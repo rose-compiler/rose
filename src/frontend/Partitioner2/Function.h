@@ -57,7 +57,7 @@ private:
     std::vector<DataBlock::Ptr> dblocks_;               // data blocks owned by this function, sorted by starting address
     bool isFrozen_;                                     // true if function is represented by the CFG
     CallingConvention::Analysis ccAnalysis_;            // analysis computing how registers etc. are used
-    CallingConvention::Definition *ccDefinition_;       // best definition or null
+    CallingConvention::Definition::Ptr ccDefinition_;   // best definition or null
     StackDelta::Analysis stackDeltaAnalysis_;           // analysis computing stack deltas for each block and whole function
     InstructionSemantics2::BaseSemantics::SValuePtr stackDeltaOverride_; // special value to override stack delta analysis
 
@@ -95,11 +95,11 @@ private:
 protected:
     // Needed for serialization
     Function()
-        : entryVa_(0), reasons_(0), isFrozen_(false), ccDefinition_(NULL) {}
+        : entryVa_(0), reasons_(0), isFrozen_(false) {}
 
     // Use instance() instead
     explicit Function(rose_addr_t entryVa, const std::string &name, unsigned reasons)
-        : entryVa_(entryVa), name_(name), reasons_(reasons), isFrozen_(false), ccDefinition_(NULL) {
+        : entryVa_(entryVa), name_(name), reasons_(reasons), isFrozen_(false) {
         bblockVas_.insert(entryVa);
     }
 
@@ -295,8 +295,8 @@ public:
      *  defintion which is usually the "best" one.
      *
      * @{ */
-    const CallingConvention::Definition* callingConventionDefinition() { return ccDefinition_; }
-    void callingConventionDefinition(const CallingConvention::Definition *ccdef) { ccDefinition_ = ccdef; }
+    CallingConvention::Definition::Ptr callingConventionDefinition() { return ccDefinition_; }
+    void callingConventionDefinition(const CallingConvention::Definition::Ptr &ccdef) { ccDefinition_ = ccdef; }
     /** @} */
 
     /** A printable name for the function.

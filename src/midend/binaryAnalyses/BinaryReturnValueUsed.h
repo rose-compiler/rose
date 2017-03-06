@@ -37,6 +37,7 @@ private:
 
     template<class S>
     void serialize(S & s, const unsigned version) {
+        s & BOOST_SERIALIZATION_NVP(callees_);
         s & BOOST_SERIALIZATION_NVP(returnRegistersUsed_);
         s & BOOST_SERIALIZATION_NVP(returnRegistersUnused_);
     }
@@ -80,7 +81,7 @@ private:
     typedef Sawyer::Container::Map<rose_addr_t /*call_site*/, CallSiteResults> CallSiteMap;
 
 private:
-    const CallingConvention::Definition *defaultCallingConvention_;
+    CallingConvention::Definition::Ptr defaultCallingConvention_;
     CallSiteMap callSites_;
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -100,7 +101,7 @@ public:
      *  This creates an analyzer that is not suitable for analysis since it doesn't know anything about the architecture it
      *  would be analyzing. This is mostly for use in situations where an analyzer must be constructed as a member of another
      *  class's default constructor, in containers that initialize their contents with default constructors, etc. */
-    Analysis(): defaultCallingConvention_(NULL) {}
+    Analysis() {}
 
     /** Property: Default calling convention.
      *
@@ -112,8 +113,8 @@ public:
      *  states which locations are <em>permitted</em> to be outputs.
      *
      * @{ */
-    const CallingConvention::Definition* defaultCallingConvention() const { return defaultCallingConvention_; }
-    void defaultCallingConvention(const CallingConvention::Definition *defn) { defaultCallingConvention_ = defn; }
+    CallingConvention::Definition::Ptr defaultCallingConvention() const { return defaultCallingConvention_; }
+    void defaultCallingConvention(const CallingConvention::Definition::Ptr &defn) { defaultCallingConvention_ = defn; }
     /** @} */
     
     /** Clear analysis results.

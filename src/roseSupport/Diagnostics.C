@@ -116,6 +116,7 @@ void initialize() {
         BinaryAnalysis::Partitioner2::initDiagnostics();
         BinaryAnalysis::Partitioner::initDiagnostics();
         BinaryAnalysis::PointerDetection::initDiagnostics();
+        BinaryAnalysis::ReturnValueUsed::initDiagnostics();
         BinaryAnalysis::StackDelta::initDiagnostics();
         BinaryAnalysis::Strings::initDiagnostics();
         BinaryAnalysis::TaintedFlow::initDiagnostics();

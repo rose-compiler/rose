@@ -2087,9 +2087,10 @@ Partitioner::detachFunction(const Function::Ptr &function) {
 
 const CallingConvention::Analysis&
 Partitioner::functionCallingConvention(const Function::Ptr &function,
-                                       const CallingConvention::Definition *dfltCc/*=NULL*/) const {
+                                       const CallingConvention::Definition::Ptr &dfltCc/*=NULL*/) const {
     ASSERT_not_null(function);
     if (!function->callingConventionAnalysis().hasResults()) {
+        function->callingConventionDefinition(CallingConvention::Definition::Ptr());
         BaseSemantics::RiscOperatorsPtr ops = newOperators(MAP_BASED_MEMORY); // map works better for calling convention
         function->callingConventionAnalysis() = CallingConvention::Analysis(newDispatcher(ops));
         function->callingConventionAnalysis().defaultCallingConvention(dfltCc);
@@ -2100,7 +2101,7 @@ Partitioner::functionCallingConvention(const Function::Ptr &function,
 
 CallingConvention::Dictionary
 Partitioner::functionCallingConventionDefinitions(const Function::Ptr &function,
-                                                  const CallingConvention::Definition *dfltCc/*=NULL*/) const {
+                                                  const CallingConvention::Definition::Ptr &dfltCc/*=NULL*/) const {
     const CallingConvention::Analysis &ccAnalysis = functionCallingConvention(function, dfltCc);
     const CallingConvention::Dictionary &archConventions = instructionProvider().callingConventions();
     return ccAnalysis.match(archConventions);
@@ -2110,10 +2111,10 @@ Partitioner::functionCallingConventionDefinitions(const Function::Ptr &function,
 struct CallingConventionWorker {
     const Partitioner &partitioner;
     Sawyer::ProgressBar<size_t> &progress;
-    const CallingConvention::Definition *dfltCc;
+    CallingConvention::Definition::Ptr dfltCc;
 
     CallingConventionWorker(const Partitioner &partitioner, Sawyer::ProgressBar<size_t> &progress,
-                            const CallingConvention::Definition *dfltCc)
+                            const CallingConvention::Definition::Ptr dfltCc)
         : partitioner(partitioner), progress(progress), dfltCc(dfltCc) {}
 
     void operator()(size_t workId, const Function::Ptr &function) {
@@ -2136,7 +2137,7 @@ struct CallingConventionWorker {
 };
 
 void
-Partitioner::allFunctionCallingConvention(const CallingConvention::Definition *dfltCc/*=NULL*/) const {
+Partitioner::allFunctionCallingConvention(const CallingConvention::Definition::Ptr &dfltCc/*=NULL*/) const {
     size_t nThreads = CommandlineProcessing::genericSwitchArgs.threads;
     FunctionCallGraph::Graph cg = functionCallGraph().graph();
     Sawyer::Container::Algorithm::graphBreakCycles(cg);
@@ -2145,6 +2146,25 @@ Partitioner::allFunctionCallingConvention(const CallingConvention::Definition *d
     if (nThreads != 1)                                  // lots of threads doing progress reports won't look too good!
         rose::BinaryAnalysis::CallingConvention::mlog[MARCH].disable();
     Sawyer::workInParallel(cg, nThreads, CallingConventionWorker(*this, progress, dfltCc));
+}
+
+void
+Partitioner::allFunctionCallingConventionDefinition(const CallingConvention::Definition::Ptr &dfltCc/*=NULL*/) const {
+    allFunctionCallingConvention(dfltCc);
+    typedef Sawyer::Container::Map<std::string, size_t> Histogram;
+    Histogram histogram;
+    Sawyer::Container::Map<rose_addr_t, CallingConvention::Dictionary> allMatches;
+    BOOST_FOREACH (const Function::Ptr &function, functions()) {
+        CallingConvention::Dictionary matches = functionCallingConventionDefinitions(function, dfltCc);
+        allMatches.insert(function->address(), matches);
+        BOOST_FOREACH (const CallingConvention::Definition::Ptr &ccdef, matches)
+            ++histogram.insertMaybe(ccdef->name(), 0);
+    }
+#if 1 // DEBUGGING [Robb P Matzke 2017-03-06]
+    BOOST_FOREACH (const Histogram::Node &node, histogram.nodes()) {
+        std::cerr <<"ROBB: " <<node.value() <<" " <<node.key() <<"\n";
+    }
+#endif
 }
 
 AddressUsageMap

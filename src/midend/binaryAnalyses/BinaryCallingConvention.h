@@ -10,6 +10,8 @@
 #include <boost/serialization/set.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/vector.hpp>
+#include <Sawyer/SharedObject.h>
+#include <Sawyer/SharedPointer.h>
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -206,10 +208,18 @@ public:
 //                                      Definition
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/** Reference counting pointer to calling convention definition. */
+typedef Sawyer::SharedPointer<class Definition> DefinitionPtr;
+
 /** Information about calling conventions.
  *
  *  A definition typically comes from external documentation rather than direct analysis. */
-class Definition {
+class Definition: public Sawyer::SharedObject {
+public:
+    /** Reference counting pointer to calling convention definition. */
+    typedef Sawyer::SharedPointer<Definition> Ptr;
+
+private:
     std::string name_;                                  // Official short name of the convention, like "stdcall".
     std::string comment_;                               // Long name, like "Windows Borland x86-32 fastcall"
     size_t wordWidth_;                                  // Natural width word size in bits
@@ -225,27 +235,6 @@ class Definition {
     ParameterLocation thisParameter_;                   // Object pointer for calling conventions that are object methods
     std::set<RegisterDescriptor> calleeSavedRegisters_; // Register that the callee must restore before returning
     std::set<RegisterDescriptor> scratchRegisters_;     // Caller-saved registers
-
-    // Predefined calling conventions.
-public:
-    /** Returns a predefined, cached calling convention.
-     *
-     * @{ */
-    static const Definition& x86_32bit_cdecl();
-    static const Definition& x86_64bit_cdecl();
-    static const Definition& x86_32bit_stdcall();
-    static const Definition& x86_64bit_stdcall();
-    static const Definition& x86_32bit_fastcall();
-    static const Definition& x86_64bit_sysv();
-    /** @} */
-
-    /** Constructs a new pre-defined calling convention based on a register dictionary.
-     *
-     * @{ */
-    static Definition x86_cdecl(const RegisterDictionary*);
-    static Definition x86_stdcall(const RegisterDictionary*);
-    static Definition x86_fastcall(const RegisterDictionary*);
-    /** @} */
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
@@ -271,7 +260,7 @@ private:
     }
 #endif
     
-public:
+protected:
     /** Default constructor.
      *
      *  Constructs a new calling convention with no name or parameters. */
@@ -289,6 +278,32 @@ public:
           nonParameterStackSize_(0), stackAlignment_(0), stackDirection_(GROWS_DOWN), stackCleanup_(CLEANUP_UNSPECIFIED) {
         ASSERT_require2(0 == (wordWidth & 7) && wordWidth > 0, "word size must be a positive multiple of eight");
     }
+
+public:
+    /** Allocating constructor. */
+    static Ptr instance(size_t wordWidth, const std::string &name, const std::string &comment, const RegisterDictionary *regs) {
+        return Ptr(new Definition(wordWidth, name, comment, regs));
+    }
+
+public:
+    /** Returns a predefined, cached calling convention.
+     *
+     * @{ */
+    static Ptr x86_32bit_cdecl();
+    static Ptr x86_64bit_cdecl();
+    static Ptr x86_32bit_stdcall();
+    static Ptr x86_64bit_stdcall();
+    static Ptr x86_32bit_fastcall();
+    static Ptr x86_64bit_sysv();
+    /** @} */
+
+    /** Constructs a new pre-defined calling convention based on a register dictionary.
+     *
+     * @{ */
+    static Ptr x86_cdecl(const RegisterDictionary*);
+    static Ptr x86_stdcall(const RegisterDictionary*);
+    static Ptr x86_fastcall(const RegisterDictionary*);
+    /** @} */
 
     /** Property: Register dictionary.
      *
@@ -740,7 +755,7 @@ public:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** A ordered collection of calling convention definitions. */
-typedef std::vector<Definition> Dictionary;
+typedef std::vector<Definition::Ptr> Dictionary;
 
 /** Common calling conventions for amd64 (x86-64). */
 const Dictionary& dictionaryAmd64();
@@ -772,7 +787,7 @@ class Analysis {
 private:
     InstructionSemantics2::BaseSemantics::DispatcherPtr cpu_;
     const RegisterDictionary *regDict_;                 // Names for the register parts
-    const Definition *defaultCc_;                       // Default calling convention for called functions
+    Definition::Ptr defaultCc_;                         // Default calling convention for called functions
 
     bool hasResults_;                                   // Are the following data members initialized?
     bool didConverge_;                                  // Are the following data members valid (else only approximations)?
@@ -811,13 +826,13 @@ public:
      *  would be analyzing. This is mostly for use in situations where an analyzer must be constructed as a member of another
      *  class's default constructor, in containers that initialize their contents with a default constructor, etc. */
     Analysis()
-        : regDict_(NULL), defaultCc_(NULL), hasResults_(false), didConverge_(false) {}
+        : regDict_(NULL), hasResults_(false), didConverge_(false) {}
 
     /** Construct an analyzer using a specified disassembler.
      *
      *  This constructor chooses a symbolic domain and a dispatcher appropriate for the disassembler's architecture. */
     explicit Analysis(Disassembler *d)
-        : regDict_(NULL), defaultCc_(NULL), hasResults_(false), didConverge_(false) {
+        : regDict_(NULL), hasResults_(false), didConverge_(false) {
         init(d);
     }
 
@@ -826,9 +841,9 @@ public:
      *  This constructor uses the supplied dispatcher and associated semantic domain. For best results, the semantic domain
      *  should be a symbolic domain that uses @ref InstructionSemantics2::BaseSemantics::MemoryCellList "MemoryCellList" and
      *  @ref InstructionSemantics2::BaseSemantics::RegisterStateGeneric "RegisterStateGeneric". These happen to also be the
-     *  defaults used by @ref InstructionSemantics::SymbolicSemantics. */
+     *  defaults used by @ref InstructionSemantics2::SymbolicSemantics. */
     explicit Analysis(const InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu)
-        : cpu_(cpu), regDict_(NULL), defaultCc_(NULL), hasResults_(false), didConverge_(false) {}
+        : cpu_(cpu), regDict_(NULL), hasResults_(false), didConverge_(false) {}
 
     /** Property: Default calling convention.
      *
@@ -837,8 +852,8 @@ public:
      *  convention's definition determines how the called function modifies the current function's data-flow state.
      *
      * @{ */
-    const Definition* defaultCallingConvention() const { return defaultCc_; }
-    void defaultCallingConvention(const Definition *x) { defaultCc_ = x; }
+    Definition::Ptr defaultCallingConvention() const { return defaultCc_; }
+    void defaultCallingConvention(const Definition::Ptr &x) { defaultCc_ = x; }
     /** @} */
 
     /** Analyze one function.
@@ -920,7 +935,7 @@ public:
     /** Determine whether a definition matches.
      *
      *  Returns true if the specified definition is compatible with the results of this analysis. */
-    bool match(const Definition&) const;
+    bool match(const Definition::Ptr&) const;
 
     /** Find matching calling convention definitions.
      *
@@ -962,7 +977,7 @@ private:
 //                                      Free functions
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::ostream& operator<<(std::ostream&, const Definition&);
+std::ostream& operator<<(std::ostream&, const Definition::Ptr&);
 std::ostream& operator<<(std::ostream&, const Analysis&);
 
 } // namespace

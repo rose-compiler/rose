@@ -3,6 +3,9 @@
 #include <Partitioner2/DataFlow.h>
 #include <Partitioner2/Partitioner.h>
 #include <Partitioner2/Semantics.h>
+#if 1 // DEBUGGING [Robb P Matzke 2017-03-04]
+#include <AsmUnparser_compat.h>
+#endif
 
 namespace P2 = rose::BinaryAnalysis::Partitioner2;
 namespace S2 = rose::BinaryAnalysis::InstructionSemantics2;
@@ -47,6 +50,7 @@ class RiscOperators: public P2::Semantics::RiscOperators {
     RegisterParts calleeOutputRegisters_;
     StackVariables calleeOutputParameters_;
     CallSiteResults *results_;
+    const RegisterDictionary *registerDictionary_;
 
 public:
     typedef P2::Semantics::RiscOperators Super;
@@ -61,15 +65,16 @@ private:
         s & BOOST_SERIALIZATION_NVP(calleeOutputRegisters_);
         s & BOOST_SERIALIZATION_NVP(calleeOutputParameters_);
         s & BOOST_SERIALIZATION_NVP(results_);
+        s & BOOST_SERIALIZATION_NVP(registerDictionary_);
     }
 #endif
 
 protected:
     explicit RiscOperators(const S2::BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
-        : Super(protoval, solver) {}
+        : Super(protoval, solver), results_(NULL), registerDictionary_(NULL) {}
 
     explicit RiscOperators(const S2::BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
-        : Super(state, solver) {}
+        : Super(state, solver), results_(NULL), registerDictionary_(NULL) {}
 
 public:
     static RiscOperatorsPtr instance(const RegisterDictionary *regdict, SMTSolver *solver=NULL) {
@@ -133,6 +138,25 @@ public:
     void callSiteResults(CallSiteResults *results) {
         results_ = results;
     }
+
+    /** Property: Register dictionary for debugging.
+     *
+     *  The register dictionary is optional, and used only to convert register descriptors to register names in diagnostic
+     *  output.
+     *
+     * @{ */
+    const RegisterDictionary* registerDictionary() const { return registerDictionary_; }
+    void registerDictionary(const RegisterDictionary *rd) { registerDictionary_ = rd; }
+    /** @} */
+
+private:
+    std::string locationNames(const RegisterParts &parts) {
+        std::vector<std::string> retval;
+        RegisterNames regNames(registerDictionary_);
+        BOOST_FOREACH (const RegisterDescriptor &reg, parts.listAll(registerDictionary_))
+            retval.push_back(regNames(reg));
+        return boost::join(retval, ", ");
+    }
     
 public:
     virtual S2::BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg,
@@ -141,6 +165,7 @@ public:
         RegisterParts found = calleeOutputRegisters_ & RegisterParts(reg);
         if (!found.isEmpty()) {
             ASSERT_not_null(results_);
+            SAWYER_MESG(mlog[DEBUG]) <<"  used return values: " <<locationNames(found) <<"\n";
             results_->returnRegistersUsed() |= found;
             calleeOutputRegisters_ -= found;
         }
@@ -150,8 +175,15 @@ public:
     virtual void writeRegister(const RegisterDescriptor &reg, const S2::BaseSemantics::SValuePtr &value) ROSE_OVERRIDE {
         // Writing to a register means that the callee's return value is definitely not used.
         RegisterParts found = calleeOutputRegisters_ & RegisterParts(reg);
+#if 1 // DEBUGGING [Robb P Matzke 2017-03-04]
+            std::cerr <<"ROBB: " <<unparseInstructionWithAddress(currentInstruction()) <<"\n"
+                      <<"        writeRegister " <<locationNames(RegisterParts(reg)) <<"\n"
+                      <<"        calleeOutputRegisters = " <<locationNames(calleeOutputRegisters_) <<"\n"
+                      <<"        intersection = " <<locationNames(found) <<"\n";
+#endif
         if (!found.isEmpty()) {
             ASSERT_not_null(results_);
+            SAWYER_MESG(mlog[DEBUG]) <<"  unused return values: " <<locationNames(found) <<"\n";
             results_->returnRegistersUnused() |= found;
             calleeOutputRegisters_ -= found;
         }
@@ -208,6 +240,8 @@ Analysis::analyzeCallSite(const P2::Partitioner &partitioner, const P2::ControlF
     ASSERT_require(partitioner.cfg().isValidVertex(callSite));
     CallSiteResults retval;
 
+    SAWYER_MESG(mlog[DEBUG]) <<"analyzing " <<partitioner.vertexName(callSite) <<"\n";
+
     // Find callers, callees, and return points in the CFG
     std::vector<P2::Function::Ptr> callers = partitioner.functionsOwningBasicBlock(callSite);
     retval.callees(findCallees(partitioner, callSite));
@@ -263,6 +297,7 @@ Analysis::analyzeCallSite(const P2::Partitioner &partitioner, const P2::ControlF
     ASSERT_not_null(registerDictionary);
     SMTSolver *solver = NULL;
     RiscOperatorsPtr ops = RiscOperators::instance(registerDictionary, solver);
+    ops->registerDictionary(registerDictionary);
     ops->insertOutputs(cc.outputRegisters(), cc.outputStackParameters());
     if (!ops->hasOutputs())
         return retval;
@@ -274,12 +309,13 @@ Analysis::analyzeCallSite(const P2::Partitioner &partitioner, const P2::ControlF
 
     // Build a CFG to analyze. We use a data-flow CFG even though we're not doing a true data flow, because it's convenient.
     P2::DataFlow::DfCfg dfCfg = P2::DataFlow::buildDfCfg(partitioner, partitioner.cfg(), returnTarget);
-#if 0 // DEBUGGING [Robb P Matzke 2017-03-03]
+    SAWYER_MESG(mlog[DEBUG]) <<"  dfCfg has " <<StringUtility::plural(dfCfg.nVertices(), "vertices", "vertex") <<"\n";
+#if 1 // DEBUGGING [Robb P Matzke 2017-03-03]
     {
         boost::filesystem::path debugDir = "./rose-debug/BinaryAnalysis/ReturnValueUsed";
         boost::filesystem::create_directories(debugDir);
         boost::filesystem::path fileName = debugDir /
-                                           ("F_" + StringUtility::addrToString(function->address()).substr(2) + ".dot");
+                                           ("B_" + StringUtility::addrToString(callSite->value().address()).substr(2) + ".dot");
         std::ofstream f(fileName.string().c_str());
         P2::DataFlow::dumpDfCfg(f, dfCfg);
     }
@@ -300,7 +336,20 @@ Analysis::analyzeCallSite(const P2::Partitioner &partitioner, const P2::ControlF
     for (Traversal t(dfCfg, dfCfg.findVertex(0)); t; ++t) {
         StatePtr inputState = inputStates[t.vertex()->id()];
         ASSERT_not_null(inputState);
+        if (mlog[DEBUG]) {
+            std::ostringstream ss;
+            ss <<*inputState;
+            mlog[DEBUG] <<"  incoming state for vertex #" <<t.vertex()->id() <<"\n"
+                        <<StringUtility::prefixLines(ss.str(), "    ");
+        }
+
         StatePtr outputState = State::promote(xfer(dfCfg, t.vertex()->id(), inputState));
+        if (mlog[DEBUG]) {
+            std::ostringstream ss;
+            ss <<*outputState;
+            mlog[DEBUG] <<"  outgoing state for vertex #" <<t.vertex()->id() <<"\n"
+                        <<StringUtility::prefixLines(ss.str(), "    ");
+        }
 
         // Forward output state to the input states for vertices we have yet to traverse.
         BOOST_FOREACH (const P2::DataFlow::DfCfg::Edge &edge, t.vertex()->outEdges()) {

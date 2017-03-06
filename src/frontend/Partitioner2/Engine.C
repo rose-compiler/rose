@@ -1824,7 +1824,7 @@ Engine::updateAnalysisResults(Partitioner &partitioner) {
         separator = ", ";
         // Calling convention analysis uses a default convention to break recursion cycles in the CG.
         const CallingConvention::Dictionary &ccDict = partitioner.instructionProvider().callingConventions();
-        partitioner.allFunctionCallingConvention(ccDict.empty() ? NULL : &ccDict.front());
+        partitioner.allFunctionCallingConvention(ccDict.empty() ? CallingConvention::Definition::Ptr() : ccDict.front());
     }
 
     info <<"; total " <<timer <<" seconds\n";

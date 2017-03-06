@@ -154,278 +154,278 @@ dictionaryX86() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // class method
-const Definition&
+Definition::Ptr
 Definition::x86_32bit_cdecl() {
-    static Definition cc;
-    if (cc.name().empty())
+    static Ptr cc;
+    if (!cc)
         cc = x86_cdecl(RegisterDictionary::dictionary_pentium4());
     return cc;
 }
 
 // class method
-const Definition&
+Definition::Ptr
 Definition::x86_64bit_cdecl() {
-    static Definition cc;
-    if (cc.name().empty())
+    static Ptr cc;
+    if (!cc)
         cc = x86_cdecl(RegisterDictionary::dictionary_amd64());
     return cc;
 }
 
 // class method
-Definition
+Definition::Ptr
 Definition::x86_cdecl(const RegisterDictionary *regDict) {
     ASSERT_not_null(regDict);
     const RegisterDescriptor SP = regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp);
-    Definition cc(SP.get_nbits(), "cdecl", 
-                  "x86-" + StringUtility::numberToString(SP.get_nbits()) + " cdecl",
-                  regDict);
+    Ptr cc = instance(SP.get_nbits(), "cdecl", 
+                      "x86-" + StringUtility::numberToString(SP.get_nbits()) + " cdecl",
+                      regDict);
 
     // Stack characteristics
-    cc.stackPointerRegister(SP);
-    cc.stackDirection(GROWS_DOWN);
-    cc.nonParameterStackSize(cc.wordWidth() >> 3);      // return address
+    cc->stackPointerRegister(SP);
+    cc->stackDirection(GROWS_DOWN);
+    cc->nonParameterStackSize(cc->wordWidth() >> 3);    // return address
 
     // All parameters are passed on the stack.
-    cc.stackParameterOrder(RIGHT_TO_LEFT);
-    cc.stackCleanup(CLEANUP_BY_CALLER);
+    cc->stackParameterOrder(RIGHT_TO_LEFT);
+    cc->stackCleanup(CLEANUP_BY_CALLER);
 
     // Other inputs
-    cc.appendInputParameter(*regDict->lookup("df"));    // direction flag is always assumed to be valid
+    cc->appendInputParameter(*regDict->lookup("df"));   // direction flag is always assumed to be valid
 
     // Return values
-    cc.appendOutputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_ax));
-    cc.appendOutputParameter(regDict->findLargestRegister(x86_regclass_st, x86_st_0));
-    cc.appendOutputParameter(SP);                       // final value is usually one word greater than initial value
+    cc->appendOutputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_ax));
+    cc->appendOutputParameter(regDict->findLargestRegister(x86_regclass_st, x86_st_0));
+    cc->appendOutputParameter(SP);                      // final value is usually one word greater than initial value
 
     // Scratch registers (i.e., modified, not callee-saved, not return registers)
-    cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_cx));
-    cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_dx));
-    cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_ip, 0));
-    cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_flags, x86_flags_status));
-    cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_flags, x86_flags_fpstatus));
+    cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_cx));
+    cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_dx));
+    cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_ip, 0));
+    cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_flags, x86_flags_status));
+    cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_flags, x86_flags_fpstatus));
 
     // Callee-saved registers (everything else)
-    RegisterParts regParts = regDict->getAllParts() - cc.getUsedRegisterParts();
+    RegisterParts regParts = regDict->getAllParts() - cc->getUsedRegisterParts();
     std::vector<RegisterDescriptor> registers = regParts.extract(regDict);
-    cc.calleeSavedRegisters().insert(registers.begin(), registers.end());
+    cc->calleeSavedRegisters().insert(registers.begin(), registers.end());
 
     return cc;
 }
 
 // class method
-const Definition&
+Definition::Ptr
 Definition::x86_32bit_stdcall() {
-    static Definition cc;
-    if (cc.name().empty())
+    static Ptr cc;
+    if (!cc)
         cc = x86_stdcall(RegisterDictionary::dictionary_pentium4());
     return cc;
 }
 
 // class method
-const Definition&
+Definition::Ptr
 Definition::x86_64bit_stdcall() {
-    static Definition cc;
-    if (cc.name().empty())
+    static Ptr cc;
+    if (!cc)
         cc = x86_stdcall(RegisterDictionary::dictionary_amd64());
     return cc;
 }
 
 // class method
-Definition
+Definition::Ptr
 Definition::x86_stdcall(const RegisterDictionary *regDict) {
     ASSERT_not_null(regDict);
     const RegisterDescriptor SP = regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp);
-    Definition cc(SP.get_nbits(), "stdcall", 
-                  "x86-" + StringUtility::numberToString(SP.get_nbits()) + " stdcall",
-                  regDict);
+    Ptr cc = instance(SP.get_nbits(), "stdcall", 
+                      "x86-" + StringUtility::numberToString(SP.get_nbits()) + " stdcall",
+                      regDict);
 
     // Stack characteristics
-    cc.stackPointerRegister(SP);
-    cc.stackDirection(GROWS_DOWN);
-    cc.nonParameterStackSize(cc.wordWidth() >> 3);      // return address
+    cc->stackPointerRegister(SP);
+    cc->stackDirection(GROWS_DOWN);
+    cc->nonParameterStackSize(cc->wordWidth() >> 3);    // return address
 
     // All parameters are passed on the stack
-    cc.stackParameterOrder(RIGHT_TO_LEFT);
-    cc.stackCleanup(CLEANUP_BY_CALLEE);
+    cc->stackParameterOrder(RIGHT_TO_LEFT);
+    cc->stackCleanup(CLEANUP_BY_CALLEE);
 
     // Other inputs
-    cc.appendInputParameter(*regDict->lookup("df"));    // direction flag is always assumed to be valid
+    cc->appendInputParameter(*regDict->lookup("df"));   // direction flag is always assumed to be valid
 
     // Return values
-    cc.appendOutputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_ax));
-    cc.appendOutputParameter(SP);
+    cc->appendOutputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_ax));
+    cc->appendOutputParameter(SP);
 
     // Scratch registers (i.e., modified, not callee-saved, not return registers)
-    cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_cx));
-    cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_dx));
-    cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_ip, 0));
-    cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_flags, x86_flags_status));
-    cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_flags, x86_flags_fpstatus));
+    cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_cx));
+    cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_dx));
+    cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_ip, 0));
+    cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_flags, x86_flags_status));
+    cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_flags, x86_flags_fpstatus));
 
     // Callee-saved registers (everything else)
-    RegisterParts regParts = regDict->getAllParts() - cc.getUsedRegisterParts();
+    RegisterParts regParts = regDict->getAllParts() - cc->getUsedRegisterParts();
     std::vector<RegisterDescriptor> registers = regParts.extract(regDict);
-    cc.calleeSavedRegisters().insert(registers.begin(), registers.end());
+    cc->calleeSavedRegisters().insert(registers.begin(), registers.end());
 
     return cc;
 }
 
 // class method
-const Definition&
+Definition::Ptr
 Definition::x86_32bit_fastcall() {
-    static Definition cc;
-    if (cc.name().empty())
+    static Ptr cc;
+    if (!cc)
         cc = x86_fastcall(RegisterDictionary::dictionary_pentium4());
     return cc;
 }
 
 // class method
-Definition
+Definition::Ptr
 Definition::x86_fastcall(const RegisterDictionary *regDict) {
     ASSERT_not_null(regDict);
     const RegisterDescriptor SP = regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp);
-    static Definition cc(SP.get_nbits(), "fastcall",
-                         "x86-" + StringUtility::numberToString(SP.get_nbits()) + " fastcall",
-                         regDict);
+    static Ptr cc = instance(SP.get_nbits(), "fastcall",
+                             "x86-" + StringUtility::numberToString(SP.get_nbits()) + " fastcall",
+                             regDict);
 
     // Stack characteristics
-    cc.stackPointerRegister(SP);
-    cc.stackDirection(GROWS_DOWN);
-    cc.nonParameterStackSize(cc.wordWidth() >> 3);      // return address
+    cc->stackPointerRegister(SP);
+    cc->stackDirection(GROWS_DOWN);
+    cc->nonParameterStackSize(cc->wordWidth() >> 3);    // return address
 
     // Uses ECX and EDX for first args that fit; all other parameters are passed on the stack.
-    cc.appendInputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_cx));
-    cc.appendInputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_dx));
-    cc.stackParameterOrder(RIGHT_TO_LEFT);
-    cc.stackCleanup(CLEANUP_BY_CALLEE);
-    cc.appendInputParameter(*regDict->lookup("df"));    // direction flag is always assumed to be valid
+    cc->appendInputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_cx));
+    cc->appendInputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_dx));
+    cc->stackParameterOrder(RIGHT_TO_LEFT);
+    cc->stackCleanup(CLEANUP_BY_CALLEE);
+    cc->appendInputParameter(*regDict->lookup("df"));   // direction flag is always assumed to be valid
 
     // Return values
-    cc.appendOutputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_ax));
-    cc.appendOutputParameter(SP);
+    cc->appendOutputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_ax));
+    cc->appendOutputParameter(SP);
 
     // Scratch registers (i.e., modified, not callee-saved, not return registers)
-    cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_cx));
-    cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_dx));
-    cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_ip, 0));
-    cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_flags, x86_flags_status));
-    cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_flags, x86_flags_fpstatus));
+    cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_cx));
+    cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_dx));
+    cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_ip, 0));
+    cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_flags, x86_flags_status));
+    cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_flags, x86_flags_fpstatus));
 
     // Callee-saved registers (everything else)
-    RegisterParts regParts = regDict->getAllParts() - cc.getUsedRegisterParts();
+    RegisterParts regParts = regDict->getAllParts() - cc->getUsedRegisterParts();
     std::vector<RegisterDescriptor> registers = regParts.extract(regDict);
-    cc.calleeSavedRegisters().insert(registers.begin(), registers.end());
+    cc->calleeSavedRegisters().insert(registers.begin(), registers.end());
 
     return cc;
 }
 
 // class method
-const Definition&
+Definition::Ptr
 Definition::x86_64bit_sysv() {
-    static Definition cc;
-    if (cc.name().empty()) {
+    static Ptr cc;
+    if (!cc) {
         const RegisterDictionary *regDict = RegisterDictionary::dictionary_amd64();
         const RegisterDescriptor SP = regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp);
 
-        cc = Definition(64, "sysv", "x86-64 sysv", regDict);
+        cc = instance(64, "sysv", "x86-64 sysv", regDict);
 
         // Stack characteristics
-        cc.stackPointerRegister(SP);
-        cc.stackDirection(GROWS_DOWN);
-        cc.nonParameterStackSize(cc.wordWidth() >> 3);  // return address
+        cc->stackPointerRegister(SP);
+        cc->stackDirection(GROWS_DOWN);
+        cc->nonParameterStackSize(cc->wordWidth() >> 3); // return address
 
         //---- Function arguments ----
 
         // The first six integer or pointer arguments are passed in registers RDI, RSI, RDX, RCX, R8, and R9.
         // These registers are also not preserved across the call.
-        cc.appendInputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_di));
-        cc.appendInputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_si));
-        cc.appendInputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_dx));
-        cc.appendInputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_cx));
-        cc.appendInputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_r8));
-        cc.appendInputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_r9));
+        cc->appendInputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_di));
+        cc->appendInputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_si));
+        cc->appendInputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_dx));
+        cc->appendInputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_cx));
+        cc->appendInputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_r8));
+        cc->appendInputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_r9));
 
         // The first eight SSE arguments are passed in registers xmm0 through xmm7
-        cc.appendInputParameter(regDict->findLargestRegister(x86_regclass_xmm, 0));
-        cc.appendInputParameter(regDict->findLargestRegister(x86_regclass_xmm, 1));
-        cc.appendInputParameter(regDict->findLargestRegister(x86_regclass_xmm, 2));
-        cc.appendInputParameter(regDict->findLargestRegister(x86_regclass_xmm, 3));
-        cc.appendInputParameter(regDict->findLargestRegister(x86_regclass_xmm, 4));
-        cc.appendInputParameter(regDict->findLargestRegister(x86_regclass_xmm, 5));
-        cc.appendInputParameter(regDict->findLargestRegister(x86_regclass_xmm, 6));
-        cc.appendInputParameter(regDict->findLargestRegister(x86_regclass_xmm, 7));
+        cc->appendInputParameter(regDict->findLargestRegister(x86_regclass_xmm, 0));
+        cc->appendInputParameter(regDict->findLargestRegister(x86_regclass_xmm, 1));
+        cc->appendInputParameter(regDict->findLargestRegister(x86_regclass_xmm, 2));
+        cc->appendInputParameter(regDict->findLargestRegister(x86_regclass_xmm, 3));
+        cc->appendInputParameter(regDict->findLargestRegister(x86_regclass_xmm, 4));
+        cc->appendInputParameter(regDict->findLargestRegister(x86_regclass_xmm, 5));
+        cc->appendInputParameter(regDict->findLargestRegister(x86_regclass_xmm, 6));
+        cc->appendInputParameter(regDict->findLargestRegister(x86_regclass_xmm, 7));
 
         // The AL register is an input register that stores the number of SSE registers used for variable argument calls. (It
         // is also part of the first return value).
-        cc.appendInputParameter(RegisterDescriptor(x86_regclass_gpr, x86_gpr_ax, 0, 8)); // for varargs calls
+        cc->appendInputParameter(RegisterDescriptor(x86_regclass_gpr, x86_gpr_ax, 0, 8)); // for varargs calls
 
         // direction flag is always assumed to be initialized and is thus often treated as input
-        cc.appendInputParameter(*regDict->lookup("df"));
+        cc->appendInputParameter(*regDict->lookup("df"));
 
         // Arguments that don't fit in the input registers are passed on the stack
-        cc.stackParameterOrder(RIGHT_TO_LEFT);
-        cc.stackCleanup(CLEANUP_BY_CALLER);
+        cc->stackParameterOrder(RIGHT_TO_LEFT);
+        cc->stackCleanup(CLEANUP_BY_CALLER);
 
         //---- Return values ----
 
-        cc.appendOutputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_ax));
-        cc.appendOutputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_dx)); // second integer return
-        cc.appendOutputParameter(SP);                   // final value is usually 8 greater than initial value
-        cc.appendOutputParameter(regDict->findLargestRegister(x86_regclass_xmm, 0));
-        cc.appendOutputParameter(regDict->findLargestRegister(x86_regclass_xmm, 1));
-        //cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_st, 0)); // dynamic st(0), overlaps mm<i>
-        //cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_st, 1)); // dynamic st(1), overlaps mm<i+1>
+        cc->appendOutputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_ax));
+        cc->appendOutputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_dx)); // second integer return
+        cc->appendOutputParameter(SP);                   // final value is usually 8 greater than initial value
+        cc->appendOutputParameter(regDict->findLargestRegister(x86_regclass_xmm, 0));
+        cc->appendOutputParameter(regDict->findLargestRegister(x86_regclass_xmm, 1));
+        //cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_st, 0)); // dynamic st(0), overlaps mm<i>
+        //cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_st, 1)); // dynamic st(1), overlaps mm<i+1>
 
         //---- Scratch registers (modified, not callee-saved, not return values) ----
 
         // Registers that hold arguments are also scratch registers (as long as they're not return values)
-        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_di));
-        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_si));
-        //cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_dx)); this is a return reg
-        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_cx));
-        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_r8));
-        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_r9));
+        cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_di));
+        cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_si));
+        //cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_dx)); this is a return reg
+        cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_cx));
+        cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_r8));
+        cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_r9));
 
-        //cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_xmm, 0)); this is a return reg
-        //cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_xmm, 1)); this is a return reg
-        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_xmm, 2));
-        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_xmm, 3));
-        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_xmm, 4));
-        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_xmm, 5));
-        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_xmm, 6));
-        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_xmm, 7));
+        //cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_xmm, 0)); this is a return reg
+        //cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_xmm, 1)); this is a return reg
+        cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_xmm, 2));
+        cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_xmm, 3));
+        cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_xmm, 4));
+        cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_xmm, 5));
+        cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_xmm, 6));
+        cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_xmm, 7));
 
         // These registers are almost always modified by a function
-        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_ip, 0));
-        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_flags, x86_flags_status));
-        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_flags, x86_flags_fpstatus));
+        cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_ip, 0));
+        cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_flags, x86_flags_status));
+        cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_flags, x86_flags_fpstatus));
 
-        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_r10)); //static chain ptr
-        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_r11));
+        cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_r10)); //static chain ptr
+        cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_r11));
 
         // Floating point registers are pretty much all scratch.
-        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_xmm, 8));
-        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_xmm, 9));
-        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_xmm, 10));
-        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_xmm, 11));
-        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_xmm, 12));
-        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_xmm, 13));
-        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_xmm, 14));
-        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_xmm, 15));
+        cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_xmm, 8));
+        cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_xmm, 9));
+        cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_xmm, 10));
+        cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_xmm, 11));
+        cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_xmm, 12));
+        cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_xmm, 13));
+        cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_xmm, 14));
+        cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_xmm, 15));
 
-        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_st, 0)); // i.e., statically mm0
-        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_st, 1)); // mm1, etc. Since mm<i> could
-        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_st, 2)); // overlap with st(0) or st(1),
-        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_st, 3)); // two of these could also be
-        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_st, 4)); // return values.
-        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_st, 5));
-        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_st, 6));
-        cc.scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_st, 7));
+        cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_st, 0)); // i.e., statically mm0
+        cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_st, 1)); // mm1, etc. Since mm<i> could
+        cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_st, 2)); // overlap with st(0) or st(1),
+        cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_st, 3)); // two of these could also be
+        cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_st, 4)); // return values.
+        cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_st, 5));
+        cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_st, 6));
+        cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_st, 7));
         
         // Callee-saved registers (everything else)
-        RegisterParts regParts = regDict->getAllParts() - cc.getUsedRegisterParts();
+        RegisterParts regParts = regDict->getAllParts() - cc->getUsedRegisterParts();
         std::vector<RegisterDescriptor> registers = regParts.extract(regDict);
-        cc.calleeSavedRegisters().insert(registers.begin(), registers.end());
+        cc->calleeSavedRegisters().insert(registers.begin(), registers.end());
     }
     return cc;
 }
@@ -847,12 +847,13 @@ Analysis::print(std::ostream &out, bool multiLine) const {
 }
 
 bool
-Analysis::match(const Definition &cc) const {
+Analysis::match(const Definition::Ptr &cc) const {
     ASSERT_not_null2(cpu_, "analyzer is not properly initialized");
+    ASSERT_not_null(cc);
 
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     SAWYER_MESG(debug) <<"matching calling convention definition to analysis\n"
-                       <<"  definition: " <<cc <<"\n"
+                       <<"  definition: " <<*cc <<"\n"
                        <<"  analysis results: " <<*this <<"\n";
 
     if (!hasResults_) {
@@ -860,8 +861,8 @@ Analysis::match(const Definition &cc) const {
         return false;
     }
 
-    if (cc.wordWidth() != cpu_->stackPointerRegister().get_nbits()) {
-        SAWYER_MESG(debug) <<"  mismatch: defn word size (" <<cc.wordWidth() <<") != analysis word size ("
+    if (cc->wordWidth() != cpu_->stackPointerRegister().get_nbits()) {
+        SAWYER_MESG(debug) <<"  mismatch: defn word size (" <<cc->wordWidth() <<") != analysis word size ("
                            <<cpu_->stackPointerRegister().get_nbits() <<")\n";
         return false;
     }
@@ -869,41 +870,41 @@ Analysis::match(const Definition &cc) const {
     // Gather up definition's input registers. We always add EIP (or similar) because the analysis will have read it to obtain
     // the function's first instruction before ever writing to it.  Similarly, we add ESP (or similar) because pushing,
     // popping, aligning, and allocating local variable space all read ESP before writing to it.
-    RegisterParts ccInputRegisters = cc.inputRegisterParts();
+    RegisterParts ccInputRegisters = cc->inputRegisterParts();
     ccInputRegisters.insert(cpu_->instructionPointerRegister());
     ccInputRegisters.insert(cpu_->stackPointerRegister());
-    if (cc.thisParameter().type() == ParameterLocation::REGISTER)
-        ccInputRegisters.insert(cc.thisParameter().reg());
+    if (cc->thisParameter().type() == ParameterLocation::REGISTER)
+        ccInputRegisters.insert(cc->thisParameter().reg());
 
     // Gather up definition's output registers.  We always add EIP (or similar) because the final RET instruction will write
     // the return address into the EIP register and not subsequently read it. The stack pointer register is not added by
     // default because not all functions use the stack (e.g., architectures that have link registers); it must be added (or
     // not) when the definition is created.
-    RegisterParts ccOutputRegisters = cc.outputRegisterParts() | cc.scratchRegisterParts();
+    RegisterParts ccOutputRegisters = cc->outputRegisterParts() | cc->scratchRegisterParts();
     ccOutputRegisters.insert(cpu_->instructionPointerRegister());
 
     // Stack delta checks
     if (stackDelta_) {
-        int64_t normalization = (cc.stackDirection() == GROWS_UP ? -1 : +1);
+        int64_t normalization = (cc->stackDirection() == GROWS_UP ? -1 : +1);
         int64_t normalizedStackDelta = *stackDelta_ * normalization; // in bytes
 
         // All callees must pop the non-parameter area (e.g., return address) of the stack.
-        if (normalizedStackDelta < 0 || (uint64_t)normalizedStackDelta < cc.nonParameterStackSize()) {
-            SAWYER_MESG(debug) <<"  mismatch: callee did not pop " <<cc.nonParameterStackSize() <<"-byte"
+        if (normalizedStackDelta < 0 || (uint64_t)normalizedStackDelta < cc->nonParameterStackSize()) {
+            SAWYER_MESG(debug) <<"  mismatch: callee did not pop " <<cc->nonParameterStackSize() <<"-byte"
                                <<" non-parameter area from stack\n";
             return false;
         }
-        normalizedStackDelta -= cc.nonParameterStackSize();
+        normalizedStackDelta -= cc->nonParameterStackSize();
 
         // The callee must not pop stack parameters if the caller cleans them up.
-        if (cc.stackCleanup() == CLEANUP_BY_CALLER && normalizedStackDelta != 0) {
+        if (cc->stackCleanup() == CLEANUP_BY_CALLER && normalizedStackDelta != 0) {
             SAWYER_MESG(debug) <<"  mismatch: callee popped stack parameters but definition is caller-cleanup\n";
             return false;
         }
         
         // For callee cleanup, the callee must pop all the stack variables. It may pop more than what it used (i.e., it must
         // pop even unused arguments).
-        if (cc.stackCleanup() == CLEANUP_BY_CALLEE) {
+        if (cc->stackCleanup() == CLEANUP_BY_CALLEE) {
             int64_t normalizedEnd = 0; // one-past first-pushed argument normlized for downward-growing stack
             BOOST_FOREACH (const StackVariable &var, inputStackParameters_)
                 normalizedEnd = std::max(normalizedEnd, (int64_t)(var.location.offset * normalization + var.location.nBytes));
@@ -943,10 +944,10 @@ Analysis::match(const Definition &cc) const {
     }
     
     // All analysis restored registers must be a definition's callee-saved register.
-    if (!(restoredRegisters_ - cc.calleeSavedRegisterParts()).isEmpty()) {
+    if (!(restoredRegisters_ - cc->calleeSavedRegisterParts()).isEmpty()) {
         if (debug) {
             debug <<"  mismatch: restored registers that are not defined as callee-saved:";
-            RegisterParts parts = restoredRegisters_ - cc.calleeSavedRegisterParts();
+            RegisterParts parts = restoredRegisters_ - cc->calleeSavedRegisterParts();
             RegisterNames regName(registerDictionary());
             BOOST_FOREACH (const RegisterDescriptor &reg, parts.listAll(registerDictionary()))
                 debug <<" " <<regName(reg);
@@ -970,21 +971,22 @@ Analysis::match(const Definition &cc) const {
     
     // If the definition has an object pointer ("this" parameter) then it should not be an anlysis output or scratch register,
     // but must be an analysis input register.
-    if (cc.thisParameter().type() == ParameterLocation::REGISTER) {
-        if (ccOutputRegisters.existsAny(cc.thisParameter().reg())) {
+    if (cc->thisParameter().type() == ParameterLocation::REGISTER) {
+        if (ccOutputRegisters.existsAny(cc->thisParameter().reg())) {
             SAWYER_MESG(debug) <<"  mismatch: actual output defined as \"this\" register: "
-                               <<RegisterNames(registerDictionary())(cc.thisParameter().reg()) <<"\n";
+                               <<RegisterNames(registerDictionary())(cc->thisParameter().reg()) <<"\n";
             return false;
         }
-        if (!ccInputRegisters.existsAll(cc.thisParameter().reg())) {
+        if (!ccInputRegisters.existsAll(cc->thisParameter().reg())) {
             SAWYER_MESG(debug) <<"  mismatch: actual input does not include \"this\" register: "
-                               <<RegisterNames(registerDictionary())(cc.thisParameter().reg()) <<"\n";
+                               <<RegisterNames(registerDictionary())(cc->thisParameter().reg()) <<"\n";
             return false;
         }
     }
 
     // If the analysis has stack inputs or outputs then the definition must have a valid stack parameter direction.
-    if ((!inputStackParameters().empty() || !outputStackParameters().empty()) && cc.stackParameterOrder() == ORDER_UNSPECIFIED) {
+    if ((!inputStackParameters().empty() || !outputStackParameters().empty()) &&
+        cc->stackParameterOrder() == ORDER_UNSPECIFIED) {
         SAWYER_MESG(debug) <<"  mismatch: stack parameters detected but not allowed by definition\n";
         return false;
     }
@@ -996,7 +998,7 @@ Analysis::match(const Definition &cc) const {
 Dictionary
 Analysis::match(const Dictionary &conventions) const {
     Dictionary retval;
-    BOOST_FOREACH (const Definition &cc, conventions) {
+    BOOST_FOREACH (const Definition::Ptr &cc, conventions) {
         if (match(cc))
             retval.push_back(cc);
     }
