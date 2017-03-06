@@ -57,6 +57,7 @@ private:
     std::vector<DataBlock::Ptr> dblocks_;               // data blocks owned by this function, sorted by starting address
     bool isFrozen_;                                     // true if function is represented by the CFG
     CallingConvention::Analysis ccAnalysis_;            // analysis computing how registers etc. are used
+    CallingConvention::Definition *ccDefinition_;       // best definition or null
     StackDelta::Analysis stackDeltaAnalysis_;           // analysis computing stack deltas for each block and whole function
     InstructionSemantics2::BaseSemantics::SValuePtr stackDeltaOverride_; // special value to override stack delta analysis
 
@@ -85,6 +86,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(dblocks_);
         s & BOOST_SERIALIZATION_NVP(isFrozen_);
         s & BOOST_SERIALIZATION_NVP(ccAnalysis_);
+        s & BOOST_SERIALIZATION_NVP(ccDefinition_);
         s & BOOST_SERIALIZATION_NVP(stackDeltaAnalysis_);
         s & BOOST_SERIALIZATION_NVP(stackDeltaOverride_);
     }
@@ -93,11 +95,11 @@ private:
 protected:
     // Needed for serialization
     Function()
-        : entryVa_(0), reasons_(0), isFrozen_(false) {}
+        : entryVa_(0), reasons_(0), isFrozen_(false), ccDefinition_(NULL) {}
 
     // Use instance() instead
     explicit Function(rose_addr_t entryVa, const std::string &name, unsigned reasons)
-        : entryVa_(entryVa), name_(name), reasons_(reasons), isFrozen_(false) {
+        : entryVa_(entryVa), name_(name), reasons_(reasons), isFrozen_(false), ccDefinition_(NULL) {
         bblockVas_.insert(entryVa);
     }
 
@@ -282,6 +284,19 @@ public:
      * @{ */
     const CallingConvention::Analysis& callingConventionAnalysis() const { return ccAnalysis_; }
     CallingConvention::Analysis& callingConventionAnalysis() { return ccAnalysis_; }
+    /** @} */
+
+    /** Property: Best calling convention definition.
+     *
+     *  This is the best calling convention definition for this function. Calling conventions have two parts: (1) the behavior
+     *  of the function such as which locations serve as inputs (read-before-write) and outputs (write-last), and callee-saved
+     *  locations (read-before-write and write-last and same initial and final value), and (2) a list of well-known calling
+     *  convention definitions that match the function's behavior.  More than one definition can match. This property holds one
+     *  defintion which is usually the "best" one.
+     *
+     * @{ */
+    const CallingConvention::Definition* callingConventionDefinition() { return ccDefinition_; }
+    void callingConventionDefinition(const CallingConvention::Definition *ccdef) { ccDefinition_ = ccdef; }
     /** @} */
 
     /** A printable name for the function.
