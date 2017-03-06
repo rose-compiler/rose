@@ -3175,7 +3175,17 @@ Grammar::buildCode ()
      includeHeaderString += defines2;
      includeHeaderString += defines3;
 
+  // DQ (3/5/2017): Add message stream support for diagnostic messge from the ROSE IR nodes.
+  // This allows us to easily convert printf() functions to mprintf() functions that contain
+  // the more sophisticated Saywer support for diagnostic messages.
+  // Insert:
+  //    #undef mprintf
+  //    #define mprintf rose::Diagnostics::mfprintf(rose::mlog[rose::Diagnostics::DEBUG])
 
+     string defines4 = "#undef mprintf\n";
+     includeHeaderString += defines4;
+     string defines5 = "#define mprintf rose::Diagnostics::mfprintf(rose::ir_node_mlog[rose::Diagnostics::DEBUG])\n\n";
+     includeHeaderString += defines5;
 
 
      includeHeaderString += "\nusing namespace std;\n";

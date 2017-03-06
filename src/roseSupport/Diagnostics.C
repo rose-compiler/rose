@@ -131,6 +131,11 @@ void initialize() {
         NameQualificationTraversal::initDiagnostics();
         UnparseLanguageIndependentConstructs::initDiagnostics();
         SageBuilder::initDiagnostics();
+
+#if 1
+     // DQ (3/5/2017): Adding message stream to support diagnostic message from the ROSE IR nodes.
+        rose::initDiagnostics();
+#endif
     }
 }
 

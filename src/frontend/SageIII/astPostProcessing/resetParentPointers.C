@@ -17,6 +17,10 @@
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 
+// DQ (3/6/2017): Added support for message logging to control output from ROSE tools.
+#undef mprintf
+#define mprintf rose::Diagnostics::mfprintf(rose::ir_node_mlog[rose::Diagnostics::DEBUG])
+
 // [DQ]
 // Declaration matching static member data
 // list<string> ResetParentPointers::modifiedNodeInformationList;
@@ -2089,7 +2093,8 @@ ResetParentPointersInMemoryPool::visit(SgNode* node)
 #if 1
                          if (declaration->get_parent() == NULL)
                             {
-                               printf ("##### ResetParentPointersInMemoryPool::visit(declaration = %p = %s) declaration->get_parent() == NULL \n",node,node->class_name().c_str());
+                            // DQ (3/6/2017): Converted to use message logging.
+                               mprintf ("##### ResetParentPointersInMemoryPool::visit(declaration = %p = %s) declaration->get_parent() == NULL \n",node,node->class_name().c_str());
 
                             // DQ (8/23/2012): For remaining template instantiationsthat only have a non-definng declaration, set the parent to the global scope (since they don't appear to be connected to anything else).
                                SgTemplateInstantiationDecl* templateInstantiation = isSgTemplateInstantiationDecl(nondefiningDeclaration);
