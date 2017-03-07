@@ -4,171 +4,58 @@
 
 using namespace Fortran::Untyped;
 
+
 UntypedTraversal::UntypedTraversal(SgSourceFile* sourceFile)
 {
    p_source_file = sourceFile;
 }
 
+
 InheritedAttribute
-UntypedTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute attr)
+UntypedTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute currentScope)
 {
    if (isSgUntypedFile(n) != NULL)
       {
          SgUntypedFile* ut_file = dynamic_cast<SgUntypedFile*>(n);
-         printf ("Down Traverse: found a file   ... %s\n", ut_file->class_name().c_str());
-
-         SgSourceFile* sg_file = p_source_file;  //OpenFortranParser_globalFilePointer;
+         SgSourceFile*  sg_file = p_source_file;
          ROSE_ASSERT(sg_file != NULL);
-         printf ("                       SgSourceFile       %p\n", sg_file);
-         printf ("                               name       %s\n", sg_file->getFileName().c_str());
 
-         SgUntypedGlobalScope* ut_globalScope = ut_file->get_scope();
-         printf ("                    ut_global scope       %p\n", ut_globalScope);
-
-         attr = UntypedConverter::initialize_global_scope(sg_file);
+         currentScope = UntypedConverter::initialize_global_scope(sg_file);
       }
 
    else if (isSgUntypedGlobalScope(n) != NULL)
       {
          SgUntypedGlobalScope* ut_scope = dynamic_cast<SgUntypedGlobalScope*>(n);
-         printf ("Down Traverse: found a global scope   ... %s\n", n->class_name().c_str());
-         printf ("                    ut_global scope       %p\n", ut_scope);
-         printf ("                    sg_global scope       %p\n", SageBuilder::getGlobalScopeFromScopeStack());
+         SgGlobal*             sg_scope = UntypedConverter::convertSgUntypedGlobalScope(ut_scope, SageBuilder::getGlobalScopeFromScopeStack());
 
-      // The global scope should have neither declarations nor executables
-         ROSE_ASSERT(ut_scope->get_declaration_list()-> get_traversalSuccessorContainer().size() == 0);
-         ROSE_ASSERT(ut_scope->get_statement_list()  -> get_traversalSuccessorContainer().size() == 0);
-
-         attr = SageBuilder::getGlobalScopeFromScopeStack();
+         currentScope = sg_scope;
       }
 
    else if (isSgUntypedProgramHeaderDeclaration(n) != NULL)
       {
          SgUntypedProgramHeaderDeclaration* ut_program = dynamic_cast<SgUntypedProgramHeaderDeclaration*>(n);
+         SgProgramHeaderStatement*          sg_program = UntypedConverter::convertSgUntypedProgramHeaderDeclaration(ut_program, currentScope);
 
-         SgUntypedNamedStatement* ut_program_end_statement = ut_program->get_end_statement();
-         ROSE_ASSERT(ut_program_end_statement != NULL);
-
-         SgName programName = ut_program->get_name();
-         printf ("                         found a program  %s\n", programName.str());
-
-         SgScopeStatement* topOfStack = SageBuilder::topScopeStack();
-         ROSE_ASSERT(topOfStack->variantT() == V_SgGlobal);
-
-      // We should test if this is in the function type table, but do this later
-         SgFunctionType* type = new SgFunctionType(SgTypeVoid::createType(), false);
-
-         SgProgramHeaderStatement* programDeclaration = new SgProgramHeaderStatement(programName, type, NULL);
-
-      // This is the defining declaration and there is no non-defining declaration!
-         programDeclaration->set_definingDeclaration(programDeclaration);
-
-        programDeclaration->set_scope(topOfStack);
-        programDeclaration->set_parent(topOfStack);
-
-     // Add the program declaration to the global scope
-        SgGlobal* globalScope = isSgGlobal(topOfStack);
-        ROSE_ASSERT(globalScope != NULL);
-        globalScope->append_statement(programDeclaration);
-
-        // A symbol using this name should not already exist
-        ROSE_ASSERT(!globalScope->symbol_exists(programName));
-
-        // Add a symbol to the symbol table in global scope
-        SgFunctionSymbol* symbol = new SgFunctionSymbol(programDeclaration);
-        globalScope->insert_symbol(programName, symbol);
-
-        //FIXME if (SgProject::get_verbose() > DEBUG_COMMENT_LEVEL)
-           {
-              printf("Inserted SgFunctionSymbol in globalScope using name = %s \n", programName.str());
-           }
-
-        SgBasicBlock* programBody = new SgBasicBlock();
-        SgFunctionDefinition* programDefinition = new SgFunctionDefinition(programDeclaration, programBody);
-
-        programBody->setCaseInsensitive(true);
-        programDefinition->setCaseInsensitive(true);
-
-        SageBuilder::pushScopeStack(programDefinition);
-        SageBuilder::pushScopeStack(programBody);
-
-        programBody->set_parent(programDefinition);
-        programDefinition->set_parent(programDeclaration);
-
-        UntypedConverter::setSourcePositionUnknown(programDeclaration->get_parameterList());
-        UntypedConverter::setSourcePositionUnknown(programDeclaration);
-
-     // Convert the labels for the program begin and end statements
-        UntypedConverter::convertLabel(ut_program,               programDeclaration, SgLabelSymbol::e_start_label_type, /*label_scope=*/ programDefinition);
-        UntypedConverter::convertLabel(ut_program_end_statement, programDeclaration, SgLabelSymbol::e_end_label_type,   /*label_scope=*/ programDefinition);
-
-      // Set the end statement name if it exists
-         if (ut_program_end_statement->get_statement_name().empty() != true)
-            {
-               programDeclaration->set_named_in_end_statement(true);
-            }
-
-#if THIS_PART_NEEDS_TO_IMPLEMENT_NO_PROGRAM_STATEMENT
-        ROSE_ASSERT(programDeclaration->get_parameterList() != NULL);
-
-        if (programKeyword != NULL)
-        {
-            UntypedConverter::setSourcePosition(programDeclaration->get_parameterList(), programKeyword);
-            UntypedConverter::setSourcePosition(programDeclaration, programKeyword);
-        }
-        else
-           {
-           // These will be marked as isSourcePositionUnavailableInFrontend = true and isOutputInCodeGeneration = true
-
-           // DQ (12/18/2008): These need to make marked with a valid file id (not NULL_FILE, internally),
-           // so that any attached comments and CPP directives will be properly attached.
-              UntypedConverter::setSourcePosition(programDeclaration->get_parameterList(), tokenList);
-              UntypedConverter::setSourcePosition(programDeclaration, tokenList);
-        }
-
-        // Unclear if we should use the same token list for resetting the source position in all three IR nodes.
-        UntypedConverter::setSourcePosition(programDefinition, tokenList);
-        UntypedConverter::setSourcePosition(programBody, tokenList);
-#endif
-
-        UntypedConverter::setSourcePositionUnknown(programDefinition);
-        UntypedConverter::setSourcePositionUnknown(programBody);
-
-        ROSE_ASSERT(programDeclaration->get_firstNondefiningDeclaration() != programDeclaration);
-        ROSE_ASSERT(programDeclaration->get_firstNondefiningDeclaration() == NULL);
-
-//        if (programDeclaration->get_program_statement_explicit() == false)
-        //   {
-           // The function declaration should be forced to match the "end" keyword.
-           // Reset the declaration to the current filename.
-//FIXME-no this      programDeclaration->get_startOfConstruct()->set_filenameString(p_source_file->getFileName());
-//FIXME              programDeclaration->get_endOfConstruct()->set_filenameString(p_source_file->getFileName());
-        //    }
-
-        printf("--- finished building program %s\n", programDeclaration->get_name().str());
-
-        attr = programBody;
+         currentScope = SageBuilder::topScopeStack();
       }
 
-// R501 type-declaration-stmt
    else if (isSgUntypedVariableDeclaration(n) != NULL)
       {
          SgUntypedVariableDeclaration* ut_decl = dynamic_cast<SgUntypedVariableDeclaration*>(n);
-         UntypedConverter::convertSgUntypedVariableDeclaration(ut_decl, attr);
+         UntypedConverter::convertSgUntypedVariableDeclaration(ut_decl, currentScope);
       }
 
-// R560 implicit-stmt
    else if (isSgUntypedImplicitDeclaration(n) != NULL)
       {
          SgUntypedImplicitDeclaration* ut_decl = dynamic_cast<SgUntypedImplicitDeclaration*>(n);
-         UntypedConverter::convertSgUntypedImplicitDeclaration(ut_decl, attr);
+         UntypedConverter::convertSgUntypedImplicitDeclaration(ut_decl, currentScope);
       }
 
    else
       {
          printf ("Down traverse: found a node of type ... %s\n", n->class_name().c_str());
       }
-   return attr;
+   return currentScope;
 }
 
 

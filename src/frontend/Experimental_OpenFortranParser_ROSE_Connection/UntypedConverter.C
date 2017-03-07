@@ -62,8 +62,8 @@ static void setFortranNumericLabel(SgStatement* stmt, int label_value, SgLabelSy
 
 
 void
-UntypedConverter::convertLabel(SgUntypedStatement* ut_stmt, SgStatement* sg_stmt,
-                               SgLabelSymbol::label_type_enum label_type, SgScopeStatement* label_scope)
+UntypedConverter::convertLabel (SgUntypedStatement* ut_stmt, SgStatement* sg_stmt,
+                                SgLabelSymbol::label_type_enum label_type, SgScopeStatement* label_scope)
 {
    std::string label_name = ut_stmt->get_label_string();
    if (!label_name.empty())
@@ -74,11 +74,12 @@ UntypedConverter::convertLabel(SgUntypedStatement* ut_stmt, SgStatement* sg_stmt
       }
 }
 
-// R403 declaration-type-spec
-//
+
 SgType*
-UntypedConverter::convertSgUntypedType(SgUntypedType* ut_type, SgScopeStatement* scope)
+UntypedConverter::convertSgUntypedType (SgUntypedType* ut_type, SgScopeStatement* scope)
 {
+   SgType* sg_type = NULL;
+
 // Temporary assertions as this conversion is completed
    ROSE_ASSERT(ut_type->get_is_intrinsic() == true);
    ROSE_ASSERT(ut_type->get_is_literal() == false);
@@ -87,18 +88,74 @@ UntypedConverter::convertSgUntypedType(SgUntypedType* ut_type, SgScopeStatement*
    ROSE_ASSERT(ut_type->get_is_user_defined() == false);
    ROSE_ASSERT(ut_type->get_has_kind() == false);
 
-   ROSE_ASSERT(ut_type->get_type_enum_id() == SgUntypedType::e_int);
-   SgType* sg_type = SageBuilder::buildIntType();
+   switch(ut_type->get_type_enum_id())
+      {
+        case SgUntypedType::e_unknown:
+           {
+              if (ut_type->get_type_name() == "bool")
+                 {
+                    sg_type = SageBuilder::buildBoolType();
+                    fprintf(stderr, "UntypedConverter::convertSgUntypedType: bool type %p \n", sg_type);
+                 }
+              else
+                 {
+                    fprintf(stderr, "UntypedConverter::convertSgUntypedType: failed to find known type \n");
+                    ROSE_ASSERT(0);
+                 }
+              break;
+           }
+        case SgUntypedType::e_void:
+           {
+              sg_type = SageBuilder::buildVoidType();
+              break;
+           }
+        case SgUntypedType::e_int:
+           {
+              sg_type = SageBuilder::buildIntType();
+              break;
+           }
+        case SgUntypedType::e_float:
+           {
+              sg_type = SageBuilder::buildFloatType();
+              break;
+           }
+        case SgUntypedType::e_double:
+           {
+              sg_type = SageBuilder::buildDoubleType();
+              break;
+           }
+        case SgUntypedType::e_complex:
+           {
+              sg_type = SageBuilder::buildComplexType();
+              break;
+           }
+        case SgUntypedType::e_char:
+           {
+           // sg_type = SageBuilder::buildCharType(SgExpression* stringLengthExpression);
+           // TODO - need stringLengthExpression, the following will fail on an assertion
+              sg_type = SageBuilder::buildCharType();
+              break;
+           }
+        default:
+           {
+              fprintf(stderr, "UntypedConverter::convertSgUntypedType: failed to find known type \n");
+              ROSE_ASSERT(0);
+           }
+      }
 
    printf("--- finished converting type %s\n", ut_type->get_type_name().c_str());
+
+   ROSE_ASSERT(sg_type != NULL);
 
    return sg_type;
 }
 
+
 SgInitializedName*
-UntypedConverter::convertSgUntypedInitializedName(SgUntypedInitializedName* ut_name, SgType* sg_type, SgInitializer* sg_init)
+UntypedConverter::convertSgUntypedInitializedName (SgUntypedInitializedName* ut_name, SgType* sg_type, SgInitializer* sg_init)
 {
    SgInitializedName* sg_name = SageBuilder::buildInitializedName(ut_name->get_name(), sg_type, sg_init);
+   setSourcePositionUnknown(sg_name);
 
    printf("--- finished converting initialized name %s\n", ut_name->get_name().c_str());
 
@@ -106,34 +163,183 @@ UntypedConverter::convertSgUntypedInitializedName(SgUntypedInitializedName* ut_n
 }
 
 
-// R501 type-declaration-stmt
-//
+SgGlobal*
+UntypedConverter::convertSgUntypedGlobalScope (SgUntypedGlobalScope* ut_scope, SgScopeStatement* scope)
+{
+// The global scope should have neither declarations nor executables
+   ROSE_ASSERT(ut_scope->get_declaration_list()-> get_traversalSuccessorContainer().size() == 0);
+   ROSE_ASSERT(ut_scope->get_statement_list()  -> get_traversalSuccessorContainer().size() == 0);
+
+   SgGlobal* sg_scope = isSgGlobal(scope);
+   ROSE_ASSERT(sg_scope == SageBuilder::getGlobalScopeFromScopeStack());
+
+   return sg_scope;
+}
+
+
+SgProgramHeaderStatement*
+UntypedConverter::convertSgUntypedProgramHeaderDeclaration (SgUntypedProgramHeaderDeclaration* ut_program, SgScopeStatement* scope)
+{
+   ROSE_ASSERT(scope->variantT() == V_SgGlobal);
+
+   SgUntypedNamedStatement* ut_program_end_statement = ut_program->get_end_statement();
+   ROSE_ASSERT(ut_program_end_statement != NULL);
+
+   SgName programName = ut_program->get_name();
+
+// We should test if this is in the function type table, but do this later?
+   SgFunctionType* type = new SgFunctionType(SgTypeVoid::createType(), false);
+
+   SgProgramHeaderStatement* programDeclaration = new SgProgramHeaderStatement(programName, type, NULL);
+
+// A Fortran program has no non-defining declaration
+   programDeclaration->set_definingDeclaration(programDeclaration);
+
+   programDeclaration->set_scope(scope);
+   programDeclaration->set_parent(scope);
+
+ // Add the program declaration to the global scope
+   SgGlobal* globalScope = isSgGlobal(scope);
+   ROSE_ASSERT(globalScope != NULL);
+   globalScope->append_statement(programDeclaration);
+
+// A symbol using this name should not already exist
+   ROSE_ASSERT(!globalScope->symbol_exists(programName));
+
+// Add a symbol to the symbol table in global scope
+   SgFunctionSymbol* symbol = new SgFunctionSymbol(programDeclaration);
+   globalScope->insert_symbol(programName, symbol);
+
+//FIXME if (SgProject::get_verbose() > DEBUG_COMMENT_LEVEL)
+   {
+      printf("Inserted SgFunctionSymbol in globalScope using name = %s \n", programName.str());
+   }
+
+   SgBasicBlock* programBody = new SgBasicBlock();
+   SgFunctionDefinition* programDefinition = new SgFunctionDefinition(programDeclaration, programBody);
+
+   programBody->setCaseInsensitive(true);
+   programDefinition->setCaseInsensitive(true);
+
+   SageBuilder::pushScopeStack(programDefinition);
+   SageBuilder::pushScopeStack(programBody);
+
+   programBody->set_parent(programDefinition);
+   programDefinition->set_parent(programDeclaration);
+
+   UntypedConverter::setSourcePositionUnknown(programDeclaration->get_parameterList());
+   UntypedConverter::setSourcePositionUnknown(programDeclaration);
+
+// Convert the labels for the program begin and end statements
+   UntypedConverter::convertLabel(ut_program,               programDeclaration, SgLabelSymbol::e_start_label_type, /*label_scope=*/ programDefinition);
+   UntypedConverter::convertLabel(ut_program_end_statement, programDeclaration, SgLabelSymbol::e_end_label_type,   /*label_scope=*/ programDefinition);
+
+// Set the end statement name if it exists
+   if (ut_program_end_statement->get_statement_name().empty() != true)
+      {
+         programDeclaration->set_named_in_end_statement(true);
+      }
+
+#if THIS_PART_NEEDS_TO_IMPLEMENT_NO_PROGRAM_STATEMENT
+        ROSE_ASSERT(programDeclaration->get_parameterList() != NULL);
+
+        if (programKeyword != NULL)
+        {
+            UntypedConverter::setSourcePosition(programDeclaration->get_parameterList(), programKeyword);
+            UntypedConverter::setSourcePosition(programDeclaration, programKeyword);
+        }
+        else
+           {
+           // These will be marked as isSourcePositionUnavailableInFrontend = true and isOutputInCodeGeneration = true
+
+           // DQ (12/18/2008): These need to make marked with a valid file id (not NULL_FILE, internally),
+           // so that any attached comments and CPP directives will be properly attached.
+              UntypedConverter::setSourcePosition(programDeclaration->get_parameterList(), tokenList);
+              UntypedConverter::setSourcePosition(programDeclaration, tokenList);
+        }
+
+        // Unclear if we should use the same token list for resetting the source position in all three IR nodes.
+        UntypedConverter::setSourcePosition(programDefinition, tokenList);
+        UntypedConverter::setSourcePosition(programBody, tokenList);
+#endif
+
+   UntypedConverter::setSourcePositionUnknown(programDefinition);
+   UntypedConverter::setSourcePositionUnknown(programBody);
+
+   ROSE_ASSERT(programDeclaration->get_firstNondefiningDeclaration() != programDeclaration);
+   ROSE_ASSERT(programDeclaration->get_firstNondefiningDeclaration() == NULL);
+
+#if 0
+   if (programDeclaration->get_program_statement_explicit() == false)
+      {
+         // The function declaration should be forced to match the "end" keyword.
+         // Reset the declaration to the current filename.
+         //FIXME-no this      programDeclaration->get_startOfConstruct()->set_filenameString(p_source_file->getFileName());
+         //FIXME              programDeclaration->get_endOfConstruct()->set_filenameString(p_source_file->getFileName());
+      }
+#endif
+
+   printf("--- finished building program %s\n", programDeclaration->get_name().str());
+
+   ROSE_ASSERT(programBody == SageBuilder::topScopeStack());
+
+   return programDeclaration;
+}
+
+
 SgVariableDeclaration*
-UntypedConverter::convertSgUntypedVariableDeclaration(SgUntypedVariableDeclaration* ut_decl, SgScopeStatement* scope)
+UntypedConverter::convertSgUntypedVariableDeclaration (SgUntypedVariableDeclaration* ut_decl, SgScopeStatement* scope)
 {
    ROSE_ASSERT(scope->variantT() == V_SgBasicBlock || scope->variantT() == V_SgClassDefinition);
 
    SgUntypedType* ut_type = ut_decl->get_type();
-   SgUntypedInitializedNameList* ut_params = ut_decl->get_parameters();
+   SgType*        sg_type = convertSgUntypedType(ut_type, scope);
 
-   SgType* sg_type = convertSgUntypedType(ut_type, scope);
+   SgUntypedInitializedNamePtrList ut_vars = ut_decl->get_parameters()->get_name_list();
+   SgUntypedInitializedNamePtrList::const_iterator i = ut_vars.begin();
 
-   SgInitializer* varInit = NULL;
+// Declare the first variable
+   SgVariableDeclaration* sg_decl = SageBuilder::buildVariableDeclaration((*i)->get_name(), sg_type, /*sg_init*/NULL, scope);
 
-   SgUntypedInitializedNamePtrList vars = ut_params->get_name_list();
+// And now the rest of the variables
+   for (i = ut_vars.begin() + 1; i != ut_vars.end(); i++)
+      {
+      SgInitializedName* initializedName = UntypedConverter::convertSgUntypedInitializedName((*i), sg_type, /*sg_init*/NULL);
+      SgName variableName = initializedName->get_name();
 
-   SgVariableDeclaration* sg_decl = SageBuilder::buildVariableDeclaration(vars[0]->get_name(), sg_type, varInit, scope);
+      initializedName->set_declptr(sg_decl);
+      sg_decl->append_variable(initializedName, /*sg_init*/NULL);
 
-   SgInitializedName* var = SageBuilder::buildInitializedName(vars[1]->get_name(), sg_type, varInit);
+      SgVariableSymbol* variableSymbol = NULL;
+      SgFunctionDefinition * functionDefinition = SageInterface::getEnclosingProcedure(scope);
+      if (functionDefinition != NULL)
+         {
+         // Check in the function definition for an existing symbol
+            variableSymbol = functionDefinition->lookup_variable_symbol(variableName);
+            if (variableSymbol != NULL) // found a function parameter with the same name
+               {
+                  // look at code in sageBuilder.C and fortran_support.C
+               }
+         }
 
-   sg_decl->append_variable(var, NULL);
+      if (variableSymbol == NULL)
+         {
+         // Check the current scope
+            variableSymbol = scope->lookup_variable_symbol(variableName);
 
+            initializedName->set_scope(scope);
+            if (variableSymbol == NULL)
+               {
+                  variableSymbol = new SgVariableSymbol(initializedName);
+                  scope->insert_symbol(variableName,variableSymbol);
+                  ROSE_ASSERT (initializedName->get_symbol_from_symbol_table () != NULL);
+               }
+         }
+      ROSE_ASSERT(variableSymbol != NULL);
+      ROSE_ASSERT(initializedName->get_scope() != NULL);
+   }
 
-   // TODO - figure out why this has source position
    // setSourcePositionUnknown(sg_decl);
-
-   //NEEDED?   sg_decl->set_parent(scope);
-   //NEEDED?   sg_decl->set_definingDeclaration(sg_decl);
 
 // Need to set attributes here
 // TODO - add attr-spec-list to RTG so that it is the SgUntypedVariableDeclaration constructor
@@ -239,10 +445,12 @@ UntypedConverter::setSourcePositionUnknown(SgLocatedNode* locatedNode)
   // Check the endOfConstruct first since it is most likely NULL (helpful in debugging)
      if (locatedNode->get_endOfConstruct() != NULL || locatedNode->get_startOfConstruct() != NULL)
         {
-          printf ("In setSourcePosition(SgLocatedNode* locatedNode): locatedNode = %p = %s \n",locatedNode,locatedNode->class_name().c_str());
+          printf ("In setSourcePositionUnknown: source position known locatedNode = %p = %s \n",locatedNode,locatedNode->class_name().c_str());
         }
-     ROSE_ASSERT(locatedNode->get_endOfConstruct()   == NULL);
-     ROSE_ASSERT(locatedNode->get_startOfConstruct() == NULL);
-
-     SageInterface::setSourcePosition(locatedNode);
+     else
+        {
+           ROSE_ASSERT(locatedNode->get_endOfConstruct()   == NULL);
+           ROSE_ASSERT(locatedNode->get_startOfConstruct() == NULL);
+           SageInterface::setSourcePosition(locatedNode);
+        }
 }

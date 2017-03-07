@@ -21,11 +21,13 @@ class UntypedConverter
 
       static SgInitializedName*     convertSgUntypedInitializedName    (SgUntypedInitializedName* ut_name, SgType* sg_type, SgInitializer* sg_init);
 
-      static SgImplicitStatement*   convertSgUntypedImplicitDeclaration(SgUntypedImplicitDeclaration* ut_decl, SgScopeStatement* scope);
-      static SgVariableDeclaration* convertSgUntypedVariableDeclaration(SgUntypedVariableDeclaration* ut_decl, SgScopeStatement* scope);
       static SgType*                convertSgUntypedType               (SgUntypedType* ut_type,                SgScopeStatement* scope);
+      static SgGlobal*              convertSgUntypedGlobalScope        (SgUntypedGlobalScope* ut_scope,        SgScopeStatement* scope);
 
+      static SgProgramHeaderStatement* convertSgUntypedProgramHeaderDeclaration (SgUntypedProgramHeaderDeclaration* ut_decl, SgScopeStatement* scope);
 
+      static SgImplicitStatement*   convertSgUntypedImplicitDeclaration (SgUntypedImplicitDeclaration* ut_decl, SgScopeStatement* scope);
+      static SgVariableDeclaration* convertSgUntypedVariableDeclaration (SgUntypedVariableDeclaration* ut_decl, SgScopeStatement* scope);
 
   };
 
