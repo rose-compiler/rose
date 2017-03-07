@@ -60,7 +60,7 @@ initDiagnostics()
      if (!initialized)
         {
           initialized = true;
-          rose::Diagnostics::initAndRegister(mlog, "rose::SageBuilder");
+          rose::Diagnostics::initAndRegister(&mlog, "rose::SageBuilder");
         }
    }
 
