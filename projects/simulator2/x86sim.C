@@ -192,7 +192,7 @@ int
 main(int argc, char *argv[], char *envp[]) {
     // Initialization
     ROSE_INITIALIZE;
-    Diagnostics::initAndRegister(::mlog, "tool");
+    Diagnostics::initAndRegister(&::mlog, "tool");
 
     // Command-line parsing
     Settings settings;
