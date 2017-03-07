@@ -7985,8 +7985,17 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
        else
         {
        // Turn off all warnings.
-       // inputCommandLine.push_back("--no_warnings");
-          argcArgvList.push_back("-w");
+
+       // DQ (3/7/2017): Avoid use of "-w" on X10 compiler.
+          if (get_X10_only() == false)
+             {
+            // This is a portable way to turn off warnings in the backend compilers (GNU, Intel, Clang).
+               argcArgvList.push_back("-w");
+             }
+            else
+             {
+            // X10 command line generation using "-w" will cause X10 compiler to fail.
+             }
         }
 
 #if 0
