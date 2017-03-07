@@ -38,7 +38,8 @@ else # NOT ROSE_USE_EDG_VERSION_4_9
 #	$(VALGRIND) ASAN_OPTIONS="$(VALGRIND)" TOOL2=$(TEST_TRANSLATOR) TOOL1=$(CXX) CPP11_STL_TESTS=yes $(top_srcdir)/tests/nonsmoke/functional/CompileTests/STL_tests/stl-eval.sh
 	$(VALGRIND) ASAN_OPTIONS="$(VALGRIND)" TOOL2=$(TEST_TRANSLATOR) TOOL1=$(CXX) CPP11_STL_TESTS=no $(top_srcdir)/tests/nonsmoke/functional/CompileTests/STL_tests/stl-eval.sh
 endif # ROSE_USE_EDG_VERSION_4_9
-else
+else  # NOT ROSE_USING_GCC_VERSION_LATER_5_1
+	@echo "NOT USING_GCC_VERSION_LATER_5_1"
 if ROSE_USE_EDG_VERSION_4_9
 # DQ (2/10/2017): Run tests using GNU 4.9 using only EDG 4.9 but disable C++11 specific testing.
 	@echo "USE_EDG_VERSION_4_9"
@@ -48,9 +49,11 @@ else # NOT ROSE_USE_EDG_VERSION_4_9
 # DQ (2/10/2017): Run tests using GNU 5.1 and later using only EDG 4.12
 	@echo "NOT USE_EDG_VERSION_4_9"
 	@echo "Run tests using GNU 4.9 or later compilers and EDG 4.12 (skipping run all C++11 tests)"
+# DQ (3/4/2017): We can turn on the C++11 testings now.
 # DQ (2/22/2017): Break this up to first test the non C++11 support using the latest compilers and EDG 4.12.
 #	$(VALGRIND) ASAN_OPTIONS="$(VALGRIND)" TOOL2=$(TEST_TRANSLATOR) TOOL1=$(CXX) CPP11_STL_TESTS=yes $(top_srcdir)/tests/nonsmoke/functional/CompileTests/STL_tests/stl-eval.sh
-	$(VALGRIND) ASAN_OPTIONS="$(VALGRIND)" TOOL2=$(TEST_TRANSLATOR) TOOL1=$(CXX) CPP11_STL_TESTS=no $(top_srcdir)/tests/nonsmoke/functional/CompileTests/STL_tests/stl-eval.sh
+#	$(VALGRIND) ASAN_OPTIONS="$(VALGRIND)" TOOL2=$(TEST_TRANSLATOR) TOOL1=$(CXX) CPP11_STL_TESTS=no $(top_srcdir)/tests/nonsmoke/functional/CompileTests/STL_tests/stl-eval.sh
+	$(VALGRIND) ASAN_OPTIONS="$(VALGRIND)" TOOL2=$(TEST_TRANSLATOR) TOOL1=$(CXX) CPP11_STL_TESTS=yes $(top_srcdir)/tests/nonsmoke/functional/CompileTests/STL_tests/stl-eval.sh
 endif # ROSE_USE_EDG_VERSION_4_9
 endif # ROSE_USING_GCC_VERSION_LATER_5_1
 else  # NOT ROSE_USING_GCC_VERSION_LATER_4_9
