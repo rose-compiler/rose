@@ -138,6 +138,41 @@ namespace rose
   // we have added variables that are set using command line parameters to avoid the use of
   // global variables.  
 
+  // DQ (3/6/2017): Adding ROSE options data structure to support frontend and backend options such as:
+  //    1) output of warnings from the EDG (or other) frontend.
+  //    2) output of notes from the EDG (or other) frontend.
+  //    3) output of warnings from the backend compiler.
+  // The reason for this options clas is to support tools that would want to suppress warnings from ROSE,
+  // and still also permit compilers that would be implemented using ROSE to have the full range of output
+  // from EDG (or other frontends) to control notes and warnings.
+     class Options
+        {
+          private:
+               bool frontend_notes;
+               bool frontend_warnings;
+               bool backend_notes;
+               bool backend_warnings;
+
+          public:
+               ROSE_DLL_API Options();
+               ROSE_DLL_API Options(const Options & X);
+               ROSE_DLL_API Options & operator= (const Options & X);
+
+            // Access functions for options API.
+               ROSE_DLL_API bool get_frontend_notes();
+               ROSE_DLL_API void set_frontend_notes(bool flag);
+               ROSE_DLL_API bool get_frontend_warnings();
+               ROSE_DLL_API void set_frontend_warnings(bool flag);
+               ROSE_DLL_API bool get_backend_notes();
+               ROSE_DLL_API void set_backend_notes(bool flag);
+               ROSE_DLL_API bool get_backend_warnings();
+               ROSE_DLL_API void set_backend_warnings(bool flag);
+        };
+
+  // Global variable (in this rose namespace) to permit multiple parts of ROSE to access consistant information on options.
+     ROSE_DLL_API extern Options global_options;
+
+
        // DQ (8/10/2004): This was moved to the SgFile a long time ago and should not be used any more)
        // DQ (8/11/2004): Need to put this back so that there is a global concept of verbosity for all of ROSE.
        // static int roseVerboseLevel;
