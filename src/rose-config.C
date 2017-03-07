@@ -37,11 +37,12 @@ struct Config {
     const char *cflags;                                 // C compiling switches excluding preprocessor switches
     const char *cxxflags;                               // C++ compiling switches excluding preprocessor switches
     const char *ldflags;                                // Loader/linker switches
+    const char *prefix;                                 // ROSE installation prefix
 };
 
 static Config configs[] = {
-    { CXX, BUILD_CPPFLAGS,     CFLAGS, CXXFLAGS, BUILD_LDFLAGS     },
-    { CXX, INSTALLED_CPPFLAGS, CFLAGS, CXXFLAGS, INSTALLED_LDFLAGS }
+    { CXX, BUILD_CPPFLAGS,     CFLAGS, CXXFLAGS, BUILD_LDFLAGS,     PREFIX_DIR },
+    { CXX, INSTALLED_CPPFLAGS, CFLAGS, CXXFLAGS, INSTALLED_LDFLAGS, PREFIX_DIR }
 };
 
 struct Settings {
@@ -79,7 +80,10 @@ parseCommandLine(int argc, char *argv[], Settings &settings /*in,out*/) {
              "library.}"
 
              "@named{libdirs}{Shows a colon-separated list of library directories. These are the directories that might "
-             "contain shared libraries.}");
+             "contain shared libraries.}"
+
+             "@named{prefix}{ROSE installation prefix. This is the name of the directory that includes \"lib\" and "
+             "\"include\" subdirectories (among others) where the ROSE library and its headers are installed.}");
 
     SwitchGroup switches;
     switches.insert(Switch("help", 'h')
@@ -173,6 +177,8 @@ main(int argc, char *argv[]) {
                 std::cout <<makefileEscape(config.ldflags) <<"\n";
             } else if (command == "libdirs") {
                 std::cout <<makefileEscape(makeLibrarySearchPaths(config.ldflags)) <<"\n";
+            } else if (command == "prefix") {
+                std::cout <<makefileEscape(config.prefix) <<"\n";
             } else {
                 throw std::runtime_error("unrecognized command: \"" + StringUtility::cEscape(command) + "\"");
             }
