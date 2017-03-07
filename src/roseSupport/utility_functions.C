@@ -61,6 +61,81 @@ const int roseTargetCacheLineSize = 32;
 // DQ (8/11/2004): build a global state here
 // int rose::roseVerbose = 0;
 
+// DQ (3/6/2017): Adding ROSE options data structure to support frontend and backend options (see header file for details).
+rose::Options rose::global_options;
+
+// DQ (3/6/2017): Adding ROSE options data structure to support frontend and backend options (see header file for details).
+rose::Options::Options()
+   {
+  // DQ (3/6/2017): Default option value to minimize the chattyness of ROSE based tools.
+     frontend_notes    = false;
+     frontend_warnings = false;
+     backend_notes     = false;
+     backend_warnings  = false;
+   }
+
+// DQ (3/6/2017): Adding ROSE options data structure to support frontend and backend options (see header file for details).
+rose::Options::Options(const Options & X)
+   {
+  // DQ (3/6/2017): Default option value to minimize the chattyness of ROSE based tools.
+     frontend_notes    = X.frontend_notes;
+     frontend_warnings = X.frontend_warnings;
+     backend_notes     = X.backend_notes;
+     backend_warnings  = X.backend_warnings;
+   }
+
+// DQ (3/6/2017): Adding ROSE options data structure to support frontend and backend options (see header file for details).
+Options & rose::Options::operator= (const Options & X)
+   {
+  // DQ (3/6/2017): Default option value to minimize the chattyness of ROSE based tools.
+     frontend_notes    = X.frontend_notes;
+     frontend_warnings = X.frontend_warnings;
+     backend_notes     = X.backend_notes;
+     backend_warnings  = X.backend_warnings;
+
+     return *this;
+   }
+
+bool rose::Options::get_frontend_notes()
+   {
+     return frontend_notes;
+   }
+
+void rose::Options::set_frontend_notes(bool flag)
+   {
+     frontend_notes = flag;
+   }
+
+bool rose::Options::get_frontend_warnings()
+   {
+     return frontend_warnings;
+   }
+
+void rose::Options::set_frontend_warnings(bool flag)
+   {
+     frontend_warnings = flag;
+   }
+
+bool rose::Options::get_backend_notes()
+   {
+     return backend_notes;
+   }
+
+void rose::Options::set_backend_notes(bool flag)
+   {
+     backend_notes = flag;
+   }
+
+bool rose::Options::get_backend_warnings()
+   {
+     return backend_warnings;
+   }
+
+void rose::Options::set_backend_warnings(bool flag)
+   {
+     backend_warnings = flag;
+   }
+
 
 #define OUTPUT_TO_FILE true
 #define DEBUG_COPY_EDIT false

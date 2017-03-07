@@ -44,6 +44,14 @@ int main( int argc, char * argv[] )
        // DQ (3/5/2017): Allow output of diagnostic messages from the ROSE IR nodes.
           rose::ir_node_mlog[rose::Diagnostics::DEBUG].enable(true);
 #endif
+
+#if 1
+       // DQ (3/6/2017): Test API to set frontend and backend options for tools (minimal output from ROSE-based tools).
+       // Note that the defaults are for minimal output from ROSE-based tools.
+          rose::global_options.set_frontend_notes(false);
+          rose::global_options.set_frontend_warnings(true);
+          rose::global_options.set_backend_warnings(false);
+#endif
         }
 #endif
 

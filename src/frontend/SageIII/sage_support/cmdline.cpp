@@ -7195,6 +7195,29 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // Note: this is where options such as "--no_warnings --restrict" are added.
      CommandlineProcessing::addListToCommandLine(inputCommandLine,"--",edgOptionList);
 
+
+  // DQ (3/6/2017): Adding support to read the ROSE options data structure to trigger suppression of warnings.
+  // printf ("In build_EDG_CommandLine(): get_output_warnings() = %s \n",get_output_warnings() ? "true" : "false");
+     if (rose::global_options.get_frontend_warnings())
+        {
+       // The EDG default is to output warnings (so we need not do anything to adjust the command line).
+          set_output_warnings(true);
+        }
+       else
+        {
+       // Turn off all warnings.
+          inputCommandLine.push_back("--no_warnings");
+        }
+
+#if 0
+     std::string tmp0_argString = CommandlineProcessing::generateStringFromArgList(inputCommandLine,false,false);
+     printf ("In build_EDG_CommandLine(): Input Command Line Arguments: \n%s \n",tmp0_argString.c_str());
+
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
+
   // DQ (7/3/2013): Where are we in the command line.
   // inputCommandLine.push_back("--DDD");
 
@@ -7950,6 +7973,29 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 #if DEBUG_COMPILER_COMMAND_LINE
      printf ("In buildCompilerCommandLineOptions: After removing source file name: argcArgvList.size() = %" PRIuPTR " argcArgvList = %s \n",argcArgvList.size(),StringUtility::listToString(argcArgvList).c_str());
   // ROSE_ASSERT(false);
+#endif
+
+  // DQ (3/6/2017): Adding support to read the ROSE options data structure to trigger suppression of warnings.
+  // printf ("In build_EDG_CommandLine(): get_output_warnings() = %s \n",get_output_warnings() ? "true" : "false");
+     if (rose::global_options.get_backend_warnings())
+        {
+       // The EDG default is to output warnings (so we need not do anything to adjust the command line).
+       // set_output_warnings(true);
+        }
+       else
+        {
+       // Turn off all warnings.
+       // inputCommandLine.push_back("--no_warnings");
+          argcArgvList.push_back("-w");
+        }
+
+#if 0
+     printf ("In buildCompilerCommandLineOptions(): After adding options from rose::global_options: argcArgvList.size() = %" PRIuPTR " argcArgvList = %s \n",
+          argcArgvList.size(),StringUtility::listToString(argcArgvList).c_str());
+#endif
+#if 0
+     printf ("Exitng as a test! \n");
+     ROSE_ASSERT(false);
 #endif
 
      bool  objectNameSpecified = false;

@@ -296,16 +296,16 @@ using Sawyer::Message::mfacilities;
     
 /** Initialize diagnostics-related global variables. This should be called before any of the global variables in the
  *  rose::Diagnostics name space are used.  It doesn't hurt to call this more than once. */
-void initialize();
+ROSE_DLL_API void initialize();
 
 /** Returns true if diagnostics-related global variables have been initialized. */
-bool isInitialized();
+ROSE_DLL_API bool isInitialized();
 
 /** Initialize and register a logging facility.
  *
  *  Initializes the specified facility by giving it a name and pointing it to the same place as the other ROSE diagnostic
  *  streams. Then register the facility with ROSE's global list of facilities so it can be controlled from the command-line. */
-void initAndRegister(Facility &mlog, const std::string &name);
+ROSE_DLL_API void initAndRegister(Facility &mlog, const std::string &name);
 
 /** Intermediate class for printing to C++ ostreams with a printf-like API.
  *
