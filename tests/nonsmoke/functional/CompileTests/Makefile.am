@@ -29,12 +29,14 @@ if ROSE_USE_CLANG_FRONTEND
    SUBDIRS += C_subset_of_Cxx_tests
    SUBDIRS += CudaTests
    SUBDIRS += OpenClTests
-else
+else # NOT ROSE_USE_CLANG_FRONTEND
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 # TOO (2/16/2011): Errors with Tensilica's Xtensa compilers as alternative backend compilers. We can
 # gradually enable these tests at a later stage if necessary.
 if !USING_XTENSA_BACKEND_COMPILER
-   SUBDIRS += C_tests Cxx_tests C_subset_of_Cxx_tests C99_tests C11_tests Cxx11_tests Cxx14_tests UPC_tests MicrosoftWindows_C_tests MicrosoftWindows_Cxx_tests
+# DQ (2/18/2017): We can't use the EDG 4.9 frontend with later versions of compiler because it can't parse a few of the header files from those compilers.
+# LLVM header files are actually a copy of the GNU header files (e.g. LLVM 3.5 uses GNU 4.9 headers).
+SUBDIRS += C_tests Cxx_tests C_subset_of_Cxx_tests C99_tests C11_tests Cxx11_tests Cxx14_tests UPC_tests MicrosoftWindows_C_tests MicrosoftWindows_Cxx_tests
 endif
 endif
 
@@ -58,12 +60,46 @@ endif
 # Liao 2/130/2017: moved to after Fortran tests. So OpenMP's Fortran tests will be tested after Fortran_tests
 # DQ (1/15/2017): Added conditional support to avoid these tests when ROSE is configured for binary only support, failing in ROSE matrix testing).
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
+
 # DQ (1/15/2017): Clang does not support omp.h include file required for OpenMP testing.
 # And we don't have a AUTOMAKE conditional defined for the use of Clang as the backend compiler.
-if !USING_CLANG_COMPILER
+# if !USING_CLANG_COMPILER
+# SUBDIRS += OpenMP_tests FailSafe_tests
+# endif
+
+# DQ (2/19/2017): Added the more complex logic to control this for different compilers, and versions of EDG.
+if ROSE_USE_EDG_VERSION_4_9
+if USING_GNU_COMPILER
 SUBDIRS += OpenMP_tests FailSafe_tests
-endif
-endif
+else # NOT USING_GNU_COMPILER
+if USING_CLANG_COMPILER
+# Exclude this list of files in the case of CLANG compiler.
+else # NOT USING_CLANG_COMPILER
+if USING_INTEL_COMPILER
+# Exclude this list of files in the case of Intel compiler.
+else # NOT USING_INTEL_COMPILER
+# This is an unknown compiler.
+# DQ (2/27/2017): If this is really an unknown compile then don't do any testing (until we understand this case).
+# SUBDIRS += OpenMP_tests FailSafe_tests
+endif # USING_INTEL_COMPILER
+endif # USING_CLANG_COMPILER
+endif # USING_GNU_COMPILER
+else # NOT ROSE_USE_EDG_VERSION_4_9
+if USING_GNU_COMPILER
+SUBDIRS += OpenMP_tests FailSafe_tests
+else # NOT USING_GNU_COMPILER
+if USING_CLANG_COMPILER
+# Exclude this list of files in the case of CLANG compiler.
+else # NOT USING_CLANG_COMPILER
+if USING_INTEL_COMPILER
+# Exclude this list of files in the case of Intel compiler.
+SUBDIRS += OpenMP_tests FailSafe_tests
+else # NOT USING_INTEL_COMPILER
+# This is an unknown compiler.
+endif # USING_INTEL_COMPILER
+endif # USING_CLANG_COMPILER
+endif # USING_GNU_COMPILER
+endif # ROSE_USE_EDG_VERSION_4_9
 
 if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 if !ROSE_USE_SANITIZER
@@ -110,7 +146,7 @@ if !ROSE_USE_SANITIZER
 SUBDIRS += RoseExample_tests 
 endif
 
-endif
+endif # ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 
 # end of !ROSE_USE_CLANG_FRONTEND
 endif
@@ -137,4 +173,4 @@ SUBDIRS += systemc_tests
 endif
 
 # end of ROSE_USE_CLANG_FRONTEND
-# endif
+endif

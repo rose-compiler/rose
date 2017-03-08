@@ -399,7 +399,7 @@ FeasiblePath::initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        Diagnostics::initAndRegister(mlog, "rose::BinaryAnalysis::FeasiblePath");
+        Diagnostics::initAndRegister(&mlog, "rose::BinaryAnalysis::FeasiblePath");
     }
 }
 

@@ -3502,6 +3502,10 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
                                    printf ("We need to output the expression used in the defining declaration's array type \n");
                                    curprint(" /* We need to output the expression used in the defining declaration's array type */ ");
 #endif
+#if 0
+                                   printf ("In unparseArrayType(): array_type->get_index() = %p \n",array_type->get_index());
+                                   printf ("In unparseArrayType(): array_type->get_index() = %p = %s \n",array_type->get_index(),array_type->get_index()->class_name().c_str());
+#endif
                                    unp->u_exprStmt->unparseExpression(array_type->get_index(), ninfo2); // get_index() returns an expr
                                  }
                                 else
@@ -3548,7 +3552,7 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
              }
         }
 
-#if DEBUG_ARRAY_TYPE
+#if DEBUG_ARRAY_TYPE || 0
   // DQ (5/8/2013): Note that this will make the type name very long and can cause problems with nexted type generating nested comments.
      printf ("Leaving unparseArrayType(): type = %p \n",type);
      curprint("/* Leaving unparseArrayType() */ \n ");

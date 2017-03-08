@@ -38,10 +38,10 @@ endif
 if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
 #  libroseExperimentalOpenFortranParserlibraries = frontend/Experimental_OpenFortranParser_ROSE_Connection/libexperimentalRoseFortran.la
 
-# DQ (1/26/2017): This is not built in the new way that Craig and I are working together on the new OFP.
-#  libroseExperimentalOpenFortranParserlibraries = frontend/Experimental_OpenFortranParser_ROSE_Connection/libexperimentalRoseFortran.la 3rdPartyLibraries/experimental-fortran-parser/aterm_traversal/libexperimentalOFP.la
-#  libroseExperimentalOpenFortranParserlibraries = 
-   libroseExperimentalOpenFortranParserlibraries = frontend/Experimental_OpenFortranParser_ROSE_Connection/libexperimentalRoseFortran.la 
+# DQ (1/26/2017): This is built in the new way that Craig and I are working together on the new OFP.
+# Rasmussen (2/7/2017): The ATerm traversal library is needed by the frontend/Experimental_OpenFortranParser_ROSE_Connection.
+# Adding this library is ok because it is built with the normal 64-bit mode of the compiler (no -m32 CFLAGS) and then linked with the 64-bit ATerm library.
+   libroseExperimentalOpenFortranParserlibraries = frontend/Experimental_OpenFortranParser_ROSE_Connection/libexperimentalRoseFortran.la 3rdPartyLibraries/experimental-fortran-parser/aterm_traversal/libexperimentalOFP.la
 
 #  libroseExperimentalOpenFortranParserlibraries =
 #  ROSE_EXPERIMENTAL_OFP_INCLUDE = -I$(_PREFIX)/include
@@ -200,7 +200,10 @@ testSharedRoseLib_DEPENDENCIES = $(REQUIRED_LIBS)
 testSharedRoseLib_LDADD  = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 # DQ (4/12/2016): This is required for use with clang (not clear how to compile ROSE with out it).
 if USING_CLANG_COMPILER
-testSharedRoseLib_LDADD += -lstdc++
+# testSharedRoseLib_LDADD += -lstdc++
+# testSharedRoseLib_LDADD += -lstdc++ -fno-rtti
+testSharedRoseLib_LDADD += -lstdc++ 
+testSharedRoseLib_LDFLAGS = -fno-rtti
 endif
 if OS_MACOSX
 testSharedRoseLib_LDFLAGS = -Xlinker -rpath $(JAVA_JVM_PATH)
@@ -277,15 +280,18 @@ if ROSE_USE_GCC_OMP
    librose_la_LIBADD += lgomp
 endif
 
-# DQ (4/12/2016): This is required for use with clang (not clear how to compile ROSE with out it).
-if USING_CLANG_COMPILER
-librose_la_LIBADD += -lstdc++
-endif
-
 # librose_la_LDFLAGS = -no-undefined --rpath $(INTEL_PIN_PATH)/intel64/lib-ext
 librose_la_LDFLAGS = -no-undefined
 
 #librose_la_LDFLAGS = $(ROSE_DWARF_LIBS_WITH_PATH)
+
+# DQ (4/12/2016): This is required for use with clang (not clear how to compile ROSE with out it).
+if USING_CLANG_COMPILER
+# librose_la_LIBADD += -lstdc++
+# librose_la_LIBADD += -lstdc++ -fno-rtti
+librose_la_LIBADD += -lstdc++
+librose_la_LDFLAGS += -fno-rtti
+endif
 
 librose_la_DEPENDENCIES = $(libroseLibraries)
 
@@ -383,7 +389,10 @@ rose_config_CPPFLAGS =									\
 rose_config_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 if USING_CLANG_COMPILER
+# rose_config_LDADD += -lstdc++
+# rose_config_LDADD += -lstdc++ -fno-rtti
 rose_config_LDADD += -lstdc++
+rose_config_LDFLAGS = -fno-rtti
 endif
 
 print:

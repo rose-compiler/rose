@@ -354,8 +354,13 @@ Partitioner::basicBlockExists(const BasicBlock::Ptr &bblock) const {
 
 BaseSemantics::RiscOperatorsPtr
 Partitioner::newOperators() const {
+    return newOperators(semanticMemoryParadigm_);
+}
+
+BaseSemantics::RiscOperatorsPtr
+Partitioner::newOperators(SemanticMemoryParadigm memType) const {
     Semantics::RiscOperatorsPtr ops =
-        Semantics::RiscOperators::instance(instructionProvider_->registerDictionary(), solver_, semanticMemoryParadigm_);
+        Semantics::RiscOperators::instance(instructionProvider_->registerDictionary(), solver_, memType);
     BaseSemantics::MemoryStatePtr mem = ops->currentState()->memoryState();
     if (Semantics::MemoryListStatePtr ml = boost::dynamic_pointer_cast<Semantics::MemoryListState>(mem)) {
         ml->memoryMap(&memoryMap_);
@@ -2085,7 +2090,8 @@ Partitioner::functionCallingConvention(const Function::Ptr &function,
                                        const CallingConvention::Definition *dfltCc/*=NULL*/) const {
     ASSERT_not_null(function);
     if (!function->callingConventionAnalysis().hasResults()) {
-        function->callingConventionAnalysis() = CallingConvention::Analysis(newDispatcher(newOperators()));
+        BaseSemantics::RiscOperatorsPtr ops = newOperators(MAP_BASED_MEMORY); // map works better for calling convention
+        function->callingConventionAnalysis() = CallingConvention::Analysis(newDispatcher(ops));
         function->callingConventionAnalysis().defaultCallingConvention(dfltCc);
         function->callingConventionAnalysis().analyzeFunction(*this, function);
     }

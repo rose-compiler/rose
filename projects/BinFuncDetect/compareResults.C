@@ -221,7 +221,7 @@ listInstructions(const InstructionProvider::Ptr &insns, const MemoryMap &map,
 
 int main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
-    Diagnostics::initAndRegister(mlog, "tool");
+    Diagnostics::initAndRegister(&mlog, "tool");
 
     // Parse command line
     Settings settings;
