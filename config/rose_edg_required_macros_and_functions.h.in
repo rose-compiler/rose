@@ -5650,8 +5650,12 @@ __m128 __builtin_ia32_vpermilvarps_mask (__v4sf __A,  __v4si __C,  __v4sf setzer
 __m256i __builtin_ia32_pmulld256_mask (__v8si __A,__v8si __B,__v8si setzero,__mmask8 __M);
 __m256i __builtin_ia32_permvardi256_mask (__v4di  __Y,__v4di  __X,__v4di setzero,__mmask8 __M);
 __m256i __builtin_ia32_pmulld256_mask (__v8si __A,__v8si __B,__v8si __W, __mmask8 __M);
+
+#if __cplusplus
 __m128i __builtin_ia32_pmulld128_mask (__v4si __A,__v4si __B,__v4si setzero,__mmask8 __M);
 __m128i __builtin_ia32_pmulld128_mask (__v4si __A,__v4si __B,__v4si __W, __mmask16 __M);
+#endif
+
 __m256i __builtin_ia32_pmuldq256_mask (__v8si __X,__v8si __Y,__v4di  __W, __mmask8 __M);
 __m256i __builtin_ia32_pmuldq256_mask (__v8si __X,__v8si __Y,__v4di setzero,__mmask8 __M);
 __m128i __builtin_ia32_pmuldq128_mask (__v4si __X,__v4si __Y,__v2di  __W, __mmask8 __M);
@@ -5682,22 +5686,38 @@ __m512i __builtin_ia32_loaddquqi512_mask (__v64qi * __P,__v64qi setzero,__mmask6
 void  __builtin_ia32_storedquqi512_mask (__v64qi * __P, __v64qi __A, __mmask64  __U);
 __m512i __builtin_ia32_psadbw512 (__v64qi __A,  __v64qi __B);
 __m256i __builtin_ia32_pmovwb512_mask (__v32hi  __A,__v32qi setzero,__mmask32  minus_one);
+
+#if __cplusplus
 __m256i __builtin_ia32_pmovwb512_mask (__v32hi  __A,__v32qi  __O, __mmask8 __M);
 __m256i __builtin_ia32_pmovwb512_mask (__v32hi  __A,__v32qi  setzero,__mmask8 __M);
+#endif
+
 __m256i __builtin_ia32_pmovswb512_mask (__v32hi  __A, __v32qi  setzero, __mmask32  minus_one);
+
+#if __cplusplus
 __m256i __builtin_ia32_pmovswb512_mask (__v32hi  __A, __v32qi __O, __mmask8 __M);
 __m256i __builtin_ia32_pmovswb512_mask (__v32hi  __A, __v32qi  setzero, __mmask8 __M);
+#endif
+
 __m256i __builtin_ia32_pmovuswb512_mask (__v32hi  __A,  __v32qi  setzero,  __mmask32  minus_one);
+
+#if __cplusplus
 __m256i __builtin_ia32_pmovuswb512_mask (__v32hi  __A,  __v32qi  __O,  __mmask8 __M);
 __m256i __builtin_ia32_pmovuswb512_mask (__v32hi  __A,  __v32qi  setzero,  __mmask8 __M);
+#endif
+
 __m512i __builtin_ia32_pbroadcastb512_mask (__v16qi  __A,  __v64qi undefined,  __mmask64  minus_one);
 __m512i __builtin_ia32_pbroadcastb512_mask (__v16qi  __A,  __v64qi __O,  __mmask64 __M);
 __m512i __builtin_ia32_pbroadcastb512_mask (__v16qi  __A,  __v64qi setzero,  __mmask64 __M);
 __m512i __builtin_ia32_pbroadcastb512_gpr_mask (char __A,  __v64qi __O,  __mmask8 __M);
 __m512i __builtin_ia32_pbroadcastb512_gpr_mask (char __A,  __v64qi setzero,  __mmask8 __M);
+
+#if __cplusplus
 __m512i __builtin_ia32_pbroadcastw512_mask (__v8hi  __A,  __v32hi undefined,  __mmask32 minus_one);
 __m512i __builtin_ia32_pbroadcastw512_mask (__v8hi  __A,  __v32hi  __O,  __mmask8 __M);
 __m512i __builtin_ia32_pbroadcastw512_mask (__v8hi  __A,  __v32hi setzero,  __mmask8 __M);
+#endif
+
 __m512i __builtin_ia32_pbroadcastw512_gpr_mask (short __A,  __v32hi  __O,  __mmask8 __M);
 __m512i __builtin_ia32_pbroadcastw512_gpr_mask (short __A,  __v32hi setzero,  __mmask8 __M);
 __m512i __builtin_ia32_pmulhrsw512_mask (__v32hi  __A,  __v32hi  __B,  __v32hi setzero,  __mmask32  minus_one);
@@ -5791,17 +5811,31 @@ __mmask64 __builtin_ia32_ucmpb512_mask (__v64qi __A,  __v64qi __B, unsigned int 
 __mmask64 __builtin_ia32_pcmpeqb512_mask (__v64qi __A,__v64qi __B,__mmask64  minus_one);
 __mmask64 __builtin_ia32_ucmpb512_mask (__v64qi __A,  __v64qi __B, unsigned int zero, __mmask64 __U);
 __mmask64 __builtin_ia32_pcmpeqb512_mask (__v64qi __A,__v64qi __B, __mmask64  __U);
+
 __mmask32 __builtin_ia32_ucmpw512_mask (__v32hi  __A,  __v32hi  __B, unsigned int zero,  __mmask32  minus_one);
+
 __mmask32 __builtin_ia32_pcmpeqw512_mask (__v32hi  __A,__v32hi  __B,__mmask32  minus_one);
+
+#if __cplusplus
 __mmask32 __builtin_ia32_ucmpw512_mask (__v32hi  __A,  __v32hi  __B, unsigned int zero,__mmask64 __U);
+#endif
+
 __mmask32 __builtin_ia32_pcmpeqw512_mask (__v32hi  __A,__v32hi  __B,__mmask32 __U);
 __mmask64 __builtin_ia32_ucmpb512_mask (__v64qi __A,  __v64qi __B, unsigned int six,  __mmask64  minus_one);
 __mmask64 __builtin_ia32_pcmpgtb512_mask (__v64qi __A,__v64qi __B,__mmask64  minus_one);
 __mmask64 __builtin_ia32_ucmpb512_mask (__v64qi __A,  __v64qi __B, unsigned int six, __mmask64 __U);
 __mmask64 __builtin_ia32_pcmpgtb512_mask (__v64qi __A,__v64qi __B, __mmask64  __U);
+
+#if __cplusplus
 __mmask32 __builtin_ia32_ucmpw512_mask (__v32hi  __A,  __v32hi  __B, unsigned int six,  __mmask32  minus_one);
+#endif
+
 __mmask32 __builtin_ia32_pcmpgtw512_mask (__v32hi  __A,__v32hi  __B,__mmask32  minus_one);
+
+#if __cplusplus
 __mmask32 __builtin_ia32_ucmpw512_mask (__v32hi  __A,  __v32hi  __B, unsigned int six,__mmask64 __U);
+#endif
+
 __mmask32 __builtin_ia32_pcmpgtw512_mask (__v32hi  __A,__v32hi  __B,__mmask32 __U);
 __mmask64 __builtin_ia32_cvtb2mask512 (__v64qi __A);
 __mmask32 __builtin_ia32_cvtw2mask512 (__v32hi  __A);
@@ -5854,8 +5888,12 @@ __m512i __builtin_ia32_psrlv32hi_mask (__v32hi  __A,__v32hi  __B,__v32hi  setzer
 __m512i __builtin_ia32_psllv32hi_mask (__v32hi  __A,__v32hi  __B,__v32hi  setzero,__mmask32  minus_one);
 __m512i __builtin_ia32_psllv32hi_mask (__v32hi  __A,__v32hi  __B,__v32hi  __W,__mmask32  __U);
 __m512i __builtin_ia32_psllv32hi_mask (__v32hi  __A,__v32hi  __B,__v32hi  setzero,__mmask32  __U);
+
+#if __cplusplus
 __m512i __builtin_ia32_packsswb512_mask (__v32hi  __A,  __v32hi  __B,  __v64qi __W,  __mmask64  __M);
 __m512i __builtin_ia32_packsswb512_mask (__v32hi  __A,  __v32hi  __B,  __v64qi setzero,  __mmask8 __M);
+#endif
+
 __m512i __builtin_ia32_packuswb512_mask (__v32hi  __A,  __v32hi  __B,  __v64qi setzero,  __mmask64  minus_one);
 __m512i __builtin_ia32_packuswb512_mask (__v32hi  __A,  __v32hi  __B,  __v64qi __W,  __mmask64  __M);
 __m512i __builtin_ia32_packuswb512_mask (__v32hi  __A,  __v32hi  __B,  __v64qi setzero,  __mmask64  __M);
@@ -5869,10 +5907,14 @@ __mmask64 __builtin_ia32_ucmpb512_mask (__v64qi __X, __v64qi __Y, unsigned int v
 __mmask64 __builtin_ia32_ucmpb512_mask (__v64qi __X, __v64qi __Y, unsigned int value, __mmask64  __M);
 __mmask64 __builtin_ia32_ucmpb512_mask (__v64qi __X, __v64qi __Y, unsigned int value, __mmask64  __M);
 __mmask64 __builtin_ia32_ucmpb512_mask (__v64qi __X, __v64qi __Y, unsigned int value, __mmask64  __M);
+
+#if __cplusplus
 __mmask32 __builtin_ia32_ucmpw512_mask (__v32hi  __X, __v32hi  __Y, unsigned int value, __mmask32  __M);
 __mmask32 __builtin_ia32_ucmpw512_mask (__v32hi  __X, __v32hi  __Y, unsigned int value, __mmask32  __M);
 __mmask32 __builtin_ia32_ucmpw512_mask (__v32hi  __X, __v32hi  __Y, unsigned int value, __mmask32  __M);
 __mmask32 __builtin_ia32_ucmpw512_mask (__v32hi  __X, __v32hi  __Y, unsigned int value, __mmask32  __M);
+#endif
+
 __mmask64 __builtin_ia32_cmpb512_mask (__v64qi __X,__v64qi __Y, unsigned int value,__mmask64  __M);
 __mmask64 __builtin_ia32_cmpb512_mask (__v64qi __X,__v64qi __Y, unsigned int value,__mmask64  __M);
 __mmask64 __builtin_ia32_cmpb512_mask (__v64qi __X,__v64qi __Y, unsigned int value,__mmask64  __M);
@@ -5885,10 +5927,14 @@ __mmask64 __builtin_ia32_ucmpb512_mask (__v64qi __X, __v64qi __Y, unsigned int v
 __mmask64 __builtin_ia32_ucmpb512_mask (__v64qi __X, __v64qi __Y, unsigned int value, __mmask64 one);
 __mmask64 __builtin_ia32_ucmpb512_mask (__v64qi __X, __v64qi __Y, unsigned int value, __mmask64 one);
 __mmask64 __builtin_ia32_ucmpb512_mask (__v64qi __X, __v64qi __Y, unsigned int value, __mmask64 one);
+
+#if __cplusplus
 __mmask32 __builtin_ia32_ucmpw512_mask (__v32hi  __X, __v32hi  __Y, unsigned int value, __mmask32 one);
 __mmask32 __builtin_ia32_ucmpw512_mask (__v32hi  __X, __v32hi  __Y, unsigned int value, __mmask32 one);
 __mmask32 __builtin_ia32_ucmpw512_mask (__v32hi  __X, __v32hi  __Y, unsigned int value, __mmask32 one);
 __mmask32 __builtin_ia32_ucmpw512_mask (__v32hi  __X, __v32hi  __Y, unsigned int value, __mmask32 one);
+#endif
+
 __mmask64 __builtin_ia32_cmpb512_mask (__v64qi __X,__v64qi __Y, unsigned int value,__mmask64 one);
 __mmask64 __builtin_ia32_cmpb512_mask (__v64qi __X,__v64qi __Y, unsigned int value,__mmask64 one);
 __mmask64 __builtin_ia32_cmpb512_mask (__v64qi __X,__v64qi __Y, unsigned int value,__mmask64 one);
@@ -5902,9 +5948,14 @@ __m512d __builtin_ia32_broadcastf64x2_512_mask (__v2df __A,  __v8df setzero,  __
 __m512i __builtin_ia32_broadcasti64x2_512_mask (__v2di  __A, __v8di  undefined,  __mmask8 minus_one);
 __m512i __builtin_ia32_broadcasti64x2_512_mask (__v2di __A,  __v8di __O, __mmask8 __M);
 __m512i __builtin_ia32_broadcasti64x2_512_mask (__v2di __A,  __v8di  setzero,  __mmask8 __M);
+
 __m512 __builtin_ia32_broadcastf32x2_512_mask (__v4sf __A, __v16sf undefined, __mmask16  minus_one);
+
+#if __cplusplus
 __m512 __builtin_ia32_broadcastf32x2_512_mask (__v4sf __A, __v16sf __O, __mmask8 __M);
 __m512 __builtin_ia32_broadcastf32x2_512_mask (__v4sf __A, __v16sf  setzero, __mmask8 __M);
+#endif
+
 __m512i __builtin_ia32_broadcasti32x2_512_mask (__v4si __A,  __v16si undefined,  __mmask16  minus_one);
 __m512i __builtin_ia32_broadcasti32x2_512_mask (__v4si __A,  __v16si __O, __mmask16 __M);
 __m512i __builtin_ia32_broadcasti32x2_512_mask (__v4si __A,  __v16si  setzero,  __mmask16 __M);
@@ -5998,9 +6049,14 @@ __m256i __builtin_ia32_loaddquqi256_mask (__v32qi * __P,__v32qi  __W,__mmask32  
 __m256i __builtin_ia32_loaddquqi256_mask (__v32qi * __P,__v32qi  setzero,__mmask32  __U);
 __m128i __builtin_ia32_loaddquqi128_mask (__v16qi * __P,__v16qi  __W,__mmask16  __U);
 __m128i __builtin_ia32_loaddquqi128_mask (__v16qi * __P,__v16qi setzero,__mmask16  __U);
+
 __m128i __builtin_ia32_pmovwb256_mask (__v16hi  __A,__v16qi undefined,__mmask16  minus_one);
+
+#if __cplusplus
 __m128i __builtin_ia32_pmovwb256_mask (__v16hi  __A,__v16qi  __O, __mmask8 __M);
 __m128i __builtin_ia32_pmovwb256_mask (__v16hi  __A,__v16qi setzero,__mmask8 __M);
+#endif
+
 __m128i __builtin_ia32_pmovswb128_mask (__v8hi  __A, __v16qi undefined, __mmask8 minus_one);
 __m128i __builtin_ia32_pmovswb128_mask (__v8hi  __A, __v16qi  __O, __mmask8 __M);
 __m128i __builtin_ia32_pmovswb128_mask (__v8hi  __A, __v16qi setzero, __mmask8 __M);
@@ -6099,14 +6155,23 @@ __m128i __builtin_ia32_pmaxuw128_mask (__v8hi  __A,__v8hi  __B,__v8hi  setzero,_
 __m128i __builtin_ia32_pmaxuw128_mask (__v8hi  __A,__v8hi  __B,__v8hi  __W,__mmask8 __M);
 __m128i __builtin_ia32_pminsw128_mask (__v8hi  __A,__v8hi  __B,__v8hi  setzero,__mmask8 __M);
 __m128i __builtin_ia32_pminsw128_mask (__v8hi  __A,__v8hi  __B,__v8hi  __W,__mmask8 __M);
+
+__mmask32 __builtin_ia32_cmpb256_mask (__v32qi  __X,__v32qi  __Y, unsigned int value,__mmask32 one);
+
+#if __cplusplus
 __mmask32 __builtin_ia32_cmpb256_mask (__v32qi  __X,__v32qi  __Y, unsigned int value,__mmask32 one);
 __mmask32 __builtin_ia32_cmpb256_mask (__v32qi  __X,__v32qi  __Y, unsigned int value,__mmask32 one);
 __mmask32 __builtin_ia32_cmpb256_mask (__v32qi  __X,__v32qi  __Y, unsigned int value,__mmask32 one);
-__mmask32 __builtin_ia32_cmpb256_mask (__v32qi  __X,__v32qi  __Y, unsigned int value,__mmask32 one);
+#endif
+
+__mmask16 __builtin_ia32_cmpw256_mask (__v16hi  __X,__v16hi  __Y, unsigned int value,__mmask16 one);
+
+#if __cplusplus
 __mmask16 __builtin_ia32_cmpw256_mask (__v16hi  __X,__v16hi  __Y, unsigned int value,__mmask16 one);
 __mmask16 __builtin_ia32_cmpw256_mask (__v16hi  __X,__v16hi  __Y, unsigned int value,__mmask16 one);
 __mmask16 __builtin_ia32_cmpw256_mask (__v16hi  __X,__v16hi  __Y, unsigned int value,__mmask16 one);
-__mmask16 __builtin_ia32_cmpw256_mask (__v16hi  __X,__v16hi  __Y, unsigned int value,__mmask16 one);
+#endif
+
 __mmask16 __builtin_ia32_ucmpb128_mask (__v16qi  __X, __v16qi  __Y, unsigned int value, __mmask16 one);
 __mmask16 __builtin_ia32_ucmpb128_mask (__v16qi  __X, __v16qi  __Y, unsigned int value, __mmask16 one);
 __mmask16 __builtin_ia32_ucmpb128_mask (__v16qi  __X, __v16qi  __Y, unsigned int value, __mmask16 one);
@@ -6203,9 +6268,15 @@ __mmask16 __builtin_ia32_pcmpeqb128_mask (__v16qi  __A,__v16qi  __B,__mmask16  m
 __mmask16 __builtin_ia32_ucmpb128_mask (__v16qi  __A,  __v16qi  __B, unsigned int zero,  __mmask16  minus_one);
 __mmask16 __builtin_ia32_ucmpb128_mask (__v16qi  __A,  __v16qi  __B, unsigned int zero,  __mmask16 __U);
 __mmask16 __builtin_ia32_pcmpeqb128_mask (__v16qi  __A,__v16qi  __B,__mmask16 __U);
+
 __mmask32 __builtin_ia32_ucmpb256_mask (__v32qi  __A,  __v32qi  __B, unsigned int zero,  __mmask32  minus_one);
+
 __mmask32 __builtin_ia32_pcmpeqb256_mask (__v32qi  __A,__v32qi  __B,__mmask32  minus_one);
+
+#if __cplusplus
 __mmask32 __builtin_ia32_ucmpb256_mask (__v32qi  __A,  __v32qi  __B, unsigned int zero,  __mmask32 __U);
+#endif
+
 __mmask32 __builtin_ia32_pcmpeqb256_mask (__v32qi  __A,__v32qi  __B,__mmask32 __U);
 __mmask8 __builtin_ia32_ucmpw128_mask (__v8hi  __A, __v8hi  __B, unsigned int zero, __mmask8 minus_one);
 __mmask8 __builtin_ia32_pcmpeqw128_mask (__v8hi  __A,  __v8hi  __B,  __mmask8 minus_one);
@@ -6213,23 +6284,43 @@ __mmask8 __builtin_ia32_ucmpw128_mask (__v8hi  __A, __v8hi  __B, unsigned int ze
 __mmask8 __builtin_ia32_pcmpeqw128_mask (__v8hi  __A,  __v8hi  __B, __mmask8 __U);
 __mmask16 __builtin_ia32_ucmpw256_mask (__v16hi  __A,  __v16hi  __B, unsigned int zero,  __mmask16  minus_one);
 __mmask16 __builtin_ia32_pcmpeqw256_mask (__v16hi  __A,__v16hi  __B,__mmask16  minus_one);
+
+#if __cplusplus
 __mmask16 __builtin_ia32_ucmpw256_mask (__v16hi  __A,  __v16hi  __B, unsigned int zero,__mmask16 __U);
+#endif
+
 __mmask16 __builtin_ia32_pcmpeqw256_mask (__v16hi  __A,__v16hi  __B,__mmask16 __U);
 __mmask16 __builtin_ia32_ucmpb128_mask (__v16qi  __A,  __v16qi  __B, unsigned int six,  __mmask16  minus_one);
 __mmask16 __builtin_ia32_pcmpgtb128_mask (__v16qi  __A,__v16qi  __B,__mmask16  minus_one);
 __mmask16 __builtin_ia32_ucmpb128_mask (__v16qi  __A,  __v16qi  __B, unsigned int six,  __mmask16 __U);
 __mmask16 __builtin_ia32_pcmpgtb128_mask (__v16qi  __A,__v16qi  __B,__mmask16 __U);
+
+#if __cplusplus
 __mmask32 __builtin_ia32_ucmpb256_mask (__v32qi  __A,  __v32qi  __B, unsigned int six,  __mmask32  minus_one);
+#endif
+
 __mmask32 __builtin_ia32_pcmpgtb256_mask (__v32qi  __A,__v32qi  __B,__mmask32  minus_one);
+
+#if __cplusplus
 __mmask32 __builtin_ia32_ucmpb256_mask (__v32qi  __A,  __v32qi  __B, unsigned int six,  __mmask32 __U);
+#endif
+
 __mmask32 __builtin_ia32_pcmpgtb256_mask (__v32qi  __A,__v32qi  __B,__mmask32 __U);
 __mmask8 __builtin_ia32_ucmpw128_mask (__v8hi  __A, __v8hi  __B, unsigned int six, __mmask8 minus_one);
 __mmask8 __builtin_ia32_pcmpgtw128_mask (__v8hi  __A,  __v8hi  __B,  __mmask8 minus_one);
 __mmask8 __builtin_ia32_ucmpw128_mask (__v8hi  __A, __v8hi  __B, unsigned int six, __mmask8 __U);
 __mmask8 __builtin_ia32_pcmpgtw128_mask (__v8hi  __A,  __v8hi  __B, __mmask8 __U);
+
+#if __cplusplus
 __mmask16 __builtin_ia32_ucmpw256_mask (__v16hi  __A,  __v16hi  __B, unsigned int six,  __mmask16  minus_one);
+#endif
+
 __mmask16 __builtin_ia32_pcmpgtw256_mask (__v16hi  __A,__v16hi  __B,__mmask16  minus_one);
+
+#if __cplusplus
 __mmask16 __builtin_ia32_ucmpw256_mask (__v16hi  __A,  __v16hi  __B, unsigned int six,  __mmask16 __U);
+#endif
+
 __mmask16 __builtin_ia32_pcmpgtw256_mask (__v16hi  __A,__v16hi  __B,__mmask16 __U);
 __mmask16 __builtin_ia32_ptestnmb128 (__v16qi  __A, __v16qi  __B, __mmask16  minus_one);
 __mmask16 __builtin_ia32_ptestnmb128 (__v16qi  __A, __v16qi  __B, __mmask16 __U);
@@ -6259,14 +6350,21 @@ __m256i __builtin_ia32_pabsw256_mask (__v16hi  __A, __v16hi  __W, __mmask16  __U
 __m256i __builtin_ia32_pabsw256_mask (__v16hi  __A, __v16hi  setzero, __mmask16  __U);
 __m128i __builtin_ia32_pabsw128_mask (__v8hi  __A, __v8hi  __W, __mmask8 __U);
 __m128i __builtin_ia32_pabsw128_mask (__v8hi  __A, __v8hi setzero, __mmask8 __U);
+
+#if __cplusplus
 __mmask32 __builtin_ia32_ucmpb256_mask (__v32qi  __X, __v32qi  __Y, unsigned int value, __mmask32 one);
 __mmask32 __builtin_ia32_ucmpb256_mask (__v32qi  __X, __v32qi  __Y, unsigned int value, __mmask32 one);
 __mmask32 __builtin_ia32_ucmpb256_mask (__v32qi  __X, __v32qi  __Y, unsigned int value, __mmask32 one);
 __mmask32 __builtin_ia32_ucmpb256_mask (__v32qi  __X, __v32qi  __Y, unsigned int value, __mmask32 one);
+#endif
+
+#if __cplusplus
 __mmask16 __builtin_ia32_ucmpw256_mask (__v16hi  __X, __v16hi  __Y, unsigned int value, __mmask16 one);
 __mmask16 __builtin_ia32_ucmpw256_mask (__v16hi  __X, __v16hi  __Y, unsigned int value, __mmask16 one);
 __mmask16 __builtin_ia32_ucmpw256_mask (__v16hi  __X, __v16hi  __Y, unsigned int value, __mmask16 one);
 __mmask16 __builtin_ia32_ucmpw256_mask (__v16hi  __X, __v16hi  __Y, unsigned int value, __mmask16 one);
+#endif
+
 void  __builtin_ia32_storedquhi256_mask (__v16hi * __P, __v16hi  __A, __mmask16  __U);
 void  __builtin_ia32_storedquhi128_mask (__v8hi * __P, __v8hi  __A, __mmask8 __U);
 __m128i __builtin_ia32_paddsw128_mask (__v8hi  __A,__v8hi  __B,__v8hi  __W,__mmask8 __U);
@@ -6328,8 +6426,13 @@ __m128i __builtin_ia32_packusdw128_mask (__v4si __A,  __v4si __B,  __v8hi setzer
 __m128i __builtin_ia32_packusdw128_mask (__v4si __A,  __v4si __B,  __v8hi  __W, __mmask8 __M);
 __m256i __builtin_ia32_packssdw256_mask (__v8si __A,  __v8si __B,  __v16hi  setzero,  __mmask16 __M);
 __m256i __builtin_ia32_packssdw256_mask (__v8si __A,  __v8si __B,  __v16hi  __W,  __mmask16 __M);
+
 __m128i __builtin_ia32_packssdw128_mask (__v4si __A,  __v4si __B,  __v8hi setzero,  __mmask8 __M);
+
+#if __cplusplus
 __m128i __builtin_ia32_packssdw128_mask (__v4si __A,  __v4si __B,  __v8hi  __W, __mmask16 __M);
+#endif
+
 __mmask16 __builtin_ia32_ucmpb128_mask (__v16qi  __X, __v16qi  __Y, unsigned int value, __mmask16  __M);
 __mmask16 __builtin_ia32_ucmpb128_mask (__v16qi  __X, __v16qi  __Y, unsigned int value, __mmask16  __M);
 __mmask16 __builtin_ia32_ucmpb128_mask (__v16qi  __X, __v16qi  __Y, unsigned int value, __mmask16  __M);
@@ -6346,22 +6449,35 @@ __mmask8 __builtin_ia32_cmpw128_mask (__v8hi  __X, __v8hi  __Y, unsigned int val
 __mmask8 __builtin_ia32_cmpw128_mask (__v8hi  __X, __v8hi  __Y, unsigned int value, __mmask8 __M);
 __mmask8 __builtin_ia32_cmpw128_mask (__v8hi  __X, __v8hi  __Y, unsigned int value, __mmask8 __M);
 __mmask8 __builtin_ia32_cmpw128_mask (__v8hi  __X, __v8hi  __Y, unsigned int value, __mmask8 __M);
+
+#if __cplusplus
 __mmask8 __builtin_ia32_ucmpb256_mask (__v32qi  __X,__v32qi  __Y, unsigned int value,__mmask8 __M);
 __mmask8 __builtin_ia32_ucmpb256_mask (__v32qi  __X,__v32qi  __Y, unsigned int value,__mmask8 __M);
 __mmask8 __builtin_ia32_ucmpb256_mask (__v32qi  __X,__v32qi  __Y, unsigned int value,__mmask8 __M);
 __mmask8 __builtin_ia32_ucmpb256_mask (__v32qi  __X,__v32qi  __Y, unsigned int value,__mmask8 __M);
+#endif
+
+#if __cplusplus
 __mmask8 __builtin_ia32_ucmpw256_mask (__v16hi  __X,__v16hi  __Y, unsigned int value,__mmask8 __M);
 __mmask8 __builtin_ia32_ucmpw256_mask (__v16hi  __X,__v16hi  __Y, unsigned int value,__mmask8 __M);
 __mmask8 __builtin_ia32_ucmpw256_mask (__v16hi  __X,__v16hi  __Y, unsigned int value,__mmask8 __M);
 __mmask8 __builtin_ia32_ucmpw256_mask (__v16hi  __X,__v16hi  __Y, unsigned int value,__mmask8 __M);
+#endif
+
+#if __cplusplus
 __mmask8 __builtin_ia32_cmpb256_mask (__v32qi  __X, __v32qi  __Y, unsigned int value, __mmask8 __M);
 __mmask8 __builtin_ia32_cmpb256_mask (__v32qi  __X, __v32qi  __Y, unsigned int value, __mmask8 __M);
 __mmask8 __builtin_ia32_cmpb256_mask (__v32qi  __X, __v32qi  __Y, unsigned int value, __mmask8 __M);
 __mmask8 __builtin_ia32_cmpb256_mask (__v32qi  __X, __v32qi  __Y, unsigned int value, __mmask8 __M);
+#endif
+
+#if __cplusplus
 __mmask8 __builtin_ia32_cmpw256_mask (__v16hi  __X, __v16hi  __Y, unsigned int value, __mmask8 __M);
 __mmask8 __builtin_ia32_cmpw256_mask (__v16hi  __X, __v16hi  __Y, unsigned int value, __mmask8 __M);
 __mmask8 __builtin_ia32_cmpw256_mask (__v16hi  __X, __v16hi  __Y, unsigned int value, __mmask8 __M);
 __mmask8 __builtin_ia32_cmpw256_mask (__v16hi  __X, __v16hi  __Y, unsigned int value, __mmask8 __M);
+#endif
+
 __m256i __builtin_ia32_cvttpd2qq256_mask (__v4df __A,__v4di setzero,__mmask8 minus_one);
 __m256i __builtin_ia32_cvttpd2qq256_mask (__v4df __A,__v4di  __W,__mmask8 __U);
 __m256i __builtin_ia32_cvttpd2qq256_mask (__v4df __A,__v4di setzero,__mmask8 __U);
