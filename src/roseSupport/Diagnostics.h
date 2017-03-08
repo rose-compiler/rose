@@ -296,10 +296,10 @@ using Sawyer::Message::mfacilities;
     
 /** Initialize diagnostics-related global variables. This should be called before any of the global variables in the
  *  rose::Diagnostics name space are used.  It doesn't hurt to call this more than once. */
-void initialize();
+ROSE_DLL_API void initialize();
 
 /** Returns true if diagnostics-related global variables have been initialized. */
-bool isInitialized();
+ROSE_DLL_API bool isInitialized();
 
 /** Initialize and register a logging facility.
  *
@@ -311,7 +311,7 @@ void initAndRegister(Facility *mlog, const std::string &name);
 
 // [Robb P Matzke 2017-02-16]: deprecated: The version that takes a pointer first argument is a better design because it gives
 // the user a better clue that we're saving a reference rather than a copy. Note: ROSE_DEPRECATED not defined here.
-void initAndRegister(Facility &mlog, const std::string &name) SAWYER_DEPRECATED("use a pointer for the first argument");
+ROSE_DLL_API void initAndRegister(Facility &mlog, const std::string &name) SAWYER_DEPRECATED("use a pointer for the first argument");
 
 /** Deregister a facility.
  *
@@ -320,7 +320,7 @@ void initAndRegister(Facility &mlog, const std::string &name) SAWYER_DEPRECATED(
  *  automatically. However, the recognition is heuristic based on magic numbers manipulated by constructors and destructors and
  *  could potentially fail.  The general safe, rule is that if a registered Facility object is destroyed other than at program
  *  exit, you should explicitly deregister it before it's destroyed. */
-void deregister(Facility *mlog);
+ROSE_DLL_API void deregister(Facility *mlog);
 
 /** Intermediate class for printing to C++ ostreams with a printf-like API.
  *

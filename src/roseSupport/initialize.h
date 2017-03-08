@@ -45,7 +45,7 @@ namespace rose {
  *
  *  See also, @ref isInitialized and @ref checkConfigToken. The @c ROSE_INITIALIZE C preprocessor-defined symbol expands to
  *  <code>rose::initialize(ROSE_CONFIG_TOKEN)</code> but might be easier to remember. */
-void initialize(const char *configToken);
+ROSE_DLL_API void initialize(const char *configToken);
 
 /** Checks whether the library has been initialized.
  *
@@ -54,13 +54,13 @@ void initialize(const char *configToken);
  *  that the notion of "when some other thread is initializing the library" is defined as beginning when that other thread
  *  enters the initialization critical section and ends when it leaves the critical section, which doesn't coincide exactly
  *  with the call to and return from @ref initialize. */
-bool isInitialized();
+ROSE_DLL_API bool isInitialized();
 
 /** Check the configuration token.
  *
  *  This function checks the supplied configuration token against the token compiled into the library and returns true if they
  *  match and false if they don't.  See @ref initialize. */
-bool checkConfigToken(const char *configTokenToken);
+ROSE_DLL_API bool checkConfigToken(const char *configTokenToken);
 
 } // namespace
 
