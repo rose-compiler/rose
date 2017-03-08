@@ -4920,11 +4920,12 @@ SgScopeStatement::insert_symbol ( const SgName& n, SgSymbol* s )
 
           if (classScope != thisScope)
              {
-               printf ("Warning: SgScopeStatement::insert_symbol(): class_declaration->get_scope() != this \n");
-               printf ("   --- scope = %p = %s \n",this,this->class_name().c_str());
-               printf ("   --- class_declaration = %p = %s \n",class_declaration,class_declaration->class_name().c_str());
-               printf ("   --- class_declaration->get_scope() = %p = %s \n",class_declaration->get_scope(),class_declaration->get_scope()->class_name().c_str());
-               class_declaration->get_file_info()->display("class_declaration: debug");
+            // DQ (3/6/2017): Added support for message logging to control output from ROSE tools.
+               mprintf ("Warning: SgScopeStatement::insert_symbol(): class_declaration->get_scope() != this \n");
+               mprintf ("   --- scope = %p = %s \n",this,this->class_name().c_str());
+               mprintf ("   --- class_declaration = %p = %s \n",class_declaration,class_declaration->class_name().c_str());
+               mprintf ("   --- class_declaration->get_scope() = %p = %s \n",class_declaration->get_scope(),class_declaration->get_scope()->class_name().c_str());
+            // class_declaration->get_file_info()->display("class_declaration: debug");
              }
        // ROSE_ASSERT(class_declaration->get_scope() == this);
         }

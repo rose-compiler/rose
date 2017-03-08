@@ -4,7 +4,6 @@
 
 using namespace rose;
 
-/** Constructor adds the new entry to the relocation table. */
 void
 SgAsmElfRelocEntry::ctor(SgAsmElfRelocSection *section)
 {
@@ -14,7 +13,6 @@ SgAsmElfRelocEntry::ctor(SgAsmElfRelocSection *section)
     set_parent(section->get_entries());
 }
 
-/* Parsers */
 void
 SgAsmElfRelocEntry::parse(ByteOrder::Endianness sex, const Elf32RelaEntry_disk *disk)
 {
@@ -52,7 +50,6 @@ SgAsmElfRelocEntry::parse(ByteOrder::Endianness sex, const Elf64RelEntry_disk *d
     p_type = (RelocType)(info & 0xffffffff);
 }
 
-/* Encode a native entry back into disk format */
 void *
 SgAsmElfRelocEntry::encode(ByteOrder::Endianness sex, Elf32RelaEntry_disk *disk) const
 {
@@ -90,7 +87,7 @@ SgAsmElfRelocEntry::encode(ByteOrder::Endianness sex, Elf64RelEntry_disk *disk) 
     return disk;
 }
 
-/* Change symbol to string. TODO, needs to handle multiple architectures [MCB] */
+/* TODO, needs to handle multiple architectures [MCB] */
 std::string
 SgAsmElfRelocEntry::reloc_name() const
 {
@@ -102,7 +99,6 @@ SgAsmElfRelocEntry::reloc_name() const
 #endif
 }
 
-/** Print some debugging info */
 void
 SgAsmElfRelocEntry::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmElfSymbolSection *symtab) const
 {
@@ -163,7 +159,6 @@ SgAsmElfRelocEntry::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmElfSymbo
     }
 }
 
-/** Non-parsing constructor */
 void
 SgAsmElfRelocSection::ctor(SgAsmElfSymbolSection *symbols, SgAsmElfSection *targetsec/*=NULL*/)
 {
@@ -173,7 +168,6 @@ SgAsmElfRelocSection::ctor(SgAsmElfSymbolSection *symbols, SgAsmElfSection *targ
     p_target_section = targetsec;
 }
 
-/** Parse an existing ELF Rela Section */
 SgAsmElfRelocSection *
 SgAsmElfRelocSection::parse()
 {
@@ -222,7 +216,6 @@ SgAsmElfRelocSection::parse()
     return this;
 }
 
-/** Return sizes for various parts of the table. See doc for SgAsmElfSection::calculate_sizes. */
 rose_addr_t
 SgAsmElfRelocSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
@@ -242,7 +235,6 @@ SgAsmElfRelocSection::calculate_sizes(size_t *entsize, size_t *required, size_t 
     return retval;
 }
 
-/** Pre-unparsing adjustments */
 bool
 SgAsmElfRelocSection::reallocate()
 {
@@ -258,7 +250,6 @@ SgAsmElfRelocSection::reallocate()
     return reallocated;
 }
 
-/** Write section back to disk */
 void
 SgAsmElfRelocSection::unparse(std::ostream &f) const
 {
@@ -311,7 +302,6 @@ SgAsmElfRelocSection::unparse(std::ostream &f) const
     unparse_holes(f);
 }
 
-/** Print some debugging info */
 void
 SgAsmElfRelocSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
