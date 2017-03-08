@@ -177,6 +177,26 @@ UntypedConverter::convertSgUntypedGlobalScope (SgUntypedGlobalScope* ut_scope, S
 }
 
 
+void
+UntypedConverter::convertSgUntypedFunctionDeclarationList (SgUntypedFunctionDeclarationList* ut_list, SgScopeStatement* scope)
+{
+   if (scope->variantT() == V_SgBasicBlock || scope->variantT() == V_SgClassDefinition)
+      {
+         if ( ! ut_list->get_func_list().empty() )
+            {
+               // Need to add a contains statement to the current scope as it currently
+               // doesn't exist in OFP's Fortran AST (FAST) design (part of concrete syntax only)
+               SgContainsStatement* containsStatement = new SgContainsStatement();
+               UntypedConverter::setSourcePositionUnknown(containsStatement);
+               containsStatement->set_definingDeclaration(containsStatement);
+
+               scope->append_statement(containsStatement);
+               ROSE_ASSERT(containsStatement->get_parent() != NULL);
+            }
+      }
+}
+
+
 SgProgramHeaderStatement*
 UntypedConverter::convertSgUntypedProgramHeaderDeclaration (SgUntypedProgramHeaderDeclaration* ut_program, SgScopeStatement* scope)
 {

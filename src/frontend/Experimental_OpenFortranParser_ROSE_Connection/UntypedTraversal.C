@@ -31,6 +31,13 @@ UntypedTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute curre
          currentScope = sg_scope;
       }
 
+   else if (isSgUntypedFunctionDeclarationList(n) != NULL)
+      {
+         SgUntypedFunctionDeclarationList* ut_list = dynamic_cast<SgUntypedFunctionDeclarationList*>(n);
+      // The list is not converted (note that nothing is returned) but the current scope may be modified
+         UntypedConverter::convertSgUntypedFunctionDeclarationList(ut_list, currentScope);
+      }
+
    else if (isSgUntypedProgramHeaderDeclaration(n) != NULL)
       {
          SgUntypedProgramHeaderDeclaration* ut_program = dynamic_cast<SgUntypedProgramHeaderDeclaration*>(n);
