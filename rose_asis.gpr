@@ -2,28 +2,29 @@ with "asis";
 
 project ROSE_ASIS is
 
-   type Build_Kind1 is
-      ("default");
    type Build_Kind is
       ("static", "relocatable", "static-pic");
-   for Main use ("asis_application_driver_1.adb");
-   LIBRARY_TYPE : Build_Kind := external ("LIBRARY_TYPE");
-   ASIS_BUILD : Build_Kind1 := external ("ASIS_BUILD");
+   Library_Type : Build_Kind := external ("LIBRARY_TYPE");
+   type Build_Kind1 is
+      ("default");
+   Asis_Build : Build_Kind1 := external ("ASIS_BUILD");
 
-   case LIBRARY_TYPE is
+   case Library_Type is
 
       when "static" =>
 
-         case ASIS_BUILD is
+         case Asis_Build is
 
             when "default" =>
+               for Main use ("asis_tool_1.adb");
                for Object_Dir use "./obj";
          end case;
 
       when "relocatable" =>
+         for Main use ("asis_application_driver_1.adb");
 
       when "static-pic" =>
-
+         for Main use ("asis_application_driver_1.adb");
    end case;
 
 end ROSE_ASIS;
