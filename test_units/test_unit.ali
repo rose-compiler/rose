@@ -1,0 +1,61 @@
+V "GNAT Lib v2016"
+A -gnatc
+A -gnatt
+A -mtune=generic
+A -march=x86-64
+P NO ZX
+
+RN
+RV NO_EXCEPTION_HANDLERS
+RV NO_EXCEPTIONS
+RV NO_IO
+RV NO_DYNAMIC_SIZED_OBJECTS
+RV SPARK_05
+
+U test_unit%b		test_unit.adb		9c234bfe NE OO PK
+W ada%s			ada.ads			ada.ali
+W ada.text_io%s		a-textio.adb		a-textio.ali
+Z ada.text_io.integer_aux%s  a-tiinau.adb	a-tiinau.ali
+W ada.text_io.integer_io%s
+
+U test_unit%s		test_unit.ads		8c8aee91 NE OO PK
+
+D ada.ads		20160516092928 3ffc8e18 ada%s
+D a-ioexce.ads		20160516092927 e4a01f64 ada.io_exceptions%s
+D a-stream.ads		20160516092929 119b8fb3 ada.streams%s
+D a-textio.ads		20160516092932 386df5d4 ada.text_io%s
+D a-tiinau.ads		20160516092930 8114c8e4 ada.text_io.integer_aux%s
+D a-tiinio.ads		20160516092928 aa04e5d6 ada.text_io.integer_io%s
+D a-tiinio.adb		20160516092930 df9cd7af ada.text_io.integer_io%b
+D interfac.ads		20160516092928 5ab55268 interfaces%s
+D i-cstrea.ads		20160516092927 e53d8b8e interfaces.c_streams%s
+D system.ads		20160516092929 6326c08a system%s
+D s-crtl.ads		20160516092927 0ebbdb71 system.crtl%s
+D s-ficobl.ads		20160516092933 078245e4 system.file_control_block%s
+D s-parame.ads		20160516092932 7e2a0d7f system.parameters%s
+D s-wchcon.ads		20160516092931 1b7d22d2 system.wch_con%s
+D test_unit.ads		20170303175228 8c8aee91 test_unit%s
+D test_unit.adb		20170303175228 28c450bb test_unit%b
+X 1 ada.ads
+16K9*Ada 19e8 16|4r6 4r23
+X 4 a-textio.ads
+49K13*Text_IO 471e16 16|4w10 4r27
+166U14*New_Line 16|32s7 36s7 40s7 43s7 47s7
+242U14*Put 16|30s7 34s7 41s7 45s7
+X 6 a-tiinio.ads
+46k21*Integer_IO 85e27 16|24r29
+66U14 Put 16|31s7[24] 35s7[24] 42s7[24] 46s7[24]
+X 15 test_unit.ads
+4K9*Test_Unit 10l5 10e14 16|6b14 52l5 52t14
+7+12 T 8r34 16|8r34 9r10
+8u14*Swap 8=20 8=23 16|8b14 18l8 18t12 20r34
+8*20 A{7+12} 16|8b20 11r10 14r15 15m10
+8*23 B{7+12} 16|8b23 11r14 15r15 16m10
+X 16 test_unit.adb
+9*6 C{15|7+12} 14m10 16r15
+20U14 Swap_Integer[15|8] 8b14 38s7
+22U14 Use_Swap_Integer 22b14 49l8 49t24
+23i7 X{integer} 27m7 31r12 38m21 38r21 42r12
+23i10 Y{integer} 28m7 35r12 38m24 38r24 46r12
+24K15 Int_IO[6|46] 25r11
+
