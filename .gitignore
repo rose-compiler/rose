@@ -1,5 +1,6 @@
 # Editor backup files:
 *~
+
 # GNAT generated files:
-gnatinspect.db
+/obj
  
