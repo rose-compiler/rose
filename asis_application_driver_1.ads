@@ -1,0 +1,38 @@
+------------------------------------------------------------------------------
+--                                                                          --
+--                    ASIS APPLICATION TEMPLATE COMPONENTS                  --
+--                                                                          --
+--              A S I S _ A P P L I C A T I O N _ D R I V E R _ 1           --
+--                                                                          --
+--                                 S p e c                                  --
+--                                                                          --
+--            Copyright (c) 2000, Free Software Foundation, Inc.            --
+--                                                                          --
+-- ASIS  Application  Templates are  free software; you can redistribute it --
+-- and/or  modify it under  terms  of the  GNU  General  Public  License as --
+-- published by the Free Software Foundation; either version 2, or (at your --
+-- option) any later version. ASIS Application Templates are distributed in --
+-- the hope that they will be useful, but  WITHOUT  ANY  WARRANTY; without  --
+-- even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR --
+-- PURPOSE. See the GNU General Public License for more details. You should --
+-- have  received a copy of the GNU General Public License distributed with --
+-- distributed  with  GNAT;  see  file  COPYING. If not, write to the Free  --
+-- Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, --
+-- USA.                                                                     --
+--                                                                          --
+-- ASIS Application Templates were developed and are now maintained by Ada  --
+-- Core Technologies Inc (http://www.gnat.com).                             --
+--                                                                          --
+------------------------------------------------------------------------------
+
+--  This procedure implements the template for the top-level driver of an
+--  ASIS application. This driver processes all the Compilation Units which
+--  are located in a given ASIS Context. By default, the Context is made up
+--  by all the tree files contained in the current directory.
+--
+--  The driver does not have parameter.
+--
+--  When working, this driver generates the trace containg the names of
+--  compilation units being processed.
+
+procedure ASIS_Application_Driver_1;
