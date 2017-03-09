@@ -1,6 +1,14 @@
 # Editor backup files:
 *~
 
+# Log files:
+*.log
+
 # GNAT generated files:
 /obj
+
+# GNAT generated files (these files are not generated in an obj directory when 
+# there is no project file present that specifies an obj directory):
+*.ali
+*.adt
  
