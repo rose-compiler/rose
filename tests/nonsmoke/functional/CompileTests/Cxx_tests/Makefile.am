@@ -414,7 +414,8 @@ NEW_TESTCODES = \
    test2016_87.C \
    test2016_88.C \
    test2016_91.C \
-   test2016_93.C
+   test2016_93.C \
+   test2017_04.C
 
 # DQ (1/29/2017): This appers to fail for Boost 1.57
 if !ROSE_USING_BOOST_VERSION_1_57
@@ -450,6 +451,13 @@ endif
 if ROSE_USING_GCC_VERSION_LATER_4_4
 NEW_TESTCODES += test2016_96.C
 endif
+
+# DQ (3/8/2017): These test codes have not been integrated yet. test2017_01.C is moved to C++11_tests, test2017_02 
+# is an example of nonconforming C++ code, and test2017_03.C passes, but is not yet integrated for general testing.
+TESTCODES_NOT_INTEGRATED = \
+   test2017_01.C \
+   test2017_02.C \
+   test2017_03.C
 
 # DQ (11/14/2016): Test codes not yet passing.
 #  test2016_91.C 

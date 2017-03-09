@@ -2286,9 +2286,6 @@ src/util/stringSupport/Makefile
 src/util/support/Makefile
 stamp-h
 tests/Makefile
-tests/CompileTests/Makefile
-tests/CompileTests/OpenMP_tests/Makefile
-tests/CompileTests/x10_tests/Makefile
 tests/nonsmoke/ExamplesForTestWriters/Makefile
 tests/nonsmoke/Makefile
 tests/nonsmoke/acceptance/Makefile
@@ -2471,6 +2468,11 @@ tutorial/intelPin/Makefile
 tutorial/outliner/Makefile
 tutorial/roseHPCT/Makefile
 ])
+
+# DQ (3/8/2017): Removed these directories from testing (pre-smoke and pre-nonsmoke test directories.
+# tests/CompileTests/Makefile
+# tests/CompileTests/OpenMP_tests/Makefile
+# tests/CompileTests/x10_tests/Makefile
 
 # Liao, 1/16/2014, comment out a few directories which are turned off for EDG 4.x upgrade
 #projects/BinaryDataStructureRecognition/Makefile

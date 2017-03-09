@@ -54,9 +54,9 @@ endif
 if !ROSE_USE_INSURE
    SUBDIRS += programAnalysisTests astOutliningTests loopProcessingTests fileLocation_tests
 endif 
-endif
-endif
-endif
+endif # !USING_XTENSA_BACKEND_COMPILER
+endif # !USING_GCC_3_4_4_BACKEND_COMPILER
+endif # ROSE_USING_GCC_VERSION_4_8_CXX11
 
 else  # NOT USING_GNU_COMPILER
 # DQ (2/19/2017): Skipping testing with other non-GNU compilers for now.
