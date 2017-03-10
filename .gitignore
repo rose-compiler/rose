@@ -6,6 +6,8 @@
 
 # GNAT generated files:
 /obj
+# Pretty printer:
+*.npp
 
 # GNAT generated files (these files are not generated in an obj directory when 
 # there is no project file present that specifies an obj directory):
