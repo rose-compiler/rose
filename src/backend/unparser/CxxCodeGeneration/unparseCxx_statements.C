@@ -2070,7 +2070,7 @@ Unparse_ExprStmt::unparseUsingDeclarationStatement (SgStatement* stmt, SgUnparse
                     SgTemplateDeclaration* templateDeclaration = isSgTemplateDeclaration(declarationStatement);
                     ROSE_ASSERT(templateDeclaration != NULL);
                     SgName templateName = templateDeclaration->get_name();
-                    curprint ( templateName.str());
+                    curprint (templateName.str());
                     break;
                   }
 
@@ -2080,7 +2080,17 @@ Unparse_ExprStmt::unparseUsingDeclarationStatement (SgStatement* stmt, SgUnparse
                     SgEnumDeclaration* enumDeclaration = isSgEnumDeclaration(declarationStatement);
                     ROSE_ASSERT(enumDeclaration != NULL);
                     SgName enumName = enumDeclaration->get_name();
-                    curprint ( enumName.str());
+                    curprint (enumName.str());
+                    break;
+                  }
+
+            // DQ (3/8/2017): Added support for SgTemplateTypedefDeclaration IR nodes in using declaration (Cxx11_tests/test20017_03.C).
+               case V_SgTemplateTypedefDeclaration:
+                  {
+                    SgTemplateTypedefDeclaration* templateTypedefDeclaration = isSgTemplateTypedefDeclaration(declarationStatement);
+                    ROSE_ASSERT(templateTypedefDeclaration != NULL);
+                    SgName name = templateTypedefDeclaration->get_name();
+                    curprint (name.str());
                     break;
                   }
 

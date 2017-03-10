@@ -119,7 +119,11 @@ test2016_42.C \
 test2016_91.C \
 test2016_92.C \
 test2016_93.C \
+test2017_03.C \
 test2017_04.C \
+test2017_07.C \
+test2017_08.C \
+test2017_09.C \
 last.C
 
 # DQ (2/21/2017): This fails due to missing builtin functions (still to be addressed).
@@ -210,6 +214,7 @@ test2014_03.C \
 test2014_82.C \
 test2014_85.C \
 test2014_88.C \
+test2017_10.C \
 last.C
 
 # Note: last.C just simplifies the Makefile.am it
@@ -357,8 +362,8 @@ else # NOT USING_CLANG_COMPILER
 if USING_INTEL_COMPILER
 # Exclude this list of files in the case of Intel compiler.
 #	@echo "USING_INTEL_COMPILER == true"
-	@echo "C++11 tests using EDG 4.9 Intel backend compiler are allowed."
-	@$(MAKE) $(PASSING_TEST_Objects)
+	@echo "C++11 tests using EDG 4.9 Intel backend compiler are NOT allowed."
+#	@$(MAKE) $(PASSING_TEST_Objects)
 else # NOT USING_INTEL_COMPILER
 # This is an unknown compiler.
 #	@echo "USING_INTEL_COMPILER == false"
@@ -380,7 +385,7 @@ if USING_CLANG_COMPILER
 # Exclude this list of files in the case of CLANG compiler.
 	@echo "USING_CLANG_COMPILER == true"
 	@echo "C++11 tests using EDG 4.9: Clang backend compiler using EDG 4.12 frontend."
-# DQ (2/21/2017): Too many failing files due to building functions that are missing.
+# DQ (2/21/2017): Too many failing files due to builtin functions that are missing.
 #	@$(MAKE) $(PASSING_TEST_Objects)
 else # NOT USING_CLANG_COMPILER
 	@echo "USING_CLANG_COMPILER == false"

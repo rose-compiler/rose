@@ -32,7 +32,7 @@ namespace CodeThorn {
   // prints #transitions and details about states
   void printStgSize(TransitionGraph* model, std::string optionalComment="", std::stringstream* csvOutput=NULL);
 
-  static void initDiagnostics();
+  void initDiagnostics();
   
 } // end of namespace CodeThorn
 

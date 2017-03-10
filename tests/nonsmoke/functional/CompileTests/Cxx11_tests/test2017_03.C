@@ -1,11 +1,10 @@
-// This is a C++11 feature for which the test code has been moved to the Cxx11_tests directory.
-
-#if 0
 namespace Myspace {
         template<typename T>
         class A {
                 T component;
         };
+
+ // This is called an alias template (C++11 specific).
     template<typename V>
         using Alias = Myspace::A<V>;
 }
@@ -14,4 +13,3 @@ namespace Myspace {
 using Myspace::A;  //THIS WORKS.
 using Myspace::Alias; //THIS CAUSES EDG/ROSE TO FAIL.
 
-#endif
