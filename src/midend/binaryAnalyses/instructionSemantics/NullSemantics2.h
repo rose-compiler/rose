@@ -171,6 +171,12 @@ public:
         return protoval()->undefined_(reg.get_nbits());
     }
 
+    virtual BaseSemantics::SValuePtr
+    peekRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &dflt,
+                 BaseSemantics::RiscOperators *ops) ROSE_OVERRIDE {
+        return protoval()->undefined_(reg.get_nbits());
+    }
+
     virtual void writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &value,
                                BaseSemantics::RiscOperators *ops) ROSE_OVERRIDE {}
 
