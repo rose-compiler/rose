@@ -31,7 +31,9 @@ with Asis;
 
 package Unit_Processing is
 
-   procedure Process_Unit (The_Unit : Asis.Compilation_Unit);
+   procedure Process_Unit
+     (The_Unit           : Asis.Compilation_Unit;
+      Do_Context_Clauses : Boolean := True);
    --  This procedure decomposes its argument unit and calls the element
    --  processing routine for all the top-level components of the unit
    --  element hierarchy. This element processing routine is the instance

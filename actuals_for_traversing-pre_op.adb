@@ -41,6 +41,7 @@ procedure Pre_Op
 is
 begin
    null;
+   Ada.Wide_Text_IO.put (".");
 exception
 
    when Ex : Asis.Exceptions.ASIS_Inappropriate_Context          |
