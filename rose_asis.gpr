@@ -16,7 +16,7 @@ project ROSE_ASIS is
          case Asis_Build is
 
             when "default" =>
-               for Main use ("asis_tool_1.adb");
+               for Main use ("asis_tool_1.adb", "run_asis_tool_2.adb");
                for Object_Dir use "./obj";
          end case;
 

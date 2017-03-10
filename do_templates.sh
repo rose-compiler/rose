@@ -11,7 +11,7 @@ source `which utility_functions.sh`
 
 rel_script_dir=`dirname $0`
 script_dir=`(cd ${rel_script_dir}; pwd)`
-tool_name=asis_tool_1
+tool_name=run_asis_tool_2
 target_dir=./test_units
 
 use_gnat () {
