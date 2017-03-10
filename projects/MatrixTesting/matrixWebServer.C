@@ -13,6 +13,7 @@ static Sawyer::Message::Facility mlog;
 #include <boost/foreach.hpp>
 #include <boost/regex.hpp>
 #include <Color.h>                                      // ROSE
+#include <Diagnostics.h>                                // ROSE
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Map.h>
 #include <Sawyer/Set.h>
@@ -2440,13 +2441,17 @@ public:
         int bigRow = 1;                                 // leave room for the header
         for (SqlDatabase::Statement::iterator iter1 = q1->begin(); iter1 != q1->end(); ++iter1, bigRow+=3) {
             int nErrors = iter1.get<int>(0);
-            int errorsPercent = round(100.0*nErrors/nTests);
+            double errorsPercent = 100.0*nErrors/nTests;
             std::string status = iter1.get<std::string>(1);
             std::string message = iter1.get<std::string>(2);
 
             // Error count and failure rate
-            grid_->elementAt(bigRow+0, 0)->addWidget(new Wt::WText(StringUtility::numberToString(nErrors) + "<br/>" +
-                                                                   StringUtility::numberToString(errorsPercent) + "%"));
+            {
+                std::ostringstream ss;
+                ss <<nErrors <<"<br/>";
+                Diagnostics::mfprintf(ss)("%7.3f%%", errorsPercent);
+                grid_->elementAt(bigRow+0, 0)->addWidget(new Wt::WText(ss.str()));
+            }
             grid_->elementAt(bigRow+0, 0)->setRowSpan(3);
             grid_->elementAt(bigRow+0, 0)->setStyleClass("error-count-cell");
 
