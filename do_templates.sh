@@ -29,22 +29,21 @@ build_asis_tool () {
   gprbuild -p -Prose_asis.gpr -XLIBRARY_TYPE=static -XASIS_BUILD=default ${tool_name}.adb
 }
 
+# Keeps going.  Returns 1 if any failed, 0 if all succeeded:
 generate_adt_files () {
+  status=0
   log "Generating .adt files for specified units in ${target_dir}"
-  cd ${target_dir}
-  for unit in ${units}
+  for target_unit in ${target_units}
   do
     log "Generating ${target_unit}.adt" 
-    gcc -c -gnatct ${target_unit}.adb
+    (cd ${target_dir}; gcc -c -gnatct ${target_unit}.adb) || status=1
   done
-  cd ${current_dir}
+  return ${status}
 }
 
 run_asis_tool () {
   log "Running ${tool_name} on all .adt files in ${target_dir}"
-  cd ${target_dir}
-  ${script_dir}/obj/${tool_name}
-  cd ${current_dir}
+  (cd ${target_dir}; ${script_dir}/obj/${tool_name})
 }
 
 log_start
