@@ -1772,7 +1772,7 @@ public:
      *  which calling convention analysis fails. */
     void
     allFunctionCallingConventionDefinition(const CallingConvention::Definition::Ptr &dflt =
-                                               CallingConvention::Definition::Ptr()) const /*final*/;
+                                           CallingConvention::Definition::Ptr()) const /*final*/;
 
     /** Adjust inter-function edge types.
      *

@@ -2151,20 +2151,31 @@ Partitioner::allFunctionCallingConvention(const CallingConvention::Definition::P
 void
 Partitioner::allFunctionCallingConventionDefinition(const CallingConvention::Definition::Ptr &dfltCc/*=NULL*/) const {
     allFunctionCallingConvention(dfltCc);
+
+    // Compute the histogram for calling convention definitions.
     typedef Sawyer::Container::Map<std::string, size_t> Histogram;
     Histogram histogram;
     Sawyer::Container::Map<rose_addr_t, CallingConvention::Dictionary> allMatches;
     BOOST_FOREACH (const Function::Ptr &function, functions()) {
-        CallingConvention::Dictionary matches = functionCallingConventionDefinitions(function, dfltCc);
-        allMatches.insert(function->address(), matches);
-        BOOST_FOREACH (const CallingConvention::Definition::Ptr &ccdef, matches)
+        CallingConvention::Dictionary functionCcDefs = functionCallingConventionDefinitions(function, dfltCc);
+        allMatches.insert(function->address(), functionCcDefs);
+        BOOST_FOREACH (const CallingConvention::Definition::Ptr &ccdef, functionCcDefs)
             ++histogram.insertMaybe(ccdef->name(), 0);
     }
-#if 1 // DEBUGGING [Robb P Matzke 2017-03-06]
-    BOOST_FOREACH (const Histogram::Node &node, histogram.nodes()) {
-        std::cerr <<"ROBB: " <<node.value() <<" " <<node.key() <<"\n";
+
+    // For each function, choose the calling convention definition with the highest frequencey in the histogram.
+    BOOST_FOREACH (const Function::Ptr &function, functions()) {
+        CallingConvention::Dictionary &functionCcDefs = allMatches[function->address()];
+        CallingConvention::Definition::Ptr bestCcDef = dfltCc;
+        if (!functionCcDefs.empty()) {
+            bestCcDef = functionCcDefs[0];
+            for (size_t i=1; i<functionCcDefs.size(); ++i) {
+                if (histogram[functionCcDefs[i]->name()] > histogram[bestCcDef->name()])
+                    bestCcDef = functionCcDefs[i];
+            }
+        }
+        function->callingConventionDefinition(bestCcDef);
     }
-#endif
 }
 
 AddressUsageMap

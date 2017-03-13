@@ -977,7 +977,7 @@ private:
 //                                      Free functions
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::ostream& operator<<(std::ostream&, const Definition::Ptr&);
+std::ostream& operator<<(std::ostream&, const Definition&);
 std::ostream& operator<<(std::ostream&, const Analysis&);
 
 } // namespace

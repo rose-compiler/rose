@@ -920,9 +920,9 @@ Analysis::match(const Definition::Ptr &cc) const {
     // All analysis output registers must be a definition's output or scratch register.
     if (!(outputRegisters_ - ccOutputRegisters).isEmpty()) {
         if (debug) {
+            RegisterNames regName(registerDictionary());
             debug <<"  mismatch: actual outputs are not defined outputs or scratch registers: ";
             RegisterParts parts = outputRegisters_ - ccOutputRegisters;
-            RegisterNames regName(registerDictionary());
             BOOST_FOREACH (const RegisterDescriptor &reg, parts.listAll(registerDictionary()))
                 debug <<" " <<regName(reg);
             debug <<"\n";
@@ -933,9 +933,9 @@ Analysis::match(const Definition::Ptr &cc) const {
     // All analysis input registers must be a definition's input or "this" register.
     if (!(inputRegisters_ - ccInputRegisters).isEmpty()) {
         if (debug) {
+            RegisterNames regName(registerDictionary());
             debug <<"  mismatch: actual inputs are not defined inputs or \"this\" register: ";
             RegisterParts parts = inputRegisters_ - ccInputRegisters;
-            RegisterNames regName(registerDictionary());
             BOOST_FOREACH (const RegisterDescriptor &reg, parts.listAll(registerDictionary()))
                 debug <<" " <<regName(reg);
             debug <<"\n";
@@ -948,19 +948,6 @@ Analysis::match(const Definition::Ptr &cc) const {
         if (debug) {
             debug <<"  mismatch: restored registers that are not defined as callee-saved:";
             RegisterParts parts = restoredRegisters_ - cc->calleeSavedRegisterParts();
-            RegisterNames regName(registerDictionary());
-            BOOST_FOREACH (const RegisterDescriptor &reg, parts.listAll(registerDictionary()))
-                debug <<" " <<regName(reg);
-            debug <<"\n";
-        }
-        return false;
-    }
-    
-    // If we modified registers we were not allowed to have modified then we're not this calling convention.
-    if (!(outputRegisters_ & ccOutputRegisters).isEmpty()) {
-        if (debug) {
-            debug <<"  mismatch: actual output register is not defined as output:";
-            RegisterParts parts = outputRegisters_ & ccOutputRegisters;
             RegisterNames regName(registerDictionary());
             BOOST_FOREACH (const RegisterDescriptor &reg, parts.listAll(registerDictionary()))
                 debug <<" " <<regName(reg);
