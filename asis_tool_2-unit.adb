@@ -59,52 +59,49 @@ package body Asis_Tool_2.Unit is
       Object.My_Unit := Asis_Unit;
    end Set_Up;
 
+   function To_String (this : in Asis.Unit_Classes) return Wide_String is
+   begin
+      case this is
+         when Asis.A_Public_Declaration |
+              Asis.A_Private_Declaration =>
+            return "spec";
+         when Asis.A_Public_Body              |
+              Asis.A_Public_Declaration_And_Body |
+              Asis.A_Private_Body                =>
+            return "body";
+         when Asis.A_Separate_Body =>
+            return "subunit";
+         when others =>
+            return Asis.Unit_Classes'Wide_Image(this);
+      end case;
+   end To_String;
+
+
    ------------
    -- EXPORTED:
    ------------
    procedure Process (Object : in out Class) is
-      Unit_Origin : Asis.Unit_Origins     := Asis.Compilation_Units.Unit_Origin (Object.My_Unit);
-      Unit_Class  : Asis.Unit_Classes     := Asis.Compilation_Units.Unit_Class (Object.My_Unit);
+      Unit_Name   : constant Wide_String       := Asis.Compilation_Units.Unit_Full_Name (Object.My_Unit);
+      Unit_Origin : constant Asis.Unit_Origins := Asis.Compilation_Units.Unit_Origin (Object.My_Unit);
+      Unit_Class  : constant Asis.Unit_Classes := Asis.Compilation_Units.Unit_Class (Object.My_Unit);
       use Ada.Wide_Text_IO;
    begin
-      if Trace_On then
-         Put ("Processing: ");
-         Put (Asis.Compilation_Units.Unit_Full_Name (Object.My_Unit));
-         case Unit_Class is
-            when Asis.A_Public_Declaration |
-                 Asis.A_Private_Declaration =>
-               Put (" (spec)");
-            when Asis.A_Separate_Body =>
-               Put (" (subunit)");
-            when Asis.A_Public_Body              |
-                 Asis.A_Public_Declaration_And_Body |
-                 Asis.A_Private_Body                =>
-               Put (" (body)");
-            when others =>
-               Put_Line (" (???)");
-         end case;
-         New_Line;
-      end if;
-
       case Unit_Origin is
          when Asis.An_Application_Unit =>
+            New_Line;
+            Put_Line ("Processing: " & Unit_Name & " (" & To_String (Unit_Class) & ")");
 
             -- Do actual work:
             Object.Process_Element_Trees;
 
-            Trace_Put ("Done");
+            Trace_Put_Line ("Done");
          when Asis.A_Predefined_Unit =>
-            Trace_Put ("Skipped (predefined unit)");
+            Trace_Put_Line ("Skipped " & Unit_Name & " (predefined unit)");
          when Asis.An_Implementation_Unit =>
-            Trace_Put ("Skipped (implementation-defined unit)");
+            Trace_Put_Line ("Skipped " & Unit_Name & " (implementation-defined unit)");
          when Asis.Not_An_Origin =>
-            Trace_Put ("Skipped (nonexistent unit)");
+            Trace_Put_Line ("Skipped " & Unit_Name & " (non-existent unit)");
       end case;
-
-      if Trace_On then
-         New_Line;
-         New_Line;
-      end if;
    end Process;
 
 

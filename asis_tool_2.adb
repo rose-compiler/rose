@@ -16,6 +16,16 @@ package body Asis_Tool_2 is
    -----------
    -- PRIVATE:
    -----------
+   procedure Trace_Put_Line (Message : in Wide_String) is
+   begin
+      if Trace_On then
+         Ada.Wide_Text_IO.Put_Line (Message);
+      end if;
+   end Trace_Put_Line;
+
+   -----------
+   -- PRIVATE:
+   -----------
    procedure Print_Exception_Info (X : in Ada.Exceptions.Exception_Occurrence) is
       use Ada.Characters.Handling;
       use Ada.Exceptions;

@@ -11,6 +11,8 @@ private
 
    procedure Trace_Put (Message : in Wide_String);
 
+   procedure Trace_Put_Line (Message : in Wide_String);
+
    procedure Print_Exception_Info (X : in Ada.Exceptions.Exception_Occurrence);
 
 end Asis_Tool_2;
