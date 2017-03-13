@@ -726,14 +726,19 @@ all-lcov.info:
 # (04/26/2016) Pei-Hung lcov has issue to output extracted result to librose-lcov.info with -o option. Using piping instead.
 librose-lcov.info: all-lcov.info
 	lcov --extract $< "$(top_srcdir)/src/*" > $@
+	lcov --remove librose-lcov.info  "$(top_srcdir)/src/frontend/CxxFrontend/EDG/edgRose/debugging.*" "$(top_srcdir)/src/frontend/CxxFrontend/EDG/edgRose/edgGraph.*" -o librose-lcov.info 
+	lcov --remove librose-lcov.info  "$(top_srcdir)/src/backend/unparser/PythonCodeGeneration/*" "$(top_srcdir)/src/backend/unparser/PHPCodeGeneration/*" -o librose-lcov.info 
+	lcov --remove librose-lcov.info  "$(top_srcdir)/src/midend/programAnalysis/OAWrap/*" "$(top_srcdir)/src/midend/programAnalysis/OpenAnalysis/*" -o librose-lcov.info 
 
 # Generate a directory containing the HTML representation of the coverage information for the ROSE library proper.
 # THIS INCLUDES EDG SOURCES; DO NOT DISTRIBUTE THIS DIRECTORY
 librose_lcov_web_pages: librose-lcov.info
-	genhtml					\
-		--title librose			\
-		--legend			\
-		--demangle-cpp			\
-		--prefix $(top_srcdir)		\
-		--ignore-errors=source		\
-		--output-directory $@ $<
+	genhtml                                 \
+                --title librose                 \
+                --legend                        \
+                --demangle-cpp                  \
+                --rc genhtml_hi_limit=85        \
+                --rc genhtml_med_limit=60       \
+                --prefix $(top_srcdir)          \
+                --ignore-errors=source          \
+                --output-directory $@ $<
