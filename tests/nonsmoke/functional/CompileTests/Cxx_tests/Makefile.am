@@ -415,7 +415,8 @@ NEW_TESTCODES = \
    test2016_88.C \
    test2016_91.C \
    test2016_93.C \
-   test2017_04.C
+   test2017_04.C \
+   test2017_09.C
 
 # DQ (1/29/2017): This appers to fail for Boost 1.57
 if !ROSE_USING_BOOST_VERSION_1_57
@@ -457,7 +458,12 @@ endif
 TESTCODES_NOT_INTEGRATED = \
    test2017_01.C \
    test2017_02.C \
-   test2017_03.C
+   test2017_03.C \
+   test2017_03.C \
+   test2017_05.C \
+   test2017_06.C \
+   test2017_07.C \
+   test2017_08.C
 
 # DQ (11/14/2016): Test codes not yet passing.
 #  test2016_91.C 
@@ -534,11 +540,23 @@ endif
 #    test2014_60.C \
 #    test2014_61.C 
 
-
-if !ROSE_USE_EDG_VERSION_4_7
-if !ROSE_USING_BOOST_VERSION_1_57
+# DQ (3/10/2017): I think we can fix these now (appear to be only buildins missing at this point).
+# if !ROSE_USE_EDG_VERSION_4_7
+# if !ROSE_USING_BOOST_VERSION_1_57
 # These boost 1.57 specific tests fail in EDG 4.7 and pass in EDG 4.9, so
 # avoid testing them in this combination.  The issue is fixed in EDG 4.9.
+# NEW_TESTCODES += \
+#   test2014_187.C \
+#   test2014_187_work_around.C \
+#   test2014_188.C \
+#   test2015_120.C 
+# endif
+# endif
+
+# DQ (3/12/2017): These test codes are no long a problem for BOOST 1.57 on GNU and 
+# Intel compilers, but are an issue for Clang (at least 3.8.0).
+if !USING_CLANG_COMPILER
+if !USING_INTEL_COMPILER
 NEW_TESTCODES += \
    test2014_187.C \
    test2014_187_work_around.C \
@@ -1653,6 +1671,7 @@ if ROSE_USING_GCC_VERSION_LATER_4_9
 	@echo "Using EDG 4.9 and GNU version later then 4.9 (skipping C++ tests: reconfigure with EDG 4.12 to run C++ tests)"
 else  # NOT ROSE_USING_GCC_VERSION_LATER_4_9
 	@echo "Using GNU compiler (version up to 4.8)"
+	@$(MAKE) $(PASSING_TEST_Sources) $(FAILING_TEST_targets)
 endif #  ROSE_USING_GCC_VERSION_LATER_4_9
 else  # NOT USING_GNU_COMPILER
 	@echo "NOT Using GNU compiler"
