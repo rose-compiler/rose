@@ -453,3 +453,11 @@ size_t SgAsmPEImportSection::mesg_nprinted = 0;
 rose_addr_t rose_rva_t::get_va() const { return 0; }
 std::string SgAsmGenericSection::read_content_str(const MemoryMap*, rose_addr_t, bool) { return ""; }
 std::string SgAsmGenericSection::read_content_str(rose_addr_t, bool) { return ""; }
+
+SgAsmGenericString* SgAsmGenericDLL::get_name() const { return NULL; }
+void SgAsmGenericDLL::set_name(SgAsmGenericString*) {}
+void SgAsmElfNoteEntry::set_name(SgAsmGenericString*) {}
+void SgAsmGenericSymbol::set_name(SgAsmGenericString*) {}
+void SgAsmPEExportEntry::set_forwarder(SgAsmGenericString*) {}
+void SgAsmPEExportEntry::set_name(SgAsmGenericString*) {}
+void SgAsmElfDynamicEntry::set_name(SgAsmGenericString*) {}
