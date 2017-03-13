@@ -110,7 +110,8 @@ public:
     
     // Associate some data with an item.
     void setItemExtraData(const Wt::WModelIndex &idx, const T &data) {
-        if (idx.row() >= extraData_.size())
+        ASSERT_require(idx.row() >= 0);
+        if ((size_t)idx.row() >= extraData_.size())
             extraData_.resize(idx.row()+1);
         std::string oldDisplay = extraData_[idx.row()].display();
         std::string newDisplay = data.display();
@@ -123,7 +124,8 @@ public:
     // Get data for an item.
     const T& itemExtraData(const Wt::WModelIndex &idx) const {
         static const T dflt;
-        return idx.row() < extraData_.size() ? extraData_[idx.row()] : dflt;
+        ASSERT_require(idx.row() >= 0);
+        return (size_t)idx.row() < extraData_.size() ? extraData_[idx.row()] : dflt;
     }
 
     // Find first item with specified data. Returns -1 if not found.
@@ -137,7 +139,8 @@ public:
 
     // Remove some data
     virtual bool removeRows(int row, int count, const Wt::WModelIndex &parent = Wt::WModelIndex()) {
-        ASSERT_require(row + count <= extraData_.size());
+        ASSERT_require(row + count >= 0);
+        ASSERT_require((size_t)(row + count) <= extraData_.size());
         if (Wt::WStringListModel::removeRows(row, count, parent)) {
             extraData_.erase(extraData_.begin()+row, extraData_.begin()+row+count);
             return true;
@@ -151,7 +154,8 @@ public:
         } else if (idx.isValid() && Wt::DisplayRole == role) {
             boost::any v = Wt::WStringListModel::data(idx, Wt::DisplayRole);
             Wt::WString s1 = v.empty() ? Wt::WString() : boost::any_cast<Wt::WString>(v);
-            Wt::WString s2 = (idx.row() < extraData_.size() ? extraData_[idx.row()] : T()).display();
+            ASSERT_require(idx.row() >= 0);
+            Wt::WString s2 = ((size_t)idx.row() < extraData_.size() ? extraData_[idx.row()] : T()).display();
             return s1 + (s1.empty() || s2.empty() ? "" : " ") + s2;
         } else {
             return Wt::WStringListModel::data(idx, role);
