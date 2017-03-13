@@ -7,15 +7,27 @@ with Asis.Iterator;
 package body Asis_Tool_2.Element is
 
    type Traversal_State is tagged limited record
-      Indent : Natural := 0;
+      Indent_Level : Natural := 0;
    end record;
+
+
+   procedure Indent (This : in out Traversal_State) is
+   begin
+      This.Indent_Level := This.Indent_Level + 1;
+   end Indent;
+
+
+   procedure Dedent (This : in out Traversal_State) is
+   begin
+      This.Indent_Level := This.Indent_Level - 1;
+   end Dedent;
 
 
    function White_Space
      (This : in Traversal_State)
       return Wide_String is
    begin
-      return (1 .. This.Indent => ' ');
+      return (1 .. This.Indent_Level * 2 => ' ');
    end White_Space;
 
 
@@ -49,8 +61,8 @@ package body Asis_Tool_2.Element is
       Kind : constant Wide_String := Ada.Characters.Handling.To_Wide_String
         (Asis.Elements.Element_Kind (Element)'Image);
    begin
-      State.Put_Indented_Line ("(" & Kind & ": " & Name (Element));
-      State.Indent := State.Indent + 1;
+      State.Put_Indented_Line ("(" & Kind & "): " & Name (Element));
+      State.Indent;
    end Pre_Op;
 
 
@@ -59,8 +71,7 @@ package body Asis_Tool_2.Element is
       Control : in out Asis.Traverse_Control;
       State   : in out Traversal_State) is
    begin
-      State.Indent := State.Indent - 1;
-      State.Put_Indented_Line (")");
+      State.Dedent;
    end Post_Op;
 
 
