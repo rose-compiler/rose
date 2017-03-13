@@ -332,7 +332,8 @@ if USING_CLANG_COMPILER
 # Exclude this list of files in the case of CLANG compiler.
 	@echo "USING_CLANG_COMPILER == true"
 	@echo "C++11 tests using EDG 4.9: Clang backend compiler using EDG 4.12 frontend."
-	@$(MAKE) $(PASSING_TEST_Objects)
+# DQ (2/28/2017): Skip these files with Clang for now and come back to them later (when we understand the limits of portability better).
+#	@$(MAKE) $(PASSING_TEST_Objects)
 else # NOT USING_CLANG_COMPILER
 	@echo "USING_CLANG_COMPILER == false"
 if USING_INTEL_COMPILER
