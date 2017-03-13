@@ -383,7 +383,8 @@ rose_config_CPPFLAGS =									\
 	-DCFLAGS='"$(subst ",\",$(CFLAGS))"'						\
 	-DCXXFLAGS='"$(subst ",\",$(CXXFLAGS))"'					\
 	-DINSTALLED_LDFLAGS='"$(subst ",\",$(rose_config_installed_ldflags))"'		\
-	-DBUILD_LDFLAGS='"$(subst ",\",$(rose_config_build_ldflags))"'
+	-DBUILD_LDFLAGS='"$(subst ",\",$(rose_config_build_ldflags))"'			\
+	-DPREFIX_DIR='"$(prefix)"'
 
 # DQ (4/12/2016): This is required for use with clang (not clear how to compile ROSE with out it).
 rose_config_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)

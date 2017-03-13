@@ -161,7 +161,7 @@ int Specialization::substituteConstArrayIndexExprsWithConst(VariableIdMapping* v
        if(arrayIndexExpr) {
          // avoid substituting a constant by a constant
          if(!isSgIntVal(arrayIndexExpr)) {
-           list<SingleEvalResultConstInt> evalResultList=exprAnalyzer->evalConstInt(arrayIndexExpr,*estate,true, true);
+           list<SingleEvalResultConstInt> evalResultList=exprAnalyzer->evalConstInt(arrayIndexExpr,*estate,true);
            // only when we get exactly one result it is considered for substitution
            // there can be multiple const-results which do not allow to replace it with a single const
            if(evalResultList.size()==1) {
