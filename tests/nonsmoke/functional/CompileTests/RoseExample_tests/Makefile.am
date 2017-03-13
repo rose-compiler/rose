@@ -11,15 +11,20 @@ testRoseHeaders_00.C \
 testRoseHeaders_07.C \
 testRoseHeaders_08.C
 
+# DQ (3/11/2017): These can now work with at least the GNU 5.1 and older compilers.
 # DQ (1/19/2017): These are a problem for GNU 5.1 (but maybe just because __atomic_is_lock_free() is not correctly handled).
-if !ROSE_USING_GCC_VERSION_LATER_5_1
+if !ROSE_USING_GCC_VERSION_LATER_6_1
 TESTCODES_REQUIRED_TO_PASS += \
 testRoseHeaders_01.C \
 testRoseHeaders_02.C \
-testRoseHeaders_03.C \
 testRoseHeaders_04.C \
 testRoseHeaders_05.C \
 testRoseHeaders_06.C 
+endif
+
+if !ROSE_USING_GCC_VERSION_LATER_5_1
+TESTCODES_REQUIRED_TO_PASS += \
+testRoseHeaders_03.C
 endif
 
 EXTRA_TESTCODES_REQUIRED_TO_PASS = \

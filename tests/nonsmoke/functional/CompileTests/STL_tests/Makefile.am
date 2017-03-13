@@ -83,11 +83,12 @@ if USING_GNU_COMPILER
 else  # NOT USING_GNU_COMPILER
 	@echo "USING_GCC_COMPILER == false"
 if USING_CLANG_COMPILER
-# This will demonstrate at least two bugs in ROSE.
+# DQ (3/12/2017): Activate for testingonly.
 	@echo "Run tests for CLANG compilers."
 #	$(VALGRIND) ASAN_OPTIONS="$(VALGRIND)" TOOL2=$(TEST_TRANSLATOR) TOOL1=$(CXX) CPP11_STL_TESTS=no $(top_srcdir)/tests/nonsmoke/functional/CompileTests/STL_tests/stl-eval.sh
 else # NOT USING_CLANG_COMPILER
 if USING_INTEL_COMPILER
+# DQ (3/12/2017): Activate for testingonly.
 # Not clear if this has been tested previusly.
 	@echo "Run tests for INTEL compilers."
 #	$(VALGRIND) ASAN_OPTIONS="$(VALGRIND)" TOOL2=$(TEST_TRANSLATOR) TOOL1=$(CXX) CPP11_STL_TESTS=no $(top_srcdir)/tests/nonsmoke/functional/CompileTests/STL_tests/stl-eval.sh
