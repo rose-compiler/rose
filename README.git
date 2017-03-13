@@ -1032,3 +1032,28 @@ DQ (3/10/2017): How to report the git hash number to restart the ROSE Matrix Tes
    or
        git log origin/master
 
+   4. Send email to Robb, Justin, Pei-Hung, and Craig
+
+Example email:
+Subject: Restart request for ROSE Matrix Testing and/or sending of platform build information for ROSE
+Hi,
+   The new commit is: <commit number> e.g. 2594134b423e928d6f5a0cc0711f3cbeb7f7cbe3
+(just checked in this morning).
+
+Could you all please either restart the ROSE Matrix Testing, or sending of information
+to the database that holds the ROSE Matrix Testing results.
+
+Thanks,
+Dan
+
+
+
+
+How to determine archaeology of old code in ROSE:
+
+   git log src/midend/programAnalysis/genericDataflow
+
+and then scroll to end to see the first commits.
+
+
+
