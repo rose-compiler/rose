@@ -195,6 +195,11 @@ MOSTLYCLEANFILES += EDG/libroseEDG.la
 endif
 
 clean-local:
-	rm -rf EDG/.libs $(EDGBIN_NAME_PREFIX)-*.tar.gz
+# DQ (3/1/2017): Need to be able to run make clean whenClang frontend support is defined.
+#	rm -rf EDG/.libs $(EDGBIN_NAME_PREFIX)-*.tar.gz
+	rm -rf EDG/.libs 
+if !ROSE_USE_CLANG_FRONTEND
+	rm -rf $(EDGBIN_NAME_PREFIX)-*.tar.gz
+endif
 
 .PHONY: $(PHONIES)

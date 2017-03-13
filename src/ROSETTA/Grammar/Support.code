@@ -4327,6 +4327,10 @@ HEADER_SYMBOL_TABLE_START
        // SgTemplateClassSymbol* find_template_class   (const SgName& name);                     //! Complexity O(log n) for first match against name, then O(n)
           SgTemplateClassSymbol* find_template_class (const SgName & nm, SgTemplateParameterPtrList* templateList, SgTemplateArgumentPtrList* templateArgumentList );
 
+       // DQ (3/8/2017): Adding support for template typedef declarations and their symbol table handling.
+       // SgTemplateTypedefSymbol* find_template_typedef (const SgName & nm, SgTemplateParameterPtrList* templateList, SgTemplateArgumentPtrList* templateArgumentList );
+          SgTemplateTypedefSymbol* find_template_typedef (const SgName & nm);
+
        // SgClassSymbol*         find_nontemplate_class(const SgName& name);                     //! Complexity O(log n) for first match against name, then O(n)
           SgClassSymbol*         find_nontemplate_class(const SgName& name, SgTemplateArgumentPtrList* templateArgumentsList); //! Complexity O(log n) for first match against name, then O(n)
 
@@ -8453,7 +8457,10 @@ std::vector<SgTemplateParameter*> getTemplateParametersOrArgumentsList<SgTemplat
        // DQ (11/10/2014): Providing an initial implementation for template typedef symbol support.
           case V_SgTemplateTypedefSymbol:
              {
-               printf ("WARNING: returning NULL in SgSymbolTable::getTemplateParametersOrArgumentsList<SgTemplateParameter>(): symbol = %p = %s \n",symbol,symbol->class_name().c_str());
+#if 1
+            // DQ (3/5/2017): Converted to use message logging, but the mechanism is not supported here yet.
+               mprintf ("WARNING: returning NULL in SgSymbolTable::getTemplateParametersOrArgumentsList<SgTemplateParameter>(): symbol = %p = %s \n",symbol,symbol->class_name().c_str());
+#endif
                break;
              }
 #if 0
@@ -9333,6 +9340,23 @@ SgSymbolTable::find_template_class (const SgName & nm, SgTemplateParameterPtrLis
      ROSE_ASSERT(templateParameterList != NULL);
 
      SgTemplateClassSymbol *s = find_symbol_with_type_support<SgTemplateClassSymbol>(nm,NULL,templateParameterList,templateSpecializationArgumentList);
+
+     return s;
+   }
+
+// DQ (3/8/2017): Adding support for SgTemplateTypedefSymbol handling.
+// SgTemplateClassSymbol* SgSymbolTable::find_template_class (const SgName & nm)
+// SgTemplateTypedefSymbol* SgSymbolTable::find_template_typedef (const SgName & nm, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList )
+SgTemplateTypedefSymbol* 
+SgSymbolTable::find_template_typedef (const SgName & nm)
+   {
+  // ROSE_ASSERT(templateParameterList != NULL);
+
+     SgTemplateParameterPtrList* templateParameterList              = NULL;
+     SgTemplateArgumentPtrList*  templateSpecializationArgumentList = NULL;
+
+  // SgTemplateTypedefSymbol *s = find_symbol_with_type_support<SgTemplateTypedefSymbol>(nm,NULL,templateParameterList,templateSpecializationArgumentList);
+     SgTemplateTypedefSymbol *s = find_symbol_with_type_support<SgTemplateTypedefSymbol>(nm,NULL,templateParameterList,templateSpecializationArgumentList);
 
      return s;
    }
