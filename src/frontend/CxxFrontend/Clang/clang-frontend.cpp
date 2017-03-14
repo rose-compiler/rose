@@ -6,6 +6,15 @@
 
 #include "rose_config.h"
 
+#if 0
+// DQ (3/1/2017): Trying to get rid of linker error.
+#ifdef ROSE_USE_CLANG_FRONTEND
+clang::ASTConsumer::typeinfo() {};
+clang::PPCallbacks::typeinfo() {};
+#endif
+#endif
+
+
 extern bool roseInstallPrefix(std::string&);
 
 int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {

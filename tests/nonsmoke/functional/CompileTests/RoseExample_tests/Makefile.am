@@ -11,15 +11,20 @@ testRoseHeaders_00.C \
 testRoseHeaders_07.C \
 testRoseHeaders_08.C
 
+# DQ (3/11/2017): These can now work with at least the GNU 5.1 and older compilers.
 # DQ (1/19/2017): These are a problem for GNU 5.1 (but maybe just because __atomic_is_lock_free() is not correctly handled).
-if !ROSE_USING_GCC_VERSION_LATER_5_1
+if !ROSE_USING_GCC_VERSION_LATER_6_1
 TESTCODES_REQUIRED_TO_PASS += \
 testRoseHeaders_01.C \
 testRoseHeaders_02.C \
-testRoseHeaders_03.C \
 testRoseHeaders_04.C \
 testRoseHeaders_05.C \
 testRoseHeaders_06.C 
+endif
+
+if !ROSE_USING_GCC_VERSION_LATER_5_1
+TESTCODES_REQUIRED_TO_PASS += \
+testRoseHeaders_03.C
 endif
 
 EXTRA_TESTCODES_REQUIRED_TO_PASS = \
@@ -248,7 +253,10 @@ if USING_GNU_COMPILER
 if ROSE_USING_GCC_VERSION_LATER_4_9
 	@echo "ROSE_USING_GCC_VERSION_LATER_4_9 == true"
 	@echo "ROSE source tests: tests using EDG 4.9 and GNU version 4.9 backend compiler are disabled (except for tests 1, 7, and 8)."
+# DQ (2/27/2017): Don't test GNU 5.1 and greater using EDG 4.9 (requires EDG 4.12 and later).
+if !ROSE_USING_GCC_VERSION_LATER_5_1
 	@$(MAKE) $(PASSING_TEST_Sources)
+endif
 # Exclude these tests on GNU 4.9 and later compilers).
 else  # NOT ROSE_USING_GCC_VERSION_LATER_4_8
 # If this is not the CLANG or Intel compilers and an earlier version of GNU than GNU 4.9 compiler, so include these files.

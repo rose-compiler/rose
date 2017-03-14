@@ -245,6 +245,9 @@ void SgAsmGenericSection::set_size(rose_addr_t) {}
 SgAsmGenericString* SgAsmElfNoteEntry::get_name() const { return NULL; }
 SgAsmGenericString* SgAsmGenericSymbol::get_name() const { return NULL; }
 
+const char* SgAsmElfFileHeader::format_name() const { return NULL; }
+
+
 rose_rva_t::rose_rva_t() {
     addr = 0;
     section = NULL;

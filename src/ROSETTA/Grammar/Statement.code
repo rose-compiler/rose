@@ -369,6 +369,9 @@ HEADER_SCOPE_STATEMENT_START
        // SgTemplateClassSymbol* lookup_template_class_symbol    (const SgName& n) const;
           SgTemplateClassSymbol* lookup_template_class_symbol    (const SgName& n, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList) const;
 
+       // DQ (3/8/2017): Adding support for SgTemplateTypedefDeclaration IR nodes.
+          SgTemplateTypedefSymbol* lookup_template_typedef_symbol (const SgName& n) const;
+
        // DQ (8/22/2012): If we have template arguments then we have a chance to disambiguate SgTemplateInstantiationDecl IR nodes based on the
        // arguments which would otherwise require qulified names (which are difficult to robustly support using as the AST is being constructed).
           SgClassSymbol*     lookup_nontemplate_class_symbol (const SgName& n, SgTemplateArgumentPtrList* templateArgumentsList) const;
@@ -4920,11 +4923,12 @@ SgScopeStatement::insert_symbol ( const SgName& n, SgSymbol* s )
 
           if (classScope != thisScope)
              {
-               printf ("Warning: SgScopeStatement::insert_symbol(): class_declaration->get_scope() != this \n");
-               printf ("   --- scope = %p = %s \n",this,this->class_name().c_str());
-               printf ("   --- class_declaration = %p = %s \n",class_declaration,class_declaration->class_name().c_str());
-               printf ("   --- class_declaration->get_scope() = %p = %s \n",class_declaration->get_scope(),class_declaration->get_scope()->class_name().c_str());
-               class_declaration->get_file_info()->display("class_declaration: debug");
+            // DQ (3/6/2017): Added support for message logging to control output from ROSE tools.
+               mprintf ("Warning: SgScopeStatement::insert_symbol(): class_declaration->get_scope() != this \n");
+               mprintf ("   --- scope = %p = %s \n",this,this->class_name().c_str());
+               mprintf ("   --- class_declaration = %p = %s \n",class_declaration,class_declaration->class_name().c_str());
+               mprintf ("   --- class_declaration->get_scope() = %p = %s \n",class_declaration->get_scope(),class_declaration->get_scope()->class_name().c_str());
+            // class_declaration->get_file_info()->display("class_declaration: debug");
              }
        // ROSE_ASSERT(class_declaration->get_scope() == this);
         }
@@ -5498,6 +5502,48 @@ SgScopeStatement::lookup_template_class_symbol (const SgName& n, SgTemplateParam
 
      return p_symbol_table->find_template_class(n, templateParameterList, templateSpecializationArgumentList);
    }
+
+
+// DQ (3/8/2017): Adding support for SgTemplateTypedefDeclaration IR nodes. Note: not clear if template parameters are required here.
+SgTemplateTypedefSymbol* 
+// SgScopeStatement::lookup_template_typedef_symbol (const SgName& n, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList ) const
+SgScopeStatement::lookup_template_typedef_symbol (const SgName& n) const
+   {
+     ROSE_ASSERT (this != NULL);
+     ROSE_ASSERT (p_symbol_table != NULL);
+
+  // DQ (5/17/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
+     const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
+     if (namespaceDefinitionStatement != NULL)
+        {
+          ROSE_ASSERT(namespaceDefinitionStatement->get_global_definition() != NULL);
+          const SgNamespaceDefinitionStatement* globalNamespaceDefinitionStatement = namespaceDefinitionStatement->get_global_definition();
+#if 0
+          printf ("In SgScopeStatement::lookup_template_class_symbol(): name = %s this = %p = %s globalNamespaceDefinitionStatement = %p \n",n.str(),this,this->class_name().c_str(),globalNamespaceDefinitionStatement);
+#endif
+       // DQ (3/8/2017): We only want to use the name for looking of a template typedef (I think).
+       // return globalNamespaceDefinitionStatement->get_symbol_table()->find_template_typedef(n, templateParameterList, templateSpecializationArgumentList);
+          return globalNamespaceDefinitionStatement->get_symbol_table()->find_template_typedef(n);
+        }
+
+  // TV (7/18/2013): If this is a Global Scope then lookup the symbol in the project wide Global Scope
+     const SgGlobal * global_scope = isSgGlobal(this);
+     if (global_scope != NULL) {
+       SgProject * project = SageInterface::getProject(global_scope);
+       if (project != NULL) {
+         SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+         assert(globalScopeAcrossFiles != NULL);
+      // SgTemplateTypedefSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_template_typedef(n, templateParameterList, templateSpecializationArgumentList);
+         SgTemplateTypedefSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_template_typedef(n);
+         if (symbol != NULL) return symbol;
+       }
+     }
+
+  // return p_symbol_table->find_template_typedef(n, templateParameterList, templateSpecializationArgumentList);
+     return p_symbol_table->find_template_typedef(n);
+   }
+
+
 
 // DQ (8/22/2012): If we have template arguments then we have a chance to disambiguate SgTemplateInstantiationDecl IR nodes based on the
 // arguments which would otherwise require qulified names (which are difficult to robustly support using as the AST is being constructed).

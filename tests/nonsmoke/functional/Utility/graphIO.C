@@ -190,28 +190,31 @@ int main(int argc, char *argv[]) {
                "string, then deserializes the string to create a new graph, then tests that both graphs are identical.");
     Sawyer::CommandLine::ParserResult cmdline = parser.parse(argc, argv).apply();
     ASSERT_always_require2(cmdline.unreachedArgs().empty(), "invalid program arguments; see --help");
-    mlog[DEBUG].enable(showGraph);
+
+ // DQ (3/6/2017): Need explicit qualification to about mlog in rose namespace.
+ // mlog[DEBUG].enable(showGraph);
+    rose::Diagnostics::mlog[DEBUG].enable(showGraph);
 
     // Build and serialize the inital graph
-    mlog[INFO] <<"building the initial graph: " <<plural(nverts, "vertices", "vertex") <<" and " <<plural(nedges, "edges") <<"\n";
+    rose::Diagnostics::mlog[INFO] <<"building the initial graph: " <<plural(nverts, "vertices", "vertex") <<" and " <<plural(nedges, "edges") <<"\n";
     Graph g1;
     buildGraph(g1, nverts, nedges);
-    SAWYER_MESG(mlog[DEBUG]) <<"Original graph:\n" <<g1;
-    mlog[INFO] <<"serializing original graph\n";
+    SAWYER_MESG(rose::Diagnostics::mlog[DEBUG]) <<"Original graph:\n" <<g1;
+    rose::Diagnostics::mlog[INFO] <<"serializing original graph\n";
     std::ostringstream oss;
     GraphUtility::serialize(oss, g1);
-    mlog[INFO] <<"serialized to " <<plural(oss.str().size(), "bytes") <<"\n";
+    rose::Diagnostics::mlog[INFO] <<"serialized to " <<plural(oss.str().size(), "bytes") <<"\n";
 
     // De-serialize to create a second graph
-    mlog[INFO] <<"creating a new graph by de-serializing\n";
+    rose::Diagnostics::mlog[INFO] <<"creating a new graph by de-serializing\n";
     Graph g2;
     std::istringstream iss(oss.str());
     GraphUtility::deserialize(iss, g2);
     ASSERT_always_require2(g2.nVertices()==nverts, "wrong number of vertices deserialized");
     ASSERT_always_require2(g2.nEdges()==nedges, "wrong number of edges deserialized");
-    SAWYER_MESG(mlog[DEBUG]) <<"Reconstructed graph:\n" <<g2;
+    SAWYER_MESG(rose::Diagnostics::mlog[DEBUG]) <<"Reconstructed graph:\n" <<g2;
 
     // Check that both graphs are the same
-    mlog[INFO] <<"comparing new graph with original\n";
+    rose::Diagnostics::mlog[INFO] <<"comparing new graph with original\n";
     checkGraphs(g1, g2);
 }

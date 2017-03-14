@@ -31,7 +31,7 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 	      astLValueTests abstractMemoryObjectTests 
 
 # DQ (11/5/2016): Skip these tests when using the address sanitizer since they would 
-# take SO LONG (at least overr an hour for initial testing, I think).
+# take SO LONG (at least over an hour for initial testing, I think).
 if !ROSE_USE_SANITIZER
    SUBDIRS += ROSETTA
 endif
@@ -49,14 +49,20 @@ if !USING_XTENSA_BACKEND_COMPILER
 if !ROSE_USE_INSURE
    SUBDIRS += astInterfaceTests astInliningTests ompLoweringTests
 endif
+
+# DQ (3/11/2017): Later version compilers (at least 5.3 and greater have problems with some files in at least the astFileIOTests).
+# Note that later versions of compilers should be have ROSE configured using EDG 4.12 or later (EDG 4.9 is not good enough).
+if !ROSE_USING_GCC_VERSION_LATER_5_3
 # DQ (1/28/2014): Commented out astFileIO tests (now uncommented).
    SUBDIRS += astFileIOTests 
 if !ROSE_USE_INSURE
    SUBDIRS += programAnalysisTests astOutliningTests loopProcessingTests fileLocation_tests
 endif 
 endif
-endif
-endif
+
+endif # !USING_XTENSA_BACKEND_COMPILER
+endif # !USING_GCC_3_4_4_BACKEND_COMPILER
+endif # ROSE_USING_GCC_VERSION_4_8_CXX11
 
 else  # NOT USING_GNU_COMPILER
 # DQ (2/19/2017): Skipping testing with other non-GNU compilers for now.
@@ -64,6 +70,9 @@ else  # NOT USING_GNU_COMPILER
 endif # USING_GNU_COMPILER
 else  # NOT ROSE_USE_EDG_VERSION_4_9
 #	@echo "ROSE_USE_EDG_VERSION_4_9 == false"
+
+# DQ (3/11/2017): It is unclear if these tests are robust enough to work with EDG 4.12 (this needs to be investigated seperately).
+
 endif # ROSE_USE_EDG_VERSION_4_9
 
 if ROSE_BUILD_PHP_LANGUAGE_SUPPORT
