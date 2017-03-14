@@ -68,7 +68,7 @@ void NameQualificationTraversal::initDiagnostics()
      if (!initialized) 
         {
           initialized = true;
-          rose::Diagnostics::initAndRegister(mlog, "rose::NameQualificationTraversal");
+          rose::Diagnostics::initAndRegister(&mlog, "rose::NameQualificationTraversal");
         }
    }
 
@@ -4877,8 +4877,9 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                   }
                  else
                   {
+                 // DQ (3/5/2017): Converted to use message logging.
                  // DQ (9/17/2011): Added this case, print a warning and fix thiat after debugging the constant folding value elimination..
-                    printf ("WARNING: SgFunctionRefExp name qualification not handled for the case of currentStatement == NULL \n");
+                    mprintf ("WARNING: SgFunctionRefExp name qualification not handled for the case of currentStatement == NULL \n");
                   }
              }
             else
