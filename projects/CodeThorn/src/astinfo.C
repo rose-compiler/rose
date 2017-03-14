@@ -31,7 +31,7 @@ void printLineColInfo(SgNode* astRoot) {
   RoseAst ast(astRoot);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
     if(SgLocatedNode* loc=isSgLocatedNode(*i)) {
-      if(!isSgInitializedName(loc)&&!loc->isCompilerGenerated()&&!isSgGlobal(loc)) {
+      if(/*!isSgInitializedName(loc)&&*/!loc->isCompilerGenerated()&&!isSgGlobal(loc)) {
         LineColInfo li(loc);
         cout<<li.toString()<<": "<<(*i)->class_name()<<" #"<<(*i)->unparseToString()<<"#"<<endl;
       }

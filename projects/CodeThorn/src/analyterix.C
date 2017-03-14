@@ -147,7 +147,9 @@ void checkStaticArrayBounds(SgProject* root, SPRAY::IntervalAnalysis* intervalAn
             if(intervalPropertyState->variableExists(indexVarId)) {
               NumberIntervalLattice indexVariableInterval=intervalPropertyState->getVariable(indexVarId);
               if(indexVariableInterval.isTop()
+                 ||indexVariableInterval.isLowInf()
                  ||indexVariableInterval.getLow()<0
+                 ||indexVariableInterval.isHighInf()
                  ||indexVariableInterval.getHigh()>(arraySize-1)) {
                 cout<<"DETECTED: array out of bounds access: "<<lineCol
                     <<": "<<node->unparseToString()
@@ -161,15 +163,15 @@ void checkStaticArrayBounds(SgProject* root, SPRAY::IntervalAnalysis* intervalAn
                 issuesFound++;
               }
             } else if(intervalPropertyState->isBot()) {
-              cout<<"ANALYSIS: not reachable: "<<node->unparseToString()<<endl;
+              //cout<<"ANALYSIS: not reachable: "<<node->unparseToString()<<endl;
               // nothing to do
             } else {
               cout<<"Error: variable "<<indexVarId.toString()<<" does not exist in property state."<<endl;
               exit(1);
             }
           } else {
-            cerr<<"WARNING: Unsupported array access expression: ";
-            cerr<<SPRAY::AstTerm::astTermWithNullValuesToString(arrRefExp)<<endl;
+            //cerr<<"WARNING: Unsupported array access expression: ";
+            //cerr<<SPRAY::AstTerm::astTermWithNullValuesToString(arrRefExp)<<endl;
           }
         }
       }

@@ -38,6 +38,7 @@ class SingleEvalResult {
  */
 class SingleEvalResultConstInt {
  public:
+  void init(EState estate, ConstraintSet exprConstraints, AType::ConstIntLattice result);
   EState estate;
   ConstraintSet exprConstraints; // temporary during evaluation of expression
   AType::ConstIntLattice result;
@@ -53,6 +54,7 @@ class SingleEvalResultConstInt {
   * \author Markus Schordan
   * \date 2012.
  */
+//#define EXPR_VISITOR
 class ExprAnalyzer {
  public:
   ExprAnalyzer();
@@ -63,26 +65,127 @@ class ExprAnalyzer {
   //! true-case the other one representing the false-case.
   //! When the option useConstraints is set to false constraints are not used when determining the
   //! values of top-variables. 
-  list<SingleEvalResultConstInt> evalConstInt(SgNode* node,EState estate, bool useConstraints, bool safeConstraintPropagation);
-  //! returns true if node is a VarRefExp and sets varName=name, otherwise false and varName="$".
-  static bool variable(SgNode* node,VariableName& varName);
-  //! returns true if node is a VarRefExp and sets varId=id, otherwise false and varId=0.
-  bool variable(SgNode* node,VariableId& varId);
-
+  list<SingleEvalResultConstInt> evalConstInt(SgNode* node,EState estate, bool useConstraints);
   void setVariableIdMapping(VariableIdMapping* variableIdMapping) { _variableIdMapping=variableIdMapping; }
   void setSkipSelectedFunctionCalls(bool skip);
   bool getSkipSelectedFunctionCalls();
   void setSkipArrayAccesses(bool skip);
   bool getSkipArrayAccesses();
-  AType::ConstIntLattice constIntLatticeFromSgValueExp(SgValueExp* valueExp);
  private:
   //! This function turn a single result into a one-elment list with
   //! this one result. This function is used to combine cases where the result
   //! might be empty or have multiple results as well.
-  static list<SingleEvalResultConstInt> listify(SingleEvalResultConstInt res);
   VariableIdMapping* _variableIdMapping;
   bool _skipSelectedFunctionCalls;
   bool _skipArrayAccesses;
+ public:
+  //! returns true if node is a VarRefExp and sets varName=name, otherwise false and varName="$".
+  static bool variable(SgNode* node,VariableName& varName);
+  //! returns true if node is a VarRefExp and sets varId=id, otherwise false and varId=0.
+  bool variable(SgNode* node,VariableId& varId);
+ protected:
+  AType::ConstIntLattice constIntLatticeFromSgValueExp(SgValueExp* valueExp);
+  static list<SingleEvalResultConstInt> listify(SingleEvalResultConstInt res);
+
+  // evaluation state
+#ifdef EXPR_VISITOR
+  SingleEvalResultConstInt res;
+#endif
+  // evaluation functions
+  list<SingleEvalResultConstInt> evalConditionalExpr(SgConditionalExp* node, EState estate, bool useConstraints);
+
+  list<SingleEvalResultConstInt> evalEqualOp(SgEqualityOp* node,
+                                             SingleEvalResultConstInt lhsResult, 
+                                             SingleEvalResultConstInt rhsResult,
+                                             EState estate, bool useConstraints);
+  list<SingleEvalResultConstInt> evalNotEqualOp(SgNotEqualOp* node,
+                                             SingleEvalResultConstInt lhsResult, 
+                                             SingleEvalResultConstInt rhsResult,
+                                             EState estate, bool useConstraints);
+  list<SingleEvalResultConstInt> evalAndOp(SgAndOp* node,
+                                           SingleEvalResultConstInt lhsResult, 
+                                           SingleEvalResultConstInt rhsResult,
+                                           EState estate, bool useConstraints);
+  list<SingleEvalResultConstInt> evalOrOp(SgOrOp* node,
+                                          SingleEvalResultConstInt lhsResult, 
+                                          SingleEvalResultConstInt rhsResult,
+                                          EState estate, bool useConstraints);
+  list<SingleEvalResultConstInt> evalAddOp(SgAddOp* node,
+                                           SingleEvalResultConstInt lhsResult, 
+                                           SingleEvalResultConstInt rhsResult,
+                                           EState estate, bool useConstraints);
+  list<SingleEvalResultConstInt> evalSubOp(SgSubtractOp* node,
+                                           SingleEvalResultConstInt lhsResult, 
+                                           SingleEvalResultConstInt rhsResult,
+                                           EState estate, bool useConstraints);
+  list<SingleEvalResultConstInt> evalMulOp(SgMultiplyOp* node,
+                                           SingleEvalResultConstInt lhsResult, 
+                                           SingleEvalResultConstInt rhsResult,
+                                           EState estate, bool useConstraints);
+  list<SingleEvalResultConstInt> evalDivOp(SgDivideOp* node,
+                                           SingleEvalResultConstInt lhsResult, 
+                                           SingleEvalResultConstInt rhsResult,
+                                           EState estate, bool useConstraints);
+  list<SingleEvalResultConstInt> evalModOp(SgModOp* node,
+                                           SingleEvalResultConstInt lhsResult, 
+                                           SingleEvalResultConstInt rhsResult,
+                                           EState estate, bool useConstraints);
+  list<SingleEvalResultConstInt> evalBitwiseAndOp(SgBitAndOp* node,
+                                           SingleEvalResultConstInt lhsResult, 
+                                           SingleEvalResultConstInt rhsResult,
+                                           EState estate, bool useConstraints);
+  list<SingleEvalResultConstInt> evalBitwiseOrOp(SgBitOrOp* node,
+                                           SingleEvalResultConstInt lhsResult, 
+                                           SingleEvalResultConstInt rhsResult,
+                                           EState estate, bool useConstraints);
+  list<SingleEvalResultConstInt> evalBitwiseXorOp(SgBitXorOp* node,
+                                           SingleEvalResultConstInt lhsResult, 
+                                           SingleEvalResultConstInt rhsResult,
+                                           EState estate, bool useConstraints);
+
+  list<SingleEvalResultConstInt> evalGreaterOrEqualOp(SgGreaterOrEqualOp* node,
+                                           SingleEvalResultConstInt lhsResult, 
+                                           SingleEvalResultConstInt rhsResult,
+                                           EState estate, bool useConstraints);
+  list<SingleEvalResultConstInt> evalGreaterThanOp(SgGreaterThanOp* node,
+                                           SingleEvalResultConstInt lhsResult, 
+                                           SingleEvalResultConstInt rhsResult,
+                                           EState estate, bool useConstraints);
+  list<SingleEvalResultConstInt> evalLessOrEqualOp(SgLessOrEqualOp* node,
+                                           SingleEvalResultConstInt lhsResult, 
+                                           SingleEvalResultConstInt rhsResult,
+                                           EState estate, bool useConstraints);
+  list<SingleEvalResultConstInt> evalLessThanOp(SgLessThanOp* node,
+                                           SingleEvalResultConstInt lhsResult, 
+                                           SingleEvalResultConstInt rhsResult,
+                                           EState estate, bool useConstraints);
+
+  list<SingleEvalResultConstInt> evalArrayReferenceOp(SgPntrArrRefExp* node,
+                                                    SingleEvalResultConstInt lhsResult, 
+                                                    SingleEvalResultConstInt rhsResult,
+                                                    EState estate, bool useConstraints);
+  list<SingleEvalResultConstInt> evalNotOp(SgNotOp* node, 
+                                           SingleEvalResultConstInt operandResult, 
+                                           EState estate, bool useConstraints);
+  list<SingleEvalResultConstInt> evalUnaryMinusOp(SgMinusOp* node, 
+                                                  SingleEvalResultConstInt operandResult, 
+                                                  EState estate, bool useConstraints);
+  list<SingleEvalResultConstInt> evalCastOp(SgCastExp* node, 
+                                            SingleEvalResultConstInt operandResult, 
+                                            EState estate, bool useConstraints);
+  list<SingleEvalResultConstInt> evalBitwiseComplementOp(SgBitComplementOp* node, 
+                                              SingleEvalResultConstInt operandResult, 
+                                              EState estate, bool useConstraints);
+
+  // use of Variable as rvalue (not as lvalue; lvalues are handled in the transfer function of assignments)
+  list<SingleEvalResultConstInt> evalRValueVarExp(SgVarRefExp* node, EState estate, bool useConstraints);
+  list<SingleEvalResultConstInt> evalValueExp(SgValueExp* node, EState estate, bool useConstraints);
+
+  /* should never occur in a normalized program
+     if it does occur functions have to be in the list of selected function calls to be skipped (=ignored), otherwise
+     an error is reported. */
+  list<SingleEvalResultConstInt> evalFunctionCall(SgFunctionCallExp* node, EState estate, bool useConstraints);
+
 };
 
 } // end of namespace CodeThorn
