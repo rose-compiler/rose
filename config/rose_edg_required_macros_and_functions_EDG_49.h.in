@@ -326,8 +326,11 @@ __builtin_va_list & __builtin_next_arg(char const *format);
 #endif
 
 
+// DQ (3/12/2017): Re-comment these out for EDG 4.9 (required for Clang C++ but not C tests).
 // DQ (12/16/2016): Comment these out for EDG 4.9.
-#if defined(__EDG_VERSION__) && __EDG_VERSION__ >= 409
+// #if defined(__EDG_VERSION__) && __EDG_VERSION__ >= 409
+// #if defined(__EDG_VERSION__) && (__EDG_VERSION__ > 409 || (__EDG_VERSION__ == 409 && defined (__clang__) && defined(__cplusplus)))
+#if defined(__EDG_VERSION__) && (__EDG_VERSION__ > 409 || (__EDG_VERSION__ == 409 && defined(__cplusplus)))
 
 /* Note that might not be using our builtin function mechanism for EDG 4.12 and later (at least while we sort it out) */
 // $REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS
