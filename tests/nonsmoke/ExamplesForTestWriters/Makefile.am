@@ -117,11 +117,12 @@ noInputs.passed: noInputs
 # specimens can be easily changed, although in such a small example it might be clearer to list all three tests
 # explicitly.
 
-# DQ (3/12/2017): I am not clear why this fails for Clang (independent of ROSE).
-if !USING_CLANG_COMPILER
+# DQ (3/12/2017): Interestingly, this test will detect if the CXX variable was specficied with "clang" or "clang++".
+# With "clang++" specified on the configure command-line for ROSE this works fine.
+# if !USING_CLANG_COMPILER
 noinst_PROGRAMS += parser
 parser_SOURCES = parser.C
-endif
+# endif
 
 # The explicit list of specimens. If you have specimens coming from multiple specimen directories you'll have to
 # include the directory name and make special provisions below to prevent conflicts in the test target names.

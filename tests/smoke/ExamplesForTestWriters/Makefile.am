@@ -96,7 +96,7 @@ if USING_CLANG_COMPILER
 	@echo "USING_CLANG_COMPILER == true"
 	@echo "ExamplesForTestWriters tests using EDG 4.9: Clang backend compiler using EDG 4.12 frontend."
 # DQ (2/28/2017): Skip these files with Clang for now and come back to them later (when we understand the limits of portability better).
-#	@$(MAKE) $(TEST_TARGETS)
+	@$(MAKE) $(TEST_TARGETS)
 else # NOT USING_CLANG_COMPILER
 	@echo "USING_CLANG_COMPILER == false"
 if USING_INTEL_COMPILER
