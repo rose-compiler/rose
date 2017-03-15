@@ -343,6 +343,8 @@ public:
     
     virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor&,
                                                   const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr peekRegister(const RegisterDescriptor&,
+                                                  const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
     virtual void writeRegister(const RegisterDescriptor&, const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr,
                                                 const BaseSemantics::SValuePtr &dflt,

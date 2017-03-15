@@ -42,3 +42,20 @@ delete from attachments where test_id in (select test_id from bad_tests);
 delete from test_results where id in (select test_id from bad_tests);
 
 drop table bad_tests;
+
+-- ########################################################################################################################
+-- First and last date that each error was reported
+-- ########################################################################################################################
+
+create table stats as select to_timestamp(min(rose_date)) as first_date, to_timestamp(max(rose_date)) as last_date, count(*) as occurrences, first_error from test_results group by first_error order by first_error;
+
+-- List of all distinct error messages
+select * from stats order by first_error;
+
+-- Number of errors first encountered per date
+select first_date, count(*) as nerrors from stats group by first_date order by first_date;
+
+-- Number of errors last encountered per date
+select last_date, count(*) as nerrors from stats group by last_date order by last_date;
+
+drop table stats;
