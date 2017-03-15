@@ -27,5 +27,62 @@ project ROSE_ASIS is
          for Main use ("asis_application_driver_1.adb");
    end case;
 
+   package Compiler is
+
+      case Library_Type is
+
+         when "static" =>
+
+            case Asis_Build is
+
+               when "default" =>
+                  for Default_Switches ("ada") use ("-gnat12", "-gnata", "-g");
+            end case;
+
+         when "relocatable" =>
+
+         when "static-pic" =>
+
+      end case;
+   end Compiler;
+
+   package Linker is
+
+      case Library_Type is
+
+         when "static" =>
+
+            case Asis_Build is
+
+               when "default" =>
+                  for Default_Switches ("ada") use ("-g");
+            end case;
+
+         when "relocatable" =>
+
+         when "static-pic" =>
+
+      end case;
+   end Linker;
+
+   package Ide is
+
+      case Library_Type is
+
+         when "static" =>
+
+            case Asis_Build is
+
+               when "default" =>
+                  for Vcs_Kind use "Git";
+            end case;
+
+         when "relocatable" =>
+
+         when "static-pic" =>
+
+      end case;
+   end Ide;
+
 end ROSE_ASIS;
 

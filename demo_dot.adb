@@ -1,5 +1,5 @@
 with Ada.Text_IO;
-with Dot.Graph;
+with Dot;
 
 procedure Demo_Dot is
 
@@ -12,52 +12,69 @@ procedure Demo_Dot is
       ATI.New_Line;
    end;
 
+   procedure Demo_Default_Graph is
+      Graph : Dot.Graph.Class;
+   begin
+      ATI.Put_Line ("Default Graph:");
+      Print (Graph);
+   end;
+
    procedure Demo_Graph is
-      Graph : Dot.Graph.Class (Digraph => False);
+      Graph : Dot.Graph.Class (Digraph => False,
+                               Strict => False);
    begin
       ATI.Put_Line ("Graph:");
-      Graph.Strict := False;
       Print (Graph);
    end;
 
    procedure Demo_Digraph is
-      Graph : Dot.Graph.Class (Digraph => True);
+      Graph : Dot.Graph.Class (Digraph => True,
+                               Strict => False);
    begin
       ATI.Put_Line ("Digraph:");
-      Graph.Strict := False;
       Print (Graph);
    end;
 
    procedure Demo_Strict_Graph is
-      Graph : Dot.Graph.Class (Digraph => False);
+      Graph : Dot.Graph.Class (Digraph => False,
+                               Strict => True);
    begin
       ATI.Put_Line ("Strict Graph:");
-      Graph.Strict := True;
       Print (Graph);
    end;
 
    procedure Demo_Strict_Digraph is
-      Graph : Dot.Graph.Class (Digraph => True);
+      Graph : Dot.Graph.Class (Digraph => True,
+                               Strict => True);
    begin
       ATI.Put_Line ("Strict Digraph:");
-      Graph.Strict := True;
       Print (Graph);
    end;
 
    procedure Demo_ID is
-      Graph : Dot.Graph.Class (Digraph => False);
+      Graph : Dot.Graph.Class (Digraph => True,
+                               Strict => False);
    begin
       ATI.Put_Line ("Graph with ID:");
-      Graph.Strict := False;
       Graph.ID := Dot.To_ID_Type ("Some_ID");
       Print (Graph);
    end;
 
-   Graph : Dot.Graph.Class (Digraph => True);
+   procedure Demo_Nodes is
+      Graph : Dot.Graph.Class (Digraph => False,
+                               Strict => False);
+   begin
+      ATI.Put_Line ("Graph with nodes:");
+--        Graph.Add_Node (Node => Node_Info);
+      Print (Graph);
+   end;
+
 begin
    Demo_Graph;
    Demo_Digraph;
    Demo_Strict_Graph;
    Demo_Strict_Digraph;
    Demo_ID;
+
+   Demo_Nodes;
 end Demo_Dot;

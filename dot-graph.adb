@@ -13,7 +13,7 @@ package body Dot.Graph is
       else
          Put_Spaced ("graph");
       end if;
-      Put (This.ID);
+      Put_Spaced (To_String(This.ID));
       Put ("{");
       New_Line;
       Put ("}");

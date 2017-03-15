@@ -1,15 +1,12 @@
 package Dot.Graph is
 
-   -- Using the exact spellings from the grammar for the record components
-   -- instead of spelling things out:
-   type Class (Digraph : Boolean := True) is tagged limited
+   type Class (Digraph : Boolean := True;
+               Strict  : Boolean := True) is tagged limited
       record
-         Strict : Boolean := True;
-         ID     : ID_Type; -- Initialized
---           stmt_list : stmt_list_type;
+         ID        : ID_Type; -- Initialized
+         Stmt_List : Stmt_List_Type;
       end record;
 
    procedure Print (This : in Class);
-
 
 end Dot.Graph;
