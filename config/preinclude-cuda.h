@@ -809,3 +809,19 @@ cudaError_t cudaDeviceSynchronize();
 #if defined(__cplusplus)
 }
 #endif /* __cplusplus */
+
+/* DQ (3/1/2017): Moved this to be outside of the extern "C" declarations above (required to 
+   support possible multiple overloaded declarations of __builtin_bswap32).
+   DQ (2/28/2017): Added builtin function to support CUDA code (this declaration is required 
+   to compile cu test file test_2011_13.cu on gcc-4.8-c++11 ubuntu1404 platform).
+ */
+
+// int __builtin_bswap32 (int x);
+// int32_t __builtin_bswap32 (int32_t x);
+#ifdef __INT32_TYPE__
+__INT32_TYPE__ __builtin_bswap32 (__INT32_TYPE__ x);
+#else
+int __builtin_bswap32 (int x);
+#endif
+
+
