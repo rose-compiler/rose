@@ -441,6 +441,17 @@ RiscOperators::readRegister(const RegisterDescriptor &reg, const BaseSemantics::
     return result;
 }
 
+BaseSemantics::SValuePtr
+RiscOperators::peekRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &dflt) {
+    TemporarilyDeactivate deactivate(this, innerDomainId_);
+    MultiSemantics::SValuePtr result = MultiSemantics::SValue::promote(Super::peekRegister(reg, dflt));
+    BaseSemantics::RiscOperatorsPtr innerDomain = get_subdomain(innerDomainId_);
+    SValuePtr value = SValue::promote(innerDomain->protoval()->undefined_(reg.get_nbits()));
+    value->insert(AbstractLocation(reg, regdict_));
+    result->set_subvalue(innerDomainId_, value);
+    return result;
+}
+
 void
 RiscOperators::writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &a_) {
     TemporarilyDeactivate deactivate(this, innerDomainId_);

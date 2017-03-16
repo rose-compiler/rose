@@ -18,7 +18,7 @@ typedef InstructionSemantics2::SymbolicSemantics::SValue SValue;
 typedef InstructionSemantics2::SymbolicSemantics::SValuePtr SValuePtr;
 
 typedef InstructionSemantics2::BaseSemantics::RegisterStateGeneric RegisterState;
-typedef InstructionSemantics2::BaseSemantics::RegisterStateGenericPtr RegisterStateGenericPtr;
+typedef InstructionSemantics2::BaseSemantics::RegisterStateGenericPtr RegisterStatePtr;
 
 typedef InstructionSemantics2::BaseSemantics::State State;
 typedef InstructionSemantics2::BaseSemantics::StatePtr StatePtr;

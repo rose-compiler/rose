@@ -3119,17 +3119,6 @@ void Grammar::setUpBinaryInstructions() {
     DECLARE_LEAF_CLASS(AsmFunction);
     IS_SERIALIZABLE(AsmFunction);
 
-    DECLARE_HEADERS(AsmFunction);
-#if defined(SgAsmFunction_HEADERS) || defined(DOCUMENTATION)
-    namespace rose {
-    namespace BinaryAnalysis {
-    namespace CallingConvention {
-    class Definition;
-    } // namespace
-    } // namespace
-    } // namespace
-#endif // SgAsmFunction_HEADERS
-
 #ifdef DOCUMENTATION
     /** Represents a synthesized function.
      *
@@ -3298,17 +3287,17 @@ void Grammar::setUpBinaryInstructions() {
 #ifdef DOCUMENTATION
         /** Property: Primary calling convention.
          *
-         *  This is the primary calling convention for this function. When the semantics of the function match multiple
-         *  calling convention definitions, this property holds the "best" one for some definition of "best". It is also
-         *  possible for the semantics to not match any calling convention definition in which case this property is null. It
-         *  is also null if the calling convention analysis was not performed.
+         *  This is the name of the primary calling convention for this function. When the semantics of the function match
+         *  multiple calling convention definitions, this property holds the "best" one for some definition of "best". It is
+         *  also possible for the semantics to not match any calling convention definition in which case this property is
+         *  empty. It is also empty if the calling convention analysis was not performed.
          *
          * @{ */
-        const rose::BinaryAnalysis::CallingConvention::Definition* get_callingConvention() const;
-        void set_callingConvention(const rose::BinaryAnalysis::CallingConventionD::Definition*);
+        const std::string& get_callingConvention() const;
+        void set_callingConvention(const std::string&);
         /** @} */
 #else
-        AsmFunction.setDataPrototype("const rose::BinaryAnalysis::CallingConvention::Definition*", "callingConvention", "=NULL",
+        AsmFunction.setDataPrototype("std::string", "callingConvention", "",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
