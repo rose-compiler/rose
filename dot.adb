@@ -3,20 +3,6 @@ with Ada.Characters.Handling;
 
 package body Dot is
 
-   -- Output support:
-
-   ------------
-   -- EXPORTED:
-   ------------
-   procedure Put_Spaced (Item : in String) is
-   begin
-      if Item'Length > 0 then
-         Put (Item & " ");
-      end if;
-   end Put_Spaced;
-
-   -- END Output support
-
    function Case_Insensitive_Equals (L, R : in String)
                                      return Boolean is
    begin
@@ -42,8 +28,220 @@ package body Dot is
         Item = "strict";
    end Is_Reserved_Word;
 
+   package body Graph is
+
+      ------------
+      -- EXPORTED
+      ------------
+      procedure Print (This : in Class) is
+      begin
+         if This.Strict then
+            Indented.Put ("strict ");
+         end if;
+         if This.Digraph then
+            Indented.Put ("digraph ");
+         else
+            Indented.Put ("graph ");
+         end if;
+         Indented.Put_Spaced (To_String(This.ID));
+         This.Stmt_List.Print;
+      end print;
+
+   end Graph;
+
+   package body Stmt is
+
+      ------------
+      -- EXPORTED
+      ------------
+      procedure Print (This_List : in List) is
+      begin
+         Indented.Put_Line ("{");
+         Indented.Indent;
+         for This of This_List loop
+            This.Print;
+         end loop;
+         Indented.Dedent;
+         Indented.Put_Line ("}");
+      end Print;
+
+   end Stmt;
+
+   package body Assignment is
+      ------------
+      -- EXPORTED
+      ------------
+      procedure Print (This : in Class) is begin
+         Print (This.L);
+         Indented.Put (" = ");
+         Print (This.R);
+      end Print;
+
+      ------------
+      -- EXPORTED
+      ------------
+      procedure Print (This : in List) is
+      begin
+         Indented.Put_Line ("[");
+         Indented.Indent;
+         for Item of This loop
+            Item.Print;
+            Indented.New_Line;
+         end loop;
+         Indented.Dedent;
+         Indented.Put_Line ("]");
+      end Print;
+   end Assignment;
+
+   package body Attrs is
+      ------------
+      -- EXPORTED
+      ------------
+      procedure Print (This : in List) is
+      begin
+         for Item of This loop
+            Item.Print;
+         end loop;
+      end Print;
+   end Attrs;
+
+   package body Attr_Stmt is
+      ------------
+      -- EXPORTED
+      ------------
+      procedure Print (This : in Class) is
+      begin
+         Indented.Put_Line ("<attr stmt>");
+      end Print;
+   end Attr_Stmt;
+
+   package body Node_ID is
+
+      ------------
+      -- EXPORTED
+      ------------
+      procedure Print (This : in Port_Class) is
+      begin
+         if This.Has_ID then
+            Indented.Put (":");
+            Print (This.ID);
+         end if;
+         if This.Has_Compass_Pt then
+            Indented.Put (":");
+            Indented.Put (To_String (This.Compass_Pt));
+         end if;
+      end Print;
+
+      ------------
+      -- EXPORTED
+      ------------
+      procedure Print (This : in Class) is
+      begin
+         Print (This.ID);
+         This.Port.Print;
+      end Print;
+
+   end Node_ID;
+
+   package body Node_Stmt is
+      ------------
+      -- EXPORTED
+      ------------
+      procedure Print (This : in Class) is
+      begin
+         This.Node_Id.Print;
+         Indented.Put (" ");
+         This.Attrs.Print;
+      end Print;
+
+   end Node_Stmt;
+
+   package body Edge_Stmt is
+
+      ------------
+      -- EXPORTED
+      ------------
+      procedure Print (This : in Class) is
+      begin
+         Indented.Put_Line ("<edge stmt>");
+      end Print;
+
+   end Edge_Stmt;
+
+   -----------
+   -- PRIVATE:
+   -----------
+   package body Indented is
+
+      Current_Indent : Natural := 0;
+      Indent_Needed : Boolean := True;
+
+      procedure Put_Indent is
+      begin
+         if Indent_Needed then
+            ATI.Put ((1 .. Current_Indent * 2 => ' '));
+            Indent_Needed := False;
+         end if;
+      end Put_Indent;
+
+      ------------
+      -- EXPORTED
+      ------------
+      procedure Indent is
+      begin
+         Current_Indent := Current_Indent + 1;
+      end Indent;
+
+      ------------
+      -- EXPORTED
+      ------------
+      procedure Dedent is
+      begin
+         Current_Indent := Current_Indent - 1;
+      end Dedent;
+
+      ------------
+      -- EXPORTED
+      ------------
+      procedure Put (Item : in String) is
+      begin
+         Put_Indent;
+         ATI.Put (Item);
+      end Put;
+
+      ------------
+      -- EXPORTED
+      ------------
+      procedure Put_Line (Item : in String) is
+      begin
+         Put_Indent;
+         ATI.Put_Line (Item);
+         Indent_Needed := True;
+      end Put_Line;
+
+      ------------
+      -- EXPORTED
+      ------------
+      procedure New_Line is
+      begin
+         ATI.New_Line;
+         Indent_Needed := True;
+      end New_Line;
+
+      ------------
+      -- EXPORTED
+      ------------
+      procedure Put_Spaced (Item : in String) is
+      begin
+         if Item'Length > 0 then
+            Put (Item & " ");
+         end if;
+      end Put_Spaced;
+
+   end Indented;
+
    ------------
-   -- EXPORTED:
+   -- PRIVATE:
    ------------
    function To_String (Item : in ID_Type)
                        return String is
@@ -58,7 +256,7 @@ package body Dot is
    end To_String;
 
    ------------
-   -- EXPORTED:
+   -- PRIVATE:
    ------------
    function To_String (Item : in Compass_Pt_Type)
                        return String is
@@ -71,28 +269,12 @@ package body Dot is
       end case;
    end To_String;
 
-   package body Graph is
-
-      ------------
-      -- EXPORTED
-      ------------
-      procedure Print (This : in Class) is
-      begin
-         if This.Strict then
-            Put_Spaced ("strict");
-         end if;
-         if This.Digraph then
-            Put_Spaced ("digraph");
-         else
-            Put_Spaced ("graph");
-         end if;
-         Put_Spaced (To_String(This.ID));
-         Put ("{");
-         New_Line;
-         Put ("}");
-         New_Line;
-      end print;
-
-   end Graph;
+   ------------
+   -- PRIVATE:
+   ------------
+   procedure Print (This : in ID_Type) is
+   begin
+      Indented.Put (To_String(This));
+   end Print;
 
 end Dot;

@@ -63,11 +63,30 @@ procedure Demo_Dot is
 
    procedure Demo_Nodes is
       Graph : Dot.Graph.Class;
+      Node_Stmt_1 : Dot.Node_Stmt.Class; -- Initialized
+      Node_Stmt_2 : Dot.Node_Stmt.Class; -- Initialized
+      Assignment_List_1 : Dot.Assignment.List; -- Initialized
+      Assignment_List_2 : Dot.Assignment.List; -- Initialized
    begin
       Graph.Digraph := False;
       Graph.Strict := False;
---        Graph.Add_Node (Node => Node_Info);
-      Print (Graph, "Graph with nodes");
+
+      Node_Stmt_1.Node_ID.ID := Dot.To_ID_Type ("minimal_node");
+      Graph.Stmt_List.Append (new Dot.Node_Stmt.Class'(Node_Stmt_1));
+
+      Node_Stmt_2.Node_ID.ID := Dot.To_ID_Type ("node_with_attrs");
+      Assignment_List_1.Append ((L => Dot.To_ID_Type ("Today"),
+                                 R => Dot.To_ID_Type ("Thursday")));
+      Assignment_List_1.Append ((L => Dot.To_ID_Type ("Tomorrow"),
+                                 R => Dot.To_ID_Type ("Friday")));
+      Node_Stmt_2.Attrs.Append (Assignment_List_1);
+      Assignment_List_2.Append ((L => Dot.To_ID_Type ("Now"),
+                                 R => Dot.To_ID_Type ("Day")));
+      Assignment_List_2.Append ((L => Dot.To_ID_Type ("Later"),
+                                 R => Dot.To_ID_Type ("Night")));
+      Node_Stmt_2.Attrs.Append (Assignment_List_2);
+      Graph.Stmt_List.Append (new Dot.Node_Stmt.Class'(Node_Stmt_2));
+      Print (Graph, "Graph with " & Graph.Stmt_List.Length'Image & " nodes");
    end;
 
 begin

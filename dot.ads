@@ -57,17 +57,20 @@ package Dot is
    function To_ID_Type (Item : in String) return ID_Type
                         renames To_Unbounded_String;
 
-
    -----------------------------------------------------------------------------
    package Stmt is
 
       type Class is abstract tagged null record;
       type Access_All_Class is access all Class'Class;
 
-      package Stmt_Lists is new
+      procedure Print (This : in Class) is abstract;
+
+      package Lists is new
         Ada.Containers.Doubly_Linked_Lists (Access_All_Class);
       -- Make primitive operations like "=" visible:
-      type List is new Stmt_Lists.List with null record;
+      type List is new Lists.List with null record;
+
+      procedure Print (This_List : in List);
 
    end Stmt;
    -----------------------------------------------------------------------------
@@ -81,27 +84,56 @@ package Dot is
    -----------------------------------------------------------------------------
 
    -----------------------------------------------------------------------------
+   -- Zero or more assignments:
+   package Assignment is
+
+      type Class is tagged -- Initialized
+      record
+         L : ID_Type; -- Initialized
+         R : ID_Type; -- Initialized
+      end record;
+
+      procedure Print (This : in Class);
+
+      package Lists is new
+        Ada.Containers.Doubly_Linked_Lists (Class);
+      -- Make primitive operations like "=" visible:
+      type List is new Lists.List with null record;
+
+      procedure Print (This : in List);
+
+      Empty_List : constant List := List'(Lists.Empty_List with null record);
+
+   end Assignment;
+   -----------------------------------------------------------------------------
+
+   -----------------------------------------------------------------------------
+   -- Zero or more bracketed lists of assignments:
+   package Attrs is
+      package Lists is new
+        Ada.Containers.Doubly_Linked_Lists (Element_Type => Assignment.List,
+                                            "="          => Assignment."=");
+      -- Make primitive operations like "=" visible:
+      type List is new Lists.List with null record;
+
+      procedure Print (This : in List);
+
+      Empty_List : constant List := List'(Lists.Empty_List with null record);
+
+   end Attrs;
+   -----------------------------------------------------------------------------
+
+   -----------------------------------------------------------------------------
    package Attr_Stmt is
-
-      -- Zero or more assignments:
-      package A_Lists is new
-        Ada.Containers.Doubly_Linked_Lists (Element_Type => Assignment_Class,
-                                            "="          => "=");
-      -- Make primitive operations like "=" visible:
-      type A_List is new A_Lists.List with null record;
-
-      -- Zero or more bracketed lists of assignments:
-      package Attr_Lists is new
-        Ada.Containers.Doubly_Linked_Lists (A_List);
-      -- Make primitive operations like "=" visible:
-      type Attr_List is new Attr_Lists.List with null record;
 
       type Kind_Type is (Graph, Node, Edge);
 
       type Class is new Stmt.Class with record -- Initialized
          Kind  : Kind_Type := Node;
-         Attrs : Attr_List; -- Initialized
+         Attrs : Dot.Attrs.List; -- Initialized
       end record;
+
+      procedure Print (This : in Class);
 
    end Attr_Stmt;
    -----------------------------------------------------------------------------
@@ -109,21 +141,41 @@ package Dot is
    -----------------------------------------------------------------------------
    package Node_ID is
 
-      type Port_Class_Kind is (Has_ID, Has_Compass_Pt, Has_Both);
-
       type Port_Class is tagged record -- Initialized
-         Kind       : Port_Class_Kind := Has_ID;
-         ID         : ID_Type; -- Initialized
-         Compass_Pt : Compass_Pt_Type := C;
+         Has_ID         : Boolean := False;
+         ID             : ID_Type; -- Initialized
+         Has_Compass_Pt : Boolean := False;
+         Compass_Pt     : Compass_Pt_Type := C;
       end record;
+
+      procedure Print (This : in Port_Class);
+
+      Null_Port_Class : constant Port_Class;
 
       type Class is tagged record -- Initialized
          ID       : ID_Type; -- Initialized
-         Has_Port : Boolean := False;
          Port     : Port_Class; -- Initialized
       end record;
 
+      procedure Print (This : in Class);
+
+   private
+      Default_Port_Class : Port_Class;
+      Null_Port_Class : constant Port_Class := Default_Port_Class;
    end Node_ID;
+   -----------------------------------------------------------------------------
+
+   -----------------------------------------------------------------------------
+   package Node_Stmt is
+
+      type Class is new Stmt.Class with record -- Initialized
+         Node_ID : Dot.Node_ID.Class; -- Initialized
+         Attrs   : Dot.Attrs.List; -- Initialized
+      end record;
+
+      procedure Print (This : in Class);
+
+   end Node_Stmt;
    -----------------------------------------------------------------------------
 
    -----------------------------------------------------------------------------
@@ -135,14 +187,19 @@ package Dot is
    -----------------------------------------------------------------------------
 
    -----------------------------------------------------------------------------
-   type Edge_Stmt_Kind_Type is (Node, Subgraph);
+   package Edge_Stmt is
+      type Kind_Type is (Node, Subgraph);
 
-   type Edge_Stmt_Class is new Stmt.Class with record -- Initialized
-      Attrs    : Attr_Stmt.Attr_List; -- Initialized
-      Kind     : Edge_Stmt_Kind_Type := Node;
-      Node_ID  : Dot.Node_ID.Class; -- Initialized
-      Subgraph : Subgraph_Class; -- Initialized
-   end record;
+      type Class is new Stmt.Class with record -- Initialized
+         Attrs    : Dot.Attrs.List; -- Initialized
+         Kind     : Kind_Type := Node;
+         Node_ID  : Dot.Node_ID.Class; -- Initialized
+         Subgraph : Subgraph_Class; -- Initialized
+      end record;
+
+      procedure Print (This : in Class);
+
+   end Edge_Stmt;
    -----------------------------------------------------------------------------
 
 
@@ -169,11 +226,16 @@ private
    -----------------------------------------------------------------------------
    -- Output support:
 
-   procedure Put (Item : in String) renames ATI.Put;
-   procedure New_Line (Spacing : ATI.Positive_Count := 1) renames ATI.New_Line;
+   package Indented is
+      procedure Indent;
+      procedure Dedent;
+      procedure Put (Item : in String);
+      procedure Put_Line (Item : in String);
+      procedure New_Line;
 
-   -- Puts nothing if Item is empty, else puts it with a trailing space:
-   procedure Put_Spaced (Item : in String);
+      -- Puts nothing if Item is empty, else puts it with a trailing space:
+      procedure Put_Spaced (Item : in String);
+   end Indented;
 
    -- END Output support
    -----------------------------------------------------------------------------
@@ -186,6 +248,8 @@ private
    -- string if the ID is empty:
    function To_String (Item : in ID_Type)
                        return String;
+
+   procedure Print (This : in ID_Type);
 
 
 end Dot;
