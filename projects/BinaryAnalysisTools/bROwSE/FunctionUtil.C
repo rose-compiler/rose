@@ -391,19 +391,19 @@ functionDataFlow(P2::Partitioner &partitioner, const P2::Function::Ptr &function
 }
 
 // Retrieve calling convention analysis on a function.
-const rose::BinaryAnalysis::CallingConvention::Definition*
+rose::BinaryAnalysis::CallingConvention::Definition::Ptr
 functionCallingConvention(P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
     using namespace rose::BinaryAnalysis;
 
     if (function==NULL || !function->callingConventionAnalysis().hasResults())
         return NULL;                                    // analysis was never run and is too expensive to run here.
 
-    const CallingConvention::Definition *ccdef = NULL;
+    CallingConvention::Definition::Ptr ccdef;
     if (NULL == (ccdef = function->attributeOrElse(ATTR_CallConvDef, ccdef))) {
         const CallingConvention::Dictionary &archConventions = partitioner.instructionProvider().callingConventions();
         CallingConvention::Dictionary conventions = function->callingConventionAnalysis().match(archConventions);
         if (!conventions.empty()) {
-            ccdef = new CallingConvention::Definition(conventions.front());
+            ccdef = conventions.front();
             function->setAttribute(ATTR_CallConvDef, ccdef);
         }
     }
