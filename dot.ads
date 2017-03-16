@@ -147,7 +147,6 @@ package Dot is
 
 
    -----------------------------------------------------------------------------
-
    package Graph is
 
       type Class is tagged
@@ -161,11 +160,13 @@ package Dot is
       procedure Print (This : in Class);
 
    end Graph;
+   -----------------------------------------------------------------------------
 
 private
    package ASU renames Ada.Strings.Unbounded;
    package ATI renames Ada.Text_IO;
 
+   -----------------------------------------------------------------------------
    -- Output support:
 
    procedure Put (Item : in String) renames ATI.Put;
@@ -175,16 +176,11 @@ private
    procedure Put_Spaced (Item : in String);
 
    -- END Output support
+   -----------------------------------------------------------------------------
 
 
    function To_String (Item : in Compass_Pt_Type)
                        return String;
-
-   -- We are about to override the inherited To_String, but need to call it in
-   -- the implementatiuon, so:
-   function Inherited_To_String (Item : in ID_Type)
-                                 return String
-                                 renames To_String;
 
    -- Returns a quoted string (in case ID is a reserved word), or an empty
    -- string if the ID is empty:

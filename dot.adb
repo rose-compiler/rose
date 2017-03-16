@@ -1,3 +1,6 @@
+--with Ada.Strings.Mapping;
+with Ada.Characters.Handling;
+
 package body Dot is
 
    -- Output support:
@@ -14,18 +17,45 @@ package body Dot is
 
    -- END Output support
 
+   function Case_Insensitive_Equals (L, R : in String)
+                                     return Boolean is
+   begin
+      -- Prevents recursion in case this function is named "=":
+      return Standard."=" (Ada.Characters.Handling.To_Lower (L),
+                           Ada.Characters.Handling.To_Lower (R));
+   end Case_Insensitive_Equals;
+
+
+   function Is_Reserved_Word (Item : in String)
+                              return boolean
+   is
+      function "=" (L, R : in String)
+                    return Boolean
+                    renames Case_Insensitive_Equals;
+   begin
+      return
+        Item = "node" or else
+        Item = "edge" or else
+        Item = "graph" or else
+        Item = "digraph" or else
+        Item = "subgraph" or else
+        Item = "strict";
+   end Is_Reserved_Word;
+
    ------------
    -- EXPORTED:
    ------------
    function To_String (Item : in ID_Type)
                        return String is
+      Item_String : constant String :=
+        ASU.To_String (ASU.Unbounded_String(Item));
    begin
-      if Length (Item) > 0 then
-         return '"' & Inherited_To_String(Item) & '"';
+      if Is_Reserved_Word (Item_String) then
+         return '"' & Item_String & '"';
       else
-         return "";
+         return Item_String;
       end if;
-   end;
+   end To_String;
 
    ------------
    -- EXPORTED:
@@ -39,7 +69,7 @@ package body Dot is
          when others =>
             return Item'Image;
       end case;
-   end;
+   end To_String;
 
    package body Graph is
 
