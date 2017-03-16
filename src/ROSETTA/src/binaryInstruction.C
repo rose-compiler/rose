@@ -157,6 +157,8 @@ class SgNode;
 void Grammar::setUpBinaryInstructions() {
 #endif
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     /**************************************************************************************************************************
      *                                  Instructions.
      * Base class (SgAsmInstruction) and various subclasses, one per architecture.
@@ -630,6 +632,7 @@ void Grammar::setUpBinaryInstructions() {
 #endif // SgAsmInstruction_HEADERS
 
 #ifdef DOCUMENTATION
+    /** Base class for machine instructions. */
     class SgAsmInstruction: public SgAsmStatement {
     public:
 #endif
@@ -1040,14 +1043,12 @@ void Grammar::setUpBinaryInstructions() {
 
 
 
-
-
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    
     /**************************************************************************************************************************
      *                                  Instruction Expressions
      * Related functions and documentation can be found in src/frontend/Disassemblers/Expressions.C
      **************************************************************************************************************************/
-
-
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -2750,6 +2751,7 @@ void Grammar::setUpBinaryInstructions() {
 
 
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /***************************************************************************************************************************
      *                                  Data Types (new interface 2014-07)
@@ -3109,6 +3111,7 @@ void Grammar::setUpBinaryInstructions() {
 
 
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**************************************************************************************************************************
      *                                  Collections of Instructions
@@ -4078,6 +4081,7 @@ void Grammar::setUpBinaryInstructions() {
 
 
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /*************************************************************************************************************************
      *                                         Binary Interpretations
@@ -4085,6 +4089,8 @@ void Grammar::setUpBinaryInstructions() {
      * Apple OS X files can have multiple architectures represented in a single file, etc.  The interpretation is the root of
      * an AST that represents a single, coherent sub-part of the file.
      *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     DECLARE_LEAF_CLASS(AsmInterpretationList);
     IS_SERIALIZABLE(AsmInterpretationList);
@@ -4292,9 +4298,13 @@ void Grammar::setUpBinaryInstructions() {
 
 
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     /*************************************************************************************************************************
      *                                         ELF File Header
      *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     DECLARE_LEAF_CLASS(AsmElfFileHeader);
     IS_SERIALIZABLE(AsmElfFileHeader);
@@ -4701,6 +4711,9 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
 
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     /*************************************************************************************************************************
      *                                         ELF Section Tables
      *************************************************************************************************************************/
@@ -5104,6 +5117,8 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
 
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /*************************************************************************************************************************
      *                                         ELF Segment Tables
@@ -5524,10 +5539,13 @@ void Grammar::setUpBinaryInstructions() {
 
 
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /*************************************************************************************************************************
      *                                         ELF Symbol Tables
      *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     DECLARE_LEAF_CLASS(AsmElfSymbolSection);
     IS_SERIALIZABLE(AsmElfSymbolSection);
@@ -5880,9 +5898,13 @@ void Grammar::setUpBinaryInstructions() {
 
 
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     /*************************************************************************************************************************
      *                                         ELF Symbol Version Tables
      *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     DECLARE_LEAF_CLASS(AsmElfSymverSection);
     IS_SERIALIZABLE(AsmElfSymverSection);
@@ -6935,10 +6957,13 @@ void Grammar::setUpBinaryInstructions() {
 
 
 
-    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     /*************************************************************************************************************************
      *                                         ELF Relocation Tables
      *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     DECLARE_LEAF_CLASS(AsmElfRelocSection);
     IS_SERIALIZABLE(AsmElfRelocSection);
@@ -7333,9 +7358,13 @@ void Grammar::setUpBinaryInstructions() {
 
 
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     /*************************************************************************************************************************
      *                                         ELF Dynamic Linking
      *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     DECLARE_LEAF_CLASS(AsmElfDynamicSection);
     IS_SERIALIZABLE(AsmElfDynamicSection);
@@ -7669,144 +7698,1117 @@ void Grammar::setUpBinaryInstructions() {
     };
 #endif
 
+
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     /*************************************************************************************************************************
      *                                         ELF String Tables
      *************************************************************************************************************************/
 
-    // String table section
-    NEW_TERMINAL_MACRO(AsmElfStringSection, "AsmElfStringSection", "AsmElfStringSectionTag");
-    AsmElfStringSection.setFunctionPrototype("HEADER_ELF_STRING_SECTION", "../Grammar/BinaryInstruction.code");
-    AsmElfStringSection.setFunctionSource("SOURCE_ELF_STRING_SECTION", "../Grammar/BinaryInstruction.code");
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmElfStringSection);
+    IS_SERIALIZABLE(AsmElfStringSection);
     AsmElfStringSection.setAutomaticGenerationOfDestructor(false);
-    AsmElfStringSection.setDataPrototype("SgAsmElfStrtab*", "strtab", "= NULL",
-                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+#ifdef DOCUMENTATION
+    /** ELF string table section.
+     *
+     *  A file section that holds string literals such as symbol names. */
+    class SgAsmElfStringSection: public SgAsmElfSection {
+    public:
+#endif
 
+#ifdef DOCUMENTATION
+        /** Property: String table.
+         *
+         *  Pointer to the actual string table for this section.
+         *
+         * @{ */
+        SgAsmElfStrtab* get_strtab() const;
+        void set_strtab(SgAsmElfStrtab*);
+        /** @} */
+#else
+        AsmElfStringSection.setDataPrototype("SgAsmElfStrtab*", "strtab", "= NULL",
+                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 
-    NEW_TERMINAL_MACRO(AsmElfStrtab, "AsmElfStrtab", "AsmElfStrtabTag");
-    AsmElfStrtab.setFunctionPrototype("HEADER_ELF_STRING_TABLE", "../Grammar/BinaryInstruction.code");
+        DECLARE_OTHERS(AsmElfStringSection);
+#if defined(SgAsmElfStringSection_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmElfSection);
+            s & BOOST_SERIALIZATION_NVP(p_strtab);
+        }
+#endif
+
+    public:
+        /** Constructor that links new object into AST. */
+        explicit SgAsmElfStringSection(SgAsmElfFileHeader *fhdr)
+            : SgAsmElfSection(fhdr), p_strtab(NULL) {
+            ctor();
+        }
+
+        /** Initialize object by parsing binary specimen. */
+        virtual SgAsmElfStringSection *parse();
+
+        /** Dump debugging information. */
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+
+        /** Adjust size of table.
+         *
+         * Augments superclass to make sure free list and such are adjusted properly. Any time the ELF String Section size is
+         * changed we adjust the free list in the ELF String Table contained in this section. */
+        virtual void set_size(rose_addr_t newsize);
+
+        /** Reallocate space for the string section if necessary.
+         *
+         *  Note that reallocation is lazy here -- we don't shrink the section, we only enlarge it (if you want the section to
+         *  shrink then call SgAsmGenericStrtab::reallocate(bool) with a true value rather than calling this
+         *  function. SgAsmElfStringSection::reallocate is called in response to unparsing a file and gives the string table a
+         *  chance to extend its container section if it needs to allocate more space for strings. */
+        virtual bool reallocate();
+
+        /** Unparse an ElfStringSection by unparsing the ElfStrtab */
+        virtual void unparse(std::ostream&) const;
+
+    private:
+        void ctor();
+        void ctor(SgAsmElfSectionTable*);
+#endif // SgAsmElfStringSection_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmElfStrtab);
+    IS_SERIALIZABLE(AsmElfStrtab);
     AsmElfStrtab.setAutomaticGenerationOfDestructor(false);
 
+#ifdef DOCUMENTATION
+    /** ELF string table. */
+    class SgAsmElfStrtab: public SgAsmGenericStrtab {
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmElfStrtab);
+#if defined(SgAsmElfStrtab_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericStrtab);
+        }
+#endif
+
+    public:
+        /** Non-parsing constructor.
+         *
+         *  The table is created to be at least one byte long and having a NUL character as the first byte. */
+        explicit SgAsmElfStrtab(class SgAsmElfSection *containing_section)
+            : SgAsmGenericStrtab(containing_section) {
+            ctor();
+        }
+
+        /** Free StringStorage objects associated with this string table.
+         *
+         *  It may not be safe to blow them away yet since other objects may still have @ref SgAsmStoredStrings pointing to
+         *  these storage objects. So instead, we will mark all this strtab's storage objects as no longer being associated
+         *  with a string table. This allows the @ref SgAsmStoredString objects to still function properly and their
+         *  destructors will free their storage. */
+        virtual ~SgAsmElfStrtab();
+
+        /** Parses the string table.
+         *
+         *  All that actually happens at this point is we look to see if the table begins with an empty string. */
+        virtual SgAsmElfStrtab *parse();
+
+        /** Write string table back to disk.
+         *
+         *  Free space is zeroed out; holes are left as they are. */
+        virtual void unparse(std::ostream&) const;
+
+        /** Creates the storage item for the string at the specified offset.
+         *
+         *  If @p shared is true then attempt to re-use a previous storage object, otherwise always create a new one. Each
+         *  storage object is considered a separate string, therefore when two strings share the same storage object, changing
+         *  one string changes the other. */
+        virtual SgAsmStringStorage *create_storage(rose_addr_t offset, bool shared);
+
+        /** Returns the number of bytes required to store the string in the string table.
+         *
+         *  This is the length of the string plus one for the NUL terminator. */
+        virtual rose_addr_t get_storage_size(const SgAsmStringStorage*);
+
+        /** Find offset for a string.
+         *
+         *  Tries to find a suitable offset for a string such that it overlaps with some other string already allocated. If the
+         *  new string is the same as the end of some other string (new="main", existing="domain") then we just use an offset
+         *  into that string since the space is already allocated for the existing string. If the new string ends with an
+         *  existing string (new="domain", existing="main") and there's enough free space before the existing string (two bytes
+         *  in this case) then we allocate some of that free space and use a suitable offset. In any case, upon return
+         *  <code>storege->get_offset()</code> will return the allocated offset if successful, or
+         *  @ref SgAsmGenericString::unallocated if we couldn't find an overlap. */
+        virtual void allocate_overlap(SgAsmStringStorage*);
+
+        /** Similar to create_storage() but uses a storage object that's already been allocated. */
+        virtual void rebind(SgAsmStringStorage*, rose_addr_t);
+
+    private:
+        void ctor();
+#endif // SgAsmElfStrtab_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
 
 
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    
     /*************************************************************************************************************************
      *                                         ELF Notes
      *************************************************************************************************************************/
 
-    NEW_TERMINAL_MACRO(AsmElfNoteSection, "AsmElfNoteSection", "AsmElfNoteSection");
-    AsmElfNoteSection.setFunctionPrototype("HEADER_ELF_NOTE_SECTION", "../Grammar/BinaryInstruction.code");
-    AsmElfNoteSection.setDataPrototype("SgAsmElfNoteEntryList*", "entries", "= NULL",
-                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    DECLARE_LEAF_CLASS(AsmElfNoteSection);
+    IS_SERIALIZABLE(AsmElfNoteSection);
 
+#ifdef DOCUMENTATION
+    class SgAsmElfNoteSection: public SgAsmElfSection {
+    public:
+#endif
 
-    NEW_TERMINAL_MACRO(AsmElfNoteEntryList, "AsmElfNoteEntryList", "AsmElfNoteEntryListTag");
-    AsmElfNoteEntryList.setDataPrototype("SgAsmElfNoteEntryPtrList", "entries", "",
+#ifdef DOCUMENTATION
+        /** Property: List of note entries.
+         *
+         *  This property points to an AST node that contains the list rather than being a list directly because of limitations
+         *  of ROSETTA.
+         *
+         * @{ */
+        SgAsmElfNoteEntryList* get_entries() const;
+        void set_entries(SgAsmElfNoteEntryList*);
+        /** @} */
+#else
+        AsmElfNoteSection.setDataPrototype("SgAsmElfNoteEntryList*", "entries", "= NULL",
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmElfNoteSection);
+#if defined(SgAsmElfNoteSection_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmElfSection);
+            s & BOOST_SERIALIZATION_NVP(p_entries);
+        }
+#endif
+
+    public:
+        /** Non-parsing constructor */
+        explicit SgAsmElfNoteSection(SgAsmElfFileHeader *fhdr)
+            : SgAsmElfSection(fhdr) {
+            ctor();
+        }
+        virtual SgAsmElfNoteSection *parse();
+
+        /** Pre-unparsing adjustments */
+        virtual bool reallocate();
+
+        /** Write data to note section */
+        virtual void unparse(std::ostream&) const;
+
+        /** Print some debugging information */
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+
+    private:
+        void ctor();
+#endif // SgAsmElfNoteSection_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmElfNoteEntryList);
+    IS_SERIALIZABLE(AsmElfNoteEntryList);
+
+#ifdef DOCUMENTATION
+    /** Node to hold list of ELF note entries.
+     *
+     *  This node's only purpose is to hold the list of pointers to note entries, which must be done like this because of
+     *  limitations of ROSETTA. */
+    class SgAsmElfNoteEntryList: public SgAsmExecutableFileFormat {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: List of ELF not entries.
+         *
+         * @{ */
+        const SgAsmElfNoteEntryPtrList& get_entries() const;
+        void set_entries(const SgAsmElfNoteEntryPtrList&);
+        /** @} */
+#else
+        AsmElfNoteEntryList.setDataPrototype("SgAsmElfNoteEntryPtrList", "entries", "",
+                                             NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmElfNoteEntryList);
+#if defined(SgAsmElfNoteEntryList_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
+            s & BOOST_SERIALIZATION_NVP(p_entries);
+        }
+#endif
+#endif // SgAsmElfNoteEntryList_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmElfNoteEntry);
+    IS_SERIALIZABLE(AsmElfNoteEntry);
+
+#ifdef DOCUMENTATION
+    /** One entry of an ELF notes table. */
+    class SgAsmElfNoteEntry: public SgAsmExecutableFileFormat {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Type of note.
+         *
+         *  See official ELF specification.
+         *
+         * @{ */
+        unsigned get_type() const;
+        void set_type(unsigned);
+        /** @} */
+#else
+        AsmElfNoteEntry.setDataPrototype("unsigned", "type", "= 0",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        // documented below
+#else
+        AsmElfNoteEntry.setDataPrototype("SgAsmGenericString*", "name", "= NULL",
+                                         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Note payload.
+         *
+         *  This is the data associated with the note.
+         *
+         * @{ */
+        const SgUnsignedCharList& get_payload() const;
+        void set_payload(const SgUnsignedCharList&);
+        /** @} */
+#else
+        AsmElfNoteEntry.setDataPrototype("SgUnsignedCharList", "payload", "",
                                          NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmElfNoteEntry);
+#if defined(SgAsmElfNoteEntry_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
+            s & BOOST_SERIALIZATION_NVP(p_type);
+            s & BOOST_SERIALIZATION_NVP(p_name);
+            s & BOOST_SERIALIZATION_NVP(p_payload);
+        }
+#endif
+
+    public:
+        /** Constructor adds the new note to the list of notes for the note section. */
+        SgAsmElfNoteEntry(SgAsmElfNoteSection *section)
+            : p_type(0), p_name(NULL) {
+            ctor(section);
+        }
+
+        /** Property: Note name.
+         *
+         *  A string note name stored in an ELF string table in the binary specimen. Changing the name of a note also changes
+         *  the contents of the string table.
+         *
+         * @{ */
+        SgAsmGenericString *get_name() const;
+        void set_name(SgAsmGenericString *name);
+        /** @} */
+
+        /** Initialize a note by parsing it from the specified location in the note section.
+         *
+         *  Return value is the offset to the beginning of the next note. */
+        rose_addr_t parse(rose_addr_t starting_offset);
+
+        /** Write a note at the specified offset to the section containing the note.
+         *
+         *  Returns the offset for the first byte past the end of the note. */
+        rose_addr_t unparse(std::ostream &f, rose_addr_t starting_offset);
+
+        /** Print some debugging information */
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+
+        /** Property: Note payload.
+         *
+         *  This is the data associated with the note. */
+        void set_payload(const void*, size_t nbytes);
+
+        /** Returns the number of bytes needed to store this note. */
+        rose_addr_t calculate_size() const;
+
+    private:
+        void ctor(SgAsmElfNoteSection *section);
+#endif // SgAsmElfNoteEntry_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
 
 
 
-    NEW_TERMINAL_MACRO(AsmElfNoteEntry, "AsmElfNoteEntry", "AsmElfNoteEntryTag");
-    AsmElfNoteEntry.setFunctionPrototype("HEADER_ELF_NOTE_ENTRY", "../Grammar/BinaryInstruction.code");
-    AsmElfNoteEntry.setDataPrototype("unsigned", "type", "= 0",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmElfNoteEntry.setDataPrototype("SgAsmGenericString*", "name", "= NULL",
-                                     NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-    AsmElfNoteEntry.setDataPrototype("SgUnsignedCharList", "payload", "",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-
-
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    
     /*************************************************************************************************************************
      *                                         ELF Exception Handling
      *************************************************************************************************************************/
 
-    NEW_TERMINAL_MACRO(AsmElfEHFrameSection, "AsmElfEHFrameSection", "AsmElfEHFrameSection");
-    AsmElfEHFrameSection.setFunctionPrototype("HEADER_ELF_EH_FRAME_SECTION", "../Grammar/BinaryInstruction.code");
-    AsmElfEHFrameSection.setDataPrototype("SgAsmElfEHFrameEntryCIList*", "ci_entries", "= NULL",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    DECLARE_LEAF_CLASS(AsmElfEHFrameSection);
+    IS_SERIALIZABLE(AsmElfEHFrameSection);
 
+#ifdef DOCUMENTATION
+    /** Represents an ELF EH frame section. */
+    class SgAsmElfEHFrameSection: public SgAsmElfSection {
+    public:
+#endif
 
-    NEW_TERMINAL_MACRO(AsmElfEHFrameEntryCIList, "AsmElfEHFrameEntryCIList", "AsmElfEHFrameEntryCIListTag");
-    AsmElfEHFrameEntryCIList.setDataPrototype("SgAsmElfEHFrameEntryCIPtrList", "entries", "",
+#ifdef DOCUMENTATION
+        /** Property: CI entries.
+         *
+         *  See official ELF specification.  This property points to an AST node containing the list rather than the direct
+         *  list due to limitations of ROSETTA.
+         *
+         * @{ */
+        SgAsmElfEHFrameEntryCIList* get_ci_entries() const;
+        void set_ci_entries(SgAsmElfEHFrameEntryCIList*);
+        /** @} */
+#else
+        AsmElfEHFrameSection.setDataPrototype("SgAsmElfEHFrameEntryCIList*", "ci_entries", "= NULL",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmElfEHFrameSection);
+#if defined(SgAsmElfEHFrameSection_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmElfSection);
+            s & BOOST_SERIALIZATION_NVP(p_ci_entries);
+        }
+#endif
+
+    public:
+        /** Non-parsing constructor. */
+        explicit SgAsmElfEHFrameSection(SgAsmElfFileHeader *fhdr)
+            : SgAsmElfSection(fhdr), p_ci_entries(NULL) {
+            ctor();
+        }
+
+        /** Initialize by parsing a file. */
+        virtual SgAsmElfEHFrameSection *parse();
+
+        /** Return sizes for various parts of the table.
+         *
+         *  See documentation for @ref SgAsmElfSection::calculate_sizes. Since EH Frame Sections are run-length encoded, we
+         *  need to actually unparse the section in order to determine its size. */
+        virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const;
+
+        /** Write data to .eh_frame section */
+        virtual void unparse(std::ostream&) const;
+
+        /** Unparses the section into the optional output stream and returns the number of bytes written.
+         *
+         *  If there is no output stream we still go through the actions but don't write anything. This is the only way to
+         *  determine the amount of memory required to store the section since the section is run-length encoded. */
+        rose_addr_t unparse(std::ostream*) const;
+
+        /** Print some debugging info */
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+
+    private:
+        void ctor();
+#endif // SgAsmElfEHFrameSection_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        
+    DECLARE_LEAF_CLASS(AsmElfEHFrameEntryCIList);
+    IS_SERIALIZABLE(AsmElfEHFrameEntryCIList);
+
+#ifdef DOCUMENTATION
+    /** List of ELF EH frame CI entries.
+     *
+     *  See official ELF specification. The only reason this node exists is because of ROSETTA limitations which prevent the
+     *  list from being stored directly in the class that needs it. */
+    class SgAsmElfEHFrameEntryCIList: public SgAsmExecutableFileFormat {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: List of pointers to ELF EH frame CI entries.
+         *
+         * @{ */
+        const SgAsmElfEHFrameEntryCIPtrList& get_entries() const;
+        void set_entries(const SgAsmElfEHFrameEntryCIPtrList&);
+        /** @} */
+#else
+        AsmElfEHFrameEntryCIList.setDataPrototype("SgAsmElfEHFrameEntryCIPtrList", "entries", "",
+                                                  NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL,
+                                                  NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmElfEHFrameEntryCIList);
+#if defined(SgAsmElfEHFrameEntryCIList_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
+            s & BOOST_SERIALIZATION_NVP(p_entries);
+        }
+#endif
+#endif // SgAsmElfEHFrameEntryCIList_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmElfEHFrameEntryCI);
+    IS_SERIALIZABLE(AsmElfEHFrameEntryCI);
+
+#ifdef DOCUMENTATION
+    /** ELF error handling frame entry, common information entry.
+     *
+     *  Most of the properties of this class are documented in the official ELF specification. */
+    class SgAsmElfEHFrameEntryCI: public SgAsmExecutableFileFormat {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Version number.
+         *
+         *  See official ELF specification.
+         *
+         * @{ */
+        int get_version() const;
+        void set_version(int);
+        /** @} */
+#else
+        AsmElfEHFrameEntryCI.setDataPrototype("int", "version", "= 0",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Augmentation string.
+         *
+         *  See official ELF specification.
+         *
+         * @{ */
+        const std::string& get_augmentation_string() const;
+        void set_augmentation_string(const std::string&);
+        /** @} */
+#else
+        AsmElfEHFrameEntryCI.setDataPrototype("std::string", "augmentation_string", "= \"\"",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Data value.
+         *
+         *  See official ELF specification.
+         *
+         * @{ */
+        uint64_t get_eh_data() const;
+        void set_eh_data(uint64_t);
+        /** @} */
+#else
+        AsmElfEHFrameEntryCI.setDataPrototype("uint64_t", "eh_data", "=0",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Code alignment factor.
+         *
+         *  See official ELF specification.
+         *
+         *  @{ */
+        uint64_t get_code_alignment_factor() const;
+        void set_code_alignment_factor(uint64_t);
+        /** @} */
+#else
+        AsmElfEHFrameEntryCI.setDataPrototype("uint64_t", "code_alignment_factor", "= 0",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Data alignment factor.
+         *
+         *  See official ELF specification.
+         *
+         * @{ */
+        int64_t get_data_alignment_factor() const;
+        void set_data_alignment_factor(int64_t);
+        /** @} */
+#else
+        AsmElfEHFrameEntryCI.setDataPrototype("int64_t", "data_alignment_factor", "= 0",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Augmentation data length.
+         *
+         *  See official ELF specification.
+         *
+         * @{ */
+        uint64_t get_augmentation_data_length() const;
+        void set_augmentation_data_length(uint64_t);
+        /** @} */
+#else
+        AsmElfEHFrameEntryCI.setDataPrototype("uint64_t", "augmentation_data_length", "= 0",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: LSDA encoding.
+         *
+         *  See official ELF specification.
+         *
+         * @{ */
+        int get_lsda_encoding() const;
+        void set_lsda_encoding(int);
+        /** @} */
+#else
+        AsmElfEHFrameEntryCI.setDataPrototype("int", "lsda_encoding", "= -1",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: PRH encoding.
+         *
+         *  See official ELF specification.
+         *
+         * @{ */
+        int get_prh_encoding() const;
+        void set_prh_encoding(int);
+        /** @} */
+#else
+        AsmElfEHFrameEntryCI.setDataPrototype("int", "prh_encoding", "= -1",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: PRH argument.
+         *
+         *  See official ELF specification.
+         *
+         * @{ */
+        unsigned get_prh_arg() const;
+        void set_prh_arg(unsigned);
+        /** @} */
+#else
+        AsmElfEHFrameEntryCI.setDataPrototype("unsigned", "prh_arg", "= 0",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: PRH address.
+         *
+         *  See official ELF specification.
+         *
+         * @{ */
+        rose_addr_t get_prh_addr() const;
+        void set_prh_addr(rose_addr_t);
+        /** @} */
+#else
+        AsmElfEHFrameEntryCI.setDataPrototype("rose_addr_t", "prh_addr", "= 0",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Address encoding.
+         *
+         *  See official ELF specification.
+         *
+         * @{ */
+        int get_addr_encoding() const;
+        void set_addr_encoding(int);
+        /** @} */
+#else
+        AsmElfEHFrameEntryCI.setDataPrototype("int", "addr_encoding", "= -1",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Signal frame.
+         *
+         *  See official ELF specification.
+         *
+         * @{ */
+        bool get_sig_frame() const;
+        void set_sig_frame(bool);
+        /** @} */
+#else
+        AsmElfEHFrameEntryCI.setDataPrototype("bool", "sig_frame", "= false",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Instructions.
+         *
+         *  See official ELF specification.
+         *
+         * @{ */
+        const SgUnsignedCharList& get_instructions() const;
+        void set_instructions(const SgUnsignedCharList);
+        /** @} */
+#else
+        AsmElfEHFrameEntryCI.setDataPrototype("SgUnsignedCharList", "instructions", "",
                                               NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 
+#ifdef DOCUMENTATION
+        /** Property: FD entries.
+         *
+         *  See official ELF specification. This points to an AST node that holds the list of pointers to the actual entry
+         *  nodes due to limitations of ROSETTA.
+         *
+         * @{ */
+        SgAsmElfEHFrameEntryFDList* get_fd_entries() const;
+        void set_fd_entries(SgAsmElfEHFrameEntryFDList*);
+        /** @} */
+#else
+        AsmElfEHFrameEntryCI.setDataPrototype("SgAsmElfEHFrameEntryFDList*", "fd_entries", "= NULL",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
 
+        DECLARE_OTHERS(AsmElfEHFrameEntryCI);
+#if defined(SgAsmElfEHFrameEntryCI_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
 
-    // ELF Error Handling Frame Entry, Common Information Entry Format
-    NEW_TERMINAL_MACRO(AsmElfEHFrameEntryCI, "AsmElfEHFrameEntryCI", "AsmElfEHFrameEntryCITag");
-    AsmElfEHFrameEntryCI.setFunctionPrototype("HEADER_ELF_EH_FRAME_ENTRY_CI", "../Grammar/BinaryInstruction.code");
-    AsmElfEHFrameEntryCI.setDataPrototype("int", "version", "= 0",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmElfEHFrameEntryCI.setDataPrototype("std::string", "augmentation_string", "= \"\"",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmElfEHFrameEntryCI.setDataPrototype("uint64_t", "eh_data", "=0",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmElfEHFrameEntryCI.setDataPrototype("uint64_t", "code_alignment_factor", "= 0",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmElfEHFrameEntryCI.setDataPrototype("int64_t", "data_alignment_factor", "= 0",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmElfEHFrameEntryCI.setDataPrototype("uint64_t", "augmentation_data_length", "= 0",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmElfEHFrameEntryCI.setDataPrototype("int", "lsda_encoding", "= -1",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmElfEHFrameEntryCI.setDataPrototype("int", "prh_encoding", "= -1",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmElfEHFrameEntryCI.setDataPrototype("unsigned", "prh_arg", "= 0",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmElfEHFrameEntryCI.setDataPrototype("rose_addr_t", "prh_addr", "= 0",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmElfEHFrameEntryCI.setDataPrototype("int", "addr_encoding", "= -1",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmElfEHFrameEntryCI.setDataPrototype("bool", "sig_frame", "= false",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmElfEHFrameEntryCI.setDataPrototype("SgUnsignedCharList", "instructions", "",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmElfEHFrameEntryCI.setDataPrototype("SgAsmElfEHFrameEntryFDList*", "fd_entries", "= NULL",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
+            s & BOOST_SERIALIZATION_NVP(p_version);
+            s & BOOST_SERIALIZATION_NVP(p_augmentation_string);
+            s & BOOST_SERIALIZATION_NVP(p_eh_data);
+            s & BOOST_SERIALIZATION_NVP(p_code_alignment_factor);
+            s & BOOST_SERIALIZATION_NVP(p_data_alignment_factor);
+            s & BOOST_SERIALIZATION_NVP(p_augmentation_data_length);
+            s & BOOST_SERIALIZATION_NVP(p_lsda_encoding);
+            s & BOOST_SERIALIZATION_NVP(p_prh_encoding);
+            s & BOOST_SERIALIZATION_NVP(p_prh_arg);
+            s & BOOST_SERIALIZATION_NVP(p_addr_encoding);
+            s & BOOST_SERIALIZATION_NVP(p_sig_frame);
+            s & BOOST_SERIALIZATION_NVP(p_instructions);
+            s & BOOST_SERIALIZATION_NVP(p_fd_entries);
+        }
+#endif
 
+    public:
+        /** Non-parsing constructor */
+        explicit SgAsmElfEHFrameEntryCI(SgAsmElfEHFrameSection *ehframe)
+            : p_version(0), p_eh_data(0), p_code_alignment_factor(0), p_data_alignment_factor(0),
+              p_augmentation_data_length(0), p_lsda_encoding(-1), p_prh_encoding(-1), p_prh_arg(0), p_prh_addr(0),
+              p_addr_encoding(-1), p_sig_frame(false), p_fd_entries(NULL) {
+            ctor(ehframe);
+        }
 
+        /** Print some debugging info */
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 
-    NEW_TERMINAL_MACRO(AsmElfEHFrameEntryFDList, "AsmElfEHFrameEntryFDList", "AsmElfEHFrameEntryFDListTag");
-    AsmElfEHFrameEntryFDList.setDataPrototype("SgAsmElfEHFrameEntryFDPtrList", "entries", "",
+        /** Unparse an entry.
+         *
+         *  Unparse one Common Information Entry (CIE) without unparsing the Frame Description Entries (FDE) to which it
+         *  points. The initial length fields are not included in the result string. */
+        std::string unparse(const SgAsmElfEHFrameSection*) const;
+
+    private:
+        void ctor(SgAsmElfEHFrameSection*);
+#endif // SgAsmElfEHFrameEntryCI_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    
+    DECLARE_LEAF_CLASS(AsmElfEHFrameEntryFDList);
+    IS_SERIALIZABLE(AsmElfEHFrameEntryFDList);
+
+#ifdef DOCUMENTATION
+    /** List of ELF error handling frame descriptor entries.
+     *
+     *  The only purpose of this node is to hold the list of pointers to FD entries, and is necesssary due to limitations of
+     *  ROSETTA. */
+    class AsmElfEHFrameEntryFDList: public SgAsmExecutableFileFormat {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: List of pointers to error handling frame descriptor entries.
+         *
+         * @{ */
+        const SgAsmElfEHFrameEntryFDPtrList& get_entries() const;
+        void set_entries(const SgAsmElfEHFrameEntryFDPtrList&);
+        /** @} */
+#else
+        AsmElfEHFrameEntryFDList.setDataPrototype("SgAsmElfEHFrameEntryFDPtrList", "entries", "",
+                                                  NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL,
+                                                  NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmElfEHFrameEntryFDList);
+#if defined(SgAsmElfEHFrameEntryFDList_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
+            s & BOOST_SERIALIZATION_NVP(p_entries);
+        }
+#endif
+#endif // SgAsmElfEHFrameEntryFDList_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmElfEHFrameEntryFD);
+    IS_SERIALIZABLE(AsmElfEHFrameEntryFD);
+
+#ifdef DOCUMENTATION
+    /** ELF error handling frame entry frame description entry. */
+    class SgAsmElfEHFrameEntryFD: public SgAsmExecutableFileFormat {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Beginning relative virtual address.
+         *
+         *  See official ELF specification.
+         *
+         * @{ */
+        const rose_rva_t& get_begin_rva() const;
+        void set_begin_rva(const rose_rva_t&);
+        /** @} */
+#else
+        AsmElfEHFrameEntryFD.setDataPrototype("rose_rva_t", "begin_rva", "",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Size in bytes.
+         *
+         *  See official ELF specification.
+         *
+         * @{ */
+        rose_addr_t get_size() const;
+        void set_size(rose_addr_t);
+        /** @} */
+#else
+        AsmElfEHFrameEntryFD.setDataPrototype("rose_addr_t", "size", "= 0",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Augmentation data.
+         *
+         *  See official ELF specification.
+         *
+         * @{ */
+        const SgUnsignedCharList& get_augmentation_data() const;
+        void set_augmentation_data(const SgUnsignedCharList&);
+        /** @} */
+#else
+        AsmElfEHFrameEntryFD.setDataPrototype("SgUnsignedCharList", "augmentation_data", "",
                                               NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Instructions.
+         *
+         *  See official ELF specification.
+         *
+         * @{ */
+        const SgUnsignedCharList& get_instructions() const;
+        void set_instructions(const SgUnsignedCharList&);
+        /** @} */
+#else
+        AsmElfEHFrameEntryFD.setDataPrototype("SgUnsignedCharList", "instructions", "",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmElfEHFrameEntryFD);
+#if defined(SgAsmElfEHFrameEntryFD_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
+            s & BOOST_SERIALIZATION_NVP(p_begin_rva);
+            s & BOOST_SERIALIZATION_NVP(p_size);
+            s & BOOST_SERIALIZATION_NVP(p_augmentation_data);
+            s & BOOST_SERIALIZATION_NVP(p_instructions);
+        }
+#endif
+
+    public:
+        /** Non-parsing constructor */
+        explicit SgAsmElfEHFrameEntryFD(SgAsmElfEHFrameEntryCI *cie)
+            : p_size(0) {
+            ctor(cie);
+        }
+
+        /** Print some debugging info */
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+
+        /** Unparse to string.
+         *
+         *  Unparses the frame description entry (FDE) into a string but do not include the leading length field(s) or the CIE
+         *  back pointer. */
+        std::string unparse(const SgAsmElfEHFrameSection*, SgAsmElfEHFrameEntryCI*) const;
+
+    private:
+        void ctor(SgAsmElfEHFrameEntryCI*);
+#endif // SgAsmElfEHFrameEntryFD_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
 
 
 
-    /* ELF Error Handling Frame Entry, Frame Description Entry Format */
-    NEW_TERMINAL_MACRO(AsmElfEHFrameEntryFD, "AsmElfEHFrameEntryFD", "AsmElfEHFrameEntryFDTag");
-    AsmElfEHFrameEntryFD.setFunctionPrototype("HEADER_ELF_EH_FRAME_ENTRY_FD", "../Grammar/BinaryInstruction.code");
-    AsmElfEHFrameEntryFD.setDataPrototype("rose_rva_t", "begin_rva", "",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmElfEHFrameEntryFD.setDataPrototype("rose_addr_t", "size", "= 0",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmElfEHFrameEntryFD.setDataPrototype("SgUnsignedCharList", "augmentation_data", "",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmElfEHFrameEntryFD.setDataPrototype("SgUnsignedCharList", "instructions", "",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /*************************************************************************************************************************
      *                                         ELF Sections
      *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     NEW_NONTERMINAL_MACRO(AsmElfSection,
                           AsmElfSymbolSection | AsmElfRelocSection         | AsmElfDynamicSection       |
                           AsmElfStringSection | AsmElfNoteSection          | AsmElfEHFrameSection       |
                           AsmElfSymverSection | AsmElfSymverDefinedSection | AsmElfSymverNeededSection,
                           "AsmElfSection", "AsmElfSectionTag", true);
-    AsmElfSection.setFunctionPrototype("HEADER_ELF_SECTION", "../Grammar/BinaryInstruction.code");
-    AsmElfSection.setFunctionSource("SOURCE_ELF_SECTION", "../Grammar/BinaryInstruction.code");
-    AsmElfSection.setDataPrototype("SgAsmElfSection*", "linked_section", "= NULL", //accessors must be virtual
-                                   NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmElfSection.setDataPrototype("SgAsmElfSectionTableEntry*", "section_entry", "= NULL",
-                                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-    AsmElfSection.setDataPrototype("SgAsmElfSegmentTableEntry*", "segment_entry", "= NULL",
-                                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+    AsmElfSection.setCppCondition("!defined(DOCUMENTATION)");
+    IS_SERIALIZABLE(AsmElfSection);
+
+#ifdef DOCUMENTATION
+    /** Base class for ELF file sections. */
+    class SgAsmElfSection: public SgAsmGenericSection {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        // Documentation below
+        // DQ (8/22/2008): These are not automatically generated since one of them must be virtual.
+#else
+        AsmElfSection.setDataPrototype("SgAsmElfSection*", "linked_section", "= NULL", //accessors must be virtual
+                                       NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: The section table entry corresponding to this section.
+         *
+         * @{ */
+        SgAsmElfSectionTableEntry* get_section_entry() const;
+        void set_section_entry(SgAsmElfSectionTableEntry*);
+        /** @} */
+#else
+        AsmElfSection.setDataPrototype("SgAsmElfSectionTableEntry*", "section_entry", "= NULL",
+                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: The segment table entry corresponding to this section.
+         *
+         * @{ */
+        SgAsmElfSegmentTableEntry* get_segment_entry() const;
+        void set_segment_entry(SgAsmElfSegmentTableEntry*);
+        /** @} */
+#else
+        AsmElfSection.setDataPrototype("SgAsmElfSegmentTableEntry*", "segment_entry", "= NULL",
+                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmElfSection);
+#if defined(SgAsmElfSection_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
+            s & BOOST_SERIALIZATION_NVP(p_linked_section);
+            s & BOOST_SERIALIZATION_NVP(p_section_entry);
+            s & BOOST_SERIALIZATION_NVP(p_segment_entry);
+        }
+#endif
+
+    public:
+        /** Constructor for sections not yet in a table.
+         *
+         *  This constructs a section that is in neither the ELF Section Table nor the ELF Segment Table yet, but eventually
+         *  will be. */
+        explicit SgAsmElfSection(SgAsmGenericHeader *fhdr)
+            : SgAsmGenericSection(fhdr->get_file(), fhdr), p_linked_section(NULL), p_section_entry(NULL),
+              p_segment_entry(NULL) {
+            ctor();
+        }
+        
+        /** Initializes the section from data parsed from the ELF Section Table.
+         *
+         *  This includes the section name, offset, size, memory mapping, and alignments. The @p id is the index into the
+         *  section table. This function complements @ref SgAsmElfSectionTable::add_section in that this function initializes
+         *  this section from the section table while @ref SgAsmElfSectionTable::add_section "add_section" initializes the
+         *  section table from the section. */
+        SgAsmElfSection *init_from_section_table(SgAsmElfSectionTableEntry*, SgAsmElfStringSection*, int id);
+
+        /** Initializes the section from data parse from the ELF Segment Table.
+         *
+         *  This is similar to @ref init_from_section_table but for segments instead of sections. */
+        SgAsmElfSection *init_from_segment_table(SgAsmElfSegmentTableEntry*, bool mmap_only=false);
+
+        /** Returns info about the size of the entries based on information already available.
+         *
+         *  Any or all arguments may be null pointers if the caller is not interested in the value. Return values are:
+         *
+         *  @li @p entsize is the size of each entry, sum of required and optional parts. This comes from the sh_entsize member
+         *  of this section's ELF Section Table Entry, adjusted upward to be large enough to hold the required part of each
+         *  entry (see "required").
+         *
+         *  @li @p required is the size of the required (leading) part of each entry. The size of the required part is based
+         *  on the ELF word size.
+         *
+         *  @li @p optional is the size of the optional (trailing) part of each entry. If the section has been parsed then
+         *  the optional size will be calculated from the entry with the largest "extra" (aka, optional) data. Otherwise this
+         *  is calculated as the difference between the @p entsize" and the @p required" sizes.
+         *   
+         *  @li entcount is the total number of entries in this section. If the section has been parsed then this is the
+         *  actual number of parsed entries, otherwise its the section size divided by the @p entsize.
+         *
+         *  Return value is the total size needed for the section. In all cases, it is the product of @p entsize and @p
+         *  entcount. */
+        rose_addr_t calculate_sizes(size_t r32size, size_t r64size, const std::vector<size_t> &optsizes,
+                                    size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
+
+        virtual void finish_parsing() {}
+
+        /** Base implementation for calculating sizes.
+         *
+         *  Most subclasses will override this virtual function in order to return more useful values. This implementation
+         *  returns the following values:
+         *
+         *  @li @p entsize is size stored in the ELF Section Table's sh_entsize member, or size of entire section if not a
+         *  table.
+         *
+         *  @li @p required is the same as @p entsize.
+         *
+         *  @li @p optional is zero.
+         *
+         *  @li @p entcount is the number of entries, each of size entsize, that can fit in the section.
+         *  
+         *  The return size is the product of @p entsize and @p entcount, which, if this section is a table (nonzero
+         *  sh_entsize), could be smaller than the total size of the section. */
+        virtual rose_addr_t calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
+
+        /** Called prior to unparse to make things consistent. */
+        virtual bool reallocate();
+
+        /** Print some debugging info */
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+
+        /** Make this section's name to be stored in the specified string table. */
+        void allocate_name_to_storage(SgAsmElfStringSection*);
+
+        /** Obtain ELF header.
+         *
+         *  This is just a convenience function so we don't need to constantly cast the return value from @ref get_header. */
+        SgAsmElfFileHeader *get_elf_header() const;
+
+        /** Property: Linked section.
+         *
+         *  Points to an optional related section. See official ELF specification.
+         *
+         * @{ */
+        SgAsmElfSection* get_linked_section () const;
+        virtual void set_linked_section(SgAsmElfSection*);
+        /** @} */
+
+    private:
+        void ctor();
+#endif // SgAsmElfSection_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
 
 
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /*************************************************************************************************************************
      *                                         DOS File Header
@@ -9077,17 +10079,86 @@ void Grammar::setUpBinaryInstructions() {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    NEW_TERMINAL_MACRO(AsmStringStorage, "AsmStringStorage", "AsmStringStorageTag");
-    AsmStringStorage.setFunctionPrototype("HEADER_STRING_STORAGE", "../Grammar/BinaryInstruction.code");
-    AsmStringStorage.setDataPrototype("SgAsmGenericStrtab*", "strtab", "= NULL",
-                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmStringStorage.setDataPrototype("std::string", "string", "= \"\"",
-                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmStringStorage.setDataPrototype("rose_addr_t", "offset", "= 0",
-                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+    DECLARE_LEAF_CLASS(AsmStringStorage);
+    IS_SERIALIZABLE(AsmStringStorage);
 
+#ifdef DOCUMENTATION
+    /** Strings stored in an ELF or PE container. */
+    class SgAsmStringStorage: public SgAsmExecutableFileFormat {
+    public:
+#endif
 
+#ifdef DOCUMENTATION
+        /** Property: String table holding the string.
+         *
+         * @{ */
+        SgAsmGenericStrtab* get_strtab() const;
+        void set_strtab(SgAsmGenericStrtab*);
+        /** @} */
+#else
+        AsmStringStorage.setDataPrototype("SgAsmGenericStrtab*", "strtab", "= NULL",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 
+#ifdef DOCUMENTATION
+        /** Property: String value.
+         *
+         * @{ */
+        const std::string& get_string() const;
+        void set_string(const std::string&);
+        /** @} */
+#else
+        AsmStringStorage.setDataPrototype("std::string", "string", "= \"\"",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Location of string in storage table.
+         *
+         * @{ */
+        rose_addr_t get_offset() const;
+        void set_offset(rose_addr_t);
+        /** @} */
+#else
+        AsmStringStorage.setDataPrototype("rose_addr_t", "offset", "= 0",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmStringStorage);
+#if defined(SgAsmStringStorage_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
+            s & BOOST_SERIALIZATION_NVP(p_strtab);
+            s & BOOST_SERIALIZATION_NVP(p_string);
+            s & BOOST_SERIALIZATION_NVP(p_offset);
+        }
+#endif
+
+    public:
+        SgAsmStringStorage(SgAsmGenericStrtab *strtab, const std::string &string, rose_addr_t offset)
+            : p_strtab(strtab), p_string(string), p_offset(offset) {}
+
+        void dump(FILE *s, const char *prefix, ssize_t idx) const;
+
+        /* Accessors. The set_* accessors are private because we don't want anyone messing with them. These data members are
+         * used to control string allocation in ELF string tables and must only be modified by allocators in closely related
+         * classes.  For instance, to change the value of the string one should call SgAsmGenericString::set_string()
+         * instead. */
+
+     private:
+          friend class SgAsmStoredString;                     /*allowed to set private data members*/
+          friend class SgAsmStoredStrtab;                     /*allowed to set private data members*/
+#endif // SgAsmStringStorage_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     DECLARE_LEAF_CLASS(AsmBasicString);
@@ -9145,16 +10216,95 @@ void Grammar::setUpBinaryInstructions() {
     };
 #endif
 
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    NEW_TERMINAL_MACRO(AsmStoredString, "AsmStoredString", "AsmStoredStringTag");
-    AsmStoredString.setFunctionPrototype("HEADER_STORED_STRING", "../Grammar/BinaryInstruction.code");
-    AsmStoredString.setDataPrototype("SgAsmStringStorage*", "storage", "= NULL",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+    DECLARE_LEAF_CLASS(AsmStoredString);
+    IS_SERIALIZABLE(AsmStoredString);
 
+#ifdef DOCUMENTATION
+    /** Strings stored in an ELF or PE container. */
+    class SgAsmStoredString: public SgAsmGenericString {
+    public:
+#endif
 
+#ifdef DOCUMENTATION
+        /** Property: Storage area for this string.
+         *
+         * @{ */
+        SgAsmStringStorage* get_storage() const;
+        void set_storage(SgAsmStringStorage*);
+        /** @} */
+#else
+        AsmStoredString.setDataPrototype("SgAsmStringStorage*", "storage", "= NULL",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 
+        DECLARE_OTHERS(AsmStoredString);
+#if defined(SgAsmStoredString_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericString);
+            s & BOOST_SERIALIZATION_NVP(p_storage);
+        }
+#endif
+
+    public:
+        /** Construct a string existing in a string table. */
+        SgAsmStoredString(SgAsmGenericStrtab *strtab, rose_addr_t offset) {
+            ctor(strtab, offset, false);
+        }
+
+        /** Construct a new string in a string table. */
+        SgAsmStoredString(SgAsmGenericStrtab *strtab, const std::string &s) {
+            ctor(strtab, s);
+        }
+
+        /** Construct a string that shares storage with another. */
+        explicit SgAsmStoredString(class SgAsmStringStorage *storage) {
+            ctor(storage);
+        }
+
+        /** Print some debugging info */
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+
+        /** Returns the string table that holds this string.
+         *
+         *  Returns the table even if the string value isn't currently allocated in the table. */
+        SgAsmGenericStrtab *get_strtab();
+
+        /** Returns the std::string associated with the SgAsmStoredString. */
+        virtual std::string get_string(bool escape=false) const;
+
+        /** Give the string a new value.
+         *
+         *  This also deallocates the previous value. */
+        virtual void set_string(const std::string&);
+
+        /** Give the string a new value.
+         *
+         *  The string is given a new value by specifying the offset of a string that already exists in the string table. */
+        virtual void set_string(rose_addr_t);
+
+        /** Returns the offset into the string table where the string is allocated.
+         *
+         *  If the string is not allocated then this call triggers an allocation. */
+        virtual rose_addr_t get_offset() const;
+
+    private:
+        void ctor(class SgAsmGenericStrtab*, rose_addr_t offset, bool shared);
+        void ctor(class SgAsmGenericStrtab*, const std::string&);
+        void ctor(class SgAsmStringStorage*);
+        void ctor(const std::string &s);
+#endif // SgAsmStoredString_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     NEW_NONTERMINAL_MACRO(AsmGenericString,
@@ -9208,53 +10358,345 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
 
-
-
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    
     /*************************************************************************************************************************
      *                                         Generic Binary IR Nodes
      * These are mostly base classes for the container-specific nodes defined above.
      *************************************************************************************************************************/
 
-    NEW_TERMINAL_MACRO(AsmGenericHeaderList, "AsmGenericHeaderList", "AsmGenericHeaderListTag");
-    AsmGenericHeaderList.setDataPrototype("SgAsmGenericHeaderPtrList", "headers", "",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmGenericHeaderList);
+    IS_SERIALIZABLE(AsmGenericHeaderList);
 
 
+#ifdef DOCUMENTATION
+    /** List of generic file headers.
+     *
+     *  The only purpose of this AST node is to hold a list of pointers which cannot be contained directly in other nodes
+     *  because of ROSETTA limitations. */
+    class SgAsmGenericHeaderList: public SgAsmExecutableFileFormat {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: List of file header nodes.
+         *
+         * @{ */
+        const SgAsmGenericHeaderPtrList& get_headers() const;
+        void set_headers(const SgAsmGenericHeaderPtrList&);
+        /** @} */
+#else
+        AsmGenericHeaderList.setDataPrototype("SgAsmGenericHeaderPtrList", "headers", "",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL,
+                                              NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmGenericHeaderList);
+#if defined(SgAsmGenericHeaderList_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
+            s & BOOST_SERIALIZATION_NVP(p_headers);
+        }
+#endif
+#endif // SgAsmGenericHeaderList_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     NEW_NONTERMINAL_MACRO(AsmGenericHeader,
                           AsmPEFileHeader | AsmLEFileHeader | AsmNEFileHeader | AsmDOSFileHeader | AsmElfFileHeader,
                           "AsmGenericHeader", "AsmGenericHeaderTag", true);
-    AsmGenericHeader.setFunctionPrototype("HEADER_GENERIC_HEADER", "../Grammar/BinaryInstruction.code");
-    AsmGenericHeader.setFunctionSource("SOURCE_GENERIC_HEADER", "../Grammar/BinaryInstruction.code");
+    AsmGenericHeader.setCppCondition("!defined(DOCUMENTATION)");
     AsmGenericHeader.setAutomaticGenerationOfDestructor(false);
-    // General info about the executable format
-    AsmGenericHeader.setDataPrototype("SgAsmGenericFormat*", "exec_format", "= NULL",
-                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-    // Optional magic number in file byte order
-    AsmGenericHeader.setDataPrototype("SgCharList", "magic", "",
-                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    // Machine for which this header and its sections, etc. was compiled
-    AsmGenericHeader.setDataPrototype("SgAsmGenericFormat::InsSetArchitecture", "isa", "= SgAsmGenericFormat::ISA_UNSPECIFIED",
-                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    // Base virtual address used by all "relative virtual addresses" (RVA)
-    AsmGenericHeader.setDataPrototype("rose_addr_t", "base_va", "= 0",
-                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    // Code entry point wrt base_va
-    AsmGenericHeader.setDataPrototype("SgRVAList", "entry_rvas", "",
-                                      NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmGenericHeader.setDataPrototype("SgAsmGenericDLLList*", "dlls", "= NULL",
-                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-    AsmGenericHeader.setDataPrototype("SgAsmGenericSectionList*", "sections", "= NULL",
-                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+    IS_SERIALIZABLE(AsmGenericHeader);
 
+#ifdef DOCUMENTATION
+    /** Base class for container file headers. */
+    class SgAsmGenericHeader: public SgAsmGenericSection {
+    public:
+#endif
 
+#ifdef DOCUMENTATION
+        /** Property: General info about the executable format.
+         *
+         * @{ */
+        SgAsmGenericFormat* get_exec_format() const;
+        void set_exec_format(SgAsmGenericFormat*);
+        /** @} */
+#else
+        AsmGenericHeader.setDataPrototype("SgAsmGenericFormat*", "exec_format", "= NULL",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
 
-    NEW_TERMINAL_MACRO(AsmGenericSymbolList, "AsmGenericSymbolList", "AsmGenericSymbolListTag");
-    AsmGenericSymbolList.setDataPrototype("SgAsmGenericSymbolPtrList", "symbols", "",
+#ifdef DOCUMENTATION
+        /** Property: Optional magic number in file byte order.
+         *
+         * @{ */
+        const SgCharList& get_magic() const;
+        void set_magic(const SgCharList&);
+        /** @} */
+#else
+        AsmGenericHeader.setDataPrototype("SgCharList", "magic", "",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Machine for which this header and its sections, etc. was compiled.
+         *
+         * @{ */
+        SgAsmGenericFormat::InsSetArchitecture get_isa() const;
+        void set_isa(SgAsmGenericFormat::InsSetArchitecture);
+        /** @} */
+#else
+        AsmGenericHeader.setDataPrototype("SgAsmGenericFormat::InsSetArchitecture", "isa",
+                                          "= SgAsmGenericFormat::ISA_UNSPECIFIED",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Base virtual address used by all relative virtual addresses.
+         *
+         * @{ */
+        rose_addr_t get_base_va() const;
+        void set_base_va(rose_addr_t);
+        /** @} */
+#else
+        AsmGenericHeader.setDataPrototype("rose_addr_t", "base_va", "= 0",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Code entry point wrt base virtual address.
+         *
+         * @{ */
+        const SgRVAList& get_entry_rvas() const;
+        void set_entry_rvas(const SgRVAList&);
+        /** @} */
+#else
+        AsmGenericHeader.setDataPrototype("SgRVAList", "entry_rvas", "",
                                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 
+#ifdef DOCUMENTATION
+        /** Property: List of dynamically linked libraries.
+         *
+         * @{ */
+        SgAsmGenericDLLList* get_dlls() const;
+        void set_dlls(SgAsmGenericDLLList*);
+        /** @} */
+#else
+        AsmGenericHeader.setDataPrototype("SgAsmGenericDLLList*", "dlls", "= NULL",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
 
+#ifdef DOCUMENTATION
+        /** Property: List of file sections.
+         *
+         * @{ */
+        SgAsmGenericSectionList* get_sections() const;
+        void set_sections(SgAsmGenericSectionList*);
+        /** @} */
+#else
+        AsmGenericHeader.setDataPrototype("SgAsmGenericSectionList*", "sections", "= NULL",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
 
+        DECLARE_OTHERS(AsmGenericHeader);
+#if defined(SgAsmGenericHeader_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
+            s & BOOST_SERIALIZATION_NVP(p_exec_format);
+            s & BOOST_SERIALIZATION_NVP(p_magic);
+            s & BOOST_SERIALIZATION_NVP(p_isa);
+            s & BOOST_SERIALIZATION_NVP(p_base_va);
+            s & BOOST_SERIALIZATION_NVP(p_entry_rvas);
+            s & BOOST_SERIALIZATION_NVP(p_dlls);
+            s & BOOST_SERIALIZATION_NVP(p_sections);
+        }
+#endif
+
+    public:
+        /** Constructor.
+         *
+         *  Headers (@ref SgAsmGenericHeader and derived classes) set the file/header relationship--a bidirectional link
+         *  between this new header and the single file that contains this new header. This new header points to its file and
+         *  the file contains a list that points to this new header. The header-to-file half of the link is deleted by the
+         *  default destructor by virtue of being a simple pointer, but we also need to delete the other half of the link in
+         *  the destructors. */
+        explicit SgAsmGenericHeader(SgAsmGenericFile *ef)
+            : SgAsmGenericSection(ef, NULL), p_exec_format(NULL), p_isa(ISA_OTHER), p_base_va(0), p_dlls(NULL),
+              p_sections(NULL) {
+            ctor();
+        }
+
+        virtual ~SgAsmGenericHeader();
+
+        /** Allow all sections to reallocate themselves */
+        virtual bool reallocate();
+
+        /** Unparse headers and all they point to */
+        virtual void unparse(std::ostream&) const;
+
+        /** Print some debugging info. */
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+
+        /** Returns the name of the file format. */
+        virtual const char *format_name() const;
+
+        /** Add a new DLL to the header DLL list */
+        void add_dll(SgAsmGenericDLL *dll);
+
+        /** Vector of dynamically loaded libraries. */
+        std::vector<SgAsmGenericDLL*>& get_dlls() {
+            ROSE_ASSERT(p_dlls != NULL);
+            return p_dlls->get_dlls();
+        }
+
+        std::vector<unsigned char>& get_magic() {return p_magic;}
+
+        /** Returns the RVA of the first entry point.
+         *
+         *  The return value is relative to the header's base virtual address. If there are no entry points defined then
+         *  returns a zero RVA. */
+        rose_addr_t get_entry_rva() const;
+
+        /** Append an RVA to the list of entry points. */
+        void add_entry_rva(const rose_rva_t &rva) {
+            p_entry_rvas.push_back(rva);
+        }
+
+        /* Convenience functions */
+        ByteOrder::Endianness get_sex() const;
+        size_t get_word_size() const;
+
+        /** Adds a new section to the header.
+         *
+         *  This is called implicitly by the section constructor. */
+        void add_section(SgAsmGenericSection*);
+
+        /** Removes a secton from the header's section list. */
+        void remove_section(SgAsmGenericSection*);
+
+        /** Returns the list of sections that are memory mapped */
+        SgAsmGenericSectionPtrList get_mapped_sections() const;
+
+        /** Returns sections in this header that have the specified ID. */
+        SgAsmGenericSectionPtrList get_sections_by_id(int id) const;
+
+        /** Returns sections in this header that have the specified name.
+         *
+         *  If @p sep is a non-null string then ignore any part of name at and after @p sep. */
+        SgAsmGenericSectionPtrList get_sections_by_name(std::string, char sep=0) const;
+
+        /** Returns sectons in this header that contain all of the specified portion of the file. */
+        SgAsmGenericSectionPtrList get_sections_by_offset(rose_addr_t offset, rose_addr_t size) const;
+
+        /** Returns sections that have a preferred mapping that includes the specified relative virtual address. */
+        SgAsmGenericSectionPtrList get_sections_by_rva(rose_addr_t rva) const;
+
+        /** Returns sections having a preferred or actual mapping that includes the specified virtual address.
+         *
+         *  If @p use_preferred is set, then the condition is evaluated by looking at the section's preferred mapping,
+         *  otherwise the actual mapping is used.  If an actual mapping is used, the specified virtual address must be part of
+         *  the actual mapped section, not merely in the memory region that was also mapped to satisfy alignment
+         *  constraints. */
+        SgAsmGenericSectionPtrList get_sections_by_va(rose_addr_t va, bool use_preferred) const;
+
+        /** Returns single section in this header that has the specified ID. */
+        SgAsmGenericSection *get_section_by_id(int id, size_t *nfound=0) const;
+
+        /** Returns single section in this header that has the specified name. */
+        SgAsmGenericSection *get_section_by_name(const std::string&, char sep=0, size_t *nfound=0) const;
+
+        /** Returns single section in this header that contains all of the specified portion of the file. */
+        SgAsmGenericSection *get_section_by_offset(rose_addr_t offset, rose_addr_t size, size_t *nfound=0) const;
+
+        /** Returns the single section having a preferred mapping that includes the specified relative virtual address.
+         *
+         *  If there are no sections or multiple sections satisfying this condition then a null pointer is returned. */
+        SgAsmGenericSection *get_section_by_rva(rose_addr_t rva, size_t *nfound=0) const;
+
+        /** Returns the section having a preferred or actual mapping that includes the specified virtual address.
+         *
+         *  If @p use_preferred is set, then the condition is evaluated by looking at the section's preferred mapping,
+         *  otherwise the actual mapping is used. If an actual mapping is used, the specified virtual address must be part of
+         *  the actual mapped section, not merely in the memory region that was also mapped to satisfy alignment constraints.
+         *  If there are no sections or multiple sections satisfying this condition then a null pointer is returned. */
+        SgAsmGenericSection *get_section_by_va(rose_addr_t va, bool use_preferred, size_t *nfound=0) const;
+
+        /** Like SgAsmGenericFile::get_best_section_by_va() except considers only sections defined in this header. */
+        SgAsmGenericSection *get_best_section_by_va(rose_addr_t va, bool use_preferred, size_t *nfound=0) const;
+
+    private:
+        void ctor();
+#endif // SgAsmGenericHeader_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmGenericSymbolList);
+    IS_SERIALIZABLE(AsmGenericSymbolList);
+
+#ifdef DOCUMENTATION
+    /** Node to hold a list of symbol node pointers.
+     *
+     *  The only reason this node exists is because a ROSETTA limitation prevents us from storing the list directly in the
+     *  nodes that need it. */
+    class SgAsmGenericSymbolList: public SgAsmExecutableFileFormat {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: List of symbol nodes.
+         *
+         * @{ */
+        const SgAsmGenericSymbolPtrList& get_symbols() const;
+        void set_symbols(const SgAsmGenericSymbolPtrList&);
+        /** @} */
+#else
+        AsmGenericSymbolList.setDataPrototype("SgAsmGenericSymbolPtrList", "symbols", "",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL,
+                                              NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmGenericSymbolList);
+#if defined(SgAsmGenericSymbolList_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
+            s & BOOST_SERIALIZATION_NVP(p_symbols);
+        }
+#endif
+#endif // SgAsmGenericSymbolList_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    
     NEW_NONTERMINAL_MACRO(AsmGenericSymbol,
                           AsmCoffSymbol | AsmElfSymbol,
                           "AsmGenericSymbol", "AsmGenericSymbolTag", false);
