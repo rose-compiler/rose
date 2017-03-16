@@ -33,6 +33,7 @@ firstprivate.c \
 firstprivate2.c \
 firstprivate3.c \
 foo.c \
+for-i-j.c \
 functionCall.c \
 ifAndFor.c \
 indirectIndex.c \
