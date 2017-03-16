@@ -1003,6 +1003,13 @@ RiscOperators::readRegister(const RegisterDescriptor &reg, const BaseSemantics::
     return filterResult(result);
 }
 
+BaseSemantics::SValuePtr
+RiscOperators::peekRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &dflt) {
+    PartialDisableUsedef du(this);
+    BaseSemantics::SValuePtr result = BaseSemantics::RiscOperators::peekRegister(reg, dflt);
+    return filterResult(result);
+}
+
 void
 RiscOperators::writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &a_)
 {

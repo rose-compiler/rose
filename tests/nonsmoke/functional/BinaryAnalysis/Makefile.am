@@ -744,6 +744,7 @@ testCallDetection.passed: $(TEST_WITH_ANSWER) $(SPECIMEN_DIR)/i386-fcalls testCa
 ###############################################################################################################################
 noinst_PROGRAMS += testReturnsValue
 testReturnsValue_SOURCES = testReturnsValue.C
+testReturnsValue_CPPFLAGS = -DROSE_BINARY_TEST_DISABLED='"deprecation"' $(AM_CPPFLAGS)
 testReturnsValue_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += testReturnsValue.passed
@@ -751,7 +752,7 @@ TEST_TARGETS += testReturnsValue.passed
 testReturnsValue.passed: $(SPECIMEN_DIR)/buffer2.bin testReturnsValue $(TEST_EXIT_STATUS) conditionalDisable
 	@$(RTH_RUN)						\
 		TITLE="function-returns-value analysis [$@]"	\
-		DISABLED="$$(./conditionalDisable)"		\
+		DISABLED="deprecated $$(./conditionalDisable)"	\
 		CMD="./testReturnsValue $<"			\
 		$(TEST_EXIT_STATUS) $@
 

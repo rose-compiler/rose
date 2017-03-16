@@ -43,7 +43,7 @@ void Partitioner::initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        Diagnostics::initAndRegister(mlog, "rose::BinaryAnalysis::Partitioner");
+        Diagnostics::initAndRegister(&mlog, "rose::BinaryAnalysis::Partitioner");
     }
 }
 

@@ -124,7 +124,25 @@ cat_edg_dependencies() {
 #------------------------------------------------------------------------------------------------------------------------
 # Generate the SHA1 hash by for the source files (some generated) on which EDG depends.
 generate_edg_hash() {
-    local sha1=$(cat_edg_dependencies |sha1sum |cut -d' ' -f1)
+    local sha1sum_exe=`which sha1sum`
+
+    if [ -x "$sha1sum_exe" ]; then
+       local sha1=$(cat_edg_dependencies |$sha1sum_exe |cut -d' ' -f1)
+    else
+     # sha1sum doesn't exist natively on Mac OSX
+       echo "WARNING: sha1sum not found, attempting to use openssl sha1"
+       local sha1=$(cat_edg_dependencies |openssl sha1 |cut -d' ' -f2)
+    fi
+
+    if [ "$sha1" = "" ]; then
+	echo "$0: Failed to find the sha1sum executable required to find an SHA1 hash value." >&2
+	echo "     You'll need to obtain the SHA1 for the src/frontend/CxxFrontend/EDG submodule and place" >&2
+	echo "     its first 7 characters in a file named src/frontend/CxxFrontend/EDG-submodule-sha1 in your" >&2
+	echo "     ROSE build tree. The best way to find this is to go to to /src/frontend/CxxFrontend/EDG at" >&2
+	echo "     github.com or where ever you downloaded this source tree and copy the 7-letter hash found there." >&2
+	exit 1
+    fi
+
     echo "4.$sha1"		# this is version 4 of edg dependency hashing
 }
 

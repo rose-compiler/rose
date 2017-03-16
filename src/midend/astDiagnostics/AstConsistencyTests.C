@@ -2858,9 +2858,10 @@ TestAstForProperlySetDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                  // DQ (6/30/2014): I think this is not an error for SgTemplateInstantiationDecl.
                     if (isSgTemplateInstantiationDecl(definingDeclaration) != NULL)
                        {
-                         printf ("Warning: (different access modifiers used) definingDeclaration = %p firstNondefiningDeclaration = %p = %s  \n",definingDeclaration,firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str());
-                         printf ("Warning: definingDeclaration_access_modifier         = %d \n",definingDeclaration_access_modifier);
-                         printf ("Warning: firstNondefiningDeclaration_access_modifier = %d \n",firstNondefiningDeclaration_access_modifier);
+                      // DQ (3/11/2017): Fixed to use message streams.
+                         mprintf ("Warning: (different access modifiers used) definingDeclaration = %p firstNondefiningDeclaration = %p = %s  \n",definingDeclaration,firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str());
+                         mprintf ("Warning: definingDeclaration_access_modifier         = %d \n",definingDeclaration_access_modifier);
+                         mprintf ("Warning: firstNondefiningDeclaration_access_modifier = %d \n",firstNondefiningDeclaration_access_modifier);
                        }
                       else
                        {
@@ -5071,7 +5072,7 @@ void TestChildPointersInMemoryPool::initDiagnostics()
      if (!initialized) 
         {
           initialized = true;
-          rose::Diagnostics::initAndRegister(mlog, "rose::TestChildPointersInMemoryPool");
+          rose::Diagnostics::initAndRegister(&mlog, "rose::TestChildPointersInMemoryPool");
         }
    }
 

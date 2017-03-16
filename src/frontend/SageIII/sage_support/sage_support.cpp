@@ -26,6 +26,7 @@
 #include <boost/algorithm/string/join.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
+#include <Sawyer/FileSystem.h>
 
 #ifdef __INSURE__
 // Provide a dummy function definition to support linking with Insure++.
@@ -2374,9 +2375,8 @@ int openFortranParser_main(int argc, char **argv );
 #endif
 
 #ifdef ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
-// This is defined seperately only in configured for the EXPERIMENTAL_OFP_ROSE_CONNECTION.
-// int experimental_openFortranParser_main(int argc, char **argv );
-SgUntypedFile* experimental_openFortranParser_main(int argc, char **argv );
+// This is defined separately configured only for the EXPERIMENTAL_OFP_ROSE_CONNECTION.
+   int experimental_openFortranParser_main(int argc, char **argv);
 #endif
 
 #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
@@ -3235,28 +3235,30 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 
        // add source file name
           string sourceFilename              = get_sourceFileNameWithPath();
-          string preprocessFilename;
 
           // use a pseudonym for source file in case original extension does not permit preprocessing
-             // compute absolute path for pseudonym
-                // TODO: when boost 1.46 is available, use boost::filesystem to get 'dir', 'abs_dir', and 'base'
-                string dir = StringUtility::getPathFromFileName(this->get_unparse_output_filename());
-                string abs_dir = StringUtility::getAbsolutePathFromRelativePath(dir.empty() ? getWorkingDirectory() : dir);  // Windows 'tempnam' requires this
-                string file = StringUtility::stripPathFromFileName(sourceFilename);
-                string base = StringUtility::stripFileSuffixFromFileName(file);
-                char * temp = tempnam(abs_dir.c_str(), (base + "-").c_str());   // not deprecated in Visual Studio 2010
-                preprocessFilename = string(temp) + ".F90"; free(temp);
-             // copy source file to pseudonym file
-                try {
-                    rose::FileSystem::copyFile(sourceFilename, preprocessFilename);
-                } catch(exception &e) {
-                    cerr << "Error in copying file " << sourceFilename << " to " << preprocessFilename
-                         << " (" << e.what() << ")" << endl;
-                    ROSE_ASSERT(false);
-                }
+          // compute absolute path for pseudonym
+          FileSystem::Path abs_path = FileSystem::makeAbsolute(this->get_unparse_output_filename());
+          FileSystem::Path abs_dir = abs_path.parent_path();
+          FileSystem::Path base = abs_dir.filename().stem();
+          string preprocessFilename = (abs_dir / boost::filesystem::unique_path(base.string() + "-%%%%%%%%.F90")).string();
+
+          // The Sawyer::FileSystem::TemporaryFile d'tor will delete the file. We close the file after it's created because
+          // rose::FileSystem::copyFile will reopen it in binary mode anyway.
+          Sawyer::FileSystem::TemporaryFile tempFile(preprocessFilename);
+          tempFile.stream().close();
+
+          // copy source file to pseudonym file
+          try {
+              rose::FileSystem::copyFile(sourceFilename, preprocessFilename);
+          } catch(exception &e) {
+              cerr << "Error in copying file " << sourceFilename << " to " << preprocessFilename
+                   << " (" << e.what() << ")" << endl;
+              ROSE_ASSERT(false);
+          }
           fortran_C_preprocessor_commandLine.push_back(preprocessFilename);
 
-       // add option to specify output file name
+          // add option to specify output file name
           fortran_C_preprocessor_commandLine.push_back("-o");
           string sourceFileNameOutputFromCpp = generate_C_preprocessor_intermediate_filename(sourceFilename);
           fortran_C_preprocessor_commandLine.push_back(sourceFileNameOutputFromCpp);
@@ -3274,15 +3276,6 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           {
              printf ("Error in running cpp on Fortran code: errorCode = %d \n",errorCode);
              ROSE_ASSERT(false);
-          }
-
-       // clean up after alias processing
-          try { boost::filesystem::remove(preprocessFilename); }
-          catch(exception &e)
-          {
-            cout << "Error in removing file " << preprocessFilename
-                 << " (" << e.what() << ")" << endl;
-            ROSE_ASSERT(false);
           }
      }
 
@@ -3838,7 +3831,16 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
        // string path_to_table = findRoseSupportPathFromSource("src/3rdPartyLibraries/experimental-fortran-parser/Fortran.tbl", "bin/Fortran.tbl");
        // string path_to_table = findRoseSupportPathFromBuild("src/3rdPartyLibraries/experimental-fortran-parser/Fortran.tbl", "bin/Fortran.tbl");
        // string path_to_table = findRoseSupportPathFromBuild("src/3rdPartyLibraries/experimental-fortran-parser/sdf_syntax/Fortran.tbl", "bin/Fortran.tbl");
-          string path_to_table = "/nfs/casc/overture/ROSE/aterm_for_rose_bin/Fortran.tbl";
+       // string path_to_table = "/nfs/casc/overture/ROSE/aterm_for_rose_bin/Fortran.tbl";
+
+       // Rasmussen (2/22/2017): OFP_BIN_PATH is the path to the Fortran parse table and other
+       // binaries used in transforming an OFP parse tree to an SgUntypedNode ATerm representation.
+#ifndef USE_CMAKE
+          std::string path_to_table = OFP_BIN_PATH;
+#else
+          std::string path_to_table = "";
+#endif
+          path_to_table += "/Fortran.tbl";
 
           experimentalFrontEndCommandLine.push_back(path_to_table);
 
@@ -3853,9 +3855,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           printf ("Calling the experimental fortran frontend (this work is incomplete) \n");
           printf ("   --- Fortran numberOfCommandLineArguments = %" PRIuPTR " frontEndCommandLine = %s \n",experimentalFrontEndCommandLine.size(),CommandlineProcessing::generateStringFromArgList(experimentalFrontEndCommandLine,false,false).c_str());
 #ifdef ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
-       // frontendErrorLevel = experimental_openFortranParser_main (experimental_openFortranParser_argc, experimental_openFortranParser_argv);
-          SgUntypedFile* untypedFile = experimental_openFortranParser_main (experimental_openFortranParser_argc, experimental_openFortranParser_argv);
-          frontendErrorLevel = (untypedFile != NULL) ? 0 : 1;
+          frontendErrorLevel = experimental_openFortranParser_main (experimental_openFortranParser_argc, experimental_openFortranParser_argv);
 #else
           printf ("ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION is not defined \n");
 #endif
@@ -3866,7 +3866,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
                printf ("Exiting before unparser (checking only through call to experimental_openFortranParser_main(): SUCESS! \n");
                exit(0);
 #else
-               printf ("frontendErrorLevel == 0: call to experimental_openFortranParser_main(): SUCESS! \n");
+               printf ("frontendErrorLevel == 0: call to experimental_openFortranParser_main(): SUCCESS! \n");
 #endif
              }
             else

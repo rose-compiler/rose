@@ -47,14 +47,15 @@ RegisterParts::operator|(const RegisterParts &other) const {
 
 RegisterParts&
 RegisterParts::operator&=(const RegisterParts &other) {
-    BOOST_FOREACH (const Map::Node &node, other.map_.nodes()) {
-        if (map_.exists(node.key())) {
-            BitSet &set = map_[node.key()];
-            set.eraseMultiple(node.value());
-            if (set.isEmpty())
-                map_.erase(node.key());
+    Map newmap;
+    BOOST_FOREACH (const Map::Node &node, map_.nodes()) {
+        if (other.map_.exists(node.key())) {
+            BitSet intersection = node.value() & other.map_[node.key()];
+            if (!intersection.isEmpty())
+                newmap.insert(node.key(), intersection);
         }
     }
+    map_ = newmap;
     return *this;
 }
 

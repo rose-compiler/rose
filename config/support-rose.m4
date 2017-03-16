@@ -676,6 +676,9 @@ ROSE_CONFIGURE_SECTION([Backend C/C++ compiler specific references])
 SETUP_BACKEND_C_COMPILER_SPECIFIC_REFERENCES
 SETUP_BACKEND_CXX_COMPILER_SPECIFIC_REFERENCES
 
+# echo "In configure.in ... CXX = $CXX : exiting after call to setup backend C and C++ compilers specific references."
+# exit 1
+
 # DQ (1/15/2007): Check if longer internal make check rule is to be used (default is short tests)
 ROSE_SUPPORT_LONG_MAKE_CHECK_RULE
 
@@ -800,8 +803,12 @@ AM_CONDITIONAL(ROSE_USE_LIBFFI,test ! "$with_libffi" = no)
 # DQ (3/14/2013): Adding support for Aterm library use in ROSE.
 ROSE_SUPPORT_ATERM
 
-# DQ (1/22/2016): Added support for stratego (need to know the path to sglri executable for Exprermental Fortran support).
+# DQ (1/22/2016): Added support for stratego (need to know the path to sglri executable for Experimental Fortran support).
 ROSE_SUPPORT_STRATEGO
+
+# RASMUSSEN (2/22/2017): Added support for OFP Stratego tools binary installation (Experimental Fortran support).
+# This assumes that OFP is installed from an OFP release and not imported and buiit with ROSE directly.
+ROSE_SUPPORT_OFP_STRATEGO
 
 if test "x$enable_experimental_fortran_frontend" = "xyes"; then
    if test "x$ATERM_LIBRARY_PATH" = "x"; then
@@ -809,6 +816,9 @@ if test "x$enable_experimental_fortran_frontend" = "xyes"; then
    fi
    if test "x$STRATEGO_LIBRARY_PATH" = "x"; then
       AC_MSG_ERROR([Support for experimental_fortran_frontend requires Stratego library support, --with-stratego=<path> must be specified!])
+   fi
+   if test "x$OFP_BIN_PATH" = "x"; then
+      AC_MSG_ERROR([Support for experimental_fortran_frontend requires OFP binary installation, --with-ofp-bin=<path> must be specified!])
    fi
 fi
 
@@ -2276,9 +2286,6 @@ src/util/stringSupport/Makefile
 src/util/support/Makefile
 stamp-h
 tests/Makefile
-tests/CompileTests/Makefile
-tests/CompileTests/OpenMP_tests/Makefile
-tests/CompileTests/x10_tests/Makefile
 tests/nonsmoke/ExamplesForTestWriters/Makefile
 tests/nonsmoke/Makefile
 tests/nonsmoke/acceptance/Makefile
@@ -2461,6 +2468,11 @@ tutorial/intelPin/Makefile
 tutorial/outliner/Makefile
 tutorial/roseHPCT/Makefile
 ])
+
+# DQ (3/8/2017): Removed these directories from testing (pre-smoke and pre-nonsmoke test directories.
+# tests/CompileTests/Makefile
+# tests/CompileTests/OpenMP_tests/Makefile
+# tests/CompileTests/x10_tests/Makefile
 
 # Liao, 1/16/2014, comment out a few directories which are turned off for EDG 4.x upgrade
 #projects/BinaryDataStructureRecognition/Makefile

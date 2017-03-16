@@ -2736,9 +2736,10 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
 
      if (possibleFunctionCall == NULL)
         {
-          printf ("In unparseMFuncRefSupport(): possibleFunctionCall == NULL: mfunc_ref = %p = %s \n",mfunc_ref,mfunc_ref->class_name().c_str());
+       // DQ (3/5/2017): Converted to use message logging.
+          mprintf ("In unparseMFuncRefSupport(): possibleFunctionCall == NULL: mfunc_ref = %p = %s \n",mfunc_ref,mfunc_ref->class_name().c_str());
           SgNode* parent = mfunc_ref->get_parent();
-          printf ("  ---  parent = %p = %s \n",parent,parent->class_name().c_str());
+          mprintf ("  ---  parent = %p = %s \n",parent,parent->class_name().c_str());
           ROSE_ASSERT(parent->get_parent() == NULL);
         }
 
@@ -2957,7 +2958,8 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
      ROSE_ASSERT(decl != NULL);
      if (decl->get_parent() == NULL)
         {
-          printf ("Note: decl->get_parent() == NULL for decl = %p = %s (name = %s::%s) (OK for index expresion in array type) \n",
+       // DQ (3/5/2017): Converted to use message logging.
+          mprintf ("Note: decl->get_parent() == NULL for decl = %p = %s (name = %s::%s) (OK for index expresion in array type) \n",
                decl,decl->class_name().c_str(),decl->get_name().str(),mfd->get_name().str());
         }
   // DQ (5/30/2016): This need not have a parent if it is an expression in index for an array type (see test2016_33.C).
