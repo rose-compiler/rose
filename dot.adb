@@ -1,5 +1,5 @@
---with Ada.Strings.Mapping;
 with Ada.Characters.Handling;
+with Ada.Strings.Fixed;
 
 package body Dot is
 
@@ -10,31 +10,6 @@ package body Dot is
    begin
       return To_ID_Type (Ada.Characters.Handling.To_String(Item));
    end To_ID_Type;
-
-   function Case_Insensitive_Equals (L, R : in String)
-                                     return Boolean is
-   begin
-      -- Prevents recursion in case this function is named "=":
-      return Standard."=" (Ada.Characters.Handling.To_Lower (L),
-                           Ada.Characters.Handling.To_Lower (R));
-   end Case_Insensitive_Equals;
-
-
-   function Is_Reserved_Word (Item : in String)
-                              return boolean
-   is
-      function "=" (L, R : in String)
-                    return Boolean
-                    renames Case_Insensitive_Equals;
-   begin
-      return
-        Item = "node" or else
-        Item = "edge" or else
-        Item = "graph" or else
-        Item = "digraph" or else
-        Item = "subgraph" or else
-        Item = "strict";
-   end Is_Reserved_Word;
 
    package body Graph is
 
@@ -306,6 +281,36 @@ package body Dot is
 
    end Indented;
 
+   function Case_Insensitive_Equals (L, R : in String)
+                                     return Boolean is
+   begin
+      -- Prevents recursion in case this function is named "=":
+      return Standard."=" (Ada.Characters.Handling.To_Lower (L),
+                           Ada.Characters.Handling.To_Lower (R));
+   end Case_Insensitive_Equals;
+
+
+   function Is_Reserved_Word (Item : in String)
+                              return boolean is
+      function "=" (L, R : in String)
+                    return Boolean
+                    renames Case_Insensitive_Equals;
+   begin
+      return
+        Item = "node" or else
+        Item = "edge" or else
+        Item = "graph" or else
+        Item = "digraph" or else
+        Item = "subgraph" or else
+        Item = "strict";
+   end Is_Reserved_Word;
+
+   function Contains_Space (Item : in String)
+                            return boolean is
+   begin
+      return Ada.Strings.Fixed.Index (Item, " ") > 0;
+   end Contains_Space;
+
    ------------
    -- PRIVATE:
    ------------
@@ -314,7 +319,7 @@ package body Dot is
       Item_String : constant String :=
         ASU.To_String (ASU.Unbounded_String(Item));
    begin
-      if Is_Reserved_Word (Item_String) then
+      if Is_Reserved_Word (Item_String) or Contains_Space (Item_String) then
          return '"' & Item_String & '"';
       else
          return Item_String;
