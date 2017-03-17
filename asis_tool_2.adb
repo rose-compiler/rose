@@ -1,7 +1,22 @@
 with Ada.Characters.Handling;
-with Ada.Wide_Text_IO;
 
 package body Asis_Tool_2 is
+
+   package Ach renames Ada.Characters.Handling;
+
+   -----------
+   -- PRIVATE:
+   -----------
+   function To_String (Item : in Wide_String) return String is
+   begin
+      return Ach.To_String (Item, Substitute => ' ');
+   end To_String;
+
+   -----------
+   -- PRIVATE:
+   -----------
+   function To_Wide_String (Item : in String) return Wide_String
+     renames Ach.To_Wide_String;
 
    -----------
    -- PRIVATE:
@@ -9,7 +24,7 @@ package body Asis_Tool_2 is
    procedure Trace_Put (Message : in Wide_String) is
    begin
       if Trace_On then
-         Ada.Wide_Text_IO.Put (Message);
+         Awti.Put (Message);
       end if;
    end Trace_Put;
 
@@ -19,7 +34,7 @@ package body Asis_Tool_2 is
    procedure Trace_Put_Line (Message : in Wide_String) is
    begin
       if Trace_On then
-         Ada.Wide_Text_IO.Put_Line (Message);
+         Awti.Put_Line (Message);
       end if;
    end Trace_Put_Line;
 
@@ -27,13 +42,10 @@ package body Asis_Tool_2 is
    -- PRIVATE:
    -----------
    procedure Print_Exception_Info (X : in Ada.Exceptions.Exception_Occurrence) is
-      use Ada.Characters.Handling;
-      use Ada.Exceptions;
-      use Ada.Wide_Text_IO;
    begin
-      Put_Line ("EXCEPTION: " & To_Wide_String (Exception_Name (X)) &
-                  " (" & To_Wide_String (Exception_Information (X)) & ")");
-      New_Line;
+      Awti.Put_Line ("EXCEPTION: " & To_Wide_String (Ae.Exception_Name (X)) &
+                  " (" & To_Wide_String (Ae.Exception_Information (X)) & ")");
+      Awti.New_Line;
    end Print_Exception_Info;
 
 end Asis_Tool_2;

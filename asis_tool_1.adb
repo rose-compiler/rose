@@ -1,3 +1,9 @@
+-- Handy references:
+-- http://www.sigada.org/WG/asiswg/basics.html
+-- http://www.sigada.org/WG/asiswg/ASISWG_Results.html
+-- http://docs.adacore.com/asis-docs/html/asis_ug/asis_ug.html
+-- http://docs.adacore.com/asis-docs/html/asis_rm/asis_rm.html
+
 with Ada.Characters.Handling;
 with Ada.Exceptions;
 with Ada.Wide_Text_IO;

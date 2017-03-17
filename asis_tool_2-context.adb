@@ -17,11 +17,14 @@ package body Asis_Tool_2.Context is
    procedure Process (Object : in out Class) is
    begin
       Asis.Implementation.Initialize;
-      Asis.Ada_Environments.Associate
-        (The_Context => Object.My_Context,
-         Name        => Asis.Ada_Environments.Default_Name);
+      Asis.Ada_Environments.Associate (Object.My_Context, "My_Context");
       Asis.Ada_Environments.Open (Object.My_Context);
+      Graph.Digraph := True;
+      Graph.Strict := False;
+      Graph.ID := Dot.To_ID_Type
+        (To_String(Asis.Ada_Environments.Name(Object.My_Context)));
       Object.Process_Units;
+      Graph.Print;
       Asis.Ada_Environments.Close (Object.My_Context);
       Asis.Ada_Environments.Dissociate (Object.My_Context);
       Asis.Implementation.Finalize;
