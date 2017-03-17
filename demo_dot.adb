@@ -72,7 +72,8 @@ procedure Demo_Dot is
       Graph.Strict := False;
 
       Node_Stmt_1.Node_ID.ID := Dot.To_ID_Type ("minimal_node");
-      Graph.Stmt_List.Append (new Dot.Node_Stmt.Class'(Node_Stmt_1));
+      Node_Stmt_1.Append_To(Graph.Stmt_List);
+--        Graph.Stmt_List.Append (new Dot.Node_Stmt.Class'(Node_Stmt_1));
 
       Node_Stmt_2.Node_ID.ID := Dot.To_ID_Type ("node_with_attrs");
       Assignment_List_1.Append ((L => Dot.To_ID_Type ("Today"),

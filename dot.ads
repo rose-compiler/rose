@@ -56,6 +56,7 @@ package Dot is
    type ID_Type is new Ada.Strings.Unbounded.Unbounded_String;
    function To_ID_Type (Item : in String) return ID_Type
                         renames To_Unbounded_String;
+--     function To_ID_Type (Item : in Wide_String) return ID_Type;
 
    -----------------------------------------------------------------------------
    package Stmt is
@@ -133,7 +134,13 @@ package Dot is
          Attrs : Dot.Attrs.List; -- Initialized
       end record;
 
+      overriding
       procedure Print (This : in Class);
+
+      -- Creates a Class object on the heap:
+      procedure Append_To
+        (This      : in Class;
+         Stmt_List : in out Stmt.List);
 
    end Attr_Stmt;
    -----------------------------------------------------------------------------
@@ -173,7 +180,13 @@ package Dot is
          Attrs   : Dot.Attrs.List; -- Initialized
       end record;
 
+      overriding
       procedure Print (This : in Class);
+
+      -- Creates a Class object on the heap:
+      procedure Append_To
+        (This      : in Class;
+         Stmt_List : in out Stmt.List);
 
    end Node_Stmt;
    -----------------------------------------------------------------------------
@@ -197,7 +210,13 @@ package Dot is
          Subgraph : Subgraph_Class; -- Initialized
       end record;
 
+      overriding
       procedure Print (This : in Class);
+
+      -- Creates a Class object on the heap:
+      procedure Append_To
+        (This      : in Class;
+         Stmt_List : in out Stmt.List);
 
    end Edge_Stmt;
    -----------------------------------------------------------------------------

@@ -3,6 +3,14 @@ with Ada.Characters.Handling;
 
 package body Dot is
 
+   ------------
+   -- EXPORTED
+   ------------
+   function To_ID_Type (Item : in Wide_String) return ID_Type is
+   begin
+      return To_ID_Type (Ada.Characters.Handling.To_String(Item));
+   end To_ID_Type;
+
    function Case_Insensitive_Equals (L, R : in String)
                                      return Boolean is
    begin
@@ -68,6 +76,7 @@ package body Dot is
    end Stmt;
 
    package body Assignment is
+
       ------------
       -- EXPORTED
       ------------
@@ -91,9 +100,11 @@ package body Dot is
          Indented.Dedent;
          Indented.Put_Line ("]");
       end Print;
+
    end Assignment;
 
    package body Attrs is
+
       ------------
       -- EXPORTED
       ------------
@@ -103,9 +114,11 @@ package body Dot is
             Item.Print;
          end loop;
       end Print;
+
    end Attrs;
 
    package body Attr_Stmt is
+
       ------------
       -- EXPORTED
       ------------
@@ -113,6 +126,17 @@ package body Dot is
       begin
          Indented.Put_Line ("<attr stmt>");
       end Print;
+
+      ------------
+      -- EXPORTED
+      ------------
+      procedure Append_To
+        (This      : in Class;
+         Stmt_List : in out Stmt.List) is
+      begin
+         Stmt_List.Append (new Class'(This));
+      end Append_To;
+
    end Attr_Stmt;
 
    package body Node_ID is
@@ -144,6 +168,7 @@ package body Dot is
    end Node_ID;
 
    package body Node_Stmt is
+
       ------------
       -- EXPORTED
       ------------
@@ -153,6 +178,16 @@ package body Dot is
          Indented.Put (" ");
          This.Attrs.Print;
       end Print;
+
+      ------------
+      -- EXPORTED
+      ------------
+      procedure Append_To
+        (This      : in Class;
+         Stmt_List : in out Stmt.List) is
+      begin
+         Stmt_List.Append (new Class'(This));
+      end Append_To;
 
    end Node_Stmt;
 
@@ -165,6 +200,16 @@ package body Dot is
       begin
          Indented.Put_Line ("<edge stmt>");
       end Print;
+
+      ------------
+      -- EXPORTED
+      ------------
+      procedure Append_To
+        (This      : in Class;
+         Stmt_List : in out Stmt.List) is
+      begin
+         Stmt_List.Append (new Class'(This));
+      end Append_To;
 
    end Edge_Stmt;
 
