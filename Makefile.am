@@ -754,6 +754,7 @@ librose-lcov.info: all-lcov.info
         "$(top_srcdir)/src/midend/programTransformation/singleStatementToBlockNormalization/*" \
         "$(top_srcdir)/src/roseSupport/stringify.C" \
         "$(top_srcdir)/src/midend/programAnalysis/graphAnalysis/*" \
+        "$(top_srcdir)/src/roseExtensions/roseHPCToolkit/*" \
          -o librose-lcov.info
 
 librose_lcov_web_pages: librose-lcov.info
