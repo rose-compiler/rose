@@ -394,11 +394,12 @@ functionDataFlow(P2::Partitioner &partitioner, const P2::Function::Ptr &function
 rose::BinaryAnalysis::CallingConvention::Definition::Ptr
 functionCallingConvention(P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
     using namespace rose::BinaryAnalysis;
+    CallingConvention::Definition::Ptr ccdef;
 
     if (function==NULL || !function->callingConventionAnalysis().hasResults())
-        return NULL;                                    // analysis was never run and is too expensive to run here.
+        return ccdef;                                   // analysis was never run and is too expensive to run here.
 
-    CallingConvention::Definition::Ptr ccdef;
+
     if (NULL == (ccdef = function->attributeOrElse(ATTR_CallConvDef, ccdef))) {
         const CallingConvention::Dictionary &archConventions = partitioner.instructionProvider().callingConventions();
         CallingConvention::Dictionary conventions = function->callingConventionAnalysis().match(archConventions);
