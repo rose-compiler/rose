@@ -89,8 +89,9 @@ package body Asis_Tool_2.Unit is
       procedure Add_To_Graph is
          Node        : Dot.Node_Stmt.Class; -- Initialized
          As : Dot.Assignment.List; -- Initialized
+         Unique_Name : constant String := To_String (Acu.Unique_Name (Unit));
       begin
-         Node.Node_ID.ID := Dot.To_ID_Type (To_String (Unit_Full_Name));
+         Node.Node_ID.ID := Dot.To_ID_Type (Unique_Name);
          As.Append ("Compilation_Command_Line_Options",
                     To_String (Acu.Compilation_Command_Line_Options (Unit)));
          -- Empty:
@@ -100,7 +101,7 @@ package body Asis_Tool_2.Unit is
          -- Empty:
 --           As.Append ("Text_Form", To_String (Acu.Text_Form (Unit)));
          As.Append ("Text_Name", To_String (Acu.Text_Name (Unit)));
-         As.Append ("Unique_Name", To_String (Acu.Unique_Name (Unit)));
+         As.Append ("Unique_Name", Unique_Name);
          As.Append ("Unit_Class", Unit_Class'Image);
          As.Append ("Unit_Full_Name", To_String (Unit_Full_Name));
          As.Append ("Unit_Kind", Acu.Unit_Kind (Unit)'Image);

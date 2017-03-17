@@ -6,6 +6,7 @@ with Asis.Compilation_Units;
 with Asis.Implementation;
 with Asis.Exceptions; use ASIS.Exceptions;
 with Asis.Errors;
+with GNAT.Directory_Operations;
 
 with Asis_Tool_2.Unit;
 
@@ -17,12 +18,15 @@ package body Asis_Tool_2.Context is
    procedure Process (Object : in out Class) is
    begin
       Asis.Implementation.Initialize;
-      Asis.Ada_Environments.Associate (Object.My_Context, "My_Context");
+      -- This just names the Context.  It does not control what it processes:
+      Asis.Ada_Environments.Associate
+        (Object.My_Context,
+         To_Wide_String (GNAT.Directory_Operations.Get_Current_Dir));
       Asis.Ada_Environments.Open (Object.My_Context);
       Graph.Digraph := True;
       Graph.Strict := False;
       Graph.ID := Dot.To_ID_Type
-        (To_String(Asis.Ada_Environments.Name(Object.My_Context)));
+        (To_String (Asis.Ada_Environments.Name (Object.My_Context)));
       Object.Process_Units;
       Graph.Print;
       Asis.Ada_Environments.Close (Object.My_Context);
