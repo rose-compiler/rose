@@ -737,7 +737,7 @@ librose-lcov.info: all-lcov.info
         "$(top_srcdir)/src/frontend/BinaryDisassembly/*" \
         "$(top_srcdir)/src/midend/binaryAnalyses/dataflowanalyses/*" \
         "$(top_srcdir)/src/midend/binaryAnalyses/RoseBin_*" \
-        "$(top_srcdir)/src/midend/programAnalysis/genericDataflowflow/*" \
+        "$(top_srcdir)/src/midend/programAnalysis/genericDataflow/*" \
         "$(top_srcdir)/src/frontend/CxxFrontend/EDG/EDG_4.9/*" \
         "$(top_srcdir)/src/midend/astRewriteMechanism/*" \
         "$(top_srcdir)/src/midend/programAnalysis/dominanceAnalysis/*" \
