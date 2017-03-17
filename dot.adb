@@ -177,6 +177,7 @@ package body Dot is
          This.Node_Id.Print;
          Indented.Put (" ");
          This.Attrs.Print;
+         Indented.New_Line_If_Needed;
       end Print;
 
       ------------
@@ -272,6 +273,17 @@ package body Dot is
          ATI.New_Line;
          Indent_Needed := True;
       end New_Line;
+
+      ------------
+      -- EXPORTED
+      ------------
+      procedure New_Line_If_Needed is
+         At_Beginning_Of_Line : Boolean renames Indent_Needed;
+      begin
+         if not At_Beginning_Of_Line then
+            New_Line;
+         end if;
+      end New_Line_If_Needed;
 
       ------------
       -- EXPORTED

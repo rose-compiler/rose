@@ -252,6 +252,9 @@ private
       procedure Put_Line (Item : in String);
       procedure New_Line;
 
+      -- Calls New_Line if not already at beginning of line:
+      procedure New_Line_If_Needed;
+
       -- Puts nothing if Item is empty, else puts it with a trailing space:
       procedure Put_Spaced (Item : in String);
    end Indented;
