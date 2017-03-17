@@ -27,6 +27,8 @@
 // Liao 1/24/2008 : need access to scope stack sometimes
 #include "sageBuilder.h"
 
+// DQ (3/14/2017): Try to comment this out since it is not tested (used in get_C_array_dimensions(), 
+// from midend/programTransformation/ompLowering/omp_lowering.cpp, but not tested).
 // PP 01/06/2012 : need swap operations for wrapFunction implementation
 // PP 05/30/2012 : need ancestor function
 #include "sageGeneric.h"
@@ -19549,7 +19551,6 @@ void SageInterface::annotateExpressionsWithUniqueNames (SgProject* project)
   {
     return get_C_array_dimensions_aux(arrtype, varrefCreator(initname));
   }
-
 
 // DQ (1/23/2013): Added support for generated a set of source sequence entries.
 class CollectSourceSequenceNumbers : public AstSimpleProcessing
