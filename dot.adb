@@ -112,7 +112,7 @@ package body Dot is
 
    end Assignment;
 
-   package body Attrs is
+   package body Attr is
 
       ------------
       -- EXPORTED
@@ -124,7 +124,7 @@ package body Dot is
          end loop;
       end Print;
 
-   end Attrs;
+   end Attr;
 
    package body Attr_Stmt is
 

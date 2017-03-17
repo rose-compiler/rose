@@ -122,7 +122,7 @@ package Dot is
 
    -----------------------------------------------------------------------------
    -- Zero or more bracketed lists of assignments:
-   package Attrs is
+   package Attr is
       package Lists is new
         Ada.Containers.Doubly_Linked_Lists (Element_Type => Assignment.List,
                                             "="          => Assignment."=");
@@ -133,7 +133,7 @@ package Dot is
 
       Empty_List : constant List := List'(Lists.Empty_List with null record);
 
-   end Attrs;
+   end Attr;
    -----------------------------------------------------------------------------
 
    -----------------------------------------------------------------------------
@@ -143,7 +143,7 @@ package Dot is
 
       type Class is new Stmt.Class with record -- Initialized
          Kind  : Kind_Type := Node;
-         Attrs : Dot.Attrs.List; -- Initialized
+         Attrs : Dot.Attr.List; -- Initialized
       end record;
 
       overriding
@@ -189,7 +189,7 @@ package Dot is
 
       type Class is new Stmt.Class with record -- Initialized
          Node_ID : Dot.Node_ID.Class; -- Initialized
-         Attrs   : Dot.Attrs.List; -- Initialized
+         Attrs   : Dot.Attr.List; -- Initialized
       end record;
 
       overriding
@@ -216,7 +216,7 @@ package Dot is
       type Kind_Type is (Node, Subgraph);
 
       type Class is new Stmt.Class with record -- Initialized
-         Attrs    : Dot.Attrs.List; -- Initialized
+         Attrs    : Dot.Attr.List; -- Initialized
          Kind     : Kind_Type := Node;
          Node_ID  : Dot.Node_ID.Class; -- Initialized
          Subgraph : Subgraph_Class; -- Initialized
