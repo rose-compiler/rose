@@ -101,6 +101,15 @@ package body Dot is
          Indented.Put_Line ("]");
       end Print;
 
+      procedure Append
+        (Container : in out List;
+         L, R      : in     String) is
+      begin
+         Container.Append
+           ((L => To_ID_Type (L),
+             R => To_ID_Type (R)));
+      end Append;
+
    end Assignment;
 
    package body Attrs is

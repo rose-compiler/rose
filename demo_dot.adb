@@ -76,15 +76,11 @@ procedure Demo_Dot is
 --        Graph.Stmt_List.Append (new Dot.Node_Stmt.Class'(Node_Stmt_1));
 
       Node_Stmt_2.Node_ID.ID := Dot.To_ID_Type ("node_with_attrs");
-      Assignment_List_1.Append ((L => Dot.To_ID_Type ("Today"),
-                                 R => Dot.To_ID_Type ("Thursday")));
-      Assignment_List_1.Append ((L => Dot.To_ID_Type ("Tomorrow"),
-                                 R => Dot.To_ID_Type ("Friday")));
+      Assignment_List_1.Append ("Today", "Thursday");
+      Assignment_List_1.Append ("Tomorrow", "Friday");
       Node_Stmt_2.Attrs.Append (Assignment_List_1);
-      Assignment_List_2.Append ((L => Dot.To_ID_Type ("Now"),
-                                 R => Dot.To_ID_Type ("Day")));
-      Assignment_List_2.Append ((L => Dot.To_ID_Type ("Later"),
-                                 R => Dot.To_ID_Type ("Night")));
+      Assignment_List_2.Append ("Now", "Day");
+      Assignment_List_2.Append ("Later", "Night");
       Node_Stmt_2.Attrs.Append (Assignment_List_2);
       Graph.Stmt_List.Append (new Dot.Node_Stmt.Class'(Node_Stmt_2));
       Print (Graph, "Graph with " & Graph.Stmt_List.Length'Image & " nodes");

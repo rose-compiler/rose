@@ -103,6 +103,18 @@ package Dot is
 
       procedure Print (This : in List);
 
+      -- Convenience: converts L, R to ID_Type and appends a Class to the list.
+      -- Allows this:
+      --      Assignment_List.Append ("Today", "Thursday");
+      -- Instead of this:
+      --      Assignment_List.Append ((L => Dot.To_ID_Type ("Today"),
+      --                               R => Dot.To_ID_Type ("Thursday")));
+
+      not overriding
+      procedure Append
+        (Container : in out List;
+         L, R      : in     String);
+
       Empty_List : constant List := List'(Lists.Empty_List with null record);
 
    end Assignment;
