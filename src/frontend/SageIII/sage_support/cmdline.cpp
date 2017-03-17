@@ -1448,10 +1448,14 @@ SgProject::processCommandLine(const vector<string>& input_argv)
                   bool is_directory = boost::filesystem::is_directory(include_path_no_quotes);
                   if (false == is_directory)
                   {
-                      std::cout  << "[WARN] "
+                 // DQ (3/15/2017): Fixed to use mlog message logging.
+                    if (rose::ir_node_mlog[rose::Diagnostics::DEBUG])
+                       {
+                         std::cout  << "[WARN] "
                               << "Invalid argument to -I; path does not exist: "
                               << "'" << include_path_no_quotes << "'"
                               << std::endl;
+                       }
                   }
               } catch (const boost::filesystem::filesystem_error& ex) {
                   std::cout  << "[ERROR] "
@@ -1573,10 +1577,14 @@ NormalizeIncludePathOptions (std::vector<std::string>& argv)
           bool is_directory = boost::filesystem::is_directory(arg);
           if (false == is_directory)
           {
-              std::cout  << "[WARN] "
+          // DQ (3/15/2017): Fixed to use mlog message logging.
+             if (rose::ir_node_mlog[rose::Diagnostics::DEBUG])
+                {
+                  std::cout  << "[WARN] "
                         << "Invalid argument to -I; path does not exist: "
                         << "'" << arg << "'"
                         << std::endl;
+                }
           }
 #ifdef _MSC_VER
           // ensure that the path is quoted on Windows.
@@ -7804,21 +7812,33 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
   // printf ("compilerName       = %s \n",compilerName);
   // printf ("compilerNameString = %s \n",compilerNameString.c_str());
 
+  // DQ (3/15/2017): This is the wrong way to handl this since the compiler name can be anything.
+  // Note: ROSE Matrix Testing using "icpc-16.03" instead of "icpc" (and so was a problem for this code below).
   // tps (28 Aug 2008) : changed this so it does not pick up mpicc for icc
-     string name = StringUtility::stripPathFromFileName(compilerNameString[0]);
-     //     if (compilerNameString[0].find("icc") != string::npos)
-     if (name == "icc")
-        {
+  // string name = StringUtility::stripPathFromFileName(compilerNameString[0]);
+  // if (name == "icc")
+  //    {
        // This is the Intel C compiler: icc, we need to add the -restrict option
-          compilerNameString.push_back("-restrict");
-        }
+  //      compilerNameString.push_back("-restrict");
+  //    }
 
-     //     if (compilerNameString[0].find("icpc") != string::npos)
-     if (name == "icpc")
-        {
+  // if (name == "icpc")
+  //    {
        // This is the Intel C++ compiler: icc, we need to add the -restrict option
-          compilerNameString.push_back("-restrict");
-        }
+  //      compilerNameString.push_back("-restrict");
+  //    }
+
+  // DQ (3/15/2017): This is the correct way to handle compiler vendor specific details within ROSE.
+  #if defined(BACKEND_CXX_IS_GNU_COMPILER)
+  // Nothing is required for restrict pointer handling on the GNU compiler command line.
+  #endif
+  #if defined(BACKEND_CXX_IS_CLANG_COMPILER)
+  // Nothing is required for restrict pointer handling on the Clang compiler command line.
+  #endif
+  #if defined(BACKEND_CXX_IS_INTEL_COMPILER)
+  // DQ (3/15/2017): The intel compiler requires the use of the "-restrict" option to support the "restrict" keyword.
+     compilerNameString.push_back("-restrict");
+  #endif
 
   // DQ (9/24/2006): Not clear if we want this, if we just skip stripping it out then it will be passed to the backend directly!
   // But we have to add it in the case of "-rose:strict", so we have to add it uniformally and strip it from the input.
