@@ -13993,7 +13993,23 @@ Sg_File_Info::get_line() const
              }
             else
              {
+#if 0
+            // DQ (3/18/2017): Original code.
                returnValue = p_line;
+#else
+            // DQ (3/18/2017): Add to the cases where we want to output an undefined value.
+            // I think it is helpful to know the position in the rose_edg_required_macros_and_functions.h 
+            // file (so don't output undefined value for case of isFrontendSpecific() == true).
+            // if (isFrontendSpecific() == true || isSourcePositionUnavailableInFrontend() == true )
+               if ( isSourcePositionUnavailableInFrontend() == true )
+                  {
+                    returnValue = undefinedValue;
+                  }
+                 else
+                  {
+                    returnValue = p_line;
+                  }
+#endif
              }
         }
 
@@ -14071,7 +14087,23 @@ Sg_File_Info::get_col() const
              }
             else
              {
+#if 0
+            // DQ (3/18/2017): Original code.
                returnValue = p_col;
+#else
+            // DQ (3/18/2017): Add to the cases where we want to output an undefined value.
+            // I think it is helpful to know the position in the rose_edg_required_macros_and_functions.h 
+            // file (so don't output undefined value for case of isFrontendSpecific() == true).
+            // if (isFrontendSpecific() == true || isSourcePositionUnavailableInFrontend() == true )
+               if ( isSourcePositionUnavailableInFrontend() == true )
+                  {
+                    returnValue = undefinedValue;
+                  }
+                 else
+                  {
+                    returnValue = p_col;
+                  }
+#endif
              }
         }
 
