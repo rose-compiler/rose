@@ -172,10 +172,12 @@ public:
 
     virtual void write(SgAsmExpression *e, const BaseSemantics::SValuePtr &value, size_t addr_nbits=0) ROSE_OVERRIDE;
 
+    enum AccessMode { READ_REGISTER, PEEK_REGISTER };
+
     /** Architecture-specific read from register.
      *
      *  Similar to RiscOperators::readRegister, but might do additional architecture-specific things. */
-    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor&);
+    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor&, AccessMode mode = READ_REGISTER);
 
     /** Architecture-specific write to register.
      *

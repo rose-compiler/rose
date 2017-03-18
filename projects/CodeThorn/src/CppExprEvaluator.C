@@ -7,6 +7,7 @@
 #include "CppExprEvaluator.h"
 #include "IntervalPropertyState.h"
 #include "SgNodeHelper.h"
+#include "BoolLattice.h"
 #include <cmath>
 
 using namespace std;
@@ -25,23 +26,30 @@ SPRAY::CppExprEvaluator::CppExprEvaluator(SPRAY::NumberIntervalLattice* d, SPRAY
 {
 }
 
-int SPRAY::CppExprEvaluator::determineSizeOf(SgNode* node) {
-  if(SgExpression* exp=isSgExpression(node)) {
-    SgType* type=exp->get_type();
-    if(SgNodeHelper::isPointerType(type)) {
-      return sizeof(void*);
-    } else {
-      // TODO
-      if(_showWarnings) {
-        cout<<"WARNING: SgSizeOfOp: size 0 assumed: "<<(type->unparseToString())<<":"<<(node->unparseToString())<<endl;
+int SPRAY::CppExprEvaluator::computeSize(SgSizeOfOp* node) {
+  SgNode* child=node->get_operand_expr();
+  if(child) {
+    if(SgExpression* exp=isSgExpression(child)) {
+      SgType* type=exp->get_type();
+      if(SgNodeHelper::isPointerType(type)) {
+        return sizeof(void*);
+      } else {
+        // TODO
+        if(_showWarnings) {
+          cout<<"WARNING: SgSizeOfOp: unknown size (using top): "<<(type->unparseToString())<<":"<<(child->unparseToString())<<endl;
+        }
+        return -1;
       }
-      return 0;
+    } else {
+      if(_showWarnings) {
+        cout<<"WARNING: SgSizeOfOp: (not an expression, using top): "<<(child->unparseToString())<<endl;
+      }
+      return -1;
     }
   } else {
-    if(_showWarnings) {
-      cout<<"WARNING: SgSizeOfOp: size assumed 0 (not an expression): "<<(node->unparseToString())<<endl;
-    }
-    return 0;
+    // no child (type is provided, e.g. sizeof(struct S))
+    //SgType* type=node->get_operand_type();
+    return -1;
   }
 }
 
@@ -320,11 +328,12 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
 
   switch(node->variantT()) {
   case V_SgSizeOfOp: {
-    int size=determineSizeOf(SgNodeHelper::getFirstChild(node));
-    if(_showWarnings && size==0) {
-      cout<<"WARNING: SgSizeOfOp: size assumed 0: "<<(node->unparseToString())<<endl;
+    int size=computeSize(isSgSizeOfOp(node));
+    if(size==-1) {
+      return NumberIntervalLattice::top();
+    } else {
+      return NumberIntervalLattice(Number(size));
     }
-    return NumberIntervalLattice(Number(size));
   }
   case V_SgIntVal: return NumberIntervalLattice(Number(isSgIntVal(node)->get_value()));
   case V_SgDoubleVal: {

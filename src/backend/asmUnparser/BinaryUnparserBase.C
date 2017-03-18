@@ -680,8 +680,8 @@ Base::emitFunctionCallingConvention(std::ostream &out, const P2::Function::Ptr &
                 CallingConvention::Dictionary matches = state.partitioner().functionCallingConventionDefinitions(function);
                 std::string s = "calling convention definitions:";
                 if (!matches.empty()) {
-                    BOOST_FOREACH (const CallingConvention::Definition &ccdef, matches)
-                        s += " " + ccdef.name();
+                    BOOST_FOREACH (const CallingConvention::Definition::Ptr &ccdef, matches)
+                        s += " " + ccdef->name();
                 } else {
                     s += " unknown";
                 }
