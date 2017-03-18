@@ -1655,7 +1655,7 @@ print_testcodes:
 performance_timing:
 	../../testGraphGeneration --edg:no_warnings -w -rose:verbose 3 -rose:skip_unparse_asm_commands -rose:skipAstConsistancyTests -rose:skip_commentsAndDirectives -rose:skip_unparse -I$(srcdir) -c $(srcdir)/testPerformance.C
 
-# Added PDF test for ROSE evaluation (forces testing of parts of ROSE for lcov):
+# DQ (3/17/2017): Added PDF test for ROSE evaluation (forces testing of parts of ROSE for lcov):
 test_pdf_generation: $(TEST_PDF_TRANSLATOR)
 	../../testPDFGeneration --edg:no_warnings -w -rose:verbose 0 -rose:skip_unparse_asm_commands -rose:skipAstConsistancyTests -rose:skip_commentsAndDirectives -rose:skip_unparse -I$(srcdir) -c $(srcdir)/test2004_77.C
 
