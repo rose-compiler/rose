@@ -7837,13 +7837,13 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
   //    }
 
   // DQ (3/15/2017): This is the correct way to handle compiler vendor specific details within ROSE.
-  #if defined(BACKEND_CXX_IS_GNU_COMPILER)
+#if defined(BACKEND_CXX_IS_GNU_COMPILER)
   // Nothing is required for restrict pointer handling on the GNU compiler command line.
-  #endif
-  #if defined(BACKEND_CXX_IS_CLANG_COMPILER)
+#endif
+#if defined(BACKEND_CXX_IS_CLANG_COMPILER)
   // Nothing is required for restrict pointer handling on the Clang compiler command line.
-  #endif
-  #if defined(BACKEND_CXX_IS_INTEL_COMPILER)
+#endif
+#if defined(BACKEND_CXX_IS_INTEL_COMPILER)
   // DQ (3/16/2017): Only turn this on for C and C++ modes (not for Fortran (or anything else).
   // DQ (3/15/2017): The intel compiler requires the use of the "-restrict" option to support the "restrict" keyword.
      if (get_C_only() == true || get_Cxx_only() == true)
@@ -7852,18 +7852,13 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
         }
        else
         {
+       // DQ (3/17/2017): It was a problem that C++11 was turned on for Fortran when using the Intel and Clang compilers (this code checks this).
           ROSE_ASSERT(get_C11_only() == false);
           ROSE_ASSERT(get_C14_only() == false);
-#if 0
-          if (get_Cxx11_only() == true)
-             {
-               printf ("WARNING: C and C++ mode false, but Cxx11 mode true \n");
-             }
-#endif
           ROSE_ASSERT(get_Cxx11_only() == false);
           ROSE_ASSERT(get_Cxx14_only() == false);
         }
-  #endif
+#endif
 
   // DQ (9/24/2006): Not clear if we want this, if we just skip stripping it out then it will be passed to the backend directly!
   // But we have to add it in the case of "-rose:strict", so we have to add it uniformally and strip it from the input.
