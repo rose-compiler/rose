@@ -175,7 +175,7 @@ public:
     virtual void writeRegister(const RegisterDescriptor &reg, const S2::BaseSemantics::SValuePtr &value) ROSE_OVERRIDE {
         // Writing to a register means that the callee's return value is definitely not used.
         RegisterParts found = calleeOutputRegisters_ & RegisterParts(reg);
-#if 1 // DEBUGGING [Robb P Matzke 2017-03-04]
+#if 0 // DEBUGGING [Robb P Matzke 2017-03-04]
             std::cerr <<"ROBB: " <<unparseInstructionWithAddress(currentInstruction()) <<"\n"
                       <<"        writeRegister " <<locationNames(RegisterParts(reg)) <<"\n"
                       <<"        calleeOutputRegisters = " <<locationNames(calleeOutputRegisters_) <<"\n"
