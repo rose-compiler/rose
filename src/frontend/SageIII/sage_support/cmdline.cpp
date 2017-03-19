@@ -4507,33 +4507,37 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
         }
        else
         {
-       // This is the case of a C++ file.
-
-       // DQ (2/21/2017): If C++14 was not specified explicitly then let the default be C++11 for this compiler.
-          if (get_Cxx14_only() == false && get_Cxx14_gnu_only() == false)
+       // DQ (3/17/2017): This could be a fortran file and we don't want to blindly turn on C++11 mode.
+          if (get_Cxx_only() == true)
              {
-               set_Cxx11_only(true);
-               set_Cxx11_gnu_only(false);
+            // This is the case of a C++ file.
+
+            // DQ (2/21/2017): If C++14 was not specified explicitly then let the default be C++11 for this compiler.
+               if (get_Cxx14_only() == false && get_Cxx14_gnu_only() == false)
+                  {
+                    set_Cxx11_only(true);
+                    set_Cxx11_gnu_only(false);
+                  }
+            // Set gnu specific level of C99 support to false.
+            // set_Cxx11_gnu_only(false);
+
+            // DQ (7/31/2013): If we turn on C99, then turn off C89.
+               set_C89_only(false);
+               set_C89_gnu_only(false);
+               set_C99_only(false);
+               set_C99_gnu_only(false);
+               set_C11_only(false);
+               set_C11_gnu_only(false);
+
+               ROSE_ASSERT(get_C_only() == false);
+
+            // DQ (2/1/2015): I think that explicit specificiation of C mode should turn off C mode!
+            // set_C_only(false);
+
+            // DQ (2/21/2017): Modified this assertion.
+            // ROSE_ASSERT(get_Cxx11_only() == true);
+               ROSE_ASSERT(get_Cxx11_only() == true || get_Cxx14_only() == true);
              }
-       // Set gnu specific level of C99 support to false.
-       // set_Cxx11_gnu_only(false);
-
-       // DQ (7/31/2013): If we turn on C99, then turn off C89.
-          set_C89_only(false);
-          set_C89_gnu_only(false);
-          set_C99_only(false);
-          set_C99_gnu_only(false);
-          set_C11_only(false);
-          set_C11_gnu_only(false);
-
-          ROSE_ASSERT(get_C_only() == false);
-
-       // DQ (2/1/2015): I think that explicit specificiation of C mode should turn off C mode!
-       // set_C_only(false);
-
-       // DQ (2/21/2017): Modified this assertion.
-       // ROSE_ASSERT(get_Cxx11_only() == true);
-          ROSE_ASSERT(get_Cxx11_only() == true || get_Cxx14_only() == true);
         }
 #endif
 
@@ -4546,8 +4550,12 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
         }
        else
         {
-       // printf ("For Clang as the backend compiler the default C++ mode is C++11 \n");
-          set_Cxx11_only(true);
+       // DQ (3/17/2017): This could be a fortran file and we don't want to blindly turn on C++11 mode.
+          if (get_Cxx_only() == true)
+             {
+            // printf ("For Clang as the backend compiler the default C++ mode is C++11 \n");
+               set_Cxx11_only(true);
+             }
         }
 #endif
 
@@ -7829,16 +7837,28 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
   //    }
 
   // DQ (3/15/2017): This is the correct way to handle compiler vendor specific details within ROSE.
-  #if defined(BACKEND_CXX_IS_GNU_COMPILER)
+#if defined(BACKEND_CXX_IS_GNU_COMPILER)
   // Nothing is required for restrict pointer handling on the GNU compiler command line.
-  #endif
-  #if defined(BACKEND_CXX_IS_CLANG_COMPILER)
+#endif
+#if defined(BACKEND_CXX_IS_CLANG_COMPILER)
   // Nothing is required for restrict pointer handling on the Clang compiler command line.
-  #endif
-  #if defined(BACKEND_CXX_IS_INTEL_COMPILER)
+#endif
+#if defined(BACKEND_CXX_IS_INTEL_COMPILER)
+  // DQ (3/16/2017): Only turn this on for C and C++ modes (not for Fortran (or anything else).
   // DQ (3/15/2017): The intel compiler requires the use of the "-restrict" option to support the "restrict" keyword.
-     compilerNameString.push_back("-restrict");
-  #endif
+     if (get_C_only() == true || get_Cxx_only() == true)
+        {
+          compilerNameString.push_back("-restrict");
+        }
+       else
+        {
+       // DQ (3/17/2017): It was a problem that C++11 was turned on for Fortran when using the Intel and Clang compilers (this code checks this).
+          ROSE_ASSERT(get_C11_only() == false);
+          ROSE_ASSERT(get_C14_only() == false);
+          ROSE_ASSERT(get_Cxx11_only() == false);
+          ROSE_ASSERT(get_Cxx14_only() == false);
+        }
+#endif
 
   // DQ (9/24/2006): Not clear if we want this, if we just skip stripping it out then it will be passed to the backend directly!
   // But we have to add it in the case of "-rose:strict", so we have to add it uniformally and strip it from the input.
