@@ -2556,13 +2556,13 @@ TransformationSupport::getFunctionDefinition( const SgNode* astNode)
      const SgNode* parentNode = astNode;
 
      ROSE_ASSERT(astNode != NULL);
-#if 1
+#if 0
      printf ("Note: astNode = %p = %s parent = %p \n",astNode,astNode->class_name().c_str(),astNode->get_parent());
 #endif
 
      while ( (isSgFunctionDefinition(parentNode) == NULL) && (parentNode->get_parent() != NULL) )
         {
-#if 1
+#if 0
           printf ("Note: parentNode = %p = %s \n",parentNode,parentNode->class_name().c_str());
 #endif
           parentNode = parentNode->get_parent();
