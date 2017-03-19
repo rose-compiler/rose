@@ -1,8 +1,19 @@
 /* ELF Sections (SgAsmElfSection and related classes) */
 
 #include "sage3basic.h"
-    
-/** Constructor for sections that are in neither the ELF Section Table nor the ELF Segment Table yet (but eventually will be) */
+
+// DQ (8/22/2008): These are not automatically generated since one of them must be virtual.
+SgAsmElfSection* 
+SgAsmElfSection::get_linked_section() const {
+    return p_linked_section;
+}
+
+void
+SgAsmElfSection::set_linked_section(SgAsmElfSection* linked_section) {
+    set_isModified(true);
+    p_linked_section = linked_section;
+}
+
 void
 SgAsmElfSection::ctor()
 {
@@ -10,10 +21,6 @@ SgAsmElfSection::ctor()
     set_purpose(SP_UNSPECIFIED);
 }
 
-/** Initializes the section from data parsed from the ELF Section Table. This includes the section name, offset, size, memory
- *  mapping, and alignments. The @p id is the index into the section table. This function complements
- *  SgAsmElfSectionTable::add_section(): this function initializes this section from the section table while add_section()
- *  initializes the section table from the section. */
 SgAsmElfSection *
 SgAsmElfSection::init_from_section_table(SgAsmElfSectionTableEntry *shdr, SgAsmElfStringSection *strsec, int id)
 {
@@ -80,7 +87,6 @@ SgAsmElfSection::init_from_section_table(SgAsmElfSectionTableEntry *shdr, SgAsmE
     return this;
 }
 
-/** Initializes the section from data parse from the ELF Segment Table similar to init_from_section_table() */
 SgAsmElfSection *
 SgAsmElfSection::init_from_segment_table(SgAsmElfSegmentTableEntry *shdr, bool mmap_only)
 {
@@ -132,31 +138,12 @@ SgAsmElfSection::init_from_segment_table(SgAsmElfSegmentTableEntry *shdr, bool m
     return this;
 }
 
-/** Just a convenience function so we don't need to constantly cast the return value from get_header() */
 SgAsmElfFileHeader*
 SgAsmElfSection::get_elf_header() const
 {
     return dynamic_cast<SgAsmElfFileHeader*>(get_header());
 }
 
-/** Returns info about the size of the entries based on information already available. Any or all arguments may be null
- *  pointers if the caller is not interested in the value. Return values are:
- *
- *   entsize  - size of each entry, sum of required and optional parts. This comes from the sh_entsize member of this
- *              section's ELF Section Table Entry, adjusted upward to be large enough to hold the required part of each
- *              entry (see "required").
- *
- *   required - size of the required (leading) part of each entry. The size of the required part is based on the ELF word size.
- *
- *   optional - size of the optional (trailing) part of each entry. If the section has been parsed then the optional size will
- *              be calculated from the entry with the largest "extra" (aka, optional) data. Otherwise this is calculated as the
- *              difference between the "entsize" and the "required" sizes.
- *   
- *   entcount - total number of entries in this section. If the section has been parsed then this is the actual number of
- *              parsed entries, otherwise its the section size divided by the "entsize".
- *
- *  Return value is the total size needed for the section. In all cases, it is entsize*entcount.
- */
 rose_addr_t
 SgAsmElfSection::calculate_sizes(size_t r32size, size_t r64size,       /*size of required parts*/
                                  const std::vector<size_t> &optsizes,  /*size of optional parts and number of parts parsed*/
@@ -216,21 +203,12 @@ SgAsmElfSection::calculate_sizes(size_t r32size, size_t r64size,       /*size of
     return entry_size * nentries;
 }
 
-/** Most subclasses will override this virtual function in order to return more useful values. This implementation returns the
- *  following values:
- *   entsize  -- size stored in the ELF Section Table's sh_entsize member, or size of entire section if not a table.
- *   required -- same as entsize
- *   optional -- zero
- *   entcount -- number of entries, each of size entsize, that can fit in the section.
- *  The return size is entsize*entcount, which, if this section is a table (nonzero sh_entsize), could be smaller than the
- *  total size of the section. */
 rose_addr_t
 SgAsmElfSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
     return calculate_sizes(0, 0, std::vector<size_t>(), entsize, required, optional, entcount);
 }
 
-/** Called prior to unparse to make things consistent. */
 bool
 SgAsmElfSection::reallocate()
 {
@@ -263,7 +241,6 @@ SgAsmElfSection::reallocate()
     return reallocated;
 }
 
-/** Print some debugging info */
 void
 SgAsmElfSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 {

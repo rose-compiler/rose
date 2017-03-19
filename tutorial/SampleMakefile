@@ -40,7 +40,7 @@ demo.o: demo.C
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -o $@ -c $^
 
 demo: demo.o
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $^
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 	@echo "Remember to set:"
 	@echo "  LD_LIBRARY_PATH=$(LIBDIRS):$$LD_LIBRARY_PATH"
 
