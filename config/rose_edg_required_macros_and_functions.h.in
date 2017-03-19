@@ -457,6 +457,9 @@ __int128_t __sync_fetch_and_xor_16(__int128_t volatile*, __int128_t, ...) __attr
 long int __sync_add_and_fetch(volatile long int * word, unsigned long int ammount);
 unsigned int __sync_add_and_fetch (volatile unsigned int * word, unsigned long int ammount);
 
+// DQ (3/15/2017): Adding support for mysql required builtins.
+unsigned long int __sync_add_and_fetch(volatile unsigned long int * word, unsigned long int ammount);
+
 
 char __sync_add_and_fetch_1(char volatile*, char, ...) __attribute__((nothrow));
 short __sync_add_and_fetch_2(short volatile*, short, ...) __attribute__((nothrow));
@@ -469,6 +472,8 @@ __int128_t __sync_add_and_fetch_16(__int128_t volatile*, __int128_t, ...) __attr
 long int __sync_sub_and_fetch(volatile long int * word, unsigned long int ammount);
 unsigned int __sync_sub_and_fetch (volatile unsigned int * word, unsigned long int ammount);
 
+// DQ (3/15/2017): Adding support for mysql required builtins.
+unsigned long int __sync_sub_and_fetch (volatile unsigned long int * word, unsigned long int ammount);
 
 char __sync_sub_and_fetch_1(char volatile*, char, ...) __attribute__((nothrow));
 short __sync_sub_and_fetch_2(short volatile*, short, ...) __attribute__((nothrow));

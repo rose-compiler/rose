@@ -13,16 +13,16 @@ if USING_GNU_COMPILER
 # Ultimately we want this test to only apply to the GNU 4.8 compiler in C++11 mode (which can have internal errors 
 # in compiling the C++ code represented by some more complex C++ test codes using ROSE).  Interestingly, the
 # GNU 4.8 C++11 mode works fine for the C++ code that implements ROSE itself.
-if ROSE_USING_GCC_VERSION_4_8_CXX11
-check-local:
-	@echo "********************************************************************************************************************************************"
-	@echo "********************************************************************************************************************************************"
-	@echo "Skipping tests in tests/roseTests directory for GNU 4.8.x using C++11 mode (GNU 4.8 compiler has internal errors when using the C++11 mode)."
-	@echo "********************************************************************************************************************************************"
-	@echo "********************************************************************************************************************************************"
-
-else
-
+# if ROSE_USING_GCC_VERSION_4_8_CXX11
+# check-local:
+# 	@echo "********************************************************************************************************************************************"
+# 	@echo "********************************************************************************************************************************************"
+# 	@echo "Skipping tests in tests/roseTests directory for GNU 4.8.x using C++11 mode (GNU 4.8 compiler has internal errors when using the C++11 mode)."
+# 	@echo "********************************************************************************************************************************************"
+# 	@echo "********************************************************************************************************************************************"
+# 
+# else
+# 
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
    SUBDIRS += astMergeTests astPerformanceTests \
               astProcessingTests astQueryTests astRewriteTests astSymbolTableTests astTokenStreamTests astSnippetTests \
@@ -62,7 +62,7 @@ endif
 
 endif # !USING_XTENSA_BACKEND_COMPILER
 endif # !USING_GCC_3_4_4_BACKEND_COMPILER
-endif # ROSE_USING_GCC_VERSION_4_8_CXX11
+# endif # ROSE_USING_GCC_VERSION_4_8_CXX11
 
 else  # NOT USING_GNU_COMPILER
 # DQ (2/19/2017): Skipping testing with other non-GNU compilers for now.

@@ -48,6 +48,9 @@ $(unparseType_TEST_TARGETS): ut_%.passed: $(SPECIMEN_DIR)/% $(TEST_CONFIG) unpar
 test_unparseProject: unparseProject
 	./unparseProject $(srcdir)/test2014_26.C
 
+test_unparseProject_template: unparseProject
+	./unparseProject $(srcdir)/test2017_01.C
+
 ########################################################################################################################
 # Additional automake rules
 ########################################################################################################################

@@ -1392,6 +1392,8 @@ endif
 
 TEST_TRANSLATOR = ../../testTranslator
 
+TEST_PDF_TRANSLATOR = ../../testPDFGeneration
+
 # A number of tests require the path to the A++ include directory 
 # and a number of other tests require a path to the source directory.
 # Add the dependence upon the source file to trigger recompilation each time the makefile is run!
@@ -1566,6 +1568,9 @@ testTemplateExample: $(TEST_TEMPLATE_TRANSLATOR)
 $(TEST_TRANSLATOR):
 	cd ../..; $(MAKE) testTranslator
 
+$(TEST_PDF_TRANSLATOR):
+	cd ../..; $(MAKE) testPDFGeneration
+
 ../../testTranslatorFoldedConstants:
 	cd ../..; $(MAKE) testTranslatorFoldedConstants
 
@@ -1650,6 +1655,13 @@ print_testcodes:
 performance_timing:
 	../../testGraphGeneration --edg:no_warnings -w -rose:verbose 3 -rose:skip_unparse_asm_commands -rose:skipAstConsistancyTests -rose:skip_commentsAndDirectives -rose:skip_unparse -I$(srcdir) -c $(srcdir)/testPerformance.C
 
+# DQ (3/17/2017): Added PDF test for ROSE evaluation (forces testing of parts of ROSE for lcov):
+test_pdf_generation: $(TEST_PDF_TRANSLATOR)
+	../../testPDFGeneration --edg:no_warnings -w -rose:verbose 0 -rose:skip_unparse_asm_commands -rose:skipAstConsistancyTests -rose:skip_commentsAndDirectives -rose:skip_unparse -I$(srcdir) -c $(srcdir)/test2004_77.C
+	ls -l *.pdf
+	@echo "Removing the generated PDF file because it is up to 150Meg and we want to save disk space."
+	rm *.pdf
+
 # DQ (11/19/2012): HPCToolKit use.  This makes some significant assumptions on how we have setup HPCToolKit.
 hpctoolkit:
 	hpcrun -e WALLCLOCK -- ../../testTranslator --edg:no_warnings -w -rose:verbose 0 -rose:skip_unparse_asm_commands -rose:skipAstConsistancyTests -rose:skip_commentsAndDirectives -rose:skip_unparse -I/home/dquinlan/ROSE/git-dq-edg4x-rc/tests/nonsmoke/functional/CompileTests/Cxx_tests -c /home/dquinlan/ROSE/git-dq-edg4x-rc/tests/nonsmoke/functional/CompileTests/Cxx_tests/testPerformance.C
@@ -1672,6 +1684,7 @@ if ROSE_USING_GCC_VERSION_LATER_4_9
 else  # NOT ROSE_USING_GCC_VERSION_LATER_4_9
 	@echo "Using GNU compiler (version up to 4.8)"
 	@$(MAKE) $(PASSING_TEST_Sources) $(FAILING_TEST_targets)
+	@$(MAKE) test_pdf_generation
 endif #  ROSE_USING_GCC_VERSION_LATER_4_9
 else  # NOT USING_GNU_COMPILER
 	@echo "NOT Using GNU compiler"
@@ -1683,6 +1696,7 @@ if USING_INTEL_COMPILER
 else  # NOT USING_INTEL_COMPILER
 	@echo "Using EDG 4.9 and GNU version 4.8 or earlier (ROSE supports running C++ tests with this configuration)"
 	@$(MAKE) $(PASSING_TEST_Sources) $(FAILING_TEST_targets)
+	@$(MAKE) test_pdf_generation
 endif # USING_INTEL_COMPILER
 endif # USING_CLANG_COMPILER
 endif # USING_GNU_COMPILER
@@ -1690,6 +1704,7 @@ else  # NOT ROSE_USE_EDG_VERSION_4_9
 	@echo "Using EDG 4.12"
 	@echo "Using EDG version later than 4.9 (ROSE supports running all C++ tests across all compilers)"
 	@$(MAKE) $(PASSING_TEST_Sources) $(FAILING_TEST_targets)
+	@$(MAKE) test_pdf_generation
 endif # ROSE_USE_EDG_VERSION_4_9
 #	I'm not sure why these are coded to run in serial [RPM 2014-08-29]
 	@$(MAKE) test_unparse_includes_option.passed
@@ -1707,7 +1722,7 @@ endif
 	@echo "*******************************************************************************************************************"
 
 clean-local:
-	rm -f a.out *.o rose_*.[cC] roseTestProgram.C *.dot *.ti
+	rm -f a.out *.o rose_*.[cC] roseTestProgram.C *.dot *.ti *.pdf
 	rm -f *.foldedConstants-o
 	rm -f *.unfoldedConstants-o
 	rm -rf QMTest

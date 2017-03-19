@@ -366,8 +366,9 @@ FortranCodeGeneration_locatedNode::unparseFortranIncludeLine (SgStatement* stmt,
 
      if (usingGfortran)
         {
+       // DQ (3/17/2017): Fixed this to support GNU 5.1.
           if ( (BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER == 3) || 
-               ( (BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER >= 4) && (BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER <= 1) ) )
+               ( (BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER <= 1) ) )
              {
             // gfortran versions before 4.2 can not handle absolute path names in the Fortran specific include mechanism.
 
