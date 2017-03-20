@@ -6,8 +6,9 @@
 #ifndef AST_ATTRIBUTEDOT_H
 #define AST_ATTRIBUTEDOT_H
 
-#if 0
+#if 1
 // DQ (3/19/2017): These functions do not appear to ever be called (experiment with commenting it out).
+// Note that these are used in the tutorial/wholeGraphFilterOnPersistantAttributes.C file.
 
 /**************************************************************************************
  *
