@@ -14,7 +14,7 @@
 using namespace rose;
 using namespace rose::Diagnostics;
     
-/** Non-parsing constructor. The ELF String Table is constructed to contain one NUL byte. */
+// Non-parsing constructor. The ELF String Table is constructed to contain one NUL byte.
 void
 SgAsmElfStringSection::ctor()
 {
@@ -24,7 +24,7 @@ SgAsmElfStringSection::ctor()
     p_strtab = new SgAsmElfStrtab(this);
 }
 
-/** Parse the file content to initialize the string table */
+// Parse the file content to initialize the string table
 SgAsmElfStringSection *
 SgAsmElfStringSection::parse()
 {
@@ -35,10 +35,6 @@ SgAsmElfStringSection::parse()
     return this;
 }
 
-/** Reallocate space for the string section if necessary. Note that reallocation is lazy here -- we don't shrink the section,
- *  we only enlarge it (if you want the section to shrink then call SgAsmGenericStrtab::reallocate(bool) with a true value
- *  rather than calling this function. SgAsmElfStringSection::reallocate is called in response to unparsing a file and gives
- *  the string table a chance to extend its container section if it needs to allocate more space for strings. */
 bool
 SgAsmElfStringSection::reallocate()
 {
@@ -54,7 +50,6 @@ SgAsmElfStringSection::reallocate()
     return reallocated;
 }
 
-/** Unparse an ElfStringSection by unparsing the ElfStrtab */
 void
 SgAsmElfStringSection::unparse(std::ostream &f) const
 {
@@ -62,8 +57,6 @@ SgAsmElfStringSection::unparse(std::ostream &f) const
     unparse_holes(f);
 }
 
-/** Augments superclass to make sure free list and such are adjusted properly. Any time the ELF String Section size is changed
- *  we adjust the free list in the ELF String Table contained in this section. */
 void
 SgAsmElfStringSection::set_size(rose_addr_t newsize)
 {
@@ -84,7 +77,6 @@ SgAsmElfStringSection::set_size(rose_addr_t newsize)
     }
 }
 
-/** Print some debugging info */
 void
 SgAsmElfStringSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
@@ -105,7 +97,6 @@ SgAsmElfStringSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 }
 
 
-/** Non-parsing constructor. The table is created to be at least one byte long and having a NUL character as the first byte. */
 void
 SgAsmElfStrtab::ctor()
 {
@@ -115,8 +106,6 @@ SgAsmElfStrtab::ctor()
     p_dont_free = create_storage(0, false);
 }
 
-/** Parses the string table. All that actually happens at this point is we look to see if the table begins with an empty
- *  string. */
 SgAsmElfStrtab *
 SgAsmElfStrtab::parse()
 {
@@ -138,10 +127,6 @@ SgAsmElfStrtab::parse()
     return this;
 }
 
-/** Free StringStorage objects associated with this string table. It may not be safe to blow them away yet since other objects
- *  may still have SgAsmStoredStrings pointing to these storage objects. So instead, we will mark all this strtab's storage
- *  objects as no longer being associated with a string table. This allows the SgAsmStoredString objects to still function
- *  properly and their destructors (~SgAsmStoredString) will free their storage. */
 SgAsmElfStrtab::~SgAsmElfStrtab()
 {
     for (referenced_t::iterator i = p_storage_list.begin(); i != p_storage_list.end(); ++i) {
@@ -153,9 +138,6 @@ SgAsmElfStrtab::~SgAsmElfStrtab()
     p_dont_free = NULL; /*FIXME: can't delete for same reason as in SgAsmStoredString destructor. (RPM 2008-09-05) */
 }
 
-/** Creates the storage item for the string at the specified offset. If 'shared' is true then attempt to re-use a previous
- *  storage object, otherwise always create a new one. Each storage object is considered a separate string, therefore when two
- *  strings share the same storage object, changing one string changes the other. */
 SgAsmStringStorage *
 SgAsmElfStrtab::create_storage(rose_addr_t offset, bool shared)
 {
@@ -202,7 +184,6 @@ SgAsmElfStrtab::create_storage(rose_addr_t offset, bool shared)
     return storage;
 }
 
-/** Similar to create_storage() but uses a storage object that's already been allocated. */
 void
 SgAsmElfStrtab::rebind(SgAsmStringStorage *storage, rose_addr_t offset)
 {
@@ -212,19 +193,11 @@ SgAsmElfStrtab::rebind(SgAsmStringStorage *storage, rose_addr_t offset)
     storage->set_string(s);
 }
 
-/** Returns the number of bytes required to store the string in the string table. This is the length of the string plus
- *  one for the NUL terminator. */
 rose_addr_t
 SgAsmElfStrtab::get_storage_size(const SgAsmStringStorage *storage) {
     return storage->get_string().size() + 1;
 }
 
-/** Tries to find a suitable offset for a string such that it overlaps with some other string already allocated. If the new
- *  string is the same as the end of some other string (new="main", existing="domain") then we just use an offset into that
- *  string since the space is already allocated for the existing string. If the new string ends with an existing string
- *  (new="domain", existing="main") and there's enough free space before the existing string (two bytes in this case) then
- *  we allocate some of that free space and use a suitable offset. In any case, upon return storage->get_offset() will return
- *  the allocated offset if successful, or SgAsmGenericString::unallocated if we couldn't find an overlap. */
 void
 SgAsmElfStrtab::allocate_overlap(SgAsmStringStorage *storage)
 {
@@ -253,7 +226,6 @@ SgAsmElfStrtab::allocate_overlap(SgAsmStringStorage *storage)
     }
 }
 
-/** Write string table back to disk. Free space is zeroed out; holes are left as they are. */
 void
 SgAsmElfStrtab::unparse(std::ostream &f) const
 {
