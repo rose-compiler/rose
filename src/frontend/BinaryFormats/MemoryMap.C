@@ -181,6 +181,13 @@ MemoryMap::insertFileDocumentation() {
 AddressInterval
 MemoryMap::insertFile(const std::string &locatorString) {
 
+    // These resources need to be cleaned up for all returns and exceptions
+    struct Resources {
+        uint8_t *data;                                  // line read from a file, allocated with operator new[]
+        Resources(): data(NULL) {}
+        ~Resources() { delete[] data; }
+    } r;
+
     //--------------------------------------
     // Parse the parts of the locator string
     //--------------------------------------
@@ -290,13 +297,12 @@ MemoryMap::insertFile(const std::string &locatorString) {
 
     // Read the file data.  If we know the file size then we can allocate a buffer and read it all in one shot, otherwise we'll
     // have to read a little at a time (only happens on Windows due to stat call above).
-    uint8_t *data = NULL;                               // data read from the file
     size_t nRead = 0;                                   // bytes of data actually allocated, read, and initialized in "data"
     if (optionalFSize) {
         // This is reasonably fast and not too bad on memory
         if (0 != *optionalFSize) {
-            data = new uint8_t[*optionalFSize];
-            file.read((char*)data, *optionalFSize);
+            r.data = new uint8_t[*optionalFSize];
+            file.read((char*)r.data, *optionalFSize);
             nRead = file.gcount();
             if (nRead != *optionalFSize)
                 throw std::runtime_error("MemoryMap::insertFile: short read from \""+StringUtility::cEscape(fileName)+"\"");
@@ -307,10 +313,10 @@ MemoryMap::insertFile(const std::string &locatorString) {
             file.read((char*)page, sizeof page);
             size_t n = file.gcount();
             uint8_t *tmp = new uint8_t[nRead + n];
-            memcpy(tmp, data, nRead);
+            memcpy(tmp, r.data, nRead);
             memcpy(tmp+nRead, page, n);
-            delete[] data;
-            data = tmp;
+            delete[] r.data;
+            r.data = tmp;
             nRead += n;
         }
         optionalFSize = nRead;
@@ -353,7 +359,7 @@ MemoryMap::insertFile(const std::string &locatorString) {
         return AddressInterval();                       // empty
     AddressInterval interval = AddressInterval::baseSize(*optionalVa, *optionalVSize);
     insert(interval, Segment::anonymousInstance(interval.size(), *optionalAccess, segmentName));
-    size_t nCopied = at(interval.least()).limit(nRead).write(data).size();
+    size_t nCopied = at(interval.least()).limit(nRead).write(r.data).size();
     ASSERT_always_require(nRead==nCopied);              // better work since we just created the segment!
     return interval;
 }

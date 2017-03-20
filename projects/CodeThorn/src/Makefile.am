@@ -3,7 +3,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 COUNTEREXAMPLES = counterexamples/ltl2haskell.sh counterexamples/Makefile counterexamples/qc.hs counterexamples/log2csv.awk
 EXTRA_DIST = EqualityMaintainer.C Doxyfile $(TESTS) $(COUNTEREXAMPLES)
 
-bin_PROGRAMS = codethorn woodpecker analyterix matcher_demo astinfo
+bin_PROGRAMS = codethorn woodpecker analyterix matcher_demo matcher astinfo
 noinst_PROGRAMS = addressTakenAnalysis matcher_demo astinfo
 
 CLEANFILES = 
@@ -22,6 +22,7 @@ libspray_la_SOURCES=\
  AnalysisAstAnnotator.h \
  AstTerm.h \
  AType.h \
+ BoolLattice.h \
  CFAnalysis.h \
  DFAnalysisBase.h \
  DFTransferFunctions.h \
@@ -55,6 +56,7 @@ libspray_la_SOURCES=\
  AliasAnalysis.C \
  AstTerm.C \
  AType.C \
+ BoolLattice.C \
  CFAnalysis.C \
  CppExprEvaluator.C \
  DFAnalysisBase.C \
@@ -467,6 +469,11 @@ BUILT_SOURCES =
 AM_YFLAGS =
 AM_LFLAGS =
 
+matcher_DEPENDENCIES=libspray.la
+matcher_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
+matcher__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
+matcher_SOURCES = Timer.cpp matcher.C
+
 #MS: iterator_test not ingegrated yet
 #iterator_test_SOURCES = iterator_test.C ShowSeq.h
 #iterator_test_LDADD = -lrose libmatcher.la
@@ -489,9 +496,12 @@ check-astinfo:
 	./astinfo --linecol --edg:no_warnings $(srcdir)/tests/bugs/bug3.C
 	@echo "-------------------------------------------------------------"
 
-check-matcher:
+check-matcher-demo:
 	./matcher_demo  --edg:no_warnings $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat
 #	./ast_demo $(srcdir)/tests/basictest5.C
+
+check-matcher:
+	./matcher_demo  --edg:no_warnings $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat
 
 check-local:
 	@echo ================================================================
@@ -527,10 +537,10 @@ check-local:
 	@diff tmp.nsdump $(srcdir)/tests/jacobi-1d-imper_mod.c.nsdump
 	@rm tmp.nsdump
 
-	@echo ================================================================
-	@echo RUNNING STATIC PROGRAM ANALYSIS TESTS
-	@echo ================================================================
-	@$(srcdir)/scripts/runAnalyterixTests.sh "$(srcdir)" "$(top_builddir)/projects/CodeThorn/src" "$(clean-only)" "$(skip-analyterix)" # Run analyterix tests
+#	@echo ================================================================
+#	@echo RUNNING STATIC PROGRAM ANALYSIS TESTS
+#	@echo ================================================================
+#	@$(srcdir)/scripts/runAnalyterixTests.sh "$(srcdir)" "$(top_builddir)/projects/CodeThorn/src" "$(clean-only)" "$(skip-analyterix)" # Run analyterix tests
 
 	@echo ================================================================
 	@echo RUNNING LTL VERIFICATION TESTS
