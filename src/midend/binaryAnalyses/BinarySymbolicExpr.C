@@ -982,8 +982,10 @@ Interior::identity(uint64_t ident) {
 
     // Don't simplify the return value recursively
     Interior *inode = new Interior(0, getOperator(), args, comment());
-    if (inode->nBits() != nBits())
+    if (inode->nBits() != nBits()) {
+        delete inode;
         return sharedFromThis();                        // don't simplify if width changed.
+    }
     return InteriorPtr(inode);
 }
 

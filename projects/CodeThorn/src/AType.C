@@ -5,6 +5,7 @@
  * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
+#include "sage3basic.h"
 #include "AType.h"
 #include "assert.h"
 #include "CommandLineOptions.h"
@@ -18,167 +19,11 @@ using namespace std;
 
 using namespace CodeThorn;
 
-bool AType::ConstIntLattice::arithTop=false;
-
-ostream& AType::operator<<(ostream& os, const BoolLattice& value) {
-  os << value.toString();
-  return os;
-}
-
-ostream& AType::operator<<(ostream& os, const ConstIntLattice& value) {
-  os << value.toString();
-  return os;
-}
-
 istream& AType::operator>>(istream& is, ConstIntLattice& value) {
   value.fromStream(is);
   return is;
 }
 
-AType::BoolLattice::BoolLattice():value(AType::BoolLattice::BOT) {}
-
-AType::BoolLattice::BoolLattice(bool val) {if(val) value=AType::BoolLattice::TRUE; else value=AType::BoolLattice::FALSE;}
-
-// type conversion
-AType::BoolLattice::BoolLattice(Top e) {value=AType::BoolLattice::TOP;}
-
-// type conversion
-AType::BoolLattice::BoolLattice(Bot e) {value=AType::BoolLattice::BOT;}
-
-// type conversion
-AType::BoolLattice::BoolLattice(int x) {if(x==0) value=AType::BoolLattice::FALSE; else value=AType::BoolLattice::TRUE;}
-
-bool AType::BoolLattice::isTop()   const {return value==AType::BoolLattice::TOP;}
-bool AType::BoolLattice::isTrue()  const {return value==AType::BoolLattice::TRUE;}
-bool AType::BoolLattice::isFalse() const {return value==AType::BoolLattice::FALSE;}
-bool AType::BoolLattice::isBot()   const {return value==AType::BoolLattice::BOT;}
-
-/**
- * CAVEAT:    We define !bot := bot
- * RATIONALE: bot means "not yet analyzed" / "no meaningful result"
- *          top means "could be any value"
- */
-AType::BoolLattice AType::BoolLattice::operator!() {
-  AType::BoolLattice tmp;
-  switch(value) {
-  case FALSE: tmp.value=TRUE;break;
-  case TRUE: tmp.value=FALSE;break;
-  case TOP: tmp.value=TOP;break;
-  case BOT: tmp.value=BOT;break;
-  default:
-    throw CodeThorn::Exception("Error: BoolLattice operation '!' failed.");
-  }
-  return tmp;
-}
-
-bool AType::BoolLattice::operator==(AType::BoolLattice other) const {
-  return other.value == value;
-}
-
-bool AType::BoolLattice::operator!=(AType::BoolLattice other) const {
-  return other.value != value;
-}
-
-bool AType::BoolLattice::operator<(BoolLattice other) const {
-  if (isBot()) {
-    if (other.isBot()) return false;
-    return true;
-  }
-  if (isFalse()) {
-    if (other.isBot())   return false;
-    if (other.isFalse()) return false;
-    return true;
-  }
-  if (isTrue()) {
-    if (other.isBot())   return false;
-    if (other.isFalse()) return false;
-    if (other.isTrue())  return false;
-    return true;
-  }
-  if (isTop()) {
-    return false;
-  }
-  throw CodeThorn::Exception("Error: BoolLattice operation< failed.");
-}
-
-AType::BoolLattice AType::BoolLattice::operator||(AType::BoolLattice other) {
-  AType::BoolLattice tmp;
-  // all TOP cases
-  if(isTop()   && other.isTop())   return Top();
-  if(isTop()   && other.isTrue())  return true;
-  if(isTrue()  && other.isTop())   return true;
-  if(isTop()   && other.isFalse()) return Top();
-  if(isFalse() && other.isTop())   return Top();
-  // all BOT cases
-  if(value==BOT)                   return other;
-  if(other.value==BOT)             return *this;
-  // usual bool cases
-  if(isTrue()  && other.isTrue())  return true;
-  if(isTrue()  && other.isFalse()) return true;
-  if(isFalse() && other.isTrue())  return true;
-  if(isFalse() && other.isFalse()) return false;
-  throw CodeThorn::Exception("Error: BoolLattice operation|| failed.");
-}
-
-AType::BoolLattice AType::BoolLattice::operator&&(AType::BoolLattice other) {
-  // all TOP cases
-  if(isTop()   && other.isTop())   return Top();
-  if(isTop()   && other.isTrue())  return Top();
-  if(isTrue()  && other.isTop())   return Top();
-  if(isTop()   && other.isFalse()) return false;
-  if(isFalse() && other.isTop())   return false;
-  // all BOT cases
-  if(value==BOT)                   return other;
-  if(other.value==BOT)             return *this;
-  // usual bool cases
-  if(isTrue()  && other.isTrue())  return true;
-  if(isTrue()  && other.isFalse()) return false;
-  if(isFalse() && other.isTrue())  return false;
-  if(isFalse() && other.isFalse()) return false;
-  throw CodeThorn::Exception("Error: BoolLattice operation&& failed.");
-}
-
-AType::BoolLattice AType::BoolLattice::lub(AType::BoolLattice other) {
-  // all TOP cases
-  if(isTop()   || other.isTop())   return Top();
-  // all BOT cases
-  if(value==BOT)                   return other;
-  if(other.value==BOT)             return *this;
-  // usual bool cases
-  if(isTrue()  && other.isTrue())  return true;
-  if(isTrue()  && other.isFalse()) return Top();
-  if(isFalse() && other.isTrue())  return Top();
-  if(isFalse() && other.isFalse()) return false;
-  throw CodeThorn::Exception("Error: BoolLattice lub failed.");
-}
-
-AType::BoolLattice AType::BoolLattice::glb(AType::BoolLattice other) {
-  // all BOT cases
-  if(isBot()   || other.isBot())   return Bot();
-  // all BOT cases
-  if(value==TOP)                   return other;
-  if(other.value==TOP)             return *this;
-  // usual bool cases
-  if(isTrue()  && other.isTrue())  return true;
-  if(isTrue()  && other.isFalse()) return Bot();
-  if(isFalse() && other.isTrue())  return Bot();
-  if(isFalse() && other.isFalse()) return false;
-  throw CodeThorn::Exception("Error: BoolLattice glb failed.");
-}
-
-// operator= : C++ default used
-// operator== : C++ default used
-string AType::BoolLattice::toString() const {
-  switch(value) {
-  case TOP: return "⊤" /*"top"*/; /* AP: not sure how portable this is */
-  case BOT: return "⊥" /*"bot"*/;
-  case TRUE: return "true";
-  case FALSE: return "false";
-  default:
-    cerr<<"VALUE = "<<value<<endl;
-    throw CodeThorn::Exception("Error: BoolLattice::toString operation failed.");
-  }
-}
 
 // default constructor
 AType::ConstIntLattice::ConstIntLattice():valueType(AType::ConstIntLattice::BOT),intValue(0) {}
@@ -205,7 +50,7 @@ AType::ConstIntLattice::ConstIntLattice(short x) {valueType=AType::ConstIntLatti
 AType::ConstIntLattice::ConstIntLattice(int x) {valueType=AType::ConstIntLattice::CONSTINT;intValue=x;}
 AType::ConstIntLattice::ConstIntLattice(long int x) {
   if((x<INT_MIN || x>INT_MAX)) throw CodeThorn::Exception("Error: numbers outside 'signed int' range not supported.");
-  valueType=AType::ConstIntLattice::CONSTINT;intValue=(int)x;
+   valueType=AType::ConstIntLattice::CONSTINT;intValue=(int)x;
 }
 AType::ConstIntLattice::ConstIntLattice(long long int x) {
   if((x<INT_MIN || x>INT_MAX)) throw CodeThorn::Exception("Error: numbers outside 'signed int' range not supported.");
@@ -234,6 +79,7 @@ bool AType::ConstIntLattice::isTrue() const {return valueType==AType::ConstIntLa
 bool AType::ConstIntLattice::isFalse() const {return valueType==AType::ConstIntLattice::CONSTINT && intValue==0;}
 bool AType::ConstIntLattice::isBot() const {return valueType==AType::ConstIntLattice::BOT;}
 bool AType::ConstIntLattice::isConstInt() const {return valueType==AType::ConstIntLattice::CONSTINT;}
+bool AType::ConstIntLattice::isPtr() const {return valueType==AType::ConstIntLattice::PTR;}
 
 long AType::ConstIntLattice::hash() const {
   if(isTop()) return LONG_MAX;
@@ -316,17 +162,46 @@ AType::ConstIntLattice AType::ConstIntLattice::operatorAnd(ConstIntLattice other
   if(isFalse() && other.isFalse()) return false;
   throw CodeThorn::Exception("Error: ConstIntLattice operation&& failed.");
 }
-
+ 
 bool AType::strictWeakOrderingIsSmaller(const AType::ConstIntLattice& c1, const AType::ConstIntLattice& c2) {
-  if(c1.isConstInt() && c2.isConstInt())
-    return c1.getIntValue()<c2.getIntValue();
-  return (c1.getValueType()<c2.getValueType());
+  if (c1.getValueType()!=c2.getValueType()) {
+    return c1.getValueType()<c2.getValueType();
+  } else {
+    ROSE_ASSERT(c1.getValueType()==c2.getValueType()); 
+    if(c1.isConstInt() && c2.isConstInt()) {
+      return c1.getIntValue()<c2.getIntValue();
+    } else if(c1.isPtr() && c2.isPtr()) {
+      if(c1.getVariableId()!=c2.getVariableId()) {
+        return c1.getVariableId()<c2.getVariableId();
+      } else {
+        return c1.getIntValue()<c2.getIntValue();
+      }
+    } else if (c1.isBot()==c2.isBot()) {
+      return false;
+    } else if (c1.isTop()==c2.isTop()) {
+      return false;
+    } else {
+      throw CodeThorn::Exception("Error: ConstIntLattice::strictWeakOrderingIsSmaller: unknown equal values.");
+    }
+  }
 }
+
 bool AType::strictWeakOrderingIsEqual(const AType::ConstIntLattice& c1, const AType::ConstIntLattice& c2) {
-  if(c1.isConstInt() && c2.isConstInt())
-    return c1.getIntValue()==c2.getIntValue();
-  return c1.getValueType()==c2.getValueType();
+  if(c1.getValueType()==c2.getValueType()) {
+    if(c1.isConstInt() && c2.isConstInt())
+      return c1.getIntValue()==c2.getIntValue();
+    else if(c1.isPtr() && c2.isPtr()) {
+      return c1.getVariableId()==c2.getVariableId() && c1.getIntValue()==c2.getIntValue();
+    } else {
+      ROSE_ASSERT((c1.isTop()&&c2.isTop()) || (c1.isBot()&&c2.isBot()));
+      return true;
+    }
+  } else {
+    // different value types
+    return false;
+  }
 }
+
 bool AType::ConstIntLatticeCmp::operator()(const AType::ConstIntLattice& c1, const AType::ConstIntLattice& c2) const {
   return AType::strictWeakOrderingIsSmaller(c1,c2);
 }
@@ -485,6 +360,15 @@ int AType::ConstIntLattice::getIntValue() const {
     return intValue;
 }
 
+ SPRAY::VariableId AType::ConstIntLattice::getVariableId() const { 
+   if(valueType!=PTR) {
+     cerr << "ConstIntLattice: valueType="<<valueType<<endl;
+     throw CodeThorn::Exception("Error: ConstIntLattice::getVariableId operation failed.");
+  }
+  else 
+    return variableId;
+}
+
 // arithmetic operators
 AType::ConstIntLattice AType::ConstIntLattice::operatorUnaryMinus() {
   AType::ConstIntLattice tmp;
@@ -501,7 +385,7 @@ AType::ConstIntLattice AType::ConstIntLattice::operatorUnaryMinus() {
   return tmp;
 }
 
-AType::ConstIntLattice AType::operator+(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
+AType::ConstIntLattice AType::ConstIntLattice::operatorAdd(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
   if(a.isTop() || b.isTop())
     return Top();
   if(a.isBot())
@@ -509,60 +393,63 @@ AType::ConstIntLattice AType::operator+(AType::ConstIntLattice& a,AType::ConstIn
   if(b.isBot())
     return a;
   assert(a.isConstInt() && b.isConstInt());
-  if(ConstIntLattice::arithTop)
-    return AType::Top();
-  else
-    return a.getIntValue()+b.getIntValue();
+  return a.getIntValue()+b.getIntValue();
+}
+AType::ConstIntLattice AType::ConstIntLattice::operatorSub(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
+  if(a.isTop() || b.isTop())
+    return Top();
+  if(a.isBot())
+    return b;
+  if(b.isBot())
+    return a;
+  assert(a.isConstInt() && b.isConstInt());
+  return a.getIntValue()-b.getIntValue();
+}
+AType::ConstIntLattice AType::ConstIntLattice::operatorMul(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
+  if(a.isTop() || b.isTop())
+    return Top();
+  if(a.isBot())
+    return b;
+  if(b.isBot())
+    return a;
+  assert(a.isConstInt() && b.isConstInt());
+  return a.getIntValue()*b.getIntValue();
+
+}
+AType::ConstIntLattice AType::ConstIntLattice::operatorDiv(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
+  if(a.isTop() || b.isTop())
+    return Top();
+  if(a.isBot())
+    return b;
+  if(b.isBot())
+    return a;
+  assert(a.isConstInt() && b.isConstInt());
+  return a.getIntValue()/b.getIntValue();
+
+}
+AType::ConstIntLattice AType::ConstIntLattice::operatorMod(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
+  if(a.isTop() || b.isTop())
+    return Top();
+  if(a.isBot())
+    return b;
+  if(b.isBot())
+    return a;
+  assert(a.isConstInt() && b.isConstInt());
+  return a.getIntValue()%b.getIntValue();
+}
+
+AType::ConstIntLattice AType::operator+(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
+  return ConstIntLattice::operatorAdd(a,b);
 }
 AType::ConstIntLattice AType::operator-(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
-  if(a.isTop() || b.isTop())
-    return Top();
-  if(a.isBot())
-    return b;
-  if(b.isBot())
-    return a;
-  assert(a.isConstInt() && b.isConstInt());
-  if(ConstIntLattice::arithTop)
-    return AType::Top();
-  else
-    return a.getIntValue()-b.getIntValue();
+  return ConstIntLattice::operatorSub(a,b);
 }
 AType::ConstIntLattice AType::operator*(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
-  if(a.isTop() || b.isTop())
-    return Top();
-  if(a.isBot())
-    return b;
-  if(b.isBot())
-    return a;
-  assert(a.isConstInt() && b.isConstInt());
-  if(ConstIntLattice::arithTop)
-    return AType::Top();
-  else
-    return a.getIntValue()*b.getIntValue();
+  return ConstIntLattice::operatorMul(a,b);
 }
 AType::ConstIntLattice AType::operator/(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
-  if(a.isTop() || b.isTop())
-    return Top();
-  if(a.isBot())
-    return b;
-  if(b.isBot())
-    return a;
-  assert(a.isConstInt() && b.isConstInt());
-  if(ConstIntLattice::arithTop)
-    return AType::Top();
-  else
-    return a.getIntValue()/b.getIntValue();
+  return ConstIntLattice::operatorDiv(a,b);
 }
 AType::ConstIntLattice AType::operator%(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
-  if(a.isTop() || b.isTop())
-    return Top();
-  if(a.isBot())
-    return b;
-  if(b.isBot())
-    return a;
-  assert(a.isConstInt() && b.isConstInt());
-  if(ConstIntLattice::arithTop)
-    return AType::Top();
-  else
-    return a.getIntValue()%b.getIntValue();
+  return ConstIntLattice::operatorMod(a,b);
 }

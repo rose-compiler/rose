@@ -84,14 +84,14 @@ SPRAY::PASolver1::runSolver() {
     if(info->isBot()) {
       if(_trace) {
         cout<<"TRACE: computing transfer function: "<<lab0<<":";info->toStream(cout,0);
-        cout<<"-> cancel (because of bot)";
+        cout<<" ==> cancel (because of bot)";
         cout<<endl;
       }
       // do nothing (non-reachable code)
     } else {
       if(_trace) {
         cout<<"TRACE: computing transfer function: "<<lab0<<":";info->toStream(cout,0);
-        cout<<"->"<<lab1<<":";_analyzerDataPreInfo[lab1.getId()]->toStream(cout,0);
+        cout<<" ==> "<<lab1<<":";_analyzerDataPreInfo[lab1.getId()]->toStream(cout,0);
         cout<<endl;
       }
       _transferFunctions.transfer(edge,*info);
