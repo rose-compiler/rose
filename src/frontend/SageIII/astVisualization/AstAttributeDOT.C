@@ -4,6 +4,8 @@
 #include "sage3basic.h"
 #include "AstAttributeDOT.h"
 
+#if 0
+// DQ (3/19/2017): These functions do not appear to ever be called (experiment with commenting it out).
 
 AstAttributeDOT::AstAttributeDOT ()
   {
@@ -459,4 +461,8 @@ DOTGraphNode::get_dot_options_string()
      return optionsString;
    }
 
+// DQ (3/19/2017): These functions do not appear to ever be called (experiment with commenting it out).
 #endif
+
+#endif
+
