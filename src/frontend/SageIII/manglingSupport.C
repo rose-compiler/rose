@@ -802,7 +802,8 @@ mangleTemplateArgs (const SgTemplateArgumentPtrList::const_iterator b,
 #endif
 
 
-
+#if 0
+// DQ (3/19/2017): This function does not appear to ever be called (experiment with commenting it out).
 void
 testForCycleInTemplateArgumentsOfTemplateDeclaration ( const SgTemplateInstantiationDefn* templateInstantiationDefinition )
    {
@@ -893,8 +894,10 @@ testForCycleInTemplateArgumentsOfTemplateDeclaration ( const SgTemplateInstantia
              }
         }
    }
+#endif
 
-
+#if 0
+// DQ (3/19/2017): This function does not appear to ever be called (experiment with commenting it out).
 void
 MangledNameSupport::outputVisitedTemplateDefinitions()
    {
@@ -912,7 +915,7 @@ MangledNameSupport::outputVisitedTemplateDefinitions()
 
      printf ("   --- end of list \n\n");
    }
-
+#endif
 
 string
 mangleTemplateToString (const string& templ_name,
