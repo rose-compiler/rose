@@ -6,6 +6,10 @@
 #ifndef AST_ATTRIBUTEDOT_H
 #define AST_ATTRIBUTEDOT_H
 
+#if 1
+// DQ (3/19/2017): These functions do not appear to ever be called (experiment with commenting it out).
+// Note that these are used in the tutorial/wholeGraphFilterOnPersistantAttributes.C file.
+
 /**************************************************************************************
  *
  *  The class
@@ -174,5 +178,8 @@ class ROSE_DLL_API DOTGraphEdge : public AstAttributeDOT
           std::vector<std::string> get_dot_options_list();
           std::string get_dot_options_string();
    };
+
+// DQ (3/19/2017): These functions do not appear to ever be called (experiment with commenting it out).
+#endif
 
 #endif
