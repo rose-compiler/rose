@@ -902,8 +902,29 @@ testPartitioner2_%.passed: $(SPECIMEN_DIR)/% $(SMOKE_BLDDIR)/testPartitioner2 te
 		ANS="$(srcdir)/testPartitioner2_$*.ans"									\
 		$(top_srcdir)/scripts/test_with_answer $@
 
+# Another set of partitioner tests, but using the map-based semantic memory
+testP2map_test_targets = $(addprefix testP2map_, $(addsuffix .passed, $(testPartitioner2_specimens)))
+testP2map_answers = $(testPartitioner2_test_target:.passed=.ans)
+
+EXTRA_DIST += $(testP2map_answers)
+TEST_TARGETS += $(testP2map_test_targets)
+
+$(testP2map_test_targets): \
+testP2map_%.passed: $(SPECIMEN_DIR)/% $(SMOKE_BLDDIR)/testPartitioner2 conditionalDisable
+	@$(RTH_RUN)													\
+		TITLE="testPartitioner2 map $(notdir $<) [$@]"								\
+		DISABLED="$$(./conditionalDisable)"									\
+		USE_SUBDIR=yes												\
+		CMD="$(SMOKE_BLDDIR)/testPartitioner2 $(if $(findstring exefmt,$<), --no-inter-function-calls) --semantic-memory=map --use-semantics $<"	\
+		ANS="$(srcdir)/testP2map_$*.ans"									\
+		$(top_srcdir)/scripts/test_with_answer $@
+
+
+
 PHONIES += check-testPartitioner2
-check-testPartitioner2: $(testPartitioner2_test_targets)
+check-testPartitioner2: $(testPartitioner2_test_targets) $(testP2map_test_targets)
+
+
 
 
 ###############################################################################################################################
