@@ -1694,7 +1694,9 @@ public:
      *  Analyses a function to determine characteristics of its calling convention, such as which registers are callee-saved,
      *  which registers and stack locations are input parameters, and which are output parameters.   The calling convention
      *  analysis itself does not define the entire calling convention--instead, the analysis results must be matched against a
-     *  dictionary of calling convention definitions.
+     *  dictionary of calling convention definitions. Each function has a @ref Function::callingConventionDefinition
+     *  "callingConventionDefinition" property that points to the best definition; if this method reanalyzes the calling
+     *  convention then the definition is reset to the null pointer.
      *
      *  Since this analysis is based on data-flow, which is based on a control flow graph, the function must be attached to the
      *  CFG/AUM and all its basic blocks must also exist in the CFG/AUM.
@@ -1711,8 +1713,24 @@ public:
      *
      *  See also, @ref allFunctionCallingConvention, which computes calling convention characteristics for all functions at
      *  once, and @ref functionCallingConventionDefinitions, which returns matching definitions. */
-    const CallingConvention::Analysis& functionCallingConvention(const Function::Ptr&,
-                                                                 const CallingConvention::Definition *dflt=NULL) const /*final*/;
+    const CallingConvention::Analysis&
+    functionCallingConvention(const Function::Ptr&,
+                              const CallingConvention::Definition::Ptr &dflt = CallingConvention::Definition::Ptr())
+        const /*final*/;
+
+    /** Compute calling conventions for all functions.
+     *
+     *  Analyzes calling conventions for all functions and caches results in the function objects. The analysis uses a depth
+     *  first traversal of the call graph, invoking the analysis as the traversal unwinds. This increases the chance that the
+     *  calling conventions of callees are known before their callers are analyzed. However, this analysis must break cycles in
+     *  mutually recursive calls, and does so by using an optional default calling convention where the cycle is broken. This
+     *  default is not inserted as a result--it only influences the data-flow portion of the analysis.
+     *
+     *  After this method runs, results can be queried per function with either @ref Function::callingConventionAnalysis or
+     *  @ref functionCallingConvention. */
+    void
+    allFunctionCallingConvention(const CallingConvention::Definition::Ptr &dflt = CallingConvention::Definition::Ptr())
+        const /*final*/;
 
     /** Return list of matching calling conventions.
      *
@@ -1732,25 +1750,29 @@ public:
      *  been analyzed yet.
      *
      *  If the calling convention analysis fails or no common architecture calling convention definition matches the
-     *  characteristics of the function, then an empty list is returned.
+     *  characteristics of the function, then an empty list is returned.  This method does not access the function's calling
+     *  convention property -- it recomputes the list of matching definitions from scratch.
      *
      *  See also, @ref functionCallingConvention, which returns the calling convention characteristics of a function (rather
      *  than definitions), and @ref allFunctionCallingConvention, which runs that analysis over all functions. */
     CallingConvention::Dictionary
     functionCallingConventionDefinitions(const Function::Ptr&,
-                                         const CallingConvention::Definition *dflt=NULL) const /*final*/;
+                                         const CallingConvention::Definition::Ptr &dflt = CallingConvention::Definition::Ptr())
+        const /*final*/;
 
-    /** Compute calling conventions for all functions.
+    /** Analyzes calling conventions and saves results.
      *
-     *  Analyzes calling conventions for all functions and caches results in the function objects. The analysis uses a depth
-     *  first traversal of the call graph, invoking the analysis as the traversal unwinds. This increases the chance that the
-     *  calling conventions of callees are known before their callers are analyzed. However, this analysis must break cycles in
-     *  mutually recursive calls, and does so by using an optional default calling convention where the cycle is broken. This
-     *  default is not inserted as a result--it only influences the data-flow portion of the analysis.
+     *  This method invokes @ref allFunctionCallingConvention to analyze the behavior of every function, then finds the list of
+     *  matching definitions for each function. A histogram of definitions is calculated and each function is re-examined. If
+     *  any function matched more than one definition, then the most frequent of those definitions is chosen as that function's
+     *  "best" calling convention definition and saved in the @ref Function::callingConventionDefinition property.
      *
-     *  After this method runs, results can be queried per function with either @ref Function::callingConventionAnalysis or
-     *  @ref functionCallingConvention. */
-    void allFunctionCallingConvention(const CallingConvention::Definition *dflt=NULL) const /*final*/;
+     *  If a default calling convention definition is provided, it gets passed to the @ref allFunctionCallingConvention
+     *  analysis. The default is also assigned as the @ref Function::callingConventionDefinition property of any function for
+     *  which calling convention analysis fails. */
+    void
+    allFunctionCallingConventionDefinition(const CallingConvention::Definition::Ptr &dflt =
+                                           CallingConvention::Definition::Ptr()) const /*final*/;
 
     /** Adjust inter-function edge types.
      *

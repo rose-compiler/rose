@@ -85,6 +85,16 @@ private:
 #endif
     
 public:
+    /** Default construct an object with no register parts. */
+    RegisterParts() {}
+
+    /** Constructor to insert a register.
+     *
+     *  This is the same as default-constructing an instance and inserting the specified register. */
+    explicit RegisterParts(const RegisterDescriptor &reg) {
+        insert(reg);
+    }
+
     /** Predicate checking whether this container is empty.
      *
      *  Returns true if this container holds no part of any register. */

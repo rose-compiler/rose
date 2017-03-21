@@ -415,7 +415,8 @@ NEW_TESTCODES = \
    test2016_88.C \
    test2016_91.C \
    test2016_93.C \
-   test2017_04.C
+   test2017_04.C \
+   test2017_09.C
 
 # DQ (1/29/2017): This appers to fail for Boost 1.57
 if !ROSE_USING_BOOST_VERSION_1_57
@@ -457,7 +458,12 @@ endif
 TESTCODES_NOT_INTEGRATED = \
    test2017_01.C \
    test2017_02.C \
-   test2017_03.C
+   test2017_03.C \
+   test2017_03.C \
+   test2017_05.C \
+   test2017_06.C \
+   test2017_07.C \
+   test2017_08.C
 
 # DQ (11/14/2016): Test codes not yet passing.
 #  test2016_91.C 
@@ -534,11 +540,23 @@ endif
 #    test2014_60.C \
 #    test2014_61.C 
 
-
-if !ROSE_USE_EDG_VERSION_4_7
-if !ROSE_USING_BOOST_VERSION_1_57
+# DQ (3/10/2017): I think we can fix these now (appear to be only buildins missing at this point).
+# if !ROSE_USE_EDG_VERSION_4_7
+# if !ROSE_USING_BOOST_VERSION_1_57
 # These boost 1.57 specific tests fail in EDG 4.7 and pass in EDG 4.9, so
 # avoid testing them in this combination.  The issue is fixed in EDG 4.9.
+# NEW_TESTCODES += \
+#   test2014_187.C \
+#   test2014_187_work_around.C \
+#   test2014_188.C \
+#   test2015_120.C 
+# endif
+# endif
+
+# DQ (3/12/2017): These test codes are no long a problem for BOOST 1.57 on GNU and 
+# Intel compilers, but are an issue for Clang (at least 3.8.0).
+if !USING_CLANG_COMPILER
+if !USING_INTEL_COMPILER
 NEW_TESTCODES += \
    test2014_187.C \
    test2014_187_work_around.C \
@@ -1374,6 +1392,8 @@ endif
 
 TEST_TRANSLATOR = ../../testTranslator
 
+TEST_PDF_TRANSLATOR = ../../testPDFGeneration
+
 # A number of tests require the path to the A++ include directory 
 # and a number of other tests require a path to the source directory.
 # Add the dependence upon the source file to trigger recompilation each time the makefile is run!
@@ -1548,6 +1568,9 @@ testTemplateExample: $(TEST_TEMPLATE_TRANSLATOR)
 $(TEST_TRANSLATOR):
 	cd ../..; $(MAKE) testTranslator
 
+$(TEST_PDF_TRANSLATOR):
+	cd ../..; $(MAKE) testPDFGeneration
+
 ../../testTranslatorFoldedConstants:
 	cd ../..; $(MAKE) testTranslatorFoldedConstants
 
@@ -1632,6 +1655,13 @@ print_testcodes:
 performance_timing:
 	../../testGraphGeneration --edg:no_warnings -w -rose:verbose 3 -rose:skip_unparse_asm_commands -rose:skipAstConsistancyTests -rose:skip_commentsAndDirectives -rose:skip_unparse -I$(srcdir) -c $(srcdir)/testPerformance.C
 
+# DQ (3/17/2017): Added PDF test for ROSE evaluation (forces testing of parts of ROSE for lcov):
+test_pdf_generation: $(TEST_PDF_TRANSLATOR)
+	../../testPDFGeneration --edg:no_warnings -w -rose:verbose 0 -rose:skip_unparse_asm_commands -rose:skipAstConsistancyTests -rose:skip_commentsAndDirectives -rose:skip_unparse -I$(srcdir) -c $(srcdir)/test2004_77.C
+	ls -l *.pdf
+	@echo "Removing the generated PDF file because it is up to 150Meg and we want to save disk space."
+	rm *.pdf
+
 # DQ (11/19/2012): HPCToolKit use.  This makes some significant assumptions on how we have setup HPCToolKit.
 hpctoolkit:
 	hpcrun -e WALLCLOCK -- ../../testTranslator --edg:no_warnings -w -rose:verbose 0 -rose:skip_unparse_asm_commands -rose:skipAstConsistancyTests -rose:skip_commentsAndDirectives -rose:skip_unparse -I/home/dquinlan/ROSE/git-dq-edg4x-rc/tests/nonsmoke/functional/CompileTests/Cxx_tests -c /home/dquinlan/ROSE/git-dq-edg4x-rc/tests/nonsmoke/functional/CompileTests/Cxx_tests/testPerformance.C
@@ -1653,6 +1683,8 @@ if ROSE_USING_GCC_VERSION_LATER_4_9
 	@echo "Using EDG 4.9 and GNU version later then 4.9 (skipping C++ tests: reconfigure with EDG 4.12 to run C++ tests)"
 else  # NOT ROSE_USING_GCC_VERSION_LATER_4_9
 	@echo "Using GNU compiler (version up to 4.8)"
+	@$(MAKE) $(PASSING_TEST_Sources) $(FAILING_TEST_targets)
+	@$(MAKE) test_pdf_generation
 endif #  ROSE_USING_GCC_VERSION_LATER_4_9
 else  # NOT USING_GNU_COMPILER
 	@echo "NOT Using GNU compiler"
@@ -1664,6 +1696,7 @@ if USING_INTEL_COMPILER
 else  # NOT USING_INTEL_COMPILER
 	@echo "Using EDG 4.9 and GNU version 4.8 or earlier (ROSE supports running C++ tests with this configuration)"
 	@$(MAKE) $(PASSING_TEST_Sources) $(FAILING_TEST_targets)
+	@$(MAKE) test_pdf_generation
 endif # USING_INTEL_COMPILER
 endif # USING_CLANG_COMPILER
 endif # USING_GNU_COMPILER
@@ -1671,6 +1704,7 @@ else  # NOT ROSE_USE_EDG_VERSION_4_9
 	@echo "Using EDG 4.12"
 	@echo "Using EDG version later than 4.9 (ROSE supports running all C++ tests across all compilers)"
 	@$(MAKE) $(PASSING_TEST_Sources) $(FAILING_TEST_targets)
+	@$(MAKE) test_pdf_generation
 endif # ROSE_USE_EDG_VERSION_4_9
 #	I'm not sure why these are coded to run in serial [RPM 2014-08-29]
 	@$(MAKE) test_unparse_includes_option.passed
@@ -1688,7 +1722,7 @@ endif
 	@echo "*******************************************************************************************************************"
 
 clean-local:
-	rm -f a.out *.o rose_*.[cC] roseTestProgram.C *.dot *.ti
+	rm -f a.out *.o rose_*.[cC] roseTestProgram.C *.dot *.ti *.pdf
 	rm -f *.foldedConstants-o
 	rm -f *.unfoldedConstants-o
 	rm -rf QMTest

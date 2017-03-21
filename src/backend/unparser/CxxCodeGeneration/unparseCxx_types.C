@@ -3571,13 +3571,14 @@ Unparse_Type::unparseTemplateType(SgType* type, SgUnparse_Info& info)
      SgTemplateType* template_type = isSgTemplateType(type);
      ROSE_ASSERT(template_type != NULL);
 
-#if 0
-  // DQ (8/25/2012): This allows everything to work, but likely with some internal problems that are not being noticed.
-     SgName name = "int ";
-#else
   // This is the code that we want to use, but it is not working.
      SgName name = template_type->get_name();
-#endif
+
+  // DQ (3/18/2017): Added support to unparse packing specification.
+     if (template_type->get_packed() == true)
+        {
+          name += "...";
+        }
 
   // Add a space to seperate the type from other syntax.
      name += " ";
@@ -3594,7 +3595,7 @@ Unparse_Type::unparseTemplateType(SgType* type, SgUnparse_Info& info)
 
   // For now just unparse a simple string that will at least be a correct type.
   // curprint("unparse_template_type ");
-#if 1
+
   // DQ (8/25/2012): This was a problem for the output ofr types called from different locations.
      if ( (info.isTypeFirstPart() == false) && (info.isTypeSecondPart() == false) )
         {
@@ -3612,22 +3613,9 @@ Unparse_Type::unparseTemplateType(SgType* type, SgUnparse_Info& info)
                curprint(name);
              }
         }
-#else
-  // Older version of code...
-
-#error "DEAD CODE!"
 
 #if 0
-  // DQ (8/23/2012): Only out put anything for the 2nd part fo the type.
-  // This avoids output of the type twice (which is something I have not tracked down, but appears to be happening).
-     curprint("int ");
-#else
-  // if (info.isTypeFirstPart() == true)
-     if (info.isTypeSecondPart() == true)
-        {
-          curprint("int ");
-        }
-#endif
+     printf ("Leaving Unparse_Type::unparseTemplateType() \n");
 #endif
 
 #if 0
