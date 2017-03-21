@@ -61,6 +61,12 @@ int main( int argc, char * argv[] )
   // AST consistency tests (optional for users, but this enforces more of our tests)
      AstTests::runAllTests(project);
 
+  // DQ (3/20/2017): Test info about mode (code coverage).
+     ROSE_ASSERT(SageBuilder::display(SageBuilder::SourcePositionClassificationMode) == "e_sourcePositionTransformation");
+
+  // DQ (3/20/2017): Test this function after EDG/ROSE translation (not required for users).
+     SageBuilder::clearScopeStack();
+
 #if 0
   // Output an optional graph of the AST (just the tree, when active)
      printf ("Generating a dot file... (ROSE Release Note: turn off output of dot files before committing code) \n");

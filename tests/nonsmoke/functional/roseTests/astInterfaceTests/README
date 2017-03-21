@@ -3,3 +3,158 @@ test code and input for highlevel SAGE interfaces and utilities
 Liao,
 Jan. 9, 2008
 
+
+
+DQ (3/20/2017): While adding numerous value explression tests there are a 
+few more that I noticed which appear to be missing from current testing.
+See the lcov code coverage tests for more details (file: sageBuilder.C).
+
+Additional functions to test:
+   buildEnumDeclaration()
+   buildEnumVal()
+
+   buildTemplateType()
+   buildTemplateParameter()
+   buildTemplateParameterVal()
+
+   buildUpcThreads()
+   buildUpcMyThread()
+
+// Is this Java or Python?
+   buildSuperExp()
+   buildClassExp()
+   buildClassExp_nfi()
+   buildTupleExp( list )
+   buildTupleExp( STL vector )
+   buildTupleExp_nfi( list )
+   buildTupleExp_nfi( STL vector )
+   buildListExp( list )
+   buildListExp( STL vector )
+   buildListExp_nfi( list )
+   buildListExp_nfi( STL vector )
+
+
+   buildMinusMinusOp()
+   buildPlusPlusOp()
+
+   buildConjugateOp()
+   buildVarArgStartOperandOp()
+
+// This is MATLAB
+   buildMatrixTransposeOp()
+
+   buildDeleteExp()
+   buildMinusOp_nfi()
+
+
+   buildConcatinationOp()
+   buildExponentiationOp()
+   buildExponentiationAssignOp()
+
+   buildIntegerDivideOp()
+   buildIntegerDivideAssignOp()
+   
+   buildIsOp()
+   buildIsNotOp()
+   
+   buildMembershipOp()
+   buildNonMembershipOp()
+
+   buildJavaUnsignedRShiftAssignOp()
+   buildJavaUnsignedRShiftOp()
+
+   buildScopeOp()
+
+  // Matlab operators
+   BUILD_BINARY_DEF(PowerOp);
+   BUILD_BINARY_DEF(ElementwisePowerOp);
+   BUILD_BINARY_DEF(ElementwiseMultiplyOp);
+   BUILD_BINARY_DEF(ElementwiseDivideOp);
+   BUILD_BINARY_DEF(LeftDivideOp);
+   BUILD_BINARY_DEF(ElementwiseLeftDivideOp);
+   BUILD_BINARY_DEF(ElementwiseAddOp);
+   BUILD_BINARY_DEF(ElementwiseSubtractOp);
+   
+
+   buildCompoundInitializer()
+   buildCompoundInitializer_nfi()
+
+   buildBracedInitializer()
+   buildBracedInitializer_nfi()
+
+   buildAlignOfOp()
+   buildAlignOfOp_nfi()
+
+   buildNoexceptOp()
+
+   buildAlignOfOp()
+   buildCompoundLiteralExp()
+
+   buildFunctionParameterList_nfi()
+   buildClassNameRefExp_nfi()
+   buildClassNameRefExp()
+   buildStatementExpression()
+   buildStatementExpression_nfi()
+
+   buildAssignStatement_ast_translate()
+
+   buildIfStmt_nfi()
+
+8000
+
+   buildForStatement_nfi(SgStatement*,...)
+   buildForStatement_nfi(SgForInitStatement*,...)
+
+   buildWithStatement()
+   buildWithStatement_nfi()
+
+   buildDoWhileStmt_nfi()
+
+   buildMatlabForStatement()
+   buildPassStatement()
+   buildPassStatement_nfi()
+
+   buildDeleteExp_nfi()
+   buildAssertStmt()
+   buildAssertStmt_nfi()
+   buildYieldExpression()
+   buildYieldExpression_nfi()
+   buildKeyDatumPair()
+   buildKeyDatumPair_nfi()
+
+   buildDictionaryExp()
+   buildDictionaryExp_nfi()
+
+   buildComprehension()
+   buildComprehension_nfi()
+
+   buildListComprehension()
+   buildListComprehension_nfi()
+
+   buildSetComprehension()
+   buildSetComprehension_nfi()
+
+   buildDictionaryComprehension()
+   buildDictionaryComprehension_nfi()
+
+   buildActualArgumentExpression()
+   buildActualArgumentExpression_nfi()
+
+   buildPragma()
+
+   buildSwitchStatement_nfi()
+
+   buildExecStatement()
+   buildExecStatement_nfi()
+
+
+
+
+
+
+   
+
+
+
+
+
