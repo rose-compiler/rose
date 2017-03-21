@@ -472,6 +472,12 @@ RiscOperators::readRegister(const RegisterDescriptor &reg, const BaseSemantics::
     return substitute(retval);
 }
 
+BaseSemantics::SValuePtr
+RiscOperators::peekRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &dflt) {
+    BaseSemantics::SValuePtr retval = Super::peekRegister(reg, dflt);
+    return substitute(retval);
+}
+
 void
 RiscOperators::writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &value) {
    RegisterStatePtr registers = RegisterState::promote(currentState()->registerState());

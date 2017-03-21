@@ -4532,10 +4532,10 @@ DispatcherX86::setFlagsForResult(const BaseSemantics::SValuePtr &result, const B
     ASSERT_require(cond->get_width()==1);
     BaseSemantics::SValuePtr lo_byte = operators->extract(result, 0, 8);
     BaseSemantics::SValuePtr signbit = operators->extract(result, result->get_width()-1, result->get_width());
-    BaseSemantics::SValuePtr pf = readRegister(REG_PF);
+    BaseSemantics::SValuePtr pf = readRegister(REG_PF, PEEK_REGISTER);
     writeRegister(REG_PF, operators->ite(cond, parity(lo_byte), pf));
-    writeRegister(REG_SF, operators->ite(cond, signbit, readRegister(REG_SF)));
-    BaseSemantics::SValuePtr zf = readRegister(REG_ZF);
+    writeRegister(REG_SF, operators->ite(cond, signbit, readRegister(REG_SF, PEEK_REGISTER)));
+    BaseSemantics::SValuePtr zf = readRegister(REG_ZF, PEEK_REGISTER);
     writeRegister(REG_ZF, operators->ite(cond, operators->equalToZero(result), zf));
 }
 
@@ -4874,7 +4874,7 @@ DispatcherX86::doRotateOperation(X86InstructionKind kind, const BaseSemantics::S
     writeRegister(REG_CF, new_cf);
     BaseSemantics::SValuePtr maybeOf = operators->ite(isOneBitRotate, new_of, unspecified_(1));
     writeRegister(REG_OF, operators->ite(isZeroRotateCount,
-                                         readRegister(REG_OF),
+                                         readRegister(REG_OF, PEEK_REGISTER),
                                          maybeOf));
 
     return result;
@@ -4947,7 +4947,7 @@ DispatcherX86::doShiftOperation(X86InstructionKind kind, const BaseSemantics::SV
     BaseSemantics::SValuePtr unspecAf = unspecified_(1);
     writeRegister(REG_AF,
                   operators->ite(isZeroShiftCount,
-                                 readRegister(REG_AF),
+                                 readRegister(REG_AF, PEEK_REGISTER),
                                  unspecAf));
 
     // What is the last bit shifted off the operand?  If we're right shifting by N bits, then the original operand N-1 bit
@@ -4970,7 +4970,7 @@ DispatcherX86::doShiftOperation(X86InstructionKind kind, const BaseSemantics::SV
     BaseSemantics::SValuePtr newCFite = operators->ite(isLargeShift,
                                                        (x86_sar==kind ? originalSign : unspecified_(1)),
                                                        shifted_off);
-    BaseSemantics::SValuePtr newCF = operators->ite(isZeroShiftCount, readRegister(REG_CF), newCFite);
+    BaseSemantics::SValuePtr newCF = operators->ite(isZeroShiftCount, readRegister(REG_CF, PEEK_REGISTER), newCFite);
     writeRegister(REG_CF, newCF);
 
     // Ajust the overflow flag.  From the Intel manual for the SHL, SHR, and SAR instructions, "The OF flag is affected
@@ -4988,13 +4988,13 @@ DispatcherX86::doShiftOperation(X86InstructionKind kind, const BaseSemantics::SV
             newOF = operators->ite(isOneBitShift,
                                    originalSign,
                                    operators->ite(isZeroShiftCount, 
-                                                  readRegister(REG_OF),
+                                                  readRegister(REG_OF, PEEK_REGISTER),
                                                   unspec));
             break;
         }
         case x86_sar: {
             BaseSemantics::SValuePtr unspec = unspecified_(1);
-            BaseSemantics::SValuePtr v1 = operators->ite(isZeroShiftCount, readRegister(REG_OF), unspec);
+            BaseSemantics::SValuePtr v1 = operators->ite(isZeroShiftCount, readRegister(REG_OF, PEEK_REGISTER), unspec);
             newOF = operators->ite(isOneBitShift, operators->boolean_(false), v1);
             break;
         }
@@ -5002,7 +5002,7 @@ DispatcherX86::doShiftOperation(X86InstructionKind kind, const BaseSemantics::SV
         case x86_shld:
         case x86_shrd: {
             BaseSemantics::SValuePtr unspec = unspecified_(1);
-            BaseSemantics::SValuePtr v1 = operators->ite(isZeroShiftCount, readRegister(REG_OF), unspec);
+            BaseSemantics::SValuePtr v1 = operators->ite(isZeroShiftCount, readRegister(REG_OF, PEEK_REGISTER), unspec);
             newOF = operators->ite(isOneBitShift, operators->xor_(originalSign, resultSign), v1);
             break;
         }
@@ -5017,18 +5017,29 @@ DispatcherX86::doShiftOperation(X86InstructionKind kind, const BaseSemantics::SV
 }
 
 BaseSemantics::SValuePtr
-DispatcherX86::readRegister(const RegisterDescriptor &reg) {
+DispatcherX86::readRegister(const RegisterDescriptor &reg, AccessMode mode) {
     // When reading FLAGS, EFLAGS as a whole do not coalesce individual flags into the single register.
     if (reg.get_major()==x86_regclass_flags && reg.get_offset()==0 && reg.get_nbits()>1) {
         if (BaseSemantics::StatePtr ss = operators->currentState()) {
             BaseSemantics::RegisterStatePtr rs = ss->registerState();
             if (BaseSemantics::RegisterStateGeneric *rsg = dynamic_cast<BaseSemantics::RegisterStateGeneric*>(rs.get())) {
                 BaseSemantics::RegisterStateGeneric::NoCoalesceOnRead guard(rsg);
-                return operators->readRegister(reg);
+                switch (mode) {
+                    case READ_REGISTER:
+                        return operators->readRegister(reg);
+                    case PEEK_REGISTER:
+                        return operators->peekRegister(reg, operators->undefined_(reg.get_nbits()));
+                }
             }
         }
     }
-    return operators->readRegister(reg);
+    switch (mode) {
+        case READ_REGISTER:
+            return operators->readRegister(reg);
+        case PEEK_REGISTER:
+            return operators->peekRegister(reg, operators->undefined_(reg.get_nbits()));
+    }
+    ASSERT_not_reachable("unhandled access mode");
 }
 
 void

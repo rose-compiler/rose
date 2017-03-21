@@ -43,7 +43,7 @@ int64_t functionStackDelta(P2::Partitioner&, const P2::Function::Ptr&);
 SgAsmFunction *functionAst(P2::Partitioner&, const P2::Function::Ptr&);
 rose::BinaryAnalysis::DataFlow::VariableList functionVariables(P2::Partitioner&, const P2::Function::Ptr&);
 FunctionDataFlow functionDataFlow(P2::Partitioner&, const P2::Function::Ptr&);
-const rose::BinaryAnalysis::CallingConvention::Definition* functionCallingConvention(P2::Partitioner&, const P2::Function::Ptr&);
+rose::BinaryAnalysis::CallingConvention::Definition::Ptr functionCallingConvention(P2::Partitioner&, const P2::Function::Ptr&);
 
 /** Interface for computing some property of a function. */
 class FunctionAnalyzer: public Sawyer::SharedObject {
@@ -584,19 +584,19 @@ public:
                 "matches the function's behavior; other calling convention definitions might also be valid.");
     }
     boost::any data(P2::Partitioner &p, const P2::Function::Ptr &f) const ROSE_OVERRIDE {
-        const rose::BinaryAnalysis::CallingConvention::Definition *ccdef = functionCallingConvention(p, f);
+        rose::BinaryAnalysis::CallingConvention::Definition::Ptr ccdef = functionCallingConvention(p, f);
         return ccdef ? Wt::WString(ccdef->name()) : Wt::WString("unknown");
     }
     bool isAscending(const P2::Function::Ptr &a, const P2::Function::Ptr &b) const ROSE_OVERRIDE {
-        static const rose::BinaryAnalysis::CallingConvention::Definition *NO_CC_DEF = NULL;
-        const rose::BinaryAnalysis::CallingConvention::Definition *adef = a->attributeOrElse(ATTR_CallConvDef, NO_CC_DEF);
-        const rose::BinaryAnalysis::CallingConvention::Definition *bdef = b->attributeOrElse(ATTR_CallConvDef, NO_CC_DEF);
+        rose::BinaryAnalysis::CallingConvention::Definition::Ptr NO_CC_DEF; // = NULL;
+        rose::BinaryAnalysis::CallingConvention::Definition::Ptr adef = a->attributeOrElse(ATTR_CallConvDef, NO_CC_DEF);
+        rose::BinaryAnalysis::CallingConvention::Definition::Ptr bdef = b->attributeOrElse(ATTR_CallConvDef, NO_CC_DEF);
         if (NULL==adef || NULL==bdef)
             return NULL==adef && NULL!=bdef;
         return adef->name().compare(bdef->name()) < 0;
     }
     double heatValue(P2::Partitioner &p, const P2::Function::Ptr &f) const ROSE_OVERRIDE {
-        const rose::BinaryAnalysis::CallingConvention::Definition *ccdef = NULL;
+        rose::BinaryAnalysis::CallingConvention::Definition::Ptr ccdef;
         ccdef = f->attributeOrElse(ATTR_CallConvDef, ccdef);
         return ccdef ? 1.0 : 0.0;
     }
