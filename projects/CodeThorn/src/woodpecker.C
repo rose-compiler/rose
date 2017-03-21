@@ -130,7 +130,7 @@ int main(int argc, char* argv[]) {
   rose::Diagnostics::mprefix->showElapsedTime(false);
 
   Sawyer::Message::Facility logger;
-  rose::Diagnostics::initAndRegister(logger, "Woodpecker");
+  rose::Diagnostics::initAndRegister(&logger, "Woodpecker");
 
   try {
     if(argc==1) {
