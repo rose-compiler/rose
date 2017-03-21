@@ -84,7 +84,13 @@ FortranModuleInfo::set_inputDirs(SgProject* project) {
            if (boost::filesystem::exists(rmodDir_no_quotes.c_str())) {
                 inputDirs.push_back(rmodDir_no_quotes);
           } else 
-                cout << "WARNING: the input directory does not exist : " << rmodDir<< endl;
+             {
+            // DQ (3/15/2017): Fixed to use mlog message logging.
+               if (rose::ir_node_mlog[rose::Diagnostics::DEBUG])
+                  {
+                    cout << "WARNING: the input directory does not exist (rose): " << rmodDir<< endl;
+                  }
+             }
      } 
 #endif
   }

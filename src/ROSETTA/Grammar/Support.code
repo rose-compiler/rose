@@ -13800,6 +13800,16 @@ Sg_File_Info::set_filenameString ( const std::string & filename )
           p_file_id = p_nametofileid_map[filename];
         }
 
+  // DQ (3/19/2017): Note that this is important for Fortran support (where IR nodes frequently 
+  // start with (isSourcePositionUnavailableInFrontend() == true) and are fixed up afterward.
+     if ( isSourcePositionUnavailableInFrontend() == true )
+        {
+#if 0
+          printf ("In Sg_File_Info::set_filenameString(): reset isSourcePositionUnavailableInFrontend() to false: filename = %s \n",filename.c_str());
+#endif
+          unsetSourcePositionUnavailableInFrontend();
+        }
+
   // DQ (8/31/2006): We can't enforce that this is an absolute path (test2001_04.C and test2004_60.C demonstrate why).
   // DQ (8/31/2006): Verify that this is a absolute path
   // string targetSubstring = "/";
@@ -13963,6 +13973,18 @@ Sg_File_Info::set_line(int line)
                printf ("warning: Sg_File_Info::set_line() tried to set non-zero line number to a transformation or compiler generated file info obj.");
              }
         }
+       else
+        {
+       // DQ (3/19/2017): Note that this is important for Fortran support (where IR nodes frequently 
+       // start with (isSourcePositionUnavailableInFrontend() == true) and are fixed up afterward.
+          if ( isSourcePositionUnavailableInFrontend() == true )
+             {
+#if 0
+               printf ("In Sg_File_Info::set_line(): reset isSourcePositionUnavailableInFrontend() to false: line = %d \n",line);
+#endif
+               unsetSourcePositionUnavailableInFrontend();
+             }
+        }
    }
 
 int
@@ -13993,7 +14015,23 @@ Sg_File_Info::get_line() const
              }
             else
              {
+#if 0
+            // DQ (3/18/2017): Original code.
                returnValue = p_line;
+#else
+            // DQ (3/18/2017): Add to the cases where we want to output an undefined value.
+            // I think it is helpful to know the position in the rose_edg_required_macros_and_functions.h 
+            // file (so don't output undefined value for case of isFrontendSpecific() == true).
+            // if (isFrontendSpecific() == true || isSourcePositionUnavailableInFrontend() == true )
+               if ( isSourcePositionUnavailableInFrontend() == true )
+                  {
+                    returnValue = undefinedValue;
+                  }
+                 else
+                  {
+                    returnValue = p_line;
+                  }
+#endif
              }
         }
 
@@ -14071,7 +14109,23 @@ Sg_File_Info::get_col() const
              }
             else
              {
+#if 0
+            // DQ (3/18/2017): Original code.
                returnValue = p_col;
+#else
+            // DQ (3/18/2017): Add to the cases where we want to output an undefined value.
+            // I think it is helpful to know the position in the rose_edg_required_macros_and_functions.h 
+            // file (so don't output undefined value for case of isFrontendSpecific() == true).
+            // if (isFrontendSpecific() == true || isSourcePositionUnavailableInFrontend() == true )
+               if ( isSourcePositionUnavailableInFrontend() == true )
+                  {
+                    returnValue = undefinedValue;
+                  }
+                 else
+                  {
+                    returnValue = p_col;
+                  }
+#endif
              }
         }
 
