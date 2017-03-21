@@ -755,7 +755,11 @@ librose-lcov.info: all-lcov.info
         "$(top_srcdir)/src/roseSupport/stringify.C" \
         "$(top_srcdir)/src/midend/programAnalysis/graphAnalysis/*" \
         "$(top_srcdir)/src/roseExtensions/roseHPCToolkit/*" \
+        "$(top_srcdir)/src/frontend/SageIII/nodeBuildFunctionsForAterms.C" \
+        "$(top_srcdir)/src/frontend/SageIII/astVisualization/*" \
          -o librose-lcov.info
+
+# Note: astVisualization is only approriate for small ASTs and for debugging so excluded from code coverage analysis.
 
 librose_lcov_web_pages: librose-lcov.info
 	genhtml                                 \
