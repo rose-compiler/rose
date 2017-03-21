@@ -1493,7 +1493,7 @@ inputCode_dwarfAnalysis.out: dwarfInstructionAddressToSourceLineAnalysis inputCo
 wholeGraphFilterOnPersistantAttributes.dot: wholeGraphFilterOnPersistantAttributes
 	@echo "Generating dot file ..."
 	@cp $(srcdir)/inputCode_2.C input_wholeGraphFilterOnPersistantAttributes.C
-	./wholeGraphFilterOnPersistantAttributes input_wholeGraphFilterOnPersistantAttributes.C
+#	./wholeGraphFilterOnPersistantAttributes input_wholeGraphFilterOnPersistantAttributes.C
 
 
 # Note that we have made multiple copies of "inputCode_ExampleTraversals.C"

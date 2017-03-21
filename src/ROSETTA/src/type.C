@@ -702,6 +702,11 @@ Grammar::setUpTypes ()
      ClassType.setFunctionPrototype ("HEADER_CLASS_TYPE", "../Grammar/Type.code" );
      ClassType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
 
+  // DQ (3/20/2017): We need to support a flag to indicate packing in template parameters.
+  // This is required only for the RoseExample tests using Boost 1.56 (no where else that I know of so far).
+     ClassType.setDataPrototype     ("bool","packed","= false",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
      JavaParameterizedType.setFunctionPrototype ("HEADER_JAVA_PARAMETERIZED_TYPE", "../Grammar/Type.code" );
      JavaParameterizedType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
      JavaParameterizedType.setFunctionPrototype ("HEADER_GET_QUALIFIED_NAME", "../Grammar/Type.code" );

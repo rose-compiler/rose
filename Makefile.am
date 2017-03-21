@@ -745,7 +745,6 @@ librose-lcov.info: all-lcov.info
         "$(top_srcdir)/src/midend/programAnalysis/ssaUnfilteredCfg/*" \
         "$(top_srcdir)/src/src/midend/programAnalysis/staticInterproceduralSlicing/*" \
         "$(top_srcdir)/src/midend/programAnalysis/staticSingleAssignment/*" \
-        "$(top_srcdir)/src/midend/programAnalysis/staticSingleAssignment/*" \
         "$(top_srcdir)/src/midend/programAnalysis/variableRenaming/*" \
         "$(top_srcdir)/src/midend/programTransformation/extractFunctionArgumentsNormalization/*" \
         "$(top_srcdir)/src/midend/programTransformation/finiteDifferencing/*" \
