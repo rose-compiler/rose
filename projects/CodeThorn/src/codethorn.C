@@ -1207,7 +1207,13 @@ int main( int argc, char * argv[] ) {
     logger[TRACE] << "INIT: Parsing and creating AST: started."<<endl;
     timer.stop();
     timer.start();
-    SgProject* sageProject = frontend(argc,argv);
+
+    vector<string> argvList(argv,argv+argc);
+    if(boolOptions["data-race"]) {
+      //TODO: openmp-ast support not finished yet
+      //argvList.push_back("-rose:OpenMP:ast_only");
+    }
+    SgProject* sageProject = frontend(argvList);
     double frontEndRunTime=timer.getElapsedTimeInMilliSec();
 
     logger[TRACE] << "INIT: Parsing and creating AST: finished."<<endl;
