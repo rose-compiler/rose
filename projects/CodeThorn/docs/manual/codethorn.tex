@@ -69,7 +69,7 @@
 \begin{document}
 \title{CodeThorn}
 
-\author{\small Markus Schordan, Adrian Prantl, Marc Jasper}
+\author{\small Markus Schordan, Marc Jasper, Joshua Asplund, Adrian Prantl}
 %\end{tabular}
 \date{\today}
 
@@ -122,6 +122,18 @@ whether the optimizations are semantics preserving. Furthermore
 parallel OpenMP for loops are recognized and can be checked not to
 introduce data races. Currently these approaches are extended to
 address other large scale applications.
+
+\section{Installation}
+
+CodeThorn requires the SPOT library version 1.2.6 to be installed. The
+environment variable \verb+SPOT_PREFIX+ must be set to the
+installation path of SPOT. No configuration is required because
+CodeThorn is configured as part of ROSE.
+
+Run 'make', 'make install', and optionally 'make check' in the
+\verb+projects/CodeThorn+ directory to install CodeThorn. CodeThorn is
+installed as 'codethorn' (at the same location as other ROSE tools, in
+the 'bin' directory of the ROSE installation).
 
 \section{Command Line Options}
 \begin{verbatim}

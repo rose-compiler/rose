@@ -485,8 +485,8 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
     cout << dataRaceOptions << "\n";
     exit(0);
   } else if (args.count("version")) {
-    cout << "CodeThorn version 1.7.0\n";
-    cout << "Written by Markus Schordan, Adrian Prantl, and Marc Jasper\n";
+    cout << "CodeThorn version 1.8.0\n";
+    cout << "Written by Markus Schordan, Marc Jasper, Joshua Asplund, Adrian Prantl\n";
     exit(0);
   }
   return args;
