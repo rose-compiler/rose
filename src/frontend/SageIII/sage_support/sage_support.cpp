@@ -3857,14 +3857,16 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
                 printf ("Calling the experimental fortran frontend (this work is incomplete) \n");
                 printf ("   --- Fortran numberOfCommandLineArguments = %" PRIuPTR " frontEndCommandLine = %s \n",experimentalFrontEndCommandLine.size(),CommandlineProcessing::generateStringFromArgList(experimentalFrontEndCommandLine,false,false).c_str());
              }
+
 #ifdef ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
           frontendErrorLevel = experimental_openFortranParser_main (experimental_openFortranParser_argc, experimental_openFortranParser_argv);
 #else
           printf ("ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION is not defined \n");
 #endif
+
           if (frontendErrorLevel == 0)
              {
-               printf ("SUCCESS with call to experimental_openFortranParser_main() \n");
+                if ( SgProject::get_verbose() > 1 ) printf ("SUCCESS with call to experimental_openFortranParser_main() \n");
              }
             else
              {

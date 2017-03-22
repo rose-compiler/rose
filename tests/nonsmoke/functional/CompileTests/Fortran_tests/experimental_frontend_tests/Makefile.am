@@ -30,6 +30,7 @@ F90_TESTCODES = \
  R1101e.f90 \
  R1101f.f90 \
  R1101g.f90 \
+ R404.f90   \
  test2014_02.f90 \
  tiny.f90
 
@@ -52,7 +53,6 @@ F90_TESTCODES_WORKING_ON = \
  R1218.f90 \
  R1234.f90 \
  R1241.f90 \
- R404.f90 \
  R524.f90 \
  R526.f90 \
  R611.f90 \
