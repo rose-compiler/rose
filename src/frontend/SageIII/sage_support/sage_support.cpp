@@ -3852,22 +3852,19 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           char** experimental_openFortranParser_argv = NULL;
           CommandlineProcessing::generateArgcArgvFromList(experimentalFrontEndCommandLine,experimental_openFortranParser_argc,experimental_openFortranParser_argv);
 
-          printf ("Calling the experimental fortran frontend (this work is incomplete) \n");
-          printf ("   --- Fortran numberOfCommandLineArguments = %" PRIuPTR " frontEndCommandLine = %s \n",experimentalFrontEndCommandLine.size(),CommandlineProcessing::generateStringFromArgList(experimentalFrontEndCommandLine,false,false).c_str());
+          if ( SgProject::get_verbose() > 1 )
+             {
+                printf ("Calling the experimental fortran frontend (this work is incomplete) \n");
+                printf ("   --- Fortran numberOfCommandLineArguments = %" PRIuPTR " frontEndCommandLine = %s \n",experimentalFrontEndCommandLine.size(),CommandlineProcessing::generateStringFromArgList(experimentalFrontEndCommandLine,false,false).c_str());
+             }
 #ifdef ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
           frontendErrorLevel = experimental_openFortranParser_main (experimental_openFortranParser_argc, experimental_openFortranParser_argv);
 #else
           printf ("ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION is not defined \n");
 #endif
-          printf ("DONE: Calling the experimental fortran frontend (this work is incomplete) frontendErrorLevel = %d \n",frontendErrorLevel);
           if (frontendErrorLevel == 0)
              {
-#if 0
-               printf ("Exiting before unparser (checking only through call to experimental_openFortranParser_main(): SUCESS! \n");
-               exit(0);
-#else
-               printf ("frontendErrorLevel == 0: call to experimental_openFortranParser_main(): SUCCESS! \n");
-#endif
+               printf ("SUCCESS with call to experimental_openFortranParser_main() \n");
              }
             else
              {
@@ -3886,7 +3883,8 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
   // ROSE_ASSERT(astIncludeStack.size() == 0);
      if (astIncludeStack.size() != 0)
         {
-          printf ("Warning: astIncludeStack not cleaned up after openFortranParser_main(): astIncludeStack.size() = %" PRIuPTR " \n",astIncludeStack.size());
+       // DQ (3/17/2017): Added support to use message streams.
+          mprintf ("Warning: astIncludeStack not cleaned up after openFortranParser_main(): astIncludeStack.size() = %" PRIuPTR " \n",astIncludeStack.size());
         }
 #endif
 
@@ -7244,8 +7242,13 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
           default:
              {
                ROSE_ASSERT(functionExp->get_file_info() != NULL);
-               functionExp->get_file_info()->display("In SgFunctionCallExp::getAssociatedFunctionSymbol(): case not supported: debug");
-               printf("Error: There should be no other cases functionExp = %p = %s \n", functionExp, functionExp->class_name().c_str());
+
+            // DQ (3/15/2017): Fixed to use mlog message logging.
+               if (rose::ir_node_mlog[rose::Diagnostics::DEBUG])
+                  {
+                    functionExp->get_file_info()->display("In SgFunctionCallExp::getAssociatedFunctionSymbol(): case not supported: debug");
+                  }
+               mprintf("Error: There should be no other cases functionExp = %p = %s \n", functionExp, functionExp->class_name().c_str());
 
                // schroder3 (2016-07-25): Changed "#if 1" to "#if 0" to remove ROSE_ASSERT. If this member function is unable to determine the
                //  associated function then it should return 0 instead of raising an assertion.

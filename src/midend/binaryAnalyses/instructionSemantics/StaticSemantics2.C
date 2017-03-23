@@ -436,6 +436,12 @@ RiscOperators::readRegister(const RegisterDescriptor &reg, const BaseSemantics::
     return makeSValue(reg.get_nbits(), SgAsmRiscOperation::OP_readRegister, regExpr);
 }
 
+BaseSemantics::SValuePtr
+RiscOperators::peekRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &dflt) {
+    BaseSemantics::SValuePtr regExpr = makeSValue(reg.get_nbits(), new SgAsmDirectRegisterExpression(reg));
+    return makeSValue(reg.get_nbits(), SgAsmRiscOperation::OP_peekRegister, regExpr);
+}
+
 void
 RiscOperators::writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &a) {
     BaseSemantics::SValuePtr regExpr = makeSValue(reg.get_nbits(), new SgAsmDirectRegisterExpression(reg));

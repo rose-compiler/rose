@@ -26,6 +26,15 @@ initDiagnostics() {
     }
 }
 
+static std::string
+locationNames(const RegisterParts &parts, const RegisterDictionary *regdict) {
+    std::vector<std::string> retval;
+    RegisterNames regNames(regdict);
+    BOOST_FOREACH (const RegisterDescriptor &reg, parts.listAll(regdict))
+        retval.push_back(regNames(reg));
+    return boost::join(retval, ", ");
+}
+    
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Instruction Semantics
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -149,15 +158,6 @@ public:
     void registerDictionary(const RegisterDictionary *rd) { registerDictionary_ = rd; }
     /** @} */
 
-private:
-    std::string locationNames(const RegisterParts &parts) {
-        std::vector<std::string> retval;
-        RegisterNames regNames(registerDictionary_);
-        BOOST_FOREACH (const RegisterDescriptor &reg, parts.listAll(registerDictionary_))
-            retval.push_back(regNames(reg));
-        return boost::join(retval, ", ");
-    }
-    
 public:
     virtual S2::BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg,
                                                       const S2::BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE {
@@ -165,7 +165,8 @@ public:
         RegisterParts found = calleeOutputRegisters_ & RegisterParts(reg);
         if (!found.isEmpty()) {
             ASSERT_not_null(results_);
-            SAWYER_MESG(mlog[DEBUG]) <<"  used return values: " <<locationNames(found) <<"\n";
+            SAWYER_MESG(mlog[DEBUG]) <<"  in readRegister:  used   return locations: " // extra spaces intentional
+                                     <<locationNames(found, registerDictionary_) <<"\n";
             results_->returnRegistersUsed() |= found;
             calleeOutputRegisters_ -= found;
         }
@@ -175,15 +176,10 @@ public:
     virtual void writeRegister(const RegisterDescriptor &reg, const S2::BaseSemantics::SValuePtr &value) ROSE_OVERRIDE {
         // Writing to a register means that the callee's return value is definitely not used.
         RegisterParts found = calleeOutputRegisters_ & RegisterParts(reg);
-#if 1 // DEBUGGING [Robb P Matzke 2017-03-04]
-            std::cerr <<"ROBB: " <<unparseInstructionWithAddress(currentInstruction()) <<"\n"
-                      <<"        writeRegister " <<locationNames(RegisterParts(reg)) <<"\n"
-                      <<"        calleeOutputRegisters = " <<locationNames(calleeOutputRegisters_) <<"\n"
-                      <<"        intersection = " <<locationNames(found) <<"\n";
-#endif
         if (!found.isEmpty()) {
             ASSERT_not_null(results_);
-            SAWYER_MESG(mlog[DEBUG]) <<"  unused return values: " <<locationNames(found) <<"\n";
+            SAWYER_MESG(mlog[DEBUG]) <<"  in writeRegister: unused return locations: "
+                                     <<locationNames(found, registerDictionary_) <<"\n";
             results_->returnRegistersUnused() |= found;
             calleeOutputRegisters_ -= found;
         }
@@ -283,22 +279,40 @@ Analysis::analyzeCallSite(const P2::Partitioner &partitioner, const P2::ControlF
 
     // Get cached calling convention properties for the callee; avoid doing a calling convention analysis here -- the user
     // should have already done that.
-    const CallingConvention::Analysis &cc = callee->callingConventionAnalysis();
-    if (!cc.hasResults() || !cc.didConverge()) {
-        mlog[ERROR] <<"no calling convention for " <<callee->printableName() <<" at " <<partitioner.vertexName(callSite) <<"\n";
+    const CallingConvention::Analysis &calleeBehavior = callee->callingConventionAnalysis();
+    if (!calleeBehavior.hasResults() || !calleeBehavior.didConverge()) {
+        mlog[ERROR] <<"no calling convention behavior for " <<callee->printableName()
+                    <<" called at " <<partitioner.vertexName(callSite) <<"\n";
         return retval;
     }
-
+    const CallingConvention::Definition::Ptr calleeDefinition = callee->callingConventionDefinition();
+    if (!calleeDefinition) {
+        mlog[ERROR] <<"no calling convention definition for " <<callee->printableName()
+                    <<" called at " <<partitioner.vertexName(callSite) <<"\n";
+        return retval;
+    }
+    
+    // Find the intersection of the calling convention definition's return value locations and the outputs based on callee
+    // behavior.  This takes care of two issues: (1) some behavior-based outputs are only scratch locations according to the
+    // definition, and (2) some return locations according to the definition might not have been outputs according to the
+    // callee behavior.
+    RegisterParts calleeReturnRegs = calleeDefinition->outputRegisterParts() & calleeBehavior.outputRegisters();
+    calleeReturnRegs -= RegisterParts(partitioner.instructionProvider().stackPointerRegister());
+    StackVariables calleeReturnMem;
+    BOOST_FOREACH (const CallingConvention::ParameterLocation &location, calleeDefinition->outputParameters()) {
+        // FIXME[Robb P Matzke 2017-03-20]: todo
+    }
+    
     // Build the instruction semantics that will look for which of the callee's return values are used by the caller. "Used"
     // means (1) the caller reads the callee output location without first writing to it, or (2) the caller calls a second
     // function whose input is one of the original callee outputs with no intervening write, or (3) one of the caller's own
     // return values is one of the calle's return values with no intervening write.
-    const RegisterDictionary *registerDictionary = partitioner.instructionProvider().registerDictionary();
-    ASSERT_not_null(registerDictionary);
+    const RegisterDictionary *regdict = partitioner.instructionProvider().registerDictionary();
+    ASSERT_not_null(regdict);
     SMTSolver *solver = NULL;
-    RiscOperatorsPtr ops = RiscOperators::instance(registerDictionary, solver);
-    ops->registerDictionary(registerDictionary);
-    ops->insertOutputs(cc.outputRegisters(), cc.outputStackParameters());
+    RiscOperatorsPtr ops = RiscOperators::instance(regdict, solver);
+    ops->registerDictionary(regdict);
+    ops->insertOutputs(calleeReturnRegs, calleeReturnMem);
     if (!ops->hasOutputs())
         return retval;
     S2::BaseSemantics::DispatcherPtr cpu = partitioner.newDispatcher(ops);
@@ -340,6 +354,9 @@ Analysis::analyzeCallSite(const P2::Partitioner &partitioner, const P2::ControlF
             std::ostringstream ss;
             ss <<*inputState;
             mlog[DEBUG] <<"  incoming state for vertex #" <<t.vertex()->id() <<"\n"
+                        <<"    unresolved locations:    " <<locationNames(ops->unreferencedRegisterOutputs(), regdict) <<"\n"
+                        <<"    used   return locations: " <<locationNames(retval.returnRegistersUsed(), regdict) <<"\n"
+                        <<"    unused return locations: " <<locationNames(retval.returnRegistersUnused(), regdict) <<"\n"
                         <<StringUtility::prefixLines(ss.str(), "    ");
         }
 
@@ -348,6 +365,9 @@ Analysis::analyzeCallSite(const P2::Partitioner &partitioner, const P2::ControlF
             std::ostringstream ss;
             ss <<*outputState;
             mlog[DEBUG] <<"  outgoing state for vertex #" <<t.vertex()->id() <<"\n"
+                        <<"    unresolved locations:    " <<locationNames(ops->unreferencedRegisterOutputs(), regdict) <<"\n"
+                        <<"    used   return locations: " <<locationNames(retval.returnRegistersUsed(), regdict) <<"\n"
+                        <<"    unused return locations: " <<locationNames(retval.returnRegistersUnused(), regdict) <<"\n"
                         <<StringUtility::prefixLines(ss.str(), "    ");
         }
 
@@ -358,7 +378,44 @@ Analysis::analyzeCallSite(const P2::Partitioner &partitioner, const P2::ControlF
         }
     }
 
-    // Any remaining callee outputs are assume to not be used
+    // If the caller has outputs, then read them. This is to handle situations where the caller implicitly uses the callee's
+    // return value by virtue of the caller returning it. For example:
+    //   callee: push ebp
+    //           mov ebp, esp
+    //           mov eax, 1    ; the return value
+    //           leave
+    //           ret
+    //
+    //   caller: push ebp
+    //           mov ebp, esp
+    //           call callee
+    //           leave
+    //           ret
+    //
+    // If caller's calling convention returns a value in EAX, then callee's return value (also in EAX) is implicitly used.
+    if (assumeCallerReturnsValue_) {
+        mlog[DEBUG] <<"  marking (reading) callee returns implicitly returned by caller\n";
+        P2::DataFlow::DfCfg::ConstVertexIterator returnVertex = P2::DataFlow::findReturnVertex(dfCfg);
+        if (dfCfg.isValidVertex(returnVertex)) {
+            StatePtr returnState = inputStates[returnVertex->id()];
+            ASSERT_always_not_null(returnState);
+            ops->currentState(returnState);
+            BOOST_FOREACH (const P2::Function::Ptr caller, callers) {
+                const CallingConvention::Analysis &callerBehavior = caller->callingConventionAnalysis();
+                if (callerBehavior.didConverge()) {
+                    SAWYER_MESG(mlog[DEBUG]) <<"  return from " <<caller->printableName() <<" implicitly uses: "
+                                             <<locationNames(callerBehavior.outputRegisters(), regdict) <<"\n";
+                    BOOST_FOREACH (const RegisterDescriptor &reg, callerBehavior.outputRegisters().listAll(regdict))
+                        (void) ops->readRegister(reg, ops->undefined_(reg.get_nbits()));
+                }
+            }
+        }
+    }
+
+    SAWYER_MESG(mlog[DEBUG]) <<"  final unused return locations: "
+                             <<locationNames(retval.returnRegistersUnused(), regdict) <<"\n";
+    
+    // Assume all unresolved return locations of the callee(s) are unused return values.
     retval.returnRegistersUnused() |= ops->unreferencedRegisterOutputs();
     return retval;
 }

@@ -737,14 +737,13 @@ librose-lcov.info: all-lcov.info
         "$(top_srcdir)/src/frontend/BinaryDisassembly/*" \
         "$(top_srcdir)/src/midend/binaryAnalyses/dataflowanalyses/*" \
         "$(top_srcdir)/src/midend/binaryAnalyses/RoseBin_*" \
-        "$(top_srcdir)/src/midend/programAnalysis/genericDataflowflow/*" \
+        "$(top_srcdir)/src/midend/programAnalysis/genericDataflow/*" \
         "$(top_srcdir)/src/frontend/CxxFrontend/EDG/EDG_4.9/*" \
         "$(top_srcdir)/src/midend/astRewriteMechanism/*" \
         "$(top_srcdir)/src/midend/programAnalysis/dominanceAnalysis/*" \
         "$(top_srcdir)/src/midend/programAnalysis/pointerAnal/*" \
         "$(top_srcdir)/src/midend/programAnalysis/ssaUnfilteredCfg/*" \
         "$(top_srcdir)/src/src/midend/programAnalysis/staticInterproceduralSlicing/*" \
-        "$(top_srcdir)/src/midend/programAnalysis/staticSingleAssignment/*" \
         "$(top_srcdir)/src/midend/programAnalysis/staticSingleAssignment/*" \
         "$(top_srcdir)/src/midend/programAnalysis/variableRenaming/*" \
         "$(top_srcdir)/src/midend/programTransformation/extractFunctionArgumentsNormalization/*" \
@@ -754,7 +753,42 @@ librose-lcov.info: all-lcov.info
         "$(top_srcdir)/src/midend/programTransformation/singleStatementToBlockNormalization/*" \
         "$(top_srcdir)/src/roseSupport/stringify.C" \
         "$(top_srcdir)/src/midend/programAnalysis/graphAnalysis/*" \
+        "$(top_srcdir)/src/roseExtensions/roseHPCToolkit/*" \
+        "$(top_srcdir)/src/frontend/SageIII/nodeBuildFunctionsForAterms.C" \
+        "$(top_srcdir)/src/frontend/SageIII/astVisualization/*" \
+	"$(top_srcdir)/projects/CodeThorn/MemoryLocation.*" \
+	"$(top_srcdir)/projects/CodeThorn/Normalization.*" \
+	"$(top_srcdir)/projects/CodeThorn/ParallelAutomataGenerator.*" \
+	"$(top_srcdir)/projects/CodeThorn/ParPro*.*" \
+	"$(top_srcdir)/projects/CodeThorn/PromelaCodeGenerator.*" \
+	"$(top_srcdir)/projects/CodeThorn/RefinementConstraints.*" \
+	"$(top_srcdir)/projects/CodeThorn/RersSpecialization.*" \
+	"$(top_srcdir)/projects/CodeThorn/RoseRDAnalysis.*" \
+	"$(top_srcdir)/projects/CodeThorn/SourceCodeFormat.*" \
+	"$(top_srcdir)/projects/CodeThorn/Threadification.*" \
+	"$(top_srcdir)/projects/CodeThorn/Visualizer.*" \
+	"$(top_srcdir)/projects/CodeThorn/spotconnection/*" \
+	"$(top_srcdir)/projects/CodeThorn/termindent/*" \
+	"$(top_srcdir)/projects/CodeThorn/tests/*" \
+	"$(top_srcdir)/projects/CodeThorn/regressiondata/*" \
+	"$(top_srcdir)/projects/CodeThorn/regressiondata2/*" \
+	"$(top_srcdir)/projects/CodeThorn/addressTakenAnalysis_obsolete/*" \
+	"$(top_srcdir)/projects/CodeThorn/counterexamples/*" \
+	"$(top_srcdir)/projects/CodeThorn/cpptests/*" \
+	"$(top_srcdir)/projects/CodeThorn/examples/*" \
+	"$(top_srcdir)/projects/CodeThorn/intervalLattice/*" \
+	"$(top_srcdir)/projects/CodeThorn/scripts/*" \
+	"$(top_srcdir)/projects/CodeThorn/results_scripts/*" \
+	"$(top_srcdir)/projects/CodeThorn/outdated.cpp" \
+	"$(top_srcdir)/projects/CodeThorn/matcher.C" \
+	"$(top_srcdir)/projects/CodeThorn/matcher_demo.C" \
+	"$(top_srcdir)/projects/CodeThorn/woodpecker.C" \
+	"$(top_srcdir)/projects/CodeThorn/RERS_*.C" \
+	"$(top_srcdir)/projects/CodeThorn/ast_demo.C" \
+	"$(top_srcdir)/projects/CodeThorn/astinfo.C" \
          -o librose-lcov.info
+
+# Note: astVisualization is only approriate for small ASTs and for debugging so excluded from code coverage analysis.
 
 librose_lcov_web_pages: librose-lcov.info
 	genhtml                                 \

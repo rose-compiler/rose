@@ -902,8 +902,29 @@ testPartitioner2_%.passed: $(SPECIMEN_DIR)/% $(SMOKE_BLDDIR)/testPartitioner2 te
 		ANS="$(srcdir)/testPartitioner2_$*.ans"									\
 		$(top_srcdir)/scripts/test_with_answer $@
 
+# Another set of partitioner tests, but using the map-based semantic memory
+testP2map_test_targets = $(addprefix testP2map_, $(addsuffix .passed, $(testPartitioner2_specimens)))
+testP2map_answers = $(testPartitioner2_test_target:.passed=.ans)
+
+EXTRA_DIST += $(testP2map_answers)
+TEST_TARGETS += $(testP2map_test_targets)
+
+$(testP2map_test_targets): \
+testP2map_%.passed: $(SPECIMEN_DIR)/% $(SMOKE_BLDDIR)/testPartitioner2 conditionalDisable
+	@$(RTH_RUN)													\
+		TITLE="testPartitioner2 map $(notdir $<) [$@]"								\
+		DISABLED="$$(./conditionalDisable)"									\
+		USE_SUBDIR=yes												\
+		CMD="$(SMOKE_BLDDIR)/testPartitioner2 $(if $(findstring exefmt,$<), --no-inter-function-calls) --semantic-memory=map --use-semantics $<"	\
+		ANS="$(srcdir)/testP2map_$*.ans"									\
+		$(top_srcdir)/scripts/test_with_answer $@
+
+
+
 PHONIES += check-testPartitioner2
-check-testPartitioner2: $(testPartitioner2_test_targets)
+check-testPartitioner2: $(testPartitioner2_test_targets) $(testP2map_test_targets)
+
+
 
 
 ###############################################################################################################################
@@ -942,7 +963,7 @@ $(disassemble1_test_targets): disassemble1_%.passed: $(SPECIMEN_DIR)/% disassemb
 		$(srcdir)/disassemble.conf $@
 
 # Disassembly of raw x86 buffers (these should probably have position independent code)
-disassemble2_specimens = $(filter-out $(nonsmoke_specimens_binary_large), $(raw_insns_x86_specimens))
+disassemble2_specimens = $(filter-out $(nonsmoke_specimens_binary_large), $(nonsomke_specimens_binary_raw_insns_x86))
 disassemble2_test_targets = $(addprefix disassemble2_, $(addsuffix .passed, $(disassemble2_specimens)))
 disassemble2_answers = $(disassemble2_test_targets:.passed=.ans)
 
@@ -1200,9 +1221,13 @@ llvmVersion = $(shell llvm-as --version 2>&1 |sed -nr '/LLVM version/ s/.*versio
 
 # 128-bit registers are not supported, so don't try to test them (pentium-xxm)
 # Test takes too long when compiled with debugging (puttytel.exe)
-llvmTranscoder_Specimens =						\
-	$(filter-out pentium-xmm $(large_specimens),			\
-		$(elf_exe_x86_specimens) $(pe_exe_x86_specimens))
+# Only x86 32-bit is fully supported
+llvmTranscoder_Specimens =					\
+        $(filter-out						\
+	        pentium-xmm					\
+		$(nonsmoke_specimens_binary_large),		\
+		$(nonsmoke_specimens_binary_any_exe_x86))
+
 llvmTranscoder_TestTargets = $(addprefix llvm-xcode-, $(addsuffix .passed, $(llvmTranscoder_Specimens)))
 TEST_TARGETS += $(llvmTranscoder_TestTargets)
 EXTRA_DIST += llvmTranscoder.conf
@@ -1344,9 +1369,14 @@ testStaticSemantics_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 # We lack semantics for some architectures, so don't try to test them (the result would be an std::runtime_error with the
 # message "no instruction semantics for architecture".  Also, we skip pocketputty2.exe because it takes too long with lots
 # of debugging is enabled.
-testStaticSemantics_specimens = $(filter-out								\
-	$(any_any_mips_specimens) $(any_any_ppc_specimens) $(any_any_arm_specimens) $(large_specimens)	\
-	,$(any_exe_any_specimens))
+testStaticSemantics_specimens =					\
+	$(filter-out						\
+		$(nonsmoke_specimens_binary_any_any_mips)	\
+		$(nonsmoke_specimens_binary_any_any_ppc)	\
+		$(nonsmoke_specimens_binary_any_any_arm)	\
+		$(nonsmoke_specimens_large)			\
+		,$(nonsmoke_specimens_binary_any_exe_any))
+
 testStaticSemantics_test_targets = $(addprefix testStaticSemantics_, $(addsuffix .passed, $(testStaticSemantics_specimens)))
 TEST_TARGETS += $(testStaticSemantics_test_targets)
 
@@ -1387,7 +1417,7 @@ testLazyInitialStates.passed: $(SPECIMEN_DIR)/i386-initialState testLazyInitialS
 # These all depend on the deprecated "disassemble" tool.
 
 #--------------------------------------------------------------------------------
-parse_Specimens = $(filter-out $(large_specimens), $(any_exe_any_specimens))
+parse_Specimens = $(filter-out $(nonsmoke_specimens_binary_large), $(nonsmoke_specimens_binary_any_exe_any))
 parse_Targets = $(addprefix parse_, $(addsuffix .passed, $(parse_Specimens)))
 
 TEST_TARGETS += $(parse_Targets)
@@ -1405,7 +1435,12 @@ check_parse_container: $(parse_Targets)
 
 #--------------------------------------------------------------------------------
 #FIXME: MIPS parser chokes on unimplemented DisassemblerMips::makeShadowRegister() [Robb Matzke 2013-08-30]
-disassemble_Specimens = $(filter-out $(any_any_mips_specimens) $(large_specimens), $(any_exe_any_specimens))
+disassemble_Specimens =						\
+	$(filter-out						\
+		$(nonsmoke_specimens_binary_any_any_mips)	\
+		$(nonsmoke_specimens_binary_large),		\
+		$(nonsmoke_specimens_binary_any_exe_any))
+
 disassemble_Targets = $(addprefix disassemble_, $(addsuffix .passed, $(disassemble_Specimens)))
 
 TEST_TARGETS += $(disassemble_Targets)
@@ -1423,7 +1458,12 @@ check_disassemble: $(disassemble_Targets)
 
 #--------------------------------------------------------------------------------
 #FIXME: MIPS parser chokes on unimplemented DisassemblerMips::makeShadowRegister() [Robb Matzke 2013-08-30]
-unparse_Specimens = $(filter-out $(any_any_mips_specimens) $(large_specimens), $(any_exe_any_specimens))
+unparse_Specimens =						\
+	$(filter-out						\
+		$(nonsmoke_specimens_binary_any_any_mips)	\
+		$(nonsmoke_specimens_binary_large),		\
+		$(nonsmoke_specimens_binary_any_exe_any))
+
 unparse_Targets = $(addprefix unparse_, $(addsuffix .passed, $(unparse_Specimens)))
 
 TEST_TARGETS += $(unparse_Targets)
@@ -1441,7 +1481,7 @@ check_unparse: $(unparse_Targets)
 
 #--------------------------------------------------------------------------------
 #FIXME: all of the x86 executables have at least one thing that doesn't assemble [Robb Matzke 2013-08-30]
-#assemble_Specimens = $(any_exe_x86_specimens)
+#assemble_Specimens = $(nonsmoke_specimens_binary_any_exe_x86)
 assemble_Targets = $(addprefix assemble_, $(addsuffix .passed, $(assemble_Specimens)))
 
 TEST_TARGETS += $(assemble_Targets)
@@ -1459,7 +1499,12 @@ check_assemble: $(assemble_Targets)
 
 #--------------------------------------------------------------------------------
 #FIXME: all the ARM specimens are failing, and have been. This might be due to poor disassembly. [Robb Matzke 2013-08-30]
-astio_Specimens = $(filter-out $(any_any_arm_specimens) $(large_specimens), $(any_exe_any_specimens))
+astio_Specimens =						\
+	$(filter-out						\
+		$(nonsmoke_specimens_binary_any_any_arm)	\
+		$(nonsmoke_specimens_binary_large),		\
+		$(nonsmoke_specimens_binary_any_exe_any))
+
 astio_Targets = $(addprefix astio_, $(addsuffix .passed, $(astio_Specimens)))
 
 TEST_TARGETS += $(astio_Targets)

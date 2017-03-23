@@ -83,6 +83,7 @@ private:
 private:
     CallingConvention::Definition::Ptr defaultCallingConvention_;
     CallSiteMap callSites_;
+    bool assumeCallerReturnsValue_;
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
@@ -92,6 +93,7 @@ private:
     void serialize(S &s, const unsigned version) {
         s & BOOST_SERIALIZATION_NVP(defaultCallingConvention_);
         s & BOOST_SERIALIZATION_NVP(callSites_);
+        s & BOOST_SERIALIZATION_NVP(assumeCallerReturnsValue_);
     }
 #endif
 
@@ -101,7 +103,8 @@ public:
      *  This creates an analyzer that is not suitable for analysis since it doesn't know anything about the architecture it
      *  would be analyzing. This is mostly for use in situations where an analyzer must be constructed as a member of another
      *  class's default constructor, in containers that initialize their contents with default constructors, etc. */
-    Analysis() {}
+    Analysis()
+        : assumeCallerReturnsValue_(true) {}
 
     /** Property: Default calling convention.
      *
@@ -116,7 +119,42 @@ public:
     CallingConvention::Definition::Ptr defaultCallingConvention() const { return defaultCallingConvention_; }
     void defaultCallingConvention(const CallingConvention::Definition::Ptr &defn) { defaultCallingConvention_ = defn; }
     /** @} */
-    
+
+    /** Property: Assume caller returns value(s).
+     *
+     *  If true, then assume that the caller returns a value(s) in the location(s) indicated by its primary calling convention
+     *  definition.  This property affects whether a call to function B from A followed by a return from A implicitly uses the
+     *  value returned from B.  For example, these GCC generates identical code for these two functions:
+     *
+     *  @code
+     *  int test1(void) {
+     *      return one();
+     *  }
+     *
+     *  void test2(void) {
+     *      one();
+     *  }
+     *  @endcode
+     *
+     *  Namely,
+     *
+     *  @code
+     *  L1: push     ebp
+     *      mov      ebp, esp
+     *      call     function 0x080480de "one" ; returns value in EAX
+     *      pop      ebp
+     *      ret
+     *  @endcode
+     *
+     *  If this property is set, then the analysis will indicate that the return value of the CALL instruction is used
+     *  implicitly by the RET instruction (since there was no intervening write to EAX).  On the other hand, if this property
+     *  is clear, then the analysis indicates that the call to function "one" returns a value in EAX which is unused.
+     *
+     * @{ */
+    bool assumeCallerReturnsValue() const { return assumeCallerReturnsValue_; }
+    void assumeCallerReturnsValue(bool b) { assumeCallerReturnsValue_ = b; }
+    /** @} */
+
     /** Clear analysis results.
      *
      *  Resets the analysis results so it looks like this analyzer is initialized but has not run yet. When this method
