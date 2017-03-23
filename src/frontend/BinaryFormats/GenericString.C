@@ -67,7 +67,6 @@ SgAsmBasicString::set_string(rose_addr_t offset)
     ASSERT_not_implemented("set_string(rose_addr_t offset=" + StringUtility::addrToString(offset) + ")");
 }
 
-/* Print some debugging info */
 void
 SgAsmBasicString::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
@@ -81,7 +80,6 @@ SgAsmBasicString::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = \"%s\"\n", p, w, "value", get_string(true).c_str());
 }
     
-/* Stored String constructors/destructor */
 void
 SgAsmStoredString::ctor(SgAsmGenericStrtab *strtab, rose_addr_t offset, bool shared)
 {
@@ -111,7 +109,6 @@ SgAsmStoredString::~SgAsmStoredString()
 }
 #endif
 
-/** Returns the std::string associated with the SgAsmStoredString. */
 std::string
 SgAsmStoredString::get_string(bool escape) const 
 {
@@ -121,8 +118,6 @@ SgAsmStoredString::get_string(bool escape) const
     return retval;
 }
 
-/** Returns the offset into the string table where the string is allocated. If the string is not allocated then this call
- *  triggers a reallocation. */
 rose_addr_t
 SgAsmStoredString::get_offset() const
 {
@@ -137,14 +132,12 @@ SgAsmStoredString::get_offset() const
     return get_storage()->get_offset();
 }
 
-/** Returns the string table that holds this string, even if the string value isn't currently allocated in the table. */
 SgAsmGenericStrtab *
 SgAsmStoredString::get_strtab() 
 {
     return get_storage()->get_strtab();
 }
 
-/** Give the string a new value */
 void
 SgAsmStoredString::set_string(const std::string &s)
 {
@@ -156,7 +149,6 @@ SgAsmStoredString::set_string(const std::string &s)
     storage->set_string(s);
 }
 
-/** Give the string a new value by specifying the offset of a string already existing in the string table. */
 void
 SgAsmStoredString::set_string(rose_addr_t offset)
 {

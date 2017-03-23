@@ -130,7 +130,6 @@ generate_edg_hash() {
        local sha1=$(cat_edg_dependencies |$sha1sum_exe |cut -d' ' -f1)
     else
      # sha1sum doesn't exist natively on Mac OSX
-       echo "WARNING: sha1sum not found, attempting to use openssl sha1"
        local sha1=$(cat_edg_dependencies |openssl sha1 |cut -d' ' -f2)
     fi
 
