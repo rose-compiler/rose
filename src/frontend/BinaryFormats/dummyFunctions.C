@@ -357,3 +357,4 @@ void SgAsmPEExportEntry::set_name(SgAsmGenericString*) {}
 void SgAsmElfDynamicEntry::set_name(SgAsmGenericString*) {}
 void SgAsmElfSection::set_linked_section(SgAsmElfSection*) {}
 const char* SgAsmGenericHeader::format_name() const { return NULL; }
+rose_addr_t SgAsmGenericFile::get_current_size() const { return 0; }
