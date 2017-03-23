@@ -367,35 +367,35 @@ commandLineSwitches(Settings &settings) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::string
-Base::operator()(const P2::Partitioner &p) const {
+Base::unparse(const P2::Partitioner &p) const {
     std::ostringstream ss;
     unparse(ss, p);
     return ss.str();
 }
 
 std::string
-Base::operator()(const P2::Partitioner &p, SgAsmInstruction *insn) const {
+Base::unparse(const P2::Partitioner &p, SgAsmInstruction *insn) const {
     std::ostringstream ss;
     unparse(ss, p, insn);
     return ss.str();
 }
 
 std::string
-Base::operator()(const P2::Partitioner &p, const Partitioner2::BasicBlock::Ptr &bb) const {
+Base::unparse(const P2::Partitioner &p, const Partitioner2::BasicBlock::Ptr &bb) const {
     std::ostringstream ss;
     unparse(ss, p, bb);
     return ss.str();
 }
 
 std::string
-Base::operator()(const P2::Partitioner &p, const Partitioner2::DataBlock::Ptr &db) const {
+Base::unparse(const P2::Partitioner &p, const Partitioner2::DataBlock::Ptr &db) const {
     std::ostringstream ss;
     unparse(ss, p, db);
     return ss.str();
 }
 
 std::string
-Base::operator()(const P2::Partitioner &p, const Partitioner2::Function::Ptr &f) const {
+Base::unparse(const P2::Partitioner &p, const Partitioner2::Function::Ptr &f) const {
     std::ostringstream ss;
     unparse(ss, p, f);
     return ss.str();
