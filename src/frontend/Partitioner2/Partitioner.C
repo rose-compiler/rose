@@ -888,8 +888,16 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb) const {
                 }
                 rose_addr_t calleeVa = successor.expr()->get_number();
                 BasicBlock::Ptr calleeBb = basicBlockExists(calleeVa);
-                if (!calleeBb)
+                if (!calleeBb) {
+                    // Avoid never-ending recursive calls to discoverBasicBlock.
+                    // FIXME[Robb P Matzke 2017-02-03]: This only fixes direct recursion to the same block, but the infinite
+                    // recursion can also be triggered by mutually recursive functions. I'm not fixing that at the moment.
+                    if (calleeVa == bb->address()) {
+                        allCalleesPopWithoutReturning = false;
+                        break;
+                    }
                     calleeBb = discoverBasicBlock(calleeVa);
+                }
                 if (!calleeBb) {
                     allCalleesPopWithoutReturning = false;
                     break;
