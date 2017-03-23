@@ -41,7 +41,17 @@ int main ( int argc, char* argv[] )
   VisitorTraversal exampleTraversal;
 
   exampleTraversal.traverse(project, preorder);
-  std::cout << "#visited nodes = " << count << std::endl;
+  // std::cout << "#visited nodes = " << count << std::endl;
 
+  // OK, if program does not terminate before
+  SgFilePtrList fl = project->get_files();
+  SgFile*       firstfile = fl[0];
+  ROSE_ASSERT(firstfile!=NULL);
+
+  string        filename = rose::StringUtility::stripPathFromFileName (firstfile->getFileName());
+  string        ofilename = filename+".output";
+  ofstream      ofile(ofilename.c_str());
+
+  ofile << "ok." << std::endl;
   return 0;
 }
