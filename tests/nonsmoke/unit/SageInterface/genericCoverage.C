@@ -1,4 +1,6 @@
 #include <iostream>
+#include <ostream>
+#include <string>
 
 #include "rose.h"
 #include "sageGeneric.h"
@@ -48,9 +50,9 @@ int main ( int argc, char* argv[] )
   SgFile*       firstfile = fl[0];
   ROSE_ASSERT(firstfile!=NULL);
 
-  string        filename = rose::StringUtility::stripPathFromFileName (firstfile->getFileName());
-  string        ofilename = filename+".output";
-  ofstream      ofile(ofilename.c_str());
+  std::string   filename = rose::StringUtility::stripPathFromFileName (firstfile->getFileName());
+  std::string   ofilename = filename + ".genericCoverage.output";
+  std::ofstream ofile(ofilename.c_str());
 
   ofile << "ok." << std::endl;
   return 0;

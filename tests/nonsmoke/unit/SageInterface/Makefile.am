@@ -25,8 +25,8 @@ nonsmoke_specimens_C_tests_path=$(top_srcdir)/tests/nonsmoke/functional/CompileT
 include $(nonsmoke_specimens_C_tests_path)/Specimens.inc
 
 # input for genericCoverage()
-#~ nonsmoke_specimens_C_tests_path=$(top_srcdir)/tests/nonsmoke/functional/CompileTests/C_tests
-#~ include $(nonsmoke_specimens_C_tests_path)/Specimens.inc
+nonsmoke_specimens_Cxx_tests_path=$(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests
+include $(nonsmoke_specimens_Cxx_tests_path)/Specimens.inc
 
 
 ###############################################################################
@@ -68,7 +68,8 @@ $(nonsmoke_get_C_array_dimensions_c_output): get_C_array_dimensions
 	$(VALGRIND) ./get_C_array_dimensions $(TEST_CXXFLAGS) -c $(nonsmoke_specimens_C_tests_path)/$(@:%.get_C_array_dimensions.output=%)
 
 $(nonsmoke_genericCoverage_c_output): genericCoverage
-	$(VALGRIND) ./genericCoverage $(TEST_CXXFLAGS) -c $(nonsmoke_specimens_C_tests_path)/$(@:%.genericCoverage.output=%)
+	echo $(VALGRIND) ./genericCoverage $(TEST_CXXFLAGS) -c $(nonsmoke_specimens_Cxx_tests_path)/$(@:%.genericCoverage.output=%)
+	$(VALGRIND) ./genericCoverage $(TEST_CXXFLAGS) -c $(nonsmoke_specimens_Cxx_tests_path)/$(@:%.genericCoverage.output=%)
 
 # the diff files .output.diff
 nonsmoke_getDataSharingAttribute_c_output_diff = $(addsuffix .diff, ${nonsmoke_getDataSharingAttribute_c_output_verify})
