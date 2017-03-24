@@ -102,12 +102,22 @@ echo "Testing value of FC = $FC"
    # exit 1
   else
 
-  # DQ (12/3/2016): Note that even if the bckend compiler is specified to be GNU, on a Mac OSX system this will be clang.
-  # So we can trigger behavior based on the backend compiler name direcltly when on an OSX system.
+  # DQ (12/3/2016): Note that even if the backend compiler is specified to be GNU, on a Mac OSX system this will be clang.
+  # So we can trigger behavior based on the backend compiler name directly when on an OSX system.
     if test "x$OS_vendor" = xapple; then
 
-        BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=`${srcdir}/config/getClangMajorVersionNumber.sh`
-        BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=`${srcdir}/config/getClangMinorVersionNumber.sh`
+      # Rasmussen (2/20/2017): The grep -Po option is not available on Mac OSX without installing a new
+      # version of grep.  In addition, man pages from gnu.org on grep don't provide confidence in using it:
+      #   -P
+      #   --perl-regex
+      #      Interpret the pattern as a Perl-compatible regular expression (PCRE). This is highly experimental,
+      #      particularly when combined with the -z (--null-data) option, and ‘grep -P’ may warn of
+      #      unimplemented features.
+      #
+      # Tnerefore, grep -Po usage has been replaced by shell scripts.
+
+        BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=`${srcdir}/config/getAppleClangMajorVersionNumber.sh`
+        BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=`${srcdir}/config/getAppleClangMinorVersionNumber.sh`
 
         echo "     (g++ but really clang) C++ back-end compiler major version number = $BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER"
         echo "     (g++ but really clang) C++ back-end compiler minor version number = $BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER"
@@ -124,12 +134,12 @@ echo "Testing value of FC = $FC"
         XCODE_VERSION_MINOR=$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER
         XCODE_VERSION_PATCH=$BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER
 
-      # I think the clange versions all have patch level equal to zero.
+      # I think the clang versions all have patch level equal to zero.
         BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER=0
 
         if test $XCODE_VERSION_MAJOR -eq 7; then
 
-          # The versions of Clang all depend upon the minor version number of XCode (for major version number equal to 7).
+          # The versions of clang all depend upon the minor version number of XCode (for major version number equal to 7).
             BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=3
             case "$XCODE_VERSION_MINOR" in
                 0)
@@ -139,7 +149,19 @@ echo "Testing value of FC = $FC"
                     BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=8
                     ;;
                 *)
-                    echo "Unknown or unsupported version of XCode: XCODE_VERSION_MINOR = $XCODE_VERSION_MINOR."
+                    echo "Unknown or unsupported version of XCode: XCODE_VERSION_MINOR = $XCODE_VERSION_MINOR.";
+                    exit 1;
+                    ;;
+            esac
+        elif test $XCODE_VERSION_MAJOR -eq 8; then
+            BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=3
+            case "$XCODE_VERSION_MINOR" in
+                0)
+                    BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=8
+                    ;;
+                *)
+                    echo "Unknown or unsupported version of XCode: XCODE_VERSION_MINOR = $XCODE_VERSION_MINOR.";
+                    exit 1;
                     ;;
             esac
         else
@@ -373,8 +395,13 @@ echo "Testing value of FC = $FC"
   AM_CONDITIONAL(ROSE_USING_GCC_VERSION_LATER_4_7, [test "x$gcc_version_later_4_7" = "xyes"])
 
 # DQ (7/28/2014): GNU GCC 4.8 starts C11 support.
+  gcc_version_4_8=no 
   gcc_version_later_4_8=no
-  if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x4; then
+ if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x4; then
+     if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -eq "8"; then
+        echo "Note: we have identified specific version 4.8 of gcc!"
+        gcc_version_4_8=yes
+     fi
      if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "8"; then
         echo "Note: we have identified version 4.8+ of gcc!"
         gcc_version_later_4_8=yes

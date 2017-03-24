@@ -1,5 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+# AM_CPPFLAGS = $(ROSE_INCLUDES)
+# AM_CPPFLAGS = $(ROSE_INCLUDES) -fno-rtti
 AM_CPPFLAGS = $(ROSE_INCLUDES)
 
 if ROSE_USE_CLANG_FRONTEND
@@ -25,3 +27,6 @@ EXTRA_DIST = \
   clang-builtin-cuda.hpp \
   clang-builtin-opencl.h
 
+clean-local:
+	rm -rf Templates.DB ii_files ti_files cxx_templates
+	rm -rf *.o

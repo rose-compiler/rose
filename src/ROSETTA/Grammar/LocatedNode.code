@@ -634,14 +634,16 @@ HEADER_UNTYPED_TYPE_START
      public:
           enum type_enum
              {
-               e_unknown, //! default unspecified type as identified by parser.
-               e_void,    //! void type as identified by parser.
-               e_int,     //! int type as identified by parser.
-               e_float,   //! float type as identified by parser.
-               e_double,  //! double type as identified by parser.
-               e_complex, //! complex type as identified by parser.
-               e_char,    //! character type as identified by parser.
-               e_last,    //! last type 
+               e_unknown,        //! default unspecified type as identified by parser.
+               e_void,           //! void type as identified by parser.
+               e_int,            //! int type as identified by parser.
+               e_float,          //! float type as identified by parser.
+               e_double,         //! double type as identified by parser.
+               e_complex,        //! complex type as identified by parser.
+               e_double_complex, //! double complex type as identified by parser.
+               e_bool,           //! boolean type as identified by parser.
+               e_char,           //! character type as identified by parser.
+               e_last,           //! last type
              };
 
 HEADER_UNTYPED_TYPE_END

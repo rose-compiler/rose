@@ -623,7 +623,7 @@ Gang::instance() {
 GangPtr
 Gang::instanceForId(int id) {
     SAWYER_THREAD_TRAITS::LockGuard lock(classMutex_);
-    return intentionally_leaked_NS(id);
+    return createNS(id);
 }
 
 // class method; thread-safe
@@ -634,7 +634,7 @@ Gang::instanceForTty() {
 
 // class method; not synchronized
 GangPtr
-Gang::intentionally_leaked_NS(int id) {
+Gang::createNS(int id) {
     ASSERT_require(id != NO_GANG_ID);
     if (!gangs_)
         gangs_ = new GangMap;
@@ -644,6 +644,13 @@ Gang::intentionally_leaked_NS(int id) {
         gangs_->insert(id, gang);
     }
     return gang;
+}
+
+// class method to reset to initial state prior to exit
+void
+Gang::shutdownNS() {
+    delete gangs_;
+    gangs_ = NULL;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1425,6 +1432,8 @@ Facility::Facility(const Facility &other) {
 // thread-safe
 SAWYER_EXPORT Facility&
 Facility::operator=(const Facility &other) {
+    assert(isConstructed());                            // you probably registered a facility that has gone out of scope
+    assert(other.isConstructed());
     SAWYER_THREAD_TRAITS::LockGuard lock(other.mutex_);
     constructed_ = CONSTRUCTED_MAGIC;
     name_ = other.name_;
@@ -1435,6 +1444,7 @@ Facility::operator=(const Facility &other) {
 // thread-safe
 SAWYER_EXPORT Facility&
 Facility::initStreams(const DestinationPtr &destination) {
+    assert(isConstructed());                            // you probably registered a facility that has gone out of scope
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     if (streams_.empty()) {
         for (int i=0; i<N_IMPORTANCE; ++i)
@@ -1449,6 +1459,7 @@ Facility::initStreams(const DestinationPtr &destination) {
 // thread-safe
 SAWYER_EXPORT Facility&
 Facility::renameStreams(const std::string &name) {
+    assert(isConstructed());                            // you probably registered a facility that has gone out of scope
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     for (size_t i=0; i<streams_.size(); ++i)
         streams_[i]->facilityName(name.empty() ? name_ : name);
@@ -1458,6 +1469,7 @@ Facility::renameStreams(const std::string &name) {
 // thread-safe
 SAWYER_EXPORT Stream&
 Facility::get(Importance imp) {
+    assert(isConstructed());                            // you probably registered a facility that has gone out of scope
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     if (imp<0 || imp>=N_IMPORTANCE)
         throw std::runtime_error("invalid importance level");
@@ -1499,6 +1511,7 @@ Facility::get(Importance imp) {
 // thread-safe
 SAWYER_EXPORT std::string
 Facility::name() const {
+    assert(isConstructed());                            // you probably registered a facility that has gone out of scope
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     return name_;
 }
@@ -1509,7 +1522,11 @@ Facility::name() const {
 SAWYER_EXPORT
 Facilities::Facilities(const Facilities &other) {
     SAWYER_THREAD_TRAITS::LockGuard lock(other.mutex_);
-    facilities_ = other.facilities_;
+    facilities_.clear();
+    BOOST_FOREACH (const FacilityMap::Node &otherNode, other.facilities_.nodes()) {
+        if (otherNode.value()->isConstructed())
+            facilities_.insert(otherNode.key(), otherNode.value());
+    }
     impset_ = other.impset_;
     impsetInitialized_ = other.impsetInitialized_;
 }
@@ -1518,7 +1535,11 @@ Facilities::Facilities(const Facilities &other) {
 SAWYER_EXPORT Facilities&
 Facilities::operator=(const Facilities &other) {
     LockGuard2<SAWYER_THREAD_TRAITS::Mutex> lock(mutex_, other.mutex_);
-    facilities_ = other.facilities_;
+    facilities_.clear();
+    BOOST_FOREACH (const FacilityMap::Node &otherNode, other.facilities_.nodes()) {
+        if (otherNode.value()->isConstructed())
+            facilities_.insert(otherNode.key(), otherNode.value());
+    }
     impset_ = other.impset_;
     impsetInitialized_ = other.impsetInitialized_;
     return *this;
@@ -1632,13 +1653,17 @@ Facilities::erase(Facility &facility) {
 SAWYER_EXPORT Facility&
 Facilities::facility(const std::string &name) const {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-    return *facilities_[name];
+    Facility *retval = facilities_[name];
+    if (!retval->isConstructed())
+        throw std::domain_error("key lookup failure; key is not in map domain");
+    return *retval;
 }
 
 // thread-safe
 SAWYER_EXPORT Facilities&
 Facilities::reenable() {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    eraseDestroyedNS();
     BOOST_FOREACH (const FacilityMap::Node &node, facilities_.nodes()) {
         for (int i=0; i<N_IMPORTANCE; ++i) {
             Importance imp = (Importance)i;
@@ -1652,12 +1677,15 @@ Facilities::reenable() {
 SAWYER_EXPORT Facilities&
 Facilities::reenableFrom(const Facilities &other) {
     LockGuard2<SAWYER_THREAD_TRAITS::Mutex> lock(mutex_, other.mutex_);
+    eraseDestroyedNS();
     BOOST_FOREACH (const FacilityMap::Node &src, other.facilities_.nodes()) {
-        FacilityMap::NodeIterator fi_dst = facilities_.find(src.key());
-        if (fi_dst!=facilities_.nodes().end()) {
-            for (int i=0; i<N_IMPORTANCE; ++i) {
-                Importance imp = (Importance)i;
-                fi_dst->value()->get(imp).enable(src.value()->get(imp).enabled());
+        if (src.value()->isConstructed()) {
+            FacilityMap::NodeIterator fi_dst = facilities_.find(src.key());
+            if (fi_dst!=facilities_.nodes().end()) {
+                for (int i=0; i<N_IMPORTANCE; ++i) {
+                    Importance imp = (Importance)i;
+                    fi_dst->value()->get(imp).enable(src.value()->get(imp).enabled());
+                }
             }
         }
     }
@@ -1668,6 +1696,7 @@ Facilities::reenableFrom(const Facilities &other) {
 SAWYER_EXPORT Facilities&
 Facilities::enable(const std::string &switch_name, bool b) {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    eraseDestroyedNS();
     FacilityMap::NodeIterator found = facilities_.find(switch_name);
     if (found != facilities_.nodes().end()) {
         if (b) {
@@ -1687,6 +1716,7 @@ Facilities::enable(const std::string &switch_name, bool b) {
 SAWYER_EXPORT Facilities&
 Facilities::enable(Importance imp, bool b) {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    eraseDestroyedNS();
     return enableNS(imp, b);
 }
 
@@ -1707,6 +1737,7 @@ Facilities::enableNS(Importance imp, bool b) {
 SAWYER_EXPORT Facilities&
 Facilities::enable(bool b) {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    eraseDestroyedNS();
     BOOST_FOREACH (Facility *facility, facilities_.values()) {
         if (b) {
             for (int i=0; i<N_IMPORTANCE; ++i) {
@@ -1916,6 +1947,7 @@ Facilities::parseImportanceList(const std::string &facilityName, const char *&st
 SAWYER_EXPORT std::string
 Facilities::control(const std::string &ss) {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    eraseDestroyedNS();
     const char *start = ss.c_str();
     const char *s = start;
     std::list<ControlTerm> terms;
@@ -1994,14 +2026,16 @@ Facilities::configuration() const {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     std::string retval;
     BOOST_FOREACH (const FacilityMap::Node &facility, facilities_.nodes()) {
-        retval += (retval.empty()?"":",") + facility.key() + "(";
-        for (int imp=0; imp<N_IMPORTANCE; ++imp) {
-            retval += (imp==0 ? "" : ",");
-            if (!(*facility.value())[(Importance)imp]) 
-                retval += "!";
-            retval += stringifyImportance((Importance)imp);
+        if (facility.value()->isConstructed()) {
+            retval += (retval.empty()?"":",") + facility.key() + "(";
+            for (int imp=0; imp<N_IMPORTANCE; ++imp) {
+                retval += (imp==0 ? "" : ",");
+                if (!(*facility.value())[(Importance)imp]) 
+                    retval += "!";
+                retval += stringifyImportance((Importance)imp);
+            }
+            retval += ")";
         }
-        retval += ")";
     }
     return retval;
 }
@@ -2014,6 +2048,27 @@ Facilities::facilityNames() const {
     BOOST_FOREACH (const std::string &name, facilities_.keys())
         allNames.push_back(name);
     return allNames;
+}
+
+SAWYER_EXPORT void
+Facilities::eraseDestroyedNS() {
+    for (FacilityMap::ValueIterator iter = facilities_.values().begin(); iter != facilities_.values().end(); /*void*/) {
+        if (!(*iter)->isConstructed()) {
+            facilities_.eraseAt(iter++);
+        } else {
+            ++iter;
+        }
+    }
+}
+
+SAWYER_EXPORT void
+Facilities::shutdown() {
+    eraseDestroyedNS();
+    BOOST_FOREACH (Facility *f, facilities_.values()) {
+        if (f != NULL)
+            *f = Facility();
+    }
+    facilities_.clear();
 }
 
 // thread-safe
@@ -2036,9 +2091,13 @@ Facilities::print(std::ostream &log) const {
 
             // A short easy to read format. Letters indicate the importances that are enabled; dashes keep them aligned.
             // Sort of like the format 'ls -l' uses to show permissions.
-            for (int i=0; i<N_IMPORTANCE; ++i) {
-                Importance mi = (Importance)i;
-                log <<(facility->get(mi) ? (mi==WHERE?'H':stringifyImportance(mi)[0]) : '-');
+            if (!facility->isConstructed()) {
+                log <<std::setw(N_IMPORTANCE) <<"DELETED";
+            } else {
+                for (int i=0; i<N_IMPORTANCE; ++i) {
+                    Importance mi = (Importance)i;
+                    log <<(facility->get(mi) ? (mi==WHERE?'H':stringifyImportance(mi)[0]) : '-');
+                }
             }
             log <<" " <<fnode.key() <<"\n";
         }
@@ -2112,6 +2171,14 @@ initializeLibrary() {
     }
 #endif
     return true;
+}
+
+SAWYER_EXPORT void
+shutdown() {
+    Gang::shutdownNS();
+    mlog = Facility();
+    mfacilities.shutdown();
+    merr = DestinationPtr();
 }
 
 } // namespace

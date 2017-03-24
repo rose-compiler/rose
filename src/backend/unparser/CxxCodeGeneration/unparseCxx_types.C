@@ -50,6 +50,9 @@ Unparse_Type::generateElaboratedType(SgDeclarationStatement* declarationStatemen
 
 string get_type_name(SgType* t)
    {
+  // DQ (2/12/2017): Added assertion.
+     ROSE_ASSERT(t != NULL);
+
 #if 0
      printf ("In get_type_name(t = %p): t->class_name() = %s \n",t,t->class_name().c_str());
 #endif
@@ -615,9 +618,9 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
                case T_SIGNED_128BIT_INTEGER:
                case T_UNSIGNED_128BIT_INTEGER:
 
-                 //SK: Matrix type for Matlab
+            // SK: Matrix type for Matlab
                case T_MATRIX:
-             case T_TUPLE:
+               case T_TUPLE:
                case T_LONG_DOUBLE:
                case T_STRING:
                case T_BOOL:
@@ -3499,6 +3502,10 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
                                    printf ("We need to output the expression used in the defining declaration's array type \n");
                                    curprint(" /* We need to output the expression used in the defining declaration's array type */ ");
 #endif
+#if 0
+                                   printf ("In unparseArrayType(): array_type->get_index() = %p \n",array_type->get_index());
+                                   printf ("In unparseArrayType(): array_type->get_index() = %p = %s \n",array_type->get_index(),array_type->get_index()->class_name().c_str());
+#endif
                                    unp->u_exprStmt->unparseExpression(array_type->get_index(), ninfo2); // get_index() returns an expr
                                  }
                                 else
@@ -3545,7 +3552,7 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
              }
         }
 
-#if DEBUG_ARRAY_TYPE
+#if DEBUG_ARRAY_TYPE || 0
   // DQ (5/8/2013): Note that this will make the type name very long and can cause problems with nexted type generating nested comments.
      printf ("Leaving unparseArrayType(): type = %p \n",type);
      curprint("/* Leaving unparseArrayType() */ \n ");
@@ -3564,13 +3571,14 @@ Unparse_Type::unparseTemplateType(SgType* type, SgUnparse_Info& info)
      SgTemplateType* template_type = isSgTemplateType(type);
      ROSE_ASSERT(template_type != NULL);
 
-#if 0
-  // DQ (8/25/2012): This allows everything to work, but likely with some internal problems that are not being noticed.
-     SgName name = "int ";
-#else
   // This is the code that we want to use, but it is not working.
      SgName name = template_type->get_name();
-#endif
+
+  // DQ (3/18/2017): Added support to unparse packing specification.
+     if (template_type->get_packed() == true)
+        {
+          name += "...";
+        }
 
   // Add a space to seperate the type from other syntax.
      name += " ";
@@ -3587,7 +3595,7 @@ Unparse_Type::unparseTemplateType(SgType* type, SgUnparse_Info& info)
 
   // For now just unparse a simple string that will at least be a correct type.
   // curprint("unparse_template_type ");
-#if 1
+
   // DQ (8/25/2012): This was a problem for the output ofr types called from different locations.
      if ( (info.isTypeFirstPart() == false) && (info.isTypeSecondPart() == false) )
         {
@@ -3605,22 +3613,9 @@ Unparse_Type::unparseTemplateType(SgType* type, SgUnparse_Info& info)
                curprint(name);
              }
         }
-#else
-  // Older version of code...
-
-#error "DEAD CODE!"
 
 #if 0
-  // DQ (8/23/2012): Only out put anything for the 2nd part fo the type.
-  // This avoids output of the type twice (which is something I have not tracked down, but appears to be happening).
-     curprint("int ");
-#else
-  // if (info.isTypeFirstPart() == true)
-     if (info.isTypeSecondPart() == true)
-        {
-          curprint("int ");
-        }
-#endif
+     printf ("Leaving Unparse_Type::unparseTemplateType() \n");
 #endif
 
 #if 0

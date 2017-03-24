@@ -27,7 +27,7 @@ AC_DEFUN([GET_CXX_VERSION_INFO],[
                 grep -Po '(?<=version )@<:@^ ;@:>@+' |\
                 cut -d. -f1 |\
                 cut -d\( -f1)
-             CXX_VERSION_MINOR=$($CXX_COMPILER_COMMAND --version 2>&1 |\
+            CXX_VERSION_MINOR=$($CXX_COMPILER_COMMAND --version 2>&1 |\
                 grep -Po '(?<=version )@<:@^ ;@:>@+' |\
                 cut -d. -f2 |\
                 cut -d\( -f1)
@@ -54,16 +54,30 @@ AC_DEFUN([GET_CXX_VERSION_INFO],[
               # the version of the OS indead maps to a specific version of XCode to be more secure in our choice 
               # of Clang version number, or take it directly from the XCode version number if that is a better solution.
 
+              # Rasmussen (2/20/2017): The grep -Po option is not available on Mac OSX without installing a new
+              # version of grep.  In addition, man pages from gnu.org on grep don't provide confidence in using it:
+              #   -P
+              #   --perl-regex
+              #      Interpret the pattern as a Perl-compatible regular expression (PCRE). This is highly experimental,
+              #      particularly when combined with the -z (--null-data) option, and ‘grep -P’ may warn of
+              #      unimplemented features.
+              #
+              # Tnerefore, grep -Po usage has been replaced by shell scripts.
+
+                CXX_VERSION_MAJOR=`${srcdir}/config/getAppleCxxMajorVersionNumber.sh`
+                CXX_VERSION_MINOR=`${srcdir}/config/getAppleCxxMinorVersionNumber.sh`
+                CXX_VERSION_PATCH=`${srcdir}/config/getAppleCxxPatchVersionNumber.sh`
+
                 XCODE_VERSION_MAJOR=$CXX_VERSION_MAJOR
                 XCODE_VERSION_MINOR=$CXX_VERSION_MINOR
                 XCODE_VERSION_PATCH=$CXX_VERSION_PATCH
 
-              # I think the clange versions all have patch level equal to zero.
+              # I think the clang versions all have patch level equal to zero.
                 CXX_VERSION_PATCH=0
 
                 if test $XCODE_VERSION_MAJOR -eq 7; then
 
-                  # The versions of Clang all depend upon the minor version number of XCode (for major version number equal to 7).
+                  # The versions of clang all depend upon the minor version number of XCode (for major version number equal to 7).
                     CXX_VERSION_MAJOR=3
                     case "$XCODE_VERSION_MINOR" in
                         0)
@@ -73,7 +87,19 @@ AC_DEFUN([GET_CXX_VERSION_INFO],[
                             CXX_VERSION_MINOR=8
                             ;;
                         *)
-                            echo "Unknown or unsupported version of XCode: XCODE_VERSION_MINOR = $XCODE_VERSION_MINOR."
+                            echo "Unknown or unsupported version of XCode: XCODE_VERSION_MINOR = $XCODE_VERSION_MINOR.";
+                            exit 1;
+                            ;;
+                    esac
+                elif test $XCODE_VERSION_MAJOR -eq 8; then
+                    CXX_VERSION_MAJOR=3
+                    case "$XCODE_VERSION_MINOR" in
+                        0)
+                            CXX_VERSION_MINOR=8
+                            ;;
+                        *)
+                            echo "Unknown or unsupported version of XCode: XCODE_VERSION_MINOR = $XCODE_VERSION_MINOR.";
+                            exit 1;
                             ;;
                     esac
                 else

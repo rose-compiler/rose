@@ -5,6 +5,7 @@
 #include "fixupNames.h"
 #include "FileUtility.h"
 #include "AstPDFGeneration.h"
+#include "SgNodeHelper.h" //Markus's helper functions
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
    #include "buildMangledNameMap.h"
@@ -26,6 +27,8 @@
 // Liao 1/24/2008 : need access to scope stack sometimes
 #include "sageBuilder.h"
 
+// DQ (3/14/2017): Try to comment this out since it is not tested (used in get_C_array_dimensions(), 
+// from midend/programTransformation/ompLowering/omp_lowering.cpp, but not tested).
 // PP 01/06/2012 : need swap operations for wrapFunction implementation
 // PP 05/30/2012 : need ancestor function
 #include "sageGeneric.h"
@@ -4081,6 +4084,10 @@ SageInterface::rebuildSymbolTable ( SgScopeStatement* scope )
                          break;
                        }
 
+
+                 // DQ (2/18/2017): Added support for C++11 SgTemplateTypedefDeclaration.
+                    case V_SgTemplateTypedefDeclaration:
+
                     case V_SgTypedefDeclaration:
                        {
                          SgTypedefDeclaration* derivedDeclaration = isSgTypedefDeclaration(declaration);
@@ -4231,6 +4238,15 @@ SageInterface::rebuildSymbolTable ( SgScopeStatement* scope )
                       {
                         printf ("Special cases not handled %p = %s = %s \n",*i,(*i)->class_name().c_str(),get_name(*i).c_str());
                         ROSE_ASSERT(false);
+                        break;
+                      }
+
+                  case V_SgStaticAssertionDeclaration:
+                      {
+                     // DQ (2/18/2017): This is not really a declaration (I think).  This will be fixed later.
+#if 0
+                        printf ("A static assertion statement (SgStaticAssertionDeclaration) declaration is not really a declaration %p = %s = %s \n",*i,(*i)->class_name().c_str(),get_name(*i).c_str());
+#endif
                         break;
                       }
 
@@ -5896,6 +5912,11 @@ SageInterface::lookupTypedefSymbolInParentScopes (const SgName &  name, SgScopeS
           cscope = SageBuilder::topScopeStack();
      ROSE_ASSERT(cscope != NULL);
 
+#if 0
+     printf ("In lookupTypedefSymbolInParentScopes(): name = %s starting with cscope = %p = %s \n",name.str(),cscope,cscope->class_name().c_str());
+     printf ("--- parent scope = %p = %s \n",cscope->get_scope(),(cscope->get_scope() != NULL) ? cscope->get_scope()->class_name().c_str() : "null");
+#endif
+
      while ((cscope != NULL) && (symbol == NULL))
         {
        // I think this will resolve SgAliasSymbols to be a SgClassSymbol where the alias is of a SgClassSymbol.
@@ -5905,7 +5926,15 @@ SageInterface::lookupTypedefSymbolInParentScopes (const SgName &  name, SgScopeS
                cscope = isSgGlobal(cscope) ? NULL : cscope->get_scope();
             else
                cscope = NULL;
+
+#if 0
+          printf ("In lookupTypedefSymbolInParentScopes(): symbol = %p next cscope = %p = %s \n",symbol,cscope,(cscope != NULL) ? cscope->class_name().c_str() : "null");
+#endif
         }
+
+#if 0
+     printf ("Leaving lookupTypedefSymbolInParentScopes(): symbol = %p \n",symbol);
+#endif
 
      return symbol;
    }
@@ -10212,7 +10241,52 @@ bool SageInterface::isCanonicalDoLoop(SgFortranDo* loop,SgInitializedName** ivar
   }
   return true;
 }
+//TODO: expose it to the namespace once it matures.
+//! Check if an executable statement (possibly compound), is a structured block
+//  with a single entry at the top and a single exit at the bottom, or an OpenMP construct.
+/*
+From OpenMP 4.5 Specification
 
+1.2.2 OpenMP Language Terminology
+
+For C/C++, an executable statement, possibly compound, with a single entry at the
+top and a single exit at the bottom, or an OpenMP construct.
+
+For Fortran, a block of executable statements with a single entry at the top and a
+single exit at the bottom, or an OpenMP construct.
+
+COMMENTS:
+
+For all base languages:
+* Access to the structured block must not be the result of a branch; and
+* The point of exit cannot be a branch out of the structured block.
+
+ For C/C++:
+* The point of entry must not be a call to setjmp();
+* longjmp() and throw() must not violate the entry/exit criteria;
+* Calls to exit() are allowed in a structured block; and
+* An expression statement, iteration statement, selection statement, or try block is considered to be a structured block if the corresponding compound statement obtained by enclosing it in { and } would be a structured block.
+
+For Fortran:
+* STOP statements are allowed in a structured block.
+
+*/
+bool isStructuredBlock(SgStatement* s)
+{
+  bool rt = true; 
+  ROSE_ASSERT (s != NULL);
+
+  // contain break; 
+  std::set<SgNode*>  bset = SgNodeHelper::LoopRelevantBreakStmtNodes (s);
+  if (bset.size()!=0 ) 
+    rt = false;
+  //TODO: contain goto statement, jumping to outside targets
+  // longjump(), throw(), 
+  // calls to exit() are allowed.
+
+  return rt; 
+  
+}
 
 //! Based on AstInterface::IsFortranLoop() and ASTtools::getLoopIndexVar()
 //TODO check the loop index is not being written in the loop body
@@ -10313,6 +10387,19 @@ bool SageInterface::isCanonicalForLoop(SgNode* loop,SgInitializedName** ivar/*=N
   ubast = test->get_rhs_operand();
 
   //3. Check the increment expression
+  /* Allowed forms
+     ++var
+     var++
+     --var
+     var--
+
+     var += incr
+     var -= incr
+
+     var = var + incr
+     var = incr + var
+     var = var - incr
+  */
   SgExpression* incr = fs->get_increment();
   SgVarRefExp* incr_var = NULL;
   switch (incr->variantT()) {
@@ -10360,6 +10447,13 @@ bool SageInterface::isCanonicalForLoop(SgNode* loop,SgInitializedName** ivar/*=N
   if (incr_var == NULL)
     return false;
   if (incr_var->get_symbol() != ivarname->get_symbol_from_symbol_table ())
+    return false;
+
+
+  // single entry and single exit?
+  // only for C for loop for now
+  // TODO: Fortran support later
+  if (fs && !isStructuredBlock(fs->get_loop_body()) )
     return false;
 
   // return loop information if requested
@@ -15720,8 +15814,16 @@ CollectDependentDeclarationsTraversal::visit(SgNode *astNode)
          {
            // printf ("Found class declaration: classDeclaration = %p \n",classDeclaration);
            declaration = classDeclaration->get_definingDeclaration();
-           ROSE_ASSERT(declaration != NULL);
-           addDeclaration(declaration);
+           // Liao, 12/09/2016. 
+           // In some cases, forward declaration of class types are used and sufficient, without providing defining declaration.
+           // We should allow this. 
+           if (declaration != NULL)
+           {
+             //  ROSE_ASSERT(declaration != NULL);
+             addDeclaration(declaration);
+           }
+           else 
+             addDeclaration (classDeclaration); // we use the original forward declaration.
 
            // Note that since types are shared in the AST, the declaration for a named type may be (is)
            // associated with the class declaration in the original file. However, we want to associated
@@ -19215,6 +19317,9 @@ void SageInterface::annotateExpressionsWithUniqueNames (SgProject* project)
   }
 #endif
 
+#if 0
+  // DQ (2/16/2017): This is a static function that is defined but not used in this file (compiler waring).
+
   /// \brief swaps the "defining elements" of two function declarations
   static
   void swapDefiningElements(SgFunctionDeclaration& ll, SgFunctionDeclaration& rr)
@@ -19225,6 +19330,7 @@ void SageInterface::annotateExpressionsWithUniqueNames (SgProject* project)
 
     // \todo do we need to swap also exception spec, decorator_list, etc. ?
   }
+#endif
 
 #if 0
   // DQ (11/1/2016): This function violated the ROSE -enable-advanced-warnings 
@@ -19445,7 +19551,6 @@ void SageInterface::annotateExpressionsWithUniqueNames (SgProject* project)
   {
     return get_C_array_dimensions_aux(arrtype, varrefCreator(initname));
   }
-
 
 // DQ (1/23/2013): Added support for generated a set of source sequence entries.
 class CollectSourceSequenceNumbers : public AstSimpleProcessing
@@ -20904,9 +21009,12 @@ bool SageInterface::isEquivalentFunctionType (const SgFunctionType* lhs, const S
     // Must have same number of argument types
     if (f1_arg_types.size() == f2_arg_types.size())
     {
-      int counter = 0; 
-      //iterate through all argument types
-      for (int i=0; i< f1_arg_types.size(); i++)
+   // DQ (2/16/2017): Fixed compiler warning about comparison between signed and unsigned integers
+   // int counter = 0; 
+      size_t counter = 0; 
+   // iterate through all argument types
+   // for (int i=0; i< f1_arg_types.size(); i++)
+      for (size_t i=0; i< f1_arg_types.size(); i++)
       {
         if (isEquivalentType (f1_arg_types[i], f2_arg_types[i]) )
            counter ++;  // count the number of equal arguments 
