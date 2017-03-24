@@ -343,10 +343,8 @@ test2005_125.C \
 test2005_126.C \
 test2005_127.C \
 test2005_134.C \
-test2005_135.C \
 test2005_136.C \
 test2005_137.C \
-test2005_138.C \
 test2005_139.C \
 test2005_140.C \
 test2005_141.C \
@@ -361,7 +359,6 @@ test2005_150.C \
 test2005_152.C \
 test2005_153.C \
 test2005_155.C \
-test2005_156.C \
 test2005_157.C \
 test2005_158.C \
 test2005_159.C \
@@ -387,7 +384,6 @@ test2005_182.C \
 test2005_184.C \
 test2005_185.C \
 test2005_187.C \
-test2005_189.C \
 test2005_190.C \
 test2005_191.C \
 test2005_192.C \
@@ -412,7 +408,6 @@ test2006_07.C \
 test2006_08.C \
 test2006_10.C \
 test2006_12.C \
-test2006_13.C \
 test2006_14.C \
 test2006_16.C \
 test2006_17.C \
@@ -555,7 +550,6 @@ test2007_43.C \
 test2007_44.C \
 test2007_46.C \
 test2007_47.C \
-test2007_48.C \
 test2007_49.C \
 test2007_50.C \
 test2007_51.C \
@@ -781,6 +775,19 @@ test2005_104.C \
 $(FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_CONSTANT_FOLDING_ELIMINATION) \
 $(FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_CONSTANT_FOLDING_ELIMINATION_FOR_FILE_IO_TESTS)
 
+# DQ (1/19/2017): This ia a problem for the generation of a binary AST in the file I/O tests.
+NEW_COMPILER_5_1_SPECIFIC_FAILING_TESTS_WITH_CONSTANT_FOLDING = \
+test2005_32.C \
+test2005_135.C \
+test2005_138.C \
+test2005_156.C \
+test2007_48.C 
+
+# DQ (1/19/2017): This ia a problem for the generation of a binary AST in the file I/O tests.
+NEW_COMPILER_6_1_SPECIFIC_FAILING_TESTS_WITH_CONSTANT_FOLDING = \
+test2005_189.C \
+test2006_13.C 
+
 # DQ (1/28/2014): Failing test (likely due to new nodes in AST 
 # from construction of expression trees from costants).
 # test2005_42.C (fails with gnu g++ 4.2.4 compiler)
@@ -814,7 +821,6 @@ NEW_COMPILER_4_4_5_SPECIFIC_FAILING_TESTS_WITH_CONSTANT_FOLDING = \
 
 # DQ (9/17/2011): Failing name qualification...fix after fixing original expression tree AST consistancy.
 FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_CONSTANT_FOLDING_ELIMINATION = \
- test2005_32.C \
  test2007_05.C \
  test2009_37.C \
  test2009_31.C \

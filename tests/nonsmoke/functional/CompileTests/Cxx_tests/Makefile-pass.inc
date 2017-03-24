@@ -119,7 +119,6 @@ test2004_31.C \
 test2004_32.C \
 test2004_33.C \
 test2004_34.C \
- test2004_35.C \
 test2004_36.C \
 test2004_37.C \
 test2004_38.C \
@@ -157,14 +156,12 @@ test2004_73.C \
 test2004_74.C \
 test2004_75.C \
 test2004_76.C \
- test2004_77.C \
 test2004_78.C \
 test2004_79.C \
 test2004_80.C \
 test2004_81.C \
 test2004_83.C \
 test2004_84.C \
- test2004_85.C \
 test2004_86.C \
 test2004_87.C \
 test2004_88.C \
@@ -198,15 +195,12 @@ test2004_115.C \
 test2004_117.C \
 test2004_118.C \
 test2004_119.C \
- test2004_120.C \
 test2004_121.C \
 test2004_122.C \
 test2004_123.C \
 test2004_124.C \
 test2004_125.C \
- test2004_127.C \
 test2004_128.C \
- test2004_129.C \
 test2004_131.C \
 test2004_132.C \
 test2004_133.C \
@@ -219,13 +213,11 @@ test2004_139.C \
 test2004_140.C \
 test2004_141.C \
 test2004_142.C \
- test2004_143.C \
 test2004_144.C \
 test2004_145.C \
 test2004_146.C \
 test2004_147.C \
 test2004_148.C \
- test2004_149.C \
 test2004_150.C \
 test2004_151.C \
 test2004_152.C \
@@ -266,23 +258,17 @@ test2005_24.C \
 test2005_25.C \
 test2005_26.C \
 test2005_27.C \
- test2005_28.C \
 test2005_29.C \
 test2005_30.C \
 test2005_31.C \
 test2005_33.C \
- test2005_34.C \
- test2005_35.C \
 test2005_36.C \
 test2005_37.C \
 test2005_38.C \
- test2005_39.C \
 test2005_40.C \
 test2005_41.C \
- test2005_42.C \
 test2005_43.C \
 test2005_44.C \
-test2005_45.C \
 test2005_46.C \
 test2005_47.C \
 test2005_48.C \
@@ -317,7 +303,6 @@ test2005_78.C \
 test2005_79.C \
 test2005_80.C \
 test2005_81.C \
- test2005_82.C \
 test2005_83.C \
 test2005_84.C \
 test2005_86.C \
@@ -327,17 +312,13 @@ test2005_89.C \
 test2005_90.C \
 test2005_91.C \
 test2005_92.C \
- test2005_93.C \
 test2005_94.C \
 test2005_95.C \
 test2005_96.C \
 test2005_97.C \
-test2005_98.C \
 test2005_99.C \
 test2005_100.C \
 test2005_101.C \
-test2005_102.C \
-test2005_103.C \
 test2005_105.C \
 test2005_106.C \
 test2005_107.C \
@@ -358,12 +339,6 @@ test2005_124.C \
 test2005_125.C \
 test2005_126.C \
 test2005_127.C \
-test2005_128.C \
-test2005_129.C \
-test2005_130.C \
-test2005_131.C \
-test2005_132.C \
-test2005_133.C \
 test2005_134.C \
 test2005_135.C \
 test2005_136.C \
@@ -372,7 +347,6 @@ test2005_138.C \
 test2005_139.C \
 test2005_140.C \
 test2005_141.C \
-test2005_142.C \
 test2005_143.C \
 test2005_144.C \
 test2005_145.C \
@@ -406,7 +380,6 @@ test2005_176.C \
 test2005_177.C \
 test2005_178.C \
 test2005_180.C \
-test2005_181.C \
 test2005_182.C \
 test2005_184.C \
 test2005_185.C \
@@ -441,7 +414,6 @@ test2006_16.C \
 test2006_17.C \
 test2006_18.C \
 test2006_19.C \
-test2006_20.C \
 test2006_22.C \
 test2006_23.C \
 test2006_25.C \
@@ -482,7 +454,6 @@ test2006_75.C \
 test2006_76.C \
 test2006_77.C \
 test2006_78.C \
-test2006_79.C \
 test2006_80.C \
 test2006_81.C \
 test2006_82.C \
@@ -493,7 +464,6 @@ test2006_88.C \
 test2006_89.C \
 test2006_90.C \
 test2006_91.C \
-test2006_92.C \
 test2006_93.C \
 test2006_94.C \
 test2006_95.C \
@@ -521,11 +491,9 @@ test2006_119.C \
 test2006_120.C \
 test2006_122.C \
 test2006_123.C \
-test2006_124.C \
 test2006_126.C \
 test2006_129.C \
 test2006_140.C \
-test2006_141.C \
 test2006_142.C \
 test2006_143.C \
 test2006_144.C \
@@ -611,7 +579,6 @@ test2007_133.C \
 test2007_135.C \
 test2007_137.C \
 test2007_140.C \
-test2007_141.C \
    test2007_142.C \
 test2007_147.C \
 test2007_150.C \
@@ -669,8 +636,6 @@ test2009_27.C \
 test2009_28.C \
 test2009_30.C \
 test2009_39.C \
-test2009_40.C \
-test2009_41.C \
 test2009_42.C \
 test2010_03.C \
 test2010_04.C \
@@ -681,7 +646,6 @@ test2010_19.C \
 test2011_01.C \
 test2011_02.C \
 test2011_05.C \
-test2011_06.C \
 test2011_07.C \
 test2011_19.C \
 test2011_20.C \
@@ -777,8 +741,6 @@ test2011_137.C \
 test2011_138.C \
 test2011_139.C \
 test2011_140.C \
-test2011_141.C \
-test2011_142.C \
 test2011_143.C \
 test2011_146.C \
 test2011_147.C \
@@ -790,7 +752,6 @@ test2011_147.C \
    test2005_183.C \
    test2005_194.C \
    test2005_199.C \
-   test2006_84.C \
    test2006_86.C \
    test2006_121.C \
    test2006_139.C \
@@ -811,27 +772,241 @@ lexPhase2003_01.C \
 math.C \
 inputForLoopLocator.C \
 X.C \
-inputBug317.C \
-inputBug327.C \
 test2005_09.C \
 test2005_104.C \
-test2010_24.C \
 $(FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_CONSTANT_FOLDING_ELIMINATION) \
 $(FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_CONSTANT_FOLDING_ELIMINATION_FOR_FILE_IO_TESTS)
 
+
+# Orgainize files lists:
+EDG_49_CLANG_PROBLEM_FILES = \
+   test2006_02.C 
+
+EDG_49_GNU_6_1_PROBLEM_FILES = \
+ test2005_42.C \
+ test2004_130.C \
+ test2004_143.C \
+ test2004_149.C \
+ test2005_161.C 
+
+EDG_412_GNU_6_1_PROBLEM_FILES = \
+ inputBug317.C \
+ inputBug327.C \
+ test2004_35.C \
+ test2004_77.C \
+ test2004_85.C \
+ test2004_120.C \
+ test2004_127.C \
+ test2004_129.C \
+ test2005_34.C \
+ test2005_35.C \
+ test2005_28.C \
+ test2005_39.C \
+ test2005_45.C \
+ test2005_82.C \
+ test2005_93.C \
+ test2005_98.C \
+ test2005_102.C \
+ test2005_103.C \
+ test2005_128.C \
+ test2005_129.C \
+ test2005_130.C \
+ test2005_131.C \
+ test2005_132.C \
+ test2005_133.C \ 
+ test2005_142.C \
+ test2005_181.C \
+ test2006_20.C \
+ test2006_79.C \
+ test2006_84.C \
+ test2006_92.C \
+ test2006_124.C \
+ test2006_141.C \
+ test2007_141.C \
+ test2009_40.C \
+ test2009_41.C \
+ test2010_24.C \
+ test2011_06.C \
+ test2011_141.C \
+ test2011_142.C 
+
+# DQ (2/19/2017): NEW VERSION OF LOGIC
+# DQ (2/18/2017): More specific logic required for portability.
+# When using EDG 4.9 these files don't compile on later versions of GNU, CLANG, and Intel compilers 
+# but we still want them tests as we transition to EDG 4.12 (where they all work fine independent of 
+# the compiler vendor and GNU compiler version).
+if ROSE_USE_EDG_VERSION_4_9
+#	@echo "ROSE_USE_EDG_VERSION_4_9 == true"
+if USING_GNU_COMPILER
+#	@echo "USING_GCC_COMPILER == true"
+if ROSE_USING_GCC_VERSION_LATER_4_9
+#	@echo "ROSE_USING_GCC_VERSION_LATER_4_9 == true"
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS_FOLDED_CONSTANTS += $(EDG_49_CLANG_PROBLEM_FILES)
+# Exclude these tests on GNU 4.9 and later compilers).
+else  # NOT ROSE_USING_GCC_VERSION_LATER_4_9
+# If this is not the CLANG or Intel compilers and an earlier version of GNU than GNU 4.9 compiler, so include these files.
+#	@echo "ROSE_USING_GCC_VERSION_LATER_4_9 == false"
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS_FOLDED_CONSTANTS += $(EDG_412_GNU_6_1_PROBLEM_FILES) $(EDG_49_GNU_6_1_PROBLEM_FILES) $(EDG_49_CLANG_PROBLEM_FILES)
+
+endif # ROSE_USING_GCC_VERSION_LATER_4_9
+else  # NOT USING_GNU_COMPILER
+#	@echo "USING_GCC_COMPILER == false"
+if USING_CLANG_COMPILER
+# Exclude this list of files in the case of CLANG compiler.
+#	@echo "USING_CLANG_COMPILER == true"
+else # NOT USING_CLANG_COMPILER
+#	@echo "USING_CLANG_COMPILER == false"
+if USING_INTEL_COMPILER
+# Exclude this list of files in the case of Intel compiler.
+#	@echo "USING_INTEL_COMPILER == true"
+else # NOT USING_INTEL_COMPILER
+# This is an unknown compiler.
+#	@echo "USING_INTEL_COMPILER == false"
+endif # USING_INTEL_COMPILER
+endif # USING_CLANG_COMPILER
+endif # USING_GNU_COMPILER
+else  # NOT ROSE_USE_EDG_VERSION_4_9
+# Using EDG 4.12 or later (run all tests independent of the compiler).
+#	@echo "ROSE_USE_EDG_VERSION_4_9 == false"
+
+if USING_GNU_COMPILER
+#	@echo "USING_GCC_COMPILER == true"
+if ROSE_USING_GCC_VERSION_LATER_4_9
+#	@echo "ROSE_USING_GCC_VERSION_LATER_4_9 == true"
+# Exclude these tests on GNU 4.9 and later compilers).
+if ROSE_USING_GCC_VERSION_LATER_6_1
+#	@echo "ROSE_USING_GCC_VERSION_LATER_4_9 == true"
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS_FOLDED_CONSTANTS += $(EDG_49_CLANG_PROBLEM_FILES)
+else # NOT ROSE_USING_GCC_VERSION_LATER_6_1
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS_FOLDED_CONSTANTS += $(EDG_412_GNU_6_1_PROBLEM_FILES) $(EDG_49_GNU_6_1_PROBLEM_FILES) $(EDG_49_CLANG_PROBLEM_FILES)
+endif # ROSE_USING_GCC_VERSION_LATER_6_1
+else  # NOT ROSE_USING_GCC_VERSION_LATER_4_9
+# If this is not the CLANG or Intel compilers and an earlier version of GNU than GNU 4.9 compiler, so include these files.
+#	@echo "ROSE_USING_GCC_VERSION_LATER_4_9 == false"
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS_FOLDED_CONSTANTS += $(EDG_412_GNU_6_1_PROBLEM_FILES) $(EDG_49_GNU_6_1_PROBLEM_FILES) $(EDG_49_CLANG_PROBLEM_FILES)
+endif # ROSE_USING_GCC_VERSION_LATER_4_9
+else  # NOT USING_GNU_COMPILER
+#	@echo "USING_GCC_COMPILER == false"
+if USING_CLANG_COMPILER
+# Exclude this list of files in the case of CLANG compiler.
+#	@echo "USING_CLANG_COMPILER == true"
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS_FOLDED_CONSTANTS += $(EDG_412_GNU_6_1_PROBLEM_FILES) $(EDG_49_GNU_6_1_PROBLEM_FILES)
+else # NOT USING_CLANG_COMPILER
+#	@echo "USING_CLANG_COMPILER == false"
+if USING_INTEL_COMPILER
+# Exclude this list of files in the case of Intel compiler.
+#	@echo "USING_INTEL_COMPILER == true"
+else # NOT USING_INTEL_COMPILER
+# This is an unknown compiler.
+#	@echo "USING_INTEL_COMPILER == false"
+endif # USING_INTEL_COMPILER
+endif # USING_CLANG_COMPILER
+endif # USING_GNU_COMPILER
+
+endif # ROSE_USE_EDG_VERSION_4_9
+
+
+
+OLD_EXAMPLE_TESTCODES_REQUIRED_TO_PASS_FOLDED_CONSTANTS = 
+
 # DQ (4/17/2016): This test code is a problem for Clang.
 if !USING_CLANG_COMPILER
-EXAMPLE_TESTCODES_REQUIRED_TO_PASS_FOLDED_CONSTANTS += \
+OLD_EXAMPLE_TESTCODES_REQUIRED_TO_PASS_FOLDED_CONSTANTS += \
    test2006_02.C 
 endif
 
+# DQ (1/19/2017): This test code fails for GNU 6.1 in the unparseToString_tests directory.
+# if !ROSE_USING_GCC_VERSION_LATER_6_1
+# EXAMPLE_TESTCODES_REQUIRED_TO_PASS_FOLDED_CONSTANTS += \
+#  test2005_42.C 
+# endif
+
+OLD_FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_CONSTANT_FOLDING_ELIMINATION = 
+
+# DQ (2/18/2017): New logic to control use of specific tests debendent on EDG and Compiler used.
+if ROSE_USE_EDG_VERSION_4_9
+if ROSE_USING_GCC_VERSION_LATER_6_1
+else
+
+if USING_INTEL_COMPILER
+else
+
+if USING_CLANG_COMPILER
+else
+OLD_EXAMPLE_TESTCODES_REQUIRED_TO_PASS_FOLDED_CONSTANTS += \
+ test2005_42.C 
+
+OLD_FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_CONSTANT_FOLDING_ELIMINATION += \
+ test2004_130.C \
+ test2004_143.C \
+ test2004_149.C \
+ test2005_161.C 
+endif
+
+endif
+endif
+
+else
+# Case of not EDG 4.9 (EDG 4.12)
+OLD_EXAMPLE_TESTCODES_REQUIRED_TO_PASS_FOLDED_CONSTANTS += \
+ test2005_42.C 
+
+OLD_FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_CONSTANT_FOLDING_ELIMINATION += \
+ test2004_130.C \
+ test2004_143.C \
+ test2004_149.C \
+ test2005_161.C 
+
+if !ROSE_USING_GCC_VERSION_LATER_6_1
+# DQ (1/19/2017): These test codes fails for GNU 6.1 in the staticCFG_tests directory.
+OLD_EXAMPLE_TESTCODES_REQUIRED_TO_PASS_FOLDED_CONSTANTS += \
+ inputBug317.C \
+ inputBug327.C \
+ test2004_35.C \
+ test2004_77.C \
+ test2004_85.C \
+ test2004_120.C \
+ test2004_127.C \
+ test2004_129.C \
+ test2005_34.C \
+ test2005_35.C \
+ test2005_28.C \
+ test2005_39.C \
+ test2005_45.C \
+ test2005_82.C \
+ test2005_93.C \
+ test2005_98.C \
+ test2005_102.C \
+ test2005_103.C \
+ test2005_128.C \
+ test2005_129.C \
+ test2005_130.C \
+ test2005_131.C \
+ test2005_132.C \
+ test2005_133.C \ 
+ test2005_142.C \
+ test2005_181.C \
+ test2006_20.C \
+ test2006_79.C \
+ test2006_84.C \
+ test2006_92.C \
+ test2006_124.C \
+ test2006_141.C \
+ test2007_141.C \
+ test2009_40.C \
+ test2009_41.C \
+ test2010_24.C \
+ test2011_06.C \
+ test2011_141.C \
+ test2011_142.C 
+endif
+
+endif
 
 
 # DQ (9/17/2011): Failing name qualification...fix after fixing original expression tree AST consistancy.
-FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_CONSTANT_FOLDING_ELIMINATION = \
- test2004_130.C \
+OLD_FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_CONSTANT_FOLDING_ELIMINATION += \
  test2005_32.C \
- test2005_161.C \
  test2007_05.C \
  test2009_37.C \
  test2009_31.C \
@@ -839,19 +1014,32 @@ FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_CONSTANT_FOLDING_ELIMINATION = \
  test2011_66.C \
  test2011_89.C 
 
+# DQ (2/18/2017): Move this to the unified logic above.
+# DQ (1/19/2017): This test code fails for GNU 6.1 in the staticCFG_tests directory.
+# if !ROSE_USING_GCC_VERSION_LATER_6_1
+# FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_CONSTANT_FOLDING_ELIMINATION += \
+#  test2004_130.C \
+#  test2004_143.C \
+#  test2004_149.C \
+#  test2005_161.C 
+# endif
+
 
 # DQ (9/17/2011): Failing tests for constant folding AST consitancy support.
-FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_ORIGINAL_EXPRESSION_TREE_ELIMINATION = \
+OLD_FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_ORIGINAL_EXPRESSION_TREE_ELIMINATION = \
 test2006_112.C \
 test2010_25.C 
 
 
 # DQ (9/24/2011): Failing astFileIO test as a result of making replacing constant folded values with the original expression trees.
-FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_CONSTANT_FOLDING_ELIMINATION_FOR_FILE_IO_TESTS = \
- test2006_125.C \
+OLD_FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_CONSTANT_FOLDING_ELIMINATION_FOR_FILE_IO_TESTS = \
+ test2006_125.C 
+
+# DQ (1/19/2017): This test code fails for GNU 6.1 in the staticCFG_tests directory.
+if !ROSE_USING_GCC_VERSION_LATER_6_1
+OLD_FAILING_ORIGINAL_EXPRESSION_TREE_FIXUP_CONSTANT_FOLDING_ELIMINATION_FOR_FILE_IO_TESTS += \
  test2011_121.C 
-
-
+endif
 
 
 

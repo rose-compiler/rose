@@ -26,7 +26,6 @@
 #include "InternalChecks.h"
 #include "AstAnnotator.h"
 #include "AstTerm.h"
-#include "SgNodeHelper.h"
 #include "AType.h"
 #include "AstMatching.h"
 #include "RewriteSystem.h"
@@ -71,10 +70,18 @@ namespace po = boost::program_options;
 using namespace CodeThorn;
 using namespace SPRAY;
 using namespace boost;
+
+#include "Diagnostics.h"
 using namespace Sawyer::Message;
 
 // experimental
 #include "IOSequenceGenerator.C"
+
+void CodeThorn::initDiagnostics() {
+  rose::Diagnostics::initialize();
+  Analyzer::initDiagnostics();
+  RewriteSystem::initDiagnostics();
+}
 
 bool isExprRoot(SgNode* node) {
   if(SgExpression* exp=isSgExpression(node)) {
@@ -328,7 +335,6 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
 
   experimentalOptions.add_options()
     ("annotate-terms",po::value< string >(),"annotate term representation of expressions in unparsed program.")
-    ("arith-top",po::value< string >(),"Arithmetic operations +,-,*,/,% always evaluate to top [=yes|no]")
     ("eliminate-stg-back-edges",po::value< string >(), " eliminate STG back-edges (STG becomes a tree).")
     ("generate-assertions",po::value< string >(),"generate assertions (pre-conditions) in program and output program (using ROSE unparser).")
     ("precision-exact-constraints",po::value< string >(),"(experimental) use precise constraint extraction [=yes|no]")
@@ -365,8 +371,8 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
     ("dump-sorted",po::value< string >(), " [experimental] generates sorted array updates in file <file>")
     ("dump-non-sorted",po::value< string >(), " [experimental] generates non-sorted array updates in file <file>")
     ("rewrite-ssa", "rewrite SSA form (rewrite rules perform semantics preserving operations).")
-    ("equivalence-check", "Check programs provided on the command line for equivalence")
-    ("limit-to-fragment",po::value< string >(), "the argument is used to find fragments marked by two prgagmas of that '<name>' and 'end<name>'")
+    //    ("equivalence-check", "Check programs provided on the command line for equivalence")
+    //("limit-to-fragment",po::value< string >(), "the argument is used to find fragments marked by two prgagmas of that '<name>' and 'end<name>'")
     ("print-update-infos",po::value< string >(), "[experimental] print information about array updates on stdout")
     ("rule-const-subst",po::value< string >(), " [experimental] use const-expr substitution rule <arg>")
     ("specialize-fun-name", po::value< string >(), "function of name [arg] to be specialized")
@@ -412,6 +418,7 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
     ("input-values",po::value< string >(),"specify a set of input values (e.g. \"{1,2,3}\")")
     ("input-values-as-constraints",po::value<string >(),"represent input var values as constraints (otherwise as constants in PState)")
     ("input-sequence",po::value< string >(),"specify a sequence of input values (e.g. \"[1,2,3]\")")
+    ("log-level",po::value< string >()->default_value("none,>=warn"),"Set the log level")
     ("max-transitions",po::value< int >(),"Passes (possibly) incomplete STG to verifier after max transitions (default: no limit).")
     ("max-iterations",po::value< int >(),"Passes (possibly) incomplete STG to verifier after max loop iterations (default: no limit). Currently requires --exploration-mode=loop-aware[-sync].")
     ("max-memory",po::value< long int >(),"Stop computing the STG after a total physical memory consumption of approximately <arg> Bytes has been reached. (default: no limit). Currently requires --solver=12 and only supports Unix systems.")
@@ -478,8 +485,8 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
     cout << dataRaceOptions << "\n";
     exit(0);
   } else if (args.count("version")) {
-    cout << "CodeThorn version 1.7.0\n";
-    cout << "Written by Markus Schordan, Adrian Prantl, and Marc Jasper\n";
+    cout << "CodeThorn version 1.8.0\n";
+    cout << "Written by Markus Schordan, Marc Jasper, Joshua Asplund, Adrian Prantl\n";
     exit(0);
   }
   return args;
@@ -528,7 +535,7 @@ BoolOptions& parseBoolOptions(int argc, char* argv[]) {
   boolOptions.registerOption("std-out-only",false);
   boolOptions.registerOption("keep-error-states",false);
   boolOptions.registerOption("no-input-input",false);
- 
+
   boolOptions.registerOption("with-counterexamples",false);
   boolOptions.registerOption("with-assert-counterexamples",false);
   boolOptions.registerOption("with-ltl-counterexamples",false);
@@ -553,7 +560,7 @@ BoolOptions& parseBoolOptions(int argc, char* argv[]) {
   /* set booloptions for zero-argument options (does not require
      yes/no on command-line, but resolves it by checking for its
      existence on the command line to true or false)
-     */
+  */
   boolOptions.registerOption("svcomp-mode",false);
   boolOptions.registerOption("data-race",false);
   boolOptions.registerOption("data-race-fail",false);
@@ -797,11 +804,6 @@ void analyzerSetup(Analyzer& analyzer, const po::variables_map& args, Sawyer::Me
     exit(1);
   }
 
-  if(boolOptions["arith-top"]) {
-    CodeThorn::AType::ConstIntLattice cil;
-    cil.arithTop=true;
-  }
-
   if(args.count("tg-trace")) {
     analyzer.setStgTraceFileName(args["tg-trace"].as<string>());
   }
@@ -1020,16 +1022,17 @@ void analyzerSetup(Analyzer& analyzer, const po::variables_map& args, Sawyer::Me
   }
 }
 
-/* refactoring in progress */
-//#include "DataRaceDetection.C"
-
 int main( int argc, char * argv[] ) {
-  Sawyer::Message::Facility logger("CodeThorn");
-  mfacilities.insert(logger);
+  ROSE_INITIALIZE;
 
-  mfacilities.disable(DEBUG);
-  mfacilities.disable(TRACE);
-  mfacilities.disable(INFO);
+  CodeThorn::initDiagnostics();
+
+  rose::Diagnostics::mprefix->showProgramName(false);
+  rose::Diagnostics::mprefix->showThreadId(false);
+  rose::Diagnostics::mprefix->showElapsedTime(false);
+
+  Sawyer::Message::Facility logger;
+  rose::Diagnostics::initAndRegister(logger, "CodeThorn");
 
   try {
     Timer timer;
@@ -1039,6 +1042,9 @@ int main( int argc, char * argv[] ) {
     BoolOptions boolOptions = parseBoolOptions(argc, argv);
 
     // Start execution
+
+    mfacilities.control(args["log-level"].as<string>());
+    logger[TRACE] << "Log level is " << args["log-level"].as<string>() << endl;
 
     if (args.count("generate-automata")) {
       generateAutomata(args);
@@ -1053,12 +1059,15 @@ int main( int argc, char * argv[] ) {
     Analyzer analyzer;
     global_analyzer=&analyzer;
 
+#if 0
     string option_pragma_name;
     if (args.count("limit-to-fragment")) {
       option_pragma_name = args["limit-to-fragment"].as<string>();
     }
+#endif
 
     if (args.count("internal-checks")) {
+      mfacilities.shutdown();
       if(CodeThorn::internalChecks(argc,argv)==false)
         return 1;
       else
@@ -1173,7 +1182,7 @@ int main( int argc, char * argv[] ) {
 
     // handle RERS mode: reconfigure options
     if(boolOptions["rersmode"]||boolOptions["rers-mode"]) {
-      logger[INFO] <<"RERS MODE activated [stderr output is treated like a failed assert]"<<endl;
+      logger[TRACE] <<"RERS MODE activated [stderr output is treated like a failed assert]"<<endl;
       boolOptions.setOption("stderr-like-failed-assert",true);
     }
 
@@ -1224,6 +1233,7 @@ int main( int argc, char * argv[] ) {
         }
         delete evaluator;
       }
+      mfacilities.shutdown();
       return 0;
     }
 
@@ -1340,6 +1350,7 @@ int main( int argc, char * argv[] ) {
     analyzer.getVariableIdMapping()->toStream(cout);
 #endif
 
+#if 0
     // currently not used, but may be revived to properly handle new annotation
     SgNode* fragmentStartNode=0;
     if(option_pragma_name!="") {
@@ -1358,6 +1369,7 @@ int main( int argc, char * argv[] ) {
       list<SgPragmaDeclaration*>::iterator i=pragmaDeclList.begin();
       fragmentStartNode=*i;
     }
+#endif
 
     if(boolOptions["eliminate-arrays"]) {
       //analyzer.initializeVariableIdMapping(sageProject);
@@ -1368,10 +1380,35 @@ int main( int argc, char * argv[] ) {
     }
 
     logger[TRACE]<< "INIT: creating solver."<<endl;
+
     if(option_specialize_fun_name!="") {
       analyzer.initializeSolver1(option_specialize_fun_name,root,true);
     } else {
-      analyzer.initializeSolver1("main",root,false);
+      // if main function exists, start with main-function
+      // if a single function exist, use this function
+      // in all other cases exit with error.
+      RoseAst completeAst(root);
+      string startFunction="main";
+      SgNode* startFunRoot=completeAst.findFunctionByName(startFunction);
+      if(startFunRoot==0) {
+        // no main function exists. check if a single function exists in the translation unit
+        SgProject* project=isSgProject(root);
+        ROSE_ASSERT(project);
+        std::list<SgFunctionDefinition*> funDefs=SgNodeHelper::listOfFunctionDefinitions(project);
+        if(funDefs.size()==1) {
+          // found exactly one function. Analyse this function.
+          SgFunctionDefinition* functionDef=*funDefs.begin();
+          startFunction=SgNodeHelper::getFunctionName(functionDef);
+        } else if(funDefs.size()>1) {
+          cerr<<"Error: no main function and more than one function in translation unit."<<endl;
+          exit(1);
+        } else if(funDefs.size()==0) {
+          cerr<<"Error: no function in translation unit."<<endl;
+          exit(1);
+        }
+      }
+      ROSE_ASSERT(startFunction!="");
+      analyzer.initializeSolver1(startFunction,root,false);
     }
     analyzer.initLabeledAssertNodes(sageProject);
 
@@ -1423,6 +1460,7 @@ int main( int argc, char * argv[] ) {
     int inputSeqLengthCovered = -1;
     if ( boolOptions["determine-prefix-depth"]) {
       logger[ERROR] << "option \"determine-prefix-depth\" currenlty deactivated." << endl;
+      mfacilities.shutdown();
       return 1;
     }
     double totalInputTracesTime = extractAssertionTracesTime + determinePrefixDepthTime;
@@ -1701,6 +1739,7 @@ int main( int argc, char * argv[] ) {
       }
     }
 
+#if 0
     if(args.count("equivalence-check")) {
       // TODO: iterate over SgFile nodes, create vectors for each phase
       // foreach file in SgFileList
@@ -1717,6 +1756,7 @@ int main( int argc, char * argv[] ) {
       // TODO CHECK with first
       // end foreach
     }
+#endif
 
     if(args.count("dump-sorted")>0 || args.count("dump-non-sorted")>0) {
       SAR_MODE sarMode=SAR_SSA;
@@ -1731,13 +1771,6 @@ int main( int argc, char * argv[] ) {
       logger[TRACE] <<"STATUS: performing array analysis on STG."<<endl;
       logger[TRACE] <<"STATUS: identifying array-update operations in STG and transforming them."<<endl;
 
-      Label fragmentStartLabel=Labeler::NO_LABEL;
-      if(fragmentStartNode!=0) {
-        fragmentStartLabel=analyzer.getLabeler()->getLabel(fragmentStartNode);
-        logger[INFO] <<"Fragment: start-node: "<<fragmentStartNode<<"  start-label: "<<fragmentStartLabel<<endl;
-        logger[INFO] <<"Fragment: start-node: currently not supported."<<endl;
-      }
- 
       bool useConstSubstitutionRule=boolOptions["rule-const-subst"];
 
       timer.start();
@@ -2097,23 +2130,30 @@ int main( int argc, char * argv[] ) {
     // main function try-catch
   } catch(CodeThorn::Exception& e) {
     logger[FATAL] << "CodeThorn::Exception raised: " << e.what() << endl;
+    mfacilities.shutdown();
     return 1;
   } catch(SPRAY::Exception& e) {
     logger[FATAL]<< "Spray::Exception raised: " << e.what() << endl;
+    mfacilities.shutdown();
     return 1;
   } catch(std::exception& e) {
     logger[FATAL]<< "std::exception raised: " << e.what() << endl;
+    mfacilities.shutdown();
     return 1;
   } catch(char const* str) {
     logger[FATAL]<< "*Exception raised: " << str << endl;
+    mfacilities.shutdown();
     return 1;
   } catch(string str) {
     logger[FATAL]<< "Exception raised: " << str << endl;
+    mfacilities.shutdown();
     return 1;
   } catch(...) {
     logger[FATAL]<< "Unknown exception raised." << endl;
+    mfacilities.shutdown();
     return 1;
   }
+  mfacilities.shutdown();
   return 0;
 }
 

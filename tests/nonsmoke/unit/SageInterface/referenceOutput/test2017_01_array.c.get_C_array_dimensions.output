@@ -1,0 +1,12 @@
+variable declaration at line 3
+100
+100
+variable declaration at line 4
+sizeof(x) / sizeof(int )
+variable declaration at line 5
+sizeof(y) /(sizeof(int ) * 3)
+3
+variable declaration at line 6
+sizeof(p) /(sizeof(int ) * 2 * 3)
+2
+3

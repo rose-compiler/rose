@@ -171,6 +171,11 @@ test_simple_int.C \
 test_wchars.C \
 X.C
 
+# DQ (1/19/2017): These are a problem for GNU 6.1.
+# if !ROSE_USING_GCC_VERSION_LATER_6_1
+# EXAMPLE_C_TESTCODES_VERIFIED_TO_PASS += \
+# endif
+
 # JJW 5-22-2008 This test is not portable to Mac OS X
 # test2006_44.C
 
@@ -603,7 +608,60 @@ else
 check-fortran:
 endif
 
-check-local: check-cxx check-c check-c99 check-fortran
+# check-local: check-cxx check-c check-c99 check-fortran
+check-local: 
+# DQ (2/18/2017): More specific logic required for portability.
+if ROSE_USE_EDG_VERSION_4_9
+	@echo "ROSE_USE_EDG_VERSION_4_9 == true"
+if USING_GNU_COMPILER
+	@echo "USING_GCC_COMPILER == true"
+if ROSE_USING_GCC_VERSION_LATER_4_9
+	@echo "ROSE_USING_GCC_VERSION_LATER_4_9 == true"
+# Exclude these tests on GNU 4.9 and later compilers).
+else  # NOT ROSE_USING_GCC_VERSION_LATER_4_9
+# If this is not the CLANG or Intel compilers and an earlier version of GNU than GNU 4.9 compiler, so include these files.
+	@echo "ROSE_USING_GCC_VERSION_LATER_4_9 == false"
+	@$(MAKE) check-cxx check-c check-c99 check-fortran
+endif # ROSE_USING_GCC_VERSION_LATER_4_9
+else  # NOT USING_GNU_COMPILER
+	@echo "USING_GCC_COMPILER == false"
+if USING_CLANG_COMPILER
+# Exclude this list of files in the case of CLANG compiler.
+	@echo "USING_CLANG_COMPILER == true"
+else # NOT USING_CLANG_COMPILER
+	@echo "USING_CLANG_COMPILER == false"
+if USING_INTEL_COMPILER
+# Exclude this list of files in the case of Intel compiler.
+	@echo "USING_INTEL_COMPILER == true"
+else # NOT USING_INTEL_COMPILER
+# This is an unknown compiler.
+	@echo "USING_INTEL_COMPILER == false"
+endif # USING_INTEL_COMPILER
+endif # USING_CLANG_COMPILER
+endif # USING_GNU_COMPILER
+else  # NOT ROSE_USE_EDG_VERSION_4_9
+# Using EDG 4.12 or later (run all tests independent of the compiler).
+	@echo "ROSE_USE_EDG_VERSION_4_9 == false"
+#	@$(MAKE) $(TEST_TARGETS)
+if USING_GNU_COMPILER
+	@echo "USING_GCC_COMPILER == true"
+	@$(MAKE) check-cxx check-c check-c99 check-fortran
+else
+if USING_CLANG_COMPILER
+# Exclude this list of files in the case of CLANG compiler.
+	@echo "USING_CLANG_COMPILER == true"
+else # NOT USING_CLANG_COMPILER
+	@echo "USING_CLANG_COMPILER == false"
+if USING_INTEL_COMPILER
+# Exclude this list of files in the case of Intel compiler.
+	@echo "USING_INTEL_COMPILER == true"
+else # NOT USING_INTEL_COMPILER
+# This is an unknown compiler.
+	@echo "USING_INTEL_COMPILER == false"
+endif # USING_INTEL_COMPILER
+endif # USING_CLANG_COMPILER
+endif
+endif # ROSE_USE_EDG_VERSION_4_9
 	@echo "******************************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/staticCFG_tests: make check rule complete (terminated normally) ******"
 	@echo "******************************************************************************************************"

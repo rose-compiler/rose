@@ -2,11 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
-test2014_01.c \
-test2014_02.c \
 test2014_03.c \
-test2014_04.c \
-test2014_05.c \
 test2014_06.c \
 test2014_07.c \
 test2014_08.c \
@@ -34,6 +30,13 @@ test2014_29.c \
 test2014_30.c \
 last.c
 
+if !USING_INTEL_COMPILER
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+   test2014_01.c \
+   test2014_02.c \
+   test2014_04.c \
+   test2014_05.c 
+endif
 
 TESTCODE_CURRENTLY_FAILING = \
 test2012_03.c \
@@ -135,22 +138,86 @@ print_testcodes:
 	echo $(TESTCODES)
 
 check-local:
+# DQ (2/19/2017): NEW VERSION OF LOGIC
+# DQ (2/18/2017): More specific logic required for portability.
+# When using EDG 4.9 these files don't compile on later versions of GNU, CLANG, and Intel compilers 
+# but we still want them tests as we transition to EDG 4.12 (where they all work fine independent of 
+# the compiler vendor and GNU compiler version).
 if ROSE_USE_EDG_VERSION_4_9
+	@echo "ROSE_USE_EDG_VERSION_4_9 == true"
+if USING_GNU_COMPILER
+	@echo "USING_GCC_COMPILER == true"
 if ROSE_USING_GCC_VERSION_LATER_4_8
+	@echo "ROSE_USING_GCC_VERSION_LATER_4_8 == true"
 	@echo "C11 tests using GNU version 4.8 backend compiler."
 	@$(MAKE) $(PASSING_TEST_Objects)
-else
-if ROSE_USING_GCC_VERSION_LATER_4_9
-	@echo "C11 tests using GNU version 4.9 backend compiler."
+else  # NOT ROSE_USING_GCC_VERSION_LATER_4_8
+	@echo "ROSE_USING_GCC_VERSION_LATER_4_8 == false"
+endif # ROSE_USING_GCC_VERSION_LATER_4_8
+else  # NOT USING_GNU_COMPILER
+	@echo "USING_GCC_COMPILER == false"
+if USING_CLANG_COMPILER
+# Exclude this list of files in the case of CLANG compiler.
+	@echo "USING_CLANG_COMPILER == true"
+else # NOT USING_CLANG_COMPILER
+	@echo "USING_CLANG_COMPILER == false"
+if USING_INTEL_COMPILER
+# Exclude this list of files in the case of Intel compiler.
+	@echo "USING_INTEL_COMPILER == true"
+else # NOT USING_INTEL_COMPILER
+# This is an unknown compiler.
+	@echo "USING_INTEL_COMPILER == false"
+endif # USING_INTEL_COMPILER
+endif # USING_CLANG_COMPILER
+endif # USING_GNU_COMPILER
+else  # NOT ROSE_USE_EDG_VERSION_4_9
+# Using EDG 4.12 or later (run all tests independent of the compiler).
+	@echo "ROSE_USE_EDG_VERSION_4_9 == false"
+if USING_GNU_COMPILER
+	@echo "USING_GCC_COMPILER == true"
+if ROSE_USING_GCC_VERSION_LATER_4_8
+	@echo "ROSE_USING_GCC_VERSION_LATER_4_8 == true"
+	@echo "C11 tests using GNU version 4.8 backend compiler."
 	@$(MAKE) $(PASSING_TEST_Objects)
-endif
-endif
-else
-	@echo "C11 tests require configuration with EDG version 4.9 and GNU version 4.8 or 4.9 backend compilers."
-endif
-	@echo "***********************************************************************************************"
+else  # NOT ROSE_USING_GCC_VERSION_LATER_4_8
+	@echo "ROSE_USING_GCC_VERSION_LATER_4_8 == false"
+endif # ROSE_USING_GCC_VERSION_LATER_4_8
+else  # NOT USING_GNU_COMPILER
+if USING_CLANG_COMPILER
+# Exclude this list of files in the case of CLANG compiler.
+	@echo "USING_CLANG_COMPILER == true"
+# DQ (2/28/2017): Skip these tests until we can return to this problem later.
+#	@$(MAKE) $(PASSING_TEST_Objects)
+else # NOT USING_CLANG_COMPILER
+	@echo "USING_CLANG_COMPILER == false"
+if USING_INTEL_COMPILER
+# Exclude this list of files in the case of Intel compiler.
+	@echo "USING_INTEL_COMPILER == true"
+	@$(MAKE) $(PASSING_TEST_Objects)
+else # NOT USING_INTEL_COMPILER
+# This is an unknown compiler.
+	@echo "USING_INTEL_COMPILER == false"
+endif # USING_INTEL_COMPILER
+endif # USING_CLANG_COMPILER
+endif # USING_GNU_COMPILER
+endif # ROSE_USE_EDG_VERSION_4_9
+# DQ (1/18/2017): EDG 4.9 is the default now, and EDG 4.12 will be the default shortly.
+# # if ROSE_USE_EDG_VERSION_4_9
+# if ROSE_USING_GCC_VERSION_LATER_4_8
+#	@echo "C11 tests using GNU version 4.8 backend compiler."
+#	@$(MAKE) $(PASSING_TEST_Objects)
+# else
+# if ROSE_USING_GCC_VERSION_LATER_4_9
+# 	@echo "C11 tests using GNU version 4.9 backend compiler."
+#	@$(MAKE) $(PASSING_TEST_Objects)
+# endif
+# endif
+# else
+# 	@echo "C11 tests require configuration with EDG version 4.9 and GNU version 4.8 or 4.9 backend compilers."
+# endif
+	@echo "*******************************************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/C11_tests: make check rule complete (terminated normally) ******"
-	@echo "***********************************************************************************************"
+	@echo "*******************************************************************************************************************"
 
 clean-local:
 	rm -f a.out *.o rose_*.[cC] roseTestProgram.C *.dot

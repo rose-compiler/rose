@@ -31,6 +31,8 @@ namespace CodeThorn {
                                std::string title = "state transition system computed");
   // prints #transitions and details about states
   void printStgSize(TransitionGraph* model, std::string optionalComment="", std::stringstream* csvOutput=NULL);
+
+  void initDiagnostics();
   
 } // end of namespace CodeThorn
 

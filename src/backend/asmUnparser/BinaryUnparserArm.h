@@ -36,7 +36,7 @@ protected:
 
 protected:
     static std::string unparseArmCondition(ArmInstructionCondition);
-    void emitExpr(std::ostream&, SgAsmExpression*, State&, std::string sign, std::string *suffix = NULL) const;
+    void outputExpr(std::ostream&, SgAsmExpression*, State&, std::string sign, std::string *suffix = NULL) const;
 };
 
 } // namespace

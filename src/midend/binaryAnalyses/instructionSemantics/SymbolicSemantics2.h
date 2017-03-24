@@ -185,6 +185,9 @@ public:
  *  because its set of defining instructions is non-empty ({I2}).
  */
 class SValue: public BaseSemantics::SValue {
+public:
+    typedef BaseSemantics::SValue Super;
+
 protected:
     /** The symbolic expression for this value.  Symbolic expressions are reference counted. */
     ExprPtr expr;
@@ -202,8 +205,9 @@ private:
     template<class S>
     void serialize(S &s, const unsigned version) {
         roseAstSerializationRegistration(s);            // "defs" has SgAsmInstruction ASTs
-        s & boost::serialization::base_object<BaseSemantics::SValue>(*this);
-        s & expr & defs;
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
+        s & BOOST_SERIALIZATION_NVP(expr);
+        s & BOOST_SERIALIZATION_NVP(defs);
     }
 #endif
     
@@ -442,6 +446,8 @@ typedef boost::shared_ptr<class MemoryListState> MemoryListStatePtr;
  *  @sa MemoryMapState */
 class MemoryListState: public BaseSemantics::MemoryCellList {
 public:
+    typedef BaseSemantics::MemoryCellList Super;
+
     /** Functor for handling a memory read that found more than one cell that might alias the requested address. */
     struct CellCompressor {
         virtual ~CellCompressor() {}
@@ -499,7 +505,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & boost::serialization::base_object<BaseSemantics::MemoryCellList>(*this);
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
     }
 #endif
 
@@ -623,6 +629,9 @@ typedef boost::shared_ptr<class MemoryMapState> MemoryMapStatePtr;
  *
  *  @sa MemoryListState */
 class MemoryMapState: public BaseSemantics::MemoryCellMap {
+public:
+    typedef BaseSemantics::MemoryCellMap Super;
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Serialization
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -631,7 +640,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & boost::serialization::base_object<BaseSemantics::MemoryCellMap>(*this);
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
     }
 #endif
 
@@ -764,6 +773,9 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
  * @endcode
  */
 class RiscOperators: public BaseSemantics::RiscOperators {
+public:
+    typedef BaseSemantics::RiscOperators Super;
+
 protected:
     bool omit_cur_insn;                                 // if true, do not include cur_insn as a definer
     DefinersMode computingDefiners_;                    // whether to track definers (instruction VAs) of SValues
@@ -779,12 +791,12 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & boost::serialization::base_object<BaseSemantics::RiscOperators>(*this);
-        s & omit_cur_insn;
-        s & computingDefiners_;
-        s & computingMemoryWriters_;
-        s & computingRegisterWriters_;
-        s & trimThreshold_;
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
+        s & BOOST_SERIALIZATION_NVP(omit_cur_insn);
+        s & BOOST_SERIALIZATION_NVP(computingDefiners_);
+        s & BOOST_SERIALIZATION_NVP(computingMemoryWriters_);
+        s & BOOST_SERIALIZATION_NVP(computingRegisterWriters_);
+        s & BOOST_SERIALIZATION_NVP(trimThreshold_);
     }
 #endif
 
@@ -1146,6 +1158,8 @@ public:
     virtual BaseSemantics::SValuePtr unsignedMultiply(const BaseSemantics::SValuePtr &a_,
                                                       const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg,
+                                                  const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr peekRegister(const RegisterDescriptor &reg,
                                                   const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
     virtual void writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &a_) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg,

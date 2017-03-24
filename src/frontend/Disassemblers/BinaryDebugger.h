@@ -105,6 +105,12 @@ public:
     /** Run until the next breakpoint is reached. */
     void runToBreakpoint();
 
+    /** Run until the next system call.
+     *
+     *  The subordinate is run until it is about to make a system call or has just returned from a system call, or it has
+     *  encountered a signal or terminated.  Execution does not stop at break points. */
+    void runToSyscall();
+
     /** Obtain and cache kernel's word size in bits.  The wordsize of the kernel is not necessarily the same as the word size
      * of the compiled version of this header. */
     size_t kernelWordSize();

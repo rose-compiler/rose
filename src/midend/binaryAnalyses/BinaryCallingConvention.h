@@ -10,6 +10,8 @@
 #include <boost/serialization/set.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/vector.hpp>
+#include <Sawyer/SharedObject.h>
+#include <Sawyer/SharedPointer.h>
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -102,12 +104,12 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & type_;
-        s & reg_;
+        s & BOOST_SERIALIZATION_NVP(type_);
+        s & BOOST_SERIALIZATION_NVP(reg_);
         if (STACK==type_) {
-            s & offset_;
+            s & BOOST_SERIALIZATION_NVP(offset_);
         } else {
-            s & va_;
+            s & BOOST_SERIALIZATION_NVP(va_);
         }
     }
 #endif
@@ -206,10 +208,18 @@ public:
 //                                      Definition
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/** Reference counting pointer to calling convention definition. */
+typedef Sawyer::SharedPointer<class Definition> DefinitionPtr;
+
 /** Information about calling conventions.
  *
  *  A definition typically comes from external documentation rather than direct analysis. */
-class Definition {
+class Definition: public Sawyer::SharedObject {
+public:
+    /** Reference counting pointer to calling convention definition. */
+    typedef Sawyer::SharedPointer<Definition> Ptr;
+
+private:
     std::string name_;                                  // Official short name of the convention, like "stdcall".
     std::string comment_;                               // Long name, like "Windows Borland x86-32 fastcall"
     size_t wordWidth_;                                  // Natural width word size in bits
@@ -226,51 +236,31 @@ class Definition {
     std::set<RegisterDescriptor> calleeSavedRegisters_; // Register that the callee must restore before returning
     std::set<RegisterDescriptor> scratchRegisters_;     // Caller-saved registers
 
-    // Predefined calling conventions.
-public:
-    /** Returns a predefined, cached calling convention.
-     *
-     * @{ */
-    static const Definition& x86_32bit_cdecl();
-    static const Definition& x86_64bit_cdecl();
-    static const Definition& x86_32bit_stdcall();
-    static const Definition& x86_64bit_stdcall();
-    static const Definition& x86_32bit_fastcall();
-    /** @} */
-
-    /** Constructs a new pre-defined calling convention based on a register dictionary.
-     *
-     * @{ */
-    static Definition x86_cdecl(const RegisterDictionary*);
-    static Definition x86_stdcall(const RegisterDictionary*);
-    static Definition x86_fastcall(const RegisterDictionary*);
-    /** @} */
-
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & name_;
-        s & comment_;
-        s & wordWidth_;
-        s & regDict_;
-        s & inputParameters_;
-        s & outputParameters_;
-        s & stackParameterOrder_;
-        s & stackPointerRegister_;
-        s & nonParameterStackSize_;
-        s & stackAlignment_;
-        s & stackDirection_;
-        s & stackCleanup_;
-        s & thisParameter_;
-        s & calleeSavedRegisters_;
-        s & scratchRegisters_;
+        s & BOOST_SERIALIZATION_NVP(name_);
+        s & BOOST_SERIALIZATION_NVP(comment_);
+        s & BOOST_SERIALIZATION_NVP(wordWidth_);
+        s & BOOST_SERIALIZATION_NVP(regDict_);
+        s & BOOST_SERIALIZATION_NVP(inputParameters_);
+        s & BOOST_SERIALIZATION_NVP(outputParameters_);
+        s & BOOST_SERIALIZATION_NVP(stackParameterOrder_);
+        s & BOOST_SERIALIZATION_NVP(stackPointerRegister_);
+        s & BOOST_SERIALIZATION_NVP(nonParameterStackSize_);
+        s & BOOST_SERIALIZATION_NVP(stackAlignment_);
+        s & BOOST_SERIALIZATION_NVP(stackDirection_);
+        s & BOOST_SERIALIZATION_NVP(stackCleanup_);
+        s & BOOST_SERIALIZATION_NVP(thisParameter_);
+        s & BOOST_SERIALIZATION_NVP(calleeSavedRegisters_);
+        s & BOOST_SERIALIZATION_NVP(scratchRegisters_);
     }
 #endif
     
-public:
+protected:
     /** Default constructor.
      *
      *  Constructs a new calling convention with no name or parameters. */
@@ -288,6 +278,32 @@ public:
           nonParameterStackSize_(0), stackAlignment_(0), stackDirection_(GROWS_DOWN), stackCleanup_(CLEANUP_UNSPECIFIED) {
         ASSERT_require2(0 == (wordWidth & 7) && wordWidth > 0, "word size must be a positive multiple of eight");
     }
+
+public:
+    /** Allocating constructor. */
+    static Ptr instance(size_t wordWidth, const std::string &name, const std::string &comment, const RegisterDictionary *regs) {
+        return Ptr(new Definition(wordWidth, name, comment, regs));
+    }
+
+public:
+    /** Returns a predefined, cached calling convention.
+     *
+     * @{ */
+    static Ptr x86_32bit_cdecl();
+    static Ptr x86_64bit_cdecl();
+    static Ptr x86_32bit_stdcall();
+    static Ptr x86_64bit_stdcall();
+    static Ptr x86_32bit_fastcall();
+    static Ptr x86_64bit_sysv();
+    /** @} */
+
+    /** Constructs a new pre-defined calling convention based on a register dictionary.
+     *
+     * @{ */
+    static Ptr x86_cdecl(const RegisterDictionary*);
+    static Ptr x86_stdcall(const RegisterDictionary*);
+    static Ptr x86_fastcall(const RegisterDictionary*);
+    /** @} */
 
     /** Property: Register dictionary.
      *
@@ -739,7 +755,10 @@ public:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** A ordered collection of calling convention definitions. */
-typedef std::vector<Definition> Dictionary;
+typedef std::vector<Definition::Ptr> Dictionary;
+
+/** Common calling conventions for amd64 (x86-64). */
+const Dictionary& dictionaryAmd64();
 
 /** Common calling conventions for ARM. */
 const Dictionary& dictionaryArm();
@@ -753,8 +772,9 @@ const Dictionary& dictionaryMips();
 /** Common calling conventions for PowerPC. */
 const Dictionary& dictionaryPowerpc();
 
-/** Common calling conventions for x86. */
+/** Common calling conventions for 32-bit x86. */
 const Dictionary& dictionaryX86();
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Analysis
@@ -767,7 +787,7 @@ class Analysis {
 private:
     InstructionSemantics2::BaseSemantics::DispatcherPtr cpu_;
     const RegisterDictionary *regDict_;                 // Names for the register parts
-    const Definition *defaultCc_;                       // Default calling convention for called functions
+    Definition::Ptr defaultCc_;                         // Default calling convention for called functions
 
     bool hasResults_;                                   // Are the following data members initialized?
     bool didConverge_;                                  // Are the following data members valid (else only approximations)?
@@ -785,17 +805,17 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & cpu_;
-        s & regDict_;
-        s & defaultCc_;
-        s & hasResults_;
-        s & didConverge_;
-        s & restoredRegisters_;
-        s & inputRegisters_;
-        s & outputRegisters_;
-        s & inputStackParameters_;
-        s & outputStackParameters_;
-        s & stackDelta_;
+        s & BOOST_SERIALIZATION_NVP(cpu_);
+        s & BOOST_SERIALIZATION_NVP(regDict_);
+        s & BOOST_SERIALIZATION_NVP(defaultCc_);
+        s & BOOST_SERIALIZATION_NVP(hasResults_);
+        s & BOOST_SERIALIZATION_NVP(didConverge_);
+        s & BOOST_SERIALIZATION_NVP(restoredRegisters_);
+        s & BOOST_SERIALIZATION_NVP(inputRegisters_);
+        s & BOOST_SERIALIZATION_NVP(outputRegisters_);
+        s & BOOST_SERIALIZATION_NVP(inputStackParameters_);
+        s & BOOST_SERIALIZATION_NVP(outputStackParameters_);
+        s & BOOST_SERIALIZATION_NVP(stackDelta_);
     }
 #endif
 
@@ -806,13 +826,13 @@ public:
      *  would be analyzing. This is mostly for use in situations where an analyzer must be constructed as a member of another
      *  class's default constructor, in containers that initialize their contents with a default constructor, etc. */
     Analysis()
-        : regDict_(NULL), defaultCc_(NULL), hasResults_(false), didConverge_(false) {}
+        : regDict_(NULL), hasResults_(false), didConverge_(false) {}
 
     /** Construct an analyzer using a specified disassembler.
      *
      *  This constructor chooses a symbolic domain and a dispatcher appropriate for the disassembler's architecture. */
     explicit Analysis(Disassembler *d)
-        : regDict_(NULL), defaultCc_(NULL), hasResults_(false), didConverge_(false) {
+        : regDict_(NULL), hasResults_(false), didConverge_(false) {
         init(d);
     }
 
@@ -821,9 +841,9 @@ public:
      *  This constructor uses the supplied dispatcher and associated semantic domain. For best results, the semantic domain
      *  should be a symbolic domain that uses @ref InstructionSemantics2::BaseSemantics::MemoryCellList "MemoryCellList" and
      *  @ref InstructionSemantics2::BaseSemantics::RegisterStateGeneric "RegisterStateGeneric". These happen to also be the
-     *  defaults used by @ref InstructionSemantics::SymbolicSemantics. */
+     *  defaults used by @ref InstructionSemantics2::SymbolicSemantics. */
     explicit Analysis(const InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu)
-        : cpu_(cpu), regDict_(NULL), defaultCc_(NULL), hasResults_(false), didConverge_(false) {}
+        : cpu_(cpu), regDict_(NULL), hasResults_(false), didConverge_(false) {}
 
     /** Property: Default calling convention.
      *
@@ -832,8 +852,8 @@ public:
      *  convention's definition determines how the called function modifies the current function's data-flow state.
      *
      * @{ */
-    const Definition* defaultCallingConvention() const { return defaultCc_; }
-    void defaultCallingConvention(const Definition *x) { defaultCc_ = x; }
+    Definition::Ptr defaultCallingConvention() const { return defaultCc_; }
+    void defaultCallingConvention(const Definition::Ptr &x) { defaultCc_ = x; }
     /** @} */
 
     /** Analyze one function.
@@ -915,7 +935,7 @@ public:
     /** Determine whether a definition matches.
      *
      *  Returns true if the specified definition is compatible with the results of this analysis. */
-    bool match(const Definition&) const;
+    bool match(const Definition::Ptr&) const;
 
     /** Find matching calling convention definitions.
      *
@@ -924,8 +944,11 @@ public:
      *  those in the specified dictionary. */
     Dictionary match(const Dictionary&) const;
 
-    /** Print information about the analysis results. */
-    void print(std::ostream&) const;
+    /** Print information about the analysis results.
+     *
+     *  The output is a single line of comma-separated values if @p multiLine is true. Otherwise, the top-level commas are
+     *  replaced by linefeeds. */
+    void print(std::ostream&, bool multiLine=false) const;
 
 private:
     // Finish constructing

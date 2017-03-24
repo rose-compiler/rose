@@ -68,7 +68,7 @@ int
 main(int argc, char *argv[]) {
     // Initialize
     ROSE_INITIALIZE;
-    Diagnostics::initAndRegister(mlog, "tool");
+    Diagnostics::initAndRegister(&mlog, "tool");
 
     // Parse command-line (see --help for usage)
     Partitioner2::Engine engine;

@@ -29,6 +29,23 @@ if !ROSE_USE_INSURE
 if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
    SUBDIRS += projects
 endif
+
+# DQ (2/6/2017): Added test to detect if the default mode of the C++ frontend compiler for rOSE is C++11 or not.
+# Ultimately we want this test to only apply to the GNU 4.8 compiler in C++11 mode (which can have internal errors 
+# in compiling the C++ code represented by some more complex C++ test codes using ROSE).  Interestingly, the
+# GNU 4.8 C++11 mode works fine for the C++ code that implements ROSE itself.
+# if ROSE_USING_GCC_VERSION_4_8_CXX11
+#check-local:
+# all: remove_sage3basic_h_pch
+# all:
+#	@echo "**********************************************************************************************"
+#	@echo "**********************************************************************************************"
+#	@echo "Skipping tests in tutorial, exampleTranslators, docs, tools, scripts, and demo directories for"
+#	@echo "GNU 4.8.x using C++11 mode (GNU 4.8 compiler has internal errors when using the C++11 mode)."
+#	@echo "**********************************************************************************************"
+#	@echo "**********************************************************************************************"
+if !ROSE_USING_GCC_VERSION_4_8_CXX11
+
 if ROSE_BUILD_TUTORIAL_DIRECTORY_SUPPORT
  # If we can't process the tutorial directory then we can't generate example translators or the documentation
    SUBDIRS += tutorial exampleTranslators docs 
@@ -38,6 +55,10 @@ if ROSE_BUILD_TUTORIAL_DIRECTORY_SUPPORT
  # If we can't process the tutorial directory then we can't run demos
    SUBDIRS += demo
 endif
+
+# endif for excluding tests using GNU 4.8 and C++11 mode together.
+endif
+
 # endif for controling Insure++ usage.
 endif
 endif
@@ -77,7 +98,7 @@ install-compass: install-core
 # Install ONLY the library components (no examples, no tests, no projects). This is even more "core" than "core" but I'm
 # not changing "install-core" because users use that and expect certain behavior. The purpose of this target is mainly for
 # ROSE project developers that have a need to install the library and other specific tools (via other install targets) but
-# don't want to install anything (perhaps because it doesn't compile). [Robb Matzke, 2016-03-07]
+# don't want to install anything else (perhaps because it doesn't compile). [Robb Matzke, 2016-03-07]
 install-rose-library: install-data-local
 	$(MAKE) -C $(top_builddir)/src install
 	cp rosePublicConfig.h $(pkgincludedir)
@@ -702,17 +723,160 @@ all-lcov.info:
 	lcov --capture --no-recursion $(patsubst %,-d %,$(lcov_data_dirs)) -o $@
 
 # Capture only coverage for the ROSE library source code (no tests, tutorials, projects, system headers, boost, etc).
+# DQ (3/13/2017): Modified to remove specific directories of old code to be removed from ROSE and 3rd party code that we do not maintain.
 # (04/26/2016) Pei-Hung lcov has issue to output extracted result to librose-lcov.info with -o option. Using piping instead.
 librose-lcov.info: all-lcov.info
-	lcov --extract $< "$(top_srcdir)/src/*" > $@
+	lcov --extract $< "$(top_srcdir)/src/*" "$(top_srcdir)/projects/CodeThorn/*" > $@
+	lcov --remove librose-lcov.info \
+        "$(top_srcdir)/src/frontend/CxxFrontend/EDG/edgRose/debugging.*" \
+        "$(top_srcdir)/src/frontend/CxxFrontend/EDG/edgRose/edgGraph.*" \
+        "$(top_srcdir)/src/backend/unparser/PythonCodeGeneration/*" \
+        "$(top_srcdir)/src/backend/unparser/PHPCodeGeneration/*" \
+        "$(top_srcdir)/src/midend/programAnalysis/OAWrap/*" \
+        "$(top_srcdir)/src/midend/programAnalysis/OpenAnalysis/*" \
+        "$(top_srcdir)/src/frontend/BinaryDisassembly/*" \
+        "$(top_srcdir)/src/midend/binaryAnalyses/dataflowanalyses/*" \
+        "$(top_srcdir)/src/midend/binaryAnalyses/RoseBin_*" \
+        "$(top_srcdir)/src/midend/programAnalysis/genericDataflow/*" \
+        "$(top_srcdir)/src/frontend/CxxFrontend/EDG/EDG_4.9/*" \
+        "$(top_srcdir)/src/midend/astRewriteMechanism/*" \
+        "$(top_srcdir)/src/midend/programAnalysis/dominanceAnalysis/*" \
+        "$(top_srcdir)/src/midend/programAnalysis/pointerAnal/*" \
+        "$(top_srcdir)/src/midend/programAnalysis/ssaUnfilteredCfg/*" \
+        "$(top_srcdir)/src/src/midend/programAnalysis/staticInterproceduralSlicing/*" \
+        "$(top_srcdir)/src/midend/programAnalysis/staticSingleAssignment/*" \
+        "$(top_srcdir)/src/midend/programAnalysis/variableRenaming/*" \
+        "$(top_srcdir)/src/midend/programTransformation/extractFunctionArgumentsNormalization/*" \
+        "$(top_srcdir)/src/midend/programTransformation/finiteDifferencing/*" \
+        "$(top_srcdir)/src/midend/programTransformation/functionCallNormalization/*" \
+        "$(top_srcdir)/src/midend/programTransformation/implicitCodeGeneration/*" \
+        "$(top_srcdir)/src/midend/programTransformation/singleStatementToBlockNormalization/*" \
+        "$(top_srcdir)/src/roseSupport/stringify.C" \
+        "$(top_srcdir)/src/midend/programAnalysis/graphAnalysis/*" \
+        "$(top_srcdir)/src/roseExtensions/roseHPCToolkit/*" \
+        "$(top_srcdir)/src/frontend/SageIII/nodeBuildFunctionsForAterms.C" \
+        "$(top_srcdir)/src/frontend/SageIII/astVisualization/*" \
+	"$(top_srcdir)/projects/CodeThorn/MemoryLocation.*" \
+	"$(top_srcdir)/projects/CodeThorn/Normalization.*" \
+	"$(top_srcdir)/projects/CodeThorn/ParallelAutomataGenerator.*" \
+	"$(top_srcdir)/projects/CodeThorn/ParPro*.*" \
+	"$(top_srcdir)/projects/CodeThorn/PromelaCodeGenerator.*" \
+	"$(top_srcdir)/projects/CodeThorn/RefinementConstraints.*" \
+	"$(top_srcdir)/projects/CodeThorn/RersSpecialization.*" \
+	"$(top_srcdir)/projects/CodeThorn/RoseRDAnalysis.*" \
+	"$(top_srcdir)/projects/CodeThorn/SourceCodeFormat.*" \
+	"$(top_srcdir)/projects/CodeThorn/Threadification.*" \
+	"$(top_srcdir)/projects/CodeThorn/Visualizer.*" \
+	"$(top_srcdir)/projects/CodeThorn/spotconnection/*" \
+	"$(top_srcdir)/projects/CodeThorn/termindent/*" \
+	"$(top_srcdir)/projects/CodeThorn/tests/*" \
+	"$(top_srcdir)/projects/CodeThorn/regressiondata/*" \
+	"$(top_srcdir)/projects/CodeThorn/regressiondata2/*" \
+	"$(top_srcdir)/projects/CodeThorn/addressTakenAnalysis_obsolete/*" \
+	"$(top_srcdir)/projects/CodeThorn/counterexamples/*" \
+	"$(top_srcdir)/projects/CodeThorn/cpptests/*" \
+	"$(top_srcdir)/projects/CodeThorn/examples/*" \
+	"$(top_srcdir)/projects/CodeThorn/intervalLattice/*" \
+	"$(top_srcdir)/projects/CodeThorn/scripts/*" \
+	"$(top_srcdir)/projects/CodeThorn/results_scripts/*" \
+	"$(top_srcdir)/projects/CodeThorn/outdated.cpp" \
+	"$(top_srcdir)/projects/CodeThorn/matcher.C" \
+	"$(top_srcdir)/projects/CodeThorn/matcher_demo.C" \
+	"$(top_srcdir)/projects/CodeThorn/woodpecker.C" \
+	"$(top_srcdir)/projects/CodeThorn/RERS_*.C" \
+	"$(top_srcdir)/projects/CodeThorn/ast_demo.C" \
+	"$(top_srcdir)/projects/CodeThorn/astinfo.C" \
+         -o librose-lcov.info
+
+# Note: astVisualization is only approriate for small ASTs and for debugging so excluded from code coverage analysis.
+
+librose_lcov_web_pages: librose-lcov.info
+	genhtml                                 \
+                --title librose                 \
+                --legend                        \
+                --demangle-cpp                  \
+                --rc genhtml_hi_limit=85        \
+                --rc genhtml_med_limit=60       \
+                --prefix $(top_srcdir)          \
+                --ignore-errors=source          \
+                --output-directory $@ $<
+
+# Directories to remove from LCOV testing of ROSE:
+# src/frontend/CxxFrontend/EDG/edgRose/debugging.*
+# src/frontend/CxxFrontend/EDG/edgRose/edgGraph.*
+# src/backend/unparser/PythonCodeGeneration/*
+# src/backend/unparser/PHPCodeGeneration/*
+# src/midend/programAnalysis/OAWrap/*
+# src/midend/programAnalysis/OpenAnalysis/*
+# src/frontend/BinaryDisassembly/*
+# src/midend/binaryAnalyses/dataflowanalyses/*
+# src/midend/binaryAnalyses/RoseBin_*
+# src/midend/programAnalysis/genericDataflowflow/*
+# src/frontend/CxxFrontend/EDG/EDG_4.9/*
+# src/midend/astRewriteMechanism/*
+# src/midend/programAnalysis/dominanceAnalysis/*
+# src/midend/programAnalysis/pointerAnal/*
+# src/midend/programAnalysis/ssaUnfilteredCfg/*
+# src/src/midend/programAnalysis/staticInterproceduralSlicing/*
+# src/midend/programAnalysis/staticSingleAssignment/*
+# src/midend/programAnalysis/staticSingleAssignment/*
+# src/midend/programAnalysis/variableRenaming/*
+# src/midend/programTransformation/extractFunctionArgumentsNormalization/*
+# src/midend/programTransformation/finiteDifferencing/*
+# src/midend/programTransformation/functionCallNormalization/*
+# src/midend/programTransformation/implicitCodeGeneration/*
+# src/midend/programTransformation/singleStatementToBlockNormalization/*
+# src/roseSupport/stringify.C
+# src/midend/programAnalysis/graphAnalysis/*
+# 
+# 
+# Directories to remove from ROSE:
+# src/midend/programAnalysis/dominanceAnalysis
+# src/midend/programAnalysis/pointerAnal
+# src/midend/programAnalysis/ssaUnfilteredCfg
+# src/midend/programAnalysis/staticInterproceduralSlicing
+# src/midend/programAnalysis/staticSingleAssignment
+# src/midend/programAnalysis/variableRenaming
+# src/midend/programTransformation/extractFunctionArgumentsNormalization
+# src/midend/programTransformation/finiteDifferencing
+# src/midend/programTransformation/functionCallNormalization
+# src/midend/programTransformation/implicitCodeGeneration
+# src/midend/programTransformation/singleStatementToBlockNormalization
+# 
+# May be removed in the future (to be discussed) DQ (3/13/2017):
+# src/midend/programTransformation/constantFolding
+# src/midend/programTransformation/ompLowering
+# src/midend/programTransformation/partialRedundancyElimination 
+#
+# These should not be evaluated using lcov (to be discussed) DQ (3/13/2017):
+# src/roseSupport/stringify.C 
+#      Generated file, placed in source tree because it took a long time to generate when it was put into the build tree).
+#      A few functions from this file are tested (14 of 864), but not all.
+#      This file could only be tested using an automatically generated test and that might no be productive.
+#
+#
+# What is this:
+# src/midend/abstractMemoryObject  (DTEC work by Liao)
+# src/midend/programAnalysis/graphAnalysis (Old binary call graph support, superceeded by more recent work)
+# 
+#
+# Why are these so poorly tested:
+# src/midend/programTransformation/astInlining
+# src/midend/programTransformation/astOutlining
+# 
+# 
+# 
+
 
 # Generate a directory containing the HTML representation of the coverage information for the ROSE library proper.
 # THIS INCLUDES EDG SOURCES; DO NOT DISTRIBUTE THIS DIRECTORY
 librose_lcov_web_pages: librose-lcov.info
-	genhtml					\
-		--title librose			\
-		--legend			\
-		--demangle-cpp			\
-		--prefix $(top_srcdir)		\
-		--ignore-errors=source		\
-		--output-directory $@ $<
+	genhtml                                 \
+                --title librose                 \
+                --legend                        \
+                --demangle-cpp                  \
+                --rc genhtml_hi_limit=85        \
+                --rc genhtml_med_limit=60       \
+                --prefix $(top_srcdir)          \
+                --ignore-errors=source          \
+                --output-directory $@ $<

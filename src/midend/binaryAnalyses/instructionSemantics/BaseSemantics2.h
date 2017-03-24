@@ -547,7 +547,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & width;
+        s & BOOST_SERIALIZATION_NVP(width);
     }
 #endif
     
@@ -772,7 +772,7 @@ private:
     template<class S>
     void serialize(S &s, const unsigned version) {
         //s & merger_; -- not saved
-        s & protoval_;
+        s & BOOST_SERIALIZATION_NVP(protoval_);
     }
 #endif
 
@@ -1073,11 +1073,11 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & addrProtoval_;
-        s & valProtoval_;
-        s & byteOrder_;
+        s & BOOST_SERIALIZATION_NVP(addrProtoval_);
+        s & BOOST_SERIALIZATION_NVP(valProtoval_);
+        s & BOOST_SERIALIZATION_NVP(byteOrder_);
         //s & merger_ -- not saved
-        s & byteRestricted_;
+        s & BOOST_SERIALIZATION_NVP(byteRestricted_);
     }
 #endif
 
@@ -1290,9 +1290,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & protoval_;
-        s & registers_;
-        s & memory_;
+        s & BOOST_SERIALIZATION_NVP(protoval_);
+        s & BOOST_SERIALIZATION_NVP(registers_);
+        s & BOOST_SERIALIZATION_NVP(memory_);
     }
 #endif
 
@@ -1553,13 +1553,13 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & protoval_;
-        s & currentState_;
-        s & initialState_;
-        s & solver_;
-        s & currentInsn_;
-        s & nInsns_;
-        s & name_;
+        s & BOOST_SERIALIZATION_NVP(protoval_);
+        s & BOOST_SERIALIZATION_NVP(currentState_);
+        s & BOOST_SERIALIZATION_NVP(initialState_);
+        s & BOOST_SERIALIZATION_NVP(solver_);
+        s & BOOST_SERIALIZATION_NVP(currentInsn_);
+        s & BOOST_SERIALIZATION_NVP(nInsns_);
+        s & BOOST_SERIALIZATION_NVP(name_);
     }
 #endif
 
@@ -2211,6 +2211,13 @@ public:
      *  to be false then writeMemory is a no-op. */
     virtual void writeMemory(const RegisterDescriptor &segreg, const SValuePtr &addr, const SValuePtr &data,
                              const SValuePtr &cond) = 0;
+
+    /** Obtain a register value without side effects.
+     *
+     *  This is a lower-level operation than @ref readRegister in that it doesn't cause the register to be marked as having
+     *  been read. It is typically used in situations where the register is being accessed for analysis purposes rather than as
+     *  part of an instruction emulation. */
+    virtual SValuePtr peekRegister(const RegisterDescriptor&, const SValuePtr &dflt);
 };
 
 
@@ -2260,10 +2267,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & operators;
-        s & regdict;
-        s & addrWidth_;
-        s & autoResetInstructionPointer_;
+        s & BOOST_SERIALIZATION_NVP(operators);
+        s & BOOST_SERIALIZATION_NVP(regdict);
+        s & BOOST_SERIALIZATION_NVP(addrWidth_);
+        s & BOOST_SERIALIZATION_NVP(autoResetInstructionPointer_);
         //s & iproc_table; -- not saved
     }
 #endif

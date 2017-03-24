@@ -6,10 +6,6 @@
 #include <EditDistance/LinearEditDistance.h>
 #include <Partitioner2/Partitioner.h>
 
-#ifdef ROSE_HAVE_DLIB
-    #include <dlib/matrix.h>
-    #include <dlib/optimization.h>
-#endif
 #include <Sawyer/ProgressBar.h>
 #include <Sawyer/Stopwatch.h>
 #include <Sawyer/ThreadWorkers.h>
@@ -21,21 +17,6 @@ namespace P2 = rose::BinaryAnalysis::Partitioner2;
 namespace rose {
 namespace BinaryAnalysis {
 
-#ifdef ROSE_HAVE_DLIB
-// Use the DLib matrix if possible since we'll be passing it to dlib::max_cost_assignment
-typedef dlib::matrix<double> DistanceMatrix;
-#else
-// A simple matrix that has the same API as dlib::matrix, but only the parts we actually use.
-class DistanceMatrix {
-    std::vector<std::vector<double> > data_;
-public:
-    DistanceMatrix(long nr, long nc): data_(nr, std::vector<double>(nc, 0.0)) {}
-    long nr() const { return data_.size(); }
-    long nc() const { return data_.empty() ? (size_t)0 : data_[0].size(); }
-    double& operator()(long i, long j) { return data_[i][j]; }
-    double operator()(long i, long j) const { return data_[i][j]; }
-};
-#endif
 
 Sawyer::Message::Facility FunctionSimilarity::mlog;
 
@@ -56,7 +37,7 @@ FunctionSimilarity::initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        Diagnostics::initAndRegister(mlog, "rose::BinaryAnalysis::FunctionSimilarity");
+        Diagnostics::initAndRegister(&mlog, "rose::BinaryAnalysis::FunctionSimilarity");
     }
 }
 
@@ -66,8 +47,10 @@ operator<<(std::ostream &out, const FunctionSimilarity &x) {
     return out;
 }
 
+// class method
 double
-cartesianDistance(const FunctionSimilarity::CartesianPoint &a, const FunctionSimilarity::CartesianPoint &b) {
+FunctionSimilarity::cartesianDistance(const FunctionSimilarity::CartesianPoint &a,
+                                      const FunctionSimilarity::CartesianPoint &b) {
     ASSERT_require(a.size() == b.size());
     double sum = 0.0;
     for (size_t i=0; i<a.size(); ++i)
@@ -75,17 +58,16 @@ cartesianDistance(const FunctionSimilarity::CartesianPoint &a, const FunctionSim
     return sqrt(sum);
 }
 
-// Find a 1:1 mapping from rows to columns of the specified square matrix such that the total cost is minimized. Returns a
-// vector V such that V[i] = j maps rows i to columns j.
-static std::vector<long>
-findMinimumAssignment(const DistanceMatrix &matrix) {
+// class method
+std::vector<long>
+FunctionSimilarity::findMinimumAssignment(const DistanceMatrix &matrix) {
 #ifdef ROSE_HAVE_DLIB
     ASSERT_forbid(matrix.size() == 0);
     ASSERT_require(matrix.nr() == matrix.nc());
 
     // We can avoid the O(n^3) Kuhn-Munkres algorithm if all values of the matrix are the same.
     double minValue, maxValue;
-    dlib::find_min_and_max(matrix, minValue /*out*/, maxValue /*out*/);
+    dlib::find_min_and_max(matrix.dlib(), minValue /*out*/, maxValue /*out*/);
     if (minValue == maxValue) {
         std::vector<long> ident;
         ident.reserve(matrix.nr());
@@ -110,9 +92,9 @@ findMinimumAssignment(const DistanceMatrix &matrix) {
 #endif
 }
 
-// Given a square matrix and a 1:1 mapping from rows to columns, return the total cost of the mapping.
-static double
-totalAssignmentCost(const DistanceMatrix &matrix, const std::vector<long> assignment) {
+// class method
+double
+FunctionSimilarity::totalAssignmentCost(const DistanceMatrix &matrix, const std::vector<long> &assignment) {
     double sum = 0.0;
     ASSERT_require(matrix.nr() == matrix.nc());
     ASSERT_require((size_t)matrix.nr() == assignment.size());
@@ -451,7 +433,7 @@ FunctionSimilarity::findMinimumCostMapping(const std::vector<P2::Function::Ptr> 
 
     // Reserve space for the comparison matrix.
     size_t n = std::max(list1.size(), list2.size());
-    DistanceMatrix dm(n, n);
+    DistanceMatrix dm(n);
 
     // Create tasks for the worker threads. See docs for 'tasksPerWorker' above. This won't be so efficient worker scheduling
     // wise if list2 is small compared list1.
@@ -534,7 +516,7 @@ FunctionSimilarity::comparePointClouds(const PointCloud &points1, const PointClo
         return 0.0;
     size_t dimensionality = points1.empty() ? points2[0].size() : points1[0].size();
     const CartesianPoint origin(dimensionality, 0.0);
-    DistanceMatrix dm(size, size);
+    DistanceMatrix dm(size);
     for (size_t i=0; i<size; ++i) {
         const CartesianPoint &p1 = i < points1.size() ? points1[i] : origin;
         for (size_t j=0; j<size; ++j) {

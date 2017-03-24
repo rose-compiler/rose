@@ -26,6 +26,11 @@
  * could add a case 3b, which is to repack the entire string table. This operation doesn't currently happen automatically. See
  * the commented-out source code below. (RPM 2008-10-15)
  */
+#include "conditionalDisable.h"
+#ifdef ROSE_BINARY_TEST_DISABLED
+#include <iostream>
+int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; return 1; }
+#else
 
 #include "rose.h"
 
@@ -65,3 +70,4 @@ main(int argc, char *argv[])
     return backend(project);
 }
 
+#endif

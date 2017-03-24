@@ -22,6 +22,8 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 accumulateForce.c \
 anti_dep.c \
 array_scalar.c \
+break1.c \
+break2.c \
 c99loop.c \
 coefficientSubscript.c \
 complexCondition.c \
@@ -31,6 +33,7 @@ firstprivate.c \
 firstprivate2.c \
 firstprivate3.c \
 foo.c \
+for-i-j.c \
 functionCall.c \
 ifAndFor.c \
 indirectIndex.c \
@@ -100,6 +103,7 @@ Hydro_max_min.C \
 pointer_dereference.C \
 DelVolBaseLoopAlgorithm_loopExecute.C \
 ofstream.C \
+StressAccOptimizedV1_loopExecute.C \
 pointer_noaliasing.C
 
 # current failing if no aliasing cannot be assumed.

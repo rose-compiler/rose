@@ -1,4 +1,9 @@
 // Test SymbolicSemantics with lazily instantiated initial memory state.
+#include "conditionalDisable.h"
+#ifdef ROSE_BINARY_TEST_DISABLED
+#include <iostream>
+int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; return 1; }
+#else
 
 static const char *description =
     "Disassembles and partitions a specimen and then runs a symbolic data-flow analysis on each function, showing the "
@@ -311,7 +316,7 @@ analyzeFunction(const P2::Partitioner &partitioner, const P2::Function::Ptr &fun
 int
 main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
-    Diagnostics::initAndRegister(::mlog, "tool");
+    Diagnostics::initAndRegister(&::mlog, "tool");
 
     P2::Engine engine;
     std::vector<std::string> specimen = engine.parseCommandLine(argc, argv, "tests semantics initial states", description)
@@ -323,3 +328,5 @@ main(int argc, char *argv[]) {
     BOOST_FOREACH (const P2::Function::Ptr &function, partitioner.functions())
         analyzeFunction(partitioner, function);
 }
+
+#endif

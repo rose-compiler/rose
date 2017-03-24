@@ -55,15 +55,20 @@ namespace CodeThorn {
   class Analyzer {
     friend class Visualizer;
     friend class VariableValueMonitor;
+
   public:
-    
     Analyzer();
     ~Analyzer();
-    
+
+  protected:
+    static Sawyer::Message::Facility logger;
+
+  public:
+    static void initDiagnostics();
+    static std::string nodeToString(SgNode* node);
     void initAstNodeInfo(SgNode* node);
     bool isInExplicitStateMode();
     bool isActiveGlobalTopify();
-    static std::string nodeToString(SgNode* node);
     void initializeSolver1(std::string functionToStartAt,SgNode* root, bool oneFunctionOnly);
     void initializeTraceSolver(std::string functionToStartAt,SgNode* root);
     void continueAnalysisFrom(EState* newStartEState);
@@ -85,7 +90,9 @@ namespace CodeThorn {
     void printStatusMessage(bool);
     bool isStartLabel(Label label);
 
-    // determines whether lab is a function call label of a function call of the form 'x=f(...)' and returns the varible-id of the lhs, if it exists.
+    // determines whether lab is a function call label of a function
+    // call of the form 'x=f(...)' and returns the varible-id of the
+    // lhs, if a valid pointer is provided
     bool isFunctionCallWithAssignment(Label lab,VariableId* varId=0);
 
     std::list<EState> transferEdgeEState(Edge edge, const EState* estate);
@@ -285,8 +292,6 @@ namespace CodeThorn {
 
     std::list<EState> elistify();
     std::list<EState> elistify(EState res);
-
-    static Sawyer::Message::Facility logger;
 
     // only used in LTL-driven mode
     void setStartEState(const EState* estate);

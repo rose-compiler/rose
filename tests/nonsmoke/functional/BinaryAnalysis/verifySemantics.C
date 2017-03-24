@@ -1,5 +1,11 @@
 // API 2 version to verify instruction semantics by running a specimen natively under a debugger and comparing the native
 // execution with the simulated execution in ROSE.
+#include "conditionalDisable.h"
+#ifdef ROSE_BINARY_TEST_DISABLED
+#include <iostream>
+int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; return 1; }
+#else
+
 #include <rose.h>
 
 #include <AsmUnparser_compat.h>
@@ -255,7 +261,7 @@ public:
 int
 main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
-    Diagnostics::initAndRegister(::mlog, "tool");
+    Diagnostics::initAndRegister(&::mlog, "tool");
 
     // Parse command-line
     P2::Engine engine;
@@ -335,3 +341,5 @@ main(int argc, char *argv[]) {
             std::cerr <<trace.str();
     }
 }
+
+#endif

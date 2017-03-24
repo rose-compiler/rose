@@ -55,7 +55,6 @@ LONG_LIST_TESTCODES_REQUIRED_TO_PASS = \
    copytest2007_36.C \
    copytest2007_37.C \
    copytest2007_39.C \
-   copytest2007_40.C \
    copytest2007_41.C \
    copytest2007_42.C \
    copytest2007_44.C \
@@ -189,7 +188,6 @@ test2004_26.C \
 test2004_27.C \
 test2004_28.C \
 test2004_29.C \
-test2004_30.C \
 test2004_31.C \
 test2004_32.C \
 test2004_33.C \
@@ -291,7 +289,6 @@ test2004_145.C \
 test2004_146.C \
 test2004_147.C \
 test2004_148.C \
-test2004_149.C \
 test2004_150.C \
 test2004_151.C \
 test2004_152.C \
@@ -333,7 +330,6 @@ test2005_24.C \
 test2005_25.C \
 test2005_26.C \
 test2005_27.C \
-test2005_28.C \
 test2005_29.C \
 test2005_30.C \
 test2005_31.C \
@@ -345,7 +341,6 @@ test2005_40.C \
 test2005_41.C \
 test2005_43.C \
 test2005_44.C \
-test2005_45.C \
 test2005_46.C \
 test2005_47.C \
 test2005_48.C \
@@ -388,16 +383,13 @@ test2005_89.C \
 test2005_90.C \
 test2005_91.C \
 test2005_92.C \
-test2005_93.C \
 test2005_94.C \
 test2005_95.C \
 test2005_96.C \
 test2005_97.C \
-test2005_98.C \
 test2005_99.C \
 test2005_100.C \
 test2005_101.C \
-test2005_102.C \
 test2005_105.C \
 test2005_106.C \
 test2005_107.C \
@@ -457,7 +449,6 @@ test2005_177.C \
 test2005_178.C \
 test2005_179.C \
 test2005_180.C \
-test2005_181.C \
 test2005_182.C \
 test2005_183.C \
 test2005_184.C \
@@ -492,7 +483,6 @@ test2006_14.C \
 test2006_16.C \
 test2006_17.C \
 test2006_19.C \
-test2006_20.C \
 test2006_22.C \
 test2006_23.C \
 test2006_25.C \
@@ -529,7 +519,6 @@ test2006_75.C \
 test2006_76.C \
 test2006_77.C \
 test2006_78.C \
-test2006_79.C \
 test2006_80.C \
 test2006_81.C \
 test2006_82.C \
@@ -541,7 +530,6 @@ test2006_88.C \
 test2006_89.C \
 test2006_90.C \
 test2006_91.C \
-test2006_92.C \
 test2006_93.C \
 test2006_94.C \
 test2006_97.C \
@@ -677,8 +665,14 @@ inputForLoopLocator.C \
 X.C \
 $(FAILING_TESTS)
 
-if !USING_CLANG_COMPILER
+# DQ (3/11/2017): This file is a problem for Intel v15 (using Boost 1.57 and 1.59) 
+# on RHEL 7.3, however I can't reproduce this on my desktop machine.
+if !USING_INTEL_COMPILER
 LONG_LIST_EXTRA_TESTCODES_REQUIRED_TO_PASS += \
+   test2004_30.C 
+endif
+
+EDG_49_CLANG_PROBLEM_FILES = \
    test2003_28.C \
    test2004_24.C \
    test2004_62.C \
@@ -698,6 +692,180 @@ LONG_LIST_EXTRA_TESTCODES_REQUIRED_TO_PASS += \
    test2006_118.C \
    test2006_120.C \
    test2006_123.C 
+
+EDG_49_GNU_6_1_PROBLEM_FILES = \
+   test2004_149.C \
+   test2005_28.C \
+   test2005_45.C \
+   test2005_93.C \
+   test2005_98.C \
+   test2005_102.C \
+   test2005_181.C \
+   test2006_20.C \
+   test2006_79.C \
+   test2006_92.C 
+
+EDG_412_GNU_6_1_PROBLEM_FILES =
+
+# DQ (2/19/2017): NEW VERSION OF LOGIC
+# DQ (2/18/2017): More specific logic required for portability.
+# When using EDG 4.9 these files don't compile on later versions of GNU, CLANG, and Intel compilers 
+# but we still want them tests as we transition to EDG 4.12 (where they all work fine independent of 
+# the compiler vendor and GNU compiler version).
+if ROSE_USE_EDG_VERSION_4_9
+#	@echo "ROSE_USE_EDG_VERSION_4_9 == true"
+if USING_GNU_COMPILER
+#	@echo "USING_GCC_COMPILER == true"
+if ROSE_USING_GCC_VERSION_LATER_4_9
+#	@echo "ROSE_USING_GCC_VERSION_LATER_4_9 == true"
+LONG_LIST_EXTRA_TESTCODES_REQUIRED_TO_PASS += $(EDG_49_CLANG_PROBLEM_FILES)
+# Exclude these tests on GNU 4.9 and later compilers).
+else  # NOT ROSE_USING_GCC_VERSION_LATER_4_9
+# If this is not the CLANG or Intel compilers and an earlier version of GNU than GNU 4.9 compiler, so include these files.
+#	@echo "ROSE_USING_GCC_VERSION_LATER_4_9 == false"
+LONG_LIST_EXTRA_TESTCODES_REQUIRED_TO_PASS += $(EDG_412_GNU_6_1_PROBLEM_FILES) $(EDG_49_GNU_6_1_PROBLEM_FILES) $(EDG_49_CLANG_PROBLEM_FILES)
+
+endif # ROSE_USING_GCC_VERSION_LATER_4_9
+else  # NOT USING_GNU_COMPILER
+#	@echo "USING_GCC_COMPILER == false"
+if USING_CLANG_COMPILER
+# Exclude this list of files in the case of CLANG compiler.
+#	@echo "USING_CLANG_COMPILER == true"
+else # NOT USING_CLANG_COMPILER
+#	@echo "USING_CLANG_COMPILER == false"
+if USING_INTEL_COMPILER
+# Exclude this list of files in the case of Intel compiler.
+#	@echo "USING_INTEL_COMPILER == true"
+else # NOT USING_INTEL_COMPILER
+# This is an unknown compiler.
+#	@echo "USING_INTEL_COMPILER == false"
+endif # USING_INTEL_COMPILER
+endif # USING_CLANG_COMPILER
+endif # USING_GNU_COMPILER
+else  # NOT ROSE_USE_EDG_VERSION_4_9
+# Using EDG 4.12 or later (run all tests independent of the compiler).
+#	@echo "ROSE_USE_EDG_VERSION_4_9 == false"
+
+if USING_GNU_COMPILER
+#	@echo "USING_GCC_COMPILER == true"
+if ROSE_USING_GCC_VERSION_LATER_4_9
+#	@echo "ROSE_USING_GCC_VERSION_LATER_4_9 == true"
+# Exclude these tests on GNU 4.9 and later compilers).
+if ROSE_USING_GCC_VERSION_LATER_6_1
+#	@echo "ROSE_USING_GCC_VERSION_LATER_4_9 == true"
+LONG_LIST_EXTRA_TESTCODES_REQUIRED_TO_PASS += $(EDG_49_CLANG_PROBLEM_FILES)
+else # NOT ROSE_USING_GCC_VERSION_LATER_6_1
+LONG_LIST_EXTRA_TESTCODES_REQUIRED_TO_PASS += $(EDG_412_GNU_6_1_PROBLEM_FILES) $(EDG_49_GNU_6_1_PROBLEM_FILES) $(EDG_49_CLANG_PROBLEM_FILES)
+endif # ROSE_USING_GCC_VERSION_LATER_6_1
+else  # NOT ROSE_USING_GCC_VERSION_LATER_4_9
+# If this is not the CLANG or Intel compilers and an earlier version of GNU than GNU 4.9 compiler, so include these files.
+#	@echo "ROSE_USING_GCC_VERSION_LATER_4_9 == false"
+LONG_LIST_EXTRA_TESTCODES_REQUIRED_TO_PASS += $(EDG_412_GNU_6_1_PROBLEM_FILES) $(EDG_49_GNU_6_1_PROBLEM_FILES) $(EDG_49_CLANG_PROBLEM_FILES)
+endif # ROSE_USING_GCC_VERSION_LATER_4_9
+else  # NOT USING_GNU_COMPILER
+#	@echo "USING_GCC_COMPILER == false"
+if USING_CLANG_COMPILER
+# Exclude this list of files in the case of CLANG compiler.
+#	@echo "USING_CLANG_COMPILER == true"
+# LONG_LIST_EXTRA_TESTCODES_REQUIRED_TO_PASS += $(EDG_412_GNU_6_1_PROBLEM_FILES) $(EDG_49_GNU_6_1_PROBLEM_FILES)
+# LONG_LIST_EXTRA_TESTCODES_REQUIRED_TO_PASS += 
+else # NOT USING_CLANG_COMPILER
+#	@echo "USING_CLANG_COMPILER == false"
+if USING_INTEL_COMPILER
+# Exclude this list of files in the case of Intel compiler.
+#	@echo "USING_INTEL_COMPILER == true"
+else # NOT USING_INTEL_COMPILER
+# This is an unknown compiler.
+#	@echo "USING_INTEL_COMPILER == false"
+endif # USING_INTEL_COMPILER
+endif # USING_CLANG_COMPILER
+endif # USING_GNU_COMPILER
+endif # ROSE_USE_EDG_VERSION_4_9
+
+
+
+OLD_LONG_LIST_EXTRA_TESTCODES_REQUIRED_TO_PASS = 
+
+if !USING_CLANG_COMPILER
+OLD_LONG_LIST_EXTRA_TESTCODES_REQUIRED_TO_PASS += \
+   test2003_28.C \
+   test2004_24.C \
+   test2004_62.C \
+   test2004_65.C \
+   test2005_36.C \
+   test2005_80.C \
+   test2005_110.C \
+   test2005_162.C \
+   test2005_185.C \
+   test2005_195.C \
+   test2006_02.C \
+   test2006_18.C \
+   test2006_42.C \
+   test2006_95.C \
+   test2006_96.C \
+   test2006_117.C \
+   test2006_118.C \
+   test2006_120.C \
+   test2006_123.C 
+endif
+
+# DQ (1/10/2017): These test codes are a problem for GNU 6.1 compiler (I think mostly because 
+# of lacking support for SgTemplateTypedefDeclaration in the ast copy operation).  This issue
+# might also be present for compiler versions 4.9 to 6.1 as well.  The cause is likely something
+# in the header files for those compiler versions that we have not previously seen.
+# if !ROSE_USING_GCC_VERSION_LATER_6_1
+# endif
+
+# DQ (2/18/2017): More specific logic required for portability.
+if ROSE_USE_EDG_VERSION_4_9
+if !ROSE_USING_GCC_VERSION_LATER_6_1
+if USING_CLANG_COMPILER
+# Exclude this list of files in the case of CLANG compiler.
+else
+if USING_INTEL_COMPILER
+# Exclude this list of files in the case of Intel compiler.
+else
+# If this is not the CLANG or Intel compilers and an earlier version of GNU than GNU 6.1 compiler, so include these files.
+OLD_LONG_LIST_EXTRA_TESTCODES_REQUIRED_TO_PASS += \
+   test2004_149.C \
+   test2005_28.C \
+   test2005_45.C \
+   test2005_93.C \
+   test2005_98.C \
+   test2005_102.C \
+   test2005_181.C \
+   test2006_20.C \
+   test2006_79.C \
+   test2006_92.C 
+else
+# This is the GNU 6.1 or later compiler (so skip this list of files).
+endif
+
+endif
+
+endif
+
+else
+# Using EDG 4.12 or later (independent of the compiler).
+OLD_LONG_LIST_EXTRA_TESTCODES_REQUIRED_TO_PASS += \
+   test2004_149.C \
+   test2005_28.C \
+   test2005_45.C \
+   test2005_93.C \
+   test2005_98.C \
+   test2005_102.C \
+   test2005_181.C \
+   test2006_20.C \
+   test2006_79.C \
+   test2006_92.C 
+endif
+
+OLD_LONG_LIST_TESTCODES_REQUIRED_TO_PASS =
+# DQ (1/19/2017): These is also a problem for GNU 5.1 as well (at least copytest2007_40.C).
+if !ROSE_USING_GCC_VERSION_LATER_5_1
+# LONG_LIST_EXTRA_TESTCODES_REQUIRED_TO_PASS += 
+OLD_LONG_LIST_TESTCODES_REQUIRED_TO_PASS += \
+   copytest2007_40.C 
 endif
 
 # DQ (4/19/2016): Failing test code after added Clang support
@@ -956,9 +1124,9 @@ check-local:
 	@echo "Tests for AST Copy."
 #	@$(MAKE) $(PASSING_TEST_Objects)
 	@$(MAKE) $(PASSING_TEST_Sources)
-	@echo "***************************************************************************************************"
+	@echo "***********************************************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/copyAST_tests: make check rule complete (terminated normally) ******"
-	@echo "***************************************************************************************************"
+	@echo "***********************************************************************************************************************"
 
 clean-local:
 	rm -f *.o rose_*.[cC] *.dot *.C_copy_graph_old_nodes

@@ -65,7 +65,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & name & forward & reverse;
+        s & BOOST_SERIALIZATION_NVP(name);
+        s & BOOST_SERIALIZATION_NVP(forward);
+        s & BOOST_SERIALIZATION_NVP(reverse);
     }
 #endif
 
@@ -259,7 +261,7 @@ class RegisterNames {
 public:
     /** Constructor. A RegisterDictionary can be supplied to the constructor, or to each operator() call. */
     explicit RegisterNames(const RegisterDictionary *dict=NULL)
-        : dflt_dict(dict), prefix("REG"), show_offset(-1), offset_prefix("@"), show_size(false) {}
+        : dflt_dict(dict), prefix("REG"), show_offset(-1), offset_prefix("@"), show_size(-1), size_prefix("+") {}
 
     /** Obtain a name for a register descriptor.  If a dictionary is supplied, then it will be used instead of the dictionary
      *  that was supplied to the constructor. */
@@ -271,7 +273,7 @@ public:
     int show_offset;                    /**< 0=>never show offset; positive=>always show; negative=>show only when non-zero */
     std::string offset_prefix;          /**< String printed before the offset when the offset is shown. */
     std::string offset_suffix;          /**< String printed after the offset when the offset is shown. */
-    bool show_size;                     /**< Whether to show the size in bits of the register. */
+    int show_size;                      /**< 0=>never; positive=>always; negative=>when offset is non-zero */
     std::string size_prefix;            /**< String printed prior to the size when the size is printed. */
     std::string size_suffix;            /**< String printed after the size when the size is printed. */
 };

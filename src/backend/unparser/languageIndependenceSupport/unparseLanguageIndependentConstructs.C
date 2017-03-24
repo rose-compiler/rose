@@ -41,7 +41,7 @@ UnparseLanguageIndependentConstructs::initDiagnostics()
      if (!initialized) 
         {
           initialized = true;
-          rose::Diagnostics::initAndRegister(mlog, "rose::UnparseLanguageIndependentConstructs");
+          rose::Diagnostics::initAndRegister(&mlog, "rose::UnparseLanguageIndependentConstructs");
         }
    }
 
@@ -7095,8 +7095,9 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
 #if 1
                if (functionCallExp->get_uses_operator_syntax() == true)
                   {
-                    printf ("WARNING: In getPrecedence(): case V_SgFunctionCallExp: If this is an overloaded operator then the precedence should be that of the operator being overloaded (not zero). \n");
-                    printf ("   --- functionCallExp = %p functionCallExp->get_uses_operator_syntax() = %s \n",functionCallExp,functionCallExp->get_uses_operator_syntax() ? "true" : "false");
+                 // DQ (3/5/2017): Converted to use message logging, but the mechanism is not supported here yet.
+                    mprintf ("WARNING: In getPrecedence(): case V_SgFunctionCallExp: If this is an overloaded operator then the precedence should be that of the operator being overloaded (not zero). \n");
+                    mprintf ("   --- functionCallExp = %p functionCallExp->get_uses_operator_syntax() = %s \n",functionCallExp,functionCallExp->get_uses_operator_syntax() ? "true" : "false");
                   }
 #endif
             // ROSE_ASSERT(functionCallExp->get_uses_operator_syntax() == false);

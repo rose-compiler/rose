@@ -25,11 +25,23 @@ using namespace CodeThorn;
 using namespace std;
 using namespace Sawyer::Message;
 
-Sawyer::Message::Facility Analyzer::logger = [](){
-  Facility log("Analyzer");
-  mfacilities.insert(log);
-  return log;
-}();
+Sawyer::Message::Facility Analyzer::logger;
+
+void Analyzer::initDiagnostics() {
+  static bool initialized = false;
+  if (!initialized) {
+    initialized = true;
+    logger = Sawyer::Message::Facility("CodeThorn::Analyzer", rose::Diagnostics::destination);
+    rose::Diagnostics::mfacilities.insertAndAdjust(logger);
+  }
+}
+
+string Analyzer::nodeToString(SgNode* node) {
+  string textual;
+  if(node->attributeExists("info"))
+    textual=node->getAttribute("info")->toString()+":";
+  return textual+SgNodeHelper::nodeToString(node);
+}
 
 bool Analyzer::isFunctionCallWithAssignment(Label lab,VariableId* varIdPtr){
   //return _labeler->getLabeler()->isFunctionCallWithAssignment(lab,varIdPtr);
@@ -66,7 +78,6 @@ void Analyzer::disableExternalFunctionSemantics() {
 }
 
 Analyzer::Analyzer():
-  // Set logging
   startFunRoot(0),
   cfanalyzer(0),
   _globalTopifyMode(GTM_IO),
@@ -197,14 +208,6 @@ Analyzer::VariableDeclarationList Analyzer::computeUsedGlobalVariableDeclaration
     logger[ERROR] << "no global scope.";
     exit(1);
   }
-}
-
-
-string Analyzer::nodeToString(SgNode* node) {
-  string textual;
-  if(node->attributeExists("info"))
-    textual=node->getAttribute("info")->toString()+":";
-  return textual+SgNodeHelper::nodeToString(node);
 }
 
 Analyzer::~Analyzer() {
@@ -636,7 +639,7 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
       SgSymbol* initDeclVar=initName->search_for_symbol_from_symbol_table();
       ROSE_ASSERT(initDeclVar);
       VariableId initDeclVarId=getVariableIdMapping()->variableId(initDeclVar);
-      
+
       // not possible to support yet. getIntValue must succeed on declarations.
       if(false && variableValueMonitor.isHotVariable(this,initDeclVarId)) {
         PState newPState=*currentEState.pstate();
@@ -991,13 +994,12 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root, boo
   }
   logger[TRACE]<< "INIT: Intra-Flow OK. (size: " << flow.size() << " edges)"<<endl;
   if(oneFunctionOnly) {
-    logger[TRACE]<<"INFO: analyzing one function only. No inter-procedural flow."<<endl;
-  } else {
-    InterFlow interFlow=cfanalyzer->interFlow(flow);
-    logger[TRACE]<< "INIT: Inter-Flow OK. (size: " << interFlow.size()*2 << " edges)"<<endl;
-    cfanalyzer->intraInterFlow(flow,interFlow);
-    logger[TRACE]<< "INIT: IntraInter-CFG OK. (size: " << flow.size() << " edges)"<<endl;
+    logger[TRACE]<<"INFO: analyzing one function only."<<endl;
   }
+  InterFlow interFlow=cfanalyzer->interFlow(flow);
+  logger[TRACE]<< "INIT: Inter-Flow OK. (size: " << interFlow.size()*2 << " edges)"<<endl;
+  cfanalyzer->intraInterFlow(flow,interFlow);
+  logger[TRACE]<< "INIT: ICFG OK. (size: " << flow.size() << " edges)"<<endl;
 
 #if 0
   if(boolOptions["reduce-cfg"]) {
@@ -2756,7 +2758,7 @@ std::list<EState> Analyzer::transferFunctionCall(Edge edge, const EState* estate
   ROSE_ASSERT(funCall);
   string funName=SgNodeHelper::getFunctionName(funCall);
   // handling of error function (TODO: generate dedicated state (not failedAssert))
-  
+
   if(boolOptions["rers-binary"]) {
     // if rers-binary function call is selected then we skip the static analysis for this function (specific to rers)
     string funName=SgNodeHelper::getFunctionName(funCall);
@@ -2765,7 +2767,7 @@ std::list<EState> Analyzer::transferFunctionCall(Edge edge, const EState* estate
       return elistify();
     }
   }
-  
+
   SgExpressionPtrList& actualParameters=SgNodeHelper::getFunctionCallActualParameterList(funCall);
   // ad 2)
   SgFunctionDefinition* funDef=isSgFunctionDefinition(getLabeler()->getNode(edge.target()));
@@ -2794,7 +2796,7 @@ std::list<EState> Analyzer::transferFunctionCall(Edge edge, const EState* estate
     // we use for the third parameter "false": do not use constraints when extracting values.
     // Consequently, formalparam=actualparam remains top, even if constraints are available, which
     // would allow to extract a constant value (or a range (when relational constraints are added)).
-    list<SingleEvalResultConstInt> evalResultList=exprAnalyzer.evalConstInt(actualParameterExpr,currentEState,false, true);
+    list<SingleEvalResultConstInt> evalResultList=exprAnalyzer.evalConstInt(actualParameterExpr,currentEState,false);
     ROSE_ASSERT(evalResultList.size()>0);
     list<SingleEvalResultConstInt>::iterator resultListIter=evalResultList.begin();
     SingleEvalResultConstInt evalResult=*resultListIter;
@@ -2950,17 +2952,17 @@ std::list<EState> Analyzer::transferFunctionCallReturn(Edge edge, const EState* 
     {
       returnVarId=variableIdMapping.createUniqueTemporaryVariableId(string("$return"));
     }
-    
+
     if(newPState.find(returnVarId)!=newPState.end()) {
       AValue evalResult=newPState[returnVarId];
       //newPState[lhsVarId]=evalResult;
       newPState.setVariableToValue(lhsVarId,evalResult);
-      
+
       cset.addAssignEqVarVar(lhsVarId,returnVarId);
-      
+
       newPState.deleteVar(returnVarId); // remove $return from state
       cset.removeAllConstraintsOfVar(returnVarId); // remove constraints of $return
-      
+
       return elistify(createEState(edge.target(),newPState,cset));
     } else {
       // no $return variable found in state. This can be the case for an extern function.
@@ -2996,7 +2998,7 @@ std::list<EState> Analyzer::transferFunctionExit(Edge edge, const EState* estate
     // 2a) remove variable from state
     // 2b) remove all constraints concerning this variable
     // 3) create new EState and return
-    
+
     // ad 1)
     set<SgVariableDeclaration*> varDecls=SgNodeHelper::localVariableDeclarationsOfFunction(funDef);
     // ad 2)
@@ -3007,7 +3009,7 @@ std::list<EState> Analyzer::transferFunctionExit(Edge edge, const EState* estate
     VariableIdMapping::VariableIdSet formalParams=determineVariableIdsOfSgInitializedNames(formalParamInitNames);
     VariableIdMapping::VariableIdSet vars=localVars+formalParams;
     set<string> names=variableIdsToVariableNames(vars);
-    
+
     for(VariableIdMapping::VariableIdSet::iterator i=vars.begin();i!=vars.end();++i) {
       VariableId varId=*i;
       newPState.deleteVar(varId);
@@ -3149,7 +3151,7 @@ std::list<EState> Analyzer::transferFunctionCallExternal(Edge edge, const EState
       }
     }
   }
-  
+
   // for all other external functions we use identity as transfer function
   EState newEState=currentEState;
   newEState.io=newio;
@@ -3197,13 +3199,13 @@ list<EState> Analyzer::transferIncDecOp(SgNode* nextNodeToAnalyze2, Edge edge, c
   SgNode* nextNodeToAnalyze3=SgNodeHelper::getUnaryOpChild(nextNodeToAnalyze2);
   VariableId var;
   if(exprAnalyzer.variable(nextNodeToAnalyze3,var)) {
-    list<SingleEvalResultConstInt> res=exprAnalyzer.evalConstInt(nextNodeToAnalyze3,currentEState,true,true);
+    list<SingleEvalResultConstInt> res=exprAnalyzer.evalConstInt(nextNodeToAnalyze3,currentEState,true);
     ROSE_ASSERT(res.size()==1); // must hold for currently supported limited form of ++,--
     list<SingleEvalResultConstInt>::iterator i=res.begin();
     EState estate=(*i).estate;
     PState newPState=*estate.pstate();
     ConstraintSet cset=*estate.constraints();
-      
+
     AType::ConstIntLattice varVal=newPState[var];
     AType::ConstIntLattice const1=1;
     switch(nextNodeToAnalyze2->variantT()) {
@@ -3222,7 +3224,7 @@ list<EState> Analyzer::transferIncDecOp(SgNode* nextNodeToAnalyze2, Edge edge, c
     }
     //newPState[var]=varVal;
     newPState.setVariableToValue(var,varVal);
-      
+
     if(!(*i).result.isTop())
       cset.removeAllConstraintsOfVar(var);
     list<EState> estateList;
@@ -3237,7 +3239,7 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
   EState currentEState=*estate;
   SgNode* lhs=SgNodeHelper::getLhs(nextNodeToAnalyze2);
   SgNode* rhs=SgNodeHelper::getRhs(nextNodeToAnalyze2);
-  list<SingleEvalResultConstInt> res=exprAnalyzer.evalConstInt(rhs,currentEState,true,true);
+  list<SingleEvalResultConstInt> res=exprAnalyzer.evalConstInt(rhs,currentEState,true);
   list<EState> estateList;
   for(list<SingleEvalResultConstInt>::iterator i=res.begin();i!=res.end();++i) {
     VariableId lhsVar;
@@ -3319,7 +3321,7 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
           }
           VariableId arrayElementId;
           //AValue aValue=(*i).value();
-          list<SingleEvalResultConstInt> res=exprAnalyzer.evalConstInt(indexExp,currentEState,true,true);
+          list<SingleEvalResultConstInt> res=exprAnalyzer.evalConstInt(indexExp,currentEState,true);
           ROSE_ASSERT(res.size()==1); // TODO: temporary restriction
           AValue aValue=(*(res.begin())).value();
 
@@ -3372,7 +3374,7 @@ list<EState> Analyzer::transferTrueFalseEdge(SgNode* nextNodeToAnalyze2, Edge ed
   Label newLabel;
   PState newPState;
   ConstraintSet newCSet;
-  list<SingleEvalResultConstInt> evalResultList=exprAnalyzer.evalConstInt(nextNodeToAnalyze2,currentEState,true,true);
+  list<SingleEvalResultConstInt> evalResultList=exprAnalyzer.evalConstInt(nextNodeToAnalyze2,currentEState,true);
   //assert(evalResultList.size()==1);
   list<EState> newEStateList;
   for(list<SingleEvalResultConstInt>::iterator i=evalResultList.begin();

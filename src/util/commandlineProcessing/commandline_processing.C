@@ -2,6 +2,7 @@
 // This avoids requiring the user to use rose_config.h and follows 
 // the automake manual request that we use <> instead of ""
 #include <rose_config.h>
+#include <rosePublicConfig.h>
 // #endif
 
 #include "StringUtility.h"
@@ -113,9 +114,20 @@ CommandlineProcessing::genericSwitches() {
     // Since CommandlineProcessing::genericSwitches is inside src/util we cannot depend on functions in higher levels of
     // librose being available.  In particular, ::version_message, which is defined in src/roseSupport/utility_functions.C.
     // Therefore we'll have to use our own version string function.
-    gen.insert(Switch("version", 'V')
+    gen.insert(Switch("version-long")
                .action(showVersionAndExit(utilVersionString(), 0))
-               .doc("Shows version information for various ROSE components and then exits."));
+               .doc("Shows version information for ROSE and various dependencies and then exits. The shorter @s{version} "
+                    "switch shows only the dotted quad of the ROSE library itself."));
+    gen.insert(Switch("version", 'V')
+#if defined(ROSE_PACKAGE_VERSION)
+               .action(showVersionAndExit(ROSE_PACKAGE_VERSION, 0))
+#elif defined(PACKAGE_VERSION)
+               .action(showVersionAndExit(ROSE_PACKAGE_VERSION, 0))
+#else
+               .action(showVersionAndExit("unknown", 0))
+#endif
+               .doc("Shows the dotted quad ROSE version and then exits.  See also @s{version-long}, which prints much more "
+                    "information."));
 
     // Control how a failing assertion acts. It could abort, exit with non-zero, or throw rose::Diagnostics::FailedAssertion.
     gen.insert(Switch("assert")
@@ -477,12 +489,36 @@ CommandlineProcessing::generateOptionWithNameParameterList ( Rose_STL_Container<
            // get the rest of the string as the option
               optionList.push_back( (newPrefix == "") ? it->substr(prefixLength) : newPrefix + it->substr(prefixLength));
               it = argList.erase(it);
+
            // That sounds real buggy as to detect if an option has parameters it
            // assumes inputPrefix-ed options are consecutive.
               if ( it->substr(0,prefixLength) != inputPrefix )
                  {
                    optionList.push_back(*it);
                    it = argList.erase(it);
+
+#if 0
+                // DQ (1/25/2017): Comment this out as a test of C file command line generation to EDG.
+
+                // DQ (1/21/2017): Adding support for options taking more than one paramter.
+                   if (isOptionTakingThirdParameter(inputPrefix) == true)
+                      {
+                        if ( it->substr(0,prefixLength) != inputPrefix )
+                           {
+                             optionList.push_back(*it);
+                             it = argList.erase(it);
+                           }
+                          else
+                           {
+                             printf ("Error: missing 2nd parameter in option with two parameters \n");
+                             ROSE_ABORT();
+                           }
+#if 0
+                        printf ("Need to handle options taking more than one parameter (e.g. --edg_parameter:): inputPrefix = %s \n",inputPrefix.c_str());
+                        ROSE_ASSERT(false);
+#endif
+                      }
+#endif
                  }
                 else
                  {
@@ -547,10 +583,46 @@ CommandlineProcessing::isOptionWithParameter ( vector<string> & argv, string opt
 
 void
 CommandlineProcessing::addListToCommandLine ( vector<string> & argv , string prefix, Rose_STL_Container<string> argList )
+   {
+#if 0
+     printf ("In addListToCommandLine(): prefix = %s \n",prefix.c_str());
+#endif
+     bool outputPrefix = false;
+  // for (unsigned int i = 0; i < argList.size(); ++i) 
+     for (size_t i = 0; i < argList.size(); ++i) 
         {
-     for (unsigned int i = 0; i < argList.size(); ++i) {
-       argv.push_back(prefix + argList[i]);
-   }
+#if 1
+       // DQ (1/25/2017): Original version of code (required for C test codes to pass, see C_tests directory).
+       // However, this causes a problem for the --edg_parameter support (which is fixed by the code below).
+          argv.push_back(prefix + argList[i]);
+#else
+       // DQ (1/25/2017): Comment this out as a test of C file command line generation to EDG.
+
+       // DQ (1/21/2017): The prefix should only be on the first argument (if it is non-empty).
+       // argv.push_back(prefix + argList[i]);
+#if 0
+          printf ("   argList[%zu] = %s \n",i,argList[i].c_str());
+#endif
+          if (i == 0 && argList[i].empty() == false)
+             {
+               argv.push_back(prefix + argList[i]);
+               outputPrefix = true;
+             }
+            else
+             {
+            // Account for the first entry in the list being empty.
+               if (i > 0 && outputPrefix == false && argList[i].empty() == false)
+                  {
+                    argv.push_back(prefix + argList[i]);
+                    outputPrefix = true;
+                  }
+                 else
+                  {
+                    argv.push_back(argList[i]);
+                  }
+             }
+#endif
+        }
    }
 
 #if 0

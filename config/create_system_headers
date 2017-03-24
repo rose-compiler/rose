@@ -262,13 +262,43 @@ if [ "x$language" = "xc" -o "x$language" = "xc++" ]; then
      # echo "******************************************************"
      # echo "******************************************************"
 
+     # DQ (1/19/2017): Filer out GNU 4.9 specific macro that is a problem: #define __has_include(STR) __has_include__(STR)
+     # echo "compilerVendorName = $compilerVendorName"
+
+       if [ "x$compilerVendorName" = "xgnu" ]; then
+          # Build a new temp file to store the results of the editing.
+            tmpFile2="`mktemp -t roseconfigtempXXXXXXXXXX`"
+
+          # echo "tmpFile2 name = $tmpFile2"
+
+          # sed '/match/s/.*/replacement/' file
+            sed "/#define __has_include(STR) __has_include__(STR)/s/.*//" < "$tmpFile" > "$tmpFile2"
+
+          # Copy the edited file to replace the original version we use below.
+            cp "$tmpFile2" "$tmpFile"
+
+          # echo "******************************************************"
+          # echo "********** GNU 4.9 SPECIFIC TRANSFORMATION ***********"
+          # echo "******************************************************"
+          # cat "$tmpFile"
+          # echo "******************************************************"
+          # echo "******************************************************"
+       fi
+
+       # DQ (2/25/2017): We need to support a different version of the buildin function support for EDG 4.9 because later versions 
+       # of this generated file cause the tests/roseTests/astFileIOTests makefile rule parallelMerge_short and parallelMerge_medium
+       # to fail randomly.  This can only so far be traced to it failing for EDG 4.9, but not EDG 4.12.  So the only practical solution 
+       # is to build a version of the rose_edg_required_macros_and_functions.h file specific for EDG 4.9 while we are in the transition 
+       # from EDG 4.9 to EDG 4.12.  I can't figure out the bug that is in EDG 4.9 and since it is fixed in later versions of EDG it
+       # is not pratical to focus more time on this issue.
+       sed "/REPLACE_ME_WITH_MACRO_DEFINITIONS/r$tmpFile" < "$roseHome/config/rose_edg_required_macros_and_functions_EDG_49.h.in" > "$mainTargetDir/rose_edg_required_macros_and_functions_EDG_49.h"
        sed "/REPLACE_ME_WITH_MACRO_DEFINITIONS/r$tmpFile" < "$roseHome/config/rose_edg_required_macros_and_functions.h.in" > "$mainTargetDir/rose_edg_required_macros_and_functions.h"
 
-       echo "******************************************************"
-       echo "******************************************************"
-       cat "$tmpFile"
-       echo "******************************************************"
-       echo "******************************************************"
+     # echo "******************************************************"
+     # echo "******************************************************"
+     # cat "$tmpFile"
+     # echo "******************************************************"
+     # echo "******************************************************"
 
      # echo "Modified rose_edg_required_macros_and_functions.h file"
      # cat "$mainTargetDir/rose_edg_required_macros_and_functions.h"

@@ -98,7 +98,10 @@ visit(SgNode* node)
        assignmentInInit = (init.size() == 1 ? checkForAssignment(init.front()) : false);
 
        SgExprStatement *cond = isSgExprStatement(fors->get_test());
-       comparisonInCondition = (cond ? cond->get_expression() : false);
+
+    // DQ (3/1/2017): GNU 6.1 reports these as having different types.
+    // comparisonInCondition = (cond ? cond->get_expression() : false);
+       comparisonInCondition = (cond ? (cond->get_expression() != NULL) : false);
 
        incrementOrDecrement = checkForIncrementOrDecrement(fors->get_increment());
 

@@ -1,4 +1,10 @@
 // Tests that a specimen can be converted to LLVM
+#include "conditionalDisable.h"
+#ifdef ROSE_BINARY_TEST_DISABLED
+#include <iostream>
+int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; return 1; }
+#else
+
 #define __STDC_FORMAT_MACROS
 #include "rose.h"
 #include "LlvmSemantics2.h"
@@ -72,7 +78,7 @@ int
 main(int argc, char *argv[])
 {
     ROSE_INITIALIZE;
-    rose::Diagnostics::initAndRegister(::mlog, "tool");
+    rose::Diagnostics::initAndRegister(&::mlog, "tool");
 
     Settings settings;
     SgProject *project = buildAst(argc, argv, settings);
@@ -90,3 +96,5 @@ main(int argc, char *argv[])
     
     return 0;
 }
+
+#endif

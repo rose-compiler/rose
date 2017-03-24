@@ -60,6 +60,11 @@
 //     flow paths.
 //
 //   * An initial CFG vertex and its initial incoming state.
+#include "conditionalDisable.h"
+#ifdef ROSE_BINARY_TEST_DISABLED
+#include <iostream>
+int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; return 1; }
+#else
 
 #include <rose.h>
 
@@ -224,7 +229,7 @@ int main(int argc, char *argv[])
 {
     // Configure diagnostic output
     ROSE_INITIALIZE;
-    rose::Diagnostics::initAndRegister(::mlog, "taintedFlow");
+    rose::Diagnostics::initAndRegister(&::mlog, "taintedFlow");
     rose::Diagnostics::mfacilities.control("taintedFlow(>=where)"); // the default
 
     // Describe the command-line
@@ -379,3 +384,4 @@ void compileTests(SgAsmInterpretation *interp) {
     FunctionCall().copy(cg2);
 }
 
+#endif

@@ -13,6 +13,7 @@ static Sawyer::Message::Facility mlog;
 #include <boost/foreach.hpp>
 #include <boost/regex.hpp>
 #include <Color.h>                                      // ROSE
+#include <Diagnostics.h>                                // ROSE
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Map.h>
 #include <Sawyer/Set.h>
@@ -109,7 +110,8 @@ public:
     
     // Associate some data with an item.
     void setItemExtraData(const Wt::WModelIndex &idx, const T &data) {
-        if (idx.row() >= extraData_.size())
+        ASSERT_require(idx.row() >= 0);
+        if ((size_t)idx.row() >= extraData_.size())
             extraData_.resize(idx.row()+1);
         std::string oldDisplay = extraData_[idx.row()].display();
         std::string newDisplay = data.display();
@@ -122,7 +124,8 @@ public:
     // Get data for an item.
     const T& itemExtraData(const Wt::WModelIndex &idx) const {
         static const T dflt;
-        return idx.row() < extraData_.size() ? extraData_[idx.row()] : dflt;
+        ASSERT_require(idx.row() >= 0);
+        return (size_t)idx.row() < extraData_.size() ? extraData_[idx.row()] : dflt;
     }
 
     // Find first item with specified data. Returns -1 if not found.
@@ -136,7 +139,8 @@ public:
 
     // Remove some data
     virtual bool removeRows(int row, int count, const Wt::WModelIndex &parent = Wt::WModelIndex()) {
-        ASSERT_require(row + count <= extraData_.size());
+        ASSERT_require(row + count >= 0);
+        ASSERT_require((size_t)(row + count) <= extraData_.size());
         if (Wt::WStringListModel::removeRows(row, count, parent)) {
             extraData_.erase(extraData_.begin()+row, extraData_.begin()+row+count);
             return true;
@@ -150,7 +154,8 @@ public:
         } else if (idx.isValid() && Wt::DisplayRole == role) {
             boost::any v = Wt::WStringListModel::data(idx, Wt::DisplayRole);
             Wt::WString s1 = v.empty() ? Wt::WString() : boost::any_cast<Wt::WString>(v);
-            Wt::WString s2 = (idx.row() < extraData_.size() ? extraData_[idx.row()] : T()).display();
+            ASSERT_require(idx.row() >= 0);
+            Wt::WString s2 = ((size_t)idx.row() < extraData_.size() ? extraData_[idx.row()] : T()).display();
             return s1 + (s1.empty() || s2.empty() ? "" : " ") + s2;
         } else {
             return Wt::WStringListModel::data(idx, role);
@@ -2309,8 +2314,15 @@ private:
                                         "|\\bwhat\\(\\): [^\\n]+\\n[^\\n]*Aborted$"     // fatal exception in shell command
                                         "|\\bwhat\\(\\): [^\\n]+\\n[^\\n]*command died" // fatal exception from $(RTH_RUN)
                                         "|\\[err\\]: terminated after \\d+ seconds"     // timeout from $(RTH_RUN)
+                                        "|\\[err\\]: .*Segmentation fault"              // shell output
                                         "|: Assertion `[^\\n]+' failed\\."              // failed <cassert> assertion
                                         "|: undefined reference to `"                   // GNU linker error
+                                        "|No space left on device"                      // filesystem is full
+                                        "|31;1m\\d+ TESTS FAILED. See above list for details\\." // Markus' STL tests
+                                        "|make\\[[0-9]+\\]: \\*\\*\\* No rule to make target"
+                                        "|make\\[[0-9]+\\]: \\*\\*\\* \\[.+\\] Error [0-9]+"
+                                        "|^Makefile:[0-9]+: recipe for target '.*' failed"
+                                        "|\\*{7} HPCTOOLKIT .* FAILED \\*{9}"
 
                                         ")[^\\n]*$)|"
                                         "(^[^\\n]*?(?:"
@@ -2433,13 +2445,17 @@ public:
         int bigRow = 1;                                 // leave room for the header
         for (SqlDatabase::Statement::iterator iter1 = q1->begin(); iter1 != q1->end(); ++iter1, bigRow+=3) {
             int nErrors = iter1.get<int>(0);
-            int errorsPercent = round(100.0*nErrors/nTests);
+            double errorsPercent = 100.0*nErrors/nTests;
             std::string status = iter1.get<std::string>(1);
             std::string message = iter1.get<std::string>(2);
 
             // Error count and failure rate
-            grid_->elementAt(bigRow+0, 0)->addWidget(new Wt::WText(StringUtility::numberToString(nErrors) + "<br/>" +
-                                                                   StringUtility::numberToString(errorsPercent) + "%"));
+            {
+                std::ostringstream ss;
+                ss <<nErrors <<"<br/>";
+                Diagnostics::mfprintf(ss)("%7.3f%%", errorsPercent);
+                grid_->elementAt(bigRow+0, 0)->addWidget(new Wt::WText(ss.str()));
+            }
             grid_->elementAt(bigRow+0, 0)->setRowSpan(3);
             grid_->elementAt(bigRow+0, 0)->setStyleClass("error-count-cell");
 
@@ -4030,7 +4046,7 @@ int
 main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
     Sawyer::Message::mfacilities.control("none,>=info");
-    Diagnostics::initAndRegister(::mlog, "tool");
+    Diagnostics::initAndRegister(&::mlog, "tool");
 
 #ifdef ROSE_USE_WT
     // Initialized global state shared by all serving threads.

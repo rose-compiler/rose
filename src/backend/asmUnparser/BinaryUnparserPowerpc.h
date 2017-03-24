@@ -30,7 +30,10 @@ public:
 
 protected:
     void emitInstruction(std::ostream&, SgAsmInstruction*, State&) const ROSE_OVERRIDE;
-    void emitOperandBody(std::ostream&, SgAsmExpression*, State &state) const ROSE_OVERRIDE;
+    void emitOperandBody(std::ostream&, SgAsmExpression*, State&) const ROSE_OVERRIDE;
+
+private:
+    void outputExpr(std::ostream&, SgAsmExpression*, State&) const;
 };
 
 } // namespace

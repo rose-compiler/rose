@@ -225,7 +225,13 @@ reallyhuge_output.C.binary: huge_output.C.binary
 if !OS_MACOSX	
 TEST_TARGETS += medium_output.C.binary
 if ROSE_USE_LONG_MAKE_CHECK_RULE
+# TEST_TARGETS += large_output.C.binary huge_output.C.binary reallyhuge_output.C.binary
+# DQ (1/19/2017): The large test in a problem for the GNU 6.1 compiler (and maybe later versions).
+if !ROSE_USING_GCC_VERSION_LATER_6_1
 TEST_TARGETS += large_output.C.binary huge_output.C.binary reallyhuge_output.C.binary
+else
+# TEST_TARGETS += large_output.C.binary huge_output.C.binary reallyhuge_output.C.binary
+endif
 endif
 endif
 

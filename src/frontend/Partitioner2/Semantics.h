@@ -18,7 +18,7 @@ typedef InstructionSemantics2::SymbolicSemantics::SValue SValue;
 typedef InstructionSemantics2::SymbolicSemantics::SValuePtr SValuePtr;
 
 typedef InstructionSemantics2::BaseSemantics::RegisterStateGeneric RegisterState;
-typedef InstructionSemantics2::BaseSemantics::RegisterStateGenericPtr RegisterStateGenericPtr;
+typedef InstructionSemantics2::BaseSemantics::RegisterStateGenericPtr RegisterStatePtr;
 
 typedef InstructionSemantics2::BaseSemantics::State State;
 typedef InstructionSemantics2::BaseSemantics::StatePtr StatePtr;
@@ -50,10 +50,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & boost::serialization::base_object<Super>(*this);
-        s & map_;
-        s & addressesRead_;
-        s & enabled_;
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
+        s & BOOST_SERIALIZATION_NVP(map_);
+        s & BOOST_SERIALIZATION_NVP(addressesRead_);
+        s & BOOST_SERIALIZATION_NVP(enabled_);
     }
 #endif
 
@@ -178,6 +178,9 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
  *  Most operations are delegated to the symbolic state. The return value from the symbolic state is replaced with an unknown
  *  if the expression grows beyond a certain complexity. */
 class RiscOperators: public InstructionSemantics2::SymbolicSemantics::RiscOperators {
+public:
+    typedef InstructionSemantics2::SymbolicSemantics::RiscOperators Super;
+
 private:
     static const size_t TRIM_THRESHOLD_DFLT = 100;
 
@@ -189,7 +192,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & boost::serialization::base_object<InstructionSemantics2::SymbolicSemantics::RiscOperators>(*this);
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
     }
 #endif
 

@@ -30,10 +30,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & type_;
-        s & startVa_;
-        s & bblock_;
-        s & owningFunctions_;
+        s & BOOST_SERIALIZATION_NVP(type_);
+        s & BOOST_SERIALIZATION_NVP(startVa_);
+        s & BOOST_SERIALIZATION_NVP(bblock_);
+        s & BOOST_SERIALIZATION_NVP(owningFunctions_);
     }
 #endif
 
@@ -172,7 +172,8 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & type_ & confidence_;
+        s & BOOST_SERIALIZATION_NVP(type_);
+        s & BOOST_SERIALIZATION_NVP(confidence_);
     }
 #endif
 
