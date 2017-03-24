@@ -5,10 +5,11 @@ package Asis_Tool_2.Unit is
    type Class (Trace : Boolean := False) is tagged limited private;
 
    procedure Set_Up
-     (Object             : in out Class;
-      Asis_Unit          : in     Asis.Compilation_Unit);
+     (This      : in out Class;
+      Asis_Unit : in     Asis.Compilation_Unit);
 
-   procedure Process (Object : in out Class);
+   procedure Process
+     (This : in out Class);
 
 private
 
