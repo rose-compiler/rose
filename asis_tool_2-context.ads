@@ -4,7 +4,7 @@ package Asis_Tool_2.Context is
 
    type Class is tagged limited private;
 
-   procedure Process (Object : in out Class);
+   procedure Process (This : in out Class);
 
 private
 
@@ -14,6 +14,6 @@ private
       end record;
 
    -- Process all the compilation units (ADT files) in the context:
-   procedure Process_Units (Object : in out Class);
+   procedure Process_Units (This : in out Class);
 
 end Asis_Tool_2.Context;

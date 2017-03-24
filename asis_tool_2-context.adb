@@ -15,33 +15,33 @@ package body Asis_Tool_2.Context is
    ------------
    -- EXPORTED:
    ------------
-   procedure Process (Object : in out Class) is
+   procedure Process (This : in out Class) is
    begin
       Asis.Implementation.Initialize;
       -- This just names the Context.  It does not control what it processes:
       Asis.Ada_Environments.Associate
-        (Object.My_Context,
+        (This.My_Context,
          To_Wide_String (GNAT.Directory_Operations.Get_Current_Dir));
-      Asis.Ada_Environments.Open (Object.My_Context);
+      Asis.Ada_Environments.Open (This.My_Context);
       Graph.Digraph := True;
       Graph.Strict := False;
       Graph.ID := Dot.To_ID_Type
-        (To_String (Asis.Ada_Environments.Name (Object.My_Context)));
-      Object.Process_Units;
+        (To_String (Asis.Ada_Environments.Name (This.My_Context)));
+      This.Process_Units;
       Graph.Print;
-      Asis.Ada_Environments.Close (Object.My_Context);
-      Asis.Ada_Environments.Dissociate (Object.My_Context);
+      Asis.Ada_Environments.Close (This.My_Context);
+      Asis.Ada_Environments.Dissociate (This.My_Context);
       Asis.Implementation.Finalize;
    end Process;
 
    -----------
    -- PRIVATE:
    -----------
-   procedure Process_Units (Object : in out Class) is
+   procedure Process_Units (This : in out Class) is
       use Ada.Wide_Text_IO;
       use Asis.Exceptions;
      Asis_Units : Asis.Compilation_Unit_List :=
-        Asis.Compilation_Units.Compilation_Units (Object.My_Context);
+        Asis.Compilation_Units.Compilation_Units (This.My_Context);
    begin
       for Asis_Unit of Asis_Units loop
          declare
