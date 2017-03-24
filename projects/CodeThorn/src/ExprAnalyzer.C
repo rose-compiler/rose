@@ -665,7 +665,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
       PState pstate2=*pstate; // also removes constness
       VariableId arrayVarId=_variableIdMapping->variableId(varRefExp);
       // two cases
-      if(_variableIdMapping->hasArrayType(arrayVarId)) {
+       if(_variableIdMapping->hasArrayType(arrayVarId)) {
         // has already correct id
         // nothing to do
       } else if(_variableIdMapping->hasPointerType(arrayVarId)) {
@@ -699,6 +699,14 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
       int index=-1;
       if(aValue.isConstInt()) {
         index=aValue.getIntValue();
+        // check array bounds
+        int arraySize=_variableIdMapping->getSize(arrayVarId);
+        if(index>=arraySize) {
+          cerr<<"Detected out of bounds array access."<<endl;
+          cerr<<"Access :"<<node->unparseToString()<<endl;
+          cerr<<"Array size: "<<arraySize<<" Accessindex: "<<index<<endl;
+          exit(1);
+        }
         arrayElementId=_variableIdMapping->variableIdOfArrayElement(arrayVarId,index);
         //cout<<"DEBUG: arrayElementVarId:"<<arrayElementId.toString()<<":"<<_variableIdMapping->variableName(arrayVarId)<<" Index:"<<index<<endl;
       } else {
