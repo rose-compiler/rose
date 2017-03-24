@@ -71,6 +71,7 @@ class ExprAnalyzer {
   bool getSkipSelectedFunctionCalls();
   void setSkipArrayAccesses(bool skip);
   bool getSkipArrayAccesses();
+  bool checkArrayBounds(VariableId arrayVarId,int accessIndex);
  private:
   //! This function turn a single result into a one-elment list with
   //! this one result. This function is used to combine cases where the result

@@ -9,7 +9,9 @@ int main() {
   int* p;
   int y=0;
   p=a;
+  x=p[0];
   x=p[3];
-  p[3]=x;
+  p[2]=x;
+  p[4]=x;
   return 0;
 }

@@ -699,13 +699,8 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
       int index=-1;
       if(aValue.isConstInt()) {
         index=aValue.getIntValue();
-        // check array bounds
-        int arraySize=_variableIdMapping->getSize(arrayVarId);
-        if(index>=arraySize) {
-          cerr<<"Detected out of bounds array access."<<endl;
-          cerr<<"Access :"<<node->unparseToString()<<endl;
-          cerr<<"Array size: "<<arraySize<<" Accessindex: "<<index<<endl;
-          exit(1);
+        if(!checkArrayBounds(arrayVarId,index)) {
+          cerr<<"Read access: "<<node->unparseToString()<<endl;
         }
         arrayElementId=_variableIdMapping->variableIdOfArrayElement(arrayVarId,index);
         //cout<<"DEBUG: arrayElementVarId:"<<arrayElementId.toString()<<":"<<_variableIdMapping->variableName(arrayVarId)<<" Index:"<<index<<endl;
@@ -873,4 +868,16 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalValueExp(SgValueExp* node, ESta
   res.init(estate,*estate.constraints(),AType::ConstIntLattice(AType::Bot()));
   res.result=constIntLatticeFromSgValueExp(node);
   return listify(res);
+}
+
+bool ExprAnalyzer::checkArrayBounds(VariableId arrayVarId,int accessIndex) {
+  // check array bounds
+  int arraySize=_variableIdMapping->getSize(arrayVarId);
+  if(accessIndex<0||accessIndex>=arraySize) {
+    cerr<<"Detected out of bounds array access in application: ";
+    cerr<<"array size: "<<arraySize<<", array index: "<<accessIndex<<" :: ";
+    //exit(1);
+    return false; // fail
+  }
+  return true; // pass
 }

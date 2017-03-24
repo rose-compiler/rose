@@ -555,6 +555,8 @@ check-local:
 check-arrays:
 	./codethorn $(srcdir)/tests/pointer/test48.cpp --explicit-arrays --viz=yes && dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
 
+check-array-bounds: ./codethorn
+	./codethorn --explicit-arrays $(srcdir)/tests/arraybounds1.C 
 
 # MS: 1-6 is reasonable for V1.2
 RERS=$(patsubst %,Problem%.log, $(shell seq 6))

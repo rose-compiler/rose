@@ -363,7 +363,6 @@ void Analyzer::eventGlobalTopifyTurnedOn() {
     bool isCompoundIncVar=(_compoundIncVarsSet.find(*i)!=_compoundIncVarsSet.end());
     bool isSmallActivityVar=(_smallActivityVarsSet.find(*i)!=_smallActivityVarsSet.end());
     bool isAssertCondVar=(_assertCondVarsSet.find(*i)!=_assertCondVarsSet.end());
-    // xxx
     bool topifyVar=false;
     switch(_globalTopifyMode) {
     case GTM_IO:
@@ -3254,7 +3253,6 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
           // logger[DEBUG]<<"Topifying hot variable :)"<<lhsVar.toString()<<endl;
           newPState.setVariableToTop(lhsVar);
         } else {
-          //newPState[lhsVar]=(*i).result;
           // logger[DEBUG]<<"assign lhs var:"<<lhsVar.toString()<<endl;
           newPState.setVariableToValue(lhsVar,(*i).result);
         }
@@ -3328,6 +3326,9 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
           int index=-1;
           if(aValue.isConstInt()) {
             index=aValue.getIntValue();
+            if(!exprAnalyzer.checkArrayBounds(arrayVarId,index)) {
+              cerr<<"Write access: "<<lhs->unparseToString()<<endl;
+            }
             arrayElementId=_variableIdMapping->variableIdOfArrayElement(arrayVarId,index);
             //logger[TRACE]<<"arrayElementVarId:"<<arrayElementId.toString()<<":"<<_variableIdMapping->variableName(arrayVarId)<<" Index:"<<index<<endl;
           } else {
