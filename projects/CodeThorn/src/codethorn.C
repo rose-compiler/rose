@@ -1210,7 +1210,7 @@ int main( int argc, char * argv[] ) {
 
     vector<string> argvList(argv,argv+argc);
     if(boolOptions["data-race"]) {
-      //TODO: openmp-ast support not finished yet
+      //TODO: new openmp-ast support not finished yet - using existing implementation
       //argvList.push_back("-rose:OpenMP:ast_only");
     }
     SgProject* sageProject = frontend(argvList);

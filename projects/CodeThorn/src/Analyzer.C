@@ -691,7 +691,7 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
         SgExpression* rhs=assignInitializer->get_operand_i();
         ROSE_ASSERT(rhs);
         PState newPState=analyzeAssignRhs(*currentEState.pstate(),initDeclVarId,rhs,cset);
-        return createEState(targetLabel,newPState,cset);
+         return createEState(targetLabel,newPState,cset);
       } else {
         // logger[INFO] << "no initializer (OK)."<<endl;
         PState newPState=*currentEState.pstate();
@@ -1184,7 +1184,7 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
       // nothing to do because variable is ignored
     } else {
       // new variable with new value
-      //newPState[lhsVar]=rhsIntVal;
+      // write access
       newPState.setVariableToValue(lhsVar,rhsIntVal);
     }
     // no update of constraints because no constraints can exist for a new variable
