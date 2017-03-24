@@ -512,5 +512,11 @@ BinaryDebugger::runToBreakpoint() {
     }
 }
 
+void
+BinaryDebugger::runToSyscall() {
+    sendCommandInt(PTRACE_SYSCALL, child_, 0, sendSignal_);
+    waitForChild();
+}
+
 } // namespace
 } // namespace

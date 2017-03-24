@@ -2594,6 +2594,7 @@ void Grammar::setUpBinaryInstructions() {
             OP_unsignedMultiply,
             OP_interrupt,
             OP_readRegister,
+            OP_peekRegister,
             OP_writeRegister,
             OP_readMemory,                              /**< Three or four args depending on whether segment reg is present. */
             OP_writeMemory,                             /**< Three or four args depending on whether segment reg is present. */
