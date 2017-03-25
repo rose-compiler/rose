@@ -764,6 +764,11 @@ FixupTemplateArguments::visit ( SgNode* node )
             // Since this is a second (redundant) invocaion, we likely should just not run this.  But it is not 
             // clear if this truely fixes the problem that I am seeing.
                bool result = contains_private_type(type,targetScope);
+
+            // DQ (3/25/2017): Added a trivial use to eliminate Clang warning about the return value not being used.
+            // But it might be that we should not run the function, however this is a complex subject from last month 
+            // that I don't wish to revisit at the moment while being focused om eliminating warnings from Clang.
+               ROSE_ASSERT(result == true || result == false);
 #endif
 #if 0
                if (result == true)

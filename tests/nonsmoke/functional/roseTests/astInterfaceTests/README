@@ -5,11 +5,14 @@ Jan. 9, 2008
 
 
 
-DQ (3/20/2017): While adding numerous value explression tests there are a 
+DQ (3/20/2017): While adding numerous (about 20) value explression tests there are a 
 few more that I noticed which appear to be missing from current testing.
 See the lcov code coverage tests for more details (file: sageBuilder.C).
 
-Additional functions to test:
+Additional functions to test (specific to sageBuilder.C):
+
+   buildNullptrValExp()
+
    buildEnumDeclaration()
    buildEnumVal()
 
@@ -146,6 +149,109 @@ Additional functions to test:
 
    buildExecStatement()
    buildExecStatement_nfi()
+
+   buildAtomicStmt()
+   buildWhenStmt()
+
+   buildAtExp()
+   buildFinishExp()
+   buildDotDotExp()
+
+   buildCatchStatementSeq()
+   buildPythonPrintStmt()
+   buildPythonPrintStmt_nfi()
+   buildPythonGlobalStmt()
+   buildPythonGlobalStmt_nfi()
+
+   buildAsmStatement()
+   buildAsmStatement_nfi()
+
+
+   buildMultibyteNopStatement()
+   buildMicrosoftAttributeDeclaration()
+
+   buildUnknownType()
+   buildStringType()
+
+   buildFortranKindType()
+
+// This might be an internal support function (not a part of SageBuilder namespace)
+   generate_type_list()
+
+   buildUpcBlockStarType()
+
+   buildImaginaryType()
+   buildTupleType()
+   buildRangeExp()
+
+   buildMatrixExp()
+   buildMagicColonExp()
+
+   buildLambdaRefExp()
+   buildTypeExpression()
+   buildFunctionParameterRefExp_nfi()
+   buildLambdaExp()
+   buildLambdaCapture()
+   buildLambdaCaptureList()
+
+   buildClassDefinition_nfi()
+
+   buildStmtDeclarationStatement_nfi()
+   buildStmtDeclarationStatement()
+
+   buildNamespaceDeclaration()
+
+   buildNaryComparisonOp()
+   buildNaryComparisonOp_nfi()
+
+   buildNaryBooleanOp()
+   buildNaryBooleanOp_nfi()
+
+   buildStringConversion()
+   buildStringConversion_nfi()
+
+   buildNondefiningClassDeclaration()
+
+   buildDefiningClassDeclaration()
+   buildClassDeclaration()
+
+   buildEnumDeclaration() // (reported above)
+
+   buildSourceFile()
+
+   buildEquivalenceStatement()
+
+// Code from Peter
+   17192             : //
+   17193             : // pp (07/16/16)
+   17194             : // initial support for creating template instantiations
+   17195             : // from template declarations
+   17196             : 
+   17197             : namespace {
+   17198             :   // internal functions
+ 
+
+   17314             : } /* anonymous namespace */
+   17315             : 
+
+// Code from Peter
+   buildClassTemplateType()
+
+   buildJavaMarkerAnnotation()
+   buildJavaMemberValuePair()
+   buildJavaSingleMemberAnnotation()
+   buildJavaNormalAnnotation()
+   buildJavaNormalAnnotation()
+
+
+
+
+
+
+
+
+
+
 
 
 

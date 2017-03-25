@@ -756,9 +756,12 @@ librose-lcov.info: all-lcov.info
         "$(top_srcdir)/src/roseExtensions/roseHPCToolkit/*" \
         "$(top_srcdir)/src/frontend/SageIII/nodeBuildFunctionsForAterms.C" \
         "$(top_srcdir)/src/frontend/SageIII/astVisualization/*" \
+        "$(top_srcdir)/src/frontend/SageIII/sageInterface/sageGeneric.h" \
          -o librose-lcov.info
 
 # Note: astVisualization is only approriate for small ASTs and for debugging so excluded from code coverage analysis.
+#       sageGeneric.h causes 1274 template instantiations, and we only have a test for one of them (so this file is a problem due to how lcov handles template instantaitions.
+
 
 librose_lcov_web_pages: librose-lcov.info
 	genhtml                                 \

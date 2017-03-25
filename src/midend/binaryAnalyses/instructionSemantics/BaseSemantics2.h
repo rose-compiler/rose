@@ -1015,7 +1015,7 @@ public:
     // Methods we inherited
 public:
     virtual void clear() ROSE_OVERRIDE;
-    virtual void zero() /* override*/;
+    virtual void zero() ROSE_OVERRIDE;
     virtual SValuePtr readRegister(const RegisterDescriptor &reg, const SValuePtr &dflt, RiscOperators *ops) ROSE_OVERRIDE;
     virtual void writeRegister(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops) ROSE_OVERRIDE;
     virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;

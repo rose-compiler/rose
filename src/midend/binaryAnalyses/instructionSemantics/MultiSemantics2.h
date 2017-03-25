@@ -446,7 +446,7 @@ public:
     virtual BaseSemantics::SValuePtr add(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr addWithCarries(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b,
                                                     const BaseSemantics::SValuePtr &c,
-                                                    BaseSemantics::SValuePtr &carry_out/*output*/) /* override*/;
+                                                    BaseSemantics::SValuePtr &carry_out/*output*/) ROSE_OVERRIDE /* override*/;
     virtual BaseSemantics::SValuePtr negate(const BaseSemantics::SValuePtr &a) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr signedDivide(const BaseSemantics::SValuePtr &a,
                                                   const BaseSemantics::SValuePtr &b) ROSE_OVERRIDE;

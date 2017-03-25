@@ -25,8 +25,8 @@ public:
         return instance(settings());
     }
     
-    const MipsSettings& settings() const { return settings_; }
-    MipsSettings& settings() { return settings_; }
+    const MipsSettings& settings() const ROSE_OVERRIDE { return settings_; }
+    MipsSettings& settings() ROSE_OVERRIDE { return settings_; }
 
 protected:
     void emitInstruction(std::ostream&, SgAsmInstruction*, State&) const ROSE_OVERRIDE;

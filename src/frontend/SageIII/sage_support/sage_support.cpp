@@ -1496,7 +1496,10 @@ SgFile::runFrontend(int & nextErrorCode)
   // control flow. The callFrontEnd() relies on all the "set_" flags to be already called therefore
   // it was placed here.
   // if ( isSgUnknownFile(file) == NULL && file != NULL  )
-    if ( this != NULL && isSgUnknownFile(this) == NULL )
+
+  // DQ (3/25/2017): The NULL check is done above and Clang reports it as a warning that we want to remove.
+  // if ( this != NULL && isSgUnknownFile(this) == NULL )
+    if ( isSgUnknownFile(this) == NULL )
     {
         nextErrorCode = this->callFrontEnd();
         this->set_frontendErrorCode(nextErrorCode);

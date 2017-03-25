@@ -2474,6 +2474,9 @@ ProcessSource (SgProject* project, std::vector<std::string>& argv)
           source,
           Cmdline::REMOVE_OPTION_FROM_ARGV);
 
+// DQ (3/25/2017): Eliminate warning of unused variable via a trivial use.
+   ROSE_ASSERT(has_java_source == true || has_java_source == false);
+
   // Default
   //if (has_java_source == false)
   //{
