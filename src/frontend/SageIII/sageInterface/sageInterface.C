@@ -9540,9 +9540,14 @@ bool SageInterface::loopUnrolling(SgForStatement* target_loop, size_t unrolling_
   //Handle 0 and 1, which means no unrolling at all
   if (unrolling_factor <= 1)
     return true;
+
   // normalize the target loop first
-  if (!forLoopNormalization(target_loop));
-  {// the return value is not reliable
+
+  // DQ (3/25/2017): Fixed Clang warning: warning: if statement has empty body [-Wempty-body]
+  // if (!forLoopNormalization(target_loop));
+  if (!forLoopNormalization(target_loop))
+  {
+    // the return value is not reliable
     //    cerr<<"Error in SageInterface::loopUnrolling(): target loop cannot be normalized."<<endl;
     //    dumpInfo(target_loop);
     //    return false;
@@ -9785,8 +9790,10 @@ bool SageInterface::loopTiling(SgForStatement* loopNest, size_t targetLevel, siz
   ROSE_ASSERT(loops.size()>=targetLevel);
   SgForStatement* target_loop = loops[targetLevel -1]; // adjust to numbering starting from 0
 
+  // DQ (3/25/2017): Fixed Clang warning: warning: if statement has empty body [-Wempty-body]
   // normalize the target loop first
-  if (!forLoopNormalization(target_loop));
+  // if (!forLoopNormalization(target_loop));
+  if (!forLoopNormalization(target_loop))
   {// the return value is not reliable
 //    cerr<<"Error in SageInterface::loopTiling(): target loop cannot be normalized."<<endl;
 //    dumpInfo(target_loop);
@@ -10758,11 +10765,15 @@ bool SageInterface::mergeAssignmentWithDeclaration(SgExprStatement* assign_stmt,
   SgSymbol* decl_var_symbol = decl_var->get_symbol_from_symbol_table();
   if (decl_var_symbol!=NULL)
   {
-    if (assign_op_var->get_symbol() != decl_var_symbol)  return NULL;
+    // DQ (3/25/2017): Fixed Clang warning: warning: implicit conversion of NULL constant to 'bool' [-Wnull-conversion]
+    // if (assign_op_var->get_symbol() != decl_var_symbol)  return NULL;
+    if (assign_op_var->get_symbol() != decl_var_symbol)  return false;
   }
   else
   { // fallback to comparing variable names instead
-    if (assign_op_var->get_symbol()->get_name() != decl_var ->get_name()) return NULL; 
+    // DQ (3/25/2017): Fixed Clang warning: warning: implicit conversion of NULL constant to 'bool' [-Wnull-conversion]
+    // if (assign_op_var->get_symbol()->get_name() != decl_var ->get_name()) return NULL; 
+    if (assign_op_var->get_symbol()->get_name() != decl_var ->get_name()) return false;
   }
 
   // Everything looks fine now. Do the merge.
@@ -10810,11 +10821,15 @@ bool SageInterface::mergeDeclarationWithAssignment(SgVariableDeclaration* decl, 
   SgSymbol* decl_var_symbol = decl_var->get_symbol_from_symbol_table();
   if (decl_var_symbol!=NULL)
   {
-    if (assign_op_var->get_symbol() != decl_var_symbol)  return NULL;
+    // DQ (3/25/2017): Fixed Clang warning: warning: implicit conversion of NULL constant to 'bool' [-Wnull-conversion]
+    // if (assign_op_var->get_symbol() != decl_var_symbol)  return NULL;
+    if (assign_op_var->get_symbol() != decl_var_symbol)  return false;
   }
   else
   { // fallback to comparing variable names instead
-    if (assign_op_var->get_symbol()->get_name() != decl_var ->get_name()) return NULL; 
+    // DQ (3/25/2017): Fixed Clang warning: warning: implicit conversion of NULL constant to 'bool' [-Wnull-conversion]
+    // if (assign_op_var->get_symbol()->get_name() != decl_var ->get_name()) return NULL; 
+    if (assign_op_var->get_symbol()->get_name() != decl_var ->get_name()) return false; 
   }
 
   // Everything looks fine now. Do the merge.

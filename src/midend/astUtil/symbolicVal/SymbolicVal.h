@@ -282,7 +282,11 @@ class ROSE_DLL_API SymbolicPow : public SymbolicFunction
   virtual bool GetConstOpd(int &val1, int &val2) const 
             { return last_arg().isConstInt(val1, val2); }
   SymbolicValImpl* Clone() const { return new SymbolicPow(*this); }
-  virtual SymbolicFunction* cloneFunction(const Arguments& args) 
+
+// DQ (3/25/2017): clang reports a warning here: 'SymbolicPow::cloneFunction' hides overloaded virtual function [-Woverloaded-virtual]
+// But since this is Qing's code I will not try to fix it at this moment (upon review it appears to be a typo: missing const, so I have fixed it).
+// virtual SymbolicFunction* cloneFunction(const Arguments& args) 
+  virtual SymbolicFunction* cloneFunction(const Arguments& args) const
      { SymbolicFunction* r =  new SymbolicPow(args); return r; }
 };
 
