@@ -88,65 +88,70 @@ UntypedConverter::convertSgUntypedType (SgUntypedType* ut_type, SgScopeStatement
    ROSE_ASSERT(ut_type->get_is_class() == false);
    ROSE_ASSERT(ut_type->get_is_constant() == false);
    ROSE_ASSERT(ut_type->get_is_user_defined() == false);
-   ROSE_ASSERT(ut_type->get_has_kind() == false);
 
+   SgExpression*   kindExpression = NULL;
+   SgExpression* lengthExpression = NULL;
+
+   if (ut_type->get_has_kind())
+      {
+         SgExpressionPtrList children;
+         SgUntypedExpression* ut_kind = ut_type->get_type_kind();
+      // TODO - figure out how to handle operators (or anything with children)
+         ROSE_ASSERT(isSgUntypedValueExpression(ut_kind) != NULL || isSgUntypedReferenceExpression(ut_kind) != NULL);
+         kindExpression = convertSgUntypedExpression(ut_kind, children, scope);
+      }
+   if (ut_type->get_char_length_is_string())
+      {
+         SgExpressionPtrList children;
+         SgUntypedExpression* ut_length = ut_type->get_char_length_expression();
+      // TODO - figure out how to handle operators (or anything with children)
+         ROSE_ASSERT(isSgUntypedValueExpression(ut_length) != NULL || isSgUntypedReferenceExpression(ut_length) != NULL);
+         lengthExpression = convertSgUntypedExpression(ut_length, children, scope);
+      }
+
+// TODO - determine if SageBuilder can be used (or perhaps should be updated)
    switch(ut_type->get_type_enum_id())
       {
-        case SgUntypedType::e_unknown:
+        case SgUntypedType::e_void:           sg_type = SageBuilder::buildVoidType();              break;
+        case SgUntypedType::e_int:            sg_type = SgTypeInt::createType(0, kindExpression);  break;
+        case SgUntypedType::e_float:          sg_type = SgTypeFloat::createType(kindExpression);   break;
+        case SgUntypedType::e_double:         sg_type = SageBuilder::buildDoubleType();            break;
+
+     // complex types
+        case SgUntypedType::e_complex:        sg_type = SgTypeComplex::createType(SgTypeFloat::createType(kindExpression), kindExpression); break;
+        case SgUntypedType::e_double_complex: sg_type = SgTypeComplex::createType(SgTypeDouble::createType());                              break;
+
+        case SgUntypedType::e_bool:           sg_type = SgTypeBool::createType(kindExpression);    break;
+
+     // character and string types
+        case SgUntypedType::e_char:
            {
-              if (ut_type->get_type_name() == "bool")
+              if (lengthExpression)
                  {
-                    sg_type = SageBuilder::buildBoolType();
+                    sg_type = SgTypeString::createType(lengthExpression, kindExpression);          break;
                  }
               else
                  {
-                    fprintf(stderr, "UntypedConverter::convertSgUntypedType: failed to find known type \n");
-                    ROSE_ASSERT(0);
+                    sg_type = SgTypeChar::createType(kindExpression);                              break;
                  }
-              break;
            }
-        case SgUntypedType::e_void:
-           {
-              sg_type = SageBuilder::buildVoidType();
-              break;
-           }
-        case SgUntypedType::e_int:
-           {
-              sg_type = SageBuilder::buildIntType();
-              break;
-           }
-        case SgUntypedType::e_float:
-           {
-              sg_type = SageBuilder::buildFloatType();
-              break;
-           }
-        case SgUntypedType::e_double:
-           {
-              sg_type = SageBuilder::buildDoubleType();
-              break;
-           }
-        case SgUntypedType::e_complex:
-           {
-              sg_type = SageBuilder::buildComplexType();
-              break;
-           }
-        case SgUntypedType::e_char:
-           {
-           // sg_type = SageBuilder::buildCharType(SgExpression* stringLengthExpression);
-           // TODO - need stringLengthExpression, the following will fail on an assertion
-              sg_type = SageBuilder::buildCharType();
-              break;
-           }
+
         default:
            {
-              fprintf(stderr, "UntypedConverter::convertSgUntypedType: failed to find known type \n");
+              fprintf(stderr, "UntypedConverter::convertSgUntypedType: failed to find known type, enum is %d \n", ut_type->get_type_enum_id());
               ROSE_ASSERT(0);
            }
       }
 
-#if DEBUG_UNTYPED_CONVERTER
-   printf("--- finished converting type %s\n", ut_type->get_type_name().c_str());
-#endif
+// TODO - determine if this is necessary
+   if (kindExpression != NULL)
+      {
+         kindExpression->set_parent(sg_type);
+      }
+   if (lengthExpression != NULL)
+      {
+         lengthExpression->set_parent(sg_type);
+      }
 
    ROSE_ASSERT(sg_type != NULL);
 

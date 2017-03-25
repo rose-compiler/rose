@@ -213,7 +213,7 @@ experimental_openFortranParser_main(int argc, char **argv)
 
           if (traverse_SgUntypedFile(SgUntypedFile_term, &untypedFile) != ATtrue || untypedFile == NULL)
              {
-               fprintf(stderr, "\nFAILED: in experimental_openFortranParser_main(), unable to parse file %s\n\n", filenameWithoutPath.c_str());
+               fprintf(stderr, "\nFAILED: in experimental_openFortranParser_main(), unable to traverse file %s\n\n", filenameWithoutPath.c_str());
                return 1;
              }
         }
