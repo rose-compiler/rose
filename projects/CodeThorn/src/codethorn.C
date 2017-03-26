@@ -335,7 +335,6 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
 
   experimentalOptions.add_options()
     ("annotate-terms",po::value< string >(),"annotate term representation of expressions in unparsed program.")
-    ("arith-top",po::value< string >(),"Arithmetic operations +,-,*,/,% always evaluate to top [=yes|no]")
     ("eliminate-stg-back-edges",po::value< string >(), " eliminate STG back-edges (STG becomes a tree).")
     ("generate-assertions",po::value< string >(),"generate assertions (pre-conditions) in program and output program (using ROSE unparser).")
     ("precision-exact-constraints",po::value< string >(),"(experimental) use precise constraint extraction [=yes|no]")
@@ -486,8 +485,8 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
     cout << dataRaceOptions << "\n";
     exit(0);
   } else if (args.count("version")) {
-    cout << "CodeThorn version 1.7.0\n";
-    cout << "Written by Markus Schordan, Adrian Prantl, and Marc Jasper\n";
+    cout << "CodeThorn version 1.8.0\n";
+    cout << "Written by Markus Schordan, Marc Jasper, Joshua Asplund, Adrian Prantl\n";
     exit(0);
   }
   return args;
@@ -803,11 +802,6 @@ void analyzerSetup(Analyzer& analyzer, const po::variables_map& args, Sawyer::Me
   if(boolOptions["print-all-options"]) {
     cout<<boolOptions.toString(); // prints all bool options
     exit(1);
-  }
-
-  if(boolOptions["arith-top"]) {
-    CodeThorn::AType::ConstIntLattice cil;
-    cil.arithTop=true;
   }
 
   if(args.count("tg-trace")) {

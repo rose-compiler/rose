@@ -2,7 +2,6 @@
 
 #include "sage3basic.h"
 
-/** Constructor adds the new note to the list of notes for the note section. */
 void
 SgAsmElfNoteEntry::ctor(SgAsmElfNoteSection *section)
 {
@@ -15,14 +14,12 @@ SgAsmElfNoteEntry::ctor(SgAsmElfNoteSection *section)
     p_name->set_parent(this);
 }
 
-/** Get name of note. */
 SgAsmGenericString *
 SgAsmElfNoteEntry::get_name() const
 {
     return p_name;
 }
 
-/** Set name and adjust parent. */
 void
 SgAsmElfNoteEntry::set_name(SgAsmGenericString *name)
 {
@@ -38,7 +35,6 @@ SgAsmElfNoteEntry::set_name(SgAsmGenericString *name)
     }
 }
 
-/** Set payload. This is in addition to the version that takes an SgUnsignedCharList argument. */
 void
 SgAsmElfNoteEntry::set_payload(const void *_buf, size_t nbytes)
 {
@@ -49,8 +45,6 @@ SgAsmElfNoteEntry::set_payload(const void *_buf, size_t nbytes)
         p_payload.push_back(buf[i]);
 }
 
-/** Initialize a note by parsing it from the specified location in the note section. Return value is the offset to the
- *  beginning of the next note. */
 rose_addr_t
 SgAsmElfNoteEntry::parse(rose_addr_t at)
 {
@@ -91,8 +85,6 @@ SgAsmElfNoteEntry::parse(rose_addr_t at)
     return at + payload_size;
 }
 
-/** Write a note at the specified offset to the section containing the note. Returns the offset for the first byte past the end
- *  of the note. */
 rose_addr_t
 SgAsmElfNoteEntry::unparse(std::ostream &f, rose_addr_t at)
 {
@@ -133,7 +125,6 @@ SgAsmElfNoteEntry::unparse(std::ostream &f, rose_addr_t at)
     return at;
 }
 
-/** Returns the number of bytes needed to store this note. */
 rose_addr_t
 SgAsmElfNoteEntry::calculate_size() const {
     rose_addr_t need = 12;                           /*namesize, payloadsize, type*/
@@ -143,7 +134,6 @@ SgAsmElfNoteEntry::calculate_size() const {
     return need;
 }
 
-/** Print some debugging information */
 void
 SgAsmElfNoteEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
@@ -163,7 +153,6 @@ SgAsmElfNoteEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
     }
 }
 
-/** Non-parsing constructor */
 void
 SgAsmElfNoteSection::ctor()
 {
@@ -185,7 +174,6 @@ SgAsmElfNoteSection::parse()
     return this;
 }
 
-/** Pre-unparsing adjustments */
 bool
 SgAsmElfNoteSection::reallocate()
 {
@@ -214,7 +202,6 @@ SgAsmElfNoteSection::reallocate()
     return reallocated;
 }
 
-/** Write data to note section */
 void
 SgAsmElfNoteSection::unparse(std::ostream &f) const
 {
@@ -229,7 +216,6 @@ SgAsmElfNoteSection::unparse(std::ostream &f) const
 }
 
 
-/** Print some debugging information */
 void
 SgAsmElfNoteSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 {

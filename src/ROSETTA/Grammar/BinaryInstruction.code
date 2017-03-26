@@ -4,52 +4,9 @@
 // #########################################################
 // #########################################################
 
-
-
-
-
-
-HEADER_GENERIC_SECTION_PREDECLARATION_START
-#include "MemoryMap.h"
-HEADER_GENERIC_SECTION_PREDECLARATION_END
-
-HEADER_GENERIC_FILE_PREDECLARATION_START
-#include "MemoryMap.h"
-#include "DataConversion.h"
-HEADER_GENERIC_FILE_PREDECLARATION_END
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 HEADER_BINARY_FILE_START
           void post_construction_initialization();
 HEADER_BINARY_FILE_END
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -681,10 +638,6 @@ HEADER_ELF_EH_FRAME_ENTRY_FD_START
         private:
                 void ctor(SgAsmElfEHFrameEntryCI*);
 HEADER_ELF_EH_FRAME_ENTRY_FD_END
-
-
-
-
 
 
 
@@ -2188,66 +2141,9 @@ HEADER_DOS_EXTENDED_HEADER_START
                 void ctor();
 HEADER_DOS_EXTENDED_HEADER_END
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 HEADER_BINARY_RET_START
    void append_dest( SgAsmStatement* instruction );     
 HEADER_BINARY_RET_END
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // ************************************
 //           DWARF SUPPORT
@@ -2348,12 +2244,6 @@ HEADER_DWARF_COMMON_BLOCK_END
 /* --------------------------------------------------------------------------------- */
 /* --------------------------------------------------------------------------------- */
 
-
-
-
-
-
-
 SOURCE_BINARY_RET_START
 void
 SgAsmx86Ret::append_dest( SgAsmStatement* statement )
@@ -2386,193 +2276,9 @@ SgAsmSynthesizedDataStructureDeclaration::append_declaration( SgAsmSynthesizedDe
 
 SOURCE_BINARY_DATA_STRUCTURE_END
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // *************************************
 //      Binary File Format Support
 // *************************************
-
-
-
-SOURCE_GENERIC_SECTION_START
-// DQ (10/20/2010): Moved this function's definition to the source file.
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-SgAsmGenericSection::SgAsmGenericSection(SgAsmGenericFile *f, SgAsmGenericHeader *fhdr)
-   : local_data_pool(0), p_file(f), p_header(NULL), p_size(1), p_offset(f->get_current_size()),
-     p_file_alignment(0), p_purpose(SP_UNSPECIFIED), p_synthesized(false), p_id(-1), p_name(0),
-     p_mapped_preferred_rva(0), p_mapped_size(0), p_mapped_alignment(0), p_mapped_rperm(false),
-     p_mapped_wperm(false), p_mapped_xperm(false), p_contains_code(false), p_mapped_actual_va(0)
-   {
-     ctor(f, fhdr);
-   }
-#else
-SgAsmGenericSection::SgAsmGenericSection(SgAsmGenericFile *f, SgAsmGenericHeader *fhdr)
-   {
-     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
-     ROSE_ASSERT(false);
-   }
-#endif
-
-// DQ (10/20/2010): Moved this function's definition to the source file.
-SgAsmGenericSection*
-SgAsmGenericSection::parse()
-   {
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-     grab_content();
-#else
-     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
-     ROSE_ASSERT(false);
-#endif
-
-     return this;
-   }
-
-SOURCE_GENERIC_SECTION_END
-
-
-
-SOURCE_GENERIC_HEADER_START
-const char *
-SgAsmGenericHeader::format_name() const
-   {
-     return "ASM_GENERIC_HEADER";
-   }
-
-ByteOrder::Endianness
-SgAsmGenericHeader::get_sex() const
-   {
-     ROSE_ASSERT(p_exec_format != NULL);
-     return p_exec_format->get_sex();
-   }
-
-size_t
-SgAsmGenericHeader::get_word_size() const
-   {
-     ROSE_ASSERT(p_exec_format != NULL);
-     return p_exec_format->get_word_size();
-   }
-
-SOURCE_GENERIC_HEADER_END
-
-
-SOURCE_GENERIC_SYMBOL_START
-SgAsmGenericSymbol::SgAsmGenericSymbol()
-   : p_def_state(SYM_UNDEFINED), p_binding(SYM_NO_BINDING), p_type(SYM_NO_TYPE), p_value(0), p_size(0),
-     p_bound(NULL), p_name(NULL)
-   {
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-     ctor();
-#else
-     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
-     ROSE_ASSERT(false);
-#endif
-   }
-SOURCE_GENERIC_SYMBOL_END
-
-
-SOURCE_GENERIC_DLL_START
-SgAsmGenericDLL::SgAsmGenericDLL(SgAsmGenericString *s)
-   : p_name(s)
-   {
-     s->set_parent(this);
-   }
-SOURCE_GENERIC_DLL_END
-
-
-
-
-
-
-SOURCE_ELF_STRING_SECTION_START
-SgAsmElfStringSection::SgAsmElfStringSection(SgAsmElfFileHeader *fhdr)
-   : SgAsmElfSection(fhdr), p_strtab(NULL)
-        {
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-     ctor();
-#else
-     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
-     ROSE_ASSERT(false);
-#endif
-   }
-
-SOURCE_ELF_STRING_SECTION_END
-
-
-
-
-
-SOURCE_ELF_SECTION_START
-// DQ (10/20/2010): Moved this function's definition to the source file.
-SgAsmElfSection::SgAsmElfSection(SgAsmGenericHeader *fhdr)
-   : SgAsmGenericSection(fhdr->get_file(), fhdr), p_linked_section(NULL), p_section_entry(NULL), p_segment_entry(NULL)
-   {
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-     ctor();
-#else
-     printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
-     ROSE_ASSERT(false);
-#endif
-   }
-
-// DQ (8/22/2008): These are not automatically generated since one of them must be virtual.
-SgAsmElfSection* 
-SgAsmElfSection::get_linked_section () const
-   {
-     ROSE_ASSERT (this != NULL);
-     return p_linked_section;
-   }
-
-// DQ (8/22/2008): These are not automatically generated since one of them must be virtual.
-void
-SgAsmElfSection::set_linked_section ( SgAsmElfSection* linked_section )
-   {
-     ROSE_ASSERT (this != NULL);
-     set_isModified(true);
-
-#if DEBUG_SAGE_ACCESS_FUNCTIONS
-     if (p_linked_section != NULL && linked_section != NULL && p_linked_section != linked_section)
-        {
-          printf ("Warning: linked_section = %p overwriting valid pointer p_linked_section = %p \n",linked_section,p_linked_section);
-#if DEBUG_SAGE_ACCESS_FUNCTIONS_ASSERTION
-          printf ("Error fails assertion (p_linked_section != NULL && linked_section != NULL && p_linked_section != linked_section) is false\n");
-          ROSE_ASSERT(false);
-#endif
-        }
-#endif
-     p_linked_section = linked_section;
-   }
-
-SOURCE_ELF_SECTION_END
-
-
-
-
-
-
 
 SOURCE_PE_SECTION_TABLE_ENTRY_START
 SgAsmPESectionTableEntry::SgAsmPESectionTableEntry(const SgAsmPESectionTableEntry::PESectionTableEntry_disk *disk)

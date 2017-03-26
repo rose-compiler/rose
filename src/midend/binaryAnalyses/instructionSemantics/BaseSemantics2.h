@@ -2211,6 +2211,13 @@ public:
      *  to be false then writeMemory is a no-op. */
     virtual void writeMemory(const RegisterDescriptor &segreg, const SValuePtr &addr, const SValuePtr &data,
                              const SValuePtr &cond) = 0;
+
+    /** Obtain a register value without side effects.
+     *
+     *  This is a lower-level operation than @ref readRegister in that it doesn't cause the register to be marked as having
+     *  been read. It is typically used in situations where the register is being accessed for analysis purposes rather than as
+     *  part of an instruction emulation. */
+    virtual SValuePtr peekRegister(const RegisterDescriptor&, const SValuePtr &dflt);
 };
 
 
