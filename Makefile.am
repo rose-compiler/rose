@@ -723,10 +723,13 @@ all-lcov.info:
 	lcov --capture --no-recursion $(patsubst %,-d %,$(lcov_data_dirs)) -o $@
 
 # Capture only coverage for the ROSE library source code (no tests, tutorials, projects, system headers, boost, etc).
+# DQ (3/26/2017): Removed CodeThorn from being included in lcov results (CodeThorn testing is still done to test ROSE 
+# and those results are a part of the cover coverage for ROSE.
 # DQ (3/13/2017): Modified to remove specific directories of old code to be removed from ROSE and 3rd party code that we do not maintain.
 # (04/26/2016) Pei-Hung lcov has issue to output extracted result to librose-lcov.info with -o option. Using piping instead.
+#	lcov --extract $< "$(top_srcdir)/src/*" "$(top_srcdir)/projects/CodeThorn/*" > $@
 librose-lcov.info: all-lcov.info
-	lcov --extract $< "$(top_srcdir)/src/*" "$(top_srcdir)/projects/CodeThorn/*" > $@
+	lcov --extract $< "$(top_srcdir)/src/*" > $@
 	lcov --remove librose-lcov.info \
         "$(top_srcdir)/src/frontend/CxxFrontend/EDG/edgRose/debugging.*" \
         "$(top_srcdir)/src/frontend/CxxFrontend/EDG/edgRose/edgGraph.*" \

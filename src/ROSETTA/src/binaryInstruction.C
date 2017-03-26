@@ -7757,16 +7757,16 @@ void Grammar::setUpBinaryInstructions() {
         }
 
         /** Initialize object by parsing binary specimen. */
-        virtual SgAsmElfStringSection *parse();
+        virtual SgAsmElfStringSection *parse() $ROSE_OVERRIDE;
 
         /** Dump debugging information. */
-        virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
 
         /** Adjust size of table.
          *
          * Augments superclass to make sure free list and such are adjusted properly. Any time the ELF String Section size is
          * changed we adjust the free list in the ELF String Table contained in this section. */
-        virtual void set_size(rose_addr_t newsize);
+        virtual void set_size(rose_addr_t newsize) $ROSE_OVERRIDE;
 
         /** Reallocate space for the string section if necessary.
          *
@@ -7774,10 +7774,10 @@ void Grammar::setUpBinaryInstructions() {
          *  shrink then call SgAsmGenericStrtab::reallocate(bool) with a true value rather than calling this
          *  function. SgAsmElfStringSection::reallocate is called in response to unparsing a file and gives the string table a
          *  chance to extend its container section if it needs to allocate more space for strings. */
-        virtual bool reallocate();
+        virtual bool reallocate() $ROSE_OVERRIDE;
 
         /** Unparse an ElfStringSection by unparsing the ElfStrtab */
-        virtual void unparse(std::ostream&) const;
+        virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
 
     private:
         void ctor();
@@ -7832,7 +7832,7 @@ void Grammar::setUpBinaryInstructions() {
         /** Parses the string table.
          *
          *  All that actually happens at this point is we look to see if the table begins with an empty string. */
-        virtual SgAsmElfStrtab *parse();
+        virtual SgAsmElfStrtab *parse() $ROSE_OVERRIDE;
 
         /** Write string table back to disk.
          *
@@ -7844,12 +7844,12 @@ void Grammar::setUpBinaryInstructions() {
          *  If @p shared is true then attempt to re-use a previous storage object, otherwise always create a new one. Each
          *  storage object is considered a separate string, therefore when two strings share the same storage object, changing
          *  one string changes the other. */
-        virtual SgAsmStringStorage *create_storage(rose_addr_t offset, bool shared);
+        virtual SgAsmStringStorage *create_storage(rose_addr_t offset, bool shared) $ROSE_OVERRIDE;
 
         /** Returns the number of bytes required to store the string in the string table.
          *
          *  This is the length of the string plus one for the NUL terminator. */
-        virtual rose_addr_t get_storage_size(const SgAsmStringStorage*);
+        virtual rose_addr_t get_storage_size(const SgAsmStringStorage*) $ROSE_OVERRIDE;
 
         /** Find offset for a string.
          *
@@ -7860,10 +7860,10 @@ void Grammar::setUpBinaryInstructions() {
          *  in this case) then we allocate some of that free space and use a suitable offset. In any case, upon return
          *  <code>storege->get_offset()</code> will return the allocated offset if successful, or
          *  @ref SgAsmGenericString::unallocated if we couldn't find an overlap. */
-        virtual void allocate_overlap(SgAsmStringStorage*);
+        virtual void allocate_overlap(SgAsmStringStorage*) $ROSE_OVERRIDE;
 
         /** Similar to create_storage() but uses a storage object that's already been allocated. */
-        virtual void rebind(SgAsmStringStorage*, rose_addr_t);
+        virtual void rebind(SgAsmStringStorage*, rose_addr_t) $ROSE_OVERRIDE;
 
     private:
         void ctor();
@@ -7926,16 +7926,16 @@ void Grammar::setUpBinaryInstructions() {
             : SgAsmElfSection(fhdr) {
             ctor();
         }
-        virtual SgAsmElfNoteSection *parse();
+        virtual SgAsmElfNoteSection *parse() $ROSE_OVERRIDE;
 
         /** Pre-unparsing adjustments */
-        virtual bool reallocate();
+        virtual bool reallocate() $ROSE_OVERRIDE;
 
         /** Write data to note section */
-        virtual void unparse(std::ostream&) const;
+        virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
 
         /** Print some debugging information */
-        virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
 
     private:
         void ctor();
@@ -8151,16 +8151,16 @@ void Grammar::setUpBinaryInstructions() {
         }
 
         /** Initialize by parsing a file. */
-        virtual SgAsmElfEHFrameSection *parse();
+        virtual SgAsmElfEHFrameSection *parse() $ROSE_OVERRIDE;
 
         /** Return sizes for various parts of the table.
          *
          *  See documentation for @ref SgAsmElfSection::calculate_sizes. Since EH Frame Sections are run-length encoded, we
          *  need to actually unparse the section in order to determine its size. */
-        virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const;
+        virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const $ROSE_OVERRIDE;
 
         /** Write data to .eh_frame section */
-        virtual void unparse(std::ostream&) const;
+        virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
 
         /** Unparses the section into the optional output stream and returns the number of bytes written.
          *
@@ -8169,7 +8169,7 @@ void Grammar::setUpBinaryInstructions() {
         rose_addr_t unparse(std::ostream*) const;
 
         /** Print some debugging info */
-        virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
 
     private:
         void ctor();
@@ -8777,10 +8777,10 @@ void Grammar::setUpBinaryInstructions() {
         virtual rose_addr_t calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
 
         /** Called prior to unparse to make things consistent. */
-        virtual bool reallocate();
+        virtual bool reallocate() $ROSE_OVERRIDE;
 
         /** Print some debugging info */
-        virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
 
         /** Make this section's name to be stored in the specified string table. */
         void allocate_name_to_storage(SgAsmElfStringSection*);
@@ -10270,7 +10270,7 @@ void Grammar::setUpBinaryInstructions() {
         }
 
         /** Print some debugging info */
-        virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
 
         /** Returns the string table that holds this string.
          *
@@ -10278,22 +10278,22 @@ void Grammar::setUpBinaryInstructions() {
         SgAsmGenericStrtab *get_strtab();
 
         /** Returns the std::string associated with the SgAsmStoredString. */
-        virtual std::string get_string(bool escape=false) const;
+        virtual std::string get_string(bool escape=false) const $ROSE_OVERRIDE;
 
         /** Give the string a new value.
          *
          *  This also deallocates the previous value. */
-        virtual void set_string(const std::string&);
+        virtual void set_string(const std::string&) $ROSE_OVERRIDE;
 
         /** Give the string a new value.
          *
          *  The string is given a new value by specifying the offset of a string that already exists in the string table. */
-        virtual void set_string(rose_addr_t);
+        virtual void set_string(rose_addr_t) $ROSE_OVERRIDE;
 
         /** Returns the offset into the string table where the string is allocated.
          *
          *  If the string is not allocated then this call triggers an allocation. */
-        virtual rose_addr_t get_offset() const;
+        virtual rose_addr_t get_offset() const $ROSE_OVERRIDE;
 
     private:
         void ctor(class SgAsmGenericStrtab*, rose_addr_t offset, bool shared);
@@ -10548,13 +10548,13 @@ void Grammar::setUpBinaryInstructions() {
         virtual ~SgAsmGenericHeader();
 
         /** Allow all sections to reallocate themselves */
-        virtual bool reallocate();
+        virtual bool reallocate() $ROSE_OVERRIDE;
 
         /** Unparse headers and all they point to */
-        virtual void unparse(std::ostream&) const;
+        virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
 
         /** Print some debugging info. */
-        virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
 
         /** Returns the name of the file format. */
         virtual const char *format_name() const;
