@@ -177,7 +177,13 @@ class UnparseLanguageIndependentConstructs
        // DQ (4/25/2005): Made this virtual so that Gabriel could build a specialized unparser.
           ROSE_DLL_API virtual void unparseExpression              (SgExpression* expr, SgUnparse_Info& info);
 
+#if 0
+       // DQ (3/27/2017): Eliminate Clang warning about hidden virtual function.
+       // Note that I need to think about this more.
           virtual void unparseExprList                (SgExpression* expr, SgUnparse_Info& info);
+#else
+          virtual void unparseExprList                (SgExpression* expr, SgUnparse_Info& info, bool paren);
+#endif
           virtual void unparseMatrixExp               (SgExpression* expr, SgUnparse_Info& info);
           
        // virtual void unparseUnaryOperator           (SgExpression* expr, const char* op, SgUnparse_Info& info);
