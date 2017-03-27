@@ -79,15 +79,15 @@
    This is reported as a bug in Intel v14 support for Boost, but this is a fix to
    permit the code in test2015_87.C to compile.
 */
-  #define __ECL
+#define __ECL
   typedef unsigned    long fenv_t;
   typedef unsigned    long fexcept_t;
-  #define FE_INVALID      1
-  #define FE_DIVBYZERO    4
-  #define FE_OVERFLOW     8
-  #define FE_UNDERFLOW    16
-  #define FE_INEXACT      32
-  #define _FENV_PUBAPI   /* do not change this line! */
+#define FE_INVALID      1
+#define FE_DIVBYZERO    4
+#define FE_OVERFLOW     8
+#define FE_UNDERFLOW    16
+#define FE_INEXACT      32
+#define _FENV_PUBAPI   /* do not change this line! */
   extern int  _FENV_PUBAPI feclearexcept (int __excepts) ;
   extern int  _FENV_PUBAPI fegetexceptflag (fexcept_t *__flagp, int __excepts) ;
   extern int  _FENV_PUBAPI fesetexceptflag (const fexcept_t *__flagp, int __excepts) ;

@@ -395,7 +395,8 @@ class EasyStorage <rose_graph_integer_node_hash_map> :
    {
      typedef StorageClassMemoryManagement <EasyStorageMapEntry<int,SgGraphNode*> > Base;
     private:
-     int value;
+  // DQ (3/25/2017): Remove to avoid Clang warning about unused private variable.
+  // int value;
      unsigned long parent;
     public: 
      EasyStorage() {parent = 0;}
@@ -415,7 +416,8 @@ class EasyStorage <rose_graph_integer_edge_hash_map> :
    {
      typedef StorageClassMemoryManagement <EasyStorageMapEntry<int,SgGraphEdge*> > Base;
     private:
-     int value;
+  // DQ (3/25/2017): Remove to avoid Clang warning about unused private variable.
+  // int value;
      unsigned long parent;
     public: 
      EasyStorage() {parent = 0;}
@@ -435,7 +437,8 @@ class EasyStorage <rose_graph_integer_edge_hash_multimap> :
    {
      typedef StorageClassMemoryManagement <EasyStorageMapEntry<int,SgGraphEdge*> > Base;
     private:
-     int value;
+  // DQ (3/25/2017): Remove to avoid Clang warning about unused private variable.
+  // int value;
      unsigned long parent;
     public: 
      EasyStorage() {parent = 0;}
@@ -456,7 +459,8 @@ class EasyStorage <rose_graph_string_integer_hash_multimap> :
      typedef StorageClassMemoryManagement <EasyStorageMapEntry<std::string,int> > Base;
     private:
      EasyStorage <std::string> name_data; 
-     int value;
+  // DQ (3/25/2017): Remove to avoid Clang warning about unused private variable.
+  // int value;
     public: 
      EasyStorage() {}
      void storeDataInEasyStorageClass(const rose_graph_string_integer_hash_multimap& data_);
@@ -476,7 +480,9 @@ class EasyStorage <rose_graph_integerpair_edge_hash_multimap> :
      typedef StorageClassMemoryManagement <EasyStorageMapEntry<EasyStorageMapEntry<int,int>,SgGraphEdge*> > Base;
     private:
   // EasyStorage <std::string> name_data; 
-     int value;
+
+  // DQ (3/25/2017): Remove to avoid Clang warning about unused private variable.
+  // int value;
     public: 
      EasyStorage() {}
      void storeDataInEasyStorageClass(const rose_graph_integerpair_edge_hash_multimap & data_);
