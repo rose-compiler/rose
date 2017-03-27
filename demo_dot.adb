@@ -23,42 +23,51 @@ procedure Demo_Dot is
    procedure Demo_Graph is
       Graph : Dot.Graphs.Class;
    begin
-      Graph.Digraph := False;
-      Graph.Strict := False;
+      Graph.Set_Is_Digraph (False);
+      Graph.Set_Is_Strict (False);
       Print (Graph, "Graph");
    end;
 
    procedure Demo_Digraph is
       Graph : Dot.Graphs.Class;
    begin
-      Graph.Digraph := True;
-      Graph.Strict := False;
+      Graph.Set_Is_Digraph (True);
+      Graph.Set_Is_Strict (False);
       Print (Graph, "Digraph");
    end;
 
    procedure Demo_Strict_Graph is
       Graph : Dot.Graphs.Class;
    begin
-      Graph.Digraph := False;
-      Graph.Strict := True;
+      Graph.Set_Is_Digraph (False);
+      Graph.Set_Is_Strict (True);
       Print (Graph, "Strict Graph");
    end;
 
    procedure Demo_Strict_Digraph is
       Graph : Dot.Graphs.Class;
    begin
-      Graph.Digraph := True;
-      Graph.Strict := True;
+      Graph.Set_Is_Digraph (True);
+      Graph.Set_Is_Strict (True);
       Print (Graph, "Strict Digraph");
    end;
 
    procedure Demo_ID is
       Graph : Dot.Graphs.Class;
    begin
-      Graph.Digraph := False;
-      Graph.Strict := False;
-      Graph.ID := Dot.To_ID_Type ("Some_ID");
+      Graph.Set_Is_Digraph (False);
+      Graph.Set_Is_Strict (False);
+      Graph.Set_ID (Dot.To_ID_Type ("Some_ID"));
       Print (Graph, "Graph with ID");
+   end;
+
+   procedure Demo_Reserved_ID is
+      Graph : Dot.Graphs.Class;
+   begin
+      Graph.Set_Is_Digraph (False);
+      Graph.Set_Is_Strict (False);
+      Graph.Set_ID (Dot.To_ID_Type ("graph"));
+      Print (Graph, "Graph with reserved word as ID");
    end;
 
    procedure Demo_Nodes is
@@ -68,12 +77,11 @@ procedure Demo_Dot is
       Assignment_List_1 : Dot.Assignment.List; -- Initialized
       Assignment_List_2 : Dot.Assignment.List; -- Initialized
    begin
-      Graph.Digraph := False;
-      Graph.Strict := False;
+      Graph.Set_Is_Digraph (False);
+      Graph.Set_Is_Strict (False);
 
       Node_Stmt_1.Node_ID.ID := Dot.To_ID_Type ("minimal_node");
-      Node_Stmt_1.Append_To(Graph.Stmt_List);
---        Graph.Stmt_List.Append (new Dot.Node_Stmt.Class'(Node_Stmt_1));
+      Graph.Append_Stmt (new Dot.Node_Stmt.Class'(Node_Stmt_1));
 
       Node_Stmt_2.Node_ID.ID := Dot.To_ID_Type ("node_with_attrs");
       Assignment_List_1.Append ("Today", "Thursday");
@@ -82,16 +90,18 @@ procedure Demo_Dot is
       Assignment_List_2.Append ("Now", "Day");
       Assignment_List_2.Append ("Later", "Night");
       Node_Stmt_2.Attrs.Append (Assignment_List_2);
-      Graph.Stmt_List.Append (new Dot.Node_Stmt.Class'(Node_Stmt_2));
-      Print (Graph, "Graph with " & Graph.Stmt_List.Length'Image & " nodes");
+      Graph.Append_Stmt (new Dot.Node_Stmt.Class'(Node_Stmt_2));
+      Print (Graph, "Graph with " & Graph.Stmt_Count'Image & " nodes");
    end;
 
 begin
+   Demo_Default_Graph;
    Demo_Graph;
    Demo_Digraph;
    Demo_Strict_Graph;
    Demo_Strict_Digraph;
    Demo_ID;
+   Demo_Reserved_ID;
 
    Demo_Nodes;
 end Demo_Dot;

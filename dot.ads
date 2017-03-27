@@ -237,15 +237,40 @@ package Dot is
    -----------------------------------------------------------------------------
    package Graphs is
 
-      type Class is tagged -- Initialized
+      type Class is tagged private; -- Initialized
+
+      procedure Set_Is_Digraph
+        (This : in out Class;
+         To   : in     Boolean);
+
+      procedure Set_Is_Strict
+        (This : in out Class;
+         To   : in     Boolean);
+
+      procedure Set_ID
+        (This : in out Class;
+         To   : in     ID_Type);
+
+      procedure Append_Stmt
+        (This     : in out Class;
+         The_Stmt : in     Stmt.Access_All_Class);
+
+      function Stmt_Count
+        (This : in Class)
+         return Natural;
+
+      procedure Print
+        (This : in Class);
+
+   private
+
+      type Class is tagged-- Initialized
          record
             Digraph   : Boolean := True;
             Strict    : Boolean := True;
             ID        : ID_Type; -- Initialized
             Stmt_List : Stmt.List; -- Initialized
          end record;
-
-      procedure Print (This : in Class);
 
    end Graphs;
    -----------------------------------------------------------------------------

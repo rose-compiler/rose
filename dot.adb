@@ -16,6 +16,56 @@ package body Dot is
       ------------
       -- EXPORTED
       ------------
+      procedure Set_Is_Digraph
+        (This : in out Class;
+         To   : in     Boolean) is
+      begin
+         This.Digraph := To;
+      end;
+
+      ------------
+      -- EXPORTED
+      ------------
+      procedure Set_Is_Strict
+        (This : in out Class;
+         To   : in     Boolean) is
+      begin
+         This.Strict := To;
+      end;
+
+      ------------
+      -- EXPORTED
+      ------------
+      procedure Set_ID
+        (This : in out Class;
+         To   : in     ID_Type) is
+      begin
+         This.ID := To;
+      end;
+
+      ------------
+      -- EXPORTED
+      ------------
+      procedure Append_Stmt
+        (This     : in out Class;
+         The_Stmt : in     Stmt.Access_All_Class) is
+      begin
+         This.Stmt_List.Append (The_Stmt);
+      end;
+
+      ------------
+      -- EXPORTED
+      ------------
+      function Stmt_Count
+        (This : in Class)
+         return Natural is
+      begin
+         return Natural (This.Stmt_List.Length);
+      end;
+
+      ------------
+      -- EXPORTED
+      ------------
       procedure Print (This : in Class) is
       begin
          if This.Strict then
