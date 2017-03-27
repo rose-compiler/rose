@@ -3,9 +3,9 @@ with Ada.Wide_Text_IO;
 with Asis;
 with Asis.Ada_Environments;
 with Asis.Compilation_Units;
-with Asis.Implementation;
 with Asis.Exceptions; use ASIS.Exceptions;
 with Asis.Errors;
+with Asis.Implementation;
 with GNAT.Directory_Operations;
 
 with Asis_Tool_2.Unit;
@@ -15,23 +15,21 @@ package body Asis_Tool_2.Context is
    ------------
    -- EXPORTED:
    ------------
-   procedure Process (This : in out Class) is
+   procedure Process
+     (This : in out Class;
+     Graph : in     Dot.Graphs.Access_Class) is
    begin
-      Asis.Implementation.Initialize;
+      This.Graph := Graph;
       -- This just names the Context.  It does not control what it processes:
       Asis.Ada_Environments.Associate
-        (This.My_Context,
+        (This.Asis_Context,
          To_Wide_String (GNAT.Directory_Operations.Get_Current_Dir));
-      Asis.Ada_Environments.Open (This.My_Context);
-      Graph.Digraph := True;
-      Graph.Strict := False;
-      Graph.ID := Dot.To_ID_Type
-        (To_String (Asis.Ada_Environments.Name (This.My_Context)));
+      Asis.Ada_Environments.Open (This.Asis_Context);
+      This.Graph.Set_ID
+        (To_String (Asis.Ada_Environments.Name (This.Asis_Context)));
       This.Process_Units;
-      Graph.Print;
-      Asis.Ada_Environments.Close (This.My_Context);
-      Asis.Ada_Environments.Dissociate (This.My_Context);
-      Asis.Implementation.Finalize;
+      Asis.Ada_Environments.Close (This.Asis_Context);
+      Asis.Ada_Environments.Dissociate (This.Asis_Context);
    end Process;
 
    -----------
@@ -41,14 +39,13 @@ package body Asis_Tool_2.Context is
       use Ada.Wide_Text_IO;
       use Asis.Exceptions;
      Asis_Units : Asis.Compilation_Unit_List :=
-        Asis.Compilation_Units.Compilation_Units (This.My_Context);
+        Asis.Compilation_Units.Compilation_Units (This.Asis_Context);
    begin
       for Asis_Unit of Asis_Units loop
          declare
             Tool_Unit : Asis_Tool_2.Unit.Class;
          begin
-            Tool_Unit.Set_Up (Asis_Unit);
-            Tool_Unit.Process;
+            Tool_Unit.Process (Asis_Unit, This.Graph);
          end;
       end loop;
    exception

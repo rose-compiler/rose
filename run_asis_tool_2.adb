@@ -1,9 +1,9 @@
-with Asis_Tool_2.Context;
+with Asis_Tool_2.Tool;
 
 procedure Run_Asis_Tool_2
 is
-   This_Context : Asis_Tool_2.Context.Class;
+   This_Tool : Asis_Tool_2.Tool.Class;
 begin
-   Asis_Tool_2.Trace_On := False;
-   This_Context.Process;
+   Asis_Tool_2.Trace_On := True;
+   This_Tool.Process;
 end Run_Asis_Tool_2;
