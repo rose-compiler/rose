@@ -8,6 +8,7 @@ HEADER_BINARY_FILE_START
           void post_construction_initialization();
 HEADER_BINARY_FILE_END
 
+
 // ***********************************************
 //          PE Binary File Format Support
 // ***********************************************
@@ -223,17 +224,17 @@ HEADER_PE_FILE_HEADER_START
                         : SgAsmGenericHeader(f), p_loader_map(NULL), p_section_table(NULL), p_coff_symtab(NULL)
                         {ctor();}
 
-                virtual const char *format_name() const {return "PE";}
+                virtual const char *format_name() const $ROSE_OVERRIDE {return "PE";}
                 static bool is_PE (SgAsmGenericFile*);
                 std::string rvasize_pair_name(PairPurpose, const char **short_name);
                 void set_rvasize_pair(PairPurpose, SgAsmPESection*);
                 void update_rvasize_pairs();
                 void add_rvasize_pairs();
 
-                virtual SgAsmPEFileHeader *parse();
-                virtual bool reallocate();
-                virtual void unparse(std::ostream&) const;
-                virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+                virtual SgAsmPEFileHeader *parse() $ROSE_OVERRIDE;
+                virtual bool reallocate() $ROSE_OVERRIDE;
+                virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
+                virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
                 void create_table_sections();
 
                 /* Loader memory maps */
@@ -256,8 +257,8 @@ HEADER_PE_SECTION_START
                         : SgAsmGenericSection(fhdr->get_file(), fhdr), p_section_entry(NULL)
                         {}
                 SgAsmPESection *init_from_section_table(SgAsmPESectionTableEntry *entry, int id);
-                virtual bool reallocate();
-                virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+                virtual bool reallocate() $ROSE_OVERRIDE;
+                virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
 HEADER_PE_SECTION_END
 
 
@@ -340,10 +341,10 @@ HEADER_PE_IMPORT_SECTION_START
                 explicit SgAsmPEImportSection(SgAsmPEFileHeader *fhdr)
                         : SgAsmPESection(fhdr)
                         {ctor();}
-                virtual SgAsmPEImportSection *parse();
-                virtual bool reallocate();
-                virtual void unparse(std::ostream&) const;
-                virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+                virtual SgAsmPEImportSection *parse() $ROSE_OVERRIDE;
+                virtual bool reallocate() $ROSE_OVERRIDE;
+                virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
+                virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
                 void add_import_directory(SgAsmPEImportDirectory*);
                 void remove_import_directory(SgAsmPEImportDirectory*);
                 static bool show_import_mesg();
@@ -436,8 +437,8 @@ HEADER_PE_EXPORT_SECTION_START
                 SgAsmPEExportSection(SgAsmPEFileHeader *fhdr)
                         : SgAsmPESection(fhdr), p_export_dir(NULL), p_exports(NULL)
                         {ctor();}
-                virtual SgAsmPEExportSection *parse();
-                virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+                virtual SgAsmPEExportSection *parse() $ROSE_OVERRIDE;
+                virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
                 void add_entry(SgAsmPEExportEntry*);
         private:
                 void ctor();
@@ -450,11 +451,11 @@ HEADER_PE_SECTION_TABLE_START
                 explicit SgAsmPESectionTable(SgAsmPEFileHeader *fhdr)
                         : SgAsmGenericSection(fhdr->get_file(), fhdr)
                         {ctor();}
-                virtual SgAsmPESectionTable* parse();
+                virtual SgAsmPESectionTable* parse() $ROSE_OVERRIDE;
                 void add_section(SgAsmPESection *section);
-                virtual bool reallocate();
-                virtual void unparse(std::ostream&) const;
-                virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+                virtual bool reallocate() $ROSE_OVERRIDE;
+                virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
+                virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
         private:
                 void ctor();
 HEADER_PE_SECTION_TABLE_END
@@ -467,9 +468,10 @@ HEADER_PE_COFF_SYMBOL_TABLE_START
                         : SgAsmGenericSection(fhdr->get_file(), fhdr)
                         {ctor();}
                 size_t get_nslots() const;
-                virtual SgAsmCoffSymbolTable *parse();
-                virtual void unparse(std::ostream&) const;
-                virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+                virtual SgAsmCoffSymbolTable *parse() $ROSE_OVERRIDE;
+                virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
+                virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
+
         private:
                 void ctor();
 HEADER_PE_COFF_SYMBOL_TABLE_END
@@ -589,7 +591,7 @@ HEADER_PE_COFF_SYMBOL_START
           SgAsmCoffSymbol(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAsmGenericSection *strtab, size_t idx);
        // virtual ~COFFSymbol() {}
           void *encode(SgAsmCoffSymbol::COFFSymbol_disk*) const;
-          virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
+          virtual void dump(FILE *f, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
        /* Auxilliary data for the symbol */
        // const unsigned char *get_aux_data() {return aux_data;}
        // size_t get_aux_size() {return aux_size;}
@@ -614,8 +616,8 @@ HEADER_COFF_STRING_TABLE_START
                         {}
                 virtual ~SgAsmCoffStrtab();
                 virtual void unparse(std::ostream&) const;
-                virtual SgAsmStringStorage *create_storage(rose_addr_t offset, bool shared);
-                virtual rose_addr_t get_storage_size(const SgAsmStringStorage*);
+                virtual SgAsmStringStorage *create_storage(rose_addr_t offset, bool shared) $ROSE_OVERRIDE;
+                virtual rose_addr_t get_storage_size(const SgAsmStringStorage*) $ROSE_OVERRIDE;
 HEADER_COFF_STRING_TABLE_END
 
 
@@ -626,11 +628,11 @@ HEADER_PE_STRING_SECTION_START
                         : SgAsmPESection(fhdr), p_strtab(NULL)
                         {ctor();}
                 virtual ~SgAsmPEStringSection() {}
-                virtual SgAsmPEStringSection* parse();
-                virtual bool reallocate();
-                virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
-                virtual void set_size(rose_addr_t newsize);
-           virtual void unparse(std::ostream&) const;
+                virtual SgAsmPEStringSection* parse() $ROSE_OVERRIDE;
+                virtual bool reallocate() $ROSE_OVERRIDE;
+                virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
+                virtual void set_size(rose_addr_t newsize) $ROSE_OVERRIDE;
+                virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
         private:
                 void ctor();
 HEADER_PE_STRING_SECTION_END
@@ -728,9 +730,10 @@ HEADER_NE_FILE_HEADER_START
        // virtual ~NEFileHeader() {}
           static bool is_NE (SgAsmGenericFile*);
           static SgAsmNEFileHeader *parse(SgAsmDOSFileHeader*);
-          virtual void unparse(std::ostream&) const;
-          virtual const char *format_name() const {return "NE";}
-          virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+          virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
+          virtual const char *format_name() const $ROSE_OVERRIDE {return "NE";}
+          virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
+
      private:
           void ctor(SgAsmGenericFile *f, rose_addr_t offset);
           void *encode(SgAsmNEFileHeader::NEFileHeader_disk*) const;
@@ -744,8 +747,8 @@ HEADER_NE_SECTION_START
 
        // virtual ~NESection() {}
 
-          virtual void unparse(std::ostream&) const;
-          virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+          virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
+          virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
        /* Accessors for protected/private data */
        // NESectionTableEntry *get_st_entry() {return st_entry;}
        // void set_st_entry(NESectionTableEntry *e) {st_entry=e;}
@@ -764,8 +767,9 @@ HEADER_NE_SECTION_TABLE_START
                 explicit SgAsmNESectionTable(SgAsmNEFileHeader *fhdr)
                         : SgAsmGenericSection(fhdr->get_file(), fhdr)
                         {ctor();}
-                virtual void unparse(std::ostream&) const;
-                virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+                virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
+                virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
+
         private:
                 void ctor();
 HEADER_NE_SECTION_TABLE_END
@@ -777,8 +781,8 @@ HEADER_NE_NAME_TABLE_START
                 SgAsmNENameTable(SgAsmNEFileHeader *fhdr, rose_addr_t offset)
                         : SgAsmGenericSection(fhdr->get_file(), fhdr)
                         {ctor(offset);}
-                virtual void unparse(std::ostream&) const;
-                virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+                virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
+                virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
                 std::vector<std::string> get_names_by_ordinal(unsigned ordinal);
         private:
                 void ctor(rose_addr_t offset);
@@ -791,8 +795,8 @@ HEADER_NE_MODULE_TABLE_START
                 SgAsmNEModuleTable(SgAsmNEFileHeader *fhdr, SgAsmNEStringTable *strtab, rose_addr_t offset, rose_addr_t size)
                         : SgAsmGenericSection(fhdr->get_file(), fhdr), p_strtab(strtab)
                         {ctor(offset, size);}
-                virtual void unparse(std::ostream&) const;
-                virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+                virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
+                virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
         private:
                 void ctor(rose_addr_t offset, rose_addr_t size);
 HEADER_NE_MODULE_TABLE_END
@@ -804,7 +808,7 @@ HEADER_NE_STRING_TABLE_START
                 SgAsmNEStringTable(SgAsmNEFileHeader *fhdr, rose_addr_t offset, rose_addr_t size)
                         : SgAsmGenericSection(fhdr->get_file(), fhdr)
                         {ctor(offset, size);}
-                virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+                virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
                 std::string get_string(rose_addr_t offset);
         private:
                 void ctor(rose_addr_t offset, rose_addr_t size);
@@ -818,8 +822,8 @@ HEADER_NE_ENTRY_TABLE_START
                         : SgAsmGenericSection(fhdr->get_file(), fhdr)
                         {ctor(offset, size);}
                 void populate_entries();
-                virtual void unparse(std::ostream&) const;
-                virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+                virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
+                virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
         private:
                 void ctor(rose_addr_t offset, rose_addr_t size);
 HEADER_NE_ENTRY_TABLE_END
@@ -831,8 +835,8 @@ HEADER_NE_RELOC_TABLE_START
                 explicit SgAsmNERelocTable(SgAsmNEFileHeader *fhdr, SgAsmNESection *section)
                         : SgAsmGenericSection(fhdr->get_file(), fhdr)
                         {ctor(section);}
-                virtual void unparse(std::ostream&) const;
-                virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+                virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
+                virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
         private:
                 void ctor(SgAsmNESection*);
 HEADER_NE_RELOC_TABLE_END
@@ -1029,7 +1033,7 @@ HEADER_LE_FILE_HEADER_START
 
      public:
        // Overloaded base class virtual function
-          const char *format_name() const;
+          const char *format_name() const $ROSE_OVERRIDE;
 
           static bool is_LE (SgAsmGenericFile*);
           static SgAsmLEFileHeader *parse(SgAsmDOSFileHeader*);
@@ -1123,9 +1127,9 @@ HEADER_LE_FILE_HEADER_START
 
        // virtual ~LEFileHeader() {}
 
-          virtual void unparse(std::ostream&) const;
+          virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
        // virtual const char *format_name() const;
-          virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+          virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
      private:
           void ctor(SgAsmGenericFile *f, rose_addr_t offset);
           void *encode(ByteOrder::Endianness sex, SgAsmLEFileHeader::LEFileHeader_disk*) const;
@@ -1138,7 +1142,7 @@ HEADER_LE_SECTION_START
                 explicit SgAsmLESection(SgAsmLEFileHeader *fhdr)
                         : SgAsmGenericSection(fhdr->get_file(), fhdr), p_st_entry(NULL)
                         {}
-                virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+                virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
 HEADER_LE_SECTION_END
 
 
@@ -1148,8 +1152,8 @@ HEADER_LE_SECTION_TABLE_START
                 SgAsmLESectionTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset, rose_addr_t size)
                         : SgAsmGenericSection(fhdr->get_file(), fhdr)
                         {ctor(offset, size);}
-                virtual void unparse(std::ostream&) const;
-                virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+                virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
+                virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
         private:
                 void ctor(rose_addr_t offset, rose_addr_t size);
 HEADER_LE_SECTION_TABLE_END
@@ -1165,8 +1169,8 @@ HEADER_LE_NAME_TABLE_START
                 SgAsmLENameTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset)
                         : SgAsmGenericSection(fhdr->get_file(), fhdr)
                         {ctor(offset);}
-                virtual void unparse(std::ostream&) const;
-                virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+                virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
+                virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
         private:
                 void ctor(rose_addr_t offset);
 HEADER_LE_NAME_TABLE_END
@@ -1178,8 +1182,8 @@ HEADER_LE_PAGE_TABLE_START
                 SgAsmLEPageTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset, rose_addr_t size)
                         : SgAsmGenericSection(fhdr->get_file(), fhdr)
                         {ctor(offset, size);}
-                virtual void unparse(std::ostream&) const;
-                virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+                virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
+                virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
                 SgAsmLEPageTableEntry *get_page(size_t idx);
         private:
                 void ctor(rose_addr_t offset, rose_addr_t size);
@@ -1192,8 +1196,8 @@ HEADER_LE_ENTRY_TABLE_START
                 SgAsmLEEntryTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset)
                         : SgAsmGenericSection(fhdr->get_file(), fhdr)
                         {ctor(offset);}
-                virtual void unparse(std::ostream&) const;
-                virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+                virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
+                virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
         private:
                 void ctor(rose_addr_t offset);
 HEADER_LE_ENTRY_TABLE_END
@@ -1205,7 +1209,7 @@ HEADER_LE_RELOC_TABLE_START
                 SgAsmLERelocTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset)
                         : SgAsmGenericSection(fhdr->get_file(), fhdr)
                         {ctor(offset);}
-                virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+                virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
         private:
                 void ctor(rose_addr_t offset);
 HEADER_LE_RELOC_TABLE_END
@@ -1423,12 +1427,12 @@ HEADER_DOS_HEADER_START
                 explicit SgAsmDOSFileHeader(SgAsmGenericFile *f)
                         : SgAsmGenericHeader(f), p_relocs(NULL), p_rm_section(NULL)
                         {ctor();}
-                virtual SgAsmDOSFileHeader *parse() {return parse(true);}
+                virtual SgAsmDOSFileHeader *parse() $ROSE_OVERRIDE {return parse(true);}
                 SgAsmDOSFileHeader *parse(bool define_rm_section);
-                virtual bool reallocate();
-                virtual void unparse(std::ostream&) const;
-                virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
-                virtual const char *format_name() const {return "DOS";}
+                virtual bool reallocate() $ROSE_OVERRIDE;
+                virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
+                virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
+                virtual const char *format_name() const $ROSE_OVERRIDE {return "DOS";}
                 SgAsmGenericSection *parse_rm_section(rose_addr_t max_offset=0);
                 void update_from_rm_section();
                 static bool is_DOS(SgAsmGenericFile*);
@@ -1468,10 +1472,11 @@ HEADER_DOS_EXTENDED_HEADER_START
                 explicit SgAsmDOSExtendedHeader(SgAsmDOSFileHeader *fhdr)
                         : SgAsmGenericSection(fhdr->get_file(), fhdr)
                         {ctor();}
-                virtual SgAsmDOSExtendedHeader *parse();
+                virtual SgAsmDOSExtendedHeader *parse() $ROSE_OVERRIDE;
                 void *encode(SgAsmDOSExtendedHeader::DOSExtendedHeader_disk*) const;
-                virtual void unparse(std::ostream&) const;
-                virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+                virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
+                virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
+
         private:
                 void ctor();
 HEADER_DOS_EXTENDED_HEADER_END
@@ -1488,7 +1493,7 @@ HEADER_BINARY_RET_END
 HEADER_DWARF_COMPILATION_UNIT_START
 
      public:
-          SgAsmDwarfConstructList* get_children();
+          SgAsmDwarfConstructList* get_children() $ROSE_OVERRIDE;
 
 HEADER_DWARF_COMPILATION_UNIT_END
 
@@ -1519,57 +1524,57 @@ HEADER_DWARF_CONSTRUCT_END
 
 HEADER_DWARF_SUBPROGRAM_START
      public:
-          SgAsmDwarfConstructList* get_children();
+          SgAsmDwarfConstructList* get_children() $ROSE_OVERRIDE;
 HEADER_DWARF_SUBPROGRAM_END
 
 HEADER_DWARF_STRUCTURE_TYPE_START
      public:
-          SgAsmDwarfConstructList* get_children();
+          SgAsmDwarfConstructList* get_children() $ROSE_OVERRIDE;
 HEADER_DWARF_STRUCTURE_TYPE_END
 
 HEADER_DWARF_ARRAY_TYPE_START
      public:
-          SgAsmDwarfConstructList* get_children();
+          SgAsmDwarfConstructList* get_children() $ROSE_OVERRIDE;
 HEADER_DWARF_ARRAY_TYPE_END
 
 HEADER_DWARF_LEXICAL_BLOCK_START
      public:
-          SgAsmDwarfConstructList* get_children();
+          SgAsmDwarfConstructList* get_children() $ROSE_OVERRIDE;
 HEADER_DWARF_LEXICAL_BLOCK_END
 
 HEADER_DWARF_INLINED_SUBROUTINE_START
      public:
-          SgAsmDwarfConstructList* get_children();
+          SgAsmDwarfConstructList* get_children() $ROSE_OVERRIDE;
 HEADER_DWARF_INLINED_SUBROUTINE_END
 
 HEADER_DWARF_ENUMERATION_TYPE_START
      public:
-          SgAsmDwarfConstructList* get_children();
+          SgAsmDwarfConstructList* get_children() $ROSE_OVERRIDE;
 HEADER_DWARF_ENUMERATION_TYPE_END
 
 HEADER_DWARF_SUBROUTINE_TYPE_START
      public:
-          SgAsmDwarfConstructList* get_children();
+          SgAsmDwarfConstructList* get_children() $ROSE_OVERRIDE;
 HEADER_DWARF_SUBROUTINE_TYPE_END
 
 HEADER_DWARF_UNION_TYPE_START
      public:
-          SgAsmDwarfConstructList* get_children();
+          SgAsmDwarfConstructList* get_children() $ROSE_OVERRIDE;
 HEADER_DWARF_UNION_TYPE_END
 
 HEADER_DWARF_NAMESPACE_START
      public:
-          SgAsmDwarfConstructList* get_children();
+          SgAsmDwarfConstructList* get_children() $ROSE_OVERRIDE;
 HEADER_DWARF_NAMESPACE_END
 
 HEADER_DWARF_CLASS_TYPE_START
      public:
-          SgAsmDwarfConstructList* get_children();
+          SgAsmDwarfConstructList* get_children() $ROSE_OVERRIDE;
 HEADER_DWARF_CLASS_TYPE_END
 
 HEADER_DWARF_COMMON_BLOCK_START
      public:
-          SgAsmDwarfConstructList* get_children();
+          SgAsmDwarfConstructList* get_children() $ROSE_OVERRIDE;
 HEADER_DWARF_COMMON_BLOCK_END
 
 

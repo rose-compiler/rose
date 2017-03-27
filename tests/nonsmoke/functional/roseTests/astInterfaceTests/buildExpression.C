@@ -146,6 +146,12 @@ int main (int argc, char *argv[])
    laststmt = getLastStatement(topScopeStack());
    insertStatementBefore(laststmt,exprStatement_17);
 
+// DQ (3/21/2017): Build value expressions not tested elsewhere.
+   SgUnsignedShortVal* hexUnsignedShortValue   = buildUnsignedShortValHex (42);
+   SgExprStatement* exprStatement_18 = buildExprStatement(hexUnsignedShortValue);
+   laststmt = getLastStatement(topScopeStack());
+   insertStatementBefore(laststmt,exprStatement_18);
+
 
   popScopeStack();
   AstTests::runAllTests(project);
