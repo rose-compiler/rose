@@ -238,29 +238,30 @@ package Dot is
    package Graphs is
 
       type Class is tagged private; -- Initialized
+      type Access_Class is access Class;
 
       procedure Set_Is_Digraph
-        (This : in out Class;
+        (This : access Class;
          To   : in     Boolean);
 
       procedure Set_Is_Strict
-        (This : in out Class;
+        (This : access Class;
          To   : in     Boolean);
 
       procedure Set_ID
-        (This : in out Class;
-         To   : in     ID_Type);
+        (This : access Class;
+         To   : in     String);
 
       procedure Append_Stmt
-        (This     : in out Class;
+        (This     : access Class;
          The_Stmt : in     Stmt.Access_All_Class);
 
       function Stmt_Count
-        (This : in Class)
+        (This : access Class)
          return Natural;
 
       procedure Print
-        (This : in Class);
+        (This : access Class);
 
    private
 

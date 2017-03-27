@@ -17,7 +17,7 @@ package body Dot is
       -- EXPORTED
       ------------
       procedure Set_Is_Digraph
-        (This : in out Class;
+        (This : access Class;
          To   : in     Boolean) is
       begin
          This.Digraph := To;
@@ -27,7 +27,7 @@ package body Dot is
       -- EXPORTED
       ------------
       procedure Set_Is_Strict
-        (This : in out Class;
+        (This : access Class;
          To   : in     Boolean) is
       begin
          This.Strict := To;
@@ -37,17 +37,17 @@ package body Dot is
       -- EXPORTED
       ------------
       procedure Set_ID
-        (This : in out Class;
-         To   : in     ID_Type) is
+        (This : access Class;
+         To   : in     String) is
       begin
-         This.ID := To;
+         This.ID := To_ID_Type (To);
       end;
 
       ------------
       -- EXPORTED
       ------------
       procedure Append_Stmt
-        (This     : in out Class;
+        (This     : access Class;
          The_Stmt : in     Stmt.Access_All_Class) is
       begin
          This.Stmt_List.Append (The_Stmt);
@@ -57,7 +57,7 @@ package body Dot is
       -- EXPORTED
       ------------
       function Stmt_Count
-        (This : in Class)
+        (This : access Class)
          return Natural is
       begin
          return Natural (This.Stmt_List.Length);
@@ -66,7 +66,7 @@ package body Dot is
       ------------
       -- EXPORTED
       ------------
-      procedure Print (This : in Class) is
+      procedure Print (This : access Class) is
       begin
          if This.Strict then
             Indented.Put ("strict ");

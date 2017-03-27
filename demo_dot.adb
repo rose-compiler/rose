@@ -5,7 +5,7 @@ procedure Demo_Dot is
 
    package ATI renames Ada.Text_IO;
 
-   procedure Print (Graph : in Dot.Graphs.Class;
+   procedure Print (Graph : in Dot.Graphs.Access_Class;
                    Title  : in String) is
    begin
       ATI.Put_Line ("// " & Title & ":");
@@ -15,13 +15,13 @@ procedure Demo_Dot is
    end;
 
    procedure Demo_Default_Graph is
-      Graph : Dot.Graphs.Class;
+      Graph : Dot.Graphs.Access_Class := new Dot.Graphs.Class;
    begin
       Print (Graph, "Default Graph");
    end;
 
    procedure Demo_Graph is
-      Graph : Dot.Graphs.Class;
+      Graph : Dot.Graphs.Access_Class := new Dot.Graphs.Class;
    begin
       Graph.Set_Is_Digraph (False);
       Graph.Set_Is_Strict (False);
@@ -29,7 +29,7 @@ procedure Demo_Dot is
    end;
 
    procedure Demo_Digraph is
-      Graph : Dot.Graphs.Class;
+      Graph : Dot.Graphs.Access_Class := new Dot.Graphs.Class;
    begin
       Graph.Set_Is_Digraph (True);
       Graph.Set_Is_Strict (False);
@@ -37,7 +37,7 @@ procedure Demo_Dot is
    end;
 
    procedure Demo_Strict_Graph is
-      Graph : Dot.Graphs.Class;
+      Graph : Dot.Graphs.Access_Class := new Dot.Graphs.Class;
    begin
       Graph.Set_Is_Digraph (False);
       Graph.Set_Is_Strict (True);
@@ -45,7 +45,7 @@ procedure Demo_Dot is
    end;
 
    procedure Demo_Strict_Digraph is
-      Graph : Dot.Graphs.Class;
+      Graph : Dot.Graphs.Access_Class := new Dot.Graphs.Class;
    begin
       Graph.Set_Is_Digraph (True);
       Graph.Set_Is_Strict (True);
@@ -53,25 +53,25 @@ procedure Demo_Dot is
    end;
 
    procedure Demo_ID is
-      Graph : Dot.Graphs.Class;
+      Graph : Dot.Graphs.Access_Class := new Dot.Graphs.Class;
    begin
       Graph.Set_Is_Digraph (False);
       Graph.Set_Is_Strict (False);
-      Graph.Set_ID (Dot.To_ID_Type ("Some_ID"));
+      Graph.Set_ID ("Some_ID");
       Print (Graph, "Graph with ID");
    end;
 
    procedure Demo_Reserved_ID is
-      Graph : Dot.Graphs.Class;
+      Graph : Dot.Graphs.Access_Class := new Dot.Graphs.Class;
    begin
       Graph.Set_Is_Digraph (False);
       Graph.Set_Is_Strict (False);
-      Graph.Set_ID (Dot.To_ID_Type ("graph"));
+      Graph.Set_ID ("graph");
       Print (Graph, "Graph with reserved word as ID");
    end;
 
    procedure Demo_Nodes is
-      Graph : Dot.Graphs.Class;
+      Graph : Dot.Graphs.Access_Class := new Dot.Graphs.Class;
       Node_Stmt_1 : Dot.Node_Stmt.Class; -- Initialized
       Node_Stmt_2 : Dot.Node_Stmt.Class; -- Initialized
       Assignment_List_1 : Dot.Assignment.List; -- Initialized
