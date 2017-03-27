@@ -12,12 +12,17 @@
 #include "RoseBin_DotGraph.h"
 using namespace std;
 
+#if 0 // [Robb P Matzke 2017-03-27]
 static bool debug=false;
+#endif
 
 void
 RoseBin_ControlFlowAnalysis::getCFGNodesForFunction(std::set<SgGraphNode*>& visited_f,
                                                     std::set<std::string>& visited_names,
                                                     SgGraphNode* next_n, std::string nodeName){
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   // traverse the graph from next to node
   std::vector<SgGraphNode*> successors_f;
   //  std::set<SgGraphNode*> visited_f;
@@ -55,10 +60,14 @@ RoseBin_ControlFlowAnalysis::getCFGNodesForFunction(std::set<SgGraphNode*>& visi
 
     } // for
   } // while
+#endif
 }
 
 
 void RoseBin_ControlFlowAnalysis::printGraph(std::string fileName, std::set<std::string>& filter) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   std::set<std::string>::const_iterator it = filter.begin();
   for (;it!=filter.end();++it) {
     std::cerr << "CFG -- contains filter: ." << *it << "." << endl;
@@ -205,12 +214,16 @@ void RoseBin_ControlFlowAnalysis::printGraph(std::string fileName, std::set<std:
   gr->printEpilog(myfile);
   myfile.close();
 #endif
+#endif
 }
 
 /****************************************************
  * run the compare analysis
  ****************************************************/
 void RoseBin_ControlFlowAnalysis::run(RoseBin_Graph* vg, string fileN, bool multiedge) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   vizzGraph = vg;
   fileName = fileN;
   clearMaps();
@@ -288,6 +301,7 @@ void RoseBin_ControlFlowAnalysis::run(RoseBin_Graph* vg, string fileN, bool mult
   partialCFG.insert(" 8048363_f");
   partialCFG.insert(" 804828f_f");
   printGraph("thomas.dot",partialCFG);
+#endif
 #endif
 }
 

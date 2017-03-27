@@ -25,7 +25,9 @@
 class ROSE_DLL_API RoseBin_DataFlowAnalysis : public RoseBin_FlowAnalysis {
  private:
   bool writeFile;
+#if 0 // [Robb P Matzke 2017-03-27]
   int nrOfNodesVisited;
+#endif
   bool interprocedural;
   RoseBin_DataFlowAbstract* variableAnalysis;
 
@@ -53,16 +55,16 @@ class ROSE_DLL_API RoseBin_DataFlowAnalysis : public RoseBin_FlowAnalysis {
 
   nodeHashSetType visited;
 
-  void traverseEdges(RoseBin_DataFlowAbstract* analysis);
+  void traverseEdges(RoseBin_DataFlowAbstract* analysis) ROSE_DEPRECATED("no longer supported");
 
 
 
 
-  bool existsPath(SgGraphNode* start, SgGraphNode* end);
+  bool existsPath(SgGraphNode* start, SgGraphNode* end) ROSE_DEPRECATED("no longer supported");
 
 
   bool containsHash( nodeHashSetType& vec,
-                     SgGraphNode* node);
+                     SgGraphNode* node) ROSE_DEPRECATED("no longer supported");
 
 
   RoseBin_DefUseAnalysis* defuse;
@@ -70,7 +72,7 @@ class ROSE_DLL_API RoseBin_DataFlowAnalysis : public RoseBin_FlowAnalysis {
 
 
 
-  bool exceptionCall(SgAsmX86Instruction* call);
+  bool exceptionCall(SgAsmX86Instruction* call) ROSE_DEPRECATED("no longer supported");
 
 
  public:
@@ -103,23 +105,23 @@ class ROSE_DLL_API RoseBin_DataFlowAnalysis : public RoseBin_FlowAnalysis {
     }
   }
 
-  void writeToFile(bool w);
+  void writeToFile(bool w) ROSE_DEPRECATED("no longer supported");
 
-  void traverseNodes(RoseBin_DataFlowAbstract* analysis);
+  void traverseNodes(RoseBin_DataFlowAbstract* analysis) ROSE_DEPRECATED("no longer supported");
 
-  void init();
+  void init() ROSE_DEPRECATED("no longer supported");
 
   void traverseGraph(std::vector <SgGraphNode*>& rootNodes,
                      RoseBin_DataFlowAbstract* defuse,
-                     bool interprocedural);
+                     bool interprocedural) ROSE_DEPRECATED("no longer supported");
 
 
-  void init(bool interp, bool pedges) {
+  void init(bool interp, bool pedges) ROSE_DEPRECATED("no longer supported") {
     interprocedural = interp;
     printEdges = pedges;
   }
 
-  void init(bool interp, bool pedges, RoseBin_Graph* g) {
+  void init(bool interp, bool pedges, RoseBin_Graph* g) ROSE_DEPRECATED("no longer supported") {
     interprocedural = interp;
     printEdges = pedges;
     vizzGraph = g;
@@ -128,36 +130,36 @@ class ROSE_DLL_API RoseBin_DataFlowAnalysis : public RoseBin_FlowAnalysis {
     //init();
   }
 
-  int nrOfMemoryWrites() {
+  int nrOfMemoryWrites() ROSE_DEPRECATED("no longer supported") {
     return dynamic_cast<RoseBin_DefUseAnalysis*>(defuse)->getNrOfMemoryWrites();
   }
 
-  int nrOfRegisterWrites() {
+  int nrOfRegisterWrites() ROSE_DEPRECATED("no longer supported") {
     return dynamic_cast<RoseBin_DefUseAnalysis*>(defuse)->getNrOfRegisterWrites() ;
   }
 
-  int nrOfDefinitions() {
+  int nrOfDefinitions() ROSE_DEPRECATED("no longer supported") {
     return defuse->getDefinitionSize();
   }
 
-  int nrOfUses() {
+  int nrOfUses() ROSE_DEPRECATED("no longer supported") {
     return defuse->getUsageSize();
   }
 
 
-  RoseBin_DefUseAnalysis* getDefUseAnalysis() { return defuse;}
+  RoseBin_DefUseAnalysis* getDefUseAnalysis() ROSE_DEPRECATED("no longer supported") { return defuse;}
 
-  void run(RoseBin_Graph* vg, std::string fileN, bool multiedge) ;
+  void run(RoseBin_Graph* vg, std::string fileN, bool multiedge) ROSE_DEPRECATED("no longer supported");
 
   std::set < SgGraphNode* >
-    getDefFor(SgGraphNode* node, std::pair<X86RegisterClass, int> initName);
+    getDefFor(SgGraphNode* node, std::pair<X86RegisterClass, int> initName) ROSE_DEPRECATED("no longer supported");
   std::set < SgGraphNode* >
-    getDefFor( uint64_t inst, std::pair<X86RegisterClass, int> initName);
+    getDefFor( uint64_t inst, std::pair<X86RegisterClass, int> initName) ROSE_DEPRECATED("no longer supported");
 
   std::set < uint64_t >
-    getDefForInst( uint64_t inst, std::pair<X86RegisterClass, int> initName);
+    getDefForInst( uint64_t inst, std::pair<X86RegisterClass, int> initName) ROSE_DEPRECATED("no longer supported");
 
-  RoseBin_DataFlowAbstract* getVariableAnalysis() {return variableAnalysis;}
+  RoseBin_DataFlowAbstract* getVariableAnalysis() ROSE_DEPRECATED("no longer supported") {return variableAnalysis;}
 };
 
 #endif

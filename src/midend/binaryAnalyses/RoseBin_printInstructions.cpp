@@ -14,23 +14,34 @@ using namespace std;
  * Assign the global node and the filename
  ****************************************************/
 void RoseBin_printInstructions::initPrint(SgAsmNode* root, char* fileName) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   globalNode = root;
   filename = fileName;
   myfile.open(filename);
+#endif
 }
 
 /****************************************************
  * unparse the binary AST
  ****************************************************/
 void RoseBin_printInstructions::unparsePrint() {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   traverse(globalNode, preorder);
   closeFile();
+#endif
 }
 
 /****************************************************
  * unparse binary instruction
  ****************************************************/
 void RoseBin_printInstructions::visit(SgNode* n) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   SgAsmInstruction* binInst = isSgAsmInstruction(n);
   if (binInst==NULL) return;
   ROSE_ASSERT(binInst);
@@ -61,13 +72,18 @@ void RoseBin_printInstructions::visit(SgNode* n) {
   string address_str = addrhex.str();
   // print the instruction
   myfile << address_str << "  " << size << "   " << hexcode << "\n";
+#endif
 }
 
 /****************************************************
  * close the file
  ****************************************************/
 void RoseBin_printInstructions::closeFile() {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   ROSE_ASSERT(myfile);
-  myfile.close();  
+  myfile.close();
+#endif
 }
 
