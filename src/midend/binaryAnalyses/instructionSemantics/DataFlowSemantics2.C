@@ -95,7 +95,7 @@ public:
         return false;
     }
 
-    virtual uint64_t get_number() const {
+    virtual uint64_t get_number() const ROSE_OVERRIDE {
         ASSERT_not_reachable("DataFlowSementics::SValue are never concrete");
 #ifdef _MSC_VER
         return 0;

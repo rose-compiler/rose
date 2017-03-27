@@ -261,7 +261,7 @@ private:
     }
 
 public:
-    virtual void startInstruction(SgAsmInstruction *insn) {
+    virtual void startInstruction(SgAsmInstruction *insn) ROSE_OVERRIDE {
         ASSERT_not_null(partitioner_);
         Super::startInstruction(insn);
         if (mlog[DEBUG]) {
