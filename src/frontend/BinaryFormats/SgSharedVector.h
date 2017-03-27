@@ -69,7 +69,7 @@ public:
         public:
             const_iterator operator++() { return (this->p)++; }
             bool operator!=( const const_iterator & x ) const { return (this->p != x.p); }
-	    const value_type & operator*() const { return *(this->p); }
+            const value_type & operator*() const { return *(this->p); }
             const_iterator(pointer x) : p(x) {}
         private:          
             value_type *p;
@@ -122,9 +122,9 @@ public:
 
     /**** Erasure ****/
     void clear() {
-	p_pool = NULL;
+        p_pool = NULL;
         p_size = 0;
-	p_capacity = 0;
+        p_capacity = 0;
     }
     void erase(iterator position) {
         abort(); //FIXME
