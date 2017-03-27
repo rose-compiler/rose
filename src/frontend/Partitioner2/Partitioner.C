@@ -2150,7 +2150,7 @@ Partitioner::allFunctionCallingConvention(const CallingConvention::Definition::P
     FunctionCallGraph::Graph cg = functionCallGraph().graph();
     Sawyer::Container::Algorithm::graphBreakCycles(cg);
     Sawyer::ProgressBar<size_t> progress(cg.nVertices(), mlog[MARCH], "call-conv analysis");
-    Sawyer::Message::FacilitiesGuard guard();
+    Sawyer::Message::FacilitiesGuard guard;
     if (nThreads != 1)                                  // lots of threads doing progress reports won't look too good!
         rose::BinaryAnalysis::CallingConvention::mlog[MARCH].disable();
     Sawyer::workInParallel(cg, nThreads, CallingConventionWorker(*this, progress, dfltCc));
