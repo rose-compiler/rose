@@ -1557,22 +1557,30 @@ check_specimens: check_parse_container check_disassemble check_unparse check_ass
 #############################################################################################
 
 # DQ (3/26/2017): Added PDF test for ROSE evaluation (forces testing of parts of ROSE for lcov)
-TEST_PDF_TRANSLATOR = ../testPDFGeneration
+test_pdf_translator = $(abspath ../testPDFGeneration)
+test_pdf_small_specimen = $(top_srcdir)/tests/nonsmoke/specimens/binary/i386-pop
+test_pdf_large_specimen = $(top_srcdir)/tests/nonsmoke/specimens/binary/pocketputty.exe
 
-$(TEST_PDF_TRANSLATOR):
-	cd ..; $(MAKE) testPDFGeneration
+$(test_pdf_translator):
+	$(MAKE) -C $(dir $(test_pdf_translator)) $(notdir $(test_pdf_translator))
 
-test_small_pdf_generation: $(TEST_PDF_TRANSLATOR)
-	../testPDFGeneration -rose:verbose 0 $(srcdir)/../../specimens/binary/i386-pop
-	ls -l *.pdf
-	@echo "Removing the generated PDF file because it is up to 2Meg and we want to save disk space."
-	rm *.pdf
+TEST_TARGETS += test_small_pdf_generation.passed test_large_pdf_generation.passed
 
-test_large_pdf_generation: $(TEST_PDF_TRANSLATOR)
-	../testPDFGeneration -rose:verbose 0 $(srcdir)/../../specimens/binary/pocketputty.exe
-	ls -l *.pdf
-	@echo "Removing the generated PDF file because it is up to 25Meg and we want to save disk space."
-	rm *.pdf
+test_small_pdf_generation.passed: $(test_pdf_small_specimen) $(test_pdf_translator) conditionalDisable
+	@$(RTH_RUN)								\
+		TITLE="generation of small PDF file [$@]"			\
+		DISABLED="$$(./conditionalDisable)"				\
+		USE_SUBDIR=yes							\
+		CMD="$(test_pdf_translator) -rose:verbose 0 $< && ls -l *.pdf"	\
+		$(TEST_EXIT_STATUS) $@
+
+test_large_pdf_generation.passed: $(test_pdf_large_specimen) $(test_pdf_translator) conditionalDisable
+	@$(RTH_RUN)								\
+		TITLE="generation of large PDF file [$@]"			\
+		DISABLED="$$(./conditionalDisable)"				\
+		USE_SUBDIR=yes							\
+		CMD="$(test_pdf_translator) -rose:verbose 0 $< && ls -l *.pdf"	\
+		$(TEST_EXIT_STATUS) $@
 
 
 ###############################################################################################################################
@@ -1586,9 +1594,6 @@ check-nonsmoke-local:
 else
 # Binary analysis is enabled and supported
 check-nonsmoke-local: $(TEST_TARGETS)
-	$(MAKE) test_small_pdf_generation
-	$(MAKE) test_large_pdf_generation
-
 endif
 else
 # Binary analysis is not enabled
