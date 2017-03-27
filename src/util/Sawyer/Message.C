@@ -635,12 +635,12 @@ Gang::instanceForTty() {
 // class method; not synchronized
 GangPtr
 Gang::createNS(int id) {
-    ASSERT_require(id != NO_GANG_ID);
+    ASSERT_always_require(id != NO_GANG_ID);
     if (!gangs_)
         gangs_ = new GangMap;
     GangPtr gang = gangs_->getOrDefault(id);
     if (!gang) {
-        gang = GangPtr(new Gang(id));                   // intentional leak; seek class declaration for details
+        gang = GangPtr(new Gang);
         gangs_->insert(id, gang);
     }
     return gang;
