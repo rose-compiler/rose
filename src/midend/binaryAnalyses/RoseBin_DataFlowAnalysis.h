@@ -131,19 +131,35 @@ class ROSE_DLL_API RoseBin_DataFlowAnalysis : public RoseBin_FlowAnalysis {
   }
 
   int nrOfMemoryWrites() ROSE_DEPRECATED("no longer supported") {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
     return dynamic_cast<RoseBin_DefUseAnalysis*>(defuse)->getNrOfMemoryWrites();
+#endif
   }
 
   int nrOfRegisterWrites() ROSE_DEPRECATED("no longer supported") {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
     return dynamic_cast<RoseBin_DefUseAnalysis*>(defuse)->getNrOfRegisterWrites() ;
+#endif
   }
 
   int nrOfDefinitions() ROSE_DEPRECATED("no longer supported") {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
     return defuse->getDefinitionSize();
+#endif
   }
 
   int nrOfUses() ROSE_DEPRECATED("no longer supported") {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
     return defuse->getUsageSize();
+#endif
   }
 
 
