@@ -222,7 +222,7 @@ class ROSE_DLL_API RoseBin_FlowAnalysis : public AstSimpleProcessing {//, public
   template <class T>
     bool from_string(T& t,
                      const std::string& s,
-                     std::ios_base& (*f)(std::ios_base&)) ROSE_DEPRECATED("no longer supported")
+                     std::ios_base& (*f)(std::ios_base&))
     {
       std::istringstream iss(s);
       return !(iss >> f >> t).fail();
