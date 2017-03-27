@@ -235,9 +235,9 @@ package Dot is
 
 
    -----------------------------------------------------------------------------
-   package Graph is
+   package Graphs is
 
-      type Class is tagged
+      type Class is tagged -- Initialized
          record
             Digraph   : Boolean := True;
             Strict    : Boolean := True;
@@ -247,7 +247,7 @@ package Dot is
 
       procedure Print (This : in Class);
 
-   end Graph;
+   end Graphs;
    -----------------------------------------------------------------------------
 
 private

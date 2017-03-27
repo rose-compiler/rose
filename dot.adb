@@ -11,7 +11,7 @@ package body Dot is
       return To_ID_Type (Ada.Characters.Handling.To_String(Item));
    end To_ID_Type;
 
-   package body Graph is
+   package body Graphs is
 
       ------------
       -- EXPORTED
@@ -30,7 +30,7 @@ package body Dot is
          This.Stmt_List.Print;
       end print;
 
-   end Graph;
+   end Graphs;
 
    package body Stmt is
 
