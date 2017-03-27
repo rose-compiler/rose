@@ -1030,8 +1030,9 @@ check-semantics:												\
         yicesSemanticsLib.passed        yicesSemanticsLib2-x86.passed						\
         multiSemantics.passed											\
         findConstants.passed											\
-        findConstantsABI.passed										\
-                                        semanticsSubclassing.passed     
+        findConstantsABI.passed											\
+                                        semanticsSubclassing.passed
+
 # TOO1 (3/24/2015): Failing jenkins-release GCC 4.2.4; removing temporarily until fixed
 #multiSemantics2.passed
 
@@ -1041,7 +1042,7 @@ nullSemantics2_SOURCES = semantics.C
 nullSemantics2_CPPFLAGS = -DSEMANTIC_DOMAIN=NULL_DOMAIN
 nullSemantics2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 TEST_TARGETS += nullSemantics2-x86.passed
-EXTRA_DIST += semantics.conf nullSemantics2.ans
+EXTRA_DIST += semantics.conf nullSemantics2-x86.ans
 nullSemantics2-x86.passed: semantics.conf nullSemantics2 conditionalDisable
 	@$(RTH_RUN)					\
 		DISABLED="$$(./conditionalDisable)"	\
@@ -1057,7 +1058,7 @@ partialSymbolicSemantics2_SOURCES = semantics.C
 partialSymbolicSemantics2_CPPFLAGS = -DSEMANTIC_DOMAIN=PARTSYM_DOMAIN
 partialSymbolicSemantics2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 TEST_TARGETS += partialSymbolicSemantics2-x86.passed
-EXTRA_DIST += semantics.conf partialSymbolicSemantics2.ans
+EXTRA_DIST += semantics.conf partialSymbolicSemantics2-x86.ans
 partialSymbolicSemantics2-x86.passed: semantics.conf partialSymbolicSemantics2 conditionalDisable
 	@$(RTH_RUN)					\
 		DISABLED="$$(./conditionalDisable)"	\
@@ -1073,7 +1074,7 @@ intervalSemantics2_SOURCES = semantics.C
 intervalSemantics2_CPPFLAGS = -DSEMANTIC_DOMAIN=INTERVAL_DOMAIN
 intervalSemantics2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 TEST_TARGETS += intervalSemantics2-x86.passed
-EXTRA_DIST += semantics.conf intervalSemantics2.ans
+EXTRA_DIST += semantics.conf intervalSemantics2-x86.ans
 intervalSemantics2-x86.passed: semantics.conf intervalSemantics2 conditionalDisable
 	@$(RTH_RUN)					\
 		DISABLED="$$(./conditionalDisable)"	\
@@ -1089,7 +1090,7 @@ symbolicSemantics2_SOURCES = semantics.C
 symbolicSemantics2_CPPFLAGS = -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSMT_SOLVER=NO_SOLVER
 symbolicSemantics2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 TEST_TARGETS += symbolicSemantics2-x86.passed
-EXTRA_DIST += semantics.conf symbolicSemantics2.ans
+EXTRA_DIST += semantics.conf symbolicSemantics2-x86.ans
 symbolicSemantics2-x86.passed: semantics.conf symbolicSemantics2 conditionalDisable
 	@$(RTH_RUN)					\
 		DISABLED="$$(./conditionalDisable)"	\
@@ -1105,7 +1106,7 @@ traceSymbolicSemantics2_SOURCES = semantics.C
 traceSymbolicSemantics2_CPPFLAGS = -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSMT_SOLVER=NO_SOLVER
 traceSymbolicSemantics2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 TEST_TARGETS += traceSymbolicSemantics2-x86.passed
-EXTRA_DIST += semantics.conf traceSymbolicSemantics2.ans
+EXTRA_DIST += semantics.conf traceSymbolicSemantics2-x86.ans
 traceSymbolicSemantics2-x86.passed: semantics.conf traceSymbolicSemantics2 conditionalDisable
 	@$(RTH_RUN)					\
 		DISABLED="$$(./conditionalDisable)"	\
@@ -1121,7 +1122,7 @@ noinst_PROGRAMS += yicesSemanticsExe2
 yicesSemanticsExe2_SOURCES = semantics.C
 yicesSemanticsExe2_CPPFLAGS = -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSMT_SOLVER=YICES_EXE
 yicesSemanticsExe2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-EXTRA_DIST += semantics.conf yicesSemanticsExe2.ans
+EXTRA_DIST += semantics.conf yicesSemanticsExe2-x86.ans
 if ROSE_HAVE_YICES
 TEST_TARGETS += yicesSemanticsExe2-x86.passed
 yicesSemanticsExe2-x86.passed: semantics.conf yicesSemanticsExe2 conditionalDisable
@@ -1139,7 +1140,7 @@ noinst_PROGRAMS += yicesSemanticsLib2
 yicesSemanticsLib2_SOURCES = semantics.C
 yicesSemanticsLib2_CPPFLAGS = -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSMT_SOLVER=YICES_LIB
 yicesSemanticsLib2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-EXTRA_DIST += semantics.conf yicesSemanticsLib2.ans
+EXTRA_DIST += semantics.conf yicesSemanticsLib2-x86.ans
 if ROSE_HAVE_LIBYICES
 TEST_TARGETS += yicesSemanticsLib2-x86.passed
 yicesSemanticsLib2-x86.passed: semantics.conf yicesSemanticsLib2 conditionalDisable
