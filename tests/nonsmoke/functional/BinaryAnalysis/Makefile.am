@@ -1020,16 +1020,16 @@ check-disassemble: $(disassemble1_test_targets) $(disassemble2_test_targets)
 # Convenience target to run all these semantics tests. This target is not run automatically by "make check" (which instead
 # depends on each of the targets individually rather than just this one).
 PHONIES += check-semantics
-#       API1 (the old stuff)            API2 (the newer stuff)           Extra tests
-check-semantics:											\
-        nullSemantics.passed            nullSemantics2.passed						\
-        partialSymbolicSemantics.passed partialSymbolicSemantics2.passed				\
-        intervalSemantics.passed        intervalSemantics2.passed					\
-        symbolicSemantics.passed        symbolicSemantics2.passed        traceSymbolicSemantics2.passed	\
-        yicesSemanticsExe.passed        yicesSemanticsExe2.passed					\
-        yicesSemanticsLib.passed        yicesSemanticsLib2.passed					\
-        multiSemantics.passed										\
-        findConstants.passed										\
+#       API1 (the old stuff)            API2 (the newer stuff)               Extra tests
+check-semantics:												\
+        nullSemantics.passed            nullSemantics2-x86.passed						\
+        partialSymbolicSemantics.passed partialSymbolicSemantics2-x86.passed					\
+        intervalSemantics.passed        intervalSemantics2-x86.passed						\
+        symbolicSemantics.passed        symbolicSemantics2-x86.passed        traceSymbolicSemantics2-x86.passed	\
+        yicesSemanticsExe.passed        yicesSemanticsExe2-x86.passed						\
+        yicesSemanticsLib.passed        yicesSemanticsLib2-x86.passed						\
+        multiSemantics.passed											\
+        findConstants.passed											\
         findConstantsABI.passed										\
                                         semanticsSubclassing.passed     
 # TOO1 (3/24/2015): Failing jenkins-release GCC 4.2.4; removing temporarily until fixed
@@ -1040,14 +1040,15 @@ noinst_PROGRAMS += nullSemantics2
 nullSemantics2_SOURCES = semantics.C
 nullSemantics2_CPPFLAGS = -DSEMANTIC_DOMAIN=NULL_DOMAIN
 nullSemantics2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-TEST_TARGETS += nullSemantics2.passed
+TEST_TARGETS += nullSemantics2-x86.passed
 EXTRA_DIST += semantics.conf nullSemantics2.ans
-nullSemantics2.passed: semantics.conf nullSemantics2 conditionalDisable
+nullSemantics2-x86.passed: semantics.conf nullSemantics2 conditionalDisable
 	@$(RTH_RUN)					\
 		DISABLED="$$(./conditionalDisable)"	\
 		CMD=nullSemantics2			\
 		INPUT=i686-test1.O3.bin			\
 		SPECIMEN_DIR="$(SPECIMEN_DIR)"		\
+		ANSWER=$(srcdir)/$(@:.passed=.ans)	\
 		$< $@
 
 # Partial symbolic semantics
@@ -1055,14 +1056,15 @@ noinst_PROGRAMS += partialSymbolicSemantics2
 partialSymbolicSemantics2_SOURCES = semantics.C
 partialSymbolicSemantics2_CPPFLAGS = -DSEMANTIC_DOMAIN=PARTSYM_DOMAIN
 partialSymbolicSemantics2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-TEST_TARGETS += partialSymbolicSemantics2.passed
+TEST_TARGETS += partialSymbolicSemantics2-x86.passed
 EXTRA_DIST += semantics.conf partialSymbolicSemantics2.ans
-partialSymbolicSemantics2.passed: semantics.conf partialSymbolicSemantics2 conditionalDisable
+partialSymbolicSemantics2-x86.passed: semantics.conf partialSymbolicSemantics2 conditionalDisable
 	@$(RTH_RUN)					\
 		DISABLED="$$(./conditionalDisable)"	\
 		CMD=partialSymbolicSemantics2		\
 		INPUT=i686-test1.O3.bin			\
 		SPECIMEN_DIR="$(SPECIMEN_DIR)"		\
+		ANSWER=$(srcdir)/$(@:.passed=.ans)	\
 		$< $@
 
 # Interval semantics
@@ -1070,14 +1072,15 @@ noinst_PROGRAMS += intervalSemantics2
 intervalSemantics2_SOURCES = semantics.C
 intervalSemantics2_CPPFLAGS = -DSEMANTIC_DOMAIN=INTERVAL_DOMAIN
 intervalSemantics2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-TEST_TARGETS += intervalSemantics2.passed
+TEST_TARGETS += intervalSemantics2-x86.passed
 EXTRA_DIST += semantics.conf intervalSemantics2.ans
-intervalSemantics2.passed: semantics.conf intervalSemantics2 conditionalDisable
+intervalSemantics2-x86.passed: semantics.conf intervalSemantics2 conditionalDisable
 	@$(RTH_RUN)					\
 		DISABLED="$$(./conditionalDisable)"	\
 		CMD=intervalSemantics2			\
 		INPUT=i686-test1.O3.bin			\
 		SPECIMEN_DIR="$(SPECIMEN_DIR)"		\
+		ANSWER=$(srcdir)/$(@:.passed=.ans)	\
 		$< $@
 
 # Symbolic semantics, no SMT solver
@@ -1085,14 +1088,15 @@ noinst_PROGRAMS += symbolicSemantics2
 symbolicSemantics2_SOURCES = semantics.C
 symbolicSemantics2_CPPFLAGS = -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSMT_SOLVER=NO_SOLVER
 symbolicSemantics2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-TEST_TARGETS += symbolicSemantics2.passed
+TEST_TARGETS += symbolicSemantics2-x86.passed
 EXTRA_DIST += semantics.conf symbolicSemantics2.ans
-symbolicSemantics2.passed: semantics.conf symbolicSemantics2 conditionalDisable
+symbolicSemantics2-x86.passed: semantics.conf symbolicSemantics2 conditionalDisable
 	@$(RTH_RUN)					\
 		DISABLED="$$(./conditionalDisable)"	\
 		CMD=symbolicSemantics2			\
 		INPUT=i686-test1.O3.bin			\
 		SPECIMEN_DIR="$(SPECIMEN_DIR)"		\
+		ANSWER=$(srcdir)/$(@:.passed=.ans)	\
 		$< $@
 
 # Tracing symbolic semantics, no SMT solver
@@ -1100,15 +1104,16 @@ noinst_PROGRAMS += traceSymbolicSemantics2
 traceSymbolicSemantics2_SOURCES = semantics.C
 traceSymbolicSemantics2_CPPFLAGS = -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSMT_SOLVER=NO_SOLVER
 traceSymbolicSemantics2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-TEST_TARGETS += traceSymbolicSemantics2.passed
+TEST_TARGETS += traceSymbolicSemantics2-x86.passed
 EXTRA_DIST += semantics.conf traceSymbolicSemantics2.ans
-traceSymbolicSemantics2.passed: semantics.conf traceSymbolicSemantics2 conditionalDisable
+traceSymbolicSemantics2-x86.passed: semantics.conf traceSymbolicSemantics2 conditionalDisable
 	@$(RTH_RUN)					\
 		DISABLED="$$(./conditionalDisable)"	\
 		CMD=traceSymbolicSemantics2		\
 		SWITCHES="--trace --no-usedef"		\
 		INPUT=i686-test1.O3.bin			\
 		SPECIMEN_DIR="$(SPECIMEN_DIR)"		\
+		ANSWER=$(srcdir)/$(@:.passed=.ans)	\
 		$< $@
 
 # Symbolic semantics, Yices executable
@@ -1118,13 +1123,14 @@ yicesSemanticsExe2_CPPFLAGS = -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSMT_SOLVER=YIC
 yicesSemanticsExe2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 EXTRA_DIST += semantics.conf yicesSemanticsExe2.ans
 if ROSE_HAVE_YICES
-TEST_TARGETS += yicesSemanticsExe2.passed
-yicesSemanticsExe2.passed: semantics.conf yicesSemanticsExe2 conditionalDisable
+TEST_TARGETS += yicesSemanticsExe2-x86.passed
+yicesSemanticsExe2-x86.passed: semantics.conf yicesSemanticsExe2 conditionalDisable
 	@$(RTH_RUN)					\
 		DISABLED="$$(./conditionalDisable)"	\
 		CMD=yicesSemanticsExe2			\
 		INPUT=i686-test1.O3.bin			\
 		SPECIMEN_DIR="$(SPECIMEN_DIR)"		\
+		ANSWER=$(srcdir)/$(@:.passed=.ans)	\
 		$< $@
 endif
 
@@ -1135,13 +1141,14 @@ yicesSemanticsLib2_CPPFLAGS = -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSMT_SOLVER=YIC
 yicesSemanticsLib2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 EXTRA_DIST += semantics.conf yicesSemanticsLib2.ans
 if ROSE_HAVE_LIBYICES
-TEST_TARGETS += yicesSemanticsLib2.passed
-yicesSemanticsLib2.passed: semantics.conf yicesSemanticsLib2 conditionalDisable
+TEST_TARGETS += yicesSemanticsLib2-x86.passed
+yicesSemanticsLib2-x86.passed: semantics.conf yicesSemanticsLib2 conditionalDisable
 	@$(RTH_RUN)					\
 		DISABLED="$$(./conditionalDisable)"	\
 		CMD=yicesSemanticsLib2			\
 		INPUT=i686-test1.O3.bin			\
 		SPECIMEN_DIR="$(SPECIMEN_DIR)"		\
+		ANSWER=$(srcdir)/$(@:.passed=.ans)	\
 		$< $@
 endif
 
