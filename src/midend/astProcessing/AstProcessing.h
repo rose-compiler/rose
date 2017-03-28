@@ -408,6 +408,9 @@ SgTreeTraversal<InheritedAttributeType, SynthesizedAttributeType>::
 
 #endif
 
+
+#if 0
+// DQ (3/28/2017): This function is not used and so let's experiment with removing it as a trial to improve the Code Coverage testing.
 template<class InheritedAttributeType, class SynthesizedAttributeType>
 SgTreeTraversal<InheritedAttributeType, SynthesizedAttributeType>::
 SgTreeTraversal(const SgTreeTraversal &other)
@@ -417,7 +420,11 @@ SgTreeTraversal(const SgTreeTraversal &other)
     synthesizedAttributes(other.synthesizedAttributes->deepCopy())
 {
 }
+#endif
 
+
+#if 0
+// DQ (3/28/2017): This function is not used and so let's experiment with removing it as a trial to improve the Code Coverage testing.
 template<class InheritedAttributeType, class SynthesizedAttributeType>
 const SgTreeTraversal<InheritedAttributeType, SynthesizedAttributeType> &
 SgTreeTraversal<InheritedAttributeType, SynthesizedAttributeType>::
@@ -433,6 +440,8 @@ operator=(const SgTreeTraversal &other)
 
     return *this;
 }
+#endif
+
 
 template<class InheritedAttributeType, class SynthesizedAttributeType>
 void
@@ -558,6 +567,9 @@ traverseWithinFile(SgNode* node, InheritedAttributeType inheritedValue)
 //// BOTTOM UP PROCESSING IMPLEMENTATION ////
 /////////////////////////////////////////////
 
+
+#if 0
+// DQ (3/28/2017): This function is not used and so let's experiment with removing it as a trial to improve the Code Coverage testing.
 // MS: 04/25/02
 template <class SynthesizedAttributeType>
 DummyAttribute
@@ -568,7 +580,7 @@ evaluateInheritedAttribute(SgNode* astNode, DummyAttribute inheritedValue)
     DummyAttribute a = defaultDummyAttribute;
     return a;
 }
-
+#endif
 
 
 
@@ -867,6 +879,8 @@ traversalResult()
 }
 
 
+#if 0
+// DQ (3/28/2017): This function is not used and so let's experiment with removing it as a trial to improve the Code Coverage testing.
 // GB (05/30/2007)
 template <class InheritedAttributeType, class SynthesizedAttributeType>
 void
@@ -874,13 +888,19 @@ SgTreeTraversal<InheritedAttributeType, SynthesizedAttributeType>::
 atTraversalStart()
 {
 }
+#endif
 
+
+#if 0
+// DQ (3/28/2017): This function is not used and so let's experiment with removing it as a trial to improve the Code Coverage testing.
 template <class InheritedAttributeType, class SynthesizedAttributeType>
 void
 SgTreeTraversal<InheritedAttributeType, SynthesizedAttributeType>::
 atTraversalEnd()
 {
 }
+#endif
+
 /*
 template <class InheritedAttributeType, class SynthesizedAttributeType>
 void
