@@ -79,7 +79,7 @@ procedure Demo_Dot is
 
       Node_Stmt_1.Node_ID.ID := Dot.To_ID_Type ("minimal_node");
       Graph.Append_Stmt (new Dot.Node_Stmt.Class'(Node_Stmt_1));
-      Print (Graph, "Graph with one minimal node");
+      Print (Graph, "One minimal node");
    end;
 
 
@@ -95,28 +95,28 @@ procedure Demo_Dot is
       Graph.Append_Stmt (new Dot.Node_Stmt.Class'(Node_Stmt_1));
       Node_Stmt_2.Node_ID.ID := Dot.To_ID_Type ("minimal_node_2");
       Graph.Append_Stmt (new Dot.Node_Stmt.Class'(Node_Stmt_1));
-      Print (Graph, "Graph with two minimal nodes");
+      Print (Graph, "Two minimal nodes");
    end;
 
    procedure Demo_One_Attr_Two_Assigns is
-      Graph             : Dot.Graphs.Access_Class := new Dot.Graphs.Class;
-      Node_Stmt_2       : Dot.Node_Stmt.Class; -- Initialized
+      Graph         : Dot.Graphs.Access_Class := new Dot.Graphs.Class;
+      Node_Stmt_2   : Dot.Node_Stmt.Class; -- Initialized
       Assign_List_1 : Dot.Assign.List; -- Initialized
    begin
       Graph.Set_Is_Digraph (False);
       Graph.Set_Is_Strict (False);
 
-      Node_Stmt_2.Node_ID.ID := Dot.To_ID_Type ("node_with_attrs");
+      Node_Stmt_2.Node_ID.ID := Dot.To_ID_Type ("node_with_attr");
       Assign_List_1.Append ("Today", "Thursday");
       Assign_List_1.Append ("Tomorrow", "Friday");
       Node_Stmt_2.Attrs.Append (Assign_List_1);
       Graph.Append_Stmt (new Dot.Node_Stmt.Class'(Node_Stmt_2));
-      Print (Graph, "Node with one attr with two assigns");
+      Print (Graph, "One node, one attr, two assigns");
    end;
 
    procedure Demo_Two_Attrs_One_Assign_Each is
-      Graph             : Dot.Graphs.Access_Class := new Dot.Graphs.Class;
-      Node_Stmt_2       : Dot.Node_Stmt.Class; -- Initialized
+      Graph         : Dot.Graphs.Access_Class := new Dot.Graphs.Class;
+      Node_Stmt_2   : Dot.Node_Stmt.Class; -- Initialized
       Assign_List_1 : Dot.Assign.List; -- Initialized
       Assign_List_2 : Dot.Assign.List; -- Initialized
    begin
@@ -129,13 +129,29 @@ procedure Demo_Dot is
       Assign_List_2.Append ("Now", "Day");
       Node_Stmt_2.Attrs.Append (Assign_List_2);
       Graph.Append_Stmt (new Dot.Node_Stmt.Class'(Node_Stmt_2));
-      Print (Graph, "Node with two attrs with one assign each");
+      Print (Graph, "One node, two attrs, one assign each");
+   end;
+
+   procedure Demo_Two_Attrs_No_Assigns is
+      Graph         : Dot.Graphs.Access_Class := new Dot.Graphs.Class;
+      Node_Stmt_2   : Dot.Node_Stmt.Class; -- Initialized
+      Assign_List_1 : Dot.Assign.List; -- Initialized
+      Assign_List_2 : Dot.Assign.List; -- Initialized
+   begin
+      Graph.Set_Is_Digraph (False);
+      Graph.Set_Is_Strict (False);
+
+      Node_Stmt_2.Node_ID.ID := Dot.To_ID_Type ("node_with_attrs");
+      Node_Stmt_2.Attrs.Append (Assign_List_1);
+      Node_Stmt_2.Attrs.Append (Assign_List_2);
+      Graph.Append_Stmt (new Dot.Node_Stmt.Class'(Node_Stmt_2));
+      Print (Graph, "One node, two attrs, no assigns");
    end;
 
    procedure Demo_Two_Nodes_Two_Attrs_Two_Assigns is
-      Graph             : Dot.Graphs.Access_Class := new Dot.Graphs.Class;
-      Node_Stmt_1       : Dot.Node_Stmt.Class; -- Initialized
-      Node_Stmt_2       : Dot.Node_Stmt.Class; -- Initialized
+      Graph         : Dot.Graphs.Access_Class := new Dot.Graphs.Class;
+      Node_Stmt_1   : Dot.Node_Stmt.Class; -- Initialized
+      Node_Stmt_2   : Dot.Node_Stmt.Class; -- Initialized
       Assign_List_1 : Dot.Assign.List; -- Initialized
       Assign_List_2 : Dot.Assign.List; -- Initialized
       Assign_List_3 : Dot.Assign.List; -- Initialized
@@ -177,5 +193,6 @@ begin
    Demo_Two_Nodes;
    Demo_One_Attr_Two_Assigns;
    Demo_Two_Attrs_One_Assign_Each;
+   Demo_Two_Attrs_No_Assigns;
    Demo_Two_Nodes_Two_Attrs_Two_Assigns;
 end Demo_Dot;
