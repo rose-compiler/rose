@@ -1899,14 +1899,22 @@ Grammar::setUpExpressions ()
             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      JavaTypeExpression.setFunctionPrototype ( "HEADER_JAVA_TYPE_EXPRESSION", "../Grammar/Expression.code" );
+  // DQ (3/23/2017): We need to change the name to simplify the support for the virtual get_type() 
+  // function elsewhere in ROSE (and to support the "override" keyword).
   // DQ (3/7/2014): Added support to build access functions for type to be reset in snippet support.
      JavaTypeExpression.setDataPrototype ( "SgType*", "type", "= NULL",
             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // JavaTypeExpression.setDataPrototype ( "SgType*", "internal_type", "= NULL",
+  //        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (7/24/2014): Added more general support for type expressions (required for C11 generic macro support.
      TypeExpression.setFunctionPrototype ( "HEADER_TYPE_EXPRESSION", "../Grammar/Expression.code" );
+  // DQ (3/23/2017): We need to change the name to simplify the support for the virtual get_type() 
+  // function elsewhere in ROSE (and to support the "override" keyword).
      TypeExpression.setDataPrototype ( "SgType*", "type", "= NULL",
             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // TypeExpression.setDataPrototype ( "SgType*", "internal_type", "= NULL",
+  //        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (1/13/2014): Added Java support for Java annotations.
      JavaMarkerAnnotation.setFunctionPrototype ( "HEADER_JAVA_MARKER_ANNOTATION", "../Grammar/Expression.code" );
