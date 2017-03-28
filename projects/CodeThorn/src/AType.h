@@ -53,6 +53,8 @@ class ConstIntLattice {
   ConstIntLattice(unsigned long int x);
   ConstIntLattice(long long int x);
   ConstIntLattice(unsigned long long int x);
+  // constructor for pointer value
+  ConstIntLattice(SPRAY::VariableId,ConstIntLattice);
   bool isTop() const;
   bool isTrue() const;
   bool isFalse() const;
@@ -82,6 +84,7 @@ class ConstIntLattice {
   static ConstIntLattice operatorDiv(ConstIntLattice& a,ConstIntLattice& b);
   static ConstIntLattice operatorMod(ConstIntLattice& a,ConstIntLattice& b);
 
+  ConstIntLattice createAddressOfArray(SPRAY::VariableId arrayVariableId, ConstIntLattice Index);
   // strict weak ordering (required for sorted STL data structures if
   // no comparator is provided)
   bool operator==(AType::ConstIntLattice other) const;

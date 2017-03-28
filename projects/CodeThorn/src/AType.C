@@ -72,6 +72,21 @@ AType::ConstIntLattice::ConstIntLattice(unsigned long long int x) {
   if((x>INT_MAX)) throw CodeThorn::Exception("Error: numbers outside 'signed int' range not supported.");
   valueType=AType::ConstIntLattice::CONSTINT;intValue=(int)x;
 }
+
+AType::ConstIntLattice 
+AType::ConstIntLattice::createAddressOfArray(SPRAY::VariableId arrayVariableId, 
+                                             AType::ConstIntLattice index) {
+  variableId=arrayVariableId;
+  if(index.isTop()||index.isBot()) {
+    valueType=index.valueType;
+    intValue=0;
+  } else if(index.isConstInt()) {
+    valueType=PTR;
+    intValue=index.intValue;
+  }
+  return *this;
+}
+
 int AType::ConstIntLattice::intLength() { return sizeof(int); }
 
 bool AType::ConstIntLattice::isTop() const {return valueType==AType::ConstIntLattice::TOP;}

@@ -328,7 +328,6 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalEqualOp(SgEqualityOp* node,
         tmpres2.result=false;
         resultList.push_back(tmpres1);
         resultList.push_back(tmpres2);
-        //return resultList; MS: removed 3/11/2014
         goto done;
       }
     }
@@ -420,7 +419,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalAndOp(SgAndOp* node,
     res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
   }
   
-  // in case of top we do not propagate constraints [inprecision]
+  // in case of top we do not propagate constraints [imprecision]
   if(!lhsResult.result.isTop()) {
     res.exprConstraints+=lhsResult.exprConstraints;
   }
@@ -817,30 +816,32 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalBitwiseComplementOp(SgBitComple
 list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarExp(SgVarRefExp* node, EState estate, bool useConstraints) {
   SingleEvalResultConstInt res;
   res.init(estate,*estate.constraints(),AType::ConstIntLattice(AType::Bot()));
-  VariableId varId;
-  bool isVar=ExprAnalyzer::variable(node,varId);
-  //cout<<"DEBUG: EvalConstInt: V_SgVarRefExp: isVar:"<<isVar<<", varIdcode:"<<varId.getIdCode()<<"Source:"<<node->unparseToString()<<endl;
-  assert(isVar);
   const PState* pstate=estate.pstate();
+  VariableId varId=_variableIdMapping->variableId(node);
   if(pstate->varExists(varId)) {
-    PState pstate2=*pstate; // also removes constness
-    
+    //PState pstate2=*pstate; // also removes constness
     if(_variableIdMapping->hasArrayType(varId)) {
       // CODE-POINT-1
+      // res.result=AType::ConstIntLattice::createAddressOfArray(varId,AType::ConstIntLattice(0));
       // for arrays (by default the address is used) return its pointer value (the var-id-code)
       res.result=AType::ConstIntLattice(varId.getIdCode());
     } else {
-      res.result=pstate2[varId]; // this include assignment of pointer values
+      // res.result=AType::ConstIntLattice::createAddressOfArray(varId,AType::ConstIntLattice(0));
+      res.result=const_cast<PState*>(pstate)->operator[](varId); // this includes assignment of pointer values
     }
     if(res.result.isTop() && useConstraints) {
       // in case of TOP we try to extract a possibly more precise value from the constraints
       AType::ConstIntLattice val=res.estate.constraints()->varConstIntLatticeValue(varId);
-        // TODO: TOPIFY-MODE: most efficient here
+      // TODO: TOPIFY-MODE: most efficient here
       res.result=val;
-      }
+    }
     return listify(res);
   } else {
+    // special modes to represent information not stored in the state
+    // i) unmodified arrays: data can be stored outside the state
+    // ii) undefined variables mapped to 'top' (abstraction by removing variables from state)
     if(_variableIdMapping->isConstantArray(varId) && boolOptions["rersmode"]) {
+      // currently only used in rersmode
       res.result=AType::ConstIntLattice(varId.getIdCode());
       return listify(res);
     } else {
