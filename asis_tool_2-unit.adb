@@ -86,7 +86,7 @@ package body Asis_Tool_2.Unit is
       Graph : in Dot.Graphs.Access_Class)
    is
       Node        : Dot.Node_Stmt.Class; -- Initialized
-      As          : Dot.Assignment.List; -- Initialized
+      As          : Dot.Assign.List; -- Initialized
       Unique_Name : constant String := To_String (Acu.Unique_Name (Unit));
    begin
       Node.Node_ID.ID := Dot.To_ID_Type (Unique_Name);

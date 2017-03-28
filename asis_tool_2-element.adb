@@ -23,34 +23,6 @@ package body Asis_Tool_2.Element is
    end Name;
 
 
-   procedure Put_Expression_Info
-     (Element : in Asis.Element;
-      State   : in out Class)
-   is
-      Expression_Kind : constant Asis.Expression_Kinds :=
-        Asis.Elements.Expression_Kind (Element);
-   begin
-      State.Text.Put ("." & Asis.Expression_Kinds'Wide_Image(Expression_Kind));
-      case Expression_Kind is
-         when Asis.An_Identifier =>
-            State.Text.Put (" """ & Asis.Expressions.Name_Image (Element) & '"');
-         when Asis.An_Operator_Symbol =>
-            State.Text.Put (' ' & Asis.Expressions.Name_Image (Element));
-         when others =>
-            null;
-      end case;
-    end Put_Expression_Info;
-
-
-   procedure Put_With_Clause_Info
-     (Element : in Asis.Element;
-      State   : in out Class)
-   is
-   begin
-      null;
-   end Put_With_Clause_Info;
-
-
    package Pre_Children is
 
       procedure Process_Element
@@ -63,27 +35,42 @@ package body Asis_Tool_2.Element is
    package body Pre_Children is
 
       procedure Process_Pragma
-        (Element :        Asis.Element;
+        (Element : in     Asis.Element;
          State   : in out Class)
       is
+         Pragma_Kind : Asis.Pragma_Kinds :=
+           Asis.Elements.Pragma_Kind (Element);
       begin
          --        A_Pragma              -> Pragma_Kinds
          --
-         Null;
+         State.Add_Attribute
+           (Name => "Pragma_Kind",
+            Value => Pragma_Kind'Image);
       end Process_Pragma;
 
       procedure Process_Defining_Name
-        (Element :        Asis.Element;
+        (Element : in     Asis.Element;
          State   : in out Class)
       is
+         Defining_Name_Kind : Asis.Defining_Name_Kinds :=
+           Asis.Elements.Defining_Name_Kind (Element);
       begin
          --        A_Defining_Name       -> Defining_Name_Kinds
          --                                         -> Operator_Kinds
-         State.Text.Put (" => " & Name (Element));
+         State.Add_Attribute (Name => "Name",
+                              Value => Name (Element));
+         State.Add_Attribute (Name => "Defining_Name_Kind",
+                              Value => Defining_Name_Kind'Image);
+         case Defining_Name_Kind is
+            when Asis.A_Defining_Operator_Symbol =>
+               State.Add_Attribute (Name => "Operator_Kind",
+                                    Value => Asis.Elements.Operator_Kind (Element)'Image);
+            when others => null;
+         end case;
       end Process_Defining_Name;
 
       procedure Process_Declaration
-        (Element :        Asis.Element;
+        (Element : in     Asis.Element;
          State   : in out Class)
       is
       begin
@@ -91,11 +78,12 @@ package body Asis_Tool_2.Element is
          --                                         -> Declaration_Origin
          --                                         -> Mode_Kinds
          --                                         -> Subprogram_Default_Kinds
-         Null;
+         pragma Compile_Time_Warning (Standard.True, "Asis_Tool_2.Element.Pre_Children.Process_Declaration unimplemented");
+--           raise Program_Error with "Unimplemented procedure Asis_Tool_2.Element.Pre_Children.Process_Declaration";
       end Process_Declaration;
 
       procedure Process_Definition
-        (Element :        Asis.Element;
+        (Element : in     Asis.Element;
          State   : in out Class)
       is
       begin
@@ -107,49 +95,75 @@ package body Asis_Tool_2.Element is
          --                                         -> Root_Type_Kinds
          --                                         -> Constraint_Kinds
          --                                         -> Discrete_Range_Kinds
-         Null;
+         pragma Compile_Time_Warning (Standard.True, "Asis_Tool_2.Element.Pre_Children.Process_Definition unimplemented");
+--           raise Program_Error with "Unimplemented procedure Asis_Tool_2.Element.Pre_Children.Process_Definition";
       end Process_Definition;
 
       procedure Process_Expression
-        (Element :        Asis.Element;
+        (Element : in     Asis.Element;
          State   : in out Class)
       is
+         Expression_Kind : constant Asis.Expression_Kinds :=
+           Asis.Elements.Expression_Kind (Element);
       begin
          --        An_Expression         -> Expression_Kinds
          --                                         -> Operator_Kinds
          --                                         -> Attribute_Kinds
          --
-         Put_Expression_Info (Element, State);
+         State.Add_Attribute ("Expression_Kind", Expression_Kind'Image);
+         case Expression_Kind is
+            when Asis.An_Operator_Symbol =>
+               State.Add_Attribute ("Operator_Kind",
+                                    Asis.Elements.Operator_Kind (Element)'Image);
+            when Asis.An_Attribute_Reference =>
+               State.Add_Attribute ("Attribute_Kind",
+                                    Asis.Elements.Attribute_Kind (Element)'Image);
+            when others =>
+               null;
+         end case;
+         case Expression_Kind is
+            when Asis.An_Identifier |
+                 Asis.An_Operator_Symbol |
+                 Asis.A_Character_Literal |
+                 Asis.An_Enumeration_Literal =>
+               State.Add_Attribute ("Name_Image",
+                                    '"' & Asis.Expressions.Name_Image (Element) & '"');
+            when others =>
+               null;
+         end case;
       end Process_Expression;
 
       procedure Process_Association
-        (Element :        Asis.Element;
+        (Element : in     Asis.Element;
          State   : in out Class)
       is
       begin
          --        An_Association        -> Association_Kinds
          --
-         Null;
+         pragma Compile_Time_Warning (Standard.True, "Asis_Tool_2.Element.Pre_Children.Process_Association unimplemented");
+--           raise Program_Error with "Unimplemented procedure Asis_Tool_2.Element.Pre_Children.Process_Association";
       end Process_Association;
 
       procedure Process_Statement
-        (Element :        Asis.Element;
+        (Element : in     Asis.Element;
          State   : in out Class)
       is
       begin
          --        A_Statement           -> Statement_Kinds
          --
-         Null;
+         pragma Compile_Time_Warning (Standard.True, "Asis_Tool_2.Element.Pre_Children.Process_Statement unimplemented");
+--           raise Program_Error with "Unimplemented procedure Asis_Tool_2.Element.Pre_Children.Process_Statement";
       end Process_Statement;
 
       procedure Process_Path
-        (Element :        Asis.Element;
+        (Element : in     Asis.Element;
          State   : in out Class)
       is
       begin
          --        A_Path                -> Path_Kinds
          --
-         Null;
+         pragma Compile_Time_Warning (Standard.True, "Asis_Tool_2.Element.Pre_Children.Process_Path unimplemented");
+--           raise Program_Error with "Unimplemented procedure Asis_Tool_2.Element.Pre_Children.Process_Path";
       end Process_Path;
 
       procedure Process_With_Clause
@@ -157,11 +171,12 @@ package body Asis_Tool_2.Element is
          State   : in out Class)
       is
       begin
-         null;
+         pragma Compile_Time_Warning (Standard.True, "Asis_Tool_2.Element.Pre_Children.Process_With_Clause unimplemented");
+--           raise Program_Error with "Unimplemented procedure Asis_Tool_2.Element.Pre_Children.Process_With_Clause";
       end Process_With_Clause;
 
       procedure Process_Clause
-        (Element :        Asis.Element;
+        (Element : in     Asis.Element;
          State   : in out Class)
       is
          Clause_Kind : constant Asis.Clause_Kinds :=
@@ -169,7 +184,7 @@ package body Asis_Tool_2.Element is
       begin
          --        A_Clause              -> Clause_Kinds
          --                                         -> Representation_Clause_Kinds
-         State.Text.Put ("." & Asis.Clause_Kinds'Wide_Image (Clause_Kind));
+         State.Add_Attribute ("Clause_Kind", Clause_Kind'Image);
          case Clause_Kind is
          when Asis.Not_A_Clause =>
             null;
@@ -180,7 +195,7 @@ package body Asis_Tool_2.Element is
          when Asis.A_Use_All_Type_Clause =>
             null;
          when Asis.A_With_Clause =>
-            Put_With_Clause_Info (Element, State);
+            Process_With_Clause (Element, State);
          when Asis.A_Representation_Clause =>
             null;
          when Asis.A_Component_Clause =>
@@ -189,12 +204,13 @@ package body Asis_Tool_2.Element is
       end Process_Clause;
 
       procedure Process_Exception_Handler
-        (Element :        Asis.Element;
+        (Element : in     Asis.Element;
          State   : in out Class)
       is
       begin
          --        An_Exception_Handler
-         null;
+         pragma Compile_Time_Warning (Standard.True, "Asis_Tool_2.Element.Pre_Children.Process_Pragma unimplemented");
+--           raise Program_Error with "Unimplemented procedure Asis_Tool_2.Element.Pre_Children.Process_Pragma";
       end Process_Exception_Handler;
 
       ------------
@@ -205,12 +221,13 @@ package body Asis_Tool_2.Element is
          Control : in out Asis.Traverse_Control;
          State   : in out Class)
       is
-         Kind : constant Wide_String := Ada.Characters.Handling.To_Wide_String
-           (Asis.Elements.Element_Kind (Element)'Image);
+         Element_Kind : constant Asis.Element_Kinds :=
+           Asis.Elements.Element_Kind (Element);
+         New_Node : Dot.Node_Stmt.Class; -- Initialized
       begin
-         State.Text.Put_Indent;
-         State.Text.Put(Kind);
-         case Asis.Elements.Element_Kind (Element) is
+         State.Current_Node := New_Node;
+         State.Add_Attribute ("Element_Kind", Element_Kind'Image);
+         case Element_Kind is
          when Asis.Not_An_Element =>
             Null;
          when Asis.A_Pragma =>
@@ -234,8 +251,9 @@ package body Asis_Tool_2.Element is
          when Asis.An_Exception_Handler =>
             Process_Exception_Handler (Element, State);
          end case;
-         State.Text.New_Line;
+         State.Text.End_Line;
          State.Text.Indent;
+         State.Graph.Append_Stmt (new Dot.Node_Stmt.Class'(State.Current_Node));
       end Process_Element;
 
    end Pre_Children;
@@ -292,5 +310,34 @@ package body Asis_Tool_2.Element is
          Control => Process_Control,
          State   => This);
    end Process_Element_Tree;
+
+   -----------
+   -- PRIVATE:
+   -----------
+   procedure Add_Attribute
+     (This  : in out Class;
+      Name  : in     String;
+      Value : in     String)
+   is
+      Assigns : Dot.Assign.List; -- Initialized
+   begin
+      This.Text.Put_Indented_Line (Name & " => """ & Value & """");
+      Assigns.Append (Name, Value);
+      This.Current_Node.Attrs.Append (Assigns);
+   end;
+
+   -----------
+   -- PRIVATE:
+   -----------
+   procedure Add_Attribute
+     (This  : in out Class;
+      Name  : in     String;
+      Value : in     Wide_String)
+   is
+   begin
+      This.Add_Attribute (Name, To_String (Value));
+   end;
+
+
 
 end Asis_Tool_2.Element;

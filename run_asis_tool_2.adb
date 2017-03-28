@@ -4,6 +4,6 @@ procedure Run_Asis_Tool_2
 is
    This_Tool : Asis_Tool_2.Tool.Class;
 begin
-   Asis_Tool_2.Trace_On := True;
+   Asis_Tool_2.Trace_On := False;
    This_Tool.Process;
 end Run_Asis_Tool_2;
