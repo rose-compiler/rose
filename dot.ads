@@ -77,7 +77,7 @@ package Dot is
    -----------------------------------------------------------------------------
 
    -----------------------------------------------------------------------------
-   type Assignment_Class is tagged -- Initialized
+   type Assign_Class is tagged -- Initialized
       record
          L : ID_Type; -- Initialized
          R : ID_Type; -- Initialized
@@ -85,8 +85,8 @@ package Dot is
    -----------------------------------------------------------------------------
 
    -----------------------------------------------------------------------------
-   -- Zero or more assignments:
-   package Assignment is
+   -- Zero or more assigns:
+   package Assign is
 
       type Class is tagged -- Initialized
       record
@@ -105,9 +105,9 @@ package Dot is
 
       -- Convenience: converts L, R to ID_Type and appends a Class to the list.
       -- Allows this:
-      --      Assignment_List.Append ("Today", "Thursday");
+      --      Assign_List.Append ("Today", "Thursday");
       -- Instead of this:
-      --      Assignment_List.Append ((L => Dot.To_ID_Type ("Today"),
+      --      Assign_List.Append ((L => Dot.To_ID_Type ("Today"),
       --                               R => Dot.To_ID_Type ("Thursday")));
 
       not overriding
@@ -117,15 +117,15 @@ package Dot is
 
       Empty_List : constant List := List'(Lists.Empty_List with null record);
 
-   end Assignment;
+   end Assign;
    -----------------------------------------------------------------------------
 
    -----------------------------------------------------------------------------
-   -- Zero or more bracketed lists of assignments:
+   -- Zero or more bracketed lists of assigns:
    package Attr is
       package Lists is new
-        Ada.Containers.Doubly_Linked_Lists (Element_Type => Assignment.List,
-                                            "="          => Assignment."=");
+        Ada.Containers.Doubly_Linked_Lists (Element_Type => Assign.List,
+                                            "="          => Assign."=");
       -- Make primitive operations like "=" visible:
       type List is new Lists.List with null record;
 

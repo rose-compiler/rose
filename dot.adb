@@ -100,7 +100,7 @@ package body Dot is
 
    end Stmt;
 
-   package body Assignment is
+   package body Assign is
 
       ------------
       -- EXPORTED
@@ -135,7 +135,7 @@ package body Dot is
              R => To_ID_Type (R)));
       end Append;
 
-   end Assignment;
+   end Assign;
 
    package body Attr is
 
