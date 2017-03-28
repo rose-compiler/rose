@@ -14,12 +14,12 @@ public:
     virtual ~BinaryLoaderElf() {}
 
     /** Copy constructor. See super class. */
-    virtual BinaryLoaderElf *clone() const {
+    virtual BinaryLoaderElf *clone() const ROSE_OVERRIDE {
         return new BinaryLoaderElf(*this);
     }
 
     /** Capability query. See super class. */
-    virtual bool can_load(SgAsmGenericHeader*) const;
+    virtual bool can_load(SgAsmGenericHeader*) const ROSE_OVERRIDE;
 
     /** Sets up library search paths and preloads from the environment.  The search paths and preloads are added to the end of
      *  the lists.  If an ELF file header is provided, then the DT_RPATH and DT_RUNPATH from the ".dynamic" section are also
@@ -261,10 +261,10 @@ protected:
     /** Returns mappable sections in a particular order.  Returns ELF Segments in the order they are defined in the segment
      *  table, followed by ELF Sections in the order they are defined in the section table but excluding those sections that
      *  were already added to the list as ELF Segments. */
-    virtual SgAsmGenericSectionPtrList get_remap_sections(SgAsmGenericHeader*);
+    virtual SgAsmGenericSectionPtrList get_remap_sections(SgAsmGenericHeader*) ROSE_OVERRIDE;
 
     /** Returns a new, temporary base address which is greater than everything that's been mapped already. */
-    virtual rose_addr_t rebase(MemoryMap*, SgAsmGenericHeader*, const SgAsmGenericSectionPtrList&);
+    virtual rose_addr_t rebase(MemoryMap*, SgAsmGenericHeader*, const SgAsmGenericSectionPtrList&) ROSE_OVERRIDE;
 
     /** Linux-specific ELF Segment and Section alignment. */
     virtual MappingContribution align_values(SgAsmGenericSection*, MemoryMap*,
@@ -272,7 +272,7 @@ protected:
                                              rose_addr_t *va, rose_addr_t *mem_size,
                                              rose_addr_t *offset, rose_addr_t *file_size, bool *map_private,
                                              rose_addr_t *va_offset, bool *anon_lo, bool *anon_hi, 
-                                             ConflictResolution *resolve);
+                                             ConflictResolution *resolve) ROSE_OVERRIDE;
 
     /** Builds the master symbol table. This table is built just before relocations are fixed up and contains information
      *  about all the symbols that might be necessary during that process.  The symbol table describes one entire

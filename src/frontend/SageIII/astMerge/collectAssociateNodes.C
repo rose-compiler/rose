@@ -917,8 +917,8 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                          SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(initializedName->get_parent());
                          if (variableDeclaration != NULL)
                             {
-                              bool scopesMatch = initializedName->get_scope() == variableDeclaration->get_scope();
 #if 0
+                              bool scopesMatch = initializedName->get_scope() == variableDeclaration->get_scope();
                            // DQ (10/22/2016): Suppress this output because it is a moderate issue in the mergeAST_tests directory.
                               printf ("No symbol found for initializedName = %s in SgVariableDeclaration = %s \n",initializedName->get_name().str(),scopesMatch ? "true" : "false");
 #endif

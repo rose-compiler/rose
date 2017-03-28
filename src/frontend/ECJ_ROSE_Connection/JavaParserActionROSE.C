@@ -152,6 +152,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionInsertClassEnd(JNIEnv *env, jclass
     ROSE_ASSERT(! astJavaScopeStack.empty());
 
     SgClassDefinition *class_definition = astJavaScopeStack.popClassDefinition();
+
+ // DQ (3/25/2017): Eliminate Clang warning for unused variable (define a valid usage).
+    ROSE_ASSERT(class_definition != NULL);
 }
 
 
@@ -161,7 +164,10 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionInsertClassEnd(JNIEnv *env, jclass
 JNIEXPORT void JNICALL Java_JavaParser_cactionBuildClassSupportStart(JNIEnv *env, jclass xxx, jstring java_name, jstring java_external_name, jboolean java_user_defined_class, jboolean java_is_interface, jboolean java_is_enum, jboolean java_is_anonymous, jobject jToken) {
     SgName name = convertJavaStringToCxxString(env, java_name);
 //    SgName external_name = convertJavaStringToCxxString(env, java_external_name);
-    bool user_defined_class = java_user_defined_class;
+
+ // DQ (3/25/2017): Eliminate Clang warning for unused variable.
+ // bool user_defined_class = java_user_defined_class;
+
     bool is_interface = java_is_interface;
     bool is_enum = java_is_enum;
     bool is_anonymous = java_is_anonymous;
@@ -1288,7 +1294,9 @@ cout.flush();
 //if (!array_type)
 //cout << "The type is a " << (isSgClassType(argument_type) ? isSgClassType(argument_type) -> get_qualified_name().getString() : argument_type -> class_name()) << endl;
         ROSE_ASSERT(array_type);
-        SgType *element_type = array_type -> get_base_type();
+
+     // DQ (3/25/2017): Eliminate Clang warning for unused variable.
+     // SgType *element_type = array_type -> get_base_type();
 
         alias_name -> setAttribute("var_args", new AstRegExAttribute(""));
         alias_name -> setAttribute("type", new AstRegExAttribute(argument_type_name)); // getTypeName(element_type) + "..."));
@@ -2155,6 +2163,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionCompilationUnitDeclarationEnd(JNIE
     ROSE_ASSERT(! astJavaScopeStack.empty());
     SgClassDefinition *package = astJavaScopeStack.popPackage();
 
+ // DQ (3/25/2017): Eliminate Clang warning for unused variable (define a valid usage).
+    ROSE_ASSERT(package != NULL);
+
 // TODO: Remove this!
 /*
     //
@@ -2609,8 +2620,11 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionConstructorDeclarationHeader(JNIEn
 
     // DQ (7/31/2011): Add more precise handling of the statement stack.
     // This does not count (include) explicit constructor calls...
-    int number_of_type_parameters = java_numberOfTypeParameters;
-    int numberOfArguments = java_numberOfArguments;
+
+ // DQ (3/25/2017): Eliminate Clang warning for unused variable.
+ // int number_of_type_parameters = java_numberOfTypeParameters;
+ // int numberOfArguments = java_numberOfArguments;
+
     int numberOfThrownExceptions = java_numberOfThrownExceptions;
 
     //
@@ -2743,7 +2757,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionExplicitConstructorCallEnd(JNIEnv 
     if (SgProject::get_verbose() > 0)
         printf ("Build a explicit constructor function call END \n");
 
-    bool is_implicit_super = java_is_implicit_super;
+ // DQ (3/25/2017): Eliminate Clang warning for unused variable.
+ // bool is_implicit_super = java_is_implicit_super;
+
     bool is_super = java_is_super;
     bool has_qualification = java_has_qualification;
     SgName package_name = convertJavaStringToCxxString(env, java_package_name),
@@ -2969,8 +2985,10 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionMethodDeclarationHeader(JNIEnv *en
     bool isPrivate      = java_is_private;
     bool isStrictfp     = java_is_strictfp;
 
-    int number_of_type_parameters = java_numberOfTypeParameters;
-    int numberOfArguments         = java_numberOfArguments;
+ // DQ (3/25/2017): Eliminate Clang warning for unused variable.
+ // int number_of_type_parameters = java_numberOfTypeParameters;
+ // int numberOfArguments         = java_numberOfArguments;
+
     int numberOfThrownExceptions  = java_numberOfThrownExceptions;
 
     //
@@ -5280,7 +5298,9 @@ JNIEXPORT void JNICALL Java_JavaParser_cactionImportReference(JNIEnv *env, jclas
 
 JNIEXPORT void JNICALL Java_JavaParser_cactionInitializer(JNIEnv *env, jclass, jboolean java_is_static, jstring java_string, jint initializer_index, jobject jToken) {
     SgName name = convertJavaStringToCxxString(env, java_string);
-    bool isStatic = java_is_static;
+
+ // DQ (3/25/2017): Eliminate Clang warning for unused variable.
+ // bool isStatic = java_is_static;
 
     SgClassDefinition *class_definition = isSgClassDefinition(astJavaScopeStack.top());
     ROSE_ASSERT(class_definition);
