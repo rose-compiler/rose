@@ -106,6 +106,7 @@ package body Dot is
       -- EXPORTED
       ------------
       procedure Print (This : in Class) is begin
+--           Indented.Put_Spaced ("<assign>");
          Print (This.L);
          Indented.Put (" = ");
          Print (This.R);
@@ -115,15 +116,19 @@ package body Dot is
       -- EXPORTED
       ------------
       procedure Print (This : in List) is
+         First_Item : Boolean := True;
       begin
-         Indented.Put_Line ("[");
+         --           Indented.Put_Spaced ("<assign list>");
          Indented.Indent;
          for Item of This loop
+            if First_Item then
+               First_Item := False;
+            else
+               Indented.Put_Line (",");
+            end if;
             Item.Print;
-            Indented.New_Line;
          end loop;
          Indented.Dedent;
-         Indented.Put_Line ("]");
       end Print;
 
       procedure Append
@@ -139,13 +144,21 @@ package body Dot is
 
    package body Attr is
 
+      -- There is no Print for Attr because it is nothing more than an Assign List.
+
       ------------
       -- EXPORTED
       ------------
       procedure Print (This : in List) is
       begin
+         --           Indented.Put_Spaced ("<attr list>");
+         Indented.New_Line_If_Needed;
          for Item of This loop
+            Indented.Indent;
+            Indented.Put ("[");
             Item.Print;
+            Indented.Put_Line (" ]");
+            Indented.Dedent;
          end loop;
       end Print;
 
@@ -208,8 +221,9 @@ package body Dot is
       ------------
       procedure Print (This : in Class) is
       begin
+--           Indented.Put_Spaced ("<node>");
          This.Node_Id.Print;
-         Indented.Put (" ");
+         Indented.Put(" ");
          This.Attrs.Print;
          Indented.New_Line_If_Needed;
       end Print;
@@ -253,14 +267,18 @@ package body Dot is
    -----------
    package body Indented is
 
-      Current_Indent : Natural := 0;
-      Indent_Needed : Boolean := True;
+      Indent_Level  : Natural := 0;
+      Indent_Size   : constant Natural := 2;
 
+      -- If the indent is increased in the middle of a line, this will ensure
+      -- that the next put is at that indent or better:
       procedure Put_Indent is
+         Minimum_Col : constant ATI.Positive_Count :=
+           ATI.Positive_Count ((Indent_Level * Indent_Size) + 1);
+         use type ATI.Positive_Count;
       begin
-         if Indent_Needed then
-            ATI.Put ((1 .. Current_Indent * 2 => ' '));
-            Indent_Needed := False;
+         if ATI.Col < Minimum_Col then
+            ATI.Set_Col (Minimum_Col);
          end if;
       end Put_Indent;
 
@@ -269,7 +287,7 @@ package body Dot is
       ------------
       procedure Indent is
       begin
-         Current_Indent := Current_Indent + 1;
+         Indent_Level := Indent_Level + 1;
       end Indent;
 
       ------------
@@ -277,7 +295,7 @@ package body Dot is
       ------------
       procedure Dedent is
       begin
-         Current_Indent := Current_Indent - 1;
+         Indent_Level := Indent_Level - 1;
       end Dedent;
 
       ------------
@@ -296,7 +314,6 @@ package body Dot is
       begin
          Put_Indent;
          ATI.Put_Line (Item);
-         Indent_Needed := True;
       end Put_Line;
 
       ------------
@@ -305,16 +322,15 @@ package body Dot is
       procedure New_Line is
       begin
          ATI.New_Line;
-         Indent_Needed := True;
       end New_Line;
 
       ------------
       -- EXPORTED
       ------------
       procedure New_Line_If_Needed is
-         At_Beginning_Of_Line : Boolean renames Indent_Needed;
+         use type ATI.Positive_Count;
       begin
-         if not At_Beginning_Of_Line then
+         if ATI.Col > 1 then
             New_Line;
          end if;
       end New_Line_If_Needed;
@@ -369,7 +385,10 @@ package body Dot is
       Item_String : constant String :=
         ASU.To_String (ASU.Unbounded_String(Item));
    begin
-      if Is_Reserved_Word (Item_String) or Contains_Space (Item_String) then
+      if Item_String'Length = 0 then
+         return """""";
+      elsif Is_Reserved_Word (Item_String) or else
+        Contains_Space (Item_String) then
          return '"' & Item_String & '"';
       else
          return Item_String;
