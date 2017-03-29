@@ -11,6 +11,208 @@ package body Dot is
       return To_ID_Type (Ada.Characters.Handling.To_String(Item));
    end To_ID_Type;
 
+   package body Stmt is
+
+      ------------
+      -- EXPORTED
+      ------------
+      procedure Put
+        (These : in List_Of_Access_All_Class)
+      is
+         First_Item : Boolean := True;
+      begin
+         Indented.Indent;
+         for Item of These loop
+            if First_Item Then
+               First_Item := False;
+            else
+               Indented.Put (";");
+            end if;
+            Indented.End_Line_If_Needed;
+            Item.Put;
+         end loop;
+         Indented.Dedent;
+      end Put;
+
+   end Stmt;
+
+   package body Assign is
+
+      ------------
+      -- EXPORTED
+      ------------
+      procedure Put
+        (This : in Class) is
+      begin
+         Put (This.L);
+         Indented.Put ("=");
+         Put (This.R);
+      end Put;
+
+      ------------
+      -- EXPORTED
+      ------------
+      procedure Put
+        (These : in List_Of_Class)
+      is
+         First_Item : Boolean := True;
+      begin
+         Indented.Indent;
+         for Item of These loop
+            if First_Item Then
+               First_Item := False;
+            else
+               Indented.Put (",");
+            end if;
+            Indented.End_Line_If_Needed;
+            Item.Put;
+         end loop;
+         Indented.Dedent;
+      end Put;
+
+      procedure Append
+        (These : in out List_Of_Class;
+         L, R  : in     String) is
+      begin
+         These.Append
+           ((L => To_ID_Type (L),
+             R => To_ID_Type (R)));
+      end Append;
+
+   end Assign;
+
+   package body Attr is
+
+      ------------
+      -- EXPORTED
+      ------------
+      procedure Put
+        (This : in Class) is
+      begin
+         Indented.Indent;
+         Indented.Put ("[");
+         This.Assigns.Put;
+         Indented.Put (" ]");
+         Indented.Dedent;
+     end Put;
+
+      ------------
+      -- EXPORTED
+      ------------
+      procedure Put
+        (These : in List_Of_Class)
+      is
+      begin
+         Indented.Indent;
+         for Item of These loop
+            Indented.End_Line_If_Needed;
+            Item.Put;
+         end loop;
+         Indented.Dedent;
+      end Put;
+
+   end Attr;
+
+   package body Attr_Stmt is
+
+      ------------
+      -- EXPORTED
+      ------------
+      procedure Put
+        (This     : in Class) is
+      begin
+         Indented.Put ("<attr stmt>");
+         Indented.End_Line_If_Needed;
+      end Put;
+
+      ------------
+      -- EXPORTED
+      ------------
+      procedure Append_To
+        (This      : in Class;
+         Stmt_List : in out Stmt.List_Of_Access_All_Class) is
+      begin
+         Stmt_List.Append (new Class'(This));
+      end Append_To;
+
+   end Attr_Stmt;
+
+   package body Node_ID is
+
+      ------------
+      -- EXPORTED
+      ------------
+      procedure Put (This : in Port_Class) is
+      begin
+         if This.Has_ID then
+            Indented.Put (":");
+            Put (This.ID);
+         end if;
+         if This.Has_Compass_Pt then
+            Indented.Put (":");
+            Indented.Put (To_String (This.Compass_Pt));
+         end if;
+      end Put;
+
+      ------------
+      -- EXPORTED
+      ------------
+      procedure Put (This : in Class) is
+      begin
+         Put (This.ID);
+         This.Port.Put;
+      end Put;
+
+   end Node_ID;
+
+   package body Node_Stmt is
+
+      ------------
+      -- EXPORTED
+      ------------
+      procedure Put
+        (This : in Class) is
+      begin
+         This.Node_Id.Put;
+         This.Attrs.Put;
+      end Put;
+
+      ------------
+      -- EXPORTED
+      ------------
+      procedure Append_To
+        (This      : in Class;
+         Stmt_List : in out Stmt.List_Of_Access_All_Class) is
+      begin
+         Stmt_List.Append (new Class'(This));
+      end Append_To;
+
+   end Node_Stmt;
+
+   package body Edge_Stmt is
+
+      ------------
+      -- EXPORTED
+      ------------
+      procedure Put
+        (This : in Class) is
+      begin
+         Indented.Put ("<edge stmt>");
+         Indented.End_Line_If_Needed;
+      end Put;
+
+      ------------
+      -- EXPORTED
+      ------------
+      procedure Append_To
+        (This      : in Class;
+         Stmt_List : in out Stmt.List_Of_Access_All_Class) is
+      begin
+         Stmt_List.Append (new Class'(This));
+      end Append_To;
+
+   end Edge_Stmt;
+
    package body Graphs is
 
       ------------
@@ -66,7 +268,8 @@ package body Dot is
       ------------
       -- EXPORTED
       ------------
-      procedure Print (This : access Class) is
+      procedure Put
+        (This : access Class) is
       begin
          if This.Strict then
             Indented.Put ("strict ");
@@ -77,208 +280,32 @@ package body Dot is
             Indented.Put ("graph ");
          end if;
          Indented.Put_Spaced (To_String(This.ID));
-         This.Stmt_List.Print;
-      end print;
+         Indented.Put ("{");
+         This.Stmt_List.Put;
+         Indented.New_Line;
+         Indented.Put ("}");
+      end Put;
 
    end Graphs;
-
-   package body Stmt is
-
-      ------------
-      -- EXPORTED
-      ------------
-      procedure Print (This_List : in List) is
-      begin
-         Indented.Put_Line ("{");
-         Indented.Indent;
-         for This of This_List loop
-            This.Print;
-         end loop;
-         Indented.Dedent;
-         Indented.Put_Line ("}");
-      end Print;
-
-   end Stmt;
-
-   package body Assign is
-
-      ------------
-      -- EXPORTED
-      ------------
-      procedure Print (This : in Class) is begin
---           Indented.Put_Spaced ("<assign>");
-         Print (This.L);
-         Indented.Put (" = ");
-         Print (This.R);
-      end Print;
-
-      ------------
-      -- EXPORTED
-      ------------
-      procedure Print (This : in List) is
-         First_Item : Boolean := True;
-      begin
-         --           Indented.Put_Spaced ("<assign list>");
-         Indented.Indent;
-         for Item of This loop
-            if First_Item then
-               First_Item := False;
-            else
-               Indented.Put_Line (",");
-            end if;
-            Item.Print;
-         end loop;
-         Indented.Dedent;
-      end Print;
-
-      procedure Append
-        (Container : in out List;
-         L, R      : in     String) is
-      begin
-         Container.Append
-           ((L => To_ID_Type (L),
-             R => To_ID_Type (R)));
-      end Append;
-
-   end Assign;
-
-   package body Attr is
-
-      -- There is no Print for Attr because it is nothing more than an Assign List.
-
-      ------------
-      -- EXPORTED
-      ------------
-      procedure Print (This : in List) is
-      begin
-         --           Indented.Put_Spaced ("<attr list>");
-         Indented.New_Line_If_Needed;
-         for Item of This loop
-            Indented.Indent;
-            Indented.Put ("[");
-            Item.Print;
-            Indented.Put_Line (" ]");
-            Indented.Dedent;
-         end loop;
-      end Print;
-
-   end Attr;
-
-   package body Attr_Stmt is
-
-      ------------
-      -- EXPORTED
-      ------------
-      procedure Print (This : in Class) is
-      begin
-         Indented.Put_Line ("<attr stmt>");
-      end Print;
-
-      ------------
-      -- EXPORTED
-      ------------
-      procedure Append_To
-        (This      : in Class;
-         Stmt_List : in out Stmt.List) is
-      begin
-         Stmt_List.Append (new Class'(This));
-      end Append_To;
-
-   end Attr_Stmt;
-
-   package body Node_ID is
-
-      ------------
-      -- EXPORTED
-      ------------
-      procedure Print (This : in Port_Class) is
-      begin
-         if This.Has_ID then
-            Indented.Put (":");
-            Print (This.ID);
-         end if;
-         if This.Has_Compass_Pt then
-            Indented.Put (":");
-            Indented.Put (To_String (This.Compass_Pt));
-         end if;
-      end Print;
-
-      ------------
-      -- EXPORTED
-      ------------
-      procedure Print (This : in Class) is
-      begin
-         Print (This.ID);
-         This.Port.Print;
-      end Print;
-
-   end Node_ID;
-
-   package body Node_Stmt is
-
-      ------------
-      -- EXPORTED
-      ------------
-      procedure Print (This : in Class) is
-      begin
---           Indented.Put_Spaced ("<node>");
-         This.Node_Id.Print;
-         Indented.Put(" ");
-         This.Attrs.Print;
-         Indented.New_Line_If_Needed;
-      end Print;
-
-      ------------
-      -- EXPORTED
-      ------------
-      procedure Append_To
-        (This      : in Class;
-         Stmt_List : in out Stmt.List) is
-      begin
-         Stmt_List.Append (new Class'(This));
-      end Append_To;
-
-   end Node_Stmt;
-
-   package body Edge_Stmt is
-
-      ------------
-      -- EXPORTED
-      ------------
-      procedure Print (This : in Class) is
-      begin
-         Indented.Put_Line ("<edge stmt>");
-      end Print;
-
-      ------------
-      -- EXPORTED
-      ------------
-      procedure Append_To
-        (This      : in Class;
-         Stmt_List : in out Stmt.List) is
-      begin
-         Stmt_List.Append (new Class'(This));
-      end Append_To;
-
-   end Edge_Stmt;
 
    -----------
    -- PRIVATE:
    -----------
    package body Indented is
 
-      Indent_Level  : Natural := 0;
-      Indent_Size   : constant Natural := 2;
+      Indent_Level : Natural := 0;
+      Indent_Size  : constant Natural := 2;
+
+      function Current_Indent_Col return ATI.Positive_Count is
+        (ATI.Positive_Count((Indent_Level * Indent_Size) + 1));
 
       -- If the indent is increased in the middle of a line, this will ensure
       -- that the next put is at that indent or better:
       procedure Put_Indent is
-         Minimum_Col : constant ATI.Positive_Count :=
-           ATI.Positive_Count ((Indent_Level * Indent_Size) + 1);
          use type ATI.Positive_Count;
       begin
-         if ATI.Col < Minimum_Col then
-            ATI.Set_Col (Minimum_Col);
+         if ATI.Col < Current_Indent_Col then
+            ATI.Set_Col (Current_Indent_Col);
          end if;
       end Put_Indent;
 
@@ -310,15 +337,6 @@ package body Dot is
       ------------
       -- EXPORTED
       ------------
-      procedure Put_Line (Item : in String) is
-      begin
-         Put_Indent;
-         ATI.Put_Line (Item);
-      end Put_Line;
-
-      ------------
-      -- EXPORTED
-      ------------
       procedure New_Line is
       begin
          ATI.New_Line;
@@ -327,13 +345,13 @@ package body Dot is
       ------------
       -- EXPORTED
       ------------
-      procedure New_Line_If_Needed is
+      procedure End_Line_If_Needed is
          use type ATI.Positive_Count;
       begin
-         if ATI.Col > 1 then
+         if ATI.Col > Current_Indent_Col then
             New_Line;
          end if;
-      end New_Line_If_Needed;
+      end End_Line_If_Needed;
 
       ------------
       -- EXPORTED
@@ -412,9 +430,9 @@ package body Dot is
    ------------
    -- PRIVATE:
    ------------
-   procedure Print (This : in ID_Type) is
+   procedure Put (This : in ID_Type) is
    begin
       Indented.Put (To_String(This));
-   end Print;
+   end Put;
 
 end Dot;

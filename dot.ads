@@ -56,7 +56,7 @@ package Dot is
    type ID_Type is new Ada.Strings.Unbounded.Unbounded_String;
    function To_ID_Type (Item : in String) return ID_Type
                         renames To_Unbounded_String;
---     function To_ID_Type (Item : in Wide_String) return ID_Type;
+   --     function To_ID_Type (Item : in Wide_String) return ID_Type;
 
    -----------------------------------------------------------------------------
    package Stmt is
@@ -64,24 +64,26 @@ package Dot is
       type Class is abstract tagged null record;
       type Access_All_Class is access all Class'Class;
 
-      procedure Print (This : in Class) is abstract;
+      procedure Put
+        (This : in Class) is abstract;
 
       package Lists is new
         Ada.Containers.Doubly_Linked_Lists (Access_All_Class);
       -- Make primitive operations like "=" visible:
-      type List is new Lists.List with null record;
+      type List_Of_Access_All_Class is new Lists.List with null record;
 
-      procedure Print (This_List : in List);
+      procedure Put
+        (These : in List_Of_Access_All_Class);
 
    end Stmt;
    -----------------------------------------------------------------------------
 
    -----------------------------------------------------------------------------
-   type Assign_Class is tagged -- Initialized
-      record
-         L : ID_Type; -- Initialized
-         R : ID_Type; -- Initialized
-      end record;
+--     type Assign_Class is tagged -- Initialized
+--        record
+--           L : ID_Type; -- Initialized
+--           R : ID_Type; -- Initialized
+--        end record;
    -----------------------------------------------------------------------------
 
    -----------------------------------------------------------------------------
@@ -94,14 +96,16 @@ package Dot is
          R : ID_Type; -- Initialized
       end record;
 
-      procedure Print (This : in Class);
+      procedure Put
+        (This : in Class);
 
       package Lists is new
         Ada.Containers.Doubly_Linked_Lists (Class);
       -- Make primitive operations like "=" visible:
-      type List is new Lists.List with null record;
+      type List_Of_Class is new Lists.List with null record; -- Initialized
 
-      procedure Print (This : in List);
+      procedure Put
+        (These : in List_Of_Class);
 
       -- Convenience: converts L, R to ID_Type and appends a Class to the list.
       -- Allows this:
@@ -112,10 +116,11 @@ package Dot is
 
       not overriding
       procedure Append
-        (Container : in out List;
-         L, R      : in     String);
+        (These : in out List_Of_Class;
+         L, R  : in     String);
 
-      Empty_List : constant List := List'(Lists.Empty_List with null record);
+      Empty_List : constant List_Of_Class := List_Of_Class'(Lists.Empty_List
+                                                              with null record);
 
    end Assign;
    -----------------------------------------------------------------------------
@@ -123,15 +128,25 @@ package Dot is
    -----------------------------------------------------------------------------
    -- Zero or more bracketed lists of assigns:
    package Attr is
+
+      type Class is tagged -- Initialized
+         record
+            Assigns : Assign.List_Of_Class; -- Initialized
+         end record;
+
+      procedure Put
+        (This : in Class);
+
       package Lists is new
-        Ada.Containers.Doubly_Linked_Lists (Element_Type => Assign.List,
-                                            "="          => Assign."=");
+        Ada.Containers.Doubly_Linked_Lists (Class);
       -- Make primitive operations like "=" visible:
-      type List is new Lists.List with null record;
+      type List_Of_Class is new Lists.List with null record;
 
-      procedure Print (This : in List);
+      procedure Put
+        (These : in List_Of_Class);
 
-      Empty_List : constant List := List'(Lists.Empty_List with null record);
+      Empty_List : constant List_Of_Class := List_Of_Class'(Lists.Empty_List
+                                                              with null record);
 
    end Attr;
    -----------------------------------------------------------------------------
@@ -143,16 +158,17 @@ package Dot is
 
       type Class is new Stmt.Class with record -- Initialized
          Kind  : Kind_Type := Node;
-         Attrs : Dot.Attr.List; -- Initialized
+         Attrs : Dot.Attr.List_Of_Class; -- Initialized
       end record;
 
       overriding
-      procedure Print (This : in Class);
+      procedure Put
+        (This : in Class);
 
       -- Creates a Class object on the heap:
       procedure Append_To
         (This      : in Class;
-         Stmt_List : in out Stmt.List);
+         Stmt_List : in out Stmt.List_Of_Access_All_Class);
 
    end Attr_Stmt;
    -----------------------------------------------------------------------------
@@ -167,7 +183,8 @@ package Dot is
          Compass_Pt     : Compass_Pt_Type := C;
       end record;
 
-      procedure Print (This : in Port_Class);
+      procedure Put
+        (This : in Port_Class);
 
       Null_Port_Class : constant Port_Class;
 
@@ -176,7 +193,8 @@ package Dot is
          Port     : Port_Class; -- Initialized
       end record;
 
-      procedure Print (This : in Class);
+      procedure Put
+        (This : in Class);
 
    private
       Default_Port_Class : Port_Class;
@@ -189,26 +207,27 @@ package Dot is
 
       type Class is new Stmt.Class with record -- Initialized
          Node_ID : Dot.Node_ID.Class; -- Initialized
-         Attrs   : Dot.Attr.List; -- Initialized
+         Attrs   : Dot.Attr.List_Of_Class; -- Initialized
       end record;
 
       overriding
-      procedure Print (This : in Class);
+      procedure Put
+        (This : in Class);
 
       -- Creates a Class object on the heap:
       procedure Append_To
         (This      : in Class;
-         Stmt_List : in out Stmt.List);
+         Stmt_List : in out Stmt.List_Of_Access_All_Class);
 
    end Node_Stmt;
    -----------------------------------------------------------------------------
 
    -----------------------------------------------------------------------------
    type Subgraph_Class is tagged record -- Initialized
-      Stmt_List : Stmt.List;
+      Stmt_List : Stmt.List_Of_Access_All_Class;
       Has_ID    : Boolean := False;
       ID        : ID_Type;
-   end record;
+         end record;
    -----------------------------------------------------------------------------
 
    -----------------------------------------------------------------------------
@@ -216,19 +235,20 @@ package Dot is
       type Kind_Type is (Node, Subgraph);
 
       type Class is new Stmt.Class with record -- Initialized
-         Attrs    : Dot.Attr.List; -- Initialized
+         Attrs    : Dot.Attr.List_Of_Class; -- Initialized
          Kind     : Kind_Type := Node;
          Node_ID  : Dot.Node_ID.Class; -- Initialized
          Subgraph : Subgraph_Class; -- Initialized
       end record;
 
       overriding
-      procedure Print (This : in Class);
+      procedure Put
+        (This : in Class);
 
       -- Creates a Class object on the heap:
       procedure Append_To
         (This      : in Class;
-         Stmt_List : in out Stmt.List);
+         Stmt_List : in out Stmt.List_Of_Access_All_Class);
 
    end Edge_Stmt;
    -----------------------------------------------------------------------------
@@ -260,7 +280,7 @@ package Dot is
         (This : access Class)
          return Natural;
 
-      procedure Print
+      procedure Put
         (This : access Class);
 
    private
@@ -270,7 +290,7 @@ package Dot is
             Digraph   : Boolean := True;
             Strict    : Boolean := True;
             ID        : ID_Type; -- Initialized
-            Stmt_List : Stmt.List; -- Initialized
+            Stmt_List : Stmt.List_Of_Access_All_Class; -- Initialized
          end record;
 
    end Graphs;
@@ -287,13 +307,12 @@ private
       procedure Indent;
       procedure Dedent;
       procedure Put (Item : in String);
-      procedure Put_Line (Item : in String);
       procedure New_Line;
 
-      -- Calls New_Line if not already at beginning of line:
-      procedure New_Line_If_Needed;
+      -- Calls New_Line if the current col is greater than the indent col:
+      procedure End_Line_If_Needed;
 
-      -- Puts nothing if Item is empty, else puts it with a trailing space:
+      -- Put nothing if Item is empty, else Put it with a trailing space:
       procedure Put_Spaced (Item : in String);
    end Indented;
 
@@ -309,7 +328,7 @@ private
    function To_String (Item : in ID_Type)
                        return String;
 
-   procedure Print (This : in ID_Type);
+   procedure Put (This : in ID_Type);
 
 
 end Dot;
