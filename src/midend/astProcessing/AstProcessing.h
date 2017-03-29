@@ -409,7 +409,7 @@ SgTreeTraversal<InheritedAttributeType, SynthesizedAttributeType>::
 #endif
 
 
-#if 0
+#if 1
 // DQ (3/28/2017): This function is not used and so let's experiment with removing it as a trial to improve the Code Coverage testing.
 template<class InheritedAttributeType, class SynthesizedAttributeType>
 SgTreeTraversal<InheritedAttributeType, SynthesizedAttributeType>::
@@ -568,7 +568,7 @@ traverseWithinFile(SgNode* node, InheritedAttributeType inheritedValue)
 /////////////////////////////////////////////
 
 
-#if 0
+#if 1
 // DQ (3/28/2017): This function is not used and so let's experiment with removing it as a trial to improve the Code Coverage testing.
 // MS: 04/25/02
 template <class SynthesizedAttributeType>
@@ -879,7 +879,7 @@ traversalResult()
 }
 
 
-#if 0
+#if 1
 // DQ (3/28/2017): This function is not used and so let's experiment with removing it as a trial to improve the Code Coverage testing.
 // GB (05/30/2007)
 template <class InheritedAttributeType, class SynthesizedAttributeType>
@@ -891,7 +891,7 @@ atTraversalStart()
 #endif
 
 
-#if 0
+#if 1
 // DQ (3/28/2017): This function is not used and so let's experiment with removing it as a trial to improve the Code Coverage testing.
 template <class InheritedAttributeType, class SynthesizedAttributeType>
 void
