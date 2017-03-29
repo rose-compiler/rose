@@ -324,11 +324,21 @@ UnparseFortran_type::unparseArrayType(SgType* type, SgUnparse_Info& info, bool p
         if (array_type->get_isCoArray())
         {  // print codimension info
            curprint("[");
-           unp->u_fortran_locatedNode->unparseExprList(array_type->get_dim_info(),info,/* do not output parens */ false);
+
+        // DQ (3/28/2017): Eliminate warning of overloaded virtual function in base class (from Clang).
+        // unp->u_fortran_locatedNode->unparseExprList(array_type->get_dim_info(),info,/* do not output parens */ false);
+           unp->u_fortran_locatedNode->unparseExprList(array_type->get_dim_info(),info);
+
            curprint("]");
         }
         else  // print dimension info
-           unp->u_fortran_locatedNode->unparseExprList(array_type->get_dim_info(),info,/* output parens */ true);
+        {
+        // DQ (3/28/2017): Eliminate warning of overloaded virtual function in base class (from Clang).
+        // unp->u_fortran_locatedNode->unparseExprList(array_type->get_dim_info(),info,/* output parens */ true);
+           curprint("(");
+           unp->u_fortran_locatedNode->unparseExprList(array_type->get_dim_info(),info);
+           curprint(")");
+        }
      }
 
   // DQ (1/16/2011): Plus unparse the base type...(unless it will just output the stripped types name).

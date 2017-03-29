@@ -278,7 +278,9 @@ T calculate_integer_t (SgBinaryOp* binaryOperator, T lhsValue, T rhsValue)
 template<typename T>
 T calculate_float_t (SgBinaryOp* binaryOperator, T lhsValue, T rhsValue)
 {
-  T foldedValue; // to be converted to result type   
+// DQ (3/27/2017): Initialize this to avoid Clang warning: from default case.
+// T foldedValue; // to be converted to result type   
+  T foldedValue = 0; // to be converted to result type   
 
   switch (binaryOperator->variantT())
   {
@@ -427,7 +429,10 @@ T calculate_string_t (SgBinaryOp* binaryOperator, T lhsValue, T rhsValue)
 template<typename T>
 T calculate_t (SgBinaryOp* binaryOperator, T lhsValue, T rhsValue)
 {
-  T foldedValue; // to be converted to result type   
+  // DQ (3/27/2017): Initialize this value to avoid Clang warning from default case.
+  // T foldedValue; // to be converted to result type   
+  T foldedValue = 0; // to be converted to result type   
+
   switch (binaryOperator->variantT())
   {
     // integer-exclusive oprations
@@ -552,7 +557,7 @@ T calculate_t (SgBinaryOp* binaryOperator, T lhsValue, T rhsValue)
 template<typename T>
 T calculate_u_t (SgUnaryOp* unaryOperator, T theValue)
 {
-  T foldedValue; // to be converted to result type
+  T foldedValue = 0; // to be converted to result type
   switch (unaryOperator->variantT())
   {
     // integer-exclusive oprations
@@ -1009,9 +1014,9 @@ ConstantFoldingTraversal::evaluateSynthesizedAttribute (
                             {
                               case V_SgIntVal:
                                  {
+#if 0
                                    SgIntVal* integerValue = isSgIntVal(valueExpression);
                                    int originalValue = integerValue->get_value();
-#if 0
                                 // Check if we have a constant folded value computed at a child node (synthesized attribute).
                                    SgValueExp* constantValueExp = synthesizedAttributeList[SgValueExp_originalExpressionTree].newValueExp;
                                    if (constantValueExp != NULL)
