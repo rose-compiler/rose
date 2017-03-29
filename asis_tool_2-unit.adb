@@ -86,12 +86,12 @@ package body Asis_Tool_2.Unit is
       Graph : in Dot.Graphs.Access_Class)
    is
       Node        : Dot.Node_Stmt.Class; -- Initialized
-      As          : Dot.Assign.List; -- Initialized
+      Attr        : Dot.Attr.Class; -- Initialized
       Unique_Name : constant String := To_String (Acu.Unique_Name (Unit));
    begin
       Node.Node_ID.ID := Dot.To_ID_Type (Unique_Name);
       -- These are in alphabetical order:
-      As.Append ("Compilation_Command_Line_Options",
+      Attr.Assigns.Append ("Compilation_Command_Line_Options",
                  To_String (Acu.Compilation_Command_Line_Options (Unit)));
       -- Empty:
       --           As.Append ("This_Form", To_String (Acu.Object_Form (Unit)));
@@ -99,13 +99,13 @@ package body Asis_Tool_2.Unit is
       --           As.Append ("Object_Name", To_String (Acu.Object_Name (Unit)));
       -- Empty:
       --           As.Append ("Text_Form", To_String (Acu.Text_Form (Unit)));
-      As.Append ("Text_Name",      To_String (Acu.Text_Name (Unit)));
-      As.Append ("Unique_Name",    Unique_Name);
-      As.Append ("Unit_Class",     Acu.Unit_Class (Unit)'Image);
-      As.Append ("Unit_Full_Name", To_String (Acu.Unit_Full_Name (Unit)));
-      As.Append ("Unit_Kind",      Acu.Unit_Kind (Unit)'Image);
-      As.Append ("Unit_Origin",    Acu.Unit_Origin (Unit)'Image);
-      Node.Attrs.Append (As);
+      Attr.Assigns.Append ("Text_Name",      To_String (Acu.Text_Name (Unit)));
+      Attr.Assigns.Append ("Unique_Name",    Unique_Name);
+      Attr.Assigns.Append ("Unit_Class",     Acu.Unit_Class (Unit)'Image);
+      Attr.Assigns.Append ("Unit_Full_Name", To_String (Acu.Unit_Full_Name (Unit)));
+      Attr.Assigns.Append ("Unit_Kind",      Acu.Unit_Kind (Unit)'Image);
+      Attr.Assigns.Append ("Unit_Origin",    Acu.Unit_Origin (Unit)'Image);
+      Node.Attrs.Append (Attr);
       Graph.Append_Stmt (new Dot.Node_Stmt.Class'(Node));
    end Add_To_Graph;
 

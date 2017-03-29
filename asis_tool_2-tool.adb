@@ -14,7 +14,7 @@ package body Asis_Tool_2.Tool is
       This.Graph.Set_Is_Digraph (True);
       This.Graph.Set_Is_Strict (False);
       This.My_Context.Process (Graph => This.Graph);
-      This.Graph.Print;
+      This.Graph.Put;
       Asis.Implementation.Finalize;
    end Process;
 

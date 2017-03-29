@@ -57,10 +57,10 @@ package body Asis_Tool_2.Element is
       begin
          --        A_Defining_Name       -> Defining_Name_Kinds
          --                                         -> Operator_Kinds
-         State.Add_Attribute (Name => "Name",
-                              Value => Name (Element));
          State.Add_Attribute (Name => "Defining_Name_Kind",
                               Value => Defining_Name_Kind'Image);
+         State.Add_Attribute (Name => "Name",
+                              Value => Name (Element));
          case Defining_Name_Kind is
             when Asis.A_Defining_Operator_Symbol =>
                State.Add_Attribute (Name => "Operator_Kind",
@@ -73,13 +73,52 @@ package body Asis_Tool_2.Element is
         (Element : in     Asis.Element;
          State   : in out Class)
       is
+         Declaration_Kind : Asis.Declaration_Kinds :=
+           Asis.Elements.Declaration_Kind (Element);
+         -- Tired of typing "Asis." in front of enum values:
+         use Asis;
       begin
          --        A_Declaration         -> Declaration_Kinds
          --                                         -> Declaration_Origin
          --                                         -> Mode_Kinds
          --                                         -> Subprogram_Default_Kinds
-         pragma Compile_Time_Warning (Standard.True, "Asis_Tool_2.Element.Pre_Children.Process_Declaration unimplemented");
---           raise Program_Error with "Unimplemented procedure Asis_Tool_2.Element.Pre_Children.Process_Declaration";
+         State.Add_Attribute (Name => "Declaration_Kind",
+                              Value => Declaration_Kind'Image);
+         State.Add_Attribute (Name => "Declaration_Origin",
+                              Value => Asis.Elements.Declaration_Origin (Element)'Image);
+         case Declaration_Kind is
+            when A_Parameter_Specification |
+                 A_Formal_Object_Declaration =>
+               State.Add_Attribute (Name => "Mode_Kind",
+                                    Value => Asis.Elements.Mode_Kind (Element)'Image);
+            when others =>
+               null;
+         end case;
+         case Declaration_Kind is
+            when A_Formal_Function_Declaration |
+                 A_Formal_Procedure_Declaration =>
+               State.Add_Attribute (Name => "Subprogram_Default_Kind",
+                                    Value => Asis.Elements.Default_Kind (Element)'Image);
+            when others =>
+               null;
+         end case;
+         case Declaration_Kind is
+            when A_Private_Type_Declaration |
+                 A_Private_Extension_Declaration |
+                 A_Variable_Declaration |
+                 A_Constant_Declaration |
+                 A_Deferred_Constant_Declaration |
+                 A_Discriminant_Specification |
+                 A_Loop_Parameter_Specification |
+                 A_Generalized_Iterator_Specification |
+                 An_Element_Iterator_Specification |
+                 A_Procedure_Declaration |
+                 A_Function_Declaration =>
+               State.Add_Attribute (Name => "Trait_Kind",
+                                    Value => Asis.Elements.Trait_Kind (Element)'Image);
+            when others =>
+               null;
+         end case;
       end Process_Declaration;
 
       procedure Process_Definition
@@ -319,11 +358,11 @@ package body Asis_Tool_2.Element is
       Name  : in     String;
       Value : in     String)
    is
-      Assigns : Dot.Assign.List; -- Initialized
+      Attr : Dot.Attr.Class; -- Initialized
    begin
       This.Text.Put_Indented_Line (Name & " => """ & Value & """");
-      Assigns.Append (Name, Value);
-      This.Current_Node.Attrs.Append (Assigns);
+      Attr.Assigns.Append (Name, Value);
+      This.Current_Node.Attrs.Append (Attr);
    end;
 
    -----------
