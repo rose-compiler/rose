@@ -3258,8 +3258,6 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
         }
       } else if(variableIdMapping.hasPointerType(lhsVar)) {
         // we assume here that only arrays (pointers to arrays) are assigned
-        // see CODE-POINT-1 in ExprAnalyzer.C
-        // logger[DEBUG]<<"pointer-assignment: "<<lhsVar.toString()<<"="<<(*i).result<<endl;
         //newPState[lhsVar]=(*i).result;
         if(variableValueMonitor.isActive() && variableValueMonitor.isHotVariable(this,lhsVar)) {
           newPState.setVariableToTop(lhsVar);
@@ -3289,6 +3287,7 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
         if(SgVarRefExp* varRefExp=isSgVarRefExp(arrExp)) {
           PState pstate2=oldPState;
           VariableId arrayVarId=_variableIdMapping->variableId(varRefExp);
+          AValue arrayPtrValue;
           // two cases
           if(_variableIdMapping->hasArrayType(arrayVarId)) {
             // has already correct id
@@ -3297,18 +3296,14 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
             // in case it is a pointer retrieve pointer value
             // logger[DEBUG]<<"pointer-array access!"<<endl;
             if(pstate2.varExists(arrayVarId)) {
-              AValue aValuePtr=pstate2[arrayVarId];
+              arrayPtrValue=pstate2[arrayVarId];
               // convert integer to VariableId
               // TODO (topify mode: does read this as integer)
-              if(!aValuePtr.isConstInt()) {
-                logger[ERROR] <<"pointer value in array access lhs is top. Not supported yet."<<endl;
+              if(arrayPtrValue.isTop()||arrayPtrValue.isBot()) {
+                logger[ERROR] <<"pointer value in array access lhs is top or bot. Not supported yet."<<endl;
                 exit(1);
               }
-              int aValueInt=aValuePtr.getIntValue();
-              // change arrayVarId to refered array!
               // logger[DEBUG]<<"defering pointer-to-array: ptr:"<<_variableIdMapping->variableName(arrayVarId);
-              arrayVarId=_variableIdMapping->variableIdFromCode(aValueInt);
-              // logger[DEBUG]<<" to "<<_variableIdMapping->variableName(arrayVarId)<<endl;//DEBUG
             } else {
               logger[ERROR] <<"lhs array access: pointer variable does not exist in PState."<<endl;
               exit(1);
@@ -3321,21 +3316,17 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
           //AValue aValue=(*i).value();
           list<SingleEvalResultConstInt> res=exprAnalyzer.evalConstInt(indexExp,currentEState,true);
           ROSE_ASSERT(res.size()==1); // TODO: temporary restriction
-          AValue aValue=(*(res.begin())).value();
+          AValue indexValue=(*(res.begin())).value();
 
-          int index=-1;
-          if(aValue.isConstInt()) {
-            index=aValue.getIntValue();
-            if(!exprAnalyzer.checkArrayBounds(arrayVarId,index)) {
-              cerr<<"Write access: "<<lhs->unparseToString()<<endl;
-            }
-            arrayElementId=_variableIdMapping->variableIdOfArrayElement(arrayVarId,index);
-            //logger[TRACE]<<"arrayElementVarId:"<<arrayElementId.toString()<<":"<<_variableIdMapping->variableName(arrayVarId)<<" Index:"<<index<<endl;
-          } else {
-            logger[ERROR] <<"lhs array index cannot be evaluated to a constant. Not supported yet."<<endl;
-            logger[ERROR] <<"expr: "<<varRefExp->unparseToString()<<endl;
-            exit(1);
+          AValue arrayPtrPlusIndexValue=AType::ConstIntLattice::operatorAdd(arrayPtrValue,indexValue);
+          VariableId arrayVarId2=arrayPtrPlusIndexValue.getVariableId();
+          int index2=arrayPtrPlusIndexValue.getIndexIntValue();
+
+          if(!exprAnalyzer.checkArrayBounds(arrayVarId2,index2)) {
+            cerr<<"Write access: "<<lhs->unparseToString()<<endl;
           }
+          arrayElementId=_variableIdMapping->variableIdOfArrayElement(arrayVarId2,index2);
+          //logger[TRACE]<<"arrayElementVarId:"<<arrayElementId.toString()<<":"<<_variableIdMapping->variableName(arrayVarId)<<" Index:"<<index<<endl;
           ROSE_ASSERT(arrayElementId.isValid());
           // read value of variable var id (same as for VarRefExp - TODO: reuse)
           // TODO: check whether arrayElementId (or array) is a constant array (arrayVarId)

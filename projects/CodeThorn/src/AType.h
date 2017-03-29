@@ -84,7 +84,7 @@ class ConstIntLattice {
   static ConstIntLattice operatorDiv(ConstIntLattice& a,ConstIntLattice& b);
   static ConstIntLattice operatorMod(ConstIntLattice& a,ConstIntLattice& b);
 
-  ConstIntLattice createAddressOfArray(SPRAY::VariableId arrayVariableId, ConstIntLattice Index);
+  static ConstIntLattice createAddressOfArray(SPRAY::VariableId arrayVariableId, ConstIntLattice Index);
   // strict weak ordering (required for sorted STL data structures if
   // no comparator is provided)
   bool operator==(AType::ConstIntLattice other) const;
@@ -97,10 +97,12 @@ class ConstIntLattice {
 
   ValueType getValueType() const;
   int getIntValue() const;
+  int getIndexIntValue() const;
   SPRAY::VariableId getVariableId() const;
 
   int intLength();   // returns length of integer dependent on valueType
   long hash() const;
+  std::string valueTypeToString() const;
  private:
   ValueType valueType;
   int intValue;

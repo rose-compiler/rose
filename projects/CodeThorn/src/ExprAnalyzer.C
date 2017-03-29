@@ -641,50 +641,36 @@ ExprAnalyzer::evalLessThanOp(SgLessThanOp* node,
 
 list<SingleEvalResultConstInt> 
 ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
-                                 SingleEvalResultConstInt lhsResult, 
-                                 SingleEvalResultConstInt rhsResult,
+                                 SingleEvalResultConstInt arrayExprResult, 
+                                 SingleEvalResultConstInt indexExprResult,
                                  EState estate, bool useConstraints) {
   list<SingleEvalResultConstInt> resultList;
   SingleEvalResultConstInt res;
   res.estate=estate;
-  SgNode* lhs=SgNodeHelper::getLhs(node);
+  SgNode* arrayExpr=SgNodeHelper::getLhs(node);
   
-  // assume top for array elements (array elements are not stored in state)
-  //cout<<"DEBUG: ARRAY-ACCESS2: ARR"<<node->unparseToString()<<"Index:"<<rhsResult.value()<<"skip:"<<getSkipArrayAccesses()<<endl;
-  if(rhsResult.value().isTop()||getSkipArrayAccesses()==true) {
+  if(indexExprResult.value().isTop()||getSkipArrayAccesses()==true) {
     // set result to top when index is top [imprecision]
-    //cerr<<"DEBUG: arr-ref-exp: top!"<<endl;
+    // assume top for array elements if skipped
     res.result=AType::Top();
-    res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
+    res.exprConstraints=arrayExprResult.exprConstraints+indexExprResult.exprConstraints;
     resultList.push_back(res);
     return resultList;
   } else {
-    if(SgVarRefExp* varRefExp=isSgVarRefExp(lhs)) {
+    if(SgVarRefExp* varRefExp=isSgVarRefExp(arrayExpr)) {
+      ConstIntLattice arrayPtrValue=arrayExprResult.result;
       const PState* pstate=estate.pstate();
       PState pstate2=*pstate; // also removes constness
       VariableId arrayVarId=_variableIdMapping->variableId(varRefExp);
       // two cases
-       if(_variableIdMapping->hasArrayType(arrayVarId)) {
-        // has already correct id
-        // nothing to do
+      if(_variableIdMapping->hasArrayType(arrayVarId)) {
+        arrayPtrValue=AType::ConstIntLattice::createAddressOfArray(arrayVarId,AType::ConstIntLattice(0));
       } else if(_variableIdMapping->hasPointerType(arrayVarId)) {
         // in case it is a pointer retrieve pointer value
         //cout<<"DEBUG: pointer-array access!"<<endl;
         if(pstate->varExists(arrayVarId)) {
-          AValue aValuePtr=pstate2[arrayVarId];
-          // convert integer to VariableId
-          // TODO (topify mode: does read this as integer)
-          if(!aValuePtr.isConstInt()) {
-            res.result=AType::Top();
-            res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
-            resultList.push_back(res);
-            return resultList;
-          }
-          int aValueInt=aValuePtr.getIntValue();
-          // change arrayVarId to refered array!
-          //cout<<"DEBUG: defering pointer-to-array: ptr:"<<_variableIdMapping->variableName(arrayVarId);
-          arrayVarId=_variableIdMapping->variableIdFromCode(aValueInt);
-          //cout<<" to "<<_variableIdMapping->variableName(arrayVarId)<<endl;//DEBUG
+          arrayPtrValue=pstate2[arrayVarId]; // pointer value (without index)
+          ROSE_ASSERT(arrayPtrValue.isPtr());
         } else {
           cerr<<"Error: pointer variable does not exist in PState."<<endl;
           exit(1);
@@ -693,24 +679,15 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
         cerr<<"Error: unkown type of array or pointer."<<endl;
         exit(1);
       }
-      VariableId arrayElementId;
-      AValue aValue=rhsResult.value();
-      int index=-1;
-      if(aValue.isConstInt()) {
-        index=aValue.getIntValue();
-        if(!checkArrayBounds(arrayVarId,index)) {
-          cerr<<"Read access: "<<node->unparseToString()<<endl;
-        }
-        arrayElementId=_variableIdMapping->variableIdOfArrayElement(arrayVarId,index);
-        //cout<<"DEBUG: arrayElementVarId:"<<arrayElementId.toString()<<":"<<_variableIdMapping->variableName(arrayVarId)<<" Index:"<<index<<endl;
-      } else {
-        cerr<<"Error: array index cannot be evaluated to a constant. Not supported yet."<<endl;
-        cerr<<"expr: "<<varRefExp->unparseToString()<<endl;
-        exit(1);
+      ConstIntLattice indexExprResultValue=indexExprResult.value();
+      ConstIntLattice arrayPtrPlusIndexValue=ConstIntLattice::operatorAdd(arrayPtrValue,indexExprResultValue);
+      VariableId arrayVarId2=arrayPtrPlusIndexValue.getVariableId();
+      int index2=arrayPtrPlusIndexValue.getIntValue();
+      if(!checkArrayBounds(arrayVarId2,index2)) {
+        cerr<<"Read access: "<<node->unparseToString()<<endl;
       }
+      VariableId arrayElementId=_variableIdMapping->variableIdOfArrayElement(arrayVarId2,index2);
       ROSE_ASSERT(arrayElementId.isValid());
-      // read value of variable var id (same as for VarRefExp - TODO: reuse)
-      // TODO: check whether arrayElementId (or array) is a constant array (arrayVarId)
       if(pstate->varExists(arrayElementId)) {
         res.result=pstate2[arrayElementId];
         //cout<<"DEBUG: retrieved array element value:"<<res.result<<endl;
@@ -720,7 +697,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
         }
         return listify(res);
       } else {
-        // check that array is constant array (it is therefore ok that it is not in the state)
+        // array variable NOT in state. Special optimization case for constant array.
         if(_variableIdMapping->isConstantArray(arrayVarId)) {
           SgExpressionPtrList& initList=_variableIdMapping->getInitializerListOfArrayVariable(arrayVarId);
           int elemIndex=0;
@@ -736,7 +713,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
                 int intVal=intValNode->get_value();
                 //cout<<"DEBUG:initializing array element:"<<arrayElemId.toString()<<"="<<intVal<<endl;
                 //newPState.setVariableToValue(arrayElemId,CodeThorn::AValue(AType::ConstIntLattice(intVal)));
-                if(elemIndex==index) {
+                if(elemIndex==index2) {
                   AType::ConstIntLattice val=AType::ConstIntLattice(intVal);
                   res.result=val;
                   return listify(res);
@@ -762,7 +739,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
       }
     } else {
       cerr<<"Error: array-access uses expr for denoting the array. Not supported yet."<<endl;
-      cerr<<"expr: "<<lhs->unparseToString()<<endl;
+      cerr<<"expr: "<<arrayExpr->unparseToString()<<endl;
       cerr<<"arraySkip: "<<getSkipArrayAccesses()<<endl;
       exit(1);
     }
@@ -822,11 +799,13 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarExp(SgVarRefExp* node,
     //PState pstate2=*pstate; // also removes constness
     if(_variableIdMapping->hasArrayType(varId)) {
       // CODE-POINT-1
-      // res.result=AType::ConstIntLattice::createAddressOfArray(varId,AType::ConstIntLattice(0));
+      res.result=AType::ConstIntLattice::createAddressOfArray(varId,AType::ConstIntLattice(0));
       // for arrays (by default the address is used) return its pointer value (the var-id-code)
-      res.result=AType::ConstIntLattice(varId.getIdCode());
+      // with a unified pointer representation this case is now equal
+      //res.result=AType::ConstIntLattice(varId.getIdCode());
+      //res.result=const_cast<PState*>(pstate)->operator[](varId); // this includes assignment of pointer values
     } else {
-      // res.result=AType::ConstIntLattice::createAddressOfArray(varId,AType::ConstIntLattice(0));
+      //res.result=AType::ConstIntLattice::createAddressOfArray(varId,AType::ConstIntLattice(0));
       res.result=const_cast<PState*>(pstate)->operator[](varId); // this includes assignment of pointer values
     }
     if(res.result.isTop() && useConstraints) {
@@ -882,3 +861,4 @@ bool ExprAnalyzer::checkArrayBounds(VariableId arrayVarId,int accessIndex) {
   }
   return true; // pass
 }
+   

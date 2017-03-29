@@ -76,15 +76,32 @@ AType::ConstIntLattice::ConstIntLattice(unsigned long long int x) {
 AType::ConstIntLattice 
 AType::ConstIntLattice::createAddressOfArray(SPRAY::VariableId arrayVariableId, 
                                              AType::ConstIntLattice index) {
-  variableId=arrayVariableId;
-  if(index.isTop()||index.isBot()) {
-    valueType=index.valueType;
-    intValue=0;
+  AType::ConstIntLattice val;
+  if(index.isTop()) {
+    return Top();
+  } else if(index.isBot()) {
+    return Bot();
   } else if(index.isConstInt()) {
-    valueType=PTR;
-    intValue=index.intValue;
+    val.valueType=PTR;
+    val.variableId=arrayVariableId;
+    val.intValue=index.getIntValue();
+    return val;
+  } else {
+    cerr<<"Error: createAddressOfArray: unknown index type."<<endl;
+    exit(1);
   }
-  return *this;
+}
+
+std::string AType::ConstIntLattice::valueTypeToString() const {
+  switch(valueType) {
+  case TOP: return "top";
+  case CONSTINT: return "constint";
+  case PTR: return "ptr";
+  case PATHEXPR: return "pathexpr";
+  case BOT: return "bot";
+  default:
+    return "unknown";
+  }
 }
 
 int AType::ConstIntLattice::intLength() { return sizeof(int); }
@@ -98,9 +115,10 @@ bool AType::ConstIntLattice::isPtr() const {return valueType==AType::ConstIntLat
 
 long AType::ConstIntLattice::hash() const {
   if(isTop()) return LONG_MAX;
-  if(isBot()) return LONG_MIN;
-  if(isConstInt()) return getIntValue();
-  throw CodeThorn::Exception("Error: ConstIntLattice hash: unknown value.");
+  else if(isBot()) return LONG_MIN;
+  else if(isConstInt()) return getIntValue();
+    else if(isPtr()) return getVariableId().getIdCode()+getIntValue();
+  else throw CodeThorn::Exception("Error: ConstIntLattice hash: unknown value.");
 }
 
 AType::ConstIntLattice AType::ConstIntLattice::operatorNot() {
@@ -228,22 +246,24 @@ bool AType::ConstIntLattice::operator<(AType::ConstIntLattice other) const {
   return AType::strictWeakOrderingIsSmaller(*this,other);
 }
 
+// TODO: comparison with nullptr
 AType::ConstIntLattice AType::ConstIntLattice::operatorEq(ConstIntLattice other) const {
   // all TOP cases
   if(valueType==TOP || other.valueType==TOP) { 
     return AType::Top();
   }
   // all BOT cases
-  if(valueType==BOT)
+  if(valueType==BOT) {
     return other;
-  if(other.valueType==BOT) { 
+  } else if(other.valueType==BOT) { 
     return *this;
+  } else if(isPtr() && other.isPtr()) {
+    return ConstIntLattice(variableId==other.variableId && intValue==other.intValue);
+  } else if(isConstInt() && other.isConstInt()) {
+    return ConstIntLattice(intValue==other.intValue);
+  } else {
+    return ConstIntLattice(Top()); // all other cases can be true or false
   }
-  // otherwise usual bool cases
-  if(intValue==other.intValue) 
-    return ConstIntLattice(true);
-  else
-    return ConstIntLattice(false);
 }
 
 AType::ConstIntLattice AType::ConstIntLattice::operatorNotEq(ConstIntLattice other) const {
@@ -366,9 +386,19 @@ AType::ConstIntLattice::ValueType AType::ConstIntLattice::getValueType() const {
   return valueType;
 }
 
+int AType::ConstIntLattice::getIndexIntValue() const { 
+  if(valueType!=PTR) {
+    cerr << "ConstIntLattice: valueType="<<valueTypeToString()<<endl;
+    throw CodeThorn::Exception("Error: ConstIntLattice::getIndexIntValue operation failed.");
+  }
+  else 
+    return intValue;
+}
+
 int AType::ConstIntLattice::getIntValue() const { 
-  if(valueType!=CONSTINT) {
-    cerr << "ConstIntLattice: valueType="<<valueType<<endl;
+  // PTR will be removed once all ptrs are adapted to getIndexIntValue
+  if(valueType!=CONSTINT && valueType!=PTR) {
+    cerr << "ConstIntLattice: valueType="<<valueTypeToString()<<endl;
     throw CodeThorn::Exception("Error: ConstIntLattice::getIntValue operation failed.");
   }
   else 
@@ -377,7 +407,7 @@ int AType::ConstIntLattice::getIntValue() const {
 
  SPRAY::VariableId AType::ConstIntLattice::getVariableId() const { 
    if(valueType!=PTR) {
-     cerr << "ConstIntLattice: valueType="<<valueType<<endl;
+     cerr << "ConstIntLattice: valueType="<<valueTypeToString()<<endl;
      throw CodeThorn::Exception("Error: ConstIntLattice::getVariableId operation failed.");
   }
   else 
@@ -407,8 +437,21 @@ AType::ConstIntLattice AType::ConstIntLattice::operatorAdd(AType::ConstIntLattic
     return b;
   if(b.isBot())
     return a;
-  assert(a.isConstInt() && b.isConstInt());
-  return a.getIntValue()+b.getIntValue();
+  if(a.isPtr() && b.isConstInt()) {
+    AType::ConstIntLattice val=a;
+    val.intValue+=b.intValue;
+    return val;
+  } else if(a.isConstInt() && b.isPtr()) {
+    AType::ConstIntLattice val=b;
+    val.intValue+=a.intValue;
+    return val;
+  } else if(a.isPtr() && b.isPtr()) {
+    throw CodeThorn::Exception("Error: invalid operands of type pointer to binary ‘operator+’.");
+  } else if(a.isConstInt() && b.isConstInt()) {
+    return a.getIntValue()+b.getIntValue();
+  } else {
+    throw CodeThorn::Exception("Error: undefined behavior in '+' operation.");
+  }
 }
 AType::ConstIntLattice AType::ConstIntLattice::operatorSub(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
   if(a.isTop() || b.isTop())
@@ -417,8 +460,27 @@ AType::ConstIntLattice AType::ConstIntLattice::operatorSub(AType::ConstIntLattic
     return b;
   if(b.isBot())
     return a;
-  assert(a.isConstInt() && b.isConstInt());
-  return a.getIntValue()-b.getIntValue();
+  if(a.isPtr() && b.isPtr()) {
+    if(a.getVariableId()==b.getVariableId()) {
+      AType::ConstIntLattice val;
+      val.intValue=a.intValue-b.intValue;
+      val.valueType=CONSTINT;
+      val.variableId=a.variableId; // same as b.variableId
+      return val;
+    } else {
+      return Top(); // subtraction of incompatible pointers gives arbitrary value
+    }
+  } else if(a.isPtr() && b.isConstInt()) {
+    AType::ConstIntLattice val=a;
+    val.intValue-=b.intValue;
+    return val;
+  } else if(a.isConstInt() && b.isPtr()) {
+    throw CodeThorn::Exception("Error: forbidden operation in '-' operation. Attempt to subtract pointer from integer.");
+  } else if(a.isConstInt() && b.isConstInt()) {
+    return a.getIntValue()-b.getIntValue();
+  } else {
+    throw CodeThorn::Exception("Error: undefined behavior in '-' operation.");
+  }
 }
 AType::ConstIntLattice AType::ConstIntLattice::operatorMul(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
   if(a.isTop() || b.isTop())
@@ -427,9 +489,9 @@ AType::ConstIntLattice AType::ConstIntLattice::operatorMul(AType::ConstIntLattic
     return b;
   if(b.isBot())
     return a;
+  // TODO multiplication of pointer values
   assert(a.isConstInt() && b.isConstInt());
   return a.getIntValue()*b.getIntValue();
-
 }
 AType::ConstIntLattice AType::ConstIntLattice::operatorDiv(AType::ConstIntLattice& a,AType::ConstIntLattice& b) {
   if(a.isTop() || b.isTop())
@@ -438,6 +500,7 @@ AType::ConstIntLattice AType::ConstIntLattice::operatorDiv(AType::ConstIntLattic
     return b;
   if(b.isBot())
     return a;
+  // TODO division of pointer values
   assert(a.isConstInt() && b.isConstInt());
   return a.getIntValue()/b.getIntValue();
 
@@ -449,6 +512,7 @@ AType::ConstIntLattice AType::ConstIntLattice::operatorMod(AType::ConstIntLattic
     return b;
   if(b.isBot())
     return a;
+  // TODO modulo of pointer values
   assert(a.isConstInt() && b.isConstInt());
   return a.getIntValue()%b.getIntValue();
 }
