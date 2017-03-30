@@ -416,7 +416,9 @@ NEW_TESTCODES = \
    test2016_91.C \
    test2016_93.C \
    test2017_04.C \
-   test2017_09.C
+   test2017_09.C \
+   test2017_10.C \
+   test2017_11.C
 
 # DQ (1/29/2017): This appers to fail for Boost 1.57
 if !ROSE_USING_BOOST_VERSION_1_57

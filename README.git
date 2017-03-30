@@ -1057,3 +1057,5 @@ and then scroll to end to see the first commits.
 
 
 
+ROSE.SH (specification of alternative translator):
+   CXX="other_translator" rose.sh ...
