@@ -311,7 +311,7 @@ namespace OmpSupport
           if(macroName == isSgVarRefExp(old_exp)->get_symbol()->get_name().getString())
           {   // Clause is defined in a macro
               size_t comma = define_macro.find(",");
-              if(comma == string::npos);       // Macros like "#define MACRO_NAME VALUE1, VALUE2" are not accepted
+              if(comma == string::npos)       // Macros like "#define MACRO_NAME VALUE1, VALUE2" are not accepted
               {   // We create here an expression with the value of the clause defined in the macro
                   unsigned int macroValueInitPos = macroNameEndPos + 1;
                   while(macroValueInitPos<define_macro.size() && define_macro[macroValueInitPos]==' ')
