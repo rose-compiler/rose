@@ -12,59 +12,59 @@ using namespace VirtualBinCFG;
 #include "../RoseBin_FlowAnalysis.h"
 
 void
-RoseBin_DotGraph::printProlog(  std::ofstream& myfile, string& fileType) ROSE_DEPRECATED("no longer supported") {
+RoseBin_DotGraph::printProlog(  std::ofstream& myfile, string& fileType) {
 }
 
 void
-RoseBin_DotGraph::printEpilog(  std::ofstream& myfile) ROSE_DEPRECATED("no longer supported") {
+RoseBin_DotGraph::printEpilog(  std::ofstream& myfile) {
 }
 
 void
-RoseBin_DotGraph::printNodesCallGraph(std::ofstream& myfile) ROSE_DEPRECATED("no longer supported") {
+RoseBin_DotGraph::printNodesCallGraph(std::ofstream& myfile) {
 }
 
 void
 RoseBin_DotGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow, bool forward_analysis,
-                                 std::ofstream& myfile, string& recursiveFunctionName) ROSE_DEPRECATED("no longer supported") {
+                                 std::ofstream& myfile, string& recursiveFunctionName) {
 }
 
 void
 RoseBin_DotGraph::printInternalNodes(    bool dfg, bool forward_analysis,
                                          std::ofstream& myfile, string& recursiveFunctionName,
-                                         SgAsmFunction* p_binFunc) ROSE_DEPRECATED("no longer supported") {
+                                         SgAsmFunction* p_binFunc) {
 }
 void RoseBin_DotGraph::printEdges( VirtualBinCFG::AuxiliaryInformation* info,
-                bool forward_analysis, std::ofstream& myfile, bool mergedEdges) ROSE_DEPRECATED("no longer supported") {
+                bool forward_analysis, std::ofstream& myfile, bool mergedEdges) {
 }
 void RoseBin_DotGraph::printEdges_single( VirtualBinCFG::AuxiliaryInformation* info,
-                bool forward_analysis, std::ofstream& myfile) ROSE_DEPRECATED("no longer supported") {
+                bool forward_analysis, std::ofstream& myfile) {
 }
 void RoseBin_DotGraph::printEdges_multiple( VirtualBinCFG::AuxiliaryInformation* info,
-                bool forward_analysis, std::ofstream& myfile) ROSE_DEPRECATED("no longer supported") {
+                bool forward_analysis, std::ofstream& myfile) {
 }
 void RoseBin_DotGraph::printEdges( VirtualBinCFG::AuxiliaryInformation* info,
-                bool forward_analysis, std::ofstream& myfile, SgDirectedGraphEdge* edge ) ROSE_DEPRECATED("no longer supported") {
+                bool forward_analysis, std::ofstream& myfile, SgDirectedGraphEdge* edge ) {
 }
 void
-RoseBin_GMLGraph::printProlog(  std::ofstream& myfile, string& fileType) ROSE_DEPRECATED("no longer supported") {
+RoseBin_GMLGraph::printProlog(  std::ofstream& myfile, string& fileType) {
 }
 
 void
-RoseBin_GMLGraph::printEpilog(  std::ofstream& myfile) ROSE_DEPRECATED("no longer supported") {
+RoseBin_GMLGraph::printEpilog(  std::ofstream& myfile) {
 }
 
 void
 RoseBin_GMLGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow,bool forward_analysis,
-                                 std::ofstream& myfile, string& recursiveFunctionName) ROSE_DEPRECATED("no longer supported") {
+                                 std::ofstream& myfile, string& recursiveFunctionName) {
 }
 void RoseBin_GMLGraph::printEdges( VirtualBinCFG::AuxiliaryInformation* info,
-                        bool forward_analysis, std::ofstream& myfile, bool mergedEdges) ROSE_DEPRECATED("no longer supported") {
+                        bool forward_analysis, std::ofstream& myfile, bool mergedEdges) {
 }
 void RoseBin_GMLGraph::printEdges_single( VirtualBinCFG::AuxiliaryInformation* info,
-                        bool forward_analysis, std::ofstream& myfile) ROSE_DEPRECATED("no longer supported") {
+                        bool forward_analysis, std::ofstream& myfile) {
 }
 void RoseBin_GMLGraph::printEdges_multiple( VirtualBinCFG::AuxiliaryInformation* info,
-                        bool forward_analysis, std::ofstream& myfile) ROSE_DEPRECATED("no longer supported") {
+                        bool forward_analysis, std::ofstream& myfile) {
 }
-void RoseBin_GMLGraph::printEdges( VirtualBinCFG::AuxiliaryInformation* info, bool forward_analysis, std::ofstream& myfile, SgDirectedGraphEdge* edge) ROSE_DEPRECATED("no longer supported") {
+void RoseBin_GMLGraph::printEdges( VirtualBinCFG::AuxiliaryInformation* info, bool forward_analysis, std::ofstream& myfile, SgDirectedGraphEdge* edge) {
 }
