@@ -236,11 +236,11 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         // Overrides are documented in the base class
-        virtual std::string description() const ROSE_OVERRIDE;
-        virtual bool terminatesBasicBlock() ROSE_OVERRIDE;
-        virtual std::set<rose_addr_t> getSuccessors(bool* complete) ROSE_OVERRIDE;
-        virtual bool isUnknown() const ROSE_OVERRIDE;
-        virtual unsigned get_anyKind() const ROSE_OVERRIDE;
+        virtual std::string description() const $ROSE_OVERRIDE;
+        virtual bool terminatesBasicBlock() $ROSE_OVERRIDE;
+        virtual std::set<rose_addr_t> getSuccessors(bool* complete) $ROSE_OVERRIDE;
+        virtual bool isUnknown() const $ROSE_OVERRIDE;
+        virtual unsigned get_anyKind() const $ROSE_OVERRIDE;
 #endif // SgAsmArmInstruction_OTHERS
 #ifdef DOCUMENTATION
     };
@@ -412,20 +412,20 @@ void Grammar::setUpBinaryInstructions() {
         static const RegisterDictionary* registersForWidth(size_t);
 
         // Overrides are documented in the base class
-        virtual bool terminatesBasicBlock() ROSE_OVERRIDE;
+        virtual bool terminatesBasicBlock() $ROSE_OVERRIDE;
         virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*>&,
-                                        rose_addr_t *target, rose_addr_t *ret) ROSE_OVERRIDE;
+                                        rose_addr_t *target, rose_addr_t *ret) $ROSE_OVERRIDE;
         virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&,
-                                        rose_addr_t *target, rose_addr_t *ret) ROSE_OVERRIDE;
-        virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) ROSE_OVERRIDE;
-        virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) ROSE_OVERRIDE;
-        virtual bool getBranchTarget(rose_addr_t *target/*out*/) ROSE_OVERRIDE;
-        virtual std::set<rose_addr_t> getSuccessors(bool* complete) ROSE_OVERRIDE;
+                                        rose_addr_t *target, rose_addr_t *ret) $ROSE_OVERRIDE;
+        virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) $ROSE_OVERRIDE;
+        virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) $ROSE_OVERRIDE;
+        virtual bool getBranchTarget(rose_addr_t *target/*out*/) $ROSE_OVERRIDE;
+        virtual std::set<rose_addr_t> getSuccessors(bool* complete) $ROSE_OVERRIDE;
         virtual std::set<rose_addr_t> getSuccessors(const std::vector<SgAsmInstruction*>&,
                                                     bool* complete,
-                                                    const MemoryMap *initial_memory=NULL) ROSE_OVERRIDE;
-        virtual bool isUnknown() const ROSE_OVERRIDE;
-        virtual unsigned get_anyKind() const ROSE_OVERRIDE;
+                                                    const MemoryMap *initial_memory=NULL) $ROSE_OVERRIDE;
+        virtual bool isUnknown() const $ROSE_OVERRIDE;
+        virtual unsigned get_anyKind() const $ROSE_OVERRIDE;
 #endif // SgAsmX86Instruction_OTHERS
 #ifdef DOCUMENTATION
     };
@@ -478,11 +478,11 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         // Overrides are documented in the base class
-        virtual std::string description() const ROSE_OVERRIDE;
-        virtual bool terminatesBasicBlock() ROSE_OVERRIDE;
-        virtual std::set<rose_addr_t> getSuccessors(bool* complete) ROSE_OVERRIDE;
-        virtual bool isUnknown() const ROSE_OVERRIDE;
-        virtual unsigned get_anyKind() const ROSE_OVERRIDE;
+        virtual std::string description() const $ROSE_OVERRIDE;
+        virtual bool terminatesBasicBlock() $ROSE_OVERRIDE;
+        virtual std::set<rose_addr_t> getSuccessors(bool* complete) $ROSE_OVERRIDE;
+        virtual bool isUnknown() const $ROSE_OVERRIDE;
+        virtual unsigned get_anyKind() const $ROSE_OVERRIDE;
 #endif // SgAsmPowerpcInstruction_OTHERS
 #ifdef DOCUMENTATION
     };
@@ -535,18 +535,18 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         // Overrides are documented in the base class
-        virtual std::string description() const ROSE_OVERRIDE;
-        virtual bool terminatesBasicBlock() ROSE_OVERRIDE;
+        virtual std::string description() const $ROSE_OVERRIDE;
+        virtual bool terminatesBasicBlock() $ROSE_OVERRIDE;
         virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns,
-                                        rose_addr_t *target/*out*/, rose_addr_t *ret/*out*/) ROSE_OVERRIDE;
+                                        rose_addr_t *target/*out*/, rose_addr_t *ret/*out*/) $ROSE_OVERRIDE;
         virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&,
-                                        rose_addr_t *target, rose_addr_t *ret) ROSE_OVERRIDE;
-        virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) ROSE_OVERRIDE;
-        virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) ROSE_OVERRIDE;
-        virtual std::set<rose_addr_t> getSuccessors(bool* complete) ROSE_OVERRIDE;
-        virtual bool isUnknown() const ROSE_OVERRIDE;
-        virtual bool getBranchTarget(rose_addr_t *target) ROSE_OVERRIDE;
-        virtual unsigned get_anyKind() const ROSE_OVERRIDE;
+                                        rose_addr_t *target, rose_addr_t *ret) $ROSE_OVERRIDE;
+        virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) $ROSE_OVERRIDE;
+        virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) $ROSE_OVERRIDE;
+        virtual std::set<rose_addr_t> getSuccessors(bool* complete) $ROSE_OVERRIDE;
+        virtual bool isUnknown() const $ROSE_OVERRIDE;
+        virtual bool getBranchTarget(rose_addr_t *target) $ROSE_OVERRIDE;
+        virtual unsigned get_anyKind() const $ROSE_OVERRIDE;
 #endif // SgAsmMipsInstruction_OTHERS
 #ifdef DOCUMENTATION
     };
@@ -597,21 +597,21 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         // Overrides are documented in the base class
-        virtual std::string description() const ROSE_OVERRIDE;
-        virtual bool terminatesBasicBlock() ROSE_OVERRIDE;
+        virtual std::string description() const $ROSE_OVERRIDE;
+        virtual bool terminatesBasicBlock() $ROSE_OVERRIDE;
         virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns,
-                                        rose_addr_t *target/*out*/, rose_addr_t *ret/*out*/) ROSE_OVERRIDE;
+                                        rose_addr_t *target/*out*/, rose_addr_t *ret/*out*/) $ROSE_OVERRIDE;
         virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&,
-                                        rose_addr_t *target, rose_addr_t *ret) ROSE_OVERRIDE;
-        virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) ROSE_OVERRIDE;
-        virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) ROSE_OVERRIDE;
-        virtual bool getBranchTarget(rose_addr_t *target) ROSE_OVERRIDE;
-        virtual std::set<rose_addr_t> getSuccessors(bool* complete) ROSE_OVERRIDE;
+                                        rose_addr_t *target, rose_addr_t *ret) $ROSE_OVERRIDE;
+        virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) $ROSE_OVERRIDE;
+        virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) $ROSE_OVERRIDE;
+        virtual bool getBranchTarget(rose_addr_t *target) $ROSE_OVERRIDE;
+        virtual std::set<rose_addr_t> getSuccessors(bool* complete) $ROSE_OVERRIDE;
         virtual std::set<rose_addr_t> getSuccessors(const std::vector<SgAsmInstruction*>&,
                                                     bool* complete,
-                                                    const MemoryMap *initial_memory=NULL) ROSE_OVERRIDE;
-        virtual bool isUnknown() const ROSE_OVERRIDE;
-        virtual unsigned get_anyKind() const ROSE_OVERRIDE;
+                                                    const MemoryMap *initial_memory=NULL) $ROSE_OVERRIDE;
+        virtual bool isUnknown() const $ROSE_OVERRIDE;
+        virtual unsigned get_anyKind() const $ROSE_OVERRIDE;
 #endif // SgAsmM68kInstruction_OTHERS
 #ifdef DOCUMENTATION
     };
@@ -2805,8 +2805,8 @@ void Grammar::setUpBinaryInstructions() {
         bool get_isSigned() const;
 
         // Overrides documented in base class
-        virtual void check() const ROSE_OVERRIDE;
-        virtual std::string toString() const ROSE_OVERRIDE;
+        virtual void check() const $ROSE_OVERRIDE;
+        virtual std::string toString() const $ROSE_OVERRIDE;
 #endif // SgAsmIntegerType_OTHERS
 
 #ifdef DOCUMENTATION
@@ -2901,8 +2901,8 @@ void Grammar::setUpBinaryInstructions() {
         bool normalizedSignificand() const;
 
         // Overrides documented in base class
-        virtual void check() const ROSE_OVERRIDE;
-        virtual std::string toString() const ROSE_OVERRIDE;
+        virtual void check() const $ROSE_OVERRIDE;
+        virtual std::string toString() const $ROSE_OVERRIDE;
 #endif // SgAsmFloatType_OTHERS
 
 #ifdef DOCUMENTATION
@@ -2960,7 +2960,7 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         /** Property: Number of bits. */
-        virtual size_t get_nBits() const ROSE_OVERRIDE;
+        virtual size_t get_nBits() const $ROSE_OVERRIDE;
 
         /** Property: Minor byte order. This is the usual notion of byte order. */
         ByteOrder::Endianness get_minorOrder() const;
@@ -2972,8 +2972,8 @@ void Grammar::setUpBinaryInstructions() {
         size_t get_majorNBytes() const;
 
         // Overrides documented in base class
-        virtual void check() const ROSE_OVERRIDE;
-        virtual std::string toString() const ROSE_OVERRIDE;
+        virtual void check() const $ROSE_OVERRIDE;
+        virtual std::string toString() const $ROSE_OVERRIDE;
 #endif // SgAsmScalarType_OTHERS
 
 #ifdef DOCUMENTATION
@@ -3024,9 +3024,9 @@ void Grammar::setUpBinaryInstructions() {
         SgAsmType* get_elmtType() const;
 
         // Overrides documented in base class
-        virtual void check() const ROSE_OVERRIDE;
-        virtual std::string toString() const ROSE_OVERRIDE;
-        virtual size_t get_nBits() const ROSE_OVERRIDE;
+        virtual void check() const $ROSE_OVERRIDE;
+        virtual std::string toString() const $ROSE_OVERRIDE;
+        virtual size_t get_nBits() const $ROSE_OVERRIDE;
 #endif // SgAsmVectorType_OTHERS
 
 #ifdef DOCUMENTATION
@@ -4699,7 +4699,7 @@ void Grammar::setUpBinaryInstructions() {
         SgAsmGenericSectionPtrList get_segtab_sections();
 
         // Overrides documented in base class
-        virtual const char *format_name() const ROSE_OVERRIDE;
+        virtual const char *format_name() const $ROSE_OVERRIDE;
 
     private:
         void ctor();                                    // called by constructors
@@ -5050,11 +5050,8 @@ void Grammar::setUpBinaryInstructions() {
             uint32_t        sh_addralign;        /* 0x20 Mapped alignment (0 and 1=>byte aligned); sh_addr must be aligned*/
             uint32_t        sh_entsize;          /* 0x24 If non-zero, size in bytes of each array member in the section */
         }                                        /* 0x28 */
-// DQ (3/7/2013): Adding support to restrict visability to SWIG.
-#ifndef SWIG
-#ifndef _MSC_VER
+#if !defined(SWIG) && !defined(_MSC_VER)
         __attribute__((packed))
-#endif
 #endif
         ;
 
@@ -5070,11 +5067,8 @@ void Grammar::setUpBinaryInstructions() {
             uint64_t        sh_addralign;        /* 0x30 */
             uint64_t        sh_entsize;          /* 0x38 */
         }                                        /* 0x40 */
-// DQ (3/7/2013): Adding support to restrict visability to SWIG.
-#ifndef SWIG
-#ifndef _MSC_VER
+#if !defined(SWIG) && !defined(_MSC_VER)
         __attribute__((packed))
-#endif
 #endif
         ;
 #ifdef _MSC_VER
@@ -8815,360 +8809,2920 @@ void Grammar::setUpBinaryInstructions() {
      *                                         DOS File Header
      *************************************************************************************************************************/
 
-    NEW_TERMINAL_MACRO(AsmDOSFileHeader, "AsmDOSFileHeader", "AsmDOSFileHeaderTag");
-    AsmDOSFileHeader.setFunctionPrototype("HEADER_DOS_HEADER", "../Grammar/BinaryInstruction.code");
-    AsmDOSFileHeader.setDataPrototype("uint16_t", "e_last_page_size", "= 0",
-                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmDOSFileHeader.setDataPrototype("uint16_t", "e_total_pages", "= 0",
-                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmDOSFileHeader.setDataPrototype("uint16_t", "e_nrelocs", "= 0",
-                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmDOSFileHeader.setDataPrototype("uint16_t", "e_header_paragraphs", "= 0",
-                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmDOSFileHeader.setDataPrototype("uint16_t", "e_minalloc", "= 0",
-                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmDOSFileHeader.setDataPrototype("uint16_t", "e_maxalloc", "= 0",
-                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmDOSFileHeader.setDataPrototype("uint16_t", "e_ss", "= 0",
-                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmDOSFileHeader.setDataPrototype("uint16_t", "e_sp", "= 0",
-                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmDOSFileHeader.setDataPrototype("uint16_t", "e_cksum", "= 0",
-                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmDOSFileHeader.setDataPrototype("uint16_t", "e_ip", "= 0",
-                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmDOSFileHeader.setDataPrototype("uint16_t", "e_cs", "= 0",
-                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmDOSFileHeader.setDataPrototype("uint16_t", "e_overlay", "= 0",
-                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmDOSFileHeader.setDataPrototype("rose_addr_t", "e_relocs_offset", "= 0",
-                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmDOSFileHeader.setDataPrototype("unsigned", "e_res1", "= 0",
-                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmDOSFileHeader.setDataPrototype("SgAsmGenericSection*", "relocs", "= NULL", //relocation info
-                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-    AsmDOSFileHeader.setDataPrototype("SgAsmGenericSection*", "rm_section", "= NULL", //real-mode section
-                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmDOSFileHeader);
+    IS_SERIALIZABLE(AsmDOSFileHeader);
+
+#ifdef DOCUMENTATION
+    /** Represents the file header for DOS executables.
+     *
+     *  Many of the properties for this node come directly from the DOS specification and have similar names to that
+     *  documentation. Such properties are not documented in ROSE. */
+    class SgAsmDOSFileHeader: public SgAsmGenericHeader {
+    public:
+#endif
+        
+#ifdef DOCUMENTATION
+        /** Property: Last page size.
+         *
+         *  See DOS specification.
+         *
+         * @{ */
+        uint16_t get_e_last_page_size() const;
+        void set_e_last_page_size(uint16_t);
+        /** @} */
+#else
+        AsmDOSFileHeader.setDataPrototype("uint16_t", "e_last_page_size", "= 0",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Total number of pages.
+         *
+         *  See DOS specification.
+         *
+         * @{ */
+        uint16_t get_e_total_pages() const;
+        void set_e_total_pages(uint16_t);
+        /** @} */
+#else
+        AsmDOSFileHeader.setDataPrototype("uint16_t", "e_total_pages", "= 0",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Number of relocations.
+         *
+         *  See DOS specification.
+         *
+         * @{ */
+        uint16_t get_e_nrelocs() const;
+        void set_e_nrelocs(uint16_t);
+        /** @} */
+#else
+        AsmDOSFileHeader.setDataPrototype("uint16_t", "e_nrelocs", "= 0",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Number of header paragraphs.
+         *
+         *  See DOS specification.
+         *
+         * @{ */
+        uint16_t get_e_header_paragraphs() const;
+        void set_e_header_paragraphs(uint16_t);n
+        /** @} */
+#else
+        AsmDOSFileHeader.setDataPrototype("uint16_t", "e_header_paragraphs", "= 0",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Min alloc.
+         *
+         *  See DOS specification.
+         *
+         * @{ */
+        uint16_t get_e_minalloc() const;
+        void set_e_minalloc(uint16_t);
+        /** @} */
+#else
+        AsmDOSFileHeader.setDataPrototype("uint16_t", "e_minalloc", "= 0",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Max alloc.
+         *
+         *  See DOS specification.
+         *
+         * @{ */
+        uint16_t get_e_maxalloc() const;
+        void set_e_maxalloc(uint16_t);
+        /** @} */
+#else
+        AsmDOSFileHeader.setDataPrototype("uint16_t", "e_maxalloc", "= 0",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: SS.
+         *
+         *  See DOS specification.
+         *
+         * @{ */
+        uint16_t get_e_ss() const;
+        void set_e_ss(uint16_t);
+        /** @} */
+#else
+        AsmDOSFileHeader.setDataPrototype("uint16_t", "e_ss", "= 0",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: SP.
+         *
+         *  See DOS specification.
+         *
+         * @{ */
+        uint16_t get_e_sp() const;
+        void set_e_sp(uint16_t);
+        /** @} */
+#else
+        AsmDOSFileHeader.setDataPrototype("uint16_t", "e_sp", "= 0",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Checksum.
+         *
+         *  See DOS specification.
+         *
+         * @{ */
+        uint16_t get_e_cksum() const;
+        void set_e_cksum(uint16_t);
+        /** @} */
+#else
+        AsmDOSFileHeader.setDataPrototype("uint16_t", "e_cksum", "= 0",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: IP.
+         *
+         *  See DOS specification.
+         *
+         * @{ */
+        uint16_t get_e_ip() const;
+        void set_e_ip(uint16_t);
+        /** @} */
+#else
+        AsmDOSFileHeader.setDataPrototype("uint16_t", "e_ip", "= 0",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: CS.
+         *
+         *  See DOS specification.
+         *
+         * @{ */
+        uint16_t get_e_cs() const;
+        void set_e_cs(uint16_t);
+        /** @} */
+#else
+        AsmDOSFileHeader.setDataPrototype("uint16_t", "e_cs", "= 0",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Overlay.
+         *
+         *  See DOS specification.
+         *
+         * @{ */
+        uint16_t get_e_overlay() const;
+        void set_e_overlay(uint16_t);
+        /** @} */
+#else
+        AsmDOSFileHeader.setDataPrototype("uint16_t", "e_overlay", "= 0",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Relocs offset.
+         *
+         *  See DOS specification.
+         *
+         * @{ */
+        rose_addr_t get_e_relocs_offset() const;
+        void set_e_relocs_offset(rose_addr_t);
+        /** @} */
+#else
+        AsmDOSFileHeader.setDataPrototype("rose_addr_t", "e_relocs_offset", "= 0",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Reserved field 1.
+         *
+         *  See DOS specification.
+         *
+         * @{ */
+        unsigned get_e_res1() const;
+        void set_e_res1(unsigned);
+        /** @} */
+#else
+        AsmDOSFileHeader.setDataPrototype("unsigned", "e_res1", "= 0",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Section containing relocation information.
+         *
+         * @{ */
+        SgAsmGenericSection* get_relocs() const;
+        void set_relocs(SgAsmGenericSection*);
+        /** @} */
+#else
+        AsmDOSFileHeader.setDataPrototype("SgAsmGenericSection*", "relocs", "= NULL",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Real mode section.
+         *
+         * @{ */
+        SgAsmGenericSection* get_rm_section() const;
+        void set_rm_section(SgAsmGenericSection*);
+        /** @} */
+#else
+        AsmDOSFileHeader.setDataPrototype("SgAsmGenericSection*", "rm_section", "= NULL", //real-mode section
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmDOSFileHeader);
+#if defined(SgAsmDOSFileHeader_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
+            s & BOOST_SERIALIZATION_NVP(p_e_last_page_size);
+            s & BOOST_SERIALIZATION_NVP(p_e_total_pages);
+            s & BOOST_SERIALIZATION_NVP(p_e_nrelocs);
+            s & BOOST_SERIALIZATION_NVP(p_e_header_paragraphs);
+            s & BOOST_SERIALIZATION_NVP(p_e_minalloc);
+            s & BOOST_SERIALIZATION_NVP(p_e_maxalloc);
+            s & BOOST_SERIALIZATION_NVP(p_e_ss);
+            s & BOOST_SERIALIZATION_NVP(p_e_sp);
+            s & BOOST_SERIALIZATION_NVP(p_e_cksum);
+            s & BOOST_SERIALIZATION_NVP(p_e_ip);
+            s & BOOST_SERIALIZATION_NVP(p_e_cs);
+            s & BOOST_SERIALIZATION_NVP(p_e_overlay);
+            s & BOOST_SERIALIZATION_NVP(p_e_relocs_offset);
+            s & BOOST_SERIALIZATION_NVP(p_e_res1);
+            s & BOOST_SERIALIZATION_NVP(p_relocs);
+            s & BOOST_SERIALIZATION_NVP(p_rm_section);
+        }
+#endif
+
+    public:
+#ifdef _MSC_VER
+# pragma pack (1)
+#endif
+        /** On-disk format of DOS file header. */
+        struct DOSFileHeader_disk {
+            unsigned char e_magic[2];                /**< 0x00 "MZ" */
+            uint16_t      e_last_page_size;          /**< 0x02 bytes used on last page of file (1 page == 512 bytes);
+                                                      *        zero implies if last page is full. */ // 
+            uint16_t      e_total_pages;             /**< 0x04 number of pages (inc. last possibly partial page) in file. */
+            uint16_t      e_nrelocs;                 /**< 0x06 number of relocation entries stored after this header. */
+            uint16_t      e_header_paragraphs;       /**< 0x08 header size in paragraphs (16-byte blocks) inc. relocations. */
+            uint16_t      e_minalloc;                /**< 0x0a number of extra paragraphs needed, similar to BSS in Unix. */
+            uint16_t      e_maxalloc;                /**< 0x0c max paragraphs to allocate for BSS. */
+            uint16_t      e_ss;                      /**< 0x0e initial value of SS register relative to program load segment. */
+            uint16_t      e_sp;                      /**< 0x10 initial value for SP register. */
+            uint16_t      e_cksum;                   /**< 0x12 checksum; 16-bit sum of all words in file should be zero
+                                                      *        (usually not filled in). */
+            uint16_t      e_ip;                      /**< 0x14 initial value for IP register. */
+            uint16_t      e_cs;                      /**< 0x16 initial value for CS register relative to program load segment. */
+            uint16_t      e_relocs_offset;           /**< 0x18 file address of relocation table. */
+            uint16_t      e_overlay;                 /**< 0x1a overlay number (zero indicates main program). */
+            uint32_t      e_res1;                    /**< 0x1c unknown purpose. */
+        }                                            /* 0x20 */
+#if !defined(SWIG) && !defined(_MSC_VER)
+        __attribute__((packed))
+#endif
+        ;
+
+        struct DOSRelocEntry_disk {
+            uint16_t      offset;                       /* 0x00 */
+            uint16_t      segment;                      /* 0x02 */
+        }                                               /* 0x04 */
+#if !defined(SWIG) && !defined(_MSC_VER)
+        __attribute__((packed))
+#endif
+        ;
+
+#ifdef _MSC_VER
+# pragma pack ()
+#endif
+
+        explicit SgAsmDOSFileHeader(SgAsmGenericFile *f)
+            : SgAsmGenericHeader(f), p_relocs(NULL), p_rm_section(NULL) {
+            ctor();
+        }
+        virtual SgAsmDOSFileHeader *parse() $ROSE_OVERRIDE {return parse(true);}
+        SgAsmDOSFileHeader *parse(bool define_rm_section);
+        virtual bool reallocate() $ROSE_OVERRIDE;
+        virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
+        virtual const char *format_name() const $ROSE_OVERRIDE {return "DOS";}
+        SgAsmGenericSection *parse_rm_section(rose_addr_t max_offset=0);
+        void update_from_rm_section();
+        static bool is_DOS(SgAsmGenericFile*);
+
+    private:
+        void ctor();
+        void *encode(SgAsmDOSFileHeader::DOSFileHeader_disk*) const;
+#endif // SgAsmDOSFileHeader_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmDOSExtendedHeader);
+    IS_SERIALIZABLE(AsmDOSExtendedHeader);
+
+#ifdef DOCUMENTATION
+    /** DOS exteded header.
+     *
+     *  Most of the properties correspond to those defined in the PE/DOS specifications and that documentation is not
+     *  repeated here. */
+    class SgAsmDOSExtendedHeader: public SgAsmGenericSection {
+    public:
+#endif
+        
+#ifdef DOCUMENTATION
+        /** Property: Rerserved area 1.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        unsigned get_e_res1() const;
+        void set_e_res1(unsigned);
+        /** @} */
+#else
+        AsmDOSExtendedHeader.setDataPrototype("unsigned", "e_res1", "= 0",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+        
+#ifdef DOCUMENTATION
+        /** Property: OEM ID.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        unsigned get_e_oemid() const;
+        void set_e_oemid(unsigned);
+        /** @} */
+#else
+        AsmDOSExtendedHeader.setDataPrototype("unsigned", "e_oemid", "= 0",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: OEM info.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        unsigned get_e_res1() const;
+        void set_e_res1(unsigned);
+        /** @} */
+#else
+        AsmDOSExtendedHeader.setDataPrototype("unsigned", "e_oeminfo", "= 0",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Rerserved area 2.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        unsigned get_e_res2() const;
+        void set_e_res2(unsigned);
+        /** @} */
+#else
+        AsmDOSExtendedHeader.setDataPrototype("unsigned", "e_res2", "= 0",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Rerserved area 3.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        unsigned get_e_res3() const;
+        void set_e_res3(unsigned);
+        /** @} */
+#else
+        AsmDOSExtendedHeader.setDataPrototype("unsigned", "e_res3", "= 0",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Rerserved area 4.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        unsigned get_e_res4() const;
+        void set_e_res4(unsigned);
+        /** @} */
+#else
+        AsmDOSExtendedHeader.setDataPrototype("unsigned", "e_res4", "= 0",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Rerserved area 5.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        unsigned get_e_res5() const;
+        void set_e_res5(unsigned);
+        /** @} */
+#else
+        AsmDOSExtendedHeader.setDataPrototype("unsigned", "e_res5", "= 0",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Rerserved area 6.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        unsigned get_e_res6() const;
+        void set_e_res6(unsigned);
+        /** @} */
+#else
+        AsmDOSExtendedHeader.setDataPrototype("unsigned", "e_res6", "= 0",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: lfanew.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        rose_addr_t get_e_lfanew() const;
+        void set_e_lfanew(rose_addr_t);
+        /** @} */
+#else
+        AsmDOSExtendedHeader.setDataPrototype("rose_addr_t", "e_lfanew", "= 0",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmDOSExtendedHeader);
+#if defined(SgAsmDOSExtendedHeader_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
+            s & BOOST_SERIALIZATION_NVP(p_e_res1);
+            s & BOOST_SERIALIZATION_NVP(p_e_oemid);
+            s & BOOST_SERIALIZATION_NVP(p_e_oeminfo);
+            s & BOOST_SERIALIZATION_NVP(p_e_res2);
+            s & BOOST_SERIALIZATION_NVP(p_e_res3);
+            s & BOOST_SERIALIZATION_NVP(p_e_res4);
+            s & BOOST_SERIALIZATION_NVP(p_e_res5);
+            s & BOOST_SERIALIZATION_NVP(p_e_res6);
+            s & BOOST_SERIALIZATION_NVP(p_e_lfanew);
+        }
+#endif
+
+    public:
+#ifdef _MSC_VER
+# pragma pack (1)
+#endif
+        struct DOSExtendedHeader_disk {
+            uint32_t      e_res1;     /* 0x00 reserved */
+            uint16_t      e_oemid;    /* 0x04 OEM Identifier */
+            uint16_t      e_oeminfo;  /* 0x06 other OEM information; oemid specific */
+            uint32_t      e_res2;     /* 0x08 reserved */
+            uint32_t      e_res3;     /* 0x0c reserved */
+            uint32_t      e_res4;     /* 0x10 reserved */
+            uint32_t      e_res5;     /* 0x14 reserved */
+            uint32_t      e_res6;     /* 0x18 reserved */
+            uint32_t      e_lfanew;   /* 0x1c file offset of new exe (PE) header */
+        }                                 /* 0x20 */
+#if !defined(SWIG) && !defined(_MSC_VER)
+        __attribute__((packed))
+#endif
+        ;
+#ifdef _MSC_VER
+# pragma pack ()
+#endif
+
+        explicit SgAsmDOSExtendedHeader(SgAsmDOSFileHeader *fhdr)
+            : SgAsmGenericSection(fhdr->get_file(), fhdr) {
+            ctor();
+        }
+        virtual SgAsmDOSExtendedHeader *parse() $ROSE_OVERRIDE;
+        void *encode(SgAsmDOSExtendedHeader::DOSExtendedHeader_disk*) const;
+        virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
+
+    private:
+        void ctor();
+#endif // SgAsmDOSExtendedHeader_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
 
 
-
-    NEW_TERMINAL_MACRO(AsmDOSExtendedHeader, "AsmDOSExtendedHeader", "AsmDOSExtendedHeaderTag");
-    AsmDOSExtendedHeader.setFunctionPrototype("HEADER_DOS_EXTENDED_HEADER", "../Grammar/BinaryInstruction.code");
-    AsmDOSExtendedHeader.setDataPrototype("unsigned", "e_res1", "= 0",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmDOSExtendedHeader.setDataPrototype("unsigned", "e_oemid", "= 0",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmDOSExtendedHeader.setDataPrototype("unsigned", "e_oeminfo", "= 0",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmDOSExtendedHeader.setDataPrototype("unsigned", "e_res2", "= 0",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmDOSExtendedHeader.setDataPrototype("unsigned", "e_res3", "= 0",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmDOSExtendedHeader.setDataPrototype("unsigned", "e_res4", "= 0",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmDOSExtendedHeader.setDataPrototype("unsigned", "e_res5", "= 0",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmDOSExtendedHeader.setDataPrototype("unsigned", "e_res6", "= 0",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmDOSExtendedHeader.setDataPrototype("rose_addr_t", "e_lfanew", "= 0",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /*************************************************************************************************************************
      *                                         PE File Header
      *************************************************************************************************************************/
 
-    NEW_TERMINAL_MACRO(AsmPEFileHeader, "AsmPEFileHeader", "AsmPEFileHeaderTag");
-    AsmPEFileHeader.setFunctionPrototype("HEADER_PE_FILE_HEADER", "../Grammar/BinaryInstruction.code");
-    AsmPEFileHeader.setDataPrototype("unsigned", "e_cpu_type", "= 0",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEFileHeader.setDataPrototype("unsigned", "e_nsections", "= 0",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEFileHeader.setDataPrototype("unsigned", "e_time", "= 0",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEFileHeader.setDataPrototype("rose_addr_t", "e_coff_symtab", "= 0",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEFileHeader.setDataPrototype("rose_addr_t", "e_nt_hdr_size", "= 0",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEFileHeader.setDataPrototype("unsigned", "e_coff_nsyms", "= 0",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEFileHeader.setDataPrototype("unsigned", "e_flags", "= 0",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEFileHeader.setDataPrototype("unsigned", "e_opt_magic", "= 0",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEFileHeader.setDataPrototype("unsigned", "e_lmajor", "= 0",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEFileHeader.setDataPrototype("unsigned", "e_lminor", "= 0",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEFileHeader.setDataPrototype("unsigned", "e_code_size", "= 0",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEFileHeader.setDataPrototype("unsigned", "e_data_size", "= 0",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEFileHeader.setDataPrototype("unsigned", "e_bss_size", "= 0",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEFileHeader.setDataPrototype("rose_rva_t", "e_code_rva", "= 0",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEFileHeader.setDataPrototype("rose_rva_t", "e_data_rva", "= 0",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEFileHeader.setDataPrototype("unsigned", "e_section_align", "= 0",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEFileHeader.setDataPrototype("unsigned", "e_file_align", "= 0",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEFileHeader.setDataPrototype("unsigned", "e_os_major", "= 0",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEFileHeader.setDataPrototype("unsigned", "e_os_minor", "= 0",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEFileHeader.setDataPrototype("unsigned", "e_user_major", "= 0",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEFileHeader.setDataPrototype("unsigned", "e_user_minor", "= 0",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEFileHeader.setDataPrototype("unsigned", "e_subsys_major", "= 0",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEFileHeader.setDataPrototype("unsigned", "e_subsys_minor", "= 0",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEFileHeader.setDataPrototype("unsigned", "e_reserved9", "= 0",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEFileHeader.setDataPrototype("unsigned", "e_image_size", "= 0",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEFileHeader.setDataPrototype("unsigned", "e_header_size", "= 0",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEFileHeader.setDataPrototype("unsigned", "e_file_checksum", "= 0",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEFileHeader.setDataPrototype("unsigned", "e_subsystem", "= 0",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEFileHeader.setDataPrototype("unsigned", "e_dll_flags", "= 0",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEFileHeader.setDataPrototype("unsigned", "e_stack_reserve_size", "= 0",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEFileHeader.setDataPrototype("unsigned", "e_stack_commit_size", "= 0",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEFileHeader.setDataPrototype("unsigned", "e_heap_reserve_size", "= 0",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEFileHeader.setDataPrototype("unsigned", "e_heap_commit_size", "= 0",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEFileHeader.setDataPrototype("unsigned", "e_loader_flags", "= 0",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEFileHeader.setDataPrototype("unsigned", "e_num_rvasize_pairs", "= 0",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEFileHeader.setDataPrototype("SgAsmPERVASizePairList*", "rvasize_pairs", "= NULL",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-    AsmPEFileHeader.setDataPrototype("SgAsmPESectionTable*", "section_table", "= NULL",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEFileHeader.setDataPrototype("SgAsmCoffSymbolTable*", "coff_symtab", "= NULL",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmPEFileHeader);
+    IS_SERIALIZABLE(AsmPEFileHeader);
+
+#ifdef DOCUMENTATION
+    /** Windows PE file header.
+     *
+     *  Most of the properties come directly from the PE specification and their documentation is not repeated here. */
+    class SgAsmPEFileHeader: public SgAsmGenericHeader {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: CPU type.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        unsigned get_e_cpu_type() const;
+        void set_e_cpu_type(unsigned);
+        /** @} */
+#else
+        AsmPEFileHeader.setDataPrototype("unsigned", "e_cpu_type", "= 0",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Number of sections.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        unsigned get_e_nsections() const;
+        void set_e_nsections(unsigned);
+        /** @} */
+#else
+        AsmPEFileHeader.setDataPrototype("unsigned", "e_nsections", "= 0",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Time.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        unsigned get_e_time() const;
+        void set_e_time(unsigned);
+        /** @} */
+#else
+        AsmPEFileHeader.setDataPrototype("unsigned", "e_time", "= 0",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: COFF symbol table.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        rose_addr_t get_e_coff_symtab() const;
+        void set_e_coff_symtab(rose_addr_t);
+        /** @} */
+#else
+        AsmPEFileHeader.setDataPrototype("rose_addr_t", "e_coff_symtab", "= 0",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Size of NT header.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        rose_addr_t get_e_nt_hdr_size() const;
+        void set_e_nt_hdr_size(rose_addr_t);
+        /** @} */
+#else
+        AsmPEFileHeader.setDataPrototype("rose_addr_t", "e_nt_hdr_size", "= 0",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Number of COFF symbols.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        unsigned get_e_coff_nsyms() const;
+        void set_e_coff_nsyms(unsigned);
+        /** @} */
+#else
+        AsmPEFileHeader.setDataPrototype("unsigned", "e_coff_nsyms", "= 0",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Flags
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        unsigned get_e_flags() const;
+        void set_e_flags(unsigned);
+        /** @} */
+#else
+        AsmPEFileHeader.setDataPrototype("unsigned", "e_flags", "= 0",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Magic.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        unsigned get_e_opt_magic() const;
+        void set_e_opt_magic(unsigned);
+        /** @} */
+#else
+        AsmPEFileHeader.setDataPrototype("unsigned", "e_opt_magic", "= 0",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: lmajor.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        unsigned get_e_lmajor() const;
+        void set_e_lmajor(unsigned);
+
+#else/** @} */
+        AsmPEFileHeader.setDataPrototype("unsigned", "e_lmajor", "= 0",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: lminor.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        unsigned get_e_lminor() const;
+        void set_e_lminor(unsigned);
+        /** @} */
+#else
+        AsmPEFileHeader.setDataPrototype("unsigned", "e_lminor", "= 0",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Code size.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        unsigned get_e_code_size() const;
+        void set_e_code_size(unsigned);
+        /** @} */
+#else
+        AsmPEFileHeader.setDataPrototype("unsigned", "e_code_size", "= 0",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Data size.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        unsigned get_e_data_size() const;
+        void set_e_data_size(unsigned);
+        /** @} */
+#else
+        AsmPEFileHeader.setDataPrototype("unsigned", "e_data_size", "= 0",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: BSS size.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        unsigned get_e_bss_size() const;
+        void set_e_bss_size(unsigned);
+        /** @} */
+#else
+        AsmPEFileHeader.setDataPrototype("unsigned", "e_bss_size", "= 0",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Code RVA.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        rose_rva_t get_e_code_rva() const;
+        void set_e_code_rva(rose_rva_t);
+        /** @} */
+#else
+        AsmPEFileHeader.setDataPrototype("rose_rva_t", "e_code_rva", "= 0",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Data RVA.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        rose_rva_t get_e_data_rva() const;
+        void set_e_data_rva(rose_rva_t);
+        /** @} */
+#else
+        AsmPEFileHeader.setDataPrototype("rose_rva_t", "e_data_rva", "= 0",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Section alignment.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        unsigned get_e_section_align() const;
+        void set_e_section_align(unsigned);
+        /** @} */
+#else
+        AsmPEFileHeader.setDataPrototype("unsigned", "e_section_align", "= 0",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: File alignment.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        unsigned get_e_file_align() const;
+        void set_e_file_align(unsigned);
+        /** @} */
+#else
+        AsmPEFileHeader.setDataPrototype("unsigned", "e_file_align", "= 0",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: OS major number.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        unsigned get_e_os_major() const;
+        void set_e_os_major(unsigned);
+        /** @} */
+#else
+        AsmPEFileHeader.setDataPrototype("unsigned", "e_os_major", "= 0",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: OS minor number.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        unsigned get_e_os_minor() const;
+        void set_e_os_minor(unsigned);
+        /** @} */
+#else
+        AsmPEFileHeader.setDataPrototype("unsigned", "e_os_minor", "= 0",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: User major number.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        unsigned get_e_user_major() const;
+        void set_e_user_major(unsigned);
+        /** @} */
+#else
+        AsmPEFileHeader.setDataPrototype("unsigned", "e_user_major", "= 0",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: User minor number.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        unsigned get_e_user_minor() const;
+        void set_e_user_minor(unsigned);
+        /** @} */
+#else
+        AsmPEFileHeader.setDataPrototype("unsigned", "e_user_minor", "= 0",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Subsystem major number.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        unsigned get_e_subsys_major() const;
+        void set_e_subsys_major(unsigned);
+        /** @} */
+#else
+        AsmPEFileHeader.setDataPrototype("unsigned", "e_subsys_major", "= 0",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Subsystem minor number.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        unsigned get_e_subsys_minor() const;
+        void set_e_subsys_minor(unsigned);
+        /** @} */
+#else
+        AsmPEFileHeader.setDataPrototype("unsigned", "e_subsys_minor", "= 0",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Reserved area #9.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        unsigned get_e_reserved9() const;
+        void set_e_reserved9(unsigned);
+        /** @} */
+#else
+        AsmPEFileHeader.setDataPrototype("unsigned", "e_reserved9", "= 0",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Image size.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        unsigned get_e_image_size() const;
+        void set_e_image_size(unsigned);
+        /** @} */
+#else
+        AsmPEFileHeader.setDataPrototype("unsigned", "e_image_size", "= 0",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Header size.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        unsigned get_e_header_size() const;
+        void set_e_header_size(unsigned);
+        /** @} */
+#else
+        AsmPEFileHeader.setDataPrototype("unsigned", "e_header_size", "= 0",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: File checksum.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        unsigned get_e_file_checksum() const;
+        void set_e_file_checksum(unsigned);
+        /** @} */
+#else
+        AsmPEFileHeader.setDataPrototype("unsigned", "e_file_checksum", "= 0",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Subsystem.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        unsigned get_e_subsystem() const;
+        void set_e_subsystem(unsigned);
+        /** @} */
+#else
+        AsmPEFileHeader.setDataPrototype("unsigned", "e_subsystem", "= 0",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: DLL flags.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        unsigned get_e_dll_flags() const;
+        void set_e_dll_flags(unsigned);
+        /** @} */
+#else
+        AsmPEFileHeader.setDataPrototype("unsigned", "e_dll_flags", "= 0",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Stack reserve size.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        unsigned get_e_stack_reserve_size() const;
+        void set_e_stack_reserve_size(unsigned);
+        /** @} */
+#else
+        AsmPEFileHeader.setDataPrototype("unsigned", "e_stack_reserve_size", "= 0",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Stack commit size.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        unsigned get_e_stack_commit_size() const;
+        void set_e_stack_commit_size(unsigned);
+        /** @} */
+#else
+        AsmPEFileHeader.setDataPrototype("unsigned", "e_stack_commit_size", "= 0",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Heap reserve size.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        unsigned get_e_heap_reserve_size() const;
+        void set_e_heap_reserve_size(unsigned);
+        /** @} */
+#else
+        AsmPEFileHeader.setDataPrototype("unsigned", "e_heap_reserve_size", "= 0",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Heap commit size.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        unsigned get_e_heap_commit_size() const;
+        void set_e_heap_commit_size(unsigned);
+        /** @} */
+#else
+        AsmPEFileHeader.setDataPrototype("unsigned", "e_heap_commit_size", "= 0",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Loader flags.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        unsigned get_e_loader_flags() const;
+        void set_e_loader_flags(unsigned);
+        /** @} */
+#else
+        AsmPEFileHeader.setDataPrototype("unsigned", "e_loader_flags", "= 0",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Number of RVA/size pairs.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        unsigned get_e_num_rvasize_pairs() const;
+        void set_e_num_rvasize_pairs(unsigned);
+        /** @} */
+#else
+        AsmPEFileHeader.setDataPrototype("unsigned", "e_num_rvasize_pairs", "= 0",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: RVA/size pairs.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        SgAsmPERVASizePairList* get_rvasize_pairs() const;
+        void set_rvasize_pairs(SgAsmPERVASizePairList*);
+        /** @} */
+#else
+        AsmPEFileHeader.setDataPrototype("SgAsmPERVASizePairList*", "rvasize_pairs", "= NULL",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Section table.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        SgAsmPESectionTable* get_section_table() const;
+        void set_section_table(SgAsmPESectionTable*);
+        /** @} */
+#else
+        AsmPEFileHeader.setDataPrototype("SgAsmPESectionTable*", "section_table", "= NULL",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: COFF symbol table.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        SgAsmCoffSymbolTable* get_coff_symtab() const;
+        void set_coff_symtab(SgAsmCoffSymbolTable*);
+        /** @} */
+#else
+        AsmPEFileHeader.setDataPrototype("SgAsmCoffSymbolTable*", "coff_symtab", "= NULL",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmPEFileHeader);
+#if defined(SgAsmPEFileHeader_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericHeader);
+            s & BOOST_SERIALIZATION_NVP(p_e_cpu_type);
+            s & BOOST_SERIALIZATION_NVP(p_e_nsections);
+            s & BOOST_SERIALIZATION_NVP(p_e_time);
+            s & BOOST_SERIALIZATION_NVP(p_e_coff_symtab);
+            s & BOOST_SERIALIZATION_NVP(p_e_nt_hdr_size);
+            s & BOOST_SERIALIZATION_NVP(p_e_coff_nsyms);
+            s & BOOST_SERIALIZATION_NVP(p_e_flags);
+            s & BOOST_SERIALIZATION_NVP(p_e_opt_magic);
+            s & BOOST_SERIALIZATION_NVP(p_e_lmajor);
+            s & BOOST_SERIALIZATION_NVP(p_e_lminor);
+            s & BOOST_SERIALIZATION_NVP(p_e_code_size);
+            s & BOOST_SERIALIZATION_NVP(p_e_data_size);
+            s & BOOST_SERIALIZATION_NVP(p_e_bss_size);
+            s & BOOST_SERIALIZATION_NVP(p_e_code_rva);
+            s & BOOST_SERIALIZATION_NVP(p_e_data_rva);
+            s & BOOST_SERIALIZATION_NVP(p_e_section_align);
+            s & BOOST_SERIALIZATION_NVP(p_e_file_align);
+            s & BOOST_SERIALIZATION_NVP(p_e_os_major);
+            s & BOOST_SERIALIZATION_NVP(p_e_os_minor);
+            s & BOOST_SERIALIZATION_NVP(p_e_user_major);
+            s & BOOST_SERIALIZATION_NVP(p_e_user_minor);
+            s & BOOST_SERIALIZATION_NVP(p_e_subsys_major);
+            s & BOOST_SERIALIZATION_NVP(p_e_subsys_minor);
+            s & BOOST_SERIALIZATION_NVP(p_e_reserved9);
+            s & BOOST_SERIALIZATION_NVP(p_e_image_size);
+            s & BOOST_SERIALIZATION_NVP(p_e_header_size);
+            s & BOOST_SERIALIZATION_NVP(p_e_file_checksum);
+            s & BOOST_SERIALIZATION_NVP(p_e_subsystem);
+            s & BOOST_SERIALIZATION_NVP(p_e_dll_flags);
+            s & BOOST_SERIALIZATION_NVP(p_e_stack_reserve_size);
+            s & BOOST_SERIALIZATION_NVP(p_e_stack_commit_size);
+            s & BOOST_SERIALIZATION_NVP(p_e_heap_reserve_size);
+            s & BOOST_SERIALIZATION_NVP(p_e_heap_commit_size);
+            s & BOOST_SERIALIZATION_NVP(p_e_loader_flags);
+            s & BOOST_SERIALIZATION_NVP(p_e_num_rvasize_pairs);
+            s & BOOST_SERIALIZATION_NVP(p_rvasize_pairs);
+            s & BOOST_SERIALIZATION_NVP(p_section_table);
+            s & BOOST_SERIALIZATION_NVP(p_coff_symtab);
+        }
+#endif
+
+    public:
+#ifdef _MSC_VER
+# pragma pack (1)
+#endif
+        /* File format of a PE File Header. All fields are little endian. */
+        struct PEFileHeader_disk {
+            unsigned char e_magic[4];       /* 0x00 magic number "PE\0\0" */
+            uint16_t    e_cpu_type;         /* 0x04 e.g., 0x014c = Intel 386 */
+            uint16_t    e_nsections;        /* 0x06 number of sections defined in the Section Table */
+            uint32_t    e_time;             /* 0x08 time and date file was created or modified by the linker */
+            uint32_t    e_coff_symtab;      /* 0x0c offset to COFF symbol table */
+            uint32_t    e_coff_nsyms;       /* 0x10 number of symbols in COFF symbol table */
+            uint16_t    e_nt_hdr_size;      /* 0x14 num remaining bytes in the header following the 'flags' field */
+            uint16_t    e_flags;            /* 0x16 Bit flags: exe file, program/library image, fixed address, etc. */
+        }                                       /* 0x18 */
+#if !defined(SWIG) && !defined(_MSC_VER)
+        __attribute__((packed))
+#endif
+        ;
+
+        struct PE32OptHeader_disk {
+            uint16_t    e_opt_magic;        /* 0x18 magic number */
+            uint16_t    e_lmajor;           /* 0x1a linker version */
+            uint16_t    e_lminor;           /* 0x1c */
+            uint16_t    e_code_size;        /* 0x1e Size of .text or sum of all code sections */
+            uint32_t    e_data_size;        /* 0x20 Sum size of initialized data */
+            uint32_t    e_bss_size;         /* 0x24 Sum size of uninitialized data */
+            uint32_t    e_entrypoint_rva;   /* 0x28 RVA="relative virtual address"; relative to 'image_base', below */
+            uint32_t    e_code_rva;         /* 0x2c Addr relative to image base for code section when memory mapped */
+            uint32_t    e_data_rva;         /* 0x30 Address relative to image base for data section */
+            uint32_t    e_image_base;       /* 0x34 Virt base of image (first byte of file, DOS header). 64k aligned */
+            uint32_t    e_section_align;    /* 0x38 Alignment of sections in memory. Power of two 512<=x<=256M */
+            uint32_t    e_file_align;       /* 0x3c Alignment factor (in bytes) for image pages */
+            uint16_t    e_os_major;         /* 0x40 OS version number required to run this image */
+            uint16_t    e_os_minor;         /* 0x42 */
+            uint16_t    e_user_major;       /* 0x44 User-specified for differentiating between image revs */
+            uint16_t    e_user_minor;       /* 0x46 */
+            uint16_t    e_subsys_major;     /* 0x48 Subsystem version number */
+            uint16_t    e_subsys_minor;     /* 0x4a */
+            uint32_t    e_reserved9;        /* 0x4c */
+            uint32_t    e_image_size;       /* 0x50 Virtual size of the image inc. all headers; section_align */
+            uint32_t    e_header_size;      /* 0x54 Total header size (DOS Header + PE Header + Section table */
+            uint32_t    e_file_checksum;    /* 0x58 Checksum for entire file; Set to zero by the linker */
+            uint16_t    e_subsystem;        /* 0x5c Native, WindowsGUI, WindowsCharacter, OS/2 Character, etc. */
+            uint16_t    e_dll_flags;        /* 0x5e Bit flags for library init/terminate per process or thread */
+            uint32_t    e_stack_reserve_size;/*0x60 Virtual mem reserved for stack; non-committed pages are guards */
+            uint32_t    e_stack_commit_size;/* 0x64 Size of valid stack; other pages are guards; <=stack_reserve_size*/
+            uint32_t    e_heap_reserve_size;/* 0x68 Size (bytes) of local heap to reserve */
+            uint32_t    e_heap_commit_size; /* 0x6c Size (bytes) of valid local heap */
+            uint32_t    e_loader_flags;     /* 0x70 Reserved, must be zero */
+            uint32_t    e_num_rvasize_pairs;/* 0x74 Num RVASizePair entries that follow this member; part of header */
+        }                                       /* 0x78 */
+#if !defined(SWIG) && !defined(_MSC_VER)
+        __attribute__((packed))
+#endif
+        ;
+
+        struct PE64OptHeader_disk {
+            uint16_t    e_opt_magic;        /* 0x18 */
+            uint16_t    e_lmajor;           /* 0x1a */
+            uint16_t    e_lminor;           /* 0x1c */
+            uint16_t    e_code_size;        /* 0x1e */
+            uint32_t    e_data_size;        /* 0x20 */
+            uint32_t    e_bss_size;         /* 0x24 */
+            uint32_t    e_entrypoint_rva;   /* 0x28 */
+            uint32_t    e_code_rva;         /* 0x2c */
+            // uint32_t  e_data_rva;             /* Not present in PE32+ */
+            uint64_t    e_image_base;       /* 0x30 */
+            uint32_t    e_section_align;    /* 0x38 */
+            uint32_t    e_file_align;       /* 0x3c */
+            uint16_t    e_os_major;         /* 0x40 */
+            uint16_t    e_os_minor;         /* 0x42 */
+            uint16_t    e_user_major;       /* 0x44 */
+            uint16_t    e_user_minor;       /* 0x46 */
+            uint16_t    e_subsys_major;     /* 0x48 */
+            uint16_t    e_subsys_minor;     /* 0x4a */
+            uint32_t    e_reserved9;        /* 0x4c */
+            uint32_t    e_image_size;       /* 0x50 */
+            uint32_t    e_header_size;      /* 0x54 */
+            uint32_t    e_file_checksum;    /* 0x58 */
+            uint16_t    e_subsystem;        /* 0x5c */
+            uint16_t    e_dll_flags;        /* 0x5e */
+            uint64_t    e_stack_reserve_size;/*0x60 */
+            uint64_t    e_stack_commit_size;/* 0x68 */
+            uint64_t    e_heap_reserve_size;/* 0x70 */
+            uint64_t    e_heap_commit_size; /* 0x78 */
+            uint32_t    e_loader_flags;     /* 0x80 */
+            uint32_t    e_num_rvasize_pairs;/* 0x84 */
+        }                                       /* 0x88 */
+#if !defined(SWIG) && !defined(_MSC_VER)
+        __attribute__((packed))
+#endif
+            ;
+#ifdef _MSC_VER
+# pragma pack ()
+#endif
+
+        /* Bit flags for the PE header 'flags' member */
+        enum HeaderFlags {
+            HF_PROGRAM          = 0x0000,       /* Program image (no non-reserved bits set) */
+            HF_EXECUTABLE       = 0x0002,       /* Clear indicates can't load: link errors or incrementally linked */
+            HF_FIXED            = 0x0200,       /* Image *must* be loaded at image_base address or error */
+            HF_LIBRARY          = 0x2000,       /* Library image */
+            HF_RESERVED_MASK    = 0xddfd        /* Reserved bits */
+        };
+
+        /* Values for the PE header 'subsystem' member */
+        enum Subsystem {
+            HF_SPEC_UNKNOWN     = 0x0000,       /* Specified as 'unknown' in the file */
+            HF_NATIVE           = 0x0001,       /* Native */
+            HF_WINGUI           = 0x0002,       /* Windows GUI */
+            HF_WINCHAR          = 0x0003,       /* Windows character */
+            HF_OS2CHAR          = 0x0005,       /* OS/2 character */
+            HF_POSIX            = 0x0007        /* POSIX character */
+        };
+
+        /* Bit flags for the PE header 'dll_flags' member */
+        enum DLLFlags {
+            DLL_PROC_INIT       = 0x0001,       /* Per-process library initialization */
+            DLL_PROC_TERM       = 0x0002,       /* Per-process library termination */
+            DLL_THRD_INIT       = 0x0004,       /* Per-thread library initialization */
+            DLL_THRD_TERM       = 0x0008,       /* Per-thread library termination */
+            DLL_RESERVED_MASK   = 0xfff0        /* Reserved bits */
+        };
+
+        /** Reason for each rva/size pair in the PE header. */
+        enum PairPurpose {              // Values are important
+            PAIR_EXPORTS            = 0,
+            PAIR_IMPORTS            = 1,
+            PAIR_RESOURCES          = 2,
+            PAIR_EXCEPTIONS         = 3,
+            PAIR_CERTIFICATES       = 4,
+            PAIR_BASERELOCS         = 5,
+            PAIR_DEBUG              = 6,
+            PAIR_ARCHITECTURE       = 7,
+            PAIR_GLOBALPTR          = 8,
+            PAIR_TLS                = 9,    // Thread local storage
+            PAIR_LOADCONFIG         = 10,
+            PAIR_BOUNDIMPORT        = 11,
+            PAIR_IAT                = 12,   // Import address table
+            PAIR_DELAYIMPORT        = 13,   // Delay import descriptor
+            PAIR_CLRRUNTIME         = 14,   // CLR(?) runtime header
+            PAIR_RESERVED15         = 15    // Reserved (always zero according to specification)
+        };
+
+    public:
+        explicit SgAsmPEFileHeader(SgAsmGenericFile *f)
+            : SgAsmGenericHeader(f), p_loader_map(NULL), p_section_table(NULL), p_coff_symtab(NULL) {
+            ctor();
+        }
+
+        virtual const char *format_name() const $ROSE_OVERRIDE {return "PE";}
+        static bool is_PE (SgAsmGenericFile*);
+        std::string rvasize_pair_name(PairPurpose, const char **short_name);
+        void set_rvasize_pair(PairPurpose, SgAsmPESection*);
+        void update_rvasize_pairs();
+        void add_rvasize_pairs();
+
+        virtual SgAsmPEFileHeader *parse() $ROSE_OVERRIDE;
+        virtual bool reallocate() $ROSE_OVERRIDE;
+        virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
+        void create_table_sections();
+
+        /* Loader memory maps */
+        MemoryMap *get_loader_map() const {return p_loader_map;}
+        void set_loader_map(MemoryMap *map) {p_loader_map=map;}
+
+    private:
+        void ctor();
+        void *encode(SgAsmPEFileHeader::PEFileHeader_disk*) const;
+        void *encode(SgAsmPEFileHeader::PE32OptHeader_disk*) const;
+        void *encode(SgAsmPEFileHeader::PE64OptHeader_disk*) const;
+        MemoryMap *p_loader_map;
+#endif // SgAsmPEFileHeader_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    
+    DECLARE_LEAF_CLASS(AsmPERVASizePairList);
+    IS_SERIALIZABLE(AsmPERVASizePairList);
+
+#ifdef DOCUMENTATION
+    /** List of SgAsmPERVASizePair AST nodes.
+     *
+     *  The only reason this AST node exists rather than storing the list directly in the nodes that need it is due to ROSETTA
+     *  limitations. */
+    class SgAsmPERVASizePairList: public SgAsmExecutableFileFormat {
+    public:
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: List of pointers to other nodes.
+         *
+         * @{ */
+        const SgAsmPERVASizePairPtrList& get_pairs() const;
+        void set_pairs(const SgAsmPERVASizePairPtrList&);
+        /** @} */
+#else
+        AsmPERVASizePairList.setDataPrototype("SgAsmPERVASizePairPtrList", "pairs", "",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmPERVASizePairList);
+#if defined(SgAsmPERVASizePairList_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
+            s & BOOST_SERIALIZATION_NVP(p_pairs);
+        }
+#endif
+
+    public:
+        explicit SgAsmPERVASizePairList(SgAsmPEFileHeader *parent) {
+            set_parent(parent);
+        }
+#endif // SgAsmPERVASizePairList_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmPERVASizePair);
+    IS_SERIALIZABLE(AsmPERVASizePair);
+
+#ifdef DOCUMENTATION
+    /** RVA/size pair. */
+    class SgAsmPERVASizePair: public SgAsmExecutableFileFormat {
+    public:
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: RVA.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        rose_rva_t get_e_rva() const;
+        void set_e_rva(rose_rva_t);
+        /** @} */
+#else
+        AsmPERVASizePair.setDataPrototype("rose_rva_t", "e_rva", "= 0",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Size.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        rose_addr_t get_e_size() const;
+        void set_e_size(rose_addr_t);
+        /** @} */
+#else
+        AsmPERVASizePair.setDataPrototype("rose_addr_t", "e_size", "= 0",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Section.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        SgAsmGenericSection* get_section() const;
+        void set_section(SgAsmGenericSection*);
+        /** @} */
+#else
+        AsmPERVASizePair.setDataPrototype("SgAsmGenericSection*", "section", "= NULL",
+                                          NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmPERVASizePair);
+#if defined(SgAsmPERVASizePair_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
+            s & BOOST_SERIALIZATION_NVP(p_e_rva);
+            s & BOOST_SERIALIZATION_NVP(p_e_size);
+            s & BOOST_SERIALIZATION_NVP(p_section);
+        }
+#endif
+
+
+    public:
+#ifdef _MSC_VER
+# pragma pack (1)
+#endif
+        /** File format for an RVA/Size pair.
+         *
+         *  Such pairs are considered to be part of the PE file header.  All fields are little endian. */
+        struct RVASizePair_disk {
+            uint32_t    e_rva;
+            uint32_t    e_size;
+        }
+#if !defined(SWIG) && !defined(_MSC_VER)
+        __attribute__((packed))
+#endif
+        ;
+#ifdef _MSC_VER
+# pragma pack ()
+#endif
+
+        SgAsmPERVASizePair(SgAsmPERVASizePairList *parent, const SgAsmPERVASizePair::RVASizePair_disk *disk)
+            : p_e_rva(0), p_e_size(0), p_section(NULL) {
+            ctor(parent, disk);
+        }
+
+        SgAsmPERVASizePair(SgAsmPERVASizePairList *parent, rose_addr_t rva, rose_addr_t size)
+            : p_e_rva(0), p_e_size(0), p_section(NULL) {
+            ctor(parent, rva, size);
+        }
+
+        void set_section(SgAsmGenericSection *section);
+        SgAsmGenericSection *get_section() const;
+
+        void *encode(SgAsmPERVASizePair::RVASizePair_disk *disk) const;
+    private:
+        void ctor(SgAsmPERVASizePairList *parent, const SgAsmPERVASizePair::RVASizePair_disk*);
+        void ctor(SgAsmPERVASizePairList *parent, rose_addr_t rva, rose_addr_t size);
+#endif // SgAsmPERVASizePair_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
 
 
 
-    NEW_TERMINAL_MACRO(AsmPERVASizePairList, "AsmPERVASizePairList", "AsmPERVASizePairListTag");
-    AsmPERVASizePairList.setFunctionPrototype("HEADER_PE_RVA_SIZE_PAIR_LIST", "../Grammar/BinaryInstruction.code");
-    AsmPERVASizePairList.setDataPrototype("SgAsmPERVASizePairPtrList", "pairs", "",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-
-
-
-    NEW_TERMINAL_MACRO(AsmPERVASizePair, "AsmPERVASizePair", "AsmPERVASizePairTag");
-    AsmPERVASizePair.setFunctionPrototype("HEADER_PE_RVA_SIZE_PAIR", "../Grammar/BinaryInstruction.code");
-    AsmPERVASizePair.setDataPrototype("rose_rva_t", "e_rva", "= 0",
-                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPERVASizePair.setDataPrototype("rose_addr_t", "e_size", "= 0",
-                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPERVASizePair.setDataPrototype("SgAsmGenericSection*", "section", "= NULL",
-                                      NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /*************************************************************************************************************************
      *                                         PE Import Tables
      *************************************************************************************************************************/
 
-    // A single imported object.  Each of these nodes is created from a combination of the PE Import Lookup Table and the PE
-    // Import Address Table, pointers to which are stored in the Import Directory (SgAsmPEImportDirectory).
-    NEW_TERMINAL_MACRO(AsmPEImportItem, "AsmPEImportItem", "AsmPEImportItemTag");
-    AsmPEImportItem.setFunctionPrototype("HEADER_PE_IMPORT_ITEM", "../Grammar/BinaryInstruction.code");
-    AsmPEImportItem.setDataPrototype("bool", "by_ordinal", "=true",      // store ordinal number if ILT/IAT?
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEImportItem.setDataPrototype("unsigned", "ordinal", "=0",        // ordinal number
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEImportItem.setDataPrototype("unsigned", "hint", "=0",           // export name table hint if not by_ordinal
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEImportItem.setDataPrototype("SgAsmGenericString*", "name", "",  // name if not by ordinal
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-    AsmPEImportItem.setDataPrototype("rose_rva_t", "hintname_rva", "=0", // rva of hint/name pair
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEImportItem.setDataPrototype("size_t", "hintname_nalloc", "=0",  // file bytes allocated for hint/name pair
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEImportItem.setDataPrototype("rose_rva_t", "bound_rva", "=0",    // bound rva from IAT if not a copy of ILT
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    DECLARE_LEAF_CLASS(AsmPEImportItem);
+    IS_SERIALIZABLE(AsmPEImportItem);
 
+#ifdef DOCUMENTATION
+    /** A single imported object.
+     *
+     *  Each of these nodes is created from a combination of the PE Import Lookup Table and the PE Import Address Table,
+     *  pointers to which are stored in the Import Directory (@ref SgAsmPEImportDirectory). */
+    class SgAsmPEImportItem: public SgAsmExecutableFileFormat {
+    public:
+#endif
 
-    // A list of imported items.
-    NEW_TERMINAL_MACRO(AsmPEImportItemList, "AsmPEImportItemList", "AsmPEImportItemListTag");
-    AsmPEImportItemList.setDataPrototype("SgAsmPEImportItemPtrList", "vector", "",
-                                         NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#ifdef DOCUMENTATION
+        /** Property: Whether ordinal number is stored.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        bool get_by_ordinal() const;
+        void set_by_ordinal(bool);
+        /** @} */
+#else
+        AsmPEImportItem.setDataPrototype("bool", "by_ordinal", "=true",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 
+#ifdef DOCUMENTATION
+        /** Property: Ordinal number
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        unsigned get_ordinal() const;
+        void set_ordinal(unsigned);
+        /** @} */
+#else
+        AsmPEImportItem.setDataPrototype("unsigned", "ordinal", "=0",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 
+#ifdef DOCUMENTATION
+        /** Property: Export name table hint if not ordinal.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        unsigned get_hint() const;
+        void set_hint(unsigned);
+        /** @} */
+#else
+        AsmPEImportItem.setDataPrototype("unsigned", "hint", "=0",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 
-    // One import directory per library.  The import directory points to the Import Lookup Table and Import Address Table.
-    // ROSE no longer represents the ILT and IAT with separate IR nodes.
-    NEW_TERMINAL_MACRO(AsmPEImportDirectory, "AsmPEImportDirectory", "AsmPEImportDirectoryTag");
-    AsmPEImportDirectory.setFunctionPrototype("HEADER_PE_IMPORT_DIRECTORY", "../Grammar/BinaryInstruction.code");
-    AsmPEImportDirectory.setDataPrototype("SgAsmGenericString*", "dll_name", "=0", // name of library from which to import
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-    AsmPEImportDirectory.setDataPrototype("rose_rva_t", "dll_name_rva", "= 0", // address of the name
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEImportDirectory.setDataPrototype("size_t", "dll_name_nalloc", "=0",   // bytes allocated in the file for the name
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEImportDirectory.setDataPrototype("time_t", "time", "= 0",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEImportDirectory.setDataPrototype("unsigned", "forwarder_chain", "= 0",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEImportDirectory.setDataPrototype("rose_rva_t", "ilt_rva", "= 0", // starting address of the ILT
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEImportDirectory.setDataPrototype("size_t", "ilt_nalloc", "= 0",  // bytes allocated in the file for the ILT
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEImportDirectory.setDataPrototype("rose_rva_t", "iat_rva", "= 0", // usually in the .rdata section
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEImportDirectory.setDataPrototype("size_t", "iat_nalloc", "=0",   // bytes allocated in the file for the IAT
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEImportDirectory.setDataPrototype("SgAsmPEImportItemList*", "imports", "=NULL",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-
-
-    // A list of PE Import Directories.
-    NEW_TERMINAL_MACRO(AsmPEImportDirectoryList, "AsmPEImportDirectoryList", "AsmPEImportDirectoryListTag");
-    AsmPEImportDirectoryList.setDataPrototype("SgAsmPEImportDirectoryPtrList", "vector", "",
-                                              NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-
-
-
-    // A file section containing a list of PE Import Directories.  Documentation is in PeImportSection.C */
-    NEW_TERMINAL_MACRO(AsmPEImportSection, "AsmPEImportSection", "AsmPEImportSectionTag");
-    AsmPEImportSection.setFunctionPrototype("HEADER_PE_IMPORT_SECTION", "../Grammar/BinaryInstruction.code");
-    AsmPEImportSection.setDataPrototype ("SgAsmPEImportDirectoryList*", "import_directories", "= NULL",
+#ifdef DOCUMENTATION
+        /** Property: Name if not by ordinal.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        SgAsmGenericString* get_name() const;
+        void set_name(SgAsmGenericString*);
+        /** @} */
+#else
+        AsmPEImportItem.setDataPrototype("SgAsmGenericString*", "name", "",
                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: RVA of hint/name pair.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        rose_rva_t get_hintname_rva() const;
+        void set_hintname_rva(rose_rva_t);
+        /** @} */
+#else
+        AsmPEImportItem.setDataPrototype("rose_rva_t", "hintname_rva", "=0",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: File bytes allocated for hint/name pair.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        size_t get_hintname_nalloc() const;
+        void set_hintname_nalloc(size_t);
+        /** @} */
+#else
+        AsmPEImportItem.setDataPrototype("size_t", "hintname_nalloc", "=0",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Bound RVA from IAT if not a copy of ILT.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        rose_rva_t get_bound_rva() const;
+        void set_bound_rva(rose_rva_t);
+        /** @} */
+#else
+        AsmPEImportItem.setDataPrototype("rose_rva_t", "bound_rva", "=0",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmPEImportItem);
+#if defined(SgAsmPEImportItem_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
+            s & BOOST_SERIALIZATION_NVP(p_by_ordinal);
+            s & BOOST_SERIALIZATION_NVP(p_ordinal);
+            s & BOOST_SERIALIZATION_NVP(p_hint);
+            s & BOOST_SERIALIZATION_NVP(p_name);
+            s & BOOST_SERIALIZATION_NVP(p_hintname_rva);
+            s & BOOST_SERIALIZATION_NVP(p_hintname_nalloc);
+            s & BOOST_SERIALIZATION_NVP(p_bound_rva);
+        }
+#endif
+
+    public:
+        explicit SgAsmPEImportItem(SgAsmPEImportItemList *parent) {
+            ctor(parent);
+        }
+        explicit SgAsmPEImportItem(SgAsmPEImportDirectory *idir) {
+            ctor(idir);
+        }
+        SgAsmPEImportItem(SgAsmPEImportDirectory *idir, const std::string &name, unsigned hint=0) {
+            ctor(idir, name, hint);
+        }
+        SgAsmPEImportItem(SgAsmPEImportDirectory *idir, const unsigned ordinal) {
+            ctor(idir, ordinal);
+        }
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+        size_t hintname_required_size() const;
+        rose_addr_t get_iat_entry_va() const;
+
+    private:
+        void ctor(SgAsmPEImportItemList *parent);
+        void ctor(SgAsmPEImportDirectory*);
+        void ctor(SgAsmPEImportDirectory*, const std::string &name, unsigned hint);
+        void ctor(SgAsmPEImportDirectory*, unsigned ordinal);
+#endif // SgAsmPEImportItem_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmPEImportItemList);
+    IS_SERIALIZABLE(AsmPEImportItemList);
+
+#ifdef DOCUMENTATION
+    /** A list of imported items.
+     *
+     *  The only purpose of this node is to hold a list of pointers to other nodes. This list cannot be contained directly in
+     *  the nodes that need it due to ROSETTA limitations. */
+    class SgAsmPEImportItemList: public SgAsmExecutableFileFormat {
+    public:
+#endif
 
 
+#ifdef DOCUMENTATION
+        /** Property: List of pointers to other nodes.
+         *
+         * @{ */
+        const SgAsmPEImportItemPtrList& get_vector() const;
+        void set_vector(const SgAsmPEImportItemPtrList&);
+        /** @} */
+#else
+        AsmPEImportItemList.setDataPrototype("SgAsmPEImportItemPtrList", "vector", "",
+                                             NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmPEImportItemList);
+#if defined(SgAsmPEImportItemList_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
+            s & BOOST_SERIALIZATION_NVP(p_vector);
+        }
+#endif
+#endif // SgAsmPEImportItemList_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmPEImportDirectory);
+    IS_SERIALIZABLE(AsmPEImportDirectory);
+
+#ifdef DOCUMENTATION
+    /** One import directory per library.
+     *
+     *  The import directory points to the Import Lookup Table and Import Address Table. ROSE no longer represents the ILT and
+     *  IAT with separate IR nodes. */
+    class SgAsmPEImportDirectory: public SgAsmExecutableFileFormat {
+    public:
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: Name of library from which to import.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        SgAsmGenericString* get_dll_name() const;
+        void set_dll_name(SgAsmGenericString*);
+        /** @} */
+#else
+        AsmPEImportDirectory.setDataPrototype("SgAsmGenericString*", "dll_name", "=0",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Address of the import library name.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        rose_rva_t get_dll_name_rva() const;
+        void set_dll_name_rva(rose_rva_t);
+        /** @} */
+#else
+        AsmPEImportDirectory.setDataPrototype("rose_rva_t", "dll_name_rva", "= 0",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Bytes allocated in the file for the name.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        size_t get_dll_name_nalloc() const;
+        void set_dll_name_nalloc(size_t);
+        /** @} */
+#else
+        AsmPEImportDirectory.setDataPrototype("size_t", "dll_name_nalloc", "=0",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Time.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        time_t get_time() const;
+        void set_time(time_t);
+        /** @} */
+#else
+        AsmPEImportDirectory.setDataPrototype("time_t", "time", "= 0",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Forwarder chain.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        unsigned get_forwarder_chain() const;
+        void set_forwarder_chain(unsigned);
+        /** @} */
+#else
+        AsmPEImportDirectory.setDataPrototype("unsigned", "forwarder_chain", "= 0",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Starting address of the ILT.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        rose_rva_t get_ilt_rva() const;
+        void set_ilt_rva(rose_rva_t);
+        /** @} */
+#else
+        AsmPEImportDirectory.setDataPrototype("rose_rva_t", "ilt_rva", "= 0",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Bytes allocated in the file for the ILT.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        size_t get_ilt_nalloc() const;
+        void set_ilt_nalloc(size_t);
+        /** @} */
+#else
+        AsmPEImportDirectory.setDataPrototype("size_t", "ilt_nalloc", "= 0",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: IAT RVA.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        rose_rva_t get_iat_rva() const;
+        void set_iat_rva(rose_rva_t);
+        /** @} */
+#else
+        AsmPEImportDirectory.setDataPrototype("rose_rva_t", "iat_rva", "= 0",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Bytes allocated in the file for the IAT.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        size_t get_iat_nalloc() const;
+        void set_iat_nalloc(size_t);
+        /** @} */
+#else
+        AsmPEImportDirectory.setDataPrototype("size_t", "iat_nalloc", "=0",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: List of imports.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        SgAsmPEImportItemList* get_imports() const;
+        void set_imports(SgAsmPEImportItemList*);
+        /** @} */
+#else
+        AsmPEImportDirectory.setDataPrototype("SgAsmPEImportItemList*", "imports", "=NULL",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmPEImportDirectory);
+#if defined(SgAsmPEImportDirectory_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
+            s & BOOST_SERIALIZATION_NVP(p_dll_name);
+            s & BOOST_SERIALIZATION_NVP(p_dll_name_rva);
+            s & BOOST_SERIALIZATION_NVP(p_dll_name_nalloc);
+            s & BOOST_SERIALIZATION_NVP(p_time);
+            s & BOOST_SERIALIZATION_NVP(p_forwarder_chain);
+            s & BOOST_SERIALIZATION_NVP(p_ilt_rva);
+            s & BOOST_SERIALIZATION_NVP(p_ilt_nalloc);
+            s & BOOST_SERIALIZATION_NVP(p_iat_rva);
+            s & BOOST_SERIALIZATION_NVP(p_imports);
+        }
+#endif
+
+    public:
+#ifdef _MSC_VER
+# pragma pack (1)
+#endif
+        struct PEImportDirectory_disk {
+            uint32_t ilt_rva;               /* 0x00 Import Lookup Table RVA */
+            uint32_t time;                  /* 0x04 Zero until the image is bound, then time stamp of the DLL */
+            uint32_t forwarder_chain;       /* 0x08 Index of the first forwarder chain */
+            uint32_t dll_name_rva;          /* 0x0c address of NUL-terminated DLL name */
+            uint32_t iat_rva;               /* 0x10 Import Address Table (Thunk Table) RVA */
+        }                                       /* 0x14 */
+#if !defined(SWIG) && !defined(_MSC_VER)
+        __attribute__((packed))
+#endif
+        ;
+#ifdef _MSC_VER
+# pragma pack ()
+#endif
+
+        explicit SgAsmPEImportDirectory(SgAsmPEImportSection *isec, std::string dll_name="")
+            : p_dll_name(NULL), p_dll_name_rva(0), p_dll_name_nalloc(0), p_time(0), p_forwarder_chain(0),
+              p_ilt_rva(0), p_ilt_nalloc(0), p_iat_rva(0), p_iat_nalloc(0), p_imports(NULL) {
+            ctor(isec, dll_name);
+        }
+        SgAsmPEImportDirectory *parse(rose_addr_t va);
+        size_t reallocate(rose_rva_t starting_rva);
+        void *encode(SgAsmPEImportDirectory::PEImportDirectory_disk*) const;
+        virtual void unparse(std::ostream&, const SgAsmPEImportSection*, size_t idx) const;
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+        size_t iat_required_size() const;
+        int find_import_item(const SgAsmPEImportItem *item, int hint=0) const;
+        size_t hintname_table_extent(AddressIntervalSet &extent/*in,out*/) const;
+
+    private:
+        void ctor(SgAsmPEImportSection*, const std::string &dll_name);
+        void parse_ilt_iat(const rose_rva_t &table_start, bool assume_bound);
+        void unparse_ilt_iat(std::ostream&,const rose_rva_t &table_start, bool assume_bound, size_t nalloc) const;
+#endif // SgAsmPEImportDirectory_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmPEImportDirectoryList);
+    IS_SERIALIZABLE(AsmPEImportDirectoryList);
+
+#ifdef DOCUMENTATION
+    /** A list of PE Import Directories.
+     *
+     *  The only purpose of this class is to store a list of node pointers which cannot be stored in the nodes that need it due
+     *  to ROSETTA limitations. */
+    class SgAsmPEImportDirectoryList: public SgAsmExecutableFileFormat {
+    public:
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: List of nodes.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        const SgAsmPEImportDirectoryPtrList& get_vector() const;
+        void set_vector(const SgAsmPEImportDirectoryPtrList&);
+        /** @} */
+#else
+        AsmPEImportDirectoryList.setDataPrototype("SgAsmPEImportDirectoryPtrList", "vector", "",
+                                                  NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmPEImportDirectoryList);
+#if defined(SgAsmPEImportDirectoryList_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
+            s & BOOST_SERIALIZATION_NVP(p_vector);
+        }
+#endif
+#endif // SgAsmPEImportDirectoryList_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmPEImportSection);
+    IS_SERIALIZABLE(AsmPEImportSection);
+
+#ifdef DOCUMENTATION
+    /** A file section containing a list of PE Import Directories. */
+    class SgAsmPEImportSection: public SgAsmPESection {
+    public:
+#endif
+        
+
+#ifdef DOCUMENTATION
+        /** Property: List of import directories.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        SgAsmPEImportDirectoryList* get_import_directories() const;
+        void set_import_directories(SgAsmPEImportDirectoryList*);
+        /** @} */
+#else
+        AsmPEImportSection.setDataPrototype ("SgAsmPEImportDirectoryList*", "import_directories", "= NULL",
+                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmPEImportSection);
+#if defined(SgAsmPEImportSection_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmPESection);
+            s & BOOST_SERIALIZATION_NVP(p_import_directories);
+        }
+#endif
+
+    public:
+        explicit SgAsmPEImportSection(SgAsmPEFileHeader *fhdr)
+            : SgAsmPESection(fhdr) {
+            ctor();
+        }
+        virtual SgAsmPEImportSection *parse() $ROSE_OVERRIDE;
+        virtual bool reallocate() $ROSE_OVERRIDE;
+        virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
+        void add_import_directory(SgAsmPEImportDirectory*);
+        void remove_import_directory(SgAsmPEImportDirectory*);
+        static bool show_import_mesg();
+        static void import_mesg_reset() { mesg_nprinted=0; }
+        size_t reallocate_iats(rose_rva_t start_at);
+
+    private:
+        static size_t mesg_nprinted; //counter for import_mesg()
+        void ctor();
+#endif // SgAsmPEImportSection_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /*************************************************************************************************************************
      *                                         PE Export Tables
      *************************************************************************************************************************/
 
-    NEW_TERMINAL_MACRO(AsmPEExportSection, "AsmPEExportSection", "AsmPEExportSectionTag");
-    AsmPEExportSection.setFunctionPrototype("HEADER_PE_EXPORT_SECTION", "../Grammar/BinaryInstruction.code");
-    AsmPEExportSection.setDataPrototype("SgAsmPEExportDirectory*", "export_dir", "= NULL",
-                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-    AsmPEExportSection.setDataPrototype("SgAsmPEExportEntryList*", "exports", "= NULL",
-                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmPEExportSection);
+    IS_SERIALIZABLE(AsmPEExportSection);
+
+
+#ifdef DOCUMENTATION
+    /** Export file section. */
+    class SgAsmPEExportSection: public SgAsmPESection {
+    public:
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: Export directory.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        SgAsmPEExportDirectory* get_export_dir() const;
+        void set_export_dir(SgAsmPEExportDirectory*);
+        /** @} */
+#else
+        AsmPEExportSection.setDataPrototype("SgAsmPEExportDirectory*", "export_dir", "= NULL",
+                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: List of export entries.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        SgAsmPEExportEntryList* get_exports() const;
+        void set_exports(SgAsmPEExportEntryList*);
+        /** @} */
+#else
+        AsmPEExportSection.setDataPrototype("SgAsmPEExportEntryList*", "exports", "= NULL",
+                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmPEExportSection);
+#if defined(SgAsmPEExportSection_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmPESection);
+            s & BOOST_SERIALIZATION_NVP(p_export_dir);
+            s & BOOST_SERIALIZATION_NVP(p_exports);
+        }
+#endif
+
+    public:
+        /** The PE Export Address Table is an array of expaddr_n 4-byte RVAs.
+         *
+         *  If the address is not in the export section (as defined by the address and length that are indicated in the NT
+         *  Optional Header) then the RVA is an actual address in code or data. Otherwise its a Forwarder RVA that names a
+         *  symbol in another DLL. */
+        typedef uint32_t ExportAddress_disk;
+
+        /** The PE Export Name Pointer Table is an array of nameptr_n 4-byte RVAs pointing into the Export Name Table. The
+         *  pointers are ordered lexically to allow binary searches.  An export name is defined only if the export name pointer
+         *  table contains a pointer to it. */
+        typedef uint32_t ExportNamePtr_disk;
+
+        /** The PE Export Ordinal Table is an array of nameptr_n (yes) 2-byte indices into the Export Address Table biased by
+         *  ord_base. In other words, the ord_base must be subtracted from the ordinals to obtain true indices into the Export
+         *  Address Table. */
+        typedef uint16_t ExportOrdinal_disk;
+
+        SgAsmPEExportSection(SgAsmPEFileHeader *fhdr)
+            : SgAsmPESection(fhdr), p_export_dir(NULL), p_exports(NULL) {
+            ctor();
+        }
+        virtual SgAsmPEExportSection *parse() $ROSE_OVERRIDE;
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
+        void add_entry(SgAsmPEExportEntry*);
+
+    private:
+        void ctor();
+#endif // SgAsmPEExportSection_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmPEExportDirectory);
+    IS_SERIALIZABLE(AsmPEExportDirectory);
+
+
+#ifdef DOCUMENTATION
+    /** Export directory. */
+    class SgAsmPEExportDirectory: public SgAsmExecutableFileFormat {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Reserved aread #1.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        unsigned get_res1() const;
+        void set_res1(unsigned);
+        /** @} */
+#else
+        AsmPEExportDirectory.setDataPrototype("unsigned", "res1", "= 0",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Time stamp.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        time_t get_timestamp() const;
+        void set_timestamp(time_t);
+        /** @} */
+#else
+        AsmPEExportDirectory.setDataPrototype("time_t", "timestamp", "= 0",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: VMajor.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        unsigned get_vmajor() const;
+        void set_vmajor(unsigned);
+        /** @} */
+#else
+        AsmPEExportDirectory.setDataPrototype("unsigned", "vmajor", "= 0",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: VMinor.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        unsigned get_vminor() const;
+        void set_vminor(unsigned);
+        /** @} */
+#else
+        AsmPEExportDirectory.setDataPrototype("unsigned", "vminor", "= 0",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: RVA for name.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        rose_rva_t get_name_rva() const;
+        void set_name_rva(rose_rva_t);
+        /** @} */
+#else
+        AsmPEExportDirectory.setDataPrototype("rose_rva_t", "name_rva", "= 0",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Ordinal base.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        unsigned get_ord_base() const;
+        void set_ord_base(unsigned);
+        /** @} */
+#else
+        AsmPEExportDirectory.setDataPrototype("unsigned", "ord_base", "= 0",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Expaddr_n.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        size_t get_expaddr_n() const;
+        void set_expaddr_n(size_t);
+        /** @} */
+#else
+        AsmPEExportDirectory.setDataPrototype("size_t", "expaddr_n", "= 0",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Nameptr_n.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        size_t get_nameptr_n() const;
+        void set_nameptr_n(size_t);
+        /** @} */
+#else
+        AsmPEExportDirectory.setDataPrototype("size_t", "nameptr_n", "= 0",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Expaddr RVA.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        rose_rva_t get_expaddr_rva() const;
+        void set_expaddr_rva(rose_rva_t);
+        /** @} */
+#else
+        AsmPEExportDirectory.setDataPrototype("rose_rva_t", "expaddr_rva", "= 0",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Name pointer RVA.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        rose_rva_t get_nameptr_rva() const;
+        void set_nameptr_rva(rose_rva_t);
+        /** @} */
+#else
+        AsmPEExportDirectory.setDataPrototype("rose_rva_t", "nameptr_rva", "= 0",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Ordinals RVA.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        rose_rva_t get_ordinals_rva() const;
+        void set_ordinals_rva(rose_rva_t);
+        /** @} */
+#else
+        AsmPEExportDirectory.setDataPrototype("rose_rva_t", "ordinals_rva", "= 0",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Name.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        SgAsmGenericString* get_name() const;
+        void set_name(SgAsmGenericString*);
+        /** @} */
+#else
+        AsmPEExportDirectory.setDataPrototype("SgAsmGenericString*", "name", "= NULL",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmPEExportDirectory);
+#if defined(SgAsmPEExportDirectory_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
+            s & BOOST_SERIALIZATION_NVP(p_res1);
+            s & BOOST_SERIALIZATION_NVP(p_timestamp);
+            s & BOOST_SERIALIZATION_NVP(p_vmajor);
+            s & BOOST_SERIALIZATION_NVP(p_vminor);
+            s & BOOST_SERIALIZATION_NVP(p_name_rva);
+            s & BOOST_SERIALIZATION_NVP(p_ord_base);
+            s & BOOST_SERIALIZATION_NVP(p_expaddr_n);
+            s & BOOST_SERIALIZATION_NVP(p_nameptr_n);
+            s & BOOST_SERIALIZATION_NVP(p_expaddr_rva);
+            s & BOOST_SERIALIZATION_NVP(p_nameptr_rva);
+            s & BOOST_SERIALIZATION_NVP(p_ordinals_rva);
+            s & BOOST_SERIALIZATION_NVP(p_name);
+        }
+#endif
+
+    public:
+#ifdef _MSC_VER
+# pragma pack (1)
+#endif
+        /* An Export Section begins with the Export Directory */
+        struct PEExportDirectory_disk {
+            uint32_t res1;         /* 0x00 Reserved, must be zero */
+            uint32_t timestamp;    /* 0x04 Time that export data was created */
+            uint16_t vmajor;       /* 0x08 Major version number (user defined) */
+            uint16_t vminor;       /* 0x0a Minor version number (user defined) */
+            uint32_t name_rva;     /* 0x0c Location of name of DLL */
+            uint32_t ord_base;     /* 0x10 Starting ordinal for exports in this image (usually 1) */
+            uint32_t expaddr_n;    /* 0x14 Number of entries in the export address table */
+            uint32_t nameptr_n;    /* 0x18 Number of entries in the name pointer table and ordinal table */
+            uint32_t expaddr_rva;  /* 0x1c Location of Export Address Table */
+            uint32_t nameptr_rva;  /* 0x20 Location of Export Name Pointer Table */
+            uint32_t ordinals_rva; /* 0x24 Location of Ordinal Table */
+        }                               /* 0x28 */
+#if !defined(SWIG) && !defined(_MSC_VER)
+        __attribute__((packed))
+#endif
+        ;
+#ifdef _MSC_VER
+# pragma pack ()
+#endif
+
+        explicit SgAsmPEExportDirectory(SgAsmPEExportSection *s) {
+            ctor(s);
+        }
+        void dump(FILE *f, const char *prefix, ssize_t idx) const;
+
+    private:
+        void ctor(SgAsmPEExportSection*);
+#endif // SgAsmPEExportDirectory_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmPEExportEntryList);
+    IS_SERIALIZABLE(AsmPEExportEntryList);
+
+#ifdef DOCUMENTATION
+    /** List of pointers to other AST nodes.
+     *
+     *  The only purpose of this node is to hold a list of pointers to other nodes. We cannot store the list directly in the
+     *  nodes that need it due to ROSETTA limitations. */
+    class SgAsmPEExportEntryList: public SgAsmExecutableFileFormat {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: List of pointers to nodes.
+         *
+         * @{ */
+        const SgAsmPEExportEntryPtrList& get_exports() const;
+        void set_exports(const SgAsmPEExportEntryPtrList&);
+        /** @} */
+#else
+        AsmPEExportEntryList.setDataPrototype("SgAsmPEExportEntryPtrList", "exports", "",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmPEExportEntryList);
+#if defined(SgAsmPEExportEntryList_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
+            s & BOOST_SERIALIZATION_NVP(p_exports);
+        }
+#endif
+#endif // SgAsmPEExportEntryList_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmPEExportEntry);
+    IS_SERIALIZABLE(AsmPEExportEntry);
+
+#ifdef DOCUMENTATION
+    /** Export entry. */
+    class SgAsmPEExportEntry: public SgAsmExecutableFileFormat {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Name.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        SgAsmGenericString* get_name() const;
+        void set_name(SgAsmGenericString*);
+        /** @} */
+#else
+        AsmPEExportEntry.setDataPrototype("SgAsmGenericString*", "name", "= NULL",
+                                          NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Ordinal.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        unsigned get_ordinal() const;
+        void set_ordinal(unsigned);
+        /** @} */
+#else
+        AsmPEExportEntry.setDataPrototype("unsigned", "ordinal", "= 0",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Export RVA.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        rose_rva_t get_export_rva() const;
+        void set_export_rva(rose_rva_t);
+        /** @} */
+#else
+        AsmPEExportEntry.setDataPrototype("rose_rva_t", "export_rva", "= 0",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Forwarder.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        SgAsmGenericString* get_forwarder() const;
+        void set_forwarder(SgAsmGenericString*);
+        /** @} */
+#else
+        AsmPEExportEntry.setDataPrototype("SgAsmGenericString*", "forwarder", "= NULL",
+                                          NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmPEExportEntry);
+#if defined(SgAsmPEExportEntry_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
+            s & BOOST_SERIALIZATION_NVP(p_name);
+            s & BOOST_SERIALIZATION_NVP(p_ordinal);
+            s & BOOST_SERIALIZATION_NVP(p_export_rva);
+            s & BOOST_SERIALIZATION_NVP(p_forwarder);
+        }
+#endif
+
+    public:
+        SgAsmPEExportEntry(SgAsmGenericString *name, unsigned ordinal, rose_rva_t export_rva,
+                           SgAsmGenericString *forwarder) {
+            ctor(name, ordinal, export_rva, forwarder);
+        }
+
+        void dump(FILE *f,const char *prefix,ssize_t idx) const;
+        /* Accessors. Override ROSETTA because we adjust parents. */
+        SgAsmGenericString *get_name() const {return p_name;}
+        void set_name(SgAsmGenericString*);
+        SgAsmGenericString *get_forwarder() const {return p_forwarder;}
+        void set_forwarder(SgAsmGenericString*);
+
+    private:
+        void ctor(SgAsmGenericString *name, unsigned ordinal, rose_rva_t export_rva, SgAsmGenericString *forwarder);
+#endif // SgAsmPEExportEntry_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
 
 
 
-    NEW_TERMINAL_MACRO(AsmPEExportDirectory, "AsmPEExportDirectory", "AsmPEExportDirectoryTag");
-    AsmPEExportDirectory.setFunctionPrototype("HEADER_PE_EXPORT_DIRECTORY", "../Grammar/BinaryInstruction.code");
-    AsmPEExportDirectory.setDataPrototype("unsigned", "res1", "= 0",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEExportDirectory.setDataPrototype("time_t", "timestamp", "= 0",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEExportDirectory.setDataPrototype("unsigned", "vmajor", "= 0",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEExportDirectory.setDataPrototype("unsigned", "vminor", "= 0",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEExportDirectory.setDataPrototype("rose_rva_t", "name_rva", "= 0",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEExportDirectory.setDataPrototype("unsigned", "ord_base", "= 0",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEExportDirectory.setDataPrototype("size_t", "expaddr_n", "= 0",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEExportDirectory.setDataPrototype("size_t", "nameptr_n", "= 0",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEExportDirectory.setDataPrototype("rose_rva_t", "expaddr_rva", "= 0",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEExportDirectory.setDataPrototype("rose_rva_t", "nameptr_rva", "= 0",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEExportDirectory.setDataPrototype("rose_rva_t", "ordinals_rva", "= 0",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEExportDirectory.setDataPrototype("SgAsmGenericString*", "name", "= NULL",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-
-
-
-    NEW_TERMINAL_MACRO(AsmPEExportEntryList, "AsmPEExportEntryList", "AsmPEExportEntryListTag");
-    AsmPEExportEntryList.setDataPrototype("SgAsmPEExportEntryPtrList", "exports", "",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-
-
-
-    NEW_TERMINAL_MACRO(AsmPEExportEntry, "AsmPEExportEntry", "AsmPEExportEntryTag");
-    AsmPEExportEntry.setFunctionPrototype("HEADER_PE_EXPORT_ENTRY", "../Grammar/BinaryInstruction.code");
-    AsmPEExportEntry.setDataPrototype("SgAsmGenericString*", "name", "= NULL",
-                                      NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-    AsmPEExportEntry.setDataPrototype("unsigned", "ordinal", "= 0",
-                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEExportEntry.setDataPrototype("rose_rva_t", "export_rva", "= 0",
-                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPEExportEntry.setDataPrototype("SgAsmGenericString*", "forwarder", "= NULL",
-                                      NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-
-
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /*************************************************************************************************************************
      *                                         PE String Tables
      *************************************************************************************************************************/
 
-    NEW_TERMINAL_MACRO(AsmPEStringSection, "AsmPEStringSection", "AsmPEStringSectionTag");
-    AsmPEStringSection.setFunctionPrototype("HEADER_PE_STRING_SECTION", "../Grammar/BinaryInstruction.code");
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmPEStringSection);
+    IS_SERIALIZABLE(AsmPEStringSection);
     AsmPEStringSection.setAutomaticGenerationOfDestructor(false);
-    AsmPEStringSection.setDataPrototype("SgAsmCoffStrtab*", "strtab", "= NULL",
-                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+#ifdef DOCUMENTATION
+    /** String section. */
+    class SgAsmPEStringSection: public SgAsmPESection {
+    public:
+#endif
 
 
+#ifdef DOCUMENTATION
+        /** Property: String table.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        SgAsmCoffStrtab* get_strtab() const;
+        void set_strtab(SgAsmCoffStrtab*);
+        /** @} */
+#else
+        AsmPEStringSection.setDataPrototype("SgAsmCoffStrtab*", "strtab", "= NULL",
+                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmPEStringSection);
+#if defined(SgAsmPEStringSection_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmPESection);
+            s & BOOST_SERIALIZATION_NVP(p_strtab);
+        }
+#endif
+
+    public:
+        SgAsmPEStringSection(SgAsmPEFileHeader *fhdr)
+            : SgAsmPESection(fhdr), p_strtab(NULL) {
+            ctor();
+        }
+        virtual ~SgAsmPEStringSection() {}
+        virtual SgAsmPEStringSection* parse() $ROSE_OVERRIDE;
+        virtual bool reallocate() $ROSE_OVERRIDE;
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
+        virtual void set_size(rose_addr_t newsize) $ROSE_OVERRIDE;
+        virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
+
+    private:
+        void ctor();
+#endif // SgAsmPEStringSection_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /*************************************************************************************************************************
      *                                         PE Section Tables
      *************************************************************************************************************************/
 
-    NEW_TERMINAL_MACRO(AsmPESectionTable, "AsmPESectionTable", "AsmPESectionTableTag");
-    AsmPESectionTable.setFunctionPrototype("HEADER_PE_SECTION_TABLE", "../Grammar/BinaryInstruction.code");
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmPESectionTable);
+    IS_SERIALIZABLE(AsmPESectionTable);
+
+#ifdef DOCUMENTATION
+    /** Section table. */
+    class SgAsmPESectionTable: public SgAsmGenericSection {
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmPESectionTable);
+#if defined(SgAsmPESectionTable_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
+        }
+#endif
+
+    public:
+        explicit SgAsmPESectionTable(SgAsmPEFileHeader *fhdr)
+            : SgAsmGenericSection(fhdr->get_file(), fhdr) {
+            ctor();
+        }
+        virtual SgAsmPESectionTable* parse() $ROSE_OVERRIDE;
+        void add_section(SgAsmPESection *section);
+        virtual bool reallocate() $ROSE_OVERRIDE;
+        virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
+
+    private:
+        void ctor();
+#endif // SgAsmPESectionTable_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmPESectionTableEntry);
+    IS_SERIALIZABLE(AsmPESectionTableEntry);
+
+#ifdef DOCUMENTATION
+    /** Section table entry. */
+    class SgAsmPESectionTableEntry: public SgAsmExecutableFileFormat {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Name.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        const std::string& get_name() const;
+        void set_name(const std::string&);
+        /** @} */
+#else
+        AsmPESectionTableEntry.setDataPrototype("std::string", "name", "= \"\"",
+                                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Virtual size.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        rose_addr_t get_virtual_size() const;
+        void set_virtual_size(rose_addr_t);
+        /** @} */
+#else
+        AsmPESectionTableEntry.setDataPrototype("rose_addr_t", "virtual_size", "= 0",
+                                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: RVA.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        rose_addr_t get_rva() const;
+        void set_rva(rose_addr_t);
+        /** @} */
+#else
+        AsmPESectionTableEntry.setDataPrototype("rose_addr_t", "rva", "= 0",
+                                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Physical size.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        rose_addr_t get_physical_size() const;
+        void set_physical_size(rose_addr_t);
+        /** @} */
+#else
+        AsmPESectionTableEntry.setDataPrototype("rose_addr_t", "physical_size", "= 0",
+                                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Physical offset.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        rose_addr_t get_physical_offset() const;
+        void set_physical_offset(rose_addr_t);
+        /** @} */
+#else
+        AsmPESectionTableEntry.setDataPrototype("rose_addr_t", "physical_offset", "= 0",
+                                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: COFF line numbers.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        unsigned get_coff_line_nums() const;
+        void set_coff_line_nums(unsigned);
+        /** @} */
+#else
+        AsmPESectionTableEntry.setDataPrototype("unsigned", "coff_line_nums", "= 0",
+                                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Number of relocations.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        unsigned get_n_relocs() const;
+        void set_n_relocs(unsigned);
+        /** @} */
+#else
+        AsmPESectionTableEntry.setDataPrototype("unsigned", "n_relocs", "= 0",
+                                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Number of COFF line numbers.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        unsigned get_n_coff_line_nums() const;
+        void set_n_coff_line_nums(unsigned);
+        /** @} */
+#else
+        AsmPESectionTableEntry.setDataPrototype("unsigned", "n_coff_line_nums", "= 0",
+                                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Flags.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        unsigned get_flags() const;
+        void set_flags(unsigned);
+        /** @} */
+#else
+        AsmPESectionTableEntry.setDataPrototype("unsigned", "flags", "= 0",
+                                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmPESectionTableEntry);
+#if defined(SgAsmPESectionTableEntry_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
+            s & BOOST_SERIALIZATION_NVP(p_name);
+            s & BOOST_SERIALIZATION_NVP(p_virtual_size);
+            s & BOOST_SERIALIZATION_NVP(p_rva);
+            s & BOOST_SERIALIZATION_NVP(p_physical_size);
+            s & BOOST_SERIALIZATION_NVP(p_physical_offset);
+            s & BOOST_SERIALIZATION_NVP(p_coff_line_nums);
+            s & BOOST_SERIALIZATION_NVP(p_n_relocs);
+            s & BOOST_SERIALIZATION_NVP(p_coff_line_nums);
+            s & BOOST_SERIALIZATION_NVP(p_flags);
+        }
+#endif
+    public:
+#ifdef _MSC_VER
+# pragma pack (1)
+#endif
+        /* File format of a section table entry. All fields are little endian. Sections are ordered by RVA. */
+        struct PESectionTableEntry_disk {
+            char     name[8];          /* NUL-padded */
+            uint32_t virtual_size;     /* virtual memory size, >= physical_size and difference is zero filled */
+            uint32_t rva;              /* relative virt addr wrt Image Base; multiple of section_align; dense space */
+            uint32_t physical_size;    /* bytes of initialized data on disk; multiple of file_align & <= virtual_size*/
+            uint32_t physical_offset;  /* location of initialized data on disk; multiple of file_align */
+            uint32_t coff_line_nums;   /* file offset of COFF line number info or zero */
+            uint32_t n_relocs;         /* number of relocation entries; should be zero for executables */
+            uint32_t n_coff_line_nums; /* number of COFF line number entries */
+            uint32_t flags;            /* PESectionFlags bits: code, data, caching, paging, shared, permissions, etc.*/
+        }
+#if !defined(SWIG) && !defined(_MSC_VER)
+        __attribute__((packed))
+#endif
+        ;
+#ifdef _MSC_VER
+# pragma pack ()
+#endif
+
+        /* These come from the windows PE documentation and
+         * http://en.wikibooks.org/wiki/X86_Disassembly/Windows_Executable_Files */
+        enum PESectionFlags {
+            OF_CODE             = 0x00000020,   /* section contains code */
+            OF_IDATA            = 0x00000040,   /* initialized data */
+            OF_UDATA            = 0x00000080,   /* uninitialized data */
+            OF_INFO             = 0x00000200,   /* comments or some other type of info */
+            OF_REMOVE           = 0x00000800,   /* section will not become part of image */
+            OF_COMDAT           = 0x00001000,   /* section contains comdat */
+            OF_NO_DEFER_SPEC_EXC= 0x00004000,   /* reset speculative exception handling bits in the TLB entires for
+                                                 * this section */
+            OF_GPREL            = 0x00008000,   /* section content can be access relative to GP */
+            OF_ALIGN_1          = 0x00100000,   /* no alignment */
+            OF_ALIGN_2          = 0x00200000,   /* 2-byte alignment */
+            OF_ALIGN_4          = 0x00300000,   /* 4-byte alignment */
+            OF_ALIGN_8          = 0x00400000,   /* 8-byte alignment */
+            OF_ALIGN_16         = 0x00500000,   /* 16-byte alignment (default if not other alignment specified) */
+            OF_ALIGN_32         = 0x00600000,   /* 32-byte alignment */
+            OF_ALIGN_64         = 0x00700000,   /* 64-byte alignment */
+            OF_ALIGN_128        = 0x00800000,   /* 128-byte alignment */
+            OF_ALIGN_256        = 0x00900000,   /* 256-byte alignment */
+            OF_ALIGN_512        = 0x00a00000,   /* 512-byte alignment */
+            OF_ALIGN_1k         = 0x00b00000,   /* 1024-byte alignment */
+            OF_ALIGN_2k         = 0x00c00000,   /* 2048-byte alignment */
+            OF_ALIGN_4k         = 0x00d00000,   /* 4096-byte alignment */
+            OF_ALIGN_8k         = 0x00e00000,   /* 8192-byte alignment */
+            OF_ALIGN_MASK       = 0x00f00000,   /* mask for alignment value */
+            OF_NRELOC_OVFL      = 0x01000000,   /* section contains extended relocations */
+            OF_DISCARDABLE      = 0x02000000,   /* can be discarded */
+            OF_NO_CACHE         = 0x04000000,   /* section must not be cached */
+            OF_NO_PAGING        = 0x08000000,   /* section is not pageable */
+            OF_SHARED           = 0x10000000,   /* section is shared */
+            OF_EXECUTABLE       = 0x20000000,   /* execute permission */
+            OF_READABLE         = 0x40000000,   /* read permission */
+            OF_WRITABLE         = 0x80000000    /* write permission */
+        };
+
+        explicit SgAsmPESectionTableEntry(const SgAsmPESectionTableEntry::PESectionTableEntry_disk *disk);
+        void update_from_section(SgAsmPESection *section);
+        void *encode(SgAsmPESectionTableEntry::PESectionTableEntry_disk*) const;
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+
+    private:
+        void ctor(const SgAsmPESectionTableEntry::PESectionTableEntry_disk*);
+#endif // SgAsmPESectionTableEntry_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
 
 
 
-    NEW_TERMINAL_MACRO(AsmPESectionTableEntry, "AsmPESectionTableEntry", "AsmPESectionTableEntryTag");
-    AsmPESectionTableEntry.setFunctionPrototype("HEADER_PE_SECTION_TABLE_ENTRY", "../Grammar/BinaryInstruction.code");
-    AsmPESectionTableEntry.setFunctionSource("SOURCE_PE_SECTION_TABLE_ENTRY", "../Grammar/BinaryInstruction.code");
-    AsmPESectionTableEntry.setDataPrototype("std::string", "name", "= \"\"",
-                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPESectionTableEntry.setDataPrototype("rose_addr_t", "virtual_size", "= 0",
-                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPESectionTableEntry.setDataPrototype("rose_addr_t", "rva", "= 0",
-                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPESectionTableEntry.setDataPrototype("rose_addr_t", "physical_size", "= 0",
-                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPESectionTableEntry.setDataPrototype("rose_addr_t", "physical_offset", "= 0",
-                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPESectionTableEntry.setDataPrototype("unsigned", "coff_line_nums", "= 0",
-                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPESectionTableEntry.setDataPrototype("unsigned", "n_relocs", "= 0",
-                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPESectionTableEntry.setDataPrototype("unsigned", "n_coff_line_nums", "= 0",
-                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    AsmPESectionTableEntry.setDataPrototype("unsigned", "flags", "= 0",
-                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /*************************************************************************************************************************
      *                                         PE Sections
      *************************************************************************************************************************/
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     NEW_NONTERMINAL_MACRO(AsmPESection,
                           AsmPEImportSection | AsmPEExportSection | AsmPEStringSection,
                           "AsmPESection", "AsmPESectionTag", true);
-    AsmPESection.setFunctionPrototype("HEADER_PE_SECTION", "../Grammar/BinaryInstruction.code");
-    AsmPESection.setDataPrototype("SgAsmPESectionTableEntry*", "section_entry", "= NULL",
-                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+    AsmPESection.setCppCondition("!defined(DOCUMENTATION)");
+    IS_SERIALIZABLE(AsmPESection);
+
+#ifdef DOCUMENTATION
+    /** Base class for PE sections. */
+    class SgAsmPESection: public SgAsmGenericSection {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Section table entry.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        SgAsmPESectionTableEntry* get_section_entry() const;
+        void set_section_entry(SgAsmPESectionTableEntry*);
+        /** @} */
+#else
+        AsmPESection.setDataPrototype("SgAsmPESectionTableEntry*", "section_entry", "= NULL",
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmPESection);
+#if defined(SgAsmPESection_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned version) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
+            s & BOOST_SERIALIZATION_NVP(p_section_entry);
+        }
+#endif
+
+    public:
+        explicit SgAsmPESection(SgAsmPEFileHeader *fhdr)
+            : SgAsmGenericSection(fhdr->get_file(), fhdr), p_section_entry(NULL) {}
+        SgAsmPESection *init_from_section_table(SgAsmPESectionTableEntry *entry, int id);
+        virtual bool reallocate() $ROSE_OVERRIDE;
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
+#endif // SgAsmPESection_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
 
 
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /*************************************************************************************************************************
      *                                         COFF Symbol Tables
@@ -10204,10 +12758,10 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 
         // Overrides documented in base class
-        virtual void dump(FILE*, const char *prefix, ssize_t idx) const ROSE_OVERRIDE;
-        virtual std::string get_string(bool escape=false) const ROSE_OVERRIDE;
-        virtual void set_string(const std::string&) ROSE_OVERRIDE;
-        virtual void set_string(rose_addr_t) ROSE_OVERRIDE;
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
+        virtual std::string get_string(bool escape=false) const $ROSE_OVERRIDE;
+        virtual void set_string(const std::string&) $ROSE_OVERRIDE;
+        virtual void set_string(rose_addr_t) $ROSE_OVERRIDE;
 
     private:
         void ctor();
