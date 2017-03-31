@@ -810,15 +810,13 @@ FeasiblePath::shouldInline(const P2::CfgPath &path, const P2::ControlFlowGraph::
         return true;
 
     // Don't let the call depth get too deep
-    if (settings_.maxCallDepth > 0) {
-        ssize_t callDepth = path.callDepth();
-        ASSERT_require(callDepth >= 0);
-        if ((size_t)callDepth >= settings_.maxCallDepth)
-            return false;
-    }
+    ssize_t callDepth = path.callDepth();
+    ASSERT_require(callDepth >= 0);
+    if ((size_t)callDepth >= settings_.maxCallDepth)
+        return false;
 
     // Don't let recursion get too deep
-    if (settings_.maxRecursionDepth > 0) {
+    if (settings_.maxRecursionDepth < (size_t)(-1)) {
         if (cfgCallTarget->value().type() != P2::V_BASIC_BLOCK)
             return false;
         P2::Function::Ptr callee = cfgCallTarget->value().isEntryBlock();
@@ -931,9 +929,6 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
                 postConditions = settings_.postConditions;
             BaseSemantics::DispatcherPtr cpu;
             YicesSolver solver;
-#if 1 // DEBUGGING [Robb P Matzke 2017-03-28]
-            solver.set_debug(atEndOfPath ? stderr : NULL);
-#endif
             boost::logic::tribool isFeasible = isPathFeasible(path, solver, postConditions,
                                                               pathConditions /*in,out*/, cpu /*out*/);
             if (debug) {
@@ -958,20 +953,20 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
                     }
                 }
                 doBacktrack = true;
-#if 1 // DEBUGGING [Robb P Matzke 2017-03-28]
+#if 1 // Adding this because I think it should be here. [Robb P Matzke 2017-03-28]
             } else if (!isFeasible) {
                 doBacktrack = true;
 #endif
             }
 
             // If we've visited a vertex too many times (e.g., because of a loop or recursion), then don't go any further.
-            if (settings_.vertexVisitLimit > 0 && path.nVisits(backVertex) > settings_.vertexVisitLimit) {
+            if (path.nVisits(backVertex) > settings_.vertexVisitLimit) {
                 mlog[WARN] <<indent <<"max visits (" <<settings_.vertexVisitLimit <<") reached for vertex " <<backVertex->id() <<"\n";
                 doBacktrack = true;
             }
 
             // Limit path length (in terms of number of instructions)
-            if (settings_.maxPathLength > 0 && !doBacktrack) {
+            if (settings_.maxPathLength < (size_t)(-1) && !doBacktrack) {
                 size_t pathNInsns = 0;
                 BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &vertex, path.vertices()) {
                     switch (vertex->value().type()) {
@@ -1000,12 +995,14 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
                 ASSERT_require(partitioner().cfg().isValidVertex(cfgBackVertex));
                 BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &cfgCallEdge, P2::findCallEdges(cfgBackVertex)) {
                     if (shouldSummarizeCall(path.backVertex(), partitioner().cfg(), cfgCallEdge->target())) {
+                        info <<indent <<"summarizing function for edge " <<partitioner().edgeName(cfgCallEdge) <<"\n";
                         insertCallSummary(backVertex, partitioner().cfg(), cfgCallEdge);
                     } else if (shouldInline(path, cfgCallEdge->target())) {
                         info <<indent <<"inlining function call paths at vertex " <<partitioner().vertexName(backVertex) <<"\n";
                         P2::insertCalleePaths(paths_, backVertex, partitioner().cfg(),
                                               cfgBackVertex, cfgEndAvoidVertices_, cfgAvoidEdges_);
                     } else {
+                        info <<indent <<"summarizing function for edge " <<partitioner().edgeName(cfgCallEdge) <<"\n";
                         insertCallSummary(backVertex, partitioner().cfg(), cfgCallEdge);
                     }
                 }

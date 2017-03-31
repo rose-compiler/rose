@@ -34,7 +34,8 @@ public:
 
         /** Default settings. */
         Settings()
-            : searchMode(SEARCH_SINGLE_DFS), vertexVisitLimit(0), maxPathLength(0), maxCallDepth(0), nonAddressIsFeasible(true) {}
+            : searchMode(SEARCH_SINGLE_DFS), vertexVisitLimit((size_t)-1), maxPathLength((size_t)-1), maxCallDepth((size_t)-1),
+              maxRecursionDepth((size_t)-1), nonAddressIsFeasible(true) {}
     };
 
     /** Diagnostic output. */
