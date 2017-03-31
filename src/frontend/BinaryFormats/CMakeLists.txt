@@ -61,5 +61,5 @@ add_dependencies(roseBinaryFormats rosetta_generated)
 
 install(
   FILES  DataConversion.h IntelPinSupport.h MemoryMap.h ByteOrder.h
-         SRecord.h WorkLists.h
+         SRecord.h WorkLists.h SgSharedVector.h StatSerializer.h
   DESTINATION include)
