@@ -18176,7 +18176,7 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
                       // The func declaration should be moved along with the call site.
                       // The scope should be set to the new block also
                       // Liao 1/14/2011
-                      if (func->get_firstNondefiningDeclaration() == func);
+                      if (func->get_firstNondefiningDeclaration() == func)
                         func->set_scope(targetBlock);
                     }
                     else
