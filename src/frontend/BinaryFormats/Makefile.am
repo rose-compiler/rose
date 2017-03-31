@@ -34,7 +34,10 @@ else
    libroseBinaryFormats_la_DEPENDENCIES += dummyFunctions.C
 endif
 
-pkginclude_HEADERS = ByteOrder.h DataConversion.h IntelPinSupport.h MemoryMap.h SRecord.h WorkLists.h
+pkginclude_HEADERS =												\
+	ByteOrder.h DataConversion.h IntelPinSupport.h MemoryMap.h SRecord.h WorkLists.h SgSharedVector.h	\
+	StatSerializer.h
+
 
 # Make sure that this is distributed even if ROSE was not configured using: -with-IntelPin=<path>
 EXTRA_DIST = CMakeLists.txt IntelPinSupport.C
