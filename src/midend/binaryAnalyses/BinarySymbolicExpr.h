@@ -170,7 +170,11 @@ public:
 
 /** Base class for symbolic expression nodes.
  *
- *  Every node has a specified number of significant bits that is constant over the life of the node.
+ *  Every node has a specified width measured in bits that is constant over the life of the node. The width is always a
+ *  concrete, positive value stored in a 64-bit field.  The corollary of this invariant is that if an expression's result
+ *  width depends on the @em values of some of its arguments, those arguments must be concrete and not wider than 64 bits. Only
+ *  a few operators fall into this category since most expressions depend on the @em widths of their arguments rather than the
+ *  @em values of their arguments.
  *
  *  In order that subtrees can be freely assigned as children of other nodes (provided the structure as a whole remains a
  *  lattice and not a graph with cycles), two things are required: First, tree nodes are always referenced through
