@@ -143,7 +143,7 @@ public:
         ASSERT_not_reachable("no implementation necessary");
     }
     
-    virtual void set_width(size_t nbits) {
+    virtual void set_width(size_t nbits) ROSE_OVERRIDE {
         ASSERT_not_reachable("no implementation necessary");
     }
 
@@ -374,7 +374,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Override all operator methods from base class.  These are the RISC operators that are invoked by a Dispatcher.
 public:
-    virtual BaseSemantics::SValuePtr unspecified_(size_t nbits);
+    virtual BaseSemantics::SValuePtr unspecified_(size_t nbits) ROSE_OVERRIDE;
     virtual void hlt() ROSE_OVERRIDE;
     virtual void cpuid() ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr rdtsc() ROSE_OVERRIDE;
@@ -412,7 +412,7 @@ public:
     virtual BaseSemantics::SValuePtr addWithCarries(const BaseSemantics::SValuePtr &a_,
                                                     const BaseSemantics::SValuePtr &b_,
                                                     const BaseSemantics::SValuePtr &c_,
-                                                    BaseSemantics::SValuePtr &carry_out/*out*/);
+                                                    BaseSemantics::SValuePtr &carry_out/*out*/) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr negate(const BaseSemantics::SValuePtr &a_) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr signedDivide(const BaseSemantics::SValuePtr &a_,
                                                   const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;

@@ -18,6 +18,9 @@ bool RoseBin_FlowAnalysis::initialized = false;
 
 // DQ (10/20/2010): Moved to source file to support compilation of language only mode which excludes binary analysis support.
 RoseBin_FlowAnalysis::RoseBin_FlowAnalysis(SgAsmNode* global, GraphAlgorithms* algo) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
     g_algo=algo;
     nrNodes=0;
     nrEdges=0;
@@ -50,12 +53,15 @@ RoseBin_FlowAnalysis::RoseBin_FlowAnalysis(SgAsmNode* global, GraphAlgorithms* a
       process_jumps();
       initialized = true;
     }
-
+#endif
   }
 
 
 void
 RoseBin_FlowAnalysis::clearMaps() {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   vizzGraph->get_node_index_to_node_map().clear();
   vizzGraph->get_string_to_node_index_multimap().clear();
   vizzGraph->get_node_index_to_edge_multimap_edgesOut().clear();
@@ -64,10 +70,14 @@ RoseBin_FlowAnalysis::clearMaps() {
   vizzGraph->get_node_index_pair_to_edge_multimap().clear();
   vizzGraph->get_edge_index_to_edge_map().clear();
   vizzGraph->get_string_to_edge_index_multimap().clear();
+#endif
 }
 
 SgGraphNode*
 RoseBin_FlowAnalysis::addCFNode(string& name, string& type, int address, bool isFunction, SgNode* int_node) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   ROSE_ASSERT(int_node);
   ostringstream addrhex;
   addrhex << hex << setw(8) << address ;
@@ -106,10 +116,14 @@ RoseBin_FlowAnalysis::addCFNode(string& name, string& type, int address, bool is
 
   ROSE_ASSERT(n_source->get_SgNode());
   return n_source;
+#endif
 }
 
 void
 RoseBin_FlowAnalysis::getRootNodes(vector <SgGraphNode*>& rootNodes) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   nrOfFunctions=0;
   ROSE_ASSERT(vizzGraph);
   //cerr << " get Root nodes " << endl;
@@ -128,11 +142,15 @@ RoseBin_FlowAnalysis::getRootNodes(vector <SgGraphNode*>& rootNodes) {
       nrOfFunctions++;
     }
   }
+#endif
 }
 
 
 bool
 RoseBin_FlowAnalysis::sameParents(SgGraphNode* node, SgGraphNode* next) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   bool same=false;
   if (isSgAsmFunction(node->get_SgNode())) {
     return true;
@@ -154,6 +172,7 @@ RoseBin_FlowAnalysis::sameParents(SgGraphNode* node, SgGraphNode* next) {
     }
   }
   return same;
+#endif
 }
 
 /*
@@ -162,6 +181,9 @@ RoseBin_FlowAnalysis::sameParents(SgGraphNode* node, SgGraphNode* next) {
  */
 void
 RoseBin_FlowAnalysis::flattenBlocks(SgAsmNode* globalNode) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   vector<SgNode*> tree =NodeQuery::querySubTree(globalNode, V_SgAsmBlock);
   vector<SgNode*>::iterator itV = tree.begin();
   //cerr << " ObjDump-BinRose:: Removing Blocks " << endl;
@@ -183,8 +205,7 @@ RoseBin_FlowAnalysis::flattenBlocks(SgAsmNode* globalNode) {
 
     }
   }
-
-
+#endif
 }
 
 /*
@@ -193,6 +214,9 @@ RoseBin_FlowAnalysis::flattenBlocks(SgAsmNode* globalNode) {
  */
 void
 RoseBin_FlowAnalysis::convertBlocksToFunctions(SgAsmNode* globalNode) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   vector<SgNode*> tree =NodeQuery::querySubTree(globalNode, V_SgAsmBlock);
   vector<SgNode*>::iterator itV = tree.begin();
   //cerr << " ObjDump-BinRose:: Converting Blocks To Functions" << endl;
@@ -220,7 +244,7 @@ RoseBin_FlowAnalysis::convertBlocksToFunctions(SgAsmNode* globalNode) {
   //  string filename="_binary_tree_func.dot";
   //AST_BIN_Traversal* trav = new AST_BIN_Traversal();
   //trav->run(globalNode, filename);
-
+#endif
 }
 
 /*
@@ -228,6 +252,9 @@ RoseBin_FlowAnalysis::convertBlocksToFunctions(SgAsmNode* globalNode) {
  */
 void
 RoseBin_FlowAnalysis::resolveFunctions(SgAsmNode* globalNode) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   //cerr << " ObjDump-BinRose:: Detecting and merging Functions" << endl;
   vector<SgAsmFunction*> visitedFunctions;
   vector<SgNode*> tree =NodeQuery::querySubTree(globalNode, V_SgAsmFunction);
@@ -290,12 +317,15 @@ RoseBin_FlowAnalysis::resolveFunctions(SgAsmNode* globalNode) {
       }
     }
   } // for
-
+#endif
 }
 
 
 SgAsmInstruction*
 RoseBin_FlowAnalysis::resolveFunction(SgAsmInstruction* instx, bool hasStopCondition) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   SgAsmX86Instruction* inst = isSgAsmX86Instruction(instx);
   if (inst==NULL) return NULL;
   ROSE_ASSERT(g_algo->info);
@@ -335,10 +365,14 @@ RoseBin_FlowAnalysis::resolveFunction(SgAsmInstruction* instx, bool hasStopCondi
   }
 
   return nextFlow;
+#endif
 }
 
 SgAsmInstruction*
 RoseBin_FlowAnalysis::process_jumps_get_target(SgAsmX86Instruction* inst) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   if (inst && x86InstructionIsControlTransfer(inst)) {
     //cerr << " ..................... processing jmp " << endl;
     ostringstream addrhex3;
@@ -441,10 +475,14 @@ RoseBin_FlowAnalysis::process_jumps_get_target(SgAsmX86Instruction* inst) {
 
   }
   return NULL;
+#endif
 }
 
 void
 RoseBin_FlowAnalysis::initFunctionList(SgAsmNode* globalNode) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   vector<SgNode*> tree =NodeQuery::querySubTree(globalNode, V_SgAsmInstruction);
   vector<SgNode*>::iterator itV = tree.begin();
   for (;itV!=tree.end();itV++) {
@@ -454,18 +492,26 @@ RoseBin_FlowAnalysis::initFunctionList(SgAsmNode* globalNode) {
       rememberInstructions[addr] = inst;
     }
   }
+#endif
 }
 
 void printAST(SgAsmNode* globalNode) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
     if (RoseBin_support::DEBUG_MODE())
   std::cerr << " ++++++++++++++++++++++++++++++= printing AST +++++++++++++++++++++++\n\n " << endl;
   std::string filename="_binary_tree_func.dot";
   AST_BIN_Traversal* trav = new AST_BIN_Traversal();
   trav->run(globalNode, filename);
+#endif
 }
 
 void
 RoseBin_FlowAnalysis::process_jumps() {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
     if (RoseBin_support::DEBUG_MODE())
       cerr << "\n >>>>>>>>> processing jumps ... " << endl;
   rose_hash::unordered_map <uint64_t, SgAsmInstruction* >::iterator it;
@@ -593,11 +639,15 @@ RoseBin_FlowAnalysis::process_jumps() {
   }
   if (RoseBin_support::DEBUG_MODE())
     cerr << " >>>>>>>>> resolving RET jumps ... done." << endl;
+#endif
 }
 
 
 uint64_t
 RoseBin_FlowAnalysis::getAddressForNode(SgGraphNode* node) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   ROSE_ASSERT(node);
   SgAsmInstruction* inst = isSgAsmInstruction(node->get_SgNode());
   uint64_t addr = 0;
@@ -607,10 +657,14 @@ RoseBin_FlowAnalysis::getAddressForNode(SgGraphNode* node) {
     // this is probably not an instruction
   }
   return addr;
+#endif
 }
 
 void
 RoseBin_FlowAnalysis::createInstToNodeTable() {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   //  tabletype::const_iterator it = deftable.begin();
 
   // DQ (4/23/2009): We want the type defined in the base class.
@@ -645,6 +699,7 @@ RoseBin_FlowAnalysis::createInstToNodeTable() {
   // ida to python scripts
   //ROSE_ASSERT(deftable.size()==deftable_instr.size());
   //ROSE_ASSERT(usetable.size()==usetable_instr.size());
+#endif
 }
 
 
@@ -653,6 +708,9 @@ RoseBin_FlowAnalysis::createInstToNodeTable() {
  ****************************************************/
 void
 RoseBin_FlowAnalysis::visit(SgNode* node) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
 
   //  cerr << " traversing node " << node->class_name() << endl;
 
@@ -731,6 +789,7 @@ RoseBin_FlowAnalysis::visit(SgNode* node) {
       cerr << "This is not an Instruction " << endl;
     }
   }
+#endif
 }
 
 
@@ -738,6 +797,9 @@ void
 RoseBin_FlowAnalysis::checkControlFlow( SgAsmInstruction* binInst,
                                         int functionSize, int countDown,
                                         string& currentFunctionName, int func_nr) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   //cerr << "check control flow" << endl;
   while (!worklist_forthisfunction.empty()) {
     SgAsmInstruction* binInst = worklist_forthisfunction.top();
@@ -1060,5 +1122,6 @@ RoseBin_FlowAnalysis::checkControlFlow( SgAsmInstruction* binInst,
 
   //  if (RoseBin_support::DEBUG_MODE())
   //  cout << " ------------------------ done with instr: " << name << " " << addrhex.str() << endl;
+#endif
 }
 

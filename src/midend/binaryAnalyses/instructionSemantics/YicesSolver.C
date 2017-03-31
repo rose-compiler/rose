@@ -140,8 +140,11 @@ YicesSolver::generate_file(std::ostream &o, const std::vector<SymbolicExpr::Ptr>
       <<"; Assertions\n"
       <<";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n";
     for (std::vector<SymbolicExpr::Ptr>::const_iterator ei=exprs.begin(); ei!=exprs.end(); ++ei) {
-        o <<"\n"
-          <<"; effective size = " <<StringUtility::plural((*ei)->nNodes(), "nodes")
+        o <<"\n";
+        const std::string &comment = (*ei)->comment();
+        if (!comment.empty())
+            o <<StringUtility::prefixLines(comment, "; ") <<"\n";
+        o <<"; effective size = " <<StringUtility::plural((*ei)->nNodes(), "nodes")
           <<", actual size = " <<StringUtility::plural((*ei)->nNodesUnique(), "nodes") <<"\n";
         out_assert(o, *ei);
     }

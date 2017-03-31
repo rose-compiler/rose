@@ -42,8 +42,8 @@ class ROSE_DLL_API RoseBin_CallGraphAnalysis : public RoseBin_FlowAnalysis {
 
 
   // run this analysis
-  void run(RoseBin_Graph* vg, std::string fileN, bool multiedge) ;
-  void getConnectedComponents(std::map<int,std::set<SgAsmFunction*> >& ret);
+  void run(RoseBin_Graph* vg, std::string fileN, bool multiedge) ROSE_DEPRECATED("no longer supported");
+  void getConnectedComponents(std::map<int,std::set<SgAsmFunction*> >& ret) ROSE_DEPRECATED("no longer supported");
 
 };
 

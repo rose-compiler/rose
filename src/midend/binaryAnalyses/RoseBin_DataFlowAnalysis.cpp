@@ -15,18 +15,29 @@ using namespace std;
 
 std::set < SgGraphNode* >
 RoseBin_DataFlowAnalysis::getDefFor(SgGraphNode* node, std::pair<X86RegisterClass, int> initName) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   return defuse->getDefFor(node, initName);
+#endif
 }
 
 std::set < SgGraphNode* >
 RoseBin_DataFlowAnalysis::getDefFor( uint64_t inst, std::pair<X86RegisterClass, int> initName) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   SgGraphNode* node = getNodeFor(inst);
   return defuse->getDefFor(node, initName);
+#endif
 }
 
 
 std::set < uint64_t >
 RoseBin_DataFlowAnalysis::getDefForInst( uint64_t inst, std::pair<X86RegisterClass, int> initName) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   std::set <uint64_t> hexSet;
   SgGraphNode* node = getNodeFor(inst);
   if (node==NULL)
@@ -46,6 +57,7 @@ RoseBin_DataFlowAnalysis::getDefForInst( uint64_t inst, std::pair<X86RegisterCla
     }
   }
   return hexSet;
+#endif
 }
 
 
@@ -54,23 +66,34 @@ RoseBin_DataFlowAnalysis::getDefForInst( uint64_t inst, std::pair<X86RegisterCla
 bool
 RoseBin_DataFlowAnalysis::containsHash( nodeHashSetType& vec,
                                         SgGraphNode* node) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
    nodeHashSetType:: const_iterator it = vec.find(node);
   if (it!=vec.end())
     return true;
   return false;
+#endif
 }
 
 
 void RoseBin_DataFlowAnalysis::init() {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   // stores the visited nodes
   visited.clear();
   visitedCounter.clear();
   nodeBeforeMap.clear();
   nrOfNodesVisited=0;
+#endif
 }
 
 void
 RoseBin_DataFlowAnalysis::traverseEdges(RoseBin_DataFlowAbstract* analysis) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   if (RoseBin_support::DEBUG_MODE_MIN())
     cerr << " >> Traversing over all edges and adding label ... " << endl;
   //typedef rose_graph_integer_edge_hash_multimap edgesM;
@@ -91,10 +114,14 @@ RoseBin_DataFlowAnalysis::traverseEdges(RoseBin_DataFlowAbstract* analysis) {
     if (g_algo->isValidCFGEdge(trg, src))
       analysis->runEdge(src,trg);
   }
+#endif
 }
 
 void
 RoseBin_DataFlowAnalysis::traverseNodes(RoseBin_DataFlowAbstract* analysis) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   if (RoseBin_support::DEBUG_MODE_MIN())
     cerr << " >> Traversing over all nodes and adding label ... " << endl;
   rose_graph_integer_node_hash_map::iterator itn = vizzGraph->get_node_index_to_node_map().begin();
@@ -113,10 +140,14 @@ RoseBin_DataFlowAnalysis::traverseNodes(RoseBin_DataFlowAbstract* analysis) {
       }
     }
   }
+#endif
 }
 
 bool
 RoseBin_DataFlowAnalysis::existsPath(SgGraphNode* start, SgGraphNode* end) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   // make sure its not a SgAsmCall and the next node is a DirectedControlFlowEdge
   ROSE_ASSERT(g_algo->info);
   bool exists = false;
@@ -135,10 +166,14 @@ RoseBin_DataFlowAnalysis::existsPath(SgGraphNode* start, SgGraphNode* end) {
     exists = true;
   }
   return exists;
+#endif
 }
 
 bool
 RoseBin_DataFlowAnalysis::exceptionCall(SgAsmX86Instruction* call) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   // this function returns true, if the function that is being called is the _malloc function
   // this is good to know, so that the malloc analysis can be performed even if there is no ret
 
@@ -164,6 +199,7 @@ RoseBin_DataFlowAnalysis::exceptionCall(SgAsmX86Instruction* call) {
   }
   //  cerr << "Found call --- comment = " << comment << "  exception = " << exception << endl;
   return exception;
+#endif
 }
 
 /***********************************************************************
@@ -178,6 +214,9 @@ void
 RoseBin_DataFlowAnalysis::traverseGraph(vector <SgGraphNode*>& rootNodes,
                                         RoseBin_DataFlowAbstract* analysis,
                                         bool interprocedural){
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   if (RoseBin_support::DEBUG_MODE_MIN())
     cerr << " traverseGraph : debug: " << RoseBin_support::resBool(RoseBin_support::DEBUG_MODE()) <<
       "  debug_min : " <<  RoseBin_support::resBool(RoseBin_support::DEBUG_MODE_MIN()) << endl;
@@ -385,17 +424,24 @@ RoseBin_DataFlowAnalysis::traverseGraph(vector <SgGraphNode*>& rootNodes,
     } // while worklist.size()>0
 
   } // for rootNodes
+#endif
 }
 
 void RoseBin_DataFlowAnalysis::writeToFile(bool w) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   writeFile=w;
+#endif
 }
 
 /****************************************************
  * run the compare analysis
  ****************************************************/
 void RoseBin_DataFlowAnalysis::run(RoseBin_Graph* vg, string fileN, bool multiedge) {
-
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   vizzGraph=vg;
   fileName=fileN;
   double start=0;
@@ -554,7 +600,7 @@ void RoseBin_DataFlowAnalysis::run(RoseBin_Graph* vg, string fileN, bool multied
     vizzGraph->printEpilog(myfile);
     myfile.close();
   }
-
+#endif
 }
 
 

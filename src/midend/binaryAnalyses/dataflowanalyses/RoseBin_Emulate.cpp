@@ -18,6 +18,9 @@ void
 RoseBin_Emulate::getRegister_val(std::pair<X86RegisterClass, int>  code,
                                  RoseBin_support::X86PositionInRegister pos,
                                  uint64_t &val) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   uint8_t b_val=0xF;
   uint16_t w_val=0xFF;
   uint32_t dw_val=0xFFFF;
@@ -34,7 +37,7 @@ RoseBin_Emulate::getRegister_val(std::pair<X86RegisterClass, int>  code,
     val = uint64_t(dw_val);
   else if (qw_val!=0xFFFFFFFF)
     val = uint64_t(qw_val);
-
+#endif
 }
 
 void
@@ -44,8 +47,9 @@ RoseBin_Emulate::getRegister_val(std::pair<X86RegisterClass, int>  code,
                                  uint16_t &w_val,
                                  uint32_t &dw_val,
                                  uint64_t &qw_val) {
-
-
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   uint8_t b8,b7=0xF;
   uint16_t b78=0xFF;
   uint32_t b5678=0xFFFF;
@@ -163,17 +167,25 @@ RoseBin_Emulate::getRegister_val(std::pair<X86RegisterClass, int>  code,
     default: break;
   }
   //return res;
+#endif
 }
 
 
 uint64_t RoseBin_Emulate::getRandomValue(int val) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   int random_integer = rand()%val;
   return random_integer;//0x10ULL;
+#endif
 }
 
 
 RoseBin_support::X86PositionInRegister
 get_position_in_register(const RegisterDescriptor &rdesc) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
     if (0==rdesc.get_offset()) {
         switch (rdesc.get_nbits()) {
             case 8: return RoseBin_support::x86_regpos_low_byte;
@@ -187,10 +199,14 @@ get_position_in_register(const RegisterDescriptor &rdesc) {
     } else {
         return RoseBin_support::x86_regpos_unknown;
     }
+#endif
 }
 
 bool
 RoseBin_Emulate::evaluateInstruction( SgAsmX86Instruction* binInst, string& operands) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   SgAsmOperandList* opList = binInst->get_operandList();
   ROSE_ASSERT(opList);
   //string operands = "";
@@ -431,18 +447,26 @@ RoseBin_Emulate::evaluateInstruction( SgAsmX86Instruction* binInst, string& oper
   }
   operands += "\\n";
   return success;
+#endif
 }
 
 
 std::string
 RoseBin_Emulate::printRegister(std::string text, uint64_t reg) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   string ret = "\\n"+text + " : " +   RoseBin_support::HexToString(reg) ;
   return ret;
+#endif
 }
 
 
 uint64_t
 RoseBin_Emulate::getRegister(std::pair<X86RegisterClass, int>  code) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   uint64_t reg=0;
   ROSE_ASSERT (code.first == x86_regclass_gpr);
  switch (code.second) {
@@ -482,20 +506,29 @@ RoseBin_Emulate::getRegister(std::pair<X86RegisterClass, int>  code) {
     break;
   }
  return reg;
+#endif
 }
 
 void
 RoseBin_Emulate::assignMemory(uint64_t position, uint64_t value) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   memory[position] = value;
+#endif
 }
 
 uint64_t
 RoseBin_Emulate::getMemory(uint64_t position) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   rose_hash::unordered_map <uint64_t, uint64_t>::iterator it = memory.find(position);
   uint64_t value = 0xFFFFFFFF;
   if (it!=memory.end())
     value = it->second;
   return value;
+#endif
 }
 
 
@@ -510,6 +543,9 @@ RoseBin_Emulate::assignRegister(std::pair<X86RegisterClass, int>  code,
                                 uint16_t &w_val,
                                 uint32_t &dw_val,
                                 uint64_t &qw_val) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   switch (code.first) {
     case x86_regclass_gpr: {
       switch (code.second) {
@@ -681,12 +717,16 @@ RoseBin_Emulate::assignRegister(std::pair<X86RegisterClass, int>  code,
     case x86_regclass_segment: break;
     default: break;
   }
+#endif
 }
 
 
 void
 RoseBin_Emulate::assignRegister(std::pair<X86RegisterClass, int>  code,
                                 uint64_t &qw_val) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   if (code.first != x86_regclass_gpr) return;
   switch (code.second) {
     case x86_gpr_ax: {
@@ -724,9 +764,13 @@ RoseBin_Emulate::assignRegister(std::pair<X86RegisterClass, int>  code,
     default:
       break;
   }
+#endif
 }
 
 void RoseBin_Emulate::clearRegisters() {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   uint8_t cv1 = 0xF;
   uint16_t cv2 = 0xFF;
   uint32_t cv3 = 0xFFFF;
@@ -739,10 +783,14 @@ void RoseBin_Emulate::clearRegisters() {
                  RoseBin_support::x86_regpos_qword, cv1, cv2, cv3, cv4);
   assignRegister(std::make_pair(x86_regclass_gpr, x86_gpr_dx) ,
                  RoseBin_support::x86_regpos_qword, cv1, cv2, cv3, cv4);
+#endif
 }
 
 
 std::string RoseBin_Emulate::evaluateRegisters() {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
     string regs = "";
     string space = "      ";
 
@@ -777,12 +825,15 @@ std::string RoseBin_Emulate::evaluateRegisters() {
       }
       //      regs += eval;
       return regs;
+#endif
 }
 
 bool
 RoseBin_Emulate::run(string& name, SgGraphNode* node,
                      SgGraphNode* pervious) {
-
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   // check known function calls and resolve variables
   ROSE_ASSERT(node);
   SgAsmInstruction* inst = isSgAsmInstruction(node->get_SgNode());
@@ -809,6 +860,7 @@ RoseBin_Emulate::run(string& name, SgGraphNode* node,
   // ----------------------------------------------------------------------------
   }
   return false;
+#endif
 }
 
 

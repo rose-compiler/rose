@@ -115,11 +115,21 @@ public:
      *  This is just a convenience wrapper around the three-argument form.
      *
      * @{ */
-    std::string operator()(const Partitioner2::Partitioner &p) const /*final*/;
-    std::string operator()(const Partitioner2::Partitioner &p, SgAsmInstruction *insn) const /*final*/;
-    std::string operator()(const Partitioner2::Partitioner &p, const Partitioner2::BasicBlockPtr &bb) const /*final*/;
-    std::string operator()(const Partitioner2::Partitioner &p, const Partitioner2::DataBlockPtr &db) const /*final*/;
-    std::string operator()(const Partitioner2::Partitioner &p, const Partitioner2::FunctionPtr &f) const /*final*/;
+    std::string operator()(const Partitioner2::Partitioner &p) const /*final*/ {
+        return unparse(p);
+    }
+    std::string operator()(const Partitioner2::Partitioner &p, SgAsmInstruction *insn) const /*final*/ {
+        return unparse(p, insn);
+    }
+    std::string operator()(const Partitioner2::Partitioner &p, const Partitioner2::BasicBlockPtr &bb) const /*final*/ {
+        return unparse(p, bb);
+    }
+    std::string operator()(const Partitioner2::Partitioner &p, const Partitioner2::DataBlockPtr &db) const /*final*/ {
+        return unparse(p, db);
+    }
+    std::string operator()(const Partitioner2::Partitioner &p, const Partitioner2::FunctionPtr &f) const /*final*/ {
+        return unparse(p, f);
+    }
     /** @} */
 
 
@@ -136,6 +146,12 @@ public:
     virtual void unparse(std::ostream&, const Partitioner2::Partitioner&, const Partitioner2::BasicBlockPtr&) const;
     virtual void unparse(std::ostream&, const Partitioner2::Partitioner&, const Partitioner2::DataBlockPtr&) const;
     virtual void unparse(std::ostream&, const Partitioner2::Partitioner&, const Partitioner2::FunctionPtr&) const;
+
+    virtual std::string unparse(const Partitioner2::Partitioner&) const;
+    virtual std::string unparse(const Partitioner2::Partitioner&, SgAsmInstruction*) const;
+    virtual std::string unparse(const Partitioner2::Partitioner&, const Partitioner2::BasicBlockPtr&) const;
+    virtual std::string unparse(const Partitioner2::Partitioner&, const Partitioner2::DataBlockPtr&) const;
+    virtual std::string unparse(const Partitioner2::Partitioner&, const Partitioner2::FunctionPtr&) const;
     /** @} */
 
 public:

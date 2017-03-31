@@ -15,6 +15,9 @@ using namespace std;
 
 void
 RoseBin_Graph::createUniqueEdges() {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   //SgGraphEdgeList* gedges = get_edges();
   rose_graph_integer_edge_hash_multimap edges =get_node_index_to_edge_multimap_edgesOut();
   if (unique_edges.size()==0) {
@@ -45,6 +48,7 @@ RoseBin_Graph::createUniqueEdges() {
       } // else
     } // for
   } // if
+#endif
 }
 
 

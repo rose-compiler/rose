@@ -897,7 +897,6 @@ generatedCodeExamples = \
    collectCommentsAcrossHeaderFiles.out \
    collectDefineDirectives.out \
    defuseAnalysis_pic1.pdf \
-   binaryAnalysis_pic1.pdf \
    binaryAnalysis_pic3.pdf \
    rose_inputCode_seedBugsExample_arrayIndexing.C \
    rose_inputCode_VolatileTypeModifier.C \
@@ -1229,24 +1228,7 @@ endif
 
 
 binaryAnalysis_pic1.pdf: binaryAnalysisExample binaryAnalysis
-	@echo "Building an example BinaryAnalysis ..."
-# This does currently not work because we don't support 64bit binaries
-#	./binaryAnalysis bin_example
-# trick is to load a 32bit binary
-	cp $(srcdir)/buffer2.bin ./bin_example
-	./binaryAnalysisExample bin_example
-	@echo "BinaryAnalysis: Building assembly listing for binary (rose_bin_example.s.a) ..."
-	split -42 rose_bin_example.s rose_bin_example.s.
-	@echo "BinaryAnalysis: Building postscript file from cfg.dot & dfg.dot ..."
-	$(top_srcdir)/scripts/dotgenLetterPDF cfg.dot binaryAnalysis_pic1.pdf
-if ROSE_USE_GRAPHVIZ_DOT
-	if ! test -e binaryAnalysis_pic1.pdf; then exit 1; fi
-endif
-	$(top_srcdir)/scripts/dotgenLetterPDF dfg.dot binaryAnalysis_pic2.pdf
-if ROSE_USE_GRAPHVIZ_DOT
-#	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
-	if ! test -e binaryAnalysis_pic2.pdf; then exit 1; fi
-endif
+	@echo "binaryAnalysisExample is no longer supported."
 
 # DQ (8/17/2008): Added example to show how to use traversal on AST for binary executable format.
 binaryAnalysis_pic3.pdf: binaryAnalysis_symbolTable

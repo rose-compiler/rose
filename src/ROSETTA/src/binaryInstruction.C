@@ -12025,6 +12025,7 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmGenericFile_HEADERS) || defined(DOCUMENTATION)
     #include "MemoryMap.h"
     #include "DataConversion.h"
+    #include "StatSerializer.h"                         // non-intrusive serialization of struct stat
 #endif // SgAsmGenericFile_HEADERS
 
 #ifdef DOCUMENTATION
@@ -12611,7 +12612,7 @@ void Grammar::setUpBinaryInstructions() {
 
         /** Information about the file in the filesystem. */
         typedef struct stat fileDetails;
-
+        
         /** Architecture family. */
         enum ExecFamily {
             FAMILY_UNSPECIFIED,                         /**< Unspecified family. */
