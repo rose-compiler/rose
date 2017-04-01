@@ -9,10 +9,10 @@ bin_SCRIPTS =
 AM_CPPFLAGS = $(ROSE_INCLUDES)
 AM_LDFLAGS = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-bin_PROGRAMS = moveDeclarationToInnermostScope 
-
+bin_PROGRAMS = moveDeclarationToInnermostScope
 moveDeclarationToInnermostScope_SOURCES = moveDeclarationToInnermostScope.C
 
-
+bin_PROGRAMS += c++-to-bash
+c___to_bash_SOURCES = c++-to-bash.C
 
 
