@@ -19,7 +19,9 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 SUBDIRS = 
 if !ROSE_USING_BOOST_VERSION_1_62
 # SUBDIRS += staticSingleAssignment
-  SUBDIRS = staticSingleAssignment ssaUnfilteredCfg
+  SUBDIRS += staticSingleAssignment ssaUnfilteredCfg
+else
+#  SUBDIRS += staticSingleAssignment ssaUnfilteredCfg
 endif
 # SUBDIRS += ssaUnfilteredCfg
 
@@ -138,6 +140,8 @@ libprogramAnalysis_la_SOURCES=\
 # libprogramAnalysis_la_LIBADD = staticSingleAssignment/libSSA.la ssaUnfilteredCfg/libSSA_UnfilteredCfg.la
 if !ROSE_USING_BOOST_VERSION_1_62
    libprogramAnalysis_la_LIBADD = staticSingleAssignment/libSSA.la ssaUnfilteredCfg/libSSA_UnfilteredCfg.la
+else
+   libprogramAnalysis_la_LIBADD = 
 endif
 
 pkginclude_HEADERS=\
