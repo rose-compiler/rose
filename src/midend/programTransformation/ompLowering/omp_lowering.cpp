@@ -2396,7 +2396,7 @@ void categorizeMapClauseVariables( const SgInitializedNamePtrList & all_vars, //
    // make sure the categorization is complete
     ROSE_ASSERT (all_vars.size() == (array_syms.size() + atom_syms.size()) );
   }
-
+#if 0
  //! Generate expression calculating the size of a linearized array
  // e.g. row_size * sizeof(double)* column_size
  static
@@ -2437,7 +2437,7 @@ void categorizeMapClauseVariables( const SgInitializedNamePtrList & all_vars, //
 
   return result; 
 }                    
-
+#endif
   // Check if a variable is in the clause's variable list
 bool isInClauseVariableList(SgOmpClause* cls, SgSymbol* var)
 {
@@ -5894,7 +5894,7 @@ void transOmpCollapse(SgOmpClauseBodyStatement * node)
   if(isSgOmpTargetStatement(target_stmt))
   {
     Rose_STL_Container<SgOmpClause*> map_clauses;
-    SgOmpMapClause * map_to;
+    SgOmpMapClause * map_to = NULL;
 
     /*get the data clause of this target statement*/
     SgOmpClauseBodyStatement * target_clause_body = isSgOmpClauseBodyStatement(target_stmt); 

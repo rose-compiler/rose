@@ -17240,7 +17240,7 @@ namespace {
     ROSE_ASSERT(res);
     return res;
   }
-
+#if 0
   SgName genTemplateName(SgName base, Rose_STL_Container<SgNode*>& targs)
   {
     Rose_STL_Container<SgNode*>::iterator aa = targs.begin();
@@ -17253,7 +17253,7 @@ namespace {
 
     return SgName(name);
   }
-
+#endif
   SgTemplateArgumentPtrList genTemplateArgumentList(Rose_STL_Container<SgNode*>& targs)
   {
     Rose_STL_Container<SgNode*>::iterator aa = targs.begin();
