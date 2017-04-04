@@ -464,8 +464,27 @@ SgAsmPEFileHeader::set_rvasize_pair(PairPurpose idx, SgAsmPESection *section)
     ROSE_ASSERT(section->get_parent()!=NULL);
     ROSE_ASSERT(isSgAsmPEFileHeader(section->get_header())!=NULL);
 
-    if (idx>=16)
-        mlog[WARN] <<"SgAsmPEFileHeader::set_rvasize_pair: index " <<idx <<" exceeds specification limit\n";
+    switch (idx) {
+        case PAIR_EXPORTS:
+        case PAIR_IMPORTS:
+        case PAIR_RESOURCES:
+        case PAIR_EXCEPTIONS:
+        case PAIR_CERTIFICATES:
+        case PAIR_BASERELOCS:
+        case PAIR_DEBUG:
+        case PAIR_ARCHITECTURE:
+        case PAIR_GLOBALPTR:
+        case PAIR_TLS:
+        case PAIR_LOADCONFIG:
+        case PAIR_BOUNDIMPORT:
+        case PAIR_IAT:
+        case PAIR_DELAYIMPORT:
+        case PAIR_CLRRUNTIME:
+        case PAIR_RESERVED15:
+            break;
+        default:
+            mlog[WARN] <<"SgAsmPEFileHeader::set_rvasize_pair: index " <<idx <<" exceeds specification limit\n";
+    }
 
     /* Extend array of rva/size pairs if necessary */
     if ((size_t)idx>=get_rvasize_pairs()->get_pairs().size()) {
