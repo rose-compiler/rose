@@ -20,16 +20,27 @@ using namespace VirtualBinCFG;
 
 void
 RoseBin_DotGraph::printProlog(  std::ofstream& myfile, string& fileType) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   myfile << "digraph \"" << fileType << "\" {\n" << endl;
+#endif
 }
 
 void
 RoseBin_DotGraph::printEpilog(  std::ofstream& myfile) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   myfile << "}\n" << endl;
+#endif
 }
 
 void
 RoseBin_DotGraph::printNodesCallGraph(std::ofstream& myfile) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   //cerr << " Preparing graph - Nr of Nodes : " << nodes.size() << endl;
 
   //  rose_graph_integer_node_hash_map node_index_to_node_map;
@@ -204,12 +215,15 @@ RoseBin_DotGraph::printNodesCallGraph(std::ofstream& myfile) {
       myfile << "} \n";
     }
   }
-
+#endif
 }
 
 void
 RoseBin_DotGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow, bool forward_analysis,
                                  std::ofstream& myfile, string& recursiveFunctionName) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   //ROSE_ASSERT(unparser);
   //bool firstFunc = true;
   //  cerr << " grouping : " << grouping << endl;
@@ -332,6 +346,7 @@ RoseBin_DotGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow, bool forw
         myfile << "} \n";
     }
   }
+#endif
 }
 
 
@@ -340,7 +355,9 @@ void
 RoseBin_DotGraph::printInternalNodes(    bool dfg, bool forward_analysis,
                                          std::ofstream& myfile, string& recursiveFunctionName,
                                          SgAsmFunction* p_binFunc) {
-
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   inverseNodeType::iterator inv = inverse_nodesMap.lower_bound(p_binFunc);
   for (;inv!=inverse_nodesMap.upper_bound(p_binFunc);++inv) {
     pair <int, SgGraphNode*>  itn = inv->second;
@@ -523,22 +540,29 @@ RoseBin_DotGraph::printInternalNodes(    bool dfg, bool forward_analysis,
       " visited: " << visitedCounter <<"\\n" <<
       "type = " << type << "\\n" << variable << "\\n" << regs << "\"" << add <<"];\n";
   }
-
+#endif
 }
 
 
 void RoseBin_DotGraph::printEdges( VirtualBinCFG::AuxiliaryInformation* info,
                 bool forward_analysis, std::ofstream& myfile, bool mergedEdges) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   ROSE_ASSERT(info);
   if (mergedEdges) {
     createUniqueEdges();
     printEdges_single(info, forward_analysis, myfile);
   } else
     printEdges_multiple(info, forward_analysis, myfile);
+#endif
 }
 
 void RoseBin_DotGraph::printEdges_single( VirtualBinCFG::AuxiliaryInformation* info,
                 bool forward_analysis, std::ofstream& myfile) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   // traverse edges and visualize results of graph
   //  SgGraphEdgeList* gedges = get_edges();
   rose_graph_integer_edge_hash_multimap edges =get_node_index_to_edge_multimap_edgesOut();
@@ -554,10 +578,14 @@ void RoseBin_DotGraph::printEdges_single( VirtualBinCFG::AuxiliaryInformation* i
     printEdges(info, forward_analysis, myfile, edge);
   }
   //  nodesMap.clear();
+#endif
 }
 
 void RoseBin_DotGraph::printEdges_multiple( VirtualBinCFG::AuxiliaryInformation* info,
                 bool forward_analysis, std::ofstream& myfile) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   // traverse edges and visualize results of graph
   //  SgGraphEdgeList* gedges = get_edges();
         rose_graph_integer_edge_hash_multimap edges =get_node_index_to_edge_multimap_edgesOut();
@@ -573,11 +601,15 @@ void RoseBin_DotGraph::printEdges_multiple( VirtualBinCFG::AuxiliaryInformation*
     printEdges(info, forward_analysis, myfile, edge);
   }
   //nodesMap.clear();
+#endif
 }
 
 
 void RoseBin_DotGraph::printEdges( VirtualBinCFG::AuxiliaryInformation* info,
                 bool forward_analysis, std::ofstream& myfile, SgDirectedGraphEdge* edge ) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   // traverse edges and visualize results of graph
   /*
     cerr << " Writing graph to DOT - Nr of Edges : " << edges.size() << endl;
@@ -737,6 +769,7 @@ void RoseBin_DotGraph::printEdges( VirtualBinCFG::AuxiliaryInformation* info,
 
   myfile << output;
   //}
+#endif
 }
 
 

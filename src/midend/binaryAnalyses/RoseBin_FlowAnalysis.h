@@ -29,7 +29,7 @@
 class FindAsmFunctionsVisitor: public std::binary_function<SgNode*, std::vector<SgAsmFunction *>* , void* >
 {
   public:
-    void* operator()(first_argument_type node, std::vector<SgAsmFunction*>* insns ) const{
+    void* operator()(first_argument_type node, std::vector<SgAsmFunction*>* insns ) const ROSE_DEPRECATED("no longer supported"){
       if (isSgAsmFunction(node)) insns->push_back(isSgAsmFunction(node));
       return NULL;
     }
@@ -38,7 +38,7 @@ class FindAsmFunctionsVisitor: public std::binary_function<SgNode*, std::vector<
 class FindSgFunctionsVisitor: public std::binary_function<SgNode*, std::vector<SgFunctionDeclaration *>* , void* >
 {
   public:
-    void* operator()(first_argument_type node, std::vector<SgFunctionDeclaration*>* insns ) const{
+    void* operator()(first_argument_type node, std::vector<SgFunctionDeclaration*>* insns ) const ROSE_DEPRECATED("no longer supported"){
       if (isSgFunctionDeclaration(node)) insns->push_back(isSgFunctionDeclaration(node));
       return NULL;
     }
@@ -48,7 +48,7 @@ class FindSgFunctionsVisitor: public std::binary_function<SgNode*, std::vector<S
 class FindInstructionsVisitor: public std::binary_function<SgNode*, std::vector<SgAsmInstruction *>* , void* >
 {
  public:
-  void* operator()(first_argument_type node, std::vector<SgAsmInstruction*>* insns ) const{
+  void* operator()(first_argument_type node, std::vector<SgAsmInstruction*>* insns ) const ROSE_DEPRECATED("no longer supported"){
     if (isSgAsmInstruction(node)) insns->push_back(isSgAsmInstruction(node));
     return NULL;
   }
@@ -58,7 +58,7 @@ class FindInstructionsVisitor: public std::binary_function<SgNode*, std::vector<
 class FindInstructionsVisitorx86: public std::binary_function<SgNode*, std::vector<SgAsmX86Instruction *>* , void* >
 {
  public:
-  void* operator()(first_argument_type node, std::vector<SgAsmX86Instruction*>* insns ) const{
+  void* operator()(first_argument_type node, std::vector<SgAsmX86Instruction*>* insns ) const ROSE_DEPRECATED("no longer supported"){
     if (isSgAsmX86Instruction(node)) insns->push_back(isSgAsmX86Instruction(node));
     return NULL;
   }
@@ -67,7 +67,7 @@ class FindInstructionsVisitorx86: public std::binary_function<SgNode*, std::vect
 class FindAsmStatementsVisitor: public std::binary_function<SgNode*, std::vector<SgAsmStatement *>* , void* >
 {
  public:
-  void* operator()(first_argument_type node, std::vector<SgAsmStatement*>* insns ) const{
+  void* operator()(first_argument_type node, std::vector<SgAsmStatement*>* insns ) const ROSE_DEPRECATED("no longer supported"){
     if (isSgAsmStatement(node)) insns->push_back(isSgAsmStatement(node));
     return NULL;
   }
@@ -76,7 +76,7 @@ class FindAsmStatementsVisitor: public std::binary_function<SgNode*, std::vector
 class FindAsmStatementsHeaderVisitor: public std::binary_function<SgNode*, std::vector<SgAsmNode *>* , void* >
 {
  public:
-  void* operator()(first_argument_type node, std::vector<SgAsmNode*>* insns ) const{
+  void* operator()(first_argument_type node, std::vector<SgAsmNode*>* insns ) const ROSE_DEPRECATED("no longer supported"){
     if (isSgAsmStatement(node)) insns->push_back(isSgAsmStatement(node));
     if (isSgAsmExecutableFileFormat(node)) insns->push_back(isSgAsmExecutableFileFormat(node));
     return NULL;
@@ -86,7 +86,7 @@ class FindAsmStatementsHeaderVisitor: public std::binary_function<SgNode*, std::
 class FindStatementsVisitor: public std::binary_function<SgNode*, std::vector<SgStatement *>* , void* >
 {
  public:
-  void* operator()(first_argument_type node, std::vector<SgStatement*>* insns ) const{
+  void* operator()(first_argument_type node, std::vector<SgStatement*>* insns ) const ROSE_DEPRECATED("no longer supported"){
     if (isSgStatement(node))
       //      if (!isSgStatement(node)->get_file_info()->isCompilerGenerated())
         insns->push_back(isSgStatement(node));
@@ -98,7 +98,7 @@ class FindStatementsVisitor: public std::binary_function<SgNode*, std::vector<Sg
 class FindNodeVisitor: public std::binary_function<SgNode*, std::vector<SgLocatedNode *>* , void* >
 {
  public:
-  void* operator()(first_argument_type node, std::vector<SgLocatedNode*>* insns ) const{
+  void* operator()(first_argument_type node, std::vector<SgLocatedNode*>* insns ) const ROSE_DEPRECATED("no longer supported"){
     if (isSgNode(node))
       insns->push_back(isSgLocatedNode(node));
     return NULL;
@@ -172,13 +172,13 @@ class ROSE_DLL_API RoseBin_FlowAnalysis : public AstSimpleProcessing {//, public
 
   //VirtualBinCFG::AuxiliaryInformation* info;
 
-  void initFunctionList(SgAsmNode* global);
-  void process_jumps();
-  SgAsmInstruction* process_jumps_get_target(SgAsmX86Instruction* inst);
-  void resolveFunctions(SgAsmNode* global);
-  SgAsmInstruction* resolveFunction(SgAsmInstruction* inst, bool hasStopCondition);
-  void convertBlocksToFunctions(SgAsmNode* globalNode);
-  void flattenBlocks(SgAsmNode* globalNode);
+  void initFunctionList(SgAsmNode* global) ROSE_DEPRECATED("no longer supported");
+  void process_jumps() ROSE_DEPRECATED("no longer supported");
+  SgAsmInstruction* process_jumps_get_target(SgAsmX86Instruction* inst) ROSE_DEPRECATED("no longer supported");
+  void resolveFunctions(SgAsmNode* global) ROSE_DEPRECATED("no longer supported");
+  SgAsmInstruction* resolveFunction(SgAsmInstruction* inst, bool hasStopCondition) ROSE_DEPRECATED("no longer supported");
+  void convertBlocksToFunctions(SgAsmNode* globalNode) ROSE_DEPRECATED("no longer supported");
+  void flattenBlocks(SgAsmNode* globalNode) ROSE_DEPRECATED("no longer supported");
 
   bool db;
 
@@ -194,29 +194,29 @@ class ROSE_DLL_API RoseBin_FlowAnalysis : public AstSimpleProcessing {//, public
 
   virtual ~RoseBin_FlowAnalysis() {}
 
-  void setInitializedFalse() {
+  void setInitializedFalse()  ROSE_DEPRECATED("no longer supported"){
     initialized=false;
   }
-  RoseBin_Graph* getGraph() {return vizzGraph;}
+  RoseBin_Graph* getGraph()  ROSE_DEPRECATED("no longer supported"){return vizzGraph;}
 
   bool forward_analysis;
-  void printAST(SgAsmNode* globalNode);
+  void printAST(SgAsmNode* globalNode) ROSE_DEPRECATED("no longer supported");
   // run this analysis
   virtual void run(RoseBin_Graph* vg, std::string fileN, bool multiedge) =0;
 
-  std::string getName() { return analysisName;}
+  std::string getName()  ROSE_DEPRECATED("no longer supported"){ return analysisName;}
 
-  void visit(SgNode* node);
+  void visit(SgNode* node) ROSE_DEPRECATED("no longer supported");
   void checkControlFlow( SgAsmInstruction* binInst,
                          int functionSize, int countDown,
-                         std::string& currentFunctionName, int func_nr);
+                         std::string& currentFunctionName, int func_nr) ROSE_DEPRECATED("no longer supported");
 
   SgGraphNode*
-    getNodeFor(uint64_t inst) { return deftable_instr[inst];}
+    getNodeFor(uint64_t inst) ROSE_DEPRECATED("no longer supported") { return deftable_instr[inst];}
 
 
-  void createInstToNodeTable();
-  uint64_t getAddressForNode(SgGraphNode* node);
+  void createInstToNodeTable() ROSE_DEPRECATED("no longer supported");
+  uint64_t getAddressForNode(SgGraphNode* node) ROSE_DEPRECATED("no longer supported");
 
   // converts string to hex
   template <class T>
@@ -228,21 +228,21 @@ class ROSE_DLL_API RoseBin_FlowAnalysis : public AstSimpleProcessing {//, public
       return !(iss >> f >> t).fail();
     }
 
-  int nodesVisited() {
+  int nodesVisited() ROSE_DEPRECATED("no longer supported") {
     return nrNodes;
   }
 
-  int edgesVisited() {
+  int edgesVisited() ROSE_DEPRECATED("no longer supported") {
     return nrEdges;
   }
 
-  bool sameParents(SgGraphNode* node, SgGraphNode* next);
-  void getRootNodes(std::vector <SgGraphNode*>& rootNodes);
+  bool sameParents(SgGraphNode* node, SgGraphNode* next) ROSE_DEPRECATED("no longer supported");
+  void getRootNodes(std::vector <SgGraphNode*>& rootNodes) ROSE_DEPRECATED("no longer supported");
 
 
-  SgGraphNode* addCFNode(std::string& name, std::string& type, int address, bool isFunction, SgNode* int_node);
+  SgGraphNode* addCFNode(std::string& name, std::string& type, int address, bool isFunction, SgNode* int_node) ROSE_DEPRECATED("no longer supported");
 
-  void clearMaps();
+  void clearMaps() ROSE_DEPRECATED("no longer supported");
 
 };
 

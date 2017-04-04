@@ -17,6 +17,9 @@ using namespace RoseBin_Arch;
 
 bool
 RoseBin_DataFlowAbstract::isInstructionAlteringOneRegister(SgAsmX86Instruction* inst) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   bool alters = false;
   switch (inst->get_kind()) {
     case x86_aaa:
@@ -294,6 +297,7 @@ RoseBin_DataFlowAbstract::isInstructionAlteringOneRegister(SgAsmX86Instruction* 
     default: break;
   }
   return alters;
+#endif
 }
 
 
@@ -302,6 +306,9 @@ RoseBin_DataFlowAbstract::isInstructionAlteringOneRegister(SgAsmX86Instruction* 
 bool
 RoseBin_DataFlowAbstract::altersMultipleRegisters(vector<std::pair<X86RegisterClass, int> >& codes,
                                                 SgAsmX86Instruction* inst) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   bool alters=false;
   switch (inst->get_kind()) {
     case x86_push:
@@ -339,6 +346,7 @@ RoseBin_DataFlowAbstract::altersMultipleRegisters(vector<std::pair<X86RegisterCl
   }
 
   return alters;
+#endif
 }
 
 
@@ -348,8 +356,12 @@ RoseBin_DataFlowAbstract::altersMultipleRegisters(vector<std::pair<X86RegisterCl
  *****************************************/
 std::set < SgGraphNode* >
 RoseBin_DataFlowAbstract::getDefFor(SgGraphNode* node, std::pair<X86RegisterClass, int>  initName) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   multitype multi = getDefMultiMapFor(node);
   return getAnyFor( &multi, initName);
+#endif
 }
 
 /******************************************
@@ -358,8 +370,12 @@ RoseBin_DataFlowAbstract::getDefFor(SgGraphNode* node, std::pair<X86RegisterClas
  *****************************************/
 std::set < SgGraphNode* >
 RoseBin_DataFlowAbstract::getUseFor(SgGraphNode* node, std::pair<X86RegisterClass, int>  initName) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   multitype multi = getUseMultiMapFor(node);
   return getAnyFor(&multi, initName);
+#endif
 }
 
 /******************************************
@@ -368,6 +384,9 @@ RoseBin_DataFlowAbstract::getUseFor(SgGraphNode* node, std::pair<X86RegisterClas
  *****************************************/
 std::set < SgGraphNode* >
 RoseBin_DataFlowAbstract::getAnyFor(const multitype* multi, std::pair<X86RegisterClass, int>  initName) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   set < SgGraphNode*> defNodes;
   defNodes.clear();
   //multitype multi = getDefUseFor(node);
@@ -384,6 +403,7 @@ RoseBin_DataFlowAbstract::getAnyFor(const multitype* multi, std::pair<X86Registe
     }
   }
   return defNodes;
+#endif
 }
 
 /******************************************
@@ -393,12 +413,16 @@ RoseBin_DataFlowAbstract::getAnyFor(const multitype* multi, std::pair<X86Registe
 //__gnu_cxx::hash_multimap
 const std::multimap< std::pair<X86RegisterClass, int>  , SgGraphNode* >&
 RoseBin_DataFlowAbstract::getDefMultiMapFor(SgGraphNode* node) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   static std::multimap< std::pair<X86RegisterClass, int>  , SgGraphNode* >
     mymap;
   if (deftable.find(node)!=deftable.end())
     return deftable[node];
   else
     return mymap;
+#endif
 }
 
 /******************************************
@@ -408,18 +432,25 @@ RoseBin_DataFlowAbstract::getDefMultiMapFor(SgGraphNode* node) {
 //__gnu_cxx::hash_multimap
 const std::multimap< std::pair<X86RegisterClass, int>  , SgGraphNode* >&
 RoseBin_DataFlowAbstract::getUseMultiMapFor(SgGraphNode* node) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   static std::multimap< std::pair<X86RegisterClass, int>  , SgGraphNode* >
     mymap;
   if (usetable.find(node)!=usetable.end())
     return usetable[node];
   else
     return mymap;
+#endif
 }
 
 
 void
 RoseBin_DataFlowAbstract::printDefTableToFile(
                                               std::string fileName) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   std::ofstream myfile;
   myfile.open(fileName.c_str());
 
@@ -455,10 +486,14 @@ RoseBin_DataFlowAbstract::printDefTableToFile(
   }
 
   myfile.close();
+#endif
 }
 
 bool
 RoseBin_DataFlowAbstract::sameParents(SgGraphNode* node, SgGraphNode* next) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   bool same=false;
   if (isSgAsmFunction(node->get_SgNode())) {
     return true;
@@ -473,10 +508,14 @@ RoseBin_DataFlowAbstract::sameParents(SgGraphNode* node, SgGraphNode* next) {
       same=true;
   }
   return same;
+#endif
 }
 
 uint64_t
 RoseBin_DataFlowAbstract::getValueInExpression(SgAsmValueExpression* valExp) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
 
   uint8_t b_val=0xF;
   uint16_t w_val=0xFF;
@@ -499,6 +538,7 @@ RoseBin_DataFlowAbstract::getValueInExpression(SgAsmValueExpression* valExp) {
     val = uint64_t(qw_val);
 
   return val;
+#endif
 }
 
 
@@ -514,6 +554,9 @@ RoseBin_DataFlowAbstract::check_isRegister(SgGraphNode* node,
                                            vector<std::pair<X86RegisterClass, int> >& regsOfInterest,
                                            bool& cantTrack
                                            ) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   // bool rightSide specifies
   // true = checking the right side (of instruction operands) for a registerReference
   // false = checking the left side (of instruction operands) for a registerReference
@@ -600,6 +643,7 @@ RoseBin_DataFlowAbstract::check_isRegister(SgGraphNode* node,
       " -- " << operands << "  foundReg: " << RoseBin_support::resBool(foundECX) << endl;
   */
   return res;
+#endif
 }
 
 /************************************************************
@@ -611,6 +655,9 @@ std::pair<X86RegisterClass, int>
 RoseBin_DataFlowAbstract::check_isRegister(SgGraphNode* node,
                                            SgAsmX86Instruction* inst,
                                            bool rightSide, bool& memoryReference, bool& registerReference ) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   // bool rightSide specifies
   // true = checking the right side (of instruction operands) for a registerReference
   // false = checking the left side (of instruction operands) for a registerReference
@@ -658,6 +705,7 @@ RoseBin_DataFlowAbstract::check_isRegister(SgGraphNode* node,
   }
 
   return code;
+#endif
 }
 
 /************************************************************
@@ -668,6 +716,9 @@ SgAsmExpression*
 RoseBin_DataFlowAbstract::getOperand(
                                       SgAsmX86Instruction* inst,
                                       bool rightSide ) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   // bool rightSide specifies
   // true = checking the right side (of instruction operands) for a registerReference
   // false = checking the left side (of instruction operands) for a registerReference
@@ -699,10 +750,14 @@ RoseBin_DataFlowAbstract::getOperand(
     refExpr = isSgAsmMemoryReferenceExpression(expr);
   }
   return refExpr;
+#endif
 }
 
 uint64_t
 RoseBin_DataFlowAbstract::getValueInMemoryRefExp(SgAsmExpression* expr) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   uint64_t res = 0;
   if (isSgAsmValueExpression(expr)) {
     res = getValueInExpression(isSgAsmValueExpression(expr));
@@ -735,6 +790,7 @@ RoseBin_DataFlowAbstract::getValueInMemoryRefExp(SgAsmExpression* expr) {
          << expr->class_name() << endl;
   }
   return res;
+#endif
 }
 
 /************************************************************
@@ -744,6 +800,9 @@ RoseBin_DataFlowAbstract::getValueInMemoryRefExp(SgAsmExpression* expr) {
 uint64_t
 RoseBin_DataFlowAbstract::getValueOfInstr( SgAsmX86Instruction* inst,
                                            bool rightSide ) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   // bool rightSide specifies
   // true = checking the right side (of instruction operands) for a registerReference
   // false = checking the left side (of instruction operands) for a registerReference
@@ -775,6 +834,7 @@ RoseBin_DataFlowAbstract::getValueOfInstr( SgAsmX86Instruction* inst,
     }
   }
   return val;
+#endif
 }
 
 int64_t
@@ -783,6 +843,9 @@ RoseBin_DataFlowAbstract::trackValueForRegister(
                                                 std::pair<X86RegisterClass, int>  codeSearch,
                                                 bool& cantTrack,
                                                 SgAsmRegisterReferenceExpression* refExpr_rightHand) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   int64_t value = 0xffffffff;
   if (RoseBin_support::DEBUG_MODE())
     cout << "    ........ trying to resolve value for register :: " << codeSearch.first << "." << codeSearch.second << endl;
@@ -849,10 +912,14 @@ RoseBin_DataFlowAbstract::trackValueForRegister(
 
 
   return value;
+#endif
 }
 
 SgGraphNode*
 RoseBin_DataFlowAbstract::getPredecessor(SgGraphNode* node){
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   vector <SgGraphNode*> vec;
   g_algo->getDirectCFGPredecessors(vizzGraph,node, vec);
   SgGraphNode* previous = NULL;
@@ -869,10 +936,14 @@ RoseBin_DataFlowAbstract::getPredecessor(SgGraphNode* node){
     exit(0);
   }
   return previous;
+#endif
 }
 
 SgGraphNode*
 RoseBin_DataFlowAbstract::getSuccessor(SgGraphNode* node){
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   vector <SgGraphNode*> vec;
   //cerr << endl << " START ++++++++++++ getSuccessor : call getDirectCFGSucc " << endl;
   g_algo->getDirectCFGSuccessors(vizzGraph,node, vec);
@@ -894,6 +965,7 @@ RoseBin_DataFlowAbstract::getSuccessor(SgGraphNode* node){
     exit(0);
   }
   return after;
+#endif
 }
 
 
@@ -907,6 +979,9 @@ RoseBin_DataFlowAbstract::createVariable(uint64_t position,
                                          int length,
                                          vector<uint64_t> value,
                                          bool memoryRef) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   RoseBin_Variable* var_hashed =NULL;
   if (name=="") {
     cerr << " ERROR: no variable name . " << endl;
@@ -934,10 +1009,14 @@ RoseBin_DataFlowAbstract::createVariable(uint64_t position,
   }
   ROSE_ASSERT(var_hashed);
   return var_hashed;
+#endif
 }
 
 RoseBin_Variable*
 RoseBin_DataFlowAbstract::getVariable(std::string var) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   uint64_t val = 0;
 
 // DQ (4/23/2009): Made a typedef for the type used here since it is sensative to the template default parameters.
@@ -949,15 +1028,20 @@ RoseBin_DataFlowAbstract::getVariable(std::string var) {
   }
 
   return getVariable(val);
+#endif
 }
 
 RoseBin_Variable*
 RoseBin_DataFlowAbstract::getVariable(uint64_t pos) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   RoseBin_Variable* var=NULL;
   rose_hash::unordered_map <uint64_t, RoseBin_Variable*>::iterator it = variables.find(pos);
   if (it!=variables.end()) {
     var = it->second;
   }
   return var;
+#endif
 }
 
