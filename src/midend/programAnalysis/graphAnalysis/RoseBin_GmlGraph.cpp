@@ -16,17 +16,28 @@ using namespace VirtualBinCFG;
 
 void
 RoseBin_GMLGraph::printProlog(  std::ofstream& myfile, string& fileType) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   myfile << "graph  [\n" << endl;
+#endif
 }
 
 void
 RoseBin_GMLGraph::printEpilog(  std::ofstream& myfile) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   myfile << "]\n" << endl;
+#endif
 }
 
 void
 RoseBin_GMLGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow,bool forward_analysis,
                                  std::ofstream& myfile, string& recursiveFunctionName) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   //bool firstFunc = true;
   // traverse nodes and visualize results of graph
 
@@ -222,6 +233,7 @@ RoseBin_GMLGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow,bool forwa
     //    cerr << " this node : " << text << endl;
   }
   funcMap.clear();
+#endif
 }
 
 
@@ -229,7 +241,9 @@ RoseBin_GMLGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow,bool forwa
 std::string
 RoseBin_GMLGraph::getInternalNodes(  SgGraphNode* node,
                                      bool forward_analysis, SgAsmNode* internal) {
-
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   SgAsmInstruction* bin_inst = isSgAsmInstruction(internal);
   SgAsmX86Instruction* control = isSgAsmX86Instruction(internal);
   // get the unparser string!
@@ -360,19 +374,27 @@ RoseBin_GMLGraph::getInternalNodes(  SgGraphNode* node,
 
 
   return nodeStr;
+#endif
 }
 
 void RoseBin_GMLGraph::printEdges( VirtualBinCFG::AuxiliaryInformation* info,
                         bool forward_analysis, std::ofstream& myfile, bool mergedEdges) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   if (mergedEdges) {
     createUniqueEdges();
     printEdges_single(info, forward_analysis, myfile);
   } else
     printEdges_multiple(info, forward_analysis, myfile);
+#endif
 }
 
 void RoseBin_GMLGraph::printEdges_single( VirtualBinCFG::AuxiliaryInformation* info,
                         bool forward_analysis, std::ofstream& myfile) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   // traverse edges and visualize results of graph
   //SgGraphEdgeList* gedges = get_edges();
         rose_graph_integer_edge_hash_multimap edges =get_node_index_to_edge_multimap_edgesOut();
@@ -388,10 +410,14 @@ void RoseBin_GMLGraph::printEdges_single( VirtualBinCFG::AuxiliaryInformation* i
     printEdges(info, forward_analysis, myfile, edge);
   }
   nodesMap.clear();
+#endif
 }
 
 void RoseBin_GMLGraph::printEdges_multiple( VirtualBinCFG::AuxiliaryInformation* info,
                         bool forward_analysis, std::ofstream& myfile) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   // traverse edges and visualize results of graph
   //  SgGraphEdgeList* gedges = get_edges();
   rose_graph_integer_edge_hash_multimap edges =get_node_index_to_edge_multimap_edgesOut();
@@ -407,10 +433,14 @@ void RoseBin_GMLGraph::printEdges_multiple( VirtualBinCFG::AuxiliaryInformation*
     printEdges(info, forward_analysis, myfile, edge);
   }
   nodesMap.clear();
+#endif
 }
 
 
 void RoseBin_GMLGraph::printEdges( VirtualBinCFG::AuxiliaryInformation* info, bool forward_analysis, std::ofstream& myfile, SgDirectedGraphEdge* edge) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   // traverse edges and visualize results of graph
     SgGraphNode* source = isSgGraphNode(edge->get_from());
     SgGraphNode* target = isSgGraphNode(edge->get_to());
@@ -527,6 +557,6 @@ void RoseBin_GMLGraph::printEdges( VirtualBinCFG::AuxiliaryInformation* info, bo
     //  }
   // ----------
     //  nodesMap.clear();
-
+#endif
 }
 

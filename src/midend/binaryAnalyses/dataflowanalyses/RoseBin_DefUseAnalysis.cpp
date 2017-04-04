@@ -16,10 +16,14 @@ using namespace std;
  *********************************************************/
 void RoseBin_DefUseAnalysis::replaceElement(SgGraphNode* sgNode,
                                             std::pair<X86RegisterClass, int> initName) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   // if the node is contained but not identical, then we overwrite it
   // otherwise, we do nothing
   deftable[sgNode].erase(deftable[sgNode].lower_bound(initName), deftable[sgNode].upper_bound(initName));
   deftable[sgNode].insert(make_pair(initName,sgNode));
+#endif
 }
 
 
@@ -27,6 +31,9 @@ void RoseBin_DefUseAnalysis::replaceElement(SgGraphNode* sgNode,
  *  Search for the value for a certain key in the multimap
  *********************************************************/
 bool RoseBin_DefUseAnalysis::searchMulti(const multitype* multi, std::pair<X86RegisterClass, int> initName) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   multitype::const_iterator it1, it2;
   pair <multitype::const_iterator, multitype::const_iterator> iter = multi->equal_range(initName);
   it1 = iter.first;
@@ -36,6 +43,7 @@ bool RoseBin_DefUseAnalysis::searchMulti(const multitype* multi, std::pair<X86Re
     return true;
   }
   return false;
+#endif
 }
 
 /**********************************************************
@@ -45,6 +53,9 @@ bool
 RoseBin_DefUseAnalysis::searchMulti(const multitype* multi,
                                     std::pair<X86RegisterClass, int> initName,
                                     SgGraphNode* val) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   multitype::const_iterator it1, it2;
   pair <multitype::const_iterator, multitype::const_iterator> iter = multi->equal_range(initName);
   it1 = iter.first;
@@ -57,26 +68,38 @@ RoseBin_DefUseAnalysis::searchMulti(const multitype* multi,
       return true;
   }
   return false;
+#endif
 }
 
 /**********************************************************
  *  print out the table containing all nodes
  *********************************************************/
 void RoseBin_DefUseAnalysis::printDefMap() {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   printAnyMap(&deftable);
+#endif
 }
 
 /**********************************************************
  *  print out the table containing all nodes
  *********************************************************/
 void RoseBin_DefUseAnalysis::printUseMap() {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   printAnyMap(&usetable);
+#endif
 }
 
 /**********************************************************
  *  print out the table containing all nodes
  *********************************************************/
 void RoseBin_DefUseAnalysis::printAnyMap(tabletype* tabl) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   int pos = 0;
   cout << "\n **************** MAP ************************** " << endl;
   for (tabletype::const_iterator i = tabl->begin(); i != tabl->end(); ++i) {
@@ -94,12 +117,16 @@ void RoseBin_DefUseAnalysis::printAnyMap(tabletype* tabl) {
       cout << pos << ": NULL ------------- " << endl;
   }
   cout << " **************** MAP ************************** \n" << endl;
+#endif
 }
 
 /**********************************************************
  *  print out the multimap
  *********************************************************/
 void RoseBin_DefUseAnalysis::printMultiMap(const multitype* multi) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   for (multitype::const_iterator j = multi->begin(); j != multi->end(); ++j) {
     std::pair<X86RegisterClass, int> sgInitMM = (*j).first;
     SgGraphNode* sgNodeMM = (*j).second;
@@ -112,6 +139,7 @@ void RoseBin_DefUseAnalysis::printMultiMap(const multitype* multi) {
       " ) " << " - SgNode " <<
       RoseBin_support::HexToString(isSgAsmInstruction(sgNodeMM->get_SgNode())->get_address()) << endl;
   }
+#endif
 }
 
 
@@ -124,6 +152,9 @@ void
 RoseBin_DefUseAnalysis::getOtherInNode(vector <SgGraphNode*>& otherNodes,
                                        SgGraphNode* cfgNode,
                                        SgGraphNode* oneNode){
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   vector <SgGraphNode*> in_edges;
   vizzGraph->getPredecessors(cfgNode, in_edges);
   vector<SgGraphNode* >::const_iterator i = in_edges.begin();
@@ -138,6 +169,7 @@ RoseBin_DefUseAnalysis::getOtherInNode(vector <SgGraphNode*>& otherNodes,
     }
   }
   //return otherNode;
+#endif
 }
 
 
@@ -145,6 +177,9 @@ RoseBin_DefUseAnalysis::getOtherInNode(vector <SgGraphNode*>& otherNodes,
  *  check if two multimaps are equal
  *********************************************************/
 bool RoseBin_DefUseAnalysis::checkElementsForEquality(const multitype* t1, const multitype* t2) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   // if every element of t2 is contained in t1, then no change
   // occured in the map
   typedef set<pair<std::pair<X86RegisterClass, int>, SgGraphNode*> > st;
@@ -156,6 +191,7 @@ bool RoseBin_DefUseAnalysis::checkElementsForEquality(const multitype* t1, const
       printMultiMap(t2);
   assert (s2.size() == t2->size());
   return s1 != s2;
+#endif
 }
 
 
@@ -163,14 +199,22 @@ bool RoseBin_DefUseAnalysis::checkElementsForEquality(const multitype* t1, const
  *  Union of two maps
  *********************************************************/
 void RoseBin_DefUseAnalysis::mapDefUnion(SgGraphNode* before, SgGraphNode* other, SgGraphNode* sgNode) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   mapAnyUnion(&deftable, before, other, sgNode);
+#endif
 }
 
 /**********************************************************
  *  Union of two maps
  *********************************************************/
 void RoseBin_DefUseAnalysis::mapUseUnion(SgGraphNode* before, SgGraphNode* other, SgGraphNode* sgNode) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   mapAnyUnion(&usetable, before, other, sgNode);
+#endif
 }
 
 /**********************************************************
@@ -178,6 +222,9 @@ void RoseBin_DefUseAnalysis::mapUseUnion(SgGraphNode* before, SgGraphNode* other
  *********************************************************/
 void RoseBin_DefUseAnalysis::mapAnyUnion(tabletype* tabl, SgGraphNode* before,
                                          SgGraphNode* other, SgGraphNode* sgNode) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
 
 
 
@@ -233,6 +280,7 @@ void RoseBin_DefUseAnalysis::mapAnyUnion(tabletype* tabl, SgGraphNode* before,
   ROSE_ASSERT (s.size() == (*tabl)[sgNode].size());
 #endif
 
+#endif
 }
 
 
@@ -240,18 +288,26 @@ void RoseBin_DefUseAnalysis::mapAnyUnion(tabletype* tabl, SgGraphNode* before,
  *  Search for the value for a certain key in the map
  *********************************************************/
 bool RoseBin_DefUseAnalysis::searchDefMap(SgGraphNode* node) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   return searchMap(&deftable, node);
+#endif
 }
 
 /**********************************************************
  *  Search for the value for a certain key in the map
  *********************************************************/
 bool RoseBin_DefUseAnalysis::searchMap(const tabletype* ltable, SgGraphNode* node) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   bool isCurrentValueContained=false;
   tabletype::const_iterator i =ltable->find(node);
   if (i!=ltable->end())
     isCurrentValueContained=true;
   return isCurrentValueContained;
+#endif
 }
 
 
@@ -261,7 +317,11 @@ bool RoseBin_DefUseAnalysis::searchMap(const tabletype* ltable, SgGraphNode* nod
 void RoseBin_DefUseAnalysis::addDefElement(SgGraphNode* sgNode,
                                            std::pair<X86RegisterClass, int> initName,
                                            SgGraphNode* defNode) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   addAnyElement(&deftable, sgNode, initName, defNode);
+#endif
 }
 
 /**********************************************************
@@ -270,7 +330,11 @@ void RoseBin_DefUseAnalysis::addDefElement(SgGraphNode* sgNode,
 void RoseBin_DefUseAnalysis::addUseElement(SgGraphNode* sgNode,
                                            std::pair<X86RegisterClass, int> initName,
                                            SgGraphNode* defNode) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   addAnyElement( &usetable, sgNode, initName, defNode);
+#endif
 }
 
 /**********************************************************
@@ -279,14 +343,21 @@ void RoseBin_DefUseAnalysis::addUseElement(SgGraphNode* sgNode,
 void RoseBin_DefUseAnalysis::addAnyElement(tabletype* tabl, SgGraphNode* sgNode,
                                            std::pair<X86RegisterClass, int> initName,
                                            SgGraphNode* defNode) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   bool contained = searchMulti(&(*tabl)[sgNode], initName, defNode);
   if (!contained)
     (*tabl)[sgNode].insert(make_pair(initName, defNode));
+#endif
 }
 
 
 string
 RoseBin_DefUseAnalysis::getElementsAsStringForNode(bool def,SgGraphNode* node) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   string label="";
   multitype mm;
   if (def)
@@ -308,11 +379,15 @@ RoseBin_DefUseAnalysis::getElementsAsStringForNode(bool def,SgGraphNode* node) {
       label += "Use of "+registerName+" at "+addr_str+"\\n";
   }
   return label;
+#endif
 }
 
 bool
 RoseBin_DefUseAnalysis::runEdge(SgGraphNode* node,
                             SgGraphNode* next) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   // follow control flow through all nodes
   // and assign for each edge the defMap
 
@@ -335,6 +410,7 @@ RoseBin_DefUseAnalysis::runEdge(SgGraphNode* node,
     }
   }
   return false;
+#endif
 }
 
 
@@ -345,6 +421,9 @@ RoseBin_DefUseAnalysis::runEdge(SgGraphNode* node,
 void
 RoseBin_DefUseAnalysis::handleCopy(bool def,SgGraphNode* sgNode,
                                       SgGraphNode* sgNodeBefore) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   ROSE_ASSERT(sgNode);
   vector <SgGraphNode*> pre;
   vizzGraph->getPredecessors(sgNode, pre);
@@ -401,20 +480,28 @@ RoseBin_DefUseAnalysis::handleCopy(bool def,SgGraphNode* sgNode,
       }
     }
   }
+#endif
 }
 
 
 void
 RoseBin_DefUseAnalysis::clearRegisters() {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   deftable.clear();
   //deftable_instr.clear();
   usetable.clear();
   //usetable_instr.clear();
+#endif
 }
 
 bool
 RoseBin_DefUseAnalysis::run(string& name, SgGraphNode* node,
                             SgGraphNode* nodeBefore ) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   // check known function calls and resolve variables
   ROSE_ASSERT(node);
   bool hasChanged=false;
@@ -587,6 +674,7 @@ RoseBin_DefUseAnalysis::run(string& name, SgGraphNode* node,
   if (hasChanged)
     ROSE_ASSERT(oldMul.size()< newMul.size());
   return hasChanged;
+#endif
 }
 
 

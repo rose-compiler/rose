@@ -22,6 +22,9 @@ InterruptAnalysis::getIntCallName(uint64_t rax,
                                   std::vector<uint64_t>& pos_rcx,
                                   std::vector<uint64_t>& pos_rdx,
                                   uint64_t fpos_rbx, uint64_t fpos_rcx, uint64_t fpos_rdx ) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   string int_name = "unknown";
   data_ebx = d_none;
   data_ecx = d_none;
@@ -45,6 +48,7 @@ InterruptAnalysis::getIntCallName(uint64_t rax,
                                          fpos_rbx, fpos_rcx, fpos_rdx);
 
   return int_name;
+#endif
 }
 
 std::string
@@ -59,6 +63,9 @@ InterruptAnalysis::getIntCallName_Linux32bit(uint64_t rax,
                                                     std::vector<uint64_t>& pos_rcx,
                                                     std::vector<uint64_t>& pos_rdx,
                                                     uint64_t fpos_rbx, uint64_t fpos_rcx, uint64_t fpos_rdx) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   string int_name = "unknown";
   // linux system calls for kernel 2.2 - 32bit
         switch (rax) {
@@ -302,6 +309,7 @@ InterruptAnalysis::getIntCallName_Linux32bit(uint64_t rax,
           break;
         }
         return int_name;
+#endif
 }
 
 std::string
@@ -316,6 +324,9 @@ InterruptAnalysis::getIntCallName_Linux64bit(uint64_t rax,
                                              std::vector<uint64_t>& pos_rcx,
                                              std::vector<uint64_t>& pos_rdx,
                                              uint64_t fpos_rbx, uint64_t fpos_rcx, uint64_t fpos_rdx) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   string int_name = "unknown";
   // linux system calls for kernel 2.6 - 64bit
   // check in linux src : uinstd.h and syscalls.h
@@ -371,6 +382,7 @@ InterruptAnalysis::getIntCallName_Linux64bit(uint64_t rax,
           break;
         }
         return int_name;
+#endif
 }
 
 
@@ -380,6 +392,9 @@ InterruptAnalysis::getValueForDefinition(std::vector<uint64_t>& vec,
                                                 uint64_t& fpos,
                                                 SgGraphNode* node,
                                                 std::pair<X86RegisterClass, int> reg ) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   set <SgGraphNode*> defNodeSet = getDefFor(node, reg);
   if (RoseBin_support::DEBUG_MODE())
     cout << "    size of found NodeSet = " << defNodeSet.size() <<endl;
@@ -426,12 +441,16 @@ InterruptAnalysis::getValueForDefinition(std::vector<uint64_t>& vec,
       }
     }
   }
+#endif
 }
 
 
 bool
 InterruptAnalysis::run(string& name, SgGraphNode* node,
                               SgGraphNode* previous){
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   // check known function calls and resolve variables
   ROSE_ASSERT(node);
   vector<uint64_t> val_rax, val_rbx, val_rcx, val_rdx ;
@@ -507,6 +526,7 @@ InterruptAnalysis::run(string& name, SgGraphNode* node,
 
   // has changed?
   return false;
+#endif
 }
 
 

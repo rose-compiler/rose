@@ -7,6 +7,9 @@ using namespace std;
 SgGraphNode*
 GraphAlgorithms::getDefinitionForUsage(RoseBin_Graph* vizzGraph,
                                        SgGraphNode* node) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   rose_graph_integer_edge_hash_multimap::iterator it1, it2;
   pair <rose_graph_integer_edge_hash_multimap::iterator, rose_graph_integer_edge_hash_multimap::iterator> iter =
     vizzGraph->get_node_index_to_edge_multimap_edgesIn().equal_range(node->get_index());
@@ -26,12 +29,16 @@ GraphAlgorithms::getDefinitionForUsage(RoseBin_Graph* vizzGraph,
     }
   }
   return NULL;
+#endif
 }
 
 
 void
 GraphAlgorithms::getDirectCFGSuccessors(RoseBin_Graph* vizzGraph,
                                         SgGraphNode* node, std::vector <SgGraphNode*>& vec ) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   //SgGraphEdgeList* gedges = vizzGraph->get_edges();
   rose_graph_integer_edge_hash_multimap edges = vizzGraph->get_node_index_to_edge_multimap_edgesOut();
   rose_graph_integer_edge_hash_multimap::iterator it1, it2;
@@ -56,6 +63,7 @@ GraphAlgorithms::getDirectCFGSuccessors(RoseBin_Graph* vizzGraph,
       }
     }
   }
+#endif
 }
 
 
@@ -63,6 +71,9 @@ GraphAlgorithms::getDirectCFGSuccessors(RoseBin_Graph* vizzGraph,
 void
 GraphAlgorithms::getDirectCFGPredecessors(RoseBin_Graph* vizzGraph,
                                           SgGraphNode* node, std::vector <SgGraphNode*>& vec ) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   rose_graph_integer_edge_hash_multimap::iterator it1, it2;
   pair <rose_graph_integer_edge_hash_multimap::iterator, rose_graph_integer_edge_hash_multimap::iterator> iter =
           vizzGraph->get_node_index_to_edge_multimap_edgesIn().equal_range(node->get_index());
@@ -80,11 +91,15 @@ GraphAlgorithms::getDirectCFGPredecessors(RoseBin_Graph* vizzGraph,
       }
     }
   }
+#endif
 }
 
 bool
 GraphAlgorithms::isDirectCFGEdge(SgGraphNode* sgNode,
                                  SgGraphNode* sgNodeBefore) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   bool isDirectedControlFlowEdge = false;
   SgAsmInstruction* instSgNode = isSgAsmInstruction(sgNode->get_SgNode());
   SgAsmInstruction* instSgNodeBefore = isSgAsmInstruction(sgNodeBefore->get_SgNode());
@@ -114,11 +129,15 @@ GraphAlgorithms::isDirectCFGEdge(SgGraphNode* sgNode,
   }
   //  cerr << "     ... checking if isDirectedCFGEdge " << isDirectedControlFlowEdge << endl;
   return isDirectedControlFlowEdge;
+#endif
 }
 
 bool
 GraphAlgorithms::isValidCFGEdge(SgGraphNode* sgNode,
                                 SgGraphNode* sgNodeBefore) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   if (!sgNode || !sgNodeBefore)
     return false;
   //  bool isAUnconditionalControlTransfer = false;
@@ -178,4 +197,5 @@ GraphAlgorithms::isValidCFGEdge(SgGraphNode* sgNode,
   */
 
   return valid;
+#endif
 }
