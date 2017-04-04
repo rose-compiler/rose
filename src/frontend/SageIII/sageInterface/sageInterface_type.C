@@ -642,6 +642,7 @@ bool isCopyConstructible(SgType* type)
         case V_SgTypeLong:
         case V_SgTypeLongDouble:
         case V_SgTypeLongLong:
+        case V_SgTypeNullptr:
         case V_SgTypeShort:
         case V_SgTypeSignedChar:
         case V_SgTypeSignedInt:
@@ -759,6 +760,7 @@ bool isCopyConstructible(SgType* type)
       case V_SgTypeLong:
       case V_SgTypeLongDouble:
       case V_SgTypeLongLong:
+      case V_SgTypeNullptr:
       case V_SgTypeShort:
       case V_SgTypeSignedChar:
       case V_SgTypeSignedInt:
