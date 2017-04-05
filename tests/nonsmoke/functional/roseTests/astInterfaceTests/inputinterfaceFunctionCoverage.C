@@ -4,10 +4,13 @@
 
 #include <iostream>
 #include <vector> 
+#include <cassert>
 
+using namespace std;
 #define SIZE 1000
 int i; 
 
+void foo();
 #ifdef SIZE
 void foo(int i)
 {
@@ -25,10 +28,10 @@ void foo(int i)
 
 // declare a template class
 template <class T>
-class pair {
+class mypair {
     T values [2];
   public:
-    pair (T first, T second)
+    mypair (T first, T second)
     {
       values[0]=first; values[1]=second;
     }
@@ -38,7 +41,7 @@ class pair {
 // define member function with template
 // two things: 1) add template <class T> 2) add <T> after class name !!
 template <class T>
-T pair<T>::getmax ()
+T mypair<T>::getmax ()
 {
   T retval;
   retval = values[0]>values[1]? values[0] : values[1];
@@ -59,10 +62,113 @@ struct Derived : Base {
     }
 };
 #endif
-int main()
+
+
+// operator overload
+class Integer
+{
+  public:
+    int i;
+    Integer () {i=0;}
+    Integer (int n):i(n) {}
+
+   //prefix: ++a
+  // a is increased first, then used, still the same a, allow modifying
+  Integer & operator++ ()
+  {
+    i++;
+    return *this; // by reference, still the value can be used, confusion
+  }
+  
+  
+  //suffix: a++,
+  // old temp a is used, then increased by 1 
+  // must return by value for the old value, 
+  // must have const return to catch error like (a++)=c
+  //Integer operator++ (int)
+  const Integer operator++ (int)
+  {
+    Integer old(this->i);
+    i++;
+    return old;
+  }
+
+
+  // assignment operator
+  Integer&  operator= (int value)
+  {
+    this->i = value;
+    return *this;
+  }
+
+  // must has const input to help catch error like (a++)=c
+  Integer&  operator= (const Integer& other)
+  {
+    if (this == & other) // not = !!
+      return *this;
+    this->i = other.i;
+    return *this;
+  }
+
+  bool operator == (int y)
+  {
+    return (i == y);
+  }
+
+};
+
+void test_splitVariableDeclaration()
+{
+  int i=100;
+}
+
+void test_setOperand()
+{
+  int j=12345678;
+
+}
+
+void test_collectVariableReferencesInArrayTypes()
+{
+  int total_gpudevs = 0;
+  int gpu_selection[total_gpudevs];
+  
+  test_splitVariableDeclaration();
+}
+
+void test_removeConsecutiveLabels ()
+{
+  int a = 10;
+
+Loop1:
+LOOP:
+  do {
+    if( a == 15) {
+      a = a + 1;
+      goto LOOP;
+    }
+    a++;
+  }
+  while( a < 20 );
+}
+
+int main(int argc, char* argv[])
 {
   // usage
-  pair<int> myobject (115, 36); 
-  pair<float> myfloats (3.0, 2.18); 
+  mypair<int> myobject (115, 36); 
+  mypair<float> myfloats (3.0, 2.18); 
+
+  Integer a, b, c;
+  a = 1; b =2 ; c =3;
+  (++a) = c;
+  assert (a == 3);
+  //(a++) = c; // compilation error: trying to modify const
+  cout<<a.i<<endl;
+
+  if (argc >1)
+  {
+    cout<<"argc >1"<<endl;
+  }
+
   return 0;
 }
