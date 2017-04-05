@@ -360,7 +360,15 @@ Analysis::analyzeCallSite(const P2::Partitioner &partitioner, const P2::ControlF
                         <<StringUtility::prefixLines(ss.str(), "    ");
         }
 
-        StatePtr outputState = State::promote(xfer(dfCfg, t.vertex()->id(), inputState));
+        StatePtr outputState;
+        try {
+            outputState = State::promote(xfer(dfCfg, t.vertex()->id(), inputState));
+        } catch (const S2::BaseSemantics::Exception &e) {
+            mlog[WARN] <<e.what() <<" at call site vertex " <<partitioner.vertexName(callSite) <<"\n";
+            retval.didConverge(false);
+            return retval;
+        }
+        
         if (mlog[DEBUG]) {
             std::ostringstream ss;
             ss <<*outputState;
@@ -417,6 +425,8 @@ Analysis::analyzeCallSite(const P2::Partitioner &partitioner, const P2::ControlF
     
     // Assume all unresolved return locations of the callee(s) are unused return values.
     retval.returnRegistersUnused() |= ops->unreferencedRegisterOutputs();
+
+    retval.didConverge(true);
     return retval;
 }
 
