@@ -2965,7 +2965,7 @@ SageInterface::templateDefinitionIsInClass( SgTemplateInstantiationMemberFunctio
 
      return result;
    }
-
+#if 0
 SgDeclarationStatement*
 generateUniqueDeclaration ( SgDeclarationStatement* declaration )
    {
@@ -2991,6 +2991,7 @@ generateUniqueDeclaration ( SgDeclarationStatement* declaration )
 
      return keyDeclaration;
    }
+#endif   
 //! Extract a SgPragmaDeclaration's leading keyword . For example "#pragma omp parallel" has a keyword of "omp".
 std::string SageInterface::extractPragmaKeyword(const SgPragmaDeclaration *pragmaDeclaration)
 {
@@ -3396,7 +3397,7 @@ supportForVariableLists ( SgScopeStatement* scope, SgSymbolTable* symbolTable, S
           i++;
         }
    }
-
+#if 0
 // DQ (3/2/2014): Added a new interface function (used in the snippet insertion support).
 void
 SageInterface::supportForInitializedNameLists ( SgScopeStatement* scope, SgInitializedNamePtrList & variableList )
@@ -3406,7 +3407,7 @@ SageInterface::supportForInitializedNameLists ( SgScopeStatement* scope, SgIniti
 
      supportForVariableLists(scope,symbolTable,variableList);
    }
-
+#endif
 
 void
 supportForVariableDeclarations ( SgScopeStatement* scope, SgSymbolTable* symbolTable, SgVariableDeclaration* variableDeclaration )
@@ -4523,13 +4524,23 @@ SgProject * SageInterface::getProject(const SgNode * node) {
 }
 
 SgFunctionDeclaration* SageInterface::getDeclarationOfNamedFunction(SgExpression* func) {
-  if (isSgFunctionRefExp(func)) {
+  SgFunctionDeclaration * ret = NULL; 
+  if (isSgFunctionRefExp(func)) 
+  {
     return isSgFunctionRefExp(func)->get_symbol()->get_declaration();
-  } else if (isSgDotExp(func) || isSgArrowExp(func)) {
+  } 
+  else if (isSgDotExp(func) || isSgArrowExp(func)) 
+  {
     SgExpression* func2 = isSgBinaryOp(func)->get_rhs_operand();
-    ROSE_ASSERT (isSgMemberFunctionRefExp(func2));
-    return isSgMemberFunctionRefExp(func2)->get_symbol()->get_declaration();
-  } else return 0;
+    if (isSgMemberFunctionRefExp(func2))
+      return isSgMemberFunctionRefExp(func2)->get_symbol()->get_declaration();
+    else
+    {
+      cerr<<"Warning in SageInterface::getDeclarationOfNamedFunction(): rhs operand of dot or arrow operations is not a member function, but a "<<func2->class_name()<<endl;
+    }
+  } 
+
+  return ret;
 }
 
 SgExpression* SageInterface::forallMaskExpression(SgForAllStatement* stmt) {
@@ -6279,7 +6290,6 @@ SageInterface::setOneSourcePositionNull(SgNode *node)
      setSourcePosition(node);
    }
 
-
 // DQ (5/1/2012): Newly renamed function (previous name preserved for backward compatability).
 void
 SageInterface::setSourcePositionPointersToNull(SgNode *node)
@@ -6341,7 +6351,6 @@ SageInterface::setSourcePositionPointersToNull(SgNode *node)
              }
         }
    }
-
 
 // DQ (1/24/2009): Could we change the name to be "setSourcePositionAtRootAndAllChildrenAsTransformation(SgNode *root)"
 void
@@ -6569,7 +6578,7 @@ SageInterface::setSourcePosition(SgNode* node)
 #endif
    }
 
-
+#if 0
 void
 SageInterface::setSourcePositionForTransformation_memoryPool()
    {
@@ -6586,7 +6595,7 @@ SageInterface::setSourcePositionForTransformation_memoryPool()
           setOneSourcePositionForTransformation(*i);
         }
    }
-
+#endif
 
 SgGlobal * SageInterface::getFirstGlobalScope(SgProject *project)
    {
@@ -11202,6 +11211,7 @@ SgAssignInitializer* SageInterface::splitExpression(SgExpression* from, string n
     SgFunctionCallExp* fc = isSgFunctionCallExp(e);
     if (!fc) return false;
     SgFunctionRefExp* fr = isSgFunctionRefExp(fc->get_function());
+    if (fr == NULL) return false;
     return fr->get_symbol()->get_declaration() == decl;
   }
 
@@ -11210,6 +11220,7 @@ SgAssignInitializer* SageInterface::splitExpression(SgExpression* from, string n
     SgFunctionCallExp* fc = isSgFunctionCallExp(e);
     if (!fc) return false;
     SgFunctionRefExp* fr = isSgFunctionRefExp(fc->get_function());
+    if (fr == NULL) return false;
     string name =
   fr->get_symbol()->get_declaration()->get_qualified_name().getString();
     return (name == qualifiedName &&
