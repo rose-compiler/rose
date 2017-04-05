@@ -51,13 +51,14 @@ void RoseVisitor::visit ( SgNode* node)
   {
   }
 
+ //TODO: this function triggers assertion failure.
+#if 0
   if (SgTemplateInstantiationMemberFunctionDecl * temp_decl = isSgTemplateInstantiationMemberFunctionDecl (node))
   {
     cout<<"Found a SgTemplateInstantiationMemberFunctionDecl "<<endl;
-    //TODO: this function triggers assertion failure.
-    // getNonInstantiatonDeclarationForClass (temp_decl);
+    getNonInstantiatonDeclarationForClass (temp_decl);
   }
-
+#endif 
   if (SgFunctionDeclaration* func = isSgFunctionDeclaration (node))
   {
     SgScopeStatement* scope = func->get_scope();
