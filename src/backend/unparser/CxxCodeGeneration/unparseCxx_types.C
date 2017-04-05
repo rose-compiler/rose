@@ -482,7 +482,7 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
      curprint(string("\n/* Top of unparseType: class_name() = ") + type->class_name() + " */ \n");
 #endif
 
-#if 1
+#if 0
      if (info.SkipClassDefinition() != info.SkipEnumDefinition())
         {
           printf ("In unparseType(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
@@ -2362,6 +2362,10 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
                        {
                       // Else if this is a declaration in a variable declaration, then we do want to output a generated name.
                       // We could also mark the declaration for the cases where this is required. See test2012_141.C for this case.
+                         if (edecl->get_parent() == NULL)
+                            {
+                              printf ("WARNING: edecl->get_parent() == NULL: edecl = %p \n",edecl);
+                            }
                          ROSE_ASSERT(edecl->get_parent() != NULL);
                          SgTypedefDeclaration* typedefDeclaration = isSgTypedefDeclaration(edecl->get_parent());
                          if (typedefDeclaration != NULL)
