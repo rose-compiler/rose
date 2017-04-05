@@ -5,8 +5,10 @@
 #include <iostream>
 #include <vector> 
 
+#define SIZE 1000
 int i; 
 
+#ifdef SIZE
 void foo(int i)
 {
 
@@ -19,6 +21,7 @@ void foo(int i)
 
   }
 }
+#endif
 
 // declare a template class
 template <class T>
@@ -45,16 +48,17 @@ T pair<T>::getmax ()
 class Base {
     virtual void f(int);
 };
+#if 1
 struct Derived : Base {
     // this member template does not override B::f
     template <class T> void f(T);
  
     // non-template member override can call the template:
-    void f(int i) override {
+    void f(int i) {
          f<>(i);
     }
 };
-
+#endif
 int main()
 {
   // usage

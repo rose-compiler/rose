@@ -2634,7 +2634,7 @@ SageInterface::generateUniqueNameForUseAsIdentifier_support ( SgDeclarationState
           default:
              {
                printf ("In SageInterface::generateUniqueNameForUseAsIdentifier(): Unsupported declaration = %p = %s \n",declaration,declaration->class_name().c_str());
-               ROSE_ASSERT(false);
+//               ROSE_ASSERT(false);
              }
         }
 
@@ -2951,14 +2951,17 @@ SageInterface::templateDefinitionIsInClass( SgTemplateInstantiationMemberFunctio
   // Alternative approach
   // SgTemplateDeclaration* templateDeclaration = memberFunctionDeclaration->get_templateDeclaration();
      SgDeclarationStatement* templateDeclaration = memberFunctionDeclaration->get_templateDeclaration();
-     printf ("In templateDefinitionIsInClass(): templateDeclaration = %p parent of templateDeclaration = %p = %s \n",templateDeclaration,
-          templateDeclaration->get_parent(),templateDeclaration->get_parent()->class_name().c_str());
+//     printf ("In templateDefinitionIsInClass(): templateDeclaration = %p parent of templateDeclaration = %p = %s \n",templateDeclaration,
+//          templateDeclaration->get_parent(),templateDeclaration->get_parent()->class_name().c_str());
 
-     SgScopeStatement* parentScope = isSgScopeStatement(templateDeclaration->get_parent());
-     if (isSgClassDefinition(parentScope) != NULL)
-        {
-          result = true;
-        }
+    if (templateDeclaration != NULL && templateDeclaration->get_parent() != NULL)
+    {  
+      SgScopeStatement* parentScope = isSgScopeStatement(templateDeclaration->get_parent());
+      if (isSgClassDefinition(parentScope) != NULL)
+         {
+           result = true;
+         }
+    }
 
      return result;
    }
