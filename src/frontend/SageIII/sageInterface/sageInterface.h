@@ -98,9 +98,9 @@ namespace SageInterface
 
         };
 
-  // DQ (4/3/2014): This constucts a data structure that holds analysis information about
-  // the AST that is seperate from the AST.  This is intended to be a general mechanism 
-  // to support analysis information without constantly modifing the IR.
+  // DQ (4/3/2014): This constructs a data structure that holds analysis information about
+  // the AST that is separate from the AST.  This is intended to be a general mechanism 
+  // to support analysis information without constantly modifying the IR.
      DeclarationSets* buildDeclarationSets(SgNode*);
 
 //! An internal counter for generating unique SgName
