@@ -3,8 +3,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 COUNTEREXAMPLES = counterexamples/ltl2haskell.sh counterexamples/Makefile counterexamples/qc.hs counterexamples/log2csv.awk
 EXTRA_DIST = EqualityMaintainer.C Doxyfile $(TESTS) $(COUNTEREXAMPLES)
 
-bin_PROGRAMS = codethorn woodpecker analyterix matcher_demo matcher astinfo
-noinst_PROGRAMS = addressTakenAnalysis matcher_demo astinfo
+bin_PROGRAMS = codethorn woodpecker analyterix matcher_demo matcher scat1 astinfo
+noinst_PROGRAMS = addressTakenAnalysis matcher_demo matcher astinfo
 
 CLEANFILES = 
 
@@ -473,6 +473,11 @@ matcher_DEPENDENCIES=libspray.la
 matcher_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
 matcher__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
 matcher_SOURCES = Timer.cpp matcher.C
+
+scat1_DEPENDENCIES=libspray.la
+scat1_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
+scat1__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
+scat1_SOURCES = Timer.cpp scat1.C
 
 #MS: iterator_test not ingegrated yet
 #iterator_test_SOURCES = iterator_test.C ShowSeq.h
