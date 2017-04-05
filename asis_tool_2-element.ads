@@ -24,7 +24,8 @@ private
          Current_Node : Dot.Node_Stmt.Class; -- Initialized
       end record;
 
-   -- Add an attribute to the current node:
+   -- Add an assign to the first attribute of the current node. If there is no
+   -- first attribute, add one.:
    procedure Add_Attribute
      (This  : in out Class;
       Name  : in     String;

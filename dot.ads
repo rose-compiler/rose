@@ -134,6 +134,8 @@ package Dot is
             Assigns : Assign.List_Of_Class; -- Initialized
          end record;
 
+      Null_Class : constant Class;
+
       procedure Put
         (This : in Class);
 
@@ -145,8 +147,19 @@ package Dot is
       procedure Put
         (These : in List_Of_Class);
 
-      Empty_List : constant List_Of_Class := List_Of_Class'(Lists.Empty_List
-                                                              with null record);
+   -- Add an assign to the first attr of the list. If there is no first attr,
+   -- add one:
+      procedure Add_Assign_To_First_Attr
+        (Attrs : in out List_Of_Class;
+         Name  : in     String;
+         Value : in     String);
+
+      Empty_List : constant List_Of_Class :=
+        List_Of_Class'(Lists.Empty_List with null record);
+   private
+
+      Default_Class : Class;
+      Null_Class    : constant Class := Default_Class;
 
    end Attr;
    -----------------------------------------------------------------------------

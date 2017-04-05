@@ -181,6 +181,20 @@ procedure Demo_Dot is
       Print (Graph, "Two nodes, two attrs, two assigns");
    end;
 
+   procedure Demo_Add_Assign_To_First_Attr is
+      Graph       : Dot.Graphs.Access_Class := new Dot.Graphs.Class;
+      Node_Stmt_2 : Dot.Node_Stmt.Class; -- Initialized
+   begin
+      Graph.Set_Is_Digraph (False);
+      Graph.Set_Is_Strict (False);
+
+      Node_Stmt_2.Node_ID.ID := Dot.To_ID_Type ("node_with_attr");
+      Node_Stmt_2.Attrs.Add_Assign_To_First_Attr ("Today", "Thursday");
+      Node_Stmt_2.Attrs.Add_Assign_To_First_Attr  ("Tomorrow", "Friday");
+      Graph.Append_Stmt (new Dot.Node_Stmt.Class'(Node_Stmt_2));
+      Print (Graph, "One node, one attr, two assigns, using Add_Assign_To_First_Attr");
+   end;
+
 begin
    Demo_Default_Graph;
    Demo_Graph;
@@ -196,4 +210,5 @@ begin
    Demo_Two_Attrs_One_Assign_Each;
    Demo_Two_Attrs_No_Assigns;
    Demo_Two_Nodes_Two_Attrs_Two_Assigns;
+   Demo_Add_Assign_To_First_Attr;
 end Demo_Dot;

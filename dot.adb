@@ -111,6 +111,27 @@ package body Dot is
          Indented.Dedent;
       end Put;
 
+      ------------
+      -- EXPORTED
+      ------------
+      procedure Add_Assign_To_First_Attr
+        (Attrs : in out List_Of_Class;
+         Name  : in     String;
+         Value : in     String)
+      is
+         procedure Add_Assign (Attr : in out Dot.Attr.Class) is
+         begin
+            Attr.Assigns.Append (Name, Value);
+         end Add_Assign;
+      begin
+         if Attrs.Is_Empty then
+            Attrs.Append (Dot.Attr.Null_Class);
+         end if;
+         Attrs.Update_Element
+           (Position => Dot.Attr.First(Attrs),
+            Process  => Add_Assign'Access);
+      end Add_Assign_To_First_Attr;
+
    end Attr;
 
    package body Attr_Stmt is

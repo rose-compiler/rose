@@ -358,11 +358,11 @@ package body Asis_Tool_2.Element is
       Name  : in     String;
       Value : in     String)
    is
-      Attr : Dot.Attr.Class; -- Initialized
    begin
       This.Text.Put_Indented_Line (Name & " => """ & Value & """");
-      Attr.Assigns.Append (Name, Value);
-      This.Current_Node.Attrs.Append (Attr);
+      This.Current_Node.Attrs.Add_Assign_To_First_Attr
+        (Name  => Name,
+         Value => Value);
    end;
 
    -----------
