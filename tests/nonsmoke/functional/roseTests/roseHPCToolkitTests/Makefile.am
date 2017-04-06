@@ -98,9 +98,9 @@ PHONIES += test_attach01 test_attach01a test_prop01 update_xml
 # DQ (3/21/2009): These tests don't appear to run under Cygwin.
 if ROSE_BUILD_OS_IS_CYGWIN
 conditional-check-local:
-	@echo "********************************************************************************************"
+	@echo "****************************************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/roseTests/roseHPCToolkitTests: (commented out all tests for Cygwin) ******"
-	@echo "********************************************************************************************"
+	@echo "****************************************************************************************************************"
 else
 conditional-check-local:
 # DQ (9/10/2009): Skip tests on Debian system to test ROSE (and focus first on where it works!)
@@ -114,9 +114,9 @@ if ROSE_BUILD_C_LANGUAGE_SUPPORT
 #	$(srcdir)/test_attach03.sh
 	env SRC_DIR_PREFIX=$(srcdir)/ $(srcdir)/test_prop01.sh
 	env SRC_DIR_PREFIX=$(srcdir)/ $(srcdir)/test_hl01.sh
-	@echo "******************************************************************************************************"
+	@echo "**************************************************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/roseTests/roseHPCToolkitTests: make check rule complete (terminated normally) ******"
-	@echo "******************************************************************************************************"
+	@echo "**************************************************************************************************************************"
 else
 	@echo "***** SKIPPING TESTS IN ROSE/tests/nonsmoke/functional/roseTests/roseHPCToolkitTests *****"
 	@echo "      because C/C++ language support is not enabled              *****"
@@ -124,6 +124,8 @@ endif
 else
 	@echo "***** SKIPPING TESTS IN ROSE/tests/nonsmoke/functional/roseTests/roseHPCToolkitTests *****"
 endif
+else
+	@echo "***** SKIPPING TESTS IN ROSE/tests/nonsmoke/functional/roseTests/roseHPCToolkitTests *****"
 endif
 endif
 
