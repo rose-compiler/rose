@@ -12207,7 +12207,7 @@ void SageInterface::insertStatementListBefore(SgStatement *targetStmt, const std
 
   //a wrapper for set_expression(), set_operand(), set_operand_exp() etc
   // special concern for lvalue, parent,
-  // todo: warning overwritting existing operands
+  // todo: warning overwriting existing operands
 void SageInterface::setOperand(SgExpression* target, SgExpression* operand)
   {
     ROSE_ASSERT(target);
@@ -12233,11 +12233,15 @@ void SageInterface::setOperand(SgExpression* target, SgExpression* operand)
       case V_SgVarArgStartOneOperandOp:
         isSgVarArgStartOneOperandOp(target)->set_operand_expr(operand);
         break;
+      case V_SgAssignInitializer:
+         isSgAssignInitializer (target)->set_operand(operand);
+         break;
       default:
-        if (isSgUnaryOp(target)!=NULL) isSgUnaryOp(target)->set_operand_i(operand);
+        if (isSgUnaryOp(target)!=NULL) 
+          isSgUnaryOp(target)->set_operand_i(operand);
         else
           {
-            cout<<"SageInterface::setOperand(): unhandled case for target expression of type "
+            cerr<<"\tSageInterface::setOperand(): unhandled case for target expression of type "
                 <<target->class_name()<<endl;
             ROSE_ASSERT(false);
           }
