@@ -1502,6 +1502,15 @@ Facility::get(Importance imp) {
         // constructed.
         std::ostringstream ss;
         ss <<"stream " <<stringifyImportance(imp) <<" in facility " <<this <<" is default constructed";
+
+     // DQ (4/6/2017): This is at least a clue to a user that there is a problem and how to fix it.
+     // Because ROSE developers have integrated the message logging into diagnostic messages, calling 
+     // ROSE_INITIALIZE now appears to be required.  For example, and translator not calling it will 
+     // throw the exception below if the "-I" option is used with a path that does not exist (which is
+     // a cause for a warning only, but not an exception.  The act of outputing just the warnings message
+     // causes the exception.
+        ss << " (likely \"ROSE_INITIALIZE;\" is required as the start of your ROSE-based tool)";
+
         throw std::runtime_error(ss.str());
     }
 
