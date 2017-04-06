@@ -138,7 +138,6 @@ generatedCodeExamples = \
   rose_inputcanonicalLoop.C \
   rose_inputcollectReadWriteVariables.C \
   rose_inputtypeTraits.C \
-  rose_inputinterfaceFunctionCoverage.C \
   rose_inputlivenessAnalysis.C \
   rose_inputreplaceMacroCalls.C \
   rose_inputbuildAbstractHandle.C \
@@ -176,6 +175,12 @@ if !ROSE_USING_GCC_VERSION_LATER_4_9
 generatedCodeExamples += \
   deepDelete.passed 
 endif
+
+# Liao 4/6/2017, GCC 4.2.4 has some issue to pass the coverage test
+if ROSE_USING_GCC_VERSION_LATER_4_4
+generatedCodeExamples += \
+  rose_inputinterfaceFunctionCoverage.C 
+endif 
 
 # Liao 8/17/2010
 #if USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT

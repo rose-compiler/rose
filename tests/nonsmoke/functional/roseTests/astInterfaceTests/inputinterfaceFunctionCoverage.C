@@ -124,7 +124,7 @@ void test_splitVariableDeclaration()
 
 void test_setOperand()
 {
-  int j=12345678;
+  int j=12345;
 
 }
 
