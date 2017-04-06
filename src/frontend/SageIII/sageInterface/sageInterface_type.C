@@ -532,6 +532,7 @@ bool isCopyConstructible(SgType* type)
         case V_SgFunctionType:
         case V_SgMemberFunctionType:
         case V_SgTypeEllipse:
+        case V_SgDeclType:
             return false;
             break;
 
@@ -684,6 +685,7 @@ bool isCopyConstructible(SgType* type)
       case V_SgMemberFunctionType:
       case V_SgReferenceType: //I think C++ reference types cannot be reassigned. 
       case V_SgTypeEllipse:
+      case V_SgDeclType:
         return false;
         break;
 
