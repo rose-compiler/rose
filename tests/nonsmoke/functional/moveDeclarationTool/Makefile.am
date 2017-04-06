@@ -16,7 +16,6 @@ MOVE_DECLS_TESTCODES_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_4.C \
   inputmoveDeclarationToInnermostScope_5.C \
   inputmoveDeclarationToInnermostScope_6.C \
-  inputmoveDeclarationToInnermostScope_7.C \
   inputmoveDeclarationToInnermostScope_8.C \
   inputmoveDeclarationToInnermostScope_9.C \
   inputmoveDeclarationToInnermostScope_10.C \
@@ -39,6 +38,11 @@ MOVE_DECLS_TESTCODES_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_test2015_126.C \
   inputmoveDeclarationToInnermostScope_test2015_127.C
 
+# EDG 4.12 has some issues , only turn on the following tests for EDG 4.9
+if ROSE_USE_EDG_VERSION_4_9
+MOVE_DECLS_TESTCODES_FULLY_SUPPORTED +=
+  inputmoveDeclarationToInnermostScope_7.C
+endif	
 # DQ (12/23/2014): This fails because the normal unparsing (without token unparsing) is failing.
 # inputmoveDeclarationToInnermostScope_test2014_26.C
 
@@ -70,7 +74,6 @@ MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_3.C \
   inputmoveDeclarationToInnermostScope_4.C \
   inputmoveDeclarationToInnermostScope_6.C \
-  inputmoveDeclarationToInnermostScope_7.C \
   inputmoveDeclarationToInnermostScope_8.C \
   inputmoveDeclarationToInnermostScope_9.C \
   inputmoveDeclarationToInnermostScope_10.C \
@@ -268,6 +271,12 @@ MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_test2015_167.C \
   inputmoveDeclarationToInnermostScope_test2015_168.C
 
+# EDG 4.12 has some issues , only turn on the following tests for EDG 4.9
+if ROSE_USE_EDG_VERSION_4_9
+MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED += \
+  inputmoveDeclarationToInnermostScope_7.C
+endif	
+
 # DQ (11/13/2015): Note that inputmoveDeclarationToInnermostScope_test2015_141.C 
 # and inputmoveDeclarationToInnermostScope_test2015_133.C only fail when using 
 # the -rose:merge_decl_assign option.
@@ -422,7 +431,8 @@ else
 if USING_CLANG_COMPILER
 # Exclude this list of files in the case of CLANG compiler.
 	@echo "USING_CLANG_COMPILER == true"
-	@echo "moveDeclarationTool tests using EDG 4.9: Clang backend compiler using EDG 4.12 frontend."
+	@echo "moveDeclarationTool tests using EDG 4.12: Clang backend compiler using EDG 4.12 frontend."
+	@$(MAKE) move_decls_diff_check move_merge_decls_diff_check #test_move_decls_with_token_unparsig # TODO: token based unparsing not yet pass
 else # NOT USING_CLANG_COMPILER
 	@echo "USING_CLANG_COMPILER == false"
 if USING_INTEL_COMPILER

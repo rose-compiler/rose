@@ -12,7 +12,7 @@ AM_CPPFLAGS =  \
         $(ROSE_INCLUDES) \
         -I$(top_srcdir)/src/frontend/SageIII/sageInterface
 # We install a few test programs since they might be useful for external users
-bin_PROGRAMS = loopInterchange loopUnrolling loopTiling loopCollapsingDirective loopCollapsing 
+bin_PROGRAMS = loopInterchange loopUnrolling loopTiling loopCollapsingDirective loopCollapsing rajaChecker 
 #moveDeclarationToInnermostScope is moved to rose/tools/
 
 #not for installation
@@ -100,6 +100,7 @@ loopCollapsingDirective_SOURCES           = loopCollapsingDirective.C
 createAbstractHandles_SOURCES             = createAbstractHandles.C
 buildStatementFromString_SOURCES          = buildStatementFromString.C
 interfaceFunctionCoverage_SOURCES         = interfaceFunctionCoverage.C
+rajaChecker_SOURCES                       = rajaChecker.C
 # libsageInterface.la is included in rose.la already?
 LDADD =  $(ROSE_LIBS)
 
@@ -162,7 +163,8 @@ generatedCodeExamples = \
   rose_inputloopCollapsing_4.C\
   rose_inputloopCollapsing_5.C\
   rose_inputbuildStatementFromString.C \
-  buildJavaPackage.passed 
+  buildJavaPackage.passed \
+  rose_inputrajaChecker.C
 
 # DQ (2/27/2017): Exclude the GNU 4.9 compiler as well (fails on Ubuntu16.04).
 # DQ (2/8/2017): This test will sometimes fail on GNU 5.1 and later compilers.
@@ -541,6 +543,14 @@ $(group3): rose_%: % $(group3_headers)
 		INPUT=$(abspath $<) \
 		$(srcdir)/astInterface.conf $@.passed
 
+# special options for raja checker 
+rose_inputrajaChecker.C: inputrajaChecker.C rajaChecker
+	@$(RTH_RUN) \
+		EXE="$$(pwd)/rajaChecker$(EXEEXT)" \
+		FLAGS="$(TEST_CXXFLAGS) -rose:Cxx11_only" \
+		INPUT=$(abspath $<) \
+		$(srcdir)/astInterface.conf $@.passed
+
 
 # Doesn't produce any output source files
 buildJavaPackage.passed: inputbuildJavaPackage.C buildJavaPackage
@@ -578,7 +588,8 @@ EXTRA_DIST = astInterface.conf inputBlank1.C inputBlank2.C inputfindMain.C input
        inputbuildLabelStatement2.f inputreplaceWithPattern.C inputinsertBeforeUsingCommaOp.C			\
        inputinsertAfterUsingCommaOp.C inputdeepCopy.C inputfixVariableReferences.C  inputcreateAbstractHandles.C \
        inputloopCollapsing_2.C  inputloopCollapsing_3.C  inputloopCollapsing_4.C  inputloopCollapsing_5.C \
-       inputbuildJavaPackage.C inputloopCollapsing_1.C inputbuildStatementFromString.C inputinterfaceFunctionCoverage.C
+       inputbuildJavaPackage.C inputloopCollapsing_1.C inputbuildStatementFromString.C inputinterfaceFunctionCoverage.C \
+       inputrajaChecker.C
 
 # JP (10/4/14): Added the unit tests
 unit-tests:
