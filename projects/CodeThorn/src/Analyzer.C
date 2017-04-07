@@ -723,8 +723,8 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
           
         } else if(variableIdMapping.hasClassType(initDeclVarId)) {
           // not supported yet
-          cerr<<"Error: class type in variable declaration not supported yet."<<endl;
-          exit(1);
+          cerr<<"WARNING: class type in variable declaration not supported yet."<<endl;
+          //exit(1);
         } else {
           // set it to top (=any value possible (uninitialized))
           newPState.setVariableToTop(initDeclVarId);
