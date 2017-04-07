@@ -146,6 +146,10 @@ EXTRA_DIST = test_attach01a.sh \
   read_ast.cc \
   test_highlevel.cc
 
+conditional-check-local:
+	@echo "***** SKIPPING TESTS IN ROSE/tests/nonsmoke/functional/roseTests/roseHPCToolkitTests *****"
+	@echo "      because ROSE is not built with HPC Toolkit support         *****"
+
 endif # ROSE_BUILD_ROSEHPCT
 
 check-local: conditional-check-local
