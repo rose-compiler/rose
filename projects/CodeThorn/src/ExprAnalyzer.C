@@ -664,7 +664,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
       VariableId arrayVarId=_variableIdMapping->variableId(varRefExp);
       // two cases
       if(_variableIdMapping->hasArrayType(arrayVarId)) {
-        arrayPtrValue=AType::ConstIntLattice::createAddressOfArray(arrayVarId,AType::ConstIntLattice(0));
+        arrayPtrValue=AType::ConstIntLattice::createAddressOfArray(arrayVarId);
       } else if(_variableIdMapping->hasPointerType(arrayVarId)) {
         // in case it is a pointer retrieve pointer value
         //cout<<"DEBUG: pointer-array access!"<<endl;
@@ -799,7 +799,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarExp(SgVarRefExp* node,
     //PState pstate2=*pstate; // also removes constness
     if(_variableIdMapping->hasArrayType(varId)) {
       // CODE-POINT-1
-      res.result=AType::ConstIntLattice::createAddressOfArray(varId,AType::ConstIntLattice(0));
+      res.result=AType::ConstIntLattice::createAddressOfArray(varId);
       // for arrays (by default the address is used) return its pointer value (the var-id-code)
       // with a unified pointer representation this case is now equal
       //res.result=AType::ConstIntLattice(varId.getIdCode());

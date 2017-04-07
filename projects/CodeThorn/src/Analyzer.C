@@ -631,14 +631,27 @@ const EState* Analyzer::addToWorkListIfNew(EState estate) {
 }
 
 EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState currentEState, Label targetLabel) {
-  // logger[WHERE] << "we are at "<<astTermWithNullValuesToString(nextNodeToAnalyze1)<<endl;
+
+  /*
+    1) declaration of variable or array
+    - AssignInitializer (e.g. x=1+2;)
+    - AggregateInitializer (e.g. int a[]={1,2,3};)
+    - AggregateInitializer (e.g. int a[5]={1,2,3};)
+    2) if array, determine size of array (from VariableIdMapping)
+    3) if no size is provided, determine it from the initializer list (and add this information to the variableIdMapping - or update the variableIdMapping).
+   */
+
+  //cout<< "DEBUG: DECLARATION:"<<SPRAY::AstTerm::astTermWithNullValuesToString(decl)<<endl;
   SgNode* initName0=decl->get_traversalSuccessorByIndex(1); // get-InitializedName
-  if(initName0) {
+  if(initName0!=nullptr) {
     if(SgInitializedName* initName=isSgInitializedName(initName0)) {
+#if 0
       SgSymbol* initDeclVar=initName->search_for_symbol_from_symbol_table();
       ROSE_ASSERT(initDeclVar);
       VariableId initDeclVarId=getVariableIdMapping()->variableId(initDeclVar);
-
+#else
+      VariableId initDeclVarId=getVariableIdMapping()->variableId(initName);
+#endif
       // not possible to support yet. getIntValue must succeed on declarations.
       if(false && variableValueMonitor.isHotVariable(this,initDeclVarId)) {
         PState newPState=*currentEState.pstate();
@@ -656,46 +669,66 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
         ConstraintSet cset=*currentEState.constraints();
         return createEState(targetLabel,newPState,cset);
       }
-      SgName initDeclVarName=initDeclVar->get_name();
-      string initDeclVarNameString=initDeclVarName.getString();
+      //SgName initDeclVarName=initDeclVar->get_name();
+      //string initDeclVarNameString=initDeclVarName.getString();
       //cout << "INIT-DECLARATION: var:"<<initDeclVarNameString<<endl;
       //cout << "DECLARATION: var:"<<SgNodeHelper::nodeToString(decl)<<endl;
-      SgInitializer* initializer=initName->get_initializer();
-      //assert(initializer);
       ConstraintSet cset=*currentEState.constraints();
-      SgAssignInitializer* assignInitializer=0;
-      if(initializer && isSgAggregateInitializer(initializer)) {
-        // logger[DEBUG] <<"array-initializer found:"<<initializer->unparseToString()<<endl;
-        PState newPState=*currentEState.pstate();
-        int elemIndex=0;
-        SgExpressionPtrList& initList=SgNodeHelper::getInitializerListOfAggregateDeclaration(decl);
-        for(SgExpressionPtrList::iterator i=initList.begin();i!=initList.end();++i) {
-          VariableId arrayElemId=variableIdMapping.variableIdOfArrayElement(initDeclVarId,elemIndex);
-          SgExpression* exp=*i;
-          SgAssignInitializer* assignInit=isSgAssignInitializer(exp);
-          SgIntVal* intValNode=0;
-          if(assignInit && (intValNode=isSgIntVal(assignInit->get_operand_i()))) {
-            int intVal=intValNode->get_value();
-            // logger[DEBUG] <<"initializing array element:"<<arrayElemId.toString()<<"="<<intVal<<endl;
-            newPState.setVariableToValue(arrayElemId,CodeThorn::AValue(AType::ConstIntLattice(intVal)));
-          } else {
-            logger[ERROR] <<"unsupported array initializer value:"<<exp->unparseToString()<<" AST:"<<SPRAY::AstTerm::astTermWithNullValuesToString(exp)<<endl;
-            exit(1);
+      SgInitializer* initializer=initName->get_initializer();
+      if(initializer) {
+        // has aggregate initializer
+        if(isSgAggregateInitializer(initializer)) {
+          // logger[DEBUG] <<"array-initializer found:"<<initializer->unparseToString()<<endl;
+          PState newPState=*currentEState.pstate();
+          int elemIndex=0;
+          SgExpressionPtrList& initList=SgNodeHelper::getInitializerListOfAggregateDeclaration(decl);
+          for(SgExpressionPtrList::iterator i=initList.begin();i!=initList.end();++i) {
+            VariableId arrayElemId=variableIdMapping.variableIdOfArrayElement(initDeclVarId,elemIndex);
+            SgExpression* exp=*i;
+            SgAssignInitializer* assignInit=isSgAssignInitializer(exp);
+            ROSE_ASSERT(assignInit);
+            // TODO: model arbitrary RHS values (use:analyzeAssignRhs (see below))
+            if(SgIntVal* intValNode=isSgIntVal(assignInit->get_operand_i())) {
+              int intVal=intValNode->get_value();
+              // logger[DEBUG] <<"initializing array element:"<<arrayElemId.toString()<<"="<<intVal<<endl;
+              newPState.setVariableToValue(arrayElemId,CodeThorn::AValue(AType::ConstIntLattice(intVal)));
+            } else {
+              logger[ERROR] <<"unsupported array initializer value:"<<exp->unparseToString()<<" AST:"<<SPRAY::AstTerm::astTermWithNullValuesToString(exp)<<endl;
+              exit(1);
+            }
+            elemIndex++;
           }
-          elemIndex++;
+          return createEState(targetLabel,newPState,cset);
+        } else if(SgAssignInitializer* assignInitializer=isSgAssignInitializer(initializer)) {
+          // an single AssignInitializer on the rhs is a constant expression that evaluates to a known value at compile time
+          SgExpression* rhs=assignInitializer->get_operand_i();
+          ROSE_ASSERT(rhs);
+          PState newPState=analyzeAssignRhs(*currentEState.pstate(),initDeclVarId,rhs,cset);
+          return createEState(targetLabel,newPState,cset);
+        } else {
+          logger[ERROR] << "unsupported initializer in declaration: "<<decl->unparseToString()<<endl;
+          exit(1);
         }
-        return createEState(targetLabel,newPState,cset);
-      } else if(initializer && (assignInitializer=isSgAssignInitializer(initializer))) {
-        // logger[DEBUG] << "initializer found:"<<initializer->unparseToString()<<endl;
-        SgExpression* rhs=assignInitializer->get_operand_i();
-        ROSE_ASSERT(rhs);
-        PState newPState=analyzeAssignRhs(*currentEState.pstate(),initDeclVarId,rhs,cset);
-         return createEState(targetLabel,newPState,cset);
       } else {
-        // logger[INFO] << "no initializer (OK)."<<endl;
+        // no initializer (model default cases)
         PState newPState=*currentEState.pstate();
-        //newPState[initDeclVarId]=AType::Top();
-        newPState.setVariableToTop(initDeclVarId);
+        if(variableIdMapping.hasArrayType(initDeclVarId)) {
+          // add default array elements to PState
+          size_t length=variableIdMapping.getSize(initDeclVarId);
+          for(size_t elemIndex=0;elemIndex<length;elemIndex++) {
+            VariableId newArrayElementId=variableIdMapping.variableIdOfArrayElement(initDeclVarId,elemIndex);
+            // set default init value
+            newPState.setVariableToTop(newArrayElementId);
+          }
+          
+        } else if(variableIdMapping.hasClassType(initDeclVarId)) {
+          // not supported yet
+          cerr<<"Error: class type in variable declaration not supported yet."<<endl;
+          exit(1);
+        } else {
+          // set it to top (=any value possible (uninitialized))
+          newPState.setVariableToTop(initDeclVarId);
+        }
         return createEState(targetLabel,newPState,cset);
       }
     } else {
@@ -706,6 +739,8 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
     logger[ERROR] << "in declaration: no variable found ... bailing out."<<endl;
     exit(1);
   }
+  cout<<"WARNING: not initialized name in variable declaration: "<<decl->unparseToString()<<endl;
+  return currentEState;
 }
 
 // this function has been moved to VariableIdMapping: TODO eliminate this function here
@@ -3235,6 +3270,7 @@ list<EState> Analyzer::transferIncDecOp(SgNode* nextNodeToAnalyze2, Edge edge, c
 }
 
 std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edge edge, const EState* estate) {
+  //cout<<"DEBUG: @ "<<nextNodeToAnalyze2->unparseToString()<<endl;
   EState currentEState=*estate;
   SgNode* lhs=SgNodeHelper::getLhs(nextNodeToAnalyze2);
   SgNode* rhs=SgNodeHelper::getRhs(nextNodeToAnalyze2);
@@ -3281,7 +3317,6 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
         // TODO: remove constraints on array-element(s) [currently no constraints are computed for arrays]
         estateList.push_back(createEState(edge.target(),oldPState,oldcset));
       } else {
-        //logger[TRACE] <<"lhs array-access ... "<<AstTerm::astTermWithNullValuesToString(lhs)<<endl;
         SgExpression* arrExp=isSgExpression(SgNodeHelper::getLhs(lhs));
         SgExpression* indexExp=isSgExpression(SgNodeHelper::getRhs(lhs));
         if(SgVarRefExp* varRefExp=isSgVarRefExp(arrExp)) {
@@ -3290,15 +3325,14 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
           AValue arrayPtrValue;
           // two cases
           if(_variableIdMapping->hasArrayType(arrayVarId)) {
-            // has already correct id
-            // nothing to do
+            // create array element 0 (in preparation to have index added, or, if not index is used, it is already the right index (=0).
+            arrayPtrValue=AType::ConstIntLattice::createAddressOfArray(arrayVarId);
           } else if(_variableIdMapping->hasPointerType(arrayVarId)) {
             // in case it is a pointer retrieve pointer value
             // logger[DEBUG]<<"pointer-array access!"<<endl;
             if(pstate2.varExists(arrayVarId)) {
               arrayPtrValue=pstate2[arrayVarId];
               // convert integer to VariableId
-              // TODO (topify mode: does read this as integer)
               if(arrayPtrValue.isTop()||arrayPtrValue.isBot()) {
                 logger[ERROR] <<"pointer value in array access lhs is top or bot. Not supported yet."<<endl;
                 exit(1);
@@ -3317,11 +3351,9 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
           list<SingleEvalResultConstInt> res=exprAnalyzer.evalConstInt(indexExp,currentEState,true);
           ROSE_ASSERT(res.size()==1); // TODO: temporary restriction
           AValue indexValue=(*(res.begin())).value();
-
           AValue arrayPtrPlusIndexValue=AType::ConstIntLattice::operatorAdd(arrayPtrValue,indexValue);
           VariableId arrayVarId2=arrayPtrPlusIndexValue.getVariableId();
           int index2=arrayPtrPlusIndexValue.getIndexIntValue();
-
           if(!exprAnalyzer.checkArrayBounds(arrayVarId2,index2)) {
             cerr<<"Write access: "<<lhs->unparseToString()<<endl;
           }
@@ -3336,7 +3368,8 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
             estateList.push_back(createEState(edge.target(),pstate2,oldcset));
           } else {
             // check that array is constant array (it is therefore ok that it is not in the state)
-            logger[ERROR] <<"Error: lhs array-access index does not exist in state."<<endl;
+            logger[ERROR] <<"Error: lhs array-access index does not exist in state. Array element id:"<<arrayElementId.toString()<<" PState size:"<<pstate2.size()<<endl;
+            logger[ERROR]<<"PState:"<<pstate2.toString(getVariableIdMapping())<<endl;
             exit(1);
           }
         } else {
@@ -3347,6 +3380,7 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
         }
       }
     } else {
+      //cout<<"DEBUG: else (no var, no ptr) ... "<<endl;
       if(getSkipArrayAccesses()&&isSgPointerDerefExp(lhs)) {
         logger[WARN]<<"skipping pointer dereference: "<<lhs->unparseToString()<<endl;
       } else {

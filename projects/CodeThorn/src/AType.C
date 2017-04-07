@@ -74,7 +74,11 @@ AType::ConstIntLattice::ConstIntLattice(unsigned long long int x) {
 }
 
 AType::ConstIntLattice 
-AType::ConstIntLattice::createAddressOfArray(SPRAY::VariableId arrayVariableId, 
+AType::ConstIntLattice::createAddressOfArray(SPRAY::VariableId arrayVarId) {
+  return AType::ConstIntLattice::createAddressOfArrayElement(arrayVarId,AType::ConstIntLattice(0));
+}
+AType::ConstIntLattice 
+AType::ConstIntLattice::createAddressOfArrayElement(SPRAY::VariableId arrayVariableId, 
                                              AType::ConstIntLattice index) {
   AType::ConstIntLattice val;
   if(index.isTop()) {
@@ -363,8 +367,13 @@ string AType::ConstIntLattice::toString() const {
     ss<<getIntValue();
     return ss.str();
   }
+  case PTR: {
+    stringstream ss;
+    ss<<"("<<variableId.toString()<<","<<getIntValue()<<")";
+    return ss.str();
+  }
   default:
-    throw CodeThorn::Exception("Error: ConstIntLattice::toString operation failed.");
+    throw CodeThorn::Exception("Error: ConstIntLattice::toString operation failed. Unknown abstraction type.");
   }
 }
 
