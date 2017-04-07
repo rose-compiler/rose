@@ -1168,14 +1168,6 @@ public:
     void byteRestricted(bool b) { byteRestricted_ = b; }
     /** @} */
 
-    // [Robb Matzke 2015-12-23]: deprecated
-    virtual bool get_byte_restricted() const ROSE_DEPRECATED("use byteRestricted instead") {
-        return byteRestricted();
-    }
-    virtual void set_byte_restricted(bool b) ROSE_DEPRECATED("use byteRestricted instead") {
-        byteRestricted(b);
-    }
-
     /** Memory byte order.
      *  @{ */
     ByteOrder::Endianness get_byteOrder() const { return byteOrder_; }
