@@ -759,13 +759,15 @@ librose-lcov.info: all-lcov.info
         "$(top_srcdir)/src/roseExtensions/roseHPCToolkit/*" \
         "$(top_srcdir)/src/frontend/SageIII/nodeBuildFunctionsForAterms.C" \
         "$(top_srcdir)/src/frontend/SageIII/astVisualization/*" \
-        "$(top_srcdir)/src/frontend/SageIII/sageInterface/sageGeneric.h" \
         "$(top_srcdir)/src/midend/astProcessing/AstProcessing.h" \
          -o librose-lcov.info
 
 # Note: astVisualization is only approriate for small ASTs and for debugging so excluded from code coverage analysis.
 #       sageGeneric.h causes 1274 template instantiations, and we only have a test for one of them (so this file is a problem due to how lcov handles template instantaitions.
 #       DQ (3/30/2017): Removed src/midend/astProcessing/AstProcessing.h file because it's template use is not handled accurately by lcov (wildly incorrect).
+
+# DQ (4/5/2017): This fails with GNU 6.1 and Boost 1.51 and Boost 1.52, but it is now called and should contribute to code coverage so let it back in as a test.
+#       "$(top_srcdir)/src/frontend/SageIII/sageInterface/sageGeneric.h" 
 
 
 librose_lcov_web_pages: librose-lcov.info
