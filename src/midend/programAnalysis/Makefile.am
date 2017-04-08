@@ -13,7 +13,17 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 #else
 #SUBDIRS = staticSingleAssignment ssaUnfilteredCfg systemDependenceGraph
 #endif
-SUBDIRS = staticSingleAssignment ssaUnfilteredCfg
+
+# DQ (4/3/2017): Boost 1.62 is not working due to internal Boost header files issues (Boost group suggestes using alternative version).
+#SUBDIRS = staticSingleAssignment ssaUnfilteredCfg
+SUBDIRS = 
+if !ROSE_USING_BOOST_VERSION_1_62
+# SUBDIRS += staticSingleAssignment
+  SUBDIRS += staticSingleAssignment ssaUnfilteredCfg
+else
+#  SUBDIRS += staticSingleAssignment ssaUnfilteredCfg
+endif
+# SUBDIRS += ssaUnfilteredCfg
 
 ###############################################################################
 # Subdirectory specifics
@@ -125,9 +135,14 @@ libprogramAnalysis_la_SOURCES=\
 # else
 # libprogramAnalysis_la_LIBADD = staticSingleAssignment/libSSA.la ssaUnfilteredCfg/libSSA_UnfilteredCfg.la systemDependenceGraph/libSDG.la
 # endif
-libprogramAnalysis_la_LIBADD = \
-	staticSingleAssignment/libSSA.la \
-	ssaUnfilteredCfg/libSSA_UnfilteredCfg.la
+
+# DQ (4/3/2017): Boost 1.62 is a problem and it is suggested that people not use it.  We disable some minimal parts of ROSE to address this.
+# libprogramAnalysis_la_LIBADD = staticSingleAssignment/libSSA.la ssaUnfilteredCfg/libSSA_UnfilteredCfg.la
+if !ROSE_USING_BOOST_VERSION_1_62
+   libprogramAnalysis_la_LIBADD = staticSingleAssignment/libSSA.la ssaUnfilteredCfg/libSSA_UnfilteredCfg.la
+else
+   libprogramAnalysis_la_LIBADD = 
+endif
 
 pkginclude_HEADERS=\
 	$(mpaCallGraphAnalysis_includeHeaders) \

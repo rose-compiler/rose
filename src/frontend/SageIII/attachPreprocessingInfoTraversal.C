@@ -720,6 +720,11 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
 #endif
                     ROSE_ASSERT(lex_token_stream != NULL);
 
+                    if ( SgProject::get_verbose() > 1 )
+                       {
+                         printf ("DONE: getFortranFixedFormatPreprocessorDirectives() \n");
+                       }
+
                  // Attach the token stream to the AST
                     returnListOfAttributes->set_rawTokenStream(lex_token_stream);
 #if 1

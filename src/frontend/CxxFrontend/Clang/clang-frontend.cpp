@@ -7,10 +7,28 @@
 #include "rose_config.h"
 
 #if 0
+// DQ (4/5/2017): nothing works since we need the version of Clang/LLVM that we are using to be3 compilied without the "-fno-rtti" option.
 // DQ (3/1/2017): Trying to get rid of linker error.
 #ifdef ROSE_USE_CLANG_FRONTEND
-clang::ASTConsumer::typeinfo() {};
-clang::PPCallbacks::typeinfo() {};
+#include "typeinfo"
+// clang::ASTConsumer::typeinfo() {};
+// clang::PPCallbacks::typeinfo() {};
+// extern "C" {
+#if 0
+namespace clang {
+  namespace ASTConsumer {
+     typeinfo() {};
+  }
+  namespace PPCallbacks {
+     typeinfo() {};
+  }
+}
+#endif
+
+void clang::ASTConsumer::type_info() {};
+void clang::PPCallbacks::type_info() {};
+
+// }
 #endif
 #endif
 
