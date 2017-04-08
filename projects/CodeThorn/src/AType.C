@@ -433,6 +433,8 @@ AType::ConstIntLattice AType::ConstIntLattice::operatorUnaryMinus() {
     break;
   case AType::ConstIntLattice::TOP: tmp=Top();break;
   case AType::ConstIntLattice::BOT: tmp=Bot();break;
+  case AType::ConstIntLattice::PTR:
+    throw CodeThorn::Exception("Error: ConstIntLattice operator unary minus on pointer value.");
   default:
     throw CodeThorn::Exception("Error: ConstIntLattice operation unaryMinus failed.");
   }

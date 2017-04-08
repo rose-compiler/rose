@@ -226,6 +226,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
         CASE_EXPR_ANALYZER_EVAL_UNARY_OP(SgCastExp,evalCastOp);
         CASE_EXPR_ANALYZER_EVAL_UNARY_OP(SgBitComplementOp,evalBitwiseComplementOp);
         CASE_EXPR_ANALYZER_EVAL_UNARY_OP(SgMinusOp,evalUnaryMinusOp);
+        CASE_EXPR_ANALYZER_EVAL_UNARY_OP(SgPointerDerefExp,evalDereferenceOp);
       default:
         cerr << "@NODE:"<<node->sage_class_name()<<endl;
         string exceptionInfo=string("Error: evalConstInt::unknown unary operation @")+string(node->sage_class_name());
@@ -790,6 +791,19 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalBitwiseComplementOp(SgBitComple
   return listify(res);
 }
 
+list<SingleEvalResultConstInt> ExprAnalyzer::evalDereferenceOp(SgPointerDerefExp* node, 
+                                                              SingleEvalResultConstInt operandResult, 
+                                                              EState estate, bool useConstraints) {
+  SingleEvalResultConstInt res;
+  res.estate=estate;
+  ConstIntLattice derefOperandValue=operandResult.result;
+  // (varid,idx) => varid'; return estate.pstate()[varid'] || pstate(AValue)
+  res.result=accessState(estate.pstate(), derefOperandValue);
+  res.exprConstraints=operandResult.exprConstraints;
+  return listify(res);
+}
+
+
 list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarExp(SgVarRefExp* node, EState estate, bool useConstraints) {
   SingleEvalResultConstInt res;
   res.init(estate,*estate.constraints(),AType::ConstIntLattice(AType::Bot()));
@@ -854,11 +868,21 @@ bool ExprAnalyzer::checkArrayBounds(VariableId arrayVarId,int accessIndex) {
   // check array bounds
   int arraySize=_variableIdMapping->getSize(arrayVarId);
   if(accessIndex<0||accessIndex>=arraySize) {
+    // this will throw a specific exception that will be caught by the analyzer to report verification results
     cerr<<"Detected out of bounds array access in application: ";
     cerr<<"array size: "<<arraySize<<", array index: "<<accessIndex<<" :: ";
-    //exit(1);
     return false; // fail
   }
   return true; // pass
 }
-   
+
+// compute absolute variableId as encoded in the VariableIdMapping.
+SPRAY::VariableId ExprAnalyzer::resolveToAbsoluteVariableId(ConstIntLattice abstrValue) const {
+  VariableId arrayVarId2=abstrValue.getVariableId();
+  int index2=abstrValue.getIntValue();
+  return _variableIdMapping->variableIdOfArrayElement(arrayVarId2,index2);
+}
+
+AType::ConstIntLattice ExprAnalyzer::accessState(const PState* pState, ConstIntLattice abstrValue) const {
+  return pState->varValue(resolveToAbsoluteVariableId(abstrValue));
+}

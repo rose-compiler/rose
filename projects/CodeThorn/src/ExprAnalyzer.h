@@ -72,7 +72,9 @@ class ExprAnalyzer {
   void setSkipArrayAccesses(bool skip);
   bool getSkipArrayAccesses();
   bool checkArrayBounds(VariableId arrayVarId,int accessIndex);
- private:
+  VariableId resolveToAbsoluteVariableId(AType::ConstIntLattice abstrValue) const;
+  AType::ConstIntLattice accessState(const PState* pState, AType::ConstIntLattice abstrValue) const;
+private:
   //! This function turn a single result into a one-elment list with
   //! this one result. This function is used to combine cases where the result
   //! might be empty or have multiple results as well.
@@ -174,6 +176,9 @@ class ExprAnalyzer {
   list<SingleEvalResultConstInt> evalCastOp(SgCastExp* node, 
                                             SingleEvalResultConstInt operandResult, 
                                             EState estate, bool useConstraints);
+  list<SingleEvalResultConstInt> evalDereferenceOp(SgPointerDerefExp* node, 
+                                                   SingleEvalResultConstInt operandResult, 
+                                                   EState estate, bool useConstraints);
   list<SingleEvalResultConstInt> evalBitwiseComplementOp(SgBitComplementOp* node, 
                                               SingleEvalResultConstInt operandResult, 
                                               EState estate, bool useConstraints);
