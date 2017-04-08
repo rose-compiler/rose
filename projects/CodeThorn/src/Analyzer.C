@@ -938,7 +938,7 @@ std::list<EState> Analyzer::elistify(EState res) {
 
 list<EState> Analyzer::transferEdgeEState(Edge edge, const EState* estate) {
   ROSE_ASSERT(edge.source()==estate->label());
-  cout<<"ESTATE: "<<estate->toString(getVariableIdMapping())<<endl;
+  //cout<<"ESTATE: "<<estate->toString(getVariableIdMapping())<<endl;
   EState currentEState=*estate;
   PState currentPState=*currentEState.pstate();
   ConstraintSet cset=*currentEState.constraints();
