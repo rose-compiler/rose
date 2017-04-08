@@ -11,8 +11,9 @@ using namespace std;
 
 void
 SB_CallGraph::createCallGraph(SgProject* project) {
-
-
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   const char* callFileNameGML = "callgraph.gml";
   const char* callFileNameDOT = "callgraph.dot";
   bool mergedEdges = false;
@@ -60,7 +61,6 @@ SB_CallGraph::createCallGraph(SgProject* project) {
      printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
      ROSE_ASSERT(false);
 #endif
-
-
+#endif
 }
 

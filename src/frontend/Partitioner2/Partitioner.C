@@ -888,8 +888,16 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb) const {
                 }
                 rose_addr_t calleeVa = successor.expr()->get_number();
                 BasicBlock::Ptr calleeBb = basicBlockExists(calleeVa);
-                if (!calleeBb)
+                if (!calleeBb) {
+                    // Avoid never-ending recursive calls to discoverBasicBlock.
+                    // FIXME[Robb P Matzke 2017-02-03]: This only fixes direct recursion to the same block, but the infinite
+                    // recursion can also be triggered by mutually recursive functions. I'm not fixing that at the moment.
+                    if (calleeVa == bb->address()) {
+                        allCalleesPopWithoutReturning = false;
+                        break;
+                    }
                     calleeBb = discoverBasicBlock(calleeVa);
+                }
                 if (!calleeBb) {
                     allCalleesPopWithoutReturning = false;
                     break;
@@ -2087,9 +2095,10 @@ Partitioner::detachFunction(const Function::Ptr &function) {
 
 const CallingConvention::Analysis&
 Partitioner::functionCallingConvention(const Function::Ptr &function,
-                                       const CallingConvention::Definition *dfltCc/*=NULL*/) const {
+                                       const CallingConvention::Definition::Ptr &dfltCc/*=NULL*/) const {
     ASSERT_not_null(function);
     if (!function->callingConventionAnalysis().hasResults()) {
+        function->callingConventionDefinition(CallingConvention::Definition::Ptr());
         BaseSemantics::RiscOperatorsPtr ops = newOperators(MAP_BASED_MEMORY); // map works better for calling convention
         function->callingConventionAnalysis() = CallingConvention::Analysis(newDispatcher(ops));
         function->callingConventionAnalysis().defaultCallingConvention(dfltCc);
@@ -2100,7 +2109,7 @@ Partitioner::functionCallingConvention(const Function::Ptr &function,
 
 CallingConvention::Dictionary
 Partitioner::functionCallingConventionDefinitions(const Function::Ptr &function,
-                                                  const CallingConvention::Definition *dfltCc/*=NULL*/) const {
+                                                  const CallingConvention::Definition::Ptr &dfltCc/*=NULL*/) const {
     const CallingConvention::Analysis &ccAnalysis = functionCallingConvention(function, dfltCc);
     const CallingConvention::Dictionary &archConventions = instructionProvider().callingConventions();
     return ccAnalysis.match(archConventions);
@@ -2110,10 +2119,10 @@ Partitioner::functionCallingConventionDefinitions(const Function::Ptr &function,
 struct CallingConventionWorker {
     const Partitioner &partitioner;
     Sawyer::ProgressBar<size_t> &progress;
-    const CallingConvention::Definition *dfltCc;
+    CallingConvention::Definition::Ptr dfltCc;
 
     CallingConventionWorker(const Partitioner &partitioner, Sawyer::ProgressBar<size_t> &progress,
-                            const CallingConvention::Definition *dfltCc)
+                            const CallingConvention::Definition::Ptr dfltCc)
         : partitioner(partitioner), progress(progress), dfltCc(dfltCc) {}
 
     void operator()(size_t workId, const Function::Ptr &function) {
@@ -2136,15 +2145,45 @@ struct CallingConventionWorker {
 };
 
 void
-Partitioner::allFunctionCallingConvention(const CallingConvention::Definition *dfltCc/*=NULL*/) const {
+Partitioner::allFunctionCallingConvention(const CallingConvention::Definition::Ptr &dfltCc/*=NULL*/) const {
     size_t nThreads = CommandlineProcessing::genericSwitchArgs.threads;
     FunctionCallGraph::Graph cg = functionCallGraph().graph();
     Sawyer::Container::Algorithm::graphBreakCycles(cg);
     Sawyer::ProgressBar<size_t> progress(cg.nVertices(), mlog[MARCH], "call-conv analysis");
-    Sawyer::Message::FacilitiesGuard guard();
+    Sawyer::Message::FacilitiesGuard guard;
     if (nThreads != 1)                                  // lots of threads doing progress reports won't look too good!
         rose::BinaryAnalysis::CallingConvention::mlog[MARCH].disable();
     Sawyer::workInParallel(cg, nThreads, CallingConventionWorker(*this, progress, dfltCc));
+}
+
+void
+Partitioner::allFunctionCallingConventionDefinition(const CallingConvention::Definition::Ptr &dfltCc/*=NULL*/) const {
+    allFunctionCallingConvention(dfltCc);
+
+    // Compute the histogram for calling convention definitions.
+    typedef Sawyer::Container::Map<std::string, size_t> Histogram;
+    Histogram histogram;
+    Sawyer::Container::Map<rose_addr_t, CallingConvention::Dictionary> allMatches;
+    BOOST_FOREACH (const Function::Ptr &function, functions()) {
+        CallingConvention::Dictionary functionCcDefs = functionCallingConventionDefinitions(function, dfltCc);
+        allMatches.insert(function->address(), functionCcDefs);
+        BOOST_FOREACH (const CallingConvention::Definition::Ptr &ccdef, functionCcDefs)
+            ++histogram.insertMaybe(ccdef->name(), 0);
+    }
+
+    // For each function, choose the calling convention definition with the highest frequencey in the histogram.
+    BOOST_FOREACH (const Function::Ptr &function, functions()) {
+        CallingConvention::Dictionary &functionCcDefs = allMatches[function->address()];
+        CallingConvention::Definition::Ptr bestCcDef = dfltCc;
+        if (!functionCcDefs.empty()) {
+            bestCcDef = functionCcDefs[0];
+            for (size_t i=1; i<functionCcDefs.size(); ++i) {
+                if (histogram[functionCcDefs[i]->name()] > histogram[bestCcDef->name()])
+                    bestCcDef = functionCcDefs[i];
+            }
+        }
+        function->callingConventionDefinition(bestCcDef);
+    }
 }
 
 AddressUsageMap

@@ -93,16 +93,16 @@ main(int argc, char *argv[]) {
                 std::cout <<"Serializing\n";
                 std::ostringstream oss;
                 boost::archive::text_oarchive out(oss);
-                out.template register_type<SymbolicExpr::Interior>();
-                out.template register_type<SymbolicExpr::Leaf>();
+                out.register_type<SymbolicExpr::Interior>();
+                out.register_type<SymbolicExpr::Leaf>();
                 out <<expr;
 
                 std::cout <<"Deserializing\n";
                 std::istringstream iss(oss.str());
                 boost::archive::text_iarchive in(iss);
                 SymbolicExpr::Ptr expr2;
-                in.template register_type<SymbolicExpr::Interior>();
-                in.template register_type<SymbolicExpr::Leaf>();
+                in.register_type<SymbolicExpr::Interior>();
+                in.register_type<SymbolicExpr::Leaf>();
                 in >>expr2;
 
                 std::cout <<"Restored value = " <<*expr2 <<"\n\n";

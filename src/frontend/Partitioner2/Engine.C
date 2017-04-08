@@ -1190,6 +1190,7 @@ Engine::partition(const std::string &fileName) {
 }
 
 
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Partitioner mid-level operations
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1824,7 +1825,10 @@ Engine::updateAnalysisResults(Partitioner &partitioner) {
         separator = ", ";
         // Calling convention analysis uses a default convention to break recursion cycles in the CG.
         const CallingConvention::Dictionary &ccDict = partitioner.instructionProvider().callingConventions();
-        partitioner.allFunctionCallingConvention(ccDict.empty() ? NULL : &ccDict.front());
+        CallingConvention::Definition::Ptr dfltCcDef;
+        if (!ccDict.empty())
+            dfltCcDef = ccDict[0];
+        partitioner.allFunctionCallingConventionDefinition(dfltCcDef);
     }
 
     info <<"; total " <<timer <<" seconds\n";

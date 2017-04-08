@@ -329,7 +329,7 @@ HEADER_GET_MANGLED_START
       //! Mangled name support for unparser support
        // SgName get_mangled ( SgUnparse_Info & info );
        // RV (1/31/2006): Removed dependence on SgUnparse_Info.
-          virtual SgName get_mangled (void) const;
+          virtual SgName get_mangled (void) const $ROSE_OVERRIDE;
 
 HEADER_GET_MANGLED_END
 
@@ -360,7 +360,7 @@ HEADER_GET_NAME_START
           This applies to the SgClassType, SgTypedef and the
           SgEnumType (derived from SgNamedType)
        */
-          SgName get_name() const;
+          SgName get_name() const $ROSE_OVERRIDE;
 HEADER_GET_NAME_END
 
 
@@ -399,6 +399,10 @@ HEADER_JAVA_WILDCARD_TYPE_END
 
 HEADER_JAVA_UNION_TYPE_START
           SgJavaUnionType ( const SgJavaUnionType & X );
+
+       // DQ (3/22/2017): Added explicitly to avoid using mechansim reserved for virtual functions 
+       // (part of support for override specification and elimination of those warnings from Clang).
+          SgName get_name() const;
 HEADER_JAVA_UNION_TYPE_END
 
 
@@ -726,7 +730,7 @@ HEADER_MODIFIER_TYPE_START
 #endif
 
       //! Performs final initialization of data members (called by constructors)
-          void post_construction_initialization();
+          void post_construction_initialization() $ROSE_OVERRIDE;
 
 HEADER_MODIFIER_TYPE_END
 
@@ -754,7 +758,7 @@ HEADER_FUNCTION_TYPE_START
        // static SgFunctionType* createType(SgPartialFunctionType *);
 
       //! Performs final initialization of data members (called by constructors)
-          void post_construction_initialization ();
+          void post_construction_initialization () $ROSE_OVERRIDE;
 
       // Get a const list of input types (types of the parameters list) to this function type (from a cost functionType object)
       //! This is a const convience access function to the STL container of types in the child IR node (SgFunctionParameterTypeList* p_argument_list).
@@ -802,7 +806,7 @@ HEADER_MEMBER_FUNCTION_TYPE_START
           SgMemberFunctionType(SgPartialFunctionType *);
 
       //! Performs final initialization of data members (called by constructors)
-          void post_construction_initialization();
+          void post_construction_initialization() $ROSE_OVERRIDE;
 
 #if 1
       //! Enum for const and volatile function modifiers
@@ -867,7 +871,7 @@ HEADER_MEMBER_FUNCTION_TYPE_START
 HEADER_MEMBER_FUNCTION_TYPE_END
 
 HEADER_PARTIAL_FUNCTION_TYPE_START
-          void post_construction_initialization ();
+          void post_construction_initialization () $ROSE_OVERRIDE;
 HEADER_PARTIAL_FUNCTION_TYPE_END
 
 HEADER_TYPEDEF_TYPE_START
@@ -889,12 +893,12 @@ HEADER_TYPE_COMPLEX_TYPE_START
       //! function returns example of type
        // static $CLASSNAME* createType(SgType* base_type);
           static $CLASSNAME* createType(SgType* base_type, SgExpression* optional_fortran_type_kind = NULL);
-      // SKW (3/1/2011): Added these explicit declarations since we no longer build them automatically
-          virtual SgExpression* get_type_kind () const;
-          virtual void set_type_kind ( SgExpression* type_kind );
+       // SKW (3/1/2011): Added these explicit declarations since we no longer build them automatically
+          virtual SgExpression* get_type_kind () const $ROSE_OVERRIDE;
+          virtual void set_type_kind ( SgExpression* type_kind ) $ROSE_OVERRIDE;
 HEADER_TYPE_COMPLEX_TYPE_END
 
-//SK(08/20/2015): SgTypeTuple implementation
+// SK(08/20/2015): SgTypeTuple implementation
 HEADER_TYPE_TUPLE_START
     SgTypePtrList& get_types();
     const SgTypePtrList& get_types() const;
@@ -916,7 +920,7 @@ HEADER_TYPE_STRING_TYPE_START
           static $CLASSNAME* createType(SgExpression*, SgExpression* optional_fortran_type_kind = NULL);
 
       //! Performs final initialization of data members (called by constructors)
-          void post_construction_initialization();
+          void post_construction_initialization() $ROSE_OVERRIDE;
 HEADER_TYPE_STRING_TYPE_END
 
 HEADER_TYPE_DEFAULT_TYPE_START
@@ -954,6 +958,16 @@ HEADER_TYPEOF_TYPE_START
           void set_base_type(SgType* base_type);
 
 HEADER_TYPEOF_TYPE_END
+
+
+HEADER_ARRAY_TYPE_START
+
+       // DQ (3/22/2017): I would like to remove this function if possible.
+       // DQ (3/22/2017): Added the get_name() function prototype directly so that 
+       // it could be differentiated from where it is a virtual function.
+          SgName get_name() const;
+
+HEADER_ARRAY_TYPE_END
 
 
 // #########################################################
@@ -5613,6 +5627,10 @@ SOURCE_PARTIAL_FUNCTION_TYPE_END
 
 
 SOURCE_ARRAY_TYPE_START
+
+#if 1
+// DQ (3/22/2017): I would like to remove this function if possible (it is not sufficiently general).
+// Note that this is used within ROSE (which might be worth checking out in more detail later).
 SgName
 SgArrayType::get_name(void) const {
     string dimensions = "[]";
@@ -5672,6 +5690,7 @@ SgArrayType::get_name(void) const {
 
     return SgName(name);
 }
+#endif
 
 SgName
 SgArrayType::get_qualified_name(void) const {

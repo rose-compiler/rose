@@ -170,7 +170,11 @@ public:
 
 /** Base class for symbolic expression nodes.
  *
- *  Every node has a specified number of significant bits that is constant over the life of the node.
+ *  Every node has a specified width measured in bits that is constant over the life of the node. The width is always a
+ *  concrete, positive value stored in a 64-bit field.  The corollary of this invariant is that if an expression's result
+ *  width depends on the @em values of some of its arguments, those arguments must be concrete and not wider than 64 bits. Only
+ *  a few operators fall into this category since most expressions depend on the @em widths of their arguments rather than the
+ *  @em values of their arguments.
  *
  *  In order that subtrees can be freely assigned as children of other nodes (provided the structure as a whole remains a
  *  lattice and not a graph with cycles), two things are required: First, tree nodes are always referenced through
@@ -766,17 +770,17 @@ public:
     /** @} */
 
     /* see superclass, where these are pure virtual */
-    virtual bool mustEqual(const Ptr &other, SMTSolver*);
-    virtual bool mayEqual(const Ptr &other, SMTSolver*);
-    virtual bool isEquivalentTo(const Ptr &other);
-    virtual int compareStructure(const Ptr& other);
-    virtual Ptr substitute(const Ptr &from, const Ptr &to);
-    virtual bool isNumber() {
+    virtual bool mustEqual(const Ptr &other, SMTSolver*) ROSE_OVERRIDE;
+    virtual bool mayEqual(const Ptr &other, SMTSolver*) ROSE_OVERRIDE;
+    virtual bool isEquivalentTo(const Ptr &other) ROSE_OVERRIDE;
+    virtual int compareStructure(const Ptr& other) ROSE_OVERRIDE;
+    virtual Ptr substitute(const Ptr &from, const Ptr &to) ROSE_OVERRIDE;
+    virtual bool isNumber() ROSE_OVERRIDE {
         return false; /*if it's known, then it would have been folded to a leaf*/
     }
-    virtual uint64_t toInt() { ASSERT_forbid2(true, "not a number"); return 0;}
-    virtual VisitAction depthFirstTraversal(Visitor&);
-    virtual uint64_t nNodes() { return nnodes_; }
+    virtual uint64_t toInt() ROSE_OVERRIDE { ASSERT_forbid2(true, "not a number"); return 0;}
+    virtual VisitAction depthFirstTraversal(Visitor&) ROSE_OVERRIDE;
+    virtual uint64_t nNodes() ROSE_OVERRIDE { return nnodes_; }
 
     /** Returns the number of children. */
     size_t nChildren() { return children_.size(); }

@@ -166,7 +166,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     const CallingConvention::Dictionary &ccDefs = partitioner.instructionProvider().callingConventions();
     P2::DataFlow::MergeFunction merge(cpu_);
     TransferFunction xfer(this);
-    xfer.defaultCallingConvention(ccDefs.empty() ? NULL : &ccDefs.front());
+    xfer.defaultCallingConvention(ccDefs.empty() ? CallingConvention::Definition::Ptr() : ccDefs.front());
     DfEngine dfEngine(dfCfg, xfer, merge);
     size_t maxIterations = dfCfg.nVertices() * 5;       // arbitrary
     dfEngine.maxIterations(maxIterations);

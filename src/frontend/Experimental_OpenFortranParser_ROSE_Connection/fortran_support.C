@@ -19,7 +19,7 @@
 using namespace std;
 using namespace rose;
 
-#define DEBUG_ROSE_EXPERIMENTAL 1
+#define DEBUG_ROSE_EXPERIMENTAL 0
 
 #define USE_EXECUTABLE_FROM_PATH 1
 
@@ -31,11 +31,6 @@ experimental_openFortranParser_main(int argc, char **argv)
      int i, err;
      string parse_table;
      SgUntypedFile* untypedFile = NULL;
-
-
-#if DEBUG_ROSE_EXPERIMENTAL
-     printf ("In experimental_openFortranParser_main(): Put the call to the new SDF Open Fortran Parser here... argc = %d \n",argc);
-#endif
 
      if (argc < 4)
         {
@@ -102,25 +97,18 @@ experimental_openFortranParser_main(int argc, char **argv)
           return 1;
         }
 
-#if DEBUG_ROSE_EXPERIMENTAL
-     printf ("In experimental_openFortranParser_main(): filenameWithPath = %s \n",filenameWithPath.c_str());
-#endif
-
      string filenameWithoutPath = StringUtility::stripPathFromFileName(filenameWithPath);
 
 #if DEBUG_ROSE_EXPERIMENTAL
      printf ("In experimental_openFortranParser_main(): filenameWithPath    = %s \n",filenameWithPath.c_str());
      printf ("In experimental_openFortranParser_main(): filenameWithoutPath = %s \n",filenameWithoutPath.c_str());
-     printf ("In experimental_openFortranParser_main(): commandString = %s \n",commandString.c_str());
 #endif
 
      commandString += "-i ";
      commandString += filenameWithPath;
 
-  // commandString += "/home/dquinlan/ROSE/ROSE_CompileTree/git-LINUX-64bit-4.4.7-dq-edg49-fortran-rc-aterm/src/3rdPartyLibraries/experimental-fortran-parser/stratego_transformations/";
-  // commandString += "/home/dquinlan/ROSE/ROSE_CompileTree/git-LINUX-64bit-4.8.3-rose_development-rc-experimental_fortran_frontend/src/3rdPartyLibraries/experimental-fortran-parser/stratego_transformations/";
-  // commandString += ROSE_AUTOMAKE_TOP_BUILDDIR + "/src/3rdPartyLibraries/experimental-fortran-parser/stratego_transformations/";
-     string path_to_fortran_stratego_transformations_directory = findRoseSupportPathFromBuild("src/3rdPartyLibraries/experimental-fortran-parser/stratego_transformations", "bin");
+     string path_to_fortran_stratego_transformations_directory
+                    = findRoseSupportPathFromBuild("src/3rdPartyLibraries/experimental-fortran-parser/stratego_transformations", "bin");
 
   // Add pipe to begin transforming OFP's ATerm parse tree
      commandString += " | ";
@@ -225,14 +213,8 @@ experimental_openFortranParser_main(int argc, char **argv)
 
           if (traverse_SgUntypedFile(SgUntypedFile_term, &untypedFile) != ATtrue || untypedFile == NULL)
              {
-               fprintf(stderr, "\nFAILED: in experimental_openFortranParser_main(), unable to parse file %s\n\n", filenameWithoutPath.c_str());
+               fprintf(stderr, "\nFAILED: in experimental_openFortranParser_main(), unable to traverse file %s\n\n", filenameWithoutPath.c_str());
                return 1;
-             }
-          else
-             {
-#if DEBUG_ROSE_EXPERIMENTAL
-               printf ("In experimental_openFortranParser_main(): successfully traversed ATerms untypedFile = %p \n",untypedFile);
-#endif
              }
         }
 

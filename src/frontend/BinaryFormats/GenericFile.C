@@ -13,8 +13,6 @@
 
 using namespace rose;
 
-/** Non-parsing constructor. If you're creating an executable from scratch then call this function and you're done. But if
- *  you're parsing an existing file then call parse() in order to map the file's contents into memory for parsing. */
 void
 SgAsmGenericFile::ctor()
 {
@@ -35,7 +33,6 @@ SgAsmGenericFile::ctor()
     p_holes->set_parent(this);
 }
 
-/** Loads file contents into memory */
 SgAsmGenericFile *
 SgAsmGenericFile::parse(std::string fileName)
 {
@@ -75,7 +72,6 @@ SgAsmGenericFile::parse(std::string fileName)
     return this;
 }
 
-/* Destructs by closing and unmapping the file and destroying all sections, headers, etc. */
 SgAsmGenericFile::~SgAsmGenericFile() 
 {
     /* AST child nodes have already been deleted if we're called from SageInterface::deleteAST() */
@@ -90,14 +86,12 @@ SgAsmGenericFile::~SgAsmGenericFile()
         close(p_fd);
 }
 
-/** Returns original size of file, based on file system */
 rose_addr_t
 SgAsmGenericFile::get_orig_size() const
 {
     return p_data.size();
 }
 
-/** Returns current size of file based on section with highest ending address. */
 rose_addr_t
 SgAsmGenericFile::get_current_size() const
 {
@@ -109,7 +103,6 @@ SgAsmGenericFile::get_current_size() const
     return retval;
 }
 
-/** Marks part of a file as having been referenced if we are tracking references. */
 void
 SgAsmGenericFile::mark_referenced_extent(rose_addr_t offset, rose_addr_t size)
 {
@@ -120,7 +113,6 @@ SgAsmGenericFile::mark_referenced_extent(rose_addr_t offset, rose_addr_t size)
     }
 }
 
-/** Returns the parts of the file that have never been referenced. */
 const AddressIntervalSet &
 SgAsmGenericFile::get_unreferenced_extents() const
 {
@@ -131,11 +123,6 @@ SgAsmGenericFile::get_unreferenced_extents() const
     return *p_unreferenced_cache;
 }
 
-/** Reads data from a file. Reads up to @p size bytes of data from the file beginning at the specified byte offset (measured
- *  from the beginning of the file), placing the result in dst_buf, and returning the number of bytes read. If the number of
- *  bytes read is less than @p size then one of two things happen: if @p strict is true (the default) then an
- *  SgAsmExecutableFileFormat::ShortRead exception is thrown; otherwise @p dst_buf is zero padded so that exactly @p size
- *  bytes are always initialized. */
 size_t
 SgAsmGenericFile::read_content(rose_addr_t offset, void *dst_buf, rose_addr_t size, bool strict)
 {
@@ -159,10 +146,6 @@ SgAsmGenericFile::read_content(rose_addr_t offset, void *dst_buf, rose_addr_t si
     return retval;
 }
 
-/** Reads data from a file. Reads up to @p size bytes of data starting at the specified (absolute) virtual address. The @p map
- *  specifies how virtual addresses are mapped to file offsets.  As bytes are read, if we encounter a virtual address that is
- *  not mapped we stop reading and do one of two things: if @p strict is set then a MemoryMap::NotMapped exception is thrown;
- *  otherwise the rest of the @p dst_buf is zero filled and the number of bytes read (not filled) is returned. */
 size_t
 SgAsmGenericFile::read_content(const MemoryMap *map, rose_addr_t start_va, void *dst_buf, rose_addr_t size, bool strict)
 {
@@ -197,11 +180,6 @@ SgAsmGenericFile::read_content(const MemoryMap *map, rose_addr_t start_va, void 
     return ncopied;
 }
 
-/** Reads a string from a file. Returns the string stored at the specified (absolute) virtual address. The returned string
- *  contains the bytes beginning at the starting virtual address and continuing until we reach a NUL byte or an address
- *  which is not mapped. If we reach an address which is not mapped then one of two things happen: if @p strict is set then a
- *  MemoryMap::NotMapped exception is thrown; otherwise the string is simply terminated. The returned string does not include
- *  the NUL byte. */
 std::string
 SgAsmGenericFile::read_content_str(const MemoryMap *map, rose_addr_t va, bool strict)
 {
@@ -226,11 +204,6 @@ SgAsmGenericFile::read_content_str(const MemoryMap *map, rose_addr_t va, bool st
     }
 }
 
-/** Reads a string from a file. Returns the NUL-terminated string stored at the specified relative virtual address. The
- *  returned string contains the bytes beginning at the specified starting file offset and continuing until we reach a NUL
- *  byte or an invalid file offset. If we reach an invalid file offset one of two things happen: if @p strict is set (the
- *  default) then an SgAsmExecutableFileFormat::ShortRead exception is thrown; otherwise the string is simply terminated. The
- *  returned string does not include the NUL byte. */
 std::string
 SgAsmGenericFile::read_content_str(rose_addr_t offset, bool strict)
 {
@@ -255,10 +228,6 @@ SgAsmGenericFile::read_content_str(rose_addr_t offset, bool strict)
     }
 }
 
-/** Returns a vector that points to part of the file content without actually ever reading or otherwise referencing the file
- *  content until the vector elements are referenced. If the desired extent falls entirely or partially outside the range
- *  of data known to the file then throw an SgAsmExecutableFileFormat::ShortRead exception. This function never updates
- *  reference tracking lists for the file. */
 SgFileContentList
 SgAsmGenericFile::content(rose_addr_t offset, rose_addr_t size)
 {
@@ -269,7 +238,6 @@ SgAsmGenericFile::content(rose_addr_t offset, rose_addr_t size)
     }
 }
 
-/** Adds a new header to the file. This is called implicitly by the header constructor */
 void
 SgAsmGenericFile::add_header(SgAsmGenericHeader *header) 
 {
@@ -286,7 +254,6 @@ SgAsmGenericFile::add_header(SgAsmGenericHeader *header)
     p_headers->get_headers().push_back(header);
 }
 
-/** Removes a header from the header list in a file */
 void
 SgAsmGenericFile::remove_header(SgAsmGenericHeader *hdr)
 {
@@ -300,7 +267,6 @@ SgAsmGenericFile::remove_header(SgAsmGenericHeader *hdr)
     }
 }
 
-/** Adds a new hole to the file. This is called implicitly by the hole constructor */
 void
 SgAsmGenericFile::add_hole(SgAsmGenericSection *hole)
 {
@@ -317,7 +283,6 @@ SgAsmGenericFile::add_hole(SgAsmGenericSection *hole)
     p_holes->get_sections().push_back(hole);
 }
 
-/** Removes a hole from the list of holes in a file */
 void
 SgAsmGenericFile::remove_hole(SgAsmGenericSection *hole)
 {
@@ -331,7 +296,6 @@ SgAsmGenericFile::remove_hole(SgAsmGenericSection *hole)
     }
 }
 
-/** Returns list of all sections in the file (including headers, holes, etc). */
 SgAsmGenericSectionPtrList
 SgAsmGenericFile::get_sections(bool include_holes) const
 {
@@ -352,7 +316,6 @@ SgAsmGenericFile::get_sections(bool include_holes) const
     return retval;
 }
 
-/** Returns list of all sections in the file that are memory mapped, including headers and holes. */
 SgAsmGenericSectionPtrList
 SgAsmGenericFile::get_mapped_sections() const
 {
@@ -365,7 +328,6 @@ SgAsmGenericFile::get_mapped_sections() const
     return retval;
 }
 
-/** Returns sections having specified ID across all headers, including headers and holes. */
 SgAsmGenericSectionPtrList
 SgAsmGenericFile::get_sections_by_id(int id) const
 {
@@ -387,8 +349,6 @@ SgAsmGenericFile::get_sections_by_id(int id) const
     return retval;
 }
 
-/** Returns the pointer to section with the specified ID across all headers only if there's exactly one match. Headers and
- *  holes are included in the results. */
 SgAsmGenericSection *
 SgAsmGenericFile::get_section_by_id(int id, size_t *nfound/*optional*/) const
 {
@@ -397,7 +357,6 @@ SgAsmGenericFile::get_section_by_id(int id, size_t *nfound/*optional*/) const
     return possible.size()==1 ? possible[0] : NULL;
 }
 
-/** Returns all sections having specified name across all headers, including headers and holes. */
 SgAsmGenericSectionPtrList
 SgAsmGenericFile::get_sections_by_name(std::string name, char sep/*or NUL*/) const
 {
@@ -439,9 +398,6 @@ SgAsmGenericFile::get_sections_by_name(std::string name, char sep/*or NUL*/) con
     return retval;
 }
 
-/** Returns pointer to the section with the specified name, or NULL if there isn't exactly one match. Any characters in the name
- *  after the first occurrence of SEP are ignored (default is NUL). For instance, if sep=='$' then the following names are all
- *  equivalent: .idata, .idata$, and .idata$1 */
 SgAsmGenericSection *
 SgAsmGenericFile::get_section_by_name(const std::string &name, char sep/*or NUL*/, size_t *nfound/*optional*/) const
 {
@@ -450,7 +406,6 @@ SgAsmGenericFile::get_section_by_name(const std::string &name, char sep/*or NUL*
     return possible.size()==1 ? possible[0] : NULL;
 }
 
-/** Returns all sections that contain all of the specified portion of the file across all headers, including headers and holes. */
 SgAsmGenericSectionPtrList
 SgAsmGenericFile::get_sections_by_offset(rose_addr_t offset, rose_addr_t size) const
 {
@@ -476,8 +431,6 @@ SgAsmGenericFile::get_sections_by_offset(rose_addr_t offset, rose_addr_t size) c
     return retval;
 }
 
-/** Returns single section that contains all of the specified portion of the file across all headers, including headers and
- *  holes. */
 SgAsmGenericSection *
 SgAsmGenericFile::get_section_by_offset(rose_addr_t offset, rose_addr_t size, size_t *nfound) const
 {
@@ -486,8 +439,6 @@ SgAsmGenericFile::get_section_by_offset(rose_addr_t offset, rose_addr_t size, si
     return possible.size()==1 ? possible[0] : NULL;
 }
 
-/** Returns all sections that are mapped to include the specified relative virtual address across all headers, including
- *  headers and holes. This uses the preferred mapping of the section rather than the actual mapping. */
 SgAsmGenericSectionPtrList
 SgAsmGenericFile::get_sections_by_rva(rose_addr_t rva) const
 {
@@ -511,8 +462,6 @@ SgAsmGenericFile::get_sections_by_rva(rose_addr_t rva) const
     return retval;
 }
 
-/** Returns single section that is mapped to include the specified relative virtual file address across all headers, including
- *  headers and holes. */
 SgAsmGenericSection *
 SgAsmGenericFile::get_section_by_rva(rose_addr_t rva, size_t *nfound/*optional*/) const
 {
@@ -521,8 +470,6 @@ SgAsmGenericFile::get_section_by_rva(rose_addr_t rva, size_t *nfound/*optional*/
     return possible.size()==1 ? possible[0] : NULL;
 }
 
-/** Returns all sections that are mapped to include the specified virtual address across all headers, including headers and
- *  holes. This uses the preferred mapping rather than the actual mapping. */
 SgAsmGenericSectionPtrList
 SgAsmGenericFile::get_sections_by_va(rose_addr_t va) const
 {
@@ -551,8 +498,6 @@ SgAsmGenericFile::get_sections_by_va(rose_addr_t va) const
     return retval;
 }
 
-/** Returns single section that is mapped to include the specified virtual address across all headers. See also
- *  get_best_section_by_va(). */
 SgAsmGenericSection *
 SgAsmGenericFile::get_section_by_va(rose_addr_t va, size_t *nfound/*optional*/) const
 {
@@ -561,9 +506,6 @@ SgAsmGenericFile::get_section_by_va(rose_addr_t va, size_t *nfound/*optional*/) 
     return possible.size()==1 ? possible[0] : NULL;
 }
 
-/** Similar to get_section_by_va() except when more than one section contains the specified virtual address we choose the
- *  "best" one. All candidates must map the virtual address to the same file address or else we fail (return null and number of
- *  candidates). See code below for definition of "best". */
 SgAsmGenericSection *
 SgAsmGenericFile::get_best_section_by_va(rose_addr_t va, size_t *nfound/*optional*/) const
 {
@@ -573,14 +515,6 @@ SgAsmGenericFile::get_best_section_by_va(rose_addr_t va, size_t *nfound/*optiona
     return best_section_by_va(candidates, va);
 }
 
-/** Definition for "best" as used by SgAsmGenericFile::get_best_section_by_va() and
- *  SgAsmGenericHeader::get_best_section_by_va().  The specified list of sections is scanned and the best one containing the
- *  specified virtual address is returned.  The operation is equivalent to the successive elimination of bad sections: first
- *  eliminate all sections that do not contain the virtual address.  If more than one remains, eliminate all but the smallest.
- *  If two or more are tied in size and at least one has a name, eliminate those that don't have names.  If more than one
- *  section remains, return the section that is earliest in the specified list of sections.  Return the null pointer if no
- *  section contains the specified virtual address, or if any two sections that contain the virtual address map it to different
- *  parts of the underlying binary file. */
 SgAsmGenericSection *
 SgAsmGenericFile::best_section_by_va(const SgAsmGenericSectionPtrList &sections, rose_addr_t va)
 {
@@ -607,8 +541,6 @@ SgAsmGenericFile::best_section_by_va(const SgAsmGenericSectionPtrList &sections,
     return best;
 }
 
-/** Appears to be the same as SgAsmGenericFile::get_best_section_by_va() except it excludes sections named "ELF Segment Table".
- *  Perhaps it should be rewritten in terms of the other. (RPM 2008-09-02) */
 SgAsmGenericSection *
 SgAsmGenericFile::get_best_possible_section_by_va(rose_addr_t va)
 {
@@ -685,8 +617,6 @@ SgAsmGenericFile::get_best_possible_section_by_va(rose_addr_t va)
      return best;
 }
 
-/** Given a file address, return the file offset of the following section(s). If there is no following section then return an
- *  address of -1 (when signed) */
 rose_addr_t
 SgAsmGenericFile::get_next_section_offset(rose_addr_t offset)
 {
@@ -699,42 +629,6 @@ SgAsmGenericFile::get_next_section_offset(rose_addr_t offset)
     return found;
 }
 
-/** Shifts (to a higher offset) and/or enlarges the specified section, S, taking all other sections into account. The positions
- *  of sections are based on their preferred virtual mappings rather than the actual mapping.
- *
- *  The neighborhood(S) is S itself and the set of all sections that overlap or are adjacent to the neighborhood of S,
- *  recursively.
- *
- *  The address space can be partitioned into three categories:
- *     - Section: part of an address space that is referenced by an SgAsmGenericSection other than a "hole" section.
- *     - Hole:    part of an address space that is referenced only by a "hole" section.
- *     - Unref:   part of an address space that is not used by any section, including any "hole" section.
- * 
- *  The last two categories define parts of the address space that can be optionally elastic--they expand or contract
- *  to take up slack or provide space for neighboring sections. This is controlled by the "elasticity" argument.
- *
- *  Note that when elasticity is ELASTIC_HOLE we simply ignore the "hole" sections, effectively removing their addresses from
- *  the range of addresses under consideration. This avoids complications that arise when a "hole" overlaps with a real section
- *  (due to someone changing offsets in an incompatible manner), but causes the hole offset and size to remain fixed.
- *  (FIXME RPM 2008-10-20)
- *
- *  When section S is shifted by 'Sa' bytes and/or enlarged by 'Sn' bytes, other sections are affected as follows:
- *     Cat L:  Not affected
- *     Cat R:  Shifted by Sa+Sn if they are in neighborhood(S). Otherwise the amount of shifting depends on the size of the
- *             hole right of neighborhood(S).
- *     Cat C:  Shifted Sa and enlarged Sn.
- *     Cat O:  If starting address are the same: Shifted Sa
- *             If starting address not equal:    Englarged Sa+Sn
- *     Cat I:  Shifted Sa, not enlarged
- *     Cat B:  Not shifted, but enlarged Sn
- *     Cat E:  Shifted Sa and enlarged Sn
- *
- *  Generally speaking, the "space" argument should be SgAsmGenericFile::ADDRSP_ALL in order to adjust both file and memory
- *  offsets and sizes in a consistent manner.
- *
- *  To change the address and/or size of S without regard to other sections in the same file, use set_offset() and set_size()
- *  (for file address space) or set_mapped_preferred_rva() and set_mapped_size() (for memory address space).
- */
 void
 SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr_t sn, AddressSpace space, Elasticity elasticity)
 {
@@ -1079,10 +973,6 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr
     if (debug) fprintf(stderr, "%s    -- END --\n", p);
 }
 
-/** Print text file containing all known information about a binary file.  If in_cwd is set, then the file is created in the
- *  current working directory rather than the directory containing the binary file (the default is to create the file in the
- *  current working directory).  If @p ext is non-null then these characters are added to the end of the binary file name. The
- *  default null pointer causes the string ".dump" to be appended to the file name. */
 void
 SgAsmGenericFile::dump_all(bool in_cwd, const char *ext)
 {
@@ -1097,7 +987,6 @@ SgAsmGenericFile::dump_all(bool in_cwd, const char *ext)
     dump_all(dump_name);
 }    
 
-/** Print text file containing all known information about a binary file. */
 void
 SgAsmGenericFile::dump_all(const std::string &dump_name)
 {
@@ -1137,7 +1026,6 @@ SgAsmGenericFile::dump_all(const std::string &dump_name)
     fclose(dumpFile);
 }
 
-/* Print basic info about the sections of a file */
 void
 SgAsmGenericFile::dump(FILE *f) const
 {
@@ -1262,9 +1150,6 @@ SgAsmGenericFile::dump(FILE *f) const
     }
 }
 
-/** Synthesizes "hole" sections to describe the parts of the file that are not yet referenced by other sections. Note that holes
- *  are used to represent parts of the original file data, before sections were modified by walking the AST (at this time it is
- *  not possible to create a hole outside the original file content). */
 void
 SgAsmGenericFile::fill_holes()
 {
@@ -1292,7 +1177,6 @@ SgAsmGenericFile::fill_holes()
     }
 }
 
-/** Deletes "hole" sections */
 void
 SgAsmGenericFile::unfill_holes()
 {
@@ -1308,7 +1192,6 @@ SgAsmGenericFile::unfill_holes()
     ROSE_ASSERT(get_holes()->get_sections().size()==0);
 }
 
-/** Call this before unparsing to make sure everything is consistent. */
 void
 SgAsmGenericFile::reallocate()
 {
@@ -1330,10 +1213,6 @@ SgAsmGenericFile::reallocate()
     } while (reallocated);
 }
 
-/** Mirror image of parsing an executable file. The result (unless the AST has been modified) should be identical to the
- *  original file.  If the file's neuter property is true, then rather than creating a binary file, the output will
- *  contain a note indicating that the neuter property is set.  This is intended to prevent ASTs that represent malicious
- *  binaries from accidently being used to create the binary. */
 void
 SgAsmGenericFile::unparse(std::ostream &f) const
 {
@@ -1374,7 +1253,6 @@ SgAsmGenericFile::unparse(std::ostream &f) const
         extend_to_eof(f);
 }
 
-/** Extend the output file by writing the last byte if it hasn't been written yet. */
 void
 SgAsmGenericFile::extend_to_eof(std::ostream &f) const
 {
@@ -1387,15 +1265,12 @@ SgAsmGenericFile::extend_to_eof(std::ostream &f) const
 }
 
 
-/** Return a string describing the file format. We use the last header so that files like PE, NE, LE, LX, etc. which also have
- *  a DOS header report the format of the second (PE, etc.) header rather than the DOS header. */
 const char *
 SgAsmGenericFile::format_name() const
 {
     return p_headers->get_headers().back()->format_name();
 }
 
-/** Returns the header for the specified format. */
 SgAsmGenericHeader *
 SgAsmGenericFile::get_header(SgAsmGenericFormat::ExecFamily efam)
 {

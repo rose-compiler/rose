@@ -635,12 +635,12 @@ Gang::instanceForTty() {
 // class method; not synchronized
 GangPtr
 Gang::createNS(int id) {
-    ASSERT_require(id != NO_GANG_ID);
+    ASSERT_always_require(id != NO_GANG_ID);
     if (!gangs_)
         gangs_ = new GangMap;
     GangPtr gang = gangs_->getOrDefault(id);
     if (!gang) {
-        gang = GangPtr(new Gang(id));                   // intentional leak; seek class declaration for details
+        gang = GangPtr(new Gang);
         gangs_->insert(id, gang);
     }
     return gang;
@@ -1502,6 +1502,15 @@ Facility::get(Importance imp) {
         // constructed.
         std::ostringstream ss;
         ss <<"stream " <<stringifyImportance(imp) <<" in facility " <<this <<" is default constructed";
+
+     // DQ (4/6/2017): This is at least a clue to a user that there is a problem and how to fix it.
+     // Because ROSE developers have integrated the message logging into diagnostic messages, calling 
+     // ROSE_INITIALIZE now appears to be required.  For example, and translator not calling it will 
+     // throw the exception below if the "-I" option is used with a path that does not exist (which is
+     // a cause for a warning only, but not an exception.  The act of outputing just the warnings message
+     // causes the exception.
+        ss << " (likely \"ROSE_INITIALIZE;\" is required as the start of your ROSE-based tool)";
+
         throw std::runtime_error(ss.str());
     }
 
@@ -2111,7 +2120,7 @@ Facilities::print(std::ostream &log) const {
 void
 FacilitiesGuard::save() {
     BOOST_FOREACH (const std::string &facilityName, facilities_.facilityNames()) {
-        std::vector<bool> facilityState = state_.insertMaybeDefault(facilityName);
+        std::vector<bool> &facilityState = state_.insertMaybeDefault(facilityName);
         facilityState.resize(N_IMPORTANCE, false);
         Facility &facility = facilities_.facility(facilityName);
         for (int i=0; i<N_IMPORTANCE; ++i)
@@ -2122,6 +2131,7 @@ FacilitiesGuard::save() {
 void
 FacilitiesGuard::restore() {
     BOOST_FOREACH (const State::Node &saved, state_.nodes()) {
+        ASSERT_require(saved.value().size() == N_IMPORTANCE);
         try {
             Facility &facility = facilities_.facility(saved.key());
             for (int i=0; i<N_IMPORTANCE; ++i)

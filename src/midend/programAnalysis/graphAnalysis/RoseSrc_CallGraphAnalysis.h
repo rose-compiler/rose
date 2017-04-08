@@ -12,7 +12,7 @@ class RoseSrc_CallGraphAnalysis {
                  graph = new SB_DirectedGraph();
   }
   virtual ~RoseSrc_CallGraphAnalysis() {}
-  SB_DirectedGraph* getGraph() {return graph;}
+  SB_DirectedGraph* getGraph() ROSE_DEPRECATED("no longer supported") {return graph;}
 
 
 };

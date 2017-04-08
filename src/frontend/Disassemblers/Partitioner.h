@@ -136,7 +136,11 @@ public:
      *************************************************************************************************************************/
 protected:
 
-    struct Function;
+ // DQ (3/25/2017): Eliminated warning for "Function" class declaration below: 
+ // warning: 'Function' defined as a class here but previously declared as a struct [-Wmismatched-tags]
+ // struct Function;
+    class Function;
+
     struct DataBlock;
     struct BasicBlock;
 

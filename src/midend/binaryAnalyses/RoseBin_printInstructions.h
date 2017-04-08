@@ -20,8 +20,10 @@
 
 class RoseBin_printInstructions : public AstSimpleProcessing {
  private:
+#if 0 // [Robb P Matzke 2017-03-27]
   SgAsmNode* globalNode;
   char* filename;
+#endif
   std::ofstream myfile;
 
  public:
@@ -29,20 +31,20 @@ class RoseBin_printInstructions : public AstSimpleProcessing {
   RoseBin_printInstructions(){};
 
   // initialize with the globalNode and the filename for output
-  void initPrint(SgAsmNode* root, char* fileName);
+  void initPrint(SgAsmNode* root, char* fileName) ROSE_DEPRECATED("no longer supported");
 
   // unparse the AST to assembly
-  void unparsePrint();
+  void unparsePrint() ROSE_DEPRECATED("no longer supported");
 
   /****************************************************
    * unparse binary instruction
    ****************************************************/
-  virtual void visit(SgNode* n);
+  virtual void visit(SgNode* n) ROSE_DEPRECATED("no longer supported");
 
   /****************************************************
    * close the file
    ****************************************************/
-  void closeFile();
+  void closeFile() ROSE_DEPRECATED("no longer supported");
 
 };
 

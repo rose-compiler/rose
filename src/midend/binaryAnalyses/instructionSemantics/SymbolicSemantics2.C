@@ -462,12 +462,20 @@ RiscOperators::extract(const BaseSemantics::SValuePtr &a_, size_t begin_bit, siz
     SValuePtr retval = svalue_expr(SymbolicExpr::makeExtract(beginExpr, endExpr, a->get_expression()));
     switch (computingDefiners_) {
         case TRACK_NO_DEFINERS:
+            if (retval->get_width() == a->get_width())
+                retval->add_defining_instructions(a);   // preserve definers if this extract is a no-op
             break;
         case TRACK_ALL_DEFINERS:
-            retval->add_defining_instructions(a);       // fall through...
-        case TRACK_LATEST_DEFINER:
-            if (retval->get_width() != a->get_width())
+            retval->add_defining_instructions(a);       // old definers and...
+            if (retval->get_width() != a->get_width())  // ...new definer but only if this extract is not a no-op
                 retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
+            break;
+        case TRACK_LATEST_DEFINER:
+            if (retval->get_width() != a->get_width()) {
+                retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
+            } else {
+                retval->add_defining_instructions(a);   // preserve definers if this extract is a no-op
+            }
             break;
     }
     return filterResult(retval);
@@ -993,13 +1001,30 @@ BaseSemantics::SValuePtr
 RiscOperators::readRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &dflt) 
 {
     PartialDisableUsedef du(this);
-    BaseSemantics::SValuePtr result = BaseSemantics::RiscOperators::readRegister(reg, dflt);
+    SValuePtr result = SValue::promote(BaseSemantics::RiscOperators::readRegister(reg, dflt));
 
     if (currentInstruction()) {
         RegisterStatePtr regs = RegisterState::promote(currentState()->registerState());
         regs->updateReadProperties(reg);
     }
 
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+        case TRACK_LATEST_DEFINER:
+            result->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
+            break;
+    }
+
+    return filterResult(result);
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::peekRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &dflt) {
+    PartialDisableUsedef du(this);
+    BaseSemantics::SValuePtr result = BaseSemantics::RiscOperators::peekRegister(reg, dflt);
+    ASSERT_require(result!=NULL && result->get_width() == reg.get_nbits());
     return filterResult(result);
 }
 

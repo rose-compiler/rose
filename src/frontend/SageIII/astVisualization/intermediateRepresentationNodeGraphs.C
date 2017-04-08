@@ -59,12 +59,15 @@ IntermediateRepresentationNodeGraph::IntermediateRepresentationNodeGraph(ofstrea
      printf ("Number of IR nodes in IntermediateRepresentationNodeGraph = %d \n",numberOfNodes);
 
 #if 1
-     int counter = 0;
+  // DQ (3/25/2017): Eliminate Clang warnings: unused variables.
+  // int counter = 0;
      for (Rose_STL_Container<SgNode*>::iterator i = functionDeclarationList.begin(); i != functionDeclarationList.end(); i++)
         {
           SgStatement*            statement           = isSgStatement(*i);
-          SgDeclarationStatement* declaration         = isSgDeclarationStatement(*i);
-          SgFunctionDeclaration*  functionDeclaration = isSgFunctionDeclaration(*i);
+
+       // DQ (3/25/2017): Eliminate Clang warnings: unused variables.
+       // SgDeclarationStatement* declaration         = isSgDeclarationStatement(*i);
+       // SgFunctionDeclaration*  functionDeclaration = isSgFunctionDeclaration(*i);
 
           SgTemplateInstantiationFunctionDecl*  templateInstantiationFunctionDeclaration = isSgTemplateInstantiationFunctionDecl(*i);
 

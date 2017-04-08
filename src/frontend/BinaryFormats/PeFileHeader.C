@@ -464,8 +464,27 @@ SgAsmPEFileHeader::set_rvasize_pair(PairPurpose idx, SgAsmPESection *section)
     ROSE_ASSERT(section->get_parent()!=NULL);
     ROSE_ASSERT(isSgAsmPEFileHeader(section->get_header())!=NULL);
 
-    if (idx>=16)
-        mlog[WARN] <<"SgAsmPEFileHeader::set_rvasize_pair: index " <<idx <<" exceeds specification limit\n";
+    switch (idx) {
+        case PAIR_EXPORTS:
+        case PAIR_IMPORTS:
+        case PAIR_RESOURCES:
+        case PAIR_EXCEPTIONS:
+        case PAIR_CERTIFICATES:
+        case PAIR_BASERELOCS:
+        case PAIR_DEBUG:
+        case PAIR_ARCHITECTURE:
+        case PAIR_GLOBALPTR:
+        case PAIR_TLS:
+        case PAIR_LOADCONFIG:
+        case PAIR_BOUNDIMPORT:
+        case PAIR_IAT:
+        case PAIR_DELAYIMPORT:
+        case PAIR_CLRRUNTIME:
+        case PAIR_RESERVED15:
+            break;
+        default:
+            mlog[WARN] <<"SgAsmPEFileHeader::set_rvasize_pair: index " <<idx <<" exceeds specification limit\n";
+    }
 
     /* Extend array of rva/size pairs if necessary */
     if ((size_t)idx>=get_rvasize_pairs()->get_pairs().size()) {
@@ -636,6 +655,12 @@ SgAsmPEFileHeader::create_table_sections()
 bool
 SgAsmPEFileHeader::reallocate()
 {
+    struct Resources {
+        unsigned char *oh;
+        Resources(): oh(NULL) {}
+        ~Resources() { delete[] oh; }
+    } r;
+
     bool reallocated = SgAsmGenericHeader::reallocate();
     
     /* Resize if necessary */
@@ -746,17 +771,16 @@ SgAsmPEFileHeader::reallocate()
     } else {
         throw FormatError("unsupported PE word size");
     }
-    unsigned char *oh = new unsigned char[oh_size];
+    r.oh = new unsigned char[oh_size];
     if (4==get_word_size()) {
-        encode((PE32OptHeader_disk*)oh);
+        encode((PE32OptHeader_disk*)r.oh);
     } else if (8==get_word_size()) {
-        encode((PE64OptHeader_disk*)oh);
+        encode((PE64OptHeader_disk*)r.oh);
     } else {
-        delete[] oh;
         throw FormatError("unsupported PE word size");
     }
     while (oh_size>p_e_nt_hdr_size) {
-        if (0!=oh[oh_size-1]) break;
+        if (0!=r.oh[oh_size-1]) break;
         --oh_size;
     }
     set_e_nt_hdr_size(oh_size);
@@ -767,6 +791,12 @@ SgAsmPEFileHeader::reallocate()
 void
 SgAsmPEFileHeader::unparse(std::ostream &f) const
 {
+    struct Resources {
+        unsigned char *oh;
+        Resources(): oh(NULL) {}
+        ~Resources() { delete[] oh; }
+    } r;
+
     /* Write unreferenced areas back to the file before anything else. */
     unparse_holes(f);
     
@@ -799,22 +829,22 @@ SgAsmPEFileHeader::unparse(std::ostream &f) const
     } else {
         throw FormatError("unsupported PE word size");
     }
-    unsigned char *oh = new unsigned char[oh_size];
+    r.oh = new unsigned char[oh_size];
     if (4==get_word_size()) {
-        encode((PE32OptHeader_disk*)oh);
+        encode((PE32OptHeader_disk*)r.oh);
         rvasize_offset = sizeof(PE32OptHeader_disk);
     } else if (8==get_word_size()) {
-        encode((PE64OptHeader_disk*)oh);
+        encode((PE64OptHeader_disk*)r.oh);
         rvasize_offset = sizeof(PE64OptHeader_disk);
     } else {
         throw FormatError("unsupported PE word size");
     }
     for (size_t i=0; i<p_rvasize_pairs->get_pairs().size(); i++, rvasize_offset+=sizeof(SgAsmPERVASizePair::RVASizePair_disk)) {
-        SgAsmPERVASizePair::RVASizePair_disk *rvasize_disk = (SgAsmPERVASizePair::RVASizePair_disk*)(oh+rvasize_offset);
+        SgAsmPERVASizePair::RVASizePair_disk *rvasize_disk = (SgAsmPERVASizePair::RVASizePair_disk*)(r.oh+rvasize_offset);
         p_rvasize_pairs->get_pairs()[i]->encode(rvasize_disk);
     }
     while (oh_size>p_e_nt_hdr_size) {
-        if (0!=oh[oh_size-1]) break;
+        if (0!=r.oh[oh_size-1]) break;
         --oh_size;
     }
     ROSE_ASSERT(p_e_nt_hdr_size==oh_size); /*set in reallocate()*/
@@ -825,7 +855,7 @@ SgAsmPEFileHeader::unparse(std::ostream &f) const
     rose_addr_t spos = write(f, 0, sizeof fh, &fh);
 
     /* Write the following "NT Optional Header" */
-    spos = write(f, spos, oh_size, oh);
+    spos = write(f, spos, oh_size, r.oh);
 }
     
 /* Print some debugging information */

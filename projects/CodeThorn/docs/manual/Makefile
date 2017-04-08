@@ -6,7 +6,7 @@ clean:
 cleaner: clean
 	rm -f codethorn.pdf
 
-codethorn.pdf: codethorn.tex codethorn.bib stg.tex ltl.tex
+codethorn.pdf: codethorn.tex codethorn.bib
 
 %.pdf: %.tex %.bib
 	if test -n "`which rubber`"; then \

@@ -97,6 +97,10 @@ struct stream_element
 };
 #endif
 
+// DQ (3/19/2017): Define this so that we can avoid output spew from generated rule #36 
+// in generated file which maps to %% on line 468 of this file.
+#define ECHO
+
 
 LexTokenStreamTypePointer ROSE_Fortran_fixed_format_token_stream_pointer = NULL;
 typedef LexTokenStreamType::iterator SE_ITR;
@@ -517,6 +521,7 @@ getFortranFixedFormatPreprocessorDirectives( std::string fileName )
             // exit(0);
                yyin = fp; 
                yylex(); 
+
             /*
                char s[100];
                while(fgets(s, 100, fp))
@@ -595,8 +600,7 @@ static void clean_up_stream()
         {
             cout<<"## ????Unrecognized element in the token stream##"; 
         }
-        cout<<"\n"; 
- 
+        cout<<"\n";  
     }
 #endif
 }

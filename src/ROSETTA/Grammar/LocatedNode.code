@@ -28,7 +28,7 @@ HEADER_START
      protected:
      // void delete_file_info();
      // void directives(ostream& os);
-        void post_construction_initialization();
+        void post_construction_initialization() $ROSE_OVERRIDE;
 
      private:
           $CLASSNAME( const $CLASSNAME & X ); /* until we know what to do with it */
@@ -52,7 +52,7 @@ HEADER_START
           start and end of the located node object (previously we only stored the starting location).
           This function still returns the starting location of the construct.
         */
-          virtual Sg_File_Info* get_file_info() const;
+          virtual Sg_File_Info* get_file_info() const $ROSE_OVERRIDE;
 
       //! Access function calls set_startingConstruct(Sg_File_Info*) member function
           virtual void set_file_info(Sg_File_Info* X);
@@ -137,9 +137,9 @@ HEADER_START
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
 #else
        // DQ (11/1/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
@@ -634,14 +634,16 @@ HEADER_UNTYPED_TYPE_START
      public:
           enum type_enum
              {
-               e_unknown, //! default unspecified type as identified by parser.
-               e_void,    //! void type as identified by parser.
-               e_int,     //! int type as identified by parser.
-               e_float,   //! float type as identified by parser.
-               e_double,  //! double type as identified by parser.
-               e_complex, //! complex type as identified by parser.
-               e_char,    //! character type as identified by parser.
-               e_last,    //! last type 
+               e_unknown,        //! default unspecified type as identified by parser.
+               e_void,           //! void type as identified by parser.
+               e_int,            //! int type as identified by parser.
+               e_float,          //! float type as identified by parser.
+               e_double,         //! double type as identified by parser.
+               e_complex,        //! complex type as identified by parser.
+               e_double_complex, //! double complex type as identified by parser.
+               e_bool,           //! boolean type as identified by parser.
+               e_char,           //! character type as identified by parser.
+               e_last,           //! last type
              };
 
 HEADER_UNTYPED_TYPE_END

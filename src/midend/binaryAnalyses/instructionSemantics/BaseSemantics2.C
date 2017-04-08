@@ -938,6 +938,11 @@ RiscOperators::fpRoundTowardZero(const SValuePtr &a, SgAsmFloatType *aType) {
 
 SValuePtr
 RiscOperators::readRegister(const RegisterDescriptor &reg, const SValuePtr &dflt_) {
+    return peekRegister(reg, dflt_);
+}
+
+SValuePtr
+RiscOperators::peekRegister(const RegisterDescriptor &reg, const SValuePtr &dflt_) {
     SValuePtr dflt = dflt_;
     ASSERT_not_null(currentState_);
     ASSERT_not_null(dflt);

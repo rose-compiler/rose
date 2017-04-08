@@ -7,7 +7,7 @@
  *        working to combine all of our installation instructions into this single document, at which time those other
  *        documents will be removed. [Robb P. Matzke 2015-09-25]
  *
- *  @section installation_obtaining Obtaining ROSE
+ *  @section installation_obtaining Downloading ROSE
  *
  *  ROSE is free (libre) software distributed under a @ref license "modified BSD license". The ROSE team at Lawrence Livermore
  *  National Laboratory makes two kinds of public source releases both as Git repositories.
@@ -24,10 +24,21 @@
  *  ROSE can be downloaded with standard Git commands. <em>Do not use Github's "Download ZIP" button since this strips necessary
  *  version information from the ZIP archive.</em>
  *
+ *  @section installation_dev_repo Development Repository
+ *
+ *  @code
+ *  git clone https://github.com/rose-compiler/rose-develop rose
+ *  cd rose/
+ *  @endcode
+ *
+ *  @section installation_release_repo Release Repository
+ *
  *  @code
  *  git clone https://github.com/rose-compiler/rose
- *  cd rose
+ *  cd rose/
  *  @endcode
+ *
+ *  @section installation_versioning Versioning Scheme
  *
  *  ROSE uses a [continuous delivery](https://en.wikipedia.org/wiki/Continuous_delivery) paradigm. To obtain the identification
  *  for a particular version of ROSE, run "git rev-parse HEAD" in the ROSE source directory (the reported SHA1 hash can be
