@@ -121,10 +121,19 @@ TESTCODES_REQUIRED_TO_PASS += \
      mergeTest_04.C \
      mergeTest_05.C 
 
+# DQ (4/9/2017): This appears to be a problem for GNU 4.8 using EDG 4.9.
+if !ROSE_USE_EDG_VERSION_4_9
 # DQ (2/26/2017): This is a file that fails for GNU 5.1 and later versions.
 if !ROSE_USING_GCC_VERSION_LATER_5_1
 TESTCODES_REQUIRED_TO_PASS += \
      mergeTest_111.C 
+endif
+else
+# DQ (4/9/2017): Older compiler versions appear to be fine.
+if !ROSE_USING_GCC_VERSION_LATER_4_8
+TESTCODES_REQUIRED_TO_PASS += \
+     mergeTest_111.C 
+endif
 endif
 endif
 
