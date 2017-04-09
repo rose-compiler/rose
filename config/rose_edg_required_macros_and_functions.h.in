@@ -79,8 +79,10 @@
    This is reported as a bug in Intel v14 support for Boost, but this is a fix to
    permit the code in test2015_87.C to compile.
 */
+/* DQ (4/9/2017): This is also a problem for the Intel v16 compiler (for C++11 test2017_04.C). */
 /* DQ (4/4/2017): This is a problem for the Intel v15 compiler (for C++11 test2017_04.C). */
-#if !(defined(__INTEL_COMPILER) && (__INTEL_COMPILER == 1500))
+// #if !(defined(__INTEL_COMPILER) && (__INTEL_COMPILER == 1500))
+#if !(defined(__INTEL_COMPILER) && (__INTEL_COMPILER >= 1500))
 #define __ECL
   typedef unsigned    long fenv_t;
   typedef unsigned    long fexcept_t;
