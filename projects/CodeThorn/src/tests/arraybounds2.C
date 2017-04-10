@@ -35,12 +35,10 @@ int main() {
   //  m1[6]=m1[4]+*(p+2);
   p++;
   x=258; // char: 1,2
-#if 0
-  p[0]=(unsigned char)((x>>8)&0xff);
-  p[1]=(unsigned char)((x   )&0xff);
+  //p[0]=(unsigned char)((x>>8)&0xff);
+  //p[1]=(unsigned char)((x   )&0xff);
   p+=2;
   *p=220;
-#endif
 #ifdef WITH_IO
   printf("array: ");
   for(int i=0;i<3;i++) {

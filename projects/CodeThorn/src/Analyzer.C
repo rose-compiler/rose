@@ -938,7 +938,7 @@ std::list<EState> Analyzer::elistify(EState res) {
 
 list<EState> Analyzer::transferEdgeEState(Edge edge, const EState* estate) {
   ROSE_ASSERT(edge.source()==estate->label());
-  cout<<"ESTATE: "<<estate->toString(getVariableIdMapping())<<endl;
+  //cout<<"ESTATE: "<<estate->toString(getVariableIdMapping())<<endl;
   EState currentEState=*estate;
   PState currentPState=*currentEState.pstate();
   ConstraintSet cset=*currentEState.constraints();
@@ -3380,6 +3380,21 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
           exit(1);
         }
       }
+    } else if(SgPointerDerefExp* lhsDerefExp=isSgPointerDerefExp(lhs)) {
+      cout<<"DEBUG: PointerDerefOp:"<<lhsDerefExp->unparseToString()<<" (ignoring) : AbstrPtrVal:";
+      SgExpression* lhsOperand=lhsDerefExp->get_operand();
+      list<SingleEvalResultConstInt> resLhs=exprAnalyzer.evalConstInt(lhsOperand,currentEState,true);
+      if(resLhs.size()>1) {
+        throw CodeThorn::Exception("more than 1 execution path (probably due to abstraction) in operand's expression of pointer dereference operator on lhs of "+nextNodeToAnalyze2->unparseToString());
+      }
+      ROSE_ASSERT(resLhs.size()==1);
+      AValue lhsPointerValue=(*resLhs.begin()).result;
+      ROSE_ASSERT(lhsPointerValue.isPtr()); // only a pointer value can be dereferenced
+      cout<<lhsPointerValue.toString(getVariableIdMapping());
+      cout<<endl;
+      PState pstate2=*(estate->pstate());
+      getExprAnalyzer()->writeToMemoryLocation(pstate2,lhsPointerValue,(*i).result);
+      estateList.push_back(createEState(edge.target(),pstate2,*(estate->constraints())));
     } else {
       //cout<<"DEBUG: else (no var, no ptr) ... "<<endl;
       if(getSkipArrayAccesses()&&isSgPointerDerefExp(lhs)) {

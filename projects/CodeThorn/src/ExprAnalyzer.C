@@ -798,7 +798,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalDereferenceOp(SgPointerDerefExp
   res.estate=estate;
   ConstIntLattice derefOperandValue=operandResult.result;
   // (varid,idx) => varid'; return estate.pstate()[varid'] || pstate(AValue)
-  res.result=accessState(estate.pstate(), derefOperandValue);
+  res.result=readFromMemoryLocation(estate.pstate(), derefOperandValue);
   res.exprConstraints=operandResult.exprConstraints;
   return listify(res);
 }
@@ -883,6 +883,13 @@ SPRAY::VariableId ExprAnalyzer::resolveToAbsoluteVariableId(ConstIntLattice abst
   return _variableIdMapping->variableIdOfArrayElement(arrayVarId2,index2);
 }
 
-AType::ConstIntLattice ExprAnalyzer::accessState(const PState* pState, ConstIntLattice abstrValue) const {
+AType::ConstIntLattice ExprAnalyzer::readFromMemoryLocation(const PState* pState, ConstIntLattice abstrValue) const {
   return pState->varValue(resolveToAbsoluteVariableId(abstrValue));
+}
+
+void ExprAnalyzer::writeToMemoryLocation(PState& pState,
+                                         AType::ConstIntLattice abstractMemLoc,
+                                         AType::ConstIntLattice abstractValue) {
+  VariableId absoluteMemLoc=resolveToAbsoluteVariableId(abstractMemLoc);
+  pState.setVariableToValue(absoluteMemLoc,abstractValue);
 }

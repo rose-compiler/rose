@@ -73,7 +73,8 @@ class ExprAnalyzer {
   bool getSkipArrayAccesses();
   bool checkArrayBounds(VariableId arrayVarId,int accessIndex);
   VariableId resolveToAbsoluteVariableId(AType::ConstIntLattice abstrValue) const;
-  AType::ConstIntLattice accessState(const PState* pState, AType::ConstIntLattice abstrValue) const;
+  AType::ConstIntLattice readFromMemoryLocation(const PState* pState, AType::ConstIntLattice abstrValue) const;
+  void writeToMemoryLocation(PState& pState, AType::ConstIntLattice abstractMemLoc, AType::ConstIntLattice abstrValue);
 private:
   //! This function turn a single result into a one-elment list with
   //! this one result. This function is used to combine cases where the result
