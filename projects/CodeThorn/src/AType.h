@@ -90,6 +90,8 @@ class ConstIntLattice {
   bool operator<(AType::ConstIntLattice other) const;
 
   string toString() const;
+  string toString(SPRAY::VariableIdMapping* vim) const;
+  
   friend ostream& operator<<(ostream& os, const ConstIntLattice& value);
   friend istream& operator>>(istream& os, ConstIntLattice& value);
   void fromStream(istream& is);

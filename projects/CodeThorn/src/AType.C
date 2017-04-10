@@ -358,6 +358,25 @@ AType::ConstIntLattice AType::ConstIntLattice::operatorBitwiseComplement() const
   return ~getIntValue();
 }
 
+string AType::ConstIntLattice::toString(SPRAY::VariableIdMapping* vim) const {
+  switch(valueType) {
+  case TOP: return "top";
+  case BOT: return "bot";
+  case CONSTINT: {
+    stringstream ss;
+    ss<<getIntValue();
+    return ss.str();
+  }
+  case PTR: {
+    stringstream ss;
+    ss<<"("<<variableId.toString(vim)<<","<<getIntValue()<<")";
+    return ss.str();
+  }
+  default:
+    throw CodeThorn::Exception("Error: ConstIntLattice::toString operation failed. Unknown abstraction type.");
+  }
+}
+
 string AType::ConstIntLattice::toString() const {
   switch(valueType) {
   case TOP: return "top";

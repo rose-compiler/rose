@@ -221,13 +221,13 @@ string PState::toString(VariableIdMapping* variableIdMapping) const {
   for(PState::const_iterator j=begin();j!=end();++j) {
     if(j!=begin()) ss<<", ";
     ss<<"(";
-    ss <<variableIdMapping->uniqueLongVariableName((*j).first);
+    ss <<variableIdMapping->uniqueShortVariableName((*j).first);
 #if 0
     ss<<"->";
 #else
     ss<<",";
 #endif
-    ss<<varValueToString((*j).first);
+    ss<<(((*j).second).toString(variableIdMapping)); // ss<<varValueToString((*j).first);
     ss<<")";
   }
   ss<<"}";
