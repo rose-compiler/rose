@@ -202,6 +202,23 @@ static void copybit_tests() {
     check(v1.toHex()=="9866f43433");
 }
 
+static void copybit_tests2() {
+    std::cout <<"copy bits 2\n";
+    std::cout <<"  initializing\n";
+    BitVector src(32);
+    src.fromHex("11223344");
+    BitVector dst(56);
+
+    std::cout <<"  copy 32-bit vector to [24,55] of another\n";
+    dst.copy(BitRange::hull(24, 55), src, src.hull());
+    check(dst.toHex() == "11223344000000");
+
+    std::cout <<"  copy [24,55] back to the source\n";
+    src.clear();
+    src.copy(src.hull(), dst, BitRange::hull(24, 55));
+    check(src.toHex() == "11223344");
+}
+
 static void swap_tests() {
     std::cout <<"swap tests\n";
 
@@ -732,6 +749,7 @@ int main() {
     clearbit_tests();
     setbit_tests();
     copybit_tests();
+    copybit_tests2();
     swap_tests();
     bitsearch_tests();
     counting_tests();

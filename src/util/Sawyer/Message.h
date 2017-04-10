@@ -965,7 +965,6 @@ class Gang: public HighWater, public SharedObject {
     static const int TTY_GANG = -1;                     /**< The ID for streams that are emitting to a terminal device. */
     static const int NO_GANG_ID = -2;                   /**< Arbitrary ID used for default-constructed objects. */
     static SAWYER_THREAD_TRAITS::Mutex classMutex_;     /**< Mutex for class data. */
-
 protected:
     Gang() {}
 public:
