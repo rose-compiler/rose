@@ -163,8 +163,15 @@ generatedCodeExamples = \
   rose_inputloopCollapsing_4.C\
   rose_inputloopCollapsing_5.C\
   rose_inputbuildStatementFromString.C \
-  buildJavaPackage.passed \
+  buildJavaPackage.passed
+
+# C++ 11 features need GCC 4.8 and later
+# Liao 4/10/2017
+if ROSE_USING_GCC_VERSION_LATER_4_8
+generatedCodeExamples += \
   rose_inputrajaChecker.C
+endif
+
 
 # DQ (2/27/2017): Exclude the GNU 4.9 compiler as well (fails on Ubuntu16.04).
 # DQ (2/8/2017): This test will sometimes fail on GNU 5.1 and later compilers.
