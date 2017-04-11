@@ -220,7 +220,8 @@ void xomp_parallel_start (void (*func) (void *), unsigned* ifClauseValue, unsign
 
 //  printf("Debug: xomp_parallel_start(), g_parameter at address %p\n", g_parameter);
   g_parameter[0]= func;
-  va_start (v1, (*argcount));
+  //va_start (v1, (*argcount));
+  va_start (v1, argcount);
   for (x=0; x<(*argcount); x++)
   {
     g_parameter[p_offset+x]= va_arg(v1, void*);
@@ -452,7 +453,8 @@ void xomp_task(void (*func) (void *), void (*cpyfn) (void *, void *), int* arg_s
 
   // Grab data parameters for the Fortran subroutine one by one
   va_list v1;
-  va_start (v1, (*argcount));
+  //va_start (v1, (*argcount));
+  va_start (v1, argcount);
 
   // 2nd parameter and after ----------------
   // Fill in the actual data parameters for the function pointer
