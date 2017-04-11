@@ -1,16 +1,24 @@
-with Ada.Characters.Handling;
-with Ada.Wide_Text_IO;
-with Asis.Clauses;
 with Asis.Declarations;
 with Asis.Elements;
 with Asis.Expressions;
 with Asis.Iterator;
+-- GNAT-specific:
+with Asis.Set_Get;
 
 package body Asis_Tool_2.Element is
 
    -- Processing of current element aborted.  Processing of remaining elements
    -- may proceed:
    Not_Implemented : exception;
+
+   function Node_Id_Image
+     (Element : in Asis.Element)
+      return String
+   is
+      Leading_Space_Image : constant String := Asis.Set_Get.Node(Element)'Image;
+   begin
+      return Leading_Space_Image (2 .. Leading_Space_Image'Last);
+   end Node_Id_Image;
 
    -- Return the name image for declarations:
    function Name
@@ -494,6 +502,7 @@ package body Asis_Tool_2.Element is
          New_Node : Dot.Node_Stmt.Class; -- Initialized
       begin
          State.Current_Node := New_Node;
+         State.Current_Node.Node_ID.ID := Dot.To_ID_Type (Node_Id_Image (Element));
          State.Add_Attribute ("Element_Kind", Element_Kind'Image);
          case Element_Kind is
          when Asis.Not_An_Element =>
