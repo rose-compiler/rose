@@ -14,3 +14,6 @@
 *.ali
 *.adt
  
+# (Temporary for now) graph files:
+*.dot
+
