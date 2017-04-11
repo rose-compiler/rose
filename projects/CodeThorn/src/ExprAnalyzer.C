@@ -198,10 +198,8 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
           CASE_EXPR_ANALYZER_EVAL(SgLessThanOp,evalLessThanOp);
           CASE_EXPR_ANALYZER_EVAL(SgLessOrEqualOp,evalLessOrEqualOp);
           CASE_EXPR_ANALYZER_EVAL(SgPntrArrRefExp,evalArrayReferenceOp);
-
-          // TODO: shift operators
-          //CASE_EXPR_ANALYZER_EVAL(SgLshiftOp,evalLeftShiftOp);
-          //CASE_EXPR_ANALYZER_EVAL(SgRshiftOp,evalRightShiftOp);
+          CASE_EXPR_ANALYZER_EVAL(SgLshiftOp,evalBitwiseShiftLeftOp);
+          CASE_EXPR_ANALYZER_EVAL(SgRshiftOp,evalBitwiseShiftRightOp);
 
         default:
             cerr << "Binary Op:"<<SgNodeHelper::nodeToString(node)<<"(nodetype:"<<node->class_name()<<")"<<endl;
@@ -635,6 +633,34 @@ ExprAnalyzer::evalLessThanOp(SgLessThanOp* node,
     if(res.result.isTop())
       throw CodeThorn::Exception("Error: Top found in relational operator (not supported yet).");
   }
+  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
+  resultList.push_back(res);
+  return resultList;
+}
+
+list<SingleEvalResultConstInt>
+ExprAnalyzer::evalBitwiseShiftLeftOp(SgLshiftOp* node,
+                             SingleEvalResultConstInt lhsResult, 
+                             SingleEvalResultConstInt rhsResult,
+                             EState estate, bool useConstraints) {
+  list<SingleEvalResultConstInt> resultList;
+  SingleEvalResultConstInt res;
+  res.estate=estate;
+  res.result=(lhsResult.result.operatorBitwiseShiftLeft(rhsResult.result));
+  res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
+  resultList.push_back(res);
+  return resultList;
+}
+
+list<SingleEvalResultConstInt>
+ExprAnalyzer::evalBitwiseShiftRightOp(SgRshiftOp* node,
+                             SingleEvalResultConstInt lhsResult, 
+                             SingleEvalResultConstInt rhsResult,
+                             EState estate, bool useConstraints) {
+  list<SingleEvalResultConstInt> resultList;
+  SingleEvalResultConstInt res;
+  res.estate=estate;
+  res.result=(lhsResult.result.operatorBitwiseShiftRight(rhsResult.result));
   res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
   resultList.push_back(res);
   return resultList;

@@ -163,6 +163,14 @@ private:
                                            SingleEvalResultConstInt lhsResult, 
                                            SingleEvalResultConstInt rhsResult,
                                            EState estate, bool useConstraints);
+  list<SingleEvalResultConstInt> evalBitwiseShiftLeftOp(SgLshiftOp* node,
+                                           SingleEvalResultConstInt lhsResult, 
+                                           SingleEvalResultConstInt rhsResult,
+                                           EState estate, bool useConstraints);
+  list<SingleEvalResultConstInt> evalBitwiseShiftRightOp(SgRshiftOp* node,
+                                           SingleEvalResultConstInt lhsResult, 
+                                           SingleEvalResultConstInt rhsResult,
+                                           EState estate, bool useConstraints);
 
   list<SingleEvalResultConstInt> evalArrayReferenceOp(SgPntrArrRefExp* node,
                                                     SingleEvalResultConstInt lhsResult, 

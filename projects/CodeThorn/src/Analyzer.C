@@ -3381,7 +3381,6 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
         }
       }
     } else if(SgPointerDerefExp* lhsDerefExp=isSgPointerDerefExp(lhs)) {
-      cout<<"DEBUG: PointerDerefOp:"<<lhsDerefExp->unparseToString()<<" (ignoring) : AbstrPtrVal:";
       SgExpression* lhsOperand=lhsDerefExp->get_operand();
       list<SingleEvalResultConstInt> resLhs=exprAnalyzer.evalConstInt(lhsOperand,currentEState,true);
       if(resLhs.size()>1) {

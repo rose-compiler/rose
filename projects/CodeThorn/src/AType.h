@@ -35,7 +35,7 @@ class ConstIntLattice {
  public:
   friend bool strictWeakOrderingIsSmaller(const ConstIntLattice& c1, const ConstIntLattice& c2);
   friend bool strictWeakOrderingIsEqual(const ConstIntLattice& c1, const ConstIntLattice& c2);
-  enum ValueType { BOT, CONSTINT, PTR, PATHEXPR, TOP};
+  enum ValueType { BOT, CONSTINT, PTR, RAW_PTR, TOP};
   ConstIntLattice();
   ConstIntLattice(bool val);
   // type conversion
@@ -75,6 +75,9 @@ class ConstIntLattice {
   ConstIntLattice operatorBitwiseOr(ConstIntLattice other) const;
   ConstIntLattice operatorBitwiseXor(ConstIntLattice other) const;
   ConstIntLattice operatorBitwiseComplement() const;
+
+  ConstIntLattice operatorBitwiseShiftLeft(ConstIntLattice other) const;
+  ConstIntLattice operatorBitwiseShiftRight(ConstIntLattice other) const;
 
   static ConstIntLattice operatorAdd(ConstIntLattice& a,ConstIntLattice& b);
   static ConstIntLattice operatorSub(ConstIntLattice& a,ConstIntLattice& b);

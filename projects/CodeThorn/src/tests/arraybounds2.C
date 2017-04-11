@@ -37,6 +37,8 @@ int main() {
   x=258; // char: 1,2
   //p[0]=(unsigned char)((x>>8)&0xff);
   //p[1]=(unsigned char)((x   )&0xff);
+  p[0]=((x>>8)&0xff);
+  p[1]=((x   )&0xff);
   p+=2;
   *p=220;
 #ifdef WITH_IO

@@ -101,7 +101,7 @@ std::string AType::ConstIntLattice::valueTypeToString() const {
   case TOP: return "top";
   case CONSTINT: return "constint";
   case PTR: return "ptr";
-  case PATHEXPR: return "pathexpr";
+  case RAW_PTR: return "rawptr";
   case BOT: return "bot";
   default:
     return "unknown";
@@ -356,6 +356,28 @@ AType::ConstIntLattice AType::ConstIntLattice::operatorBitwiseComplement() const
     return *this;
   assert(isConstInt());
   return ~getIntValue();
+}
+
+AType::ConstIntLattice AType::ConstIntLattice::operatorBitwiseShiftLeft(ConstIntLattice other) const {
+  if(isTop()||other.isTop())
+    return Top();
+  if(isBot())
+    return *this;
+  if(other.isBot())
+    return *this;
+  assert(isConstInt()&&other.isConstInt());
+  return getIntValue()<<other.getIntValue();
+}
+
+AType::ConstIntLattice AType::ConstIntLattice::operatorBitwiseShiftRight(ConstIntLattice other) const {
+  if(isTop()||other.isTop())
+    return Top();
+  if(isBot())
+    return *this;
+  if(other.isBot())
+    return *this;
+  assert(isConstInt()&&other.isConstInt());
+  return getIntValue()>>other.getIntValue();
 }
 
 string AType::ConstIntLattice::toString(SPRAY::VariableIdMapping* vim) const {
