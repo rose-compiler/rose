@@ -79,8 +79,18 @@
    This is reported as a bug in Intel v14 support for Boost, but this is a fix to
    permit the code in test2015_87.C to compile.
 */
+/* DQ (4/9/2017): This is also a problem for the Intel v16 compiler (for C++11 test2017_04.C). */
 /* DQ (4/4/2017): This is a problem for the Intel v15 compiler (for C++11 test2017_04.C). */
+// #if !(defined(__INTEL_COMPILER) && (__INTEL_COMPILER == 1500))
 #if !(defined(__INTEL_COMPILER) && (__INTEL_COMPILER == 1500))
+
+/* DQ (4/9/2017): This should permit skipping the original fenv.h header file specific to the Intel v16 compiler
+   This is not required from desktop, but appears to be required for the ROSE Matrix Testing.
+ */
+#if (defined(__INTEL_COMPILER) && (__INTEL_COMPILER == 1600))
+#define __FENV_H_INCLUDED
+#endif
+
 #define __ECL
   typedef unsigned    long fenv_t;
   typedef unsigned    long fexcept_t;

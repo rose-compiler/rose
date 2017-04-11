@@ -559,7 +559,7 @@ SageInterface::whereAmI(SgNode* node)
   // This highest level node acceptable for us by this function is a SgGlobal (global scope).
 
      ROSE_ASSERT(node != NULL);
-     printf ("Inside of SageInterface::whereAmI(node = %p = %s) \n",node,node->class_name().c_str());
+//     printf ("Inside of SageInterface::whereAmI(node = %p = %s) \n",node,node->class_name().c_str());
 
   // Enforce that some IR nodes should not be acepted inputs.
      ROSE_ASSERT(isSgFile(node)     == NULL);
@@ -571,10 +571,10 @@ SageInterface::whereAmI(SgNode* node)
   // Don't traverse past the SgFile level.
      while (parent != NULL && isSgFileList(parent) == NULL)
         {
-          printf ("--- parent = %p = %s \n",parent,parent->class_name().c_str());
+//          printf ("--- parent = %p = %s \n",parent,parent->class_name().c_str());
 
           ROSE_ASSERT(parent->get_file_info() != NULL);
-          parent->get_file_info()->display("In SageInterface::whereAmI() diagnostics support");
+//          parent->get_file_info()->display("In SageInterface::whereAmI() diagnostics support");
 
           parent = parent->get_parent();
         }
@@ -2634,7 +2634,7 @@ SageInterface::generateUniqueNameForUseAsIdentifier_support ( SgDeclarationState
           default:
              {
                printf ("In SageInterface::generateUniqueNameForUseAsIdentifier(): Unsupported declaration = %p = %s \n",declaration,declaration->class_name().c_str());
-               ROSE_ASSERT(false);
+//               ROSE_ASSERT(false);
              }
         }
 
@@ -2951,18 +2951,21 @@ SageInterface::templateDefinitionIsInClass( SgTemplateInstantiationMemberFunctio
   // Alternative approach
   // SgTemplateDeclaration* templateDeclaration = memberFunctionDeclaration->get_templateDeclaration();
      SgDeclarationStatement* templateDeclaration = memberFunctionDeclaration->get_templateDeclaration();
-     printf ("In templateDefinitionIsInClass(): templateDeclaration = %p parent of templateDeclaration = %p = %s \n",templateDeclaration,
-          templateDeclaration->get_parent(),templateDeclaration->get_parent()->class_name().c_str());
+//     printf ("In templateDefinitionIsInClass(): templateDeclaration = %p parent of templateDeclaration = %p = %s \n",templateDeclaration,
+//          templateDeclaration->get_parent(),templateDeclaration->get_parent()->class_name().c_str());
 
-     SgScopeStatement* parentScope = isSgScopeStatement(templateDeclaration->get_parent());
-     if (isSgClassDefinition(parentScope) != NULL)
-        {
-          result = true;
-        }
+    if (templateDeclaration != NULL && templateDeclaration->get_parent() != NULL)
+    {  
+      SgScopeStatement* parentScope = isSgScopeStatement(templateDeclaration->get_parent());
+      if (isSgClassDefinition(parentScope) != NULL)
+         {
+           result = true;
+         }
+    }
 
      return result;
    }
-
+#if 0
 SgDeclarationStatement*
 generateUniqueDeclaration ( SgDeclarationStatement* declaration )
    {
@@ -2988,6 +2991,7 @@ generateUniqueDeclaration ( SgDeclarationStatement* declaration )
 
      return keyDeclaration;
    }
+#endif   
 //! Extract a SgPragmaDeclaration's leading keyword . For example "#pragma omp parallel" has a keyword of "omp".
 std::string SageInterface::extractPragmaKeyword(const SgPragmaDeclaration *pragmaDeclaration)
 {
@@ -3393,7 +3397,7 @@ supportForVariableLists ( SgScopeStatement* scope, SgSymbolTable* symbolTable, S
           i++;
         }
    }
-
+#if 0
 // DQ (3/2/2014): Added a new interface function (used in the snippet insertion support).
 void
 SageInterface::supportForInitializedNameLists ( SgScopeStatement* scope, SgInitializedNamePtrList & variableList )
@@ -3403,7 +3407,7 @@ SageInterface::supportForInitializedNameLists ( SgScopeStatement* scope, SgIniti
 
      supportForVariableLists(scope,symbolTable,variableList);
    }
-
+#endif
 
 void
 supportForVariableDeclarations ( SgScopeStatement* scope, SgSymbolTable* symbolTable, SgVariableDeclaration* variableDeclaration )
@@ -4520,13 +4524,23 @@ SgProject * SageInterface::getProject(const SgNode * node) {
 }
 
 SgFunctionDeclaration* SageInterface::getDeclarationOfNamedFunction(SgExpression* func) {
-  if (isSgFunctionRefExp(func)) {
+  SgFunctionDeclaration * ret = NULL; 
+  if (isSgFunctionRefExp(func)) 
+  {
     return isSgFunctionRefExp(func)->get_symbol()->get_declaration();
-  } else if (isSgDotExp(func) || isSgArrowExp(func)) {
+  } 
+  else if (isSgDotExp(func) || isSgArrowExp(func)) 
+  {
     SgExpression* func2 = isSgBinaryOp(func)->get_rhs_operand();
-    ROSE_ASSERT (isSgMemberFunctionRefExp(func2));
-    return isSgMemberFunctionRefExp(func2)->get_symbol()->get_declaration();
-  } else return 0;
+    if (isSgMemberFunctionRefExp(func2))
+      return isSgMemberFunctionRefExp(func2)->get_symbol()->get_declaration();
+    else
+    {
+      cerr<<"Warning in SageInterface::getDeclarationOfNamedFunction(): rhs operand of dot or arrow operations is not a member function, but a "<<func2->class_name()<<endl;
+    }
+  } 
+
+  return ret;
 }
 
 SgExpression* SageInterface::forallMaskExpression(SgForAllStatement* stmt) {
@@ -6276,7 +6290,6 @@ SageInterface::setOneSourcePositionNull(SgNode *node)
      setSourcePosition(node);
    }
 
-
 // DQ (5/1/2012): Newly renamed function (previous name preserved for backward compatability).
 void
 SageInterface::setSourcePositionPointersToNull(SgNode *node)
@@ -6338,7 +6351,6 @@ SageInterface::setSourcePositionPointersToNull(SgNode *node)
              }
         }
    }
-
 
 // DQ (1/24/2009): Could we change the name to be "setSourcePositionAtRootAndAllChildrenAsTransformation(SgNode *root)"
 void
@@ -6566,7 +6578,7 @@ SageInterface::setSourcePosition(SgNode* node)
 #endif
    }
 
-
+#if 0
 void
 SageInterface::setSourcePositionForTransformation_memoryPool()
    {
@@ -6583,7 +6595,7 @@ SageInterface::setSourcePositionForTransformation_memoryPool()
           setOneSourcePositionForTransformation(*i);
         }
    }
-
+#endif
 
 SgGlobal * SageInterface::getFirstGlobalScope(SgProject *project)
    {
@@ -11199,6 +11211,7 @@ SgAssignInitializer* SageInterface::splitExpression(SgExpression* from, string n
     SgFunctionCallExp* fc = isSgFunctionCallExp(e);
     if (!fc) return false;
     SgFunctionRefExp* fr = isSgFunctionRefExp(fc->get_function());
+    if (fr == NULL) return false;
     return fr->get_symbol()->get_declaration() == decl;
   }
 
@@ -11207,6 +11220,7 @@ SgAssignInitializer* SageInterface::splitExpression(SgExpression* from, string n
     SgFunctionCallExp* fc = isSgFunctionCallExp(e);
     if (!fc) return false;
     SgFunctionRefExp* fr = isSgFunctionRefExp(fc->get_function());
+    if (fr == NULL) return false;
     string name =
   fr->get_symbol()->get_declaration()->get_qualified_name().getString();
     return (name == qualifiedName &&
@@ -12193,7 +12207,7 @@ void SageInterface::insertStatementListBefore(SgStatement *targetStmt, const std
 
   //a wrapper for set_expression(), set_operand(), set_operand_exp() etc
   // special concern for lvalue, parent,
-  // todo: warning overwritting existing operands
+  // todo: warning overwriting existing operands
 void SageInterface::setOperand(SgExpression* target, SgExpression* operand)
   {
     ROSE_ASSERT(target);
@@ -12219,11 +12233,15 @@ void SageInterface::setOperand(SgExpression* target, SgExpression* operand)
       case V_SgVarArgStartOneOperandOp:
         isSgVarArgStartOneOperandOp(target)->set_operand_expr(operand);
         break;
+      case V_SgAssignInitializer:
+         isSgAssignInitializer (target)->set_operand(operand);
+         break;
       default:
-        if (isSgUnaryOp(target)!=NULL) isSgUnaryOp(target)->set_operand_i(operand);
+        if (isSgUnaryOp(target)!=NULL) 
+          isSgUnaryOp(target)->set_operand_i(operand);
         else
           {
-            cout<<"SageInterface::setOperand(): unhandled case for target expression of type "
+            cerr<<"\tSageInterface::setOperand(): unhandled case for target expression of type "
                 <<target->class_name()<<endl;
             ROSE_ASSERT(false);
           }

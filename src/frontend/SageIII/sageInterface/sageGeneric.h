@@ -2732,6 +2732,11 @@ namespace sg
         Dispatcher::dispatch(rv, assume_sage_type<SgQualifiedNameType>(*n));
         break;
 
+   // DQ (4/5/2017): Added this case that shows up using GNU 6.1 and Boost 1.51 (or Boost 1.52).
+      case V_SgDeclType:
+        Dispatcher::dispatch(rv, assume_sage_type<SgDeclType>(*n));
+        break;
+
       // intermediary types - should not occur during AST traversal
       // \note this list is incomplete
       case V_SgNode:

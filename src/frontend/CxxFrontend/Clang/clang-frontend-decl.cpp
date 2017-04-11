@@ -1278,7 +1278,11 @@ bool ClangToSageTranslator::VisitTranslationUnitDecl(clang::TranslationUnitDecl 
 
   // Traverse the children
 
-    SageBuilder::pushScopeStack(*node);
+ // DQ (4/5/2017): Fixed code to use updated SageBuilder API.
+ // SageBuilder::pushScopeStack(*node);
+    SgScopeStatement* global_scope = isSgGlobal(*node);
+    ROSE_ASSERT(global_scope != NULL);
+    SageBuilder::pushScopeStack(global_scope);
 
     clang::DeclContext * decl_context = (clang::DeclContext *)translation_unit_decl; // useless but more clear
 

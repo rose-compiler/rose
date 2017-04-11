@@ -6,6 +6,10 @@
 
 int main ( int argc, char** argv) {
 
+   // DQ (4/6/2017): This will not fail if we skip calling ROSE_INITIALIZE (but
+   // any warning message using the message looging feature in ROSE will fail).
+   ROSE_INITIALIZE;
+
    // command line parameters are passed to EDG
    // non-EDG parameters are passed (through) to ROSE (and the vendor compiler)
    SgProject* root=frontend(argc,argv); 
