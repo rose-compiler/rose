@@ -11,6 +11,10 @@ main ( int argc, char * argv[] )
   // Main Function for default example ROSE Preprocessor
   // This is an example of a preprocessor that can be built with ROSE
 
+  // DQ (4/6/2017): This will not fail if we skip calling ROSE_INITIALIZE (but
+  // any warning message using the message looging feature in ROSE will fail).
+     ROSE_INITIALIZE;
+
   // Build the project object (AST) which we will fill up with multiple files and use as a
   // handle for all processing of the AST(s) associated with one or more source files.
      int frontEndErrorCode = 0;
