@@ -804,7 +804,6 @@ FortranCodeGeneration_locatedNode::unparseCastOp(SgExpression* expr, SgUnparse_I
      printf ("Case operators not defined for Fortran code generation! node = %s \n",expr->class_name().c_str());
   // ROSE_ASSERT(false);
 
-#if 1
      SgCastExp* cast_op = isSgCastExp(expr);
      ROSE_ASSERT(cast_op != NULL);
 
@@ -852,6 +851,7 @@ FortranCodeGeneration_locatedNode::unparseCastOp(SgExpression* expr, SgUnparse_I
                ROSE_ASSERT(false);
                break;
              }
+
           case SgCastExp::e_C_style_cast:
           case SgCastExp::e_const_cast:
              {
@@ -868,10 +868,34 @@ FortranCodeGeneration_locatedNode::unparseCastOp(SgExpression* expr, SgUnparse_I
                   }
                break;
              }
+
+     // DQ (3/28/2017): Adding this here to eliminate warning from Clang.
+          case SgCastExp::e_safe_cast:
+             {
+               printf ("SgCastExp::e_safe_cast found (Not defined in Fortran) \n");
+               ROSE_ASSERT(false);
+               break;
+             }
+
+     // DQ (3/28/2017): Adding this here to eliminate warning from Clang.
+        case SgCastExp::e_last_cast:
+             {
+               printf ("SgCastExp::e_last_cast is an error (end of enum list) \n");
+               ROSE_ASSERT(false);
+               break;
+             }
+
+     // DQ (3/28/2017): Adding this here to eliminate warning from Clang.
+          default:
+             {
+            // DQ (3/28/2017): There should be no other cases, but make the default an error (just in case).
+               printf ("SgCastExp::e_last_cast is an error (end of enum list) \n");
+               ROSE_ASSERT(false);
+               break;
+             }
         }
 
      unparseExpression(cast_op->get_operand(), info); 
-#endif
    }
 
 
@@ -1249,7 +1273,8 @@ FortranCodeGeneration_locatedNode::unparseUseOnly(SgExpression* expr, SgUnparse_
      SgExprListExp* lst = only_expr->get_access_list();
      curprint(", ONLY: ");
   // unparseExprList(lst, info, false /*paren*/);
-     unparseExprList(lst, info, false /*paren*/);
+  // unparseExprList(lst, info, false /*paren*/);
+     unparseExprList(lst, info);
    }
 #endif
 
@@ -1267,7 +1292,8 @@ FortranCodeGeneration_locatedNode::unparseIOItemExpr(SgExpression* expr, SgUnpar
   SgExpression* ioitem = ioitem_expr->get_io_item();
 
   if (isSgExprListExp(ioitem)) {
-    unparseExprList(isSgExprListExp(ioitem), info, false /*paren*/);
+ // unparseExprList(isSgExprListExp(ioitem), info, false /*paren*/);
+    unparseExprList(isSgExprListExp(ioitem), info);
   }
   else {
     unparseExpression(ioitem, info);
@@ -1353,7 +1379,8 @@ FortranCodeGeneration_locatedNode::unparseImpliedDo(SgExpression* expr, SgUnpars
      curprint("(");
      if (object_list != NULL)
         {
-          unparseExprList(object_list, info, false /*paren*/);
+       // unparseExprList(object_list, info, false /*paren*/);
+          unparseExprList(object_list, info);
 
        // DQ (9/26/2010): Handle cases where the list is empty (see test2010_49.f90)
           if (object_list->empty() == false)
@@ -1759,11 +1786,16 @@ FortranCodeGeneration_locatedNode::unparseLongDblVal(SgExpression* expr, SgUnpar
 //----------------------------------------------------------------------------
 
 // bool FortranCodeGeneration_locatedNode::unparseExprList(SgExprListExp* expr, SgUnparse_Info& info, bool paren)
+// void FortranCodeGeneration_locatedNode::unparseExprList(SgExpression* expr, SgUnparse_Info& info, bool paren)
 void
-FortranCodeGeneration_locatedNode::unparseExprList(SgExpression* expr, SgUnparse_Info& info, bool paren)
+FortranCodeGeneration_locatedNode::unparseExprList(SgExpression* expr, SgUnparse_Info& info)
 {
   ROSE_ASSERT(expr);
   SgExprListExp* expr_list = isSgExprListExp(expr);
+
+// DQ (3/28/2017): Removed this from the function parameter list so that it would match the base class virtual function.
+// This is part of removing warnings from ROSE specific to Clang.
+  bool paren = false;
 
   info.set_nested_expression();
 

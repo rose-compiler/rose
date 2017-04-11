@@ -361,7 +361,6 @@ SgAsmElfSectionTable::add_section(SgAsmElfSection *section)
     return shdr;
 }
 
-/* Make this section's name to be stored in the specified string table. */
 void
 SgAsmElfSection::allocate_name_to_storage(SgAsmElfStringSection *strsec)
 {

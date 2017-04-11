@@ -18,6 +18,9 @@
 #include <iostream>
 #endif /* NDEBUG */
 
+
+#define WITH_BINARY_ANALYSIS 0
+
 // #include "Cxx_Grammar.h"
 
 // DQ (10/5/2014): We can't include this here.
@@ -143,6 +146,11 @@ namespace sg
     }
   };
 
+#define GEN_SAGE_CASE(X) \
+  case V_##X : \
+    Dispatcher::dispatch(rv, assume_sage_type<X>(*n)); \
+    break
+
 /// \brief for internal use (use dispatch instead)
   template <class RoseVisitor, class SageNode>
   static inline
@@ -155,9 +163,11 @@ namespace sg
 
     switch (n->variantT())
     {
-      case V_SgName:
-        Dispatcher::dispatch(rv, assume_sage_type<SgName>(*n));
-        break;
+      //~ case V_SgName:
+        //~ Dispatcher::dispatch(rv, assume_sage_type<SgName>(*n));
+        //~ break;
+
+      GEN_SAGE_CASE(SgName);
 
       case V_SgSymbolTable:
         Dispatcher::dispatch(rv, assume_sage_type<SgSymbolTable>(*n));
@@ -231,9 +241,11 @@ namespace sg
         Dispatcher::dispatch(rv, assume_sage_type<SgSourceFile>(*n));
         break;
 
+#if WITH_BINARY_ANALYSIS
       case V_SgBinaryComposite:
         Dispatcher::dispatch(rv, assume_sage_type<SgBinaryComposite>(*n));
         break;
+#endif /* WITH_BINARY_ANALYSIS */
 
       case V_SgUnknownFile:
         Dispatcher::dispatch(rv, assume_sage_type<SgUnknownFile>(*n));
@@ -297,6 +309,38 @@ namespace sg
 
       case V_SgTemplateArgumentList:
         Dispatcher::dispatch(rv, assume_sage_type<SgTemplateArgumentList>(*n));
+        break;
+
+      case V_SgTemplateMemberFunctionDeclaration:
+        Dispatcher::dispatch(rv, assume_sage_type<SgTemplateMemberFunctionDeclaration>(*n));
+        break;
+
+      case V_SgTemplateFunctionDeclaration:
+        Dispatcher::dispatch(rv, assume_sage_type<SgTemplateFunctionDeclaration>(*n));
+        break;
+
+      case V_SgTemplateFunctionDefinition:
+        Dispatcher::dispatch(rv, assume_sage_type<SgTemplateFunctionDefinition>(*n));
+        break;
+
+      case V_SgTemplateVariableDeclaration:
+        Dispatcher::dispatch(rv, assume_sage_type<SgTemplateVariableDeclaration>(*n));
+        break;
+
+      case V_SgTemplateParameterVal:
+        Dispatcher::dispatch(rv, assume_sage_type<SgTemplateParameterVal>(*n));
+        break;
+
+      case V_SgTemplateFunctionRefExp:
+        Dispatcher::dispatch(rv, assume_sage_type<SgTemplateFunctionRefExp>(*n));
+        break;
+
+      case V_SgTemplateMemberFunctionRefExp:
+        Dispatcher::dispatch(rv, assume_sage_type<SgTemplateMemberFunctionRefExp>(*n));
+        break;
+
+      case V_SgTypeTraitBuiltinOperator:
+        Dispatcher::dispatch(rv, assume_sage_type<SgTypeTraitBuiltinOperator>(*n));
         break;
 
       case V_SgBitAttribute:
@@ -405,6 +449,10 @@ namespace sg
 
       case V_SgForStatement:
         Dispatcher::dispatch(rv, assume_sage_type<SgForStatement>(*n));
+        break;
+
+      case V_SgMatlabForStatement:
+        Dispatcher::dispatch(rv, assume_sage_type<SgMatlabForStatement>(*n));
         break;
 
       case V_SgForInitStatement:
@@ -1543,6 +1591,7 @@ namespace sg
         Dispatcher::dispatch(rv, assume_sage_type<SgSymbol>(*n));
         break;
 
+#if WITH_BINARY_ANALYSIS
       case V_SgAsmBlock:
         Dispatcher::dispatch(rv, assume_sage_type<SgAsmBlock>(*n));
         break;
@@ -2406,6 +2455,7 @@ namespace sg
       case V_SgAsmNode:
         Dispatcher::dispatch(rv, assume_sage_type<SgAsmNode>(*n));
         break;
+#endif /* WITH_BINARY_ANALYSIS */
 
       case V_SgInitializedName:
         Dispatcher::dispatch(rv, assume_sage_type<SgInitializedName>(*n));
@@ -2682,6 +2732,11 @@ namespace sg
         Dispatcher::dispatch(rv, assume_sage_type<SgQualifiedNameType>(*n));
         break;
 
+   // DQ (4/5/2017): Added this case that shows up using GNU 6.1 and Boost 1.51 (or Boost 1.52).
+      case V_SgDeclType:
+        Dispatcher::dispatch(rv, assume_sage_type<SgDeclType>(*n));
+        break;
+
       // intermediary types - should not occur during AST traversal
       // \note this list is incomplete
       case V_SgNode:
@@ -2696,6 +2751,8 @@ namespace sg
 
     return rv;
   }
+
+#undef GEN_SAGE_CASE
 
 
 /// \brief    uncovers the type of SgNode and passes it to an

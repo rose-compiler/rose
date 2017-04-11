@@ -482,7 +482,7 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
      curprint(string("\n/* Top of unparseType: class_name() = ") + type->class_name() + " */ \n");
 #endif
 
-#if 1
+#if 0
      if (info.SkipClassDefinition() != info.SkipEnumDefinition())
         {
           printf ("In unparseType(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
@@ -2362,6 +2362,10 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
                        {
                       // Else if this is a declaration in a variable declaration, then we do want to output a generated name.
                       // We could also mark the declaration for the cases where this is required. See test2012_141.C for this case.
+                         if (edecl->get_parent() == NULL)
+                            {
+                              printf ("WARNING: edecl->get_parent() == NULL: edecl = %p \n",edecl);
+                            }
                          ROSE_ASSERT(edecl->get_parent() != NULL);
                          SgTypedefDeclaration* typedefDeclaration = isSgTypedefDeclaration(edecl->get_parent());
                          if (typedefDeclaration != NULL)
@@ -3481,10 +3485,13 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
                        {
                       // Unparse the array bound.
 
+                      // DQ (3/28/2017): Eliminate warning about unused variable from Clang.
                       // DQ (2/12/2016): Adding support for variable length arrays.
                       // unp->u_exprStmt->unparseExpression(array_type->get_index(), ninfo2); // get_index() returns an expr
-                         SgExpression* indexExpression = array_type->get_index();
-                         SgNullExpression* nullExpression = isSgNullExpression(indexExpression);
+                      // SgExpression* indexExpression = array_type->get_index();
+
+                      // DQ (3/28/2017): Eliminate warning about unused variable from Clang.
+                      // SgNullExpression* nullExpression = isSgNullExpression(indexExpression);
 
                       // DQ (2/14/2016): Since the array type's index is updated after seeing the function definition, we need to always use the VLA syntax for reliabily.
                       // if (nullExpression != NULL && array_type->get_is_variable_length_array() == true)
@@ -3501,6 +3508,10 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
 #if 0
                                    printf ("We need to output the expression used in the defining declaration's array type \n");
                                    curprint(" /* We need to output the expression used in the defining declaration's array type */ ");
+#endif
+#if 0
+                                   printf ("In unparseArrayType(): array_type->get_index() = %p \n",array_type->get_index());
+                                   printf ("In unparseArrayType(): array_type->get_index() = %p = %s \n",array_type->get_index(),array_type->get_index()->class_name().c_str());
 #endif
                                    unp->u_exprStmt->unparseExpression(array_type->get_index(), ninfo2); // get_index() returns an expr
                                  }
@@ -3548,7 +3559,7 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
              }
         }
 
-#if DEBUG_ARRAY_TYPE
+#if DEBUG_ARRAY_TYPE || 0
   // DQ (5/8/2013): Note that this will make the type name very long and can cause problems with nexted type generating nested comments.
      printf ("Leaving unparseArrayType(): type = %p \n",type);
      curprint("/* Leaving unparseArrayType() */ \n ");
@@ -3567,13 +3578,14 @@ Unparse_Type::unparseTemplateType(SgType* type, SgUnparse_Info& info)
      SgTemplateType* template_type = isSgTemplateType(type);
      ROSE_ASSERT(template_type != NULL);
 
-#if 0
-  // DQ (8/25/2012): This allows everything to work, but likely with some internal problems that are not being noticed.
-     SgName name = "int ";
-#else
   // This is the code that we want to use, but it is not working.
      SgName name = template_type->get_name();
-#endif
+
+  // DQ (3/18/2017): Added support to unparse packing specification.
+     if (template_type->get_packed() == true)
+        {
+          name += "...";
+        }
 
   // Add a space to seperate the type from other syntax.
      name += " ";
@@ -3590,7 +3602,7 @@ Unparse_Type::unparseTemplateType(SgType* type, SgUnparse_Info& info)
 
   // For now just unparse a simple string that will at least be a correct type.
   // curprint("unparse_template_type ");
-#if 1
+
   // DQ (8/25/2012): This was a problem for the output ofr types called from different locations.
      if ( (info.isTypeFirstPart() == false) && (info.isTypeSecondPart() == false) )
         {
@@ -3608,22 +3620,9 @@ Unparse_Type::unparseTemplateType(SgType* type, SgUnparse_Info& info)
                curprint(name);
              }
         }
-#else
-  // Older version of code...
-
-#error "DEAD CODE!"
 
 #if 0
-  // DQ (8/23/2012): Only out put anything for the 2nd part fo the type.
-  // This avoids output of the type twice (which is something I have not tracked down, but appears to be happening).
-     curprint("int ");
-#else
-  // if (info.isTypeFirstPart() == true)
-     if (info.isTypeSecondPart() == true)
-        {
-          curprint("int ");
-        }
-#endif
+     printf ("Leaving Unparse_Type::unparseTemplateType() \n");
 #endif
 
 #if 0

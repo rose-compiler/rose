@@ -61,6 +61,81 @@ const int roseTargetCacheLineSize = 32;
 // DQ (8/11/2004): build a global state here
 // int rose::roseVerbose = 0;
 
+// DQ (3/6/2017): Adding ROSE options data structure to support frontend and backend options (see header file for details).
+rose::Options rose::global_options;
+
+// DQ (3/6/2017): Adding ROSE options data structure to support frontend and backend options (see header file for details).
+rose::Options::Options()
+   {
+  // DQ (3/6/2017): Default option value to minimize the chattyness of ROSE based tools.
+     frontend_notes    = false;
+     frontend_warnings = false;
+     backend_notes     = false;
+     backend_warnings  = false;
+   }
+
+// DQ (3/6/2017): Adding ROSE options data structure to support frontend and backend options (see header file for details).
+rose::Options::Options(const Options & X)
+   {
+  // DQ (3/6/2017): Default option value to minimize the chattyness of ROSE based tools.
+     frontend_notes    = X.frontend_notes;
+     frontend_warnings = X.frontend_warnings;
+     backend_notes     = X.backend_notes;
+     backend_warnings  = X.backend_warnings;
+   }
+
+// DQ (3/6/2017): Adding ROSE options data structure to support frontend and backend options (see header file for details).
+Options & rose::Options::operator= (const Options & X)
+   {
+  // DQ (3/6/2017): Default option value to minimize the chattyness of ROSE based tools.
+     frontend_notes    = X.frontend_notes;
+     frontend_warnings = X.frontend_warnings;
+     backend_notes     = X.backend_notes;
+     backend_warnings  = X.backend_warnings;
+
+     return *this;
+   }
+
+bool rose::Options::get_frontend_notes()
+   {
+     return frontend_notes;
+   }
+
+void rose::Options::set_frontend_notes(bool flag)
+   {
+     frontend_notes = flag;
+   }
+
+bool rose::Options::get_frontend_warnings()
+   {
+     return frontend_warnings;
+   }
+
+void rose::Options::set_frontend_warnings(bool flag)
+   {
+     frontend_warnings = flag;
+   }
+
+bool rose::Options::get_backend_notes()
+   {
+     return backend_notes;
+   }
+
+void rose::Options::set_backend_notes(bool flag)
+   {
+     backend_notes = flag;
+   }
+
+bool rose::Options::get_backend_warnings()
+   {
+     return backend_warnings;
+   }
+
+void rose::Options::set_backend_warnings(bool flag)
+   {
+     backend_warnings = flag;
+   }
+
 
 #define OUTPUT_TO_FILE true
 #define DEBUG_COPY_EDIT false
@@ -85,6 +160,26 @@ std::map<SgScopeStatement*,SgStatement*> rose::representativeWhitespaceStatement
 
 // DQ (11/30/2015): Provide a statement to use as a key in the macro expansion map to get info about macro expansions.
 std::map<SgStatement*,MacroExpansion*> rose::macroExpansionMap;
+
+
+// DQ (3/24/2016): Adding Robb's message logging mechanism to contrl output debug message from the EDG/ROSE connection code.
+using namespace rose::Diagnostics;
+
+// DQ (3/5/2017): Added general IR node specific message stream to support debugging message from the ROSE IR nodes.
+Sawyer::Message::Facility rose::ir_node_mlog;
+
+void rose::initDiagnostics() 
+   {
+     static bool initialized = false;
+     if (!initialized) 
+        {
+          initialized = true;
+       // printf ("In rose::initDiagnostics(): Calling Sawyer::Message::Facility() \n");
+          ir_node_mlog = Sawyer::Message::Facility("rose_ir_node", rose::Diagnostics::destination);
+          rose::Diagnostics::mfacilities.insertAndAdjust(ir_node_mlog);
+       // printf ("In rose::initDiagnostics(): DONE Calling Sawyer::Message::Facility() \n");
+        }
+   }
 
 
 // DQ (4/17/2010): This function must be defined if C++ support in ROSE is disabled.

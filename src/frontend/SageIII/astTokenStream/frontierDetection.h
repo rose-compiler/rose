@@ -120,7 +120,9 @@ class FrontierDetectionForTokenStreamMappingAttribute : public AstAttribute
   // be unparsed vs. unparsing directly from the AST (e.g. for transformations).
 
      private:
-          SgNode* node;
+       // DQ (3/25/2017): Remove to avoid Clang warning about unused private variable.
+       // SgNode* node;
+
           std::string name;
           std::string options;
 

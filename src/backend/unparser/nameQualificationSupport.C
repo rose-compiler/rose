@@ -68,7 +68,7 @@ void NameQualificationTraversal::initDiagnostics()
      if (!initialized) 
         {
           initialized = true;
-          rose::Diagnostics::initAndRegister(mlog, "rose::NameQualificationTraversal");
+          rose::Diagnostics::initAndRegister(&mlog, "rose::NameQualificationTraversal");
         }
    }
 
@@ -4877,8 +4877,9 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                   }
                  else
                   {
+                 // DQ (3/5/2017): Converted to use message logging.
                  // DQ (9/17/2011): Added this case, print a warning and fix thiat after debugging the constant folding value elimination..
-                    printf ("WARNING: SgFunctionRefExp name qualification not handled for the case of currentStatement == NULL \n");
+                    mprintf ("WARNING: SgFunctionRefExp name qualification not handled for the case of currentStatement == NULL \n");
                   }
              }
             else
@@ -5406,7 +5407,8 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                  // if (numberOfAliasSymbols > 1)
                     if (numberOfAliasSymbols > 1 && amountOfNameQualificationRequired == 0)
                        {
-                         printf ("WARNING: name qualification can be required when there are multiple base classes with the same referenced variable via SgAliasSymbol \n");
+                      // DQ (3/15/2017): Added support to use message streams.
+                         mprintf ("WARNING: name qualification can be required when there are multiple base classes with the same referenced variable via SgAliasSymbol \n");
                        }
                       else
                        {
@@ -5417,14 +5419,16 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                       // if (numberOfSymbolsWithSameName > 1 && amountOfNameQualificationRequired == 0)
                          if ((numberOfSymbolsWithSameName - numberOfAliasSymbols) > 1 && amountOfNameQualificationRequired == 0)
                             {
-                              printf ("WARNING: name qualification can be required when there are multiple base classes with the same referenced variable via SgVariableSymbol \n");
+                           // DQ (3/15/2017): Added support to use message streams.
+                              mprintf ("WARNING: name qualification can be required when there are multiple base classes with the same referenced variable via SgVariableSymbol \n");
                             }
                       // ROSE_ASSERT(numberOfSymbolsWithSameName < 2);
                       // if (numberOfSymbolsWithSameName >= 2 && amountOfNameQualificationRequired == 0)
                          if ((numberOfSymbolsWithSameName - numberOfAliasSymbols) > 1 && amountOfNameQualificationRequired == 0)
                             {
-                              printf ("   --- numberOfSymbolsWithSameName       = %d \n",numberOfSymbolsWithSameName);
-                              printf ("   --- amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
+                           // DQ (3/15/2017): Added support to use message streams.
+                              mprintf ("   --- numberOfSymbolsWithSameName       = %d \n",numberOfSymbolsWithSameName);
+                              mprintf ("   --- amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
                             }
                        // ROSE_ASSERT(numberOfSymbolsWithSameName < 2 || amountOfNameQualificationRequired > 0);
 

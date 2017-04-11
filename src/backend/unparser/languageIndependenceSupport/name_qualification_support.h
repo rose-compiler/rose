@@ -25,10 +25,13 @@ class Unparser_Nameq
   // This class has the low level support for name qualification.
 
      private:
-          Unparser* unp;
+       // DQ (3/28/2017): Eliminate warning about unused variable from Clang.
+       // Unparser* unp;
 
      public:
-          Unparser_Nameq(Unparser* unp):unp(unp){};
+       // DQ (3/28/2017): Eliminate warning about unused variable from Clang.
+       // Unparser_Nameq(Unparser* unp):unp(unp){};
+          Unparser_Nameq(Unparser* unp) { };
           virtual ~Unparser_Nameq() {};
 
        // DQ (6/2/2011): New name qualification support.

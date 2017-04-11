@@ -70,9 +70,11 @@ AttributeListMap::AttributeListMap(SgFile* sageFilePtr)
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
  
 void AttributeListMap::attach_line_to_macro_call(){
+#if 0 
+  // DQ (3/25/2017): Moved these in to the commented out code to avoid Clang warning about unused variables.
       attribute_map_type::iterator begin = currentMapOfAttributes.begin();
-      attribute_map_type::iterator end   = currentMapOfAttributes.end();  
-  #if 0 
+      attribute_map_type::iterator end   = currentMapOfAttributes.end();
+
       //Find all lines within files with macros and create a PreprocessingInfo object containing that line from
       //from the original source code
       while(begin!=end){
@@ -135,7 +137,7 @@ void AttributeListMap::attach_line_to_macro_call(){
       
          ++begin;
       }
-  #endif
+#endif
 }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

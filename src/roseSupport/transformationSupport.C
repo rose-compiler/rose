@@ -8,6 +8,9 @@
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 
+// DQ (3/6/2017): Added support for message logging to control output from ROSE tools.
+#undef mprintf
+#define mprintf rose::Diagnostics::mfprintf(rose::ir_node_mlog[rose::Diagnostics::DEBUG])
 
 
 #if 0
@@ -2097,7 +2100,8 @@ TransformationSupport::getDirectory( const SgNode* astNode )
             // DQ (9/2/2014): Only output this message if this is not in a SgArrayType.
                if (isSgArrayType(parentNode) == NULL)
                  {
-                   printf ("Warning: can't locate an associated SgFile from astNode = %p = %s parentNode = %p = %s \n",astNode,astNode->class_name().c_str(),parentNode,parentNode->class_name().c_str());
+                // DQ (3/6/2017): Converted to use message logging.
+                   mprintf ("Warning: can't locate an associated SgFile from astNode = %p = %s parentNode = %p = %s \n",astNode,astNode->class_name().c_str(),parentNode,parentNode->class_name().c_str());
                  }
                return NULL;
              }
@@ -2138,7 +2142,8 @@ TransformationSupport::getFile( const SgNode* astNode )
             // DQ (9/2/2014): Only output this message if this is not in a SgArrayType.
                if (isSgArrayType(parentNode) == NULL)
                  {
-                   printf ("Warning: can't locate an associated SgFile from astNode = %p = %s parentNode = %p = %s \n",astNode,astNode->class_name().c_str(),parentNode,parentNode->class_name().c_str());
+                // DQ (3/6/2017): Converted to use message logging.
+                   mprintf ("Warning: can't locate an associated SgFile from astNode = %p = %s parentNode = %p = %s \n",astNode,astNode->class_name().c_str(),parentNode,parentNode->class_name().c_str());
                  }
                return NULL;
              }
@@ -2551,13 +2556,13 @@ TransformationSupport::getFunctionDefinition( const SgNode* astNode)
      const SgNode* parentNode = astNode;
 
      ROSE_ASSERT(astNode != NULL);
-#if 1
+#if 0
      printf ("Note: astNode = %p = %s parent = %p \n",astNode,astNode->class_name().c_str(),astNode->get_parent());
 #endif
 
      while ( (isSgFunctionDefinition(parentNode) == NULL) && (parentNode->get_parent() != NULL) )
         {
-#if 1
+#if 0
           printf ("Note: parentNode = %p = %s \n",parentNode,parentNode->class_name().c_str());
 #endif
           parentNode = parentNode->get_parent();
