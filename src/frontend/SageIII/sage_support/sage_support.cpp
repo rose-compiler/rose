@@ -6955,6 +6955,7 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
   //   - SgAddressOfOp
   //   - SgFunctionRefExp
   //   - SgMemberFunctionRefExp
+  //   - SgFunctionSymbol  // Liao 4/7/2017, discovered by a call to RAJA template functions using lambda expressions
   // schroder3 (2016-06-28): There are some more (see below).
 
   // Some virtual functions are resolved statically (e.g. for objects allocated on the stack)
@@ -7243,9 +7244,16 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
 #endif
                break;
              }
-
+          case V_SgFunctionSymbol: 
+             {
+               returnSymbol = isSgFunctionSymbol(functionExp);
+               break; 
+             }
           default:
              {
+               // Send out error message before the assertion, which may fail and stop first otherwise. 
+               mprintf("Error: There should be no other cases functionExp = %p = %s \n", functionExp, functionExp->class_name().c_str());
+
                ROSE_ASSERT(functionExp->get_file_info() != NULL);
 
             // DQ (3/15/2017): Fixed to use mlog message logging.
@@ -7253,7 +7261,6 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
                   {
                     functionExp->get_file_info()->display("In SgFunctionCallExp::getAssociatedFunctionSymbol(): case not supported: debug");
                   }
-               mprintf("Error: There should be no other cases functionExp = %p = %s \n", functionExp, functionExp->class_name().c_str());
 
                // schroder3 (2016-07-25): Changed "#if 1" to "#if 0" to remove ROSE_ASSERT. If this member function is unable to determine the
                //  associated function then it should return 0 instead of raising an assertion.
