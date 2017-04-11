@@ -102,9 +102,15 @@ get_C_array_dimensions_diff_check: $(nonsmoke_get_C_array_dimensions_c_output_di
 genericCoverage_diff_check: $(nonsmoke_genericCoverage_c_output_diff)
 
 #  generate the diff files
+if !ROSE_USING_GCC_VERSION_LATER_6_1
 check-local: $(nonsmoke_getDataSharingAttribute_c_output) $(nonsmoke_getDataSharingAttribute_c_output_diff) \
              $(nonsmoke_get_C_array_dimensions_c_output) $(nonsmoke_get_C_array_dimensions_c_output_diff) \
              $(nonsmoke_genericCoverage_c_output) $(nonsmoke_genericCoverage_c_output_diff)
+else
+# DQ (4/5/2017): GNU 6.1 includes language features that this test does not support.
+check-local: $(nonsmoke_getDataSharingAttribute_c_output) $(nonsmoke_getDataSharingAttribute_c_output_diff) \
+             $(nonsmoke_get_C_array_dimensions_c_output) $(nonsmoke_get_C_array_dimensions_c_output_diff) 
+endif
 
 clean-local:
 	rm -rf $(rose_nonsmoke_getDataSharingAttribute_c) $(nonsmoke_getDataSharingAttribute_c_output) $(nonsmoke_getDataSharingAttribute_c_output_diff)

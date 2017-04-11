@@ -72,7 +72,7 @@ namespace OmpSupport
 
     OmpAttributeList* cur_list =  getOmpAttributeList(node);
     ROSE_ASSERT (cur_list != NULL);
-    (cur_list->ompAttriList);
+//    (cur_list->ompAttriList);
     vector <OmpAttribute* >::iterator h_pos = find ((cur_list->ompAttriList).begin(), (cur_list->ompAttriList).end(), ompattribute);
     ROSE_ASSERT (h_pos != (cur_list->ompAttriList).end());
     (cur_list->ompAttriList).erase (h_pos);

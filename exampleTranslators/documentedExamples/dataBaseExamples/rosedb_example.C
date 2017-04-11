@@ -7,34 +7,36 @@ DEFINE_TABLE_PROJECTS();
 DEFINE_TABLE_FILES();
 
 //-----------------------------------------------------------------------------
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[]) 
+   {
+  // DQ (4/6/2017): This will not fail if we skip calling ROSE_INITIALIZE (but
+  // any warning message using the message looging feature in ROSE will fail).
+     ROSE_INITIALIZE;
 
-	GlobalDatabaseConnection db;
-	int initOk =  db.initialize();
-	assert( initOk==0 );
+     GlobalDatabaseConnection db;
+     int initOk =  db.initialize();
+     assert( initOk==0 );
 
-	CREATE_TABLE(db, projects);
-	CREATE_TABLE(db, files);
+     CREATE_TABLE(db, projects);
+     CREATE_TABLE(db, files);
 
-	// initialize project
-	string projectName = "testProject";  // this should be given at the command line
-	string fileName    = "testFile.C";   // this should be retrieved from a SgFile node
+  // initialize project
+     string projectName = "testProject";  // this should be given at the command line
+     string fileName    = "testFile.C";   // this should be retrieved from a SgFile node
 
-	projectsRowdata prow( UNKNOWNID ,projectName, UNKNOWNID );
-	projects.retrieveCreateByColumn( &prow, "name", 
-			projectName );
-	long projectId 	= prow.get_id();
+     projectsRowdata prow( UNKNOWNID ,projectName, UNKNOWNID );
+     projects.retrieveCreateByColumn( &prow, "name", projectName );
+     long projectId 	= prow.get_id();
 
-	// get id of this file
-	filesRowdata frow( UNKNOWNID, projectId , fileName );
-	files.retrieveCreateByColumn( &frow, "fileName", 
-			fileName, frow.get_projectId() );
-	long fileId	= frow.get_id();
+  // get id of this file
+     filesRowdata frow( UNKNOWNID, projectId , fileName );
+     files.retrieveCreateByColumn( &frow, "fileName", fileName, frow.get_projectId() );
+     long fileId	= frow.get_id();
 
-	// do some work...
-	std::cout << "Project ID:"<< projectId <<" , File ID:" << fileId << std::endl;
+  // do some work...
+     std::cout << "Project ID:"<< projectId <<" , File ID:" << fileId << std::endl;
 
-	db.shutdown();
-	return( 0 );
-}
+     db.shutdown();
+     return( 0 );
+   }
 

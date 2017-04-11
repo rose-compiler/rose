@@ -12,7 +12,7 @@ AM_CPPFLAGS =  \
         $(ROSE_INCLUDES) \
         -I$(top_srcdir)/src/frontend/SageIII/sageInterface
 # We install a few test programs since they might be useful for external users
-bin_PROGRAMS = loopInterchange loopUnrolling loopTiling loopCollapsingDirective loopCollapsing 
+bin_PROGRAMS = loopInterchange loopUnrolling loopTiling loopCollapsingDirective loopCollapsing rajaChecker 
 #moveDeclarationToInnermostScope is moved to rose/tools/
 
 #not for installation
@@ -33,7 +33,7 @@ noinst_PROGRAMS = \
     buildCommonBlock doLoopNormalization buildLabelStatement2 replaceWithPattern \
     insertBeforeUsingCommaOp insertAfterUsingCommaOp deepCopy fixVariableReferences \
     buildJavaPackage createAbstractHandles buildStatementFromString \
-    getArrayElementType
+    getArrayElementType interfaceFunctionCoverage
 
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes --suppressions=$(top_srcdir)/scripts/rose-suppressions-for-valgrind
 # VALGRIND = valgrind $(VALGRIND_OPTIONS)
@@ -99,6 +99,8 @@ loopCollapsing_SOURCES                    = loopCollapsing.C
 loopCollapsingDirective_SOURCES           = loopCollapsingDirective.C
 createAbstractHandles_SOURCES             = createAbstractHandles.C
 buildStatementFromString_SOURCES          = buildStatementFromString.C
+interfaceFunctionCoverage_SOURCES         = interfaceFunctionCoverage.C
+rajaChecker_SOURCES                       = rajaChecker.C
 # libsageInterface.la is included in rose.la already?
 LDADD =  $(ROSE_LIBS)
 
@@ -161,7 +163,15 @@ generatedCodeExamples = \
   rose_inputloopCollapsing_4.C\
   rose_inputloopCollapsing_5.C\
   rose_inputbuildStatementFromString.C \
-  buildJavaPackage.passed 
+  buildJavaPackage.passed
+
+# C++ 11 features need GCC 4.8 and later
+# Liao 4/10/2017
+if ROSE_USING_GCC_VERSION_LATER_4_8
+generatedCodeExamples += \
+  rose_inputrajaChecker.C
+endif
+
 
 # DQ (2/27/2017): Exclude the GNU 4.9 compiler as well (fails on Ubuntu16.04).
 # DQ (2/8/2017): This test will sometimes fail on GNU 5.1 and later compilers.
@@ -174,6 +184,12 @@ if !ROSE_USING_GCC_VERSION_LATER_4_9
 generatedCodeExamples += \
   deepDelete.passed 
 endif
+
+# Liao 4/6/2017, GCC 4.2.4 has some issue to pass the coverage test
+if ROSE_USING_GCC_VERSION_LATER_4_4
+generatedCodeExamples += \
+  rose_inputinterfaceFunctionCoverage.C 
+endif 
 
 # Liao 8/17/2010
 #if USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
@@ -213,6 +229,7 @@ group1 =						\
 	rose_inputloopNormalization.C			\
 	rose_inputcollectReadWriteVariables.C		\
 	rose_inputtypeTraits.C				\
+	rose_inputinterfaceFunctionCoverage.C	        \
 	rose_inputlivenessAnalysis.C			\
 	rose_inputgenerateUniqueName.C			\
 	rose_inputannotateExpressionsWithUniqueNames.C	\
@@ -533,6 +550,14 @@ $(group3): rose_%: % $(group3_headers)
 		INPUT=$(abspath $<) \
 		$(srcdir)/astInterface.conf $@.passed
 
+# special options for raja checker 
+rose_inputrajaChecker.C: inputrajaChecker.C rajaChecker
+	@$(RTH_RUN) \
+		EXE="$$(pwd)/rajaChecker$(EXEEXT)" \
+		FLAGS="$(TEST_CXXFLAGS) -rose:Cxx11_only" \
+		INPUT=$(abspath $<) \
+		$(srcdir)/astInterface.conf $@.passed
+
 
 # Doesn't produce any output source files
 buildJavaPackage.passed: inputbuildJavaPackage.C buildJavaPackage
@@ -570,7 +595,8 @@ EXTRA_DIST = astInterface.conf inputBlank1.C inputBlank2.C inputfindMain.C input
        inputbuildLabelStatement2.f inputreplaceWithPattern.C inputinsertBeforeUsingCommaOp.C			\
        inputinsertAfterUsingCommaOp.C inputdeepCopy.C inputfixVariableReferences.C  inputcreateAbstractHandles.C \
        inputloopCollapsing_2.C  inputloopCollapsing_3.C  inputloopCollapsing_4.C  inputloopCollapsing_5.C \
-       inputbuildJavaPackage.C inputloopCollapsing_1.C inputbuildStatementFromString.C 
+       inputbuildJavaPackage.C inputloopCollapsing_1.C inputbuildStatementFromString.C inputinterfaceFunctionCoverage.C \
+       inputrajaChecker.C
 
 # JP (10/4/14): Added the unit tests
 unit-tests:

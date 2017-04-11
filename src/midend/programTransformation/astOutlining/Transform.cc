@@ -23,7 +23,7 @@ using namespace rose;
 using namespace SageBuilder;
 using namespace SageInterface;
 // =====================================================================
-
+#if 0
 static SgType * buildArrayMemberType( SgType * member_type )
 {
     SgType * ret;
@@ -35,7 +35,7 @@ static SgType * buildArrayMemberType( SgType * member_type )
         ret = member_type;
     return ret;
 }
-
+#endif
 // ! create a struct to contain data members for variables to be passed as parameters
 // A wrapper struct for variables passed to the outlined function
 // Each variable (e.g a) has two choices
