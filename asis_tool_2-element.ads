@@ -35,4 +35,8 @@ private
       Name  : in     String;
       Value : in     Wide_String);
 
+   -- Add attribute: Traversal="***NOT_IMPLEMENTED"
+   procedure Add_Not_Implemented
+     (This  : in out Class);
+
 end Asis_Tool_2.Element;
