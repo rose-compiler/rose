@@ -56,7 +56,7 @@ class RoseBin_Graph : public SB_DirectedGraph {
    virtual ~RoseBin_Graph() {}
   //RoseBin_unparse_visitor* unparser;
   SgIncidenceDirectedGraph* graph;
-  void setGrouping(bool val) {grouping = val;}
+  void setGrouping(bool val) ROSE_DEPRECATED("no longer supported") {grouping = val;}
 
   virtual void printEdges( VirtualBinCFG::AuxiliaryInformation* info,
                           bool forward_analysis, std::ofstream& myfile, bool mergedEdges) =0;
@@ -66,7 +66,7 @@ class RoseBin_Graph : public SB_DirectedGraph {
   virtual void printProlog(  std::ofstream& myfile, std::string& fileType) =0;
   virtual void printEpilog(  std::ofstream& myfile) =0;
 
-  void createUniqueEdges();
+  void createUniqueEdges() ROSE_DEPRECATED("no longer supported");
 
 };
 

@@ -95,7 +95,7 @@ public:
         return false;
     }
 
-    virtual uint64_t get_number() const {
+    virtual uint64_t get_number() const ROSE_OVERRIDE {
         ASSERT_not_reachable("DataFlowSementics::SValue are never concrete");
 #ifdef _MSC_VER
         return 0;
@@ -434,6 +434,17 @@ BaseSemantics::SValuePtr
 RiscOperators::readRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &dflt) {
     TemporarilyDeactivate deactivate(this, innerDomainId_);
     MultiSemantics::SValuePtr result = MultiSemantics::SValue::promote(Super::readRegister(reg, dflt));
+    BaseSemantics::RiscOperatorsPtr innerDomain = get_subdomain(innerDomainId_);
+    SValuePtr value = SValue::promote(innerDomain->protoval()->undefined_(reg.get_nbits()));
+    value->insert(AbstractLocation(reg, regdict_));
+    result->set_subvalue(innerDomainId_, value);
+    return result;
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::peekRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &dflt) {
+    TemporarilyDeactivate deactivate(this, innerDomainId_);
+    MultiSemantics::SValuePtr result = MultiSemantics::SValue::promote(Super::peekRegister(reg, dflt));
     BaseSemantics::RiscOperatorsPtr innerDomain = get_subdomain(innerDomainId_);
     SValuePtr value = SValue::promote(innerDomain->protoval()->undefined_(reg.get_nbits()));
     value->insert(AbstractLocation(reg, regdict_));

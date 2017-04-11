@@ -70,6 +70,7 @@ bin_PROGRAMS = \
    testAstFileRead \
    parallelASTMerge \
    testGraphGeneration \
+   testPDFGeneration \
    testTokenGeneration \
    KeepGoingTranslator \
    testTemplates
@@ -136,6 +137,9 @@ parallelASTMerge_SOURCES = parallelASTMerge.C
 
 # This tests the ability to generate dot file (AST and WholeGraph) for the input application.
 testGraphGeneration_SOURCES = testGraphGeneration.C
+
+# This tests the ability to generate pdf file (AST) for the input application.
+testPDFGeneration_SOURCES = testPDFGeneration.C
 
 # This tests the token generation capabilities which are an option in ROSE used to support the 
 # generation of patches to define transformations of large scale applications.
@@ -359,12 +363,32 @@ if !ROSE_USE_CLANG_FRONTEND
 
 test_testGraphGeneration: testGraphGeneration
 
+test_testPDFGeneration: testPDFGeneration
+
+# DQ (74/6/2017): Adding test for the version of identityTranslator that is distributed 
+# in the exampleTranslators/documentedExamples/simpleTranslatorExamples directory.
+exampleIdentityTranslator:
+	$(MAKE) -C $(top_builddir)/exampleTranslators/documentedExamples/simpleTranslatorExamples
+
+if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
+BAD_PATH = $(builddir)/XXX
+test_exampleIdentityTranslator: exampleIdentityTranslator
+	cp $(srcdir)/inputFile.C alt_identityTranslator_inputFile.C
+	@echo "Test the identityTranslator distributed in $(top_builddir)/exampleTranslators/documentedExamples/simpleTranslatorExamples"
+	$(top_builddir)/exampleTranslators/documentedExamples/simpleTranslatorExamples/identityTranslator -c alt_identityTranslator_inputFile.C
+	@echo "Test the identityTranslator using a bad path with the -I option (previous failing case)."
+	$(top_builddir)/exampleTranslators/documentedExamples/simpleTranslatorExamples/identityTranslator -I$(BAD_PATH) -c alt_identityTranslator_inputFile.C
+else
+test_exampleIdentityTranslator:
+	@echo "SKIPPING target '$@' because the C/C++ frontend is not enabled."
+endif
+
 # Rule to run all the example translator tests
 # test: test_testAnalysis test_testCodeGeneration test_testTranslator test_testAstFileIO testSimpleLinkFileTranslator
 if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-   test: test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testTemplates test_testGraphGeneration testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants testKeepGoingTranslator
+   test: test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testTemplates test_testGraphGeneration test_testPDFGeneration testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants testKeepGoingTranslator
 else
-   test: test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testTemplates test_testGraphGeneration test_testAstFileIO testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants testKeepGoingTranslator
+   test: test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testTemplates test_testGraphGeneration test_testPDFGeneration test_testAstFileIO testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants testKeepGoingTranslator test_exampleIdentityTranslator
 endif
 
 testKeepGoingTranslator: KeepGoingTranslator

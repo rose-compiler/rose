@@ -45,7 +45,7 @@ void BinaryLoader::initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        Diagnostics::initAndRegister(mlog, "rose::BinaryAnalysis::BinaryLoader");
+        Diagnostics::initAndRegister(&mlog, "rose::BinaryAnalysis::BinaryLoader");
     }
 }
 

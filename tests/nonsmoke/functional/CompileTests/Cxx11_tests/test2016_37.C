@@ -39,6 +39,7 @@ class nullptr_t
 
 #endif
 
+// typedef decltype(nullptr) nullptr_t;
 
 template <class T>
 class X
@@ -49,7 +50,9 @@ class X
                return (*this);
              }
 
-          X<T>& operator= (nullptr_t from)
+       // DQ (2/21/2017): This should be "std::nullptr_t" instead of "nullptr_t"
+       // X<T>& operator= (nullptr_t from)
+          X<T>& operator= (std::nullptr_t from)
              {
                return *this;
              }

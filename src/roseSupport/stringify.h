@@ -63,6 +63,7 @@ std::string stringifyBinaryAnalysisFunctionSimilarityCValKind(long int n, const 
 std::string stringifyBinaryAnalysisFunctionSimilarityStatistic(long int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyBinaryAnalysisInstructionSemantics2BaseSemanticsInputOutputProperty(long int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyBinaryAnalysisInstructionSemantics2DataFlowSemanticsDataFlowEdgeEdgeType(long int n, const char *strip=NULL, bool canonic=false);
+std::string stringifyBinaryAnalysisInstructionSemantics2DispatcherX86AccessMode(long int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyBinaryAnalysisInstructionSemantics2IntervalSemanticsCarry(long int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyBinaryAnalysisInstructionSemantics2SymbolicSemanticsDefinersMode(long int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyBinaryAnalysisInstructionSemantics2SymbolicSemanticsWritersMode(long int n, const char *strip=NULL, bool canonic=false);
@@ -884,6 +885,8 @@ std::string stringify_controlEnum(long int n, const char *strip=NULL, bool canon
 std::string stringify_defaultEnumFunctionType(long int n, const char *strip=NULL, bool canonic=false);
 std::string stringify_klt_tile_desc_t_tile_kind_e(long int n, const char *strip=NULL, bool canonic=false);
 std::string stringify_language_enum(long int n, const char *strip=NULL, bool canonic=false);
+std::string stringify_omp_lock_hint_t(long int n, const char *strip=NULL, bool canonic=false);
+std::string stringify_omp_proc_bind_t(long int n, const char *strip=NULL, bool canonic=false);
 std::string stringify_omp_sched_t(long int n, const char *strip=NULL, bool canonic=false);
 std::string stringify_ops(long int n, const char *strip=NULL, bool canonic=false);
 std::string stringify_ssa_unfiltered_cfgReachingDefType(long int n, const char *strip=NULL, bool canonic=false);

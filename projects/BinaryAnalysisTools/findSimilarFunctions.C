@@ -412,7 +412,7 @@ int
 main(int argc, char *argv[]) {
     // Initialization
     ROSE_INITIALIZE;
-    Diagnostics::initAndRegister(mlog, "tool");
+    Diagnostics::initAndRegister(&mlog, "tool");
     Stream info(mlog[INFO]);
 
     // Parse command-line

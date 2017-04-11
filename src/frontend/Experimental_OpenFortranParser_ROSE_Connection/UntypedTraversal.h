@@ -6,24 +6,29 @@
 // convert them to regular SgNodes.
 //-----------------------------------------------------------------------------------
 
-namespace SgUntyped {
+namespace Fortran {
+namespace Untyped {
 
-typedef SgExpression* SynthesizedAttribute;
+typedef SgScopeStatement*  InheritedAttribute;
+typedef SgExpression*      SynthesizedAttribute;
 
-class UntypedTraversal : public AstBottomUpProcessing<SynthesizedAttribute>
+class UntypedTraversal : public SgTopDownBottomUpProcessing<InheritedAttribute, SynthesizedAttribute>
   {
-    public :
-      virtual SynthesizedAttribute evaluateSynthesizedAttribute(SgNode* n, SynthesizedAttributesList childAttrs);
+    public:
 
-      static SgExpression* convert_SgUntypedExpression      (SgUntypedExpression* untyped_expression);
-      static SgValueExp*   convert_SgUntypedValueExpression (SgUntypedValueExpression* untyped_value);
+      virtual InheritedAttribute   evaluateInheritedAttribute   (SgNode* n, InheritedAttribute inheritedAttribute );
+      virtual SynthesizedAttribute evaluateSynthesizedAttribute (SgNode* n, InheritedAttribute inheritedAttribute
+                                                                          , SynthesizedAttributesList childAttrs  );
 
-      static SgUnaryOp*  convert_SgUntypedUnaryOperator (SgUntypedUnaryOperator* untyped_operator, SgExpression* expr);
-      static SgBinaryOp* convert_SgUntypedBinaryOperator(SgUntypedBinaryOperator* untyped_operator, SgExpression* lhs, SgExpression* rhs);
+      UntypedTraversal(SgSourceFile* sourceFile);
 
+    private:
+
+      SgSourceFile* p_source_file;
   };
 
-} // namespace SgUntyped
+} // namespace Fortran
+} // namespace Untyped
 
 // endif for UNTYPED_TRAVERSAL_H
 #endif

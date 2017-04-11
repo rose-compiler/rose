@@ -1001,3 +1001,61 @@ Build a new branch:
    git checkout -b <branch_name-dev>
    cd src/frontend/CxxFrontend/EDG
    git checkout -b <branch_name-dev>
+
+
+Using ssh to access files within emacs:
+SSH in emacs works!  Try this to open a file:
+
+C-x C-f /ssh:your_login@some_machine:/path/to/remote/file RET
+
+
+How to debug builtin function support:
+   1) It helps to increase the number of errors reported by EDG (see "DQ (1/21/2017): 
+      Increase the error limit" comment in error.c of EDG src directory).
+   2) Use:
+      ../../../../../tests/nonsmoke/functional/testTranslator -rose:skipfinalCompileStep -I. --edg:no_warnings test_algorithm_cxx11.pp.C -std=c++11 2>&1 | grep " __builtin" 
+      to generate list of missing functions.
+   3) Then generate the unique list to remove duplicates:
+      ../../../../../tests/nonsmoke/functional/testTranslator -rose:skipfinalCompileStep -I. --edg:no_warnings test_algorithm_cxx11.pp.C -std=c++11 2>&1 | grep " __builtin" | uniq > new_builtin_list
+
+
+DQ (3/10/2017): How to report the git hash number to restart the ROSE Matrix Testing:
+   Command for getting the right commit number for restarting matrix testing:
+
+   1. After Jenkins merges the branch into master...
+
+   2. Fetch the ROSE development master branch (this doesn't change your working tree in any way):
+       git fetch origin (or smgit fetch origin)
+
+   3. List commits on the origin/master branch you just fetched:
+       git show origin/master
+   or
+       git log origin/master
+
+   4. Send email to Robb, Justin, Pei-Hung, and Craig
+
+Example email:
+Subject: Restart request for ROSE Matrix Testing and/or sending of platform build information for ROSE
+Hi,
+   The new commit is: <commit number> e.g. 2594134b423e928d6f5a0cc0711f3cbeb7f7cbe3
+(just checked in this morning).
+
+Could you all please either restart the ROSE Matrix Testing, or sending of information
+to the database that holds the ROSE Matrix Testing results.
+
+Thanks,
+Dan
+
+
+
+
+How to determine archaeology of old code in ROSE:
+
+   git log src/midend/programAnalysis/genericDataflow
+
+and then scroll to end to see the first commits.
+
+
+
+ROSE.SH (specification of alternative translator):
+   CXX="other_translator" rose.sh ...

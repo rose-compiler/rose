@@ -41,7 +41,7 @@ UnparseLanguageIndependentConstructs::initDiagnostics()
      if (!initialized) 
         {
           initialized = true;
-          rose::Diagnostics::initAndRegister(mlog, "rose::UnparseLanguageIndependentConstructs");
+          rose::Diagnostics::initAndRegister(&mlog, "rose::UnparseLanguageIndependentConstructs");
         }
    }
 
@@ -495,7 +495,9 @@ UnparseLanguageIndependentConstructs::printOutComments ( SgLocatedNode* locatedN
 void
 UnparseLanguageIndependentConstructs::outputCompilerGeneratedStatements( SgUnparse_Info & info )
    {
-     list<SgStatement*>::iterator i = unp->compilerGeneratedStatementQueue.begin();
+  // DQ (3/28/2017): Eliminate warning about unused variable from Clang.
+  // list<SgStatement*>::iterator i = unp->compilerGeneratedStatementQueue.begin();
+
   // printf ("compilerGeneratedStatementQueue.size() = %" PRIuPTR " \n",compilerGeneratedStatementQueue.size());
      while (info.outputCompilerGeneratedStatements() == false && unp->compilerGeneratedStatementQueue.empty() == false)
         {
@@ -989,7 +991,8 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStreamForNodeCont
 
      std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap = sourceFile->get_tokenSubsequenceMap();
 
-     SgTokenPtrList & tokenVector = sourceFile->get_token_list();
+  // DQ (3/28/2017): Eliminate warning about unused variable from Clang.
+  // SgTokenPtrList & tokenVector = sourceFile->get_token_list();
 
   // This implementation uses the refactored code.
      bool unparseStatus = (canBeUnparsedFromTokenStream(sourceFile,stmt) == true);
@@ -1456,8 +1459,9 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
 #if 0
                curprint("/* In UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFile*,,,): calling unparseAttachedPreprocessingInfoUsingTokenStream test 0 */");
 #endif
+            // DQ (3/28/2017): Eliminate warning about unused variable from Clang.
             // DQ (1/15/2014): This value is not used in the logic below.
-               bool unparseTrailingTokenStream = unparseAttachedPreprocessingInfoUsingTokenStream(stmt,info,PreprocessingInfo::after);
+            // bool unparseTrailingTokenStream = unparseAttachedPreprocessingInfoUsingTokenStream(stmt,info,PreprocessingInfo::after);
 #if 0
                curprint("/* DONE: In UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFile*,,,): calling unparseAttachedPreprocessingInfoUsingTokenStream test 0 */");
 #endif
@@ -7095,8 +7099,9 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
 #if 1
                if (functionCallExp->get_uses_operator_syntax() == true)
                   {
-                    printf ("WARNING: In getPrecedence(): case V_SgFunctionCallExp: If this is an overloaded operator then the precedence should be that of the operator being overloaded (not zero). \n");
-                    printf ("   --- functionCallExp = %p functionCallExp->get_uses_operator_syntax() = %s \n",functionCallExp,functionCallExp->get_uses_operator_syntax() ? "true" : "false");
+                 // DQ (3/5/2017): Converted to use message logging, but the mechanism is not supported here yet.
+                    mprintf ("WARNING: In getPrecedence(): case V_SgFunctionCallExp: If this is an overloaded operator then the precedence should be that of the operator being overloaded (not zero). \n");
+                    mprintf ("   --- functionCallExp = %p functionCallExp->get_uses_operator_syntax() = %s \n",functionCallExp,functionCallExp->get_uses_operator_syntax() ? "true" : "false");
                   }
 #endif
             // ROSE_ASSERT(functionCallExp->get_uses_operator_syntax() == false);

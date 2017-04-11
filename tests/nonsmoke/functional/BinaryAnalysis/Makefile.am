@@ -744,6 +744,7 @@ testCallDetection.passed: $(TEST_WITH_ANSWER) $(SPECIMEN_DIR)/i386-fcalls testCa
 ###############################################################################################################################
 noinst_PROGRAMS += testReturnsValue
 testReturnsValue_SOURCES = testReturnsValue.C
+testReturnsValue_CPPFLAGS = -DROSE_BINARY_TEST_DISABLED='"deprecation"' $(AM_CPPFLAGS)
 testReturnsValue_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += testReturnsValue.passed
@@ -751,7 +752,7 @@ TEST_TARGETS += testReturnsValue.passed
 testReturnsValue.passed: $(SPECIMEN_DIR)/buffer2.bin testReturnsValue $(TEST_EXIT_STATUS) conditionalDisable
 	@$(RTH_RUN)						\
 		TITLE="function-returns-value analysis [$@]"	\
-		DISABLED="$$(./conditionalDisable)"		\
+		DISABLED="deprecated $$(./conditionalDisable)"	\
 		CMD="./testReturnsValue $<"			\
 		$(TEST_EXIT_STATUS) $@
 
@@ -901,8 +902,29 @@ testPartitioner2_%.passed: $(SPECIMEN_DIR)/% $(SMOKE_BLDDIR)/testPartitioner2 te
 		ANS="$(srcdir)/testPartitioner2_$*.ans"									\
 		$(top_srcdir)/scripts/test_with_answer $@
 
+# Another set of partitioner tests, but using the map-based semantic memory
+testP2map_test_targets = $(addprefix testP2map_, $(addsuffix .passed, $(testPartitioner2_specimens)))
+testP2map_answers = $(testPartitioner2_test_target:.passed=.ans)
+
+EXTRA_DIST += $(testP2map_answers)
+TEST_TARGETS += $(testP2map_test_targets)
+
+$(testP2map_test_targets): \
+testP2map_%.passed: $(SPECIMEN_DIR)/% $(SMOKE_BLDDIR)/testPartitioner2 conditionalDisable
+	@$(RTH_RUN)													\
+		TITLE="testPartitioner2 map $(notdir $<) [$@]"								\
+		DISABLED="$$(./conditionalDisable)"									\
+		USE_SUBDIR=yes												\
+		CMD="$(SMOKE_BLDDIR)/testPartitioner2 $(if $(findstring exefmt,$<), --no-inter-function-calls) --semantic-memory=map --use-semantics $<"	\
+		ANS="$(srcdir)/testP2map_$*.ans"									\
+		$(top_srcdir)/scripts/test_with_answer $@
+
+
+
 PHONIES += check-testPartitioner2
-check-testPartitioner2: $(testPartitioner2_test_targets)
+check-testPartitioner2: $(testPartitioner2_test_targets) $(testP2map_test_targets)
+
+
 
 
 ###############################################################################################################################
@@ -941,7 +963,7 @@ $(disassemble1_test_targets): disassemble1_%.passed: $(SPECIMEN_DIR)/% disassemb
 		$(srcdir)/disassemble.conf $@
 
 # Disassembly of raw x86 buffers (these should probably have position independent code)
-disassemble2_specimens = $(filter-out $(nonsmoke_specimens_binary_large), $(raw_insns_x86_specimens))
+disassemble2_specimens = $(filter-out $(nonsmoke_specimens_binary_large), $(nonsomke_specimens_binary_raw_insns_x86))
 disassemble2_test_targets = $(addprefix disassemble2_, $(addsuffix .passed, $(disassemble2_specimens)))
 disassemble2_answers = $(disassemble2_test_targets:.passed=.ans)
 
@@ -998,18 +1020,19 @@ check-disassemble: $(disassemble1_test_targets) $(disassemble2_test_targets)
 # Convenience target to run all these semantics tests. This target is not run automatically by "make check" (which instead
 # depends on each of the targets individually rather than just this one).
 PHONIES += check-semantics
-#       API1 (the old stuff)            API2 (the newer stuff)           Extra tests
-check-semantics:											\
-        nullSemantics.passed            nullSemantics2.passed						\
-        partialSymbolicSemantics.passed partialSymbolicSemantics2.passed				\
-        intervalSemantics.passed        intervalSemantics2.passed					\
-        symbolicSemantics.passed        symbolicSemantics2.passed        traceSymbolicSemantics2.passed	\
-        yicesSemanticsExe.passed        yicesSemanticsExe2.passed					\
-        yicesSemanticsLib.passed        yicesSemanticsLib2.passed					\
-        multiSemantics.passed										\
-        findConstants.passed										\
-        findConstantsABI.passed										\
-                                        semanticsSubclassing.passed     
+#       API1 (the old stuff)            API2 (the newer stuff)               Extra tests
+check-semantics:												\
+        nullSemantics.passed            nullSemantics2-x86.passed						\
+        partialSymbolicSemantics.passed partialSymbolicSemantics2-x86.passed					\
+        intervalSemantics.passed        intervalSemantics2-x86.passed						\
+        symbolicSemantics.passed        symbolicSemantics2-x86.passed        traceSymbolicSemantics2-x86.passed	\
+        yicesSemanticsExe.passed        yicesSemanticsExe2-x86.passed						\
+        yicesSemanticsLib.passed        yicesSemanticsLib2-x86.passed						\
+        multiSemantics.passed											\
+        findConstants.passed											\
+        findConstantsABI.passed											\
+                                        semanticsSubclassing.passed
+
 # TOO1 (3/24/2015): Failing jenkins-release GCC 4.2.4; removing temporarily until fixed
 #multiSemantics2.passed
 
@@ -1018,14 +1041,15 @@ noinst_PROGRAMS += nullSemantics2
 nullSemantics2_SOURCES = semantics.C
 nullSemantics2_CPPFLAGS = -DSEMANTIC_DOMAIN=NULL_DOMAIN
 nullSemantics2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-TEST_TARGETS += nullSemantics2.passed
-EXTRA_DIST += semantics.conf nullSemantics2.ans
-nullSemantics2.passed: semantics.conf nullSemantics2 conditionalDisable
+TEST_TARGETS += nullSemantics2-x86.passed
+EXTRA_DIST += semantics.conf nullSemantics2-x86.ans
+nullSemantics2-x86.passed: semantics.conf nullSemantics2 conditionalDisable
 	@$(RTH_RUN)					\
 		DISABLED="$$(./conditionalDisable)"	\
 		CMD=nullSemantics2			\
 		INPUT=i686-test1.O3.bin			\
 		SPECIMEN_DIR="$(SPECIMEN_DIR)"		\
+		ANSWER=$(srcdir)/$(@:.passed=.ans)	\
 		$< $@
 
 # Partial symbolic semantics
@@ -1033,14 +1057,15 @@ noinst_PROGRAMS += partialSymbolicSemantics2
 partialSymbolicSemantics2_SOURCES = semantics.C
 partialSymbolicSemantics2_CPPFLAGS = -DSEMANTIC_DOMAIN=PARTSYM_DOMAIN
 partialSymbolicSemantics2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-TEST_TARGETS += partialSymbolicSemantics2.passed
-EXTRA_DIST += semantics.conf partialSymbolicSemantics2.ans
-partialSymbolicSemantics2.passed: semantics.conf partialSymbolicSemantics2 conditionalDisable
+TEST_TARGETS += partialSymbolicSemantics2-x86.passed
+EXTRA_DIST += semantics.conf partialSymbolicSemantics2-x86.ans
+partialSymbolicSemantics2-x86.passed: semantics.conf partialSymbolicSemantics2 conditionalDisable
 	@$(RTH_RUN)					\
 		DISABLED="$$(./conditionalDisable)"	\
 		CMD=partialSymbolicSemantics2		\
 		INPUT=i686-test1.O3.bin			\
 		SPECIMEN_DIR="$(SPECIMEN_DIR)"		\
+		ANSWER=$(srcdir)/$(@:.passed=.ans)	\
 		$< $@
 
 # Interval semantics
@@ -1048,14 +1073,15 @@ noinst_PROGRAMS += intervalSemantics2
 intervalSemantics2_SOURCES = semantics.C
 intervalSemantics2_CPPFLAGS = -DSEMANTIC_DOMAIN=INTERVAL_DOMAIN
 intervalSemantics2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-TEST_TARGETS += intervalSemantics2.passed
-EXTRA_DIST += semantics.conf intervalSemantics2.ans
-intervalSemantics2.passed: semantics.conf intervalSemantics2 conditionalDisable
+TEST_TARGETS += intervalSemantics2-x86.passed
+EXTRA_DIST += semantics.conf intervalSemantics2-x86.ans
+intervalSemantics2-x86.passed: semantics.conf intervalSemantics2 conditionalDisable
 	@$(RTH_RUN)					\
 		DISABLED="$$(./conditionalDisable)"	\
 		CMD=intervalSemantics2			\
 		INPUT=i686-test1.O3.bin			\
 		SPECIMEN_DIR="$(SPECIMEN_DIR)"		\
+		ANSWER=$(srcdir)/$(@:.passed=.ans)	\
 		$< $@
 
 # Symbolic semantics, no SMT solver
@@ -1063,14 +1089,15 @@ noinst_PROGRAMS += symbolicSemantics2
 symbolicSemantics2_SOURCES = semantics.C
 symbolicSemantics2_CPPFLAGS = -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSMT_SOLVER=NO_SOLVER
 symbolicSemantics2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-TEST_TARGETS += symbolicSemantics2.passed
-EXTRA_DIST += semantics.conf symbolicSemantics2.ans
-symbolicSemantics2.passed: semantics.conf symbolicSemantics2 conditionalDisable
+TEST_TARGETS += symbolicSemantics2-x86.passed
+EXTRA_DIST += semantics.conf symbolicSemantics2-x86.ans
+symbolicSemantics2-x86.passed: semantics.conf symbolicSemantics2 conditionalDisable
 	@$(RTH_RUN)					\
 		DISABLED="$$(./conditionalDisable)"	\
 		CMD=symbolicSemantics2			\
 		INPUT=i686-test1.O3.bin			\
 		SPECIMEN_DIR="$(SPECIMEN_DIR)"		\
+		ANSWER=$(srcdir)/$(@:.passed=.ans)	\
 		$< $@
 
 # Tracing symbolic semantics, no SMT solver
@@ -1078,15 +1105,16 @@ noinst_PROGRAMS += traceSymbolicSemantics2
 traceSymbolicSemantics2_SOURCES = semantics.C
 traceSymbolicSemantics2_CPPFLAGS = -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSMT_SOLVER=NO_SOLVER
 traceSymbolicSemantics2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-TEST_TARGETS += traceSymbolicSemantics2.passed
-EXTRA_DIST += semantics.conf traceSymbolicSemantics2.ans
-traceSymbolicSemantics2.passed: semantics.conf traceSymbolicSemantics2 conditionalDisable
+TEST_TARGETS += traceSymbolicSemantics2-x86.passed
+EXTRA_DIST += semantics.conf traceSymbolicSemantics2-x86.ans
+traceSymbolicSemantics2-x86.passed: semantics.conf traceSymbolicSemantics2 conditionalDisable
 	@$(RTH_RUN)					\
 		DISABLED="$$(./conditionalDisable)"	\
 		CMD=traceSymbolicSemantics2		\
 		SWITCHES="--trace --no-usedef"		\
 		INPUT=i686-test1.O3.bin			\
 		SPECIMEN_DIR="$(SPECIMEN_DIR)"		\
+		ANSWER=$(srcdir)/$(@:.passed=.ans)	\
 		$< $@
 
 # Symbolic semantics, Yices executable
@@ -1094,15 +1122,16 @@ noinst_PROGRAMS += yicesSemanticsExe2
 yicesSemanticsExe2_SOURCES = semantics.C
 yicesSemanticsExe2_CPPFLAGS = -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSMT_SOLVER=YICES_EXE
 yicesSemanticsExe2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-EXTRA_DIST += semantics.conf yicesSemanticsExe2.ans
+EXTRA_DIST += semantics.conf yicesSemanticsExe2-x86.ans
 if ROSE_HAVE_YICES
-TEST_TARGETS += yicesSemanticsExe2.passed
-yicesSemanticsExe2.passed: semantics.conf yicesSemanticsExe2 conditionalDisable
+TEST_TARGETS += yicesSemanticsExe2-x86.passed
+yicesSemanticsExe2-x86.passed: semantics.conf yicesSemanticsExe2 conditionalDisable
 	@$(RTH_RUN)					\
 		DISABLED="$$(./conditionalDisable)"	\
 		CMD=yicesSemanticsExe2			\
 		INPUT=i686-test1.O3.bin			\
 		SPECIMEN_DIR="$(SPECIMEN_DIR)"		\
+		ANSWER=$(srcdir)/$(@:.passed=.ans)	\
 		$< $@
 endif
 
@@ -1111,15 +1140,16 @@ noinst_PROGRAMS += yicesSemanticsLib2
 yicesSemanticsLib2_SOURCES = semantics.C
 yicesSemanticsLib2_CPPFLAGS = -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSMT_SOLVER=YICES_LIB
 yicesSemanticsLib2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-EXTRA_DIST += semantics.conf yicesSemanticsLib2.ans
+EXTRA_DIST += semantics.conf yicesSemanticsLib2-x86.ans
 if ROSE_HAVE_LIBYICES
-TEST_TARGETS += yicesSemanticsLib2.passed
-yicesSemanticsLib2.passed: semantics.conf yicesSemanticsLib2 conditionalDisable
+TEST_TARGETS += yicesSemanticsLib2-x86.passed
+yicesSemanticsLib2-x86.passed: semantics.conf yicesSemanticsLib2 conditionalDisable
 	@$(RTH_RUN)					\
 		DISABLED="$$(./conditionalDisable)"	\
 		CMD=yicesSemanticsLib2			\
 		INPUT=i686-test1.O3.bin			\
 		SPECIMEN_DIR="$(SPECIMEN_DIR)"		\
+		ANSWER=$(srcdir)/$(@:.passed=.ans)	\
 		$< $@
 endif
 
@@ -1199,9 +1229,13 @@ llvmVersion = $(shell llvm-as --version 2>&1 |sed -nr '/LLVM version/ s/.*versio
 
 # 128-bit registers are not supported, so don't try to test them (pentium-xxm)
 # Test takes too long when compiled with debugging (puttytel.exe)
-llvmTranscoder_Specimens =						\
-	$(filter-out pentium-xmm $(large_specimens),			\
-		$(elf_exe_x86_specimens) $(pe_exe_x86_specimens))
+# Only x86 32-bit is fully supported
+llvmTranscoder_Specimens =					\
+        $(filter-out						\
+	        pentium-xmm					\
+		$(nonsmoke_specimens_binary_large),		\
+		$(nonsmoke_specimens_binary_any_exe_x86))
+
 llvmTranscoder_TestTargets = $(addprefix llvm-xcode-, $(addsuffix .passed, $(llvmTranscoder_Specimens)))
 TEST_TARGETS += $(llvmTranscoder_TestTargets)
 EXTRA_DIST += llvmTranscoder.conf
@@ -1343,9 +1377,14 @@ testStaticSemantics_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 # We lack semantics for some architectures, so don't try to test them (the result would be an std::runtime_error with the
 # message "no instruction semantics for architecture".  Also, we skip pocketputty2.exe because it takes too long with lots
 # of debugging is enabled.
-testStaticSemantics_specimens = $(filter-out								\
-	$(any_any_mips_specimens) $(any_any_ppc_specimens) $(any_any_arm_specimens) $(large_specimens)	\
-	,$(any_exe_any_specimens))
+testStaticSemantics_specimens =					\
+	$(filter-out						\
+		$(nonsmoke_specimens_binary_any_any_mips)	\
+		$(nonsmoke_specimens_binary_any_any_ppc)	\
+		$(nonsmoke_specimens_binary_any_any_arm)	\
+		$(nonsmoke_specimens_large)			\
+		,$(nonsmoke_specimens_binary_any_exe_any))
+
 testStaticSemantics_test_targets = $(addprefix testStaticSemantics_, $(addsuffix .passed, $(testStaticSemantics_specimens)))
 TEST_TARGETS += $(testStaticSemantics_test_targets)
 
@@ -1386,7 +1425,7 @@ testLazyInitialStates.passed: $(SPECIMEN_DIR)/i386-initialState testLazyInitialS
 # These all depend on the deprecated "disassemble" tool.
 
 #--------------------------------------------------------------------------------
-parse_Specimens = $(filter-out $(large_specimens), $(any_exe_any_specimens))
+parse_Specimens = $(filter-out $(nonsmoke_specimens_binary_large), $(nonsmoke_specimens_binary_any_exe_any))
 parse_Targets = $(addprefix parse_, $(addsuffix .passed, $(parse_Specimens)))
 
 TEST_TARGETS += $(parse_Targets)
@@ -1404,7 +1443,12 @@ check_parse_container: $(parse_Targets)
 
 #--------------------------------------------------------------------------------
 #FIXME: MIPS parser chokes on unimplemented DisassemblerMips::makeShadowRegister() [Robb Matzke 2013-08-30]
-disassemble_Specimens = $(filter-out $(any_any_mips_specimens) $(large_specimens), $(any_exe_any_specimens))
+disassemble_Specimens =						\
+	$(filter-out						\
+		$(nonsmoke_specimens_binary_any_any_mips)	\
+		$(nonsmoke_specimens_binary_large),		\
+		$(nonsmoke_specimens_binary_any_exe_any))
+
 disassemble_Targets = $(addprefix disassemble_, $(addsuffix .passed, $(disassemble_Specimens)))
 
 TEST_TARGETS += $(disassemble_Targets)
@@ -1422,7 +1466,12 @@ check_disassemble: $(disassemble_Targets)
 
 #--------------------------------------------------------------------------------
 #FIXME: MIPS parser chokes on unimplemented DisassemblerMips::makeShadowRegister() [Robb Matzke 2013-08-30]
-unparse_Specimens = $(filter-out $(any_any_mips_specimens) $(large_specimens), $(any_exe_any_specimens))
+unparse_Specimens =						\
+	$(filter-out						\
+		$(nonsmoke_specimens_binary_any_any_mips)	\
+		$(nonsmoke_specimens_binary_large),		\
+		$(nonsmoke_specimens_binary_any_exe_any))
+
 unparse_Targets = $(addprefix unparse_, $(addsuffix .passed, $(unparse_Specimens)))
 
 TEST_TARGETS += $(unparse_Targets)
@@ -1440,7 +1489,7 @@ check_unparse: $(unparse_Targets)
 
 #--------------------------------------------------------------------------------
 #FIXME: all of the x86 executables have at least one thing that doesn't assemble [Robb Matzke 2013-08-30]
-#assemble_Specimens = $(any_exe_x86_specimens)
+#assemble_Specimens = $(nonsmoke_specimens_binary_any_exe_x86)
 assemble_Targets = $(addprefix assemble_, $(addsuffix .passed, $(assemble_Specimens)))
 
 TEST_TARGETS += $(assemble_Targets)
@@ -1458,7 +1507,12 @@ check_assemble: $(assemble_Targets)
 
 #--------------------------------------------------------------------------------
 #FIXME: all the ARM specimens are failing, and have been. This might be due to poor disassembly. [Robb Matzke 2013-08-30]
-astio_Specimens = $(filter-out $(any_any_arm_specimens) $(large_specimens), $(any_exe_any_specimens))
+astio_Specimens =						\
+	$(filter-out						\
+		$(nonsmoke_specimens_binary_any_any_arm)	\
+		$(nonsmoke_specimens_binary_large),		\
+		$(nonsmoke_specimens_binary_any_exe_any))
+
 astio_Targets = $(addprefix astio_, $(addsuffix .passed, $(astio_Specimens)))
 
 TEST_TARGETS += $(astio_Targets)
@@ -1498,6 +1552,38 @@ check_specimens: check_parse_container check_disassemble check_unparse check_ass
 #		$(top_srcdir)/scripts/test_exit_status $@
 
 
+
+#############################################################################################
+# PDF File Generation for Binaries
+#############################################################################################
+
+# DQ (3/26/2017): Added PDF test for ROSE evaluation (forces testing of parts of ROSE for lcov)
+test_pdf_translator = $(abspath ../testPDFGeneration)
+test_pdf_small_specimen = $(top_srcdir)/tests/nonsmoke/specimens/binary/i386-pop
+test_pdf_large_specimen = $(top_srcdir)/tests/nonsmoke/specimens/binary/pocketputty.exe
+
+$(test_pdf_translator):
+	$(MAKE) -C $(dir $(test_pdf_translator)) $(notdir $(test_pdf_translator))
+
+TEST_TARGETS += test_small_pdf_generation.passed test_large_pdf_generation.passed
+
+test_small_pdf_generation.passed: $(test_pdf_small_specimen) $(test_pdf_translator) conditionalDisable
+	@$(RTH_RUN)								\
+		TITLE="generation of small PDF file [$@]"			\
+		DISABLED="$$(./conditionalDisable)"				\
+		USE_SUBDIR=yes							\
+		CMD="$(test_pdf_translator) -rose:verbose 0 $< && ls -l *.pdf"	\
+		$(TEST_EXIT_STATUS) $@
+
+test_large_pdf_generation.passed: $(test_pdf_large_specimen) $(test_pdf_translator) conditionalDisable
+	@$(RTH_RUN)								\
+		TITLE="generation of large PDF file [$@]"			\
+		DISABLED="$$(./conditionalDisable)"				\
+		USE_SUBDIR=yes							\
+		CMD="$(test_pdf_translator) -rose:verbose 0 $< && ls -l *.pdf"	\
+		$(TEST_EXIT_STATUS) $@
+
+
 ###############################################################################################################################
 # Standard boilerplate
 ###############################################################################################################################
@@ -1509,7 +1595,6 @@ check-nonsmoke-local:
 else
 # Binary analysis is enabled and supported
 check-nonsmoke-local: $(TEST_TARGETS)
-
 endif
 else
 # Binary analysis is not enabled

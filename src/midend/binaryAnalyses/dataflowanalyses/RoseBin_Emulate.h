@@ -29,8 +29,8 @@ class RoseBin_Emulate : public RoseBin_DataFlowAbstract{
   // set this currently statically in file
   bool isCode64bit;
 
-  void assignMemory(uint64_t position, uint64_t value);
-  uint64_t getMemory(uint64_t position);
+  void assignMemory(uint64_t position, uint64_t value) ROSE_DEPRECATED("no longer supported");
+  uint64_t getMemory(uint64_t position) ROSE_DEPRECATED("no longer supported");
 
 
 
@@ -39,18 +39,18 @@ class RoseBin_Emulate : public RoseBin_DataFlowAbstract{
                       uint8_t &b_val,
                       uint16_t &w_val,
                       uint32_t &dw_val,
-                      uint64_t &qw_val);
+                      uint64_t &qw_val) ROSE_DEPRECATED("no longer supported");
 
   void assignRegister(std::pair<X86RegisterClass, int>  code,
-                      uint64_t &qw_val);
+                      uint64_t &qw_val) ROSE_DEPRECATED("no longer supported");
 
 
-  void clearRegisters();
-  uint64_t getRegister(std::pair<X86RegisterClass, int>  code);
+  void clearRegisters() ROSE_DEPRECATED("no longer supported");
+  uint64_t getRegister(std::pair<X86RegisterClass, int>  code) ROSE_DEPRECATED("no longer supported");
 
-  std::string printRegister(std::string text, uint64_t reg);
+  std::string printRegister(std::string text, uint64_t reg) ROSE_DEPRECATED("no longer supported");
 
-  uint64_t getRandomValue(int val);
+  uint64_t getRandomValue(int val) ROSE_DEPRECATED("no longer supported");
 
 
   void getRegister_val(std::pair<X86RegisterClass, int>  code,
@@ -58,11 +58,11 @@ class RoseBin_Emulate : public RoseBin_DataFlowAbstract{
                        uint8_t &b_val,
                        uint16_t &w_val,
                        uint32_t &dw_val,
-                       uint64_t &qw_val);
+                       uint64_t &qw_val) ROSE_DEPRECATED("no longer supported");
 
   void getRegister_val(std::pair<X86RegisterClass, int>  code,
                        RoseBin_support::X86PositionInRegister pos,
-                       uint64_t &qw_val);
+                       uint64_t &qw_val) ROSE_DEPRECATED("no longer supported");
 
 
 
@@ -71,15 +71,15 @@ class RoseBin_Emulate : public RoseBin_DataFlowAbstract{
   RoseBin_Emulate(GraphAlgorithms* algo):RoseBin_DataFlowAbstract(algo) {}
   ~RoseBin_Emulate() {}
 
-  bool run(std::string& name, SgGraphNode* node, SgGraphNode* before);
-  std::string evaluateRegisters();
-  bool evaluateInstruction( SgAsmX86Instruction* inst, std::string& operands) ;
+  bool run(std::string& name, SgGraphNode* node, SgGraphNode* before) ROSE_DEPRECATED("no longer supported");
+  std::string evaluateRegisters() ROSE_DEPRECATED("no longer supported");
+  bool evaluateInstruction( SgAsmX86Instruction* inst, std::string& operands) ROSE_DEPRECATED("no longer supported") ;
 
-  bool runEdge( SgGraphNode* node, SgGraphNode* next) {
+  bool runEdge( SgGraphNode* node, SgGraphNode* next) ROSE_DEPRECATED("no longer supported") {
     return false;
   }
 
-  void init(RoseBin_Graph* vg) {
+  void init(RoseBin_Graph* vg) ROSE_DEPRECATED("no longer supported") {
     vizzGraph = vg;
     rax = 0xFFFFFFFF;
     rbx = 0xFFFFFFFF;

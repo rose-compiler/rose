@@ -155,8 +155,9 @@ echo "Testing value of FC = $FC"
             esac
         elif test $XCODE_VERSION_MAJOR -eq 8; then
             BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=3
+          # DQ (3/3//2017): Added latest version information from Craig.
             case "$XCODE_VERSION_MINOR" in
-                0)
+                0|1)
                     BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=8
                     ;;
                 *)

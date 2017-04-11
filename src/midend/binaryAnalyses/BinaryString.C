@@ -21,7 +21,7 @@ initDiagnostics(void) {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        Diagnostics::initAndRegister(mlog, "rose::BinaryAnalysis::Strings");
+        Diagnostics::initAndRegister(&mlog, "rose::BinaryAnalysis::Strings");
     }
 }
     

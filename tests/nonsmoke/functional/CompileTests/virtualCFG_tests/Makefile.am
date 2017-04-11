@@ -691,8 +691,59 @@ check-fortran:
 endif
 
 # check-local: check-cxx check-c check-c99 check-fortran check-java
-check-local: check-c check-c99 check-fortran check-java check-cxx
+# check-local: check-c check-c99 check-fortran check-java check-cxx
 # check-local: $(CXX_FILES) $(C_FILES)
+check-local:
+	@$(MAKE) check-c
+	@$(MAKE) check-c99
+if USING_GNU_COMPILER
+if !ROSE_USING_GCC_VERSION_LATER_4_9
+	@echo "Tests for C++."
+	@echo "Some specific C++ tests are skipped with any later GNU compiler (GNU 4.9 or later)."
+	@$(MAKE) check-cxx
+#  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
+#	These C programs must be called externally to the test codes in the "TESTCODES" make variable
+endif # NOT ROSE_USING_GCC_VERSION_LATER_4_9
+else
+if USING_CLANG_COMPILER
+# Exclude this list of files in the case of CLANG compiler.
+	@echo "USING_CLANG_COMPILER == true"
+else # NOT USING_CLANG_COMPILER
+	@echo "USING_CLANG_COMPILER == false"
+if USING_INTEL_COMPILER
+# Exclude this list of files in the case of Intel compiler.
+	@echo "USING_INTEL_COMPILER == true"
+else # NOT USING_INTEL_COMPILER
+# This is an unknown compiler.
+	@echo "USING_INTEL_COMPILER == false"
+endif # USING_INTEL_COMPILER
+endif # USING_CLANG_COMPILER
+endif # USING_GNU_COMPILER
+	@$(MAKE) check-fortran
+if USING_GNU_COMPILER
+if !ROSE_USING_GCC_VERSION_LATER_4_9
+	@echo "Some specific Java tests are skipped with any later GNU compiler (GNU 4.9 or later)."
+# conditional-check-local: extraTests
+	@$(MAKE) check-java
+	@echo "Tests for Java."
+#  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
+#	These C programs must be called externally to the test codes in the "TESTCODES" make variable
+endif # NOT ROSE_USING_GCC_VERSION_LATER_4_9
+else
+if USING_CLANG_COMPILER
+# Exclude this list of files in the case of CLANG compiler.
+	@echo "USING_CLANG_COMPILER == true"
+else # NOT USING_CLANG_COMPILER
+	@echo "USING_CLANG_COMPILER == false"
+if USING_INTEL_COMPILER
+# Exclude this list of files in the case of Intel compiler.
+	@echo "USING_INTEL_COMPILER == true"
+else # NOT USING_INTEL_COMPILER
+# This is an unknown compiler.
+	@echo "USING_INTEL_COMPILER == false"
+endif # USING_INTEL_COMPILER
+endif # USING_CLANG_COMPILER
+endif # USING_GNU_COMPILER
 	@echo "******************************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/virtualCFG_tests: make check rule complete (terminated normally) ******"
 	@echo "******************************************************************************************************"

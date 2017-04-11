@@ -9,12 +9,13 @@ Note that the unparser does generate the correct classname (identityTranslator)
 
  */
 
-template<typename _MemberPointer>
-    class _Mem_fn;
-
-template<typename _Res, typename _Class, typename... _ArgTypes>
-class _Mem_fn<_Res (_Class::*)(_ArgTypes...)>
-{
-  int x;
-};
-
+namespace std {
+  template<typename _MemberPointer>
+  class _Mem_fn;
+  
+  template<typename _Res, typename _Class, typename... _ArgTypes>
+  class _Mem_fn<_Res (_Class::*)(_ArgTypes...)>
+  {
+    int x;
+  };
+}

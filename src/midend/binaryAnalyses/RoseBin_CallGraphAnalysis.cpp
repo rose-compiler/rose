@@ -10,12 +10,17 @@
 
 using namespace std;
 
+#if 0 // [Robb P Matzke 2017-03-27]
 static bool debug = false;
+#endif
 
 void
 RoseBin_CallGraphAnalysis::findClusterOfNode(SgGraphNode* next_n,
                                              int& currentCluster,
                                              std::map<SgAsmFunction*,int>& visited) {
+#if 1 // [Robb P Matzke 2017-03-27]
+    ASSERT_not_reachable("no longer supported");
+#else
   int resultsCluster=0;
   std::map<SgAsmFunction*,int>::const_iterator t = visited.begin();
   for (;t!=visited.end();++t) {
@@ -122,11 +127,14 @@ RoseBin_CallGraphAnalysis::findClusterOfNode(SgGraphNode* next_n,
       RoseBin_support::HexToString(isSgAsmFunction(func_next)->get_address()) <<
       "  cluster : " << resultsCluster << "   " << node << endl;
   }
-
+#endif
 }
 
 void
 RoseBin_CallGraphAnalysis::getConnectedComponents(std::map<int,std::set<SgAsmFunction*> >& ret) {
+#if 1 // [Robb P Matzke 2017-03-27]
+    ASSERT_not_reachable("no longer supported");
+#else
   std::map<SgAsmFunction*,int> visited;
 
 // DQ (4/23/2009): We want the type defined in the base class.
@@ -186,12 +194,16 @@ RoseBin_CallGraphAnalysis::getConnectedComponents(std::map<int,std::set<SgAsmFun
         cerr << "   CALLGRAPH :  function : " << name << endl;
       }
   }
+#endif
 }
 
 /****************************************************
  * run the compare analysis
  ****************************************************/
 void RoseBin_CallGraphAnalysis::run(RoseBin_Graph* vg, string fileN, bool multiedge) {
+#if 1 // [Robb P Matzke 2017-03-27]
+    ASSERT_not_reachable("no longer supported");
+#else
   vizzGraph = vg;
   fileName = fileN;
   double start=0;
@@ -254,5 +266,6 @@ void RoseBin_CallGraphAnalysis::run(RoseBin_Graph* vg, string fileN, bool multie
 
   vizzGraph->printEpilog(myfile);
   myfile.close();
+#endif
 }
 

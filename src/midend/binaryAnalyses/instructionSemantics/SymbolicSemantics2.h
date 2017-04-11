@@ -556,7 +556,7 @@ public:
     }
 
     /** Virtual constructor. Creates a new memory state having specified prototypical cells and value. */
-    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::MemoryCellPtr &protocell) const {
+    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::MemoryCellPtr &protocell) const ROSE_OVERRIDE {
         return instance(protocell);
     }
 
@@ -873,14 +873,14 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Inherited methods for constructing values.
 public:
-    virtual BaseSemantics::SValuePtr boolean_(bool b) {
+    virtual BaseSemantics::SValuePtr boolean_(bool b) ROSE_OVERRIDE {
         SValuePtr retval = SValue::promote(BaseSemantics::RiscOperators::boolean_(b));
         if (computingDefiners() != TRACK_NO_DEFINERS && !omit_cur_insn)
             retval->defined_by(currentInstruction());
         return retval;
     }
 
-    virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) {
+    virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) ROSE_OVERRIDE {
         SValuePtr retval = SValue::promote(BaseSemantics::RiscOperators::number_(nbits, value));
         if (computingDefiners() != TRACK_NO_DEFINERS && !omit_cur_insn)
             retval->defined_by(currentInstruction());
@@ -1143,7 +1143,7 @@ public:
     virtual BaseSemantics::SValuePtr addWithCarries(const BaseSemantics::SValuePtr &a_,
                                                     const BaseSemantics::SValuePtr &b_,
                                                     const BaseSemantics::SValuePtr &c_,
-                                                    BaseSemantics::SValuePtr &carry_out/*out*/);
+                                                    BaseSemantics::SValuePtr &carry_out/*out*/) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr negate(const BaseSemantics::SValuePtr &a_) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr signedDivide(const BaseSemantics::SValuePtr &a_,
                                                   const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
@@ -1158,6 +1158,8 @@ public:
     virtual BaseSemantics::SValuePtr unsignedMultiply(const BaseSemantics::SValuePtr &a_,
                                                       const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg,
+                                                  const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr peekRegister(const RegisterDescriptor &reg,
                                                   const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
     virtual void writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &a_) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg,

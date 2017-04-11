@@ -41,14 +41,14 @@ class RoseBin_Variable  {
     value = v;
   }
 
-  RoseBin_DataTypes::DataTypes getType() {
+  RoseBin_DataTypes::DataTypes getType() ROSE_DEPRECATED("no longer supported") {
     return type;
   }
 
-  int getLength() { return length;}
-  std::string getName() { return name;}
+  int getLength() ROSE_DEPRECATED("no longer supported") { return length;}
+  std::string getName() ROSE_DEPRECATED("no longer supported") { return name;}
 
-  std::string toString() {
+  std::string toString() ROSE_DEPRECATED("no longer supported") {
     std::string values="";
     std::vector<uint64_t>::iterator it = value.begin();
     for (;it!=value.end();++it) {
@@ -108,7 +108,7 @@ class RoseBin_DataFlowAbstract { //: public GraphAlgorithms {
   int nrOfRegisterWrites;
 
   std::set < SgGraphNode* >
-    getAnyFor(const multitype* multi, std::pair<X86RegisterClass, int> initName);
+    getAnyFor(const multitype* multi, std::pair<X86RegisterClass, int> initName) ROSE_DEPRECATED("no longer supported");
 
  public:
   tabletype deftable;
@@ -118,8 +118,8 @@ class RoseBin_DataFlowAbstract { //: public GraphAlgorithms {
 // DQ (5/9/2009): Move a (two) non-pure-virtual out-of-line virtual member functions to be 
 // defined first in the class so that the vtable will be put into the translation unit where
 // these are defined (this avoid the error: undefined reference to `vtable for RoseBin_DefUseAnalysis'. 
-  SgGraphNode* getPredecessor(SgGraphNode* node);
-  SgGraphNode* getSuccessor(SgGraphNode* node);
+  SgGraphNode* getPredecessor(SgGraphNode* node) ROSE_DEPRECATED("no longer supported");
+  SgGraphNode* getSuccessor(SgGraphNode* node) ROSE_DEPRECATED("no longer supported");
 
   RoseBin_DataFlowAbstract(GraphAlgorithms* algo) {g_algo=algo;}
   virtual ~RoseBin_DataFlowAbstract() {}
@@ -128,63 +128,63 @@ class RoseBin_DataFlowAbstract { //: public GraphAlgorithms {
   virtual bool runEdge(SgGraphNode* node, SgGraphNode* next)=0;
   virtual void init(RoseBin_Graph* vg)=0;
 
-  int getDefinitionSize() {
+  int getDefinitionSize() ROSE_DEPRECATED("no longer supported") {
     return deftable.size();
   }
-  int getUsageSize() { return usetable.size();}
+  int getUsageSize() ROSE_DEPRECATED("no longer supported") { return usetable.size();}
 
   int64_t check_isRegister(SgGraphNode* node,
                            SgAsmX86Instruction* inst,
                            std::pair<X86RegisterClass, int> codeSearch,
                            bool rightSide,
                            std::vector<std::pair<X86RegisterClass, int> >& regsOfInterest,
-                           bool& cantTrack);
+                           bool& cantTrack) ROSE_DEPRECATED("no longer supported");
 
 
 
   int64_t check_isLeftSideRegister(SgAsmX86Instruction* inst,
-                                   std::pair<X86RegisterClass, int>  codeSearch);
+                                   std::pair<X86RegisterClass, int>  codeSearch) ROSE_DEPRECATED("no longer supported");
 
-  uint64_t getValueInExpression(SgAsmValueExpression* valExp);
+  uint64_t getValueInExpression(SgAsmValueExpression* valExp) ROSE_DEPRECATED("no longer supported");
 
   int64_t trackValueForRegister(
                                 SgGraphNode* node,
                                 std::pair<X86RegisterClass, int>  codeSearch,
                                 bool& cantTrack,
-                                SgAsmRegisterReferenceExpression* refExpr_rightHand);
+                                SgAsmRegisterReferenceExpression* refExpr_rightHand) ROSE_DEPRECATED("no longer supported");
 
 
   std::pair<X86RegisterClass, int>
     check_isRegister(SgGraphNode* node, SgAsmX86Instruction* inst,
-                     bool rightSide, bool& memoryReference, bool& registerReference );
+                     bool rightSide, bool& memoryReference, bool& registerReference ) ROSE_DEPRECATED("no longer supported");
 
   SgAsmExpression* getOperand(SgAsmX86Instruction* inst,
-                                                bool rightSide );
+                                                bool rightSide ) ROSE_DEPRECATED("no longer supported");
 
-  uint64_t getValueInMemoryRefExp(SgAsmExpression* ref);
+  uint64_t getValueInMemoryRefExp(SgAsmExpression* ref) ROSE_DEPRECATED("no longer supported");
 
   bool isInstructionAlteringOneRegister(SgAsmX86Instruction* inst);
   bool altersMultipleRegisters(std::vector<std::pair<X86RegisterClass, int> >& codes,
-                              SgAsmX86Instruction* inst);
+                              SgAsmX86Instruction* inst) ROSE_DEPRECATED("no longer supported");
 
-  bool sameParents(SgGraphNode* node, SgGraphNode* next);
+  bool sameParents(SgGraphNode* node, SgGraphNode* next) ROSE_DEPRECATED("no longer supported");
 
-  void printDefTableToFile(std::string file);
-
-  std::set < SgGraphNode* >
-    getDefFor(SgGraphNode* node, std::pair<X86RegisterClass, int>  initName) ;
+  void printDefTableToFile(std::string file) ROSE_DEPRECATED("no longer supported");
 
   std::set < SgGraphNode* >
-    getUseFor(SgGraphNode* node, std::pair<X86RegisterClass, int>  initName);
+    getDefFor(SgGraphNode* node, std::pair<X86RegisterClass, int>  initName)  ROSE_DEPRECATED("no longer supported");
+
+  std::set < SgGraphNode* >
+    getUseFor(SgGraphNode* node, std::pair<X86RegisterClass, int>  initName) ROSE_DEPRECATED("no longer supported");
 
 
     const std::multimap < std::pair<X86RegisterClass, int>  , SgGraphNode* >&
-    getDefMultiMapFor(SgGraphNode* node);
+    getDefMultiMapFor(SgGraphNode* node) ROSE_DEPRECATED("no longer supported");
 
     const std::multimap< std::pair<X86RegisterClass, int>  , SgGraphNode* > &
-    getUseMultiMapFor(SgGraphNode* node);
+    getUseMultiMapFor(SgGraphNode* node) ROSE_DEPRECATED("no longer supported");
 
-    uint64_t getValueOfInstr( SgAsmX86Instruction* inst,  bool rightSide );
+    uint64_t getValueOfInstr( SgAsmX86Instruction* inst,  bool rightSide ) ROSE_DEPRECATED("no longer supported");
 
 
   RoseBin_Variable* createVariable(uint64_t position,
@@ -192,10 +192,10 @@ class RoseBin_DataFlowAbstract { //: public GraphAlgorithms {
                                    std::string name, RoseBin_DataTypes::DataTypes type, std::string description,
                                    int length,
                                    std::vector<uint64_t> value,
-                                   bool memoryRef);
+                                   bool memoryRef) ROSE_DEPRECATED("no longer supported");
 
-  RoseBin_Variable* getVariable(uint64_t pos);
-  RoseBin_Variable* getVariable(std::string var);
+  RoseBin_Variable* getVariable(uint64_t pos) ROSE_DEPRECATED("no longer supported");
+  RoseBin_Variable* getVariable(std::string var) ROSE_DEPRECATED("no longer supported");
 
 };
 

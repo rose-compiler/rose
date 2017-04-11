@@ -1163,6 +1163,21 @@ RiscOperators::readRegister(const RegisterDescriptor &a, const BaseSemantics::SV
     }
 }
 
+BaseSemantics::SValuePtr
+RiscOperators::peekRegister(const RegisterDescriptor &a, const BaseSemantics::SValuePtr &b)
+{
+    before("peekRegister", a, b);
+    try {
+        return check_width(after(subdomain_->peekRegister(a, b)), a.get_nbits());
+    } catch (const BaseSemantics::Exception &e) {
+        after(e);
+        throw;
+    } catch (...) {
+        after_exception();
+        throw;
+    }
+}
+
 void
 RiscOperators::writeRegister(const RegisterDescriptor &a, const BaseSemantics::SValuePtr &b)
 {

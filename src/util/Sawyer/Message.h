@@ -965,10 +965,9 @@ class Gang: public HighWater, public SharedObject {
     static const int TTY_GANG = -1;                     /**< The ID for streams that are emitting to a terminal device. */
     static const int NO_GANG_ID = -2;                   /**< Arbitrary ID used for default-constructed objects. */
     static SAWYER_THREAD_TRAITS::Mutex classMutex_;     /**< Mutex for class data. */
-    int id_;                                            /**< Unique ID except for default-constructed objects. */
+
 protected:
-    Gang(): id_(NO_GANG_ID) {}
-    Gang(int id): id_(id) {}
+    Gang() {}
 public:
     static GangPtr instance();                          /**< New non-shared gang with NO_GANG_ID. */
     static GangPtr instanceForId(int id);               /**< The gang for the specified ID, creating a new one if necessary. */
@@ -1919,6 +1918,9 @@ private:
     static std::string parseImportanceName(const char* &input);
     static Importance importanceFromString(const std::string&);
     static std::list<ControlTerm> parseImportanceList(const std::string &facilityName, const char* &input, bool isGlobal);
+
+    // Remove Facility objects that have apparently been destroyed
+    void eraseDestroyedNS();
 
 };
 

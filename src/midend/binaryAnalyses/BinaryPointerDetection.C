@@ -28,7 +28,7 @@ initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        Diagnostics::initAndRegister(mlog, "rose::BinaryAnalysis::PointerDetection");
+        Diagnostics::initAndRegister(&mlog, "rose::BinaryAnalysis::PointerDetection");
     }
 }
 

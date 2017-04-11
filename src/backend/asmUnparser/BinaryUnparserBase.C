@@ -187,7 +187,7 @@ Settings::Settings() {
     bblock.cfg.showingSharing = true;
 
     insn.address.showing = true;
-    insn.address.fieldWidth = 10;
+    insn.address.fieldWidth = 11;                       // "0x" + 8 hex digits + ":"
     insn.bytes.showing = true;
     insn.bytes.perLine = 8;
     insn.bytes.fieldWidth = 25;
@@ -367,35 +367,35 @@ commandLineSwitches(Settings &settings) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::string
-Base::operator()(const P2::Partitioner &p) const {
+Base::unparse(const P2::Partitioner &p) const {
     std::ostringstream ss;
     unparse(ss, p);
     return ss.str();
 }
 
 std::string
-Base::operator()(const P2::Partitioner &p, SgAsmInstruction *insn) const {
+Base::unparse(const P2::Partitioner &p, SgAsmInstruction *insn) const {
     std::ostringstream ss;
     unparse(ss, p, insn);
     return ss.str();
 }
 
 std::string
-Base::operator()(const P2::Partitioner &p, const Partitioner2::BasicBlock::Ptr &bb) const {
+Base::unparse(const P2::Partitioner &p, const Partitioner2::BasicBlock::Ptr &bb) const {
     std::ostringstream ss;
     unparse(ss, p, bb);
     return ss.str();
 }
 
 std::string
-Base::operator()(const P2::Partitioner &p, const Partitioner2::DataBlock::Ptr &db) const {
+Base::unparse(const P2::Partitioner &p, const Partitioner2::DataBlock::Ptr &db) const {
     std::ostringstream ss;
     unparse(ss, p, db);
     return ss.str();
 }
 
 std::string
-Base::operator()(const P2::Partitioner &p, const Partitioner2::Function::Ptr &f) const {
+Base::unparse(const P2::Partitioner &p, const Partitioner2::Function::Ptr &f) const {
     std::ostringstream ss;
     unparse(ss, p, f);
     return ss.str();
@@ -462,7 +462,8 @@ Base::emitFunctionPrologue(std::ostream &out, const P2::Function::Ptr &function,
         } else {
             out <<";;; function " <<StringUtility::addrToString(function->address());
             if (!function->name().empty())
-                out <<" \"" <<StringUtility::cEscape(function->name()) <<"\"\n";
+                out <<" \"" <<StringUtility::cEscape(function->name()) <<"\"";
+            out <<"\n";
         }
         state.frontUnparser().emitFunctionComment(out, function, state);
         if (settings().function.showingReasons)
@@ -669,10 +670,22 @@ Base::emitFunctionCallingConvention(std::ostream &out, const P2::Function::Ptr &
         const CallingConvention::Analysis &analyzer = function->callingConventionAnalysis();
         if (analyzer.hasResults()) {
             if (analyzer.didConverge()) {
+                // Calling convention analysis
                 std::ostringstream ss;
-                ss <<analyzer;
-                out <<";;; calling convention:\n";
+                analyzer.print(ss, true /*multi-line*/);
+                state.frontUnparser().emitCommentBlock(out, "calling convention analysis:", state);
                 state.frontUnparser().emitCommentBlock(out, ss.str(), state, ";;;   ");
+
+                // Calling convention dictionary matches
+                CallingConvention::Dictionary matches = state.partitioner().functionCallingConventionDefinitions(function);
+                std::string s = "calling convention definitions:";
+                if (!matches.empty()) {
+                    BOOST_FOREACH (const CallingConvention::Definition::Ptr &ccdef, matches)
+                        s += " " + ccdef->name();
+                } else {
+                    s += " unknown";
+                }
+                state.frontUnparser().emitCommentBlock(out, s, state);
             } else {
                 out <<";;; calling convention analysis did not converge\n";
             }
@@ -727,6 +740,18 @@ Base::emitBasicBlockPrologue(std::ostream &out, const P2::BasicBlock::Ptr &bb, S
             state.frontUnparser().emitBasicBlockSharing(out, bb, state);
         if (settings().bblock.cfg.showingPredecessors)
             state.frontUnparser().emitBasicBlockPredecessors(out, bb, state);
+
+        // Comment warning about block not being the function entry point.
+        if (state.currentFunction() && bb->address() == *state.currentFunction()->basicBlockAddresses().begin() &&
+            bb->address() != state.currentFunction()->address()) {
+            out <<"\t;; this is not the function entry point; entry point is ";
+            if (settings().insn.address.showing) {
+                out <<StringUtility::addrToString(state.currentFunction()->address()) <<"\n";
+            } else {
+                out <<state.basicBlockLabels().getOrElse(state.currentFunction()->address(),
+                                                         StringUtility::addrToString(state.currentFunction()->address())) <<"\n";
+            }
+        }
     }
 }
 

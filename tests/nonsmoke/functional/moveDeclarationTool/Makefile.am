@@ -381,7 +381,7 @@ if ROSE_USING_GCC_VERSION_LATER_4_8
 	@echo "ROSE_USING_GCC_VERSION_LATER_4_8 == true"
 #	@echo "moveDeclarationTool tests using EDG 4.9 and GNU version 4.9 backend compiler are disabled."
 if ROSE_USING_GCC_VERSION_LATER_4_9
-	@echo "C++11 tests using EDG 4.9: GNU 4.9 backend compiler NOT allowed with the EDG 4.9 frontend (reconfigure with EDG 4.12)."
+	@echo "moveDeclarationTool tests using EDG 4.9: GNU 4.9 backend compiler NOT allowed with the EDG 4.9 frontend (reconfigure with EDG 4.12)."
 else  # NOT ROSE_USING_GCC_VERSION_LATER_4_9
 	@echo "moveDeclarationTool tests using EDG 4.9 and GNU version 4.8 backend compiler are allowed."
 	@$(MAKE) move_diff_check
@@ -422,7 +422,7 @@ else
 if USING_CLANG_COMPILER
 # Exclude this list of files in the case of CLANG compiler.
 	@echo "USING_CLANG_COMPILER == true"
-	@echo "moveDeclarationTool tests using EDG 4.9: Clang backend compiler using EDG 4.12 frontend."
+	@echo "moveDeclarationTool tests using EDG 4.12: Clang backend compiler using EDG 4.12 frontend."
 else # NOT USING_CLANG_COMPILER
 	@echo "USING_CLANG_COMPILER == false"
 if USING_INTEL_COMPILER
