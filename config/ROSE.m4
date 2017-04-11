@@ -186,6 +186,10 @@ if test "x$with_CXX_WARNINGS" = "xyes"; then
     # cc1plus: warning: command line option "-Wmissing-prototypes" is valid for Ada/C/ObjC but not for C++
     # CXX_WARNINGS="-Wall -Wstrict-prototypes -Wmissing-prototypes"
     #  CXX_WARNINGS="-Wall"
+    # DQ (4/5/2017): Ignore some warnings (GNU feature only meaningful for small codes).
+    # CXX_WARNINGS+="-Wall -Wnomisleading-indentation -Wnonnull-compare"
+    # DQ (4/5/2017): Note: specification of "-Wnomisleading-indentation" causes errors downstream in boost configuration.
+    # CXX_WARNINGS+="-Wall -Wnomisleading-indentation"
       CXX_WARNINGS+="-Wall"
       ;;
 #   icpc)

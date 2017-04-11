@@ -539,7 +539,7 @@ FixupTemplateArguments::contains_private_type (SgTemplateArgument* templateArgum
                          if (foundNonPrivateTypeAlias == true)
                             {
                               ROSE_ASSERT(suitableTypeAlias != NULL);
-#if DEBUG_PRIVATE_TYPE_TRANSFORMATION || 1
+#if DEBUG_PRIVATE_TYPE_TRANSFORMATION || 0
                               printf ("targetScope             = %p = %s \n",targetScope,targetScope->class_name().c_str());
                               printf ("typedefDeclarationScope = %p = %s \n",typedefDeclarationScope,typedefDeclarationScope->class_name().c_str());
                               targetScope->get_file_info()->display("targetScope: debug");
@@ -548,7 +548,7 @@ FixupTemplateArguments::contains_private_type (SgTemplateArgument* templateArgum
                               printf ("Found private type to be replaced: typedefType       = %p = %s = %s \n",typedefType,typedefType->class_name().c_str(),typedefType->unparseToString().c_str());
                               printf ("Found suitable type alias:         suitableTypeAlias = %p = %s = %s \n",suitableTypeAlias,suitableTypeAlias->class_name().c_str(),suitableTypeAlias->unparseToString().c_str());
 #endif
-#if 1
+#if 0
                               printf ("SageInterface::whereAmI(targetScope): \n");
                               SageInterface::whereAmI(targetScope);
                               printf ("SageInterface::whereAmI(typedefDeclaration): \n");
