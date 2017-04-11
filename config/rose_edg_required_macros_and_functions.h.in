@@ -81,12 +81,13 @@
 */
 /* DQ (4/9/2017): This is also a problem for the Intel v16 compiler (for C++11 test2017_04.C). */
 /* DQ (4/4/2017): This is a problem for the Intel v15 compiler (for C++11 test2017_04.C). */
-#if !(defined(__INTEL_COMPILER) && (__INTEL_COMPILER == 1500))
 
-// DQ (4/10/2017): This is what is required to make Intel v16 work on my desktop.
-#if (defined(__INTEL_COMPILER) && (__INTEL_COMPILER == 1600))
+// DQ (4/10/2017): This is what is required to make Intel v15 and v16 work on my desktop.
+#if (defined(__INTEL_COMPILER) && (__INTEL_COMPILER >= 1500))
 #define _GLIBCXX_FENV_H
 #endif
+
+#if !(defined(__INTEL_COMPILER) && (__INTEL_COMPILER == 1500))
 
 // DQ (4/10/2017): And this is what is required to make Intel V16 work on hudson-rose-23 (at least they both work).
 #if !(defined(__INTEL_COMPILER) && (__INTEL_COMPILER == 1600))
