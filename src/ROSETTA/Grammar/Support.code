@@ -16405,6 +16405,10 @@ SgProject::SgProject ( const std::vector<std::string>& argv, bool frontendConsta
 void
 SgProject::initialization()
    {
+  // DQ (4/11/2017): Some implementations of ROSE tools are just calling the SgProject constructor directly, these 
+  // need to call ROSE_INITIALIZE.  Here is a reasonable point to make that call.
+     ROSE_INITIALIZE;
+
   // DQ (10/16/2005): This function initializes default values (until we use an automatically generated version)
 
   // Matzke (12/06/2016): Added missing initializations identified by valgrind and code inspection
