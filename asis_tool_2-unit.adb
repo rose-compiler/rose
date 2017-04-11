@@ -90,7 +90,7 @@ package body Asis_Tool_2.Unit is
    begin
       Node.Node_ID.ID := Dot.To_ID_Type (Unique_Name);
       -- These are in alphabetical order:
-      Node.Attrs.Add_Assign_To_First_Attr ("Compilation_Command_Line_Options",
+      Node.Attr_List.Add_Assign_To_First_Attr ("Compilation_Command_Line_Options",
                  To_String (Acu.Compilation_Command_Line_Options (Unit)));
       -- Empty:
       -- Node.Attrs.Add_Assign_To_First_Attr ("This_Form",      To_String (Acu.Object_Form (Unit)));
@@ -98,12 +98,12 @@ package body Asis_Tool_2.Unit is
       -- Node.Attrs.Add_Assign_To_First_Attr ("Object_Name",    To_String (Acu.Object_Name (Unit)));
       -- Empty:
       -- Node.Attrs.Add_Assign_To_First_Attr ("Text_Form",      To_String (Acu.Text_Form (Unit)));
-      Node.Attrs.Add_Assign_To_First_Attr ("Text_Name",      To_String (Acu.Text_Name (Unit)));
-      Node.Attrs.Add_Assign_To_First_Attr ("Unique_Name",    Unique_Name);
-      Node.Attrs.Add_Assign_To_First_Attr ("Unit_Class",     Acu.Unit_Class (Unit)'Image);
-      Node.Attrs.Add_Assign_To_First_Attr ("Unit_Full_Name", To_String (Acu.Unit_Full_Name (Unit)));
-      Node.Attrs.Add_Assign_To_First_Attr ("Unit_Kind",      Acu.Unit_Kind (Unit)'Image);
-      Node.Attrs.Add_Assign_To_First_Attr ("Unit_Origin",    Acu.Unit_Origin (Unit)'Image);
+      Node.Attr_List.Add_Assign_To_First_Attr ("Text_Name",      To_String (Acu.Text_Name (Unit)));
+      Node.Attr_List.Add_Assign_To_First_Attr ("Unique_Name",    Unique_Name);
+      Node.Attr_List.Add_Assign_To_First_Attr ("Unit_Class",     Acu.Unit_Class (Unit)'Image);
+      Node.Attr_List.Add_Assign_To_First_Attr ("Unit_Full_Name", To_String (Acu.Unit_Full_Name (Unit)));
+      Node.Attr_List.Add_Assign_To_First_Attr ("Unit_Kind",      Acu.Unit_Kind (Unit)'Image);
+      Node.Attr_List.Add_Assign_To_First_Attr ("Unit_Origin",    Acu.Unit_Origin (Unit)'Image);
       Graph.Append_Stmt (new Dot.Node_Stmt.Class'(Node));
    end Add_To_Graph;
 

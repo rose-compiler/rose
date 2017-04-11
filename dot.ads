@@ -131,7 +131,7 @@ package Dot is
 
       type Class is tagged -- Initialized
          record
-            Assigns : Assign.List_Of_Class; -- Initialized
+            A_List : Assign.List_Of_Class; -- Initialized
          end record;
 
       Null_Class : constant Class;
@@ -150,9 +150,9 @@ package Dot is
    -- Add an assign to the first attr of the list. If there is no first attr,
    -- add one:
       procedure Add_Assign_To_First_Attr
-        (Attrs : in out List_Of_Class;
-         Name  : in     String;
-         Value : in     String);
+        (Attr_List : in out List_Of_Class;
+         Name      : in     String;
+         Value     : in     String);
 
       Empty_List : constant List_Of_Class :=
         List_Of_Class'(Lists.Empty_List with null record);
@@ -171,7 +171,7 @@ package Dot is
 
       type Class is new Stmt.Class with record -- Initialized
          Kind  : Kind_Type := Node;
-         Attrs : Dot.Attr.List_Of_Class; -- Initialized
+         Attr_List : Dot.Attr.List_Of_Class; -- Initialized
       end record;
 
       overriding
@@ -219,8 +219,8 @@ package Dot is
    package Node_Stmt is
 
       type Class is new Stmt.Class with record -- Initialized
-         Node_ID : Dot.Node_ID.Class; -- Initialized
-         Attrs   : Dot.Attr.List_Of_Class; -- Initialized
+         Node_ID   : Dot.Node_ID.Class; -- Initialized
+         Attr_List : Dot.Attr.List_Of_Class; -- Initialized
       end record;
 
       overriding
@@ -236,36 +236,72 @@ package Dot is
    -----------------------------------------------------------------------------
 
    -----------------------------------------------------------------------------
-   type Subgraph_Class is tagged record -- Initialized
-      Stmt_List : Stmt.List_Of_Access_All_Class;
-      Has_ID    : Boolean := False;
-      ID        : ID_Type;
-         end record;
-   -----------------------------------------------------------------------------
+   package Subgraphs is
 
-   -----------------------------------------------------------------------------
-   package Edge_Stmt is
-      type Kind_Type is (Node, Subgraph);
-
-      type Class is new Stmt.Class with record -- Initialized
-         Attrs    : Dot.Attr.List_Of_Class; -- Initialized
-         Kind     : Kind_Type := Node;
-         Node_ID  : Dot.Node_ID.Class; -- Initialized
-         Subgraph : Subgraph_Class; -- Initialized
+      type Class is tagged record -- Initialized
+         Stmt_List : Stmt.List_Of_Access_All_Class;
+         ID        : ID_Type;
       end record;
 
-      overriding
       procedure Put
         (This : in Class);
 
-      -- Creates a Class object on the heap:
-      procedure Append_To
-        (This      : in Class;
-         Stmt_List : in out Stmt.List_Of_Access_All_Class);
-
-   end Edge_Stmt;
+   end Subgraphs;
    -----------------------------------------------------------------------------
 
+
+   -----------------------------------------------------------------------------
+   package Edges is
+
+      package Terminals is
+
+         type Kind_Type is (Node_Kind, Subgraph_Kind);
+
+         type Class (Kind : Kind_Type := Node_Kind) is record -- Initialized
+            case Kind is
+               when Node_Kind =>
+                  Node_Id  : Dot.Node_ID.Class; -- Initialized
+               when Subgraph_Kind =>
+                  Subgraph : Subgraphs.Class; -- Initialized
+            end case;
+         end record;
+
+         procedure Put
+           (This : in Class);
+
+         package Lists is new
+           Ada.Containers.Doubly_Linked_Lists (Class);
+         -- Make primitive operations like "=" visible:
+         type List_Of_Class is new Lists.List with null record;
+
+         procedure Put
+           (These : in List_Of_Class);
+
+      end Terminals;
+
+      package Stmts is
+
+         -- There must be at least one RHS:
+         type Class is new Stmt.Class with record -- Initialized
+            LHS : Terminals.Class; -- Initialized
+            RHS : Terminals.Class; -- Initialized
+            RHSs : Terminals.List_Of_Class; -- Initialized
+            Attr_List      : Dot.Attr.List_Of_Class; -- Initialized
+         end record;
+
+         overriding
+         procedure Put
+           (This : in Class);
+
+         -- Creates a Class object on the heap:
+         procedure Append_To
+           (This      : in Class;
+            Stmt_List : in out Stmt.List_Of_Access_All_Class);
+
+      end Stmts;
+
+   end Edges;
+   -----------------------------------------------------------------------------
 
    -----------------------------------------------------------------------------
    package Graphs is

@@ -598,7 +598,7 @@ package body Asis_Tool_2.Element is
    is
    begin
       This.Text.Put_Indented_Line (Name & " => """ & Value & """");
-      This.Current_Node.Attrs.Add_Assign_To_First_Attr
+      This.Current_Node.Attr_List.Add_Assign_To_First_Attr
         (Name  => Name,
          Value => Value);
    end;

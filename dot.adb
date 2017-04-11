@@ -11,6 +11,9 @@ package body Dot is
       return To_ID_Type (Ada.Characters.Handling.To_String(Item));
    end To_ID_Type;
 
+   -- NOT TASK SAFE:
+   Is_Digraph : Boolean := True;
+
    package body Stmt is
 
       ------------
@@ -91,7 +94,7 @@ package body Dot is
       begin
          Indented.Indent;
          Indented.Put ("[");
-         This.Assigns.Put;
+         This.A_List.Put;
          Indented.Put (" ]");
          Indented.Dedent;
      end Put;
@@ -115,20 +118,20 @@ package body Dot is
       -- EXPORTED
       ------------
       procedure Add_Assign_To_First_Attr
-        (Attrs : in out List_Of_Class;
+        (Attr_List : in out List_Of_Class;
          Name  : in     String;
          Value : in     String)
       is
          procedure Add_Assign (Attr : in out Dot.Attr.Class) is
          begin
-            Attr.Assigns.Append (Name, Value);
+            Attr.A_List.Append (Name, Value);
          end Add_Assign;
       begin
-         if Attrs.Is_Empty then
-            Attrs.Append (Dot.Attr.Null_Class);
+         if Attr_List.Is_Empty then
+            Attr_List.Append (Dot.Attr.Null_Class);
          end if;
-         Attrs.Update_Element
-           (Position => Dot.Attr.First(Attrs),
+         Attr_List.Update_Element
+           (Position => Dot.Attr.First(Attr_List),
             Process  => Add_Assign'Access);
       end Add_Assign_To_First_Attr;
 
@@ -195,7 +198,7 @@ package body Dot is
         (This : in Class) is
       begin
          This.Node_Id.Put;
-         This.Attrs.Put;
+         This.Attr_List.Put;
       end Put;
 
       ------------
@@ -210,29 +213,96 @@ package body Dot is
 
    end Node_Stmt;
 
-   package body Edge_Stmt is
+   package body Subgraphs is
 
-      ------------
-      -- EXPORTED
-      ------------
       procedure Put
         (This : in Class) is
       begin
-         Indented.Put ("<edge stmt>");
-         Indented.End_Line_If_Needed;
+         if Length (This.ID) > 0 then
+            Indented.Put ("subgraph ");
+            Put (This.ID);
+         end if;
+         This.Stmt_List.Put;
       end Put;
+
+   end Subgraphs;
+
+   package body Edges is
+
+      procedure Put_Edgeop is
+      begin
+         if Is_Digraph then
+            Indented.Put (" -> ");
+         else
+            Indented.Put (" -- ");
+         end if;
+      end Put_Edgeop;
 
       ------------
       -- EXPORTED
       ------------
-      procedure Append_To
-        (This      : in Class;
-         Stmt_List : in out Stmt.List_Of_Access_All_Class) is
-      begin
-         Stmt_List.Append (new Class'(This));
-      end Append_To;
+      package body Terminals is
 
-   end Edge_Stmt;
+         ------------
+         -- EXPORTED
+         ------------
+         procedure Put
+           (This : in Class) is
+         begin
+            case This.Kind is
+               when Node_Kind =>
+                  This.Node_Id.Put;
+               when Subgraph_Kind =>
+                  This.Subgraph.Put;
+            end case;
+         end Put;
+
+
+         ------------
+         -- EXPORTED
+         ------------
+         procedure Put
+           (These : in List_Of_Class) is
+         begin
+            for This of These loop
+               Put_Edgeop;
+               Put(This);
+               end loop;
+         end Put;
+
+      end Terminals;
+
+      ------------
+      -- EXPORTED
+      ------------
+      package body Stmts is
+
+         ------------
+         -- EXPORTED
+         ------------
+         procedure Put
+           (This : in Class) is
+         begin
+            Terminals.Put (This.LHS);
+            Put_Edgeop;
+            Terminals.Put (This.RHS);
+            This.RHSs.Put;
+            This.Attr_List.Put;
+         end Put;
+
+         ------------
+         -- EXPORTED
+         ------------
+         procedure Append_To
+           (This      : in Class;
+            Stmt_List : in out Stmt.List_Of_Access_All_Class) is
+         begin
+            Stmt_List.Append (new Class'(This));
+         end Append_To;
+
+      end Stmts;
+
+   end Edges;
 
    package body Graphs is
 
@@ -297,8 +367,10 @@ package body Dot is
          end if;
          if This.Digraph then
             Indented.Put ("digraph ");
+            Is_Digraph := True;
          else
             Indented.Put ("graph ");
+            Is_Digraph := False;
          end if;
          Indented.Put_Spaced (To_String(This.ID));
          Indented.Put ("{");
