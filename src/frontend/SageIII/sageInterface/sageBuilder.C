@@ -13692,8 +13692,35 @@ SageBuilder::buildEnumDeclaration_nfi(const SgName& name, SgScopeStatement* scop
   // constructor is side-effect free
      defdecl->set_definingDeclaration(defdecl);
 
+#if 0
+     printf ("In buildEnumDeclaration_nfi(): name = %s \n",name.str());
+#endif
+
+#if 1
+  // DQ (4/3/2017): Check for an existing non-defining declaration before building one (to avoid multiple versions). See test2017_13.C.
+     ROSE_ASSERT(scope != NULL);
+     SgEnumSymbol* enumSymbol = scope->lookup_enum_symbol(name);
+  // ROSE_ASSERT(enumSymbol != NULL);
+     SgEnumDeclaration* nondefdecl = NULL;
+     if (enumSymbol != NULL)
+        {
+          ROSE_ASSERT(enumSymbol->get_declaration() != NULL);
+          nondefdecl = enumSymbol->get_declaration();
+          ROSE_ASSERT(nondefdecl != NULL);
+        }
+       else
+        {
+       // build the nondefining declaration
+          nondefdecl = buildNondefiningEnumDeclaration_nfi(name, scope);
+#if 0
+          printf ("###### In buildEnumDeclaration_nfi(): built a non-defining declaration to support the symbol table: name = %s nondefdecl = %p \n",name.str(),nondefdecl);
+#endif
+        }
+#else
   // build the nondefining declaration
      SgEnumDeclaration* nondefdecl = buildNondefiningEnumDeclaration_nfi(name, scope);
+#endif
+
      nondefdecl->set_definingDeclaration(defdecl);
   // defdecl->set_firstNondefiningDeclaration(nondefdecl);
      defdecl->set_firstNondefiningDeclaration(nondefdecl->get_firstNondefiningDeclaration());
@@ -16591,7 +16618,7 @@ SageBuilder::fixupCopyOfNodeFromSeparateFileInNewTargetAst(SgStatement* insertio
                          SgGlobal* globalScope = TransformationSupport::getGlobalScope(targetScope);
                          ROSE_ASSERT(globalScope != NULL);
                          fprintf (stderr, "  globalScope = %p = %s \n",globalScope,globalScope->class_name().c_str());
-#if 1
+#if 0
                          targetScope->get_file_info()->display("case V_SgFunctionRefExp: targetScope: debug");
                          node_original->get_file_info()->display("case V_SgFunctionRefExp: node_original: debug");
 #endif
