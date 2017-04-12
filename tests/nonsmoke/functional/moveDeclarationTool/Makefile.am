@@ -422,7 +422,7 @@ else
 if USING_CLANG_COMPILER
 # Exclude this list of files in the case of CLANG compiler.
 	@echo "USING_CLANG_COMPILER == true"
-	@echo "moveDeclarationTool tests using EDG 4.9: Clang backend compiler using EDG 4.12 frontend."
+	@echo "moveDeclarationTool tests using EDG 4.12: Clang backend compiler using EDG 4.12 frontend."
 else # NOT USING_CLANG_COMPILER
 	@echo "USING_CLANG_COMPILER == false"
 if USING_INTEL_COMPILER
