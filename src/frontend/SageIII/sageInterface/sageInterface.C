@@ -14877,13 +14877,14 @@ SgLocatedNode* SageInterface::ensureBasicBlockAsParent(SgStatement* s)
         }
         return p;
 }
-#endif
+
   void SageInterface::changeAllLoopBodiesToBlocks(SgNode* top) {
     cerr<<"Warning: SageInterface::changeAllLoopBodiesToBlocks() is being replaced by SageInterface::changeAllBodiesToBlocks()."<<endl;
     cerr<<"Please use SageInterface::changeAllBodiesToBlocks() if you can."<<endl;
         changeAllBodiesToBlocks(top) ;
   }
 
+#endif
   void SageInterface::changeAllBodiesToBlocks(SgNode* top, bool createEmptyBody /*= true*/ ) {
     class Visitor: public AstSimpleProcessing {
       public: 
@@ -15345,6 +15346,7 @@ void SageInterface::replaceSubexpressionWithStatement(SgExpression* from, Statem
       case V_SgUnsignedLongVal: return isSgUnsignedLongVal(expr)->get_value();
       case V_SgLongLongIntVal: return isSgLongLongIntVal(expr)->get_value();
       case V_SgUnsignedLongLongIntVal: return isSgUnsignedLongLongIntVal(expr)->get_value();
+      case V_SgBoolValExp: return (long long )(isSgBoolValExp(expr)->get_value());
 
    // DQ (2/18/2015): Make this a better error message.
    // default: ROSE_ASSERT (!"Bad kind in getIntegerConstantValue");
@@ -16249,7 +16251,8 @@ SageInterface::isIndexOperator( SgExpression* exp )
    {
      bool returnValue = false;
      SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(exp);
-     ROSE_ASSERT(memberFunctionRefExp != NULL);
+     if (memberFunctionRefExp == NULL)
+       return false;
 
      SgMemberFunctionDeclaration* memberFunctionDeclaration = memberFunctionRefExp->getAssociatedMemberFunctionDeclaration();
      if (memberFunctionDeclaration != NULL)
