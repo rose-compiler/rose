@@ -15,6 +15,10 @@ void foo();
 void foo(int i)
 {
 
+  while (i >100)
+    i++;
+
+
   switch (i)
   {
     case 0:
@@ -25,6 +29,33 @@ void foo(int i)
   }
 }
 #endif
+
+int test_getForLoopInformations(int i)
+{
+  int ret =0; 
+  for (i=0; i<100; i++)
+  {
+    ret += i;
+  }
+  return ret; 
+}
+
+void test_getIntegerConstantValue()
+{
+  char c='c';
+  unsigned char c2='a';
+
+  short st =1;
+  unsigned short st2 =1;
+
+  unsigned int ui = 10;
+
+  long  li =100;
+  unsigned long  li2 =100;
+
+  long long lli = 100;
+  unsigned long long lli2=100;
+} 
 
 // declare a template class
 template <class T>
@@ -150,6 +181,32 @@ LOOP:
     a++;
   }
   while( a < 20 );
+}
+
+class MyList 
+{
+  private:
+    int plist[10];
+
+  public:
+    int& operator[] (const int index);
+};
+ 
+int& MyList::operator[] (const int index)
+{
+    return plist[index];
+}
+
+
+int test_moveVariableDeclaration(int j)
+{
+  int i;
+
+  for (i=0; i<100; i++)
+  {
+    j=+ i;
+  }
+  return j; 
 }
 
 int main(int argc, char* argv[])
