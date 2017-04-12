@@ -2125,7 +2125,7 @@ FacilitiesGuard::save() {
 void
 FacilitiesGuard::restore() {
     BOOST_FOREACH (const State::Node &saved, state_.nodes()) {
-        ASSERT_require(saved.size() == N_IMPORTANCE);
+        ASSERT_require(saved.value().size() == N_IMPORTANCE);
         try {
             Facility &facility = facilities_.facility(saved.key());
             for (int i=0; i<N_IMPORTANCE; ++i)
