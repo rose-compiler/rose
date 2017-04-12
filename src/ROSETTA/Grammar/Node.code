@@ -1918,7 +1918,9 @@ HEADER_START
       /* */
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-      /*! \brief Returns the CFG node for just before this AST node */
+#if 0
+       // DQ (4/5/2017): Moved these function definition out of the header file to avoid warnings from 
+       // assertion from the header file (OK if it appears once from compiling the source file).
      /*! \brief Returns the CFG node for just before this AST node */
           VirtualCFG::CFGNode cfgForBeginning()
              {
@@ -1933,6 +1935,12 @@ HEADER_START
                return VirtualCFG::CFGNode(this, this->cfgIndexForEnd());
 	          }
       /* */
+#else
+     /*! \brief Returns the CFG node for just before this AST node */
+          VirtualCFG::CFGNode cfgForBeginning();
+      /*! \brief Returns the CFG node for just after this AST node */
+          VirtualCFG::CFGNode cfgForEnd();
+#endif
 #endif
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
@@ -2898,6 +2906,21 @@ operator<< ( std::ostream & os, const struct stat & sb )
      return os;
    }
 
+// DQ (4/5/2017): Moved these function definition out of the header file to avoid warnings from 
+// assertion from the header file (OK if it appears once from compiling the source file).
+VirtualCFG::CFGNode
+SgNode::cfgForBeginning()
+   {
+     ROSE_ASSERT (this);
+     return VirtualCFG::CFGNode(this, 0);
+   }
+
+VirtualCFG::CFGNode
+SgNode::cfgForEnd()
+   {
+     ROSE_ASSERT (this);
+     return VirtualCFG::CFGNode(this, this->cfgIndexForEnd());
+   }
  
 SOURCE_END
 
