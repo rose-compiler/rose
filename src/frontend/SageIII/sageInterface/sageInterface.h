@@ -2143,8 +2143,8 @@ bool isBodyStatement (SgStatement* s);
 //! Fix up ifs, loops, while, switch, Catch, OmpBodyStatement, etc. to have blocks as body components. It also adds an empty else body to if statements that don't have them.
 void changeAllBodiesToBlocks(SgNode* top, bool createEmptyBody = true);
 
-//! The same as changeAllBodiesToBlocks(SgNode* top). To be phased out.
-void changeAllLoopBodiesToBlocks(SgNode* top);
+// The same as changeAllBodiesToBlocks(SgNode* top). Phased out.
+//void changeAllLoopBodiesToBlocks(SgNode* top);
 
 //! Make a single statement body to be a basic block. Its parent is if, while, catch, or upc_forall etc.
 SgBasicBlock * makeSingleStatementBodyToBlock(SgStatement* singleStmt);
