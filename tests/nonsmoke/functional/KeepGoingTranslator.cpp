@@ -1,12 +1,6 @@
 #include "rose.h"
 #include "keep_going.h"
 
-#include <assert.h>
-#include <setjmp.h>
-#include <signal.h>
-#include <sys/types.h> //getpid()
-#include <unistd.h>    //getpid()
-
 #include <fstream>
 #include <iostream>
 #include <map>
@@ -14,6 +8,16 @@
 #include <string>
 #include <vector>
 
+#if 0
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <cstdlib>
+#endif
+
+#include <utime.h>
 #include <boost/algorithm/string/join.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/filesystem.hpp>
@@ -22,6 +26,8 @@
 
 static void
 ShowUsage(std::string program_name);
+
+static bool verbose = false;
 
 /**
  * @returns The current time in the specified format
@@ -33,7 +39,7 @@ std::string
 StripPrefix(const std::string& prefix, const std::string& str);
 
 /**
- * @brief Append msg to filename
+ * @brief Append msg to a file 
  */
 void
 AppendToFile(const std::string& filename, const std::string& msg);
@@ -50,254 +56,248 @@ CreateExpectationsMap(const std::string& filename);
 std::vector<std::string>
 GetSourceFilenamesFromCommandline(const std::vector<std::string>& argv);
 
-int
-main(int argc, char * argv[])
+
+//! Processing command line options
+void commandLineProcessing 
+                          (int argc, char* argv[],
+                           std::vector<std::string> & rose_cmdline,
+                           bool& verbose,
+                           bool & enable_ast_tests,
+                           std::string& report_filename__fail,
+                           std::string& report_filename__pass,
+                           std::string& expectations_filename__fail,
+                           std::string& expectations_filename__pass,
+                           std::string& path_prefix
+                           ) 
 {
-  bool verbose = false;
-  bool enable_ast_tests = false;
-  std::string report_filename__fail("rose-failed_files.txt");
-  std::string report_filename__pass("rose-passed_files.txt");
-  std::string expectations_filename__fail("");
-  std::string expectations_filename__pass("");
-  std::string path_prefix;
-
   std::string program_name(argv[0]);
-
-  std::vector<std::string> rose_cmdline;
   rose_cmdline.push_back(program_name);
+  // wrap the -rose:keep_going option inside of this translator
   rose_cmdline.push_back("-rose:keep_going");
 
   {// CLI
-      std::string cli_list_filenames        = "--list-filenames"; // deprecated 2013-11-2
-      std::string cli_report                = "--report="; // deprecated 2013-11-2
-      std::string cli_report__fail          = "--report-fail=";
-      std::string cli_report__pass          = "--report-pass=";
-      std::string cli_expectations__fail    = "--expected-failures=";
-      std::string cli_expectations__pass    = "--expected-passes=";
-      std::string cli_strip_path_prefix     = "--strip-path-prefix=";
-      std::string cli_enable_ast_tests      = "--enable-ast-tests";
-      std::string cli_verbose               = "--verbose";
-      std::string cli_silent                = "--silent";
+    std::string cli_list_filenames        = "--list-filenames"; // deprecated 2013-11-2
+    std::string cli_report                = "--report="; // deprecated 2013-11-2
+    std::string cli_report__fail          = "--report-fail=";
+    std::string cli_report__pass          = "--report-pass=";
+    std::string cli_expectations__fail    = "--expected-failures=";
+    std::string cli_expectations__pass    = "--expected-passes=";
+    std::string cli_strip_path_prefix     = "--strip-path-prefix=";
+    std::string cli_enable_ast_tests      = "--enable-ast-tests";
+    std::string cli_verbose               = "--verbose";
+    std::string cli_silent                = "--silent";
 
-      for (int ii = 1; ii < argc; ++ii)
+    for (int ii = 1; ii < argc; ++ii)
+    {
+      std::string arg = argv[ii];
+
+      // --help
+      if ((arg == "-h") || (arg == "--help"))
       {
-          std::string arg = argv[ii];
-
-          // --help
-          if ((arg == "-h") || (arg == "--help"))
-          {
-              ShowUsage(program_name);
-              return 0;
-          }
-          // --verbose
-          else if (arg.find(cli_verbose) == 0)
-          {
-              verbose = true;
-          }
-          // --silent
-          else if (arg.find(cli_silent) == 0)
-          {
-              verbose = false;
-          }
-          // --list-filenames
-          else if (arg.find(cli_list_filenames) == 0)
-          {
-              arg.replace(0, cli_list_filenames.length(), "");
-              {
-                  std::vector<std::string> filenames =
-                      GetSourceFilenamesFromCommandline(
-                          std::vector<std::string>(argv, argv + argc));
-                  BOOST_FOREACH(std::string filename, filenames)
-                  {
-                      std::cout << filename << std::endl;
-                  }
-              }
-              return 0;
-          }
-          // --report=<filename>
-          else if (arg.find(cli_report) == 0)
-          {
-              arg.replace(0, cli_report.length(), "");
-              if (arg.empty())
-              {
-                  std::cerr
-                      << "[ERROR] "
-                      << "[" << program_name << "] "
-                      << "--report requires an argument, see --help"
-                      << std::endl;
-                  return 1;
-              }
-              else
-              {
-                  report_filename__fail = arg + "-fail";
-                  report_filename__pass = arg + "-pass";
-              }
-          }
-          // --report-fail=<filename>
-          else if (arg.find(cli_report__fail) == 0)
-          {
-              arg.replace(0, cli_report__fail.length(), "");
-              if (arg.empty())
-              {
-                  std::cerr
-                      << "[ERROR] "
-                      << "[" << program_name << "] "
-                      << "--report-fail requires an argument, see --help"
-                      << std::endl;
-                  return 1;
-              }
-              else
-              {
-                  report_filename__fail = arg;
-              }
-          }
-          // --report-pass=<filename>
-          else if (arg.find(cli_report__pass) == 0)
-          {
-              arg.replace(0, cli_report__pass.length(), "");
-              if (arg.empty())
-              {
-                  std::cerr
-                      << "[ERROR] "
-                      << "[" << program_name << "] "
-                      << "--report-pass requires an argument, see --help"
-                      << std::endl;
-                  return 1;
-              }
-              else
-              {
-                  report_filename__pass = arg;
-              }
-          }
-          // --expected-failures
-          else if (arg.find(cli_expectations__fail) == 0)
-          {
-              arg.replace(0, cli_expectations__fail.length(), "");
-              if (arg.empty())
-              {
-                  std::cerr
-                      << "[ERROR] "
-                      << "[" << program_name << "] "
-                      << "--expected-failures requires an argument, see --help"
-                      << std::endl;
-                  return 1;
-              }
-              else
-              {
-                  expectations_filename__fail = arg;
-                  if (!boost::filesystem::exists(expectations_filename__fail))
-                  {
-                      std::cerr
-                          << "[FATAL] "
-                          << "Expected failures file does not exist: "
-                          << expectations_filename__fail
-                          << std::endl;
-                      exit(1);
-                  }
-              }
-          }
-          // --expected-passes
-          else if (arg.find(cli_expectations__pass) == 0)
-          {
-              arg.replace(0, cli_expectations__pass.length(), "");
-              if (arg.empty())
-              {
-                  std::cerr
-                      << "[ERROR] "
-                      << "[" << program_name << "] "
-                      << "--expected-passes requires an argument, see --help"
-                      << std::endl;
-                  return 1;
-              }
-              else
-              {
-                  expectations_filename__pass = arg;
-                  if (!boost::filesystem::exists(expectations_filename__pass))
-                  {
-                      std::cerr
-                          << "[FATAL] "
-                          << "expected passes file does not exist: "
-                          << expectations_filename__pass
-                          << std::endl;
-                      exit(1);
-                  }
-              }
-          }
-          // --strip-path-prefix
-          else if (arg.find(cli_strip_path_prefix) == 0)
-          {
-              arg.replace(0, cli_strip_path_prefix.length(), "");
-              if (arg.empty())
-              {
-                  std::cerr
-                      << "[ERROR] "
-                      << "[" << program_name << "] "
-                      << "--strip-path-prefix requires an argument, see --help"
-                      << std::endl;
-                  return 1;
-              }
-              else
-              {
-                  path_prefix = arg;
-              }
-          }
-          // --enable-ast-tests
-          else if (arg.find(cli_enable_ast_tests) == 0)
-          {
-              enable_ast_tests = true;
-          }
-          else
-          {
-              rose_cmdline.push_back(arg);
-          }
+        ShowUsage(program_name);
+        exit(0);
       }
-
-      if (verbose)
+      // --verbose
+      else if (arg.find(cli_verbose) == 0)
       {
-          std::cout
-              << "[INFO] ROSE Commandline: "
-              << boost::algorithm::join(rose_cmdline, " ")
+        verbose = true;
+      }
+      // --silent
+      else if (arg.find(cli_silent) == 0)
+      {
+        verbose = false;
+      }
+      // --list-filenames
+      else if (arg.find(cli_list_filenames) == 0)
+      {
+        arg.replace(0, cli_list_filenames.length(), "");
+        {
+          std::vector<std::string> filenames =
+            GetSourceFilenamesFromCommandline(
+                std::vector<std::string>(argv, argv + argc));
+          BOOST_FOREACH(std::string filename, filenames)
+          {
+            std::cout << filename << std::endl;
+          }
+        }
+        exit(0);
+      }
+      // --report=<filename>
+      else if (arg.find(cli_report) == 0)
+      {
+        arg.replace(0, cli_report.length(), "");
+        if (arg.empty())
+        {
+          std::cerr
+            << "[ERROR] "
+            << "[" << program_name << "] "
+            << "--report requires an argument, see --help"
+            << std::endl;
+          exit(1);
+        }
+        else
+        {
+          report_filename__fail = arg + "-fail";
+          report_filename__pass = arg + "-pass";
+        }
+      }
+      // --report-fail=<filename>
+      else if (arg.find(cli_report__fail) == 0)
+      {
+        arg.replace(0, cli_report__fail.length(), "");
+        if (arg.empty())
+        {
+          std::cerr
+            << "[ERROR] "
+            << "[" << program_name << "] "
+            << "--report-fail requires an argument, see --help"
+            << std::endl;
+          exit(1);
+        }
+        else
+        {
+          report_filename__fail = arg;
+        }
+      }
+      // --report-pass=<filename>
+      else if (arg.find(cli_report__pass) == 0)
+      {
+        arg.replace(0, cli_report__pass.length(), "");
+        if (arg.empty())
+        {
+          std::cerr
+            << "[ERROR] "
+            << "[" << program_name << "] "
+            << "--report-pass requires an argument, see --help"
+            << std::endl;
+          exit(1);
+        }
+        else
+        {
+          report_filename__pass = arg;
+        }
+      }
+      // --expected-failures
+      else if (arg.find(cli_expectations__fail) == 0)
+      {
+        arg.replace(0, cli_expectations__fail.length(), "");
+        if (arg.empty())
+        {
+          std::cerr
+            << "[ERROR] "
+            << "[" << program_name << "] "
+            << "--expected-failures requires an argument, see --help"
+            << std::endl;
+          exit(1);
+        }
+        else
+        {
+          expectations_filename__fail = arg;
+          if (!boost::filesystem::exists(expectations_filename__fail))
+          {
+            std::cerr
+              << "[FATAL] "
+              << "Expected failures file does not exist: "
+              << expectations_filename__fail
               << std::endl;
+            exit(1);
+          }
+        }
       }
-  }// CLI
-
-  // Build the AST used by ROSE
-  SgProject* project = frontend(rose_cmdline);
-
-  if (KEEP_GOING_CAUGHT_MIDEND_SIGNAL)
-  {
-      std::cout
-          << "[WARN] "
-          << "Configured to keep going after catching a signal in the Midend"
-          << std::endl;
-      project->set_midendErrorCode(100);
-  }
-  else
-  {
-      if (enable_ast_tests)
+      // --expected-passes
+      else if (arg.find(cli_expectations__pass) == 0)
       {
-          // Run internal consistency tests on AST
-          AstTests::runAllTests(project);
+        arg.replace(0, cli_expectations__pass.length(), "");
+        if (arg.empty())
+        {
+          std::cerr
+            << "[ERROR] "
+            << "[" << program_name << "] "
+            << "--expected-passes requires an argument, see --help"
+            << std::endl;
+          exit(1);
+        }
+        else
+        {
+          expectations_filename__pass = arg;
+          if (!boost::filesystem::exists(expectations_filename__pass))
+          {
+            std::cerr
+              << "[FATAL] "
+              << "expected passes file does not exist: "
+              << expectations_filename__pass
+              << std::endl;
+            exit(1);
+          }
+        }
+      }
+      // --strip-path-prefix
+      else if (arg.find(cli_strip_path_prefix) == 0)
+      {
+        arg.replace(0, cli_strip_path_prefix.length(), "");
+        if (arg.empty())
+        {
+          std::cerr
+            << "[ERROR] "
+            << "[" << program_name << "] "
+            << "--strip-path-prefix requires an argument, see --help"
+            << std::endl;
+          exit(1);
+        }
+        else
+        {
+          path_prefix = arg;
+        }
+      }
+      // --enable-ast-tests
+      else if (arg.find(cli_enable_ast_tests) == 0)
+      {
+        enable_ast_tests = true;
       }
       else
       {
-          if (verbose)
-          {
-              std::cerr
-                  << "[INFO] "
-                  << "Skipping AST consistency tests; turn them on with '--enable-ast-tests'"
-                  << std::endl;
-          }
+        rose_cmdline.push_back(arg);
       }
-  }
+    }
 
-  // Insert your own manipulation of the AST here...
+    if (verbose)
+    {
+      std::cout
+        << "[INFO] ROSE Commandline: "
+        << boost::algorithm::join(rose_cmdline, " ")
+        << std::endl;
+    }
+  }// CLI
 
-  // Generate source code from the AST and call the vendor's compiler
-  int backend_status = backend(project);
+}
 
-  // Report errors
+void generate_reports(SgProject* project, 
+                     std::vector< std::string> orig_rose_cmdline,
+                     std::string & path_prefix, 
+                     std::string& report_filename__fail,
+                     std::string& report_filename__pass,
+                     std::string& expectations_filename__fail,
+                     std::string& expectations_filename__pass
+                       )
+{
+  // --------------------------------------------------------------
   SgFilePtrList files_with_errors = project->get_files_with_errors();
+  
+  // Convert command line options into a single line string
+  std::string orig_command_str; 
+  for (size_t len= 0; len<orig_rose_cmdline.size(); len++)
+  {
+    if (len!=0)
+      orig_command_str +=" ";
+    orig_command_str += orig_rose_cmdline[len];
+  }
+  orig_command_str +="\n";
+
+  // add original command line into the log file so users can easily reproduce the errors. 
+  if (files_with_errors.size()>0)
+  {
+    AppendToFile (report_filename__fail, orig_command_str);
+  }
   BOOST_FOREACH(SgFile* file, files_with_errors)
   {
       std::string filename = file->getFileName();
@@ -314,18 +314,27 @@ main(int argc, char * argv[])
 
       // <file> <frontend> <unparser> <backend>
       std::stringstream ss;
-      ss << filename << " "
-         << file->get_frontendErrorCode() << " "
-         << file->get_javacErrorCode() << " "
-         << file->get_unparserErrorCode() << " "
-         << file->get_backendCompilerErrorCode() << " "
-         << file->get_unparsedFileFailedCompilation();
-
+      ss << filename << " ";
+      if (file->get_frontendErrorCode())
+         ss << "\nFrontend Error Code:" << file->get_frontendErrorCode() ;
+      if (file->get_javacErrorCode())    
+         ss << "\nJAVA Error Code:"<< file->get_javacErrorCode(); 
+      if (file->get_unparserErrorCode())   
+         ss << "\nUnparser Error Code:"<< file->get_unparserErrorCode();
+      if (file->get_backendCompilerErrorCode())   
+         ss << "\nBackend Compiler Error Code: " << file->get_backendCompilerErrorCode();
+      if (file->get_unparsedFileFailedCompilation())   
+         ss << "\nUnparsed File Failed Compilation Code: "<< file->get_unparsedFileFailedCompilation();
       AppendToFile(report_filename__fail, ss.str());
   }
 
   // Report successes
   SgFilePtrList files_without_errors = project->get_files_without_errors();
+  if (files_without_errors.size()>0)
+  {
+    AppendToFile (report_filename__pass, orig_command_str);
+  }
+ 
   BOOST_FOREACH(SgFile* file, files_without_errors)
   {
       std::string filename = file->getFileName();
@@ -438,8 +447,9 @@ main(int argc, char * argv[])
       }
   }
 
-  return backend_status;
+
 }
+
 
 static void
 ShowUsage(std::string program_name)
@@ -469,7 +479,7 @@ StripPrefix(const std::string& prefix, const std::string& str)
 {
   std::string stripped_str(str);
 
-  int index = str.find(prefix, 0);
+  size_t index = str.find(prefix, 0);
   if (index != std::string::npos)
   {
       stripped_str.replace(0, prefix.length(), "");
@@ -483,7 +493,9 @@ GetTimestamp(const std::string& format)
 {
   using namespace boost::posix_time;
 
-  ptime now = second_clock::universal_time();
+  //ptime now = second_clock::universal_time();
+  // Using local time instead to be user-friendly.
+  ptime now = second_clock::local_time();
 
   static std::locale loc(std::cout.getloc(),
                          new time_facet(format.c_str()));
@@ -494,18 +506,6 @@ GetTimestamp(const std::string& format)
 
   return ss.str();
 }
-
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <utime.h>
-
-#include <iostream>
-#include <string>
-
-#include <cstdlib>
 
 // http://chris-sharpe.blogspot.com/2013/05/better-than-systemtouch.html
 void touch(const std::string& pathname)
@@ -534,11 +534,15 @@ void touch(const std::string& pathname)
             << "\"\n";
         return;
     }
+
+   if (verbose)
+   {
     std::clog
         << __PRETTY_FUNCTION__
         << ": Completed touch() on path \""
         << pathname
         << "\"\n";
+   }
 }
 
 
@@ -625,11 +629,80 @@ CreateExpectationsMap(const std::string& filename)
   return expectations;
 }
 
+/**
+ * @returns A vector of all filenames from the commandline.
+ */
 std::vector<std::string>
 GetSourceFilenamesFromCommandline(const std::vector<std::string>& argv)
 {
   std::vector<std::string> filenames =
       CommandlineProcessing::generateSourceFilenames(argv, false);
   return filenames;
+}
+
+int
+main(int argc, char * argv[])
+{
+ bool enable_ast_tests = false;
+
+// Using home may be a better choice, no scattered log files in every subdirectories.  
+//  std::string report_filename__fail(boost::filesystem::path(getenv("HOME")).native()+"/rose-failed_files.txt");
+
+  std::string report_filename__fail("rose-failed_files.txt");
+  std::string report_filename__pass("rose-passed_files.txt");
+//  std::string report_filename__pass(boost::filesystem::path(getenv("HOME")).native()+"/rose-passed_files.txt");
+  std::string expectations_filename__fail("");
+  std::string expectations_filename__pass("");
+  std::string path_prefix;
+
+  std::vector<std::string> orig_rose_cmdline(argv, argv+argc);
+
+  std::string program_name(argv[0]);
+
+  std::vector<std::string> rose_cmdline;
+
+  //-----------command line processing -----------------
+  commandLineProcessing (argc, argv, rose_cmdline, verbose, enable_ast_tests, 
+        report_filename__fail,report_filename__pass,expectations_filename__fail,expectations_filename__pass, path_prefix);
+
+  // Build the AST used by ROSE
+  SgProject* project = frontend(rose_cmdline);
+
+  if (KEEP_GOING_CAUGHT_MIDEND_SIGNAL)
+  {
+      std::cout
+          << "[WARN] "
+          << "Configured to keep going after catching a signal in the Midend"
+          << std::endl;
+      project->set_midendErrorCode(100);
+  }
+  else
+  {
+      if (enable_ast_tests)
+      {
+          // Run internal consistency tests on AST
+          AstTests::runAllTests(project);
+      }
+      else
+      {
+          if (verbose)
+          {
+              std::cerr
+                  << "[INFO] "
+                  << "Skipping AST consistency tests; turn them on with '--enable-ast-tests'"
+                  << std::endl;
+          }
+      }
+  }
+
+  // Insert your own manipulation of the AST here...
+
+  // Generate source code from the AST and call the vendor's compiler
+  int backend_status = backend(project);
+
+  // Report errors
+  generate_reports (project, orig_rose_cmdline, path_prefix, report_filename__fail, report_filename__pass, expectations_filename__fail,  expectations_filename__pass);
+
+  return backend_status;
 }
 
