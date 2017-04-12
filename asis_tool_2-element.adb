@@ -4,21 +4,18 @@ with Asis.Expressions;
 with Asis.Iterator;
 -- GNAT-specific:
 with Asis.Set_Get;
+with Types;
 
 package body Asis_Tool_2.Element is
 
-   -- Processing of current element aborted.  Processing of remaining elements
-   -- may proceed:
-   Not_Implemented : exception;
-
-   function Node_Id_Image
-     (Element : in Asis.Element)
-      return String
-   is
-      Leading_Space_Image : constant String := Asis.Set_Get.Node(Element)'Image;
-   begin
-      return Leading_Space_Image (2 .. Leading_Space_Image'Last);
-   end Node_Id_Image;
+--     function Node_Id_Image
+--       (Element : in Asis.Element)
+--        return String
+--     is
+--        Leading_Space_Image : constant String := Asis.Set_Get.Node(Element)'Image;
+--     begin
+--        return "element_" & Leading_Space_Image (2 .. Leading_Space_Image'Last);
+--     end Node_Id_Image;
 
    -- Return the name image for declarations:
    function Name
@@ -489,6 +486,24 @@ package body Asis_Tool_2.Element is
          State.Add_Not_Implemented;
       end Process_Exception_Handler;
 
+      function Get_Enclosing_ID
+        (Element : in Asis.Element)
+         return Dot.ID_Type
+      is
+         Result : Dot.ID_Type; -- Initilaized
+         Enclosing_Element : constant Asis.Element :=
+           Asis.Elements.Enclosing_Element (Element);
+         Enclosing_Element_Node_Id : constant Natural :=
+           Natural (Asis.Set_Get.Node_Value (Enclosing_Element));
+      begin
+         if Enclosing_Element_Node_Id /= Natural (Types.Empty) then
+            Result := To_Dot_ID_Type (Enclosing_Element);
+         else
+            Result := To_Dot_ID_Type (Asis.Set_Get.Encl_Unit (Element));
+         end if;
+         return Result;
+      end Get_Enclosing_ID;
+
       ------------
       -- EXPORTED:
       ------------
@@ -497,12 +512,17 @@ package body Asis_Tool_2.Element is
          Control : in out Asis.Traverse_Control;
          State   : in out Class)
       is
-         Element_Kind : constant Asis.Element_Kinds :=
+         Element_Kind         : constant Asis.Element_Kinds :=
            Asis.Elements.Element_Kind (Element);
-         New_Node : Dot.Node_Stmt.Class; -- Initialized
+         Element_Id           : Dot.ID_Type := To_Dot_ID_Type (Element);
+         New_Node             : Dot.Node_Stmt.Class; -- Initialized
+         Edge_Stmt            : Dot.Edges.Stmts.Class; -- Initialized
       begin
+         Edge_Stmt.LHS.Node_Id.ID := Get_Enclosing_ID (Element);
+         Edge_Stmt.RHS.Node_Id.ID := Element_Id;
+         State.Graph.Append_Stmt (new Dot.Edges.Stmts.Class'(Edge_Stmt));
          State.Current_Node := New_Node;
-         State.Current_Node.Node_ID.ID := Dot.To_ID_Type (Node_Id_Image (Element));
+         State.Current_Node.Node_ID.ID := Element_Id;
          State.Add_Attribute ("Element_Kind", Element_Kind'Image);
          case Element_Kind is
          when Asis.Not_An_Element =>
@@ -619,7 +639,7 @@ package body Asis_Tool_2.Element is
      (This  : in out Class)
    is
    begin
-      This.Add_Attribute ("Traversal", String'("***NOT_IMPLEMENTED***"));
+      This.Add_Attribute ("ASIS_PROCESSING", String'("NOT_COMPLETELY_IMPLEMENTED"));
    end Add_Not_Implemented;
 
 

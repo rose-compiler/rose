@@ -4,6 +4,8 @@ with Asis;
 with Asis.Compilation_Units;
 with Asis.Elements;
 with Asis.Iterator;
+-- GNAT-specific:
+with Asis.Set_Get;
 
 with Asis_Tool_2.Element;
 with Dot;
@@ -86,9 +88,8 @@ package body Asis_Tool_2.Unit is
       Graph : in Dot.Graphs.Access_Class)
    is
       Node        : Dot.Node_Stmt.Class; -- Initialized
-      Unique_Name : constant String := To_String (Acu.Unique_Name (Unit));
    begin
-      Node.Node_ID.ID := Dot.To_ID_Type (Unique_Name);
+      Node.Node_ID.ID := To_Dot_ID_Type (Unit);
       -- These are in alphabetical order:
       Node.Attr_List.Add_Assign_To_First_Attr ("Compilation_Command_Line_Options",
                  To_String (Acu.Compilation_Command_Line_Options (Unit)));
@@ -99,7 +100,7 @@ package body Asis_Tool_2.Unit is
       -- Empty:
       -- Node.Attrs.Add_Assign_To_First_Attr ("Text_Form",      To_String (Acu.Text_Form (Unit)));
       Node.Attr_List.Add_Assign_To_First_Attr ("Text_Name",      To_String (Acu.Text_Name (Unit)));
-      Node.Attr_List.Add_Assign_To_First_Attr ("Unique_Name",    Unique_Name);
+      Node.Attr_List.Add_Assign_To_First_Attr ("Unique_Name",    To_String (Acu.Unique_Name (Unit)));
       Node.Attr_List.Add_Assign_To_First_Attr ("Unit_Class",     Acu.Unit_Class (Unit)'Image);
       Node.Attr_List.Add_Assign_To_First_Attr ("Unit_Full_Name", To_String (Acu.Unit_Full_Name (Unit)));
       Node.Attr_List.Add_Assign_To_First_Attr ("Unit_Kind",      Acu.Unit_Kind (Unit)'Image);

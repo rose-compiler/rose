@@ -1,5 +1,8 @@
 with Ada.Characters.Handling;
 
+--GNAT-specific:
+with Asis.Set_Get;
+
 package body Asis_Tool_2 is
 
    package Ach renames Ada.Characters.Handling;
@@ -47,6 +50,41 @@ package body Asis_Tool_2 is
                   " (" & To_Wide_String (Aex.Exception_Information (X)) & ")");
       Awti.New_Line;
    end Print_Exception_Info;
+
+   -----------
+   -- PRIVATE:
+   -----------
+   function Spaceless_Image (Item : in Natural) return String is
+      Leading_Space_Image : constant String := Item'Image;
+   begin
+      return Leading_Space_Image (2 .. Leading_Space_Image'Last);
+   end Spaceless_Image;
+
+   function Node_Id_Image (Element : in Asis.Element) return String is
+   begin
+      return "element_" & Spaceless_Image (Natural (Asis.Set_Get.Node(Element)));
+   end Node_Id_Image;
+
+   function Node_Id_Image (Unit : in Asis.Compilation_Unit) return String is
+   begin
+      return "unit_" & Spaceless_Image (Natural (Asis.Set_Get.Get_Unit_Id (Unit)));
+   end Node_Id_Image;
+
+   -----------
+   -- PRIVATE:
+   -----------
+   function To_Dot_ID_Type (Element : in Asis.Element) return Dot.ID_Type is
+   begin
+      return Dot.To_ID_Type (Node_Id_Image (Element));
+   end To_Dot_ID_Type;
+
+   -----------
+   -- PRIVATE:
+   -----------
+   function To_Dot_ID_Type (Unit : in Asis.Compilation_Unit) return Dot.ID_Type is
+   begin
+      return Dot.To_ID_Type (Node_Id_Image (Unit));
+   end To_Dot_ID_Type;
 
    -----------
    -- PRIVATE:

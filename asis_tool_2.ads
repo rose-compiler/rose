@@ -1,5 +1,8 @@
 private with Ada.Exceptions;
 private with Ada.Wide_Text_IO;
+private with Asis;
+
+private with Dot;
 
 -- Contains supporting declarations for child packages
 package Asis_Tool_2 is
@@ -24,7 +27,13 @@ private
 
    procedure Print_Exception_Info (X : in Aex.Exception_Occurrence);
 
-   -- At the beginning of each line, puts out white space relative to the
+   -- Returns the image minus the leading space:
+   function Spaceless_Image (Item : in Natural) return String;
+
+   function To_Dot_ID_Type (Element : in Asis.Element) return Dot.ID_Type;
+   function To_Dot_ID_Type (Unit : in Asis.Compilation_Unit) return Dot.ID_Type;
+
+      -- At the beginning of each line, puts out white space relative to the
    -- current indent.  Emits Wide text:
    package Indented_Text is
 
