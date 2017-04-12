@@ -354,16 +354,29 @@ void
 MetricAttribute::unpacked_data(int size, char* data) {
     if (size <= 0)
         return;
+
+    ROSE_ASSERT(data != NULL);
+
     // check tail **
     char * head = data;
-    char * tail = head + strlen(head) - 1;
-    if (*tail=='*')
-    is_derived_ = true;
+
+ // char * tail = head + strlen(head) - 1;
+    int string_size_minus_one = strlen(head) - 1;
+    if (string_size_minus_one >= 0) {
+       char * tail = head + string_size_minus_one;
+       if (*tail=='*')
+          is_derived_ = true;
 
     // retrieve value
     // strtod() is smart enough to skip tab and ignore tailing **
-    char * endp;
-    value_=strtod(head,&endp);
+       char * endp = NULL;
+       value_=strtod(head,&endp);
+    }
+    else
+      {
+        std::cout << "Error: In MetricAttribute::unpacked_data(): data string is zero length" << std::endl;
+        ROSE_ASSERT(false);
+      }
 }
 
 
