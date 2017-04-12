@@ -264,7 +264,10 @@ getInEdges(int& node, CFG*& g)
 {
     Vertex getIns = intvertmap[node];
     std::vector<int> inedges;
-    in_edge_iterator i, j;
+ // DQ (4/11/2017): Fix Klockworks issue of uninitialized variables.
+ // in_edge_iterator i, j;
+    in_edge_iterator i = inedges.begin();
+    in_edge_iterator j = i;
     for (boost::tie(i, j) = boost::in_edges(getIns, *g); i != j; ++i)
     {
         inedges.push_back(edgeintmap[*i]);
@@ -289,7 +292,10 @@ getOutEdges(int &node, CFG*& g)
 {
     Vertex getOuts = intvertmap[node];
     std::vector<int> outedges;
-    out_edge_iterator i, j;
+ // DQ (4/11/2017): Fix Klockworks issue of uninitialized variables.
+ // out_edge_iterator i, j;
+    out_edge_iterator i = outedges.begin();
+    out_edge_iterator j = i;
     for (boost::tie(i, j) = boost::out_edges(getOuts, *g); i != j; ++i)
     {
         outedges.push_back(edgeintmap[*i]);
@@ -1270,8 +1276,14 @@ These should NOT be used by the user. They are simply for writing interesting in
             mf.open(fn.c_str());
 
             mf << "digraph defaultName { \n";
-            vertex_iterator v, vend;
-            edge_iterator e, eend;
+         // DQ (4/11/2017): Fix Klockworks issue of uninitialized variables.
+         // vertex_iterator v, vend;
+         // edge_iterator e, eend;
+            vertex_iterator v    = vertices(*gc).begin();
+            vertex_iterator vend = v;
+            edge_iterator e    = edges(*gc).begin();
+            edge_iterator eend = e;
+
             for (boost::tie(v, vend) = vertices(*gc); v != vend; ++v)
             {
                 printCFGNode(vertintmap[*v], mf);
@@ -1372,20 +1384,29 @@ void
 SgGraphTraversal<CFG>::
 findClosuresAndMarkersAndEnumerate(CFG*& g)
 {
-    edge_iterator e, eend;
+ // DQ (4/11/2017): Fix Klockworks issue of uninitialized variables.
+ // edge_iterator e, eend;
+    edge_iterator e    = edges(*g).begin();
+    edge_iterator eend = e;
     for (tie(e, eend) = edges(*g); e != eend; ++e) {
         intedgemap[nextEdge] = *e;
         edgeintmap[*e] = nextEdge;
         nextEdge++;
     }
-    vertex_iterator v1, vend1;
+ // DQ (4/11/2017): Fix Klockworks issue of uninitialized variables.
+ // vertex_iterator v1, vend1;
+    vertex_iterator v1    = vertices(*g).begin();
+    vertex_iterator vend1 = v1;
     for (boost::tie(v1, vend1) = vertices(*g); v1 != vend1; ++v1)
     {
         vertintmap[*v1] = nextNode;
         intvertmap[nextNode] = *v1;
         nextNode++;
     }
-    vertex_iterator v, vend;
+ // DQ (4/11/2017): Fix Klockworks issue of uninitialized variables.
+ // vertex_iterator v, vend;
+    vertex_iterator v    = vertices(*g).begin();
+    vertex_iterator vend = v;
     for (boost::tie(v, vend) = vertices(*g); v != vend; ++v) {
         std::vector<int> outs = getOutEdges(vertintmap[*v], g);
         std::vector<int> ins = getInEdges(vertintmap[*v], g);
