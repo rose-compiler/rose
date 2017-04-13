@@ -54,7 +54,7 @@ bdd SpotSuccIter::generateSpotTransition(const Transition& t) const {
     exit(1);
   }
 
-  AType::AbstractValue myIOVal=myTarget->determineUniqueIOValue();
+  AbstractValue myIOVal=myTarget->determineUniqueIOValue();
 
   // check if there exists a single input or output value (remove for support of symbolic analysis)
   if(myTarget->io.isStdInIO()||myTarget->io.isStdOutIO()) {

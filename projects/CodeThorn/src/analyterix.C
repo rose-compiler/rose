@@ -65,7 +65,6 @@
 
 using namespace std;
 using namespace CodeThorn;
-using namespace AType;
 using namespace DFAstAttributeConversion;
 using namespace AnalysisAbstractionLayer;
 

@@ -20,9 +20,9 @@
 */
 
 // we may want to make this type a template parameter of IntervalLattice for handling relational operators
-typedef CodeThorn::AType::BoolLattice BoolLatticeType;
-typedef CodeThorn::AType::Top BoolLatticeTop;
-typedef CodeThorn::AType::Bot BoolLatticeBot;
+typedef CodeThorn::BoolLattice BoolLatticeType;
+typedef CodeThorn::Top BoolLatticeTop;
+typedef CodeThorn::Bot BoolLatticeBot;
 
 
 namespace SPRAY {
@@ -755,7 +755,7 @@ class GenericIntervalLattice {
     }
     if(haveOverlap(l1,l2)) {
       // overlap with more than one value we do not know
-      return BoolLatticeType(BoolLatticeType(CodeThorn::AType::Top()));
+      return BoolLatticeType(BoolLatticeType(CodeThorn::Top()));
     } else {
       // no overlap mean they cannot be equal
       return BoolLatticeType(BoolLatticeType(false));
@@ -801,7 +801,7 @@ class GenericIntervalLattice {
         return BoolLatticeType(false);
       }
       else {
-        return BoolLatticeType(CodeThorn::AType::Top());
+        return BoolLatticeType(CodeThorn::Top());
       }
     } else {
       if(l1.isHighInf())

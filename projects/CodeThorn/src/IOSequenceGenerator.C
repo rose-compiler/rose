@@ -32,7 +32,7 @@ namespace CodeThorn {
           ss<<sep;
         }
         if((*i)->io.isStdInIO()) {
-          AType::AbstractValue val=(*i)->determineUniqueIOValue();
+          AbstractValue val=(*i)->determineUniqueIOValue();
           ss<<val.toString();
         } else {
           ss<<"ERROR:"<<(*i)->toString();

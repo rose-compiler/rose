@@ -34,7 +34,6 @@
 
 using namespace std;
 using namespace CodeThorn;
-using namespace AType;
 
 #include "Diagnostics.h"
 using namespace Sawyer::Message;

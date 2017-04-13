@@ -829,15 +829,15 @@ ConstraintSet::iterator ConstraintSet::findSpecific(Constraint::ConstraintOp op,
   * \author Markus Schordan
   * \date 2012.
  */
-AType::AbstractValue ConstraintSet::varAbstractValue(const VariableId varId) const {
-  AType::AbstractValue c;
+AbstractValue ConstraintSet::varAbstractValue(const VariableId varId) const {
+  AbstractValue c;
   VariableId dedicatedVarId=equalityMaintainer.determineDedicatedElement(varId);
   ConstraintSet::iterator i=findSpecific(Constraint::EQ_VAR_CONST,dedicatedVarId);
   if(i==end()) {
     // no EQ_VAR_CONST constraint for this variable
-    return AType::AbstractValue(AType::Top());
+    return AbstractValue(CodeThorn::Top());
   } else {
-    return AType::AbstractValue((*i).rhsVal());
+    return AbstractValue((*i).rhsVal());
   }
 }
 

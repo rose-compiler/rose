@@ -376,7 +376,7 @@ string Visualizer::transitionGraphWithIOToDot(EStatePtrSet displayedEStates,
     } else {
       ss<<"n"<<*i<<" [label=";
     }
-    AType::AbstractValue number=(*i)->determineUniqueIOValue();
+    AbstractValue number=(*i)->determineUniqueIOValue();
     if (displayCurrentState) {
       // generate number which is used in IO operation
       string name="\"";
@@ -498,7 +498,7 @@ string Visualizer::transitionGraphWithIOToDot() {
       name+="R:";
 #endif
     // generate number which is used in IO operation
-    AType::AbstractValue number=(*i)->determineUniqueIOValue();
+    AbstractValue number=(*i)->determineUniqueIOValue();
     if(boolOptions["rersmode"] && !boolOptions["rers-numeric"]) {
       if(!number.isTop() && !number.isBot()) {
         // convert number to letter

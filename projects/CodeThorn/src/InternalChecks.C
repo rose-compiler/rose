@@ -119,22 +119,22 @@ void checkTypes() {
   {
     cout << "------------------------------------------"<<endl;
     cout << "RUNNING CHECKS FOR BOOLLATTICE TYPE:"<<endl;
-    AType::BoolLattice a;
+    CodeThorn::BoolLattice a;
     a=true;
     check("a=true => isTrue",a.isTrue());
-    AType::BoolLattice b;
+    CodeThorn::BoolLattice b;
     b=false;
     check("b=false => isFalse",b.isFalse());
-    AType::BoolLattice c=a||b;
+    CodeThorn::BoolLattice c=a||b;
     check("c=a||b => c isTrue ",c.isTrue());
-    AType::Top e;
-    AType::BoolLattice d;
+    CodeThorn::Top e;
+    CodeThorn::BoolLattice d;
     d=e;
     check("Top e; d=e => d isTop",d.isTop());
     c=c||d;
     check("c=c||d: true",c.isTrue());
-    AType::BoolLattice f=AType::Bot();
-    d=AType::Bot();
+    CodeThorn::BoolLattice f=CodeThorn::Bot();
+    d=CodeThorn::Bot();
     check("d=bot: bot",d.isBot());
     check("f=bot: bot",f.isBot());
     a=d&&f;
@@ -147,24 +147,24 @@ void checkTypes() {
 
   {
     cout << "RUNNING CHECKS FOR CONSTINT LATTICE TYPE:"<<endl;
-    AType::AbstractValue a;
+    AbstractValue a;
     a=true;
     check("a=true => isTrue",a.isTrue());
     check("a=true => !isFalse",!a.isFalse());
-    AType::AbstractValue b;
+    AbstractValue b;
     b=false;
     check("b=false => isFalse",b.isFalse());
     check("b=false => !isTrue",!b.isTrue());
-    AType::AbstractValue c=a.operatorOr(b);
+    AbstractValue c=a.operatorOr(b);
     check("c=a.operatorOr(b): ",c.isTrue());
-    AType::Top e;
-    AType::AbstractValue d;
+    CodeThorn::Top e;
+    AbstractValue d;
     d=e;
     check("Top e; d=e; d isTop ",d.isTop());
     c=c.operatorOr(d);
     check("c=c.operatorOr(d) => c isTrue ",c.isTrue());
-    AType::AbstractValue f=AType::Bot();
-    d=AType::Bot();
+    AbstractValue f=CodeThorn::Bot();
+    d=CodeThorn::Bot();
     
     a=d.operatorAnd(f);
     check("d=bot;f=bot;a=d.operatorAnd(f); => a isBot",a.isBot());
@@ -287,11 +287,11 @@ void checkTypes() {
   {  
     cout << "------------------------------------------"<<endl;
     cout << "RUNNING CHECKS FOR CONSTINTLATTICE (formerly CPPCAPSULE):"<<endl;
-    AType::AbstractValue cint1(1);
+    AbstractValue cint1(1);
     check("cint1 == 1",cint1.getIntValue()==1);
-    AType::AbstractValue cint2=AType::Top();
-    AType::AbstractValue cint3;
-    cint3=AType::Top();
+    AbstractValue cint2=CodeThorn::Top();
+    AbstractValue cint3;
+    cint3=CodeThorn::Top();
     check("cint2 isTop",cint2.isTop());
     check("cint3 isTop",cint3.isTop());
     check("!(cint1 == cint3)",!(cint1==cint3)); // strictly weak ordering test
@@ -308,7 +308,7 @@ void checkTypes() {
     PState s2;
     PState s3;
     PState s5;
-    AValue valtop=AType::Top();
+    AValue valtop=CodeThorn::Top();
     AValue val1=500;
     AValue val2=501;
     PStateSet pstateSet;
@@ -486,7 +486,7 @@ void checkTypes() {
     check("Parse: Testing test1 on test1.",SPRAY::Parse::checkWord("test1",ss3));
     //cout << "Remaing stream: "<<ss3.str()<<endl;
 
-    CodeThorn::AType::AbstractValue x;
+    CodeThorn::AbstractValue x;
     stringstream ss4;
     ss4<<"top";
     x.fromStream(ss4);
@@ -610,8 +610,7 @@ void checkLanguageRestrictor(int argc, char *argv[]) {
 
 void checkLargeSets() {
   VariableIdMapping variableIdMapping;
-  AType::AbstractValue i;
-  using namespace AType;
+  AbstractValue i;
   set<AbstractValue> cilSet;
   cilSet.insert(AbstractValue(Bot()));
   cilSet.insert(AbstractValue(Top()));

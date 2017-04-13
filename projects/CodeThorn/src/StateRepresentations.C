@@ -42,7 +42,7 @@ void InputOutput::recordVariable(OpType op0,VariableId varId) {
   }
   op=op0;
   var=varId;
-  val=CodeThorn::AType::Bot();
+  val=CodeThorn::Bot();
 }
 
 /*! 
@@ -65,7 +65,7 @@ void InputOutput::recordVerificationError() {
   * \author Markus Schordan
   * \date 2012.
  */
-void InputOutput::recordConst(OpType op0,AType::AbstractValue constvalue) {
+void InputOutput::recordConst(OpType op0,AbstractValue constvalue) {
   ROSE_ASSERT(op0==STDOUT_CONST || op0==STDERR_CONST);
   op=op0;
   var=VariableId();
@@ -73,7 +73,7 @@ void InputOutput::recordConst(OpType op0,AType::AbstractValue constvalue) {
 }
 void InputOutput::recordConst(OpType op0,int value) {
   ROSE_ASSERT(op0==STDOUT_CONST || op0==STDERR_CONST);
-  AType::AbstractValue abstractConstValue(value);
+  AbstractValue abstractConstValue(value);
   recordConst(op0,abstractConstValue);
 }
 /*! 
@@ -129,7 +129,7 @@ bool CodeThorn::operator<(const InputOutput& c1, const InputOutput& c2) {
     return c1.op<c2.op;
   if(!(c1.var==c2.var))
     return c1.var<c2.var;
-  return AType::strictWeakOrderingIsSmaller(c1.val,c2.val);
+  return CodeThorn::strictWeakOrderingIsSmaller(c1.val,c2.val);
 }
 
 /*! 
@@ -137,7 +137,7 @@ bool CodeThorn::operator<(const InputOutput& c1, const InputOutput& c2) {
   * \date 2012.
  */
 bool CodeThorn::operator==(const InputOutput& c1, const InputOutput& c2) {
-  return c1.op==c2.op && c1.var==c2.var && (AType::strictWeakOrderingIsEqual(c1.val,c2.val));
+  return c1.op==c2.op && c1.var==c2.var && (CodeThorn::strictWeakOrderingIsEqual(c1.val,c2.val));
 }
 
 /*! 
@@ -370,7 +370,7 @@ AValue PState::varValue(VariableId varId) const {
   * \date 2012.
  */
 void PState::setAllVariablesToTop() {
-  CodeThorn::AValue val=AType::Top();
+  CodeThorn::AValue val=CodeThorn::Top();
   setAllVariablesToValue(val);
 }
 
@@ -388,7 +388,7 @@ void PState::setVariableValueMonitor(VariableValueMonitor* vvm) {
   _variableValueMonitor=vvm;
 }
 void PState::setVariableToTop(VariableId varId) {
-  CodeThorn::AValue val=AType::Top();
+  CodeThorn::AValue val=CodeThorn::Top();
   setVariableToValue(varId, val);
 }
 
@@ -620,16 +620,16 @@ ConstraintSet EState::allInfoAsConstraints() const {
   return cset;
 }
 
-CodeThorn::AType::AbstractValue EState::determineUniqueIOValue() const {
+CodeThorn::AbstractValue EState::determineUniqueIOValue() const {
   // this returns 1 (TODO: investigate)
-  CodeThorn::AType::AbstractValue value;
+  CodeThorn::AbstractValue value;
   if(io.op==InputOutput::STDIN_VAR||io.op==InputOutput::STDOUT_VAR||io.op==InputOutput::STDERR_VAR) {
     VariableId varId=io.var;
     assert(_pstate->varExists(varId));
     // case 1: check PState
     if(_pstate->varIsConst(varId)) {
       PState pstate2=*_pstate;
-      AType::AbstractValue varVal=(pstate2)[varId];
+      AbstractValue varVal=(pstate2)[varId];
       return varVal;
     }
     // case 2: check constraint if var is top

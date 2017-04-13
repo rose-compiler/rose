@@ -9,7 +9,7 @@
 #include "Labeler.h"
 
 using namespace std;
-using namespace CodeThorn::AType;
+using namespace CodeThorn;
 using namespace SPRAY;
 
 // does not support -inf, +inf yet

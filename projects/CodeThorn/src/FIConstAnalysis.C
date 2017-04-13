@@ -37,7 +37,7 @@ FIConstAnalysis::determinedConstantVariables() {
 AbstractValue FIConstAnalysis::analyzeAssignRhs(SgNode* rhs) {
   assert(isSgExpression(rhs));
 
-  AbstractValue rhsIntVal=AType::Top();
+  AbstractValue rhsIntVal=CodeThorn::Top();
 
   // TODO: -1 is OK, but not -(-1); yet.
   if(SgMinusOp* minusOp=isSgMinusOp(rhs)) {
@@ -109,7 +109,7 @@ VariableValuePair FIConstAnalysis::analyzeVariableDeclaration(SgVariableDeclarat
         return VariableValuePair(initDeclVarId,analyzeAssignRhs(rhs));
       } else {
         if(detailedOutput) cout << "no initializer (OK)."<<endl;
-        return VariableValuePair(initDeclVarId,AType::Top());
+        return VariableValuePair(initDeclVarId,CodeThorn::Top());
       }
     } else {
       cerr << "Error: in declaration (@initializedName) no variable found ... bailing out."<<endl;
@@ -153,7 +153,7 @@ void FIConstAnalysis::determineVarConstValueSet(SgNode* node, VariableIdMapping&
         if(detailedOutput) cout<<"INFO: analyzing variable assignment (SgCompoundAssignOp)  :"<<res.toString(varIdMapping)<<endl;
         // set properly to Top (update of variable)
 #if 0
-        AbstractValue topVal(AType::Top);
+        AbstractValue topVal(CodeThorn::Top);
 #endif
         map[res.varId].insert(AbstractValue(Top()));
       } else {
@@ -185,7 +185,7 @@ VariableValueRangeInfo::VariableValueRangeInfo(AbstractValue min0, AbstractValue
   _max=max0;
   if((_width.operatorLess(0)).isTrue())
     _width=AbstractValue(0);
-  AbstractValue one=AType::AbstractValue(1);
+  AbstractValue one=AbstractValue(1);
   _width=(VariableValueRangeInfo::_width+one);
   _asize=1;
 }
@@ -208,15 +208,15 @@ VariableValueRangeInfo VariableConstInfo::createVariableValueRangeInfo(VariableI
   ROSE_ASSERT(map.size()>0);
   ROSE_ASSERT(varId.isValid());
   set<AbstractValue> intSet=map[varId];
-  AType::AbstractValue minVal;
-  AType::AbstractValue maxVal;
+  AbstractValue minVal;
+  AbstractValue maxVal;
   // in case the set of collected assignments is empty, bot is returned (min and max remain bot).
   if(intSet.size()==0)
-    return VariableValueRangeInfo(AType::AbstractValue(AType::Bot()));
+    return VariableValueRangeInfo(AbstractValue(CodeThorn::Bot()));
   for(set<AbstractValue>::iterator i=intSet.begin();i!=intSet.end();++i) {
-    AType::AbstractValue aint=(*i);
+    AbstractValue aint=(*i);
     if(aint.isTop()) {
-      return VariableValueRangeInfo(AType::AbstractValue(AType::Top()));
+      return VariableValueRangeInfo(AbstractValue(CodeThorn::Top()));
     }
  
     if(minVal.isBot() && maxVal.isBot()) { minVal=aint; maxVal=aint; continue; }
@@ -226,7 +226,7 @@ VariableValueRangeInfo VariableConstInfo::createVariableValueRangeInfo(VariableI
       maxVal=aint;
   }
   if(minVal.isBot()||maxVal.isBot())
-    return VariableValueRangeInfo(AType::AbstractValue(AType::Bot()));
+    return VariableValueRangeInfo(AbstractValue(CodeThorn::Bot()));
   return VariableValueRangeInfo(minVal,maxVal);
 }
 
@@ -234,8 +234,8 @@ VariableValueRangeInfo VariableConstInfo::createVariableValueRangeInfo(VariableI
 // returns false if not in set
 // returns top if set contains top
 AbstractValue VariableConstInfo::isConstInSet(AbstractValue val, set<AbstractValue> valSet) {
-  if(valSet.find(AbstractValue(AbstractValue(AType::Top())))!=valSet.end()) {
-    return AbstractValue(AType::Top());
+  if(valSet.find(AbstractValue(AbstractValue(CodeThorn::Top())))!=valSet.end()) {
+    return AbstractValue(CodeThorn::Top());
   }
   if(valSet.find(AbstractValue(val))!=valSet.end()) {  
     return AbstractValue(true);
@@ -395,7 +395,7 @@ EvalValueType FIConstAnalysis::evalSgVarRefExp(SgExpression* node) {
   if(global_variableConstInfo->isUniqueConst(varId)) {
     return AbstractValue(global_variableConstInfo->uniqueConst(varId));
   } else {
-    return AbstractValue(AType::Top());
+    return AbstractValue(CodeThorn::Top());
   }
 }
 
@@ -450,36 +450,36 @@ EvalValueType FIConstAnalysis::evalWithMultiConst(SgNode* op, SgVarRefExp* lhsVa
   int rhsMinConst=global_variableConstInfo->minConst(rhsVarId);
   int rhsMaxConst=global_variableConstInfo->maxConst(rhsVarId);
   
-  EvalValueType res=AType::Top(); 
+  EvalValueType res=CodeThorn::Top(); 
   bool haveEmptyIntersect=global_variableConstInfo->haveEmptyIntersection(lhsVarId,rhsVarId);
   switch(op->variantT()) {
   case V_SgEqualityOp:
     if(haveEmptyIntersect) res=EvalValueType(false);
-    else res=AType::Top();
+    else res=CodeThorn::Top();
     break;
   case V_SgNotEqualOp: 
     if(haveEmptyIntersect) res=EvalValueType(true);
-    else res=AType::Top();
+    else res=CodeThorn::Top();
     break;
   case V_SgGreaterOrEqualOp:
     if(lhsMinConst>=rhsMaxConst) res=EvalValueType(true);
     else if(lhsMaxConst<rhsMinConst) res=EvalValueType(false);
-    else res=AType::Top();
+    else res=CodeThorn::Top();
     break;
   case V_SgGreaterThanOp:
     if(lhsMinConst>rhsMaxConst) res=EvalValueType(true);
     else if(lhsMaxConst<=rhsMinConst) res=EvalValueType(false);
-    else res=AType::Top();
+    else res=CodeThorn::Top();
     break;
   case V_SgLessOrEqualOp:
     if(lhsMaxConst<=rhsMinConst) res=EvalValueType(true);
     else if(lhsMinConst>rhsMaxConst) res=EvalValueType(false);
-    else res=AType::Top();
+    else res=CodeThorn::Top();
     break;
   case V_SgLessThanOp:
     if(lhsMaxConst<rhsMinConst) res=EvalValueType(true);
     else if(lhsMinConst>=rhsMaxConst) res=EvalValueType(false);
-    else res=AType::Top();
+    else res=CodeThorn::Top();
     break;
   default:
     cerr<<"Error: evalWithMultiConst: unknown operator."<<endl;
@@ -499,7 +499,7 @@ EvalValueType FIConstAnalysis::evalWithMultiConst(SgNode* op, SgVarRefExp* var, 
 
   assert(!(constVal0.isTop()||constVal0.isBot()));
 
-  EvalValueType res=AType::Top(); // default if no more precise result can be determined
+  EvalValueType res=CodeThorn::Top(); // default if no more precise result can be determined
 
   if(detailedOutput) cout<<"evalWithMultiConst:"<<op->unparseToString();
 
@@ -525,32 +525,32 @@ EvalValueType FIConstAnalysis::evalWithMultiConst(SgNode* op, SgVarRefExp* var, 
     case V_SgEqualityOp:
       // case of one value is handled by const-analysis
       if(!constValIsInVarMultiConstSet) res=EvalValueType(false);
-      else res=AType::Top();
+      else res=CodeThorn::Top();
       break;
     case V_SgNotEqualOp: 
       // case of one value is handled by const-analysis
       if(!constValIsInVarMultiConstSet) res=EvalValueType(true);
-      else res=AType::Top();
+      else res=CodeThorn::Top();
       break;
     case V_SgGreaterOrEqualOp:
       if(myMinConst>=constVal) res=EvalValueType(true);
       else if(myMaxConst<constVal) res=EvalValueType(false);
-      else res=AType::Top();
+      else res=CodeThorn::Top();
       break;
     case V_SgGreaterThanOp:
       if(myMinConst>constVal) res=EvalValueType(true);
       else if(myMaxConst<=constVal) res=EvalValueType(false);
-      else res=AType::Top();
+      else res=CodeThorn::Top();
       break;
     case V_SgLessOrEqualOp:
       if(myMaxConst<=constVal) res=EvalValueType(true);
       else if(myMinConst>constVal) res=EvalValueType(false);
-      else res=AType::Top();
+      else res=CodeThorn::Top();
       break;
     case V_SgLessThanOp:
       if(myMaxConst<constVal) res=EvalValueType(true);
       else if(myMinConst>=constVal) res=EvalValueType(false);
-      else res=AType::Top();
+      else res=CodeThorn::Top();
       break;
     default:
       cerr<<"Error: evalWithMultiConst: unknown operator."<<endl;
@@ -580,7 +580,7 @@ EvalValueType FIConstAnalysis::eval(SgExpression* node) {
     if(option_multiconstanalysis) {
       // refinement for special cases handled by multi-const analysis
       if(isRelationalOperator(node)) {
-        EvalValueType res2=AType::Top();
+        EvalValueType res2=CodeThorn::Top();
         if(isSgVarRefExp(lhs) && isConstVal(rhs))
           res2=evalWithMultiConst(node,isSgVarRefExp(lhs),eval(rhs));
         if(isConstVal(lhs) && isSgVarRefExp(rhs))
@@ -616,8 +616,8 @@ EvalValueType FIConstAnalysis::eval(SgExpression* node) {
     case V_SgGreaterThanOp: res=(lhsResult.operatorMore(rhsResult));break;
     case V_SgLessThanOp: res=(lhsResult.operatorLess(rhsResult));break;
     case V_SgLessOrEqualOp: res=(lhsResult.operatorLessOrEq(rhsResult));break;
-    case V_SgPntrArrRefExp: res=AType::Top();break;
-    default:cerr<<"EvalValueType:unknown binary operator:"<<node->class_name()<<"::"<<node->unparseToString()<<" using top as default."<<endl; res=AType::Top();break;
+    case V_SgPntrArrRefExp: res=CodeThorn::Top();break;
+    default:cerr<<"EvalValueType:unknown binary operator:"<<node->class_name()<<"::"<<node->unparseToString()<<" using top as default."<<endl; res=CodeThorn::Top();break;
     }
   } else if(dynamic_cast<SgUnaryOp*>(node)) {
     SgExpression* child=isSgExpression(SgNodeHelper::getFirstChild(node));
@@ -627,8 +627,8 @@ EvalValueType FIConstAnalysis::eval(SgExpression* node) {
     case V_SgNotOp: res=childVal.operatorNot();break;
     case V_SgCastExp: res=childVal;break; // requires refinement for different types
     case V_SgMinusOp: res=childVal.operatorUnaryMinus(); break;
-    case V_SgPointerDerefExp: res=AType::Top();break;
-    default:cerr<<"EvalValueType:unknown unary operator:"<<node->class_name()<<"::"<<node->unparseToString()<<endl; res=AType::Top();break;
+    case V_SgPointerDerefExp: res=CodeThorn::Top();break;
+    default:cerr<<"EvalValueType:unknown unary operator:"<<node->class_name()<<"::"<<node->unparseToString()<<endl; res=CodeThorn::Top();break;
     }
   } else {
     // ALL REMAINING CASES ARE EXPRESSION LEAF NODES
@@ -636,7 +636,7 @@ EvalValueType FIConstAnalysis::eval(SgExpression* node) {
     case V_SgBoolValExp: res=evalSgBoolValExp(node);break;
     case V_SgIntVal: res=evalSgIntVal(node);break;
     case V_SgVarRefExp: res=evalSgVarRefExp(node);break;
-    default: cerr<<"EvalValueType:unknown operator:"<<node->class_name()<<"::"<<node->unparseToString()<<endl; res=AType::Top();break;
+    default: cerr<<"EvalValueType:unknown operator:"<<node->class_name()<<"::"<<node->unparseToString()<<endl; res=CodeThorn::Top();break;
     }
   }
   return res;

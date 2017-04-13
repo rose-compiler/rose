@@ -19,7 +19,6 @@ using std::ostream;
 
 namespace CodeThorn {
 
-namespace AType {
  class AbstractValue;
 
  bool strictWeakOrderingIsSmaller(const AbstractValue& c1, const AbstractValue& c2);
@@ -39,9 +38,9 @@ class AbstractValue {
   AbstractValue();
   AbstractValue(bool val);
   // type conversion
-  AbstractValue(AType::Top e);
+  AbstractValue(CodeThorn::Top e);
   // type conversion
-  AbstractValue(AType::Bot e);
+  AbstractValue(CodeThorn::Bot e);
   // type conversion
   AbstractValue(signed char x);
   AbstractValue(unsigned char x);
@@ -89,8 +88,8 @@ class AbstractValue {
   static AbstractValue createAddressOfArrayElement(SPRAY::VariableId arrayVariableId, AbstractValue Index);
   // strict weak ordering (required for sorted STL data structures if
   // no comparator is provided)
-  bool operator==(AType::AbstractValue other) const;
-  bool operator<(AType::AbstractValue other) const;
+  bool operator==(AbstractValue other) const;
+  bool operator<(AbstractValue other) const;
 
   string toString() const;
   string toString(SPRAY::VariableIdMapping* vim) const;
@@ -114,11 +113,11 @@ class AbstractValue {
 };
 
 // arithmetic operators
- AType::AbstractValue operator+(AType::AbstractValue& a,AType::AbstractValue& b);
- AType::AbstractValue operator-(AType::AbstractValue& a,AType::AbstractValue& b);
- AType::AbstractValue operator*(AType::AbstractValue& a,AType::AbstractValue& b);
- AType::AbstractValue operator/(AType::AbstractValue& a,AType::AbstractValue& b);
- AType::AbstractValue operator%(AType::AbstractValue& a,AType::AbstractValue& b);
+ AbstractValue operator+(AbstractValue& a,AbstractValue& b);
+ AbstractValue operator-(AbstractValue& a,AbstractValue& b);
+ AbstractValue operator*(AbstractValue& a,AbstractValue& b);
+ AbstractValue operator/(AbstractValue& a,AbstractValue& b);
+ AbstractValue operator%(AbstractValue& a,AbstractValue& b);
 
  ostream& operator<<(ostream& os, const AbstractValue& value);
  istream& operator>>(istream& is, AbstractValue& value);
@@ -128,13 +127,11 @@ class AbstractValue {
     \author Markus Schordan
   */
   struct AbstractValueCmp {
-    bool operator()(const AType::AbstractValue& c1, const AType::AbstractValue& c2) const;
+    bool operator()(const AbstractValue& c1, const AbstractValue& c2) const;
   };
 
-} // end of namespace AType
-
-typedef AType::AbstractValue AValue; 
-typedef AType::AbstractValueCmp AValueCmp; 
+typedef AbstractValue AValue; 
+typedef AbstractValueCmp AValueCmp; 
 
 }
 

@@ -10,7 +10,6 @@
 
 using namespace CodeThorn;
 using namespace SPRAY;
-using namespace AType;
 
 ExprAnalyzer::ExprAnalyzer():_variableIdMapping(0),_skipSelectedFunctionCalls(false),_skipArrayAccesses(false){
 }
@@ -72,14 +71,14 @@ bool ExprAnalyzer::variable(SgNode* node, VariableId& varId) {
   }
 }
 
-AType::AbstractValue ExprAnalyzer::constIntLatticeFromSgValueExp(SgValueExp* valueExp) {
+AbstractValue ExprAnalyzer::constIntLatticeFromSgValueExp(SgValueExp* valueExp) {
   if(isSgFloatVal(valueExp)
      ||isSgDoubleVal(valueExp)
      ||isSgLongDoubleVal(valueExp)
      ||isSgComplexVal(valueExp)
      ||isSgStringVal(valueExp)
      ) {
-    return AbstractValue(AType::Top());
+    return AbstractValue(CodeThorn::Top());
   } else if(SgBoolValExp* exp=isSgBoolValExp(valueExp)) {
     // ROSE uses an integer for a bool
     int val=exp->get_value();
@@ -140,7 +139,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::listify(SingleEvalResultConstInt re
   return resList;
 }
 
-void SingleEvalResultConstInt::init(EState estate, ConstraintSet exprConstraints, AType::AbstractValue result) {
+void SingleEvalResultConstInt::init(EState estate, ConstraintSet exprConstraints, AbstractValue result) {
   this->estate=estate;
   this->exprConstraints=exprConstraints;
   this->result=result;
@@ -155,7 +154,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
   // initialize with default values from argument(s)
   SingleEvalResultConstInt res;
   res.estate=estate;
-  res.result=AType::AbstractValue(AType::Bot());
+  res.result=AbstractValue(CodeThorn::Bot());
 
   if(SgNodeHelper::isPostfixIncDecOp(node)) {
     cout << "Error: incdec-op not supported in conditions."<<endl;
@@ -679,7 +678,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
   if(indexExprResult.value().isTop()||getSkipArrayAccesses()==true) {
     // set result to top when index is top [imprecision]
     // assume top for array elements if skipped
-    res.result=AType::Top();
+    res.result=CodeThorn::Top();
     res.exprConstraints=arrayExprResult.exprConstraints+indexExprResult.exprConstraints;
     resultList.push_back(res);
     return resultList;
@@ -691,7 +690,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
       VariableId arrayVarId=_variableIdMapping->variableId(varRefExp);
       // two cases
       if(_variableIdMapping->hasArrayType(arrayVarId)) {
-        arrayPtrValue=AType::AbstractValue::createAddressOfArray(arrayVarId);
+        arrayPtrValue=AbstractValue::createAddressOfArray(arrayVarId);
       } else if(_variableIdMapping->hasPointerType(arrayVarId)) {
         // in case it is a pointer retrieve pointer value
         //cout<<"DEBUG: pointer-array access!"<<endl;
@@ -719,7 +718,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
         res.result=pstate2[arrayElementId];
         //cout<<"DEBUG: retrieved array element value:"<<res.result<<endl;
         if(res.result.isTop() && useConstraints) {
-          AType::AbstractValue val=res.estate.constraints()->varAbstractValue(arrayElementId);
+          AbstractValue val=res.estate.constraints()->varAbstractValue(arrayElementId);
           res.result=val;
         }
         return listify(res);
@@ -739,9 +738,9 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
               if(SgIntVal* intValNode=isSgIntVal(initExp)) {
                 int intVal=intValNode->get_value();
                 //cout<<"DEBUG:initializing array element:"<<arrayElemId.toString()<<"="<<intVal<<endl;
-                //newPState.setVariableToValue(arrayElemId,CodeThorn::AValue(AType::AbstractValue(intVal)));
+                //newPState.setVariableToValue(arrayElemId,CodeThorn::AValue(AbstractValue(intVal)));
                 if(elemIndex==index2) {
-                  AType::AbstractValue val=AType::AbstractValue(intVal);
+                  AbstractValue val=AbstractValue(intVal);
                   res.result=val;
                   return listify(res);
                 }
@@ -832,25 +831,25 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalDereferenceOp(SgPointerDerefExp
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarExp(SgVarRefExp* node, EState estate, bool useConstraints) {
   SingleEvalResultConstInt res;
-  res.init(estate,*estate.constraints(),AType::AbstractValue(AType::Bot()));
+  res.init(estate,*estate.constraints(),AbstractValue(CodeThorn::Bot()));
   const PState* pstate=estate.pstate();
   VariableId varId=_variableIdMapping->variableId(node);
   if(pstate->varExists(varId)) {
     //PState pstate2=*pstate; // also removes constness
     if(_variableIdMapping->hasArrayType(varId)) {
       // CODE-POINT-1
-      res.result=AType::AbstractValue::createAddressOfArray(varId);
+      res.result=AbstractValue::createAddressOfArray(varId);
       // for arrays (by default the address is used) return its pointer value (the var-id-code)
       // with a unified pointer representation this case is now equal
-      //res.result=AType::AbstractValue(varId.getIdCode());
+      //res.result=AbstractValue(varId.getIdCode());
       //res.result=const_cast<PState*>(pstate)->operator[](varId); // this includes assignment of pointer values
     } else {
-      //res.result=AType::AbstractValue::createAddressOfArray(varId,AType::AbstractValue(0));
+      //res.result=AbstractValue::createAddressOfArray(varId,AbstractValue(0));
       res.result=const_cast<PState*>(pstate)->operator[](varId); // this includes assignment of pointer values
     }
     if(res.result.isTop() && useConstraints) {
       // in case of TOP we try to extract a possibly more precise value from the constraints
-      AType::AbstractValue val=res.estate.constraints()->varAbstractValue(varId);
+      AbstractValue val=res.estate.constraints()->varAbstractValue(varId);
       // TODO: TOPIFY-MODE: most efficient here
       res.result=val;
     }
@@ -861,10 +860,10 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarExp(SgVarRefExp* node,
     // ii) undefined variables mapped to 'top' (abstraction by removing variables from state)
     if(_variableIdMapping->isConstantArray(varId) && boolOptions["rersmode"]) {
       // currently only used in rersmode
-      res.result=AType::AbstractValue(varId.getIdCode());
+      res.result=AbstractValue(varId.getIdCode());
       return listify(res);
     } else {
-      res.result=AType::Top();
+      res.result=CodeThorn::Top();
       //cerr << "WARNING: variable not in PState (var="<<_variableIdMapping->uniqueLongVariableName(varId)<<"). Initialized with top."<<endl;
       return listify(res);
     }
@@ -874,7 +873,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarExp(SgVarRefExp* node,
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp* node, EState estate, bool useConstraints) {
   SingleEvalResultConstInt res;
-  res.init(estate,*estate.constraints(),AType::AbstractValue(AType::Bot()));
+  res.init(estate,*estate.constraints(),AbstractValue(CodeThorn::Bot()));
   if(getSkipSelectedFunctionCalls()) {
     // return default value
     return listify(res);
@@ -885,7 +884,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp*
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalValueExp(SgValueExp* node, EState estate, bool useConstraints) {
   SingleEvalResultConstInt res;
-  res.init(estate,*estate.constraints(),AType::AbstractValue(AType::Bot()));
+  res.init(estate,*estate.constraints(),AbstractValue(CodeThorn::Bot()));
   res.result=constIntLatticeFromSgValueExp(node);
   return listify(res);
 }
@@ -909,13 +908,13 @@ SPRAY::VariableId ExprAnalyzer::resolveToAbsoluteVariableId(AbstractValue abstrV
   return _variableIdMapping->variableIdOfArrayElement(arrayVarId2,index2);
 }
 
-AType::AbstractValue ExprAnalyzer::readFromMemoryLocation(const PState* pState, AbstractValue abstrValue) const {
+AbstractValue ExprAnalyzer::readFromMemoryLocation(const PState* pState, AbstractValue abstrValue) const {
   return pState->varValue(resolveToAbsoluteVariableId(abstrValue));
 }
 
 void ExprAnalyzer::writeToMemoryLocation(PState& pState,
-                                         AType::AbstractValue abstractMemLoc,
-                                         AType::AbstractValue abstractValue) {
+                                         AbstractValue abstractMemLoc,
+                                         AbstractValue abstractValue) {
   VariableId absoluteMemLoc=resolveToAbsoluteVariableId(abstractMemLoc);
   pState.setVariableToValue(absoluteMemLoc,abstractValue);
 }

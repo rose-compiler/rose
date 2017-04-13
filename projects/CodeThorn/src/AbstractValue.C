@@ -19,68 +19,68 @@ using namespace std;
 
 using namespace CodeThorn;
 
-istream& AType::operator>>(istream& is, AbstractValue& value) {
+istream& CodeThorn::operator>>(istream& is, AbstractValue& value) {
   value.fromStream(is);
   return is;
 }
 
 
 // default constructor
-AType::AbstractValue::AbstractValue():valueType(AType::AbstractValue::BOT),intValue(0) {}
+AbstractValue::AbstractValue():valueType(AbstractValue::BOT),intValue(0) {}
 
 // type conversion
-AType::AbstractValue::AbstractValue(bool val) {
+AbstractValue::AbstractValue(bool val) {
   if(val) {
-    valueType=AType::AbstractValue::CONSTINT;
+    valueType=AbstractValue::CONSTINT;
     intValue=1;
   } else {
-    valueType=AType::AbstractValue::CONSTINT;
+    valueType=AbstractValue::CONSTINT;
     intValue=0;
   }
 }
 
 // type conversion
-AType::AbstractValue::AbstractValue(Top e) {valueType=AType::AbstractValue::TOP;intValue=0;}
+AbstractValue::AbstractValue(Top e) {valueType=AbstractValue::TOP;intValue=0;}
 // type conversion
-AType::AbstractValue::AbstractValue(Bot e) {valueType=AType::AbstractValue::BOT;intValue=0;}
+AbstractValue::AbstractValue(Bot e) {valueType=AbstractValue::BOT;intValue=0;}
 // type conversion
-AType::AbstractValue::AbstractValue(unsigned char x) {valueType=AType::AbstractValue::CONSTINT;intValue=(int)x;}
-AType::AbstractValue::AbstractValue(signed char x) {valueType=AType::AbstractValue::CONSTINT;intValue=(int)x;}
-AType::AbstractValue::AbstractValue(short x) {valueType=AType::AbstractValue::CONSTINT;intValue=(int)x;}
-AType::AbstractValue::AbstractValue(int x) {valueType=AType::AbstractValue::CONSTINT;intValue=x;}
-AType::AbstractValue::AbstractValue(long int x) {
+AbstractValue::AbstractValue(unsigned char x) {valueType=AbstractValue::CONSTINT;intValue=(int)x;}
+AbstractValue::AbstractValue(signed char x) {valueType=AbstractValue::CONSTINT;intValue=(int)x;}
+AbstractValue::AbstractValue(short x) {valueType=AbstractValue::CONSTINT;intValue=(int)x;}
+AbstractValue::AbstractValue(int x) {valueType=AbstractValue::CONSTINT;intValue=x;}
+AbstractValue::AbstractValue(long int x) {
   if((x<INT_MIN || x>INT_MAX)) throw CodeThorn::Exception("Error: numbers outside 'signed int' range not supported.");
-   valueType=AType::AbstractValue::CONSTINT;intValue=(int)x;
+   valueType=AbstractValue::CONSTINT;intValue=(int)x;
 }
-AType::AbstractValue::AbstractValue(long long int x) {
+AbstractValue::AbstractValue(long long int x) {
   if((x<INT_MIN || x>INT_MAX)) throw CodeThorn::Exception("Error: numbers outside 'signed int' range not supported.");
-  valueType=AType::AbstractValue::CONSTINT;intValue=(int)x;
+  valueType=AbstractValue::CONSTINT;intValue=(int)x;
 }
-AType::AbstractValue::AbstractValue(unsigned short int x) {
+AbstractValue::AbstractValue(unsigned short int x) {
   if((x>INT_MAX)) throw CodeThorn::Exception("Error: numbers outside 'signed int' range not supported.");
-  valueType=AType::AbstractValue::CONSTINT;intValue=(int)x;
+  valueType=AbstractValue::CONSTINT;intValue=(int)x;
 }
-AType::AbstractValue::AbstractValue(unsigned int x) {
+AbstractValue::AbstractValue(unsigned int x) {
   if((x>INT_MAX)) throw CodeThorn::Exception("Error: numbers outside 'signed int' range not supported.");
-  valueType=AType::AbstractValue::CONSTINT;intValue=(int)x;
+  valueType=AbstractValue::CONSTINT;intValue=(int)x;
 }
-AType::AbstractValue::AbstractValue(unsigned long int x) {
+AbstractValue::AbstractValue(unsigned long int x) {
   if((x>INT_MAX)) throw CodeThorn::Exception("Error: numbers outside 'signed int' range not supported.");
-  valueType=AType::AbstractValue::CONSTINT;intValue=(int)x;
+  valueType=AbstractValue::CONSTINT;intValue=(int)x;
 }
-AType::AbstractValue::AbstractValue(unsigned long long int x) {
+AbstractValue::AbstractValue(unsigned long long int x) {
   if((x>INT_MAX)) throw CodeThorn::Exception("Error: numbers outside 'signed int' range not supported.");
-  valueType=AType::AbstractValue::CONSTINT;intValue=(int)x;
+  valueType=AbstractValue::CONSTINT;intValue=(int)x;
 }
 
-AType::AbstractValue 
-AType::AbstractValue::createAddressOfArray(SPRAY::VariableId arrayVarId) {
-  return AType::AbstractValue::createAddressOfArrayElement(arrayVarId,AType::AbstractValue(0));
+AbstractValue 
+AbstractValue::createAddressOfArray(SPRAY::VariableId arrayVarId) {
+  return AbstractValue::createAddressOfArrayElement(arrayVarId,AbstractValue(0));
 }
-AType::AbstractValue 
-AType::AbstractValue::createAddressOfArrayElement(SPRAY::VariableId arrayVariableId, 
-                                             AType::AbstractValue index) {
-  AType::AbstractValue val;
+AbstractValue 
+AbstractValue::createAddressOfArrayElement(SPRAY::VariableId arrayVariableId, 
+                                             AbstractValue index) {
+  AbstractValue val;
   if(index.isTop()) {
     return Top();
   } else if(index.isBot()) {
@@ -96,7 +96,7 @@ AType::AbstractValue::createAddressOfArrayElement(SPRAY::VariableId arrayVariabl
   }
 }
 
-std::string AType::AbstractValue::valueTypeToString() const {
+std::string AbstractValue::valueTypeToString() const {
   switch(valueType) {
   case TOP: return "top";
   case CONSTINT: return "constint";
@@ -108,16 +108,16 @@ std::string AType::AbstractValue::valueTypeToString() const {
   }
 }
 
-int AType::AbstractValue::intLength() { return sizeof(int); }
+int AbstractValue::intLength() { return sizeof(int); }
 
-bool AType::AbstractValue::isTop() const {return valueType==AType::AbstractValue::TOP;}
-bool AType::AbstractValue::isTrue() const {return valueType==AType::AbstractValue::CONSTINT && intValue!=0;}
-bool AType::AbstractValue::isFalse() const {return valueType==AType::AbstractValue::CONSTINT && intValue==0;}
-bool AType::AbstractValue::isBot() const {return valueType==AType::AbstractValue::BOT;}
-bool AType::AbstractValue::isConstInt() const {return valueType==AType::AbstractValue::CONSTINT;}
-bool AType::AbstractValue::isPtr() const {return valueType==AType::AbstractValue::PTR;}
+bool AbstractValue::isTop() const {return valueType==AbstractValue::TOP;}
+bool AbstractValue::isTrue() const {return valueType==AbstractValue::CONSTINT && intValue!=0;}
+bool AbstractValue::isFalse() const {return valueType==AbstractValue::CONSTINT && intValue==0;}
+bool AbstractValue::isBot() const {return valueType==AbstractValue::BOT;}
+bool AbstractValue::isConstInt() const {return valueType==AbstractValue::CONSTINT;}
+bool AbstractValue::isPtr() const {return valueType==AbstractValue::PTR;}
 
-long AType::AbstractValue::hash() const {
+long AbstractValue::hash() const {
   if(isTop()) return LONG_MAX;
   else if(isBot()) return LONG_MIN;
   else if(isConstInt()) return getIntValue();
@@ -125,10 +125,10 @@ long AType::AbstractValue::hash() const {
   else throw CodeThorn::Exception("Error: AbstractValue hash: unknown value.");
 }
 
-AType::AbstractValue AType::AbstractValue::operatorNot() {
-  AType::AbstractValue tmp;
+AbstractValue AbstractValue::operatorNot() {
+  AbstractValue tmp;
   switch(valueType) {
-  case AType::AbstractValue::CONSTINT: 
+  case AbstractValue::CONSTINT: 
     tmp.valueType=valueType;
     if(intValue==0) {
       tmp.intValue=1;
@@ -136,16 +136,16 @@ AType::AbstractValue AType::AbstractValue::operatorNot() {
       tmp.intValue=0;
     }
     break;
-  case AType::AbstractValue::TOP: tmp=Top();break;
-  case AType::AbstractValue::BOT: tmp=Bot();break;
+  case AbstractValue::TOP: tmp=Top();break;
+  case AbstractValue::BOT: tmp=Bot();break;
   default:
     throw CodeThorn::Exception("Error: AbstractValue operation '!' failed.");
   }
   return tmp;
 }
 
-AType::AbstractValue AType::AbstractValue::operatorOr(AbstractValue other) {
-  AType::AbstractValue tmp;
+AbstractValue AbstractValue::operatorOr(AbstractValue other) {
+  AbstractValue tmp;
   // all TOP cases
   if(isTop()   && other.isTop())   return Top();
   if(isTop()   && other.isTrue())  return true;
@@ -172,8 +172,8 @@ AType::AbstractValue AType::AbstractValue::operatorOr(AbstractValue other) {
   throw CodeThorn::Exception("Error: AbstractValue operation|| failed.");
 }
 
-AType::AbstractValue AType::AbstractValue::operatorAnd(AbstractValue other) {
-  AType::AbstractValue tmp;
+AbstractValue AbstractValue::operatorAnd(AbstractValue other) {
+  AbstractValue tmp;
   // all TOP cases
   if(isTop()   && other.isTop())   return Top();
   if(isTop()   && other.isTrue())  return Top();
@@ -200,7 +200,7 @@ AType::AbstractValue AType::AbstractValue::operatorAnd(AbstractValue other) {
   throw CodeThorn::Exception("Error: AbstractValue operation&& failed.");
 }
  
-bool AType::strictWeakOrderingIsSmaller(const AType::AbstractValue& c1, const AType::AbstractValue& c2) {
+bool CodeThorn::strictWeakOrderingIsSmaller(const AbstractValue& c1, const AbstractValue& c2) {
   if (c1.getValueType()!=c2.getValueType()) {
     return c1.getValueType()<c2.getValueType();
   } else {
@@ -223,7 +223,7 @@ bool AType::strictWeakOrderingIsSmaller(const AType::AbstractValue& c1, const AT
   }
 }
 
-bool AType::strictWeakOrderingIsEqual(const AType::AbstractValue& c1, const AType::AbstractValue& c2) {
+bool CodeThorn::strictWeakOrderingIsEqual(const AbstractValue& c1, const AbstractValue& c2) {
   if(c1.getValueType()==c2.getValueType()) {
     if(c1.isConstInt() && c2.isConstInt())
       return c1.getIntValue()==c2.getIntValue();
@@ -239,22 +239,22 @@ bool AType::strictWeakOrderingIsEqual(const AType::AbstractValue& c1, const ATyp
   }
 }
 
-bool AType::AbstractValueCmp::operator()(const AType::AbstractValue& c1, const AType::AbstractValue& c2) const {
-  return AType::strictWeakOrderingIsSmaller(c1,c2);
+bool CodeThorn::AbstractValueCmp::operator()(const AbstractValue& c1, const AbstractValue& c2) const {
+  return CodeThorn::strictWeakOrderingIsSmaller(c1,c2);
 }
 
-bool AType::AbstractValue::operator==(AType::AbstractValue other) const {
-  return AType::strictWeakOrderingIsEqual(*this,other);
+bool AbstractValue::operator==(AbstractValue other) const {
+  return CodeThorn::strictWeakOrderingIsEqual(*this,other);
 }
-bool AType::AbstractValue::operator<(AType::AbstractValue other) const {
-  return AType::strictWeakOrderingIsSmaller(*this,other);
+bool AbstractValue::operator<(AbstractValue other) const {
+  return CodeThorn::strictWeakOrderingIsSmaller(*this,other);
 }
 
 // TODO: comparison with nullptr
-AType::AbstractValue AType::AbstractValue::operatorEq(AbstractValue other) const {
+AbstractValue AbstractValue::operatorEq(AbstractValue other) const {
   // all TOP cases
   if(valueType==TOP || other.valueType==TOP) { 
-    return AType::Top();
+    return CodeThorn::Top();
   }
   // all BOT cases
   if(valueType==BOT) {
@@ -270,11 +270,11 @@ AType::AbstractValue AType::AbstractValue::operatorEq(AbstractValue other) const
   }
 }
 
-AType::AbstractValue AType::AbstractValue::operatorNotEq(AbstractValue other) const {
+AbstractValue AbstractValue::operatorNotEq(AbstractValue other) const {
   return ((*this).operatorEq(other)).operatorNot();
 }
 
-AType::AbstractValue AType::AbstractValue::operatorLess(AbstractValue other) const {
+AbstractValue AbstractValue::operatorLess(AbstractValue other) const {
   if(isTop()||other.isTop())
     return Top();
   if(isBot())
@@ -285,7 +285,7 @@ AType::AbstractValue AType::AbstractValue::operatorLess(AbstractValue other) con
   return getIntValue()<other.getIntValue();
 }
 
-AType::AbstractValue AType::AbstractValue::operatorLessOrEq(AbstractValue other) const {
+AbstractValue AbstractValue::operatorLessOrEq(AbstractValue other) const {
   if(isTop()||other.isTop())
     return Top();
   if(isBot())
@@ -296,7 +296,7 @@ AType::AbstractValue AType::AbstractValue::operatorLessOrEq(AbstractValue other)
   return getIntValue()<=other.getIntValue();
 }
 
-AType::AbstractValue AType::AbstractValue::operatorMoreOrEq(AbstractValue other) const {
+AbstractValue AbstractValue::operatorMoreOrEq(AbstractValue other) const {
   if(isTop()||other.isTop())
     return Top();
   if(isBot())
@@ -307,7 +307,7 @@ AType::AbstractValue AType::AbstractValue::operatorMoreOrEq(AbstractValue other)
   return getIntValue()>=other.getIntValue();
 }
 
-AType::AbstractValue AType::AbstractValue::operatorMore(AbstractValue other) const {
+AbstractValue AbstractValue::operatorMore(AbstractValue other) const {
   if(isTop()||other.isTop())
     return Top();
   if(isBot())
@@ -318,7 +318,7 @@ AType::AbstractValue AType::AbstractValue::operatorMore(AbstractValue other) con
   return getIntValue()>other.getIntValue();
 }
 
-AType::AbstractValue AType::AbstractValue::operatorBitwiseOr(AbstractValue other) const {
+AbstractValue AbstractValue::operatorBitwiseOr(AbstractValue other) const {
   if(isTop()||other.isTop())
     return Top();
   if(isBot())
@@ -329,7 +329,7 @@ AType::AbstractValue AType::AbstractValue::operatorBitwiseOr(AbstractValue other
   return getIntValue()|other.getIntValue();
 }
 
-AType::AbstractValue AType::AbstractValue::operatorBitwiseXor(AbstractValue other) const {
+AbstractValue AbstractValue::operatorBitwiseXor(AbstractValue other) const {
   if(isTop()||other.isTop())
     return Top();
   if(isBot())
@@ -340,7 +340,7 @@ AType::AbstractValue AType::AbstractValue::operatorBitwiseXor(AbstractValue othe
   return getIntValue()^other.getIntValue();
 }
 
-AType::AbstractValue AType::AbstractValue::operatorBitwiseAnd(AbstractValue other) const {
+AbstractValue AbstractValue::operatorBitwiseAnd(AbstractValue other) const {
   if(isTop()||other.isTop())
     return Top();
   if(isBot())
@@ -351,14 +351,14 @@ AType::AbstractValue AType::AbstractValue::operatorBitwiseAnd(AbstractValue othe
   return getIntValue()&other.getIntValue();
 }
 
-AType::AbstractValue AType::AbstractValue::operatorBitwiseComplement() const {
+AbstractValue AbstractValue::operatorBitwiseComplement() const {
   if(isTop()||isBot())
     return *this;
   assert(isConstInt());
   return ~getIntValue();
 }
 
-AType::AbstractValue AType::AbstractValue::operatorBitwiseShiftLeft(AbstractValue other) const {
+AbstractValue AbstractValue::operatorBitwiseShiftLeft(AbstractValue other) const {
   if(isTop()||other.isTop())
     return Top();
   if(isBot())
@@ -369,7 +369,7 @@ AType::AbstractValue AType::AbstractValue::operatorBitwiseShiftLeft(AbstractValu
   return getIntValue()<<other.getIntValue();
 }
 
-AType::AbstractValue AType::AbstractValue::operatorBitwiseShiftRight(AbstractValue other) const {
+AbstractValue AbstractValue::operatorBitwiseShiftRight(AbstractValue other) const {
   if(isTop()||other.isTop())
     return Top();
   if(isBot())
@@ -380,7 +380,7 @@ AType::AbstractValue AType::AbstractValue::operatorBitwiseShiftRight(AbstractVal
   return getIntValue()>>other.getIntValue();
 }
 
-string AType::AbstractValue::toString(SPRAY::VariableIdMapping* vim) const {
+string AbstractValue::toString(SPRAY::VariableIdMapping* vim) const {
   switch(valueType) {
   case TOP: return "top";
   case BOT: return "bot";
@@ -399,7 +399,7 @@ string AType::AbstractValue::toString(SPRAY::VariableIdMapping* vim) const {
   }
 }
 
-string AType::AbstractValue::toString() const {
+string AbstractValue::toString() const {
   switch(valueType) {
   case TOP: return "top";
   case BOT: return "bot";
@@ -418,7 +418,7 @@ string AType::AbstractValue::toString() const {
   }
 }
 
-void AType::AbstractValue::fromStream(istream& is) {
+void AbstractValue::fromStream(istream& is) {
   if(SPRAY::Parse::checkWord("top",is)) {
     valueType=TOP;
     intValue=0;
@@ -432,11 +432,11 @@ void AType::AbstractValue::fromStream(istream& is) {
   }
 }
 
-AType::AbstractValue::ValueType AType::AbstractValue::getValueType() const {
+AbstractValue::ValueType AbstractValue::getValueType() const {
   return valueType;
 }
 
-int AType::AbstractValue::getIndexIntValue() const { 
+int AbstractValue::getIndexIntValue() const { 
   if(valueType!=PTR) {
     cerr << "AbstractValue: valueType="<<valueTypeToString()<<endl;
     throw CodeThorn::Exception("Error: AbstractValue::getIndexIntValue operation failed.");
@@ -445,7 +445,7 @@ int AType::AbstractValue::getIndexIntValue() const {
     return intValue;
 }
 
-int AType::AbstractValue::getIntValue() const { 
+int AbstractValue::getIntValue() const { 
   // PTR will be removed once all ptrs are adapted to getIndexIntValue
   if(valueType!=CONSTINT && valueType!=PTR) {
     cerr << "AbstractValue: valueType="<<valueTypeToString()<<endl;
@@ -455,7 +455,7 @@ int AType::AbstractValue::getIntValue() const {
     return intValue;
 }
 
- SPRAY::VariableId AType::AbstractValue::getVariableId() const { 
+ SPRAY::VariableId AbstractValue::getVariableId() const { 
    if(valueType!=PTR) {
      cerr << "AbstractValue: valueType="<<valueTypeToString()<<endl;
      throw CodeThorn::Exception("Error: AbstractValue::getVariableId operation failed.");
@@ -465,16 +465,16 @@ int AType::AbstractValue::getIntValue() const {
 }
 
 // arithmetic operators
-AType::AbstractValue AType::AbstractValue::operatorUnaryMinus() {
-  AType::AbstractValue tmp;
+AbstractValue AbstractValue::operatorUnaryMinus() {
+  AbstractValue tmp;
   switch(valueType) {
-  case AType::AbstractValue::CONSTINT: 
-    tmp.valueType=AType::AbstractValue::CONSTINT;
+  case AbstractValue::CONSTINT: 
+    tmp.valueType=AbstractValue::CONSTINT;
     tmp.intValue=-intValue; // unary minus
     break;
-  case AType::AbstractValue::TOP: tmp=Top();break;
-  case AType::AbstractValue::BOT: tmp=Bot();break;
-  case AType::AbstractValue::PTR:
+  case AbstractValue::TOP: tmp=Top();break;
+  case AbstractValue::BOT: tmp=Bot();break;
+  case AbstractValue::PTR:
     throw CodeThorn::Exception("Error: AbstractValue operator unary minus on pointer value.");
   default:
     throw CodeThorn::Exception("Error: AbstractValue operation unaryMinus failed.");
@@ -482,7 +482,7 @@ AType::AbstractValue AType::AbstractValue::operatorUnaryMinus() {
   return tmp;
 }
 
-AType::AbstractValue AType::AbstractValue::operatorAdd(AType::AbstractValue& a,AType::AbstractValue& b) {
+AbstractValue AbstractValue::operatorAdd(AbstractValue& a,AbstractValue& b) {
   if(a.isTop() || b.isTop())
     return Top();
   if(a.isBot())
@@ -490,11 +490,11 @@ AType::AbstractValue AType::AbstractValue::operatorAdd(AType::AbstractValue& a,A
   if(b.isBot())
     return a;
   if(a.isPtr() && b.isConstInt()) {
-    AType::AbstractValue val=a;
+    AbstractValue val=a;
     val.intValue+=b.intValue;
     return val;
   } else if(a.isConstInt() && b.isPtr()) {
-    AType::AbstractValue val=b;
+    AbstractValue val=b;
     val.intValue+=a.intValue;
     return val;
   } else if(a.isPtr() && b.isPtr()) {
@@ -505,7 +505,7 @@ AType::AbstractValue AType::AbstractValue::operatorAdd(AType::AbstractValue& a,A
     throw CodeThorn::Exception("Error: undefined behavior in '+' operation.");
   }
 }
-AType::AbstractValue AType::AbstractValue::operatorSub(AType::AbstractValue& a,AType::AbstractValue& b) {
+AbstractValue AbstractValue::operatorSub(AbstractValue& a,AbstractValue& b) {
   if(a.isTop() || b.isTop())
     return Top();
   if(a.isBot())
@@ -514,7 +514,7 @@ AType::AbstractValue AType::AbstractValue::operatorSub(AType::AbstractValue& a,A
     return a;
   if(a.isPtr() && b.isPtr()) {
     if(a.getVariableId()==b.getVariableId()) {
-      AType::AbstractValue val;
+      AbstractValue val;
       val.intValue=a.intValue-b.intValue;
       val.valueType=CONSTINT;
       val.variableId=a.variableId; // same as b.variableId
@@ -523,7 +523,7 @@ AType::AbstractValue AType::AbstractValue::operatorSub(AType::AbstractValue& a,A
       return Top(); // subtraction of incompatible pointers gives arbitrary value
     }
   } else if(a.isPtr() && b.isConstInt()) {
-    AType::AbstractValue val=a;
+    AbstractValue val=a;
     val.intValue-=b.intValue;
     return val;
   } else if(a.isConstInt() && b.isPtr()) {
@@ -534,7 +534,7 @@ AType::AbstractValue AType::AbstractValue::operatorSub(AType::AbstractValue& a,A
     throw CodeThorn::Exception("Error: undefined behavior in '-' operation.");
   }
 }
-AType::AbstractValue AType::AbstractValue::operatorMul(AType::AbstractValue& a,AType::AbstractValue& b) {
+AbstractValue AbstractValue::operatorMul(AbstractValue& a,AbstractValue& b) {
   if(a.isTop() || b.isTop())
     return Top();
   if(a.isBot())
@@ -545,7 +545,7 @@ AType::AbstractValue AType::AbstractValue::operatorMul(AType::AbstractValue& a,A
   assert(a.isConstInt() && b.isConstInt());
   return a.getIntValue()*b.getIntValue();
 }
-AType::AbstractValue AType::AbstractValue::operatorDiv(AType::AbstractValue& a,AType::AbstractValue& b) {
+AbstractValue AbstractValue::operatorDiv(AbstractValue& a,AbstractValue& b) {
   if(a.isTop() || b.isTop())
     return Top();
   if(a.isBot())
@@ -557,7 +557,7 @@ AType::AbstractValue AType::AbstractValue::operatorDiv(AType::AbstractValue& a,A
   return a.getIntValue()/b.getIntValue();
 
 }
-AType::AbstractValue AType::AbstractValue::operatorMod(AType::AbstractValue& a,AType::AbstractValue& b) {
+AbstractValue AbstractValue::operatorMod(AbstractValue& a,AbstractValue& b) {
   if(a.isTop() || b.isTop())
     return Top();
   if(a.isBot())
@@ -569,18 +569,18 @@ AType::AbstractValue AType::AbstractValue::operatorMod(AType::AbstractValue& a,A
   return a.getIntValue()%b.getIntValue();
 }
 
-AType::AbstractValue AType::operator+(AType::AbstractValue& a,AType::AbstractValue& b) {
+AbstractValue CodeThorn::operator+(AbstractValue& a,AbstractValue& b) {
   return AbstractValue::operatorAdd(a,b);
 }
-AType::AbstractValue AType::operator-(AType::AbstractValue& a,AType::AbstractValue& b) {
+AbstractValue CodeThorn::operator-(AbstractValue& a,AbstractValue& b) {
   return AbstractValue::operatorSub(a,b);
 }
-AType::AbstractValue AType::operator*(AType::AbstractValue& a,AType::AbstractValue& b) {
+AbstractValue CodeThorn::operator*(AbstractValue& a,AbstractValue& b) {
   return AbstractValue::operatorMul(a,b);
 }
-AType::AbstractValue AType::operator/(AType::AbstractValue& a,AType::AbstractValue& b) {
+AbstractValue CodeThorn::operator/(AbstractValue& a,AbstractValue& b) {
   return AbstractValue::operatorDiv(a,b);
 }
-AType::AbstractValue AType::operator%(AType::AbstractValue& a,AType::AbstractValue& b) {
+AbstractValue CodeThorn::operator%(AbstractValue& a,AbstractValue& b) {
   return AbstractValue::operatorMod(a,b);
 }

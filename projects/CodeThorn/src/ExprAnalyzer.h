@@ -25,7 +25,7 @@ namespace CodeThorn {
 class SingleEvalResult {
  public:
   EState estate;
-  AType::BoolLattice result;
+  CodeThorn::BoolLattice result;
   bool isTop() {return result.isTop();}
   bool isTrue() {return result.isTrue();}
   bool isFalse() {return result.isFalse();}
@@ -38,10 +38,10 @@ class SingleEvalResult {
  */
 class SingleEvalResultConstInt {
  public:
-  void init(EState estate, ConstraintSet exprConstraints, AType::AbstractValue result);
+  void init(EState estate, ConstraintSet exprConstraints, AbstractValue result);
   EState estate;
   ConstraintSet exprConstraints; // temporary during evaluation of expression
-  AType::AbstractValue result;
+  AbstractValue result;
   AValue value() {return result;}
   bool isConstInt() {return result.isConstInt();}
   bool isTop() {return result.isTop();}
@@ -72,9 +72,9 @@ class ExprAnalyzer {
   void setSkipArrayAccesses(bool skip);
   bool getSkipArrayAccesses();
   bool checkArrayBounds(VariableId arrayVarId,int accessIndex);
-  VariableId resolveToAbsoluteVariableId(AType::AbstractValue abstrValue) const;
-  AType::AbstractValue readFromMemoryLocation(const PState* pState, AType::AbstractValue abstrValue) const;
-  void writeToMemoryLocation(PState& pState, AType::AbstractValue abstractMemLoc, AType::AbstractValue abstrValue);
+  VariableId resolveToAbsoluteVariableId(AbstractValue abstrValue) const;
+  AbstractValue readFromMemoryLocation(const PState* pState, AbstractValue abstrValue) const;
+  void writeToMemoryLocation(PState& pState, AbstractValue abstractMemLoc, AbstractValue abstrValue);
 private:
   //! This function turn a single result into a one-elment list with
   //! this one result. This function is used to combine cases where the result
@@ -88,7 +88,7 @@ private:
   //! returns true if node is a VarRefExp and sets varId=id, otherwise false and varId=0.
   bool variable(SgNode* node,VariableId& varId);
  protected:
-  AType::AbstractValue constIntLatticeFromSgValueExp(SgValueExp* valueExp);
+  AbstractValue constIntLatticeFromSgValueExp(SgValueExp* valueExp);
   static list<SingleEvalResultConstInt> listify(SingleEvalResultConstInt res);
 
   // evaluation state

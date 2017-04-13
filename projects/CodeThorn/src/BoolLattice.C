@@ -21,41 +21,41 @@ using namespace std;
 
 using namespace CodeThorn;
 
-ostream& AType::operator<<(ostream& os, const BoolLattice& value) {
+ostream& CodeThorn::operator<<(ostream& os, const BoolLattice& value) {
   os << value.toString();
   return os;
 }
 
-ostream& AType::operator<<(ostream& os, const AbstractValue& value) {
+ostream& CodeThorn::operator<<(ostream& os, const AbstractValue& value) {
   os << value.toString();
   return os;
 }
 
-AType::BoolLattice::BoolLattice():value(AType::BoolLattice::BOT) {}
+CodeThorn::BoolLattice::BoolLattice():value(CodeThorn::BoolLattice::BOT) {}
 
-AType::BoolLattice::BoolLattice(bool val) {if(val) value=AType::BoolLattice::TRUE; else value=AType::BoolLattice::FALSE;}
-
-// type conversion
-AType::BoolLattice::BoolLattice(Top e) {value=AType::BoolLattice::TOP;}
+CodeThorn::BoolLattice::BoolLattice(bool val) {if(val) value=CodeThorn::BoolLattice::TRUE; else value=CodeThorn::BoolLattice::FALSE;}
 
 // type conversion
-AType::BoolLattice::BoolLattice(Bot e) {value=AType::BoolLattice::BOT;}
+CodeThorn::BoolLattice::BoolLattice(Top e) {value=CodeThorn::BoolLattice::TOP;}
 
 // type conversion
-AType::BoolLattice::BoolLattice(int x) {if(x==0) value=AType::BoolLattice::FALSE; else value=AType::BoolLattice::TRUE;}
+CodeThorn::BoolLattice::BoolLattice(Bot e) {value=CodeThorn::BoolLattice::BOT;}
 
-bool AType::BoolLattice::isTop()   const {return value==AType::BoolLattice::TOP;}
-bool AType::BoolLattice::isTrue()  const {return value==AType::BoolLattice::TRUE;}
-bool AType::BoolLattice::isFalse() const {return value==AType::BoolLattice::FALSE;}
-bool AType::BoolLattice::isBot()   const {return value==AType::BoolLattice::BOT;}
+// type conversion
+CodeThorn::BoolLattice::BoolLattice(int x) {if(x==0) value=CodeThorn::BoolLattice::FALSE; else value=CodeThorn::BoolLattice::TRUE;}
+
+bool CodeThorn::BoolLattice::isTop()   const {return value==CodeThorn::BoolLattice::TOP;}
+bool CodeThorn::BoolLattice::isTrue()  const {return value==CodeThorn::BoolLattice::TRUE;}
+bool CodeThorn::BoolLattice::isFalse() const {return value==CodeThorn::BoolLattice::FALSE;}
+bool CodeThorn::BoolLattice::isBot()   const {return value==CodeThorn::BoolLattice::BOT;}
 
 /**
  * CAVEAT:    We define !bot := bot
  * RATIONALE: bot means "not yet analyzed" / "no meaningful result"
  *          top means "could be any value"
  */
-AType::BoolLattice AType::BoolLattice::operator!() {
-  AType::BoolLattice tmp;
+CodeThorn::BoolLattice CodeThorn::BoolLattice::operator!() {
+  CodeThorn::BoolLattice tmp;
   switch(value) {
   case FALSE: tmp.value=TRUE;break;
   case TRUE: tmp.value=FALSE;break;
@@ -67,15 +67,15 @@ AType::BoolLattice AType::BoolLattice::operator!() {
   return tmp;
 }
 
-bool AType::BoolLattice::operator==(AType::BoolLattice other) const {
+bool CodeThorn::BoolLattice::operator==(CodeThorn::BoolLattice other) const {
   return other.value == value;
 }
 
-bool AType::BoolLattice::operator!=(AType::BoolLattice other) const {
+bool CodeThorn::BoolLattice::operator!=(CodeThorn::BoolLattice other) const {
   return other.value != value;
 }
 
-bool AType::BoolLattice::operator<(BoolLattice other) const {
+bool CodeThorn::BoolLattice::operator<(BoolLattice other) const {
   if (isBot()) {
     if (other.isBot()) return false;
     return true;
@@ -97,8 +97,8 @@ bool AType::BoolLattice::operator<(BoolLattice other) const {
   throw CodeThorn::Exception("Error: BoolLattice operation< failed.");
 }
 
-AType::BoolLattice AType::BoolLattice::operator||(AType::BoolLattice other) {
-  AType::BoolLattice tmp;
+CodeThorn::BoolLattice CodeThorn::BoolLattice::operator||(CodeThorn::BoolLattice other) {
+  CodeThorn::BoolLattice tmp;
   // all TOP cases
   if(isTop()   && other.isTop())   return Top();
   if(isTop()   && other.isTrue())  return true;
@@ -116,7 +116,7 @@ AType::BoolLattice AType::BoolLattice::operator||(AType::BoolLattice other) {
   throw CodeThorn::Exception("Error: BoolLattice operation|| failed.");
 }
 
-AType::BoolLattice AType::BoolLattice::operator&&(AType::BoolLattice other) {
+CodeThorn::BoolLattice CodeThorn::BoolLattice::operator&&(CodeThorn::BoolLattice other) {
   // all TOP cases
   if(isTop()   && other.isTop())   return Top();
   if(isTop()   && other.isTrue())  return Top();
@@ -134,7 +134,7 @@ AType::BoolLattice AType::BoolLattice::operator&&(AType::BoolLattice other) {
   throw CodeThorn::Exception("Error: BoolLattice operation&& failed.");
 }
 
-AType::BoolLattice AType::BoolLattice::lub(AType::BoolLattice other) {
+CodeThorn::BoolLattice CodeThorn::BoolLattice::lub(CodeThorn::BoolLattice other) {
   // all TOP cases
   if(isTop()   || other.isTop())   return Top();
   // all BOT cases
@@ -148,7 +148,7 @@ AType::BoolLattice AType::BoolLattice::lub(AType::BoolLattice other) {
   throw CodeThorn::Exception("Error: BoolLattice lub failed.");
 }
 
-AType::BoolLattice AType::BoolLattice::glb(AType::BoolLattice other) {
+CodeThorn::BoolLattice CodeThorn::BoolLattice::glb(CodeThorn::BoolLattice other) {
   // all BOT cases
   if(isBot()   || other.isBot())   return Bot();
   // all BOT cases
@@ -164,7 +164,7 @@ AType::BoolLattice AType::BoolLattice::glb(AType::BoolLattice other) {
 
 // operator= : C++ default used
 // operator== : C++ default used
-string AType::BoolLattice::toString() const {
+string CodeThorn::BoolLattice::toString() const {
   switch(value) {
   case TOP: return "⊤" /*"top"*/; /* AP: not sure how portable this is */
   case BOT: return "⊥" /*"bot"*/;
