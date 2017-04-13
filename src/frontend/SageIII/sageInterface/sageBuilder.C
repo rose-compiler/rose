@@ -207,7 +207,7 @@ SgScopeStatement::find_symbol_by_type_of_function (const SgName & name, const Sg
                  // func_symbol = find_nontemplate_function(name,func_type);
                  // func_symbol = lookup_nontemplate_function_symbol(name,func_type);
                     func_symbol = lookup_nontemplate_function_symbol(name,func_type,templateArgumentsList);
-#if 0
+#if 1
                  // DQ (3/20/2017): Comment this debugging code out, note that the assertion it supports in left in place.
                     if (isSgTemplateFunctionSymbol(func_symbol) != NULL)
                        {
