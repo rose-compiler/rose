@@ -239,7 +239,7 @@ bool AType::strictWeakOrderingIsEqual(const AType::AbstractValue& c1, const ATyp
   }
 }
 
-bool AType::ConstIntLatticeCmp::operator()(const AType::AbstractValue& c1, const AType::AbstractValue& c2) const {
+bool AType::AbstractValueCmp::operator()(const AType::AbstractValue& c1, const AType::AbstractValue& c2) const {
   return AType::strictWeakOrderingIsSmaller(c1,c2);
 }
 

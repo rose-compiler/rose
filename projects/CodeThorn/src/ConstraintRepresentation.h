@@ -101,7 +101,7 @@ class ConstraintSet : public set<Constraint> {
   std::string toAssertionString(VariableIdMapping* vim) const;
 
   //! returns concrete int-value if equality exists, otherwise Top.
-  AType::AbstractValue varConstIntLatticeValue(const VariableId varId) const;
+  AType::AbstractValue varAbstractValue(const VariableId varId) const;
   //! returns set of concrete values for which an equality is stored 
   //! (there can be at most one), otherwise the set is empty. 
   //! Note that top may exist as explicit equality if it was added as such.

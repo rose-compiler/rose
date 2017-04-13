@@ -634,7 +634,7 @@ CodeThorn::AType::AbstractValue EState::determineUniqueIOValue() const {
     }
     // case 2: check constraint if var is top
     if(_pstate->varIsTop(varId))
-      return constraints()->varConstIntLatticeValue(varId);
+      return constraints()->varAbstractValue(varId);
   }
   if(io.op==InputOutput::STDOUT_CONST||io.op==InputOutput::STDERR_CONST) {
     value=io.val;
@@ -752,7 +752,7 @@ bool EState::isConst(VariableIdMapping* vim) const {
       continue;
     } else {
       // variable non-const in PState (i.e. top/bot) -> need to investigate constraints
-      if(!cs->varConstIntLatticeValue(varId).isConstInt()) {
+      if(!cs->varAbstractValue(varId).isConstInt()) {
         return false;
       }
     }

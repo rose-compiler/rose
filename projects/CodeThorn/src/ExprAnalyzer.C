@@ -719,7 +719,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
         res.result=pstate2[arrayElementId];
         //cout<<"DEBUG: retrieved array element value:"<<res.result<<endl;
         if(res.result.isTop() && useConstraints) {
-          AType::AbstractValue val=res.estate.constraints()->varConstIntLatticeValue(arrayElementId);
+          AType::AbstractValue val=res.estate.constraints()->varAbstractValue(arrayElementId);
           res.result=val;
         }
         return listify(res);
@@ -850,7 +850,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarExp(SgVarRefExp* node,
     }
     if(res.result.isTop() && useConstraints) {
       // in case of TOP we try to extract a possibly more precise value from the constraints
-      AType::AbstractValue val=res.estate.constraints()->varConstIntLatticeValue(varId);
+      AType::AbstractValue val=res.estate.constraints()->varAbstractValue(varId);
       // TODO: TOPIFY-MODE: most efficient here
       res.result=val;
     }

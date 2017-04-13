@@ -127,14 +127,14 @@ class AbstractValue {
     \date 2012
     \author Markus Schordan
   */
-  struct ConstIntLatticeCmp {
+  struct AbstractValueCmp {
     bool operator()(const AType::AbstractValue& c1, const AType::AbstractValue& c2) const;
   };
 
 } // end of namespace AType
 
 typedef AType::AbstractValue AValue; 
-typedef AType::ConstIntLatticeCmp AValueCmp; 
+typedef AType::AbstractValueCmp AValueCmp; 
 
 }
 
