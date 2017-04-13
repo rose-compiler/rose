@@ -123,8 +123,8 @@ OS="$(uname -s)"
 if [ "x$OS" = "xDarwin" ]; then
     if [ -n "$(type glibtool)" ]; then
         echo "Found glibtool... $(which glibtool)"
-    elif [ -n "$(type glibtool)" ]; then
-        echo "checking if $(which libtool) is GNU libtool..."
+    elif [ -n "$(type libtool)" ]; then
+        echo "checking that $(which libtool) is GNU libtool..."
         libtool --version
         if [ $? -ne 0 ]; then
             echo "Error: $(which libtool) is not GNU libtool!"
@@ -134,7 +134,19 @@ if [ "x$OS" = "xDarwin" ]; then
         fi
     fi
 
-    libtoolize_name="$(which glibtoolize)"
+    if [ -n "$(type glibtoolize)" ]; then
+        libtoolize_name="$(which glibtoolize)"
+    elif [ -n "$(type libtoolize)" ]; then
+        echo "checking that $(which libtoolize) is GNU libtoolize..."
+        libtoolize --version
+        if [ $? -ne 0 ]; then
+            echo "Error: $(which libtoolize) is not GNU libtoolize!"
+            exit 1
+        else
+            libtoolize_name="$(which libtoolize)"
+        fi
+    fi
+
     if [ ! -n "$libtoolize_name" ]; then
         echo "glibtoolize not found!"
         exit 1
