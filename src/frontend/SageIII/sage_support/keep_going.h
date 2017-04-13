@@ -146,8 +146,55 @@ namespace Rose {
     }// ::Rose::KeepGoing::Backend
   
     // Helper functions to create translators with keep-going handling
+    void
+    ShowUsage(std::string program_name);
 
+   extern  bool verbose; 
+   extern  bool enable_ast_tests; 
+   extern std::string report_filename__fail;
+   extern std::string report_filename__pass;
+   extern std::string expectations_filename__fail;
+   extern std::string expectations_filename__pass;
+   extern std::string path_prefix;
+ 
+    /**
+     * @returns The current time in the specified format
+     */
+    std::string
+    GetTimestamp(const std::string& format = "%Y-%m-%d %H:%M:%S");
+    
+    std::string
+    StripPrefix(const std::string& prefix, const std::string& str);
+    
+    /**
+     * @brief Append msg to a file 
+     */
+    void
+    AppendToFile(const std::string& filename, const std::string& msg);
+    
+    /**
+     * @returns A map of all filenames expected to fail.
+     */
+    std::map<std::string, std::string>
+    CreateExpectationsMap(const std::string& filename);
+    
+    /**
+     * @returns A vector of all filenames from the commandline.
+     */
+    std::vector<std::string>
+    GetSourceFilenamesFromCommandline(const std::vector<std::string>& argv);
+    
+    
+    //! Processing command line options
+    void commandLineProcessing 
+                              (int argc, char* argv[],
+                               std::vector<std::string> & rose_cmdline);
 
+    void generate_reports(SgProject* project,
+                     std::vector< std::string> orig_rose_cmdline);
+
+   // touch a file 
+   void touch(const std::string& pathname);
   }// ::Rose::KeepGoing
 }// ::Rose
 #endif // ROSE_KEEPGOING_H
