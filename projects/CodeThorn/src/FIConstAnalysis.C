@@ -1,7 +1,7 @@
 // analysis
 #include <rose.h>
 #include "FIConstAnalysis.h"
-#include "AType.h"
+#include "AbstractValue.h"
 #include "CPAstAttribute.h"
 #include "AnalysisAbstractionLayer.h"
 

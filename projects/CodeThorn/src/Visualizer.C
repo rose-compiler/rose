@@ -10,7 +10,7 @@
 #include "SgNodeHelper.h"
 #include "CommandLineOptions.h"
 #include "AstAnnotator.h"
-#include "AType.h"
+#include "AbstractValue.h"
 #include "Miscellaneous2.h"
 #include "tgba/succiter.hh"
 #include "tgba/state.hh"

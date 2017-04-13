@@ -11,7 +11,7 @@
 #include <string>
 #include "StateRepresentations.h"
 #include "VariableIdMapping.h"
-#include "AType.h"
+#include "AbstractValue.h"
 #include "AstTerm.h"
 
 using namespace std;

@@ -29,7 +29,7 @@
 #include "Miscellaneous2.h"
 #include "ProgramStats.h"
 #include "AnalysisAbstractionLayer.h"
-#include "AType.h"
+#include "AbstractValue.h"
 #include "SgNodeHelper.h"
 #include "DFAstAttributeConversion.h"
 #include "FIConstAnalysis.h"

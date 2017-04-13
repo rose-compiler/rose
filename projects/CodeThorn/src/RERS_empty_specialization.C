@@ -1,6 +1,6 @@
 #include "sage3basic.h"
 #include <iostream>
-#include "AType.h"
+#include "AbstractValue.h"
 #include "StateRepresentations.h"
 #include "Analyzer.h"
 

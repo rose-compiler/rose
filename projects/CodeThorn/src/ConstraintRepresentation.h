@@ -14,7 +14,7 @@
 #include <list>
 #include "Labeler.h"
 #include "CFAnalysis.h"
-#include "AType.h"
+#include "AbstractValue.h"
 #include "VariableIdMapping.h"
 #include "EqualityMaintainer.h"
 #include "HSetMaintainer.h"

@@ -8,7 +8,7 @@
 
 #include "sage3basic.h"
 #include "BoolLattice.h"
-#include "AType.h"
+#include "AbstractValue.h"
 #include "assert.h"
 #include "CommandLineOptions.h"
 #include <iostream>

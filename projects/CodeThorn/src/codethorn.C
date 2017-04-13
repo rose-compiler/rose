@@ -26,7 +26,7 @@
 #include "InternalChecks.h"
 #include "AstAnnotator.h"
 #include "AstTerm.h"
-#include "AType.h"
+#include "AbstractValue.h"
 #include "AstMatching.h"
 #include "RewriteSystem.h"
 #include "SpotConnection.h"

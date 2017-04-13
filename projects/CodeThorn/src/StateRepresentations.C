@@ -9,7 +9,7 @@
 #include <algorithm>
 #include "StateRepresentations.h"
 #include "ExprAnalyzer.h"
-#include "AType.h"
+#include "AbstractValue.h"
 #include "CollectionOperators.h"
 #include "CommandLineOptions.h"
 #include "Miscellaneous.h"

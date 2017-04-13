@@ -6,7 +6,7 @@
 #include <string>
 #include <sstream>
 #include <cassert>
-#include "AType.h"
+#include "AbstractValue.h"
 #include "SprayException.h"
 
 // log2

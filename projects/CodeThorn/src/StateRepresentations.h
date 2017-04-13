@@ -15,7 +15,7 @@
 #include <utility>
 #include "Labeler.h"
 #include "CFAnalysis.h"
-#include "AType.h"
+#include "AbstractValue.h"
 #include "VariableIdMapping.h"
 #include "ConstraintRepresentation.h"
 

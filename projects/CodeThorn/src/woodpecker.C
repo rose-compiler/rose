@@ -12,7 +12,7 @@
 #include "ProgramStats.h"
 #include "CommandLineOptions.h"
 #include "AnalysisAbstractionLayer.h"
-#include "AType.h"
+#include "AbstractValue.h"
 #include "SgNodeHelper.h"
 #include "FIConstAnalysis.h"
 #include "TrivialInlining.h"

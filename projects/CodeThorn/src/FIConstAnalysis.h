@@ -1,7 +1,7 @@
 #ifndef FICONSTANALYSIS_H
 #define FICONSTANALYSIS_H
 
-#include "AType.h"
+#include "AbstractValue.h"
 #include <cassert>
 #include <map>
 #include <set>
