@@ -72,60 +72,60 @@ bool ExprAnalyzer::variable(SgNode* node, VariableId& varId) {
   }
 }
 
-AType::ConstIntLattice ExprAnalyzer::constIntLatticeFromSgValueExp(SgValueExp* valueExp) {
+AType::AbstractValue ExprAnalyzer::constIntLatticeFromSgValueExp(SgValueExp* valueExp) {
   if(isSgFloatVal(valueExp)
      ||isSgDoubleVal(valueExp)
      ||isSgLongDoubleVal(valueExp)
      ||isSgComplexVal(valueExp)
      ||isSgStringVal(valueExp)
      ) {
-    return ConstIntLattice(AType::Top());
+    return AbstractValue(AType::Top());
   } else if(SgBoolValExp* exp=isSgBoolValExp(valueExp)) {
     // ROSE uses an integer for a bool
     int val=exp->get_value();
     if(val==0)
-      return ConstIntLattice(false);
+      return AbstractValue(false);
     else if(val==1)
-      return ConstIntLattice(true);
+      return AbstractValue(true);
     else {
       cerr<<"Error: unknown bool value (not 0 or 1): SgBoolExp::get_value()=="<<val<<endl;
       exit(1);
     }
   } else if(SgShortVal* exp=isSgShortVal(valueExp)) {
     short int val=exp->get_value();
-    return ConstIntLattice((int)val);
+    return AbstractValue((int)val);
   } else if(SgIntVal* exp=isSgIntVal(valueExp)) {
     int val=exp->get_value();
-    return ConstIntLattice(val);
+    return AbstractValue(val);
   } else if(SgLongIntVal* exp=isSgLongIntVal(valueExp)) {
     long int val=exp->get_value();
-    return ConstIntLattice(val);
+    return AbstractValue(val);
   } else if(SgLongLongIntVal* exp=isSgLongLongIntVal(valueExp)) {
     long long val=exp->get_value();
-    return ConstIntLattice(val);
+    return AbstractValue(val);
   } else if(SgUnsignedCharVal* exp=isSgUnsignedCharVal(valueExp)) {
     unsigned char val=exp->get_value();
-    return ConstIntLattice((int)val);
+    return AbstractValue((int)val);
   } else if(SgUnsignedShortVal* exp=isSgUnsignedShortVal(valueExp)) {
     unsigned short val=exp->get_value();
-    return ConstIntLattice((int)val);
+    return AbstractValue((int)val);
   } else if(SgUnsignedIntVal* exp=isSgUnsignedIntVal(valueExp)) {
     unsigned int val=exp->get_value();
-    return ConstIntLattice(val);
+    return AbstractValue(val);
   } else if(SgUnsignedLongVal* exp=isSgUnsignedLongVal(valueExp)) {
     unsigned long int val=exp->get_value();
-    return ConstIntLattice(val);
+    return AbstractValue(val);
   } else if(SgUnsignedLongVal* exp=isSgUnsignedLongVal(valueExp)) {
     unsigned long int val=exp->get_value();
-    return ConstIntLattice(val);
+    return AbstractValue(val);
   } else if(SgWcharVal* exp=isSgWcharVal(valueExp)) {
     long int val=exp->get_value();
-    return ConstIntLattice(val);
+    return AbstractValue(val);
   } else if(isSgNullptrValExp(valueExp)) {
-    return ConstIntLattice((int)0);
+    return AbstractValue((int)0);
   } else if(SgEnumVal* exp=isSgEnumVal(valueExp)) {
     int val=exp->get_value();
-    return ConstIntLattice(val);
+    return AbstractValue(val);
   } else {
     throw CodeThorn::Exception("Error: constIntLatticeFromSgValueExp::unsupported number type in SgValueExp.");
   }
@@ -140,7 +140,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::listify(SingleEvalResultConstInt re
   return resList;
 }
 
-void SingleEvalResultConstInt::init(EState estate, ConstraintSet exprConstraints, AType::ConstIntLattice result) {
+void SingleEvalResultConstInt::init(EState estate, ConstraintSet exprConstraints, AType::AbstractValue result) {
   this->estate=estate;
   this->exprConstraints=exprConstraints;
   this->result=result;
@@ -155,7 +155,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
   // initialize with default values from argument(s)
   SingleEvalResultConstInt res;
   res.estate=estate;
-  res.result=AType::ConstIntLattice(AType::Bot());
+  res.result=AType::AbstractValue(AType::Bot());
 
   if(SgNodeHelper::isPostfixIncDecOp(node)) {
     cout << "Error: incdec-op not supported in conditions."<<endl;
@@ -685,13 +685,13 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
     return resultList;
   } else {
     if(SgVarRefExp* varRefExp=isSgVarRefExp(arrayExpr)) {
-      ConstIntLattice arrayPtrValue=arrayExprResult.result;
+      AbstractValue arrayPtrValue=arrayExprResult.result;
       const PState* pstate=estate.pstate();
       PState pstate2=*pstate; // also removes constness
       VariableId arrayVarId=_variableIdMapping->variableId(varRefExp);
       // two cases
       if(_variableIdMapping->hasArrayType(arrayVarId)) {
-        arrayPtrValue=AType::ConstIntLattice::createAddressOfArray(arrayVarId);
+        arrayPtrValue=AType::AbstractValue::createAddressOfArray(arrayVarId);
       } else if(_variableIdMapping->hasPointerType(arrayVarId)) {
         // in case it is a pointer retrieve pointer value
         //cout<<"DEBUG: pointer-array access!"<<endl;
@@ -706,8 +706,8 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
         cerr<<"Error: unkown type of array or pointer."<<endl;
         exit(1);
       }
-      ConstIntLattice indexExprResultValue=indexExprResult.value();
-      ConstIntLattice arrayPtrPlusIndexValue=ConstIntLattice::operatorAdd(arrayPtrValue,indexExprResultValue);
+      AbstractValue indexExprResultValue=indexExprResult.value();
+      AbstractValue arrayPtrPlusIndexValue=AbstractValue::operatorAdd(arrayPtrValue,indexExprResultValue);
       VariableId arrayVarId2=arrayPtrPlusIndexValue.getVariableId();
       int index2=arrayPtrPlusIndexValue.getIntValue();
       if(!checkArrayBounds(arrayVarId2,index2)) {
@@ -719,7 +719,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
         res.result=pstate2[arrayElementId];
         //cout<<"DEBUG: retrieved array element value:"<<res.result<<endl;
         if(res.result.isTop() && useConstraints) {
-          AType::ConstIntLattice val=res.estate.constraints()->varConstIntLatticeValue(arrayElementId);
+          AType::AbstractValue val=res.estate.constraints()->varConstIntLatticeValue(arrayElementId);
           res.result=val;
         }
         return listify(res);
@@ -739,9 +739,9 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
               if(SgIntVal* intValNode=isSgIntVal(initExp)) {
                 int intVal=intValNode->get_value();
                 //cout<<"DEBUG:initializing array element:"<<arrayElemId.toString()<<"="<<intVal<<endl;
-                //newPState.setVariableToValue(arrayElemId,CodeThorn::AValue(AType::ConstIntLattice(intVal)));
+                //newPState.setVariableToValue(arrayElemId,CodeThorn::AValue(AType::AbstractValue(intVal)));
                 if(elemIndex==index2) {
-                  AType::ConstIntLattice val=AType::ConstIntLattice(intVal);
+                  AType::AbstractValue val=AType::AbstractValue(intVal);
                   res.result=val;
                   return listify(res);
                 }
@@ -822,7 +822,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalDereferenceOp(SgPointerDerefExp
                                                               EState estate, bool useConstraints) {
   SingleEvalResultConstInt res;
   res.estate=estate;
-  ConstIntLattice derefOperandValue=operandResult.result;
+  AbstractValue derefOperandValue=operandResult.result;
   // (varid,idx) => varid'; return estate.pstate()[varid'] || pstate(AValue)
   res.result=readFromMemoryLocation(estate.pstate(), derefOperandValue);
   res.exprConstraints=operandResult.exprConstraints;
@@ -832,25 +832,25 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalDereferenceOp(SgPointerDerefExp
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarExp(SgVarRefExp* node, EState estate, bool useConstraints) {
   SingleEvalResultConstInt res;
-  res.init(estate,*estate.constraints(),AType::ConstIntLattice(AType::Bot()));
+  res.init(estate,*estate.constraints(),AType::AbstractValue(AType::Bot()));
   const PState* pstate=estate.pstate();
   VariableId varId=_variableIdMapping->variableId(node);
   if(pstate->varExists(varId)) {
     //PState pstate2=*pstate; // also removes constness
     if(_variableIdMapping->hasArrayType(varId)) {
       // CODE-POINT-1
-      res.result=AType::ConstIntLattice::createAddressOfArray(varId);
+      res.result=AType::AbstractValue::createAddressOfArray(varId);
       // for arrays (by default the address is used) return its pointer value (the var-id-code)
       // with a unified pointer representation this case is now equal
-      //res.result=AType::ConstIntLattice(varId.getIdCode());
+      //res.result=AType::AbstractValue(varId.getIdCode());
       //res.result=const_cast<PState*>(pstate)->operator[](varId); // this includes assignment of pointer values
     } else {
-      //res.result=AType::ConstIntLattice::createAddressOfArray(varId,AType::ConstIntLattice(0));
+      //res.result=AType::AbstractValue::createAddressOfArray(varId,AType::AbstractValue(0));
       res.result=const_cast<PState*>(pstate)->operator[](varId); // this includes assignment of pointer values
     }
     if(res.result.isTop() && useConstraints) {
       // in case of TOP we try to extract a possibly more precise value from the constraints
-      AType::ConstIntLattice val=res.estate.constraints()->varConstIntLatticeValue(varId);
+      AType::AbstractValue val=res.estate.constraints()->varConstIntLatticeValue(varId);
       // TODO: TOPIFY-MODE: most efficient here
       res.result=val;
     }
@@ -861,7 +861,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarExp(SgVarRefExp* node,
     // ii) undefined variables mapped to 'top' (abstraction by removing variables from state)
     if(_variableIdMapping->isConstantArray(varId) && boolOptions["rersmode"]) {
       // currently only used in rersmode
-      res.result=AType::ConstIntLattice(varId.getIdCode());
+      res.result=AType::AbstractValue(varId.getIdCode());
       return listify(res);
     } else {
       res.result=AType::Top();
@@ -874,7 +874,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarExp(SgVarRefExp* node,
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp* node, EState estate, bool useConstraints) {
   SingleEvalResultConstInt res;
-  res.init(estate,*estate.constraints(),AType::ConstIntLattice(AType::Bot()));
+  res.init(estate,*estate.constraints(),AType::AbstractValue(AType::Bot()));
   if(getSkipSelectedFunctionCalls()) {
     // return default value
     return listify(res);
@@ -885,7 +885,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp*
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalValueExp(SgValueExp* node, EState estate, bool useConstraints) {
   SingleEvalResultConstInt res;
-  res.init(estate,*estate.constraints(),AType::ConstIntLattice(AType::Bot()));
+  res.init(estate,*estate.constraints(),AType::AbstractValue(AType::Bot()));
   res.result=constIntLatticeFromSgValueExp(node);
   return listify(res);
 }
@@ -903,19 +903,19 @@ bool ExprAnalyzer::checkArrayBounds(VariableId arrayVarId,int accessIndex) {
 }
 
 // compute absolute variableId as encoded in the VariableIdMapping.
-SPRAY::VariableId ExprAnalyzer::resolveToAbsoluteVariableId(ConstIntLattice abstrValue) const {
+SPRAY::VariableId ExprAnalyzer::resolveToAbsoluteVariableId(AbstractValue abstrValue) const {
   VariableId arrayVarId2=abstrValue.getVariableId();
   int index2=abstrValue.getIntValue();
   return _variableIdMapping->variableIdOfArrayElement(arrayVarId2,index2);
 }
 
-AType::ConstIntLattice ExprAnalyzer::readFromMemoryLocation(const PState* pState, ConstIntLattice abstrValue) const {
+AType::AbstractValue ExprAnalyzer::readFromMemoryLocation(const PState* pState, AbstractValue abstrValue) const {
   return pState->varValue(resolveToAbsoluteVariableId(abstrValue));
 }
 
 void ExprAnalyzer::writeToMemoryLocation(PState& pState,
-                                         AType::ConstIntLattice abstractMemLoc,
-                                         AType::ConstIntLattice abstractValue) {
+                                         AType::AbstractValue abstractMemLoc,
+                                         AType::AbstractValue abstractValue) {
   VariableId absoluteMemLoc=resolveToAbsoluteVariableId(abstractMemLoc);
   pState.setVariableToValue(absoluteMemLoc,abstractValue);
 }

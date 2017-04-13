@@ -74,10 +74,10 @@ void printResult(VariableIdMapping& variableIdMapping, VarConstSetMap& map) {
     VariableId varId=(*i).first;
     //string variableName=variableIdMapping.uniqueShortVariableName(varId);
     string variableName=variableIdMapping.variableName(varId);
-    set<ConstIntLattice> valueSet=(*i).second;
+    set<AbstractValue> valueSet=(*i).second;
     stringstream setstr;
     setstr<<"{";
-    for(set<ConstIntLattice>::iterator i=valueSet.begin();i!=valueSet.end();++i) {
+    for(set<AbstractValue>::iterator i=valueSet.begin();i!=valueSet.end();++i) {
       if(i!=valueSet.begin())
         setstr<<",";
       setstr<<(*i).toString();

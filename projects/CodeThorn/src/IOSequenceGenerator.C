@@ -32,7 +32,7 @@ namespace CodeThorn {
           ss<<sep;
         }
         if((*i)->io.isStdInIO()) {
-          AType::ConstIntLattice val=(*i)->determineUniqueIOValue();
+          AType::AbstractValue val=(*i)->determineUniqueIOValue();
           ss<<val.toString();
         } else {
           ss<<"ERROR:"<<(*i)->toString();

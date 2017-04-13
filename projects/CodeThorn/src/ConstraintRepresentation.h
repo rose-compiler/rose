@@ -76,7 +76,7 @@ bool operator==(const Constraint& c1, const Constraint& c2);
 bool operator!=(const Constraint& c1, const Constraint& c2);
 
 // we use only one disequality constraint to mark constraint set representing non-reachable states
-#define DISEQUALITYCONSTRAINT Constraint(Constraint::DEQ,VariableId(),AType::ConstIntLattice(0))
+#define DISEQUALITYCONSTRAINT Constraint(Constraint::DEQ,VariableId(),AType::AbstractValue(0))
 
 /*! 
   * \author Markus Schordan
@@ -101,7 +101,7 @@ class ConstraintSet : public set<Constraint> {
   std::string toAssertionString(VariableIdMapping* vim) const;
 
   //! returns concrete int-value if equality exists, otherwise Top.
-  AType::ConstIntLattice varConstIntLatticeValue(const VariableId varId) const;
+  AType::AbstractValue varConstIntLatticeValue(const VariableId varId) const;
   //! returns set of concrete values for which an equality is stored 
   //! (there can be at most one), otherwise the set is empty. 
   //! Note that top may exist as explicit equality if it was added as such.

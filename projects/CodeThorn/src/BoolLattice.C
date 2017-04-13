@@ -26,7 +26,7 @@ ostream& AType::operator<<(ostream& os, const BoolLattice& value) {
   return os;
 }
 
-ostream& AType::operator<<(ostream& os, const ConstIntLattice& value) {
+ostream& AType::operator<<(ostream& os, const AbstractValue& value) {
   os << value.toString();
   return os;
 }

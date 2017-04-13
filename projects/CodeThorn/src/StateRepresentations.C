@@ -65,7 +65,7 @@ void InputOutput::recordVerificationError() {
   * \author Markus Schordan
   * \date 2012.
  */
-void InputOutput::recordConst(OpType op0,AType::ConstIntLattice constvalue) {
+void InputOutput::recordConst(OpType op0,AType::AbstractValue constvalue) {
   ROSE_ASSERT(op0==STDOUT_CONST || op0==STDERR_CONST);
   op=op0;
   var=VariableId();
@@ -73,7 +73,7 @@ void InputOutput::recordConst(OpType op0,AType::ConstIntLattice constvalue) {
 }
 void InputOutput::recordConst(OpType op0,int value) {
   ROSE_ASSERT(op0==STDOUT_CONST || op0==STDERR_CONST);
-  AType::ConstIntLattice abstractConstValue(value);
+  AType::AbstractValue abstractConstValue(value);
   recordConst(op0,abstractConstValue);
 }
 /*! 
@@ -620,16 +620,16 @@ ConstraintSet EState::allInfoAsConstraints() const {
   return cset;
 }
 
-CodeThorn::AType::ConstIntLattice EState::determineUniqueIOValue() const {
+CodeThorn::AType::AbstractValue EState::determineUniqueIOValue() const {
   // this returns 1 (TODO: investigate)
-  CodeThorn::AType::ConstIntLattice value;
+  CodeThorn::AType::AbstractValue value;
   if(io.op==InputOutput::STDIN_VAR||io.op==InputOutput::STDOUT_VAR||io.op==InputOutput::STDERR_VAR) {
     VariableId varId=io.var;
     assert(_pstate->varExists(varId));
     // case 1: check PState
     if(_pstate->varIsConst(varId)) {
       PState pstate2=*_pstate;
-      AType::ConstIntLattice varVal=(pstate2)[varId];
+      AType::AbstractValue varVal=(pstate2)[varId];
       return varVal;
     }
     // case 2: check constraint if var is top

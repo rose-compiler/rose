@@ -691,7 +691,7 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
             if(SgIntVal* intValNode=isSgIntVal(assignInit->get_operand_i())) {
               int intVal=intValNode->get_value();
               // logger[DEBUG] <<"initializing array element:"<<arrayElemId.toString()<<"="<<intVal<<endl;
-              newPState.setVariableToValue(arrayElemId,CodeThorn::AValue(AType::ConstIntLattice(intVal)));
+              newPState.setVariableToValue(arrayElemId,CodeThorn::AValue(AType::AbstractValue(intVal)));
             } else {
               logger[ERROR] <<"unsupported array initializer value:"<<exp->unparseToString()<<" AST:"<<SPRAY::AstTerm::astTermWithNullValuesToString(exp)<<endl;
               exit(1);
@@ -1053,7 +1053,7 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root, boo
     VariableId varId=variableIdMapping.variableId(*i);
     ROSE_ASSERT(varId.isValid());
     // initialize all formal parameters of function (of extremal label) with top
-    //emptyPState[varId]=AType::ConstIntLattice(AType::Top());
+    //emptyPState[varId]=AType::AbstractValue(AType::Top());
     emptyPState.setVariableToTop(varId);
   }
   const PState* emptyPStateStored=processNew(emptyPState);
@@ -1179,7 +1179,7 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
         //cout<<" of array type.";
         // we use the id-code as int-value (points-to info)
         int idCode=rhsVarId.getIdCode();
-        newPState.setVariableToValue(lhsVar,CodeThorn::AValue(AType::ConstIntLattice(idCode)));
+        newPState.setVariableToValue(lhsVar,CodeThorn::AValue(AType::AbstractValue(idCode)));
         //cout<<" id-code: "<<idCode;
         return newPState;
       } else {
@@ -1514,7 +1514,7 @@ void Analyzer::generateSpotTransition(stringstream& ss, const Transition& t) {
   ss<<",";
   ss<<"S"<<estateSet.estateIdString(t.target);
   const EState* myTarget=t.target;
-  AType::ConstIntLattice myIOVal=myTarget->determineUniqueIOValue();
+  AType::AbstractValue myIOVal=myTarget->determineUniqueIOValue();
   ss<<",\""; // dquote reqired for condition
   // generate transition condition
   if(myTarget->io.isStdInIO()||myTarget->io.isStdOutIO()) {
@@ -2051,7 +2051,7 @@ bool Analyzer::searchForIOPatterns(PState* startPState, int assertion_id, list<i
   // create a new instance of the startPState
   //TODO: check why init of "output" is necessary
   (*startPState).setVariableToValue(globalVarIdByName("output"),
-                                    CodeThorn::AType::ConstIntLattice(-7));
+                                    CodeThorn::AType::AbstractValue(-7));
   PState newStartPState = *startPState;
   // initialize worklist
   PStatePlusIOHistory startState = PStatePlusIOHistory(newStartPState, list<int>());
@@ -2117,7 +2117,7 @@ bool Analyzer::searchForIOPatterns(PState* startPState, int assertion_id, list<i
         // copy the state and initialize new input
         PState newPState = currentState.first;
         newPState.setVariableToValue(globalVarIdByName("input"),
-                                     CodeThorn::AType::ConstIntLattice(*inputVal));
+                                     CodeThorn::AType::AbstractValue(*inputVal));
         list<int> newHistory = currentState.second;
         ROSE_ASSERT(newHistory.size() % 2 == 0);
         newHistory.push_back(*inputVal);
@@ -2221,7 +2221,7 @@ int Analyzer::pStateDepthFirstSearch(PState* startPState, int maxDepth, int thre
     for (set<int>::iterator inputVal=_inputVarValues.begin(); inputVal!=_inputVarValues.end(); inputVal++) {
       // copy the state and initialize new input
       PState newPState = currentState.first;
-      newPState[globalVarIdByName("input")]=CodeThorn::AType::ConstIntLattice(*inputVal);
+      newPState[globalVarIdByName("input")]=CodeThorn::AType::AbstractValue(*inputVal);
       list<int> newHistory = currentState.second;
       ROSE_ASSERT(newHistory.size() % 2 == 0);
       newHistory.push_back(*inputVal);
@@ -2286,9 +2286,9 @@ list<int> Analyzer::inputsFromPatternTwoRepetitions(list<int> pattern2r) {
 }
 
 bool Analyzer::computePStateAfterInputs(PState& pState, int input, int thread_id, list<int>* iOSequence) {
-  //pState[globalVarIdByName("input")]=CodeThorn::AType::ConstIntLattice(input);
+  //pState[globalVarIdByName("input")]=CodeThorn::AType::AbstractValue(input);
   pState.setVariableToValue(globalVarIdByName("input"),
-                            CodeThorn::AType::ConstIntLattice(input));
+                            CodeThorn::AType::AbstractValue(input));
   RERS_Problem::rersGlobalVarsCallInit(this, pState, thread_id);
   (void) RERS_Problem::calculate_output(thread_id);
   RERS_Problem::rersGlobalVarsCallReturnInit(this, pState, thread_id);
@@ -2306,9 +2306,9 @@ bool Analyzer::computePStateAfterInputs(PState& pState, int input, int thread_id
 
 bool Analyzer::computePStateAfterInputs(PState& pState, list<int>& inputs, int thread_id, list<int>* iOSequence) {
   for (list<int>::iterator i = inputs.begin(); i !=inputs.end(); i++) {
-    //pState[globalVarIdByName("input")]=CodeThorn::AType::ConstIntLattice(*i);
+    //pState[globalVarIdByName("input")]=CodeThorn::AType::AbstractValue(*i);
     pState.setVariableToValue(globalVarIdByName("input"),
-                              CodeThorn::AType::ConstIntLattice(*i));
+                              CodeThorn::AType::AbstractValue(*i));
     RERS_Problem::rersGlobalVarsCallInit(this, pState, thread_id);
     (void) RERS_Problem::calculate_output(thread_id);
     RERS_Problem::rersGlobalVarsCallReturnInit(this, pState, thread_id);
@@ -2887,9 +2887,9 @@ std::list<EState> Analyzer::transferFunctionCallLocalEdge(Edge edge, const EStat
 	  _io.recordFailedAssert();
 	  // error label encoded in the output value, storing it in the new failing assertion EState
 	  PState newPstate  = _pstate;
-	  //newPstate[globalVarIdByName("output")]=CodeThorn::AType::ConstIntLattice(rers_result);
+	  //newPstate[globalVarIdByName("output")]=CodeThorn::AType::AbstractValue(rers_result);
 	  newPstate.setVariableToValue(globalVarIdByName("output"),
-                                       CodeThorn::AType::ConstIntLattice(rers_result));
+                                       CodeThorn::AType::AbstractValue(rers_result));
 	  EState _eState=createEState(edge.target(),newPstate,_cset,_io);
 	  return elistify(_eState);
         }
@@ -2902,8 +2902,8 @@ std::list<EState> Analyzer::transferFunctionCallLocalEdge(Edge edge, const EStat
 	  bool isLhsVar=exprAnalyzer.variable(lhs,lhsVarId);
 	  ROSE_ASSERT(isLhsVar); // must hold
 	  // logger[DEBUG]<< "lhsvar:rers-result:"<<lhsVarId.toString()<<"="<<rers_result<<endl;
-	  //_pstate[lhsVarId]=AType::ConstIntLattice(rers_result);
-	  _pstate.setVariableToValue(lhsVarId,AType::ConstIntLattice(rers_result));
+	  //_pstate[lhsVarId]=AType::AbstractValue(rers_result);
+	  _pstate.setVariableToValue(lhsVarId,AType::AbstractValue(rers_result));
 	  ConstraintSet _cset=*estate->constraints();
 	  _cset.removeAllConstraintsOfVar(lhsVarId);
 	  EState _eState=createEState(edge.target(),_pstate,_cset);
@@ -3101,12 +3101,12 @@ std::list<EState> Analyzer::transferFunctionCallExternal(Edge edge, const EState
         newCSet.removeAllConstraintsOfVar(varId);
         //newPState[varId]=AType::Top();
         newPState.setVariableToTop(varId);
-        newCSet.addConstraint(Constraint(Constraint::EQ_VAR_CONST,varId,AType::ConstIntLattice(newValue)));
+        newCSet.addConstraint(Constraint(Constraint::EQ_VAR_CONST,varId,AType::AbstractValue(newValue)));
         ROSE_ASSERT(newCSet.size()>0);
       } else {
         newCSet.removeAllConstraintsOfVar(varId);
-        //newPState[varId]=AType::ConstIntLattice(newValue);
-        newPState.setVariableToValue(varId,AType::ConstIntLattice(newValue));
+        //newPState[varId]=AType::AbstractValue(newValue);
+        newPState.setVariableToValue(varId,AType::AbstractValue(newValue));
       }
       newio.recordVariable(InputOutput::STDIN_VAR,varId);
       EState estate=createEState(edge.target(),newPState,newCSet,newio);
@@ -3126,13 +3126,13 @@ std::list<EState> Analyzer::transferFunctionCallExternal(Edge edge, const EState
             newCSet.removeAllConstraintsOfVar(varId);
             //newPState[varId]=AType::Top();
             newPState.setVariableToTop(varId);
-            newCSet.addConstraint(Constraint(Constraint::EQ_VAR_CONST,varId,AType::ConstIntLattice(*i)));
+            newCSet.addConstraint(Constraint(Constraint::EQ_VAR_CONST,varId,AType::AbstractValue(*i)));
             assert(newCSet.size()>0);
           } else {
             newCSet.removeAllConstraintsOfVar(varId);
             // new input value must be const (otherwise constraints must be used)
-            //newPState[varId]=AType::ConstIntLattice(*i);
-            newPState.setVariableToValue(varId,AType::ConstIntLattice(*i));
+            //newPState[varId]=AType::AbstractValue(*i);
+            newPState.setVariableToValue(varId,AType::AbstractValue(*i));
           }
           newio.recordVariable(InputOutput::STDIN_VAR,varId);
           EState estate=createEState(edge.target(),newPState,newCSet,newio);
@@ -3241,8 +3241,8 @@ list<EState> Analyzer::transferIncDecOp(SgNode* nextNodeToAnalyze2, Edge edge, c
     PState newPState=*estate.pstate();
     ConstraintSet cset=*estate.constraints();
 
-    AType::ConstIntLattice varVal=newPState[var];
-    AType::ConstIntLattice const1=1;
+    AType::AbstractValue varVal=newPState[var];
+    AType::AbstractValue const1=1;
     switch(nextNodeToAnalyze2->variantT()) {
     case V_SgPlusPlusOp:
       varVal=varVal+const1; // overloaded binary + operator
@@ -3327,7 +3327,7 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
           // two cases
           if(_variableIdMapping->hasArrayType(arrayVarId)) {
             // create array element 0 (in preparation to have index added, or, if not index is used, it is already the right index (=0).
-            arrayPtrValue=AType::ConstIntLattice::createAddressOfArray(arrayVarId);
+            arrayPtrValue=AType::AbstractValue::createAddressOfArray(arrayVarId);
           } else if(_variableIdMapping->hasPointerType(arrayVarId)) {
             // in case it is a pointer retrieve pointer value
             // logger[DEBUG]<<"pointer-array access!"<<endl;
@@ -3352,7 +3352,7 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
           list<SingleEvalResultConstInt> res=exprAnalyzer.evalConstInt(indexExp,currentEState,true);
           ROSE_ASSERT(res.size()==1); // TODO: temporary restriction
           AValue indexValue=(*(res.begin())).value();
-          AValue arrayPtrPlusIndexValue=AType::ConstIntLattice::operatorAdd(arrayPtrValue,indexValue);
+          AValue arrayPtrPlusIndexValue=AType::AbstractValue::operatorAdd(arrayPtrValue,indexValue);
           VariableId arrayVarId2=arrayPtrPlusIndexValue.getVariableId();
           int index2=arrayPtrPlusIndexValue.getIndexIntValue();
           if(!exprAnalyzer.checkArrayBounds(arrayVarId2,index2)) {

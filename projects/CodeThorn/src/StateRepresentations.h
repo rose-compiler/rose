@@ -150,11 +150,11 @@ class InputOutput {
   enum OpType {NONE,STDIN_VAR,STDOUT_VAR,STDOUT_CONST,STDERR_VAR,STDERR_CONST, FAILED_ASSERT,VERIFICATION_ERROR};
   OpType op;
   VariableId var;
-  CodeThorn::AType::ConstIntLattice val;
+  CodeThorn::AType::AbstractValue val;
   string toString() const;
   string toString(VariableIdMapping* variableIdMapping) const;
   void recordVariable(OpType op, VariableId varId);
-  void recordConst(OpType op, CodeThorn::AType::ConstIntLattice val);
+  void recordConst(OpType op, CodeThorn::AType::AbstractValue val);
   void recordConst(OpType op, int val);
   void recordFailedAssert();
   void recordVerificationError();
@@ -278,7 +278,7 @@ class EState {
   ConstraintSet allInfoAsConstraints() const;
   InputOutput::OpType ioOp() const;
   // isBot():no value, isTop(): any value (not unique), isConstInt():one concrete integer (int getIntValue())
-  AType::ConstIntLattice determineUniqueIOValue() const;
+  AType::AbstractValue determineUniqueIOValue() const;
   /* Predicate that determines whether all variables can be determined to be bound to a constant value.
      This function uses the entire PState and all available constraints to determine constness.
    */

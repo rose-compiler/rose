@@ -829,15 +829,15 @@ ConstraintSet::iterator ConstraintSet::findSpecific(Constraint::ConstraintOp op,
   * \author Markus Schordan
   * \date 2012.
  */
-AType::ConstIntLattice ConstraintSet::varConstIntLatticeValue(const VariableId varId) const {
-  AType::ConstIntLattice c;
+AType::AbstractValue ConstraintSet::varConstIntLatticeValue(const VariableId varId) const {
+  AType::AbstractValue c;
   VariableId dedicatedVarId=equalityMaintainer.determineDedicatedElement(varId);
   ConstraintSet::iterator i=findSpecific(Constraint::EQ_VAR_CONST,dedicatedVarId);
   if(i==end()) {
     // no EQ_VAR_CONST constraint for this variable
-    return AType::ConstIntLattice(AType::Top());
+    return AType::AbstractValue(AType::Top());
   } else {
-    return AType::ConstIntLattice((*i).rhsVal());
+    return AType::AbstractValue((*i).rhsVal());
   }
 }
 

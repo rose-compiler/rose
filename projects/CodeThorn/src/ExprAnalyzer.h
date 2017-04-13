@@ -38,10 +38,10 @@ class SingleEvalResult {
  */
 class SingleEvalResultConstInt {
  public:
-  void init(EState estate, ConstraintSet exprConstraints, AType::ConstIntLattice result);
+  void init(EState estate, ConstraintSet exprConstraints, AType::AbstractValue result);
   EState estate;
   ConstraintSet exprConstraints; // temporary during evaluation of expression
-  AType::ConstIntLattice result;
+  AType::AbstractValue result;
   AValue value() {return result;}
   bool isConstInt() {return result.isConstInt();}
   bool isTop() {return result.isTop();}
@@ -59,7 +59,7 @@ class ExprAnalyzer {
  public:
   ExprAnalyzer();
   //SingleEvalResult eval(SgNode* node,EState estate);
-  //! Evaluates an expression using ConstIntLattice and returns a list of all evaluation-results.
+  //! Evaluates an expression using AbstractValue and returns a list of all evaluation-results.
   //! There can be multiple results if one of the variables was bound to top as we generate
   //! two different states and corresponding constraints in this case, one representing the
   //! true-case the other one representing the false-case.
@@ -72,9 +72,9 @@ class ExprAnalyzer {
   void setSkipArrayAccesses(bool skip);
   bool getSkipArrayAccesses();
   bool checkArrayBounds(VariableId arrayVarId,int accessIndex);
-  VariableId resolveToAbsoluteVariableId(AType::ConstIntLattice abstrValue) const;
-  AType::ConstIntLattice readFromMemoryLocation(const PState* pState, AType::ConstIntLattice abstrValue) const;
-  void writeToMemoryLocation(PState& pState, AType::ConstIntLattice abstractMemLoc, AType::ConstIntLattice abstrValue);
+  VariableId resolveToAbsoluteVariableId(AType::AbstractValue abstrValue) const;
+  AType::AbstractValue readFromMemoryLocation(const PState* pState, AType::AbstractValue abstrValue) const;
+  void writeToMemoryLocation(PState& pState, AType::AbstractValue abstractMemLoc, AType::AbstractValue abstrValue);
 private:
   //! This function turn a single result into a one-elment list with
   //! this one result. This function is used to combine cases where the result
@@ -88,7 +88,7 @@ private:
   //! returns true if node is a VarRefExp and sets varId=id, otherwise false and varId=0.
   bool variable(SgNode* node,VariableId& varId);
  protected:
-  AType::ConstIntLattice constIntLatticeFromSgValueExp(SgValueExp* valueExp);
+  AType::AbstractValue constIntLatticeFromSgValueExp(SgValueExp* valueExp);
   static list<SingleEvalResultConstInt> listify(SingleEvalResultConstInt res);
 
   // evaluation state

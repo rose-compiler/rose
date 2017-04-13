@@ -147,23 +147,23 @@ void checkTypes() {
 
   {
     cout << "RUNNING CHECKS FOR CONSTINT LATTICE TYPE:"<<endl;
-    AType::ConstIntLattice a;
+    AType::AbstractValue a;
     a=true;
     check("a=true => isTrue",a.isTrue());
     check("a=true => !isFalse",!a.isFalse());
-    AType::ConstIntLattice b;
+    AType::AbstractValue b;
     b=false;
     check("b=false => isFalse",b.isFalse());
     check("b=false => !isTrue",!b.isTrue());
-    AType::ConstIntLattice c=a.operatorOr(b);
+    AType::AbstractValue c=a.operatorOr(b);
     check("c=a.operatorOr(b): ",c.isTrue());
     AType::Top e;
-    AType::ConstIntLattice d;
+    AType::AbstractValue d;
     d=e;
     check("Top e; d=e; d isTop ",d.isTop());
     c=c.operatorOr(d);
     check("c=c.operatorOr(d) => c isTrue ",c.isTrue());
-    AType::ConstIntLattice f=AType::Bot();
+    AType::AbstractValue f=AType::Bot();
     d=AType::Bot();
     
     a=d.operatorAnd(f);
@@ -287,10 +287,10 @@ void checkTypes() {
   {  
     cout << "------------------------------------------"<<endl;
     cout << "RUNNING CHECKS FOR CONSTINTLATTICE (formerly CPPCAPSULE):"<<endl;
-    AType::ConstIntLattice cint1(1);
+    AType::AbstractValue cint1(1);
     check("cint1 == 1",cint1.getIntValue()==1);
-    AType::ConstIntLattice cint2=AType::Top();
-    AType::ConstIntLattice cint3;
+    AType::AbstractValue cint2=AType::Top();
+    AType::AbstractValue cint3;
     cint3=AType::Top();
     check("cint2 isTop",cint2.isTop());
     check("cint3 isTop",cint3.isTop());
@@ -486,23 +486,23 @@ void checkTypes() {
     check("Parse: Testing test1 on test1.",SPRAY::Parse::checkWord("test1",ss3));
     //cout << "Remaing stream: "<<ss3.str()<<endl;
 
-    CodeThorn::AType::ConstIntLattice x;
+    CodeThorn::AType::AbstractValue x;
     stringstream ss4;
     ss4<<"top";
     x.fromStream(ss4);
-    check("ConstIntLattice: streaminput: top",x.toString()=="top");
+    check("AbstractValue: streaminput: top",x.toString()=="top");
     stringstream ss5;
     ss5<<"12";
     x.fromStream(ss5);
-    check("ConstIntLattice: streaminput: 12",x.toString()=="12");
+    check("AbstractValue: streaminput: 12",x.toString()=="12");
     stringstream ss6;
     ss6<<"15top16";
     ss6>>x;
-    check("ConstIntLattice: streaminput: 15",x.toString()=="15");
+    check("AbstractValue: streaminput: 15",x.toString()=="15");
     ss6>>x;
-    check("ConstIntLattice: streaminput: top",x.toString()=="top");
+    check("AbstractValue: streaminput: top",x.toString()=="top");
     ss6>>x;
-    check("ConstIntLattice: streaminput: 16",x.toString()=="16");
+    check("AbstractValue: streaminput: 16",x.toString()=="16");
 
     {
       PState ps;
@@ -610,13 +610,13 @@ void checkLanguageRestrictor(int argc, char *argv[]) {
 
 void checkLargeSets() {
   VariableIdMapping variableIdMapping;
-  AType::ConstIntLattice i;
+  AType::AbstractValue i;
   using namespace AType;
-  set<ConstIntLattice> cilSet;
-  cilSet.insert(ConstIntLattice(Bot()));
-  cilSet.insert(ConstIntLattice(Top()));
+  set<AbstractValue> cilSet;
+  cilSet.insert(AbstractValue(Bot()));
+  cilSet.insert(AbstractValue(Top()));
   for(int i=-10;i<10;i++) {
-    cilSet.insert(ConstIntLattice(i));
+    cilSet.insert(AbstractValue(i));
   }
   check("integer set: bot,-10, ... ,+10,top",cilSet.size()==22); // 1+20+1
 }
