@@ -316,7 +316,7 @@ analyzeFunction(const P2::Partitioner &partitioner, const P2::Function::Ptr &fun
 int
 main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
-    Diagnostics::initAndRegister(::mlog, "tool");
+    Diagnostics::initAndRegister(&::mlog, "tool");
 
     P2::Engine engine;
     std::vector<std::string> specimen = engine.parseCommandLine(argc, argv, "tests semantics initial states", description)

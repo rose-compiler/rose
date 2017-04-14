@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 #include "AsmUnparser_compat.h"
 
+#include <BinaryDemangler.h>
 #include <BinaryString.h>
 #include <Partitioner2/FunctionCallGraph.h>
 #include <Partitioner2/Modules.h>
@@ -32,6 +33,34 @@ canonicalFunctionName(const std::string &name) {
         return function + "@" + library;
     }
     return name;
+}
+
+void
+demangleFunctionNames(const Partitioner &p) {
+    // The demangler is most efficient if we give it all the names at once.
+    std::vector<std::string> mangledNames;
+    BOOST_FOREACH (const Function::Ptr &f, p.functions()) {
+        if (!f->name().empty() && f->name() == f->demangledName())
+            mangledNames.push_back(f->name());
+    }
+
+    // Demangle everything that possible to demangle.  An exception probably means that c++filt is not available or doesn't
+    // work.
+    Demangler demangler;
+    try {
+        demangler.fillCache(mangledNames);
+    } catch (const std::runtime_error &e) {
+        mlog[WARN] <<"name demangler failed: " <<e.what() <<"\n";
+        return;
+    }
+
+    BOOST_FOREACH (const Function::Ptr &f, p.functions()) {
+        if (!f->name().empty() && f->name() == f->demangledName()) { // same condition as above
+            std::string demangled = demangler.demangle(f->name());
+            if (demangled != f->name())
+                f->demangledName(demangled);
+        }
+    }
 }
 
 bool
@@ -822,15 +851,11 @@ buildFunctionAst(const Partitioner &partitioner, const Function::Ptr &function, 
         }
     }
 
-    // Function's calling convention. For now, we just set the function's calling convention to the best one on a local
-    // basis. A separate pass later can choose the globally best conventions.  Don't run the analysis if it hasn't been run
-    // already (sometimes users request that we skip this expensive analysis).
-    const CallingConvention::Definition *bestCallingConvention = NULL;
-    if (function->callingConventionAnalysis().hasResults()) {
-        CallingConvention::Dictionary conventions = partitioner.functionCallingConventionDefinitions(function);
-        if (!conventions.empty())
-            bestCallingConvention = new CallingConvention::Definition(conventions.front());
-    }
+    // Function's calling convention. The AST holds the name of the best calling convention, or the empty string if no calling
+    // convention has been assigned.
+    std::string bestCallingConvention;
+    if (CallingConvention::Definition::Ptr ccdef = function->callingConventionDefinition())
+        bestCallingConvention = ccdef->name();
     
     // Build the AST
     SgAsmFunction *ast = SageBuilderAsm::buildFunction(function->address(), children);
@@ -961,8 +986,9 @@ fixupAstCallingConventions(const Partitioner &partitioner, SgNode *ast) {
         const CallingConvention::Analysis &ccAnalysis = function->callingConventionAnalysis();
         if (!ccAnalysis.hasResults())
             continue;                                   // don't run analysis if not run already
-        BOOST_FOREACH (const CallingConvention::Definition &ccDef, partitioner.functionCallingConventionDefinitions(function))
-            ++totals.insertMaybe(ccDef.name(), 0);
+        CallingConvention::Dictionary ccDefs = partitioner.functionCallingConventionDefinitions(function);
+        BOOST_FOREACH (const CallingConvention::Definition::Ptr &ccDef, ccDefs)
+            ++totals.insertMaybe(ccDef->name(), 0);
     }
 
     // Pass 2: For each function in the AST, select the matching definition that's most frequent overall. If there's a tie, use
@@ -974,18 +1000,18 @@ fixupAstCallingConventions(const Partitioner &partitioner, SgNode *ast) {
             if (!ccAnalysis.hasResults())
                 continue;                               // don't run analysis if not run already
             CallingConvention::Dictionary ccDefs = partitioner.functionCallingConventionDefinitions(function);
-            const CallingConvention::Definition *ccBest = NULL;
-            BOOST_FOREACH (const CallingConvention::Definition &ccDef, ccDefs) {
+            CallingConvention::Definition::Ptr ccBest;
+            BOOST_FOREACH (const CallingConvention::Definition::Ptr &ccDef, ccDefs) {
                 if (NULL==ccBest) {
-                    ccBest = &ccDef;
-                } else if (totals.getOrElse(ccDef.name(), 0) > totals.getOrElse(ccBest->name(), 0)) {
-                    ccBest = &ccDef;
+                    ccBest = ccDef;
+                } else if (totals.getOrElse(ccDef->name(), 0) > totals.getOrElse(ccBest->name(), 0)) {
+                    ccBest = ccDef;
                 }
             }
             if (ccBest) {
                 // We cannot delete previously stored calling conventions because there's no clear rule about whether they need
                 // to be allocated on the heap, and if so, who owns them or what allocator was used.
-                astFunction->set_callingConvention(new CallingConvention::Definition(*ccBest));
+                astFunction->set_callingConvention(ccBest->name());
             }
         }
     }

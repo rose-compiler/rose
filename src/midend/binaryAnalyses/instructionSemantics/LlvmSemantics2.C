@@ -1597,7 +1597,7 @@ std::string
 Transcoder::transcodeInterpretation(SgAsmInterpretation *interp)
 {
     std::ostringstream ss;
-    transcodeInterpretation(interp);
+    transcodeInterpretation(interp, ss);
     return ss.str();
 }
 

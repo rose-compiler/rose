@@ -26,6 +26,7 @@
 #include <boost/algorithm/string/join.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
+#include <Sawyer/FileSystem.h>
 
 #ifdef __INSURE__
 // Provide a dummy function definition to support linking with Insure++.
@@ -1496,7 +1497,10 @@ SgFile::runFrontend(int & nextErrorCode)
   // control flow. The callFrontEnd() relies on all the "set_" flags to be already called therefore
   // it was placed here.
   // if ( isSgUnknownFile(file) == NULL && file != NULL  )
-    if ( this != NULL && isSgUnknownFile(this) == NULL )
+
+  // DQ (3/25/2017): The NULL check is done above and Clang reports it as a warning that we want to remove.
+  // if ( this != NULL && isSgUnknownFile(this) == NULL )
+    if ( isSgUnknownFile(this) == NULL )
     {
         nextErrorCode = this->callFrontEnd();
         this->set_frontendErrorCode(nextErrorCode);
@@ -1545,6 +1549,242 @@ namespace X10c {
 }// Rose
 #endif
 
+
+
+// *****************************************************************************************
+// *****************************************************************************************
+// *****************************************************************************************
+// *********  IMPLEMENTATION OF SAWYER COMMAND LINE SUPPORT FOR ROSE (in progress)  ********
+// *****************************************************************************************
+// *****************************************************************************************
+// *****************************************************************************************
+
+// DQ (4/10/2017): Adding incremental support for ROSE use of Sawyer command line handling to ROSE.
+
+#define ROSE_SAWYER_COMMENT_LINE_DEBUG 0
+
+#if 0
+//! Return a description of the outliner's command-line switches. When these switches are parsed, they will adjust settings
+//  in this @ref Outliner.
+Sawyer::CommandLine::SwitchGroup
+SgProject::commandLineSwitches() 
+   {
+     using namespace Sawyer::CommandLine;
+
+     SwitchGroup switches("ROSE switches");
+     switches.doc("These switches control ROSE's frontend. ");
+     switches.name("rose:frontend");
+
+#if 0
+  // DQ (4/10/2017): This code serves as examples only at this point.
+     switches.insert(Switch("xxx_enable_debug")
+                    .intrinsicValue(true, enable_debug)
+                    .doc("Enable debugging ode for outlined functions."));
+
+     switches.insert(Switch("xxx_preproc-only")
+                    .intrinsicValue(true, preproc_only_)
+                    .doc("Enable preprocessing only."));
+
+     switches.insert(Switch("xxx_parameter_wrapper")
+                    .intrinsicValue(true, useParameterWrapper)
+                    .doc("Enable parameter wrapping."));
+
+     switches.insert(Switch("xxx_structure_wrapper")
+                    .intrinsicValue(true, useStructureWrapper)
+                    .doc("Enable parameter wrapping using a structure."));
+
+     switches.insert(Switch("xxx_new_file")
+                    .intrinsicValue(true, useNewFile)
+                    .doc("Enable new source file for outlined functions."));
+
+     switches.insert(Switch("xxx_exclude_headers")
+                    .intrinsicValue(true, exclude_headers)
+                    .doc("Exclude headers in the new file containing outlined functions."));
+
+     switches.insert(Switch("xxx_enable_classic")
+                    .intrinsicValue(true, enable_classic)
+                    .doc("Enable a classic way for outlined functions."));
+
+     switches.insert(Switch("xxx_temp_variable")
+                    .intrinsicValue(true, temp_variable)
+                    .doc("Enable using temp variables to reduce pointer dereferencing for outlined functions."));
+
+     switches.insert(Switch("xxx_use_dlopen")
+                    .intrinsicValue(true, use_dlopen)
+                    .doc("Use @man{dlopen}(3) to find an outlined function saved into a new source file."));
+
+     switches.insert(Switch("xxx_abstract_handle")
+                    .argument("handle", anyParser(handles))
+                    .whichValue(SAVE_ALL)               // if switch appears more than once, save all values not just last
+                    .doc("Enable using abstract handles to specify targets for outlining."));
+
+     switches.insert(Switch("xxx_output_path")
+                    .argument("name", anyParser(output_path))
+                    .doc("Use a custom output path."));
+
+     switches.insert(Switch("xxx_enable_liveness")
+                    .intrinsicValue(true, enable_liveness)
+                    .doc("This switch is only honored if @s{temp_variable} was specified."));
+#endif
+
+     return switches;
+   }
+#endif
+
+
+Sawyer::CommandLine::SwitchGroup
+SgProject::frontendAllSwitches() 
+   {
+     using namespace Sawyer::CommandLine;
+
+     SwitchGroup switches("ROSE switches");
+     switches.doc("These switches control ROSE's frontend. ");
+     switches.name("rose:frontend");
+
+
+     return switches;
+   }
+
+
+Sawyer::CommandLine::SwitchGroup
+SgProject::backendAllSwitches() 
+   {
+     using namespace Sawyer::CommandLine;
+
+     SwitchGroup switches("ROSE switches");
+     switches.doc("These switches control ROSE's backend. ");
+     switches.name("rose:backend");
+
+
+     return switches;
+   }
+
+
+
+
+// The "purpose" as it appears in the man page, uncapitalized and a single, short, line.
+static const char *purpose = "This tool provided basic ROSE source-to-source functionality";
+
+static const char *description =
+    "ROSE is a source-to-source compiler infrastructure for building analysis and/or transformation tools."
+    "   --- More info can be found at http:www.RoseCompiler.org ";
+
+// DQ (4/10/2017): Not clear if we want to sue this concept of switch setting in ROSE command line handling (implemented as a test).
+// Switches for this tool. Tools with lots of switches will probably want these to be in some Settings struct mirroring the
+// approach used by some analyses that have lots of settings. So we'll do that here too even though it looks funny.
+struct RoseSettings {
+    bool showRoseSettings;         // should we show the outliner settings instead of running it?
+    bool useOldCommandlineParser;  // call the old Outliner command-line parser
+
+    RoseSettings()
+        : showRoseSettings(false), useOldCommandlineParser(false) {}
+} rose_settings;
+
+
+// DQ (4/10/2017): Added commandline support from Saywer (most comments are from Robb's definition of this function for the tutorial/outliner.cc).
+std::vector<std::string>
+SgProject::parseCommandLine(std::vector<std::string> argv) 
+   {
+  // Parse the tool's command-line, processing only those switches recognized by Sawyer. Then return the non-parsed switches for
+  // the next stage of parsing. We have three more stages that need to process the command-line: Outliner (the old approach),
+  // frontend(), and the backend compiler. None of these except the backend compiler can issue error messages about misspelled
+  // switches because the first three must assume that an unrecognized switch is intended for a later stage.
+
+     using namespace Sawyer::CommandLine;
+
+     using namespace rose;                   // the ROSE team is migrating everything to this namespace
+     using namespace rose::Diagnostics;      // for mlog, INFO, WARN, ERROR, FATAL, etc.
+
+  // Use CommandlineProcessing to create a consistent parser among all tools.  If you want a tool's parser to be different
+  // then either create one yourself, or modify the parser properties after createParser returns. The createEmptyParserStage
+  // creates a parser that assumes all unrecognized switches are intended for a later stage. If there are no later stages
+  // then use createEmptyParser instead or else users will never see error messages for misspelled switches.
+     Parser p = CommandlineProcessing::createEmptyParserStage(purpose, description);
+     p.doc("Synopsis", "@prop{programName} @v{switches} @v{files}...");
+#if 1
+  // DEBUGGING [Robb P Matzke 2016-09-27]
+     p.longPrefix("-");
+#endif
+
+  // User errors (what few will be reported since this is only a first-stage parser) should be sent to standard error instead
+  // of raising an exception.  Programmer errors still cause exceptions.
+     p.errorStream(::mlog[FATAL]);
+
+  // All ROSE tools have some switches in common, such as --version, -V, --help, -h, -?, --log, -L, --threads, etc. We
+  // include them first so they appear near the top of the documentation.  The genericSwitches returns a
+  // Sawyer::CommandLine::SwitchGroup, which this tool could extend by adding additional switches.  This could have been done
+  // inside createParser, but it turns out that many tools like to extend or re-order this group of switches, which is
+  // simpler this way.
+     p.with(CommandlineProcessing::genericSwitches());
+
+  // Eventually, if we change frontend so we can query what switches it knows about, we could insert them into our parser at
+  // this point.  The frontend could report all known switches (sort of how things are organized one) or we could query only
+  // those groups of frontend switches that this tool is interested in (e.g., I don't know if the outliner needs Fortran
+  // switches).
+  // [Robb P Matzke 2016-09-27]
+     p.with(SgProject::frontendAllSwitches()); // or similar
+
+ // DQ (4/10/2017): Added seperate function for backend command line switches.
+     p.with(SgProject::backendAllSwitches()); // or similar
+
+#if 0
+  // These are tool specific switches.
+  // The Outliner has some switches of its own, so include them next.  These switches will automatically adjust the Outliner
+  // settings. Since the outliner is implemented as a namespace rather than a class, it's essentially a singlton.  There can
+  // be only one instance of an outliner per tool, whether the tool uses an outliner directly (like this one) or indirectly
+  // as part of some other analysis.
+     p.with(SgProject::commandLineSwitches());
+#endif
+
+  // Finally, a tool sometimes has its own specific settings, so we demo that here with a couple made-up switches.
+     SwitchGroup tool("Tool-specific switches");
+
+     tool.insert(Switch("dry-run", 'n')
+                .intrinsicValue(true, rose_settings.showRoseSettings)
+                .doc("Instead of running the outliner, just display its settings."));
+
+  // Helper function that adds "--old-outliner" and "--no-old-outliner" to the tool switch group, and causes
+  // settings.useOldParser to be set to true or false. It also appends some additional documentation to say what the default
+  // value is. We could have done this by hand with Sawyer, but having a helper encourages consistency.
+     CommandlineProcessing::insertBooleanSwitch(tool, "old-commandline-handling", rose_settings.useOldCommandlineParser, 
+                                               "Call the old ROSE frontend command line parser in addition to its new Sawyer parser.");
+
+  // We want the "--rose:help" switch to appear in the Sawyer documentation but we have to pass it to the next stage also. We
+  // could do this two different ways. The older way (that still works) is to have Sawyer process the switch and then we
+  // prepend it into the returned vector for processing by later stages.  The newer way is to set the switch's "skipping"
+  // property that causes Sawyer to treat it as a skipped (unrecognized) switch.  We'll use SKIP_STRONG, but SKIP_WEAK is
+  // sort of a cross between Sawyer recognizing it and not recognizing it.
+     tool.insert(Switch("rose:help")
+                .skipping(SKIP_STRONG)                  // appears in documentation and is parsed, but treated as skipped
+                .doc("Show the non-Sawyer switch documentation."));
+
+#if 0
+  // DQ (4/10/2017): This is tool specific and should not be a part of the more general ROSE infrastructure support.
+  // Copy this tool's switches into the parser.
+     p.with(tool);
+#endif
+
+  // Parse the command-line, stopping at the first "--" or positional arugment. Return the unparsed stuff so it can be passed
+  // to the next stage.  ROSE's frontend expects arg[0] to be the name of the command, which Sawyer has already processed, so
+  // we need to add it back again.
+
+  // DQ (4/10/2017): Note that we do NOT call the apply function to define an non-destructive first use of Saywer in ROSE command line handling.
+  // std::vector<std::string> remainingArgs = p.parse(argc, argv).apply().unparsedArgs(true);
+     std::vector<std::string> remainingArgs = p.parse(argv).unparsedArgs(true);
+
+  // remainingArgs.insert(remainingArgs.begin(), argv[0]);
+
+#if ROSE_SAWYER_COMMENT_LINE_DEBUG
+  // DEBUGGING [Robb P Matzke 2016-09-27]
+     std::cerr <<"These are the arguments left over after parsing with Sawyer:\n";
+     BOOST_FOREACH (const std::string &s, remainingArgs)
+         std::cerr <<"    \"" <<s <<"\"\n";
+#endif
+
+     return remainingArgs;
+   }
+
+
 //! internal function to invoke the EDG frontend and generate the AST
 int
 SgProject::parse(const vector<string>& argv)
@@ -1553,6 +1793,21 @@ SgProject::parse(const vector<string>& argv)
 
   // DQ (7/6/2005): Introduce tracking of performance of ROSE.
      TimingPerformance timer ("AST (SgProject::parse(argc,argv)):");
+
+  // DQ (4/10/2017): Experiment with Saywer for comment line parsing.
+  // Parse Sawyer-recognized switches and the rest we'll pass to Outliner and frontend like before.
+     std::vector<std::string> sawyer_args = parseCommandLine(argv);
+
+#if 0
+  // Unclear if we want to use this feature of Sawyer.
+     if (rose_settings.useOldCommandlineParser)
+        {
+       // Example of usage from outliner.
+       // Outliner::commandLineProcessing(args);  // this is the old way
+
+          printf ("In SgProject::parse(): Permit optional command line handling using the older approach (not supported) \n");
+        }
+#endif
 
   // TOO1 (2014/01/22): TODO: Consider moving CLI processing out of SgProject
   // constructor. We can't set any error codes on SgProject since SgProject::parse
@@ -2374,9 +2629,8 @@ int openFortranParser_main(int argc, char **argv );
 #endif
 
 #ifdef ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
-// This is defined seperately only in configured for the EXPERIMENTAL_OFP_ROSE_CONNECTION.
-// int experimental_openFortranParser_main(int argc, char **argv );
-SgUntypedFile* experimental_openFortranParser_main(int argc, char **argv );
+// This is defined separately configured only for the EXPERIMENTAL_OFP_ROSE_CONNECTION.
+   int experimental_openFortranParser_main(int argc, char **argv);
 #endif
 
 #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
@@ -3235,28 +3489,30 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 
        // add source file name
           string sourceFilename              = get_sourceFileNameWithPath();
-          string preprocessFilename;
 
           // use a pseudonym for source file in case original extension does not permit preprocessing
-             // compute absolute path for pseudonym
-                // TODO: when boost 1.46 is available, use boost::filesystem to get 'dir', 'abs_dir', and 'base'
-                string dir = StringUtility::getPathFromFileName(this->get_unparse_output_filename());
-                string abs_dir = StringUtility::getAbsolutePathFromRelativePath(dir.empty() ? getWorkingDirectory() : dir);  // Windows 'tempnam' requires this
-                string file = StringUtility::stripPathFromFileName(sourceFilename);
-                string base = StringUtility::stripFileSuffixFromFileName(file);
-                char * temp = tempnam(abs_dir.c_str(), (base + "-").c_str());   // not deprecated in Visual Studio 2010
-                preprocessFilename = string(temp) + ".F90"; free(temp);
-             // copy source file to pseudonym file
-                try {
-                    rose::FileSystem::copyFile(sourceFilename, preprocessFilename);
-                } catch(exception &e) {
-                    cerr << "Error in copying file " << sourceFilename << " to " << preprocessFilename
-                         << " (" << e.what() << ")" << endl;
-                    ROSE_ASSERT(false);
-                }
+          // compute absolute path for pseudonym
+          FileSystem::Path abs_path = FileSystem::makeAbsolute(this->get_unparse_output_filename());
+          FileSystem::Path abs_dir = abs_path.parent_path();
+          FileSystem::Path base = abs_dir.filename().stem();
+          string preprocessFilename = (abs_dir / boost::filesystem::unique_path(base.string() + "-%%%%%%%%.F90")).string();
+
+          // The Sawyer::FileSystem::TemporaryFile d'tor will delete the file. We close the file after it's created because
+          // rose::FileSystem::copyFile will reopen it in binary mode anyway.
+          Sawyer::FileSystem::TemporaryFile tempFile(preprocessFilename);
+          tempFile.stream().close();
+
+          // copy source file to pseudonym file
+          try {
+              rose::FileSystem::copyFile(sourceFilename, preprocessFilename);
+          } catch(exception &e) {
+              cerr << "Error in copying file " << sourceFilename << " to " << preprocessFilename
+                   << " (" << e.what() << ")" << endl;
+              ROSE_ASSERT(false);
+          }
           fortran_C_preprocessor_commandLine.push_back(preprocessFilename);
 
-       // add option to specify output file name
+          // add option to specify output file name
           fortran_C_preprocessor_commandLine.push_back("-o");
           string sourceFileNameOutputFromCpp = generate_C_preprocessor_intermediate_filename(sourceFilename);
           fortran_C_preprocessor_commandLine.push_back(sourceFileNameOutputFromCpp);
@@ -3274,15 +3530,6 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           {
              printf ("Error in running cpp on Fortran code: errorCode = %d \n",errorCode);
              ROSE_ASSERT(false);
-          }
-
-       // clean up after alias processing
-          try { boost::filesystem::remove(preprocessFilename); }
-          catch(exception &e)
-          {
-            cout << "Error in removing file " << preprocessFilename
-                 << " (" << e.what() << ")" << endl;
-            ROSE_ASSERT(false);
           }
      }
 
@@ -3838,7 +4085,16 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
        // string path_to_table = findRoseSupportPathFromSource("src/3rdPartyLibraries/experimental-fortran-parser/Fortran.tbl", "bin/Fortran.tbl");
        // string path_to_table = findRoseSupportPathFromBuild("src/3rdPartyLibraries/experimental-fortran-parser/Fortran.tbl", "bin/Fortran.tbl");
        // string path_to_table = findRoseSupportPathFromBuild("src/3rdPartyLibraries/experimental-fortran-parser/sdf_syntax/Fortran.tbl", "bin/Fortran.tbl");
-          string path_to_table = "/nfs/casc/overture/ROSE/aterm_for_rose_bin/Fortran.tbl";
+       // string path_to_table = "/nfs/casc/overture/ROSE/aterm_for_rose_bin/Fortran.tbl";
+
+       // Rasmussen (2/22/2017): OFP_BIN_PATH is the path to the Fortran parse table and other
+       // binaries used in transforming an OFP parse tree to an SgUntypedNode ATerm representation.
+#ifndef USE_CMAKE
+          std::string path_to_table = OFP_BIN_PATH;
+#else
+          std::string path_to_table = "";
+#endif
+          path_to_table += "/Fortran.tbl";
 
           experimentalFrontEndCommandLine.push_back(path_to_table);
 
@@ -3850,24 +4106,21 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           char** experimental_openFortranParser_argv = NULL;
           CommandlineProcessing::generateArgcArgvFromList(experimentalFrontEndCommandLine,experimental_openFortranParser_argc,experimental_openFortranParser_argv);
 
-          printf ("Calling the experimental fortran frontend (this work is incomplete) \n");
-          printf ("   --- Fortran numberOfCommandLineArguments = %" PRIuPTR " frontEndCommandLine = %s \n",experimentalFrontEndCommandLine.size(),CommandlineProcessing::generateStringFromArgList(experimentalFrontEndCommandLine,false,false).c_str());
+          if ( SgProject::get_verbose() > 1 )
+             {
+                printf ("Calling the experimental fortran frontend (this work is incomplete) \n");
+                printf ("   --- Fortran numberOfCommandLineArguments = %" PRIuPTR " frontEndCommandLine = %s \n",experimentalFrontEndCommandLine.size(),CommandlineProcessing::generateStringFromArgList(experimentalFrontEndCommandLine,false,false).c_str());
+             }
+
 #ifdef ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
-       // frontendErrorLevel = experimental_openFortranParser_main (experimental_openFortranParser_argc, experimental_openFortranParser_argv);
-          SgUntypedFile* untypedFile = experimental_openFortranParser_main (experimental_openFortranParser_argc, experimental_openFortranParser_argv);
-          frontendErrorLevel = (untypedFile != NULL) ? 0 : 1;
+          frontendErrorLevel = experimental_openFortranParser_main (experimental_openFortranParser_argc, experimental_openFortranParser_argv);
 #else
           printf ("ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION is not defined \n");
 #endif
-          printf ("DONE: Calling the experimental fortran frontend (this work is incomplete) frontendErrorLevel = %d \n",frontendErrorLevel);
+
           if (frontendErrorLevel == 0)
              {
-#if 0
-               printf ("Exiting before unparser (checking only through call to experimental_openFortranParser_main(): SUCESS! \n");
-               exit(0);
-#else
-               printf ("frontendErrorLevel == 0: call to experimental_openFortranParser_main(): SUCESS! \n");
-#endif
+                if ( SgProject::get_verbose() > 1 ) printf ("SUCCESS with call to experimental_openFortranParser_main() \n");
              }
             else
              {
@@ -3886,7 +4139,8 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
   // ROSE_ASSERT(astIncludeStack.size() == 0);
      if (astIncludeStack.size() != 0)
         {
-          printf ("Warning: astIncludeStack not cleaned up after openFortranParser_main(): astIncludeStack.size() = %" PRIuPTR " \n",astIncludeStack.size());
+       // DQ (3/17/2017): Added support to use message streams.
+          mprintf ("Warning: astIncludeStack not cleaned up after openFortranParser_main(): astIncludeStack.size() = %" PRIuPTR " \n",astIncludeStack.size());
         }
 #endif
 
@@ -6952,6 +7206,7 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
   //   - SgAddressOfOp
   //   - SgFunctionRefExp
   //   - SgMemberFunctionRefExp
+  //   - SgFunctionSymbol  // Liao 4/7/2017, discovered by a call to RAJA template functions using lambda expressions
   // schroder3 (2016-06-28): There are some more (see below).
 
   // Some virtual functions are resolved statically (e.g. for objects allocated on the stack)
@@ -7240,12 +7495,23 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
 #endif
                break;
              }
-
+          case V_SgFunctionSymbol: 
+             {
+               returnSymbol = isSgFunctionSymbol(functionExp);
+               break; 
+             }
           default:
              {
+               // Send out error message before the assertion, which may fail and stop first otherwise. 
+               mprintf("Error: There should be no other cases functionExp = %p = %s \n", functionExp, functionExp->class_name().c_str());
+
                ROSE_ASSERT(functionExp->get_file_info() != NULL);
-               functionExp->get_file_info()->display("In SgFunctionCallExp::getAssociatedFunctionSymbol(): case not supported: debug");
-               printf("Error: There should be no other cases functionExp = %p = %s \n", functionExp, functionExp->class_name().c_str());
+
+            // DQ (3/15/2017): Fixed to use mlog message logging.
+               if (rose::ir_node_mlog[rose::Diagnostics::DEBUG])
+                  {
+                    functionExp->get_file_info()->display("In SgFunctionCallExp::getAssociatedFunctionSymbol(): case not supported: debug");
+                  }
 
                // schroder3 (2016-07-25): Changed "#if 1" to "#if 0" to remove ROSE_ASSERT. If this member function is unable to determine the
                //  associated function then it should return 0 instead of raising an assertion.

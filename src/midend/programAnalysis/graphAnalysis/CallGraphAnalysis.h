@@ -24,10 +24,10 @@ class ROSE_DLL_API SB_CallGraph {
   }
   virtual ~SB_CallGraph() {}
 
-  void createCallGraph(SgProject* project);
+  void createCallGraph(SgProject* project) ROSE_DEPRECATED("no longer supported");
 
-  RoseBin_CallGraphAnalysis* getBinaryCallGraph() {return bin_callanalysis;}
-  RoseSrc_CallGraphAnalysis* getSourceCallGraph() {return src_callanalysis;}
+  RoseBin_CallGraphAnalysis* getBinaryCallGraph() ROSE_DEPRECATED("no longer supported") {return bin_callanalysis;}
+  RoseSrc_CallGraphAnalysis* getSourceCallGraph() ROSE_DEPRECATED("no longer supported") {return src_callanalysis;}
 
 
 };

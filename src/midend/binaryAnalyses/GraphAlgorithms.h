@@ -19,19 +19,19 @@ public:
   //VirtualBinCFG::AuxiliaryInformation* get_bininfo() {return info;}
   //void set_bininfo(VirtualBinCFG::AuxiliaryInformation* in) { info=in;}
 
- GraphAlgorithms(VirtualBinCFG::AuxiliaryInformation* info):
+    GraphAlgorithms(VirtualBinCFG::AuxiliaryInformation* info):
 #ifdef _MSC_VER
 //#define __builtin_constant_p(exp) (0)
 #endif
   info(info) {ROSE_ASSERT(info);}
   virtual ~GraphAlgorithms() {}
 
-  SgGraphNode* getDefinitionForUsage(RoseBin_Graph* vizzGraph,SgGraphNode* def);
+  SgGraphNode* getDefinitionForUsage(RoseBin_Graph* vizzGraph,SgGraphNode* def) ROSE_DEPRECATED("no longer supported");
 
-  void getDirectCFGSuccessors(RoseBin_Graph* vizzGraph,SgGraphNode* node, std::vector <SgGraphNode*>& vec );
-  void getDirectCFGPredecessors(RoseBin_Graph* vizzGraph,SgGraphNode* node, std::vector <SgGraphNode*>& vec );
-   bool isValidCFGEdge(SgGraphNode* sgNode, SgGraphNode* sgNodeBefore);
-   bool isDirectCFGEdge(SgGraphNode* sgNode, SgGraphNode* sgNodeBefore);
+  void getDirectCFGSuccessors(RoseBin_Graph* vizzGraph,SgGraphNode* node, std::vector <SgGraphNode*>& vec ) ROSE_DEPRECATED("no longer supported");
+  void getDirectCFGPredecessors(RoseBin_Graph* vizzGraph,SgGraphNode* node, std::vector <SgGraphNode*>& vec ) ROSE_DEPRECATED("no longer supported");
+   bool isValidCFGEdge(SgGraphNode* sgNode, SgGraphNode* sgNodeBefore) ROSE_DEPRECATED("no longer supported");
+   bool isDirectCFGEdge(SgGraphNode* sgNode, SgGraphNode* sgNodeBefore) ROSE_DEPRECATED("no longer supported");
 
 };
 

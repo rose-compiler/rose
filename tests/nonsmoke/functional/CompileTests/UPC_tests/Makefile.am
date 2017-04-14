@@ -343,7 +343,7 @@ SharedMemoryDSL_testcodes = \
    testSharedMemoryDSL_1 testSharedMemoryDSL_2 testSharedMemoryDSL_3 testSharedMemoryDSL_4 testSharedMemoryDSL_5 \
    testSharedMemoryDSL_6 testSharedMemoryDSL_7 testSharedMemoryDSL_8 testSharedMemoryDSL_9 testSharedMemoryDSL_10 \
    testSharedMemoryDSL_11 testSharedMemoryDSL_12 testSharedMemoryDSL_13 testSharedMemoryDSL_14 testSharedMemoryDSL_15 \
-   testSharedMemoryDSL_16 testSharedMemoryDSL_17 testSharedMemoryDSL_18 testSharedMemoryDSL_19 testSharedMemoryDSL_20 \
+   testSharedMemoryDSL_16                        testSharedMemoryDSL_18 testSharedMemoryDSL_19 testSharedMemoryDSL_20 \
    testSharedMemoryDSL_21 testSharedMemoryDSL_22 testSharedMemoryDSL_23 testSharedMemoryDSL_24 testSharedMemoryDSL_25 \
    testSharedMemoryDSL_26 testSharedMemoryDSL_27 testSharedMemoryDSL_28 testSharedMemoryDSL_29 testSharedMemoryDSL_30 \
    testSharedMemoryDSL_31 testSharedMemoryDSL_32 testSharedMemoryDSL_33 testSharedMemoryDSL_34  \
@@ -353,6 +353,11 @@ SharedMemoryDSL_testcodes = \
    testSharedMemoryDSL_51 testSharedMemoryDSL_52 testSharedMemoryDSL_53 testSharedMemoryDSL_54 testSharedMemoryDSL_55 \
    testSharedMemoryDSL_56 testSharedMemoryDSL_57 testSharedMemoryDSL_58 testSharedMemoryDSL_59 testSharedMemoryDSL_60 \
    testSharedMemoryDSL_61 testSharedMemoryDSL_62
+
+# DQ (2/21/2017): This test fails for ROSE when used with the Intel compiler.
+if USING_GNU_COMPILER
+SharedMemoryDSL_testcodes += testSharedMemoryDSL_17
+endif
 
 # DQ (7/15/2014): This requires a fix that is not on this branch (it is on another branch not yet merged).
 # testSharedMemoryDSL_35

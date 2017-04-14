@@ -505,12 +505,12 @@ testSemanticsApi(const Settings &settings, const P2::Engine &engine, const P2::P
                           PartialSymbolicSemantics::RiscOperatorsPtr> tester;
             tester.test(ops);
         } else if (settings.opsClassName == "partitioner2") {
-            TestSemantics<P2::Semantics::SValuePtr, P2::Semantics::RegisterStateGenericPtr,
+            TestSemantics<P2::Semantics::SValuePtr, P2::Semantics::RegisterStatePtr,
                           P2::Semantics::MemoryListStatePtr, P2::Semantics::StatePtr,
                           P2::Semantics::RiscOperatorsPtr> tester;
             tester.test(ops);
         } else if (settings.opsClassName == "symbolic") {
-            TestSemantics<SymbolicSemantics::SValuePtr, BaseSemantics::RegisterStateGenericPtr,
+            TestSemantics<SymbolicSemantics::SValuePtr, BaseSemantics::RegisterStatePtr,
                           SymbolicSemantics::MemoryListStatePtr, BaseSemantics::StatePtr,
                           SymbolicSemantics::RiscOperatorsPtr> tester;
             tester.test(ops);
@@ -649,7 +649,7 @@ runSemantics(const P2::BasicBlock::Ptr &bblock, const Settings &settings,
 int
 main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
-    Diagnostics::initAndRegister(::mlog, "tool");
+    Diagnostics::initAndRegister(&::mlog, "tool");
 
     // Parse the command-line to load, disassemble, and partition the specimen
     P2::Engine engine;

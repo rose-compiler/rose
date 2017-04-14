@@ -5,7 +5,6 @@
 
 using namespace rose;
 
-/* Print some debugging info */
 void
 SgAsmGenericFormat::dump(FILE *f, const char *prefix, ssize_t idx) const
 {

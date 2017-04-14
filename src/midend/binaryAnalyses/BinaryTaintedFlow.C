@@ -12,7 +12,7 @@ TaintedFlow::initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        rose::Diagnostics::initAndRegister(mlog, "rose::BinaryAnalysis::TaintedFlow");
+        rose::Diagnostics::initAndRegister(&mlog, "rose::BinaryAnalysis::TaintedFlow");
     }
 }
 

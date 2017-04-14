@@ -14,6 +14,9 @@ DFTransferFunctions::DFTransferFunctions():_programAbstractionLayer(0){}
 
 void DFTransferFunctions::transfer(Edge edge, Lattice& element) {
     Label lab0=edge.source();
+    //SgNode* node=getLabeler()->getNode(lab0);
+    //cout<<"DEBUG: transfer @"<<lab0<<":"<<node->unparseToString()<<endl;
+
     // switch statement has its own transfer functions which are selected in transfer function
     if(getLabeler()->isConditionLabel(lab0)&&!getLabeler()->isSwitchExprLabel(lab0)) {
       transferCondition(edge,element);

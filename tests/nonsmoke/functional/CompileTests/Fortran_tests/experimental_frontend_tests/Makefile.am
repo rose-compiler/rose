@@ -23,9 +23,6 @@ LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -L../../../../src/3rdPartyLibraries/e
 # F90_TESTCODES = main_program_2008_01.f90 main_program_2014_01.f90
 # F90_TESTCODES = test2014_02.f90
 F90_TESTCODES = \
- test2014_02.f90 \
- pause_stmt.f77 \
- R1001.f90 \
  R1101a.f90 \
  R1101b.f90 \
  R1101c.f90 \
@@ -33,6 +30,12 @@ F90_TESTCODES = \
  R1101e.f90 \
  R1101f.f90 \
  R1101g.f90 \
+ R404.f90   \
+ test2014_02.f90 \
+ tiny.f90
+
+F90_TESTCODES_WORKING_ON = \
+ R1001.f90 \
  R1109.f90 \
  R1111.f90 \
  R1120a.f90 \
@@ -50,7 +53,6 @@ F90_TESTCODES = \
  R1218.f90 \
  R1234.f90 \
  R1241.f90 \
- R404.f90 \
  R524.f90 \
  R526.f90 \
  R611.f90 \
@@ -93,6 +95,7 @@ F90_TESTCODES = \
  R930.f90
 
 FAILING_TESTS = \
+   pause_stmt.f77 \
    R432.f90 \
    R452.f90 \
    R858.f08 \

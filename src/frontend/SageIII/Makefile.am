@@ -123,8 +123,8 @@ GENERATED_SOURCE = \
 else
 GENERATED_SOURCE = \
 	Cxx_Grammar.h \
-	Cxx_GrammarAtermSupport.C \
 	Cxx_Grammar.C \
+	Cxx_GrammarAtermSupport.C \
 	Cxx_GrammarRTI.C \
 	Cxx_GrammarMemoryPoolSupport.C \
 	AstQueryMemoryPool.h \

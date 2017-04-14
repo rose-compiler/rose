@@ -2,7 +2,23 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # DQ (10/22/2016): Change order of tests (simple --> hardest).
 # SUBDIRS = LANL_POP gfortranTestSuite
-SUBDIRS = . gfortranTestSuite LANL_POP
+# SUBDIRS = . gfortranTestSuite LANL_POP
+
+SUBDIRS = . LANL_POP
+if USING_GNU_COMPILER
+SUBDIRS += gfortranTestSuite
+else
+if USING_CLANG_COMPILER
+SUBDIRS += gfortranTestSuite
+else
+if USING_INTEL_COMPILER
+# DQ (2/21/2017): This directory has some failing test codes for ROSE when compiled using the Intel v16 compiler, for example:
+#   gfortranTestSuite/gfortran.dg/continuation_6.f
+#   gfortranTestSuite/gfortran.dg/continuation_4.f90
+# SUBDIRS += gfortranTestSuite
+endif
+endif
+endif
 
 if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
    SUBDIRS += experimental_frontend_tests
@@ -402,6 +418,10 @@ endif
 #     test2010_119.f90
 
 
+# DQ (3/1/2017): If using Clang or Intel compilers then these variable might not be set. So avoid
+# using GNU 5.4 compiler on Ubuntu system by mistake (see ROSE Matrix Testing for 2/28/2017).
+if USING_GNU_COMPILER
+
 if !ROSE_USING_GFORTRAN_VERSION_4_0
  # These are tests that fail using the gfrotran version 4.0 compiler (but pass with all other versions of gfortran).
    F90_TESTCODES_REQUIRED_TO_PASS += test2007_263.f90
@@ -421,6 +441,9 @@ if !ROSE_USING_GFORTRAN_VERSION_LATER_4_5
      test2011_37.f90 
 endif
 endif
+
+endif
+
 
 # DQ (4/9/2011): Insure++ has identified problems with these tests, great news but I am not prepared to fix 
 # them yet. Currently these fail for Insure++, they also report errors which will be valuable in identifing 

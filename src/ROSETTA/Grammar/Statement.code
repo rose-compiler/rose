@@ -22,10 +22,9 @@ HEADER_START
           virtual void setStatic() ROSE_DEPRECATED_FUNCTION;
 
       protected:
-          virtual bool replace_child(SgStatement *target,SgStatement * newStmt, 
-                                         bool extractListFromBasicBlock = false);
-          virtual bool insert_child(SgStatement*, SgStatement*, bool inFront = true, 
-                                         bool extractListFromBasicBlock = false);
+          virtual bool replace_child(SgStatement *target,SgStatement * newStmt, bool extractListFromBasicBlock = false);
+          virtual bool insert_child(SgStatement*, SgStatement*, bool inFront = true, bool extractListFromBasicBlock = false);
+
        public:
           
       /* 
@@ -151,7 +150,7 @@ HEADER_START
           /*!
              \brief support general replace functions, used in statements that directly contain SgExpression IR nodes.
           */
-          virtual int replace_expression(SgExpression *,SgExpression *);
+          virtual int replace_expression(SgExpression* original_expression, SgExpression* new_expression );
 
        /* */
 
@@ -183,23 +182,23 @@ HEADER_START
 #endif
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-	  // Overriding SgNode versions of these
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual bool cfgIsIndexInteresting(unsigned int index) const;
-          virtual unsigned int cfgFindChildIndex(SgNode* n);
-          virtual unsigned int cfgFindNextChildIndex(SgNode* n);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+       // Overriding SgNode versions of these
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual bool cfgIsIndexInteresting(unsigned int index) const $ROSE_OVERRIDE;
+          virtual unsigned int cfgFindChildIndex(SgNode* n) $ROSE_OVERRIDE;
+          virtual unsigned int cfgFindNextChildIndex(SgNode* n) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
        // get lvalue
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
 #else
        // DQ (10/5/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
@@ -369,6 +368,9 @@ HEADER_SCOPE_STATEMENT_START
        // SgTemplateClassSymbol* lookup_template_class_symbol    (const SgName& n) const;
           SgTemplateClassSymbol* lookup_template_class_symbol    (const SgName& n, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList) const;
 
+       // DQ (3/8/2017): Adding support for SgTemplateTypedefDeclaration IR nodes.
+          SgTemplateTypedefSymbol* lookup_template_typedef_symbol (const SgName& n) const;
+
        // DQ (8/22/2012): If we have template arguments then we have a chance to disambiguate SgTemplateInstantiationDecl IR nodes based on the
        // arguments which would otherwise require qulified names (which are difficult to robustly support using as the AST is being constructed).
           SgClassSymbol*     lookup_nontemplate_class_symbol (const SgName& n, SgTemplateArgumentPtrList* templateArgumentsList) const;
@@ -537,9 +539,9 @@ HEADER_SCOPE_STATEMENT_START
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
 #else
        // DQ (10/6/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
@@ -730,7 +732,7 @@ HEADER_STATEMENT_POSTDECLARATION_END
 
 
 HEADER_POST_CONSTRUCTION_INITIALIZATION_START
-          void post_construction_initialization();
+          void post_construction_initialization() $ROSE_OVERRIDE;
 HEADER_POST_CONSTRUCTION_INITIALIZATION_END
 
 
@@ -859,9 +861,9 @@ HEADER_DECLARATION_STATEMENT_START
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
 #else
        // DQ (10/5/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
@@ -880,7 +882,7 @@ HEADER_DECLARATION_STATEMENT_START
        // virtual SgSymbol* get_symbol_from_symbol_table();
 
        // DQ (2/11/2007): Added to support the virtual function in derived classes
-          virtual SgSymbol* get_symbol_from_symbol_table() const;
+          virtual SgSymbol* get_symbol_from_symbol_table() const $ROSE_OVERRIDE;
 
        // DQ (7/4/2007): Get the declaration for which get_symbol_from_symbol_table() returns a valid pointer.
           SgDeclarationStatement* get_declaration_associated_with_symbol() const;
@@ -946,24 +948,24 @@ HEADER_LIST_DECLARATIONS_END
 HEADER_GLOBAL_START
 
        // DQ (9/8/2004): Added to support general name qualification
-          virtual SgName get_qualified_name() const;
+          virtual SgName get_qualified_name() const $ROSE_OVERRIDE;
 
        // DQ (2/22/2007): Added support for mangled name of SgGlobal to better support generation of 
        // mangled names which include the scope! Previously the mangled name of some declarations used
        // the qualified name of the scope which put "::" substrings into the mangled names!  This is
        // inappropriate because the mangled names have to be able to be variable names and must follow 
        // C/C++ standards for construction of variable names.
-          virtual SgName get_mangled_name() const;
+          virtual SgName get_mangled_name() const $ROSE_OVERRIDE;
 
        // DQ (10/6/2006): Support for mangle name caching (for better performance)
        // std::map<SgNode*,std::string> & get_mangledNameCache();
        // std::map<std::string, int> & get_shortMangledNameCache();
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
-          virtual bool cfgIsIndexInteresting(unsigned int idx) const;
-          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual bool cfgIsIndexInteresting(unsigned int idx) const $ROSE_OVERRIDE;
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
 #endif
 
 #if 1
@@ -974,18 +976,16 @@ HEADER_GLOBAL_START
 HEADER_LIST_DECLARATIONS
 
      protected:
-          virtual bool insert_child(SgStatement*, SgStatement*, bool inFront = true,
-                                         bool extractListFromBasicBlock = false);
-          virtual bool replace_child(SgStatement *,SgStatement *,
-                                         bool extractListFromBasicBlock = false);
+          virtual bool insert_child(SgStatement*, SgStatement*, bool inFront = true, bool extractListFromBasicBlock = false) $ROSE_OVERRIDE;
+          virtual bool replace_child(SgStatement *,SgStatement *, bool extractListFromBasicBlock = false) $ROSE_OVERRIDE;
 
      public:
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
 #else
        // DQ (10/5/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
@@ -997,10 +997,10 @@ HEADER_GLOBAL_END
 HEADER_BASIC_BLOCK_START
 
        // DQ (9/8/2004): Added to support general name qualification
-          virtual SgName get_qualified_name() const;
+          virtual SgName get_qualified_name() const $ROSE_OVERRIDE;
 
        // DQ (2/22/2007): Added for uniform support of mangled names
-          virtual SgName get_mangled_name() const;
+          virtual SgName get_mangled_name() const $ROSE_OVERRIDE;
 
        // Special case constructor
           SgBasicBlock ( Sg_File_Info* info = NULL, SgStatement* stmt = NULL );
@@ -1016,18 +1016,16 @@ HEADER_LIST_DECLARATIONS
        // void prepend_statement(const SgStatementPtrList::iterator& where, SgStatement* what);
 
        protected:
-          virtual bool replace_child(SgStatement *,SgStatement *,
-                                         bool extractListFromBasicBlock = false);
+          virtual bool replace_child(SgStatement *,SgStatement *, bool extractListFromBasicBlock = false) $ROSE_OVERRIDE;
+          virtual bool insert_child(SgStatement*, SgStatement*, bool inFront = true, bool extractListFromBasicBlock = false) $ROSE_OVERRIDE;
 
-          virtual bool insert_child(SgStatement*, SgStatement*, bool inFront = true,
-                                         bool extractListFromBasicBlock = false);
       public:
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual bool cfgIsIndexInteresting(unsigned int) const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual bool cfgIsIndexInteresting(unsigned int) const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
        // void prepend_statement(const SgStatementPtrList::iterator& where, SgStatement *what);
@@ -1035,9 +1033,9 @@ HEADER_LIST_DECLARATIONS
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
 #else
        // DQ (10/6/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
@@ -1278,26 +1276,26 @@ HEADER_DECLARATION_STATEMENT_POSTDECLARATION_END
 HEADER_IF_STATEMENT_START
 
       protected:
-          virtual bool replace_child(SgStatement *,SgStatement *,
-                                         bool extractListFromBasicBlock = false);
+          virtual bool replace_child(SgStatement *,SgStatement *, bool extractListFromBasicBlock = false) $ROSE_OVERRIDE;
+
       public:
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual bool cfgIsIndexInteresting(unsigned int) const;
-          virtual unsigned int cfgFindChildIndex(SgNode* n);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual bool cfgIsIndexInteresting(unsigned int) const $ROSE_OVERRIDE;
+          virtual unsigned int cfgFindChildIndex(SgNode* n) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
        // DQ (2/22/2007): Added for uniform support of mangled names
-          virtual SgName get_mangled_name() const;
+          virtual SgName get_mangled_name() const $ROSE_OVERRIDE;
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
 #else
        // DQ (10/20/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
@@ -1318,8 +1316,8 @@ HEADER_LIST_DECLARATIONS
           const SgStatementPtrList & get_init_stmt() const;
 
        protected:
-          virtual bool replace_child(SgStatement *,SgStatement *,
-                                         bool extractListFromBasicBlock = false);
+          virtual bool replace_child(SgStatement *,SgStatement *, bool extractListFromBasicBlock = false) $ROSE_OVERRIDE;
+
        public:
 
        // DQ (11/25/2005): Support for previous interface function.
@@ -1328,25 +1326,25 @@ HEADER_LIST_DECLARATIONS
        // SgExpressionRoot* get_test_expr_root () const                            ROSE_DEPRECATED_FUNCTION;
        // void              set_test_expr_root (SgExpressionRoot* expressionRoot ) ROSE_DEPRECATED_FUNCTION;
 
-          int replace_expression(SgExpression * original_expression, SgExpression * new_expression );
+          int replace_expression(SgExpression * original_expression, SgExpression * new_expression ) $ROSE_OVERRIDE;
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual bool cfgIsIndexInteresting(unsigned int) const;
-          virtual unsigned int cfgFindChildIndex(SgNode* n);
-          virtual unsigned int cfgFindNextChildIndex(SgNode* n);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual bool cfgIsIndexInteresting(unsigned int) const $ROSE_OVERRIDE;
+          virtual unsigned int cfgFindChildIndex(SgNode* n) $ROSE_OVERRIDE;
+          virtual unsigned int cfgFindNextChildIndex(SgNode* n) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
        // DQ (2/22/2007): Added for uniform support of mangled names
-          virtual SgName get_mangled_name() const;
+          virtual SgName get_mangled_name() const $ROSE_OVERRIDE;
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
 #else
        // DQ (10/20/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
@@ -1357,23 +1355,22 @@ HEADER_FOR_STATEMENT_END
 
 HEADER_FOR_INIT_STATEMENT_START
         protected:
-          virtual bool replace_child(SgStatement *,SgStatement *,
-                                         bool extractListFromBasicBlock = false);
-          virtual bool insert_child(SgStatement*, SgStatement*, bool inFront = true,
-                                         bool extractListFromBasicBlock = false);
+          virtual bool replace_child(SgStatement *,SgStatement *, bool extractListFromBasicBlock = false) $ROSE_OVERRIDE;
+          virtual bool insert_child(SgStatement*, SgStatement*, bool inFront = true, bool extractListFromBasicBlock = false) $ROSE_OVERRIDE;
+
         public:
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
 #else
        // DQ (10/20/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
@@ -1384,12 +1381,12 @@ HEADER_FOR_INIT_STATEMENT_END
 
 HEADER_FORALL_STATEMENT_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual bool cfgIsIndexInteresting(unsigned int) const;
-          virtual unsigned int cfgFindChildIndex(SgNode* n);
-          virtual unsigned int cfgFindNextChildIndex(SgNode* n);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual bool cfgIsIndexInteresting(unsigned int) const $ROSE_OVERRIDE;
+          virtual unsigned int cfgFindChildIndex(SgNode* n) $ROSE_OVERRIDE;
+          virtual unsigned int cfgFindNextChildIndex(SgNode* n) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 HEADER_FORALL_STATEMENT_END
 
@@ -1397,12 +1394,12 @@ HEADER_FORALL_STATEMENT_END
 
 HEADER_MATLAB_FOR_STATEMENT_START
 /*#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual bool cfgIsIndexInteresting(unsigned int) const;
-          virtual unsigned int cfgFindChildIndex(SgNode* n);
-          virtual unsigned int cfgFindNextChildIndex(SgNode* n);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual bool cfgIsIndexInteresting(unsigned int) const $ROSE_OVERRIDE;
+          virtual unsigned int cfgFindChildIndex(SgNode* n) $ROSE_OVERRIDE;
+          virtual unsigned int cfgFindNextChildIndex(SgNode* n) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif*/
 HEADER_MATLAB_FOR_STATEMENT_END
 
@@ -1410,16 +1407,16 @@ HEADER_MATLAB_FOR_STATEMENT_END
 HEADER_CATCH_STATEMENT_SEQ_START
 HEADER_LIST_DECLARATIONS
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual bool cfgIsIndexInteresting(unsigned int) const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual bool cfgIsIndexInteresting(unsigned int) const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
 #else
        // DQ (10/20/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
@@ -1431,9 +1428,9 @@ HEADER_CATCH_STATEMENT_SEQ_END
 HEADER_STATIC_ASSERTION_DECLARATION_START
 
        // We need this to be defined to avoid calling the base class version (which is an error).
-          SgName get_mangled_name() const;
+          SgName get_mangled_name() const $ROSE_OVERRIDE;
 
-          bool hasExplicitScope() const;
+          bool hasExplicitScope() const $ROSE_OVERRIDE;
 
 HEADER_STATIC_ASSERTION_DECLARATION_END
 
@@ -1449,10 +1446,10 @@ HEADER_FUNCTION_DECLARATION_STATEMENT_START
 
        // Empty declaration substitution
        // void set_mangled_name();
-       // SgName get_mangled_name() const;
+       // SgName get_mangled_name() const $ROSE_OVERRIDE;
 
        // RV (1/31/2006): Removed dependence on SgUnparse_Info, and made virtual.
-          virtual SgName get_mangled_name(void) const;
+          virtual SgName get_mangled_name(void) const $ROSE_OVERRIDE;
 
        // DQ (4/28/2005): functions that are SgTemplateInstatiationMemberFunctionDecl can be non-template 
        // functions in a class that is a template class or a nested class in a templated class, this function 
@@ -1464,15 +1461,15 @@ HEADER_FUNCTION_DECLARATION_STATEMENT_START
           const SgInitializedNamePtrList & get_args() const;
 
       //! Support for where the scope is explicitly required
-          virtual bool hasExplicitScope() const;
+          virtual bool hasExplicitScope() const $ROSE_OVERRIDE;
 
-          virtual SgSymbol* get_symbol_from_symbol_table() const;
+          virtual SgSymbol* get_symbol_from_symbol_table() const $ROSE_OVERRIDE;
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
 #else
        // DQ (10/6/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
@@ -1505,14 +1502,14 @@ HEADER_LIST_DECLARATIONS
           SgName get_template_header() const;
 
      protected:
-          virtual bool replace_child(SgStatement *,SgStatement *,
-                                         bool extractListFromBasicBlock = false);
+          virtual bool replace_child(SgStatement *,SgStatement *, bool extractListFromBasicBlock = false) $ROSE_OVERRIDE;
+
      public:  // (see comment above)
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
        // DQ (5/29/2011): Added support for return type name qualification.
@@ -1559,19 +1556,19 @@ HEADER_FUNCTION_PARAMETER_LIST_START
 HEADER_LIST_DECLARATIONS
 
        // DQ (2/18/2006): Added general name mangling for all declarations (and some other IR nodes).
-          virtual SgName get_mangled_name(void) const;
+          virtual SgName get_mangled_name(void) const $ROSE_OVERRIDE;
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
 #else
        // DQ (10/6/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
@@ -1583,13 +1580,13 @@ HEADER_CTOR_INITIALIZER_LIST_START
 HEADER_LIST_DECLARATIONS
 
        // DQ (2/18/2006): Added general name mangling for all declarations (and some other IR nodes).
-          virtual SgName get_mangled_name(void) const;
+          virtual SgName get_mangled_name(void) const $ROSE_OVERRIDE;
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
        // MD (7/09/2010): Added virtual CFG methods
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif          
 
 HEADER_CTOR_INITIALIZER_LIST_END
@@ -1607,12 +1604,12 @@ HEADER_FUNCTION_DEFINITION_STATEMENT_START
           void prepend_statement ( SgStatement* what );
 
         protected:
-          virtual bool replace_child(SgStatement *,SgStatement *,
-                                         bool extractListFromBasicBlock = false);
+          virtual bool replace_child(SgStatement *,SgStatement *, bool extractListFromBasicBlock = false) $ROSE_OVERRIDE;
+
         public:
 
        // RV (2/5/2006): Added name mangling for function definitions
-          virtual SgName get_mangled_name (void) const;
+          virtual SgName get_mangled_name (void) const $ROSE_OVERRIDE;
 
        // DQ (10/5/2006): Added support for storing unique block numbering within functions 
        // (cache values in a map instead of recomputing them, this also permits cache invalidation).
@@ -1621,14 +1618,14 @@ HEADER_FUNCTION_DEFINITION_STATEMENT_START
           void clearScopeNumbers();
           void resetScopeNumbers();
 
-          SgName get_qualified_name() const;
+          SgName get_qualified_name() const $ROSE_OVERRIDE;
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual bool cfgIsIndexInteresting(unsigned int) const;
-          virtual unsigned int cfgFindChildIndex(SgNode* n);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual bool cfgIsIndexInteresting(unsigned int) const $ROSE_OVERRIDE;
+          virtual unsigned int cfgFindChildIndex(SgNode* n) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
        // MD (09/20/2010): Accessor for preinitialization lists associated with 
@@ -1637,9 +1634,9 @@ HEADER_FUNCTION_DEFINITION_STATEMENT_START
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
 #else
        // DQ (10/6/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
@@ -1654,14 +1651,14 @@ HEADER_MEMBER_FUNCTION_DECLARATION_STATEMENT_START
 
 HEADER_LIST_DECLARATIONS
 
-          virtual SgName get_qualified_name() const;
+          virtual SgName get_qualified_name() const $ROSE_OVERRIDE;
           void set_orig_return_type( SgType *);
 
          SgInitializedNamePtrList & get_ctors();
          const SgInitializedNamePtrList & get_ctors() const;
 
       protected:
-          virtual bool replace_child(SgStatement *,SgStatement *, bool extractListFromBasicBlock = false);
+          virtual bool replace_child(SgStatement *,SgStatement *, bool extractListFromBasicBlock = false) $ROSE_OVERRIDE;
 
      public:
 
@@ -1690,19 +1687,19 @@ HEADER_LIST_DECLARATIONS
       //! This is an access function for the p_associatedClassDeclaration data member.
           void set_associatedClassDeclaration ( SgClassDeclaration* associatedClassDeclaration );
 
-          virtual SgSymbol* get_symbol_from_symbol_table() const;
+          virtual SgSymbol* get_symbol_from_symbol_table() const $ROSE_OVERRIDE;
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
 #else
        // DQ (10/19/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
@@ -1750,8 +1747,8 @@ HEADER_VARIABLE_DECLARATION_STATEMENT_START
           void initializeData(Sg_File_Info *info, SgInitializedName* c_item);
 
           void setDeclarationOnly() ROSE_DEPRECATED_FUNCTION;
-          void setExtern() ROSE_DEPRECATED_FUNCTION;
-          void setStatic() ROSE_DEPRECATED_FUNCTION;
+          void setExtern() $ROSE_OVERRIDE ROSE_DEPRECATED_FUNCTION;
+          void setStatic() $ROSE_OVERRIDE ROSE_DEPRECATED_FUNCTION;
           SgVariableDefinition *get_definition( SgInitializedName* ditem = 0 );
           SgInitializedName *get_decl_item(const SgName&);
        // SgInitializedName *get_defn_item(const SgName&);
@@ -1771,7 +1768,7 @@ HEADER_VARIABLE_DECLARATION_STATEMENT_START
           SgStatement *get_next(int &) const;
 
        // DQ (2/18/2006): Added general name mangling for all declarations (and some other IR nodes).
-          virtual SgName get_mangled_name(void) const;
+          virtual SgName get_mangled_name(void) const $ROSE_OVERRIDE;
 
        // DQ (6/1/2006): Get the type (base type if more than one variable) used for all variables in this variable declaration.
        // SgType *get_type();
@@ -1796,17 +1793,17 @@ HEADER_VARIABLE_DECLARATION_STATEMENT_START
 #endif
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual unsigned int cfgFindChildIndex(SgNode* n);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual unsigned int cfgFindChildIndex(SgNode* n) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
 #else
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
 #endif
@@ -1970,7 +1967,7 @@ HEADER_VARIABLE_DEFINITION_STATEMENT_START
           SgVariableDefinition( SgInitializedName *decl_item, SgInitializer *initializer);
 
        // DQ (2/18/2006): Added general name mangling for all declarations (and some other IR nodes).
-          virtual SgName get_mangled_name(void) const;
+          virtual SgName get_mangled_name(void) const $ROSE_OVERRIDE;
 
 HEADER_VARIABLE_DEFINITION_STATEMENT_END
 
@@ -1994,33 +1991,33 @@ HEADER_CLASS_DECLARATION_STATEMENT_START
           virtual SgName get_qualified_name() const;
 
        // RV (1/31/2006): Added this mangler to replace 'get_mangled_qualified_name'
-          virtual SgName get_mangled_name (void) const;
+          virtual SgName get_mangled_name (void) const $ROSE_OVERRIDE;
 
       //! \deprecated by RV (1/31/2006)
           SgName get_mangled_qualified_name(int & cnt );
 
      protected:
-          virtual bool replace_child(SgStatement *,SgStatement *, bool extractListFromBasicBlock = false);
+          virtual bool replace_child(SgStatement *,SgStatement *, bool extractListFromBasicBlock = false) $ROSE_OVERRIDE;
 
      public:
 
       //! Support for where the scope is explicitly required
-          virtual bool hasExplicitScope() const;
+          virtual bool hasExplicitScope() const $ROSE_OVERRIDE;
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
        // DQ (2/10/2007): I think this should have been marked virtual
-          virtual SgSymbol* get_symbol_from_symbol_table() const;
+          virtual SgSymbol* get_symbol_from_symbol_table() const $ROSE_OVERRIDE;
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
 #else
        // DQ (10/5/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
@@ -2051,20 +2048,17 @@ HEADER_LIST_DECLARATIONS_1
 
 HEADER_LIST_DECLARATIONS_2
 
-          virtual SgName get_qualified_name() const;
+          virtual SgName get_qualified_name() const $ROSE_OVERRIDE;
 
        // RV (1/31/2006): Added this mangler to replace 'get_mangled_qualified_name'
-          virtual SgName get_mangled_name (void) const;
+          virtual SgName get_mangled_name (void) const $ROSE_OVERRIDE;
 
       //! \deprecated
           SgName get_mangled_qualified_name(int& i);
 
           protected:
-          virtual bool replace_child(SgStatement *,SgStatement *,
-                                     bool extractListFromBasicBlock = false);
-
-          virtual bool insert_child( SgStatement*, SgStatement*, bool inFront = true,
-                                     bool extractListFromBasicBlock = false);
+          virtual bool replace_child(SgStatement *,SgStatement *, bool extractListFromBasicBlock = false) $ROSE_OVERRIDE;
+          virtual bool insert_child( SgStatement*, SgStatement*, bool inFront = true, bool extractListFromBasicBlock = false) $ROSE_OVERRIDE;
 
         public:
 
@@ -2076,9 +2070,9 @@ HEADER_LIST_DECLARATIONS_2
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
 #else
        // DQ (10/19/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
@@ -2087,7 +2081,7 @@ HEADER_LIST_DECLARATIONS_2
 HEADER_CLASS_DEFINITION_STATEMENT_END
 
 HEADER_STMT_DECLARATION_STATEMENT_START
-          virtual SgName get_mangled_name (void) const;
+          virtual SgName get_mangled_name (void) const $ROSE_OVERRIDE;
 HEADER_STMT_DECLARATION_STATEMENT_END
 
 HEADER_TEMPLATE_INSTANTIATION_DEFINITION_STATEMENT_START
@@ -2097,23 +2091,23 @@ HEADER_TEMPLATE_INSTANTIATION_DEFINITION_STATEMENT_START
        // SgName get_name () const;
 
        // DQ (9/8/2004): overrides base class implementation
-          virtual SgName get_qualified_name() const;
+          virtual SgName get_qualified_name() const $ROSE_OVERRIDE;
 
           SgTemplateInstantiationDefn( Sg_File_Info *f, SgTemplateInstantiationDecl* d);
           SgTemplateInstantiationDefn( SgTemplateInstantiationDecl* d);
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
 #else
        // DQ (10/19/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
 #endif
 
        // DQ (5/31/2012): Added to support mangled name testing (at least).
-          virtual SgName get_mangled_name(void) const;
+          virtual SgName get_mangled_name(void) const $ROSE_OVERRIDE;
 
 HEADER_TEMPLATE_INSTANTIATION_DEFINITION_STATEMENT_END
 
@@ -2126,25 +2120,25 @@ HEADER_LIST_DECLARATIONS
           virtual SgName get_qualified_name() const;
 
        // RV (1/31/2006): Implemented mangler for enum declarations.
-          virtual SgName get_mangled_name (void) const;
+          virtual SgName get_mangled_name (void) const $ROSE_OVERRIDE;
 
       //! Support for where the scope is explicitly required
-          virtual bool hasExplicitScope() const;
+          virtual bool hasExplicitScope() const $ROSE_OVERRIDE;
 
        // DQ (2/6/2007): Get the associated symbol from the symbol table in the stored scope
-          virtual SgSymbol* get_symbol_from_symbol_table() const;
+          virtual SgSymbol* get_symbol_from_symbol_table() const $ROSE_OVERRIDE;
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
 #else
        // DQ (10/18/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
@@ -2156,19 +2150,19 @@ HEADER_ENUM_DECLARATION_STATEMENT_END
 HEADER_EXPRESSION_STATEMENT_START
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
        // DQ (12/6/2006): Added to support general replace functions.
-          int replace_expression(SgExpression *,SgExpression *);
+          int replace_expression(SgExpression *,SgExpression *) $ROSE_OVERRIDE;
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
 #else
        // DQ (10/5/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
@@ -2185,26 +2179,26 @@ HEADER_LABEL_STATEMENT_START
           SgName get_name() const ROSE_DEPRECATED_FUNCTION;
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
        // DQ (2/10/2007): Marked as virtual to be consistent
-          virtual SgSymbol* get_symbol_from_symbol_table() const;
+          virtual SgSymbol* get_symbol_from_symbol_table() const $ROSE_OVERRIDE;
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
 #else
        // DQ (10/5/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
 #endif
 
       //! Support for where the scope is explicitly required
-          virtual bool hasExplicitScope() const;
+          virtual bool hasExplicitScope() const $ROSE_OVERRIDE;
 
        // DQ (8/21/2013): Added function to support calling get_type() from a SgDeclarationStatement so that the 
        // template low-level symbol table support function would compile cleanly.  Note that it is an error to 
@@ -2217,26 +2211,26 @@ HEADER_LABEL_STATEMENT_END
 
 HEADER_JAVA_LABEL_STATEMENT_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual bool cfgIsIndexInteresting(unsigned int idx) const;
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual bool cfgIsIndexInteresting(unsigned int idx) const $ROSE_OVERRIDE;
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 // CAVE3 (09/30/2011): Not sure what we need to fixup for java label
 /*
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
 #else
        // DQ (10/5/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
 #endif
 */
       // charles4: 09/13/2011 added to support Java (DQ (2/10/2007): Marked as virtual to be consistent)
-          virtual SgSymbol* get_symbol_from_symbol_table() const;
+          virtual SgSymbol* get_symbol_from_symbol_table() const $ROSE_OVERRIDE;
 
        // DQ (8/21/2013): Added function to support calling get_type() from a SgDeclarationStatement so that the 
        // template low-level symbol table support function would compile cleanly.  Note that it is an error to 
@@ -2257,26 +2251,26 @@ HEADER_WHILE_STATEMENT_START
 #endif
 
         protected:
-          virtual bool replace_child(SgStatement *,SgStatement *,
-                                         bool extractListFromBasicBlock = false);
+          virtual bool replace_child(SgStatement *,SgStatement *, bool extractListFromBasicBlock = false) $ROSE_OVERRIDE;
+
         public:
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual bool cfgIsIndexInteresting(unsigned int) const;
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual unsigned int cfgFindNextChildIndex(SgNode* n);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual bool cfgIsIndexInteresting(unsigned int) const $ROSE_OVERRIDE;
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual unsigned int cfgFindNextChildIndex(SgNode* n) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
        // DQ (2/22/2007): Added for uniform support of mangled names
-          virtual SgName get_mangled_name() const;
+          virtual SgName get_mangled_name() const $ROSE_OVERRIDE;
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
 #else
        // DQ (10/20/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
@@ -2287,24 +2281,24 @@ HEADER_WHILE_STATEMENT_END
 
 HEADER_DO_WHILE_STATEMENT_START
         protected:
-          virtual bool replace_child(SgStatement *,SgStatement *,
-                                         bool extractListFromBasicBlock = false);
+          virtual bool replace_child(SgStatement *,SgStatement *, bool extractListFromBasicBlock = false) $ROSE_OVERRIDE;
+
          public:
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual bool cfgIsIndexInteresting(unsigned int) const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual bool cfgIsIndexInteresting(unsigned int) const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
        // DQ (2/22/2007): Added for uniform support of mangled names
-          virtual SgName get_mangled_name() const;
+          virtual SgName get_mangled_name() const $ROSE_OVERRIDE;
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
 #else
        // DQ (10/20/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
@@ -2322,25 +2316,25 @@ HEADER_SWITCH_STATEMENT_START
           void append_default(SgDefaultOptionStmt *&);
 
         protected:
-          virtual bool replace_child(SgStatement *,SgStatement *,
-                                         bool extractListFromBasicBlock = false);
+          virtual bool replace_child(SgStatement *,SgStatement *, bool extractListFromBasicBlock = false) $ROSE_OVERRIDE;
+
         public:
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual bool cfgIsIndexInteresting(unsigned int) const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual bool cfgIsIndexInteresting(unsigned int) const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
        // DQ (2/22/2007): Added for uniform support of mangled names
-          virtual SgName get_mangled_name() const;
+          virtual SgName get_mangled_name() const $ROSE_OVERRIDE;
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
 #else
        // DQ (10/20/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
@@ -2351,22 +2345,21 @@ HEADER_SWITCH_STATEMENT_END
 
 HEADER_CASE_OPTION_STATEMENT_START
         protected:
-          virtual bool replace_child(SgStatement *,SgStatement *,
-                                         bool extractListFromBasicBlock = false);
+          virtual bool replace_child(SgStatement *,SgStatement *, bool extractListFromBasicBlock = false) $ROSE_OVERRIDE;
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual bool cfgIsIndexInteresting(unsigned int) const;
-          virtual unsigned int cfgFindChildIndex(SgNode* n);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual bool cfgIsIndexInteresting(unsigned int) const $ROSE_OVERRIDE;
+          virtual unsigned int cfgFindChildIndex(SgNode* n) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
 #else
        // DQ (10/20/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
@@ -2402,21 +2395,21 @@ HEADER_LIST_DECLARATIONS
 #endif
 
         protected:
-          virtual bool replace_child(SgStatement *,SgStatement *,
-                                         bool extractListFromBasicBlock = false);
+          virtual bool replace_child(SgStatement *,SgStatement *, bool extractListFromBasicBlock = false) $ROSE_OVERRIDE;
+
          public:
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual bool cfgIsIndexInteresting(unsigned int) const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual bool cfgIsIndexInteresting(unsigned int) const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
 #else
        // DQ (10/20/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
@@ -2433,24 +2426,23 @@ HEADER_CATCH_OPTION_STATEMENT_START
 
        // DQ (2/22/2007): Added mangled name support for scopes so that the 
        // mangled names for declarations could have better support!
-          virtual SgName get_mangled_name() const;
+          virtual SgName get_mangled_name() const $ROSE_OVERRIDE;
 
      protected:
-          virtual bool replace_child(SgStatement *,SgStatement *,
-                                         bool extractListFromBasicBlock = false);
+          virtual bool replace_child(SgStatement *,SgStatement *, bool extractListFromBasicBlock = false) $ROSE_OVERRIDE;
 
          public:
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
 #else
        // DQ (10/20/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
@@ -2466,22 +2458,22 @@ HEADER_DEFAULT_OPTION_STATEMENT_START
 #endif
 
         protected:
-          virtual bool replace_child(SgStatement *,SgStatement *,
-                                         bool extractListFromBasicBlock = false);
+          virtual bool replace_child(SgStatement *,SgStatement *, bool extractListFromBasicBlock = false) $ROSE_OVERRIDE;
+
         public:
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual bool cfgIsIndexInteresting(unsigned int) const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual bool cfgIsIndexInteresting(unsigned int) const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
 #else
        // DQ (10/20/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
@@ -2492,20 +2484,20 @@ HEADER_DEFAULT_OPTION_STATEMENT_END
 
 HEADER_BREAK_STATEMENT_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual bool cfgIsIndexInteresting(unsigned int) const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual bool cfgIsIndexInteresting(unsigned int) const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 HEADER_BREAK_STATEMENT_END
 
 
 HEADER_CONTINUE_STATEMENT_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual bool cfgIsIndexInteresting(unsigned int) const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual bool cfgIsIndexInteresting(unsigned int) const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 HEADER_CONTINUE_STATEMENT_END
 
@@ -2513,14 +2505,14 @@ HEADER_CONTINUE_STATEMENT_END
 HEADER_RETURN_STATEMENT_START
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
-          int replace_expression(SgExpression * original_expression, SgExpression * new_expression );
+          int replace_expression(SgExpression * original_expression, SgExpression * new_expression ) $ROSE_OVERRIDE;
 
        // get lvalue
-		  virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL
+          virtual bool isChildUsedAsLValue(const SgExpression* child) const $ROSE_OVERRIDE; // INTERNAL
 HEADER_RETURN_STATEMENT_END
 
 
@@ -2528,22 +2520,22 @@ HEADER_GOTO_STATEMENT_START
        // void post_construction_initialization();
 
         protected:
-          virtual bool replace_child(SgStatement *,SgStatement *,
-                                         bool extractListFromBasicBlock = false);
+          virtual bool replace_child(SgStatement *,SgStatement *, bool extractListFromBasicBlock = false) $ROSE_OVERRIDE;
+
         public:
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual bool cfgIsIndexInteresting(unsigned int) const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual bool cfgIsIndexInteresting(unsigned int) const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
 #else
        // DQ (10/5/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
@@ -2561,15 +2553,15 @@ HEADER_PYTHON_PRINT_STMT_END
 HEADER_ASM_STATEMENT_START
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
        // DQ (7/26/2006): Need a type for the list of registers used in the clobber list
           typedef std::vector<SgInitializedName::asm_register_name_enum> AsmRegisterNameList;
 
        // DQ (2/18/2006): Added general name mangling for all declarations (and some other IR nodes).
-          virtual SgName get_mangled_name(void) const;
+          virtual SgName get_mangled_name(void) const $ROSE_OVERRIDE;
 
        // DQ (7/22/2006): We need these to be explicit since we can't support reference parameter passing within ROSETTA.
           SgExpressionPtrList& get_operands();
@@ -2596,14 +2588,14 @@ HEADER_JAVA_FOREACH_STATEMENT_START
 
        public:
        // charles4 (9/07/2011): Added for uniform support of mangled names
-          virtual SgName get_mangled_name() const;
+          virtual SgName get_mangled_name() const $ROSE_OVERRIDE;
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual bool cfgIsIndexInteresting(unsigned int idx) const;
-          virtual unsigned int cfgFindNextChildIndex(SgNode* n);
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual bool cfgIsIndexInteresting(unsigned int idx) const $ROSE_OVERRIDE;
+          virtual unsigned int cfgFindNextChildIndex(SgNode* n) $ROSE_OVERRIDE;
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 HEADER_JAVA_FOREACH_STATEMENT_END
@@ -2612,11 +2604,11 @@ HEADER_JAVA_FOREACH_STATEMENT_END
 HEADER_JAVA_SYNCHRONIZED_STATEMENT_START
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgFindChildIndex(SgNode* n);
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual bool cfgIsIndexInteresting(unsigned int) const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgFindChildIndex(SgNode* n) $ROSE_OVERRIDE;
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual bool cfgIsIndexInteresting(unsigned int) const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 HEADER_JAVA_SYNCHRONIZED_STATEMENT_END
@@ -2625,9 +2617,9 @@ HEADER_JAVA_SYNCHRONIZED_STATEMENT_END
 HEADER_ASSERT_STMT_START
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 HEADER_ASSERT_STMT_END
@@ -2636,9 +2628,9 @@ HEADER_ASSERT_STMT_END
 HEADER_NULL_STATEMENT_START
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 HEADER_NULL_STATEMENT_END
@@ -2661,12 +2653,12 @@ HEADER_TYPEDEF_DECLARATION_STATEMENT_START
 #endif
 
      protected:
-          virtual bool replace_child(SgStatement *,SgStatement *,bool extractListFromBasicBlock = false);
+          virtual bool replace_child(SgStatement *,SgStatement *,bool extractListFromBasicBlock = false) $ROSE_OVERRIDE;
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
      public:
@@ -2674,22 +2666,22 @@ HEADER_TYPEDEF_DECLARATION_STATEMENT_START
           virtual SgName get_qualified_name() const;
 
        // RV (1/31/2006): Added this mangler for typedef declarations.
-          virtual SgName get_mangled_name (void) const;
+          virtual SgName get_mangled_name (void) const $ROSE_OVERRIDE;
 
       //! Support for where the scope is explicitly required
-          virtual bool hasExplicitScope() const;
+          virtual bool hasExplicitScope() const $ROSE_OVERRIDE;
 
        // DQ (2/10/2007): Marked as virtual to be consistent
-          virtual SgSymbol* get_symbol_from_symbol_table() const;
+          virtual SgSymbol* get_symbol_from_symbol_table() const $ROSE_OVERRIDE;
 
       //! Returns the defining declaration if get_typedefBaseTypeContainsDefiningDeclaration() is true, otherwise NULL. Also same as get_declaration().
           SgDeclarationStatement* get_baseTypeDefiningDeclaration() const;
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
 #else
        // DQ (10/14/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
@@ -2742,26 +2734,26 @@ HEADER_TEMPLATE_DECLARATION_STATEMENT_START
           virtual SgName get_qualified_name() const;
 
        // DQ (2/18/2006): Added general name mangling for all declarations (and some other IR nodes).
-          virtual SgName get_mangled_name(void) const;
+          virtual SgName get_mangled_name(void) const $ROSE_OVERRIDE;
 
        // This is generated by ROSETTA, though we might want to implement
        // it differently if we want to get the name from the declaration!
        // SgName get_name() const;
 
       //! Support for where the scope is explicitly required
-          virtual bool hasExplicitScope() const;
+          virtual bool hasExplicitScope() const $ROSE_OVERRIDE;
 
        // DQ (2/10/2007): Marked as virtual to be consistent
-          virtual SgSymbol* get_symbol_from_symbol_table() const;
+          virtual SgSymbol* get_symbol_from_symbol_table() const $ROSE_OVERRIDE;
 
        // DQ (12/12/2011): Explicit access function.
           SgType* get_type();
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
 #else
        // DQ (10/19/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
@@ -2785,7 +2777,7 @@ HEADER_TEMPLATE_CLASS_DECLARATION_STATEMENT_START
 // file to be defined for all user source code (which we can't allow for portability reasons).
 // #ifdef ROSE_USE_NEW_EDG_INTERFACE
        // DQ (9/10/2012): Added general name mangling for new template class declaration IR node.
-          virtual SgName get_mangled_name(void) const;
+          virtual SgName get_mangled_name(void) const $ROSE_OVERRIDE;
 // #endif
 
 HEADER_TEMPLATE_CLASS_DECLARATION_STATEMENT_END
@@ -2802,8 +2794,8 @@ HEADER_TEMPLATE_CLASS_DEFINITION_STATEMENT_START
           SgTemplateClassDeclaration* get_declaration() const;
           void set_declaration(SgTemplateClassDeclaration* new_val);
 
-          SgName get_qualified_name() const;
-          SgName get_mangled_name (void) const;
+          SgName get_qualified_name() const $ROSE_OVERRIDE;
+          SgName get_mangled_name (void) const $ROSE_OVERRIDE;
           SgName get_mangled_qualified_name (int& i);
 
        // DQ (11/19/2011): Added constructor to match SgClassDefinition API.
@@ -2820,7 +2812,7 @@ HEADER_TEMPLATE_FUNCTION_DEFINITION_STATEMENT_START
           SgTemplateFunctionDeclaration* get_declaration() const;
           void set_declaration(SgTemplateFunctionDeclaration* new_val);
 
-          virtual SgName get_mangled_name (void) const;
+          virtual SgName get_mangled_name (void) const $ROSE_OVERRIDE;
 
 HEADER_TEMPLATE_FUNCTION_DEFINITION_STATEMENT_END
 
@@ -2858,10 +2850,10 @@ HEADER_TEMPLATE_INSTANTIATION_DECLARATION_STATEMENT_START
        // SgName get_name () const;
        // void set_name (SgName name);
 
-          virtual SgName get_qualified_name () const;
+          virtual SgName get_qualified_name () const $ROSE_OVERRIDE;
 
        // RV (1/31/2006): Added mangler for template instantiation declarations.
-          virtual SgName get_mangled_name (void) const;
+          virtual SgName get_mangled_name (void) const $ROSE_OVERRIDE;
 
        // DQ (9/23/2004): Added function to hide base class interface so that we would only set the 
        // definition for a template instantiation declaration using a template instantiation definition.
@@ -2873,13 +2865,13 @@ HEADER_TEMPLATE_INSTANTIATION_DECLARATION_STATEMENT_START
           void set_definition( SgClassDefinition* definition );
 
        // DQ (2/11/2007): Add this to the derived class so that the SgSymbolTable::find() function will work properly
-          virtual SgSymbol* get_symbol_from_symbol_table() const;
+          virtual SgSymbol* get_symbol_from_symbol_table() const $ROSE_OVERRIDE;
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
 #else
        // DQ (11/6/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
@@ -2923,16 +2915,16 @@ HEADER_TEMPLATE_FUNCTION_INSTANTIATION_DECLARATION_STATEMENT_START
        // void set_name (SgName name);
 
        // RV (1/31/2006): Added mangler for template function instantiations.
-          virtual SgName get_mangled_name (void) const;
+          virtual SgName get_mangled_name (void) const $ROSE_OVERRIDE;
 
        // DQ (2/11/2007): Add this to the derived class so that the SgSymbolTable::find() function will work properly
-          virtual SgSymbol* get_symbol_from_symbol_table() const;
+          virtual SgSymbol* get_symbol_from_symbol_table() const $ROSE_OVERRIDE;
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
 #else
        // DQ (10/19/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
@@ -2978,16 +2970,16 @@ HEADER_TEMPLATE_MEMBER_FUNCTION_INSTANTIATION_DECLARATION_STATEMENT_START
 
        // RV (1/31/2006): Added mangler for template member function instantiations.
       //! Returns a mangled name.
-          virtual SgName get_mangled_name (void) const;
+          virtual SgName get_mangled_name (void) const $ROSE_OVERRIDE;
 
        // DQ (2/11/2007): Add this to the derived class so that the SgSymbolTable::find() function will work properly
-          virtual SgSymbol* get_symbol_from_symbol_table() const;
+          virtual SgSymbol* get_symbol_from_symbol_table() const $ROSE_OVERRIDE;
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
 #else
        // DQ (11/6/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
@@ -3052,12 +3044,12 @@ HEADER_TEMPLATE_INSTANTIATION_TYPEDEF_DECLARATION_STATEMENT_END
 HEADER_PRAGMA_STATEMENT_START
 
        // DQ (2/18/2006): Added general name mangling for all declarations (and some other IR nodes).
-          virtual SgName get_mangled_name(void) const;
+          virtual SgName get_mangled_name(void) const $ROSE_OVERRIDE;
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 HEADER_PRAGMA_STATEMENT_END
@@ -3069,7 +3061,7 @@ HEADER_NAMESPACE_DECLARATION_STATEMENT_START
           virtual SgName get_qualified_name() const;
 
        // RV (1/31/2006): Added mangler for namespace declarations.
-          virtual SgName get_mangled_name (void) const;
+          virtual SgName get_mangled_name (void) const $ROSE_OVERRIDE;
 
 #if 0
        // Wrong, this should be structural and not explicitly stored
@@ -3080,11 +3072,11 @@ HEADER_NAMESPACE_DECLARATION_STATEMENT_START
        // maintains the source code structural relationships, which the scope represents the semantic 
        // relationships.
       //! Support for where the scope is explicitly required
-          virtual bool hasExplicitScope() const;
+          virtual bool hasExplicitScope() const $ROSE_OVERRIDE;
 #endif
 
        // DQ (2/10/2007): Marked as virtual to be consistent
-          virtual SgSymbol* get_symbol_from_symbol_table() const;
+          virtual SgSymbol* get_symbol_from_symbol_table() const $ROSE_OVERRIDE;
 
        // DQ (6/5/2007): Since namespaces are re-entrant we define a simple function to test if two namespaces 
        // are the same (not the same SgNamespaceDeclarationStatement, but the same namespace).
@@ -3093,9 +3085,9 @@ HEADER_NAMESPACE_DECLARATION_STATEMENT_START
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
 #else
        // DQ (10/5/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
@@ -3106,19 +3098,19 @@ HEADER_NAMESPACE_DECLARATION_STATEMENT_END
 HEADER_NAMESPACE_DEFINITION_STATEMENT_START
 
        // DQ (9/8/2004): Added to support qualified name generation
-          virtual SgName get_qualified_name() const;
+          virtual SgName get_qualified_name() const $ROSE_OVERRIDE;
 
        // RV (1/31/2006): Added mangler for namespace definitions.
-          virtual SgName get_mangled_name (void) const;
+          virtual SgName get_mangled_name (void) const $ROSE_OVERRIDE;
 
       //! Compare if to namespaces are the same namespace (may be different scopes).
           bool isSameNamespace(const SgNamespaceDefinitionStatement* n ) const;
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
 #else
        // DQ (10/19/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
@@ -3136,10 +3128,8 @@ HEADER_NAMESPACE_DEFINITION_STATEMENT_START
 #endif
 
      protected:
-          virtual bool replace_child ( SgStatement *,SgStatement *, 
-                                       bool extractListFromBasicBlock = false );
-          virtual bool insert_child ( SgStatement*, SgStatement*, bool inFront = true, 
-                                      bool extractListFromBasicBlock = false );
+          virtual bool replace_child ( SgStatement *,SgStatement *, bool extractListFromBasicBlock = false ) $ROSE_OVERRIDE;
+          virtual bool insert_child ( SgStatement*, SgStatement*, bool inFront = true, bool extractListFromBasicBlock = false ) $ROSE_OVERRIDE;
 
 HEADER_LIST_DECLARATIONS
 
@@ -3148,10 +3138,10 @@ HEADER_NAMESPACE_DEFINITION_STATEMENT_END
 HEADER_NAMESPACE_ALIAS_DECLARATION_STATEMENT_START
 
        // DQ (2/18/2006): Added general name mangling for all declarations (and some other IR nodes).
-          virtual SgName get_mangled_name(void) const;
+          virtual SgName get_mangled_name(void) const $ROSE_OVERRIDE;
 
        // DQ (8/30/2009): Added namespace alias support.
-          virtual SgSymbol* get_symbol_from_symbol_table() const;
+          virtual SgSymbol* get_symbol_from_symbol_table() const $ROSE_OVERRIDE;
 
        // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
           int get_name_qualification_length() const;
@@ -3170,13 +3160,13 @@ HEADER_NAMESPACE_ALIAS_DECLARATION_STATEMENT_END
 HEADER_USING_DIRECTIVE_STATEMENT_START
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
        // DQ (2/18/2006): Added general name mangling for all declarations (and some other IR nodes).
-          virtual SgName get_mangled_name(void) const;
+          virtual SgName get_mangled_name(void) const $ROSE_OVERRIDE;
 
        // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
           int get_name_qualification_length() const;
@@ -3195,16 +3185,16 @@ HEADER_USING_DIRECTIVE_STATEMENT_END
 HEADER_USING_DECLARATION_STATEMENT_START
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 // DQ (7/21/2005): The using declaration can reference either a SgDeclarationStatement or a SgInitializedName
 // object thus we need a single more general function to return whatever it is.  Maybe not!
 
        // DQ (2/18/2006): Added general name mangling for all declarations (and some other IR nodes).
-          virtual SgName get_mangled_name(void) const;
+          virtual SgName get_mangled_name(void) const $ROSE_OVERRIDE;
 
        // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
           int get_name_qualification_length() const;
@@ -3223,13 +3213,13 @@ HEADER_USING_DECLARATION_STATEMENT_END
 HEADER_TEMPLATE_INSTANTIATION_DIRECTIVE_STATEMENT_START
 
        // DQ (2/18/2006): Added general name mangling for all declarations (and some other IR nodes).
-          virtual SgName get_mangled_name(void) const;
+          virtual SgName get_mangled_name(void) const $ROSE_OVERRIDE;
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
 #else
        // DQ (10/15/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
@@ -3252,7 +3242,7 @@ HEADER_PROGRAM_HEADER_STATEMENT_START
   // SgType* get_orig_return_type() const;
 
   // DQ (3/20/2007): I think we need this
-     SgName get_mangled_name() const;
+     SgName get_mangled_name() const $ROSE_OVERRIDE;
 
   // DQ (3/20/2007): This should be added as a data member with automatically generated access functions.
   // void set_parameterList ( SgFunctionParameterList* );
@@ -3262,8 +3252,8 @@ HEADER_PROGRAM_HEADER_STATEMENT_START
   // const SgInitializedNamePtrList & get_args() const;
 
      protected:
-          virtual bool replace_child($GRAMMAR_PREFIX_Statement *,$GRAMMAR_PREFIX_Statement *,
-                                         bool extractListFromBasicBlock = false);
+          virtual bool replace_child($GRAMMAR_PREFIX_Statement *,$GRAMMAR_PREFIX_Statement *, bool extractListFromBasicBlock = false) $ROSE_OVERRIDE;
+
      public:
        // DQ (3/20/2007): Fortran Program does not have this concept.
        // void hasEllipses();
@@ -3291,7 +3281,7 @@ HEADER_PROCEDURE_HEADER_STATEMENT_START
                e_last_subprogram_kind        /*!< last value (upper bound on range of values, used in error checking) */
              };
 
-          SgName get_mangled_name() const;
+          SgName get_mangled_name() const $ROSE_OVERRIDE;
 
        /* HEADER_LIST_DECLARATIONS */
 
@@ -3313,21 +3303,21 @@ HEADER_PROCEDURE_HEADER_STATEMENT_END
 
 HEADER_ENTRY_STATEMENT_START
 
-          SgName get_mangled_name() const;
+          SgName get_mangled_name() const $ROSE_OVERRIDE;
 
 HEADER_ENTRY_STATEMENT_END
 
 HEADER_FORTRAN_DO_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual bool cfgIsIndexInteresting(unsigned int) const;
-          virtual unsigned int cfgFindChildIndex(SgNode* n);
-          virtual unsigned int cfgFindNextChildIndex(SgNode* n);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual bool cfgIsIndexInteresting(unsigned int) const $ROSE_OVERRIDE;
+          virtual unsigned int cfgFindChildIndex(SgNode* n) $ROSE_OVERRIDE;
+          virtual unsigned int cfgFindNextChildIndex(SgNode* n) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
           // Added for uniform support of mangled names, Liao, 3/11/2009
-          virtual SgName get_mangled_name() const;
+          virtual SgName get_mangled_name() const $ROSE_OVERRIDE;
 
 HEADER_FORTRAN_DO_END
 
@@ -3348,24 +3338,24 @@ HEADER_INTERFACE_STATEMENT_START
              };
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
-          virtual SgName get_mangled_name() const;
+          virtual SgName get_mangled_name() const $ROSE_OVERRIDE;
 HEADER_INTERFACE_STATEMENT_END
 
 HEADER_PARAMETER_STATEMENT_START
 HEADER_PARAMETER_STATEMENT_END
 
 HEADER_COMMON_BLOCK_STATEMENT_START
-          SgName get_mangled_name() const;
+          SgName get_mangled_name() const $ROSE_OVERRIDE;
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
           const SgCommonBlockObjectPtrList & get_block_list() const;
@@ -3373,12 +3363,12 @@ HEADER_COMMON_BLOCK_STATEMENT_START
 HEADER_COMMON_BLOCK_STATEMENT_END
 
 HEADER_MODULE_STATEMENT_START
-          virtual SgName get_mangled_name() const;
+          virtual SgName get_mangled_name() const $ROSE_OVERRIDE;
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
           std::vector<SgInterfaceStatement*> get_interfaces() const;
@@ -3394,22 +3384,22 @@ HEADER_MODULE_STATEMENT_END
 
 HEADER_CONTAINS_STATEMENT_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
-          virtual SgName get_mangled_name() const;
+          virtual SgName get_mangled_name() const $ROSE_OVERRIDE;
 HEADER_CONTAINS_STATEMENT_END
 
 HEADER_USE_STATEMENT_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
-          virtual SgName get_mangled_name() const;
+          virtual SgName get_mangled_name() const $ROSE_OVERRIDE;
 HEADER_USE_STATEMENT_END
 
 HEADER_STOP_OR_PAUSE_STATEMENT_START
@@ -3422,9 +3412,9 @@ HEADER_STOP_OR_PAUSE_STATEMENT_START
              };
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 HEADER_STOP_OR_PAUSE_STATEMENT_END
@@ -3454,89 +3444,89 @@ HEADER_IO_STATEMENT_END
 
 HEADER_PRINT_STATEMENT_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-     virtual unsigned int cfgIndexForEnd() const;
-     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+     virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 HEADER_PRINT_STATEMENT_END
 
 HEADER_READ_STATEMENT_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-     virtual unsigned int cfgIndexForEnd() const;
-     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+     virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 HEADER_READ_STATEMENT_END
 
 HEADER_WRITE_STATEMENT_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-     virtual unsigned int cfgIndexForEnd() const;
-     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+     virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 HEADER_WRITE_STATEMENT_END
 
 HEADER_OPEN_STATEMENT_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-     virtual unsigned int cfgIndexForEnd() const;
-     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+     virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 HEADER_OPEN_STATEMENT_END
 
 HEADER_CLOSE_STATEMENT_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-     virtual unsigned int cfgIndexForEnd() const;
-     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+     virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 HEADER_CLOSE_STATEMENT_END
 
 HEADER_INQUIRE_STATEMENT_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-     virtual unsigned int cfgIndexForEnd() const;
-     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+     virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 HEADER_INQUIRE_STATEMENT_END
 
 HEADER_FLUSH_STATEMENT_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-     virtual unsigned int cfgIndexForEnd() const;
-     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+     virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 HEADER_FLUSH_STATEMENT_END
 
 HEADER_REWIND_STATEMENT_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-     virtual unsigned int cfgIndexForEnd() const;
-     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+     virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 HEADER_REWIND_STATEMENT_END
 
 HEADER_BACKSPACE_STATEMENT_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-     virtual unsigned int cfgIndexForEnd() const;
-     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+     virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 HEADER_BACKSPACE_STATEMENT_END
 
 HEADER_ENDFILE_STATEMENT_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-     virtual unsigned int cfgIndexForEnd() const;
-     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+     virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 HEADER_ENDFILE_STATEMENT_END
 
 HEADER_WAIT_STATEMENT_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-     virtual unsigned int cfgIndexForEnd() const;
-     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+     virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 HEADER_WAIT_STATEMENT_END
 
@@ -3546,34 +3536,34 @@ HEADER_BLOCK_DATA_STATEMENT_START
 HEADER_BLOCK_DATA_STATEMENT_END
 
 HEADER_IMPLICIT_STATEMENT_START
-     SgName get_mangled_name() const;
+     SgName get_mangled_name() const $ROSE_OVERRIDE;
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-     virtual unsigned int cfgIndexForEnd() const;
-     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+     virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 HEADER_IMPLICIT_STATEMENT_END
 
 HEADER_STATEMENT_FUNCTION_STATEMENT_START
-     SgName get_mangled_name() const;
+     SgName get_mangled_name() const $ROSE_OVERRIDE;
 HEADER_STATEMENT_FUNCTION_STATEMENT_END
 
 HEADER_WHERE_STATEMENT_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-     virtual unsigned int cfgIndexForEnd() const;
-     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+     virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 HEADER_WHERE_STATEMENT_END
 
 HEADER_ELSE_WHERE_STATEMENT_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-     virtual unsigned int cfgIndexForEnd() const;
-     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+     virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 HEADER_ELSE_WHERE_STATEMENT_END
@@ -3582,26 +3572,26 @@ HEADER_NULLIFY_STATEMENT_START
 HEADER_NULLIFY_STATEMENT_END
 
 HEADER_EQUIVALENCE_STATEMENT_START
-     SgName get_mangled_name() const;
+     SgName get_mangled_name() const $ROSE_OVERRIDE;
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-     virtual unsigned int cfgIndexForEnd() const;
-     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+     virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 HEADER_EQUIVALENCE_STATEMENT_END
 
 HEADER_DERIVED_TYPE_STATEMENT_START
-     SgName get_mangled_name() const;
+     SgName get_mangled_name() const $ROSE_OVERRIDE;
 HEADER_DERIVED_TYPE_STATEMENT_END
 
 HEADER_ATTRIBUTE_SPECIFICATION_STATEMENT_START
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-     virtual unsigned int cfgIndexForEnd() const;
-     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+     virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+     virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
      public:
@@ -3630,7 +3620,7 @@ HEADER_ATTRIBUTE_SPECIFICATION_STATEMENT_START
                e_last_attribute_spec
              };
 
-          virtual SgName get_mangled_name() const;
+          virtual SgName get_mangled_name() const $ROSE_OVERRIDE;
 
           const SgStringList & get_name_list() const;
           SgStringList & get_name_list();
@@ -3667,9 +3657,9 @@ HEADER_SEQUENCE_STATEMENT_END
 
 HEADER_ARITHMETIC_IF_STATEMENT_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 HEADER_ARITHMETIC_IF_STATEMENT_END
@@ -3682,11 +3672,11 @@ HEADER_ASSIGN_STATEMENT_END
 HEADER_COMPUTED_GOTO_STATEMENT_START
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual bool cfgIsIndexInteresting(unsigned int) const;
-          virtual unsigned int cfgFindChildIndex(SgNode* n);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual bool cfgIsIndexInteresting(unsigned int) const $ROSE_OVERRIDE;
+          virtual unsigned int cfgFindChildIndex(SgNode* n) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 #if 0
@@ -3706,12 +3696,12 @@ HEADER_ASSIGNED_GOTO_STATEMENT_END
 
 HEADER_NAMELIST_STATEMENT_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
-          virtual SgName get_mangled_name() const;
+          virtual SgName get_mangled_name() const $ROSE_OVERRIDE;
 
           const SgNameGroupPtrList & get_group_list() const;
           SgNameGroupPtrList & get_group_list();
@@ -3720,12 +3710,12 @@ HEADER_NAMELIST_STATEMENT_END
 
 HEADER_IMPORT_STATEMENT_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
-          virtual SgName get_mangled_name() const;
+          virtual SgName get_mangled_name() const $ROSE_OVERRIDE;
 
           const SgExpressionPtrList & get_import_list() const;
           SgExpressionPtrList & get_import_list();
@@ -3734,23 +3724,23 @@ HEADER_IMPORT_STATEMENT_END
 
 HEADER_ASSOCIATE_STATEMENT_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
-          virtual SgName get_mangled_name() const;
+          virtual SgName get_mangled_name() const $ROSE_OVERRIDE;
 HEADER_ASSOCIATE_STATEMENT_END
 
 
 HEADER_FORMAT_STATEMENT_START
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
-          virtual SgName get_mangled_name() const;
+          virtual SgName get_mangled_name() const $ROSE_OVERRIDE;
 
        // const SgFormatItemPtrList & get_format_item_list() const;
        // SgFormatItemPtrList & get_format_item_list();
@@ -3760,11 +3750,11 @@ HEADER_FORMAT_STATEMENT_END
 
 HEADER_FORTRAN_INCLUDE_LINE_START
        // Not sure if we need these...
-       // virtual unsigned int cfgIndexForEnd() const;
-       // virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-       // virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+       // virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+       // virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+       // virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 
-          virtual SgName get_mangled_name() const;
+          virtual SgName get_mangled_name() const $ROSE_OVERRIDE;
 HEADER_FORTRAN_INCLUDE_LINE_END
 
 
@@ -3789,27 +3779,27 @@ HEADER_LIST_DECLARATIONS
          SgStatementPtrList & get_init_stmt();
           const SgStatementPtrList & get_init_stmt() const;
        protected:
-          virtual bool replace_child(SgStatement *,SgStatement *,
-                                         bool extractListFromBasicBlock = false);
+          virtual bool replace_child(SgStatement *,SgStatement *, bool extractListFromBasicBlock = false) $ROSE_OVERRIDE;
+
        public:
 
        // DQ (11/25/2005): Support for previous interface function.
           SgExpression*     get_test_expr () const                                 ROSE_DEPRECATED_FUNCTION;
           void              set_test_expr (SgExpression* expression )              ROSE_DEPRECATED_FUNCTION;
 
-          int replace_expression(SgExpression * original_expression, SgExpression * new_expression );
+          int replace_expression(SgExpression * original_expression, SgExpression * new_expression ) $ROSE_OVERRIDE;
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual bool cfgIsIndexInteresting(unsigned int) const;
-          virtual unsigned int cfgFindChildIndex(SgNode* n);
-          virtual unsigned int cfgFindNextChildIndex(SgNode* n);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual bool cfgIsIndexInteresting(unsigned int) const $ROSE_OVERRIDE;
+          virtual unsigned int cfgFindChildIndex(SgNode* n) $ROSE_OVERRIDE;
+          virtual unsigned int cfgFindNextChildIndex(SgNode* n) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
          // DQ (2/22/2007): Added for uniform support of mangled names
-          virtual SgName get_mangled_name() const;
+          virtual SgName get_mangled_name() const $ROSE_OVERRIDE;
 
 HEADER_UPC_FORALL_STATEMENT_END
 
@@ -3821,7 +3811,7 @@ HEADER_PREPROCESSOR_DIRECTIVE_STATEMENT_START
           static SgC_PreprocessorDirectiveStatement* createDirective ( PreprocessingInfo* currentPreprocessingInfo );
 
        // DQ (11/29/2008): Added for uniform support of mangled names
-          virtual SgName get_mangled_name() const;
+          virtual SgName get_mangled_name() const $ROSE_OVERRIDE;
 
 HEADER_PREPROCESSOR_DIRECTIVE_STATEMENT_END
 
@@ -3833,25 +3823,25 @@ HEADER_LINEMARKER_PREPROCESSOR_DIRECTIVE_STATEMENT_END
 HEADER_JAVA_IMPORT_STATEMENT_START
        // We might need to be able to read this file in and process it..., but hopefully the ECJ frontend takes care of that.
 
-          virtual SgName get_mangled_name (void) const;
+          virtual SgName get_mangled_name (void) const $ROSE_OVERRIDE;
 
 HEADER_JAVA_IMPORT_STATEMENT_END
 
 HEADER_JAVA_PACKAGE_DECLARATION_START
-          virtual SgName get_mangled_name() const;
+          virtual SgName get_mangled_name() const $ROSE_OVERRIDE;
 HEADER_JAVA_PACKAGE_DECLARATION_END
 
 HEADER_JAVA_PACKAGE_STATEMENT_START
-          virtual SgName get_mangled_name() const;
+          virtual SgName get_mangled_name() const $ROSE_OVERRIDE;
 HEADER_JAVA_PACKAGE_STATEMENT_END
 
 
 HEADER_MICROSOFT_ATTRIBUTE_DECLARATION_STATEMENT_START
 
        // We need this to be defined to avoid calling the base class version (which is an error).
-          SgName get_mangled_name() const;
+          SgName get_mangled_name() const $ROSE_OVERRIDE;
 
-          bool hasExplicitScope() const;
+          bool hasExplicitScope() const $ROSE_OVERRIDE;
 
 HEADER_MICROSOFT_ATTRIBUTE_DECLARATION_STATEMENT_END
 
@@ -4920,11 +4910,12 @@ SgScopeStatement::insert_symbol ( const SgName& n, SgSymbol* s )
 
           if (classScope != thisScope)
              {
-               printf ("Warning: SgScopeStatement::insert_symbol(): class_declaration->get_scope() != this \n");
-               printf ("   --- scope = %p = %s \n",this,this->class_name().c_str());
-               printf ("   --- class_declaration = %p = %s \n",class_declaration,class_declaration->class_name().c_str());
-               printf ("   --- class_declaration->get_scope() = %p = %s \n",class_declaration->get_scope(),class_declaration->get_scope()->class_name().c_str());
-               class_declaration->get_file_info()->display("class_declaration: debug");
+            // DQ (3/6/2017): Added support for message logging to control output from ROSE tools.
+               mprintf ("Warning: SgScopeStatement::insert_symbol(): class_declaration->get_scope() != this \n");
+               mprintf ("   --- scope = %p = %s \n",this,this->class_name().c_str());
+               mprintf ("   --- class_declaration = %p = %s \n",class_declaration,class_declaration->class_name().c_str());
+               mprintf ("   --- class_declaration->get_scope() = %p = %s \n",class_declaration->get_scope(),class_declaration->get_scope()->class_name().c_str());
+            // class_declaration->get_file_info()->display("class_declaration: debug");
              }
        // ROSE_ASSERT(class_declaration->get_scope() == this);
         }
@@ -5498,6 +5489,48 @@ SgScopeStatement::lookup_template_class_symbol (const SgName& n, SgTemplateParam
 
      return p_symbol_table->find_template_class(n, templateParameterList, templateSpecializationArgumentList);
    }
+
+
+// DQ (3/8/2017): Adding support for SgTemplateTypedefDeclaration IR nodes. Note: not clear if template parameters are required here.
+SgTemplateTypedefSymbol* 
+// SgScopeStatement::lookup_template_typedef_symbol (const SgName& n, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList ) const
+SgScopeStatement::lookup_template_typedef_symbol (const SgName& n) const
+   {
+     ROSE_ASSERT (this != NULL);
+     ROSE_ASSERT (p_symbol_table != NULL);
+
+  // DQ (5/17/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
+     const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
+     if (namespaceDefinitionStatement != NULL)
+        {
+          ROSE_ASSERT(namespaceDefinitionStatement->get_global_definition() != NULL);
+          const SgNamespaceDefinitionStatement* globalNamespaceDefinitionStatement = namespaceDefinitionStatement->get_global_definition();
+#if 0
+          printf ("In SgScopeStatement::lookup_template_class_symbol(): name = %s this = %p = %s globalNamespaceDefinitionStatement = %p \n",n.str(),this,this->class_name().c_str(),globalNamespaceDefinitionStatement);
+#endif
+       // DQ (3/8/2017): We only want to use the name for looking of a template typedef (I think).
+       // return globalNamespaceDefinitionStatement->get_symbol_table()->find_template_typedef(n, templateParameterList, templateSpecializationArgumentList);
+          return globalNamespaceDefinitionStatement->get_symbol_table()->find_template_typedef(n);
+        }
+
+  // TV (7/18/2013): If this is a Global Scope then lookup the symbol in the project wide Global Scope
+     const SgGlobal * global_scope = isSgGlobal(this);
+     if (global_scope != NULL) {
+       SgProject * project = SageInterface::getProject(global_scope);
+       if (project != NULL) {
+         SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+         assert(globalScopeAcrossFiles != NULL);
+      // SgTemplateTypedefSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_template_typedef(n, templateParameterList, templateSpecializationArgumentList);
+         SgTemplateTypedefSymbol * symbol = globalScopeAcrossFiles->get_symbol_table()->find_template_typedef(n);
+         if (symbol != NULL) return symbol;
+       }
+     }
+
+  // return p_symbol_table->find_template_typedef(n, templateParameterList, templateSpecializationArgumentList);
+     return p_symbol_table->find_template_typedef(n);
+   }
+
+
 
 // DQ (8/22/2012): If we have template arguments then we have a chance to disambiguate SgTemplateInstantiationDecl IR nodes based on the
 // arguments which would otherwise require qulified names (which are difficult to robustly support using as the AST is being constructed).
@@ -18312,9 +18345,9 @@ SOURCE_FORMAT_STATEMENT_END
 
 SOURCE_FORTRAN_INCLUDE_LINE_START
        // Not sure if we need these...
-       // virtual unsigned int cfgIndexForEnd() const;
-       // virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-       // virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+       // virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+       // virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+       // virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 
 SgName
 SgFortranIncludeLine::get_mangled_name(void) const
@@ -18387,8 +18420,8 @@ SgOmpCriticalStatement::post_construction_initialization()
 SOURCE_OMP_CRITICAL_STATEMENT_END
 
 HEADER_OMP_THREADPRIVATE_STATEMENT_START
-  //! Required for any declaration statement
-  virtual SgName get_mangled_name(void) const;
+ //! Required for any declaration statement
+     virtual SgName get_mangled_name(void) const $ROSE_OVERRIDE;
 HEADER_OMP_THREADPRIVATE_STATEMENT_END
 
 SOURCE_OMP_THREADPRIVATE_STATEMENT_START
@@ -18494,14 +18527,14 @@ SgOmpTaskStatement::post_construction_initialization()
 SOURCE_OMP_TASK_STATEMENT_END
 
 HEADER_OMP_BODY_STATEMENT_START
-      virtual bool replace_child(SgStatement *,SgStatement *,
-                                   bool extractListFromBasicBlock = false);
+      virtual bool replace_child(SgStatement *,SgStatement *, bool extractListFromBasicBlock = false) $ROSE_OVERRIDE;
+
       public:
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-      virtual unsigned int cfgIndexForEnd() const;
-      virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-      virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+      virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+      virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+      virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 HEADER_OMP_BODY_STATEMENT_END
@@ -18523,9 +18556,9 @@ HEADER_OMP_CLAUSEBODY_STATEMENT_START
       public:
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-      virtual unsigned int cfgIndexForEnd() const;
-      virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-      virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+      virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+      virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+      virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
 HEADER_OMP_CLAUSEBODY_STATEMENT_END

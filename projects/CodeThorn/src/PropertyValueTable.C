@@ -360,6 +360,7 @@ void PropertyValueTable::printResultsStatistics() {
       <<endl;
 }
 
+#ifndef SPOT_NOT_AVAILABLE
 string PropertyValueTable::getLtlsAsPromelaCode(bool withResults, bool withAnnotations) {
   stringstream propertiesSpinSyntax;
   for (map<size_t, string>::iterator i=_formulas.begin(); i!=_formulas.end(); i++) {
@@ -384,6 +385,8 @@ string PropertyValueTable::getLtlsAsPromelaCode(bool withResults, bool withAnnot
   }
   return propertiesSpinSyntax.str();
 }
+#endif
+
 string PropertyValueTable::getLtlsRersFormat(bool withResults, bool withAnnotations) {
   stringstream propertiesRersFormat;
   for (map<size_t, string>::iterator i=_formulas.begin(); i!=_formulas.end(); i++) {

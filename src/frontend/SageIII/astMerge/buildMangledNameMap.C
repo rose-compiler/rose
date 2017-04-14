@@ -302,7 +302,8 @@ MangledNameMapTraversal::addToMap ( string key, SgNode* node)
           addAssociatedNodes(node,setOfNodesToDelete,false,matchingNodeInMergedAST);
 #else
 #ifndef _MSC_VER
-   #warning "Skipping call to addAssociatedNodes()"
+       // DQ (3/25/2017): Removed this warning (it appears to be related to old code).
+       // #warning "Skipping call to addAssociatedNodes()"
 #endif
                   // printf ("Skipping call to addAssociatedNodes() \n");
 #endif

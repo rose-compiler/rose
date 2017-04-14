@@ -10,6 +10,8 @@
 #include <climits>
 #include <string>
 #include <sstream>
+#include "BoolLattice.h"
+#include "VariableIdMapping.h"
 
 using std::string;
 using std::istream;
@@ -17,70 +19,7 @@ using std::ostream;
 
 namespace CodeThorn {
 
-/*!
-  \brief Several abstract types implementing abstract semantics.
-  \details These types are used by the analyzer for computing abstract values according the semantics of the respective domain.
-  \date 2012
-  \author Markus Schordan
- */
-
 namespace AType {
-
-  /*!
-    \brief Serves as top value in analysis.
-    \date 2012
-    \author Markus Schordan
-  */
-  class Top {
-  };
-
-/*!
-  \brief Serves as bot value in analysis.
-  \date 2012
-  \author Markus Schordan
- */
-  class Bot {
-  };
-
-/*!
-  \brief Implements semantic functions of a boolean lattice.
-  \date 2012
-  \author Markus Schordan, Adrian Prantl
-  \details All lattice domain operators are implemented as overloaded functions.
- */
-class BoolLattice {
- public:
-  enum ValueType { FALSE, TRUE, BOT, TOP};
-  BoolLattice();
-  BoolLattice(bool val); // type conversion
-  BoolLattice(Top e); // type conversion
-  BoolLattice(Bot e); // type conversion
-  BoolLattice(int x); // type conversion
-  bool isTop() const;
-  bool isTrue() const;
-  bool isFalse() const;
-  bool isBot() const;
-  BoolLattice operator!();
-  BoolLattice operator||(BoolLattice other);
-  BoolLattice operator&&(BoolLattice other);
-  /// least upper bound
-  BoolLattice lub(BoolLattice other);
-  /// greatest lower bound
-  BoolLattice glb(BoolLattice other);
-  /// operator= : C++ default used
-  bool operator==(BoolLattice other) const;
-  bool operator!=(BoolLattice other) const;
-  /// for sorting only!
-  bool operator<(BoolLattice other) const;
-  string toString() const;
-  inline ValueType val() const { return value; }
-  friend ostream& operator<<(ostream& os, const BoolLattice& value);
- private:
-  ValueType value;
-};
-
- ostream& operator<<(ostream& os, const BoolLattice& value);
-
  class ConstIntLattice;
 
  bool strictWeakOrderingIsSmaller(const ConstIntLattice& c1, const ConstIntLattice& c2);
@@ -96,7 +35,7 @@ class ConstIntLattice {
  public:
   friend bool strictWeakOrderingIsSmaller(const ConstIntLattice& c1, const ConstIntLattice& c2);
   friend bool strictWeakOrderingIsEqual(const ConstIntLattice& c1, const ConstIntLattice& c2);
-  enum ValueType { BOT, CONSTINT, TOP};
+  enum ValueType { BOT, CONSTINT, PTR, PATHEXPR, TOP};
   ConstIntLattice();
   ConstIntLattice(bool val);
   // type conversion
@@ -107,12 +46,12 @@ class ConstIntLattice {
   ConstIntLattice(signed char x);
   ConstIntLattice(unsigned char x);
   ConstIntLattice(short int x);
-  ConstIntLattice(int x);
-  ConstIntLattice(long int x);
-  ConstIntLattice(long long int x);
   ConstIntLattice(unsigned short int x);
+  ConstIntLattice(int x);
   ConstIntLattice(unsigned int x);
+  ConstIntLattice(long int x);
   ConstIntLattice(unsigned long int x);
+  ConstIntLattice(long long int x);
   ConstIntLattice(unsigned long long int x);
   bool isTop() const;
   bool isTrue() const;
@@ -120,6 +59,7 @@ class ConstIntLattice {
   bool isBot() const;
   // determines whether the value is known and constant. Otherwise it can be bot or top.
   bool isConstInt() const;
+  bool isPtr() const;
   ConstIntLattice operatorNot();
   ConstIntLattice operatorUnaryMinus(); // unary minus
   ConstIntLattice operatorOr(ConstIntLattice other);
@@ -131,11 +71,16 @@ class ConstIntLattice {
   ConstIntLattice operatorMoreOrEq(ConstIntLattice other) const;
   ConstIntLattice operatorMore(ConstIntLattice other) const;
 
+  ConstIntLattice operatorBitwiseAnd(ConstIntLattice other) const;
   ConstIntLattice operatorBitwiseOr(ConstIntLattice other) const;
   ConstIntLattice operatorBitwiseXor(ConstIntLattice other) const;
-  ConstIntLattice operatorBitwiseAnd(ConstIntLattice other) const;
   ConstIntLattice operatorBitwiseComplement() const;
 
+  static ConstIntLattice operatorAdd(ConstIntLattice& a,ConstIntLattice& b);
+  static ConstIntLattice operatorSub(ConstIntLattice& a,ConstIntLattice& b);
+  static ConstIntLattice operatorMul(ConstIntLattice& a,ConstIntLattice& b);
+  static ConstIntLattice operatorDiv(ConstIntLattice& a,ConstIntLattice& b);
+  static ConstIntLattice operatorMod(ConstIntLattice& a,ConstIntLattice& b);
 
   // strict weak ordering (required for sorted STL data structures if
   // no comparator is provided)
@@ -146,15 +91,17 @@ class ConstIntLattice {
   friend ostream& operator<<(ostream& os, const ConstIntLattice& value);
   friend istream& operator>>(istream& os, ConstIntLattice& value);
   void fromStream(istream& is);
+
   ValueType getValueType() const;
   int getIntValue() const;
+  SPRAY::VariableId getVariableId() const;
+
+  int intLength();   // returns length of integer dependent on valueType
   long hash() const;
-  static bool arithTop;
-  // returns length of integer dependent on valueType
-  int intLength();
  private:
   ValueType valueType;
   int intValue;
+  SPRAY::VariableId variableId;
 };
 
 // arithmetic operators

@@ -547,9 +547,16 @@ Unparse_Python::unparseDictionaryComprehension(SgDictionaryComprehension* dict_c
     curprint("}");
 }
 
+// DQ (3/28/2017): This should take a SgExpression* to match the base class virtual function signature.
+// Fixing this eliminates a warning in Clang.
+// void Unparse_Python::unparseDoubleVal(SgDoubleVal* d_val, SgUnparse_Info& info)
 void
-Unparse_Python::unparseDoubleVal(SgDoubleVal* d_val, SgUnparse_Info& info)
+Unparse_Python::unparseDoubleVal(SgExpression* e, SgUnparse_Info& info)
 {
+ // DQ (3/28/2017): Adding this here so that the function parameter can be SgExpression*.
+    SgDoubleVal* d_val = isSgDoubleVal(e);
+    ROSE_ASSERT(d_val != NULL);
+
     stringstream code;
     code.setf( ios::showpoint );
     code << d_val->get_value();
@@ -814,10 +821,16 @@ Unparse_Python::unparseListExp(SgListExp* list_exp,
     curprint("]");
 }
 
+// DQ (3/28/2017): This should take a SgExpression* to match the base class virtual function signature.
+// Fixing this eliminates a warning in Clang.
+// void Unparse_Python::unparseLongLongIntVal(SgLongLongIntVal* lli_val, SgUnparse_Info& info)
 void
-Unparse_Python::unparseLongLongIntVal(SgLongLongIntVal* lli_val,
-                                      SgUnparse_Info& info)
+Unparse_Python::unparseLongLongIntVal(SgExpression* e, SgUnparse_Info& info)
 {
+ // DQ (3/28/2017): Adding this here so that the function parameter can be SgExpression*.
+    SgLongLongIntVal* lli_val = isSgLongLongIntVal(e);
+    ROSE_ASSERT(lli_val != NULL);
+
     stringstream code;
     code << lli_val->get_value();
     curprint( code.str() );

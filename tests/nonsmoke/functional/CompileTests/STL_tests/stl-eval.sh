@@ -7,7 +7,10 @@
 : ${CPP98_STL_TESTS:="yes"}
 : ${CPP11_STL_TESTS:="yes"}
 
+# DQ (3/12/2017): restore this setting for before checkin.
 CLEANUP_ON_SUCCESS="yes"
+# CLEANUP_ON_SUCCESS="no"
+
 CLEANUP_AND_EXIT="no"
 ASAN_USED="no"
 
@@ -208,7 +211,9 @@ if [ "$CPP98_STL_TESTS" == "yes" ]; then
 
     check "$STL_CPP98_HEADERS_PASSING" "c++98" ""
     if [ ${TOTAL_FAIL} -gt 0 ]; then
+# DQ (3/12/2017): Force next phase of tests.
         test_failed
+#       echo "FORCED PASS TO TEST NEXT PHASE (FRONTEND+BACKEND)."
     else
         echo "PASS (FRONTEND+BACKEND)."
     fi
@@ -224,7 +229,9 @@ if [ "$CPP98_STL_TESTS" == "yes" ]; then
     # of those C++ 98 headers.
     ((CPP98_FAIL=T0_FAIL+T1_FAIL))
     if [ ${CPP98_FAIL} -gt 0 ]; then
+# DQ (3/12/2017): Force next phase of tests.
         test_failed
+#       echo "FORCED PASS TO TEST NEXT PHASE (FRONTEND+BACKEND)."
     else
         echo "PASS (FRONTEND:PASS, BACKEND: known to fail)."
     fi

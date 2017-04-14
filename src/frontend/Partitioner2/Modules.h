@@ -160,6 +160,12 @@ namespace Modules {
  * @sa ModulesPe::systemFunctionName and possibly other OS-specific formatters. */
 std::string canonicalFunctionName(const std::string&);
 
+/** Demangle all function names.
+ *
+ *  Run the name demangler on all functions that have a non-empty name and no demangled name. Assign the result as each
+ *  function's demangled name if it's different than the true name. */
+void demangleFunctionNames(const Partitioner&);
+
 /** Follow basic block ghost edges.
  *
  *  If this callback is registered as a partitioner basic block callback then the partitioner will follow ghost edges when

@@ -620,7 +620,18 @@ testGCJ: $(gcjTests_passing_Objects)
 # ********************************************************************************
 
 
-conditional-check-local: extraTests
+conditional-check-local:
+# DQ (2/19/2017): NEW VERSION OF LOGIC
+# DQ (2/18/2017): More specific logic required for portability.
+# When using EDG 4.9 these files don't compile on later versions of GNU, CLANG, and Intel compilers 
+# but we still want them tests as we transition to EDG 4.12 (where they all work fine independent of 
+# the compiler vendor and GNU compiler version).
+# Jave support is independent of EDG 4.9 or EDG 4.12 or later (run all tests independent of the C/C++ frontend).
+if USING_GNU_COMPILER
+if !ROSE_USING_GCC_VERSION_LATER_4_9
+	@echo "Some specific Java tests are skipped with any later GNU compiler (GNU 4.9 or later)."
+# conditional-check-local: extraTests
+	@$(MAKE) extraTests
 	@echo "Tests for Java."
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
 #	These C programs must be called externally to the test codes in the "TESTCODES" make variable
@@ -628,6 +639,22 @@ conditional-check-local: extraTests
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@$(MAKE) $(TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6_Objects)
 	@$(MAKE) $(TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_7_Objects)
+endif # NOT ROSE_USING_GCC_VERSION_LATER_4_9
+else
+if USING_CLANG_COMPILER
+# Exclude this list of files in the case of CLANG compiler.
+	@echo "USING_CLANG_COMPILER == true"
+else # NOT USING_CLANG_COMPILER
+	@echo "USING_CLANG_COMPILER == false"
+if USING_INTEL_COMPILER
+# Exclude this list of files in the case of Intel compiler.
+	@echo "USING_INTEL_COMPILER == true"
+else # NOT USING_INTEL_COMPILER
+# This is an unknown compiler.
+	@echo "USING_INTEL_COMPILER == false"
+endif # USING_INTEL_COMPILER
+endif # USING_CLANG_COMPILER
+endif # USING_GNU_COMPILER
 	@echo "************************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/Java_tests: make check rule complete (terminated normally) ******"
 	@echo "************************************************************************************************"

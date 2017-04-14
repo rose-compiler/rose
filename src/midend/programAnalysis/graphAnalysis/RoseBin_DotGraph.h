@@ -22,25 +22,25 @@ class ROSE_DLL_API RoseBin_DotGraph : public RoseBin_Graph {
   inverseNodeType inverse_nodesMap;
 
   void printEdges_single( VirtualBinCFG::AuxiliaryInformation* info,
-                          bool forward_analysis, std::ofstream& myfile);
+                          bool forward_analysis, std::ofstream& myfile) ROSE_DEPRECATED("no longer supported");
   void printEdges_multiple( VirtualBinCFG::AuxiliaryInformation* info,
-                          bool forward_analysis, std::ofstream& myfile);
+                          bool forward_analysis, std::ofstream& myfile) ROSE_DEPRECATED("no longer supported");
   void printEdges( VirtualBinCFG::AuxiliaryInformation* info,
-                          bool forward_analysis, std::ofstream& myfile, SgDirectedGraphEdge* edge);
+                          bool forward_analysis, std::ofstream& myfile, SgDirectedGraphEdge* edge) ROSE_DEPRECATED("no longer supported");
 
  public:
   RoseBin_DotGraph(): RoseBin_Graph() {}
   ~RoseBin_DotGraph() {}
 
   void printNodes( bool dfg,  RoseBin_FlowAnalysis* flow, bool forward_analysis,
-                   std::ofstream &myfile, std::string& recursiveFunctionName);
-  void printNodesCallGraph(std::ofstream& myfile);
+                   std::ofstream &myfile, std::string& recursiveFunctionName) ROSE_DEPRECATED("no longer supported");
+  void printNodesCallGraph(std::ofstream& myfile) ROSE_DEPRECATED("no longer supported");
 
   void printEdges( VirtualBinCFG::AuxiliaryInformation* info,
-                   bool forward_analysis, std::ofstream& myfile, bool mergedEdges);
+                   bool forward_analysis, std::ofstream& myfile, bool mergedEdges) ROSE_DEPRECATED("no longer supported");
 
-  void printProlog(  std::ofstream& myfile, std::string& fileType);
-  void printEpilog(  std::ofstream& myfile);
+  void printProlog(  std::ofstream& myfile, std::string& fileType) ROSE_DEPRECATED("no longer supported");
+  void printEpilog(  std::ofstream& myfile) ROSE_DEPRECATED("no longer supported");
 
 };
 

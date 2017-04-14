@@ -156,7 +156,7 @@ void nonoverlappingCopy(const Word *src, const BitRange &srcRange, Word *dst, co
 
         for (size_t i=dstFirstIdx; i<=dstLastIdx; ++i) {
             const Word tmp = (i+srcOffset > srcFirstIdx ? (src[i+srcOffset-1] >> rightShiftAmount) : Word(0)) |
-                             (src[i+srcOffset] << leftShiftAmount);
+                             (i+srcOffset > srcLastIdx ? Word(0) : (src[i+srcOffset] << leftShiftAmount));
             Word mask = bitMask<Word>(0, bitsPerWord<Word>::value);
             if (i==dstFirstIdx)
                 mask &= ~bitMask<Word>(0, bitIndex<Word>(dstRange.least()));

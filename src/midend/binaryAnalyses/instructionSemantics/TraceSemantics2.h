@@ -294,7 +294,7 @@ public:
     virtual BaseSemantics::SValuePtr rotateLeft(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr rotateRight(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr shiftLeft(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr shiftRight(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&);
+    virtual BaseSemantics::SValuePtr shiftRight(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr shiftRightArithmetic(const BaseSemantics::SValuePtr&,
                                                           const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr equalToZero(const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
@@ -318,7 +318,7 @@ public:
     virtual BaseSemantics::SValuePtr unsignedMultiply(const BaseSemantics::SValuePtr&,
                                                       const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
 
-    virtual void interrupt(int majr, int minr);
+    virtual void interrupt(int majr, int minr) ROSE_OVERRIDE;
 
     virtual BaseSemantics::SValuePtr fpFromInteger(const BaseSemantics::SValuePtr&, SgAsmFloatType*) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr fpToInteger(const BaseSemantics::SValuePtr&, SgAsmFloatType*,
@@ -342,6 +342,8 @@ public:
     virtual BaseSemantics::SValuePtr fpRoundTowardZero(const BaseSemantics::SValuePtr&, SgAsmFloatType*) ROSE_OVERRIDE;
     
     virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor&,
+                                                  const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr peekRegister(const RegisterDescriptor&,
                                                   const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
     virtual void writeRegister(const RegisterDescriptor&, const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr,

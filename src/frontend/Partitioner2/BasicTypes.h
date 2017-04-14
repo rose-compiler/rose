@@ -98,6 +98,15 @@ struct AstConstructionSettings {
      *  parent pointer will always return the same basic block. */
     bool copyAllInstructions;
 
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, unsigned version) {
+        s & allowEmptyGlobalBlock & allowFunctionWithNoBasicBlocks & allowEmptyBasicBlocks & copyAllInstructions;
+    }
+
+public:
     /** Default constructor. */
     AstConstructionSettings()
         : allowEmptyGlobalBlock(false), allowFunctionWithNoBasicBlocks(false), allowEmptyBasicBlocks(false),
@@ -181,6 +190,15 @@ struct LoaderSettings {
     LoaderSettings()
         : deExecuteZerosThreshold(0), deExecuteZerosLeaveAtFront(16), deExecuteZerosLeaveAtBack(1),
           memoryDataAdjustment(DATA_IS_INITIALIZED), memoryIsExecutable(false) {}
+
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, unsigned version) {
+        s & deExecuteZerosThreshold & deExecuteZerosLeaveAtFront & deExecuteZerosLeaveAtBack;
+        s & memoryDataAdjustment & memoryIsExecutable;
+    }
 };
 
 /** Settings that control the disassembler.
@@ -190,6 +208,14 @@ struct DisassemblerSettings {
     std::string isaName;                            /**< Name of the instruction set architecture. Specifying a non-empty
                                                      *   ISA name will override the architecture that's chosen from the
                                                      *   binary container(s) such as ELF or PE. */
+
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, unsigned version) {
+        s & isaName;
+    }
 };
 
 /** Controls whether the function may-return analysis runs. */
@@ -272,14 +298,47 @@ struct PartitionerSettings {
     SemanticMemoryParadigm semanticMemoryParadigm;  /**< Container used for semantic memory states. */
     bool namingConstants;                           /**< Give names to constants by calling @ref Modules::nameConstants. */
     bool namingStrings;                             /**< Give labels to constants that are string literal addresses. */
+    bool demangleNames;                             /**< Run all names through a demangling step. */
 
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, unsigned version) {
+        s & base;
+        s & startingVas;
+        s & followingGhostEdges;
+        s & discontiguousBlocks;
+        s & findingFunctionPadding;
+        s & findingDeadCode;
+        s & peScramblerDispatcherVa;
+        s & findingIntraFunctionCode;
+        s & findingIntraFunctionData;
+        s & findingInterFunctionCalls;
+        s & interruptVector;
+        s & doingPostAnalysis;
+        s & doingPostFunctionMayReturn;
+        s & doingPostFunctionStackDelta;
+        s & doingPostCallingConvention;
+        s & doingPostFunctionNoop;
+        s & functionReturnAnalysis;
+        s & findingDataFunctionPointers;
+        s & findingThunks;
+        s & splittingThunks;
+        s & semanticMemoryParadigm;
+        s & namingConstants;
+        s & namingStrings;
+    }
+
+public:
     PartitionerSettings()
         : followingGhostEdges(false), discontiguousBlocks(true), findingFunctionPadding(true),
           findingDeadCode(true), peScramblerDispatcherVa(0), findingIntraFunctionCode(true), findingIntraFunctionData(true),
           findingInterFunctionCalls(true), doingPostAnalysis(true), doingPostFunctionMayReturn(true),
           doingPostFunctionStackDelta(true), doingPostCallingConvention(false), doingPostFunctionNoop(false),
           functionReturnAnalysis(MAYRETURN_DEFAULT_YES), findingDataFunctionPointers(false), findingThunks(true),
-          splittingThunks(false), semanticMemoryParadigm(LIST_BASED_MEMORY), namingConstants(true), namingStrings(true) {}
+          splittingThunks(false), semanticMemoryParadigm(LIST_BASED_MEMORY), namingConstants(true), namingStrings(true),
+          demangleNames(true) {}
 };
 
 /** Settings for controling the engine behavior.
@@ -288,6 +347,14 @@ struct PartitionerSettings {
  *  descriptions and command-line parser for these switches can be obtained from @ref engineBehaviorSwitches. */
 struct EngineSettings {
     std::vector<std::string> configurationNames;    /**< List of configuration files and/or directories. */
+
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, unsigned version) {
+        s & configurationNames;
+    }
 };
 
 // Additional declarations w/out definitions yet.

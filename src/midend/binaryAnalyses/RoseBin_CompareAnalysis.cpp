@@ -16,11 +16,15 @@ using namespace std;
 // DQ (10/20/2010): Moved to source file to support compilation of language only mode which excludes binary analysis support.
 RoseBin_CompareAnalysis::RoseBin_CompareAnalysis(SgProject *pr, SgAsmNode* global)
    {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
      RoseBin_support::setDebugMode(false);    
      project = pr;
      globalBin = global;
      main_prolog_end=false;
      attributeName = "rosebin_color";
+#endif
    }
 
 /****************************************************
@@ -28,14 +32,21 @@ RoseBin_CompareAnalysis::RoseBin_CompareAnalysis(SgProject *pr, SgAsmNode* globa
  * visualization
  ****************************************************/
 MyAstAttribute* RoseBin_CompareAnalysis::createAttribute(int val) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   MyAstAttribute* maas = new MyAstAttribute(val);
   return maas;
+#endif
 }
 
 /****************************************************
  * traverse the binary AST
  ****************************************************/
 void RoseBin_CompareAnalysis::visit(SgNode* node) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   //SgAsmNode* binNode= isSgAsmNode(node);
   
   //  cerr << " traversing node " << binNode << endl;
@@ -44,12 +55,16 @@ void RoseBin_CompareAnalysis::visit(SgNode* node) {
     string name = binDecl->get_name();
     bin_funcs[name] = binDecl;
   }
+#endif
 }
 
 /****************************************************
  * traverse Rose src and create map (name, src_func, bin_func)
  ****************************************************/
 void RoseBin_CompareAnalysis::create_map_functions() {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   traverse(globalBin,preorder);
 
   std::vector<SgNode*> functionCallList = NodeQuery:: querySubTree (project, V_SgFunctionDeclaration);
@@ -64,6 +79,7 @@ void RoseBin_CompareAnalysis::create_map_functions() {
       function_map[name]=(make_pair(funcDef,funcD));
     }
   }
+#endif
 }
 
 /****************************************************
@@ -71,6 +87,9 @@ void RoseBin_CompareAnalysis::create_map_functions() {
  * that are known 
 2 ****************************************************/
 bool RoseBin_CompareAnalysis::instruction_filter(SgAsmStatement* stat, string func_name, string *output) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   // return true if valid instruction, false if part of filter
   bool isValidInstr=true;
   SgAsmX86Instruction* inst = isSgAsmX86Instruction(stat);
@@ -194,6 +213,7 @@ bool RoseBin_CompareAnalysis::instruction_filter(SgAsmStatement* stat, string fu
     stat->setAttribute(attributeName,createAttribute(0));
   }  
   return isValidInstr;
+#endif
 }
 
 
@@ -201,6 +221,9 @@ bool RoseBin_CompareAnalysis::instruction_filter(SgAsmStatement* stat, string fu
  * determine variable access
  ****************************************************/
 string RoseBin_CompareAnalysis::checkVariable(SgAsmValueExpression* rhs) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   string valStr="";
   if (rhs) {
       SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(rhs);
@@ -220,26 +243,39 @@ string RoseBin_CompareAnalysis::checkVariable(SgAsmValueExpression* rhs) {
     cerr << " >> cannot check for variable location 3. " << endl;
     exit(0);
   }
-  return valStr;  
+  return valStr;
+#endif
 }
 
 void RoseBin_CompareAnalysis::storeVariable(string val, 
                                             string name,
                                             SgAsmValueExpression* node
                                             ) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   cerr << " storing variable : " << name << " val: " << val << endl;
   local_vars[val]=(make_pair(name, node));
   node->setAttribute(attributeName,createAttribute(2));
+#endif
 }
 
 string RoseBin_CompareAnalysis::getVariableName(string val) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   std::pair<string,SgAsmValueExpression*> thepair = local_vars[val];
   return thepair.first;
+#endif
 }
 
 SgAsmValueExpression* RoseBin_CompareAnalysis::getVariableType(string val) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   std::pair<string,SgAsmValueExpression*> thepair = local_vars[val];
   return thepair.second;
+#endif
 }
 
 /****************************************************
@@ -247,6 +283,9 @@ SgAsmValueExpression* RoseBin_CompareAnalysis::getVariableType(string val) {
  ****************************************************/
 
 string RoseBin_CompareAnalysis::resolveRegister(const RegisterDescriptor &reg) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   string ret="reg";
   
   if (reg.get_major() == x86_regclass_segment && reg.get_minor() == x86_segreg_ss) 
@@ -279,14 +318,19 @@ string RoseBin_CompareAnalysis::resolveRegister(const RegisterDescriptor &reg) {
     ret="GS";
 
   return ret;
+#endif
 }
 
 bool RoseBin_CompareAnalysis::existsVariable(string value) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   bool exists =true;
   string name = getVariableName(value);
   if (name=="")
     exists=false;
   return exists;
+#endif
 }
 
 string RoseBin_CompareAnalysis::resolve_binaryInstruction(SgAsmInstruction* mov,
@@ -294,7 +338,9 @@ string RoseBin_CompareAnalysis::resolve_binaryInstruction(SgAsmInstruction* mov,
                                                           string *right,
                                                           string name
                                                           ) {
-
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   SgAsmOperandList* opList = mov->get_operandList();
   SgAsmExpressionPtrList exprList = opList->get_operands();
   SgAsmExpressionPtrList::iterator it = exprList.begin();
@@ -345,6 +391,7 @@ string RoseBin_CompareAnalysis::resolve_binaryInstruction(SgAsmInstruction* mov,
     *left << " " << *right << endl;
   // return the nr for a variable , e.g. -8
   return value;
+#endif
 }
 
 
@@ -352,6 +399,9 @@ bool RoseBin_CompareAnalysis::isReturnStmt(SgNode* srcNode,
                                            SgAsmNode* binNode,
                                            string *output,
                                            int &nodes_matched) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   bool isreturn=false;
   // check if return matches
   SgReturnStmt* returnS = isSgReturnStmt(srcNode);
@@ -365,6 +415,7 @@ bool RoseBin_CompareAnalysis::isReturnStmt(SgNode* srcNode,
     isreturn=true;
   }
   return isreturn;
+#endif
 }
 
 /**********************************************************
@@ -375,6 +426,9 @@ bool RoseBin_CompareAnalysis::isFunctionCall(SgNode* srcNode,
                                              SgAsmNode* binNode,
                                              string *output,
                                              int &nodes_matched) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   bool isfunction=false;
   cerr << "   inside isFunctionCall " << endl;
   SgFunctionCallExp* srcCall = isSgFunctionCallExp(srcNode);
@@ -390,12 +444,16 @@ bool RoseBin_CompareAnalysis::isFunctionCall(SgNode* srcNode,
     }
   }
   return isfunction;
+#endif
 }
 
 bool RoseBin_CompareAnalysis::isSgPlusPlus(SgNode* srcNode,
                                            SgAsmNode* binNode,
                                            string *output,
                                            int &nodes_matched) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   bool isplus=false;
   cerr << "   inside isSgPlusPlus " << endl;
   SgPlusPlusOp* srcCall = isSgPlusPlusOp(srcNode);
@@ -412,6 +470,7 @@ bool RoseBin_CompareAnalysis::isSgPlusPlus(SgNode* srcNode,
     }
   }
   return isplus;
+#endif
 }
 
 
@@ -439,6 +498,9 @@ bool RoseBin_CompareAnalysis::isVariableDeclaration(SgNode* srcNode,
                                                     SgAsmNode* bin_statements[],
                                                     bool &increase_source
                                                     ) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   bool isvar=false;
   cerr << "   inside isVariableDeclaration " << endl;
   SgVariableDeclaration* varDecl = isSgVariableDeclaration(srcNode);
@@ -527,6 +589,7 @@ bool RoseBin_CompareAnalysis::isVariableDeclaration(SgNode* srcNode,
     }
   }
   return isvar;
+#endif
 }
 
 /****************************************************
@@ -538,6 +601,9 @@ void RoseBin_CompareAnalysis::resolve_bin_vardecl_or_assignment(bool &isVarDecl0
                                                                 bool &isAssign1,
                                                                 SgAsmX86Instruction* mov
                                                                 ) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   SgAsmOperandList* opList = mov->get_operandList();
   SgAsmExpressionPtrList exprList = opList->get_operands();
   SgAsmExpressionPtrList::iterator it = exprList.begin();
@@ -572,6 +638,7 @@ void RoseBin_CompareAnalysis::resolve_bin_vardecl_or_assignment(bool &isVarDecl0
     }
     iteration++;
   }
+#endif
 }
 
 
@@ -607,6 +674,9 @@ bool RoseBin_CompareAnalysis::isAssignOp(SgNode* srcNode,
                                          SgAsmNode* bin_statements[],
                                          bool &increase_source
                                          ) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   bool isassign=false;
   cerr << "   inside isAssignOp    " << endl;
   SgAssignOp* assign = isSgAssignOp(srcNode);
@@ -747,11 +817,16 @@ bool RoseBin_CompareAnalysis::isAssignOp(SgNode* srcNode,
     
   }
   return isassign;  
+#endif
 }
 
 void RoseBin_CompareAnalysis::pushOnStack(SgExpression* expr){
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   if (!isSgVarRefExp(expr))
     srcNodesTodo.push(expr);
+#endif
 }
 
 
@@ -765,7 +840,9 @@ SgExpression* RoseBin_CompareAnalysis::isExpression( SgExpression* expr,
                                                      int array_bin_length,
                                                      int array_src_length,
                                                      bool &keep_binary_node) {
-
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   ROSE_ASSERT(expr);
   cerr << "   ---- inside isExpression " << expr->class_name() << endl;
 
@@ -974,13 +1051,18 @@ SgExpression* RoseBin_CompareAnalysis::isExpression( SgExpression* expr,
   }
 
   return expr;
+#endif
 }
 
 bool RoseBin_CompareAnalysis::isAnExpression(SgExpression* expr) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   if ((isSgAddOp(expr) || isSgSubtractOp(expr) || isSgMultiplyOp(expr) ||
        isSgDivideOp(expr))) 
     return true;
   return false;
+#endif
 }
 
 bool RoseBin_CompareAnalysis::handleSourceExpression(
@@ -995,6 +1077,9 @@ bool RoseBin_CompareAnalysis::handleSourceExpression(
                                                      int array_src_length,
                                                      SgAssignOp* assign,
                                                      bool increase_bin_count) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   if (!isAnExpression(expr))
     return true;
   bool success =true;
@@ -1040,6 +1125,7 @@ bool RoseBin_CompareAnalysis::handleSourceExpression(
   //  if (expr==NULL && one_call_only)
   //bin_count++;
   return success;
+#endif
 }
 
 
@@ -1052,6 +1138,9 @@ int RoseBin_CompareAnalysis::match_statements(int array_src_length,
                                               SgNode* src_statements[],
                                               SgAsmNode* bin_statements[],
                                               string *output) {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
 
   /**********************************************************
    * Check preconditions
@@ -1181,6 +1270,7 @@ int RoseBin_CompareAnalysis::match_statements(int array_src_length,
     //        cerr << " loop : " << src_count << " - " << bin_count << endl;
   }
   return nodes_matched;
+#endif
 }
 
 
@@ -1191,7 +1281,9 @@ int RoseBin_CompareAnalysis::match_statements(int array_src_length,
 void RoseBin_CompareAnalysis::checkFunctions(string name,
                                              SgFunctionDeclaration* funcDecl,
                                              SgAsmFunction* binDecl) {
-
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   string output="\n**** *************************\n";
   /*
   //  std::list <SgNode*> src_statements;
@@ -1323,12 +1415,16 @@ void RoseBin_CompareAnalysis::checkFunctions(string name,
   cerr << output;
   }
   */
+#endif
 }
 
 /****************************************************
  * run the compare analysis
  ****************************************************/
 void RoseBin_CompareAnalysis::run() {
+#if 1
+    ASSERT_not_reachable("no longer supported");
+#else
   // first thing to do is to match up the functions
   // we want to get all src functions and check
   // against the binary functions and create a
@@ -1351,6 +1447,6 @@ void RoseBin_CompareAnalysis::run() {
     SgAsmFunction* binDef = my_pair.second;
     checkFunctions(name,funcDef, binDef);
   }
-  
+#endif
 }
 
