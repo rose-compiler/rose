@@ -137,7 +137,10 @@ class GrammarString
   static bool isContainedIn ( const std::string& longString, const std::string& shortString );
   // A smarter string concatination function (corrects for space in the target automatically)
   static std::string stringConcatenate ( const std::string& target, const std::string& endingString );
-  
+
+// DQ (3/22/2017): Added to support use of override keyword to remove warnings from Clang.
+  bool generate_override_keyword( std::string variableNameString ) const;
+
 };
 
 #endif

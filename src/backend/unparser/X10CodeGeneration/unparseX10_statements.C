@@ -686,6 +686,9 @@ Unparse_X10::unparseCaseOrDefaultBasicBlockStmt(SgStatement* stmt, SgUnparse_Inf
    }
 
 
+#if 0
+ // DQ (3/28/2017): Eliminate warning about unused function from Clang.
+
 // Determine how many "else {}"'s an outer if that has an else clause needs to
 // prevent dangling if problems
 static size_t countElsesNeededToPreventDangling(SgStatement* s) {
@@ -717,6 +720,8 @@ static size_t countElsesNeededToPreventDangling(SgStatement* s) {
     default: return 0;
   }
 }
+#endif
+
 
 void Unparse_X10::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info) {
     SgIfStmt* if_stmt = isSgIfStmt(stmt);

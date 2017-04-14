@@ -22,9 +22,10 @@ CallVisitorContext::~CallVisitorContext() {
 // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=reorder.
 ForVisitorContext::ForVisitorContext(unsigned int nb_init__, bool has_cond__, unsigned int nb_incr__) 
   : VisitorContext(0),
-    has_cond(has_cond__), 
-    nb_init(nb_init__),
-    nb_incr(nb_incr__)
+    has_cond(has_cond__)
+ // DQ (3/25/2017): Eliminate Clang warning for unused variables (private data members).
+ // nb_init(nb_init__),
+ // nb_incr(nb_incr__)
 {
 }
 

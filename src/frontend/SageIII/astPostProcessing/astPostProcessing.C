@@ -11,6 +11,9 @@
 // This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
 #include "rose_config.h"
 
+// DQ (3/6/2017): Added support for message logging to control output from ROSE tools.
+#undef mprintf
+#define mprintf rose::Diagnostics::mfprintf(rose::ir_node_mlog[rose::Diagnostics::DEBUG])
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
@@ -409,6 +412,11 @@ void postProcessingSupport (SgNode* node)
           printf ("In postProcessingSupport: Test 3: Calling postProcessingTestFunctionCallArguments() \n");
           postProcessingTestFunctionCallArguments(node);
 #endif
+
+          if (SgProject::get_verbose() > 1)
+             {
+               printf ("Calling fixupTemplateArguments() \n");
+             }
 
        // DQ (2/11/2017): Changed API to use SgSimpleProcessing based traversal.
        // DQ (11/27/2016): Fixup template arguments to additionally reference a type that can be unparsed.
@@ -957,7 +965,8 @@ void postProcessingSupport (SgNode* node)
           ROSE_ASSERT(globalScope != NULL);
           if (globalScope->get_declarations().empty() == true)
              {
-               printf ("WARNING: no statements in global scope for file = %s \n",sourceFile->getFileName().c_str());
+            // DQ (3/17/2017): Added support to use message streams.
+               mprintf ("WARNING: no statements in global scope for file = %s \n",sourceFile->getFileName().c_str());
              }
         }
        else 
@@ -973,7 +982,8 @@ void postProcessingSupport (SgNode* node)
                          ROSE_ASSERT(globalScope != NULL);
                          if (globalScope->get_declarations().empty() == true)
                             {
-                              printf ("WARNING: no statements in global scope for file = %s \n",(*fileI)->getFileName().c_str());
+                           // DQ (3/17/2017): Added support to use message streams.
+                              mprintf ("WARNING: no statements in global scope for file = %s \n",(*fileI)->getFileName().c_str());
                             }
                        }
                   }

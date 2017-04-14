@@ -73,6 +73,7 @@ EXTRA_DIST = CMakeLists.txt setup.h utilDocumentation.docs
 # rules for the Sawyer subdirectory
 
 noinst_LTLIBRARIES += libroseSawyer.la
+libroseSawyer_la_CPPFLAGS = $(ROSE_INCLUDES) -DCOMPILING_ROSE
 libroseSawyer_la_SOURCES =			\
 	Sawyer/Assert.C				\
 	Sawyer/Attribute.C			\
