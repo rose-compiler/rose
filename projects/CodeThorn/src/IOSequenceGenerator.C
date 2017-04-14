@@ -1,7 +1,7 @@
 #ifndef IOSequenceGenerator_H
 #define IOSequenceGenerator_H
 
-#include "StateRepresentations.h"
+#include "EState.h"
 #include <iostream>
 #include <sstream>
 

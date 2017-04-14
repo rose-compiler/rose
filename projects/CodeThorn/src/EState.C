@@ -8,7 +8,7 @@
 #include "EState.h"
 
 #include <algorithm>
-#include "StateRepresentations.h"
+#include "EState.h"
 #include "ExprAnalyzer.h"
 #include "AbstractValue.h"
 #include "CollectionOperators.h"

@@ -1,6 +1,6 @@
 #include "sage3basic.h"
 #include "AbstractValue.h"
-#include "StateRepresentations.h"
+#include "EState.h"
 #include "Analyzer.h"
 
 #include "RERS_Problem3_mod.C"

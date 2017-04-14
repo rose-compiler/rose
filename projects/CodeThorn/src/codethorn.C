@@ -10,7 +10,7 @@
 #include "SgNodeHelper.h"
 #include "Labeler.h"
 #include "VariableIdMapping.h"
-#include "StateRepresentations.h"
+#include "EState.h"
 #include "Timer.h"
 #include <cstdio>
 #include <cstring>

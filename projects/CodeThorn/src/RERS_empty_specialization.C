@@ -1,7 +1,7 @@
 #include "sage3basic.h"
 #include <iostream>
 #include "AbstractValue.h"
-#include "StateRepresentations.h"
+#include "EState.h"
 #include "Analyzer.h"
 
 namespace RERS_Problem {
