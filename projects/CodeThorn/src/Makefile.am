@@ -192,8 +192,6 @@ codethorn_SOURCES = \
   InputOutput.h           \
   ParProEState.C           \
   ParProEState.h           \
-  StateRepresentations.C           \
-  StateRepresentations.h           \
   Timer.cpp                        \
   Timer.h                          \
   TransitionGraph.h                \
@@ -598,6 +596,7 @@ clean-local:
 	rm -f *.consistent Problem*.[0-9].csv
 	rm -f codethorn-LTLParser.c++
 	rm -f tmp.nsdump
+	rm -f rose_Problem1401_opt.pp.c
 
 distclean-local: clean
 	rm -f *.tgz

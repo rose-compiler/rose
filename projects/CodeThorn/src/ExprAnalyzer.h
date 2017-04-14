@@ -9,7 +9,7 @@
 
 #include <limits.h>
 #include <string>
-#include "StateRepresentations.h"
+#include "EState.h"
 #include "VariableIdMapping.h"
 #include "AbstractValue.h"
 #include "AstTerm.h"

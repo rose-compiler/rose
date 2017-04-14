@@ -6,7 +6,7 @@
 #include "sage3basic.h"
 
 // SPRAY includes
-#include "StateRepresentations.h"
+#include "ParProEState.h"
 
 // CodeThorn includes
 #include "SpotConnection.h"

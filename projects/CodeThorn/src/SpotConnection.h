@@ -10,7 +10,7 @@
 #include <algorithm>
 
 //CodeThorn includes
-#include "StateRepresentations.h"
+#include "EState.h"
 #include "SpotTgba.h"
 #include "ParProSpotTgba.h"
 #include "PropertyValueTable.h"
