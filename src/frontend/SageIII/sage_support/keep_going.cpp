@@ -15,8 +15,9 @@
 #include <sstream>
 #include <string>
 #include <vector>
-
-//#include <utime.h>
+#ifdef __linux__
+#include <utime.h>
+#endif
 #include <boost/algorithm/string/join.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/filesystem.hpp>
@@ -671,6 +672,8 @@ Rose::KeepGoing::GetTimestamp(const std::string& format)
 
 void Rose::KeepGoing::touch(const std::string& pathname)
 {
+  
+#ifdef __linux__  // commented out to pass windows test for now
     int fd = open(pathname.c_str(),
                   O_WRONLY|O_CREAT|O_NOCTTY|O_NONBLOCK,
                   0666);
@@ -684,7 +687,6 @@ void Rose::KeepGoing::touch(const std::string& pathname)
         return;
     }
 
-#if 0 // commented out to pass windows test for now
     int rc = utime(pathname.c_str(), 0);
 
     if (rc)
@@ -696,7 +698,6 @@ void Rose::KeepGoing::touch(const std::string& pathname)
             << "\"\n";
         return;
     }
-#endif
    if (verbose)
    {
     std::clog
@@ -705,6 +706,7 @@ void Rose::KeepGoing::touch(const std::string& pathname)
         << pathname
         << "\"\n";
    }
+#endif
 }
 
 
