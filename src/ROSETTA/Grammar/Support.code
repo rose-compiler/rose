@@ -5872,6 +5872,17 @@ HEADER_APPLICATION_PROJECT_START
           SgProject ( int &argc, char** argv, int & errorCode) ROSE_DEPRECATED_FUNCTION;
 #endif
 
+       // DQ (4/10/2017): Adding support for use of Saywer for command line handling.
+      //! Use of Saywer support for command line handling (work in progress).
+          std::vector<std::string> parseCommandLine(std::vector<std::string> argv);
+
+       // DQ (4/10/2017): Adding support for use of Saywer for command line handling.
+       // Sawyer::CommandLine::SwitchGroup commandLineSwitches();
+
+      //! Use of Saywer support for specification of ROSE specific command line switches (work in progress).
+          Sawyer::CommandLine::SwitchGroup frontendAllSwitches();
+          Sawyer::CommandLine::SwitchGroup backendAllSwitches();
+
       //! process command line and store options in the SgProject object. This options are used by parse und unparse.
           void processCommandLine(const std::vector<std::string>& argv);
           void processCommandLine(int argc, char** argv) { processCommandLine(std::vector<std::string>(argv, argv + argc)); }
@@ -8345,6 +8356,10 @@ std::vector<SgTemplateArgument*> getTemplateParametersOrArgumentsList<SgTemplate
           SgEnumDeclaration*               enumDeclaration      = isSgEnumDeclaration(declaration);
           SgNamespaceDeclarationStatement* namespaceDeclaration = isSgNamespaceDeclarationStatement(declaration);
 #endif
+
+       // DQ (4/10/2017): Added case for other symbols (but we only return the empty list for this case).
+          case V_SgLabelSymbol:
+
        // DQ (8/19/2013): Added case for other symbols (but we only return the empty list for this case).
           case V_SgVariableSymbol:
           case V_SgTypedefSymbol:
@@ -16390,6 +16405,10 @@ SgProject::SgProject ( const std::vector<std::string>& argv, bool frontendConsta
 void
 SgProject::initialization()
    {
+  // DQ (4/11/2017): Some implementations of ROSE tools are just calling the SgProject constructor directly, these 
+  // need to call ROSE_INITIALIZE.  Here is a reasonable point to make that call.
+     ROSE_INITIALIZE;
+
   // DQ (10/16/2005): This function initializes default values (until we use an automatically generated version)
 
   // Matzke (12/06/2016): Added missing initializations identified by valgrind and code inspection
