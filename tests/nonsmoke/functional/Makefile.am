@@ -391,8 +391,10 @@ else
    test: test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testTemplates test_testGraphGeneration test_testPDFGeneration test_testAstFileIO testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants testKeepGoingTranslator test_exampleIdentityTranslator
 endif
 
+# Liao, 4/12/2017 restrict_template_parameter.C will trigger frontend error.
+# __minimal_input_code is defined in input_codes/Makefile.for.input.codes
 testKeepGoingTranslator: KeepGoingTranslator
-	./KeepGoingTranslator $(__minimal_input_code)
+	./KeepGoingTranslator -c $(__minimal_input_code) $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests/restrict_template_parameter.C
 
 # DQ (7/2/2015): template test code that marks all template instantiations for output (as a test).
 test_testTemplates: testTemplates
@@ -427,4 +429,5 @@ myCleanRule:
 	rm -f inputObjectFileAnalysis.C inputObjectFileCodeGeneration.C inputObjectFileTranslator.C alt_ObjectFileTokenGeneration_inputFile.C
 	rm -f alt_AstFileIO_inputFile* alt_AstFileRead_inputFile* a.out *.dot *.binary
 	rm -f *.C_identity
+	rm -rf rose_minimal.cpp rose-passed_files.txt rose-failed_files.txt
 
