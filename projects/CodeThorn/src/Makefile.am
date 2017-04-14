@@ -184,6 +184,14 @@ codethorn_SOURCES = \
   ParProLtlMiner.C                 \
   ParProLtlMiner.h                 \
   ReadWriteData.h \
+  PState.C           \
+  PState.h           \
+  EState.C           \
+  EState.h           \
+  InputOutput.C           \
+  InputOutput.h           \
+  ParProEState.C           \
+  ParProEState.h           \
   StateRepresentations.C           \
   StateRepresentations.h           \
   Timer.cpp                        \
