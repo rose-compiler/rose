@@ -122,7 +122,7 @@ CommandlineProcessing::genericSwitches() {
 #if defined(ROSE_PACKAGE_VERSION)
                .action(showVersionAndExit(ROSE_PACKAGE_VERSION, 0))
 #elif defined(PACKAGE_VERSION)
-               .action(showVersionAndExit(ROSE_PACKAGE_VERSION, 0))
+               .action(showVersionAndExit(PACKAGE_VERSION, 0))
 #else
                .action(showVersionAndExit("unknown", 0))
 #endif
