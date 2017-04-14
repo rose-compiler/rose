@@ -94,4 +94,18 @@ checkConfigToken(const char *configToken) {
     return 0 == strcmp(configToken, ROSE_CONFIG_TOKEN);
 }
 
+bool
+checkVersionNumber(const std::string &need) {
+    std::vector<std::string> needParts = rose::StringUtility::split('.', need);
+    std::vector<std::string> haveParts = rose::StringUtility::split('.', ROSE_PACKAGE_VERSION);
+
+    for (size_t i=0; i < needParts.size() && i < haveParts.size(); ++i) {
+        if (needParts[i] != haveParts[i])
+            return needParts[i] < haveParts[i];
+    }
+
+    // E.g., need = "1.2" and have = "1.2.x", or vice versa
+    return true;
+}
+
 } // namespace
