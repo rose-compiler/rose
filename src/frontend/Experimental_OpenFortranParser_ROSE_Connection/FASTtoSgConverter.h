@@ -1,9 +1,6 @@
 #ifndef FAST_TO_SG_CONVERTER_H
 #define FAST_TO_SG_CONVERTER_H
 
-#include "rosePublicConfig.h"
-#include "sage3basic.h"
-
 #include "FASTNodes.hpp"
 
 class FASTtoSgConverter : public FAST::Converter

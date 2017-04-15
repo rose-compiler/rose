@@ -1,3 +1,5 @@
+#include "sage3basic.h"
+
 #include "FASTtoSgConverter.h"
 
 #define PRINT_FAST_CONVERTER 0
