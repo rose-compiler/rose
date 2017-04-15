@@ -3069,17 +3069,18 @@ std::list<EState> Analyzer::transferFunctionCallExternal(Edge edge, const EState
 
   InputOutput newio;
   Label lab=getLabeler()->getLabel(nextNodeToAnalyze1);
+
   VariableId varId;
+  /*bool isFunctionCallWithAssignmentFlag=*/isFunctionCallWithAssignment(lab,&varId);
+  SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1);
+
   // TODO: check whether the following test is superfluous meanwhile, since isStdInLabel does take NonDetX functions into account
   bool isExternalNonDetXFunction=false;
-  if(isFunctionCallWithAssignment(lab,&varId)) {
-    if(isUsingExternalFunctionSemantics()) {
-      if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1)) {
-        ROSE_ASSERT(funCall);
-        string externalFunctionName=SgNodeHelper::getFunctionName(funCall);
-        if(externalFunctionName==_externalNonDetIntFunctionName||externalFunctionName==_externalNonDetLongFunctionName) {
-          isExternalNonDetXFunction=true;
-        }
+  if(isUsingExternalFunctionSemantics()) {
+    if(funCall) {
+      string externalFunctionName=SgNodeHelper::getFunctionName(funCall);
+      if(externalFunctionName==_externalNonDetIntFunctionName||externalFunctionName==_externalNonDetLongFunctionName) {
+        isExternalNonDetXFunction=true;
       }
     }
   }
@@ -3153,37 +3154,34 @@ std::list<EState> Analyzer::transferFunctionCallExternal(Edge edge, const EState
       }
     }
   }
+  int constvalue=0;
   if(getLabeler()->isStdOutVarLabel(lab,&varId)) {
     newio.recordVariable(InputOutput::STDOUT_VAR,varId);
     ROSE_ASSERT(newio.var==varId);
-  }
-  {
-    int constvalue;
-    if(getLabeler()->isStdOutConstLabel(lab,&constvalue)) {
-      {
-        newio.recordConst(InputOutput::STDOUT_CONST,constvalue);
-      }
-    }
-  }
-  if(getLabeler()->isStdErrLabel(lab,&varId)) {
+  } else if(getLabeler()->isStdOutConstLabel(lab,&constvalue)) {
+    newio.recordConst(InputOutput::STDOUT_CONST,constvalue);
+  } else if(getLabeler()->isStdErrLabel(lab,&varId)) {
     newio.recordVariable(InputOutput::STDERR_VAR,varId);
     ROSE_ASSERT(newio.var==varId);
   }
-  /* handling of specific semantics for external function */ {
-    if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1)) {
-      assert(funCall);
-      string funName=SgNodeHelper::getFunctionName(funCall);
-      if(isUsingExternalFunctionSemantics()) {
-        if(funName==_externalErrorFunctionName) {
-          //cout<<"DETECTED error function: "<<_externalErrorFunctionName<<endl;
-          return elistify(createVerificationErrorEState(currentEState,edge.target()));
-        } else if(funName==_externalExitFunctionName) {
-          /* the exit function is modeled to terminate the program
-             (therefore no successor state is generated)
-          */
-          return elistify();
-        }
+
+  /* handling of specific semantics for external function */ 
+  if(funCall) {
+    string funName=SgNodeHelper::getFunctionName(funCall);
+    if(isUsingExternalFunctionSemantics()) {
+      if(funName==_externalErrorFunctionName) {
+        //cout<<"DETECTED error function: "<<_externalErrorFunctionName<<endl;
+        return elistify(createVerificationErrorEState(currentEState,edge.target()));
+      } else if(funName==_externalExitFunctionName) {
+        /* the exit function is modeled to terminate the program
+           (therefore no successor state is generated)
+        */
+        return elistify();
       }
+    }
+    if(funName=="malloc") {
+      cout<<"DEBUG: detected malloc function call."<<endl;
+      
     }
   }
 

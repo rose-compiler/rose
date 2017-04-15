@@ -878,7 +878,8 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp*
     // return default value
     return listify(res);
   } else {
-    throw CodeThorn::Exception("Error: evalConstInt::function call inside expression.");
+    string s=node->unparseToString();
+    throw CodeThorn::Exception("Unknown semantics of function call inside expression: "+s);
   }
 }
 
