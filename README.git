@@ -1059,3 +1059,8 @@ and then scroll to end to see the first commits.
 
 ROSE.SH (specification of alternative translator):
    CXX="other_translator" rose.sh ...
+
+
+Collecting header file information to support debugging:
+   g++ -H -c /home/quinlan1/ROSE/git_rose_development/tests/nonsmoke/functional/CompileTests/Cxx_tests/test2004_35.C > header_output.txt 2>&1
+
