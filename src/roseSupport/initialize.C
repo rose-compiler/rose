@@ -97,7 +97,13 @@ checkConfigToken(const char *configToken) {
 bool
 checkVersionNumber(const std::string &need) {
     std::vector<std::string> needParts = rose::StringUtility::split('.', need);
+#if defined(ROSE_PACKAGE_VERSION)                       // autoconf
     std::vector<std::string> haveParts = rose::StringUtility::split('.', ROSE_PACKAGE_VERSION);
+#elif defined(PACKAGE_VERSION)                          // cmake
+    std::vector<std::string> haveParts = rose::StringUtility::split('.', PACKAGE_VERSION);
+#else
+    #error "unknown ROSE version number"
+#endif
 
     for (size_t i=0; i < needParts.size() && i < haveParts.size(); ++i) {
         if (needParts[i] != haveParts[i])
