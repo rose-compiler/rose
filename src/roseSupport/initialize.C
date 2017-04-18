@@ -1,4 +1,6 @@
 #include <sage3basic.h>
+#include <rosePublicConfig.h>
+#include <rose_config.h>                                // needed for VERSION with cmake
 #include <initialize.h>
 
 #ifdef ROSE_HAVE_GCRYPT_H
@@ -99,8 +101,8 @@ checkVersionNumber(const std::string &need) {
     std::vector<std::string> needParts = rose::StringUtility::split('.', need);
 #if defined(ROSE_PACKAGE_VERSION)                       // autoconf
     std::vector<std::string> haveParts = rose::StringUtility::split('.', ROSE_PACKAGE_VERSION);
-#elif defined(PACKAGE_VERSION)                          // cmake
-    std::vector<std::string> haveParts = rose::StringUtility::split('.', PACKAGE_VERSION);
+#elif defined(VERSION)                                  // cmake
+    std::vector<std::string> haveParts = rose::StringUtility::split('.', VERSION);
 #else
     #error "unknown ROSE version number"
 #endif
