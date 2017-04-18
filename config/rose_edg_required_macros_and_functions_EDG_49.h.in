@@ -1237,6 +1237,9 @@ DQ (6/19/2007): These might required math.h to be included.
    int __sync_lock_test_and_set( int *v, int n );
 // type __sync_lock_test_and_set (type *ptr, type value, ...)
 
+// DQ (4/12/2017): Added to support gcc_sync.h
+   void* __sync_lock_test_and_set( void * volatile *a, void * v);
+
 // DQ (2/10/2017): Change __Cplusplus to the correct __cplusplus.
 // DQ (12/15/2016): Need to address the use of C, not just C++.
 // int __sync_lock_release( int & v );

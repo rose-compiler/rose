@@ -7,8 +7,7 @@ namespace Unparser {
 
 void
 Mips::emitInstruction(std::ostream &out, SgAsmInstruction *insn_, State &state) const {
-    SgAsmMipsInstruction *insn = isSgAsmMipsInstruction(insn_);
-    ASSERT_not_null2(insn, "not a MIPS instruction");
+    ASSERT_not_null(isSgAsmMipsInstruction(insn_));
     Base::emitInstruction(out, insn_, state);
 }
 

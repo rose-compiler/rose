@@ -191,7 +191,10 @@ SgScopeStatement::find_symbol_by_type_of_function (const SgName & name, const Sg
                case V_SgTemplateInstantiationFunctionDecl:
                   {
 #if 0
-                     printf ("In SgScopeStatement::find_symbol_by_type_of_function(): This is a SgFunctionDeclaration or SgTemplateInstantiationFunctionDecl function: name = %s \n",name.str());
+                 // printf ("In SgScopeStatement::find_symbol_by_type_of_function(): This is a SgFunctionDeclaration or SgTemplateInstantiationFunctionDecl function: name = %s \n",name.str());
+                    printf ("In SgScopeStatement::find_symbol_by_type_of_function<%s>(): This is a SgFunctionDeclaration or SgTemplateInstantiationFunctionDecl function: name = %s \n",
+                         Cxx_GrammarTerminalNames[T::static_variant].name.c_str(),name.str());
+                    printf ("   --- templateArgumentsList = %p \n",templateArgumentsList);
 #endif
                  // DQ (8/11/2013): Verify that the template arguments are provided for the correct cases and not for the incorrect cases.
                     if ((VariantT)T::static_variant == V_SgTemplateInstantiationFunctionDecl)
