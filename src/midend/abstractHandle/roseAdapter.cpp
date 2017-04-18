@@ -417,9 +417,13 @@ namespace AbstractHandle
         { 
           if (shandle->getNode() != NULL)
           { // get SgNode from the handle
+#ifdef _MSC_VER  // abstract_node::getNode() using covariant type is not supported on Windows MSVC
+          lnode = NULL; 
+#else          
             SgNode* target_node = (SgNode*) (shandle->getNode()->getNode());
             ROSE_ASSERT(isSgStatement(target_node));
             lnode= isSgLocatedNode(target_node);
+#endif            
             break;
           }
         }
