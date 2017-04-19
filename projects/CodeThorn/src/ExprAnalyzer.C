@@ -11,7 +11,11 @@
 using namespace CodeThorn;
 using namespace SPRAY;
 
-ExprAnalyzer::ExprAnalyzer():_variableIdMapping(0),_skipSelectedFunctionCalls(false),_skipArrayAccesses(false){
+ExprAnalyzer::ExprAnalyzer():
+  _variableIdMapping(0),
+  _skipSelectedFunctionCalls(false),
+  _skipArrayAccesses(false), 
+  _externalFunctionSemantics(false) {
 }
 
 void ExprAnalyzer::setSkipSelectedFunctionCalls(bool skip) {
@@ -28,6 +32,14 @@ void ExprAnalyzer::setSkipArrayAccesses(bool skip) {
 
 bool ExprAnalyzer::getSkipArrayAccesses() {
   return _skipArrayAccesses;
+}
+
+void ExprAnalyzer::setExternalFunctionSemantics(bool flag) {
+  _externalFunctionSemantics=flag;
+}
+
+bool ExprAnalyzer::getExternalFunctionSemantics() {
+  return _externalFunctionSemantics;
 }
 
 bool ExprAnalyzer::variable(SgNode* node, string& varName) {
@@ -873,9 +885,12 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarExp(SgVarRefExp* node,
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp* node, EState estate, bool useConstraints) {
   SingleEvalResultConstInt res;
-  res.init(estate,*estate.constraints(),AbstractValue(CodeThorn::Bot()));
+  res.init(estate,*estate.constraints(),AbstractValue(CodeThorn::Top()));
   if(getSkipSelectedFunctionCalls()) {
     // return default value
+    return listify(res);
+  } else if(getExternalFunctionSemantics()) {
+    cout<<"DEBUG: FOUND function call inside expression (external): "<<node->unparseToString()<<endl;
     return listify(res);
   } else {
     string s=node->unparseToString();
@@ -910,6 +925,11 @@ SPRAY::VariableId ExprAnalyzer::resolveToAbsoluteVariableId(AbstractValue abstrV
 }
 
 AbstractValue ExprAnalyzer::readFromMemoryLocation(const PState* pState, AbstractValue abstrValue) const {
+  if(abstrValue.isTop()) {
+    // report memory violation
+    cout<<"WARNING: reading from unknown memory location (top)."<<endl;
+    return abstrValue;
+  }
   return pState->varValue(resolveToAbsoluteVariableId(abstrValue));
 }
 
