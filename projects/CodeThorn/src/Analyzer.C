@@ -50,7 +50,7 @@ bool Analyzer::isFunctionCallWithAssignment(Label lab,VariableId* varIdPtr){
     std::pair<SgVarRefExp*,SgFunctionCallExp*> p=SgNodeHelper::Pattern::matchExprStmtAssignOpVarRefExpFunctionCallExp2(node);
     if(p.first) {
       if(varIdPtr) {
-	*varIdPtr=variableIdMapping.variableId(p.first);
+        *varIdPtr=variableIdMapping.variableId(p.first);
       }
       return true;
     }
@@ -109,6 +109,7 @@ Analyzer::Analyzer():
   _next_iteration_cnt(0),
   _externalFunctionSemantics(false)
 {
+  initDiagnostics();
   _analysisTimer.start();
   _analysisTimer.stop();
   variableIdMapping.setModeVariableIdForEachArrayElement(true);
@@ -722,7 +723,7 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
             // set default init value
             newPState.setVariableToTop(newArrayElementId);
           }
-          
+
         } else if(variableIdMapping.hasClassType(initDeclVarId)) {
           // not supported yet
           cerr<<"WARNING: class type in variable declaration not supported yet."<<endl;
@@ -3171,7 +3172,7 @@ std::list<EState> Analyzer::transferFunctionCallExternal(Edge edge, const EState
     ROSE_ASSERT(newio.var==varId);
   }
 
-  /* handling of specific semantics for external function */ 
+  /* handling of specific semantics for external function */
   if(funCall) {
     string funName=SgNodeHelper::getFunctionName(funCall);
     if(isUsingExternalFunctionSemantics()) {

@@ -202,6 +202,8 @@ codethorn_SOURCES = \
   VariableValueMonitor.C \
   Visualizer.C                     \
   Visualizer.h                     \
+  AnalyzerTools.C                  \
+  AnalyzerTools.h                  \
   codethorn.h \
   codethorn.C
 

@@ -51,6 +51,7 @@
 #include "PromelaCodeGenerator.h"
 #include "ParProLtlMiner.h"
 #include "ParProExplorer.h"
+#include "AnalyzerTools.h"
 #include "ParallelAutomataGenerator.h"
 #if defined(__unix__) || defined(__unix) || defined(unix)
 #include <sys/resource.h>
@@ -80,6 +81,7 @@ using namespace Sawyer::Message;
 void CodeThorn::initDiagnostics() {
   rose::Diagnostics::initialize();
   Analyzer::initDiagnostics();
+  CounterexampleGenerator::initDiagnostics();
   RewriteSystem::initDiagnostics();
 }
 
