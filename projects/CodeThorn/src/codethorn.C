@@ -10,7 +10,7 @@
 #include "SgNodeHelper.h"
 #include "Labeler.h"
 #include "VariableIdMapping.h"
-#include "StateRepresentations.h"
+#include "EState.h"
 #include "Timer.h"
 #include <cstdio>
 #include <cstring>
@@ -26,7 +26,7 @@
 #include "InternalChecks.h"
 #include "AstAnnotator.h"
 #include "AstTerm.h"
-#include "AType.h"
+#include "AbstractValue.h"
 #include "AstMatching.h"
 #include "RewriteSystem.h"
 #include "SpotConnection.h"
@@ -418,7 +418,7 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
     ("input-values",po::value< string >(),"specify a set of input values (e.g. \"{1,2,3}\")")
     ("input-values-as-constraints",po::value<string >(),"represent input var values as constraints (otherwise as constants in PState)")
     ("input-sequence",po::value< string >(),"specify a sequence of input values (e.g. \"[1,2,3]\")")
-    ("log-level",po::value< string >()->default_value("none,>=warn"),"Set the log level")
+    ("log-level",po::value< string >()->default_value("none,>=warn"),"Set the log level (none|info|warn|trace)")
     ("max-transitions",po::value< int >(),"Passes (possibly) incomplete STG to verifier after max transitions (default: no limit).")
     ("max-iterations",po::value< int >(),"Passes (possibly) incomplete STG to verifier after max loop iterations (default: no limit). Currently requires --exploration-mode=loop-aware[-sync].")
     ("max-memory",po::value< long int >(),"Stop computing the STG after a total physical memory consumption of approximately <arg> Bytes has been reached. (default: no limit). Currently requires --solver=12 and only supports Unix systems.")
@@ -1032,7 +1032,7 @@ int main( int argc, char * argv[] ) {
   rose::Diagnostics::mprefix->showElapsedTime(false);
 
   Sawyer::Message::Facility logger;
-  rose::Diagnostics::initAndRegister(logger, "CodeThorn");
+  rose::Diagnostics::initAndRegister(&logger, "CodeThorn");
 
   try {
     Timer timer;
@@ -1207,7 +1207,13 @@ int main( int argc, char * argv[] ) {
     logger[TRACE] << "INIT: Parsing and creating AST: started."<<endl;
     timer.stop();
     timer.start();
-    SgProject* sageProject = frontend(argc,argv);
+
+    vector<string> argvList(argv,argv+argc);
+    if(boolOptions["data-race"]) {
+      //TODO: new openmp-ast support not finished yet - using existing implementation
+      //argvList.push_back("-rose:OpenMP:ast_only");
+    }
+    SgProject* sageProject = frontend(argvList);
     double frontEndRunTime=timer.getElapsedTimeInMilliSec();
 
     logger[TRACE] << "INIT: Parsing and creating AST: finished."<<endl;

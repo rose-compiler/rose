@@ -77,6 +77,7 @@ class VariableIdMapping {
   bool hasFloatingPointType(VariableId varId);
   bool hasPointerType(VariableId varId);
   bool hasArrayType(VariableId varId);
+  bool hasClassType(VariableId varId);
   bool isConstantArray(VariableId varId);
   SgVariableDeclaration* getVariableDeclaration(VariableId varId);
   bool isTemporaryVariableId(VariableId varId);
@@ -144,6 +145,12 @@ class VariableId {
   VariableId();
   std::string toString() const;
   std::string toString(VariableIdMapping& vid) const;
+
+  /* if VariableIdMapping is a valid pointer a variable name is returned
+     otherwise toString() is called and a generic name (V..) is returend.
+  */
+  std::string toString(VariableIdMapping* vid) const;
+
   int getIdCode() const { return _id; }
   // we intentionally do not provide a constructor for int because this would clash 
   // with overloaded functions that are using ConstIntLattice (which has an implicit 

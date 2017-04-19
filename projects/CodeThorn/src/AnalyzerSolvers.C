@@ -520,7 +520,7 @@ void Analyzer::runSolver10() {
   // create a new instance of the startPState
   //TODO: check why init of "output" is necessary
   PState newStartPState = _startPState;
-  newStartPState[globalVarIdByName("output")]=CodeThorn::AType::ConstIntLattice(-7);
+  newStartPState[globalVarIdByName("output")]=CodeThorn::AbstractValue(-7);
   // initialize worklist
   PStatePlusIOHistory startState = PStatePlusIOHistory(newStartPState, list<int>());
   std::list<PStatePlusIOHistory> workList;
@@ -600,7 +600,7 @@ bool isEmptyWorkList;
       for (set<int>::iterator inputVal=_inputVarValues.begin(); inputVal!=_inputVarValues.end(); inputVal++) {
         // copy the state and initialize new input
         PState newPState = currentState.first;
-        newPState[globalVarIdByName("input")]=CodeThorn::AType::ConstIntLattice(*inputVal);
+        newPState[globalVarIdByName("input")]=CodeThorn::AbstractValue(*inputVal);
         list<int> newHistory = currentState.second;
         ROSE_ASSERT(newHistory.size() % 2 == 0);
         newHistory.push_back(*inputVal);

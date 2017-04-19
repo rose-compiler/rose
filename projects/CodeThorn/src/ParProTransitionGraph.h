@@ -7,7 +7,7 @@
 
 // SPRAY includes
 // #include "Flow.h"
-#include "StateRepresentations.h"
+#include "ParProEState.h"
 
 // CodeThorn includes
 

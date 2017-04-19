@@ -12,7 +12,7 @@
 #include "ProgramStats.h"
 #include "CommandLineOptions.h"
 #include "AnalysisAbstractionLayer.h"
-#include "AType.h"
+#include "AbstractValue.h"
 #include "SgNodeHelper.h"
 #include "FIConstAnalysis.h"
 #include "TrivialInlining.h"
@@ -34,7 +34,6 @@
 
 using namespace std;
 using namespace CodeThorn;
-using namespace AType;
 
 #include "Diagnostics.h"
 using namespace Sawyer::Message;
@@ -74,10 +73,10 @@ void printResult(VariableIdMapping& variableIdMapping, VarConstSetMap& map) {
     VariableId varId=(*i).first;
     //string variableName=variableIdMapping.uniqueShortVariableName(varId);
     string variableName=variableIdMapping.variableName(varId);
-    set<ConstIntLattice> valueSet=(*i).second;
+    set<AbstractValue> valueSet=(*i).second;
     stringstream setstr;
     setstr<<"{";
-    for(set<ConstIntLattice>::iterator i=valueSet.begin();i!=valueSet.end();++i) {
+    for(set<AbstractValue>::iterator i=valueSet.begin();i!=valueSet.end();++i) {
       if(i!=valueSet.begin())
         setstr<<",";
       setstr<<(*i).toString();
@@ -130,7 +129,7 @@ int main(int argc, char* argv[]) {
   rose::Diagnostics::mprefix->showElapsedTime(false);
 
   Sawyer::Message::Facility logger;
-  rose::Diagnostics::initAndRegister(logger, "Woodpecker");
+  rose::Diagnostics::initAndRegister(&logger, "Woodpecker");
 
   try {
     if(argc==1) {

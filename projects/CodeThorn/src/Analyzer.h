@@ -27,7 +27,7 @@
 #include "RoseAst.h"
 #include "SgNodeHelper.h"
 #include "ExprAnalyzer.h"
-#include "StateRepresentations.h"
+#include "EState.h"
 #include "TransitionGraph.h"
 #include "PropertyValueTable.h"
 #include "CTIOLabeler.h"

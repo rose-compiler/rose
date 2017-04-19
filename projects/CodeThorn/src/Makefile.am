@@ -3,8 +3,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 COUNTEREXAMPLES = counterexamples/ltl2haskell.sh counterexamples/Makefile counterexamples/qc.hs counterexamples/log2csv.awk
 EXTRA_DIST = EqualityMaintainer.C Doxyfile $(TESTS) $(COUNTEREXAMPLES)
 
-bin_PROGRAMS = codethorn woodpecker analyterix matcher_demo matcher astinfo
-noinst_PROGRAMS = addressTakenAnalysis matcher_demo astinfo
+bin_PROGRAMS = codethorn woodpecker analyterix matcher_demo matcher scat1 astinfo
+noinst_PROGRAMS = addressTakenAnalysis matcher_demo matcher astinfo
 
 CLEANFILES = 
 
@@ -21,7 +21,7 @@ libspray_la_SOURCES=\
  AnalysisAbstractionLayer.h \
  AnalysisAstAnnotator.h \
  AstTerm.h \
- AType.h \
+ AbstractValue.h \
  BoolLattice.h \
  CFAnalysis.h \
  DFAnalysisBase.h \
@@ -55,7 +55,7 @@ libspray_la_SOURCES=\
  AnalysisAstAnnotator.C \
  AliasAnalysis.C \
  AstTerm.C \
- AType.C \
+ AbstractValue.C \
  BoolLattice.C \
  CFAnalysis.C \
  CppExprEvaluator.C \
@@ -184,8 +184,14 @@ codethorn_SOURCES = \
   ParProLtlMiner.C                 \
   ParProLtlMiner.h                 \
   ReadWriteData.h \
-  StateRepresentations.C           \
-  StateRepresentations.h           \
+  PState.C           \
+  PState.h           \
+  EState.C           \
+  EState.h           \
+  InputOutput.C           \
+  InputOutput.h           \
+  ParProEState.C           \
+  ParProEState.h           \
   Timer.cpp                        \
   Timer.h                          \
   TransitionGraph.h                \
@@ -474,6 +480,11 @@ matcher_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
 matcher__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
 matcher_SOURCES = Timer.cpp matcher.C
 
+scat1_DEPENDENCIES=libspray.la
+scat1_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
+scat1__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
+scat1_SOURCES = Timer.cpp scat1.C
+
 #MS: iterator_test not ingegrated yet
 #iterator_test_SOURCES = iterator_test.C ShowSeq.h
 #iterator_test_LDADD = -lrose libmatcher.la
@@ -555,6 +566,8 @@ check-local:
 check-arrays:
 	./codethorn $(srcdir)/tests/pointer/test48.cpp --explicit-arrays --viz=yes && dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
 
+check-array-bounds: ./codethorn
+	./codethorn --explicit-arrays $(srcdir)/tests/arraybounds1.C 
 
 # MS: 1-6 is reasonable for V1.2
 RERS=$(patsubst %,Problem%.log, $(shell seq 6))
@@ -583,6 +596,7 @@ clean-local:
 	rm -f *.consistent Problem*.[0-9].csv
 	rm -f codethorn-LTLParser.c++
 	rm -f tmp.nsdump
+	rm -f rose_Problem1401_opt.pp.c
 
 distclean-local: clean
 	rm -f *.tgz
