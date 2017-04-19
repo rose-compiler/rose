@@ -2134,28 +2134,28 @@ int main( int argc, char * argv[] ) {
     cout<<color("normal")<<"done."<<endl;
 
     // main function try-catch
-  } catch(CodeThorn::Exception& e) {
-    logger[FATAL] << "CodeThorn::Exception raised: " << e.what() << endl;
+  } catch(const CodeThorn::Exception& e) {
+    cerr << "CodeThorn::Exception raised: " << e.what() << endl;
     mfacilities.shutdown();
     return 1;
-  } catch(SPRAY::Exception& e) {
-    logger[FATAL]<< "Spray::Exception raised: " << e.what() << endl;
+  } catch(const SPRAY::Exception& e) {
+    cerr<< "Spray::Exception raised: " << e.what() << endl;
     mfacilities.shutdown();
     return 1;
-  } catch(std::exception& e) {
-    logger[FATAL]<< "std::exception raised: " << e.what() << endl;
+  } catch(const std::exception& e) {
+    cerr<< "std::exception raised: " << e.what() << endl;
     mfacilities.shutdown();
     return 1;
   } catch(char const* str) {
-    logger[FATAL]<< "*Exception raised: " << str << endl;
+    cerr<< "*Exception raised: " << str << endl;
     mfacilities.shutdown();
     return 1;
   } catch(string str) {
-    logger[FATAL]<< "Exception raised: " << str << endl;
+    cerr<< "Exception raised: " << str << endl;
     mfacilities.shutdown();
     return 1;
   } catch(...) {
-    logger[FATAL]<< "Unknown exception raised." << endl;
+    cerr<< "Unknown exception raised." << endl;
     mfacilities.shutdown();
     return 1;
   }

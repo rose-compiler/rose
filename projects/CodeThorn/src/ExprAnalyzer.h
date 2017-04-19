@@ -67,10 +67,14 @@ class ExprAnalyzer {
   //! values of top-variables. 
   list<SingleEvalResultConstInt> evalConstInt(SgNode* node,EState estate, bool useConstraints);
   void setVariableIdMapping(VariableIdMapping* variableIdMapping) { _variableIdMapping=variableIdMapping; }
+
   void setSkipSelectedFunctionCalls(bool skip);
   bool getSkipSelectedFunctionCalls();
   void setSkipArrayAccesses(bool skip);
   bool getSkipArrayAccesses();
+  void setExternalFunctionSemantics(bool flag);
+  bool getExternalFunctionSemantics();
+
   bool checkArrayBounds(VariableId arrayVarId,int accessIndex);
   VariableId resolveToAbsoluteVariableId(AbstractValue abstrValue) const;
   AbstractValue readFromMemoryLocation(const PState* pState, AbstractValue abstrValue) const;
@@ -80,8 +84,12 @@ private:
   //! this one result. This function is used to combine cases where the result
   //! might be empty or have multiple results as well.
   VariableIdMapping* _variableIdMapping;
+
+  // Options
   bool _skipSelectedFunctionCalls;
   bool _skipArrayAccesses;
+  bool _externalFunctionSemantics;
+
  public:
   //! returns true if node is a VarRefExp and sets varName=name, otherwise false and varName="$".
   static bool variable(SgNode* node,VariableName& varName);

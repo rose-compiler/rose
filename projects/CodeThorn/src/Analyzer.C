@@ -60,6 +60,7 @@ bool Analyzer::isFunctionCallWithAssignment(Label lab,VariableId* varIdPtr){
 
 void Analyzer::enableExternalFunctionSemantics() {
   _externalFunctionSemantics=true;
+  exprAnalyzer.setExternalFunctionSemantics(true);
   _externalErrorFunctionName="__VERIFIER_error";
   _externalNonDetIntFunctionName="__VERIFIER_nondet_int";
   _externalNonDetLongFunctionName="__VERIFIER_nondet_long";
@@ -68,6 +69,7 @@ void Analyzer::enableExternalFunctionSemantics() {
 
 void Analyzer::disableExternalFunctionSemantics() {
   _externalFunctionSemantics=false;
+  exprAnalyzer.setExternalFunctionSemantics(false);
   _externalErrorFunctionName="";
   _externalNonDetIntFunctionName="";
   _externalNonDetLongFunctionName="";
@@ -953,6 +955,8 @@ list<EState> Analyzer::transferEdgeEState(Edge edge, const EState* estate) {
     return elistify(createFailedAssertEState(currentEState,edge.target()));
   } else if(edge.isType(EDGE_CALL)) {
     return transferFunctionCall(edge,estate);
+  } else if(edge.isType(EDGE_EXTERNAL)) {
+    return transferFunctionCallExternal(edge,estate);
   } else if(isSgReturnStmt(nextNodeToAnalyze1) && !SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(nextNodeToAnalyze1)) {
     // "return x;": add $return=eval() [but not for "return f();"]
     return transferReturnStmt(edge,estate);
@@ -960,15 +964,15 @@ list<EState> Analyzer::transferEdgeEState(Edge edge, const EState* estate) {
     return transferFunctionExit(edge,estate);
   } else if(getLabeler()->isFunctionCallReturnLabel(edge.source())) {
     return transferFunctionCallReturn(edge,estate);
-  } else if(edge.isType(EDGE_EXTERNAL)) {
-    return transferFunctionCallExternal(edge,estate);
   } else if(SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1)
      ||edge.isType(EDGE_EXTERNAL)
      ||edge.isType(EDGE_CALLRETURN)) {
+    // this is supposed to be dead code meanwhile
+    ROSE_ASSERT(false);
     // special case external call
-    EState newEState=currentEState;
-    newEState.setLabel(edge.target());
-    return elistify(newEState);
+    //EState newEState=currentEState;
+    //newEState.setLabel(edge.target());
+    //return elistify(newEState);
   } else if(SgVariableDeclaration* decl=isSgVariableDeclaration(nextNodeToAnalyze1)) {
     return transferVariableDeclaration(decl,edge,estate);
   } else if(isSgExprStatement(nextNodeToAnalyze1) || SgNodeHelper::isForIncExpr(nextNodeToAnalyze1)) {
@@ -1007,7 +1011,7 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root, boo
 
   logger[TRACE]<< "INIT: Creating Labeler."<<endl;
   Labeler* labeler= new CTIOLabeler(root,getVariableIdMapping());
-  logger[TRACE]<< "INIT: Initializing ExprAnalyzer."<<endl;
+  logger[TRACE]<< "INIT: Initializing VariableIdMapping."<<endl;
   exprAnalyzer.setVariableIdMapping(getVariableIdMapping());
   logger[TRACE]<< "INIT: Creating CFAnalysis."<<endl;
   cfanalyzer=new CFAnalysis(labeler,true);
@@ -3067,6 +3071,8 @@ std::list<EState> Analyzer::transferFunctionCallExternal(Edge edge, const EState
   SgNode* nextNodeToAnalyze1=cfanalyzer->getNode(edge.source());
   ROSE_ASSERT(nextNodeToAnalyze1);
 
+  cout<<"DEBUG: external function call (statement): "<<nextNodeToAnalyze1->unparseToString()<<endl;
+
   InputOutput newio;
   Label lab=getLabeler()->getLabel(nextNodeToAnalyze1);
 
@@ -3181,7 +3187,10 @@ std::list<EState> Analyzer::transferFunctionCallExternal(Edge edge, const EState
     }
     if(funName=="malloc") {
       cout<<"DEBUG: detected malloc function call."<<endl;
-      
+    } else if(funName=="free") {
+      cout<<"DEBUG: detected free function call."<<endl;
+    } else if(funName=="strlen") {
+      cout<<"DEBUG: detected free function call."<<endl;
     }
   }
 
@@ -3386,7 +3395,15 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
       }
       ROSE_ASSERT(resLhs.size()==1);
       AValue lhsPointerValue=(*resLhs.begin()).result;
-      ROSE_ASSERT(lhsPointerValue.isPtr()); // only a pointer value can be dereferenced
+      if(lhsPointerValue.isTop()) {
+        // special case. Expr evaluates to top (should be dereferenced)
+        PState pstate2=*(estate->pstate());
+         estateList.push_back(createEState(edge.target(),pstate2,*(estate->constraints())));
+      }
+      if(!(lhsPointerValue.isPtr())) {
+        cerr<<"Error: not a pointer value in dereference operator."<<lhsPointerValue.toString()<<endl;
+        exit(1);
+      }
       cout<<lhsPointerValue.toString(getVariableIdMapping());
       cout<<endl;
       PState pstate2=*(estate->pstate());
