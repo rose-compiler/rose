@@ -6,6 +6,7 @@
 #include "sageBuilderAsm.h"
 #include "DisassemblerPowerpc.h"
 #include "BinaryUnparserPowerpc.h"
+#include "DispatcherPowerpc.h"
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -57,6 +58,9 @@ DisassemblerPowerpc::init()
     set_registers(RegisterDictionary::dictionary_powerpc()); // only a default
     REG_IP = *get_registers()->lookup("iar");
     callingConventions(CallingConvention::dictionaryPowerpc());
+    InstructionSemantics2::DispatcherPowerpcPtr d = InstructionSemantics2::DispatcherPowerpc::instance();
+    d->set_register_dictionary(get_registers());
+    p_proto_dispatcher = d;
 }
 
 /* This is a bit of a kludge for now because we're trying to use an unmodified version of the PowerpcDisassembler name space. */
