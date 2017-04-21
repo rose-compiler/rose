@@ -98,9 +98,9 @@ namespace SageInterface
 
         };
 
-  // DQ (4/3/2014): This constucts a data structure that holds analysis information about
-  // the AST that is seperate from the AST.  This is intended to be a general mechanism 
-  // to support analysis information without constantly modifing the IR.
+  // DQ (4/3/2014): This constructs a data structure that holds analysis information about
+  // the AST that is separate from the AST.  This is intended to be a general mechanism 
+  // to support analysis information without constantly modifying the IR.
      DeclarationSets* buildDeclarationSets(SgNode*);
 
 //! An internal counter for generating unique SgName
@@ -813,7 +813,7 @@ void setSourcePositionPointersToNull(SgNode *node);
   ROSE_DLL_API void setSourcePositionForTransformation (SgNode * root);
 
 //! Set source position info(Sg_File_Info) as transformation generated for all SgNodes in memory pool
-  ROSE_DLL_API void setSourcePositionForTransformation_memoryPool();
+//  ROSE_DLL_API void setSourcePositionForTransformation_memoryPool();
 
 //! Check if a node is from a system header file
   ROSE_DLL_API bool insideSystemHeader (SgLocatedNode* node);
@@ -2143,8 +2143,8 @@ bool isBodyStatement (SgStatement* s);
 //! Fix up ifs, loops, while, switch, Catch, OmpBodyStatement, etc. to have blocks as body components. It also adds an empty else body to if statements that don't have them.
 void changeAllBodiesToBlocks(SgNode* top, bool createEmptyBody = true);
 
-//! The same as changeAllBodiesToBlocks(SgNode* top). To be phased out.
-void changeAllLoopBodiesToBlocks(SgNode* top);
+// The same as changeAllBodiesToBlocks(SgNode* top). Phased out.
+//void changeAllLoopBodiesToBlocks(SgNode* top);
 
 //! Make a single statement body to be a basic block. Its parent is if, while, catch, or upc_forall etc.
 SgBasicBlock * makeSingleStatementBodyToBlock(SgStatement* singleStmt);
@@ -2503,7 +2503,7 @@ SgInitializedName& getFirstVariable(SgVariableDeclaration& vardecl);
       SgType *  UnderlyingType(SgType *type);
 
 // DQ (3/2/2014): Added a new interface function (used in the snippet insertion support).
-   void supportForInitializedNameLists ( SgScopeStatement* scope, SgInitializedNamePtrList & variableList );
+//   void supportForInitializedNameLists ( SgScopeStatement* scope, SgInitializedNamePtrList & variableList );
 
 // DQ (3/4/2014): Added support for testing two trees for equivalents using the AST iterators.
    bool isStructurallyEquivalentAST( SgNode* tree1, SgNode* tree2 );

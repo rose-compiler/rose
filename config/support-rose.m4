@@ -354,9 +354,27 @@ AC_CANONICAL_HOST
 
 # *****************************************************************
 
+# DQ (3/21/2017): Moved this to here (earlier than where is it used below) so that 
+# the warnings options can use the compiler vendor instead of the compiler name.
+AC_LANG(C++)
+
+# Get frontend compiler vendor 
+AX_COMPILER_VENDOR
+FRONTEND_CXX_COMPILER_VENDOR="$ax_cv_cxx_compiler_vendor"
+
+# echo "_AC_LANG_ABBREV              = $_AC_LANG_ABBREV"
+echo "ax_cv_c_compiler_vendor      = $ax_cv_c_compiler_vendor"
+echo "ax_cv_cxx_compiler_vendor    = $ax_cv_cxx_compiler_vendor"
+echo "FRONTEND_CXX_COMPILER_VENDOR = $FRONTEND_CXX_COMPILER_VENDOR"
+
+unset ax_cv_cxx_compiler_vendor
+
 # Setup default options for C and C++ compilers compiling ROSE source code.
 ROSE_FLAG_C_OPTIONS
 ROSE_FLAG_CXX_OPTIONS
+
+# echo "Exiting after computing the frontend compiler vendor"
+# exit 1
 
 # *****************************************************************
 
@@ -488,6 +506,8 @@ CHOOSE_BACKEND_COMPILER
 # TV (06/17/2013): Now always the case (EDG 4.7).
 AC_DEFINE([TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS], [], [Controls design of internal template declaration support within the ROSE AST.])
 
+# *****************************************************************
+
 # Calling available macro from Autoconf (test by optionally pushing C language onto the internal autoconf language stack).
 # This function must be called from this support-rose file (error in ./build if called from the GET COMPILER SPECIFIC DEFINES macro.
 # AC_LANG_PUSH(C)
@@ -516,6 +536,9 @@ unset ax_cv_cxx_compiler_vendor
   echo "After resetting CXX to be the saved name of the original compiler: CXX = $CXX"
 
 echo "FRONTEND_CXX_COMPILER_VENDOR = $FRONTEND_CXX_COMPILER_VENDOR"
+
+# echo "Exiting after computing the backend compiler vendor"
+# exit 1
 
 # *****************************************************************
 
@@ -1031,6 +1054,9 @@ fi
 ROSE_SUPPORT_HASKELL
 
 ROSE_SUPPORT_CUDA
+
+# if swi-prolog is available
+ROSE_SUPPORT_SWIPL
 
 # Call support macro for Z3
 

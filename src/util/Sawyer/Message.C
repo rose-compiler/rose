@@ -640,7 +640,7 @@ Gang::createNS(int id) {
         gangs_ = new GangMap;
     GangPtr gang = gangs_->getOrDefault(id);
     if (!gang) {
-        gang = GangPtr(new Gang(id));                   // intentional leak; seek class declaration for details
+        gang = GangPtr(new Gang);
         gangs_->insert(id, gang);
     }
     return gang;
@@ -1056,7 +1056,7 @@ public:
     bool anyUnbuffered_;                                // True if any baked destinations are unbuffered.
 
     StreamBuf(Stream *owner): stream_(owner), enabled_(true), isBaked_(false), anyUnbuffered_(false) {}
-    ~StreamBuf() { cancelMessage(); }
+    virtual ~StreamBuf() { cancelMessage(); }
     void owner(Stream *s) {
         assert(stream_==NULL || stream_==s);
         stream_ = s;
@@ -1495,13 +1495,16 @@ Facility::get(Importance imp) {
         // |
         // |int main() {
         // |    mlog = Sawyer::Message::Facility("tool");
-        // 
-        // ROSE users: librose does not currently (2014-09-09) initialize libsawyer until the ROSE frontend() is called. If
-        // you're calling into librose before calling "frontend" then you probably want to explicitly initialize ROSE by
-        // invoking rose::Diagnostics::initialize() early in "main". This will cause all of ROSE's Facility objects to be
-        // constructed.
+        //
+        // ROSE users: librose does not currently (2017-04-10) initialize libsawyer until the ROSE frontend() is called. If
+        // you're calling into librose before calling "frontend" then you probably want to explicitly initialize ROSE by using
+        // adding "ROSE_INITIALIZE;" or "rose::initialize(ROSE_CONFIG_TOKEN)" to the beginning of your "main" function. This
+        // will cause all of ROSE's Facility objects (among other things) to be constructed.
         std::ostringstream ss;
-        ss <<"stream " <<stringifyImportance(imp) <<" in facility " <<this <<" is default constructed";
+        ss <<"Sawyer stream " <<stringifyImportance(imp) <<" in facility " <<this <<" is default constructed";
+#ifdef COMPILING_ROSE
+        ss <<" (likely \"ROSE_INITIALIZE;\" is required at the start of your ROSE-based tool)";
+#endif
         throw std::runtime_error(ss.str());
     }
 
@@ -2111,7 +2114,7 @@ Facilities::print(std::ostream &log) const {
 void
 FacilitiesGuard::save() {
     BOOST_FOREACH (const std::string &facilityName, facilities_.facilityNames()) {
-        std::vector<bool> facilityState = state_.insertMaybeDefault(facilityName);
+        std::vector<bool> &facilityState = state_.insertMaybeDefault(facilityName);
         facilityState.resize(N_IMPORTANCE, false);
         Facility &facility = facilities_.facility(facilityName);
         for (int i=0; i<N_IMPORTANCE; ++i)
@@ -2122,6 +2125,7 @@ FacilitiesGuard::save() {
 void
 FacilitiesGuard::restore() {
     BOOST_FOREACH (const State::Node &saved, state_.nodes()) {
+        ASSERT_require(saved.value().size() == N_IMPORTANCE);
         try {
             Facility &facility = facilities_.facility(saved.key());
             for (int i=0; i<N_IMPORTANCE; ++i)

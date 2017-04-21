@@ -204,7 +204,6 @@ SgAsmStringStorage::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, ", \"%s\"\n", escapeString(get_string()).c_str());
 }
 
-/** Constructs an SgAsmStoredString from an offset into this string table. */
 SgAsmStoredString *
 SgAsmGenericStrtab::create_string(rose_addr_t offset, bool shared)
 {
@@ -212,8 +211,6 @@ SgAsmGenericStrtab::create_string(rose_addr_t offset, bool shared)
     return new SgAsmStoredString(storage);
 }
 
-/** Free area of this string table that corresponds to the string currently stored. Use this in preference to the offset/size
- *  version of free() when possible. */
 void
 SgAsmGenericStrtab::free(SgAsmStringStorage *storage)
 {
@@ -227,9 +224,6 @@ SgAsmGenericStrtab::free(SgAsmStringStorage *storage)
     }
 }
 
-/** Add a range of bytes to the free list after subtracting areas that are referenced by other strings. For instance, an ELF
- *  string table can have "main" and "domain" sharing storage. If we free the "domain" string then only "do" should be added
- *  to the free list. */
 void
 SgAsmGenericStrtab::free(rose_addr_t offset, rose_addr_t size)
 {
@@ -257,9 +251,6 @@ SgAsmGenericStrtab::free(rose_addr_t offset, rose_addr_t size)
     get_freelist().insertMultiple(toFree);
 }
 
-/** Free all strings so they will be reallocated later. This is more efficient than calling free() for each storage object. If
- *  blow_way_holes is true then any areas that are unreferenced in the string table will be marked as referenced and added to
- *  the free list. */
 void
 SgAsmGenericStrtab::free_all_strings(bool blow_away_holes)
 {
@@ -291,9 +282,6 @@ SgAsmGenericStrtab::free_all_strings(bool blow_away_holes)
         get_freelist().erase(AddressInterval::baseSize(p_dont_free->get_offset(), p_dont_free->get_string().size()+1));
 }
 
-/** Allocates storage for strings that have been modified but not allocated. We first try to fit unallocated strings into free
- *  space. Any that are left will cause the string table to be extended. Returns true if the reallocation would potentially
- *  affect some other section. If "shrink" is true then release address space that's no longer needed at the end of the table. */
 bool
 SgAsmGenericStrtab::reallocate(bool shrink)
 {
@@ -407,20 +395,18 @@ SgAsmGenericStrtab::reallocate(bool shrink)
     return reallocated;
 }
 
-/** Returns a reference to the free list. Don't use ROSETTA-generated version because callers need to be able to modify the
- *  free list. */
 const AddressIntervalSet&
 SgAsmGenericStrtab::get_freelist() const
 {
     return p_freelist;
 }
+
 AddressIntervalSet&
 SgAsmGenericStrtab::get_freelist()
 {
     return p_freelist;
 }
 
-/* Print some debugging info */
 void
 SgAsmGenericStrtab::dump(FILE *f, const char *prefix, ssize_t idx) const
 {

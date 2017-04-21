@@ -1304,7 +1304,9 @@ frontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
 
 FrontierDetectionForTokenStreamMappingAttribute::
 FrontierDetectionForTokenStreamMappingAttribute(SgNode* n, std::string name, std::string options)
-   : node(n), name(name), options(options)
+// DQ (3/25/2017): Remove to avoid Clang warning about unused private variable.
+// : node(n), 
+   : name(name), options(options)
    {
 #if 0
      printf ("In FrontierDetectionForTokenStreamMappingAttribute constructor! name = %s options = %s \n",name.c_str(),options.c_str());

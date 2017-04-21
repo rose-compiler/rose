@@ -482,7 +482,7 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
      curprint(string("\n/* Top of unparseType: class_name() = ") + type->class_name() + " */ \n");
 #endif
 
-#if 1
+#if 0
      if (info.SkipClassDefinition() != info.SkipEnumDefinition())
         {
           printf ("In unparseType(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
@@ -2362,6 +2362,10 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
                        {
                       // Else if this is a declaration in a variable declaration, then we do want to output a generated name.
                       // We could also mark the declaration for the cases where this is required. See test2012_141.C for this case.
+                         if (edecl->get_parent() == NULL)
+                            {
+                              printf ("WARNING: edecl->get_parent() == NULL: edecl = %p \n",edecl);
+                            }
                          ROSE_ASSERT(edecl->get_parent() != NULL);
                          SgTypedefDeclaration* typedefDeclaration = isSgTypedefDeclaration(edecl->get_parent());
                          if (typedefDeclaration != NULL)
@@ -3481,10 +3485,13 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
                        {
                       // Unparse the array bound.
 
+                      // DQ (3/28/2017): Eliminate warning about unused variable from Clang.
                       // DQ (2/12/2016): Adding support for variable length arrays.
                       // unp->u_exprStmt->unparseExpression(array_type->get_index(), ninfo2); // get_index() returns an expr
-                         SgExpression* indexExpression = array_type->get_index();
-                         SgNullExpression* nullExpression = isSgNullExpression(indexExpression);
+                      // SgExpression* indexExpression = array_type->get_index();
+
+                      // DQ (3/28/2017): Eliminate warning about unused variable from Clang.
+                      // SgNullExpression* nullExpression = isSgNullExpression(indexExpression);
 
                       // DQ (2/14/2016): Since the array type's index is updated after seeing the function definition, we need to always use the VLA syntax for reliabily.
                       // if (nullExpression != NULL && array_type->get_is_variable_length_array() == true)

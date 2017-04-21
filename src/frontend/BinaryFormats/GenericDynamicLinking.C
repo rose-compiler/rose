@@ -4,12 +4,18 @@
 
 using namespace rose;
 
-/** Accessors for "name" like ROSETTA's except setting name reparents the SgAsmGenericString. */
+void
+SgAsmGenericDLL::ctor() {
+    ASSERT_not_null(p_name);
+    p_name->set_parent(this);
+}
+
 SgAsmGenericString *
 SgAsmGenericDLL::get_name() const 
 {
     return p_name;
 }
+
 void
 SgAsmGenericDLL::set_name(SgAsmGenericString *s)
 {
@@ -25,7 +31,6 @@ SgAsmGenericDLL::set_name(SgAsmGenericString *s)
     }
 }
 
-/** Print some debugging info */
 void
 SgAsmGenericDLL::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
@@ -53,7 +58,6 @@ SgAsmGenericSymbol::ctor()
     p_name->set_parent(this);
 }
 
-/** Like ROSETTA-generated accessors, but also sets parent */
 SgAsmGenericString *
 SgAsmGenericSymbol::get_name() const
 {
@@ -107,7 +111,6 @@ SgAsmGenericSymbol::stringifyBinding() const
 #endif
 }
 
-/** Print some debugging info */
 void
 SgAsmGenericSymbol::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
