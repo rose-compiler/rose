@@ -64,9 +64,6 @@ check-local:
 # DQ (4/28/2010): This appears to fail in 32-bit machines.  For now get existing work checked in and 
 # investigate this detail afterward (ongoing work).
 #	@$(MAKE) testmatchPattern
-	@echo "****************************************************************************************"
-	@echo "****** ROSE/tests/nonsmoke/functional/translatorTests: make check rule complete (terminated normally) ******"
-	@echo "****************************************************************************************"
 
 
 distclean-local:
