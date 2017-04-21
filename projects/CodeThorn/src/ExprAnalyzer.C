@@ -735,7 +735,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
         }
         return listify(res);
       } else {
-        // array variable NOT in state. Special optimization case for constant array.
+        // array variable NOT in state. Special space optimization case for constant array.
         if(_variableIdMapping->isConstantArray(arrayVarId)) {
           SgExpressionPtrList& initList=_variableIdMapping->getInitializerListOfArrayVariable(arrayVarId);
           int elemIndex=0;
@@ -883,21 +883,6 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarExp(SgVarRefExp* node,
   // unreachable
 }
 
-list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp* node, EState estate, bool useConstraints) {
-  SingleEvalResultConstInt res;
-  res.init(estate,*estate.constraints(),AbstractValue(CodeThorn::Top()));
-  if(getSkipSelectedFunctionCalls()) {
-    // return default value
-    return listify(res);
-  } else if(getExternalFunctionSemantics()) {
-    cout<<"DEBUG: FOUND function call inside expression (external): "<<node->unparseToString()<<endl;
-    return listify(res);
-  } else {
-    string s=node->unparseToString();
-    throw CodeThorn::Exception("Unknown semantics of function call inside expression: "+s);
-  }
-}
-
 list<SingleEvalResultConstInt> ExprAnalyzer::evalValueExp(SgValueExp* node, EState estate, bool useConstraints) {
   SingleEvalResultConstInt res;
   res.init(estate,*estate.constraints(),AbstractValue(CodeThorn::Bot()));
@@ -905,10 +890,52 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalValueExp(SgValueExp* node, ESta
   return listify(res);
 }
 
+list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp* funCall, EState estate, bool useConstraints) {
+  SingleEvalResultConstInt res;
+  res.init(estate,*estate.constraints(),AbstractValue(CodeThorn::Top()));
+  if(getSkipSelectedFunctionCalls()) {
+    // return default value
+    return listify(res);
+  } else if(getExternalFunctionSemantics()) {
+    cout<<"DEBUG: FOUND function call inside expression (external): "<<funCall->unparseToString()<<endl;
+    string funName=SgNodeHelper::getFunctionName(funCall);
+    if(funName=="malloc") {
+      return evalFunctionCallMalloc(funCall,estate,useConstraints);
+    } else if(funName=="memcpy") {
+      cout<<"DETECTED: memcpy!"<<endl;
+      return listify(res);
+    } else {
+      cout<<"WARNING: unknown external function "<<funName<<". Assuming it is side-effect free and arbitrary return value (type ignored)."<<endl;
+      return listify(res);
+    }
+  } else {
+    string s=funCall->unparseToString();
+    throw CodeThorn::Exception("Unknown semantics of function call inside expression: "+s);
+  }
+}
+
+list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMalloc(SgFunctionCallExp* funCall, EState estate, bool useConstraints) {
+  SingleEvalResultConstInt res;
+  static int memorylocid=0; // temporary
+  memorylocid++;
+  stringstream ss;
+  ss<<"memoryregion"<<memorylocid;
+  ROSE_ASSERT(_variableIdMapping);
+  VariableId memLocVarId=_variableIdMapping->createUniqueTemporaryVariableId(ss.str());
+  AbstractValue allocatedMemoryPtr=AbstractValue::createAddressOfArray(memLocVarId);
+  res.init(estate,*estate.constraints(),allocatedMemoryPtr);
+  cout<<"DEBUG: evaluating (TODO) function call malloc:"<<funCall->unparseToString()<<endl;
+  ROSE_ASSERT(allocatedMemoryPtr.isPtr());
+  cout<<"Generated malloc-allocated mem-chunk pointer is OK."<<endl;
+  // 1) TODO eval function call param
+  // 2) return allocated memory value pointer (register in memory allocator)
+  return listify(res);
+}
+
 bool ExprAnalyzer::checkArrayBounds(VariableId arrayVarId,int accessIndex) {
   // check array bounds
   int arraySize=_variableIdMapping->getSize(arrayVarId);
-  if(accessIndex<0||accessIndex>=arraySize) {
+  if(accessIndex<0||accessIndex>=arraySize) {  
     // this will throw a specific exception that will be caught by the analyzer to report verification results
     cerr<<"Detected out of bounds array access in application: ";
     cerr<<"array size: "<<arraySize<<", array index: "<<accessIndex<<" :: ";

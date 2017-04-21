@@ -3062,6 +3062,19 @@ std::list<EState> Analyzer::transferFunctionExit(Edge edge, const EState* estate
   }
 }
 
+SgNode* findExprNodeInAstUpwards(VariantT variant,SgNode* node) {
+  while(node!=nullptr&&isSgExpression(node)&&(node->variantT()!=variant)) {
+    cout<<"DEBUG: findExprNode @"<<node->class_name()<<endl;
+    node=node->get_parent();
+  }
+  if(node)
+    // if the search did not find the node and continued to the stmt level 
+    // this check ensures that a nullptr is returned
+    return isSgExpression(node); 
+  else
+    return nullptr;
+}
+
 std::list<EState> Analyzer::transferFunctionCallExternal(Edge edge, const EState* estate) {
   EState currentEState=*estate;
   PState currentPState=*currentEState.pstate();
@@ -3077,7 +3090,8 @@ std::list<EState> Analyzer::transferFunctionCallExternal(Edge edge, const EState
   Label lab=getLabeler()->getLabel(nextNodeToAnalyze1);
 
   VariableId varId;
-  /*bool isFunctionCallWithAssignmentFlag=*/isFunctionCallWithAssignment(lab,&varId);
+  bool isFunctionCallWithAssignmentFlag=isFunctionCallWithAssignment(lab,&varId);
+
   SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1);
 
   // TODO: check whether the following test is superfluous meanwhile, since isStdInLabel does take NonDetX functions into account
@@ -3183,14 +3197,28 @@ std::list<EState> Analyzer::transferFunctionCallExternal(Edge edge, const EState
            (therefore no successor state is generated)
         */
         return elistify();
+      } else {
+        // dispatch all other external function calls to the other
+        // transferFunctions where the external function call is handled as an expression
+        if(isFunctionCallWithAssignmentFlag) {
+          // here only the specific format x=f(...) can exist
+          SgAssignOp* assignOp=isSgAssignOp(findExprNodeInAstUpwards(V_SgAssignOp,funCall));
+          ROSE_ASSERT(assignOp);
+          return transferAssignOp(assignOp,edge,estate);
+        } else {
+          // special case: void function call f(...);
+          list<SingleEvalResultConstInt> res=exprAnalyzer.evalFunctionCall(funCall,currentEState,true);
+          // build new estate(s) from single eval result list
+          list<EState> estateList;
+          for(list<SingleEvalResultConstInt>::iterator i=res.begin();i!=res.end();++i) {
+            EState estate=(*i).estate;
+            PState newPState=*estate.pstate();
+            ConstraintSet cset=*estate.constraints();
+            estateList.push_back(createEState(edge.target(),newPState,cset));
+          }
+          return estateList;
+        }
       }
-    }
-    if(funName=="malloc") {
-      cout<<"DEBUG: detected malloc function call."<<endl;
-    } else if(funName=="free") {
-      cout<<"DEBUG: detected free function call."<<endl;
-    } else if(funName=="strlen") {
-      cout<<"DEBUG: detected free function call."<<endl;
     }
   }
 
@@ -3401,7 +3429,7 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
          estateList.push_back(createEState(edge.target(),pstate2,*(estate->constraints())));
       }
       if(!(lhsPointerValue.isPtr())) {
-        cerr<<"Error: not a pointer value in dereference operator."<<lhsPointerValue.toString()<<endl;
+        cerr<<"Error: not a pointer value in dereference operator:"<<lhsPointerValue.toString()<<"<="<<lhs->unparseToString()<<endl;
         exit(1);
       }
       cout<<lhsPointerValue.toString(getVariableIdMapping());

@@ -151,10 +151,10 @@ class VariableId {
   */
   std::string toString(VariableIdMapping* vid) const;
 
-  int getIdCode() const { return _id; }
-  // we intentionally do not provide a constructor for int because this would clash 
-  // with overloaded functions that are using ConstIntLattice (which has an implicit 
+  // intentionally no constructor for int because this would clash 
+  // with overloaded functions that are using AbstractValue (which has an implicit 
   // type conversion for int)
+  int getIdCode() const { return _id; }
   void setIdCode(int id) {_id=id;}
   //std::string variableName() const;
   //std::string longVariableName() const;

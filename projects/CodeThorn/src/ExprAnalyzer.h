@@ -95,6 +95,9 @@ private:
   static bool variable(SgNode* node,VariableName& varName);
   //! returns true if node is a VarRefExp and sets varId=id, otherwise false and varId=0.
   bool variable(SgNode* node,VariableId& varId);
+
+  list<SingleEvalResultConstInt> evalFunctionCall(SgFunctionCallExp* node, EState estate, bool useConstraints);
+
  protected:
   AbstractValue constIntLatticeFromSgValueExp(SgValueExp* valueExp);
   static list<SingleEvalResultConstInt> listify(SingleEvalResultConstInt res);
@@ -204,11 +207,7 @@ private:
   list<SingleEvalResultConstInt> evalRValueVarExp(SgVarRefExp* node, EState estate, bool useConstraints);
   list<SingleEvalResultConstInt> evalValueExp(SgValueExp* node, EState estate, bool useConstraints);
 
-  /* should never occur in a normalized program
-     if it does occur functions have to be in the list of selected function calls to be skipped (=ignored), otherwise
-     an error is reported. */
-  list<SingleEvalResultConstInt> evalFunctionCall(SgFunctionCallExp* node, EState estate, bool useConstraints);
-
+  list<SingleEvalResultConstInt> evalFunctionCallMalloc(SgFunctionCallExp* funCall, EState estate, bool useConstraints);
 };
 
 } // end of namespace CodeThorn
