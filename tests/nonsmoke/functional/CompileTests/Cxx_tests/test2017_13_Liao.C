@@ -1,4 +1,8 @@
-// undefined macros in a template function, testing KeepGoingTranslator
+// undefined function call in a template function, testing KeepGoingTranslator
+// Strangely, GCC and Clang won't complain.
+// There are some relevant discussion at:
+//  http://stackoverflow.com/questions/20599890/can-you-use-an-undefined-type-in-a-c-template-function-if-the-function-is-neve
+//
 // Liao, 4/21/2017
 
 namespace loop_over {
