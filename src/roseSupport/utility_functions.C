@@ -445,6 +445,12 @@ frontend (int argc, char** argv, bool frontendConstantFolding )
 SgProject*
 frontend (const std::vector<std::string>& argv, bool frontendConstantFolding )
    {
+  // DQ (4/11/2017): Call this as early as possible (usually good enough if it is here).
+  // Note that there are ROSE-based tools that are calling the SgProject constructor directly, 
+  // and these are not covered by placing ROSE_INITIALIZE here (examples are: loopProcessor).
+  // But most are older examples of tools built using ROSE.
+     ROSE_INITIALIZE;
+
   // DQ (6/14/2007): Added support for timing of high level frontend function.
      TimingPerformance timer ("ROSE frontend():");
 

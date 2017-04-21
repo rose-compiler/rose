@@ -7,6 +7,10 @@
 using namespace rose;
 using namespace rose::Diagnostics;
 
+SgAsmPESectionTableEntry::SgAsmPESectionTableEntry(const SgAsmPESectionTableEntry::PESectionTableEntry_disk *disk) {
+    ctor(disk);
+}
+
 void
 SgAsmPESectionTableEntry::ctor(const PESectionTableEntry_disk *disk)
 {

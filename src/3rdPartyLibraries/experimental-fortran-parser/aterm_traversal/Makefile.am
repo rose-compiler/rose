@@ -42,17 +42,13 @@ libexperimentalOFP_la_SOURCES = $(libexperimentalOFP_Sources)
 
 # libexperimentalOFP_Sources =$(srcdir)/traversal.cpp $(srcdir)/OFPUnparser.cpp $(srcdir)/ofp_traverse_productions.cpp $(srcdir)/OFPExpr.cpp $(srcdir)/UntypedASTBuilder.cpp $(srcdir)/OFPNodes.cpp
 # libexperimentalOFP_Sources =$(srcdir)/traversal.cpp $(srcdir)/OFPUnparser.cpp $(srcdir)/ofp_traverse_productions.cpp $(srcdir)/OFPExpr.cpp $(srcdir)/OFPNodes.cpp
-# libexperimentalOFP_Sources = traverse_SgUntypedNodes.cpp
-# libexperimentalOFP_Headers = traverse_SgUntypedNodes.hpp
-libexperimentalOFP_Sources = traverse_SgUntypedNodes.cpp build_SgUntypedNodes.cpp
-libexperimentalOFP_Headers = traverse_SgUntypedNodes.hpp build_SgUntypedNodes.hpp
+libexperimentalOFP_Sources = OFPTraversal.cpp
+libexperimentalOFP_Headers = OFPTraversal.hpp FASTNodes.hpp
 
 # bin_PROGRAMS = traverse
 # traverse_SOURCES = $(srcdir)/traverse.cpp $(srcdir)/traversal.cpp $(srcdir)/OFPUnparser.cpp \
 #                   $(srcdir)/ofp_traverse_productions.cpp $(srcdir)/OFPExpr.cpp \
 #                   $(srcdir)/UntypedASTBuilder.cpp $(srcdir)/OFPNodes.cpp
-
-EXTRA_DIST = traversal.hpp OFPNodes.hpp OFPExpr.hpp UntypedNodes.h OFPExpr.hpp
 
 # traverse : traverse_main.o traverse_SgUntypedNodes.o SgUntypedNodes.o
 #	c++ -o traverse $(LDFLAGS) traverse_main.o traverse_SgUntypedNodes.o SgUntypedNodes.o $(LIBS)

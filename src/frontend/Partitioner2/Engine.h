@@ -107,6 +107,14 @@ public:
         PartitionerSettings partitioner;                /**< Settings for creating a partitioner. */
         EngineSettings engine;                          /**< Settings that control engine behavior. */
         AstConstructionSettings astConstruction;        /**< Settings for constructing the AST. */
+
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, unsigned version) {
+            s & loader & disassembler & partitioner & engine & astConstruction;
+        }
     };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -145,6 +153,33 @@ private:
         void moveAndSortCallReturn(const Partitioner&);
     };
 
+    // A work list providing constants from instructions that are part of the CFG.
+    class CodeConstants: public CfgAdjustmentCallback {
+    public:
+        typedef Sawyer::SharedPointer<CodeConstants> Ptr;
+
+    private:
+        std::set<rose_addr_t> toBeExamined_;            // instructions waiting to be examined
+        std::set<rose_addr_t> wasExamined_;             // instructions we've already examined
+        rose_addr_t inProgress_;                        // instruction that is currently in progress
+        std::vector<rose_addr_t> constants_;            // constants for the instruction in progress
+
+    protected:
+        CodeConstants(): inProgress_(0) {}
+
+    public:
+        static Ptr instance() { return Ptr(new CodeConstants); }
+
+        // Possibly insert more instructions into the work list when a basic block is added to the CFG
+        virtual bool operator()(bool chain, const AttachedBasicBlock &attached) ROSE_OVERRIDE;
+
+        // Possibly remove instructions from the worklist when a basic block is removed from the CFG
+        virtual bool operator()(bool chain, const DetachedBasicBlock &detached) ROSE_OVERRIDE;
+
+        // Return the next available constant if any.
+        Sawyer::Optional<rose_addr_t> nextConstant(const Partitioner &partitioner);
+    };
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Data members
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -155,6 +190,7 @@ private:
     Disassembler *disassembler_;                        // not ref-counted yet, but don't destroy it since user owns it
     MemoryMap map_;                                     // memory map initialized by load()
     BasicBlockWorkList::Ptr basicBlockWorkList_;        // what blocks to work on next
+    CodeConstants::Ptr codeFunctionPointers_;           // generates constants that are found in instruction ASTs
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Constructors
@@ -291,7 +327,8 @@ public:
      *
      *  Disassembles and organizes instructions into basic blocks and functions with these steps:
      *
-     *  @li If the specimen is not loaded (@ref areSpecimensLoaded) then call @ref loadSpecimens.
+     *  @li If the specimen is not loaded (@ref areSpecimensLoaded) then call @ref loadSpecimens. The no-argument version of
+     *  this function requires that specimens have already been loaded.
      *
      *  @li Obtain a disassembler by calling @ref obtainDisassembler.
      *
@@ -311,7 +348,8 @@ public:
      *  Constructs a new abstract syntax tree (AST) from partitioner information with these steps:
      *
      *  @li If the partitioner has not been run yet (according to @ref isPartitioned), then do that now with the same
-     *      arguments.
+     *      arguments.  The zero-argument version invokes the zero-argument @ref partition, which requires that the specimen
+     *      has already been loaded by @ref loadSpecimens.
      *
      *  @li Call Modules::buildAst to build the AST.
      *
@@ -633,7 +671,7 @@ public:
      *  to implement a more directed approach to discovering basic blocks. */
     virtual void discoverBasicBlocks(Partitioner&);
 
-    /** Scan read-only data to find addresses.
+    /** Scan read-only data to find function pointers.
      *
      *  Scans read-only data beginning at the specified address in order to find pointers to code, and makes a new function at
      *  when found.  The pointer must be word aligned and located in memory that's mapped read-only (not writable and not
@@ -643,6 +681,19 @@ public:
      *  Returns a pointer to a newly-allocated function that has not yet been attached to the CFG/AUM, or a null pointer if no
      *  function was found.  In any case, the startVa is updated so it points to the next read-only address to check. */
     virtual Function::Ptr makeNextDataReferencedFunction(const Partitioner&, rose_addr_t &startVa /*in,out*/);
+
+    /** Scan instruction ASTs to function pointers.
+     *
+     *  Scans each instruction to find pointers to code and makes a new function when found.  The pointer must be word aligned
+     *  and located in memory that's mapped read-only (not writable and not executable), and it most not point to an unknown
+     *  instruction of an instruction that overlaps with any instruction that's already in the CFG/AUM.
+     *
+     *  This function requires that the partitioner has been initialized to track instruction ASTs as they are added to and
+     *  removed from the CFG/AUM.
+     *
+     *  Returns a pointer to a newly-allocated function that has not yet been attached to the CFG/AUM, or a null pointer if no
+     *  function was found. */
+    virtual Function::Ptr makeNextCodeReferencedFunction(const Partitioner&);
 
     /** Make functions for function call edges.
      *
@@ -1140,6 +1191,16 @@ public:
      * @{ */
     bool findingDataFunctionPointers() const /*final*/ { return settings_.partitioner.findingDataFunctionPointers; }
     virtual void findingDataFunctionPointers(bool b) { settings_.partitioner.findingDataFunctionPointers = b; }
+    /** @} */
+
+    /** Property: Whether to search existing instructions for function pointers.
+     *
+     *  If this property is set, then the partitioner scans existing instructions to look for constants that seem to be
+     *  pointers to functions that haven't been discovered yet.
+     *
+     * @{ */
+    bool findingCodeFunctionPointers() const /*final*/ { return settings_.partitioner.findingCodeFunctionPointers; }
+    virtual void findingCodeFunctionPointers(bool b) { settings_.partitioner.findingCodeFunctionPointers = b; }
     /** @} */
 
     /** Property: Whether to look for function calls used as branches.

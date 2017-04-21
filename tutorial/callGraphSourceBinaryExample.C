@@ -15,6 +15,9 @@ using namespace std;
 
 int main(int argc, char** argv)
 {
+#if 1
+    ASSERT_not_reachable("no longer supported--see http://rosecompiler.org/ROSE_HTML_Reference/binary_tutorial.html");
+#else
   // Initialize and check compatibility. See rose::initialize
   ROSE_INITIALIZE;
 
@@ -40,5 +43,6 @@ int main(int argc, char** argv)
   }
   // Unparse the output to test the unparser...
   return backend(project);
+#endif
 }
 

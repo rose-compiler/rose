@@ -25,8 +25,8 @@ public:
         return instance(settings());
     }
 
-    const X86Settings& settings() const { return settings_; }
-    X86Settings& settings() { return settings_; }
+    const X86Settings& settings() const ROSE_OVERRIDE { return settings_; }
+    X86Settings& settings() ROSE_OVERRIDE { return settings_; }
 
 protected:
     void emitInstructionMnemonic(std::ostream&, SgAsmInstruction*, State&) const ROSE_OVERRIDE;

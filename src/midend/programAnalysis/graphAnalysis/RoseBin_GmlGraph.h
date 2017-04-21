@@ -14,17 +14,17 @@
 class ROSE_DLL_API RoseBin_GMLGraph : public RoseBin_Graph {
  private:
   std::string getInternalNodes(SgGraphNode* node,
-                               bool forward_analysis, SgAsmNode* internal);
+                               bool forward_analysis, SgAsmNode* internal) ROSE_DEPRECATED("no longer supported");
 
   std::map < SgAsmStatement*, int > nodesMap;
   std::map < SgAsmFunction*, int > funcMap;
 
   void printEdges_single( VirtualBinCFG::AuxiliaryInformation* info,
-                          bool forward_analysis, std::ofstream& myfile);
+                          bool forward_analysis, std::ofstream& myfile) ROSE_DEPRECATED("no longer supported");
   void printEdges_multiple( VirtualBinCFG::AuxiliaryInformation* info,
-                          bool forward_analysis, std::ofstream& myfile);
+                          bool forward_analysis, std::ofstream& myfile) ROSE_DEPRECATED("no longer supported");
   void printEdges( VirtualBinCFG::AuxiliaryInformation* info,
-                          bool forward_analysis, std::ofstream& myfile, SgDirectedGraphEdge* edge);
+                          bool forward_analysis, std::ofstream& myfile, SgDirectedGraphEdge* edge) ROSE_DEPRECATED("no longer supported");
 
   bool skipFunctions;
   bool skipInternalEdges;
@@ -41,13 +41,13 @@ class ROSE_DLL_API RoseBin_GMLGraph : public RoseBin_Graph {
   virtual ~RoseBin_GMLGraph() {}
 
   void printNodes( bool dfg, RoseBin_FlowAnalysis* flow,  bool forward_analysis,
-                   std::ofstream &myfile, std::string& recursiveFunctionName);
+                   std::ofstream &myfile, std::string& recursiveFunctionName) ROSE_DEPRECATED("no longer supported");
 
   void printEdges( VirtualBinCFG::AuxiliaryInformation* info,
-                   bool forward_analysis, std::ofstream& myfile, bool mergedEdges);
+                   bool forward_analysis, std::ofstream& myfile, bool mergedEdges) ROSE_DEPRECATED("no longer supported");
 
-  void printProlog(  std::ofstream& myfile, std::string& fileType);
-  void printEpilog(  std::ofstream& myfile);
+  void printProlog(  std::ofstream& myfile, std::string& fileType) ROSE_DEPRECATED("no longer supported");
+  void printEpilog(  std::ofstream& myfile) ROSE_DEPRECATED("no longer supported");
 
 };
 

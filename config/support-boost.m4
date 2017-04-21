@@ -98,6 +98,11 @@ AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_59, test "x$rose_boost_version" = "x10
 AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_60, test "x$rose_boost_version" = "x106000" -o "x$_version" = "x1.60")
 AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_61, test "x$rose_boost_version" = "x106100" -o "x$_version" = "x1.61")
 AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_62, test "x$rose_boost_version" = "x106200" -o "x$_version" = "x1.62")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_63, test "x$rose_boost_version" = "x106300" -o "x$_version" = "x1.63")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_64, test "x$rose_boost_version" = "x106400" -o "x$_version" = "x1.64")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_65, test "x$rose_boost_version" = "x106500" -o "x$_version" = "x1.65")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_66, test "x$rose_boost_version" = "x106600" -o "x$_version" = "x1.66")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_67, test "x$rose_boost_version" = "x106700" -o "x$_version" = "x1.67")
 
 # DQ (10/22/2015): Added more tests (1.55 through 1.62)
 # TOO1 (3/16/2015):
@@ -130,6 +135,11 @@ AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_59, test $rose_boost_version -ge 10
 AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_60, test $rose_boost_version -ge 106000)
 AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_61, test $rose_boost_version -ge 106100)
 AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_62, test $rose_boost_version -ge 106200)
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_63, test $rose_boost_version -ge 106300)
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_64, test $rose_boost_version -ge 106400)
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_65, test $rose_boost_version -ge 106500)
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_66, test $rose_boost_version -ge 106600)
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_67, test $rose_boost_version -ge 106700)
 
 # DQ (10/22/2015): Added acceptable case 1.54.
 # DQ (8/2/2016): Added acceptable case 1.55 through 1.61.

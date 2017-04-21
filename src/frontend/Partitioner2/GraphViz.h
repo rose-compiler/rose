@@ -805,7 +805,6 @@ private:
 
 /** Emits a function call graph. */
 class ROSE_DLL_API CgEmitter: public BaseEmitter<FunctionCallGraph::Graph> {
-    const Partitioner &partitioner_;
     FunctionCallGraph cg_;
     Color::HSV functionHighlightColor_;                 // highlight certain functions
     boost::regex highlightNameMatcher_;                 // which functions to highlight

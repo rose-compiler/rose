@@ -365,16 +365,36 @@ test_testGraphGeneration: testGraphGeneration
 
 test_testPDFGeneration: testPDFGeneration
 
+# DQ (74/6/2017): Adding test for the version of identityTranslator that is distributed 
+# in the exampleTranslators/documentedExamples/simpleTranslatorExamples directory.
+exampleIdentityTranslator:
+	$(MAKE) -C $(top_builddir)/exampleTranslators/documentedExamples/simpleTranslatorExamples
+
+if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
+BAD_PATH = $(builddir)/XXX
+test_exampleIdentityTranslator: exampleIdentityTranslator
+	cp $(srcdir)/inputFile.C alt_identityTranslator_inputFile.C
+	@echo "Test the identityTranslator distributed in $(top_builddir)/exampleTranslators/documentedExamples/simpleTranslatorExamples"
+	$(top_builddir)/exampleTranslators/documentedExamples/simpleTranslatorExamples/identityTranslator -c alt_identityTranslator_inputFile.C
+	@echo "Test the identityTranslator using a bad path with the -I option (previous failing case)."
+	$(top_builddir)/exampleTranslators/documentedExamples/simpleTranslatorExamples/identityTranslator -I$(BAD_PATH) -c alt_identityTranslator_inputFile.C
+else
+test_exampleIdentityTranslator:
+	@echo "SKIPPING target '$@' because the C/C++ frontend is not enabled."
+endif
+
 # Rule to run all the example translator tests
 # test: test_testAnalysis test_testCodeGeneration test_testTranslator test_testAstFileIO testSimpleLinkFileTranslator
 if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
    test: test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testTemplates test_testGraphGeneration test_testPDFGeneration testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants testKeepGoingTranslator
 else
-   test: test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testTemplates test_testGraphGeneration test_testPDFGeneration test_testAstFileIO testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants testKeepGoingTranslator
+   test: test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testTemplates test_testGraphGeneration test_testPDFGeneration test_testAstFileIO testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants testKeepGoingTranslator test_exampleIdentityTranslator
 endif
 
+# Liao, 4/12/2017 restrict_template_parameter.C will trigger frontend error.
+# __minimal_input_code is defined in input_codes/Makefile.for.input.codes
 testKeepGoingTranslator: KeepGoingTranslator
-	./KeepGoingTranslator $(__minimal_input_code)
+	./KeepGoingTranslator -c $(__minimal_input_code) $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests/restrict_template_parameter.C
 
 # DQ (7/2/2015): template test code that marks all template instantiations for output (as a test).
 test_testTemplates: testTemplates
@@ -409,4 +429,5 @@ myCleanRule:
 	rm -f inputObjectFileAnalysis.C inputObjectFileCodeGeneration.C inputObjectFileTranslator.C alt_ObjectFileTokenGeneration_inputFile.C
 	rm -f alt_AstFileIO_inputFile* alt_AstFileRead_inputFile* a.out *.dot *.binary
 	rm -f *.C_identity
+	rm -rf rose_minimal.cpp rose-passed_files.txt rose-failed_files.txt
 

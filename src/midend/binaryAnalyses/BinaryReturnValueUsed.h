@@ -27,6 +27,7 @@ extern Sawyer::Message::Facility mlog;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class CallSiteResults {
+    bool didConverge_;                                  // Are the following data members valid (else only approximations)?
     std::vector<Partitioner2::Function::Ptr> callees_;
     RegisterParts returnRegistersUsed_;
     RegisterParts returnRegistersUnused_;
@@ -37,6 +38,7 @@ private:
 
     template<class S>
     void serialize(S & s, const unsigned version) {
+        s & BOOST_SERIALIZATION_NVP(didConverge_);
         s & BOOST_SERIALIZATION_NVP(callees_);
         s & BOOST_SERIALIZATION_NVP(returnRegistersUsed_);
         s & BOOST_SERIALIZATION_NVP(returnRegistersUnused_);
@@ -44,6 +46,20 @@ private:
 #endif
 
 public:
+    CallSiteResults()
+        : didConverge_(false) {}
+
+    /** Property: Did the analysis converge to a solution.
+     *
+     *  If the return value used analysis encountered an error then it returns an object whose didConverge property is
+     *  false. This object might still contain some information about the call, but the information might not be complete or
+     *  might be only an approximation.
+     *
+     * @{ */
+    bool didConverge() const { return didConverge_; }
+    void didConverge(bool b) { didConverge_ = b; }
+    /** @} */
+
     /** Property: Functions called at this site. */
     const std::vector<Partitioner2::Function::Ptr> callees() const { return callees_; }
 

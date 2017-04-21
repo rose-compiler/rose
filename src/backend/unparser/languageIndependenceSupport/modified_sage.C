@@ -1355,8 +1355,8 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
                          if (templateClassInstatiationDefn != NULL)
                             {
                            // Supress output of "template<>" syntax for template member function instantiations.
-                              SgTemplateInstantiationMemberFunctionDecl* templateInstantiationMemberFunctionDecl = isSgTemplateInstantiationMemberFunctionDecl(decl_stmt);
 #if 0
+                              SgTemplateInstantiationMemberFunctionDecl* templateInstantiationMemberFunctionDecl = isSgTemplateInstantiationMemberFunctionDecl(decl_stmt);
                               printf ("templateInstantiationMemberFunctionDecl = %p \n",templateInstantiationMemberFunctionDecl);
                               printf ("templateInstantiationMemberFunctionDecl->get_templateName() = %s \n",templateInstantiationMemberFunctionDecl->get_templateName().str());
                               printf ("templateInstantiationMemberFunctionDecl->get_templateDeclaration() = %p \n",templateInstantiationMemberFunctionDecl->get_templateDeclaration());

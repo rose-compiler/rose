@@ -32,6 +32,8 @@ SgBinaryComposite* buildBinaryComposite(const std::string &fileName);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Build data types
+//
+// These data type builders always return the same IR node and are thread-safe.
 
 // Generic data types
 SgAsmIntegerType* buildTypeU1();                        /**< 1-bit unsigned (Boolean) */

@@ -19,7 +19,8 @@ namespace rose {
 namespace BinaryAnalysis {
 
 // details are defined in this .C files so users don't end up including <magic.h> into the global namespace.
-struct MagicNumberDetails {
+class MagicNumberDetails {
+public:
     magic_t cookie;
     MagicNumberDetails(magic_t &cookie): cookie(cookie) {}
     ~MagicNumberDetails() {

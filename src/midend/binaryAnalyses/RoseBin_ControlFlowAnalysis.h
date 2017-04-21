@@ -60,8 +60,8 @@ class ROSE_DLL_API RoseBin_ControlFlowAnalysis : public RoseBin_FlowAnalysis {
   //void visit(SgNode* node) ;
 
   // run this analysis
-  void run(RoseBin_Graph* vg, std::string fileN, bool multiedge) ;
-  void printGraph(std::string fileName, std::set<std::string>& filter);
+  void run(RoseBin_Graph* vg, std::string fileN, bool multiedge) ROSE_DEPRECATED("no longer supported");
+  void printGraph(std::string fileName, std::set<std::string>& filter) ROSE_DEPRECATED("no longer supported");
 
 };
 

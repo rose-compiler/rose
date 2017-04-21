@@ -13,7 +13,8 @@
 #include "fortran_support.h"
 
 #include <aterm2.h>
-#include "traverse_SgUntypedNodes.hpp"
+#include "OFPTraversal.hpp"
+#include "FASTtoSgConverter.h"
 #include "UntypedTraversal.h"
 
 using namespace std;
@@ -21,6 +22,7 @@ using namespace rose;
 
 #define DEBUG_ROSE_EXPERIMENTAL 0
 
+#define USE_STRATEGO_TRANSFORMATION 0
 #define USE_EXECUTABLE_FROM_PATH 1
 
 int
@@ -30,7 +32,8 @@ experimental_openFortranParser_main(int argc, char **argv)
 
      int i, err;
      string parse_table;
-     SgUntypedFile* untypedFile = NULL;
+     FASTtoSgConverter* fast_converter = NULL;
+     OFP::Traversal*     ofp_traversal = NULL;
 
      if (argc < 4)
         {
@@ -107,6 +110,7 @@ experimental_openFortranParser_main(int argc, char **argv)
      commandString += "-i ";
      commandString += filenameWithPath;
 
+#if USE_STRATEGO_TRANSFORMATION
      string path_to_fortran_stratego_transformations_directory
                     = findRoseSupportPathFromBuild("src/3rdPartyLibraries/experimental-fortran-parser/stratego_transformations", "bin");
 
@@ -121,12 +125,14 @@ experimental_openFortranParser_main(int argc, char **argv)
 #endif
 
      string path_to_fortran_aterm_traversal_directory = findRoseSupportPathFromBuild("src/3rdPartyLibraries/experimental-fortran-parser/aterm_traversal", "bin");
+#endif
 
    //CER bool process_using_ofp_roundtrip_support = OpenFortranParser_globalFilePointer->get_experimental_fortran_frontend_OFP_test();
      bool process_using_ofp_roundtrip_support = false;
 
      if (process_using_ofp_roundtrip_support == false)
         {
+#if USE_STRATEGO_TRANSFORMATION
        // Convert from OFP's internal representation (FAST) to a ROSE SgUntyped aterm representation
           commandString += " | ";
 #if USE_EXECUTABLE_FROM_PATH
@@ -134,6 +140,7 @@ experimental_openFortranParser_main(int argc, char **argv)
 #else
           commandString += path_to_fortran_aterm_traversal_directory;
           commandString += "/fast2sage";
+#endif
 #endif
 
        // Output the transformed aterm file
@@ -143,6 +150,7 @@ experimental_openFortranParser_main(int argc, char **argv)
         }
      else
         {
+#if USE_STRATEGO_TRANSFORMATION
        // Prepare the FAST representation for pretty printing
           commandString += " | ";
           commandString += path_to_fortran_stratego_transformations_directory;
@@ -162,6 +170,7 @@ experimental_openFortranParser_main(int argc, char **argv)
        // Output a text file with prefix.
           commandString += " -o ";
           commandString += "pretty_print" + filenameWithoutPath;
+#endif
         }
 
 #if DEBUG_ROSE_EXPERIMENTAL
@@ -204,18 +213,29 @@ experimental_openFortranParser_main(int argc, char **argv)
                return 1;
              }
 
-          ATerm SgUntypedFile_term = ATreadFromTextFile(file);
+          ATerm program_term = ATreadFromTextFile(file);
           fclose(file);
 
 #if DEBUG_ROSE_EXPERIMENTAL
           printf ("In experimental_openFortranParser_main(): Calling traverse_SgUntypedFile() \n");
 #endif
 
-          if (traverse_SgUntypedFile(SgUntypedFile_term, &untypedFile) != ATtrue || untypedFile == NULL)
+          fast_converter = new FASTtoSgConverter();
+          ofp_traversal  = new OFP::Traversal(fast_converter);
+
+       // Rasmussen (4/15/2017): changing from using stratego transformations
+       // if (traverse_SgUntypedFile(SgUntypedFile_term, &untypedFile) != ATtrue || untypedFile == NULL)
+          if (ofp_traversal->traverse_Program(program_term) != ATtrue)
              {
-               fprintf(stderr, "\nFAILED: in experimental_openFortranParser_main(), unable to parse file %s\n\n", filenameWithoutPath.c_str());
+               fprintf(stderr, "\nFAILED: in experimental_openFortranParser_main(), unable to traverse file %s\n\n", filenameWithoutPath.c_str());
                return 1;
              }
+        }
+
+     if (fast_converter == NULL || ofp_traversal == NULL)
+        {
+           fprintf(stderr, "\nFAILED: in experimental_openFortranParser_main(), fast_converter or ofp_traversal is NULL\n\n");
+           return 1;
         }
 
 #if DEBUG_ROSE_EXPERIMENTAL
@@ -228,13 +248,14 @@ experimental_openFortranParser_main(int argc, char **argv)
 //----------------------------------------------------------------------
 
   // Build the traversal object
-     Fortran::Untyped::UntypedTraversal traversal(OpenFortranParser_globalFilePointer);
+     Fortran::Untyped::UntypedTraversal sg_traversal(OpenFortranParser_globalFilePointer);
      Fortran::Untyped::InheritedAttribute scope = NULL;
 
   // Traverse the untyped tree and convert to sage nodes
-     traversal.traverse(untypedFile,scope);
+     sg_traversal.traverse(fast_converter->get_file(),scope);
 
-     delete untypedFile;
+     if (fast_converter) delete fast_converter;
+     if (ofp_traversal)  delete ofp_traversal;
 
      return 0;
   }

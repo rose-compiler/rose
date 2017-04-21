@@ -174,6 +174,7 @@ std::ostream& operator<<(std::ostream &os, const AddressIntervalSet&) { return o
 bool SgAsmDOSFileHeader::reallocate() { return false; }
 void SgAsmPEStringSection::set_size(rose_addr_t) {}
 void SgAsmGenericSection::set_mapped_size(rose_addr_t) {}
+SgAsmGenericSection* SgAsmGenericSection::parse() { return NULL; }
 bool SgAsmElfStringSection::reallocate() { return false; }
 bool SgAsmElfNoteSection::reallocate() { return false; }
 void SgAsmElfStrtab::rebind(SgAsmStringStorage*, rose_addr_t) {}
@@ -338,6 +339,9 @@ void SgAsmPEImportItem::ctor(SgAsmPEImportDirectory *idir, unsigned ordinal){}
 void SgAsmElfStringSection::ctor() {}
 void SgAsmElfStringSection::ctor(SgAsmElfSectionTable*) {}
 void SgAsmElfSection::ctor() {}
+void SgAsmGenericSymbol::ctor() {}
+void SgAsmGenericSection::ctor(SgAsmGenericFile*, SgAsmGenericHeader*) {}
+void SgAsmGenericDLL::ctor() {}
 
 size_t SgAsmPEImportSection::mesg_nprinted = 0;
 rose_addr_t rose_rva_t::get_va() const { return 0; }
@@ -353,3 +357,4 @@ void SgAsmPEExportEntry::set_name(SgAsmGenericString*) {}
 void SgAsmElfDynamicEntry::set_name(SgAsmGenericString*) {}
 void SgAsmElfSection::set_linked_section(SgAsmElfSection*) {}
 const char* SgAsmGenericHeader::format_name() const { return NULL; }
+rose_addr_t SgAsmGenericFile::get_current_size() const { return 0; }

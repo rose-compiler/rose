@@ -207,7 +207,7 @@ public:
         return instance(addrProtoval, valProtoval);
     }
 
-    virtual BaseSemantics::MemoryStatePtr clone() const {
+    virtual BaseSemantics::MemoryStatePtr clone() const ROSE_OVERRIDE {
         return MemoryStatePtr(new MemoryState(*this));
     }
 

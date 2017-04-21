@@ -8776,7 +8776,10 @@ Unparse_ExprStmt::unparseCaseStmt(SgStatement* stmt, SgUnparse_Info& info)
              {
                SgBasicBlock* basicBlock = isSgBasicBlock(case_body);
                ROSE_ASSERT(basicBlock != NULL);
-               SgStatementPtrList::iterator first = basicBlock->get_statements().begin();
+
+            // DQ (3/28/2017): Eliminate warning about unused variable from Clang.
+            // SgStatementPtrList::iterator first = basicBlock->get_statements().begin();
+
 #if 0
 #if 0
                printf ("Top of loop to find first non-transformation: *first = %p = %s \n",*first,(*first)->class_name().c_str());

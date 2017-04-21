@@ -25,8 +25,8 @@ public:
         return instance(settings());
     }
     
-    const PowerpcSettings& settings() const { return settings_; }
-    PowerpcSettings& settings() { return settings_; }
+    const PowerpcSettings& settings() const ROSE_OVERRIDE { return settings_; }
+    PowerpcSettings& settings() ROSE_OVERRIDE { return settings_; }
 
 protected:
     void emitInstruction(std::ostream&, SgAsmInstruction*, State&) const ROSE_OVERRIDE;

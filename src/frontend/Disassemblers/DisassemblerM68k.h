@@ -106,7 +106,7 @@ public:
     virtual bool can_disassemble(SgAsmGenericHeader*) const ROSE_OVERRIDE;
     virtual SgAsmInstruction *disassembleOne(const MemoryMap*, rose_addr_t start_va, AddressSet *successors=NULL) ROSE_OVERRIDE;
     virtual SgAsmInstruction *make_unknown_instruction(const Disassembler::Exception&) ROSE_OVERRIDE;
-    virtual Unparser::BasePtr unparser() const;
+    virtual Unparser::BasePtr unparser() const ROSE_OVERRIDE;
 
     typedef std::pair<SgAsmExpression*, SgAsmExpression*> ExpressionPair;
 

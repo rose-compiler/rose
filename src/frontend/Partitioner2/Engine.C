@@ -382,6 +382,17 @@ Engine::partitionerSwitches() {
               .intrinsicValue(false, settings_.partitioner.findingDataFunctionPointers)
               .hidden(true));
 
+    sg.insert(Switch("code-functions")
+              .intrinsicValue(true, settings_.partitioner.findingCodeFunctionPointers)
+              .doc("Scan instructions to find pointers to functions. This analysis can be disabled with "
+                   "@s{no-code-functions}. The default is to " +
+                   std::string(settings_.partitioner.findingCodeFunctionPointers?"":"not ") +
+                   "perform this analysis."));
+    sg.insert(Switch("no-code-functions")
+              .key("code-functions")
+              .intrinsicValue(false, settings_.partitioner.findingCodeFunctionPointers)
+              .hidden(true));
+
     sg.insert(Switch("interrupt-vector")
               .argument("addresses", addressIntervalParser(settings_.partitioner.interruptVector))
               .doc("A table containing addresses of functions invoked for various kinds of interrupts. " +
@@ -518,7 +529,7 @@ Engine::partitionerSwitches() {
               .key("demangle-names")
               .intrinsicValue(false, settings_.partitioner.demangleNames)
               .hidden(true));
-    
+
     return sg;
 }
 
@@ -953,6 +964,12 @@ Engine::createBarePartitioner() {
     ASSERT_not_null(basicBlockWorkList_);
     p.cfgAdjustmentCallbacks().prepend(basicBlockWorkList_);
 
+    // Make sure the stream of constants found in instruction ASTs is updated whenever the CFG is adjusted.
+    if (settings_.partitioner.findingCodeFunctionPointers) {
+        codeFunctionPointers_ = CodeConstants::instance();
+        p.cfgAdjustmentCallbacks().prepend(codeFunctionPointers_);
+    }
+
     // Perform some finalization whenever a basic block is created.  For instance, this figures out whether we should add an
     // extra indeterminate edge for indirect jump instructions that go through initialized but writable memory.
     p.basicBlockCallbacks().append(BasicBlockFinalizer::instance());
@@ -1190,6 +1207,7 @@ Engine::partition(const std::string &fileName) {
 }
 
 
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Partitioner mid-level operations
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1410,6 +1428,29 @@ Engine::makeNextDataReferencedFunction(const Partitioner &partitioner, rose_addr
     return Function::Ptr();
 }
 
+Function::Ptr
+Engine::makeNextCodeReferencedFunction(const Partitioner &partitioner) {
+    // As basic blocks are inserted into the CFG their instructions go into a set to be examined by this function. Once this
+    // function examines them, it moves them to an already-examined set.
+    rose_addr_t constant = 0;
+    while (codeFunctionPointers_ && codeFunctionPointers_->nextConstant(partitioner).assignTo(constant)) {
+
+        SgAsmInstruction *insn = partitioner.discoverInstruction(constant);
+        if (!insn || insn->isUnknown())
+            continue;                                   // no instruction
+
+        AddressInterval insnInterval = AddressInterval::baseSize(insn->get_address(), insn->get_size());
+        if (!partitioner.instructionsOverlapping(insnInterval).empty())
+            continue;                                   // would overlap with existing instruction
+
+        // All seems okay, so make a function there
+        // FIXME[Robb P Matzke 2017-04-13]: USERDEF is not the best, most descriptive reason, but it's what we have for now
+        mlog[INFO] <<"possible code address " <<StringUtility::addrToString(constant) <<"\n";
+        return Function::instance(constant, SgAsmFunction::FUNC_USERDEF);
+    }
+    return Function::Ptr();
+}
+
 std::vector<Function::Ptr>
 Engine::makeCalledFunctions(Partitioner &partitioner) {
     std::vector<Function::Ptr> retval;
@@ -1464,7 +1505,7 @@ Engine::makeFunctionFromInterFunctionCalls(Partitioner &partitioner, rose_addr_t
             // hasn't tried looking for its instructions yet.  I don't think this happens within the stock engine because it
             // tries to recursively discover all basic blocks before it starts scanning things that might be data. But users
             // might call this before they've processed all the outstanding placeholders.  Consider the following hypothetical
-            // user's partitioner state 
+            // user's partitioner state
             //          B1: push ebp            ; this block's insns are discovered
             //              mov ebp, esp
             //              test eax, eax
@@ -1607,6 +1648,14 @@ Engine::discoverFunctions(Partitioner &partitioner) {
             newFunctions = makeFunctionFromInterFunctionCalls(partitioner, nextInterFunctionCallVa /*in,out*/);
             if (!newFunctions.empty())
                 continue;
+        }
+
+        // Try looking at literal constants inside existing instructions to find possible pointers to new functions
+        if (settings_.partitioner.findingCodeFunctionPointers) {
+            if (Function::Ptr function = makeNextCodeReferencedFunction(partitioner)) {
+                partitioner.attachFunction(function);
+                continue;
+            }
         }
 
         // Try looking for a function address mentioned in read-only memory
@@ -1988,6 +2037,68 @@ Engine::BasicBlockWorkList::moveAndSortCallReturn(const Partitioner &partitioner
             }
         }
     }
+}
+
+// Add new basic block's instructions to list of instruction addresses to process
+bool
+Engine::CodeConstants::operator()(bool chain, const AttachedBasicBlock &attached) {
+    if (chain && attached.bblock) {
+        BOOST_FOREACH (SgAsmInstruction *insn, attached.bblock->instructions()) {
+            if (wasExamined_.find(insn->get_address()) == wasExamined_.end())
+                toBeExamined_.insert(insn->get_address());
+        }
+    }
+    return chain;
+}
+
+// Remove basic block's instructions from list of instructions to process
+bool
+Engine::CodeConstants::operator()(bool chain, const DetachedBasicBlock &detached) {
+    if (chain && detached.bblock) {
+        BOOST_FOREACH (SgAsmInstruction *insn, detached.bblock->instructions()) {
+            toBeExamined_.erase(insn->get_address());
+            if (insn->get_address() == inProgress_)
+                constants_.clear();
+        }
+    }
+    return chain;
+}
+
+// Return the next constant from the next instruction
+Sawyer::Optional<rose_addr_t>
+Engine::CodeConstants::nextConstant(const Partitioner &partitioner) {
+    if (!constants_.empty()) {
+        rose_addr_t constant = constants_.back();
+        constants_.pop_back();
+        return constant;
+    }
+
+    while (!toBeExamined_.empty()) {
+        inProgress_ = *toBeExamined_.begin();
+        toBeExamined_.erase(inProgress_);
+        if (SgAsmInstruction *insn = partitioner.instructionExists(inProgress_).orDefault().insn()) {
+
+            struct T1: AstSimpleProcessing {
+                std::set<rose_addr_t> constants;
+                virtual void visit(SgNode *node) ROSE_OVERRIDE {
+                    if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(node)) {
+                        if (ival->get_significantBits() <= 64)
+                            constants.insert(ival->get_absoluteValue());
+                    }
+                }
+            } t1;
+            t1.traverse(insn, preorder);
+            constants_ = std::vector<rose_addr_t>(t1.constants.begin(), t1.constants.end());
+        }
+
+        if (!constants_.empty()) {
+            rose_addr_t constant = constants_.back();
+            constants_.pop_back();
+            return constant;
+        }
+    }
+
+    return Sawyer::Nothing();
 }
 
 // Return true if a new CFG edge was added.

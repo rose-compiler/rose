@@ -18,10 +18,13 @@
 
 class RoseBin_CompareAnalysis : public AstSimpleProcessing{
  private:
+#if 0 // [Robb P Matzke 2017-03-27]
   SgProject* project;
   SgAsmNode* globalBin;
 
   bool main_prolog_end;
+#endif
+
   std::string attributeName;
 
   // stores the last variable that has been modified!
@@ -50,16 +53,20 @@ class RoseBin_CompareAnalysis : public AstSimpleProcessing{
                        int array_bin_length,
                        SgNode* src_statements[],
                        SgAsmNode* bin_statements[],
-                       std::string *output);
+                       std::string *output) ROSE_DEPRECATED("no longer supported");
 
 
+#if 0 // [Robb P Matzke 2017-03-27]
   bool tookSrcNodeFromStack;
+#endif
 
-  std::string resolveRegister(const RegisterDescriptor &reg);
+  std::string resolveRegister(const RegisterDescriptor &reg) ROSE_DEPRECATED("no longer supported");
 
+#if 0 // [Robb P Matzke 2017-03-27]
   SgAsmValueExpression* valExp;     
   SgAsmRegisterReferenceExpression* refExp_Left; 
-  SgAsmRegisterReferenceExpression* refExp_Right; 
+  SgAsmRegisterReferenceExpression* refExp_Right;
+#endif
 
   /**********************************************************
    * check if function calls match ----------------------------------------------------------------------------
@@ -68,12 +75,12 @@ class RoseBin_CompareAnalysis : public AstSimpleProcessing{
   bool isFunctionCall(SgNode* srcNode,
                       SgAsmNode* binNode,
                       std::string *output,
-                      int &nodes_matched);
+                      int &nodes_matched) ROSE_DEPRECATED("no longer supported");
 
   bool isReturnStmt(SgNode* srcNode,
                     SgAsmNode* binNode,
                     std::string *output,
-                    int &nodes_matched);
+                    int &nodes_matched) ROSE_DEPRECATED("no longer supported");
 
   bool isVariableDeclaration(SgNode* srcNode,
                              SgAsmNode* binNode,
@@ -83,7 +90,7 @@ class RoseBin_CompareAnalysis : public AstSimpleProcessing{
                              int &bin_count,
                              SgNode* src_statements[],
                              SgAsmNode* bin_statements[],
-                             bool &increase_source);
+                             bool &increase_source) ROSE_DEPRECATED("no longer supported");
 
   bool isAssignOp(SgNode* srcNode,
                   SgAsmNode* binNode,
@@ -95,19 +102,19 @@ class RoseBin_CompareAnalysis : public AstSimpleProcessing{
                   int src_count,
                   SgNode* src_statements[],
                   SgAsmNode* bin_statements[],
-                  bool &increase_source);                 
+                  bool &increase_source) ROSE_DEPRECATED("no longer supported");
 
   bool isSgPlusPlus(SgNode* srcNode,
                     SgAsmNode* binNode,
                     std::string *output,
-                    int &nodes_matched);
+                    int &nodes_matched) ROSE_DEPRECATED("no longer supported");
 
-  std::string checkVariable(SgAsmValueExpression* rhs);
+  std::string checkVariable(SgAsmValueExpression* rhs) ROSE_DEPRECATED("no longer supported");
   void storeVariable(std::string val, std::string name,
-                     SgAsmValueExpression* binval);
+                     SgAsmValueExpression* binval) ROSE_DEPRECATED("no longer supported");
 
-  std::string getVariableName(std::string val);
-  SgAsmValueExpression* getVariableType(std::string val);
+  std::string getVariableName(std::string val) ROSE_DEPRECATED("no longer supported");
+  SgAsmValueExpression* getVariableType(std::string val) ROSE_DEPRECATED("no longer supported");
 
   
 
@@ -121,7 +128,7 @@ class RoseBin_CompareAnalysis : public AstSimpleProcessing{
                               int array_bin_length,
                               int array_src_length,
                               SgAssignOp* assign,
-                              bool dont_increase_bool_count);
+                              bool dont_increase_bool_count) ROSE_DEPRECATED("no longer supported");
 
   SgExpression* isExpression( SgExpression* expr,
                               SgNode* src_statements[],
@@ -132,52 +139,52 @@ class RoseBin_CompareAnalysis : public AstSimpleProcessing{
                               int &nodes_matched,
                               int array_bin_length,
                               int array_src_length,
-                              bool& keep_binary_node);
+                              bool& keep_binary_node) ROSE_DEPRECATED("no longer supported");
 
   std::string last_src_variable_left;
 
   std::string resolve_binaryInstruction(SgAsmInstruction* mov,
                                         std::string *left,
                                         std::string *right,
-                                        std::string varName);
+                                        std::string varName) ROSE_DEPRECATED("no longer supported");
 
-  bool existsVariable(std::string value);
+  bool existsVariable(std::string value) ROSE_DEPRECATED("no longer supported");
 
-  bool isAnExpression(SgExpression* expr);
+  bool isAnExpression(SgExpression* expr) ROSE_DEPRECATED("no longer supported");
 
-  void pushOnStack(SgExpression* expr);
+  void pushOnStack(SgExpression* expr) ROSE_DEPRECATED("no longer supported");
 
   void resolve_bin_vardecl_or_assignment(bool &isVarDecl0, 
                                          bool &isVarDecl1,
                                          bool &isAssign0,
                                          bool &isAssign1,
                                          SgAsmX86Instruction* mov
-                                         );
+                                         ) ROSE_DEPRECATED("no longer supported");
 
  public:
 
 // DQ (10/20/2010): Moved to source file to support compilation of language only mode which excludes binary analysis support.
-  RoseBin_CompareAnalysis(SgProject *pr, SgAsmNode* global);
+  RoseBin_CompareAnalysis(SgProject *pr, SgAsmNode* global) ROSE_DEPRECATED("no longer supported");
 
   // visit the binary AST
-  void visit(SgNode* node);
+  void visit(SgNode* node) ROSE_DEPRECATED("no longer supported");
 
   // run this analysis
-  void run();
+  void run() ROSE_DEPRECATED("no longer supported");
 
 
   //traverse Rose src and create map (name, src_func, null)
-  void create_map_functions();
+  void create_map_functions() ROSE_DEPRECATED("no longer supported");
 
 
   // compare a src function and a binary function
   void checkFunctions(std::string name,
                       SgFunctionDeclaration* funcDecl,
-                      SgAsmFunction* binDecl);
+                      SgAsmFunction* binDecl) ROSE_DEPRECATED("no longer supported");
 
   // filter instructions that are known
   bool instruction_filter(SgAsmStatement* stat, std::string name,
-                          std::string *output);
+                          std::string *output) ROSE_DEPRECATED("no longer supported");
 
 
 };

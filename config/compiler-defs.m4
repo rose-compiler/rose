@@ -93,8 +93,9 @@ AC_DEFUN([GET_CXX_VERSION_INFO],[
                     esac
                 elif test $XCODE_VERSION_MAJOR -eq 8; then
                     CXX_VERSION_MAJOR=3
+                  # DQ (3/3//2017): Added latest version information from Craig.
                     case "$XCODE_VERSION_MINOR" in
-                        0)
+                        0|1)
                             CXX_VERSION_MINOR=8
                             ;;
                         *)
