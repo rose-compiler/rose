@@ -1,5 +1,10 @@
-#include "rose.h"
 #include "rose_getline.h"
+
+#include <cctype>
+#include <cstdlib>
+#include <cstring>
+#include <boost/version.hpp>
+#include <iostream>
 
 int
 main(int argc, char *argv[])
