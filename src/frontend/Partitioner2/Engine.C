@@ -105,10 +105,19 @@ Engine::frontend(int argc, char *argv[], const std::string &purpose, const std::
 
 SgAsmBlock*
 Engine::frontend(const std::vector<std::string> &args, const std::string &purpose, const std::string &description) {
-    std::vector<std::string> specimenNames = parseCommandLine(args, purpose, description).unreachedArgs();
-    if (specimenNames.empty())
-        throw std::runtime_error("no binary specimen specified; see --help");
-    return buildAst(specimenNames);
+    try {
+        std::vector<std::string> specimenNames = parseCommandLine(args, purpose, description).unreachedArgs();
+        if (specimenNames.empty())
+            throw std::runtime_error("no binary specimen specified; see --help");
+        return buildAst(specimenNames);
+    } catch (const std::runtime_error &e) {
+        if (settings().engine.exitOnError) {
+            mlog[FATAL] <<e.what() <<"\n";
+            exit(1);
+        } else {
+            throw;
+        }
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -675,10 +684,19 @@ Engine::commandLineParser(const std::string &purpose, const std::string &descrip
 
 Sawyer::CommandLine::ParserResult
 Engine::parseCommandLine(int argc, char *argv[], const std::string &purpose, const std::string &description) {
-    std::vector<std::string> args;
-    for (int i=1; i<argc; ++i)
-        args.push_back(argv[i]);
-    return parseCommandLine(args, purpose, description);
+    try {
+        std::vector<std::string> args;
+        for (int i=1; i<argc; ++i)
+            args.push_back(argv[i]);
+        return parseCommandLine(args, purpose, description);
+    } catch (const std::runtime_error &e) {
+        if (settings().engine.exitOnError) {
+            mlog[FATAL] <<e.what() <<"\n";
+            exit(1);
+        } else {
+            throw;
+        }
+    }
 }
 
 Sawyer::CommandLine::ParserResult
@@ -718,37 +736,48 @@ Engine::parseContainers(const std::string &fileName) {
 
 SgAsmInterpretation*
 Engine::parseContainers(const std::vector<std::string> &fileNames) {
-    interp_ = NULL;
-    map_.clear();
-    checkSettings();
+    try {
+        interp_ = NULL;
+        map_.clear();
+        checkSettings();
 
-    // Prune away things we recognize as not being binary containers.
-    std::vector<std::string> frontendNames;
-    BOOST_FOREACH (const std::string &fileName, fileNames) {
-        if (boost::starts_with(fileName, "run:") && fileName.size()>4) {
-            frontendNames.push_back(fileName.substr(4));
-        } else if (!isNonContainer(fileName)) {
-            frontendNames.push_back(fileName);
+        // Prune away things we recognize as not being binary containers.
+        std::vector<std::string> frontendNames;
+        BOOST_FOREACH (const std::string &fileName, fileNames) {
+            if (boost::starts_with(fileName, "run:") && fileName.size()>4) {
+                frontendNames.push_back(fileName.substr(4));
+            } else if (!isNonContainer(fileName)) {
+                frontendNames.push_back(fileName);
+            }
+        }
+
+        // Process through ROSE's frontend()
+        if (!frontendNames.empty()) {
+            std::vector<std::string> frontendArgs;
+            frontendArgs.push_back("/proc/self/exe");       // I don't think frontend actually uses this
+            frontendArgs.push_back("-rose:binary");
+            frontendArgs.push_back("-rose:read_executable_file_format_only");
+            frontendArgs.insert(frontendArgs.end(), frontendNames.begin(), frontendNames.end());
+            SgProject *project = ::frontend(frontendArgs);
+            ASSERT_not_null(project);                       // an exception should have been thrown
+
+            std::vector<SgAsmInterpretation*> interps = SageInterface::querySubTree<SgAsmInterpretation>(project);
+            if (interps.empty())
+                throw std::runtime_error("a binary specimen container must have at least one SgAsmInterpretation");
+            interp_ = interps.back();    // windows PE is always after DOS
+            ASSERT_require(areContainersParsed());
+        }
+
+        ASSERT_require(!areSpecimensLoaded());
+        return interp_;
+    } catch (const std::runtime_error &e) {
+        if (settings().engine.exitOnError) {
+            mlog[FATAL] <<e.what() <<"\n";
+            exit(1);
+        } else {
+            throw;
         }
     }
-
-    // Process through ROSE's frontend()
-    if (!frontendNames.empty()) {
-        std::vector<std::string> frontendArgs;
-        frontendArgs.push_back("/proc/self/exe");       // I don't think frontend actually uses this
-        frontendArgs.push_back("-rose:binary");
-        frontendArgs.push_back("-rose:read_executable_file_format_only");
-        frontendArgs.insert(frontendArgs.end(), frontendNames.begin(), frontendNames.end());
-        SgProject *project = ::frontend(frontendArgs);
-        std::vector<SgAsmInterpretation*> interps = SageInterface::querySubTree<SgAsmInterpretation>(project);
-        if (interps.empty())
-            throw std::runtime_error("a binary specimen container must have at least one SgAsmInterpretation");
-        interp_ = interps.back();    // windows PE is always after DOS
-        ASSERT_require(areContainersParsed());
-    }
-
-    ASSERT_require(!areSpecimensLoaded());
-    return interp_;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -894,13 +923,22 @@ Engine::loadSpecimens(const std::string &fileName) {
 
 MemoryMap&
 Engine::loadSpecimens(const std::vector<std::string> &fileNames) {
-    map_.clear();
-    if (!areContainersParsed())
-        parseContainers(fileNames);
-    loadContainers(fileNames);
-    loadNonContainers(fileNames);
-    adjustMemoryMap();
-    return map_;
+    try {
+        map_.clear();
+        if (!areContainersParsed())
+            parseContainers(fileNames);
+        loadContainers(fileNames);
+        loadNonContainers(fileNames);
+        adjustMemoryMap();
+        return map_;
+    } catch (const std::runtime_error &e) {
+        if (settings().engine.exitOnError) {
+            mlog[FATAL] <<e.what() <<"\n";
+            exit(1);
+        } else {
+            throw;
+        }
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1193,12 +1231,21 @@ Engine::runPartitioner(Partitioner &partitioner) {
 
 Partitioner
 Engine::partition(const std::vector<std::string> &fileNames) {
-    if (!areSpecimensLoaded())
-        loadSpecimens(fileNames);
-    obtainDisassembler();
-    Partitioner partitioner = createPartitioner();
-    runPartitioner(partitioner);
-    return partitioner;
+    try {
+        if (!areSpecimensLoaded())
+            loadSpecimens(fileNames);
+        obtainDisassembler();
+        Partitioner partitioner = createPartitioner();
+        runPartitioner(partitioner);
+        return partitioner;
+    } catch (const std::runtime_error &e) {
+        if (settings().engine.exitOnError) {
+            mlog[FATAL] <<e.what() <<"\n";
+            exit(1);
+        } else {
+            throw;
+        }
+    }
 }
 
 Partitioner
@@ -2257,8 +2304,17 @@ Engine::makeNextBasicBlock(Partitioner &partitioner) {
 
 SgAsmBlock*
 Engine::buildAst(const std::vector<std::string> &fileNames) {
-    Partitioner partitioner = partition(fileNames);
-    return Modules::buildAst(partitioner, interp_, settings_.astConstruction);
+    try {
+        Partitioner partitioner = partition(fileNames);
+        return Modules::buildAst(partitioner, interp_, settings_.astConstruction);
+    } catch (const std::runtime_error &e) {
+        if (settings().engine.exitOnError) {
+            mlog[FATAL] <<e.what() <<"\n";
+            exit(1);
+        } else {
+            throw;
+        }
+    }
 }
 
 SgAsmBlock*

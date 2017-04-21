@@ -235,6 +235,9 @@ public:
      *  The @p description is a full, multi-line description written in the Sawyer markup language where "@" characters have
      *  special meaning.
      *
+     *  If an <code>std::runtime_exception</code> occurs and the @ref exitOnError property is set, then the exception is caught,
+     *  its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
+     *
      * @{ */
     SgAsmBlock* frontend(int argc, char *argv[],
                          const std::string &purpose, const std::string &description);
@@ -275,6 +278,9 @@ public:
      *  If the tool requires additional switches, an opportunity to adjust the parser, or other special handling, it can call
      *  @ref commandLineParser to obtain a parser and then call its @c parse and @c apply methods explicitly.
      *
+     *  If an <code>std::runtime_exception</code> occurs and the @ref exitOnError property is set, then the exception is caught,
+     *  its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
+     *
      * @{ */
     Sawyer::CommandLine::ParserResult parseCommandLine(int argc, char *argv[],
                                                        const std::string &purpose, const std::string &description) /*final*/;
@@ -297,6 +303,9 @@ public:
      *  interpretation. If the list of names has nothing suitable for ROSE's @c frontend function (the thing that does the
      *  container parsing) then the null pointer is returned.
      *
+     *  If an <code>std::runtime_exception</code> occurs and the @ref exitOnError property is set, then the exception is caught,
+     *  its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
+     *
      * @{ */
     virtual SgAsmInterpretation* parseContainers(const std::vector<std::string> &fileNames);
     SgAsmInterpretation* parseContainers(const std::string &fileName) /*final*/;
@@ -318,6 +327,9 @@ public:
      *
      *  Returns a reference to the engine's memory map.
      *
+     *  If an <code>std::runtime_exception</code> occurs and the @ref exitOnError property is set, then the exception is caught,
+     *  its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
+     *
      * @{ */
     virtual MemoryMap& loadSpecimens(const std::vector<std::string> &fileNames = std::vector<std::string>());
     MemoryMap& loadSpecimens(const std::string &fileName) /*final*/;
@@ -338,6 +350,9 @@ public:
      *
      *  Returns the partitioner that was used and which contains the results.
      *
+     *  If an <code>std::runtime_exception</code> occurs and the @ref exitOnError property is set, then the exception is caught,
+     *  its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
+     *
      * @{ */
     virtual Partitioner partition(const std::vector<std::string> &fileNames = std::vector<std::string>());
     Partitioner partition(const std::string &fileName) /*final*/;
@@ -352,6 +367,9 @@ public:
      *      has already been loaded by @ref loadSpecimens.
      *
      *  @li Call Modules::buildAst to build the AST.
+     *
+     *  If an <code>std::runtime_exception</code> occurs and the @ref exitOnError property is set, then the exception is caught,
+     *  its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
      *
      * @{ */
     SgAsmBlock* buildAst(const std::vector<std::string> &fileNames = std::vector<std::string>()) /*final*/;
@@ -895,6 +913,18 @@ public:
      * @{ */
     const Settings& settings() const /*final*/ { return settings_; }
     Settings& settings() /*final*/ { return settings_; }
+    /** @} */
+
+    /** Property: Error handling.
+     *
+     *  If an exception occurs during certain high-level functions and this property is set, then the exception is caught,
+     *  its text is written to a fatal error stream, and exit is called with a non-zero value.  Since the error message is more
+     *  user-friendly and professional looking than the uncaught exception message produced by the C++ runtime, the default is
+     *  that exceptions are caught.  If a tool needs to perform its own error handling, then it should clear this property.
+     *
+     * @{ */
+    bool exitOnError() const /*final*/ { return settings_.engine.exitOnError; }
+    virtual void exitOnError(bool b) { settings_.engine.exitOnError = b; }
     /** @} */
 
     /** Property: interpretation
