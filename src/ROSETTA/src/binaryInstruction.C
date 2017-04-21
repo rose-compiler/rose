@@ -15156,12 +15156,11 @@ void Grammar::setUpBinaryInstructions() {
         /** Exception for container syntax errors.
          *
          *  This object is thrown when the file contains an error that prevents ROSE from parsing it. */
-        class FormatError {
+        class FormatError: public std::runtime_error {
         public:
-            std::string mesg;
-
-            FormatError(const std::string &mesg) {this->mesg=mesg;}
-            FormatError(const char *mesg) {this->mesg=mesg;}
+            FormatError(const std::string &mesg): std::runtime_error(mesg) {}
+            FormatError(const char *mesg): std::runtime_error(mesg) {}
+            ~FormatError() throw () {}
         };
 
         /** Information about the file in the filesystem. */
