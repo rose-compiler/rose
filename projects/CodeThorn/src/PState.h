@@ -31,18 +31,21 @@ namespace CodeThorn {
   * \author Markus Schordan
   * \date 2012.
  */
-class PState : public map<SPRAY::VariableId,CodeThorn::AValue> {
+  typedef SPRAY::VariableId VarAbstractValue;
+  typedef SPRAY::VariableIdSet VarAbstractValueSet;
+
+  class PState : public map<VarAbstractValue,CodeThorn::AValue> {
  public:
     PState() {
     }
   friend std::ostream& operator<<(std::ostream& os, const PState& value);
   friend std::istream& operator>>(std::istream& os, PState& value);
-  bool varExists(SPRAY::VariableId varId) const;
-  bool varIsConst(SPRAY::VariableId varId) const;
-  bool varIsTop(SPRAY::VariableId varId) const;
-  CodeThorn::AValue varValue(SPRAY::VariableId varId) const;
-  string varValueToString(SPRAY::VariableId varId) const;
-  void deleteVar(SPRAY::VariableId varname);
+  bool varExists(VarAbstractValue varId) const;
+  bool varIsConst(VarAbstractValue varId) const;
+  bool varIsTop(VarAbstractValue varId) const;
+  CodeThorn::AValue varValue(VarAbstractValue varId) const;
+  string varValueToString(VarAbstractValue varId) const;
+  void deleteVar(VarAbstractValue varname);
   long memorySize() const;
   void fromStream(std::istream& is);
   void toStream(std::ostream& os) const;
@@ -50,11 +53,11 @@ class PState : public map<SPRAY::VariableId,CodeThorn::AValue> {
   string toString(SPRAY::VariableIdMapping* variableIdMapping) const;
   void setAllVariablesToTop();
   void setAllVariablesToValue(CodeThorn::AValue val);
-  void setVariableToTop(SPRAY::VariableId varId);
-  void setVariableToValue(SPRAY::VariableId varId, CodeThorn::AValue val);
+  void setVariableToTop(VarAbstractValue varId);
+  void setVariableToValue(VarAbstractValue varId, CodeThorn::AValue val);
   void topifyState();
   bool isTopifiedState() const;
-  SPRAY::VariableIdSet getVariableIds() const;
+  VarAbstractValueSet getVariableIds() const;
   static void setActiveGlobalTopify(bool val);
   static void setVariableValueMonitor(VariableValueMonitor* vvm);
   static bool _activeGlobalTopify;

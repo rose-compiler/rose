@@ -33,7 +33,7 @@ void PState::fromStream(istream& is) {
   char c;
   string s;
   int __varIdCode=-1; 
-  VariableId __varId; 
+  VarAbstractValue __varId; 
   AValue __varAValue; 
   if(!SPRAY::Parse::checkWord("{",is)) throw CodeThorn::Exception("Error: Syntax error PState. Expected '{'.");
   is>>c;
@@ -44,7 +44,7 @@ void PState::fromStream(istream& is) {
     if(c!='V') throw CodeThorn::Exception("Error: Syntax error PState. Expected VariableId.");
     is>>__varIdCode;
     assert(__varIdCode>=0);
-    VariableId __varId;
+    VarAbstractValue __varId;
     __varId.setIdCode(__varIdCode);
     is>>c;
     if(c!=',') { cout << "Error: found "<<c<<"__varIdCode="<<__varIdCode<<endl; throw CodeThorn::Exception("Error: Syntax error PState. Expected ','.");}
@@ -117,7 +117,7 @@ long EState::memorySize() const {
   * \author Markus Schordan
   * \date 2012.
  */
-void PState::deleteVar(VariableId varId) {
+void PState::deleteVar(VarAbstractValue varId) {
   PState::iterator i=begin();
   while(i!=end()) {
     if((*i).first==varId)
@@ -131,7 +131,7 @@ void PState::deleteVar(VariableId varId) {
   * \author Markus Schordan
   * \date 2012.
  */
-bool PState::varExists(VariableId varId) const {
+bool PState::varExists(VarAbstractValue varId) const {
   PState::const_iterator i=find(varId);
   return !(i==end());
 }
@@ -140,7 +140,7 @@ bool PState::varExists(VariableId varId) const {
   * \author Markus Schordan
   * \date 2012.
  */
-bool PState::varIsConst(VariableId varId) const {
+bool PState::varIsConst(VarAbstractValue varId) const {
   PState::const_iterator i=find(varId);
   if(i!=end()) {
     AValue val=(*i).second;
@@ -151,7 +151,7 @@ bool PState::varIsConst(VariableId varId) const {
     return false; // throw CodeThorn::Exception("Error: PState::varIsConst : variable does not exist.";
   }
 }
-bool PState::varIsTop(VariableId varId) const {
+bool PState::varIsTop(VarAbstractValue varId) const {
   PState::const_iterator i=find(varId);
   if(i!=end()) {
     AValue val=(*i).second;
@@ -166,7 +166,7 @@ bool PState::varIsTop(VariableId varId) const {
   * \author Markus Schordan
   * \date 2012.
  */
-string PState::varValueToString(VariableId varId) const {
+string PState::varValueToString(VarAbstractValue varId) const {
   stringstream ss;
   AValue val=varValue(varId);
   return val.toString();
@@ -176,7 +176,7 @@ string PState::varValueToString(VariableId varId) const {
   * \author Markus Schordan
   * \date 2014.
  */
-AValue PState::varValue(VariableId varId) const {
+AValue PState::varValue(VarAbstractValue varId) const {
   AValue val=((*(const_cast<PState*>(this)))[varId]);
   return val;
 }
@@ -196,19 +196,19 @@ void PState::setAllVariablesToTop() {
  */
 void PState::setAllVariablesToValue(CodeThorn::AValue val) {
   for(PState::iterator i=begin();i!=end();++i) {
-    VariableId varId=(*i).first;
+    VarAbstractValue varId=(*i).first;
     setVariableToValue(varId,val);
   }
 }
 void PState::setVariableValueMonitor(VariableValueMonitor* vvm) {
   _variableValueMonitor=vvm;
 }
-void PState::setVariableToTop(VariableId varId) {
+void PState::setVariableToTop(VarAbstractValue varId) {
   CodeThorn::AValue val=CodeThorn::Top();
   setVariableToValue(varId, val);
 }
 
-void PState::setVariableToValue(VariableId varId, CodeThorn::AValue val) {
+void PState::setVariableToValue(VarAbstractValue varId, CodeThorn::AValue val) {
   if(false && _activeGlobalTopify) {
     ROSE_ASSERT(_variableValueMonitor);
     if(_variableValueMonitor->isHotVariable(_analyzer,varId)) {
@@ -221,7 +221,7 @@ void PState::setVariableToValue(VariableId varId, CodeThorn::AValue val) {
 
 void PState::topifyState() {
   for(PState::const_iterator i=begin();i!=end();++i) {
-    VariableId varId=(*i).first;
+    VarAbstractValue varId=(*i).first;
     if(_activeGlobalTopify && _variableValueMonitor->isHotVariable(_analyzer,varId)) {
       setVariableToTop(varId);
     }
@@ -234,7 +234,7 @@ bool PState::isTopifiedState() const {
   }
   ROSE_ASSERT(_variableValueMonitor);
   for(PState::const_iterator i=begin();i!=end();++i) {
-    VariableId varId=(*i).first;
+    VarAbstractValue varId=(*i).first;
     if(_variableValueMonitor->isHotVariable(_analyzer,varId)) {
       if(varIsTop(varId)) {
         continue;
@@ -248,10 +248,10 @@ bool PState::isTopifiedState() const {
   return true;
 }
 
-VariableIdSet PState::getVariableIds() const {
-  VariableIdSet varIdSet;
+VarAbstractValueSet PState::getVariableIds() const {
+  VarAbstractValueSet varIdSet;
   for(PState::const_iterator i=begin();i!=end();++i) {
-    VariableId varId=(*i).first;
+    VarAbstractValue varId=(*i).first;
     varIdSet.insert(varId);
   }
   return varIdSet;
