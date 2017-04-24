@@ -1,0 +1,114 @@
+/***********************************************************************
+*
+*                    NAS Parallel Benchmarks 2.3
+*
+*                         OpenMP C Versions
+*
+*                    Omni OpenMP Compiler Project
+*                  Real World Computing Partnership
+*
+*                          October 18, 2000
+*
+***********************************************************************/
+
+1. Introduction
+
+The OpenMP C versions of the NAS Parallel Benchmarks are derived from
+the serial Fortran versions of the NAS Parallel Benchmarks 2.3(NPB2.3-serial).
+The objectives of the development of the OpenMP C versions are
+
+  (1) Performance evaluation of numerical OpenMP C codes, and
+  (2) Comparison of the performance of OpenMP C and OpenMP Fortran codes.
+
+The OpenMP C versions can be used in the same way as NPB2.3-serial.
+This suite is developed by Real World Computing Partnership as a part of
+Omni OpenMP compiler project, and it is based on the work done by NAS.
+
+This suite is just a sample implementation of NPB in OpenMP C.
+Further optimizations for each platform, especially for DSMs, may be needed
+to obtaining the maximum performance.
+
+This document describes overview of the translation and parallelization,
+installation of the suite, and so on.
+
+
+2. Translation to C
+
+We first translated Fortran codes in NPB2.3-serial to C codes by hand,
+and then parallelized with OpenMP API.
+Off course, Fortran codes can be translated to C automatically using
+translators such as f2c. However, the automatically generated C codes 
+may not have characteristics similar to hand-codes ones.
+
+Note that the integer sort program, IS, in NPB2.3-serial is already
+written in C and no translation is made for it.
+
+The following are guidelines for the translation:
+
+- Parameters are passed by value if it is possible.
+- For making the lower bound of an array to be zero, subscripts are added
+  minus one or an extra array element is added if necessary.
+- The order of subscripts or the order of loop nests are changed, since
+  Fortran and C have different storage order for arrays.
+- Control transfer using goto statements are rewritten by using structured
+  control constructs.
+- In BT, LU and SP, source files are merged into a single file.
+- In MG, the arrays for grids are allocated dynamically.
+  This incurs performance losses due to extra memory accesses for
+  pointer dereferences and poor memory access locality.
+  In function comm3, copies via buffers are removed.
+
+
+3. Parallelization with OpenMP API
+
+The following are guidelines for the parallelization:
+
+- Parallelize as coarse as possible to reduce fork-join overheads.
+- Add nowait clauses as many as possible to reduce redundant synchronization.
+- No specific scheduling policy is assumed if the schedule clause is not used.
+- Minimum change to sequential code.
+- Avoid the use of the runtime library routines.
+- In LU, pipelined algorithm is used for wavefront computations.
+
+
+4. Installation
+
+If you have gzip'ed tar file 'NPB2.3-omp-C.tgz' or tar file 'NPB2.3-omp-C.tar',
+unpack it first.
+In directory "NPB2.3-omp-C", you will find the following files/directories:
+
+  README.omc - this file
+  README.org - readme file in NPB2.3-serial
+  Makefile - makefile for the suite
+  Doc - documentations (not modified from NPB2.3-serial)
+  BT, CG, EP, FT, IS, LU, MG, SP - directory for each program
+  bin - directory to put executable files
+  common - common routines
+  config - configuration files used by 'make'
+  sys - utilities 
+
+Some files in the suite are the same as those in NPB2.3-serial,
+and some others have Fortran counterpart in NPB2.3-serial.
+
+To use the suite, first edit file 'make.def' in directory 'config'.
+You must specify the name of compiler and linker, and compiler options.
+Definitions for Fortran are not used in this suite.
+Then you can build benchmarks with 'make'.
+For more details, refer to file "README.install" in subdirectory "Doc".
+
+
+5. Information
+
+- RWCP
+
+  Information on the OpenMP C versions and the Omni OpenMP compiler is 
+  available at http://pdplab.trc.rwcp.or.jp/pdperf/Omni/.
+  Send comments and questions to pdp-openmp@trc.rwcp.or.jp.
+
+- NAS
+
+  Information on the NAS Parallel Benchmarks is available at
+  http://www.nas.nasa.gov/NAS/NPB/.
+  Note that NAS does not support the OpenMP C versions.
+
+[END]
