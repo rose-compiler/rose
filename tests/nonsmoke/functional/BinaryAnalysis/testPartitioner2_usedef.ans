@@ -87,7 +87,7 @@
 0x08048102: 50                      |P       |<sp-4 >   push   eax
 0x08048103: 74 9d                   |t.      |<sp-8 >   je     0x080480a2<end>
 0x08048103: Outgoing stack delta: -8
-0x08048103: Successor blocks: 0x08048105, 0x080480a2
+0x08048103: Successor blocks: 0x080480a2, 0x08048105
 
 0x08048105: Basic block reasons: 
 0x08048105: f4                      |.       |<sp-8 >   hlt    

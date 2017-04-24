@@ -46,7 +46,7 @@
 0x08048120: Basic block reasons: 
 0x08048120: e8 c4 ff ff ff          |.....   |<sp+0 >   call   0x080480e9<test8>
 0x08048120: Outgoing stack delta: -4
-0x08048120: Successor blocks: 0x08048125, 0x080480e9<test8>
+0x08048120: Successor blocks: 0x080480e9<test8>, 0x08048125
 
 0x08048125: Basic block reasons: 
 0x08048125: f4                      |.       |<sp+0 >   hlt    
@@ -94,7 +94,7 @@
 0x080480c6: 85 c0                   |..      |<sp+0 >   test   eax, eax
 0x080480c8: 74 05                   |t.      |<sp+0 >   je     0x080480cf<test4a.a>
 0x080480c8: Outgoing stack delta: +0
-0x080480c8: Successor blocks: 0x080480cf, 0x080480ca
+0x080480c8: Successor blocks: 0x080480ca, 0x080480cf
 
 0x080480ca: Basic block reasons: 
 0x080480ca: b8 01 00 00 00          |.....   |<sp+0 >   mov    eax, 0x00000001
@@ -114,7 +114,7 @@
 0x080480d4: 85 c0                   |..      |<sp+0 >   test   eax, eax
 0x080480d6: 74 05                   |t.      |<sp+0 >   je     0x080480dd<test4b.a>
 0x080480d6: Outgoing stack delta: +0
-0x080480d6: Successor blocks: 0x080480dd, 0x080480d8
+0x080480d6: Successor blocks: 0x080480d8, 0x080480dd
 
 0x080480d8: Basic block reasons: 
 0x080480d8: b8 01 00 00 00          |.....   |<sp+0 >   mov    eax, 0x00000001

@@ -4,22 +4,22 @@
 0x080480a0: Basic block reasons: entry point, CFG head
 0x080480a0: e8 1c 00 00 00          |.....   |<sp+0 >   call   0x080480c1<T1>
 0x080480a0: Outgoing stack delta: -4
-0x080480a0: Successor blocks: 0x080480c1<T1>, 0x080480a5
+0x080480a0: Successor blocks: 0x080480a5, 0x080480c1<T1>
 
 0x080480a5: Basic block reasons: 
 0x080480a5: e8 1d 00 00 00          |.....   |<sp+0 >   call   0x080480c7<T2>
 0x080480a5: Outgoing stack delta: -4
-0x080480a5: Successor blocks: 0x080480c7<T2>, 0x080480aa
+0x080480a5: Successor blocks: 0x080480aa, 0x080480c7<T2>
 
 0x080480aa: Basic block reasons: 
 0x080480aa: e8 23 00 00 00          |.#...   |<sp+0 >   call   0x080480d2<T3>
 0x080480aa: Outgoing stack delta: -4
-0x080480aa: Successor blocks: 0x080480d2<T3>, 0x080480af
+0x080480aa: Successor blocks: 0x080480af, 0x080480d2<T3>
 
 0x080480af: Basic block reasons: 
 0x080480af: e8 24 00 00 00          |.$...   |<sp+0 >   call   0x080480d8<T4>
 0x080480af: Outgoing stack delta: -4
-0x080480af: Successor blocks: 0x080480d8<T4>, 0x080480b4
+0x080480af: Successor blocks: 0x080480b4, 0x080480d8<T4>
 
 0x080480b4: Basic block reasons: 
 0x080480b4: e8 40 00 00 00          |.@...   |<sp+0 >   call   0x080480f9<T5>
@@ -100,12 +100,12 @@
 0x080480f9: Basic block reasons: entry point
 0x080480f9: e8 0b 00 00 00          |.....   |<sp+0 >   call   0x08048109<T5_1>
 0x080480f9: Outgoing stack delta: -4
-0x080480f9: Successor blocks: 0x08048109<T5_1>, 0x080480fe
+0x080480f9: Successor blocks: 0x080480fe, 0x08048109<T5_1>
 
 0x080480fe: Basic block reasons: 
 0x080480fe: e8 0b 00 00 00          |.....   |<sp+0 >   call   0x0804810e<T5_2>
 0x080480fe: Outgoing stack delta: -4
-0x080480fe: Successor blocks: 0x0804810e<T5_2>, 0x08048103
+0x080480fe: Successor blocks: 0x08048103, 0x0804810e<T5_2>
 
 0x08048103: Basic block reasons: 
 0x08048103: e8 0b 00 00 00          |.....   |<sp+0 >   call   0x08048113<T5_3>

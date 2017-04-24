@@ -6,7 +6,7 @@
 0x000000cc: 8a 8c 30 02             |..0.    |<sp+0 >   mov    cl, byte ds:[si + 0x0230<560>]
 0x000000d0: e8 4d 00                |.M.     |<sp+0 >   call   0x0120<288,<Func>>
 0x000000d0: Outgoing stack delta: -2
-0x000000d0: Successor blocks: 0x00000120<<Func>>, 0x000000d3
+0x000000d0: Successor blocks: 0x000000d3, 0x00000120<<Func>>
 
 0x000000d3: Basic block reasons: 
 0x000000d3: 8a 97 42 02             |..B.    |<sp+0 >   mov    dl, byte ds:[bx + 0x0242<578>]
@@ -32,7 +32,7 @@
 0x000000eb: fe cd                   |..      |<sp+0 >   dec    ch
 0x000000ed: 75 e4                   |u.      |<sp+0 >   jne    0x00d3<<BBlock>>
 0x000000ed: Outgoing stack delta: +0
-0x000000ed: Successor blocks: 0x000000ef, 0x000000d3
+0x000000ed: Successor blocks: 0x000000d3, 0x000000ef
 
 0x000000ef: Basic block reasons: 
 0x000000ef: 8a 8c 39 02             |..9.    |<sp+0 >   mov    cl, byte ds:[si + 0x0239<569>]
@@ -75,7 +75,7 @@
 0x0000011a: 83 fe 09                |...     |<sp+0 >   cmp    si, 0x09
 0x0000011d: 72 ad                   |r.      |<sp+0 >   jb     0x00cc<<BBlock>>
 0x0000011d: Outgoing stack delta: +0
-0x0000011d: Successor blocks: 0x0000011f, 0x000000cc
+0x0000011d: Successor blocks: 0x000000cc, 0x0000011f
 
 0x0000011f: Basic block reasons: 
 0x0000011f: c3                      |.       |<sp+0 >   ret    

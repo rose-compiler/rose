@@ -80,7 +80,7 @@
 0x004004ee: 48 c7 c7 90 05 40 00    |H....@. |<sp-16>   mov    rdi, 0x00400590
 0x004004f5: e8 96 ff ff ff          |.....   |<sp-16>   call   0x0000000000400490<__libc_start_main@plt>
 0x004004f5: Outgoing stack delta: -24
-0x004004f5: Successor blocks: 0x004004fa, 0x00400490<__libc_start_main@plt>
+0x004004f5: Successor blocks: 0x00400490<__libc_start_main@plt>, 0x004004fa
 
 0x004004fa: Basic block reasons: 
 0x004004fa: f4                      |.       |<sp-16>   hlt    
@@ -96,7 +96,7 @@
 0x00400507: 48 85 c0                |H..     |<sp-8 >   test   rax, rax
 0x0040050a: 74 02                   |t.      |<sp-8 >   je     0x000000000040050e<<BBlock>>
 0x0040050a: Outgoing stack delta: -8
-0x0040050a: Successor blocks: 0x0040050e, 0x0040050c
+0x0040050a: Successor blocks: 0x0040050c, 0x0040050e
 
 0x0040050c: Basic block reasons: 
 0x0040050c: ff d0                   |..      |<sp-8 >   call   rax
@@ -149,7 +149,7 @@
 0x00400547: 48 85 d2                |H..     |<sp-8 >   test   rdx, rdx
 0x0040054a: 75 e4                   |u.      |<sp-8 >   jne    0x0000000000400530<<BBlock>>
 0x0040054a: Outgoing stack delta: -8
-0x0040054a: Successor blocks: 0x0040054c, 0x00400530
+0x0040054a: Successor blocks: 0x00400530, 0x0040054c
 
 0x0040054c: Basic block reasons: 
 0x0040054c: c6 05 85 04 10 00 01    |....... |<sp-8 >   mov    byte ds:[rip + 0x0000000000100485], 0x01
@@ -171,7 +171,7 @@
 0x00400569: 48 89 e5                |H..     |<sp-8 >   mov    rbp, rsp
 0x0040056c: 74 16                   |t.      |<sp-8 >   je     0x0000000000400584<<BBlock>>
 0x0040056c: Outgoing stack delta: -8
-0x0040056c: Successor blocks: 0x00400584, 0x0040056e
+0x0040056c: Successor blocks: 0x0040056e, 0x00400584
 
 0x0040056e: Basic block reasons: 
 0x0040056e: b8 00 00 00 00          |.....   |<sp-8 >   mov    eax, 0x00000000
