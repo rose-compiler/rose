@@ -419,7 +419,7 @@ void Analyzer::eventGlobalTopifyTurnedOn() {
     //if(name!="output") {
     //if(true) {
     if(topifyVar) {
-      variableValueMonitor.setVariableMode(VariableValueMonitor::VARMODE_FORCED_TOP,*i);
+      //variableValueMonitor.setVariableMode(VariableValueMonitor::VARMODE_FORCED_TOP,*i);
       n++;
     }
     nt++;
@@ -458,6 +458,7 @@ EState Analyzer::createEState(Label label, PState pstate, ConstraintSet cset) {
     VariableIdSet varSet=pstate.getVariableIds();
     for(VariableIdSet::iterator i=varSet.begin();i!=varSet.end();++i) {
       if(variableValueMonitor.isHotVariable(this,*i)) {
+        ROSE_ASSERT(false); // should not be used any
         topifyVariable(pstate, cset, *i);
       }
     }
@@ -467,16 +468,6 @@ EState Analyzer::createEState(Label label, PState pstate, ConstraintSet cset) {
     // set cset in general to empty cset, otherwise cset can grow again arbitrarily
     ConstraintSet cset0; // xxx2
     cset=cset0;
-  }
-  if(variableValueMonitor.isActive()) {
-    logger[ERROR]<<"Variable-Value-Monitor: no longer supported."<<endl;
-    exit(1);
-    VariableIdSet hotVarSet;
-#pragma omp critical (VARIABLEVALUEMONITOR)
-    hotVarSet=variableValueMonitor.getHotVariables(this,&pstate);
-    for(VariableIdSet::iterator i=hotVarSet.begin();i!=hotVarSet.end();++i) {
-      topifyVariable(pstate, cset, *i);
-    }
   }
   const PState* newPStatePtr=processNewOrExisting(pstate);
   const ConstraintSet* newConstraintSetPtr=processNewOrExisting(cset);
