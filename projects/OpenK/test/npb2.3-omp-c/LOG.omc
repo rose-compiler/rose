@@ -1,0 +1,43 @@
+
+[Jan. 29 2001] Second Release
+
+1. Bug fix
+
+- BT
+  main(): replaced "(float)" with "(double)".
+
+- CG
+  main(): added "private(it,i,j,k)" to the parallel directives.
+          removed "private(k)" from the first for directive.
+          replaced "abs()" with "fabs()".
+
+- FT
+  main(): replaced "(float)" with "(double)".
+
+- IS
+  main(): added an extra parameter for the invocation of c_print_results().
+
+- LU
+  main(): replaced "(float)" with "(double)".
+  ssor(): added "private(i,j,k,m)" to the parallel directive.
+  blts(), buts(): moved flush directives into #if defined(_OPENMP_) blocks.
+
+- MG
+  zran3(): changed the fourth argument of the invocation of "randlc".
+
+- SP
+  main(): replaced "(float)" with "(double)".
+          parallelized the first call for adi().
+
+- common
+  c_print_results.c: added a parameter to specify random number generator.
+  npb-C.h: added a function declaration for c_print_results().
+
+2. Known Problems
+
+- LU
+  MIPSPro compiler 7.3 does not compile it properly due to bugs in the parser.
+  Some of examples, such as A.5, A.8, A.14, in the OpenMP C/C++ API
+  specification also failed to be compiled.
+
+[Oct. 18 2000] First Release

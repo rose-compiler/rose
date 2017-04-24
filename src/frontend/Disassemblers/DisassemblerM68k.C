@@ -253,7 +253,18 @@ integerFormat(unsigned fmtNumber)
 static M68kDataFormat
 floatingFormat(unsigned fmtNumber)
 {
-    return (M68kDataFormat)fmtNumber;
+    switch (fmtNumber) {
+        case m68k_fmt_i32:
+        case m68k_fmt_f32:
+        case m68k_fmt_f96:
+        case m68k_fmt_p96:
+        case m68k_fmt_i16:
+        case m68k_fmt_f64:
+        case m68k_fmt_i8 :
+            return (M68kDataFormat)fmtNumber;
+        default:
+            throw Disassembler::Exception("invalid floating point format code=" + StringUtility::numberToString(fmtNumber));
+    }
 }
 
 // Default format for floating-point operations. Floating point values are converted to this type internally before any

@@ -354,7 +354,7 @@ UntypedConverter::convertSgUntypedSubroutineDeclaration (SgUntypedSubroutineDecl
 SgProcedureHeaderStatement*
 UntypedConverter::convertSgUntypedFunctionDeclaration (SgUntypedFunctionDeclaration* ut_function, SgScopeStatement* scope)
 {
-   SgProcedureHeaderStatement* sg_function;
+   SgProcedureHeaderStatement* sg_function = NULL;
    return sg_function;
 }
 

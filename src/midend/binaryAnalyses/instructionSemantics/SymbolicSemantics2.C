@@ -1123,15 +1123,16 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg,
 
 void
 RiscOperators::writeMemory(const RegisterDescriptor &segreg,
-                           const BaseSemantics::SValuePtr &address,
+                           const BaseSemantics::SValuePtr &address_,
                            const BaseSemantics::SValuePtr &value_,
                            const BaseSemantics::SValuePtr &condition) {
     ASSERT_require(1==condition->get_width()); // FIXME: condition is not used
     if (condition->is_number() && !condition->get_number())
         return;
-    if (address->isBottom())
+    if (address_->isBottom())
         return;
-    SValuePtr value = SValue::promote(value_->copy());
+    SValuePtr address = SValue::promote(address_);
+    SValuePtr value = SValue::promote(value_);
     PartialDisableUsedef du(this);
     size_t nbits = value->get_width();
     ASSERT_require(0 == nbits % 8);
@@ -1150,8 +1151,10 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg,
             throw BaseSemantics::Exception("multi-byte write with memory having unspecified byte order", currentInstruction());
         }
 
-        BaseSemantics::SValuePtr byte_value = extract(value, 8*byteOffset, 8*byteOffset+8);
-        BaseSemantics::SValuePtr byte_addr = add(address, number_(address->get_width(), bytenum));
+        SValuePtr byte_value = SValue::promote(extract(value, 8*byteOffset, 8*byteOffset+8));
+        byte_value->add_defining_instructions(value);
+        SValuePtr byte_addr = SValue::promote(add(address, number_(address->get_width(), bytenum)));
+        byte_addr->add_defining_instructions(address);
         currentState()->writeMemory(byte_addr, byte_value, this, this);
 
         // Update the latest writer info if we have a current instruction and the memory state supports it.
