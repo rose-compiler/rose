@@ -419,7 +419,7 @@ void Analyzer::eventGlobalTopifyTurnedOn() {
     //if(name!="output") {
     //if(true) {
     if(topifyVar) {
-      //variableValueMonitor.setVariableMode(VariableValueMonitor::VARMODE_FORCED_TOP,*i);
+      variableValueMonitor.setVariableMode(VariableValueMonitor::VARMODE_FORCED_TOP,*i);
       n++;
     }
     nt++;
@@ -458,7 +458,7 @@ EState Analyzer::createEState(Label label, PState pstate, ConstraintSet cset) {
     VariableIdSet varSet=pstate.getVariableIds();
     for(VariableIdSet::iterator i=varSet.begin();i!=varSet.end();++i) {
       if(variableValueMonitor.isHotVariable(this,*i)) {
-        ROSE_ASSERT(false); // should not be used any
+        //ROSE_ASSERT(false); // this branch is live
         topifyVariable(pstate, cset, *i);
       }
     }
