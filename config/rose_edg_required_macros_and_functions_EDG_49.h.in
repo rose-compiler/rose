@@ -73,6 +73,48 @@
   #define __inline inline
 #endif
 
+/* DQ (4/23/2017): This is now added on the EDG command line to support handling of Microsoft options.
+   This supports analysis of Microsofte specific code on Linuc platforms.  It is not clear now specific
+   our support can be since we can't interogate the Microsoft compiler for some specifics.
+ */
+#ifdef ROSE_USE_MICROSOFT_EXTENSIONS
+// Define away the GNU specific attribute mechanism (not supported by Microsoft compilers).
+#define __attribute__(X)
+
+// Define away _Complex (until we figure out what this is equivalent to in MSVC).
+#define _Complex
+#define __int128_t long long int
+#define __builtin_va_list int
+
+// DQ (4/23/2017): Define/undef this so that WINE header files will avoid a bad path.
+// This is an issue for the processing of the WINE 2.0.1 winnt.h header file (line 2345).
+// Either of these will partially fix the problem, but I think that undefining _MSC_VER
+// is the best solution, because I think we don't want 32-bit support and we don't want 
+// to turn off 64-bit support.
+// #define __i386__
+// #undef __x86_64__
+#undef _MSC_VER
+
+// DQ (4/23/2017): This is required to avoid calling wine-2.0.1/include/winscard.h which calls wtypes.h (which does not exist).
+// Also prevents call to headef file "unknown.h"
+#define NOCRYPT 1
+
+#if 0
+#if defined(__i386__) && defined(__GNUC__) && ((__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 2)))
+    #error "__GNUC__ is defined"
+#elif defined(__i386__) && defined(_MSC_VER)
+    #error "__i386__ && _MSC_VER are defined"
+#elif defined(__x86_64__) && defined(__GNUC__)
+    #error "__x86_64__ && __GNUC__ are defined"
+#elif defined(__x86_64__) && defined(_MSC_VER)
+    #error "__x86_64__ && _MSC_VER are defined"
+#else
+    #error "nothing defined"
+#endif
+#endif
+
+#endif
+
 #if __cplusplus >= 201103L
 /* DQ (1/27/2017): This is needed for at least the Intel compilers and GNU 4.8 and later compilers in C++11 mode. */
 /* DQ (10/8/2015): Added support for Intel compiler to handle fenv.h header file. 
@@ -395,6 +437,18 @@ ROSE_CONSTEXPR int __builtin_clzll(unsigned long long int) __attribute__((nothro
 
 ROSE_CONSTEXPR int __builtin_signbitf(float) __attribute__((nothrow, const));
 ROSE_CONSTEXPR int __builtin_signbitl(long double) __attribute__((nothrow, const));
+
+/* DQ (4/23/2017): This is now added on the EDG command line to support handling of Microsoft options.
+   This supports analysis of Microsofte specific code on Linuc platforms.  It is not clear now specific
+   our support can be since we can't interogate the Microsoft compiler for some specifics.
+ */
+#ifndef ROSE_USE_MICROSOFT_EXTENSIONS
+#ifdef __cplusplus
+// DQ (2/21/2017): These functions are not defined for C language support.
+void __noop(...) __attribute__((nothrow));
+#endif
+#endif
+
 #endif
 
 
