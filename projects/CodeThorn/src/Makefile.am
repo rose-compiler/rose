@@ -562,6 +562,7 @@ check-local:
 	@$(srcdir)/scripts/runLtlRegressionTests $(srcdir) $(top_builddir)/projects/CodeThorn/src #run RERS examples in several versions and compare to previous results
 	@$(srcdir)/scripts/runBuechiTransformTests $(srcdir) $(top_builddir)/projects/CodeThorn/src #confirm that option --keep-error-states=yes does not lead to erroneous results
 	@$(srcdir)/scripts/run_tests_cegpra $(srcdir) $(top_builddir)/projects/CodeThorn/src #run CEGPRA tests
+	@./codethorn tests/rers/Problem1401_opt.c --solver=5 --exploration-mode=breadth-first --edg:no_warnings --rers-binary=no --rersmode=yes --with-ltl-counterexamples=no --counterexamples-with-output=no --input-values="{1,2,3,4,5}" --ltl-in-alphabet="{1,2,3,4,5}" --ltl-out-alphabet="{18,19,20,21,22,23,24,25,26}" --max-transitions-forced-top=1000 --check-ltl=tests/rers/constraints-RERS14-5.txt --csv-spot-ltl="Problem1401_ltl_results_forcedtop_1000_n_bf.csv" --csv-assert="Problem1401_assert_results_forcedtop_1000_n_bf.csv" --threads=4  --csv-stats="Problem1401_stats_forcedtop_1000_n_bf_t4.csv" --display-diff=100000 # run abstract mode test
 
 check-arrays:
 	./codethorn $(srcdir)/tests/pointer/test48.cpp --explicit-arrays --viz=yes && dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
@@ -597,6 +598,7 @@ clean-local:
 	rm -f codethorn-LTLParser.c++
 	rm -f tmp.nsdump
 	rm -f rose_Problem1401_opt.pp.c
+	rm -f Problem1401_assert_results_forcedtop_1000_n_bf.csv 
 
 distclean-local: clean
 	rm -f *.tgz
