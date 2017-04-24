@@ -62,7 +62,7 @@
 0x080480d9: 8b 03                   |..      |<sp+0 >   mov    eax, dword ds:[ebx]
 0x080480db: 74 c5                   |t.      |<sp+0 >   je     0x080480a2<end>
 0x080480db: Outgoing stack delta: +0
-0x080480db: Successor blocks: 0x080480a2, 0x080480dd
+0x080480db: Successor blocks: 0x080480dd, 0x080480a2
 
 0x080480dd: Basic block reasons: 
 0x080480dd: c1 e8 0a                |...     |<sp+0 >   shr    eax, 0x0a
@@ -86,7 +86,7 @@
 0x080480fd: b8 07 00 00 00          |.....   |          mov    eax, 0x00000007
 0x08048102: 50                      |P       |          push   eax
 0x08048103: 74 9d                   |t.      |          je     0x080480a2<end>
-0x08048103: Successor blocks: 0x080480a2, 0x08048105
+0x08048103: Successor blocks: 0x08048105, 0x080480a2
 
 0x08048105: Basic block reasons: 
 0x08048105: f4                      |.       |          hlt    

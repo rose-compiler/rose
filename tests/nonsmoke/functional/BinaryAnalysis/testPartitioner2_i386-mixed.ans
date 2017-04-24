@@ -22,25 +22,25 @@
 0x080480b1: Basic block reasons: 
 0x080480b1: 62 00                   |b.      |          bound  eax, dword ds:[eax]
 0x080480b3: 2e 73 74                |.st     |          jae,pn 0x0804812a<<BBlock>>
-0x080480b3: Successor blocks: 0x080480b6, 0x0804812a
+0x080480b3: Successor blocks: 0x0804812a, 0x080480b6
 
 0x080480b6: Basic block reasons: 
 0x080480b6: 72 74                   |rt      |          jb     0x0804812c<<BBlock>>
-0x080480b6: Successor blocks: 0x080480b8, 0x0804812c
+0x080480b6: Successor blocks: 0x0804812c, 0x080480b8
 
 0x080480b8: Basic block reasons: 
 0x080480b8: 61                      |a       |          popad  
 0x080480b9: 62 00                   |b.      |          bound  eax, dword ds:[eax]
 0x080480bb: 2e 73 68                |.sh     |          jae,pn 0x08048126<<BBlock>>
-0x080480bb: Successor blocks: 0x080480be, 0x08048126
+0x080480bb: Successor blocks: 0x08048126, 0x080480be
 
 0x080480be: Basic block reasons: 
 0x080480be: 73 74                   |st      |          jae    0x08048134<<BBlock>>
-0x080480be: Successor blocks: 0x080480c0, 0x08048134
+0x080480be: Successor blocks: 0x08048134, 0x080480c0
 
 0x080480c0: Basic block reasons: 
 0x080480c0: 72 74                   |rt      |          jb     0x08048136<<BBlock>>
-0x080480c0: Successor blocks: 0x080480c2, 0x08048136
+0x080480c0: Successor blocks: 0x08048136, 0x080480c2
 
 0x080480c2: Basic block reasons: 
 0x080480c2: 61                      |a       |          popad  
@@ -48,23 +48,23 @@
 0x080480c5: 2e 6e                   |.n      |          outsb  
 0x080480c7: 6f                      |o       |          outsd  
 0x080480c8: 74 65                   |te      |          je     0x0804812f<<BBlock>>
-0x080480c8: Successor blocks: 0x080480ca, 0x0804812f
+0x080480c8: Successor blocks: 0x0804812f, 0x080480ca
 
 0x080480ca: Basic block reasons: 
 0x080480ca: 2e 67 6e                |.gn     |          outsb  
 0x080480cd: 75 2e                   |u.      |          jne    0x080480fd<<BBlock>>
-0x080480cd: Successor blocks: 0x080480cf, 0x080480fd
+0x080480cd: Successor blocks: 0x080480fd, 0x080480cf
 
 0x080480cf: Basic block reasons: 
 0x080480cf: 62 75 69                |bui     |          bound  esi, dword ss:[ebp + 0x69]
 0x080480d2: 6c                      |l       |          insb   
 0x080480d3: 64 2d 69 64 00 2e       |d-id..  |          sub    eax, 0x2e006469
 0x080480d9: 74 65                   |te      |          je     0x08048140<<BBlock>>
-0x080480d9: Successor blocks: 0x080480db, 0x08048140
+0x080480d9: Successor blocks: 0x08048140, 0x080480db
 
 0x080480db: Basic block reasons: 
 0x080480db: 78 74                   |xt      |          js     0x08048151<<BBlock>>
-0x080480db: Successor blocks: 0x080480dd, 0x08048151
+0x080480db: Successor blocks: 0x08048151, 0x080480dd
 
 0x080480dd: Basic block reasons: 
 0x080480dd: 00 00                   |..      |          add    byte ds:[eax], al
@@ -229,7 +229,7 @@
 0x080481b4: 00 00                   |..      |          add    byte ds:[eax], al
 0x080481b6: 00 00                   |..      |          add    byte ds:[eax], al
 0x080481b8: 70 02                   |p.      |          jo     0x080481bc<<BBlock>>
-0x080481b8: Successor blocks: 0x080481ba, 0x080481bc
+0x080481b8: Successor blocks: 0x080481bc, 0x080481ba
 
 0x080481ba: Basic block reasons: 
 0x080481ba: 00 00                   |..      |          add    byte ds:[eax], al

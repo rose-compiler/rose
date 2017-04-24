@@ -24,7 +24,7 @@
 0x080480b4: Basic block reasons: 
 0x080480b4: e8 40 00 00 00          |.@...   |<sp+0 >   call   0x080480f9<T5>
 0x080480b4: Outgoing stack delta: -4
-0x080480b4: Successor blocks: 0x080480f9<T5>, 0x080480b9
+0x080480b4: Successor blocks: 0x080480b9, 0x080480f9<T5>
 
 0x080480b9: Basic block reasons: 
 0x080480b9: b8 01 00 00 00          |.....   |<sp+0 >   mov    eax, 0x00000001
@@ -41,7 +41,7 @@
 0x080480c1: Basic block reasons: entry point
 0x080480c1: e8 52 00 00 00          |.R...   |<sp+0 >   call   0x08048118<callee>
 0x080480c1: Outgoing stack delta: -4
-0x080480c1: Successor blocks: 0x08048118<callee>, 0x080480c6
+0x080480c1: Successor blocks: 0x080480c6, 0x08048118<callee>
 
 0x080480c6: Basic block reasons: 
 0x080480c6: c3                      |.       |<sp+0 >   ret    
@@ -55,7 +55,7 @@
 0x080480c7: 68 d1 80 04 08          |h....   |<sp+0 >   push   0x080480d1<T2.L1>
 0x080480cc: e9 47 00 00 00          |.G...   |<sp-4 >   jmp    0x08048118<callee>
 0x080480cc: Outgoing stack delta: -4
-0x080480cc: Successor blocks: 0x08048118<callee>, 0x080480d1
+0x080480cc: Successor blocks: 0x080480d1, 0x08048118<callee>
 
 0x080480d1: Basic block reasons: 
 0x080480d1: c3                      |.       |<sp+0 >   ret    
@@ -85,7 +85,7 @@
 0x080480f0: 40                      |@       |<sp-12>   inc    eax
 0x080480f1: e9 22 00 00 00          |."...   |<sp-12>   jmp    0x08048118<callee>
 0x080480f1: Outgoing stack delta: -12
-0x080480f1: Successor blocks: 0x08048118<callee>, 0x080480f6
+0x080480f1: Successor blocks: 0x080480f6, 0x08048118<callee>
 
 0x080480f6: Basic block reasons: 
 0x080480f6: 58                      |X       |<sp-8 >   pop    eax
@@ -110,7 +110,7 @@
 0x08048103: Basic block reasons: 
 0x08048103: e8 0b 00 00 00          |.....   |<sp+0 >   call   0x08048113<T5_3>
 0x08048103: Outgoing stack delta: -4
-0x08048103: Successor blocks: 0x08048113<T5_3>, 0x08048108
+0x08048103: Successor blocks: 0x08048108, 0x08048113<T5_3>
 
 0x08048108: Basic block reasons: 
 0x08048108: c3                      |.       |<sp+0 >   ret    
