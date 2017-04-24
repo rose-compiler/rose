@@ -12,22 +12,21 @@ TEST_TRANSLATOR = $(top_builddir)/tests/nonsmoke/functional/testTranslator
 if ROSE_USE_WINDOWS_ANALYSIS_SUPPORT
 
 TESTCODES_REQUIRED_TO_PASS = \
-     simple_windows_prog1.C 
-
-
-# DQ (4/23/2017): Adding some extra tests.
-TESTCODES_REQUIRED_TO_PASS += \
      test2017_01.C \
      test2017_02.C \
+     test2017_03.C \
      test2017_04.C \
-     test2017_05.C 
+     test2017_05.C \
+     simple_windows_prog1.C \
+     tibbar_packer.C 
+
+# DQ (4/23/2017): Adding some extra tests.
+# TESTCODES_REQUIRED_TO_PASS +=
 
 # Need to handle C source codes separately from C++ source codes
 #    simple_windows_prog.c
 
-TESTCODE_CURRENTLY_FAILING += \
-     test2017_03.C \
-     tibbar_packer.C
+TESTCODE_CURRENTLY_FAILING = 
 
 noinst_headers = 
 
