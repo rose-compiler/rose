@@ -133,6 +133,9 @@ class AbstractValue {
 typedef AbstractValue AValue; 
 typedef AbstractValueCmp AValueCmp; 
 
+ typedef std::set<AbstractValue> AbstractValueSet;
+ AbstractValueSet& operator+=(AbstractValueSet& s1, AbstractValueSet& s2);
+
 }
 
 #endif

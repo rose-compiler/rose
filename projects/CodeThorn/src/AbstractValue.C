@@ -584,3 +584,10 @@ AbstractValue CodeThorn::operator/(AbstractValue& a,AbstractValue& b) {
 AbstractValue CodeThorn::operator%(AbstractValue& a,AbstractValue& b) {
   return AbstractValue::operatorMod(a,b);
 }
+
+AbstractValueSet& CodeThorn::operator+=(AbstractValueSet& s1, AbstractValueSet& s2) {
+  for(AbstractValueSet::iterator i=s2.begin();i!=s2.end();++i) {
+    s1.insert(*i);
+  }
+  return s1;
+}

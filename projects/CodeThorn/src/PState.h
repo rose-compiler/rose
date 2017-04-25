@@ -31,8 +31,13 @@ namespace CodeThorn {
   * \author Markus Schordan
   * \date 2012.
  */
+#if 0
   typedef SPRAY::VariableId VarAbstractValue;
   typedef SPRAY::VariableIdSet VarAbstractValueSet;
+#else
+  typedef AbstractValue VarAbstractValue;
+  typedef AbstractValueSet VarAbstractValueSet;
+#endif
 
   class PState : public map<VarAbstractValue,CodeThorn::AValue> {
  public:
