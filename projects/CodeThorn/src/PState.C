@@ -10,18 +10,10 @@
 // only necessary for class VariableValueMonitor
 #include "Analyzer.h"
 
-// it is not necessary to define comparison-ops for Pstate, but
-// the ordering appears to be implementation dependent (but consistent)
-
 using namespace std;
 using namespace CodeThorn;
 
-bool PState::_activeGlobalTopify=false;
-VariableValueMonitor* PState::_variableValueMonitor=0;
-Analyzer* PState::_analyzer=0;
-
-void PState::setActiveGlobalTopify(bool val) {
-  _activeGlobalTopify=val;
+PState::PState() {
 }
 
 /*! 
@@ -200,52 +192,14 @@ void PState::setAllVariablesToValue(CodeThorn::AValue val) {
     setVariableToValue(varId,val);
   }
 }
-void PState::setVariableValueMonitor(VariableValueMonitor* vvm) {
-  _variableValueMonitor=vvm;
-}
+
 void PState::setVariableToTop(VarAbstractValue varId) {
   CodeThorn::AValue val=CodeThorn::Top();
   setVariableToValue(varId, val);
 }
 
 void PState::setVariableToValue(VarAbstractValue varId, CodeThorn::AValue val) {
-  if(false && _activeGlobalTopify) {
-    ROSE_ASSERT(_variableValueMonitor);
-    if(_variableValueMonitor->isHotVariable(_analyzer,varId)) {
-      setVariableToTop(varId);
-    }
-  } else {
-    operator[](varId)=val;
-  }
-}
-
-void PState::topifyState() {
-  for(PState::const_iterator i=begin();i!=end();++i) {
-    VarAbstractValue varId=(*i).first;
-    if(_activeGlobalTopify && _variableValueMonitor->isHotVariable(_analyzer,varId)) {
-      setVariableToTop(varId);
-    }
-  }
-}
-
-bool PState::isTopifiedState() const {
-  if(!_activeGlobalTopify) {
-    return false;
-  }
-  ROSE_ASSERT(_variableValueMonitor);
-  for(PState::const_iterator i=begin();i!=end();++i) {
-    VarAbstractValue varId=(*i).first;
-    if(_variableValueMonitor->isHotVariable(_analyzer,varId)) {
-      if(varIsTop(varId)) {
-        continue;
-      } else {
-        cout<<"DEBUG: var is not top (but hot): "<<varId.toString(*_analyzer->getVariableIdMapping())<<":"<<(*i).second.toString()<<endl;
-        cout<<"DEBUG: PState:"<<toString()<<endl;
-        return false;
-      }
-    }
-  }
-  return true;
+  operator[](varId)=val;
 }
 
 VarAbstractValueSet PState::getVariableIds() const {

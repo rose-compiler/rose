@@ -344,7 +344,6 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
     ("post-semantic-fold",po::value< string >(),"compute semantically folded state transition graph only after the complete transition graph has been computed. [=yes|no]")
     ("set-stg-incomplete", po::value< string >(), "set to true if the generated STG will not contain all possible execution paths (e.g. if only a subset of the input values is used). [=yes|no]")
     ("tg-trace", po::value< string >(), "generate STG computation trace [=filename]")
-    ("variable-value-threshold",po::value< int >(),"sets a threshold for the maximum number of different values are stored for each variable.")
     ("explicit-arrays","turns on to represent all arrays explicitly in every state.")
     ;
 
@@ -1016,9 +1015,6 @@ void analyzerSetup(Analyzer& analyzer, const po::variables_map& args, Sawyer::Me
   }
   if(analyzer.getModeLTLDriven()) {
     analyzer.setSolver(ltlSolverNr);
-  }
-  if(args.count("variable-value-threshold")) {
-    analyzer.setVariableValueThreshold(args["variable-value-threshold"].as<int>());
   }
 }
 

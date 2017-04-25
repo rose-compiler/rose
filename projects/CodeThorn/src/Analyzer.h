@@ -247,8 +247,6 @@ namespace CodeThorn {
     bool getModeLTLDriven() { return transitionGraph.getModeLTLDriven(); }
     long analysisRunTimeInSeconds(); 
 
-    void setVariableValueThreshold(int threshold) { variableValueMonitor.setThreshold(threshold); }
-
     void set_finished(std::vector<bool>& v, bool val);
     bool all_false(std::vector<bool>& v);
 

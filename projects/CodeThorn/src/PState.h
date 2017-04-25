@@ -36,10 +36,9 @@ namespace CodeThorn {
 
   class PState : public map<VarAbstractValue,CodeThorn::AValue> {
  public:
-    PState() {
-    }
   friend std::ostream& operator<<(std::ostream& os, const PState& value);
   friend std::istream& operator>>(std::istream& os, PState& value);
+  PState();
   bool varExists(VarAbstractValue varId) const;
   bool varIsConst(VarAbstractValue varId) const;
   bool varIsTop(VarAbstractValue varId) const;
@@ -55,14 +54,9 @@ namespace CodeThorn {
   void setAllVariablesToValue(CodeThorn::AValue val);
   void setVariableToTop(VarAbstractValue varId);
   void setVariableToValue(VarAbstractValue varId, CodeThorn::AValue val);
-  void topifyState();
-  bool isTopifiedState() const;
   VarAbstractValueSet getVariableIds() const;
-  static void setActiveGlobalTopify(bool val);
-  static void setVariableValueMonitor(VariableValueMonitor* vvm);
-  static bool _activeGlobalTopify;
-  static VariableValueMonitor* _variableValueMonitor;
-  static Analyzer* _analyzer;
+  // it is not necessary to define comparison-ops for PState, but
+  // the ordering appears to be implementation dependent (but consistent)
 };
 
   std::ostream& operator<<(std::ostream& os, const PState& value);

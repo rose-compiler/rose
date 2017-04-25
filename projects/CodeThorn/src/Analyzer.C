@@ -138,7 +138,7 @@ void Analyzer::setExternalErrorFunctionName(std::string externalErrorFunctionNam
 }
 
 bool Analyzer::isPrecise() {
-  return !(isActiveGlobalTopify()||variableValueMonitor.isActive());
+  return !(isActiveGlobalTopify());
 }
 
 bool Analyzer::isInExplicitStateMode() {
@@ -412,21 +412,12 @@ void Analyzer::eventGlobalTopifyTurnedOn() {
       exit(1);
     }
 
-    //if(name!="input" && name!="output" && name!="cf" && !variableIdMapping.hasPointerType(*i)) {
-    //if(name!="input" && name!="output" && name!="cf") {
-    //if(isCompoundIncVar) {
-    //if(name!="input") {
-    //if(name!="output") {
-    //if(true) {
     if(topifyVar) {
       variableValueMonitor.setVariableMode(VariableValueMonitor::VARMODE_FORCED_TOP,*i);
       n++;
     }
     nt++;
   }
-  PState::setActiveGlobalTopify(true);
-  PState::setVariableValueMonitor(&variableValueMonitor);
-  PState::_analyzer=this;
 
   logger[TRACE] << "switched to static analysis (approximating "<<n<<" of "<<nt<<" variables with top-conversion)."<<endl;
   //switch to the counter for approximated loop iterations if currently in a mode that counts iterations
@@ -438,14 +429,7 @@ void Analyzer::eventGlobalTopifyTurnedOn() {
   }
 }
 
-bool Analyzer::isTopified(EState& estate) {
-  const PState* pState=estate.pstate();
-  return pState->isTopifiedState();
-}
-
 void Analyzer::topifyVariable(PState& pstate, ConstraintSet& cset, VariableId varId) {
-  // logger[DEBUG] << "DEAD CODE (Analyzer::topifyVariale(..))." <<endl;
-  //exit(1);
   pstate.setVariableToTop(varId);
   //cset.removeAllConstraintsOfVar(varId);
 }
@@ -1929,10 +1913,6 @@ void Analyzer::runSolver12() {
         ROSE_ASSERT(threadNum>=0 && threadNum<=_numberOfThreadsToUse);
       } else {
         ROSE_ASSERT(currentEStatePtr);
-        if(variableValueMonitor.isActive()) {
-          variableValueMonitor.update(this,const_cast<EState*>(currentEStatePtr));
-        }
-
         Flow edgeSet=flow.outEdges(currentEStatePtr->label());
         // logger[DEBUG]<< "out-edgeSet size:"<<edgeSet.size()<<endl;
         for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
@@ -3312,24 +3292,15 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
       ConstraintSet cset=*estate.constraints();
       // only update integer variables. Ensure values of floating-point variables are not computed
       if(variableIdMapping.hasIntegerType(lhsVar)) {
-        if(variableValueMonitor.isActive() && variableValueMonitor.isHotVariable(this,lhsVar)) {
-          // logger[DEBUG]<<"Topifying hot variable :)"<<lhsVar.toString()<<endl;
-          newPState.setVariableToTop(lhsVar);
-        } else {
-          // logger[DEBUG]<<"assign lhs var:"<<lhsVar.toString()<<endl;
-          newPState.setVariableToValue(lhsVar,(*i).result);
-        }
+        newPState.setVariableToValue(lhsVar,(*i).result);
       } else if(variableIdMapping.hasPointerType(lhsVar)) {
         // we assume here that only arrays (pointers to arrays) are assigned
         //newPState[lhsVar]=(*i).result;
-        if(variableValueMonitor.isActive() && variableValueMonitor.isHotVariable(this,lhsVar)) {
-          newPState.setVariableToTop(lhsVar);
-        } else {
-          newPState.setVariableToValue(lhsVar,(*i).result);
-        }
+        newPState.setVariableToValue(lhsVar,(*i).result);
       }
-      if(!(*i).result.isTop())
+      if(!(*i).result.isTop()) {
         cset.removeAllConstraintsOfVar(lhsVar);
+      }
       estateList.push_back(createEState(edge.target(),newPState,cset));
     } else if(isSgPntrArrRefExp(lhs)) {
       // for now we ignore array refs on lhs

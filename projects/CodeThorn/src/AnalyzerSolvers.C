@@ -224,10 +224,6 @@ void Analyzer::runSolver5() {
         ROSE_ASSERT(threadNum>=0 && threadNum<=_numberOfThreadsToUse);
       } else {
         ROSE_ASSERT(currentEStatePtr);
-        if(variableValueMonitor.isActive()) {
-          variableValueMonitor.update(this,const_cast<EState*>(currentEStatePtr));
-        }
-
         Flow edgeSet=flow.outEdges(currentEStatePtr->label());
         // logger[DEBUG] << "out-edgeSet size:"<<edgeSet.size()<<endl;
         for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
@@ -353,10 +349,6 @@ void Analyzer::runSolver8() {
       ROSE_ASSERT(0); // there should always be exactly one element in the worklist at this point
     }
     ROSE_ASSERT(currentEStatePtr);
-
-    if(variableValueMonitor.isActive()) {
-      variableValueMonitor.update(this,const_cast<EState*>(currentEStatePtr));
-    }
 
     Flow edgeSet=flow.outEdges(currentEStatePtr->label());
     for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
