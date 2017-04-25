@@ -2,86 +2,19 @@ with "asis";
 
 project ROSE_ASIS is
 
-   type Build_Kind is
-      ("static", "relocatable", "static-pic");
-   Library_Type : Build_Kind := external ("LIBRARY_TYPE");
-   type Build_Kind1 is
-      ("default");
-   Asis_Build : Build_Kind1 := external ("ASIS_BUILD");
-
-   case Library_Type is
-
-      when "static" =>
-
-         case Asis_Build is
-
-            when "default" =>
-               for Main use ("demo_dot.adb", "run_asis_tool_2.adb");
-               for Object_Dir use "./obj";
-         end case;
-
-      when "relocatable" =>
-         for Main use ("asis_application_driver_1.adb");
-
-      when "static-pic" =>
-         for Main use ("asis_application_driver_1.adb");
-   end case;
+   for Main use ("demo_dot.adb", "run_asis_tool_2.adb");
+   for Object_Dir use "./obj";
 
    package Compiler is
-
-      case Library_Type is
-
-         when "static" =>
-
-            case Asis_Build is
-
-               when "default" =>
-                  for Default_Switches ("ada") use ("-gnat12", "-gnata", "-g");
-            end case;
-
-         when "relocatable" =>
-
-         when "static-pic" =>
-
-      end case;
+      for Default_Switches ("ada") use ("-gnat12", "-gnata", "-g");
    end Compiler;
 
    package Linker is
-
-      case Library_Type is
-
-         when "static" =>
-
-            case Asis_Build is
-
-               when "default" =>
-                  for Default_Switches ("ada") use ("-g");
-            end case;
-
-         when "relocatable" =>
-
-         when "static-pic" =>
-
-      end case;
+      for Default_Switches ("ada") use ("-g");
    end Linker;
 
    package Ide is
-
-      case Library_Type is
-
-         when "static" =>
-
-            case Asis_Build is
-
-               when "default" =>
-                  for Vcs_Kind use "Git";
-            end case;
-
-         when "relocatable" =>
-
-         when "static-pic" =>
-
-      end case;
+      for Vcs_Kind use "Git";
    end Ide;
 
 end ROSE_ASIS;
