@@ -293,6 +293,7 @@ struct PartitionerSettings {
     bool doingPostFunctionNoop;                     /**< Find and name functions that are effectively no-ops. */
     FunctionReturnAnalysis functionReturnAnalysis;  /**< How to run the function may-return analysis. */
     bool findingDataFunctionPointers;               /**< Look for function pointers in static data. */
+    bool findingCodeFunctionPointers;               /**< Look for function pointers in instructions. */
     bool findingThunks;                             /**< Look for common thunk patterns in undiscovered areas. */
     bool splittingThunks;                           /**< Split thunks into their own separate functions. */
     SemanticMemoryParadigm semanticMemoryParadigm;  /**< Container used for semantic memory states. */
@@ -323,6 +324,7 @@ private:
         s & doingPostFunctionNoop;
         s & functionReturnAnalysis;
         s & findingDataFunctionPointers;
+        s & findingCodeFunctionPointers;
         s & findingThunks;
         s & splittingThunks;
         s & semanticMemoryParadigm;
@@ -336,9 +338,9 @@ public:
           findingDeadCode(true), peScramblerDispatcherVa(0), findingIntraFunctionCode(true), findingIntraFunctionData(true),
           findingInterFunctionCalls(true), doingPostAnalysis(true), doingPostFunctionMayReturn(true),
           doingPostFunctionStackDelta(true), doingPostCallingConvention(false), doingPostFunctionNoop(false),
-          functionReturnAnalysis(MAYRETURN_DEFAULT_YES), findingDataFunctionPointers(false), findingThunks(true),
-          splittingThunks(false), semanticMemoryParadigm(LIST_BASED_MEMORY), namingConstants(true), namingStrings(true),
-          demangleNames(true) {}
+          functionReturnAnalysis(MAYRETURN_DEFAULT_YES), findingDataFunctionPointers(false), findingCodeFunctionPointers(false),
+          findingThunks(true), splittingThunks(false), semanticMemoryParadigm(LIST_BASED_MEMORY), namingConstants(true),
+          namingStrings(true), demangleNames(true) {}
 };
 
 /** Settings for controling the engine behavior.

@@ -6348,11 +6348,14 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 #if 0
   // DQ (8/18/2014): Supress this output, I think we do want to include the rose_edg_required_macros_and_functions.h 
   // (but we might want to use it to specify different or additional builtin functions in the future).
-     printf ("Note for advance microsoft windows support using MSVC: Not clear if we need a specific --preinclude rose_edg_required_macros_and_functions.h for windows \n");
+     printf ("Note for advanced microsoft windows support using MSVC: Not clear if we need a specific --preinclude rose_edg_required_macros_and_functions.h for windows \n");
 #endif
   // commandLine.insert(commandLine.end(), configDefs.begin(), configDefs.end());
      commandLine.push_back("--preinclude");
      commandLine.push_back("rose_edg_required_macros_and_functions.h");
+
+  // DQ (4/23/2017): Add something to permit use to detect when Microsoft extensions are being supported.
+     commandLine.push_back("-DROSE_USE_MICROSOFT_EXTENSIONS");
 #endif
 
   // DQ (5/24/2015): Adding support for specification of optimization to trigger use of __OPTIMIZE__ macro (required for compatability with GNU gcc API).

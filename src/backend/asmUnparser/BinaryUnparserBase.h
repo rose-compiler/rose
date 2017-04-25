@@ -10,6 +10,7 @@
 namespace rose {
 namespace BinaryAnalysis {
 
+/** Generates pseudo-assembly listings. */
 namespace Unparser {
 
 /** State for unparsing.
@@ -141,17 +142,17 @@ public:
      *  This function does the same thing as the function operator that has the same arguments.
      *
      * @{ */
-    virtual void unparse(std::ostream&, const Partitioner2::Partitioner&) const;
-    virtual void unparse(std::ostream&, const Partitioner2::Partitioner&, SgAsmInstruction*) const;
-    virtual void unparse(std::ostream&, const Partitioner2::Partitioner&, const Partitioner2::BasicBlockPtr&) const;
-    virtual void unparse(std::ostream&, const Partitioner2::Partitioner&, const Partitioner2::DataBlockPtr&) const;
-    virtual void unparse(std::ostream&, const Partitioner2::Partitioner&, const Partitioner2::FunctionPtr&) const;
+    void unparse(std::ostream&, const Partitioner2::Partitioner&) const /*final*/;
+    void unparse(std::ostream&, const Partitioner2::Partitioner&, SgAsmInstruction*) const /*final*/;
+    void unparse(std::ostream&, const Partitioner2::Partitioner&, const Partitioner2::BasicBlockPtr&) const /*final*/;
+    void unparse(std::ostream&, const Partitioner2::Partitioner&, const Partitioner2::DataBlockPtr&) const /*final*/;
+    void unparse(std::ostream&, const Partitioner2::Partitioner&, const Partitioner2::FunctionPtr&) const /*final*/;
 
-    virtual std::string unparse(const Partitioner2::Partitioner&) const;
-    virtual std::string unparse(const Partitioner2::Partitioner&, SgAsmInstruction*) const;
-    virtual std::string unparse(const Partitioner2::Partitioner&, const Partitioner2::BasicBlockPtr&) const;
-    virtual std::string unparse(const Partitioner2::Partitioner&, const Partitioner2::DataBlockPtr&) const;
-    virtual std::string unparse(const Partitioner2::Partitioner&, const Partitioner2::FunctionPtr&) const;
+    std::string unparse(const Partitioner2::Partitioner&) const /*final*/;
+    std::string unparse(const Partitioner2::Partitioner&, SgAsmInstruction*) const /*final*/;
+    std::string unparse(const Partitioner2::Partitioner&, const Partitioner2::BasicBlockPtr&) const /*final*/;
+    std::string unparse(const Partitioner2::Partitioner&, const Partitioner2::DataBlockPtr&) const /*final*/;
+    std::string unparse(const Partitioner2::Partitioner&, const Partitioner2::FunctionPtr&) const /*final*/;
     /** @} */
 
 public:

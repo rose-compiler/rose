@@ -1055,6 +1055,9 @@ ROSE_SUPPORT_HASKELL
 
 ROSE_SUPPORT_CUDA
 
+# if swi-prolog is available
+ROSE_SUPPORT_SWIPL
+
 # Call support macro for Z3
 
 ROSE_SUPPORT_Z3

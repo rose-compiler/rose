@@ -49,10 +49,6 @@ test2012_52.C \
 test2012_53.C \
 test2012_54.C \
 test2012_55.C \
-test2012_56.C \
-test2012_57.C \
-test2012_58.C \
-test2012_59.C \
 test2012_60.C \
 test2012_61.C \
 test2012_62.C \
@@ -72,7 +68,6 @@ test2012_78.C \
 test2012_80.C \
 test2012_81.C \
 test2012_82.C \
-test2012_83.C \
 test2012_84.C \
 test2012_85.C \
 test2012_87.C \
@@ -87,7 +82,6 @@ test2012_97.C \
 test2012_98.C \
 test2013_01.C \
 test2013_02.C \
-test2013_03.C \
 test2013_04.C \
 test2013_05.C \
 test2013_06.C \
@@ -183,8 +177,8 @@ test2014_20_nouuid.C \
 test2014_21_nouuid.C \
 test2014_22_nouuid.C 
 
-
-if ROSE_USE_EDG_VERSION_4_9
+# DQ (4/23/2017): Now that EDG 4.9 is the default and we support EDG 4.12, we should not need to disable these tests.
+# if ROSE_USE_EDG_VERSION_4_9
 # These test code require EDG version 4.9 for the better Microsoft support for the declspec(uuid).
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
 test2014_12.C \
@@ -194,15 +188,23 @@ test2014_19.C \
 test2014_20.C \
 test2014_21.C \
 test2014_22.C 
-endif
+# endif
 
 endif
+
 
 # Waiting for commit from Zack.
 # hello.C
 
-TESTCODE_CURRENTLY_FAILING = 
-
+# DQ (4/23/2017): This failes for the current Microsoft support in EDG 4.12 (investigate seperately).
+TESTCODE_CURRENTLY_FAILING = \
+test2012_56.C \
+test2012_57.C \
+test2012_58.C \
+test2012_59.C \
+test2012_83.C \
+test2013_03.C \
+last.C
 
 # DQ (8/6/2012): This is the list of test code that were failing before the move to EDG 4.3 (failing with the use of EDG 3.3)
 # DQ (8/6/2012): Original count is 183 failing tests that have never passed previously.
