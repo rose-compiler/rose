@@ -246,7 +246,7 @@ int Labeler::isLabelRelevantNode(SgNode* node) {
     // represent all parallel omp constructs as nodes
   case V_SgOmpCriticalStatement:
   case V_SgOmpDoStatement:
-  case V_SgOmpFlushStatement:	
+  case V_SgOmpFlushStatement:   
   case V_SgOmpForStatement:
   case V_SgOmpMasterStatement:
   case V_SgOmpOrderedStatement:
@@ -255,7 +255,7 @@ int Labeler::isLabelRelevantNode(SgNode* node) {
   case V_SgOmpSectionsStatement:
   case V_SgOmpSimdStatement:
   case V_SgOmpSingleStatement:
-  case V_SgOmpTargetDataStatement:	
+  case V_SgOmpTargetDataStatement:      
   case V_SgOmpTargetStatement:
   case V_SgOmpTaskStatement:
   case V_SgOmpTaskwaitStatement:
