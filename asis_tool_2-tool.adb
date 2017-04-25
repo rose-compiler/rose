@@ -6,14 +6,13 @@ package body Asis_Tool_2.Tool is
    -- EXPORTED:
    ------------
    procedure Process
-     (This : in out Class)
-   is
+     (This : in out Class) is
    begin
       Asis.Implementation.Initialize;
-      This.Graph := new Dot.Graphs.Class;
-      This.Graph.Set_Is_Digraph (True);
-      This.Graph.Set_Is_Strict (False);
+      This.Graph := Dot.Graphs.Create (Is_Digraph => True,
+                                       Is_Strict  => False);
       This.My_Context.Process (Graph => This.Graph);
+      Awti.New_Line;
       This.Graph.Put;
       Asis.Implementation.Finalize;
    end Process;

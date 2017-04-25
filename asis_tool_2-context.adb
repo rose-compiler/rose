@@ -36,9 +36,8 @@ package body Asis_Tool_2.Context is
    -- PRIVATE:
    -----------
    procedure Process_Units (This : in out Class) is
-      use Ada.Wide_Text_IO;
       use Asis.Exceptions;
-     Asis_Units : Asis.Compilation_Unit_List :=
+      Asis_Units : Asis.Compilation_Unit_List :=
         Asis.Compilation_Units.Compilation_Units (This.Asis_Context);
    begin
       for Asis_Unit of Asis_Units loop
@@ -57,17 +56,17 @@ package body Asis_Tool_2.Context is
            ASIS_Inappropriate_Line_Number      |
            ASIS_Failed                         =>
          Print_Exception_Info (Ex);
-         Put_Line
+         Awti.Put_Line
            ("ASIS Error Status is " &
               Asis.Errors.Error_Kinds'Wide_Image (Asis.Implementation.Status));
-         Put_Line
+         Awti.Put_Line
            ("ASIS Diagnosis is " & (Asis.Implementation.Diagnosis));
             Asis.Implementation.Set_Status (Asis.Errors.Not_An_Error);
-         Put_Line ("Continuing...");
+         Awti.Put_Line ("Continuing...");
 
       when X : others =>
          Print_Exception_Info (X);
-         Put_Line ("Continuing...");
+         Awti.Put_Line ("Continuing...");
    end Process_Units;
 
 end Asis_Tool_2.Context;

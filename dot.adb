@@ -309,6 +309,22 @@ package body Dot is
       ------------
       -- EXPORTED
       ------------
+      function Create
+        (Is_Digraph : in Boolean;
+         Is_Strict  : in Boolean)
+         return Access_Class
+      is
+         Result : Access_Class;
+      begin
+         Result := new Dot.Graphs.Class;
+         Result.Set_Is_Digraph (Is_Digraph);
+         Result.Set_Is_Strict (Is_Strict);
+         return Result;
+      end Create;
+
+      ------------
+      -- EXPORTED
+      ------------
       procedure Set_Is_Digraph
         (This : access Class;
          To   : in     Boolean) is

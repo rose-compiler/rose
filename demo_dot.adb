@@ -18,12 +18,9 @@ procedure Demo_Dot is
    end;
 
    function Create_Graph return Dot.Graphs.Access_Class is
-      Result : Dot.Graphs.Access_Class;
    begin
-      Result := new Dot.Graphs.Class;
-      Result.Set_Is_Digraph (True);
-      Result.Set_Is_Strict (False);
-      return Result;
+      return Dot.Graphs.Create (Is_Digraph => True,
+                                Is_Strict  => False);
    end;
 
    -- Demo subprograms:

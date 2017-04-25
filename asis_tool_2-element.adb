@@ -35,7 +35,7 @@ package body Asis_Tool_2.Element is
    package Pre_Children is
 
       procedure Process_Element
-        (Element :        Asis.Element;
+        (Element : in     Asis.Element;
          Control : in out Asis.Traverse_Control;
          State   : in out Class);
 
@@ -508,15 +508,15 @@ package body Asis_Tool_2.Element is
       -- EXPORTED:
       ------------
       procedure Process_Element
-        (Element :        Asis.Element;
+        (Element : in     Asis.Element;
          Control : in out Asis.Traverse_Control;
          State   : in out Class)
       is
-         Element_Kind         : constant Asis.Element_Kinds :=
+         Element_Kind : constant Asis.Element_Kinds :=
            Asis.Elements.Element_Kind (Element);
-         Element_Id           : Dot.ID_Type := To_Dot_ID_Type (Element);
-         New_Node             : Dot.Node_Stmt.Class; -- Initialized
-         Edge_Stmt            : Dot.Edges.Stmts.Class; -- Initialized
+         Element_Id   : Dot.ID_Type := To_Dot_ID_Type (Element);
+         New_Node     : Dot.Node_Stmt.Class; -- Initialized
+         Edge_Stmt    : Dot.Edges.Stmts.Class; -- Initialized
       begin
          Edge_Stmt.LHS.Node_Id.ID := Get_Enclosing_ID (Element);
          Edge_Stmt.RHS.Node_Id.ID := Element_Id;
@@ -575,7 +575,6 @@ package body Asis_Tool_2.Element is
          Control : in out Asis.Traverse_Control;
          State   : in out Class) is
       begin
-         -- TODO: Add edges?
          State.Text.Dedent;
       end Process_Element;
 

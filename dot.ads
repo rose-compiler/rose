@@ -309,6 +309,11 @@ package Dot is
       type Class is tagged private; -- Initialized
       type Access_Class is access Class;
 
+      function Create
+        (Is_Digraph : in Boolean;
+         Is_Strict  : in Boolean)
+        return Access_Class;
+
       procedure Set_Is_Digraph
         (This : access Class;
          To   : in     Boolean);
