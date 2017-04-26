@@ -317,7 +317,7 @@ public:
      *
      *  This method is called with a memory map that describes what has been mapped so far, a file header for the sections
      *  that are about to be mapped, and a list of sections about to be mapped. */
-    virtual rose_addr_t rebase(MemoryMap::Ptr&/*in,out*/, SgAsmGenericHeader *header, const SgAsmGenericSectionPtrList&) {
+    virtual rose_addr_t rebase(const MemoryMap::Ptr&/*in,out*/, SgAsmGenericHeader *header, const SgAsmGenericSectionPtrList&) {
         return header->get_base_va();
     }
 
