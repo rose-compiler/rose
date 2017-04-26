@@ -5,6 +5,7 @@
 
 using namespace rose;
 using namespace rose::Diagnostics;
+using namespace rose::BinaryAnalysis;
 
 /* The __attribute__ mechanism is only supported by GNU compilers */
 #ifndef __GNUC__
@@ -570,7 +571,7 @@ SgAsmPEFileHeader::create_table_sections()
          *        contiguous and we'll just ignore this for now.  In any case, as long as these sections only ever read their
          *        data via the same MemoryMap that we use here, everything should be fine. [RPM 2009-08-17] */
         rose_addr_t pair_va = get_base_va() + pair->get_e_rva();
-        MemoryMap *map = get_loader_map();
+        MemoryMap::Ptr map = get_loader_map();
         ROSE_ASSERT(map!=NULL);
         if (!map->baseSize(pair_va, pair->get_e_size()).exists(Sawyer::Container::MATCH_WHOLE)) {
             mlog[WARN] <<"SgAsmPEFileHeader::create_table_sections: pair-" <<i
@@ -939,7 +940,7 @@ SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
         hexdump(f, 0, std::string(p)+"data at ", p_data);
 
     /* Show the simulated loader memory map */
-    const MemoryMap *map = get_loader_map();
+    const MemoryMap::Ptr map = get_loader_map();
     if (map) {
         map->dump(f, (std::string(p)+"loader_map: ").c_str());
     } else {
