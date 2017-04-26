@@ -21,6 +21,7 @@
 #include <Wt/WText>
 
 using namespace rose;
+using namespace rose::BinaryAnalysis;
 
 namespace bROwSE {
 
@@ -127,7 +128,7 @@ WMemoryMap::allowDownloads(bool b) {
 }
 
 void
-WMemoryMap::memoryMap(const MemoryMap &map) {
+WMemoryMap::memoryMap(const MemoryMap::Ptr &map) {
     memoryMap_ = map;
     synchronize();
     mapChanged_.emit();
@@ -136,12 +137,13 @@ WMemoryMap::memoryMap(const MemoryMap &map) {
 // Synchronize the RowGroup list and the WTable rows with the MemoryMap
 void
 WMemoryMap::synchronize() {
-    memoryMap_.checkConsistency();
-    MemoryMap::NodeIterator mmNode = memoryMap_.nodes().begin();
+    ASSERT_not_null(memoryMap_);
+    memoryMap_->checkConsistency();
+    MemoryMap::NodeIterator mmNode = memoryMap_->nodes().begin();
     RowGroups::iterator rg = rowGroups_.begin();
     size_t rgIdx = 0;
 
-    for (/*void*/; mmNode != memoryMap_.nodes().end(); ++mmNode, ++rg, ++rgIdx) {
+    for (/*void*/; mmNode != memoryMap_->nodes().end(); ++mmNode, ++rg, ++rgIdx) {
         size_t tableIdx = rowGroupTableIndex(rgIdx);
         if (rg == rowGroups_.end()) {
             // Append a RowGroup and the corresponding table rows
@@ -170,10 +172,11 @@ WMemoryMap::synchronize() {
 // Synchronize edit rows of the table with the RowGroups
 void
 WMemoryMap::synchronizeEdits(RowGroup &rg, ColumnNumber toEdit) {
+    ASSERT_not_null(memoryMap_);
     rg.editingColumn = toEdit;
-    MemoryMap::NodeIterator mmNode = memoryMap_.nodes().begin();
+    MemoryMap::NodeIterator mmNode = memoryMap_->nodes().begin();
     RowGroups::iterator rgIter = rowGroups_.begin();
-    for (/*void*/; mmNode != memoryMap_.nodes().end(); ++mmNode, ++rgIter) {
+    for (/*void*/; mmNode != memoryMap_->nodes().end(); ++mmNode, ++rgIter) {
         ASSERT_require(rgIter != rowGroups_.end());
         ASSERT_require(mmNode->key().least() == rgIter->segmentVa);
         if (rgIter->wId != rg.wId || !isEditable_)
@@ -306,7 +309,8 @@ WMemoryMap::updateRowGroupWidgets(RowGroup &rg, MemoryMap::NodeIterator mmNode) 
 
 void
 WMemoryMap::updateRowGroupDataWidgets(RowGroup &rg, MemoryMap::NodeIterator mmNode) {
-    ASSERT_require(mmNode != memoryMap_.nodes().end());
+    ASSERT_not_null(memoryMap_);
+    ASSERT_require(mmNode != memoryMap_->nodes().end());
     const AddressInterval &interval = mmNode->key();
     ASSERT_forbid(interval.isEmpty());
     ASSERT_require(rg.segmentVa == interval.least());
@@ -381,21 +385,24 @@ WMemoryMap::updateRowGroupEditWidgets(RowGroup &rg, MemoryMap::NodeIterator mmNo
 
 bool
 WMemoryMap::canSplit(const RowGroup &rg, MemoryMap::NodeIterator mmNode) {
-    ASSERT_require(mmNode != memoryMap_.nodes().end());
+    ASSERT_not_null(memoryMap_);
+    ASSERT_require(mmNode != memoryMap_->nodes().end());
     return !mmNode->key().isEmpty() && mmNode->key().size() > 1;
 }
 
 bool
 WMemoryMap::canMerge(const RowGroup &rg, MemoryMap::NodeIterator mmNode) {
-    ASSERT_require(mmNode != memoryMap_.nodes().end());
+    ASSERT_not_null(memoryMap_);
+    ASSERT_require(mmNode != memoryMap_->nodes().end());
     MemoryMap::NodeIterator mmNext = mmNode; ++mmNext;
-    return mmNext!=memoryMap_.nodes().end() && mmNode->key().greatest()+1 == mmNext->key().least();
+    return mmNext!=memoryMap_->nodes().end() && mmNode->key().greatest()+1 == mmNext->key().least();
 }
 
 MemoryMap::NodeIterator
 WMemoryMap::findMapNode(const RowGroup &rg) {
-    MemoryMap::NodeIterator mmNode = memoryMap_.at(rg.segmentVa).findNode();
-    ASSERT_require(mmNode != memoryMap_.nodes().end());
+    ASSERT_not_null(memoryMap_);
+    MemoryMap::NodeIterator mmNode = memoryMap_->at(rg.segmentVa).findNode();
+    ASSERT_require(mmNode != memoryMap_->nodes().end());
     ASSERT_require(mmNode->key().least() == rg.segmentVa);
     return mmNode;
 }
@@ -428,10 +435,11 @@ WMemoryMap::startDeleteSegment(Wt::WText *wId) {
 
 void
 WMemoryMap::finishDeleteSegment(Wt::WText *wId) {
+    ASSERT_not_null(memoryMap_);
     ASSERT_require(isEditable_);
     RowGroup &rg = rowGroup(wId);
     ASSERT_require(rg.editingColumn == DeleteColumn);
-    memoryMap_.erase(findMapNode(rg)->key());
+    memoryMap_->erase(findMapNode(rg)->key());
     synchronize();
     mapChanged_.emit();
 }
@@ -456,7 +464,7 @@ WMemoryMap::checkMoveSegment(Wt::WText *wId, rose_addr_t destinationVa) {
     MemoryMap::NodeIterator mmNode = findMapNode(rg);
     if (destinationVa != mmNode->key().least()) {
         AddressInterval newInterval = AddressInterval::baseSize(destinationVa, mmNode->key().size());
-        AddressIntervalSet usedAddresses(memoryMap_);
+        AddressIntervalSet usedAddresses(*memoryMap_);
         usedAddresses.erase(mmNode->key());
         if (usedAddresses.isOverlapping(newInterval))
             rg.wMoveSegment->setError("Destination would collide with another segment.");
@@ -471,7 +479,7 @@ WMemoryMap::finishMoveSegment(Wt::WText *wId) {
     MemoryMap::NodeIterator mmNode = findMapNode(rg);
     AddressInterval newInterval = AddressInterval::baseSize(rg.wMoveSegment->value(), mmNode->key().size());
     if (newInterval != mmNode->key()) {
-        AddressIntervalSet usedAddresses(memoryMap_);
+        AddressIntervalSet usedAddresses(*memoryMap_);
         usedAddresses.erase(mmNode->key());
         if (usedAddresses.isOverlapping(newInterval)) {
             // Just comment this check out if you want to allow this.  You'll also probably need to comment out the same check
@@ -479,8 +487,8 @@ WMemoryMap::finishMoveSegment(Wt::WText *wId) {
             std::cerr <<"  Move fails because it overlaps with something else.\n";
         } else {
             MemoryMap::Segment newSegment = mmNode->value();
-            memoryMap_.erase(mmNode->key());
-            memoryMap_.insert(newInterval, newSegment);
+            memoryMap_->erase(mmNode->key());
+            memoryMap_->insert(newInterval, newSegment);
             mapChanged_.emit();
         }
     }
@@ -538,7 +546,7 @@ WMemoryMap::finishMergeSegments(Wt::WText *wId) {
     }
 
     // Insert the new segment over the top of the two we're replacing
-    memoryMap_.insert(newInterval, newSegment);
+    memoryMap_->insert(newInterval, newSegment);
     mapChanged_.emit();
     synchronize();
 }
@@ -555,13 +563,13 @@ WMemoryMap::startHexValueEdit(Wt::WText *wId, ColumnNumber column) {
     // Find memory map node, prior node and next node if possible, or end nodes.
     MemoryMap::NodeIterator mmNode = findMapNode(rg);
     MemoryMap::NodeIterator mmPrior = mmNode;
-    if (mmPrior != memoryMap_.nodes().begin()) {
+    if (mmPrior != memoryMap_->nodes().begin()) {
         --mmPrior;
     } else {
-        mmPrior = memoryMap_.nodes().end();
+        mmPrior = memoryMap_->nodes().end();
     }
     MemoryMap::NodeIterator mmNext = mmNode;
-    if (mmNext != memoryMap_.nodes().end())
+    if (mmNext != memoryMap_->nodes().end())
         ++mmNext;
 
     // Get the initial value and limits for the edit.
@@ -571,7 +579,7 @@ WMemoryMap::startHexValueEdit(Wt::WText *wId, ColumnNumber column) {
         case LeastVaColumn: {
             label = "Low address: ";
             value = mmNode->key().least();
-            rose_addr_t lo1 = mmPrior==memoryMap_.nodes().end() ? 0 : mmPrior->key().greatest()+1;
+            rose_addr_t lo1 = mmPrior==memoryMap_->nodes().end() ? 0 : mmPrior->key().greatest()+1;
             rose_addr_t lo2 = rg.segmentVa - std::min(rg.segmentVa, mmNode->value().offset());
             lo = std::max(lo1, lo2);
             hi = mmNode->key().greatest();
@@ -582,7 +590,7 @@ WMemoryMap::startHexValueEdit(Wt::WText *wId, ColumnNumber column) {
             value = mmNode->key().greatest();
             lo = mmNode->key().least();
             rose_addr_t avail = mmNode->value().buffer()->available(mmNode->value().offset());
-            if (mmNext != memoryMap_.nodes().end())
+            if (mmNext != memoryMap_->nodes().end())
                 avail = std::min(avail, mmNext->key().least() - mmNode->key().least());
             ASSERT_require(avail > 0);
             hi = lo + avail - 1;
@@ -593,7 +601,7 @@ WMemoryMap::startHexValueEdit(Wt::WText *wId, ColumnNumber column) {
             value = mmNode->key().size();
             lo = 1;
             hi = mmNode->value().buffer()->available(mmNode->value().offset());
-            if (mmNext != memoryMap_.nodes().end())
+            if (mmNext != memoryMap_->nodes().end())
                 hi = std::min(hi, mmNext->key().least() - mmNode->key().least());
             ASSERT_require(hi > 0);
             break;
@@ -620,7 +628,7 @@ WMemoryMap::finishHexValueEdit(Wt::WText *wId) {
         case LeastVaColumn:
             if (value > rg.segmentVa) {
                 AddressInterval toErase = AddressInterval::hull(rg.segmentVa, value-1);
-                memoryMap_.erase(toErase);
+                memoryMap_->erase(toErase);
                 mapChanged_.emit();
             } else if (value < rg.segmentVa) {
                 MemoryMap::Segment newSegment = mmNode->value();
@@ -628,7 +636,7 @@ WMemoryMap::finishHexValueEdit(Wt::WText *wId) {
                 ASSERT_require(mmNode->value().offset() >= negDelta);
                 newSegment.offset(mmNode->value().offset() - negDelta);
                 AddressInterval newInterval = AddressInterval::hull(value, mmNode->key().greatest());
-                memoryMap_.insert(newInterval, newSegment);
+                memoryMap_->insert(newInterval, newSegment);
                 mapChanged_.emit();
             }
             break;
@@ -638,11 +646,11 @@ WMemoryMap::finishHexValueEdit(Wt::WText *wId) {
                 rose_addr_t newSize = value - rg.segmentVa + 1;
                 ASSERT_require(newSegment.buffer()->available(newSegment.offset()) >= newSize);
                 AddressInterval newInterval = AddressInterval::baseSize(rg.segmentVa, newSize);
-                memoryMap_.insert(newInterval, newSegment);
+                memoryMap_->insert(newInterval, newSegment);
                 mapChanged_.emit();
             } else if (value < mmNode->key().greatest()) {
                 AddressInterval toErase = AddressInterval::hull(value+1, mmNode->key().greatest());
-                memoryMap_.erase(toErase);
+                memoryMap_->erase(toErase);
                 mapChanged_.emit();
             }
             break;
@@ -652,11 +660,11 @@ WMemoryMap::finishHexValueEdit(Wt::WText *wId) {
                 rose_addr_t newSize = value;
                 ASSERT_require(newSegment.buffer()->available(newSegment.offset()) >= newSize);
                 AddressInterval newInterval = AddressInterval::baseSize(rg.segmentVa, newSize);
-                memoryMap_.insert(newInterval, newSegment);
+                memoryMap_->insert(newInterval, newSegment);
                 mapChanged_.emit();
             } else if (value < mmNode->key().size()) {
                 AddressInterval toErase = AddressInterval::baseSize(rg.segmentVa, value);
-                memoryMap_.erase(toErase);
+                memoryMap_->erase(toErase);
                 mapChanged_.emit();
             }
             break;
@@ -670,7 +678,7 @@ WMemoryMap::finishHexValueEdit(Wt::WText *wId) {
             newSegment.buffer(newBuffer);
             newSegment.offset(newSegment.offset() + delta);
             AddressInterval newInterval = AddressInterval::hull(value, mmNode->key().greatest());
-            memoryMap_.insert(newInterval, newSegment);
+            memoryMap_->insert(newInterval, newSegment);
             mapChanged_.emit();
             break;
         }
@@ -747,7 +755,7 @@ WMemoryMap::prepareDownload() {
         return;
     }
     AddressInterval addresses = AddressInterval::hull(leastVa, greatestVa);
-    if (BinaryFormat==fmt && memoryMap_.at(leastVa).limit(addresses.size()).available().size()<addresses.size()) {
+    if (BinaryFormat==fmt && memoryMap_->at(leastVa).limit(addresses.size()).available().size()<addresses.size()) {
         wDownloadMessage_->setText("Some addresses the the range are not mapped.");
         wDownloadMessage_->setStyleClass("text-error");
         return;
@@ -761,7 +769,7 @@ WMemoryMap::prepareDownload() {
         static uint8_t buf[8192];
         rose_addr_t nRemaining = addresses.size();
         rose_addr_t va = leastVa;
-        while (size_t nRead = memoryMap_.at(va).limit(std::min((rose_addr_t)(sizeof buf), nRemaining)).read(buf).size()) {
+        while (size_t nRead = memoryMap_->at(va).limit(std::min((rose_addr_t)(sizeof buf), nRemaining)).read(buf).size()) {
             output.write((const char*)buf, nRead);
             va += nRead;
             nRemaining -= nRead;
@@ -770,11 +778,11 @@ WMemoryMap::prepareDownload() {
         ASSERT_require(SRecordFormat == fmt);
         fileName = uniquePath(".srec");
         std::ofstream output(fileName.c_str());
-        MemoryMap tmp = memoryMap_;
+        MemoryMap::Ptr tmp = memoryMap_->shallowCopy();
         if (leastVa>0)
-            tmp.erase(AddressInterval::hull(0, leastVa-1));
-        if (greatestVa < tmp.hull().greatest())
-            tmp.erase(AddressInterval::hull(greatestVa+1, tmp.hull().greatest()));
+            tmp->erase(AddressInterval::hull(0, leastVa-1));
+        if (greatestVa < tmp->hull().greatest())
+            tmp->erase(AddressInterval::hull(greatestVa+1, tmp->hull().greatest()));
         rose::BinaryAnalysis::SRecord::dump(tmp, output);
     }
 

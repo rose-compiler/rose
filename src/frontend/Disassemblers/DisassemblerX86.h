@@ -113,7 +113,7 @@ public:
     virtual Unparser::BasePtr unparser() const ROSE_OVERRIDE;
 
     /** See Disassembler::disassembleOne */
-    virtual SgAsmInstruction *disassembleOne(const MemoryMap *map, rose_addr_t start_va,
+    virtual SgAsmInstruction *disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
                                              AddressSet *successors=NULL) ROSE_OVERRIDE;
 
     /** Make an unknown instruction from an exception. */

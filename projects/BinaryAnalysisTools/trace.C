@@ -108,7 +108,7 @@ main(int argc, char *argv[]) {
     BinaryAnalysis::BinaryDebugger debugger(command);
     std::string specimenResourceName = "proc:noattach:" + StringUtility::numberToString(debugger.isAttached());
     P2::Partitioner partitioner = engine.partition(specimenResourceName);
-    partitioner.memoryMap().dump(std::cerr);            // show the memory map as a debugging aid
+    partitioner.memoryMap()->dump(std::cerr);           // show the memory map as a debugging aid
 
     // Create a global control flow graph whose vertices are instructions from a global CFG whose verts are mostly basic
     // blocks.

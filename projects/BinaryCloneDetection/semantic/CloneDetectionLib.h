@@ -22,6 +22,7 @@ namespace CloneDetection {
 
 extern const char *schema; /**< Contents of Schema.sql file, initialized in CloneDetectionSchema.C */
 
+using namespace rose::BinaryAnalysis;
 using namespace rose::BinaryAnalysis::InstructionSemantics;
 
 typedef std::set<SgAsmFunction*> Functions;
@@ -1267,7 +1268,7 @@ public:
 
     // If the specified address looks like it points to a string in the memory map then return a hash of that string, otherwise
     // return the address.
-    rose_addr_t hash_if_string(rose_addr_t va, const MemoryMap *map) {
+    rose_addr_t hash_if_string(rose_addr_t va, const MemoryMap::Ptr &map) {
         rose_addr_t retval = va;
         static const size_t limit = 4096; // arbitrary
         std::string str = map->readString(va, limit, isascii);
@@ -1281,7 +1282,7 @@ public:
 
     // Return output values.  These are the interesting general-purpose registers to which a value has been written, and the
     // memory locations to which a value has been written.  The returned object can be deleted when no longer needed.
-    OutputGroup get_outputs(Verbosity verbosity, const MemoryMap *map) {
+    OutputGroup get_outputs(Verbosity verbosity, const MemoryMap::Ptr &map) {
         OutputGroup outputs = this->output_group;
 
         // Function return value is EAX, but only if it has been written to
@@ -1988,7 +1989,7 @@ public:
         if (uninitialized_read) {
             // At least one of the bytes read did not previously exist, so consume an input value
             ValueType<nBits> ivalue;
-            MemoryMap *map = this->interp ? this->interp->get_map() : NULL;
+            MemoryMap::Ptr map = this->interp ? this->interp->get_map() : MemoryMap::Ptr();
             rose_addr_t addr = a0.known_value();
             rose_addr_t ebp = state.registers.gpr[x86_gpr_bp].known_value();
             bool ebp_is_stack_frame = ebp>=params.initial_stack-16*4096 && ebp<params.initial_stack;
@@ -2532,7 +2533,7 @@ SgProject *open_specimen(const SqlDatabase::TransactionPtr&, FilesTable&, int sp
 
 /** Links exports with imports. The exports provided by @p exports_header are linked into the dynamic linking slots in the @p
  *  imports_header by modifying memory pointed to by the @p map. */
-void link_builtins(SgAsmGenericHeader *imports_header, SgAsmGenericHeader *exports_header, MemoryMap *map);
+void link_builtins(SgAsmGenericHeader *imports_header, SgAsmGenericHeader *exports_header, const MemoryMap::Ptr &map);
 
 /** Start the command by adding a new entry to the semantic_history table. Returns the hashkey ID for this command. */
 int64_t start_command(const SqlDatabase::TransactionPtr&, int argc, char *argv[], const std::string &desc, time_t begin=0);

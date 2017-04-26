@@ -35,14 +35,14 @@ MatchLink::match(const Partitioner &partitioner, rose_addr_t anchor) {
 // 51 fc, 00 00, 51 fc 51 fc, but we'll allow any combination.
 rose_addr_t
 MatchFunctionPadding::match(const Partitioner &partitioner, rose_addr_t anchor) {
-    const MemoryMap &m = partitioner.memoryMap();
+    MemoryMap::Ptr m = partitioner.memoryMap();
     if (0==anchor)
         return anchor;
 
     // Read backward from the anchor, skipping over padding as we go
     rose_addr_t padMin = anchor;
     uint8_t buf[2];                                     // reading two bytes at a time
-    while (AddressInterval accessed = m.at(padMin-1).limit(2).require(MemoryMap::EXECUTABLE)
+    while (AddressInterval accessed = m->at(padMin-1).limit(2).require(MemoryMap::EXECUTABLE)
            .read(buf, Sawyer::Container::MATCH_BACKWARD)) {
 
         // Match zero byte or (0x51 0xfc) pair
@@ -142,7 +142,7 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
     size_t tableIdx = 0;
     rose_addr_t leastCodeVa = (rose_addr_t)(-1);
     std::set<rose_addr_t> codeVas;
-    const MemoryMap &map = args.partitioner.memoryMap();
+    MemoryMap::Ptr map = args.partitioner.memoryMap();
     while (1) {
         // Where is the offset in memory?  It must be between the end of the JMP instruction (watch out for overflow) and the
         // lowest address for a switch case.
@@ -162,7 +162,7 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
         // Read the offset from the offset table.  Something went wrong if we can't read it because we know that the code for
         // the switch cases follows the table.
         uint16_t offsetBE;
-        if (2!=map.at(offsetVa).limit(2).require(MemoryMap::EXECUTABLE).read((uint8_t*)&offsetBE).size()) {
+        if (2!=map->at(offsetVa).limit(2).require(MemoryMap::EXECUTABLE).read((uint8_t*)&offsetBE).size()) {
             mlog[WARN] <<"short read entry[" <<tableIdx <<"] " <<StringUtility::addrToString(offsetVa)
                        <<" in offset table " <<StringUtility::addrToString(startOfOffsetTable) <<"\n";
             break;
@@ -205,7 +205,7 @@ findInterruptFunctions(const Partitioner &partitioner, rose_addr_t vectorVa) {
     for (size_t i=0; i<256; ++i) {
         rose_addr_t elmtVa = vectorVa + 4*i;
         uint32_t functionVa;
-        if (4 == partitioner.memoryMap().at(elmtVa).limit(4).read((uint8_t*)&functionVa).size()) {
+        if (4 == partitioner.memoryMap()->at(elmtVa).limit(4).read((uint8_t*)&functionVa).size()) {
             functionVa = ByteOrder::be_to_host(functionVa);
             std::string name;
             unsigned reasons = SgAsmFunction::FUNC_EXCEPTION_HANDLER;

@@ -1,7 +1,10 @@
-#ifndef ROSE_BINARYLOADER_H
-#define ROSE_BINARYLOADER_H
+#ifndef ROSE_BinaryAnalysis_BinaryLoader_H
+#define ROSE_BinaryAnalysis_BinaryLoader_H
 
 #include "Sawyer/Message.h"
+
+namespace rose {
+namespace BinaryAnalysis {
 
 /** Base class for loading a static or dynamic object.
  *
@@ -300,7 +303,7 @@ public:
 
     /** Remaps the sections for a particular header.  This method is often replaced by subclasses since this is where
      *  decisions are made about alignment.  Different operating systems and their loaders have different alignment policies. */
-    virtual void remap(MemoryMap*, SgAsmGenericHeader*);
+    virtual void remap(rose::BinaryAnalysis::MemoryMap::Ptr&/*in,out*/, SgAsmGenericHeader*);
 
     /** Selects those sections of a header that should be mapped. Returns the sections in the order they should be mapped. */
     virtual SgAsmGenericSectionPtrList get_remap_sections(SgAsmGenericHeader *header) {
@@ -314,7 +317,7 @@ public:
      *
      *  This method is called with a memory map that describes what has been mapped so far, a file header for the sections
      *  that are about to be mapped, and a list of sections about to be mapped. */
-    virtual rose_addr_t rebase(MemoryMap*, SgAsmGenericHeader *header, const SgAsmGenericSectionPtrList&) {
+    virtual rose_addr_t rebase(MemoryMap::Ptr&/*in,out*/, SgAsmGenericHeader *header, const SgAsmGenericSectionPtrList&) {
         return header->get_base_va();
     }
 
@@ -376,7 +379,7 @@ public:
      *  Likewise, this method is allowed to perform the mapping itself if the algorithm in the caller, remap(), cannot
      *  be sufficiently influenced by the values that are returned.  In this case, this method should perform the mapping
      *  and return CONTRIB_NONE to prevent the caller from doing any further mapping. */
-    virtual MappingContribution align_values(SgAsmGenericSection*, MemoryMap*,
+    virtual MappingContribution align_values(SgAsmGenericSection*, const MemoryMap::Ptr&,
                                              rose_addr_t *malign_lo, rose_addr_t *malign_hi,
                                              rose_addr_t *va, rose_addr_t *mem_size,
                                              rose_addr_t *offset, rose_addr_t *file_size, bool *map_private,
@@ -419,5 +422,8 @@ private:
     bool p_perform_remap;
     bool p_perform_relocations;
 };
+
+} // namespace
+} // namespace
 
 #endif /* ROSE_BINARYLOADER_H */

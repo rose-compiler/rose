@@ -166,7 +166,7 @@ isJmpImmThunk(const Partitioner &partitioner, const std::vector<SgAsmInstruction
     if (!jmpArg0)
         return 0;
     rose_addr_t targetVa = jmpArg0->get_absoluteValue();
-    if (!partitioner.memoryMap().require(MemoryMap::EXECUTABLE).at(targetVa).exists())
+    if (!partitioner.memoryMap()->require(MemoryMap::EXECUTABLE).at(targetVa).exists())
         return 0;                                       // target must be an executable address
     if (!partitioner.instructionExists(targetVa) && !partitioner.instructionsOverlapping(targetVa).empty())
         return 0;                                       // points to middle of some instruction
@@ -616,14 +616,14 @@ scanCodeAddressTable(const Partitioner &partitioner, AddressInterval &tableLimit
     if (tableLimits.isEmpty() || targetLimits.isEmpty())
         return successors;
 
-    const MemoryMap &map = partitioner.memoryMap();
+    MemoryMap::Ptr map = partitioner.memoryMap();
     while (1) {
         // Read table entry to get target address
         uint8_t bytes[sizeof(rose_addr_t)];
         rose_addr_t tableEntryVa = tableLimits.least() + successors.size() * tableEntrySize;
         if (!tableLimits.isContaining(AddressInterval::baseSize(tableEntryVa, tableEntrySize)))
             break;                                      // table entry is outside of table boundary
-        if (tableEntrySize != (map.at(tableEntryVa).limit(tableEntrySize)
+        if (tableEntrySize != (map->at(tableEntryVa).limit(tableEntrySize)
                                .require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE).read(bytes).size()))
             break;                                      // table entry must be readable but not writable
         rose_addr_t target = 0;
@@ -633,7 +633,7 @@ scanCodeAddressTable(const Partitioner &partitioner, AddressInterval &tableLimit
         // Check target validity
         if (!targetLimits.isContaining(target))
             break;                                      // target is outside allowed interval
-        if (!map.at(target).require(MemoryMap::EXECUTABLE).exists())
+        if (!map->at(target).require(MemoryMap::EXECUTABLE).exists())
             break;                                      // target address is not executable
 
         successors.push_back(target);
@@ -661,7 +661,7 @@ scanCodeAddressTable(const Partitioner &partitioner, AddressInterval &tableLimit
     if (successors.size() <= 16 /*arbitrarily small tables*/) {
         while (indexArrayCurrentVa <= tableLimits.greatest()) {
             uint8_t byte;
-            if (!map.at(indexArrayCurrentVa).limit(1).require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE).read(&byte))
+            if (!map->at(indexArrayCurrentVa).limit(1).require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE).read(&byte))
                 break;
             if (byte >= successors.size())
                 break;
