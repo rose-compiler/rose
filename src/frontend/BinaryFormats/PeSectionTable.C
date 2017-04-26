@@ -6,6 +6,7 @@
 
 using namespace rose;
 using namespace rose::Diagnostics;
+using namespace rose::BinaryAnalysis;
 
 SgAsmPESectionTableEntry::SgAsmPESectionTableEntry(const SgAsmPESectionTableEntry::PESectionTableEntry_disk *disk) {
     ctor(disk);
@@ -242,7 +243,7 @@ SgAsmPESectionTable::parse()
     ROSE_ASSERT(NULL==fhdr->get_loader_map());
     BinaryLoader *loader = BinaryLoader::lookup(fhdr); /*no need to clone; we're not changing any settings*/
     ROSE_ASSERT(loader!=NULL);
-    MemoryMap *loader_map = new MemoryMap;
+    MemoryMap::Ptr loader_map = MemoryMap::instance();
     loader->remap(loader_map, fhdr);
     fhdr->set_loader_map(loader_map);
 
