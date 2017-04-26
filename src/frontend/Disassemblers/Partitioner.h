@@ -430,7 +430,7 @@ public:
 public:
 
     Partitioner()
-        : aggregate_mean(NULL), aggregate_variance(NULL), code_criteria(NULL), disassembler(NULL), map(NULL),
+        : aggregate_mean(NULL), aggregate_variance(NULL), code_criteria(NULL), disassembler(NULL),
           func_heuristics(SgAsmFunction::FUNC_DEFAULT), allow_discont_blocks(true)
         {}
     virtual ~Partitioner() { clear(); }
@@ -508,8 +508,8 @@ public:
      *  The first map will be stored by the partitioner as a pointer; the other supplied maps are copied.
      *
      *  @{ */
-    void set_map(MemoryMap *mmap, MemoryMap *ro_mmap=NULL);
-    MemoryMap *get_map() const {
+    void set_map(const MemoryMap::Ptr &mmap, const MemoryMap::Ptr &ro_mmap = MemoryMap::Ptr());
+    MemoryMap::Ptr get_map() const {
         return map;
     }
     /** @} */
@@ -551,10 +551,11 @@ public:
      *  If it is null then those function seeding operations that depend on having file headers are not run.  The memory map
      *  argument is optional only if a memory map has already been attached to this partitioner object with the set_map()
      *  method. */
-    virtual SgAsmBlock* partition(SgAsmInterpretation*, const Disassembler::InstructionMap&, MemoryMap *mmap=NULL);
+    virtual SgAsmBlock* partition(SgAsmInterpretation*, const Disassembler::InstructionMap&,
+                                  const MemoryMap::Ptr &mmap = MemoryMap::Ptr());
 
     /** Top-level function to run the partitioner, calling the specified disassembler as necessary to generate instructions. */
-    virtual SgAsmBlock* partition(SgAsmInterpretation*, Disassembler*, MemoryMap*);
+    virtual SgAsmBlock* partition(SgAsmInterpretation*, Disassembler*, const MemoryMap::Ptr&);
 
     /** Reset partitioner to initial conditions by discarding all instructions, basic blocks, functions, and configuration
      *  file settings and definitions. */
@@ -1078,10 +1079,11 @@ public:
     public:
         /** Arguments for the callback. */
         struct Args {
-            Args(Partitioner *partitioner, MemoryMap *restrict_map, const FunctionRangeMap &ranges, const Extent &range)
+            Args(Partitioner *partitioner, const MemoryMap::Ptr &restrict_map, const FunctionRangeMap &ranges,
+                 const Extent &range)
                 : partitioner(partitioner), restrict_map(restrict_map), ranges(ranges), range(range) {}
             Partitioner *partitioner;
-            MemoryMap *restrict_map;                    /**< Optional memory map supplied to scan_*_bytes() method. */
+            MemoryMap::Ptr restrict_map;                /**< Optional memory map supplied to scan_*_bytes() method. */
             const FunctionRangeMap &ranges;             /**< The range map over which we are iterating. */
             Extent range;                               /**< Range of address space being processed by the callback. */
         };
@@ -1181,8 +1183,8 @@ public:
      *  If a @p restrict_map MemoryMap is specified then only addresses that are also defined in the map are considered.
      *
      *  @{ */
-    virtual void scan_unassigned_bytes(ByteRangeCallbacks &callbacks, MemoryMap *restrict_map=NULL);
-    void scan_unassigned_bytes(ByteRangeCallback *callback, MemoryMap *restrict_map=NULL) {
+    virtual void scan_unassigned_bytes(ByteRangeCallbacks &callbacks, const MemoryMap::Ptr &restrict_map = MemoryMap::Ptr());
+    void scan_unassigned_bytes(ByteRangeCallback *callback, const MemoryMap::Ptr &restrict_map = MemoryMap::Ptr()) {
         ByteRangeCallbacks cblist(callback);
         scan_unassigned_bytes(cblist, restrict_map);
     }
@@ -1196,8 +1198,8 @@ public:
      *  If a @p restrict_map MemoryMap is specified then only addresses that are also defined in the map are considered.
      *
      *  @{ */
-    virtual void scan_intrafunc_bytes(ByteRangeCallbacks &callbacks, MemoryMap *restrict_map=NULL);
-    void scan_intrafunc_bytes(ByteRangeCallback *callback, MemoryMap *restrict_map=NULL) {
+    virtual void scan_intrafunc_bytes(ByteRangeCallbacks &callbacks, const MemoryMap::Ptr &restrict_map = MemoryMap::Ptr());
+    void scan_intrafunc_bytes(ByteRangeCallback *callback, const MemoryMap::Ptr &restrict_map = MemoryMap::Ptr()) {
         ByteRangeCallbacks cblist(callback);
         scan_intrafunc_bytes(cblist, restrict_map);
     }
@@ -1211,8 +1213,8 @@ public:
      *  If a @p restrict_map MemoryMap is specified then only addresses that are also defined in the map are considered.
      *
      *  @{ */
-    virtual void scan_interfunc_bytes(ByteRangeCallbacks &callbacks, MemoryMap *restrict_map=NULL);
-    void scan_interfunc_bytes(ByteRangeCallback *callback, MemoryMap *restrict_map=NULL) {
+    virtual void scan_interfunc_bytes(ByteRangeCallbacks &callbacks, const MemoryMap::Ptr &restrict_map = MemoryMap::Ptr());
+    void scan_interfunc_bytes(ByteRangeCallback *callback, const MemoryMap::Ptr &restrict_map = MemoryMap::Ptr()) {
         ByteRangeCallbacks cblist(callback);
         scan_interfunc_bytes(cblist, restrict_map);
     }
@@ -1622,11 +1624,11 @@ public:
      *  function immediately after those bytes by recursively disassembling and following the control flow graph.  Searching for
      *  the padding and function discovery are interleaved: look for padding, discover function, repeat.  The supplied map is
      *  used for searching, but the usual map is used for discovery. */
-    virtual void discover_post_padding_functions(const MemoryMap &map);
+    virtual void discover_post_padding_functions(const MemoryMap::Ptr &map);
 
     /** Return the next unused address.  Scans through the memory map starting at the specified address and returns the first
      *  address found to be mapped but not belonging to any basic block or data block. Returns none on failure. */
-    virtual Sawyer::Optional<rose_addr_t> next_unused_address(const MemoryMap &map, rose_addr_t start_va);
+    virtual Sawyer::Optional<rose_addr_t> next_unused_address(const MemoryMap::Ptr &map, rose_addr_t start_va);
 
     /*************************************************************************************************************************
      *                                   IPD Parser for initializing the Partitioner
@@ -1882,8 +1884,8 @@ public:
 public:
     Disassembler *disassembler;                         /**< Optional disassembler to call when an instruction is needed. */
     InstructionMap insns;                               /**< Instruction cache, filled in by user or populated by disassembler. */
-    MemoryMap *map;                                     /**< Memory map used for disassembly if disassembler is present. */
-    MemoryMap ro_map;                                   /**< The read-only parts of 'map', used for insn semantics mem reads. */
+    MemoryMap::Ptr map;                                 /**< Memory map used for disassembly if disassembler is present. */
+    MemoryMap::Ptr ro_map;                             /**< The read-only parts of 'map', used for insn semantics mem reads. */
     ExtentMap pe_iat_extents;                           /**< Virtual addresses for all PE Import Address Tables. */
     Disassembler::BadMap bad_insns;                     /**< Captured disassembler exceptions. */
 

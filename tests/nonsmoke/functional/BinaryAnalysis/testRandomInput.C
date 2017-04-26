@@ -57,7 +57,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
     }
 }
 
-MemoryMap
+MemoryMap::Ptr
 createInput(const Settings &settings) {
     // Generate input data
     uint8_t *tmp = new uint8_t[settings.nBytes];
@@ -66,10 +66,10 @@ createInput(const Settings &settings) {
         tmp[i] = lcg();
 
     // Create the memory map by writing the input data into it
-    MemoryMap map;
+    MemoryMap::Ptr map = MemoryMap::instance();
     MemoryMap::Segment segment(MemoryMap::AllocatingBuffer::instance(settings.nBytes), 0, MemoryMap::READ_EXECUTE, "random data");
-    map.insert(AddressInterval::baseSize(0, settings.nBytes), segment);
-    map.at(0).limit(settings.nBytes).write(tmp);
+    map->insert(AddressInterval::baseSize(0, settings.nBytes), segment);
+    map->at(0).limit(settings.nBytes).write(tmp);
 
     delete[] tmp;
     return map;
@@ -81,7 +81,7 @@ main(int argc, char *argv[]) {
     Diagnostics::initAndRegister(&mlog, "tool");
     Settings settings;
     parseCommandLine(argc, argv, settings);
-    MemoryMap map = createInput(settings);
+    MemoryMap::Ptr map = createInput(settings);
 
     // Obtain a disassembler
     Disassembler *disassembler = Disassembler::lookup(settings.isa);
@@ -112,12 +112,12 @@ main(int argc, char *argv[]) {
                <<" using the " <<disassembler->name() <<" disassembler\n";
     size_t nNulls=0, nUnknown=0, nGood=0, nDisExceptions=0, nSemExceptions=0;
     rose_addr_t va = 0;
-    while (map.atOrAfter(va).next().assignTo(va)) {
+    while (map->atOrAfter(va).next().assignTo(va)) {
         // Disassemble at current address
         SAWYER_MESG(mlog[DEBUG]) <<"disassembling at " <<StringUtility::addrToString(va) <<"\n";
         SgAsmInstruction *insn = NULL;
         try {
-            insn = disassembler->disassembleOne(&map, va);
+            insn = disassembler->disassembleOne(map, va);
             if (NULL == insn) {
                 ++nNulls;
             } else if (insn->isUnknown()) {
@@ -140,7 +140,7 @@ main(int argc, char *argv[]) {
         }
 
         // Increment to next address
-        if (va == map.greatest())
+        if (va == map->greatest())
             break;                                      // avoid possible overflow
         if (insn) {
             va += insn->get_size();

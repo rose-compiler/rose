@@ -5291,7 +5291,7 @@ SgBinaryComposite::buildAST(vector<string> /*argv*/, vector<string> /*inputComma
         }
     } else {
         ROSE_ASSERT(get_libraryArchiveObjectFileNameList().empty());
-        BinaryLoader::load(this, get_read_executable_file_format_only());
+        BinaryAnalysis::BinaryLoader::load(this, get_read_executable_file_format_only());
     }
 
     /* Disassemble each interpretation */

@@ -188,7 +188,7 @@ private:
     SgAsmInterpretation *interp_;                       // interpretation set by loadSpecimen
     BinaryLoader *binaryLoader_;                        // how to remap, link, and fixup
     Disassembler *disassembler_;                        // not ref-counted yet, but don't destroy it since user owns it
-    MemoryMap map_;                                     // memory map initialized by load()
+    MemoryMap::Ptr map_;                                // memory map initialized by load()
     BasicBlockWorkList::Ptr basicBlockWorkList_;        // what blocks to work on next
     CodeConstants::Ptr codeFunctionPointers_;           // generates constants that are found in instruction ASTs
 
@@ -331,8 +331,8 @@ public:
      *  its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
      *
      * @{ */
-    virtual MemoryMap& loadSpecimens(const std::vector<std::string> &fileNames = std::vector<std::string>());
-    MemoryMap& loadSpecimens(const std::string &fileName) /*final*/;
+    virtual MemoryMap::Ptr loadSpecimens(const std::vector<std::string> &fileNames = std::vector<std::string>());
+    MemoryMap::Ptr loadSpecimens(const std::string &fileName) /*final*/;
     /** @} */
 
     /** Partition instructions into basic blocks and functions.
@@ -493,12 +493,9 @@ public:
      *  resources (via @ref loadNonContainers). During partitioning operations the memory map comes from the partitioner
      *  itself.  See @ref loadSpecimens.
      *
-     *  The return value is a non-const reference so that the map can be manipulated directly if desired.
-     *
      * @{ */
-    MemoryMap& memoryMap() /*final*/ { return map_; }
-    const MemoryMap& memoryMap() const /*final*/ { return map_; }
-    virtual void memoryMap(const MemoryMap &m) { map_ = m; }
+    MemoryMap::Ptr memoryMap() const /*final*/ { return map_; }
+    virtual void memoryMap(const MemoryMap::Ptr &m) { map_ = m; }
     /** @} */
 
 

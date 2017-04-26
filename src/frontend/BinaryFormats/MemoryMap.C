@@ -19,14 +19,16 @@
 
 // This is the other half of the BOOST_CLASS_EXPORT_KEY from the header file.
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-BOOST_CLASS_EXPORT_IMPLEMENT(MemoryMap::AllocatingBuffer);
-BOOST_CLASS_EXPORT_IMPLEMENT(MemoryMap::MappedBuffer);
-BOOST_CLASS_EXPORT_IMPLEMENT(MemoryMap::NullBuffer);
-BOOST_CLASS_EXPORT_IMPLEMENT(MemoryMap::StaticBuffer);
+BOOST_CLASS_EXPORT_IMPLEMENT(rose::BinaryAnalysis::MemoryMap::AllocatingBuffer);
+BOOST_CLASS_EXPORT_IMPLEMENT(rose::BinaryAnalysis::MemoryMap::MappedBuffer);
+BOOST_CLASS_EXPORT_IMPLEMENT(rose::BinaryAnalysis::MemoryMap::NullBuffer);
+BOOST_CLASS_EXPORT_IMPLEMENT(rose::BinaryAnalysis::MemoryMap::StaticBuffer);
 #endif
 
-using namespace rose;
 using namespace rose::Diagnostics;
+
+namespace rose {
+namespace BinaryAnalysis {
 
 
 std::ostream& operator<<(std::ostream &o, const MemoryMap &x) { x.print(o); return o; }
@@ -738,3 +740,6 @@ MemoryMap::dump(std::ostream &out, std::string prefix) const
             <<"\n";
     }
 }
+
+} // namespace
+} // namespace

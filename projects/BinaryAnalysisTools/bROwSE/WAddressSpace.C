@@ -6,6 +6,7 @@
 #include <Wt/WPainter>
 
 using namespace rose;
+using namespace rose::BinaryAnalysis;
 
 namespace bROwSE {
 
@@ -138,7 +139,7 @@ WAddressSpace::insertSegmentsAndFunctions(const P2::Partitioner &partitioner) {
 }
 
 size_t
-WAddressSpace::insert(const MemoryMap &mm, size_t idx, bool showStarts) {
+WAddressSpace::insert(const MemoryMap::Ptr &mm, size_t idx, bool showStarts) {
     if ((size_t)-1 == idx)
         idx = maps_.size();
 
@@ -158,7 +159,7 @@ WAddressSpace::insert(const MemoryMap &mm, size_t idx, bool showStarts) {
         gutterGradient = gradient(idx);
     }
     
-    BOOST_FOREACH (const MemoryMap::Node &node, mm.nodes()) {
+    BOOST_FOREACH (const MemoryMap::Node &node, mm->nodes()) {
         const AddressInterval &interval = node.key();
         const MemoryMap::Segment &segment = node.value();
         double g = 0;                                   // gradient position

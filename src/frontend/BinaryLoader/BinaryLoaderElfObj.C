@@ -2,6 +2,9 @@
 #include "BinaryLoaderElfObj.h"
 #include "MemoryMap.h"
 
+namespace rose {
+namespace BinaryAnalysis {
+
 /* This binary loader can handle ELF object files. */
 bool
 BinaryLoaderElfObj::can_load(SgAsmGenericHeader *hdr) const
@@ -27,7 +30,7 @@ BinaryLoaderElfObj::get_remap_sections(SgAsmGenericHeader *header)
  * contain code (SgAsmGenericSection::get_contains_code() is true) is mapped to an otherwise unused area of the virtual
  * memory. */
 BinaryLoader::MappingContribution
-BinaryLoaderElfObj::align_values(SgAsmGenericSection *section, MemoryMap *map,
+BinaryLoaderElfObj::align_values(SgAsmGenericSection *section, const MemoryMap::Ptr &map,
                                  rose_addr_t *malign_lo_p, rose_addr_t *malign_hi_p,
                                  rose_addr_t *va_p, rose_addr_t *mem_size_p,
                                  rose_addr_t *offset_p, rose_addr_t *file_size_p, bool *map_private_p,
@@ -60,3 +63,6 @@ BinaryLoaderElfObj::align_values(SgAsmGenericSection *section, MemoryMap *map,
      * return values in this case. */
     return CONTRIBUTE_NONE;
 }
+
+} // namespace
+} // namespace

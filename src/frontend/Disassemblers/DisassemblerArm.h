@@ -31,7 +31,7 @@ public:
     virtual Unparser::BasePtr unparser() const;
 
     /** See Disassembler::disassembleOne */
-    virtual SgAsmInstruction *disassembleOne(const MemoryMap *map, rose_addr_t start_va, AddressSet *successors=NULL);
+    virtual SgAsmInstruction *disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va, AddressSet *successors=NULL);
 
     /** See Disassembler::assembleOne */
     virtual void assembleOne(SgAsmInstruction*, SgUnsignedCharList&) {abort();}

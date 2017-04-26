@@ -423,7 +423,8 @@ void Grammar::setUpBinaryInstructions() {
         virtual std::set<rose_addr_t> getSuccessors(bool* complete) $ROSE_OVERRIDE;
         virtual std::set<rose_addr_t> getSuccessors(const std::vector<SgAsmInstruction*>&,
                                                     bool* complete,
-                                                    const MemoryMap *initial_memory=NULL) $ROSE_OVERRIDE;
+                                                    const rose::BinaryAnalysis::MemoryMap::Ptr &initial_memory =
+                                                    rose::BinaryAnalysis::MemoryMap::Ptr()) $ROSE_OVERRIDE;
         virtual bool isUnknown() const $ROSE_OVERRIDE;
         virtual unsigned get_anyKind() const $ROSE_OVERRIDE;
 #endif // SgAsmX86Instruction_OTHERS
@@ -609,7 +610,8 @@ void Grammar::setUpBinaryInstructions() {
         virtual std::set<rose_addr_t> getSuccessors(bool* complete) $ROSE_OVERRIDE;
         virtual std::set<rose_addr_t> getSuccessors(const std::vector<SgAsmInstruction*>&,
                                                     bool* complete,
-                                                    const MemoryMap *initial_memory=NULL) $ROSE_OVERRIDE;
+                                                    const rose::BinaryAnalysis::MemoryMap::Ptr &initial_memory =
+                                                    rose::BinaryAnalysis::MemoryMap::Ptr()) $ROSE_OVERRIDE;
         virtual bool isUnknown() const $ROSE_OVERRIDE;
         virtual unsigned get_anyKind() const $ROSE_OVERRIDE;
 #endif // SgAsmM68kInstruction_OTHERS
@@ -985,7 +987,8 @@ void Grammar::setUpBinaryInstructions() {
          *  might want to override this to do something more sophisticated. */
         virtual std::set<rose_addr_t> getSuccessors(const std::vector<SgAsmInstruction*> &basicBlock,
                                                     bool *complete,
-                                                    const MemoryMap *initial_memory=NULL);
+                                                    const rose::BinaryAnalysis::MemoryMap::Ptr &initial_memory =
+                                                    rose::BinaryAnalysis::MemoryMap::Ptr());
 
         /** Returns the size of an instruction in bytes.
          *
@@ -4143,7 +4146,7 @@ void Grammar::setUpBinaryInstructions() {
 
     DECLARE_HEADERS(AsmInterpretation);
 #if defined(SgAsmInterpretation_HEADERS) || defined(DOCUMENTATION)
-    class MemoryMap;
+    #include <MemoryMap.h>
     class RegisterDictionary;
 #endif // SgAsmInterpretation_HEADERS
 
@@ -4198,7 +4201,7 @@ void Grammar::setUpBinaryInstructions() {
         DECLARE_OTHERS(AsmInterpretation);
 #if defined(SgAsmInterpretation_OTHERS) || defined(DOCUMENTATION)
     private:
-        MemoryMap *p_map;
+        rose::BinaryAnalysis::MemoryMap::Ptr p_map;
         const RegisterDictionary *p_registers;
         bool coverageComputed;                          // true iff percentageCoverage has been computed
         mutable InstructionMap instruction_map;         // cached instruction map
@@ -4227,8 +4230,7 @@ void Grammar::setUpBinaryInstructions() {
     public:
         /** Default constructor. */
         SgAsmInterpretation()
-            : p_map(NULL), p_registers(NULL), coverageComputed(false), percentageCoverage(0.0),
-              p_headers(NULL), p_global_block(NULL) {
+            : p_registers(NULL), coverageComputed(false), percentageCoverage(0.0), p_headers(NULL), p_global_block(NULL) {
             ctor();
         }
 
@@ -4243,8 +4245,8 @@ void Grammar::setUpBinaryInstructions() {
          *  This is the memory map representing the entire interpretation.
          *
          * @{ */
-        MemoryMap *get_map() const {return p_map;}
-        void set_map(MemoryMap* m) {p_map=m;}
+        rose::BinaryAnalysis::MemoryMap::Ptr get_map() const {return p_map;}
+        void set_map(const rose::BinaryAnalysis::MemoryMap::Ptr &m) {p_map=m;}
         /** @} */
 
         /** Property: Register dictionary.
@@ -10086,7 +10088,7 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         explicit SgAsmPEFileHeader(SgAsmGenericFile *f)
-            : SgAsmGenericHeader(f), p_loader_map(NULL), p_section_table(NULL), p_coff_symtab(NULL) {
+            : SgAsmGenericHeader(f), p_section_table(NULL), p_coff_symtab(NULL) {
             ctor();
         }
 
@@ -10104,15 +10106,15 @@ void Grammar::setUpBinaryInstructions() {
         void create_table_sections();
 
         /* Loader memory maps */
-        MemoryMap *get_loader_map() const {return p_loader_map;}
-        void set_loader_map(MemoryMap *map) {p_loader_map=map;}
+        rose::BinaryAnalysis::MemoryMap::Ptr get_loader_map() const {return p_loader_map;}
+        void set_loader_map(const rose::BinaryAnalysis::MemoryMap::Ptr &map) {p_loader_map=map;}
 
     private:
         void ctor();
         void *encode(SgAsmPEFileHeader::PEFileHeader_disk*) const;
         void *encode(SgAsmPEFileHeader::PE32OptHeader_disk*) const;
         void *encode(SgAsmPEFileHeader::PE64OptHeader_disk*) const;
-        MemoryMap *p_loader_map;
+        rose::BinaryAnalysis::MemoryMap::Ptr p_loader_map;
 #endif // SgAsmPEFileHeader_OTHERS
 
 #ifdef DOCUMENTATION
@@ -13635,7 +13637,7 @@ void Grammar::setUpBinaryInstructions() {
 
     DECLARE_HEADERS(AsmGenericSection);
 #if defined(SgAsmGenericSection_HEADERS) || defined(DOCUMENTATION)
-#   include "MemoryMap.h"
+#   include <MemoryMap.h>
 #endif // SgAsmGenericSection_HEADERS
 
 #ifdef DOCUMENTATION
@@ -14069,8 +14071,10 @@ void Grammar::setUpBinaryInstructions() {
          *  to file offsets; if @p map is NULL then the map defined in the underlying file is used.
          *
          * @{ */
-        size_t read_content(const MemoryMap*, rose_addr_t start,  void *dst_buf, rose_addr_t size, bool strict=true);
-        size_t read_content(const MemoryMap *map, const rose_rva_t &start, void *dst_buf, rose_addr_t size, bool strict=true);
+        size_t read_content(const rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t start,  void *dst_buf,
+                            rose_addr_t size, bool strict=true);
+        size_t read_content(const rose::BinaryAnalysis::MemoryMap::Ptr&, const rose_rva_t &start, void *dst_buf,
+                            rose_addr_t size, bool strict=true);
         /** @} */
 
         /** Reads data from a file.
@@ -14087,7 +14091,7 @@ void Grammar::setUpBinaryInstructions() {
          *  address that is not mapped. However, if @p strict is set (the default) and we reach an unmapped address then an
          *  @ref MemoryMap::NotMapped exception is thrown. The @p map defines the mapping from virtual addresses to file
          *  offsets; if @p map is NULL then the map defined in the underlying file is used. */
-        std::string read_content_str(const MemoryMap*, rose_addr_t va, bool strict=true);
+        std::string read_content_str(const rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t va, bool strict=true);
 
         /** Reads a string from the file.
          *
@@ -14097,7 +14101,7 @@ void Grammar::setUpBinaryInstructions() {
          *
          * @{ */
         std::string read_content_str(rose_addr_t abs_offset, bool strict=true);
-        std::string read_content_str(const MemoryMap *map, rose_rva_t rva, bool strict=true) {
+        std::string read_content_str(const rose::BinaryAnalysis::MemoryMap::Ptr &map, rose_rva_t rva, bool strict=true) {
             return read_content_str(map, rva.get_va(), strict);
         }
         /** @} */
@@ -14849,7 +14853,8 @@ void Grammar::setUpBinaryInstructions() {
          *  mapped we stop reading and do one of two things: if @p strict is set then a @ref MemoryMap::NotMapped exception is
          *  thrown; otherwise the rest of the @p dst_buf is zero filled and the number of bytes read (not filled) is
          *  returned. */
-        size_t read_content(const MemoryMap *map, rose_addr_t va, void *dst_buf, rose_addr_t size, bool strict=true);
+        size_t read_content(const rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t va, void *dst_buf,
+                            rose_addr_t size, bool strict=true);
 
         /** Reads a string from a file.
          *
@@ -14858,7 +14863,7 @@ void Grammar::setUpBinaryInstructions() {
          *  mapped. If we reach an address which is not mapped then one of two things happen: if @p strict is set then a @ref
          *  MemoryMap::NotMapped exception is thrown; otherwise the string is simply terminated. The returned string does not
          *  include the NUL byte. */
-        std::string read_content_str(const MemoryMap *map, rose_addr_t va, bool strict=true);
+        std::string read_content_str(const rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t va, bool strict=true);
 
         /** Reads a string from a file.
          *

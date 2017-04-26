@@ -291,7 +291,7 @@ main(int argc, char *argv[]) {
     P2::Partitioner partitioner = engine.partition();
     if (settings.showMaps) {
         std::cout <<"ROSE loader specimen memory map:\n";
-        partitioner.memoryMap().dump(std::cout);
+        partitioner.memoryMap()->dump(std::cout);
     }
     std::vector<P2::Function::Ptr> functions = partitioner.functions();
     info <<"; completed in " <<partitionTimer <<" seconds.\n";
