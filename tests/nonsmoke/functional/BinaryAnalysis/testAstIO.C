@@ -9,6 +9,7 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #include "stringify.h"
 
 using namespace rose;
+using namespace rose::BinaryAnalysis;
 
 #if 0 // call is commented out below
 static void
@@ -114,6 +115,15 @@ struct TestInterpMap: AstSimpleProcessing {
     }
 };
 
+// Since the loader map is not saved in the binary file at this time (2017-04-26, ROSE-872) we should remove them
+// from the AST before comparing.
+struct ClearLoaderMaps: AstSimpleProcessing {
+    void visit(SgNode *node) {
+        if (SgAsmPEFileHeader *fhdr = isSgAsmPEFileHeader(node))
+            fhdr->set_loader_map(MemoryMap::Ptr());
+    }
+};
+
 int
 main(int argc, char *argv[])
 {
@@ -126,6 +136,7 @@ main(int argc, char *argv[])
         /* Parse the binary and create a text dump file */
         SgProject *p1 = frontend(argc, argv);
         ROSE_ASSERT(p1!=NULL);
+        ClearLoaderMaps().traverse(p1, preorder);
         std::string base_name = BaseName(p1).string();
         dump1_name = base_name + "-1.dump";
         Dumper(p1, dump1_name);
