@@ -91,7 +91,7 @@ void TransitionGraph::reduceEStates2(set<const EState*> toReduce) {
  */
 
 TransitionGraph::TransitionPtrSet TransitionGraph::inEdges(const EState* estate) {
-  assert(estate);
+  ROSE_ASSERT(estate);
 #if 1
   return _inEdges[estate];
 #else

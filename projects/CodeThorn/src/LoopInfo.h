@@ -3,7 +3,7 @@
 
 #include "Labeler.h"
 #include "VariableIdMapping.h"
-#include "StateRepresentations.h"
+#include "EState.h"
 
 enum IterVarType { ITERVAR_SEQ, ITERVAR_PAR, ITERVAR_UNKNOWN };
 

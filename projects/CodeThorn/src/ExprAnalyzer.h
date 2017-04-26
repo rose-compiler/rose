@@ -9,9 +9,9 @@
 
 #include <limits.h>
 #include <string>
-#include "StateRepresentations.h"
+#include "EState.h"
 #include "VariableIdMapping.h"
-#include "AType.h"
+#include "AbstractValue.h"
 #include "AstTerm.h"
 
 using namespace std;
@@ -25,7 +25,7 @@ namespace CodeThorn {
 class SingleEvalResult {
  public:
   EState estate;
-  AType::BoolLattice result;
+  CodeThorn::BoolLattice result;
   bool isTop() {return result.isTop();}
   bool isTrue() {return result.isTrue();}
   bool isFalse() {return result.isFalse();}
@@ -38,10 +38,10 @@ class SingleEvalResult {
  */
 class SingleEvalResultConstInt {
  public:
-  void init(EState estate, ConstraintSet exprConstraints, AType::ConstIntLattice result);
+  void init(EState estate, ConstraintSet exprConstraints, AbstractValue result);
   EState estate;
   ConstraintSet exprConstraints; // temporary during evaluation of expression
-  AType::ConstIntLattice result;
+  AbstractValue result;
   AValue value() {return result;}
   bool isConstInt() {return result.isConstInt();}
   bool isTop() {return result.isTop();}
@@ -59,7 +59,7 @@ class ExprAnalyzer {
  public:
   ExprAnalyzer();
   //SingleEvalResult eval(SgNode* node,EState estate);
-  //! Evaluates an expression using ConstIntLattice and returns a list of all evaluation-results.
+  //! Evaluates an expression using AbstractValue and returns a list of all evaluation-results.
   //! There can be multiple results if one of the variables was bound to top as we generate
   //! two different states and corresponding constraints in this case, one representing the
   //! true-case the other one representing the false-case.
@@ -67,24 +67,39 @@ class ExprAnalyzer {
   //! values of top-variables. 
   list<SingleEvalResultConstInt> evalConstInt(SgNode* node,EState estate, bool useConstraints);
   void setVariableIdMapping(VariableIdMapping* variableIdMapping) { _variableIdMapping=variableIdMapping; }
+
   void setSkipSelectedFunctionCalls(bool skip);
   bool getSkipSelectedFunctionCalls();
   void setSkipArrayAccesses(bool skip);
   bool getSkipArrayAccesses();
- private:
+  void setExternalFunctionSemantics(bool flag);
+  bool getExternalFunctionSemantics();
+
+  bool checkArrayBounds(VariableId arrayVarId,int accessIndex);
+  VariableId resolveToAbsoluteVariableId(AbstractValue abstrValue) const;
+  AbstractValue readFromMemoryLocation(const PState* pState, AbstractValue abstrValue) const;
+  void writeToMemoryLocation(PState& pState, AbstractValue abstractMemLoc, AbstractValue abstrValue);
+private:
   //! This function turn a single result into a one-elment list with
   //! this one result. This function is used to combine cases where the result
   //! might be empty or have multiple results as well.
   VariableIdMapping* _variableIdMapping;
+
+  // Options
   bool _skipSelectedFunctionCalls;
   bool _skipArrayAccesses;
+  bool _externalFunctionSemantics;
+
  public:
   //! returns true if node is a VarRefExp and sets varName=name, otherwise false and varName="$".
   static bool variable(SgNode* node,VariableName& varName);
   //! returns true if node is a VarRefExp and sets varId=id, otherwise false and varId=0.
   bool variable(SgNode* node,VariableId& varId);
+
+  list<SingleEvalResultConstInt> evalFunctionCall(SgFunctionCallExp* node, EState estate, bool useConstraints);
+
  protected:
-  AType::ConstIntLattice constIntLatticeFromSgValueExp(SgValueExp* valueExp);
+  AbstractValue constIntLatticeFromSgValueExp(SgValueExp* valueExp);
   static list<SingleEvalResultConstInt> listify(SingleEvalResultConstInt res);
 
   // evaluation state
@@ -159,6 +174,14 @@ class ExprAnalyzer {
                                            SingleEvalResultConstInt lhsResult, 
                                            SingleEvalResultConstInt rhsResult,
                                            EState estate, bool useConstraints);
+  list<SingleEvalResultConstInt> evalBitwiseShiftLeftOp(SgLshiftOp* node,
+                                           SingleEvalResultConstInt lhsResult, 
+                                           SingleEvalResultConstInt rhsResult,
+                                           EState estate, bool useConstraints);
+  list<SingleEvalResultConstInt> evalBitwiseShiftRightOp(SgRshiftOp* node,
+                                           SingleEvalResultConstInt lhsResult, 
+                                           SingleEvalResultConstInt rhsResult,
+                                           EState estate, bool useConstraints);
 
   list<SingleEvalResultConstInt> evalArrayReferenceOp(SgPntrArrRefExp* node,
                                                     SingleEvalResultConstInt lhsResult, 
@@ -173,6 +196,9 @@ class ExprAnalyzer {
   list<SingleEvalResultConstInt> evalCastOp(SgCastExp* node, 
                                             SingleEvalResultConstInt operandResult, 
                                             EState estate, bool useConstraints);
+  list<SingleEvalResultConstInt> evalDereferenceOp(SgPointerDerefExp* node, 
+                                                   SingleEvalResultConstInt operandResult, 
+                                                   EState estate, bool useConstraints);
   list<SingleEvalResultConstInt> evalBitwiseComplementOp(SgBitComplementOp* node, 
                                               SingleEvalResultConstInt operandResult, 
                                               EState estate, bool useConstraints);
@@ -181,11 +207,7 @@ class ExprAnalyzer {
   list<SingleEvalResultConstInt> evalRValueVarExp(SgVarRefExp* node, EState estate, bool useConstraints);
   list<SingleEvalResultConstInt> evalValueExp(SgValueExp* node, EState estate, bool useConstraints);
 
-  /* should never occur in a normalized program
-     if it does occur functions have to be in the list of selected function calls to be skipped (=ignored), otherwise
-     an error is reported. */
-  list<SingleEvalResultConstInt> evalFunctionCall(SgFunctionCallExp* node, EState estate, bool useConstraints);
-
+  list<SingleEvalResultConstInt> evalFunctionCallMalloc(SgFunctionCallExp* funCall, EState estate, bool useConstraints);
 };
 
 } // end of namespace CodeThorn
