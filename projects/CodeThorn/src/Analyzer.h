@@ -188,7 +188,8 @@ namespace CodeThorn {
     //! compute the VariableIds of SgInitializedNamePtrList
     VariableIdMapping::VariableIdSet determineVariableIdsOfSgInitializedNames(SgInitializedNamePtrList& namePtrList);
     
-    std::set<std::string> variableIdsToVariableNames(VariableIdMapping::VariableIdSet);
+    std::set<std::string> variableIdsToVariableNames(CodeThorn::AbstractValueSet);
+    std::set<std::string> variableIdsToVariableNames(SPRAY::VariableIdSet);
     typedef std::list<SgVariableDeclaration*> VariableDeclarationList;
     VariableDeclarationList computeUnusedGlobalVariableDeclarationList(SgProject* root);
     VariableDeclarationList computeUsedGlobalVariableDeclarationList(SgProject* root);
@@ -233,9 +234,9 @@ namespace CodeThorn {
 
     boost::unordered_map <std::string,int*> mapGlobalVarAddress;
     boost::unordered_map <int*,std::string> mapAddressGlobalVar;
-    void setCompoundIncVarsSet(set<VariableId> ciVars);
-    void setSmallActivityVarsSet(set<VariableId> ciVars);
-    void setAssertCondVarsSet(set<VariableId> acVars);
+    void setCompoundIncVarsSet(set<AbstractValue> ciVars);
+    void setSmallActivityVarsSet(set<AbstractValue> ciVars);
+    void setAssertCondVarsSet(set<AbstractValue> acVars);
     enum GlobalTopifyMode {GTM_IO, GTM_IOCF, GTM_IOCFPTR, GTM_COMPOUNDASSIGN, GTM_FLAGS};
     void setGlobalTopifyMode(GlobalTopifyMode mode);
     void setExternalErrorFunctionName(std::string externalErrorFunctionName);
@@ -252,9 +253,9 @@ namespace CodeThorn {
 
   private:
     GlobalTopifyMode _globalTopifyMode;
-    set<VariableId> _compoundIncVarsSet;
-    set<VariableId> _smallActivityVarsSet;
-    set<VariableId> _assertCondVarsSet;
+    set<AbstractValue> _compoundIncVarsSet;
+    set<AbstractValue> _smallActivityVarsSet;
+    set<AbstractValue> _assertCondVarsSet;
     set<int> _inputVarValues;
     std::list<int> _inputSequence;
     std::list<int>::iterator _inputSequenceIterator;
@@ -302,7 +303,7 @@ namespace CodeThorn {
     const EState* processNew(EState& s);
     const EState* processNewOrExisting(EState& s);
     const EState* processCompleteNewOrExisting(const EState* es);
-    void topifyVariable(PState& pstate, ConstraintSet& cset, VariableId varId);
+    void topifyVariable(PState& pstate, ConstraintSet& cset, AbstractValue varId);
     bool isTopified(EState& s);
     EStateSet::ProcessingResult process(EState& s);
     EStateSet::ProcessingResult process(Label label, PState pstate, ConstraintSet cset, InputOutput io);

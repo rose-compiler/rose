@@ -174,10 +174,18 @@ void Analyzer::runSolver() {
   }
 }
 
-set<string> Analyzer::variableIdsToVariableNames(VariableIdMapping::VariableIdSet s) {
+set<string> Analyzer::variableIdsToVariableNames(AbstractValueSet s) {
   set<string> res;
-  for(VariableIdMapping::VariableIdSet::iterator i=s.begin();i!=s.end();++i) {
-    res.insert(variableIdMapping.uniqueLongVariableName(*i));
+  for(AbstractValueSet::iterator i=s.begin();i!=s.end();++i) {
+    res.insert((*i).toString(getVariableIdMapping()));
+  }
+  return res;
+}
+
+set<string> Analyzer::variableIdsToVariableNames(SPRAY::VariableIdSet s) {
+  set<string> res;
+  for(SPRAY::VariableIdSet::iterator i=s.begin();i!=s.end();++i) {
+    res.insert((AbstractValue(*i)).toString(getVariableIdMapping()));
   }
   return res;
 }
@@ -357,11 +365,11 @@ bool Analyzer::isActiveGlobalTopify() {
 
 void Analyzer::eventGlobalTopifyTurnedOn() {
   logger[TRACE] << "mode global-topify activated."<<endl;
-  VariableIdSet vset=variableValueMonitor.getVariables();
+  AbstractValueSet vset=variableValueMonitor.getVariables();
   int n=0;
   int nt=0;
-  for(VariableIdSet::iterator i=vset.begin();i!=vset.end();++i) {
-    string name=SgNodeHelper::symbolToString(getVariableIdMapping()->getSymbol(*i));
+  for(AbstractValueSet::iterator i=vset.begin();i!=vset.end();++i) {
+    string name=(*i).toString(getVariableIdMapping());
     bool isCompoundIncVar=(_compoundIncVarsSet.find(*i)!=_compoundIncVarsSet.end());
     bool isSmallActivityVar=(_smallActivityVarsSet.find(*i)!=_smallActivityVarsSet.end());
     bool isAssertCondVar=(_assertCondVarsSet.find(*i)!=_assertCondVarsSet.end());
@@ -378,7 +386,7 @@ void Analyzer::eventGlobalTopifyTurnedOn() {
       }
       break;
     case GTM_IOCFPTR:
-      if(name!="input" && name!="output" && name!="cf" && !variableIdMapping.hasPointerType(*i)) {
+      if(name!="input" && name!="output" && name!="cf" && !(*i).isPtr()) {
         topifyVar=true;
       }
       break;
@@ -429,7 +437,7 @@ void Analyzer::eventGlobalTopifyTurnedOn() {
   }
 }
 
-void Analyzer::topifyVariable(PState& pstate, ConstraintSet& cset, VariableId varId) {
+void Analyzer::topifyVariable(PState& pstate, ConstraintSet& cset, AbstractValue varId) {
   pstate.setVariableToTop(varId);
   //cset.removeAllConstraintsOfVar(varId);
 }
@@ -439,8 +447,8 @@ EState Analyzer::createEState(Label label, PState pstate, ConstraintSet cset) {
   if(isActiveGlobalTopify()) {
     // xxx1
 #if 1
-    VariableIdSet varSet=pstate.getVariableIds();
-    for(VariableIdSet::iterator i=varSet.begin();i!=varSet.end();++i) {
+    AbstractValueSet varSet=pstate.getVariableIds();
+    for(AbstractValueSet::iterator i=varSet.begin();i!=varSet.end();++i) {
       if(variableValueMonitor.isHotVariable(this,*i)) {
         //ROSE_ASSERT(false); // this branch is live
         topifyVariable(pstate, cset, *i);
@@ -660,7 +668,8 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
           int elemIndex=0;
           SgExpressionPtrList& initList=SgNodeHelper::getInitializerListOfAggregateDeclaration(decl);
           for(SgExpressionPtrList::iterator i=initList.begin();i!=initList.end();++i) {
-            VariableId arrayElemId=variableIdMapping.variableIdOfArrayElement(initDeclVarId,elemIndex);
+            //OLD VariableId arrayElemId=variableIdMapping.variableIdOfArrayElement(initDeclVarId,elemIndex);
+            AbstractValue arrayElemId=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(elemIndex));
             SgExpression* exp=*i;
             SgAssignInitializer* assignInit=isSgAssignInitializer(exp);
             ROSE_ASSERT(assignInit);
@@ -668,7 +677,7 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
             if(SgIntVal* intValNode=isSgIntVal(assignInit->get_operand_i())) {
               int intVal=intValNode->get_value();
               // logger[DEBUG] <<"initializing array element:"<<arrayElemId.toString()<<"="<<intVal<<endl;
-              newPState.setVariableToValue(arrayElemId,CodeThorn::AValue(AbstractValue(intVal)));
+              newPState.setVariableToValue(arrayElemId,CodeThorn::AValue(intVal));
             } else {
               logger[ERROR] <<"unsupported array initializer value:"<<exp->unparseToString()<<" AST:"<<SPRAY::AstTerm::astTermWithNullValuesToString(exp)<<endl;
               exit(1);
@@ -693,7 +702,7 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
           // add default array elements to PState
           size_t length=variableIdMapping.getSize(initDeclVarId);
           for(size_t elemIndex=0;elemIndex<length;elemIndex++) {
-            VariableId newArrayElementId=variableIdMapping.variableIdOfArrayElement(initDeclVarId,elemIndex);
+            AbstractValue newArrayElementId=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(elemIndex));
             // set default init value
             newPState.setVariableToTop(newArrayElementId);
           }
@@ -2732,15 +2741,15 @@ void Analyzer::continueAnalysisFrom(EState * newStartEState) {
   mapAddressGlobalVar[addr]=name;
 }
 
- void Analyzer::setCompoundIncVarsSet(set<VariableId> ciVars) {
+ void Analyzer::setCompoundIncVarsSet(set<AbstractValue> ciVars) {
    _compoundIncVarsSet=ciVars;
  }
 
- void Analyzer::setSmallActivityVarsSet(set<VariableId> saVars) {
+ void Analyzer::setSmallActivityVarsSet(set<AbstractValue> saVars) {
    _smallActivityVarsSet=saVars;
  }
 
- void Analyzer::setAssertCondVarsSet(set<VariableId> acVars) {
+ void Analyzer::setAssertCondVarsSet(set<AbstractValue> acVars) {
    _assertCondVarsSet=acVars;
  }
 
@@ -3344,20 +3353,22 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
             logger[ERROR] <<"lhs array access: unkown type of array or pointer."<<endl;
             exit(1);
           }
-          VariableId arrayElementId;
+          AbstractValue arrayElementId;
           //AValue aValue=(*i).value();
           list<SingleEvalResultConstInt> res=exprAnalyzer.evalConstInt(indexExp,currentEState,true);
           ROSE_ASSERT(res.size()==1); // TODO: temporary restriction
           AValue indexValue=(*(res.begin())).value();
           AValue arrayPtrPlusIndexValue=AbstractValue::operatorAdd(arrayPtrValue,indexValue);
+
+          // TODO: rewrite to use AbstractValue only
           VariableId arrayVarId2=arrayPtrPlusIndexValue.getVariableId();
           int index2=arrayPtrPlusIndexValue.getIndexIntValue();
           if(!exprAnalyzer.checkArrayBounds(arrayVarId2,index2)) {
             cerr<<"Write access: "<<lhs->unparseToString()<<endl;
           }
-          arrayElementId=_variableIdMapping->variableIdOfArrayElement(arrayVarId2,index2);
+          arrayElementId=arrayPtrPlusIndexValue;
           //logger[TRACE]<<"arrayElementVarId:"<<arrayElementId.toString()<<":"<<_variableIdMapping->variableName(arrayVarId)<<" Index:"<<index<<endl;
-          ROSE_ASSERT(arrayElementId.isValid());
+          ROSE_ASSERT(!arrayElementId.isBot());
           // read value of variable var id (same as for VarRefExp - TODO: reuse)
           // TODO: check whether arrayElementId (or array) is a constant array (arrayVarId)
           if(pstate2.varExists(arrayElementId)) {
