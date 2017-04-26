@@ -67,7 +67,11 @@ namespace Frontend {
       std::cout
           << "[WARN] "
           << "Caught signal="
+#ifndef _MSC_VER
           << "'" << strsignal(sig) << "' "
+#else
+          << "'" << sig << "' "
+#endif
           << "during frontend processing"
           << std::endl;
 
@@ -87,7 +91,11 @@ namespace Frontend {
         std::cout
             << "[WARN] "
             << "Caught signal="
-            << "'" << strsignal(sig) << "' "
+#ifndef _MSC_VER
+          << "'" << strsignal(sig) << "' "
+#else
+          << "'" << sig << "' "
+#endif
             << "during commandline processing in frontend processing"
             << std::endl;
 
@@ -108,7 +116,11 @@ namespace Frontend {
         std::cout
             << "[WARN] "
             << "Caught signal="
-            << "'" << strsignal(sig) << "' "
+#ifndef _MSC_VER
+          << "'" << strsignal(sig) << "' "
+#else
+          << "'" << sig << "' "
+#endif
             << "during secondary pass in frontend processing"
             << std::endl;
 
@@ -130,7 +142,11 @@ namespace Midend {
       std::cout
           << "[WARN] "
           << "Caught signal="
+#ifndef _MSC_VER
           << "'" << strsignal(sig) << "' "
+#else
+          << "'" << sig << "' "
+#endif
           << "during midend processing"
           << std::endl;
 
@@ -153,7 +169,11 @@ namespace Backend
         std::cout
             << "[WARN] "
             << "Caught signal="
-            << "'" << strsignal(sig) << "' "
+#ifndef _MSC_VER
+          << "'" << strsignal(sig) << "' "
+#else
+          << "'" << sig << "' "
+#endif
             << "during backend unparser processing"
             << std::endl;
   
@@ -174,7 +194,11 @@ namespace Backend
         std::cout
             << "[WARN] "
             << "Caught signal="
-            << "'" << strsignal(sig) << "' "
+#ifndef _MSC_VER
+          << "'" << strsignal(sig) << "' "
+#else
+          << "'" << sig << "' "
+#endif
             << "during backend compiler processing"
             << std::endl;
   
