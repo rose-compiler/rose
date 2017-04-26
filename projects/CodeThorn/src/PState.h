@@ -31,13 +31,6 @@ namespace CodeThorn {
   * \author Markus Schordan
   * \date 2012.
  */
-#if 0
-  typedef SPRAY::VariableId VarAbstractValue;
-  typedef SPRAY::VariableIdSet VarAbstractValueSet;
-#else
-  typedef AbstractValue VarAbstractValue;
-  typedef AbstractValueSet VarAbstractValueSet;
-#endif
 
   class PState : public map<VarAbstractValue,CodeThorn::AValue> {
  public:
@@ -51,7 +44,6 @@ namespace CodeThorn {
   string varValueToString(VarAbstractValue varId) const;
   void deleteVar(VarAbstractValue varname);
   long memorySize() const;
-  void fromStream(std::istream& is);
   void toStream(std::ostream& os) const;
   string toString() const;
   string toString(SPRAY::VariableIdMapping* variableIdMapping) const;
@@ -65,8 +57,6 @@ namespace CodeThorn {
 };
 
   std::ostream& operator<<(std::ostream& os, const PState& value);
-  std::istream& operator>>(std::istream& os, PState& value);
-
   typedef set<const PState*> PStatePtrSet;
 
 #ifdef USE_CUSTOM_HSET

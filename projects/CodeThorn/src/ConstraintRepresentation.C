@@ -37,7 +37,7 @@ void Constraint::negate() {
   * \date 2012.
  */
 Constraint::ConstraintOp Constraint::op() const { return _op; }
-VariableId Constraint::lhsVar() const {
+VarAbstractValue Constraint::lhsVar() const {
   return _lhsVar; 
 }
 
@@ -45,7 +45,7 @@ VariableId Constraint::lhsVar() const {
   * \author Markus Schordan
   * \date 2012.
  */
-VariableId Constraint::rhsVar() const {
+VarAbstractValue Constraint::rhsVar() const {
   if(isVarVarOp())
     return _rhsVar;
   else
@@ -161,7 +161,7 @@ Constraint::Constraint() {
   * \author Markus Schordan
   * \date 2012.
  */
-Constraint::Constraint(ConstraintOp op0,VariableId lhs, AValue rhs):_op(op0),_lhsVar(lhs),_rhsVar(VariableId()),_intVal(rhs) {
+Constraint::Constraint(ConstraintOp op0,VarAbstractValue lhs, AValue rhs):_op(op0),_lhsVar(lhs),_rhsVar(rhs) {
   switch(op0) {
   case EQ_VAR_CONST:
   case NEQ_VAR_CONST:
@@ -169,22 +169,6 @@ Constraint::Constraint(ConstraintOp op0,VariableId lhs, AValue rhs):_op(op0),_lh
     return;
   default:
     cerr<<"Error: Constraint constructor var-val operator: "<<op0<<". Wrong operator."<<endl;
-    exit(1);
-  }
-} 
-
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
-Constraint::Constraint(ConstraintOp op0,VariableId lhs, VariableId rhs):_op(op0),_lhsVar(lhs),_rhsVar(rhs),_intVal(0) {
-  switch(op0) {
-  case EQ_VAR_VAR:
-  case NEQ_VAR_VAR:
-  case DEQ:
-    return;
-  default:
-    cerr<<"Error: Constraint constructor var-var operator: "<<op0<<". Wrong operator."<<endl;
     exit(1);
   }
 } 
@@ -216,12 +200,9 @@ string Constraint::toString(VariableIdMapping* variableIdMapping) const {
   stringstream ss;
   if(isDisequation())
     return "__##__";
-  if(isVarVarOp())
-    ss<<variableIdMapping->uniqueLongVariableName(lhsVar())<<(*this).opToString()<<variableIdMapping->uniqueLongVariableName(rhsVar());
-  else {
-    if(isVarValOp())
-      ss<<variableIdMapping->uniqueLongVariableName(lhsVar())<<(*this).opToString()<<rhsVal().toString();
-    else
+  if(isVarVarOp()||isVarValOp()) {
+    ss<<lhsVar().toString(variableIdMapping)<<(*this).opToString()<<rhsVar().toString(variableIdMapping);
+  } else {
       throw CodeThorn::Exception( "Error: Constraint::toString: unknown operator.");
   }
   return ss.str();
@@ -235,13 +216,10 @@ string Constraint::toAssertionString(VariableIdMapping* variableIdMapping) const
   stringstream ss;
   if(isDisequation())
     return "false";
-  if(isVarVarOp())
-    ss<<variableIdMapping->uniqueLongVariableName(lhsVar())<<(*this).opToString()<<variableIdMapping->uniqueLongVariableName(rhsVar());
-  else {
-    if(isVarValOp())
-      ss<<variableIdMapping->uniqueLongVariableName(lhsVar())<<(*this).opToString()<<rhsVal().toString();
-    else
-      throw CodeThorn::Exception( "Error: Constraint::toString: unknown operator.");
+  if(isVarVarOp()||isVarVarOp()) {
+    ss<<lhsVar().toString(variableIdMapping)<<(*this).opToString()<<rhsVar().toString(variableIdMapping);
+  } else {
+    throw CodeThorn::Exception( "Error: Constraint::toAssertionString: unknown operator.");
   }
   return ss.str();
 }
@@ -266,7 +244,7 @@ void Constraint::toStreamAsTuple(ostream& os) {
   case NEQ_VAR_CONST:
     os<<_lhsVar.toString();
     os<<",";
-    os<<(_intVal.getIntValue());
+    os<<_rhsVar.getIntValue();
     break;
   default:
     throw CodeThorn::Exception( "Constraint::toStream: unknown operator.");
@@ -308,46 +286,9 @@ string Constraint::operatorStringFromStream(istream& is) {
  */
 void Constraint::initialize() {
   _op=Constraint::UNDEFINED;
-  VariableId varId;
+  VarAbstractValue varId;
   _lhsVar=varId;
   _rhsVar=varId;
-  _intVal=AValue(0);
-}
-
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
-void Constraint::fromStream(istream& is) {
-  char c;
-  string s;
-  int __varIdCode=-1; 
-  VariableId __varId; 
-  AValue __varAValue; 
-  is>>c;
-  if(c!='V') throw CodeThorn::Exception( "Error: Syntax error Constraint. Expected VariableId.");
-  is>>__varIdCode;
-  assert(__varIdCode>=0);
-  __varId.setIdCode(__varIdCode);
-  _lhsVar=__varId;
-  string op=operatorStringFromStream(is);
-  if(is.peek()=='V') {
-    // case: varop var
-    is>>c; // consume 'V'
-    is>>__varIdCode;
-    assert(__varIdCode>=0);
-    __varId.setIdCode(__varIdCode);
-    _rhsVar=__varId;
-    if(op=="==") _op=EQ_VAR_VAR;
-    if(op=="!=") _op=NEQ_VAR_VAR;
-    if(op=="##") _op=DEQ; // special case
-  } else {
-    // case: var op const
-    is>>__varAValue;
-    _intVal=__varAValue;
-    if(op=="==") _op=EQ_VAR_CONST;
-    if(op=="!=") _op=NEQ_VAR_CONST;
-  }
 }
 
 /*! 
@@ -375,16 +316,16 @@ void Constraint::swapVars() {
   if(!isVarVarOp()) {
     throw CodeThorn::Exception( "Error: Constraint::swapVars on non var-var constraint.");
   }
-  VariableId tmp=_lhsVar;
+  VarAbstractValue tmp=_lhsVar;
   _lhsVar=_rhsVar;
   _rhsVar=tmp;
 }
 
-ConstraintSet ConstraintSet::constraintsOfVariable(VariableId varId) const {
+ConstraintSet ConstraintSet::constraintsOfVariable(VarAbstractValue varId) const {
   ConstraintSet cset;
   for(ConstraintSet::iterator i=begin();i!=end();++i) {
     Constraint c=*i;
-    VariableId lhsVar=c.lhsVar();
+    VarAbstractValue lhsVar=c.lhsVar();
     if(lhsVar==varId) {
       cset.insert(*i);
     }
@@ -402,7 +343,7 @@ ConstraintSet ConstraintSet::constraintsOfVariable(VariableId varId) const {
   * \author Markus Schordan
   * \date 2012.
  */
-void ConstraintSet::addAssignEqVarVar(VariableId lhsVar, VariableId rhsVar) {
+void ConstraintSet::addAssignEqVarVar(VarAbstractValue lhsVar, VarAbstractValue rhsVar) {
   // move removes all constraints on target var. arg1rhsVar->arg2lhsVar
   if(lhsVar==rhsVar)
     return;
@@ -414,7 +355,7 @@ void ConstraintSet::addAssignEqVarVar(VariableId lhsVar, VariableId rhsVar) {
   * \author Markus Schordan
   * \date 2012.
  */
-void ConstraintSet::addEqVarVar(VariableId lhsVar, VariableId rhsVar) {
+void ConstraintSet::addEqVarVar(VarAbstractValue lhsVar, VarAbstractValue rhsVar) {
   // move removes all constraints on target var. arg1rhsVar->arg2lhsVar
   if(lhsVar==rhsVar)
     return;
@@ -479,7 +420,7 @@ void ConstraintSet::invertConstraints() {
   * \author Markus Schordan
   * \date 2012.
  */
-void  ConstraintSet::moveConstConstraints(VariableId fromVarId, VariableId toVarId) {
+void  ConstraintSet::moveConstConstraints(VarAbstractValue fromVarId, VarAbstractValue toVarId) {
   if(fromVarId==toVarId)
     return; // duplication not necessary
   ConstraintSet::iterator i=begin();
@@ -496,7 +437,7 @@ void  ConstraintSet::moveConstConstraints(VariableId fromVarId, VariableId toVar
   * \author Markus Schordan
   * \date 2012.
  */
-void ConstraintSet::eraseConstConstraints(VariableId varId)  {
+void ConstraintSet::eraseConstConstraints(VarAbstractValue varId)  {
   ConstraintSet::iterator i=begin();
   while(i!=end()) {
     if((*i).isVarValOp() && (*i).lhsVar()==varId)
@@ -510,7 +451,7 @@ void ConstraintSet::eraseConstConstraints(VariableId varId)  {
   * \author Markus Schordan
   * \date 2012.
  */
-void  ConstraintSet::deleteAndMoveConstConstraints(VariableId fromVarId, VariableId toVarId) {
+void  ConstraintSet::deleteAndMoveConstConstraints(VarAbstractValue fromVarId, VarAbstractValue toVarId) {
   if(fromVarId==toVarId)
     return; // duplication not necessary
   removeAllConstraintsOfVar(toVarId);
@@ -521,7 +462,7 @@ void  ConstraintSet::deleteAndMoveConstConstraints(VariableId fromVarId, Variabl
   * \author Markus Schordan
   * \date 2012.
  */
-void  ConstraintSet::duplicateConstConstraints(VariableId varId1, VariableId varId2) {
+void  ConstraintSet::duplicateConstConstraints(VarAbstractValue varId1, VarAbstractValue varId2) {
   if(varId1==varId2)
     return; // duplication not necessary
   // we duplicate constraints for both variables
@@ -585,7 +526,7 @@ void ConstraintSet::addConstraint(Constraint c) {
     }
 #endif
   }
-  VariableId dedicatedLhsVar=equalityMaintainer.determineDedicatedElement(c.lhsVar());
+  VarAbstractValue dedicatedLhsVar=equalityMaintainer.determineDedicatedElement(c.lhsVar());
   switch(c.op()) {
     // attempt to insert x==k
   case Constraint::EQ_VAR_CONST: {
@@ -639,16 +580,16 @@ void ConstraintSet::addConstraint(Constraint c) {
   case Constraint::EQ_VAR_VAR: {
     // TODO: maintain consistency wenn x=y is inserted but constraints of x and y are in conflict
     // currently we only add x=y for a fresh variable y on parameter passing and therefore this is OK.
-    VariableId v1=dedicatedLhsVar;
-    VariableId v2=equalityMaintainer.determineDedicatedElement(c.rhsVar());
+    VarAbstractValue v1=dedicatedLhsVar;
+    VarAbstractValue v2=equalityMaintainer.determineDedicatedElement(c.rhsVar());
     if(v1==v2) {
       // same dedicated variable => equality is already represented => nothing to do
       return;
     } else {
       // we need to move const-constraints from one variable to the new dedicated variable
       equalityMaintainer.addEquality(v1,v2);
-      VariableId new_v1=equalityMaintainer.determineDedicatedElement(v1);
-      VariableId new_v2=equalityMaintainer.determineDedicatedElement(v2);
+      VarAbstractValue new_v1=equalityMaintainer.determineDedicatedElement(v1);
+      VarAbstractValue new_v2=equalityMaintainer.determineDedicatedElement(v2);
       if(new_v1!=v1) {
         moveConstConstraints(v1,new_v1);
         if(!disequalityExists()) {
@@ -704,7 +645,7 @@ void ConstraintSet::insertConstraint(Constraint c) {
   * \author Markus Schordan
   * \date 2012.
  */
-void ConstraintSet::eraseEqWithLhsVar(VariableId v) {
+void ConstraintSet::eraseEqWithLhsVar(VarAbstractValue v) {
   set<Constraint>::iterator i=begin();
   while(i!=end()) {
     if((*i).op()==Constraint::EQ_VAR_VAR && (*i).lhsVar()==v)
@@ -718,7 +659,7 @@ void ConstraintSet::eraseEqWithLhsVar(VariableId v) {
   * \author Markus Schordan
   * \date 2012.
  */
-long ConstraintSet::numberOfConstConstraints(VariableId var) {
+long ConstraintSet::numberOfConstConstraints(VarAbstractValue var) {
   long cnt=0;
   for(ConstraintSet::iterator i=begin();i!=end();++i) {
     if((*i).isVarValOp() && (*i).lhsVar()==var) cnt++;
@@ -782,7 +723,7 @@ ConstraintSet ConstraintSet::constraintsWithOp(Constraint::ConstraintOp op) cons
   * \author Markus Schordan
   * \date 2012.
  */
-bool ConstraintSet::constraintExists(Constraint::ConstraintOp op, VariableId varId, AValue intVal) const { 
+bool ConstraintSet::constraintExists(Constraint::ConstraintOp op, VarAbstractValue varId, AValue intVal) const { 
   Constraint tmp(op,varId,intVal);
   return constraintExists(tmp);
 }
@@ -802,7 +743,7 @@ bool ConstraintSet::constraintExists(const Constraint& tmp) const {
   * \author Markus Schordan
   * \date 2012.
  */
-ConstraintSet ConstraintSet::findSpecificSet(Constraint::ConstraintOp op, VariableId varId) const {
+ConstraintSet ConstraintSet::findSpecificSet(Constraint::ConstraintOp op, VarAbstractValue varId) const {
   ConstraintSet cs;
   // find op-constraint for variable varname
   for(ConstraintSet::iterator i=begin();i!=end();++i) {
@@ -816,7 +757,7 @@ ConstraintSet ConstraintSet::findSpecificSet(Constraint::ConstraintOp op, Variab
   * \author Markus Schordan
   * \date 2012.
  */
-ConstraintSet::iterator ConstraintSet::findSpecific(Constraint::ConstraintOp op, VariableId varId) const {
+ConstraintSet::iterator ConstraintSet::findSpecific(Constraint::ConstraintOp op, VarAbstractValue varId) const {
   // find op-constraint for variable varname
   for(ConstraintSet::iterator i=begin();i!=end();++i) {
     if((*i).lhsVar()==varId && (*i).op()==op)
@@ -829,9 +770,9 @@ ConstraintSet::iterator ConstraintSet::findSpecific(Constraint::ConstraintOp op,
   * \author Markus Schordan
   * \date 2012.
  */
-AbstractValue ConstraintSet::varAbstractValue(const VariableId varId) const {
+AbstractValue ConstraintSet::varAbstractValue(const VarAbstractValue varId) const {
   AbstractValue c;
-  VariableId dedicatedVarId=equalityMaintainer.determineDedicatedElement(varId);
+  VarAbstractValue dedicatedVarId=equalityMaintainer.determineDedicatedElement(varId);
   ConstraintSet::iterator i=findSpecific(Constraint::EQ_VAR_CONST,dedicatedVarId);
   if(i==end()) {
     // no EQ_VAR_CONST constraint for this variable
@@ -845,7 +786,7 @@ AbstractValue ConstraintSet::varAbstractValue(const VariableId varId) const {
   * \author Markus Schordan
   * \date 2012.
  */
-SetOfVariableId ConstraintSet::getEqVars(const VariableId varId) const {
+SetOfVariableId ConstraintSet::getEqVars(const VarAbstractValue varId) const {
   return equalityMaintainer.equalElements(varId);
 }
 
@@ -853,9 +794,9 @@ SetOfVariableId ConstraintSet::getEqVars(const VariableId varId) const {
   * \author Markus Schordan
   * \date 2012.
  */
-ListOfAValue ConstraintSet::getEqVarConst(const VariableId varId) const {
+ListOfAValue ConstraintSet::getEqVarConst(const VarAbstractValue varId) const {
   ListOfAValue s;
-  VariableId dedicatedVarId=equalityMaintainer.determineDedicatedElement(varId);
+  VarAbstractValue dedicatedVarId=equalityMaintainer.determineDedicatedElement(varId);
   ConstraintSet::iterator i=findSpecific(Constraint::EQ_VAR_CONST,dedicatedVarId);
   if(i!=end()) {
     // there can exist at most one EQ_VAR_CONST for a variable
@@ -868,9 +809,9 @@ ListOfAValue ConstraintSet::getEqVarConst(const VariableId varId) const {
   * \author Markus Schordan
   * \date 2012.
  */
-ListOfAValue ConstraintSet::getNeqVarConst(const VariableId varId) const {
+ListOfAValue ConstraintSet::getNeqVarConst(const VarAbstractValue varId) const {
   ListOfAValue s;
-  VariableId dedicatedVarId=equalityMaintainer.determineDedicatedElement(varId);
+  VarAbstractValue dedicatedVarId=equalityMaintainer.determineDedicatedElement(varId);
   ConstraintSet cset=findSpecificSet(Constraint::NEQ_VAR_CONST,dedicatedVarId);
   for(ConstraintSet::iterator i=cset.begin();i!=cset.end();++i) {
     s.push_back((*i).rhsVal());
@@ -882,23 +823,23 @@ ListOfAValue ConstraintSet::getNeqVarConst(const VariableId varId) const {
   * \author Markus Schordan
   * \date 2012.
  */
-void ConstraintSet::removeAllConstraintsOfVar(VariableId varId) {
+void ConstraintSet::removeAllConstraintsOfVar(VarAbstractValue varId) {
   // case 1: variable is a dedicated variable in a set with #set>=2
   // => find new dedicated variable and move all information and remove all
   // otherwise
   // => simply remove all (we do not loose information)
 
   bool isDedicatedVar=(equalityMaintainer.determineDedicatedElement(varId)==varId);
-  VariableIdMapping::VariableIdSet equalVars=equalityMaintainer.equalElements(varId);
+  VarAbstractValueSet equalVars=equalityMaintainer.equalElements(varId);
   if(isDedicatedVar && (equalVars.size()>=2)) {
     // find an element different to the dedicated var (the 2nd element must be correct)
-    VariableIdMapping::VariableIdSet::iterator i=equalVars.begin();
+    VarAbstractValueSet::iterator i=equalVars.begin();
     ++i;
     assert(i!=equalVars.end());
-    VariableId someOtherVar=*i;
+    VarAbstractValue someOtherVar=*i;
     assert(someOtherVar!=varId);
     equalityMaintainer.removeEqualities(varId);
-    VariableId newDedicatedVar=equalityMaintainer.determineDedicatedElement(someOtherVar);
+    VarAbstractValue newDedicatedVar=equalityMaintainer.determineDedicatedElement(someOtherVar);
     moveConstConstraints(varId,newDedicatedVar);
     // the constraint set CANNOT become inconsistent
     assert(!disequalityExists());

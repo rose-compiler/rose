@@ -485,51 +485,6 @@ void checkTypes() {
     check("Parse: Testing test1 on test1.",SPRAY::Parse::checkWord("test1",ss3));
     //cout << "Remaing stream: "<<ss3.str()<<endl;
 
-    CodeThorn::AbstractValue x;
-    stringstream ss4;
-    ss4<<"top";
-    x.fromStream(ss4);
-    check("AbstractValue: streaminput: top",x.toString()=="top");
-    stringstream ss5;
-    ss5<<"12";
-    x.fromStream(ss5);
-    check("AbstractValue: streaminput: 12",x.toString()=="12");
-    stringstream ss6;
-    ss6<<"15top16";
-    ss6>>x;
-    check("AbstractValue: streaminput: 15",x.toString()=="15");
-    ss6>>x;
-    check("AbstractValue: streaminput: top",x.toString()=="top");
-    ss6>>x;
-    check("AbstractValue: streaminput: 16",x.toString()=="16");
-
-    {
-      PState ps;
-      stringstream ss1;
-      string pstateString="{}";
-      ss1<<pstateString;
-      ps.fromStream(ss1);
-      string checkString=(string("stream input PState: ")+pstateString);
-      bool checkresult=(ps.toString()==pstateString);
-      check(checkString,checkresult);
-      if(checkresult==false) {
-        cout << "Error: input stream result: "<<ps.toString()<<endl;
-      }
-    }
-    {
-      PState ps;
-      stringstream ss0;
-      string pstateString="{(V0,5),(V1,top),(V2,bot)}";
-      ss0<<pstateString;
-      ss0>>ps;
-      string checkString=(string("stream input PState: ")+pstateString);
-      bool checkresult=(ps.toString()==pstateString);
-      check(checkString,checkresult);
-      if(checkresult==false) {
-        cout << "pstateString :"<<pstateString<<":"<<endl;
-        cout << "ps.toString():"<<ps.toString()<<":"<<endl;
-      }
-    }
     {
       stringstream ss;
       string s="aaabbb";
@@ -539,37 +494,6 @@ void checkTypes() {
       char next;
       ss>>next;
       check(string("Parsing: ")+parseString+" from:"+s+" Next:"+next,true);      
-    }
-    {
-      Constraint cs;
-      stringstream ss;
-      stringstream ssout;
-      string cstring="V1==V2";
-      ss<<cstring;
-      cs.fromStream(ss);
-      cs.toStream(ssout);
-      check("Stream I/O constraint: "+cstring,ssout.str()==cstring);
-    }
-    {
-      Constraint cs;
-      stringstream ss;
-      stringstream ssout;
-      string cstring="V3!=4";
-      ss<<cstring;
-      cs.fromStream(ss);
-      cs.toStream(ssout);
-      check("Stream I/O constraint: "+cstring,ssout.str()==cstring);
-    }
-    {
-      Constraint cs;
-      cs=DISEQUALITYCONSTRAINT;
-      stringstream ss;
-      stringstream ssout;
-      string cstring=cs.toString();
-      ss<<cstring;
-      cs.fromStream(ss);
-      cs.toStream(ssout);
-      check("Stream I/O DEQ constraint: "+cstring,ssout.str()==cstring);
     }
 #ifndef EXCLUDE_RDANALYSIS
     {
