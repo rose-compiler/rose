@@ -56,14 +56,14 @@ void AssertionExtractor::computeLabelVectorOfEStates() {
       bool isFirst=true;
       for(PState::const_iterator j=p->begin();j!=p->end();++j) {
         // iterating on the map
-        VariableId varId=(*j).first;
+        AbstractValue varId=(*j).first;
         if(p->varIsConst(varId)) {
           if(!isFirst) {
             assertions[lab.getId()]+=" && ";
           } else {
             isFirst=false;
           }
-          assertions[lab.getId()]+=variableIdMapping->variableName(varId)+"=="+p->varValueToString(varId);
+          assertions[lab.getId()]+=varId.toString(variableIdMapping)+"=="+p->varValueToString(varId);
         }
       }
       const ConstraintSet* cset=(*i)->constraints();

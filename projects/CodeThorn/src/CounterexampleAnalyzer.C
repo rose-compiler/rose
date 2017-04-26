@@ -503,9 +503,9 @@ EStatePtrSet CounterexampleAnalyzer::addAllPrefixOutputStates(EStatePtrSet& star
 bool CounterexampleAnalyzer::isPrefixState(const EState* state) {
   boost::regex re("a(.)*");
   const PState* pstate = state->pstate();
-  VariableIdSet varSet=pstate->getVariableIds();
-  for (VariableIdSet::iterator l=varSet.begin();l!=varSet.end();++l) {
-    string varName=SgNodeHelper::symbolToString(_analyzer->getVariableIdMapping()->getSymbol(*l));
+  AbstractValueSet varSet=pstate->getVariableIds();
+  for (AbstractValueSet::iterator l=varSet.begin();l!=varSet.end();++l) {
+    string varName=(*l).toString(_analyzer->getVariableIdMapping());
     if (boost::regex_match(varName, re)) { //matches internal variables (e.g. "int a188")
       if (pstate->varIsConst(*l)) {  // is a concrete (therefore prefix) state
         return true;
