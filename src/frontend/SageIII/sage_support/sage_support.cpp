@@ -2223,7 +2223,7 @@ SgProject::parse()
 
           nameIterator++;
           i++;
-        }
+        } // end while
 
 #if 0
      printf ("In Project::parse(): (calling the frontend on all previously setup SgFile objects) vectorOfFiles.size() = %" PRIuPTR " \n",vectorOfFiles.size());
@@ -2238,7 +2238,7 @@ SgProject::parse()
 #endif
 
   // DQ (6/13/2013): Test the new function to lookup the SgFile from the name with full path.
-  // This is a simple consistancy test for that new function.
+  // This is a simple consistency test for that new function.
      for (size_t i = 0; i < vectorOfFiles.size(); i++)
         {
           string filename = vectorOfFiles[i]->get_sourceFileNameWithPath();
@@ -2332,7 +2332,9 @@ SgProject::parse()
                       << "[FATAL] "
                       << "Unable to keep going due to an unrecoverable internal error"
                       << std::endl;
-                  exit(1);
+  // Liao, 4/25/2017. one assertion failure may trigger other assertion failures. We still want to keep going.              
+                    exit(1);
+//                  return std::max(100, errorCode);
               }
           }
           else
@@ -2444,7 +2446,7 @@ SgProject::parse()
         }
 
      return errorCode;
-   }
+   } // end parse(;
 
 //negara1 (07/29/2011)
 //The returned file path is not normalized. 
@@ -5527,7 +5529,11 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
             // ROSE_ABORT("Errors in Processing: (frontend_failed)");
             // printf ("Errors in Processing Input File: (throwing an instance of \"frontend_failed\" exception due to errors detected in the input code), have a nice day! \n");
                printf ("Errors in Processing Input File: throwing an instance of \"frontend_failed\" exception due to syntax errors detected in the input code \n");
-               exit(1);
+               if (Rose::KeepGoing::g_keep_going) {
+                 raise(SIGABRT); // raise a signal to be handled by the keep going support , instead of exit. Liao 4/25/2017
+               }
+               else  
+                  exit(1);
              }
         }
 
@@ -5851,18 +5857,20 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                          std::cout  << "[FATAL] "
                                     << "Original input file is invalid: "
                                     << "'" << this->getFileName() << "'"
-                                    << std::endl;
-                         exit(1);
+                                    << "\n\treported by " << __FILE__ <<":"<<__LINE__ <<std::endl;
+                         if (Rose::KeepGoing::g_keep_going)  
+                           raise(SIGABRT); // raise a signal to be handled by the keep going support , instead of exit. Liao 4/25/2017  
+                         else  
+                           exit(1);
                        }
                       else
-                       {
-                      // The ROSE unparsed file is invalid...
-                         this->set_frontendErrorCode(-1);
-                         this->set_unparsedFileFailedCompilation(true);
+                      {
+                        // The ROSE unparsed file is invalid...
+                        this->set_frontendErrorCode(-1);
+                        this->set_unparsedFileFailedCompilation(true);
 
-                      // So try to compile the original input file instead...
                          returnValueForCompiler = this->compileOutput(argv, fileNameIndex);
-                       }
+                      }
                   }
                //
                // Note that in the case of java, a correct unparsed file may not compile because it 
@@ -5987,7 +5995,9 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
         }
 
   // printf ("Program Terminated Normally (exit status = %d)! \n\n\n\n",finalCompiledExitStatus);
-
+   // Liao, 4/26/2017. KeepGoingTranslator should keep going no mater what. 
+    if (Rose::KeepGoing::g_keep_going)
+      finalCompiledExitStatus = 0; 
      return finalCompiledExitStatus;
    }
 
