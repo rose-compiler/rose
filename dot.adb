@@ -199,7 +199,7 @@ package body Dot is
    package body Node_Stmt is
 
       ------------
-      -- EXPORTED
+      -- EXPORTED:
       ------------
       procedure Put
         (This : in Class) is
@@ -209,7 +209,7 @@ package body Dot is
       end Put;
 
       ------------
-      -- EXPORTED
+      -- EXPORTED:
       ------------
       procedure Append_To
         (This      : in Class;
@@ -219,6 +219,79 @@ package body Dot is
       end Append_To;
 
    end Node_Stmt;
+
+   package body HTML_Like_Labels is
+
+      NL : constant String := (1 => ASCII.LF);
+
+      ------------
+      -- EXPORTED:
+      ------------
+      procedure Add_Assignment_Row
+        (This : in out Class;
+         L, R : in String)
+      is
+         Row : constant LR_Pair :=
+           (1 => To_Unbounded_String (L),
+            2 => To_Unbounded_String (R));
+      begin
+         This.Rows.Append (Row);
+      end Add_Assignment_Row;
+
+      function To_Row_Unbounded_String
+        (LR : in Unbounded_String)
+         return Unbounded_String is
+      begin
+         return "              <TD ALIGN=""LEFT"">" & LR & "</TD>";
+      end To_Row_Unbounded_String;
+
+
+      function To_Unbounded_String (This : in LR_Pair) return Unbounded_String
+      is
+      begin
+         return
+           "            <TR>" & NL &
+           To_Row_Unbounded_String (This (1)) & NL &
+           "              <TD>=</TD>" & NL &
+           To_Row_Unbounded_String (This (2)) & NL &
+           "            </TR>";
+      end To_Unbounded_String;
+
+
+
+      function To_Unbounded_String (This : in Class) return Unbounded_String is
+      begin
+         return
+           "< " & NL &
+           "          <TABLE CELLBORDER=""0""> " & NL &
+           To_Unbounded_String (This.Rows) & NL &
+           "          </TABLE>" & NL &
+           "        >";
+      end To_Unbounded_String;
+
+      ------------
+      -- EXPORTED:
+      ------------
+      function To_String (This : in Class) return String is begin
+         return To_String (To_Unbounded_String (This));
+      end To_String;
+
+      ------------
+      -- EXPORTED:
+      ------------
+      function To_Unbounded_String (This : in LR_Pair_List) return Unbounded_String is
+         Result : Unbounded_String; -- Initialized
+      begin
+         for Pair of This loop
+            Result := Result & To_Unbounded_String (Pair);
+         end loop;
+         return Result;
+      end To_Unbounded_String;
+
+
+
+
+   end HTML_Like_Labels;
 
    package body Subgraphs is
 
