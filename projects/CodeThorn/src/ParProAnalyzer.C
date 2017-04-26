@@ -1,7 +1,6 @@
 // Author: Marc Jasper, 2016.
 
 #include "ParProAnalyzer.h"
-#include "StateRepresentations.h"
 
 using namespace SPRAY;
 using namespace CodeThorn;
