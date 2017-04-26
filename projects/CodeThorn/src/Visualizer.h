@@ -9,7 +9,7 @@
 
 #include "Labeler.h"
 #include "CFAnalysis.h"
-#include "StateRepresentations.h"
+#include "EState.h"
 #include "ParProTransitionGraph.h"
 #include "Analyzer.h"
 #include "CommandLineOptions.h"

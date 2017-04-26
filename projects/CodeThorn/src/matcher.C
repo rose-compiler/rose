@@ -6,6 +6,7 @@
 #include "rose.h"
 #include "AstTerm.h"
 #include "AstMatching.h"
+#include "SgNodeHelper.h"
 
 #include "Timer.h"
 
@@ -25,9 +26,9 @@ void write_file(std::string filename, std::string data) {
 
 int main( int argc, char * argv[] ) {
 
-  std::string matchexpression;
-  std::cout<<"Enter match-expression: ";
-  std::getline(std::cin, matchexpression);
+  //std::string matchexpression;
+  //std::cout<<"Enter match-expression: ";
+  //std::getline(std::cin, matchexpression);
 
   bool measurementmode=false;
 
@@ -36,9 +37,8 @@ int main( int argc, char * argv[] ) {
   
   // Run internal consistency tests on AST
   AstTests::runAllTests(sageProject);
-  AstDOTGeneration dotGen;
-  dotGen.generate(sageProject,"matcher",AstDOTGeneration::TOPDOWN);
-
+  //AstDOTGeneration dotGen;
+  //dotGen.generate(sageProject,"matcher",AstDOTGeneration::TOPDOWN);
   SgNode* root;
   //root=sageProject->get_traversalSuccessorByIndex(0)->get_traversalSuccessorByIndex(0)->get_traversalSuccessorByIndex(0)->get_traversalSuccessorByIndex(0);
   root=sageProject;
@@ -69,6 +69,10 @@ int main( int argc, char * argv[] ) {
   std::cout << "Iteration Length: without null: " << num2 << std::endl;
   
 #if 1
+  //$ARR=SgPntrArrRefExp($LHS,$RHS)";
+  //std::string matchexpression="$Root=SgAssignOp($LHS,$RHS)";
+  //std::string matchexpression="$LHS=SgPntrArrRefExp(SgPntrArrRefExp(SgArrowExp($E1,$E2),$E3),SgVarRefExp)"
+  std::string matchexpression="$Root=SgAssignOp($LHS=SgPntrArrRefExp(SgPntrArrRefExp(SgArrowExp($WORK,$DS),$E1),$E2),$RHS)";
   AstMatching m;
   if(!measurementmode) {
     timer.start();
@@ -84,6 +88,22 @@ int main( int argc, char * argv[] ) {
         SgNode* matchedTerm=(*vars_iter).second;
         std::cout << "  VAR: " << (*vars_iter).first << "=" << SPRAY::AstTerm::astTermWithNullValuesToString(matchedTerm) << " @" << matchedTerm << std::endl;
       }
+      cout<< "WORK:"<<(*i)["$WORK"]<<" : "<<(*i)["$WORK"]->unparseToString()<<endl;
+      cout<< "DS:"<<(*i)["$DS"]<<" : "<<(*i)["$DS"]->unparseToString()<<endl;
+      cout<< "E1:"<<(*i)["$E1"]<<" : "<<(*i)["$E1"]->unparseToString()<<endl;
+      cout<< "E2:"<<(*i)["$E2"]<<" : "<<(*i)["$E2"]->unparseToString()<<endl;
+      cout<< "RHS:"<<(*i)["$RHS"]<<" : "<<(*i)["$RHS"]->unparseToString()<<endl;
+
+      // work -> dV[E1][E2] = RHS; ==> work -> dV.set(E1,E2,RHS);
+      string work=(*i)["$WORK"]->unparseToString();
+      string ds=(*i)["$DS"]->unparseToString();
+      string e1=(*i)["$E1"]->unparseToString();
+      string e2=(*i)["$E2"]->unparseToString();
+      string rhs=(*i)["$RHS"]->unparseToString();
+      string oldCode="/* OLD: "+(*i)["$Root"]->unparseToString()+"; */\n";
+      string newCode="      /* NEW: */"+work+" -> "+ds+".set("+e1+","+e2+","+rhs+")"; // ';' is unparsed as part of the statement that contains the assignop
+      SgNodeHelper::replaceAstWithString((*i)["$Root"], oldCode+newCode);
+
       std::cout << std::endl;
       std::cout << "Matching time: "<<matchingMeasurementTime<<endl;
     }
@@ -119,5 +139,6 @@ int main( int argc, char * argv[] ) {
     std::cout << std::endl;
   }
 #endif
+  backend(sageProject);
 }
 
