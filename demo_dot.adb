@@ -211,6 +211,49 @@ procedure Demo_Dot is
       Print (Graph, "Two edge stmts");
    end;
 
+   procedure Demo_HTML_Like_Label is
+      Graph          : Dot.Graphs.Access_Class := Create_Graph;
+      Node_Stmt      : Dot.Node_Stmt.Class; -- Initialized
+      Node_Stmt_Attr : Dot.Attr.Class; -- Initialized
+      Attr_Stmt      : Dot.Attr_Stmt.Class; -- Initialized
+      Attr_Stmt_Attr : Dot.Attr.Class; -- Initialized
+      NL : constant String := (1 => ASCII.LF);
+
+      Label_Text : constant String :=
+        "< " & NL &
+        "          <TABLE CELLBORDER=""0""> " & NL &
+        "            <TR>" & NL &
+        "              <TD ALIGN=""LEFT"">Element_Kind</TD>" & NL &
+        "              <TD>=</TD>" & NL &
+        "              <TD ALIGN=""LEFT"">AN_EXPRESSION</TD>" & NL &
+        "            </TR>" & NL &
+        "            <TR>" & NL &
+        "              <TD ALIGN=""LEFT"">Expression_Kind</TD>" & NL &
+        "              <TD>=</TD>" & NL &
+        "              <TD ALIGN=""LEFT"">AN_IDENTIFIER</TD>" & NL &
+        "            </TR>" & NL &
+        "            <TR>" & NL &
+        "              <TD ALIGN=""LEFT"">Name_Image</TD>" & NL &
+        "              <TD>=</TD>" & NL &
+        "              <TD ALIGN=""LEFT"">""Text_IO""</TD>" & NL &
+        "            </TR>" & NL &
+        "          </TABLE>" & NL &
+        "        >";
+   begin
+      Attr_Stmt.Kind := Dot.Attr_Stmt.Node;
+      Attr_Stmt_Attr.A_List.Append ("shape", "none");
+      Attr_Stmt.Attr_List.Append (Attr_Stmt_Attr);
+      Graph.Append_Stmt (new Dot.Attr_Stmt.Class'(Attr_Stmt));
+
+      Node_Stmt.Node_ID.ID := Dot.To_ID_Type ("node_1");
+      Node_Stmt_Attr.A_List.Append ("label", Label_Text);
+      Node_Stmt.Attr_List.Append (Node_Stmt_Attr);
+      Graph.Append_Stmt (new Dot.Node_Stmt.Class'(Node_Stmt));
+
+      Print (Graph, "One node, with HTML-like label");
+   end;
+
+
 
 begin
    Demo_Default_Graph;
@@ -232,4 +275,7 @@ begin
    Demo_Default_Edge;
    Demo_One_Edge;
    Demo_Two_Edges;
+
+   Demo_HTML_Like_Label;
+
 end Demo_Dot;

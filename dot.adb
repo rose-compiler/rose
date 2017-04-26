@@ -145,8 +145,15 @@ package body Dot is
       procedure Put
         (This     : in Class) is
       begin
-         Indented.Put ("<attr stmt>");
-         Indented.End_Line_If_Needed;
+         case This.Kind is
+            when Graph =>
+               Indented.Put ("graph");
+            when Node =>
+               Indented.Put ("node");
+            when Edge =>
+               Indented.Put ("edge");
+         end case;
+         This.Attr_List.Put;
       end Put;
 
       ------------
@@ -504,6 +511,12 @@ package body Dot is
       return Ada.Strings.Fixed.Index (Item, " ") > 0;
    end Contains_Space;
 
+   function Is_Html_Like (Item : in String)
+                          return boolean is
+   begin
+      return Item (Item'First) = '<';
+   end Is_Html_Like;
+
    ------------
    -- PRIVATE:
    ------------
@@ -511,12 +524,19 @@ package body Dot is
                        return String is
       Item_String : constant String :=
         ASU.To_String (ASU.Unbounded_String(Item));
+      function Quoted_Item_String return String is
+      begin
+         return '"' & Item_String & '"';
+      end Quoted_Item_String;
    begin
       if Item_String'Length = 0 then
          return """""";
-      elsif Is_Reserved_Word (Item_String) or else
-        Contains_Space (Item_String) then
-         return '"' & Item_String & '"';
+      elsif Is_Reserved_Word (Item_String) then
+         return Quoted_Item_String;
+      elsif Is_Html_Like (Item_String) then
+         return Item_String;
+      elsif Contains_Space (Item_String) then
+         return Quoted_Item_String;
       else
          return Item_String;
       end if;
