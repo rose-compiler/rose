@@ -95,6 +95,10 @@ bool VariableIdMapping::hasArrayType(VariableId varId) {
   SgType* type=getType(varId);
   return isSgArrayType(type)!=0;
 }
+bool VariableIdMapping::hasClassType(VariableId varId) {
+  SgType* type=getType(varId);
+  return isSgClassType(type)!=0;
+}
 bool VariableIdMapping::isConstantArray(VariableId varId) {
   if(hasArrayType(varId)) {
     // TODO: use new function: hasConstantArrayType.
@@ -296,12 +300,12 @@ SgSymbol* VariableIdMapping::getSymbol(VariableId varid) {
 //}
 
 void VariableIdMapping::setSize(VariableId variableId, size_t size) {
-  ROSE_ASSERT(hasArrayType(variableId));
+  //ROSE_ASSERT(hasArrayType(variableId));
   mappingVarIdToSize[variableId._id]=size;
 }
 
 size_t VariableIdMapping::getSize(VariableId variableId) {
-  ROSE_ASSERT(hasArrayType(variableId));
+  //ROSE_ASSERT(hasArrayType(variableId));
   return mappingVarIdToSize[variableId._id];
 }
 
@@ -594,7 +598,10 @@ void VariableIdMapping::registerNewSymbol(SgSymbol* sym) {
     size_t newIdCode = mappingVarIdToSym.size();
     mappingSymToVarId[sym] = newIdCode;
     mappingVarIdToSym.push_back(sym);
-
+    // set size to 1 (to compute bytes, multiply by size of type)
+    VariableId newVarId;
+    newVarId.setIdCode(newIdCode);
+    setSize(newVarId,1);
     // Mapping in both directions must be possible:
     ROSE_ASSERT(mappingSymToVarId.at(mappingVarIdToSym[newIdCode]) == newIdCode);
     ROSE_ASSERT(mappingVarIdToSym[mappingSymToVarId.at(sym)] == sym);
@@ -658,6 +665,14 @@ VariableId::toString() const {
 string
 VariableId::toString(VariableIdMapping& vim) const {
   return vim.uniqueShortVariableName(*this);
+}
+
+string
+VariableId::toString(VariableIdMapping* vim) const {
+  if(vim)
+    return vim->uniqueShortVariableName(*this);
+  else
+    return toString();
 }
 
 #if 0
