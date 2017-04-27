@@ -58,7 +58,7 @@ VarAbstractValue Constraint::rhsVar() const {
  */
 AValue Constraint::rhsVal() const {
   if(isVarValOp())
-    return _intVal; 
+    return _rhsVar;
   else
     throw CodeThorn::Exception( "Error: Constraint::rhsVal failed.");
 }
@@ -180,13 +180,12 @@ Constraint::Constraint(ConstraintOp op0,VarAbstractValue lhs, AValue rhs):_op(op
 string Constraint::toString() const {
   stringstream ss;
   if(isDisequation())
-    return "V0##0";
-  if(isVarVarOp())
+    return "--##--";
+  if(isVarVarOp()) {
     ss<<lhsVar().toString()<<(*this).opToString()<<rhsVar().toString();
-  else {
-    if(isVarValOp())
+  } else if(isVarValOp()) {
       ss<<lhsVar().toString()<<(*this).opToString()<<rhsVal().toString();
-    else
+  } else {
       throw CodeThorn::Exception( "Error: Constraint::toString: unknown operator.");
   }
   return ss.str();
@@ -198,12 +197,18 @@ string Constraint::toString() const {
  */
 string Constraint::toString(VariableIdMapping* variableIdMapping) const {
   stringstream ss;
+  cerr<<"DEBUG: toString()"<<endl;
+  cout<<"Op:"<<_op<<endl;
+  cout<<"lhs:"<<_lhsVar.toString()<<endl;
+  cout<<"rhs:"<<_rhsVar.toString()<<endl;
+
   if(isDisequation())
     return "__##__";
   if(isVarVarOp()||isVarValOp()) {
+    cerr<<"DEBUG: toString():varvar|varval"<<endl;
     ss<<lhsVar().toString(variableIdMapping)<<(*this).opToString()<<rhsVar().toString(variableIdMapping);
   } else {
-      throw CodeThorn::Exception( "Error: Constraint::toString: unknown operator.");
+    throw CodeThorn::Exception( "Error: Constraint::toString: unknown operator.");
   }
   return ss.str();
 }

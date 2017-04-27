@@ -67,7 +67,6 @@ class Constraint {
   ConstraintOp _op;
   CodeThorn::VarAbstractValue _lhsVar;
   CodeThorn::VarAbstractValue _rhsVar;
-  AValue _intVal;
 };
 
 bool operator<(const Constraint& c1, const Constraint& c2);
