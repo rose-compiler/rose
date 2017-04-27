@@ -903,6 +903,13 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb) const {
                     break;
                 }
 
+                // If the called block is also a function return (i.e., we're calling a function which is only one block long),
+                // then of course the block will pop the return address even though it's a legitimate function.
+                if (basicBlockIsFunctionReturn(calleeBb)) {
+                    allCalleesPopWithoutReturning = false;
+                    break;
+                }
+
                 // Get callee block's initial and final states
                 BaseSemantics::StatePtr calleeState0 = calleeBb->initialState();
                 BaseSemantics::StatePtr calleeStateN = calleeBb->finalState();
