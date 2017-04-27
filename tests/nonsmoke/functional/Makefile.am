@@ -54,12 +54,17 @@ endif
 
 ########################################################################################################################
 
-
 # Three phases (levels) of test programs:
 #  Phase 1) Analysis only, compiles the original code
 #  Phase 2) Analysis and code generation, compiles the original code
 #  Phase 3) analysis, code generation, and compiling the generated code
+
+#Installable programs
 bin_PROGRAMS = \
+  KeepGoingTranslator
+
+#  Non-installed programs
+noinst_PROGRAMS = \
    testParser \
    testFrontEnd \
    testAnalysis \
@@ -72,16 +77,15 @@ bin_PROGRAMS = \
    testGraphGeneration \
    testPDFGeneration \
    testTokenGeneration \
-   KeepGoingTranslator \
    testTemplates
 
 if ROSE_WITH_ATERM
-   bin_PROGRAMS += testAtermGraphGeneration
+   noinst_PROGRAMS += testAtermGraphGeneration
 endif
 
 # DQ (1/16/2012): This test code is not supported when compiling for simple front-end testing (smallest subset of ROSE that can be built).
 if !ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-   bin_PROGRAMS += testAstFileIO 
+   noinst_PROGRAMS += testAstFileIO 
 endif
 
 # Phase 0 tests code:
@@ -391,8 +395,15 @@ else
    test: test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testTemplates test_testGraphGeneration test_testPDFGeneration test_testAstFileIO testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants testKeepGoingTranslator test_exampleIdentityTranslator
 endif
 
+# Liao, 4/12/2017 restrict_template_parameter.C will trigger frontend error.
+# __minimal_input_code is defined in input_codes/Makefile.for.input.codes
+# Failed test: $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests/test2017_12_Liao.C
+# Failed test: $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests/test2017_13_Liao.C
 testKeepGoingTranslator: KeepGoingTranslator
-	./KeepGoingTranslator $(__minimal_input_code)
+	./KeepGoingTranslator -c $(__minimal_input_code) $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests/restrict_template_parameter.C  
+#	./KeepGoingTranslator -rose:Cxx11_only -c $(__minimal_input_code) $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests/restrict_template_parameter.C  
+#	$(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests/test2017_13_Liao.C
+#	$(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests/test2017_12_Liao.C
 
 # DQ (7/2/2015): template test code that marks all template instantiations for output (as a test).
 test_testTemplates: testTemplates
@@ -427,4 +438,5 @@ myCleanRule:
 	rm -f inputObjectFileAnalysis.C inputObjectFileCodeGeneration.C inputObjectFileTranslator.C alt_ObjectFileTokenGeneration_inputFile.C
 	rm -f alt_AstFileIO_inputFile* alt_AstFileRead_inputFile* a.out *.dot *.binary
 	rm -f *.C_identity
+	rm -rf rose_minimal.cpp rose-passed_files.txt rose-failed_files.txt
 

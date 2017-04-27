@@ -25,7 +25,6 @@ class RoseVisitor : public ROSE_VisitTraversal
     void visit ( SgNode* node);
 };
 
-
 void RoseVisitor::visit ( SgNode* node)
 {
   if (SgDeclarationStatement* decl = isSgDeclarationStatement(node))
@@ -50,6 +49,29 @@ void RoseVisitor::visit ( SgNode* node)
 
   }
 
+  if (SgVarRefExp* varref = isSgVarRefExp(node))
+  {
+    if (SgArrayType *atype = isSgArrayType (varref->get_type()) )
+    {
+      get_C_array_dimensions (*atype, *varref);
+    }
+  }
+
+#if 0 //TODO: Assertion `init_stmt != __null' failed.
+  if (SgForStatement* fs = isSgForStatement(node))
+  {
+    SgVariableSymbol* vs=NULL;
+    SgExpression* lb = NULL; 
+    SgExpression* up = NULL; 
+    SgExpression* st= NULL; 
+    getForLoopInformations (fs, vs, lb, up, st);
+  }
+#endif
+  if (SgVariableDeclaration* var_decl = isSgVariableDeclaration(node))
+  {
+    getFirstVariable (*var_decl);
+  }
+
   if (SgSwitchStatement* sw = isSgSwitchStatement(node))
   {
     cout<<"calling whereAmI() "<<endl;
@@ -61,7 +83,17 @@ void RoseVisitor::visit ( SgNode* node)
     // calling some functions within a smaller narrow scope
     setOneSourcePositionForTransformation(sw);
     removeAllOriginalExpressionTrees (sw);
+    // TODO: bugging function to fix    
+    //    changeBreakStatementsToGotos(sw);
   }
+
+#if 0
+  if (SgWhileStmt* sw = isSgWhileStmt(node))
+  {
+    // Internal function, called by SageInterface::ensureBasicBlockAsBodyOfUpcForAll(SgUpcForAllStatement* fs) only.    
+    //    ensureBasicBlock_aux (sw, &SgWhileStmt::get_body, &SgWhileStmt::set_body);
+  }
+#endif
 
   // TODO: not sure when SgToken show up in AST
   if (SgToken* stk = isSgToken(node) )
@@ -105,11 +137,19 @@ void RoseVisitor::visit ( SgNode* node)
     cout<<generateUniqueNameForUseAsIdentifier(func)<<endl;
 
     SgFunctionDeclaration* nondef_decl = isSgFunctionDeclaration(func->get_firstNondefiningDeclaration ());
+    // This is a defining declaration
     if (nondef_decl != NULL && nondef_decl != func)
     {
       if (declarationPreceedsDefinition (nondef_decl, func))
         cout<<"calling declarationPreceedsDefinition() returns true."<<endl;
+
     }
+
+    dumpInfo(func);
+    std::set<SgVariableSymbol*> readOnlySymbols; 
+    //TODO: assertion failures
+    //collectReadOnlySymbols (func, readOnlySymbols);
+
   }
 
   if (SgMemberFunctionDeclaration * memfunc = isSgMemberFunctionDeclaration (node))
@@ -148,6 +188,8 @@ void RoseVisitor::visit ( SgNode* node)
     isConstantTrue (exp);
     isConstantFalse (exp);
 
+    isPostfixOperator (exp);
+    isIndexOperator (exp);
 #if 0
     if (SgBinaryOp* bop = isSgBinaryOp (exp))
     {
@@ -155,6 +197,20 @@ void RoseVisitor::visit ( SgNode* node)
       splitExpressionIntoBasicBlock(bop);
     }
 #endif
+    if (isSgCharVal(exp) ||
+        isSgUnsignedCharVal(exp) ||
+        isSgShortVal(exp) ||
+        isSgUnsignedShortVal(exp) ||
+        isSgUnsignedIntVal(exp) ||
+        isSgLongIntVal(exp) ||
+        isSgUnsignedLongVal(exp) ||
+        isSgLongLongIntVal(exp) ||
+        isSgUnsignedLongLongIntVal(exp)
+       )
+    {
+      getIntegerConstantValue (isSgValueExp(exp));
+      evaluateConstIntegerExpression (exp);
+    }
 
   }
 
@@ -239,6 +295,22 @@ main ( int argc, char* argv[])
   is_X10_language();
   is_mixed_Fortran_and_C_language();
 
+    SgFilePtrList file_list = project->get_files();
+    SgFilePtrList::iterator iter;
+    for (iter= file_list.begin(); iter!=file_list.end(); iter++)
+    {   
+      SgFile* cur_file = *iter;
+      SgSourceFile * sfile = isSgSourceFile(cur_file);
+      if (sfile!=NULL)
+      { 
+        insertHeader (sfile, "stdio.h", true, PreprocessingInfo::before) ; 
+        insertHeader (sfile, "math.h", true, true) ; 
+        //TODO: it does not support SgProject
+        saveToPDF(sfile);
+      }
+    } // end for SgFile
+
+
   //2. Call some functions during a memory traversal
   // ROSE memory traversal to catch all sorts of nodes, not just those on visible AST
   RoseVisitor visitor;
@@ -248,7 +320,28 @@ main ( int argc, char* argv[])
   reset_name_collision_map();
   outputGlobalFunctionTypeSymbolTable();
 
-  
+  // special calls
+  SgFunctionDeclaration* mdecl =  findMain(project);
+  ROSE_ASSERT (mdecl != NULL);
+  PreprocessingInfo* comment =  new PreprocessingInfo(PreprocessingInfo::CplusplusStyleComment,
+                 "//test comments here ","user-generated",0, 0, 0, PreprocessingInfo::before);
+  insertHeader (mdecl,comment, true);
+
+  SgFunctionDeclaration* foo_decl = findFunctionDeclaration (project,  "foo", NULL, false);
+  ROSE_ASSERT (foo_decl!= NULL);
+  setExtern(foo_decl); 
+
+  checkTypesAreEqual (mdecl->get_type(), foo_decl->get_type());
+  collectTransformedStatements(project);
+  collectModifiedStatements(project);
+
+  SgFunctionDeclaration* mv_decl = findFunctionDeclaration (project,  "test_moveVariableDeclaration", NULL, false);
+  ROSE_ASSERT (mv_decl!= NULL);
+  SgBasicBlock* body = isSgBasicBlock(mv_decl->get_definition()->get_body());
+  ROSE_ASSERT (body != NULL);
+  SgVariableDeclaration* var_decl = isSgVariableDeclaration( (body->get_statements())[0]);
+  SgForStatement* fs = isSgForStatement( (body->get_statements())[1]);
+  moveVariableDeclaration (var_decl, fs);
   return backend(project);
 }
 

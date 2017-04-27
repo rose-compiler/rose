@@ -1,0 +1,15 @@
+#This is for a DEC Alpha 8400. The code will execute on a 
+#single processor
+#Warning: parallel make does not work properly in general
+F77  = f77
+FLINK   = f77
+#Optimization -O5 breaks SP; works fine for all other codes
+FFLAGS  = -O4
+
+CC   = cc
+CLINK   = cc
+CFLAGS  = -O5 
+
+BINDIR  = ../bin
+
+RAND   = randi8

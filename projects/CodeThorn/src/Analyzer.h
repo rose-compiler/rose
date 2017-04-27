@@ -27,7 +27,7 @@
 #include "RoseAst.h"
 #include "SgNodeHelper.h"
 #include "ExprAnalyzer.h"
-#include "StateRepresentations.h"
+#include "EState.h"
 #include "TransitionGraph.h"
 #include "PropertyValueTable.h"
 #include "CTIOLabeler.h"
@@ -246,8 +246,6 @@ namespace CodeThorn {
     void setModeLTLDriven(bool ltlDriven) { transitionGraph.setModeLTLDriven(ltlDriven); }
     bool getModeLTLDriven() { return transitionGraph.getModeLTLDriven(); }
     long analysisRunTimeInSeconds(); 
-
-    void setVariableValueThreshold(int threshold) { variableValueMonitor.setThreshold(threshold); }
 
     void set_finished(std::vector<bool>& v, bool val);
     bool all_false(std::vector<bool>& v);

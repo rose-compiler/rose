@@ -2365,6 +2365,12 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
                          if (edecl->get_parent() == NULL)
                             {
                               printf ("WARNING: edecl->get_parent() == NULL: edecl = %p \n",edecl);
+
+                           // DQ (4/23/2017): Debugging Microsoft extensions.
+                              edecl->get_file_info()->display("WARNING: edecl->get_parent() == NULL: debug");
+
+                              printf ("edecl->get_firstNondefiningDeclaration() = %p \n",edecl->get_firstNondefiningDeclaration());
+                              printf ("edecl->get_definingDeclaration() = %p \n",edecl->get_definingDeclaration());
                             }
                          ROSE_ASSERT(edecl->get_parent() != NULL);
                          SgTypedefDeclaration* typedefDeclaration = isSgTypedefDeclaration(edecl->get_parent());
@@ -2400,7 +2406,7 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
 
 #if 0
      printf ("In unparseEnumType(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
-     printf ("In unparseEnumType(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition() == true) ? "true" : "false");
+     printf ("In unparseEnumType(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition()  == true) ? "true" : "false");
 #endif
 
   // DQ (1/7/2014): These should have been setup to be the same.

@@ -1,7 +1,7 @@
 #ifndef TRANSITION_GRAPH
 #define TRANSITION_GRAPH
 
-#include "StateRepresentations.h"
+#include "EState.h"
 
 namespace CodeThorn {
   /*! 

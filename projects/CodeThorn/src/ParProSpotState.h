@@ -6,7 +6,7 @@
 
 //CodeThorn includes
 #include "codethorn.h"
-#include "StateRepresentations.h"
+#include "ParProEState.h"
 #include "ParProSpotTgba.h"
 #include "ParProSpotSuccIter.h"
 
