@@ -226,7 +226,7 @@ public:
         InputGroup igroup;
         WorkItem prevWorkItem;
         SgAsmInterpretation *prev_interp = NULL;
-        MemoryMap ro_map;
+        MemoryMap::Ptr ro_map = MemoryMap::instance();
         Disassembler::AddressSet whitelist_exports;         // dynamic functions that should be called
         PointerDetectors pointers;
         InsnCoverage insn_coverage;
@@ -263,11 +263,11 @@ public:
             if (interp!=prev_interp) {
                 prev_interp = interp;
                 assert(interp->get_map()!=NULL);
-                ro_map = *interp->get_map();
-                ro_map.require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE).keep();
+                ro_map = interp->get_map()->shallowCopy();
+                ro_map->require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE).keep();
                 Disassembler::AddressSet whitelist_imports = get_import_addresses(interp, builtin_function_names);
                 whitelist_exports.clear(); // imports are addresses of import table slots; exports are functions
-                overmap_dynlink_addresses(interp, *insns, opt.params.follow_calls, &ro_map, GOTPLT_VALUE,
+                overmap_dynlink_addresses(interp, *insns, opt.params.follow_calls, ro_map, GOTPLT_VALUE,
                                           whitelist_imports, whitelist_exports/*out*/);
                 if (opt.verbosity>=EFFUSIVE) {
                     std::cerr <<argv0 <<": memory map for SgAsmInterpretation:\n";
@@ -280,7 +280,7 @@ public:
             assert(entry2id!=NULL);
             std::cerr <<"process " <<getpid() <<" about to run test " <<workIdx <<"/" <<work.size() <<" " <<workItem <<"\n";
             runOneTest(tx, workItem, pointers, func, function_ids, insn_coverage, dynamic_cg, tracer, consumed_inputs,
-                       interp, whitelist_exports, cmd_id, igroup, funcinfo, *insns, &ro_map, *entry2id, ogroups);
+                       interp, whitelist_exports, cmd_id, igroup, funcinfo, *insns, ro_map, *entry2id, ogroups);
             ++ntests_ran;
 
             // Checkpoint

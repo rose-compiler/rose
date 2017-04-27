@@ -1,4 +1,4 @@
-==============================================================================
+=============================================================================
 === Introduction
 ==============================================================================
 
@@ -1063,4 +1063,13 @@ ROSE.SH (specification of alternative translator):
 
 Collecting header file information to support debugging:
    g++ -H -c /home/quinlan1/ROSE/git_rose_development/tests/nonsmoke/functional/CompileTests/Cxx_tests/test2004_35.C > header_output.txt 2>&1
+
+Running Compass:
+   ./rose.sh --shell mysql
+
+   export ROSE_CXX="env COMPASS_PARAMETERS=/home/quinlan1/ROSE/ROSE_CompileTree/git-LINUX-64bit-4.8.4-EDG12-BOOST_1_60-dq-development-rc/projects/compass/tools/compass/compass_parameters /home/quinlan1/ROSE/ROSE_CompileTree/git-LINUX-64bit-4.8.4-EDG12-BOOST_1_60-dq-development-rc/projects/compass/tools/compass/compassMain --compass:silent"
+
+   export ROSE_CXX="env COMPASS_PARAMETERS=/home/quinlan1/ROSE/ROSE_CompileTree/git-LINUX-64bit-4.8.4-EDG12-BOOST_1_60-dq-development-rc/projects/compass/tools/sampleCompassSubset/compass_parameters /home/quinlan1/ROSE/ROSE_CompileTree/git-LINUX-64bit-4.8.4-EDG12-BOOST_1_60-dq-development-rc/projects/compass/tools/sampleCompassSubset/sampleCompassSubset --compass:silent"
+
+   export ROSE_CXX="env COMPASS_PARAMETERS=/home/quinlan1/ROSE/ROSE_CompileTree/git-LINUX-64bit-4.8.4-EDG12-BOOST_1_60-dq-development-rc/projects/compass/tools/sampleCompassSubset/compass_parameters /home/quinlan1/ROSE/ROSE_CompileTree/git-LINUX-64bit-4.8.4-EDG12-BOOST_1_60-dq-development-rc/projects/compass/tools/sampleCompassSubset/sampleCompassSubset --compass:silent"
 

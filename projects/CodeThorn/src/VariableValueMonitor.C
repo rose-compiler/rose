@@ -7,16 +7,7 @@ using namespace SPRAY;
 
 namespace CodeThorn {
 
-bool VariableValueMonitor::isActive() {
-  return _threshold!=-1;
-}
-
-VariableValueMonitor::VariableValueMonitor():_threshold(-1){
-}
-
-// in combination with adaptive-top mode
-void VariableValueMonitor::setThreshold(size_t threshold) {
-  _threshold=threshold;
+VariableValueMonitor::VariableValueMonitor(){
 }
 
 void VariableValueMonitor::setVariableMode(VariableMode mode,VariableId variableId) {
@@ -108,7 +99,7 @@ bool VariableValueMonitor::isHotVariable(Analyzer* analyzer, VariableId varId) {
     if(name=="input" || name=="output") 
       return false;
     else
-      return _threshold!=-1 && ((long int)_variablesMap[varId]->size())>=_threshold;
+      return true;
   }
   case VariableValueMonitor::VARMODE_PRECISE:
     return false;

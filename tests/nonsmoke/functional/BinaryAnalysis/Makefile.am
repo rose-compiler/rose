@@ -1532,6 +1532,27 @@ check_astio: $(astio_Targets)
 PHONIES += check_specimens
 check_specimens: check_parse_container check_disassemble check_unparse check_assemble check_astio
 
+#############################################################################################
+# Test disassembling random input data for various architectures.
+#############################################################################################
+
+noinst_PROGRAMS += testRandomInput
+testRandomInput_SOURCES = testRandomInput.C
+testRandomInput_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+
+testRandomInput_ISAs = amd64 arm coldfire i386 m68040 mips-be mips-le ppc
+testRandomInput_Targets = $(addprefix tri_, $(addsuffix .passed, $(testRandomInput_ISAs)))
+TEST_TARGETS += $(testRandomInput_Targets)
+
+$(testRandomInput_Targets): tri_%.passed: testRandomInput conditionalDisable
+	@$(RTH_RUN)							\
+		TITLE="disassemble random $* input [$@]"		\
+		DISABLED="$$(./conditionalDisable)"			\
+		CMD="$$(pwd)/testRandomInput --size=50000 --isa=$*"	\
+		$(TEST_EXIT_STATUS) $@
+
+PHONIES += check-random-input
+check-random-input: $(testRandomInput_Targets)
 
 #############################################################################################
 # Serialization of IR nodes related to binary analysis

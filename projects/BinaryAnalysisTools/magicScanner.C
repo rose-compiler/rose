@@ -8,6 +8,7 @@
 
 using namespace rose;
 using namespace rose::Diagnostics;
+using namespace rose::BinaryAnalysis;
 
 struct Settings {
     AddressInterval limits;                             // limits for scanning (empty implies all addresses)
@@ -93,12 +94,12 @@ main(int argc, char *argv[]) {
     BinaryAnalysis::MagicNumber analyzer;
     analyzer.maxBytesToCheck(settings.maxBytes);
 
-    MemoryMap map = engine.loadSpecimens(specimenNames);
-    map.dump(mlog[INFO]);
+    MemoryMap::Ptr map = engine.loadSpecimens(specimenNames);
+    map->dump(mlog[INFO]);
 
     size_t step = std::max(size_t(1), settings.step);
-    AddressInterval limits = settings.limits.isEmpty() ? map.hull() : (settings.limits & map.hull());
-    Sawyer::Container::IntervalSet<AddressInterval> addresses(map);
+    AddressInterval limits = settings.limits.isEmpty() ? map->hull() : (settings.limits & map->hull());
+    Sawyer::Container::IntervalSet<AddressInterval> addresses(*map);
     addresses.intersect(limits);
     size_t nPositions = addresses.size() / step;
     mlog[INFO] <<"approximately " <<StringUtility::plural(nPositions, "positions") <<" to check\n";
@@ -106,12 +107,12 @@ main(int argc, char *argv[]) {
     {
         Sawyer::ProgressBar<size_t> progress(nPositions, mlog[INFO], "positions");
         for (rose_addr_t va=limits.least();
-             va<=limits.greatest() && map.atOrAfter(va).next().assignTo(va);
+             va<=limits.greatest() && map->atOrAfter(va).next().assignTo(va);
              va+=step, ++progress) {
             std::string magicString = analyzer.identify(map, va);
             if (magicString!="data") {                  // runs home to Momma when it gets confused
                 uint8_t buf[8];
-                size_t nBytes = map.at(va).limit(sizeof buf).read(buf).size();
+                size_t nBytes = map->at(va).limit(sizeof buf).read(buf).size();
                 std::cout <<StringUtility::addrToString(va) <<" |" <<leadingBytes(buf, nBytes) <<" | " <<magicString <<"\n";
             }
             if (va==limits.greatest())

@@ -314,7 +314,7 @@ public:
         // If we know the address and that memory exists, then read the memory to obtain the default value.
         uint8_t buf[8];
         if (addr->is_number() && nBytes < sizeof(buf) &&
-            nBytes == partitioner_->memoryMap().at(addr->get_number()).limit(nBytes).read(buf).size()) {
+            nBytes == partitioner_->memoryMap()->at(addr->get_number()).limit(nBytes).read(buf).size()) {
             // FIXME[Robb P. Matzke 2015-05-25]: assuming little endian
             uint64_t value = 0;
             for (size_t i=0; i<nBytes; ++i)

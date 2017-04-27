@@ -91,7 +91,7 @@ DisassemblerMips::unparser() const {
 
 // see base class
 SgAsmInstruction *
-DisassemblerMips::disassembleOne(const MemoryMap *map, rose_addr_t start_va, AddressSet *successors)
+DisassemblerMips::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va, AddressSet *successors)
 {
     // Instructions are always four-byte, naturally-aligned, in big- or little-endian order.
     insn_va = start_va;

@@ -130,7 +130,7 @@ DisassemblerX86::init(size_t wordsize)
 }
 
 SgAsmInstruction *
-DisassemblerX86::disassembleOne(const MemoryMap *map, rose_addr_t start_va, AddressSet *successors)
+DisassemblerX86::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va, AddressSet *successors)
 {
     /* The low-level disassembly function don't understand MemoryMap mappings. Therefore, remap the next few bytes (enough
      * for at least one instruction) into a temporary buffer. The longest x86 instruction is 15 bytes in 16-bit mode and 13

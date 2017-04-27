@@ -11,9 +11,10 @@
 #include "Disassembler.h"
 #include "dwarfSupport.h"
 
-using namespace rose;                                   // temporary until this API lives in the "rose" name space
 using namespace rose::Diagnostics;
-using namespace rose::BinaryAnalysis;
+
+namespace rose {
+namespace BinaryAnalysis {
 
 Sawyer::Message::Facility BinaryLoader::mlog;
 std::vector<BinaryLoader*> BinaryLoader::loaders;
@@ -327,8 +328,8 @@ void
 BinaryLoader::remap(SgAsmInterpretation* interp)
 {
     /* Make sure we have a valid memory map. It is permissible for the caller to have reserved some space already. */
-    MemoryMap *map = interp->get_map();
-    if (!map) interp->set_map(map = new MemoryMap);
+    MemoryMap::Ptr map = interp->get_map();
+    if (!map) interp->set_map(map = MemoryMap::instance());
 
     /* Process each file header in the order it appears in the AST. This is also the order that the link() method parsed
      * dependencies (usually by a breadth-first search). */
@@ -339,7 +340,7 @@ BinaryLoader::remap(SgAsmInterpretation* interp)
 
 /* Maps the sections of a single header. */
 void
-BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
+BinaryLoader::remap(MemoryMap::Ptr &map, SgAsmGenericHeader *header)
 {
     SgAsmGenericFile *file = header->get_file();
     ASSERT_not_null(file);
@@ -735,7 +736,7 @@ BinaryLoader::bialign(rose_addr_t val1, rose_addr_t align1, rose_addr_t val2, ro
 }
 
 BinaryLoader::MappingContribution
-BinaryLoader::align_values(SgAsmGenericSection *section, MemoryMap *map,
+BinaryLoader::align_values(SgAsmGenericSection *section, const MemoryMap::Ptr &map,
                            rose_addr_t *malign_lo_p, rose_addr_t *malign_hi_p,
                            rose_addr_t *va_p, rose_addr_t *mem_size_p,
                            rose_addr_t *offset_p, rose_addr_t *file_size_p, bool *map_private_p,
@@ -802,3 +803,6 @@ BinaryLoader::fixup(SgAsmInterpretation *interp, FixupErrors *errors)
     // 4. Collect Relocation Entries.
     // 5.  for each relocation entry, perform relocation
 }
+
+} // namespace
+} // namespace

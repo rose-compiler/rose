@@ -8,7 +8,7 @@
 
 //CodeThron includes
 #include "SpotState.h"
-#include "StateRepresentations.h"
+#include "EState.h"
 
 //SPOT includes
 #include "tgba/succiter.hh"

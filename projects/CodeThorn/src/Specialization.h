@@ -2,7 +2,7 @@
 #define SPECIALIZATION_H
 
 #include "VariableIdMapping.h"
-#include "StateRepresentations.h"
+#include "EState.h"
 #include "ArrayElementAccessData.h"
 #include "Analyzer.h"
 #include "ExprAnalyzer.h"

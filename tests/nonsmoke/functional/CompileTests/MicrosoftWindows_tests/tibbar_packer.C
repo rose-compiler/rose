@@ -20,6 +20,9 @@ This code was substantially changed by Kirk Sayre (sayre@cert.org).
 #include "winbase.h"
 #include "limits.h"
 
+// DQ (4/23/2017): Added header to define IMAGE_NT_HEADERS32.
+// #include "winnt.h"
+
 // Do correct pointer addition.
 // cast - The type of pointer to create.
 // ptr, addValue - The pointers to add together.
@@ -454,8 +457,11 @@ int main( int argc, char* argv[] ) {
   //
   // Use the IMAGE_FIRST_SECTION macro defined in winnt.h to get the address
   // of the 1st IMAGE_SECTION_HEADER.
-  IMAGE_SECTION_HEADER* firstSectionHeader = 
-    IMAGE_FIRST_SECTION32(pNTHeader);
+
+  // DQ (4/23/2017): I don't see that this macro will work with WINE (modified to support testing).
+  // IMAGE_SECTION_HEADER* firstSectionHeader = 
+  //  IMAGE_FIRST_SECTION32(pNTHeader);
+  IMAGE_SECTION_HEADER* firstSectionHeader = NULL;
 
   // Get a pointer to the code block. The code block is found by adding the
   // base load address to the code RVA.

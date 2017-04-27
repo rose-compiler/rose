@@ -23,8 +23,6 @@ namespace CodeThorn {
   \author Markus Schordan
  */
 
-namespace AType {
-
   /*!
     \brief Serves as top value in analysis.
     \date 2012
@@ -80,7 +78,6 @@ class BoolLattice {
 
  ostream& operator<<(ostream& os, const BoolLattice& value);
 
-} // end of namespace AType
 } // end of namespace CodeThorn
 
 

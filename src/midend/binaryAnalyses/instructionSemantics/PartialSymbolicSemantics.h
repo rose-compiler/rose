@@ -236,12 +236,12 @@ namespace PartialSymbolicSemantics {
         size_t ninsns;                      /**< Total number of instructions processed. This is incremented by
                                              *   startInstruction(), which is the first thing called by
                                              *   X86InstructionSemantics::processInstruction(). */
-        const MemoryMap *map;               /**< Initial known memory values for known addresses. */
+        MemoryMap::Ptr map;                 /**< Initial known memory values for known addresses. */
 
     public:
         typedef State<ValueType> StateType;
 
-        Policy(): cur_insn(NULL), p_discard_popped_memory(false), ninsns(0), map(NULL) {
+        Policy(): cur_insn(NULL), p_discard_popped_memory(false), ninsns(0) {
             /* So that named values are identical in both; reinitialized by first call to startInstruction(). */
             set_register_dictionary(RegisterDictionary::dictionary_pentium4());
             orig_state = cur_state;
@@ -250,10 +250,10 @@ namespace PartialSymbolicSemantics {
         /** Memory map that holds known values for known memory addresses.  This map is not modified by the
          *  policy and data is read from but not written to the map.
          * @{ */
-        void set_map(const MemoryMap *map) {
+        void set_map(const MemoryMap::Ptr &map) {
             this->map = map;
         }
-        const MemoryMap *get_map() const { return map; }
+        const MemoryMap::Ptr get_map() const { return map; }
         /** @} */
 
         /** Returns the number of instructions processed. This counter is incremented at the beginning of each

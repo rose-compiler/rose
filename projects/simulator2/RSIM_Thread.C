@@ -662,8 +662,8 @@ RSIM_Thread::report_stack_frames(Sawyer::Message::Stream &mesg, const std::strin
         SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(insn);
         if (func && !func->get_name().empty() && 0==(func->get_reason() & SgAsmFunction::FUNC_LEFTOVERS)) {
             mesg <<" in function " <<func->get_name();
-        } else if (process->get_memory().at(ip).exists()) {
-            const MemoryMap::Segment &sgmt = process->get_memory().find(ip)->value();
+        } else if (process->get_memory()->at(ip).exists()) {
+            const MemoryMap::Segment &sgmt = process->get_memory()->find(ip)->value();
             if (!sgmt.name().empty())
                 mesg <<" in memory region " <<sgmt.name();
         }

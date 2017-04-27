@@ -426,7 +426,8 @@ SgAsmM68kInstruction::getSuccessors(bool *complete)
 }
 
 BinaryAnalysis::Disassembler::AddressSet
-SgAsmM68kInstruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns, bool *complete, const MemoryMap *initial_memory)
+SgAsmM68kInstruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns, bool *complete,
+                                    const BinaryAnalysis::MemoryMap::Ptr &initial_memory)
 {
     using namespace rose::BinaryAnalysis::InstructionSemantics2;
     Stream debug(mlog[DEBUG]);

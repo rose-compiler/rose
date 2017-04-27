@@ -255,9 +255,13 @@ int main(int argc, char** argv)
 #ifdef ROSE_MPI
   MPI_Finalize();
 #endif
-#if 1  // Liao, 2/26/2009, add this backend support to be more friendly to build systems
-       // 
-     return backend(project);
+#if 1
+  // DQ (4/17/2017): We only need to support analysis so this is the safer (more robust) backend to use.
+  // Skip calling the typical backend for ROSE (not required for just testing analysis)
+  // This backend calls the backend compiler using the original input source file list.
+  // Liao, 2/26/2009, add this backend support to be more friendly to build systems
+  // return backend(project);
+     return backendCompilesUsingOriginalInputFile(project);
 #else     
      return 0;
 #endif     
