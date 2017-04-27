@@ -157,8 +157,10 @@ class ConstraintSetHashFun {
       unsigned int hash=1;
       for(ConstraintSet::iterator i=cs.begin();i!=cs.end();++i) {
         // use the symbol-ptr of lhsVar for hashing (we are a friend).
-        if((*i).isVarValOp()||(*i).isVarVarOp()) {
+        if((*i).isVarValOp()) {
           hash=((hash<<8)+((long)(*i).rhsVal().hash()))^hash;
+        } else if((*i).isVarVarOp()) {
+          hash=((hash<<8)+((long)(*i).rhsVar().hash()))^hash;
         } else {
           hash=0; // DEQ
         }
@@ -177,8 +179,10 @@ class ConstraintSetHashFun {
       unsigned int hash=1;
       for(ConstraintSet::iterator i=cs->begin();i!=cs->end();++i) {
         // use the symbol-ptr of lhsVar for hashing (we are a friend).
-        if((*i).isVarValOp()||(*i).isVarVarOp()) {
+        if((*i).isVarValOp()) {
           hash=((hash<<8)+((long)(*i).rhsVal().hash()))^hash;
+        } else if((*i).isVarVarOp()) {
+          hash=((hash<<8)+((long)(*i).rhsVar().hash()))^hash;
         } else {
           hash=0; // DEQ
         }

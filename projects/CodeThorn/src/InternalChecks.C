@@ -227,6 +227,7 @@ void checkTypes() {
         cs1.addConstraint(c2);
         Constraint c5(Constraint::EQ_VAR_VAR,var_x,var_y);
         cs1.addConstraint(c5);
+        cout<<cs1.toString()<<endl;
         check("cs1.disequalityExists()==true",cs1.disequalityExists());
       }
       {

@@ -369,7 +369,7 @@ void Analyzer::eventGlobalTopifyTurnedOn() {
   int n=0;
   int nt=0;
   for(AbstractValueSet::iterator i=vset.begin();i!=vset.end();++i) {
-    string name=(*i).toString(getVariableIdMapping());
+    string name=(*i).toLhsString(getVariableIdMapping());
     bool isCompoundIncVar=(_compoundIncVarsSet.find(*i)!=_compoundIncVarsSet.end());
     bool isSmallActivityVar=(_smallActivityVarsSet.find(*i)!=_smallActivityVarsSet.end());
     bool isAssertCondVar=(_assertCondVarsSet.find(*i)!=_assertCondVarsSet.end());
@@ -445,7 +445,6 @@ void Analyzer::topifyVariable(PState& pstate, ConstraintSet& cset, AbstractValue
 EState Analyzer::createEState(Label label, PState pstate, ConstraintSet cset) {
   // here is the best location to adapt the analysis results to certain global restrictions
   if(isActiveGlobalTopify()) {
-    // xxx1
 #if 1
     AbstractValueSet varSet=pstate.getVariableIds();
     for(AbstractValueSet::iterator i=varSet.begin();i!=varSet.end();++i) {
@@ -931,7 +930,6 @@ list<EState> Analyzer::transferEdgeEState(Edge edge, const EState* estate) {
   // 1. we handle the edge as outgoing edge
   SgNode* nextNodeToAnalyze1=cfanalyzer->getNode(edge.source());
   ROSE_ASSERT(nextNodeToAnalyze1);
-
   if(edge.isType(EDGE_LOCAL)) {
     return transferFunctionCallLocalEdge(edge,estate);
   } else if(SgNodeHelper::Pattern::matchAssertExpr(nextNodeToAnalyze1)) {
@@ -1247,7 +1245,6 @@ void Analyzer::generateAstNodeInfo(SgNode* node) {
       }
     }
 #if 0
-    cout << "DEBUG:"<<(*i)->sage_class_name();
     if(attr) cout<<":"<<attr->toString();
     else cout<<": no attribute!"<<endl;
 #endif
@@ -1951,7 +1948,6 @@ void Analyzer::runSolver12() {
                 // logger[DEBUG]<<"generate STG-edge:"<<"ICFG-EDGE:"<<e.toString()<<endl;
               }
             }
-
             if((!newEState.constraints()->disequalityExists()) &&(!isFailedAssertEState(&newEState)&&!isVerificationErrorEState(&newEState))) {
               HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=process(newEState);
               const EState* newEStatePtr=pres.second;
@@ -2978,7 +2974,6 @@ std::list<EState> Analyzer::transferFunctionCallReturn(Edge edge, const EState* 
       newPState.setVariableToValue(lhsVarId,evalResult);
 
       cset.addAssignEqVarVar(lhsVarId,returnVarId);
-
       newPState.deleteVar(returnVarId); // remove $return from state
       cset.removeAllConstraintsOfVar(returnVarId); // remove constraints of $return
 
@@ -3032,7 +3027,7 @@ std::list<EState> Analyzer::transferFunctionExit(Edge edge, const EState* estate
     for(VariableIdMapping::VariableIdSet::iterator i=vars.begin();i!=vars.end();++i) {
       VariableId varId=*i;
       newPState.deleteVar(varId);
-        cset.removeAllConstraintsOfVar(varId);
+      cset.removeAllConstraintsOfVar(varId);
     }
     // ad 3)
     return elistify(createEState(edge.target(),newPState,cset));
@@ -3044,7 +3039,6 @@ std::list<EState> Analyzer::transferFunctionExit(Edge edge, const EState* estate
 
 SgNode* findExprNodeInAstUpwards(VariantT variant,SgNode* node) {
   while(node!=nullptr&&isSgExpression(node)&&(node->variantT()!=variant)) {
-    cout<<"DEBUG: findExprNode @"<<node->class_name()<<endl;
     node=node->get_parent();
   }
   if(node)

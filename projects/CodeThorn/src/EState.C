@@ -153,7 +153,7 @@ CodeThorn::AbstractValue EState::determineUniqueIOValue() const {
   CodeThorn::AbstractValue value;
   if(io.op==InputOutput::STDIN_VAR||io.op==InputOutput::STDOUT_VAR||io.op==InputOutput::STDERR_VAR) {
     VarAbstractValue varId=io.var;
-    assert(_pstate->varExists(varId));
+    ROSE_ASSERT(_pstate->varExists(varId));
     // case 1: check PState
     if(_pstate->varIsConst(varId)) {
       PState pstate2=*_pstate;
@@ -161,8 +161,11 @@ CodeThorn::AbstractValue EState::determineUniqueIOValue() const {
       return varVal;
     }
     // case 2: check constraint if var is top
-    if(_pstate->varIsTop(varId))
+    if(_pstate->varIsTop(varId)) {
       return constraints()->varAbstractValue(varId);
+    } else {
+      cout<<"DEBUG: could not determine constant value from constraints."<<endl;
+    }
   }
   if(io.op==InputOutput::STDOUT_CONST||io.op==InputOutput::STDERR_CONST) {
     value=io.val;
@@ -294,7 +297,7 @@ bool EState::isRersTopified(VariableIdMapping* vim) const {
   const PState* pstate = this->pstate();
   VarAbstractValueSet varSet=pstate->getVariableIds();
   for (VarAbstractValueSet::iterator l=varSet.begin();l!=varSet.end();++l) {
-    string varName=(*l).toString(vim);
+    string varName=(*l).toLhsString(vim);
     if (boost::regex_match(varName, re)) { //matches internal RERS variables (e.g. "int a188")
       if (pstate->varIsConst(*l)) {  // is a concrete (therefore prefix) state
         return false;

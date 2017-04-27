@@ -77,6 +77,25 @@ using namespace Sawyer::Message;
 // experimental
 #include "IOSequenceGenerator.C"
 
+#include <execinfo.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+// handler for generating backtrace
+void handler(int sig) {
+  void *array[10];
+  size_t size;
+
+  // get void*'s for all entries on the stack
+  size = backtrace(array, 10);
+
+  // print out all the frames to stderr
+  fprintf(stderr, "Error: signal %d:\n", sig);
+  backtrace_symbols_fd(array, size, STDERR_FILENO);
+  exit(1);
+}
+
 void CodeThorn::initDiagnostics() {
   rose::Diagnostics::initialize();
   Analyzer::initDiagnostics();
@@ -1021,6 +1040,7 @@ void analyzerSetup(Analyzer& analyzer, const po::variables_map& args, Sawyer::Me
 int main( int argc, char * argv[] ) {
   ROSE_INITIALIZE;
 
+  signal(SIGSEGV, handler);   // install handler for backtrace
   CodeThorn::initDiagnostics();
 
   rose::Diagnostics::mprefix->showProgramName(false);

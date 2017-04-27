@@ -31,7 +31,7 @@ AbstractValue::AbstractValue():valueType(AbstractValue::BOT),intValue(0) {}
 
 // type conversion
 // TODO: represent value 'unitialized' here
-AbstractValue::AbstractValue(VariableId varId):valueType(AbstractValue::CONSTINT),variableId(varId),intValue(0) {
+AbstractValue::AbstractValue(VariableId varId):valueType(AbstractValue::PTR),variableId(varId),intValue(0) {
 }
 
 // type conversion

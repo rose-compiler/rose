@@ -48,8 +48,8 @@ VarAbstractValue Constraint::lhsVar() const {
 VarAbstractValue Constraint::rhsVar() const {
   if(isVarVarOp())
     return _rhsVar;
-  else
-    throw CodeThorn::Exception( "Error: Constraint::rhsVar failed.");
+  else 
+    throw CodeThorn::Exception( "Error: Constraint::rhsVar failed  (not a var-var operator).");
 }
 
 /*! 
@@ -57,10 +57,11 @@ VarAbstractValue Constraint::rhsVar() const {
   * \date 2012.
  */
 AValue Constraint::rhsVal() const {
-  if(isVarValOp())
+  if(isVarValOp()) {
     return _rhsVar;
-  else
-    throw CodeThorn::Exception( "Error: Constraint::rhsVal failed.");
+  } else {
+    throw CodeThorn::Exception( "Error: Constraint::rhsVal failed (not a var-val operator).");
+  }
 }
 
 /*! 
@@ -111,9 +112,10 @@ bool CodeThorn::operator<(const Constraint& c1, const Constraint& c2) {
     return c1.op()<c2.op();
   if(c1.op()==c2.op()) {
     switch(c1.op()) {
+    case Constraint::DEQ:
+      return false; // bugfix MS:4/26/17
     case Constraint::EQ_VAR_CONST:
     case Constraint::NEQ_VAR_CONST:
-    case Constraint::DEQ:
       return (c1.rhsVal()<c2.rhsVal());
     case Constraint::EQ_VAR_VAR:
     case Constraint::NEQ_VAR_VAR:
@@ -132,13 +134,18 @@ bool CodeThorn::operator<(const Constraint& c1, const Constraint& c2) {
   * \date 2012.
  */
 bool CodeThorn::operator==(const Constraint& c1, const Constraint& c2) {
-  return 
-    c1.lhsVar()==c2.lhsVar() && c1.op()==c2.op() 
-    && ((c1.isVarValOp() && (c1.rhsVal()==c2.rhsVal()))
-        || 
-        (c1.isVarVarOp() && (c1.rhsVar()==c2.rhsVar()))
-       )
-    ;
+  if(c1.isDisequation()&&c2.isDisequation()) {
+    return true;
+  } else if( (c1.isDisequation()&&!c2.isDisequation()) || (!c1.isDisequation()&&c2.isDisequation()) ) {
+    return false;
+  } else {
+    return (c1.lhsVar()==c2.lhsVar() && c1.op()==c2.op() 
+            && ((c1.isVarValOp() && (c1.rhsVal()==c2.rhsVal()))
+                || 
+                (c1.isVarVarOp() && (c1.rhsVar()==c2.rhsVar()))
+                )
+            );
+  }
 }
 
 /*! 
@@ -162,10 +169,18 @@ Constraint::Constraint() {
   * \date 2012.
  */
 Constraint::Constraint(ConstraintOp op0,VarAbstractValue lhs, AValue rhs):_op(op0),_lhsVar(lhs),_rhsVar(rhs) {
+  //cout<<"DEBUG: Constraint::Constraint("<<op0<<","<<lhs.toString()<<","<<rhs.toString()<<endl;
   switch(op0) {
   case EQ_VAR_CONST:
   case NEQ_VAR_CONST:
+    ROSE_ASSERT(_lhsVar.isPtr()&&_rhsVar.isConstInt());
+    return;
+  case EQ_VAR_VAR:
+  case NEQ_VAR_VAR:
+    ROSE_ASSERT(_lhsVar.isPtr()&&_rhsVar.isPtr());
+    return;
   case DEQ:
+    ROSE_ASSERT(_lhsVar.isBot()&&_rhsVar.isConstInt()); // see macro DISEQUALITYCONSTRAINT
     return;
   default:
     cerr<<"Error: Constraint constructor var-val operator: "<<op0<<". Wrong operator."<<endl;
@@ -180,7 +195,7 @@ Constraint::Constraint(ConstraintOp op0,VarAbstractValue lhs, AValue rhs):_op(op
 string Constraint::toString() const {
   stringstream ss;
   if(isDisequation())
-    return "--##--";
+    return "V0##0";
   if(isVarVarOp()) {
     ss<<lhsVar().toString()<<(*this).opToString()<<rhsVar().toString();
   } else if(isVarValOp()) {
@@ -197,16 +212,12 @@ string Constraint::toString() const {
  */
 string Constraint::toString(VariableIdMapping* variableIdMapping) const {
   stringstream ss;
-  cerr<<"DEBUG: toString()"<<endl;
-  cout<<"Op:"<<_op<<endl;
-  cout<<"lhs:"<<_lhsVar.toString()<<endl;
-  cout<<"rhs:"<<_rhsVar.toString()<<endl;
-
   if(isDisequation())
-    return "__##__";
-  if(isVarVarOp()||isVarValOp()) {
-    cerr<<"DEBUG: toString():varvar|varval"<<endl;
-    ss<<lhsVar().toString(variableIdMapping)<<(*this).opToString()<<rhsVar().toString(variableIdMapping);
+    return "V0##0";
+  if(isVarVarOp()) {
+    ss<<lhsVar().toLhsString(variableIdMapping)<<(*this).opToString()<<rhsVar().toString(variableIdMapping);
+  } else if (isVarValOp()) {
+    ss<<lhsVar().toLhsString(variableIdMapping)<<(*this).opToString()<<rhsVal().toString(variableIdMapping);
   } else {
     throw CodeThorn::Exception( "Error: Constraint::toString: unknown operator.");
   }
@@ -221,8 +232,10 @@ string Constraint::toAssertionString(VariableIdMapping* variableIdMapping) const
   stringstream ss;
   if(isDisequation())
     return "false";
-  if(isVarVarOp()||isVarVarOp()) {
+  if(isVarVarOp()) {
     ss<<lhsVar().toString(variableIdMapping)<<(*this).opToString()<<rhsVar().toString(variableIdMapping);
+  } else if(isVarValOp()) {
+    ss<<lhsVar().toString(variableIdMapping)<<(*this).opToString()<<rhsVal().toString(variableIdMapping);
   } else {
     throw CodeThorn::Exception( "Error: Constraint::toAssertionString: unknown operator.");
   }
@@ -249,7 +262,7 @@ void Constraint::toStreamAsTuple(ostream& os) {
   case NEQ_VAR_CONST:
     os<<_lhsVar.toString();
     os<<",";
-    os<<_rhsVar.getIntValue();
+    os<<_rhsVar.getIntValue(); // TODO? toString()
     break;
   default:
     throw CodeThorn::Exception( "Constraint::toStream: unknown operator.");
@@ -567,7 +580,7 @@ void ConstraintSet::addConstraint(Constraint c) {
     // search for some x==m (where m must be different to k (otherwise we would have found it above))
     ConstraintSet::iterator i=findSpecific(Constraint::EQ_VAR_CONST,dedicatedLhsVar);
     if(i!=end()) {
-      assert(!((*i).rhsVal() == c.rhsVal()));
+      ROSE_ASSERT(!((*i).rhsVal() == c.rhsVal()));
       // we have found an equation x==m with m!=k ==> do not insert x!=k constraint (do nothing)
       return;
     } else {
@@ -752,8 +765,9 @@ ConstraintSet ConstraintSet::findSpecificSet(Constraint::ConstraintOp op, VarAbs
   ConstraintSet cs;
   // find op-constraint for variable varname
   for(ConstraintSet::iterator i=begin();i!=end();++i) {
-    if((*i).lhsVar()==varId && (*i).op()==op)
+    if((*i).lhsVar()==varId && (*i).op()==op) {
       cs.addConstraint(Constraint((*i).op(),(*i).lhsVar(),(*i).rhsVal()));
+    }
   }
   return cs;
 }

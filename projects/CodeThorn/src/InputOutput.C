@@ -58,6 +58,7 @@ void InputOutput::recordConst(OpType op0,AbstractValue constvalue) {
   ROSE_ASSERT(op0==STDOUT_CONST || op0==STDERR_CONST);
   op=op0;
   var=VarAbstractValue();
+  ROSE_ASSERT(constvalue.isConstInt());
   val=constvalue;
 }
 void InputOutput::recordConst(OpType op0,int value) {

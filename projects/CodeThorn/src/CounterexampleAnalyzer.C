@@ -505,7 +505,7 @@ bool CounterexampleAnalyzer::isPrefixState(const EState* state) {
   const PState* pstate = state->pstate();
   AbstractValueSet varSet=pstate->getVariableIds();
   for (AbstractValueSet::iterator l=varSet.begin();l!=varSet.end();++l) {
-    string varName=(*l).toString(_analyzer->getVariableIdMapping());
+    string varName=(*l).toLhsString(_analyzer->getVariableIdMapping());
     if (boost::regex_match(varName, re)) { //matches internal variables (e.g. "int a188")
       if (pstate->varIsConst(*l)) {  // is a concrete (therefore prefix) state
         return true;

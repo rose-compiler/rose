@@ -91,7 +91,7 @@ AbstractValueSet VariableValueMonitor::getVariables() {
 
 bool VariableValueMonitor::isHotVariable(Analyzer* analyzer, AbstractValue varId) {
   // TODO: provide set of variables to ignore
-  string name=varId.toString(analyzer->getVariableIdMapping());
+  string name=varId.toLhsString(analyzer->getVariableIdMapping());
   switch(_variablesModeMap[varId]) {
   case VariableValueMonitor::VARMODE_FORCED_TOP:
     return true;
