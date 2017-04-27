@@ -946,7 +946,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
        // Note that there can be more than one symbol if the name is hidden in a base class scope (and thus there are SgAliasSymbols using the same name).
           ROSE_ASSERT(currentScope != NULL);
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
           printf ("Initial lookup: name = %s currentScope = %p = %s \n",name.str(),currentScope,currentScope->class_name().c_str());
 #endif
 
@@ -2968,7 +2968,8 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
           SgDeclarationStatement* declaration = associatedDeclaration(type);
           if (declaration != NULL)
              {
-#if 0
+// #if 0
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                printf ("In NameQualificationTraversal::traverseType(): Calling evaluateTemplateInstantiationDeclaration(): declaration = %p = %s currentScope = %p = %s positionStatement = %p = %s \n",
                     declaration,declaration->class_name().c_str(),currentScope,currentScope->class_name().c_str(),positionStatement,positionStatement->class_name().c_str());
 #endif
@@ -3006,6 +3007,10 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
 
        // DQ (8/19/2013): Added specification to skip class specifier (fixes problem with test2013_306.C).
           unparseInfoPointer->set_SkipClassSpecifier();
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+          printf ("++++++++++++++++ Calling globalUnparseToString(): type = %p = %s \n",type,type->class_name().c_str());
+#endif
 
           string typeNameString = globalUnparseToString(type,unparseInfoPointer);
 
@@ -7859,7 +7864,9 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
                        {
                          if (classDefinition->get_declaration()->get_isUnNamed() == false)
                             {
+                           // DQ (4/11/2017): Klockworks reports that classDeclaration may be NULL, so make sure that adding an assertion will fix the issue.
                               SgClassDeclaration* classDeclaration = classDefinition->get_declaration();
+                              ROSE_ASSERT(classDeclaration != NULL);
                               printf ("Error: class should be marked as unnamed: classDeclaration = %p = %s \n",classDeclaration,classDeclaration->class_name().c_str());
                               printf ("   --- classDeclaration name = %s \n",classDeclaration->get_name().str());
                             }
