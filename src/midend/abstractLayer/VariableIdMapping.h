@@ -145,11 +145,14 @@ class VariableId {
   VariableId();
   std::string toString() const;
   std::string toString(VariableIdMapping& vid) const;
+  //std::string toUniqueString() const;
+  std::string toUniqueString(VariableIdMapping& vid) const;
 
   /* if VariableIdMapping is a valid pointer a variable name is returned
      otherwise toString() is called and a generic name (V..) is returend.
   */
   std::string toString(VariableIdMapping* vid) const;
+  std::string toUniqueString(VariableIdMapping* vid) const;
 
   // intentionally no constructor for int because this would clash 
   // with overloaded functions that are using AbstractValue (which has an implicit 
