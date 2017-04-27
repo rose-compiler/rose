@@ -112,12 +112,14 @@ bool VariableIdMapping::isConstantArray(VariableId varId) {
   * \date 2012.
  */
 void VariableIdMapping::toStream(ostream& os) {
+  cout<<"DEBUG: Size of variable-id-mapping: "<<mappingVarIdToSym.size()<<endl;
+  cout<<"DEBUG: Size of tmp variable-id-mapping: "<<temporaryVariableIdMapping.size()<<endl;
   for(size_t i=0;i<mappingVarIdToSym.size();++i) {
     os<<""<<i
-      <<","<<mappingVarIdToSym[i]
-      <<","<<SgNodeHelper::symbolToString(mappingVarIdToSym[i])
-      <<","<<SgNodeHelper::uniqueLongVariableName(mappingVarIdToSym[i])
-      <<endl;
+      <<","<<mappingVarIdToSym[i];
+    os  <<","<<SgNodeHelper::symbolToString(mappingVarIdToSym[i])
+      //<<","<<SgNodeHelper::uniqueLongVariableName(mappingVarIdToSym[i])
+        <<endl;
     ROSE_ASSERT(modeVariableIdForEachArrayElement?true:mappingSymToVarId[mappingVarIdToSym[i]]==i);
   }
 }
@@ -618,11 +620,13 @@ void VariableIdMapping::registerNewSymbol(SgSymbol* sym) {
  */
 // we use a function as a destructor may delete it multiple times
 void VariableIdMapping::deleteUniqueTemporaryVariableId(VariableId varId) {
-  if(isTemporaryVariableId(varId))
-    delete getSymbol(varId);
-  else
+  if(isTemporaryVariableId(varId)) {
+    cerr<<"DEBUG WARNING: not deleting temporary variable id symbol."<<endl;
+    //delete getSymbol(varId);
+  } else {
     throw SPRAY::Exception("VariableIdMapping::deleteUniqueTemporaryVariableSymbol: improper id operation.");
-}
+  }
+  }
 
 /*! 
   * \author Markus Schordan
@@ -663,14 +667,27 @@ VariableId::toString() const {
 }
 
 string
-VariableId::toString(VariableIdMapping& vim) const {
+VariableId::toUniqueString(VariableIdMapping& vim) const {
   return vim.uniqueShortVariableName(*this);
+}
+
+string
+VariableId::toUniqueString(VariableIdMapping* vim) const {
+  if(vim)
+    return vim->uniqueShortVariableName(*this);
+  else
+    return toString();
+}
+
+string
+VariableId::toString(VariableIdMapping& vim) const {
+  return vim.variableName(*this);
 }
 
 string
 VariableId::toString(VariableIdMapping* vim) const {
   if(vim)
-    return vim->uniqueShortVariableName(*this);
+    return vim->variableName(*this);
   else
     return toString();
 }
