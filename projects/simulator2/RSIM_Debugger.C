@@ -412,10 +412,10 @@ public:
             }
         }
         if (cmd.size()==1) {
-            thread->get_process()->get_memory().any().changeAccess(prot, ~prot);
+            thread->get_process()->get_memory()->any().changeAccess(prot, ~prot);
         } else {
             AddressInterval where = parseAddressInterval(cmd[2]);
-            thread->get_process()->get_memory().atOrAfter(where.least()).atOrBefore(where.greatest())
+            thread->get_process()->get_memory()->atOrAfter(where.least()).atOrBefore(where.greatest())
                 .changeAccess(prot, ~prot);
         }
     }
@@ -440,7 +440,7 @@ public:
         AddressInterval interval = parseAddressInterval(cmd[1]);
         uint8_t buffer[8192];
         while (!interval.isEmpty()) {
-            size_t nRead = thread->get_process()->get_memory().at(interval.least())
+            size_t nRead = thread->get_process()->get_memory()->at(interval.least())
                            .limit(std::min(interval.size(), rose_addr_t(sizeof buffer)))
                            .read(buffer).size();
             if (0==nRead)
@@ -465,7 +465,7 @@ public:
         } else if (!boost::starts_with(resource, ":")) {
             resource = ":" + resource;
         }
-        thread->get_process()->get_memory().insertFile(resource);
+        thread->get_process()->get_memory()->insertFile(resource);
     }
 
     // Commands for producing memory hexdumps
@@ -477,7 +477,7 @@ public:
         uint8_t buffer[8192];
         HexdumpFormat fmt;
         while (!interval.isEmpty()) {
-            size_t nRead = thread->get_process()->get_memory().at(interval.least())
+            size_t nRead = thread->get_process()->get_memory()->at(interval.least())
                            .limit(std::min(interval.size(), rose_addr_t(sizeof buffer)))
                            .read(buffer).size();
             if (0==nRead)
@@ -545,7 +545,7 @@ public:
             size_t nRead = 0;
             uint64_t value = 0;
             if (fmt!='i' && fmt!='s') {
-                nRead = thread->get_process()->get_memory().at(va).limit(nBytes).read(bytes).size();
+                nRead = thread->get_process()->get_memory()->at(va).limit(nBytes).read(bytes).size();
                 if (nRead != nBytes)
                     throw std::runtime_error("short read");
                 ByteOrder::Endianness guestOrder = thread->get_process()->disassembler()->get_sex();
@@ -649,13 +649,13 @@ public:
     //   x/...                          -- examine memory, similar to the GDB "x/" command
     void memoryCommand(RSIM_Thread *thread, std::vector<std::string> &cmd) {
         if (cmd.empty()) {
-            thread->get_process()->get_memory().dump(out_);
+            thread->get_process()->get_memory()->dump(out_);
         } else if (cmd[0]=="del" || cmd[0]=="delete") {
             if (cmd.size()==1) {
-                thread->get_process()->get_memory().clear();
+                thread->get_process()->get_memory()->clear();
             } else {
                 AddressInterval where = parseAddressInterval(cmd[1]);
-                thread->get_process()->get_memory().erase(where);
+                thread->get_process()->get_memory()->erase(where);
             }
         } else if (cmd[0]=="dump") {
             cmd.erase(cmd.begin());

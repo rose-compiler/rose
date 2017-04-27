@@ -374,7 +374,7 @@ Application::isTabAvailable(MainTab idx) {
         case PartitionerTab:
             return true;
         case MemoryMapTab:
-            return !wMemoryMap_->memoryMap().isEmpty();
+            return !wMemoryMap_->memoryMap()->isEmpty();
         case FunctionListTab:
             return (!ctx_.partitioner.isDefaultConstructed() && wFunctionList_->functions().size());
         case FunctionSummaryTab:
@@ -382,11 +382,11 @@ Application::isTabAvailable(MainTab idx) {
         case AssemblyTab:
             return currentFunction_ != NULL;
         case HexDumpTab:
-            return !wHexDump_->memoryMap().isEmpty();
+            return !wHexDump_->memoryMap()->isEmpty();
         case MagicTab:
-            return !wMagic_->memoryMap().isEmpty();
+            return !wMagic_->memoryMap()->isEmpty();
         case StringsTab:
-            return !wStrings_->memoryMap().isEmpty();
+            return !wStrings_->memoryMap()->isEmpty();
         case StatusTab:
             return true;
         default:
@@ -431,7 +431,7 @@ Application::handleSpecimenLoaded(bool done) {
     if (done) {
         wMemoryMap_->memoryMap(ctx_.engine.memoryMap());
     } else {
-        wMemoryMap_->memoryMap(MemoryMap());
+        wMemoryMap_->memoryMap(MemoryMap::instance());
     }
     showHideTabs();
 }

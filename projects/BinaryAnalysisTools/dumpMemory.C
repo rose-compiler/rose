@@ -103,9 +103,10 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings/
 
 class Dumper {
 public:
-    void operator()(const Settings &settings, const MemoryMap &map, const AddressInterval &dataInterval, std::ostream &stream) {
-        MemoryMap::ConstNodeIterator inode = map.at(dataInterval.least()).nodes().begin();
-        ASSERT_forbid(inode == map.nodes().end());
+    void operator()(const Settings &settings, const MemoryMap::Ptr &map, const AddressInterval &dataInterval,
+                    std::ostream &stream) {
+        MemoryMap::ConstNodeIterator inode = map->at(dataInterval.least()).nodes().begin();
+        ASSERT_forbid(inode == map->nodes().end());
         const AddressInterval &segmentInterval = inode->key();
         ASSERT_require(segmentInterval.isContaining(dataInterval));
         const MemoryMap::Segment &segment = inode->value();
@@ -153,8 +154,8 @@ class SRecordDumper: public Dumper {
 public:
     virtual void formatData(std::ostream &stream, const AddressInterval &segmentInterval, const MemoryMap::Segment &segment,
                             const AddressInterval &dataInterval, const uint8_t *data) ROSE_OVERRIDE {
-        MemoryMap map;
-        map.insert(dataInterval, MemoryMap::Segment::staticInstance(data, dataInterval.size(), MemoryMap::READABLE));
+        MemoryMap::Ptr map = MemoryMap::instance();
+        map->insert(dataInterval, MemoryMap::Segment::staticInstance(data, dataInterval.size(), MemoryMap::READABLE));
         SRecord::dump(map, stream, 4);
     }
 };
@@ -191,9 +192,9 @@ main(int argc, char *argv[]) {
         throw std::runtime_error("the --prefix switch is required when --binary is specified");
 
     // Parse and load the specimen, but do not disassemble or partition.
-    MemoryMap map = engine.loadSpecimens(specimenNames);
+    MemoryMap::Ptr map = engine.loadSpecimens(specimenNames);
     if (settings.showMap)
-        map.dump(std::cout);
+        map->dump(std::cout);
 
     std::ofstream binaryIndex;
     if (settings.showAsBinary) {
@@ -209,10 +210,10 @@ main(int argc, char *argv[]) {
         settings.where.push_back(AddressInterval::whole());
     BOOST_FOREACH (AddressInterval where, settings.where) {
         rose_addr_t va = where.least();
-        while (AddressInterval interval = map.atOrAfter(va).singleSegment().available()) {
+        while (AddressInterval interval = map->atOrAfter(va).singleSegment().available()) {
             interval = interval.intersection(where);
             ASSERT_forbid(interval.isEmpty());
-            MemoryMap::ConstNodeIterator inode = map.at(interval.least()).nodes().begin();
+            MemoryMap::ConstNodeIterator inode = map->at(interval.least()).nodes().begin();
             const AddressInterval &segmentInterval = inode->key();
             const MemoryMap::Segment &segment = inode->value();
             mlog[WHERE] <<"dumping segment " <<segmentInterval <<" \"" <<StringUtility::cEscape(segment.name()) <<"\"\n";

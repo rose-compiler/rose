@@ -97,9 +97,9 @@ int main(int argc, char *argv[])
     std::vector<std::string> specimenNames = parseCommandLine(argc, argv, engine, settings);
 
     // Load the speciem as raw data or an ELF or PE container
-    MemoryMap map = engine.loadSpecimens(specimenNames);
-    map.dump(::mlog[INFO]);
-    map.dump(std::cout);
+    MemoryMap::Ptr map = engine.loadSpecimens(specimenNames);
+    map->dump(::mlog[INFO]);
+    map->dump(std::cout);
     Disassembler *disassembler = engine.obtainDisassembler();
 
     // Obtain an unparser suitable for this disassembler
@@ -117,10 +117,10 @@ int main(int argc, char *argv[])
 
     // Disassemble at each valid address, and show disassembly errors
     rose_addr_t va = settings.startVa;
-    while (map.atOrAfter(va).require(MemoryMap::EXECUTABLE).next().assignTo(va)) {
+    while (map->atOrAfter(va).require(MemoryMap::EXECUTABLE).next().assignTo(va)) {
         va = alignUp(va, settings.alignment);
         try {
-            SgAsmInstruction *insn = disassembler->disassembleOne(&map, va);
+            SgAsmInstruction *insn = disassembler->disassembleOne(map, va);
             ASSERT_not_null(insn);
             unparser.unparse(std::cout, insn);
 

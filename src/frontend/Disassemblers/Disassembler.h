@@ -600,7 +600,7 @@ public:
      *
      *  Thread safety:  The safety of this method depends on its implementation in the subclass. In any case, no other thread
      *  can be modifying the MemoryMap or successors set at the same time. */
-    virtual SgAsmInstruction *disassembleOne(const MemoryMap *map, rose_addr_t start_va, AddressSet *successors=NULL) = 0;
+    virtual SgAsmInstruction *disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va, AddressSet *successors=NULL) = 0;
 
     /** Similar in functionality to the disassembleOne method that takes a MemoryMap argument, except the content buffer is
      *  mapped 1:1 to virtual memory beginning at the specified address.
@@ -634,7 +634,7 @@ public:
      *
      *  Thread safety: The safety of this method depends on the implementation of disassembleOne() in the subclass. In any
      *  case, no other thread should be concurrently modifying the memory map, successors, or cache. */
-    InstructionMap disassembleBlock(const MemoryMap *map, rose_addr_t start_va, AddressSet *successors=NULL,
+    InstructionMap disassembleBlock(const MemoryMap::Ptr &map, rose_addr_t start_va, AddressSet *successors=NULL,
                                     InstructionMap *cache=NULL);
 
     /** Similar in functionality to the disassembleBlock method that takes a MemoryMap argument, except the supplied buffer
@@ -655,7 +655,7 @@ public:
      *
      * Thread safety: The safety of this method depends on the implementation of disassembleOne() in the subclass. In any case,
      * no other thread should be concurrently modifying the memory map, successor list, or exception map. */
-    InstructionMap disassembleBuffer(const MemoryMap *map, size_t start_va, AddressSet *successors=NULL, BadMap *bad=NULL);
+    InstructionMap disassembleBuffer(const MemoryMap::Ptr &map, size_t start_va, AddressSet *successors=NULL, BadMap *bad=NULL);
 
     /** Similar in functionality to the disassembleBuffer methods that take a MemoryMap argument, except the supplied buffer
      *  is mapped 1:1 to virtual memory beginning at the specified address.
@@ -670,7 +670,8 @@ public:
      *
      *  Thread safety:  The safety of this method depends on the implementation of disassembleOne() in the subclass. In any case,
      *  no other thread should be concurrently modifying the memory map, successor list, or exception map. */
-    InstructionMap disassembleBuffer(const MemoryMap *map, AddressSet workset, AddressSet *successors=NULL, BadMap *bad=NULL);
+    InstructionMap disassembleBuffer(const MemoryMap::Ptr &map, AddressSet workset, AddressSet *successors=NULL,
+                                     BadMap *bad=NULL);
 
     /** Disassembles instructions in the specified section by assuming that it's mapped to a particular starting address.
      *  Disassembly will begin at the specified byte offset in the section. The section need not be mapped with execute
@@ -703,7 +704,7 @@ public:
      *  Thread safety: Multiple threads can call this method using the same Disassembler object as long as they pass different
      *  worklist address sets and no other thread is modifying the other arguments. */
     void search_following(AddressSet *worklist, const InstructionMap &bb, rose_addr_t bb_va, 
-                          const MemoryMap *map, const InstructionMap &tried);
+                          const MemoryMap::Ptr &map, const InstructionMap &tried);
 
     /** Adds values of immediate operands to the list of addresses that should be disassembled.  Such operands are often used
      *  in a closely following instruction as a jump target. E.g., "move 0x400600, reg1; ...; jump reg1". This search method is
@@ -713,7 +714,8 @@ public:
      *
      *  Thread safety:  Multiple threads can call this method using the same Disassembler object as long as they pass different
      *  worklist address sets and no other thread is modifying the other arguments. */
-    void search_immediate(AddressSet *worklist, const InstructionMap &bb,  const MemoryMap *map, const InstructionMap &tried);
+    void search_immediate(AddressSet *worklist, const InstructionMap &bb,  const MemoryMap::Ptr &map,
+                          const InstructionMap &tried);
 
     /** Adds all word-aligned values to work list, provided they specify a virtual address in the @p map.  The @p wordsize must
      *  be a power of two. This search method is invoked automatically if the SEARCH_WORDS bit is set (see set_search()). The
@@ -722,7 +724,7 @@ public:
      *
      *  Thread safety: Multiple threads can call this method using the same Disassembler object as long as they pass different
      *  worklist address sets and no other thread is modifying the other arguments. */
-    void search_words(AddressSet *worklist, const MemoryMap *map, const InstructionMap &tried);
+    void search_words(AddressSet *worklist, const MemoryMap::Ptr &map, const InstructionMap &tried);
 
     /** Finds the lowest virtual address, greater than or equal to @p start_va, which does not correspond to a previous
      *  disassembly attempt as evidenced by its presence in the supplied instructions or bad map.  If @p avoid_overlaps is set
@@ -735,7 +737,7 @@ public:
      *
      *  Thread safety: Multiple threads can call this method using the same Disassembler object as long as they pass different
      *  worklist address sets and no other thread is modifying the other arguments. */
-    void search_next_address(AddressSet *worklist, rose_addr_t start_va, const MemoryMap *map, const InstructionMap &insns,
+    void search_next_address(AddressSet *worklist, rose_addr_t start_va, const MemoryMap::Ptr &map, const InstructionMap &insns,
                              const InstructionMap &tried, bool avoid_overlaps);
 
     /** Adds addresses that correspond to function symbols.  This method is invoked automatically if the SEARCH_FUNCSYMS bits
@@ -744,7 +746,7 @@ public:
      *  Thread safety: Multiple threads can call this method using the same Disassembler object as long as they pass different
      *  worklist addresses and no other thread is modifying the memory map or changing the AST under the specified file header
      *  node. */
-    void search_function_symbols(AddressSet *worklist, const MemoryMap*, SgAsmGenericHeader*);
+    void search_function_symbols(AddressSet *worklist, const MemoryMap::Ptr&, SgAsmGenericHeader*);
 
 
     /***************************************************************************************************************************
@@ -765,7 +767,7 @@ public:
     /** Marks parts of the file that correspond to instructions as having been referenced.
      *
      *  Thread safety: This method is not thread safe. */
-    void mark_referenced_instructions(SgAsmInterpretation*, const MemoryMap*, const InstructionMap&);
+    void mark_referenced_instructions(SgAsmInterpretation*, const MemoryMap::Ptr&, const InstructionMap&);
 
     /** Calculates the successor addresses of a basic block and adds them to a successors set. The successors is always
      *  non-null when called. If the function is able to determine the complete set of successors then it should set @p
