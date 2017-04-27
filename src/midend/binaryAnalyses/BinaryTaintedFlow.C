@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 #include "BinaryTaintedFlow.h"
 #include "stringify.h"
+#include <sstream>
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -154,6 +155,15 @@ TaintedFlow::TransferFunction::operator()(size_t cfgVertex, const StatePtr &in) 
     if (mlog[DEBUG])
         mlog[DEBUG] <<"state after transfer function:\n" <<*out;
     return out;
+}
+
+std::string
+TaintedFlow::TransferFunction::printState(const StatePtr &state) {
+    if (!state)
+        return "null state";
+    std::ostringstream ss;
+    ss <<*state;
+    return ss.str();
 }
 
 std::ostream &
