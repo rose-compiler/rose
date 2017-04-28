@@ -276,6 +276,14 @@ x86_function_vas_SOURCES = x86-function-vas.C
 x86_function_vas_CPPFLAGS = $(ROSE_INCLUDES)
 x86_function_vas_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+#------------------------------------------------------------------------------------------------------------------------
+# generate XML from ROSE internals
+
+bin_PROGRAMS += rxml
+rxml_SOURCES = rxml.C
+rxml_CPPFLAGS = $(ROSE_INCLUDES)
+rxml_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
 
 ########################################################################################################################
 ########################################################################################################################
