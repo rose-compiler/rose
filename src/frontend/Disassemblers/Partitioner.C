@@ -229,18 +229,18 @@ Partitioner::parse_switches(const std::string &s, unsigned flags)
 
 /* Set disassembly and memory initialization maps. */
 void
-Partitioner::set_map(MemoryMap *map, MemoryMap *ro_map)
+Partitioner::set_map(const MemoryMap::Ptr &map, const MemoryMap::Ptr &ro_map)
 {
     this->map = map;
     if (map) {
         if (ro_map) {
-            this->ro_map = *ro_map;
+            this->ro_map = ro_map->shallowCopy();
         } else {
-            this->ro_map = *map;
-            this->ro_map.require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE).keep();
+            this->ro_map = map->shallowCopy();
+            this->ro_map->require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE).keep();
         }
     } else {
-        this->ro_map.clear();
+        this->ro_map = MemoryMap::Ptr();
     }
 }
 
@@ -266,7 +266,7 @@ Partitioner::discover_jump_table(BasicBlock *bb, bool do_create, ExtentMap *tabl
     const RegisterDescriptor *REG_EIP = regdict->lookup("eip");
     PartialSymbolicSemantics::RiscOperatorsPtr ops = PartialSymbolicSemantics::RiscOperators::instance(regdict);
     BaseSemantics::DispatcherPtr dispatcher = DispatcherX86::instance(ops, 32);
-    ops->set_memory_map(&ro_map);
+    ops->set_memory_map(ro_map);
     try {
         for (size_t i=0; i<bb->insns.size(); ++i) {
             insn_x86 = isSgAsmX86Instruction(bb->insns[i]->node);
@@ -294,7 +294,7 @@ Partitioner::discover_jump_table(BasicBlock *bb, bool do_create, ExtentMap *tabl
                 rose_addr_t base_va = cell->get_address()->get_number();
                 size_t nentries = 0;
                 while (1) {
-                    size_t nread = ro_map.readQuick(buf, base_va+nentries*entry_size, entry_size);
+                    size_t nread = ro_map->readQuick(buf, base_va+nentries*entry_size, entry_size);
                     if (nread!=entry_size)
                         break;
                     rose_addr_t target_va = 0;
@@ -335,7 +335,7 @@ Partitioner::update_analyses(BasicBlock *bb)
     std::vector<SgAsmInstruction*> inodes;
     for (InstructionVector::const_iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii)
         inodes.push_back(isSgAsmInstruction(*ii));
-    bb->cache.sucs = bb->insns.front()->node->getSuccessors(inodes, &(bb->cache.sucs_complete), &ro_map);
+    bb->cache.sucs = bb->insns.front()->node->getSuccessors(inodes, &(bb->cache.sucs_complete), ro_map);
 
     /* Try to handle indirect jumps of the form "jmp ds:[BASE+REGISTER*WORDSIZE]".  The trick is to assume that some kind of
      * jump table exists beginning at address BASE, and that the table contains only addresses of valid code.  All we need to
@@ -1152,7 +1152,7 @@ Partitioner::mark_ipd_configuration()
 
             // FIXME: Use a copy (COW) version of the map so we don't need to modify the real map and so that the simulated
             // program can't accidentally modify the stuff being disassembled. [RPM 2012-05-07]
-            MemoryMap *map = get_map();
+            MemoryMap::Ptr map = get_map();
             ASSERT_not_null(map);
             typedef PartialSymbolicSemantics::Policy<> Policy;
             typedef X86InstructionSemantics<Policy, PartialSymbolicSemantics::ValueType> Semantics;
@@ -1743,7 +1743,7 @@ Partitioner::mark_func_patterns()
             return enabled;
         }
     } t1(this);
-    MemoryMap *mm = get_map();
+    MemoryMap::Ptr mm = get_map();
     if (mm)
         scan_unassigned_bytes(&t1, mm);
 
@@ -1897,7 +1897,7 @@ Partitioner::scan_intrafunc_insns(InsnRangeCallbacks &cblist)
 }
 
 void
-Partitioner::scan_unassigned_bytes(ByteRangeCallbacks &cblist, MemoryMap *restrict_map/*=NULL*/)
+Partitioner::scan_unassigned_bytes(ByteRangeCallbacks &cblist, const MemoryMap::Ptr &restrict_map/*=NULL*/)
 {
     if (cblist.empty())
         return;
@@ -1922,7 +1922,7 @@ Partitioner::scan_unassigned_bytes(ByteRangeCallbacks &cblist, MemoryMap *restri
 }
 
 void
-Partitioner::scan_intrafunc_bytes(ByteRangeCallbacks &cblist, MemoryMap *restrict_map/*=NULL*/)
+Partitioner::scan_intrafunc_bytes(ByteRangeCallbacks &cblist, const MemoryMap::Ptr &restrict_map/*=NULL*/)
 {
     if (cblist.empty())
         return;
@@ -1955,7 +1955,7 @@ Partitioner::scan_intrafunc_bytes(ByteRangeCallbacks &cblist, MemoryMap *restric
 }
 
 void
-Partitioner::scan_interfunc_bytes(ByteRangeCallbacks &cblist, MemoryMap *restrict_map/*=NULL*/)
+Partitioner::scan_interfunc_bytes(ByteRangeCallbacks &cblist, const MemoryMap::Ptr &restrict_map/*=NULL*/)
 {
     if (cblist.empty())
         return;
@@ -2032,7 +2032,7 @@ Partitioner::FindDataPadding::operator()(bool enabled, const Args &args)
      * read, although this shouldn't happen if the caller supplied the correct memory map to the scan_*_bytes() method. */
     if (range.size() > maximum_range_size)
         return true;
-    MemoryMap *map = args.restrict_map ? args.restrict_map : &p->ro_map;
+    MemoryMap::Ptr map = args.restrict_map ? args.restrict_map : p->ro_map;
     SgUnsignedCharList buf = map->readVector(range.first(), range.size());
     if (ends_contiguously && buf.size()<range.size())
         return true;
@@ -3645,8 +3645,9 @@ Partitioner::is_used_address(rose_addr_t va)
 }
 
 Sawyer::Optional<rose_addr_t>
-Partitioner::next_unused_address(const MemoryMap &map, rose_addr_t start_va)
+Partitioner::next_unused_address(const MemoryMap::Ptr &map, rose_addr_t start_va)
 {
+    ASSERT_not_null(map);
     Sawyer::Nothing NOT_FOUND;
     ExtentMap unused = unused_addresses();              // all unused addresses regardless of whether they're mapped
 
@@ -3659,7 +3660,7 @@ Partitioner::next_unused_address(const MemoryMap &map, rose_addr_t start_va)
 
         // get the next mapped address, but it might not be unused
         rose_addr_t mapped_unused_va = 0;
-        if (!map.atOrAfter(unused_va).next().assignTo(mapped_unused_va))
+        if (!map->atOrAfter(unused_va).next().assignTo(mapped_unused_va))
             return NOT_FOUND;                           // no higher mapped address
         if (unused.contains(Extent(mapped_unused_va)))
             return mapped_unused_va;                    // found
@@ -3672,10 +3673,11 @@ Partitioner::next_unused_address(const MemoryMap &map, rose_addr_t start_va)
 }
 
 void
-Partitioner::discover_post_padding_functions(const MemoryMap &map)
+Partitioner::discover_post_padding_functions(const MemoryMap::Ptr &map)
 {
+    ASSERT_not_null(map);
     Stream debug = mlog[DEBUG];
-    if (map.isEmpty())
+    if (map->isEmpty())
         return;
 
     std::vector<uint8_t> padding_bytes;
@@ -3685,7 +3687,7 @@ Partitioner::discover_post_padding_functions(const MemoryMap &map)
 
     debug <<"discover_post_padding_functions()\n";
 
-    rose_addr_t next_va = map.hull().least();           // first address in the map
+    rose_addr_t next_va = map->hull().least();          // first address in the map
     while (1) {
         debug <<"  current position is " <<addrToString(next_va) <<"\n";
 
@@ -3696,16 +3698,16 @@ Partitioner::discover_post_padding_functions(const MemoryMap &map)
         debug <<"  next unused address is " <<addrToString(unused_va) <<"\n";
 
         // Find the next occurrence of padding bytes.
-        Extent search_limits = Extent::inin(unused_va, map.hull().greatest());
+        Extent search_limits = Extent::inin(unused_va, map->hull().greatest());
         rose_addr_t padding_va;
-        if (!map.findAny(search_limits, padding_bytes).assignTo(padding_va))
+        if (!map->findAny(search_limits, padding_bytes).assignTo(padding_va))
             break;
 
         // Skip over all padding bytes. After loop, candidate_va is one past end of padding (but possibly not mapped).
         rose_addr_t candidate_va = padding_va;
         while (1) {
             uint8_t byte;
-            if (1!=map.at(candidate_va).limit(1).singleSegment().read(&byte).size() ||
+            if (1!=map->at(candidate_va).limit(1).singleSegment().read(&byte).size() ||
                 std::find(padding_bytes.begin(), padding_bytes.end(), byte)==padding_bytes.end())
                 break;
             ++candidate_va;
@@ -3727,7 +3729,7 @@ Partitioner::discover_post_padding_functions(const MemoryMap &map)
         if (NULL==find_instruction(candidate_va))
             continue;                                   // can't be a function if there's no instruction
         uint8_t buf[64];                                // arbitrary
-        size_t nread = map.readQuick(buf, candidate_va, sizeof buf);
+        size_t nread = map->readQuick(buf, candidate_va, sizeof buf);
         if (nread < 5)                                  // arbitrary
             continue;                                   // too small to be a function
         size_t nzeros = 0, nprint = 0;
@@ -3765,8 +3767,9 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
                 <<"=== Variance ===\n" <<*variance <<"\n";
 
     /* A memory map that contains only the executable regions.  I.e., those that might contain instructions. */
-    MemoryMap exe_map = *map;
-    exe_map.require(MemoryMap::EXECUTABLE).keep();
+    ASSERT_not_null(map);
+    MemoryMap::Ptr exe_map = map->shallowCopy();
+    exe_map->require(MemoryMap::EXECUTABLE).keep();
 
     /* Add unassigned intra-function blocks to the surrounding function.  This needs to come before detecting inter-function
      * padding, otherwise it will also try to add the stuff between the true function and its following padding. */
@@ -3775,7 +3778,7 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
         fff.require_noninterleaved = true;
         fff.require_intrafunction = true;
         fff.threshold = 0; // treat all intra-function regions as code
-        scan_unassigned_bytes(&fff, &exe_map);
+        scan_unassigned_bytes(&fff, exe_map);
     }
 
 #if 0 // [Robb P. Matzke 2014-04-29]: experimental, slow, heuristic, and a bit too greedy, but perhaps more accurate
@@ -3803,9 +3806,9 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
         cb.patterns.push_back(pattern);
 
         /* Scan only executable regions of memory. */
-        MemoryMap exe_map = *map;
-        exe_map.require(MemoryMap::EXECUTABLE).keep();
-        scan_interfunc_bytes(&cb, &exe_map);
+        MemoryMap::Ptr exe_map = map->shallowCopy();
+        exe_map->require(MemoryMap::EXECUTABLE).keep();
+        scan_interfunc_bytes(&cb, exe_map);
     }
 
     /* Find thunks.  First use FindThunkTables, which has a more relaxed definition of a "thunk" but requires some minimum
@@ -3815,7 +3818,7 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
         FindThunkTables find_thunk_tables;
         find_thunk_tables.minimum_nthunks = 3; // at least this many JMPs per table
         find_thunk_tables.validate_targets = false;
-        scan_unassigned_bytes(&find_thunk_tables, &exe_map);
+        scan_unassigned_bytes(&find_thunk_tables, exe_map);
         for (size_t npasses=0; npasses<5; ++npasses) {
             FindThunks find_thunks;
             scan_unassigned_insns(&find_thunks);
@@ -3827,7 +3830,7 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
     /* Find functions that we missed between inter-function padding. */
     if (func_heuristics & SgAsmFunction::FUNC_MISCMASK) {
         FindInterPadFunctions find_interpad_functions;
-        scan_unassigned_bytes(&find_interpad_functions, &exe_map);
+        scan_unassigned_bytes(&find_interpad_functions, exe_map);
     }
 
     /* Find code fragments that appear after a function. */
@@ -3836,7 +3839,7 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
         fff.require_noninterleaved = false;
         fff.require_intrafunction = false;
         fff.threshold = 0.7;
-        scan_unassigned_bytes(&fff, &exe_map);
+        scan_unassigned_bytes(&fff, exe_map);
     }
 
     /* Run another analysis of the CFG because we may need to fix some things up after having added more blocks from the
@@ -3862,7 +3865,7 @@ Partitioner::post_cfg(SgAsmInterpretation *interp/*=NULL*/)
 
     /* Append data to the end(s) of each normal function. */
     FindData find_data;
-    scan_unassigned_bytes(&find_data, &ro_map);
+    scan_unassigned_bytes(&find_data, ro_map);
 
     /* Make sure padding is back where it belongs. */
     adjust_padding();
@@ -4403,13 +4406,14 @@ Partitioner::build_ast(DataBlock *block)
 
 /* Top-level function to run the partitioner in passive mode. */
 SgAsmBlock *
-Partitioner::partition(SgAsmInterpretation* interp/*=NULL*/, const Disassembler::InstructionMap& insns, MemoryMap *map)
+Partitioner::partition(SgAsmInterpretation* interp/*=NULL*/, const Disassembler::InstructionMap& insns,
+                       const MemoryMap::Ptr &map)
 {
     disassembler = NULL;
     add_instructions(insns);
 
-    MemoryMap *old_map = get_map();
-    MemoryMap old_ro_map = ro_map;
+    MemoryMap::Ptr old_map = get_map();
+    MemoryMap::Ptr old_ro_map = ro_map;
     if (!map && !old_map)
         throw Exception("no memory map");
     if (map)
@@ -4421,9 +4425,9 @@ Partitioner::partition(SgAsmInterpretation* interp/*=NULL*/, const Disassembler:
         analyze_cfg(SgAsmBlock::BLK_GRAPH1);
         post_cfg(interp);
         retval = build_ast(interp);
-        set_map(old_map, &old_ro_map);
+        set_map(old_map, old_ro_map);
     } catch (...) {
-        set_map(old_map, &old_ro_map);
+        set_map(old_map, old_ro_map);
         throw;
     }
 
@@ -4432,7 +4436,7 @@ Partitioner::partition(SgAsmInterpretation* interp/*=NULL*/, const Disassembler:
 
 /* Top-level function to run the partitioner in active mode. */
 SgAsmBlock *
-Partitioner::partition(SgAsmInterpretation* interp/*=NULL*/, Disassembler *d, MemoryMap *m)
+Partitioner::partition(SgAsmInterpretation* interp/*=NULL*/, Disassembler *d, const MemoryMap::Ptr &m)
 {
     ASSERT_not_null(d);
     disassembler = d;
@@ -4473,9 +4477,9 @@ Partitioner::disassembleInterpretation(SgAsmInterpretation *interp)
         return;
 
     // Map segments into virtual memory if this hasn't been done yet
-    MemoryMap *map = interp->get_map();
+    MemoryMap::Ptr map = interp->get_map();
     if (map==NULL) {
-        map = new MemoryMap;
+        map = MemoryMap::instance();
         interp->set_map(map);
         BinaryLoader *loader = BinaryLoader::lookup(interp)->clone();
         loader->remap(interp);

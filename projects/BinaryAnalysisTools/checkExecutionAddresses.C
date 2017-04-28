@@ -142,13 +142,13 @@ parseAddressFile(const std::string &fileName) {
 }
 
 static inline bool
-isGoodAddr(const std::set<rose_addr_t> &goodVas, const MemoryMap &map, rose_addr_t va) {
-    return !map.at(va).exists() || goodVas.find(va)!=goodVas.end();
+isGoodAddr(const std::set<rose_addr_t> &goodVas, const MemoryMap::Ptr &map, rose_addr_t va) {
+    return !map->at(va).exists() || goodVas.find(va)!=goodVas.end();
 }
 
 // returns number of good and bad addresses executed
 static std::pair<size_t, size_t>
-execute(const Settings &settings, const std::set<rose_addr_t> &knownVas, BinaryDebugger &debugger, const MemoryMap &map,
+execute(const Settings &settings, const std::set<rose_addr_t> &knownVas, BinaryDebugger &debugger, const MemoryMap::Ptr &map,
         AddressCounts &executed /*in,out*/) {
     Sawyer::ProgressBar<size_t> progress(mlog[MARCH], "instructions");
     std::ofstream trace;
@@ -202,17 +202,18 @@ main(int argc, char *argv[]) {
     mlog[INFO] <<"child PID " <<pid <<"\n";
 
     // Get memory map.
-    MemoryMap map;
+    MemoryMap::Ptr map;
     if (MAP_ROSE==settings.mapSource) {
         map = engine.loadSpecimens(specimen_cmd[0]);
     } else {
-        map.insertProcess(":noattach:" + numberToString(pid));
+        map = MemoryMap::instance();
+        map->insertProcess(":noattach:" + numberToString(pid));
     }
-    map.dump(mlog[INFO]);
+    map->dump(mlog[INFO]);
 
     // The addresses specified in the instruction address file must all be in memory that is mapped.
     BOOST_FOREACH (rose_addr_t va, knownVas) {
-        ASSERT_always_require2(map.at(va).require(MemoryMap::EXECUTABLE).exists(),
+        ASSERT_always_require2(map->at(va).require(MemoryMap::EXECUTABLE).exists(),
                                "given address " + addrToString(va) + " is not mapped or lacks execute permission");
     }
 
@@ -220,8 +221,8 @@ main(int argc, char *argv[]) {
     // map came from an ELF file parsed by ROSE then it will probably have a ".plt" section that is executable.  It is very
     // likely that the process will execute instructions here that we don't know about, and can't know about since we didn't do
     // any dynamic linking.  Therefore, simply remove these sections from the map.
-    map.require(MemoryMap::EXECUTABLE).keep();
-    map.substr("(.plt)").prune();
+    map->require(MemoryMap::EXECUTABLE).keep();
+    map->substr("(.plt)").prune();
 
     // Single step the process and see if each mapped execution address is also an instruction address. Keep track of which
     // addresses were executed.
@@ -244,7 +245,7 @@ main(int argc, char *argv[]) {
     if (settings.showUnmapped) {
         std::cout <<"Unmapped addresses:\n";
         BOOST_FOREACH (const AddressCounts::Node &addrCount, executed.nodes()) {
-            if (!map.at(addrCount.key()).exists())
+            if (!map->at(addrCount.key()).exists())
                 std::cout <<"    " <<addrToString(addrCount.key()) <<"\t" <<addrCount.value() <<"\n";
         }
     }

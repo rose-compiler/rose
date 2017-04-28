@@ -8,8 +8,10 @@
 #include <boost/regex.hpp>
 #include <boost/filesystem.hpp>
 
-using namespace rose;
 using namespace Sawyer::Message;
+
+namespace rose {
+namespace BinaryAnalysis {
 
 std::ostream& operator<<(std::ostream &o, const BinaryLoaderElf::VersionedSymbol &x) { x.print(o); return o; }
 
@@ -57,7 +59,7 @@ BinaryLoaderElf::get_remap_sections(SgAsmGenericHeader *header)
 
 /* For any given file header, start mapping at a particular location in the address space. */
 rose_addr_t
-BinaryLoaderElf::rebase(MemoryMap *map, SgAsmGenericHeader *header, const SgAsmGenericSectionPtrList &sections)
+BinaryLoaderElf::rebase(const MemoryMap::Ptr &map, SgAsmGenericHeader *header, const SgAsmGenericSectionPtrList &sections)
 {
     static const size_t maximum_alignment = 8192;
     AddressInterval mappableArea = AddressInterval::whole();
@@ -98,7 +100,7 @@ BinaryLoaderElf::rebase(MemoryMap *map, SgAsmGenericHeader *header, const SgAsmG
 }
 
 BinaryLoader::MappingContribution
-BinaryLoaderElf::align_values(SgAsmGenericSection *_section, MemoryMap *map,
+BinaryLoaderElf::align_values(SgAsmGenericSection *_section, const MemoryMap::Ptr &map,
                               rose_addr_t *malign_lo_p, rose_addr_t *malign_hi_p,
                               rose_addr_t *va_p, rose_addr_t *mem_size_p,
                               rose_addr_t *offset_p, rose_addr_t *file_size_p, bool *map_private_p,
@@ -930,7 +932,8 @@ BinaryLoaderElf::fixup_info_symbol_va(SgAsmElfSymbol *symbol, SgAsmGenericSectio
 }
 
 rose_addr_t
-BinaryLoaderElf::fixup_info_addend(SgAsmElfRelocEntry *reloc, rose_addr_t target_va, MemoryMap *memmap, size_t nbytes)
+BinaryLoaderElf::fixup_info_addend(SgAsmElfRelocEntry *reloc, rose_addr_t target_va, const MemoryMap::Ptr &memmap,
+                                   size_t nbytes)
 {
     Stream trace(mlog[TRACE]);
 
@@ -979,7 +982,7 @@ BinaryLoaderElf::fixup_info_addend(SgAsmElfRelocEntry *reloc, rose_addr_t target
 
 rose_addr_t
 BinaryLoaderElf::fixup_info_expr(const std::string &expression, SgAsmElfRelocEntry *reloc, const SymverResolver &resolver,
-                                 MemoryMap *memmap, rose_addr_t *target_va_p)
+                                 const MemoryMap::Ptr &memmap, rose_addr_t *target_va_p)
 {
     std::vector<rose_addr_t> stack;
     SgAsmElfSymbol *symbol = NULL;                      /* Defining symbol for relocation */
@@ -1037,7 +1040,7 @@ BinaryLoaderElf::fixup_info_expr(const std::string &expression, SgAsmElfRelocEnt
  *======================================================================================================================== */
 
 void
-BinaryLoaderElf::fixup_apply(rose_addr_t value, SgAsmElfRelocEntry *reloc, MemoryMap *memmap,
+BinaryLoaderElf::fixup_apply(rose_addr_t value, SgAsmElfRelocEntry *reloc, const MemoryMap::Ptr &memmap,
                              rose_addr_t target_va/*=0*/, size_t nbytes/*=0*/)
 {
     Stream trace(mlog[TRACE]);
@@ -1081,7 +1084,8 @@ BinaryLoaderElf::fixup_apply(rose_addr_t value, SgAsmElfRelocEntry *reloc, Memor
 
     
 void
-BinaryLoaderElf::fixup_apply_symbol_copy(SgAsmElfRelocEntry* reloc, const SymverResolver &resolver, MemoryMap *memmap)
+BinaryLoaderElf::fixup_apply_symbol_copy(SgAsmElfRelocEntry* reloc, const SymverResolver &resolver,
+                                         const MemoryMap::Ptr &memmap)
 {
     Stream trace(mlog[TRACE]);
     SgAsmElfSymbol *symbol = fixup_info_reloc_symbol(reloc, resolver);
@@ -1178,7 +1182,8 @@ Thus, we're performing
 
 
 void
-BinaryLoaderElf::performRelocation(SgAsmElfRelocEntry* reloc, const SymverResolver &resolver, MemoryMap *memmap)
+BinaryLoaderElf::performRelocation(SgAsmElfRelocEntry* reloc, const SymverResolver &resolver,
+                                   const MemoryMap::Ptr &memmap)
 {
     Stream trace(mlog[TRACE]);
     ASSERT_not_null2(reloc, "ELF relocation entry");
@@ -1303,7 +1308,7 @@ BinaryLoaderElf::performRelocation(SgAsmElfRelocEntry* reloc, const SymverResolv
 }
 
 void
-BinaryLoaderElf::performRelocations(SgAsmElfFileHeader* elfHeader, MemoryMap *memmap)
+BinaryLoaderElf::performRelocations(SgAsmElfFileHeader* elfHeader, const MemoryMap::Ptr &memmap)
 {
     SymverResolver resolver(elfHeader);
     SgAsmGenericSectionPtrList sections = elfHeader->get_sectab_sections();
@@ -1830,3 +1835,6 @@ BinaryLoaderElf::performRelocations(SgAsmElfFileHeader* elfHeader, MemoryMap *me
 //
 // */
 //
+
+} // namespace
+} // namespace

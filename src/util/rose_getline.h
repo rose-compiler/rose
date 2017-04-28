@@ -2,6 +2,7 @@
 #define Rose_getline_H
 
 #include "rosedll.h"
+#include <stdio.h>
 
 #ifdef _MSC_VER
     #include <windows.h>

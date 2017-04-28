@@ -169,17 +169,17 @@ RSIM_Linux64::loadVsyscalls(RSIM_Process *process) {
         FileSystem::Path name = path / "vsyscall-amd64";
         if (FileSystem::isFile(name)) {
             found = FileSystem::toString(name);
-            loaded = process->get_memory().insertFile(":0xffffffffff600000+0x1000=rx::" + found);
+            loaded = process->get_memory()->insertFile(":0xffffffffff600000+0x1000=rx::" + found);
             break;
         } else if (FileSystem::isFile(path)) {
             found = FileSystem::toString(name);
-            loaded = process->get_memory().insertFile(":0xffffffffff600000+0x1000=rx::" + found);
+            loaded = process->get_memory()->insertFile(":0xffffffffff600000+0x1000=rx::" + found);
             break;
         }
     }
 
     // Change the name from just a file name to "[vsyscall] ..."
-    BOOST_FOREACH (MemoryMap::Segment &segment, process->get_memory().within(loaded).segments())
+    BOOST_FOREACH (MemoryMap::Segment &segment, process->get_memory()->within(loaded).segments())
         segment.name("[vsyscall] " + found);
 }
 
@@ -193,7 +193,7 @@ RSIM_Linux64::loadSpecimenNative(RSIM_Process *process, Disassembler *disassembl
         debugger.attach(exeArgs());
     }
 
-    process->get_memory().insertProcess(":noattach:" + StringUtility::numberToString(debugger.isAttached()));
+    process->get_memory()->insertProcess(":noattach:" + StringUtility::numberToString(debugger.isAttached()));
 
     const RegisterDictionary *regs = disassembler->get_registers();
     initialRegs_.ax = debugger.readRegister(*regs->lookup("rax")).toInteger();

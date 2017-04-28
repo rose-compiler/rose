@@ -44,7 +44,7 @@ DisassemblerArm::unparser() const {
 
 /* This is a bit of a kludge for now because we're trying to use an unmodified version of the ArmDisassembler name space. */
 SgAsmInstruction *
-DisassemblerArm::disassembleOne(const MemoryMap *map, rose_addr_t start_va, AddressSet *successors)
+DisassemblerArm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va, AddressSet *successors)
 {
     if (start_va & 0x3)
         throw Exception("instruction pointer not word aligned", start_va);

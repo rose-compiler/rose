@@ -159,9 +159,9 @@ rebaseImportAddressTables(Partitioner &partitioner, const ImportIndex &index) {
 
     // Add segments to the memory map.
     BOOST_FOREACH (const AddressInterval &iatExtent, iatAddresses.intervals()) {
-        partitioner.memoryMap().insert(iatExtent,
-                                       MemoryMap::Segment::anonymousInstance(iatExtent.size(), MemoryMap::READABLE,
-                                                                             "partitioner-adjusted IAT"));
+        partitioner.memoryMap()->insert(iatExtent,
+                                        MemoryMap::Segment::anonymousInstance(iatExtent.size(), MemoryMap::READABLE,
+                                                                              "partitioner-adjusted IAT"));
     }
 
     // Write IAT entries into the newly mapped IATs
@@ -170,7 +170,7 @@ rebaseImportAddressTables(Partitioner &partitioner, const ImportIndex &index) {
         for (size_t i=0; i<wordSize; ++i)
             packed[i] = (node.key() >> (8*i)) & 0xff;
         rose_addr_t iatVa = node.value()->get_iat_entry_va();
-        if (wordSize!=partitioner.memoryMap().at(iatVa).limit(wordSize).write(packed).size())
+        if (wordSize!=partitioner.memoryMap()->at(iatVa).limit(wordSize).write(packed).size())
             ASSERT_not_reachable("write failed to map we just created");
     }
 }
@@ -308,7 +308,7 @@ PeDescrambler::findCalleeAddress(const Partitioner &partitioner, rose_addr_t ret
             static const size_t nWordsToRead = nEntriesToRead * wordsPerEntry;
             static uint32_t buf[nWordsToRead];
             rose_addr_t batchVa = dispatchTableVa_ + dispatchTable_.size() * sizeof(DispatchEntry);
-            size_t nReadBytes = partitioner.memoryMap().at(batchVa).limit(sizeof buf).read((uint8_t*)buf).size();
+            size_t nReadBytes = partitioner.memoryMap()->at(batchVa).limit(sizeof buf).read((uint8_t*)buf).size();
             reachedEndOfTable_ = nReadBytes < bytesPerEntry;
             for (size_t i=0; 4*(i+1)<nReadBytes; i+=2)
                 dispatchTable_.push_back(DispatchEntry(ByteOrder::le_to_host(buf[i+0]), ByteOrder::le_to_host(buf[i+1])));
@@ -321,7 +321,7 @@ PeDescrambler::findCalleeAddress(const Partitioner &partitioner, rose_addr_t ret
             rose_addr_t va = dispatchTable_[tableIdx].calleeVa;
             if (hitNullEntry) {
                 uint32_t va2;
-                if (4 != partitioner.memoryMap().at(va).limit(4).read((uint8_t*)&va2).size())
+                if (4 != partitioner.memoryMap()->at(va).limit(4).read((uint8_t*)&va2).size())
                     return Sawyer::Nothing();       // couldn't dereference table entry
                 va = ByteOrder::le_to_host(va2);
             }

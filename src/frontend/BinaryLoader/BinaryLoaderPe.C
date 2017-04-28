@@ -3,6 +3,9 @@
 #include "Diagnostics.h"
 #include "MemoryMap.h"
 
+namespace rose {
+namespace BinaryAnalysis {
+
 /* This binary loader can handle all PE files. */
 bool
 BinaryLoaderPe::can_load(SgAsmGenericHeader *hdr) const
@@ -37,7 +40,7 @@ BinaryLoaderPe::get_remap_sections(SgAsmGenericHeader *header)
 /* This algorithm was implemented based on an e-mail from Cory Cohen at CERT and inspection of PE::ConvertRvaToFilePosition()
  * as defined in "PE.cpp 2738 2009-06-05 15:09:11Z murawski_dev". [RPM 2009-08-17] */
 BinaryLoader::MappingContribution
-BinaryLoaderPe::align_values(SgAsmGenericSection *section, MemoryMap *map,
+BinaryLoaderPe::align_values(SgAsmGenericSection *section, const MemoryMap::Ptr &map,
                              rose_addr_t *malign_lo_p, rose_addr_t *malign_hi_p,
                              rose_addr_t *va_p, rose_addr_t *mem_size_p,
                              rose_addr_t *offset_p, rose_addr_t *file_size_p, bool *map_private_p,
@@ -84,3 +87,6 @@ BinaryLoaderPe::align_values(SgAsmGenericSection *section, MemoryMap *map,
     *resolve_p = RESOLVE_OVERMAP;
     return CONTRIBUTE_ADD;
 }
+
+} // namespace
+} // namespace

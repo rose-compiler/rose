@@ -11,8 +11,8 @@
 0x0804830f: call   0x0804840c<<Func>>
       yes: 0x000000000804840c<134513676><Func>
 0x08048314: basic block
-      yes: 0x000000000804856c<134514028><Func>
       yes: 0x0000000008048319<134513433><BBlock>
+      yes: 0x000000000804856c<134514028><Func>
 0x08048314: call   0x0804856c<<Func>>
       yes: 0x000000000804856c<134514028><Func>
 0x0804831c: push   dword ds:[0x080496dc<.got.plt+4>]
@@ -32,8 +32,8 @@
 0x0804837c: jmp    dword ds:[0x080496f8<.got.plt+0x20>]
       yes: 0x00000000080496f8<134518520>.got.plt+0x20
 0x08048390: basic block
-      yes: 0x000000000804834c<134513484>__libc_start_main@plt
       yes: 0x00000000080483b1<134513585><BBlock>
+      yes: 0x000000000804834c<134513484>__libc_start_main@plt
 0x08048395: and    esp, 0xf0<-16>
   *****no: 0x00000000000000f0
 0x0804839b: push   0x08048528<<Func>>
@@ -45,8 +45,8 @@
 0x080483ac: call   0x0804834c<__libc_start_main@plt>
       yes: 0x000000000804834c<134513484>__libc_start_main@plt
 0x080483b4: basic block
-      yes: 0x00000000080483cf<134513615><BBlock>
       yes: 0x00000000080483d1<134513617><BBlock>
+      yes: 0x00000000080483cf<134513615><BBlock>
 0x080483b8: call   0x080483bd<<Insn>>
       yes: 0x00000000080483bd<134513597><Insn>
 0x080483be: add    ebx, 0x0000131b<4891>
@@ -82,8 +82,8 @@
 0x080483ef: mov    dword ds:[0x08049704<.data+8>], eax
       yes: 0x0000000008049704<134518532>.data+8
 0x080483f6: basic block
-      yes: 0x00000000080483ec<134513644><BBlock>
       yes: 0x0000000008048401<134513665><BBlock>
+      yes: 0x00000000080483ec<134513644><BBlock>
 0x080483f6: mov    eax, dword ds:[0x08049704<.data+8>]
       yes: 0x0000000008049704<134518532>.data+8
 0x080483ff: jne    0x080483ec<<BBlock>>
@@ -94,8 +94,8 @@
       yes: 0x0000000008049708<134518536>.bss
   *****no: 0x0000000000000001
 0x0804840c: basic block
-      yes: 0x000000000804841b<134513691><BBlock>
       yes: 0x0000000008048434<134513716><BBlock>
+      yes: 0x000000000804841b<134513691><BBlock>
 0x0804840f: sub    esp, 0x08
   *****no: 0x0000000000000008
 0x08048412: mov    eax, dword ds:[0x08049608<.jcr>]
@@ -103,8 +103,8 @@
 0x08048419: je     0x08048434<<BBlock>>
       yes: 0x0000000008048434<134513716><BBlock>
 0x0804841b: basic block
-      yes: 0x0000000008048424<134513700><BBlock>
       yes: 0x0000000008048434<134513716><BBlock>
+      yes: 0x0000000008048424<134513700><BBlock>
 0x0804841b: mov    eax, 0x00000000
   *****no: 0x0000000000000000
 0x08048422: je     0x08048434<<BBlock>>
@@ -138,13 +138,13 @@
 0x08048460: call   0x0804835c<open@plt>
       yes: 0x000000000804835c<134513500>open@plt
 0x08048465: basic block
-      yes: 0x000000000804846b<134513771><BBlock>
       yes: 0x0000000008048493<134513811><BBlock>
+      yes: 0x000000000804846b<134513771><BBlock>
 0x08048469: jns    0x08048493<<BBlock>>
       yes: 0x0000000008048493<134513811><BBlock>
 0x0804846b: basic block
-      yes: 0x000000000804832c<134513452>write@plt
       yes: 0x0000000008048487<134513799><BBlock>
+      yes: 0x000000000804832c<134513452>write@plt
 0x0804846b: mov    dword ss:[esp + 0x08], 0x00000029
   *****no: 0x0000000000000008
   *****no: 0x0000000000000029
@@ -168,8 +168,8 @@
 0x08048499: jmp    0x080484af<<BBlock>>
       yes: 0x00000000080484af<134513839><BBlock>
 0x0804849b: basic block
-      yes: 0x000000000804832c<134513452>write@plt
       yes: 0x00000000080484af<134513839><BBlock>
+      yes: 0x000000000804832c<134513452>write@plt
 0x0804849b: mov    dword ss:[esp + 0x08], eax
   *****no: 0x0000000000000008
 0x0804849f: mov    dword ss:[esp + 0x04], esi
@@ -179,8 +179,8 @@
 0x080484aa: call   0x0804832c<write@plt>
       yes: 0x000000000804832c<134513452>write@plt
 0x080484af: basic block
-      yes: 0x000000000804837c<134513532>read@plt
       yes: 0x00000000080484c3<134513859><BBlock>
+      yes: 0x000000000804837c<134513532>read@plt
 0x080484af: mov    dword ss:[esp + 0x08], 0x00000080
   *****no: 0x0000000000000008
   *****no: 0x0000000000000080
@@ -189,13 +189,13 @@
 0x080484be: call   0x0804837c<read@plt>
       yes: 0x000000000804837c<134513532>read@plt
 0x080484c3: basic block
-      yes: 0x000000000804849b<134513819><BBlock>
       yes: 0x00000000080484c7<134513863><BBlock>
+      yes: 0x000000000804849b<134513819><BBlock>
 0x080484c5: jg     0x0804849b<<BBlock>>
       yes: 0x000000000804849b<134513819><BBlock>
 0x080484c7: basic block
-      yes: 0x000000000804833c<134513468>close@plt
       yes: 0x00000000080484cf<134513871><BBlock>
+      yes: 0x000000000804833c<134513468>close@plt
 0x080484ca: call   0x0804833c<close@plt>
       yes: 0x000000000804833c<134513468>close@plt
 0x080484cf: basic block
@@ -214,8 +214,8 @@
 0x080484e9: call   0x08048304<<Func>>
       yes: 0x0000000008048304<134513412><Func>
 0x080484ee: basic block
-      yes: 0x0000000008048508<134513928><BBlock>
       yes: 0x000000000804851e<134513950><BBlock>
+      yes: 0x0000000008048508<134513928><BBlock>
 0x080484ee: lea    eax, [ebx + 0xffffff20<-224>]
   *****no: 0x00000000ffffff20<4294967072>
 0x080484f4: lea    edx, [ebx + 0xffffff20<-224>]
@@ -233,8 +233,8 @@
 0x0804850c: call   dword ds:[edx + esi*0x04]
   *****no: 0x0000000000000004
 0x0804850f: basic block
-      yes: 0x000000000804850c<134513932><BBlock>
       yes: 0x000000000804851e<134513950><BBlock>
+      yes: 0x000000000804850c<134513932><BBlock>
 0x0804850f: mov    ecx, dword ss:[ebp + 0xf0<-16>]
   *****no: 0x00000000000000f0
 0x08048515: sar    ecx, 0x02
@@ -277,8 +277,8 @@
 0x0804855b: jne    0x08048554<<BBlock>>
       yes: 0x0000000008048554<134514004><BBlock>
 0x0804855d: basic block
-      yes: 0x0000000008048590<134514064><Func>
       yes: 0x0000000008048562<134514018><BBlock>
+      yes: 0x0000000008048590<134514064><Func>
 0x0804855d: call   0x08048590<<Func>>
       yes: 0x0000000008048590<134514064><Func>
 0x08048562: add    esp, 0x0c
@@ -309,8 +309,8 @@
 0x0804858a: jne    0x08048580<<BBlock>>
       yes: 0x0000000008048580<134514048><BBlock>
 0x08048590: basic block
-      yes: 0x00000000080483d8<134513624><Func>
       yes: 0x00000000080485a6<134514086><BBlock>
+      yes: 0x00000000080483d8<134513624><Func>
 0x08048594: call   0x08048599<<Insn>>
       yes: 0x0000000008048599<134514073><Insn>
 0x0804859a: add    ebx, 0x0000113f<4415>

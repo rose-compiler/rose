@@ -52,8 +52,8 @@ public:
         wordSize_ = regIp_.get_nbits();
     }
 
-    void reset(MemoryMap map) {
-        BOOST_FOREACH (MemoryMap::Segment &segment, map.segments())
+    void reset(const MemoryMap::Ptr &map) {
+        BOOST_FOREACH (MemoryMap::Segment &segment, map->segments())
             segment.buffer()->copyOnWrite(true);        // prevent the VM from changing the real map
         BaseSemantics::StatePtr state = ops_->currentState()->clone();
         state->clear();
@@ -65,7 +65,7 @@ public:
         ops_->writeMemory(regSs_, sp, ops_->number_(wordSize_, returnMarker_), ops_->boolean_(true));
     }
 
-    const MemoryMap& map() const {
+    MemoryMap::Ptr map() const {
         return ConcreteSemantics::MemoryState::promote(ops_->currentState()->memoryState())->memoryMap();
     }
 
@@ -89,12 +89,12 @@ public:
     }
 
     uint64_t readMemory(rose_addr_t va) const {
-        const MemoryMap &map = ConcreteSemantics::MemoryState::promote(ops_->currentState()->memoryState())->memoryMap();
+        MemoryMap::Ptr map = ConcreteSemantics::MemoryState::promote(ops_->currentState()->memoryState())->memoryMap();
         uint8_t buf[16];
         memset(buf, 0, sizeof buf);
         size_t nBytes = wordSize_ / 8;
         ASSERT_require(sizeof(buf) >= nBytes);
-        map.at(va).limit(nBytes).read(buf);
+        map->at(va).limit(nBytes).read(buf);
         uint64_t retval = 0;
         for (size_t i=0; i<nBytes; ++i)
             retval |= buf[i] << (8*i);                  // FIXME[Robb P. Matzke 2015-05-19]: this is only little endian
@@ -102,8 +102,8 @@ public:
     }
     
     std::string readString(rose_addr_t va) const {
-        const MemoryMap &map = ConcreteSemantics::MemoryState::promote(ops_->currentState()->memoryState())->memoryMap();
-        return map.readString(va, 256 /*arbitrary*/);
+        MemoryMap::Ptr map = ConcreteSemantics::MemoryState::promote(ops_->currentState()->memoryState())->memoryMap();
+        return map->readString(va, 256 /*arbitrary*/);
     }
 
     void setIp(rose_addr_t ip) {
@@ -205,7 +205,7 @@ arguments(const VirtualMachine &vm, size_t nArgs) {
     for (size_t i=0; i<nArgs; ++i) {
         BaseSemantics::SValuePtr arg = vm.argument(i);
         ss <<(i?", ":"") <<"arg_" <<i <<" = " <<*arg;
-        if (vm.map().at(arg->get_number()).exists()) {
+        if (vm.map()->at(arg->get_number()).exists()) {
             if (uint64_t deref = vm.readMemory(arg->get_number()))
                 ss <<" [deref=" <<StringUtility::toHex2(deref, vm.wordSize()) <<"]";
         }

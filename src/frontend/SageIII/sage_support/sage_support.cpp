@@ -604,10 +604,7 @@ isBinaryExecutableFile ( string sourceFilename )
   // Open file for reading
      FILE* f = fopen(sourceFilename.c_str(), "rb");
      if (!f)
-        {
-          printf ("Could not open file");
-          ROSE_ASSERT(false);
-        }
+         return false;                                  // a file that cannot be opened is not a binary file
 
      int character0 = fgetc(f);
      int character1 = fgetc(f);
@@ -645,10 +642,7 @@ isLibraryArchiveFile ( string sourceFilename )
   // Open file for reading
      FILE* f = fopen(sourceFilename.c_str(), "rb");
      if (!f)
-        {
-          printf ("Could not open file in isLibraryArchiveFile()");
-          ROSE_ASSERT(false);
-        }
+         return false;                                  // a non-existing file is not a library archive
 
      string magicHeader;
      for (int i = 0; i < 7; i++)
@@ -844,9 +838,12 @@ cout.flush();
        // Zack Galbreath 1/9/2014: Windows absolute paths do not begin with "/".
        // The following printf could cause problems for our testing systems because
        // it contains the word "error".
+       // [Robb P Matzke 2017-04-21]: Such a low-level utility function as this shouldn't be emitting output at all, especially
+       // not on standard output, because it makes it problematic to call this in situations where the file might not
+       // exist.
        #ifndef _MSC_VER
-          if (sourceFilename.substr(0,targetSubstring.size()) != targetSubstring)
-               printf ("sourceFilename encountered an error in filename\n");
+          //if (sourceFilename.substr(0,targetSubstring.size()) != targetSubstring)
+          //     printf ("sourceFilename encountered an error in filename\n");
        #endif
        
        // DQ (11/29/2006): Even if this is C mode, we have to define the __cplusplus macro
@@ -5296,7 +5293,7 @@ SgBinaryComposite::buildAST(vector<string> /*argv*/, vector<string> /*inputComma
         }
     } else {
         ROSE_ASSERT(get_libraryArchiveObjectFileNameList().empty());
-        BinaryLoader::load(this, get_read_executable_file_format_only());
+        BinaryAnalysis::BinaryLoader::load(this, get_read_executable_file_format_only());
     }
 
     /* Disassemble each interpretation */

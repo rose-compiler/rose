@@ -349,6 +349,10 @@ public:
  *  descriptions and command-line parser for these switches can be obtained from @ref engineBehaviorSwitches. */
 struct EngineSettings {
     std::vector<std::string> configurationNames;    /**< List of configuration files and/or directories. */
+    bool exitOnError;                               /**< If true, emit error message and exit non-zero, else throw. */
+
+    EngineSettings()
+        : exitOnError(true) {}
 
 private:
     friend class boost::serialization::access;
@@ -356,6 +360,7 @@ private:
     template<class S>
     void serialize(S &s, unsigned version) {
         s & configurationNames;
+        s & exitOnError;
     }
 };
 

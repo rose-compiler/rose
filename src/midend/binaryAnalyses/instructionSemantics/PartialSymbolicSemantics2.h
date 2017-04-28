@@ -303,17 +303,17 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 /** Defines RISC operators for this semantic domain. */
 class RiscOperators: public BaseSemantics::RiscOperators {
 protected:
-    const MemoryMap *map;
+    MemoryMap::Ptr map;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
     explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
-        : BaseSemantics::RiscOperators(protoval, solver), map(NULL) {
+        : BaseSemantics::RiscOperators(protoval, solver) {
         name("PartialSymbolic");
     }
     explicit RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
-        : BaseSemantics::RiscOperators(state, solver), map(NULL) {
+        : BaseSemantics::RiscOperators(state, solver) {
         name("PartialSymbolic");
     }
 
@@ -365,8 +365,8 @@ public:
      *  would initialize the memory map to contain all the non-writable addresses.  The byte-order property of the memory
      *  map is used when reading the value.
      * @{ */
-    const MemoryMap *get_memory_map() const { return map; }
-    void set_memory_map(const MemoryMap *m) { map = m; }
+    const MemoryMap::Ptr get_memory_map() const { return map; }
+    void set_memory_map(const MemoryMap::Ptr &m) { map = m; }
     /** @} */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

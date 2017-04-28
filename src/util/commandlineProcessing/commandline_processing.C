@@ -587,7 +587,7 @@ CommandlineProcessing::addListToCommandLine ( vector<string> & argv , string pre
 #if 0
      printf ("In addListToCommandLine(): prefix = %s \n",prefix.c_str());
 #endif
-     bool outputPrefix = false;
+  // bool outputPrefix = false;
   // for (unsigned int i = 0; i < argList.size(); ++i) 
      for (size_t i = 0; i < argList.size(); ++i) 
         {
