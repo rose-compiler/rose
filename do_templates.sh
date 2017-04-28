@@ -26,7 +26,7 @@ use_gnat () {
 
 build_asis_tool () {
   log "Building ${tool_name}"
-  gprbuild -p -Prose_asis.gpr -XLIBRARY_TYPE=static -XASIS_BUILD=default ${tool_name}.adb
+  gprbuild -p -Pdot_asis.gpr -XLIBRARY_TYPE=static -XASIS_BUILD=default ${tool_name}.adb
 }
 
 # Keeps going.  Returns 1 if any failed, 0 if all succeeded:
