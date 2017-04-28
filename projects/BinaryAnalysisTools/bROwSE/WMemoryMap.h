@@ -73,7 +73,7 @@ private:
 
 private:
     bool allowDownloads_;                               // should downloads be allowed?
-    MemoryMap memoryMap_;                               // the memory map being manipulated
+    rose::BinaryAnalysis::MemoryMap::Ptr memoryMap_;    // the memory map being manipulated
     Wt::WTable *wTable_;
     bool isEditable_;                                   // can entries be edited?
     Wt::Signal<> mapChanged_;                           // emitted when the memory map changes
@@ -92,15 +92,16 @@ private:
     RowGroups rowGroups_;
 
 public:
-    explicit WMemoryMap(const MemoryMap &map = MemoryMap(), Wt::WContainerWidget *parent=NULL)
+    explicit WMemoryMap(const rose::BinaryAnalysis::MemoryMap::Ptr &map = rose::BinaryAnalysis::MemoryMap::Ptr(),
+                        Wt::WContainerWidget *parent=NULL)
         : Wt::WContainerWidget(parent), allowDownloads_(true), memoryMap_(map), wTable_(NULL), isEditable_(true),
           wDownloadPanel_(NULL), wDownloadFrom_(NULL), wDownloadTo_(NULL), wDownloadFormat_(NULL), wDownloadPrepare_(NULL),
           wDownload_(NULL), wDownloadMessage_(NULL) {
         init();
     }
 
-    const MemoryMap& memoryMap() const { return memoryMap_; }
-    void memoryMap(const MemoryMap&);
+    rose::BinaryAnalysis::MemoryMap::Ptr memoryMap() const { return memoryMap_; }
+    void memoryMap(const rose::BinaryAnalysis::MemoryMap::Ptr&);
 
     bool isEditable() const { return isEditable_; }
     void isEditable(bool b);
@@ -126,16 +127,16 @@ private:
     void instantiateTableWidgets(RowGroup&, size_t tableIdx);
 
     // Update table row widgets with interval and segment information
-    void updateRowGroupWidgets(RowGroup&, MemoryMap::NodeIterator);
-    void updateRowGroupDataWidgets(RowGroup&, MemoryMap::NodeIterator);
-    void updateRowGroupEditWidgets(RowGroup&, MemoryMap::NodeIterator);
+    void updateRowGroupWidgets(RowGroup&, rose::BinaryAnalysis::MemoryMap::NodeIterator);
+    void updateRowGroupDataWidgets(RowGroup&, rose::BinaryAnalysis::MemoryMap::NodeIterator);
+    void updateRowGroupEditWidgets(RowGroup&, rose::BinaryAnalysis::MemoryMap::NodeIterator);
 
     // Predicates for a RowGroup
-    bool canSplit(const RowGroup&, MemoryMap::NodeIterator);
-    bool canMerge(const RowGroup&, MemoryMap::NodeIterator);
+    bool canSplit(const RowGroup&, rose::BinaryAnalysis::MemoryMap::NodeIterator);
+    bool canMerge(const RowGroup&, rose::BinaryAnalysis::MemoryMap::NodeIterator);
 
     // Return memory map node for row group
-    MemoryMap::NodeIterator findMapNode(const RowGroup&);
+    rose::BinaryAnalysis::MemoryMap::NodeIterator findMapNode(const RowGroup&);
 
     // Return RowGroup given table ID
     RowGroup& rowGroup(Wt::WText *wId);

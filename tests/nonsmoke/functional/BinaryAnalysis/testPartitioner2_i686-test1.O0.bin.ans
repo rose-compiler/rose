@@ -8,17 +8,17 @@
 0x080482cb: 83 ec 08                |...     |<sp-4 >   sub    esp, 0x08
 0x080482ce: e8 91 00 00 00          |.....   |<sp-12>   call   0x08048364<(func)call_gmon_start>
 0x080482ce: Outgoing stack delta: -16
-0x080482ce: Successor blocks: 0x08048364<call_gmon_start>, 0x080482d3
+0x080482ce: Successor blocks: 0x080482d3, 0x08048364<call_gmon_start>
 
 0x080482d3: Basic block reasons: 
 0x080482d3: e8 f8 00 00 00          |.....   |<sp-12>   call   0x080483d0<(func)frame_dummy>
 0x080482d3: Outgoing stack delta: -16
-0x080482d3: Successor blocks: 0x080483d0<frame_dummy>, 0x080482d8
+0x080482d3: Successor blocks: 0x080482d8, 0x080483d0<frame_dummy>
 
 0x080482d8: Basic block reasons: 
 0x080482d8: e8 83 02 00 00          |.....   |<sp-12>   call   0x08048560<(func)__do_global_ctors_aux>
 0x080482d8: Outgoing stack delta: -16
-0x080482d8: Successor blocks: 0x08048560<__do_global_ctors_aux>, 0x080482dd
+0x080482d8: Successor blocks: 0x080482dd, 0x08048560<__do_global_ctors_aux>
 
 0x080482dd: Basic block reasons: 
 0x080482dd: c9                      |.       |<sp-12>   leave  
@@ -411,7 +411,7 @@
 0x0804854b: Basic block reasons: 
 0x0804854b: e8 40 00 00 00          |.@...   |<sp-28>   call   0x08048590<(func)_fini>
 0x0804854b: Outgoing stack delta: -32
-0x0804854b: Successor blocks: 0x08048590<_fini>, 0x08048550
+0x0804854b: Successor blocks: 0x08048550, 0x08048590<_fini>
 
 0x08048550: Basic block reasons: 
 0x08048550: 83 c4 0c                |...     |<sp-28>   add    esp, 0x0c

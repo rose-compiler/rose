@@ -233,7 +233,7 @@
 0x0100129b: 50                      |P       |          push   eax
 0x0100129c: 89 45 f0                |.E.     |          mov    dword ss:[ebp + 0xf0<-16>], eax
 0x0100129f: e8 5c 06 00 00          |.\...   |          call   0x01001900<<Func>>
-0x0100129f: Successor blocks: 0x01001900<<Func>>, 0x010012a4
+0x0100129f: Successor blocks: 0x010012a4, 0x01001900<<Func>>
 
 0x010012a4: Basic block reasons: 
 0x010012a4: 3b c6                   |;.      |          cmp    eax, esi
@@ -272,7 +272,7 @@
 0x010012d0: Basic block reasons: 
 0x010012d0: ff 75 f4                |.u.     |          push   dword ss:[ebp + 0xf4<-12>]
 0x010012d3: e8 1c 06 00 00          |.....   |          call   0x010018f4<<Func>>
-0x010012d3: Successor blocks: 0x010018f4<<Func>>, 0x010012d8
+0x010012d3: Successor blocks: 0x010012d8, 0x010018f4<<Func>>
 
 0x010012d8: Basic block reasons: 
 0x010012d8: 59                      |Y       |          pop    ecx
@@ -334,7 +334,7 @@
 0x01001311: 50                      |P       |<sp-40>   push   eax
 0x01001312: e8 e9 05 00 00          |.....   |<sp-44>   call   0x01001900<<Func>>
 0x01001312: Outgoing stack delta: -48
-0x01001312: Successor blocks: 0x01001900<<Func>>, 0x01001317
+0x01001312: Successor blocks: 0x01001317, 0x01001900<<Func>>
 
 0x01001317: Basic block reasons: 
 0x01001317: 3b c7                   |;.      |<sp-44>   cmp    eax, edi
@@ -617,7 +617,7 @@
 0x0100146c: Basic block reasons: 
 0x0100146c: ff 75 f8                |.u.     |          push   dword ss:[ebp + 0xf8<-8>]
 0x0100146f: e8 80 04 00 00          |.....   |          call   0x010018f4<<Func>>
-0x0100146f: Successor blocks: 0x010018f4<<Func>>, 0x01001474
+0x0100146f: Successor blocks: 0x01001474, 0x010018f4<<Func>>
 
 0x01001474: Basic block reasons: 
 0x01001474: 59                      |Y       |          pop    ecx
@@ -631,7 +631,7 @@
 0x0100147b: Basic block reasons: 
 0x0100147b: ff 75 fc                |.u.     |          push   dword ss:[ebp + 0xfc<-4>]
 0x0100147e: e8 71 04 00 00          |.q...   |          call   0x010018f4<<Func>>
-0x0100147e: Successor blocks: 0x010018f4<<Func>>, 0x01001483
+0x0100147e: Successor blocks: 0x01001483, 0x010018f4<<Func>>
 
 0x01001483: Basic block reasons: 
 0x01001483: 59                      |Y       |          pop    ecx
@@ -999,7 +999,7 @@
 0x01001636: 57                      |W       |<sp-32>   push   edi
 0x01001637: e8 70 00 00 00          |.p...   |<sp-36>   call   0x010016ac<<Func>>
 0x01001637: Outgoing stack delta: -40
-0x01001637: Successor blocks: 0x010016ac<<Func>>, 0x0100163c
+0x01001637: Successor blocks: 0x0100163c, 0x010016ac<<Func>>
 
 0x0100163c: Basic block reasons: 
 0x0100163c: 8b f8                   |..      |<sp-36>   mov    edi, eax
@@ -1125,7 +1125,7 @@
 0x010016c8: 89 75 f0                |.u.     |<sp-40>   mov    dword ss:[ebp + 0xf0<-16>], esi
 0x010016cb: e8 30 02 00 00          |.0...   |<sp-40>   call   0x01001900<<Func>>
 0x010016cb: Outgoing stack delta: -44
-0x010016cb: Successor blocks: 0x01001900<<Func>>, 0x010016d0
+0x010016cb: Successor blocks: 0x010016d0, 0x01001900<<Func>>
 
 0x010016d0: Basic block reasons: 
 0x010016d0: 8b f8                   |..      |<sp-40>   mov    edi, eax
@@ -1214,7 +1214,7 @@
 0x0100174d: Basic block reasons: 
 0x0100174d: ff 75 f8                |.u.     |          push   dword ss:[ebp + 0xf8<-8>]
 0x01001750: e8 9f 01 00 00          |.....   |          call   0x010018f4<<Func>>
-0x01001750: Successor blocks: 0x010018f4<<Func>>, 0x01001755
+0x01001750: Successor blocks: 0x01001755, 0x010018f4<<Func>>
 
 0x01001755: Basic block reasons: 
 0x01001755: 81 ff e9 2e 00 00       |......  |          cmp    edi, 0x00002ee9<12009>
@@ -1250,7 +1250,7 @@
 0x01001776: 68 d8 10 00 01          |h....   |<sp-4 >   push   0x010010d8
 0x0100177b: e8 c4 01 00 00          |.....   |<sp-8 >   call   0x01001944<<Func>>
 0x0100177b: Outgoing stack delta: -12
-0x0100177b: Successor blocks: 0x01001944<<Func>>, 0x01001780
+0x0100177b: Successor blocks: 0x01001780, 0x01001944<<Func>>
 
 0x01001780: Basic block reasons: 
 0x01001780: 33 ff                   |3.      |<sp-8 >   xor    edi, edi
@@ -1353,7 +1353,7 @@
 0x01001818: a3 1c 20 00 01          |.. ..   |<sp-12>   mov    dword ds:[0x0100201c<.bss+0x1c>], eax
 0x0100181d: e8 18 01 00 00          |.....   |<sp-12>   call   0x0100193a<<Func>>
 0x0100181d: Outgoing stack delta: -16
-0x0100181d: Successor blocks: 0x0100193a<<Func>>, 0x01001822
+0x0100181d: Successor blocks: 0x01001822, 0x0100193a<<Func>>
 
 0x01001822: Basic block reasons: 
 0x01001822: 39 3d 00 30 00 01       |9=.0..  |<sp-12>   cmp    dword ds:[0x01003000<.data>], edi
@@ -1375,14 +1375,14 @@
 0x01001836: Basic block reasons: 
 0x01001836: e8 e8 00 00 00          |.....   |<sp-12>   call   0x01001923<<Func>>
 0x01001836: Outgoing stack delta: -16
-0x01001836: Successor blocks: 0x01001923<<Func>>, 0x0100183b
+0x01001836: Successor blocks: 0x0100183b, 0x01001923<<Func>>
 
 0x0100183b: Basic block reasons: 
 0x0100183b: 68 0c 10 00 01          |h....   |<sp-12>   push   0x0100100c
 0x01001840: 68 08 10 00 01          |h....   |<sp-16>   push   0x01001008
 0x01001845: e8 ce 00 00 00          |.....   |<sp-20>   call   0x01001918<<Func>>
 0x01001845: Outgoing stack delta: -24
-0x01001845: Successor blocks: 0x01001918<<Func>>, 0x0100184a
+0x01001845: Successor blocks: 0x0100184a, 0x01001918<<Func>>
 
 0x0100184a: Basic block reasons: 
 0x0100184a: a1 08 20 00 01          |.. ..   |<sp-20>   mov    eax, dword ds:[0x01002008<.bss+8>]
@@ -1406,7 +1406,7 @@
 0x01001876: 68 00 10 00 01          |h....   |<sp-44>   push   0x01001000
 0x0100187b: e8 98 00 00 00          |.....   |<sp-48>   call   0x01001918<<Func>>
 0x0100187b: Outgoing stack delta: -52
-0x0100187b: Successor blocks: 0x01001918<<Func>>, 0x01001880
+0x0100187b: Successor blocks: 0x01001880, 0x01001918<<Func>>
 
 0x01001880: Basic block reasons: 
 0x01001880: 8b 45 e0                |.E.     |<sp-48>   mov    eax, dword ss:[ebp + 0xe0<-32>]
@@ -1450,7 +1450,7 @@
 0x010018bf: 50                      |P       |          push   eax
 0x010018c0: 51                      |Q       |          push   ecx
 0x010018c1: e8 46 00 00 00          |.F...   |          call   0x0100190c<<Func>>
-0x010018c1: Successor blocks: 0x0100190c<<Func>>, 0x010018c6
+0x010018c1: Successor blocks: 0x010018c6, 0x0100190c<<Func>>
 
 0x010018c6: Basic block reasons: 
 0x010018c6: 59                      |Y       |          pop    ecx
@@ -1478,7 +1478,7 @@
 0x010018e2: 83 4d fc ff             |.M..    |          or     dword ss:[ebp + 0xfc<-4>], 0xff<-1>
 0x010018e6: 8b c6                   |..      |          mov    eax, esi
 0x010018e8: e8 92 00 00 00          |.....   |          call   0x0100197f<<Func>>
-0x010018e8: Successor blocks: 0x0100197f<<Func>>, 0x010018ed
+0x010018e8: Successor blocks: 0x010018ed, 0x0100197f<<Func>>
 
 0x010018ed: Basic block reasons: 
 0x010018ed: c3                      |.       |          ret    
@@ -1524,7 +1524,7 @@
 0x01001928: 68 00 00 01 00          |h....   |<sp-4 >   push   0x00010000
 0x0100192d: e8 70 00 00 00          |.p...   |<sp-8 >   call   0x010019a2<<Func>>
 0x0100192d: Outgoing stack delta: -12
-0x0100192d: Successor blocks: 0x010019a2<<Func>>, 0x01001932
+0x0100192d: Successor blocks: 0x01001932, 0x010019a2<<Func>>
 
 0x01001932: Basic block reasons: 
 0x01001932: 59                      |Y       |<sp-8 >   pop    ecx

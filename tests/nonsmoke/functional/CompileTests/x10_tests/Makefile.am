@@ -5,7 +5,7 @@ if ROSE_BUILD_X10_LANGUAGE_SUPPORT
 #===============================================================================
 ROSE_TRANSLATOR = $(top_builddir)/tests/nonsmoke/functional/testTranslator
 $(ROSE_TRANSLATOR):
-	@$(MAKE) testTranslator -C $(top_builddir)/tests
+	$(MAKE) -C $(top_builddir)/tests/nonsmoke/functional testTranslator 
 
 ROSE_FLAGS =
 
@@ -21,7 +21,7 @@ $(TESTCODES:.x10=.compile): $(ROSE_TRANSLATOR)
 			-rose:output "$(@:.compile=.x10)"
 
 conditional-check-local:
-	@$(MAKE) $(TESTCODES:.x10=.compile)
+	$(MAKE) $(TESTCODES:.x10=.compile)
 	@echo "***********************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/x10_tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************"

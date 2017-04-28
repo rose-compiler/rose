@@ -951,7 +951,7 @@ DisassemblerM68k::extensionWordsUsed() const
 
 // see base class
 SgAsmInstruction *
-DisassemblerM68k::disassembleOne(const MemoryMap *map, rose_addr_t start_va, AddressSet *successors)
+DisassemblerM68k::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va, AddressSet *successors)
 {
     start_instruction(map, start_va);
     if (0!=start_va%2)

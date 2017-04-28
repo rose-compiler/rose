@@ -8,17 +8,17 @@
 0x08048943: 83 ec 08                |...     |<sp-4 >   sub    esp, 0x08
 0x08048946: e8 89 02 00 00          |.....   |<sp-12>   call   0x08048bd4<<Func>>
 0x08048946: Outgoing stack delta: -16
-0x08048946: Successor blocks: 0x08048bd4<<Func>>, 0x0804894b
+0x08048946: Successor blocks: 0x0804894b, 0x08048bd4<<Func>>
 
 0x0804894b: Basic block reasons: 
 0x0804894b: e8 e0 02 00 00          |.....   |<sp-12>   call   0x08048c30<<Func>>
 0x0804894b: Outgoing stack delta: -16
-0x0804894b: Successor blocks: 0x08048c30<<Func>>, 0x08048950
+0x0804894b: Successor blocks: 0x08048950, 0x08048c30<<Func>>
 
 0x08048950: Basic block reasons: 
 0x08048950: e8 4b 13 00 00          |.K...   |<sp-12>   call   0x08049ca0<<Func>>
 0x08048950: Outgoing stack delta: -16
-0x08048950: Successor blocks: 0x08049ca0<<Func>>, 0x08048955
+0x08048950: Successor blocks: 0x08048955, 0x08049ca0<<Func>>
 
 0x08048955: Basic block reasons: 
 0x08048955: c9                      |.       |<sp-12>   leave  
@@ -1892,7 +1892,7 @@
 0x08049bf5: 53                      |S       |<sp-12>   push   ebx
 0x08049bf6: e8 98 00 00 00          |.....   |<sp-16>   call   0x08049c93<<Func>>
 0x08049bf6: Outgoing stack delta: -20
-0x08049bf6: Successor blocks: 0x08049c93<<Func>>, 0x08049bfb
+0x08049bf6: Successor blocks: 0x08049bfb, 0x08049c93<<Func>>
 
 0x08049bfb: Basic block reasons: 
 0x08049bfb: 81 c3 99 15 00 00       |......  |<sp-16>   add    ebx, 0x00001599<5529>
@@ -1928,7 +1928,7 @@
 0x08049c29: 8d b4 26 00 00 00 00    |..&.... |<sp-28>   lea    esi, [esi + 0x00000000]
 0x08049c30: e8 9f 00 00 00          |.....   |<sp-28>   call   0x08049cd4<(func)_fini>
 0x08049c30: Outgoing stack delta: -32
-0x08049c30: Successor blocks: 0x08049cd4<_fini>, 0x08049c35
+0x08049c30: Successor blocks: 0x08049c35, 0x08049cd4<_fini>
 
 0x08049c35: Basic block reasons: 
 0x08049c35: 83 c4 0c                |...     |<sp-28>   add    esp, 0x0c
@@ -1951,7 +1951,7 @@
 0x08049c45: 53                      |S       |<sp-12>   push   ebx
 0x08049c46: e8 48 00 00 00          |.H...   |<sp-16>   call   0x08049c93<<Func>>
 0x08049c46: Outgoing stack delta: -20
-0x08049c46: Successor blocks: 0x08049c93<<Func>>, 0x08049c4b
+0x08049c46: Successor blocks: 0x08049c4b, 0x08049c93<<Func>>
 
 0x08049c4b: Basic block reasons: 
 0x08049c4b: 81 c3 49 15 00 00       |..I...  |<sp-16>   add    ebx, 0x00001549<5449>

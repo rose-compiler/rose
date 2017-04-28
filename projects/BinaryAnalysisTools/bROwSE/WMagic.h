@@ -21,8 +21,8 @@ public:
         init();
     }
 
-    const MemoryMap& memoryMap() const;
-    void memoryMap(const MemoryMap&);
+    rose::BinaryAnalysis::MemoryMap::Ptr memoryMap() const;
+    void memoryMap(const rose::BinaryAnalysis::MemoryMap::Ptr&);
 
 private:
     void init();
