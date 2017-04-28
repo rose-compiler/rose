@@ -7,6 +7,7 @@
 #include <Partitioner2/Partitioner.h>
 #include <Sawyer/GraphTraversal.h>
 #include <SymbolicSemantics2.h>
+#include <sstream>
 
 using namespace Sawyer::Container;
 using namespace Sawyer::Container::Algorithm;
@@ -588,6 +589,15 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
             cpu_->processInstruction(insn);
     }
     return retval;
+}
+
+std::string
+TransferFunction::printState(const BaseSemantics::StatePtr &state) {
+    if (!state)
+        return "null state";
+    std::ostringstream ss;
+    ss <<*state;
+    return ss.str();
 }
 
 } // namespace

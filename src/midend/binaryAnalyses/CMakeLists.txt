@@ -13,6 +13,7 @@ add_library(midend_binary OBJECT
   BinaryMagic.C
   BinaryNoOperation.C
   BinaryPointerDetection.C
+  BinaryReachability.C
   BinaryReturnValueUsed.C
   BinaryStackDelta.C
   BinaryString.C
@@ -85,6 +86,8 @@ install(
     BinaryMagic.h
     BinaryNoOperation.h
     BinaryPointerDetection.h
+    BinaryReachability.h
+    BinaryReturnValueUsed.h
     BinaryStackDelta.h
     BinaryStackVariable.h
     BinaryString.h

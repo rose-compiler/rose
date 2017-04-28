@@ -321,7 +321,8 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     try {
         // Use this rather than runToFixedPoint because it lets us show a progress report
         Sawyer::ProgressBar<size_t> progress(mlog[MARCH], function->printableName());
-        dfEngine.reset(startVertexId, initialState_);
+        dfEngine.reset(BaseSemantics::StatePtr());
+        dfEngine.insertStartingVertex(startVertexId, initialState_);
         while (dfEngine.runOneIteration())
             ++progress;
     } catch (const DataFlow::NotConverging &e) {
