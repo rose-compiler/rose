@@ -934,6 +934,7 @@ Engine::loadSpecimens(const std::vector<std::string> &fileNames) {
         loadContainers(fileNames);
         loadNonContainers(fileNames);
         adjustMemoryMap();
+        map_->shrinkUnshare();
         return map_;
     } catch (const std::runtime_error &e) {
         if (settings().engine.exitOnError) {
