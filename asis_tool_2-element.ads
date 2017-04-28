@@ -18,10 +18,11 @@ private
    -- want limited state information:
    type Class is tagged -- Initialized
       record
-         The_Element  : Asis.Element; -- Initialized
-         Text         : Indented_Text.Class; -- Initialized
-         Graph        : Dot.Graphs.Access_Class; -- Initialized
-         Current_Node : Dot.Node_Stmt.Class; -- Initialized
+         The_Element   : Asis.Element; -- Initialized
+         Text          : Indented_Text.Class; -- Initialized
+         Graph         : Dot.Graphs.Access_Class; -- Initialized
+         Current_Node  : Dot.Node_Stmt.Class; -- Initialized
+         Current_Label : Dot.HTML_Like_Labels.Class; -- Initialized
       end record;
 
    -- Add an assign to the first attribute of the current node. If there is no

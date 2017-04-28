@@ -26,7 +26,7 @@ package body Asis_Tool_2.Context is
          To_Wide_String (GNAT.Directory_Operations.Get_Current_Dir));
       Asis.Ada_Environments.Open (This.Asis_Context);
       This.Graph.Set_ID
-        (To_String (Asis.Ada_Environments.Name (This.Asis_Context)));
+        ("""" & To_String (Asis.Ada_Environments.Name (This.Asis_Context)) & """");
       This.Process_Units;
       Asis.Ada_Environments.Close (This.Asis_Context);
       Asis.Ada_Environments.Dissociate (This.Asis_Context);

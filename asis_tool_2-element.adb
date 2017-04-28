@@ -516,13 +516,27 @@ package body Asis_Tool_2.Element is
            Asis.Elements.Element_Kind (Element);
          Element_Id   : Dot.ID_Type := To_Dot_ID_Type (Element);
          New_Node     : Dot.Node_Stmt.Class; -- Initialized
+         New_Label    : Dot.HTML_Like_Labels.Class; -- Initialized
          Edge_Stmt    : Dot.Edges.Stmts.Class; -- Initialized
+         procedure Start_Node is begin
+            State.Current_Node := New_Node;
+            State.Current_Node.Node_ID.ID := Element_Id;
+            State.Current_Label := New_Label;
+         end Start_Node;
+         procedure Finish_Node is begin
+            State.Current_Node.Add_Label (State.Current_Label);
+            State.Graph.Append_Stmt (new Dot.Node_Stmt.Class'(State.Current_Node));
+         State.Text.End_Line;
+         State.Text.Indent;
+         end Finish_Node;
+         procedure Add_Enclosing_Edge is begin
+            Edge_Stmt.LHS.Node_Id.ID := Get_Enclosing_ID (Element);
+            Edge_Stmt.RHS.Node_Id.ID := Element_Id;
+            State.Graph.Append_Stmt (new Dot.Edges.Stmts.Class'(Edge_Stmt));
+         end Add_Enclosing_Edge;
       begin
-         Edge_Stmt.LHS.Node_Id.ID := Get_Enclosing_ID (Element);
-         Edge_Stmt.RHS.Node_Id.ID := Element_Id;
-         State.Graph.Append_Stmt (new Dot.Edges.Stmts.Class'(Edge_Stmt));
-         State.Current_Node := New_Node;
-         State.Current_Node.Node_ID.ID := Element_Id;
+         Add_Enclosing_Edge;
+         Start_Node;
          State.Add_Attribute ("Element_Kind", Element_Kind'Image);
          case Element_Kind is
          when Asis.Not_An_Element =>
@@ -548,9 +562,7 @@ package body Asis_Tool_2.Element is
          when Asis.An_Exception_Handler =>
             Process_Exception_Handler (Element, State);
          end case;
-         State.Text.End_Line;
-         State.Text.Indent;
-         State.Graph.Append_Stmt (new Dot.Node_Stmt.Class'(State.Current_Node));
+         Finish_Node;
       end Process_Element;
 
    end Pre_Children;
@@ -617,9 +629,11 @@ package body Asis_Tool_2.Element is
    is
    begin
       This.Text.Put_Indented_Line (Name & " => """ & Value & """");
-      This.Current_Node.Attr_List.Add_Assign_To_First_Attr
-        (Name  => Name,
-         Value => Value);
+-- Instead of this, put the "attribute" in the label:
+--        This.Current_Node.Attr_List.Add_Assign_To_First_Attr
+--          (Name  => Name,
+--           Value => Value);
+      This.Current_Label.Add_Eq_Row(L => Name, R => Value);
    end;
 
    -----------
