@@ -1,6 +1,6 @@
 with "asis";
 
-project ROSE_ASIS is
+project DOT_ASIS is
 
    for Main use ("demo_dot.adb", "run_asis_tool_2.adb");
    for Object_Dir use "./obj";
@@ -17,5 +17,5 @@ project ROSE_ASIS is
       for Vcs_Kind use "Git";
    end Ide;
 
-end ROSE_ASIS;
+end DOT_ASIS;
 

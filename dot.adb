@@ -218,6 +218,17 @@ package body Dot is
          Stmt_List.Append (new Class'(This));
       end Append_To;
 
+      ------------
+      -- EXPORTED:
+      ------------
+      procedure Add_Label
+        (This     : in out Class;
+         HL_Label : HTML_Like_Labels.Class) is
+      begin
+         This.Attr_List.Add_Assign_To_First_Attr ("label", HL_Label.To_String);
+      end Add_Label;
+
+
    end Node_Stmt;
 
    package body HTML_Like_Labels is
@@ -261,7 +272,7 @@ package body Dot is
       function To_Unbounded_String (This : in Class) return Unbounded_String is
       begin
          return
-           "<<TABLE CELLBORDER=""0"" CELLSPACING=""0"" CELLPADDING=""0""> " & NL &
+           "<<TABLE BORDER=""0"" CELLBORDER=""0"" CELLSPACING=""0"" CELLPADDING=""0""> " & NL &
            To_Unbounded_String (This.Rows) &
            "          </TABLE>>";
       end To_Unbounded_String;

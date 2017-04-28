@@ -208,31 +208,11 @@ package Dot is
    -----------------------------------------------------------------------------
 
    -----------------------------------------------------------------------------
-   package Node_Stmt is
-
-      type Class is new Stmt.Class with record -- Initialized
-         Node_ID   : Dot.Node_ID.Class; -- Initialized
-         Attr_List : Dot.Attr.List_Of_Class; -- Initialized
-      end record;
-
-      overriding
-      procedure Put
-        (This : in Class);
-
-      -- Creates a Class object on the heap:
-      procedure Append_To
-        (This      : in Class;
-         Stmt_List : in out Stmt.List_Of_Access_All_Class);
-
-   end Node_Stmt;
-   -----------------------------------------------------------------------------
-
-   -----------------------------------------------------------------------------
    package HTML_Like_Labels is
       -- GraphViz HTML-Like Labels support variously formatted nodes, especially
       -- tables.  This package supports node formatting with "this = that" table
       -- rows.
-      type Class is tagged private;
+      type Class is tagged private; -- Initialized
 
       procedure Add_Eq_Row
         (This : in out Class;
@@ -251,20 +231,42 @@ package Dot is
       package LR_Pair_Lists is new
         Ada.Containers.Doubly_Linked_Lists (LR_Pair);
       -- Make primitive operations like "=" visible:
-      type LR_Pair_List is new LR_Pair_Lists.List with null record;
+      type LR_Pair_List is new LR_Pair_Lists.List with null record; -- Initialized
 
       function To_Unbounded_String (This : in LR_Pair_List) return Unbounded_String;
 
-      type Class is tagged record
-         Rows : LR_Pair_List;
+      type Class is tagged record -- Initialized
+         Rows : LR_Pair_List; -- Initialized
       end record;
 
    end HTML_Like_Labels;
-
-
    -----------------------------------------------------------------------------
 
+    -----------------------------------------------------------------------------
+   package Node_Stmt is
+
+      type Class is new Stmt.Class with record -- Initialized
+         Node_ID   : Dot.Node_ID.Class; -- Initialized
+         Attr_List : Dot.Attr.List_Of_Class; -- Initialized
+      end record;
+
+      overriding
+      procedure Put
+        (This : in Class);
+
+      -- Creates a Class object on the heap:
+      procedure Append_To
+        (This      : in Class;
+         Stmt_List : in out Stmt.List_Of_Access_All_Class);
+
+      procedure Add_Label
+        (This     : in out Class;
+         HL_Label : in HTML_Like_Labels.Class);
+
+   end Node_Stmt;
    -----------------------------------------------------------------------------
+
+  -----------------------------------------------------------------------------
    package Subgraphs is
 
       type Class is tagged record -- Initialized

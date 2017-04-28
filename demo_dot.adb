@@ -215,24 +215,22 @@ procedure Demo_Dot is
    procedure Demo_HTML_Like_Label is
       Graph          : Dot.Graphs.Access_Class := Create_Graph;
       Node_Stmt      : Dot.Node_Stmt.Class; -- Initialized
-      Node_Stmt_Attr : Dot.Attr.Class; -- Initialized
-      Attr_Stmt      : Dot.Attr_Stmt.Class; -- Initialized
-      Attr_Stmt_Attr : Dot.Attr.Class; -- Initialized
-      HL_Label       : Dot.HTML_Like_Labels.Class;
+--        Attr_Stmt      : Dot.Attr_Stmt.Class; -- Initialized
+      HL_Label       : Dot.HTML_Like_Labels.Class; -- Initialized
+
    begin
       Node_Stmt.Node_ID.ID := Dot.To_ID_Type ("node_1");
 
       -- Optional - node shape defaults to none:
-      Attr_Stmt.Kind := Dot.Attr_Stmt.Node;
-      Attr_Stmt_Attr.A_List.Append ("shape", "none");
-      Attr_Stmt.Attr_List.Append (Attr_Stmt_Attr);
-      Graph.Append_Stmt (new Dot.Attr_Stmt.Class'(Attr_Stmt));
+--        Attr_Stmt.Kind := Dot.Attr_Stmt.Node;
+--        Attr_Stmt_Attr.A_List.Append ("shape", "none");
+--        Attr_Stmt.Attr_List.Append (Attr_Stmt_Attr);
+--        Graph.Append_Stmt (new Dot.Attr_Stmt.Class'(Attr_Stmt));
 
       HL_Label.Add_Eq_Row ("Element_Kind", "AN_EXPRESSION");
       HL_Label.Add_Eq_Row ("Expression_Kind", "AN_IDENTIFIER");
       HL_Label.Add_Eq_Row ("Name_Image", "Text_IO");
-      Node_Stmt_Attr.A_List.Append ("label", HL_Label.To_String);
-      Node_Stmt.Attr_List.Append (Node_Stmt_Attr);
+      Node_Stmt.Add_Label (HL_Label);
 
       Graph.Append_Stmt (new Dot.Node_Stmt.Class'(Node_Stmt));
 
