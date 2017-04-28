@@ -2,6 +2,7 @@
 #define VARIABLE_VALUE_MONITOR
 
 #include "VariableIdMapping.h"
+#include "AbstractValue.h"
 
 namespace CodeThorn {
 
@@ -16,17 +17,17 @@ namespace CodeThorn {
     // the init function only uses the variableIds of a given estate (not its values) for initialization
     void init(const EState* estate);
     void init(const PState* pstate);
-    SPRAY::VariableIdSet getHotVariables(Analyzer* analyzer, const EState* estate);
-    SPRAY::VariableIdSet getHotVariables(Analyzer* analyzer, const PState* pstate);
-    SPRAY::VariableIdSet getVariables();
-    void setVariableMode(VariableMode,SPRAY::VariableId);
-    VariableMode getVariableMode(SPRAY::VariableId);
+    AbstractValueSet getHotVariables(Analyzer* analyzer, const EState* estate);
+    AbstractValueSet getHotVariables(Analyzer* analyzer, const PState* pstate);
+    AbstractValueSet getVariables();
+    void setVariableMode(VariableMode,CodeThorn::AbstractValue);
+    VariableMode getVariableMode(CodeThorn::AbstractValue);
     void update(Analyzer* analyzer, EState* estate);
-    bool isHotVariable(Analyzer* analyzer, SPRAY::VariableId varId);
+    bool isHotVariable(Analyzer* analyzer, CodeThorn::AbstractValue varId);
     std::string toString(SPRAY::VariableIdMapping* variableIdMapping);
   private:
-    std::map<SPRAY::VariableId,std::set<int>* > _variablesMap;
-    std::map<SPRAY::VariableId,VariableMode> _variablesModeMap;
+    std::map<CodeThorn::AbstractValue,std::set<int>* > _variablesMap;
+    std::map<CodeThorn::AbstractValue,VariableMode> _variablesModeMap;
 };
 
 } // end of namespace CodeThorn

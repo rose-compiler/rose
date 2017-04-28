@@ -569,8 +569,8 @@ list<SgClassDeclaration*> SgNodeHelper::classDeclarationNestingSequence(SgDeclar
 // MS: TODO: this implementation is complicated and needs to be structured better
 string SgNodeHelper::uniqueLongVariableName(SgNode* node) {
   if(!(isSgVarRefExp(node)||isSgVariableDeclaration(node)||isSgVariableSymbol(node))) {
-    cerr<< "WARNING: :uniqueLongVariableName: unsupported node type: "<<node->class_name()<<endl;
-    return "non-variable-name";
+    string s="Error: uniqueLongVariableName: unsupported node type: "+node->class_name();
+    throw SPRAY::Exception(s);
   }
   SgSymbol* sym=0;
   bool found=false;

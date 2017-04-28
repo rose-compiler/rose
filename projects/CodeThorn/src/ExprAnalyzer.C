@@ -903,6 +903,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp*
       return evalFunctionCallMalloc(funCall,estate,useConstraints);
     } else if(funName=="memcpy") {
       cout<<"DETECTED: memcpy!"<<endl;
+      
       return listify(res);
     } else {
       cout<<"WARNING: unknown external function "<<funName<<". Assuming it is side-effect free and arbitrary return value (type ignored)."<<endl;

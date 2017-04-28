@@ -183,17 +183,24 @@ void checkTypes() {
     cout << "------------------------------------------"<<endl;
     cout << "RUNNING CHECKS FOR CONSTRAINT TYPE:"<<endl;
     VariableId var_x=variableIdMapping.createUniqueTemporaryVariableId("x");
+    cout<<"DEBUG: P1"<<endl;
     VariableId var_y=variableIdMapping.createUniqueTemporaryVariableId("y");
+    cout<<"DEBUG: P2"<<endl;
+    variableIdMapping.toStream(cout);
     Constraint c1(Constraint::EQ_VAR_CONST,var_x,1);
+    cerr<<"DEBUG: P3"<<endl;
+    cerr<< "c1:"<<endl;
+    cerr<<c1.toString(&variableIdMapping)<<endl;
     Constraint c2(Constraint::NEQ_VAR_CONST,var_y,2);
+    cout<< "c2:"<<c2.toString(&variableIdMapping)<<endl;
     Constraint c3=DISEQUALITYCONSTRAINT;
     Constraint c4=Constraint(Constraint::EQ_VAR_CONST,var_y,2);
     ConstraintSet cs;
     cs.addConstraint(c1);
-    //cout << "CS1:"<<cs.toString()<<endl;
+    cout << "CS1:"<<cs.toString()<<endl;
     cs.addConstraint(c2);
-    //cout << "CS2:"<<cs.toString()<<endl;
-    check("inserted 2 different constraints, size of constraint set == 3",cs.size()==2);
+    cout << "CS2:"<<cs.toString()<<endl;
+    check("inserted 2 different constraints, size of constraint set == 2",cs.size()==2);
     check("c1:constraintExists(EQ_VAR_CONST,x,1) == true",cs.constraintExists(Constraint::EQ_VAR_CONST,var_x,1));
     check("c1:constraintExists(NEQ_VAR_CONST,x,1) == false",!cs.constraintExists(Constraint::NEQ_VAR_CONST,var_x,1));
     check("c2:constraintExists(NEQ_VAR_CONST,y,2) == true",cs.constraintExists(Constraint::NEQ_VAR_CONST,var_y,2));
@@ -220,6 +227,7 @@ void checkTypes() {
         cs1.addConstraint(c2);
         Constraint c5(Constraint::EQ_VAR_VAR,var_x,var_y);
         cs1.addConstraint(c5);
+        cout<<cs1.toString()<<endl;
         check("cs1.disequalityExists()==true",cs1.disequalityExists());
       }
       {
@@ -485,51 +493,6 @@ void checkTypes() {
     check("Parse: Testing test1 on test1.",SPRAY::Parse::checkWord("test1",ss3));
     //cout << "Remaing stream: "<<ss3.str()<<endl;
 
-    CodeThorn::AbstractValue x;
-    stringstream ss4;
-    ss4<<"top";
-    x.fromStream(ss4);
-    check("AbstractValue: streaminput: top",x.toString()=="top");
-    stringstream ss5;
-    ss5<<"12";
-    x.fromStream(ss5);
-    check("AbstractValue: streaminput: 12",x.toString()=="12");
-    stringstream ss6;
-    ss6<<"15top16";
-    ss6>>x;
-    check("AbstractValue: streaminput: 15",x.toString()=="15");
-    ss6>>x;
-    check("AbstractValue: streaminput: top",x.toString()=="top");
-    ss6>>x;
-    check("AbstractValue: streaminput: 16",x.toString()=="16");
-
-    {
-      PState ps;
-      stringstream ss1;
-      string pstateString="{}";
-      ss1<<pstateString;
-      ps.fromStream(ss1);
-      string checkString=(string("stream input PState: ")+pstateString);
-      bool checkresult=(ps.toString()==pstateString);
-      check(checkString,checkresult);
-      if(checkresult==false) {
-        cout << "Error: input stream result: "<<ps.toString()<<endl;
-      }
-    }
-    {
-      PState ps;
-      stringstream ss0;
-      string pstateString="{(V0,5),(V1,top),(V2,bot)}";
-      ss0<<pstateString;
-      ss0>>ps;
-      string checkString=(string("stream input PState: ")+pstateString);
-      bool checkresult=(ps.toString()==pstateString);
-      check(checkString,checkresult);
-      if(checkresult==false) {
-        cout << "pstateString :"<<pstateString<<":"<<endl;
-        cout << "ps.toString():"<<ps.toString()<<":"<<endl;
-      }
-    }
     {
       stringstream ss;
       string s="aaabbb";
@@ -539,37 +502,6 @@ void checkTypes() {
       char next;
       ss>>next;
       check(string("Parsing: ")+parseString+" from:"+s+" Next:"+next,true);      
-    }
-    {
-      Constraint cs;
-      stringstream ss;
-      stringstream ssout;
-      string cstring="V1==V2";
-      ss<<cstring;
-      cs.fromStream(ss);
-      cs.toStream(ssout);
-      check("Stream I/O constraint: "+cstring,ssout.str()==cstring);
-    }
-    {
-      Constraint cs;
-      stringstream ss;
-      stringstream ssout;
-      string cstring="V3!=4";
-      ss<<cstring;
-      cs.fromStream(ss);
-      cs.toStream(ssout);
-      check("Stream I/O constraint: "+cstring,ssout.str()==cstring);
-    }
-    {
-      Constraint cs;
-      cs=DISEQUALITYCONSTRAINT;
-      stringstream ss;
-      stringstream ssout;
-      string cstring=cs.toString();
-      ss<<cstring;
-      cs.fromStream(ss);
-      cs.toStream(ssout);
-      check("Stream I/O DEQ constraint: "+cstring,ssout.str()==cstring);
     }
 #ifndef EXCLUDE_RDANALYSIS
     {

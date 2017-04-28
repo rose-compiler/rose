@@ -52,6 +52,7 @@ class AbstractValue {
   AbstractValue(unsigned long int x);
   AbstractValue(long long int x);
   AbstractValue(unsigned long long int x);
+  AbstractValue(SPRAY::VariableId varId); // allows implicit type conversion
   bool isTop() const;
   bool isTrue() const;
   bool isFalse() const;
@@ -88,11 +89,16 @@ class AbstractValue {
   static AbstractValue createAddressOfArrayElement(SPRAY::VariableId arrayVariableId, AbstractValue Index);
   // strict weak ordering (required for sorted STL data structures if
   // no comparator is provided)
-  bool operator==(AbstractValue other) const;
+  //  bool operator==(AbstractValue other) const;
+  //bool operator!=(AbstractValue other) const;
+  bool operator==(const AbstractValue other) const;
+  bool operator!=(const AbstractValue other) const;
   bool operator<(AbstractValue other) const;
 
   string toString() const;
   string toString(SPRAY::VariableIdMapping* vim) const;
+  string toLhsString(SPRAY::VariableIdMapping* vim) const;
+  string toRhsString(SPRAY::VariableIdMapping* vim) const;
   
   friend ostream& operator<<(ostream& os, const AbstractValue& value);
   friend istream& operator>>(istream& os, AbstractValue& value);
@@ -108,8 +114,8 @@ class AbstractValue {
   std::string valueTypeToString() const;
  private:
   ValueType valueType;
-  int intValue;
   SPRAY::VariableId variableId;
+  int intValue;
 };
 
 // arithmetic operators
@@ -133,6 +139,10 @@ class AbstractValue {
 typedef AbstractValue AValue; 
 typedef AbstractValueCmp AValueCmp; 
 
+ typedef AbstractValue VarAbstractValue;
+ typedef std::set<AbstractValue> AbstractValueSet;
+ typedef AbstractValueSet VarAbstractValueSet;
+ AbstractValueSet& operator+=(AbstractValueSet& s1, AbstractValueSet& s2);
 }
 
 #endif

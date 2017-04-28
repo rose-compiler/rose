@@ -14,9 +14,10 @@
 #include "Miscellaneous.h"
 #include "Miscellaneous2.h"
 #include "CodeThornException.h"
+#include "VariableIdMapping.h"
 
 using namespace std;
-
+using namespace SPRAY;
 using namespace CodeThorn;
 
 istream& CodeThorn::operator>>(istream& is, AbstractValue& value) {
@@ -27,6 +28,11 @@ istream& CodeThorn::operator>>(istream& is, AbstractValue& value) {
 
 // default constructor
 AbstractValue::AbstractValue():valueType(AbstractValue::BOT),intValue(0) {}
+
+// type conversion
+// TODO: represent value 'unitialized' here
+AbstractValue::AbstractValue(VariableId varId):valueType(AbstractValue::PTR),variableId(varId),intValue(0) {
+}
 
 // type conversion
 AbstractValue::AbstractValue(bool val) {
@@ -243,8 +249,17 @@ bool CodeThorn::AbstractValueCmp::operator()(const AbstractValue& c1, const Abst
   return CodeThorn::strictWeakOrderingIsSmaller(c1,c2);
 }
 
-bool AbstractValue::operator==(AbstractValue other) const {
+//bool AbstractValue::operator==(AbstractValue other) const {
+//  return CodeThorn::strictWeakOrderingIsEqual(*this,other);
+//}
+//bool AbstractValue::operator!=(AbstractValue other) const {
+//  return !CodeThorn::strictWeakOrderingIsEqual(*this,other);
+//}
+bool AbstractValue::operator==(const AbstractValue other) const {
   return CodeThorn::strictWeakOrderingIsEqual(*this,other);
+}
+bool AbstractValue::operator!=(const AbstractValue other) const {
+  return !CodeThorn::strictWeakOrderingIsEqual(*this,other);
 }
 bool AbstractValue::operator<(AbstractValue other) const {
   return CodeThorn::strictWeakOrderingIsSmaller(*this,other);
@@ -378,6 +393,53 @@ AbstractValue AbstractValue::operatorBitwiseShiftRight(AbstractValue other) cons
     return *this;
   assert(isConstInt()&&other.isConstInt());
   return getIntValue()>>other.getIntValue();
+}
+
+string AbstractValue::toLhsString(SPRAY::VariableIdMapping* vim) const {
+  switch(valueType) {
+  case TOP: return "top";
+  case BOT: return "bot";
+  case CONSTINT: {
+    stringstream ss;
+    ss<<getIntValue();
+    return ss.str();
+  }
+  case PTR: {
+    stringstream ss;
+    if(vim->getSize(variableId)==1) {
+      ss<<variableId.toString(vim); // variables are arrays of size 1
+    } else {
+      ss<<variableId.toString(vim)<<"["<<getIntValue()<<"]";
+    }
+    return ss.str();
+  }
+  default:
+    throw CodeThorn::Exception("Error: AbstractValue::toLhsString operation failed. Unknown abstraction type.");
+  }
+}
+
+string AbstractValue::toRhsString(SPRAY::VariableIdMapping* vim) const {
+  switch(valueType) {
+  case TOP: return "top";
+  case BOT: return "bot";
+  case CONSTINT: {
+    stringstream ss;
+    ss<<getIntValue();
+    return ss.str();
+  }
+  case PTR: {
+    stringstream ss;
+    ss<<"&"; // on the rhs an abstract pointer is always a pointer value of some abstract value
+    if(vim->getSize(variableId)==1) {
+      ss<<variableId.toString(vim); // variables are arrays of size 1
+    } else {
+      ss<<variableId.toString(vim)<<"["<<getIntValue()<<"]";
+    }
+    return ss.str();
+  }
+  default:
+    throw CodeThorn::Exception("Error: AbstractValue::toRhsString operation failed. Unknown abstraction type.");
+  }
 }
 
 string AbstractValue::toString(SPRAY::VariableIdMapping* vim) const {
@@ -583,4 +645,11 @@ AbstractValue CodeThorn::operator/(AbstractValue& a,AbstractValue& b) {
 }
 AbstractValue CodeThorn::operator%(AbstractValue& a,AbstractValue& b) {
   return AbstractValue::operatorMod(a,b);
+}
+
+AbstractValueSet& CodeThorn::operator+=(AbstractValueSet& s1, AbstractValueSet& s2) {
+  for(AbstractValueSet::iterator i=s2.begin();i!=s2.end();++i) {
+    s1.insert(*i);
+  }
+  return s1;
 }

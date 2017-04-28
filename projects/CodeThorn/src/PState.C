@@ -16,41 +16,6 @@ using namespace CodeThorn;
 PState::PState() {
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
-  * \brief read: regexp: '{' ( '('<varId>','<varValue>')' )* '}'
- */
-void PState::fromStream(istream& is) {
-  char c;
-  string s;
-  int __varIdCode=-1; 
-  VarAbstractValue __varId; 
-  AValue __varAValue; 
-  if(!SPRAY::Parse::checkWord("{",is)) throw CodeThorn::Exception("Error: Syntax error PState. Expected '{'.");
-  is>>c;
-  // read pairs (varname,varvalue)
-  while(c!='}') {
-    if(c!='(') throw CodeThorn::Exception("Error: Syntax error PState. Expected '('.");
-    is>>c;
-    if(c!='V') throw CodeThorn::Exception("Error: Syntax error PState. Expected VariableId.");
-    is>>__varIdCode;
-    assert(__varIdCode>=0);
-    VarAbstractValue __varId;
-    __varId.setIdCode(__varIdCode);
-    is>>c;
-    if(c!=',') { cout << "Error: found "<<c<<"__varIdCode="<<__varIdCode<<endl; throw CodeThorn::Exception("Error: Syntax error PState. Expected ','.");}
-    is>>__varAValue;
-    is>>c;    
-    if(c!=')' && c!=',') throw CodeThorn::Exception("Error: Syntax error PState. Expected ')' or ','.");
-    is>>c;
-    //cout << "DEBUG: Read from istream: ("<<__varId.toString()<<","<<__varAValue.toString()<<")"<<endl;
-    (*this)[__varId]=__varAValue;
-    if(c==',') is>>c;
-  }
-  if(c!='}') throw CodeThorn::Exception("Error: Syntax error PState. Expected '}'.");
-}
-
 void PState::toStream(ostream& os) const {
   os<<toString();
 }
@@ -81,7 +46,7 @@ string PState::toString(VariableIdMapping* variableIdMapping) const {
   for(PState::const_iterator j=begin();j!=end();++j) {
     if(j!=begin()) ss<<", ";
     ss<<"(";
-    ss <<variableIdMapping->uniqueShortVariableName((*j).first);
+    ss <<((*j).first).toString(variableIdMapping);
 #if 0
     ss<<"->";
 #else
@@ -269,15 +234,6 @@ string PStateSet::toString() {
 ostream& CodeThorn::operator<<(ostream& os, const PState& pState) {
   pState.toStream(os);
   return os;
-}
-
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
-istream& CodeThorn::operator>>(istream& is, PState& pState) {
-  pState.fromStream(is);
-  return is;
 }
 
 #ifdef USER_DEFINED_PSTATE_COMP

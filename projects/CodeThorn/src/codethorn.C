@@ -77,6 +77,25 @@ using namespace Sawyer::Message;
 // experimental
 #include "IOSequenceGenerator.C"
 
+#include <execinfo.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+// handler for generating backtrace
+void handler(int sig) {
+  void *array[10];
+  size_t size;
+
+  // get void*'s for all entries on the stack
+  size = backtrace(array, 10);
+
+  // print out all the frames to stderr
+  fprintf(stderr, "Error: signal %d:\n", sig);
+  backtrace_symbols_fd(array, size, STDERR_FILENO);
+  exit(1);
+}
+
 void CodeThorn::initDiagnostics() {
   rose::Diagnostics::initialize();
   Analyzer::initDiagnostics();
@@ -173,11 +192,11 @@ void attachTermRepresentation(SgNode* node) {
 
 static Analyzer* global_analyzer=0;
 
-set<VariableId> determineSetOfCompoundIncVars(VariableIdMapping* vim, SgNode* root) {
+set<AbstractValue> determineSetOfCompoundIncVars(VariableIdMapping* vim, SgNode* root) {
   ROSE_ASSERT(vim);
   ROSE_ASSERT(root);
   RoseAst ast(root) ;
-  set<VariableId> compoundIncVarsSet;
+  set<AbstractValue> compoundIncVarsSet;
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
     if(SgCompoundAssignOp* compoundAssignOp=isSgCompoundAssignOp(*i)) {
       SgVarRefExp* lhsVar=isSgVarRefExp(SgNodeHelper::getLhs(compoundAssignOp));
@@ -206,8 +225,8 @@ set<VariableId> determineSetOfConstAssignVars2(VariableIdMapping* vim, SgNode* r
   return constAssignVars;
 }
 
-VariableIdSet determineVarsInAssertConditions(SgNode* node, VariableIdMapping* variableIdMapping) {
-  VariableIdSet usedVarsInAssertConditions;
+AbstractValueSet determineVarsInAssertConditions(SgNode* node, VariableIdMapping* variableIdMapping) {
+  AbstractValueSet usedVarsInAssertConditions;
   RoseAst ast(node);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
     if(SgIfStmt* ifstmt=isSgIfStmt(*i)) {
@@ -222,7 +241,7 @@ VariableIdSet determineVarsInAssertConditions(SgNode* node, VariableIdMapping* v
           //cout<<"Num of vars: "<<vars.size()<<endl;
           for(std::vector<SgVarRefExp*>::iterator j=vars.begin();j!=vars.end();++j) {
             VariableId varId=variableIdMapping->variableId(*j);
-            usedVarsInAssertConditions.insert(varId);
+            usedVarsInAssertConditions.insert(AbstractValue(varId));
           }
         }
       }
@@ -1021,6 +1040,7 @@ void analyzerSetup(Analyzer& analyzer, const po::variables_map& args, Sawyer::Me
 int main( int argc, char * argv[] ) {
   ROSE_INITIALIZE;
 
+  signal(SIGSEGV, handler);   // install handler for backtrace
   CodeThorn::initDiagnostics();
 
   rose::Diagnostics::mprefix->showProgramName(false);
@@ -1297,12 +1317,12 @@ int main( int argc, char * argv[] ) {
 
     {
       // TODO: refactor this into class Analyzer after normalization has been moved to class Analyzer.
-      set<VariableId> compoundIncVarsSet=determineSetOfCompoundIncVars(analyzer.getVariableIdMapping(),root);
+      set<AbstractValue> compoundIncVarsSet=determineSetOfCompoundIncVars(analyzer.getVariableIdMapping(),root);
       analyzer.setCompoundIncVarsSet(compoundIncVarsSet);
       logger[TRACE]<<"STATUS: determined "<<compoundIncVarsSet.size()<<" compound inc/dec variables before normalization."<<endl;
     }
     {
-      VariableIdSet varsInAssertConditions=determineVarsInAssertConditions(root,analyzer.getVariableIdMapping());
+      AbstractValueSet varsInAssertConditions=determineVarsInAssertConditions(root,analyzer.getVariableIdMapping());
       logger[TRACE]<<"STATUS: determined "<<varsInAssertConditions.size()<< " variables in (guarding) assert conditions."<<endl;
       analyzer.setAssertCondVarsSet(varsInAssertConditions);
     }
