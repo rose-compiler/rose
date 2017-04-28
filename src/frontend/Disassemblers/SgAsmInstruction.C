@@ -87,7 +87,7 @@ SgAsmInstruction::getSuccessors(bool *complete) {
 
 std::set<rose_addr_t>
 SgAsmInstruction::getSuccessors(const std::vector<SgAsmInstruction*>& basic_block, bool *complete/*out*/,
-                                const MemoryMap *initial_memory/*=NULL*/)
+                                const MemoryMap::Ptr &initial_memory/*=NULL*/)
 {
     if (basic_block.size()==0) {
         if (complete) *complete = true;
