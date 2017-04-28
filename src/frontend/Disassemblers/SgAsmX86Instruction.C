@@ -366,7 +366,8 @@ SgAsmX86Instruction::getBranchTarget(rose_addr_t *target) {
 }
 
 BinaryAnalysis::Disassembler::AddressSet
-SgAsmX86Instruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns, bool *complete, const MemoryMap *initial_memory)
+SgAsmX86Instruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns, bool *complete,
+                                   const MemoryMap::Ptr &initial_memory)
 {
     Stream debug(mlog[DEBUG]);
     using namespace rose::BinaryAnalysis::InstructionSemantics2;

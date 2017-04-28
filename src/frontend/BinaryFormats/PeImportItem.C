@@ -9,6 +9,8 @@
 #include "sage3basic.h"
 #include "MemoryMap.h"
 
+using namespace rose::BinaryAnalysis;
+
 void
 SgAsmPEImportItem::ctor(SgAsmPEImportItemList *parent)
 {
