@@ -315,7 +315,6 @@ public:
         /** Reset engine to initial state. */
         void reset(State initialState = State()) {
             ASSERT_this();
-            ASSERT_require(startVertexId < cfg_.nVertices());
             incomingState_.clear();
             incomingState_.resize(cfg_.nVertices(), initialState);
             outgoingState_.clear();
