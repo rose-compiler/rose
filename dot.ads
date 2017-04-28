@@ -232,11 +232,9 @@ package Dot is
       -- GraphViz HTML-Like Labels support variously formatted nodes, especially
       -- tables.  This package supports node formatting with "this = that" table
       -- rows.
-      use Ada.Strings.Unbounded;
-
       type Class is tagged private;
 
-      procedure Add_Assignment_Row
+      procedure Add_Eq_Row
         (This : in out Class;
          L, R : in String);
 
@@ -244,9 +242,11 @@ package Dot is
 
    private
 
+      use Ada.Strings.Unbounded;
+
       type LR_Pair is array (1 .. 2) Of Unbounded_String;
 
-      function To_Unbounded_String (This : in LR_Pair) return Unbounded_String;
+      function To_TR (This : in LR_Pair) return Unbounded_String;
 
       package LR_Pair_Lists is new
         Ada.Containers.Doubly_Linked_Lists (LR_Pair);

@@ -227,46 +227,43 @@ package body Dot is
       ------------
       -- EXPORTED:
       ------------
-      procedure Add_Assignment_Row
+      procedure Add_Eq_Row
         (This : in out Class;
-         L, R : in String)
-      is
-         Row : constant LR_Pair :=
-           (1 => To_Unbounded_String (L),
-            2 => To_Unbounded_String (R));
+         L, R : in String) is
       begin
-         This.Rows.Append (Row);
-      end Add_Assignment_Row;
+         This.Rows.Append
+           ((1 => To_Unbounded_String (L),
+             2 => To_Unbounded_String (R)));
+      end Add_Eq_Row;
 
-      function To_Row_Unbounded_String
+
+      function To_TD
         (LR : in Unbounded_String)
          return Unbounded_String is
       begin
-         return "              <TD ALIGN=""LEFT"">" & LR & "</TD>";
-      end To_Row_Unbounded_String;
+         return "<TD ALIGN=""LEFT"">" & LR & "</TD>";
+      end To_TD;
 
 
-      function To_Unbounded_String (This : in LR_Pair) return Unbounded_String
+      function To_TR (This : in LR_Pair) return Unbounded_String
       is
       begin
          return
-           "            <TR>" & NL &
-           To_Row_Unbounded_String (This (1)) & NL &
-           "              <TD>=</TD>" & NL &
-           To_Row_Unbounded_String (This (2)) & NL &
-           "            </TR>";
-      end To_Unbounded_String;
+           "          <TR>" &
+           To_TD (This (1)) &
+           "<TD> = </TD>" &
+           To_TD (This (2)) &
+           "</TR>" & NL;
+      end To_TR;
 
 
 
       function To_Unbounded_String (This : in Class) return Unbounded_String is
       begin
          return
-           "< " & NL &
-           "          <TABLE CELLBORDER=""0""> " & NL &
-           To_Unbounded_String (This.Rows) & NL &
-           "          </TABLE>" & NL &
-           "        >";
+           "<<TABLE CELLBORDER=""0"" CELLSPACING=""0"" CELLPADDING=""0""> " & NL &
+           To_Unbounded_String (This.Rows) &
+           "          </TABLE>>";
       end To_Unbounded_String;
 
       ------------
@@ -283,13 +280,10 @@ package body Dot is
          Result : Unbounded_String; -- Initialized
       begin
          for Pair of This loop
-            Result := Result & To_Unbounded_String (Pair);
+            Result := Result & To_TR (Pair);
          end loop;
          return Result;
       end To_Unbounded_String;
-
-
-
 
    end HTML_Like_Labels;
 
