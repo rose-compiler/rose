@@ -92,6 +92,7 @@ package body Asis_Tool_2.Unit is
       Label : Dot.HTML_Like_Labels.Class; -- Initialized
    begin
       Node.Node_ID.ID := To_Dot_ID_Type (Unit);
+      Label.Add_3_Col_Cell (Node_Id_Image (Unit));
       -- These are in alphabetical order:
       Label.Add_Eq_Row ("Compilation_Command_Line_Options",
                  To_String (Acu.Compilation_Command_Line_Options (Unit)));

@@ -522,6 +522,7 @@ package body Asis_Tool_2.Element is
             State.Current_Node := New_Node;
             State.Current_Node.Node_ID.ID := Element_Id;
             State.Current_Label := New_Label;
+            State.Add_Attribute ("ID", Node_Id_Image (Element));
          end Start_Node;
          procedure Finish_Node is begin
             State.Current_Node.Add_Label (State.Current_Label);

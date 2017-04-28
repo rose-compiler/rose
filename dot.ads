@@ -218,6 +218,10 @@ package Dot is
         (This : in out Class;
          L, R : in String);
 
+      procedure Add_3_Col_Cell
+        (This : in out Class;
+         Text : in String);
+
       function To_String (This : in Class) return String;
 
    private

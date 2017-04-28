@@ -247,24 +247,62 @@ package body Dot is
              2 => To_Unbounded_String (R)));
       end Add_Eq_Row;
 
+      ------------
+      -- EXPORTED:
+      ------------
+      procedure Add_3_Col_Cell
+        (This : in out Class;
+         Text : in String) is
+      begin
+         -- To_Image omits the "=" when it sees this pattern:
+         This.Rows.Append
+           ((1 => To_Unbounded_String (""),
+             2 => To_Unbounded_String (Text)));
+      end Add_3_Col_Cell;
 
-      function To_TD
+
+      function To_Left_TD
         (LR : in Unbounded_String)
          return Unbounded_String is
       begin
          return "<TD ALIGN=""LEFT"">" & LR & "</TD>";
-      end To_TD;
+      end To_Left_TD;
 
 
-      function To_TR (This : in LR_Pair) return Unbounded_String
-      is
+      function To_Center_TD
+        (LR : in String)
+         return Unbounded_String is
       begin
-         return
-           "          <TR>" &
-           To_TD (This (1)) &
-           "<TD> = </TD>" &
-           To_TD (This (2)) &
-           "</TR>" & NL;
+         return "<TD>" & To_Unbounded_String (LR) & "</TD>";
+      end To_Center_TD;
+
+
+      function To_Center_3_TD
+        (LR : in Unbounded_String)
+         return Unbounded_String is
+      begin
+         return "<TD COLSPAN=""3"">" & LR & "</TD>";
+      end To_Center_3_TD;
+
+
+      function To_Center_3_TD
+        (LR : in String)
+         return Unbounded_String is
+      begin
+         return To_Center_3_TD (To_Unbounded_String (LR));
+      end To_Center_3_TD;
+
+
+      function To_TR (This : in LR_Pair) return Unbounded_String is
+      begin
+         if This (1) = "" then
+            return "          <TR>" &
+              To_Center_3_TD (This (2)) & "</TR>" & NL;
+         else
+            return "          <TR>" &
+              To_Left_TD (This (1)) & To_Center_TD (" = ") &
+              To_Left_TD (This (2)) & "</TR>" & NL;
+            end if;
       end To_TR;
 
 

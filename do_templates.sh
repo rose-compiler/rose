@@ -52,7 +52,7 @@ log_invocation "$@"
 use_gnat
 log_and_run build_asis_tool    || exit $?
 log_and_run generate_adt_files || exit $?
-log_and_run run_asis_tool      || exit $?
+log_and_run run_asis_tool "$@" || exit $?
 
 log_end
 

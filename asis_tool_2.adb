@@ -60,11 +60,17 @@ package body Asis_Tool_2 is
       return Leading_Space_Image (2 .. Leading_Space_Image'Last);
    end Spaceless_Image;
 
+   -----------
+   -- PRIVATE:
+   -----------
    function Node_Id_Image (Element : in Asis.Element) return String is
    begin
       return "element_" & Spaceless_Image (Natural (Asis.Set_Get.Node(Element)));
    end Node_Id_Image;
 
+   -----------
+   -- PRIVATE:
+   -----------
    function Node_Id_Image (Unit : in Asis.Compilation_Unit) return String is
    begin
       return "unit_" & Spaceless_Image (Natural (Asis.Set_Get.Get_Unit_Id (Unit)));
