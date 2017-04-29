@@ -52,6 +52,15 @@ if ROSE_USE_SQLITE_DATABASE
    ROSE_SIDEEFFECT_INCLUDE						 = -I$(top_srcdir)/src/midend/programAnalysis/sideEffectAnalysis
 endif
 
+if USE_Z3
+  Z3_LIB_NAME = z3
+  Z3_LIB_FILE = lib$(Z3_LIB_NAME).so
+  Z3_LIBS = -l$(Z3_LIB_NAME)
+
+  Z3_INCLUDES = -I$(Z3_PREFIX)/include
+  Z3_LIB_INCLUDES = -L$(Z3_PREFIX)/lib
+endif
+
 # This is properly handled by automake even when specified in an include file
 EDG_LIBS = @EDG_LIBS@
 
