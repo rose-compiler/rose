@@ -44,7 +44,7 @@ AC_DEFUN([GET_CXX_VERSION_INFO],[
           # directly, but if this is on a MAC (OSX) system then this is the version of 
           # XCode and we have to map it to the clang version number.
           # if test "x$build_vendor" = xapple; then
-            if test "x$OS_vendor" = xapple; then
+            if test "x$OS_vendor" = xapple && $($CXX_COMPILER_COMMAND --version | grep -q 'Apple'); then
 
               # On an OSX system, the version of Clang is not clear since the "--version" option will report the 
               # version number of XCode (not clang).  So either we map from the version of the OS to the version 

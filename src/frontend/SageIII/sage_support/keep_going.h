@@ -190,6 +190,10 @@ namespace Rose {
                               (int argc, char* argv[],
                                std::vector<std::string> & rose_cmdline);
 
+    //! Set the project and all its files's midend error codes 
+    void setMidendErrorCode (SgProject* project, int errorCode);
+
+    //! Generates the file reports
     void generate_reports(SgProject* project,
                      std::vector< std::string> orig_rose_cmdline);
 
