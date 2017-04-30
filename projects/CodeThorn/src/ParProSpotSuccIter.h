@@ -11,7 +11,7 @@
 
 //CodeThron includes
 #include "ParProSpotState.h"
-#include "StateRepresentations.h"
+#include "ParProEState.h"
 
 // BOOST includes
 #include "boost/unordered_set.hpp"

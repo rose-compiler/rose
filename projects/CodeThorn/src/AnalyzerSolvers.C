@@ -224,10 +224,6 @@ void Analyzer::runSolver5() {
         ROSE_ASSERT(threadNum>=0 && threadNum<=_numberOfThreadsToUse);
       } else {
         ROSE_ASSERT(currentEStatePtr);
-        if(variableValueMonitor.isActive()) {
-          variableValueMonitor.update(this,const_cast<EState*>(currentEStatePtr));
-        }
-
         Flow edgeSet=flow.outEdges(currentEStatePtr->label());
         // logger[DEBUG] << "out-edgeSet size:"<<edgeSet.size()<<endl;
         for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
@@ -353,10 +349,6 @@ void Analyzer::runSolver8() {
       ROSE_ASSERT(0); // there should always be exactly one element in the worklist at this point
     }
     ROSE_ASSERT(currentEStatePtr);
-
-    if(variableValueMonitor.isActive()) {
-      variableValueMonitor.update(this,const_cast<EState*>(currentEStatePtr));
-    }
 
     Flow edgeSet=flow.outEdges(currentEStatePtr->label());
     for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
@@ -520,7 +512,7 @@ void Analyzer::runSolver10() {
   // create a new instance of the startPState
   //TODO: check why init of "output" is necessary
   PState newStartPState = _startPState;
-  newStartPState[globalVarIdByName("output")]=CodeThorn::AType::ConstIntLattice(-7);
+  newStartPState[globalVarIdByName("output")]=CodeThorn::AbstractValue(-7);
   // initialize worklist
   PStatePlusIOHistory startState = PStatePlusIOHistory(newStartPState, list<int>());
   std::list<PStatePlusIOHistory> workList;
@@ -600,7 +592,7 @@ bool isEmptyWorkList;
       for (set<int>::iterator inputVal=_inputVarValues.begin(); inputVal!=_inputVarValues.end(); inputVal++) {
         // copy the state and initialize new input
         PState newPState = currentState.first;
-        newPState[globalVarIdByName("input")]=CodeThorn::AType::ConstIntLattice(*inputVal);
+        newPState[globalVarIdByName("input")]=CodeThorn::AbstractValue(*inputVal);
         list<int> newHistory = currentState.second;
         ROSE_ASSERT(newHistory.size() % 2 == 0);
         newHistory.push_back(*inputVal);

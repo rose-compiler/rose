@@ -1,7 +1,10 @@
-#ifndef ROSE_BINARYLOADERELF_H
-#define ROSE_BINARYLOADERELF_H
+#ifndef ROSE_BinaryAnalysis_BinaryLoaderElf_H
+#define ROSE_BinaryAnalysis_BinaryLoaderElf_H
 
 #include "BinaryLoader.h"
+
+namespace rose {
+namespace BinaryAnalysis {
 
 class BinaryLoaderElf: public BinaryLoader {
 public:
@@ -264,10 +267,10 @@ protected:
     virtual SgAsmGenericSectionPtrList get_remap_sections(SgAsmGenericHeader*) ROSE_OVERRIDE;
 
     /** Returns a new, temporary base address which is greater than everything that's been mapped already. */
-    virtual rose_addr_t rebase(MemoryMap*, SgAsmGenericHeader*, const SgAsmGenericSectionPtrList&) ROSE_OVERRIDE;
+    virtual rose_addr_t rebase(const MemoryMap::Ptr&, SgAsmGenericHeader*, const SgAsmGenericSectionPtrList&) ROSE_OVERRIDE;
 
     /** Linux-specific ELF Segment and Section alignment. */
-    virtual MappingContribution align_values(SgAsmGenericSection*, MemoryMap*,
+    virtual MappingContribution align_values(SgAsmGenericSection*, const MemoryMap::Ptr&,
                                              rose_addr_t *malign_lo, rose_addr_t *malign_hi,
                                              rose_addr_t *va, rose_addr_t *mem_size,
                                              rose_addr_t *offset, rose_addr_t *file_size, bool *map_private,
@@ -325,7 +328,7 @@ protected:
      *  is always obtained from information in the relocation's file header.
      *
      *  An Exception is thrown if an attempt is made to read from memory which is not mapped or not readable. */
-    rose_addr_t fixup_info_addend(SgAsmElfRelocEntry*, rose_addr_t target_va, MemoryMap*, size_t nbytes=0);
+    rose_addr_t fixup_info_addend(SgAsmElfRelocEntry*, rose_addr_t target_va, const MemoryMap::Ptr&, size_t nbytes=0);
 
     /** Evaluates a simple postfix expression and returns the result.  The expression consists of terms, operators, and
      *  settings each consisting of a single character. They are defined as follows, and for the most part match various
@@ -360,7 +363,7 @@ protected:
      *
      * Exceptions are thrown when something goes wrong.  Most exceptions come from the underlying fixup_info_* methods. */
     rose_addr_t fixup_info_expr(const std::string &expression, SgAsmElfRelocEntry *reloc, const SymverResolver &resolver,
-                                MemoryMap *memmap, rose_addr_t *target_va_p=NULL);
+                                const MemoryMap::Ptr &memmap, rose_addr_t *target_va_p=NULL);
 
 
 
@@ -378,18 +381,18 @@ protected:
      *
      *  An Exception is thrown if the value cannot be written to the specimen memory due to memory not being mapped or not
      *  being writable. */
-    void fixup_apply(rose_addr_t value, SgAsmElfRelocEntry*, MemoryMap*, rose_addr_t target_va=0, size_t nbytes=0);
+    void fixup_apply(rose_addr_t value, SgAsmElfRelocEntry*, const MemoryMap::Ptr&, rose_addr_t target_va=0, size_t nbytes=0);
 
     /** Copies symbol memory to the relocation target.  This is usually used to copy initialized library data (initialized by
      *  the loader calling a constructor) into a common location in the executable's .bss. */
-    void fixup_apply_symbol_copy(SgAsmElfRelocEntry*, const SymverResolver&, MemoryMap*);
+    void fixup_apply_symbol_copy(SgAsmElfRelocEntry*, const SymverResolver&, const MemoryMap::Ptr&);
 
     /*========================================================================================================================
      * Functions moved here from the BinaryLoader_ElfSupport name space.
      *======================================================================================================================== */
 protected:
-    void performRelocation(SgAsmElfRelocEntry*, const SymverResolver&, MemoryMap*);
-    void performRelocations(SgAsmElfFileHeader*, MemoryMap*);
+    void performRelocation(SgAsmElfRelocEntry*, const SymverResolver&, const MemoryMap::Ptr&);
+    void performRelocations(SgAsmElfFileHeader*, const MemoryMap::Ptr&);
 
     /*========================================================================================================================
      * Data members
@@ -402,5 +405,8 @@ protected:
 };
 
 std::ostream& operator<<(std::ostream&, const BinaryLoaderElf::VersionedSymbol&);
+
+} // namespace
+} // namespace
 
 #endif /*ROSE_BINARYLOADERELF_H*/

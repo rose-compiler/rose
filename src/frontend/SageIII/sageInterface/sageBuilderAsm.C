@@ -25,7 +25,7 @@ buildBinaryComposite(const std::string &fileName) {
     if (SgProject *project = SageInterface::getProject()) {
         // We already have a project, so we cannot call frontend() again.
         retval = new SgBinaryComposite(args, project);
-        BinaryLoader::load(retval, DONT_DISASSEMBLE);
+        BinaryAnalysis::BinaryLoader::load(retval, DONT_DISASSEMBLE);
     } else {
         // No project yet, so just call frontend()
         project = frontend(args);

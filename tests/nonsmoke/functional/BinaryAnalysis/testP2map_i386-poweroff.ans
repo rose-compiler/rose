@@ -8,17 +8,17 @@
 0x08048957: 83 ec 08                |...     |<sp-4 >   sub    esp, 0x08
 0x0804895a: e8 e1 02 00 00          |.....   |<sp-12>   call   0x08048c40<<Func>>
 0x0804895a: Outgoing stack delta: -16
-0x0804895a: Successor blocks: 0x08048c40<<Func>>, 0x0804895f
+0x0804895a: Successor blocks: 0x0804895f, 0x08048c40<<Func>>
 
 0x0804895f: Basic block reasons: 
 0x0804895f: e8 34 03 00 00          |.4...   |<sp-12>   call   0x08048c98<<Func>>
 0x0804895f: Outgoing stack delta: -16
-0x0804895f: Successor blocks: 0x08048c98<<Func>>, 0x08048964
+0x0804895f: Successor blocks: 0x08048964, 0x08048c98<<Func>>
 
 0x08048964: Basic block reasons: 
 0x08048964: e8 4b 0f 00 00          |.K...   |<sp-12>   call   0x080498b4<<Func>>
 0x08048964: Outgoing stack delta: -16
-0x08048964: Successor blocks: 0x080498b4<<Func>>, 0x08048969
+0x08048964: Successor blocks: 0x08048969, 0x080498b4<<Func>>
 
 0x08048969: Basic block reasons: 
 0x08048969: c9                      |.       |<sp-12>   leave  
@@ -1001,7 +1001,7 @@
 0x08049019: 68 fa 9a 04 08          |h....   |<sp-108>   push   0x08049afa<"shutdown">
 0x0804901e: e8 a9 05 00 00          |.....   |<sp-112>   call   0x080495cc<<Func>>
 0x0804901e: Outgoing stack delta: -116
-0x0804901e: Successor blocks: 0x080495cc<<Func>>, 0x08049023
+0x0804901e: Successor blocks: 0x08049023, 0x080495cc<<Func>>
 
 0x08049023: Basic block reasons: 
 0x08049023: 83 c4 20                |..      |<sp-112>   add    esp, 0x20
@@ -1256,7 +1256,7 @@
 0x08049184: Basic block reasons: 
 0x08049184: e8 2b 02 00 00          |.+...   |<sp-80>   call   0x080493b4<<Func>>
 0x08049184: Outgoing stack delta: -84
-0x08049184: Successor blocks: 0x080493b4<<Func>>, 0x08049189
+0x08049184: Successor blocks: 0x08049189, 0x080493b4<<Func>>
 
 0x08049189: Basic block reasons: 
 0x08049189: e9 74 ff ff ff          |.t...   |<sp-80>   jmp    0x08049102<<BBlock>>
@@ -1266,7 +1266,7 @@
 0x0804918e: Basic block reasons: 
 0x0804918e: e8 31 00 00 00          |.1...   |<sp-80>   call   0x080491c4<<Func>>
 0x0804918e: Outgoing stack delta: -84
-0x0804918e: Successor blocks: 0x080491c4<<Func>>, 0x08049193
+0x0804918e: Successor blocks: 0x08049193, 0x080491c4<<Func>>
 
 0x08049193: Basic block reasons: 
 0x08049193: e9 5f ff ff ff          |._...   |<sp-80>   jmp    0x080490f7<<BBlock>>
@@ -2352,7 +2352,7 @@
 0x080498a5: Basic block reasons: 
 0x080498a5: e8 2e 00 00 00          |.....   |<sp-28>   call   0x080498d8<<Func>>
 0x080498a5: Outgoing stack delta: -32
-0x080498a5: Successor blocks: 0x080498d8<<Func>>, 0x080498aa
+0x080498a5: Successor blocks: 0x080498aa, 0x080498d8<<Func>>
 
 0x080498aa: Basic block reasons: 
 0x080498aa: 83 c4 0c                |...     |<sp-28>   add    esp, 0x0c

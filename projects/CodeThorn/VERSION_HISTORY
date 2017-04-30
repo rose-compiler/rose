@@ -114,3 +114,43 @@ V1.7 2016-05-09 Markus Schordan, Adrian Prantl, Marc Jasper
     int Analyzer::semanticFusionOfInInTransitions();
   * improved openmp support for parallel solvers
   * added support for LTL-driven verification mode
+
+---------------------------------------------------------------------------
+V1.8 2017-04-27 Markus Schordan, Marc Jasper, Joshua Asplund, Adrian Prantl
+---------------------------------------------------------------------------
+  * changed state representation to use map of AbstractValue->AbstractValue
+  * extended state representation with abstract pointer/struct representation
+  * extended domain with pointer arithmetic
+  * changed Makefile to separate out different kinds of tests.
+  * added test for concrete->abstract analysis mode change.
+  * added initial support for semantics of C memory alloc/copy functions
+  * separated StateRepresentations.h/C into PState,EState,InputOutput,ParProEState files and minimzed dependencies.
+  * removed namespace AType
+  * renamed class ConstIntLattice to AbstractValue.
+  * added support for bitshift operators
+  * add support for write operations in pointer domain
+  * adapted toString functions of PState and VariableIdMapping to pointer domain
+  * added array bounds check (arrays fixed size, read/write)
+  * added logger functionality
+  * deactivated option --limit-to-fragment
+  * bugfix: equivalence checking of a selected function with external function calls.
+  * added data race check (--help-data-race)
+  * revised bit operator semantics support
+  * added ssa-rewrite for equivalence checking
+  * enumerated error-path pruning status messages
+  * added time as optional resource constraint (options "--max-time[-forced-top]"). 
+  * Added a test for the synchronized loop-aware mode (solver 12).
+  * Parallel systems are now discarded unless option "--keep-systems=yes" is used. Also improved the generation of random LTL properties.
+  * improved how the memory consumption is reported, added a parameter to the LTL specification mining.
+  * the Promela code generator now supports systems of parallel automata with more than 256 transitions.
+  * the reported total memory consumption now reflects the physical memory usage (resident set size, only works on Linux).
+  * The HSetMaintainer now deletes elements during its destruction. Also improved memory size counters.
+  * added an option to set the seed value for randomly generated parallel automata and specification mining.
+  * mined LTL properties are now shuffled, synchronized transitions now contain the names of original transitions (parallel automata).
+  * defined initial state of generated promela code, deactivated relabeling of initial transitions in generated parallel automata.
+  * random parallel automata can now be generated automatically.
+  * bugfix: reduceNode (reduce cfg node); enabled reduce-cfg by default.
+  * the CFG now uses the Sawyer graph implementation (default index for vertices).
+  * added visualization of read and write sets (data race check).
+  * added a PROMELA code generator for parallel automata.
+  * CFG dot graph frontend: multiple subgraphs can now be parsed as inidividual CFGs.

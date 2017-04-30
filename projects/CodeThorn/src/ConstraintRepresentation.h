@@ -14,17 +14,18 @@
 #include <list>
 #include "Labeler.h"
 #include "CFAnalysis.h"
-#include "AType.h"
+#include "AbstractValue.h"
 #include "VariableIdMapping.h"
 #include "EqualityMaintainer.h"
 #include "HSetMaintainer.h"
+#include "AbstractValue.h"
 
 using namespace SPRAY;
 
 namespace CodeThorn {
 
   typedef std::list<AValue> ListOfAValue;
-  typedef VariableIdMapping::VariableIdSet SetOfVariableId;
+  typedef VarAbstractValueSet SetOfVariableId;
 
 /*
   EQ_VAR_CONST : equal (==)
@@ -41,17 +42,15 @@ class Constraint {
  public:
   enum ConstraintOp {UNDEFINED,EQ_VAR_CONST,NEQ_VAR_CONST, EQ_VAR_VAR, NEQ_VAR_VAR, DEQ};
   Constraint();
-  Constraint(ConstraintOp op0,VariableId lhs, AValue rhs);
-  Constraint(ConstraintOp op0,VariableId lhs, VariableId rhs);
+  Constraint(ConstraintOp op0,CodeThorn::VarAbstractValue lhs, AValue rhs);
   ConstraintOp op() const;
-  VariableId lhsVar() const;
-  VariableId rhsVar() const;
+  CodeThorn::VarAbstractValue lhsVar() const;
+  CodeThorn::VarAbstractValue rhsVar() const;
   AValue rhsVal() const;
   std::string toString() const;
   std::string toString(VariableIdMapping*) const;
   std::string toAssertionString(VariableIdMapping*) const;
   std::string operatorStringFromStream(istream& is);
-  void fromStream(istream& is);
   void toStream(ostream& os);
   void toStreamAsTuple(ostream& os);
   bool isVarVarOp() const;
@@ -61,14 +60,13 @@ class Constraint {
   bool isDisequation() const;
   void negate();
   void swapVars();
-  void setLhsVar(VariableId lhs) { _lhsVar=lhs; } 
+  void setLhsVar(CodeThorn::VarAbstractValue lhs) { _lhsVar=lhs; } 
  private:
   void initialize();
   std::string opToString() const;
   ConstraintOp _op;
-  VariableId _lhsVar;
-  VariableId _rhsVar;
-  AValue _intVal;
+  CodeThorn::VarAbstractValue _lhsVar;
+  CodeThorn::VarAbstractValue _rhsVar;
 };
 
 bool operator<(const Constraint& c1, const Constraint& c2);
@@ -76,7 +74,7 @@ bool operator==(const Constraint& c1, const Constraint& c2);
 bool operator!=(const Constraint& c1, const Constraint& c2);
 
 // we use only one disequality constraint to mark constraint set representing non-reachable states
-#define DISEQUALITYCONSTRAINT Constraint(Constraint::DEQ,VariableId(),AType::ConstIntLattice(0))
+#define DISEQUALITYCONSTRAINT Constraint(Constraint::DEQ,CodeThorn::VarAbstractValue(),AbstractValue(0))
 
 /*! 
   * \author Markus Schordan
@@ -84,16 +82,16 @@ bool operator!=(const Constraint& c1, const Constraint& c2);
  */
 class ConstraintSet : public set<Constraint> {
  public:
-  ConstraintSet constraintsOfVariable(VariableId varId) const;
-  bool constraintExists(Constraint::ConstraintOp op, VariableId varId, AValue intVal) const;
+  ConstraintSet constraintsOfVariable(CodeThorn::VarAbstractValue varId) const;
+  bool constraintExists(Constraint::ConstraintOp op, CodeThorn::VarAbstractValue varId, AValue intVal) const;
   bool constraintExists(Constraint::ConstraintOp op) const;
   ConstraintSet constraintsWithOp(Constraint::ConstraintOp op) const;
   bool constraintExists(const Constraint& c) const;
 
   // deprecated
-  ConstraintSet::iterator findSpecific(Constraint::ConstraintOp op, VariableId varId) const;
+  ConstraintSet::iterator findSpecific(Constraint::ConstraintOp op, CodeThorn::VarAbstractValue varId) const;
   // deprecated
-  ConstraintSet findSpecificSet(Constraint::ConstraintOp op, VariableId varId) const;
+  ConstraintSet findSpecificSet(Constraint::ConstraintOp op, CodeThorn::VarAbstractValue varId) const;
 
   std::string toString() const;
   std::string toString(VariableIdMapping* vim) const;
@@ -101,18 +99,18 @@ class ConstraintSet : public set<Constraint> {
   std::string toAssertionString(VariableIdMapping* vim) const;
 
   //! returns concrete int-value if equality exists, otherwise Top.
-  AType::ConstIntLattice varConstIntLatticeValue(const VariableId varId) const;
+  AbstractValue varAbstractValue(const CodeThorn::VarAbstractValue varId) const;
   //! returns set of concrete values for which an equality is stored 
   //! (there can be at most one), otherwise the set is empty. 
   //! Note that top may exist as explicit equality if it was added as such.
-  ListOfAValue getEqVarConst(const VariableId varId) const;
+  ListOfAValue getEqVarConst(const CodeThorn::VarAbstractValue varId) const;
   //! returns set of concrete values for which an inequality exists
-  ListOfAValue getNeqVarConst(const VariableId varId) const;
-  SetOfVariableId getEqVars(const VariableId varId) const;
+  ListOfAValue getNeqVarConst(const CodeThorn::VarAbstractValue varId) const;
+  SetOfVariableId getEqVars(const CodeThorn::VarAbstractValue varId) const;
 
   //! maintains consistency of set and creates DIS if inconsistent constraints are added
   void addConstraint(Constraint c);
-  void removeAllConstraintsOfVar(VariableId varId);
+  void removeAllConstraintsOfVar(CodeThorn::VarAbstractValue varId);
 
 #if 0
   ConstraintSet invertedConstraints(); // only correct for single constraints 
@@ -122,29 +120,29 @@ class ConstraintSet : public set<Constraint> {
   void addDisequality();
   bool disequalityExists() const;
 
-  void addAssignEqVarVar(VariableId, VariableId);
-  void addEqVarVar(VariableId, VariableId);
-  //void removeEqualitiesOfVar(VariableId);
+  void addAssignEqVarVar(CodeThorn::VarAbstractValue, CodeThorn::VarAbstractValue);
+  void addEqVarVar(CodeThorn::VarAbstractValue, CodeThorn::VarAbstractValue);
+  //void removeEqualitiesOfVar(CodeThorn::VarAbstractValue);
 
-  long numberOfConstConstraints(VariableId);
+  long numberOfConstConstraints(CodeThorn::VarAbstractValue);
   ConstraintSet& operator+=(ConstraintSet& s2);
   //ConstraintSet operator+(ConstraintSet& s2);
   long memorySize() const;
 
  private:
-  void deleteAndMoveConstConstraints(VariableId lhsVarId, VariableId rhsVarId);
-  void moveConstConstraints(VariableId fromVar, VariableId toVar);
+  void deleteAndMoveConstConstraints(CodeThorn::VarAbstractValue lhsVarId, CodeThorn::VarAbstractValue rhsVarId);
+  void moveConstConstraints(CodeThorn::VarAbstractValue fromVar, CodeThorn::VarAbstractValue toVar);
   //! modifies internal representation
   void insertConstraint(Constraint c);
   //! modifies internal representation
   void eraseConstraint(Constraint c);
   void eraseConstraint(set<Constraint>::iterator i);
   //! modifies internal representation
-  void eraseEqWithLhsVar(VariableId);
-  void duplicateConstConstraints(VariableId lhsVarId, VariableId rhsVarId);
+  void eraseEqWithLhsVar(CodeThorn::VarAbstractValue);
+  void duplicateConstConstraints(CodeThorn::VarAbstractValue lhsVarId, CodeThorn::VarAbstractValue rhsVarId);
   //! moves const-constraints from "fromVar" to "toVar". Does maintain consistency, set may be become DEQ.
-  void eraseConstConstraints(VariableId);
-  EqualityMaintainer<VariableId> equalityMaintainer;
+  void eraseConstConstraints(CodeThorn::VarAbstractValue);
+  EqualityMaintainer<CodeThorn::VarAbstractValue> equalityMaintainer;
 };
 
 /*! 
@@ -159,10 +157,10 @@ class ConstraintSetHashFun {
       unsigned int hash=1;
       for(ConstraintSet::iterator i=cs.begin();i!=cs.end();++i) {
         // use the symbol-ptr of lhsVar for hashing (we are a friend).
-        if((*i).isVarValOp())
+        if((*i).isVarValOp()) {
           hash=((hash<<8)+((long)(*i).rhsVal().hash()))^hash;
-        else if((*i).isVarVarOp()) {
-          hash=((hash<<8)+((long)((*i).rhsVar().getIdCode())))^hash;
+        } else if((*i).isVarVarOp()) {
+          hash=((hash<<8)+((long)(*i).rhsVar().hash()))^hash;
         } else {
           hash=0; // DEQ
         }
@@ -181,10 +179,10 @@ class ConstraintSetHashFun {
       unsigned int hash=1;
       for(ConstraintSet::iterator i=cs->begin();i!=cs->end();++i) {
         // use the symbol-ptr of lhsVar for hashing (we are a friend).
-        if((*i).isVarValOp())
+        if((*i).isVarValOp()) {
           hash=((hash<<8)+((long)(*i).rhsVal().hash()))^hash;
-        else if((*i).isVarVarOp()) {
-          hash=((hash<<8)+((long)((*i).rhsVar().getIdCode())))^hash;
+        } else if((*i).isVarVarOp()) {
+          hash=((hash<<8)+((long)(*i).rhsVar().hash()))^hash;
         } else {
           hash=0; // DEQ
         }

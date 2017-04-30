@@ -1,6 +1,11 @@
 template <typename T, typename R>
-class BoundFunctorCallbackImpl {
+
+class BoundFunctorCallbackImpl 
+
+{
+
 public:
+
   template <typename FUNCTOR>
 
   R operator() (void) {

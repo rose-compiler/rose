@@ -22,6 +22,7 @@ libbinaryMidend_la_SOURCES =					\
     BinaryMagic.C						\
     BinaryNoOperation.C						\
     BinaryPointerDetection.C					\
+    BinaryReachability.C					\
     BinaryReturnValueUsed.C					\
     BinaryStackDelta.C						\
     BinaryString.C						\
@@ -92,6 +93,7 @@ pkginclude_HEADERS =					\
     BinaryMagic.h					\
     BinaryNoOperation.h					\
     BinaryPointerDetection.h				\
+    BinaryReachability.h				\
     BinaryReturnValueUsed.h				\
     BinaryStackDelta.h					\
     BinaryStackVariable.h				\

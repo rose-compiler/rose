@@ -218,7 +218,7 @@ public:
      *  layer is used in the address map, otherwise a new layer is created. In any case, the layer used is returned.  If @p
      *  showStarts is true then the starting address of each function will be added to the gutter (top gutter for layer zero,
      *  bottom gutter for other layers).  The gutter is cleared first. */
-    size_t insert(const MemoryMap&, size_t idx=0, bool showStarts=true);
+    size_t insert(const rose::BinaryAnalysis::MemoryMap::Ptr&, size_t idx=0, bool showStarts=true);
 
     /** Initialize with function addresses.
      *

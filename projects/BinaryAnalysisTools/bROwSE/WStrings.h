@@ -37,8 +37,8 @@ public:
         init();
     }
 
-    const MemoryMap& memoryMap() const;
-    void memoryMap(const MemoryMap&);                   // model is marked as out-of-date
+    rose::BinaryAnalysis::MemoryMap::Ptr memoryMap() const;
+    void memoryMap(const rose::BinaryAnalysis::MemoryMap::Ptr&); // model is marked as out-of-date
     void updateModelIfNecessary();                      // update model if it is out-of-date (expensive)
 
     /** Update string table from new partitioner.
@@ -61,7 +61,7 @@ private:
     void search(Wt::WLineEdit*);
     void searchNavigate(int direction);
     void selectStringByRow(const Wt::WModelIndex &idx);
-    void redrawAddressSpace(const MemoryMap&);
+    void redrawAddressSpace(const rose::BinaryAnalysis::MemoryMap::Ptr&);
 };
 
 } // namespace

@@ -79,7 +79,7 @@ PropertyValueTable ReachabilityAnalysis::fiReachabilityAnalysis(Labeler& labeler
       //cout<<node->class_name()<<";";
       exp=isSgExpression(node);
       if(exp) {
-        ConstIntLattice res=fiConstAnalysis.eval(exp);
+        AbstractValue res=fiConstAnalysis.eval(exp);
         int assertCode=isIfWithLabeledAssert(*i);
         if(assertCode>=0) {
           if(res.isTrue()) {

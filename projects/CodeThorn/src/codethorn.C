@@ -10,7 +10,7 @@
 #include "SgNodeHelper.h"
 #include "Labeler.h"
 #include "VariableIdMapping.h"
-#include "StateRepresentations.h"
+#include "EState.h"
 #include "Timer.h"
 #include <cstdio>
 #include <cstring>
@@ -26,7 +26,7 @@
 #include "InternalChecks.h"
 #include "AstAnnotator.h"
 #include "AstTerm.h"
-#include "AType.h"
+#include "AbstractValue.h"
 #include "AstMatching.h"
 #include "RewriteSystem.h"
 #include "SpotConnection.h"
@@ -76,6 +76,25 @@ using namespace Sawyer::Message;
 
 // experimental
 #include "IOSequenceGenerator.C"
+
+#include <execinfo.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+// handler for generating backtrace
+void handler(int sig) {
+  void *array[10];
+  size_t size;
+
+  // get void*'s for all entries on the stack
+  size = backtrace(array, 10);
+
+  // print out all the frames to stderr
+  fprintf(stderr, "Error: signal %d:\n", sig);
+  backtrace_symbols_fd(array, size, STDERR_FILENO);
+  exit(1);
+}
 
 void CodeThorn::initDiagnostics() {
   rose::Diagnostics::initialize();
@@ -173,11 +192,11 @@ void attachTermRepresentation(SgNode* node) {
 
 static Analyzer* global_analyzer=0;
 
-set<VariableId> determineSetOfCompoundIncVars(VariableIdMapping* vim, SgNode* root) {
+set<AbstractValue> determineSetOfCompoundIncVars(VariableIdMapping* vim, SgNode* root) {
   ROSE_ASSERT(vim);
   ROSE_ASSERT(root);
   RoseAst ast(root) ;
-  set<VariableId> compoundIncVarsSet;
+  set<AbstractValue> compoundIncVarsSet;
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
     if(SgCompoundAssignOp* compoundAssignOp=isSgCompoundAssignOp(*i)) {
       SgVarRefExp* lhsVar=isSgVarRefExp(SgNodeHelper::getLhs(compoundAssignOp));
@@ -206,8 +225,8 @@ set<VariableId> determineSetOfConstAssignVars2(VariableIdMapping* vim, SgNode* r
   return constAssignVars;
 }
 
-VariableIdSet determineVarsInAssertConditions(SgNode* node, VariableIdMapping* variableIdMapping) {
-  VariableIdSet usedVarsInAssertConditions;
+AbstractValueSet determineVarsInAssertConditions(SgNode* node, VariableIdMapping* variableIdMapping) {
+  AbstractValueSet usedVarsInAssertConditions;
   RoseAst ast(node);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
     if(SgIfStmt* ifstmt=isSgIfStmt(*i)) {
@@ -222,7 +241,7 @@ VariableIdSet determineVarsInAssertConditions(SgNode* node, VariableIdMapping* v
           //cout<<"Num of vars: "<<vars.size()<<endl;
           for(std::vector<SgVarRefExp*>::iterator j=vars.begin();j!=vars.end();++j) {
             VariableId varId=variableIdMapping->variableId(*j);
-            usedVarsInAssertConditions.insert(varId);
+            usedVarsInAssertConditions.insert(AbstractValue(varId));
           }
         }
       }
@@ -344,7 +363,6 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
     ("post-semantic-fold",po::value< string >(),"compute semantically folded state transition graph only after the complete transition graph has been computed. [=yes|no]")
     ("set-stg-incomplete", po::value< string >(), "set to true if the generated STG will not contain all possible execution paths (e.g. if only a subset of the input values is used). [=yes|no]")
     ("tg-trace", po::value< string >(), "generate STG computation trace [=filename]")
-    ("variable-value-threshold",po::value< int >(),"sets a threshold for the maximum number of different values are stored for each variable.")
     ("explicit-arrays","turns on to represent all arrays explicitly in every state.")
     ;
 
@@ -418,7 +436,7 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
     ("input-values",po::value< string >(),"specify a set of input values (e.g. \"{1,2,3}\")")
     ("input-values-as-constraints",po::value<string >(),"represent input var values as constraints (otherwise as constants in PState)")
     ("input-sequence",po::value< string >(),"specify a sequence of input values (e.g. \"[1,2,3]\")")
-    ("log-level",po::value< string >()->default_value("none,>=warn"),"Set the log level")
+    ("log-level",po::value< string >()->default_value("none,>=warn"),"Set the log level (none|info|warn|trace)")
     ("max-transitions",po::value< int >(),"Passes (possibly) incomplete STG to verifier after max transitions (default: no limit).")
     ("max-iterations",po::value< int >(),"Passes (possibly) incomplete STG to verifier after max loop iterations (default: no limit). Currently requires --exploration-mode=loop-aware[-sync].")
     ("max-memory",po::value< long int >(),"Stop computing the STG after a total physical memory consumption of approximately <arg> Bytes has been reached. (default: no limit). Currently requires --solver=12 and only supports Unix systems.")
@@ -1017,14 +1035,12 @@ void analyzerSetup(Analyzer& analyzer, const po::variables_map& args, Sawyer::Me
   if(analyzer.getModeLTLDriven()) {
     analyzer.setSolver(ltlSolverNr);
   }
-  if(args.count("variable-value-threshold")) {
-    analyzer.setVariableValueThreshold(args["variable-value-threshold"].as<int>());
-  }
 }
 
 int main( int argc, char * argv[] ) {
   ROSE_INITIALIZE;
 
+  signal(SIGSEGV, handler);   // install handler for backtrace
   CodeThorn::initDiagnostics();
 
   rose::Diagnostics::mprefix->showProgramName(false);
@@ -1032,7 +1048,7 @@ int main( int argc, char * argv[] ) {
   rose::Diagnostics::mprefix->showElapsedTime(false);
 
   Sawyer::Message::Facility logger;
-  rose::Diagnostics::initAndRegister(logger, "CodeThorn");
+  rose::Diagnostics::initAndRegister(&logger, "CodeThorn");
 
   try {
     Timer timer;
@@ -1207,7 +1223,13 @@ int main( int argc, char * argv[] ) {
     logger[TRACE] << "INIT: Parsing and creating AST: started."<<endl;
     timer.stop();
     timer.start();
-    SgProject* sageProject = frontend(argc,argv);
+
+    vector<string> argvList(argv,argv+argc);
+    if(boolOptions["data-race"]) {
+      //TODO: new openmp-ast support not finished yet - using existing implementation
+      //argvList.push_back("-rose:OpenMP:ast_only");
+    }
+    SgProject* sageProject = frontend(argvList);
     double frontEndRunTime=timer.getElapsedTimeInMilliSec();
 
     logger[TRACE] << "INIT: Parsing and creating AST: finished."<<endl;
@@ -1295,12 +1317,12 @@ int main( int argc, char * argv[] ) {
 
     {
       // TODO: refactor this into class Analyzer after normalization has been moved to class Analyzer.
-      set<VariableId> compoundIncVarsSet=determineSetOfCompoundIncVars(analyzer.getVariableIdMapping(),root);
+      set<AbstractValue> compoundIncVarsSet=determineSetOfCompoundIncVars(analyzer.getVariableIdMapping(),root);
       analyzer.setCompoundIncVarsSet(compoundIncVarsSet);
       logger[TRACE]<<"STATUS: determined "<<compoundIncVarsSet.size()<<" compound inc/dec variables before normalization."<<endl;
     }
     {
-      VariableIdSet varsInAssertConditions=determineVarsInAssertConditions(root,analyzer.getVariableIdMapping());
+      AbstractValueSet varsInAssertConditions=determineVarsInAssertConditions(root,analyzer.getVariableIdMapping());
       logger[TRACE]<<"STATUS: determined "<<varsInAssertConditions.size()<< " variables in (guarding) assert conditions."<<endl;
       analyzer.setAssertCondVarsSet(varsInAssertConditions);
     }
@@ -2128,28 +2150,28 @@ int main( int argc, char * argv[] ) {
     cout<<color("normal")<<"done."<<endl;
 
     // main function try-catch
-  } catch(CodeThorn::Exception& e) {
-    logger[FATAL] << "CodeThorn::Exception raised: " << e.what() << endl;
+  } catch(const CodeThorn::Exception& e) {
+    cerr << "CodeThorn::Exception raised: " << e.what() << endl;
     mfacilities.shutdown();
     return 1;
-  } catch(SPRAY::Exception& e) {
-    logger[FATAL]<< "Spray::Exception raised: " << e.what() << endl;
+  } catch(const SPRAY::Exception& e) {
+    cerr<< "Spray::Exception raised: " << e.what() << endl;
     mfacilities.shutdown();
     return 1;
-  } catch(std::exception& e) {
-    logger[FATAL]<< "std::exception raised: " << e.what() << endl;
+  } catch(const std::exception& e) {
+    cerr<< "std::exception raised: " << e.what() << endl;
     mfacilities.shutdown();
     return 1;
   } catch(char const* str) {
-    logger[FATAL]<< "*Exception raised: " << str << endl;
+    cerr<< "*Exception raised: " << str << endl;
     mfacilities.shutdown();
     return 1;
   } catch(string str) {
-    logger[FATAL]<< "Exception raised: " << str << endl;
+    cerr<< "Exception raised: " << str << endl;
     mfacilities.shutdown();
     return 1;
   } catch(...) {
-    logger[FATAL]<< "Unknown exception raised." << endl;
+    cerr<< "Unknown exception raised." << endl;
     mfacilities.shutdown();
     return 1;
   }

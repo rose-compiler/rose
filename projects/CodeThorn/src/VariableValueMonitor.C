@@ -7,23 +7,14 @@ using namespace SPRAY;
 
 namespace CodeThorn {
 
-bool VariableValueMonitor::isActive() {
-  return _threshold!=-1;
+VariableValueMonitor::VariableValueMonitor(){
 }
 
-VariableValueMonitor::VariableValueMonitor():_threshold(-1){
-}
-
-// in combination with adaptive-top mode
-void VariableValueMonitor::setThreshold(size_t threshold) {
-  _threshold=threshold;
-}
-
-void VariableValueMonitor::setVariableMode(VariableMode mode,VariableId variableId) {
+void VariableValueMonitor::setVariableMode(VariableMode mode,AbstractValue variableId) {
   _variablesModeMap[variableId]=mode;
 }
 
-VariableValueMonitor::VariableMode VariableValueMonitor::getVariableMode(VariableId variableId) {
+VariableValueMonitor::VariableMode VariableValueMonitor::getVariableMode(AbstractValue variableId) {
   return _variablesModeMap[variableId];
 }
 
@@ -34,8 +25,8 @@ void VariableValueMonitor::init(const EState* estate) {
 }
 
 void VariableValueMonitor::init(const PState* pstate) {
-  VariableIdSet varIdSet=pstate->getVariableIds();
-  for(VariableIdSet::iterator i=varIdSet.begin(); i!=varIdSet.end(); ++i) {
+  AbstractValueSet varIdSet=pstate->getVariableIds();
+  for(AbstractValueSet::iterator i=varIdSet.begin(); i!=varIdSet.end(); ++i) {
     // to also allow reinit
     if(_variablesMap.find(*i)==_variablesMap.end()) {
       _variablesMap[*i]=new set<int>(); // initialize value set for each variable
@@ -44,14 +35,14 @@ void VariableValueMonitor::init(const PState* pstate) {
   }
 }
 
-VariableIdSet VariableValueMonitor::getHotVariables(Analyzer* analyzer, const PState* pstate) {
+AbstractValueSet VariableValueMonitor::getHotVariables(Analyzer* analyzer, const PState* pstate) {
   if(pstate->size()!=_variablesMap.size()) {
     // found a new variable during analysis (e.g. local variable)
     init(pstate);
   }
-  VariableIdSet hotVariables;
-  VariableIdSet varIdSet=pstate->getVariableIds();
-  for(VariableIdSet::iterator i=varIdSet.begin(); i!=varIdSet.end(); ++i) {
+  AbstractValueSet hotVariables;
+  AbstractValueSet varIdSet=pstate->getVariableIds();
+  for(AbstractValueSet::iterator i=varIdSet.begin(); i!=varIdSet.end(); ++i) {
     if(isHotVariable(analyzer,*i)) {
       hotVariables.insert(*i);
     }
@@ -59,13 +50,13 @@ VariableIdSet VariableValueMonitor::getHotVariables(Analyzer* analyzer, const PS
   return hotVariables;
 }
 
-VariableIdSet VariableValueMonitor::getHotVariables(Analyzer* analyzer, const EState* estate) {
+AbstractValueSet VariableValueMonitor::getHotVariables(Analyzer* analyzer, const EState* estate) {
   const PState* pstate=estate->pstate();
   return getHotVariables(analyzer,pstate);
 }
 
 void VariableValueMonitor::update(Analyzer* analyzer,EState* estate) {
-  VariableIdSet hotVariables=getHotVariables(analyzer,estate);
+  AbstractValueSet hotVariables=getHotVariables(analyzer,estate);
   const PState* pstate=estate->pstate();
   if(pstate->size()!=_variablesMap.size()) {
     //cerr<<"WARNING: variable map size mismatch (probably local var)"<<endl;
@@ -73,9 +64,9 @@ void VariableValueMonitor::update(Analyzer* analyzer,EState* estate) {
     init(estate);
   }
       
-  VariableIdSet varIdSet=pstate->getVariableIds();
-  for(VariableIdSet::iterator i=varIdSet.begin(); i!=varIdSet.end(); ++i) {
-    VariableId varId=*i;
+  AbstractValueSet varIdSet=pstate->getVariableIds();
+  for(AbstractValueSet::iterator i=varIdSet.begin(); i!=varIdSet.end(); ++i) {
+    AbstractValue varId=*i;
     bool isHotVariable=hotVariables.find(varId)!=hotVariables.end();
     if(!isHotVariable) {
       if(pstate->varIsConst(varId)) {
@@ -88,9 +79,9 @@ void VariableValueMonitor::update(Analyzer* analyzer,EState* estate) {
   }
 }
 
-VariableIdSet VariableValueMonitor::getVariables() {
-  VariableIdSet vset;
-  for(map<VariableId,VariableMode>::iterator i=_variablesModeMap.begin();
+AbstractValueSet VariableValueMonitor::getVariables() {
+  AbstractValueSet vset;
+  for(map<AbstractValue,VariableMode>::iterator i=_variablesModeMap.begin();
       i!=_variablesModeMap.end();
       ++i) {
     vset.insert((*i).first);
@@ -98,9 +89,9 @@ VariableIdSet VariableValueMonitor::getVariables() {
   return vset;
 }
 
-bool VariableValueMonitor::isHotVariable(Analyzer* analyzer, VariableId varId) {
+bool VariableValueMonitor::isHotVariable(Analyzer* analyzer, AbstractValue varId) {
   // TODO: provide set of variables to ignore
-  string name=SgNodeHelper::symbolToString(analyzer->getVariableIdMapping()->getSymbol(varId));
+  string name=varId.toLhsString(analyzer->getVariableIdMapping());
   switch(_variablesModeMap[varId]) {
   case VariableValueMonitor::VARMODE_FORCED_TOP:
     return true;
@@ -108,7 +99,7 @@ bool VariableValueMonitor::isHotVariable(Analyzer* analyzer, VariableId varId) {
     if(name=="input" || name=="output") 
       return false;
     else
-      return _threshold!=-1 && ((long int)_variablesMap[varId]->size())>=_threshold;
+      return true;
   }
   case VariableValueMonitor::VARMODE_PRECISE:
     return false;
@@ -120,10 +111,10 @@ bool VariableValueMonitor::isHotVariable(Analyzer* analyzer, VariableId varId) {
 
 string VariableValueMonitor::toString(VariableIdMapping* variableIdMapping) {
   stringstream ss;
-  for(map<VariableId,set<int>* >::iterator i=_variablesMap.begin();
+  for(map<AbstractValue,set<int>* >::iterator i=_variablesMap.begin();
       i!=_variablesMap.end();
       ++i) {
-    ss<<string("VAR:")<<variableIdMapping->uniqueShortVariableName((*i).first)<<": "<<(*i).second->size()<<": ";
+    ss<<string("VAR:")<<((*i).first).toString(variableIdMapping)<<": "<<(*i).second->size()<<": ";
     set<int>* sp=(*i).second;
     for(set<int>::iterator i=sp->begin();i!=sp->end();++i) {
       ss<<*i<<" ";

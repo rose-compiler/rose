@@ -7310,7 +7310,7 @@ SageBuilder::buildOpaqueVarRefExp(const std::string& name,SgScopeStatement* scop
           result = buildVarRefExp(isSgVariableSymbol(symbol));
 
        // DQ (4/2/2012): Output a warning:
-          printf ("WARNING: In SageBuilder::buildOpaqueVarRefExp(): proper symbol used to build SgVarRefExp = %p \n",result);
+       //   printf ("WARNING: In SageBuilder::buildOpaqueVarRefExp(): proper symbol used to build SgVarRefExp = %p \n",result);
         }
        else
         {
@@ -7325,7 +7325,7 @@ SageBuilder::buildOpaqueVarRefExp(const std::string& name,SgScopeStatement* scop
          result = buildVarRefExp(fakeSymbol);
 
        // DQ (4/2/2012): Output a warning:
-          printf ("WARNING: In SageBuilder::buildOpaqueVarRefExp(): fake symbol generated to build SgVarRefExp = %p (but not put into symbol table) \n",result);
+       //   printf ("WARNING: In SageBuilder::buildOpaqueVarRefExp(): fake symbol generated to build SgVarRefExp = %p (but not put into symbol table) \n",result);
         }
 
      return result;

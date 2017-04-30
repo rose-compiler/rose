@@ -6,7 +6,7 @@
 //CodeThorn includes
 #include "SpotState.h"
 #include "SpotSuccIter.h"
-#include "StateRepresentations.h"
+#include "EState.h"
 
 //SPOT includes
 #include "tgba/tgba.hh"

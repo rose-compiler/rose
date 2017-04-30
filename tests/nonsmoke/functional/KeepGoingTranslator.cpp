@@ -56,7 +56,7 @@ main(int argc, char * argv[])
      "                                  onto standard out. Each filename is separated by a new line.\n"
      "\n"
      "  --report-pass=<filename>        File to write report of passes\n"
-     "  --report-fail=<filename>        File to write report of failurest\n"
+     "  --report-fail=<filename>        File to write report of failures\n"
      "  --expected-failures=<filename>  File containing filenames that are expected to fail\n"
      "  --expected-passes=<filename>    File containing filenames that are expected to pass\n"
      "  --strip-path-prefix=<filename>  Normalize filenames by stripping this path prefix from them\n"

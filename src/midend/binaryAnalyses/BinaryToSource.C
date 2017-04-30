@@ -59,7 +59,7 @@ BinaryToSource::emitFilePrologue(const P2::Partitioner &partitioner, std::ostrea
     if (!settings_.allocateMemoryArray) {
         out <<"extern uint8_t *mem;\n";
     } else if (0 == *settings_.allocateMemoryArray) {
-        out <<"uint8_t mem[" <<StringUtility::addrToString(partitioner.memoryMap().greatest()+1) <<"];\n";
+        out <<"uint8_t mem[" <<StringUtility::addrToString(partitioner.memoryMap()->greatest()+1) <<"];\n";
     } else {
         out <<"uint8_t mem[" <<StringUtility::addrToString(*settings_.allocateMemoryArray) <<"];\n";
     }
@@ -252,13 +252,13 @@ BinaryToSource::emitMemoryInitialization(const P2::Partitioner &partitioner, std
         <<"initialize_memory(void) {\n";
     rose_addr_t va = 0;
     uint8_t buf[8192];
-    while (AddressInterval where = partitioner.memoryMap().atOrAfter(va).limit(sizeof buf).read(buf)) {
+    while (AddressInterval where = partitioner.memoryMap()->atOrAfter(va).limit(sizeof buf).read(buf)) {
         uint8_t *bufptr = buf;
         for (va = where.least(); va <= where.greatest(); ++va, ++bufptr) {
             out <<"    mem[" <<StringUtility::addrToString(va) <<"]"
                 <<"= " <<StringUtility::toHex2(*bufptr, 8, false, false) <<";\n";
         }
-        if (va <= partitioner.memoryMap().hull().least())
+        if (va <= partitioner.memoryMap()->hull().least())
             break;                                      // overflow of ++va
     }
     out <<"}\n";

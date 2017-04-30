@@ -65,7 +65,7 @@ DisassemblerPowerpc::init()
 
 /* This is a bit of a kludge for now because we're trying to use an unmodified version of the PowerpcDisassembler name space. */
 SgAsmInstruction *
-DisassemblerPowerpc::disassembleOne(const MemoryMap *map, rose_addr_t start_va, AddressSet *successors)
+DisassemblerPowerpc::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va, AddressSet *successors)
 {
     /* The old PowerpcDisassembler::disassemble() function doesn't understand MemoryMap mappings. Therefore, remap the next
      * few bytes (enough for at least one instruction) into a temporary buffer. */

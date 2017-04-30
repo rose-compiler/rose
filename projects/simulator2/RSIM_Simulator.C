@@ -446,7 +446,7 @@ RSIM_Simulator::loadSpecimen(const std::vector<std::string> &args, int existingP
 
     if ((process->tracingFlags() & tracingFacilityBit(TRACE_MMAP))) {
         fprintf(process->tracingFile(), "memory map after program load:\n");
-        process->get_memory().dump(process->tracingFile(), "  ");
+        process->get_memory()->dump(process->tracingFile(), "  ");
     }
 
     mainThread->tracing(TRACE_STATE) <<"Initial state:\n"

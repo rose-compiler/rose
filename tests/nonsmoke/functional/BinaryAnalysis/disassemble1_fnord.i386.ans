@@ -1,18 +1,18 @@
 using this memory map for disassembly:
-    va 0x08048000 + 0x000000a0 = 0x080480a0 r-xp at buffer aac   + 0x00000000 fnord.i386(LOAD#0)
-    va 0x080480a0 + 0x00002e87 = 0x0804af27 r-x- at buffer aai   + 0x000000a0 fnord.i386(.text)
-    va 0x0804af27 + 0x00000019 = 0x0804af40 r-xp at buffer aac   + 0x00002f27 fnord.i386(LOAD#0)
-    va 0x0804af40 + 0x0000085b = 0x0804b79b r--- at buffer aak   + 0x00002f40 fnord.i386(.rodata)
-    va 0x0804b79b + 0x00000001 = 0x0804b79c r-xp at buffer aac   + 0x0000379b fnord.i386(LOAD#0)
-    va 0x0804b79c + 0x00000058 = 0x0804b7f4 r--- at buffer aam   + 0x0000379c fnord.i386(.eh_frame)
-    va 0x0804b7f4 + 0x000001ac = 0x0804b9a0 r-xp at buffer aac   + 0x000037f4 fnord.i386(LOAD#0)
-    va 0x0804b9a0 + 0x00000660 = 0x0804c000 r-xp at buffer aab   + 0x00000000 fnord.i386(LOAD#0)
-    va 0x0804c000 + 0x000007f4 = 0x0804c7f4 rw-p at buffer aag   + 0x00000000 fnord.i386(LOAD#1)
-    va 0x0804c7f4 + 0x00000064 = 0x0804c858 rw-- at buffer aao   + 0x000037f4 fnord.i386(.data)
-    va 0x0804c858 + 0x00000008 = 0x0804c860 rw-p at buffer aaf   + 0x00000000 fnord.i386(LOAD#1)
-    va 0x0804c860 + 0x00000148 = 0x0804c9a8 rw-p at buffer aar   + 0x00000000 fnord.i386(.bss)
-    va 0x0804c9a8 + 0x00003fc0 = 0x08050968 rw-p at buffer aaq   + 0x00000000 fnord.i386(.bss)
-    va 0x08050968 + 0x00000698 = 0x08051000 rw-p at buffer aae   + 0x00003fc8 fnord.i386(LOAD#1)
+    va 0x08048000 + 0x000000a0 = 0x080480a0 r-xp at buffer aac.A + 0x00000000 fnord.i386(LOAD#0)
+    va 0x080480a0 + 0x00002e87 = 0x0804af27 r-x- at buffer aai.S + 0x000000a0 fnord.i386(.text)
+    va 0x0804af27 + 0x00000019 = 0x0804af40 r-xp at buffer aac.A + 0x00002f27 fnord.i386(LOAD#0)
+    va 0x0804af40 + 0x0000085b = 0x0804b79b r--- at buffer aak.S + 0x00002f40 fnord.i386(.rodata)
+    va 0x0804b79b + 0x00000001 = 0x0804b79c r-xp at buffer aac.A + 0x0000379b fnord.i386(LOAD#0)
+    va 0x0804b79c + 0x00000058 = 0x0804b7f4 r--- at buffer aam.S + 0x0000379c fnord.i386(.eh_frame)
+    va 0x0804b7f4 + 0x000001ac = 0x0804b9a0 r-xp at buffer aac.A + 0x000037f4 fnord.i386(LOAD#0)
+    va 0x0804b9a0 + 0x00000660 = 0x0804c000 r-xp at buffer aab.A + 0x00000000 fnord.i386(LOAD#0)
+    va 0x0804c000 + 0x000007f4 = 0x0804c7f4 rw-p at buffer aag.A + 0x00000000 fnord.i386(LOAD#1)
+    va 0x0804c7f4 + 0x00000064 = 0x0804c858 rw-- at buffer aao.S + 0x000037f4 fnord.i386(.data)
+    va 0x0804c858 + 0x00000008 = 0x0804c860 rw-p at buffer aaf.A + 0x00000000 fnord.i386(LOAD#1)
+    va 0x0804c860 + 0x00000148 = 0x0804c9a8 rw-p at buffer aar.A + 0x00000000 fnord.i386(.bss)
+    va 0x0804c9a8 + 0x00003fc0 = 0x08050968 rw-p at buffer aaq.A + 0x00000000 fnord.i386(.bss)
+    va 0x08050968 + 0x00000698 = 0x08051000 rw-p at buffer aae.A + 0x00003fc8 fnord.i386(LOAD#1)
 
 
 0x080480a0: ================================== Function (entry point) unknown name
@@ -4572,7 +4572,7 @@ using this memory map for disassembly:
 0x08048b7e: 8b 45 0c                |.E.     |   mov    eax, dword ss:[ebp + 0x0c]
 0x08048b81: ff 70 04                |.p.     |   push   dword ds:[eax + 0x04]
 0x08048b84: e8 c7 15 00 00          |.....   |   call   0x0804a150<<Func>>
-0x08048b84: Successor blocks: 0x0804a150<<Func>>, 0x08048b89
+0x08048b84: Successor blocks: 0x08048b89, 0x0804a150<<Func>>
 
 0x08048b89: Basic block reasons: graph-1
 0x08048b89: Predecessor blocks: 0x08048b7e
@@ -4585,7 +4585,7 @@ using this memory map for disassembly:
 0x08048b8a: Dominator block: 0x0804a489
 0x08048b8a: 68 74 b0 04 08          |ht...   |   push   0x0804b074<<StaticData@0x0804af27>+0x014d>
 0x08048b8f: e8 c4 15 00 00          |.....   |   call   0x0804a158<<Func>>
-0x08048b8f: Successor blocks: 0x0804a158<<Func>>, 0x08048b94
+0x08048b8f: Successor blocks: 0x08048b94, 0x0804a158<<Func>>
 
 0x08048b94: Basic block reasons: graph-1
 0x08048b94: Predecessor blocks: 0x08048b8a
@@ -4607,7 +4607,7 @@ using this memory map for disassembly:
 0x08048ba5: Dominator block: 0x08048b94
 0x08048ba5: 68 94 b0 04 08          |h....   |   push   0x0804b094<<StaticData@0x0804af27>+0x016d>
 0x08048baa: e8 a1 15 00 00          |.....   |   call   0x0804a150<<Func>>
-0x08048baa: Successor blocks: 0x0804a150<<Func>>, 0x08048baf
+0x08048baa: Successor blocks: 0x08048baf, 0x0804a150<<Func>>
 
 0x08048baf: Basic block reasons: graph-1
 0x08048baf: Predecessor blocks: 0x08048ba5
@@ -4622,7 +4622,7 @@ using this memory map for disassembly:
 0x08048bb8: Dominator block: 0x08048baf
 0x08048bb8: 68 2e b0 04 08          |h....   |   push   0x0804b02e<<StaticData@0x0804af27>+0x0107>
 0x08048bbd: e8 46 16 00 00          |.F...   |   call   0x0804a208<<Func>>
-0x08048bbd: Successor blocks: 0x0804a208<<Func>>, 0x08048bc2
+0x08048bbd: Successor blocks: 0x08048bc2, 0x0804a208<<Func>>
 
 0x08048bc2: Basic block reasons: graph-1
 0x08048bc2: Predecessor blocks: 0x08048bb8
@@ -4640,7 +4640,7 @@ using this memory map for disassembly:
 0x08048bcc: 50                      |P       |   push   eax
 0x08048bcd: 53                      |S       |   push   ebx
 0x08048bce: e8 15 15 00 00          |.....   |   call   0x0804a0e8<<Func>>
-0x08048bce: Successor blocks: 0x0804a0e8<<Func>>, 0x08048bd3
+0x08048bce: Successor blocks: 0x08048bd3, 0x0804a0e8<<Func>>
 
 0x08048bd3: Basic block reasons: graph-1
 0x08048bd3: Predecessor blocks: 0x08048bc9
@@ -4660,7 +4660,7 @@ using this memory map for disassembly:
 0x08048be9: 50                      |P       |   push   eax
 0x08048bea: 6a 01                   |j.      |   push   0x01
 0x08048bec: e8 9f 15 00 00          |.....   |   call   0x0804a190<<Func>>
-0x08048bec: Successor blocks: 0x0804a190<<Func>>, 0x08048bf1
+0x08048bec: Successor blocks: 0x08048bf1, 0x0804a190<<Func>>
 
 0x08048bf1: Basic block reasons: graph-1
 0x08048bf1: Predecessor blocks: 0x08048bdf
@@ -4676,7 +4676,7 @@ using this memory map for disassembly:
 0x08048bfb: Dominator block: 0x08048bc2
 0x08048bfb: 68 32 b0 04 08          |h2...   |   push   0x0804b032<<StaticData@0x0804af27>+0x010b>
 0x08048c00: e8 03 16 00 00          |.....   |   call   0x0804a208<<Func>>
-0x08048c00: Successor blocks: 0x0804a208<<Func>>, 0x08048c05
+0x08048c00: Successor blocks: 0x08048c05, 0x0804a208<<Func>>
 
 0x08048c05: Basic block reasons: graph-1
 0x08048c05: Predecessor blocks: 0x08048bfb
@@ -4694,7 +4694,7 @@ using this memory map for disassembly:
 0x08048c0f: 50                      |P       |   push   eax
 0x08048c10: 53                      |S       |   push   ebx
 0x08048c11: e8 d2 14 00 00          |.....   |   call   0x0804a0e8<<Func>>
-0x08048c11: Successor blocks: 0x0804a0e8<<Func>>, 0x08048c16
+0x08048c11: Successor blocks: 0x08048c16, 0x0804a0e8<<Func>>
 
 0x08048c16: Basic block reasons: graph-1
 0x08048c16: Predecessor blocks: 0x08048c0c
@@ -4711,7 +4711,7 @@ using this memory map for disassembly:
 0x08048c22: 0f b7 45 e8             |..E.    |   movzx  eax, word ss:[ebp + 0xe8<-24>]
 0x08048c26: 50                      |P       |   push   eax
 0x08048c27: e8 6c 15 00 00          |.l...   |   call   0x0804a198<<Func>>
-0x08048c27: Successor blocks: 0x0804a198<<Func>>, 0x08048c2c
+0x08048c27: Successor blocks: 0x08048c2c, 0x0804a198<<Func>>
 
 0x08048c2c: Basic block reasons: graph-1
 0x08048c2c: Predecessor blocks: 0x08048c22
@@ -4732,7 +4732,7 @@ using this memory map for disassembly:
 0x08048c35: 6a 01                   |j.      |   push   0x01
 0x08048c37: 6a 0d                   |j.      |   push   0x0d
 0x08048c39: e8 a6 17 00 00          |.....   |   call   0x0804a3e4<<Func>>
-0x08048c39: Successor blocks: 0x0804a3e4<<Func>>, 0x08048c3e
+0x08048c39: Successor blocks: 0x08048c3e, 0x0804a3e4<<Func>>
 
 0x08048c3e: Basic block reasons: graph-1
 0x08048c3e: Predecessor blocks: 0x08048c35
@@ -4758,7 +4758,7 @@ using this memory map for disassembly:
 0x08048c53: c7 05 64 c8 04 08 00 00 |..d.....|
 0x08048c5b: 00 00                   |..      |   mov    dword ds:[0x0804c864], 0x00000000
 0x08048c5d: e8 3e 15 00 00          |.>...   |   call   0x0804a1a0<<Func>>
-0x08048c5d: Successor blocks: 0x0804a1a0<<Func>>, 0x08048c62
+0x08048c5d: Successor blocks: 0x08048c62, 0x0804a1a0<<Func>>
 
 0x08048c62: Basic block reasons: graph-1
 0x08048c62: Predecessor blocks: 0x08048c45
@@ -4780,7 +4780,7 @@ using this memory map for disassembly:
 0x08048c8a: 8d 45 d8                |.E.     |   lea    eax, [ebp + 0xd8<-40>]
 0x08048c8d: 50                      |P       |   push   eax
 0x08048c8e: e8 e5 14 00 00          |.....   |   call   0x0804a178<<Func>>
-0x08048c8e: Successor blocks: 0x0804a178<<Func>>, 0x08048c93
+0x08048c8e: Successor blocks: 0x08048c93, 0x0804a178<<Func>>
 
 0x08048c93: Basic block reasons: graph-1
 0x08048c93: Predecessor blocks: 0x08048c83
@@ -4803,7 +4803,7 @@ using this memory map for disassembly:
 0x08048ca3: 8d 45 e8                |.E.     |   lea    eax, [ebp + 0xe8<-24>]
 0x08048ca6: 50                      |P       |   push   eax
 0x08048ca7: e8 f4 14 00 00          |.....   |   call   0x0804a1a0<<Func>>
-0x08048ca7: Successor blocks: 0x0804a1a0<<Func>>, 0x08048cac
+0x08048ca7: Successor blocks: 0x08048cac, 0x0804a1a0<<Func>>
 
 0x08048cac: Basic block reasons: graph-1
 0x08048cac: Predecessor blocks: 0x08048ca3
@@ -4828,7 +4828,7 @@ using this memory map for disassembly:
 0x08048cc6: 53                      |S       |   push   ebx
 0x08048cc7: 6a 00                   |j.      |   push   0x00
 0x08048cc9: e8 ba 14 00 00          |.....   |   call   0x0804a188<<Func>>
-0x08048cc9: Successor blocks: 0x0804a188<<Func>>, 0x08048cce
+0x08048cc9: Successor blocks: 0x08048cce, 0x0804a188<<Func>>
 
 0x08048cce: Basic block reasons: graph-1
 0x08048cce: Predecessor blocks: 0x08048cba
@@ -4850,7 +4850,7 @@ using this memory map for disassembly:
 0x08048ce0: 6a 00                   |j.      |   push   0x00
 0x08048ce2: 01 c6                   |..      |   add    esi, eax
 0x08048ce4: e8 b7 14 00 00          |.....   |   call   0x0804a1a0<<Func>>
-0x08048ce4: Successor blocks: 0x0804a1a0<<Func>>, 0x08048ce9
+0x08048ce4: Successor blocks: 0x08048ce9, 0x0804a1a0<<Func>>
 
 0x08048ce9: Basic block reasons: graph-1
 0x08048ce9: Predecessor blocks: 0x08048ce0
@@ -5053,7 +5053,7 @@ using this memory map for disassembly:
 0x08048df4: 50                      |P       |   push   eax
 0x08048df5: 89 95 88 cb ff ff       |......  |   mov    dword ss:[ebp + 0xffffcb88<-13432>], edx
 0x08048dfb: e8 14 12 00 00          |.....   |   call   0x0804a014<<Func>>
-0x08048dfb: Successor blocks: 0x0804a014<<Func>>, 0x08048e00
+0x08048dfb: Successor blocks: 0x08048e00, 0x0804a014<<Func>>
 
 0x08048e00: Basic block reasons: graph-1
 0x08048e00: Predecessor blocks: 0x08048de6
@@ -5062,7 +5062,7 @@ using this memory map for disassembly:
 0x08048e02: ff 35 34 c9 04 08       |.54...  |   push   dword ds:[0x0804c934]
 0x08048e08: 89 c3                   |..      |   mov    ebx, eax
 0x08048e0a: e8 05 12 00 00          |.....   |   call   0x0804a014<<Func>>
-0x08048e0a: Successor blocks: 0x0804a014<<Func>>, 0x08048e0f
+0x08048e0a: Successor blocks: 0x08048e0f, 0x0804a014<<Func>>
 
 0x08048e0f: Basic block reasons: graph-1
 0x08048e0f: Predecessor blocks: 0x08048e00
@@ -5092,7 +5092,7 @@ using this memory map for disassembly:
 0x08048e3b: 40                      |@       |   inc    eax
 0x08048e3c: 50                      |P       |   push   eax
 0x08048e3d: e8 22 12 00 00          |."...   |   call   0x0804a064<<Func>>
-0x08048e3d: Successor blocks: 0x0804a064<<Func>>, 0x08048e42
+0x08048e3d: Successor blocks: 0x08048e42, 0x0804a064<<Func>>
 
 0x08048e42: Basic block reasons: graph-1
 0x08048e42: Predecessor blocks: 0x08048e2c
@@ -5444,7 +5444,7 @@ using this memory map for disassembly:
 0x08048fd8: 68 63 b1 04 08          |hc...   |   push   0x0804b163<<StaticData@0x0804af27>+0x023c>
 0x08048fdd: ff 35 f8 c7 04 08       |.5....  |   push   dword ds:[0x0804c7f8<.data+4>]
 0x08048fe3: e8 c8 0f 00 00          |.....   |   call   0x08049fb0<<Func>>
-0x08048fe3: Successor blocks: 0x08049fb0<<Func>>, 0x08048fe8
+0x08048fe3: Successor blocks: 0x08048fe8, 0x08049fb0<<Func>>
 
 0x08048fe8: Basic block reasons: graph-1
 0x08048fe8: Predecessor blocks: 0x08048fd8
@@ -5460,7 +5460,7 @@ using this memory map for disassembly:
 0x08048fee: Dominator block: 0x08048fe8
 0x08048fee: 6a 78                   |jx      |   push   0x78
 0x08048ff0: e8 47 14 00 00          |.G...   |   call   0x0804a43c<<Func>>
-0x08048ff0: Successor blocks: 0x0804a43c<<Func>>, 0x08048ff5
+0x08048ff0: Successor blocks: 0x08048ff5, 0x0804a43c<<Func>>
 
 0x08048ff5: Basic block reasons: graph-1
 0x08048ff5: Predecessor blocks: 0x08048fee
@@ -5473,7 +5473,7 @@ using this memory map for disassembly:
 0x08048ffa: Dominator block: 0x08048fe8
 0x08048ffa: 68 6f b1 04 08          |ho...   |   push   0x0804b16f<<StaticData@0x0804af27>+0x0248>
 0x08048fff: e8 04 12 00 00          |.....   |   call   0x0804a208<<Func>>
-0x08048fff: Successor blocks: 0x0804a208<<Func>>, 0x08049004
+0x08048fff: Successor blocks: 0x08049004, 0x0804a208<<Func>>
 
 0x08049004: Basic block reasons: graph-1
 0x08049004: Predecessor blocks: 0x08048ffa
@@ -5514,7 +5514,7 @@ using this memory map for disassembly:
 0x0804903c: Dominator block: 0x0804902e
 0x0804903c: 50                      |P       |   push   eax
 0x0804903d: e8 3a 0f 00 00          |.:...   |   call   0x08049f7c<<Func>>
-0x0804903d: Successor blocks: 0x08049f7c<<Func>>, 0x08049042
+0x0804903d: Successor blocks: 0x08049042, 0x08049f7c<<Func>>
 
 0x08049042: Basic block reasons: graph-1
 0x08049042: Predecessor blocks: 0x0804903c
@@ -5541,7 +5541,7 @@ using this memory map for disassembly:
 0x0804905e: Dominator block: 0x08049046
 0x0804905e: 68 84 b1 04 08          |h....   |   push   0x0804b184<<StaticData@0x0804af27>+0x025d>
 0x08049063: e8 a0 11 00 00          |.....   |   call   0x0804a208<<Func>>
-0x08049063: Successor blocks: 0x0804a208<<Func>>, 0x08049068
+0x08049063: Successor blocks: 0x08049068, 0x0804a208<<Func>>
 
 0x08049068: Basic block reasons: graph-1
 0x08049068: Predecessor blocks: 0x0804905e
@@ -5563,7 +5563,7 @@ using this memory map for disassembly:
 0x08049074: Dominator block: 0x08049068
 0x08049074: 53                      |S       |   push   ebx
 0x08049075: e8 02 0f 00 00          |.....   |   call   0x08049f7c<<Func>>
-0x08049075: Successor blocks: 0x08049f7c<<Func>>, 0x0804907a
+0x08049075: Successor blocks: 0x0804907a, 0x08049f7c<<Func>>
 
 0x0804907a: Basic block reasons: graph-1
 0x0804907a: Predecessor blocks: 0x08049074
@@ -5571,7 +5571,7 @@ using this memory map for disassembly:
 0x0804907a: ff 35 50 c9 04 08       |.5P...  |   push   dword ds:[0x0804c950]
 0x08049080: 89 c7                   |..      |   mov    edi, eax
 0x08049082: e8 f5 0e 00 00          |.....   |   call   0x08049f7c<<Func>>
-0x08049082: Successor blocks: 0x08049f7c<<Func>>, 0x08049087
+0x08049082: Successor blocks: 0x08049087, 0x08049f7c<<Func>>
 
 0x08049087: Basic block reasons: graph-1
 0x08049087: Predecessor blocks: 0x0804907a
@@ -5593,7 +5593,7 @@ using this memory map for disassembly:
 0x08049093: Predecessor blocks: 0x08049091, 0x08049bf7
 0x08049093: Dominator block: 0x08048fe8
 0x08049093: e8 7d 10 00 00          |.}...   |   call   0x0804a115<<Func>>
-0x08049093: Successor blocks: 0x0804a115<<Func>>, 0x08049098
+0x08049093: Successor blocks: 0x08049098, 0x0804a115<<Func>>
 
 0x08049098: Basic block reasons: graph-1
 0x08049098: Predecessor blocks: 0x08049087, 0x08049093
@@ -5602,7 +5602,7 @@ using this memory map for disassembly:
 0x08049099: 56                      |V       |   push   esi
 0x0804909a: 89 35 f4 c7 04 08       |.5....  |   mov    dword ds:[0x0804c7f4<.data>], esi
 0x080490a0: e8 43 0d 00 00          |.C...   |   call   0x08049de8<<Func>>
-0x080490a0: Successor blocks: 0x08049de8<<Func>>, 0x080490a5
+0x080490a0: Successor blocks: 0x080490a5, 0x08049de8<<Func>>
 
 0x080490a5: Basic block reasons: graph-1
 0x080490a5: Predecessor blocks: 0x08049098
@@ -5612,7 +5612,7 @@ using this memory map for disassembly:
 0x080490ac: 8d 04 06                |...     |   lea    eax, [esi + eax]
 0x080490af: 50                      |P       |   push   eax
 0x080490b0: e8 33 0d 00 00          |.3...   |   call   0x08049de8<<Func>>
-0x080490b0: Successor blocks: 0x08049de8<<Func>>, 0x080490b5
+0x080490b0: Successor blocks: 0x080490b5, 0x08049de8<<Func>>
 
 0x080490b5: Basic block reasons: graph-1
 0x080490b5: Predecessor blocks: 0x080490a5
@@ -5622,7 +5622,7 @@ using this memory map for disassembly:
 0x080490be: 8d 04 06                |...     |   lea    eax, [esi + eax]
 0x080490c1: 50                      |P       |   push   eax
 0x080490c2: e8 21 0d 00 00          |.!...   |   call   0x08049de8<<Func>>
-0x080490c2: Successor blocks: 0x08049de8<<Func>>, 0x080490c7
+0x080490c2: Successor blocks: 0x080490c7, 0x08049de8<<Func>>
 
 0x080490c7: Basic block reasons: graph-1
 0x080490c7: Predecessor blocks: 0x080490b5
@@ -5636,7 +5636,7 @@ using this memory map for disassembly:
 0x080490c9: 6a 3a                   |j:      |   push   0x3a
 0x080490cb: 50                      |P       |   push   eax
 0x080490cc: e8 43 0f 00 00          |.C...   |   call   0x0804a014<<Func>>
-0x080490cc: Successor blocks: 0x0804a014<<Func>>, 0x080490d1
+0x080490cc: Successor blocks: 0x080490d1, 0x0804a014<<Func>>
 
 0x080490d1: Basic block reasons: graph-1
 0x080490d1: Predecessor blocks: 0x080490c9
@@ -5654,7 +5654,7 @@ using this memory map for disassembly:
 0x080490df: 52                      |R       |   push   edx
 0x080490e0: 56                      |V       |   push   esi
 0x080490e1: e8 02 0d 00 00          |.....   |   call   0x08049de8<<Func>>
-0x080490e1: Successor blocks: 0x08049de8<<Func>>, 0x080490e6
+0x080490e1: Successor blocks: 0x080490e6, 0x08049de8<<Func>>
 
 0x080490e6: Basic block reasons: graph-1
 0x080490e6: Predecessor blocks: 0x080490df
@@ -5664,7 +5664,7 @@ using this memory map for disassembly:
 0x080490ed: 8d 04 06                |...     |   lea    eax, [esi + eax]
 0x080490f0: 50                      |P       |   push   eax
 0x080490f1: e8 f2 0c 00 00          |.....   |   call   0x08049de8<<Func>>
-0x080490f1: Successor blocks: 0x08049de8<<Func>>, 0x080490f6
+0x080490f1: Successor blocks: 0x080490f6, 0x08049de8<<Func>>
 
 0x080490f6: Basic block reasons: graph-1
 0x080490f6: Predecessor blocks: 0x080490e6
@@ -5674,7 +5674,7 @@ using this memory map for disassembly:
 0x080490ff: 8d 04 06                |...     |   lea    eax, [esi + eax]
 0x08049102: 50                      |P       |   push   eax
 0x08049103: e8 e0 0c 00 00          |.....   |   call   0x08049de8<<Func>>
-0x08049103: Successor blocks: 0x08049de8<<Func>>, 0x08049108
+0x08049103: Successor blocks: 0x08049108, 0x08049de8<<Func>>
 
 0x08049108: Basic block reasons: graph-1
 0x08049108: Predecessor blocks: 0x080490f6
@@ -5693,7 +5693,7 @@ using this memory map for disassembly:
 0x08049111: Dominator block: 0x08048fe8
 0x08049111: ff 35 f4 c7 04 08       |.5....  |   push   dword ds:[0x0804c7f4<.data>]
 0x08049117: e8 60 0e 00 00          |.`...   |   call   0x08049f7c<<Func>>
-0x08049117: Successor blocks: 0x08049f7c<<Func>>, 0x0804911c
+0x08049117: Successor blocks: 0x0804911c, 0x08049f7c<<Func>>
 
 0x0804911c: Basic block reasons: graph-1
 0x0804911c: Predecessor blocks: 0x08049111
@@ -5765,7 +5765,7 @@ using this memory map for disassembly:
 0x08049165: 6a 00                   |j.      |   push   0x00
 0x08049167: 68 74 b0 04 08          |ht...   |   push   0x0804b074<<StaticData@0x0804af27>+0x014d>
 0x0804916c: e8 bb 11 00 00          |.....   |   call   0x0804a32c<<Func>>
-0x0804916c: Successor blocks: 0x0804a32c<<Func>>, 0x08049171
+0x0804916c: Successor blocks: 0x08049171, 0x0804a32c<<Func>>
 
 0x08049171: Basic block reasons: graph-1
 0x08049171: Predecessor blocks: 0x08049165
@@ -5789,7 +5789,7 @@ using this memory map for disassembly:
 0x08049186: Dominator block: 0x0804915c
 0x08049186: ff 35 f4 c7 04 08       |.5....  |   push   dword ds:[0x0804c7f4<.data>]
 0x0804918c: e8 bf 0f 00 00          |.....   |   call   0x0804a150<<Func>>
-0x0804918c: Successor blocks: 0x0804a150<<Func>>, 0x08049191
+0x0804918c: Successor blocks: 0x08049191, 0x0804a150<<Func>>
 
 0x08049191: Basic block reasons: graph-1
 0x08049191: Predecessor blocks: 0x08049186
@@ -5807,7 +5807,7 @@ using this memory map for disassembly:
 0x080491a5: 56                      |V       |   push   esi
 0x080491a6: ff 35 f4 c7 04 08       |.5....  |   push   dword ds:[0x0804c7f4<.data>]
 0x080491ac: e8 cf 0f 00 00          |.....   |   call   0x0804a180<<Func>>
-0x080491ac: Successor blocks: 0x0804a180<<Func>>, 0x080491b1
+0x080491ac: Successor blocks: 0x080491b1, 0x0804a180<<Func>>
 
 0x080491b1: Basic block reasons: graph-1
 0x080491b1: Predecessor blocks: 0x0804919a
@@ -5848,7 +5848,7 @@ using this memory map for disassembly:
 0x080491d9: 56                      |V       |   push   esi
 0x080491da: ff 35 04 c8 04 08       |.5....  |   push   dword ds:[0x0804c804<.data+0x10>]
 0x080491e0: e8 2b 0b 00 00          |.+...   |   call   0x08049d10<<Func>>
-0x080491e0: Successor blocks: 0x08049d10<<Func>>, 0x080491e5
+0x080491e0: Successor blocks: 0x080491e5, 0x08049d10<<Func>>
 
 0x080491e5: Basic block reasons: graph-1
 0x080491e5: Predecessor blocks: 0x080491d8
@@ -5884,7 +5884,7 @@ using this memory map for disassembly:
 0x08049200: Dominator block: 0x080491b1
 0x08049200: 68 ca b1 04 08          |h....   |   push   0x0804b1ca<<StaticData@0x0804af27>+0x02a3>
 0x08049205: e8 46 0f 00 00          |.F...   |   call   0x0804a150<<Func>>
-0x08049205: Successor blocks: 0x0804a150<<Func>>, 0x0804920a
+0x08049205: Successor blocks: 0x0804920a, 0x0804a150<<Func>>
 
 0x0804920a: Basic block reasons: graph-1
 0x0804920a: Predecessor blocks: 0x08049200
@@ -5916,7 +5916,7 @@ using this memory map for disassembly:
 0x08049229: 8b 1d 34 c9 04 08       |..4...  |   mov    ebx, dword ds:[0x0804c934]
 0x0804922f: 53                      |S       |   push   ebx
 0x08049230: e8 47 0d 00 00          |.G...   |   call   0x08049f7c<<Func>>
-0x08049230: Successor blocks: 0x08049f7c<<Func>>, 0x08049235
+0x08049230: Successor blocks: 0x08049235, 0x08049f7c<<Func>>
 
 0x08049235: Basic block reasons: graph-1
 0x08049235: Predecessor blocks: 0x08049229
@@ -5935,7 +5935,7 @@ using this memory map for disassembly:
 0x08049247: Dominator block: 0x08049235
 0x08049247: 50                      |P       |   push   eax
 0x08049248: e8 2f 0d 00 00          |./...   |   call   0x08049f7c<<Func>>
-0x08049248: Successor blocks: 0x08049f7c<<Func>>, 0x0804924d
+0x08049248: Successor blocks: 0x0804924d, 0x08049f7c<<Func>>
 
 0x0804924d: Basic block reasons: graph-1
 0x0804924d: Predecessor blocks: 0x08049247
@@ -5949,7 +5949,7 @@ using this memory map for disassembly:
 0x08049260: 83 e6 f0                |...     |   and    esi, 0xf0<-16>
 0x08049263: 56                      |V       |   push   esi
 0x08049264: e8 7f 0b 00 00          |.....   |   call   0x08049de8<<Func>>
-0x08049264: Successor blocks: 0x08049de8<<Func>>, 0x08049269
+0x08049264: Successor blocks: 0x08049269, 0x08049de8<<Func>>
 
 0x08049269: Basic block reasons: graph-1
 0x08049269: Predecessor blocks: 0x0804924d
@@ -5958,7 +5958,7 @@ using this memory map for disassembly:
 0x0804926e: 8d 1c 06                |...     |   lea    ebx, [esi + eax]
 0x08049271: 53                      |S       |   push   ebx
 0x08049272: e8 71 0b 00 00          |.q...   |   call   0x08049de8<<Func>>
-0x08049272: Successor blocks: 0x08049de8<<Func>>, 0x08049277
+0x08049272: Successor blocks: 0x08049277, 0x08049de8<<Func>>
 
 0x08049277: Basic block reasons: graph-1
 0x08049277: Predecessor blocks: 0x08049269
@@ -5992,7 +5992,7 @@ using this memory map for disassembly:
 0x080492ac: Dominator block: 0x0804929d
 0x080492ac: ff 35 34 c9 04 08       |.54...  |   push   dword ds:[0x0804c934]
 0x080492b2: e8 c5 0c 00 00          |.....   |   call   0x08049f7c<<Func>>
-0x080492b2: Successor blocks: 0x08049f7c<<Func>>, 0x080492b7
+0x080492b2: Successor blocks: 0x080492b7, 0x08049f7c<<Func>>
 
 0x080492b7: Basic block reasons: graph-1
 0x080492b7: Predecessor blocks: 0x080492ac
@@ -6010,7 +6010,7 @@ using this memory map for disassembly:
 0x080492de: 89 85 9c cb ff ff       |......  |   mov    dword ss:[ebp + 0xffffcb9c<-13412>], eax
 0x080492e4: 56                      |V       |   push   esi
 0x080492e5: e8 fe 0a 00 00          |.....   |   call   0x08049de8<<Func>>
-0x080492e5: Successor blocks: 0x08049de8<<Func>>, 0x080492ea
+0x080492e5: Successor blocks: 0x080492ea, 0x08049de8<<Func>>
 
 0x080492ea: Basic block reasons: graph-1
 0x080492ea: Predecessor blocks: 0x080492b7
@@ -6030,7 +6030,7 @@ using this memory map for disassembly:
 0x080492fb: 8d 47 fc                |.G.     |   lea    eax, [edi + 0xfc<-4>]
 0x080492fe: 50                      |P       |   push   eax
 0x080492ff: e8 ac 0c 00 00          |.....   |   call   0x08049fb0<<Func>>
-0x080492ff: Successor blocks: 0x08049fb0<<Func>>, 0x08049304
+0x080492ff: Successor blocks: 0x08049304, 0x08049fb0<<Func>>
 
 0x08049304: Basic block reasons: graph-1
 0x08049304: Predecessor blocks: 0x080492f3
@@ -6049,7 +6049,7 @@ using this memory map for disassembly:
 0x08049312: 68 7c b4 04 08          |h|...   |   push   0x0804b47c<<StaticData@0x0804af27>+0x0555>
 0x08049317: 50                      |P       |   push   eax
 0x08049318: e8 cb 0a 00 00          |.....   |   call   0x08049de8<<Func>>
-0x08049318: Successor blocks: 0x08049de8<<Func>>, 0x0804931d
+0x08049318: Successor blocks: 0x0804931d, 0x08049de8<<Func>>
 
 0x0804931d: Basic block reasons: graph-1
 0x0804931d: Predecessor blocks: 0x0804930a
@@ -6065,7 +6065,7 @@ using this memory map for disassembly:
 0x08049326: 8d 04 1e                |...     |   lea    eax, [esi + ebx]
 0x08049329: 50                      |P       |   push   eax
 0x0804932a: e8 b9 0a 00 00          |.....   |   call   0x08049de8<<Func>>
-0x0804932a: Successor blocks: 0x08049de8<<Func>>, 0x0804932f
+0x0804932a: Successor blocks: 0x0804932f, 0x08049de8<<Func>>
 
 0x0804932f: Basic block reasons: graph-1
 0x0804932f: Predecessor blocks: 0x0804931d, 0x0804931f
@@ -6094,7 +6094,7 @@ using this memory map for disassembly:
 0x0804934d: ff b5 94 cb ff ff       |......  |   push   dword ss:[ebp + 0xffffcb94<-13420>]
 0x08049353: 89 35 34 c9 04 08       |.54...  |   mov    dword ds:[0x0804c934], esi
 0x08049359: e8 02 0e 00 00          |.....   |   call   0x0804a160<<Func>>
-0x08049359: Successor blocks: 0x0804a160<<Func>>, 0x0804935e
+0x08049359: Successor blocks: 0x0804935e, 0x0804a160<<Func>>
 
 0x0804935e: Basic block reasons: graph-1
 0x0804935e: Predecessor blocks: 0x0804934d
@@ -6172,7 +6172,7 @@ using this memory map for disassembly:
 0x080493d1: Dominator block: 0x0804939d
 0x080493d1: ff 35 04 c8 04 08       |.5....  |   push   dword ds:[0x0804c804<.data+0x10>]
 0x080493d7: e8 f0 08 00 00          |.....   |   call   0x08049ccc<<Func>>
-0x080493d7: Successor blocks: 0x08049ccc<<Func>>, 0x080493dc
+0x080493d7: Successor blocks: 0x080493dc, 0x08049ccc<<Func>>
 
 0x080493dc: Basic block reasons: graph-1
 0x080493dc: Predecessor blocks: 0x080493d1
@@ -6182,7 +6182,7 @@ using this memory map for disassembly:
 0x080493de: ff 35 00 c8 04 08       |.5....  |   push   dword ds:[0x0804c800<.data+0x0c>]
 0x080493e4: ff 35 04 c8 04 08       |.5....  |   push   dword ds:[0x0804c804<.data+0x10>]
 0x080493ea: e8 dd 08 00 00          |.....   |   call   0x08049ccc<<Func>>
-0x080493ea: Successor blocks: 0x08049ccc<<Func>>, 0x080493ef
+0x080493ea: Successor blocks: 0x080493ef, 0x08049ccc<<Func>>
 
 0x080493ef: Basic block reasons: graph-1
 0x080493ef: Predecessor blocks: 0x080493dc
@@ -6190,7 +6190,7 @@ using this memory map for disassembly:
 0x080493ef: 68 2b b0 04 08          |h+...   |   push   0x0804b02b<<StaticData@0x0804af27>+0x0104>
 0x080493f4: ff 35 04 c8 04 08       |.5....  |   push   dword ds:[0x0804c804<.data+0x10>]
 0x080493fa: e8 cd 08 00 00          |.....   |   call   0x08049ccc<<Func>>
-0x080493fa: Successor blocks: 0x08049ccc<<Func>>, 0x080493ff
+0x080493fa: Successor blocks: 0x080493ff, 0x08049ccc<<Func>>
 
 0x080493ff: Basic block reasons: graph-1
 0x080493ff: Predecessor blocks: 0x080493ef
@@ -6227,7 +6227,7 @@ using this memory map for disassembly:
 0x0804941d: Dominator block: 0x080493ff
 0x0804941d: ff 35 04 c8 04 08       |.5....  |   push   dword ds:[0x0804c804<.data+0x10>]
 0x08049423: e8 a4 08 00 00          |.....   |   call   0x08049ccc<<Func>>
-0x08049423: Successor blocks: 0x08049ccc<<Func>>, 0x08049428
+0x08049423: Successor blocks: 0x08049428, 0x08049ccc<<Func>>
 
 0x08049428: Basic block reasons: graph-1
 0x08049428: Predecessor blocks: 0x0804941d
@@ -6249,7 +6249,7 @@ using this memory map for disassembly:
 0x08049433: 68 c8 b2 04 08          |h....   |   push   0x0804b2c8<<StaticData@0x0804af27>+0x03a1>
 0x08049438: ff 35 04 c8 04 08       |.5....  |   push   dword ds:[0x0804c804<.data+0x10>]
 0x0804943e: e8 89 08 00 00          |.....   |   call   0x08049ccc<<Func>>
-0x0804943e: Successor blocks: 0x08049ccc<<Func>>, 0x08049443
+0x0804943e: Successor blocks: 0x08049443, 0x08049ccc<<Func>>
 
 0x08049443: Basic block reasons: graph-1
 0x08049443: Predecessor blocks: 0x08049433
@@ -6257,7 +6257,7 @@ using this memory map for disassembly:
 0x08049443: ff 35 64 c8 04 08       |.5d...  |   push   dword ds:[0x0804c864]
 0x08049449: ff 35 04 c8 04 08       |.5....  |   push   dword ds:[0x0804c804<.data+0x10>]
 0x0804944f: e8 78 08 00 00          |.x...   |   call   0x08049ccc<<Func>>
-0x0804944f: Successor blocks: 0x08049ccc<<Func>>, 0x08049454
+0x0804944f: Successor blocks: 0x08049454, 0x08049ccc<<Func>>
 
 0x08049454: Basic block reasons: graph-1
 0x08049454: Predecessor blocks: 0x08049443
@@ -6265,7 +6265,7 @@ using this memory map for disassembly:
 0x08049454: 68 2b b0 04 08          |h+...   |   push   0x0804b02b<<StaticData@0x0804af27>+0x0104>
 0x08049459: ff 35 04 c8 04 08       |.5....  |   push   dword ds:[0x0804c804<.data+0x10>]
 0x0804945f: e8 68 08 00 00          |.h...   |   call   0x08049ccc<<Func>>
-0x0804945f: Successor blocks: 0x08049ccc<<Func>>, 0x08049464
+0x0804945f: Successor blocks: 0x08049464, 0x08049ccc<<Func>>
 
 0x08049464: Basic block reasons: graph-1
 0x08049464: Predecessor blocks: 0x08049454
@@ -6280,7 +6280,7 @@ using this memory map for disassembly:
 0x0804946c: bb 64 00 00 00          |.d...   |   mov    ebx, 0x00000064
 0x08049471: ff 35 04 c8 04 08       |.5....  |   push   dword ds:[0x0804c804<.data+0x10>]
 0x08049477: e8 50 08 00 00          |.P...   |   call   0x08049ccc<<Func>>
-0x08049477: Successor blocks: 0x08049ccc<<Func>>, 0x0804947c
+0x08049477: Successor blocks: 0x0804947c, 0x08049ccc<<Func>>
 
 0x0804947c: Basic block reasons: graph-1
 0x0804947c: Predecessor blocks: 0x08049467
@@ -6301,7 +6301,7 @@ using this memory map for disassembly:
 0x080494a0: 68 ec b2 04 08          |h....   |   push   0x0804b2ec<<StaticData@0x0804af27>+0x03c5>
 0x080494a5: ff 35 04 c8 04 08       |.5....  |   push   dword ds:[0x0804c804<.data+0x10>]
 0x080494ab: e8 1c 08 00 00          |.....   |   call   0x08049ccc<<Func>>
-0x080494ab: Successor blocks: 0x08049ccc<<Func>>, 0x080494b0
+0x080494ab: Successor blocks: 0x080494b0, 0x08049ccc<<Func>>
 
 0x080494b0: Basic block reasons: graph-1
 0x080494b0: Predecessor blocks: 0x080494a0
@@ -6321,7 +6321,7 @@ using this memory map for disassembly:
 0x080494ca: 50                      |P       |   push   eax
 0x080494cb: ff 35 04 c8 04 08       |.5....  |   push   dword ds:[0x0804c804<.data+0x10>]
 0x080494d1: e8 3a 08 00 00          |.:...   |   call   0x08049d10<<Func>>
-0x080494d1: Successor blocks: 0x08049d10<<Func>>, 0x080494d6
+0x080494d1: Successor blocks: 0x080494d6, 0x08049d10<<Func>>
 
 0x080494d6: Basic block reasons: graph-1
 0x080494d6: Predecessor blocks: 0x080494ba
@@ -6329,7 +6329,7 @@ using this memory map for disassembly:
 0x080494d6: 68 fe b2 04 08          |h....   |   push   0x0804b2fe<<StaticData@0x0804af27>+0x03d7>
 0x080494db: ff 35 04 c8 04 08       |.5....  |   push   dword ds:[0x0804c804<.data+0x10>]
 0x080494e1: e8 e6 07 00 00          |.....   |   call   0x08049ccc<<Func>>
-0x080494e1: Successor blocks: 0x08049ccc<<Func>>, 0x080494e6
+0x080494e1: Successor blocks: 0x080494e6, 0x08049ccc<<Func>>
 
 0x080494e6: Basic block reasons: graph-1
 0x080494e6: Predecessor blocks: 0x080494d6
@@ -6345,7 +6345,7 @@ using this memory map for disassembly:
 0x080494f3: 68 ff b2 04 08          |h....   |   push   0x0804b2ff<<StaticData@0x0804af27>+0x03d8>
 0x080494f8: ff 35 04 c8 04 08       |.5....  |   push   dword ds:[0x0804c804<.data+0x10>]
 0x080494fe: e8 c9 07 00 00          |.....   |   call   0x08049ccc<<Func>>
-0x080494fe: Successor blocks: 0x08049ccc<<Func>>, 0x08049503
+0x080494fe: Successor blocks: 0x08049503, 0x08049ccc<<Func>>
 
 0x08049503: Basic block reasons: graph-1
 0x08049503: Predecessor blocks: 0x080494f3
@@ -6356,7 +6356,7 @@ using this memory map for disassembly:
 0x0804950e: 50                      |P       |   push   eax
 0x0804950f: ff 35 04 c8 04 08       |.5....  |   push   dword ds:[0x0804c804<.data+0x10>]
 0x08049515: e8 f6 07 00 00          |.....   |   call   0x08049d10<<Func>>
-0x08049515: Successor blocks: 0x08049d10<<Func>>, 0x0804951a
+0x08049515: Successor blocks: 0x0804951a, 0x08049d10<<Func>>
 
 0x0804951a: Basic block reasons: graph-1
 0x0804951a: Predecessor blocks: 0x08049503
@@ -6365,7 +6365,7 @@ using this memory map for disassembly:
 0x0804951d: 68 ff b2 04 08          |h....   |   push   0x0804b2ff<<StaticData@0x0804af27>+0x03d8>
 0x08049522: ff 35 04 c8 04 08       |.5....  |   push   dword ds:[0x0804c804<.data+0x10>]
 0x08049528: e8 9f 07 00 00          |.....   |   call   0x08049ccc<<Func>>
-0x08049528: Successor blocks: 0x08049ccc<<Func>>, 0x0804952d
+0x08049528: Successor blocks: 0x0804952d, 0x08049ccc<<Func>>
 
 0x0804952d: Basic block reasons: graph-1
 0x0804952d: Predecessor blocks: 0x0804951a
@@ -6396,7 +6396,7 @@ using this memory map for disassembly:
 0x08049559: 68 ff b2 04 08          |h....   |   push   0x0804b2ff<<StaticData@0x0804af27>+0x03d8>
 0x0804955e: ff 35 04 c8 04 08       |.5....  |   push   dword ds:[0x0804c804<.data+0x10>]
 0x08049564: e8 63 07 00 00          |.c...   |   call   0x08049ccc<<Func>>
-0x08049564: Successor blocks: 0x08049ccc<<Func>>, 0x08049569
+0x08049564: Successor blocks: 0x08049569, 0x08049ccc<<Func>>
 
 0x08049569: Basic block reasons: graph-1
 0x08049569: Predecessor blocks: 0x08049559
@@ -6412,7 +6412,7 @@ using this memory map for disassembly:
 0x08049576: 68 99 b1 04 08          |h....   |   push   0x0804b199<<StaticData@0x0804af27>+0x0272>
 0x0804957b: ff 35 04 c8 04 08       |.5....  |   push   dword ds:[0x0804c804<.data+0x10>]
 0x08049581: e8 46 07 00 00          |.F...   |   call   0x08049ccc<<Func>>
-0x08049581: Successor blocks: 0x08049ccc<<Func>>, 0x08049586
+0x08049581: Successor blocks: 0x08049586, 0x08049ccc<<Func>>
 
 0x08049586: Basic block reasons: graph-1
 0x08049586: Predecessor blocks: 0x08049576
@@ -6428,7 +6428,7 @@ using this memory map for disassembly:
 0x08049593: 68 99 b1 04 08          |h....   |   push   0x0804b199<<StaticData@0x0804af27>+0x0272>
 0x08049598: ff 35 04 c8 04 08       |.5....  |   push   dword ds:[0x0804c804<.data+0x10>]
 0x0804959e: e8 29 07 00 00          |.)...   |   call   0x08049ccc<<Func>>
-0x0804959e: Successor blocks: 0x08049ccc<<Func>>, 0x080495a3
+0x0804959e: Successor blocks: 0x080495a3, 0x08049ccc<<Func>>
 
 0x080495a3: Basic block reasons: graph-1
 0x080495a3: Predecessor blocks: 0x08049593
@@ -6445,7 +6445,7 @@ using this memory map for disassembly:
 0x080495b2: 68 01 b3 04 08          |h....   |   push   0x0804b301<<StaticData@0x0804af27>+0x03da>
 0x080495b7: ff 35 04 c8 04 08       |.5....  |   push   dword ds:[0x0804c804<.data+0x10>]
 0x080495bd: e8 0a 07 00 00          |.....   |   call   0x08049ccc<<Func>>
-0x080495bd: Successor blocks: 0x08049ccc<<Func>>, 0x080495c2
+0x080495bd: Successor blocks: 0x080495c2, 0x08049ccc<<Func>>
 
 0x080495c2: Basic block reasons: graph-1
 0x080495c2: Predecessor blocks: 0x080495b2
@@ -6479,7 +6479,7 @@ using this memory map for disassembly:
 0x080495f0: 68 08 b3 04 08          |h....   |   push   0x0804b308<<StaticData@0x0804af27>+0x03e1>
 0x080495f5: ff 35 04 c8 04 08       |.5....  |   push   dword ds:[0x0804c804<.data+0x10>]
 0x080495fb: e8 cc 06 00 00          |.....   |   call   0x08049ccc<<Func>>
-0x080495fb: Successor blocks: 0x08049ccc<<Func>>, 0x08049600
+0x080495fb: Successor blocks: 0x08049600, 0x08049ccc<<Func>>
 
 0x08049600: Basic block reasons: graph-1
 0x08049600: Predecessor blocks: 0x080495f0
@@ -6496,7 +6496,7 @@ using this memory map for disassembly:
 0x08049617: 68 34 b3 04 08          |h4...   |   push   0x0804b334<<StaticData@0x0804af27>+0x040d>
 0x0804961c: ff 35 04 c8 04 08       |.5....  |   push   dword ds:[0x0804c804<.data+0x10>]
 0x08049622: e8 a5 06 00 00          |.....   |   call   0x08049ccc<<Func>>
-0x08049622: Successor blocks: 0x08049ccc<<Func>>, 0x08049627
+0x08049622: Successor blocks: 0x08049627, 0x08049ccc<<Func>>
 
 0x08049627: Basic block reasons: graph-1
 0x08049627: Predecessor blocks: 0x08049617
@@ -6518,7 +6518,7 @@ using this memory map for disassembly:
 0x08049648: 68 94 b0 04 08          |h....   |   push   0x0804b094<<StaticData@0x0804af27>+0x016d>
 0x0804964d: ff 35 04 c8 04 08       |.5....  |   push   dword ds:[0x0804c804<.data+0x10>]
 0x08049653: e8 74 06 00 00          |.t...   |   call   0x08049ccc<<Func>>
-0x08049653: Successor blocks: 0x08049ccc<<Func>>, 0x08049658
+0x08049653: Successor blocks: 0x08049658, 0x08049ccc<<Func>>
 
 0x08049658: Basic block reasons: graph-1
 0x08049658: Predecessor blocks: 0x08049645
@@ -6535,7 +6535,7 @@ using this memory map for disassembly:
 0x0804966f: 68 2b b0 04 08          |h+...   |   push   0x0804b02b<<StaticData@0x0804af27>+0x0104>
 0x08049674: ff 35 04 c8 04 08       |.5....  |   push   dword ds:[0x0804c804<.data+0x10>]
 0x0804967a: e8 4d 06 00 00          |.M...   |   call   0x08049ccc<<Func>>
-0x0804967a: Successor blocks: 0x08049ccc<<Func>>, 0x0804967f
+0x0804967a: Successor blocks: 0x0804967f, 0x08049ccc<<Func>>
 
 0x0804967f: Basic block reasons: graph-1
 0x0804967f: Predecessor blocks: 0x0804966f
@@ -6549,7 +6549,7 @@ using this memory map for disassembly:
 0x08049682: 68 2b b0 04 08          |h+...   |   push   0x0804b02b<<StaticData@0x0804af27>+0x0104>
 0x08049687: ff 35 04 c8 04 08       |.5....  |   push   dword ds:[0x0804c804<.data+0x10>]
 0x0804968d: e8 3a 06 00 00          |.:...   |   call   0x08049ccc<<Func>>
-0x0804968d: Successor blocks: 0x08049ccc<<Func>>, 0x08049692
+0x0804968d: Successor blocks: 0x08049692, 0x08049ccc<<Func>>
 
 0x08049692: Basic block reasons: graph-1
 0x08049692: Predecessor blocks: 0x08049682
@@ -6612,7 +6612,7 @@ using this memory map for disassembly:
 0x080496e4: 50                      |P       |   push   eax
 0x080496e5: ff b5 94 cb ff ff       |......  |   push   dword ss:[ebp + 0xffffcb94<-13420>]
 0x080496eb: e8 7c 0b 00 00          |.|...   |   call   0x0804a26c<<Func>>
-0x080496eb: Successor blocks: 0x0804a26c<<Func>>, 0x080496f0
+0x080496eb: Successor blocks: 0x080496f0, 0x0804a26c<<Func>>
 
 0x080496f0: Basic block reasons: graph-1
 0x080496f0: Predecessor blocks: 0x080496e1
@@ -6628,7 +6628,7 @@ using this memory map for disassembly:
 0x080496fa: 53                      |S       |   push   ebx
 0x080496fb: ff b5 94 cb ff ff       |......  |   push   dword ss:[ebp + 0xffffcb94<-13420>]
 0x08049701: e8 82 0a 00 00          |.....   |   call   0x0804a188<<Func>>
-0x08049701: Successor blocks: 0x0804a188<<Func>>, 0x08049706
+0x08049701: Successor blocks: 0x08049706, 0x0804a188<<Func>>
 
 0x08049706: Basic block reasons: graph-1
 0x08049706: Predecessor blocks: 0x080496f3
@@ -6637,14 +6637,14 @@ using this memory map for disassembly:
 0x08049707: 53                      |S       |   push   ebx
 0x08049708: ff 35 04 c8 04 08       |.5....  |   push   dword ds:[0x0804c804<.data+0x10>]
 0x0804970e: e8 fd 05 00 00          |.....   |   call   0x08049d10<<Func>>
-0x0804970e: Successor blocks: 0x08049d10<<Func>>, 0x08049713
+0x0804970e: Successor blocks: 0x08049713, 0x08049d10<<Func>>
 
 0x08049713: Basic block reasons: graph-1
 0x08049713: Predecessor blocks: 0x08049706
 0x08049713: Dominator block: 0x08049706
 0x08049713: ff 35 04 c8 04 08       |.5....  |   push   dword ds:[0x0804c804<.data+0x10>]
 0x08049719: e8 ca 05 00 00          |.....   |   call   0x08049ce8<<Func>>
-0x08049719: Successor blocks: 0x08049ce8<<Func>>, 0x0804971e
+0x08049719: Successor blocks: 0x0804971e, 0x08049ce8<<Func>>
 
 0x0804971e: Basic block reasons: graph-1
 0x0804971e: Predecessor blocks: 0x08049713
@@ -6666,7 +6666,7 @@ using this memory map for disassembly:
 0x08049735: 89 55 e4                |.U.     |   mov    dword ss:[ebp + 0xe4<-28>], edx
 0x08049738: c7 45 ec 01 00 00 00    |.E..... |   mov    dword ss:[ebp + 0xec<-20>], 0x00000001
 0x0804973f: e8 98 0c 00 00          |.....   |   call   0x0804a3dc<<Func>>
-0x0804973f: Successor blocks: 0x0804a3dc<<Func>>, 0x08049744
+0x0804973f: Successor blocks: 0x08049744, 0x0804a3dc<<Func>>
 
 0x08049744: Basic block reasons: graph-1
 0x08049744: Predecessor blocks: 0x08049726
@@ -6675,7 +6675,7 @@ using this memory map for disassembly:
 0x0804974a: c7 05 68 c8 04 08 01 00 |..h.....|
 0x08049752: 00 00                   |..      |   mov    dword ds:[0x0804c868], 0x00000001
 0x08049754: e8 8f 05 00 00          |.....   |   call   0x08049ce8<<Func>>
-0x08049754: Successor blocks: 0x08049ce8<<Func>>, 0x08049759
+0x08049754: Successor blocks: 0x08049759, 0x08049ce8<<Func>>
 
 0x08049759: Basic block reasons: graph-1
 0x08049759: Predecessor blocks: 0x08049744
@@ -6727,7 +6727,7 @@ using this memory map for disassembly:
 0x080497ad: ff b5 94 cb ff ff       |......  |   push   dword ss:[ebp + 0xffffcb94<-13420>]
 0x080497b3: 6a 01                   |j.      |   push   0x01
 0x080497b5: e8 82 0b 00 00          |.....   |   call   0x0804a33c<<Func>>
-0x080497b5: Successor blocks: 0x0804a33c<<Func>>, 0x080497ba
+0x080497b5: Successor blocks: 0x080497ba, 0x0804a33c<<Func>>
 
 0x080497ba: Basic block reasons: graph-1
 0x080497ba: Predecessor blocks: 0x080497a3
@@ -6786,7 +6786,7 @@ using this memory map for disassembly:
 0x08049830: 53                      |S       |   push   ebx
 0x08049831: 6a 00                   |j.      |   push   0x00
 0x08049833: e8 a0 0a 00 00          |.....   |   call   0x0804a2d8<<Func>>
-0x08049833: Successor blocks: 0x0804a2d8<<Func>>, 0x08049838
+0x08049833: Successor blocks: 0x08049838, 0x0804a2d8<<Func>>
 
 0x08049838: Basic block reasons: graph-1
 0x08049838: Predecessor blocks: 0x0804981a
@@ -6834,7 +6834,7 @@ using this memory map for disassembly:
 0x080498bb: 53                      |S       |   push   ebx
 0x080498bc: 6a 00                   |j.      |   push   0x00
 0x080498be: e8 15 0a 00 00          |.....   |   call   0x0804a2d8<<Func>>
-0x080498be: Successor blocks: 0x0804a2d8<<Func>>, 0x080498c3
+0x080498be: Successor blocks: 0x080498c3, 0x0804a2d8<<Func>>
 
 0x080498c3: Basic block reasons: graph-1
 0x080498c3: Predecessor blocks: 0x08049863
@@ -6877,7 +6877,7 @@ using this memory map for disassembly:
 0x08049910: 89 df                   |..      |   mov    edi, ebx
 0x08049912: 50                      |P       |   push   eax
 0x08049913: e8 88 08 00 00          |.....   |   call   0x0804a1a0<<Func>>
-0x08049913: Successor blocks: 0x0804a1a0<<Func>>, 0x08049918
+0x08049913: Successor blocks: 0x08049918, 0x0804a1a0<<Func>>
 
 0x08049918: Basic block reasons: graph-1
 0x08049918: Predecessor blocks: 0x0804990d
@@ -6903,7 +6903,7 @@ using this memory map for disassembly:
 0x08049953: 8d 45 d8                |.E.     |   lea    eax, [ebp + 0xd8<-40>]
 0x08049956: 50                      |P       |   push   eax
 0x08049957: e8 1c 08 00 00          |.....   |   call   0x0804a178<<Func>>
-0x08049957: Successor blocks: 0x0804a178<<Func>>, 0x0804995c
+0x08049957: Successor blocks: 0x0804995c, 0x0804a178<<Func>>
 
 0x0804995c: Basic block reasons: graph-1
 0x0804995c: Predecessor blocks: 0x08049941
@@ -6941,7 +6941,7 @@ using this memory map for disassembly:
 0x0804997d: ff b5 ac cb ff ff       |......  |   push   dword ss:[ebp + 0xffffcbac<-13396>]
 0x08049983: 6a 01                   |j.      |   push   0x01
 0x08049985: e8 1e 08 00 00          |.....   |   call   0x0804a1a8<<Func>>
-0x08049985: Successor blocks: 0x0804a1a8<<Func>>, 0x0804998a
+0x08049985: Successor blocks: 0x0804998a, 0x0804a1a8<<Func>>
 
 0x0804998a: Basic block reasons: graph-1
 0x0804998a: Predecessor blocks: 0x0804997c
@@ -6959,7 +6959,7 @@ using this memory map for disassembly:
 0x0804999d: 8d 45 e8                |.E.     |   lea    eax, [ebp + 0xe8<-24>]
 0x080499a0: 50                      |P       |   push   eax
 0x080499a1: e8 fa 07 00 00          |.....   |   call   0x0804a1a0<<Func>>
-0x080499a1: Successor blocks: 0x0804a1a0<<Func>>, 0x080499a6
+0x080499a1: Successor blocks: 0x080499a6, 0x0804a1a0<<Func>>
 
 0x080499a6: Basic block reasons: graph-1
 0x080499a6: Predecessor blocks: 0x08049918, 0x08049995
@@ -6992,7 +6992,7 @@ using this memory map for disassembly:
 0x080499e9: 01 9d b8 cb ff ff       |......  |   add    dword ss:[ebp + 0xffffcbb8<-13384>], ebx
 0x080499ef: 11 b5 bc cb ff ff       |......  |   adc    dword ss:[ebp + 0xffffcbbc<-13380>], esi
 0x080499f5: e8 76 07 00 00          |.v...   |   call   0x0804a170<<Func>>
-0x080499f5: Successor blocks: 0x0804a170<<Func>>, 0x080499fa
+0x080499f5: Successor blocks: 0x080499fa, 0x0804a170<<Func>>
 
 0x080499fa: Basic block reasons: graph-1
 0x080499fa: Predecessor blocks: 0x080499ab
@@ -7046,7 +7046,7 @@ using this memory map for disassembly:
 0x08049a46: 53                      |S       |   push   ebx
 0x08049a47: 6a 00                   |j.      |   push   0x00
 0x08049a49: e8 8a 08 00 00          |.....   |   call   0x0804a2d8<<Func>>
-0x08049a49: Successor blocks: 0x0804a2d8<<Func>>, 0x08049a4e
+0x08049a49: Successor blocks: 0x08049a4e, 0x0804a2d8<<Func>>
 
 0x08049a4e: Basic block reasons: graph-1
 0x08049a4e: Predecessor blocks: 0x08049a30
@@ -7152,7 +7152,7 @@ using this memory map for disassembly:
 0x08049ace: 6a 01                   |j.      |   push   0x01
 0x08049ad0: c7 45 ec 00 00 00 00    |.E..... |   mov    dword ss:[ebp + 0xec<-20>], 0x00000000
 0x08049ad7: e8 00 09 00 00          |.....   |   call   0x0804a3dc<<Func>>
-0x08049ad7: Successor blocks: 0x0804a3dc<<Func>>, 0x08049adc
+0x08049ad7: Successor blocks: 0x08049adc, 0x0804a3dc<<Func>>
 
 0x08049adc: Basic block reasons: graph-1
 0x08049adc: Predecessor blocks: 0x08049ac4
@@ -7172,21 +7172,21 @@ using this memory map for disassembly:
 0x08049aec: Dominator block: 0x08049adf
 0x08049aec: ff b5 94 cb ff ff       |......  |   push   dword ss:[ebp + 0xffffcb94<-13420>]
 0x08049af2: e8 69 06 00 00          |.i...   |   call   0x0804a160<<Func>>
-0x08049af2: Successor blocks: 0x0804a160<<Func>>, 0x08049af7
+0x08049af2: Successor blocks: 0x08049af7, 0x0804a160<<Func>>
 
 0x08049af7: Basic block reasons: graph-1
 0x08049af7: Predecessor blocks: 0x08049aec
 0x08049af7: Dominator block: 0x08049aec
 0x08049af7: ff 35 48 c9 04 08       |.5H...  |   push   dword ds:[0x0804c948]
 0x08049afd: e8 66 06 00 00          |.f...   |   call   0x0804a168<<Func>>
-0x08049afd: Successor blocks: 0x0804a168<<Func>>, 0x08049b02
+0x08049afd: Successor blocks: 0x08049b02, 0x0804a168<<Func>>
 
 0x08049b02: Basic block reasons: graph-1
 0x08049b02: Predecessor blocks: 0x08049af7
 0x08049b02: Dominator block: 0x08049af7
 0x08049b02: ff 35 48 c9 04 08       |.5H...  |   push   dword ds:[0x0804c948]
 0x08049b08: e8 53 06 00 00          |.S...   |   call   0x0804a160<<Func>>
-0x08049b08: Successor blocks: 0x0804a160<<Func>>, 0x08049b0d
+0x08049b08: Successor blocks: 0x08049b0d, 0x0804a160<<Func>>
 
 0x08049b0d: Basic block reasons: graph-1
 0x08049b0d: Predecessor blocks: 0x08049b02
@@ -7208,7 +7208,7 @@ using this memory map for disassembly:
 0x08049b24: Dominator block: 0x0804969e
 0x08049b24: ff 35 04 c8 04 08       |.5....  |   push   dword ds:[0x0804c804<.data+0x10>]
 0x08049b2a: e8 b9 01 00 00          |.....   |   call   0x08049ce8<<Func>>
-0x08049b2a: Successor blocks: 0x08049ce8<<Func>>, 0x08049b2f
+0x08049b2a: Successor blocks: 0x08049b2f, 0x08049ce8<<Func>>
 
 0x08049b2f: Basic block reasons: graph-1
 0x08049b2f: Predecessor blocks: 0x08049b24
@@ -7303,7 +7303,7 @@ using this memory map for disassembly:
 0x08049ba4: 56                      |V       |   push   esi
 0x08049ba5: 57                      |W       |   push   edi
 0x08049ba6: e8 d5 05 00 00          |.....   |   call   0x0804a180<<Func>>
-0x08049ba6: Successor blocks: 0x0804a180<<Func>>, 0x08049bab
+0x08049ba6: Successor blocks: 0x08049bab, 0x0804a180<<Func>>
 
 0x08049bab: Basic block reasons: graph-1
 0x08049bab: Predecessor blocks: 0x08049b99
@@ -7332,7 +7332,7 @@ using this memory map for disassembly:
 0x08049bbb: Dominator block: 0x08049191
 0x08049bbb: ff 35 04 c8 04 08       |.5....  |   push   dword ds:[0x0804c804<.data+0x10>]
 0x08049bc1: e8 4a 01 00 00          |.J...   |   call   0x08049d10<<Func>>
-0x08049bc1: Successor blocks: 0x08049d10<<Func>>, 0x08049bc6
+0x08049bc1: Successor blocks: 0x08049bc6, 0x08049d10<<Func>>
 
 0x08049bc6: Basic block reasons: graph-1
 0x08049bc6: Predecessor blocks: 0x08049bbb
@@ -7348,7 +7348,7 @@ using this memory map for disassembly:
 0x08049bd4: c7 05 fc c7 04 08 2d 01 |......-.|
 0x08049bdc: 00 00                   |..      |   mov    dword ds:[0x0804c7fc<.data+8>], 0x0000012d<301>
 0x08049bde: e8 e9 00 00 00          |.....   |   call   0x08049ccc<<Func>>
-0x08049bde: Successor blocks: 0x08049ccc<<Func>>, 0x08049be3
+0x08049bde: Successor blocks: 0x08049be3, 0x08049ccc<<Func>>
 
 0x08049be3: Basic block reasons: graph-1
 0x08049be3: Predecessor blocks: 0x08049bc9
@@ -7363,7 +7363,7 @@ using this memory map for disassembly:
 0x08049bec: Dominator block: 0x08049be3
 0x08049bec: ff 35 04 c8 04 08       |.5....  |   push   dword ds:[0x0804c804<.data+0x10>]
 0x08049bf2: e8 f1 00 00 00          |.....   |   call   0x08049ce8<<Func>>
-0x08049bf2: Successor blocks: 0x08049ce8<<Func>>, 0x08049bf7
+0x08049bf2: Successor blocks: 0x08049bf7, 0x08049ce8<<Func>>
 
 0x08049bf7: Basic block reasons: graph-1
 0x08049bf7: Predecessor blocks: 0x08048ff5, 0x08049adf, 0x08049bec
@@ -7377,7 +7377,7 @@ using this memory map for disassembly:
 0x08049bfe: Dominator block: 0x08049bab
 0x08049bfe: 68 36 b3 04 08          |h6...   |   push   0x0804b336<<StaticData@0x0804af27>+0x040f>
 0x08049c03: e8 00 06 00 00          |.....   |   call   0x0804a208<<Func>>
-0x08049c03: Successor blocks: 0x0804a208<<Func>>, 0x08049c08
+0x08049c03: Successor blocks: 0x08049c08, 0x0804a208<<Func>>
 
 0x08049c08: Basic block reasons: graph-1
 0x08049c08: Predecessor blocks: 0x08049bfe
@@ -7401,7 +7401,7 @@ using this memory map for disassembly:
 0x08049c1a: 56                      |V       |   push   esi
 0x08049c1b: ff 35 04 c8 04 08       |.5....  |   push   dword ds:[0x0804c804<.data+0x10>]
 0x08049c21: e8 a6 00 00 00          |.....   |   call   0x08049ccc<<Func>>
-0x08049c21: Successor blocks: 0x08049ccc<<Func>>, 0x08049c26
+0x08049c21: Successor blocks: 0x08049c26, 0x08049ccc<<Func>>
 
 0x08049c26: Basic block reasons: graph-1
 0x08049c26: Predecessor blocks: 0x08049c1a
@@ -7435,7 +7435,7 @@ using this memory map for disassembly:
 0x08049c32: Dominator block: 0x08049c08
 0x08049c32: 68 44 b3 04 08          |hD...   |   push   0x0804b344<<StaticData@0x0804af27>+0x041d>
 0x08049c37: e8 cc 05 00 00          |.....   |   call   0x0804a208<<Func>>
-0x08049c37: Successor blocks: 0x0804a208<<Func>>, 0x08049c3c
+0x08049c37: Successor blocks: 0x08049c3c, 0x0804a208<<Func>>
 
 0x08049c3c: Basic block reasons: graph-1
 0x08049c3c: Predecessor blocks: 0x08049c32
@@ -7463,7 +7463,7 @@ using this memory map for disassembly:
 0x08049c49: Dominator block: 0x08049191
 0x08049c49: ff 35 04 c8 04 08       |.5....  |   push   dword ds:[0x0804c804<.data+0x10>]
 0x08049c4f: e8 78 00 00 00          |.x...   |   call   0x08049ccc<<Func>>
-0x08049c4f: Successor blocks: 0x08049ccc<<Func>>, 0x08049c54
+0x08049c4f: Successor blocks: 0x08049c54, 0x08049ccc<<Func>>
 
 0x08049c54: Basic block reasons: graph-1
 0x08049c54: Predecessor blocks: 0x08049c49
