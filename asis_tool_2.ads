@@ -29,6 +29,7 @@ private
 
    -- Returns the image minus the leading space:
    function Spaceless_Image (Item : in Natural) return String;
+   function NLB_Image (Item : in Natural) return String renames Spaceless_Image;
 
    function Node_Id_Image (Unit : in Asis.Compilation_Unit) return String;
    function To_Dot_ID_Type (Unit : in Asis.Compilation_Unit) return Dot.ID_Type;

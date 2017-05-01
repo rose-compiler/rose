@@ -25,13 +25,12 @@ private
          Current_Label : Dot.HTML_Like_Labels.Class; -- Initialized
       end record;
 
-   -- Add an assign to the first attribute of the current node. If there is no
-   -- first attribute, add one.:
-   procedure Add_Attribute
+   -- Add this info to the label, and print it if trace is on:
+   procedure Add_To_Label
      (This  : in out Class;
       Name  : in     String;
       Value : in     String);
-   procedure Add_Attribute
+   procedure Add_To_Label
      (This  : in out Class;
       Name  : in     String;
       Value : in     Wide_String);

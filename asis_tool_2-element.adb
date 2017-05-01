@@ -1,9 +1,11 @@
+with Asis.Compilation_Units;
 with Asis.Declarations;
 with Asis.Elements;
 with Asis.Expressions;
 with Asis.Iterator;
 -- GNAT-specific:
 with Asis.Set_Get;
+with Asis.Text;
 with Types;
 
 package body Asis_Tool_2.Element is
@@ -52,7 +54,7 @@ package body Asis_Tool_2.Element is
       begin
          --        A_Pragma              -> Pragma_Kinds
          --
-         State.Add_Attribute
+         State.Add_To_Label
            (Name => "Pragma_Kind",
             Value => Pragma_Kind'Image);
          State.Add_Not_Implemented;
@@ -67,13 +69,13 @@ package body Asis_Tool_2.Element is
       begin
          --        A_Defining_Name       -> Defining_Name_Kinds
          --                                         -> Operator_Kinds
-         State.Add_Attribute (Name => "Defining_Name_Kind",
+         State.Add_To_Label (Name => "Defining_Name_Kind",
                               Value => Defining_Name_Kind'Image);
-         State.Add_Attribute (Name => "Name",
+         State.Add_To_Label (Name => "Name",
                               Value => Name (Element));
          case Defining_Name_Kind is
             when Asis.A_Defining_Operator_Symbol =>
-               State.Add_Attribute (Name => "Operator_Kind",
+               State.Add_To_Label (Name => "Operator_Kind",
                                     Value => Asis.Elements.Operator_Kind (Element)'Image);
             when others => null;
          end case;
@@ -92,14 +94,14 @@ package body Asis_Tool_2.Element is
          --                                         -> Declaration_Origin
          --                                         -> Mode_Kinds
          --                                         -> Subprogram_Default_Kinds
-         State.Add_Attribute (Name => "Declaration_Kind",
+         State.Add_To_Label (Name => "Declaration_Kind",
                               Value => Declaration_Kind'Image);
-         State.Add_Attribute (Name => "Declaration_Origin",
+         State.Add_To_Label (Name => "Declaration_Origin",
                               Value => Asis.Elements.Declaration_Origin (Element)'Image);
          case Declaration_Kind is
             when A_Parameter_Specification |
                  A_Formal_Object_Declaration =>
-               State.Add_Attribute (Name => "Mode_Kind",
+               State.Add_To_Label (Name => "Mode_Kind",
                                     Value => Asis.Elements.Mode_Kind (Element)'Image);
             when others =>
                null;
@@ -107,7 +109,7 @@ package body Asis_Tool_2.Element is
          case Declaration_Kind is
             when A_Formal_Function_Declaration |
                  A_Formal_Procedure_Declaration =>
-               State.Add_Attribute (Name => "Subprogram_Default_Kind",
+               State.Add_To_Label (Name => "Subprogram_Default_Kind",
                                     Value => Asis.Elements.Default_Kind (Element)'Image);
             when others =>
                null;
@@ -124,7 +126,7 @@ package body Asis_Tool_2.Element is
                  An_Element_Iterator_Specification |
                  A_Procedure_Declaration |
                  A_Function_Declaration =>
-               State.Add_Attribute (Name => "Trait_Kind",
+               State.Add_To_Label (Name => "Trait_Kind",
                                     Value => Asis.Elements.Trait_Kind (Element)'Image);
             when others =>
                null;
@@ -159,7 +161,7 @@ package body Asis_Tool_2.Element is
          --                                         -> Operator_Kinds
          --                                         -> Attribute_Kinds
          --
-         State.Add_Attribute ("Expression_Kind", Expression_Kind'Image);
+         State.Add_To_Label ("Expression_Kind", Expression_Kind'Image);
          -- Kind ordering and grouping is from Asis.Expression_Kinds.
          -- "when" comment is Ada LRM section.
          case Expression_Kind is
@@ -181,7 +183,7 @@ package body Asis_Tool_2.Element is
                  An_Operator_Symbol |                         -- 4.1
                  A_Character_Literal |                        -- 4.1
                  An_Enumeration_Literal =>                    -- 4.1
-               State.Add_Attribute ("Name_Image",
+               State.Add_To_Label ("Name_Image",
                                     '"' & Asis.Expressions.Name_Image (Element) & '"');
                -- Name_Image
                -- Corresponding_Name_Definition
@@ -190,7 +192,7 @@ package body Asis_Tool_2.Element is
                -- Subpool_Name
                case Expression_Kind is
                   when An_Operator_Symbol =>
-                     State.Add_Attribute ("Operator_Kind",
+                     State.Add_To_Label ("Operator_Kind",
                                           Asis.Elements.Operator_Kind (Element)'Image);
                   when others =>
                      null;
@@ -220,7 +222,7 @@ package body Asis_Tool_2.Element is
                -- Prefix
                -- Selector
             when An_Attribute_Reference =>                    -- 4.1.4  -> Attribute_Kinds
-               State.Add_Attribute ("Attribute_Kind",
+               State.Add_To_Label ("Attribute_Kind",
                                     Asis.Elements.Attribute_Kind (Element)'Image);
                -- Prefix
                -- Attribute_Designator_Identifier
@@ -311,7 +313,7 @@ package body Asis_Tool_2.Element is
       begin
          --        A_Statement           -> Statement_Kinds
          --
-         State.Add_Attribute ("Statement_Kind", Statement_Kind'Image);
+         State.Add_To_Label ("Statement_Kind", Statement_Kind'Image);
          -- All Statements can have:
          -- Label_Names
 
@@ -458,7 +460,7 @@ package body Asis_Tool_2.Element is
       begin
          --        A_Clause              -> Clause_Kinds
          --                                         -> Representation_Clause_Kinds
-         State.Add_Attribute ("Clause_Kind", Clause_Kind'Image);
+         State.Add_To_Label ("Clause_Kind", Clause_Kind'Image);
          case Clause_Kind is
             when Asis.Not_A_Clause =>
                raise Program_Error with "Element.Pre_Children.Process_Clause called with: " & Clause_Kind'Image;
@@ -504,6 +506,41 @@ package body Asis_Tool_2.Element is
          return Result;
       end Get_Enclosing_ID;
 
+      function Source_Location_Image
+        (Element : in Asis.Element)
+         return String
+      is
+         Unit : constant Asis.Compilation_Unit :=
+           Asis.Elements.Enclosing_Compilation_Unit (Element);
+         Unit_Name : constant String := To_String
+           (Asis.Compilation_Units.Unit_Full_Name (Unit));
+         Unit_Class : constant Asis.Unit_Classes := Asis.Compilation_Units.Unit_Class (Unit);
+         Span : constant Asis.Text.Span := Asis.Text.Element_Span (Element);
+         function Spec_Or_Body return String is
+            use all type Asis.Unit_Classes;
+         begin
+            case Unit_Class is
+               when Not_A_Class =>
+                  return "()";
+               when A_Public_Declaration |
+                    A_Private_Declaration =>
+                  return "(spec)";
+               when A_Public_Body |
+                    A_Private_Body =>
+                  return "(body)";
+               when A_Public_Declaration_And_Body =>
+                  return "(spec and body)";
+               when A_Separate_Body =>
+                  return "(separate body)";
+            end case;
+         end Spec_Or_Body;
+      begin
+         return Unit_Name & Spec_Or_Body & ":" &
+           NLB_Image (Span.First_Line) & ":" & NLB_Image (Span.First_Column) &
+           ".." &
+           NLB_Image (Span.Last_Line) & ":" & NLB_Image (Span.Last_Column);
+      end Source_Location_Image;
+
       ------------
       -- EXPORTED:
       ------------
@@ -522,7 +559,8 @@ package body Asis_Tool_2.Element is
             State.Current_Node := New_Node;
             State.Current_Node.Node_ID.ID := Element_Id;
             State.Current_Label := New_Label;
-            State.Add_Attribute ("ID", Node_Id_Image (Element));
+            State.Add_To_Label ("ID", Node_Id_Image (Element));
+            State.Add_To_Label ("Source", Source_Location_Image (Element));
          end Start_Node;
          procedure Finish_Node is begin
             State.Current_Node.Add_Label (State.Current_Label);
@@ -538,7 +576,7 @@ package body Asis_Tool_2.Element is
       begin
          Add_Enclosing_Edge;
          Start_Node;
-         State.Add_Attribute ("Element_Kind", Element_Kind'Image);
+         State.Add_To_Label ("Element_Kind", Element_Kind'Image);
          case Element_Kind is
          when Asis.Not_An_Element =>
             Null;
@@ -623,7 +661,7 @@ package body Asis_Tool_2.Element is
    -----------
    -- PRIVATE:
    -----------
-   procedure Add_Attribute
+   procedure Add_To_Label
      (This  : in out Class;
       Name  : in     String;
       Value : in     String)
@@ -640,20 +678,20 @@ package body Asis_Tool_2.Element is
    -----------
    -- PRIVATE:
    -----------
-   procedure Add_Attribute
+   procedure Add_To_Label
      (This  : in out Class;
       Name  : in     String;
       Value : in     Wide_String)
    is
    begin
-      This.Add_Attribute (Name, To_String (Value));
+      This.Add_To_Label (Name, To_String (Value));
    end;
 
    procedure Add_Not_Implemented
      (This  : in out Class)
    is
    begin
-      This.Add_Attribute ("ASIS_PROCESSING", String'("NOT_COMPLETELY_IMPLEMENTED"));
+      This.Add_To_Label ("ASIS_PROCESSING", String'("NOT_COMPLETELY_IMPLEMENTED"));
    end Add_Not_Implemented;
 
 
