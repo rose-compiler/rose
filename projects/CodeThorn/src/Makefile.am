@@ -522,7 +522,8 @@ check-codethorn-internal:
 	@./codethorn --internal-checks	
 	@./codethorn --edg:no_warnings $(srcdir)/tests/typetest1.C 
 
-check-local: check-codethorn-internal check-data-races check-flow-insenstive check-ltl
+#check-local: check-codethorn-internal check-data-races check-flow-insenstive check-ltl
+check-local: check-codethorn-internal check-data-races check-ltl
 	@echo ================================================================
 	@echo RUNNING VERIFICATION ERROR TESTS
 	@echo ================================================================
@@ -802,3 +803,6 @@ CODETHORN_TESTS= \
     tests/switchtest3.C \
     examples/example-invocations.sh \
     tests/normalization1.C
+
+demo:
+	$(srcdir)/demodir/rundemo.sh $(srcdir)/demodir $(top_builddir)/projects/CodeThorn
