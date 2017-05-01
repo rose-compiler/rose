@@ -65,6 +65,7 @@ namespace CodeThorn {
     void setNumRequiredFalsifiable(int numFalsifiable) { _numRequiredFalsifiable = numFalsifiable; }
     void setNumberOfThreadsToUse(int n) { _numberOfThreadsToUse=n; }
     void setVisualize(bool viz) { _visualize = viz; }
+    void setUseLtsMin(bool useLtsMin) { _useLtsMin = useLtsMin; }
 
   private:
     ParallelSystem exploreOnce();
@@ -95,6 +96,7 @@ namespace CodeThorn {
     int _numRequiredFalsifiable;
     int _numberOfThreadsToUse;
     bool _visualize;
+    bool _useLtsMin;
   };
 
 } // end of namespace CodeThorn

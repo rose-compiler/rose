@@ -6,6 +6,7 @@
 #include "SpotConnection.h"
 #include "Miscellaneous2.h"
 
+using namespace CodeThorn;
 using namespace SPRAY;
 using namespace boost;
 using namespace std;
@@ -483,6 +484,64 @@ PropertyValueTable* ParProLtlMiner::mineProperties(ParallelSystem& system, int m
 	result->setAnnotation(result->getPropertyNumber(ltlFormula), system.toString());
 	falsifiableCount++;
       }
+    }
+  }
+  return result;
+}
+
+PropertyValueTable* ParProLtlMiner::minePropertiesLtsMin(ParallelSystem& system, int minNumComponents, int minNumVerifiable, int minNumFalsifiable) {
+  PropertyValueTable* result = new PropertyValueTable();
+  int verifiableCount = 0;
+  int falsifiableCount = 0;
+  set<string> annotations;
+  vector<string> annotationVec;
+  ROSE_ASSERT(_numComponentsForLtlAnnotations <= system.size());
+  if (_numComponentsForLtlAnnotations == system.size()) {
+    annotations = system.getAnnotations();
+    annotationVec.reserve(annotations.size());
+    copy(annotations.begin(), annotations.end(), back_inserter(annotationVec));
+  }
+  for (unsigned int i = 0; i < _numberOfMiningsPerSubsystem; ++i) {
+    if (_numComponentsForLtlAnnotations < system.size()) {
+      pair<int,int> range(0, (system.size() - 1));
+      list<int> componentIdsForAnnotations = nDifferentRandomIntsInSet(_numComponentsForLtlAnnotations, system.getComponentIds());
+      annotations = system.getAnnotations(componentIdsForAnnotations);
+    }
+    pair<string, string> ltlProperty = randomLtlFormula(annotations);
+    string ltlFormula = ltlProperty.first;
+
+    if (verifiableCount < minNumVerifiable	
+	&& _ltsminConnection.checkPropertyParPro(ltlFormula, system.components()) == PROPERTY_VALUE_YES) {
+      /*
+      bool passedFilter; 
+      if (_storeComputedSystems) {
+	const ParallelSystem* systemPtr = _subsystems.processNewOrExisting(system);
+	passedFilter = passesFilter(ltlFormula, PROPERTY_VALUE_YES, systemPtr, minNumComponents);
+      } else {
+	passedFilter = passesFilter(ltlFormula, PROPERTY_VALUE_YES, system, minNumComponents);
+      }
+      if (passedFilter) {
+      */
+	result->addProperty(ltlFormula, PROPERTY_VALUE_YES);
+	result->setAnnotation(result->getPropertyNumber(ltlFormula), system.toString());
+	verifiableCount++;
+      //}
+    } else if (falsifiableCount < minNumFalsifiable
+	       && _ltsminConnection.checkPropertyParPro(ltlFormula, system.components()) == PROPERTY_VALUE_NO) {
+      /*
+      bool passedFilter;
+      if (_storeComputedSystems) {
+	const ParallelSystem* systemPtr = _subsystems.processNewOrExisting(system);
+	passedFilter = passesFilter(ltlFormula, PROPERTY_VALUE_NO, systemPtr, minNumComponents);
+      } else {
+	passedFilter = passesFilter(ltlFormula, PROPERTY_VALUE_NO, system, minNumComponents);
+      }
+      if (passedFilter) {
+      */
+	result->addProperty(ltlFormula, PROPERTY_VALUE_NO);
+	result->setAnnotation(result->getPropertyNumber(ltlFormula), system.toString());
+	falsifiableCount++;
+      //}
     }
   }
   return result;

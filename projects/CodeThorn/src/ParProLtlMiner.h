@@ -12,6 +12,7 @@
 #include "SpotConnection.h"
 #include "ParProAnalyzer.h"
 #include "PropertyValueTable.h"
+#include "LtsminConnection.h"
 
 // BOOST includes
 #include "boost/lexical_cast.hpp"
@@ -20,8 +21,6 @@
 #include "boost/algorithm/string.hpp"
 #include "boost/algorithm/string/trim.hpp"
 #include "boost/algorithm/string/regex.hpp"
-
-using namespace CodeThorn;
 
 namespace CodeThorn {
 
@@ -105,6 +104,7 @@ namespace CodeThorn {
 
     PropertyValueTable* mineProperties(ParallelSystem& system, int minNumComponents);
     PropertyValueTable* mineProperties(ParallelSystem& system, int minNumComponents, int minNumVerifiable, int minNumFalsifiable);
+    PropertyValueTable* minePropertiesLtsMin(ParallelSystem& system, int minNumComponents, int minNumVerifiable, int minNumFalsifiable);
     void setNumberOfMiningsPerSubsystem(unsigned int numMinings) { _numberOfMiningsPerSubsystem = numMinings; }
     void setNumberOfComponentsForLtlAnnotations(unsigned int numComponentsLtl) { _numComponentsForLtlAnnotations = numComponentsLtl; }
     void setStoreComputedSystems(bool storeSystems) { _storeComputedSystems = storeSystems; }
@@ -139,6 +139,7 @@ namespace CodeThorn {
     ParallelSystemSet _subsystems;
     ParallelSystemDag _subsystemsOf;
     SpotConnection _spotConnection;
+    LtsminConnection _ltsminConnection;
   };
 
 } // end of namespace CodeThorn

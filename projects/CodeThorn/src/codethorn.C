@@ -331,6 +331,7 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
     ("promela-output",po::value< string >(),"Writes a promela program reflecting the synchronized automata of option \"--automata-dot-input\" to file <arg>. Includes LTL properties if analyzed.")
     ("output-with-results",po::value< string >(),"include results for the LTL properties in generated promela code and LTL property files (yes|[no]).")
     ("output-with-annotations",po::value< string >(),"include annotations for the LTL properties in generated promela code and LTL property files (yes|[no]).")
+    ("verification-engine",po::value< string >(),"Choose which backend verification engine is used (ltsmin|[spot]).")
     ;
 
   experimentalOptions.add_options()
@@ -618,6 +619,12 @@ void automataDotInput(const po::variables_map& args, Sawyer::Message::Facility l
   }
 
   ParProExplorer explorer(cfgsAsVector, edgeAnnotationMap);
+  if (args.count("verification-engine")) {
+    string verificationEngine = args["verification-engine"].as<string>();
+    if (verificationEngine == "ltsmin") {
+      explorer.setUseLtsMin(true);
+    }
+  } 
   if (boolOptions["keep-systems"]) {
     explorer.setStoreComputedSystems(true);
   } else {
@@ -1155,6 +1162,7 @@ int main( int argc, char * argv[] ) {
           || string(argv[i]).find("--specialize-fun-name")==0
           || string(argv[i]).find("--specialize-fun-param")==0
           || string(argv[i]).find("--use-components")==0
+          || string(argv[i]).find("--verification-engine")==0
           || string(argv[i]).find("--fixed-components")==0
           || string(argv[i]).find("--specialize-fun-param")==0
           ) {

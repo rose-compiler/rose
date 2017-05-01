@@ -2,6 +2,9 @@
 
 #include "ParProExplorer.h"
 
+#include "LtsminConnection.h"
+
+
 using namespace SPRAY;
 using namespace CodeThorn;
 using namespace std;
@@ -24,7 +27,8 @@ _minNumComponents(3),
 _numRequiredVerifiable(10),
 _numRequiredFalsifiable(10),
 _numberOfThreadsToUse(1), 
-_visualize(false) {
+_visualize(false),
+_useLtsMin(false) {
 }
 
 PropertyValueTable* ParProExplorer::ltlAnalysis(ParallelSystem system) {
@@ -85,6 +89,16 @@ PropertyValueTable* ParProExplorer::ltlAnalysis(ParallelSystem system) {
 }
 
 void ParProExplorer::explore() {
+
+  if(_useLtsMin) {
+    ParallelSystem system = exploreOnce();
+    LtsminConnection ltsMinConnection;
+    string testProperty = "( (((action == \"c0_t7\") -> (!(action == \"c0_t1\") W (action == \"c0_t0__c1_t2\"))) W (action == \"c1_t3\")) )";
+    //string testProperty = "( (!((action == \"c0_t9\") || (action == \"c1_t3\")) W (action == \"c1_t4\")) )";
+    ltsMinConnection.checkPropertyParPro(testProperty, system.components());
+    exit(0);
+  }
+
   if (_randomSubsetMode == PAR_PRO_NUM_SUBSETS_INFINITE) {
     if (_ltlMode != PAR_PRO_LTL_MODE_MINE) {
       cout << "ERROR: An unlimited number of analyses using random subsets has been selected, but LTLs are not generated (choose mode --ltl-mode=mine)."<<endl;

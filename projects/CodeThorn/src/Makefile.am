@@ -144,6 +144,8 @@ codethorn_SOURCES = \
   InternalChecks.h                 \
   LTL.h                            \
   LTLParser.y++                    \
+  LtsminConnection.h		   \
+  LtsminConnection.C		   \
   LanguageRestrictorCollection.C   \
   LanguageRestrictorCollection.h   \
   LoopInfo.h                       \
