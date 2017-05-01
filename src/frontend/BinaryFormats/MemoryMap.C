@@ -700,7 +700,7 @@ MemoryMap::shrinkUnshare() {
         if (const uint8_t *data = segment.buffer()->data()) {
             // Create a new buffer for this segment, copying the old data
             Buffer::Ptr buf = AllocatingBuffer::instance(interval.size());
-            if (buf->write(data, 0, interval.size()) != interval.size()) {
+            if (buf->write(data + segment.offset(), 0, interval.size()) != interval.size()) {
                 success = false;
             } else {
                 segment.offset(0);

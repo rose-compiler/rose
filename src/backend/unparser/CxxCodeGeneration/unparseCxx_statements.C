@@ -1289,6 +1289,8 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
 
 #if 0
      curprint ( string("\n/* Top of unparseLanguageSpecificStatement (Unparse_ExprStmt) " ) + stmt->class_name() + " */\n ");
+#endif
+#if 0
      ROSE_ASSERT(stmt->get_startOfConstruct() != NULL);
   // ROSE_ASSERT(stmt->getAttachedPreprocessingInfo() != NULL);
      int numberOfComments = -1;
@@ -10819,7 +10821,19 @@ Unparse_ExprStmt::unparseStaticAssertionDeclaration (SgStatement* stmt, SgUnpars
      SgStaticAssertionDeclaration* staticAssertionDeclaration = isSgStaticAssertionDeclaration(stmt);
      ROSE_ASSERT(staticAssertionDeclaration != NULL);
 
-     curprint("_Static_assert(");
+  // DQ (4/29/2017): This is the C11 syntax, and for C++11 we need the alternative syntax ("static_assert").
+  // curprint("_Static_assert(");
+     if (SageInterface::is_Cxx_language() == true)
+        {
+       // This must be C++11 (or later).
+          curprint("static_assert(");
+        }
+       else
+        {
+       // This must be C11 (or later).
+          curprint("_Static_assert(");
+        }
+
      unparseExpression(staticAssertionDeclaration->get_condition(), info);
      curprint(",\"");
   // unparseExpression(staticAssertionDeclaration->get_string_literal(), info);

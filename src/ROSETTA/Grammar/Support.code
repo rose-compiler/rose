@@ -17799,6 +17799,10 @@ SgUnparse_Info & SgUnparse_Info::operator= ( const SgUnparse_Info & X )
   // DQ (1/10/2014): Added to support token based unparsing.
      p_current_source_file = X.p_current_source_file;
 
+  // DQ (4/28/2017): Added information required for use of generated names in the output of types for template 
+  // arguments as used in symbol table lookup.
+     p_use_generated_name_for_template_arguments = X.p_use_generated_name_for_template_arguments;
+
      return *this;
    }
 
@@ -17908,6 +17912,10 @@ SgUnparse_Info::post_construction_initialization()
 
   // DQ (1/10/2014): Added to support token based unparsing.
      p_current_source_file = NULL;
+
+  // DQ (4/28/2017): Added information required for use of generated names in the output of types for template 
+  // arguments as used in symbol table lookup.
+     p_use_generated_name_for_template_arguments = false;
    }
 
 bool
@@ -18821,6 +18829,7 @@ SgUnparse_Info::display ( const std::string & label ) const
      printf ("p_array_index_list                     = %s \n",(p_array_index_list.is_null() == false) ? p_array_index_list.str() : "EmPtY sTrInG");
      printf ("p_current_namespace                    = %p \n",p_current_namespace);
      printf ("p_outputCodeGenerationFormatDelimiters = %s \n",p_outputCodeGenerationFormatDelimiters ? "true" : "false");
+
      printf ("p_current_function_call                = %p \n",p_current_function_call);
      printf ("p_current_scope                        = %p = %s \n",p_current_scope,p_current_scope != NULL ? p_current_scope->class_name().c_str() : "EmPtY sTrInG");
 
@@ -18834,6 +18843,10 @@ SgUnparse_Info::display ( const std::string & label ) const
 
   // DQ (1/10/2015): Added support for debugging the SgUnparse_Info object.
      printf ("p_current_source_file                  = %p = %s \n",p_current_source_file,p_current_source_file != NULL ? p_current_source_file->class_name().c_str() : "EmPtY sTrInG");
+
+  // DQ (4/28/2017): Added information required for use of generated names in the output of types for template 
+  // arguments as used in symbol table lookup.
+     printf ("p_use_generated_name_for_template_arguments = %s \n",p_use_generated_name_for_template_arguments ? "true" : "false");
    }
 
 string
