@@ -548,6 +548,11 @@ Grammar::setUpSupport ()
      Unparse_Info.setDataPrototype("SgSourceFile*","current_source_file","= NULL",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (4/28/2017): Added information required for use of generated names in the output of types for template 
+  // arguments as used in symbol table lookup.
+     Unparse_Info.setDataPrototype("bool","use_generated_name_for_template_arguments","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      BaseClass.setFunctionPrototype           ( "HEADER_BASECLASS", "../Grammar/Support.code");
      ExpBaseClass.setFunctionPrototype           ( "HEADER_EXP_BASE_CLASS", "../Grammar/Support.code");
 
