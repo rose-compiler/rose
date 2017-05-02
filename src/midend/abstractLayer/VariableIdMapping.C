@@ -540,6 +540,7 @@ bool VariableIdMapping::isVariableIdValid(VariableId varId) {
   * \author Markus Schordan
   * \date 2012.
  */
+// deprecated (use createAndRegisterVariableId instead)
 VariableId
 VariableIdMapping::createUniqueTemporaryVariableId(string name) {
   for(TemporaryVariableIdMapping::iterator i=temporaryVariableIdMapping.begin();
@@ -552,11 +553,30 @@ VariableIdMapping::createUniqueTemporaryVariableId(string name) {
     }
   }
   // temporary variable with name 'name' does not exist yet, create, register, and return
-  SgSymbol* sym=new UniqueTemporaryVariableSymbol(name);
-  registerNewSymbol(sym);
+  SgSymbol* sym=createAndRegisterNewSymbol(name);
   VariableId newVarId=variableId(sym);
   temporaryVariableIdMapping.insert(make_pair(newVarId,name));
   return newVarId;
+}
+
+SgSymbol* VariableIdMapping::createAndRegisterNewSymbol(std::string name) {
+  SgSymbol* sym=new UniqueTemporaryVariableSymbol(name);
+  registerNewSymbol(sym);
+  return sym;
+}
+
+SPRAY::VariableId VariableIdMapping::createAndRegisterNewVariableId(std::string name) {
+  SgSymbol* sym=createAndRegisterNewSymbol(name);
+  VariableId varId=variableId(sym);
+  setSize(varId,1); // default
+  return varId;
+}
+
+SPRAY::VariableId VariableIdMapping::createAndRegisterNewMemoryRegion(std::string name, int regionSize) {
+  SgSymbol* sym=createAndRegisterNewSymbol(name);
+  VariableId varId=variableId(sym);
+  setSize(varId,regionSize);
+  return varId;
 }
 
 void VariableIdMapping::registerNewArraySymbol(SgSymbol* sym, int arraySize) {
