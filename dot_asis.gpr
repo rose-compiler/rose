@@ -2,7 +2,11 @@ with "asis";
 
 project DOT_ASIS is
 
-   for Main use ("demo_dot.adb", "run_asis_tool_2.adb");
+   for Main use
+     ("demo_dot.adb",
+      "run_asis_tool_2.adb",
+      "test_command_switches.adb");
+
    for Object_Dir use "./obj";
 
    package Compiler is
