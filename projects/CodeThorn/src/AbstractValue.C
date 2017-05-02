@@ -453,7 +453,9 @@ string AbstractValue::toString(SPRAY::VariableIdMapping* vim) const {
   }
   case PTR: {
     stringstream ss;
-    ss<<"("<<variableId.toString(vim)<<","<<getIntValue()<<")";
+    ss<<"(";
+    ss<<variableId.toString(vim);
+    ss<<","<<getIntValue()<<")";
     return ss.str();
   }
   default:

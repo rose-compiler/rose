@@ -92,6 +92,9 @@ class VariableIdMapping {
   // get the size of a data structure represented by this variable-id. Currently only arrays are supported.
   size_t getSize(VariableId variableId);
 
+  SgSymbol* createAndRegisterNewSymbol(std::string name);
+  SPRAY::VariableId createAndRegisterNewVariableId(std::string name);
+  SPRAY::VariableId createAndRegisterNewMemoryRegion(std::string name, int regionSize);
   void registerNewSymbol(SgSymbol* sym);
   void registerNewArraySymbol(SgSymbol* sym, int arraySize);
   void toStream(std::ostream& os);

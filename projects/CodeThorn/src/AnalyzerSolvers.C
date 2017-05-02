@@ -241,6 +241,7 @@ void Analyzer::runSolver5() {
               // _csv_stg_trace_filename is the member-variable of analyzer
 #pragma omp critical
               {
+#if 0
                 fout.open(_stg_trace_filename.c_str(),ios::app);    // open file for appending
                 assert (!fout.fail( ));
                 fout<<"PSTATE-IN :"<<currentEStatePtr->pstate()->toString(&variableIdMapping);
@@ -252,6 +253,15 @@ void Analyzer::runSolver5() {
                 fout<<endl;
                 fout.close();
                 // logger[DEBUG] <<"generate STG-edge:"<<"ICFG-EDGE:"<<e.toString()<<endl;
+#else
+                cout<<"PSTATE-IN :"<<currentEStatePtr->pstate()->toString(&variableIdMapping)<<endl;
+                string sourceString=getCFAnalyzer()->getLabeler()->getNode(currentEStatePtr->label())->unparseToString().substr(0,40);
+                if(sourceString.size()==40) sourceString+="...";
+                cout<<sourceString<<endl;
+                cout<<"PSTATE-OUT:"<<newEState.pstate()->toString(&variableIdMapping)<<endl;
+                cout<<endl;
+#endif                
+
               }
             }
 

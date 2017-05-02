@@ -3333,9 +3333,10 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
             // logger[DEBUG]<<"pointer-array access!"<<endl;
             if(pstate2.varExists(arrayVarId)) {
               arrayPtrValue=pstate2[arrayVarId];
+              cout<<"DEBUG: arrayPtrValue: "<<arrayPtrValue.toString(_variableIdMapping);
               // convert integer to VariableId
               if(arrayPtrValue.isTop()||arrayPtrValue.isBot()) {
-                logger[ERROR] <<"pointer value in array access lhs is top or bot. Not supported yet."<<endl;
+                logger[ERROR] <<"pointer value in array access lhs "<<arrayPtrValue.toString(_variableIdMapping)<<" is top or bot. Not supported yet."<<endl;
                 exit(1);
               }
               // logger[DEBUG]<<"defering pointer-to-array: ptr:"<<_variableIdMapping->variableName(arrayVarId);
@@ -3353,14 +3354,18 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
           ROSE_ASSERT(res.size()==1); // TODO: temporary restriction
           AValue indexValue=(*(res.begin())).value();
           AValue arrayPtrPlusIndexValue=AbstractValue::operatorAdd(arrayPtrValue,indexValue);
+          cout<<"DEBUG: arrayPtrPlusIndexValue: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
 
           // TODO: rewrite to use AbstractValue only
-          VariableId arrayVarId2=arrayPtrPlusIndexValue.getVariableId();
-          int index2=arrayPtrPlusIndexValue.getIndexIntValue();
-          if(!exprAnalyzer.checkArrayBounds(arrayVarId2,index2)) {
-            cerr<<"Write access: "<<lhs->unparseToString()<<endl;
+          {
+            VariableId arrayVarId2=arrayPtrPlusIndexValue.getVariableId();
+            int index2=arrayPtrPlusIndexValue.getIndexIntValue();
+            if(!exprAnalyzer.checkArrayBounds(arrayVarId2,index2)) {
+              cerr<<"Write access: "<<lhs->unparseToString()<<endl;
+            }
           }
           arrayElementId=arrayPtrPlusIndexValue;
+          cout<<"DEBUG: arrayElementId: "<<arrayElementId.toString(_variableIdMapping)<<endl;
           //logger[TRACE]<<"arrayElementVarId:"<<arrayElementId.toString()<<":"<<_variableIdMapping->variableName(arrayVarId)<<" Index:"<<index<<endl;
           ROSE_ASSERT(!arrayElementId.isBot());
           // read value of variable var id (same as for VarRefExp - TODO: reuse)
@@ -3371,9 +3376,11 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
             estateList.push_back(createEState(edge.target(),pstate2,oldcset));
           } else {
             // check that array is constant array (it is therefore ok that it is not in the state)
-            logger[ERROR] <<"Error: lhs array-access index does not exist in state. Array element id:"<<arrayElementId.toString()<<" PState size:"<<pstate2.size()<<endl;
-            logger[ERROR]<<"PState:"<<pstate2.toString(getVariableIdMapping())<<endl;
-            exit(1);
+            logger[TRACE] <<"lhs array-access index does not exist in state (creating it now). Array element id:"<<arrayElementId.toString(_variableIdMapping)<<" PState size:"<<pstate2.size()<<endl;
+            logger[TRACE]<<"PState:"<<pstate2.toString(getVariableIdMapping())<<endl;
+            logger[TRACE]<<"TODO: check bounds of new entry."<<endl;
+            pstate2[arrayElementId]=(*i).value(); // *i is assignment-rhs evaluation result
+            estateList.push_back(createEState(edge.target(),pstate2,oldcset));
           }
         } else {
           logger[ERROR] <<"array-access uses expr for denoting the array. Not supported yet."<<endl;
@@ -3393,14 +3400,13 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
       if(lhsPointerValue.isTop()) {
         // special case. Expr evaluates to top (should be dereferenced)
         PState pstate2=*(estate->pstate());
-         estateList.push_back(createEState(edge.target(),pstate2,*(estate->constraints())));
+        estateList.push_back(createEState(edge.target(),pstate2,*(estate->constraints())));
       }
       if(!(lhsPointerValue.isPtr())) {
         cerr<<"Error: not a pointer value in dereference operator:"<<lhsPointerValue.toString()<<"<="<<lhs->unparseToString()<<endl;
         exit(1);
       }
-      cout<<lhsPointerValue.toString(getVariableIdMapping());
-      cout<<endl;
+      cout<<"DEBUG: lhsPointerValue:"<<lhsPointerValue.toString(getVariableIdMapping())<<endl;
       PState pstate2=*(estate->pstate());
       getExprAnalyzer()->writeToMemoryLocation(pstate2,lhsPointerValue,(*i).result);
       estateList.push_back(createEState(edge.target(),pstate2,*(estate->constraints())));

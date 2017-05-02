@@ -925,7 +925,12 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMalloc(SgFunctionCa
   stringstream ss;
   ss<<"memoryregion"<<memorylocid;
   ROSE_ASSERT(_variableIdMapping);
+  int memoryRegionSize=50; // TODO: malloc: set to allocated memory size
+#if 0
   VariableId memLocVarId=_variableIdMapping->createUniqueTemporaryVariableId(ss.str());
+#else
+  VariableId memLocVarId=_variableIdMapping->createAndRegisterNewMemoryRegion(ss.str(),memoryRegionSize);
+#endif
   AbstractValue allocatedMemoryPtr=AbstractValue::createAddressOfArray(memLocVarId);
   res.init(estate,*estate.constraints(),allocatedMemoryPtr);
   cout<<"DEBUG: evaluating (TODO) function call malloc:"<<funCall->unparseToString()<<endl;
@@ -967,6 +972,10 @@ AbstractValue ExprAnalyzer::readFromMemoryLocation(const PState* pState, Abstrac
 void ExprAnalyzer::writeToMemoryLocation(PState& pState,
                                          AbstractValue abstractMemLoc,
                                          AbstractValue abstractValue) {
+#if 0
   VariableId absoluteMemLoc=resolveToAbsoluteVariableId(abstractMemLoc);
   pState.setVariableToValue(absoluteMemLoc,abstractValue);
+#else
+  pState.setVariableToValue(abstractMemLoc,abstractValue);
+#endif
 }
