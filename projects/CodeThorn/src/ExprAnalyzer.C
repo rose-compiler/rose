@@ -719,6 +719,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
       }
       AbstractValue indexExprResultValue=indexExprResult.value();
       AbstractValue arrayPtrPlusIndexValue=AbstractValue::operatorAdd(arrayPtrValue,indexExprResultValue);
+#if 0
       VariableId arrayVarId2=arrayPtrPlusIndexValue.getVariableId();
       int index2=arrayPtrPlusIndexValue.getIntValue();
       if(!checkArrayBounds(arrayVarId2,index2)) {
@@ -726,11 +727,12 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
       }
       VariableId arrayElementId=_variableIdMapping->variableIdOfArrayElement(arrayVarId2,index2);
       ROSE_ASSERT(arrayElementId.isValid());
-      if(pstate->varExists(arrayElementId)) {
-        res.result=pstate2[arrayElementId];
+#endif
+      if(pstate->varExists(arrayPtrPlusIndexValue)) {
+        res.result=pstate2[arrayPtrPlusIndexValue];
         //cout<<"DEBUG: retrieved array element value:"<<res.result<<endl;
         if(res.result.isTop() && useConstraints) {
-          AbstractValue val=res.estate.constraints()->varAbstractValue(arrayElementId);
+          AbstractValue val=res.estate.constraints()->varAbstractValue(arrayPtrPlusIndexValue);
           res.result=val;
         }
         return listify(res);
@@ -751,6 +753,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
                 int intVal=intValNode->get_value();
                 //cout<<"DEBUG:initializing array element:"<<arrayElemId.toString()<<"="<<intVal<<endl;
                 //newPState.setVariableToValue(arrayElemId,CodeThorn::AValue(AbstractValue(intVal)));
+                int index2=arrayPtrPlusIndexValue.getIndexIntValue();
                 if(elemIndex==index2) {
                   AbstractValue val=AbstractValue(intVal);
                   res.result=val;
@@ -769,7 +772,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
           exit(1);
         } else {
           cerr<<"Error: Array Element does not exist (out of array access?)"<<endl;
-          cerr<<"array-element-id: "<<arrayElementId.toString()<<" name:"<<_variableIdMapping->variableName(arrayElementId)<<endl;
+          cerr<<"array-element: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
           cerr<<"PState: "<<pstate->toString(_variableIdMapping)<<endl;
           cerr<<"AST: "<<node->unparseToString()<<endl;
           exit(1);
