@@ -909,11 +909,9 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp*
     if(funName=="malloc") {
       return evalFunctionCallMalloc(funCall,estate,useConstraints);
     } else if(funName=="memcpy") {
-      cout<<"DETECTED: memcpy!"<<endl;
-      
-      return listify(res);
+      return evalFunctionCallMemCpy(funCall,estate,useConstraints);
     } else {
-      cout<<"WARNING: unknown external function ("<<funName<<") inside expression detected. Assuming it is side-effect free and arbitrary return value (type ignored)."<<endl;
+      cout<<"WARNING: unknown external function ("<<funName<<") inside expression detected. Assuming it is side-effect free."<<endl;
       return listify(res);
     }
   } else {
@@ -922,7 +920,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp*
   }
 }
 
-  list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMalloc(SgFunctionCallExp* funCall, EState estate, bool useConstraints) {
+list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMalloc(SgFunctionCallExp* funCall, EState estate, bool useConstraints) {
   SingleEvalResultConstInt res;
   static int memorylocid=0; // to be integrated in VariableIdMapping
   memorylocid++;
@@ -960,6 +958,72 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp*
   }
   return listify(res);
 }
+
+int ExprAnalyzer::getMemoryRegionSize(CodeThorn::AbstractValue ptrToRegion) {
+  ROSE_ASSERT(ptrToRegion.isPtr());
+  VariableId ptrVariableId=ptrToRegion.getVariableId();
+  //cout<<"DEBUG: ptrVariableId:"<<ptrVariableId<<" "<<_variableIdMapping->variableName(ptrVariableId)<<endl;
+  int size=_variableIdMapping->getSize(ptrVariableId);
+  return size;
+}
+
+list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMemCpy(SgFunctionCallExp* funCall, EState estate, bool useConstraints) {
+  //cout<<"DETECTED: memcpy: "<<funCall->unparseToString()<<endl;
+  SingleEvalResultConstInt res;
+  // memcpy is a void function, no return value
+  res.init(estate,*estate.constraints(),AbstractValue(CodeThorn::Top())); 
+  SgExpressionPtrList& argsList=SgNodeHelper::getFunctionCallActualParameterList(funCall);
+  if(argsList.size()==3) {
+    AbstractValue memcpyArgs[3];
+    int i=0;
+    for(SgExpressionPtrList::iterator argIter=argsList.begin();argIter!=argsList.end();++argIter) {
+      SgExpression* arg=*argIter;
+      list<SingleEvalResultConstInt> resList=evalConstInt(arg,estate,useConstraints);
+      if(resList.size()!=1) {
+        cerr<<"Error: conditional control-flow in function argument expression. Expression normalization required."<<endl;
+        exit(1);
+      }
+      SingleEvalResultConstInt sres=*resList.begin();
+      AbstractValue argVal=sres.result;
+      memcpyArgs[i++]=argVal;
+    }
+    // determine sizes of memory regions (refered to by pointer)
+    for(int i=0;i<3;i++) {
+      //cout<<"memcpy argument "<<i<<": "<<memcpyArgs[i].toString(_variableIdMapping)<<endl;
+    }
+    int memRegionSizeTarget=getMemoryRegionSize(memcpyArgs[0]);
+    int memRegionSizeSource=getMemoryRegionSize(memcpyArgs[1]);
+
+    //cout<<"DEBUG: memRegionSize target:"<<memRegionSizeTarget<<endl;
+    //cout<<"DEBUG: memRegionSize source:"<<memRegionSizeSource<<endl;
+    if(memcpyArgs[2].isTop()) {
+      cout<<"Program error detected at line "<<SgNodeHelper::sourceLineColumnToString(funCall)<<funCall->unparseToString()<<" : potential out of bounds access (source and target)."<<endl;
+      return listify(res);
+    }
+    int copyRegionSize=memcpyArgs[2].getIntValue();
+    cout<<"DEBUG: copyRegionSize:"<<copyRegionSize<<endl;
+    if(memRegionSizeSource<copyRegionSize) {
+      if(memRegionSizeSource==0) {
+        cout<<"Program error detected at line "<<SgNodeHelper::sourceLineColumnToString(funCall)<<": "<<funCall->unparseToString()<<" : potential out of bounds access at copy source."<<endl;
+      } else {
+        cout<<"Program error detected at line "<<SgNodeHelper::sourceLineColumnToString(funCall)<<": "<<funCall->unparseToString()<<" : definitive out of bounds access at copy source."<<endl;
+      }
+    }
+    if(memRegionSizeTarget<copyRegionSize) {
+      if(memRegionSizeTarget==0) {
+        cout<<"Program error detected at line "<<SgNodeHelper::sourceLineColumnToString(funCall)<<": "<<funCall->unparseToString()<<" : potential out of bounds access at copy target."<<endl;
+      } else {
+        cout<<"Program error detected at line "<<SgNodeHelper::sourceLineColumnToString(funCall)<<": "<<funCall->unparseToString()<<" : definitive out of bounds access at copy target."<<endl;
+      }
+    }
+    return listify(res);
+  } else {
+    // this will become an error in future
+    cerr<<"WARNING: unknown memcpy function (number of arguments != 3)"<<funCall->unparseToString()<<endl;
+  }
+  return listify(res);
+}
+
 
 bool ExprAnalyzer::checkArrayBounds(VariableId arrayVarId,int accessIndex) {
   // check array bounds

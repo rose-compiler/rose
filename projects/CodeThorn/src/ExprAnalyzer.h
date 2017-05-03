@@ -208,6 +208,8 @@ private:
   list<SingleEvalResultConstInt> evalValueExp(SgValueExp* node, EState estate, bool useConstraints);
 
   list<SingleEvalResultConstInt> evalFunctionCallMalloc(SgFunctionCallExp* funCall, EState estate, bool useConstraints);
+  list<SingleEvalResultConstInt> evalFunctionCallMemCpy(SgFunctionCallExp* funCall, EState estate, bool useConstraints);
+  int getMemoryRegionSize(CodeThorn::AbstractValue ptrToRegion);
 };
 
 } // end of namespace CodeThorn
