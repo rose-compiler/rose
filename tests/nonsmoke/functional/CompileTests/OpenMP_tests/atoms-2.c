@@ -1,3 +1,4 @@
+#include <omp.h>
 int atom()
 {
   int i=0;
