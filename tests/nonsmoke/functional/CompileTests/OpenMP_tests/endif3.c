@@ -17,6 +17,7 @@ int fib0 (int n)
 #endif
   }
   printf("Fibonacci result for %d is %d\n",n,par_res);
+  return par_res;
 }
 
 // hard case for ROSE: #endif is attached to printf
@@ -31,6 +32,7 @@ int fib1 (int n)
     par_res = fib1(n);
 #endif
 //  printf("Fibonacci result for %d is %d\n",n,par_res);
+   return par_res;
 }
 
 
@@ -47,4 +49,5 @@ int fib2 (int n)
   par_res = fib2(n);
 #endif
   }
+  return par_res;
 }

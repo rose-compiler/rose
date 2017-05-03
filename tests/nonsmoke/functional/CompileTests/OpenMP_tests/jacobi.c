@@ -59,7 +59,7 @@ void error_check(void);
 
 int main (void) 
 {
-  float toler;
+//  float toler;
   /*      printf("Input n,m (< %d) - grid dimension in x,y direction:\n",MSIZE); 
           scanf ("%d",&n);
           scanf ("%d",&m);

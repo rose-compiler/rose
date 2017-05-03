@@ -174,7 +174,7 @@ int main(int argc, char *argv[])
     int num_threads;
     REAL *u, *uold, *f;
     REAL dx,dy;
-    double seq_elapsed, omp_for_elapsed, acc_elapsed;
+    double omp_for_elapsed, acc_elapsed;
     int halosize = 1; 
     
 
@@ -214,7 +214,7 @@ int main(int argc, char *argv[])
         }
 
     }
-    double ompacc_time = read_timer();
+    //double ompacc_time = read_timer();
     acc_elapsed = omp_get_wtime();
     REAL* tmp;
     double* error;
@@ -242,7 +242,7 @@ int main(int argc, char *argv[])
         size = size + halosize;
 
       printf("thread %d working on GPU devices %d with size %d copying data from y_ompacc with offset %d\n",tid, tid, size,offset);
-    int i, j, k;
+    int k;
     k = 1;
     error_sum = 10.0 * tol;
     /* Copy new solution into old */
