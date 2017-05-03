@@ -25,6 +25,8 @@ package body Asis_Tool_2.Context is
         (This.Asis_Context,
          To_Wide_String (GNAT.Directory_Operations.Get_Current_Dir));
       Asis.Ada_Environments.Open (This.Asis_Context);
+      Trace_Put_Line ("Context info: " & Asis.Ada_Environments.Debug_Image
+                     (This.Asis_Context));
       This.Graph.Set_ID
         ("""" & To_String (Asis.Ada_Environments.Name (This.Asis_Context)) & """");
       This.Process_Units;

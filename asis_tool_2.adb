@@ -37,7 +37,7 @@ package body Asis_Tool_2 is
    procedure Trace_Put_Line (Message : in Wide_String) is
    begin
       if Trace_On then
-         Awti.Put_Line (Message);
+         Awti.Put_Line ("$$$ " & Message);
       end if;
    end Trace_Put_Line;
 

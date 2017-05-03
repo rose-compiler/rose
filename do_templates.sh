@@ -2,6 +2,10 @@
 #
 # 
 # Builds ASIS templates executable, and runs it on some test code.
+# 
+# Parameters:
+# -d  Turns on debug
+#
 
 # Prevents some informative error messages, so is usually commented out:
 #set -o errexit
@@ -15,7 +19,7 @@ script_dir=`(cd ${rel_script_dir}; pwd)`
 current_dir=`pwd`
 tool_name=run_asis_tool_2
 target_dir=./test_units
-target_units="test_unit"
+target_units="test_unit.adb"
 
 use_gnat () {
   # Make GNAT compiler and gprbuild available:
@@ -30,20 +34,16 @@ build_asis_tool () {
 }
 
 # Keeps going.  Returns 1 if any failed, 0 if all succeeded:
-generate_adt_files () {
-  status=0
-  log "Generating .adt files for specified units in ${target_dir}"
+process_units () {
+  status=0  
+  log "Processing specified files in ${target_dir} with ${tool_name}"
+  cd ${target_dir}
   for target_unit in ${target_units}
   do
-    log "Generating ${target_unit}.adt" 
-    (cd ${target_dir}; gcc -c -gnatct ${target_unit}.adb) || status=1
+    log "Processing ${target_unit}" 
+    log_and_run ${script_dir}/obj/${tool_name} -f ${target_unit} "$@" || status=1
   done
   return ${status}
-}
-
-run_asis_tool () {
-  log "Running ${tool_name} on all .adt files in ${target_dir}"
-  (cd ${target_dir}; ${script_dir}/obj/${tool_name})
 }
 
 log_start
@@ -51,8 +51,7 @@ log_invocation "$@"
 
 use_gnat
 log_and_run build_asis_tool    || exit $?
-log_and_run generate_adt_files || exit $?
-log_and_run run_asis_tool "$@" || exit $?
+log_and_run process_units "$@" || exit $?
 
 log_end
 
