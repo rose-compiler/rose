@@ -3341,8 +3341,8 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
             AbstractValue ptr=AbstractValue::createAddressOfArray(arrayVarId);
             if(pstate2.varExists(ptr)) {
               cout<<"DEBUG: pointer exists (OK): "<<ptr.toString(_variableIdMapping)<<endl;
-              //arrayPtrValue=pstate2[ptr]; 
-              arrayPtrValue=ptr;
+              arrayPtrValue=pstate2[ptr]; 
+              //arrayPtrValue=ptr;
               cout<<"DEBUG: arrayPtrValue: "<<arrayPtrValue.toString(_variableIdMapping)<<endl;
               // convert integer to VariableId
               if(arrayPtrValue.isTop()||arrayPtrValue.isBot()) {
@@ -3416,7 +3416,7 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
         cerr<<"Error: not a pointer value in dereference operator:"<<lhsPointerValue.toString()<<"<="<<lhs->unparseToString()<<endl;
         exit(1);
       }
-      cout<<"DEBUG: lhsPointerValue:"<<lhsPointerValue.toString(getVariableIdMapping())<<endl;
+      //cout<<"DEBUG: lhsPointerValue:"<<lhsPointerValue.toString(getVariableIdMapping())<<endl;
       PState pstate2=*(estate->pstate());
       getExprAnalyzer()->writeToMemoryLocation(pstate2,lhsPointerValue,(*i).result);
       estateList.push_back(createEState(edge.target(),pstate2,*(estate->constraints())));

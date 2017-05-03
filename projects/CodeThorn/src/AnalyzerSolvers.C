@@ -241,7 +241,7 @@ void Analyzer::runSolver5() {
               // _csv_stg_trace_filename is the member-variable of analyzer
 #pragma omp critical
               {
-#if 0
+#if 1
                 fout.open(_stg_trace_filename.c_str(),ios::app);    // open file for appending
                 assert (!fout.fail( ));
                 fout<<"PSTATE-IN :"<<currentEStatePtr->pstate()->toString(&variableIdMapping);

@@ -682,6 +682,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
                                  SingleEvalResultConstInt arrayExprResult, 
                                  SingleEvalResultConstInt indexExprResult,
                                  EState estate, bool useConstraints) {
+  //cout<<"DEBUG: evalArrayReferenceOp: "<<node->unparseToString()<<endl;
   list<SingleEvalResultConstInt> resultList;
   SingleEvalResultConstInt res;
   res.estate=estate;
@@ -837,14 +838,17 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalDereferenceOp(SgPointerDerefExp
   SingleEvalResultConstInt res;
   res.estate=estate;
   AbstractValue derefOperandValue=operandResult.result;
+  //cout<<"DEBUG: derefOperandValue: "<<derefOperandValue.toRhsString(_variableIdMapping);
   // (varid,idx) => varid'; return estate.pstate()[varid'] || pstate(AValue)
-  res.result=readFromMemoryLocation(estate.pstate(), derefOperandValue);
+  //res.result=readFromMemoryLocation(estate.pstate(), derefOperandValue);
+  res.result=derefOperandValue;
   res.exprConstraints=operandResult.exprConstraints;
   return listify(res);
 }
 
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarExp(SgVarRefExp* node, EState estate, bool useConstraints) {
+  //cout<<"DEBUG: evalRValueVarExp: "<<node->unparseToString()<<endl;
   SingleEvalResultConstInt res;
   res.init(estate,*estate.constraints(),AbstractValue(CodeThorn::Bot()));
   const PState* pstate=estate.pstate();
@@ -900,7 +904,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp*
     // return default value
     return listify(res);
   } else if(getExternalFunctionSemantics()) {
-    cout<<"DEBUG: FOUND function call inside expression (external): "<<funCall->unparseToString()<<endl;
+    //cout<<"DEBUG: FOUND function call inside expression (external): "<<funCall->unparseToString()<<endl;
     string funName=SgNodeHelper::getFunctionName(funCall);
     if(funName=="malloc") {
       return evalFunctionCallMalloc(funCall,estate,useConstraints);
@@ -909,7 +913,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp*
       
       return listify(res);
     } else {
-      cout<<"WARNING: unknown external function "<<funName<<". Assuming it is side-effect free and arbitrary return value (type ignored)."<<endl;
+      cout<<"WARNING: unknown external function ("<<funName<<") inside expression detected. Assuming it is side-effect free and arbitrary return value (type ignored)."<<endl;
       return listify(res);
     }
   } else {
@@ -946,10 +950,10 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp*
     memLocVarId=_variableIdMapping->createAndRegisterNewMemoryRegion(ss.str(),memoryRegionSize);
     AbstractValue allocatedMemoryPtr=AbstractValue::createAddressOfArray(memLocVarId);
     res.init(estate,*estate.constraints(),allocatedMemoryPtr);
-    cout<<"DEBUG: evaluating (TODO) function call malloc:"<<funCall->unparseToString()<<endl;
+    //cout<<"DEBUG: evaluating function call malloc:"<<funCall->unparseToString()<<endl;
     ROSE_ASSERT(allocatedMemoryPtr.isPtr());
-    cout<<"Generated malloc-allocated mem-chunk pointer is OK."<<endl;
-    return listify(sres);
+    //cout<<"Generated malloc-allocated mem-chunk pointer is OK."<<endl;
+    return listify(res);
   } else {
     // this will become an error in future
     cerr<<"WARNING: unknown malloc function "<<funCall->unparseToString()<<endl;
