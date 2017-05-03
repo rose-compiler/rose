@@ -710,8 +710,15 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
           // not supported yet
           cerr<<"WARNING: class type in variable declaration not supported yet."<<endl;
           //exit(1);
+        } else if(variableIdMapping.hasPointerType(initDeclVarId)) {
+          // create pointer value and set it to top (=any value possible (uninitialized))
+          AbstractValue pointerVal=AbstractValue::createAddressOfVariable(initDeclVarId);
+          newPState.setVariableToTop(pointerVal);
         } else {
-          // set it to top (=any value possible (uninitialized))
+          // set it to top (=any value possible (uninitialized)); this
+          // default case also creates an address due to implicit type
+          // conversion. However, it should become an error-path once
+          // all cases are addressed explicitly above.
           newPState.setVariableToTop(initDeclVarId);
         }
         return createEState(targetLabel,newPState,cset);
@@ -3326,14 +3333,17 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
           AValue arrayPtrValue;
           // two cases
           if(_variableIdMapping->hasArrayType(arrayVarId)) {
-            // create array element 0 (in preparation to have index added, or, if not index is used, it is already the right index (=0).
+            // create array element 0 (in preparation to have index added, or, if not index is used, it is already the correct index (=0).
             arrayPtrValue=AbstractValue::createAddressOfArray(arrayVarId);
           } else if(_variableIdMapping->hasPointerType(arrayVarId)) {
             // in case it is a pointer retrieve pointer value
             // logger[DEBUG]<<"pointer-array access!"<<endl;
-            if(pstate2.varExists(arrayVarId)) {
-              arrayPtrValue=pstate2[arrayVarId];
-              cout<<"DEBUG: arrayPtrValue: "<<arrayPtrValue.toString(_variableIdMapping);
+            AbstractValue ptr=AbstractValue::createAddressOfArray(arrayVarId);
+            if(pstate2.varExists(ptr)) {
+              cout<<"DEBUG: pointer exists (OK): "<<ptr.toString(_variableIdMapping)<<endl;
+              //arrayPtrValue=pstate2[ptr]; 
+              arrayPtrValue=ptr;
+              cout<<"DEBUG: arrayPtrValue: "<<arrayPtrValue.toString(_variableIdMapping)<<endl;
               // convert integer to VariableId
               if(arrayPtrValue.isTop()||arrayPtrValue.isBot()) {
                 logger[ERROR] <<"pointer value in array access lhs "<<arrayPtrValue.toString(_variableIdMapping)<<" is top or bot. Not supported yet."<<endl;

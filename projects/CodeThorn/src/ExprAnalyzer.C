@@ -918,26 +918,42 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp*
   }
 }
 
-list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMalloc(SgFunctionCallExp* funCall, EState estate, bool useConstraints) {
+  list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMalloc(SgFunctionCallExp* funCall, EState estate, bool useConstraints) {
   SingleEvalResultConstInt res;
-  static int memorylocid=0; // temporary
+  static int memorylocid=0; // to be integrated in VariableIdMapping
   memorylocid++;
   stringstream ss;
-  ss<<"memoryregion"<<memorylocid;
+  ss<<"$MEM"<<memorylocid;
   ROSE_ASSERT(_variableIdMapping);
-  int memoryRegionSize=50; // TODO: malloc: set to allocated memory size
-#if 0
-  VariableId memLocVarId=_variableIdMapping->createUniqueTemporaryVariableId(ss.str());
-#else
-  VariableId memLocVarId=_variableIdMapping->createAndRegisterNewMemoryRegion(ss.str(),memoryRegionSize);
-#endif
-  AbstractValue allocatedMemoryPtr=AbstractValue::createAddressOfArray(memLocVarId);
-  res.init(estate,*estate.constraints(),allocatedMemoryPtr);
-  cout<<"DEBUG: evaluating (TODO) function call malloc:"<<funCall->unparseToString()<<endl;
-  ROSE_ASSERT(allocatedMemoryPtr.isPtr());
-  cout<<"Generated malloc-allocated mem-chunk pointer is OK."<<endl;
-  // 1) TODO eval function call param
-  // 2) return allocated memory value pointer (register in memory allocator)
+  SgExpressionPtrList& argsList=SgNodeHelper::getFunctionCallActualParameterList(funCall);
+  if(argsList.size()==1) {
+    SgExpression* arg1=*argsList.begin();
+    list<SingleEvalResultConstInt> resList=evalConstInt(arg1,estate,useConstraints);
+    if(resList.size()!=1) {
+      cerr<<"Error: conditional control-flow in function argument expression not supported. Expression normalization required."<<endl;
+      exit(1);
+    }
+    SingleEvalResultConstInt sres=*resList.begin();
+    AbstractValue arg1val=sres.result;
+    VariableId memLocVarId;
+    int memoryRegionSize;
+    if(arg1val.isConstInt()) {
+      memoryRegionSize=arg1val.getIntValue();
+    } else {
+      // unknown size
+      memoryRegionSize=0;
+    }
+    memLocVarId=_variableIdMapping->createAndRegisterNewMemoryRegion(ss.str(),memoryRegionSize);
+    AbstractValue allocatedMemoryPtr=AbstractValue::createAddressOfArray(memLocVarId);
+    res.init(estate,*estate.constraints(),allocatedMemoryPtr);
+    cout<<"DEBUG: evaluating (TODO) function call malloc:"<<funCall->unparseToString()<<endl;
+    ROSE_ASSERT(allocatedMemoryPtr.isPtr());
+    cout<<"Generated malloc-allocated mem-chunk pointer is OK."<<endl;
+    return listify(sres);
+  } else {
+    // this will become an error in future
+    cerr<<"WARNING: unknown malloc function "<<funCall->unparseToString()<<endl;
+  }
   return listify(res);
 }
 
@@ -954,6 +970,7 @@ bool ExprAnalyzer::checkArrayBounds(VariableId arrayVarId,int accessIndex) {
 }
 
 // compute absolute variableId as encoded in the VariableIdMapping.
+// obsolete with new domain
 SPRAY::VariableId ExprAnalyzer::resolveToAbsoluteVariableId(AbstractValue abstrValue) const {
   VariableId arrayVarId2=abstrValue.getVariableId();
   int index2=abstrValue.getIntValue();
@@ -966,7 +983,11 @@ AbstractValue ExprAnalyzer::readFromMemoryLocation(const PState* pState, Abstrac
     cout<<"WARNING: reading from unknown memory location (top)."<<endl;
     return abstrValue;
   }
+#if 0
   return pState->varValue(resolveToAbsoluteVariableId(abstrValue));
+#else
+  return pState->varValue(abstrValue);
+#endif
 }
 
 void ExprAnalyzer::writeToMemoryLocation(PState& pState,
@@ -976,6 +997,10 @@ void ExprAnalyzer::writeToMemoryLocation(PState& pState,
   VariableId absoluteMemLoc=resolveToAbsoluteVariableId(abstractMemLoc);
   pState.setVariableToValue(absoluteMemLoc,abstractValue);
 #else
+  if(abstractValue.isBot()) {
+    //cout<<"INFO: conversion: bot(uninitialized)->top(any)."<<endl;
+    abstractValue=AbstractValue(CodeThorn::Top());
+  }
   pState.setVariableToValue(abstractMemLoc,abstractValue);
 #endif
 }

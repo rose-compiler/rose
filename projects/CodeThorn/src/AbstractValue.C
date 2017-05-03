@@ -80,6 +80,10 @@ AbstractValue::AbstractValue(unsigned long long int x) {
 }
 
 AbstractValue 
+AbstractValue::createAddressOfVariable(SPRAY::VariableId varId) {
+  return AbstractValue::createAddressOfArray(varId);
+}
+AbstractValue 
 AbstractValue::createAddressOfArray(SPRAY::VariableId arrayVarId) {
   return AbstractValue::createAddressOfArrayElement(arrayVarId,AbstractValue(0));
 }
