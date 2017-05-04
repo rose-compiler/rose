@@ -9,7 +9,7 @@ static double a[NUMELEMENT];
 
 static void init(void)
 {
-  int i,j,k;
+  int i=0,j;
    i=i+5; 
 /*assume onthread 1,3 */
 #pragma omp for

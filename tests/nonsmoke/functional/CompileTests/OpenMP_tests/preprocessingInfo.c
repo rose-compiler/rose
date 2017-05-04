@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <omp.h>
 int main (void)
 {
   int mits=5000;

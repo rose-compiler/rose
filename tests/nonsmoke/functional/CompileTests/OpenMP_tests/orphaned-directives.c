@@ -8,7 +8,7 @@ static double a[1000];
 
 static void init(void)
 {
-  int i;
+  int i=0;
   i=i+5; 
 #pragma omp for
   for (i=0;i<1000;i++)
