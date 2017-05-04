@@ -12,7 +12,7 @@ AM_CPPFLAGS =  \
         $(ROSE_INCLUDES) \
         -I$(top_srcdir)/src/frontend/SageIII/sageInterface
 # We install a few test programs since they might be useful for external users
-bin_PROGRAMS = loopInterchange loopUnrolling loopTiling loopCollapsingDirective loopCollapsing rajaChecker 
+bin_PROGRAMS = loopInterchange loopUnrolling loopTiling loopCollapsingDirective loopCollapsing 
 #moveDeclarationToInnermostScope is moved to rose/tools/
 
 #not for installation
@@ -100,7 +100,8 @@ loopCollapsingDirective_SOURCES           = loopCollapsingDirective.C
 createAbstractHandles_SOURCES             = createAbstractHandles.C
 buildStatementFromString_SOURCES          = buildStatementFromString.C
 interfaceFunctionCoverage_SOURCES         = interfaceFunctionCoverage.C
-rajaChecker_SOURCES                       = rajaChecker.C
+# moved to rose/tools
+#rajaChecker_SOURCES                       = rajaChecker.C
 # libsageInterface.la is included in rose.la already?
 LDADD =  $(ROSE_LIBS)
 
@@ -164,30 +165,6 @@ generatedCodeExamples = \
   rose_inputloopCollapsing_5.C\
   rose_inputbuildStatementFromString.C \
   buildJavaPackage.passed
-
-# DQ (4/12/2017): This needs more restrictions to be included in ROSE Matrix testing.
-# Restricted to GNU compilers and version EDG 4.9 for only GNU version 4.8, and EDG 4.12 
-# for later versions of GNU compilers. We can relax this constraints later if approriate.
-# C++ 11 features need GCC 4.8 and later
-# Liao 4/10/2017
-if USING_GNU_COMPILER
-if ROSE_USE_EDG_VERSION_4_9
-# Restrict to GNU 4.8 for use with EDG 4.9
-if !ROSE_USING_GCC_VERSION_LATER_4_9
-if ROSE_USING_GCC_VERSION_LATER_4_8
-generatedCodeExamples += \
-  rose_inputrajaChecker.C
-endif
-endif
-else
-# Using EDG 4.12 and later.
-if ROSE_USING_GCC_VERSION_LATER_4_9
-generatedCodeExamples += \
-  rose_inputrajaChecker.C
-endif
-endif
-endif
-
 
 # DQ (2/27/2017): Exclude the GNU 4.9 compiler as well (fails on Ubuntu16.04).
 # DQ (2/8/2017): This test will sometimes fail on GNU 5.1 and later compilers.
@@ -566,15 +543,6 @@ $(group3): rose_%: % $(group3_headers)
 		INPUT=$(abspath $<) \
 		$(srcdir)/astInterface.conf $@.passed
 
-# special options for raja checker 
-rose_inputrajaChecker.C: inputrajaChecker.C rajaChecker
-	@$(RTH_RUN) \
-		EXE="$$(pwd)/rajaChecker$(EXEEXT)" \
-		FLAGS="$(TEST_CXXFLAGS) -rose:Cxx11_only" \
-		INPUT=$(abspath $<) \
-		$(srcdir)/astInterface.conf $@.passed
-
-
 # Doesn't produce any output source files
 buildJavaPackage.passed: inputbuildJavaPackage.C buildJavaPackage
 	@$(RTH_RUN) \
@@ -611,8 +579,7 @@ EXTRA_DIST = astInterface.conf inputBlank1.C inputBlank2.C inputfindMain.C input
        inputbuildLabelStatement2.f inputreplaceWithPattern.C inputinsertBeforeUsingCommaOp.C			\
        inputinsertAfterUsingCommaOp.C inputdeepCopy.C inputfixVariableReferences.C  inputcreateAbstractHandles.C \
        inputloopCollapsing_2.C  inputloopCollapsing_3.C  inputloopCollapsing_4.C  inputloopCollapsing_5.C \
-       inputbuildJavaPackage.C inputloopCollapsing_1.C inputbuildStatementFromString.C inputinterfaceFunctionCoverage.C \
-       inputrajaChecker.C
+       inputbuildJavaPackage.C inputloopCollapsing_1.C inputbuildStatementFromString.C inputinterfaceFunctionCoverage.C 
 
 # JP (10/4/14): Added the unit tests
 unit-tests:

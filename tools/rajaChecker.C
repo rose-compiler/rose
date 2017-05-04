@@ -158,8 +158,8 @@ void RoseVisitor::visit ( SgNode* n)
         // Check if the lambda expression is used as a parameter of RAJA function call
         if (isRAJATemplateFunctionCallParameter (le, & raja_func))
         {
-          cout<<"Found a lambda exp within RAJA func call ..."<<endl; 
-          le->get_file_info()->display();
+         cout<<"Found a lambda exp within RAJA func call ..."<<endl; 
+          //le->get_file_info()->display();
           cout<<"RAJA func name is:"<<
           raja_func->get_name()<<endl;
           // scan the function body for data member accesses. 
@@ -180,15 +180,15 @@ main ( int argc, char* argv[])
   RoseVisitor visitor;
 
   SgFilePtrList file_ptr_list = project->get_fileList();
-  for (size_t i = 0; i<file_ptr_list.size(); i++)                                                                                          
-  {                                                                                                                                        
-    SgFile* cur_file = file_ptr_list[i];                                                                                                   
-    SgSourceFile* s_file = isSgSourceFile(cur_file);                                                                                       
-    if (s_file != NULL)                                                                                                                    
-    {                                                                                                                                      
-      visitor.traverseWithinFile(s_file, preorder);                                                                               
-    }                                                                                                                                      
-  }            
+  for (size_t i = 0; i<file_ptr_list.size(); i++)
+  {
+    SgFile* cur_file = file_ptr_list[i];
+    SgSourceFile* s_file = isSgSourceFile(cur_file); 
+    if (s_file != NULL)
+    {
+      visitor.traverseWithinFile(s_file, preorder); 
+    }
+  }
 
   return backend(project);
 }
