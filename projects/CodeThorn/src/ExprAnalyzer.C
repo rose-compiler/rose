@@ -989,7 +989,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMemCpy(SgFunctionCa
     }
     // determine sizes of memory regions (refered to by pointer)
     for(int i=0;i<3;i++) {
-      //cout<<"memcpy argument "<<i<<": "<<memcpyArgs[i].toString(_variableIdMapping)<<endl;
+      cout<<"memcpy argument "<<i<<": "<<memcpyArgs[i].toString(_variableIdMapping)<<endl;
     }
     int memRegionSizeTarget=getMemoryRegionSize(memcpyArgs[0]);
     int memRegionSizeSource=getMemoryRegionSize(memcpyArgs[1]);
@@ -1001,19 +1001,19 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMemCpy(SgFunctionCa
       return listify(res);
     }
     int copyRegionSize=memcpyArgs[2].getIntValue();
-    cout<<"DEBUG: copyRegionSize:"<<copyRegionSize<<endl;
+    //cout<<"DEBUG: copyRegionSize:"<<copyRegionSize<<endl;
     if(memRegionSizeSource<copyRegionSize) {
       if(memRegionSizeSource==0) {
         cout<<"Program error detected at line "<<SgNodeHelper::sourceLineColumnToString(funCall)<<": "<<funCall->unparseToString()<<" : potential out of bounds access at copy source."<<endl;
       } else {
-        cout<<"Program error detected at line "<<SgNodeHelper::sourceLineColumnToString(funCall)<<": "<<funCall->unparseToString()<<" : definitive out of bounds access at copy source."<<endl;
+        cout<<"Program error detected at line "<<SgNodeHelper::sourceLineColumnToString(funCall)<<": "<<funCall->unparseToString()<<" : definitive out of bounds access at copy source - memcpy(["<<memRegionSizeTarget<<"],["<<memRegionSizeSource<<"],"<<copyRegionSize<<")"<<endl;
       }
     }
     if(memRegionSizeTarget<copyRegionSize) {
       if(memRegionSizeTarget==0) {
         cout<<"Program error detected at line "<<SgNodeHelper::sourceLineColumnToString(funCall)<<": "<<funCall->unparseToString()<<" : potential out of bounds access at copy target."<<endl;
       } else {
-        cout<<"Program error detected at line "<<SgNodeHelper::sourceLineColumnToString(funCall)<<": "<<funCall->unparseToString()<<" : definitive out of bounds access at copy target."<<endl;
+        cout<<"Program error detected at line "<<SgNodeHelper::sourceLineColumnToString(funCall)<<": "<<funCall->unparseToString()<<" : definitive out of bounds access at copy target - memcpy(["<<memRegionSizeTarget<<"],["<<memRegionSizeSource<<"],"<<copyRegionSize<<")"<<endl;
       }
     }
     return listify(res);
