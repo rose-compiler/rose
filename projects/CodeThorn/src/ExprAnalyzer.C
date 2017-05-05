@@ -989,31 +989,46 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMemCpy(SgFunctionCa
     }
     // determine sizes of memory regions (refered to by pointer)
     for(int i=0;i<3;i++) {
-      cout<<"memcpy argument "<<i<<": "<<memcpyArgs[i].toString(_variableIdMapping)<<endl;
+      //cout<<"memcpy argument "<<i<<": "<<memcpyArgs[i].toString(_variableIdMapping)<<endl;
     }
     int memRegionSizeTarget=getMemoryRegionSize(memcpyArgs[0]);
     int memRegionSizeSource=getMemoryRegionSize(memcpyArgs[1]);
-
+    
     //cout<<"DEBUG: memRegionSize target:"<<memRegionSizeTarget<<endl;
     //cout<<"DEBUG: memRegionSize source:"<<memRegionSizeSource<<endl;
     if(memcpyArgs[2].isTop()) {
       cout<<"Program error detected at line "<<SgNodeHelper::sourceLineColumnToString(funCall)<<funCall->unparseToString()<<" : potential out of bounds access (source and target)."<<endl;
       return listify(res);
     }
+    bool errorDetected=false;
     int copyRegionSize=memcpyArgs[2].getIntValue();
     //cout<<"DEBUG: copyRegionSize:"<<copyRegionSize<<endl;
     if(memRegionSizeSource<copyRegionSize) {
       if(memRegionSizeSource==0) {
         cout<<"Program error detected at line "<<SgNodeHelper::sourceLineColumnToString(funCall)<<": "<<funCall->unparseToString()<<" : potential out of bounds access at copy source."<<endl;
+        errorDetected=true;
       } else {
-        cout<<"Program error detected at line "<<SgNodeHelper::sourceLineColumnToString(funCall)<<": "<<funCall->unparseToString()<<" : definitive out of bounds access at copy source - memcpy(["<<memRegionSizeTarget<<"],["<<memRegionSizeSource<<"],"<<copyRegionSize<<")"<<endl;
+        cout<<"Program error detected at line "<<SgNodeHelper::sourceLineColumnToString(funCall)<<": "<<funCall->unparseToString()<<" : definitive out of bounds access at copy source - memcpy(["<<(memRegionSizeTarget>0?std::to_string(memRegionSizeTarget):"-")<<"],["<<memRegionSizeSource<<"],"<<copyRegionSize<<")"<<endl;
+        errorDetected=true;
       }
     }
     if(memRegionSizeTarget<copyRegionSize) {
       if(memRegionSizeTarget==0) {
         cout<<"Program error detected at line "<<SgNodeHelper::sourceLineColumnToString(funCall)<<": "<<funCall->unparseToString()<<" : potential out of bounds access at copy target."<<endl;
+        errorDetected=true;
       } else {
-        cout<<"Program error detected at line "<<SgNodeHelper::sourceLineColumnToString(funCall)<<": "<<funCall->unparseToString()<<" : definitive out of bounds access at copy target - memcpy(["<<memRegionSizeTarget<<"],["<<memRegionSizeSource<<"],"<<copyRegionSize<<")"<<endl;
+        cout<<"Program error detected at line "<<SgNodeHelper::sourceLineColumnToString(funCall)<<": "<<funCall->unparseToString()<<" : definitive out of bounds access at copy target - memcpy(["<<(memRegionSizeTarget>0?std::to_string(memRegionSizeTarget):"-")<<"],["<<memRegionSizeSource<<"],"<<copyRegionSize<<")"<<endl;
+        errorDetected=true;
+      }
+    }
+    if(!errorDetected) {
+      // no error occured. Copy region.
+      cout<<"DEBUG: copy region now. "<<endl;
+      for(int i=0;i<copyRegionSize;i++) {
+        AbstractValue index(i);
+        AbstractValue targetPtr=memcpyArgs[0]+index;
+        AbstractValue sourcePtr=memcpyArgs[1]+index;
+        cout<<"DEBUG: copying "<<targetPtr.toString(_variableIdMapping)<<" from "<<sourcePtr.toString(_variableIdMapping)<<endl;
       }
     }
     return listify(res);

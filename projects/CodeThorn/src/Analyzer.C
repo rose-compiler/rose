@@ -3386,8 +3386,8 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
             estateList.push_back(createEState(edge.target(),pstate2,oldcset));
           } else {
             // check that array is constant array (it is therefore ok that it is not in the state)
-            logger[TRACE] <<"lhs array-access index does not exist in state (creating it now). Array element id:"<<arrayElementId.toString(_variableIdMapping)<<" PState size:"<<pstate2.size()<<endl;
-            logger[TRACE]<<"PState:"<<pstate2.toString(getVariableIdMapping())<<endl;
+            //logger[TRACE] <<"lhs array-access index does not exist in state (creating it now). Array element id:"<<arrayElementId.toString(_variableIdMapping)<<" PState size:"<<pstate2.size()<<endl;
+            //logger[TRACE]<<"PState:"<<pstate2.toString(getVariableIdMapping())<<endl;
             pstate2[arrayElementId]=(*i).value(); // *i is assignment-rhs evaluation result
             estateList.push_back(createEState(edge.target(),pstate2,oldcset));
           }

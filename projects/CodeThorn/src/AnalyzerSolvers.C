@@ -254,14 +254,13 @@ void Analyzer::runSolver5() {
                 fout.close();
                 // logger[DEBUG] <<"generate STG-edge:"<<"ICFG-EDGE:"<<e.toString()<<endl;
 #else
-                cout<<"PSTATE-IN :"<<currentEStatePtr->pstate()->toString(&variableIdMapping)<<endl;
+                logger[TRACE]<<"PSTATE-IN :"<<currentEStatePtr->pstate()->toString(&variableIdMapping)<<endl;
                 string sourceString=getCFAnalyzer()->getLabeler()->getNode(currentEStatePtr->label())->unparseToString().substr(0,40);
                 if(sourceString.size()==40) sourceString+="...";
-                cout<<sourceString<<endl;
-                cout<<"PSTATE-OUT:"<<newEState.pstate()->toString(&variableIdMapping)<<endl;
-                cout<<endl;
+                logger[TRACE]<<sourceString<<endl;
+                logger[TRACE]<<"PSTATE-OUT:"<<newEState.pstate()->toString(&variableIdMapping)<<endl;
+                logger[TRACE]<<endl;
 #endif                
-
               }
             }
 
