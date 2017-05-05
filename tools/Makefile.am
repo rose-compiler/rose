@@ -9,6 +9,11 @@ bin_SCRIPTS =
 AM_CPPFLAGS = $(ROSE_INCLUDES)
 AM_LDFLAGS = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+EXTRA_DIST += tests
+
+#-------------- only for C/C++
+if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
+
 bin_PROGRAMS = moveDeclarationToInnermostScope rajaChecker
 
 moveDeclarationToInnermostScope_SOURCES = moveDeclarationToInnermostScope.C
@@ -48,9 +53,10 @@ rose_inputrajaChecker.C: $(top_srcdir)/tools/tests/inputrajaChecker.C rajaChecke
 # regular for loop
 rose_nodalAccPattern1.cpp: $(top_srcdir)/tools/tests/nodalAccPattern1.cpp rajaChecker
 	./rajaChecker -c $<
-EXTRA_DIST += tests
 
 check: $(generatedCodeExamples)
 
 clean:
 	rm -rf rose_*.C rose_*.cpp rose*.cxx
+
+endif	
