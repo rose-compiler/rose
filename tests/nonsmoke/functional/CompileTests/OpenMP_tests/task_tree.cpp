@@ -38,7 +38,7 @@ void process(node* n)
   printf("Found node %d\n",n->id);
 }
 
-void traverse (struct node *p)
+void traverse (node *p)
 {
   //process(p); // pre-order
   if (p->left)
@@ -58,7 +58,7 @@ void traverse (struct node *p)
 }
 
 
-struct node * tree;
+node * tree;
 /*!
  *      1
  *     /  \
