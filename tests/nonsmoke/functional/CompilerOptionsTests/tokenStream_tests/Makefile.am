@@ -7,6 +7,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # if ROSE_USE_BOOST_WAVE
 
 AM_CPPFLAGS = $(ROSE_INCLUDES)
+AM_LDFLAGS = $(ROSE_RPATHS)
 
 # This is a shorted list that tests more quickly.
 TESTCODES_REQUIRED_TO_PASS = \
@@ -44,7 +45,7 @@ bin_PROGRAMS = main
 main_SOURCES = \
    main.C
 
-LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+LDADD = $(ROSE_SEPARATE_LIBS)
 
 # testMain: main
 #	$(VALGRIND) ./main -c $(srcdir)/tests/inputCode_main.C

@@ -1,10 +1,11 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 AM_CPPFLAGS = $(ROSE_INCLUDES)
+AM_LDFLAGS = $(ROSE_RPATHS)
 
 noinst_PROGRAMS= ssaTestHarness
 ssaTestHarness_SOURCES = ssaTestHarness.C
-ssaTestHarness_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+ssaTestHarness_LDADD = $(ROSE_LIBS)
 
 # EXTRA_DIST are files that are not compiled or installed. These include readme's, internal header files, etc.
 EXTRA_DIST = 

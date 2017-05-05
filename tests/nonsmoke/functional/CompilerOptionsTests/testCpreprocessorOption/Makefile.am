@@ -3,6 +3,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/tests/nonsmoke/functional/CompilerOptionsTests/A++Code -I$(srcdir)
 AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(srcdir)
+AM_LDFLAGS = $(ROSE_RPATHS)
 
 # DQ (12/5/2007): A++ does not compile with g++ version 4 and greater so the source
 # code has been modified to skip the code when #if ( (__GNUC__ == 3) && (__GNUC_MINOR__ <= 4) )

@@ -13,8 +13,9 @@ EXTRA_DIST += check_rose_output
 TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 
 # All these executables have the same includes and libraries
-AM_CPPFLAGS = $(ROSE_INCLUDES) 
-LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
+AM_LDFLAGS = $(ROSE_RPATHS)
+LDADD = $(ROSE_SEPARATE_LIBS)
 
 #-------------------------------------------------------------------------------------------------------------------------------
 # preTest

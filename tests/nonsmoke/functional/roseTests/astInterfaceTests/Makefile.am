@@ -11,6 +11,9 @@ TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 AM_CPPFLAGS =  \
         $(ROSE_INCLUDES) \
         -I$(top_srcdir)/src/frontend/SageIII/sageInterface
+
+AM_LDFLAGS = $(ROSE_RPATHS)
+
 # We install a few test programs since they might be useful for external users
 bin_PROGRAMS = loopInterchange loopUnrolling loopTiling loopCollapsingDirective loopCollapsing rajaChecker 
 #moveDeclarationToInnermostScope is moved to rose/tools/
