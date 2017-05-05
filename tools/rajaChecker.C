@@ -17,11 +17,18 @@ class RoseVisitor : public AstSimpleProcessing
 namespace RAJA_Checker 
 {
   bool checkDataMember = false; 
-  bool checkNodalAccumulationLoop = true;
+  bool checkNodalAccumulationPattern = true;
 
 
-  //! if a for loop is a nodal accumulation loop 
-  bool isNodalAccumulationLoop(SgForStatement* forloop);
+  //! If a for loop is a nodal accumulation loop , return the recognized first accumulation statement
+  bool isNodalAccumulationLoop(SgForStatement* forloop, SgExprStatement*& fstmt);
+
+  //! Check if a lambda function is a nodal accumulation function
+  bool isNodalAccumulationLambdaExp(SgLambdaExp* exp, SgExprStatement*& fstmt);
+
+  //! Check if a block of statement has the nodal accumulation pattern, with a known loop index variable 
+  bool isNodalAccumulationBody(SgBasicBlock* bb, SgInitializedName* lvar, SgExprStatement*& fstmt);
+
   // TODO: move some functions to SageInterface if needed.
   //! Find and warn if there are data member accesses within a scope
   // This is useful in the context of RAJA programming: 
@@ -296,18 +303,11 @@ SgStatement* getNextNonNullStatement(SgStatement* s)
   //now r is NULL, or not a NULL statement
   return r; 
 }
-
-bool RAJA_Checker::isNodalAccumulationLoop(SgForStatement* forloop)
+// With a known loop variable lvar, check if a basic block contains the 4-statement pattern
+bool RAJA_Checker::isNodalAccumulationBody(SgBasicBlock* bb, SgInitializedName* lvar, SgExprStatement*& fstmt)
 {
-  SgStatement* body = forloop->get_loop_body();
-  if (body == NULL) return false;
-
-  SgBasicBlock* bb = isSgBasicBlock(body);
-  if (bb == NULL) return false;
-
-  SgInitializedName* lvar = SageInterface::getLoopIndexVariable (forloop);
-  ROSE_ASSERT (lvar !=NULL);
-
+  ROSE_ASSERT (bb != NULL);
+  ROSE_ASSERT (lvar != NULL);
   //if the body contains at least 4 nodal accumulation statement in a row, then it is a matched loop
   // Find all expression statements. if there is one Nodal Accumulation Statement (NAS) , and it is followed by 3 other NAS.
   // then there is a match. 
@@ -327,6 +327,7 @@ bool RAJA_Checker::isNodalAccumulationLoop(SgForStatement* forloop)
            s4 = getNextNonNullStatement (s3);
            if (s4 != NULL && isNodalAccumulationStmt (s4, lvar))
            { 
+             fstmt = s; 
              return true;
            } // end s4
         } //end s3
@@ -335,6 +336,66 @@ bool RAJA_Checker::isNodalAccumulationLoop(SgForStatement* forloop)
   } // end for loop  
   
   return false;
+}
+
+bool RAJA_Checker::isNodalAccumulationLoop(SgForStatement* forloop, SgExprStatement*& fstmt)
+{
+  SgStatement* body = forloop->get_loop_body();
+  if (body == NULL) return false;
+
+  SgBasicBlock* bb = isSgBasicBlock(body);
+  if (bb == NULL) return false;
+
+  SgInitializedName* lvar = SageInterface::getLoopIndexVariable (forloop);
+  ROSE_ASSERT (lvar !=NULL);
+
+  return isNodalAccumulationBody (bb, lvar, fstmt);
+}
+/*
+RAJA::forall< class RAJA::seq_exec  > (0,n, [=] (int i)
+ {  .... });
+
+The expected AST is 
+SgExprStatement
+* SgFunctionCallExp
+*** SgExprListExp
+**** SgIntVal: 0
+**** SgVarRefExp: n
+**** SgLambdaExp: 
+***** SgLambdaCaptureList  
+***** SgMemberFunctionDeclaration 
+****** SgFunctionParameterList:  (int i) // loop index variable
+****** SgFunctionDefinition
+******* SgBasicBlock  // the lambda function body
+
+ * */
+bool RAJA_Checker::isNodalAccumulationLambdaExp(SgLambdaExp* exp, SgExprStatement* & fstmt)
+{
+  ROSE_ASSERT (exp!=NULL);
+  // this is the raja template function declaration!!
+  SgFunctionDeclaration* raja_func = NULL;
+  if (!isRAJATemplateFunctionCallParameter (exp, & raja_func))
+    return false;
+   
+   if (raja_func ==NULL) return false;
+
+   // ROSE uses a anonymous class declaration for lambda expression. Its function is a member function. 
+   SgMemberFunctionDeclaration* lfunc = isSgMemberFunctionDeclaration( exp->get_lambda_function());
+   if (lfunc ==NULL) return false;
+
+   // loop variable is modeled as the first parameter of the lambda function's parameter list
+   SgFunctionParameterList* plist = lfunc->get_parameterList();
+   if (plist ==NULL) return false;
+
+   SgInitializedName* lvar= (plist->get_args())[0];
+   if (lvar ==NULL) return false;
+
+   SgFunctionDefinition* def = lfunc->get_definition();
+   if (def==NULL) return false;
+   SgBasicBlock* bb = def->get_body();
+   if (bb ==NULL) return false;
+
+  return isNodalAccumulationBody (bb, lvar, fstmt);
 }
 
 void RoseVisitor::visit ( SgNode* n)
@@ -346,12 +407,17 @@ void RoseVisitor::visit ( SgNode* n)
     if (lnode->get_file_info()->isCompilerGenerated())
       return;
 
+//-------------------  Nodal accumulation loop detection ----------------
     if (SgForStatement* forloop = isSgForStatement(lnode))
     {
-      if (checkNodalAccumulationLoop)
+      if (checkNodalAccumulationPattern)
       {
-        if ( isNodalAccumulationLoop (forloop))
+        SgExprStatement* fstmt = NULL; 
+        if ( isNodalAccumulationLoop (forloop, fstmt))
+        {
           cout<<"Found a nodal accumulation loop at line:"<< forloop->get_file_info()->get_line()<<endl;
+          cout<<"\t The first accumulation statement is at line:"<< fstmt->get_file_info()->get_line()<<endl;
+        }
       }
     } // end if for loop
 
@@ -360,8 +426,20 @@ void RoseVisitor::visit ( SgNode* n)
     {
       if ( SgLambdaExp* le = isSgLambdaExp(n))
       {
+//----------- Check if the lambda expression is a parameter of RAJA function call with nodal accumulation pattern
+        if (checkNodalAccumulationPattern)
+        {
+          SgExprStatement* fstmt = NULL; 
+          if ( isNodalAccumulationLambdaExp(le, fstmt))
+          {
+            cout<<"Found a nodal accumulation lambda function at line:"<< le->get_file_info()->get_line()<<endl;
+            cout<<"\t The first accumulation statement is at line:"<< fstmt->get_file_info()->get_line()<<endl;
+          }
+        }
+
+
+//----------- Check if the lambda expression is used as a parameter of RAJA function call
         SgFunctionDeclaration* raja_func = NULL; 
-        // Check if the lambda expression is used as a parameter of RAJA function call
         if (isRAJATemplateFunctionCallParameter (le, & raja_func))
         {
           //cout<<"Found a lambda exp within RAJA func call ..."<<endl; 
