@@ -16,6 +16,12 @@ class RoseVisitor : public AstSimpleProcessing
 
 namespace RAJA_Checker 
 {
+  bool checkDataMember = false; 
+  bool checkNodalAccumulationLoop = true;
+
+
+  //! if a for loop is a nodal accumulation loop 
+  bool isNodalAccumulationLoop(SgForStatement* forloop);
   // TODO: move some functions to SageInterface if needed.
   //! Find and warn if there are data member accesses within a scope
   // This is useful in the context of RAJA programming: 
@@ -140,6 +146,197 @@ namespace RAJA_Checker
 
 using namespace RAJA_Checker;
 
+/*
+
+Algorithm:
+for a for loop
+
+the body has a sequence of accumulation operation statements, in groups of 4. 
+  lhs1 accum-op rhs;
+  lhs: array element access using loop index  xm[loop_index], xm is a pointer to a double type
+  accum-op:  +=, -=, *=, /=, MIN (), MAX, ..
+  rhs:  double type scalar
+
+Example:
+   double* xa4, * ya4, ....; 
+   xa1 = xa4 + 1
+   for (i= ...)
+   {
+     xa4[i] += ax ; ya4[i] += ay ; za4[i] += az ; ;
+     xa3[i] += ax ; ya3[i] += ay ; za3[i] += az ; ;
+   }
+
+In AST, these accumulation statements are 
+SgExprStatement   
+* SgPlusAssignOp
+** SgPntrArrRefExp
+*** SgVarRefExp: xa4, pointer to double
+*** SgVarRefExp: i,   double scalar
+** SgVarRefExp:  ax
+
+Note that there might be empty statements in the sequence 
+
+SgExprStatement
+* SgNullExpression 
+
+ * */
+
+// Check if an operand is a form of x[index], x is a pointer to a double, index is a loop index
+bool isDoubleArrayAccess (SgExpression* exp, SgInitializedName * lvar)
+{
+  ROSE_ASSERT (lvar != NULL);
+  if (exp == NULL) return false;
+  SgPntrArrRefExp* arr = isSgPntrArrRefExp (exp);
+  if (arr == NULL)
+    return false;
+
+  SgExpression* lhs, *rhs;
+  lhs = arr->get_lhs_operand();
+  if (lhs == NULL) return false;
+  rhs = arr->get_rhs_operand();
+  if (rhs == NULL) return false;
+
+  // lhs is a pointer type
+  SgPointerType* ptype = isSgPointerType(lhs->get_type());
+  if (!ptype)
+    return false;
+  // lhs is a pointer to double  
+   if (! isSgTypeDouble( ptype->get_base_type()) )
+    return false;
+  
+  // rhs is a loop index
+  SgVarRefExp* varRef = isSgVarRefExp(rhs) ;
+  if (varRef == NULL) return false;
+
+  if (varRef->get_symbol() != lvar->get_symbol_from_symbol_table ())
+    return false;
+  
+  return true; 
+}
+
+//  accum-op:  +=, -=, *=, /=, MIN (), MAX, ..
+bool isNodalAccumulationOp (SgExpression* op)
+{
+  if (op == NULL) return false;
+
+  if (isSgPlusAssignOp(op) ||
+      isSgMinusAssignOp(op) ||
+      isSgMultAssignOp(op) ||
+      isSgDivAssignOp(op)  // TODO: MIN() and MAX ()
+     )
+    return true;
+
+  return false;
+}
+
+
+/*
+ * xa4[i] += ax; within a for-loop, i is loop index
+ *  lhs: array element access using loop index  xm[loop_index], xm is a pointer to a double type
+ *  accum-op:  +=, -=, *=, /=, MIN (), MAX, ..
+ *
+ * */
+bool isNodalAccumulationStmt (SgStatement* s, SgInitializedName* lvar)
+{
+  ROSE_ASSERT (lvar != NULL);
+   if (s==NULL) return false;
+   SgExprStatement* es = isSgExprStatement (s);
+   if (es==NULL) return false;
+
+   SgExpression* exp = es->get_expression();
+   if (exp==NULL)
+     return false;
+   
+   if (! isNodalAccumulationOp (exp) )
+     return false;
+
+   SgBinaryOp* bop = isSgBinaryOp (exp);
+   ROSE_ASSERT (bop != NULL);
+
+   // lhs is x[i]
+   if (!isDoubleArrayAccess(bop->get_lhs_operand(), lvar))
+     return false;
+  
+    // rhs is a scalar type
+   if (!SageInterface::isScalarType (bop->get_rhs_operand()->get_type())) 
+     return false;
+
+   // rhs is a double type
+   if (!isSgTypeDouble(bop->get_rhs_operand()->get_type())) 
+     return false;
+  // meet all conditions above
+   return true;
+}
+
+bool isNullStatement(SgStatement* s)
+{
+  if (s==NULL) return false;
+  SgExprStatement* es = isSgExprStatement(s);
+  if (es == NULL) return false;
+
+  if (es->get_expression())
+  {
+    return isSgNullExpression(es->get_expression());
+  }
+  return false;
+}
+
+// find the next non-null statement from the current s
+// skip empty statement like ;
+SgStatement* getNextNonNullStatement(SgStatement* s)
+{
+  if (s == NULL) return NULL;
+
+  SgStatement* r = NULL;
+  r = SageInterface::getNextStatement (s);
+  if (r== NULL) return r; 
+  //skip one or more ; 
+  while (isNullStatement(r))
+    r = SageInterface::getNextStatement (r);
+  //now r is NULL, or not a NULL statement
+  return r; 
+}
+
+bool RAJA_Checker::isNodalAccumulationLoop(SgForStatement* forloop)
+{
+  SgStatement* body = forloop->get_loop_body();
+  if (body == NULL) return false;
+
+  SgBasicBlock* bb = isSgBasicBlock(body);
+  if (bb == NULL) return false;
+
+  SgInitializedName* lvar = SageInterface::getLoopIndexVariable (forloop);
+  ROSE_ASSERT (lvar !=NULL);
+
+  //if the body contains at least 4 nodal accumulation statement in a row, then it is a matched loop
+  // Find all expression statements. if there is one Nodal Accumulation Statement (NAS) , and it is followed by 3 other NAS.
+  // then there is a match. 
+  Rose_STL_Container<SgNode*> stmtList = NodeQuery::querySubTree(bb, V_SgExprStatement);
+  for (Rose_STL_Container<SgNode*>::iterator iter = stmtList.begin(); iter != stmtList.end(); iter++)
+  {
+    SgExprStatement* s = isSgExprStatement(*iter);
+    if (isNodalAccumulationStmt (s, lvar))
+    {
+      SgStatement* s2, *s3, *s4; 
+      s2= getNextNonNullStatement(s);
+      if (s2!=NULL && isNodalAccumulationStmt (s2, lvar))
+      {
+        s3 = getNextNonNullStatement (s2);
+        if (s3!=NULL && isNodalAccumulationStmt (s3, lvar))
+        {
+           s4 = getNextNonNullStatement (s3);
+           if (s4 != NULL && isNodalAccumulationStmt (s4, lvar))
+           { 
+             return true;
+           } // end s4
+        } //end s3
+      } // end s2
+    } // end s1 
+  } // end for loop  
+  
+  return false;
+}
+
 void RoseVisitor::visit ( SgNode* n)
 {
   // Only watch for Located nodes from input user source files.
@@ -149,8 +346,17 @@ void RoseVisitor::visit ( SgNode* n)
     if (lnode->get_file_info()->isCompilerGenerated())
       return;
 
+    if (SgForStatement* forloop = isSgForStatement(lnode))
+    {
+      if (checkNodalAccumulationLoop)
+      {
+        if ( isNodalAccumulationLoop (forloop))
+          cout<<"Found a nodal accumulation loop at line:"<< forloop->get_file_info()->get_line()<<endl;
+      }
+    } // end if for loop
+
     // catch lambda expressions  
-   if (n->variantT() == V_SgLambdaExp)
+    if (n->variantT() == V_SgLambdaExp)
     {
       if ( SgLambdaExp* le = isSgLambdaExp(n))
       {
@@ -158,16 +364,19 @@ void RoseVisitor::visit ( SgNode* n)
         // Check if the lambda expression is used as a parameter of RAJA function call
         if (isRAJATemplateFunctionCallParameter (le, & raja_func))
         {
-         cout<<"Found a lambda exp within RAJA func call ..."<<endl; 
+          //cout<<"Found a lambda exp within RAJA func call ..."<<endl; 
           //le->get_file_info()->display();
-          cout<<"RAJA func name is:"<<
-          raja_func->get_name()<<endl;
+          //cout<<"RAJA func name is:"<<
+          //raja_func->get_name()<<endl;
+
           // scan the function body for data member accesses. 
-          warnDataMemberAccess (le->get_lambda_function()->get_definition());
+          if (checkDataMember)
+            warnDataMemberAccess (le->get_lambda_function()->get_definition());
         }
       }
-    }
-  }
+    } // end if lambda exp
+
+  } // end if located node
 }
 
 int

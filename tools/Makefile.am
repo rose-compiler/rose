@@ -27,14 +27,16 @@ if ROSE_USE_EDG_VERSION_4_9
 if !ROSE_USING_GCC_VERSION_LATER_4_9
 if ROSE_USING_GCC_VERSION_LATER_4_8
 generatedCodeExamples += \
-  rose_inputrajaChecker.C
+  rose_inputrajaChecker.C \
+  rose_nodalAccPattern1.cpp
 endif
 endif
 else
 # Using EDG 4.12 and later.
 if ROSE_USING_GCC_VERSION_LATER_4_9
 generatedCodeExamples += \
-  rose_inputrajaChecker.C
+  rose_inputrajaChecker.C \
+  rose_nodalAccPattern1.cpp
 endif
 endif
 endif
@@ -43,6 +45,12 @@ endif
 rose_inputrajaChecker.C: $(top_srcdir)/tools/tests/inputrajaChecker.C rajaChecker
 	./rajaChecker -rose:Cxx11_only -c $<
 
+# regular for loop
+rose_nodalAccPattern1.cpp: $(top_srcdir)/tools/tests/nodalAccPattern1.cpp rajaChecker
+	./rajaChecker -c $<
 EXTRA_DIST += tests
 
 check: $(generatedCodeExamples)
+
+clean:
+	rm -rf rose_*.C rose_*.cpp rose*.cxx
