@@ -10,6 +10,7 @@ SUBDIRS += roseHPCT
 endif
 
 AM_CPPFLAGS = $(ROSE_INCLUDES)
+AM_LDFLAGS = $(ROSE_RPATHS)
 
 # all: exampleMakefile
 
@@ -380,8 +381,7 @@ findVariableDeclarations_SOURCES = findVariableDeclarations.C
 
 # Use this to control use of -lrose -ledg vs. the very long list 
 # of separate libraries which is faster to use in development.
-# LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-LDADD = $(LIBS_WITH_RPATH) $(WAVE_LDFLAGS) $(ROSE_SEPARATE_LIBS) 
+LDADD = $(WAVE_LDFLAGS) $(ROSE_SEPARATE_LIBS) 
 
 # #####################################
 # Tests for debugging tutorial examples

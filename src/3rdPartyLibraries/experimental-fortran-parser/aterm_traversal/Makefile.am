@@ -18,7 +18,7 @@ CFLAGS = -I. -I$(A_TERM_INCLUDE)
 # LIBS = -L$(ATERM_ROOT)/lib -lATerm
 LIBS = -L$(ATERM_INSTALL_PATH)/lib -lATerm
 
-LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+LDADD    = $(ROSE_LIBS)
 
 # bin_PROGRAMS = traverse fast2sage
 
@@ -36,6 +36,7 @@ LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 # traverse_SOURCES = traverse_SgUntypedNodes.cpp traverse_SgUntypedNodes.hpp
 
 AM_CPPFLAGS = $(A_TERM_INCLUDE) $(ROSE_INCLUDES) $(SDF_GRAMMAR_DIR)
+AM_LDFLAGS = $(ROSE_RPATHS)
 
 noinst_LTLIBRARIES = libexperimentalOFP.la
 libexperimentalOFP_la_SOURCES = $(libexperimentalOFP_Sources)

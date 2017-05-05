@@ -22,6 +22,7 @@ TEST_TRANSLATOR = $(top_builddir)/tests/nonsmoke/functional/testTranslator $(ROS
 ## Include the path to A++ and the transformation specification
 ## AM_CPPFLAGS = @Axx_INCLUDES@
 AM_CPPFLAGS = -I. -I$(srcdir) -I$(srcdir)/../A++Code
+AM_LDFLAGS = $(ROSE_RPATHS)
 
 # libTestSource_a_SOURCES = $(TESTCODES)
 # This rule is run after automake's internal check rule (which we don't want to use)

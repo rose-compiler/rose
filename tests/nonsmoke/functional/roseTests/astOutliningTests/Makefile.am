@@ -15,7 +15,8 @@ TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 noinst_PROGRAMS += outline
 outline_SOURCES = outline.cc
 outline_CPPFLAGS = $(ROSE_INCLUDES)
-outline_LDFLAGS = $(ROSE_LIBS)
+outline_LDFLAGS = $(ROSE_RPATHS)
+outline_LDADD = $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
 # injectOutlinePragmas
@@ -23,7 +24,8 @@ outline_LDFLAGS = $(ROSE_LIBS)
 noinst_PROGRAMS += injectOutlinePragmas
 injectOutlinePragmas_SOURCES = RandomStmtSelector.cc injectOutlinePragmas.cc
 injectOutlinePragmas_CPPFLAGS = $(ROSE_INCLUDES)
-injectOutlinePragmas_LDFLAGS = $(ROSE_LIBS)
+injectOutlinePragmas_LDFLAGS = $(ROSE_RPATHS)
+injectOutlinePragmas_LDADD = $(ROSE_LIBS)
 
 TEST_TARGETS += injectOutlinePragmas.passed
 injectOutlinePragmas.passed: injectOutlinePragmas
@@ -35,7 +37,8 @@ injectOutlinePragmas.passed: injectOutlinePragmas
 noinst_PROGRAMS += outlineRandom
 outlineRandom_SOURCES = RandomStmtSelector.cc outlineRandom.cc
 outlineRandom_CPPFLAGS = $(ROSE_INCLUDES)
-outlineRandom_LDFLAGS = $(ROSE_LIBS)
+outlineRandom_LDFLAGS = $(ROSE_RPATHS)
+outlineRandom_LDADD = $(ROSE_LIBS)
 EXTRA_DIST += RandomStmtSelector.hh
 
 TEST_TARGETS += outlineRandom.passed
@@ -48,7 +51,8 @@ outlineRandom.passed: outlineRandom
 noinst_PROGRAMS += outlineSelection
 outlineSelection_SOURCES = outlineSelection.cc
 outlineSelection_CPPFLAGS = $(ROSE_INCLUDES)
-outlineSelection_LDFLAGS = $(ROSE_LIBS)
+outlineSelection_LDFLAGS = $(ROSE_RPATHS)
+outlineSelection_LDADD = $(ROSE_LIBS)
 
 #########################################################################################################################
 #						TEST SPECIMENS

@@ -28,7 +28,6 @@ install(TARGETS memoryTranslator DESTINATION bin)
 #memoryTranslator_SOURCES = test.C
 #
 #INCLUDES = $(ROSE_INCLUDES)
-#LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 #
 #TESTCODES_REQUIRED_TO_PASS = \
 #      test1.C

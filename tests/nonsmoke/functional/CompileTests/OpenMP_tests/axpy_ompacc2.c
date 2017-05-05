@@ -1,6 +1,7 @@
 // Add example of writing multiple device code using OpenMP 4.0
 //
 /* change this to do saxpy or daxpy : single precision or double precision*/
+#include <omp.h>
 #define REAL double
 
 #ifdef __cplusplus

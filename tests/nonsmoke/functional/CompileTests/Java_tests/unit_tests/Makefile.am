@@ -9,7 +9,8 @@ bin_PROGRAMS =
 
 # Use variables set in ROSE/config/Makefile.for.ROSE.includes.and.libs
 AM_CPPFLAGS = $(ROSE_INCLUDES) $(JAVA_JVM_INCLUDE)
-LDADD    = $(ROSE_LIBS) $(LIBS_WITH_RPATH)
+AM_LDFLAGS = $(ROSE_RPATHS)
+LDADD    = $(ROSE_LIBS)
 
 clean-local:
 	rm -fr rose-* ecj-classes-* javac-*

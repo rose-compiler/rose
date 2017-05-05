@@ -9,12 +9,14 @@ noinst_PROGRAMS =
 noinst_PROGRAMS += unparseToString
 unparseToString_SOURCES = unparseToString.C
 unparseToString_CPPFLAGS = $(ROSE_INCLUDES)
-unparseToString_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+unparseToString_LDFLAGS = $(ROSE_RPATHS)
+unparseToString_LDADD = $(ROSE_SEPARATE_LIBS)
 
 noinst_PROGRAMS += unparseProject
 unparseProject_SOURCES = unparseProject.C
 unparseProject_CPPFLAGS = $(ROSE_INCLUDES)
-unparseProject_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+unparseProject_LDFLAGS = $(ROSE_RPATHS)
+unparseProject_LDADD = $(ROSE_SEPARATE_LIBS)
 
 ########################################################################################################################
 # Tests.  We currently have two tests (which are both the same executable but invoked with different switches) that

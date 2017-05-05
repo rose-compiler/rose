@@ -24,6 +24,7 @@ SMOKE_SRCDIR = $(abspath $(top_srcdir))/tests/smoke/functional/BinaryAnalysis
 
 # To keep compile commands tidy, please ONLY put required include flags here.
 AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/binaryAnalyses/libraryIdentification
+AM_LDFLAGS = $(ROSE_RPATHS)
 
 TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 TEST_WITH_ANSWER = $(top_srcdir)/scripts/test_with_answer
@@ -504,7 +505,7 @@ if ROSE_USE_SQLITE_DATABASE
 
 noinst_PROGRAMS += testLibraryDb
 testLibraryDb_SOURCES = testLibraryDb.C
-testLibraryDb_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+testLibraryDb_LDADD = $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += testLibraryDb.passed
 
@@ -524,7 +525,7 @@ endif
 ###############################################################################################################################
 noinst_PROGRAMS += testPeImports
 testPeImports_SOURCES = testPeImports.C
-testPeImports_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+testPeImports_LDADD = $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += testPeImports.passed
 EXTRA_DIST += testPeImports.ans
@@ -544,7 +545,7 @@ testPeImports.passed: $(TEST_WITH_ANSWER) testPeImports testPeImports.ans condit
 ###############################################################################################################################
 noinst_PROGRAMS += cory002
 cory002_SOURCES = cory002.C
-cory002_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+cory002_LDADD = $(ROSE_SEPARATE_LIBS)
 
 
 ###############################################################################################################################
@@ -552,7 +553,7 @@ cory002_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 ###############################################################################################################################
 noinst_PROGRAMS += cory003
 cory003_SOURCES = cory003.C
-cory003_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+cory003_LDADD = $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += cory003.passed
 
@@ -569,7 +570,7 @@ cory003.passed: $(TEST_EXIT_STATUS) cory003 conditionalDisable
 ###############################################################################################################################
 noinst_PROGRAMS += cory004
 cory004_SOURCES = cory004.C
-cory004_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+cory004_LDADD = $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += cory004.passed
 
@@ -586,7 +587,7 @@ cory004.passed: $(TEST_EXIT_STATUS) cory004 conditionalDisable
 ###############################################################################################################################
 noinst_PROGRAMS += cory006
 cory006_SOURCES = cory006.C
-cory006_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+cory006_LDADD = $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += cory006.passed
 
@@ -603,7 +604,7 @@ cory006.passed: $(TEST_EXIT_STATUS) cory006 conditionalDisable
 ###############################################################################################################################
 noinst_PROGRAMS += cory007
 cory007_SOURCES = cory007.C
-cory007_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+cory007_LDADD = $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += cory007.passed
 
@@ -620,7 +621,7 @@ cory007.passed: $(TEST_EXIT_STATUS) cory007 conditionalDisable
 ###############################################################################################################################
 noinst_PROGRAMS += cory008
 cory008_SOURCES = cory008.C
-cory008_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+cory008_LDADD = $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += cory008.passed
 EXTRA_DIST += cory008.ans
@@ -639,7 +640,7 @@ cory008.passed: $(TEST_WITH_ANSWER) cory008 cory008.ans conditionalDisable
 ###############################################################################################################################
 noinst_PROGRAMS += testSymReadWrite
 testSymReadWrite_SOURCES = testSymReadWrite.C
-testSymReadWrite_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+testSymReadWrite_LDADD = $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += testSymReadWrite.passed
 EXTRA_DIST += testSymReadWrite.conf testSymReadWrite.ans
@@ -658,7 +659,7 @@ testSymReadWrite.passed: testSymReadWrite.conf testSymReadWrite.ans testSymReadW
 ###############################################################################################################################
 noinst_PROGRAMS += testWorkList
 testWorkList_SOURCES = testWorkList.C
-testWorkList_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+testWorkList_LDADD = $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += testWorkList.passed
 
@@ -675,7 +676,7 @@ testWorkList.passed: $(TEST_EXIT_STATUS) testWorkList conditionalDisable
 ###############################################################################################################################
 noinst_PROGRAMS += testMap
 testMap_SOURCES = testMap.C
-testMap_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+testMap_LDADD = $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += testMap.passed
 
@@ -692,7 +693,7 @@ testMap.passed: $(TEST_EXIT_STATUS) testMap conditionalDisable
 ###############################################################################################################################
 noinst_PROGRAMS += testPointerDetection
 testPointerDetection_SOURCES = testPointerDetection.C
-testPointerDetection_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+testPointerDetection_LDADD = $(ROSE_SEPARATE_LIBS)
 
 PointerDetectionSpecimen = $(SPECIMEN_DIR)/i386-pointers
 PointerDetectionSpecimenFunctions =											\
@@ -724,7 +725,7 @@ testPointerDetection.passed: $(TEST_WITH_ANSWER) testPointerDetection testPointe
 ###############################################################################################################################
 noinst_PROGRAMS += testCallDetection
 testCallDetection_SOURCES = testCallDetection.C
-testCallDetection_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+testCallDetection_LDADD = $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += testCallDetection.passed
 EXTRA_DIST += testCallDetection.ans
@@ -745,7 +746,7 @@ testCallDetection.passed: $(TEST_WITH_ANSWER) $(SPECIMEN_DIR)/i386-fcalls testCa
 noinst_PROGRAMS += testReturnsValue
 testReturnsValue_SOURCES = testReturnsValue.C
 testReturnsValue_CPPFLAGS = -DROSE_BINARY_TEST_DISABLED='"deprecation"' $(AM_CPPFLAGS)
-testReturnsValue_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+testReturnsValue_LDADD = $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += testReturnsValue.passed
 
@@ -780,7 +781,7 @@ usedef.passed: usedef.conf symbolicSemantics2 $(SPECIMEN_DIR)/usedef conditional
 ###############################################################################################################################
 noinst_PROGRAMS += testBitPattern
 testBitPattern_SOURCES = testBitPattern.C
-testBitPattern_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+testBitPattern_LDADD = $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += testBitPattern.passed
 
@@ -797,7 +798,7 @@ testBitPattern.passed: $(TEST_EXIT_STATUS) testBitPattern conditionalDisable
 ###############################################################################################################################
 noinst_PROGRAMS += testRNG
 testRNG_SOURCES = testRNG.C
-testRNG_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+testRNG_LDADD = $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += testRNG.passed
 
@@ -814,7 +815,7 @@ testRNG.passed: $(TEST_EXIT_STATUS) testRNG conditionalDisable
 ###############################################################################################################################
 noinst_PROGRAMS += testSymbolicSimplification
 testSymbolicSimplification_SOURCES = testSymbolicSimplification.C
-testSymbolicSimplification_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+testSymbolicSimplification_LDADD = $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += testSymbolicSimplification.passed
 EXTRA_DIST += testSymbolicSimplification.ans
@@ -833,7 +834,7 @@ testSymbolicSimplification.passed: $(TEST_WITH_ANSWER) testSymbolicSimplificatio
 ###############################################################################################################################
 noinst_PROGRAMS += testSymbolicFlags
 testSymbolicFlags_SOURCES = testSymbolicFlags.C
-testSymbolicFlags_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+testSymbolicFlags_LDADD = $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += testSymbolicFlags.passed
 EXTRA_DIST += testSymbolicFlags.ans
@@ -852,7 +853,7 @@ testSymbolicFlags.passed: $(TEST_WITH_ANSWER) testSymbolicFlags testSymbolicFlag
 ###############################################################################################################################
 noinst_PROGRAMS += verifySemantics
 verifySemantics_SOURCES = verifySemantics.C
-verifySemantics_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+verifySemantics_LDADD = $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += verifySemantics.passed
 
@@ -1372,7 +1373,7 @@ check-noop: $(testNoop_TestTargets)
 
 noinst_PROGRAMS += testStaticSemantics
 testStaticSemantics_SOURCES = testStaticSemantics.C
-testStaticSemantics_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+testStaticSemantics_LDADD = $(ROSE_SEPARATE_LIBS)
 
 # We lack semantics for some architectures, so don't try to test them (the result would be an std::runtime_error with the
 # message "no instruction semantics for architecture".  Also, we skip pocketputty2.exe because it takes too long with lots
@@ -1406,7 +1407,7 @@ check-testStaticSemantics: $(testStaticSemantics_test_targets)
 
 noinst_PROGRAMS += testLazyInitialStates
 testLazyInitialStates_SOURCES = testLazyInitialStates.C
-testLazyInitialStates_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+testLazyInitialStates_LDADD = $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += testLazyInitialStates.passed
 
@@ -1538,7 +1539,7 @@ check_specimens: check_parse_container check_disassemble check_unparse check_ass
 
 noinst_PROGRAMS += testRandomInput
 testRandomInput_SOURCES = testRandomInput.C
-testRandomInput_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+testRandomInput_LDADD = $(ROSE_SEPARATE_LIBS)
 
 testRandomInput_ISAs = amd64 arm coldfire i386 m68040 mips-be mips-le ppc
 testRandomInput_Targets = $(addprefix tri_, $(addsuffix .passed, $(testRandomInput_ISAs)))
@@ -1561,7 +1562,7 @@ check-random-input: $(testRandomInput_Targets)
 # DQ (2/6/2017): This fails to to compile with GNU 4.8.4 and Boost 1.60.
 # noinst_PROGRAMS += testSageSerialization
 # testSageSerialization_SOURCES = testSageSerialization.C
-# testSageSerialization_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+# testSageSerialization_LDADD = $(ROSE_SEPARATE_LIBS)
 
 # TEST_TARGETS += testSageSerialization.passed
 

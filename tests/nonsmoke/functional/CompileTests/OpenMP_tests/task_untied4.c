@@ -1,8 +1,10 @@
 // Contributed by Allan Porterfield
 // 1/26/2010
+void lu0(float *);
+void fwd(float *, float*);
 void sparselu_par_call(float **BENCH)
 {
-  int ii, jj, kk;
+  int jj, kk;
 
 #pragma omp parallel
   {

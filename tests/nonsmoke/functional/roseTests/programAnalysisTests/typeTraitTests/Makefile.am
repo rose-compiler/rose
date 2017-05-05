@@ -1,15 +1,16 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 AM_CPPFLAGS = $(ROSE_INCLUDES)
+AM_LDFLAGS = $(ROSE_RPATHS)
 
 bindir = ${exec_prefix}/bin/testsuite
 bin_PROGRAMS  = typeTraitExerciseWithRetCode typeTraitExerciseWithoutRetCode
 
 typeTraitExerciseWithRetCode_SOURCES = typeTraitExerciseWithRetCode.C
-typeTraitExerciseWithRetCode_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+typeTraitExerciseWithRetCode_LDADD = $(ROSE_SEPARATE_LIBS)
 
 typeTraitExerciseWithoutRetCode_SOURCES = typeTraitExerciseWithoutRetCode.C
-typeTraitExerciseWithoutRetCode_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+typeTraitExerciseWithoutRetCode_LDADD = $(ROSE_SEPARATE_LIBS)
 
 SPECIMEN_NUMBERS = $(shell seq 1 16)
 SPECIMEN_NAMES = $(addprefix test, $(addsuffix .C, $(SPECIMEN_NUMBERS)))
