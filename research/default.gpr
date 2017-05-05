@@ -1,5 +1,6 @@
 project Default is
    for Languages use ("C", "Ada");
+   for Object_Dir use "./obj";
    for Main use ("bar.adb");
 end Default;
 
