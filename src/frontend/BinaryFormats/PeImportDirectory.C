@@ -7,17 +7,7 @@ using namespace rose;
 using namespace rose::Diagnostics;
 using namespace rose::BinaryAnalysis;
 
-/** @class SgAsmPEImportDirectory
- *
- *  Portable Executable Import Directory.
- *
- *  Represents a single directory (usually corresponding to a single library) in the PE Import Section. See
- *  SgAsmPEImportSection for details. */
-
-
-
-
-/** Constructor. The constructor makes @p section the parent of this new import directory, and adds this new import
+/* Constructor. The constructor makes @p section the parent of this new import directory, and adds this new import
  *  directory to the import section. */
 void
 SgAsmPEImportDirectory::ctor(SgAsmPEImportSection *section, const std::string &dll_name)
@@ -33,9 +23,6 @@ SgAsmPEImportDirectory::ctor(SgAsmPEImportSection *section, const std::string &d
     p_imports->set_parent(this);
 }
 
-/** Number of bytes required for the table.  Returns the number of bytes required for the entire IAT or ILT (including the zero
- *  terminator) as it is currently defined in the Import Directory.  The returned size does not include space required to store
- *  any Hint/Name pairs, which are outside the ILT/IAT but pointed to by the ILT/IAT. */
 size_t
 SgAsmPEImportDirectory::iat_required_size() const
 {
@@ -44,8 +31,6 @@ SgAsmPEImportDirectory::iat_required_size() const
     return (p_imports->get_vector().size() + 1) * fhdr->get_word_size();
 }
 
-/** Find an import item in an import directory.  Returns the index of the specified import item in this directory, or -1 if the
- *  import item is not a child of this directory.  The hint index is checked first. */
 int
 SgAsmPEImportDirectory::find_import_item(const SgAsmPEImportItem *item, int hint) const
 {
@@ -59,15 +44,6 @@ SgAsmPEImportDirectory::find_import_item(const SgAsmPEImportItem *item, int hint
     return -1;
 }
 
-/** Obtains the virtual address of the Hint/Name Table.  The Hint/Name Table is an implicit table--the PE file format
- *  specification talks about such a table, but it is not actually defined anywhere in the PE file.  Instead, various Import
- *  Lookup Table and Import Address Table entries might point to individual Hint/Name pairs, which collectively form an
- *  implicit Hint/Name Table.  There is no requirement that the Hint/Name pairs are contiguous in the address space, and indeed
- *  they often are not.  Therefore, the only way to describe the location of the Hint/Name Table is by a list of addresses.
- *
- *  This function will scan this Import Directory's import items, observe which items make references to Hint/Name pairs that
- *  have known addresses, and add those areas of virtual memory to the specified extent map.  This function returns the number
- *  of ILT entries that reference a Hint/Name pair. */
 size_t
 SgAsmPEImportDirectory::hintname_table_extent(AddressIntervalSet &extent/*in,out*/) const
 {
@@ -84,9 +60,6 @@ SgAsmPEImportDirectory::hintname_table_extent(AddressIntervalSet &extent/*in,out
     return retval;
 }
 
-/** Parse an import directory. The import directory is parsed from the specified virtual address via the PE header's loader
- *  map. Return value is this directory entry on success, or the null pointer if the entry is all zero (which marks the end of
- *  the directory list). */
 SgAsmPEImportDirectory *
 SgAsmPEImportDirectory::parse(rose_addr_t idir_va)
 {
@@ -156,15 +129,15 @@ SgAsmPEImportDirectory::parse(rose_addr_t idir_va)
     return this;
 }
 
-/** Parse an Import Lookup Table or Import Address Table.  The table begins at the specified address and consists of 32- or 64-
- *  bit vectors which are (1) an ordinal number with high order bit set, (2) a relative virtual address of a hint/name pair, or
- *  (3) a virtual address filled in by the dynamic linker when the shared object is bound.  The last case is assumed if @p
- *  @p assume_bound is set.
+/* Parse an Import Lookup Table or Import Address Table.  The table begins at the specified address and consists of 32- or 64-
+ * bit vectors which are (1) an ordinal number with high order bit set, (2) a relative virtual address of a hint/name pair, or
+ * (3) a virtual address filled in by the dynamic linker when the shared object is bound.  The last case is assumed if @p
+ * @p assume_bound is set.
  *
- *  Normally, the ILT and IAT of an executable file have identical structure and content and the IAT is changed only after the
- *  shared objects are dynamically linked.  However, we might encounter cases where we discover that the IAT has values that
- *  are different than the ILT even when @p assume_bound is false.  When this happens, we emit a warning message and treat the
- *  conflicting IAT entry as a bound address. */
+ * Normally, the ILT and IAT of an executable file have identical structure and content and the IAT is changed only after the
+ * shared objects are dynamically linked.  However, we might encounter cases where we discover that the IAT has values that
+ * are different than the ILT even when @p assume_bound is false.  When this happens, we emit a warning message and treat the
+ * conflicting IAT entry as a bound address. */
 void
 SgAsmPEImportDirectory::parse_ilt_iat(const rose_rva_t &table_start, bool assume_bound)
 {
@@ -377,17 +350,17 @@ SgAsmPEImportDirectory::parse_ilt_iat(const rose_rva_t &table_start, bool assume
     }
 }
 
-/** Unparse a PE Import Lookup Table or Import Address Table.  The @p table_start address is the location where the ILT or IAT
- *  begins and should be bound to the section to which the table is being written.  The table is filled with ordinals and/or
- *  hint/name pairs unless @p assume_bound is set, in which case the table is filled with the bound addresses.  The PE spec
- *  requires that the IAT in the executable file has the exact same structure and content as the ILT, so this method is
- *  normally called wtih @p assume_bound set to false.
+/* Unparse a PE Import Lookup Table or Import Address Table.  The @p table_start address is the location where the ILT or IAT
+ * begins and should be bound to the section to which the table is being written.  The table is filled with ordinals and/or
+ * hint/name pairs unless @p assume_bound is set, in which case the table is filled with the bound addresses.  The PE spec
+ * requires that the IAT in the executable file has the exact same structure and content as the ILT, so this method is
+ * normally called wtih @p assume_bound set to false.
  *
- *  The @p tablesize argument is the number of bytes allocated for the table, and may be less than the number of bytes required
- *  to write the entire table.  This can happen, for instance, when the AST was modified by adding entries to the ILT/IAT but
- *  the size (and probably location) of the table could not be changed.  This is typical of IATs since code in the .text
- *  section often references IAT entries via indirect jumps/calls and it is infeasible to move the IAT to a new location.  If
- *  unparsing is unable to write all table entries due to the @p tablesize limit, an error message is printed. */
+ * The @p tablesize argument is the number of bytes allocated for the table, and may be less than the number of bytes required
+ * to write the entire table.  This can happen, for instance, when the AST was modified by adding entries to the ILT/IAT but
+ * the size (and probably location) of the table could not be changed.  This is typical of IATs since code in the .text
+ * section often references IAT entries via indirect jumps/calls and it is infeasible to move the IAT to a new location.  If
+ * unparsing is unable to write all table entries due to the @p tablesize limit, an error message is printed. */
 void
 SgAsmPEImportDirectory::unparse_ilt_iat(std::ostream &f, const rose_rva_t &table_start, bool assume_bound,
                                         size_t tablesize) const
@@ -510,7 +483,6 @@ SgAsmPEImportDirectory::unparse_ilt_iat(std::ostream &f, const rose_rva_t &table
     }
 }
     
-/** Encode an import directory entry back into disk format */
 void *
 SgAsmPEImportDirectory::encode(PEImportDirectory_disk *disk) const
 {
@@ -522,11 +494,6 @@ SgAsmPEImportDirectory::encode(PEImportDirectory_disk *disk) const
     return disk;
 }
 
-/** Allocates space for this import directory's name, import lookup table, and import address table.  The items are allocated
- *  beginning at the specified relative virtual address. Items are reallocated if they are not allocated or if they are
- *  allocated in the same section to which start_rva points (the import section).   They are not reallocated if they already
- *  exist in some other section. The return value is the number of bytes allocated in the import section.  Upon return, this
- *  directory's address data members are initialized with possibly new values. */
 size_t
 SgAsmPEImportDirectory::reallocate(rose_rva_t start_rva)
 {
@@ -612,7 +579,6 @@ SgAsmPEImportDirectory::unparse(std::ostream &f, const SgAsmPEImportSection *sec
 }
 
 
-/** Print debugging info */
 void
 SgAsmPEImportDirectory::dump(FILE *f, const char *prefix, ssize_t idx) const
 {

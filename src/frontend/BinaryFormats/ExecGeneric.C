@@ -14,8 +14,6 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-/** Writes a new file from the IR node for a parsed executable file. Warning: This function might modify the AST by calling
- *  reallocate(), which makes sure all parts of the AST are consistent with respect to each other. */
 void
 SgAsmExecutableFileFormat::unparseBinaryFormat(const std::string &name, SgAsmGenericFile *ef)
 {
@@ -26,8 +24,6 @@ SgAsmExecutableFileFormat::unparseBinaryFormat(const std::string &name, SgAsmGen
     f.close();
 }
 
-/** Unparses an executable file into the supplied output stream. Warning: This function might modify the AST by calling
- *  reallocate(), which makes sure all parts of the AST are consistent with respect to each other. */
 void
 SgAsmExecutableFileFormat::unparseBinaryFormat(std::ostream &f, SgAsmGenericFile *ef)
 {
