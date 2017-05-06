@@ -709,7 +709,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
         //cout<<"DEBUG: pointer-array access!"<<endl;
         if(pstate->varExists(arrayVarId)) {
           arrayPtrValue=pstate2[arrayVarId]; // pointer value (without index)
-          ROSE_ASSERT(arrayPtrValue.isPtr());
+          ROSE_ASSERT(arrayPtrValue.isTop()||arrayPtrValue.isBot()||arrayPtrValue.isPtr());
         } else {
           cerr<<"Error: pointer variable does not exist in PState."<<endl;
           exit(1);
@@ -772,11 +772,11 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
           cerr<<"Error: access to element of constant array (not in state). Not supported yet."<<endl;
           exit(1);
         } else {
-          cerr<<"Error: Array Element does not exist (out of array access?)"<<endl;
+          cout<<"Error: potential out of bounds access (memory bound index: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<")"<<endl;
           cerr<<"array-element: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
           cerr<<"PState: "<<pstate->toString(_variableIdMapping)<<endl;
           cerr<<"AST: "<<node->unparseToString()<<endl;
-          exit(1);
+          
         }
       }
     } else {
@@ -910,6 +910,8 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp*
       return evalFunctionCallMalloc(funCall,estate,useConstraints);
     } else if(funName=="memcpy") {
       return evalFunctionCallMemCpy(funCall,estate,useConstraints);
+    } else if(funName=="free") {
+      return evalFunctionCallFree(funCall,estate,useConstraints);
     } else {
       cout<<"WARNING: unknown external function ("<<funName<<") inside expression detected. Assuming it is side-effect free."<<endl;
       return listify(res);
@@ -955,6 +957,32 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMalloc(SgFunctionCa
   } else {
     // this will become an error in future
     cerr<<"WARNING: unknown malloc function "<<funCall->unparseToString()<<endl;
+  }
+  return listify(res);
+}
+
+list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallFree(SgFunctionCallExp* funCall, EState estate, bool useConstraints) {
+  SingleEvalResultConstInt res;
+  SgExpressionPtrList& argsList=SgNodeHelper::getFunctionCallActualParameterList(funCall);
+  if(argsList.size()==1) {
+    SgExpression* arg1=*argsList.begin();
+    list<SingleEvalResultConstInt> resList=evalConstInt(arg1,estate,useConstraints);
+    if(resList.size()!=1) {
+      cerr<<"Error: conditional control-flow in function argument expression not supported. Expression normalization required."<<endl;
+      exit(1);
+    }
+    SingleEvalResultConstInt sres=*resList.begin();
+    AbstractValue arg1val=sres.result;
+    if(arg1val.isPtr()) {
+      int memoryRegionSize=getMemoryRegionSize(arg1val);
+      // can be marked as deallocated (currently this does not impact the analysis)
+      //variableIdMapping->setSize(arg1Val.getVariableId(),-1);
+      ROSE_ASSERT(memoryRegionSize>=0);
+    }
+    res.init(estate,*estate.constraints(),AbstractValue(Top())); // void result (using top here)
+  } else {
+    // this will become an error in future
+    cerr<<"WARNING: unknown free function "<<funCall->unparseToString()<<endl;
   }
   return listify(res);
 }

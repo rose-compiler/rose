@@ -209,6 +209,7 @@ private:
 
   list<SingleEvalResultConstInt> evalFunctionCallMalloc(SgFunctionCallExp* funCall, EState estate, bool useConstraints);
   list<SingleEvalResultConstInt> evalFunctionCallMemCpy(SgFunctionCallExp* funCall, EState estate, bool useConstraints);
+  list<SingleEvalResultConstInt> evalFunctionCallFree(SgFunctionCallExp* funCall, EState estate, bool useConstraints);
   int getMemoryRegionSize(CodeThorn::AbstractValue ptrToRegion);
 };
 
