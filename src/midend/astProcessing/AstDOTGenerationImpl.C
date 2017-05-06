@@ -1,3 +1,5 @@
+// Warning: This is actually a header file! It's #included into multiple source files.
+
 #ifdef TEMPLATE_IMPLEMENTATIONS
 
 #ifndef ASTDOTGENERATION_TEMPLATES_C
@@ -8,11 +10,12 @@
 #  ifndef SAGE3_CLASSES_BASIC__H
 #    include "sage3basic.h"
 #  endif
-#  ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-#    include "AsmUnparser_compat.h"
-#  endif
 #  include "wholeAST_API.h"
 #  include "sageInterface.h"
+#endif
+
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#  include "AsmUnparser_compat.h"
 #endif
 
 template <typename ExtraNodeInfo_t, typename ExtraNodeOptions_t, typename ExtraEdgeInfo_t, typename ExtraEdgeOptions_t>
