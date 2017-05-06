@@ -123,7 +123,6 @@ set(rose_LIB_SRCS
   $<TARGET_OBJECTS:astPostProcessing>
   $<TARGET_OBJECTS:failsafe>
   $<TARGET_OBJECTS:trans_tracking>
-  $<TARGET_OBJECTS:binaryFrontend>
   $<TARGET_OBJECTS:astRewriteMechanism>
   $<TARGET_OBJECTS:mstl>
 )
