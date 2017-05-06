@@ -81,7 +81,6 @@ install(
     BinaryToSource.h
     DwarfLineMapper.h
     ether.h
-    instructionSemantics/BaseSemantics.h
     instructionSemantics/BaseSemantics2.h
     instructionSemantics/ConcreteSemantics2.h
     instructionSemantics/DataFlowSemantics2.h
