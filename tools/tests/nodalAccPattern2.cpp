@@ -7,15 +7,11 @@ namespace RAJA
   // new specialized policy
 
  // input code , template 1
-  template < typename EXEC_POLICY_T,
-           typename LOOP_BODY >
-             void forall ( Index_type begin, Index_type end,
-                 LOOP_BODY loop_body )
-             {
-               forall ( EXEC_POLICY_T ( ),
-                   begin, end,
-                   loop_body );
-             }
+  template < typename EXEC_POLICY_T, typename LOOP_BODY >
+    void forall ( Index_type begin, Index_type end, LOOP_BODY loop_body)
+    {
+      forall ( EXEC_POLICY_T(), begin, end, loop_body );
+    }
   // some prebuilt policies
   // the type for specialization
 
@@ -25,9 +21,7 @@ namespace RAJA
   ;
   // Some prebuilt specialization for sequential and parallel executions
   template < typename LOOP_BODY >
-    void for_all ( seq_exec,
-        Index_type begin, Index_type end,
-        LOOP_BODY loop_body )
+    void forall ( seq_exec, Index_type begin, Index_type end, LOOP_BODY loop_body )
     {
       ;
 #pragma novector
@@ -41,7 +35,7 @@ namespace RAJA
 }
 
 
-void foo(double* x, int jp, int kp, int begin, int end, double rh1)
+void foo(double* x, int jp, int kp, RAJA::Index_type begin, RAJA::Index_type end, double rh1)
 {
    //Condition 1: pointer declaration, 4 or 8 pointers
    double * x1, *x2, *x3, *x4; 
@@ -53,7 +47,7 @@ void foo(double* x, int jp, int kp, int begin, int end, double rh1)
    x4 = x1 + kp; 
 
    //Condition 3:  A regular loop or a RAJA loop
-   RAJA::for_all <class RAJA::seq_exec> (begin, end, [=](int i)
+   RAJA::forall <class RAJA::seq_exec> (begin, end, [=](int i)
    {
       // Condition 4: accumulation pattern: lhs accum-op rhs
       // lhs : array element access x[i]: x is pointer type, i is loop index 
@@ -68,6 +62,6 @@ void foo(double* x, int jp, int kp, int begin, int end, double rh1)
 
 int main()
 {
-  foo();                                                                                                        
+  //foo();                                                                                                        
   return 0;                                                                                                           
 }
