@@ -804,16 +804,6 @@ EXCLUDE                = @top_srcdir@/src/frontend/CxxFrontend/EDG \
                          @top_srcdir@/util/roseString.C \
                          @top_srcdir@/docs/Rose/AstProcessing \
                          @top_srcdir@/docs/Rose/Tutorial \
-			 @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/BaseSemantics.h \
-			 @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/FindRegisterDefs.h \
-			 @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/IntervalSemantics.h \
-			 @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/MultiSemantics.h \
-			 @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/NullSemantics.h \
-			 @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/PartialSymbolicSemantics.h \
-			 @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/ReadWriteRegisterFragment.h \
-			 @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/SymbolicSemantics.h \
-			 @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/flowEquations.h \
-			 @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/x86InstructionSemantics.h \
                          @top_pwd@/src/frontend/SageIII/StorageClasses.h
 
 # The EXCLUDE_SYMLINKS tag can be used to select whether or not files or
