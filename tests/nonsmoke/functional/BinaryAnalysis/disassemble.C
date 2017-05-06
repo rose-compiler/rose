@@ -24,6 +24,7 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 
 #include "AsmFunctionIndex.h"
 #include "AsmUnparser.h"
+#include "Assembler.h"
 #include "BinaryLoader.h"
 #include "SMTSolver.h"
 #include "BinaryControlFlow.h"
@@ -35,6 +36,7 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #include "DisassemblerX86.h"
 #include "DisassemblerM68k.h"
 #include "Diagnostics.h"
+#include "Partitioner.h"
 
 /*FIXME: Rose cannot parse this file.*/
 #ifndef CXX_I_ROSE_ANALYSIS

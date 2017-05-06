@@ -7,6 +7,7 @@ static const char *description =
 #include <rose.h>
 
 #include <Diagnostics.h>
+#include <Disassembler.h>
 #include <LinearCongruentialGenerator.h>
 #include <MemoryMap.h>
 #include <Sawyer/AllocatingBuffer.h>

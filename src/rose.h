@@ -114,31 +114,6 @@ namespace ELF{
 // DQ (1/25/2008): Added cfgToDot.h as suggested by Jeremiah
 #include "cfgToDot.h"
 
-#include "DataConversion.h"
-// Files in src/frontend/ExecFormats
-#include "MemoryMap.h"
-
-#include "InstructionEnumsX86.h"
-#include "x86InstructionProperties.h"
-#include "armInstructionEnum.h"
-#include "powerpcInstructionEnum.h"
-
-// Files in src/frontend/Disassemblers
-#include "Disassembler.h"
-#include "DisassemblerArm.h"
-#include "DisassemblerPowerpc.h"
-#include "DisassemblerX86.h"
-#include "Partitioner.h"
-#include "Assembler.h"
-#include "AssemblerX86.h"
-
-// Files in src/backend/asmUnparser
-#include "AsmUnparser.h"
-#include "AsmUnparser_compat.h"  /*backward compatibility functions once in unparseAsm.h*/
-
-
-
-
 // ABI struct layout and similar helpers in src/frontend/SageIII/sageInterface
 #include "abiStuff.h"
 
