@@ -321,7 +321,7 @@ Partitioner::discover_jump_table(BasicBlock *bb, bool do_create, ExtentMap *tabl
     return successors;
 }
 
-/** Runs local block analyses if their cached results are invalid and caches the results.  A local analysis is one whose
+/*  Runs local block analyses if their cached results are invalid and caches the results.  A local analysis is one whose
  *  results only depend on the specified block and which are valid into the future as long as the instructions in the block do
  *  not change. */
 void
@@ -410,7 +410,7 @@ Partitioner::update_analyses(BasicBlock *bb)
     bb->validate_cache();
 }
 
-/** Returns true if basic block appears to end with a function call.  If the call target can be determined and @p target_va is
+/*  Returns true if basic block appears to end with a function call.  If the call target can be determined and @p target_va is
  *  non-null, then @p target_va will be initialized to contain the virtual address of the call target; otherwise it will
  *  contain the constant NO_TARGET. */
 bool
@@ -421,7 +421,7 @@ Partitioner::is_function_call(BasicBlock *bb, rose_addr_t *target_va)
     return bb->cache.is_function_call;
 }
 
-/** Returns known successors of a basic block.
+/*  Returns known successors of a basic block.
  *
  *  There are two types of successor analyses:  one is an analysis that depends only on the instructions of the basic block
  *  for which successors are being calculated.  It is safe to cache these based on properties of the block itself (e.g., the
@@ -483,7 +483,7 @@ Partitioner::successors(BasicBlock *bb, bool *complete)
     return retval;
 }
 
-/** Returns call target if block could be a function call. If the specified block looks like it could be a function call
+/*  Returns call target if block could be a function call. If the specified block looks like it could be a function call
  *  (using only local analysis) then return the call target address.  If the block does not look like a function call or the
  *  target address cannot be statically computed, then return Partitioner::NO_TARGET. */
 rose_addr_t
@@ -523,7 +523,7 @@ Partitioner::pops_return_address(rose_addr_t va)
     return !on_stack;
 }
 
-/** Returns the first address of a basic block.  Since the instructions of a basic block are not necessarily monotonically
+/*  Returns the first address of a basic block.  Since the instructions of a basic block are not necessarily monotonically
  * increasing, the first address might not be the lowest address. */
 rose_addr_t
 Partitioner::BasicBlock::address() const
@@ -532,7 +532,7 @@ Partitioner::BasicBlock::address() const
     return insns.front()->get_address();
 }
 
-/** Returns the first address of a data block.  This might not be the lowest address--it's just the starting address of the
+/*  Returns the first address of a data block.  This might not be the lowest address--it's just the starting address of the
  *  first data node that was added. */
 rose_addr_t
 Partitioner::DataBlock::address() const
@@ -541,7 +541,7 @@ Partitioner::DataBlock::address() const
     return nodes.front()->get_address();
 }
 
-/** Returns the function to which this data block is effectively assigned.  This returns, in this order, the function to which
+/*  Returns the function to which this data block is effectively assigned.  This returns, in this order, the function to which
  *  this data block is explicitly assigned, the function to which this block is implicitly assigned via an association with a
  *  basic block, or a null pointer. */
 Partitioner::Function *
@@ -716,7 +716,7 @@ Partitioner::load_config(const std::string &filename) {
 #endif
 }
 
-/** Reduces the size of a basic block by truncating its list of instructions.  The new block contains initial instructions up
+/*  Reduces the size of a basic block by truncating its list of instructions.  The new block contains initial instructions up
  *  to but not including the instruction at the specified virtual address.  The addresses of the instructions (aside from the
  *  instruction with the specified split point), are irrelevant since the choice of where to split is based on the relative
  *  positions in the basic block's instruction vector rather than instruction address.
@@ -757,7 +757,7 @@ Partitioner::append(BasicBlock* bb, Instruction* insn)
     bb->insns.push_back(insn);
 }
 
-/** Associate a data block with a basic block.  Any basic block can point to zero or more data blocks.  The data block will
+/*  Associate a data block with a basic block.  Any basic block can point to zero or more data blocks.  The data block will
  *  then be kept with the same function as the basic block.  This is typically used for things like jump tables, where the last
  *  instruction of the basic block is an indirect jump, and the data block contains the jump table.  When a blasic block is
  *  truncated, it looses its data blocks.
@@ -780,7 +780,7 @@ Partitioner::append(BasicBlock *bb, DataBlock *db, unsigned reason)
     db->basic_block = bb;
 }
 
-/** Append basic block to function.  This method is a bit of a misnomer because the order that blocks are appended to a
+/*  Append basic block to function.  This method is a bit of a misnomer because the order that blocks are appended to a
  *  function is irrelevant -- the blocks are stored in a map by order of block entry address.  The block being appended must
  *  not already belong to some other function, but it's fine if the block already belongs to the function to which it is being
  *  appended (it is not added a second time).
@@ -819,7 +819,7 @@ Partitioner::append(Function* f, BasicBlock *bb, unsigned reason, bool keep/*=fa
         f->promote_may_return(SgAsmFunction::RET_SOMETIMES);
 }
 
-/** Append data region to function.  This method is a bit of a misnomer because the order that the data blocks are appended to
+/*  Append data region to function.  This method is a bit of a misnomer because the order that the data blocks are appended to
  *  the function is irrelevant -- the blocks are stored in a map by order of block address.  The data block being appended must
  *  not already belong to some other function, but it's fine if the block already belongs to the function to which it is being
  *  appended (it is not added a second time).
@@ -850,7 +850,7 @@ Partitioner::append(Function *func, DataBlock *block, unsigned reason, bool forc
     func->data_blocks[block->address()] = block;
 }
 
-/** Remove a basic block from a function.  The block and function continue to exist--only the association between them is
+/*  Remove a basic block from a function.  The block and function continue to exist--only the association between them is
  *  broken. */
 void
 Partitioner::remove(Function* f, BasicBlock* bb)
@@ -862,7 +862,7 @@ Partitioner::remove(Function* f, BasicBlock* bb)
     f->basic_blocks.erase(bb->address());
 }
 
-/** Remove a data block from a function. The block and function continue to exist--only the association between them is
+/*  Remove a data block from a function. The block and function continue to exist--only the association between them is
  *  broken.  The data block might also be associated with a basic block, in which case the data block will ultimately belong to
  *  the same function as the basic block. */
 void
@@ -875,7 +875,7 @@ Partitioner::remove(Function *f, DataBlock *db)
     f->data_blocks.erase(db->address());
 }
 
-/** Remove a data block from a basic block.  The blocks continue to exist--only the association between them is broken.  The
+/*  Remove a data block from a basic block.  The blocks continue to exist--only the association between them is broken.  The
  *  data block might still be associated with a function, in which case it will ultimately end up in that function. */
 void
 Partitioner::remove(BasicBlock *bb, DataBlock *db)
@@ -949,7 +949,7 @@ Partitioner::find_instruction(rose_addr_t va, bool create/*=true*/)
     return ii==insns.end() ? NULL : ii->second;
 }
 
-/** Finds a basic block containing the specified instruction address. If no basic block exists and @p create is set, then a
+/*  Finds a basic block containing the specified instruction address. If no basic block exists and @p create is set, then a
  *  new block is created which starts at the specified address.  The return value, in the case when a block already exists,
  *  may be a block where the specified virtual address is either the beginning of the block or somewhere inside the block. In
  *  any case, the virtual address will always represent a function.
@@ -1014,7 +1014,7 @@ Partitioner::find_bb_containing(rose_addr_t va, bool create/*true*/)
     return bb;
 }
 
-/** Makes sure the block at the specified address exists.  This is similar to find_bb_containing() except it makes sure that
+/*  Makes sure the block at the specified address exists.  This is similar to find_bb_containing() except it makes sure that
  *  @p va starts a new basic block if it was previously in the middle of a block.  If an existing block had to be truncated to
  *  start this new block then the original block's function is marked as pending rediscovery. */
 Partitioner::BasicBlock *
@@ -1037,7 +1037,7 @@ Partitioner::find_bb_starting(rose_addr_t va, bool create/*true*/)
     return bb;
 }
 
-/** Folows alias_for links in basic blocks. The input value is the virtual address of a basic block (which need not exist). We
+/*  Folows alias_for links in basic blocks. The input value is the virtual address of a basic block (which need not exist). We
  *  recursively look up the specified block and follow its alias_for link until either the block does not exist or it has no
  *  alias_for. */
 rose_addr_t
@@ -1674,7 +1674,7 @@ Partitioner::pattern6(const InstructionMap &insns, InstructionMap::const_iterato
     return first;                                       // the LEA instruction is the start of a function
 }
 
-/** Seeds functions according to byte and instruction patterns.  Note that the instruction pattern matcher looks only at
+/*  Seeds functions according to byte and instruction patterns.  Note that the instruction pattern matcher looks only at
  *  existing instructions--it does not actively disassemble new instructions.  In other words, this matcher is intended mostly
  *  for passive-mode partitioners where the disassembler has already disassembled everything it can. The byte pattern matcher
  *  works whether or not instructions are available. */
@@ -2219,7 +2219,7 @@ Partitioner::FindInsnPadding::operator()(bool enabled, const Args &args)
     return retval;
 }
 
-/** Finds (or creates) a data block.  Finds a data block starting at the specified address.  If @p size is non-zero then the
+/*  Finds (or creates) a data block.  Finds a data block starting at the specified address.  If @p size is non-zero then the
  *  existing data block must contain all bytes in the range @p start_va (inclusive) to @p start_va + @p size (exclusive), and
  *  if it doesn't then a new SgAsmStaticData node is created and appended to either a new data block or a data block that
  *  already begins at the specified address.   If size is zero an no block exists, then the null pointer is returned.  The size
@@ -2516,7 +2516,7 @@ Partitioner::FindThunkTables::operator()(bool enabled, const Args &args)
     return true;
 }
 
-/** Determines if function is a thunk.  A thunk is a small piece of code (a function) whose only purpose is to branch to
+/*  Determines if function is a thunk.  A thunk is a small piece of code (a function) whose only purpose is to branch to
  *  another function.   This predicate should not be confused with the SgAsmFunction::FUNC_THUNK reason bit; the
  *  latter is only an indication of why the function was originally created.  A thunk (as defined by this predicate) might not
  *  have the FUNC_THUNK reason bit set if this function was detected by other means (such as being a target of a function
@@ -2651,7 +2651,7 @@ Partitioner::get_indirection_addr(SgAsmInstruction *g_insn, rose_addr_t offset)
     return retval; /*calculated value, or defaults to zero*/
 }
 
-/** Gives names to dynmaic linking trampolines for ELF.  This method gives names to the dynamic linking trampolines in the .plt
+/*  Gives names to dynmaic linking trampolines for ELF.  This method gives names to the dynamic linking trampolines in the .plt
  *  section if the Partitioner detected them as functions. If mark_elf_plt_entries() was called then they all would have been
  *  marked as functions and given names. Otherwise, ROSE might have detected some of them in other ways (like CFG analysis) and
  *  this function will give them names. */
@@ -2727,7 +2727,7 @@ Partitioner::name_plt_entries(SgAsmGenericHeader *fhdr)
     }
 }
 
-/** Gives names to dynamic linking thunks for PE.  This method gives names to thunks for imported functions.  The thunks must
+/*  Gives names to dynamic linking thunks for PE.  This method gives names to thunks for imported functions.  The thunks must
  *  have already been detected by the partitioner--this method does not create new functions.  The algorithm scans the list of
  *  unnamed functions looking for functions whose entry instruction is an indirect jump.  When found, check whether the jump is
  *  through a memory address that part of an import address table.  If so, use the corresponding import name as the name of
@@ -2791,7 +2791,7 @@ Partitioner::name_import_entries(SgAsmGenericHeader *fhdr)
     }
 }
 
-/** Find the addresses for all PE Import Address Tables. Adds them to Partitioner::pe_iat_extents. */
+/*  Find the addresses for all PE Import Address Tables. Adds them to Partitioner::pe_iat_extents. */
 void
 Partitioner::find_pe_iat_extents(SgAsmGenericHeader *hdr)
 {
@@ -2852,7 +2852,7 @@ Partitioner::pre_cfg(SgAsmInterpretation *interp/*=NULL*/)
     }
 }
 
-/** Adds first basic block to empty function before we start discovering blocks of any other functions. This
+/*  Adds first basic block to empty function before we start discovering blocks of any other functions. This
  *  protects against cases where one function simply falls through to another within a basic block, such as:
  *
  *  @code
@@ -2915,7 +2915,7 @@ Partitioner::discover_first_block(Function *func)
     }
 }
 
-/** Discover the basic blocks that belong to the current function. This function recursively adds basic blocks to function @p f
+/*  Discover the basic blocks that belong to the current function. This function recursively adds basic blocks to function @p f
  *  by following the successors of each block.  If a successor is an instruction belonging to some other
  *  function then it's either a function call (if it branches to the entry point of that function) or it's a collision.
  *  Collisions are resolved by discarding and rediscovering the blocks of the other function. */
@@ -3510,7 +3510,7 @@ Partitioner::merge_functions(Function *parent, Function *other)
     delete other;
 }
 
-/** Mark PE dynamic linking thunks as thunks and give them a name if possible. */
+/*  Mark PE dynamic linking thunks as thunks and give them a name if possible. */
 void
 Partitioner::name_pe_dynlink_thunks(SgAsmInterpretation *interp/*=NULL*/)
 {
