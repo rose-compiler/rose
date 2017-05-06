@@ -5,7 +5,8 @@ noinst_PROGRAMS =
 TEST_TARGETS =
 
 AM_CPPFLAGS = $(ROSE_INCLUDES)
-AM_LDFLAGS = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+AM_LDFLAGS = $(ROSE_RPATHS)
+LDADD = $(ROSE_LIBS)
 
 ###############################################################################################################################
 # Check boost library linkage consistency

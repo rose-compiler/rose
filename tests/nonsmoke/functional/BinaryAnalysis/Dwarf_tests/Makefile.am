@@ -2,7 +2,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 if ROSE_HAVE_LIBDWARF
 
-AM_CPPFLAGS = $(ROSE_INCLUDES) 
+AM_CPPFLAGS = $(ROSE_INCLUDES)
+AM_LDFLAGS = $(ROSE_RPATHS)
 
 # Removd dwarfDumpMinimal from list of programs compiled by default because it is not part of libdwarf, but rather a
 # separate package and therefore shouldn't be tied to the --with-dwarf configuration switch.

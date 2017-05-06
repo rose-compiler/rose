@@ -2,11 +2,12 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # To keep compile commands tidy, please ONLY put required include flags here.
 AM_CPPFLAGS = $(ROSE_INCLUDES)
+AM_LDFLAGS = $(ROSE_RPATHS)
 
 # roseCompiler_DEPENDENCIES = $(REQUIRED_LIBS)
-# roseCompiler_LDADD  = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+# roseCompiler_LDADD  = $(ROSE_LIBS)
 DEPENDENCIES = $(REQUIRED_LIBS)
-LDADD  = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+LDADD  = $(ROSE_LIBS)
 
 
 # DQ (2/28/2017): NOTE: bug125 is executed and takes a very long time (about 15 minutes; we should maybe look into this).
@@ -68,7 +69,7 @@ testTraversalOfTemplateInstantiations_SOURCES = testTraversalOfTemplateInstantia
 testTranslator2013_01_SOURCES = testTranslator2013_01.C
 testTranslator2013_02_SOURCES = testTranslator2013_02.C
 
-# LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+# LDADD = $(ROSE_SEPARATE_LIBS)
 
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
 

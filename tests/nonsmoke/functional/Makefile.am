@@ -176,10 +176,10 @@ endif
 # Use names set in ROSE/config/Makefile.for.ROSE.includes.and.libs
 # AM_CPPFLAGS = $(ROSE_INCLUDES) $(ATERM_INCLUDE)
 AM_CPPFLAGS = $(ROSE_INCLUDES)
-LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+AM_LDFLAGS  = $(ROSE_RPATHS)
+LDADD       = $(ROSE_LIBS)
 
-# testAtermGraphGeneration_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(ATERM_LIB_DIR)/libATerm.a 
-testAtermGraphGeneration_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+testAtermGraphGeneration_LDADD = $(ROSE_LIBS)
 
 EXTRA_DIST = CMakeLists.txt input_codes inputFile.C tests.tex
 

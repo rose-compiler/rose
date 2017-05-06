@@ -6,7 +6,8 @@ bin_PROGRAMS = memoryTranslator
 memoryTranslator_SOURCES = test.C
 
 AM_CPPFLAGS = $(ROSE_INCLUDES)
-LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+AM_LDFLAGS = $(ROSE_RPATHS)
+LDADD    = $(ROSE_LIBS)
 
 TESTCODES_REQUIRED_TO_PASS = \
       test1.C

@@ -16,11 +16,14 @@ sageInterfaceTest_CXXFLAGS= \
   -I$(top_srcdir)/tests/nonsmoke/functional/testSupport/gtest/include \
   $(ROSE_INCLUDES)
 
+sageInterfaceTest_LDFLAGS = \
+  $(ROSE_RPATHS)
+
 sageInterfaceTest_LDADD= \
   $(top_builddir)/tests/nonsmoke/functional/testSupport/libroseUnitTestSupport.la \
   $(top_builddir)/tests/nonsmoke/functional/testSupport/gtest/lib/libgtest_main.la \
   $(top_builddir)/tests/nonsmoke/functional/testSupport/gtest/lib/libgtest.la \
-  $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+  $(ROSE_LIBS)
 
 
 sageBuilderTest_SOURCES= \
@@ -33,11 +36,14 @@ sageBuilderTest_CXXFLAGS= \
   -I$(top_srcdir)/tests/nonsmoke/functional/testSupport/gtest/include \
   $(ROSE_INCLUDES)
 
+sageBuilderTest_LDFLAGS = \
+  $(ROSE_RPATHS)
+
 sageBuilderTest_LDADD= \
   $(top_builddir)/tests/nonsmoke/functional/testSupport/libroseUnitTestSupport.la \
   $(top_builddir)/tests/nonsmoke/functional/testSupport/gtest/lib/libgtest_main.la \
   $(top_builddir)/tests/nonsmoke/functional/testSupport/gtest/lib/libgtest.la \
-  $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+  $(ROSE_LIBS)
 
 
 check-local: sageInterfaceTest sageBuilderTest

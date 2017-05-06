@@ -25,9 +25,7 @@ INCLUDES = $(ROSE_INCLUDES) $(SIDEEFFECT_INCLUDES) -idirafter /usr/casc/overture
 
 DEFS = 
 
-LIBS_WITH_RPATH =  -L/home/bwhite/rose-playground/ROSE-build-3.2.3/src -Wl,-rpath /home/bwhite/rose-playground/ROSE-build-3.2.3/src
 
-ROSE_LIBS = $(LIBS_WITH_RPATH) -lrose -ledg -lm 
 
 LDADD = $(ROSE_LIBS) $(top_builddir)/projects/dataBase/librosedatabase.a /usr/casc/overture/MySQL/MySQL_Install/lib/mysql/libmysqlclient.a /usr/casc/overture/MySQL/MySQL_Install/lib/libsqlplus.a -lm -lz
 
