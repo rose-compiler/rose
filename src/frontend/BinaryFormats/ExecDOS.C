@@ -6,8 +6,8 @@
 // MS-DOS Real Mode File Header
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Construct a new DOS File Header with default values. The new section is placed at file offset zero and the size is
- *  initially one byte (calling reallocate() or parse() will extend it as necessary). */
+// Construct a new DOS File Header with default values. The new section is placed at file offset zero and the size is
+// initially one byte (calling reallocate() or parse() will extend it as necessary).
 void
 SgAsmDOSFileHeader::ctor()
 {
@@ -37,7 +37,6 @@ SgAsmDOSFileHeader::ctor()
     p_isa = ISA_IA32_Family;
 }
 
-/** Returns true if a cursory look at the file indicates that it could be a DOS executable file. */
 bool
 SgAsmDOSFileHeader::is_DOS(SgAsmGenericFile *file)
 {
@@ -59,8 +58,6 @@ SgAsmDOSFileHeader::is_DOS(SgAsmGenericFile *file)
     return true;
 }
 
-/** Initialize this header with information parsed from the file and construct and parse everything that's reachable from the
- *  header. The DOS File Header should have been constructed such that SgAsmDOSFileHeader::ctor() was called. */
 SgAsmDOSFileHeader*
 SgAsmDOSFileHeader::parse(bool define_rm_section)
 {
@@ -122,9 +119,6 @@ SgAsmDOSFileHeader::parse(bool define_rm_section)
     return this;
 }
 
-/** Update DOS header with data from real-mode section. The DOS real-mode data+text section is assumed to appear immediately
- * after the DOS Extended Header, which appears immediately after the DOS File Header, which appears at the beginning of the
- * file. These assumptions are not checked until SgAsmDOSFileHeader::unparse() is called. See also, parse_rm_section(). */
 void
 SgAsmDOSFileHeader::update_from_rm_section()
 {
@@ -166,8 +160,6 @@ SgAsmDOSFileHeader::encode(DOSFileHeader_disk *disk) const
     return disk;
 }
 
-/** Allocate file space for header. Also updates various entries in the header based on the location and size of the
- *  DOS Extended Header and the DOS Real-Mode Text+Data section (if any). */
 bool
 SgAsmDOSFileHeader::reallocate()
 {
@@ -220,9 +212,6 @@ SgAsmDOSFileHeader::unparse(std::ostream &f) const
     write(f, 0, sizeof(disk), &disk);
 }
 
-/** Parses the DOS real-mode text+data section and adds it to the AST.  If max_offset is non-zero then use that as the maximum
- *  offset of the real-mode section. If the DOS header indicates a zero sized section then return NULL. If the section exists
- *  or is zero size due to the max_offset then return the section. See also, update_from_rm_section(). */
 SgAsmGenericSection *
 SgAsmDOSFileHeader::parse_rm_section(rose_addr_t max_offset)
 {
@@ -318,8 +307,6 @@ SgAsmDOSFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
 // section belonging to the DOS File Header. The PE, NE, LE and LX File Header IR nodes usually also point to this section.
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Construct a new DOS Extended Header with default values. The real constructor will have already initialized this object's
- *  offset and size. */
 void
 SgAsmDOSExtendedHeader::ctor()
 {
@@ -330,7 +317,6 @@ SgAsmDOSExtendedHeader::ctor()
     set_size(sizeof(DOSExtendedHeader_disk));
 }
 
-/** Initialize this header with information parsed from the file. */
 SgAsmDOSExtendedHeader*
 SgAsmDOSExtendedHeader::parse()
 {
