@@ -2,12 +2,14 @@
  * because then they won't get indexed/formatted/etc. by C-aware tools. */
 
 #include "sage3basic.h"
-#include "SymbolicSemantics.h"
+
+#include "AsmUnparser_compat.h"
 #include "SymbolicSemantics2.h"
 #include "PartialSymbolicSemantics2.h"
 #include "DispatcherX86.h"
 #include "Disassembler.h"
 #include "Diagnostics.h"
+#include "x86InstructionProperties.h"
 
 using namespace rose;                                   // temporary until this lives in "rose"
 using namespace rose::Diagnostics;

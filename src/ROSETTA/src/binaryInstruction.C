@@ -744,14 +744,6 @@ void Grammar::setUpBinaryInstructions() {
          *  empty string. */
         virtual std::string description() const { return ""; }
 
-        // [Robb P Matzke 2017-02-13]: deprecating this old API
-        SgAsmInstruction* cfgBinFlowOutEdge(const VirtualBinCFG::AuxiliaryInformation* info)
-            ROSE_DEPRECATED("cfgBin is deprecated");
-        std::vector<VirtualBinCFG::CFGEdge> cfgBinOutEdges(const VirtualBinCFG::AuxiliaryInformation* info)
-            ROSE_DEPRECATED("cfgBin is deprecated");
-        std::vector<VirtualBinCFG::CFGEdge> cfgBinInEdges(const VirtualBinCFG::AuxiliaryInformation* info)
-            ROSE_DEPRECATED("cfgBin is deprecated");
-
         // FIXME[Robb P Matzke 2017-02-13]: unused?
         void appendSources( SgAsmInstruction* instruction );
 
@@ -2697,24 +2689,6 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
 #ifdef DOCUMENTATION
-        /** Property: Replacement string for RoseBin_IDAPRO_buildTree.
-         *
-         *  The @p replacement is only set by @ref RoseBin_IDAPRO_buildTree::resolveRecursivelyExpression and appears to be
-         *  used only in a couple of files in src/midend/binaryAnalsyses (and elsewhere only for converting a @ref
-         *  SgAsmExpression to a string). It seems to hold the name of a function, such as "_malloc" or "malloc@plt" for branch
-         *  instructions. It should be possible to obtain the function name by looking up the instruction at the branch target
-         *  and then following parent links in the AST until we reach the SgAsmFunction node, which has a get_name() method.
-         *
-         * @{ */
-        std::string get_replacement() const;
-        void set_replacement(std::string);
-        /** @} */
-#else
-        AsmExpression.setDataPrototype("std::string", "replacement", "= \"\"",
-                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
-
-#ifdef DOCUMENTATION
         /** Property: Comment.
          *
          *  User-defined comment for an expression.
@@ -2738,6 +2712,7 @@ void Grammar::setUpBinaryInstructions() {
         void serialize(S &s, const unsigned version) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmNode);
             s & BOOST_SERIALIZATION_NVP(p_type);
+            s & BOOST_SERIALIZATION_NVP(p_comment);
         }
 #endif
 

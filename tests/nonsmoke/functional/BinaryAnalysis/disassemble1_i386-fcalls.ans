@@ -1,10 +1,10 @@
 using this memory map for disassembly:
-    va 0x08048000 + 0x00000074 = 0x08048074 r-xp at buffer aac   + 0x00000000 i386-fcalls(LOAD#0)
-    va 0x08048074 + 0x00000024 = 0x08048098 r--p at buffer aae   + 0x00000000 i386-fcalls(.note.gnu.build-id)
-    va 0x08048098 + 0x00000008 = 0x080480a0 r-xp at buffer aac   + 0x00000098 i386-fcalls(LOAD#0)
-    va 0x080480a0 + 0x0000007a = 0x0804811a r-x- at buffer aag   + 0x000000a0 i386-fcalls(.text)
-    va 0x0804811a + 0x000002c5 = 0x080483df r-xp at buffer aac   + 0x0000011a i386-fcalls(LOAD#0)
-    va 0x080483df + 0x00000c21 = 0x08049000 r-xp at buffer aab   + 0x00000000 i386-fcalls(LOAD#0)
+    va 0x08048000 + 0x00000074 = 0x08048074 r-xp at buffer aac.A + 0x00000000 i386-fcalls(LOAD#0)
+    va 0x08048074 + 0x00000024 = 0x08048098 r--p at buffer aae.A + 0x00000000 i386-fcalls(.note.gnu.build-id)
+    va 0x08048098 + 0x00000008 = 0x080480a0 r-xp at buffer aac.A + 0x00000098 i386-fcalls(LOAD#0)
+    va 0x080480a0 + 0x0000007a = 0x0804811a r-x- at buffer aag.S + 0x000000a0 i386-fcalls(.text)
+    va 0x0804811a + 0x000002c5 = 0x080483df r-xp at buffer aac.A + 0x0000011a i386-fcalls(LOAD#0)
+    va 0x080483df + 0x00000c21 = 0x08049000 r-xp at buffer aab.A + 0x00000000 i386-fcalls(LOAD#0)
 
 
 0x080480a0: ================================== Function (entry point) unknown name
@@ -48,7 +48,7 @@ using this memory map for disassembly:
 0x080480b9: Predecessor blocks: 0x080480b4
 0x080480b9: Dominator block: 0x080480b4
 0x080480b9: b8 01 00 00 00          |.....   |   mov    eax, 0x00000001
-0x080480be: cd 80                   |..      |   int    0x80<-128> <exit>
+0x080480be: cd 80                   |..      |   int    0x80<-128>
 0x080480c0: f4                      |.       |   hlt    
 0x080480c0: Successor blocks: none
 

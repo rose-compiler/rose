@@ -18,7 +18,6 @@ add_subdirectory(pointerAnal)
 add_subdirectory(annotationLanguageParser)
 add_subdirectory(sideEffectAnalysis)
 add_subdirectory(distributedMemoryAnalysis)
-add_subdirectory(graphAnalysis)
 add_subdirectory(variableRenaming)
 add_subdirectory(genericDataflow)
 add_subdirectory(dataflowAnalysis)
@@ -36,9 +35,6 @@ if (enable-binary-analysis)
     defUseAnalysis/LivenessAnalysis.cpp
     defUseAnalysis/dfaToDot.cpp
     defUseAnalysis/DefUseAnalysis_perFunction.cpp
-    graphAnalysis/RoseBin_GmlGraph.cpp
-    graphAnalysis/RoseBin_Graph.cpp
-    graphAnalysis/RoseBin_DotGraph.cpp
     valuePropagation/ValueAnnot.C
     valuePropagation/ValuePropagate.C
     variableRenaming/VariableRenaming.C
@@ -70,9 +66,6 @@ if (enable-binary-analysis)
     VirtualFunctionAnalysis/IntraProcAliasAnalysis.C
     VirtualFunctionAnalysis/IntraProcDataFlowAnalysis.C
     VirtualFunctionAnalysis/InterProcDataFlowAnalysis.C
-    graphAnalysis/SB_Graph.C
-    graphAnalysis/CallGraphAnalysis.C
-    graphAnalysis/RoseSrc_CallGraphAnalysis.C
     staticSingleAssignment/staticSingleAssignmentCalculation.C
     staticSingleAssignment/staticSingleAssignmentQueries.C
     staticSingleAssignment/uniqueNameTraversal.C
@@ -121,10 +114,6 @@ else()
     VirtualFunctionAnalysis/IntraProcAliasAnalysis.C
     VirtualFunctionAnalysis/IntraProcDataFlowAnalysis.C
     VirtualFunctionAnalysis/InterProcDataFlowAnalysis.C
-    graphAnalysis/SB_Graph.C
-    graphAnalysis/CallGraphAnalysis.C
-    graphAnalysis/RoseSrc_CallGraphAnalysis.C
-    graphAnalysis/dummyFunction.cpp
     staticSingleAssignment/staticSingleAssignmentCalculation.C
     staticSingleAssignment/staticSingleAssignmentQueries.C
     staticSingleAssignment/uniqueNameTraversal.C

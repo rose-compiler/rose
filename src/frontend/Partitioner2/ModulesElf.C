@@ -2,6 +2,7 @@
 #include <Partitioner2/ModulesElf.h>
 #include <Partitioner2/Partitioner.h>
 #include <Partitioner2/Utility.h>
+#include <x86InstructionProperties.h>
 
 #include <boost/foreach.hpp>
 

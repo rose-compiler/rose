@@ -1,10 +1,6 @@
 #include "sage3basic.h"
 
 #include "BinaryString.h"
-#include "GraphAlgorithms.h"
-#include "RoseBin_CallGraphAnalysis.h" 
-#include "RoseBin_FlowAnalysis.h"
-#include "RoseBin_Graph.h"
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -193,11 +189,3 @@ TerminatedString::reset() {
 } // namespace
 } // namespace
 } // namespace
-
-RoseBin_FlowAnalysis::RoseBin_FlowAnalysis(SgAsmNode* global, GraphAlgorithms* algo) {
-}
-bool RoseBin_FlowAnalysis::initialized = false;
-void
-RoseBin_FlowAnalysis::visit(SgNode* node) {}
-void RoseBin_CallGraphAnalysis::run(RoseBin_Graph* vg, std::string fileN, bool multiedge) {
-}

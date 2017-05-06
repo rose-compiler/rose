@@ -25,7 +25,6 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #include "AsmFunctionIndex.h"
 #include "AsmUnparser.h"
 #include "BinaryLoader.h"
-#include "PartialSymbolicSemantics.h"
 #include "SMTSolver.h"
 #include "BinaryControlFlow.h"
 #include "BinaryFunctionCall.h"
@@ -42,7 +41,6 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 
 using namespace rose;
 using namespace rose::BinaryAnalysis;
-using namespace rose::BinaryAnalysis::InstructionSemantics;
 using namespace Sawyer::Message::Common;
 using namespace StringUtility;
 
@@ -68,7 +66,10 @@ digest_to_str(const unsigned char digest[20])
 bool
 block_hash(SgAsmBlock *blk, unsigned char digest[20]) 
 {
-
+#if 1 // [Robb P Matzke 2017-05-06]
+    memset(digest, 0, 20);                              // no longer supported
+    return false;
+#else
     if (!blk || blk->get_statementList().empty() || !isSgAsmX86Instruction(blk->get_statementList().front())) {
         memset(digest, 0, 20);
         return false;
@@ -111,6 +112,7 @@ block_hash(SgAsmBlock *blk, unsigned char digest[20])
     if (ignore_final_ip)
         policy.get_state().registers.ip = policy.get_orig_state().registers.ip;
     return policy.SHA1(digest);
+#endif
 }
 
 /* Compute a hash value for a function. Return false if the hash cannot be computed. */
@@ -234,6 +236,7 @@ private:
                         if (isSgAsmInstruction(stmts[int_n])==args.insn)
                             break;
 
+#if 0 // [Robb P Matzke 2017-05-06]: no longer supported
                     typedef PartialSymbolicSemantics::Policy<PartialSymbolicSemantics::State,
                                                              PartialSymbolicSemantics::ValueType> Policy;
                     typedef X86InstructionSemantics<Policy, PartialSymbolicSemantics::ValueType> Semantics;
@@ -252,6 +255,7 @@ private:
                     } catch (const Semantics::Exception&) {
                     } catch (const Policy::Exception&) {
                     }
+#endif
                 }
             }
             return enabled;

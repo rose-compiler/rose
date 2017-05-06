@@ -4185,7 +4185,7 @@ using this memory map for disassembly:
 0x0804a2ff: 8b 77 20                |.w      |   mov    esi, dword ds:[edi + 0x20]
 0x0804a302: 8b 7f 24                |..$     |   mov    edi, dword ds:[edi + 0x24]
 0x0804a305: b8 c0 00 00 00          |.....   |   mov    eax, 0x000000c0
-0x0804a30a: cd 80                   |..      |   int    0x80<-128> <mmap2>
+0x0804a30a: cd 80                   |..      |   int    0x80<-128>
 0x0804a30c: 83 f8 84                |...     |   cmp    eax, 0x84<-124>
 0x0804a30f: 76 0e                   |v.      |   jbe    0x0804a31f<<Insn>>
 0x0804a30f: Successor blocks: 0x0804a311, 0x0804a31f
@@ -9180,7 +9180,7 @@ using this memory map for disassembly:
 
 0x0804ac30: Basic block reasons: entry point, graph-2
 0x0804ac30: b8 ad 00 00 00          |.....   |   mov    eax, 0x000000ad
-0x0804ac35: cd 80                   |..      |   int    0x80<-128> <rt_sigreturn>
+0x0804ac35: cd 80                   |..      |   int    0x80<-128>
 0x0804ac37: f4                      |.       |   hlt    
 0x0804ac37: Successor blocks: none
 

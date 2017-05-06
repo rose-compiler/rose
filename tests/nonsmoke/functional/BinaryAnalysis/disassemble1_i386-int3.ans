@@ -1,10 +1,10 @@
 using this memory map for disassembly:
-    va 0x08048000 + 0x00000074 = 0x08048074 r-xp at buffer aac   + 0x00000000 i386-int3(LOAD#0)
-    va 0x08048074 + 0x00000024 = 0x08048098 r--p at buffer aae   + 0x00000000 i386-int3(.note.gnu.build-id)
-    va 0x08048098 + 0x00000008 = 0x080480a0 r-xp at buffer aac   + 0x00000098 i386-int3(LOAD#0)
-    va 0x080480a0 + 0x0000000a = 0x080480aa r-x- at buffer aag   + 0x000000a0 i386-int3(.text)
-    va 0x080480aa + 0x000001e2 = 0x0804828c r-xp at buffer aac   + 0x000000aa i386-int3(LOAD#0)
-    va 0x0804828c + 0x00000d74 = 0x08049000 r-xp at buffer aab   + 0x00000000 i386-int3(LOAD#0)
+    va 0x08048000 + 0x00000074 = 0x08048074 r-xp at buffer aac.A + 0x00000000 i386-int3(LOAD#0)
+    va 0x08048074 + 0x00000024 = 0x08048098 r--p at buffer aae.A + 0x00000000 i386-int3(.note.gnu.build-id)
+    va 0x08048098 + 0x00000008 = 0x080480a0 r-xp at buffer aac.A + 0x00000098 i386-int3(LOAD#0)
+    va 0x080480a0 + 0x0000000a = 0x080480aa r-x- at buffer aag.S + 0x000000a0 i386-int3(.text)
+    va 0x080480aa + 0x000001e2 = 0x0804828c r-xp at buffer aac.A + 0x000000aa i386-int3(LOAD#0)
+    va 0x0804828c + 0x00000d74 = 0x08049000 r-xp at buffer aab.A + 0x00000000 i386-int3(LOAD#0)
 
 
 0x080480a0: ================================== Function (entry point) unknown name
@@ -14,7 +14,7 @@ using this memory map for disassembly:
 0x080480a0: Basic block reasons: entry point, graph-1
 0x080480a0: cd 03                   |..      |   int    0x03
 0x080480a2: b8 01 00 00 00          |.....   |   mov    eax, 0x00000001
-0x080480a7: cd 80                   |..      |   int    0x80<-128> <exit>
+0x080480a7: cd 80                   |..      |   int    0x80<-128>
 0x080480a9: f4                      |.       |   hlt    
 0x080480a9: Successor blocks: none
 

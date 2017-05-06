@@ -9,8 +9,8 @@
 #include "AsmUnparser_compat.h"
 #include "BinaryLoader.h"
 #include "MemoryCellList.h"
-#include "PartialSymbolicSemantics.h"           // FIXME: expensive to compile; remove when no longer needed [RPM 2012-05-06]
 #include "stringify.h"
+#include "x86InstructionProperties.h"
 
 #include "PartialSymbolicSemantics2.h"
 #include "DispatcherX86.h"
@@ -500,12 +500,13 @@ Partitioner::call_target(BasicBlock *bb)
  * FIXME: This is far from perfect: it analyzes only the first basic block; it may have incomplete information about where the
  *        basic block ends due to not yet having discovered all incoming CFG edges; it doesn't consider cases where the return
  *        value is popped but saved and restored later; etc.  It also only handles x86 instructions at this time.
- *        [RPM 2010-04-30] */
+ *        [RPM 2010-04-30]
+ *
+ * Due to its reliance on the deprecated semantics API which has now been removed, it doesn't even handle x86 anymore.
+ * [Robb P Matzke 2017-05-06] */
 bool
 Partitioner::pops_return_address(rose_addr_t va)
 {
-    using namespace BinaryAnalysis::InstructionSemantics;
-
     bool on_stack = true; /*assume return value stays on stack; prove otherwise*/
 
     /* Create the basic block if possible, but if we created it here then we should clear it below. */
@@ -513,39 +514,6 @@ Partitioner::pops_return_address(rose_addr_t va)
     bool preexisting = bb!=NULL;
     if (!bb) bb = find_bb_containing(va);
     if (!bb) return false;
-    try {
-
-        SgAsmX86Instruction *last_insn = isSgAsmX86Instruction(bb->last_insn());
-
-        typedef PartialSymbolicSemantics::Policy<> Policy;
-        typedef X86InstructionSemantics<Policy, PartialSymbolicSemantics::ValueType> Semantics;
-        Policy policy;
-        policy.set_map(get_map());
-        PartialSymbolicSemantics::ValueType<32> orig_retaddr;
-        policy.writeMemory(x86_segreg_ss, policy.readRegister<32>("esp"), orig_retaddr, policy.true_());
-        Semantics semantics(policy);
-
-        try {
-            for (InstructionVector::iterator ii=bb->insns.begin(); ii!=bb->insns.end(); ++ii) {
-                SgAsmX86Instruction *insn = isSgAsmX86Instruction(*ii);
-                if (!insn) return false;
-                if (insn==last_insn && insn->get_kind()==x86_ret) break;
-                semantics.processInstruction(insn);
-            }
-            on_stack = policy.on_stack(orig_retaddr);
-            if (!on_stack)
-                mlog[TRACE] <<"[B" <<addrToString(va) <<"#" <<bb->insns.size() <<" discards return address]";
-        } catch (const Semantics::Exception&) {
-            /*void*/
-        } catch (const Policy::Exception&) {
-            /*void*/
-        }
-
-    } catch(...) {
-        if (!preexisting)
-            discard(bb);
-        throw;
-    }
 
     /* We don't want to have a basic block created just because we did some analysis. */
     if (!preexisting)
@@ -1118,8 +1086,6 @@ Partitioner::add_function(rose_addr_t entry_va, unsigned reasons, std::string na
 void
 Partitioner::mark_ipd_configuration()
 {
-    using namespace BinaryAnalysis::InstructionSemantics;
-
     for (BlockConfigMap::iterator bci=block_config.begin(); bci!=block_config.end(); ++bci) {
         rose_addr_t va = bci->first;
         BlockConfig *bconf = bci->second;
@@ -1142,6 +1108,9 @@ Partitioner::mark_ipd_configuration()
             bb->cache.sucs_complete = bconf->sucs_complete;
         }
         if (!bconf->sucs_program.empty()) {
+#if 1 // [Robb P Matzke 2017-05-06]
+            ASSERT_not_reachable("no longer supported");
+#else
             /* "Execute" the program that will detect successors. We do this by interpreting the basic block to initialize
              * registers, loading the successor program, pushing some arguments onto the program's stack, interpreting the
              * program, extracting return values from memory, and unloading the program. */
@@ -1286,6 +1255,7 @@ Partitioner::mark_ipd_configuration()
             map->erase(svecInterval);
 
             mlog[DEBUG] <<"  done.\n";
+#endif
         }
     }
 }

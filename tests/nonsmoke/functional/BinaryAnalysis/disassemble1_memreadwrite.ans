@@ -1,8 +1,8 @@
 using this memory map for disassembly:
-    va 0x08048000 + 0x00000060 = 0x08048060 r-xp at buffer aac   + 0x00000000 memreadwrite(LOAD#0)
-    va 0x08048060 + 0x00000018 = 0x08048078 r-x- at buffer aae   + 0x00000060 memreadwrite(.text)
-    va 0x08048078 + 0x00000190 = 0x08048208 r-xp at buffer aac   + 0x00000078 memreadwrite(LOAD#0)
-    va 0x08048208 + 0x00000df8 = 0x08049000 r-xp at buffer aab   + 0x00000000 memreadwrite(LOAD#0)
+    va 0x08048000 + 0x00000060 = 0x08048060 r-xp at buffer aac.A + 0x00000000 memreadwrite(LOAD#0)
+    va 0x08048060 + 0x00000018 = 0x08048078 r-x- at buffer aae.S + 0x00000060 memreadwrite(.text)
+    va 0x08048078 + 0x00000190 = 0x08048208 r-xp at buffer aac.A + 0x00000078 memreadwrite(LOAD#0)
+    va 0x08048208 + 0x00000df8 = 0x08049000 r-xp at buffer aab.A + 0x00000000 memreadwrite(LOAD#0)
 
 
 0x08048060: ================================== Function (entry point) unknown name
@@ -15,7 +15,7 @@ using this memory map for disassembly:
 0x08048069: 8b 0c 24                |..$     |   mov    ecx, dword ss:[esp]
 0x0804806c: 8b 44 24 fc             |.D$.    |   mov    eax, dword ss:[esp + 0xfc<-4>]
 0x08048070: b8 01 00 00 00          |.....   |   mov    eax, 0x00000001
-0x08048075: cd 80                   |..      |   int    0x80<-128> <exit>
+0x08048075: cd 80                   |..      |   int    0x80<-128>
 0x08048077: f4                      |.       |   hlt    
 0x08048077: Successor blocks: none
 
