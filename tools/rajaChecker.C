@@ -4,24 +4,39 @@
 // Liao, 4/6/2017
 #include "rose.h"
 #include <iostream>
+#include "keep_going.h"
+#include <string>
+
+#include <Sawyer/CommandLine.h>
+static const char* purpose = "This tool detects various patterns in input source files.";
+static const char* description =
+        "This tool detects several patterns in C++ source files. For example: "
+        " Pattern 1: the use of class or structure data members in RAJA loops."
+        " Pattern 2: the Nodal Accumulation Pattern in for loops or RAJA loops.";
+
 using namespace std;
 using namespace SageInterface;
 
-class RoseVisitor : public AstSimpleProcessing
-{
-  protected:
-    void virtual visit ( SgNode* node);
-};
-
-
 namespace RAJA_Checker 
 {
+  bool enable_debug = false;
+  bool keep_going = false;
+
   bool checkDataMember = false; 
-  bool checkNodalAccumulationLoop = true;
+  bool checkNodalAccumulationPattern = true;
 
+  //! Processing command line options
+  std::vector<std::string> commandline_processing(std::vector< std::string > & argvList);
 
-  //! if a for loop is a nodal accumulation loop 
-  bool isNodalAccumulationLoop(SgForStatement* forloop);
+  //! If a for loop is a nodal accumulation loop , return the recognized first accumulation statement
+  bool isNodalAccumulationLoop(SgForStatement* forloop, SgExprStatement*& fstmt);
+
+  //! Check if a lambda function is a nodal accumulation function
+  bool isNodalAccumulationLambdaExp(SgLambdaExp* exp, SgExprStatement*& fstmt);
+
+  //! Check if a block of statement has the nodal accumulation pattern, with a known loop index variable 
+  bool isNodalAccumulationBody(SgBasicBlock* bb, SgInitializedName* lvar, SgExprStatement*& fstmt);
+
   // TODO: move some functions to SageInterface if needed.
   //! Find and warn if there are data member accesses within a scope
   // This is useful in the context of RAJA programming: 
@@ -57,7 +72,7 @@ namespace RAJA_Checker
           // Additionally, we exclude user added explicit this->
           SgBinaryOp* bop = isSgBinaryOp(exp);
           if (!isSgThisExp(bop->get_lhs_operand()))
-             cout<<"Found data member access at:"<< finfo->get_filename() <<" " << finfo->get_line() <<":"<< finfo->get_col()  <<endl;
+            cout<<"Found data member access at:"<< finfo->get_filename() <<" " << finfo->get_line() <<":"<< finfo->get_col()  <<endl;
         }
       } 
     }
@@ -94,7 +109,7 @@ namespace RAJA_Checker
     {
       SgFunctionDeclaration* func_decl = call_exp->getAssociatedFunctionDeclaration();
       ROSE_ASSERT (func_decl!=NULL);
-      
+
       SgScopeStatement* scope = func_decl->get_scope();
       if (SgNamespaceDefinitionStatement * ns_def = isSgNamespaceDefinitionStatement(scope) )
       {
@@ -143,6 +158,77 @@ namespace RAJA_Checker
 
 } // end RAJA_Checker namespace
 
+//! Initialize the switch group and its switches.
+Sawyer::CommandLine::SwitchGroup commandLineSwitches() {
+  using namespace Sawyer::CommandLine;
+
+
+  // Default log files for keep_going option
+  Rose::KeepGoing::report_filename__fail = "autoPar-failed-files.txt";
+  Rose::KeepGoing::report_filename__pass = "autoPar-passed-files.txt";
+
+
+  SwitchGroup switches("RAJA Checker's switches");                                                                         
+  switches.doc("These switches control the RAJA Checker tool. ");                                                          
+  switches.name("rose:checker");                                                                                      
+                                                                                                                      
+  switches.insert(Switch("enable_debug")                                                                              
+      .intrinsicValue(true, RAJA_Checker::enable_debug)                                                        
+      .doc("Enable the debugging mode."));                                                                            
+                                                                                                                      
+  // Keep going option of autoPar, set to true by default                                                             
+  switches.insert(Switch("keep_going")                                                                                
+      .intrinsicValue(true, RAJA_Checker::keep_going)                                                          
+      .doc("Allow the tool to keep going even if errors happen"));                                             
+                                                                                                                      
+  switches.insert(Switch("failure_report")                                                                            
+      .argument("string", anyParser(Rose::KeepGoing::report_filename__fail))                                          
+      .doc("Specify the report file for logging files the tool cannot process"));                                      
+                                                                                                                      
+  switches.insert(Switch("success_report")                                                                            
+      .argument("string", anyParser(Rose::KeepGoing::report_filename__pass))                                          
+      .doc("Specify the report file for logging files the tool can successfully process"));                                         
+#if 0                                                                                                                      
+  switches.insert(Switch("dumpannot")                                                                                 
+      .intrinsicValue(true, AutoParallelization::dump_annot_file)                                                     
+      .doc("Dump annotation file content for debugging purposes."));                                                  
+#endif                                                                                                                      
+  return switches;                                                                                                    
+} 
+
+std::vector<std::string> RAJA_Checker::commandline_processing(std::vector< std::string > & argvList)
+{
+  using namespace Sawyer::CommandLine;                                                                                
+  Parser p = CommandlineProcessing::createEmptyParserStage(purpose, description);                                     
+  p.doc("Synopsis", "@prop{programName} @v{switches} @v{files}...");                                                  
+  p.longPrefix("-");                                                                                                  
+
+// initialize generic Sawyer switches: assertion, logging, threads, etc.                                              
+  p.with(CommandlineProcessing::genericSwitches());                                                                   
+                                                                                                                      
+// initialize this tool's switches                                                                                    
+  p.with(commandLineSwitches());                                                                                      
+                                                                                                                      
+// --rose:help for more ROSE switches                                                                                 
+  SwitchGroup tool("ROSE builtin switches");                                                                          
+  bool showRoseHelp = false;                                                                                          
+  tool.insert(Switch("rose:help")                                                                                     
+             .longPrefix("-")                                                                                         
+             .intrinsicValue(true, showRoseHelp)                                                                      
+             .doc("Show the old-style ROSE help."));                                                                  
+  p.with(tool);                                                                                                       
+
+  std::vector<std::string> remainingArgs = p.parse(argvList).apply().unparsedArgs(true);                              
+
+  if (RAJA_Checker::keep_going)                                                                                
+    remainingArgs.push_back("-rose:keep_going");                                                                      
+                                                                                                                      
+// AFTER parse the command-line, you can do this:                                                                     
+ if (showRoseHelp)                                                                                                    
+    SgFile::usage(0);
+
+  return remainingArgs;                  
+}
 
 using namespace RAJA_Checker;
 
@@ -296,18 +382,11 @@ SgStatement* getNextNonNullStatement(SgStatement* s)
   //now r is NULL, or not a NULL statement
   return r; 
 }
-
-bool RAJA_Checker::isNodalAccumulationLoop(SgForStatement* forloop)
+// With a known loop variable lvar, check if a basic block contains the 4-statement pattern
+bool RAJA_Checker::isNodalAccumulationBody(SgBasicBlock* bb, SgInitializedName* lvar, SgExprStatement*& fstmt)
 {
-  SgStatement* body = forloop->get_loop_body();
-  if (body == NULL) return false;
-
-  SgBasicBlock* bb = isSgBasicBlock(body);
-  if (bb == NULL) return false;
-
-  SgInitializedName* lvar = SageInterface::getLoopIndexVariable (forloop);
-  ROSE_ASSERT (lvar !=NULL);
-
+  ROSE_ASSERT (bb != NULL);
+  ROSE_ASSERT (lvar != NULL);
   //if the body contains at least 4 nodal accumulation statement in a row, then it is a matched loop
   // Find all expression statements. if there is one Nodal Accumulation Statement (NAS) , and it is followed by 3 other NAS.
   // then there is a match. 
@@ -327,6 +406,7 @@ bool RAJA_Checker::isNodalAccumulationLoop(SgForStatement* forloop)
            s4 = getNextNonNullStatement (s3);
            if (s4 != NULL && isNodalAccumulationStmt (s4, lvar))
            { 
+             fstmt = s; 
              return true;
            } // end s4
         } //end s3
@@ -337,6 +417,72 @@ bool RAJA_Checker::isNodalAccumulationLoop(SgForStatement* forloop)
   return false;
 }
 
+bool RAJA_Checker::isNodalAccumulationLoop(SgForStatement* forloop, SgExprStatement*& fstmt)
+{
+  SgStatement* body = forloop->get_loop_body();
+  if (body == NULL) return false;
+
+  SgBasicBlock* bb = isSgBasicBlock(body);
+  if (bb == NULL) return false;
+
+  SgInitializedName* lvar = SageInterface::getLoopIndexVariable (forloop);
+  ROSE_ASSERT (lvar !=NULL);
+
+  return isNodalAccumulationBody (bb, lvar, fstmt);
+}
+/*
+RAJA::forall< class RAJA::seq_exec  > (0,n, [=] (int i)
+ {  .... });
+
+The expected AST is 
+SgExprStatement
+* SgFunctionCallExp
+*** SgExprListExp
+**** SgIntVal: 0
+**** SgVarRefExp: n
+**** SgLambdaExp: 
+***** SgLambdaCaptureList  
+***** SgMemberFunctionDeclaration 
+****** SgFunctionParameterList:  (int i) // loop index variable
+****** SgFunctionDefinition
+******* SgBasicBlock  // the lambda function body
+
+ * */
+bool RAJA_Checker::isNodalAccumulationLambdaExp(SgLambdaExp* exp, SgExprStatement* & fstmt)
+{
+  ROSE_ASSERT (exp!=NULL);
+  // this is the raja template function declaration!!
+  SgFunctionDeclaration* raja_func = NULL;
+  if (!isRAJATemplateFunctionCallParameter (exp, & raja_func))
+    return false;
+   
+   if (raja_func ==NULL) return false;
+
+   // ROSE uses a anonymous class declaration for lambda expression. Its function is a member function. 
+   SgMemberFunctionDeclaration* lfunc = isSgMemberFunctionDeclaration( exp->get_lambda_function());
+   if (lfunc ==NULL) return false;
+
+   // loop variable is modeled as the first parameter of the lambda function's parameter list
+   SgFunctionParameterList* plist = lfunc->get_parameterList();
+   if (plist ==NULL) return false;
+
+   SgInitializedName* lvar= (plist->get_args())[0];
+   if (lvar ==NULL) return false;
+
+   SgFunctionDefinition* def = lfunc->get_definition();
+   if (def==NULL) return false;
+   SgBasicBlock* bb = def->get_body();
+   if (bb ==NULL) return false;
+
+  return isNodalAccumulationBody (bb, lvar, fstmt);
+}
+
+class RoseVisitor : public AstSimpleProcessing
+{
+  protected:
+    void virtual visit ( SgNode* node);
+};
+
 void RoseVisitor::visit ( SgNode* n)
 {
   // Only watch for Located nodes from input user source files.
@@ -346,12 +492,17 @@ void RoseVisitor::visit ( SgNode* n)
     if (lnode->get_file_info()->isCompilerGenerated())
       return;
 
+//-------------------  Nodal accumulation loop detection ----------------
     if (SgForStatement* forloop = isSgForStatement(lnode))
     {
-      if (checkNodalAccumulationLoop)
+      if (checkNodalAccumulationPattern)
       {
-        if ( isNodalAccumulationLoop (forloop))
+        SgExprStatement* fstmt = NULL; 
+        if ( isNodalAccumulationLoop (forloop, fstmt))
+        {
           cout<<"Found a nodal accumulation loop at line:"<< forloop->get_file_info()->get_line()<<endl;
+          cout<<"\t The first accumulation statement is at line:"<< fstmt->get_file_info()->get_line()<<endl;
+        }
       }
     } // end if for loop
 
@@ -360,8 +511,20 @@ void RoseVisitor::visit ( SgNode* n)
     {
       if ( SgLambdaExp* le = isSgLambdaExp(n))
       {
+//----------- Check if the lambda expression is a parameter of RAJA function call with nodal accumulation pattern
+        if (checkNodalAccumulationPattern)
+        {
+          SgExprStatement* fstmt = NULL; 
+          if ( isNodalAccumulationLambdaExp(le, fstmt))
+          {
+            cout<<"Found a nodal accumulation lambda function at line:"<< le->get_file_info()->get_line()<<endl;
+            cout<<"\t The first accumulation statement is at line:"<< fstmt->get_file_info()->get_line()<<endl;
+          }
+        }
+
+
+//----------- Check if the lambda expression is used as a parameter of RAJA function call
         SgFunctionDeclaration* raja_func = NULL; 
-        // Check if the lambda expression is used as a parameter of RAJA function call
         if (isRAJATemplateFunctionCallParameter (le, & raja_func))
         {
           //cout<<"Found a lambda exp within RAJA func call ..."<<endl; 
@@ -382,22 +545,47 @@ void RoseVisitor::visit ( SgNode* n)
 int
 main ( int argc, char* argv[])
 {
-  SgProject* project = frontend(argc,argv);
+  vector<string> argvList(argv, argv+argc);
+  argvList = commandline_processing (argvList);
+
+  SgProject* project = frontend(argvList);
   ROSE_ASSERT (project != NULL);
 
-  // ROSE Traversal
-  RoseVisitor visitor;
-
-  SgFilePtrList file_ptr_list = project->get_fileList();
-  for (size_t i = 0; i<file_ptr_list.size(); i++)
+  // register midend signal handling function                                                                         
+  if (KEEP_GOING_CAUGHT_MIDEND_SIGNAL)                                                                                
+  {                                                                                                                   
+    std::cout                                                                                                         
+      << "[WARN] "                                                                                                    
+      << "Configured to keep going after catching a "                                                                 
+      << "signal in AutoPar"                                                                                          
+      << std::endl;                                                                                                   
+    Rose::KeepGoing::setMidendErrorCode (project, 100);                                                               
+    goto label_end;                                                                                                   
+  }
+  else
   {
-    SgFile* cur_file = file_ptr_list[i];
-    SgSourceFile* s_file = isSgSourceFile(cur_file); 
-    if (s_file != NULL)
+    // ROSE Traversal
+    RoseVisitor visitor;
+
+    SgFilePtrList file_ptr_list = project->get_fileList();
+    for (size_t i = 0; i<file_ptr_list.size(); i++)
     {
-      visitor.traverseWithinFile(s_file, preorder); 
+      SgFile* cur_file = file_ptr_list[i];
+      SgSourceFile* s_file = isSgSourceFile(cur_file); 
+      if (s_file != NULL)
+      {
+        visitor.traverseWithinFile(s_file, preorder); 
+      }
     }
   }
+
+label_end:
+  // Report errors
+  if (RAJA_Checker::keep_going)
+  {
+    std::vector<std::string> orig_rose_cmdline(argv, argv+argc);
+    Rose::KeepGoing::generate_reports (project, orig_rose_cmdline);
+  }  
 
   return backend(project);
 }
