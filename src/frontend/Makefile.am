@@ -1,13 +1,5 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-# Later add EDG_1.4, EDG_3.3, Open64, SAGE_III
-# SUBDIRS = SageIII EDG EDG_SAGE_Connection
-# SUBDIRS = SageIII EDG EDG_SAGE_Connection Open64_SAGE_Connection BinaryDisassembly
-# SUBDIRS = SageIII EDG EDG_SAGE_Connection BinaryDisassembly
-# SUBDIRS = SageIII EDG EDG_SAGE_Connection OpenFortranParser_SAGE_Connection BinaryDisassembly ObjdumpDisassembler
-# SUBDIRS = SageIII BinaryDisassembly ObjdumpDisassembler OpenFortranParser_SAGE_Connection EDG EDG_SAGE_Connection
-# SUBDIRS = SageIII CxxFrontend OpenFortranParser_SAGE_Connection BinaryDisassembly Disassemblers BinaryFormats BinaryLoader PHPFrontend
-
 SUBDIRS = \
   SageIII \
   X10_ROSE_Connection
@@ -28,13 +20,7 @@ endif
 
 SUBDIRS += ECJ_ROSE_Connection
 
-SUBDIRS += BinaryDisassembly Disassemblers BinaryFormats BinaryLoader Partitioner2
-
-#if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-#   SUBDIRS += BinaryDisassembly Disassemblers BinaryFormats BinaryLoader
-#else
-#  SUBDIRS += BinaryFormats
-#endif
+SUBDIRS += Disassemblers BinaryFormats BinaryLoader Partitioner2
 
 if ROSE_BUILD_PHP_LANGUAGE_SUPPORT
    SUBDIRS += PHPFrontend

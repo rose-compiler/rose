@@ -1011,7 +1011,6 @@ AM_CONDITIONAL(ROSE_USE_INDENT, [test "x$INDENT" = "xindent"])
 echo "value of INDENT variable = $INDENT"
 
 # DQ (9/30/2009): Added checking for tclsh command (common in Linux, but not on some platforms).
-# This command is used in the src/frontend/BinaryDisassembly/Makefile.am file.
 AC_CHECK_PROGS(TCLSH, [tclsh])
 AM_CONDITIONAL(ROSE_USE_TCLSH, [test "x$TCLSH" = "xtclsh"])
 echo "value of TCLSH variable = $TCLSH"
@@ -2151,7 +2150,6 @@ src/Makefile
 src/ROSETTA/Makefile
 src/ROSETTA/src/Makefile
 src/backend/Makefile
-src/frontend/BinaryDisassembly/Makefile
 src/frontend/BinaryFormats/Makefile
 src/frontend/BinaryLoader/Makefile
 src/frontend/CxxFrontend/Clang/Makefile
