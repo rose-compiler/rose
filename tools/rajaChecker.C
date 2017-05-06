@@ -4,21 +4,29 @@
 // Liao, 4/6/2017
 #include "rose.h"
 #include <iostream>
+#include "keep_going.h"
+#include <string>
+
+#include <Sawyer/CommandLine.h>
+static const char* purpose = "This tool detects various patterns in input source files.";
+static const char* description =
+        "This tool detects several patterns in C++ source files. For example: "
+        " Pattern 1: the use of class or structure data members in RAJA loops."
+        " Pattern 2: the Nodal Accumulation Pattern in for loops or RAJA loops.";
+
 using namespace std;
 using namespace SageInterface;
 
-class RoseVisitor : public AstSimpleProcessing
-{
-  protected:
-    void virtual visit ( SgNode* node);
-};
-
-
 namespace RAJA_Checker 
 {
+  bool enable_debug = false;
+  bool keep_going = false;
+
   bool checkDataMember = false; 
   bool checkNodalAccumulationPattern = true;
 
+  //! Processing command line options
+  std::vector<std::string> commandline_processing(std::vector< std::string > & argvList);
 
   //! If a for loop is a nodal accumulation loop , return the recognized first accumulation statement
   bool isNodalAccumulationLoop(SgForStatement* forloop, SgExprStatement*& fstmt);
@@ -64,7 +72,7 @@ namespace RAJA_Checker
           // Additionally, we exclude user added explicit this->
           SgBinaryOp* bop = isSgBinaryOp(exp);
           if (!isSgThisExp(bop->get_lhs_operand()))
-             cout<<"Found data member access at:"<< finfo->get_filename() <<" " << finfo->get_line() <<":"<< finfo->get_col()  <<endl;
+            cout<<"Found data member access at:"<< finfo->get_filename() <<" " << finfo->get_line() <<":"<< finfo->get_col()  <<endl;
         }
       } 
     }
@@ -101,7 +109,7 @@ namespace RAJA_Checker
     {
       SgFunctionDeclaration* func_decl = call_exp->getAssociatedFunctionDeclaration();
       ROSE_ASSERT (func_decl!=NULL);
-      
+
       SgScopeStatement* scope = func_decl->get_scope();
       if (SgNamespaceDefinitionStatement * ns_def = isSgNamespaceDefinitionStatement(scope) )
       {
@@ -150,6 +158,77 @@ namespace RAJA_Checker
 
 } // end RAJA_Checker namespace
 
+//! Initialize the switch group and its switches.
+Sawyer::CommandLine::SwitchGroup commandLineSwitches() {
+  using namespace Sawyer::CommandLine;
+
+
+  // Default log files for keep_going option
+  Rose::KeepGoing::report_filename__fail = "autoPar-failed-files.txt";
+  Rose::KeepGoing::report_filename__pass = "autoPar-passed-files.txt";
+
+
+  SwitchGroup switches("RAJA Checker's switches");                                                                         
+  switches.doc("These switches control the RAJA Checker tool. ");                                                          
+  switches.name("rose:checker");                                                                                      
+                                                                                                                      
+  switches.insert(Switch("enable_debug")                                                                              
+      .intrinsicValue(true, RAJA_Checker::enable_debug)                                                        
+      .doc("Enable the debugging mode."));                                                                            
+                                                                                                                      
+  // Keep going option of autoPar, set to true by default                                                             
+  switches.insert(Switch("keep_going")                                                                                
+      .intrinsicValue(true, RAJA_Checker::keep_going)                                                          
+      .doc("Allow the tool to keep going even if errors happen"));                                             
+                                                                                                                      
+  switches.insert(Switch("failure_report")                                                                            
+      .argument("string", anyParser(Rose::KeepGoing::report_filename__fail))                                          
+      .doc("Specify the report file for logging files the tool cannot process"));                                      
+                                                                                                                      
+  switches.insert(Switch("success_report")                                                                            
+      .argument("string", anyParser(Rose::KeepGoing::report_filename__pass))                                          
+      .doc("Specify the report file for logging files the tool can successfully process"));                                         
+#if 0                                                                                                                      
+  switches.insert(Switch("dumpannot")                                                                                 
+      .intrinsicValue(true, AutoParallelization::dump_annot_file)                                                     
+      .doc("Dump annotation file content for debugging purposes."));                                                  
+#endif                                                                                                                      
+  return switches;                                                                                                    
+} 
+
+std::vector<std::string> RAJA_Checker::commandline_processing(std::vector< std::string > & argvList)
+{
+  using namespace Sawyer::CommandLine;                                                                                
+  Parser p = CommandlineProcessing::createEmptyParserStage(purpose, description);                                     
+  p.doc("Synopsis", "@prop{programName} @v{switches} @v{files}...");                                                  
+  p.longPrefix("-");                                                                                                  
+
+// initialize generic Sawyer switches: assertion, logging, threads, etc.                                              
+  p.with(CommandlineProcessing::genericSwitches());                                                                   
+                                                                                                                      
+// initialize this tool's switches                                                                                    
+  p.with(commandLineSwitches());                                                                                      
+                                                                                                                      
+// --rose:help for more ROSE switches                                                                                 
+  SwitchGroup tool("ROSE builtin switches");                                                                          
+  bool showRoseHelp = false;                                                                                          
+  tool.insert(Switch("rose:help")                                                                                     
+             .longPrefix("-")                                                                                         
+             .intrinsicValue(true, showRoseHelp)                                                                      
+             .doc("Show the old-style ROSE help."));                                                                  
+  p.with(tool);                                                                                                       
+
+  std::vector<std::string> remainingArgs = p.parse(argvList).apply().unparsedArgs(true);                              
+
+  if (RAJA_Checker::keep_going)                                                                                
+    remainingArgs.push_back("-rose:keep_going");                                                                      
+                                                                                                                      
+// AFTER parse the command-line, you can do this:                                                                     
+ if (showRoseHelp)                                                                                                    
+    SgFile::usage(0);
+
+  return remainingArgs;                  
+}
 
 using namespace RAJA_Checker;
 
@@ -398,6 +477,12 @@ bool RAJA_Checker::isNodalAccumulationLambdaExp(SgLambdaExp* exp, SgExprStatemen
   return isNodalAccumulationBody (bb, lvar, fstmt);
 }
 
+class RoseVisitor : public AstSimpleProcessing
+{
+  protected:
+    void virtual visit ( SgNode* node);
+};
+
 void RoseVisitor::visit ( SgNode* n)
 {
   // Only watch for Located nodes from input user source files.
@@ -460,22 +545,47 @@ void RoseVisitor::visit ( SgNode* n)
 int
 main ( int argc, char* argv[])
 {
-  SgProject* project = frontend(argc,argv);
+  vector<string> argvList(argv, argv+argc);
+  argvList = commandline_processing (argvList);
+
+  SgProject* project = frontend(argvList);
   ROSE_ASSERT (project != NULL);
 
-  // ROSE Traversal
-  RoseVisitor visitor;
-
-  SgFilePtrList file_ptr_list = project->get_fileList();
-  for (size_t i = 0; i<file_ptr_list.size(); i++)
+  // register midend signal handling function                                                                         
+  if (KEEP_GOING_CAUGHT_MIDEND_SIGNAL)                                                                                
+  {                                                                                                                   
+    std::cout                                                                                                         
+      << "[WARN] "                                                                                                    
+      << "Configured to keep going after catching a "                                                                 
+      << "signal in AutoPar"                                                                                          
+      << std::endl;                                                                                                   
+    Rose::KeepGoing::setMidendErrorCode (project, 100);                                                               
+    goto label_end;                                                                                                   
+  }
+  else
   {
-    SgFile* cur_file = file_ptr_list[i];
-    SgSourceFile* s_file = isSgSourceFile(cur_file); 
-    if (s_file != NULL)
+    // ROSE Traversal
+    RoseVisitor visitor;
+
+    SgFilePtrList file_ptr_list = project->get_fileList();
+    for (size_t i = 0; i<file_ptr_list.size(); i++)
     {
-      visitor.traverseWithinFile(s_file, preorder); 
+      SgFile* cur_file = file_ptr_list[i];
+      SgSourceFile* s_file = isSgSourceFile(cur_file); 
+      if (s_file != NULL)
+      {
+        visitor.traverseWithinFile(s_file, preorder); 
+      }
     }
   }
+
+label_end:
+  // Report errors
+  if (RAJA_Checker::keep_going)
+  {
+    std::vector<std::string> orig_rose_cmdline(argv, argv+argc);
+    Rose::KeepGoing::generate_reports (project, orig_rose_cmdline);
+  }  
 
   return backend(project);
 }
