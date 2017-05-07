@@ -104,8 +104,6 @@ install(
     instructionSemantics/TestSemantics2.h
     instructionSemantics/TraceSemantics2.h
     instructionSemantics/YicesSolver.h
-    instructionSemantics/flowEquations.h
-    instructionSemantics/x86InstructionSemantics.h
     libraryIdentification/functionIdentification.h
     libraryIdentification/libraryIdentification.h
   DESTINATION include)
