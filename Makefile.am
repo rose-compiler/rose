@@ -203,9 +203,6 @@ check-local: enforce_policies
 	@echo 'To run additional "non-smoke" tests, use this command:'
 	@echo "  $(MAKE) -C $$(pwd)/tests/nonsmoke check"
 
-check-nonsmoke:
-	$(MAKE) -C $(top_builddir)/tests/nonsmoke check-nonsmoke
-
 install-exec-local:
 	@echo '*****************************************************************'
 	@echo '***** make install-exec rule complete (terminated normally) *****'

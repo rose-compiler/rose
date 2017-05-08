@@ -619,38 +619,6 @@ RTH_STATS=$(top_srcdir)/scripts/rth_stats.pl
 # (depreicated in automake and for which many warnings are generated).
 CPPFLAGS = $(AM_CPPFLAGS)
 
-# Temporary workaround for lack of AM_EXTRA_RECURSIVE_TARGETS in automake 1.11 and 1.12 [Matzke, 2016-09-14]
-# The check for "." is because $ROSE/tests adds "." to SUBDIRS which would otherwise result in infinite recursion.
-# The checks for other names are because we don't want to recurse into some directories that don't include this
-# file and therefore don't have this rule (but that means these names can't be test subdirecties elsewhere either).
-check-smoke check-nonsmoke check-all:
-	@for subdir in $(SUBDIRS); do						\
-		if [ "$$subdir" != .						\
-			-a "$$subdir" != libltdl				\
-			-a "$$subdir" != config					\
-			-a "$$subdir" != EDG					\
-			-a "$$subdir" != DLX					\
-			-a "$$subdir" != MFB					\
-			-a "$$subdir" != MDCG					\
-			-a "$$subdir" != KLT					\
-			-a "$$subdir" != 3rdPartyLibraries			\
-			-a "$$subdir" != roseHPCToolkit				\
-			-a "$$subdir" != projects				\
-			-a "$$subdir" != docs					\
-			-a "$$subdir" != tools ]; then				\
-			echo "Making $@ in $$subdir";				\
-			$(MAKE) $(AM_MAKEFLAGS) -C "$$subdir" $@ || exit 1;	\
-		fi;								\
-	done
-	$(MAKE) $(AM_MAKEFLAGS) $@-local
-
-check-smoke-local check-nonsmoke-local:
-check-all-local: check-smoke-local check-nonsmoke-local
-
-# Temporary until Jenkins and the Matrix are fixed to run "make check-all" isntead of "make check".  The correct version
-# should be that check-local depends only on check-smoke-local. [Matzke, 2016-09-21].
-check-local: check-smoke-local check-nonsmoke-local
-
 clean-test-targets:
 	rm -f $(TEST_TARGETS)
 	rm -f $(TEST_TARGETS:.passed=.failed)
@@ -659,4 +627,4 @@ clean-test-targets:
 
 clean-local: clean-test-targets
 
-.PHONY: check-smoke check-nonsmoke check-all check-smoke-local check-nonsmoke-local check-all-local clean-test-targets
+.PHONY: clean-test-targets
