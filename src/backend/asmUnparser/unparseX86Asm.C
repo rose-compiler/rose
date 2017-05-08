@@ -162,7 +162,6 @@ std::string unparseX86Expression(SgAsmExpression *expr, const AsmUnparser::Label
         }
     }
 
-    result = StringUtility::appendAsmComment(result, expr->get_replacement());
     result = StringUtility::appendAsmComment(result, expr->get_comment());
     return result;
 }

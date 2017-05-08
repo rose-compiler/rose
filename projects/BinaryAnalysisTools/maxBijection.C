@@ -2,6 +2,7 @@
 #include "rose_getline.h"
 #include "rose_strtoull.h"
 #include "Diagnostics.h"
+#include "integerOps.h"
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/ProgressBar.h>
 #include <set>

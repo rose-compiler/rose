@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-AM_CPPFLAGS = $(ROSE_INCLUDES)  
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 
 LINK = $(CXXLINK)
 

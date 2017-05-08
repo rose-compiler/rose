@@ -1,9 +1,10 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 AM_CPPFLAGS = $(ROSE_INCLUDES)
+AM_LDFLAGS = $(ROSE_RPATHS)
 
 noinst_PROGRAMS  = runTest
 runTest_SOURCES = runTest.C
-runTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+runTest_LDADD = $(ROSE_SEPARATE_LIBS)
 
 # Tests are numbered in runTest.C, and each test uses a hard-coded specimen.  Rather than duplicate the specimen-selecting
 # logic of runTest.C in this makefile, we'll just make sure that each test depends on all the available specimens.

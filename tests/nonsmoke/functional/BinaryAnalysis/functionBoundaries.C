@@ -12,6 +12,8 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #define __STDC_FORMAT_MACROS
 #include "rose.h"
 #include "AsmFunctionIndex.h"
+#include "Partitioner.h"
+#include "DisassemblerX86.h"
 
 #include <inttypes.h>
 

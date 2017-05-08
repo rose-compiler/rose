@@ -226,7 +226,6 @@ static std::string unparseArmExpression(SgAsmExpression* expr, const AsmUnparser
     if (suffix)
         *suffix = extra;
 
-    result = StringUtility::appendAsmComment(result, expr->get_replacement());
     result = StringUtility::appendAsmComment(result, expr->get_comment());
     return result;
 }

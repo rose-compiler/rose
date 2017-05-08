@@ -3,6 +3,7 @@
 #include <boost/algorithm/string/erase.hpp>
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <sageBuilderAsm.h>
 #include <stringify.h>
 
 namespace rose {
@@ -102,8 +103,6 @@ X86::outputExpr(std::ostream &out, SgAsmExpression *expr, State &state) const {
         ASSERT_not_implemented("invalid x86 expression: " + expr->class_name());
     }
 
-    if (!expr->get_replacement().empty())
-        comments.push_back(expr->get_replacement());
     if (!expr->get_comment().empty())
         comments.push_back(expr->get_comment());
     if (!comments.empty())

@@ -1,6 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 noinst_PROGRAMS =
 AM_CPPFLAGS = $(ROSE_INCLUDES)
+AM_LDFLAGS = $(ROSE_RPATHS)
 TEST_TARGETS =
 TEST_CONFIG = $(top_srcdir)/scripts/test_exit_status
 EXTRA_DIST =
@@ -13,7 +14,7 @@ MOSTLYCLEANFILES =
 
 noinst_PROGRAMS += proFunSIG
 proFunSIG_SOURCES = proFunSIG.C
-proFunSIG_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+proFunSIG_LDADD = $(ROSE_SEPARATE_LIBS)
 proFunSIG_SPECIMENS = mf1.C mf3.C mf4.C mf5.C
 proFunSIG_TEST_TARGETS = $(addprefix pfs_, $(addsuffix .passed, $(proFunSIG_SPECIMENS)))
 
@@ -31,7 +32,7 @@ MOSTLYCLEANFILES += $(addsuffix .main.dot, $(proFunSIG_SPECIMENS)) \
 #------------------------------------------------------------------------------------------------------------------------
 noinst_PROGRAMS += interproceduralCFG
 interproceduralCFG_SOURCES = interproceduralCFG.C
-interproceduralCFG_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+interproceduralCFG_LDADD = $(ROSE_SEPARATE_LIBS)
 interproceduralCFG_SPECIMENS = test11.C test12.C test13.C test14.C
 interproceduralCFG_TEST_TARGETS = $(addprefix ipcfg_, $(addsuffix .passed, $(interproceduralCFG_SPECIMENS)))
 
@@ -49,7 +50,7 @@ MOSTLYCLEANFILES += $(addsuffix .main.dot, $(interproceduralCFG_SPECIMENS)) \
 #------------------------------------------------------------------------------------------------------------------------
 noinst_PROGRAMS += e0
 e0_SOURCES = efor2.C.maintest.C
-e0_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+e0_LDADD = $(ROSE_SEPARATE_LIBS)
 
 e0_efor2.C.passed: efor2.C $(TEST_CONFIG) e0
 	@$(RTH_RUN) CMD="./e0 $<" $(TEST_CONFIG) $@
@@ -64,7 +65,7 @@ MOSTLYCLEANFILES += hotness0.dot
 #------------------------------------------------------------------------------------------------------------------------
 noinst_PROGRAMS += e1
 e1_SOURCES = efor3.C.maintest.C
-e1_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+e1_LDADD = $(ROSE_SEPARATE_LIBS)
 
 e1_efor3.C.passed: efor3.C $(TEST_CONFIG) e1
 	@$(RTH_RUN) CMD="./e1 $<" $(TEST_CONFIG) $@
@@ -79,7 +80,7 @@ MOSTLYCLEANFILES += efor3.C.main.dot efor3.C.maintest.o hotness0.dot
 #------------------------------------------------------------------------------------------------------------------------
 noinst_PROGRAMS += ff1
 ff1_SOURCES = tf1.C.maintest.C
-ff1_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+ff1_LDADD = $(ROSE_SEPARATE_LIBS)
 
 ff1_tf1.C.passed: tf1.C $(TEST_CONFIG) ff1
 	@$(RTH_RUN) CMD="./ff1 $<" $(TEST_CONFIG) $@
@@ -94,7 +95,7 @@ MOSTLYCLEANFILES += tf1.C.main.dot hotness0.dot
 #------------------------------------------------------------------------------------------------------------------------
 noinst_PROGRAMS += ff2
 ff2_SOURCES = tf2.C.maintest.C
-ff2_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+ff2_LDADD = $(ROSE_SEPARATE_LIBS)
 
 ff2_tf2.C.passed: tf2.C $(TEST_CONFIG) ff2
 	@$(RTH_RUN) CMD="./ff2 $<" $(TEST_CONFIG) $@
@@ -109,7 +110,7 @@ MOSTLYCLEANFILES += tf2.C.main.dot hotness0.dot
 #------------------------------------------------------------------------------------------------------------------------
 noinst_PROGRAMS += ff3
 ff3_SOURCES = tf3.C.maintest.C
-ff3_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+ff3_LDADD = $(ROSE_SEPARATE_LIBS)
 
 ff3_tf3.C.passed: tf3.C $(TEST_CONFIG) ff3
 	@$(RTH_RUN) CMD="./ff3 $<" $(TEST_CONFIG) $@
@@ -124,7 +125,7 @@ MOSTLYCLEANFILES += tf3.C.main.dot hotness0.dot
 #------------------------------------------------------------------------------------------------------------------------
 noinst_PROGRAMS += f1
 f1_SOURCES = tfif1.C.maintest.C
-f1_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+f1_LDADD = $(ROSE_SEPARATE_LIBS)
 
 f1_tfif1.C.passed: tfif1.C $(TEST_CONFIG) f1
 	@$(RTH_RUN) CMD="./f1 $<" $(TEST_CONFIG) $@
@@ -139,7 +140,7 @@ MOSTLYCLEANFILES += tfif1.C.main.dot hotness0.dot
 #------------------------------------------------------------------------------------------------------------------------
 noinst_PROGRAMS += f2
 f2_SOURCES = tfif2.C.maintest.C
-f2_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+f2_LDADD = $(ROSE_SEPARATE_LIBS)
 
 f2_tfif2.C.passed: tfif2.C $(TEST_CONFIG) f2
 	@$(RTH_RUN) CMD="./f2 $<" $(TEST_CONFIG) $@
@@ -154,7 +155,7 @@ MOSTLYCLEANFILES += tfif2.C.main.dot hotness0.dot
 #------------------------------------------------------------------------------------------------------------------------
 noinst_PROGRAMS += f3
 f3_SOURCES = tfif3.C.maintest.C
-f3_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+f3_LDADD = $(ROSE_SEPARATE_LIBS)
 
 f3_tfif3.C.passed: tfif3.C $(TEST_CONFIG) f3
 	@$(RTH_RUN) CMD="./f3 $<" $(TEST_CONFIG) $@
@@ -169,7 +170,7 @@ MOSTLYCLEANFILES += tfif3.C.main.dot hotness0.dot
 #------------------------------------------------------------------------------------------------------------------------
 noinst_PROGRAMS += f4
 f4_SOURCES = tfif4.C.maintest.C
-f4_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+f4_LDADD = $(ROSE_SEPARATE_LIBS)
 
 f4_tfif4.C.passed: tfif4.C $(TEST_CONFIG) f4
 	@$(RTH_RUN) CMD="./f4 $<" $(TEST_CONFIG) $@
@@ -184,7 +185,7 @@ MOSTLYCLEANFILES += tfif4.C.main.dot hotness0.dot
 #------------------------------------------------------------------------------------------------------------------------
 noinst_PROGRAMS += createTest
 createTest_SOURCES = createTest.C
-createTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+createTest_LDADD = $(ROSE_SEPARATE_LIBS)
 
 # createTest is not tested in the original makefile
 .PHONY: check-createTest
@@ -194,7 +195,7 @@ check-createTest:
 #------------------------------------------------------------------------------------------------------------------------
 noinst_PROGRAMS += astTraversalTest
 astTraversalTest_SOURCES      = astTraversalTest.C
-astTraversalTest_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+astTraversalTest_LDADD        = $(ROSE_SEPARATE_LIBS)
 astTraversalTest_SPECIMENS    = input1.C
 astTraversalTest_TEST_TARGETS = $(addprefix att_, $(addsuffix .passed, $(astTraversalTest_SPECIMENS)))
 
@@ -220,7 +221,7 @@ MOSTLYCLEANFILES += rose_input1.C
 #------------------------------------------------------------------------------------------------------------------------
 noinst_PROGRAMS += processnew3Down4SgIncGraph2
 processnew3Down4SgIncGraph2_SOURCES      = processnew3Down4SgIncGraph2.C
-processnew3Down4SgIncGraph2_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+processnew3Down4SgIncGraph2_LDADD        = $(ROSE_SEPARATE_LIBS)
 processnew3Down4SgIncGraph2_SPECIMENS    = test11.C test12.C test13.C test14.C
 processnew3Down4SgIncGraph2_TEST_TARGETS = $(addprefix pnew2_, $(addsuffix .passed, $(processnew3Down4SgIncGraph2_SPECIMENS)))
 
@@ -237,7 +238,7 @@ MOSTLYCLEANFILES += $(addsuffix .main.dot, $(processnew3Down4SgIncGraph2_SPECIME
 #------------------------------------------------------------------------------------------------------------------------
 noinst_PROGRAMS += processnew3Down4SgIncGraph3
 processnew3Down4SgIncGraph3_SOURCES      = processnew3Down4SgIncGraph3.C
-processnew3Down4SgIncGraph3_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+processnew3Down4SgIncGraph3_LDADD        = $(ROSE_SEPARATE_LIBS)
 processnew3Down4SgIncGraph3_SPECIMENS    = eif.C eif2.C eif3.C eif4.C
 processnew3Down4SgIncGraph3_TEST_TARGETS = $(addprefix pnew3_, $(addsuffix .passed, $(processnew3Down4SgIncGraph3_SPECIMENS)))
 
@@ -254,7 +255,7 @@ MOSTLYCLEANFILES += $(addsuffix .main.dot, $(processnew3Down4SgIncGraph3_SPECIME
 #------------------------------------------------------------------------------------------------------------------------
 noinst_PROGRAMS += strictGraphTest
 strictGraphTest_SOURCES = strictGraphTest.C
-strictGraphTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+strictGraphTest_LDADD = $(ROSE_SEPARATE_LIBS)
 
 strictGraphTest.passed: strictGraphTest $(TEST_CONFIG)
 	@$(RTH_RUN) CMD="./strictGraphTest" $(TEST_CONFIG) $@
@@ -268,7 +269,7 @@ MOSTLYCLEANFILES += hotness0.dot
 #------------------------------------------------------------------------------------------------------------------------
 noinst_PROGRAMS += strictGraphTest2
 strictGraphTest2_SOURCES = strictGraphTest2.C
-strictGraphTest2_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+strictGraphTest2_LDADD = $(ROSE_SEPARATE_LIBS)
 
 strictGraphTest2.passed: strictGraphTest2 $(TEST_CONFIG)
 	@$(RTH_RUN) CMD="./strictGraphTest2" $(TEST_CONFIG) $@
@@ -282,7 +283,7 @@ MOSTLYCLEANFILES += hotness0.dot
 #------------------------------------------------------------------------------------------------------------------------
 noinst_PROGRAMS += strictGraphTest3
 strictGraphTest3_SOURCES = strictGraphTest3.C
-strictGraphTest3_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+strictGraphTest3_LDADD = $(ROSE_SEPARATE_LIBS)
 
 # Not all targets have support for openmp, so it can't be unconditionally added to the compiler command line.  Also, why are
 # we turning on optimizations especially when the user may have requested a different level of optimizations?  Besides,
@@ -302,7 +303,7 @@ MOSTLYCLEANFILES += hotness0.dot
 #------------------------------------------------------------------------------------------------------------------------
 noinst_PROGRAMS += smtlibParser
 smtlibParser_SOURCES = smtlibParser.C
-smtlibParser_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+smtlibParser_LDADD = $(ROSE_SEPARATE_LIBS)
 smtlibParser_SPECIMENS = test11.C
 smtlibParser_TEST_TARGETS = $(addprefix smtlib_, $(addsuffix .passed, $(smtlibParser_SPECIMENS)))
 
@@ -319,7 +320,7 @@ MOSTLYCLEANFILES += $(addsuffix .main.dot, $(smtlibParser_SPECIMENS)) hotness0.d
 #------------------------------------------------------------------------------------------------------------------------
 noinst_PROGRAMS += sourcePTP
 sourcePTP_SOURCES = sourcePTP.C
-sourcePTP_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+sourcePTP_LDADD = $(ROSE_SEPARATE_LIBS)
 sourcePTP_SPECIMENS = test14.C
 sourcePTP_TEST_TARGETS = $(addprefix sptp_, $(addsuffix .passed, $(sourcePTP_SPECIMENS)))
 
@@ -335,7 +336,7 @@ MOSTLYCLEANFILES += $(addsuffix .main.dot, $(sourcePTP_SPECIMENS)) hotness0.dot
 
 #------------------------------------------------------------------------------------------------------------------------
 binaryPaths_SOURCES = binaryPaths.C
-binaryPaths_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+binaryPaths_LDADD = $(ROSE_SEPARATE_LIBS)
 binaryPaths_SPECIMENS = t1 t2 t3 t4
 binaryPaths_TEST_TARGETS = $(addprefix bp_, $(addsuffix .passed, $(binaryPaths_SPECIMENS)))
 
@@ -355,7 +356,7 @@ MOSTLYCLEANFILES += analysis.dot hotness0.dot
 
 #------------------------------------------------------------------------------------------------------------------------
 bPTP_SOURCES = bPTP.C
-bPTP_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+bPTP_LDADD = $(ROSE_SEPARATE_LIBS)
 bPTP_SPECIMENS = t1 t2 t3 t4
 bPTP_TEST_TARGETS = $(addprefix bptp_, $(addsuffix .passed, $(bPTP_SPECIMENS)))
 
@@ -374,7 +375,7 @@ MOSTLYCLEANFILES += analysis.dot hotness0.dot
 
 #------------------------------------------------------------------------------------------------------------------------
 yicesParser_SOURCES = yicesParser.C
-yicesParser_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+yicesParser_LDADD = $(ROSE_SEPARATE_LIBS)
 yicesParser_SPECIMENS = efor1.C efor2.C efor3.C eif.C eif2.C eif3.C mf1.C mf10.C mf11.C mf12.C mf13.C mf2.C mf3.C    \
 	mf8.C mf9.C mfEx.C mfEx2.C mfEx3.C mfEx4.C mfEx6.C mfEx7.C mfEx8.C tf1.C tf2.C tf3.C tfif1.C tfif2.C tfif3.C \
 	tfif4.C whiletest.C whiletest2.C whiletest3.C

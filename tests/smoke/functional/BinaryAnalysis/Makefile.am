@@ -9,7 +9,8 @@ EXTRA_DIST =
 PHONIES =
 
 AM_CPPFLAGS = $(ROSE_INCLUDES)
-AM_LDFLAGS = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+AM_LDFLAGS = $(ROSE_RPATHS)
+LDADD = $(ROSE_LIBS)
 
 ###############################################################################################################################
 # Disassembly tests using rose::BinaryAnalysis::Partitioner2

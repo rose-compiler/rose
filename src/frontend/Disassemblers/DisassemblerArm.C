@@ -111,7 +111,7 @@ DisassemblerArm::makeInstructionWithoutOperands(uint32_t address, const std::str
     return instruction;
 }
 
-/** Creates a general-purpose register reference expression. */
+// Creates a general-purpose register reference expression.
 SgAsmRegisterReferenceExpression *
 DisassemblerArm::makeRegister(uint8_t reg) const
 {
@@ -124,16 +124,15 @@ DisassemblerArm::makeRegister(uint8_t reg) const
     return r;
 }
 
-/** Create a reference to one of the program status registers. If @p useSPSR is true then create a reference to the saved
- *  program status register, otherwise create a reference to the current program status register. The @p fields is a 4-bit mask
- *  indicating which individual fields of the register are selected.
- *
- *  The field bits are
- *     0x01 => c   control field mask bit
- *     0x02 => x   extension field mask bit
- *     0x04 => s   status field mask bit
- *     0x08 => f   flags field mask bit
- */
+// Create a reference to one of the program status registers. If @p useSPSR is true then create a reference to the saved
+// program status register, otherwise create a reference to the current program status register. The @p fields is a 4-bit mask
+// indicating which individual fields of the register are selected.
+//
+//  The field bits are
+//     0x01 => c   control field mask bit
+//     0x02 => x   extension field mask bit
+//     0x04 => s   status field mask bit
+//     0x08 => f   flags field mask bit
 SgAsmRegisterReferenceExpression *
 DisassemblerArm::makePsrFields(bool useSPSR, uint8_t fields) const
 {

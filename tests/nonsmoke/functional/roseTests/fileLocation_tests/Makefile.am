@@ -17,7 +17,8 @@ TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 noinst_PROGRAMS += fileLocation
 fileLocation_SOURCES = fileLocation.C
 fileLocation_CPPFLAGS = $(ROSE_INCLUDES)
-fileLocation_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+fileLocation_LDFLAGS = $(ROSE_RPATHS)
+fileLocation_LDADD = $(ROSE_SEPARATE_LIBS)
 
 
 #########################################################################################################################

@@ -2,6 +2,7 @@
 #include "sage3basic.h"
 #include <cmath>
 #include <rose_isnan.h>
+#include <x86InstructionProperties.h>
 
 #include "Partitioner.h"
 

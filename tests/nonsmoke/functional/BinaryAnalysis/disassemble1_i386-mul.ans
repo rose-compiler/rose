@@ -1,10 +1,10 @@
 using this memory map for disassembly:
-    va 0x08048000 + 0x00000074 = 0x08048074 r-xp at buffer aac   + 0x00000000 i386-mul(LOAD#0)
-    va 0x08048074 + 0x00000024 = 0x08048098 r--p at buffer aae   + 0x00000000 i386-mul(.note.gnu.build-id)
-    va 0x08048098 + 0x00000008 = 0x080480a0 r-xp at buffer aac   + 0x00000098 i386-mul(LOAD#0)
-    va 0x080480a0 + 0x0000001c = 0x080480bc r-x- at buffer aag   + 0x000000a0 i386-mul(.text)
-    va 0x080480bc + 0x000001df = 0x0804829b r-xp at buffer aac   + 0x000000bc i386-mul(LOAD#0)
-    va 0x0804829b + 0x00000d65 = 0x08049000 r-xp at buffer aab   + 0x00000000 i386-mul(LOAD#0)
+    va 0x08048000 + 0x00000074 = 0x08048074 r-xp at buffer aac.A + 0x00000000 i386-mul(LOAD#0)
+    va 0x08048074 + 0x00000024 = 0x08048098 r--p at buffer aae.A + 0x00000000 i386-mul(.note.gnu.build-id)
+    va 0x08048098 + 0x00000008 = 0x080480a0 r-xp at buffer aac.A + 0x00000098 i386-mul(LOAD#0)
+    va 0x080480a0 + 0x0000001c = 0x080480bc r-x- at buffer aag.S + 0x000000a0 i386-mul(.text)
+    va 0x080480bc + 0x000001df = 0x0804829b r-xp at buffer aac.A + 0x000000bc i386-mul(LOAD#0)
+    va 0x0804829b + 0x00000d65 = 0x08049000 r-xp at buffer aab.A + 0x00000000 i386-mul(LOAD#0)
 
 
 0x080480a0: ================================== Function (entry point) unknown name
@@ -22,7 +22,7 @@ using this memory map for disassembly:
 0x080480ae: 89 da                   |..      |   mov    edx, ebx
 0x080480b0: f7 64 24 14             |.d$.    |   mul    dword ss:[esp + 0x14]
 0x080480b4: b8 01 00 00 00          |.....   |   mov    eax, 0x00000001
-0x080480b9: cd 80                   |..      |   int    0x80<-128> <exit>
+0x080480b9: cd 80                   |..      |   int    0x80<-128>
 0x080480bb: f4                      |.       |   hlt    
 0x080480bb: Successor blocks: none
 

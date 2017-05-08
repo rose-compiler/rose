@@ -1011,7 +1011,6 @@ AM_CONDITIONAL(ROSE_USE_INDENT, [test "x$INDENT" = "xindent"])
 echo "value of INDENT variable = $INDENT"
 
 # DQ (9/30/2009): Added checking for tclsh command (common in Linux, but not on some platforms).
-# This command is used in the src/frontend/BinaryDisassembly/Makefile.am file.
 AC_CHECK_PROGS(TCLSH, [tclsh])
 AM_CONDITIONAL(ROSE_USE_TCLSH, [test "x$TCLSH" = "xtclsh"])
 echo "value of TCLSH variable = $TCLSH"
@@ -1371,41 +1370,6 @@ ROSE_SUPPORT_INSURE
 
 # DQ (1/14/2007): I don't think this is required any more!
 # ROSE_TEST_LIBS="-L$prefix/lib"
-
-# DQ (1/14/2007): I don't know if this is required, but too many people are resetting this variable!
-# LIBS_WITH_RPATH="$(WAVE_LIBRARIES)"
-
-dnl PC (09/15/2006): None of the following should not be relevant any more
-dnl
-dnl echo "Calling LIBS_ADD_RPATH ROSE_TEST_LIBS = $ROSE_TEST_LIBS"
-dnl # Macro copied from Brian Gummey's implementation and turned on by default.
-dnl ROSE_LIBS_ADD_RPATH(ROSE_TEST_LIBS,LIBS_WITH_RPATH,0)
-dnl 
-dnl # This is part of support for Boost-Wave (CPP Preprocessor Library)
-dnl # Only add the Boost-Wave library to rpath if it has been set
-dnl if (test "$with_boost_wave" = yes); then
-dnl    MY_WAVE_PATH="-L$wave_libraries"
-dnl    ROSE_LIBS_ADD_RPATH(MY_WAVE_PATH,LIBS_WITH_RPATH,0)
-dnl fi
-dnl 
-dnl echo "DONE: MY_WAVE_PATH                   = $MY_WAVE_PATH"
-dnl echo "DONE: LIBS_ADD_RPATH ROSE_TEST_LIBS  = $ROSE_TEST_LIBS"
-dnl echo "DONE: LIBS_ADD_RPATH LIBS_WITH_RPATH = $LIBS_WITH_RPATH"
-dnl 
-dnl # exit 1
-dnl 
-dnl # This is part of support for QRose (specification of QT Graphics Library)
-dnl # Only add the QT library to rpath if it has been set
-dnl if (test "$ac_qt_libraries"); then
-dnl    MY_QT_PATH="-L$ac_qt_libraries"
-dnl    ROSE_LIBS_ADD_RPATH(MY_QT_PATH,LIBS_WITH_RPATH,0)
-dnl fi
-dnl 
-dnl echo "DONE: MY_QT_PATH                     = $MY_QT_PATH"
-dnl echo "DONE: LIBS_ADD_RPATH ROSE_TEST_LIBS  = $ROSE_TEST_LIBS"
-dnl echo "DONE: LIBS_ADD_RPATH LIBS_WITH_RPATH = $LIBS_WITH_RPATH"
-
-AC_SUBST(LIBS_WITH_RPATH)
 
 # Determine how to create C++ libraries.
 AC_MSG_CHECKING(how to create C++ libraries)
@@ -2186,7 +2150,6 @@ src/Makefile
 src/ROSETTA/Makefile
 src/ROSETTA/src/Makefile
 src/backend/Makefile
-src/frontend/BinaryDisassembly/Makefile
 src/frontend/BinaryFormats/Makefile
 src/frontend/BinaryLoader/Makefile
 src/frontend/CxxFrontend/Clang/Makefile
