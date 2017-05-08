@@ -688,6 +688,7 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
           // an single AssignInitializer on the rhs is a constant expression that evaluates to a known value at compile time
           SgExpression* rhs=assignInitializer->get_operand_i();
           ROSE_ASSERT(rhs);
+          //cout<<"DEBUG: assign initializer:"<<assignInitializer->unparseToString()<<":"<<rhs->unparseToString()<<endl;
           PState newPState=analyzeAssignRhs(*currentEState.pstate(),initDeclVarId,rhs,cset);
           return createEState(targetLabel,newPState,cset);
         } else {
@@ -711,7 +712,7 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
           //cerr<<"WARNING: class type in variable declaration not supported yet."<<endl;
           //exit(1);
         } else if(variableIdMapping.hasPointerType(initDeclVarId)) {
-          // create pointer value and set it to top (=any value possible (uninitialized))
+          // create pointer value and set it to top (=any value possible (uninitialized pointer variable declaration))
           AbstractValue pointerVal=AbstractValue::createAddressOfVariable(initDeclVarId);
           newPState.setVariableToTop(pointerVal);
         } else {
@@ -1114,6 +1115,15 @@ set<const EState*> Analyzer::transitionSourceEStateSetOfLabel(Label lab) {
   return estateSet;
 }
 
+// PState is maintainted to allow for assignments on the rhs
+// TODO: change lhsVar to lhsAbstractValue
+PState Analyzer::analyzeAssignRhsExpr(PState currentPState,VariableId lhsVar, SgNode* rhs, ConstraintSet& cset) {
+  // TODO DECLARATION:SgVariableDeclaration(null,SgInitializedName(SgAssignInitializer(SgCastExp(SgIntVal))))
+  //                  rhs=SgCastExp(SgIntVal) // not handled yet in below function
+  //AbstractValue lhsValue=AbstractValue(lhsVar);
+  ROSE_ASSERT(false);
+}
+
 // TODO: this function should be implemented with a call of ExprAnalyzer::evalConstInt
 // TODO: currently all rhs which are not a variable are evaluated to top by this function
 PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode* rhs, ConstraintSet& cset) {
@@ -1122,6 +1132,11 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
   bool isRhsIntVal=false;
   bool isRhsVar=false;
 
+  if(SgCastExp* castExp=isSgCastExp(rhs)) {
+    // just skip the cast for now (casting is addressed in the new expression evaluation)
+    rhs=castExp->get_operand();
+  }
+  
   // TODO: -1 is OK, but not -(-1); yet.
   if(SgMinusOp* minusOp=isSgMinusOp(rhs)) {
     if(SgIntVal* intValNode=isSgIntVal(SgNodeHelper::getFirstChild(minusOp))) {

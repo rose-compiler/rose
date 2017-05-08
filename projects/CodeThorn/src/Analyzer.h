@@ -73,8 +73,11 @@ namespace CodeThorn {
     void initializeTraceSolver(std::string functionToStartAt,SgNode* root);
     void continueAnalysisFrom(EState* newStartEState);
     
-    PState analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode* rhs,ConstraintSet& cset);
     EState analyzeVariableDeclaration(SgVariableDeclaration* nextNodeToAnalyze1,EState currentEState, Label targetLabel);
+
+    PState analyzeAssignRhsExpr(PState currentPState,VariableId lhsVar, SgNode* rhs,ConstraintSet& cset);
+    // to be replaced by above function
+    PState analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode* rhs,ConstraintSet& cset);
     
     void addToWorkList(const EState* estate);
     const EState* addToWorkListIfNew(EState estate);
