@@ -89,12 +89,13 @@ testControlFlow_answers = $(testControlFlow_targets:.passed=.ans)
 EXTRA_DIST += $(testControlFlow_answers)
 TEST_TARGETS += $(testControlFlow_targets)
 
-$(testControlFlow_targets): testControlFlow-%.passed: $(TEST_WITH_ANSWER) testControlFlow testControlFlow-%.dot conditionalDisable
+$(testControlFlow_targets): \
+testControlFlow-%.passed: $(TEST_WITH_ANSWER) testControlFlow testControlFlow-%.ans conditionalDisable
 	@$(RTH_RUN)							\
 		TITLE="AST-based control flow graph, algorithm $* [$@]"	\
 		DISABLED="$$(./conditionalDisable)"			\
 		CMD="./testControlFlow $* $(SPECIMEN_DIR)/buffer2.bin"	\
-		ANS="$(srcdir)/testControlFlow-$*.dot"			\
+		ANS="$(srcdir)/testControlFlow-$*.ans"			\
 		$< $@
 
 
@@ -118,22 +119,22 @@ testFunctionCall_SOURCES = testFunctionCall.C
 testFunctionCall_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 TEST_TARGETS += testFunctionCall-A.passed testFunctionCall-B.passed
-EXTRA_DIST += testFunctionCall-A.dot testFunctionCall-B.dot
+EXTRA_DIST += testFunctionCall-A.ans testFunctionCall-B.ans
 
-testFunctionCall-A.passed: $(TEST_WITH_ANSWER) testFunctionCall testFunctionCall-A.dot conditionalDisable
+testFunctionCall-A.passed: $(TEST_WITH_ANSWER) testFunctionCall testFunctionCall-A.ans conditionalDisable
 	@$(RTH_RUN)							\
 		TITLE="function calls, algorithm A [$@]"		\
 		DISABLED="$$(./conditionalDisable)"			\
 		CMD="./testFunctionCall A $(SPECIMEN_DIR)/buffer2.bin"	\
-		ANS="$(srcdir)/testFunctionCall-A.dot"			\
+		ANS="$(srcdir)/testFunctionCall-A.ans"			\
 		$< $@
 
-testFunctionCall-B.passed: $(TEST_WITH_ANSWER) testFunctionCall testFunctionCall-B.dot conditionalDisable
+testFunctionCall-B.passed: $(TEST_WITH_ANSWER) testFunctionCall testFunctionCall-B.ans conditionalDisable
 	@$(RTH_RUN)							\
 		TITLE="function calls, algorithm B [$@]"		\
 		DISABLED="$$(./conditionalDisable)"			\
 		CMD="./testFunctionCall B $(SPECIMEN_DIR)/buffer2.bin"	\
-		ANS="$(srcdir)/testFunctionCall-B.dot"			\
+		ANS="$(srcdir)/testFunctionCall-B.ans"			\
 		$< $@
 
 
@@ -405,7 +406,7 @@ rot13.passed: rot13.conf rot13 conditionalDisable
 
 
 ###############################################################################################################################
-# Program to test the assembler (see also "disassemble --assemble")
+# Program to test the assembler
 ###############################################################################################################################
 noinst_PROGRAMS += testAssembler
 testAssembler_SOURCES=testAssembler.C
@@ -926,90 +927,6 @@ PHONIES += check-testPartitioner2
 check-testPartitioner2: $(testPartitioner2_test_targets) $(testP2map_test_targets)
 
 
-
-
-###############################################################################################################################
-# Disassembly tests using the old partitioner (deprecated)
-###############################################################################################################################
-
-noinst_PROGRAMS += disassemble
-disassemble_SOURCES = disassemble.C linux_syscalls.C
-disassemble_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-
-# Disassembly of executable files (DOS, ELF, PE) of various architectures (amd64, Arm, Mips, M68k, PowerPC, x86)
-# MIPS specimens are currently failing a FIXME assertion in makeShadowRegister()
-# PowerPC specimens have lots of "XL-Form xoOpcode = 36 not handled!" and similar errors
-# Be careful where the comma is located!
-disassemble1_specimens =					\
-	$(filter-out						\
-		$(nonsmoke_specimens_binary_any_any_mips)	\
-		$(nonsmoke_specimens_binary_any_any_ppc)	\
-		$(nonsmoke_specimens_binary_large),		\
-		$(nonsmoke_specimens_binary_any_exe_any))
-disassemble1_test_targets = $(addprefix disassemble1_, $(addsuffix .passed, $(disassemble1_specimens)))
-disassemble1_answers = $(disassemble1_test_targets:.passed=.ans)
-
-EXTRA_DIST += $(disassemble1_answers) disassemble.conf
-TEST_TARGETS += $(disassemble1_test_targets)
-
-$(disassemble1_test_targets): disassemble1_%.passed: $(SPECIMEN_DIR)/% disassemble disassemble.conf disassemble1_%.ans conditionalDisable
-	@$(RTH_RUN)						\
-		TITLE="disassemble $(notdir $<) [$@]"		\
-		DISABLED="$$(./conditionalDisable)"		\
-		USE_SUBDIR=yes					\
-		EXE="$$(pwd)/disassemble"			\
-		SWITCHES=					\
-		PSEARCH="-rose:partitioner_search -leftovers"	\
-		ARGS="$<"					\
-		$(srcdir)/disassemble.conf $@
-
-# Disassembly of raw x86 buffers (these should probably have position independent code)
-disassemble2_specimens = $(filter-out $(nonsmoke_specimens_binary_large), $(nonsomke_specimens_binary_raw_insns_x86))
-disassemble2_test_targets = $(addprefix disassemble2_, $(addsuffix .passed, $(disassemble2_specimens)))
-disassemble2_answers = $(disassemble2_test_targets:.passed=.ans)
-
-EXTRA_DIST += $(disassemble2_answers)
-TEST_TARGETS += $(disassemble2_test_targets)
-
-disassemble2_buffer2.raw.passed: $(SPECIMEN_DIR)/buffer2.raw disassemble disassemble.conf disassemble2_buffer2.raw.ans conditionalDisable
-	@$(RTH_RUN)													\
-		TITLE="disassemble $(notdir $<) [$@]"									\
-		DISABLED="$$(./conditionalDisable)"									\
-		USE_SUBDIR=yes												\
-		EXE="$$(pwd)/disassemble"										\
-		SWITCHES="--disassemble --linear --raw=0x08048310"							\
-		DSEARCH="-rose:disassembler_search following,immediate,words,-allbytes,unused,nonexe,deadend,-unknown"	\
-		ARGS="$< 0x08048310"											\
-		$(srcdir)/disassemble.conf $@
-
-disassemble2_vm-final.raw.passed: $(SPECIMEN_DIR)/vm-final.raw disassemble disassemble.conf disassemble2_vm-final.raw.ans
-	@$(RTH_RUN)													\
-		DISABLED="This takes forever to run"									\
-		TITLE="disassemble $(notdir $<) [$@]"									\
-		USE_SUBDIR=yes												\
-		EXE="$$(pwd)/disassemble"										\
-		SWITCHES="--disassemble --linear --raw=0x00c01000"							\
-		DSEARCH="-rose:disassembler_search following,immediate,words,-allbytes,unused,nonexe,deadend,-unknown"	\
-		ARGS="$< 0x00c00000"											\
-		$(srcdir)/disassemble.conf $@
-
-disassemble2_other_targets = $(filter-out	\
-	disassemble2_buffer2.raw.passed		\
-	disassemble2_vm-final.raw.passed	\
-	,$(disassemble2_test_targets))
-
-$(disassemble2_other_targets): disassemble2_%.passed: $(SPECIMEN_DIR)/% disassemble
-	@$(RTH_RUN)						\
-		DISABLED="unknown map and entry address"	\
-		TITLE="disassemble $(notdir $<) [$@]"		\
-		CMD=false					\
-		$(srcdir)/disassemble.conf $@
-
-# A convenient target for just testing the disassembler
-PHONIES += check-disassemble
-check-disassemble: $(disassemble1_test_targets) $(disassemble2_test_targets)
-
-
 ###############################################################################################################################
 # Instruction semantics tests.
 #
@@ -1290,7 +1207,7 @@ EXTRA_DIST += llvmAnalysis.conf
 #TEST_TARGETS += $(llvmAnalysis_TestTargets)
 MOSTLYCLEANFILES += $(llvmAnalysis_TestTargets) $(llvmAnalysis_TestTargets:.passed=.failed)
 
-$(llvmAnalysis_TestTargets): llvm-analysis-%.passed: $(llvmAnalysis_SpecimenDir)/%.c llvmTranscoder disassemble conditionalDisable
+$(llvmAnalysis_TestTargets): llvm-analysis-%.passed: $(llvmAnalysis_SpecimenDir)/%.c llvmTranscoder conditionalDisable
 	@$(RTH_RUN)											\
 		TITLE="LLVM analysis for $(notdir $<) [$@]"						\
 		DISABLED="$$(./conditionalDisable)"							\
@@ -1423,88 +1340,6 @@ testLazyInitialStates.passed: $(SPECIMEN_DIR)/i386-initialState testLazyInitialS
 ###############################################################################################################################
 # Test various things for all our sample binaries
 ###############################################################################################################################
-# These all depend on the deprecated "disassemble" tool.
-
-#--------------------------------------------------------------------------------
-parse_Specimens = $(filter-out $(nonsmoke_specimens_binary_large), $(nonsmoke_specimens_binary_any_exe_any))
-parse_Targets = $(addprefix parse_, $(addsuffix .passed, $(parse_Specimens)))
-
-TEST_TARGETS += $(parse_Targets)
-
-$(parse_Targets): parse_%.passed: $(SPECIMEN_DIR)/% disassemble conditionalDisable
-	@$(RTH_RUN)					\
-		TITLE="parse $(notdir $<) [$@]"		\
-		DISABLED="$$(./conditionalDisable)"	\
-		CMD="$$(pwd)/disassemble $(abspath $<)"	\
-		USE_SUBDIR=yes				\
-		$(TEST_EXIT_STATUS) $@
-
-PHONIES += check_parse_container
-check_parse_container: $(parse_Targets)
-
-#--------------------------------------------------------------------------------
-#FIXME: MIPS parser chokes on unimplemented DisassemblerMips::makeShadowRegister() [Robb Matzke 2013-08-30]
-disassemble_Specimens =						\
-	$(filter-out						\
-		$(nonsmoke_specimens_binary_any_any_mips)	\
-		$(nonsmoke_specimens_binary_large),		\
-		$(nonsmoke_specimens_binary_any_exe_any))
-
-disassemble_Targets = $(addprefix disassemble_, $(addsuffix .passed, $(disassemble_Specimens)))
-
-TEST_TARGETS += $(disassemble_Targets)
-
-$(disassemble_Targets): disassemble_%.passed: $(SPECIMEN_DIR)/% disassemble conditionalDisable
-	@$(RTH_RUN)						\
-		TITLE="disassemble $(notdir $<) [$@]"		\
-		DISABLED="$$(./conditionalDisable)"		\
-		CMD="$$(pwd)/disassemble --quiet $(abspath $<)"	\
-		USE_SUBDIR=yes					\
-		$(TEST_EXIT_STATUS) $@
-
-PHONIES += check_disassemble
-check_disassemble: $(disassemble_Targets)
-
-#--------------------------------------------------------------------------------
-#FIXME: MIPS parser chokes on unimplemented DisassemblerMips::makeShadowRegister() [Robb Matzke 2013-08-30]
-unparse_Specimens =						\
-	$(filter-out						\
-		$(nonsmoke_specimens_binary_any_any_mips)	\
-		$(nonsmoke_specimens_binary_large),		\
-		$(nonsmoke_specimens_binary_any_exe_any))
-
-unparse_Targets = $(addprefix unparse_, $(addsuffix .passed, $(unparse_Specimens)))
-
-TEST_TARGETS += $(unparse_Targets)
-
-$(unparse_Targets): unparse_%.passed: $(SPECIMEN_DIR)/% disassemble conditionalDisable
-	@$(RTH_RUN)					\
-		TITLE="unparse $(notdir $<) [$@]"	\
-		DISABLED="$$(./conditionalDisable)"	\
-		CMD="$$(pwd)/disassemble $(abspath $<)"	\
-		USE_SUBDIR=yes				\
-		$(TEST_EXIT_STATUS) $@
-
-PHONIES += check_unparse
-check_unparse: $(unparse_Targets)
-
-#--------------------------------------------------------------------------------
-#FIXME: all of the x86 executables have at least one thing that doesn't assemble [Robb Matzke 2013-08-30]
-#assemble_Specimens = $(nonsmoke_specimens_binary_any_exe_x86)
-assemble_Targets = $(addprefix assemble_, $(addsuffix .passed, $(assemble_Specimens)))
-
-TEST_TARGETS += $(assemble_Targets)
-
-$(assemble_Targets): assemble_%.passed: $(SPECIMEN_DIR)/% disassemble conditionalDisable
-	@$(RTH_RUN)									\
-		TITLE="assemble $(notdir $<) [$@]"					\
-		DISABLED="$$(./conditionalDisable)"					\
-		CMD="$$(pwd)/disassemble --quiet --reassemble --show-bad $(abspath $<)"	\
-		USE_SUBDIR=yes								\
-		$(TEST_EXIT_STATUS) $@
-
-PHONIES += check_assemble
-check_assemble: $(assemble_Targets)
 
 #--------------------------------------------------------------------------------
 #FIXME: all the ARM specimens are failing, and have been. This might be due to poor disassembly. [Robb Matzke 2013-08-30]
@@ -1597,10 +1432,12 @@ test_small_pdf_generation.passed: $(test_pdf_small_specimen) $(test_pdf_translat
 		CMD="$(test_pdf_translator) -rose:verbose 0 $< && ls -l *.pdf"	\
 		$(TEST_EXIT_STATUS) $@
 
+# Matzke (2017-05-08): Disabled because it can take >900 seconds when debugging is enabled, and the
+# functionality is already mostly tested by test_small_pdf_generation.passed
 test_large_pdf_generation.passed: $(test_pdf_large_specimen) $(test_pdf_translator) conditionalDisable
 	@$(RTH_RUN)								\
 		TITLE="generation of large PDF file [$@]"			\
-		DISABLED="$$(./conditionalDisable)"				\
+		DISABLED="takes too long"					\
 		USE_SUBDIR=yes							\
 		CMD="$(test_pdf_translator) -rose:verbose 0 $< && ls -l *.pdf"	\
 		$(TEST_EXIT_STATUS) $@

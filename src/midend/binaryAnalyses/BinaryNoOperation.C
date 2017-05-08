@@ -126,7 +126,7 @@ NoOperation::NoOperation(Disassembler *disassembler) {
     normalizer_ = StateNormalizer::instance();
 
     if (disassembler) {
-        const RegisterDictionary *registerDictionary = disassembler->get_registers();
+        const RegisterDictionary *registerDictionary = disassembler->registerDictionary();
         ASSERT_not_null(registerDictionary);
         size_t addrWidth = disassembler->instructionPointerRegister().get_nbits();
 

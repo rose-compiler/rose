@@ -591,7 +591,7 @@ operator<<(std::ostream &out, const Definition &x) {
 void
 Analysis::init(Disassembler *disassembler) {
     if (disassembler) {
-        const RegisterDictionary *registerDictionary = disassembler->get_registers();
+        const RegisterDictionary *registerDictionary = disassembler->registerDictionary();
         ASSERT_not_null(registerDictionary);
         size_t addrWidth = disassembler->instructionPointerRegister().get_nbits();
 
