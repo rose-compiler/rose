@@ -17,24 +17,16 @@ include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
 
 # DQ (4/17/2010): Support for minimal configuration of ROSE (e.g. "--enable-only-fortran").
 
-# We don't want "make [all]", "make check", or "make install", etc. to recurse into the tests/nonsmoke directory. If you want
-# to build something in the non-smoke area you should "cd" do that directory first, as in "make -C tests/nonsmoke
-# ...". We still want tests/nonsmoke to be traversed for "make dist", "make distclean", and "make maintainer-clean" (to
-# the extent that those even work anyway), and we don't want to have to explicitly set DIST_SUBDIRS, so we use some
-# automake black magic: if DIST_SUBDIRS is not set explicitly (which it isn't in this makefile), then automake will
-# define it to be the union of all possible entries of SUBDIRS. [Matzke 2017-04-21]
+# We don't want "make [all]", "make check", or "make install", etc. to recurse into the tests/nonsmoke directory (unless
+# ROSE was configured using "--with-ROSE_LONG_MAKE_CHECK_RULE"). If you want to build something in the non-smoke area
+# you should "cd" do that directory first, as in "make -C tests/nonsmoke ...".
 SUBDIRS = libltdl config src
 if ROSE_BUILD_TESTS_DIRECTORY_SUPPORT
    SUBDIRS += tests/smoke
 endif
-
-# Automake black magic to set DIST_SUBDIRS (yes, the variable is named "SUBDIRS"; see comment above)
-if ROSE_USE_CLANG_FRONTEND
-if !ROSE_USE_CLANG_FRONTEND
+if ROSE_USE_LONG_MAKE_CHECK_RULE
 SUBDIRS += tests/nonsmoke
 endif
-endif
-
 
 if !ROSE_USE_CLANG_FRONTEND
 if !ROSE_USE_INSURE
