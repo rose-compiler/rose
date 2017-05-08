@@ -17,6 +17,9 @@ static const char* description =
 using namespace std;
 using namespace SageInterface;
 
+// used to store debugging output into a file
+ofstream ofile; 
+
 namespace RAJA_Checker 
 {
   bool enable_debug = false;
@@ -24,6 +27,7 @@ namespace RAJA_Checker
 
   bool checkDataMember = false; 
   bool checkNodalAccumulationPattern = true;
+
 
   //! Processing command line options
   std::vector<std::string> commandline_processing(std::vector< std::string > & argvList);
@@ -72,7 +76,10 @@ namespace RAJA_Checker
           // Additionally, we exclude user added explicit this->
           SgBinaryOp* bop = isSgBinaryOp(exp);
           if (!isSgThisExp(bop->get_lhs_operand()))
-            cout<<"Found data member access at:"<< finfo->get_filename() <<" " << finfo->get_line() <<":"<< finfo->get_col()  <<endl;
+          {
+           if (RAJA_Checker::enable_debug)
+            ofile<<"Found data member access at:"<< finfo->get_filename() <<" " << finfo->get_line() <<":"<< finfo->get_col()  <<endl;
+          }
         }
       } 
     }
@@ -159,13 +166,13 @@ namespace RAJA_Checker
 } // end RAJA_Checker namespace
 
 //! Initialize the switch group and its switches.
-Sawyer::CommandLine::SwitchGroup commandLineSwitches() {
+Sawyer::CommandLine::SwitchGroup commandLineSwitches() 
+{
   using namespace Sawyer::CommandLine;
 
-
   // Default log files for keep_going option
-  Rose::KeepGoing::report_filename__fail = "autoPar-failed-files.txt";
-  Rose::KeepGoing::report_filename__pass = "autoPar-passed-files.txt";
+  Rose::KeepGoing::report_filename__fail = "rajaChecker-failed-files.txt";
+  Rose::KeepGoing::report_filename__pass = "rajaChecker-passed-files.txt";
 
 
   SwitchGroup switches("RAJA Checker's switches");                                                                         
@@ -500,8 +507,11 @@ void RoseVisitor::visit ( SgNode* n)
         SgExprStatement* fstmt = NULL; 
         if ( isNodalAccumulationLoop (forloop, fstmt))
         {
-          cout<<"Found a nodal accumulation loop at line:"<< forloop->get_file_info()->get_line()<<endl;
-          cout<<"\t The first accumulation statement is at line:"<< fstmt->get_file_info()->get_line()<<endl;
+          if (RAJA_Checker::enable_debug)
+          {
+            ofile<<"Found a nodal accumulation loop at line:"<< forloop->get_file_info()->get_line()<<endl;
+            ofile<<"\t The first accumulation statement is at line:"<< fstmt->get_file_info()->get_line()<<endl;
+          }
         }
       }
     } // end if for loop
@@ -517,8 +527,11 @@ void RoseVisitor::visit ( SgNode* n)
           SgExprStatement* fstmt = NULL; 
           if ( isNodalAccumulationLambdaExp(le, fstmt))
           {
-            cout<<"Found a nodal accumulation lambda function at line:"<< le->get_file_info()->get_line()<<endl;
-            cout<<"\t The first accumulation statement is at line:"<< fstmt->get_file_info()->get_line()<<endl;
+            if (RAJA_Checker::enable_debug)
+            {
+              ofile<<"Found a nodal accumulation lambda function at line:"<< le->get_file_info()->get_line()<<endl;
+              ofile<<"\t The first accumulation statement is at line:"<< fstmt->get_file_info()->get_line()<<endl;
+            }
           }
         }
 
@@ -542,6 +555,21 @@ void RoseVisitor::visit ( SgNode* n)
   } // end if located node
 }
 
+
+
+static void initDebugOutputFile(SgProject* project)
+{
+  SgFilePtrList fl = project->get_files();
+  SgFile* firstfile = fl[0];
+  ROSE_ASSERT (firstfile!=NULL);
+
+  string filename = rose::StringUtility::stripPathFromFileName (firstfile->getFileName());
+  string ofilename = filename+".output";
+  ofile.open(ofilename.c_str());
+}
+
+
+//---------------------------------------------------------------------------
 int
 main ( int argc, char* argv[])
 {
@@ -564,6 +592,8 @@ main ( int argc, char* argv[])
   }
   else
   {
+    if (RAJA_Checker::enable_debug)
+      initDebugOutputFile (project);
     // ROSE Traversal
     RoseVisitor visitor;
 
@@ -577,6 +607,9 @@ main ( int argc, char* argv[])
         visitor.traverseWithinFile(s_file, preorder); 
       }
     }
+
+    if (RAJA_Checker::enable_debug)
+      ofile.close();
   }
 
 label_end:
