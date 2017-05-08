@@ -112,8 +112,6 @@ bool VariableIdMapping::isConstantArray(VariableId varId) {
   * \date 2012.
  */
 void VariableIdMapping::toStream(ostream& os) {
-  cout<<"DEBUG: Size of variable-id-mapping: "<<mappingVarIdToSym.size()<<endl;
-  cout<<"DEBUG: Size of tmp variable-id-mapping: "<<temporaryVariableIdMapping.size()<<endl;
   for(size_t i=0;i<mappingVarIdToSym.size();++i) {
     os<<""<<i
       <<","<<mappingVarIdToSym[i];
@@ -244,7 +242,6 @@ void VariableIdMapping::generateDot(string filename, SgNode* astRoot) {
       if(sym)
         generateStmtSymbolDotEdge(myfile,initname,variableId(initname));
 #else          
-      cout << "AT:"<<initname->get_name()<<endl;
       if(initname->get_name()=="") {
         cerr<<"WARNING: SgInitializedName::get_name()==\"\" .. skipping."<<endl;
       } else {
@@ -347,7 +344,6 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
         }
         else {
           //cout << "computeVariableSymbolMapping: SgInitializedName \"" << initName->unparseToString() << "\" without associated symbol found." << endl;
-
           // Registration is not possible without symbol.
           // This is presumably a parameter in a declaration, a built-in variable (e.g. __builtin__x), an enum value, or a child of a SgCtorInitializerList.
           //  TODO: Is it possible to assert this?
@@ -368,7 +364,6 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
           // New symbol: Check for array symbol:
           if(SgArrayType* arrayType=isSgArrayType(type)) {
             // Try to find the array dimensions:
-            //cout<<"DEBUG: found array type."<<endl;
             // returns 0 if type does not contain size
             int arraySize = getArrayElementCount(arrayType);
             if(arraySize==0) {
