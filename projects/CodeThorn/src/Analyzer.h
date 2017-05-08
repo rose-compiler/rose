@@ -89,6 +89,13 @@ namespace CodeThorn {
     void swapWorkLists();
     size_t memorySizeContentEStateWorkLists();
     
+    void setOptionStatusMessages(bool flag);
+    bool getOptionStatusMessages();
+    // thread save; only prints if option status messages is enabled.
+    void printStatusMessage(string s);
+    void printStatusMessageLine(string s);
+    void printStatusMessage(string s, bool newLineFlag);
+    static string lineColSource(SgNode* node);
     void recordTransition(const EState* sourceEState, Edge e, const EState* targetEState);
     void printStatusMessage(bool);
     bool isStartLabel(Label label);
@@ -291,6 +298,7 @@ namespace CodeThorn {
     long int _maxBytesForcedTop;
     long int _maxSecondsForcedTop;
     PState _startPState;
+    bool _optionStatusMessages;
 
     std::list<EState> elistify();
     std::list<EState> elistify(EState res);

@@ -27,6 +27,38 @@ using namespace Sawyer::Message;
 
 Sawyer::Message::Facility Analyzer::logger;
 
+void Analyzer::setOptionStatusMessages(bool flag) {
+  _optionStatusMessages=flag;
+}
+
+bool Analyzer::getOptionStatusMessages() {
+  return _optionStatusMessages;
+}
+
+void Analyzer::printStatusMessage(string s, bool newLineFlag) {
+#pragma omp critical (STATUS_MESSAGES)
+  {
+    if(getOptionStatusMessages()) {
+      cout<<s;
+      if(newLineFlag) {
+        cout<<endl;
+      }
+    }
+  }
+}
+
+void Analyzer::printStatusMessage(string s) {
+  printStatusMessage(s,false);
+}
+
+void Analyzer::printStatusMessageLine(string s) {
+  printStatusMessage(s,true);
+}
+
+string Analyzer::lineColSource(SgNode* node) {
+  return SgNodeHelper::sourceLineColumnToString(node)+": "+SgNodeHelper::nodeToString(node);
+}
+
 void Analyzer::initDiagnostics() {
   static bool initialized = false;
   if (!initialized) {
@@ -97,6 +129,7 @@ Analyzer::Analyzer():
   _maxIterationsForcedTop(-1),
   _maxBytesForcedTop(-1),
   _maxSecondsForcedTop(-1),
+  _optionStatusMessages(false),
   _treatStdErrLikeFailedAssert(false),
   _skipSelectedFunctionCalls(false),
   _explorationMode(EXPL_BREADTH_FIRST),
@@ -278,7 +311,7 @@ void Analyzer::printStatusMessage(bool forceDisplay) {
        <<"/"<<getIterations()<<"-"<<getApproximatedIterations()
       ;
     ss<<endl;
-    cout<<ss.str();
+    printStatusMessage(ss.str());
   }
 }
 
@@ -3352,16 +3385,14 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
             arrayPtrValue=AbstractValue::createAddressOfArray(arrayVarId);
           } else if(_variableIdMapping->hasPointerType(arrayVarId)) {
             // in case it is a pointer retrieve pointer value
-            // logger[DEBUG]<<"pointer-array access!"<<endl;
             AbstractValue ptr=AbstractValue::createAddressOfArray(arrayVarId);
             if(pstate2.varExists(ptr)) {
               //cout<<"DEBUG: pointer exists (OK): "<<ptr.toString(_variableIdMapping)<<endl;
               arrayPtrValue=pstate2[ptr]; 
-              //arrayPtrValue=ptr;
               //cout<<"DEBUG: arrayPtrValue: "<<arrayPtrValue.toString(_variableIdMapping)<<endl;
               // convert integer to VariableId
               if(arrayPtrValue.isTop()||arrayPtrValue.isBot()) {
-                logger[ERROR] <<"pointer value in array access lhs "<<arrayPtrValue.toString(_variableIdMapping)<<" is top or bot. Not supported yet."<<endl;
+                logger[ERROR] <<"Error: unsupported feature: "<<nextNodeToAnalyze2->unparseToString()<<arrayPtrValue.toString(_variableIdMapping)<<" array index is top or bot. Not supported yet."<<endl;
                 exit(1);
               }
               // logger[DEBUG]<<"defering pointer-to-array: ptr:"<<_variableIdMapping->variableName(arrayVarId);
