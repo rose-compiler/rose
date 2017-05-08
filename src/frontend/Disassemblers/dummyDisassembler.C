@@ -4,7 +4,6 @@
 #include "sage3basic.h"
 #include "Diagnostics.h"
 #include "Disassembler.h"
-#include "Partitioner.h"
 
 using namespace rose::BinaryAnalysis;
 
@@ -180,16 +179,6 @@ namespace BinaryAnalysis{
 void Disassembler::initDiagnostics() {}
 } // namespace
 } // namespace
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Partitioner
-
-namespace rose {
-namespace BinaryAnalysis{
-void Partitioner::initDiagnostics() {}
-} // namespace
-} // namespace
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmBlock
