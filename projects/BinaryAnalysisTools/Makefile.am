@@ -334,5 +334,5 @@ endif
 clean-local:
 	rm -f $(MOSTLYCLEANFILES)
 
-check-nonsmoke: $(TEST_TARGETS)
+check-local: $(TEST_TARGETS)
 

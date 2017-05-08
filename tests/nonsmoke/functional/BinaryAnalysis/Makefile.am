@@ -1449,15 +1449,15 @@ test_large_pdf_generation.passed: $(test_pdf_large_specimen) $(test_pdf_translat
 
 if ROSE_BUILD_OS_IS_CYGWIN
 # DQ (3/21/2009): These tests don't appear to run under Cygwin.
-check-nonsmoke-local:
+check-local:
 	@echo "  TESTING (disabled: all tests disabled for Cygwin)"
 else
 # Binary analysis is enabled and supported
-check-nonsmoke-local: $(TEST_TARGETS)
+check-local: $(TEST_TARGETS)
 endif
 else
 # Binary analysis is not enabled
-check-nonsmoke-local:
+check-local:
 	@echo "  TESTING (disabled: binary frontend is not enabled)"
 endif
 
