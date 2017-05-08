@@ -13,7 +13,7 @@ if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 	SgAsmInstruction.C SgAsmArmInstruction.C SgAsmPowerpcInstruction.C SgAsmX86Instruction.C SgAsmMipsInstruction.C	\
 	SgAsmM68kInstruction.C SgAsmExecutableFileFormat.C x86InstructionProperties.C					\
 	SgAsmInterpretation.C SgAsmIntegerValueExpression.C SgAsmFloatValueExpression.C SgAsmExpression.C SgAsmType.C	\
-	BinaryDebugger.C Expressions.C Partitioner.C PStatistics.C IPDParser.C IPDUnparser.C Registers.C		\
+	BinaryDebugger.C Partitioner.C PStatistics.C IPDParser.C IPDUnparser.C Registers.C		\
         Disassembler.C DisassemblerArm.C DisassemblerMips.C DisassemblerM68k.C DisassemblerPowerpc.C DisassemblerX86.C	\
 	Assembler.C AssemblerX86.C AssemblerX86Init.C RegisterParts.C							\
 	AssemblerX86Init1.C AssemblerX86Init2.C AssemblerX86Init3.C AssemblerX86Init4.C AssemblerX86Init5.C		\

@@ -10,24 +10,22 @@ using namespace Diagnostics;
 
 Sawyer::Message::Facility AsmUnparser::mlog;
 
-/** Returns a vector of booleans indicating whether an instruction is part of a no-op sequence.  The sequences returned by
- *  SgAsmInstruction::findNoopSubsequences() can overlap, but we cannot assume that removing overlapping sequences will
- *  result in a meaningful basic block.  For instance, consider the following block:
+/* Returns a vector of booleans indicating whether an instruction is part of a no-op sequence.  The sequences returned by
+ * SgAsmInstruction::findNoopSubsequences() can overlap, but we cannot assume that removing overlapping sequences will
+ * result in a meaningful basic block.  For instance, consider the following block:
  *
- *  \code
  *      1: mov eax, 1
  *      2: mov eax, 2
  *      3: mov eax, 1
  *      4: mov eax, 2
- *  \endcode
  *
- *  The subsequences <2,3> and <3,4> are both no-ops when considered independently.  However, we cannot remove all four
- *  instructions because the sequence <1,2,3,4> is not a no-op.
+ * The subsequences <2,3> and <3,4> are both no-ops when considered independently.  However, we cannot remove all four
+ * instructions because the sequence <1,2,3,4> is not a no-op.
  *
- *  Therefore, this function takes the list returned by findNoopSubsequences and greedily selects the longest non-overlapping
- *  sequences, and returns a vector indexed by instruction position and containing a boolean to indicate whether that
- *  instruction is part of a selected no-op sequence.  Note that this algorithm does not necessarily maximize the number of
- *  no-op instructions. */
+ * Therefore, this function takes the list returned by findNoopSubsequences and greedily selects the longest non-overlapping
+ * sequences, and returns a vector indexed by instruction position and containing a boolean to indicate whether that
+ * instruction is part of a selected no-op sequence.  Note that this algorithm does not necessarily maximize the number of
+ * no-op instructions. */
 static std::vector<bool>
 build_noop_index(const std::vector <std::pair <size_t, size_t> > &noops)
 {
