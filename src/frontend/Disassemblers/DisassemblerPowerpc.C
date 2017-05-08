@@ -57,6 +57,7 @@ DisassemblerPowerpc::init()
     set_sex(ByteOrder::ORDER_LSB);
     set_registers(RegisterDictionary::dictionary_powerpc()); // only a default
     REG_IP = *get_registers()->lookup("iar");
+    REG_SP = *registerDictionary()->lookup("r1");
     callingConventions(CallingConvention::dictionaryPowerpc());
     InstructionSemantics2::DispatcherPowerpcPtr d = InstructionSemantics2::DispatcherPowerpc::instance();
     d->set_register_dictionary(get_registers());
