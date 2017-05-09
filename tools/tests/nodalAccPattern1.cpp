@@ -99,7 +99,7 @@ void foo2(double* x, int jp, int kp, int begin, int end, double rh1)
 
 // Negative test: not double type
 // -------------------------------------------
-void foo(int * x, int jp, int kp, int begin, int end, int rh1)
+void foo3(int * x, int jp, int kp, int begin, int end, int rh1)
 {
    int * x1, *x2, *x3, *x4; 
 
@@ -111,6 +111,27 @@ void foo(int * x, int jp, int kp, int begin, int end, int rh1)
    for (int i = begin; i< end; i++)
    {
       x1[i] += rh1; 
+      x2[i] -= rh1; 
+      x3[i] *= rh1; 
+      x4[i] /= rh1; 
+   } 
+}
+
+// tentative negative test case: loop without init statment 
+// -------------------------------------------
+void foo4(double* x, int jp, int kp, int begin, int end, double rh1)
+{
+   double * x1, *x2, *x3, *x4; 
+
+   x1 = x;
+   x2 = x +1; 
+   x3 = x1 + jp; 
+   x4 = x1 + kp; 
+
+   int i=begin; 
+   for (; i< end; i++)
+   {
+      x1[i] += rh1; // not accumulation pattern
       x2[i] -= rh1; 
       x3[i] *= rh1; 
       x4[i] /= rh1; 
