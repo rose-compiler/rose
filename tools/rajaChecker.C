@@ -628,13 +628,17 @@ main ( int argc, char* argv[])
 
 label_end:
   // Report errors
+  int status = backend(project);
+ // important: MUST call backend() first, then generate reports.
+ // otherwise, backend errors will not be caught by keep-going feature!!
+
 // We want the reports are generated with or without keep_going option
 //  if (RAJA_Checker::keep_going)
   {
     std::vector<std::string> orig_rose_cmdline(argv, argv+argc);
     Rose::KeepGoing::generate_reports (project, orig_rose_cmdline);
   }  
-
-  return backend(project);
+  //return backend(project);
+  return status;
 }
 
