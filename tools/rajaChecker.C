@@ -10,10 +10,10 @@
 #include <Sawyer/CommandLine.h>
 static const char* purpose = "This tool detects various patterns in input source files.";
 static const char* description =
-        "This tool detects several patterns in C++ source files. For example: "
-        " Pattern 1: the use of class or structure data members in RAJA loops."
-        " Pattern 2: the Nodal Accumulation Pattern in for loops or RAJA loops.";
+        "This tool detects several patterns in C++ source files. Currently supported patterns are: "
+        " Pattern 1: the Nodal Accumulation Pattern in C++ for loops or LLNL/RAJA loops.";
 
+//        " Pattern 1: the use of class or structure data members in RAJA loops."
 using namespace std;
 using namespace SageInterface;
 
@@ -186,6 +186,10 @@ Sawyer::CommandLine::SwitchGroup commandLineSwitches()
       .intrinsicValue(true, RAJA_Checker::enable_debug)                                                        
       .doc("Enable the debugging mode."));                                                                            
 
+  switches.insert(Switch("report")                                                                            
+      .argument("string", anyParser(Rose::KeepGoing::report_filename__pass))                                          
+      .doc("Specify the report file for storing results, default is HOME/rajaChecker-passed-files.txt"));
+
   // Keep going option, false by default
   switches.insert(Switch("keep_going")                                                                                
       .intrinsicValue(true, RAJA_Checker::keep_going)                                                          
@@ -193,11 +197,8 @@ Sawyer::CommandLine::SwitchGroup commandLineSwitches()
 
   switches.insert(Switch("failure_report")                                                                            
       .argument("string", anyParser(Rose::KeepGoing::report_filename__fail))                                          
-      .doc("Specify the report file for logging files the tool cannot process, default is HOME/rajaChecker-failed-files.txt"));
+      .doc("Only used when keep_going is turned on. Specify the report file for storing files the tool cannot process, default is HOME/rajaChecker-failed-files.txt"));
 
-  switches.insert(Switch("report")                                                                            
-      .argument("string", anyParser(Rose::KeepGoing::report_filename__pass))                                          
-      .doc("Specify the report file for storing results, default is HOME/rajaChecker-passed-files.txt"));
 #if 0                                                                                                                      
   switches.insert(Switch("dumpannot")                                                                                 
       .intrinsicValue(true, AutoParallelization::dump_annot_file)                                                     
