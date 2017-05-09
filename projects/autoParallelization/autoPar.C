@@ -161,7 +161,7 @@ Sawyer::CommandLine::SwitchGroup commandLineSwitches() {
       .intrinsicValue(true, AutoParallelization::enable_debug)
       .doc("Enable the debugging mode."));
 
-  // Keep going option of autoPar, set to true by default
+  // Keep going option of autoPar
   switches.insert(Switch("keep_going")
       .intrinsicValue(true, AutoParallelization::keep_going)
       .doc("Allow auto parallelization to keep going if errors happen"));

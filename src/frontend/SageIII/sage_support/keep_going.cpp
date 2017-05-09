@@ -498,6 +498,7 @@ void Rose::KeepGoing::generate_reports(SgProject* project,
   // add original command line into the log file so users can easily reproduce the errors. 
   if (files_with_errors.size()>0 && report_filename__fail.size()>0)
   {
+    AppendToFile (report_filename__pass, "------------------------\n");
     AppendToFile (report_filename__fail, orig_command_str);
 
     BOOST_FOREACH(SgFile* file, files_with_errors)
@@ -539,13 +540,18 @@ void Rose::KeepGoing::generate_reports(SgProject* project,
   SgFilePtrList files_without_errors = project->get_files_without_errors();
   if (files_without_errors.size()>0 && report_filename__pass.size()>0)
   {
-    AppendToFile (report_filename__pass, orig_command_str);
+   // full command line , it may has multiple files 
+   
+    AppendToFile (report_filename__pass, "------------------------\n");
+    //AppendToFile (report_filename__pass, orig_command_str);
 
     BOOST_FOREACH(SgFile* file, files_without_errors)
     {
-      std::string filename = file->getFileName();
-      filename = StripPrefix(path_prefix, filename);
+      std::string full_filename = file->getFileName();
+      std::string filename = StripPrefix(path_prefix, full_filename);
 
+      // output file full path first
+      AppendToFile(report_filename__pass, full_filename+"\n");
       if (verbose)
       {
         std::cout
@@ -558,13 +564,11 @@ void Rose::KeepGoing::generate_reports(SgProject* project,
       // If exists, output the analysis results associated with each file
       std::ostringstream oss;
       oss <<  File2StringMap[file]; // not copyable, not assignable
-      AppendToFile(report_filename__pass, oss.str());
-#if 0  // no need to output file name again, part of command line already
-      std::stringstream ss;
-      ss << filename;
+      if (oss.str().size()>0)
+      {
 
-      AppendToFile(report_filename__pass, ss.str());
-#endif       
+        AppendToFile(report_filename__pass, oss.str());
+      }
     }
   }
 
