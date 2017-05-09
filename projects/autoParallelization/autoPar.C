@@ -437,6 +437,7 @@ main (int argc, char *argv[])
 
 label_end: 
   // Report errors
+  int status = backend (project);
   if (keep_going)
   {
     std::vector<std::string> orig_rose_cmdline(argv, argv+argc);
@@ -444,5 +445,7 @@ label_end:
   }
 
   //project->unparse();
-  return backend (project);
+  //return backend (project);
+  return status; 
+
 }
