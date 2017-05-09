@@ -171,9 +171,12 @@ Sawyer::CommandLine::SwitchGroup commandLineSwitches()
   using namespace Sawyer::CommandLine;
 
   // Default log files for keep_going option
-  Rose::KeepGoing::report_filename__fail = "rajaChecker-failed-files.txt";
-  Rose::KeepGoing::report_filename__pass = "rajaChecker-passed-files.txt";
+ // Using home may be a better choice, no scattered log files in every subdirectories.  
+  //  report_filename__fail(boost::filesystem::path(getenv("HOME")).native()+"/rajaChecker-failed_files.txt");
+  //  report_filename__pass(boost::filesystem::path(getenv("HOME")).native()+"/rajaChecker-passed_files.txt");
 
+  Rose::KeepGoing::report_filename__fail = boost::filesystem::path(getenv("HOME")).native()+"/rajaChecker-failed_files.txt";
+  Rose::KeepGoing::report_filename__pass = boost::filesystem::path(getenv("HOME")).native()+"/rajaChecker-passed_files.txt";
 
   SwitchGroup switches("RAJA Checker's switches");                                                                         
   switches.doc("These switches control the RAJA Checker tool. ");                                                          
@@ -190,11 +193,11 @@ Sawyer::CommandLine::SwitchGroup commandLineSwitches()
                                                                                                                       
   switches.insert(Switch("failure_report")                                                                            
       .argument("string", anyParser(Rose::KeepGoing::report_filename__fail))                                          
-      .doc("Specify the report file for logging files the tool cannot process"));                                      
+      .doc("Specify the report file for logging files the tool cannot process, default is HOME/rajaChecker-failed-files.txt"));
                                                                                                                       
   switches.insert(Switch("success_report")                                                                            
       .argument("string", anyParser(Rose::KeepGoing::report_filename__pass))                                          
-      .doc("Specify the report file for logging files the tool can successfully process"));                                         
+      .doc("Specify the report file for logging files the tool can successfully process, default is HOME/rajaChecker-passed-files.txt"));
 #if 0                                                                                                                      
   switches.insert(Switch("dumpannot")                                                                                 
       .intrinsicValue(true, AutoParallelization::dump_annot_file)                                                     
@@ -499,6 +502,7 @@ void RoseVisitor::visit ( SgNode* n)
     if (lnode->get_file_info()->isCompilerGenerated())
       return;
 
+    
 //-------------------  Nodal accumulation loop detection ----------------
     if (SgForStatement* forloop = isSgForStatement(lnode))
     {
@@ -507,10 +511,15 @@ void RoseVisitor::visit ( SgNode* n)
         SgExprStatement* fstmt = NULL; 
         if ( isNodalAccumulationLoop (forloop, fstmt))
         {
+            ostringstream oss;
+            oss<<"Found a nodal accumulation loop at line:"<< forloop->get_file_info()->get_line()<<endl;
+            oss<<"\t The first accumulation statement is at line:"<< fstmt->get_file_info()->get_line()<<endl;
+
+            SgSourceFile* file = getEnclosingSourceFile(forloop);
+            Rose::KeepGoing::File2StringMap[file]+=oss.str();
           if (RAJA_Checker::enable_debug)
           {
-            ofile<<"Found a nodal accumulation loop at line:"<< forloop->get_file_info()->get_line()<<endl;
-            ofile<<"\t The first accumulation statement is at line:"<< fstmt->get_file_info()->get_line()<<endl;
+            ofile<<oss.str();
           }
         }
       }
@@ -527,10 +536,15 @@ void RoseVisitor::visit ( SgNode* n)
           SgExprStatement* fstmt = NULL; 
           if ( isNodalAccumulationLambdaExp(le, fstmt))
           {
+              ostringstream oss; 
+              oss<<"Found a nodal accumulation lambda function at line:"<< le->get_file_info()->get_line()<<endl;
+              oss<<"\t The first accumulation statement is at line:"<< fstmt->get_file_info()->get_line()<<endl;
+
+              SgSourceFile* file = getEnclosingSourceFile(le);
+              Rose::KeepGoing::File2StringMap[file]+=oss.str();
             if (RAJA_Checker::enable_debug)
             {
-              ofile<<"Found a nodal accumulation lambda function at line:"<< le->get_file_info()->get_line()<<endl;
-              ofile<<"\t The first accumulation statement is at line:"<< fstmt->get_file_info()->get_line()<<endl;
+              ofile<<oss.str();
             }
           }
         }
@@ -614,7 +628,8 @@ main ( int argc, char* argv[])
 
 label_end:
   // Report errors
-  if (RAJA_Checker::keep_going)
+// We want the reports are generated with or without keep_going option
+//  if (RAJA_Checker::keep_going)
   {
     std::vector<std::string> orig_rose_cmdline(argv, argv+argc);
     Rose::KeepGoing::generate_reports (project, orig_rose_cmdline);

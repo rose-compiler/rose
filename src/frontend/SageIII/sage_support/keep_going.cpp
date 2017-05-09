@@ -37,6 +37,8 @@ namespace KeepGoing {
  std::string expectations_filename__pass;
  std::string path_prefix;
 
+ std::map <SgFile* , std::string> File2StringMap; 
+
 #ifndef _MSC_VER
 struct sigaction SignalAction;
 #endif //_MSC_VER
@@ -475,6 +477,7 @@ void Rose::KeepGoing::setMidendErrorCode (SgProject* project, int errorCode)
     file->set_midendErrorCode(errorCode);
   }
 }
+
 void Rose::KeepGoing::generate_reports(SgProject* project, 
                      std::vector< std::string> orig_rose_cmdline
                        )
@@ -552,6 +555,10 @@ void Rose::KeepGoing::generate_reports(SgProject* project,
           << std::endl;
       }
 
+      // If exists, output the analysis results associated with each file
+      std::ostringstream oss;
+      oss <<  File2StringMap[file]; // not copyable, not assignable
+      AppendToFile(report_filename__pass, oss.str());
 #if 0  // no need to output file name again, part of command line already
       std::stringstream ss;
       ss << filename;
