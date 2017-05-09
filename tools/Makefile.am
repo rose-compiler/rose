@@ -47,7 +47,7 @@ rose_inputrajaChecker.C: $(top_srcdir)/tools/tests/inputrajaChecker.C rajaChecke
 #	./rajaChecker -c $<
 
 $(generatedCodeExamples): $(top_srcdir)/tools/tests/$(@:rose_%=%) rajaChecker
-	./rajaChecker --rose:checker:enable_debug --rose:checker:success_report success-report.txt -std=c++11 -c $(top_srcdir)/tools/tests/$(@:rose_%=%)
+	./rajaChecker --debug --report report.txt -std=c++11 -c $(top_srcdir)/tools/tests/$(@:rose_%=%)
 
 # enable diff based correctness checking
 DIFF=diff

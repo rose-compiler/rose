@@ -25,9 +25,9 @@ namespace RAJA_Checker
   bool enable_debug = false;
   bool keep_going = false;
 
+  // Not in use right now
   bool checkDataMember = false; 
   bool checkNodalAccumulationPattern = true;
-
 
   //! Processing command line options
   std::vector<std::string> commandline_processing(std::vector< std::string > & argvList);
@@ -180,24 +180,24 @@ Sawyer::CommandLine::SwitchGroup commandLineSwitches()
 
   SwitchGroup switches("RAJA Checker's switches");                                                                         
   switches.doc("These switches control the RAJA Checker tool. ");                                                          
-  switches.name("rose:checker");                                                                                      
+  switches.name("");                                                                                      
                                                                                                                       
-  switches.insert(Switch("enable_debug")                                                                              
+  switches.insert(Switch("debug")                                                                              
       .intrinsicValue(true, RAJA_Checker::enable_debug)                                                        
       .doc("Enable the debugging mode."));                                                                            
                                                                                                                       
-  // Keep going option of autoPar, set to true by default                                                             
+  // Keep going option, false by default
   switches.insert(Switch("keep_going")                                                                                
       .intrinsicValue(true, RAJA_Checker::keep_going)                                                          
       .doc("Allow the tool to keep going even if errors happen"));                                             
-                                                                                                                      
+
   switches.insert(Switch("failure_report")                                                                            
       .argument("string", anyParser(Rose::KeepGoing::report_filename__fail))                                          
       .doc("Specify the report file for logging files the tool cannot process, default is HOME/rajaChecker-failed-files.txt"));
-                                                                                                                      
-  switches.insert(Switch("success_report")                                                                            
+
+  switches.insert(Switch("report")                                                                            
       .argument("string", anyParser(Rose::KeepGoing::report_filename__pass))                                          
-      .doc("Specify the report file for logging files the tool can successfully process, default is HOME/rajaChecker-passed-files.txt"));
+      .doc("Specify the report file for storing results, default is HOME/rajaChecker-passed-files.txt"));
 #if 0                                                                                                                      
   switches.insert(Switch("dumpannot")                                                                                 
       .intrinsicValue(true, AutoParallelization::dump_annot_file)                                                     
