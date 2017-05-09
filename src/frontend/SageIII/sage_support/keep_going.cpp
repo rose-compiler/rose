@@ -498,7 +498,7 @@ void Rose::KeepGoing::generate_reports(SgProject* project,
   // add original command line into the log file so users can easily reproduce the errors. 
   if (files_with_errors.size()>0 && report_filename__fail.size()>0)
   {
-    AppendToFile (report_filename__pass, "------------------------\n");
+    AppendToFile (report_filename__fail, "------------------------\n");
     AppendToFile (report_filename__fail, orig_command_str);
 
     BOOST_FOREACH(SgFile* file, files_with_errors)

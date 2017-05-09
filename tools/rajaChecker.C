@@ -185,7 +185,7 @@ Sawyer::CommandLine::SwitchGroup commandLineSwitches()
   switches.insert(Switch("debug")                                                                              
       .intrinsicValue(true, RAJA_Checker::enable_debug)                                                        
       .doc("Enable the debugging mode."));                                                                            
-                                                                                                                      
+
   // Keep going option, false by default
   switches.insert(Switch("keep_going")                                                                                
       .intrinsicValue(true, RAJA_Checker::keep_going)                                                          
@@ -436,7 +436,14 @@ bool RAJA_Checker::isNodalAccumulationLoop(SgForStatement* forloop, SgExprStatem
   if (bb == NULL) return false;
 
   SgInitializedName* lvar = SageInterface::getLoopIndexVariable (forloop);
-  ROSE_ASSERT (lvar !=NULL);
+  if (lvar ==NULL)
+  {
+    if (RAJA_Checker::enable_debug)
+    {
+      cerr<<"Warning: SageInterface::getLoopIndexVariable() returns NULL for loop:"<<forloop->get_file_info()->displayString()<<endl;
+    }
+    return false;
+  }
 
   return isNodalAccumulationBody (bb, lvar, fstmt);
 }
