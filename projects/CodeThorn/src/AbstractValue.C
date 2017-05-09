@@ -37,10 +37,10 @@ AbstractValue::AbstractValue(VariableId varId):valueType(AbstractValue::PTR),var
 // type conversion
 AbstractValue::AbstractValue(bool val) {
   if(val) {
-    valueType=AbstractValue::CONSTINT;
+    valueType=AbstractValue::INTEGER;
     intValue=1;
   } else {
-    valueType=AbstractValue::CONSTINT;
+    valueType=AbstractValue::INTEGER;
     intValue=0;
   }
 }
@@ -50,33 +50,33 @@ AbstractValue::AbstractValue(Top e) {valueType=AbstractValue::TOP;intValue=0;}
 // type conversion
 AbstractValue::AbstractValue(Bot e) {valueType=AbstractValue::BOT;intValue=0;}
 // type conversion
-AbstractValue::AbstractValue(unsigned char x) {valueType=AbstractValue::CONSTINT;intValue=(int)x;}
-AbstractValue::AbstractValue(signed char x) {valueType=AbstractValue::CONSTINT;intValue=(int)x;}
-AbstractValue::AbstractValue(short x) {valueType=AbstractValue::CONSTINT;intValue=(int)x;}
-AbstractValue::AbstractValue(int x) {valueType=AbstractValue::CONSTINT;intValue=x;}
+AbstractValue::AbstractValue(unsigned char x) {valueType=AbstractValue::INTEGER;intValue=(int)x;}
+AbstractValue::AbstractValue(signed char x) {valueType=AbstractValue::INTEGER;intValue=(int)x;}
+AbstractValue::AbstractValue(short x) {valueType=AbstractValue::INTEGER;intValue=(int)x;}
+AbstractValue::AbstractValue(int x) {valueType=AbstractValue::INTEGER;intValue=x;}
 AbstractValue::AbstractValue(long int x) {
   if((x<INT_MIN || x>INT_MAX)) throw CodeThorn::Exception("Error: numbers outside 'signed int' range not supported.");
-   valueType=AbstractValue::CONSTINT;intValue=(int)x;
+   valueType=AbstractValue::INTEGER;intValue=(int)x;
 }
 AbstractValue::AbstractValue(long long int x) {
   if((x<INT_MIN || x>INT_MAX)) throw CodeThorn::Exception("Error: numbers outside 'signed int' range not supported.");
-  valueType=AbstractValue::CONSTINT;intValue=(int)x;
+  valueType=AbstractValue::INTEGER;intValue=(int)x;
 }
 AbstractValue::AbstractValue(unsigned short int x) {
   if((x>INT_MAX)) throw CodeThorn::Exception("Error: numbers outside 'signed int' range not supported.");
-  valueType=AbstractValue::CONSTINT;intValue=(int)x;
+  valueType=AbstractValue::INTEGER;intValue=(int)x;
 }
 AbstractValue::AbstractValue(unsigned int x) {
   if((x>INT_MAX)) throw CodeThorn::Exception("Error: numbers outside 'signed int' range not supported.");
-  valueType=AbstractValue::CONSTINT;intValue=(int)x;
+  valueType=AbstractValue::INTEGER;intValue=(int)x;
 }
 AbstractValue::AbstractValue(unsigned long int x) {
   if((x>INT_MAX)) throw CodeThorn::Exception("Error: numbers outside 'signed int' range not supported.");
-  valueType=AbstractValue::CONSTINT;intValue=(int)x;
+  valueType=AbstractValue::INTEGER;intValue=(int)x;
 }
 AbstractValue::AbstractValue(unsigned long long int x) {
   if((x>INT_MAX)) throw CodeThorn::Exception("Error: numbers outside 'signed int' range not supported.");
-  valueType=AbstractValue::CONSTINT;intValue=(int)x;
+  valueType=AbstractValue::INTEGER;intValue=(int)x;
 }
 
 AbstractValue 
@@ -109,9 +109,10 @@ AbstractValue::createAddressOfArrayElement(SPRAY::VariableId arrayVariableId,
 std::string AbstractValue::valueTypeToString() const {
   switch(valueType) {
   case TOP: return "top";
-  case CONSTINT: return "constint";
+  case INTEGER: return "constint";
+  case FLOAT: return "float";
   case PTR: return "ptr";
-  case RAW_PTR: return "rawptr";
+  case REF: return "ref";
   case BOT: return "bot";
   default:
     return "unknown";
@@ -121,10 +122,10 @@ std::string AbstractValue::valueTypeToString() const {
 int AbstractValue::intLength() { return sizeof(int); }
 
 bool AbstractValue::isTop() const {return valueType==AbstractValue::TOP;}
-bool AbstractValue::isTrue() const {return valueType==AbstractValue::CONSTINT && intValue!=0;}
-bool AbstractValue::isFalse() const {return valueType==AbstractValue::CONSTINT && intValue==0;}
+bool AbstractValue::isTrue() const {return valueType==AbstractValue::INTEGER && intValue!=0;}
+bool AbstractValue::isFalse() const {return valueType==AbstractValue::INTEGER && intValue==0;}
 bool AbstractValue::isBot() const {return valueType==AbstractValue::BOT;}
-bool AbstractValue::isConstInt() const {return valueType==AbstractValue::CONSTINT;}
+bool AbstractValue::isConstInt() const {return valueType==AbstractValue::INTEGER;}
 bool AbstractValue::isPtr() const {return valueType==AbstractValue::PTR;}
 
 long AbstractValue::hash() const {
@@ -138,7 +139,7 @@ long AbstractValue::hash() const {
 AbstractValue AbstractValue::operatorNot() {
   AbstractValue tmp;
   switch(valueType) {
-  case AbstractValue::CONSTINT: 
+  case AbstractValue::INTEGER: 
     tmp.valueType=valueType;
     if(intValue==0) {
       tmp.intValue=1;
@@ -403,7 +404,7 @@ string AbstractValue::toLhsString(SPRAY::VariableIdMapping* vim) const {
   switch(valueType) {
   case TOP: return "top";
   case BOT: return "bot";
-  case CONSTINT: {
+  case INTEGER: {
     stringstream ss;
     ss<<getIntValue();
     return ss.str();
@@ -426,7 +427,7 @@ string AbstractValue::toRhsString(SPRAY::VariableIdMapping* vim) const {
   switch(valueType) {
   case TOP: return "top";
   case BOT: return "bot";
-  case CONSTINT: {
+  case INTEGER: {
     stringstream ss;
     ss<<getIntValue();
     return ss.str();
@@ -450,7 +451,7 @@ string AbstractValue::toString(SPRAY::VariableIdMapping* vim) const {
   switch(valueType) {
   case TOP: return "top";
   case BOT: return "bot";
-  case CONSTINT: {
+  case INTEGER: {
     stringstream ss;
     ss<<getIntValue();
     return ss.str();
@@ -471,7 +472,7 @@ string AbstractValue::toString() const {
   switch(valueType) {
   case TOP: return "top";
   case BOT: return "bot";
-  case CONSTINT: {
+  case INTEGER: {
     stringstream ss;
     ss<<getIntValue();
     return ss.str();
@@ -494,7 +495,7 @@ void AbstractValue::fromStream(istream& is) {
     valueType=BOT;
     intValue=0;
   } else if(SPRAY::Parse::integer(is,intValue)) {
-    valueType=CONSTINT;
+    valueType=INTEGER;
   } else {
     throw CodeThorn::Exception("Error: ConstIntLattic::fromStream failed.");
   }
@@ -515,7 +516,7 @@ int AbstractValue::getIndexIntValue() const {
 
 int AbstractValue::getIntValue() const { 
   // PTR will be removed once all ptrs are adapted to getIndexIntValue
-  if(valueType!=CONSTINT && valueType!=PTR) {
+  if(valueType!=INTEGER && valueType!=PTR) {
     cerr << "AbstractValue: valueType="<<valueTypeToString()<<endl;
     throw CodeThorn::Exception("Error: AbstractValue::getIntValue operation failed.");
   }
@@ -536,8 +537,8 @@ int AbstractValue::getIntValue() const {
 AbstractValue AbstractValue::operatorUnaryMinus() {
   AbstractValue tmp;
   switch(valueType) {
-  case AbstractValue::CONSTINT: 
-    tmp.valueType=AbstractValue::CONSTINT;
+  case AbstractValue::INTEGER: 
+    tmp.valueType=AbstractValue::INTEGER;
     tmp.intValue=-intValue; // unary minus
     break;
   case AbstractValue::TOP: tmp=Top();break;
@@ -584,7 +585,7 @@ AbstractValue AbstractValue::operatorSub(AbstractValue& a,AbstractValue& b) {
     if(a.getVariableId()==b.getVariableId()) {
       AbstractValue val;
       val.intValue=a.intValue-b.intValue;
-      val.valueType=CONSTINT;
+      val.valueType=INTEGER;
       val.variableId=a.variableId; // same as b.variableId
       return val;
     } else {

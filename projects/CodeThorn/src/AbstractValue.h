@@ -34,7 +34,7 @@ class AbstractValue {
  public:
   friend bool strictWeakOrderingIsSmaller(const AbstractValue& c1, const AbstractValue& c2);
   friend bool strictWeakOrderingIsEqual(const AbstractValue& c1, const AbstractValue& c2);
-  enum ValueType { BOT, CONSTINT, PTR, RAW_PTR, TOP};
+  enum ValueType { BOT, INTEGER, FLOAT, PTR, REF, TOP};
   AbstractValue();
   AbstractValue(bool val);
   // type conversion
