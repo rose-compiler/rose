@@ -2,7 +2,6 @@
 
 #include "rose.h"
 #include "DisassemblerX86.h"
-#include "Partitioner.h"
 
 #include <cstdlib>
 #include <cstring>

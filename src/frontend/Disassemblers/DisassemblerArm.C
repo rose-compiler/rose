@@ -16,7 +16,7 @@ using namespace Diagnostics;
 /* See header file for full documentation. */
 
 bool
-DisassemblerArm::can_disassemble(SgAsmGenericHeader *header) const
+DisassemblerArm::canDisassemble(SgAsmGenericHeader *header) const
 {
     SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
     return (isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_ARM_Family;
@@ -27,14 +27,13 @@ DisassemblerArm::init()
 {
     name("arm");
     decodeUnconditionalInstructions = true;
-    set_wordsize(4);
-    set_alignment(4);
-    set_sex(ByteOrder::ORDER_LSB);
-    set_registers(RegisterDictionary::dictionary_arm7()); // only a default
+    wordSizeBytes(4);
+    byteOrder(ByteOrder::ORDER_LSB);
+    registerDictionary(RegisterDictionary::dictionary_arm7()); // only a default
     callingConventions(CallingConvention::dictionaryArm());
 
-    REG_IP = *get_registers()->lookup("r15");
-    REG_SP = *get_registers()->lookup("r13");
+    REG_IP = *registerDictionary()->lookup("r15");
+    REG_SP = *registerDictionary()->lookup("r13");
 }
 
 Unparser::Base::Ptr
@@ -54,7 +53,7 @@ DisassemblerArm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
     /* The old ArmDisassembler::disassemble() function doesn't understand MemoryMap mappings. Therefore, remap the next
      * few bytes (enough for at least one instruction) into a temporary buffer. */
     unsigned char temp[4]; /* all ARM instructions are 32 bits */
-    size_t tempsz = map->at(start_va).limit(sizeof temp).require(get_protection()).read(temp).size();
+    size_t tempsz = map->at(start_va).limit(sizeof temp).require(MemoryMap::EXECUTABLE).read(temp).size();
 
     /* Treat the bytes as a little-endian instruction. FIXME: This assumes a little-endian ARM system. */
     if (tempsz<4)
@@ -73,12 +72,11 @@ DisassemblerArm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
         successors->insert(suc2.begin(), suc2.end());
     }
 
-    update_progress(insn);
     return insn;
 }
 
 SgAsmInstruction *
-DisassemblerArm::make_unknown_instruction(const Exception &e) 
+DisassemblerArm::makeUnknownInstruction(const Exception &e) 
 {
     SgAsmArmInstruction *insn = new SgAsmArmInstruction(e.ip, "unknown", arm_unknown_instruction, arm_cond_unknown, 0);
     SgAsmOperandList *operands = new SgAsmOperandList();
@@ -115,10 +113,10 @@ DisassemblerArm::makeInstructionWithoutOperands(uint32_t address, const std::str
 SgAsmRegisterReferenceExpression *
 DisassemblerArm::makeRegister(uint8_t reg) const
 {
-    ASSERT_not_null(get_registers());
+    ASSERT_not_null(registerDictionary());
     ASSERT_require(reg<16);
     std::string name = "r" + StringUtility::numberToString(reg);
-    const RegisterDescriptor *rdesc = get_registers()->lookup(name);
+    const RegisterDescriptor *rdesc = registerDictionary()->lookup(name);
     ASSERT_not_null(rdesc);
     SgAsmRegisterReferenceExpression* r = new SgAsmDirectRegisterExpression(*rdesc);
     return r;
@@ -136,9 +134,9 @@ DisassemblerArm::makeRegister(uint8_t reg) const
 SgAsmRegisterReferenceExpression *
 DisassemblerArm::makePsrFields(bool useSPSR, uint8_t fields) const
 {
-    ASSERT_not_null(get_registers());
+    ASSERT_not_null(registerDictionary());
     std::string name = useSPSR ? "spsr" : "cpsr";
-    const RegisterDescriptor *rdesc = get_registers()->lookup(name);
+    const RegisterDescriptor *rdesc = registerDictionary()->lookup(name);
     ASSERT_not_null(rdesc);
     SgAsmDirectRegisterExpression *r = new SgAsmDirectRegisterExpression(*rdesc);
     if (fields!=0)

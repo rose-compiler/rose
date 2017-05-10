@@ -44,4 +44,4 @@ testBoostRegex.passed: $(top_srcdir)/scripts/test_exit_status testBoostRegex
 # Boilerplate
 ###############################################################################################################################
 
-check-smoke-local: $(TEST_TARGETS)
+check-local: $(TEST_TARGETS)
