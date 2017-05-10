@@ -1507,6 +1507,10 @@ namespace sg
         Dispatcher::dispatch(rv, assume_sage_type<SgValueExp>(*n));
         break;
 
+      case V_SgAlignOfOp:
+        Dispatcher::dispatch(rv, assume_sage_type<SgAlignOfOp>(*n));
+        break;
+
       case V_SgVariableSymbol:
         Dispatcher::dispatch(rv, assume_sage_type<SgVariableSymbol>(*n));
         break;
@@ -2634,6 +2638,10 @@ namespace sg
 
       case V_SgTypeUnsignedLongLong:
         Dispatcher::dispatch(rv, assume_sage_type<SgTypeUnsignedLongLong>(*n));
+        break;
+
+      case V_SgTypeSigned128bitInteger:
+        Dispatcher::dispatch(rv, assume_sage_type<SgTypeSigned128bitInteger>(*n));
         break;
 
       case V_SgTypeLongDouble:
