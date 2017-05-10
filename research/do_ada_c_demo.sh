@@ -13,32 +13,21 @@ source `which utility_functions.sh`
 rel_script_dir=`dirname $0`
 script_dir=`(cd ${rel_script_dir}; pwd)`
 current_dir=`pwd`
-tool_name='bar'
 
+# Make GNAT compiler and gprbuild available:
 use_gnat () {
-  # Make GNAT compiler and gprbuild available:
   # Needed for use:
   . /usr/local/tools/dotkit/init.sh
   use -q gnat
-}
-
-build_it () {
-  log "Building ${tool_name}"
-  gprbuild -p -Pdefault.gpr
-}
-
-run_it () {
-  log "Running ${tool_name}"
-  log_and_run ${script_dir}/obj/${tool_name}
 }
 
 log_start
 log_invocation "$@"
 use_gnat
 
-log_and_run build_it    || exit $?
-log_and_run run_it "$@" || exit $?
+log_and_run gprbuild -p -Pada_c_demo.gpr || exit $?
+log_and_run ${script_dir}/obj/ada_main "$@" || exit $?
+log_and_run ${script_dir}/obj/c_main "$@" || exit $?
 
 log_end
-
 
