@@ -636,11 +636,18 @@ main ( int argc, char* argv[])
 
 label_end:
   // Report errors
-  // For this analysis-only tool. We turn off backend unparsing and compilation. 
+  // For this analysis-only tool. 
+  // Can we turn off backend unparsing and compilation. 
   // So the tool can process more files and generate more complete reports.
-  int status = 0; // backend(project);
+  // We cannot do this. Some build processes need *.o files. 
+  int status = backend(project);
  // important: MUST call backend() first, then generate reports.
  // otherwise, backend errors will not be caught by keep-going feature!!
+
+  // One problem: some files fail backend , but the analysis generates useful info.
+  // How to output analysis info for them?
+  // the report of failed files will contain the analysis results. 
+  //TODO: would a single report file easier for users?
 
 // We want the reports are generated with or without keep_going option
 //  if (RAJA_Checker::keep_going)
