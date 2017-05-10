@@ -636,7 +636,9 @@ main ( int argc, char* argv[])
 
 label_end:
   // Report errors
-  int status = backend(project);
+  // For this analysis-only tool. We turn off backend unparsing and compilation. 
+  // So the tool can process more files and generate more complete reports.
+  int status = 0; // backend(project);
  // important: MUST call backend() first, then generate reports.
  // otherwise, backend errors will not be caught by keep-going feature!!
 
