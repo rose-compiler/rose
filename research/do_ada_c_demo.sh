@@ -26,8 +26,9 @@ log_invocation "$@"
 use_gnat
 
 log_and_run gprbuild -p -Pada_c_demo.gpr || exit $?
-log_and_run ${script_dir}/obj/ada_main "$@" || exit $?
-log_and_run ${script_dir}/obj/c_main "$@" || exit $?
+log_and_run ${script_dir}/obj/ada_main "$@" 
+log_and_run ${script_dir}/obj/c_main "$@"
+log_and_run ${script_dir}/obj/c_ada_c_main "$@" 
 
 log_end
 

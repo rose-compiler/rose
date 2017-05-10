@@ -7,6 +7,7 @@ project Ada_C_Demo is
    for Object_Dir use "./obj";
    for Main use
      ("ada_main.adb",
-     "c_main.c");
+      "c_main.c",
+      "c_ada_c_main.c");
 end Ada_C_Demo;
 
