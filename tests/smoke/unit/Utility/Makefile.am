@@ -107,4 +107,4 @@ testRangeMap.passed: $(top_srcdir)/scripts/test_exit_status testRangeMap
 # Boilerplate
 ###############################################################################################################################
 
-check-smoke-local: $(TEST_TARGETS)
+check-local: $(TEST_TARGETS)

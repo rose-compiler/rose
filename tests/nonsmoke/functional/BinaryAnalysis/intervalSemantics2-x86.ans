@@ -32,7 +32,7 @@ registers:
   fpstatus_top = {0}[3]
 memory:
 
-0x080482ce: call   0x08048364<call_gmon_start>
+0x080482ce: call   0x08048364<(func)call_gmon_start>
 registers:
   esp          = any[32]
   ebp          = any[32]
@@ -49,7 +49,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x080482d3: call   0x080483d0<frame_dummy>
+0x080482d3: call   0x080483d0<(func)frame_dummy>
 registers:
   esp          = any[32]
   eip          = {0x080483d0}[32]
@@ -59,7 +59,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x080482d8: call   0x08048580<__do_global_ctors_aux>
+0x080482d8: call   0x08048580<(func)__do_global_ctors_aux>
 registers:
   esp          = any[32]
   eip          = {0x08048580}[32]
@@ -81,6 +81,23 @@ memory:
 registers:
   esp          = any[32]
   ebp          = any[32]
+  eip          = any[32]
+  fpstatus_top = {0}[3]
+memory:
+=====================================================================================
+=== Starting a new basic block                                                    ===
+=====================================================================================
+
+0x080482e0: push   dword ds:[0x080496cc<.got.plt+4>]
+registers:
+  esp          = any[32]
+  eip          = {0x080482e6}[32]
+  fpstatus_top = {0}[3]
+memory:
+
+0x080482e6: jmp    dword ds:[0x080496d0<.got.plt+8>]
+registers:
+  esp          = any[32]
   eip          = any[32]
   fpstatus_top = {0}[3]
 memory:
@@ -245,7 +262,7 @@ registers:
   fpstatus_top = {0}[3]
 memory:
 
-0x0804834b: push   0x08048520<__libc_csu_fini>
+0x0804834b: push   0x08048520<(func)__libc_csu_fini>
 registers:
   eax          = any[32]
   ecx          = any[32]
@@ -263,7 +280,7 @@ registers:
   fpstatus_top = {0}[3]
 memory:
 
-0x08048350: push   0x080484b0<__libc_csu_init>
+0x08048350: push   0x080484b0<(func)__libc_csu_init>
 registers:
   eax          = any[32]
   ecx          = any[32]
@@ -317,7 +334,7 @@ registers:
   fpstatus_top = {0}[3]
 memory:
 
-0x08048357: push   0x08048410<main>
+0x08048357: push   0x08048410<(func)main>
 registers:
   eax          = any[32]
   ecx          = any[32]
@@ -465,7 +482,7 @@ registers:
   fpstatus_top = {0}[3]
 memory:
 
-0x0804837d: je     0x08048384<<Insn>>
+0x0804837d: je     0x08048384<<BBlock>>
 registers:
   edx          = any[32]
   ebx          = any[32]
@@ -589,7 +606,7 @@ registers:
   fpstatus_top = {0}[3]
 memory:
 
-0x08048396: cmp    byte ds:[0x080496f4<.bss>], 0x00
+0x08048396: cmp    byte ds:[0x080496f4<_edata>], 0x00
 registers:
   esp          = any[32]
   ebp          = any[32]
@@ -603,7 +620,7 @@ registers:
   fpstatus_top = {0}[3]
 memory:
 
-0x0804839d: jne    0x080483cc<<Insn>>
+0x0804839d: jne    0x080483cc<<BBlock>>
 registers:
   esp          = any[32]
   ebp          = any[32]
@@ -620,7 +637,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x0804839f: mov    eax, dword ds:[0x080496f0<.data+8>]
+0x0804839f: mov    eax, dword ds:[0x080496f0<(data)p.0>]
 registers:
   eax          = any[32]
   eip          = {0x080483a4}[32]
@@ -649,7 +666,7 @@ registers:
   fpstatus_top = {0}[3]
 memory:
 
-0x080483a8: je     0x080483c5<<Insn>>
+0x080483a8: je     0x080483c5<<BBlock>>
 registers:
   eax          = any[32]
   edx          = any[32]
@@ -663,7 +680,7 @@ registers:
   fpstatus_top = {0}[3]
 memory:
 
-0x080483c5: mov    byte ds:[0x080496f4<.bss>], 0x01
+0x080483c5: mov    byte ds:[0x080496f4<_edata>], 0x01
 registers:
   eax          = any[32]
   edx          = any[32]
@@ -733,7 +750,7 @@ registers:
   fpstatus_top = {0}[3]
 memory:
 
-0x080483b3: mov    dword ds:[0x080496f0<.data+8>], eax
+0x080483b3: mov    dword ds:[0x080496f0<(data)p.0>], eax
 registers:
   eax          = any[32]
   esi          = any[32]
@@ -766,7 +783,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x080483ba: mov    eax, dword ds:[0x080496f0<.data+8>]
+0x080483ba: mov    eax, dword ds:[0x080496f0<(data)p.0>]
 registers:
   eax          = any[32]
   eip          = {0x080483bf}[32]
@@ -795,7 +812,7 @@ registers:
   fpstatus_top = {0}[3]
 memory:
 
-0x080483c3: jne    0x080483b0<<Insn>>
+0x080483c3: jne    0x080483b0<<BBlock>>
 registers:
   eax          = any[32]
   edx          = any[32]
@@ -842,7 +859,7 @@ registers:
   fpstatus_top = {0}[3]
 memory:
 
-0x080483d6: mov    eax, dword ds:[0x080495f8<.jcr>]
+0x080483d6: mov    eax, dword ds:[0x080495f8<(data)__JCR_END__>]
 registers:
   eax          = any[32]
   esp          = any[32]
@@ -872,7 +889,7 @@ registers:
   fpstatus_top = {0}[3]
 memory:
 
-0x080483dd: je     0x08048400<<Insn>>
+0x080483dd: je     0x08048400<<BBlock>>
 registers:
   eax          = any[32]
   esp          = any[32]
@@ -955,7 +972,7 @@ registers:
   fpstatus_top = {0}[3]
 memory:
 
-0x080483e6: je     0x08048400<<Insn>>
+0x080483e6: je     0x08048400<<BBlock>>
 registers:
   eax          = {0}[32]
   eip          = {0x08048400}[32]
@@ -971,7 +988,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x080483e8: mov    dword ss:[esp], 0x080495f8<.jcr>
+0x080483e8: mov    dword ss:[esp], 0x080495f8<(data)__JCR_END__>
 registers:
   esp          = any[32]
   eip          = {0x080483ef}[32]
@@ -1014,7 +1031,7 @@ registers:
   fpstatus_top = {0}[3]
 memory:
 
-0x08048411: mov    edx, 0x08048480<handler>
+0x08048411: mov    edx, 0x08048480<(func)handler>
 registers:
   edx          = {0x08048480}[32]
   esp          = any[32]
@@ -1196,7 +1213,7 @@ registers:
   fpstatus_top = {0}[3]
 memory:
 
-0x08048446: mov    dword ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
+0x08048446: mov    dword ss:[esp], 0x080485d4<"Hello, world.\n">
 registers:
   esp          = any[32]
   ebp          = any[32]
@@ -1284,7 +1301,7 @@ registers:
   fpstatus_top = {0}[3]
 memory:
 
-0x08048466: mov    dword ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
+0x08048466: mov    dword ss:[esp], 0x080485d4<"Hello, world.\n">
 registers:
   esp          = any[32]
   ebp          = any[32]
@@ -1362,7 +1379,7 @@ registers:
   fpstatus_top = {0}[3]
 memory:
 
-0x08048486: inc    dword ds:[0x080496f8<.bss+4>]
+0x08048486: inc    dword ds:[0x080496f8<(data)ncaught>]
 registers:
   esp          = any[32]
   ebp          = any[32]
@@ -1376,7 +1393,7 @@ registers:
   fpstatus_top = {0}[3]
 memory:
 
-0x0804848c: mov    dword ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
+0x0804848c: mov    dword ss:[esp], 0x080485d4<"Hello, world.\n">
 registers:
   esp          = any[32]
   ebp          = any[32]
@@ -1529,7 +1546,7 @@ registers:
   fpstatus_top = {0}[3]
 memory:
 
-0x080484c5: call   0x080482c8<_init>
+0x080484c5: call   0x080482c8<(func)_init>
 registers:
   ebx          = any[32]
   esp          = any[32]
@@ -1609,7 +1626,7 @@ registers:
   fpstatus_top = {0}[3]
 memory:
 
-0x080484de: jne    0x080484f0<<StaticData@0x080484e8>+8>
+0x080484de: jne    0x080484f0<<BBlock>>
 registers:
   eax          = any[32]
   edx          = any[32]
@@ -1704,6 +1721,251 @@ registers:
 memory:
 
 0x080484e7: ret    
+registers:
+  ebx          = any[32]
+  esp          = any[32]
+  ebp          = any[32]
+  esi          = any[32]
+  edi          = any[32]
+  eip          = any[32]
+  cf           = any[1]
+  pf           = any[1]
+  af           = any[1]
+  zf           = any[1]
+  sf           = any[1]
+  of           = any[1]
+  fpstatus_top = {0}[3]
+memory:
+=====================================================================================
+=== Starting a new basic block                                                    ===
+=====================================================================================
+
+0x080484e8: nop    
+registers:
+  eip          = {0x080484e9}[32]
+  fpstatus_top = {0}[3]
+memory:
+
+0x080484e9: lea    esi, [esi + 0x00000000]
+registers:
+  esi          = any[32]
+  eip          = {0x080484f0}[32]
+  fpstatus_top = {0}[3]
+memory:
+
+0x080484f0: xor    edi, edi
+registers:
+  esi          = any[32]
+  edi          = {0}[32]
+  eip          = {0x080484f2}[32]
+  cf           = {0}[1]
+  pf           = {1}[1]
+  af           = any[1]
+  zf           = {1}[1]
+  sf           = {0}[1]
+  of           = {0}[1]
+  fpstatus_top = {0}[3]
+memory:
+
+0x080484f2: mov    esi, edx
+registers:
+  edx          = any[32]
+  esi          = any[32]
+  edi          = {0}[32]
+  eip          = {0x080484f4}[32]
+  cf           = {0}[1]
+  pf           = {1}[1]
+  af           = any[1]
+  zf           = {1}[1]
+  sf           = {0}[1]
+  of           = {0}[1]
+  fpstatus_top = {0}[3]
+memory:
+
+0x080484f4: lea    esi, [esi + 0x00000000]
+registers:
+  edx          = any[32]
+  esi          = any[32]
+  edi          = {0}[32]
+  eip          = {0x080484fa}[32]
+  cf           = {0}[1]
+  pf           = {1}[1]
+  af           = any[1]
+  zf           = {1}[1]
+  sf           = {0}[1]
+  of           = {0}[1]
+  fpstatus_top = {0}[3]
+memory:
+
+0x080484fa: lea    edi, [edi + 0x00000000]
+registers:
+  edx          = any[32]
+  esi          = any[32]
+  edi          = {0}[32]
+  eip          = {0x08048500}[32]
+  cf           = {0}[1]
+  pf           = {1}[1]
+  af           = any[1]
+  zf           = {1}[1]
+  sf           = {0}[1]
+  of           = {0}[1]
+  fpstatus_top = {0}[3]
+memory:
+
+0x08048500: call   dword ds:[esi]
+registers:
+  edx          = any[32]
+  esp          = any[32]
+  esi          = any[32]
+  edi          = {0}[32]
+  eip          = any[32]
+  cf           = {0}[1]
+  pf           = {1}[1]
+  af           = any[1]
+  zf           = {1}[1]
+  sf           = {0}[1]
+  of           = {0}[1]
+  fpstatus_top = {0}[3]
+memory:
+=====================================================================================
+=== Starting a new basic block                                                    ===
+=====================================================================================
+
+0x08048502: inc    edi
+registers:
+  edi          = any[32]
+  eip          = {0x08048503}[32]
+  pf           = any[1]
+  af           = any[1]
+  zf           = any[1]
+  sf           = any[1]
+  of           = any[1]
+  fpstatus_top = {0}[3]
+memory:
+
+0x08048503: add    esi, 0x04
+registers:
+  esi          = any[32]
+  edi          = any[32]
+  eip          = {0x08048506}[32]
+  cf           = any[1]
+  pf           = any[1]
+  af           = any[1]
+  zf           = any[1]
+  sf           = any[1]
+  of           = any[1]
+  fpstatus_top = {0}[3]
+memory:
+
+0x08048506: cmp    edi, dword ss:[ebp + 0xf0<-16>]
+registers:
+  ebp          = any[32]
+  esi          = any[32]
+  edi          = any[32]
+  eip          = {0x08048509}[32]
+  cf           = any[1]
+  pf           = any[1]
+  af           = any[1]
+  zf           = any[1]
+  sf           = any[1]
+  of           = any[1]
+  fpstatus_top = {0}[3]
+memory:
+
+0x08048509: jb     0x08048500<<BBlock>>
+registers:
+  ebp          = any[32]
+  esi          = any[32]
+  edi          = any[32]
+  eip          = {0x08048500, 0x0804850b}[32]
+  cf           = any[1]
+  pf           = any[1]
+  af           = any[1]
+  zf           = any[1]
+  sf           = any[1]
+  of           = any[1]
+  fpstatus_top = {0}[3]
+memory:
+=====================================================================================
+=== Starting a new basic block                                                    ===
+=====================================================================================
+
+0x0804850b: add    esp, 0x0c
+registers:
+  esp          = any[32]
+  eip          = {0x0804850e}[32]
+  cf           = any[1]
+  pf           = any[1]
+  af           = any[1]
+  zf           = any[1]
+  sf           = any[1]
+  of           = any[1]
+  fpstatus_top = {0}[3]
+memory:
+
+0x0804850e: pop    ebx
+registers:
+  ebx          = any[32]
+  esp          = any[32]
+  eip          = {0x0804850f}[32]
+  cf           = any[1]
+  pf           = any[1]
+  af           = any[1]
+  zf           = any[1]
+  sf           = any[1]
+  of           = any[1]
+  fpstatus_top = {0}[3]
+memory:
+
+0x0804850f: pop    esi
+registers:
+  ebx          = any[32]
+  esp          = any[32]
+  esi          = any[32]
+  eip          = {0x08048510}[32]
+  cf           = any[1]
+  pf           = any[1]
+  af           = any[1]
+  zf           = any[1]
+  sf           = any[1]
+  of           = any[1]
+  fpstatus_top = {0}[3]
+memory:
+
+0x08048510: pop    edi
+registers:
+  ebx          = any[32]
+  esp          = any[32]
+  esi          = any[32]
+  edi          = any[32]
+  eip          = {0x08048511}[32]
+  cf           = any[1]
+  pf           = any[1]
+  af           = any[1]
+  zf           = any[1]
+  sf           = any[1]
+  of           = any[1]
+  fpstatus_top = {0}[3]
+memory:
+
+0x08048511: pop    ebp
+registers:
+  ebx          = any[32]
+  esp          = any[32]
+  ebp          = any[32]
+  esi          = any[32]
+  edi          = any[32]
+  eip          = {0x08048512}[32]
+  cf           = any[1]
+  pf           = any[1]
+  af           = any[1]
+  zf           = any[1]
+  sf           = any[1]
+  of           = any[1]
+  fpstatus_top = {0}[3]
+memory:
+
+0x08048512: ret    
 registers:
   ebx          = any[32]
   esp          = any[32]
@@ -1942,7 +2204,7 @@ registers:
   fpstatus_top = {0}[3]
 memory:
 
-0x0804854d: je     0x0804856b<<Insn>>
+0x0804854d: je     0x0804856b<<BBlock>>
 registers:
   eax          = any[32]
   edx          = any[32]
@@ -2080,7 +2342,7 @@ registers:
   fpstatus_top = {0}[3]
 memory:
 
-0x08048569: jne    0x08048560<<Insn>>
+0x08048569: jne    0x08048560<<BBlock>>
 registers:
   ebp          = any[32]
   esi          = any[32]
@@ -2098,7 +2360,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x0804856b: call   0x080485b0<_fini>
+0x0804856b: call   0x080485b0<(func)_fini>
 registers:
   esp          = any[32]
   eip          = {0x080485b0}[32]
@@ -2243,7 +2505,7 @@ registers:
   fpstatus_top = {0}[3]
 memory:
 
-0x08048587: mov    ebx, 0x080495e8<.ctors>
+0x08048587: mov    ebx, 0x080495e8<__init_array_start>
 registers:
   ebx          = {0x080495e8}[32]
   esp          = any[32]
@@ -2258,7 +2520,7 @@ registers:
   fpstatus_top = {0}[3]
 memory:
 
-0x0804858c: mov    eax, dword ds:[0x080495e8<.ctors>]
+0x0804858c: mov    eax, dword ds:[0x080495e8<__init_array_start>]
 registers:
   eax          = any[32]
   ebx          = {0x080495e8}[32]
@@ -2290,7 +2552,7 @@ registers:
   fpstatus_top = {0}[3]
 memory:
 
-0x08048594: je     0x080485ac<<Insn>>
+0x08048594: je     0x080485ac<<BBlock>>
 registers:
   eax          = any[32]
   ebx          = {0x080495e8}[32]
@@ -2381,7 +2643,7 @@ registers:
   fpstatus_top = {0}[3]
 memory:
 
-0x080485aa: jne    0x080485a0<<Insn>>
+0x080485aa: jne    0x080485a0<<BBlock>>
 registers:
   eax          = any[32]
   ebx          = any[32]
@@ -2508,7 +2770,7 @@ registers:
   fpstatus_top = {0}[3]
 memory:
 
-0x080485c1: call   0x08048390<__do_global_dtors_aux>
+0x080485c1: call   0x08048390<(func)__do_global_dtors_aux>
 registers:
   ebx          = any[32]
   esp          = any[32]

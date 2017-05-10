@@ -1933,6 +1933,23 @@ Engine::updateAnalysisResults(Partitioner &partitioner) {
     info <<"; total " <<timer <<" seconds\n";
 }
 
+// class method called by ROSE's ::frontend to disassemble instructions.
+void
+Engine::disassembleForRoseFrontend(SgAsmInterpretation *interp) {
+    ASSERT_not_null(interp);
+    ASSERT_not_null(interp->get_map());
+    ASSERT_require(interp->get_global_block() == NULL);
+
+    Engine engine;
+    engine.memoryMap(interp->get_map()->shallowCopy()); // copied so we can make local changes
+    engine.adjustMemoryMap();
+    engine.interpretation(interp);
+
+    if (SgAsmBlock *gblock = engine.buildAst()) {
+        interp->set_global_block(gblock);
+        interp->set_map(engine.memoryMap());
+    }
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Partitioner low-level stuff

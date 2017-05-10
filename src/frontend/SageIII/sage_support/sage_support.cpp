@@ -21,6 +21,10 @@
 #   include "unparseFortran_modfile.h"
 #endif
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#   include <Partitioner2/Engine.h>
+#endif
+
 #include <algorithm>
 
 #include <boost/algorithm/string/join.hpp>
@@ -5296,12 +5300,12 @@ SgBinaryComposite::buildAST(vector<string> /*argv*/, vector<string> /*inputComma
         BinaryAnalysis::BinaryLoader::load(this, get_read_executable_file_format_only());
     }
 
-    /* Disassemble each interpretation */
+    // Disassemble each interpretation
     if (!get_read_executable_file_format_only()) {
+        namespace P2 = rose::BinaryAnalysis::Partitioner2;
         const SgAsmInterpretationPtrList &interps = get_interpretations()->get_interpretations();
-        for (size_t i=0; i<interps.size(); i++) {
-            rose::BinaryAnalysis::Partitioner::disassembleInterpretation(interps[i]);
-        }
+        for (size_t i=0; i<interps.size(); i++)
+            rose::BinaryAnalysis::Partitioner2::Engine::disassembleForRoseFrontend(interps[i]);
     }
 
     // DQ (1/22/2008): The generated unparsed assemble code can not currently be compiled because the
