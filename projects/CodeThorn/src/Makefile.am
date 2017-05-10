@@ -56,6 +56,7 @@ libspray_la_SOURCES=\
  AliasAnalysis.C \
  AstTerm.C \
  AbstractValue.C \
+ TypeSizeMapping.C \
  BoolLattice.C \
  CFAnalysis.C \
  CppExprEvaluator.C \

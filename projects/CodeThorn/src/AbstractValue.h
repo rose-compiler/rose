@@ -13,6 +13,7 @@
 #include "BoolLattice.h"
 #include "VariableIdMapping.h"
 #include <cstdint>
+#include "TypeSizeMapping.h"
 
 using std::string;
 using std::istream;
@@ -20,10 +21,12 @@ using std::ostream;
 
 namespace CodeThorn {
 
- class AbstractValue;
 
- bool strictWeakOrderingIsSmaller(const AbstractValue& c1, const AbstractValue& c2);
- bool strictWeakOrderingIsEqual(const AbstractValue& c1, const AbstractValue& c2);
+  
+  class AbstractValue;
+
+  bool strictWeakOrderingIsSmaller(const AbstractValue& c1, const AbstractValue& c2);
+  bool strictWeakOrderingIsEqual(const AbstractValue& c1, const AbstractValue& c2);
 
 /*!
   \brief Implements semantic functions of an integer lattice.
@@ -54,6 +57,7 @@ class AbstractValue {
   AbstractValue(long long int x);
   AbstractValue(unsigned long long int x);
   AbstractValue(SPRAY::VariableId varId); // allows implicit type conversion
+  AbstractValue createIntegerValue(CodeThorn::BuiltInType btype, long long int ival);
   bool isTop() const;
   bool isTrue() const;
   bool isFalse() const;
@@ -140,13 +144,13 @@ class AbstractValue {
     bool operator()(const AbstractValue& c1, const AbstractValue& c2) const;
   };
 
-typedef AbstractValue AValue; 
-typedef AbstractValueCmp AValueCmp; 
-
- typedef AbstractValue VarAbstractValue;
- typedef std::set<AbstractValue> AbstractValueSet;
- typedef AbstractValueSet VarAbstractValueSet;
- AbstractValueSet& operator+=(AbstractValueSet& s1, AbstractValueSet& s2);
+  typedef AbstractValue AValue; 
+  typedef AbstractValueCmp AValueCmp; 
+  
+  typedef AbstractValue VarAbstractValue;
+  typedef std::set<AbstractValue> AbstractValueSet;
+  typedef AbstractValueSet VarAbstractValueSet;
+  AbstractValueSet& operator+=(AbstractValueSet& s1, AbstractValueSet& s2);
 }
 
 #endif

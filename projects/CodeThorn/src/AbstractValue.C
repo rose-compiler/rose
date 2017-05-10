@@ -45,6 +45,11 @@ AbstractValue::AbstractValue(bool val) {
   }
 }
 
+AbstractValue AbstractValue::createIntegerValue(CodeThorn::BuiltInType btype, long long int ival) {
+  AbstractValue aval;
+  return aval;
+}
+
 // type conversion
 AbstractValue::AbstractValue(Top e) {valueType=AbstractValue::TOP;intValue=0;}
 // type conversion
