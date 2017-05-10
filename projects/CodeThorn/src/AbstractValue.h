@@ -12,6 +12,7 @@
 #include <sstream>
 #include "BoolLattice.h"
 #include "VariableIdMapping.h"
+#include <cstdint>
 
 using std::string;
 using std::istream;
@@ -109,14 +110,16 @@ class AbstractValue {
   int getIntValue() const;
   int getIndexIntValue() const;
   SPRAY::VariableId getVariableId() const;
+  uint8_t getValueSize() const;
+  void setValueSize(uint8_t valueSize);
 
-  int intLength();   // returns length of integer dependent on valueType
   long hash() const;
   std::string valueTypeToString() const;
  private:
   ValueType valueType;
   SPRAY::VariableId variableId;
   int intValue;
+  uint8_t valueSize; // size of value in bits
 };
 
 // arithmetic operators

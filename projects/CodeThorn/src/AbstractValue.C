@@ -119,8 +119,6 @@ std::string AbstractValue::valueTypeToString() const {
   }
 }
 
-int AbstractValue::intLength() { return sizeof(int); }
-
 bool AbstractValue::isTop() const {return valueType==AbstractValue::TOP;}
 bool AbstractValue::isTrue() const {return valueType==AbstractValue::INTEGER && intValue!=0;}
 bool AbstractValue::isFalse() const {return valueType==AbstractValue::INTEGER && intValue==0;}
@@ -503,6 +501,14 @@ void AbstractValue::fromStream(istream& is) {
 
 AbstractValue::ValueType AbstractValue::getValueType() const {
   return valueType;
+}
+
+uint8_t AbstractValue::getValueSize() const {
+  return valueSize;
+}
+
+void AbstractValue::setValueSize(uint8_t valueSize) {
+  this->valueSize=valueSize;
 }
 
 int AbstractValue::getIndexIntValue() const { 
