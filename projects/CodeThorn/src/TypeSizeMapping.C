@@ -19,4 +19,17 @@ uint8_t TypeSizeMapping::getTypeSize(BuiltInType bitype) {
   return _mapping[bitype];
 }
   
+std::size_t TypeSizeMapping::sizeOfOp(BuiltInType bitype) {
+  return getTypeSize(bitype);
+}
+
+bool TypeSizeMapping::isCpp11StandardCompliant() {
+  size_t byteSize=1;
+  return byteSize==sizeOfOp(BITYPE_CHAR)
+    && sizeOfOp(BITYPE_CHAR)<=sizeOfOp(BITYPE_SHORT)
+    && sizeOfOp(BITYPE_SHORT)<=sizeOfOp(BITYPE_INT)
+    && sizeOfOp(BITYPE_INT)<=sizeOfOp(BITYPE_LONG)
+    && sizeOfOp(BITYPE_LONG)<=sizeOfOp(BITYPE_LONG_LONG);
+}
+
 } // end of namespace CodeThorn
