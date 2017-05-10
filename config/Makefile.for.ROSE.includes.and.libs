@@ -544,6 +544,7 @@ ROSE_RPATHS =										\
 	  $(filter-out -l% -pthread %.a %.la /lib% /usr/lib% /usr/local/lib% /var/lib%,	\
 	    $(patsubst -L%,%,								\
 	      $(ROSE_LIBS)								\
+	      $(subst :, , $(GNU_COMPILERS_LIBDIRS))					\
 	      $(subst :, , $(LIBBZ2_LIBDIRS))						\
 	      $(subst :, , $(LIBGRAPHICSMAGICK_LIBDIRS))				\
 	      $(subst :, , $(LIBJPEG_LIBDIRS))						\
