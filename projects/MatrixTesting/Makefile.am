@@ -45,14 +45,14 @@ if ROSE_USE_WT
 bin_PROGRAMS += matrixWebServer-http
 matrixWebServer_http_SOURCES = matrixWebServer.C
 matrixWebServer_http_CPPFLAGS = $(ROSE_INCLUDES) -I$(WT_PREFIX)/include -DDEFAULT_DATABASE='"$(DEFAULT_DATABASE)"'
-matrixWebServer_http_LDFLAGS = $(ROSE_RPATHS)
+matrixWebServer_http_LDFLAGS = $(ROSE_RPATHS) -R $(WT_PREFIX)/lib
 matrixWebServer_http_LDADD = -L$(WT_PREFIX)/lib -lwt -lwthttp -lwtdbo -lwtdbopostgres -lboost_signals $(ROSE_LIBS)
 
 bin_PROGRAMS += matrixWebServer-fcgi
 matrixWebServer_fcgi_SOURCES = matrixWebServer.C
 matrixWebServer_fcgi_CPPFLAGS = $(ROSE_INCLUDES) -I$(WT_PREFIX)/include \
 	-DDEFAULT_DATABASE='"$(DEFAULT_DATABASE_LOCAL)"' -DUSING_FASTCGI
-matrixWebServer_fcgi_LDFLAGS = $(ROSE_RPATHS)
+matrixWebServer_fcgi_LDFLAGS = $(ROSE_RPATHS) -R $(WT_PREFIX)/lib
 matrixWebServer_fcgi_LDADD = -L$(WT_PREFIX)/lib -lwt -lwtfcgi -lwtdbo -lwtdbopostgres -lboost_signals $(ROSE_LIBS)
 
 endif
