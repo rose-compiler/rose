@@ -156,6 +156,11 @@ Analyzer::Analyzer():
   constraintSetMaintainer.max_load_factor(0.7);
 #endif
   resetInputSequenceIterator();
+  _typeSizeMapping=new TypeSizeMapping();
+}
+
+Analyzer::~Analyzer() {
+  delete _typeSizeMapping;
 }
 
 size_t Analyzer::getNumberOfErrorLabels() {
@@ -251,10 +256,6 @@ Analyzer::VariableDeclarationList Analyzer::computeUsedGlobalVariableDeclaration
     logger[ERROR] << "no global scope.";
     exit(1);
   }
-}
-
-Analyzer::~Analyzer() {
-  // intentionally empty, nothing to free explicitly
 }
 
 void Analyzer::recordTransition(const EState* sourceState, Edge e, const EState* targetState) {
@@ -3513,3 +3514,13 @@ list<EState> Analyzer::transferTrueFalseEdge(SgNode* nextNodeToAnalyze2, Edge ed
   return newEStateList;
 }
 
+void Analyzer::setTypeSizeMapping(TypeSizeMapping* typeSizeMapping) {
+  // a default type size mapping is set in initialization and must exist
+  ROSE_ASSERT(_typeSizeMapping);
+  delete _typeSizeMapping;
+  _typeSizeMapping=typeSizeMapping;
+}
+
+TypeSizeMapping* Analyzer::getTypeSizeMapping() {
+  return _typeSizeMapping;
+}
