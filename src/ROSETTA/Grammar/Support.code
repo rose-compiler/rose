@@ -15363,11 +15363,6 @@ X aggressive
 
      p_read_instructions_only    = false;
 
-     p_disassemblerSearchHeuristics = rose::BinaryAnalysis::Disassembler::SEARCH_DEFAULT;
-
-  // DQ (11/12/2014): Previously uninitialized data members
-     p_partitionerSearchHeuristics = SgAsmFunction::FUNC_DEFAULT;
-
   // DQ (11/20/2010): Support for token handling.
      p_unparse_tokens = false;
 
