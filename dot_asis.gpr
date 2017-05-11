@@ -7,6 +7,10 @@ project DOT_ASIS is
       "run_asis_tool_2.adb",
       "test_gnat_command_line.adb");
 
+   for Source_Dirs use
+     (".",
+      "test_units");
+
    for Object_Dir use "./obj";
 
    package Compiler is
