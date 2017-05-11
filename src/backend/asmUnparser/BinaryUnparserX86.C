@@ -76,14 +76,14 @@ X86::outputExpr(std::ostream &out, SgAsmExpression *expr, State &state) const {
         if (!isLea) {
             state.frontUnparser().emitTypeName(out, mr->get_type(), state);
             out <<" ";
-            if (mr->get_segment()) {
-                outputExpr(out, mr->get_segment(), state);
-                out <<":";
-            }
-            out <<"[";
-            outputExpr(out, mr->get_address(), state);
-            out <<"]";
         }
+        if (mr->get_segment()) {
+            outputExpr(out, mr->get_segment(), state);
+            out <<":";
+        }
+        out <<"[";
+        outputExpr(out, mr->get_address(), state);
+        out <<"]";
 
     } else if (SgAsmDirectRegisterExpression *rr = isSgAsmDirectRegisterExpression(expr)) {
         state.frontUnparser().emitRegister(out, rr->get_descriptor(), state);
