@@ -380,7 +380,7 @@ parallel_for_clause : unique_parallel_clause
                     | if_clause
                     | num_threads_clause
                     | proc_bind_clause
-                    ;
+                   ;
 
 parallel_sections_directive : /* #pragma */ OMP PARALLEL SECTIONS { 
                                 ompattribute =buildOmpAttribute(e_parallel_sections,gNode, true); 
