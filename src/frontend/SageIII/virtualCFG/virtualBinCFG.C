@@ -172,21 +172,11 @@ namespace VirtualBinCFG {
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
     vector<CFGEdge> CFGNode::outEdges() const {
-#if 1
     ASSERT_not_reachable("no longer supported");
-#else
-        ROSE_ASSERT (node);
-        return node->cfgBinOutEdges(info);
-#endif
     }
 
     vector<CFGEdge> CFGNode::inEdges() const {
-#if 1
     ASSERT_not_reachable("no longer supported");
-#else
-        ROSE_ASSERT (node);
-        return node->cfgBinInEdges(info);
-#endif
     }
 #endif
 
@@ -255,14 +245,7 @@ namespace VirtualBinCFG {
                 SgAsmInstruction* insn = isSgAsmInstruction(n);
                 if (!insn) return;
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-#if 1
                 ASSERT_not_reachable("no longer supported");
-#else
-                vector<CFGEdge> outEdgesSoFar = insn->cfgBinOutEdges(info);
-                for (size_t i = 0; i < outEdgesSoFar.size(); ++i) {
-                    info->incomingEdges[outEdgesSoFar[i].target().getNode()].insert(insn->get_address());
-                }
-#endif
 #else
                 printf ("This function is not supported in the ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT mode.\n");
                 ROSE_ASSERT(false);

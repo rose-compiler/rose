@@ -5,7 +5,12 @@
 #include <sys/time.h>
 #include <libgen.h>
 int readseqs(int first_seq, char *filename);
-
+void forward_pass(char *ia, char *ib, int n, int m, int *se1, int *se2, int *maxscore, int g, int gh);
+void reverse_pass(char *ia, char *ib, int se1, int se2, int *sb1, int *sb2, int maxscore, int g, int gh);
+int diff (int A, int B, int M, int N, int tb, int te, int *print_ptr, int *last_print, int *displ, int seq1, int seq2, int g, int gh);
+double tracepath(int tsb1, int tsb2, int *print_ptr, int *last_print, int *displ, int seq1, int seq2);
+int get_matrix(int*, int*, int);
+void bots_message (char*);
 int ktup, window, signif;
 int prot_ktup, prot_window, prot_signif;
 

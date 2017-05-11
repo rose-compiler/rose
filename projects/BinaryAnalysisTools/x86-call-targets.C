@@ -2,6 +2,7 @@
 // stdout as hexadecimal numbers.
 
 #include "rose.h"
+#include "DisassemblerX86.h"
 
 #include <cstdlib>
 #include <cstring>
@@ -32,9 +33,9 @@ main(int argc, char *argv[])
             
     // Open the file
     rose_addr_t start_va = 0;
-    MemoryMap map;
-    size_t file_size = map.insertFile(specimen_name, start_va);
-    map.at(start_va).limit(file_size).changeAccess(MemoryMap::EXECUTABLE, 0);
+    MemoryMap::Ptr map = MemoryMap::instance();
+    size_t file_size = map->insertFile(specimen_name, start_va);
+    map->at(start_va).limit(file_size).changeAccess(MemoryMap::EXECUTABLE, 0);
 
     // Try to disassemble every byte, and print the CALL/FARCALL targets
     size_t ninsns=0, nerrors=0;
@@ -42,7 +43,7 @@ main(int argc, char *argv[])
     for (rose_addr_t offset=0; offset<file_size; ++offset) {
         try {
             rose_addr_t insn_va = start_va + offset;
-            SgAsmX86Instruction *insn = isSgAsmX86Instruction(disassembler->disassembleOne(&map, insn_va));
+            SgAsmX86Instruction *insn = isSgAsmX86Instruction(disassembler->disassembleOne(map, insn_va));
             if (insn && (x86_call==insn->get_kind() || x86_farcall==insn->get_kind())) {
                 ++ninsns;
                 rose_addr_t target_va;

@@ -128,17 +128,7 @@ Q5. I added a new specimen (no new checkers yet) and make
     specimen for that checker.
 
 
-Q6. In my non-smoke directory, why do "make check" and "make
-    check-smoke" build the non-smoke checkers?
-
-    This is a limitation of automake: automake assumes that "make
-    check" depends on all programs that the makefile could generate. A
-    more precise approach would be to have each test target depend on
-    its checker (which is already true in a correctly written
-    makefile).
-
-
-Q7. What if I have a project that uses non-smoke specimens?
+Q6. What if I have a project that uses non-smoke specimens?
 
     If a project depends on non-smoke tests, then the project's
     configuration step should verify that the depencency is present,

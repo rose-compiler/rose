@@ -1935,7 +1935,11 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, const SgTemplateArgume
   // "Implementation Note".
 
 #if 0
-     printf ("In globalUnparseToString(): astNode = %p = %s \n",astNode,astNode->class_name().c_str());
+     printf ("In globalUnparseToString(): astNode = %p \n",astNode);
+     if (astNode != NULL)
+        {
+          printf ("In globalUnparseToString(): astNode = %p = %s \n",astNode,astNode->class_name().c_str());
+        }
 #endif
 
 #if 0

@@ -194,11 +194,9 @@ public:
     void defaultCallingConvention(const CallingConvention::DefinitionPtr &x) { defaultCallingConvention_ = x; }
     /** @} */
 
-    // Required by data-flow engine: should return a deep copy of the state
-    BaseSemantics::StatePtr operator()(const BaseSemantics::StatePtr &incomingState) const {
-        return incomingState ? incomingState->clone() : BaseSemantics::StatePtr();
-    }
-
+    // Required by data-flow engine
+    std::string printState(const BaseSemantics::StatePtr &state);
+    
     // Required by data-flow engine: compute new output state given a vertex and input state.
     BaseSemantics::StatePtr operator()(const DfCfg&, size_t vertexId, const BaseSemantics::StatePtr &incomingState) const;
 };

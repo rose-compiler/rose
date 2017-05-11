@@ -9,7 +9,8 @@ TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 noinst_PROGRAMS = singleStatementToBlockNormalization
 singleStatementToBlockNormalization_SOURCES =  SingleStatementToBlockNormalization.C
 singleStatementToBlockNormalization_CPPFLAGS = $(ROSE_INCLUDES)
-singleStatementToBlockNormalization_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+singleStatementToBlockNormalization_LDFLAGS = $(ROSE_RPATHS)
+singleStatementToBlockNormalization_LDADD = $(ROSE_LIBS)
 
 # The following tests are disable because they're broken in ways unrelated to what this makefile is testing
 #   test2013_242.C: ROSE is unable to parse boost-1.47 header file

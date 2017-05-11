@@ -29,6 +29,7 @@ CHECK_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/programAnalysis -I$(top_srcdir)/src/midend/programAnalysis/pointerAnal -I${top_srcdir}/src/midend/programAnalysis/CFG -I${top_srcdir}/src/midend/programAnalysis/bitvectorDataflow -I$(top_srcdir)/src/util/support -I$(top_srcdir)/src/util/graphs -I$(top_srcdir)/src/midend/astUtil/astSupport -I$(top_srcdir)/src/midend/astUtil/astInterface -I$(top_srcdir)/src/midend/astUtil -I$(top_srcdir)/src/midend/programAnalysis/ 
 #-I$(top_srcdir)/src/midend/programAnalysis/ptrTrace/GAI/ICFG/
 
+AM_LDFLAGS = $(ROSE_RPATHS)
 
 
 #-------------------------------------------------------------------------------------------------------------------------------
@@ -41,42 +42,42 @@ CFGTest_SOURCES =
 if !ROSE_USING_ROSE_CODE_GENERATION
      CFGTest_SOURCES += CFGTest.C
 endif
-CFGTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+CFGTest_LDADD = $(ROSE_LIBS)
 
 
 noinst_PROGRAMS += DataFlowTest
 DataFlowTest_SOURCES = DataFlowTest.C
-DataFlowTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+DataFlowTest_LDADD = $(ROSE_LIBS)
 
 
 noinst_PROGRAMS += StmtRefTest
 StmtRefTest_SOURCES = StmtRefTest.C
-StmtRefTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+StmtRefTest_LDADD = $(ROSE_LIBS)
 
 
 noinst_PROGRAMS += PtrAnalTest
 PtrAnalTest_SOURCES = PtrAnalTest.C
-PtrAnalTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+PtrAnalTest_LDADD = $(ROSE_LIBS)
 
 
 noinst_PROGRAMS += steensgaardTest1
 steensgaardTest1_SOURCES = steensgaardTest1.C
-steensgaardTest1_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+steensgaardTest1_LDADD = $(ROSE_LIBS)
 
 
 noinst_PROGRAMS += steensgaardTest2
 steensgaardTest2_SOURCES = steensgaardTest2.C
-steensgaardTest2_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+steensgaardTest2_LDADD = $(ROSE_LIBS)
 
 
 noinst_PROGRAMS += VirtualFunctionAnalysisTest
 VirtualFunctionAnalysisTest_SOURCES = VirtualFunctionAnalysisTest.C
-VirtualFunctionAnalysisTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+VirtualFunctionAnalysisTest_LDADD = $(ROSE_LIBS)
 
 
 noinst_PROGRAMS += ReachingDefinitionFacadeTest
 ReachingDefinitionFacadeTest_SOURCES = ReachingDefinitionFacadeTest.C
-ReachingDefinitionFacadeTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+ReachingDefinitionFacadeTest_LDADD = $(ROSE_LIBS)
 
 #-------------------------------------------------------------------------------------------------------------------------------
 # VirtualFunctionAnalysisTest tests using a variety of specimens from the CompileTests/Cxx_tests directory.

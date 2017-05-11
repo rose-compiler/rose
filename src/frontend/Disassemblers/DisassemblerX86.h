@@ -107,17 +107,14 @@ public:
     // Public methods
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** See Disassembler::can_disassemble */
-    virtual bool can_disassemble(SgAsmGenericHeader*) const ROSE_OVERRIDE;
+    virtual bool canDisassemble(SgAsmGenericHeader*) const ROSE_OVERRIDE;
 
     virtual Unparser::BasePtr unparser() const ROSE_OVERRIDE;
 
-    /** See Disassembler::disassembleOne */
-    virtual SgAsmInstruction *disassembleOne(const MemoryMap *map, rose_addr_t start_va,
+    virtual SgAsmInstruction *disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
                                              AddressSet *successors=NULL) ROSE_OVERRIDE;
 
-    /** Make an unknown instruction from an exception. */
-    virtual SgAsmInstruction *make_unknown_instruction(const Exception&) ROSE_OVERRIDE;
+    virtual SgAsmInstruction *makeUnknownInstruction(const Exception&) ROSE_OVERRIDE;
 
 
     /*========================================================================================================================

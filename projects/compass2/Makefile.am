@@ -20,7 +20,7 @@ LDADD = \
 	$(XERCES_LIBS) \
 	$(ROSE_LIBS)
 
-LDFLAGS = $(XERCES_LDFLAGS)
+AM_LDFLAGS = $(ROSE_RPATHS) $(XERCES_LDFLAGS)
 
 # ------------------------------------------------------------------------------
 #  libcompass2.la

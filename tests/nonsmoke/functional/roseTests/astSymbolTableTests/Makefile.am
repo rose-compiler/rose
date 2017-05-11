@@ -5,12 +5,13 @@ EXTRA_DIST =
 MOSTLYCLEANFILES =
 
 AM_CPPFLAGS = $(ROSE_INCLUDES)
+AM_LDFLAGS = $(ROSE_RPATHS)
 TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 
 #------------------------------------------------------------------------------------------------------------------------
 noinst_PROGRAMS += testSymbolTable
 testSymbolTable_SOURCES = testSymbolTable.C
-testSymbolTable_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+testSymbolTable_LDADD = $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += test1.passed
 test1.passed: input.C testSymbolTable

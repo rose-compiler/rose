@@ -37,6 +37,8 @@ namespace KeepGoing {
  std::string expectations_filename__pass;
  std::string path_prefix;
 
+ std::map <SgFile* , std::string> File2StringMap; 
+
 #ifndef _MSC_VER
 struct sigaction SignalAction;
 #endif //_MSC_VER
@@ -67,7 +69,11 @@ namespace Frontend {
       std::cout
           << "[WARN] "
           << "Caught signal="
+#ifndef _MSC_VER
+          << "'" << strsignal(sig) << "' "
+#else
           << "'" << sig << "' "
+#endif
           << "during frontend processing"
           << std::endl;
 
@@ -87,7 +93,11 @@ namespace Frontend {
         std::cout
             << "[WARN] "
             << "Caught signal="
-            << "'" << sig << "' "
+#ifndef _MSC_VER
+          << "'" << strsignal(sig) << "' "
+#else
+          << "'" << sig << "' "
+#endif
             << "during commandline processing in frontend processing"
             << std::endl;
 
@@ -108,7 +118,11 @@ namespace Frontend {
         std::cout
             << "[WARN] "
             << "Caught signal="
-            << "'" << sig << "' "
+#ifndef _MSC_VER
+          << "'" << strsignal(sig) << "' "
+#else
+          << "'" << sig << "' "
+#endif
             << "during secondary pass in frontend processing"
             << std::endl;
 
@@ -130,7 +144,11 @@ namespace Midend {
       std::cout
           << "[WARN] "
           << "Caught signal="
+#ifndef _MSC_VER
+          << "'" << strsignal(sig) << "' "
+#else
           << "'" << sig << "' "
+#endif
           << "during midend processing"
           << std::endl;
 
@@ -142,48 +160,57 @@ namespace Midend {
   }
 }// ::Rose::KeepGoing::Midend
 
-namespace Backend {
-namespace Unparser {
-  #ifndef _MSC_VER
-    sigjmp_buf jmp_target;
-  #endif //_MSC_VER
-  void SignalHandler(int sig)
-  {
-      std::cout
-          << "[WARN] "
-          << "Caught signal="
+namespace Backend 
+{
+  namespace Unparser {
+    #ifndef _MSC_VER
+      sigjmp_buf jmp_target;
+    #endif //_MSC_VER
+    void SignalHandler(int sig)
+    {
+        std::cout
+            << "[WARN] "
+            << "Caught signal="
+#ifndef _MSC_VER
+          << "'" << strsignal(sig) << "' "
+#else
           << "'" << sig << "' "
-          << "during backend unparser processing"
-          << std::endl;
-
-      #ifndef _MSC_VER
-          siglongjmp(Backend::Unparser::jmp_target, -1);
-      #else
-          ROSE_ASSERT(! "[FATAL] KeepGoing feature not supported yet on Windows");
-      #endif //_MSC_VER
-  }
-}// ::Rose::KeepGoing::Backend::Unparser
-
-namespace Compiler {
-  #ifndef _MSC_VER
-    sigjmp_buf jmp_target;
-  #endif //_MSC_VER
-  void SignalHandler(int sig)
-  {
-      std::cout
-          << "[WARN] "
-          << "Caught signal="
+#endif
+            << "during backend unparser processing"
+            << std::endl;
+  
+        #ifndef _MSC_VER
+            siglongjmp(Backend::Unparser::jmp_target, -1);
+        #else
+            ROSE_ASSERT(! "[FATAL] KeepGoing feature not supported yet on Windows");
+        #endif //_MSC_VER
+    }
+  }// ::Rose::KeepGoing::Backend::Unparser
+  
+  namespace Compiler {
+    #ifndef _MSC_VER
+      sigjmp_buf jmp_target;
+    #endif //_MSC_VER
+    void SignalHandler(int sig)
+    {
+        std::cout
+            << "[WARN] "
+            << "Caught signal="
+#ifndef _MSC_VER
+          << "'" << strsignal(sig) << "' "
+#else
           << "'" << sig << "' "
-          << "during backend compiler processing"
-          << std::endl;
-
-      #ifndef _MSC_VER
-          siglongjmp(Backend::Compiler::jmp_target, -1);
-      #else
-          ROSE_ASSERT(! "[FATAL] KeepGoing feature not supported yet on Windows");
-      #endif //_MSC_VER
-  }
-}// ::Rose::KeepGoing::Backend::Compiler
+#endif
+            << "during backend compiler processing"
+            << std::endl;
+  
+        #ifndef _MSC_VER
+            siglongjmp(Backend::Compiler::jmp_target, -1);
+        #else
+            ROSE_ASSERT(! "[FATAL] KeepGoing feature not supported yet on Windows");
+        #endif //_MSC_VER
+    }
+  }// ::Rose::KeepGoing::Backend::Compiler
 }// ::Rose::KeepGoing::Backend
 }// ::Rose::KeepGoing
 }// Rose
@@ -440,6 +467,17 @@ void Rose::KeepGoing::commandLineProcessing
 
 }
 
+void Rose::KeepGoing::setMidendErrorCode (SgProject* project, int errorCode)
+{
+  project->set_midendErrorCode(errorCode);
+
+  SgFilePtrList files = project->get_files();
+  BOOST_FOREACH(SgFile* file, files)
+  {
+    file->set_midendErrorCode(errorCode);
+  }
+}
+
 void Rose::KeepGoing::generate_reports(SgProject* project, 
                      std::vector< std::string> orig_rose_cmdline
                        )
@@ -458,8 +496,14 @@ void Rose::KeepGoing::generate_reports(SgProject* project,
   orig_command_str +="\n";
 
   // add original command line into the log file so users can easily reproduce the errors. 
-  if (files_with_errors.size()>0)
+  if (files_with_errors.size()>0 && report_filename__fail.size()>0)
   {
+    AppendToFile (report_filename__fail, "------------------------\n");
+    // add time stamp in the beginning
+    std::ostringstream ostamp;
+    ostamp << GetTimestamp()  << " " << getpid() << std::endl;
+    AppendToFile (report_filename__fail, ostamp.str());
+
     AppendToFile (report_filename__fail, orig_command_str);
 
     BOOST_FOREACH(SgFile* file, files_with_errors)
@@ -482,6 +526,8 @@ void Rose::KeepGoing::generate_reports(SgProject* project,
       // Keep all info. of one file into one line. Users can easily count the total failures. 
       if (file->get_frontendErrorCode())
         ss << "\t Frontend Error Code:" << file->get_frontendErrorCode() ;
+      if (file->get_midendErrorCode())
+        ss << "\t Midend Error Code:" << file->get_midendErrorCode() ;
       if (file->get_javacErrorCode())    
         ss << "\t JAVA Error Code:"<< file->get_javacErrorCode(); 
       if (file->get_unparserErrorCode())   
@@ -492,20 +538,39 @@ void Rose::KeepGoing::generate_reports(SgProject* project,
         ss << "\t Unparsed File Failed Compilation Code: "<< file->get_unparsedFileFailedCompilation();
       ss<<"\n";  
       AppendToFile(report_filename__fail, ss.str());
-    }
 
+      //Sometimes even for files failed on backend stage, some analysis results are generated. 
+      //we still want to output such results.
+      // If exists, output the analysis results associated with each file
+      std::ostringstream oss;
+      oss <<  File2StringMap[file]; // not copyable, not assignable
+      if (oss.str().size()>0)
+      {
+        AppendToFile(report_filename__fail, oss.str());
+      }
+    }
   }
   // Report successes
   SgFilePtrList files_without_errors = project->get_files_without_errors();
-  if (files_without_errors.size()>0)
+  if (files_without_errors.size()>0 && report_filename__pass.size()>0)
   {
-    AppendToFile (report_filename__pass, orig_command_str);
+   // full command line , it may has multiple files 
+   
+    AppendToFile (report_filename__pass, "------------------------\n");
+    //AppendToFile (report_filename__pass, orig_command_str);
+
+    // add time stamp in the beginning
+    std::ostringstream ostamp ;
+    ostamp << GetTimestamp()  << " " << getpid() << std::endl;
+    AppendToFile (report_filename__pass, ostamp.str());
 
     BOOST_FOREACH(SgFile* file, files_without_errors)
     {
-      std::string filename = file->getFileName();
-      filename = StripPrefix(path_prefix, filename);
+      std::string full_filename = file->getFileName();
+      std::string filename = StripPrefix(path_prefix, full_filename);
 
+      // output file full path first
+      AppendToFile(report_filename__pass, full_filename+"\n");
       if (verbose)
       {
         std::cout
@@ -515,14 +580,17 @@ void Rose::KeepGoing::generate_reports(SgProject* project,
           << std::endl;
       }
 
-#if 0  // no need to output file name again, part of command line already
-      std::stringstream ss;
-      ss << filename;
+      // If exists, output the analysis results associated with each file
+      std::ostringstream oss;
+      oss <<  File2StringMap[file]; // not copyable, not assignable
+      if (oss.str().size()>0)
+      {
 
-      AppendToFile(report_filename__pass, ss.str());
-#endif       
+        AppendToFile(report_filename__pass, oss.str());
+      }
     }
   }
+
 
   if (!expectations_filename__fail.empty())
   {
@@ -615,8 +683,6 @@ void Rose::KeepGoing::generate_reports(SgProject* project,
           }
       }
   }
-
-
 }
 
 void
@@ -714,10 +780,14 @@ void Rose::KeepGoing::touch(const std::string& pathname)
 #endif
 }
 
-//! AppendToFile , automatically add a trailing \n .
+//! AppendToFile a message
 void
 Rose::KeepGoing::AppendToFile(const std::string& filename, const std::string& msg)
 {
+  // if filename is NULL, no action is needed. 
+  if (filename.size()==0)
+    return; 
+
   touch(filename);
 
   boost::interprocess::file_lock flock;
@@ -755,12 +825,14 @@ Rose::KeepGoing::AppendToFile(const std::string& filename, const std::string& ms
       exit(1);
   }
 
+#if 0
   fout
       << GetTimestamp()  << " "
       << getpid() << " "
       << msg
       << std::endl;
-
+#endif
+  fout<<msg; 
   fout.close();
   flock.unlock();
 }

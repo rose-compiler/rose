@@ -37,7 +37,6 @@ Views that we want to have of Klocwork results:
        - src/backend/unparser/JavaCodeGeneration
 
    6) View of Binary Analysis support only directories (and subdirs of):
-       - src/frontend/BinaryDisassembly
        - src/frontend/BinaryFormats
        - src/frontend/BinaryLoader
        - src/midend/binaryAnalyses

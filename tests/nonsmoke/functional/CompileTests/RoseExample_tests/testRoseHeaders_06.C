@@ -114,35 +114,14 @@ namespace ELF{
 // DQ (1/25/2008): Added cfgToDot.h as suggested by Jeremiah
 #include "cfgToDot.h"
 
-// DQ (1/24/2008): Add these here to permit simple and uniform support of binaries.
-// File in src/frontend/BinaryDisassembly
-#include "RoseBin_support.h"
-#ifdef HASH_ROSE_USE_BINARYSQL
-  #include "RoseBin.h"
-#endif
-
-
 #include "DataConversion.h"
 // Files in src/frontend/ExecFormats
 #include "MemoryMap.h"
-
-#include "RoseBin_abstract.h"
-#include "RoseFile.h"
-#include "RoseObj.h"
-
-#include "RoseBin_DotGraph.h"
-#include "RoseBin_GmlGraph.h"
-#include "RoseBin_ControlFlowAnalysis.h"
-#include "RoseBin_DataFlowAnalysis.h"
-#include "RoseBin_CallGraphAnalysis.h"
-
-#include "AST_BIN_Traversal.h"
 
 #include "InstructionEnumsX86.h"
 #include "x86InstructionProperties.h"
 #include "armInstructionEnum.h"
 #include "powerpcInstructionEnum.h"
-#include "powerpcInstructionProperties.h"
 
 // Files in src/frontend/Disassemblers
 #include "Disassembler.h"

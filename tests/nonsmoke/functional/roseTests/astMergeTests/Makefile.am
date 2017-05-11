@@ -4,6 +4,7 @@ TEST_TARGETS =
 EXTRA_DIST =
 
 AM_CPPFLAGS = $(ROSE_INCLUDES)
+AM_LDFLAGS = $(ROSE_RPATHS)
 TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 
 test_input_sources = mangleTest.C mangleTwo.C mangleThree.C
@@ -15,7 +16,7 @@ EXTRA_DIST += $(test_input_files)
 # testMerge executable
 noinst_PROGRAMS += testMerge
 testMerge_SOURCES = testMerge.C
-testMerge_LDADD = $(ROSE_LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+testMerge_LDADD = $(ROSE_SEPARATE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
 # tests of the testMerge executable

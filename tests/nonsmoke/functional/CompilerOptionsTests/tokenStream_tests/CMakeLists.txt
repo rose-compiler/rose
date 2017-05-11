@@ -68,8 +68,6 @@ install(TARGETS main DESTINATION bin)
 #main_SOURCES = \
 #   main.C
 #
-#LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
-#
 ## testMain: main
 ##	$(VALGRIND) ./main -c $(srcdir)/tests/inputCode_main.C
 #

@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
       offset += tid;
 #endif
     XOMP_static_even_divide (0, n, GPU_N, tid, &offset, &size);
-    printf("thread %d working on GPU devices %d with size %d copying data from y_ompacc with offset %d\n",tid, tid, size,offset);
+    printf("thread %d working on GPU devices %d with size %ld copying data from y_ompacc with offset %ld\n",tid, tid, size,offset);
     int j;
 #pragma omp target device (tid) map(tofrom: y_ompacc[offset:size]) map(to: x[offset:size],a,size, offset)
 #pragma omp parallel for shared(size, a)  private(j)

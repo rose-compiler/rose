@@ -8,7 +8,8 @@ noinst_PROGRAMS = deviceTranformation
 deviceTranformation_SOURCES = deviceTranformation.C
 
 AM_CPPFLAGS = $(ROSE_INCLUDES)
-LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+AM_LDFLAGS  = $(ROSE_RPATHS)
+LDADD = $(ROSE_LIBS)
 
 CUDA_NO_BUILT_IN_CODES = \
 test_2011_01.cu \

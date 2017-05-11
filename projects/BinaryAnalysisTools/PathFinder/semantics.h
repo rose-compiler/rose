@@ -3,6 +3,7 @@
 
 #include <PathFinder/PathFinder.h>
 #include <SymbolicSemantics2.h>
+#include <Partitioner2/Partitioner.h>
 
 namespace PathFinder {
 

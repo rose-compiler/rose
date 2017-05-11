@@ -92,7 +92,7 @@ int main( int argc, char * argv[] )
 
      markAllTemplateInstantiationsToBeUnparsed(project);
 
-  // DQ (9/17/2015): Call fixup function for template instatiations so that they can be unparsed with the GNU g++ backend compiler.
+  // DQ (9/17/2015): Call fixup function for template instantiations so that they can be unparsed with the GNU g++ backend compiler.
      SageInterface::wrapAllTemplateInstantiationsInAssociatedNamespaces(project);
 
 #if 0

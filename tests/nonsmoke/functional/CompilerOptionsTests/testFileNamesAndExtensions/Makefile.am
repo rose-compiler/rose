@@ -5,7 +5,8 @@ EXTRA_DIST = README
 noinst_PROGRAMS = translator
 translator_SOURCES = translator.C
 translator_CPPFLAGS = $(ROSE_INCLUDES)
-translator_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+translator_LDFLAGS = $(ROSE_RPATHS)
+translator_LDADD = $(ROSE_LIBS)
 
 ########################################################################################################################
 # Tests for various file name extensions.

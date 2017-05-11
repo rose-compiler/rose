@@ -9,11 +9,10 @@
 #include "BinaryDataFlow.h"                             // rose::BinaryAnalysis::DataFlow
 #include "BinaryFeasiblePath.h"                         // rose::BinaryAnalysis::FeasiblePath
 #include "BinaryFunctionSimilarity.h"                   // rose::BinaryAnalysis::FunctionSimilarity
-#include "BinaryLoader.h"                               // BinaryLoader
+#include "BinaryLoader.h"                               // rose::BinaryAnalysis::BinaryLoader
 #include "BinaryNoOperation.h"                          // rose::BinaryAnalysis::NoOperation
 #include "BinaryTaintedFlow.h"                          // rose::BinaryAnalysis::TaintedFlow
 #include "Disassembler.h"                               // rose::BinaryAnalysis::Disassembler
-#include "Partitioner.h"                                // old partitioner
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -106,7 +105,7 @@ void initialize() {
         // point to the rose::Diagnostics::destination that we set above.  Generally speaking, if a frontend language is
         // disabled there should be a dummy initDiagnostics that does nothing so we don't need lots of #ifdefs here.
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-        BinaryLoader::initDiagnostics();
+        BinaryAnalysis::BinaryLoader::initDiagnostics();
         BinaryAnalysis::AsmUnparser::initDiagnostics();
         BinaryAnalysis::BestMapAddress::initDiagnostics();
         BinaryAnalysis::CallingConvention::initDiagnostics();
@@ -117,7 +116,6 @@ void initialize() {
         BinaryAnalysis::InstructionSemantics2::initDiagnostics();
         BinaryAnalysis::NoOperation::initDiagnostics();
         BinaryAnalysis::Partitioner2::initDiagnostics();
-        BinaryAnalysis::Partitioner::initDiagnostics();
         BinaryAnalysis::PointerDetection::initDiagnostics();
         BinaryAnalysis::ReturnValueUsed::initDiagnostics();
         BinaryAnalysis::StackDelta::initDiagnostics();

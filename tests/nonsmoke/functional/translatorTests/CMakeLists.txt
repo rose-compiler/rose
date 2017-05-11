@@ -32,7 +32,6 @@ endif()
 #bug125_SOURCES = bug125.C
 #qualifiedName_SOURCES = qualifiedName.C
 #
-#LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 #
 #VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
 #

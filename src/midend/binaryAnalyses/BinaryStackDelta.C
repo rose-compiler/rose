@@ -32,7 +32,7 @@ initDiagnostics() {
 void
 Analysis::init(Disassembler *disassembler) {
     if (disassembler) {
-        const RegisterDictionary *regdict = disassembler->get_registers();
+        const RegisterDictionary *regdict = disassembler->registerDictionary();
         ASSERT_not_null(regdict);
         size_t addrWidth = disassembler->instructionPointerRegister().get_nbits();
 
@@ -98,11 +98,6 @@ public:
             newState->writeRegister(SP, ops->undefined_(SP.get_nbits()), ops.get());
         }
         return newState;
-    }
-    
-    // Required by data-flow engine: deep-copy the state
-    BaseSemantics::State::Ptr operator()(const BaseSemantics::State::Ptr &incomingState) const {
-        return P2::DataFlow::TransferFunction::operator()(incomingState);
     }
 
     // Required by data-flow engine: compute next state from current state and dfCfg vertex
@@ -182,7 +177,8 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     try {
         // Use this rather than runToFixedPoint because it lets us show a progress report
         Sawyer::ProgressBar<size_t> progress(maxIterations, mlog[MARCH], function->printableName());
-        dfEngine.reset(startVertexId, initialState);
+        dfEngine.reset(BaseSemantics::StatePtr());
+        dfEngine.insertStartingVertex(startVertexId, initialState);
         while (dfEngine.runOneIteration())
             ++progress;
     } catch (const DataFlow::NotConverging &e) {

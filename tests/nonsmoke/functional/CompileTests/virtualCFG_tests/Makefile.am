@@ -1,6 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 AM_CPPFLAGS = $(ROSE_INCLUDES)
+AM_LDFLAGS = $(ROSE_RPATHS)
 bin_PROGRAMS = generateVirtualCFG
 
 generateVirtualCFG_SOURCES = generateVirtualCFG.C
@@ -9,7 +10,7 @@ noinst_PROGRAMS = testVirtualCFG
 
 testVirtualCFG_SOURCES = testVirtualCFG.C
 
-LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+LDADD = $(ROSE_SEPARATE_LIBS)
 
 # Import list of C++ test cases that should pass:
 #   EXAMPLE_TESTCODES_REQUIRED_TO_PASS

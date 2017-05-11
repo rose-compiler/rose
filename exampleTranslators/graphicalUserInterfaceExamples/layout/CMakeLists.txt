@@ -32,7 +32,6 @@ install(TARGETS layout DESTINATION bin)
 #
 ## Use names set in ROSE/config/Makefile.for.ROSE.includes.and.libs
 #INCLUDES = $(ROSE_INCLUDES)
-#LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 #
 #
 #EXTRA_DIST = $(TESTCODES)

@@ -41,8 +41,6 @@ install(TARGETS fileLocation DESTINATION bin)
 ## DQ (8/14/2004) Developer's Note:
 ## This permits the use of the pair of libraries -lrose -ledg OR the longer 
 ## list of libraries (the later option is much faster for development work).
-## LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-#LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 #
 ## Turn on GNU Coverage Tool (gcov)
 ## CXX += -fprofile-arcs -ftest-coverage

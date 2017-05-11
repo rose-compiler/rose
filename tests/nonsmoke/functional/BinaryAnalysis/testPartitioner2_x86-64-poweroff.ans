@@ -6,17 +6,17 @@
 0x00400e70: 48 83 ec 08             |H...    |<sp+0 >   sub    rsp, 0x08
 0x00400e74: e8 f3 02 00 00          |.....   |<sp-8 >   call   0x000000000040116c<<Func>>
 0x00400e74: Outgoing stack delta: -16
-0x00400e74: Successor blocks: 0x0040116c<<Func>>, 0x00400e79
+0x00400e74: Successor blocks: 0x00400e79, 0x0040116c<<Func>>
 
 0x00400e79: Basic block reasons: 
 0x00400e79: e8 52 03 00 00          |.R...   |<sp-8 >   call   0x00000000004011d0<<Func>>
 0x00400e79: Outgoing stack delta: -16
-0x00400e79: Successor blocks: 0x004011d0<<Func>>, 0x00400e7e
+0x00400e79: Successor blocks: 0x00400e7e, 0x004011d0<<Func>>
 
 0x00400e7e: Basic block reasons: 
 0x00400e7e: e8 ed 0f 00 00          |.....   |<sp-8 >   call   0x0000000000401e70<<Func>>
 0x00400e7e: Outgoing stack delta: -16
-0x00400e7e: Successor blocks: 0x00401e70<<Func>>, 0x00400e83
+0x00400e7e: Successor blocks: 0x00400e83, 0x00401e70<<Func>>
 
 0x00400e83: Basic block reasons: 
 0x00400e83: 48 83 c4 08             |H...    |<sp-8 >   add    rsp, 0x08
