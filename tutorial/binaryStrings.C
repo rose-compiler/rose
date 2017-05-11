@@ -27,8 +27,8 @@ main(int argc, char *argv[]) {
     //! [commandline]
 
     //! [load]
-    MemoryMap map = engine.loadSpecimens(specimen);
-    ByteOrder::Endianness sex = engine.obtainDisassembler()->get_sex();
+    MemoryMap::Ptr map = engine.loadSpecimens(specimen);
+    ByteOrder::Endianness sex = engine.obtainDisassembler()->byteOrder();
     //! [load]
 
     //! [analysis]
@@ -36,7 +36,7 @@ main(int argc, char *argv[]) {
     finder.settings().minLength = 5;    // no strings shorter than 5 characters
     finder.settings().maxLength = 8192; // no strings longer than 8k characters
     finder.insertCommonEncoders(sex);   // match common encodings of strings
-    finder.find(map.require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE));
+    finder.find(map->require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE));
     //! [analysis]
 
     //! [output]

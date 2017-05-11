@@ -1185,7 +1185,8 @@ ConstantFoldingTraversal::evaluateSynthesizedAttribute (
                         !isSgSizeOfOp(expr) &&
                         !isSgFunctionCallExp(expr))
                {
-                 cout<<"constant folding: unhandled expression type:"<<expr->class_name()<<endl;
+                 if (SgProject::get_verbose() > 0)
+                   cout<<"constant folding: unhandled expression type:"<<expr->class_name()<<endl;
                }
              } // end if (exp)
         }

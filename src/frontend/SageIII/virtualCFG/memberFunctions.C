@@ -231,7 +231,8 @@ static CFGNode getNodeJustBeforeInContainer(SgNode* n) {
 #else
     if (isSgTemplateMemberFunctionDeclaration(decl) != NULL)
        {
-         printf ("Warning: SgTemplateMemberFunctionDeclaration has been mixed into the CFG (template declarations should not appear in the CFG): decl = %p \n",decl);
+         if ( SgProject::get_verbose() > 1 )
+           printf ("Warning: SgTemplateMemberFunctionDeclaration has been mixed into the CFG (template declarations should not appear in the CFG): decl = %p \n",decl);
        }
 #endif
 
