@@ -18,7 +18,7 @@ int main() {
   array[0]=1; // long value to char array
   unsigned char* m1;
 #ifdef WITH_MALLOC
-  m1=malloc(7);
+  m1=(unsigned char*)malloc(7);
 #else
   unsigned char array2[7];
   m1=array2;
