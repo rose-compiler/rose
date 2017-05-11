@@ -12,7 +12,7 @@ InstructionProvider::operator[](rose_addr_t va) const {
             try {
                 insn = disassembler_->disassembleOne(memMap_, va);
             } catch (const Disassembler::Exception &e) {
-                insn = disassembler_->make_unknown_instruction(e);
+                insn = disassembler_->makeUnknownInstruction(e);
                 ASSERT_not_null(insn);
                 uint8_t byte;
                 if (1==memMap_->at(va).limit(1).require(MemoryMap::EXECUTABLE).read(&byte).size())

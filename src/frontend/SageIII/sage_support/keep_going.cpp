@@ -37,6 +37,8 @@ namespace KeepGoing {
  std::string expectations_filename__pass;
  std::string path_prefix;
 
+ std::map <SgFile* , std::string> File2StringMap; 
+
 #ifndef _MSC_VER
 struct sigaction SignalAction;
 #endif //_MSC_VER
@@ -475,6 +477,7 @@ void Rose::KeepGoing::setMidendErrorCode (SgProject* project, int errorCode)
     file->set_midendErrorCode(errorCode);
   }
 }
+
 void Rose::KeepGoing::generate_reports(SgProject* project, 
                      std::vector< std::string> orig_rose_cmdline
                        )
@@ -495,6 +498,12 @@ void Rose::KeepGoing::generate_reports(SgProject* project,
   // add original command line into the log file so users can easily reproduce the errors. 
   if (files_with_errors.size()>0 && report_filename__fail.size()>0)
   {
+    AppendToFile (report_filename__fail, "------------------------\n");
+    // add time stamp in the beginning
+    std::ostringstream ostamp;
+    ostamp << GetTimestamp()  << " " << getpid() << std::endl;
+    AppendToFile (report_filename__fail, ostamp.str());
+
     AppendToFile (report_filename__fail, orig_command_str);
 
     BOOST_FOREACH(SgFile* file, files_with_errors)
@@ -510,7 +519,7 @@ void Rose::KeepGoing::generate_reports(SgProject* project,
           << "'" << path_prefix << filename << "'"
           << std::endl;
       }
-     
+
       // <file> <frontend> <unparser> <backend>
       std::stringstream ss;
       // ss << filename << " "; // no need to output filename again, part of command line already.
@@ -529,20 +538,39 @@ void Rose::KeepGoing::generate_reports(SgProject* project,
         ss << "\t Unparsed File Failed Compilation Code: "<< file->get_unparsedFileFailedCompilation();
       ss<<"\n";  
       AppendToFile(report_filename__fail, ss.str());
-    }
 
+      //Sometimes even for files failed on backend stage, some analysis results are generated. 
+      //we still want to output such results.
+      // If exists, output the analysis results associated with each file
+      std::ostringstream oss;
+      oss <<  File2StringMap[file]; // not copyable, not assignable
+      if (oss.str().size()>0)
+      {
+        AppendToFile(report_filename__fail, oss.str());
+      }
+    }
   }
   // Report successes
   SgFilePtrList files_without_errors = project->get_files_without_errors();
   if (files_without_errors.size()>0 && report_filename__pass.size()>0)
   {
-    AppendToFile (report_filename__pass, orig_command_str);
+   // full command line , it may has multiple files 
+   
+    AppendToFile (report_filename__pass, "------------------------\n");
+    //AppendToFile (report_filename__pass, orig_command_str);
+
+    // add time stamp in the beginning
+    std::ostringstream ostamp ;
+    ostamp << GetTimestamp()  << " " << getpid() << std::endl;
+    AppendToFile (report_filename__pass, ostamp.str());
 
     BOOST_FOREACH(SgFile* file, files_without_errors)
     {
-      std::string filename = file->getFileName();
-      filename = StripPrefix(path_prefix, filename);
+      std::string full_filename = file->getFileName();
+      std::string filename = StripPrefix(path_prefix, full_filename);
 
+      // output file full path first
+      AppendToFile(report_filename__pass, full_filename+"\n");
       if (verbose)
       {
         std::cout
@@ -552,14 +580,17 @@ void Rose::KeepGoing::generate_reports(SgProject* project,
           << std::endl;
       }
 
-#if 0  // no need to output file name again, part of command line already
-      std::stringstream ss;
-      ss << filename;
+      // If exists, output the analysis results associated with each file
+      std::ostringstream oss;
+      oss <<  File2StringMap[file]; // not copyable, not assignable
+      if (oss.str().size()>0)
+      {
 
-      AppendToFile(report_filename__pass, ss.str());
-#endif       
+        AppendToFile(report_filename__pass, oss.str());
+      }
     }
   }
+
 
   if (!expectations_filename__fail.empty())
   {

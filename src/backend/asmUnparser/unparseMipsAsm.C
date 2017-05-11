@@ -107,7 +107,6 @@ std::string unparseMipsExpression(SgAsmExpression *expr, const AsmUnparser::Labe
         }
     }
 
-    result = StringUtility::appendAsmComment(result, expr->get_replacement());
     result = StringUtility::appendAsmComment(result, expr->get_comment());
     return result;
 }

@@ -288,15 +288,6 @@ x86_call_targets_LDFLAGS = $(ROSE_RPATHS)
 x86_call_targets_LDADD = $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
-# x86-function-vas
-
-bin_PROGRAMS += x86-function-vas
-x86_function_vas_SOURCES = x86-function-vas.C
-x86_function_vas_CPPFLAGS = $(ROSE_INCLUDES)
-x86_function_vas_LDFLAGS = $(ROSE_RPATHS)
-x86_function_vas_LDADD = $(ROSE_LIBS)
-
-#------------------------------------------------------------------------------------------------------------------------
 # generate XML from ROSE internals
 
 bin_PROGRAMS += rxml
@@ -343,5 +334,5 @@ endif
 clean-local:
 	rm -f $(MOSTLYCLEANFILES)
 
-check-nonsmoke: $(TEST_TARGETS)
+check-local: $(TEST_TARGETS)
 

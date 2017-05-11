@@ -15363,11 +15363,6 @@ X aggressive
 
      p_read_instructions_only    = false;
 
-     p_disassemblerSearchHeuristics = rose::BinaryAnalysis::Disassembler::SEARCH_DEFAULT;
-
-  // DQ (11/12/2014): Previously uninitialized data members
-     p_partitionerSearchHeuristics = SgAsmFunction::FUNC_DEFAULT;
-
   // DQ (11/20/2010): Support for token handling.
      p_unparse_tokens = false;
 
@@ -20247,11 +20242,7 @@ SgIncidenceDirectedGraph::getSuccessors(const SgGraphNode* node, std::vector <Sg
       SgGraphNode* target = isSgGraphNode(edge->get_to());
       assert(target);
       if (target) {
-	    //if (type_n==RoseBin_support::ToString(SgGraph::cfg)) {
 	       vec.push_back(target);
-            //}
-	    //else 
-	    //   printf("Different edge type \n");
       }
     } else {
       printf("This is not a DirectedGraphEdge.\n");
@@ -20278,7 +20269,6 @@ SgIncidenceDirectedGraph::getPredecessors(const SgGraphNode* node, std::vector <
       SgGraphNode* source = isSgGraphNode(edge->get_from());
       if (source) {
 	//string type_n = getProperty(SgGraph::type, edge);
-	//if (type_n==RoseBin_support::ToString(SgGraph::cfg))
 	  vec.push_back(source);
       }
     }

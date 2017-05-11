@@ -4,6 +4,7 @@
 
 #include "Disassembler.h"
 #include "NullSemantics2.h"
+#include "sageBuilderAsm.h"
 
 namespace rose {
 namespace BinaryAnalysis {              // documented elsewhere

@@ -2,6 +2,7 @@
 // stdout as hexadecimal numbers.
 
 #include "rose.h"
+#include "DisassemblerX86.h"
 
 #include <cstdlib>
 #include <cstring>

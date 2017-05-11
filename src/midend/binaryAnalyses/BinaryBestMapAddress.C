@@ -46,7 +46,7 @@ BestMapAddress::gatherAddresses(P2::Engine &engine) {
         if (!dis)
             throw Exception("no disassembler");
         nBits_ = dis->instructionPointerRegister().get_nbits();
-    } else if (dis->get_wordsize() != nBits_) {
+    } else if (dis->wordSizeBytes()*8 != nBits_) {
         throw Exception("mismatched address sizes");
     }
 

@@ -744,14 +744,6 @@ void Grammar::setUpBinaryInstructions() {
          *  empty string. */
         virtual std::string description() const { return ""; }
 
-        // [Robb P Matzke 2017-02-13]: deprecating this old API
-        SgAsmInstruction* cfgBinFlowOutEdge(const VirtualBinCFG::AuxiliaryInformation* info)
-            ROSE_DEPRECATED("cfgBin is deprecated");
-        std::vector<VirtualBinCFG::CFGEdge> cfgBinOutEdges(const VirtualBinCFG::AuxiliaryInformation* info)
-            ROSE_DEPRECATED("cfgBin is deprecated");
-        std::vector<VirtualBinCFG::CFGEdge> cfgBinInEdges(const VirtualBinCFG::AuxiliaryInformation* info)
-            ROSE_DEPRECATED("cfgBin is deprecated");
-
         // FIXME[Robb P Matzke 2017-02-13]: unused?
         void appendSources( SgAsmInstruction* instruction );
 
@@ -2269,8 +2261,11 @@ void Grammar::setUpBinaryInstructions() {
 #ifdef DOCUMENTATION
     /** Base class for values.
      *
-     *  Values that are addresses or references to data will have symbols in a function symbol table.  All other values are
-     *  assumed to be literals and will not have associated symbols. */
+     *  Assembly instruction (@ref SgAsmInstruction) operands are represented by @ref SgAsmExpression nodes in the AST. If the
+     *  expression has a numeric value then an @ref SgAsmValueExpression is used.  Values of various types (integers and
+     *  floating-point values of various sizes) are represented by subclasses of @ref SgAsmValueExpression.  Values that are
+     *  addresses or references to data will have symbols in a function symbol table.  All other values are assumed to be
+     *  literals and will not have associated symbols. */
     class SgAsmValueExpression: public SgAsmExpression {
     public:
 #endif
@@ -2295,7 +2290,9 @@ void Grammar::setUpBinaryInstructions() {
         /** Property: Where this expression is encoded within the instruction.
          *
          *  This is the bit offset into the instruction's raw bytes where this expression is encoded. If it is not supported by
-         *  the architectures, it will be set to zero and the "bit_size" property will also be zero.
+         *  the architectures, it will be set to zero and the "bit_size" property will also be zero.  Bits are numbered so that
+         *  bits zero through seven are in the first byte, bits eight through 15 are in the second byte, etc. Within a byte,
+         *  bits are numbered so that lower indexes are less significant bits.
          *
          * @{ */
         unsigned short get_bit_offset() const;
@@ -2697,24 +2694,6 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
 #ifdef DOCUMENTATION
-        /** Property: Replacement string for RoseBin_IDAPRO_buildTree.
-         *
-         *  The @p replacement is only set by @ref RoseBin_IDAPRO_buildTree::resolveRecursivelyExpression and appears to be
-         *  used only in a couple of files in src/midend/binaryAnalsyses (and elsewhere only for converting a @ref
-         *  SgAsmExpression to a string). It seems to hold the name of a function, such as "_malloc" or "malloc@plt" for branch
-         *  instructions. It should be possible to obtain the function name by looking up the instruction at the branch target
-         *  and then following parent links in the AST until we reach the SgAsmFunction node, which has a get_name() method.
-         *
-         * @{ */
-        std::string get_replacement() const;
-        void set_replacement(std::string);
-        /** @} */
-#else
-        AsmExpression.setDataPrototype("std::string", "replacement", "= \"\"",
-                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
-
-#ifdef DOCUMENTATION
         /** Property: Comment.
          *
          *  User-defined comment for an expression.
@@ -2738,6 +2717,7 @@ void Grammar::setUpBinaryInstructions() {
         void serialize(S &s, const unsigned version) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmNode);
             s & BOOST_SERIALIZATION_NVP(p_type);
+            s & BOOST_SERIALIZATION_NVP(p_comment);
         }
 #endif
 
@@ -9125,8 +9105,22 @@ void Grammar::setUpBinaryInstructions() {
         virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
         virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
         virtual const char *format_name() const $ROSE_OVERRIDE {return "DOS";}
+
+        /** Parses the DOS real-mode text+data section and adds it to the AST.
+         *
+         *  If max_offset is non-zero then use that as the maximum offset of the real-mode section. If the DOS header indicates
+         *  a zero sized section then return NULL. If the section exists or is zero size due to the max_offset then return the
+         *  section. See also, update_from_rm_section(). */
         SgAsmGenericSection *parse_rm_section(rose_addr_t max_offset=0);
+
+        /** Update DOS header with data from real-mode section.
+         *
+         *  The DOS real-mode data+text section is assumed to appear immediately after the DOS Extended Header, which appears
+         *  immediately after the DOS File Header, which appears at the beginning of the file. These assumptions are not
+         *  checked until SgAsmDOSFileHeader::unparse() is called. See also, @ref parse_rm_section. */
         void update_from_rm_section();
+
+        /** Returns true if a cursory look at the file indicates that it could be a DOS executable file. */
         static bool is_DOS(SgAsmGenericFile*);
 
     private:
@@ -10093,10 +10087,26 @@ void Grammar::setUpBinaryInstructions() {
         }
 
         virtual const char *format_name() const $ROSE_OVERRIDE {return "PE";}
+
+        /** Return true if the file looks like it might be a PE file according to the magic number.
+         *
+         *  The file must contain what appears to be a DOS File Header at address zero, and what appears to be a PE File Header
+         *  at a file offset specified in part of the DOS File Header (actually, in the bytes that follow the DOS File
+         *  Header). */
         static bool is_PE (SgAsmGenericFile*);
+
+        /** Convert an RVA/Size Pair index number into a section name.
+         *
+         *  This is different than @ref stringifySgAsmPEFileHeaderPairPurpose because it returns a section name rather than an
+         *  enum name. */
         std::string rvasize_pair_name(PairPurpose, const char **short_name);
+
+        /** Define an RVA/Size pair in the PE file header. */
         void set_rvasize_pair(PairPurpose, SgAsmPESection*);
+
+        /** Update all the RVA/Size pair info from the section to which it points. */
         void update_rvasize_pairs();
+
         void add_rvasize_pairs();
 
         virtual SgAsmPEFileHeader *parse() $ROSE_OVERRIDE;
@@ -10270,7 +10280,15 @@ void Grammar::setUpBinaryInstructions() {
             ctor(parent, rva, size);
         }
 
+        /** Sets or removes the section associated with an RVA/size pair.
+         *
+         *  Setting or removing the section also updates the RVA and size according to the preferred mapping address and mapped
+         *  size of the section. */
         void set_section(SgAsmGenericSection *section);
+
+        /** Returns the section associated with an RVA/size pair.
+         *
+         *  This is the same as the ROSETTA-generated accessor, but we need a custom version of set_section(). */
         SgAsmGenericSection *get_section() const;
 
         void *encode(SgAsmPERVASizePair::RVASizePair_disk *disk) const;
@@ -10300,7 +10318,10 @@ void Grammar::setUpBinaryInstructions() {
     /** A single imported object.
      *
      *  Each of these nodes is created from a combination of the PE Import Lookup Table and the PE Import Address Table,
-     *  pointers to which are stored in the Import Directory (@ref SgAsmPEImportDirectory). */
+     *  pointers to which are stored in the Import Directory (@ref SgAsmPEImportDirectory). This node represents a single
+     *  import object described by data structures referenced by a PE Import Directory.  Such a node represents data from two,
+     *  possibly three, distinct data structures in the PE file: (1) An entry in the Import Lookup Table, (2) an entry in the
+     *  Import Address Table, and (3) an optional Hint/Name pair in the (implicit) Hint/Name Table. */
     class SgAsmPEImportItem: public SgAsmExecutableFileFormat {
     public:
 #endif
@@ -10436,7 +10457,18 @@ void Grammar::setUpBinaryInstructions() {
             ctor(idir, ordinal);
         }
         virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+
+        /** Bytes needed to store hint/name pair.
+         *
+         *  A hint/name pair consists of a two-byte, little endian, unsigned hint and a NUL-terminated ASCII string.  An
+         *  optional zero byte padding appears after the string's NUL terminator if necessary to make the total size of the
+         *  hint/name pair a multiple of two. */
         size_t hintname_required_size() const;
+
+        /** Virtual address of an IAT entry.
+         *
+         *  Returns the virtual address of the IAT slot for this import item.  This import item must be linked into the AST in
+         *  order for this method to succeed. */
         rose_addr_t get_iat_entry_va() const;
 
     private:
@@ -10695,13 +10727,52 @@ void Grammar::setUpBinaryInstructions() {
               p_ilt_rva(0), p_ilt_nalloc(0), p_iat_rva(0), p_iat_nalloc(0), p_imports(NULL) {
             ctor(isec, dll_name);
         }
+
+        /** Parse an import directory.
+         *
+         *  The import directory is parsed from the specified virtual address via the PE header's loader map. Return value is
+         *  this directory entry on success, or the null pointer if the entry is all zero (which marks the end of the directory
+         *  list). */
         SgAsmPEImportDirectory *parse(rose_addr_t va);
+
+        /** Allocates space for this import directory's name, import lookup table, and import address table.
+         *
+         *  The items are allocated beginning at the specified relative virtual address. Items are reallocated if they are not
+         *  allocated or if they are allocated in the same section to which start_rva points (the import section).  They are
+         *  not reallocated if they already exist in some other section. The return value is the number of bytes allocated in
+         *  the import section.  Upon return, this directory's address data members are initialized with possibly new
+         *  values. */
         size_t reallocate(rose_rva_t starting_rva);
+
+        /** Encode an import directory entry back into disk format */
         void *encode(SgAsmPEImportDirectory::PEImportDirectory_disk*) const;
         virtual void unparse(std::ostream&, const SgAsmPEImportSection*, size_t idx) const;
         virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+
+        /** Number of bytes required for the table.
+         *
+         *  Returns the number of bytes required for the entire IAT or ILT (including the zero terminator) as it is currently
+         *  defined in the Import Directory.  The returned size does not include space required to store any Hint/Name pairs,
+         *  which are outside the ILT/IAT but pointed to by the ILT/IAT. */
         size_t iat_required_size() const;
+
+        /** Find an import item in an import directory.
+         *
+         *  Returns the index of the specified import item in this directory, or -1 if the import item is not a child of this
+         *  directory.  The hint index is checked first. */
         int find_import_item(const SgAsmPEImportItem *item, int hint=0) const;
+
+        /** Obtains the virtual address of the Hint/Name Table.
+         *
+         *  The Hint/Name Table is an implicit table--the PE file format specification talks about such a table, but it is not
+         *  actually defined anywhere in the PE file.  Instead, various Import Lookup Table and Import Address Table entries
+         *  might point to individual Hint/Name pairs, which collectively form an implicit Hint/Name Table.  There is no
+         *  requirement that the Hint/Name pairs are contiguous in the address space, and indeed they often are not.
+         *  Therefore, the only way to describe the location of the Hint/Name Table is by a list of addresses.
+         *
+         *  This function will scan this Import Directory's import items, observe which items make references to Hint/Name
+         *  pairs that have known addresses, and add those areas of virtual memory to the specified extent map.  This function
+         *  returns the number of ILT entries that reference a Hint/Name pair. */
         size_t hintname_table_extent(AddressIntervalSet &extent/*in,out*/) const;
 
     private:
@@ -10767,7 +10838,148 @@ void Grammar::setUpBinaryInstructions() {
     IS_SERIALIZABLE(AsmPEImportSection);
 
 #ifdef DOCUMENTATION
-    /** A file section containing a list of PE Import Directories. */
+   /** Portable Executable Import Section.
+     *
+     *  Constructs an SgAsmPEImportSection that represents either a PE ".idata" section as defined by the PE Section Table, or
+     *  a PE Import Table as described by the RVA/Size pairs at the end of the NT Optional Header. The ".idata" section and PE
+     *  Import Table both have the same format (only important fields shown):
+     *
+     *  @par Import Section
+     *  An Import Section consists of a list of Import Directory Entries ("Directories"), one per dynamically linked library,
+     *  followed by an all-zero Directory entry that marks the end of the list.  ROSE does not explicitly store the terminating
+     *  entry, and wherever "Directories" appears in the following description it does not include this null directory.
+     *
+     *  @par Import Directory
+     *  Each directory points to (by relative virtual address (RVA)) both an Import Lookup Table (ILT) and Import Address Table
+     *  (IAT).
+     *
+     *  @par Import Lookup Table (and Import Address Table)
+     *  The Import Lookup Table (ILT) and Import Address Table (IAT) have identical structure.  ROSE represents them as a list
+     *  of SgAsmPEImportItem in the Import Directory.  The ILT and IAT are parallel arrays of 32- or 64-bit (PE32 or PE32+)
+     *  entries terminated with an all-zero entry.  The terminating entry is not stored explicitly by ROSE.  The entries are
+     *  identical for both ILTs and IATs.
+     *
+     *  @par Import Lookup Table Entry (and Import Address Table Entry)
+     *  Entries for ILTs and IATs are structurally identical.  They are 32- or 64-bit vectors.  The most significant bit
+     *  (31/63) indicates whether the remaining bits are an Ordinal (when set) or Hint/Name address (when clear).  Ordinals are
+     *  represented by the low-order 16 bits and Hint/Name addresses are stored in the low-order 31 bits.  All other bits must
+     *  be zero according to the PE specification.  Hint/Name addresses are relative virtual addresses of entries in the
+     *  (implicit) Hint/Name Table. When a function is bound by the dynamic linkter, its IAT Entry within process memory is
+     *  overwritten with the virtual address of the bound function.
+     *
+     *  @par Hint/Name Table
+     *  Some Import Lookup Table (and Import Address Table) entries contain a Hint/Name Table Entry RVA.  The Hint/Name Table
+     *  Entries collectively form the Hint/Name Table, but there is no requirement that the entries appear in any particular
+     *  order or even that they appear contiguously in memory.  In other words, the Hint/Name Table is a conceptual object
+     *  rather than a true table in the PE file.
+     *
+     *
+     * @verbatim
+        +------------ Import Section -------------+                         (SgAsmPEImportSection)
+        |                                         |
+        |                                         |
+        |  +------- Import Directory #0 ------+   |                         (SgAsmPEImportDirectory)
+        |  |   1. Import Lookup Table RVA     |   |
+        |  |   2. Date/time stamp             |   |
+        |  |   3. Forwarder chain index       |   |
+        |  |   4. Name RVA                    |   |
+        |  |   5. Import Address Table RVA    |   |
+        |  +----------------------------------+   |
+        |                                         |
+        |                                         |
+        |  +------- Import Directory #1 ------+   |
+        |  |   1. Import Lookup Table RVA     |--------+
+        |  |   2. Date/time stamp             |   |    |
+        |  |   3. Forwarder chain index       |   |    |
+        |  |   4. Name RVA                    |   |    |
+        |  |   5. Import Address Table RVA    |------- | -------+
+        |  +----------------------------------+   |    |        |
+        |                                         |    |        |
+        |         . . .                           |    |        |
+        |                                         |    |        |
+        |  +------- Import Directory #N ------+   |    |        |
+        |  |                                  |   |    |        |
+        |  |   Terminating directory is       |   |    |        |
+        |  |   zero filled.                   |   |    |        |
+        |  |                                  |   |    |        |
+        |  |                                  |   |    |        |
+        |  +----------------------------------+   |    |        |
+        |                                         |    |        |
+        +-----------------------------------------+    |        |           (Entries of the ILT and IAT are combined into
+                                                       |        |            SgAsmPEImportItem objects.)
+                                                       |        |
+                                                       |        |
+        +----------- Import Lookup Table ---------+ <--+        +-->  +----------- Import Address Table --------+
+        | #0  32/64-bit vector                    |                   | #0  32/64-bit vector or VA when bound   |
+        |                                         |   These arrays    |                                         |
+        | #1  32/64-bit vector                    |   are parallel    | #1  32/64-bit vector or VA when bound   |
+        |                      \                  |                   |                                         |
+        |     ...               \when used as     |                   |     ...                                 |
+        |                        \a Hint/Name     |                   |                                         |
+        | #N  32/64-bit zero      \RVA            |                   | #N  32/64-bit zero                      |
+        +--------------------------\--------------+                   +-----------------------------------------+
+                                    \
+                                     \
+                                      |
+        + - - - - -  Hint/Name Table  | - - - - - +           The Hint/Name Table doesn't actually
+                                      v                       exist explicitly--there is no pointer
+        |  +------ Hint/Name ----------------+    |           to the beginning of the table and no
+           |  1. 2-byte index ENPT           |                requirement that the entries be in any
+        |  |  2. NUL-terminated name         |    |           particular order, or even contiguous.
+           |  3. Optional extran NUL         |
+        |  +---------------------------------+    |           "ENPT" means Export Name Pointer Table,
+                                                              which is a table in the linked-to
+        |          . . .                          |           shared library.
+
+        |  +------ Hint/Name ----------------+    |
+           |  1. 2-byte index ENPT           |                              (SgAsmPEImportHNTEntry)
+        |  |  2. NUL-terminated name         |    |
+           |  3. Optional extran NUL         |
+        |  +---------------------------------+    |
+
+        + - - - - - - - - - - - - - - - - - - - - +
+    @endverbatim
+     *
+     * When parsing an Import Directory, ROSE assumes that the IAT contains ordinals and/or hint/name addresses rather than
+     * bound addresses.  ROSE checks that the IAT entries are compatible with the ILT entries there were already parsed and if
+     * an inconsistency is detected then a warning is issued and ROSE assumes that the IAT entry is a bound value instead.
+     * Passing true as the @p assume_bound argument for the parser will cause ROSE to not issue such warnings and immediately
+     * assume that all IAT entries are bound addresses.  One can therefore find the conflicting entries by looking for
+     * SgAsmImportItem objects that are created with a non-zero bound address.
+     *
+     * The IAT is often required to be allocated at a fixed address, often the beginning of the ".rdata" section.  Increasing
+     * the size of the IAT by adding more items to the import list(s) can be problematic because ROSE is unable to safely write
+     * beyond the end of the original IAT.  We require the user to manually allocate space for the new IAT and tell the
+     * SgAsmPEImportDirectory object the location and size of the allocated space before unparsing.  On a related note, due to
+     * ROSE allocators being section-local, reallocation of an Import Section does not cause reallocation of ILTs, Hint/Name
+     * pairs, or DLL names that have addresses outside the Import Section.  If these items' sizes increase, the items will be
+     * truncated when written back to disk.  The reallocation happens automatically for all import-related objects that are
+     * either bound to the import section or have a null RVA, so one method of getting things reallocated is to traverse the
+     * AST and null their RVAs:
+     *
+     * @code
+     *  struct Traversal: public AstSimpleTraversal {
+     *      void visit(SgNode *node) {
+     *          SgAsmPEImportDirectory *idir = isSgAsmPEImportDirectory(node);
+     *          SgAsmPEImportItem *import = isSgAsmPEImportItem(node);
+     *          static const rose_rva_t nil(0);
+     *
+     *          if (idir) {
+     *              idir->set_dll_name_rva(nil);
+     *              idir->set_ilt_rva(nil);
+     *              idir->set_iat_rva(nil);
+     *          }
+     *
+     *          if (import)
+     *              idir->set_hintname_rva(nil);
+     *     }
+     *  };
+     * @endcode
+     * 
+     * @sa
+     *      SgAsmPEImportDirectory
+     *      SgAsmPEImportItem
+     */
     class SgAsmPEImportSection: public SgAsmPESection {
     public:
 #endif
@@ -10809,10 +11021,22 @@ void Grammar::setUpBinaryInstructions() {
         virtual bool reallocate() $ROSE_OVERRIDE;
         virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
         virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
+
+        /** Add an import directory to the end of the import directory list. */
         void add_import_directory(SgAsmPEImportDirectory*);
+
+        /** Remove an import directory from the import directory list. Does not delete it. */
         void remove_import_directory(SgAsmPEImportDirectory*);
         static bool show_import_mesg();
         static void import_mesg_reset() { mesg_nprinted=0; }
+
+        /** Reallocate space for all Import Address Table.
+         *
+         *  This method traverses the AST beginning at this PE Import Section and assigns addresses and sizes to all Import
+         *  Address Tables (IATs).  The first IAT is given the @p start_at RVA and its size is reset to what ever size is
+         *  needed to store the entire table.  Each subsequent IAT is given the next available address and it's size is also
+         *  updated.  The result is that all the IATs under this Import Section are given addresses and sizes that make them
+         *  contiguous in memory. This method returns the total number of bytes required for all the IATs. */
         size_t reallocate_iats(rose_rva_t start_at);
 
     private:
@@ -11417,6 +11641,11 @@ void Grammar::setUpBinaryInstructions() {
             ctor();
         }
         virtual SgAsmPESectionTable* parse() $ROSE_OVERRIDE;
+
+        /** Attaches a previously unattached PE Section to the PE Section Table.
+         *
+         *  This method complements SgAsmPESection::init_from_section_table. This method initializes the section table from the
+         *  section while init_from_section_table() initializes the section from the section table. */
         void add_section(SgAsmPESection *section);
         virtual bool reallocate() $ROSE_OVERRIDE;
         virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
@@ -11649,6 +11878,8 @@ void Grammar::setUpBinaryInstructions() {
         };
 
         explicit SgAsmPESectionTableEntry(const SgAsmPESectionTableEntry::PESectionTableEntry_disk *disk);
+
+        /** Update this section table entry with newer information from the section */
         void update_from_section(SgAsmPESection *section);
         void *encode(SgAsmPESectionTableEntry::PESectionTableEntry_disk*) const;
         virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
@@ -11713,6 +11944,12 @@ void Grammar::setUpBinaryInstructions() {
     public:
         explicit SgAsmPESection(SgAsmPEFileHeader *fhdr)
             : SgAsmGenericSection(fhdr->get_file(), fhdr), p_section_entry(NULL) {}
+
+        /** Initializes the section from data parsed from the PE Section Table.
+         *
+         *  This includes the section offset, size, memory mapping, alignments, permissions, etc. This function complements
+         *  SgAsmPESectionTable::add_section(): this function initializes this section from the section table while
+         *  add_section() initializes the section table from the section. */
         SgAsmPESection *init_from_section_table(SgAsmPESectionTableEntry *entry, int id);
         virtual bool reallocate() $ROSE_OVERRIDE;
         virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
@@ -15399,10 +15636,16 @@ void Grammar::setUpBinaryInstructions() {
         /** Factory method that parses a binary file. */
         static SgAsmGenericFile *parseBinaryFormat(const char *name);
 
-        /** Dump debugging information into a named text file. */
+        /** Dump debugging information into a named text file.
+         *
+         *  Writes a new file from the IR node for a parsed executable file. Warning: This function might modify the AST by
+         *  calling @ref reallocate, which makes sure all parts of the AST are consistent with respect to each other. */
         static void unparseBinaryFormat(const std::string &name, SgAsmGenericFile*);
 
-        /** Dump debugging information to specified stream. */
+        /** Dump debugging information to specified stream.
+         *
+         *  Unparses an executable file into the supplied output stream. Warning: This function might modify the AST by calling
+         *  reallocate(), which makes sure all parts of the AST are consistent with respect to each other. */
         static void unparseBinaryFormat(std::ostream&, SgAsmGenericFile*);
 
         /** Diagnostic stream. */

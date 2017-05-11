@@ -3,6 +3,7 @@
 
 #include "Map.h"
 #include "WorkLists.h"
+#include "sageBuilderAsm.h"
 
 #include <boost/foreach.hpp>
 #include <boost/graph/adjacency_list.hpp>
