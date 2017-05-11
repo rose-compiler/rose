@@ -547,6 +547,7 @@ SgOmpSafelenClause
 SgOmpLinearClause
 SgOmpUniformClause
 SgOmpAlignedClause
+SgOmpProcBindClause
 SgOpenclAccessModeModifier
 SgOpenStatement
 SgOptions
