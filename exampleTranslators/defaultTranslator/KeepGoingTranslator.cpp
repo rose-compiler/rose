@@ -74,7 +74,7 @@ main(int argc, char * argv[])
   // Build the AST used by ROSE
   SgProject* project = frontend(stripped_cmdline);
 
-#if 1 // this part is optional
+  // this part is used to catch midend errors.
   if (KEEP_GOING_CAUGHT_MIDEND_SIGNAL)
   {
     std::cout
@@ -83,7 +83,7 @@ main(int argc, char * argv[])
       << std::endl;
     project->set_midendErrorCode(100);
   }
-  else
+  else // put your midend code here
   {
     if (Rose::KeepGoing::enable_ast_tests)
     {
@@ -101,7 +101,7 @@ main(int argc, char * argv[])
       }
     }
   }
-#endif 
+
   // Insert your own manipulation of the AST here...
 
   // Generate source code from the AST and call the vendor's compiler
@@ -111,6 +111,9 @@ main(int argc, char * argv[])
   std::vector<std::string> orig_rose_cmdline(argv, argv+argc);
   Rose::KeepGoing::generate_reports (project, orig_rose_cmdline);
 
+  // IMPORTANT: Note that this is split into two steps, with generate_reports() in between;
+  // Otherwise the backend errors will not be reported in the file report. 
+  // return backend(project); 
   return backend_status;
 }
 

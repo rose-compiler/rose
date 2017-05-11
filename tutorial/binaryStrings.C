@@ -28,7 +28,7 @@ main(int argc, char *argv[]) {
 
     //! [load]
     MemoryMap::Ptr map = engine.loadSpecimens(specimen);
-    ByteOrder::Endianness sex = engine.obtainDisassembler()->get_sex();
+    ByteOrder::Endianness sex = engine.obtainDisassembler()->byteOrder();
     //! [load]
 
     //! [analysis]
