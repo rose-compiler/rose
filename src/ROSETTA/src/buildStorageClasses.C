@@ -846,6 +846,7 @@ AstNodeClass::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgFile::outputLanguageOption_enum" ) ||
                  ( varTypeString == "SgOmpClause::omp_default_option_enum" ) ||
                  ( varTypeString == "SgOmpClause::omp_proc_bind_policy_enum" ) ||
+                 ( varTypeString == "SgOmpClause::omp_atomic_clause_enum" ) ||
                  ( varTypeString == "SgOmpClause::omp_schedule_kind_enum" ) ||
                  ( varTypeString == "SgOmpClause::omp_reduction_operator_enum" ) ||
                  ( varTypeString == "SgOmpClause::omp_map_operator_enum" ) ||
