@@ -225,7 +225,11 @@ bool CodeThorn::strictWeakOrderingIsSmaller(const AbstractValue& c1, const Abstr
       if(c1.getVariableId()!=c2.getVariableId()) {
         return c1.getVariableId()<c2.getVariableId();
       } else {
-        return c1.getIntValue()<c2.getIntValue();
+        if(c1.getIntValue()!=c2.getIntValue()) {
+          return c1.getIntValue()<c2.getIntValue();
+        } else {
+          return c1.getValueSize()<c2.getValueSize();
+        }
       }
     } else if (c1.isBot()==c2.isBot()) {
       return false;
@@ -240,9 +244,9 @@ bool CodeThorn::strictWeakOrderingIsSmaller(const AbstractValue& c1, const Abstr
 bool CodeThorn::strictWeakOrderingIsEqual(const AbstractValue& c1, const AbstractValue& c2) {
   if(c1.getValueType()==c2.getValueType()) {
     if(c1.isConstInt() && c2.isConstInt())
-      return c1.getIntValue()==c2.getIntValue();
+      return c1.getIntValue()==c2.getIntValue() && c1.getValueSize()==c2.getValueSize();
     else if(c1.isPtr() && c2.isPtr()) {
-      return c1.getVariableId()==c2.getVariableId() && c1.getIntValue()==c2.getIntValue();
+      return c1.getVariableId()==c2.getVariableId() && c1.getIntValue()==c2.getIntValue() && c1.getValueSize()==c2.getValueSize();
     } else {
       ROSE_ASSERT((c1.isTop()&&c2.isTop()) || (c1.isBot()&&c2.isBot()));
       return true;
@@ -285,9 +289,9 @@ AbstractValue AbstractValue::operatorEq(AbstractValue other) const {
   } else if(other.valueType==BOT) { 
     return *this;
   } else if(isPtr() && other.isPtr()) {
-    return AbstractValue(variableId==other.variableId && intValue==other.intValue);
+    return AbstractValue(variableId==other.variableId && intValue==other.intValue && getValueSize()==other.getValueSize());
   } else if(isConstInt() && other.isConstInt()) {
-    return AbstractValue(intValue==other.intValue);
+    return AbstractValue(intValue==other.intValue && getValueSize()==other.getValueSize());
   } else {
     return AbstractValue(Top()); // all other cases can be true or false
   }

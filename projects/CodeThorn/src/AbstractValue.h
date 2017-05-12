@@ -123,7 +123,7 @@ class AbstractValue {
   ValueType valueType;
   SPRAY::VariableId variableId;
   int intValue;
-  uint8_t valueSize; // size of value in bits
+  uint8_t valueSize=0; // size of value in bytes
 };
 
 // arithmetic operators
