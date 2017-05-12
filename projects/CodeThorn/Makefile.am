@@ -12,7 +12,12 @@ if ROSE_USING_BOOST_VERSION_1_43
 else
 if ROSE_USING_BOOST_VERSION_1_44
 else
+
 SUBDIRS=src
+# demo target (for plugin demos)
+demo:
+	make -C src demo
+
 endif
 endif
 endif

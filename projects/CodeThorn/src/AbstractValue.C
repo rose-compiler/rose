@@ -80,6 +80,10 @@ AbstractValue::AbstractValue(unsigned long long int x) {
 }
 
 AbstractValue 
+AbstractValue::createAddressOfVariable(SPRAY::VariableId varId) {
+  return AbstractValue::createAddressOfArray(varId);
+}
+AbstractValue 
 AbstractValue::createAddressOfArray(SPRAY::VariableId arrayVarId) {
   return AbstractValue::createAddressOfArrayElement(arrayVarId,AbstractValue(0));
 }
@@ -453,7 +457,9 @@ string AbstractValue::toString(SPRAY::VariableIdMapping* vim) const {
   }
   case PTR: {
     stringstream ss;
-    ss<<"("<<variableId.toString(vim)<<","<<getIntValue()<<")";
+    ss<<"(";
+    ss<<variableId.toString(vim);
+    ss<<","<<getIntValue()<<")";
     return ss.str();
   }
   default:
