@@ -800,8 +800,6 @@ namespace sg
     return vis.rv;
   }
 
-
-
 /// \brief    uncovers the type of SgNode and passes it to an
 ///           overloaded function handle in RoseVisitor.
 /// \tparam   RoseVisitor the visitor that will be called back with
