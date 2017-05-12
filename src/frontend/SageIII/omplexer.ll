@@ -113,6 +113,10 @@ none            { return cond_return ( NONE ); }
 reduction       { return cond_return ( REDUCTION ); }
 copyin          { return cond_return ( COPYIN ); }
 
+proc_bind       { return cond_return ( PROC_BIND); }
+close           { return cond_return ( CLOSE ); }
+spread          { return cond_return ( SPREAD ); } /* master should already be recognized */
+
 target          {return cond_return ( TARGET ); }
 mpi             {return cond_return ( MPI ); } /*Experimental keywords to support scaling up to MPI processes */
 mpi:all         {return cond_return ( MPI_ALL ); }

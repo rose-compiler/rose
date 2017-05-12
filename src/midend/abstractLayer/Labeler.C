@@ -324,7 +324,7 @@ void Labeler::createLabels(SgNode* root) {
     if(isSgExprStatement(*i)||isSgReturnStmt(*i)/*||isSgVariableDeclaration(*i)*/)
       i.skipChildrenOnForward();
   }
-  std::cout << "STATUS: Assigned "<<mappingLabelToLabelProperty.size()<< " labels."<<std::endl;
+  //std::cout << "STATUS: Assigned "<<mappingLabelToLabelProperty.size()<< " labels."<<std::endl;
   //std::cout << "DEBUG: mappingLabelToLabelProperty:\n"<<this->toString()<<std::endl;
 }
 
@@ -362,7 +362,7 @@ void Labeler::ensureValidNodeToLabelMapping() {
 
 void Labeler::computeNodeToLabelMapping() {
   mappingNodeToLabel.clear();
-  std::cout << "INFO: computing node<->label with map size: "<<mappingLabelToLabelProperty.size()<<std::endl;
+  //std::cout << "INFO: computing node<->label with map size: "<<mappingLabelToLabelProperty.size()<<std::endl;
   for(Label i=0;i<mappingLabelToLabelProperty.size();++i) {
     SgNode* node=mappingLabelToLabelProperty[i.getId()].getNode();
     assert(node);

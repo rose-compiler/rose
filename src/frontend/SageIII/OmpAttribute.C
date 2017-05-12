@@ -420,6 +420,22 @@ namespace OmpSupport
     }
   }
 
+  void OmpAttribute::setProcBindPolicy(omp_construct_enum valuex)
+  {
+    switch (valuex)
+    {
+      case  e_proc_bind_master:
+      case  e_proc_bind_close:
+      case  e_proc_bind_spread:
+        proc_bind_policy = valuex;
+        break;
+      default:
+        cerr<<"OmpAttribute::setProcBindValue() Illegal default scoping value:"<<valuex<<endl;
+        ROSE_ASSERT(false);
+    }
+  }
+
+
   enum omp_construct_enum OmpAttribute::getDefaultValue()
   {
     // It does not make sense to get the default value
@@ -427,6 +443,15 @@ namespace OmpSupport
     ROSE_ASSERT(hasClause(e_default));
     return default_scope;
   }
+
+  enum omp_construct_enum OmpAttribute::getProcBindPolicy()
+  {
+    // It does not make sense to get the default value
+    // if there is no default clause
+    ROSE_ASSERT(hasClause(e_proc_bind));
+    return proc_bind_policy;
+  }
+
 
   // Reduction clause's operator, 
   // we store reduction clauses of the same operators into a single entity
@@ -557,7 +582,7 @@ namespace OmpSupport
       case e_end_task:result = "end task"; break;
       case e_end_workshare:result = "end workshare"; break;
 
-                           // clauses
+      // clauses
       case e_default: result = "default"; break;
       case e_shared: result = "shared"; break;
       case e_private: result = "private"; break;
@@ -565,7 +590,7 @@ namespace OmpSupport
       case e_lastprivate: result = "lastprivate"; break;
       case e_copyin: result = "copyin"; break;
       case e_copyprivate: result = "copyprivate"; break;
-
+      case e_proc_bind:        result = "proc_bind"; break;
 
       case e_if: result = "if"; break;
       case e_num_threads: result = "num_threads"; break;
@@ -584,6 +609,11 @@ namespace OmpSupport
       case e_default_shared: result = "shared"; break;
       case e_default_private: result = "private"; break;
       case e_default_firstprivate: result = "firstprivate"; break;
+
+
+      case e_proc_bind_master: result = "master"; break;
+      case e_proc_bind_close:  result = "close"; break;
+      case e_proc_bind_spread: result = "spread"; break;
 
       case e_reduction_plus: result = "+"; break;
       case e_reduction_minus: result = "-"; break;
@@ -955,6 +985,8 @@ namespace OmpSupport
       case e_collapse:
       case e_untied:
 
+      case e_proc_bind:
+
      // experimental accelerator clauses 
       case e_map:
       case e_dist_data:
@@ -1141,6 +1173,11 @@ namespace OmpSupport
       {
         result += OmpSupport::toString(omp_type);
         result+=" ("+ OmpSupport::toString(getDefaultValue())+")";
+      } 
+      else if (omp_type == e_proc_bind)
+      {
+        result += OmpSupport::toString(omp_type);
+        result+=" ("+ OmpSupport::toString(getProcBindPolicy())+")";
       } 
       // reduction (op:var-list)
       // could have multiple reduction clauses 

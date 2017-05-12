@@ -6194,6 +6194,38 @@ void UnparseLanguageIndependentConstructs::unparseOmpDefaultClause(SgOmpClause* 
   curprint(string(")"));
 }
 
+void UnparseLanguageIndependentConstructs::unparseOmpProcBindClause(SgOmpClause* clause, SgUnparse_Info& info)
+{
+  ROSE_ASSERT(clause != NULL);
+  SgOmpProcBindClause * c = isSgOmpProcBindClause(clause);
+  ROSE_ASSERT(c!= NULL);
+  curprint(string(" proc_bind("));
+  SgOmpClause::omp_proc_bind_policy_enum dv = c->get_policy(); 
+  switch (dv)
+  {
+    case SgOmpClause::e_omp_proc_bind_policy_master:
+      {
+        curprint(string("master"));
+        break;
+      }
+    case SgOmpClause::e_omp_proc_bind_policy_close:
+      {
+        curprint(string("close"));
+        break;
+      }   
+    case SgOmpClause::e_omp_proc_bind_policy_spread:
+      {
+        curprint(string("spread"));
+        break;
+      }
+   default:
+      cerr<<"Error: UnparseLanguageIndependentConstructs::unparseOmpProcBindClause() meets unacceptable default option value:"<<dv<<endl;
+      break;
+  }    
+  curprint(string(")"));
+}
+
+
 void UnparseLanguageIndependentConstructs::unparseOmpScheduleClause(SgOmpClause* clause, SgUnparse_Info& info)
 {
   ROSE_ASSERT(clause != NULL);
@@ -6605,6 +6637,11 @@ void UnparseLanguageIndependentConstructs::unparseOmpClause(SgOmpClause* clause,
     case V_SgOmpDefaultClause:
       {
         unparseOmpDefaultClause(isSgOmpDefaultClause(clause),info);
+        break;
+      }
+    case V_SgOmpProcBindClause:
+      {
+        unparseOmpProcBindClause(isSgOmpProcBindClause(clause),info);
         break;
       }
     case V_SgOmpNowaitClause:
