@@ -91,6 +91,7 @@ namespace OmpSupport
     e_lastprivate,
     e_copyin,
     e_copyprivate,
+    e_proc_bind, 
 
     //8 misc clauses
     e_if, // used with omp parallel or omp task
@@ -111,6 +112,11 @@ namespace OmpSupport
     //Fortran default values
     e_default_private,
     e_default_firstprivate,
+
+    // proc_bind(master|close|spread)
+    e_proc_bind_master, 
+    e_proc_bind_close, 
+    e_proc_bind_spread, 
 
     // reduction operations
     //8 operand for C/C++
@@ -366,6 +372,9 @@ namespace OmpSupport
       void setDefaultValue(omp_construct_enum valuex);
       omp_construct_enum getDefaultValue();
 
+      // proc_bind() policy 
+      void setProcBindPolicy(omp_construct_enum valuex);
+      omp_construct_enum getProcBindPolicy();
       // Schedule kind
       omp_construct_enum getScheduleKind(); 
       void setScheduleKind(omp_construct_enum kindx);
@@ -467,6 +476,9 @@ namespace OmpSupport
       // values for default() clause: data scoping information
       // choices are: none,shared, private, firstprivate
       omp_construct_enum default_scope; 
+
+     // values for proc_bind() clause
+      omp_construct_enum proc_bind_policy; 
 
       // value for omp for's schedule policies
       omp_construct_enum schedule_kind;

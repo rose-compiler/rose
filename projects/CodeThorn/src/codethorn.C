@@ -363,7 +363,7 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
     ("post-semantic-fold",po::value< string >(),"compute semantically folded state transition graph only after the complete transition graph has been computed. [=yes|no]")
     ("set-stg-incomplete", po::value< string >(), "set to true if the generated STG will not contain all possible execution paths (e.g. if only a subset of the input values is used). [=yes|no]")
     ("tg-trace", po::value< string >(), "generate STG computation trace [=filename]")
-    ("explicit-arrays","turns on to represent all arrays explicitly in every state.")
+    ("explicit-arrays","represent all arrays ecplicitly in every state.")
     ;
 
   rersOptions.add_options()
@@ -381,7 +381,7 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
 
   svcompOptions.add_options()
     ("svcomp-mode", "sets default options for all following SVCOMP-specific options.")
-    ("enable-external-function-semantics",  "assumes specific semantics for the external functions: __VERIFIER_error, __VERIFIER_nondet_int, exit functions.")
+    ("external-function-semantics",  "assumes specific semantics for the external functions: __VERIFIER_error, __VERIFIER_nondet_int, exit, memcpy.")
     ("error-function", po::value< string >(), "detect a verifier error function with name [arg] (terminates verification)")
     ;
 
@@ -431,6 +431,7 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
     ("help-par", "show options for analyzing parallel programs")
     ("help-vis", "show options for visualization output files")
     ("help-data-race", "show options for data race detection")
+    ("status", "show status messages")
     ("no-reduce-cfg","Do not reduce CFG nodes that are irrelevant for the analysis.")
     ("internal-checks", "run internal consistency checks (without input program)")
     ("input-values",po::value< string >(),"specify a set of input values (e.g. \"{1,2,3}\")")
@@ -503,7 +504,7 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
     cout << dataRaceOptions << "\n";
     exit(0);
   } else if (args.count("version")) {
-    cout << "CodeThorn version 1.8.0\n";
+    cout << "CodeThorn version 1.8.1 (beta)\n";
     cout << "Written by Markus Schordan, Marc Jasper, Joshua Asplund, Adrian Prantl\n";
     exit(0);
   }
@@ -584,12 +585,14 @@ BoolOptions& parseBoolOptions(int argc, char* argv[]) {
   boolOptions.registerOption("data-race-fail",false);
   boolOptions.registerOption("reduce-cfg",true); // MS (2016-06-28): enabled reduce-cfg by default
   boolOptions.registerOption("explicit-arrays",false);
+  boolOptions.registerOption("status",false);
 
   boolOptions.processZeroArgumentsOption("svcomp-mode");
   boolOptions.processZeroArgumentsOption("reduce-cfg"); // this handles 'no-reduce-cfg'
   boolOptions.processZeroArgumentsOption("data-race");
   boolOptions.processZeroArgumentsOption("data-race-fail");
   boolOptions.processZeroArgumentsOption("explicit-arrays");
+  boolOptions.processZeroArgumentsOption("status");
 
   return boolOptions;
 }
@@ -1092,11 +1095,16 @@ int main( int argc, char * argv[] ) {
 
     analyzerSetup(analyzer, args, logger);
 
-    int numberOfThreadsToUse=1;
     if(args.count("threads")) {
-      numberOfThreadsToUse=args["threads"].as<int>();
+      int numThreads=args["threads"].as<int>();
+      if(numThreads<=0) {
+        cerr<<"Error: number of threads must be greater or equal 1."<<endl;
+        exit(1);
+      }
+      analyzer.setNumberOfThreadsToUse(numThreads);
+    } else {
+      analyzer.setNumberOfThreadsToUse(1);
     }
-    analyzer.setNumberOfThreadsToUse(numberOfThreadsToUse);
 
     string option_specialize_fun_name="";
     vector<int> option_specialize_fun_param_list;
@@ -1187,7 +1195,7 @@ int main( int argc, char * argv[] ) {
     if(args.count("dump-sorted")>0 || args.count("dump-non-sorted")>0 || args.count("equivalence-check")>0) {
       analyzer.setSkipSelectedFunctionCalls(true);
       analyzer.setSkipArrayAccesses(true);
-      if(numberOfThreadsToUse>1) {
+      if(analyzer.getNumberOfThreadsToUse()>1) {
         logger[ERROR] << "multi threaded rewrite not supported yet."<<endl;
         exit(1);
       }
@@ -1208,13 +1216,17 @@ int main( int argc, char * argv[] ) {
       analyzer.setExternalErrorFunctionName(errorFunctionName);
     }
 
-    if(args.count("enable-external-function-semantics")) {
+    if(args.count("external-function-semantics")) {
       analyzer.enableExternalFunctionSemantics();
     }
 
     if(args.count("error-function")) {
       string errorFunctionName=args["error-function"].as<string>();
       analyzer.setExternalErrorFunctionName(errorFunctionName);
+    }
+
+    if(boolOptions["status"]) {
+      analyzer.setOptionStatusMessages(true);
     }
 
     analyzer.setTreatStdErrLikeFailedAssert(boolOptions["stderr-like-failed-assert"]);
@@ -1449,7 +1461,7 @@ int main( int argc, char * argv[] ) {
     double initRunTime=timer.getElapsedTimeInMilliSec();
 
     timer.start();
-    cout << "=============================================================="<<endl;
+    analyzer.printStatusMessageLine("==============================================================");
     if(boolOptions["semantic-fold"]) {
       analyzer.setSolver(4);
     }
@@ -1463,7 +1475,7 @@ int main( int argc, char * argv[] ) {
     }
 
     double analysisRunTime=timer.getElapsedTimeInMilliSec();
-    cout << "=============================================================="<<endl;
+    analyzer.printStatusMessageLine("==============================================================");
     double extractAssertionTracesTime= 0;
     int maxOfShortestAssertInput = -1;
     if ( boolOptions["with-counterexamples"] || boolOptions["with-assert-counterexamples"]) {
@@ -1487,27 +1499,32 @@ int main( int argc, char * argv[] ) {
     }
     double totalInputTracesTime = extractAssertionTracesTime + determinePrefixDepthTime;
 
-    cout << "=============================================================="<<endl;
     bool withCe = boolOptions["with-counterexamples"] || boolOptions["with-assert-counterexamples"];
-    analyzer.reachabilityResults.printResults("YES (REACHABLE)", "NO (UNREACHABLE)", "error_", withCe);
-
+    if(analyzer.getOptionStatusMessages()) {
+      analyzer.printStatusMessageLine("==============================================================");
+      analyzer.reachabilityResults.printResults("YES (REACHABLE)", "NO (UNREACHABLE)", "error_", withCe);
+    }
     if (args.count("csv-assert")) {
       string filename=args["csv-assert"].as<string>().c_str();
       analyzer.reachabilityResults.writeFile(filename.c_str(), false, 0, withCe);
-      cout << "Reachability results written to file \""<<filename<<"\"." <<endl;
-      cout << "=============================================================="<<endl;
+      if(analyzer.getOptionStatusMessages()) {
+        cout << "Reachability results written to file \""<<filename<<"\"." <<endl;
+        cout << "=============================================================="<<endl;
+      }
     }
     if(boolOptions["tg-ltl-reduced"]) {
       analyzer.stdIOFoldingOfTransitionGraph();
-      cout << "Size of transition graph after reduction : "<<analyzer.getTransitionGraph()->size()<<endl;
+      logger[TRACE] << "Size of transition graph after reduction : "<<analyzer.getTransitionGraph()->size()<<endl;
     }
     if(boolOptions["eliminate-stg-back-edges"]) {
       int numElim=analyzer.getTransitionGraph()->eliminateBackEdges();
       logger[TRACE]<<"STATUS: eliminated "<<numElim<<" STG back edges."<<endl;
     }
 
-    analyzer.reachabilityResults.printResultsStatistics();
-    cout << "=============================================================="<<endl;
+    if(analyzer.getOptionStatusMessages()) {
+      analyzer.reachabilityResults.printResultsStatistics();
+      analyzer.printStatusMessageLine("==============================================================");
+    }
 
     long pstateSetSize=analyzer.getPStateSet()->size();
     long pstateSetBytes=analyzer.getPStateSet()->memorySize();
@@ -1714,10 +1731,12 @@ int main( int argc, char * argv[] ) {
         }
       }
 
-      ltlResults-> printResults("YES (verified)", "NO (falsified)", "ltl_property_", withCounterexample);
-      cout << "=============================================================="<<endl;
-      ltlResults->printResultsStatistics();
-      cout << "=============================================================="<<endl;
+      if(analyzer.getOptionStatusMessages()) {
+        ltlResults-> printResults("YES (verified)", "NO (falsified)", "ltl_property_", withCounterexample);
+        analyzer.printStatusMessageLine("==============================================================");
+        ltlResults->printResultsStatistics();
+        analyzer.printStatusMessageLine("==============================================================");
+      }
       if (args.count("csv-spot-ltl")) {  //write results to a file instead of displaying them directly
         std::string csv_filename = args["csv-spot-ltl"].as<string>();
         logger[TRACE] << "STATUS: writing ltl results to file: " << csv_filename << endl;
@@ -1839,7 +1858,9 @@ int main( int argc, char * argv[] ) {
 
     double overallTime =totalRunTime + totalInputTracesTime + totalLtlRunTime;
 
+#if 0
     // MS: all measurements are available here. We can print any information also on screen.
+    stringstream ss;
     cout <<color("white");
     cout << "=============================================================="<<endl;
     cout <<color("normal")<<"STG generation and assertion analysis complete"<<color("white")<<endl;
@@ -1863,8 +1884,9 @@ int main( int argc, char * argv[] ) {
     cout << "Time total           : "<<color("green")<<CodeThorn::readableruntime(totalRunTime)<<color("white")<<endl;
     cout << "=============================================================="<<endl;
     cout <<color("normal");
-    //printAnalyzerStatistics(analyzer, totalRunTime, "STG generation and assertion analysis complete");
-
+#else
+    printAnalyzerStatistics(analyzer, totalRunTime, "STG generation and assertion analysis complete");
+#endif
     if(args.count("csv-stats")) {
       string filename=args["csv-stats"].as<string>().c_str();
       stringstream text;
@@ -1924,7 +1946,7 @@ int main( int argc, char * argv[] ) {
         <<pstateSetLoadFactor<<", "
         <<eStateSetLoadFactor<<", "
         <<constraintSetsLoadFactor<<endl;
-      text<<"threads,"<<numberOfThreadsToUse<<endl;
+      text<<"threads,"<<analyzer.getNumberOfThreadsToUse()<<endl;
       //    text<<"abstract-and-const-states,"
       //    <<"";
 
@@ -2222,24 +2244,29 @@ void CodeThorn::printAnalyzerStatistics(Analyzer& analyzer, double totalRunTime,
 
   long totalMemory=pstateSetBytes+eStateSetBytes+transitionGraphBytes+constraintSetsBytes;
 
-  cout <<color("white");
-  cout << "=============================================================="<<endl;
-  cout <<color("normal")<<title<<color("white")<<endl;
-  cout << "=============================================================="<<endl;
-  cout << "Number of stdin-estates        : "<<color("cyan")<<numOfStdinEStates<<color("white")<<endl;
-  cout << "Number of stdoutvar-estates    : "<<color("cyan")<<numOfStdoutVarEStates<<color("white")<<endl;
-  cout << "Number of stdoutconst-estates  : "<<color("cyan")<<numOfStdoutConstEStates<<color("white")<<endl;
-  cout << "Number of stderr-estates       : "<<color("cyan")<<numOfStderrEStates<<color("white")<<endl;
-  cout << "Number of failed-assert-estates: "<<color("cyan")<<numOfFailedAssertEStates<<color("white")<<endl;
-  cout << "Number of const estates        : "<<color("cyan")<<numOfConstEStates<<color("white")<<endl;
-  cout << "=============================================================="<<endl;
-  cout << "Number of pstates              : "<<color("magenta")<<pstateSetSize<<color("white")<<" (memory: "<<color("magenta")<<pstateSetBytes<<color("white")<<" bytes)"<<" ("<<""<<pstateSetLoadFactor<<  "/"<<pstateSetMaxCollisions<<")"<<endl;
-  cout << "Number of estates              : "<<color("cyan")<<eStateSetSize<<color("white")<<" (memory: "<<color("cyan")<<eStateSetBytes<<color("white")<<" bytes)"<<" ("<<""<<eStateSetLoadFactor<<  "/"<<eStateSetMaxCollisions<<")"<<endl;
-  cout << "Number of transitions          : "<<color("blue")<<transitionGraphSize<<color("white")<<" (memory: "<<color("blue")<<transitionGraphBytes<<color("white")<<" bytes)"<<endl;
-  cout << "Number of constraint sets      : "<<color("yellow")<<numOfconstraintSets<<color("white")<<" (memory: "<<color("yellow")<<constraintSetsBytes<<color("white")<<" bytes)"<<" ("<<""<<constraintSetsLoadFactor<<  "/"<<constraintSetsMaxCollisions<<")"<<endl;
-  cout << "=============================================================="<<endl;
-  cout << "Memory total         : "<<color("green")<<totalMemory<<" bytes"<<color("white")<<endl;
-  cout << "Time total           : "<<color("green")<<CodeThorn::readableruntime(totalRunTime)<<color("white")<<endl;
-  cout << "=============================================================="<<endl;
-  cout <<color("normal");
+  stringstream ss;
+  ss <<color("white");
+  ss << "=============================================================="<<endl;
+  ss <<color("normal")<<title<<color("white")<<endl;
+  ss << "=============================================================="<<endl;
+  ss << "Number of stdin-estates        : "<<color("cyan")<<numOfStdinEStates<<color("white")<<endl;
+  ss << "Number of stdoutvar-estates    : "<<color("cyan")<<numOfStdoutVarEStates<<color("white")<<endl;
+  ss << "Number of stdoutconst-estates  : "<<color("cyan")<<numOfStdoutConstEStates<<color("white")<<endl;
+  ss << "Number of stderr-estates       : "<<color("cyan")<<numOfStderrEStates<<color("white")<<endl;
+  ss << "Number of failed-assert-estates: "<<color("cyan")<<numOfFailedAssertEStates<<color("white")<<endl;
+  ss << "Number of const estates        : "<<color("cyan")<<numOfConstEStates<<color("white")<<endl;
+  ss << "=============================================================="<<endl;
+  ss << "Number of pstates              : "<<color("magenta")<<pstateSetSize<<color("white")<<" (memory: "<<color("magenta")<<pstateSetBytes<<color("white")<<" bytes)"<<" ("<<""<<pstateSetLoadFactor<<  "/"<<pstateSetMaxCollisions<<")"<<endl;
+  ss << "Number of estates              : "<<color("cyan")<<eStateSetSize<<color("white")<<" (memory: "<<color("cyan")<<eStateSetBytes<<color("white")<<" bytes)"<<" ("<<""<<eStateSetLoadFactor<<  "/"<<eStateSetMaxCollisions<<")"<<endl;
+  ss << "Number of transitions          : "<<color("blue")<<transitionGraphSize<<color("white")<<" (memory: "<<color("blue")<<transitionGraphBytes<<color("white")<<" bytes)"<<endl;
+  ss << "Number of constraint sets      : "<<color("yellow")<<numOfconstraintSets<<color("white")<<" (memory: "<<color("yellow")<<constraintSetsBytes<<color("white")<<" bytes)"<<" ("<<""<<constraintSetsLoadFactor<<  "/"<<constraintSetsMaxCollisions<<")"<<endl;
+  if(analyzer.getNumberOfThreadsToUse()==1 && analyzer.getSolver()==5 && analyzer.getExplorationMode()==Analyzer::EXPL_LOOP_AWARE) {
+    ss << "Number of iterations           : "<<analyzer.getIterations()<<"-"<<analyzer.getApproximatedIterations()<<endl;
+  }
+  ss << "=============================================================="<<endl;
+  ss << "Memory total         : "<<color("green")<<totalMemory<<" bytes"<<color("white")<<endl;
+  ss << "Time total           : "<<color("green")<<CodeThorn::readableruntime(totalRunTime)<<color("white")<<endl;
+  ss << "=============================================================="<<endl;
+  ss <<color("normal");
+  analyzer.printStatusMessage(ss.str());
 }

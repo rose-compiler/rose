@@ -266,6 +266,39 @@ namespace OmpSupport
     return result;
   }
     
+   //! Build SgOmpProcBindClause from OmpAttribute, if any
+  SgOmpProcBindClause * buildOmpProcBindClause(OmpAttribute* att)
+  {
+    ROSE_ASSERT(att != NULL);
+    if (!att->hasClause(e_proc_bind))
+      return NULL;
+
+    //grab policy
+    omp_construct_enum dv = att->getProcBindPolicy();
+    SgOmpClause::omp_proc_bind_policy_enum sg_dv;
+    switch (dv)
+    {
+      case e_proc_bind_close:
+        sg_dv = SgOmpClause::e_omp_proc_bind_policy_close;
+        break;
+      case e_proc_bind_master:
+        sg_dv = SgOmpClause::e_omp_proc_bind_policy_master;
+        break;
+      case e_proc_bind_spread:
+        sg_dv = SgOmpClause::e_omp_proc_bind_policy_spread;
+        break;
+      default:
+        {
+          cerr<<"error: buildOmpProcBindClause () Unacceptable default option from OmpAttribute:"
+            <<OmpSupport::toString(dv)<<endl;
+          ROSE_ASSERT(false) ;  
+        }
+    }//end switch
+    SgOmpProcBindClause* result = new SgOmpProcBindClause(sg_dv);
+    setOneSourcePositionForTransformation(result);
+    ROSE_ASSERT(result);
+    return result;
+  }
   
   // Sara Royuela ( Nov 2, 2012 ): Check for clause parameters that can be defined in macros
   // This adds support for the use of macro definitions in OpenMP clauses
@@ -892,6 +925,12 @@ namespace OmpSupport
           result = buildOmpDefaultClause(att); 
           break;
         }
+      case e_proc_bind:
+        {
+          result = buildOmpProcBindClause(att); 
+          break;
+        }
+ 
       case e_nowait:
         {
           result = buildOmpNowaitClause(att); 

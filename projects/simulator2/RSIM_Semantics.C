@@ -78,7 +78,7 @@ createDispatcher(RSIM_Thread *owningThread) {
         TODO("architecture not supported");
     }
 
-    const RegisterDictionary *regs = disassembler->get_registers();
+    const RegisterDictionary *regs = disassembler->registerDictionary();
     RiscOperatorsPtr ops = RiscOperators::instance(arch, owningThread, regs, NULL);
     size_t wordSize = disassembler->instructionPointerRegister().get_nbits();
     ASSERT_require(wordSize == 32 || wordSize == 64);

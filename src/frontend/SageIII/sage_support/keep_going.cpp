@@ -499,6 +499,11 @@ void Rose::KeepGoing::generate_reports(SgProject* project,
   if (files_with_errors.size()>0 && report_filename__fail.size()>0)
   {
     AppendToFile (report_filename__fail, "------------------------\n");
+    // add time stamp in the beginning
+    std::ostringstream ostamp;
+    ostamp << GetTimestamp()  << " " << getpid() << std::endl;
+    AppendToFile (report_filename__fail, ostamp.str());
+
     AppendToFile (report_filename__fail, orig_command_str);
 
     BOOST_FOREACH(SgFile* file, files_with_errors)
@@ -514,7 +519,7 @@ void Rose::KeepGoing::generate_reports(SgProject* project,
           << "'" << path_prefix << filename << "'"
           << std::endl;
       }
-     
+
       // <file> <frontend> <unparser> <backend>
       std::stringstream ss;
       // ss << filename << " "; // no need to output filename again, part of command line already.
@@ -533,8 +538,17 @@ void Rose::KeepGoing::generate_reports(SgProject* project,
         ss << "\t Unparsed File Failed Compilation Code: "<< file->get_unparsedFileFailedCompilation();
       ss<<"\n";  
       AppendToFile(report_filename__fail, ss.str());
-    }
 
+      //Sometimes even for files failed on backend stage, some analysis results are generated. 
+      //we still want to output such results.
+      // If exists, output the analysis results associated with each file
+      std::ostringstream oss;
+      oss <<  File2StringMap[file]; // not copyable, not assignable
+      if (oss.str().size()>0)
+      {
+        AppendToFile(report_filename__fail, oss.str());
+      }
+    }
   }
   // Report successes
   SgFilePtrList files_without_errors = project->get_files_without_errors();
@@ -544,6 +558,11 @@ void Rose::KeepGoing::generate_reports(SgProject* project,
    
     AppendToFile (report_filename__pass, "------------------------\n");
     //AppendToFile (report_filename__pass, orig_command_str);
+
+    // add time stamp in the beginning
+    std::ostringstream ostamp ;
+    ostamp << GetTimestamp()  << " " << getpid() << std::endl;
+    AppendToFile (report_filename__pass, ostamp.str());
 
     BOOST_FOREACH(SgFile* file, files_without_errors)
     {
@@ -571,6 +590,7 @@ void Rose::KeepGoing::generate_reports(SgProject* project,
       }
     }
   }
+
 
   if (!expectations_filename__fail.empty())
   {

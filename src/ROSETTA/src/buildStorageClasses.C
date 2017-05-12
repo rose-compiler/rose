@@ -845,6 +845,7 @@ AstNodeClass::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgFile::outputFormatOption_enum" ) ||
                  ( varTypeString == "SgFile::outputLanguageOption_enum" ) ||
                  ( varTypeString == "SgOmpClause::omp_default_option_enum" ) ||
+                 ( varTypeString == "SgOmpClause::omp_proc_bind_policy_enum" ) ||
                  ( varTypeString == "SgOmpClause::omp_schedule_kind_enum" ) ||
                  ( varTypeString == "SgOmpClause::omp_reduction_operator_enum" ) ||
                  ( varTypeString == "SgOmpClause::omp_map_operator_enum" ) ||
@@ -1670,7 +1671,7 @@ string AstNodeClass::buildStorageClassArrangeStaticDataInOneBlockSource ()
 //#########################################################################################################
 
 /* JH (10/28/2005) : This method creates the source code for the IR node constructor, that has as 
-   its corresponding StorageClass as parameter! Since we call the the initalization for the parents, 
+   its corresponding StorageClass as parameter! Since we call the initialization for the parents, 
    we only need to handle the data members of the IR node itself!
 */
 string AstNodeClass::buildSourceForIRNodeStorageClassConstructor ()
