@@ -2412,7 +2412,6 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                     case V_SgLinemarkerDirectiveStatement:  unparseLinemarkerDirectiveStatement  (stmt, info); break;
 
                  // Liao 10/21/2010. Handle generic OpenMP directive unparsing here.
-                    case V_SgOmpAtomicStatement:
                     case V_SgOmpSectionStatement:
                     case V_SgOmpTaskwaitStatement:
                     case V_SgOmpBarrierStatement:           unparseOmpSimpleStatement        (stmt, info);break;
@@ -2431,6 +2430,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                     case V_SgOmpSingleStatement:
                     case V_SgOmpTaskStatement:
                     case V_SgOmpSimdStatement:
+                    case V_SgOmpAtomicStatement: // Atomic may have clause now
                          unparseOmpGenericStatement (stmt, info); 
                          break;
 
@@ -6189,6 +6189,7 @@ void UnparseLanguageIndependentConstructs::unparseOmpDefaultClause(SgOmpClause* 
       }
     default:
       cerr<<"Error: UnparseLanguageIndependentConstructs::unparseOmpDefaultClause() meets unacceptable default option value:"<<dv<<endl;
+      ROSE_ASSERT (false);
       break;
   }    
   curprint(string(")"));
@@ -6220,10 +6221,48 @@ void UnparseLanguageIndependentConstructs::unparseOmpProcBindClause(SgOmpClause*
       }
    default:
       cerr<<"Error: UnparseLanguageIndependentConstructs::unparseOmpProcBindClause() meets unacceptable default option value:"<<dv<<endl;
+      ROSE_ASSERT (false);
       break;
   }    
   curprint(string(")"));
 }
+
+void UnparseLanguageIndependentConstructs::unparseOmpAtomicClause(SgOmpClause* clause, SgUnparse_Info& info)
+{
+  ROSE_ASSERT(clause != NULL);
+  SgOmpAtomicClause * c = isSgOmpAtomicClause(clause);
+  ROSE_ASSERT(c!= NULL);
+//  curprint(string(" "));
+  SgOmpClause::omp_atomic_clause_enum dv = c->get_atomicity(); 
+  switch (dv)
+  {
+    case SgOmpClause::e_omp_atomic_clause_read:
+      {
+        curprint(string("read"));
+        break;
+      }
+    case SgOmpClause::e_omp_atomic_clause_write:
+      {
+        curprint(string("write"));
+        break;
+      }
+    case SgOmpClause::e_omp_atomic_clause_update:
+      {
+        curprint(string("update"));
+        break;
+      }
+    case SgOmpClause::e_omp_atomic_clause_capture:
+      {
+        curprint(string("capture"));
+        break;
+      }
+  default:
+      cerr<<"Error: "<< __FUNCTION__ <<" meets unacceptable default option value:"<<dv<<endl;
+      ROSE_ASSERT (false);
+      break;
+  }    
+}
+
 
 
 void UnparseLanguageIndependentConstructs::unparseOmpScheduleClause(SgOmpClause* clause, SgUnparse_Info& info)
@@ -6262,6 +6301,7 @@ void UnparseLanguageIndependentConstructs::unparseOmpScheduleClause(SgOmpClause*
       }
     default:
       cerr<<"Error: UnparseLanguageIndependentConstructs::unparseOmpScheduleClause() meets unacceptable kind option value:"<<skind<<endl;
+      ROSE_ASSERT (false);
       break;
   }
 
@@ -6644,6 +6684,12 @@ void UnparseLanguageIndependentConstructs::unparseOmpClause(SgOmpClause* clause,
         unparseOmpProcBindClause(isSgOmpProcBindClause(clause),info);
         break;
       }
+    case V_SgOmpAtomicClause:
+      {
+        unparseOmpAtomicClause(isSgOmpAtomicClause(clause),info);
+        break;
+      }
+ 
     case V_SgOmpNowaitClause:
       {
         curprint(string(" nowait"));
@@ -6725,7 +6771,7 @@ void UnparseLanguageIndependentConstructs::unparseOmpSimpleStatement(SgStatement
   SgOmpBodyStatement* b_stmt = isSgOmpBodyStatement(stmt);
   if (b_stmt)
   {
-    ROSE_ASSERT (stmt->variantT() == V_SgOmpAtomicStatement || stmt->variantT() == V_SgOmpSectionStatement);
+    ROSE_ASSERT (stmt->variantT() == V_SgOmpSectionStatement);
     SgUnparse_Info ninfo(info);
     unparseStatement(b_stmt->get_body(), ninfo);
   }

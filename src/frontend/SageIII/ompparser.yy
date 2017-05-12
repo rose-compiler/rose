@@ -107,6 +107,7 @@ corresponding C type is union name defaults to YYSTYPE.
         SUB_ASSIGN2 MUL_ASSIGN2 DIV_ASSIGN2 MOD_ASSIGN2 AND_ASSIGN2 
         XOR_ASSIGN2 OR_ASSIGN2
         LEXICALERROR IDENTIFIER 
+        READ WRITE CAPTURE
 /*We ignore NEWLINE since we only care about the pragma string , We relax the syntax check by allowing it as part of line continuation */
 %token <itype> ICONSTANT   
 %token <stype> EXPRESSION ID_EXPRESSION 
@@ -440,9 +441,28 @@ taskwait_directive : /* #pragma */ OMP TASKWAIT {
                    ;
 
 atomic_directive : /* #pragma */ OMP ATOMIC { 
-                     ompattribute = buildOmpAttribute(e_atomic,gNode, true); }
+                     ompattribute = buildOmpAttribute(e_atomic,gNode, true); 
+                     } atomic_clauseopt
                  ;
 
+atomic_clauseopt : /* empty */
+                 | atomic_clause
+                 ;
+
+atomic_clause : READ { ompattribute->addClause(e_atomic_clause);
+                       ompattribute->setAtomicAtomicity(e_atomic_read);
+                      }
+               | WRITE{ ompattribute->addClause(e_atomic_clause);
+                       ompattribute->setAtomicAtomicity(e_atomic_write);
+                  }
+
+               | UPDATE { ompattribute->addClause(e_atomic_clause);
+                       ompattribute->setAtomicAtomicity(e_atomic_update);
+                  }
+               | CAPTURE { ompattribute->addClause(e_atomic_clause);
+                       ompattribute->setAtomicAtomicity(e_atomic_capture);
+                  }
+                ;
 flush_directive : /* #pragma */ OMP FLUSH {
                     ompattribute = buildOmpAttribute(e_flush,gNode, true);
                     omptype = e_flush; 
