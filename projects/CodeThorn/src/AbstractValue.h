@@ -57,7 +57,8 @@ class AbstractValue {
   AbstractValue(long long int x);
   AbstractValue(unsigned long long int x);
   AbstractValue(SPRAY::VariableId varId); // allows implicit type conversion
-  AbstractValue createIntegerValue(CodeThorn::BuiltInType btype, long long int ival);
+  AbstractValue createIntegerValue(CodeThorn::BuiltInType btype, long long int ival, TypeSizeMapping* tsm);
+  void setValueSize(CodeThorn::BuiltInType btype, TypeSizeMapping* tsm);
   bool isTop() const;
   bool isTrue() const;
   bool isFalse() const;
@@ -116,6 +117,8 @@ class AbstractValue {
   SPRAY::VariableId getVariableId() const;
   uint8_t getValueSize() const;
   void setValueSize(uint8_t valueSize);
+  // sets value according to type size (truncates if necessary)
+  void setValue(long long int val);
 
   long hash() const;
   std::string valueTypeToString() const;
