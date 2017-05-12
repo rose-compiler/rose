@@ -131,6 +131,8 @@ namespace sg
     : rv(rosevisitor)
     {}
 
+    GEN_VISIT(SgNode)
+
     GEN_VISIT(SgName)
     GEN_VISIT(SgSymbolTable)
     GEN_VISIT(SgPragma)
