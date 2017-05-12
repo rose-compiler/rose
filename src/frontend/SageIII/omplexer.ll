@@ -117,6 +117,11 @@ proc_bind       { return cond_return ( PROC_BIND); }
 close           { return cond_return ( CLOSE ); }
 spread          { return cond_return ( SPREAD ); } /* master should already be recognized */
 
+
+read            { return cond_return ( READ ); }
+write           { return cond_return ( WRITE ); }
+capture         { return cond_return ( CAPTURE ); }
+
 target          {return cond_return ( TARGET ); }
 mpi             {return cond_return ( MPI ); } /*Experimental keywords to support scaling up to MPI processes */
 mpi:all         {return cond_return ( MPI_ALL ); }
