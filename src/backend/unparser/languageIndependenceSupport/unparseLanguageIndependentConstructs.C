@@ -3179,13 +3179,15 @@ UnparseLanguageIndependentConstructs::isTransformed(SgStatement* stmt)
   // Assume no transformation at the moment while we debug templates.
 
   // DQ (6/29/2005): return false while we try to return to compiling KULL
-#if 1
+#if 0
      return false;
 #else
-
-#error "DEAD CODE!"
-
-     return true;
+  // DQ (5/9/2017): Fix this to look at the statement (non-defining template instantiations are not being unparsed).
+#if 0
+     printf ("In UnparseLanguageIndependentConstructs::isTransformed(): stmt = %p = %s stmt->isTransformation() = %s \n",
+          stmt,stmt->class_name().c_str(),(stmt->isTransformation() == true) ? "true" : "false");
+#endif
+     return stmt->isTransformation();
 #endif
    }
 
