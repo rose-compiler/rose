@@ -433,8 +433,10 @@ private:
      *                                  Instructions and disassembly
      **************************************************************************************************************************/
 private:
-    rose::BinaryAnalysis::Disassembler *disassembler_;         /**< Disassembler to use for obtaining instructions */
-    rose::BinaryAnalysis::Disassembler::InstructionMap icache;        /**< Cache of disassembled instructions */
+    typedef std::map<rose_addr_t, SgAsmInstruction*> InstructionMap;
+
+    rose::BinaryAnalysis::Disassembler *disassembler_;  /* Disassembler to use for obtaining instructions */
+    InstructionMap icache;                              /* Cache of disassembled instructions */
 
 public:
     /** Disassembles the instruction at the specified virtual address. For efficiency, instructions are cached by the
