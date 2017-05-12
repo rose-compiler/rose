@@ -85,6 +85,7 @@ class AbstractValue {
   static AbstractValue operatorDiv(AbstractValue& a,AbstractValue& b);
   static AbstractValue operatorMod(AbstractValue& a,AbstractValue& b);
 
+  static AbstractValue createAddressOfVariable(SPRAY::VariableId varId);
   static AbstractValue createAddressOfArray(SPRAY::VariableId arrayVariableId);
   static AbstractValue createAddressOfArrayElement(SPRAY::VariableId arrayVariableId, AbstractValue Index);
   // strict weak ordering (required for sorted STL data structures if
