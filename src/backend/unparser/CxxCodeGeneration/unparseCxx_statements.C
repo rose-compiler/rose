@@ -2500,7 +2500,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
 #endif
 
 #if OUTPUT_DEBUGGING_FUNCTION_NAME || 0
-     printf ("Inside of unparseTemplateInstantiationFunctionDeclStmt() name = %s (qualified_name = %s)  transformed = %s prototype = %s static = %s friend = %s compiler generated = %s transformed = %s output = %s \n",
+     printf ("In unparseTemplateInstantiationFunctionDeclStmt() name = %s (qualified_name = %s)  transformed = %s prototype = %s static = %s friend = %s compiler generated = %s transformed = %s output = %s \n",
        // templateInstantiationFunctionDeclaration->get_name().str(),
           templateInstantiationFunctionDeclaration->get_name().str(),
           templateInstantiationFunctionDeclaration->get_qualified_name().str(),
@@ -2522,10 +2522,13 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
                (templateInstantiationFunctionDeclaration->get_file_info()->isCompilerGenerated() == true) && 
                (templateInstantiationFunctionDeclaration->get_definition() == NULL) &&
                (templateInstantiationFunctionDeclaration->get_definingDeclaration() == NULL);
+#if 0
+          printf ("In unparseTemplateInstantiationFunctionDeclStmt(): skipforwardDeclarationOfTemplateSpecialization = %s \n",skipforwardDeclarationOfTemplateSpecialization ? "true" : "false");
+#endif
           if (skipforwardDeclarationOfTemplateSpecialization == true)
              {
             // This is a compiler generated forward function declaration of a template instatiation, so skip it!
-#if PRINT_DEVELOPER_WARNINGS || 0
+#if PRINT_DEVELOPER_WARNINGS || 1
                printf ("This is a compiler generated forward function declaration of a template instatiation, so skip it! \n");
                curprint ( string("\n/* Skipping output of compiler generated forward function declaration of a template specialization */"));
 #endif
@@ -2538,7 +2541,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
             // skip output of inlined templates since these are likely to have been used 
             // previously and would be defined too late if provided as an inline template 
             // specialization output in the source code.
-#if PRINT_DEVELOPER_WARNINGS || 0
+#if PRINT_DEVELOPER_WARNINGS || 1
                printf ("This is an inlined template which might have been used previously (skipping output of late specialization) \n");
                curprint ( string("\n/* Skipping output of inlined template specialization */"));
 #endif
@@ -2656,6 +2659,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
 
        // Now output the function declaration
 #if 0
+          printf ("Now output the function declaration (unparseFuncDeclStmt) \n");
           curprint ("\n/* Now output the function declaration (unparseFuncDeclStmt) */\n ");
 #endif
           unparseFuncDeclStmt(functionDeclaration,info);
@@ -4178,6 +4182,10 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
         }
 #endif
 
+#if 0
+  // DQ (5/10/2017): This should be commented out (since we now use the specification of the nondefining 
+  // declaration as "output in generated code" to determine when it should be output.
+
   // DQ (11/27/2015): The updated support for templates demonstrates that we need this code (see test2004_37.C).
   // However, the larger issue is that the defining function declaration should not have been output, which is 
   // the root cause of this problem.
@@ -4192,16 +4200,17 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                if (isSgTemplateInstantiationFunctionDecl(def_decl))
                   {
                  // cout<<"Skipping a forward declaration of a template instantiation function declaration..."<<endl;
-#if 0
+#if 1
                     printf ("In unparseFuncDeclStmt(): Skipping a forward declaration of a template instantiation function declaration... \n");
 #endif
-#if 0
+#if 1
                     curprint("/* In unparseFuncDeclStmt(): Skipping a forward declaration of a template instantiation function declaration...*/ \n");
 #endif
                     return;
                   }
              }
         }
+#endif
 
 #if 0
      printf ("funcdecl_stmt = %p = %s \n",funcdecl_stmt,funcdecl_stmt->get_name().str());
