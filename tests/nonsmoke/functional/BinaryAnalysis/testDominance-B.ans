@@ -10,24 +10,29 @@ digraph G {
 2->3 ;
 }
 ================================================================================
-test testDominance-B2.dot in function <malloc@plt> at 0x080482a0
+test testDominance-B2.dot in function <DYNAMIC_LINKER_TRAMPOLINE> at 0x08048290
+digraph G {
+0[ label="0x08048290" ];
+}
+================================================================================
+test testDominance-B3.dot in function <malloc@plt> at 0x080482a0
 digraph G {
 0[ label="0x080482a0" ];
 }
 ================================================================================
-test testDominance-B3.dot in function <__libc_start_main@plt> at 0x080482b0
+test testDominance-B4.dot in function <__libc_start_main@plt> at 0x080482b0
 digraph G {
 0[ label="0x080482b0" ];
 }
 ================================================================================
-test testDominance-B4.dot in function <_start> at 0x080482c0
+test testDominance-B5.dot in function <_start> at 0x080482c0
 digraph G {
 0[ label="0x080482c0" ];
 1[ label="0x080482e1" ];
 0->1 ;
 }
 ================================================================================
-test testDominance-B5.dot in function <call_gmon_start> at 0x080482e4
+test testDominance-B6.dot in function <call_gmon_start> at 0x080482e4
 digraph G {
 0[ label="0x080482e4" ];
 1[ label="0x080482ff" ];
@@ -36,7 +41,7 @@ digraph G {
 0->2 ;
 }
 ================================================================================
-test testDominance-B6.dot in function <__do_global_dtors_aux> at 0x08048310
+test testDominance-B7.dot in function <__do_global_dtors_aux> at 0x08048310
 digraph G {
 0[ label="0x08048310" ];
 1[ label="0x0804831f" ];
@@ -51,24 +56,20 @@ digraph G {
 0->5 ;
 }
 ================================================================================
-test testDominance-B7.dot in function <frame_dummy> at 0x08048340
+test testDominance-B8.dot in function <frame_dummy> at 0x08048340
 digraph G {
 0[ label="0x08048340" ];
 1[ label="0x0804834f" ];
 2[ label="0x08048358" ];
 3[ label="0x08048361" ];
 0->1 ;
+1->2 ;
 0->3 ;
 }
 ================================================================================
-test testDominance-B8.dot in function <main> at 0x08048364
+test testDominance-B9.dot in function <main> at 0x08048364
 digraph G {
 0[ label="0x08048364" ];
-}
-================================================================================
-test testDominance-B9.dot in function <> at 0x0804836e
-digraph G {
-0[ label="0x0804836e" ];
 1[ label="0x08048381" ];
 2[ label="0x08048394" ];
 3[ label="0x080483a6" ];
@@ -84,17 +85,30 @@ digraph G {
 0[ label="0x080483c0" ];
 1[ label="0x080483da" ];
 2[ label="0x080483f4" ];
-3[ label="0x080483fb" ];
+3[ label="0x080483f8" ];
+4[ label="0x080483fb" ];
+5[ label="0x0804840a" ];
 0->1 ;
+1->2 ;
+2->3 ;
+3->4 ;
+1->5 ;
 }
 ================================================================================
 test testDominance-B11.dot in function <__libc_csu_fini> at 0x08048414
 digraph G {
 0[ label="0x08048414" ];
 1[ label="0x0804843f" ];
-2[ label="0x08048443" ];
-3[ label="0x0804844e" ];
-0->3 ;
+2[ label="0x08048440" ];
+3[ label="0x08048443" ];
+4[ label="0x08048444" ];
+5[ label="0x08048449" ];
+6[ label="0x0804844e" ];
+4->2 ;
+2->3 ;
+0->4 ;
+4->5 ;
+5->6 ;
 }
 ================================================================================
 test testDominance-B12.dot in function <__do_global_ctors_aux> at 0x08048460

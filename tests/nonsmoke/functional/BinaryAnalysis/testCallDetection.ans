@@ -1,16 +1,16 @@
-| call   0x080480c1<<Func>>
+| call   0x080480c1<T1>
 0x00000000080480a0:  is_call target=0x00000000080480c1 return=0x00000000080480a5
 
-| call   0x080480c7<<Func>>
+| call   0x080480c7<T2>
 0x00000000080480a5:  is_call target=0x00000000080480c7 return=0x00000000080480aa
 
-| call   0x080480d2<<Func>>
+| call   0x080480d2<T3>
 0x00000000080480aa:  is_call target=0x00000000080480d2 return=0x00000000080480af
 
-| call   0x080480d8<<Func>>
+| call   0x080480d8<T4>
 0x00000000080480af:  is_call target=0x00000000080480d8 return=0x00000000080480b4
 
-| call   0x080480f9<<Func>>
+| call   0x080480f9<T5>
 0x00000000080480b4:  is_call target=0x00000000080480f9 return=0x00000000080480b9
 
 | mov    eax, 0x00000001
@@ -18,24 +18,21 @@
 | hlt    
 0x00000000080480b9: not_call target=0xffffffffffffffff return=0xffffffffffffffff
 
-| call   0x08048118<<Func>>
+| call   0x08048118<callee>
 0x00000000080480c1:  is_call target=0x0000000008048118 return=0x00000000080480c6
 
 | ret    
 0x00000000080480c6: not_call target=0xffffffffffffffff return=0xffffffffffffffff
 
-| push   0x080480d1<<Insn>>
-| jmp    0x08048118<<Func>>
-0x00000000080480c7:  is_call target=0x0000000008048118 return=0x00000000080480d1
+| push   0x080480d1<T2.L1>
+| jmp    0x08048118<callee>
+0x00000000080480c7: not_call target=0xffffffffffffffff return=0xffffffffffffffff
 
-| ret    
-0x00000000080480d1: not_call target=0xffffffffffffffff return=0xffffffffffffffff
-
-| jmp    0x08048118<<Func>>
+| jmp    0x08048118<callee>
 0x00000000080480d2: not_call target=0xffffffffffffffff return=0xffffffffffffffff
 
 | push   eax
-| mov    eax, 0x080480f6<<Insn>>
+| mov    eax, 0x080480f6<T4.L1>
 | add    eax, 0x00000002
 | sub    eax, 0x00000001
 | push   eax
@@ -43,33 +40,28 @@
 | push   eax
 | inc    eax
 | inc    eax
-| jmp    0x08048118<<Func>>
-0x00000000080480d8:  is_call target=0x0000000008048118 return=0x00000000080480f6
+| jmp    0x08048118<callee>
+0x00000000080480d8: not_call target=0xffffffffffffffff return=0xffffffffffffffff
 
-| pop    eax
-| pop    eax
-| ret    
-0x00000000080480f6: not_call target=0xffffffffffffffff return=0xffffffffffffffff
-
-| call   0x08048109<<Func>>
+| call   0x08048109<T5_1>
 0x00000000080480f9:  is_call target=0x0000000008048109 return=0x00000000080480fe
 
-| call   0x0804810e<<Func>>
+| call   0x0804810e<T5_2>
 0x00000000080480fe:  is_call target=0x000000000804810e return=0x0000000008048103
 
-| call   0x08048113<<Func>>
+| call   0x08048113<T5_3>
 0x0000000008048103:  is_call target=0x0000000008048113 return=0x0000000008048108
 
 | ret    
 0x0000000008048108: not_call target=0xffffffffffffffff return=0xffffffffffffffff
 
-| jmp    0x08048118<<Func>>
+| jmp    0x08048118<callee>
 0x0000000008048109: not_call target=0xffffffffffffffff return=0xffffffffffffffff
 
-| jmp    0x08048109<<Func>>
+| jmp    0x08048109<T5_1>
 0x000000000804810e: not_call target=0xffffffffffffffff return=0xffffffffffffffff
 
-| jmp    0x0804810e<<Func>>
+| jmp    0x0804810e<T5_2>
 0x0000000008048113: not_call target=0xffffffffffffffff return=0xffffffffffffffff
 
 | nop    

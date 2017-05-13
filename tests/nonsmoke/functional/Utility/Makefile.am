@@ -114,13 +114,8 @@ graphIO.passed: $(top_srcdir)/scripts/test_exit_status graphIO
 # Boilerplate
 ########################################################################################################################
 
-check-smoke-local:
-check-nonsmoke-local: $(TEST_TARGETS)
 
-# FIXME: check-local temporarily runs non-smoke tests as well until Jenkins and the matrix are fixed [Matzke, 2016-09-07]
-#check-local: check-smoke-local
-check-local: check-smoke-local check-nonsmoke-local
-check-all-local: check-smoke-local check-nonsmoke-local
+check-local: $(TEST_TARGETS)
 
 clean-local:
 	rm -f $(MOSTLYCLEANFILES)

@@ -46,6 +46,6 @@ check-testPartitioner2: $(testPartitioner2_targets)
 
 endif
 
-check-smoke-local: $(TEST_TARGETS)
+check-local: $(TEST_TARGETS)
 
 .PHONY: $(PHONIES)

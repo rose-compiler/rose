@@ -89,7 +89,7 @@ void jacobi_GPU(REAL *u, REAL *uold, REAL *f, REAL dx, REAL dy, int offset, int 
 //#pragma omp parallel
     {
 //#pragma omp target device (tid) map(tofrom: u[offset*m:m*n]) map(to: uold[offset*m:m*n],f[offset*m:m*n],m,n, offset,ax,ay,b,omega) 
-#pragma omp parallel for shared(uold,u,f, offset, ax,ay,b,omega,n) private(resid,j,i) reduction(+:err_tmp) nowait
+#pragma omp parallel for shared(uold,u,f, offset, ax,ay,b,omega,n) private(resid,j,i) reduction(+:err_tmp)
       for (i=offset+1;i<offset+(n-1);i++) 
       { 
         for (j=1;j<(m-1);j++)   

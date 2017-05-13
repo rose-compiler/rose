@@ -106,4 +106,4 @@ check-sawyer: $(SAWYER_TEST_TARGETS)
 # Boilerplate
 ###############################################################################################################################
 
-check-smoke-local: $(TEST_TARGETS)
+check-local: $(TEST_TARGETS)
