@@ -49,7 +49,7 @@ void FASTtoSgConverter::convert_MainProgram(FAST::MainProgram* main_program)
 
    FAST::ProgramStmt*    programStmt    = main_program->getProgramStmt();
    FAST::Scope*          programScope   = main_program->getScope();
-   FAST::ContainsStmt*   containsStmt   = main_program->getContainsStmt();
+// FAST::ContainsStmt*   containsStmt   = main_program->getContainsStmt();
    FAST::EndProgramStmt* endProgramStmt = main_program->getEndProgramStmt();
 
 // convert EndProgramStmt first as constructor arguments are readily available
