@@ -10,18 +10,22 @@
 #include <Sawyer/CommandLine.h>
 static const char* purpose = "This tool detects various patterns in input source files.";
 static const char* description =
-        "This tool detects several patterns in C++ source files. For example: "
-        " Pattern 1: the use of class or structure data members in RAJA loops."
-        " Pattern 2: the Nodal Accumulation Pattern in for loops or RAJA loops.";
+        "This tool detects several patterns in C++ source files. Currently supported patterns are: "
+        " Pattern 1: the Nodal Accumulation Pattern in C++ for loops or LLNL/RAJA loops.";
 
+//        " Pattern 1: the use of class or structure data members in RAJA loops."
 using namespace std;
 using namespace SageInterface;
+
+// used to store debugging output into a file
+ofstream ofile; 
 
 namespace RAJA_Checker 
 {
   bool enable_debug = false;
   bool keep_going = false;
 
+  // Not in use right now
   bool checkDataMember = false; 
   bool checkNodalAccumulationPattern = true;
 
@@ -72,7 +76,10 @@ namespace RAJA_Checker
           // Additionally, we exclude user added explicit this->
           SgBinaryOp* bop = isSgBinaryOp(exp);
           if (!isSgThisExp(bop->get_lhs_operand()))
-            cout<<"Found data member access at:"<< finfo->get_filename() <<" " << finfo->get_line() <<":"<< finfo->get_col()  <<endl;
+          {
+           if (RAJA_Checker::enable_debug)
+            ofile<<"Found data member access at:"<< finfo->get_filename() <<" " << finfo->get_line() <<":"<< finfo->get_col()  <<endl;
+          }
         }
       } 
     }
@@ -159,35 +166,39 @@ namespace RAJA_Checker
 } // end RAJA_Checker namespace
 
 //! Initialize the switch group and its switches.
-Sawyer::CommandLine::SwitchGroup commandLineSwitches() {
+Sawyer::CommandLine::SwitchGroup commandLineSwitches() 
+{
   using namespace Sawyer::CommandLine;
 
-
   // Default log files for keep_going option
-  Rose::KeepGoing::report_filename__fail = "autoPar-failed-files.txt";
-  Rose::KeepGoing::report_filename__pass = "autoPar-passed-files.txt";
+ // Using home may be a better choice, no scattered log files in every subdirectories.  
+  //  report_filename__fail(boost::filesystem::path(getenv("HOME")).native()+"/rajaChecker-failed_files.txt");
+  //  report_filename__pass(boost::filesystem::path(getenv("HOME")).native()+"/rajaChecker-passed_files.txt");
 
+  Rose::KeepGoing::report_filename__fail = boost::filesystem::path(getenv("HOME")).native()+"/rajaChecker-failed_files.txt";
+  Rose::KeepGoing::report_filename__pass = boost::filesystem::path(getenv("HOME")).native()+"/rajaChecker-passed_files.txt";
 
   SwitchGroup switches("RAJA Checker's switches");                                                                         
   switches.doc("These switches control the RAJA Checker tool. ");                                                          
-  switches.name("rose:checker");                                                                                      
+  switches.name("");                                                                                      
                                                                                                                       
-  switches.insert(Switch("enable_debug")                                                                              
+  switches.insert(Switch("debug")                                                                              
       .intrinsicValue(true, RAJA_Checker::enable_debug)                                                        
       .doc("Enable the debugging mode."));                                                                            
-                                                                                                                      
-  // Keep going option of autoPar, set to true by default                                                             
+
+  switches.insert(Switch("report")                                                                            
+      .argument("string", anyParser(Rose::KeepGoing::report_filename__pass))                                          
+      .doc("Specify the report file for storing results, default is HOME/rajaChecker-passed-files.txt"));
+
+  // Keep going option, false by default
   switches.insert(Switch("keep_going")                                                                                
       .intrinsicValue(true, RAJA_Checker::keep_going)                                                          
       .doc("Allow the tool to keep going even if errors happen"));                                             
-                                                                                                                      
+
   switches.insert(Switch("failure_report")                                                                            
       .argument("string", anyParser(Rose::KeepGoing::report_filename__fail))                                          
-      .doc("Specify the report file for logging files the tool cannot process"));                                      
-                                                                                                                      
-  switches.insert(Switch("success_report")                                                                            
-      .argument("string", anyParser(Rose::KeepGoing::report_filename__pass))                                          
-      .doc("Specify the report file for logging files the tool can successfully process"));                                         
+      .doc("Only used when keep_going is turned on. Specify the report file for storing files the tool cannot process, default is HOME/rajaChecker-failed-files.txt"));
+
 #if 0                                                                                                                      
   switches.insert(Switch("dumpannot")                                                                                 
       .intrinsicValue(true, AutoParallelization::dump_annot_file)                                                     
@@ -426,7 +437,14 @@ bool RAJA_Checker::isNodalAccumulationLoop(SgForStatement* forloop, SgExprStatem
   if (bb == NULL) return false;
 
   SgInitializedName* lvar = SageInterface::getLoopIndexVariable (forloop);
-  ROSE_ASSERT (lvar !=NULL);
+  if (lvar ==NULL)
+  {
+    if (RAJA_Checker::enable_debug)
+    {
+      cerr<<"Warning: SageInterface::getLoopIndexVariable() returns NULL for loop:"<<forloop->get_file_info()->displayString()<<endl;
+    }
+    return false;
+  }
 
   return isNodalAccumulationBody (bb, lvar, fstmt);
 }
@@ -492,6 +510,7 @@ void RoseVisitor::visit ( SgNode* n)
     if (lnode->get_file_info()->isCompilerGenerated())
       return;
 
+    
 //-------------------  Nodal accumulation loop detection ----------------
     if (SgForStatement* forloop = isSgForStatement(lnode))
     {
@@ -500,8 +519,16 @@ void RoseVisitor::visit ( SgNode* n)
         SgExprStatement* fstmt = NULL; 
         if ( isNodalAccumulationLoop (forloop, fstmt))
         {
-          cout<<"Found a nodal accumulation loop at line:"<< forloop->get_file_info()->get_line()<<endl;
-          cout<<"\t The first accumulation statement is at line:"<< fstmt->get_file_info()->get_line()<<endl;
+            ostringstream oss;
+            oss<<"Found a nodal accumulation loop at line:"<< forloop->get_file_info()->get_line()<<endl;
+            oss<<"\t The first accumulation statement is at line:"<< fstmt->get_file_info()->get_line()<<endl;
+
+            SgSourceFile* file = getEnclosingSourceFile(forloop);
+            Rose::KeepGoing::File2StringMap[file]+=oss.str();
+          if (RAJA_Checker::enable_debug)
+          {
+            ofile<<oss.str();
+          }
         }
       }
     } // end if for loop
@@ -517,8 +544,16 @@ void RoseVisitor::visit ( SgNode* n)
           SgExprStatement* fstmt = NULL; 
           if ( isNodalAccumulationLambdaExp(le, fstmt))
           {
-            cout<<"Found a nodal accumulation lambda function at line:"<< le->get_file_info()->get_line()<<endl;
-            cout<<"\t The first accumulation statement is at line:"<< fstmt->get_file_info()->get_line()<<endl;
+              ostringstream oss; 
+              oss<<"Found a nodal accumulation lambda function at line:"<< le->get_file_info()->get_line()<<endl;
+              oss<<"\t The first accumulation statement is at line:"<< fstmt->get_file_info()->get_line()<<endl;
+
+              SgSourceFile* file = getEnclosingSourceFile(le);
+              Rose::KeepGoing::File2StringMap[file]+=oss.str();
+            if (RAJA_Checker::enable_debug)
+            {
+              ofile<<oss.str();
+            }
           }
         }
 
@@ -542,6 +577,21 @@ void RoseVisitor::visit ( SgNode* n)
   } // end if located node
 }
 
+
+
+static void initDebugOutputFile(SgProject* project)
+{
+  SgFilePtrList fl = project->get_files();
+  SgFile* firstfile = fl[0];
+  ROSE_ASSERT (firstfile!=NULL);
+
+  string filename = rose::StringUtility::stripPathFromFileName (firstfile->getFileName());
+  string ofilename = filename+".output";
+  ofile.open(ofilename.c_str());
+}
+
+
+//---------------------------------------------------------------------------
 int
 main ( int argc, char* argv[])
 {
@@ -564,6 +614,8 @@ main ( int argc, char* argv[])
   }
   else
   {
+    if (RAJA_Checker::enable_debug)
+      initDebugOutputFile (project);
     // ROSE Traversal
     RoseVisitor visitor;
 
@@ -577,16 +629,33 @@ main ( int argc, char* argv[])
         visitor.traverseWithinFile(s_file, preorder); 
       }
     }
+
+    if (RAJA_Checker::enable_debug)
+      ofile.close();
   }
 
 label_end:
   // Report errors
-  if (RAJA_Checker::keep_going)
+  // For this analysis-only tool. 
+  // Can we turn off backend unparsing and compilation. 
+  // So the tool can process more files and generate more complete reports.
+  // We cannot do this. Some build processes need *.o files. 
+  int status = backend(project);
+ // important: MUST call backend() first, then generate reports.
+ // otherwise, backend errors will not be caught by keep-going feature!!
+
+  // One problem: some files fail backend , but the analysis generates useful info.
+  // How to output analysis info for them?
+  // the report of failed files will contain the analysis results. 
+  //TODO: would a single report file easier for users?
+
+// We want the reports are generated with or without keep_going option
+//  if (RAJA_Checker::keep_going)
   {
     std::vector<std::string> orig_rose_cmdline(argv, argv+argc);
     Rose::KeepGoing::generate_reports (project, orig_rose_cmdline);
   }  
-
-  return backend(project);
+  //return backend(project);
+  return status;
 }
 

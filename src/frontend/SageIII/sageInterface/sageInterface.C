@@ -10061,9 +10061,12 @@ SgInitializedName* SageInterface::getLoopIndexVariable(SgNode* loop)
   }
   else
   {
-    cerr<<"Warning: SageInterface::getLoopIndexVariable(). Unhandled init_stmt type of SgForStatement"<<endl;
-    cerr<<"Init statement is :"<<init1->class_name() <<" " <<init1->unparseToString()<<endl;
-    init1->get_file_info()->display("Debug");
+    if (getProject()->get_verbose()>0)
+    {
+      cerr<<"Warning: SageInterface::getLoopIndexVariable(). Unhandled init_stmt type of SgForStatement"<<endl;
+      cerr<<"Init statement is :"<<init1->class_name() <<" " <<init1->unparseToString()<<endl;
+      init1->get_file_info()->display("Debug");
+    }
     return NULL; 
     //ROSE_ASSERT (false);
   }
