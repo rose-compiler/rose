@@ -813,7 +813,7 @@ EDG_412_GNU_6_1_PROBLEM_FILES = \
  test2005_130.C \
  test2005_131.C \
  test2005_132.C \
- test2005_133.C \ 
+ test2005_133.C \
  test2005_142.C \
  test2005_181.C \
  test2006_20.C \
@@ -828,7 +828,7 @@ EDG_412_GNU_6_1_PROBLEM_FILES = \
  test2010_24.C \
  test2011_06.C \
  test2011_141.C \
- test2011_142.C 
+ test2011_142.C
 
 # DQ (2/19/2017): NEW VERSION OF LOGIC
 # DQ (2/18/2017): More specific logic required for portability.
@@ -983,7 +983,7 @@ OLD_EXAMPLE_TESTCODES_REQUIRED_TO_PASS_FOLDED_CONSTANTS += \
  test2005_130.C \
  test2005_131.C \
  test2005_132.C \
- test2005_133.C \ 
+ test2005_133.C \
  test2005_142.C \
  test2005_181.C \
  test2006_20.C \
