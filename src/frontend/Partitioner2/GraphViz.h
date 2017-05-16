@@ -680,11 +680,6 @@ public:
         selectIntervalGraph(interval).emit(out);
     }
     
-    /** Dump function call graph.
-     *
-     *  Produces a function call graph by emitting a GraphViz dot file to the specified stream.  This emitter does not
-     *  currently use most of the properties, selectors, etc. */
-    void emitCallGraph(std::ostream&) const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Low-level emitters
