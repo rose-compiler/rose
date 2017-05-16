@@ -4003,6 +4003,7 @@ Grammar::GrammarNodeInfo Grammar::getGrammarNodeInfo(AstNodeClass* grammarnode) 
         ||nodeName == "SgOmpTaskStatement"
         ||nodeName == "SgOmpForStatement"
         ||nodeName == "SgOmpDoStatement"
+        ||nodeName == "SgOmpAtomicStatement"
         ||nodeName == "SgExprListExp");
   }
   return info;
@@ -4301,6 +4302,7 @@ Grammar::buildTreeTraversalFunctions(AstNodeClass& node, StringUtility::FileWith
                  ||string(node.getName()) == "SgOmpTargetDataStatement"
                  ||string(node.getName()) == "SgOmpForStatement"
                  ||string(node.getName()) == "SgOmpDoStatement"
+                 ||string(node.getName()) == "SgOmpAtomicStatement"
                  )
                   {
                     outputFile << "if (idx == 0) return p_body;\n"
@@ -4407,6 +4409,7 @@ Grammar::buildTreeTraversalFunctions(AstNodeClass& node, StringUtility::FileWith
                  ||string(node.getName()) == "SgOmpTargetDataStatement"
                  ||string(node.getName()) == "SgOmpForStatement"
                  ||string(node.getName()) == "SgOmpDoStatement"
+                 ||string(node.getName()) == "SgOmpAtomicStatement"
                  )
                   {
                      outputFile << "if (child == p_body) return 0;\n"
