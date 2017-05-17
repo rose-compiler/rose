@@ -1,13 +1,7 @@
-/** @class SgAsmPEImportItem
- *
- *  Portable Executable Import Object
- *
- *  This node represents a single import object described by data structures referenced by a PE Import Directory.  Such a node
- *  represents data from two, possibly three, distinct data structures in the PE file:  (1) An entry in the Import Lookup
- *  Table, (2) an entry in the Import Address Table, and (3) an optional Hint/Name pair in the (implicit) Hint/Name Table. */
-
 #include "sage3basic.h"
 #include "MemoryMap.h"
+
+using namespace rose::BinaryAnalysis;
 
 void
 SgAsmPEImportItem::ctor(SgAsmPEImportItemList *parent)
@@ -50,17 +44,12 @@ SgAsmPEImportItem::ctor(SgAsmPEImportDirectory *idir, unsigned ordinal)
     set_ordinal(ordinal);
 }
 
-/** Bytes needed to store hint/name pair.  A hint/name pair consists of a two-byte, little endian, unsigned hint and a
- *  NUL-terminated ASCII string.  An optional zero byte padding appears after the string's NUL terminator if necessary to make
- *  the total size of the hint/name pair a multiple of two. */
 size_t
 SgAsmPEImportItem::hintname_required_size() const
 {
     return alignUp(2/*hint*/ + p_name->get_string().size() + 1/*NUL*/, (size_t)2);
 }
 
-/** Virtual address of an IAT entry.  Returns the virtual address of the IAT slot for this import item.  This import item must
- *  be linked into the AST in order for this method to succeed. */
 rose_addr_t
 SgAsmPEImportItem::get_iat_entry_va() const
 {
@@ -74,7 +63,6 @@ SgAsmPEImportItem::get_iat_entry_va() const
     return idir->get_iat_rva().get_va() + idx * entry_size;
 }
 
-/** Print debugging info. */
 void
 SgAsmPEImportItem::dump(FILE *f, const char *prefix, ssize_t idx) const
 {

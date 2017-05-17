@@ -16,6 +16,7 @@ include_HEADERS = compass.h
 
 libCompass_la_SOURCES = compass.C
 
+AM_LDFLAGS = $(ROSE_RPATHS)
 LDADD = libCompass.la $(ROSE_LIBS_WITH_PATH)
 
 if ROSE_USE_GCC_OMP

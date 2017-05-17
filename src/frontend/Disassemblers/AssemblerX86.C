@@ -6,6 +6,7 @@
 #include "AsmUnparser_compat.h"
 #include "rose_getline.h"
 #include "FileSystem.h"
+#include "x86InstructionProperties.h"
 
 #include <Sawyer/MappedBuffer.h>
 
@@ -27,7 +28,6 @@ printSgAsmExpression(FILE *f, SgAsmExpression *e, const std::string &prefix, uns
         variant = e->variantT();
     switch (variant) {
         case V_SgAsmExpression: {
-            fprintf(f, ",\n%sreplacement=\"%s\"", prefix.c_str(), e->get_replacement().c_str());
             fprintf(f, ",\n%scomment=\"%s\"", prefix.c_str(), e->get_comment().c_str());
             break;
         }

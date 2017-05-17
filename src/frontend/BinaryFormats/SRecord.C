@@ -116,7 +116,7 @@ SRecord::parse(std::istream &input)
 
 // class method
 rose_addr_t
-SRecord::load(const std::vector<SRecord> &srecs, MemoryMap &map, bool createSegments, unsigned accessPerms,
+SRecord::load(const std::vector<SRecord> &srecs, const MemoryMap::Ptr &map, bool createSegments, unsigned accessPerms,
               const std::string &newSegmentNames)
 {
     if (createSegments) {
@@ -138,7 +138,7 @@ SRecord::load(const std::vector<SRecord> &srecs, MemoryMap &map, bool createSegm
         // Create buffers for the data and insert them into the memory map
         BOOST_FOREACH (const AddressInterval &interval, addressesUsed.intervals()) {
             ASSERT_forbid(interval.isWhole());              // not practically possible since S-Record file would be >2^65 bytes
-            map.insert(interval, MemoryMap::Segment::anonymousInstance(interval.size(), accessPerms, newSegmentNames));
+            map->insert(interval, MemoryMap::Segment::anonymousInstance(interval.size(), accessPerms, newSegmentNames));
         }
     }
 
@@ -150,11 +150,11 @@ SRecord::load(const std::vector<SRecord> &srecs, MemoryMap &map, bool createSegm
             case SREC_DATA24:
             case SREC_DATA32: {
                 if (!srec.data().empty()) {
-                    size_t nwritten = map.at(srec.address()).write(srec.data()).size();
+                    size_t nwritten = map->at(srec.address()).write(srec.data()).size();
                     if (nwritten != srec.data().size())
                         throw MemoryMap::NotMapped("S-Record destination is not mapped for " +
                                                    StringUtility::plural(srec.data().size(), "bytes"),
-                                                   &map, srec.address());
+                                                   map, srec.address());
                 }
                 break;
             }
@@ -172,7 +172,7 @@ SRecord::load(const std::vector<SRecord> &srecs, MemoryMap &map, bool createSegm
 
 // class method
 size_t
-SRecord::dump(const MemoryMap &map, std::ostream &out, size_t addrSize) {
+SRecord::dump(const MemoryMap::Ptr &map, std::ostream &out, size_t addrSize) {
     ASSERT_require(2==addrSize || 3==addrSize || 4==addrSize);
     SRecord::Type type = SREC_NONE;
     switch (addrSize) {
@@ -185,9 +185,9 @@ SRecord::dump(const MemoryMap &map, std::ostream &out, size_t addrSize) {
     rose_addr_t va = 0;
     static const size_t maxBytesPerRecord = 28;         // common value so each S-Record fits on an 80-character screen
     uint8_t buffer[maxBytesPerRecord];
-    while (map.atOrAfter(va).next().assignTo(va)) {
-        size_t nread = map.at(va).limit(maxBytesPerRecord).read(buffer).size();
-        ASSERT_require(nread>0);                        // since map.next() returned true
+    while (map->atOrAfter(va).next().assignTo(va)) {
+        size_t nread = map->at(va).limit(maxBytesPerRecord).read(buffer).size();
+        ASSERT_require(nread>0);                        // since map->next() returned true
         SRecord srec(type, va, buffer, nread);
         out <<srec <<"\n";
         va += nread;

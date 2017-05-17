@@ -7,7 +7,7 @@
 #endif 
 int a[20];
 
-int foo(int lower, int upper, int stride)
+void foo(int lower, int upper, int stride)
 {
   int i;
 #pragma omp single

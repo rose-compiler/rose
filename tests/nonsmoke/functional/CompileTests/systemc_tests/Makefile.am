@@ -10,7 +10,8 @@ noinst_PROGRAMS = member_function
 member_function_SOURCES = member_function.cpp
 
 AM_CPPFLAGS = $(ROSE_INCLUDES)
-LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+AM_LDFLAGS = $(ROSE_RPATHS)
+LDADD    = $(ROSE_LIBS)
 
 # Build variable to SystemC include directory.
 SYSTEM_C_INCLUDES = -I$(srcdir)/include

@@ -380,11 +380,11 @@ makeMemoryState(const Settings &settings, const P2::Engine &engine, const BaseSe
         return ops->currentState()->memoryState();
     } else if (className == "p2-list" || className == "partitioner2") {
         P2::Semantics::MemoryListStatePtr m = P2::Semantics::MemoryListState::instance(protoval, protoaddr);
-        m->memoryMap(new MemoryMap(engine.memoryMap()));
+        m->memoryMap(engine.memoryMap()->shallowCopy());
         return m;
     } else if (className == "p2-map") {
         P2::Semantics::MemoryMapStatePtr m = P2::Semantics::MemoryMapState::instance(protoval, protoaddr);
-        m->memoryMap(new MemoryMap(engine.memoryMap()));
+        m->memoryMap(engine.memoryMap()->shallowCopy());
         return m;
     } else if (className == "symbolic-list" || className == "symbolic") {
         return SymbolicSemantics::MemoryListState::instance(protoval, protoaddr);
@@ -436,7 +436,7 @@ makeRiscOperators(const Settings &settings, const P2::Engine &engine, const P2::
     } else if (className == "partial") {
         PartialSymbolicSemantics::RiscOperatorsPtr ops = PartialSymbolicSemantics::RiscOperators::instance(state, solver);
         if (settings.useMemoryMap)
-            ops->set_memory_map(new MemoryMap(engine.memoryMap()));
+            ops->set_memory_map(engine.memoryMap()->shallowCopy());
         return ops;
     } else if (className == "partitioner2") {
         return P2::Semantics::RiscOperators::instance(state, solver);

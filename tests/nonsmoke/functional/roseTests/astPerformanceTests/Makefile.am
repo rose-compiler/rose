@@ -2,6 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # To keep compile commands tidy, please ONLY put required include flags here.
 AM_CPPFLAGS = $(ROSE_INCLUDES)
+AM_LDFLAGS = $(ROSE_RPATHS)
 
 ## Don't use the repository in ../src
 CXX_TEMPLATE_REPOSITORY_PATH = .
@@ -20,7 +21,7 @@ MOSTLYCLEANFILES =
 ################################################################################
 bin_PROGRAMS += testPerformance
 testPerformance_SOURCES = testPerformance.C
-testPerformance_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+testPerformance_LDADD = $(ROSE_SEPARATE_LIBS)
 if !ROSE_BUILD_OS_IS_CYGWIN
     ROSE_TESTS += testPerformance
 endif
@@ -32,7 +33,7 @@ testPerformance.passed: testPerformance
 ################################################################################
 bin_PROGRAMS += rosePerformanceTest
 rosePerformanceTest_SOURCES = rosePerformanceTest.C
-rosePerformanceTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+rosePerformanceTest_LDADD = $(ROSE_SEPARATE_LIBS)
 if !ROSE_BUILD_OS_IS_CYGWIN
     ROSE_TESTS += rosePerformanceTest
 endif
@@ -48,7 +49,7 @@ MOSTLYCLEANFILES += ROSE_PERFORMANCE_DATA.csv
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 noinst_PROGRAMS += astThreadedCreation
 astThreadedCreation_SOURCES = astThreadedCreation.C
-astThreadedCreation_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+astThreadedCreation_LDADD = $(ROSE_SEPARATE_LIBS)
 ROSE_TESTS += astThreadedCreation
 astThreadedCreation.passed: astThreadedCreation
 	@$(RTH_RUN) EXE=./$< $(srcdir)/tests.conf $@

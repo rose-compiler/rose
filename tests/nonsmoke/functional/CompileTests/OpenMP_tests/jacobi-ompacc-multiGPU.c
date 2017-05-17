@@ -89,7 +89,7 @@ void jacobi_GPU(REAL *u, REAL *uold, REAL *f, REAL dx, REAL dy, int offset, int 
 //#pragma omp parallel
     {
 //#pragma omp target device (tid) map(tofrom: u[offset*m:m*n]) map(to: uold[offset*m:m*n],f[offset*m:m*n],m,n, offset,ax,ay,b,omega) 
-#pragma omp parallel for shared(uold,u,f, offset, ax,ay,b,omega,n) private(resid,j,i) reduction(+:err_tmp) nowait
+#pragma omp parallel for shared(uold,u,f, offset, ax,ay,b,omega,n) private(resid,j,i) reduction(+:err_tmp)
       for (i=offset+1;i<offset+(n-1);i++) 
       { 
         for (j=1;j<(m-1);j++)   
@@ -174,7 +174,7 @@ int main(int argc, char *argv[])
     int num_threads;
     REAL *u, *uold, *f;
     REAL dx,dy;
-    double seq_elapsed, omp_for_elapsed, acc_elapsed;
+    double omp_for_elapsed, acc_elapsed;
     int halosize = 1; 
     
 
@@ -214,7 +214,7 @@ int main(int argc, char *argv[])
         }
 
     }
-    double ompacc_time = read_timer();
+    //double ompacc_time = read_timer();
     acc_elapsed = omp_get_wtime();
     REAL* tmp;
     double* error;
@@ -242,7 +242,7 @@ int main(int argc, char *argv[])
         size = size + halosize;
 
       printf("thread %d working on GPU devices %d with size %d copying data from y_ompacc with offset %d\n",tid, tid, size,offset);
-    int i, j, k;
+    int k;
     k = 1;
     error_sum = 10.0 * tol;
     /* Copy new solution into old */

@@ -4,6 +4,8 @@ AM_CPPFLAGS =  \
         $(ROSE_INCLUDES) \
         -I$(top_srcdir)/src/frontend/SageIII/sageInterface
 
+AM_LDFLAGS = $(ROSE_RPATHS)
+
 MOVE_TOOL = $(top_builddir)/tools/moveDeclarationToInnermostScope
 
 $(MOVE_TOOL):

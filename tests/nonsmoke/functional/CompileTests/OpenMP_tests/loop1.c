@@ -4,7 +4,7 @@
 int main()
 {
   int i,j;
-  int innerreps = 100;
+//  int innerreps = 100;
 #pragma omp parallel private(j)
   {   
  //   for (j=0; j<innerreps; j++)

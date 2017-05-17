@@ -9,8 +9,11 @@ variableTypeTest_SOURCES= \
 variableTypeTest_CXXFLAGS= \
   $(ROSE_INCLUDES)
 
+variableTypeTest_LDFLAGS = \
+  $(ROSE_RPATHS)
+
 variableTypeTest_LDADD= \
-  $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+  $(ROSE_LIBS)
 
 functionTypeTest_SOURCES= \
   functionTypeTest.cpp
@@ -18,8 +21,11 @@ functionTypeTest_SOURCES= \
 functionTypeTest_CXXFLAGS= \
   $(ROSE_INCLUDES)
 
+functionTypeTest_LDFLAGS = \
+  $(ROSE_RPATHS)
+
 functionTypeTest_LDADD= \
-  $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+  $(ROSE_LIBS)
 
 
 typecounter_SOURCES= \
@@ -28,8 +34,11 @@ typecounter_SOURCES= \
 typecounter_CXXFLAGS= \
   $(ROSE_INCLUDES)
 
+typecounter_LDFLAGS = \
+  $(ROSE_RPATHS)
+
 typecounter_LDADD= \
-  $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+  $(ROSE_LIBS)
 
 shell-check:
 	$(srcdir)/runVariableTypeTest.sh $(builddir)

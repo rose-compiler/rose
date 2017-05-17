@@ -3,6 +3,7 @@
 // if clause has higher precedence. if it evaluates to 0, num_threads() has no effect.
 #include <assert.h>
 #include <stdio.h>
+#include <omp.h>
 
 int main(void)
 {

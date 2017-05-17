@@ -139,8 +139,6 @@ unparseAsmInterpretation(SgAsmInterpretation* interp)
     // disassembler based on the interpretation's first file header (if it has one).
     Disassembler *disassembler = Disassembler::lookup(interp)->clone();
     if (disassembler) {
-        disassembler->set_search(Disassembler::SEARCH_DEFAULT | Disassembler::SEARCH_DEADEND |
-                                 Disassembler::SEARCH_UNKNOWN | Disassembler::SEARCH_UNUSED);
         unparser.staticDataDisassembler.init(disassembler);
     }
 

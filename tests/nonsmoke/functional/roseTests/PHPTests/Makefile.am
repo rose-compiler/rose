@@ -11,7 +11,8 @@ TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 noinst_PROGRAMS  += runTest
 runTest_SOURCES = runTest.C
 runTest_CPPFLAGS = $(ROSE_INCLUDES)
-runTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+runTest_LDFLAGS = $(ROSE_RPATHS)
+runTest_LDADD = $(ROSE_SEPARATE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
 # tests

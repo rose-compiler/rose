@@ -7,7 +7,8 @@ int atom()
 #pragma omp parallel
    {
      int i =sizeof(serial);
+     serial = i; 
     }
-  return 1;
+  return serial;
 }
 

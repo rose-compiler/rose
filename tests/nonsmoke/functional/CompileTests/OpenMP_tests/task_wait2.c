@@ -32,7 +32,7 @@ int main()
       result = fib(input);
     }
   }
-  printf("Fibonacci number for %d is:%u\n",input, result);
+  printf("Fibonacci number for %lu is:%lu\n",input, result);
   assert(result == 102334155);
   return 0;
  }

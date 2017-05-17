@@ -5264,45 +5264,6 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           set_skip_unparse_asm_commands(true);
         }
 
-  // RPM (12/29/2009): Disassembler aggressiveness.
-     if (CommandlineProcessing::isOptionWithParameter(argv, "-rose:", "disassembler_search", stringParameter, true)) {
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-         try {
-             unsigned heuristics = get_disassemblerSearchHeuristics();
-             heuristics = rose::BinaryAnalysis::Disassembler::parse_switches(stringParameter, heuristics);
-             set_disassemblerSearchHeuristics(heuristics);
-         } catch(const rose::BinaryAnalysis::Disassembler::Exception &e) {
-             fprintf(stderr, "%s in \"-rose:disassembler_search\" switch\n", e.what());
-             ROSE_ASSERT(!"error parsing -rose:disassembler_search");
-         }
-#else
-         printf ("Binary analysis not supported in this distribution (turned off in this restricted distribution) \n");
-         ROSE_ASSERT(false);
-#endif
-     }
-
-  // RPM (1/4/2010): Partitioner function search methods
-     if (CommandlineProcessing::isOptionWithParameter(argv, "-rose:", "partitioner_search", stringParameter, true)) {
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-         try {
-             unsigned heuristics = get_partitionerSearchHeuristics();
-             heuristics = rose::BinaryAnalysis::Partitioner::parse_switches(stringParameter, heuristics);
-             set_partitionerSearchHeuristics(heuristics);
-         } catch(const std::string &e) {
-             fprintf(stderr, "%s in \"-rose:partitioner_search\" switch\n", e.c_str());
-             ROSE_ASSERT(!"error parsing -rose:partitioner_search");
-         }
-#else
-         printf ("Binary analysis not supported in this distribution (turned off in this restricted distribution) \n");
-         ROSE_ASSERT(false);
-#endif
-     }
-
-  // RPM (6/9/2010): Partitioner configuration
-     if (CommandlineProcessing::isOptionWithParameter(argv, "-rose:", "partitioner_config", stringParameter, true)) {
-         set_partitionerConfigurationFileName(stringParameter);
-     }
-
   // DQ (6/7/2013): Added support for alternatively calling the experimental fortran frontend.
      set_experimental_fortran_frontend(false);
      if ( CommandlineProcessing::isOption(argv,"-rose:","experimental_fortran_frontend",true) == true )

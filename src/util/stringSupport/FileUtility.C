@@ -148,12 +148,13 @@ getAbsolutePathFromRelativePath(const std::string &relativePath, bool printError
             // Output the kind of error that occured ...
             //Ask DAN and add checks for 64 bit machines here
             //extern int errno; 
-            // Output the kind of error that occured ...  
-               printf ("relativePath = %s errno = %d resolved_path is undefined \n",relativePath.c_str(),errno);
-               printf ("     error = %s \n",strerror(errno));
+            // Output the kind of error that occured ...
+            // This very low-level, internal, utility function should not be complaining on standard output. [Matzke 2017-04-21]
+               //printf ("relativePath = %s errno = %d resolved_path is undefined \n",relativePath.c_str(),errno);
+               //printf ("     error = %s \n",strerror(errno));
 
             // In case of error return the original relativePath
-               printf ("Error: getAbsolutePathFromRelativePath incured an error in use of realpath() and is returning the input relativePath. \n");
+               //printf ("Error: getAbsolutePathFromRelativePath incured an error in use of realpath() and is returning the input relativePath. \n");
              //}
             }
         // printf("returnString0 == %s    relativePath == %s   resolved_path == %s \n",returnString.c_str(),relativePath.c_str(),resolved_path);

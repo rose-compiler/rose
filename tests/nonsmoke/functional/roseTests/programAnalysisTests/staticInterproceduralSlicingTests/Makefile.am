@@ -2,6 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # To keep compile commands tidy, please ONLY put required include flags here.
 AM_CPPFLAGS = $(ROSE_INCLUDES)
+AM_LDFLAGS = $(ROSE_RPATHS)
 
 ## Don't use the repository in ../src
 CXX_TEMPLATE_REPOSITORY_PATH = .
@@ -25,37 +26,37 @@ VALGRIND =
 endif
 
 multiPassTest_SOURCES = multiPassTest.C
-multiPassTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+multiPassTest_LDADD = $(ROSE_SEPARATE_LIBS)
 
 generateSDG_SOURCES = generateSDG.C
-generateSDG_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+generateSDG_LDADD = $(ROSE_SEPARATE_LIBS)
 
 #generateSlicedSDG_SOURCES = generateSlicedSDG.C
-#generateSlicedSDG_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+#generateSlicedSDG_LDADD = $(ROSE_SEPARATE_LIBS)
 
 generateCDG_SOURCES = generateCDG.C
-generateCDG_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+generateCDG_LDADD = $(ROSE_SEPARATE_LIBS)
 
 generateDDG_SOURCES = generateDDG.C
-generateDDG_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+generateDDG_LDADD = $(ROSE_SEPARATE_LIBS)
 
 #testSlicing_SOURCES = testSlicing.C
-#testSlicing_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+#testSlicing_LDADD = $(ROSE_SEPARATE_LIBS)
 
 #slice_SOURCES = slice.C
-#lice_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+#lice_LDADD = $(ROSE_SEPARATE_LIBS)
 
 generateSFBDT_SOURCES = generateSFBDT.C
-generateSFBDT_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+generateSFBDT_LDADD = $(ROSE_SEPARATE_LIBS)
 
 generateSFCFG_SOURCES = generateSFCFG.C
-generateSFCFG_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+generateSFCFG_LDADD = $(ROSE_SEPARATE_LIBS)
 
 generateSFDF_SOURCES = generateSFDF.C
-generateSFDF_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+generateSFDF_LDADD = $(ROSE_SEPARATE_LIBS)
 
 generateSFDT_SOURCES = generateSFDT.C
-generateSFDT_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+generateSFDT_LDADD = $(ROSE_SEPARATE_LIBS)
 
 TESTCODES = test1.C test2.C test3.C test4.C
 

@@ -3,7 +3,8 @@
 
 #ifdef ROSE_ENABLE_SIMULATOR
 
-#include "Diagnostics.h"
+#include <Diagnostics.h>
+#include <Partitioner2/Engine.h>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/foreach.hpp>
@@ -124,7 +125,7 @@ RSIM_Process::mem_write(const void *buf, rose_addr_t va, size_t size, unsigned r
     {
         SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock());
         if (cb_status)
-            retval = get_memory().at(va).limit(size).require(req_perms).write((uint8_t*)buf).size();
+            retval = get_memory()->at(va).limit(size).require(req_perms).write((uint8_t*)buf).size();
     }
     callbacks.call_memory_callbacks(RSIM_Callbacks::AFTER, this, MemoryMap::WRITABLE, req_perms,
                                     va, size, (void*)buf, retval, cb_status);
@@ -140,7 +141,7 @@ RSIM_Process::mem_read(void *buf, rose_addr_t va, size_t size, unsigned req_perm
     {
         SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock());
         if (cb_status)
-            retval = get_memory().at(va).limit(size).require(req_perms).read((uint8_t*)buf).size();
+            retval = get_memory()->at(va).limit(size).require(req_perms).read((uint8_t*)buf).size();
     }
     callbacks.call_memory_callbacks(RSIM_Callbacks::AFTER, this, MemoryMap::READABLE, req_perms, va, size,
                                     buf, retval, cb_status);
@@ -151,7 +152,7 @@ bool
 RSIM_Process::mem_is_mapped(rose_addr_t va) const
 {
     SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock());
-    return get_memory().at(va).exists();
+    return get_memory()->at(va).exists();
 }
 
 size_t
@@ -196,7 +197,6 @@ RSIM_Process::load(int existingPid /*=-1*/) {
     if (!disassembler_) {
         disassembler_ = Disassembler::lookup(interpretation_)->clone();
         ASSERT_not_null(disassembler_);
-        disassembler_->set_progress_reporting(-1); /* turn off progress reporting */
     }
     wordSize_ = disassembler_->instructionPointerRegister().get_nbits();
 
@@ -661,7 +661,7 @@ RSIM_Process::get_instruction(rose_addr_t va)
     /* Use a cached instruction if possible. */
     {
         SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock());
-        Disassembler::InstructionMap::iterator found = icache.find(va);
+        InstructionMap::iterator found = icache.find(va);
         insn = found!=icache.end() ? found->second : NULL;
     }
 
@@ -686,7 +686,7 @@ RSIM_Process::get_instruction(rose_addr_t va)
      * [RPM 2011-02-09] */
     {
         SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock());
-        insn = disassembler_->disassembleOne(&get_memory(), va); // might throw Disassembler::Exception
+        insn = disassembler_->disassembleOne(get_memory(), va); // might throw Disassembler::Exception
         icache[va] = insn;
     }
 
@@ -705,9 +705,9 @@ RSIM_Process::my_addr(rose_addr_t va, size_t nbytes)
     SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock());
 
     /* Obtain mapping information and check that the specified number of bytes are mapped. */
-    if (!get_memory().at(va).exists())
+    if (!get_memory()->at(va).exists())
         return NULL;
-    const MemoryMap::Node &me = *get_memory().find(va);
+    const MemoryMap::Node &me = *get_memory()->find(va);
     size_t offset = me.value().offset() + va - me.key().least();
     uint8_t *base = const_cast<uint8_t*>(me.value().buffer()->data());
     if (!base)
@@ -720,7 +720,7 @@ RSIM_Process::guest_va(void *addr, size_t nbytes)
 {
     SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock());
     rose_addr_t retval = 0;
-    BOOST_FOREACH (const MemoryMap::Node &node, get_memory().nodes()) {
+    BOOST_FOREACH (const MemoryMap::Node &node, get_memory()->nodes()) {
         const AddressInterval &range = node.key();
         const MemoryMap::Segment &segment = node.value();
         const uint8_t *base = segment.buffer()->data();
@@ -745,7 +745,7 @@ RSIM_Process::read_string(rose_addr_t va, size_t limit/*=0*/, bool *error/*=NULL
         SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock());
         while (1) {
             uint8_t byte;
-            size_t nread = get_memory().at(va++).limit(1).read(&byte).size();
+            size_t nread = get_memory()->at(va++).limit(1).read(&byte).size();
             if (1!=nread) {
                 if (error)
                     *error = true;
@@ -806,10 +806,10 @@ RSIM_Process::read_string_vector(rose_addr_t va, size_t ptrSize, bool *_error/*=
 size_t
 RSIM_Process::mem_transaction_start(const std::string &name)
 {
-    MemoryMap new_map;
+    MemoryMap::Ptr new_map = MemoryMap::instance();
     if (!map_stack.empty()) {
         new_map = map_stack.back().first;
-        BOOST_FOREACH (MemoryMap::Segment &segment, new_map.segments())
+        BOOST_FOREACH (MemoryMap::Segment &segment, new_map->segments())
             segment.buffer()->copyOnWrite(true);
     }
     map_stack.push_back(std::make_pair(new_map, name));
@@ -862,11 +862,11 @@ RSIM_Process::mem_setbrk(rose_addr_t newbrk, Sawyer::Message::Stream &mesg)
     SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock());
     if (newbrk > brkVa_) {
         size_t size = newbrk - brkVa_;
-        get_memory().insert(AddressInterval::baseSize(brkVa_, size),
-                            MemoryMap::Segment::anonymousInstance(size, MemoryMap::READABLE|MemoryMap::WRITABLE, "[heap]"));
+        get_memory()->insert(AddressInterval::baseSize(brkVa_, size),
+                             MemoryMap::Segment::anonymousInstance(size, MemoryMap::READABLE|MemoryMap::WRITABLE, "[heap]"));
         brkVa_ = newbrk;
     } else if (newbrk>0 && newbrk<brkVa_) {
-        get_memory().erase(AddressInterval::baseSize(newbrk, brkVa_-newbrk));
+        get_memory()->erase(AddressInterval::baseSize(newbrk, brkVa_-newbrk));
         brkVa_ = newbrk;
     }
     rose_addr_t retval= brkVa_;
@@ -883,14 +883,14 @@ RSIM_Process::mem_unmap(rose_addr_t va, size_t sz, Sawyer::Message::Stream &mesg
     SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock());
 
     /* Make sure that the specified memory range is actually mapped, or return -ENOMEM. */
-    if (!get_memory().contains(AddressInterval::baseSize(va, sz)))
+    if (!get_memory()->contains(AddressInterval::baseSize(va, sz)))
         return -ENOMEM;
 
     /* Unmap for real, because if we don't, and the mapping was not anonymous, and the file that was mapped is
      * unlinked, and we're on NFS, an NFS temp file is created in place of the unlinked file. */
     const uint8_t *ptr = NULL;
     try {
-        const MemoryMap::Node &me = *get_memory().find(va);// existence checked above
+        const MemoryMap::Node &me = *get_memory()->find(va);// existence checked above
         size_t offset = me.value().offset() + va - me.key().least();
         ptr = me.value().buffer()->data() + offset;
         if (0==(uint64_t)ptr % (uint64_t)PAGE_SIZE && 0==(uint64_t)sz % (uint64_t)PAGE_SIZE)
@@ -899,7 +899,7 @@ RSIM_Process::mem_unmap(rose_addr_t va, size_t sz, Sawyer::Message::Stream &mesg
     }
 
     /* Erase the mapping from the simulation */
-    get_memory().erase(AddressInterval::baseSize(va, sz));
+    get_memory()->erase(AddressInterval::baseSize(va, sz));
 
     /* Tracing */
     if (mesg)
@@ -917,7 +917,7 @@ RSIM_Process::mem_showmap(Sawyer::Message::Stream &mesg, const char *intro, cons
     if (mesg) {
         SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock());
         std::ostringstream ss;
-        get_memory().dump(ss, prefix);
+        get_memory()->dump(ss, prefix);
         mfprintf(mesg)("%s%susing memory transaction %zu \"%s\"\n%s\n",
                        intro, prefix, mem_ntransactions(), mem_transaction_name().c_str(), ss.str().c_str());
     }
@@ -948,7 +948,7 @@ RSIM_Process::mem_protect(rose_addr_t va, size_t sz, unsigned rose_perms, unsign
         return -errno;
 
     try {
-        get_memory().at(va).limit(aligned_sz).changeAccess(rose_perms, ~rose_perms);
+        get_memory()->at(va).limit(aligned_sz).changeAccess(rose_perms, ~rose_perms);
         return 0;
     } catch (const MemoryMap::NotMapped &e) {
         return -ENOMEM;
@@ -980,7 +980,7 @@ RSIM_Process::mem_map(rose_addr_t start, size_t size, unsigned rose_perms, unsig
                     restriction = AddressInterval::hull(mmapNextVa_, AddressInterval::whole().greatest());
                 }
 
-                if (!get_memory().findFreeSpace(aligned_size, PAGE_SIZE, restriction, flags).assignTo(start)) {
+                if (!get_memory()->findFreeSpace(aligned_size, PAGE_SIZE, restriction, flags).assignTo(start)) {
                     start = (rose_addr_t)(int64_t)-ENOMEM;
                     break;
                 }
@@ -1022,8 +1022,8 @@ RSIM_Process::mem_map(rose_addr_t start, size_t size, unsigned rose_perms, unsig
                 }
             }
             
-            get_memory().insert(AddressInterval::baseSize(start, aligned_size),
-                                MemoryMap::Segment::staticInstance(buf, aligned_size, rose_perms, "mmap("+melmt_name+")"));
+            get_memory()->insert(AddressInterval::baseSize(start, aligned_size),
+                                 MemoryMap::Segment::staticInstance(buf, aligned_size, rose_perms, "mmap("+melmt_name+")"));
         }
     } while (0);
     return start;
@@ -1310,46 +1310,51 @@ RSIM_Process::signal_dispatch()
 }
 
 SgAsmBlock *
-RSIM_Process::disassemble(bool fast, MemoryMap *map/*=null*/)
+RSIM_Process::disassemble(bool fast, MemoryMap::Ptr map/*=null*/)
 {
     SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock()); // while using the memory map
+    if (!map)
+        map = get_memory();
     SgAsmBlock *block = NULL;
-    Disassembler::InstructionMap insns;
-    MemoryMap *allocated_map = NULL;
+
     if (fast) {
-        if (!map) {
-            map = allocated_map = new MemoryMap;
-            *map = get_memory();                    // shallow copy: new segments point to same old data
-            map->require(MemoryMap::EXECUTABLE).keep();
+        // Disassemble all instructions in executable memory
+        rose_addr_t va = 0;
+        while (AddressInterval interval = map->atOrAfter(va).require(MemoryMap::EXECUTABLE).available()) {
+            SgAsmInstruction *insn = NULL;
+            try {
+                insn = disassembler_->disassembleOne(map, interval.least());
+            } catch (const Disassembler::Exception &e) {
+                insn = disassembler_->makeUnknownInstruction(e);
+                ASSERT_not_null(insn);
+                uint8_t byte;
+                if (1==map->at(interval.least()).limit(1).read(&byte).size())
+                    insn->set_raw_bytes(SgUnsignedCharList(1, byte));
+                ASSERT_require(insn->get_address()==va);
+                ASSERT_require(insn->get_size()==1);
+            }
+            icache.insert(std::make_pair(insn->get_address(), insn));
         }
-        rose_addr_t start_va = 0; // arbitrary since we set the disassembler's SEARCH_UNUSED bit
-        unsigned search = disassembler_->get_search();
-        disassembler_->set_search(search | Disassembler::SEARCH_UNUSED);
-        Disassembler::AddressSet successors;
-        Disassembler::BadMap bad;
-        insns = disassembler_->disassembleBuffer(map, start_va, &successors, &bad);
-        disassembler_->set_search(search);
-    } else {
-        if (!map) {
-            map = allocated_map = new MemoryMap;
-            *map = get_memory();                    // shallow copy: new segments point to same old data
-            map->require(MemoryMap::READABLE).keep(); // keep only readable memory; probably includes all executable too
-        }
-        Partitioner partitioner;
-        block = partitioner.partition(interpretation_, disassembler_, map);
-        insns = partitioner.get_instructions();
-    }
-    delete allocated_map; allocated_map=NULL;
 
-    /* Add new instructions to cache */
-    icache.insert(insns.begin(), insns.end());
-
-    /* Fast disassembly puts all the instructions in a single SgAsmBlock */
-    if (!block) {
+        // Fast disassembly puts all the instructions in a single SgAsmBlock
         block = new SgAsmBlock;
-        for (Disassembler::InstructionMap::const_iterator ii=icache.begin(); ii!=icache.end(); ++ii)
+        for (InstructionMap::const_iterator ii=icache.begin(); ii!=icache.end(); ++ii)
             block->get_statementList().push_back(ii->second);
+
+    } else {
+        // Disassembly driven by partitioner.
+        namespace P2 = rose::BinaryAnalysis::Partitioner2;
+        P2::Engine engine;
+        engine.memoryMap(map->shallowCopy());           // copied so we can make changes
+        engine.adjustMemoryMap();
+        engine.interpretation(interpretation_);
+        engine.disassembler(disassembler_);
+        block = engine.buildAst();
+        std::vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(block);
+        BOOST_FOREACH (SgAsmInstruction *insn, insns)
+            icache.insert(std::make_pair(insn->get_address(), insn));
     }
+
     return block;
 }
 

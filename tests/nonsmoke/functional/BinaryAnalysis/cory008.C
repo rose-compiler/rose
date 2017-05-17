@@ -13,15 +13,17 @@ static const char *description = "Parses the specimen given on the command line 
 #include <rose.h>
 #include <AsmUnparser_compat.h>
 #include <Partitioner2/Engine.h>
+#include <Sawyer/Map.h>
 
 using namespace rose;
 namespace P2 = rose::BinaryAnalysis::Partitioner2;
 
-struct Counter: AstSimpleProcessing {
-    size_t nWithBase, nTotal;
-    std::string prevHeading;
+// List of integers per heading, where heading is just some arbitrary title string
+typedef Sawyer::Container::Map<std::string /*heading*/, std::vector<SgAsmIntegerValueExpression*> > IntegersByHeading;
 
-    Counter(): nWithBase(0), nTotal(0) {}
+// Search the AST to find all SgAsmIntegerValueExpressions and organize them into an IntegersByHeading.
+struct GatherIntegers: AstSimpleProcessing {
+    IntegersByHeading integers;
 
     void visit(SgNode *node) {
         std::vector<SgAsmIntegerValueExpression*> ivals;
@@ -32,8 +34,6 @@ struct Counter: AstSimpleProcessing {
         }
 
         BOOST_FOREACH (SgAsmIntegerValueExpression *ival, ivals) {
-            ++nTotal;
-
             std::string heading;
             if (SgAsmInstruction *insn = SageInterface::getEnclosingNode<SgAsmInstruction>(ival)) {
                 heading = unparseInstructionWithAddress(insn);
@@ -43,11 +43,37 @@ struct Counter: AstSimpleProcessing {
                 heading = "other";
             }
 
-            if (heading != prevHeading) {
-                std::cout <<heading <<"\n";
-                prevHeading = heading;
-            }
+            integers.insertMaybeDefault(heading).push_back(ival);
+        }
+    }
+};
 
+// Sort SgAsmIintegerValueExpression since their order in the AST is compiler dependent.
+static bool
+sortedIntegers(SgAsmIntegerValueExpression *a, SgAsmIntegerValueExpression *b) {
+    if (!a)
+        return b != NULL;                               // null < non-null
+    if (!b)
+        return false;                                   // non-null >= null
+    if (a->get_absoluteValue() != b->get_absoluteValue())
+        return a->get_absoluteValue() < b->get_absoluteValue();
+    if (!a->get_baseNode())
+        return b->get_baseNode() != NULL;
+    if (!b->get_baseNode())
+        return false;
+    return false;
+}
+
+// Print the IntegersByHeading
+static std::pair<size_t, size_t>
+printIntegersByHeading(const IntegersByHeading &ibh) {
+    size_t nWithBase=0, nTotal=0;
+    BOOST_FOREACH (const IntegersByHeading::Node &headingInteger, ibh.nodes()) {
+        std::cout <<headingInteger.key() <<"\n";
+        std::vector<SgAsmIntegerValueExpression*> integers = headingInteger.value();
+        std::sort(integers.begin(), integers.end(), sortedIntegers);
+        BOOST_FOREACH (SgAsmIntegerValueExpression *ival, integers) {
+            ++nTotal;
             if (ival->get_baseNode()) {
                 ++nWithBase;
                 std::cout <<"      yes";
@@ -57,14 +83,17 @@ struct Counter: AstSimpleProcessing {
             std::cout <<": " <<StringUtility::toHex(ival->get_absoluteValue()) <<ival->get_label() <<"\n";
         }
     }
-};
+    return std::make_pair(nTotal, nWithBase);
+}
 
 int
 main(int argc, char *argv[]) {
-    Counter counts;
-    counts.traverse(P2::Engine().frontend(argc, argv, purpose, description), preorder);
-    std::cout <<"Number of SgAsmIntegerValueExpression nodes: " <<counts.nTotal <<"\n";
-    std::cout <<"Number of such nodes having a base object:   " <<counts.nWithBase <<"\n";
+    SgAsmBlock *gblock = P2::Engine().frontend(argc, argv, purpose, description);
+    GatherIntegers gatherer;
+    gatherer.traverse(gblock, preorder);
+    std::pair<size_t, size_t> counts = printIntegersByHeading(gatherer.integers);
+    std::cout <<"Number of SgAsmIntegerValueExpression nodes: " <<counts.first <<"\n";
+    std::cout <<"Number of such nodes having a base object:   " <<counts.second <<"\n";
 }
 
 #endif

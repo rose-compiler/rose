@@ -133,11 +133,25 @@ protected:
 
         StatePtr operator()(size_t cfgVertex, const StatePtr &in);
 
-        StatePtr operator()(const StatePtr &in) {
-            return in->copy();
-        }
+        std::string printState(const StatePtr &in);
     };
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Merge function
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+protected:
+    class MergeFunction {
+    public:
+        bool operator()(StatePtr &dst /*in,out*/, const StatePtr &src) const {
+            ASSERT_not_null(src);
+            if (!dst) {
+                dst = src->copy();
+                return true;                            // destination changed
+            }
+            return dst->merge(src);
+        }
+    };
+    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Data members
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -264,7 +278,8 @@ public:
         Stream mesg(mlog[WHERE] <<"runToFixedPoint starting at CFG vertex " <<cfgStartVertex);
         results_.clear();
         TransferFunction xfer(vertexFlowGraphs_, approximation_, smtSolver_, mlog);
-        DataFlow::Engine<CFG, StatePtr, TransferFunction> dfEngine(cfg, xfer);
+        MergeFunction merge;
+        DataFlow::Engine<CFG, StatePtr, TransferFunction, MergeFunction> dfEngine(cfg, xfer, merge);
         dfEngine.runToFixedPoint(cfgStartVertex, initialState);
         results_ = dfEngine.getFinalStates();
         mesg <<"; results for " <<StringUtility::plural(results_.size(), "vertices", "vertex") <<"\n";

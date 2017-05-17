@@ -52,25 +52,25 @@ noinst_PROGRAMS = convert \
                   test_highlevel
 
 convert_SOURCES = convert.cc
-convert_LDFLAGS = $(ROSEHPCT_LIBS)
+convert_LDFLAGS = $(ROSEHPCT_LIBS) $(ROSE_RPATHS)
 
 simple_read2_SOURCES = simple_read2.cc
-simple_read2_LDFLAGS = $(ROSEHPCT_LIBS)
+simple_read2_LDFLAGS = $(ROSEHPCT_LIBS) $(ROSE_RPATHS)
 
 process_cmdline_SOURCES = process_cmdline.cc
-process_cmdline_LDFLAGS = $(ROSEHPCT_LIBS)
+process_cmdline_LDFLAGS = $(ROSEHPCT_LIBS) $(ROSE_RPATHS)
 
 attach_metrics_SOURCES = attach_metrics.cc
-attach_metrics_LDFLAGS = $(ROSEHPCT_LIBS)
+attach_metrics_LDFLAGS = $(ROSEHPCT_LIBS) $(ROSE_RPATHS)
 
 propagate_metrics_SOURCES = propagate_metrics.cc
-propagate_metrics_LDFLAGS = $(ROSEHPCT_LIBS)
+propagate_metrics_LDFLAGS = $(ROSEHPCT_LIBS) $(ROSE_RPATHS)
 
 read_ast_SOURCES = read_ast.cc
-read_ast_LDFLAGS = $(ROSEHPCT_LIBS)
+read_ast_LDFLAGS = $(ROSEHPCT_LIBS) $(ROSE_RPATHS)
 
 test_highlevel_SOURCES = test_highlevel.cc
-test_highlevel_LDFLAGS = $(ROSEHPCT_LIBS)
+test_highlevel_LDFLAGS = $(ROSEHPCT_LIBS) $(ROSE_RPATHS)
 
 # used for invoking individual tests
 # test_attach01.sh

@@ -16,6 +16,7 @@ if !ROSE_BUILD_OS_IS_OSX
 endif
 
 AM_CPPFLAGS = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I.
+AM_LDFLAGS = $(ROSE_RPATHS)
 
 
 compass_parameters:

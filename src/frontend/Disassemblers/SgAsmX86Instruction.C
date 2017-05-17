@@ -2,12 +2,14 @@
  * because then they won't get indexed/formatted/etc. by C-aware tools. */
 
 #include "sage3basic.h"
-#include "SymbolicSemantics.h"
+
+#include "AsmUnparser_compat.h"
 #include "SymbolicSemantics2.h"
 #include "PartialSymbolicSemantics2.h"
 #include "DispatcherX86.h"
 #include "Disassembler.h"
 #include "Diagnostics.h"
+#include "x86InstructionProperties.h"
 
 using namespace rose;                                   // temporary until this lives in "rose"
 using namespace rose::Diagnostics;
@@ -366,7 +368,8 @@ SgAsmX86Instruction::getBranchTarget(rose_addr_t *target) {
 }
 
 BinaryAnalysis::Disassembler::AddressSet
-SgAsmX86Instruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns, bool *complete, const MemoryMap *initial_memory)
+SgAsmX86Instruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns, bool *complete,
+                                   const MemoryMap::Ptr &initial_memory)
 {
     Stream debug(mlog[DEBUG]);
     using namespace rose::BinaryAnalysis::InstructionSemantics2;

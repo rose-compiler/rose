@@ -7,8 +7,9 @@ endif
 
 # Default header file search path
 AM_CPPFLAGS = $(ROSE_INCLUDES)
-roseomp_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-roseompacc_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+AM_LDFLAGS = $(ROSE_RPATHS)
+roseomp_LDADD = $(ROSE_LIBS)
+roseompacc_LDADD = $(ROSE_LIBS)
 
 GOMP_PATH = @gomp_omp_runtime_library_path@
 OMNI_PATH = @omni_omp_runtime_support_path@

@@ -5,13 +5,14 @@ TEST_TARGETS =
 
 TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 AM_CPPFLAGS = $(ROSE_INCLUDES)
+AM_LDFLAGS = $(ROSE_RPATHS)
 SPECIMENS = input1.C
 EXTRA_DIST += $(SPECIMENS)
 
 #------------------------------------------------------------------------------------------------------------------------
 bin_PROGRAMS += testQuery
 testQuery_SOURCES = testQuery.C
-testQuery_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+testQuery_LDADD = $(ROSE_SEPARATE_LIBS)
 
 testQuery_TEST_TARGETS = $(addprefix testQuery_, $(addsuffix .passed, $(SPECIMENS)))
 TEST_TARGETS += $(testQuery_TEST_TARGETS)
@@ -25,7 +26,7 @@ $(testQuery_TEST_TARGETS): testQuery_%.passed: $(srcdir)/% testQuery
 #------------------------------------------------------------------------------------------------------------------------
 bin_PROGRAMS += testQuery2
 testQuery2_SOURCES = testQuery2.C
-testQuery2_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+testQuery2_LDADD = $(ROSE_SEPARATE_LIBS)
 
 testQuery2_TEST_TARGETS = $(addprefix testQuery2_, $(addsuffix .passed, $(SPECIMENS)))
 TEST_TARGETS += $(testQuery2_TEST_TARGETS)
@@ -39,7 +40,7 @@ $(testQuery2_TEST_TARGETS): testQuery2_%.passed: $(srcdir)/% testQuery2
 #------------------------------------------------------------------------------------------------------------------------
 bin_PROGRAMS += testQuery3
 testQuery3_SOURCES = testQuery3.C
-testQuery3_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+testQuery3_LDADD = $(ROSE_SEPARATE_LIBS)
 
 testQuery3_TEST_TARGETS = $(addprefix testQuery3_, $(addsuffix .passed, $(SPECIMENS)))
 TEST_TARGETS += $(testQuery3_TEST_TARGETS)

@@ -25,19 +25,11 @@ public:
         return new DisassemblerArm(*this);
     }
 
-    /** See Disassembler::can_disassemble */
-    virtual bool can_disassemble(SgAsmGenericHeader*) const;
-
+    virtual bool canDisassemble(SgAsmGenericHeader*) const;
     virtual Unparser::BasePtr unparser() const;
-
-    /** See Disassembler::disassembleOne */
-    virtual SgAsmInstruction *disassembleOne(const MemoryMap *map, rose_addr_t start_va, AddressSet *successors=NULL);
-
-    /** See Disassembler::assembleOne */
+    virtual SgAsmInstruction *disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va, AddressSet *successors=NULL);
     virtual void assembleOne(SgAsmInstruction*, SgUnsignedCharList&) {abort();}
-
-    /** See Disassembler::can_disassemble */
-    virtual SgAsmInstruction *make_unknown_instruction(const Exception&);
+    virtual SgAsmInstruction *makeUnknownInstruction(const Exception&);
 
 private:
     /** Same as Disassembler::Exception except with a different constructor for ease of use in DisassemblerArm.  This

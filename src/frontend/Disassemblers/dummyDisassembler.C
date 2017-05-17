@@ -4,7 +4,8 @@
 #include "sage3basic.h"
 #include "Diagnostics.h"
 #include "Disassembler.h"
-#include "Partitioner.h"
+
+using namespace rose::BinaryAnalysis;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmExecutableFileFormat
@@ -50,7 +51,7 @@ std::set<rose_addr_t> SgAsmInstruction::getSuccessors(bool* complete) { return s
 unsigned SgAsmInstruction::get_anyKind() const { return 0; }
 
 std::set<rose_addr_t>
-SgAsmInstruction::getSuccessors(const std::vector<SgAsmInstruction*>&, bool*, const MemoryMap*) {
+SgAsmInstruction::getSuccessors(const std::vector<SgAsmInstruction*>&, bool*, const MemoryMap::Ptr&) {
     return std::set<rose_addr_t>();
 }
 
@@ -83,7 +84,7 @@ unsigned SgAsmM68kInstruction::get_anyKind() const { return 0; }
 std::string SgAsmM68kInstruction::description() const { return ""; }
 
 std::set<rose_addr_t>
-SgAsmM68kInstruction::getSuccessors(const std::vector<SgAsmInstruction*>&, bool*, const MemoryMap*) {
+SgAsmM68kInstruction::getSuccessors(const std::vector<SgAsmInstruction*>&, bool*, const MemoryMap::Ptr&) {
     return std::set<rose_addr_t>();
 }
 
@@ -124,7 +125,7 @@ unsigned SgAsmX86Instruction::get_anyKind() const { return 0; }
 std::set<rose_addr_t> SgAsmX86Instruction::getSuccessors(bool* complete) { return std::set<rose_addr_t>();}
 
 std::set<rose_addr_t>
-SgAsmX86Instruction::getSuccessors(const std::vector<SgAsmInstruction*>&, bool*, const MemoryMap*) {
+SgAsmX86Instruction::getSuccessors(const std::vector<SgAsmInstruction*>&, bool*, const MemoryMap::Ptr&) {
     return std::set<rose_addr_t>();
 }
 
@@ -178,16 +179,6 @@ namespace BinaryAnalysis{
 void Disassembler::initDiagnostics() {}
 } // namespace
 } // namespace
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Partitioner
-
-namespace rose {
-namespace BinaryAnalysis{
-void Partitioner::initDiagnostics() {}
-} // namespace
-} // namespace
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmBlock

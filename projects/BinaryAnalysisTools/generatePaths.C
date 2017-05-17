@@ -1,5 +1,7 @@
 #include <rose.h>
 
+#include "integerOps.h"
+
 #include <iostream>
 #include <Sawyer/CommandLine.h>
 #include <string>

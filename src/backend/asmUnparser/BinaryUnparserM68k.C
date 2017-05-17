@@ -63,8 +63,6 @@ M68k::outputExpr(std::ostream &out, SgAsmExpression *expr, State &state) const {
         ASSERT_not_implemented(expr->class_name());
     }
 
-    if (!expr->get_replacement().empty())
-        comments.push_back(expr->get_replacement());
     if (!expr->get_comment().empty())
         comments.push_back(expr->get_comment());
     if (!comments.empty())

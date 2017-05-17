@@ -192,7 +192,7 @@ public:
      *                                  Process memory
      **************************************************************************************************************************/
 private:
-    typedef std::vector<std::pair<MemoryMap, std::string > > MapStack;
+    typedef std::vector<std::pair<rose::BinaryAnalysis::MemoryMap::Ptr, std::string > > MapStack;
     MapStack map_stack;                                 // Memory map transaction stack.
     rose_addr_t brkVa_;                                 // Current value for brk() syscall; initialized by load()
     rose_addr_t mmapNextVa_;                            // Minimum address to use when looking for mmap free space
@@ -202,17 +202,11 @@ private:
 public:
 
     /** Returns the memory map for the simulated process.  MemoryMap is not thread safe [as of 2011-03-31], so all access to
-     *  the map should be protected by the process-wide read-write lock returned by the rwlock() method.
-     * @{ */
-    MemoryMap& get_memory() {
+     *  the map should be protected by the process-wide read-write lock returned by the rwlock() method. */
+    rose::BinaryAnalysis::MemoryMap::Ptr get_memory() const {
         assert(!map_stack.empty());
         return map_stack.back().first;
     }
-    const MemoryMap& get_memory() const {
-        assert(!map_stack.empty());
-        return map_stack.back().first;
-    }
-    /** @} */
 
     /** Add a memory mapping to a specimen.  The new mapping starts at specimen address @p va (zero causes this method to
      *  choose an appropriate address) for @p size bytes.  The @p rose_perms are the MemoryMap::Protection bits, @p flags are
@@ -279,7 +273,8 @@ public:
      *  memory must be writable.
      *
      *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threads concurrently. */
-    size_t mem_write(const void *buf, rose_addr_t va, size_t size, unsigned req_perms=MemoryMap::WRITABLE);
+    size_t mem_write(const void *buf, rose_addr_t va, size_t size,
+                     unsigned req_perms = rose::BinaryAnalysis::MemoryMap::WRITABLE);
 
     /** Copies data from specimen address space.  Copies up to @p size bytes from the specimen memory beginning at virtual
      *  address @p va into the beginning of @p buf.  If the requested number of bytes cannot be copied because (part of) the
@@ -292,7 +287,8 @@ public:
      *
      *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threads
      *  concurrently. */
-    size_t mem_read(void *buf, rose_addr_t va, size_t size, unsigned req_perms=MemoryMap::READABLE);
+    size_t mem_read(void *buf, rose_addr_t va, size_t size,
+                    unsigned req_perms = rose::BinaryAnalysis::MemoryMap::READABLE);
 
     /** Reads a NUL-terminated string from specimen memory. The NUL is not included in the string.  If a limit is specified
      *  then the returned string will contain at most this many characters (a value of zero implies no limit).  If the string
@@ -437,8 +433,10 @@ private:
      *                                  Instructions and disassembly
      **************************************************************************************************************************/
 private:
-    rose::BinaryAnalysis::Disassembler *disassembler_;         /**< Disassembler to use for obtaining instructions */
-    rose::BinaryAnalysis::Disassembler::InstructionMap icache;        /**< Cache of disassembled instructions */
+    typedef std::map<rose_addr_t, SgAsmInstruction*> InstructionMap;
+
+    rose::BinaryAnalysis::Disassembler *disassembler_;  /* Disassembler to use for obtaining instructions */
+    InstructionMap icache;                              /* Cache of disassembled instructions */
 
 public:
     /** Disassembles the instruction at the specified virtual address. For efficiency, instructions are cached by the
@@ -466,7 +464,8 @@ public:
      *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threaads concurrently.
      *  The callers are serialized and each caller will generate a new AST that does not share nodes with any AST returned by
      *  any previous call by this thread or any other. */
-    SgAsmBlock *disassemble(bool fast=false, MemoryMap *map=NULL);
+    SgAsmBlock *disassemble(bool fast=false,
+                            rose::BinaryAnalysis::MemoryMap::Ptr map = rose::BinaryAnalysis::MemoryMap::Ptr());
 
     /** Property: Disassembler.
      *

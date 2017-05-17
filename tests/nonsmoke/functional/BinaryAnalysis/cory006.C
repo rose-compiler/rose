@@ -67,13 +67,13 @@ main(int argc, char *argv[]) {
         // executable). A naive implementation would just increment to the next address and try again, but that could take a
         // very long time.  This "if" statement will give us the next executable address that falls within the unused interval
         // if possible. The address is assigned to "va" if possible.
-        if (!engine.memoryMap().within(unused).require(MemoryMap::EXECUTABLE).next().assignTo(va)) {
+        if (!engine.memoryMap()->within(unused).require(MemoryMap::EXECUTABLE).next().assignTo(va)) {
             va = unused.greatest() + 1;                 // won't overflow because of check above
             continue;
         }
 
         // "va" now points to an executable address that the partitioner doesn't know about yet.
-        ASSERT_require(engine.memoryMap().at(va).require(MemoryMap::EXECUTABLE).exists());
+        ASSERT_require(engine.memoryMap()->at(va).require(MemoryMap::EXECUTABLE).exists());
         ASSERT_forbid(partitioner.aum().instructionExists(va));
         std::cout <<"unused address " <<StringUtility::addrToString(va) <<"\n";
 

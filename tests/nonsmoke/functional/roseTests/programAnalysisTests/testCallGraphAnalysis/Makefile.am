@@ -11,31 +11,36 @@ noinst_PROGRAMS =
 noinst_PROGRAMS += testCG
 testCG_SOURCES = CG.C
 testCG_CPPFLAGS = $(ROSE_INCLUDES)
-testCG_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+testCG_LDFLAGS = $(ROSE_RPATHS)
+testCG_LDADD = $(ROSE_SEPARATE_LIBS)
 
 # This is compiled, but never used
 noinst_PROGRAMS += testCallGraph
 testCallGraph_SOURCES = testCallGraph.C
 testCallGraph_CPPFLAGS = $(ROSE_INCLUDES)
-testCallGraph_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+testCallGraph_LDFLAGS = $(ROSE_RPATHS)
+testCallGraph_LDADD = $(ROSE_SEPARATE_LIBS)
 
 # This is compiled, but never used
 noinst_PROGRAMS += classHierarchyTestGen
 classHierarchyTestGen_SOURCES = ClassHierarchyTestGen.cpp
 classHierarchyTestGen_CPPFLAGS = $(ROSE_INCLUDES)
-classHierarchyTestGen_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+classHierarchyTestGen_LDFLAGS = $(ROSE_RPATHS)
+classHierarchyTestGen_LDADD = $(ROSE_SEPARATE_LIBS)
 
 # This is compiled, but never used
 noinst_PROGRAMS += virtualFctsTester
 virtualFctsTester_SOURCES = VirtualFctsTester.cpp
 virtualFctsTester_CPPFLAGS = $(ROSE_INCLUDES)
+virtualFctsTester_LDFLAGS = $(ROSE_RPATHS)
 virtualFctsTester_LDADD = $(ROSE_LIBS)
 
 # This is compiled, but never used
 noinst_PROGRAMS += testNewCallGraph
 testNewCallGraph_SOURCES = testNewCallGraph.C
 testNewCallGraph_CPPFLAGS = $(ROSE_INCLUDES)
-testNewCallGraph_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+testNewCallGraph_LDFLAGS = $(ROSE_RPATHS)
+testNewCallGraph_LDADD = $(ROSE_SEPARATE_LIBS)
 
 #########################################################################################################################
 ## Tests
