@@ -150,11 +150,9 @@ Analyzer::Analyzer():
   }
   estateWorkListCurrent = &estateWorkListOne;
   estateWorkListNext = &estateWorkListTwo;
-#ifndef USE_CUSTOM_HSET
   estateSet.max_load_factor(0.7);
   pstateSet.max_load_factor(0.7);
   constraintSetMaintainer.max_load_factor(0.7);
-#endif
   resetInputSequenceIterator();
   _typeSizeMapping=new TypeSizeMapping();
 }
@@ -2760,11 +2758,9 @@ void Analyzer::setAnalyzerToSolver8(EState* startEState, bool resetAnalyzerData)
     list<int> newInputSequence;
     _inputSequence = newInputSequence;
     resetInputSequenceIterator();
-#ifndef USE_CUSTOM_HSET
     estateSet.max_load_factor(0.7);
     pstateSet.max_load_factor(0.7);
     constraintSetMaintainer.max_load_factor(0.7);
-#endif
   }
   // initialize worklist
   const EState* currentEState=processNewOrExisting(*startEState);

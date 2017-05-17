@@ -6,13 +6,7 @@
  * Author   : Markus Schordan                                *
  * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
-//#define USE_CUSTOM_HSET
-#ifdef USE_CUSTOM_HSET
-#include "HSet.h"
-using namespace br_stl;
-#else
 #include <boost/unordered_set.hpp>
-#endif
 
 //#define HSET_MAINTAINER_DEBUG_MODE
 
@@ -22,11 +16,7 @@ using namespace br_stl;
  */
 template<typename KeyType,typename HashFun, typename EqualToPred>
 class HSetMaintainer 
-#ifdef USE_CUSTOM_HSET
-  : public HSet<KeyType*,HashFun,EqualToPred>
-#else
   : public boost::unordered_set<KeyType*,HashFun,EqualToPred>
-#endif
   {
 public:
   typedef pair<bool,const KeyType*> ProcessingResult;
@@ -49,20 +39,12 @@ public:
   }
 
   size_t id(const KeyType& s) {
-#ifdef USE_CUSTOM_HSET
-    typename HSet<KeyType*,HashFun,EqualToPred>::const_iterator i;
-#else
     typename boost::unordered_set<KeyType*,HashFun,EqualToPred>::const_iterator i;
-#endif
     i=HSetMaintainer<KeyType,HashFun,EqualToPred>::find(s);
     if(i!=HSetMaintainer<KeyType,HashFun,EqualToPred>::end()) {
       // in lack of operator '-' we compute the distance
       size_t pos=0;
-#ifdef USE_CUSTOM_HSET
-      typename HSet<KeyType*,HashFun,EqualToPred>::const_iterator b;
-#else
       typename boost::unordered_set<KeyType*,HashFun,EqualToPred>::const_iterator b;
-#endif
       b=HSetMaintainer<KeyType,HashFun,EqualToPred>::begin();
       while(b!=i) {
         pos++;
@@ -81,21 +63,12 @@ public:
     typename HSetMaintainer<KeyType,HashFun,EqualToPred>::iterator i;
 #pragma omp critical(HASHSET)
     {
-#ifdef USE_CUSTOM_HSET
-      i=HSetMaintainer<KeyType,HashFun,EqualToPred>::find(s);
-      if(i!=HSetMaintainer<KeyType,HashFun,EqualToPred>::end()) {
-        ret=const_cast<KeyType*>(&(*i));
-      } else {
-        ret=0;
-      }
-#else
       i=HSetMaintainer<KeyType,HashFun,EqualToPred>::find(&s);
       if(i!=HSetMaintainer<KeyType,HashFun,EqualToPred>::end()) {
         ret=const_cast<KeyType*>(*i);
       } else {
         ret=0;
       }
-#endif
     }
     return ret;
   }
@@ -105,21 +78,12 @@ public:
     typename HSetMaintainer<KeyType,HashFun,EqualToPred>::iterator i;
 #pragma omp critical(HASHSET)
     {
-#ifdef USE_CUSTOM_HSET
-      i=HSetMaintainer<KeyType,HashFun,EqualToPred>::find(s);
-      if(i!=HSetMaintainer<KeyType,HashFun,EqualToPred>::end()) {
-        ret=&(*i);
-      } else {
-        ret=0;
-      }
-#else
       i=HSetMaintainer<KeyType,HashFun,EqualToPred>::find(const_cast<KeyType*>(&s));
       if(i!=HSetMaintainer<KeyType,HashFun,EqualToPred>::end()) {
         ret=const_cast<KeyType*>(*i);
       } else {
         ret=0;
       }
-#endif
     }
     return ret;
   }
@@ -209,10 +173,6 @@ public:
   long numberOf() { return HSetMaintainer<KeyType,HashFun,EqualToPred>::size(); }
 
   long maxCollisions() {
-#ifdef USE_CUSTOM_HSET
-    return HSetMaintainer<KeyType,HashFun,EqualToPred>::max_collisions();
-#else
-    //MS:2012
     size_t max=0;
     for(size_t i=0; i<HSetMaintainer<KeyType,HashFun,EqualToPred>::bucket_count();++i) {
       if(HSetMaintainer<KeyType,HashFun,EqualToPred>::bucket_size(i)>max) {
@@ -220,7 +180,6 @@ public:
       }
     }
     return max;
-#endif
   }
 
   double loadFactor() {

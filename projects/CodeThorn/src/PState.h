@@ -62,22 +62,6 @@ namespace CodeThorn {
   std::ostream& operator<<(std::ostream& os, const PState& value);
   typedef set<const PState*> PStatePtrSet;
   
-#ifdef USE_CUSTOM_HSET
-class PStateHashFun {
- public:
-    PStateHashFun(long prime=9999991) : tabSize(prime) {}
-    long operator()(PState s) const {
-      unsigned int hash=1;
-      for(PState::iterator i=s.begin();i!=s.end();++i) {
-        hash=((hash<<8)+((long)(*i).second.hash()))^hash;
-      }
-      return long(hash) % tabSize;
-    }
-      long tableSize() const { return tabSize;}
-   private:
-    long tabSize;
-};
-#else
 class PStateHashFun {
    public:
     PStateHashFun() {}
@@ -90,7 +74,7 @@ class PStateHashFun {
     }
    private:
 };
-#endif
+
 class PStateEqualToPred {
    public:
     PStateEqualToPred() {}

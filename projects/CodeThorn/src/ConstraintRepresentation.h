@@ -149,29 +149,6 @@ class ConstraintSet : public set<Constraint> {
   * \author Markus Schordan
   * \date 2012.
  */
-#ifdef USE_CUSTOM_HSET
-class ConstraintSetHashFun {
-   public:
-    ConstraintSetHashFun(long prime=99991) : tabSize(prime) {}
-    long operator()(ConstraintSet cs) const {
-      unsigned int hash=1;
-      for(ConstraintSet::iterator i=cs.begin();i!=cs.end();++i) {
-        // use the symbol-ptr of lhsVar for hashing (we are a friend).
-        if((*i).isVarValOp()) {
-          hash=((hash<<8)+((long)(*i).rhsVal().hash()))^hash;
-        } else if((*i).isVarVarOp()) {
-          hash=((hash<<8)+((long)(*i).rhsVar().hash()))^hash;
-        } else {
-          hash=0; // DEQ
-        }
-      }
-      return long(hash) % tabSize;
-    }
-      long tableSize() const { return tabSize;}
-   private:
-    long tabSize;
-};
-#else
 class ConstraintSetHashFun {
    public:
     ConstraintSetHashFun() {}
@@ -191,7 +168,6 @@ class ConstraintSetHashFun {
     }
    private:
 };
-#endif
 
 ConstraintSet operator+(ConstraintSet s1, ConstraintSet s2);
 bool operator<(const ConstraintSet& s1, const ConstraintSet& s2);
