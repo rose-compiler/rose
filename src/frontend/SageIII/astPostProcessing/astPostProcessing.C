@@ -39,7 +39,9 @@ void AstPostProcessing (SgNode* node)
   // improved by enforcing that this could not be called at the SgFile level of the hierarchy.
      if (isSgProject(node) == NULL)
         {
-          printf ("Error: AstPostProcessing should only be called on SgProject (due to repeated memory pool traversals when multiple files are specified on the command line). node = %s \n",node->class_name().c_str());
+       // DQ (5/17/17): Note that this function is called, and this message is output, from the outliner, which is OK but not ideal.
+          printf ("Warning: AstPostProcessing should ideally be called on SgProject (due to repeated memory pool traversals and quadratic \n");
+          printf ("         behavior (over files) when multiple files are specified on the command line): node = %s \n",node->class_name().c_str());
         }
   // DQ (1/31/2014): This is a problem to enforce this for at least (this test program): 
   //      tests/nonsmoke/functional/roseTests/astRewriteTests/testIncludeDirectiveInsertion.C
