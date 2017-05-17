@@ -2,6 +2,7 @@
 #include <BinaryDemangler.h>
 #include <rose_getline.h>
 
+#include <cctype>
 #include <boost/algorithm/string/trim.hpp>
 #include <Sawyer/FileSystem.h>
 
@@ -10,11 +11,17 @@ namespace BinaryAnalysis {
 
 void
 Demangler::fillCache(const std::vector<std::string> &mangledNames) {
-    // Save mangled names to a file.
+    // Save mangled names to a file.  If the mangled name contains certain special characters then don't attempt to demangle it.
     Sawyer::FileSystem::TemporaryFile mangledFile;
     BOOST_FOREACH (const std::string &s, mangledNames) {
-        ASSERT_require(s.find('\n') == std::string::npos);
-        mangledFile.stream() <<s <<"\n";
+        bool isGood = true;
+        for (size_t i=0; isGood && i<s.size(); ++i)
+            isGood = isgraph(s[i]);
+        if (isGood) {
+            mangledFile.stream() <<s <<"\n";
+        } else {
+            mangledFile.stream() <<"\n";
+        }
     }
     mangledFile.stream().close();
 
