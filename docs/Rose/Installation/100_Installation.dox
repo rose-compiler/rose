@@ -319,6 +319,16 @@
  *      <td>For ROSE API Haskell bindings so that tools can be written in Haskell. ROSE does not parse or support
  *      source-to-source analysis and transformation of the Haskell language. See @ref installing_haskell.</td>
  *    </tr>
+ *
+ *    <tr>
+ *      <td><a href="https://www.prevanders.net/dwarf.html">libdwarf</a> and
+ *          <a href="https://sourceware.org/elfutils">libelf</a></td>
+ *      <td>Optional</td>
+ *      <td>dwarf-20160613 - 20170416; libelf-0.133 - 0.169</td>
+ *      <td>dwarf-20160613 - 20170416; libelf-0.133 - 0.169</td>
+ *      <td>Used by binary analysis to parse DWARF debugging information.  ROSE has its own internal, portable ELF parser, but
+ *          libdwarf depends on the libelf parser. See @ref installing_dwarf.</td>
+ *    </tr>
  *  </table>
  *
  *  @todo Add shell scripts to install the ROSE software dependencies on RHEL and Debian. Most of the instructions are already
