@@ -232,7 +232,6 @@ ostream& CodeThorn::operator<<(ostream& os, const PState& pState) {
   return os;
 }
 
-#ifdef USER_DEFINED_PSTATE_COMP
 bool CodeThorn::operator<(const PState& s1, const PState& s2) {
   if(s1.stateSize()!=s2.stateSize())
     return s1.stateSize()<s2.stateSize();
@@ -248,7 +247,7 @@ bool CodeThorn::operator<(const PState& s1, const PState& s2) {
   assert(i==s1.end() && j==s2.end());
   return false; // both are equal
 }
-#if 1
+
 bool CodeThorn::operator==(const PState& c1, const PState& c2) {
   if(c1.stateSize()==c2.stateSize()) {
     PState::const_iterator i=c1.begin();
@@ -269,8 +268,6 @@ bool CodeThorn::operator==(const PState& c1, const PState& c2) {
 bool CodeThorn::operator!=(const PState& c1, const PState& c2) {
   return !(c1==c2);
 }
-#endif
-#endif
 
 AbstractValue PState::readFromMemoryLocation(AbstractValue abstrValue) const {
   if(abstrValue.isTop()) {

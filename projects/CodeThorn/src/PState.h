@@ -1,8 +1,6 @@
 #ifndef PSTATE_H
 #define PSTATE_H
 
-#define USER_DEFINED_PSTATE_COMP
-
 #include <string>
 #include <set>
 #include <map>
@@ -117,13 +115,9 @@ class PStateEqualToPred {
 };
 
 // define order for PState elements (necessary for PStateSet)
-#ifdef  USER_DEFINED_PSTATE_COMP
 bool operator<(const PState& c1, const PState& c2);
-#if 0
 bool operator==(const PState& c1, const PState& c2);
 bool operator!=(const PState& c1, const PState& c2);
-#endif
-#endif
 
 } // namespace CodeThorn
 
