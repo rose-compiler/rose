@@ -1,5 +1,8 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+# RASMUSSEN (5/12/2017): Added tests to check on installation of the Fortran parser
+SUBDIRS =
+
 # DQ (3/8/2017): Restrict testing to versions of GNU compiler for now for specific versions of EDG.
 # SUBDIRS = BinaryAnalysis
 
@@ -19,7 +22,7 @@ if ROSE_USING_GCC_VERSION_LATER_4_9
 else  # NOT ROSE_USING_GCC_VERSION_LATER_4_8
 # If this is not the CLANG or Intel compilers and an earlier version of GNU than GNU 4.9 compiler, so include these files.
 #	@echo "ROSE_USING_GCC_VERSION_LATER_4_8 == false"
-SUBDIRS = BinaryAnalysis
+SUBDIRS += BinaryAnalysis
 endif # ROSE_USING_GCC_VERSION_LATER_4_8
 else  # NOT USING_GNU_COMPILER
 #	@echo "USING_GCC_COMPILER == false"
@@ -46,7 +49,7 @@ if USING_GNU_COMPILER
 if ROSE_USING_GCC_VERSION_LATER_4_8
 #	@echo "Unit tests require configuration with either EDG version 4.9 and GNU version 4.8 or backend compiler or EDG 4.12 and 4.8 or any later GNU compiler."
 #	@echo "Unit tests using EDG 4.12 and any supported backend compiler are allowed."
-SUBDIRS = BinaryAnalysis
+SUBDIRS += BinaryAnalysis
 endif # ROSE_USING_GCC_VERSION_LATER_4_8
 else
 #	@echo "ROSE_USE_EDG_VERSION_4_9 == false"
@@ -70,3 +73,7 @@ endif # USING_INTEL_COMPILER
 endif # USING_CLANG_COMPILER
 endif # USING_GNU_COMPILER
 endif # ROSE_USE_EDG_VERSION_4_9
+
+if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
+SUBDIRS += Fortran
+endif

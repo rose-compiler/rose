@@ -20,7 +20,6 @@ libspray_la_SOURCES=\
  AliasAnalysis.h \
  AnalysisAbstractionLayer.h \
  AnalysisAstAnnotator.h \
- AstTerm.h \
  AbstractValue.h \
  BoolLattice.h \
  CFAnalysis.h \
@@ -54,8 +53,8 @@ libspray_la_SOURCES=\
  WorkListSeq.h \
  AnalysisAstAnnotator.C \
  AliasAnalysis.C \
- AstTerm.C \
  AbstractValue.C \
+ TypeSizeMapping.C \
  BoolLattice.C \
  CFAnalysis.C \
  CppExprEvaluator.C \

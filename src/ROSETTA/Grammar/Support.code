@@ -103,6 +103,26 @@ HEADER_OMP_CLAUSE_START
           e_omp_map_dist_data_last
         };
 
+        // Support thread affinity clause  proc_bind(master|close|spread)
+        enum omp_proc_bind_policy_enum
+        {
+          e_omp_proc_bind_policy_unknown,
+          e_omp_proc_bind_policy_master,
+          e_omp_proc_bind_policy_close,
+          e_omp_proc_bind_policy_spread,
+          e_omp_proc_bind_policy_last
+        };
+
+        enum omp_atomic_clause_enum
+        {
+          e_omp_atomic_clause_unknown,
+          e_omp_atomic_clause_read,
+          e_omp_atomic_clause_write,
+          e_omp_atomic_clause_update,
+          e_omp_atomic_clause_capture
+        };
+
+
 
 HEADER_OMP_CLAUSE_END
 HEADER_GRAPH_START
