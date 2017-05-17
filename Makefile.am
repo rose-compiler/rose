@@ -16,9 +16,16 @@ include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
 # SUBDIRS = libltdl config src tests projects tutorial exampleTranslators docs tools scripts demo binaries
 
 # DQ (4/17/2010): Support for minimal configuration of ROSE (e.g. "--enable-only-fortran").
+
+# We don't want "make [all]", "make check", or "make install", etc. to recurse into the tests/nonsmoke directory (unless
+# ROSE was configured using "--with-ROSE_LONG_MAKE_CHECK_RULE"). If you want to build something in the non-smoke area
+# you should "cd" do that directory first, as in "make -C tests/nonsmoke ...".
 SUBDIRS = libltdl config src
 if ROSE_BUILD_TESTS_DIRECTORY_SUPPORT
-   SUBDIRS += tests
+   SUBDIRS += tests/smoke
+endif
+if ROSE_USE_LONG_MAKE_CHECK_RULE
+SUBDIRS += tests/nonsmoke
 endif
 
 if !ROSE_USE_CLANG_FRONTEND
@@ -193,9 +200,8 @@ pkginclude_HEADERS = rosePublicConfig.h
 include $(top_srcdir)/config/build_rose_paths.Makefile
 
 check-local: enforce_policies
-	@echo '************************************************************'
-	@echo '****** make check rule complete (terminated normally) ******'
-	@echo '************************************************************'
+	@echo 'To run additional "non-smoke" tests, use this command:'
+	@echo "  $(MAKE) -C $$(pwd)/tests/nonsmoke check"
 
 install-exec-local:
 	@echo '*****************************************************************'
@@ -642,7 +648,6 @@ lcov:
 -d src/frontend/ECJ_ROSE_Connection/.libs \
 -d src/frontend/X10_ROSE_Connection/.libs \
 -d src/frontend/PHPFrontend/.libs \
--d src/frontend/BinaryDisassembly/.libs \
 -d src/frontend/BinaryLoader/.libs \
 -d src/frontend/BinaryFormats/.libs \
 -d src/frontend/Disassemblers/.libs \
@@ -737,9 +742,6 @@ librose-lcov.info: all-lcov.info
         "$(top_srcdir)/src/backend/unparser/PHPCodeGeneration/*" \
         "$(top_srcdir)/src/midend/programAnalysis/OAWrap/*" \
         "$(top_srcdir)/src/midend/programAnalysis/OpenAnalysis/*" \
-        "$(top_srcdir)/src/frontend/BinaryDisassembly/*" \
-        "$(top_srcdir)/src/midend/binaryAnalyses/dataflowanalyses/*" \
-        "$(top_srcdir)/src/midend/binaryAnalyses/RoseBin_*" \
         "$(top_srcdir)/src/midend/programAnalysis/genericDataflow/*" \
         "$(top_srcdir)/src/frontend/CxxFrontend/EDG/EDG_4.9/*" \
         "$(top_srcdir)/src/midend/astRewriteMechanism/*" \
@@ -755,7 +757,6 @@ librose-lcov.info: all-lcov.info
         "$(top_srcdir)/src/midend/programTransformation/implicitCodeGeneration/*" \
         "$(top_srcdir)/src/midend/programTransformation/singleStatementToBlockNormalization/*" \
         "$(top_srcdir)/src/roseSupport/stringify.C" \
-        "$(top_srcdir)/src/midend/programAnalysis/graphAnalysis/*" \
         "$(top_srcdir)/src/roseExtensions/roseHPCToolkit/*" \
         "$(top_srcdir)/src/frontend/SageIII/nodeBuildFunctionsForAterms.C" \
         "$(top_srcdir)/src/frontend/SageIII/astVisualization/*" \
@@ -790,9 +791,6 @@ librose_lcov_web_pages: librose-lcov.info
 # src/backend/unparser/PHPCodeGeneration/*
 # src/midend/programAnalysis/OAWrap/*
 # src/midend/programAnalysis/OpenAnalysis/*
-# src/frontend/BinaryDisassembly/*
-# src/midend/binaryAnalyses/dataflowanalyses/*
-# src/midend/binaryAnalyses/RoseBin_*
 # src/midend/programAnalysis/genericDataflowflow/*
 # src/frontend/CxxFrontend/EDG/EDG_4.9/*
 # src/midend/astRewriteMechanism/*
@@ -809,7 +807,6 @@ librose_lcov_web_pages: librose-lcov.info
 # src/midend/programTransformation/implicitCodeGeneration/*
 # src/midend/programTransformation/singleStatementToBlockNormalization/*
 # src/roseSupport/stringify.C
-# src/midend/programAnalysis/graphAnalysis/*
 # 
 # 
 # Directories to remove from ROSE:
@@ -839,7 +836,6 @@ librose_lcov_web_pages: librose-lcov.info
 #
 # What is this:
 # src/midend/abstractMemoryObject  (DTEC work by Liao)
-# src/midend/programAnalysis/graphAnalysis (Old binary call graph support, superceeded by more recent work)
 # 
 #
 # Why are these so poorly tested:

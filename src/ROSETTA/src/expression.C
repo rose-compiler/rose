@@ -1487,11 +1487,22 @@ Grammar::setUpExpressions ()
   // DQ (2/15/2015): This will call cycles in the AST if it is allowed to be defined in the AST traversal.
   // LambdaExp.setDataPrototype ("SgClassDeclaration*", "lambda_closure_class", "= NULL",
   //             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#if 0
+  // Original code (design).
      LambdaExp.setDataPrototype ("SgClassDeclaration*", "lambda_closure_class", "= NULL",
                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
      LambdaExp.setDataPrototype ("SgFunctionDeclaration*", "lambda_function", "= NULL",
                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#else
+  // DQ (4/27/2017): I think it might be better to traverse the class directly and mark the operator() 
+  // member function to not be traversed via the lambda function (becasue it is in the lambda closure class).
+     LambdaExp.setDataPrototype ("SgClassDeclaration*", "lambda_closure_class", "= NULL",
+                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+  // DQ (4/27/2017): This points to the non defining declaration, so it is OK to traverse it.
+     LambdaExp.setDataPrototype ("SgFunctionDeclaration*", "lambda_function", "= NULL",
+                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
+
      LambdaExp.setDataPrototype ( "bool", "is_mutable", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      LambdaExp.setDataPrototype ( "bool", "capture_default", "= false",

@@ -84,22 +84,24 @@ INDENT_ARGS = -npsl
 # Build demo translators
 
 AM_CPPFLAGS = $(ROSE_INCLUDES) $(OUTLINER_INCS)
+AM_LDFLAGS = $(ROSE_RPATHS)
+
 # We install a copy
 bin_PROGRAMS = outline
 noinst_PROGRAMS = outlineIfs outlinePreproc outlineIfs2
 
 outline_SOURCES = outline.cc
-outline_LDFLAGS = $(OUTLINER_LIBS)
+outline_LDADD = $(OUTLINER_LIBS)
 
 outlineIfs_SOURCES = outlineIfs.cc
-outlineIfs_LDFLAGS = $(OUTLINER_LIBS)
+outlineIfs_LDADD = $(OUTLINER_LIBS)
 
 # A variant using structure wrapper
 outlineIfs2_SOURCES = outlineIfs2.C
-outlineIfs2_LDFLAGS = $(OUTLINER_LIBS)
+outlineIfs2_LDADD = $(OUTLINER_LIBS)
 
 outlinePreproc_SOURCES = outlinePreproc.cc
-outlinePreproc_LDFLAGS = $(OUTLINER_LIBS)
+outlinePreproc_LDADD = $(OUTLINER_LIBS)
 
 #==========================================================================
 # Example 1: Basic outlining of a nested loop

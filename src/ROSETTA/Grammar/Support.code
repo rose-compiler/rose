@@ -103,6 +103,26 @@ HEADER_OMP_CLAUSE_START
           e_omp_map_dist_data_last
         };
 
+        // Support thread affinity clause  proc_bind(master|close|spread)
+        enum omp_proc_bind_policy_enum
+        {
+          e_omp_proc_bind_policy_unknown,
+          e_omp_proc_bind_policy_master,
+          e_omp_proc_bind_policy_close,
+          e_omp_proc_bind_policy_spread,
+          e_omp_proc_bind_policy_last
+        };
+
+        enum omp_atomic_clause_enum
+        {
+          e_omp_atomic_clause_unknown,
+          e_omp_atomic_clause_read,
+          e_omp_atomic_clause_write,
+          e_omp_atomic_clause_update,
+          e_omp_atomic_clause_capture
+        };
+
+
 
 HEADER_OMP_CLAUSE_END
 HEADER_GRAPH_START
@@ -15363,11 +15383,6 @@ X aggressive
 
      p_read_instructions_only    = false;
 
-     p_disassemblerSearchHeuristics = rose::BinaryAnalysis::Disassembler::SEARCH_DEFAULT;
-
-  // DQ (11/12/2014): Previously uninitialized data members
-     p_partitionerSearchHeuristics = SgAsmFunction::FUNC_DEFAULT;
-
   // DQ (11/20/2010): Support for token handling.
      p_unparse_tokens = false;
 
@@ -15412,6 +15427,7 @@ X aggressive
   // Matzke (12/05/2016): Added missing initialization
      p_frontendErrorCode = 0;
      p_unparserErrorCode = 0;
+     p_midendErrorCode= 0; // Liao, 4/26/2017 add midend error code
      p_backendCompilerErrorCode = 0;
    }
 
@@ -16802,6 +16818,7 @@ SgProject::get_files_with_errors() const
       bool has_errors =
           file->get_javacErrorCode()            != 0 ||
           file->get_frontendErrorCode()         != 0 ||
+          file->get_midendErrorCode()           != 0 ||
           file->get_unparserErrorCode()         != 0 ||
           file->get_backendCompilerErrorCode()  != 0;
       if (has_errors)
@@ -16826,6 +16843,7 @@ SgProject::get_files_without_errors() const
       bool has_no_errors =
           file->get_javacErrorCode()            == 0 &&
           file->get_frontendErrorCode()         == 0 &&
+          file->get_midendErrorCode()         == 0 &&
           file->get_unparserErrorCode()         == 0 &&
           file->get_backendCompilerErrorCode()  == 0;
       if (has_no_errors)
@@ -17796,6 +17814,10 @@ SgUnparse_Info & SgUnparse_Info::operator= ( const SgUnparse_Info & X )
   // DQ (1/10/2014): Added to support token based unparsing.
      p_current_source_file = X.p_current_source_file;
 
+  // DQ (4/28/2017): Added information required for use of generated names in the output of types for template 
+  // arguments as used in symbol table lookup.
+     p_use_generated_name_for_template_arguments = X.p_use_generated_name_for_template_arguments;
+
      return *this;
    }
 
@@ -17905,6 +17927,10 @@ SgUnparse_Info::post_construction_initialization()
 
   // DQ (1/10/2014): Added to support token based unparsing.
      p_current_source_file = NULL;
+
+  // DQ (4/28/2017): Added information required for use of generated names in the output of types for template 
+  // arguments as used in symbol table lookup.
+     p_use_generated_name_for_template_arguments = false;
    }
 
 bool
@@ -18818,6 +18844,7 @@ SgUnparse_Info::display ( const std::string & label ) const
      printf ("p_array_index_list                     = %s \n",(p_array_index_list.is_null() == false) ? p_array_index_list.str() : "EmPtY sTrInG");
      printf ("p_current_namespace                    = %p \n",p_current_namespace);
      printf ("p_outputCodeGenerationFormatDelimiters = %s \n",p_outputCodeGenerationFormatDelimiters ? "true" : "false");
+
      printf ("p_current_function_call                = %p \n",p_current_function_call);
      printf ("p_current_scope                        = %p = %s \n",p_current_scope,p_current_scope != NULL ? p_current_scope->class_name().c_str() : "EmPtY sTrInG");
 
@@ -18831,6 +18858,10 @@ SgUnparse_Info::display ( const std::string & label ) const
 
   // DQ (1/10/2015): Added support for debugging the SgUnparse_Info object.
      printf ("p_current_source_file                  = %p = %s \n",p_current_source_file,p_current_source_file != NULL ? p_current_source_file->class_name().c_str() : "EmPtY sTrInG");
+
+  // DQ (4/28/2017): Added information required for use of generated names in the output of types for template 
+  // arguments as used in symbol table lookup.
+     printf ("p_use_generated_name_for_template_arguments = %s \n",p_use_generated_name_for_template_arguments ? "true" : "false");
    }
 
 string
@@ -20231,11 +20262,7 @@ SgIncidenceDirectedGraph::getSuccessors(const SgGraphNode* node, std::vector <Sg
       SgGraphNode* target = isSgGraphNode(edge->get_to());
       assert(target);
       if (target) {
-	    //if (type_n==RoseBin_support::ToString(SgGraph::cfg)) {
 	       vec.push_back(target);
-            //}
-	    //else 
-	    //   printf("Different edge type \n");
       }
     } else {
       printf("This is not a DirectedGraphEdge.\n");
@@ -20262,7 +20289,6 @@ SgIncidenceDirectedGraph::getPredecessors(const SgGraphNode* node, std::vector <
       SgGraphNode* source = isSgGraphNode(edge->get_from());
       if (source) {
 	//string type_n = getProperty(SgGraph::type, edge);
-	//if (type_n==RoseBin_support::ToString(SgGraph::cfg))
 	  vec.push_back(source);
       }
     }

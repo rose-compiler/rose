@@ -29,11 +29,29 @@
  * Used for specifying a unique language construct in source files.
  *
  * Users are required to implement the interface using their own
- * IR node types.
+ * IR node types. 
  *
  * Goal : 
  *     Only define interfaces and abstract implementation
  *     independent to any particular compilers or tools
+ *
+ * We provide ROSE's implementation. 
+ *
+ * Essentially, you can use a string to uniquely specify any language constructs
+ * in your source code and convert the string to AST node. 
+ *
+ * This is useful to pass string options to translators so they can operate on 
+ * the desired language constructs (e.g. for loops)
+ *
+ *
+ * Example use in outliner: 
+ *   outline the for loop at line 12 of the input code
+ *   ./outline -rose:outline:abstract_handle "ForStatement<position,12>" -c inputCode_OutlineLoop2.c
+ *   Outline the 2nd for statement of the input code
+ *
+ *   ./outline -rose:outline:abstract_handle "FunctionDeclaration<name,initialize>::ForStatement<numbering,2>" -c inputCode_OutlineLoop2.c 
+ *   Outline the statement at line 5 of the input code
+ *   ./outline -rose:outline:abstract_handle "Statement<position,5>" -c declarations.c
  */
 namespace AbstractHandle{
 

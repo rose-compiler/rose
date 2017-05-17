@@ -16,7 +16,11 @@
 #include <sys/types.h> //getpid()
 #include <unistd.h>    //getpid()
 
+#include <iostream>
+#include <map>
+#include <string>
 // Forward declarations
+
 class SgFile;
 class SgProject;
 
@@ -30,6 +34,11 @@ namespace Rose {
   extern struct sigaction SignalAction;
   typedef void(*SignalHandlerFunction)(int);
   
+  // Often we run a rose translator/analyzer to process a set of input files.
+  // We use this to store the results for each file.
+  // Later, the generated report for successfully processed file will contain the results. 
+  // So in the end, the success report will contain both the file names and corresponding analysis results.
+  extern std::map<SgFile* , std::string> File2StringMap; 
   
   //-----------------------------------------------------------------------------
   // Public API
@@ -190,6 +199,10 @@ namespace Rose {
                               (int argc, char* argv[],
                                std::vector<std::string> & rose_cmdline);
 
+    //! Set the project and all its files's midend error codes 
+    void setMidendErrorCode (SgProject* project, int errorCode);
+
+    //! Generates the file reports
     void generate_reports(SgProject* project,
                      std::vector< std::string> orig_rose_cmdline);
 
