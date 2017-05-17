@@ -100,13 +100,14 @@ corresponding C type is union name defaults to YYSTYPE.
 %token  OMP PARALLEL IF NUM_THREADS ORDERED SCHEDULE STATIC DYNAMIC GUIDED RUNTIME SECTIONS SINGLE NOWAIT SECTION
         FOR MASTER CRITICAL BARRIER ATOMIC FLUSH TARGET UPDATE DIST_DATA BLOCK DUPLICATE CYCLIC
         THREADPRIVATE PRIVATE COPYPRIVATE FIRSTPRIVATE LASTPRIVATE SHARED DEFAULT NONE REDUCTION COPYIN 
-        TASK TASKWAIT UNTIED COLLAPSE AUTO DECLARE DATA DEVICE MAP ALLOC TO FROM TOFROM
+        TASK TASKWAIT UNTIED COLLAPSE AUTO DECLARE DATA DEVICE MAP ALLOC TO FROM TOFROM PROC_BIND CLOSE SPREAD
         SIMD SAFELEN ALIGNED LINEAR UNIFORM INBRANCH NOTINBRANCH MPI MPI_ALL MPI_MASTER TARGET_BEGIN TARGET_END
         '(' ')' ',' ':' '+' '*' '-' '&' '^' '|' LOGAND LOGOR SHLEFT SHRIGHT PLUSPLUS MINUSMINUS PTR_TO '.'
         LE_OP2 GE_OP2 EQ_OP2 NE_OP2 RIGHT_ASSIGN2 LEFT_ASSIGN2 ADD_ASSIGN2
         SUB_ASSIGN2 MUL_ASSIGN2 DIV_ASSIGN2 MOD_ASSIGN2 AND_ASSIGN2 
         XOR_ASSIGN2 OR_ASSIGN2
         LEXICALERROR IDENTIFIER 
+        READ WRITE CAPTURE
 /*We ignore NEWLINE since we only care about the pragma string , We relax the syntax check by allowing it as part of line continuation */
 %token <itype> ICONSTANT   
 %token <stype> EXPRESSION ID_EXPRESSION 
@@ -120,7 +121,7 @@ corresponding C type is union name defaults to YYSTYPE.
               shift_expr additive_expr multiplicative_expr 
               primary_expr incr_expr unary_expr
               device_clause if_clause num_threads_clause
-              simd_clause
+              simd_clause proc_bind_clause
 
 %type <itype> schedule_kind
 
@@ -179,6 +180,7 @@ parallel_clause : unique_parallel_clause
                 | data_reduction_clause
                 | if_clause
                 | num_threads_clause
+                | proc_bind_clause
                 ;
 
 unique_parallel_clause : IF { 
@@ -193,6 +195,18 @@ unique_parallel_clause : IF {
                          } '(' expression ')' { 
                            addExpression("");
                          }
+                       |PROC_BIND '(' MASTER ')' {
+                           ompattribute->addClause(e_proc_bind);
+                           ompattribute->setProcBindPolicy (e_proc_bind_master);
+                         }
+                       | PROC_BIND '(' CLOSE ')' {
+                           ompattribute->addClause(e_proc_bind);
+                           ompattribute->setProcBindPolicy (e_proc_bind_close);
+                         }
+                       | PROC_BIND '(' SPREAD ')' {
+                           ompattribute->addClause(e_proc_bind);
+                           ompattribute->setProcBindPolicy (e_proc_bind_spread);
+                         }  
                        | COPYIN { 
                            ompattribute->addClause(e_copyin);
                            omptype = e_copyin;
@@ -366,7 +380,8 @@ parallel_for_clause : unique_parallel_clause
                     | data_reduction_clause
                     | if_clause
                     | num_threads_clause
-                    ;
+                    | proc_bind_clause
+                   ;
 
 parallel_sections_directive : /* #pragma */ OMP PARALLEL SECTIONS { 
                                 ompattribute =buildOmpAttribute(e_parallel_sections,gNode, true); 
@@ -392,6 +407,7 @@ parallel_sections_clause : unique_parallel_clause
                          | data_reduction_clause
                          | if_clause
                          | num_threads_clause
+                         | proc_bind_clause
                          ;
 
 master_directive : /* #pragma */ OMP MASTER { 
@@ -425,9 +441,28 @@ taskwait_directive : /* #pragma */ OMP TASKWAIT {
                    ;
 
 atomic_directive : /* #pragma */ OMP ATOMIC { 
-                     ompattribute = buildOmpAttribute(e_atomic,gNode, true); }
+                     ompattribute = buildOmpAttribute(e_atomic,gNode, true); 
+                     } atomic_clauseopt
                  ;
 
+atomic_clauseopt : /* empty */
+                 | atomic_clause
+                 ;
+
+atomic_clause : READ { ompattribute->addClause(e_atomic_clause);
+                       ompattribute->setAtomicAtomicity(e_atomic_read);
+                      }
+               | WRITE{ ompattribute->addClause(e_atomic_clause);
+                       ompattribute->setAtomicAtomicity(e_atomic_write);
+                  }
+
+               | UPDATE { ompattribute->addClause(e_atomic_clause);
+                       ompattribute->setAtomicAtomicity(e_atomic_update);
+                  }
+               | CAPTURE { ompattribute->addClause(e_atomic_clause);
+                       ompattribute->setAtomicAtomicity(e_atomic_capture);
+                  }
+                ;
 flush_directive : /* #pragma */ OMP FLUSH {
                     ompattribute = buildOmpAttribute(e_flush,gNode, true);
                     omptype = e_flush; 
@@ -459,6 +494,20 @@ data_default_clause : DEFAULT '(' SHARED ')' {
                     | DEFAULT '(' NONE ')' {
                         ompattribute->addClause(e_default);
                         ompattribute->setDefaultValue(e_default_none);
+                      }
+                    ;
+
+proc_bind_clause : PROC_BIND '(' MASTER ')' { 
+                        ompattribute->addClause(e_proc_bind);
+                        ompattribute->setProcBindPolicy (e_proc_bind_master); 
+                      }
+                    | PROC_BIND '(' CLOSE ')' {
+                        ompattribute->addClause(e_proc_bind);
+                        ompattribute->setProcBindPolicy (e_proc_bind_close); 
+                      }
+                    | PROC_BIND '(' SPREAD ')' {
+                        ompattribute->addClause(e_proc_bind);
+                        ompattribute->setProcBindPolicy (e_proc_bind_spread); 
                       }
                     ;
                     
@@ -1071,7 +1120,8 @@ dist_size_opt: /*empty*/ {current_exp = NULL;}
 %%
 int yyerror(const char *s) {
     printf("%s!\n", s);
-    return 0;
+    assert(0);
+    return 0; // we want to the program to stop on error
 }
 
 
