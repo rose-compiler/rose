@@ -170,7 +170,7 @@ void checkStaticArrayBounds(SgProject* root, SPRAY::IntervalAnalysis* intervalAn
             }
           } else {
             //cerr<<"WARNING: Unsupported array access expression: ";
-            //cerr<<SPRAY::AstTerm::astTermWithNullValuesToString(arrRefExp)<<endl;
+            //cerr<<AstTerm::astTermWithNullValuesToString(arrRefExp)<<endl;
           }
         }
       }
