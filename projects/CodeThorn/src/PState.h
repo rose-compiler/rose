@@ -33,10 +33,10 @@ namespace CodeThorn {
    */
   
   // private inharitance ensures PState is only used through methods defined here
-  class PState : private map<VarAbstractValue,CodeThorn::AValue> {
+  class PState : private map<AbstractValue,CodeThorn::AbstractValue> {
   public:
-    typedef map<VarAbstractValue,CodeThorn::AValue>::const_iterator const_iterator;
-    typedef map<VarAbstractValue,CodeThorn::AValue>::iterator iterator;
+    typedef map<AbstractValue,CodeThorn::AbstractValue>::const_iterator const_iterator;
+    typedef map<AbstractValue,CodeThorn::AbstractValue>::iterator iterator;
     friend std::ostream& operator<<(std::ostream& os, const PState& value);
     friend std::istream& operator>>(std::istream& os, PState& value);
     friend class PStateHashFun;
@@ -45,20 +45,20 @@ namespace CodeThorn {
     friend bool CodeThorn::operator!=(const PState& c1, const PState& c2);
     friend bool CodeThorn::operator<(const PState& s1, const PState& s2);
     PState();
-    bool varExists(VarAbstractValue varId) const;
-    bool varIsConst(VarAbstractValue varId) const;
-    bool varIsTop(VarAbstractValue varId) const;
-    CodeThorn::AValue varValue(VarAbstractValue varId) const;
-    string varValueToString(VarAbstractValue varId) const;
-    void deleteVar(VarAbstractValue varname);
+    bool varExists(AbstractValue varId) const;
+    bool varIsConst(AbstractValue varId) const;
+    bool varIsTop(AbstractValue varId) const;
+    CodeThorn::AbstractValue varValue(AbstractValue varId) const;
+    string varValueToString(AbstractValue varId) const;
+    void deleteVar(AbstractValue varname);
     long memorySize() const;
     void toStream(std::ostream& os) const;
     string toString() const;
     string toString(SPRAY::VariableIdMapping* variableIdMapping) const;
-    VarAbstractValueSet getVariableIds() const;
+    AbstractValueSet getVariableIds() const;
     void writeTopToAllMemoryLocations();
-    void writeValueToAllMemoryLocations(CodeThorn::AValue val);
-    void writeTopToMemoryLocation(VarAbstractValue varId);
+    void writeValueToAllMemoryLocations(CodeThorn::AbstractValue val);
+    void writeTopToMemoryLocation(AbstractValue varId);
     AbstractValue readFromMemoryLocation(AbstractValue abstrValue) const;
     void writeToMemoryLocation(AbstractValue abstractMemLoc,
                                AbstractValue abstractValue);

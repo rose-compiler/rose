@@ -753,7 +753,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
               if(SgIntVal* intValNode=isSgIntVal(initExp)) {
                 int intVal=intValNode->get_value();
                 //cout<<"DEBUG:initializing array element:"<<arrayElemId.toString()<<"="<<intVal<<endl;
-                //newPState.writeToMemoryLocation(arrayElemId,CodeThorn::AValue(AbstractValue(intVal)));
+                //newPState.writeToMemoryLocation(arrayElemId,CodeThorn::AbstractValue(AbstractValue(intVal)));
                 int index2=arrayPtrPlusIndexValue.getIndexIntValue();
                 if(elemIndex==index2) {
                   AbstractValue val=AbstractValue(intVal);
@@ -839,7 +839,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalDereferenceOp(SgPointerDerefExp
   res.estate=estate;
   AbstractValue derefOperandValue=operandResult.result;
   //cout<<"DEBUG: derefOperandValue: "<<derefOperandValue.toRhsString(_variableIdMapping);
-  // (varid,idx) => varid'; return estate.pstate()[varid'] || pstate(AValue)
+  // (varid,idx) => varid'; return estate.pstate()[varid'] || pstate(AbstractValue)
   //res.result=readFromMemoryLocation(estate.pstate(), derefOperandValue);
   res.result=derefOperandValue;
   res.exprConstraints=operandResult.exprConstraints;

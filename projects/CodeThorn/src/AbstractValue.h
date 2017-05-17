@@ -147,12 +147,7 @@ class AbstractValue {
     bool operator()(const AbstractValue& c1, const AbstractValue& c2) const;
   };
 
-  typedef AbstractValue AValue; 
-  typedef AbstractValueCmp AValueCmp; 
-  
-  typedef AbstractValue VarAbstractValue;
   typedef std::set<AbstractValue> AbstractValueSet;
-  typedef AbstractValueSet VarAbstractValueSet;
   AbstractValueSet& operator+=(AbstractValueSet& s1, AbstractValueSet& s2);
 }
 

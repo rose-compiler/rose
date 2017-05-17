@@ -70,7 +70,7 @@ void VariableValueMonitor::update(Analyzer* analyzer,EState* estate) {
     bool isHotVariable=hotVariables.find(varId)!=hotVariables.end();
     if(!isHotVariable) {
       if(pstate->varIsConst(varId)) {
-        AValue abstractVal=pstate->varValue(varId);
+        AbstractValue abstractVal=pstate->varValue(varId);
         ROSE_ASSERT(abstractVal.isConstInt());
         int intVal=abstractVal.getIntValue();
         _variablesMap[varId]->insert(intVal);

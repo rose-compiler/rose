@@ -74,7 +74,7 @@ long EState::memorySize() const {
   * \author Markus Schordan
   * \date 2012.
  */
-void PState::deleteVar(VarAbstractValue varId) {
+void PState::deleteVar(AbstractValue varId) {
   PState::iterator i=begin();
   while(i!=end()) {
     if((*i).first==varId)
@@ -88,7 +88,7 @@ void PState::deleteVar(VarAbstractValue varId) {
   * \author Markus Schordan
   * \date 2012.
  */
-bool PState::varExists(VarAbstractValue varId) const {
+bool PState::varExists(AbstractValue varId) const {
   PState::const_iterator i=find(varId);
   return !(i==end());
 }
@@ -97,10 +97,10 @@ bool PState::varExists(VarAbstractValue varId) const {
   * \author Markus Schordan
   * \date 2012.
  */
-bool PState::varIsConst(VarAbstractValue varId) const {
+bool PState::varIsConst(AbstractValue varId) const {
   PState::const_iterator i=find(varId);
   if(i!=end()) {
-    AValue val=(*i).second;
+    AbstractValue val=(*i).second;
     return val.isConstInt();
   } else {
     // TODO: this allows variables (intentionally) not to be in PState but still to analyze
@@ -108,10 +108,10 @@ bool PState::varIsConst(VarAbstractValue varId) const {
     return false; // throw CodeThorn::Exception("Error: PState::varIsConst : variable does not exist.";
   }
 }
-bool PState::varIsTop(VarAbstractValue varId) const {
+bool PState::varIsTop(AbstractValue varId) const {
   PState::const_iterator i=find(varId);
   if(i!=end()) {
-    AValue val=(*i).second;
+    AbstractValue val=(*i).second;
     return val.isTop();
   } else {
     // TODO: this allows variables (intentionally) not to be in PState but still to analyze
@@ -123,9 +123,9 @@ bool PState::varIsTop(VarAbstractValue varId) const {
   * \author Markus Schordan
   * \date 2012.
  */
-string PState::varValueToString(VarAbstractValue varId) const {
+string PState::varValueToString(AbstractValue varId) const {
   stringstream ss;
-  AValue val=varValue(varId);
+  AbstractValue val=varValue(varId);
   return val.toString();
 }
 
@@ -133,8 +133,8 @@ string PState::varValueToString(VarAbstractValue varId) const {
   * \author Markus Schordan
   * \date 2014.
  */
-AValue PState::varValue(VarAbstractValue varId) const {
-  AValue val=((*(const_cast<PState*>(this)))[varId]);
+AbstractValue PState::varValue(AbstractValue varId) const {
+  AbstractValue val=((*(const_cast<PState*>(this)))[varId]);
   return val;
 }
 
@@ -143,7 +143,7 @@ AValue PState::varValue(VarAbstractValue varId) const {
   * \date 2012.
  */
 void PState::writeTopToAllMemoryLocations() {
-  CodeThorn::AValue val=CodeThorn::Top();
+  CodeThorn::AbstractValue val=CodeThorn::Top();
   writeValueToAllMemoryLocations(val);
 }
 
@@ -151,22 +151,22 @@ void PState::writeTopToAllMemoryLocations() {
   * \author Markus Schordan
   * \date 2012.
  */
-void PState::writeValueToAllMemoryLocations(CodeThorn::AValue val) {
+void PState::writeValueToAllMemoryLocations(CodeThorn::AbstractValue val) {
   for(PState::iterator i=begin();i!=end();++i) {
-    VarAbstractValue varId=(*i).first;
+    AbstractValue varId=(*i).first;
     writeToMemoryLocation(varId,val);
   }
 }
 
-void PState::writeTopToMemoryLocation(VarAbstractValue varId) {
-  CodeThorn::AValue val=CodeThorn::Top();
+void PState::writeTopToMemoryLocation(AbstractValue varId) {
+  CodeThorn::AbstractValue val=CodeThorn::Top();
   writeToMemoryLocation(varId, val);
 }
 
-VarAbstractValueSet PState::getVariableIds() const {
-  VarAbstractValueSet varIdSet;
+AbstractValueSet PState::getVariableIds() const {
+  AbstractValueSet varIdSet;
   for(PState::const_iterator i=begin();i!=end();++i) {
-    VarAbstractValue varId=(*i).first;
+    AbstractValue varId=(*i).first;
     varIdSet.insert(varId);
   }
   return varIdSet;
@@ -296,17 +296,17 @@ size_t PState::stateSize() const {
 }
 
 PState::iterator PState::begin() {
-  return map<VarAbstractValue,CodeThorn::AValue>::begin();
+  return map<AbstractValue,CodeThorn::AbstractValue>::begin();
 }
 
 PState::iterator PState::end() {
-  return map<VarAbstractValue,CodeThorn::AValue>::end();
+  return map<AbstractValue,CodeThorn::AbstractValue>::end();
 }
 
 PState::const_iterator PState::begin() const {
-  return map<VarAbstractValue,CodeThorn::AValue>::begin();
+  return map<AbstractValue,CodeThorn::AbstractValue>::begin();
 }
 
 PState::const_iterator PState::end() const {
-  return map<VarAbstractValue,CodeThorn::AValue>::end();
+  return map<AbstractValue,CodeThorn::AbstractValue>::end();
 }

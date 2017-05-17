@@ -42,7 +42,7 @@ class SingleEvalResultConstInt {
   EState estate;
   ConstraintSet exprConstraints; // temporary during evaluation of expression
   AbstractValue result;
-  AValue value() {return result;}
+  AbstractValue value() {return result;}
   bool isConstInt() {return result.isConstInt();}
   bool isTop() {return result.isTop();}
   bool isTrue() {return result.isTrue();}

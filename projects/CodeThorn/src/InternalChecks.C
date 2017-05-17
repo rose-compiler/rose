@@ -315,9 +315,9 @@ void checkTypes() {
     PState s2;
     PState s3;
     PState s5;
-    AValue valtop=CodeThorn::Top();
-    AValue val1=500;
-    AValue val2=501;
+    AbstractValue valtop=CodeThorn::Top();
+    AbstractValue val1=500;
+    AbstractValue val2=501;
     PStateSet pstateSet;
     VariableId x=variableIdMapping.createUniqueTemporaryVariableId("x");
     VariableId y=variableIdMapping.createUniqueTemporaryVariableId("y");

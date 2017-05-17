@@ -708,7 +708,7 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
             if(SgIntVal* intValNode=isSgIntVal(assignInit->get_operand_i())) {
               int intVal=intValNode->get_value();
               // logger[DEBUG] <<"initializing array element:"<<arrayElemId.toString()<<"="<<intVal<<endl;
-              newPState.writeToMemoryLocation(arrayElemId,CodeThorn::AValue(intVal));
+              newPState.writeToMemoryLocation(arrayElemId,CodeThorn::AbstractValue(intVal));
             } else {
               logger[ERROR] <<"unsupported array initializer value:"<<exp->unparseToString()<<" AST:"<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
               exit(1);
@@ -1160,7 +1160,7 @@ PState Analyzer::analyzeAssignRhsExpr(PState currentPState,VariableId lhsVar, Sg
 // TODO: currently all rhs which are not a variable are evaluated to top by this function
 PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode* rhs, ConstraintSet& cset) {
   ROSE_ASSERT(isSgExpression(rhs));
-  AValue rhsIntVal=CodeThorn::Top();
+  AbstractValue rhsIntVal=CodeThorn::Top();
   bool isRhsIntVal=false;
   bool isRhsVar=false;
 
@@ -1219,7 +1219,7 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
         //cout<<" of array type.";
         // we use the id-code as int-value (points-to info)
         int idCode=rhsVarId.getIdCode();
-        newPState.writeToMemoryLocation(lhsVar,CodeThorn::AValue(AbstractValue(idCode)));
+        newPState.writeToMemoryLocation(lhsVar,CodeThorn::AbstractValue(AbstractValue(idCode)));
         //cout<<" id-code: "<<idCode;
         return newPState;
       } else {
@@ -1240,7 +1240,7 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
       rhsIntVal=CodeThorn::Top();
       ROSE_ASSERT(!isInExplicitStateMode());
     }
-    // we are using AValue here (and  operator== is overloaded for AValue==AValue)
+    // we are using AbstractValue here (and  operator== is overloaded for AbstractValue==AbstractValue)
     // for this comparison isTrue() is also false if any of the two operands is CodeThorn::Top()
     if( (newPState.readFromMemoryLocation(lhsVar).operatorEq(rhsIntVal)).isTrue() ) {
       // update of existing variable with same value
@@ -3021,7 +3021,7 @@ std::list<EState> Analyzer::transferFunctionCallReturn(Edge edge, const EState* 
     }
 
     if(newPState.varExists(returnVarId)) {
-      AValue evalResult=newPState.readFromMemoryLocation(returnVarId);
+      AbstractValue evalResult=newPState.readFromMemoryLocation(returnVarId);
       //newPState[lhsVarId]=evalResult;
       newPState.writeToMemoryLocation(lhsVarId,evalResult);
 
@@ -3375,7 +3375,7 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
         if(SgVarRefExp* varRefExp=isSgVarRefExp(arrExp)) {
           PState pstate2=oldPState;
           VariableId arrayVarId=_variableIdMapping->variableId(varRefExp);
-          AValue arrayPtrValue;
+          AbstractValue arrayPtrValue;
           // two cases
           if(_variableIdMapping->hasArrayType(arrayVarId)) {
             // create array element 0 (in preparation to have index added, or, if not index is used, it is already the correct index (=0).
@@ -3402,11 +3402,11 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
             exit(1);
           }
           AbstractValue arrayElementId;
-          //AValue aValue=(*i).value();
+          //AbstractValue aValue=(*i).value();
           list<SingleEvalResultConstInt> res=exprAnalyzer.evalConstInt(indexExp,currentEState,true);
           ROSE_ASSERT(res.size()==1); // TODO: temporary restriction
-          AValue indexValue=(*(res.begin())).value();
-          AValue arrayPtrPlusIndexValue=AbstractValue::operatorAdd(arrayPtrValue,indexValue);
+          AbstractValue indexValue=(*(res.begin())).value();
+          AbstractValue arrayPtrPlusIndexValue=AbstractValue::operatorAdd(arrayPtrValue,indexValue);
           //cout<<"DEBUG: arrayPtrPlusIndexValue: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
 
           // TODO: rewrite to use AbstractValue only
@@ -3448,7 +3448,7 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
         throw CodeThorn::Exception("more than 1 execution path (probably due to abstraction) in operand's expression of pointer dereference operator on lhs of "+nextNodeToAnalyze2->unparseToString());
       }
       ROSE_ASSERT(resLhs.size()==1);
-      AValue lhsPointerValue=(*resLhs.begin()).result;
+      AbstractValue lhsPointerValue=(*resLhs.begin()).result;
       if(lhsPointerValue.isTop()) {
         // special case. Expr evaluates to top (should be dereferenced)
         PState pstate2=*(estate->pstate());
