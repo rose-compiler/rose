@@ -4183,8 +4183,10 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #endif
 
 #if 0
+  // DQ (5/12/2017): Commented this out appears to cause a problem for Fortran tests in the:
+  //    tests/nonsmoke/functional/roseTests/astOutliningTests directory.
   // DQ (5/10/2017): This should be commented out (since we now use the specification of the nondefining 
-  // declaration as "output in generated code" to determine when it should be output.
+  // declaration as "output in generated code" to determine when it should be output).
 
   // DQ (11/27/2015): The updated support for templates demonstrates that we need this code (see test2004_37.C).
   // However, the larger issue is that the defining function declaration should not have been output, which is 
@@ -4200,10 +4202,10 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                if (isSgTemplateInstantiationFunctionDecl(def_decl))
                   {
                  // cout<<"Skipping a forward declaration of a template instantiation function declaration..."<<endl;
-#if 1
+#if 0
                     printf ("In unparseFuncDeclStmt(): Skipping a forward declaration of a template instantiation function declaration... \n");
 #endif
-#if 1
+#if 0
                     curprint("/* In unparseFuncDeclStmt(): Skipping a forward declaration of a template instantiation function declaration...*/ \n");
 #endif
                     return;
