@@ -18247,6 +18247,7 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
                      break;
                      case V_SgFortranIncludeLine:
                      case V_SgAttributeSpecificationStatement:
+                     case V_SgPragmaDeclaration: 
                        break;
                     default:
                        {
