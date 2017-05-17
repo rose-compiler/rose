@@ -25,7 +25,6 @@ string EState::predicateToString(VariableIdMapping* variableIdMapping) const {
   string pred;
   const PState* ps=pstate();
   const ConstraintSet* cset=constraints(); 
-  PState::const_iterator i=ps->begin();
   VarAbstractValueSet varIdSet=ps->getVariableIds();
   string s;
   if(cset->disequalityExists()) {
@@ -157,7 +156,7 @@ CodeThorn::AbstractValue EState::determineUniqueIOValue() const {
     // case 1: check PState
     if(_pstate->varIsConst(varId)) {
       PState pstate2=*_pstate;
-      AbstractValue varVal=(pstate2)[varId];
+      AbstractValue varVal=pstate2.readFromMemoryLocation(varId);
       return varVal;
     }
     // case 2: check constraint if var is top

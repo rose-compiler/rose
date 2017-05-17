@@ -294,3 +294,19 @@ void PState::writeToMemoryLocation(AbstractValue abstractMemLoc,
 size_t PState::stateSize() const {
   return this->size();
 }
+
+PState::iterator PState::begin() {
+  return map<VarAbstractValue,CodeThorn::AValue>::begin();
+}
+
+PState::iterator PState::end() {
+  return map<VarAbstractValue,CodeThorn::AValue>::end();
+}
+
+PState::const_iterator PState::begin() const {
+  return map<VarAbstractValue,CodeThorn::AValue>::begin();
+}
+
+PState::const_iterator PState::end() const {
+  return map<VarAbstractValue,CodeThorn::AValue>::end();
+}

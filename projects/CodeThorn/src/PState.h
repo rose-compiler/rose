@@ -33,8 +33,10 @@ namespace CodeThorn {
    */
   
   // private inharitance ensures PState is only used through methods defined here
-  class PState : public map<VarAbstractValue,CodeThorn::AValue> {
+  class PState : private map<VarAbstractValue,CodeThorn::AValue> {
   public:
+    typedef map<VarAbstractValue,CodeThorn::AValue>::const_iterator const_iterator;
+    typedef map<VarAbstractValue,CodeThorn::AValue>::iterator iterator;
     friend std::ostream& operator<<(std::ostream& os, const PState& value);
     friend std::istream& operator>>(std::istream& os, PState& value);
     friend class PStateHashFun;
@@ -61,6 +63,10 @@ namespace CodeThorn {
     void writeToMemoryLocation(AbstractValue abstractMemLoc,
                                AbstractValue abstractValue);
     size_t stateSize() const;
+    PState::iterator begin();
+    PState::iterator end();
+    PState::const_iterator begin() const;
+    PState::const_iterator end() const;
   };
   
   std::ostream& operator<<(std::ostream& os, const PState& value);
