@@ -296,6 +296,15 @@ rxml_CPPFLAGS = $(ROSE_INCLUDES)
 rxml_LDFLAGS = $(ROSE_RPATHS)
 rxml_LDADD = $(ROSE_LIBS)
 
+#------------------------------------------------------------------------------------------------------------------------
+# DWARF line numbers
+
+bin_PROGRAMS += dwarf-lines
+dwarf_lines_SOURCES = dwarf-lines.C
+dwarf_lines_CPPFLAGS = $(ROSE_INCLUDES)
+dwarf_lines_LDFLAGS = $(ROSE_RPATHS)
+dwarf_lines_LDADD = $(ROSE_LIBS)
+
 
 ########################################################################################################################
 ########################################################################################################################

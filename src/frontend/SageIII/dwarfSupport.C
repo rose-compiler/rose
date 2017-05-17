@@ -1257,7 +1257,10 @@ void get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char
      // *esbp += get_FORM_name(dbg, theform);
         break;
     default:
-        print_error(dbg, "dwarf_whatform unexpected value", DW_DLV_OK,rose_dwarf_error);
+        // Failure to parse a DWARF construct must not be a non-recoverable error. [Robb P Matzke 2017-05-16]
+        //print_error(dbg, "dwarf_whatform unexpected value", DW_DLV_OK,rose_dwarf_error);
+        fputs("Error: dwarf_whatform_unexpected value\n", stderr);
+        break;
     }
     if (verbose && direct_form && direct_form == DW_FORM_indirect)
     {

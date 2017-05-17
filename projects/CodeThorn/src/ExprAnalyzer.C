@@ -761,11 +761,11 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
                   return listify(res);
                 }
               } else {
-                cerr<<"Error: unsupported array initializer value:"<<exp->unparseToString()<<" AST:"<<SPRAY::AstTerm::astTermWithNullValuesToString(exp)<<endl;
+                cerr<<"Error: unsupported array initializer value:"<<exp->unparseToString()<<" AST:"<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
                 exit(1);
               }
             } else {
-              cerr<<"Error: no assign initialize:"<<exp->unparseToString()<<" AST:"<<SPRAY::AstTerm::astTermWithNullValuesToString(exp)<<endl;
+              cerr<<"Error: no assign initialize:"<<exp->unparseToString()<<" AST:"<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
             }
             elemIndex++;
           }

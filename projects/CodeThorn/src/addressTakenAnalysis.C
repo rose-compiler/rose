@@ -32,8 +32,8 @@ void SPRAY::ProcessQuery::printMatchResult()
       std::cout << "MATCH=";
       SgNode* matchedTerm = (*smbIt).second;
       ROSE_ASSERT(matchedTerm != NULL);
-      std::cout << "  VAR: " << (*smbIt).first << "=" << 
-        SPRAY::AstTerm::astTermWithNullValuesToString(matchedTerm) << " @" << matchedTerm << std::endl;
+      std::cout << "  VAR: " << (*smbIt).first << "=" 
+                << AstTerm::astTermWithNullValuesToString(matchedTerm) << " @" << matchedTerm << std::endl;
     }
   }
 }
@@ -75,7 +75,7 @@ void SPRAY::ComputeAddressTakenInfo::setAddAddressTakingsInsideTemplateDecls(boo
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::debugPrint(SgNode* sgn)
 {
   std::cerr << sgn->class_name() << ": " 
-            << SPRAY::AstTerm::astTermWithNullValuesToString(sgn) << ", " \
+            << AstTerm::astTermWithNullValuesToString(sgn) << ", " \
             << sgn->unparseToString() << ", "                           \
             << sgn->get_file_info()->get_filenameString() << ", "       \
             << sgn->get_file_info()->get_line() << ", " \

@@ -26,6 +26,7 @@ private:
     Partitioner2::FunctionCallGraph cg_;
     Partitioner2::FunctionPtr currentFunction_;
     Partitioner2::BasicBlockPtr currentBasicBlock_;
+    std::string nextInsnLabel_;
     AddrString basicBlockLabels_;
     RegisterNames registerNames_;
     const Base &frontUnparser_;
@@ -40,6 +41,8 @@ public:
     void currentFunction(const Partitioner2::FunctionPtr&);
     Partitioner2::BasicBlockPtr currentBasicBlock() const;
     void currentBasicBlock(const Partitioner2::BasicBlockPtr&);
+    const std::string& nextInsnLabel() const;
+    void nextInsnLabel(const std::string&);
     const RegisterNames& registerNames() const;
     void registerNames(const RegisterNames &r);
     const AddrString& basicBlockLabels() const;
