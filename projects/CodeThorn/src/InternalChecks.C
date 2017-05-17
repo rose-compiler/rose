@@ -323,29 +323,29 @@ void checkTypes() {
     VariableId y=variableIdMapping.createUniqueTemporaryVariableId("y");
     check("var x not in pstate1",s1.varExists(x)==false);
     check("var y not in pstate2",s2.varExists(y)==false);
-    s1[x]=val1;
-    s2[y]=val2;
-    s3[x]=val2;
-    s5[x]=valtop;
-    s5[y]=valtop;
+    s1.writeToMemoryLocation(x,val1);
+    s2.writeToMemoryLocation(y,val2);
+    s3.writeToMemoryLocation(x,val2);
+    s5.writeToMemoryLocation(x,valtop);
+    s5.writeToMemoryLocation(y,valtop);
     check("var x exists in pstate s1",s1.varExists(x)==true);
-    check("var x==500",((s1[x].operatorEq(val1)).isTrue())==true);
+    check("var x==500",((s1.readFromMemoryLocation(x).operatorEq(val1)).isTrue())==true);
     check("var y exists in pstate s2",s2.varExists(y)==true);
-    check("var y==501",((s2[y].operatorEq(val2)).isTrue())==true);
+    check("var y==501",((s2.readFromMemoryLocation(y).operatorEq(val2)).isTrue())==true);
     //check("s0 < s1",(s0<s1)==true);
     //check("s0 < s2",(s0<s2)==true);
     check("!(s1 == s2)",(s1==s2)==false);
     check("s1<s2 xor s2<s1)",(s1<s2)^(s2<s1));
     check("var x in pstate s3",s3.varExists(x)==true);
-    check("s3[x]==501",((s3[x].operatorEq(val2)).isTrue())==true);
+    check("s3[x]==501",((s3.readFromMemoryLocation(x).operatorEq(val2)).isTrue())==true);
     check("!(s1==s2)",(!(s1==s2))==true);
     check("!(s1==s3)",(!(s1==s3))==true);
     check("!(s2==s3)",(!(s2==s3))==true);
     PState s4=s1;
     check("s1==s4",(s1==s4)==true);
 
-    s1[x]=val2;
-    check("s1.size()==1",s1.size()==1);
+    s1.writeToMemoryLocation(x,val2);
+    check("s1.size()==1",s1.stateSize()==1);
 
     pstateSet.process(s0);
     check("empty pstate s0 inserted in pstateSet => size of pstateSet == 1",pstateSet.size()==1);
@@ -370,8 +370,8 @@ void checkTypes() {
     check("constint-strictWeak-equality-1",strictWeakOrderingIsEqual(val1,val2)==false);
     check("constint-strictWeak-smaller-1",strictWeakOrderingIsSmaller(val1,val2)==true);
 
-    s4[x]=valtop;
-    check("created s4; inserted x=top; s4[x].isTop",s4[x].isTop());    
+    s4.writeToMemoryLocation(x,valtop);
+    check("created s4; inserted x=top; s4.readFromMemoryLocation(x).isTop",s4.readFromMemoryLocation(x).isTop());    
     pstateSet.processNewOrExisting(s4);
     check("inserted s4 => size of pstateSet == 4",pstateSet.size()==4);    
     const PState* pstateptr4=pstateSet.processNewOrExisting(s4); // version 1

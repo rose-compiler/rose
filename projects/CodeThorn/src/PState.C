@@ -142,29 +142,25 @@ AValue PState::varValue(VarAbstractValue varId) const {
   * \author Markus Schordan
   * \date 2012.
  */
-void PState::setAllVariablesToTop() {
+void PState::writeTopToAllMemoryLocations() {
   CodeThorn::AValue val=CodeThorn::Top();
-  setAllVariablesToValue(val);
+  writeValueToAllMemoryLocations(val);
 }
 
 /*! 
   * \author Markus Schordan
   * \date 2012.
  */
-void PState::setAllVariablesToValue(CodeThorn::AValue val) {
+void PState::writeValueToAllMemoryLocations(CodeThorn::AValue val) {
   for(PState::iterator i=begin();i!=end();++i) {
     VarAbstractValue varId=(*i).first;
-    setVariableToValue(varId,val);
+    writeToMemoryLocation(varId,val);
   }
 }
 
-void PState::setVariableToTop(VarAbstractValue varId) {
+void PState::writeTopToMemoryLocation(VarAbstractValue varId) {
   CodeThorn::AValue val=CodeThorn::Top();
-  setVariableToValue(varId, val);
-}
-
-void PState::setVariableToValue(VarAbstractValue varId, CodeThorn::AValue val) {
-  operator[](varId)=val;
+  writeToMemoryLocation(varId, val);
 }
 
 VarAbstractValueSet PState::getVariableIds() const {
@@ -238,8 +234,8 @@ ostream& CodeThorn::operator<<(ostream& os, const PState& pState) {
 
 #ifdef USER_DEFINED_PSTATE_COMP
 bool CodeThorn::operator<(const PState& s1, const PState& s2) {
-  if(s1.size()!=s2.size())
-    return s1.size()<s2.size();
+  if(s1.stateSize()!=s2.stateSize())
+    return s1.stateSize()<s2.stateSize();
   PState::const_iterator i=s1.begin();
   PState::const_iterator j=s2.begin();
   while(i!=s1.end() && j!=s2.end()) {
@@ -252,9 +248,9 @@ bool CodeThorn::operator<(const PState& s1, const PState& s2) {
   assert(i==s1.end() && j==s2.end());
   return false; // both are equal
 }
-#if 0
+#if 1
 bool CodeThorn::operator==(const PState& c1, const PState& c2) {
-  if(c1.size()==c2.size()) {
+  if(c1.stateSize()==c2.stateSize()) {
     PState::const_iterator i=c1.begin();
     PState::const_iterator j=c2.begin();
     while(i!=c1.end()) {
@@ -292,5 +288,9 @@ void PState::writeToMemoryLocation(AbstractValue abstractMemLoc,
     //cout<<"INFO: writing bot to memory (bot->top conversion)."<<endl;
     abstractValue=AbstractValue(CodeThorn::Top());
   }
-  this->setVariableToValue(abstractMemLoc,abstractValue);
+  operator[](abstractMemLoc)=abstractValue;
+}
+
+size_t PState::stateSize() const {
+  return this->size();
 }

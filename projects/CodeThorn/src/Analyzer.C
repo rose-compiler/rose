@@ -470,7 +470,7 @@ void Analyzer::eventGlobalTopifyTurnedOn() {
 }
 
 void Analyzer::topifyVariable(PState& pstate, ConstraintSet& cset, AbstractValue varId) {
-  pstate.setVariableToTop(varId);
+  pstate.writeTopToMemoryLocation(varId);
   //cset.removeAllConstraintsOfVar(varId);
 }
 
@@ -671,7 +671,7 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
       // not possible to support yet. getIntValue must succeed on declarations.
       if(false && variableValueMonitor.isHotVariable(this,initDeclVarId)) {
         PState newPState=*currentEState.pstate();
-        newPState.setVariableToTop(initDeclVarId);
+        newPState.writeTopToMemoryLocation(initDeclVarId);
         ConstraintSet cset=*currentEState.constraints();
         return createEState(targetLabel,newPState,cset);
       }
@@ -708,7 +708,7 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
             if(SgIntVal* intValNode=isSgIntVal(assignInit->get_operand_i())) {
               int intVal=intValNode->get_value();
               // logger[DEBUG] <<"initializing array element:"<<arrayElemId.toString()<<"="<<intVal<<endl;
-              newPState.setVariableToValue(arrayElemId,CodeThorn::AValue(intVal));
+              newPState.writeToMemoryLocation(arrayElemId,CodeThorn::AValue(intVal));
             } else {
               logger[ERROR] <<"unsupported array initializer value:"<<exp->unparseToString()<<" AST:"<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
               exit(1);
@@ -736,7 +736,7 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
           for(size_t elemIndex=0;elemIndex<length;elemIndex++) {
             AbstractValue newArrayElementId=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(elemIndex));
             // set default init value
-            newPState.setVariableToTop(newArrayElementId);
+            newPState.writeTopToMemoryLocation(newArrayElementId);
           }
           
         } else if(variableIdMapping.hasClassType(initDeclVarId)) {
@@ -746,13 +746,13 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
         } else if(variableIdMapping.hasPointerType(initDeclVarId)) {
           // create pointer value and set it to top (=any value possible (uninitialized pointer variable declaration))
           AbstractValue pointerVal=AbstractValue::createAddressOfVariable(initDeclVarId);
-          newPState.setVariableToTop(pointerVal);
+          newPState.writeTopToMemoryLocation(pointerVal);
         } else {
           // set it to top (=any value possible (uninitialized)); this
           // default case also creates an address due to implicit type
           // conversion. However, it should become an error-path once
           // all cases are addressed explicitly above.
-          newPState.setVariableToTop(initDeclVarId);
+          newPState.writeTopToMemoryLocation(initDeclVarId);
         }
         return createEState(targetLabel,newPState,cset);
       }
@@ -1080,7 +1080,7 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root, boo
     ROSE_ASSERT(varId.isValid());
     // initialize all formal parameters of function (of extremal label) with top
     //emptyPState[varId]=AbstractValue(CodeThorn::Top());
-    emptyPState.setVariableToTop(varId);
+    emptyPState.writeTopToMemoryLocation(varId);
   }
   const PState* emptyPStateStored=processNew(emptyPState);
   ROSE_ASSERT(emptyPStateStored);
@@ -1194,7 +1194,7 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
     //cset.addEqVarVar(lhsVar, rhsVarId);
 
     if(currentPState.varExists(rhsVarId)) {
-      rhsIntVal=currentPState[rhsVarId];
+      rhsIntVal=currentPState.readFromMemoryLocation(rhsVarId);
     } else {
       if(variableIdMapping.isConstantArray(rhsVarId) && boolOptions["rersmode"]) {
         // in case of an array the id itself is the pointer value
@@ -1219,7 +1219,7 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
         //cout<<" of array type.";
         // we use the id-code as int-value (points-to info)
         int idCode=rhsVarId.getIdCode();
-        newPState.setVariableToValue(lhsVar,CodeThorn::AValue(AbstractValue(idCode)));
+        newPState.writeToMemoryLocation(lhsVar,CodeThorn::AValue(AbstractValue(idCode)));
         //cout<<" id-code: "<<idCode;
         return newPState;
       } else {
@@ -1242,14 +1242,14 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
     }
     // we are using AValue here (and  operator== is overloaded for AValue==AValue)
     // for this comparison isTrue() is also false if any of the two operands is CodeThorn::Top()
-    if( (newPState[lhsVar].operatorEq(rhsIntVal)).isTrue() ) {
+    if( (newPState.readFromMemoryLocation(lhsVar).operatorEq(rhsIntVal)).isTrue() ) {
       // update of existing variable with same value
       // => no state change
       return newPState;
     } else {
       // update of existing variable with new value
       //newPState[lhsVar]=rhsIntVal;
-      newPState.setVariableToValue(lhsVar,rhsIntVal);
+      newPState.writeToMemoryLocation(lhsVar,rhsIntVal);
       if((!rhsIntVal.isTop() && !isRhsVar) || boolOptions["arith-top"])
         cset.removeAllConstraintsOfVar(lhsVar);
       return newPState;
@@ -1260,7 +1260,7 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
     } else {
       // new variable with new value
       // write access
-      newPState.setVariableToValue(lhsVar,rhsIntVal);
+      newPState.writeToMemoryLocation(lhsVar,rhsIntVal);
     }
     // no update of constraints because no constraints can exist for a new variable
     return newPState;
@@ -1628,7 +1628,7 @@ string Analyzer::generateSpotSTG() {
 int Analyzer::reachabilityAssertCode(const EState* currentEStatePtr) {
   if(boolOptions["rers-binary"]) {
     PState* pstate = const_cast<PState*>( (currentEStatePtr)->pstate() );
-    int outputVal = (*pstate)[globalVarIdByName("output")].getIntValue();
+    int outputVal = pstate->readFromMemoryLocation(globalVarIdByName("output")).getIntValue();
     if (outputVal > -100) {  //either not a failing assertion or a stderr output treated as a failing assertion)
       return -1;
     }
@@ -2084,7 +2084,7 @@ bool Analyzer::searchForIOPatterns(PState* startPState, int assertion_id, list<i
                                    int* inputPatternLength) {
   // create a new instance of the startPState
   //TODO: check why init of "output" is necessary
-  (*startPState).setVariableToValue(globalVarIdByName("output"),
+  (*startPState).writeToMemoryLocation(globalVarIdByName("output"),
                                     CodeThorn::AbstractValue(-7));
   PState newStartPState = *startPState;
   // initialize worklist
@@ -2150,7 +2150,7 @@ bool Analyzer::searchForIOPatterns(PState* startPState, int assertion_id, list<i
       for (set<int>::iterator inputVal=_inputVarValues.begin(); inputVal!=_inputVarValues.end(); inputVal++) {
         // copy the state and initialize new input
         PState newPState = currentState.first;
-        newPState.setVariableToValue(globalVarIdByName("input"),
+        newPState.writeToMemoryLocation(globalVarIdByName("input"),
                                      CodeThorn::AbstractValue(*inputVal));
         list<int> newHistory = currentState.second;
         ROSE_ASSERT(newHistory.size() % 2 == 0);
@@ -2255,7 +2255,7 @@ int Analyzer::pStateDepthFirstSearch(PState* startPState, int maxDepth, int thre
     for (set<int>::iterator inputVal=_inputVarValues.begin(); inputVal!=_inputVarValues.end(); inputVal++) {
       // copy the state and initialize new input
       PState newPState = currentState.first;
-      newPState[globalVarIdByName("input")]=CodeThorn::AbstractValue(*inputVal);
+      newPState.writeToMemoryLocation(globalVarIdByName("input"),CodeThorn::AbstractValue(*inputVal));
       list<int> newHistory = currentState.second;
       ROSE_ASSERT(newHistory.size() % 2 == 0);
       newHistory.push_back(*inputVal);
@@ -2321,7 +2321,7 @@ list<int> Analyzer::inputsFromPatternTwoRepetitions(list<int> pattern2r) {
 
 bool Analyzer::computePStateAfterInputs(PState& pState, int input, int thread_id, list<int>* iOSequence) {
   //pState[globalVarIdByName("input")]=CodeThorn::AbstractValue(input);
-  pState.setVariableToValue(globalVarIdByName("input"),
+  pState.writeToMemoryLocation(globalVarIdByName("input"),
                             CodeThorn::AbstractValue(input));
   RERS_Problem::rersGlobalVarsCallInit(this, pState, thread_id);
   (void) RERS_Problem::calculate_output(thread_id);
@@ -2341,7 +2341,7 @@ bool Analyzer::computePStateAfterInputs(PState& pState, int input, int thread_id
 bool Analyzer::computePStateAfterInputs(PState& pState, list<int>& inputs, int thread_id, list<int>* iOSequence) {
   for (list<int>::iterator i = inputs.begin(); i !=inputs.end(); i++) {
     //pState[globalVarIdByName("input")]=CodeThorn::AbstractValue(*i);
-    pState.setVariableToValue(globalVarIdByName("input"),
+    pState.writeToMemoryLocation(globalVarIdByName("input"),
                               CodeThorn::AbstractValue(*i));
     RERS_Problem::rersGlobalVarsCallInit(this, pState, thread_id);
     (void) RERS_Problem::calculate_output(thread_id);
@@ -2626,10 +2626,10 @@ string Analyzer::reversedInOutRunToString(list<const EState*>& run) {
     PState* pstate = const_cast<PState*>( (*i)->pstate() );
     int inOutVal;
     if ((*i)->io.isStdInIO()) {
-      inOutVal = (*pstate)[globalVarIdByName("input")].getIntValue();
+      inOutVal = pstate->readFromMemoryLocation(globalVarIdByName("input")).getIntValue();
       result += "i";
     } else if ((*i)->io.isStdOutIO()) {
-      inOutVal = (*pstate)[globalVarIdByName("output")].getIntValue();
+      inOutVal = pstate->readFromMemoryLocation(globalVarIdByName("output")).getIntValue();
       result += "o";
     } else {
       ROSE_ASSERT(0);  //function is supposed to handle list of stdIn and stdOut states only
@@ -2873,7 +2873,7 @@ std::list<EState> Analyzer::transferFunctionCall(Edge edge, const EState* estate
     }
     // above evalConstInt does not use constraints (par3==false). Therefore top vars remain top vars (which is what we want here)
     //newPState[formalParameterVarId]=evalResult.value();
-    newPState.setVariableToValue(formalParameterVarId,evalResult.value());
+    newPState.writeToMemoryLocation(formalParameterVarId,evalResult.value());
     ++i;++j;
   }
   // assert must hold if #formal-params==#actual-params (TODO: default values)
@@ -2920,7 +2920,7 @@ std::list<EState> Analyzer::transferFunctionCallLocalEdge(Edge edge, const EStat
 	  // error label encoded in the output value, storing it in the new failing assertion EState
 	  PState newPstate  = _pstate;
 	  //newPstate[globalVarIdByName("output")]=CodeThorn::AbstractValue(rers_result);
-	  newPstate.setVariableToValue(globalVarIdByName("output"),
+	  newPstate.writeToMemoryLocation(globalVarIdByName("output"),
                                        CodeThorn::AbstractValue(rers_result));
 	  EState _eState=createEState(edge.target(),newPstate,_cset,_io);
 	  return elistify(_eState);
@@ -2935,7 +2935,7 @@ std::list<EState> Analyzer::transferFunctionCallLocalEdge(Edge edge, const EStat
 	  ROSE_ASSERT(isLhsVar); // must hold
 	  // logger[DEBUG]<< "lhsvar:rers-result:"<<lhsVarId.toString()<<"="<<rers_result<<endl;
 	  //_pstate[lhsVarId]=AbstractValue(rers_result);
-	  _pstate.setVariableToValue(lhsVarId,AbstractValue(rers_result));
+	  _pstate.writeToMemoryLocation(lhsVarId,AbstractValue(rers_result));
 	  ConstraintSet _cset=*estate->constraints();
 	  _cset.removeAllConstraintsOfVar(lhsVarId);
 	  EState _eState=createEState(edge.target(),_pstate,_cset);
@@ -3020,10 +3020,10 @@ std::list<EState> Analyzer::transferFunctionCallReturn(Edge edge, const EState* 
       returnVarId=variableIdMapping.createUniqueTemporaryVariableId(string("$return"));
     }
 
-    if(newPState.find(returnVarId)!=newPState.end()) {
-      AValue evalResult=newPState[returnVarId];
+    if(newPState.varExists(returnVarId)) {
+      AValue evalResult=newPState.readFromMemoryLocation(returnVarId);
       //newPState[lhsVarId]=evalResult;
-      newPState.setVariableToValue(lhsVarId,evalResult);
+      newPState.writeToMemoryLocation(lhsVarId,evalResult);
 
       cset.addAssignEqVarVar(lhsVarId,returnVarId);
       newPState.deleteVar(returnVarId); // remove $return from state
@@ -3147,13 +3147,13 @@ std::list<EState> Analyzer::transferFunctionCallExternal(Edge edge, const EState
       if(boolOptions["input-values-as-constraints"]) {
         newCSet.removeAllConstraintsOfVar(varId);
         //newPState[varId]=CodeThorn::Top();
-        newPState.setVariableToTop(varId);
+        newPState.writeTopToMemoryLocation(varId);
         newCSet.addConstraint(Constraint(Constraint::EQ_VAR_CONST,varId,AbstractValue(newValue)));
         ROSE_ASSERT(newCSet.size()>0);
       } else {
         newCSet.removeAllConstraintsOfVar(varId);
         //newPState[varId]=AbstractValue(newValue);
-        newPState.setVariableToValue(varId,AbstractValue(newValue));
+        newPState.writeToMemoryLocation(varId,AbstractValue(newValue));
       }
       newio.recordVariable(InputOutput::STDIN_VAR,varId);
       EState estate=createEState(edge.target(),newPState,newCSet,newio);
@@ -3172,14 +3172,14 @@ std::list<EState> Analyzer::transferFunctionCallExternal(Edge edge, const EState
           if(boolOptions["input-values-as-constraints"]) {
             newCSet.removeAllConstraintsOfVar(varId);
             //newPState[varId]=CodeThorn::Top();
-            newPState.setVariableToTop(varId);
+            newPState.writeTopToMemoryLocation(varId);
             newCSet.addConstraint(Constraint(Constraint::EQ_VAR_CONST,varId,AbstractValue(*i)));
             assert(newCSet.size()>0);
           } else {
             newCSet.removeAllConstraintsOfVar(varId);
             // new input value must be const (otherwise constraints must be used)
             //newPState[varId]=AbstractValue(*i);
-            newPState.setVariableToValue(varId,AbstractValue(*i));
+            newPState.writeToMemoryLocation(varId,AbstractValue(*i));
           }
           newio.recordVariable(InputOutput::STDIN_VAR,varId);
           EState estate=createEState(edge.target(),newPState,newCSet,newio);
@@ -3194,7 +3194,7 @@ std::list<EState> Analyzer::transferFunctionCallExternal(Edge edge, const EState
         ConstraintSet newCSet=*currentEState.constraints();
         // update input var
         newCSet.removeAllConstraintsOfVar(varId);
-        newPState.setVariableToTop(varId);
+        newPState.writeTopToMemoryLocation(varId);
         newio.recordVariable(InputOutput::STDIN_VAR,varId);
         return elistify(createEState(edge.target(),newPState,newCSet,newio));
       }
@@ -3302,7 +3302,7 @@ list<EState> Analyzer::transferIncDecOp(SgNode* nextNodeToAnalyze2, Edge edge, c
     PState newPState=*estate.pstate();
     ConstraintSet cset=*estate.constraints();
 
-    AbstractValue varVal=newPState[var];
+    AbstractValue varVal=newPState.readFromMemoryLocation(var);
     AbstractValue const1=1;
     switch(nextNodeToAnalyze2->variantT()) {
     case V_SgPlusPlusOp:
@@ -3319,7 +3319,7 @@ list<EState> Analyzer::transferIncDecOp(SgNode* nextNodeToAnalyze2, Edge edge, c
       exit(1);
     }
     //newPState[var]=varVal;
-    newPState.setVariableToValue(var,varVal);
+    newPState.writeToMemoryLocation(var,varVal);
 
     if(!(*i).result.isTop())
       cset.removeAllConstraintsOfVar(var);
@@ -3347,11 +3347,11 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
       ConstraintSet cset=*estate.constraints();
       // only update integer variables. Ensure values of floating-point variables are not computed
       if(variableIdMapping.hasIntegerType(lhsVar)) {
-        newPState.setVariableToValue(lhsVar,(*i).result);
+        newPState.writeToMemoryLocation(lhsVar,(*i).result);
       } else if(variableIdMapping.hasPointerType(lhsVar)) {
         // we assume here that only arrays (pointers to arrays) are assigned
         //newPState[lhsVar]=(*i).result;
-        newPState.setVariableToValue(lhsVar,(*i).result);
+        newPState.writeToMemoryLocation(lhsVar,(*i).result);
       }
       if(!(*i).result.isTop()) {
         cset.removeAllConstraintsOfVar(lhsVar);
@@ -3385,7 +3385,7 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
             AbstractValue ptr=AbstractValue::createAddressOfArray(arrayVarId);
             if(pstate2.varExists(ptr)) {
               //cout<<"DEBUG: pointer exists (OK): "<<ptr.toString(_variableIdMapping)<<endl;
-              arrayPtrValue=pstate2[ptr]; 
+              arrayPtrValue=pstate2.readFromMemoryLocation(ptr);
               //cout<<"DEBUG: arrayPtrValue: "<<arrayPtrValue.toString(_variableIdMapping)<<endl;
               // convert integer to VariableId
               if(arrayPtrValue.isTop()||arrayPtrValue.isBot()) {
@@ -3425,13 +3425,13 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
           // TODO: check whether arrayElementId (or array) is a constant array (arrayVarId)
           if(pstate2.varExists(arrayElementId)) {
             // TODO: handle constraints
-            pstate2[arrayElementId]=(*i).value(); // *i is assignment-rhs evaluation result
+            pstate2.writeToMemoryLocation(arrayElementId,(*i).value()); // *i is assignment-rhs evaluation result
             estateList.push_back(createEState(edge.target(),pstate2,oldcset));
           } else {
             // check that array is constant array (it is therefore ok that it is not in the state)
             //logger[TRACE] <<"lhs array-access index does not exist in state (creating it now). Array element id:"<<arrayElementId.toString(_variableIdMapping)<<" PState size:"<<pstate2.size()<<endl;
             //logger[TRACE]<<"PState:"<<pstate2.toString(getVariableIdMapping())<<endl;
-            pstate2[arrayElementId]=(*i).value(); // *i is assignment-rhs evaluation result
+            pstate2.writeToMemoryLocation(arrayElementId,(*i).value()); // *i is assignment-rhs evaluation result
             estateList.push_back(createEState(edge.target(),pstate2,oldcset));
           }
         } else {

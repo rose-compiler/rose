@@ -708,7 +708,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
         // in case it is a pointer retrieve pointer value
         //cout<<"DEBUG: pointer-array access!"<<endl;
         if(pstate->varExists(arrayVarId)) {
-          arrayPtrValue=pstate2[arrayVarId]; // pointer value (without index)
+          arrayPtrValue=pstate2.readFromMemoryLocation(arrayVarId); // pointer value (without index)
           ROSE_ASSERT(arrayPtrValue.isTop()||arrayPtrValue.isBot()||arrayPtrValue.isPtr());
         } else {
           cerr<<"Error: pointer variable does not exist in PState."<<endl;
@@ -730,7 +730,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
       ROSE_ASSERT(arrayElementId.isValid());
 #endif
       if(pstate->varExists(arrayPtrPlusIndexValue)) {
-        res.result=pstate2[arrayPtrPlusIndexValue];
+        res.result=pstate2.readFromMemoryLocation(arrayPtrPlusIndexValue);
         //cout<<"DEBUG: retrieved array element value:"<<res.result<<endl;
         if(res.result.isTop() && useConstraints) {
           AbstractValue val=res.estate.constraints()->varAbstractValue(arrayPtrPlusIndexValue);
@@ -753,7 +753,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
               if(SgIntVal* intValNode=isSgIntVal(initExp)) {
                 int intVal=intValNode->get_value();
                 //cout<<"DEBUG:initializing array element:"<<arrayElemId.toString()<<"="<<intVal<<endl;
-                //newPState.setVariableToValue(arrayElemId,CodeThorn::AValue(AbstractValue(intVal)));
+                //newPState.writeToMemoryLocation(arrayElemId,CodeThorn::AValue(AbstractValue(intVal)));
                 int index2=arrayPtrPlusIndexValue.getIndexIntValue();
                 if(elemIndex==index2) {
                   AbstractValue val=AbstractValue(intVal);
@@ -854,17 +854,10 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarExp(SgVarRefExp* node,
   const PState* pstate=estate.pstate();
   VariableId varId=_variableIdMapping->variableId(node);
   if(pstate->varExists(varId)) {
-    //PState pstate2=*pstate; // also removes constness
     if(_variableIdMapping->hasArrayType(varId)) {
-      // CODE-POINT-1
       res.result=AbstractValue::createAddressOfArray(varId);
-      // for arrays (by default the address is used) return its pointer value (the var-id-code)
-      // with a unified pointer representation this case is now equal
-      //res.result=AbstractValue(varId.getIdCode());
-      //res.result=const_cast<PState*>(pstate)->operator[](varId); // this includes assignment of pointer values
     } else {
-      //res.result=AbstractValue::createAddressOfArray(varId,AbstractValue(0));
-      res.result=const_cast<PState*>(pstate)->operator[](varId); // this includes assignment of pointer values
+      res.result=const_cast<PState*>(pstate)->readFromMemoryLocation(varId);
     }
     if(res.result.isTop() && useConstraints) {
       // in case of TOP we try to extract a possibly more precise value from the constraints

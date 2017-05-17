@@ -154,6 +154,7 @@ public:
     }
     return res2;
   }
+
   const KeyType* processNew(KeyType& s) {
     //std::pair<typename HSetMaintainer::iterator, bool> res=process(s);
     ProcessingResult res=process(s);
@@ -166,10 +167,12 @@ public:
     }
     return res.second;
   }
+
   const KeyType* processNewOrExisting(KeyType& s) {
     ProcessingResult res=process(s);
     return res.second;
   }
+
   long numberOf() { return HSetMaintainer<KeyType,HashFun,EqualToPred>::size(); }
 
   long maxCollisions() {

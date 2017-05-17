@@ -32,10 +32,16 @@ namespace CodeThorn {
    * \date 2012.
    */
   
+  // private inharitance ensures PState is only used through methods defined here
   class PState : public map<VarAbstractValue,CodeThorn::AValue> {
   public:
     friend std::ostream& operator<<(std::ostream& os, const PState& value);
     friend std::istream& operator>>(std::istream& os, PState& value);
+    friend class PStateHashFun;
+    friend class PStateEqualToPred;
+    friend bool CodeThorn::operator==(const PState& c1, const PState& c2);
+    friend bool CodeThorn::operator!=(const PState& c1, const PState& c2);
+    friend bool CodeThorn::operator<(const PState& s1, const PState& s2);
     PState();
     bool varExists(VarAbstractValue varId) const;
     bool varIsConst(VarAbstractValue varId) const;
@@ -47,16 +53,14 @@ namespace CodeThorn {
     void toStream(std::ostream& os) const;
     string toString() const;
     string toString(SPRAY::VariableIdMapping* variableIdMapping) const;
-    void setAllVariablesToTop();
-    void setAllVariablesToValue(CodeThorn::AValue val);
-    void setVariableToTop(VarAbstractValue varId);
-    void setVariableToValue(VarAbstractValue varId, CodeThorn::AValue val);
     VarAbstractValueSet getVariableIds() const;
-    // it is not necessary to define comparison-ops for PState, but
-    // the ordering appears to be implementation dependent (but consistent)
+    void writeTopToAllMemoryLocations();
+    void writeValueToAllMemoryLocations(CodeThorn::AValue val);
+    void writeTopToMemoryLocation(VarAbstractValue varId);
     AbstractValue readFromMemoryLocation(AbstractValue abstrValue) const;
     void writeToMemoryLocation(AbstractValue abstractMemLoc,
                                AbstractValue abstractValue);
+    size_t stateSize() const;
   };
   
   std::ostream& operator<<(std::ostream& os, const PState& value);
