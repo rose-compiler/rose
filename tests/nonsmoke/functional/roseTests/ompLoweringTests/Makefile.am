@@ -38,6 +38,7 @@ C_TESTCODES_REQUIRED_TO_COMPILE = \
 	nowait.c \
 	ompfor5.c \
 	ompfor6.c \
+	parallel_pragma.c \
 	private-duplicate.c \
 	single2.c \
 	sizeof.c \
