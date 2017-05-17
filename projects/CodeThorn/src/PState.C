@@ -275,3 +275,22 @@ bool CodeThorn::operator!=(const PState& c1, const PState& c2) {
 }
 #endif
 #endif
+
+AbstractValue PState::readFromMemoryLocation(AbstractValue abstrValue) const {
+  if(abstrValue.isTop()) {
+    // report potential memory violation
+    cout<<"WARNING: reading from unknown memory location (top)."<<endl;
+    // result can be any value.
+    return abstrValue;
+  }
+  return this->varValue(abstrValue);
+}
+
+void PState::writeToMemoryLocation(AbstractValue abstractMemLoc,
+                                   AbstractValue abstractValue) {
+  if(abstractValue.isBot()) {
+    //cout<<"INFO: writing bot to memory (bot->top conversion)."<<endl;
+    abstractValue=AbstractValue(CodeThorn::Top());
+  }
+  this->setVariableToValue(abstractMemLoc,abstractValue);
+}

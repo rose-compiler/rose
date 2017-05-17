@@ -76,10 +76,11 @@ class ExprAnalyzer {
   bool getExternalFunctionSemantics();
 
   bool checkArrayBounds(VariableId arrayVarId,int accessIndex);
+
+  // deprecated
   VariableId resolveToAbsoluteVariableId(AbstractValue abstrValue) const;
-  AbstractValue readFromMemoryLocation(const PState* pState, AbstractValue abstrValue) const;
-  void writeToMemoryLocation(PState& pState, AbstractValue abstractMemLoc, AbstractValue abstrValue);
-private:
+
+ private:
   //! This function turn a single result into a one-elment list with
   //! this one result. This function is used to combine cases where the result
   //! might be empty or have multiple results as well.

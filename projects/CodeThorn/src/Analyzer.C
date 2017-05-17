@@ -3464,7 +3464,7 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
       }
       //cout<<"DEBUG: lhsPointerValue:"<<lhsPointerValue.toString(getVariableIdMapping())<<endl;
       PState pstate2=*(estate->pstate());
-      getExprAnalyzer()->writeToMemoryLocation(pstate2,lhsPointerValue,(*i).result);
+      pstate2.writeToMemoryLocation(lhsPointerValue,(*i).result);
       estateList.push_back(createEState(edge.target(),pstate2,*(estate->constraints())));
     } else {
       //cout<<"DEBUG: else (no var, no ptr) ... "<<endl;

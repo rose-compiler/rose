@@ -1087,31 +1087,3 @@ SPRAY::VariableId ExprAnalyzer::resolveToAbsoluteVariableId(AbstractValue abstrV
   int index2=abstrValue.getIntValue();
   return _variableIdMapping->variableIdOfArrayElement(arrayVarId2,index2);
 }
-
-AbstractValue ExprAnalyzer::readFromMemoryLocation(const PState* pState, AbstractValue abstrValue) const {
-  if(abstrValue.isTop()) {
-    // report memory violation
-    cout<<"WARNING: reading from unknown memory location (top)."<<endl;
-    return abstrValue;
-  }
-#if 0
-  return pState->varValue(resolveToAbsoluteVariableId(abstrValue));
-#else
-  return pState->varValue(abstrValue);
-#endif
-}
-
-void ExprAnalyzer::writeToMemoryLocation(PState& pState,
-                                         AbstractValue abstractMemLoc,
-                                         AbstractValue abstractValue) {
-#if 0
-  VariableId absoluteMemLoc=resolveToAbsoluteVariableId(abstractMemLoc);
-  pState.setVariableToValue(absoluteMemLoc,abstractValue);
-#else
-  if(abstractValue.isBot()) {
-    //cout<<"INFO: conversion: bot(uninitialized)->top(any)."<<endl;
-    abstractValue=AbstractValue(CodeThorn::Top());
-  }
-  pState.setVariableToValue(abstractMemLoc,abstractValue);
-#endif
-}

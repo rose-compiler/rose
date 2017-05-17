@@ -27,41 +27,44 @@ namespace CodeThorn {
 
   class VariableValueMonitor;
   class Analyzer;
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
-
+  /*! 
+   * \author Markus Schordan
+   * \date 2012.
+   */
+  
   class PState : public map<VarAbstractValue,CodeThorn::AValue> {
- public:
-  friend std::ostream& operator<<(std::ostream& os, const PState& value);
-  friend std::istream& operator>>(std::istream& os, PState& value);
-  PState();
-  bool varExists(VarAbstractValue varId) const;
-  bool varIsConst(VarAbstractValue varId) const;
-  bool varIsTop(VarAbstractValue varId) const;
-  CodeThorn::AValue varValue(VarAbstractValue varId) const;
-  string varValueToString(VarAbstractValue varId) const;
-  void deleteVar(VarAbstractValue varname);
-  long memorySize() const;
-  void toStream(std::ostream& os) const;
-  string toString() const;
-  string toString(SPRAY::VariableIdMapping* variableIdMapping) const;
-  void setAllVariablesToTop();
-  void setAllVariablesToValue(CodeThorn::AValue val);
-  void setVariableToTop(VarAbstractValue varId);
-  void setVariableToValue(VarAbstractValue varId, CodeThorn::AValue val);
-  VarAbstractValueSet getVariableIds() const;
-  // it is not necessary to define comparison-ops for PState, but
-  // the ordering appears to be implementation dependent (but consistent)
-};
-
+  public:
+    friend std::ostream& operator<<(std::ostream& os, const PState& value);
+    friend std::istream& operator>>(std::istream& os, PState& value);
+    PState();
+    bool varExists(VarAbstractValue varId) const;
+    bool varIsConst(VarAbstractValue varId) const;
+    bool varIsTop(VarAbstractValue varId) const;
+    CodeThorn::AValue varValue(VarAbstractValue varId) const;
+    string varValueToString(VarAbstractValue varId) const;
+    void deleteVar(VarAbstractValue varname);
+    long memorySize() const;
+    void toStream(std::ostream& os) const;
+    string toString() const;
+    string toString(SPRAY::VariableIdMapping* variableIdMapping) const;
+    void setAllVariablesToTop();
+    void setAllVariablesToValue(CodeThorn::AValue val);
+    void setVariableToTop(VarAbstractValue varId);
+    void setVariableToValue(VarAbstractValue varId, CodeThorn::AValue val);
+    VarAbstractValueSet getVariableIds() const;
+    // it is not necessary to define comparison-ops for PState, but
+    // the ordering appears to be implementation dependent (but consistent)
+    AbstractValue readFromMemoryLocation(AbstractValue abstrValue) const;
+    void writeToMemoryLocation(AbstractValue abstractMemLoc,
+                               AbstractValue abstractValue);
+  };
+  
   std::ostream& operator<<(std::ostream& os, const PState& value);
   typedef set<const PState*> PStatePtrSet;
-
+  
 #ifdef USE_CUSTOM_HSET
 class PStateHashFun {
-   public:
+ public:
     PStateHashFun(long prime=9999991) : tabSize(prime) {}
     long operator()(PState s) const {
       unsigned int hash=1;
