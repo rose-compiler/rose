@@ -6,6 +6,8 @@
 #include <iostream>
 #include "keep_going.h"
 #include <string>
+#include "AstMatching.h"
+#include "AstTerm.h"
 
 #include <Sawyer/CommandLine.h>
 static const char* purpose = "This tool detects various patterns in input source files.";
@@ -17,7 +19,8 @@ static const char* description =
 using namespace std;
 using namespace SageInterface;
 
-// used to store debugging output into a file
+// used to store reference correct results into a file.
+// It will be used for diff-based correctness checking. So don't output varying debugging  info into this file.
 ofstream ofile; 
 
 namespace RAJA_Checker 
@@ -278,35 +281,100 @@ SgExprStatement
 
  * */
 
+
+// Check if two integer variables are connected through an indirect array access: int i1 = IndexSet[i2]; 
+// Useful to find of i is derived from loop index i2 for example stmt like:
+//  a[i] = ..; 
+// single level of indexSet?? int i1 = IndexSet[i2];
+// TODO: multiple level of indexSet?? int i1 = IndexSet[iS2[i2]];
+bool connectedViaIndexSet (SgVarRefExp* varRef1, SgInitializedName* i2)
+{
+  AstMatching m;
+  ROSE_ASSERT (varRef1!=NULL);
+  ROSE_ASSERT (i2!=NULL);
+
+  SgVariableSymbol* sym = varRef1->get_symbol();
+  SgInitializedName* iname = sym->get_declaration();
+  SgDeclarationStatement* decl = iname->get_declaration();
+  
+  string p("$rhs=SgVariableDeclaration");
+  //string p("SgVariableDeclaration(SgInitializedName(SgAssignInitializer(SgPntrArrRefExp(SgVarRefExp, $rhs=SgVarRefExp))),..)");
+  MatchResult res=m.performMatching(p, decl);
+  for(MatchResult::iterator i=res.begin();i!=res.end();++i) {
+     //SgInitializedName * i1 = isSgInitializedName((*i)["$rhs"]);
+     SgVariableDeclaration* i1 = isSgVariableDeclaration((*i)["$rhs"]);
+     cout<<"i1 matched "<< i1->unparseToString()<<endl; 
+     cout<< AstTerm::astTermWithNullValuesToString(i1)<<endl;
+//     if (i1==i2 ) 
+//      return true; 
+  }
+  return false;
+}
+
 // Check if an operand is a form of x[index], x is a pointer to a double, index is a loop index
 bool isDoubleArrayAccess (SgExpression* exp, SgInitializedName * lvar)
 {
   ROSE_ASSERT (lvar != NULL);
-  if (exp == NULL) return false;
+  if (exp == NULL) 
+  {
+    if (RAJA_Checker::enable_debug) cout<<"\t\t\t NULL exp" <<endl;
+    return false;
+  }
   SgPntrArrRefExp* arr = isSgPntrArrRefExp (exp);
   if (arr == NULL)
+  {
+    if (RAJA_Checker::enable_debug) cout<<"\t\t\t not SgPntrArrRefExp, but" << exp->class_name() <<endl;
     return false;
+  }
 
   SgExpression* lhs, *rhs;
   lhs = arr->get_lhs_operand();
-  if (lhs == NULL) return false;
+  if (lhs == NULL) 
+  {
+    if (RAJA_Checker::enable_debug) cout<<"\t\t\t lhs of a[i] is NULL " <<endl;
+    return false;
+  }
   rhs = arr->get_rhs_operand();
-  if (rhs == NULL) return false;
+  if (rhs == NULL) 
+  {
+    if (RAJA_Checker::enable_debug) cout<<"\t\t\t rhs of a[i] is NULL " <<endl;
+    return false;
+  }
 
   // lhs is a pointer type
   SgPointerType* ptype = isSgPointerType(lhs->get_type());
   if (!ptype)
+  {
+    if (RAJA_Checker::enable_debug) cout<<"\t\t\t array var's type is not a pointer type, but " << lhs->get_type()->class_name() <<endl;
     return false;
+  }
   // lhs is a pointer to double  
    if (! isSgTypeDouble( ptype->get_base_type()) )
+   {
+    if (RAJA_Checker::enable_debug) cout<<"\t\t\t ptype of array 's base type not a double type, but " << ptype->get_base_type()->class_name()<<endl;
     return false;
+   }
   
   // rhs is a loop index
   SgVarRefExp* varRef = isSgVarRefExp(rhs) ;
-  if (varRef == NULL) return false;
-
-  if (varRef->get_symbol() != lvar->get_symbol_from_symbol_table ())
+  if (varRef == NULL) 
+  {
+    if (RAJA_Checker::enable_debug) cout<<"\t\t\t rhs of a[i] is not SgVarRefExp, but " << rhs->class_name() <<endl;
     return false;
+  }
+
+  SgSymbol * s1 = varRef->get_symbol();
+  SgSymbol * s2 = lvar->get_symbol_from_symbol_table ();
+  if ( s1 != s2 && !connectedViaIndexSet(varRef, lvar))
+  {
+    if (RAJA_Checker::enable_debug) 
+    {
+      cout<<"\t\t\t symbol is not equal to loop index symbol" <<endl;
+      cout<< "\t\t\t rhs of a[i] var Ref:" << varRef->unparseToString() <<" : "<<s1->unparseToString() <<endl;
+      cout<< "\t\t\t loop index var:" << lvar->unparseToString() <<" : "<<s2->unparseToString() <<endl;
+    }
+    return false;
+  }
   
   return true; 
 }
@@ -335,34 +403,65 @@ bool isNodalAccumulationOp (SgExpression* op)
  * */
 bool isNodalAccumulationStmt (SgStatement* s, SgInitializedName* lvar)
 {
+  if (RAJA_Checker::enable_debug)  // ofile is used for diffing,   cout is for checking traces
+    cout<<"\t checking isNodalAccumulationStmt for stmt at line:"<<s->get_file_info()->get_line()<<endl;
+
   ROSE_ASSERT (lvar != NULL);
-   if (s==NULL) return false;
-   SgExprStatement* es = isSgExprStatement (s);
-   if (es==NULL) return false;
+  if (s==NULL) return false;
+  SgExprStatement* es = isSgExprStatement (s);
+  if (es==NULL) 
+  {
+    if (RAJA_Checker::enable_debug)
+      cout<<"\t\t not SgExprStatement"<<endl;
+    return false;
+  }
 
-   SgExpression* exp = es->get_expression();
-   if (exp==NULL)
-     return false;
-   
-   if (! isNodalAccumulationOp (exp) )
-     return false;
+  SgExpression* exp = es->get_expression();
+  if (exp==NULL)
+  {
+    if (RAJA_Checker::enable_debug)
+      cout<<"\t\t not SgExpression"<<endl;
+    return false;
+  }
 
-   SgBinaryOp* bop = isSgBinaryOp (exp);
-   ROSE_ASSERT (bop != NULL);
+  if (! isNodalAccumulationOp (exp) )
+  {  
+    if (RAJA_Checker::enable_debug)
+      cout<<"\t\t not NodalAccumulationOp"<<endl;
+    return false;
+  }
 
-   // lhs is x[i]
-   if (!isDoubleArrayAccess(bop->get_lhs_operand(), lvar))
-     return false;
-  
-    // rhs is a scalar type
-   if (!SageInterface::isScalarType (bop->get_rhs_operand()->get_type())) 
-     return false;
+  SgBinaryOp* bop = isSgBinaryOp (exp);
+  ROSE_ASSERT (bop != NULL);
 
-   // rhs is a double type
-   if (!isSgTypeDouble(bop->get_rhs_operand()->get_type())) 
-     return false;
+  // lhs is x[i]
+  if (!isDoubleArrayAccess(bop->get_lhs_operand(), lvar))
+  {
+    if (RAJA_Checker::enable_debug)
+     cout<<"\t\t not DoubleArrayAccess for lhs"<<endl;
+    return false;
+  }
+
+  // rhs is a scalar type
+  SgType* rhs_type = bop->get_rhs_operand()->get_type();
+  if (!SageInterface::isScalarType (rhs_type)) 
+  {
+    if (RAJA_Checker::enable_debug)
+      cout<<"\t\t not scalar type for rhs"<<endl;
+    return false;
+  }
+  // skip const or typedef chain
+  rhs_type =rhs_type->stripTypedefsAndModifiers();
+
+  // rhs is a double type
+  if (!isSgTypeDouble(rhs_type)) 
+  {
+    if (RAJA_Checker::enable_debug)
+      cout<<"\t\t not double type for rhs"<<endl;
+    return false;
+  }
   // meet all conditions above
-   return true;
+  return true;
 }
 
 bool isNullStatement(SgStatement* s)
@@ -431,17 +530,39 @@ bool RAJA_Checker::isNodalAccumulationBody(SgBasicBlock* bb, SgInitializedName* 
 bool RAJA_Checker::isNodalAccumulationLoop(SgForStatement* forloop, SgExprStatement*& fstmt)
 {
   SgStatement* body = forloop->get_loop_body();
-  if (body == NULL) return false;
+  if (body == NULL) 
+  {
+    if (RAJA_Checker::enable_debug)
+      cout<< "NULL body, return false;"<<endl;;
+    return false;
+  }
 
   SgBasicBlock* bb = isSgBasicBlock(body);
-  if (bb == NULL) return false;
+  if (bb == NULL) 
+  {
+    if (RAJA_Checker::enable_debug)
+      cout<< "NULL Basic Block as body, return false;"<<endl;;
+    return false;
+  }
 
   SgInitializedName* lvar = SageInterface::getLoopIndexVariable (forloop);
   if (lvar ==NULL)
   {
+#if 0    
+    AstMatching m;
+    
+    MatchResult res=m.performMatching("SgForStatement(_,_,SgPlusPlusOp($I=SgVarRefExp)|SgMinusMinusOp($I=SgVarRefExp),..)",forloop);
+
+    ofile<<res.size()<<endl;
+    for(MatchResult::iterator i=res.begin();i!=res.end();++i) {
+       SgVarRefExp* ivar = isSgVarRefExp( (*i)["$I"]);
+       ofile<<"var:"<< ivar->unparseToString()<<endl;
+    }
+#endif    
     if (RAJA_Checker::enable_debug)
     {
-      cerr<<"Warning: SageInterface::getLoopIndexVariable() returns NULL for loop:"<<forloop->get_file_info()->displayString()<<endl;
+
+      cout<<"Warning: SageInterface::getLoopIndexVariable() returns NULL for loop:"<<forloop->get_file_info()->displayString()<<endl;
     }
     return false;
   }
@@ -517,6 +638,9 @@ void RoseVisitor::visit ( SgNode* n)
       if (checkNodalAccumulationPattern)
       {
         SgExprStatement* fstmt = NULL; 
+
+        if (RAJA_Checker::enable_debug)
+            cout<<"Entering checkNodalAccumulationPattern for loop at line:" << forloop->get_file_info()->get_line()<<endl;
         if ( isNodalAccumulationLoop (forloop, fstmt))
         {
             ostringstream oss;
