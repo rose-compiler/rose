@@ -36,6 +36,7 @@
 // we use INT_MIN, INT_MAX
 #include "limits.h"
 #include "AstNodeInfo.h"
+#include "TypeSizeMapping.h"
 
 namespace CodeThorn {
 
@@ -73,8 +74,11 @@ namespace CodeThorn {
     void initializeTraceSolver(std::string functionToStartAt,SgNode* root);
     void continueAnalysisFrom(EState* newStartEState);
     
-    PState analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode* rhs,ConstraintSet& cset);
     EState analyzeVariableDeclaration(SgVariableDeclaration* nextNodeToAnalyze1,EState currentEState, Label targetLabel);
+
+    PState analyzeAssignRhsExpr(PState currentPState,VariableId lhsVar, SgNode* rhs,ConstraintSet& cset);
+    // to be replaced by above function
+    PState analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode* rhs,ConstraintSet& cset);
     
     void addToWorkList(const EState* estate);
     const EState* addToWorkListIfNew(EState estate);
@@ -86,6 +90,13 @@ namespace CodeThorn {
     void swapWorkLists();
     size_t memorySizeContentEStateWorkLists();
     
+    void setOptionStatusMessages(bool flag);
+    bool getOptionStatusMessages();
+    // thread save; only prints if option status messages is enabled.
+    void printStatusMessage(string s);
+    void printStatusMessageLine(string s);
+    void printStatusMessage(string s, bool newLineFlag);
+    static string lineColSource(SgNode* node);
     void recordTransition(const EState* sourceEState, Edge e, const EState* targetEState);
     void printStatusMessage(bool);
     bool isStartLabel(Label label);
@@ -251,6 +262,8 @@ namespace CodeThorn {
     void set_finished(std::vector<bool>& v, bool val);
     bool all_false(std::vector<bool>& v);
 
+    void setTypeSizeMapping(TypeSizeMapping* typeSizeMapping);
+    TypeSizeMapping* getTypeSizeMapping();
   private:
     GlobalTopifyMode _globalTopifyMode;
     set<AbstractValue> _compoundIncVarsSet;
@@ -288,6 +301,7 @@ namespace CodeThorn {
     long int _maxBytesForcedTop;
     long int _maxSecondsForcedTop;
     PState _startPState;
+    bool _optionStatusMessages;
 
     std::list<EState> elistify();
     std::list<EState> elistify(EState res);
@@ -311,7 +325,8 @@ namespace CodeThorn {
     
     EState createEState(Label label, PState pstate, ConstraintSet cset);
     EState createEState(Label label, PState pstate, ConstraintSet cset, InputOutput io);
-
+    
+    TypeSizeMapping* _typeSizeMapping;
     VariableValueMonitor variableValueMonitor;
 
     bool _treatStdErrLikeFailedAssert;

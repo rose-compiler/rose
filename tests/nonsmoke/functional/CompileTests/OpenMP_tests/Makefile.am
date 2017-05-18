@@ -17,6 +17,7 @@ LDADD    = $(ROSE_LIBS)
 
 C_TESTCODES_REQUIRED_TO_PASS = \
 	3loops.c \
+	affinity.c \
 	jacobi.c \
 	jacobi-collapse.c \
 	alignment.c \
@@ -24,6 +25,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	array_init_2.c \
 	atomic.c \
 	atoms-2.c \
+	atomic-3.c \
 	barrier.c \
 	collapse.c \
 	copyin.c \

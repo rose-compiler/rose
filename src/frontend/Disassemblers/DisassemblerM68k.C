@@ -320,7 +320,7 @@ formatNBits(M68kDataFormat fmt)
 
 // see base class
 bool
-DisassemblerM68k::can_disassemble(SgAsmGenericHeader *header) const
+DisassemblerM68k::canDisassemble(SgAsmGenericHeader *header) const
 {
     SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
     return (isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_M68K_Family;
@@ -812,7 +812,7 @@ DisassemblerM68k::makeOffsetWidthPair(unsigned w1)
 }
 
 SgAsmInstruction *
-DisassemblerM68k::make_unknown_instruction(const Disassembler::Exception &e)
+DisassemblerM68k::makeUnknownInstruction(const Disassembler::Exception &e)
 {
     SgAsmM68kInstruction *insn = new SgAsmM68kInstruction(get_insn_va(), "unknown", m68k_unknown_instruction);
     SgAsmOperandList *operands = new SgAsmOperandList;
@@ -957,7 +957,7 @@ DisassemblerM68k::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va
     if (0!=start_va%2)
         throw Exception("instruction is not properly aligned", start_va);
     uint8_t buf[sizeof(iwords)]; // largest possible instruction
-    size_t nbytes = map->at(start_va).limit(sizeof buf).require(get_protection()).read(buf).size();
+    size_t nbytes = map->at(start_va).limit(sizeof buf).require(MemoryMap::EXECUTABLE).read(buf).size();
     niwords = nbytes / sizeof(iwords[0]);
     if (0==niwords)
         throw Exception("short read from memory map", start_va);
@@ -981,7 +981,6 @@ DisassemblerM68k::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va
         successors->insert(suc2.begin(), suc2.end());
     }
 
-    update_progress(insn);
     return insn;
 }
 
@@ -4819,17 +4818,16 @@ DisassemblerM68k::init()
         name("m68040");
         regdict = RegisterDictionary::dictionary_m68000();
     }
-    set_registers(regdict);
-    REG_IP = *get_registers()->lookup("pc");
-    REG_SP = *get_registers()->lookup("a7");
+    registerDictionary(regdict);
+    REG_IP = *registerDictionary()->lookup("pc");
+    REG_SP = *registerDictionary()->lookup("a7");
 
     p_proto_dispatcher = InstructionSemantics2::DispatcherM68k::instance();
     p_proto_dispatcher->addressWidth(32);
     p_proto_dispatcher->set_register_dictionary(regdict);
 
-    set_wordsize(2);
-    set_alignment(2);
-    set_sex(ByteOrder::ORDER_MSB);
+    wordSizeBytes(2);
+    byteOrder(ByteOrder::ORDER_MSB);
     callingConventions(CallingConvention::dictionaryM68k());
 
     idis_table.resize(17);

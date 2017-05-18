@@ -272,6 +272,11 @@ librose_la_LIBADD = $(BOOST_LDFLAGS) $(libroseLibraries) $(JAVA_JVM_FLAGS) $(LIB
           $(OPT_MYSQL_LDFLAGS) $(ROSE_ATERM_LIBS)
 endif
 
+# libelf is a prerequisite for using libdwarf
+if ROSE_HAVE_LIBELF
+   librose_la_LIBADD += $(ROSE_ELF_LIBS_WITH_PATH)
+endif
+
 # DQ (6/5/2010): Suggested change by Peter to support dwarf that would simplify use with Haskell
 if ROSE_HAVE_LIBDWARF
    librose_la_LIBADD += $(ROSE_DWARF_LIBS_WITH_PATH)
@@ -340,6 +345,7 @@ rose_config_installed_cppflags =		\
 	$(ROSE_YICES_INCLUDES)			\
 	$(ROSE_YAML_INCLUDES)			\
 	$(ROSE_LIBMAGIC_INCLUDES)		\
+	$(ROSE_ELF_INCLUDES)			\
 	$(ROSE_DWARF_INCLUDES)			\
 	$(ROSE_WINE_INCLUDES)			\
 	$(ROSE_PCH_INCLUDE)			\
@@ -367,6 +373,7 @@ rose_config_installed_ldflags =			\
 	$(RT_LIBS)				\
 	$(ROSE_YICES_LIBS_WITH_PATH)		\
 	$(ROSE_PHP_LIBS_WITH_PATH)		\
+	$(ROSE_ELF_LIBS_WITH_PATH)		\
 	$(ROSE_DWARF_LIBS_WITH_PATH)		\
 	$(ROSE_QT_LIBS_WITH_PATH)		\
 	$(ROSE_SSL_LIBS)			\

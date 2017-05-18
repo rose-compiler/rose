@@ -288,15 +288,6 @@ x86_call_targets_LDFLAGS = $(ROSE_RPATHS)
 x86_call_targets_LDADD = $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
-# x86-function-vas
-
-bin_PROGRAMS += x86-function-vas
-x86_function_vas_SOURCES = x86-function-vas.C
-x86_function_vas_CPPFLAGS = $(ROSE_INCLUDES)
-x86_function_vas_LDFLAGS = $(ROSE_RPATHS)
-x86_function_vas_LDADD = $(ROSE_LIBS)
-
-#------------------------------------------------------------------------------------------------------------------------
 # generate XML from ROSE internals
 
 bin_PROGRAMS += rxml
@@ -304,6 +295,15 @@ rxml_SOURCES = rxml.C
 rxml_CPPFLAGS = $(ROSE_INCLUDES)
 rxml_LDFLAGS = $(ROSE_RPATHS)
 rxml_LDADD = $(ROSE_LIBS)
+
+#------------------------------------------------------------------------------------------------------------------------
+# DWARF line numbers
+
+bin_PROGRAMS += dwarf-lines
+dwarf_lines_SOURCES = dwarf-lines.C
+dwarf_lines_CPPFLAGS = $(ROSE_INCLUDES)
+dwarf_lines_LDFLAGS = $(ROSE_RPATHS)
+dwarf_lines_LDADD = $(ROSE_LIBS)
 
 
 ########################################################################################################################
@@ -343,5 +343,5 @@ endif
 clean-local:
 	rm -f $(MOSTLYCLEANFILES)
 
-check-nonsmoke: $(TEST_TARGETS)
+check-local: $(TEST_TARGETS)
 

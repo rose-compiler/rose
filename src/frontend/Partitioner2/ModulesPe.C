@@ -139,9 +139,6 @@ findImportFunctions(const Partitioner &partitioner, SgAsmInterpretation *interp)
 
 void
 rebaseImportAddressTables(Partitioner &partitioner, const ImportIndex &index) {
-    ASSERT_require2(partitioner.instructionProvider().defaultByteOrder()==ByteOrder::ORDER_LSB,
-                    "FIXME[Robb P. Matzke 2014-08-24]: supports only little-endian architectures at this time");
-
     size_t wordSize = partitioner.instructionProvider().instructionPointerRegister().get_nbits() / 8;
     if (wordSize > 8) {
         mlog[WARN] <<"ModulesPe::rebaseImportAddressTable does not support a word size of "
@@ -166,9 +163,24 @@ rebaseImportAddressTables(Partitioner &partitioner, const ImportIndex &index) {
 
     // Write IAT entries into the newly mapped IATs
     BOOST_FOREACH (const ImportIndex::Node &node, index.nodes()) {
+        // First, pack it as little-endian
         uint8_t packed[8];
         for (size_t i=0; i<wordSize; ++i)
             packed[i] = (node.key() >> (8*i)) & 0xff;
+
+        // Then reorder bytes for other sexes
+        switch (partitioner.instructionProvider().defaultByteOrder()) {
+            case ByteOrder::ORDER_LSB:
+                break;
+
+            case ByteOrder::ORDER_MSB:
+                std::reverse(packed+0, packed+wordSize);
+                break;
+
+            case ByteOrder::ORDER_UNSPECIFIED:
+                ASSERT_not_reachable("unknown default byte order");
+        }
+        
         rose_addr_t iatVa = node.value()->get_iat_entry_va();
         if (wordSize!=partitioner.memoryMap()->at(iatVa).limit(wordSize).write(packed).size())
             ASSERT_not_reachable("write failed to map we just created");

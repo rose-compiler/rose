@@ -349,7 +349,7 @@ public:
                 regname=="fioff" || regname=="foseg" || regname=="fooff" || regname=="fop"   ||
                 regname=="mxcsr")
                 continue;                               // don't compare some registers
-            const RegisterDescriptor *reg = thread->get_process()->disassembler()->get_registers()->lookup(regname);
+            const RegisterDescriptor *reg = thread->get_process()->disassembler()->registerDictionary()->lookup(regname);
             if (!reg)
                 throw std::runtime_error("unknown register \"" + StringUtility::cEscape(regname) + "\"");
             rose_addr_t gdbRegValue = parseInteger(words[1]);
@@ -379,7 +379,7 @@ public:
             cmd.erase(cmd.begin());
             registerCheckGdbCommand(thread, cmd);
         } else {
-            const RegisterDescriptor *reg = thread->get_process()->disassembler()->get_registers()->lookup(cmd[0]);
+            const RegisterDescriptor *reg = thread->get_process()->disassembler()->registerDictionary()->lookup(cmd[0]);
             if (!reg) {
                 out_ <<"no such register \"" <<StringUtility::cEscape(cmd[0]) <<"\"\n";
                 return;
@@ -548,7 +548,7 @@ public:
                 nRead = thread->get_process()->get_memory()->at(va).limit(nBytes).read(bytes).size();
                 if (nRead != nBytes)
                     throw std::runtime_error("short read");
-                ByteOrder::Endianness guestOrder = thread->get_process()->disassembler()->get_sex();
+                ByteOrder::Endianness guestOrder = thread->get_process()->disassembler()->byteOrder();
                 ASSERT_require(guestOrder==ByteOrder::ORDER_LSB || guestOrder==ByteOrder::ORDER_MSB);
                 ByteOrder::Endianness hostOrder = ByteOrder::host_order();
                 if (guestOrder != hostOrder)

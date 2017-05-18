@@ -1,0 +1,163 @@
+digraph CFG {
+ graph [  ];
+ node  [  ];
+ edge  [  ];
+
+subgraph cluster_0x08048278 { label="function 0x08048278 \"_init\"" fillcolor="#f2f2f2" href="0x08048278" style=filled
+V_0x08048278 [ label=<function 0x08048278 "_init"<br align="left"/>> fillcolor="#cdfecc" fontname=Courier href="0x08048278" shape=box style=filled ];
+V_0x08048283 [ label=<basic block 0x08048283> fontname=Courier href="0x08048283" shape=box ];
+V_0x08048288 [ label=<basic block 0x08048288> fontname=Courier href="0x08048288" shape=box ];
+V_0x0804828d [ label=<basic block 0x0804828d> fillcolor="#cdccfe" fontname=Courier href="0x0804828d" shape=box style=filled ];
+}
+
+subgraph cluster_0x08048290 { label="function 0x08048290 \"DYNAMIC_LINKER_TRAMPOLINE\"" fillcolor="#f2f2f2" href="0x08048290" style=filled
+V_0x08048290 [ label=<function 0x08048290 "DYNAMIC_LINKER_TRAMPOLINE"<br align="left"/>> fillcolor="#cdfecc" fontname=Courier href="0x08048290" shape=box style=filled ];
+}
+
+subgraph cluster_0x080482a0 { label="function 0x080482a0 \"malloc@plt\"" fillcolor="#f2f2f2" href="0x080482a0" style=filled
+V_0x080482a0 [ label=<function 0x080482a0 "malloc@plt"<br align="left"/>> fillcolor="#cdfecc" fontname=Courier href="0x080482a0" shape=box style=filled ];
+}
+
+subgraph cluster_0x080482b0 { label="function 0x080482b0 \"__libc_start_main@plt\"" fillcolor="#f2f2f2" href="0x080482b0" style=filled
+V_0x080482b0 [ label=<function 0x080482b0 "__libc_start_main@plt"<br align="left"/>> fillcolor="#cdfecc" fontname=Courier href="0x080482b0" shape=box style=filled ];
+}
+
+subgraph cluster_0x080482c0 { label="function 0x080482c0 \"_start\"" fillcolor="#f2f2f2" href="0x080482c0" style=filled
+V_0x080482c0 [ label=<function 0x080482c0 "_start"<br align="left"/>> fillcolor="#cdfecc" fontname=Courier href="0x080482c0" shape=box style=filled ];
+V_0x080482e1 [ label=<basic block 0x080482e1> fontname=Courier href="0x080482e1" shape=box ];
+}
+
+subgraph cluster_0x080482e4 { label="function 0x080482e4 \"call_gmon_start\"" fillcolor="#f2f2f2" href="0x080482e4" style=filled
+V_0x080482e4 [ label=<function 0x080482e4 "call_gmon_start"<br align="left"/>> fillcolor="#cdfecc" fontname=Courier href="0x080482e4" shape=box style=filled ];
+V_0x080482ff [ label=<basic block 0x080482ff> fontname=Courier href="0x080482ff" shape=box ];
+V_0x08048301 [ label=<basic block 0x08048301> fillcolor="#cdccfe" fontname=Courier href="0x08048301" shape=box style=filled ];
+}
+
+subgraph cluster_0x08048310 { label="function 0x08048310 \"__do_global_dtors_aux\"" fillcolor="#f2f2f2" href="0x08048310" style=filled
+V_0x08048310 [ label=<function 0x08048310 "__do_global_dtors_aux"<br align="left"/>> fillcolor="#cdfecc" fontname=Courier href="0x08048310" shape=box style=filled ];
+V_0x0804831f [ label=<basic block 0x0804831f> fontname=Courier href="0x0804831f" shape=box ];
+V_0x0804832b [ label=<basic block 0x0804832b> fontname=Courier href="0x0804832b" shape=box ];
+V_0x08048321 [ label=<basic block 0x08048321> fontname=Courier href="0x08048321" shape=box ];
+V_0x08048336 [ label=<basic block 0x08048336> fontname=Courier href="0x08048336" shape=box ];
+V_0x0804833d [ label=<basic block 0x0804833d> fillcolor="#cdccfe" fontname=Courier href="0x0804833d" shape=box style=filled ];
+}
+
+subgraph cluster_0x08048340 { label="function 0x08048340 \"frame_dummy\"" fillcolor="#f2f2f2" href="0x08048340" style=filled
+V_0x08048340 [ label=<function 0x08048340 "frame_dummy"<br align="left"/>> fillcolor="#cdfecc" fontname=Courier href="0x08048340" shape=box style=filled ];
+V_0x0804834f [ label=<basic block 0x0804834f> fontname=Courier href="0x0804834f" shape=box ];
+V_0x08048361 [ label=<basic block 0x08048361> fillcolor="#cdccfe" fontname=Courier href="0x08048361" shape=box style=filled ];
+V_0x08048358 [ label=<basic block 0x08048358> fontname=Courier href="0x08048358" shape=box ];
+}
+
+subgraph cluster_0x08048364 { label="function 0x08048364 \"main\"" fillcolor="#f2f2f2" href="0x08048364" style=filled
+V_0x08048364 [ label=<function 0x08048364 "main"<br align="left"/>> fillcolor="#cdfecc" fontname=Courier href="0x08048364" shape=box style=filled ];
+V_0x08048381 [ label=<basic block 0x08048381> fontname=Courier href="0x08048381" shape=box ];
+V_0x08048394 [ label=<basic block 0x08048394> fontname=Courier href="0x08048394" shape=box ];
+V_0x080483ac [ label=<basic block 0x080483ac> fillcolor="#cdccfe" fontname=Courier href="0x080483ac" shape=box style=filled ];
+V_0x080483a6 [ label=<basic block 0x080483a6> fontname=Courier href="0x080483a6" shape=box ];
+}
+
+subgraph cluster_0x080483c0 { label="function 0x080483c0 \"__libc_csu_init\"" fillcolor="#f2f2f2" href="0x080483c0" style=filled
+V_0x080483c0 [ label=<function 0x080483c0 "__libc_csu_init"<br align="left"/>> fillcolor="#cdfecc" fontname=Courier href="0x080483c0" shape=box style=filled ];
+V_0x080483da [ label=<basic block 0x080483da> fontname=Courier href="0x080483da" shape=box ];
+V_0x080483f4 [ label=<basic block 0x080483f4> fontname=Courier href="0x080483f4" shape=box ];
+V_0x0804840a [ label=<basic block 0x0804840a> fillcolor="#cdccfe" fontname=Courier href="0x0804840a" shape=box style=filled ];
+V_0x080483fb [ label=<basic block 0x080483fb> fontname=Courier href="0x080483fb" shape=box ];
+V_0x080483f8 [ label=<basic block 0x080483f8> fontname=Courier href="0x080483f8" shape=box ];
+}
+
+subgraph cluster_0x08048414 { label="function 0x08048414 \"__libc_csu_fini\"" fillcolor="#f2f2f2" href="0x08048414" style=filled
+V_0x08048414 [ label=<function 0x08048414 "__libc_csu_fini"<br align="left"/>> fillcolor="#cdfecc" fontname=Courier href="0x08048414" shape=box style=filled ];
+V_0x08048440 [ label=<basic block 0x08048440> fontname=Courier href="0x08048440" shape=box ];
+V_0x08048449 [ label=<basic block 0x08048449> fontname=Courier href="0x08048449" shape=box ];
+V_0x08048443 [ label=<basic block 0x08048443> fontname=Courier href="0x08048443" shape=box ];
+V_0x08048444 [ label=<basic block 0x08048444> fontname=Courier href="0x08048444" shape=box ];
+V_0x0804844e [ label=<basic block 0x0804844e> fillcolor="#cdccfe" fontname=Courier href="0x0804844e" shape=box style=filled ];
+V_0x0804843f [ label=<basic block 0x0804843f> fontname=Courier href="0x0804843f" shape=box ];
+}
+
+subgraph cluster_0x08048460 { label="function 0x08048460 \"__do_global_ctors_aux\"" fillcolor="#f2f2f2" href="0x08048460" style=filled
+V_0x08048460 [ label=<function 0x08048460 "__do_global_ctors_aux"<br align="left"/>> fillcolor="#cdfecc" fontname=Courier href="0x08048460" shape=box style=filled ];
+V_0x08048476 [ label=<basic block 0x08048476> fontname=Courier href="0x08048476" shape=box ];
+V_0x0804848c [ label=<basic block 0x0804848c> fillcolor="#cdccfe" fontname=Courier href="0x0804848c" shape=box style=filled ];
+V_0x08048485 [ label=<basic block 0x08048485> fontname=Courier href="0x08048485" shape=box ];
+V_0x08048480 [ label=<basic block 0x08048480> fontname=Courier href="0x08048480" shape=box ];
+}
+
+subgraph cluster_0x08048494 { label="function 0x08048494 \"_fini\"" fillcolor="#f2f2f2" href="0x08048494" style=filled
+V_0x08048494 [ label=<function 0x08048494 "_fini"<br align="left"/>> fillcolor="#cdfecc" fontname=Courier href="0x08048494" shape=box style=filled ];
+V_0x080484aa [ label=<basic block 0x080484aa> fillcolor="#cdccfe" fontname=Courier href="0x080484aa" shape=box style=filled ];
+}
+indeterminate [ label="indeterminate" fillcolor="#ff9999" shape=box style=filled ];
+V_0x08048290 -> indeterminate [ label="other"  ];
+V_0x080482a0 -> indeterminate [ label="other"  ];
+V_0x080482b0 -> indeterminate [ label="other"  ];
+V_0x080482c0 -> V_0x080482b0 [ label="call" color="#05ff00" ];
+V_0x080484aa -> indeterminate [ label="return" color="#0500ff" ];
+V_0x080482e4 -> V_0x08048301 [ label=""  ];
+V_0x0804832b -> V_0x08048336 [ label="" style=dotted ];
+V_0x08048340 -> V_0x08048361 [ label=""  ];
+V_0x080483a6 -> V_0x080483ac [ label="" style=dotted ];
+V_0x080483f8 -> V_0x080483fb [ label="cret\nassumed" style=dotted ];
+V_0x08048440 -> indeterminate [ label="call" color="#05ff00" ];
+V_0x08048460 -> V_0x0804848c [ label=""  ];
+V_0x08048358 -> V_0x08048361 [ label="cret\nassumed" style=dotted ];
+V_0x0804848c -> indeterminate [ label="return" color="#0500ff" ];
+V_0x08048460 -> V_0x08048476 [ label="" style=dotted ];
+V_0x0804844e -> indeterminate [ label="return" color="#0500ff" ];
+V_0x08048444 -> V_0x08048449 [ label="" style=dotted ];
+V_0x08048440 -> V_0x08048443 [ label="cret\nassumed" style=dotted ];
+V_0x0804828d -> indeterminate [ label="return" color="#0500ff" ];
+V_0x0804834f -> V_0x08048361 [ label=""  ];
+V_0x08048340 -> V_0x0804834f [ label="" style=dotted ];
+V_0x08048361 -> indeterminate [ label="return" color="#0500ff" ];
+V_0x0804834f -> V_0x08048358 [ label="" style=dotted ];
+V_0x08048321 -> V_0x0804832b [ label="cret\nassumed" style=dotted ];
+V_0x08048336 -> V_0x0804833d [ label="" style=dotted ];
+V_0x08048310 -> V_0x0804831f [ label="" style=dotted ];
+V_0x08048310 -> V_0x0804832b [ label=""  ];
+V_0x080482ff -> V_0x08048301 [ label="cret\nassumed" style=dotted ];
+V_0x0804832b -> V_0x08048321 [ label=""  ];
+V_0x0804831f -> V_0x0804833d [ label=""  ];
+V_0x0804833d -> indeterminate [ label="return" color="#0500ff" ];
+V_0x08048301 -> indeterminate [ label="return" color="#0500ff" ];
+V_0x080482e4 -> V_0x080482ff [ label="" style=dotted ];
+V_0x080482c0 -> V_0x080482e1 [ label="cret" style=dotted ];
+V_0x08048278 -> V_0x08048283 [ label="cret" style=dotted ];
+V_0x08048278 -> V_0x080482e4 [ label="call" color="#05ff00" ];
+V_0x08048283 -> V_0x08048288 [ label="cret" style=dotted ];
+V_0x08048283 -> V_0x08048340 [ label="call" color="#05ff00" ];
+V_0x08048288 -> V_0x0804828d [ label="cret" style=dotted ];
+V_0x08048288 -> V_0x08048460 [ label="call" color="#05ff00" ];
+V_0x080483ac -> indeterminate [ label="return" color="#0500ff" ];
+V_0x08048364 -> V_0x080482a0 [ label="call" color="#05ff00" ];
+V_0x08048364 -> V_0x08048381 [ label="cret" style=dotted ];
+V_0x08048381 -> V_0x080483a6 [ label=""  ];
+V_0x08048394 -> V_0x080483a6 [ label="" style=dotted ];
+V_0x080483a6 -> V_0x08048394 [ label=""  ];
+V_0x080483da -> V_0x0804840a [ label=""  ];
+V_0x080483c0 -> V_0x08048278 [ label="call" color="#05ff00" ];
+V_0x080483c0 -> V_0x080483da [ label="cret" style=dotted ];
+V_0x0804840a -> indeterminate [ label="return" color="#0500ff" ];
+V_0x080483da -> V_0x080483f4 [ label="" style=dotted ];
+V_0x08048494 -> V_0x080484aa [ label="cret" style=dotted ];
+V_0x08048494 -> V_0x08048310 [ label="call" color="#05ff00" ];
+V_0x080482ff -> indeterminate [ label="call" color="#05ff00" ];
+V_0x08048321 -> indeterminate [ label="call" color="#05ff00" ];
+V_0x08048358 -> indeterminate [ label="call" color="#05ff00" ];
+V_0x080483f4 -> V_0x080483f8 [ label="" style=dotted ];
+V_0x080483fb -> V_0x0804840a [ label="" style=dotted ];
+V_0x080483fb -> V_0x080483f8 [ label=""  ];
+V_0x080483f8 -> indeterminate [ label="call" color="#05ff00" ];
+V_0x08048414 -> V_0x08048444 [ label=""  ];
+V_0x08048443 -> V_0x08048444 [ label="" style=dotted ];
+V_0x08048444 -> V_0x08048440 [ label=""  ];
+V_0x08048449 -> V_0x0804844e [ label="cret" style=dotted ];
+V_0x08048449 -> V_0x08048494 [ label="call" color="#05ff00" ];
+V_0x08048476 -> V_0x08048480 [ label="" style=dotted ];
+V_0x08048485 -> V_0x0804848c [ label="" style=dotted ];
+V_0x08048485 -> V_0x08048480 [ label=""  ];
+V_0x08048480 -> indeterminate [ label="call" color="#05ff00" ];
+V_0x08048480 -> V_0x08048485 [ label="cret\nassumed" style=dotted ];
+V_0x0804843f -> V_0x08048440 [ label="" style=dotted ];
+}

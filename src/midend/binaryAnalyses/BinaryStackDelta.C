@@ -32,7 +32,7 @@ initDiagnostics() {
 void
 Analysis::init(Disassembler *disassembler) {
     if (disassembler) {
-        const RegisterDictionary *regdict = disassembler->get_registers();
+        const RegisterDictionary *regdict = disassembler->registerDictionary();
         ASSERT_not_null(regdict);
         size_t addrWidth = disassembler->instructionPointerRegister().get_nbits();
 

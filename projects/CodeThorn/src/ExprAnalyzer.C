@@ -682,6 +682,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
                                  SingleEvalResultConstInt arrayExprResult, 
                                  SingleEvalResultConstInt indexExprResult,
                                  EState estate, bool useConstraints) {
+  //cout<<"DEBUG: evalArrayReferenceOp: "<<node->unparseToString()<<endl;
   list<SingleEvalResultConstInt> resultList;
   SingleEvalResultConstInt res;
   res.estate=estate;
@@ -708,7 +709,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
         //cout<<"DEBUG: pointer-array access!"<<endl;
         if(pstate->varExists(arrayVarId)) {
           arrayPtrValue=pstate2[arrayVarId]; // pointer value (without index)
-          ROSE_ASSERT(arrayPtrValue.isPtr());
+          ROSE_ASSERT(arrayPtrValue.isTop()||arrayPtrValue.isBot()||arrayPtrValue.isPtr());
         } else {
           cerr<<"Error: pointer variable does not exist in PState."<<endl;
           exit(1);
@@ -719,6 +720,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
       }
       AbstractValue indexExprResultValue=indexExprResult.value();
       AbstractValue arrayPtrPlusIndexValue=AbstractValue::operatorAdd(arrayPtrValue,indexExprResultValue);
+#if 0
       VariableId arrayVarId2=arrayPtrPlusIndexValue.getVariableId();
       int index2=arrayPtrPlusIndexValue.getIntValue();
       if(!checkArrayBounds(arrayVarId2,index2)) {
@@ -726,11 +728,12 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
       }
       VariableId arrayElementId=_variableIdMapping->variableIdOfArrayElement(arrayVarId2,index2);
       ROSE_ASSERT(arrayElementId.isValid());
-      if(pstate->varExists(arrayElementId)) {
-        res.result=pstate2[arrayElementId];
+#endif
+      if(pstate->varExists(arrayPtrPlusIndexValue)) {
+        res.result=pstate2[arrayPtrPlusIndexValue];
         //cout<<"DEBUG: retrieved array element value:"<<res.result<<endl;
         if(res.result.isTop() && useConstraints) {
-          AbstractValue val=res.estate.constraints()->varAbstractValue(arrayElementId);
+          AbstractValue val=res.estate.constraints()->varAbstractValue(arrayPtrPlusIndexValue);
           res.result=val;
         }
         return listify(res);
@@ -751,28 +754,29 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
                 int intVal=intValNode->get_value();
                 //cout<<"DEBUG:initializing array element:"<<arrayElemId.toString()<<"="<<intVal<<endl;
                 //newPState.setVariableToValue(arrayElemId,CodeThorn::AValue(AbstractValue(intVal)));
+                int index2=arrayPtrPlusIndexValue.getIndexIntValue();
                 if(elemIndex==index2) {
                   AbstractValue val=AbstractValue(intVal);
                   res.result=val;
                   return listify(res);
                 }
               } else {
-                cerr<<"Error: unsupported array initializer value:"<<exp->unparseToString()<<" AST:"<<SPRAY::AstTerm::astTermWithNullValuesToString(exp)<<endl;
+                cerr<<"Error: unsupported array initializer value:"<<exp->unparseToString()<<" AST:"<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
                 exit(1);
               }
             } else {
-              cerr<<"Error: no assign initialize:"<<exp->unparseToString()<<" AST:"<<SPRAY::AstTerm::astTermWithNullValuesToString(exp)<<endl;
+              cerr<<"Error: no assign initialize:"<<exp->unparseToString()<<" AST:"<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
             }
             elemIndex++;
           }
           cerr<<"Error: access to element of constant array (not in state). Not supported yet."<<endl;
           exit(1);
         } else {
-          cerr<<"Error: Array Element does not exist (out of array access?)"<<endl;
-          cerr<<"array-element-id: "<<arrayElementId.toString()<<" name:"<<_variableIdMapping->variableName(arrayElementId)<<endl;
+          cout<<"Error: potential out of bounds access (memory bound index: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<")"<<endl;
+          cerr<<"array-element: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
           cerr<<"PState: "<<pstate->toString(_variableIdMapping)<<endl;
           cerr<<"AST: "<<node->unparseToString()<<endl;
-          exit(1);
+          
         }
       }
     } else {
@@ -834,14 +838,17 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalDereferenceOp(SgPointerDerefExp
   SingleEvalResultConstInt res;
   res.estate=estate;
   AbstractValue derefOperandValue=operandResult.result;
+  //cout<<"DEBUG: derefOperandValue: "<<derefOperandValue.toRhsString(_variableIdMapping);
   // (varid,idx) => varid'; return estate.pstate()[varid'] || pstate(AValue)
-  res.result=readFromMemoryLocation(estate.pstate(), derefOperandValue);
+  //res.result=readFromMemoryLocation(estate.pstate(), derefOperandValue);
+  res.result=derefOperandValue;
   res.exprConstraints=operandResult.exprConstraints;
   return listify(res);
 }
 
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarExp(SgVarRefExp* node, EState estate, bool useConstraints) {
+  //cout<<"DEBUG: evalRValueVarExp: "<<node->unparseToString()<<endl;
   SingleEvalResultConstInt res;
   res.init(estate,*estate.constraints(),AbstractValue(CodeThorn::Bot()));
   const PState* pstate=estate.pstate();
@@ -897,16 +904,16 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp*
     // return default value
     return listify(res);
   } else if(getExternalFunctionSemantics()) {
-    cout<<"DEBUG: FOUND function call inside expression (external): "<<funCall->unparseToString()<<endl;
+    //cout<<"DEBUG: FOUND function call inside expression (external): "<<funCall->unparseToString()<<endl;
     string funName=SgNodeHelper::getFunctionName(funCall);
     if(funName=="malloc") {
       return evalFunctionCallMalloc(funCall,estate,useConstraints);
     } else if(funName=="memcpy") {
-      cout<<"DETECTED: memcpy!"<<endl;
-      
-      return listify(res);
+      return evalFunctionCallMemCpy(funCall,estate,useConstraints);
+    } else if(funName=="free") {
+      return evalFunctionCallFree(funCall,estate,useConstraints);
     } else {
-      cout<<"WARNING: unknown external function "<<funName<<". Assuming it is side-effect free and arbitrary return value (type ignored)."<<endl;
+      cout<<"WARNING: unknown external function ("<<funName<<") inside expression detected. Assuming it is side-effect free."<<endl;
       return listify(res);
     }
   } else {
@@ -917,21 +924,149 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp*
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMalloc(SgFunctionCallExp* funCall, EState estate, bool useConstraints) {
   SingleEvalResultConstInt res;
-  static int memorylocid=0; // temporary
+  static int memorylocid=0; // to be integrated in VariableIdMapping
   memorylocid++;
   stringstream ss;
-  ss<<"memoryregion"<<memorylocid;
+  ss<<"$MEM"<<memorylocid;
   ROSE_ASSERT(_variableIdMapping);
-  VariableId memLocVarId=_variableIdMapping->createUniqueTemporaryVariableId(ss.str());
-  AbstractValue allocatedMemoryPtr=AbstractValue::createAddressOfArray(memLocVarId);
-  res.init(estate,*estate.constraints(),allocatedMemoryPtr);
-  cout<<"DEBUG: evaluating (TODO) function call malloc:"<<funCall->unparseToString()<<endl;
-  ROSE_ASSERT(allocatedMemoryPtr.isPtr());
-  cout<<"Generated malloc-allocated mem-chunk pointer is OK."<<endl;
-  // 1) TODO eval function call param
-  // 2) return allocated memory value pointer (register in memory allocator)
+  SgExpressionPtrList& argsList=SgNodeHelper::getFunctionCallActualParameterList(funCall);
+  if(argsList.size()==1) {
+    SgExpression* arg1=*argsList.begin();
+    list<SingleEvalResultConstInt> resList=evalConstInt(arg1,estate,useConstraints);
+    if(resList.size()!=1) {
+      cerr<<"Error: conditional control-flow in function argument expression not supported. Expression normalization required."<<endl;
+      exit(1);
+    }
+    SingleEvalResultConstInt sres=*resList.begin();
+    AbstractValue arg1val=sres.result;
+    VariableId memLocVarId;
+    int memoryRegionSize;
+    if(arg1val.isConstInt()) {
+      memoryRegionSize=arg1val.getIntValue();
+    } else {
+      // unknown size
+      memoryRegionSize=0;
+    }
+    memLocVarId=_variableIdMapping->createAndRegisterNewMemoryRegion(ss.str(),memoryRegionSize);
+    AbstractValue allocatedMemoryPtr=AbstractValue::createAddressOfArray(memLocVarId);
+    res.init(estate,*estate.constraints(),allocatedMemoryPtr);
+    //cout<<"DEBUG: evaluating function call malloc:"<<funCall->unparseToString()<<endl;
+    ROSE_ASSERT(allocatedMemoryPtr.isPtr());
+    //cout<<"Generated malloc-allocated mem-chunk pointer is OK."<<endl;
+    return listify(res);
+  } else {
+    // this will become an error in future
+    cerr<<"WARNING: unknown malloc function "<<funCall->unparseToString()<<endl;
+  }
   return listify(res);
 }
+
+list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallFree(SgFunctionCallExp* funCall, EState estate, bool useConstraints) {
+  SingleEvalResultConstInt res;
+  SgExpressionPtrList& argsList=SgNodeHelper::getFunctionCallActualParameterList(funCall);
+  if(argsList.size()==1) {
+    SgExpression* arg1=*argsList.begin();
+    list<SingleEvalResultConstInt> resList=evalConstInt(arg1,estate,useConstraints);
+    if(resList.size()!=1) {
+      cerr<<"Error: conditional control-flow in function argument expression not supported. Expression normalization required."<<endl;
+      exit(1);
+    }
+    SingleEvalResultConstInt sres=*resList.begin();
+    AbstractValue arg1val=sres.result;
+    if(arg1val.isPtr()) {
+      int memoryRegionSize=getMemoryRegionSize(arg1val);
+      // can be marked as deallocated (currently this does not impact the analysis)
+      //variableIdMapping->setSize(arg1Val.getVariableId(),-1);
+      ROSE_ASSERT(memoryRegionSize>=0);
+    }
+    res.init(estate,*estate.constraints(),AbstractValue(Top())); // void result (using top here)
+  } else {
+    // this will become an error in future
+    cerr<<"WARNING: unknown free function "<<funCall->unparseToString()<<endl;
+  }
+  return listify(res);
+}
+
+int ExprAnalyzer::getMemoryRegionSize(CodeThorn::AbstractValue ptrToRegion) {
+  ROSE_ASSERT(ptrToRegion.isPtr());
+  VariableId ptrVariableId=ptrToRegion.getVariableId();
+  //cout<<"DEBUG: ptrVariableId:"<<ptrVariableId<<" "<<_variableIdMapping->variableName(ptrVariableId)<<endl;
+  int size=_variableIdMapping->getSize(ptrVariableId);
+  return size;
+}
+
+list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMemCpy(SgFunctionCallExp* funCall, EState estate, bool useConstraints) {
+  //cout<<"DETECTED: memcpy: "<<funCall->unparseToString()<<endl;
+  SingleEvalResultConstInt res;
+  // memcpy is a void function, no return value
+  res.init(estate,*estate.constraints(),AbstractValue(CodeThorn::Top())); 
+  SgExpressionPtrList& argsList=SgNodeHelper::getFunctionCallActualParameterList(funCall);
+  if(argsList.size()==3) {
+    AbstractValue memcpyArgs[3];
+    int i=0;
+    for(SgExpressionPtrList::iterator argIter=argsList.begin();argIter!=argsList.end();++argIter) {
+      SgExpression* arg=*argIter;
+      list<SingleEvalResultConstInt> resList=evalConstInt(arg,estate,useConstraints);
+      if(resList.size()!=1) {
+        cerr<<"Error: conditional control-flow in function argument expression. Expression normalization required."<<endl;
+        exit(1);
+      }
+      SingleEvalResultConstInt sres=*resList.begin();
+      AbstractValue argVal=sres.result;
+      memcpyArgs[i++]=argVal;
+    }
+    // determine sizes of memory regions (refered to by pointer)
+    for(int i=0;i<3;i++) {
+      //cout<<"memcpy argument "<<i<<": "<<memcpyArgs[i].toString(_variableIdMapping)<<endl;
+    }
+    int memRegionSizeTarget=getMemoryRegionSize(memcpyArgs[0]);
+    int memRegionSizeSource=getMemoryRegionSize(memcpyArgs[1]);
+    
+    //cout<<"DEBUG: memRegionSize target:"<<memRegionSizeTarget<<endl;
+    //cout<<"DEBUG: memRegionSize source:"<<memRegionSizeSource<<endl;
+    if(memcpyArgs[2].isTop()) {
+      cout<<"Program error detected at line "<<SgNodeHelper::sourceLineColumnToString(funCall)<<funCall->unparseToString()<<" : potential out of bounds access (source and target)."<<endl;
+      return listify(res);
+    }
+    bool errorDetected=false;
+    int copyRegionSize=memcpyArgs[2].getIntValue();
+    //cout<<"DEBUG: copyRegionSize:"<<copyRegionSize<<endl;
+    if(memRegionSizeSource<copyRegionSize) {
+      if(memRegionSizeSource==0) {
+        cout<<"Program error detected at line "<<SgNodeHelper::sourceLineColumnToString(funCall)<<": "<<funCall->unparseToString()<<" : potential out of bounds access at copy source."<<endl;
+        errorDetected=true;
+      } else {
+        cout<<"Program error detected at line "<<SgNodeHelper::sourceLineColumnToString(funCall)<<": "<<funCall->unparseToString()<<" : definitive out of bounds access at copy source - memcpy(["<<(memRegionSizeTarget>0?std::to_string(memRegionSizeTarget):"-")<<"],["<<memRegionSizeSource<<"],"<<copyRegionSize<<")"<<endl;
+        errorDetected=true;
+      }
+    }
+    if(memRegionSizeTarget<copyRegionSize) {
+      if(memRegionSizeTarget==0) {
+        cout<<"Program error detected at line "<<SgNodeHelper::sourceLineColumnToString(funCall)<<": "<<funCall->unparseToString()<<" : potential out of bounds access at copy target."<<endl;
+        errorDetected=true;
+      } else {
+        cout<<"Program error detected at line "<<SgNodeHelper::sourceLineColumnToString(funCall)<<": "<<funCall->unparseToString()<<" : definitive out of bounds access at copy target - memcpy(["<<(memRegionSizeTarget>0?std::to_string(memRegionSizeTarget):"-")<<"],["<<memRegionSizeSource<<"],"<<copyRegionSize<<")"<<endl;
+        errorDetected=true;
+      }
+    }
+    if(!errorDetected) {
+      // no error occured. Copy region.
+      cout<<"DEBUG: copy region now. "<<endl;
+      for(int i=0;i<copyRegionSize;i++) {
+        AbstractValue index(i);
+        AbstractValue targetPtr=memcpyArgs[0]+index;
+        AbstractValue sourcePtr=memcpyArgs[1]+index;
+        cout<<"DEBUG: copying "<<targetPtr.toString(_variableIdMapping)<<" from "<<sourcePtr.toString(_variableIdMapping)<<endl;
+      }
+    }
+    return listify(res);
+  } else {
+    // this will become an error in future
+    cerr<<"WARNING: unknown memcpy function (number of arguments != 3)"<<funCall->unparseToString()<<endl;
+  }
+  return listify(res);
+}
+
 
 bool ExprAnalyzer::checkArrayBounds(VariableId arrayVarId,int accessIndex) {
   // check array bounds
@@ -946,6 +1081,7 @@ bool ExprAnalyzer::checkArrayBounds(VariableId arrayVarId,int accessIndex) {
 }
 
 // compute absolute variableId as encoded in the VariableIdMapping.
+// obsolete with new domain
 SPRAY::VariableId ExprAnalyzer::resolveToAbsoluteVariableId(AbstractValue abstrValue) const {
   VariableId arrayVarId2=abstrValue.getVariableId();
   int index2=abstrValue.getIntValue();
@@ -958,12 +1094,24 @@ AbstractValue ExprAnalyzer::readFromMemoryLocation(const PState* pState, Abstrac
     cout<<"WARNING: reading from unknown memory location (top)."<<endl;
     return abstrValue;
   }
+#if 0
   return pState->varValue(resolveToAbsoluteVariableId(abstrValue));
+#else
+  return pState->varValue(abstrValue);
+#endif
 }
 
 void ExprAnalyzer::writeToMemoryLocation(PState& pState,
                                          AbstractValue abstractMemLoc,
                                          AbstractValue abstractValue) {
+#if 0
   VariableId absoluteMemLoc=resolveToAbsoluteVariableId(abstractMemLoc);
   pState.setVariableToValue(absoluteMemLoc,abstractValue);
+#else
+  if(abstractValue.isBot()) {
+    //cout<<"INFO: conversion: bot(uninitialized)->top(any)."<<endl;
+    abstractValue=AbstractValue(CodeThorn::Top());
+  }
+  pState.setVariableToValue(abstractMemLoc,abstractValue);
+#endif
 }
