@@ -95,6 +95,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	parallel-numthreads.c \
 	parallel-reduction.c \
 	parallel-reduction2.c \
+	parallel_pragma.c \
 	parallelfor.c \
 	parallelfor2.c \
 	parallelsections.c \

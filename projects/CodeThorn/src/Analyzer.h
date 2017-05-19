@@ -36,6 +36,7 @@
 // we use INT_MIN, INT_MAX
 #include "limits.h"
 #include "AstNodeInfo.h"
+#include "TypeSizeMapping.h"
 
 namespace CodeThorn {
 
@@ -261,6 +262,8 @@ namespace CodeThorn {
     void set_finished(std::vector<bool>& v, bool val);
     bool all_false(std::vector<bool>& v);
 
+    void setTypeSizeMapping(TypeSizeMapping* typeSizeMapping);
+    TypeSizeMapping* getTypeSizeMapping();
   private:
     GlobalTopifyMode _globalTopifyMode;
     set<AbstractValue> _compoundIncVarsSet;
@@ -322,7 +325,8 @@ namespace CodeThorn {
     
     EState createEState(Label label, PState pstate, ConstraintSet cset);
     EState createEState(Label label, PState pstate, ConstraintSet cset, InputOutput io);
-
+    
+    TypeSizeMapping* _typeSizeMapping;
     VariableValueMonitor variableValueMonitor;
 
     bool _treatStdErrLikeFailedAssert;
