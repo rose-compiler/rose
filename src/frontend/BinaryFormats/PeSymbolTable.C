@@ -9,16 +9,24 @@ using namespace rose::Diagnostics;
 
 /* Constructor reads symbol table entries beginning at entry 'i'. We can't pass an array of COFFSymbolEntry_disk structs
  * because the disk size is 18 bytes, which is not properly aligned according to the C standard. Therefore we pass the actual
- * section and table index. The symbol occupies the specified table slot and st_num_aux_entries additional slots. */
+ * section and table index. The symbol occupies the specified table slot and st_num_aux_entries additional slots.
+ *
+ * See http://www.skyfree.org/linux/references/coff.pdf */
 void
 SgAsmCoffSymbol::ctor(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAsmGenericSection *strtab, size_t idx)
 {
-    static const bool debug = false;
+    ASSERT_not_null(fhdr);
+    ASSERT_not_null(symtab);
+    ASSERT_not_null(strtab);
+
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+
     COFFSymbol_disk disk;
     symtab->read_content_local(idx * COFFSymbol_disk_size, &disk, COFFSymbol_disk_size);
     if (disk.st_zero == 0) {
         p_st_name_offset = ByteOrder::le_to_host(disk.st_offset);
-        if (p_st_name_offset < 4) throw FormatError("name collides with size field");
+        if (p_st_name_offset < 4)
+            throw FormatError("name collides with size field");
         std::string s = strtab->read_content_local_str(p_st_name_offset);
         set_name(new SgAsmBasicString(s));
     } else {
@@ -36,7 +44,7 @@ SgAsmCoffSymbol::ctor(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAs
     p_st_num_aux_entries = ByteOrder::le_to_host(disk.st_num_aux_entries);
 
     /* Bind to section number. We can do this now because we've already parsed the PE Section Table */
-    ROSE_ASSERT(fhdr->get_section_table()!=NULL);
+    ASSERT_not_null(fhdr->get_section_table());
     if (p_st_section_num > 0) {
         p_bound = fhdr->get_file()->get_section_by_id(p_st_section_num);
         if (NULL==p_bound) {
@@ -83,75 +91,83 @@ SgAsmCoffSymbol::ctor(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAs
       case 0x20: p_type = SYM_FUNC;    break;     /*function*/
       case 0x30: p_type = SYM_ARRAY;   break;     /*array*/
     }
+
+    if (debug) {
+        debug <<"COFF symbol entry #" <<idx <<" before AUX parsing"
+              <<": p_st_name_offset=" <<p_st_name_offset
+              <<", p_st_name=\"" <<StringUtility::cEscape(p_st_name) <<"\""
+              <<", p_st_section_num=" <<p_st_section_num
+              <<", p_st_type=" <<p_st_type
+              <<", p_st_storage_class=" <<p_st_storage_class
+              <<", p_st_num_aux_entries=" <<p_st_num_aux_entries
+              <<", p_value=" <<p_value
+              <<", p_def_state=" <<p_def_state
+              <<", p_binding=" <<p_binding
+              <<", p_type=" <<p_type <<"\n";
+    }
     
     /* Read additional aux entries. We keep this as 'char' to avoid alignment problems. */
     if (p_st_num_aux_entries > 0) {
         p_aux_data = symtab->read_content_local_ucl((idx+1)*COFFSymbol_disk_size, p_st_num_aux_entries * COFFSymbol_disk_size);
 
-        if (get_type() == SYM_FUNC && p_st_section_num > 0) {
-            /* Function */
+        if (2 /*external*/ == p_st_storage_class && get_type() == SYM_FUNC && p_st_section_num > 0) {
+            // Auxiliary record format 1: Function definitions
             unsigned bf_idx      = ByteOrder::le_to_host(*(uint32_t*)&(p_aux_data[0]));
             unsigned size        = ByteOrder::le_to_host(*(uint32_t*)&(p_aux_data[4]));
             unsigned lnum_ptr    = ByteOrder::le_to_host(*(uint32_t*)&(p_aux_data[8]));
             unsigned next_fn_idx = ByteOrder::le_to_host(*(uint32_t*)&(p_aux_data[12]));
             unsigned res1        = ByteOrder::le_to_host(*(uint16_t*)&(p_aux_data[16]));
             set_size(size);
-            if (debug) {
-                fprintf(stderr, "COFF aux func %s: bf_idx=%u, size=%u, lnum_ptr=%u, next_fn_idx=%u, res1=%u\n", 
-                        escapeString(p_st_name).c_str(), bf_idx, size, lnum_ptr, next_fn_idx, res1);
-            }
+            SAWYER_MESG(debug) <<"COFF aux func " <<escapeString(p_st_name) <<": bf_idx=" <<bf_idx
+                               <<", size=" <<size <<", lnum_ptr=" <<StringUtility::addrToString(lnum_ptr)
+                               <<", next_fn_idx=" <<next_fn_idx <<", res1=" <<res1 <<"\n";
             
-        } else if (p_st_storage_class == 101 /*function*/ && (0 == p_st_name.compare(".bf") || 0 == p_st_name.compare(".ef"))) {
-            /* Beginning/End of function */
+        } else if (p_st_storage_class == 101 /*function*/ && (p_st_name == ".bf" || p_st_name == ".ef")) {
+            // Auxiliary record format 2: .bf and .ef symbols
             unsigned res1        = ByteOrder::le_to_host(*(uint32_t*)&(p_aux_data[0]));
             unsigned lnum        = ByteOrder::le_to_host(*(uint16_t*)&(p_aux_data[4])); /*line num within source file*/
             unsigned res2        = ByteOrder::le_to_host(*(uint16_t*)&(p_aux_data[6]));
             unsigned res3        = ByteOrder::le_to_host(*(uint32_t*)&(p_aux_data[8]));
             unsigned next_bf     = ByteOrder::le_to_host(*(uint32_t*)&(p_aux_data[12])); /*only for .bf; reserved in .ef*/
             unsigned res4        = ByteOrder::le_to_host(*(uint16_t*)&(p_aux_data[16]));
-            if (debug) {
-                fprintf(stderr, "COFF aux %s: res1=%u, lnum=%u, res2=%u, res3=%u, next_bf=%u, res4=%u\n", 
-                        escapeString(p_st_name).c_str(), res1, lnum, res2, res3, next_bf, res4);
-            }
+            SAWYER_MESG(debug) <<"COFF aux " <<escapeString(p_st_name) <<": res1=" <<res1 <<", lnum=" <<lnum
+                               <<", res2=" <<res2 <<", res3=" <<res3 <<", next_bf=" <<next_bf <<", res4=" <<res4 <<"\n";
             
         } else if (p_st_storage_class == 2/*external*/ && p_st_section_num == 0/*undef*/ && get_value()==0) {
-            /* Weak External */
+            // Auxiliary record format 3: weak externals
             unsigned sym2_idx    = ByteOrder::le_to_host(*(uint32_t*)&(p_aux_data[0]));
             unsigned flags       = ByteOrder::le_to_host(*(uint32_t*)&(p_aux_data[4]));
             unsigned res1        = ByteOrder::le_to_host(*(uint32_t*)&(p_aux_data[8]));
             unsigned res2        = ByteOrder::le_to_host(*(uint32_t*)&(p_aux_data[12]));
             unsigned res3        = ByteOrder::le_to_host(*(uint16_t*)&(p_aux_data[16]));
-            if (debug) {
-                fprintf(stderr, "COFF aux weak %s: sym2_idx=%u, flags=%u, res1=%u, res2=%u, res3=%u\n",
-                        escapeString(p_st_name).c_str(), sym2_idx, flags, res1, res2, res3);
-            }
+            SAWYER_MESG(debug) <<"COFF aux weak " <<escapeString(p_st_name) <<": sym2_idx=" <<sym2_idx
+                               <<", flags=" <<flags <<", res1=" <<res1 <<", res2=" <<res2 <<", res3=" <<res3 <<"\n";
             
         } else if (p_st_storage_class == 103/*file*/ && 0 == p_st_name.compare(".file")) {
-            /* This symbol is a file. The file name is stored in the aux data as either the name itself or an offset
-             * into the string table. Replace the fake ".file" with the real file name. */
+            // Auxiliary record format 4: files. The file name is stored in the aux data as either the name itself or an offset
+            // into the string table. Replace the fake ".file" with the real file name.
             const COFFSymbol_disk *d = (const COFFSymbol_disk*) &(p_aux_data[0]);
             if (0 == d->st_zero) {
                 rose_addr_t fname_offset = ByteOrder::le_to_host(d->st_offset);
-                if (fname_offset < 4) throw FormatError("name collides with size field");
+                if (fname_offset < 4)
+                    throw FormatError("name collides with size field");
                 set_name(new SgAsmBasicString(strtab->read_content_local_str(fname_offset)));
-                if (debug) {
-                    fprintf(stderr, "COFF aux file: offset=%" PRIu64 ", name=\"%s\"\n",
-                            fname_offset, get_name()->get_string(true).c_str());
-                }
+                SAWYER_MESG(debug) <<"COFF aux file: offset=" <<fname_offset
+                                   <<", name=\"" <<get_name()->get_string(true) <<"\"\n";
+
             } else {
                 /* Aux data contains a NUL-padded name; the NULs (if any) are not part of the name. */
-                ROSE_ASSERT(p_st_num_aux_entries == 1);
+                ASSERT_require(p_st_num_aux_entries == 1);
                 char fname[COFFSymbol_disk_size+1];
                 memcpy(fname, &(p_aux_data[0]), COFFSymbol_disk_size);
                 fname[COFFSymbol_disk_size] = '\0';
                 set_name(new SgAsmBasicString(fname));
-                if (debug)
-                    fprintf(stderr, "COFF aux file: inline-name=\"%s\"\n", get_name()->get_string(true).c_str());
+                SAWYER_MESG(debug) <<"COFF aux file: inline-name=\"" <<get_name()->get_string(true) <<"\"\n";
             }
             set_type(SYM_FILE);
 
         } else if (p_st_storage_class == 3/*static*/ && NULL != fhdr->get_file()->get_section_by_name(p_st_name, '$')) {
-            /* Section */
+            // Auxiliary record format 5: Section definition.
             unsigned size         = ByteOrder::le_to_host(*(uint32_t*)&(p_aux_data[0])); /*same as section header SizeOfRawData */
             unsigned nrel         = ByteOrder::le_to_host(*(uint16_t*)&(p_aux_data[4])); /*number of relocations*/
             unsigned nln_ents     = ByteOrder::le_to_host(*(uint16_t*)&(p_aux_data[6])); /*number of line number entries */
@@ -162,27 +178,28 @@ SgAsmCoffSymbol::ctor(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAs
             unsigned res2         = ByteOrder::le_to_host(*(uint16_t*)&(p_aux_data[16]));
             set_size(size);
             set_type(SYM_SECTION);
-            if (debug) {
-                fprintf(stderr, 
-                        "COFF aux section: size=%u, nrel=%u, nln_ents=%u, cksum=%u, sect_id=%u, comdat=%u, res1=%u, res2=%u\n", 
-                        size, nrel, nln_ents, cksum, sect_id, comdat, res1, res2);
-            }
+            SAWYER_MESG(debug) <<"COFF aux section: size=" <<size <<", nrel=" <<nrel <<", nln_ents=" <<nln_ents
+                               <<", cksum=" <<cksum <<", sect_id=" <<sect_id <<", comdat=" <<comdat
+                               <<", res1=" <<res1 <<", res2=" <<res2 <<"\n";
             
         } else if (p_st_storage_class==3/*static*/ && (p_st_type & 0xf)==0/*null*/ &&
                    get_value()==0 && NULL!=fhdr->get_file()->get_section_by_name(p_st_name)) {
-            /* COMDAT section */
-            /*FIXME: not implemented yet*/
-            mlog[ERROR] <<"COFF aux comdat " <<escapeString(p_st_name) <<": (FIXME) not implemented yet\n";
-            hexdump(stderr, (rose_addr_t) symtab->get_offset()+(idx+1)*COFFSymbol_disk_size, "    ", p_aux_data);
+            // Auxiliary record for common data (COMDAT) sections
+            // FIXME[Robb P Matzke 2017-05-17]: The record format isn't documented in the reference listed above.
+            if (debug) {
+                debug <<"COFF aux comdat " <<escapeString(p_st_name) <<": aux record ignored\n";
+                hexdump(debug, (rose_addr_t) symtab->get_offset()+(idx+1)*COFFSymbol_disk_size, "    ", p_aux_data);
+            }
 
         } else {
-            mlog[ERROR] <<"COFF aux unknown " <<escapeString(p_st_name)
-                        <<": (FIXME) st_storage_class=" <<p_st_storage_class
-                        <<", st_type=" <<p_st_type <<", st_section_num=" <<p_st_section_num <<"\n";
-            hexdump(stderr, symtab->get_offset()+(idx+1)*COFFSymbol_disk_size, "    ", p_aux_data);
+            if (mlog[WARN]) {
+                mlog[WARN] <<"COFF aux unknown " <<escapeString(p_st_name)
+                           <<": st_storage_class=" <<p_st_storage_class
+                           <<", st_type=" <<p_st_type <<", st_section_num=" <<p_st_section_num <<"\n";
+                hexdump(mlog[WARN], symtab->get_offset()+(idx+1)*COFFSymbol_disk_size, "    ", p_aux_data);
+            }
         }
     }
-
 }
 
 /* Encode a symbol back into disk format */
