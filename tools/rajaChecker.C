@@ -43,14 +43,15 @@ namespace RAJA_Checker
   bool isEmbeddedNodalAccumulationLambda(SgLambdaExp* exp, SgExprStatement*& fstmt);
 
   //! Check if a lambda function is a nodal accumulation function and referenced as a function parameter of a RAJA function.
-  bool isIndirectNodalAccumulationLambda(SgLambdaExp* exp, SgExprStatement*& fstmt);
+  bool isIndirectNodalAccumulationLambda(SgLambdaExp* exp, SgExprStatement*& fstmt, SgExprStatement*& callStmt);
 
   //! Check if a lambda function has the nodal accumulation pattern
   bool hasNodalAccumulationBody( SgLambdaExp* exp, SgExprStatement*& fstmt);
 
   //! Check if an expression is used as a function call parameter to a RAJA function. 
   bool isRAJATemplateFunctionCallParameter(SgLocatedNode* n,  // n: SgLambdaExp
-                         SgFunctionDeclaration** raja_func_decl = NULL);
+                         SgExprStatement* & callStmt, // return  the call statement
+                         SgFunctionDeclaration*& raja_func_decl);
 
   //! Check if a block of statement has the nodal accumulation pattern, with a known loop index variable 
   bool isNodalAccumulationBody(SgBasicBlock* bb, SgInitializedName* lvar, SgExprStatement*& fstmt);
@@ -155,7 +156,8 @@ namespace RAJA_Checker
   //                           * SgExprListExp
   //                           ** SgLambdaExp 
   bool isRAJATemplateFunctionCallParameter(SgLocatedNode* n,  // n: SgLambdaExp
-                       SgFunctionDeclaration** raja_func_decl)
+                       SgExprStatement* & callStmt, 
+                       SgFunctionDeclaration*& raja_func_decl)
   {
     bool retval = false; 
     ROSE_ASSERT (n!= NULL);
@@ -170,8 +172,10 @@ namespace RAJA_Checker
       if (SgFunctionCallExp* call_exp = isSgFunctionCallExp (parent)) 
       {
         retval = isCallToRAJAFunction (call_exp);
-        if (raja_func_decl != NULL)
-          * raja_func_decl = call_exp-> getAssociatedFunctionDeclaration();
+        //if (raja_func_decl != NULL)
+        raja_func_decl = call_exp-> getAssociatedFunctionDeclaration();
+        callStmt = isSgExprStatement(call_exp->get_parent());
+        ROSE_ASSERT(callStmt);
       }
     }
 #if 0
@@ -646,7 +650,8 @@ bool RAJA_Checker::isEmbeddedNodalAccumulationLambda(SgLambdaExp* exp, SgExprSta
   ROSE_ASSERT (exp!=NULL);
   // this is the raja template function declaration!!
   SgFunctionDeclaration* raja_func = NULL;
-  if (!isRAJATemplateFunctionCallParameter (exp, & raja_func))
+  SgExprStatement* call_stmt = NULL;
+  if (!isRAJATemplateFunctionCallParameter (exp, call_stmt, raja_func))
     return false;
    
    if (raja_func ==NULL) return false;
@@ -672,7 +677,7 @@ The AST:
 The algorithm:
  
 */
-bool RAJA_Checker::isIndirectNodalAccumulationLambda(SgLambdaExp* exp, SgExprStatement*& fstmt)
+bool RAJA_Checker::isIndirectNodalAccumulationLambda(SgLambdaExp* exp, SgExprStatement*& fstmt, SgExprStatement*& callStmt)
 { 
   if (enable_debug)
     cout<<"\t Entering isIndirectNodalAccumulationLambda()."<<endl;
@@ -720,7 +725,8 @@ bool RAJA_Checker::isIndirectNodalAccumulationLambda(SgLambdaExp* exp, SgExprSta
         if (varRef->get_symbol() == getFirstVarSym(decl))
         {
           // if this is a raja call's parameter ..
-          if (isRAJATemplateFunctionCallParameter (varRef))
+          SgFunctionDeclaration* raja_func = NULL;
+          if (isRAJATemplateFunctionCallParameter (varRef, callStmt, raja_func))
           {
             found = true;
             break; 
@@ -797,11 +803,15 @@ void RoseVisitor::visit ( SgNode* n)
           if (RAJA_Checker::enable_debug)
              cout<<"Entering checking for Lambda Exp at line: "<<le->get_file_info()->get_line() <<endl;
           SgExprStatement* fstmt = NULL; 
-          if ( isEmbeddedNodalAccumulationLambda(le, fstmt) || isIndirectNodalAccumulationLambda (le, fstmt) )
+          SgExprStatement* callstmt = NULL; 
+
+          if ( isEmbeddedNodalAccumulationLambda(le, fstmt) || isIndirectNodalAccumulationLambda (le, fstmt, callstmt) )
           {
               ostringstream oss; 
               oss<<"Found a nodal accumulation lambda function at line:"<< le->get_file_info()->get_line()<<endl;
               oss<<"\t The first accumulation statement is at line:"<< fstmt->get_file_info()->get_line()<<endl;
+              if (callstmt)
+                oss<<"\t This labmda function is used as a function parameter in a RAJA function is at line:"<< callstmt->get_file_info()->get_line()<<endl;
 
               SgSourceFile* file = getEnclosingSourceFile(le);
               Rose::KeepGoing::File2StringMap[file]+=oss.str();
@@ -815,7 +825,8 @@ void RoseVisitor::visit ( SgNode* n)
 
 //----------- Check if the lambda expression is used as a parameter of RAJA function call
         SgFunctionDeclaration* raja_func = NULL; 
-        if (isRAJATemplateFunctionCallParameter (le, & raja_func))
+        SgExprStatement* call_stmt = NULL; 
+        if (isRAJATemplateFunctionCallParameter (le, call_stmt, raja_func))
         {
           //cout<<"Found a lambda exp within RAJA func call ..."<<endl; 
           //le->get_file_info()->display();
