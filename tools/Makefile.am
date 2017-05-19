@@ -34,7 +34,8 @@ Checker_Test_Files += \
    nodalAccPattern2.cpp \
    constDouble.cpp \
    indirectArrayAccess.cpp \
-   indirectLambdaCall.cpp
+   indirectLambdaCall.cpp \
+   referenceType.cpp
 endif
 endif
 endif
