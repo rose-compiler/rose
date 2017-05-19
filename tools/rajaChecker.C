@@ -367,7 +367,8 @@ bool isDoubleArrayAccess (SgExpression* exp, SgInitializedName * lvar)
   }
 
   // lhs is a pointer type
-  SgPointerType* ptype = isSgPointerType(lhs->get_type());
+  SgType* ltype = lhs->get_type()->stripType(SgType::STRIP_TYPEDEF_TYPE|SgType::STRIP_REFERENCE_TYPE);
+  SgPointerType* ptype = isSgPointerType(ltype);
   if (!ptype)
   {
     if (RAJA_Checker::enable_debug) cout<<"\t\t\t array var's type is not a pointer type, but " << lhs->get_type()->class_name() <<endl;
@@ -469,10 +470,11 @@ bool isNodalAccumulationStmt (SgStatement* s, SgInitializedName* lvar)
 
   // rhs is a scalar type
   SgType* rhs_type = bop->get_rhs_operand()->get_type();
+  rhs_type = rhs_type->stripType(SgType::STRIP_REFERENCE_TYPE);
   if (!SageInterface::isScalarType (rhs_type)) 
   {
     if (RAJA_Checker::enable_debug)
-      cout<<"\t\t not scalar type for rhs"<<endl;
+      cout<<"\t\t not scalar type for rhs, but "<< rhs_type->class_name()<<endl;
     return false;
   }
   // skip const or typedef chain
@@ -522,6 +524,8 @@ bool RAJA_Checker::isNodalAccumulationBody(SgBasicBlock* bb, SgInitializedName* 
 {
   ROSE_ASSERT (bb != NULL);
   ROSE_ASSERT (lvar != NULL);
+  if (enable_debug)
+    cout<<"\tEntering isNodalAccumulationBody() for basic block at line:"<<bb->get_file_info()->get_line()<<endl;
   //if the body contains at least 4 nodal accumulation statement in a row, then it is a matched loop
   // Find all expression statements. if there is one Nodal Accumulation Statement (NAS) , and it is followed by 3 other NAS.
   // then there is a match. 
@@ -555,7 +559,8 @@ bool RAJA_Checker::isNodalAccumulationBody(SgBasicBlock* bb, SgInitializedName* 
 bool RAJA_Checker::hasNodalAccumulationBody( SgLambdaExp* exp, SgExprStatement*& fstmt)
 {
   ROSE_ASSERT(exp);
-
+   if (enable_debug)
+     cout<<"\t\t entering hasNodalAccumulationBody ..."<<endl;
    // ROSE uses a anonymous class declaration for lambda expression. Its function is a member function. 
    SgMemberFunctionDeclaration* lfunc = isSgMemberFunctionDeclaration( exp->get_lambda_function());
    if (lfunc ==NULL) return false;
@@ -669,6 +674,8 @@ The algorithm:
 */
 bool RAJA_Checker::isIndirectNodalAccumulationLambda(SgLambdaExp* exp, SgExprStatement*& fstmt)
 { 
+  if (enable_debug)
+    cout<<"\t Entering isIndirectNodalAccumulationLambda()."<<endl;
   ROSE_ASSERT (exp);
 
   //1.  check if this is within auto kernel = ...; 
@@ -676,20 +683,25 @@ bool RAJA_Checker::isIndirectNodalAccumulationLambda(SgLambdaExp* exp, SgExprSta
   AstMatching m; 
   MatchResult r =m.performMatching ("$L=SgVariableDeclaration(null,SgInitializedName(SgAssignInitializer($R=SgLambdaExp)))", stmt);
   // must match exactly 1.
-  if (r.size()!=1 ) return false;
+  if (r.size()!=1 ) 
+  {
+    if (enable_debug)
+      cout<<"\t\t Match more than one variable decl within isIndirectNodalAccumulationLambda."<<endl;
+    return false;
+  }
 
   SgVariableDeclaration* decl = NULL;
   SgLambdaExp*  exp2 = NULL;
   for(MatchResult::iterator i=r.begin();i!=r.end();++i) {
-     decl = isSgVariableDeclaration((*i)["$L"]);
-     //cout<< AstTerm::astTermWithNullValuesToString(i1)<<endl;
-     exp2 = isSgLambdaExp((*i)["$R"]);
+    decl = isSgVariableDeclaration((*i)["$L"]);
+    //cout<< AstTerm::astTermWithNullValuesToString(i1)<<endl;
+    exp2 = isSgLambdaExp((*i)["$R"]);
   }
 
   if (exp !=exp2) 
   {
     if (enable_debug)
-      cout<<"Cannot find auto kernel=lambda_exp; for lambda exp at line:"<< exp->get_file_info()->get_line()<<endl;
+      cout<<"\t\t Cannot find auto kernel=lambda_exp; for lambda exp at line:"<< exp->get_file_info()->get_line()<<endl;
     return false;
   }
   // now we have found: auto kernel = lambda_exp; 
@@ -716,9 +728,9 @@ bool RAJA_Checker::isIndirectNodalAccumulationLambda(SgLambdaExp* exp, SgExprSta
         } // symbol match
       }
     } // end for 
-      
+
     if (found)
-       break; 
+      break; 
     nstmt = getNextNonNullStatement (nstmt);
   } // end while
 
@@ -728,7 +740,7 @@ bool RAJA_Checker::isIndirectNodalAccumulationLambda(SgLambdaExp* exp, SgExprSta
       cout<<"Cannot find RAJA::forall <> () using indirect reference to lambda exp at line:"<< exp->get_file_info()->get_line()<<endl;
     return false;
   }
-  
+
   //3. if the kernel has the pattern
   return hasNodalAccumulationBody(exp, fstmt);
 }
@@ -782,6 +794,8 @@ void RoseVisitor::visit ( SgNode* n)
 //----------- Check if the lambda expression is a parameter of RAJA function call with nodal accumulation pattern
         if (checkNodalAccumulationPattern)
         {
+          if (RAJA_Checker::enable_debug)
+             cout<<"Entering checking for Lambda Exp at line: "<<le->get_file_info()->get_line() <<endl;
           SgExprStatement* fstmt = NULL; 
           if ( isEmbeddedNodalAccumulationLambda(le, fstmt) || isIndirectNodalAccumulationLambda (le, fstmt) )
           {
