@@ -59,7 +59,7 @@ int main (int argc, char* argv[])
     //SgNode* n=(*i)["X"];
     for(SingleMatchVarBindings::iterator vars_iter=(*i).begin();vars_iter!=(*i).end();++vars_iter) {
       SgNode* matchedTerm=(*vars_iter).second;
-      std::cout << "  VAR: " << (*vars_iter).first << "=" << SPRAY::AstTerm::astTermWithNullValuesToString(matchedTerm) << " @" << matchedTerm << std::endl;
+      std::cout << "  VAR: " << (*vars_iter).first << "=" << AstTerm::astTermWithNullValuesToString(matchedTerm) << " @" << matchedTerm << std::endl;
     }
     cout<< "WORK:"<<(*i)["$WORK"]<<" : "<<(*i)["$WORK"]->unparseToString()<<endl;
     cout<< "DS:"<<(*i)["$DS"]<<" : "<<(*i)["$DS"]->unparseToString()<<endl;
@@ -85,7 +85,7 @@ int main (int argc, char* argv[])
   }
   m.printMarkedLocations();
   m.printMatchOperationsSequence();
-  write_file("astterm.txt",SPRAY::AstTerm::astTermToMultiLineString(root,2));
-  write_file("astterm.dot",SPRAY::AstTerm::astTermWithNullValuesToDot(root));
+  write_file("astterm.txt",AstTerm::astTermToMultiLineString(root,2));
+  write_file("astterm.dot",AstTerm::astTermWithNullValuesToDot(root));
   backend(sageProject);
 }

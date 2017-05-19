@@ -156,6 +156,11 @@ Analyzer::Analyzer():
   constraintSetMaintainer.max_load_factor(0.7);
 #endif
   resetInputSequenceIterator();
+  _typeSizeMapping=new TypeSizeMapping();
+}
+
+Analyzer::~Analyzer() {
+  delete _typeSizeMapping;
 }
 
 size_t Analyzer::getNumberOfErrorLabels() {
@@ -251,10 +256,6 @@ Analyzer::VariableDeclarationList Analyzer::computeUsedGlobalVariableDeclaration
     logger[ERROR] << "no global scope.";
     exit(1);
   }
-}
-
-Analyzer::~Analyzer() {
-  // intentionally empty, nothing to free explicitly
 }
 
 void Analyzer::recordTransition(const EState* sourceState, Edge e, const EState* targetState) {
@@ -658,7 +659,7 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
     3) if no size is provided, determine it from the initializer list (and add this information to the variableIdMapping - or update the variableIdMapping).
    */
 
-  //cout<< "DEBUG: DECLARATION:"<<SPRAY::AstTerm::astTermWithNullValuesToString(decl)<<endl;
+  //cout<< "DEBUG: DECLARATION:"<<AstTerm::astTermWithNullValuesToString(decl)<<endl;
   SgNode* initName0=decl->get_traversalSuccessorByIndex(1); // get-InitializedName
   if(initName0!=nullptr) {
     if(SgInitializedName* initName=isSgInitializedName(initName0)) {
@@ -711,7 +712,7 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
               // logger[DEBUG] <<"initializing array element:"<<arrayElemId.toString()<<"="<<intVal<<endl;
               newPState.setVariableToValue(arrayElemId,CodeThorn::AValue(intVal));
             } else {
-              logger[ERROR] <<"unsupported array initializer value:"<<exp->unparseToString()<<" AST:"<<SPRAY::AstTerm::astTermWithNullValuesToString(exp)<<endl;
+              logger[ERROR] <<"unsupported array initializer value:"<<exp->unparseToString()<<" AST:"<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
               exit(1);
             }
             elemIndex++;
@@ -1225,7 +1226,7 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
         return newPState;
       } else {
         logger[ERROR] <<"RHS: unknown : type: ";
-        logger[ERROR]<<SPRAY::AstTerm::astTermWithNullValuesToString(isSgExpression(rhs)->get_type());
+        logger[ERROR]<<AstTerm::astTermWithNullValuesToString(isSgExpression(rhs)->get_type());
         exit(1);
       }
       cout<<endl;
@@ -3315,7 +3316,7 @@ list<EState> Analyzer::transferIncDecOp(SgNode* nextNodeToAnalyze2, Edge edge, c
       varVal=varVal-const1; // overloaded binary - operator
       break;
     default:
-      logger[ERROR] << "Operator-AST:"<<SPRAY::AstTerm::astTermToMultiLineString(nextNodeToAnalyze2,2)<<endl;
+      logger[ERROR] << "Operator-AST:"<<AstTerm::astTermToMultiLineString(nextNodeToAnalyze2,2)<<endl;
       logger[ERROR] << "Operator:"<<SgNodeHelper::nodeToString(nextNodeToAnalyze2)<<endl;
       logger[ERROR] << "Operand:"<<SgNodeHelper::nodeToString(nextNodeToAnalyze3)<<endl;
       logger[ERROR] <<"programmatic error in handling of inc/dec operators."<<endl;
@@ -3513,3 +3514,13 @@ list<EState> Analyzer::transferTrueFalseEdge(SgNode* nextNodeToAnalyze2, Edge ed
   return newEStateList;
 }
 
+void Analyzer::setTypeSizeMapping(TypeSizeMapping* typeSizeMapping) {
+  // a default type size mapping is set in initialization and must exist
+  ROSE_ASSERT(_typeSizeMapping);
+  delete _typeSizeMapping;
+  _typeSizeMapping=typeSizeMapping;
+}
+
+TypeSizeMapping* Analyzer::getTypeSizeMapping() {
+  return _typeSizeMapping;
+}

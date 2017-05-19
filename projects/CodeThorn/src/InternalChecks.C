@@ -145,7 +145,7 @@ void checkTypes() {
   }
 
   {
-    cout << "RUNNING CHECKS FOR CONSTINT LATTICE TYPE:"<<endl;
+    cout << "RUNNING CHECKS FOR NUMBER LATTICE TYPE:"<<endl;
     AbstractValue a;
     a=true;
     check("a=true => isTrue",a.isTrue());
@@ -293,7 +293,7 @@ void checkTypes() {
   }
   {  
     cout << "------------------------------------------"<<endl;
-    cout << "RUNNING CHECKS FOR CONSTINTLATTICE (formerly CPPCAPSULE):"<<endl;
+    cout << "RUNNING CHECKS FOR NUMBER LATTICE:"<<endl;
     AbstractValue cint1(1);
     check("cint1 == 1",cint1.getIntValue()==1);
     AbstractValue cint2=CodeThorn::Top();

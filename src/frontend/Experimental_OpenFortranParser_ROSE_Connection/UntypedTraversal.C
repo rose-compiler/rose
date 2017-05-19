@@ -18,7 +18,7 @@ UntypedTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute curre
 {
    if (isSgUntypedFile(n) != NULL)
       {
-         SgUntypedFile* ut_file = dynamic_cast<SgUntypedFile*>(n);
+      // SgUntypedFile* ut_file = dynamic_cast<SgUntypedFile*>(n);
          SgSourceFile*  sg_file = p_source_file;
          ROSE_ASSERT(sg_file != NULL);
 
@@ -35,24 +35,24 @@ UntypedTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute curre
 
    else if (isSgUntypedProgramHeaderDeclaration(n) != NULL)
       {
-         SgUntypedProgramHeaderDeclaration* ut_program = dynamic_cast<SgUntypedProgramHeaderDeclaration*>(n);
-         SgProgramHeaderStatement*          sg_program = UntypedConverter::convertSgUntypedProgramHeaderDeclaration(ut_program, currentScope);
+      // SgUntypedProgramHeaderDeclaration* ut_program = dynamic_cast<SgUntypedProgramHeaderDeclaration*>(n);
+      // SgProgramHeaderStatement*          sg_program = UntypedConverter::convertSgUntypedProgramHeaderDeclaration(ut_program,currentScope);
 
          currentScope = SageBuilder::topScopeStack();
       }
 
    else if (isSgUntypedSubroutineDeclaration (n) != NULL)
       {
-         SgUntypedSubroutineDeclaration* ut_function = dynamic_cast<SgUntypedSubroutineDeclaration*>(n);
-         SgProcedureHeaderStatement*     sg_function = UntypedConverter::convertSgUntypedSubroutineDeclaration(ut_function, currentScope);
+      // SgUntypedSubroutineDeclaration* ut_function = dynamic_cast<SgUntypedSubroutineDeclaration*>(n);
+      // SgProcedureHeaderStatement*     sg_function = UntypedConverter::convertSgUntypedSubroutineDeclaration(ut_function, currentScope);
 
          currentScope = SageBuilder::topScopeStack();
       }
 
    else if (isSgUntypedFunctionDeclaration (n) != NULL)
       {
-         SgUntypedFunctionDeclaration* ut_function = dynamic_cast<SgUntypedFunctionDeclaration*>(n);
-         SgProcedureHeaderStatement*   sg_function = UntypedConverter::convertSgUntypedFunctionDeclaration(ut_function, currentScope);
+      // SgUntypedFunctionDeclaration* ut_function = dynamic_cast<SgUntypedFunctionDeclaration*>(n);
+      // SgProcedureHeaderStatement*   sg_function = UntypedConverter::convertSgUntypedFunctionDeclaration(ut_function, currentScope);
 
          currentScope = SageBuilder::topScopeStack();
       }

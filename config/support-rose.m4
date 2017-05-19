@@ -2438,6 +2438,7 @@ tests/roseTests/programAnalysisTests/typeTraitTests/Makefile
 tests/smoke/ExamplesForTestWriters/Makefile
 tests/smoke/Makefile
 tests/smoke/functional/BinaryAnalysis/Makefile
+tests/smoke/functional/Fortran/Makefile
 tests/smoke/functional/Makefile
 tests/smoke/specimens/Makefile
 tests/smoke/specimens/binary/Makefile

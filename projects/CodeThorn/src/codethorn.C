@@ -175,7 +175,7 @@ void CodeThornLanguageRestrictor::initialize() {
 class TermRepresentation : public DFAstAttribute {
   public:
     TermRepresentation(SgNode* node) : _node(node) {}
-    string toString() { return "AstTerm: "+SPRAY::AstTerm::astTermWithNullValuesToString(_node); }
+    string toString() { return "AstTerm: "+AstTerm::astTermWithNullValuesToString(_node); }
   private:
     SgNode* _node;
 };
@@ -2065,7 +2065,7 @@ int main( int argc, char * argv[] ) {
       //dotFile=astTermWithNullValuesToDot(analyzer.startFunRoot);
       analyzer.generateAstNodeInfo(sageProject);
       cout << "generated node info."<<endl;
-      dotFile=SPRAY::AstTerm::functionAstTermsWithNullValuesToDot(sageProject);
+      dotFile=AstTerm::functionAstTermsWithNullValuesToDot(sageProject);
       write_file("ast.dot", dotFile);
       cout << "generated ast.dot."<<endl;
 
