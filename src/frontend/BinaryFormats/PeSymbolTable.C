@@ -21,8 +21,13 @@ SgAsmCoffSymbol::ctor(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAs
 
     Sawyer::Message::Stream debug(mlog[DEBUG]);
 
+    static uint8_t zeroRecord[COFFSymbol_disk_size];
+    memset(zeroRecord, 0, sizeof zeroRecord);
     COFFSymbol_disk disk;
     symtab->read_content_local(idx * COFFSymbol_disk_size, &disk, COFFSymbol_disk_size);
+    if (0 == memcmp(&disk, zeroRecord, COFFSymbol_disk_size))
+        throw FormatError("zero symbol record");
+
     if (disk.st_zero == 0) {
         p_st_name_offset = ByteOrder::le_to_host(disk.st_offset);
         if (p_st_name_offset < 4)
@@ -376,6 +381,12 @@ SgAsmCoffSymbolTable::parse()
             SgAsmCoffSymbol *symbol = new SgAsmCoffSymbol(fhdr, this, p_strtab, i);
             i += symbol->get_st_num_aux_entries();
             p_symbols->get_symbols().push_back(symbol);
+        } catch (const FormatError &e) {
+            mlog[WARN] <<"SgAsmCoffSymbolTable::parse: invalid symbol: " <<e.what() <<"\n"
+                       <<"    in section \"" <<get_name()->get_string(true) <<"\"[" <<get_id() <<"]\n"
+                       <<"    symbol #" <<i <<" at file offset "
+                       <<StringUtility::addrToString(get_offset() + i*SgAsmCoffSymbol::COFFSymbol_disk_size) <<"\n"
+                       <<"    discarding this symbol\n";
         } catch (const ShortRead &e) {
             mlog[WARN] <<"SgAsmCoffSymbolTable::parse: read past end of section \"" <<get_name()->get_string(true) <<"\""
                        <<"[" <<get_id() <<"]\n"
