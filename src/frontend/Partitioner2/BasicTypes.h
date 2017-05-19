@@ -2,6 +2,9 @@
 #define ROSE_Partitioner2_BasicTypes_H
 
 #include <boost/serialization/access.hpp>
+#include <boost/serialization/nvp.hpp>
+#include <string>
+#include <vector>
 
 // Define this as one if you want extra invariant checks that are quite expensive, or define as zero. This only makes a
 // difference if NDEBUG and SAWYER_NDEBUG are both undefined--if either one of them are defined then no expensive (or
