@@ -560,6 +560,14 @@ void postProcessingSupport (SgNode* node)
 
           if (SgProject::get_verbose() > 1)
              {
+               printf ("Calling addPrototypesForTemplateInstantiations() \n");
+             }
+
+       // DQ (5/18/2017): Adding missing prototypes.
+          addPrototypesForTemplateInstantiations(node);
+
+          if (SgProject::get_verbose() > 1)
+             {
                printf ("Calling checkPhysicalSourcePosition() \n");
              }
 
