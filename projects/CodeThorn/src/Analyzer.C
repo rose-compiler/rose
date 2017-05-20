@@ -629,8 +629,6 @@ size_t Analyzer::memorySizeContentEStateWorkLists() {
   return mem;
 }
 
-#define PARALLELIZE_BRANCHES
-
 const EState* Analyzer::addToWorkListIfNew(EState estate) {
   EStateSet::ProcessingResult res=process(estate);
   if(res.first==true) {
@@ -661,13 +659,7 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
   SgNode* initName0=decl->get_traversalSuccessorByIndex(1); // get-InitializedName
   if(initName0!=nullptr) {
     if(SgInitializedName* initName=isSgInitializedName(initName0)) {
-#if 0
-      SgSymbol* initDeclVar=initName->search_for_symbol_from_symbol_table();
-      ROSE_ASSERT(initDeclVar);
-      VariableId initDeclVarId=getVariableIdMapping()->variableId(initDeclVar);
-#else
       VariableId initDeclVarId=getVariableIdMapping()->variableId(initName);
-#endif
       // not possible to support yet. getIntValue must succeed on declarations.
       if(false && variableValueMonitor.isHotVariable(this,initDeclVarId)) {
         PState newPState=*currentEState.pstate();
@@ -740,17 +732,17 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
           }
           
         } else if(variableIdMapping.hasClassType(initDeclVarId)) {
-          // not supported yet
-          //cerr<<"WARNING: class type in variable declaration not supported yet."<<endl;
-          //exit(1);
+          // not supported yet. Declarations may exist in header files,
+          // therefore silently ignore it here, but if will cause an
+          // error later as read/write of class variables is not
+          // allowed yet in expressions.
         } else if(variableIdMapping.hasPointerType(initDeclVarId)) {
           // create pointer value and set it to top (=any value possible (uninitialized pointer variable declaration))
           AbstractValue pointerVal=AbstractValue::createAddressOfVariable(initDeclVarId);
           newPState.writeTopToMemoryLocation(pointerVal);
         } else {
-          // set it to top (=any value possible (uninitialized)); this
-          // default case also creates an address due to implicit type
-          // conversion. However, it should become an error-path once
+          // set it to top (=any value possible (uninitialized)) for
+          // all remaining cases. It will become an error-path once
           // all cases are addressed explicitly above.
           newPState.writeTopToMemoryLocation(initDeclVarId);
         }
@@ -1258,8 +1250,7 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
     if(_variablesToIgnore.size()>0 && (_variablesToIgnore.find(lhsVar)!=_variablesToIgnore.end())) {
       // nothing to do because variable is ignored
     } else {
-      // new variable with new value
-      // write access
+      // new variable with new value.
       newPState.writeToMemoryLocation(lhsVar,rhsIntVal);
     }
     // no update of constraints because no constraints can exist for a new variable
@@ -1312,6 +1303,7 @@ bool Analyzer::checkTransitionGraph() {
   ok=ok && getTransitionGraph()->checkConsistency();
   return ok;
 }
+
 bool Analyzer::checkEStateSet() {
   for(EStateSet::iterator i=estateSet.begin();i!=estateSet.end();++i) {
     if(estateSet.estateId(*i)==NO_ESTATE || (*i)->label()==Label()) {
@@ -1518,9 +1510,12 @@ boost::unordered_set<Transition*>* Analyzer::transitionsToInOutErrAndWorklist( c
 }
 
 
-boost::unordered_set<Transition*>* Analyzer::transitionsToInOutErrAndWorklist( const EState* currentState, const EState* startState,
-                                                                            boost::unordered_set<Transition*>* results, boost::unordered_set<const EState*>* visited,
-									    bool includeIn, bool includeOut, bool includeErr) {
+boost::unordered_set<Transition*>*
+Analyzer::transitionsToInOutErrAndWorklist( const EState* currentState,
+                                            const EState* startState,
+                                            boost::unordered_set<Transition*>* results,
+                                            boost::unordered_set<const EState*>* visited,
+                                            bool includeIn, bool includeOut, bool includeErr) {
   //cycle check
   if (visited->count(currentState)) {
     return results;  //currentState already visited, do nothing
