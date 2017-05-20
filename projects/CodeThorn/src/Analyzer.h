@@ -234,8 +234,8 @@ namespace CodeThorn {
 
     void setDisplayDiff(int diff) { _displayDiff=diff; }
     void setResourceLimitDiff(int diff) { _resourceLimitDiff=diff; }
-    void setSolver(int solver) { _solver=solver; }
-    int getSolver() { return _solver;}
+    void setSolver(int solver);
+    int getSolver();
     void setSemanticFoldThreshold(int t) { _semanticFoldThreshold=t; }
     void setNumberOfThreadsToUse(int n) { _numberOfThreadsToUse=n; }
     int getNumberOfThreadsToUse() { return _numberOfThreadsToUse; }

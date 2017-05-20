@@ -196,6 +196,14 @@ ExprAnalyzer* Analyzer::getExprAnalyzer() {
   return &exprAnalyzer;
 }
 
+void Analyzer::setSolver(int solver) {
+  _solver=solver;
+}
+
+int Analyzer::getSolver() {
+  return _solver;
+}
+
 void Analyzer::runSolver() {
   switch(_solver) {
   case 4: runSolver4();break;
@@ -537,13 +545,6 @@ set<const EState*> Analyzer::nonLTLRelevantEStates() {
   for(set<const EState*>::iterator i=allestates.begin();i!=allestates.end();++i) {
     if(!isLTLRelevantLabel((*i)->label())) {
       res.insert(*i);
-
-      // MS: deactivated this check because it impacts performance dramatically
-#if 0
-      if(estateSet.estateId(*i)==NO_ESTATE) {
-        logger[WARN]<< "no estate :estateId="<<estateSet.estateId(*i)<<endl;
-      }
-#endif
     }
   }
   return res;
@@ -553,8 +554,8 @@ bool Analyzer::isTerminationRelevantLabel(Label label) {
   return SgNodeHelper::isLoopCond(getLabeler()->getNode(label));
 }
 
-// We want to avoid calling critical sections from critical sections:
-// therefore all worklist functions do not use each other.
+// Avoid calling critical sections from critical sections:
+// worklist functions do not use each other.
 bool Analyzer::isEmptyWorkList() {
   bool res;
 #pragma omp critical(ESTATEWL)
@@ -607,7 +608,8 @@ const EState* Analyzer::takeFromWorkList() {
   return co;
 }
 
-// the following function has to be protected by a critical section
+// this function has to be protected by a critical section
+// currently called once inside a critical section
 void Analyzer::swapWorkLists() {
   EStateWorkList* tmp = estateWorkListCurrent;
   estateWorkListCurrent = estateWorkListNext;
@@ -648,9 +650,9 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
 
   /*
     1) declaration of variable or array
-    - AssignInitializer (e.g. x=1+2;)
-    - AggregateInitializer (e.g. int a[]={1,2,3};)
-    - AggregateInitializer (e.g. int a[5]={1,2,3};)
+    - AggregateInitializer (e.g. T a[]={1,2,3};)
+    - AggregateInitializer (e.g. T a[5]={1,2,3};)
+    - AssignInitializer (e.g. T x=1+2;)
     2) if array, determine size of array (from VariableIdMapping)
     3) if no size is provided, determine it from the initializer list (and add this information to the variableIdMapping - or update the variableIdMapping).
    */
@@ -756,8 +758,7 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
     logger[ERROR] << "in declaration: no variable found ... bailing out."<<endl;
     exit(1);
   }
-  cout<<"WARNING: not initialized name in variable declaration: "<<decl->unparseToString()<<endl;
-  return currentEState;
+  ROSE_ASSERT(false); // non-reachable
 }
 
 // this function has been moved to VariableIdMapping: TODO eliminate this function here
