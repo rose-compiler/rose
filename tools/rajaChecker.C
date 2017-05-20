@@ -56,6 +56,9 @@ namespace RAJA_Checker
   //! Check if a block of statement has the nodal accumulation pattern, with a known loop index variable 
   bool isNodalAccumulationBody(SgBasicBlock* bb, SgInitializedName* lvar, SgExprStatement*& fstmt);
 
+  //!  if there is a form like: int varRef1 = indexSet[loopIndex]; 
+  bool connectedViaIndexSet (SgVarRefExp* varRef1, SgInitializedName* loopIndex);
+
   // TODO: move some functions to SageInterface if needed.
   //! Find and warn if there are data member accesses within a scope
   // This is useful in the context of RAJA programming: 
@@ -309,23 +312,42 @@ SgExprStatement
 //  a[i] = ..; 
 // single level of indexSet?? int i1 = IndexSet[i2];
 // TODO: multiple level of indexSet?? int i1 = IndexSet[iS2[i2]];
-bool connectedViaIndexSet (SgVarRefExp* varRef1, SgInitializedName* loopIndex)
+bool RAJA_Checker::connectedViaIndexSet (SgVarRefExp* varRef1, SgInitializedName* loopIndex)
 {
   AstMatching m;
   ROSE_ASSERT (varRef1!=NULL);
   ROSE_ASSERT (loopIndex!=NULL);
+  if (enable_debug)
+  {
+    cout<<"\t\t Entering connectedViaIndexSet () ..."<<endl;
+  }  
 
   SgVariableSymbol* sym = varRef1->get_symbol();
   SgInitializedName* iname = sym->get_declaration();
   SgDeclarationStatement* decl = iname->get_declaration();
   
-  //string p("$rhs=SgVariableDeclaration");
+  if (enable_debug)
+  {
+    cout<<"\t\t the ast term for var decl:"<<endl;
+    string p("$rhs=SgVariableDeclaration");
+    MatchResult res=m.performMatching(p, decl);
+    for(MatchResult::iterator i=res.begin();i!=res.end();++i) {
+      SgVariableDeclaration* i1 = isSgVariableDeclaration((*i)["$rhs"]);
+      cout<< AstTerm::astTermWithNullValuesToString(i1)<<endl;
+    }
+  }
+
   //        SgVariableDeclaration(null,SgInitializedName(SgAssignInitializer(SgPntrArrRefExp(SgVarRefExp,SgVarRefExp))))
-  string p("SgVariableDeclaration(null,SgInitializedName(SgAssignInitializer(SgPntrArrRefExp(SgVarRefExp,$rhs=SgVarRefExp))))");
+  //string p("SgVariableDeclaration(null,SgInitializedName(SgAssignInitializer(SgPntrArrRefExp(SgVarRefExp,$rhs=SgVarRefExp))))");
+  // there may be this-> pointer for indeSet variable reference!!
+  string p("SgVariableDeclaration(null,SgInitializedName(SgAssignInitializer(SgPntrArrRefExp(_,$rhs=SgVarRefExp))))");
   MatchResult res=m.performMatching(p, decl);
+  if (enable_debug)
+    cout<<"\t\t matched result size():"<<res.size()<<endl;
 #if 1  
   for(MatchResult::iterator i=res.begin();i!=res.end();++i) {
      SgVarRefExp* rhs = isSgVarRefExp((*i)["$rhs"]);
+
      //SgVariableDeclaration* i1 = isSgVariableDeclaration((*i)["$rhs"]);
      //cout<< AstTerm::astTermWithNullValuesToString(i1)<<endl;
 
@@ -468,7 +490,7 @@ bool isNodalAccumulationStmt (SgStatement* s, SgInitializedName* lvar)
   if (!isDoubleArrayAccess(bop->get_lhs_operand(), lvar))
   {
     if (RAJA_Checker::enable_debug)
-     cout<<"\t\t not DoubleArrayAccess for lhs"<<endl;
+     cout<<"\t\t not DoubleArrayAccess like array[index] for lhs"<<endl;
     return false;
   }
 
