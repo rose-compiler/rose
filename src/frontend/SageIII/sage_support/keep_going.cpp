@@ -591,7 +591,40 @@ void Rose::KeepGoing::generate_reports(SgProject* project,
     }
   }
 
+  //Sometimes even for files failed on backend stage, some analysis results are generated. 
+  //we still want to output such results.
+  // If exists, output the analysis results associated with each file
+  if (files_with_errors.size()>0 && report_filename__pass.size()>0)
+  {
+    bool runonce = false; 
+    // add time stamp in the beginning
+    std::ostringstream ostamp;
+    ostamp << GetTimestamp()  << " " << getpid() << std::endl;
 
+    BOOST_FOREACH(SgFile* file, files_with_errors)
+    {
+      std::string filename = file->getFileName();
+
+      //Sometimes even for files failed on backend stage, some analysis results are generated. 
+      //we still want to output such results.
+      // If exists, output the analysis results associated with each file
+      std::ostringstream oss;
+      oss <<  File2StringMap[file]; // not copyable, not assignable
+      if (oss.str().size()>0)
+      {
+        if (!runonce)
+        {
+          AppendToFile (report_filename__pass, "------Analysis results for files with backend errors----------------------\n");
+          AppendToFile (report_filename__pass, ostamp.str());
+          runonce = true; 
+        }
+
+        AppendToFile(report_filename__pass, filename+"\n");
+        AppendToFile(report_filename__pass, oss.str());
+      }
+    }
+  }
+ 
   if (!expectations_filename__fail.empty())
   {
       std::map<std::string, std::string> expected_failures =
