@@ -35,7 +35,8 @@ Checker_Test_Files += \
    constDouble.cpp \
    indirectArrayAccess.cpp \
    indirectLambdaCall.cpp \
-   referenceType.cpp
+   referenceType.cpp \
+   indirecArrayInLambda.cpp
 endif
 endif
 endif
