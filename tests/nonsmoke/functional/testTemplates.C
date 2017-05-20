@@ -16,23 +16,39 @@ bool isTemplateInstantiationNode(SgNode* node)
    }
 #endif
 
-void markNodeToBeUnparsed(SgNode* node) {
-  Sg_File_Info* fileInfo=node->get_file_info();
-  if(fileInfo) {
-    fileInfo->setTransformation();
-    fileInfo->setOutputInCodeGeneration();
+void markNodeToBeUnparsed(SgNode* node) 
+   {
+     Sg_File_Info* fileInfo=node->get_file_info();
+     if (fileInfo != NULL) 
+        {
+          fileInfo->setTransformation();
+          fileInfo->setOutputInCodeGeneration();
 
-    SgLocatedNode* locatedNode = isSgLocatedNode(node);
-    if (locatedNode != NULL)
-       {
-      // DQ (7/7/2015): Make the subtree as transformed.
-         locatedNode->setTransformation();
-         locatedNode->setOutputInCodeGeneration();
-
-         markTransformationsForOutput(node);
-       }
-  }
-}
+          SgLocatedNode* locatedNode = isSgLocatedNode(node);
+          if (locatedNode != NULL)
+             {
+            // DQ (7/7/2015): Make the subtree as transformed.
+               locatedNode->setTransformation();
+               locatedNode->setOutputInCodeGeneration();
+#if 0
+               printf ("Note: calling node markTransformationsForOutput(): node = %p = %s \n",node,node->class_name().c_str());
+#endif
+               markTransformationsForOutput(node);
+             }
+            else
+             {
+#if 0
+               printf ("Note: node is not a SgLocatedNode: node = %p = %s \n",node,node->class_name().c_str());
+#endif
+             }
+        }
+       else
+        {
+#if 0
+          printf ("Note: no Sg_File_Info was found: node = %p = %s \n",node,node->class_name().c_str());
+#endif
+        }
+   }
 
 int markAllTemplateInstantiationsToBeUnparsed(SgProject* root) 
    {
@@ -40,9 +56,19 @@ int markAllTemplateInstantiationsToBeUnparsed(SgProject* root)
      int n = 0;
      for (RoseAst::iterator i=ast.begin();i!=ast.end();++i) 
         {
+#if 0
+       // DQ (5/9/2017): Debugging code.
+          if (isSgGlobal((*i)->get_parent()) != NULL)
+             {
+               printf ("In global scope: *i = %p = %s \n",*i,(*i)->class_name().c_str());
+             }
+#endif
        // if (isTemplateInstantiationNode(*i)) 
           if (SageInterface::isTemplateInstantiationNode(*i)) 
              {
+#if 0
+               printf ("Calling markNodeToBeUnparsed(): *i = %p = %s \n",*i,(*i)->class_name().c_str());
+#endif
                markNodeToBeUnparsed(*i);
                n++;
              }
@@ -94,6 +120,14 @@ int main( int argc, char * argv[] )
 
   // DQ (9/17/2015): Call fixup function for template instantiations so that they can be unparsed with the GNU g++ backend compiler.
      SageInterface::wrapAllTemplateInstantiationsInAssociatedNamespaces(project);
+
+#if 0
+  // DQ (5/11/2017): Adding support for detection of template specializations that will be output and building there forward 
+  // declarations as required. Note that EDG does not always build the forward declarations that are required for the output
+  // of template specializations (see test2017_22.C and test2017_23.C for examples where EDG does and does not build the 
+  // forward declarations.
+     markTemplateInstantiationsForOutput(project);
+#endif
 
 #if 0
   // Output an optional graph of the AST (just the tree, when active)
