@@ -541,6 +541,8 @@ ROSE_RPATHS =										\
 	      $(ROSE_LIBS)								\
 	      $(subst :, , $(GNU_COMPILERS_LIBDIRS))					\
 	      $(subst :, , $(LIBBZ2_LIBDIRS))						\
+	      $(subst :, , $(LIBGCRYPT_LIBDIRS))					\
+	      $(subst :, , $(LIBGPG_ERROR_LIBDIRS))					\
 	      $(subst :, , $(LIBGRAPHICSMAGICK_LIBDIRS))				\
 	      $(subst :, , $(LIBJPEG_LIBDIRS))						\
 	      $(subst :, , $(LIBLCMS_LIBDIRS))						\
