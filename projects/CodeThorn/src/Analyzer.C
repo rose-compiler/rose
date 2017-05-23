@@ -196,6 +196,14 @@ ExprAnalyzer* Analyzer::getExprAnalyzer() {
   return &exprAnalyzer;
 }
 
+void Analyzer::setSolver(int solver) {
+  _solver=solver;
+}
+
+int Analyzer::getSolver() {
+  return _solver;
+}
+
 void Analyzer::runSolver() {
   switch(_solver) {
   case 4: runSolver4();break;
@@ -537,13 +545,6 @@ set<const EState*> Analyzer::nonLTLRelevantEStates() {
   for(set<const EState*>::iterator i=allestates.begin();i!=allestates.end();++i) {
     if(!isLTLRelevantLabel((*i)->label())) {
       res.insert(*i);
-
-      // MS: deactivated this check because it impacts performance dramatically
-#if 0
-      if(estateSet.estateId(*i)==NO_ESTATE) {
-        logger[WARN]<< "no estate :estateId="<<estateSet.estateId(*i)<<endl;
-      }
-#endif
     }
   }
   return res;
@@ -553,8 +554,8 @@ bool Analyzer::isTerminationRelevantLabel(Label label) {
   return SgNodeHelper::isLoopCond(getLabeler()->getNode(label));
 }
 
-// We want to avoid calling critical sections from critical sections:
-// therefore all worklist functions do not use each other.
+// Avoid calling critical sections from critical sections:
+// worklist functions do not use each other.
 bool Analyzer::isEmptyWorkList() {
   bool res;
 #pragma omp critical(ESTATEWL)
@@ -607,7 +608,8 @@ const EState* Analyzer::takeFromWorkList() {
   return co;
 }
 
-// the following function has to be protected by a critical section
+// this function has to be protected by a critical section
+// currently called once inside a critical section
 void Analyzer::swapWorkLists() {
   EStateWorkList* tmp = estateWorkListCurrent;
   estateWorkListCurrent = estateWorkListNext;
@@ -629,8 +631,6 @@ size_t Analyzer::memorySizeContentEStateWorkLists() {
   return mem;
 }
 
-#define PARALLELIZE_BRANCHES
-
 const EState* Analyzer::addToWorkListIfNew(EState estate) {
   EStateSet::ProcessingResult res=process(estate);
   if(res.first==true) {
@@ -650,9 +650,9 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
 
   /*
     1) declaration of variable or array
-    - AssignInitializer (e.g. x=1+2;)
-    - AggregateInitializer (e.g. int a[]={1,2,3};)
-    - AggregateInitializer (e.g. int a[5]={1,2,3};)
+    - AggregateInitializer (e.g. T a[]={1,2,3};)
+    - AggregateInitializer (e.g. T a[5]={1,2,3};)
+    - AssignInitializer (e.g. T x=1+2;)
     2) if array, determine size of array (from VariableIdMapping)
     3) if no size is provided, determine it from the initializer list (and add this information to the variableIdMapping - or update the variableIdMapping).
    */
@@ -661,13 +661,7 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
   SgNode* initName0=decl->get_traversalSuccessorByIndex(1); // get-InitializedName
   if(initName0!=nullptr) {
     if(SgInitializedName* initName=isSgInitializedName(initName0)) {
-#if 0
-      SgSymbol* initDeclVar=initName->search_for_symbol_from_symbol_table();
-      ROSE_ASSERT(initDeclVar);
-      VariableId initDeclVarId=getVariableIdMapping()->variableId(initDeclVar);
-#else
       VariableId initDeclVarId=getVariableIdMapping()->variableId(initName);
-#endif
       // not possible to support yet. getIntValue must succeed on declarations.
       if(false && variableValueMonitor.isHotVariable(this,initDeclVarId)) {
         PState newPState=*currentEState.pstate();
@@ -740,17 +734,17 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
           }
           
         } else if(variableIdMapping.hasClassType(initDeclVarId)) {
-          // not supported yet
-          //cerr<<"WARNING: class type in variable declaration not supported yet."<<endl;
-          //exit(1);
+          // not supported yet. Declarations may exist in header files,
+          // therefore silently ignore it here, but if will cause an
+          // error later as read/write of class variables is not
+          // allowed yet in expressions.
         } else if(variableIdMapping.hasPointerType(initDeclVarId)) {
           // create pointer value and set it to top (=any value possible (uninitialized pointer variable declaration))
           AbstractValue pointerVal=AbstractValue::createAddressOfVariable(initDeclVarId);
           newPState.writeTopToMemoryLocation(pointerVal);
         } else {
-          // set it to top (=any value possible (uninitialized)); this
-          // default case also creates an address due to implicit type
-          // conversion. However, it should become an error-path once
+          // set it to top (=any value possible (uninitialized)) for
+          // all remaining cases. It will become an error-path once
           // all cases are addressed explicitly above.
           newPState.writeTopToMemoryLocation(initDeclVarId);
         }
@@ -764,8 +758,7 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
     logger[ERROR] << "in declaration: no variable found ... bailing out."<<endl;
     exit(1);
   }
-  cout<<"WARNING: not initialized name in variable declaration: "<<decl->unparseToString()<<endl;
-  return currentEState;
+  ROSE_ASSERT(false); // non-reachable
 }
 
 // this function has been moved to VariableIdMapping: TODO eliminate this function here
@@ -1258,8 +1251,7 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
     if(_variablesToIgnore.size()>0 && (_variablesToIgnore.find(lhsVar)!=_variablesToIgnore.end())) {
       // nothing to do because variable is ignored
     } else {
-      // new variable with new value
-      // write access
+      // new variable with new value.
       newPState.writeToMemoryLocation(lhsVar,rhsIntVal);
     }
     // no update of constraints because no constraints can exist for a new variable
@@ -1312,6 +1304,7 @@ bool Analyzer::checkTransitionGraph() {
   ok=ok && getTransitionGraph()->checkConsistency();
   return ok;
 }
+
 bool Analyzer::checkEStateSet() {
   for(EStateSet::iterator i=estateSet.begin();i!=estateSet.end();++i) {
     if(estateSet.estateId(*i)==NO_ESTATE || (*i)->label()==Label()) {
@@ -1518,9 +1511,12 @@ boost::unordered_set<Transition*>* Analyzer::transitionsToInOutErrAndWorklist( c
 }
 
 
-boost::unordered_set<Transition*>* Analyzer::transitionsToInOutErrAndWorklist( const EState* currentState, const EState* startState,
-                                                                            boost::unordered_set<Transition*>* results, boost::unordered_set<const EState*>* visited,
-									    bool includeIn, bool includeOut, bool includeErr) {
+boost::unordered_set<Transition*>*
+Analyzer::transitionsToInOutErrAndWorklist( const EState* currentState,
+                                            const EState* startState,
+                                            boost::unordered_set<Transition*>* results,
+                                            boost::unordered_set<const EState*>* visited,
+                                            bool includeIn, bool includeOut, bool includeErr) {
   //cycle check
   if (visited->count(currentState)) {
     return results;  //currentState already visited, do nothing
