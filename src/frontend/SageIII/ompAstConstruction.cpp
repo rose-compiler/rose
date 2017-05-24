@@ -532,6 +532,12 @@ namespace OmpSupport
           result = new SgOmpSafelenClause(param);
           break;
         }
+       case e_simdlen:
+        {
+          SgExpression* param = checkOmpExpressionClause( att->getExpression(e_simdlen).second, global, e_simdlen );
+          result = new SgOmpSimdlenClause(param);
+          break;
+        }
  
       default:
         {
@@ -1029,6 +1035,7 @@ namespace OmpSupport
       case e_num_threads:
       case e_device:
       case e_safelen:
+      case e_simdlen:
         {
           result = buildOmpExpressionClause(att, c_clause_type);
           break;

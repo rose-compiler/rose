@@ -107,7 +107,7 @@ corresponding C type is union name defaults to YYSTYPE.
         SUB_ASSIGN2 MUL_ASSIGN2 DIV_ASSIGN2 MOD_ASSIGN2 AND_ASSIGN2 
         XOR_ASSIGN2 OR_ASSIGN2
         LEXICALERROR IDENTIFIER 
-        READ WRITE CAPTURE INBRANCH NOTINBRANCH
+        READ WRITE CAPTURE INBRANCH NOTINBRANCH SIMDLEN
 /*We ignore NEWLINE since we only care about the pragma string , We relax the syntax check by allowing it as part of line continuation */
 %token <itype> ICONSTANT   
 %token <stype> EXPRESSION ID_EXPRESSION 
@@ -716,6 +716,12 @@ simd_clause : SAFELEN {
                         omptype = e_safelen;
                       } '(' expression ')' {
                         addExpression("");
+                      }
+                | SIMDLEN {
+                          ompattribute->addClause(e_simdlen);
+                          omptype = e_simdlen;
+                          } '(' expression ')' {
+                          addExpression("");
                       }
                 | data_reduction_clause
                 | uniform_clause

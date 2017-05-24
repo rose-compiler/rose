@@ -142,6 +142,7 @@ from            {return cond_return ( FROM ); }
 tofrom          {return cond_return ( TOFROM ); }
 simd            {return cond_return ( SIMD ); }
 safelen         {return cond_return ( SAFELEN ); }
+simdlen         {return cond_return ( SIMDLEN ); }
 aligned         {return cond_return ( ALIGNED ); }
 linear          {return cond_return ( LINEAR ); }
 uniform         {return cond_return ( UNIFORM ); }

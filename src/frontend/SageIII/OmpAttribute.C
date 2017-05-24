@@ -687,6 +687,7 @@ namespace OmpSupport
 
       case e_simd: result = "simd"; break;
       case e_safelen: result = "safelen"; break;
+      case e_simdlen: result = "simdlen"; break;
       case e_linear: result = "linear"; break;
       case e_uniform: result = "uniform"; break;
       case e_aligned: result = "aligned"; break;
@@ -1028,6 +1029,7 @@ namespace OmpSupport
       case e_end:
 
       case e_safelen:
+      case e_simdlen:
       case e_linear:
       case e_uniform:
       case e_aligned:
@@ -1173,6 +1175,7 @@ namespace OmpSupport
           (omp_type ==e_num_threads)||
           (omp_type ==e_device)||
           (omp_type ==e_safelen)||
+          (omp_type ==e_simdlen)||
           (omp_type == e_collapse)
         )
       {
