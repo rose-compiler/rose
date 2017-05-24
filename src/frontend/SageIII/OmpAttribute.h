@@ -103,6 +103,8 @@ namespace OmpSupport
     e_collapse,
     e_untied, 
     e_atomic_clause, 
+    e_inbranch,
+    e_notinbranch,
 
     // Simple values for some clauses
 

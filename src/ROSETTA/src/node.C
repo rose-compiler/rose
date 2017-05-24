@@ -75,6 +75,8 @@ Grammar::setUpNodes ()
      NEW_TERMINAL_MACRO (OmpDefaultClause, "OmpDefaultClause", "OmpDefaultClauseTag" );
      NEW_TERMINAL_MACRO (OmpAtomicClause, "OmpAtomicClause", "OmpAtomicClauseTag" );
      NEW_TERMINAL_MACRO (OmpProcBindClause, "OmpProcBindClause", "OmpProcBindClauseTag" );
+     NEW_TERMINAL_MACRO (OmpInbranchClause, "OmpInbranchClause", "OmpInbranchClauseTag" );
+     NEW_TERMINAL_MACRO (OmpNotinbranchClause, "OmpNotinbranchClause", "OmpNotinbranchClauseTag" );
 
      NEW_TERMINAL_MACRO (OmpCollapseClause, "OmpCollapseClause", "OmpCollapseClauseTag" );
      NEW_TERMINAL_MACRO (OmpIfClause, "OmpIfClause", "OmpIfClauseTag" );
@@ -108,7 +110,8 @@ Grammar::setUpNodes ()
      NEW_TERMINAL_MACRO (OmpScheduleClause, "OmpScheduleClause", "OmpScheduleClauseTag" );
 
      NEW_NONTERMINAL_MACRO (OmpClause, OmpOrderedClause | OmpNowaitClause | OmpBeginClause |OmpEndClause | OmpUntiedClause |
-         OmpDefaultClause | OmpAtomicClause | OmpProcBindClause | OmpExpressionClause | OmpVariablesClause | OmpScheduleClause ,
+         OmpDefaultClause | OmpAtomicClause | OmpProcBindClause | OmpExpressionClause | OmpInbranchClause | OmpNotinbranchClause |
+         OmpVariablesClause | OmpScheduleClause ,
          "OmpClause", "OmpClauseTag", false);
 #endif
      

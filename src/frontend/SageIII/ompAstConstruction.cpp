@@ -529,7 +529,7 @@ namespace OmpSupport
       case e_safelen:
         {
           SgExpression* param = checkOmpExpressionClause( att->getExpression(e_safelen).second, global, e_safelen );
-          result = new SgOmpDeviceClause(param);
+          result = new SgOmpSafelenClause(param);
           break;
         }
  
@@ -598,6 +598,28 @@ namespace OmpSupport
     if (!att->hasClause(e_untied))
       return NULL;
     SgOmpUntiedClause* result = new SgOmpUntiedClause();
+    ROSE_ASSERT(result);
+    setOneSourcePositionForTransformation(result);
+    return result;
+  }
+
+  SgOmpInbranchClause * buildOmpInbranchClause(OmpAttribute* att)
+  {
+    ROSE_ASSERT(att != NULL);
+    if (!att->hasClause(e_inbranch))
+      return NULL;
+    SgOmpInbranchClause* result = new SgOmpInbranchClause();
+    ROSE_ASSERT(result);
+    setOneSourcePositionForTransformation(result);
+    return result;
+  }
+
+  SgOmpNotinbranchClause * buildOmpNotinbranchClause(OmpAttribute* att)
+  {
+    ROSE_ASSERT(att != NULL);
+    if (!att->hasClause(e_notinbranch))
+      return NULL;
+    SgOmpNotinbranchClause* result = new SgOmpNotinbranchClause();
     ROSE_ASSERT(result);
     setOneSourcePositionForTransformation(result);
     return result;
@@ -990,6 +1012,16 @@ namespace OmpSupport
       case e_untied:
         {
           result = buildOmpUntiedClause(att); 
+          break;
+        }
+      case e_inbranch:
+        {
+          result = buildOmpInbranchClause(att); 
+          break;
+        }
+       case e_notinbranch:
+        {
+          result = buildOmpNotinbranchClause(att); 
           break;
         }
       case e_if:
