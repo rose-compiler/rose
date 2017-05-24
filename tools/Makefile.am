@@ -31,7 +31,12 @@ if ROSE_USE_EDG_VERSION_4_12
 if ROSE_USING_GCC_VERSION_LATER_4_9
 Checker_Test_Files += \
    nodalAccPattern1.cpp \
-   nodalAccPattern2.cpp
+   nodalAccPattern2.cpp \
+   constDouble.cpp \
+   indirectArrayAccess.cpp \
+   indirectLambdaCall.cpp \
+   referenceType.cpp \
+   indirecArrayInLambda.cpp
 endif
 endif
 endif
@@ -47,7 +52,7 @@ rose_inputrajaChecker.C: $(top_srcdir)/tools/tests/inputrajaChecker.C rajaChecke
 #	./rajaChecker -c $<
 
 $(generatedCodeExamples): $(top_srcdir)/tools/tests/$(@:rose_%=%) rajaChecker
-	./rajaChecker --debug --report report.txt -std=c++11 -c $(top_srcdir)/tools/tests/$(@:rose_%=%)
+	./rajaChecker --debug --report report.txt -std=c++11 -c $(top_srcdir)/tools/tests/$(@:rose_%=%) &>$(@:rose_%=%).screen.log
 
 # enable diff based correctness checking
 DIFF=diff
@@ -64,6 +69,6 @@ $(Checker_Output_Diff_Files): $(generatedCodeExamples)
 check: $(generatedCodeExamples) $(Checker_Output_Diff_Files)
 
 clean-local:
-	rm -rf rose_*.C rose_*.cpp rose*.cxx *.diff *.output *.txt *.o
+	rm -rf rose_*.C rose_*.cpp rose*.cxx *.diff *.output *.txt *.o *.log
 
 endif	

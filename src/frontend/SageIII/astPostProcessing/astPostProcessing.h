@@ -78,6 +78,10 @@
 // DQ (11/27/2016): Provide alternative typedef type that when unparsed will not contain private types).
 #include "fixupTemplateArguments.h"
 
+// DQ (5/18/2017): Added support to insert template instantiation prototypes.
+#include "addPrototypesForTemplateInstantiations.h"
+
+
 /*! \brief Postprocessing that is not likely to be handled in the EDG/Sage III translation.
  */
 void postProcessingSupport (SgNode* node);

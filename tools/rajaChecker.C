@@ -6,6 +6,9 @@
 #include <iostream>
 #include "keep_going.h"
 #include <string>
+#include "AstMatching.h"
+#include "AstTerm.h"
+#include "RoseAst.h"
 
 #include <Sawyer/CommandLine.h>
 static const char* purpose = "This tool detects various patterns in input source files.";
@@ -17,7 +20,8 @@ static const char* description =
 using namespace std;
 using namespace SageInterface;
 
-// used to store debugging output into a file
+// used to store reference correct results into a file.
+// It will be used for diff-based correctness checking. So don't output varying debugging  info into this file.
 ofstream ofile; 
 
 namespace RAJA_Checker 
@@ -35,11 +39,25 @@ namespace RAJA_Checker
   //! If a for loop is a nodal accumulation loop , return the recognized first accumulation statement
   bool isNodalAccumulationLoop(SgForStatement* forloop, SgExprStatement*& fstmt);
 
-  //! Check if a lambda function is a nodal accumulation function
-  bool isNodalAccumulationLambdaExp(SgLambdaExp* exp, SgExprStatement*& fstmt);
+  //! Check if a lambda function is a nodal accumulation function, embedded within a RAJA function call
+  bool isEmbeddedNodalAccumulationLambda(SgLambdaExp* exp, SgExprStatement*& fstmt);
+
+  //! Check if a lambda function is a nodal accumulation function and referenced as a function parameter of a RAJA function.
+  bool isIndirectNodalAccumulationLambda(SgLambdaExp* exp, SgExprStatement*& fstmt, SgExprStatement*& callStmt);
+
+  //! Check if a lambda function has the nodal accumulation pattern
+  bool hasNodalAccumulationBody( SgLambdaExp* exp, SgExprStatement*& fstmt);
+
+  //! Check if an expression is used as a function call parameter to a RAJA function. 
+  bool isRAJATemplateFunctionCallParameter(SgLocatedNode* n,  // n: SgLambdaExp
+                         SgExprStatement* & callStmt, // return  the call statement
+                         SgFunctionDeclaration*& raja_func_decl);
 
   //! Check if a block of statement has the nodal accumulation pattern, with a known loop index variable 
   bool isNodalAccumulationBody(SgBasicBlock* bb, SgInitializedName* lvar, SgExprStatement*& fstmt);
+
+  //!  if there is a form like: int varRef1 = indexSet[loopIndex]; 
+  bool connectedViaIndexSet (SgVarRefExp* varRef1, SgInitializedName* loopIndex);
 
   // TODO: move some functions to SageInterface if needed.
   //! Find and warn if there are data member accesses within a scope
@@ -135,14 +153,20 @@ namespace RAJA_Checker
   //! Check if a lambda function is inside a call to a RAJA template function. Return the raja function decl if it is. 
   // This is a key interface function. Developers can first find a lambda expression , 
   // then check if it is a RAJA template function's parameter.
+  //
+  //
   // The AST should look like  SgFunctionCallExp
   //                           * SgExprListExp
   //                           ** SgLambdaExp 
-  bool isRAJATemplateFunctionCallParameter(SgLocatedNode* n, SgFunctionDeclaration** raja_func_decl = NULL)
+  bool isRAJATemplateFunctionCallParameter(SgLocatedNode* n,  // n: SgLambdaExp
+                       SgExprStatement* & callStmt, 
+                       SgFunctionDeclaration*& raja_func_decl)
   {
     bool retval = false; 
     ROSE_ASSERT (n!= NULL);
-    if (SgLambdaExp* le = isSgLambdaExp (n))
+    // Add another case: the call to the lambda exp is indirectly through a variable reference.
+    SgExpression* le = isSgExpression(n);
+    if (isSgLambdaExp (le) || isSgVarRefExp(le))
     {
       SgNode* parent = le->get_parent();
       ROSE_ASSERT(parent!=NULL);
@@ -151,15 +175,19 @@ namespace RAJA_Checker
       if (SgFunctionCallExp* call_exp = isSgFunctionCallExp (parent)) 
       {
         retval = isCallToRAJAFunction (call_exp);
-        if (raja_func_decl != NULL)
-          * raja_func_decl = call_exp-> getAssociatedFunctionDeclaration();
+        //if (raja_func_decl != NULL)
+        raja_func_decl = call_exp-> getAssociatedFunctionDeclaration();
+        callStmt = isSgExprStatement(call_exp->get_parent());
+        ROSE_ASSERT(callStmt);
       }
     }
+#if 0
     else
     {
-      cerr<<"isRAJATemplateFunctionCallParameter () encounters a parameter which is not SgLambdaExp:"<< n->class_name()<<endl;
+      cerr<<"isRAJATemplateFunctionCallParameter () encounters a parameter which is not SgLambdaExp or SgVarRef:"<< n->class_name()<<endl;
       ROSE_ASSERT (false);
     }
+#endif    
     return retval;
   }
 
@@ -278,35 +306,127 @@ SgExprStatement
 
  * */
 
+
+// Check if two integer variables are connected through an indirect array access: int i1 = IndexSet[i2]; 
+// Useful to find of i is derived from loop index i2 for example stmt like:
+//  a[i] = ..; 
+// single level of indexSet?? int i1 = IndexSet[i2];
+// TODO: multiple level of indexSet?? int i1 = IndexSet[iS2[i2]];
+bool RAJA_Checker::connectedViaIndexSet (SgVarRefExp* varRef1, SgInitializedName* loopIndex)
+{
+  AstMatching m;
+  ROSE_ASSERT (varRef1!=NULL);
+  ROSE_ASSERT (loopIndex!=NULL);
+  if (enable_debug)
+  {
+    cout<<"\t\t Entering connectedViaIndexSet () ..."<<endl;
+  }  
+
+  SgVariableSymbol* sym = varRef1->get_symbol();
+  SgInitializedName* iname = sym->get_declaration();
+  SgDeclarationStatement* decl = iname->get_declaration();
+  
+  if (enable_debug)
+  {
+    cout<<"\t\t the ast term for var decl:"<<endl;
+    string p("$rhs=SgVariableDeclaration");
+    MatchResult res=m.performMatching(p, decl);
+    for(MatchResult::iterator i=res.begin();i!=res.end();++i) {
+      SgVariableDeclaration* i1 = isSgVariableDeclaration((*i)["$rhs"]);
+      cout<< AstTerm::astTermWithNullValuesToString(i1)<<endl;
+    }
+  }
+
+  //        SgVariableDeclaration(null,SgInitializedName(SgAssignInitializer(SgPntrArrRefExp(SgVarRefExp,SgVarRefExp))))
+  //string p("SgVariableDeclaration(null,SgInitializedName(SgAssignInitializer(SgPntrArrRefExp(SgVarRefExp,$rhs=SgVarRefExp))))");
+  // there may be this-> pointer for indeSet variable reference!!
+  string p("SgVariableDeclaration(null,SgInitializedName(SgAssignInitializer(SgPntrArrRefExp(_,$rhs=SgVarRefExp))))");
+  MatchResult res=m.performMatching(p, decl);
+  if (enable_debug)
+    cout<<"\t\t matched result size():"<<res.size()<<endl;
+#if 1  
+  for(MatchResult::iterator i=res.begin();i!=res.end();++i) {
+     SgVarRefExp* rhs = isSgVarRefExp((*i)["$rhs"]);
+
+     //SgVariableDeclaration* i1 = isSgVariableDeclaration((*i)["$rhs"]);
+     //cout<< AstTerm::astTermWithNullValuesToString(i1)<<endl;
+
+     ROSE_ASSERT (rhs);
+     SgVariableSymbol* sym2= rhs->get_symbol();
+     ROSE_ASSERT (sym2);
+     SgInitializedName* i2 = sym2->get_declaration();
+     if (loopIndex==i2 ) 
+       return true; 
+  }
+#endif  
+  return false;
+}
+
 // Check if an operand is a form of x[index], x is a pointer to a double, index is a loop index
 bool isDoubleArrayAccess (SgExpression* exp, SgInitializedName * lvar)
 {
   ROSE_ASSERT (lvar != NULL);
-  if (exp == NULL) return false;
+  if (exp == NULL) 
+  {
+    if (RAJA_Checker::enable_debug) cout<<"\t\t\t NULL exp" <<endl;
+    return false;
+  }
   SgPntrArrRefExp* arr = isSgPntrArrRefExp (exp);
   if (arr == NULL)
+  {
+    if (RAJA_Checker::enable_debug) cout<<"\t\t\t not SgPntrArrRefExp, but" << exp->class_name() <<endl;
     return false;
+  }
 
   SgExpression* lhs, *rhs;
   lhs = arr->get_lhs_operand();
-  if (lhs == NULL) return false;
+  if (lhs == NULL) 
+  {
+    if (RAJA_Checker::enable_debug) cout<<"\t\t\t lhs of a[i] is NULL " <<endl;
+    return false;
+  }
   rhs = arr->get_rhs_operand();
-  if (rhs == NULL) return false;
+  if (rhs == NULL) 
+  {
+    if (RAJA_Checker::enable_debug) cout<<"\t\t\t rhs of a[i] is NULL " <<endl;
+    return false;
+  }
 
   // lhs is a pointer type
-  SgPointerType* ptype = isSgPointerType(lhs->get_type());
+  SgType* ltype = lhs->get_type()->stripType(SgType::STRIP_TYPEDEF_TYPE|SgType::STRIP_REFERENCE_TYPE);
+  SgPointerType* ptype = isSgPointerType(ltype);
   if (!ptype)
+  {
+    if (RAJA_Checker::enable_debug) cout<<"\t\t\t array var's type is not a pointer type, but " << lhs->get_type()->class_name() <<endl;
     return false;
+  }
   // lhs is a pointer to double  
    if (! isSgTypeDouble( ptype->get_base_type()) )
+   {
+    if (RAJA_Checker::enable_debug) cout<<"\t\t\t ptype of array 's base type not a double type, but " << ptype->get_base_type()->class_name()<<endl;
     return false;
+   }
   
   // rhs is a loop index
   SgVarRefExp* varRef = isSgVarRefExp(rhs) ;
-  if (varRef == NULL) return false;
-
-  if (varRef->get_symbol() != lvar->get_symbol_from_symbol_table ())
+  if (varRef == NULL) 
+  {
+    if (RAJA_Checker::enable_debug) cout<<"\t\t\t rhs of a[i] is not SgVarRefExp, but " << rhs->class_name() <<endl;
     return false;
+  }
+
+  SgSymbol * s1 = varRef->get_symbol();
+  SgSymbol * s2 = lvar->get_symbol_from_symbol_table ();
+  if ( s1 != s2 && !connectedViaIndexSet(varRef, lvar))
+  {
+    if (RAJA_Checker::enable_debug) 
+    {
+      cout<<"\t\t\t symbol is not equal to loop index symbol" <<endl;
+      cout<< "\t\t\t rhs of a[i] var Ref:" << varRef->unparseToString() <<" : "<<s1->unparseToString() <<endl;
+      cout<< "\t\t\t loop index var:" << lvar->unparseToString() <<" : "<<s2->unparseToString() <<endl;
+    }
+    return false;
+  }
   
   return true; 
 }
@@ -335,34 +455,66 @@ bool isNodalAccumulationOp (SgExpression* op)
  * */
 bool isNodalAccumulationStmt (SgStatement* s, SgInitializedName* lvar)
 {
+  if (RAJA_Checker::enable_debug)  // ofile is used for diffing,   cout is for checking traces
+    cout<<"\t checking isNodalAccumulationStmt for stmt at line:"<<s->get_file_info()->get_line()<<endl;
+
   ROSE_ASSERT (lvar != NULL);
-   if (s==NULL) return false;
-   SgExprStatement* es = isSgExprStatement (s);
-   if (es==NULL) return false;
+  if (s==NULL) return false;
+  SgExprStatement* es = isSgExprStatement (s);
+  if (es==NULL) 
+  {
+    if (RAJA_Checker::enable_debug)
+      cout<<"\t\t not SgExprStatement"<<endl;
+    return false;
+  }
 
-   SgExpression* exp = es->get_expression();
-   if (exp==NULL)
-     return false;
-   
-   if (! isNodalAccumulationOp (exp) )
-     return false;
+  SgExpression* exp = es->get_expression();
+  if (exp==NULL)
+  {
+    if (RAJA_Checker::enable_debug)
+      cout<<"\t\t not SgExpression"<<endl;
+    return false;
+  }
 
-   SgBinaryOp* bop = isSgBinaryOp (exp);
-   ROSE_ASSERT (bop != NULL);
+  if (! isNodalAccumulationOp (exp) )
+  {  
+    if (RAJA_Checker::enable_debug)
+      cout<<"\t\t not NodalAccumulationOp"<<endl;
+    return false;
+  }
 
-   // lhs is x[i]
-   if (!isDoubleArrayAccess(bop->get_lhs_operand(), lvar))
-     return false;
-  
-    // rhs is a scalar type
-   if (!SageInterface::isScalarType (bop->get_rhs_operand()->get_type())) 
-     return false;
+  SgBinaryOp* bop = isSgBinaryOp (exp);
+  ROSE_ASSERT (bop != NULL);
 
-   // rhs is a double type
-   if (!isSgTypeDouble(bop->get_rhs_operand()->get_type())) 
-     return false;
+  // lhs is x[i]
+  if (!isDoubleArrayAccess(bop->get_lhs_operand(), lvar))
+  {
+    if (RAJA_Checker::enable_debug)
+     cout<<"\t\t not DoubleArrayAccess like array[index] for lhs"<<endl;
+    return false;
+  }
+
+  // rhs is a scalar type
+  SgType* rhs_type = bop->get_rhs_operand()->get_type();
+  rhs_type = rhs_type->stripType(SgType::STRIP_REFERENCE_TYPE);
+  if (!SageInterface::isScalarType (rhs_type)) 
+  {
+    if (RAJA_Checker::enable_debug)
+      cout<<"\t\t not scalar type for rhs, but "<< rhs_type->class_name()<<endl;
+    return false;
+  }
+  // skip const or typedef chain
+  rhs_type =rhs_type->stripTypedefsAndModifiers();
+
+  // rhs is a double type
+  if (!isSgTypeDouble(rhs_type)) 
+  {
+    if (RAJA_Checker::enable_debug)
+      cout<<"\t\t not double type for rhs"<<endl;
+    return false;
+  }
   // meet all conditions above
-   return true;
+  return true;
 }
 
 bool isNullStatement(SgStatement* s)
@@ -398,6 +550,8 @@ bool RAJA_Checker::isNodalAccumulationBody(SgBasicBlock* bb, SgInitializedName* 
 {
   ROSE_ASSERT (bb != NULL);
   ROSE_ASSERT (lvar != NULL);
+  if (enable_debug)
+    cout<<"\tEntering isNodalAccumulationBody() for basic block at line:"<<bb->get_file_info()->get_line()<<endl;
   //if the body contains at least 4 nodal accumulation statement in a row, then it is a matched loop
   // Find all expression statements. if there is one Nodal Accumulation Statement (NAS) , and it is followed by 3 other NAS.
   // then there is a match. 
@@ -428,20 +582,67 @@ bool RAJA_Checker::isNodalAccumulationBody(SgBasicBlock* bb, SgInitializedName* 
   return false;
 }
 
+bool RAJA_Checker::hasNodalAccumulationBody( SgLambdaExp* exp, SgExprStatement*& fstmt)
+{
+  ROSE_ASSERT(exp);
+   if (enable_debug)
+     cout<<"\t\t entering hasNodalAccumulationBody ..."<<endl;
+   // ROSE uses a anonymous class declaration for lambda expression. Its function is a member function. 
+   SgMemberFunctionDeclaration* lfunc = isSgMemberFunctionDeclaration( exp->get_lambda_function());
+   if (lfunc ==NULL) return false;
+
+   // loop variable is modeled as the first parameter of the lambda function's parameter list
+   SgFunctionParameterList* plist = lfunc->get_parameterList();
+   if (plist ==NULL) return false;
+   
+   // TODO handle more complex RAJA pattern using loop index variables. 
+   SgInitializedName* lvar= (plist->get_args())[0];
+   if (lvar ==NULL) return false;
+
+   SgFunctionDefinition* def = lfunc->get_definition();
+   if (def==NULL) return false;
+   SgBasicBlock* bb = def->get_body();
+   if (bb ==NULL) return false;
+
+  return isNodalAccumulationBody (bb, lvar, fstmt);
+  
+}
 bool RAJA_Checker::isNodalAccumulationLoop(SgForStatement* forloop, SgExprStatement*& fstmt)
 {
   SgStatement* body = forloop->get_loop_body();
-  if (body == NULL) return false;
+  if (body == NULL) 
+  {
+    if (RAJA_Checker::enable_debug)
+      cout<< "NULL body, return false;"<<endl;;
+    return false;
+  }
 
   SgBasicBlock* bb = isSgBasicBlock(body);
-  if (bb == NULL) return false;
+  if (bb == NULL) 
+  {
+    if (RAJA_Checker::enable_debug)
+      cout<< "NULL Basic Block as body, return false;"<<endl;;
+    return false;
+  }
 
   SgInitializedName* lvar = SageInterface::getLoopIndexVariable (forloop);
   if (lvar ==NULL)
   {
+#if 0    
+    AstMatching m;
+    
+    MatchResult res=m.performMatching("SgForStatement(_,_,SgPlusPlusOp($I=SgVarRefExp)|SgMinusMinusOp($I=SgVarRefExp),..)",forloop);
+
+    ofile<<res.size()<<endl;
+    for(MatchResult::iterator i=res.begin();i!=res.end();++i) {
+       SgVarRefExp* ivar = isSgVarRefExp( (*i)["$I"]);
+       ofile<<"var:"<< ivar->unparseToString()<<endl;
+    }
+#endif    
     if (RAJA_Checker::enable_debug)
     {
-      cerr<<"Warning: SageInterface::getLoopIndexVariable() returns NULL for loop:"<<forloop->get_file_info()->displayString()<<endl;
+
+      cout<<"Warning: SageInterface::getLoopIndexVariable() returns NULL for loop:"<<forloop->get_file_info()->displayString()<<endl;
     }
     return false;
   }
@@ -466,33 +667,110 @@ SgExprStatement
 ******* SgBasicBlock  // the lambda function body
 
  * */
-bool RAJA_Checker::isNodalAccumulationLambdaExp(SgLambdaExp* exp, SgExprStatement* & fstmt)
+bool RAJA_Checker::isEmbeddedNodalAccumulationLambda(SgLambdaExp* exp, SgExprStatement* & fstmt)
 {
   ROSE_ASSERT (exp!=NULL);
   // this is the raja template function declaration!!
   SgFunctionDeclaration* raja_func = NULL;
-  if (!isRAJATemplateFunctionCallParameter (exp, & raja_func))
+  SgExprStatement* call_stmt = NULL;
+  if (!isRAJATemplateFunctionCallParameter (exp, call_stmt, raja_func))
     return false;
    
    if (raja_func ==NULL) return false;
 
-   // ROSE uses a anonymous class declaration for lambda expression. Its function is a member function. 
-   SgMemberFunctionDeclaration* lfunc = isSgMemberFunctionDeclaration( exp->get_lambda_function());
-   if (lfunc ==NULL) return false;
+  return hasNodalAccumulationBody (exp, fstmt);
+}
 
-   // loop variable is modeled as the first parameter of the lambda function's parameter list
-   SgFunctionParameterList* plist = lfunc->get_parameterList();
-   if (plist ==NULL) return false;
+// In this pattern: the lambda function is declared first, then called by the RAJA function in the same scope
+/*
+Example simplest code:
 
-   SgInitializedName* lvar= (plist->get_args())[0];
-   if (lvar ==NULL) return false;
+auto kernel = [=](int i)
+{
+  x1[i] += rh1;
+} ; 
 
-   SgFunctionDefinition* def = lfunc->get_definition();
-   if (def==NULL) return false;
-   SgBasicBlock* bb = def->get_body();
-   if (bb ==NULL) return false;
+forall(kernel);
 
-  return isNodalAccumulationBody (bb, lvar, fstmt);
+The AST: 
+  auto kernel ..;  is a variable declaration; rhs is a lambda expression.
+  forall(kernel): is a function call with a parameter referencing kernel. 
+
+The algorithm:
+ 
+*/
+bool RAJA_Checker::isIndirectNodalAccumulationLambda(SgLambdaExp* exp, SgExprStatement*& fstmt, SgExprStatement*& callStmt)
+{ 
+  if (enable_debug)
+    cout<<"\t Entering isIndirectNodalAccumulationLambda()."<<endl;
+  ROSE_ASSERT (exp);
+
+  //1.  check if this is within auto kernel = ...; 
+  SgStatement* stmt = SageInterface::getEnclosingStatement(exp);
+  AstMatching m; 
+  MatchResult r =m.performMatching ("$L=SgVariableDeclaration(null,SgInitializedName(SgAssignInitializer($R=SgLambdaExp)))", stmt);
+  // must match exactly 1.
+  if (r.size()!=1 ) 
+  {
+    if (enable_debug)
+      cout<<"\t\t Match more than one variable decl within isIndirectNodalAccumulationLambda."<<endl;
+    return false;
+  }
+
+  SgVariableDeclaration* decl = NULL;
+  SgLambdaExp*  exp2 = NULL;
+  for(MatchResult::iterator i=r.begin();i!=r.end();++i) {
+    decl = isSgVariableDeclaration((*i)["$L"]);
+    //cout<< AstTerm::astTermWithNullValuesToString(i1)<<endl;
+    exp2 = isSgLambdaExp((*i)["$R"]);
+  }
+
+  if (exp !=exp2) 
+  {
+    if (enable_debug)
+      cout<<"\t\t Cannot find auto kernel=lambda_exp; for lambda exp at line:"<< exp->get_file_info()->get_line()<<endl;
+    return false;
+  }
+  // now we have found: auto kernel = lambda_exp; 
+
+  //2. if kernel is called within RAJA::forall ()
+  // find all next statements within the same scope
+  SgStatement* nstmt= getNextNonNullStatement (decl);
+  bool found = false; 
+  while (nstmt != NULL)
+  {
+    RoseAst ast (nstmt); 
+    for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+      SgNode* n= (*i);
+      if (SgVarRefExp* varRef = isSgVarRefExp(n))
+      {
+        if (varRef->get_symbol() == getFirstVarSym(decl))
+        {
+          // if this is a raja call's parameter ..
+          SgFunctionDeclaration* raja_func = NULL;
+          if (isRAJATemplateFunctionCallParameter (varRef, callStmt, raja_func))
+          {
+            found = true;
+            break; 
+          }
+        } // symbol match
+      }
+    } // end for 
+
+    if (found)
+      break; 
+    nstmt = getNextNonNullStatement (nstmt);
+  } // end while
+
+  if(!found)
+  {
+    if (enable_debug)
+      cout<<"Cannot find RAJA::forall <> () using indirect reference to lambda exp at line:"<< exp->get_file_info()->get_line()<<endl;
+    return false;
+  }
+
+  //3. if the kernel has the pattern
+  return hasNodalAccumulationBody(exp, fstmt);
 }
 
 class RoseVisitor : public AstSimpleProcessing
@@ -517,6 +795,9 @@ void RoseVisitor::visit ( SgNode* n)
       if (checkNodalAccumulationPattern)
       {
         SgExprStatement* fstmt = NULL; 
+
+        if (RAJA_Checker::enable_debug)
+            cout<<"Entering checkNodalAccumulationPattern for loop at line:" << forloop->get_file_info()->get_line()<<endl;
         if ( isNodalAccumulationLoop (forloop, fstmt))
         {
             ostringstream oss;
@@ -541,12 +822,18 @@ void RoseVisitor::visit ( SgNode* n)
 //----------- Check if the lambda expression is a parameter of RAJA function call with nodal accumulation pattern
         if (checkNodalAccumulationPattern)
         {
+          if (RAJA_Checker::enable_debug)
+             cout<<"Entering checking for Lambda Exp at line: "<<le->get_file_info()->get_line() <<endl;
           SgExprStatement* fstmt = NULL; 
-          if ( isNodalAccumulationLambdaExp(le, fstmt))
+          SgExprStatement* callstmt = NULL; 
+
+          if ( isEmbeddedNodalAccumulationLambda(le, fstmt) || isIndirectNodalAccumulationLambda (le, fstmt, callstmt) )
           {
               ostringstream oss; 
               oss<<"Found a nodal accumulation lambda function at line:"<< le->get_file_info()->get_line()<<endl;
               oss<<"\t The first accumulation statement is at line:"<< fstmt->get_file_info()->get_line()<<endl;
+              if (callstmt)
+                oss<<"\t This labmda function is used as a function parameter in a RAJA function is at line:"<< callstmt->get_file_info()->get_line()<<endl;
 
               SgSourceFile* file = getEnclosingSourceFile(le);
               Rose::KeepGoing::File2StringMap[file]+=oss.str();
@@ -560,7 +847,8 @@ void RoseVisitor::visit ( SgNode* n)
 
 //----------- Check if the lambda expression is used as a parameter of RAJA function call
         SgFunctionDeclaration* raja_func = NULL; 
-        if (isRAJATemplateFunctionCallParameter (le, & raja_func))
+        SgExprStatement* call_stmt = NULL; 
+        if (isRAJATemplateFunctionCallParameter (le, call_stmt, raja_func))
         {
           //cout<<"Found a lambda exp within RAJA func call ..."<<endl; 
           //le->get_file_info()->display();
