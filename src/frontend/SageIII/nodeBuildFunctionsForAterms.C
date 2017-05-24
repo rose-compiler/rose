@@ -6095,6 +6095,35 @@ SgOmpAtomicStatement* SgOmpAtomicStatement::build_node_from_nonlist_children ( S
      return returnNode;
    }
 
+// Rasmussen (05/24/2017): not actually generated but should be
+// Generated static function for building IR nodes for Aterm support (like a constructor).
+SgOmpAtomicClause* SgOmpAtomicClause::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgOmpClause::omp_atomic_clause_enum clause_enum )
+{
+#if 0
+   // debugging information!
+   printf ("In SgOmpAtomicClause::build_node_from_nonlist_children ($CONSTRUCTOR_PARAMETER_LIST): this = %p = %s \n",this,\
+           this->class_name().c_str());
+#endif
+
+   SgOmpAtomicClause* returnNode = NULL;
+
+   return returnNode;
+}
+
+// Rasmussen (05/24/2017): not actually generated but should be
+// Generated static function for building IR nodes for Aterm support (like a constructor).
+SgOmpProcBindClause* SgOmpProcBindClause::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgOmpClause::omp_proc_bind_policy_enum policy_enum)
+{
+#if 0
+   // debugging information!
+   printf ("In SgOmpProcBindClause::build_node_from_nonlist_children ($CONSTRUCTOR_PARAMETER_LIST): this = %p = %s \n",this,\
+           this->class_name().c_str());
+#endif
+
+   SgOmpProcBindClause* returnNode = NULL;
+
+   return returnNode;
+}
 
 /* #line 5976 "../../../src/frontend/SageIII//Cxx_GrammarAtermNodeBuildFunctions.C" */
 
