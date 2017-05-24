@@ -4934,7 +4934,7 @@ UnparseLanguageIndependentConstructs::isRequiredOperator( SgBinaryOp* binary_op,
 #endif
 
 #if 1
-  // DQ (7/6/2014): Simpler appraoch, but wrong since overloaded operators unparsed 
+  // DQ (7/6/2014): Simpler approach, but wrong since overloaded operators unparsed 
   // using operator syntax will always be marked as compiler generated.
   // bool is_compiler_generated = binary_op->isCompilerGenerated();
 
@@ -6652,6 +6652,8 @@ void UnparseLanguageIndependentConstructs::unparseOmpExpressionClause(SgOmpClaus
     curprint(string(" num_threads("));
   else if (isSgOmpDeviceClause(c))
     curprint(string(" device("));
+  else if (isSgOmpSafelenClause(c))
+    curprint(string(" safelen("));
   else {
     cerr<<"Error: unacceptable clause type within unparseOmpExpressionClause():"<< clause->class_name()<<endl;
     ROSE_ASSERT(false);
@@ -6697,6 +6699,17 @@ void UnparseLanguageIndependentConstructs::unparseOmpClause(SgOmpClause* clause,
         curprint(string(" nowait"));
         break;
       }
+    case V_SgOmpInbranchClause:
+      {
+        curprint(string(" inbranch"));
+        break;
+      }
+     case V_SgOmpNotinbranchClause:
+      {
+        curprint(string(" notinbranch"));
+        break;
+      }
+ 
     case V_SgOmpOrderedClause:
       {
         curprint(string(" ordered"));
@@ -6726,6 +6739,7 @@ void UnparseLanguageIndependentConstructs::unparseOmpClause(SgOmpClause* clause,
     case V_SgOmpCollapseClause:
     case V_SgOmpIfClause:  
     case V_SgOmpNumThreadsClause:  
+    case V_SgOmpSafelenClause:  
       //case V_SgOmpExpressionClause: // there should be no instance for this clause
       {
         unparseOmpExpressionClause(isSgOmpExpressionClause(clause), info);

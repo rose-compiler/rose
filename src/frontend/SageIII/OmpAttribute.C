@@ -694,6 +694,9 @@ namespace OmpSupport
       case e_begin: result = "begin"; break;
       case e_end:   result = "end";   break;
 
+      case e_inbranch: result = "inbranch"; break;
+      case e_notinbranch:   result = "notinbranch";   break;
+
       case e_not_omp: result = "not_omp"; break;
       default: 
       {
@@ -1029,6 +1032,8 @@ namespace OmpSupport
       case e_uniform:
       case e_aligned:
 
+      case e_inbranch:
+      case e_notinbranch:
         result = true; 
         break;
       default:

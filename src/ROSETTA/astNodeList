@@ -549,6 +549,8 @@ SgOmpUniformClause
 SgOmpAlignedClause
 SgOmpProcBindClause
 SgOmpAtomicClause
+SgOmpInbranchClause
+SgOmpNotinbranchClause
 SgOpenclAccessModeModifier
 SgOpenStatement
 SgOptions
