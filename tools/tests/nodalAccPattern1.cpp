@@ -53,7 +53,6 @@ void foo0(double* x, int jp, int kp, int begin, int end, double rh1)
    } 
 }
 
-
 // negative test case: the tool should not find the patterns. 
 // -------------------------------------------
 void foo1(double* x, int jp, int kp, int begin, int end, double rh1)
@@ -75,6 +74,7 @@ void foo1(double* x, int jp, int kp, int begin, int end, double rh1)
       x3[i] *= rh1; 
       x4[i] /= rh1; 
    } 
+   
 }
 
 
@@ -136,6 +136,14 @@ void foo4(double* x, int jp, int kp, int begin, int end, double rh1)
       x3[i] *= rh1; 
       x4[i] /= rh1; 
    } 
+   for (; i< end; i--)
+   {
+      x1[i] += rh1; // not accumulation pattern
+      x2[i] -= rh1; 
+      x3[i] *= rh1; 
+      x4[i] /= rh1; 
+   } 
+
 }
 
 

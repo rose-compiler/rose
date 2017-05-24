@@ -8446,7 +8446,7 @@ SageInterface::isTemplateInstantiationNode(SgNode* node)
   // DQ (7/19/2015): I think we want to focus exclusively on declarations.
      if (isSgTemplateInstantiationDefn(node) != NULL)
         {
-#if 0
+#if 1
           printf ("Note: In SageInterface::isTemplateInstantiationNode(): skipping SgTemplateInstantiationDefn \n");
 #endif
         }
@@ -18247,6 +18247,7 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
                      break;
                      case V_SgFortranIncludeLine:
                      case V_SgAttributeSpecificationStatement:
+                     case V_SgPragmaDeclaration: 
                        break;
                     default:
                        {
