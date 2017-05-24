@@ -544,6 +544,7 @@ SgOmpUntiedClause
 SgOmpVariablesClause
 SgOmpMapClause
 SgOmpSafelenClause
+SgOmpSimdlenClause
 SgOmpLinearClause
 SgOmpUniformClause
 SgOmpAlignedClause

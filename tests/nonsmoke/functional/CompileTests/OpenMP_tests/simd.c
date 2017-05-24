@@ -13,16 +13,27 @@ void foo2 (int n, double *a, double* b)
     a[i]=b[i];
 }
 
-#if 0
 void foo3 (int n, double *a, double* b)
 {
   int j=0;
-#pragma omp simd simdlen(16) linear(i,1)
+#pragma omp simd simdlen(16)
   for (int i=0; i<n; i++,j++)
   {
     a[i]=b[i]+j;
   }
 }
+
+#if 0
+void foo32 (int n, double *a, double* b)
+{
+  int j=0;
+#pragma omp simd simdlen(16) linear(j)
+  for (int i=0; i<n; i++,j++)
+  {
+    a[i]=b[i]+j;
+  }
+}
+
 
 #define N 45
 int a[N], b[N], c[N];

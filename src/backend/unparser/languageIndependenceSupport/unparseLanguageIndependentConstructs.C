@@ -6654,6 +6654,8 @@ void UnparseLanguageIndependentConstructs::unparseOmpExpressionClause(SgOmpClaus
     curprint(string(" device("));
   else if (isSgOmpSafelenClause(c))
     curprint(string(" safelen("));
+  else if (isSgOmpSimdlenClause(c))
+    curprint(string(" simdlen("));
   else {
     cerr<<"Error: unacceptable clause type within unparseOmpExpressionClause():"<< clause->class_name()<<endl;
     ROSE_ASSERT(false);
@@ -6740,6 +6742,7 @@ void UnparseLanguageIndependentConstructs::unparseOmpClause(SgOmpClause* clause,
     case V_SgOmpIfClause:  
     case V_SgOmpNumThreadsClause:  
     case V_SgOmpSafelenClause:  
+    case V_SgOmpSimdlenClause:  
       //case V_SgOmpExpressionClause: // there should be no instance for this clause
       {
         unparseOmpExpressionClause(isSgOmpExpressionClause(clause), info);
@@ -6979,7 +6982,7 @@ void UnparseLanguageIndependentConstructs::unparseOmpDirectivePrefixAndName (SgS
       case V_SgOmpSimdStatement:
       {
         unparseOmpPrefix(info);
-        curprint(string ("simd "));
+        curprint(string ("simd"));
         break;
       }
      case V_SgOmpSectionsStatement:
