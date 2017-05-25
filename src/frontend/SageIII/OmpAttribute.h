@@ -103,6 +103,8 @@ namespace OmpSupport
     e_collapse,
     e_untied, 
     e_atomic_clause, 
+    e_inbranch,
+    e_notinbranch,
 
     // Simple values for some clauses
 
@@ -175,6 +177,7 @@ namespace OmpSupport
     // experimental SIMD directive, phlin 8/5/2013
     e_simd,
     e_safelen,
+    e_simdlen,
     e_uniform,
     e_aligned,
     e_linear,

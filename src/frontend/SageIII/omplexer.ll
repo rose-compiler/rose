@@ -113,6 +113,9 @@ none            { return cond_return ( NONE ); }
 reduction       { return cond_return ( REDUCTION ); }
 copyin          { return cond_return ( COPYIN ); }
 
+inbranch        { return cond_return ( INBRANCH ); }
+notinbranch     { return cond_return ( NOTINBRANCH ); }
+
 proc_bind       { return cond_return ( PROC_BIND); }
 close           { return cond_return ( CLOSE ); }
 spread          { return cond_return ( SPREAD ); } /* master should already be recognized */
@@ -139,6 +142,7 @@ from            {return cond_return ( FROM ); }
 tofrom          {return cond_return ( TOFROM ); }
 simd            {return cond_return ( SIMD ); }
 safelen         {return cond_return ( SAFELEN ); }
+simdlen         {return cond_return ( SIMDLEN ); }
 aligned         {return cond_return ( ALIGNED ); }
 linear          {return cond_return ( LINEAR ); }
 uniform         {return cond_return ( UNIFORM ); }
