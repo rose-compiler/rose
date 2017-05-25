@@ -6139,7 +6139,6 @@ SgOmpNotinbranchClause* SgOmpNotinbranchClause::build_node_from_nonlist_children
 
 // Rasmussen (05/25/2017): not actually generated but should be
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgOmpInbranchClause::build_node_from_nonlist_children(Sg_File_Info*)
 SgOmpInbranchClause* SgOmpInbranchClause::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct )
    {
 #if 0
