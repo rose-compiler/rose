@@ -3,13 +3,13 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 COUNTEREXAMPLES = counterexamples/ltl2haskell.sh counterexamples/Makefile counterexamples/qc.hs counterexamples/log2csv.awk
 EXTRA_DIST = EqualityMaintainer.C Doxyfile $(TESTS) $(COUNTEREXAMPLES)
 
-bin_PROGRAMS = codethorn woodpecker analyterix matcher_demo matcher astinfo
-noinst_PROGRAMS = addressTakenAnalysis matcher_demo astinfo
+bin_PROGRAMS = codethorn woodpecker analyterix matcher_demo matcher scat1 astinfo
+noinst_PROGRAMS = addressTakenAnalysis matcher_demo matcher astinfo
 
 CLEANFILES = 
 
-AM_LDFLAGS = $(ROSE_LIBS) $(LIBS_WITH_RPATH) -fopenmp -L$(SPOT_PREFIX)/lib
-AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/Codethorn/src -I$(SPOT_PREFIX)/include/spot -I$(SPOT_PREFIX)/include
+AM_LDFLAGS = $(ROSE_LIBS) $(LIBS_WITH_RPATH) -fopenmp -L$(SPOT_PREFIX)/lib $(Z3_LIB_INCLUDES)
+AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/Codethorn/src -I$(SPOT_PREFIX)/include/spot -I$(SPOT_PREFIX)/include $(Z3_INCLUDES) -g -rdynamic
 
 MYDATE = $(shell date +%Y_%m_%d)
 
@@ -20,8 +20,7 @@ libspray_la_SOURCES=\
  AliasAnalysis.h \
  AnalysisAbstractionLayer.h \
  AnalysisAstAnnotator.h \
- AstTerm.h \
- AType.h \
+ AbstractValue.h \
  BoolLattice.h \
  CFAnalysis.h \
  DFAnalysisBase.h \
@@ -54,8 +53,8 @@ libspray_la_SOURCES=\
  WorkListSeq.h \
  AnalysisAstAnnotator.C \
  AliasAnalysis.C \
- AstTerm.C \
- AType.C \
+ AbstractValue.C \
+ TypeSizeMapping.C \
  BoolLattice.C \
  CFAnalysis.C \
  CppExprEvaluator.C \
@@ -102,7 +101,8 @@ codethorn_YFLAGS = -p ltl_ # yacc flags for LTL parser
 codethorn_CXXFLAGS = -fopenmp -Wall -O3 -march=native -ftree-vectorize
 codethorn_DEPENDENCIES=libspray.la
 #codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspot -lbdd -lspray
-codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray -lspot -lbdd 
+codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray -lspot -lbdd
+#codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray -lspot -lbdd -lz3
 codethorn_LDFLAGS = -L$(SPOT_PREFIX)/lib
 
 codethorn_SOURCES = \
@@ -184,8 +184,14 @@ codethorn_SOURCES = \
   ParProLtlMiner.C                 \
   ParProLtlMiner.h                 \
   ReadWriteData.h \
-  StateRepresentations.C           \
-  StateRepresentations.h           \
+  PState.C           \
+  PState.h           \
+  EState.C           \
+  EState.h           \
+  InputOutput.C           \
+  InputOutput.h           \
+  ParProEState.C           \
+  ParProEState.h           \
   Timer.cpp                        \
   Timer.h                          \
   TransitionGraph.h                \
@@ -474,6 +480,11 @@ matcher_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
 matcher__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
 matcher_SOURCES = Timer.cpp matcher.C
 
+scat1_DEPENDENCIES=libspray.la
+scat1_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
+scat1__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
+scat1_SOURCES = Timer.cpp scat1.C
+
 #MS: iterator_test not ingegrated yet
 #iterator_test_SOURCES = iterator_test.C ShowSeq.h
 #iterator_test_LDADD = -lrose libmatcher.la
@@ -503,19 +514,16 @@ check-matcher-demo:
 check-matcher:
 	./matcher_demo  --edg:no_warnings $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat
 
-check-local:
+
+check-codethorn-internal:
 	@echo ================================================================
 	@echo RUNNING CODETHORN INTERNAL CHECKS
 	@echo ================================================================
 	@./codethorn --internal-checks	
-
-	@echo ================================================================
-	@echo RUNNING DATA RACE VERIFICATION TESTS
-	@echo ================================================================
-	@./codethorn --data-race  $(srcdir)/tests/datarace/anti_dep_1.yes.c --max-time=5 --solver=12 --explicit-arrays
-	@./codethorn --data-race  $(srcdir)/tests/datarace/inner_only_1.no.c --max-time=5 --solver=12 --explicit-arrays
-
 	@./codethorn --edg:no_warnings $(srcdir)/tests/typetest1.C 
+
+#check-local: check-codethorn-internal check-data-races check-flow-insenstive check-ltl
+check-local: check-codethorn-internal check-data-races check-ltl
 	@echo ================================================================
 	@echo RUNNING VERIFICATION ERROR TESTS
 	@echo ================================================================
@@ -524,24 +532,33 @@ check-local:
 	@./codethorn --enable-external-function-semantics $(srcdir)/tests/svcomp-test5.c --edg:no_warnings
 
 	@echo ================================================================
-	@echo RUNNING CONST ANALYSIS CHECK
-	@echo ================================================================
-	@./woodpecker --edg:no_warnings --csv-const-result=tmp.const.csv $(srcdir)/tests/Problem1401_opt.pp.c 
-	@diff tmp.const.csv $(srcdir)/tests/Problem1401_opt.pp.const.csv
-	@rm tmp.const.csv
-
-	@echo ================================================================
 	@echo RUNNING UPDATE SEQUENCE VERIFICATION TESTS
 	@echo ================================================================
 	@./codethorn --edg:no_warnings $(srcdir)/tests/jacobi-1d-imper_mod.c --dump-non-sorted=tmp.nsdump
 	@diff tmp.nsdump $(srcdir)/tests/jacobi-1d-imper_mod.c.nsdump
 	@rm tmp.nsdump
 
+check-data-races:
+	@echo ================================================================
+	@echo RUNNING DATA RACE VERIFICATION TESTS
+	@echo ================================================================
+	@./codethorn --data-race  $(srcdir)/tests/datarace/anti_dep_1.yes.c --max-time=5 --solver=12 --explicit-arrays
+	@./codethorn --data-race  $(srcdir)/tests/datarace/inner_only_1.no.c --max-time=5 --solver=12 --explicit-arrays
+
+
+check-flow-insenstive:
 	@echo ================================================================
 	@echo RUNNING STATIC PROGRAM ANALYSIS TESTS
 	@echo ================================================================
 	@$(srcdir)/scripts/runAnalyterixTests.sh "$(srcdir)" "$(top_builddir)/projects/CodeThorn/src" "$(clean-only)" "$(skip-analyterix)" # Run analyterix tests
+	@echo ================================================================
+	@echo RUNNING CONST ANALYSIS CHECK
+	@echo ================================================================
+	@./woodpecker --edg:no_warnings --csv-const-result=tmp.const.csv $(srcdir)/tests/Problem1401_opt.pp.c 
+	@diff tmp.const.csv $(srcdir)/tests/Problem1401_opt.pp.const.csv
+	@rm tmp.const.csv
 
+check-ltl:
 	@echo ================================================================
 	@echo RUNNING LTL VERIFICATION TESTS
 	@echo ================================================================
@@ -551,10 +568,13 @@ check-local:
 	@$(srcdir)/scripts/runLtlRegressionTests $(srcdir) $(top_builddir)/projects/CodeThorn/src #run RERS examples in several versions and compare to previous results
 	@$(srcdir)/scripts/runBuechiTransformTests $(srcdir) $(top_builddir)/projects/CodeThorn/src #confirm that option --keep-error-states=yes does not lead to erroneous results
 	@$(srcdir)/scripts/run_tests_cegpra $(srcdir) $(top_builddir)/projects/CodeThorn/src #run CEGPRA tests
+	@./codethorn $(srcdir)/tests/rers/Problem1401_opt.c --solver=5 --exploration-mode=breadth-first --edg:no_warnings --rers-binary=no --rersmode=yes --with-ltl-counterexamples=no --counterexamples-with-output=no --input-values="{1,2,3,4,5}" --ltl-in-alphabet="{1,2,3,4,5}" --ltl-out-alphabet="{18,19,20,21,22,23,24,25,26}" --max-transitions-forced-top=1000 --check-ltl=$(srcdir)/tests/rers/constraints-RERS14-5.txt --csv-spot-ltl="Problem1401_ltl_results_forcedtop_1000_n_bf.csv" --csv-assert="Problem1401_assert_results_forcedtop_1000_n_bf.csv" --threads=4  --csv-stats="Problem1401_stats_forcedtop_1000_n_bf_t4.csv" --display-diff=100000 # run abstract mode test
 
 check-arrays:
 	./codethorn $(srcdir)/tests/pointer/test48.cpp --explicit-arrays --viz=yes && dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
 
+check-array-bounds: ./codethorn
+	./codethorn --explicit-arrays $(srcdir)/tests/arraybounds1.C 
 
 # MS: 1-6 is reasonable for V1.2
 RERS=$(patsubst %,Problem%.log, $(shell seq 6))
@@ -583,6 +603,8 @@ clean-local:
 	rm -f *.consistent Problem*.[0-9].csv
 	rm -f codethorn-LTLParser.c++
 	rm -f tmp.nsdump
+	rm -f rose_Problem1401_opt.pp.c
+	rm -f Problem1401_assert_results_forcedtop_1000_n_bf.csv 
 
 distclean-local: clean
 	rm -f *.tgz
@@ -781,3 +803,6 @@ CODETHORN_TESTS= \
     tests/switchtest3.C \
     examples/example-invocations.sh \
     tests/normalization1.C
+
+demo:
+	$(srcdir)/demodir/rundemo.sh $(srcdir)/demodir $(top_builddir)/projects/CodeThorn

@@ -10,6 +10,7 @@ SUBDIRS += roseHPCT
 endif
 
 AM_CPPFLAGS = $(ROSE_INCLUDES)
+AM_LDFLAGS = $(ROSE_RPATHS)
 
 # all: exampleMakefile
 
@@ -40,7 +41,6 @@ endif
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 noinst_PROGRAMS +=				\
-   binaryAnalysisExample			\
    binaryAnalysis_symbolTable			\
    binaryCallGraph				\
    binaryFunctionCfg				\
@@ -77,7 +77,6 @@ NOINST_TUTORIAL_EXAMPLES = \
    bin_example \
    binaryFileRead \
    binaryFileWrite \
-   sb_callgraphAnalysis \
    buildFile \
    buildCFG \
    buildVFA \
@@ -268,10 +267,6 @@ buildFile_SOURCES = buildFile.C
 
 defuseAnalysis_SOURCES = defuseAnalysis.C
 
-binaryAnalysisExample_SOURCES = binaryAnalysisExample.C
-
-sb_callgraphAnalysis_SOURCES = callGraphSourceBinaryExample.C 
-
 binaryAnalysis_symbolTable_SOURCES = binaryAnalysis_symbolTable.C
 
 bin_example_SOURCES = bin_example.C
@@ -380,8 +375,7 @@ findVariableDeclarations_SOURCES = findVariableDeclarations.C
 
 # Use this to control use of -lrose -ledg vs. the very long list 
 # of separate libraries which is faster to use in development.
-# LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-LDADD = $(LIBS_WITH_RPATH) $(WAVE_LDFLAGS) $(ROSE_SEPARATE_LIBS) 
+LDADD = $(WAVE_LDFLAGS) $(ROSE_SEPARATE_LIBS) 
 
 # #####################################
 # Tests for debugging tutorial examples
@@ -897,7 +891,6 @@ generatedCodeExamples = \
    collectCommentsAcrossHeaderFiles.out \
    collectDefineDirectives.out \
    defuseAnalysis_pic1.pdf \
-   binaryAnalysis_pic1.pdf \
    binaryAnalysis_pic3.pdf \
    rose_inputCode_seedBugsExample_arrayIndexing.C \
    rose_inputCode_VolatileTypeModifier.C \
@@ -1225,27 +1218,6 @@ defuseAnalysis_pic1.pdf: defuseAnalysis
 if ROSE_USE_GRAPHVIZ_DOT
 #	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
 	if ! test -e defuseAnalysis_pic1.pdf; then exit 1; fi
-endif
-
-
-binaryAnalysis_pic1.pdf: binaryAnalysisExample binaryAnalysis
-	@echo "Building an example BinaryAnalysis ..."
-# This does currently not work because we don't support 64bit binaries
-#	./binaryAnalysis bin_example
-# trick is to load a 32bit binary
-	cp $(srcdir)/buffer2.bin ./bin_example
-	./binaryAnalysisExample bin_example
-	@echo "BinaryAnalysis: Building assembly listing for binary (rose_bin_example.s.a) ..."
-	split -42 rose_bin_example.s rose_bin_example.s.
-	@echo "BinaryAnalysis: Building postscript file from cfg.dot & dfg.dot ..."
-	$(top_srcdir)/scripts/dotgenLetterPDF cfg.dot binaryAnalysis_pic1.pdf
-if ROSE_USE_GRAPHVIZ_DOT
-	if ! test -e binaryAnalysis_pic1.pdf; then exit 1; fi
-endif
-	$(top_srcdir)/scripts/dotgenLetterPDF dfg.dot binaryAnalysis_pic2.pdf
-if ROSE_USE_GRAPHVIZ_DOT
-#	DQ (10/19/2009): Added error checking to (catches lack of "dot" in path).
-	if ! test -e binaryAnalysis_pic2.pdf; then exit 1; fi
 endif
 
 # DQ (8/17/2008): Added example to show how to use traversal on AST for binary executable format.

@@ -409,7 +409,8 @@ makeCallTargetFunctions(P2::Partitioner &partitioner, size_t alignment=1) {
     std::set<rose_addr_t> targets;                      // distinct call targets
 
     // Iterate over every executable address in the memory map
-    for (rose_addr_t va=0; partitioner.memoryMap().atOrAfter(va).require(MemoryMap::EXECUTABLE).next().assignTo(va); ++va) {
+    ASSERT_not_null(partitioner.memoryMap());
+    for (rose_addr_t va=0; partitioner.memoryMap()->atOrAfter(va).require(MemoryMap::EXECUTABLE).next().assignTo(va); ++va) {
         if (alignment>1)                                // apply alignment here as an optimization
             va = ((va+alignment-1)/alignment)*alignment;
 
@@ -420,7 +421,7 @@ makeCallTargetFunctions(P2::Partitioner &partitioner, size_t alignment=1) {
             std::vector<SgAsmInstruction*> bb(1, insn);
             rose_addr_t target = NO_ADDRESS;
             if (insn->isFunctionCallFast(bb, &target, NULL) &&
-                partitioner.memoryMap().at(target).require(MemoryMap::EXECUTABLE).exists()) {
+                partitioner.memoryMap()->at(target).require(MemoryMap::EXECUTABLE).exists()) {
                 targets.insert(target);
             }
         }
@@ -671,8 +672,9 @@ int main(int argc, char *argv[]) {
     SgAsmInterpretation *interp = engine.interpretation();
 
     // Some analyses need to know what part of the address space is being disassembled.
+    ASSERT_not_null(engine.memoryMap());
     AddressIntervalSet executableSpace;
-    BOOST_FOREACH (const MemoryMap::Node &node, engine.memoryMap().nodes()) {
+    BOOST_FOREACH (const MemoryMap::Node &node, engine.memoryMap()->nodes()) {
         if ((node.value().accessibility() & MemoryMap::EXECUTABLE)!=0)
             executableSpace.insert(node.key());
     }
@@ -704,9 +706,9 @@ int main(int argc, char *argv[]) {
     }
 
     // Show what we'll be working on (stdout for the record, and diagnostics also)
-    partitioner.memoryMap().dump(mlog[INFO]);
+    partitioner.memoryMap()->dump(mlog[INFO]);
     if (settings.doShowMap)
-        partitioner.memoryMap().dump(std::cout);
+        partitioner.memoryMap()->dump(std::cout);
 
     // Run the partitioner
     engine.runPartitioner(partitioner);
@@ -806,7 +808,7 @@ int main(int argc, char *argv[]) {
         analyzer.settings().keepingOnlyLongest = true;
         analyzer.discardingCodePoints(false);
         analyzer.insertCommonEncoders(ByteOrder::ORDER_LSB);
-        analyzer.find(partitioner.memoryMap().any());
+        analyzer.find(partitioner.memoryMap()->any());
         BOOST_FOREACH (const Strings::EncodedString &string, analyzer.strings()) {
             std::cout <<string.where() <<" " <<string.encoder()->length() <<"-character " <<string.encoder()->name() <<"\n";
             std::cout <<"  \"" <<StringUtility::cEscape(string.narrow()) <<"\"\n";

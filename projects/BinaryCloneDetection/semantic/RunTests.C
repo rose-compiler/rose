@@ -967,7 +967,7 @@ get_import_addresses(SgAsmInterpretation *interp, const NameSet &whitelist_names
 // whitelist_exports is the set of function addresses from import table slots that were whitelisted and not modified.
 void
 overmap_dynlink_addresses(SgAsmInterpretation *interp, const InstructionProvidor &insns, FollowCalls follow_calls,
-                          MemoryMap *ro_map/*in,out*/, rose_addr_t special_value,
+                          const MemoryMap::Ptr &ro_map/*in,out*/, rose_addr_t special_value,
                           const Disassembler::AddressSet &whitelist_imports, Disassembler::AddressSet &whitelist_exports/*out*/)
 {
     uint32_t special_value_le;
@@ -1045,7 +1045,7 @@ overmap_dynlink_addresses(SgAsmInterpretation *interp, const InstructionProvidor
 // Analyze a single function by running it with the specified inputs and collecting its outputs. */
 OutputGroup
 fuzz_test(SgAsmInterpretation *interp, SgAsmFunction *function, InputGroup &inputs, Tracer &tracer,
-          const InstructionProvidor &insns, MemoryMap *ro_map, const PointerDetector *pointers,
+          const InstructionProvidor &insns, const MemoryMap::Ptr &ro_map, const PointerDetector *pointers,
           const AddressIdMap &entry2id, const Disassembler::AddressSet &whitelist_exports, FuncAnalyses &funcinfo,
           InsnCoverage &insn_coverage, DynamicCallGraph &dynamic_cg, ConsumedInputs &consumed_inputs)
 {
@@ -1193,7 +1193,7 @@ runOneTest(SqlDatabase::TransactionPtr tx, const WorkItem &workItem, PointerDete
            const FunctionIdMap &function_ids, InsnCoverage &insn_coverage /*in,out*/, DynamicCallGraph &dynamic_cg /*in,out*/,
            Tracer &tracer /*in,out*/, ConsumedInputs &consumed_inputs /*in,out*/, SgAsmInterpretation *interp,
            const Disassembler::AddressSet &whitelist_exports, int64_t cmd_id, InputGroup &igroup,
-           FuncAnalyses funcinfo, const InstructionProvidor &insns, MemoryMap *ro_map, const AddressIdMap &entry2id,
+           FuncAnalyses funcinfo, const InstructionProvidor &insns, const MemoryMap::Ptr &ro_map, const AddressIdMap &entry2id,
            OutputGroups &ogroups /*in,out*/)
 {
     // Get the results of pointer analysis.  We could have done this before any fuzz testing started, but by doing

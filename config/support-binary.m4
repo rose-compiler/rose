@@ -93,7 +93,8 @@ ROSE_SUPPORT_INTEL_PIN
 # Setup Automake conditional in --- (not yet distributed)
 AM_CONDITIONAL(ROSE_USE_INTEL_PIN,test ! "$with_IntelPin" = no)
 
-# Call supporting macro to DWARF (libdwarf)
+# Call supporting macro to DWARF (libdwarf), which depends on libelf
+ROSE_SUPPORT_ELF
 ROSE_SUPPORT_DWARF
 
 # Xen and Ether [RPM 2009-10-28]

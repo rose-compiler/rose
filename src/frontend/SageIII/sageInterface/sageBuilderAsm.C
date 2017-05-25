@@ -1,4 +1,6 @@
 #include "sage3basic.h"
+
+#include "sageBuilderAsm.h"
 #include "InstructionEnumsX86.h"
 #include "BinaryLoader.h"
 
@@ -25,7 +27,7 @@ buildBinaryComposite(const std::string &fileName) {
     if (SgProject *project = SageInterface::getProject()) {
         // We already have a project, so we cannot call frontend() again.
         retval = new SgBinaryComposite(args, project);
-        BinaryLoader::load(retval, DONT_DISASSEMBLE);
+        BinaryAnalysis::BinaryLoader::load(retval, DONT_DISASSEMBLE);
     } else {
         // No project yet, so just call frontend()
         project = frontend(args);
@@ -249,6 +251,9 @@ buildAsmWordValue(uint16_t val) {
 SgAsmIntegerType*
 buildTypeU1() {
     static SgAsmIntegerType *cached = NULL;
+    static SAWYER_THREAD_TRAITS::Mutex mutex;
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+
     if (!cached)
         cached = SgAsmType::registerOrDelete(new SgAsmIntegerType(ByteOrder::ORDER_UNSPECIFIED, 1, false /*unsigned*/));
     return cached;
@@ -257,6 +262,9 @@ buildTypeU1() {
 SgAsmIntegerType*
 buildTypeU8() {
     static SgAsmIntegerType *cached = NULL;
+    static SAWYER_THREAD_TRAITS::Mutex mutex;
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+
     if (!cached)
         cached = SgAsmType::registerOrDelete(new SgAsmIntegerType(ByteOrder::ORDER_UNSPECIFIED, 8, false /*unsigned*/));
     return cached;
@@ -265,6 +273,9 @@ buildTypeU8() {
 SgAsmIntegerType*
 buildTypeU16() {
     static SgAsmIntegerType *cached = NULL;
+    static SAWYER_THREAD_TRAITS::Mutex mutex;
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+
     if (!cached)
         cached = SgAsmType::registerOrDelete(new SgAsmIntegerType(ByteOrder::ORDER_LSB, 16, false /*unsigned*/));
     return cached;
@@ -273,6 +284,9 @@ buildTypeU16() {
 SgAsmIntegerType*
 buildTypeU32() {
     static SgAsmIntegerType *cached = NULL;
+    static SAWYER_THREAD_TRAITS::Mutex mutex;
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+
     if (!cached)
         cached = SgAsmType::registerOrDelete(new SgAsmIntegerType(ByteOrder::ORDER_LSB, 32, false /*unsigned*/));
     return cached;
@@ -281,6 +295,9 @@ buildTypeU32() {
 SgAsmIntegerType*
 buildTypeU64() {
     static SgAsmIntegerType *cached = NULL;
+    static SAWYER_THREAD_TRAITS::Mutex mutex;
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+
     if (!cached)
         cached = SgAsmType::registerOrDelete(new SgAsmIntegerType(ByteOrder::ORDER_LSB, 64, false /*unsigned*/));
     return cached;
@@ -289,6 +306,9 @@ buildTypeU64() {
 SgAsmIntegerType*
 buildTypeI8() {
     static SgAsmIntegerType *cached = NULL;
+    static SAWYER_THREAD_TRAITS::Mutex mutex;
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+
     if (!cached)
         cached = SgAsmType::registerOrDelete(new SgAsmIntegerType(ByteOrder::ORDER_UNSPECIFIED, 8, true /*signed*/));
     return cached;
@@ -297,6 +317,9 @@ buildTypeI8() {
 SgAsmIntegerType*
 buildTypeI16() {
     static SgAsmIntegerType *cached = NULL;
+    static SAWYER_THREAD_TRAITS::Mutex mutex;
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+
     if (!cached)
         cached = SgAsmType::registerOrDelete(new SgAsmIntegerType(ByteOrder::ORDER_LSB, 16, true /*signed*/));
     return cached;
@@ -305,6 +328,9 @@ buildTypeI16() {
 SgAsmIntegerType*
 buildTypeI32() {
     static SgAsmIntegerType *cached = NULL;
+    static SAWYER_THREAD_TRAITS::Mutex mutex;
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+
     if (!cached)
         cached = SgAsmType::registerOrDelete(new SgAsmIntegerType(ByteOrder::ORDER_LSB, 32, true /*signed*/));
     return cached;
@@ -313,6 +339,9 @@ buildTypeI32() {
 SgAsmIntegerType*
 buildTypeI64() {
     static SgAsmIntegerType *cached = NULL;
+    static SAWYER_THREAD_TRAITS::Mutex mutex;
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+
     if (!cached)
         cached = SgAsmType::registerOrDelete(new SgAsmIntegerType(ByteOrder::ORDER_LSB, 64, true /*signed*/));
     return cached;
@@ -321,6 +350,9 @@ buildTypeI64() {
 SgAsmFloatType*
 buildIeee754Binary32() {
     static SgAsmFloatType *cached = NULL;
+    static SAWYER_THREAD_TRAITS::Mutex mutex;
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+
     if (!cached) {
         SgAsmFloatType *fpType = new SgAsmFloatType(ByteOrder::ORDER_LSB, 32,
                                                     SgAsmFloatType::BitRange::baseSize(0, 23), // significand
@@ -336,6 +368,9 @@ buildIeee754Binary32() {
 SgAsmFloatType*
 buildIeee754Binary64() {
     static SgAsmFloatType *cached = NULL;
+    static SAWYER_THREAD_TRAITS::Mutex mutex;
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+
     if (!cached) {
         SgAsmFloatType *fpType = new SgAsmFloatType(ByteOrder::ORDER_LSB, 64,
                                                     SgAsmFloatType::BitRange::baseSize(0, 52),  // significand
@@ -351,6 +386,9 @@ buildIeee754Binary64() {
 SgAsmFloatType*
 buildIeee754Binary80() {
     static SgAsmFloatType *cached = NULL;
+    static SAWYER_THREAD_TRAITS::Mutex mutex;
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+
     if (!cached) {
         SgAsmFloatType *fpType = new SgAsmFloatType(ByteOrder::ORDER_LSB, 80,
                                                     SgAsmFloatType::BitRange::baseSize(0, 64),  // significand
@@ -408,6 +446,9 @@ buildTypeX86Float80() {
 SgAsmFloatType*
 buildTypeM68kFloat96() {
     static SgAsmFloatType *cached = NULL;
+    static SAWYER_THREAD_TRAITS::Mutex mutex;
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+
     if (!cached) {
         SgAsmFloatType *fpType = new SgAsmFloatType(ByteOrder::ORDER_LSB, 96,
                                                     SgAsmFloatType::BitRange::baseSize(0, 64),  // significand

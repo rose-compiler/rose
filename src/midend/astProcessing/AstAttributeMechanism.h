@@ -428,11 +428,11 @@ public:
     virtual double getValue()  const { return value_; }
     virtual void setValue(double newVal) { value_ = newVal; }
 
-    virtual std::string toString();
+    virtual std::string toString() ROSE_OVERRIDE;
 
-    virtual int packed_size();
-    virtual char* packed_data();
-    virtual void unpacked_data(int size, char* data);
+    virtual int packed_size() ROSE_OVERRIDE;
+    virtual char* packed_data() ROSE_OVERRIDE;
+    virtual void unpacked_data(int size, char* data) ROSE_OVERRIDE;
 
     MetricAttribute& operator+=(const MetricAttribute &other);
     MetricAttribute& operator-=(const MetricAttribute &other);

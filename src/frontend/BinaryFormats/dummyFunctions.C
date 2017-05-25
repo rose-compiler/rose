@@ -1,5 +1,7 @@
 #include "sage3basic.h"
 
+using namespace rose::BinaryAnalysis;
+
 // This file contains the function definitions required within ROSE if Binary Analysis 
 // support is NOT enabled.  In each case I can't eliminate the function (usually the 
 // reason why I can't eliminate them is provides at the top of each list of associated 
@@ -69,7 +71,6 @@ bool SgAsmPEImportSection::reallocate() { return false; }
 void SgAsmElfSectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const {}
 void SgAsmElfSectionTable::dump(FILE *f, const char *prefix, ssize_t idx) const {}
 void SgAsmElfStringSection::dump(FILE *f, const char *prefix, ssize_t idx) const {}
-void MemoryMap::dump(FILE *f, const char *prefix) const {}
 void SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const {}
 void SgAsmGenericHeader::dump(FILE *f, const char *prefix, ssize_t idx) const {}
 void SgAsmElfSymbol::dump(FILE *f, const char *prefix, ssize_t idx) const {}
@@ -88,6 +89,12 @@ void SgAsmDOSFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const {}
 void SgAsmDOSExtendedHeader::dump(FILE *f, const char *prefix, ssize_t idx) const {}
 void SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx) const {}
 void SgAsmPEImportItem::dump(FILE*f, char const *prefix, ssize_t idx) const {}
+
+namespace rose {
+namespace BinaryAnalysis {
+void MemoryMap::dump(FILE *f, const char *prefix) const {}
+} // namespace
+} // namespace
 
 // These are needed because they are virtual functions and need to be defined
 // so that the associated classes can be used.
@@ -174,6 +181,7 @@ std::ostream& operator<<(std::ostream &os, const AddressIntervalSet&) { return o
 bool SgAsmDOSFileHeader::reallocate() { return false; }
 void SgAsmPEStringSection::set_size(rose_addr_t) {}
 void SgAsmGenericSection::set_mapped_size(rose_addr_t) {}
+SgAsmGenericSection* SgAsmGenericSection::parse() { return NULL; }
 bool SgAsmElfStringSection::reallocate() { return false; }
 bool SgAsmElfNoteSection::reallocate() { return false; }
 void SgAsmElfStrtab::rebind(SgAsmStringStorage*, rose_addr_t) {}
@@ -338,10 +346,13 @@ void SgAsmPEImportItem::ctor(SgAsmPEImportDirectory *idir, unsigned ordinal){}
 void SgAsmElfStringSection::ctor() {}
 void SgAsmElfStringSection::ctor(SgAsmElfSectionTable*) {}
 void SgAsmElfSection::ctor() {}
+void SgAsmGenericSymbol::ctor() {}
+void SgAsmGenericSection::ctor(SgAsmGenericFile*, SgAsmGenericHeader*) {}
+void SgAsmGenericDLL::ctor() {}
 
 size_t SgAsmPEImportSection::mesg_nprinted = 0;
 rose_addr_t rose_rva_t::get_va() const { return 0; }
-std::string SgAsmGenericSection::read_content_str(const MemoryMap*, rose_addr_t, bool) { return ""; }
+std::string SgAsmGenericSection::read_content_str(const MemoryMap::Ptr&, rose_addr_t, bool) { return ""; }
 std::string SgAsmGenericSection::read_content_str(rose_addr_t, bool) { return ""; }
 
 SgAsmGenericString* SgAsmGenericDLL::get_name() const { return NULL; }
@@ -353,3 +364,4 @@ void SgAsmPEExportEntry::set_name(SgAsmGenericString*) {}
 void SgAsmElfDynamicEntry::set_name(SgAsmGenericString*) {}
 void SgAsmElfSection::set_linked_section(SgAsmElfSection*) {}
 const char* SgAsmGenericHeader::format_name() const { return NULL; }
+rose_addr_t SgAsmGenericFile::get_current_size() const { return 0; }

@@ -7,23 +7,24 @@ TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 EXTRA_DIST = README.txt
 
 AM_CPPFLAGS = $(ROSE_INCLUDES)
+AM_LDFLAGS = $(ROSE_RPATHS)
 
 #------------------------------------------------------------------------------------------------------------------------
 # It makes no sense to install these since some (at least parallelMerge) have hard-coded paths to other executables.
 noinst_PROGRAMS  = astFileIO astFileRead astCompressionTest parallelMerge
 
 astFileIO_SOURCES = astFileIO.C 
-astFileIO_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+astFileIO_LDADD = $(ROSE_SEPARATE_LIBS)
 
 astCompressionTest_SOURCES = astCompressionTest.C 
-astCompressionTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+astCompressionTest_LDADD = $(ROSE_SEPARATE_LIBS)
 
 astFileRead_SOURCES = astFileRead.C
-astFileRead_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+astFileRead_LDADD = $(ROSE_SEPARATE_LIBS)
 
 parallelMerge_SOURCES = parallelMerge.C
 parallelMerge_CPPFLAGS = -DTEST_AST_FILE_READ='"$(abspath $(top_builddir)/tests/nonsmoke/functional/testAstFileRead)"' $(ROSE_INCLUDES)
-parallelMerge_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+parallelMerge_LDADD = $(ROSE_SEPARATE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
 # This makefile uses ../../testAstFileIO and ../../testAstFileRead, and must therefore make sure they're built.

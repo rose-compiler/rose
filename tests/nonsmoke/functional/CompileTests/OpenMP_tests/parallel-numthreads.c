@@ -1,6 +1,7 @@
 // Test if/num_threads clause handling
 #include <assert.h>
 #include <stdio.h>
+#include <omp.h>
 
 int main(void)
 {

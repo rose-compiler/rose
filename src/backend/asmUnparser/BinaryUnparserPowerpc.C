@@ -7,8 +7,7 @@ namespace Unparser {
 
 void
 Powerpc::emitInstruction(std::ostream &out, SgAsmInstruction *insn_, State &state) const {
-    SgAsmPowerpcInstruction *insn = isSgAsmPowerpcInstruction(insn_);
-    ASSERT_not_null2(insn, "not a PowerPC instruction");
+    ASSERT_not_null(isSgAsmPowerpcInstruction(insn_));
     Base::emitInstruction(out, insn_, state);
 }
 
@@ -37,8 +36,6 @@ Powerpc::outputExpr(std::ostream &out, SgAsmExpression *expr, State &state) cons
         ASSERT_not_implemented(expr->class_name());
     }
 
-    if (!expr->get_replacement().empty())
-        comments.push_back(expr->get_replacement());
     if (!expr->get_comment().empty())
         comments.push_back(expr->get_comment());
     if (!comments.empty())

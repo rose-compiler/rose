@@ -5,7 +5,8 @@ noinst_PROGRAMS =
 TEST_TARGETS =
 
 AM_CPPFLAGS = $(ROSE_INCLUDES)
-AM_LDFLAGS = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+AM_LDFLAGS = $(ROSE_RPATHS)
+LDADD = $(ROSE_LIBS)
 
 ########################################################################################################################
 # Sawyer Unit Tests
@@ -105,4 +106,4 @@ check-sawyer: $(SAWYER_TEST_TARGETS)
 # Boilerplate
 ###############################################################################################################################
 
-check-smoke-local: $(TEST_TARGETS)
+check-local: $(TEST_TARGETS)

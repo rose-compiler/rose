@@ -80,7 +80,14 @@ CommandlineProcessing::createEmptyParser(const std::string &purpose, const std::
     if (!description.empty())
         parser.doc("Description", description);
     parser.chapter(1, "ROSE Command-line Tools");
-    parser.version(std::string(ROSE_SCM_VERSION_ID).substr(0, 8), ROSE_CONFIGURE_DATE);
+#if defined(ROSE_PACKAGE_VERSION)
+    std::string v = ROSE_PACKAGE_VERSION;
+#elif defined(PACKAGE_VERSION)
+    std::string v = PACKAGE_VERSION;
+#else
+    std::string v = std::string(ROSE_SCM_VERSION_ID).substr(0, 8);
+#endif
+    parser.version(v, ROSE_CONFIGURE_DATE);
     parser.groupNameSeparator(":");                     // ROSE's style is "--rose:help" rather than "--rose-help"
     return parser;
 }
@@ -122,7 +129,7 @@ CommandlineProcessing::genericSwitches() {
 #if defined(ROSE_PACKAGE_VERSION)
                .action(showVersionAndExit(ROSE_PACKAGE_VERSION, 0))
 #elif defined(PACKAGE_VERSION)
-               .action(showVersionAndExit(ROSE_PACKAGE_VERSION, 0))
+               .action(showVersionAndExit(PACKAGE_VERSION, 0))
 #else
                .action(showVersionAndExit("unknown", 0))
 #endif
@@ -587,7 +594,7 @@ CommandlineProcessing::addListToCommandLine ( vector<string> & argv , string pre
 #if 0
      printf ("In addListToCommandLine(): prefix = %s \n",prefix.c_str());
 #endif
-     bool outputPrefix = false;
+  // bool outputPrefix = false;
   // for (unsigned int i = 0; i < argList.size(); ++i) 
      for (size_t i = 0; i < argList.size(); ++i) 
         {

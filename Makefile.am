@@ -16,9 +16,16 @@ include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
 # SUBDIRS = libltdl config src tests projects tutorial exampleTranslators docs tools scripts demo binaries
 
 # DQ (4/17/2010): Support for minimal configuration of ROSE (e.g. "--enable-only-fortran").
+
+# We don't want "make [all]", "make check", or "make install", etc. to recurse into the tests/nonsmoke directory (unless
+# ROSE was configured using "--with-ROSE_LONG_MAKE_CHECK_RULE"). If you want to build something in the non-smoke area
+# you should "cd" do that directory first, as in "make -C tests/nonsmoke ...".
 SUBDIRS = libltdl config src
 if ROSE_BUILD_TESTS_DIRECTORY_SUPPORT
-   SUBDIRS += tests
+   SUBDIRS += tests/smoke
+endif
+if ROSE_USE_LONG_MAKE_CHECK_RULE
+SUBDIRS += tests/nonsmoke
 endif
 
 if !ROSE_USE_CLANG_FRONTEND
@@ -193,9 +200,8 @@ pkginclude_HEADERS = rosePublicConfig.h
 include $(top_srcdir)/config/build_rose_paths.Makefile
 
 check-local: enforce_policies
-	@echo '************************************************************'
-	@echo '****** make check rule complete (terminated normally) ******'
-	@echo '************************************************************'
+	@echo 'To run additional "non-smoke" tests, use this command:'
+	@echo "  $(MAKE) -C $$(pwd)/tests/nonsmoke check"
 
 install-exec-local:
 	@echo '*****************************************************************'
@@ -642,7 +648,6 @@ lcov:
 -d src/frontend/ECJ_ROSE_Connection/.libs \
 -d src/frontend/X10_ROSE_Connection/.libs \
 -d src/frontend/PHPFrontend/.libs \
--d src/frontend/BinaryDisassembly/.libs \
 -d src/frontend/BinaryLoader/.libs \
 -d src/frontend/BinaryFormats/.libs \
 -d src/frontend/Disassemblers/.libs \
@@ -723,10 +728,13 @@ all-lcov.info:
 	lcov --capture --no-recursion $(patsubst %,-d %,$(lcov_data_dirs)) -o $@
 
 # Capture only coverage for the ROSE library source code (no tests, tutorials, projects, system headers, boost, etc).
+# DQ (3/26/2017): Removed CodeThorn from being included in lcov results (CodeThorn testing is still done to test ROSE 
+# and those results are a part of the cover coverage for ROSE.
 # DQ (3/13/2017): Modified to remove specific directories of old code to be removed from ROSE and 3rd party code that we do not maintain.
 # (04/26/2016) Pei-Hung lcov has issue to output extracted result to librose-lcov.info with -o option. Using piping instead.
+#	lcov --extract $< "$(top_srcdir)/src/*" "$(top_srcdir)/projects/CodeThorn/*" > $@
 librose-lcov.info: all-lcov.info
-	lcov --extract $< "$(top_srcdir)/src/*" "$(top_srcdir)/projects/CodeThorn/*" > $@
+	lcov --extract $< "$(top_srcdir)/src/*" > $@
 	lcov --remove librose-lcov.info \
         "$(top_srcdir)/src/frontend/CxxFrontend/EDG/edgRose/debugging.*" \
         "$(top_srcdir)/src/frontend/CxxFrontend/EDG/edgRose/edgGraph.*" \
@@ -734,9 +742,6 @@ librose-lcov.info: all-lcov.info
         "$(top_srcdir)/src/backend/unparser/PHPCodeGeneration/*" \
         "$(top_srcdir)/src/midend/programAnalysis/OAWrap/*" \
         "$(top_srcdir)/src/midend/programAnalysis/OpenAnalysis/*" \
-        "$(top_srcdir)/src/frontend/BinaryDisassembly/*" \
-        "$(top_srcdir)/src/midend/binaryAnalyses/dataflowanalyses/*" \
-        "$(top_srcdir)/src/midend/binaryAnalyses/RoseBin_*" \
         "$(top_srcdir)/src/midend/programAnalysis/genericDataflow/*" \
         "$(top_srcdir)/src/frontend/CxxFrontend/EDG/EDG_4.9/*" \
         "$(top_srcdir)/src/midend/astRewriteMechanism/*" \
@@ -752,43 +757,21 @@ librose-lcov.info: all-lcov.info
         "$(top_srcdir)/src/midend/programTransformation/implicitCodeGeneration/*" \
         "$(top_srcdir)/src/midend/programTransformation/singleStatementToBlockNormalization/*" \
         "$(top_srcdir)/src/roseSupport/stringify.C" \
-        "$(top_srcdir)/src/midend/programAnalysis/graphAnalysis/*" \
         "$(top_srcdir)/src/roseExtensions/roseHPCToolkit/*" \
         "$(top_srcdir)/src/frontend/SageIII/nodeBuildFunctionsForAterms.C" \
         "$(top_srcdir)/src/frontend/SageIII/astVisualization/*" \
-	"$(top_srcdir)/projects/CodeThorn/MemoryLocation.*" \
-	"$(top_srcdir)/projects/CodeThorn/Normalization.*" \
-	"$(top_srcdir)/projects/CodeThorn/ParallelAutomataGenerator.*" \
-	"$(top_srcdir)/projects/CodeThorn/ParPro*.*" \
-	"$(top_srcdir)/projects/CodeThorn/PromelaCodeGenerator.*" \
-	"$(top_srcdir)/projects/CodeThorn/RefinementConstraints.*" \
-	"$(top_srcdir)/projects/CodeThorn/RersSpecialization.*" \
-	"$(top_srcdir)/projects/CodeThorn/RoseRDAnalysis.*" \
-	"$(top_srcdir)/projects/CodeThorn/SourceCodeFormat.*" \
-	"$(top_srcdir)/projects/CodeThorn/Threadification.*" \
-	"$(top_srcdir)/projects/CodeThorn/Visualizer.*" \
-	"$(top_srcdir)/projects/CodeThorn/spotconnection/*" \
-	"$(top_srcdir)/projects/CodeThorn/termindent/*" \
-	"$(top_srcdir)/projects/CodeThorn/tests/*" \
-	"$(top_srcdir)/projects/CodeThorn/regressiondata/*" \
-	"$(top_srcdir)/projects/CodeThorn/regressiondata2/*" \
-	"$(top_srcdir)/projects/CodeThorn/addressTakenAnalysis_obsolete/*" \
-	"$(top_srcdir)/projects/CodeThorn/counterexamples/*" \
-	"$(top_srcdir)/projects/CodeThorn/cpptests/*" \
-	"$(top_srcdir)/projects/CodeThorn/examples/*" \
-	"$(top_srcdir)/projects/CodeThorn/intervalLattice/*" \
-	"$(top_srcdir)/projects/CodeThorn/scripts/*" \
-	"$(top_srcdir)/projects/CodeThorn/results_scripts/*" \
-	"$(top_srcdir)/projects/CodeThorn/outdated.cpp" \
-	"$(top_srcdir)/projects/CodeThorn/matcher.C" \
-	"$(top_srcdir)/projects/CodeThorn/matcher_demo.C" \
-	"$(top_srcdir)/projects/CodeThorn/woodpecker.C" \
-	"$(top_srcdir)/projects/CodeThorn/RERS_*.C" \
-	"$(top_srcdir)/projects/CodeThorn/ast_demo.C" \
-	"$(top_srcdir)/projects/CodeThorn/astinfo.C" \
+        "$(top_srcdir)/src/midend/astProcessing/AstProcessing.h" \
+        "$(top_srcdir)/src/frontend/SageIII/sageInterface/sageGeneric.h" \
          -o librose-lcov.info
 
 # Note: astVisualization is only approriate for small ASTs and for debugging so excluded from code coverage analysis.
+#       sageGeneric.h causes 1274 template instantiations, and we only have a test for one of them (so this file is a problem due to how lcov handles template instantaitions.
+#       DQ (3/30/2017): Removed src/midend/astProcessing/AstProcessing.h file because it's template use is not handled accurately by lcov (wildly incorrect).
+
+# DQ (4/9/2017): After getting better coverage, the ultimate limitation proved to be the poor template handling within LCOV to support more significant coverage results.
+# DQ (4/5/2017): This fails with GNU 6.1 and Boost 1.51 and Boost 1.52, but it is now called and should contribute to code coverage so let it back in as a test.
+#       "$(top_srcdir)/src/frontend/SageIII/sageInterface/sageGeneric.h" 
+
 
 librose_lcov_web_pages: librose-lcov.info
 	genhtml                                 \
@@ -808,9 +791,6 @@ librose_lcov_web_pages: librose-lcov.info
 # src/backend/unparser/PHPCodeGeneration/*
 # src/midend/programAnalysis/OAWrap/*
 # src/midend/programAnalysis/OpenAnalysis/*
-# src/frontend/BinaryDisassembly/*
-# src/midend/binaryAnalyses/dataflowanalyses/*
-# src/midend/binaryAnalyses/RoseBin_*
 # src/midend/programAnalysis/genericDataflowflow/*
 # src/frontend/CxxFrontend/EDG/EDG_4.9/*
 # src/midend/astRewriteMechanism/*
@@ -827,7 +807,6 @@ librose_lcov_web_pages: librose-lcov.info
 # src/midend/programTransformation/implicitCodeGeneration/*
 # src/midend/programTransformation/singleStatementToBlockNormalization/*
 # src/roseSupport/stringify.C
-# src/midend/programAnalysis/graphAnalysis/*
 # 
 # 
 # Directories to remove from ROSE:
@@ -857,7 +836,6 @@ librose_lcov_web_pages: librose-lcov.info
 #
 # What is this:
 # src/midend/abstractMemoryObject  (DTEC work by Liao)
-# src/midend/programAnalysis/graphAnalysis (Old binary call graph support, superceeded by more recent work)
 # 
 #
 # Why are these so poorly tested:

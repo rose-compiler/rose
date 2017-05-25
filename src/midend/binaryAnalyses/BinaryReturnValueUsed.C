@@ -246,29 +246,29 @@ Analysis::analyzeCallSite(const P2::Partitioner &partitioner, const P2::ControlF
     // FIXME[Robb P Matzke 2017-03-03]: To simplify things for now, handle only the case where the call site is owned by a
     // single function, a single callee is called, and it returns to a single point in the caller.
     if (callers.size() > 1) {
-        mlog[ERROR] <<"multiple callers not implemented yet at " <<partitioner.vertexName(callSite) <<"\n";
+        mlog[ERROR] <<"multiple callers not implemented yet at vertex " <<partitioner.vertexName(callSite) <<"\n";
         return retval;
     }
     if (retval.callees().size() > 1) {
-        mlog[ERROR] <<retval.callees().size() <<"-call not implemented yet at " <<partitioner.vertexName(callSite) <<"\n";
+        mlog[ERROR] <<retval.callees().size() <<"-call not implemented yet at vertex " <<partitioner.vertexName(callSite) <<"\n";
         return retval;
     }
     if (returnTargets.size() > 1) {
-        mlog[ERROR] <<returnTargets.size() <<"-return not implemented yet at " <<partitioner.vertexName(callSite) <<"\n";
+        mlog[ERROR] <<returnTargets.size() <<"-return not implemented yet at vertex " <<partitioner.vertexName(callSite) <<"\n";
         return retval;
     }
 
     // Handle the no-op cases.
     if (callers.empty()) {
-        mlog[WARN] <<"no caller at " <<partitioner.vertexName(callSite) <<"\n";
+        mlog[WARN] <<"no caller at vertex " <<partitioner.vertexName(callSite) <<"\n";
         return retval;
     }
     if (retval.callees().empty()) {
-        mlog[WARN] <<"no callee at " <<partitioner.vertexName(callSite) <<"\n";
+        mlog[WARN] <<"no callee at vertex " <<partitioner.vertexName(callSite) <<"\n";
         return retval;
     }
     if (returnTargets.empty()) {
-        mlog[WARN] <<"no return target at " <<partitioner.vertexName(callSite) <<"\n";
+        mlog[WARN] <<"no return target at vertex " <<partitioner.vertexName(callSite) <<"\n";
         return retval;
     }
 
@@ -281,14 +281,13 @@ Analysis::analyzeCallSite(const P2::Partitioner &partitioner, const P2::ControlF
     // should have already done that.
     const CallingConvention::Analysis &calleeBehavior = callee->callingConventionAnalysis();
     if (!calleeBehavior.hasResults() || !calleeBehavior.didConverge()) {
-        mlog[ERROR] <<"no calling convention behavior for " <<callee->printableName()
-                    <<" called at " <<partitioner.vertexName(callSite) <<"\n";
-        return retval;
+        mlog[WARN] <<"no calling convention behavior for " <<callee->printableName()
+                   <<" called at vertex " <<partitioner.vertexName(callSite) <<"\n";
     }
     const CallingConvention::Definition::Ptr calleeDefinition = callee->callingConventionDefinition();
     if (!calleeDefinition) {
         mlog[ERROR] <<"no calling convention definition for " <<callee->printableName()
-                    <<" called at " <<partitioner.vertexName(callSite) <<"\n";
+                    <<" called at vertex " <<partitioner.vertexName(callSite) <<"\n";
         return retval;
     }
     
@@ -296,7 +295,9 @@ Analysis::analyzeCallSite(const P2::Partitioner &partitioner, const P2::ControlF
     // behavior.  This takes care of two issues: (1) some behavior-based outputs are only scratch locations according to the
     // definition, and (2) some return locations according to the definition might not have been outputs according to the
     // callee behavior.
-    RegisterParts calleeReturnRegs = calleeDefinition->outputRegisterParts() & calleeBehavior.outputRegisters();
+    RegisterParts calleeReturnRegs = calleeDefinition->outputRegisterParts();
+    if (calleeBehavior.hasResults() && calleeBehavior.didConverge())
+        calleeReturnRegs &= calleeBehavior.outputRegisters();
     calleeReturnRegs -= RegisterParts(partitioner.instructionProvider().stackPointerRegister());
     StackVariables calleeReturnMem;
     BOOST_FOREACH (const CallingConvention::ParameterLocation &location, calleeDefinition->outputParameters()) {
@@ -323,17 +324,16 @@ Analysis::analyzeCallSite(const P2::Partitioner &partitioner, const P2::ControlF
 
     // Build a CFG to analyze. We use a data-flow CFG even though we're not doing a true data flow, because it's convenient.
     P2::DataFlow::DfCfg dfCfg = P2::DataFlow::buildDfCfg(partitioner, partitioner.cfg(), returnTarget);
-    SAWYER_MESG(mlog[DEBUG]) <<"  dfCfg has " <<StringUtility::plural(dfCfg.nVertices(), "vertices", "vertex") <<"\n";
-#if 1 // DEBUGGING [Robb P Matzke 2017-03-03]
-    {
+    if (mlog[DEBUG]) {
         boost::filesystem::path debugDir = "./rose-debug/BinaryAnalysis/ReturnValueUsed";
         boost::filesystem::create_directories(debugDir);
         boost::filesystem::path fileName = debugDir /
                                            ("B_" + StringUtility::addrToString(callSite->value().address()).substr(2) + ".dot");
         std::ofstream f(fileName.string().c_str());
         P2::DataFlow::dumpDfCfg(f, dfCfg);
+        mlog[DEBUG] <<"  dfCfg (" <<StringUtility::plural(dfCfg.nVertices(), "vertices", "vertex") <<")"
+                    <<" saved in " <<fileName <<"\n";
     }
-#endif
 
     // Build the state transfer function
     P2::DataFlow::TransferFunction xfer(cpu);
@@ -360,7 +360,15 @@ Analysis::analyzeCallSite(const P2::Partitioner &partitioner, const P2::ControlF
                         <<StringUtility::prefixLines(ss.str(), "    ");
         }
 
-        StatePtr outputState = State::promote(xfer(dfCfg, t.vertex()->id(), inputState));
+        StatePtr outputState;
+        try {
+            outputState = State::promote(xfer(dfCfg, t.vertex()->id(), inputState));
+        } catch (const S2::BaseSemantics::Exception &e) {
+            mlog[WARN] <<e.what() <<" at call site vertex " <<partitioner.vertexName(callSite) <<"\n";
+            retval.didConverge(false);
+            return retval;
+        }
+        
         if (mlog[DEBUG]) {
             std::ostringstream ss;
             ss <<*outputState;
@@ -417,6 +425,8 @@ Analysis::analyzeCallSite(const P2::Partitioner &partitioner, const P2::ControlF
     
     // Assume all unresolved return locations of the callee(s) are unused return values.
     retval.returnRegistersUnused() |= ops->unreferencedRegisterOutputs();
+
+    retval.didConverge(true);
     return retval;
 }
 

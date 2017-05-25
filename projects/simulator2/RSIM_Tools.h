@@ -2,6 +2,7 @@
 #define ROSE_RSIM_Tools_H
 
 #include "stringify.h"          // Needed by the MemoryAccessWatcher tool
+#include <Disassembler.h>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -235,8 +236,9 @@ public:
                         std::string name = defn->get_name();
                         if (name.empty()) {
                             SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(process->rwlock());
-                            if (process->get_memory().at(defn->get_entry_va()).exists()) {
-                                const MemoryMap::Segment &sgmt = process->get_memory().find(defn->get_entry_va())->value();
+                            if (process->get_memory()->at(defn->get_entry_va()).exists()) {
+                                const rose::BinaryAnalysis::MemoryMap::Segment &sgmt =
+                                    process->get_memory()->find(defn->get_entry_va())->value();
                                 if (!sgmt.name().empty())
                                     name = "in " + sgmt.name();
                             }
@@ -433,7 +435,7 @@ public:
     virtual bool operator()(bool enabled, const Args &args) {
         using namespace rose::Diagnostics;
         if (enabled && 0!=(args.how & how) && 0!=(args.req_perms & req_perms) && args.va<va+nbytes && args.va+args.nbytes>=va) {
-            std::string operation = args.how==MemoryMap::READABLE ? "READ" : "WRITE";
+            std::string operation = args.how == rose::BinaryAnalysis::MemoryMap::READABLE ? "READ" : "WRITE";
             for (size_t i=0; i<operation.size(); i++)
                 operation[i] = tolower(operation[i]);
             mfprintf(mesg)("MemoryAccessWatcher: triggered for %s access at 0x%08" PRIx64" for %zu byte%s\n",
@@ -706,7 +708,7 @@ public:
         if (enabled && !triggered && args.insn->get_address()==when) {
             triggered = true;
             size_t total_written=0;
-            unsigned perms = need_write_perm ? MemoryMap::WRITABLE : 0;
+            unsigned perms = need_write_perm ? rose::BinaryAnalysis::MemoryMap::WRITABLE : 0;
 
             if (new_value) {
                 total_written = args.thread->get_process()->mem_write(new_value, memaddr, nbytes, perms);

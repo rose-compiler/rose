@@ -29,7 +29,7 @@
 #include "Miscellaneous2.h"
 #include "ProgramStats.h"
 #include "AnalysisAbstractionLayer.h"
-#include "AType.h"
+#include "AbstractValue.h"
 #include "SgNodeHelper.h"
 #include "DFAstAttributeConversion.h"
 #include "FIConstAnalysis.h"
@@ -65,7 +65,6 @@
 
 using namespace std;
 using namespace CodeThorn;
-using namespace AType;
 using namespace DFAstAttributeConversion;
 using namespace AnalysisAbstractionLayer;
 
@@ -171,7 +170,7 @@ void checkStaticArrayBounds(SgProject* root, SPRAY::IntervalAnalysis* intervalAn
             }
           } else {
             //cerr<<"WARNING: Unsupported array access expression: ";
-            //cerr<<SPRAY::AstTerm::astTermWithNullValuesToString(arrRefExp)<<endl;
+            //cerr<<AstTerm::astTermWithNullValuesToString(arrRefExp)<<endl;
           }
         }
       }

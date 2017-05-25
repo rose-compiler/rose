@@ -416,7 +416,9 @@ NEW_TESTCODES = \
    test2016_91.C \
    test2016_93.C \
    test2017_04.C \
-   test2017_09.C
+   test2017_09.C \
+   test2017_10.C \
+   test2017_11.C
 
 # DQ (1/29/2017): This appers to fail for Boost 1.57
 if !ROSE_USING_BOOST_VERSION_1_57
@@ -425,7 +427,7 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_78.C 
 endif
 
-# DQ (1/16/2017): These test codes include not portable macros and references to header files that are a problem for Clang.
+# DQ (1/16/2017): These test codes include non-portable macros and references to header files that are a problem for Clang.
 if !USING_CLANG_COMPILER
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_71.C \
@@ -1292,7 +1294,7 @@ STATISTICALLY_FAILING_TESTS = \
 test2007_62.C \
 math.C 
 
-# DQ (5/17/2012): These are new tests which I deamed up and which fail.
+# DQ (5/17/2012): These are new tests which I dreamed up and which fail.
 # they likely failed in the older version of EDG support, but were not 
 # tested there.  Since the current focus is on the previous level of
 # robustness. These are considered to be NEW failing tests to work on 

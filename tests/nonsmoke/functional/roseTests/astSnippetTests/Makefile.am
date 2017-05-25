@@ -5,6 +5,7 @@ TEST_TARGETS =
 MOSTLYCLEANFILES =
 
 AM_CPPFLAGS = $(ROSE_INCLUDES)
+AM_LDFLAGS = $(ROSE_RPATHS)
 
 
 ###############################################################################################################################

@@ -92,7 +92,7 @@ int mmm()
       offset += tid;
 #endif
     XOMP_static_even_divide (0, n, GPU_N, tid, &offset, &size);   
-    printf("thread %d working on GPU devices %d with size %d copying data from y_ompacc with offset %d\n",tid, tid, size,offset);
+    printf("thread %d working on GPU devices %d with size %ld copying data from y_ompacc with offset %ld\n",tid, tid, size,offset);
     int i, j, k;
 
 #pragma omp target device (tid) map(tofrom:c[offset:size][0:n]), map(to:a[offset:size][0:n],b[0:n][0:n], offset,size,n)

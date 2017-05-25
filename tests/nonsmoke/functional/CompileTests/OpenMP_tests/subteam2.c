@@ -26,7 +26,7 @@ void *subteam1, *subteam2, *subteam3; /*use it as &threadsubteam*/
 int main(void)
 {
   int a[NUMELEMENT];
-  int i,j=0,k,sum=0,sum2=0;
+  int i,j=0,sum=0,sum2=0;
 
   /* assume 5 threads */
 #ifdef _OPENMP

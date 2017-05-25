@@ -2474,6 +2474,9 @@ ProcessSource (SgProject* project, std::vector<std::string>& argv)
           source,
           Cmdline::REMOVE_OPTION_FROM_ARGV);
 
+// DQ (3/25/2017): Eliminate warning of unused variable via a trivial use.
+   ROSE_ASSERT(has_java_source == true || has_java_source == false);
+
   // Default
   //if (has_java_source == false)
   //{
@@ -5261,45 +5264,6 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           set_skip_unparse_asm_commands(true);
         }
 
-  // RPM (12/29/2009): Disassembler aggressiveness.
-     if (CommandlineProcessing::isOptionWithParameter(argv, "-rose:", "disassembler_search", stringParameter, true)) {
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-         try {
-             unsigned heuristics = get_disassemblerSearchHeuristics();
-             heuristics = rose::BinaryAnalysis::Disassembler::parse_switches(stringParameter, heuristics);
-             set_disassemblerSearchHeuristics(heuristics);
-         } catch(const rose::BinaryAnalysis::Disassembler::Exception &e) {
-             fprintf(stderr, "%s in \"-rose:disassembler_search\" switch\n", e.what());
-             ROSE_ASSERT(!"error parsing -rose:disassembler_search");
-         }
-#else
-         printf ("Binary analysis not supported in this distribution (turned off in this restricted distribution) \n");
-         ROSE_ASSERT(false);
-#endif
-     }
-
-  // RPM (1/4/2010): Partitioner function search methods
-     if (CommandlineProcessing::isOptionWithParameter(argv, "-rose:", "partitioner_search", stringParameter, true)) {
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-         try {
-             unsigned heuristics = get_partitionerSearchHeuristics();
-             heuristics = rose::BinaryAnalysis::Partitioner::parse_switches(stringParameter, heuristics);
-             set_partitionerSearchHeuristics(heuristics);
-         } catch(const std::string &e) {
-             fprintf(stderr, "%s in \"-rose:partitioner_search\" switch\n", e.c_str());
-             ROSE_ASSERT(!"error parsing -rose:partitioner_search");
-         }
-#else
-         printf ("Binary analysis not supported in this distribution (turned off in this restricted distribution) \n");
-         ROSE_ASSERT(false);
-#endif
-     }
-
-  // RPM (6/9/2010): Partitioner configuration
-     if (CommandlineProcessing::isOptionWithParameter(argv, "-rose:", "partitioner_config", stringParameter, true)) {
-         set_partitionerConfigurationFileName(stringParameter);
-     }
-
   // DQ (6/7/2013): Added support for alternatively calling the experimental fortran frontend.
      set_experimental_fortran_frontend(false);
      if ( CommandlineProcessing::isOption(argv,"-rose:","experimental_fortran_frontend",true) == true )
@@ -6345,11 +6309,14 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 #if 0
   // DQ (8/18/2014): Supress this output, I think we do want to include the rose_edg_required_macros_and_functions.h 
   // (but we might want to use it to specify different or additional builtin functions in the future).
-     printf ("Note for advance microsoft windows support using MSVC: Not clear if we need a specific --preinclude rose_edg_required_macros_and_functions.h for windows \n");
+     printf ("Note for advanced microsoft windows support using MSVC: Not clear if we need a specific --preinclude rose_edg_required_macros_and_functions.h for windows \n");
 #endif
   // commandLine.insert(commandLine.end(), configDefs.begin(), configDefs.end());
      commandLine.push_back("--preinclude");
      commandLine.push_back("rose_edg_required_macros_and_functions.h");
+
+  // DQ (4/23/2017): Add something to permit use to detect when Microsoft extensions are being supported.
+     commandLine.push_back("-DROSE_USE_MICROSOFT_EXTENSIONS");
 #endif
 
   // DQ (5/24/2015): Adding support for specification of optimization to trigger use of __OPTIMIZE__ macro (required for compatability with GNU gcc API).

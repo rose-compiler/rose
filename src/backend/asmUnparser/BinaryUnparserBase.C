@@ -56,6 +56,16 @@ State::currentBasicBlock(const Partitioner2::BasicBlockPtr &bb) {
     currentBasicBlock_ = bb;
 }
 
+const std::string&
+State::nextInsnLabel() const {
+    return nextInsnLabel_;
+}
+
+void
+State::nextInsnLabel(const std::string &label) {
+    nextInsnLabel_ = label;
+}
+
 const RegisterNames&
 State::registerNames() const {
     return registerNames_;
@@ -367,35 +377,35 @@ commandLineSwitches(Settings &settings) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::string
-Base::operator()(const P2::Partitioner &p) const {
+Base::unparse(const P2::Partitioner &p) const {
     std::ostringstream ss;
     unparse(ss, p);
     return ss.str();
 }
 
 std::string
-Base::operator()(const P2::Partitioner &p, SgAsmInstruction *insn) const {
+Base::unparse(const P2::Partitioner &p, SgAsmInstruction *insn) const {
     std::ostringstream ss;
     unparse(ss, p, insn);
     return ss.str();
 }
 
 std::string
-Base::operator()(const P2::Partitioner &p, const Partitioner2::BasicBlock::Ptr &bb) const {
+Base::unparse(const P2::Partitioner &p, const Partitioner2::BasicBlock::Ptr &bb) const {
     std::ostringstream ss;
     unparse(ss, p, bb);
     return ss.str();
 }
 
 std::string
-Base::operator()(const P2::Partitioner &p, const Partitioner2::DataBlock::Ptr &db) const {
+Base::unparse(const P2::Partitioner &p, const Partitioner2::DataBlock::Ptr &db) const {
     std::ostringstream ss;
     unparse(ss, p, db);
     return ss.str();
 }
 
 std::string
-Base::operator()(const P2::Partitioner &p, const Partitioner2::Function::Ptr &f) const {
+Base::unparse(const P2::Partitioner &p, const Partitioner2::Function::Ptr &f) const {
     std::ostringstream ss;
     unparse(ss, p, f);
     return ss.str();
@@ -764,9 +774,11 @@ Base::emitBasicBlockBody(std::ostream &out, const P2::BasicBlock::Ptr &bb, State
         if (0 == bb->nInstructions()) {
             out <<"no instructions";
         } else {
+            state.nextInsnLabel(state.basicBlockLabels().getOrElse(bb->address(), ""));
             BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions()) {
                 state.frontUnparser().emitInstruction(out, insn, state);
                 out <<"\n";
+                state.nextInsnLabel("");
             }
         }
     }
@@ -990,6 +1002,7 @@ Base::emitInstructionBody(std::ostream &out, SgAsmInstruction *insn, State &stat
 
         // Address or label
         if (settings().insn.address.showing) {
+            // Use the instruction address instead of any label
             if (insn) {
                 std::ostringstream ss;
                 state.frontUnparser().emitInstructionAddress(ss, insn, state);
@@ -997,17 +1010,15 @@ Base::emitInstructionBody(std::ostream &out, SgAsmInstruction *insn, State &stat
             } else {
                 parts.push_back("");
             }
-            fieldWidths.push_back(settings().insn.address.fieldWidth);
+        } else if (!state.nextInsnLabel().empty()) {
+            // Use the label that has been specified in the state
+            parts.push_back(state.nextInsnLabel() + ":");
         } else {
-            if (state.currentBasicBlock() && state.currentBasicBlock()->address() == insn->get_address()) {
-                parts.push_back(state.basicBlockLabels().getOrElse(insn->get_address(), ""));
-                if (!parts.back().empty())
-                    parts.back() += ":";
-            } else {
-                parts.push_back("");
-            }
-            fieldWidths.push_back(settings().insn.address.fieldWidth);
+            // No address or label
+            parts.push_back("");
         }
+        fieldWidths.push_back(settings().insn.address.fieldWidth);
+        state.nextInsnLabel("");
 
         // Raw bytes
         if (settings().insn.bytes.showing) {

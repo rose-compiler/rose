@@ -224,10 +224,6 @@ void Analyzer::runSolver5() {
         ROSE_ASSERT(threadNum>=0 && threadNum<=_numberOfThreadsToUse);
       } else {
         ROSE_ASSERT(currentEStatePtr);
-        if(variableValueMonitor.isActive()) {
-          variableValueMonitor.update(this,const_cast<EState*>(currentEStatePtr));
-        }
-
         Flow edgeSet=flow.outEdges(currentEStatePtr->label());
         // logger[DEBUG] << "out-edgeSet size:"<<edgeSet.size()<<endl;
         for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
@@ -245,16 +241,26 @@ void Analyzer::runSolver5() {
               // _csv_stg_trace_filename is the member-variable of analyzer
 #pragma omp critical
               {
+#if 1
                 fout.open(_stg_trace_filename.c_str(),ios::app);    // open file for appending
                 assert (!fout.fail( ));
-                fout<<"PSTATE-IN:"<<currentEStatePtr->pstate()->toString(&variableIdMapping);
-                string sourceString=getCFAnalyzer()->getLabeler()->getNode(currentEStatePtr->label())->unparseToString().substr(0,20);
-                if(sourceString.size()==20) sourceString+="...";
-                fout<<" ==>"<<"TRANSFER:"<<sourceString;
-                fout<<"==> "<<"PSTATE-OUT:"<<newEState.pstate()->toString(&variableIdMapping);
+                fout<<"PSTATE-IN :"<<currentEStatePtr->pstate()->toString(&variableIdMapping);
+                string sourceString=getCFAnalyzer()->getLabeler()->getNode(currentEStatePtr->label())->unparseToString().substr(0,40);
+                if(sourceString.size()==40) sourceString+="...";
+                fout<<"\n==>"<<"TRANSFER:"<<sourceString;
+                fout<<"==>\n"<<"PSTATE-OUT:"<<newEState.pstate()->toString(&variableIdMapping);
+                fout<<endl;
                 fout<<endl;
                 fout.close();
                 // logger[DEBUG] <<"generate STG-edge:"<<"ICFG-EDGE:"<<e.toString()<<endl;
+#else
+                logger[TRACE]<<"PSTATE-IN :"<<currentEStatePtr->pstate()->toString(&variableIdMapping)<<endl;
+                string sourceString=getCFAnalyzer()->getLabeler()->getNode(currentEStatePtr->label())->unparseToString().substr(0,40);
+                if(sourceString.size()==40) sourceString+="...";
+                logger[TRACE]<<sourceString<<endl;
+                logger[TRACE]<<"PSTATE-OUT:"<<newEState.pstate()->toString(&variableIdMapping)<<endl;
+                logger[TRACE]<<endl;
+#endif                
               }
             }
 
@@ -353,10 +359,6 @@ void Analyzer::runSolver8() {
       ROSE_ASSERT(0); // there should always be exactly one element in the worklist at this point
     }
     ROSE_ASSERT(currentEStatePtr);
-
-    if(variableValueMonitor.isActive()) {
-      variableValueMonitor.update(this,const_cast<EState*>(currentEStatePtr));
-    }
 
     Flow edgeSet=flow.outEdges(currentEStatePtr->label());
     for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
@@ -520,7 +522,7 @@ void Analyzer::runSolver10() {
   // create a new instance of the startPState
   //TODO: check why init of "output" is necessary
   PState newStartPState = _startPState;
-  newStartPState[globalVarIdByName("output")]=CodeThorn::AType::ConstIntLattice(-7);
+  newStartPState[globalVarIdByName("output")]=CodeThorn::AbstractValue(-7);
   // initialize worklist
   PStatePlusIOHistory startState = PStatePlusIOHistory(newStartPState, list<int>());
   std::list<PStatePlusIOHistory> workList;
@@ -600,7 +602,7 @@ bool isEmptyWorkList;
       for (set<int>::iterator inputVal=_inputVarValues.begin(); inputVal!=_inputVarValues.end(); inputVal++) {
         // copy the state and initialize new input
         PState newPState = currentState.first;
-        newPState[globalVarIdByName("input")]=CodeThorn::AType::ConstIntLattice(*inputVal);
+        newPState[globalVarIdByName("input")]=CodeThorn::AbstractValue(*inputVal);
         list<int> newHistory = currentState.second;
         ROSE_ASSERT(newHistory.size() % 2 == 0);
         newHistory.push_back(*inputVal);

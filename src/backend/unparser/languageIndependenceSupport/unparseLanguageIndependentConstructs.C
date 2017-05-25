@@ -495,7 +495,9 @@ UnparseLanguageIndependentConstructs::printOutComments ( SgLocatedNode* locatedN
 void
 UnparseLanguageIndependentConstructs::outputCompilerGeneratedStatements( SgUnparse_Info & info )
    {
-     list<SgStatement*>::iterator i = unp->compilerGeneratedStatementQueue.begin();
+  // DQ (3/28/2017): Eliminate warning about unused variable from Clang.
+  // list<SgStatement*>::iterator i = unp->compilerGeneratedStatementQueue.begin();
+
   // printf ("compilerGeneratedStatementQueue.size() = %" PRIuPTR " \n",compilerGeneratedStatementQueue.size());
      while (info.outputCompilerGeneratedStatements() == false && unp->compilerGeneratedStatementQueue.empty() == false)
         {
@@ -989,7 +991,8 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStreamForNodeCont
 
      std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap = sourceFile->get_tokenSubsequenceMap();
 
-     SgTokenPtrList & tokenVector = sourceFile->get_token_list();
+  // DQ (3/28/2017): Eliminate warning about unused variable from Clang.
+  // SgTokenPtrList & tokenVector = sourceFile->get_token_list();
 
   // This implementation uses the refactored code.
      bool unparseStatus = (canBeUnparsedFromTokenStream(sourceFile,stmt) == true);
@@ -1456,8 +1459,9 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
 #if 0
                curprint("/* In UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFile*,,,): calling unparseAttachedPreprocessingInfoUsingTokenStream test 0 */");
 #endif
+            // DQ (3/28/2017): Eliminate warning about unused variable from Clang.
             // DQ (1/15/2014): This value is not used in the logic below.
-               bool unparseTrailingTokenStream = unparseAttachedPreprocessingInfoUsingTokenStream(stmt,info,PreprocessingInfo::after);
+            // bool unparseTrailingTokenStream = unparseAttachedPreprocessingInfoUsingTokenStream(stmt,info,PreprocessingInfo::after);
 #if 0
                curprint("/* DONE: In UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFile*,,,): calling unparseAttachedPreprocessingInfoUsingTokenStream test 0 */");
 #endif
@@ -2408,7 +2412,6 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                     case V_SgLinemarkerDirectiveStatement:  unparseLinemarkerDirectiveStatement  (stmt, info); break;
 
                  // Liao 10/21/2010. Handle generic OpenMP directive unparsing here.
-                    case V_SgOmpAtomicStatement:
                     case V_SgOmpSectionStatement:
                     case V_SgOmpTaskwaitStatement:
                     case V_SgOmpBarrierStatement:           unparseOmpSimpleStatement        (stmt, info);break;
@@ -2427,6 +2430,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                     case V_SgOmpSingleStatement:
                     case V_SgOmpTaskStatement:
                     case V_SgOmpSimdStatement:
+                    case V_SgOmpAtomicStatement: // Atomic may have clause now
                          unparseOmpGenericStatement (stmt, info); 
                          break;
 
@@ -3175,13 +3179,15 @@ UnparseLanguageIndependentConstructs::isTransformed(SgStatement* stmt)
   // Assume no transformation at the moment while we debug templates.
 
   // DQ (6/29/2005): return false while we try to return to compiling KULL
-#if 1
+#if 0
      return false;
 #else
-
-#error "DEAD CODE!"
-
-     return true;
+  // DQ (5/9/2017): Fix this to look at the statement (non-defining template instantiations are not being unparsed).
+#if 0
+     printf ("In UnparseLanguageIndependentConstructs::isTransformed(): stmt = %p = %s stmt->isTransformation() = %s \n",
+          stmt,stmt->class_name().c_str(),(stmt->isTransformation() == true) ? "true" : "false");
+#endif
+     return stmt->isTransformation();
 #endif
    }
 
@@ -4928,7 +4934,7 @@ UnparseLanguageIndependentConstructs::isRequiredOperator( SgBinaryOp* binary_op,
 #endif
 
 #if 1
-  // DQ (7/6/2014): Simpler appraoch, but wrong since overloaded operators unparsed 
+  // DQ (7/6/2014): Simpler approach, but wrong since overloaded operators unparsed 
   // using operator syntax will always be marked as compiler generated.
   // bool is_compiler_generated = binary_op->isCompilerGenerated();
 
@@ -6185,10 +6191,81 @@ void UnparseLanguageIndependentConstructs::unparseOmpDefaultClause(SgOmpClause* 
       }
     default:
       cerr<<"Error: UnparseLanguageIndependentConstructs::unparseOmpDefaultClause() meets unacceptable default option value:"<<dv<<endl;
+      ROSE_ASSERT (false);
       break;
   }    
   curprint(string(")"));
 }
+
+void UnparseLanguageIndependentConstructs::unparseOmpProcBindClause(SgOmpClause* clause, SgUnparse_Info& info)
+{
+  ROSE_ASSERT(clause != NULL);
+  SgOmpProcBindClause * c = isSgOmpProcBindClause(clause);
+  ROSE_ASSERT(c!= NULL);
+  curprint(string(" proc_bind("));
+  SgOmpClause::omp_proc_bind_policy_enum dv = c->get_policy(); 
+  switch (dv)
+  {
+    case SgOmpClause::e_omp_proc_bind_policy_master:
+      {
+        curprint(string("master"));
+        break;
+      }
+    case SgOmpClause::e_omp_proc_bind_policy_close:
+      {
+        curprint(string("close"));
+        break;
+      }   
+    case SgOmpClause::e_omp_proc_bind_policy_spread:
+      {
+        curprint(string("spread"));
+        break;
+      }
+   default:
+      cerr<<"Error: UnparseLanguageIndependentConstructs::unparseOmpProcBindClause() meets unacceptable default option value:"<<dv<<endl;
+      ROSE_ASSERT (false);
+      break;
+  }    
+  curprint(string(")"));
+}
+
+void UnparseLanguageIndependentConstructs::unparseOmpAtomicClause(SgOmpClause* clause, SgUnparse_Info& info)
+{
+  ROSE_ASSERT(clause != NULL);
+  SgOmpAtomicClause * c = isSgOmpAtomicClause(clause);
+  ROSE_ASSERT(c!= NULL);
+//  curprint(string(" "));
+  SgOmpClause::omp_atomic_clause_enum dv = c->get_atomicity(); 
+  switch (dv)
+  {
+    case SgOmpClause::e_omp_atomic_clause_read:
+      {
+        curprint(string("read"));
+        break;
+      }
+    case SgOmpClause::e_omp_atomic_clause_write:
+      {
+        curprint(string("write"));
+        break;
+      }
+    case SgOmpClause::e_omp_atomic_clause_update:
+      {
+        curprint(string("update"));
+        break;
+      }
+    case SgOmpClause::e_omp_atomic_clause_capture:
+      {
+        curprint(string("capture"));
+        break;
+      }
+  default:
+      cerr<<"Error: "<< __FUNCTION__ <<" meets unacceptable default option value:"<<dv<<endl;
+      ROSE_ASSERT (false);
+      break;
+  }    
+}
+
+
 
 void UnparseLanguageIndependentConstructs::unparseOmpScheduleClause(SgOmpClause* clause, SgUnparse_Info& info)
 {
@@ -6226,6 +6303,7 @@ void UnparseLanguageIndependentConstructs::unparseOmpScheduleClause(SgOmpClause*
       }
     default:
       cerr<<"Error: UnparseLanguageIndependentConstructs::unparseOmpScheduleClause() meets unacceptable kind option value:"<<skind<<endl;
+      ROSE_ASSERT (false);
       break;
   }
 
@@ -6574,6 +6652,10 @@ void UnparseLanguageIndependentConstructs::unparseOmpExpressionClause(SgOmpClaus
     curprint(string(" num_threads("));
   else if (isSgOmpDeviceClause(c))
     curprint(string(" device("));
+  else if (isSgOmpSafelenClause(c))
+    curprint(string(" safelen("));
+  else if (isSgOmpSimdlenClause(c))
+    curprint(string(" simdlen("));
   else {
     cerr<<"Error: unacceptable clause type within unparseOmpExpressionClause():"<< clause->class_name()<<endl;
     ROSE_ASSERT(false);
@@ -6603,11 +6685,33 @@ void UnparseLanguageIndependentConstructs::unparseOmpClause(SgOmpClause* clause,
         unparseOmpDefaultClause(isSgOmpDefaultClause(clause),info);
         break;
       }
+    case V_SgOmpProcBindClause:
+      {
+        unparseOmpProcBindClause(isSgOmpProcBindClause(clause),info);
+        break;
+      }
+    case V_SgOmpAtomicClause:
+      {
+        unparseOmpAtomicClause(isSgOmpAtomicClause(clause),info);
+        break;
+      }
+ 
     case V_SgOmpNowaitClause:
       {
         curprint(string(" nowait"));
         break;
       }
+    case V_SgOmpInbranchClause:
+      {
+        curprint(string(" inbranch"));
+        break;
+      }
+     case V_SgOmpNotinbranchClause:
+      {
+        curprint(string(" notinbranch"));
+        break;
+      }
+ 
     case V_SgOmpOrderedClause:
       {
         curprint(string(" ordered"));
@@ -6637,6 +6741,8 @@ void UnparseLanguageIndependentConstructs::unparseOmpClause(SgOmpClause* clause,
     case V_SgOmpCollapseClause:
     case V_SgOmpIfClause:  
     case V_SgOmpNumThreadsClause:  
+    case V_SgOmpSafelenClause:  
+    case V_SgOmpSimdlenClause:  
       //case V_SgOmpExpressionClause: // there should be no instance for this clause
       {
         unparseOmpExpressionClause(isSgOmpExpressionClause(clause), info);
@@ -6684,7 +6790,7 @@ void UnparseLanguageIndependentConstructs::unparseOmpSimpleStatement(SgStatement
   SgOmpBodyStatement* b_stmt = isSgOmpBodyStatement(stmt);
   if (b_stmt)
   {
-    ROSE_ASSERT (stmt->variantT() == V_SgOmpAtomicStatement || stmt->variantT() == V_SgOmpSectionStatement);
+    ROSE_ASSERT (stmt->variantT() == V_SgOmpSectionStatement);
     SgUnparse_Info ninfo(info);
     unparseStatement(b_stmt->get_body(), ninfo);
   }
@@ -6876,7 +6982,7 @@ void UnparseLanguageIndependentConstructs::unparseOmpDirectivePrefixAndName (SgS
       case V_SgOmpSimdStatement:
       {
         unparseOmpPrefix(info);
-        curprint(string ("simd "));
+        curprint(string ("simd"));
         break;
       }
      case V_SgOmpSectionsStatement:

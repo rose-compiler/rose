@@ -56,9 +56,11 @@ namespace SageInterface
   bool isScalarType( SgType* t)
   {
     ROSE_ASSERT(t);
+    // We want to strip off typedef chain, and const modifiers etc.
+    t = t->stripTypedefsAndModifiers();
     switch(t->variantT()) {
-      case V_SgTypedefType:
-         return isScalarType(isSgTypedefType(t)->get_base_type());
+//      case V_SgTypedefType:
+//         return isScalarType(isSgTypedefType(t)->get_base_type());
       case V_SgTypeChar :
       case V_SgTypeSignedChar :
       case V_SgTypeUnsignedChar :
@@ -532,6 +534,7 @@ bool isCopyConstructible(SgType* type)
         case V_SgFunctionType:
         case V_SgMemberFunctionType:
         case V_SgTypeEllipse:
+        case V_SgDeclType:
             return false;
             break;
 
@@ -642,6 +645,7 @@ bool isCopyConstructible(SgType* type)
         case V_SgTypeLong:
         case V_SgTypeLongDouble:
         case V_SgTypeLongLong:
+        case V_SgTypeNullptr:
         case V_SgTypeShort:
         case V_SgTypeSignedChar:
         case V_SgTypeSignedInt:
@@ -683,6 +687,7 @@ bool isCopyConstructible(SgType* type)
       case V_SgMemberFunctionType:
       case V_SgReferenceType: //I think C++ reference types cannot be reassigned. 
       case V_SgTypeEllipse:
+      case V_SgDeclType:
         return false;
         break;
 
@@ -759,6 +764,7 @@ bool isCopyConstructible(SgType* type)
       case V_SgTypeLong:
       case V_SgTypeLongDouble:
       case V_SgTypeLongLong:
+      case V_SgTypeNullptr:
       case V_SgTypeShort:
       case V_SgTypeSignedChar:
       case V_SgTypeSignedInt:

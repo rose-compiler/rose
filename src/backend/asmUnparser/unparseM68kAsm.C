@@ -75,7 +75,6 @@ unparseM68kExpression(SgAsmExpression *expr, const AsmUnparser::LabelMap *labels
         result = "<UNHANDLED_EXPRESSION type=" + expr->class_name() + ">";
     }
 
-    result = StringUtility::appendAsmComment(result, expr->get_replacement());
     result = StringUtility::appendAsmComment(result, expr->get_comment());
     return result;
 }

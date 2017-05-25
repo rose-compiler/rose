@@ -6,6 +6,7 @@
 #include "sageBuilderAsm.h"
 #include "DisassemblerPowerpc.h"
 #include "BinaryUnparserPowerpc.h"
+#include "DispatcherPowerpc.h"
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -36,7 +37,7 @@ namespace BinaryAnalysis {
 #define V2DOUBLET (SageBuilderAsm::buildTypeVector(2, DOUBLET))
 
 bool
-DisassemblerPowerpc::can_disassemble(SgAsmGenericHeader *header) const
+DisassemblerPowerpc::canDisassemble(SgAsmGenericHeader *header) const
 {
     SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
     return isa == SgAsmExecutableFileFormat::ISA_PowerPC;
@@ -51,22 +52,25 @@ void
 DisassemblerPowerpc::init()
 {
     name("ppc");
-    set_wordsize(4);
-    set_alignment(4);
-    set_sex(ByteOrder::ORDER_LSB);
-    set_registers(RegisterDictionary::dictionary_powerpc()); // only a default
-    REG_IP = *get_registers()->lookup("iar");
+    wordSizeBytes(4);
+    byteOrder(ByteOrder::ORDER_LSB);
+    registerDictionary(RegisterDictionary::dictionary_powerpc()); // only a default
+    REG_IP = *registerDictionary()->lookup("iar");
+    REG_SP = *registerDictionary()->lookup("r1");
     callingConventions(CallingConvention::dictionaryPowerpc());
+    InstructionSemantics2::DispatcherPowerpcPtr d = InstructionSemantics2::DispatcherPowerpc::instance();
+    d->set_register_dictionary(registerDictionary());
+    p_proto_dispatcher = d;
 }
 
 /* This is a bit of a kludge for now because we're trying to use an unmodified version of the PowerpcDisassembler name space. */
 SgAsmInstruction *
-DisassemblerPowerpc::disassembleOne(const MemoryMap *map, rose_addr_t start_va, AddressSet *successors)
+DisassemblerPowerpc::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va, AddressSet *successors)
 {
     /* The old PowerpcDisassembler::disassemble() function doesn't understand MemoryMap mappings. Therefore, remap the next
      * few bytes (enough for at least one instruction) into a temporary buffer. */
     unsigned char temp[4];
-    size_t tempsz = map->at(start_va).limit(sizeof temp).require(get_protection()).read(temp).size();
+    size_t tempsz = map->at(start_va).limit(sizeof temp).require(MemoryMap::EXECUTABLE).read(temp).size();
 
     /* Treat the bytes as a big-endian instruction.  Note that PowerPC is big-endian, but PowerPC can support both big- and
      * little-endian processor modes (with much weirdness; e.g. PDP endian like propoerties). */
@@ -86,12 +90,11 @@ DisassemblerPowerpc::disassembleOne(const MemoryMap *map, rose_addr_t start_va, 
         successors->insert(suc2.begin(), suc2.end());
     }
 
-    update_progress(insn);
     return insn;
 }
 
 SgAsmInstruction *
-DisassemblerPowerpc::make_unknown_instruction(const Exception &e) 
+DisassemblerPowerpc::makeUnknownInstruction(const Exception &e) 
 {
     SgAsmPowerpcInstruction *insn = new SgAsmPowerpcInstruction(e.ip, "unknown", powerpc_unknown_instruction);
     SgAsmOperandList *operands = new SgAsmOperandList();
@@ -254,10 +257,10 @@ DisassemblerPowerpc::makeRegister(PowerpcRegisterClass reg_class, int reg_number
     ASSERT_forbid(name.empty());
 
     /* Obtain a register descriptor from the dictionary */
-    ASSERT_not_null(get_registers());
-    const RegisterDescriptor *rdesc = get_registers()->lookup(name);
+    ASSERT_not_null(registerDictionary());
+    const RegisterDescriptor *rdesc = registerDictionary()->lookup(name);
     if (!rdesc)
-        throw ExceptionPowerpc("register \"" + name + "\" is not available for " + get_registers()->get_architecture_name(), this);
+        throw ExceptionPowerpc("register \"" + name + "\" is not available for " + registerDictionary()->get_architecture_name(), this);
     
     /* Construct the return value */
     SgAsmRegisterReferenceExpression *rre = new SgAsmDirectRegisterExpression(*rdesc);

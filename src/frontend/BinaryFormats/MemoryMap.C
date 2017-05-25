@@ -19,14 +19,16 @@
 
 // This is the other half of the BOOST_CLASS_EXPORT_KEY from the header file.
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-BOOST_CLASS_EXPORT_IMPLEMENT(MemoryMap::AllocatingBuffer);
-BOOST_CLASS_EXPORT_IMPLEMENT(MemoryMap::MappedBuffer);
-BOOST_CLASS_EXPORT_IMPLEMENT(MemoryMap::NullBuffer);
-BOOST_CLASS_EXPORT_IMPLEMENT(MemoryMap::StaticBuffer);
+BOOST_CLASS_EXPORT_IMPLEMENT(rose::BinaryAnalysis::MemoryMap::AllocatingBuffer);
+BOOST_CLASS_EXPORT_IMPLEMENT(rose::BinaryAnalysis::MemoryMap::MappedBuffer);
+BOOST_CLASS_EXPORT_IMPLEMENT(rose::BinaryAnalysis::MemoryMap::NullBuffer);
+BOOST_CLASS_EXPORT_IMPLEMENT(rose::BinaryAnalysis::MemoryMap::StaticBuffer);
 #endif
 
-using namespace rose;
 using namespace rose::Diagnostics;
+
+namespace rose {
+namespace BinaryAnalysis {
 
 
 std::ostream& operator<<(std::ostream &o, const MemoryMap &x) { x.print(o); return o; }
@@ -698,7 +700,7 @@ MemoryMap::shrinkUnshare() {
         if (const uint8_t *data = segment.buffer()->data()) {
             // Create a new buffer for this segment, copying the old data
             Buffer::Ptr buf = AllocatingBuffer::instance(interval.size());
-            if (buf->write(data, 0, interval.size()) != interval.size()) {
+            if (buf->write(data + segment.offset(), 0, interval.size()) != interval.size()) {
                 success = false;
             } else {
                 segment.offset(0);
@@ -738,3 +740,6 @@ MemoryMap::dump(std::ostream &out, std::string prefix) const
             <<"\n";
     }
 }
+
+} // namespace
+} // namespace

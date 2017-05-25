@@ -10,6 +10,7 @@
 namespace rose {
 namespace BinaryAnalysis {
 
+/** Generates pseudo-assembly listings. */
 namespace Unparser {
 
 /** State for unparsing.
@@ -25,6 +26,7 @@ private:
     Partitioner2::FunctionCallGraph cg_;
     Partitioner2::FunctionPtr currentFunction_;
     Partitioner2::BasicBlockPtr currentBasicBlock_;
+    std::string nextInsnLabel_;
     AddrString basicBlockLabels_;
     RegisterNames registerNames_;
     const Base &frontUnparser_;
@@ -39,6 +41,8 @@ public:
     void currentFunction(const Partitioner2::FunctionPtr&);
     Partitioner2::BasicBlockPtr currentBasicBlock() const;
     void currentBasicBlock(const Partitioner2::BasicBlockPtr&);
+    const std::string& nextInsnLabel() const;
+    void nextInsnLabel(const std::string&);
     const RegisterNames& registerNames() const;
     void registerNames(const RegisterNames &r);
     const AddrString& basicBlockLabels() const;
@@ -115,11 +119,21 @@ public:
      *  This is just a convenience wrapper around the three-argument form.
      *
      * @{ */
-    std::string operator()(const Partitioner2::Partitioner &p) const /*final*/;
-    std::string operator()(const Partitioner2::Partitioner &p, SgAsmInstruction *insn) const /*final*/;
-    std::string operator()(const Partitioner2::Partitioner &p, const Partitioner2::BasicBlockPtr &bb) const /*final*/;
-    std::string operator()(const Partitioner2::Partitioner &p, const Partitioner2::DataBlockPtr &db) const /*final*/;
-    std::string operator()(const Partitioner2::Partitioner &p, const Partitioner2::FunctionPtr &f) const /*final*/;
+    std::string operator()(const Partitioner2::Partitioner &p) const /*final*/ {
+        return unparse(p);
+    }
+    std::string operator()(const Partitioner2::Partitioner &p, SgAsmInstruction *insn) const /*final*/ {
+        return unparse(p, insn);
+    }
+    std::string operator()(const Partitioner2::Partitioner &p, const Partitioner2::BasicBlockPtr &bb) const /*final*/ {
+        return unparse(p, bb);
+    }
+    std::string operator()(const Partitioner2::Partitioner &p, const Partitioner2::DataBlockPtr &db) const /*final*/ {
+        return unparse(p, db);
+    }
+    std::string operator()(const Partitioner2::Partitioner &p, const Partitioner2::FunctionPtr &f) const /*final*/ {
+        return unparse(p, f);
+    }
     /** @} */
 
 
@@ -131,11 +145,17 @@ public:
      *  This function does the same thing as the function operator that has the same arguments.
      *
      * @{ */
-    virtual void unparse(std::ostream&, const Partitioner2::Partitioner&) const;
-    virtual void unparse(std::ostream&, const Partitioner2::Partitioner&, SgAsmInstruction*) const;
-    virtual void unparse(std::ostream&, const Partitioner2::Partitioner&, const Partitioner2::BasicBlockPtr&) const;
-    virtual void unparse(std::ostream&, const Partitioner2::Partitioner&, const Partitioner2::DataBlockPtr&) const;
-    virtual void unparse(std::ostream&, const Partitioner2::Partitioner&, const Partitioner2::FunctionPtr&) const;
+    void unparse(std::ostream&, const Partitioner2::Partitioner&) const /*final*/;
+    void unparse(std::ostream&, const Partitioner2::Partitioner&, SgAsmInstruction*) const /*final*/;
+    void unparse(std::ostream&, const Partitioner2::Partitioner&, const Partitioner2::BasicBlockPtr&) const /*final*/;
+    void unparse(std::ostream&, const Partitioner2::Partitioner&, const Partitioner2::DataBlockPtr&) const /*final*/;
+    void unparse(std::ostream&, const Partitioner2::Partitioner&, const Partitioner2::FunctionPtr&) const /*final*/;
+
+    std::string unparse(const Partitioner2::Partitioner&) const /*final*/;
+    std::string unparse(const Partitioner2::Partitioner&, SgAsmInstruction*) const /*final*/;
+    std::string unparse(const Partitioner2::Partitioner&, const Partitioner2::BasicBlockPtr&) const /*final*/;
+    std::string unparse(const Partitioner2::Partitioner&, const Partitioner2::DataBlockPtr&) const /*final*/;
+    std::string unparse(const Partitioner2::Partitioner&, const Partitioner2::FunctionPtr&) const /*final*/;
     /** @} */
 
 public:

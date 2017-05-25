@@ -1,6 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 AM_CPPFLAGS = $(ROSE_INCLUDES)
+AM_LDFLAGS = $(ROSE_RPATHS)
 
 # DQ (10/7/2015): This is not supported on later version and this automake test is using the wrong automake 
 # variable since this is associated with the backend comiler (not the compiler used to compile ROSE).
@@ -11,7 +12,8 @@ AM_CPPFLAGS = $(ROSE_INCLUDES)
 # else
 #    noinst_PROGRAMS = testSDG
 #    testSDG_SOURCES = sdgTest.C
-#    testSDG_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+#    testSDG_LDFLAGS = $(ROSE_RPATHS)
+#    testSDG_LDADD = $(ROSE_LIBS)
 # endif
 noinst_PROGRAMS =
 

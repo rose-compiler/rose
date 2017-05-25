@@ -70,9 +70,11 @@ UntypedConverter::convertLabel (SgUntypedStatement* ut_stmt, SgStatement* sg_stm
    std::string label_name = ut_stmt->get_label_string();
    if (!label_name.empty())
       {
+         char* next;
       // SageInterface::setFortranNumericLabel(sg_stmt, std::stoul(label_name));
       // The modifications in setFortranNumericLabel should be moved to SageInterface
-         setFortranNumericLabel(sg_stmt, std::stoul(label_name), label_type, label_scope);
+         setFortranNumericLabel(sg_stmt, strtoul(label_name.c_str(),&next,10), label_type, label_scope);
+         ROSE_ASSERT(next != label_name.c_str());
       }
 }
 
@@ -354,7 +356,7 @@ UntypedConverter::convertSgUntypedSubroutineDeclaration (SgUntypedSubroutineDecl
 SgProcedureHeaderStatement*
 UntypedConverter::convertSgUntypedFunctionDeclaration (SgUntypedFunctionDeclaration* ut_function, SgScopeStatement* scope)
 {
-   SgProcedureHeaderStatement* sg_function;
+   SgProcedureHeaderStatement* sg_function = NULL;
    return sg_function;
 }
 

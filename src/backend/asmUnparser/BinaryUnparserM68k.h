@@ -25,8 +25,8 @@ public:
         return instance(settings());
     }
     
-    const M68kSettings& settings() const { return settings_; }
-    M68kSettings& settings() { return settings_; }
+    const M68kSettings& settings() const ROSE_OVERRIDE { return settings_; }
+    M68kSettings& settings() ROSE_OVERRIDE { return settings_; }
 
 protected:
     void emitInstruction(std::ostream&, SgAsmInstruction*, State&) const ROSE_OVERRIDE;

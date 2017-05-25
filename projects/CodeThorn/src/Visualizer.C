@@ -10,7 +10,7 @@
 #include "SgNodeHelper.h"
 #include "CommandLineOptions.h"
 #include "AstAnnotator.h"
-#include "AType.h"
+#include "AbstractValue.h"
 #include "Miscellaneous2.h"
 #include "tgba/succiter.hh"
 #include "tgba/state.hh"
@@ -56,14 +56,14 @@ void AssertionExtractor::computeLabelVectorOfEStates() {
       bool isFirst=true;
       for(PState::const_iterator j=p->begin();j!=p->end();++j) {
         // iterating on the map
-        VariableId varId=(*j).first;
+        AbstractValue varId=(*j).first;
         if(p->varIsConst(varId)) {
           if(!isFirst) {
             assertions[lab.getId()]+=" && ";
           } else {
             isFirst=false;
           }
-          assertions[lab.getId()]+=variableIdMapping->variableName(varId)+"=="+p->varValueToString(varId);
+          assertions[lab.getId()]+=varId.toString(variableIdMapping)+"=="+p->varValueToString(varId);
         }
       }
       const ConstraintSet* cset=(*i)->constraints();
@@ -376,7 +376,7 @@ string Visualizer::transitionGraphWithIOToDot(EStatePtrSet displayedEStates,
     } else {
       ss<<"n"<<*i<<" [label=";
     }
-    AType::ConstIntLattice number=(*i)->determineUniqueIOValue();
+    AbstractValue number=(*i)->determineUniqueIOValue();
     if (displayCurrentState) {
       // generate number which is used in IO operation
       string name="\"";
@@ -498,7 +498,7 @@ string Visualizer::transitionGraphWithIOToDot() {
       name+="R:";
 #endif
     // generate number which is used in IO operation
-    AType::ConstIntLattice number=(*i)->determineUniqueIOValue();
+    AbstractValue number=(*i)->determineUniqueIOValue();
     if(boolOptions["rersmode"] && !boolOptions["rers-numeric"]) {
       if(!number.isTop() && !number.isBot()) {
         // convert number to letter

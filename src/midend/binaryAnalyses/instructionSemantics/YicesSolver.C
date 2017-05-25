@@ -140,8 +140,11 @@ YicesSolver::generate_file(std::ostream &o, const std::vector<SymbolicExpr::Ptr>
       <<"; Assertions\n"
       <<";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n";
     for (std::vector<SymbolicExpr::Ptr>::const_iterator ei=exprs.begin(); ei!=exprs.end(); ++ei) {
-        o <<"\n"
-          <<"; effective size = " <<StringUtility::plural((*ei)->nNodes(), "nodes")
+        o <<"\n";
+        const std::string &comment = (*ei)->comment();
+        if (!comment.empty())
+            o <<StringUtility::prefixLines(comment, "; ") <<"\n";
+        o <<"; effective size = " <<StringUtility::plural((*ei)->nNodes(), "nodes")
           <<", actual size = " <<StringUtility::plural((*ei)->nNodesUnique(), "nodes") <<"\n";
         out_assert(o, *ei);
     }
@@ -304,7 +307,7 @@ YicesSolver::clear_evidence()
     evidence.clear();
 }
 
-/** Emit type name for term. */
+/* Emit type name for term. */
 std::string
 YicesSolver::get_typename(const SymbolicExpr::Ptr &expr) {
     ASSERT_not_null(expr);
@@ -314,7 +317,7 @@ YicesSolver::get_typename(const SymbolicExpr::Ptr &expr) {
             " (bitvector " + StringUtility::numberToString(expr->nBits()) + "))");
 }
 
-/** Traverse an expression and produce Yices "define" statements for variables. */
+/* Traverse an expression and produce Yices "define" statements for variables. */
 void
 YicesSolver::out_define(std::ostream &o, const std::vector<SymbolicExpr::Ptr> &exprs, Definitions *defns) {
     ASSERT_not_null(defns);
@@ -362,7 +365,7 @@ YicesSolver::out_define(std::ostream &o, const std::vector<SymbolicExpr::Ptr> &e
         expr->depthFirstTraversal(t1);
 }
 
-/** Generate definitions for common subexpressions. */
+/* Generate definitions for common subexpressions. */
 void
 YicesSolver::out_common_subexpressions(std::ostream &o, const std::vector<SymbolicExpr::Ptr> &exprs) {
     std::vector<SymbolicExpr::Ptr> cses = findCommonSubexpressions(exprs);
@@ -420,7 +423,7 @@ YicesSolver::out_comments(std::ostream &o, const std::vector<SymbolicExpr::Ptr> 
         expr->depthFirstTraversal(t1);
 }
 
-/** Generate a Yices "assert" statement for an expression. */
+/* Generate a Yices "assert" statement for an expression. */
 void
 YicesSolver::out_assert(std::ostream &o, const SymbolicExpr::Ptr &tn)
 {
@@ -437,7 +440,7 @@ YicesSolver::out_assert(std::ostream &o, const SymbolicExpr::Ptr &tn)
     o <<")\n";
 }
 
-/** Output a decimal number. */
+/* Output a decimal number. */
 void
 YicesSolver::out_number(std::ostream &o, const SymbolicExpr::Ptr &tn)
 {
@@ -446,7 +449,7 @@ YicesSolver::out_number(std::ostream &o, const SymbolicExpr::Ptr &tn)
     o <<ln->toInt();
 }
 
-/** Output for one expression. */
+/* Output for one expression. */
 void
 YicesSolver::out_expr(std::ostream &o, const SymbolicExpr::Ptr &tn)
 {
@@ -518,7 +521,7 @@ YicesSolver::out_expr(std::ostream &o, const SymbolicExpr::Ptr &tn)
     }
 }
 
-/** Output for unary operators. */
+/* Output for unary operators. */
 void
 YicesSolver::out_unary(std::ostream &o, const char *opname, const SymbolicExpr::InteriorPtr &in)
 {
@@ -530,7 +533,7 @@ YicesSolver::out_unary(std::ostream &o, const char *opname, const SymbolicExpr::
     o <<")";
 }
 
-/** Output for binary operators. */
+/* Output for binary operators. */
 void
 YicesSolver::out_binary(std::ostream &o, const char *opname, const SymbolicExpr::InteriorPtr &in)
 {
@@ -544,15 +547,11 @@ YicesSolver::out_binary(std::ostream &o, const char *opname, const SymbolicExpr:
     o <<")";
 }
 
-/** Output for if-then-else operator.  The condition must be cast from a 1-bit vector to a number, therefore, the input
- *  \code
- *      (OP_ITE COND S1 S2)
- *  \endcode
+/* Output for if-then-else operator.  The condition must be cast from a 1-bit vector to a number, therefore, the input
+ *     (OP_ITE COND S1 S2)
  *
- *  will be rewritten as
- *  \code
- *      (ite (= COND 0b1) S1 S2)
- *  \endcode
+ * will be rewritten as
+ *     (ite (= COND 0b1) S1 S2)
  */
 void
 YicesSolver::out_ite(std::ostream &o, const SymbolicExpr::InteriorPtr &in)
@@ -580,8 +579,8 @@ YicesSolver::out_set(std::ostream &o, const SymbolicExpr::InteriorPtr &in) {
     out_expr(o, ite);
 }
 
-/** Output for left-associative, binary operators. The identity_element is sign-extended and used as the second operand
- *  if only one operand is supplied. */
+/* Output for left-associative, binary operators. The identity_element is sign-extended and used as the second operand
+ * if only one operand is supplied. */
 void
 YicesSolver::out_la(std::ostream &o, const char *opname, const SymbolicExpr::InteriorPtr &in, bool identity_element)
 {
@@ -605,7 +604,7 @@ YicesSolver::out_la(std::ostream &o, const char *opname, const SymbolicExpr::Int
     }
 }
 
-/** Output for left-associative operators. */
+/* Output for left-associative operators. */
 void
 YicesSolver::out_la(std::ostream &o, const char *opname, const SymbolicExpr::InteriorPtr &in)
 {
@@ -616,7 +615,7 @@ YicesSolver::out_la(std::ostream &o, const char *opname, const SymbolicExpr::Int
     }
 }
 
-/** Output for extract. Yices bv-extract first two arguments must be constants. */
+/* Output for extract. Yices bv-extract first two arguments must be constants. */
 void
 YicesSolver::out_extract(std::ostream &o, const SymbolicExpr::InteriorPtr &in)
 {
@@ -631,9 +630,9 @@ YicesSolver::out_extract(std::ostream &o, const SymbolicExpr::InteriorPtr &in)
     o <<")";
 }
 
-/** Output for sign-extend. The second argument for yices' bv-sign-extend function is the number of bits by which the first
- *  argument should be extended.  We compute that from the first argument of the OP_SEXTEND operator (the new size) and the
- *  size of the second operand (the bit vector to be extended). */
+/* Output for sign-extend. The second argument for yices' bv-sign-extend function is the number of bits by which the first
+ * argument should be extended.  We compute that from the first argument of the OP_SEXTEND operator (the new size) and the
+ * size of the second operand (the bit vector to be extended). */
 void
 YicesSolver::out_sext(std::ostream &o, const SymbolicExpr::InteriorPtr &in)
 {
@@ -646,9 +645,9 @@ YicesSolver::out_sext(std::ostream &o, const SymbolicExpr::InteriorPtr &in)
     o <<" " <<extend_by <<")";
 }
 
-/** Output for unsigned-extend.  ROSE's (OP_UEXT NewSize Vector) is rewritten to
+/* Output for unsigned-extend.  ROSE's (OP_UEXT NewSize Vector) is rewritten to
  *
- *  (bv-concat (mk-bv [NewSize-OldSize] 0) Vector)
+ * (bv-concat (mk-bv [NewSize-OldSize] 0) Vector)
  */
 void
 YicesSolver::out_uext(std::ostream &o, const SymbolicExpr::InteriorPtr &in)
@@ -663,7 +662,7 @@ YicesSolver::out_uext(std::ostream &o, const SymbolicExpr::InteriorPtr &in)
     o <<")";
 }
 
-/** Output for shift operators. */
+/* Output for shift operators. */
 void
 YicesSolver::out_shift(std::ostream &o, const char *opname, const SymbolicExpr::InteriorPtr &in,
                        bool newbits)
@@ -677,14 +676,14 @@ YicesSolver::out_shift(std::ostream &o, const char *opname, const SymbolicExpr::
     o <<" " <<in->child(0)->toInt() <<")";
 }
 
-/** Output for arithmetic right shift.  Yices doesn't have a sign-extending right shift, therefore we implement it in terms of
- *  other operations.  (OP_ASR ShiftAmount Vector) becomes
+/* Output for arithmetic right shift.  Yices doesn't have a sign-extending right shift, therefore we implement it in terms of
+ * other operations.  (OP_ASR ShiftAmount Vector) becomes
  *
- *  (ite (= (mk-bv 1 1) (bv-extract [VectorSize-1] [VectorSize-1] Vector)) ;; vector's sign bit
- *       (bv-shift-right1 Vector [ShiftAmount])
- *       (bv-shift-right0 Vector [ShiftAmount]))
+ * (ite (= (mk-bv 1 1) (bv-extract [VectorSize-1] [VectorSize-1] Vector)) ;; vector's sign bit
+ *      (bv-shift-right1 Vector [ShiftAmount])
+ *      (bv-shift-right0 Vector [ShiftAmount]))
  *
- * where [VectorSize], [VectorSize-1], and [ShiftAmount] are numeric constants.
+ *where [VectorSize], [VectorSize-1], and [ShiftAmount] are numeric constants.
  */
 void
 YicesSolver::out_asr(std::ostream &o, const SymbolicExpr::InteriorPtr &in)
@@ -704,15 +703,11 @@ YicesSolver::out_asr(std::ostream &o, const SymbolicExpr::InteriorPtr &in)
     o <<" " <<shift_amount <<"))";
 }
 
-/** Output for zero comparison. Result should be a single bit:
- *  \code
+/* Output for zero comparison. Result should be a single bit:
  *      (OP_ZEROP X)
- *  \endcode
  *
  *  becomes
- *  \code
  *      (ite (= (mk-bv [sizeof(X)] 0) [X]) 0b1 0b0)
- *  \endcode
  */
 void
 YicesSolver::out_zerop(std::ostream &o, const SymbolicExpr::InteriorPtr &in)
@@ -723,12 +718,10 @@ YicesSolver::out_zerop(std::ostream &o, const SymbolicExpr::InteriorPtr &in)
     o <<") 0b1 0b0)";
 }
 
-/** Output for multiply. The OP_SMUL and OP_UMUL nodes of SymbolicExpr define the result width to be the sum of the input
- *  widths. Yices' bv-mul operator requires that both operands are the same size and the result is the size of each operand.
- *  Therefore, we rewrite (OP_SMUL A B) to become, in Yices:
- *  \code
+/* Output for multiply. The OP_SMUL and OP_UMUL nodes of SymbolicExpr define the result width to be the sum of the input
+ * widths. Yices' bv-mul operator requires that both operands are the same size and the result is the size of each operand.
+ * Therefore, we rewrite (OP_SMUL A B) to become, in Yices:
  *    (bv-mul (bv-sign-extend A |B|) (bv-sign-extend B |A|))
- *  \endcode
  */
 void
 YicesSolver::out_mult(std::ostream &o, const SymbolicExpr::InteriorPtr &in)
@@ -744,7 +737,7 @@ YicesSolver::out_mult(std::ostream &o, const SymbolicExpr::InteriorPtr &in)
     o <<" " <<extend1 <<"))";
 }
 
-/** Output for write. */
+/* Output for write. */
 void
 YicesSolver::out_write(std::ostream &o, const SymbolicExpr::InteriorPtr &in)
 {
@@ -757,7 +750,7 @@ YicesSolver::out_write(std::ostream &o, const SymbolicExpr::InteriorPtr &in)
     o <<")";
 }
 
-/** Output for read. */
+/* Output for read. */
 void
 YicesSolver::out_read(std::ostream &o, const SymbolicExpr::InteriorPtr &in)
 {
@@ -769,7 +762,7 @@ YicesSolver::out_read(std::ostream &o, const SymbolicExpr::InteriorPtr &in)
 }
 
 #ifdef ROSE_HAVE_LIBYICES
-/** Traverse an expression and define Yices variables. */
+/* Traverse an expression and define Yices variables. */
 void
 YicesSolver::ctx_define(const std::vector<SymbolicExpr::Ptr> &exprs, Definitions *defns)
 {
@@ -832,7 +825,7 @@ YicesSolver::ctx_common_subexpressions(const std::vector<SymbolicExpr::Ptr> &exp
 #endif
 
 #ifdef ROSE_HAVE_LIBYICES
-/** Assert a constraint in the logical context. */
+/* Assert a constraint in the logical context. */
 void
 YicesSolver::ctx_assert(const SymbolicExpr::Ptr &tn)
 {
@@ -847,7 +840,7 @@ YicesSolver::ctx_assert(const SymbolicExpr::Ptr &tn)
 #endif
 
 #ifdef ROSE_HAVE_LIBYICES
-/** Builds a Yices expression from a ROSE expression. */
+/* Builds a Yices expression from a ROSE expression. */
 yices_expr
 YicesSolver::ctx_expr(const SymbolicExpr::Ptr &tn)
 {
@@ -1032,7 +1025,7 @@ YicesSolver::ctx_la(BinaryAPI f, const SymbolicExpr::InteriorPtr &in)
 #endif
 
 #ifdef ROSE_HAVE_LIBYICES
-/** Generate a Yices expression for extract. The yices_mk_bv_extract() second two arguments must be constants. */
+/* Generate a Yices expression for extract. The yices_mk_bv_extract() second two arguments must be constants. */
 yices_expr
 YicesSolver::ctx_extract(const SymbolicExpr::InteriorPtr &in)
 {
@@ -1049,9 +1042,9 @@ YicesSolver::ctx_extract(const SymbolicExpr::InteriorPtr &in)
 #endif
 
 #ifdef ROSE_HAVE_LIBYICES
-/** Generate a Yices expression for sign-extend. The third argument for yices_mk_bv_sign_extend() is the number of bits by which
- *  the second argument should be extended.  We compute that from the first argument of the OP_SEXTEND operator (the new size)
- *  and the size of the second operand (the bit vector to be extended). */
+/* Generate a Yices expression for sign-extend. The third argument for yices_mk_bv_sign_extend() is the number of bits by which
+ * the second argument should be extended.  We compute that from the first argument of the OP_SEXTEND operator (the new size)
+ * and the size of the second operand (the bit vector to be extended). */
 yices_expr
 YicesSolver::ctx_sext(const SymbolicExpr::InteriorPtr &in)
 {
@@ -1066,7 +1059,7 @@ YicesSolver::ctx_sext(const SymbolicExpr::InteriorPtr &in)
 #endif
 
 #ifdef ROSE_HAVE_LIBYICES
-/** Generate a Yices expression for unsigned-extend.  ROSE's (OP_UEXT NewSize Vector) is rewritten to
+/* Generate a Yices expression for unsigned-extend.  ROSE's (OP_UEXT NewSize Vector) is rewritten to
  *
  *  (bv-concat (mk-bv [NewSize-OldSize] 0) Vector)
  */
@@ -1086,7 +1079,7 @@ YicesSolver::ctx_uext(const SymbolicExpr::InteriorPtr &in)
 #endif
 
 #ifdef ROSE_HAVE_LIBYICES
-/** Generates a Yices expression for shift operators. */
+/* Generates a Yices expression for shift operators. */
 yices_expr
 YicesSolver::ctx_shift(ShiftAPI f, const SymbolicExpr::InteriorPtr &in)
 {
@@ -1100,12 +1093,12 @@ YicesSolver::ctx_shift(ShiftAPI f, const SymbolicExpr::InteriorPtr &in)
 #endif
 
 #ifdef ROSE_HAVE_LIBYICES
-/** Generates a Yices expression for arithmetic right shift.  Yices doesn't have a sign-extending right shift, therefore we
- *  implement it in terms of other operations.  (OP_ASR ShiftAmount Vector) becomes
+/* Generates a Yices expression for arithmetic right shift.  Yices doesn't have a sign-extending right shift, therefore we
+ * implement it in terms of other operations.  (OP_ASR ShiftAmount Vector) becomes
  *
- *  (ite (= (mk-bv 1 1) (bv-extract [VectorSize-1] [VectorSize-1] Vector)) ;; vector's sign bit
- *       (bv-shift-right1 Vector [ShiftAmount])
- *       (bv-shift-right0 Vector [ShiftAmount]))
+ * (ite (= (mk-bv 1 1) (bv-extract [VectorSize-1] [VectorSize-1] Vector)) ;; vector's sign bit
+ *      (bv-shift-right1 Vector [ShiftAmount])
+ *      (bv-shift-right0 Vector [ShiftAmount]))
  *
  * where [VectorSize], [VectorSize-1], and [ShiftAmount] are numeric constants.
  */
@@ -1129,15 +1122,11 @@ YicesSolver::ctx_asr(const SymbolicExpr::InteriorPtr &in)
 #endif
 
 #ifdef ROSE_HAVE_LIBYICES
-/** Output for zero comparison. Result should be a single bit:
- *  \code
+/* Output for zero comparison. Result should be a single bit:
  *      (OP_ZEROP X)
- *  \endcode
  *
  *  becomes
- *  \code
  *      (ite (= (mk-bv [sizeof(X)] 0) [X]) 0b1 0b0)
- *  \endcode
  */
 yices_expr
 YicesSolver::ctx_zerop(const SymbolicExpr::InteriorPtr &in)
@@ -1155,12 +1144,10 @@ YicesSolver::ctx_zerop(const SymbolicExpr::InteriorPtr &in)
 #endif
 
 #ifdef ROSE_HAVE_LIBYICES
-/** Generate a Yices expression for multiply. The OP_SMUL and OP_UMUL nodes of SymbolicExpr define the result width to be
- *  the sum of the input widths. Yices' bv-mul operator requires that both operands are the same size and the result is the
- *  size of each operand. Therefore, we rewrite (OP_SMUL A B) to become, in Yices:
- *  \code
+/* Generate a Yices expression for multiply. The OP_SMUL and OP_UMUL nodes of SymbolicExpr define the result width to be
+ * the sum of the input widths. Yices' bv-mul operator requires that both operands are the same size and the result is the
+ * size of each operand. Therefore, we rewrite (OP_SMUL A B) to become, in Yices:
  *    (bv-mul (bv-sign-extend A |B|]) (bv-sign-extend B |A|))
- *  \endcode
  */
 yices_expr
 YicesSolver::ctx_mult(const SymbolicExpr::InteriorPtr &in)
@@ -1178,7 +1165,7 @@ YicesSolver::ctx_mult(const SymbolicExpr::InteriorPtr &in)
 #endif
 
 #ifdef ROSE_HAVE_LIBYICES
-/** Write to memory. */
+/* Write to memory. */
 yices_expr
 YicesSolver::ctx_write(const SymbolicExpr::InteriorPtr &in)
 {
@@ -1193,7 +1180,7 @@ YicesSolver::ctx_write(const SymbolicExpr::InteriorPtr &in)
 #endif
 
 #ifdef ROSE_HAVE_LIBYICES
-/** Read from memory. */
+/* Read from memory. */
 yices_expr
 YicesSolver::ctx_read(const SymbolicExpr::InteriorPtr &in)
 {

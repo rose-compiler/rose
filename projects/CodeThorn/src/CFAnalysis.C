@@ -106,11 +106,11 @@ LabelSet CFAnalysis::functionLabelSet(Label entryLabel, Flow& flow) {
 InterFlow CFAnalysis::interFlow(Flow& flow) {
   // 1) for each call use AST information to find its corresponding called function
   // 2) create a set of <call,entry,exit,callreturn> edges
-  cout<<"STATUS: establishing inter-flow ..."<<endl;
+  //cout<<"STATUS: establishing inter-flow ..."<<endl;
   InterFlow interFlow;
   LabelSet callLabs=functionCallLabels(flow);
-  int callLabsNum=callLabs.size();
-  cout << "INFO: number of function call labels: "<<callLabsNum<<endl;
+  //int callLabsNum=callLabs.size();
+  //cout << "INFO: number of function call labels: "<<callLabsNum<<endl;
   int callLabNr=0;
   for(LabelSet::iterator i=callLabs.begin();i!=callLabs.end();++i) {
     //cout<<"INFO: resolving function call "<<callLabNr<<" of "<<callLabsNum<<endl;
@@ -145,7 +145,7 @@ InterFlow CFAnalysis::interFlow(Flow& flow) {
     interFlow.insert(InterEdge(callLabel,entryLabel,exitLabel,callReturnLabel));
     callLabNr++;
   }
-  cout<<"STATUS: inter-flow established."<<endl;
+  //cout<<"STATUS: inter-flow established."<<endl;
   return interFlow;
 }
 
@@ -232,6 +232,7 @@ Label CFAnalysis::initialLabel(SgNode* node) {
     return labeler->getLabel(node);
   case V_SgBasicBlock:
    return labeler->blockBeginLabel(node);
+
    // TODO: for(emptyInitList;S;S) {}
   case V_SgForStatement: {
     SgStatementPtrList& stmtPtrList=SgNodeHelper::getForInitList(node);
@@ -251,6 +252,27 @@ Label CFAnalysis::initialLabel(SgNode* node) {
     ROSE_ASSERT(node);
     return labeler->getLabel(node);
   }
+
+    // all omp statements
+  case V_SgOmpCriticalStatement:
+  case V_SgOmpDoStatement:
+  case V_SgOmpFlushStatement:	
+  case V_SgOmpForStatement:
+  case V_SgOmpMasterStatement:
+  case V_SgOmpOrderedStatement:
+  case V_SgOmpParallelStatement:
+  case V_SgOmpSectionStatement:
+  case V_SgOmpSectionsStatement:
+  case V_SgOmpSimdStatement:
+  case V_SgOmpSingleStatement:
+  case V_SgOmpTargetDataStatement:	
+  case V_SgOmpTargetStatement:
+  case V_SgOmpTaskStatement:
+  case V_SgOmpTaskwaitStatement:
+  case V_SgOmpThreadprivateStatement:
+  case V_SgOmpWorkshareStatement:
+    return labeler->getLabel(node);
+
   default:
     cerr << "Error: Unknown node in CodeThorn::CFAnalysis::initialLabel: "<<node->sage_class_name()<<endl;
     exit(1);
@@ -400,6 +422,27 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
     }
     return finalSet;
   }
+
+    // all omp statements
+  case V_SgOmpCriticalStatement:
+  case V_SgOmpDoStatement:
+  case V_SgOmpFlushStatement:	
+  case V_SgOmpForStatement:
+  case V_SgOmpMasterStatement:
+  case V_SgOmpOrderedStatement:
+  case V_SgOmpParallelStatement:
+  case V_SgOmpSectionStatement:
+  case V_SgOmpSectionsStatement:
+  case V_SgOmpSimdStatement:
+  case V_SgOmpSingleStatement:
+  case V_SgOmpTargetDataStatement:	
+  case V_SgOmpTargetStatement:
+  case V_SgOmpTaskStatement:
+  case V_SgOmpTaskwaitStatement:
+  case V_SgOmpThreadprivateStatement:
+  case V_SgOmpWorkshareStatement:
+    finalSet.insert(labeler->getLabel(node));
+    return finalSet;
   default:
     cerr << "Error: Unknown node in CFAnalysis::finalLabels: "<<node->sage_class_name()<<endl; exit(1);
   }
@@ -859,6 +902,27 @@ Flow CFAnalysis::flow(SgNode* node) {
   case V_SgCaseOptionStmt:
   case V_SgClassDeclaration:
     return edgeSet;
+
+    // parallel omp statements do not generate edges in addition to ingoing and outgoing edge
+  case V_SgOmpCriticalStatement:
+  case V_SgOmpDoStatement:
+  case V_SgOmpFlushStatement:	
+  case V_SgOmpForStatement:
+  case V_SgOmpMasterStatement:
+  case V_SgOmpOrderedStatement:
+  case V_SgOmpParallelStatement:
+  case V_SgOmpSectionStatement:
+  case V_SgOmpSectionsStatement:
+  case V_SgOmpSimdStatement:
+  case V_SgOmpSingleStatement:
+  case V_SgOmpTargetDataStatement:	
+  case V_SgOmpTargetStatement:
+  case V_SgOmpTaskStatement:
+  case V_SgOmpTaskwaitStatement:
+  case V_SgOmpThreadprivateStatement:
+  case V_SgOmpWorkshareStatement:
+    return edgeSet;
+
   case V_SgContinueStmt: {
     SgNode* loopStmt=correspondingLoopConstruct(node);
     if(isSgWhileStmt(loopStmt)) {
@@ -1008,7 +1072,7 @@ Flow CFAnalysis::flow(SgNode* node) {
     if(len==0) {
       // empty initializer list (hence, an initialization stmt cannot be initial stmt of for)
       cout << "INFO: for-stmt: initializer-list is empty."<<endl;
-      cerr << "Error: empty for-stmt initializer not supported yet."<<endl;
+      cerr << "Error: empty for-stmt initializer (should be an empty statement node)."<<endl;
       exit(1);
     }
     assert(len>0);

@@ -348,7 +348,8 @@ public:
  *  each interval.
  *
  *  If @p threshold is zero or the @p leaveAtFront and @p leaveAtBack sum to at least @p threshold then nothing happens. */
-AddressIntervalSet deExecuteZeros(MemoryMap &map /*in,out*/, size_t threshold, size_t leaveAtFront=16, size_t leaveAtBack=1);
+AddressIntervalSet deExecuteZeros(const MemoryMap::Ptr &map /*in,out*/, size_t threshold,
+                                  size_t leaveAtFront=16, size_t leaveAtBack=1);
 
 /** Give labels to addresses that are symbols.
  *

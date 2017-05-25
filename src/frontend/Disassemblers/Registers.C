@@ -320,15 +320,6 @@ RegisterDictionary::dictionary_for_isa(SgAsmInterpretation *interp)
     return hdrs.empty() ? NULL : dictionary_for_isa(hdrs.front()->get_isa());
 }
 
-/** Intel 8086 registers.
- *
- *  The Intel 8086 has fourteen 16-bit registers. Four of them (AX, BX, CX, DX) are general registers (although each may have
- *  an additional purpose; for example only CX can be used as a counter with the loop instruction). Each can be accessed as two
- *  separate bytes (thus BX's high byte can be accessed as BH and low byte as BL). Four segment registers (CS, DS, SS and ES)
- *  are used to form a memory address. There are two pointer registers. SP points to the bottom of the stack and BP which is
- *  used to point at some other place in the stack or the memory(Offset).  Two registers (SI and DI) are for array
- *  indexing. The FLAGS register contains flags such as carry flag, overflow flag and zero flag. Finally, the instruction
- *  pointer (IP) points to the next instruction that will be fetched from memory and then executed. */
 const RegisterDictionary *
 RegisterDictionary::dictionary_i8086() {
     static RegisterDictionary *regs = NULL;
@@ -399,9 +390,6 @@ RegisterDictionary::dictionary_i8086() {
     return regs;
 }
 
-/** Intel 8088 registers.
- *
- *  Intel 8088 has the same set of registers as Intel 8086. */
 const RegisterDictionary *
 RegisterDictionary::dictionary_i8088()
 {
@@ -413,9 +401,6 @@ RegisterDictionary::dictionary_i8088()
     return regs;
 }
 
-/** Intel 80286 registers.
- *
- *  The 80286 has the same registers as the 8086 but adds two new flags to the "flags" register. */
 const RegisterDictionary *
 RegisterDictionary::dictionary_i286()
 {
@@ -429,12 +414,6 @@ RegisterDictionary::dictionary_i286()
     return regs;
 }
 
-/** Intel 80386 registers.
- *
- *  The 80386 has the same registers as the 80286 but extends the general-purpose registers, base registers, index registers,
- *  instruction pointer, and flags register to 32 bits.  Register names from the 80286 refer to the same offsets and sizes while
- *  the full 32 bits are accessed by names prefixed with "e" as in "eax" (the "e" means "extended"). Two new segment registers
- *  (FS and GS) were added and all segment registers remain 16 bits. */
 const RegisterDictionary *
 RegisterDictionary::dictionary_i386()
 {
@@ -486,7 +465,6 @@ RegisterDictionary::dictionary_i386()
     return regs;
 }
 
-/** Intel 80386 with 80387 math co-processor. */
 const RegisterDictionary *
 RegisterDictionary::dictionary_i386_387()
 {
@@ -554,9 +532,6 @@ RegisterDictionary::dictionary_i386_387()
 }
         
 
-/** Intel 80486 registers.
- *
- *  The 80486 has the same registers as the 80386 with '387 co-processor but adds a new flag to the "eflags" register. */
 const RegisterDictionary *
 RegisterDictionary::dictionary_i486()
 {
@@ -569,9 +544,6 @@ RegisterDictionary::dictionary_i486()
     return regs;
 }
 
-/** Intel Pentium registers.
- *
- *  The Pentium has the same registers as the 80486 but adds a few flags to the "eflags" register and MMX registers. */
 const RegisterDictionary *
 RegisterDictionary::dictionary_pentium()
 {
@@ -601,10 +573,6 @@ RegisterDictionary::dictionary_pentium()
     return regs;
 }
 
-/** Intel Pentium III registers.
- *
- *  The Pentium III has the same register set as the Pentium but adds the xmm0 through xmm7 registers for the SSE instruction
- *  set. */
 const RegisterDictionary *
 RegisterDictionary::dictionary_pentiumiii()
 {
@@ -642,7 +610,6 @@ RegisterDictionary::dictionary_pentiumiii()
     return regs;
 }
 
-/** Intel Pentium 4 registers. */
 const RegisterDictionary *
 RegisterDictionary::dictionary_pentium4()
 {
@@ -654,16 +621,6 @@ RegisterDictionary::dictionary_pentium4()
     return regs;
 }
 
-/** Amd64 registers.
- *
- *  The AMD64 architecture increases the size of the general purpose registers, base registers, index registers, instruction
- *  pointer, and flags register to 64-bits.  Most register names from the Pentium architecture still exist and refer to 32-bit
- *  quantities, while the AMD64 adds new names that start with "r" rather than "e" (such as "rax" for the 64-bit register and
- *  "eax" for the 32 low-order bits of the same register).  It also adds eight additional 64-bit general purpose registers
- *  named "r8" through "r15" along with "b", "w", and "d" suffixes for the low-order 8, 16, and 32 bits, respectively.
- *
- *  The only registers that are not retained are the control registers cr0-cr4, which are replaced by 64-bit registers of the
- *  same name, and debug registers dr0-dr7, which are also replaced by 64-bit registers of the same name. */
 const RegisterDictionary *
 RegisterDictionary::dictionary_amd64()
 {
@@ -720,17 +677,6 @@ RegisterDictionary::dictionary_amd64()
     return regs;
 }
 
-/** ARM7 registers.
- *
- * The CPU has a total of 37 registers, each 32 bits wide: 31 general purpose registers named and six status registers named.
- * At most 16 (8 in Thumb mode) general purpose registers are visible at a time depending on the mode of operation. They have
- * names rN where N is an integer between 0 and 15, inclusive and are mapped onto a subset of the 31 physical general purpose
- * registers. Register r13 and r14 are, by convention, a stack pointer and link register (the link register holds the return
- * address for a function call). Register r15 is the instruction pointer.  Also, at most two status registers are available at
- * a time.
- *
- * The major number of a RegisterDescriptor is used to indicate the type of register: 0=general purpose, 1=status. The minor
- * number indicates the register number: 0-15 for general purpose, 0 or 1 for status. */
 const RegisterDictionary *
 RegisterDictionary::dictionary_arm7() {
     /* Documentation of the Nintendo GameBoy Advance is pretty decent. It's located here:
@@ -773,7 +719,6 @@ RegisterDictionary::dictionary_arm7() {
     return regs;
 }
 
-/** PowerPC registers. */
 const RegisterDictionary *
 RegisterDictionary::dictionary_powerpc()
 {
@@ -881,9 +826,6 @@ RegisterDictionary::dictionary_powerpc()
     return regs;
 }
 
-/** MIPS32 Release 1.
- *
- * Release 1 of MIPS32 supports only a 32-bit FPU (support for 64-bit FPU was added in MIPS32 Release 2). */
 const RegisterDictionary *
 RegisterDictionary::dictionary_mips32()
 {
@@ -962,12 +904,6 @@ RegisterDictionary::dictionary_mips32()
     return regs;
 }
 
-/** MIPS32 Release 1 with special register names.
- *
- * This is the same dictionary as dictionary_mips32(), except additional names are supplied for the general purpose registers
- * (e.g., "zero" for r0, "at" for r1, "gp" for r28, "sp" for r29, "fp" for r30, "ra" for r31, etc.).  This is intended mostly
- * for the AsmUnparser; any layer that looks up registers by name should probably use the standard names rather than relying on
- * these alternate names.  */ 
 const RegisterDictionary *
 RegisterDictionary::dictionary_mips32_altnames()
 {
@@ -1014,7 +950,6 @@ RegisterDictionary::dictionary_mips32_altnames()
     return regs;
 }
 
-/** Motorola M68330 register names */
 const RegisterDictionary *
 RegisterDictionary::dictionary_m68000() 
 {

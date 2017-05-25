@@ -257,7 +257,7 @@ makeSolver(const Settings &settings) {
     if (settings.solverName == "list") {
         std::cout <<"SMT solver names:\n"
                   <<"  yices            rose::BinaryAnalysis::YicesSolver\n";
-        exit(0);
+        return NULL;
     } else if (settings.solverName == "") {
         return NULL;                                    // solvers are optional
     } else if (settings.solverName == "yices") {
@@ -283,7 +283,7 @@ makeProtoVal(const Settings &settings) {
                   <<"  partial          rose::BinaryAnalysis::InstructionSemantics2::PartialSymbolicSemantics::SValue\n"
                   <<"  partitioner2     rose::BinaryAnalysis::Partitioner2::Semantics::SValue\n"
                   <<"  symbolic         rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::SValue\n";
-        exit(0);
+        return BaseSemantics::SValuePtr();
 #ifdef EXAMPLE_EXTENSIONS
     } else if (className == "example") {
         return com::example::semantics::SValue::instance();
@@ -321,7 +321,7 @@ makeRegisterState(const Settings &settings, const BaseSemantics::SValuePtr &prot
                   <<"  partitioner2     rose::BinaryAnalysis::Partitioner2::Semantics::RegisterState\n"
                   <<"  symbolic         rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterStateGeneric\n"
                   <<"  x86              rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterStateX86\n";
-        exit(0);
+        return BaseSemantics::RegisterStatePtr();
 #ifdef EXAMPLE_EXTENSIONS
     } else if (className == "example") {
         return com::example::semantics::RegisterState::instance(protoval, regdict);
@@ -364,7 +364,7 @@ makeMemoryState(const Settings &settings, const P2::Engine &engine, const BaseSe
                   <<"  p2-map           rose::BinaryAnalysis::Partitioner2::Semantics::MemoryMapState\n"
                   <<"  symbolic-list    rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::MemoryListState\n"
                   <<"  symbolic-map     rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::MemoryMapState\n";
-        exit(0);
+        return BaseSemantics::MemoryStatePtr();
 #ifdef EXAMPLE_EXTENSIONS
     } else if (className == "example") {
         return com::example::semantics::MemoryState::instance(protoval, protoaddr);
@@ -380,11 +380,11 @@ makeMemoryState(const Settings &settings, const P2::Engine &engine, const BaseSe
         return ops->currentState()->memoryState();
     } else if (className == "p2-list" || className == "partitioner2") {
         P2::Semantics::MemoryListStatePtr m = P2::Semantics::MemoryListState::instance(protoval, protoaddr);
-        m->memoryMap(new MemoryMap(engine.memoryMap()));
+        m->memoryMap(engine.memoryMap()->shallowCopy());
         return m;
     } else if (className == "p2-map") {
         P2::Semantics::MemoryMapStatePtr m = P2::Semantics::MemoryMapState::instance(protoval, protoaddr);
-        m->memoryMap(new MemoryMap(engine.memoryMap()));
+        m->memoryMap(engine.memoryMap()->shallowCopy());
         return m;
     } else if (className == "symbolic-list" || className == "symbolic") {
         return SymbolicSemantics::MemoryListState::instance(protoval, protoaddr);
@@ -436,7 +436,7 @@ makeRiscOperators(const Settings &settings, const P2::Engine &engine, const P2::
     } else if (className == "partial") {
         PartialSymbolicSemantics::RiscOperatorsPtr ops = PartialSymbolicSemantics::RiscOperators::instance(state, solver);
         if (settings.useMemoryMap)
-            ops->set_memory_map(new MemoryMap(engine.memoryMap()));
+            ops->set_memory_map(engine.memoryMap()->shallowCopy());
         return ops;
     } else if (className == "partitioner2") {
         return P2::Semantics::RiscOperators::instance(state, solver);
@@ -656,10 +656,33 @@ main(int argc, char *argv[]) {
     Settings settings;
     std::vector<std::string> specimenNames = parseCommandLine(argc, argv, engine, settings);
     adjustSettings(settings);
+
+    // Perhaps the user is only asking us to list available values for some switches
+    bool listAndExit = false;
+    if (settings.solverName == "list") {
+        (void) makeSolver(settings);
+        listAndExit = true;
+    }
+    if (settings.valueClassName == "list") {
+        (void) makeProtoVal(settings);
+        listAndExit = true;
+    }
+    if (settings.rstateClassName == "list") {
+        (void) makeRegisterState(settings, BaseSemantics::SValuePtr(), NULL);
+        listAndExit = true;
+    }
+    if (settings.mstateClassName == "list") {
+        (void) makeMemoryState(settings, engine, BaseSemantics::SValuePtr(), BaseSemantics::SValuePtr(), NULL);
+        listAndExit = true;
+    }
     if (settings.opsClassName == "list") {
         listRiscOperators();
-        exit(0);
+        listAndExit = true;
     }
+    if (listAndExit)
+        exit(0);
+
+    // Validate the command-line now that we know we're not just listing stuff
     if (specimenNames.empty())
         throw std::runtime_error("no specimen specified; see --help");
 

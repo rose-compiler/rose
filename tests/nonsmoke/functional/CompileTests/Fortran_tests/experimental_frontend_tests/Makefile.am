@@ -15,26 +15,25 @@ VALGRIND =
 ATERM_ROOT = $(ATERM_INSTALL_PATH)
 ATERM_INCLUDE = -I$(ATERM_ROOT)/include
 AM_CPPFLAGS = -I$(top_srcdir)/src/3rdPartyLibraries/experimental-fortran-parser/rose_traverse $(ROSE_INCLUDES) $(ATERM_INCLUDE)
-# LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-# LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -L../../../../src/3rdPartyLibraries/experimental-fortran-parser/rose_traverse -lofp
-LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -L../../../../src/3rdPartyLibraries/experimental-fortran-parser/aterm_traversal -lexperimentalRoseFortran
+AM_LDFLAGS = $(ROSE_RPATHS)
+LDADD    = $(ROSE_LIBS) -L../../../../src/3rdPartyLibraries/experimental-fortran-parser/aterm_traversal -lexperimentalRoseFortran
 
 # TEST_F90_Objects = main_program_2008_01.f90 main_program_2014_01.f90
 # F90_TESTCODES = main_program_2008_01.f90 main_program_2014_01.f90
 # F90_TESTCODES = test2014_02.f90
 F90_TESTCODES = \
+ R1101c.f90
+
+F90_TESTCODES_WORKING_ON = \
  R1101a.f90 \
  R1101b.f90 \
- R1101c.f90 \
  R1101d.f90 \
  R1101e.f90 \
  R1101f.f90 \
  R1101g.f90 \
  R404.f90   \
  test2014_02.f90 \
- tiny.f90
-
-F90_TESTCODES_WORKING_ON = \
+ tiny.f90 \
  R1001.f90 \
  R1109.f90 \
  R1111.f90 \

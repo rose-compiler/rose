@@ -1,6 +1,8 @@
 // Test the handling of two loops under omp for
 // watch the loop index replacement (private by default)
 // and tje array outlining
+#include <stdlib.h>
+
 int main(void)
 {
   int i, j;

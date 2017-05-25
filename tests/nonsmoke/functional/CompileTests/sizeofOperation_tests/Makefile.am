@@ -5,6 +5,7 @@ SizeofTest_GNU_SOURCES = SizeofTest_GNU.C
 SizeofTest_Intel_SOURCES = SizeofTest_Intel.C
 
 AM_CPPFLAGS = $(ROSE_INCLUDES)
+AM_LDFLAGS = $(ROSE_RPATHS)
 LDADD    = $(ROSE_LIBS)
 
 TESTCODES_REQUIRED_TO_PASS = inputCode_SizeofTest.C

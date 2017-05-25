@@ -32,25 +32,111 @@ public:
     typedef std::map<std::string/*name*/, RegisterDescriptor> Entries;
     typedef std::vector<RegisterDescriptor> RegisterDescriptors;
 
-    /* Functions that return a dictionary for a particular machine architecute. (See implementation for documentation.) */
-    static const RegisterDictionary *dictionary_i8086();                // Intel 8086
-    static const RegisterDictionary *dictionary_i8088();                // Intel 8088
-    static const RegisterDictionary *dictionary_i286();                 // Intel 80286
-    static const RegisterDictionary *dictionary_i386();                 // Intel 80386
-    static const RegisterDictionary *dictionary_i386_387();             // Intel 80386 with 80387 math coprocessor
-    static const RegisterDictionary *dictionary_i486();                 // Intel 80486
-    static const RegisterDictionary *dictionary_pentium();              // Intel Pentium
-    static const RegisterDictionary *dictionary_pentiumiii();           // Intel Pentium III
-    static const RegisterDictionary *dictionary_pentium4();             // Intel Pentium 4
-    static const RegisterDictionary *dictionary_amd64();                // AMD Athlon 64
-    static const RegisterDictionary *dictionary_arm7();                 // ARMv7-M architecture (ARM Cortex-M3)
+
+    /** Intel 8086 registers.
+     *
+     *  The Intel 8086 has fourteen 16-bit registers. Four of them (AX, BX, CX, DX) are general registers (although each may
+     *  have an additional purpose; for example only CX can be used as a counter with the loop instruction). Each can be
+     *  accessed as two separate bytes (thus BX's high byte can be accessed as BH and low byte as BL). Four segment registers
+     *  (CS, DS, SS and ES) are used to form a memory address. There are two pointer registers. SP points to the bottom of the
+     *  stack and BP which is used to point at some other place in the stack or the memory(Offset).  Two registers (SI and DI)
+     *  are for array indexing. The FLAGS register contains flags such as carry flag, overflow flag and zero flag. Finally, the
+     *  instruction pointer (IP) points to the next instruction that will be fetched from memory and then executed. */
+    static const RegisterDictionary *dictionary_i8086();
+
+    /** Intel 8088 registers.
+     *
+     *  Intel 8088 has the same set of registers as Intel 8086. */
+    static const RegisterDictionary *dictionary_i8088();
+
+    /** Intel 80286 registers.
+     *
+     *  The 80286 has the same registers as the 8086 but adds two new flags to the "flags" register. */
+    static const RegisterDictionary *dictionary_i286();
+
+    /** Intel 80386 registers.
+     *
+     *  The 80386 has the same registers as the 80286 but extends the general-purpose registers, base registers, index
+     *  registers, instruction pointer, and flags register to 32 bits.  Register names from the 80286 refer to the same offsets
+     *  and sizes while the full 32 bits are accessed by names prefixed with "e" as in "eax" (the "e" means "extended"). Two
+     *  new segment registers (FS and GS) were added and all segment registers remain 16 bits. */
+    static const RegisterDictionary *dictionary_i386();
+
+    /** Intel 80386 with 80387 math co-processor. */
+    static const RegisterDictionary *dictionary_i386_387();
+
+    /** Intel 80486 registers.
+     *
+     *  The 80486 has the same registers as the 80386 with '387 co-processor but adds a new flag to the "eflags" register. */
+    static const RegisterDictionary *dictionary_i486();
+
+    /** Intel Pentium registers.
+     *
+     *  The Pentium has the same registers as the 80486 but adds a few flags to the "eflags" register and MMX registers. */
+    static const RegisterDictionary *dictionary_pentium();
+
+    /** Intel Pentium III registers.
+     *
+     *  The Pentium III has the same register set as the Pentium but adds the xmm0 through xmm7 registers for the SSE
+     *  instruction set. */
+    static const RegisterDictionary *dictionary_pentiumiii();
+
+    /** Intel Pentium 4 registers. */
+    static const RegisterDictionary *dictionary_pentium4();
+
+    /** Amd64 registers.
+     *
+     *  The AMD64 architecture increases the size of the general purpose registers, base registers, index registers,
+     *  instruction pointer, and flags register to 64-bits.  Most register names from the Pentium architecture still exist and
+     *  refer to 32-bit quantities, while the AMD64 adds new names that start with "r" rather than "e" (such as "rax" for the
+     *  64-bit register and "eax" for the 32 low-order bits of the same register).  It also adds eight additional 64-bit
+     *  general purpose registers named "r8" through "r15" along with "b", "w", and "d" suffixes for the low-order 8, 16, and
+     *  32 bits, respectively.
+     *
+     *  The only registers that are not retained are the control registers cr0-cr4, which are replaced by 64-bit registers of
+     *  the same name, and debug registers dr0-dr7, which are also replaced by 64-bit registers of the same name. */
+    static const RegisterDictionary *dictionary_amd64();
+
+    /** ARM7 registers.
+     *
+     * The CPU has a total of 37 registers, each 32 bits wide: 31 general purpose registers named and six status registers
+     * named.  At most 16 (8 in Thumb mode) general purpose registers are visible at a time depending on the mode of
+     * operation. They have names rN where N is an integer between 0 and 15, inclusive and are mapped onto a subset of the 31
+     * physical general purpose registers. Register r13 and r14 are, by convention, a stack pointer and link register (the link
+     * register holds the return address for a function call). Register r15 is the instruction pointer.  Also, at most two
+     * status registers are available at a time.
+     *
+     * The major number of a RegisterDescriptor is used to indicate the type of register: 0=general purpose, 1=status. The
+     * minor number indicates the register number: 0-15 for general purpose, 0 or 1 for status. */
+    static const RegisterDictionary *dictionary_arm7();
+
+    /** PowerPC registers. */
     static const RegisterDictionary *dictionary_powerpc();
-    static const RegisterDictionary *dictionary_mips32();               // MIPS32 Release 1
+
+    /** MIPS32 Release 1.
+     *
+     * Release 1 of MIPS32 supports only a 32-bit FPU (support for 64-bit FPU was added in MIPS32 Release 2). */
+    static const RegisterDictionary *dictionary_mips32();
+
+    /** MIPS32 Release 1 with special registers.
+     *
+     * This is the same dictionary as dictionary_mips32(), except additional names are supplied for the general purpose
+     * registers (e.g., "zero" for r0, "at" for r1, "gp" for r28, "sp" for r29, "fp" for r30, "ra" for r31, etc.).  This is
+     * intended mostly for the AsmUnparser; any layer that looks up registers by name should probably use the standard names
+     * rather than relying on these alternate names.  */ 
     static const RegisterDictionary *dictionary_mips32_altnames();
+
+    /** Motorola M68330 register names */
     static const RegisterDictionary *dictionary_m68000();
+
+    /** Motorola M68330 alternate registers. */
     static const RegisterDictionary *dictionary_m68000_altnames();
-    static const RegisterDictionary *dictionary_coldfire();             // FreeScale ColdFire (generic hardware)
-    static const RegisterDictionary *dictionary_coldfire_emac();        // FreeScale ColdFire (generic hardware)
+
+    /** FreeScale ColdFire generic hardware registers. */
+    static const RegisterDictionary *dictionary_coldfire();
+
+    /** Registers for FreeScale ColdFire CPUs with EMAC (extended multiply-accumulate) unit. */
+    static const RegisterDictionary *dictionary_coldfire_emac();
 
 private:
     typedef std::map<uint64_t/*desc_hash*/, std::vector<std::string> > Reverse;

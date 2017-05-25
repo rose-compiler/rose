@@ -55,7 +55,7 @@ int main(int argc, char * argv[])
   // Retrieve corresponding SgNode from abstract handle
   //--------------------------------------------------
   SgProject *project = frontend (argvList);
-  SgStatement* stmt = NULL;
+//  SgStatement* stmt = NULL;
   ROSE_ASSERT(project != NULL);
   loopTraversal translateLoop;
   traverseMemoryPoolVisitorPattern(translateLoop);

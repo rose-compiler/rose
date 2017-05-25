@@ -19,7 +19,8 @@ namespace rose {
 namespace BinaryAnalysis {
 
 // details are defined in this .C files so users don't end up including <magic.h> into the global namespace.
-struct MagicNumberDetails {
+class MagicNumberDetails {
+public:
     magic_t cookie;
     MagicNumberDetails(magic_t &cookie): cookie(cookie) {}
     ~MagicNumberDetails() {
@@ -52,9 +53,9 @@ MagicNumber::~MagicNumber() {
 }
 
 std::string
-MagicNumber::identify(const MemoryMap &map, rose_addr_t va) const {
+MagicNumber::identify(const MemoryMap::Ptr &map, rose_addr_t va) const {
     uint8_t buf[256];
-    size_t nBytes = map.at(va).limit(std::min(maxBytes_, sizeof buf)).read(buf).size();
+    size_t nBytes = map->at(va).limit(std::min(maxBytes_, sizeof buf)).read(buf).size();
     if (0==nBytes)
         return "empty";
 #ifdef ROSE_HAVE_LIBMAGIC

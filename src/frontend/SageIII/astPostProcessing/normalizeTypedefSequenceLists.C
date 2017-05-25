@@ -12,7 +12,11 @@ NormalizeTypedefSequenceLists::key_t::empty() const
 size_t
 NormalizeTypedefSequenceLists::key_t::size() const
    {
-     return IRnodeList.size() + declarationString.empty() ? 0 : 1;
+  // DQ (3/25/2017): Clang reports: warning: operator '?:' has lower precedence than '+'; '+' will be evaluated first [-Wparentheses]
+  // resolved using explicit parentheses to NOT preserve the existing behavior, but to conform to what I think was intended from the types used.
+  // return IRnodeList.size() + declarationString.empty() ? 0 : 1;
+  // return IRnodeList.size() + (declarationString.empty() ? 0 : 1);
+     return IRnodeList.size() + (declarationString.empty() ? 0 : 1);
    }
 
 size_t

@@ -354,9 +354,27 @@ AC_CANONICAL_HOST
 
 # *****************************************************************
 
+# DQ (3/21/2017): Moved this to here (earlier than where is it used below) so that 
+# the warnings options can use the compiler vendor instead of the compiler name.
+AC_LANG(C++)
+
+# Get frontend compiler vendor 
+AX_COMPILER_VENDOR
+FRONTEND_CXX_COMPILER_VENDOR="$ax_cv_cxx_compiler_vendor"
+
+# echo "_AC_LANG_ABBREV              = $_AC_LANG_ABBREV"
+echo "ax_cv_c_compiler_vendor      = $ax_cv_c_compiler_vendor"
+echo "ax_cv_cxx_compiler_vendor    = $ax_cv_cxx_compiler_vendor"
+echo "FRONTEND_CXX_COMPILER_VENDOR = $FRONTEND_CXX_COMPILER_VENDOR"
+
+unset ax_cv_cxx_compiler_vendor
+
 # Setup default options for C and C++ compilers compiling ROSE source code.
 ROSE_FLAG_C_OPTIONS
 ROSE_FLAG_CXX_OPTIONS
+
+# echo "Exiting after computing the frontend compiler vendor"
+# exit 1
 
 # *****************************************************************
 
@@ -488,6 +506,8 @@ CHOOSE_BACKEND_COMPILER
 # TV (06/17/2013): Now always the case (EDG 4.7).
 AC_DEFINE([TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS], [], [Controls design of internal template declaration support within the ROSE AST.])
 
+# *****************************************************************
+
 # Calling available macro from Autoconf (test by optionally pushing C language onto the internal autoconf language stack).
 # This function must be called from this support-rose file (error in ./build if called from the GET COMPILER SPECIFIC DEFINES macro.
 # AC_LANG_PUSH(C)
@@ -516,6 +536,9 @@ unset ax_cv_cxx_compiler_vendor
   echo "After resetting CXX to be the saved name of the original compiler: CXX = $CXX"
 
 echo "FRONTEND_CXX_COMPILER_VENDOR = $FRONTEND_CXX_COMPILER_VENDOR"
+
+# echo "Exiting after computing the backend compiler vendor"
+# exit 1
 
 # *****************************************************************
 
@@ -988,7 +1011,6 @@ AM_CONDITIONAL(ROSE_USE_INDENT, [test "x$INDENT" = "xindent"])
 echo "value of INDENT variable = $INDENT"
 
 # DQ (9/30/2009): Added checking for tclsh command (common in Linux, but not on some platforms).
-# This command is used in the src/frontend/BinaryDisassembly/Makefile.am file.
 AC_CHECK_PROGS(TCLSH, [tclsh])
 AM_CONDITIONAL(ROSE_USE_TCLSH, [test "x$TCLSH" = "xtclsh"])
 echo "value of TCLSH variable = $TCLSH"
@@ -1031,6 +1053,9 @@ fi
 ROSE_SUPPORT_HASKELL
 
 ROSE_SUPPORT_CUDA
+
+# if swi-prolog is available
+ROSE_SUPPORT_SWIPL
 
 # Call support macro for Z3
 
@@ -1345,41 +1370,6 @@ ROSE_SUPPORT_INSURE
 
 # DQ (1/14/2007): I don't think this is required any more!
 # ROSE_TEST_LIBS="-L$prefix/lib"
-
-# DQ (1/14/2007): I don't know if this is required, but too many people are resetting this variable!
-# LIBS_WITH_RPATH="$(WAVE_LIBRARIES)"
-
-dnl PC (09/15/2006): None of the following should not be relevant any more
-dnl
-dnl echo "Calling LIBS_ADD_RPATH ROSE_TEST_LIBS = $ROSE_TEST_LIBS"
-dnl # Macro copied from Brian Gummey's implementation and turned on by default.
-dnl ROSE_LIBS_ADD_RPATH(ROSE_TEST_LIBS,LIBS_WITH_RPATH,0)
-dnl 
-dnl # This is part of support for Boost-Wave (CPP Preprocessor Library)
-dnl # Only add the Boost-Wave library to rpath if it has been set
-dnl if (test "$with_boost_wave" = yes); then
-dnl    MY_WAVE_PATH="-L$wave_libraries"
-dnl    ROSE_LIBS_ADD_RPATH(MY_WAVE_PATH,LIBS_WITH_RPATH,0)
-dnl fi
-dnl 
-dnl echo "DONE: MY_WAVE_PATH                   = $MY_WAVE_PATH"
-dnl echo "DONE: LIBS_ADD_RPATH ROSE_TEST_LIBS  = $ROSE_TEST_LIBS"
-dnl echo "DONE: LIBS_ADD_RPATH LIBS_WITH_RPATH = $LIBS_WITH_RPATH"
-dnl 
-dnl # exit 1
-dnl 
-dnl # This is part of support for QRose (specification of QT Graphics Library)
-dnl # Only add the QT library to rpath if it has been set
-dnl if (test "$ac_qt_libraries"); then
-dnl    MY_QT_PATH="-L$ac_qt_libraries"
-dnl    ROSE_LIBS_ADD_RPATH(MY_QT_PATH,LIBS_WITH_RPATH,0)
-dnl fi
-dnl 
-dnl echo "DONE: MY_QT_PATH                     = $MY_QT_PATH"
-dnl echo "DONE: LIBS_ADD_RPATH ROSE_TEST_LIBS  = $ROSE_TEST_LIBS"
-dnl echo "DONE: LIBS_ADD_RPATH LIBS_WITH_RPATH = $LIBS_WITH_RPATH"
-
-AC_SUBST(LIBS_WITH_RPATH)
 
 # Determine how to create C++ libraries.
 AC_MSG_CHECKING(how to create C++ libraries)
@@ -2160,7 +2150,6 @@ src/Makefile
 src/ROSETTA/Makefile
 src/ROSETTA/src/Makefile
 src/backend/Makefile
-src/frontend/BinaryDisassembly/Makefile
 src/frontend/BinaryFormats/Makefile
 src/frontend/BinaryLoader/Makefile
 src/frontend/CxxFrontend/Clang/Makefile
@@ -2449,6 +2438,7 @@ tests/roseTests/programAnalysisTests/typeTraitTests/Makefile
 tests/smoke/ExamplesForTestWriters/Makefile
 tests/smoke/Makefile
 tests/smoke/functional/BinaryAnalysis/Makefile
+tests/smoke/functional/Fortran/Makefile
 tests/smoke/functional/Makefile
 tests/smoke/specimens/Makefile
 tests/smoke/specimens/binary/Makefile

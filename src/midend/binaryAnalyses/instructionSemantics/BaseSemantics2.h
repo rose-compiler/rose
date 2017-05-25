@@ -1015,7 +1015,7 @@ public:
     // Methods we inherited
 public:
     virtual void clear() ROSE_OVERRIDE;
-    virtual void zero() /* override*/;
+    virtual void zero() ROSE_OVERRIDE;
     virtual SValuePtr readRegister(const RegisterDescriptor &reg, const SValuePtr &dflt, RiscOperators *ops) ROSE_OVERRIDE;
     virtual void writeRegister(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops) ROSE_OVERRIDE;
     virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;
@@ -1167,14 +1167,6 @@ public:
     bool byteRestricted() const { return byteRestricted_; }
     void byteRestricted(bool b) { byteRestricted_ = b; }
     /** @} */
-
-    // [Robb Matzke 2015-12-23]: deprecated
-    virtual bool get_byte_restricted() const ROSE_DEPRECATED("use byteRestricted instead") {
-        return byteRestricted();
-    }
-    virtual void set_byte_restricted(bool b) ROSE_DEPRECATED("use byteRestricted instead") {
-        byteRestricted(b);
-    }
 
     /** Memory byte order.
      *  @{ */

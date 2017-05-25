@@ -37,8 +37,8 @@ public:
       cout<<"variables m="<<m<<endl;
     }
   }
-private:
-  int j;
+//private:
+//  int j;
 };
 
 int main(void)

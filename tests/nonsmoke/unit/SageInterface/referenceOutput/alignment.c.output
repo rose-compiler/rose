@@ -1,4 +1,4 @@
-for loop at line 49
+for loop at line 54
 "si"	private
 "si"	private
 "nseqs"	shared
@@ -136,7 +136,7 @@ for loop at line 49
 "pw_ge_penalty"	shared
 "pw_go_penalty"	shared
 "mat_avscore"	shared
-for loop at line 51
+for loop at line 56
 "i"	private
 "len1"	private
 "i"	private
@@ -150,7 +150,7 @@ for loop at line 51
 "c"	private
 "gap_pos2"	shared
 "len1"	private
-for loop at line 57
+for loop at line 62
 "sj"	private
 "si"	private
 "sj"	private
@@ -265,7 +265,7 @@ for loop at line 57
 "pw_ge_penalty"	shared
 "pw_go_penalty"	shared
 "mat_avscore"	shared
-for loop at line 69
+for loop at line 74
 "i"	private
 "len2"	private
 "i"	private

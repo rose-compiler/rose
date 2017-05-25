@@ -8,7 +8,7 @@
 //CodeThorn includes
 #include "Analyzer.h"
 #include "PropertyValueTable.h"
-#include "StateRepresentations.h"
+#include "EState.h"
 #include "SpotConnection.h" 
 
 //BOOST includes

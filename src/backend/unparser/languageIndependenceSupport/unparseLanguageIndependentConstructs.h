@@ -177,7 +177,10 @@ class UnparseLanguageIndependentConstructs
        // DQ (4/25/2005): Made this virtual so that Gabriel could build a specialized unparser.
           ROSE_DLL_API virtual void unparseExpression              (SgExpression* expr, SgUnparse_Info& info);
 
+       // DQ (3/27/2017): Eliminate Clang warning about hidden virtual function (derived class functions 
+       // now use the same signature (which eliminates the warning).
           virtual void unparseExprList                (SgExpression* expr, SgUnparse_Info& info);
+
           virtual void unparseMatrixExp               (SgExpression* expr, SgUnparse_Info& info);
           
        // virtual void unparseUnaryOperator           (SgExpression* expr, const char* op, SgUnparse_Info& info);
@@ -366,6 +369,8 @@ class UnparseLanguageIndependentConstructs
          // Liao 10/20/2010 common unparsing support for OpenMP AST 
           virtual void unparseOmpPrefix                     (SgUnparse_Info& info); // = 0;
           virtual void unparseOmpDefaultClause              (SgOmpClause* clause, SgUnparse_Info& info); 
+          virtual void unparseOmpProcBindClause             (SgOmpClause* clause, SgUnparse_Info& info); 
+          virtual void unparseOmpAtomicClause               (SgOmpClause* clause, SgUnparse_Info& info); 
           virtual void unparseOmpScheduleClause             (SgOmpClause* clause, SgUnparse_Info& info);
           virtual void unparseOmpVariablesClause            (SgOmpClause* clause, SgUnparse_Info& info);
           virtual void unparseOmpExpressionClause           (SgOmpClause* clause, SgUnparse_Info& info);

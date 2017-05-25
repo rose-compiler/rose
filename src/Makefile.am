@@ -72,7 +72,6 @@ endif
 
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
    libroseBinaryLibraries =							\
-	$(top_builddir)/src/frontend/BinaryDisassembly/libbinaryFrontend.la	\
 	$(top_builddir)/src/frontend/BinaryFormats/libroseBinaryFormats.la	\
 	$(top_builddir)/src/frontend/BinaryLoader/libroseBinaryLoader.la	\
 	$(top_builddir)/src/frontend/Disassemblers/libroseDisassemblers.la	\
@@ -197,7 +196,7 @@ pkginclude_HEADERS = \
 noinst_PROGRAMS = testSharedRoseLib
 testSharedRoseLib_SOURCES = testRoseLib.C
 testSharedRoseLib_DEPENDENCIES = $(REQUIRED_LIBS)
-testSharedRoseLib_LDADD  = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+testSharedRoseLib_LDADD  = $(ROSE_LIBS)
 # DQ (4/12/2016): This is required for use with clang (not clear how to compile ROSE with out it).
 if USING_CLANG_COMPILER
 # testSharedRoseLib_LDADD += -lstdc++
@@ -207,6 +206,8 @@ testSharedRoseLib_LDFLAGS = -fno-rtti
 endif
 if OS_MACOSX
 testSharedRoseLib_LDFLAGS = -Xlinker -rpath $(JAVA_JVM_PATH)
+else
+testSharedRoseLib_LDFLAGS = $(ROSE_RPATHS)
 endif
 
 # Matzke (8/11/2016) I think "--version" is always supported now regardless of which frontends are compiled
@@ -271,6 +272,11 @@ librose_la_LIBADD = $(BOOST_LDFLAGS) $(libroseLibraries) $(JAVA_JVM_FLAGS) $(LIB
           $(OPT_MYSQL_LDFLAGS) $(ROSE_ATERM_LIBS)
 endif
 
+# libelf is a prerequisite for using libdwarf
+if ROSE_HAVE_LIBELF
+   librose_la_LIBADD += $(ROSE_ELF_LIBS_WITH_PATH)
+endif
+
 # DQ (6/5/2010): Suggested change by Peter to support dwarf that would simplify use with Haskell
 if ROSE_HAVE_LIBDWARF
    librose_la_LIBADD += $(ROSE_DWARF_LIBS_WITH_PATH)
@@ -321,10 +327,14 @@ endif
 # AM_LDFLAGS = $(ROSE_DWARF_LIBS_WITH_PATH)
 # AM_LDFLAGS =
 
-# This tool spits out information that tells users how to compile and link programs that use ROSE. Therefore, we have to pass
-# that information to the program when we compile it, and we do so with the "-DCXX", etc compiler switches.
+# This tool spits out information that tells users how to compile and link programs that use ROSE. Therefore, we have to
+# pass that information to the program when we compile it, and we do so with the "-DCXX", etc compiler switches. It's
+# also especially important that this tool uses rpaths to find its dynamically-linked libraries, otherwise the user will
+# be tempted to use LD_LIBRARY_PATH and complain when the tool segfaults, not realizing that the fault is because they
+# told the tool to use a library that is incompatible with the one it was compiled to use.
 bin_PROGRAMS += rose-config
 rose_config_SOURCES = rose-config.C
+rose_config_LDFLAGS = $(ROSE_RPATHS)
 rose_config_DEPENDENCIES = $(REQUIRED_LIBS)
 
 rose_config_installed_cppflags =		\
@@ -335,6 +345,7 @@ rose_config_installed_cppflags =		\
 	$(ROSE_YICES_INCLUDES)			\
 	$(ROSE_YAML_INCLUDES)			\
 	$(ROSE_LIBMAGIC_INCLUDES)		\
+	$(ROSE_ELF_INCLUDES)			\
 	$(ROSE_DWARF_INCLUDES)			\
 	$(ROSE_WINE_INCLUDES)			\
 	$(ROSE_PCH_INCLUDE)			\
@@ -362,6 +373,7 @@ rose_config_installed_ldflags =			\
 	$(RT_LIBS)				\
 	$(ROSE_YICES_LIBS_WITH_PATH)		\
 	$(ROSE_PHP_LIBS_WITH_PATH)		\
+	$(ROSE_ELF_LIBS_WITH_PATH)		\
 	$(ROSE_DWARF_LIBS_WITH_PATH)		\
 	$(ROSE_QT_LIBS_WITH_PATH)		\
 	$(ROSE_SSL_LIBS)			\
@@ -373,7 +385,6 @@ rose_config_installed_ldflags =			\
 	$(ROSE_DLIB_LIBS_WITH_PATH)		\
 	-lm
 rose_config_build_ldflags =			\
-	$(LIBS_WITH_RPATH)			\
 	$(ROSE_LIBS)
 
 rose_config_CPPFLAGS =									\
@@ -387,19 +398,19 @@ rose_config_CPPFLAGS =									\
 	-DPREFIX_DIR='"$(prefix)"'
 
 # DQ (4/12/2016): This is required for use with clang (not clear how to compile ROSE with out it).
-rose_config_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+rose_config_LDADD = $(ROSE_LIBS)
 
 if USING_CLANG_COMPILER
 # rose_config_LDADD += -lstdc++
 # rose_config_LDADD += -lstdc++ -fno-rtti
 rose_config_LDADD += -lstdc++
-rose_config_LDFLAGS = -fno-rtti
+rose_config_LDFLAGS += -fno-rtti
 endif
 
 print:
 	@echo "libroseLibraries = $(libroseLibraries)"
-	@echo "LIBS_WITH_RPATH = $(LIBS_WITH_RPATH)"
 	@echo "ROSE_LIBS = $(ROSE_LIBS)"
+	@echo "ROSE_RPATHS = $(ROSE_RPATHS)"
 	@echo "ROSE_DWARF_LIBS_WITH_PATH = $(ROSE_DWARF_LIBS_WITH_PATH)"
 	@echo "AM_LDFLAGS = $(AM_LDFLAGS)"
 

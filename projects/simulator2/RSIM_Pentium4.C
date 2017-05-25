@@ -8,6 +8,7 @@
 
 using namespace rose;
 using namespace rose::Diagnostics;
+using namespace rose::BinaryAnalysis;
 
 void
 RSIM_Pentium4::init() {}
@@ -51,9 +52,9 @@ RSIM_Pentium4::parseMainExecutable(RSIM_Process *process) {
 
     std::vector<std::string> resources = parser.with(pentium4).parse(exeArgs()).apply().unreachedArgs();
     engine.isaName("i386");
-    MemoryMap map = engine.loadSpecimens(resources);
+    MemoryMap::Ptr map = engine.loadSpecimens(resources);
     process->mem_transaction_start("specimen main memory");
-    process->get_memory() = map;                        // shallow copy, new segments point to same old data
+    *process->get_memory() = *map;                      // shallow copy, new segments point to same old data
 
     // The initial program counter is stored at address 4, the second entry in the interrupt vector.
     process->entryPointOriginalVa(initialEip_);
