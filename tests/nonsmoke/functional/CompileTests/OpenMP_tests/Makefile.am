@@ -113,6 +113,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	section1.c \
 	set_num_threads.c \
 	shared.c \
+	simd.c \
 	single.c \
 	single2.c \
 	single_copyprivate.c \
