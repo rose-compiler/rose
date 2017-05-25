@@ -103,6 +103,26 @@ HEADER_OMP_CLAUSE_START
           e_omp_map_dist_data_last
         };
 
+        // Support thread affinity clause  proc_bind(master|close|spread)
+        enum omp_proc_bind_policy_enum
+        {
+          e_omp_proc_bind_policy_unknown,
+          e_omp_proc_bind_policy_master,
+          e_omp_proc_bind_policy_close,
+          e_omp_proc_bind_policy_spread,
+          e_omp_proc_bind_policy_last
+        };
+
+        enum omp_atomic_clause_enum
+        {
+          e_omp_atomic_clause_unknown,
+          e_omp_atomic_clause_read,
+          e_omp_atomic_clause_write,
+          e_omp_atomic_clause_update,
+          e_omp_atomic_clause_capture
+        };
+
+
 
 HEADER_OMP_CLAUSE_END
 HEADER_GRAPH_START
@@ -196,7 +216,7 @@ HEADER_GRAPH_START
  //! Add support for externally build SgGraphNode objects
      SgGraphEdge* addEdge( SgGraphEdge* edge );
 
-     void post_construction_initialization();
+     void post_construction_initialization() $ROSE_OVERRIDE;
 
  //! Support for Boost Minimum Spanning Tree.
   // std::vector <BoostEdgeDescriptor> generateSpanningTree();
@@ -293,14 +313,14 @@ HEADER_GRAPH_POSTDECLARATION_END
 HEADER_GRAPHNODE_START
      void append_properties( int addr, const std::string & prop );	
 
-     void post_construction_initialization();
+     void post_construction_initialization() $ROSE_OVERRIDE;
 HEADER_GRAPHNODE_END
 
 
 HEADER_GRAPHEDGE_START
      void append_properties( int addr, const std::string & prop );
 
-     void post_construction_initialization();
+     void post_construction_initialization() $ROSE_OVERRIDE;
 HEADER_GRAPHEDGE_END
 
 
@@ -370,7 +390,7 @@ HEADER_INCIDENCE_DIRECTED_GRAPH_START
   	  std::set<SgGraphEdge*> getEdge(SgGraphNode* src);
   	  bool checkIfGraphEdgeExists(SgGraphNode* src);
 
-     void post_construction_initialization();
+     void post_construction_initialization() $ROSE_OVERRIDE;
 
  //! Support for adding SgGraphEdge to SgGraph.
      SgDirectedGraphEdge* addDirectedEdge( SgGraphNode* a, SgGraphNode* b, const std::string & name = "");
@@ -428,7 +448,7 @@ HEADER_MODIFIER_NODES_START
           SgModifierNodes();
       // ~SgModifierNodes();
 
-          void post_construction_initialization();
+          void post_construction_initialization() $ROSE_OVERRIDE;
 
        // DQ (2/12/2007): This function is not used.
        // SgModifierType* match(SgType*, unsigned int);
@@ -467,7 +487,7 @@ HEADER_CV_TYPE_MODIFIER_START
        // Assignment Operator
           $CLASSNAME & operator= ( const $CLASSNAME & X );
 
-          void post_construction_initialization();
+          void post_construction_initialization() $ROSE_OVERRIDE;
 
           bool isUnknown() const;
           void setUnknown();
@@ -556,7 +576,7 @@ HEADER_STORAGE_MODIFIER_START
        // Assignment Operator
           $CLASSNAME & operator= ( const $CLASSNAME & X );
 
-          void post_construction_initialization();
+          void post_construction_initialization() $ROSE_OVERRIDE;
 
           bool isUnknown() const;
           void setUnknown();
@@ -663,7 +683,7 @@ HEADER_ACCESS_MODIFIER_START
        // Assignment Operator
           SgAccessModifier & operator= ( const SgAccessModifier & X );
 
-          void post_construction_initialization();
+          void post_construction_initialization() $ROSE_OVERRIDE;
 
           bool isUnknown() const;
           void setUnknown();
@@ -766,7 +786,7 @@ HEADER_FUNCTION_MODIFIER_START
        // Assignment Operator
           $CLASSNAME & operator= ( const $CLASSNAME & X );
 
-          void post_construction_initialization();
+          void post_construction_initialization() $ROSE_OVERRIDE;
 
           bool isUnknown() const;
           void setUnknown();
@@ -962,7 +982,7 @@ HEADER_UPC_ACCESS_MODIFIER_START
        // Assignment Operator
           $CLASSNAME & operator= ( const $CLASSNAME & X );
 
-          void post_construction_initialization();
+          void post_construction_initialization() $ROSE_OVERRIDE;
 
           bool isUnknown() const;
           void setUnknown();
@@ -1020,7 +1040,7 @@ HEADER_SPECIAL_FUNCTION_MODIFIER_START
        // Assignment Operator
           $CLASSNAME & operator= ( const $CLASSNAME & X );
 
-          void post_construction_initialization();
+          void post_construction_initialization() $ROSE_OVERRIDE;
 
           bool isUnknown() const;
           void setUnknown();
@@ -1143,7 +1163,7 @@ HEADER_DECLARATION_MODIFIER_START
        // Assignment Operator
           SgDeclarationModifier & operator= ( const SgDeclarationModifier & X );
 
-          void post_construction_initialization();
+          void post_construction_initialization() $ROSE_OVERRIDE;
 
           SgTypeModifier    & get_typeModifier();
           SgAccessModifier  & get_accessModifier();
@@ -1478,7 +1498,7 @@ HEADER_TYPE_MODIFIER_START
        // Convert a single type_modifier_enum to an initializer
        // SgTypeModifier ( const SgTypeModifier::type_modifier_enum & m );
 
-          void post_construction_initialization();
+          void post_construction_initialization() $ROSE_OVERRIDE;
 
           SgUPC_AccessModifier     & get_upcModifier();
           SgConstVolatileModifier  & get_constVolatileModifier();
@@ -1687,7 +1707,7 @@ HEADER_ELABORATED_TYPE_MODIFIER_START
        // Assignment Operator
           $CLASSNAME & operator= ( const $CLASSNAME & X );
 
-          void post_construction_initialization();
+          void post_construction_initialization() $ROSE_OVERRIDE;
 
           bool isUnknown() const;
           void setUnknown();
@@ -1748,7 +1768,7 @@ HEADER_LINKAGE_MODIFIER_START
        // Assignment Operator
           $CLASSNAME & operator= ( const $CLASSNAME & X );
 
-          void post_construction_initialization();
+          void post_construction_initialization() $ROSE_OVERRIDE;
 
           bool isUnknown() const;
           void setUnknown();
@@ -1800,7 +1820,7 @@ HEADER_BASECLASS_MODIFIER_START
        // Assignment Operator
           $CLASSNAME & operator= ( const $CLASSNAME & X );
 
-          void post_construction_initialization();
+          void post_construction_initialization() $ROSE_OVERRIDE;
 
           SgAccessModifier & get_accessModifier();
           const SgAccessModifier & get_accessModifier() const;
@@ -1845,22 +1865,22 @@ HEADER_ATTRIBUTE_SUPPORT_START
       */
      /* */
      //! Add a new attribute represented by the named string.
-         virtual void addNewAttribute(std::string s,AstAttribute* a);
+         virtual void addNewAttribute(std::string s,AstAttribute* a) $ROSE_OVERRIDE;
      //! Returns attribute of name 's'.
-         virtual AstAttribute* getAttribute(std::string s) const;
+         virtual AstAttribute* getAttribute(std::string s) const $ROSE_OVERRIDE;
      //! Replace existing attribute of name 's' with new AstAttribute.
-         virtual void updateAttribute(std::string s,AstAttribute* a);  // formerly called: replace in AstAttributeMechanism
+         virtual void updateAttribute(std::string s,AstAttribute* a) $ROSE_OVERRIDE;  // formerly called: replace in AstAttributeMechanism
      /*! \brief This is a wrapper function with the following semantics:
          if no attribute of name 's' exists then \b addNewAttribute(s,a); is called,
          otherwise \b updateAttribute(s,a); is called.
       */
-         virtual void setAttribute(std::string s,AstAttribute* a);
+         virtual void setAttribute(std::string s,AstAttribute* a) $ROSE_OVERRIDE;
      //! Remove attribute of name 's' if present.
-         virtual void removeAttribute(std::string s);
+         virtual void removeAttribute(std::string s) $ROSE_OVERRIDE;
      //! Tests if attribute of name 's' is present.
-         virtual bool attributeExists(std::string s) const;
+         virtual bool attributeExists(std::string s) const $ROSE_OVERRIDE;
      //! Returns the number of attributes on this IR node.
-         virtual int numberOfAttributes() const;
+         virtual int numberOfAttributes() const $ROSE_OVERRIDE;
 
      /*! \fn AstAttributeMechanism* $CLASSNAME::get_attributeMechanism() const;
          \brief \b FOR \b INTERNAL \b USE Access function; if an attribute exists then 
@@ -1922,7 +1942,7 @@ HEADER_DATA_STATEMENT_VALUE_START
                e_last_initializer_form  /*!< last value (upper bound on range of values, used in error checking) */
              };
 
-          void post_construction_initialization();
+          void post_construction_initialization() $ROSE_OVERRIDE;
 
 HEADER_DATA_STATEMENT_VALUE_END
 
@@ -4432,9 +4452,11 @@ HEADER_SYMBOL_TABLE_START
           template<class ReturnType> ReturnType* find_symbol_support (const SgName & nm, SgTemplateParameterPtrList* templateParameters = NULL, SgTemplateArgumentPtrList* templateArguments = NULL);
 #endif
 
+       // DQ (4/14/2017): Test test2017_30.C demonstrates that we need to be able to force the filtering of symbols from templates
        // DQ (5/20/2013): Added refactoring of symbol lookup support so that we can handle new namespace support for symbols.
        // template<class ReturnType> ReturnType* find_symbol_with_type_support (const SgName & nm, const SgType* type);
-          template<class ReturnType> ReturnType* find_symbol_with_type_support (const SgName & nm, const SgType* type, SgTemplateParameterPtrList* templateParameters, SgTemplateArgumentPtrList* templateArgumentList);
+       // template<class ReturnType> ReturnType* find_symbol_with_type_support (const SgName & nm, const SgType* type, SgTemplateParameterPtrList* templateParameters, SgTemplateArgumentPtrList* templateArgumentList);
+          template<class ReturnType> ReturnType* find_symbol_with_type_support (const SgName & nm, const SgType* type, SgTemplateParameterPtrList* templateParameters, SgTemplateArgumentPtrList* templateArgumentList, bool filterTemplateSymbols);
 
 #if 0
        // DQ (5/20/2013): Added support for better refactoring on the template code so we can use it to support other functions.
@@ -4473,7 +4495,7 @@ HEADER_SYMBOL_TABLE_POSTDECLARATION_END
 
 HEADER_BASECLASS_START
      public:
-          void post_construction_initialization();
+          void post_construction_initialization() $ROSE_OVERRIDE;
 
        // This function should be autogenerated
        // SgBaseClass(int specifier=0, SgClassDeclaration* ptr = NULL, int dir = 0);
@@ -4492,9 +4514,9 @@ HEADER_BASECLASS_START
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
 #else
        // DQ (10/20/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
@@ -4528,7 +4550,7 @@ HEADER_BASECLASS_END
 
 HEADER_EXP_BASE_CLASS_START
      public:
-          void post_construction_initialization();
+          void post_construction_initialization() $ROSE_OVERRIDE;
 HEADER_EXP_BASE_CLASS_END
 
 
@@ -4758,16 +4780,16 @@ HEADER_INITIALIZED_NAME_START
           void set_ms_declspec_parameter_uuid();
           void unset_ms_declspec_parameter_uuid();
 
-          void post_construction_initialization();
+          void post_construction_initialization() $ROSE_OVERRIDE;
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
        // Overriding SgNode versions of these
-          virtual unsigned int cfgIndexForEnd() const;
-          virtual bool cfgIsIndexInteresting(unsigned int index) const;
-          virtual unsigned int cfgFindChildIndex(SgNode* n);
-          virtual unsigned int cfgFindNextChildIndex(SgNode* n);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual bool cfgIsIndexInteresting(unsigned int index) const $ROSE_OVERRIDE;
+          virtual unsigned int cfgFindChildIndex(SgNode* n) $ROSE_OVERRIDE;
+          virtual unsigned int cfgFindNextChildIndex(SgNode* n) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
 #endif
 
           SgStorageModifier & get_storageModifier();
@@ -4865,9 +4887,9 @@ HEADER_INITIALIZED_NAME_START
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
 #else
        // DQ (10/5/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
@@ -5108,16 +5130,16 @@ HEADER_TEMPLATE_INSTANTIATION_DECLARATION_ATTRIBUTE_POSTDECLARATION_END
 HEADER_PRAGMA_START
        // SgPragma(char *name);
 
-          void post_construction_initialization();
+          void post_construction_initialization() $ROSE_OVERRIDE;
 
           std::string get_pragma() const;
           bool samePragma(const std::string& str);
-          bool isPragma() const;
+          bool isPragma() const $ROSE_OVERRIDE;
           bool gotPrinted() const;
           void setPrinted(bool s = true);
 
        // DQ (8/3/2004): added function to match virtual function in SgNode
-          Sg_File_Info* get_file_info() const;
+          Sg_File_Info* get_file_info() const $ROSE_OVERRIDE;
 
 HEADER_PRAGMA_END
 
@@ -5178,7 +5200,7 @@ HEADER_FILE_INFORMATION_START
        // DQ (11/6/2008): Added to support construction of objects using Dwarf information.
           Sg_File_Info( int file_id, int line, int column );
 
-          void post_construction_initialization();
+          void post_construction_initialization() $ROSE_OVERRIDE;
 
        // DQ (11/6/2008): Added support for extending the internal static filename to integer id map
       //! Access function to permit files referenced in Dwarf to be mapped to integers using the same scheme as for source code.
@@ -5632,7 +5654,7 @@ HEADER_APPLICATION_FILE_START
       //    void setupSourceFilename ( const std::vector<std::string>& argv );
 
       //! Access function calling get_startOfConstruct(), provided to support older interface.
-          Sg_File_Info* get_file_info() const;
+          Sg_File_Info* get_file_info() const $ROSE_OVERRIDE;
 
       //! Access function calling set_startOfConstruct(), provided to support older interface.
           void set_file_info( Sg_File_Info* fileinfo );
@@ -5653,9 +5675,9 @@ HEADER_APPLICATION_FILE_START
 // DQ (9/5/2008): Moved to SgSourceFile
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
 #else
        // DQ (10/5/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
@@ -5689,13 +5711,13 @@ HEADER_APPLICATION_SOURCE_FILE_START
 
        // SgSourceFile ( int & argc, char** & argv, int & errorCode, int fileNameIndex = 0, SgProject* project = NULL );
           SgSourceFile(std::vector<std::string>& argv, SgProject* project = NULL);
-          virtual int callFrontEnd();
+          virtual int callFrontEnd() $ROSE_OVERRIDE;
        // SgSourceFile ( const SgSourceFile & X );
 
       //! Default constructor (not meant to be used)
        // SgSourceFile() ROSE_DEPRECATED_FUNCTION;
 
-          virtual int buildAST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
+          virtual int buildAST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine ) $ROSE_OVERRIDE;
 // #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT // Liao 6/25/2010, support enable-only-c and haskell
 
       //! Divide up the handling of different languages
@@ -5708,7 +5730,7 @@ HEADER_APPLICATION_SOURCE_FILE_START
           int build_PHP_AST();
           int build_Python_AST();
           int build_X10_AST(const std::vector<std::string>& p_argv);
-          virtual void doSetupForConstructor(const std::vector<std::string>& argv, SgProject* project);
+          virtual void doSetupForConstructor(const std::vector<std::string>& argv, SgProject* project) $ROSE_OVERRIDE;
 
        // DQ (12/19/2008): Added support for translation source position information using CPP linemarkers (this is specific to Fortran).
           void processCppLinemarkers();
@@ -5726,9 +5748,9 @@ HEADER_APPLICATION_SOURCE_FILE_START
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
 #else
        // DQ (10/5/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
@@ -5780,14 +5802,14 @@ HEADER_APPLICATION_BINARY_FILE_START
           SgBinaryComposite(std::vector<std::string>& argv,  SgProject* project = NULL);
        // SgBinaryComposite ( const SgBinaryFile & X );
 
-          virtual int callFrontEnd();
+          virtual int callFrontEnd() $ROSE_OVERRIDE;
       //  Default constructor (not meant to be used)
       //  JJW (9/5/2008): the normal constructor has defaults for all of its arguments, so this is ambiguous
       //  SgBinaryComposite() ROSE_DEPRECATED_FUNCTION;
 
-          virtual void doSetupForConstructor(const std::vector<std::string>& argv, SgProject* project);
+          virtual void doSetupForConstructor(const std::vector<std::string>& argv, SgProject* project) $ROSE_OVERRIDE;
 
-          virtual int buildAST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
+          virtual int buildAST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine ) $ROSE_OVERRIDE;
 
       //! However, now we have a list of them to support library archives which contain multiple object files (*.o's).
           const SgAsmGenericFile* get_binaryFile() const;
@@ -5802,8 +5824,8 @@ HEADER_APPLICATION_UNKNOWN_FILE_START
      public:
           SgUnknownFile(std::vector<std::string>& argv, SgProject* project = NULL);
 
-          virtual int callFrontEnd();
-          virtual void doSetupForConstructor(const std::vector<std::string>& argv, SgProject* project);
+          virtual int callFrontEnd() $ROSE_OVERRIDE;
+          virtual void doSetupForConstructor(const std::vector<std::string>& argv, SgProject* project) $ROSE_OVERRIDE;
 
 HEADER_APPLICATION_UNKNOWN_FILE_END
 
@@ -5823,7 +5845,7 @@ HEADER_APPLICATION_DIRECTORY_START
           int numberOfDirectories() const;
           SgDirectory* get_directory(int i) const;
 
-          void post_construction_initialization();
+          void post_construction_initialization() $ROSE_OVERRIDE;
 
 HEADER_APPLICATION_DIRECTORY_END
 
@@ -5871,6 +5893,17 @@ HEADER_APPLICATION_PROJECT_START
        // SgProject ( int &argc, char** argv, int & errorCode);
           SgProject ( int &argc, char** argv, int & errorCode) ROSE_DEPRECATED_FUNCTION;
 #endif
+
+       // DQ (4/10/2017): Adding support for use of Saywer for command line handling.
+      //! Use of Saywer support for command line handling (work in progress).
+          std::vector<std::string> parseCommandLine(std::vector<std::string> argv);
+
+       // DQ (4/10/2017): Adding support for use of Saywer for command line handling.
+       // Sawyer::CommandLine::SwitchGroup commandLineSwitches();
+
+      //! Use of Saywer support for specification of ROSE specific command line switches (work in progress).
+          Sawyer::CommandLine::SwitchGroup frontendAllSwitches();
+          Sawyer::CommandLine::SwitchGroup backendAllSwitches();
 
       //! process command line and store options in the SgProject object. This options are used by parse und unparse.
           void processCommandLine(const std::vector<std::string>& argv);
@@ -6068,9 +6101,9 @@ HEADER_APPLICATION_PROJECT_START
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
 #else
        // DQ (10/5/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
@@ -6155,7 +6188,7 @@ HEADER_UNPARSE_INFO_START
           SgUnparse_Info ( const SgUnparse_Info & X );
           SgUnparse_Info & operator= ( const SgUnparse_Info & X );
 
-          void post_construction_initialization();
+          void post_construction_initialization() $ROSE_OVERRIDE;
 
        // DQ (4/16/2003): Notes on how to improve the unparser:
        // Rather than having an inherited attribute that stores some context information 
@@ -6727,7 +6760,7 @@ HEADER_TEMPLATE_PARAMETER_START
                template_parameter  = 3  /*!< template parameter */
              };
 
-          void post_construction_initialization();
+          void post_construction_initialization() $ROSE_OVERRIDE;
 
        // Different constructors for use in building the different types of parameters possible
           SgTemplateParameter ( SgType* parameter               , SgType* defaultParameter );
@@ -6759,7 +6792,7 @@ HEADER_TEMPLATE_ARGUMENT_START
                start_of_pack_expansion_argument = 4  /*!< start of pack expansion parameter */
              };
 
-          void post_construction_initialization();
+          void post_construction_initialization() $ROSE_OVERRIDE;
 
        // Different constructors for use in building the different types of parameters possible
           SgTemplateArgument ( SgType*                      parameter, bool explicitlySpecified );
@@ -6779,9 +6812,9 @@ HEADER_TEMPLATE_ARGUMENT_START
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
 #else
        // DQ (11/5/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
@@ -6866,7 +6899,7 @@ HEADER_OPENCL_ACCESS_MODE_MODIFIER_START
        // Assignment Operator
           $CLASSNAME & operator= ( const $CLASSNAME & X );
 
-          void post_construction_initialization();
+          void post_construction_initialization() $ROSE_OVERRIDE;
 
           bool isUnknown() const;
           void setUnknown();
@@ -8066,7 +8099,8 @@ SgSymbolTable::find_any(const SgName & nm, SgTemplateParameterPtrList* templateP
   // DQ (8/21/2013): Modified to use single supporting templated lower level function.
   // DQ (6/24/2013): This special case requires some special support in find_symbol_support.
   // return find_symbol_support<SgSymbol>(nm,templateParameterList,templateArgumentList);
-     return find_symbol_with_type_support<SgSymbol>(nm,NULL,templateParameterList,templateArgumentList);
+     bool filterTemplateSymbols = false;
+     return find_symbol_with_type_support<SgSymbol>(nm,NULL,templateParameterList,templateArgumentList,filterTemplateSymbols);
    }
 
 // DQ (1/30/2007): Added these back into ROSE.
@@ -8075,7 +8109,8 @@ SgSymbolTable::find_typedef(const SgName & nm)
    {
   // DQ (8/21/2013): Modified to use single supporting templated lower level function.
   // return find_symbol_support<SgTypedefSymbol>(nm,NULL,NULL);
-     return find_symbol_with_type_support<SgTypedefSymbol>(nm,NULL,NULL,NULL);
+     bool filterTemplateSymbols = false;
+     return find_symbol_with_type_support<SgTypedefSymbol>(nm,NULL,NULL,NULL,filterTemplateSymbols);
    }
 
 // DQ (1/30/2007): Added these back into ROSE.
@@ -8084,7 +8119,8 @@ SgSymbolTable::find_enum(const SgName & nm)
    {
   // DQ (8/21/2013): Modified to use single supporting templated lower level function.
   // return find_symbol_support<SgEnumSymbol>(nm,NULL,NULL);
-     return find_symbol_with_type_support<SgEnumSymbol>(nm,NULL,NULL,NULL);
+     bool filterTemplateSymbols = false;
+     return find_symbol_with_type_support<SgEnumSymbol>(nm,NULL,NULL,NULL,filterTemplateSymbols);
    }
 
 // DQ (1/30/2007): Added these back into ROSE.
@@ -8093,7 +8129,8 @@ SgSymbolTable::find_enum_field(const SgName & nm)
    {
   // DQ (8/21/2013): Modified to use single supporting templated lower level function.
   // return find_symbol_support<SgEnumFieldSymbol>(nm,NULL,NULL);
-     return find_symbol_with_type_support<SgEnumFieldSymbol>(nm,NULL,NULL,NULL);
+     bool filterTemplateSymbols = false;
+     return find_symbol_with_type_support<SgEnumFieldSymbol>(nm,NULL,NULL,NULL,filterTemplateSymbols);
    }
 
 #if 0
@@ -8120,7 +8157,8 @@ SgSymbolTable::find_variable(const SgName & nm)
 
      return s;
 #endif
-     return find_symbol_with_type_support<SgVariableSymbol>(nm,NULL,NULL,NULL);
+     bool filterTemplateSymbols = false;
+     return find_symbol_with_type_support<SgVariableSymbol>(nm,NULL,NULL,NULL,filterTemplateSymbols);
    }
 
 #if 0
@@ -8137,7 +8175,8 @@ SgSymbolTable::find_class(const SgName & nm)
    {
   // DQ (8/21/2013): Modified to use single supporting templated lower level function.
   // SgClassSymbol* s = find_symbol_support<SgClassSymbol>(nm,NULL,NULL);
-     SgClassSymbol* s = find_symbol_with_type_support<SgClassSymbol>(nm,NULL,NULL,NULL);
+     bool filterTemplateSymbols = false;
+     SgClassSymbol* s = find_symbol_with_type_support<SgClassSymbol>(nm,NULL,NULL,NULL,filterTemplateSymbols);
 
   // DQ (5/23/2013): Report when we are not being strict in the symbol that we return.
      if (isSgTemplateClassSymbol(s) != NULL)
@@ -8345,6 +8384,10 @@ std::vector<SgTemplateArgument*> getTemplateParametersOrArgumentsList<SgTemplate
           SgEnumDeclaration*               enumDeclaration      = isSgEnumDeclaration(declaration);
           SgNamespaceDeclarationStatement* namespaceDeclaration = isSgNamespaceDeclarationStatement(declaration);
 #endif
+
+       // DQ (4/10/2017): Added case for other symbols (but we only return the empty list for this case).
+          case V_SgLabelSymbol:
+
        // DQ (8/19/2013): Added case for other symbols (but we only return the empty list for this case).
           case V_SgVariableSymbol:
           case V_SgTypedefSymbol:
@@ -9168,7 +9211,8 @@ SgSymbolTable::find_class(const SgName & nm, SgTemplateArgumentPtrList* template
 
   // return find_symbol_with_template_args_support<SgClassSymbol>(nm,templateArgumentsList);
   // return find_symbol_support<SgClassSymbol>(nm,NULL,templateArgumentsList);
-     return find_symbol_with_type_support<SgClassSymbol>(nm,NULL,NULL,templateArgumentsList);
+     bool filterTemplateSymbols = false;
+     return find_symbol_with_type_support<SgClassSymbol>(nm,NULL,NULL,templateArgumentsList,filterTemplateSymbols);
    }
 
 
@@ -9186,14 +9230,16 @@ SgFunctionTypeSymbol*
 SgSymbolTable::find_function_type(const SgName & nm)
    {
   // return find_symbol_support<SgFunctionTypeSymbol>(nm);
-     return find_symbol_with_type_support<SgFunctionTypeSymbol>(nm,NULL,NULL,NULL);
+     bool filterTemplateSymbols = false;
+     return find_symbol_with_type_support<SgFunctionTypeSymbol>(nm,NULL,NULL,NULL,filterTemplateSymbols);
    }
 
 SgLabelSymbol*
 SgSymbolTable::find_label(const SgName & nm)
    {
   // return find_symbol_support<SgLabelSymbol>(nm);
-     return find_symbol_with_type_support<SgLabelSymbol>(nm,NULL,NULL,NULL);
+     bool filterTemplateSymbols = false;
+     return find_symbol_with_type_support<SgLabelSymbol>(nm,NULL,NULL,NULL,filterTemplateSymbols);
    }
 
 //
@@ -9203,7 +9249,8 @@ SgJavaLabelSymbol*
 SgSymbolTable::find_java_label(const SgName & nm)
    {
   // return find_symbol_support<SgJavaLabelSymbol>(nm);
-     return find_symbol_with_type_support<SgJavaLabelSymbol>(nm,NULL,NULL,NULL);
+     bool filterTemplateSymbols = false;
+     return find_symbol_with_type_support<SgJavaLabelSymbol>(nm,NULL,NULL,NULL,filterTemplateSymbols);
    }
 
 // DQ (1/30/2007): Added these back into ROSE.
@@ -9211,7 +9258,8 @@ SgNamespaceSymbol*
 SgSymbolTable::find_namespace ( const SgName & nm )
    {
   // return find_symbol_support<SgNamespaceSymbol>(nm);
-     return find_symbol_with_type_support<SgNamespaceSymbol>(nm,NULL,NULL,NULL);
+     bool filterTemplateSymbols = false;
+     return find_symbol_with_type_support<SgNamespaceSymbol>(nm,NULL,NULL,NULL,filterTemplateSymbols);
    }
 
 #if 0
@@ -9231,7 +9279,8 @@ SgSymbolTable::find_function (const SgName & nm, const SgType* type, SgTemplateA
   // DQ (8/22/2013): We need to allow for functions to be searched for by name if the type is unavailable.
   // ROSE_ASSERT(type != NULL);
 
-     SgFunctionSymbol *s = find_symbol_with_type_support<SgFunctionSymbol>(nm,type,NULL,templateArgumentList);
+     bool filterTemplateSymbols = false;
+     SgFunctionSymbol *s = find_symbol_with_type_support<SgFunctionSymbol>(nm,type,NULL,templateArgumentList,filterTemplateSymbols);
 
   // DQ (8/22/2013): We have to allow this function to return either SgTemplateFunctionSymbol or 
   // SgTemplateMemberFunctionSymbol when not enough information (type == NULL or templateArgumentList == NULL).
@@ -9250,7 +9299,8 @@ SgSymbolTable::find_nontemplate_function(const SgName& nm, const SgType* t, SgTe
   // DQ (8/22/2013): We need to allow for functions to be searched for by name if the type is unavailable.
   // ROSE_ASSERT(t != NULL);
 
-     SgFunctionSymbol *s = find_symbol_with_type_support<SgFunctionSymbol>(nm,t,NULL,templateArgumentList);
+     bool filterTemplateSymbols = true;
+     SgFunctionSymbol *s = find_symbol_with_type_support<SgFunctionSymbol>(nm,t,NULL,templateArgumentList,filterTemplateSymbols);
 
   // DQ (8/22/2013): We have to allow this function to return either SgTemplateFunctionSymbol or 
   // SgTemplateMemberFunctionSymbol when not enough information (type == NULL or templateArgumentList == NULL).
@@ -9273,7 +9323,8 @@ SgSymbolTable::find_template_function(const SgName& nm, const SgType* t, SgTempl
      printf ("In SgSymbolTable::find_template_function(): nm = %s t = %p templateParameterList = %p size = %zu \n",nm.str(),t,templateParameterList,templateParameterList->size());
 #endif
 
-     SgTemplateFunctionSymbol *s = find_symbol_with_type_support<SgTemplateFunctionSymbol>(nm,t,templateParameterList,NULL);
+     bool filterTemplateSymbols = false;
+     SgTemplateFunctionSymbol *s = find_symbol_with_type_support<SgTemplateFunctionSymbol>(nm,t,templateParameterList,NULL,filterTemplateSymbols);
 
      return s;
    }
@@ -9289,7 +9340,8 @@ SgSymbolTable::find_nontemplate_member_function(const SgName& nm, const SgType* 
   // DQ (8/22/2013): We need to allow for functions to be searched for by name if the type is unavailable.
   // ROSE_ASSERT(t != NULL);
 
-     s = find_symbol_with_type_support<SgMemberFunctionSymbol>(nm,t,NULL,templateArgumentList);
+     bool filterTemplateSymbols = true;
+     s = find_symbol_with_type_support<SgMemberFunctionSymbol>(nm,t,NULL,templateArgumentList,filterTemplateSymbols);
 
   // DQ (8/22/2013): We have to allow this function to return either SgTemplateFunctionSymbol or 
   // SgTemplateMemberFunctionSymbol when not enough information (type == NULL or templateArgumentList == NULL).
@@ -9308,7 +9360,8 @@ SgSymbolTable::find_template_member_function(const SgName& nm, const SgType* t, 
   // DQ (8/22/2013): We need to allow for functions to be searched for by name if the type is unavailable.
   // ROSE_ASSERT(t != NULL);
 
-     SgTemplateMemberFunctionSymbol *s = find_symbol_with_type_support<SgTemplateMemberFunctionSymbol>(nm,t,templateParameterList,NULL);
+     bool filterTemplateSymbols = false;
+     SgTemplateMemberFunctionSymbol *s = find_symbol_with_type_support<SgTemplateMemberFunctionSymbol>(nm,t,templateParameterList,NULL,filterTemplateSymbols);
 
      return s;
    }
@@ -9319,7 +9372,8 @@ SgSymbolTable::find_template_member_function(const SgName& nm, const SgType* t, 
 SgClassSymbol*
 SgSymbolTable::find_nontemplate_class (const SgName & nm, SgTemplateArgumentPtrList* templateArgumentsList)
    {
-     SgClassSymbol* s = find_symbol_with_type_support<SgClassSymbol>(nm,NULL,NULL,templateArgumentsList);
+     bool filterTemplateSymbols = true;
+     SgClassSymbol* s = find_symbol_with_type_support<SgClassSymbol>(nm,NULL,NULL,templateArgumentsList,filterTemplateSymbols);
 
   // DQ (8/12/2013): The semantics of find_symbol_with_template_args_support() was to never 
   // return a SgTemplateClassSymbol where as the semantics of find_symbol_support() is to 
@@ -9339,7 +9393,8 @@ SgSymbolTable::find_template_class (const SgName & nm, SgTemplateParameterPtrLis
    {
      ROSE_ASSERT(templateParameterList != NULL);
 
-     SgTemplateClassSymbol *s = find_symbol_with_type_support<SgTemplateClassSymbol>(nm,NULL,templateParameterList,templateSpecializationArgumentList);
+     bool filterTemplateSymbols = false;
+     SgTemplateClassSymbol *s = find_symbol_with_type_support<SgTemplateClassSymbol>(nm,NULL,templateParameterList,templateSpecializationArgumentList,filterTemplateSymbols);
 
      return s;
    }
@@ -9355,8 +9410,9 @@ SgSymbolTable::find_template_typedef (const SgName & nm)
      SgTemplateParameterPtrList* templateParameterList              = NULL;
      SgTemplateArgumentPtrList*  templateSpecializationArgumentList = NULL;
 
+     bool filterTemplateSymbols = false;
   // SgTemplateTypedefSymbol *s = find_symbol_with_type_support<SgTemplateTypedefSymbol>(nm,NULL,templateParameterList,templateSpecializationArgumentList);
-     SgTemplateTypedefSymbol *s = find_symbol_with_type_support<SgTemplateTypedefSymbol>(nm,NULL,templateParameterList,templateSpecializationArgumentList);
+     SgTemplateTypedefSymbol *s = find_symbol_with_type_support<SgTemplateTypedefSymbol>(nm,NULL,templateParameterList,templateSpecializationArgumentList,filterTemplateSymbols);
 
      return s;
    }
@@ -9375,7 +9431,8 @@ SgSymbolTable::findfunc(const SgName & nm)
 SgFunctionSymbol*
 SgSymbolTable::find_function(const SgName & nm)
    {
-     SgFunctionSymbol* s = find_symbol_with_type_support<SgFunctionSymbol>(nm,NULL,NULL,NULL);
+     bool filterTemplateSymbols = false;
+     SgFunctionSymbol* s = find_symbol_with_type_support<SgFunctionSymbol>(nm,NULL,NULL,NULL,filterTemplateSymbols);
 
   // DQ (8/22/2013): We have to allow this function to return either SgTemplateFunctionSymbol or 
   // SgTemplateMemberFunctionSymbol when not enough information (type == NULL or templateArgumentList == NULL).
@@ -9470,9 +9527,14 @@ templateParameterAndArgumentErrorChecking(SgTemplateParameterPtrList* templatePa
 
 #define DEBUG_SYMBOL_FILTER 0
 
+// DQ (4/14/2017): Test test2017_30.C demonstrates that we need to be able to force the filtering of symbols from templates
+// and that they only way to do this is with an extra paramter to force this to happen.  Since the lack of information triggers 
+// the more general semantics to return any symbol (which is fine as a simple API, but inconsistant with when this is called
+// indirectly from the lookup_nontemplate_function_symbol() function (for example).
+// template<class ReturnSymbolType> ReturnSymbolType* symbolFilter(ReturnSymbolType* symbol, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateArgumentList)
 template<class ReturnSymbolType>
 ReturnSymbolType*
-symbolFilter(ReturnSymbolType* symbol, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateArgumentList)
+symbolFilter(ReturnSymbolType* symbol, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateArgumentList, bool filterTemplateSymbols)
    {
   // DQ (8/13/2013): This function filters types of IR nodes that could not be considered given the rules 
   // for what IR nodes apply when template parameters lists and template argument lists are provided.
@@ -9489,6 +9551,7 @@ symbolFilter(ReturnSymbolType* symbol, SgTemplateParameterPtrList* templateParam
           printf ("   --- V_SgFunctionSymbol = %d V_SgMemberFunctionSymbol = %d \n",(int)V_SgFunctionSymbol,(int)V_SgMemberFunctionSymbol);
           printf ("   --- V_SgTemplateFunctionSymbol = %d V_SgTemplateMemberFunctionSymbol = %d V_SgTemplateClassSymbol = %d \n",
                (int)V_SgTemplateFunctionSymbol,(int)V_SgTemplateMemberFunctionSymbol,(int)V_SgTemplateClassSymbol);
+          printf ("   --- filterTemplateSymbols = %s \n",filterTemplateSymbols ? "true" : "false");
 #if 0
        // Not all language constructs associated with a symbol are a SgDeclarationStatement.
        // SgDeclarationStatement* declaration = symbol->get_declaration();
@@ -9573,19 +9636,41 @@ symbolFilter(ReturnSymbolType* symbol, SgTemplateParameterPtrList* templateParam
                   }
                  else
                   {
-                 // If both templateParameterList == NULL and templateArgumentList == NULL, then we have not provided enough 
-                 // information and are looking up symbols based only on name (and maybe type) and need to find the first match 
-                 // based on only this limited information.  Basically, we want to provide the best possible match when less
-                 // than enough information is available to make a precise match.
+                 // DQ (4/14/2017): Added support to disallow template symbolds explicitly.
+                    if (filterTemplateSymbols == true)
+                       {
+                      // DQ (4/14/2017): This can't be a template symbol since we explicitly disallow it using a function parameter to control this.
 #if DEBUG_SYMBOL_FILTER
-                    printf ("DO NOT Reset symbol to NULL: (templateParameterList == NULL && templateArgumentList == NULL): not enough information provided for a precise match \n");
+                         printf ("Reset symbol to NULL: (filterTemplateSymbols == true && templateParameterList == NULL && templateArgumentList == NULL): V_SgTemplateFunctionSymbol = %d V_SgTemplateMemberFunctionSymbol = %d V_SgTemplateClassSymbol = %d \n",
+                              (int)V_SgTemplateFunctionSymbol,(int)V_SgTemplateMemberFunctionSymbol,(int)V_SgTemplateClassSymbol);
 #endif
+                      // DQ (4/14/2017): Check if this is a template symbol (if so then set symbol to NULL to avoid returning a template symbol).
+                         if ( symbolVariant == V_SgTemplateFunctionSymbol || symbolVariant == V_SgTemplateMemberFunctionSymbol || 
+                              symbolVariant == V_SgTemplateClassSymbol    || symbolVariant == V_SgTemplateTypedefSymbol        || 
+                              symbolVariant == V_SgTemplateVariableSymbol )
+                            {
+                              symbol = NULL;
+                            }
+                       }
+                      else
+                       {
+                      // DQ (4/14/2017): Original case before adding explicit control to avoid symbols associated with template declarations.
+
+                      // If both templateParameterList == NULL and templateArgumentList == NULL, then we have not provided enough 
+                      // information and are looking up symbols based only on name (and maybe type) and need to find the first match 
+                      // based on only this limited information.  Basically, we want to provide the best possible match when less
+                      // than enough information is available to make a precise match.
+#if DEBUG_SYMBOL_FILTER
+                         printf ("DO NOT Reset symbol to NULL: (templateParameterList == NULL && templateArgumentList == NULL): not enough information provided for a precise match \n");
+#endif
+                       }
                   }
              }
         }
 
 #if DEBUG_SYMBOL_FILTER
-     printf ("Leaving symbolFilter(): symbol = %p templateParameterList = %p templateArgumentList = %p \n",symbol,templateParameterList,templateArgumentList);
+     printf ("Leaving symbolFilter(): symbol = %p templateParameterList = %p templateArgumentList = %p filterTemplateSymbols = %s \n",
+          symbol,templateParameterList,templateArgumentList,filterTemplateSymbols ? "true" : "false");
 #endif
 
      return symbol;
@@ -9600,7 +9685,7 @@ symbolFilter(ReturnSymbolType* symbol, SgTemplateParameterPtrList* templateParam
 
 template<class ReturnType>
 ReturnType*
-SgSymbolTable::find_symbol_support (const SgName & nm, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateArgumentList)
+SgSymbolTable::find_symbol_support (const SgName & nm, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateArgumentList, bool filterTemplateSymbols)
    {
   // Templated function to support retrival of different types of symbols from the symbol table.
   // This refactors a lot of code (some now and more later).
@@ -9644,7 +9729,8 @@ SgSymbolTable::find_symbol_support (const SgName & nm, SgTemplateParameterPtrLis
        // DQ (8/13/2013): Added function to filter out types of symbols that would be found from 
        // a dynamic cast but which we are not interested in given the rules where template parameter 
        // lists and template argument lists apply.
-          symbol = symbolFilter<ReturnType>(symbol,templateParameterList,templateArgumentList);
+       // DQ (4/14/2017): Added explicit control to filter template symbols.
+          symbol = symbolFilter<ReturnType>(symbol,templateParameterList,templateArgumentList,filterTemplateSymbols);
 #if DEBUG_FIND_SYMBOL_WITH_TEMPLATE_ARGUMENTS
        // printf ("In loop over target symbols associated with nm = %s: (AFTER symbolFilter) symbol = %p = %s \n",nm.str(),symbol,(symbol != NULL) ? symbol->class_name().c_str() : "null");
 #endif
@@ -9762,7 +9848,8 @@ SgSymbolTable::find_symbol_support (const SgName & nm, SgTemplateParameterPtrLis
             // DQ (8/13/2013): Added function to filter out types of symbols that would be found from 
             // a dynamic cast but which we are not interested in given the rules where template parameter 
             // lists and template argument lists apply.
-               original_aliased_symbol = symbolFilter<ReturnType>(original_aliased_symbol,templateParameterList,templateArgumentList);
+            // DQ (4/14/2017): Added explicit control to filter template symbols.
+               original_aliased_symbol = symbolFilter<ReturnType>(original_aliased_symbol,templateParameterList,templateArgumentList,filterTemplateSymbols);
 #if DEBUG_FIND_SYMBOL_WITH_TEMPLATE_ARGUMENTS
             // printf ("In loop over target ALIASED symbols associated with nm = %s (AFTER symbolFilter) original_aliased_symbol = %p = %s \n",nm.str(),original_aliased_symbol,(original_aliased_symbol != NULL) ? original_aliased_symbol->class_name().c_str() : "null");
 #endif
@@ -9896,10 +9983,12 @@ isSubset(const std::vector<SgNode*>& a_vector, const std::set<SgNode*>& b_set)
    }
 
 
+// DQ (4/14/2017): Added explicit control to filer symbols associated with templates (see test2017_30.C for where this is required).
 // DQ (7/31/2013): Added support for template parameters and template specialization.
 // template<class ReturnType> ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, const SgType* type)
+// template<class ReturnType> ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, const SgType* type, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateArgumentList)
 template<class ReturnType>
-ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, const SgType* type, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateArgumentList)
+ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, const SgType* type, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateArgumentList, bool filterTemplateSymbols)
    {
   // Templated function to support retrival of different types of symbols from the symbol table.
   // This refactors a lot of code (some now and more later).
@@ -9913,7 +10002,8 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
 
 #if DEBUG_FIND_SYMBOL_WITH_TEMPLATE_ARGUMENTS
      printf ("---------------------------------------------------------------------------------- \n");
-     printf ("In find_symbol_with_type_support(nm = %s, type = %p = %s, templateParameterList = %p, templateArgumentList = %p) \n",nm.str(),type,(type != NULL) ? type->class_name().c_str() : "null",templateParameterList,templateArgumentList);
+     printf ("In find_symbol_with_type_support(nm = %s, type = %p = %s, templateParameterList = %p, templateArgumentList = %p, filterTemplateSymbols = %s) \n",
+          nm.str(),type,(type != NULL) ? type->class_name().c_str() : "null",templateParameterList,templateArgumentList,filterTemplateSymbols ? "true" : "false");
 #endif
 
      ROSE_ASSERT(templateParameterAndArgumentErrorChecking<ReturnType>(templateParameterList,templateArgumentList) == true);
@@ -9962,7 +10052,8 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
        // DQ (8/13/2013): Added function to filter out types of symbols that would be found from 
        // a dynamic cast but which we are not interested in given the rules where template parameter 
        // lists and template argument lists apply.
-          symbol = symbolFilter<ReturnType>(symbol,templateParameterList,templateArgumentList);
+       // DQ (4/14/2017): Added explicit control to filter template symbols.
+          symbol = symbolFilter<ReturnType>(symbol,templateParameterList,templateArgumentList,filterTemplateSymbols);
 
 #if DEBUG_FIND_SYMBOL_WITH_TEMPLATE_ARGUMENTS
           printf ("In loop over target symbols associated with nm = %s: (AFTER symbolFilter) symbol = %p = %s \n",nm.str(),symbol,(symbol != NULL) ? symbol->class_name().c_str() : "null");
@@ -10120,7 +10211,8 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
             // DQ (8/13/2013): Added function to filter out types of symbols that would be found from 
             // a dynamic cast but which we are not interested in given the rules where template parameter 
             // lists and template argument lists apply.
-               original_aliased_symbol = symbolFilter<ReturnType>(original_aliased_symbol,templateParameterList,templateArgumentList);
+            // DQ (4/14/2017): Added explicit control to filter template symbols.
+               original_aliased_symbol = symbolFilter<ReturnType>(original_aliased_symbol,templateParameterList,templateArgumentList,filterTemplateSymbols);
 
 #if DEBUG_FIND_SYMBOL_WITH_TEMPLATE_ARGUMENTS
                printf ("In loop over target ALIASED symbols associated with nm = %s (AFTER symbolFilter) original_aliased_symbol = %p = %s \n",nm.str(),original_aliased_symbol,(original_aliased_symbol != NULL) ? original_aliased_symbol->class_name().c_str() : "null");
@@ -10259,8 +10351,9 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
 
                          ROSE_ASSERT(baseClassDefinition->get_symbol_table() != NULL);
 
+                      // DQ (4/14/2017): Added explicit support to filter symbols associated with templates.
                       // Make a recursive call on the symbol table associated with the base class.
-                         ReturnType* symbol = baseClassDefinition->get_symbol_table()->find_symbol_with_type_support<ReturnType>(nm,type,templateParameterList,templateArgumentList);
+                         ReturnType* symbol = baseClassDefinition->get_symbol_table()->find_symbol_with_type_support<ReturnType>(nm,type,templateParameterList,templateArgumentList,filterTemplateSymbols);
 #if 0
                          printf ("   --- baseClassDefinition = %p symbol = %p \n",baseClassDefinition,symbol);
 #endif
@@ -15290,11 +15383,6 @@ X aggressive
 
      p_read_instructions_only    = false;
 
-     p_disassemblerSearchHeuristics = rose::BinaryAnalysis::Disassembler::SEARCH_DEFAULT;
-
-  // DQ (11/12/2014): Previously uninitialized data members
-     p_partitionerSearchHeuristics = SgAsmFunction::FUNC_DEFAULT;
-
   // DQ (11/20/2010): Support for token handling.
      p_unparse_tokens = false;
 
@@ -15339,6 +15427,7 @@ X aggressive
   // Matzke (12/05/2016): Added missing initialization
      p_frontendErrorCode = 0;
      p_unparserErrorCode = 0;
+     p_midendErrorCode= 0; // Liao, 4/26/2017 add midend error code
      p_backendCompilerErrorCode = 0;
    }
 
@@ -16390,6 +16479,10 @@ SgProject::SgProject ( const std::vector<std::string>& argv, bool frontendConsta
 void
 SgProject::initialization()
    {
+  // DQ (4/11/2017): Some implementations of ROSE tools are just calling the SgProject constructor directly, these 
+  // need to call ROSE_INITIALIZE.  Here is a reasonable point to make that call.
+     ROSE_INITIALIZE;
+
   // DQ (10/16/2005): This function initializes default values (until we use an automatically generated version)
 
   // Matzke (12/06/2016): Added missing initializations identified by valgrind and code inspection
@@ -16725,6 +16818,7 @@ SgProject::get_files_with_errors() const
       bool has_errors =
           file->get_javacErrorCode()            != 0 ||
           file->get_frontendErrorCode()         != 0 ||
+          file->get_midendErrorCode()           != 0 ||
           file->get_unparserErrorCode()         != 0 ||
           file->get_backendCompilerErrorCode()  != 0;
       if (has_errors)
@@ -16749,6 +16843,7 @@ SgProject::get_files_without_errors() const
       bool has_no_errors =
           file->get_javacErrorCode()            == 0 &&
           file->get_frontendErrorCode()         == 0 &&
+          file->get_midendErrorCode()         == 0 &&
           file->get_unparserErrorCode()         == 0 &&
           file->get_backendCompilerErrorCode()  == 0;
       if (has_no_errors)
@@ -17719,6 +17814,10 @@ SgUnparse_Info & SgUnparse_Info::operator= ( const SgUnparse_Info & X )
   // DQ (1/10/2014): Added to support token based unparsing.
      p_current_source_file = X.p_current_source_file;
 
+  // DQ (4/28/2017): Added information required for use of generated names in the output of types for template 
+  // arguments as used in symbol table lookup.
+     p_use_generated_name_for_template_arguments = X.p_use_generated_name_for_template_arguments;
+
      return *this;
    }
 
@@ -17828,6 +17927,10 @@ SgUnparse_Info::post_construction_initialization()
 
   // DQ (1/10/2014): Added to support token based unparsing.
      p_current_source_file = NULL;
+
+  // DQ (4/28/2017): Added information required for use of generated names in the output of types for template 
+  // arguments as used in symbol table lookup.
+     p_use_generated_name_for_template_arguments = false;
    }
 
 bool
@@ -18741,6 +18844,7 @@ SgUnparse_Info::display ( const std::string & label ) const
      printf ("p_array_index_list                     = %s \n",(p_array_index_list.is_null() == false) ? p_array_index_list.str() : "EmPtY sTrInG");
      printf ("p_current_namespace                    = %p \n",p_current_namespace);
      printf ("p_outputCodeGenerationFormatDelimiters = %s \n",p_outputCodeGenerationFormatDelimiters ? "true" : "false");
+
      printf ("p_current_function_call                = %p \n",p_current_function_call);
      printf ("p_current_scope                        = %p = %s \n",p_current_scope,p_current_scope != NULL ? p_current_scope->class_name().c_str() : "EmPtY sTrInG");
 
@@ -18754,6 +18858,10 @@ SgUnparse_Info::display ( const std::string & label ) const
 
   // DQ (1/10/2015): Added support for debugging the SgUnparse_Info object.
      printf ("p_current_source_file                  = %p = %s \n",p_current_source_file,p_current_source_file != NULL ? p_current_source_file->class_name().c_str() : "EmPtY sTrInG");
+
+  // DQ (4/28/2017): Added information required for use of generated names in the output of types for template 
+  // arguments as used in symbol table lookup.
+     printf ("p_use_generated_name_for_template_arguments = %s \n",p_use_generated_name_for_template_arguments ? "true" : "false");
    }
 
 string
@@ -20154,11 +20262,7 @@ SgIncidenceDirectedGraph::getSuccessors(const SgGraphNode* node, std::vector <Sg
       SgGraphNode* target = isSgGraphNode(edge->get_to());
       assert(target);
       if (target) {
-	    //if (type_n==RoseBin_support::ToString(SgGraph::cfg)) {
 	       vec.push_back(target);
-            //}
-	    //else 
-	    //   printf("Different edge type \n");
       }
     } else {
       printf("This is not a DirectedGraphEdge.\n");
@@ -20185,7 +20289,6 @@ SgIncidenceDirectedGraph::getPredecessors(const SgGraphNode* node, std::vector <
       SgGraphNode* source = isSgGraphNode(edge->get_from());
       if (source) {
 	//string type_n = getProperty(SgGraph::type, edge);
-	//if (type_n==RoseBin_support::ToString(SgGraph::cfg))
 	  vec.push_back(source);
       }
     }

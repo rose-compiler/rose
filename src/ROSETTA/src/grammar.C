@@ -1163,6 +1163,221 @@ Grammar::buildStringForDataDeclaration ( AstNodeClass & node )
 }
 
 
+// DQ (3/22/2017): Added to support output of "override" keyword to reduce Clang warnings.
+// bool Grammar::generate_override_keyword( string variableNameString )
+bool
+generate_override_keyword( AstNodeClass & node, GrammarString & data )
+   {
+     bool returnResult = true;
+
+     string variableNameString = string(data.variableNameString);
+     string nodeName = node.baseName;
+
+#if 0
+     printf ("In generate_override_keyword(): nodeName = %s variableNameString = %s \n",nodeName.c_str(),variableNameString.c_str());
+#endif
+
+  // Except in the root class for the virtual access function.
+     if ( (nodeName == "XXXPragma"                  && variableNameString == "startOfConstruct")  ||
+          (nodeName == "XXXPragma"                  && variableNameString == "endOfConstruct")    ||
+          (nodeName == "IfStmt"                     && variableNameString == "end_numeric_label") ||
+          (nodeName == "WhileStmt"                  && variableNameString == "end_numeric_label") ||
+          (nodeName == "SwitchStatement"            && variableNameString == "end_numeric_label") ||
+          (nodeName == "FortranDo"                  && variableNameString == "end_numeric_label") ||
+          (nodeName == "ForAllStatement"            && variableNameString == "end_numeric_label") ||
+          (nodeName == "InterfaceStatement"         && variableNameString == "end_numeric_label") ||
+          (nodeName == "DerivedTypeStatement"       && variableNameString == "end_numeric_label") ||
+          (nodeName == "ModuleStatement"            && variableNameString == "end_numeric_label") ||
+          (nodeName == "ProgramHeaderStatement"     && variableNameString == "end_numeric_label") ||
+          (nodeName == "ProcedureHeaderStatement"   && variableNameString == "end_numeric_label") ||
+          (nodeName == "WhereStatement"             && variableNameString == "end_numeric_label") ||
+          (nodeName == "QualifiedName"              && variableNameString == "scope") ||
+          (nodeName == "InitializedName"            && variableNameString == "scope") ||
+          (nodeName == "UntypedFunctionDeclaration" && variableNameString == "scope") ||
+          (nodeName == "UntypedModuleDeclaration"   && variableNameString == "scope") ||
+          (nodeName == "UntypedBlockStatement"      && variableNameString == "scope") ||
+          (nodeName == "UntypedFile"                && variableNameString == "scope") ||
+          (nodeName == "TemplateParameter"          && variableNameString == "type")  ||
+          (nodeName == "TemplateArgument"           && variableNameString == "type")  ||
+          (nodeName == "JavaQualifiedType"          && variableNameString == "type")  ||
+          (nodeName == "UntypedValueExpression"     && variableNameString == "type")  ||
+          (nodeName == "UntypedVariableDeclaration" && variableNameString == "type")  ||
+          (nodeName == "UntypedFunctionDeclaration" && variableNameString == "type")  ||
+          (nodeName == "UntypedInitializedName"     && variableNameString == "type")  ||
+          (nodeName == "EnumDeclaration"            && variableNameString == "type")  ||
+          (nodeName == "TypedefDeclaration"         && variableNameString == "type")  ||
+          (nodeName == "ClassDeclaration"           && variableNameString == "type")  ||
+          (nodeName == "FunctionDeclaration"        && variableNameString == "type")  ||
+          (nodeName == "AsmExpression"              && variableNameString == "type")  ||
+          (nodeName == "AsmGenericSymbol"           && variableNameString == "type")  ||
+          (nodeName == "AsmElfSegmentTableEntry"    && variableNameString == "type")  ||
+          (nodeName == "AsmElfRelocEntry"           && variableNameString == "type")  ||
+          (nodeName == "AsmElfNoteEntry"            && variableNameString == "type")  ||
+          (nodeName == "xxx"                        && variableNameString == "type")  ||
+          (nodeName == "xxx"                        && variableNameString == "type")  ||
+          (nodeName == "xxx"                        && variableNameString == "type")  ||
+          (nodeName == "xxx"                        && variableNameString == "type")  ||
+          (nodeName == "xxx"                        && variableNameString == "type")  ||
+          (nodeName == "xxx"                        && variableNameString == "type")  ||
+          (nodeName == "xxx"                        && variableNameString == "type")  ||
+          (nodeName == "SymbolTable"                && variableNameString == "name")  ||
+          (nodeName == "Attribute"                  && variableNameString == "name")  ||
+          (nodeName == "Directory"                  && variableNameString == "name")  ||
+          (nodeName == "Graph"                      && variableNameString == "name")  ||
+          (nodeName == "GraphNode"                  && variableNameString == "name")  ||
+          (nodeName == "GraphEdge"                  && variableNameString == "name")  ||
+          (nodeName == "TemplateType"               && variableNameString == "name")  ||
+          (nodeName == "TypeDefault"                && variableNameString == "name")  ||
+          (nodeName == "TypeLabel"                  && variableNameString == "name")  ||
+          (nodeName == "InitializedName"            && variableNameString == "name")  ||
+          (nodeName == "JavaMemberValuePair"        && variableNameString == "name")  ||
+          (nodeName == "UntypedReferenceExpression" && variableNameString == "name")  ||
+          (nodeName == "UntypedFunctionDeclaration" && variableNameString == "name")  ||
+          (nodeName == "UntypedInitializedName"     && variableNameString == "name")  ||
+          (nodeName == "EnumDeclaration"            && variableNameString == "name")  ||
+          (nodeName == "TemplateDeclaration"        && variableNameString == "name")  ||
+          (nodeName == "UseStatement"               && variableNameString == "name")  ||
+          (nodeName == "NamespaceDeclarationStatement" && variableNameString == "name")  ||
+          (nodeName == "InterfaceStatement"         && variableNameString == "name")  ||
+          (nodeName == "NamespaceAliasDeclarationStatement" && variableNameString == "name")  ||
+          (nodeName == "TypedefDeclaration"         && variableNameString == "name")  ||
+          (nodeName == "ClassDeclaration"           && variableNameString == "name")  ||
+          (nodeName == "FunctionDeclaration"        && variableNameString == "name")  ||
+          (nodeName == "JavaPackageStatement"       && variableNameString == "name")  ||
+          (nodeName == "InquireStatement"           && variableNameString == "name")  ||
+          (nodeName == "OmpCriticalStatement"       && variableNameString == "name")  ||
+          (nodeName == "EnumVal"                    && variableNameString == "name")  ||
+          (nodeName == "IOItemExpression"           && variableNameString == "name")  ||
+          (nodeName == "AsmOp"                      && variableNameString == "name")  ||
+          (nodeName == "UnknownArrayOrFunctionReference" && variableNameString == "name")  ||
+          (nodeName == "TypeTraitBuiltinOperator"   && variableNameString == "name")  ||
+          (nodeName == "AsmFunction"                && variableNameString == "name")  ||
+          (nodeName == "AsmSynthesizedFieldDeclaration" && variableNameString == "name")  ||
+          (nodeName == "AsmGenericFile"             && variableNameString == "name")  ||
+          (nodeName == "AsmElfSymverNeededAux"      && variableNameString == "name")  ||
+          (nodeName == "AsmPESectionTableEntry"     && variableNameString == "name")  ||
+          (nodeName == "AsmElfSymverDefinedAux"     && variableNameString == "name")  ||
+          (nodeName == "AsmPEExportDirectory"       && variableNameString == "name")  ||
+          (nodeName == "AsmDwarfConstruct"          && variableNameString == "name")  ||
+          (nodeName == "AsmPEImportItem"            && variableNameString == "name")  ||
+          (nodeName == "Aterm"                      && variableNameString == "name")  )
+       {
+         returnResult = false;
+#if 0
+         printf ("Exiting as a test! \n");
+         ROSE_ASSERT(false);
+#endif
+       }
+
+     return returnResult;
+   }
+
+// DQ (3/22/2017): Added to support output of "override" keyword to reduce Clang warnings.
+// bool Grammar::generate_override_keyword( string variableNameString )
+bool
+generate_override_keyword_for_set_functions( AstNodeClass & node, GrammarString & data )
+   {
+     bool returnResult = true;
+
+     string variableNameString = string(data.variableNameString);
+     string nodeName = node.baseName;
+
+#if 0
+     printf ("In generate_override_keyword(): nodeName = %s variableNameString = %s \n",nodeName.c_str(),variableNameString.c_str());
+#endif
+
+  // Except in the root class for the virtual access function.
+     if ( (nodeName == "Pragma"                     && variableNameString == "startOfConstruct")   ||
+          (nodeName == "Pragma"                     && variableNameString == "endOfConstruct")     ||
+          (nodeName == "File"                       && variableNameString == "startOfConstruct")   ||
+          (nodeName == "File"                       && variableNameString == "endOfConstruct")     ||
+          (nodeName == "LocatedNode"                && variableNameString == "startOfConstruct")   ||
+          (nodeName == "LocatedNode"                && variableNameString == "endOfConstruct")     ||
+          (nodeName == "QualifiedName"              && variableNameString == "scope") ||
+          (nodeName == "InitializedName"            && variableNameString == "scope") ||
+          (nodeName == "UntypedFunctionDeclaration" && variableNameString == "scope") ||
+          (nodeName == "UntypedModuleDeclaration"   && variableNameString == "scope") ||
+          (nodeName == "UntypedBlockStatement"      && variableNameString == "scope") ||
+          (nodeName == "UntypedFile"                && variableNameString == "scope") ||
+          (nodeName == "TemplateParameter"          && variableNameString == "type")  ||
+          (nodeName == "TemplateArgument"           && variableNameString == "type")  ||
+          (nodeName == "JavaQualifiedType"          && variableNameString == "type")  ||
+          (nodeName == "UntypedValueExpression"     && variableNameString == "type")  ||
+          (nodeName == "UntypedVariableDeclaration" && variableNameString == "type")  ||
+          (nodeName == "UntypedFunctionDeclaration" && variableNameString == "type")  ||
+          (nodeName == "UntypedInitializedName"     && variableNameString == "type")  ||
+          (nodeName == "EnumDeclaration"            && variableNameString == "type")  ||
+          (nodeName == "TypedefDeclaration"         && variableNameString == "type")  ||
+          (nodeName == "ClassDeclaration"           && variableNameString == "type")  ||
+          (nodeName == "FunctionDeclaration"        && variableNameString == "type")  ||
+          (nodeName == "FunctionTypeSymbol"         && variableNameString == "type")  ||
+          (nodeName == "DefaultSymbol"              && variableNameString == "type")  ||
+          (nodeName == "AsmExpression"              && variableNameString == "type")  ||
+          (nodeName == "AsmGenericSymbol"           && variableNameString == "type")  ||
+          (nodeName == "AsmElfSegmentTableEntry"    && variableNameString == "type")  ||
+          (nodeName == "JavaTypeExpression"         && variableNameString == "type")  ||
+          (nodeName == "TypeExpression"             && variableNameString == "type")  ||
+          (nodeName == "AsmElfRelocEntry"           && variableNameString == "type")  ||
+          (nodeName == "AsmElfNoteEntry"            && variableNameString == "type")  ||
+          (nodeName == "xxx"                        && variableNameString == "type")  ||
+          (nodeName == "xxx"                        && variableNameString == "type")  ||
+          (nodeName == "xxx"                        && variableNameString == "type")  ||
+          (nodeName == "xxx"                        && variableNameString == "type")  ||
+          (nodeName == "xxx"                        && variableNameString == "type")  ||
+          (nodeName == "SymbolTable"                && variableNameString == "name")  ||
+          (nodeName == "Attribute"                  && variableNameString == "name")  ||
+          (nodeName == "Directory"                  && variableNameString == "name")  ||
+          (nodeName == "Graph"                      && variableNameString == "name")  ||
+          (nodeName == "GraphNode"                  && variableNameString == "name")  ||
+          (nodeName == "GraphEdge"                  && variableNameString == "name")  ||
+          (nodeName == "TemplateType"               && variableNameString == "name")  ||
+          (nodeName == "TypeDefault"                && variableNameString == "name")  ||
+          (nodeName == "TypeLabel"                  && variableNameString == "name")  ||
+          (nodeName == "InitializedName"            && variableNameString == "name")  ||
+          (nodeName == "JavaMemberValuePair"        && variableNameString == "name")  ||
+          (nodeName == "UntypedReferenceExpression" && variableNameString == "name")  ||
+          (nodeName == "UntypedFunctionDeclaration" && variableNameString == "name")  ||
+          (nodeName == "UntypedInitializedName"     && variableNameString == "name")  ||
+          (nodeName == "EnumDeclaration"            && variableNameString == "name")  ||
+          (nodeName == "TemplateDeclaration"        && variableNameString == "name")  ||
+          (nodeName == "UseStatement"               && variableNameString == "name")  ||
+          (nodeName == "NamespaceDeclarationStatement" && variableNameString == "name")  ||
+          (nodeName == "InterfaceStatement"         && variableNameString == "name")  ||
+          (nodeName == "NamespaceAliasDeclarationStatement" && variableNameString == "name")  ||
+          (nodeName == "TypedefDeclaration"         && variableNameString == "name")  ||
+          (nodeName == "ClassDeclaration"           && variableNameString == "name")  ||
+          (nodeName == "FunctionDeclaration"        && variableNameString == "name")  ||
+          (nodeName == "JavaPackageStatement"       && variableNameString == "name")  ||
+          (nodeName == "InquireStatement"           && variableNameString == "name")  ||
+          (nodeName == "OmpCriticalStatement"       && variableNameString == "name")  ||
+          (nodeName == "EnumVal"                    && variableNameString == "name")  ||
+          (nodeName == "IOItemExpression"           && variableNameString == "name")  ||
+          (nodeName == "AsmOp"                      && variableNameString == "name")  ||
+          (nodeName == "UnknownArrayOrFunctionReference" && variableNameString == "name")  ||
+          (nodeName == "TypeTraitBuiltinOperator"   && variableNameString == "name")  ||
+          (nodeName == "FunctionTypeSymbol"         && variableNameString == "name")  ||
+          (nodeName == "AsmFunction"                && variableNameString == "name")  ||
+          (nodeName == "AsmSynthesizedFieldDeclaration" && variableNameString == "name")  ||
+          (nodeName == "AsmGenericFile"             && variableNameString == "name")  ||
+          (nodeName == "AsmElfSymverNeededAux"      && variableNameString == "name")  ||
+          (nodeName == "AsmPESectionTableEntry"     && variableNameString == "name")  ||
+          (nodeName == "AsmElfSymverDefinedAux"     && variableNameString == "name")  ||
+          (nodeName == "AsmPEExportDirectory"       && variableNameString == "name")  ||
+          (nodeName == "AsmDwarfConstruct"          && variableNameString == "name")  ||
+          (nodeName == "AsmPEImportItem"            && variableNameString == "name")  ||
+          (nodeName == "Aterm"                      && variableNameString == "name")  )
+       {
+         returnResult = false;
+#if 0
+         printf ("Exiting as a test! \n");
+         ROSE_ASSERT(false);
+#endif
+       }
+
+     return returnResult;
+   }
+
+
 StringUtility::FileWithLineNumbers
 Grammar::buildStringForDataAccessFunctionDeclaration ( AstNodeClass & node )
    {
@@ -1187,7 +1402,47 @@ Grammar::buildStringForDataAccessFunctionDeclaration ( AstNodeClass & node )
           dataMemberIterator++ )
         {
           GrammarString & data = **dataMemberIterator;
-          StringUtility::FileWithLineNumbers tempString(1, StringUtility::StringWithLineNumber(data.getDataAccessFunctionPrototypeString(), "" /* "<getDataAccessFunctionPrototypeString>" */, 1));
+
+          string codeString = data.getDataAccessFunctionPrototypeString();
+#if 0
+          printf ("codeString = %s \n",codeString.c_str());
+#endif
+       // DQ (3/22/2017): Do the edits for the data member access function protytypes to add "override" keyword.
+          bool use_override_keyword = generate_override_keyword(node,data);
+#if 0
+          printf ("In Grammar::buildStringForDataAccessFunctionDeclaration(): use_override_keyword = %s \n",use_override_keyword ? "true" : "false");
+#endif
+          if (use_override_keyword == false)
+             {
+               codeString = GrammarString::copyEdit(codeString, " $ROSE_OVERRIDE_GET", "");
+#if 0
+               printf ("Modified (get) codeString = %s \n",codeString.c_str());
+#endif
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+
+          bool use_override_keyword_for_set_functions = generate_override_keyword_for_set_functions(node,data);
+          if (use_override_keyword_for_set_functions == false)
+             {
+               codeString = GrammarString::copyEdit(codeString, " $ROSE_OVERRIDE_SET", "");
+#if 0
+               printf ("Modified (set) codeString = %s \n",codeString.c_str());
+#endif
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+
+       // And surviving references to $ROSE_OVERRIDE_GET and $ROSE_OVERRIDE_SET should be edited to be ROSE_OVERRIDE.
+          codeString = GrammarString::copyEdit(codeString, " $ROSE_OVERRIDE_GET", " ROSE_OVERRIDE");
+          codeString = GrammarString::copyEdit(codeString, " $ROSE_OVERRIDE_SET", " ROSE_OVERRIDE");
+
+       // StringUtility::FileWithLineNumbers tempString(1, StringUtility::StringWithLineNumber(data.getDataAccessFunctionPrototypeString(), "" /* "<getDataAccessFunctionPrototypeString>" */, 1));
+          StringUtility::FileWithLineNumbers tempString(1, StringUtility::StringWithLineNumber(codeString, "" /* "<getDataAccessFunctionPrototypeString>" */, 1));
           returnString += tempString;
         }
 
@@ -1365,7 +1620,21 @@ Grammar::buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( AstNodeClas
   //    2) Constructor prototype (e.g. "$CLASSNAME ( data = 0, $Data* someSageData = NULL );" )
      StringUtility::FileWithLineNumbers dataAccessFunctionPrototypeString = buildStringForDataAccessFunctionDeclaration(node);
 
-  // printf ("dataAccessFunctionPrototypeString = \n%s\n",dataAccessFunctionPrototypeString.c_str());
+     if (node.baseName == "IfStmt")
+        {
+          printf ("In buildMemberAccessFunctionPrototypesAndConstuctorPrototype(): node.name = %s \n",node.name.c_str());
+#if 0
+          for (size_t i = 0; i < dataAccessFunctionPrototypeString.size(); i++)
+             {
+               printf ("In buildMemberAccessFunctionPrototypesAndConstuctorPrototype(): dataAccessFunctionPrototypeString[%zu] = \n%s\n",i,dataAccessFunctionPrototypeString[i].toString().c_str());
+             }
+#endif
+
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
 
      string className = node.getName();
 
@@ -1907,6 +2176,20 @@ Grammar::buildHeaderFiles( AstNodeClass & node, StringUtility::FileWithLineNumbe
 
      StringUtility::FileWithLineNumbers postdeclarationString(1, StringUtility::StringWithLineNumber(node.getPostdeclarationString(), "" /* "<getPostdeclarationString " + node.getToken().getName() + ">" */, 1));
      editedHeaderFileString = GrammarString::copyEdit (editedHeaderFileString,"$POSTDECLARATIONS",postdeclarationString);     
+
+#if 0
+     printf ("In Grammar::buildHeaderFiles(): className = %s \n",className.c_str());
+#endif
+
+  // DQ (3/21/2017): Modify code generation to eliminate Clang C++11 override warning.
+     if (className == "SgNode")
+        {
+          editedHeaderFileString = GrammarString::copyEdit(editedHeaderFileString, " $ROSE_OVERRIDE", "");
+        }
+       else
+        {
+          editedHeaderFileString = GrammarString::copyEdit(editedHeaderFileString, " $ROSE_OVERRIDE", " ROSE_OVERRIDE");
+        }
 
      editedHeaderFileString = editSubstitution (node,editedHeaderFileString);
 
@@ -3720,6 +4003,7 @@ Grammar::GrammarNodeInfo Grammar::getGrammarNodeInfo(AstNodeClass* grammarnode) 
         ||nodeName == "SgOmpTaskStatement"
         ||nodeName == "SgOmpForStatement"
         ||nodeName == "SgOmpDoStatement"
+        ||nodeName == "SgOmpAtomicStatement"
         ||nodeName == "SgExprListExp");
   }
   return info;
@@ -4018,6 +4302,7 @@ Grammar::buildTreeTraversalFunctions(AstNodeClass& node, StringUtility::FileWith
                  ||string(node.getName()) == "SgOmpTargetDataStatement"
                  ||string(node.getName()) == "SgOmpForStatement"
                  ||string(node.getName()) == "SgOmpDoStatement"
+                 ||string(node.getName()) == "SgOmpAtomicStatement"
                  )
                   {
                     outputFile << "if (idx == 0) return p_body;\n"
@@ -4124,6 +4409,7 @@ Grammar::buildTreeTraversalFunctions(AstNodeClass& node, StringUtility::FileWith
                  ||string(node.getName()) == "SgOmpTargetDataStatement"
                  ||string(node.getName()) == "SgOmpForStatement"
                  ||string(node.getName()) == "SgOmpDoStatement"
+                 ||string(node.getName()) == "SgOmpAtomicStatement"
                  )
                   {
                      outputFile << "if (child == p_body) return 0;\n"

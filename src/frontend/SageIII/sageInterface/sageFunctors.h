@@ -84,7 +84,9 @@ namespace sg
   struct InitNameCloner
   {
       InitNameCloner(SgDeclarationStatement& declaration, SgScopeStatement* enclosing_scope = 0)
-      : decl(declaration), scope(enclosing_scope)
+   // DQ (3/25/2017): Remove to avoid Clang warning about unused private variable.
+   // : decl(declaration), 
+      : scope(enclosing_scope)
       {}
 
       SgInitializedName* operator()(const SgInitializedName* orig) const
@@ -98,7 +100,8 @@ namespace sg
       }
 
     private:
-      SgDeclarationStatement& decl;
+   // DQ (3/25/2017): Remove to avoid Clang warning about unused private variable.
+   // SgDeclarationStatement& decl;
       SgScopeStatement*       scope;
   };
 

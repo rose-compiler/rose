@@ -1,0 +1,3 @@
+Found a nodal accumulation lambda function at line:51
+	 The first accumulation statement is at line:57
+	 This labmda function is used as a function parameter in a RAJA function is at line:64

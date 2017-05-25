@@ -743,7 +743,8 @@ Grammar::setUpTypes ()
      JavaUnionType.setFunctionPrototype ("HEADER_JAVA_UNION_TYPE", "../Grammar/Type.code" );
      JavaUnionType.setDataPrototype     ("SgTypePtrList","type_list","",
                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     JavaUnionType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
+  // DQ (3/22/2017): This is reserved for virtual function specification.
+  // JavaUnionType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
 
      JavaParameterType.setFunctionPrototype ("HEADER_JAVA_PARAMETER_TYPE", "../Grammar/Type.code" );
      JavaParameterType.setFunctionPrototype ("HEADER_GET_QUALIFIED_NAME", "../Grammar/Type.code" );
@@ -893,7 +894,12 @@ Grammar::setUpTypes ()
 
      PartialFunctionType.setFunctionPrototype ("HEADER_PARTIAL_FUNCTION_TYPE", "../Grammar/Type.code" );
 
-     ArrayType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
+
+  // DQ (3/22/2017): I think it is a mistake to include this this way. This is for the virtual 
+  // function support and it is not a virtual function in SgArrayType.
+  // ArrayType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
+     ArrayType.setFunctionPrototype ("HEADER_ARRAY_TYPE", "../Grammar/Type.code" );
+
      ArrayType.setFunctionPrototype ("HEADER_GET_QUALIFIED_NAME", "../Grammar/Type.code" );
 
      ArrayType.setDataPrototype ("SgType*"      , "base_type", "= NULL",
