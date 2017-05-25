@@ -6151,6 +6151,20 @@ SgOmpInbranchClause* SgOmpInbranchClause::build_node_from_nonlist_children ( Sg_
       return returnNode;
 }
 
+// Rasmussen (05/25/2017): not actually generated but should be
+// Generated static function for building IR nodes for Aterm support (like a constructor).
+SgOmpSimdlenClause* SgOmpSimdlenClause::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgExpression* expr )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgOmpSimdlenClause::build_node_from_nonlist_children (Sg_File_Info*, SgExpression*): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgOmpSimdlenClause* returnNode = NULL;
+
+     return returnNode;
+   }
+
 /* #line 5976 "../../../src/frontend/SageIII//Cxx_GrammarAtermNodeBuildFunctions.C" */
 
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
