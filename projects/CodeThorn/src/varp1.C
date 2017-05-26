@@ -30,6 +30,10 @@ int main (int argc, char* argv[])
   rose::global_options.set_frontend_warnings(false);
   rose::global_options.set_backend_warnings(false);
 
+  int readTransformations=0;
+  int writeTransformations=0;
+  int statementTransformations=0;
+
   vector<string> argvList(argv, argv+argc);
   argvList.push_back("-rose:skipfinalCompileStep");
   // Build the AST used by ROSE
@@ -57,6 +61,7 @@ int main (int argc, char* argv[])
   // print result in readable form for demo purposes
   std::cout << "Number of matched patterns with bound variables: " << r.size() << std::endl;
   for(MatchResult::iterator i=r.begin();i!=r.end();++i) {
+    statementTransformations++;
     std::cout << "---------------------------------------------------------"<<endl;
     std::cout << "MATCH-LHS: \n"; 
     //SgNode* n=(*i)["X"];
@@ -66,6 +71,7 @@ int main (int argc, char* argv[])
     }
     string oldCode0=(*i)["$Root"]->unparseToString();
     if((*i)["$LHS"]) {
+      writeTransformations++;
       SgNode* workLhs=(*i)["$WORK"];
       if(workLhs) {
         cout<< "WORK:"<<workLhs<<" : "<<workLhs->unparseToString()<<endl;
@@ -87,6 +93,7 @@ int main (int argc, char* argv[])
       cout<<"RHS-MATCHING ROOT2: "<<root2->unparseToString()<<endl;
       MatchResult rRHS=mRHS.performMatching(matchexpressionRHSAccess,root2);
       for(MatchResult::iterator j=rRHS.begin();j!=rRHS.end();++j) {
+        readTransformations++;
         std::cout << "MATCH-RHS: \n"; 
         cout<< "RHS-PATTERN:"<<(*j)["$RHSPattern"]<<" : "<</*(*j)["RHSPattern"]->unparseToString()<<*/endl;
         //cout<< "RHS-WORK:"<<(*j)["$WORK"]<<" : "<<(*j)["$WORK"]->unparseToString()<<endl;
@@ -146,7 +153,13 @@ int main (int argc, char* argv[])
   }
   m.printMarkedLocations();
   m.printMatchOperationsSequence();
-
+  
+  cout<<"Transformation statistics:"<<endl;
+  cout<<"Number of statement transformations: "<<statementTransformations<<endl;
+  cout<<"Number of read access transformations: "<<readTransformations<<endl;
+  cout<<"Number of write access transformations: "<<writeTransformations<<endl;
+  int totalTransformations=readTransformations+writeTransformations;
+  cout<<"Total number of transformations: "<<totalTransformations<<endl;
   write_file("astterm.txt",AstTerm::astTermToMultiLineString(root,2));
   write_file("astterm.dot",AstTerm::astTermWithNullValuesToDot(root));
   backend(sageProject);
