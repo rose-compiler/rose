@@ -80,7 +80,14 @@ CommandlineProcessing::createEmptyParser(const std::string &purpose, const std::
     if (!description.empty())
         parser.doc("Description", description);
     parser.chapter(1, "ROSE Command-line Tools");
-    parser.version(std::string(ROSE_SCM_VERSION_ID).substr(0, 8), ROSE_CONFIGURE_DATE);
+#if defined(ROSE_PACKAGE_VERSION)
+    std::string v = ROSE_PACKAGE_VERSION;
+#elif defined(PACKAGE_VERSION)
+    std::string v = PACKAGE_VERSION;
+#else
+    std::string v = std::string(ROSE_SCM_VERSION_ID).substr(0, 8);
+#endif
+    parser.version(v, ROSE_CONFIGURE_DATE);
     parser.groupNameSeparator(":");                     // ROSE's style is "--rose:help" rather than "--rose-help"
     return parser;
 }
