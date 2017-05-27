@@ -748,15 +748,19 @@ aligned_clause : ALIGNED {
                   '(' reduction_operator ':' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list =false;}
                 ;
 
-linear_clause : LINEAR { 
+linear_clause :  LINEAR { 
                          ompattribute->addClause(e_linear);
                          omptype = e_linear; 
-                       }
-                       '(' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list =false;}
-                | LINEAR
-                  { ompattribute->addClause(e_reduction);}
-                  '(' reduction_operator ':' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list =false;}
+                        }
+                       '(' {b_within_variable_list = true;} variable_list {b_within_variable_list =false;}  linear_clause_step_optseq ')'
                 ;
+
+linear_clause_step_optseq: /* empty */
+                        | linear_clause_step
+                        ;
+
+linear_clause_step: ':' expression {addExpression(""); } 
+
 /* parsing real expressions here, Liao, 10/12/2008
    */       
 /* expression: { omp_parse_expr(); } EXPRESSION { if (!addExpression((const char*)$2)) YYABORT; }
