@@ -104,8 +104,8 @@ Grammar::setUpNodes ()
      NEW_TERMINAL_MACRO (OmpAlignedClause, "OmpAlignedClause", "OmpAlignedClauseTag" );
 
      NEW_NONTERMINAL_MACRO (OmpVariablesClause, OmpCopyprivateClause| OmpPrivateClause |OmpFirstprivateClause|
-         OmpSharedClause |OmpCopyinClause| OmpLastprivateClause| OmpReductionClause | OmpMapClause | OmpLinearClause |
-         OmpUniformClause | OmpAlignedClause,
+         OmpSharedClause |OmpCopyinClause| OmpLastprivateClause| OmpReductionClause | OmpMapClause | 
+         OmpUniformClause | OmpAlignedClause | OmpLinearClause ,
          "OmpVariablesClause", "OmpVariablesClauseTag", false);
 
      NEW_TERMINAL_MACRO (OmpScheduleClause, "OmpScheduleClause", "OmpScheduleClauseTag" );
@@ -1219,8 +1219,14 @@ Grammar::setUpNodes ()
      // clauses with variable lists 
      // Liao 9/27/2010, per user's report, modeling the variable reference use SgVarRefExp
      //OmpVariablesClause.setDataPrototype ( "SgInitializedNamePtrList", "variables", "",
-     OmpVariablesClause.setDataPrototype ( "SgVarRefExpPtrList", "variables", "",
-                         NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     //OmpVariablesClause.setDataPrototype ( "SgVarRefExpPtrList", "variables", "",
+     //                    NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     // Using a SgNode for variable list, avoiding mixed container + simple member
+     OmpVariablesClause.setDataPrototype ( "SgExprListExp*", "variables", "= NULL",
+                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
+     // linear (varlist[:step])
+     OmpLinearClause.setDataPrototype ( "SgExpression*", "step", "= NULL",
+                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
 
       // default (private | firstprivate | shared | none)
      OmpDefaultClause.setDataPrototype("SgOmpClause::omp_default_option_enum", "data_sharing", "=e_omp_default_unknown",
