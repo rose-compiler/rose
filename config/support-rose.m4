@@ -1947,9 +1947,6 @@ projects/OpenMP_Translator/tests/npb2.3-omp-c/LU/Makefile
 projects/OpenMP_Translator/tests/npb2.3-omp-c/MG/Makefile
 projects/OpenMP_Translator/tests/npb2.3-omp-c/Makefile
 projects/OpenMP_Translator/tests/npb2.3-omp-c/SP/Makefile
-projects/PolyOpt2/Makefile
-projects/PolyOpt2/polyopt/Makefile
-projects/PolyOpt2/src/Makefile
 projects/PolyhedralModel/Makefile
 projects/PolyhedralModel/docs/Makefile
 projects/PolyhedralModel/projects/Makefile
