@@ -1,4 +1,10 @@
 2017-05-29  Louis-Noel Pouchet  <pouchet@colostate.edu>
+
+	* bootstrap.sh: Add.
+	* pocc-installer.sh: update to fetch PoCC-1.4
+	* tests/unitary/assigniter.passthru.c: delete trailing space.
+
+2017-05-29  Louis-Noel Pouchet  <pouchet@colostate.edu>
 	Check-in the lastest version of PolyOpt, with patches.
 	Enable new options:
 	--polyopt-scop-pragmas-only: only process regions starting w/ #pragma scop

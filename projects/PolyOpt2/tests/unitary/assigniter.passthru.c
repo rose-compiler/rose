@@ -8,8 +8,8 @@ int main()
   
 #pragma scop
 {
-    int c1;
     int c3;
+    int c1;
     if (N >= 1) {
       for (c1 = 0; c1 <= N + -1; c1++) {{
           for (c3 = 0; c3 <= N + -1; c3++) {{
