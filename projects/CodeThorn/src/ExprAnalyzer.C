@@ -162,7 +162,7 @@ void SingleEvalResultConstInt::init(EState estate, ConstraintSet exprConstraints
 #define CASE_EXPR_ANALYZER_EVAL_UNARY_OP(ROSENODENAME,EVALFUNCTIONNAME) case V_ ## ROSENODENAME: resultList.splice(resultList.end(),EVALFUNCTIONNAME(is ## ROSENODENAME(node),operandResult,estate,useConstraints));break
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState estate, bool useConstraints) {
-  assert(estate.pstate()); // ensure state exists
+  ROSE_ASSERT(estate.pstate()); // ensure state exists
   // initialize with default values from argument(s)
   SingleEvalResultConstInt res;
   res.estate=estate;
@@ -213,7 +213,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
           CASE_EXPR_ANALYZER_EVAL(SgRshiftOp,evalBitwiseShiftRightOp);
 
         default:
-            cerr << "Binary Op:"<<SgNodeHelper::nodeToString(node)<<"(nodetype:"<<node->class_name()<<")"<<endl;
+          cerr << "Binary Op:"<<SgNodeHelper::nodeToString(node)<<"(nodetype:"<<node->class_name()<<")"<<endl;
           throw CodeThorn::Exception("Error: evalConstInt::unkown binary operation.");
         }
       }
@@ -338,7 +338,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalEqualOp(SgEqualityOp* node,
         tmpres2.result=false;
         resultList.push_back(tmpres1);
         resultList.push_back(tmpres2);
-        goto done;
+        return resultList;
       }
     }
     if(lhsResult.isConstInt() && variable(rhs,varId)) {
@@ -352,9 +352,9 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalEqualOp(SgEqualityOp* node,
         tmpres2.result=false;
         resultList.push_back(tmpres1);
         resultList.push_back(tmpres2);
+        return resultList;
       }
     }
-  done:;
   }
   resultList.push_back(res);
   return resultList;
@@ -385,7 +385,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalNotEqualOp(SgNotEqualOp* node,
         tmpres2.result=false;
         resultList.push_back(tmpres1);
         resultList.push_back(tmpres2);
-        goto done;
+        return resultList;
       }
     }
     if(lhsResult.isConstInt() && variable(rhs,varId)) {
@@ -399,9 +399,9 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalNotEqualOp(SgNotEqualOp* node,
         tmpres2.result=false;
         resultList.push_back(tmpres1);
         resultList.push_back(tmpres2);
+        return resultList;
       }
     }
-  done:;
   }
   resultList.push_back(res);
   return resultList;
@@ -706,7 +706,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
         arrayPtrValue=AbstractValue::createAddressOfArray(arrayVarId);
       } else if(_variableIdMapping->hasPointerType(arrayVarId)) {
         // in case it is a pointer retrieve pointer value
-        //cout<<"DEBUG: pointer-array access!"<<endl;
+        //cout<<"DEBUG: pointer-array access."<<endl;
         if(pstate->varExists(arrayVarId)) {
           arrayPtrValue=pstate2.readFromMemoryLocation(arrayVarId); // pointer value (without index)
           ROSE_ASSERT(arrayPtrValue.isTop()||arrayPtrValue.isBot()||arrayPtrValue.isPtr());
@@ -1044,18 +1044,21 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMemCpy(SgFunctionCa
     }
     if(!errorDetected) {
       // no error occured. Copy region.
-      cout<<"DEBUG: copy region now. "<<endl;
+      //cout<<"DEBUG: copy region now. "<<endl;
       for(int i=0;i<copyRegionSize;i++) {
         AbstractValue index(i);
         AbstractValue targetPtr=memcpyArgs[0]+index;
         AbstractValue sourcePtr=memcpyArgs[1]+index;
         cout<<"DEBUG: copying "<<targetPtr.toString(_variableIdMapping)<<" from "<<sourcePtr.toString(_variableIdMapping)<<endl;
+        //TODO: cpymem
+        //newPState=*estate.pstate();
+        //newPState.writeToMemoryLocation(targetPtr,newPState.readFromMemoryLocation(sourcePtr));
       }
     }
     return listify(res);
   } else {
-    // this will become an error in future
-    cerr<<"WARNING: unknown memcpy function (number of arguments != 3)"<<funCall->unparseToString()<<endl;
+    cerr<<"Error: unknown memcpy function (number of arguments != 3)"<<funCall->unparseToString()<<endl;
+    exit(1);
   }
   return listify(res);
 }

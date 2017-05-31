@@ -497,7 +497,7 @@ EState Analyzer::createEState(Label label, PState pstate, ConstraintSet cset) {
     //pstate.topifyState();
 #endif
     // set cset in general to empty cset, otherwise cset can grow again arbitrarily
-    ConstraintSet cset0; // xxx2
+    ConstraintSet cset0;
     cset=cset0;
   }
   const PState* newPStatePtr=processNewOrExisting(pstate);
@@ -3480,7 +3480,6 @@ list<EState> Analyzer::transferTrueFalseEdge(SgNode* nextNodeToAnalyze2, Edge ed
   PState newPState;
   ConstraintSet newCSet;
   list<SingleEvalResultConstInt> evalResultList=exprAnalyzer.evalConstInt(nextNodeToAnalyze2,currentEState,true);
-  //assert(evalResultList.size()==1);
   list<EState> newEStateList;
   for(list<SingleEvalResultConstInt>::iterator i=evalResultList.begin();
       i!=evalResultList.end();
@@ -3497,8 +3496,12 @@ list<EState> Analyzer::transferTrueFalseEdge(SgNode* nextNodeToAnalyze2, Edge ed
         ConstraintSet s1=*evalResult.estate.constraints();
         ConstraintSet s2=evalResult.exprConstraints;
         newCSet=s1+s2;
+      } else {
+        logger[ERROR]<<"Expected true/false edge. Found edge:"<<edge.toString()<<endl;
+        exit(1);
       }
-      newEStateList.push_back(createEState(newLabel,newPState,newCSet));
+      EState estate=createEState(newLabel,newPState,newCSet);
+      newEStateList.push_back(estate);
     } else {
       // we determined not to be on an execution path, therefore do nothing (do not add any result to resultlist)
     }
