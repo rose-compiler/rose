@@ -55,7 +55,7 @@ int PolyOptOptimizeSubTree(SgNode* root, PolyRoseOptions& polyoptions);
  *
  */
 std::vector<std::pair<SgNode*,scoplib_scop_p> >
-PolyOptRecognizeScopsSubTree(SgNode* root, PolyRoseOptions& polyoptions)
+PolyOptRecognizeScopsSubTree(SgNode* root, PolyRoseOptions& polyoptions);
 
 
 /**
@@ -64,7 +64,7 @@ PolyOptRecognizeScopsSubTree(SgNode* root, PolyRoseOptions& polyoptions)
  *
  */
 PolyOptISLRepresentation
-PolyOptConvertScopToISL(scoplib_scop_p scop)
+PolyOptConvertScopToISL(scoplib_scop_p scop);
 
 
 
