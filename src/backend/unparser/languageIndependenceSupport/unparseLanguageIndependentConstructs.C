@@ -6583,13 +6583,13 @@ void UnparseLanguageIndependentConstructs::unparseOmpVariablesClause(SgOmpClause
   }  
 
   //unparse variable list then
-  SgVarRefExpPtrList::iterator p = c->get_variables().begin();
-  while ( p != c->get_variables().end() )
+  SgExpressionPtrList::iterator p = c->get_variables()->get_expressions().begin();
+  while ( p != c->get_variables()->get_expressions().end() )
   {
-    SgInitializedName* init_name = (*p)->get_symbol()->get_declaration();           
+    SgInitializedName* init_name = isSgVarRefExp(*p)->get_symbol()->get_declaration();           
     SgName tmp_name  = init_name->get_name();
     curprint( tmp_name.str());
-    SgVariableSymbol * sym  = (*p)->get_symbol();
+    SgVariableSymbol * sym  = isSgVarRefExp(*p)->get_symbol();
     ROSE_ASSERT (sym != NULL);
     if (is_map)
     {
@@ -6628,12 +6628,19 @@ void UnparseLanguageIndependentConstructs::unparseOmpVariablesClause(SgOmpClause
     p++;
 
     // Check if this is the last argument (output a "," separator if not)
-    if (p != c->get_variables().end())
+    if (p != c->get_variables()->get_expressions().end())
     {
       curprint( ",");
     }
   }
 
+  // optional :step  for linear(list:step)
+  if (isSgOmpLinearClause(c) && isSgOmpLinearClause(c)->get_step())
+  {
+    curprint(string(":"));
+    unparseExpression(isSgOmpLinearClause(c)->get_step(), info);
+  }
+ 
   curprint(string(")"));
 }
 
@@ -6669,6 +6676,14 @@ void UnparseLanguageIndependentConstructs::unparseOmpExpressionClause(SgOmpClaus
   {
     cerr<<"Error: missing expression within unparseOmpExpressionClause():"<< clause->class_name()<<endl;
     ROSE_ASSERT(false);
+  }
+
+  SgOmpLinearClause* lc = isSgOmpLinearClause(clause);
+  if (lc && lc->get_step())
+  {
+    // unparse the expression
+    curprint(string(":"));
+    unparseExpression(lc->get_step(), info);
   }
 
   curprint(string(")"));
@@ -6756,15 +6771,14 @@ void UnparseLanguageIndependentConstructs::unparseOmpClause(SgOmpClause* clause,
     case V_SgOmpReductionClause:
     case V_SgOmpMapClause:
     case V_SgOmpSharedClause:
-    case V_SgOmpLinearClause:
     case V_SgOmpUniformClause:
     case V_SgOmpAlignedClause:
+    case V_SgOmpLinearClause: 
       {     
         unparseOmpVariablesClause(isSgOmpVariablesClause(clause), info);
         break;
       }     
-
-    default:
+   default:
       {
         cerr<<"Unhandled OpenMP clause type in UnparseLanguageIndependentConstructs::unparseOmpClause():"<<clause->class_name()<<endl;
         ROSE_ASSERT(false);

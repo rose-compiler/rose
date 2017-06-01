@@ -23,17 +23,17 @@ void foo3 (int n, double *a, double* b)
   }
 }
 
-#if 0
 void foo32 (int n, double *a, double* b)
 {
-  int j=0;
-#pragma omp simd simdlen(16) linear(j)
-  for (int i=0; i<n; i++,j++)
+  int j=0, k=0;
+#pragma omp simd linear(j,k:1)
+  for (int i=0; i<n; i++,j++,k++)
   {
-    a[i]=b[i]+j;
+    a[i]=b[i]+j+k;
   }
 }
 
+#if 0
 
 #define N 45
 int a[N], b[N], c[N];

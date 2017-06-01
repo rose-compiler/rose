@@ -835,7 +835,7 @@ namespace OmpSupport
       //target->get_variables().push_back(iname);
       // Liao 1/27/2010, fix the empty parent pointer of the SgVarRefExp here
       SgVarRefExp * var_ref = buildVarRefExp(iname);
-      target->get_variables().push_back(var_ref);
+      target->get_variables()->get_expressions().push_back(var_ref);
       var_ref->set_parent(target);
     }
   }
@@ -847,10 +847,10 @@ namespace OmpSupport
     if (!att->hasReductionOperator(reduction_op))
       return NULL;
     SgOmpClause::omp_reduction_operator_enum  sg_op = toSgOmpClauseReductionOperator(reduction_op); 
-    SgOmpReductionClause* result = new SgOmpReductionClause(sg_op);
-    setOneSourcePositionForTransformation(result);
+    SgOmpReductionClause* result = new SgOmpReductionClause(buildExprListExp(), sg_op);
     ROSE_ASSERT(result != NULL);
-
+    setOneSourcePositionForTransformation(result);
+    
     // build variable list
     setClauseVariableList(result, att, reduction_op); 
     return result;
@@ -866,7 +866,7 @@ namespace OmpSupport
     if (!att->hasMapVariant(map_op))
       return NULL;
     SgOmpClause::omp_map_operator_enum  sg_op = toSgOmpClauseMapOperator(map_op); 
-    SgOmpMapClause* result = new SgOmpMapClause(sg_op);
+    SgOmpMapClause* result = new SgOmpMapClause(buildExprListExp(), sg_op);
     setOneSourcePositionForTransformation(result);
     ROSE_ASSERT(result != NULL);
 
@@ -916,7 +916,6 @@ namespace OmpSupport
     return result;
   }
 
-
   //Build one of the clauses with a variable list
   SgOmpVariablesClause * buildOmpVariableClause(OmpAttribute* att, omp_construct_enum clause_type)
   {
@@ -928,32 +927,37 @@ namespace OmpSupport
     {
       case e_copyin:
         {
-          result = new SgOmpCopyinClause();
+          result = new SgOmpCopyinClause(buildExprListExp());
           break;
         }
       case e_copyprivate:
         {
-          result = new SgOmpCopyprivateClause();
+          result = new SgOmpCopyprivateClause(buildExprListExp());
           break;
         }
       case e_firstprivate:
         {
-          result = new SgOmpFirstprivateClause();
+          result = new SgOmpFirstprivateClause(buildExprListExp());
           break;
         }
       case e_lastprivate:
         {
-          result = new SgOmpLastprivateClause();
+          result = new SgOmpLastprivateClause(buildExprListExp());
           break;
         }
       case e_private:
         {
-          result = new SgOmpPrivateClause();
+          result = new SgOmpPrivateClause(buildExprListExp());
           break;
         }
       case e_shared:
         {
-          result = new SgOmpSharedClause();
+          result = new SgOmpSharedClause(buildExprListExp());
+          break;
+        }
+     case e_linear:
+        {
+          result = new SgOmpLinearClause(buildExprListExp(), NULL);
           break;
         }
       case e_reduction:
@@ -1046,11 +1050,12 @@ namespace OmpSupport
       case e_lastprivate:
       case e_private:
       case e_shared:
+      case e_linear:
         {
           result = buildOmpVariableClause(att, c_clause_type);
           break;
         }
-      case e_reduction:
+     case e_reduction:
         {
           printf("error: buildOmpNonReductionClause() does not handle reduction. Please use buildOmpReductionClause().\n");
           ROSE_ASSERT(false);
