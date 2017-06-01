@@ -13,7 +13,7 @@
 #include "BoolLattice.h"
 #include "VariableIdMapping.h"
 #include <cstdint>
-#include "TypeSizeMapping.h"
+#include "SgTypeSizeMapping.h"
 
 using std::string;
 using std::istream;
@@ -57,8 +57,8 @@ class AbstractValue {
   AbstractValue(long long int x);
   AbstractValue(unsigned long long int x);
   AbstractValue(SPRAY::VariableId varId); // allows implicit type conversion
-  AbstractValue createIntegerValue(CodeThorn::BuiltInType btype, long long int ival, TypeSizeMapping* tsm);
-  void setValueSize(CodeThorn::BuiltInType btype, TypeSizeMapping* tsm);
+  AbstractValue createIntegerValue(CodeThorn::BuiltInType btype, long long int ival, SgTypeSizeMapping* tsm);
+  void setValueSize(CodeThorn::BuiltInType btype, SgTypeSizeMapping* tsm);
   bool isTop() const;
   bool isTrue() const;
   bool isFalse() const;

@@ -45,7 +45,7 @@ AbstractValue::AbstractValue(bool val) {
   }
 }
 
-void AbstractValue::setValueSize(CodeThorn::BuiltInType btype, TypeSizeMapping* tsm) {
+void AbstractValue::setValueSize(CodeThorn::BuiltInType btype, SgTypeSizeMapping* tsm) {
   valueSize=tsm->getTypeSize(btype);
 }
 
@@ -55,7 +55,7 @@ void AbstractValue::setValue(long long int val) {
   ROSE_ASSERT(false);
 }
 
-AbstractValue AbstractValue::createIntegerValue(CodeThorn::BuiltInType btype, long long int ival, TypeSizeMapping* tsm) {
+AbstractValue AbstractValue::createIntegerValue(CodeThorn::BuiltInType btype, long long int ival, SgTypeSizeMapping* tsm) {
   AbstractValue aval;
   aval.valueType=AbstractValue::INTEGER;
   aval.setValueSize(btype,tsm);

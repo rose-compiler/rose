@@ -5,17 +5,18 @@
 #include <cstdint>
 namespace CodeThorn {
 
-  typedef std::uint8_t TypeSize;
+  // typesize in bytes
+  typedef std::uint32_t TypeSize;
   
   enum BuiltInType {
     BITYPE_BOOL,
-    BITYPE_CHAR, BITYPE_UCHAR,
-    BITYPE_CHAR16, BITYPE_UCHAR16,
-    BITYPE_CHAR32, BITYPE_UCHAR32,
-    BITYPE_SHORT, BITYPE_USHORT,
-    BITYPE_INT, BITYPE_UINT,
-    BITYPE_LONG, BITYPE_ULONG,
-    BITYPE_LONG_LONG, BITYPE_ULONG_LONG,
+    BITYPE_SCHAR, BITYPE_UCHAR,
+    BITYPE_SCHAR16, BITYPE_UCHAR16,
+    BITYPE_SCHAR32, BITYPE_UCHAR32,
+    BITYPE_SSHORT, BITYPE_USHORT,
+    BITYPE_SINT, BITYPE_UINT,
+    BITYPE_SLONG, BITYPE_ULONG,
+    BITYPE_SLONG_LONG, BITYPE_ULONG_LONG,
     BITYPE_FLOAT, BITYPE_DOUBLE, BITYPE_LONG_DOUBLE,
     BITYPE_POINTER
   };
@@ -26,7 +27,7 @@ namespace CodeThorn {
     void setMapping(std::vector<CodeThorn::TypeSize> mapping);
     // sets size of one type (same as reported by sizeof on respective architecture)
     void setTypeSize(BuiltInType bitype, CodeThorn::TypeSize size);
-    CodeThorn::TypeSize getTypeSize(BuiltInType bitype);
+    CodeThorn::TypeSize getTypeSize(CodeThorn::BuiltInType bitype);
     std::size_t sizeOfOp(BuiltInType bitype);
     bool isCpp11StandardCompliant();
   private:
@@ -38,6 +39,7 @@ namespace CodeThorn {
                                         8
     };
   };
+
 }
 
 #endif
