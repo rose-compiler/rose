@@ -3,7 +3,7 @@
 
 namespace CodeThorn {
   
-void TypeSizeMapping::setMapping(std::vector<uint8_t> mapping) {
+void TypeSizeMapping::setMapping(std::vector<CodeThorn::TypeSize> mapping) {
   if(mapping.size()==_mapping.size()) {
     _mapping=mapping;
   } else {
@@ -11,11 +11,11 @@ void TypeSizeMapping::setMapping(std::vector<uint8_t> mapping) {
   }
 }
                               
-void TypeSizeMapping::setTypeSize(BuiltInType bitype, uint8_t size) {
+void TypeSizeMapping::setTypeSize(BuiltInType bitype, CodeThorn::TypeSize size) {
   _mapping[bitype]=size;
 }
 
-uint8_t TypeSizeMapping::getTypeSize(BuiltInType bitype) {
+CodeThorn::TypeSize TypeSizeMapping::getTypeSize(BuiltInType bitype) {
   return _mapping[bitype];
 }
   
