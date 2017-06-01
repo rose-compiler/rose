@@ -1,3 +1,17 @@
+2017-06-01  Louis-Noel Pouchet  <pouchet@ryzen.pocc.homeunix.org>
+
+	* polyopt/PolyOptISLRepresentation.cpp,
+	* polyopt/include/polyopt/PolyOptISLRepresentation.hpp: New. Unit to translate
+	a scoplib_scop_p to ISL representation, for processing by PolyCheck.
+	* polyopt/PolyOpt.cpp: New API to only recognize scops, for subsequent
+	translation to ISL:
+	std::vector<std::pair<SgNode*,scoplib_scop_p> >
+	PolyOptRecognizeScopsSubTree(SgNode* root, PolyRoseOptions& polyoptions);
+	and then, on each scop in the output vector, call:
+	PolyOptISLRepresentation
+        PolyOptConvertScopToISL(scoplib_scop_p scop)
+	* polyopt/Makefile.am: Update for new unit.
+
 2017-05-29  Louis-Noel Pouchet  <pouchet@colostate.edu>
 
 	* bootstrap.sh: Add.
