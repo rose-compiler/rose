@@ -49,6 +49,23 @@ int PolyOptOptimizeProject(SgProject* project, PolyRoseOptions& polyoptions);
  */
 int PolyOptOptimizeSubTree(SgNode* root, PolyRoseOptions& polyoptions);
 
+/**
+ * Recognize if a sub-tree meets polyhedral restrictions.
+ *
+ *
+ */
+std::vector<std::pair<SgNode*,scoplib_scop_p> >
+PolyOptRecognizeScopsSubTree(SgNode* root, PolyRoseOptions& polyoptions)
+
+
+/**
+ * Translate a SCoP into ISL format.
+ *
+ *
+ */
+PolyOptISLRepresentation
+PolyOptConvertScopToISL(scoplib_scop_p scop)
+
 
 
 
