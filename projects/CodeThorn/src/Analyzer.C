@@ -154,12 +154,9 @@ Analyzer::Analyzer():
   pstateSet.max_load_factor(0.7);
   constraintSetMaintainer.max_load_factor(0.7);
   resetInputSequenceIterator();
-  _typeSizeMapping=new SgTypeSizeMapping();
-  PState::setTypeSizeMapping(_typeSizeMapping);
 }
 
 Analyzer::~Analyzer() {
-  delete _typeSizeMapping;
 }
 
 size_t Analyzer::getNumberOfErrorLabels() {
@@ -3511,12 +3508,9 @@ list<EState> Analyzer::transferTrueFalseEdge(SgNode* nextNodeToAnalyze2, Edge ed
 }
 
 void Analyzer::setTypeSizeMapping(SgTypeSizeMapping* typeSizeMapping) {
-  // a default type size mapping is set in initialization and must exist
-  ROSE_ASSERT(_typeSizeMapping);
-  delete _typeSizeMapping;
-  _typeSizeMapping=typeSizeMapping;
+  AbstractValue::setTypeSizeMapping(typeSizeMapping);
 }
 
 SgTypeSizeMapping* Analyzer::getTypeSizeMapping() {
-  return _typeSizeMapping;
+  return AbstractValue::getTypeSizeMapping();
 }

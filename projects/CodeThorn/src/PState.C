@@ -16,12 +16,6 @@ using namespace CodeThorn;
 PState::PState() {
 }
 
-CodeThorn::TypeSizeMapping* PState::_typeSizeMapping=0;
-
-void PState::setTypeSizeMapping(TypeSizeMapping* typeSizeMapping) {
-  PState::_typeSizeMapping=typeSizeMapping;
-}
-
 void PState::toStream(ostream& os) const {
   os<<toString();
 }

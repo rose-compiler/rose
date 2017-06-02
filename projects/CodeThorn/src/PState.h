@@ -65,10 +65,7 @@ namespace CodeThorn {
     PState::iterator end();
     PState::const_iterator begin() const;
     PState::const_iterator end() const;
-    // used to dermine size of elements of a type
-    static void setTypeSizeMapping(TypeSizeMapping* typeSizeMapping);
   private:
-    static TypeSizeMapping* _typeSizeMapping;
   };
   
   std::ostream& operator<<(std::ostream& os, const PState& value);

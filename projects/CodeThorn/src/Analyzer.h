@@ -326,7 +326,6 @@ namespace CodeThorn {
     EState createEState(Label label, PState pstate, ConstraintSet cset);
     EState createEState(Label label, PState pstate, ConstraintSet cset, InputOutput io);
     
-    SgTypeSizeMapping* _typeSizeMapping;
     VariableValueMonitor variableValueMonitor;
 
     bool _treatStdErrLikeFailedAssert;

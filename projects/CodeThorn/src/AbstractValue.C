@@ -15,10 +15,13 @@
 #include "Miscellaneous2.h"
 #include "CodeThornException.h"
 #include "VariableIdMapping.h"
+#include "TypeSizeMapping.h"
 
 using namespace std;
 using namespace SPRAY;
 using namespace CodeThorn;
+
+SgTypeSizeMapping* AbstractValue::_typeSizeMapping=new SgTypeSizeMapping();
 
 istream& CodeThorn::operator>>(istream& is, AbstractValue& value) {
   value.fromStream(is);
@@ -45,33 +48,53 @@ AbstractValue::AbstractValue(bool val) {
   }
 }
 
-void AbstractValue::setValueSize(CodeThorn::BuiltInType btype, SgTypeSizeMapping* tsm) {
-  valueSize=tsm->getTypeSize(btype);
+void AbstractValue::setTypeSizeMapping(SgTypeSizeMapping* typeSizeMapping) {
+  if(AbstractValue::_typeSizeMapping!=nullptr) {
+    delete _typeSizeMapping;
+  }
+  AbstractValue::_typeSizeMapping=typeSizeMapping;
+}
+
+SgTypeSizeMapping* AbstractValue::getTypeSizeMapping() {
+  return  _typeSizeMapping;
+}
+
+void AbstractValue::calculateValueSize(CodeThorn::BuiltInType btype) {
+  ROSE_ASSERT(AbstractValue::_typeSizeMapping);
+  valueSize=AbstractValue::_typeSizeMapping->getTypeSize(btype);
 }
 
 void AbstractValue::setValue(long long int val) {
   ROSE_ASSERT(valueSize!=0);
-  // TODO: replace current intValue with long long int value and truncate here if necessary
-  ROSE_ASSERT(false);
+  // TODO: truncate here if necessary
+  intValue=val;
 }
 
-AbstractValue AbstractValue::createIntegerValue(CodeThorn::BuiltInType btype, long long int ival, SgTypeSizeMapping* tsm) {
+AbstractValue AbstractValue::createIntegerValue(CodeThorn::BuiltInType btype, long long int ival) {
   AbstractValue aval;
-  aval.valueType=AbstractValue::INTEGER;
-  aval.setValueSize(btype,tsm);
-  aval.setValue(ival);
+  aval.init(btype,ival);
   return aval;
+}
+
+void AbstractValue::init(CodeThorn::BuiltInType btype, long long int ival) {
+  valueType=AbstractValue::INTEGER;
+  calculateValueSize(btype);
+  setValue(ival);
 }
 
 // type conversion
 AbstractValue::AbstractValue(Top e) {valueType=AbstractValue::TOP;intValue=0;}
 // type conversion
 AbstractValue::AbstractValue(Bot e) {valueType=AbstractValue::BOT;intValue=0;}
-// type conversion
-AbstractValue::AbstractValue(unsigned char x) {valueType=AbstractValue::INTEGER;intValue=(int)x;}
+
+AbstractValue::AbstractValue(unsigned char x) {
+  valueType=AbstractValue::INTEGER;intValue=(int)x;
+}
 AbstractValue::AbstractValue(signed char x) {valueType=AbstractValue::INTEGER;intValue=(int)x;}
 AbstractValue::AbstractValue(short x) {valueType=AbstractValue::INTEGER;intValue=(int)x;}
-AbstractValue::AbstractValue(int x) {valueType=AbstractValue::INTEGER;intValue=x;}
+AbstractValue::AbstractValue(int x) {
+  init(BITYPE_SINT,x);
+}
 AbstractValue::AbstractValue(long int x) {
   if((x<INT_MIN || x>INT_MAX)) throw CodeThorn::Exception("Error: numbers outside 'signed int' range not supported.");
    valueType=AbstractValue::INTEGER;intValue=(int)x;
@@ -85,8 +108,7 @@ AbstractValue::AbstractValue(unsigned short int x) {
   valueType=AbstractValue::INTEGER;intValue=(int)x;
 }
 AbstractValue::AbstractValue(unsigned int x) {
-  if((x>INT_MAX)) throw CodeThorn::Exception("Error: numbers outside 'signed int' range not supported.");
-  valueType=AbstractValue::INTEGER;intValue=(int)x;
+  init(BITYPE_UINT,x);
 }
 AbstractValue::AbstractValue(unsigned long int x) {
   if((x>INT_MAX)) throw CodeThorn::Exception("Error: numbers outside 'signed int' range not supported.");
@@ -508,14 +530,16 @@ string AbstractValue::toString() const {
 }
 
 void AbstractValue::fromStream(istream& is) {
+  int tmpintValue=0;
   if(SPRAY::Parse::checkWord("top",is)) {
     valueType=TOP;
     intValue=0;
   } else if(SPRAY::Parse::checkWord("bot",is)) {
     valueType=BOT;
     intValue=0;
-  } else if(SPRAY::Parse::integer(is,intValue)) {
+  } else if(SPRAY::Parse::integer(is,tmpintValue)) {
     valueType=INTEGER;
+    intValue=tmpintValue;
   } else {
     throw CodeThorn::Exception("Error: ConstIntLattic::fromStream failed.");
   }
