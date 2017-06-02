@@ -115,13 +115,13 @@ class AbstractValue {
   int getIntValue() const;
   int getIndexIntValue() const;
   SPRAY::VariableId getVariableId() const;
-  uint8_t getValueSize() const;
-  void setValueSize(uint8_t valueSize);
   // sets value according to type size (truncates if necessary)
   void setValue(long long int val);
-
   long hash() const;
   std::string valueTypeToString() const;
+
+  uint8_t getValueSize() const;
+  void setValueSize(uint8_t valueSize);
  private:
   ValueType valueType;
   SPRAY::VariableId variableId;

@@ -155,6 +155,7 @@ Analyzer::Analyzer():
   constraintSetMaintainer.max_load_factor(0.7);
   resetInputSequenceIterator();
   _typeSizeMapping=new SgTypeSizeMapping();
+  PState::setTypeSizeMapping(_typeSizeMapping);
 }
 
 Analyzer::~Analyzer() {
