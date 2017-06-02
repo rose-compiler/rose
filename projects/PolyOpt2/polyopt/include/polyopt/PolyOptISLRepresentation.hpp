@@ -43,6 +43,7 @@
 # undef Q
 #endif
 #include <isl/map.h>
+#include <isl/union_map.h>
 #include <isl/set.h>
 
 #include <polyopt/PolyRoseOptions.hpp>

@@ -28,7 +28,7 @@
 #include <rose.h>
 
 #include <polyopt/PolyRoseOptions.hpp>
-
+#include <polyopt/PolyOptISLRepresentation.hpp>
 
 
 /******************************************************************************/

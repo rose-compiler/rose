@@ -1,3 +1,9 @@
+2017-06-02  Louis-Noel Pouchet  <pouchet@ryzen.pocc.homeunix.org>
+
+	* projects/PolyOpt2/polyopt/include/polyopt/PolyOpt.hpp,
+	* projects/PolyOpt2/polyopt/include/polyopt/PolyOptISLRepresentation.hpp,
+	* projects/PolyOpt2/src/Makefile.am: Robustify links/includes to ISL.
+
 2017-06-01  Louis-Noel Pouchet  <pouchet@ryzen.pocc.homeunix.org>
 
 	* polyopt/PolyOptISLRepresentation.cpp,
