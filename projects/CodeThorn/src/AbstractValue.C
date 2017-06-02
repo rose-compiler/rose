@@ -88,35 +88,35 @@ AbstractValue::AbstractValue(Top e) {valueType=AbstractValue::TOP;intValue=0;}
 AbstractValue::AbstractValue(Bot e) {valueType=AbstractValue::BOT;intValue=0;}
 
 AbstractValue::AbstractValue(unsigned char x) {
-  valueType=AbstractValue::INTEGER;intValue=(int)x;
+  init(BITYPE_UCHAR,x);
 }
-AbstractValue::AbstractValue(signed char x) {valueType=AbstractValue::INTEGER;intValue=(int)x;}
-AbstractValue::AbstractValue(short x) {valueType=AbstractValue::INTEGER;intValue=(int)x;}
+AbstractValue::AbstractValue(signed char x) {
+  init(BITYPE_SCHAR,x);
+}
+AbstractValue::AbstractValue(short x) {
+  init(BITYPE_SSHORT,x);
+}
 AbstractValue::AbstractValue(int x) {
   init(BITYPE_SINT,x);
 }
 AbstractValue::AbstractValue(long int x) {
-  if((x<INT_MIN || x>INT_MAX)) throw CodeThorn::Exception("Error: numbers outside 'signed int' range not supported.");
-   valueType=AbstractValue::INTEGER;intValue=(int)x;
+  init(BITYPE_SLONG,x);
 }
 AbstractValue::AbstractValue(long long int x) {
-  if((x<INT_MIN || x>INT_MAX)) throw CodeThorn::Exception("Error: numbers outside 'signed int' range not supported.");
-  valueType=AbstractValue::INTEGER;intValue=(int)x;
+  init(BITYPE_SLONG_LONG,x);
 }
+
 AbstractValue::AbstractValue(unsigned short int x) {
-  if((x>INT_MAX)) throw CodeThorn::Exception("Error: numbers outside 'signed int' range not supported.");
-  valueType=AbstractValue::INTEGER;intValue=(int)x;
+  init(BITYPE_USHORT,x);
 }
 AbstractValue::AbstractValue(unsigned int x) {
   init(BITYPE_UINT,x);
 }
 AbstractValue::AbstractValue(unsigned long int x) {
-  if((x>INT_MAX)) throw CodeThorn::Exception("Error: numbers outside 'signed int' range not supported.");
-  valueType=AbstractValue::INTEGER;intValue=(int)x;
+  init(BITYPE_ULONG,x);
 }
 AbstractValue::AbstractValue(unsigned long long int x) {
-  if((x>INT_MAX)) throw CodeThorn::Exception("Error: numbers outside 'signed int' range not supported.");
-  valueType=AbstractValue::INTEGER;intValue=(int)x;
+  init(BITYPE_ULONG_LONG,x);
 }
 
 AbstractValue 
