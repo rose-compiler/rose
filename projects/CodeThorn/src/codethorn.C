@@ -264,6 +264,7 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
   po::options_description dataRaceOptions("Data race detection options");
   po::options_description experimentalOptions("Experimental options");
   po::options_description visualizationOptions("Visualization options");
+  po::options_description infoOptions("Program information options");
 
   ltlOptions.add_options()
     ("csv-ltl", po::value< string >(), "output LTL verification results into a CSV file [arg]")
@@ -431,6 +432,7 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
     ("help-par", "show options for analyzing parallel programs")
     ("help-vis", "show options for visualization output files")
     ("help-data-race", "show options for data race detection")
+    ("help-info", "show options for program info")
     ("status", "show status messages")
     ("no-reduce-cfg","Do not reduce CFG nodes that are irrelevant for the analysis.")
     ("internal-checks", "run internal consistency checks (without input program)")
@@ -453,6 +455,11 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
     ("threads",po::value< int >(),"Run analyzer in parallel using <arg> threads (experimental)")
     ("version,v", "display the version")
     ;
+
+  infoOptions.add_options()
+    ("print-varid-mapping","Print all information stored in var-id mapping after analysis.")
+    ;
+
   po::options_description all("All supported options");
   all.add(visibleOptions)
     .add(hiddenOptions)
@@ -466,7 +473,9 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
     .add(svcompOptions)
     .add(dataRaceOptions)
     .add(visualizationOptions)
+    .add(infoOptions)
     ;
+
   po::store(po::command_line_parser(argc, argv).options(all).allow_unregistered().run(), args);
   po::notify(args);
 
@@ -502,6 +511,9 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
     exit(0);
   } else if(args.count("help-data-race")) {
     cout << dataRaceOptions << "\n";
+    exit(0);
+  } else if(args.count("help-info")) {
+    cout << infoOptions << "\n";
     exit(0);
   } else if (args.count("version")) {
     cout << "CodeThorn version 1.8.1 (beta)\n";
@@ -2167,6 +2179,10 @@ int main( int argc, char * argv[] ) {
       logger[INFO] << "Generating annotated program."<<endl;
       //backend(sageProject);
       sageProject->unparse(0,0);
+    }
+
+    if(args.count("print-varid-mapping")) {
+      analyzer.getVariableIdMapping()->toStream(cout);
     }
     // reset terminal
     cout<<color("normal")<<"done."<<endl;
