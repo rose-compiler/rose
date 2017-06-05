@@ -81,6 +81,30 @@ string ParallelSystem::toString() const {
   return ss.str();
 }
 
+EdgeAnnotationMap ParallelSystem::edgeAnnotationMap() {
+  EdgeAnnotationMap result;
+  for (map<int, Flow*>::const_iterator i=_components.begin(); i!=_components.end(); ++i) {
+    Flow* component = (*i).second;
+    for (Flow::iterator k=component->begin(); k!= component->end(); ++k) {
+      string annotation = (*k).getAnnotation();
+      if (result.find(annotation) == result.end()) {
+	boost::unordered_map<int, list<Edge> > newMap;
+	result[annotation] = newMap;
+      }
+      boost::unordered_map<int, list<Edge> > occurrences = result[annotation];
+      if (occurrences.find((*i).first) == occurrences.end()) {
+	list<Edge> newList;
+	occurrences[(*i).first] = newList;
+      }
+      list<Edge> newList = occurrences[(*i).first];
+      newList.push_back(*k);
+      occurrences[(*i).first] = newList;
+      result[annotation] = occurrences;
+    }
+  }
+  return result;
+}
+
 // define order for ParallelSystems
 bool CodeThorn::operator<(const ParallelSystem& p1, const ParallelSystem& p2) { 
   if (p1.size()!= p2.size()) {
@@ -331,6 +355,9 @@ pair<string, string> ParProLtlMiner::randomRareEventFormula(set<string>& atomicP
 }
 
 string ParProLtlMiner::randomAtomicProposition(set<string>& atomicPropositions) {
+  if (atomicPropositions.size() == 0) { //TODO: implement in a (renamed) wrapper function
+    atomicPropositions.insert("true");  // default if no unused labels are left
+  }
   int index = randomIntInRange( pair<int,int>(0, (atomicPropositions.size() - 1)) );
   set<string>::iterator iter = atomicPropositions.begin();
   for (int i=0; i<index; ++i) {
@@ -507,44 +534,56 @@ PropertyValueTable* ParProLtlMiner::minePropertiesLtsMin(ParallelSystem& system,
       list<int> componentIdsForAnnotations = nDifferentRandomIntsInSet(_numComponentsForLtlAnnotations, system.getComponentIds());
       annotations = system.getAnnotations(componentIdsForAnnotations);
     }
+    string ltlFormula;
     pair<string, string> ltlProperty = randomLtlFormula(annotations);
-    string ltlFormula = ltlProperty.first;
-
-    if (verifiableCount < minNumVerifiable	
-	&& _ltsminConnection.checkPropertyParPro(ltlFormula, system.components()) == PROPERTY_VALUE_YES) {
-      /*
-      bool passedFilter; 
-      if (_storeComputedSystems) {
-	const ParallelSystem* systemPtr = _subsystems.processNewOrExisting(system);
-	passedFilter = passesFilter(ltlFormula, PROPERTY_VALUE_YES, systemPtr, minNumComponents);
-      } else {
-	passedFilter = passesFilter(ltlFormula, PROPERTY_VALUE_YES, system, minNumComponents);
-      }
-      if (passedFilter) {
-      */
+    ltlFormula = ltlProperty.first;
+    string ltlFormulaLtsmin = _ltsminConnection.ltlFormula2LtsminSyntax(ltlFormula);
+    if (verifiableCount < minNumVerifiable &&
+	_ltsminConnection.checkPropertyParPro(ltlFormulaLtsmin, system.components()) == PROPERTY_VALUE_YES) {
+      //      if (passesFilterLtsMin(ltlFormulaLtsmin, PROPERTY_VALUE_YES, system, minNumComponents)) {
 	result->addProperty(ltlFormula, PROPERTY_VALUE_YES);
 	result->setAnnotation(result->getPropertyNumber(ltlFormula), system.toString());
 	verifiableCount++;
-      //}
-    } else if (falsifiableCount < minNumFalsifiable
-	       && _ltsminConnection.checkPropertyParPro(ltlFormula, system.components()) == PROPERTY_VALUE_NO) {
-      /*
-      bool passedFilter;
-      if (_storeComputedSystems) {
-	const ParallelSystem* systemPtr = _subsystems.processNewOrExisting(system);
-	passedFilter = passesFilter(ltlFormula, PROPERTY_VALUE_NO, systemPtr, minNumComponents);
-      } else {
-	passedFilter = passesFilter(ltlFormula, PROPERTY_VALUE_NO, system, minNumComponents);
-      }
-      if (passedFilter) {
-      */
+	//      }
+    } else if (falsifiableCount < minNumFalsifiable &&
+	       _ltsminConnection.checkPropertyParPro(ltlFormulaLtsmin, system.components()) == PROPERTY_VALUE_NO) {
+      //      if (passesFilterLtsMin(ltlFormulaLtsmin, PROPERTY_VALUE_NO, system, minNumComponents)) {
 	result->addProperty(ltlFormula, PROPERTY_VALUE_NO);
 	result->setAnnotation(result->getPropertyNumber(ltlFormula), system.toString());
 	falsifiableCount++;
-      //}
+	//      }
     }
   }
   return result;
+}
+
+bool ParProLtlMiner::passesFilterLtsMin(string ltlProperty, PropertyValue correctValue, ParallelSystem& system, int minNumComponents) {
+  ROSE_ASSERT(correctValue != PROPERTY_VALUE_UNKNOWN);
+  ROSE_ASSERT(system.size() >= (unsigned) minNumComponents);
+  if (system.size() == 1) {
+    return true;
+  }
+  list<ParallelSystem> worklist;
+  list<ParallelSystem> subsystems = initiateSubsystemsOf(system);
+  for (list<ParallelSystem>::iterator i=subsystems.begin(); i!=subsystems.end(); ++i) {
+    worklist.push_back(*i);
+  }
+  while (!worklist.empty()) {
+    ParallelSystem subsystem = worklist.front();
+    worklist.pop_front();
+    PropertyValue resultSubsystemApprox = _ltsminConnection.checkPropertyParPro(ltlProperty, subsystem.components());
+    if (resultSubsystemApprox == correctValue) {
+      if ((int) subsystem.size() < minNumComponents) {
+	// this property can be correctly assessed with less components than required. Discard the property
+	return false;
+      }
+      list<ParallelSystem> subsubsystems = initiateSubsystemsOf(subsystem);
+      for (list<ParallelSystem>::iterator i=subsubsystems.begin(); i!=subsubsystems.end(); ++i) {
+	worklist.push_back(*i);
+      }
+    }
+  }
+  return true;
 }
 
 bool ParProLtlMiner::passesFilter(string ltlProperty, PropertyValue correctValue, const ParallelSystem* system, int minNumComponents) {

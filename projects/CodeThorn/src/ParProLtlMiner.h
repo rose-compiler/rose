@@ -39,6 +39,7 @@ namespace CodeThorn {
     std::string toString() const;
 
     std::map<int, Flow*> components() const { return _components; }  // TODO: remove const and add other functions to query the component ids
+    EdgeAnnotationMap edgeAnnotationMap();
     void setComponents(std::map<int, Flow*> components) { _components=components; } 
     bool hasStg() const { return (_stg != NULL); }
     ParProTransitionGraph* stg() { return _stg; }
@@ -130,6 +131,7 @@ namespace CodeThorn {
 					   ComponentApproximation approxMode, 
 					   std::list<ParallelSystem>& worklist);
     list<ParallelSystem> initiateSubsystemsOf(ParallelSystem& system);
+    bool passesFilterLtsMin(string ltlProperty, PropertyValue correctValue, ParallelSystem& system, int minNumComponents);
     
     unsigned int _numComponentsForLtlAnnotations;
     unsigned int _numberOfMiningsPerSubsystem;

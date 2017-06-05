@@ -751,3 +751,12 @@ std::string SpotConnection::spinSyntax(std::string ltlFormula) {
   formula->destroy();
   return result;
 }
+
+set<string> SpotConnection::atomicPropositions(string ltlFormula) {
+  set<string> result;
+  spot::ltl::atomic_prop_set* sapFormula = getAtomicProps(ltlFormula);
+  for (spot::ltl::atomic_prop_set::iterator k=sapFormula->begin(); k!=sapFormula->end(); ++k) {
+    result.insert((*k)->name());
+  }
+  return result;
+}

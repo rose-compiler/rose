@@ -6,7 +6,7 @@
 using namespace SPRAY;
 using namespace std;
 
-NumberGenerator::NumberGenerator(int start) : _start(start), _current(0) {}
+NumberGenerator::NumberGenerator(int start) : _current(start) {}
 
 int NumberGenerator::next() {
   return _current++;
