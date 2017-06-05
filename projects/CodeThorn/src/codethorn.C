@@ -337,20 +337,23 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
     ("num-intersections-range",po::value< string >(),"select a range for the number of intersections of a newly added circle with existing circles in the automaton (csv pair of integers).")
     ("automata-dot-input",po::value< string >(),"reads in parallel automata with synchronized transitions from a given .dot file.")
     ("keep-systems",po::value< string >(),"store computed parallel systems (over- and under-approximated STGs) during exploration  so that they do not need to be recomputed ([yes]|no).")
-    ("use-components",po::value< string >(),"Selects which parallel components are chosen for analyzing the (approximated) state space ([all] | subset-fixed | subset-random).")
-    ("fixed-components",po::value< string >(),"A list of IDs of parallel components used for analysis (e.g. \"1,2,4,7\"). Use only with \"--use-components=subset-fixed\".")
-    ("num-random-components",po::value< int >(),"Number of different random components used for the analysis. Use only with \"--use-components=subset-random\". Default: min(3, <num-parallel-components>)")
+    ("use-components",po::value< string >(),"Selects which parallel components are chosen for analyzing the (approximated) state space ([all] | subsets-fixed | subsets-random).")
+    ("fixed-subsets",po::value< string >(),"A list of sets of parallel component IDs used for analysis (e.g. \"{1,2},{4,7}\"). Use only with \"--use-components=subsets-fixed\".")
+    ("num-random-components",po::value< int >(),"Number of different random components used for the analysis. Use only with \"--use-components=subsets-random\". Default: min(3, <num-parallel-components>)")
+    ("parallel-composition-only",po::value< string >(),"If set to \"yes\", then no approximation will take place. Instead, the parallel compositions of the respective sub-systems will be expanded (sequentialized). Skips any LTL analysis. (Default: \"no\")")
     ("num-components-ltl",po::value< int >(),"Number of different random components used to generate a random LTL property. Default: value of option --num-random-components (a.k.a. all analyzed components)")
     ("minimum-components",po::value< int >(),"Number of different parallel components that need to be explored together in order to be able to analyze the mined properties. (default: 3).")
-    ("different-component-subsets",po::value< int >(),"Number of random component subsets. The solver will be run for each of the random subsets. Use only with \"--use-components=subset-random\" (default: no termination).")
+    ("different-component-subsets",po::value< int >(),"Number of random component subsets. The solver will be run for each of the random subsets. Use only with \"--use-components=subsets-random\" (default: no termination).")
     ("ltl-mode",po::value< string >(),"\"check\" checks the properties passed to option \"--check-ltl=<filename>\". \"mine\" searches for automatically generated properties that adhere to certain criteria. \"none\" means no LTL analysis (default).")
     ("mine-num-verifiable",po::value< int >(),"Number of verifiable properties satisfying given requirements that should be collected (default: 10).")
     ("mine-num-falsifiable",po::value< int >(),"Number of falsifiable properties satisfying given requirements that should be collected (default: 10).")
     ("minings-per-subsets",po::value< int >(),"Number of randomly generated properties that are evaluated based on one subset of parallel components (default: 50).")
     ("ltl-properties-output",po::value< string >(),"Writes the analyzed LTL properties to file <arg>.")
     ("promela-output",po::value< string >(),"Writes a promela program reflecting the synchronized automata of option \"--automata-dot-input\" to file <arg>. Includes LTL properties if analyzed.")
+    ("promela-output-only",po::value< string >(),"Only generate Promela code, skip analysis of the input .dot graphs (yes|[no]).")
     ("output-with-results",po::value< string >(),"include results for the LTL properties in generated promela code and LTL property files (yes|[no]).")
     ("output-with-annotations",po::value< string >(),"include annotations for the LTL properties in generated promela code and LTL property files (yes|[no]).")
+    ("verification-engine",po::value< string >(),"Choose which backend verification engine is used (ltsmin|[spot]).")
     ;
 
   experimentalOptions.add_options()
@@ -578,8 +581,10 @@ BoolOptions& parseBoolOptions(int argc, char* argv[]) {
   boolOptions.registerOption("set-stg-incomplete",false);
 
   boolOptions.registerOption("keep-systems",true);
+  boolOptions.registerOption("parallel-composition-only",false);
   boolOptions.registerOption("output-with-results",false);
   boolOptions.registerOption("output-with-annotations",false);
+  boolOptions.registerOption("promela-output-only",false);
 
   boolOptions.registerOption("print-update-infos",false);
   boolOptions.registerOption("verify-update-sequence-race-conditions",true);
@@ -651,8 +656,19 @@ void automataDotInput(const po::variables_map& args, Sawyer::Message::Facility l
   }
 
   ParProExplorer explorer(cfgsAsVector, edgeAnnotationMap);
+  if (args.count("verification-engine")) {
+    string verificationEngine = args["verification-engine"].as<string>();
+    if (verificationEngine == "ltsmin") {
+      explorer.setUseLtsMin(true);
+    }
+  } 
   if (boolOptions["keep-systems"]) {
     explorer.setStoreComputedSystems(true);
+  } else {
+    explorer.setStoreComputedSystems(false);
+  }
+  if (boolOptions["parallel-composition-only"]) {
+    explorer.setParallelCompositionOnly(true);
   } else {
     explorer.setStoreComputedSystems(false);
   }
@@ -660,18 +676,24 @@ void automataDotInput(const po::variables_map& args, Sawyer::Message::Facility l
     string componentSelection = args["use-components"].as<string>();
     if (componentSelection == "all") {
       explorer.setComponentSelection(PAR_PRO_COMPONENTS_ALL);
-    } else if (componentSelection == "subset-fixed") {
+      if (args.count("ltl-mode")) {
+	string ltlMode= args["ltl-mode"].as<string>();
+	if (ltlMode == "mine") {
+	  explorer.setRandomSubsetMode(PAR_PRO_NUM_SUBSETS_INFINITE);
+	}
+      }
+    } else if (componentSelection == "subsets-fixed") {
       explorer.setComponentSelection(PAR_PRO_COMPONENTS_SUBSET_FIXED);
       explorer.setRandomSubsetMode(PAR_PRO_NUM_SUBSETS_FINITE);
-      if (args.count("fixed-components")) {
-        string setstring=args["fixed-components"].as<string>();
-        set<int> intSet=Parse::integerSet(setstring);
-        explorer.setFixedComponentIds(intSet);
+      if (args.count("fixed-subsets")) {
+        string setsstring=args["fixed-subsets"].as<string>();
+        list<set<int> > intSets=Parse::integerSetList(setsstring);
+        explorer.setFixedComponentSubsets(intSets);
       } else {
-        logger[ERROR] << "selected a fixed set of components but no were selected. Please use option \"--fixed-components=<csv-id-list>\".";
+        logger[ERROR] << "selected a fixed set of components but no were selected. Please use option \"--fixed-subsets=<csv-id-list>\".";
         ROSE_ASSERT(0);
       }
-    } else if (componentSelection == "subset-random") {
+    } else if (componentSelection == "subsets-random") {
       explorer.setComponentSelection(PAR_PRO_COMPONENTS_SUBSET_RANDOM);
       if (args.count("num-random-components")) {
         explorer.setNumberRandomComponents(args["num-random-components"].as<int>());
@@ -680,13 +702,19 @@ void automataDotInput(const po::variables_map& args, Sawyer::Message::Facility l
       }
       if (args.count("different-component-subsets")) {
         explorer.setRandomSubsetMode(PAR_PRO_NUM_SUBSETS_FINITE);
-        explorer.setNumberDifferentComponentSubsets(args["use-components"].as<int>());
+        explorer.setNumberDifferentComponentSubsets(args["different-component-subsets"].as<int>());
       } else {
         explorer.setRandomSubsetMode(PAR_PRO_NUM_SUBSETS_INFINITE);
       }
     }
   } else {
     explorer.setComponentSelection(PAR_PRO_COMPONENTS_ALL);
+    if (args.count("ltl-mode")) {
+      string ltlMode= args["ltl-mode"].as<string>();
+      if (ltlMode == "mine") {
+	explorer.setRandomSubsetMode(PAR_PRO_NUM_SUBSETS_INFINITE);
+      }
+    }
   }
 
   if ( args.count("check-ltl") ) {
@@ -735,10 +763,18 @@ void automataDotInput(const po::variables_map& args, Sawyer::Message::Facility l
     explorer.setVisualize(true);
   }
 
-  explorer.explore();
-
+  if (!boolOptions["promela-output-only"]) {
+    explorer.explore();
+  }
+  
   if (args.count("check-ltl")) {
-    PropertyValueTable* ltlResults = explorer.propertyValueTable();
+    PropertyValueTable* ltlResults;
+    if (boolOptions["promela-output-only"]) { // just read the properties into a PropertyValueTable
+      SpotConnection spotConnection(args["check-ltl"].as<string>());
+      ltlResults = spotConnection.getLtlResults();
+    } else {
+      ltlResults = explorer.propertyValueTable();
+    }
     bool withCounterexamples = false;
     ltlResults-> printResults("YES (verified)", "NO (falsified)", "ltl_property_", withCounterexamples);
     cout << "=============================================================="<<endl;
@@ -749,7 +785,14 @@ void automataDotInput(const po::variables_map& args, Sawyer::Message::Facility l
   bool withResults = boolOptions["output-with-results"];
   bool withAnnotations = boolOptions["output-with-annotations"];
   if (args.count("promela-output")) {
-    string promelaLtlFormulae = explorer.propertyValueTable()->getLtlsAsPromelaCode(withResults, withAnnotations);
+    PropertyValueTable* ltlResults;
+    if (boolOptions["promela-output-only"]) { // just read the properties into a PropertyValueTable
+      SpotConnection spotConnection(args["check-ltl"].as<string>());
+      ltlResults = spotConnection.getLtlResults();
+    } else {
+      ltlResults = explorer.propertyValueTable();
+    }
+    string promelaLtlFormulae = ltlResults->getLtlsAsPromelaCode(withResults, withAnnotations);
     promelaCode += "\n" + promelaLtlFormulae;
     string filename = args["promela-output"].as<string>();
     write_file(filename, promelaCode);
@@ -1191,7 +1234,8 @@ int main( int argc, char * argv[] ) {
           || string(argv[i]).find("--specialize-fun-name")==0
           || string(argv[i]).find("--specialize-fun-param")==0
           || string(argv[i]).find("--use-components")==0
-          || string(argv[i]).find("--fixed-components")==0
+          || string(argv[i]).find("--verification-engine")==0
+          || string(argv[i]).find("--fixed-subsets")==0
           || string(argv[i]).find("--specialize-fun-param")==0
           ) {
             // do not confuse ROSE frontend

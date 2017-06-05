@@ -137,6 +137,30 @@ SPRAY::Parse::integerList(string liststring) {
     return intList;
 }
 
+list<set<int> >
+SPRAY::Parse::integerSetList(string liststring) {
+  list<set<int> > intList;
+      stringstream ss(liststring);
+    if(ss.peek()=='[')
+      ss.ignore();
+    else
+      throw SPRAY::Exception("Error: parse integer-values: wrong input format (at start).");
+    string set;
+    while(ss>>set) {
+      //cout << "DEBUG: input-var-string:i:"<<i<<" peek:"<<ss.peek()<<endl;    
+      intList.push_back(integerSet(set));
+      if(ss.peek()==','||ss.peek()==' ')
+        ss.ignore();
+    }
+#if 0
+    if(ss.peek()==']')
+      ss.ignore();
+    else
+      throw SPRAY::Exception("Error: parse integer-values: wrong input format (at end).");
+#endif
+    return intList;
+}
+
 set<int>
 SPRAY::Parse::integerSet(string setstring) {
   set<int> intSet;
