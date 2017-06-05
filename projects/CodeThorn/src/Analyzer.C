@@ -27,6 +27,38 @@ using namespace Sawyer::Message;
 
 Sawyer::Message::Facility Analyzer::logger;
 
+void Analyzer::setOptionStatusMessages(bool flag) {
+  _optionStatusMessages=flag;
+}
+
+bool Analyzer::getOptionStatusMessages() {
+  return _optionStatusMessages;
+}
+
+void Analyzer::printStatusMessage(string s, bool newLineFlag) {
+#pragma omp critical (STATUS_MESSAGES)
+  {
+    if(getOptionStatusMessages()) {
+      cout<<s;
+      if(newLineFlag) {
+        cout<<endl;
+      }
+    }
+  }
+}
+
+void Analyzer::printStatusMessage(string s) {
+  printStatusMessage(s,false);
+}
+
+void Analyzer::printStatusMessageLine(string s) {
+  printStatusMessage(s,true);
+}
+
+string Analyzer::lineColSource(SgNode* node) {
+  return SgNodeHelper::sourceLineColumnToString(node)+": "+SgNodeHelper::nodeToString(node);
+}
+
 void Analyzer::initDiagnostics() {
   static bool initialized = false;
   if (!initialized) {
@@ -97,6 +129,7 @@ Analyzer::Analyzer():
   _maxIterationsForcedTop(-1),
   _maxBytesForcedTop(-1),
   _maxSecondsForcedTop(-1),
+  _optionStatusMessages(false),
   _treatStdErrLikeFailedAssert(false),
   _skipSelectedFunctionCalls(false),
   _explorationMode(EXPL_BREADTH_FIRST),
@@ -117,12 +150,13 @@ Analyzer::Analyzer():
   }
   estateWorkListCurrent = &estateWorkListOne;
   estateWorkListNext = &estateWorkListTwo;
-#ifndef USE_CUSTOM_HSET
   estateSet.max_load_factor(0.7);
   pstateSet.max_load_factor(0.7);
   constraintSetMaintainer.max_load_factor(0.7);
-#endif
   resetInputSequenceIterator();
+}
+
+Analyzer::~Analyzer() {
 }
 
 size_t Analyzer::getNumberOfErrorLabels() {
@@ -138,7 +172,7 @@ void Analyzer::setExternalErrorFunctionName(std::string externalErrorFunctionNam
 }
 
 bool Analyzer::isPrecise() {
-  return !(isActiveGlobalTopify()||variableValueMonitor.isActive());
+  return !(isActiveGlobalTopify());
 }
 
 bool Analyzer::isInExplicitStateMode() {
@@ -160,6 +194,14 @@ ExprAnalyzer* Analyzer::getExprAnalyzer() {
   return &exprAnalyzer;
 }
 
+void Analyzer::setSolver(int solver) {
+  _solver=solver;
+}
+
+int Analyzer::getSolver() {
+  return _solver;
+}
+
 void Analyzer::runSolver() {
   switch(_solver) {
   case 4: runSolver4();break;
@@ -174,10 +216,18 @@ void Analyzer::runSolver() {
   }
 }
 
-set<string> Analyzer::variableIdsToVariableNames(VariableIdMapping::VariableIdSet s) {
+set<string> Analyzer::variableIdsToVariableNames(AbstractValueSet s) {
   set<string> res;
-  for(VariableIdMapping::VariableIdSet::iterator i=s.begin();i!=s.end();++i) {
-    res.insert(variableIdMapping.uniqueLongVariableName(*i));
+  for(AbstractValueSet::iterator i=s.begin();i!=s.end();++i) {
+    res.insert((*i).toString(getVariableIdMapping()));
+  }
+  return res;
+}
+
+set<string> Analyzer::variableIdsToVariableNames(SPRAY::VariableIdSet s) {
+  set<string> res;
+  for(SPRAY::VariableIdSet::iterator i=s.begin();i!=s.end();++i) {
+    res.insert((AbstractValue(*i)).toString(getVariableIdMapping()));
   }
   return res;
 }
@@ -210,10 +260,6 @@ Analyzer::VariableDeclarationList Analyzer::computeUsedGlobalVariableDeclaration
     logger[ERROR] << "no global scope.";
     exit(1);
   }
-}
-
-Analyzer::~Analyzer() {
-  // intentionally empty, nothing to free explicitly
 }
 
 void Analyzer::recordTransition(const EState* sourceState, Edge e, const EState* targetState) {
@@ -270,7 +316,7 @@ void Analyzer::printStatusMessage(bool forceDisplay) {
        <<"/"<<getIterations()<<"-"<<getApproximatedIterations()
       ;
     ss<<endl;
-    cout<<ss.str();
+    printStatusMessage(ss.str());
   }
 }
 
@@ -357,11 +403,11 @@ bool Analyzer::isActiveGlobalTopify() {
 
 void Analyzer::eventGlobalTopifyTurnedOn() {
   logger[TRACE] << "mode global-topify activated."<<endl;
-  VariableIdSet vset=variableValueMonitor.getVariables();
+  AbstractValueSet vset=variableValueMonitor.getVariables();
   int n=0;
   int nt=0;
-  for(VariableIdSet::iterator i=vset.begin();i!=vset.end();++i) {
-    string name=SgNodeHelper::symbolToString(getVariableIdMapping()->getSymbol(*i));
+  for(AbstractValueSet::iterator i=vset.begin();i!=vset.end();++i) {
+    string name=(*i).toLhsString(getVariableIdMapping());
     bool isCompoundIncVar=(_compoundIncVarsSet.find(*i)!=_compoundIncVarsSet.end());
     bool isSmallActivityVar=(_smallActivityVarsSet.find(*i)!=_smallActivityVarsSet.end());
     bool isAssertCondVar=(_assertCondVarsSet.find(*i)!=_assertCondVarsSet.end());
@@ -378,7 +424,7 @@ void Analyzer::eventGlobalTopifyTurnedOn() {
       }
       break;
     case GTM_IOCFPTR:
-      if(name!="input" && name!="output" && name!="cf" && !variableIdMapping.hasPointerType(*i)) {
+      if(name!="input" && name!="output" && name!="cf" && !(*i).isPtr()) {
         topifyVar=true;
       }
       break;
@@ -412,21 +458,12 @@ void Analyzer::eventGlobalTopifyTurnedOn() {
       exit(1);
     }
 
-    //if(name!="input" && name!="output" && name!="cf" && !variableIdMapping.hasPointerType(*i)) {
-    //if(name!="input" && name!="output" && name!="cf") {
-    //if(isCompoundIncVar) {
-    //if(name!="input") {
-    //if(name!="output") {
-    //if(true) {
     if(topifyVar) {
-      //variableValueMonitor.setVariableMode(VariableValueMonitor::VARMODE_FORCED_TOP,*i);
+      variableValueMonitor.setVariableMode(VariableValueMonitor::VARMODE_FORCED_TOP,*i);
       n++;
     }
     nt++;
   }
-  PState::setActiveGlobalTopify(true);
-  PState::setVariableValueMonitor(&variableValueMonitor);
-  PState::_analyzer=this;
 
   logger[TRACE] << "switched to static analysis (approximating "<<n<<" of "<<nt<<" variables with top-conversion)."<<endl;
   //switch to the counter for approximated loop iterations if currently in a mode that counts iterations
@@ -438,27 +475,19 @@ void Analyzer::eventGlobalTopifyTurnedOn() {
   }
 }
 
-bool Analyzer::isTopified(EState& estate) {
-  const PState* pState=estate.pstate();
-  return pState->isTopifiedState();
-}
-
-void Analyzer::topifyVariable(PState& pstate, ConstraintSet& cset, VariableId varId) {
-  // logger[DEBUG] << "DEAD CODE (Analyzer::topifyVariale(..))." <<endl;
-  //exit(1);
-  pstate.setVariableToTop(varId);
+void Analyzer::topifyVariable(PState& pstate, ConstraintSet& cset, AbstractValue varId) {
+  pstate.writeTopToMemoryLocation(varId);
   //cset.removeAllConstraintsOfVar(varId);
 }
 
 EState Analyzer::createEState(Label label, PState pstate, ConstraintSet cset) {
   // here is the best location to adapt the analysis results to certain global restrictions
   if(isActiveGlobalTopify()) {
-    // xxx1
 #if 1
-    VariableIdSet varSet=pstate.getVariableIds();
-    for(VariableIdSet::iterator i=varSet.begin();i!=varSet.end();++i) {
+    AbstractValueSet varSet=pstate.getVariableIds();
+    for(AbstractValueSet::iterator i=varSet.begin();i!=varSet.end();++i) {
       if(variableValueMonitor.isHotVariable(this,*i)) {
-        ROSE_ASSERT(false); // should not be used any
+        //ROSE_ASSERT(false); // this branch is live
         topifyVariable(pstate, cset, *i);
       }
     }
@@ -466,7 +495,7 @@ EState Analyzer::createEState(Label label, PState pstate, ConstraintSet cset) {
     //pstate.topifyState();
 #endif
     // set cset in general to empty cset, otherwise cset can grow again arbitrarily
-    ConstraintSet cset0; // xxx2
+    ConstraintSet cset0;
     cset=cset0;
   }
   const PState* newPStatePtr=processNewOrExisting(pstate);
@@ -514,13 +543,6 @@ set<const EState*> Analyzer::nonLTLRelevantEStates() {
   for(set<const EState*>::iterator i=allestates.begin();i!=allestates.end();++i) {
     if(!isLTLRelevantLabel((*i)->label())) {
       res.insert(*i);
-
-      // MS: deactivated this check because it impacts performance dramatically
-#if 0
-      if(estateSet.estateId(*i)==NO_ESTATE) {
-        logger[WARN]<< "no estate :estateId="<<estateSet.estateId(*i)<<endl;
-      }
-#endif
     }
   }
   return res;
@@ -530,8 +552,8 @@ bool Analyzer::isTerminationRelevantLabel(Label label) {
   return SgNodeHelper::isLoopCond(getLabeler()->getNode(label));
 }
 
-// We want to avoid calling critical sections from critical sections:
-// therefore all worklist functions do not use each other.
+// Avoid calling critical sections from critical sections:
+// worklist functions do not use each other.
 bool Analyzer::isEmptyWorkList() {
   bool res;
 #pragma omp critical(ESTATEWL)
@@ -584,7 +606,8 @@ const EState* Analyzer::takeFromWorkList() {
   return co;
 }
 
-// the following function has to be protected by a critical section
+// this function has to be protected by a critical section
+// currently called once inside a critical section
 void Analyzer::swapWorkLists() {
   EStateWorkList* tmp = estateWorkListCurrent;
   estateWorkListCurrent = estateWorkListNext;
@@ -606,8 +629,6 @@ size_t Analyzer::memorySizeContentEStateWorkLists() {
   return mem;
 }
 
-#define PARALLELIZE_BRANCHES
-
 const EState* Analyzer::addToWorkListIfNew(EState estate) {
   EStateSet::ProcessingResult res=process(estate);
   if(res.first==true) {
@@ -627,28 +648,22 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
 
   /*
     1) declaration of variable or array
-    - AssignInitializer (e.g. x=1+2;)
-    - AggregateInitializer (e.g. int a[]={1,2,3};)
-    - AggregateInitializer (e.g. int a[5]={1,2,3};)
+    - AggregateInitializer (e.g. T a[]={1,2,3};)
+    - AggregateInitializer (e.g. T a[5]={1,2,3};)
+    - AssignInitializer (e.g. T x=1+2;)
     2) if array, determine size of array (from VariableIdMapping)
     3) if no size is provided, determine it from the initializer list (and add this information to the variableIdMapping - or update the variableIdMapping).
    */
 
-  //cout<< "DEBUG: DECLARATION:"<<SPRAY::AstTerm::astTermWithNullValuesToString(decl)<<endl;
+  //cout<< "DEBUG: DECLARATION:"<<AstTerm::astTermWithNullValuesToString(decl)<<endl;
   SgNode* initName0=decl->get_traversalSuccessorByIndex(1); // get-InitializedName
   if(initName0!=nullptr) {
     if(SgInitializedName* initName=isSgInitializedName(initName0)) {
-#if 0
-      SgSymbol* initDeclVar=initName->search_for_symbol_from_symbol_table();
-      ROSE_ASSERT(initDeclVar);
-      VariableId initDeclVarId=getVariableIdMapping()->variableId(initDeclVar);
-#else
       VariableId initDeclVarId=getVariableIdMapping()->variableId(initName);
-#endif
       // not possible to support yet. getIntValue must succeed on declarations.
       if(false && variableValueMonitor.isHotVariable(this,initDeclVarId)) {
         PState newPState=*currentEState.pstate();
-        newPState.setVariableToTop(initDeclVarId);
+        newPState.writeTopToMemoryLocation(initDeclVarId);
         ConstraintSet cset=*currentEState.constraints();
         return createEState(targetLabel,newPState,cset);
       }
@@ -676,7 +691,8 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
           int elemIndex=0;
           SgExpressionPtrList& initList=SgNodeHelper::getInitializerListOfAggregateDeclaration(decl);
           for(SgExpressionPtrList::iterator i=initList.begin();i!=initList.end();++i) {
-            VariableId arrayElemId=variableIdMapping.variableIdOfArrayElement(initDeclVarId,elemIndex);
+            //OLD VariableId arrayElemId=variableIdMapping.variableIdOfArrayElement(initDeclVarId,elemIndex);
+            AbstractValue arrayElemId=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(elemIndex));
             SgExpression* exp=*i;
             SgAssignInitializer* assignInit=isSgAssignInitializer(exp);
             ROSE_ASSERT(assignInit);
@@ -684,9 +700,9 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
             if(SgIntVal* intValNode=isSgIntVal(assignInit->get_operand_i())) {
               int intVal=intValNode->get_value();
               // logger[DEBUG] <<"initializing array element:"<<arrayElemId.toString()<<"="<<intVal<<endl;
-              newPState.setVariableToValue(arrayElemId,CodeThorn::AValue(AbstractValue(intVal)));
+              newPState.writeToMemoryLocation(arrayElemId,CodeThorn::AbstractValue(intVal));
             } else {
-              logger[ERROR] <<"unsupported array initializer value:"<<exp->unparseToString()<<" AST:"<<SPRAY::AstTerm::astTermWithNullValuesToString(exp)<<endl;
+              logger[ERROR] <<"unsupported array initializer value:"<<exp->unparseToString()<<" AST:"<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
               exit(1);
             }
             elemIndex++;
@@ -696,6 +712,7 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
           // an single AssignInitializer on the rhs is a constant expression that evaluates to a known value at compile time
           SgExpression* rhs=assignInitializer->get_operand_i();
           ROSE_ASSERT(rhs);
+          //cout<<"DEBUG: assign initializer:"<<assignInitializer->unparseToString()<<":"<<rhs->unparseToString()<<endl;
           PState newPState=analyzeAssignRhs(*currentEState.pstate(),initDeclVarId,rhs,cset);
           return createEState(targetLabel,newPState,cset);
         } else {
@@ -709,18 +726,25 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
           // add default array elements to PState
           size_t length=variableIdMapping.getSize(initDeclVarId);
           for(size_t elemIndex=0;elemIndex<length;elemIndex++) {
-            VariableId newArrayElementId=variableIdMapping.variableIdOfArrayElement(initDeclVarId,elemIndex);
+            AbstractValue newArrayElementId=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(elemIndex));
             // set default init value
-            newPState.setVariableToTop(newArrayElementId);
+            newPState.writeTopToMemoryLocation(newArrayElementId);
           }
           
         } else if(variableIdMapping.hasClassType(initDeclVarId)) {
-          // not supported yet
-          cerr<<"WARNING: class type in variable declaration not supported yet."<<endl;
-          //exit(1);
+          // not supported yet. Declarations may exist in header files,
+          // therefore silently ignore it here, but if will cause an
+          // error later as read/write of class variables is not
+          // allowed yet in expressions.
+        } else if(variableIdMapping.hasPointerType(initDeclVarId)) {
+          // create pointer value and set it to top (=any value possible (uninitialized pointer variable declaration))
+          AbstractValue pointerVal=AbstractValue::createAddressOfVariable(initDeclVarId);
+          newPState.writeTopToMemoryLocation(pointerVal);
         } else {
-          // set it to top (=any value possible (uninitialized))
-          newPState.setVariableToTop(initDeclVarId);
+          // set it to top (=any value possible (uninitialized)) for
+          // all remaining cases. It will become an error-path once
+          // all cases are addressed explicitly above.
+          newPState.writeTopToMemoryLocation(initDeclVarId);
         }
         return createEState(targetLabel,newPState,cset);
       }
@@ -732,8 +756,7 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
     logger[ERROR] << "in declaration: no variable found ... bailing out."<<endl;
     exit(1);
   }
-  cout<<"WARNING: not initialized name in variable declaration: "<<decl->unparseToString()<<endl;
-  return currentEState;
+  ROSE_ASSERT(false); // non-reachable
 }
 
 // this function has been moved to VariableIdMapping: TODO eliminate this function here
@@ -938,7 +961,6 @@ list<EState> Analyzer::transferEdgeEState(Edge edge, const EState* estate) {
   // 1. we handle the edge as outgoing edge
   SgNode* nextNodeToAnalyze1=cfanalyzer->getNode(edge.source());
   ROSE_ASSERT(nextNodeToAnalyze1);
-
   if(edge.isType(EDGE_LOCAL)) {
     return transferFunctionCallLocalEdge(edge,estate);
   } else if(SgNodeHelper::Pattern::matchAssertExpr(nextNodeToAnalyze1)) {
@@ -1049,7 +1071,7 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root, boo
     ROSE_ASSERT(varId.isValid());
     // initialize all formal parameters of function (of extremal label) with top
     //emptyPState[varId]=AbstractValue(CodeThorn::Top());
-    emptyPState.setVariableToTop(varId);
+    emptyPState.writeTopToMemoryLocation(varId);
   }
   const PState* emptyPStateStored=processNew(emptyPState);
   ROSE_ASSERT(emptyPStateStored);
@@ -1116,14 +1138,28 @@ set<const EState*> Analyzer::transitionSourceEStateSetOfLabel(Label lab) {
   return estateSet;
 }
 
+// PState is maintainted to allow for assignments on the rhs
+// TODO: change lhsVar to lhsAbstractValue
+PState Analyzer::analyzeAssignRhsExpr(PState currentPState,VariableId lhsVar, SgNode* rhs, ConstraintSet& cset) {
+  // TODO DECLARATION:SgVariableDeclaration(null,SgInitializedName(SgAssignInitializer(SgCastExp(SgIntVal))))
+  //                  rhs=SgCastExp(SgIntVal) // not handled yet in below function
+  //AbstractValue lhsValue=AbstractValue(lhsVar);
+  ROSE_ASSERT(false);
+}
+
 // TODO: this function should be implemented with a call of ExprAnalyzer::evalConstInt
 // TODO: currently all rhs which are not a variable are evaluated to top by this function
 PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode* rhs, ConstraintSet& cset) {
   ROSE_ASSERT(isSgExpression(rhs));
-  AValue rhsIntVal=CodeThorn::Top();
+  AbstractValue rhsIntVal=CodeThorn::Top();
   bool isRhsIntVal=false;
   bool isRhsVar=false;
 
+  if(SgCastExp* castExp=isSgCastExp(rhs)) {
+    // just skip the cast for now (casting is addressed in the new expression evaluation)
+    rhs=castExp->get_operand();
+  }
+  
   // TODO: -1 is OK, but not -(-1); yet.
   if(SgMinusOp* minusOp=isSgMinusOp(rhs)) {
     if(SgIntVal* intValNode=isSgIntVal(SgNodeHelper::getFirstChild(minusOp))) {
@@ -1149,7 +1185,7 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
     //cset.addEqVarVar(lhsVar, rhsVarId);
 
     if(currentPState.varExists(rhsVarId)) {
-      rhsIntVal=currentPState[rhsVarId];
+      rhsIntVal=currentPState.readFromMemoryLocation(rhsVarId);
     } else {
       if(variableIdMapping.isConstantArray(rhsVarId) && boolOptions["rersmode"]) {
         // in case of an array the id itself is the pointer value
@@ -1174,12 +1210,12 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
         //cout<<" of array type.";
         // we use the id-code as int-value (points-to info)
         int idCode=rhsVarId.getIdCode();
-        newPState.setVariableToValue(lhsVar,CodeThorn::AValue(AbstractValue(idCode)));
+        newPState.writeToMemoryLocation(lhsVar,CodeThorn::AbstractValue(AbstractValue(idCode)));
         //cout<<" id-code: "<<idCode;
         return newPState;
       } else {
         logger[ERROR] <<"RHS: unknown : type: ";
-        logger[ERROR]<<SPRAY::AstTerm::astTermWithNullValuesToString(isSgExpression(rhs)->get_type());
+        logger[ERROR]<<AstTerm::astTermWithNullValuesToString(isSgExpression(rhs)->get_type());
         exit(1);
       }
       cout<<endl;
@@ -1195,16 +1231,16 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
       rhsIntVal=CodeThorn::Top();
       ROSE_ASSERT(!isInExplicitStateMode());
     }
-    // we are using AValue here (and  operator== is overloaded for AValue==AValue)
+    // we are using AbstractValue here (and  operator== is overloaded for AbstractValue==AbstractValue)
     // for this comparison isTrue() is also false if any of the two operands is CodeThorn::Top()
-    if( (newPState[lhsVar].operatorEq(rhsIntVal)).isTrue() ) {
+    if( (newPState.readFromMemoryLocation(lhsVar).operatorEq(rhsIntVal)).isTrue() ) {
       // update of existing variable with same value
       // => no state change
       return newPState;
     } else {
       // update of existing variable with new value
       //newPState[lhsVar]=rhsIntVal;
-      newPState.setVariableToValue(lhsVar,rhsIntVal);
+      newPState.writeToMemoryLocation(lhsVar,rhsIntVal);
       if((!rhsIntVal.isTop() && !isRhsVar) || boolOptions["arith-top"])
         cset.removeAllConstraintsOfVar(lhsVar);
       return newPState;
@@ -1213,9 +1249,8 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
     if(_variablesToIgnore.size()>0 && (_variablesToIgnore.find(lhsVar)!=_variablesToIgnore.end())) {
       // nothing to do because variable is ignored
     } else {
-      // new variable with new value
-      // write access
-      newPState.setVariableToValue(lhsVar,rhsIntVal);
+      // new variable with new value.
+      newPState.writeToMemoryLocation(lhsVar,rhsIntVal);
     }
     // no update of constraints because no constraints can exist for a new variable
     return newPState;
@@ -1254,7 +1289,6 @@ void Analyzer::generateAstNodeInfo(SgNode* node) {
       }
     }
 #if 0
-    cout << "DEBUG:"<<(*i)->sage_class_name();
     if(attr) cout<<":"<<attr->toString();
     else cout<<": no attribute!"<<endl;
 #endif
@@ -1268,6 +1302,7 @@ bool Analyzer::checkTransitionGraph() {
   ok=ok && getTransitionGraph()->checkConsistency();
   return ok;
 }
+
 bool Analyzer::checkEStateSet() {
   for(EStateSet::iterator i=estateSet.begin();i!=estateSet.end();++i) {
     if(estateSet.estateId(*i)==NO_ESTATE || (*i)->label()==Label()) {
@@ -1474,9 +1509,12 @@ boost::unordered_set<Transition*>* Analyzer::transitionsToInOutErrAndWorklist( c
 }
 
 
-boost::unordered_set<Transition*>* Analyzer::transitionsToInOutErrAndWorklist( const EState* currentState, const EState* startState,
-                                                                            boost::unordered_set<Transition*>* results, boost::unordered_set<const EState*>* visited,
-									    bool includeIn, bool includeOut, bool includeErr) {
+boost::unordered_set<Transition*>*
+Analyzer::transitionsToInOutErrAndWorklist( const EState* currentState,
+                                            const EState* startState,
+                                            boost::unordered_set<Transition*>* results,
+                                            boost::unordered_set<const EState*>* visited,
+                                            bool includeIn, bool includeOut, bool includeErr) {
   //cycle check
   if (visited->count(currentState)) {
     return results;  //currentState already visited, do nothing
@@ -1584,7 +1622,7 @@ string Analyzer::generateSpotSTG() {
 int Analyzer::reachabilityAssertCode(const EState* currentEStatePtr) {
   if(boolOptions["rers-binary"]) {
     PState* pstate = const_cast<PState*>( (currentEStatePtr)->pstate() );
-    int outputVal = (*pstate)[globalVarIdByName("output")].getIntValue();
+    int outputVal = pstate->readFromMemoryLocation(globalVarIdByName("output")).getIntValue();
     if (outputVal > -100) {  //either not a failing assertion or a stderr output treated as a failing assertion)
       return -1;
     }
@@ -1929,10 +1967,6 @@ void Analyzer::runSolver12() {
         ROSE_ASSERT(threadNum>=0 && threadNum<=_numberOfThreadsToUse);
       } else {
         ROSE_ASSERT(currentEStatePtr);
-        if(variableValueMonitor.isActive()) {
-          variableValueMonitor.update(this,const_cast<EState*>(currentEStatePtr));
-        }
-
         Flow edgeSet=flow.outEdges(currentEStatePtr->label());
         // logger[DEBUG]<< "out-edgeSet size:"<<edgeSet.size()<<endl;
         for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
@@ -1962,7 +1996,6 @@ void Analyzer::runSolver12() {
                 // logger[DEBUG]<<"generate STG-edge:"<<"ICFG-EDGE:"<<e.toString()<<endl;
               }
             }
-
             if((!newEState.constraints()->disequalityExists()) &&(!isFailedAssertEState(&newEState)&&!isVerificationErrorEState(&newEState))) {
               HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=process(newEState);
               const EState* newEStatePtr=pres.second;
@@ -2045,7 +2078,7 @@ bool Analyzer::searchForIOPatterns(PState* startPState, int assertion_id, list<i
                                    int* inputPatternLength) {
   // create a new instance of the startPState
   //TODO: check why init of "output" is necessary
-  (*startPState).setVariableToValue(globalVarIdByName("output"),
+  (*startPState).writeToMemoryLocation(globalVarIdByName("output"),
                                     CodeThorn::AbstractValue(-7));
   PState newStartPState = *startPState;
   // initialize worklist
@@ -2111,7 +2144,7 @@ bool Analyzer::searchForIOPatterns(PState* startPState, int assertion_id, list<i
       for (set<int>::iterator inputVal=_inputVarValues.begin(); inputVal!=_inputVarValues.end(); inputVal++) {
         // copy the state and initialize new input
         PState newPState = currentState.first;
-        newPState.setVariableToValue(globalVarIdByName("input"),
+        newPState.writeToMemoryLocation(globalVarIdByName("input"),
                                      CodeThorn::AbstractValue(*inputVal));
         list<int> newHistory = currentState.second;
         ROSE_ASSERT(newHistory.size() % 2 == 0);
@@ -2216,7 +2249,7 @@ int Analyzer::pStateDepthFirstSearch(PState* startPState, int maxDepth, int thre
     for (set<int>::iterator inputVal=_inputVarValues.begin(); inputVal!=_inputVarValues.end(); inputVal++) {
       // copy the state and initialize new input
       PState newPState = currentState.first;
-      newPState[globalVarIdByName("input")]=CodeThorn::AbstractValue(*inputVal);
+      newPState.writeToMemoryLocation(globalVarIdByName("input"),CodeThorn::AbstractValue(*inputVal));
       list<int> newHistory = currentState.second;
       ROSE_ASSERT(newHistory.size() % 2 == 0);
       newHistory.push_back(*inputVal);
@@ -2282,7 +2315,7 @@ list<int> Analyzer::inputsFromPatternTwoRepetitions(list<int> pattern2r) {
 
 bool Analyzer::computePStateAfterInputs(PState& pState, int input, int thread_id, list<int>* iOSequence) {
   //pState[globalVarIdByName("input")]=CodeThorn::AbstractValue(input);
-  pState.setVariableToValue(globalVarIdByName("input"),
+  pState.writeToMemoryLocation(globalVarIdByName("input"),
                             CodeThorn::AbstractValue(input));
   RERS_Problem::rersGlobalVarsCallInit(this, pState, thread_id);
   (void) RERS_Problem::calculate_output(thread_id);
@@ -2302,7 +2335,7 @@ bool Analyzer::computePStateAfterInputs(PState& pState, int input, int thread_id
 bool Analyzer::computePStateAfterInputs(PState& pState, list<int>& inputs, int thread_id, list<int>* iOSequence) {
   for (list<int>::iterator i = inputs.begin(); i !=inputs.end(); i++) {
     //pState[globalVarIdByName("input")]=CodeThorn::AbstractValue(*i);
-    pState.setVariableToValue(globalVarIdByName("input"),
+    pState.writeToMemoryLocation(globalVarIdByName("input"),
                               CodeThorn::AbstractValue(*i));
     RERS_Problem::rersGlobalVarsCallInit(this, pState, thread_id);
     (void) RERS_Problem::calculate_output(thread_id);
@@ -2587,10 +2620,10 @@ string Analyzer::reversedInOutRunToString(list<const EState*>& run) {
     PState* pstate = const_cast<PState*>( (*i)->pstate() );
     int inOutVal;
     if ((*i)->io.isStdInIO()) {
-      inOutVal = (*pstate)[globalVarIdByName("input")].getIntValue();
+      inOutVal = pstate->readFromMemoryLocation(globalVarIdByName("input")).getIntValue();
       result += "i";
     } else if ((*i)->io.isStdOutIO()) {
-      inOutVal = (*pstate)[globalVarIdByName("output")].getIntValue();
+      inOutVal = pstate->readFromMemoryLocation(globalVarIdByName("output")).getIntValue();
       result += "o";
     } else {
       ROSE_ASSERT(0);  //function is supposed to handle list of stdIn and stdOut states only
@@ -2719,11 +2752,9 @@ void Analyzer::setAnalyzerToSolver8(EState* startEState, bool resetAnalyzerData)
     list<int> newInputSequence;
     _inputSequence = newInputSequence;
     resetInputSequenceIterator();
-#ifndef USE_CUSTOM_HSET
     estateSet.max_load_factor(0.7);
     pstateSet.max_load_factor(0.7);
     constraintSetMaintainer.max_load_factor(0.7);
-#endif
   }
   // initialize worklist
   const EState* currentEState=processNewOrExisting(*startEState);
@@ -2752,15 +2783,15 @@ void Analyzer::continueAnalysisFrom(EState * newStartEState) {
   mapAddressGlobalVar[addr]=name;
 }
 
- void Analyzer::setCompoundIncVarsSet(set<VariableId> ciVars) {
+ void Analyzer::setCompoundIncVarsSet(set<AbstractValue> ciVars) {
    _compoundIncVarsSet=ciVars;
  }
 
- void Analyzer::setSmallActivityVarsSet(set<VariableId> saVars) {
+ void Analyzer::setSmallActivityVarsSet(set<AbstractValue> saVars) {
    _smallActivityVarsSet=saVars;
  }
 
- void Analyzer::setAssertCondVarsSet(set<VariableId> acVars) {
+ void Analyzer::setAssertCondVarsSet(set<AbstractValue> acVars) {
    _assertCondVarsSet=acVars;
  }
 
@@ -2836,7 +2867,7 @@ std::list<EState> Analyzer::transferFunctionCall(Edge edge, const EState* estate
     }
     // above evalConstInt does not use constraints (par3==false). Therefore top vars remain top vars (which is what we want here)
     //newPState[formalParameterVarId]=evalResult.value();
-    newPState.setVariableToValue(formalParameterVarId,evalResult.value());
+    newPState.writeToMemoryLocation(formalParameterVarId,evalResult.value());
     ++i;++j;
   }
   // assert must hold if #formal-params==#actual-params (TODO: default values)
@@ -2883,7 +2914,7 @@ std::list<EState> Analyzer::transferFunctionCallLocalEdge(Edge edge, const EStat
 	  // error label encoded in the output value, storing it in the new failing assertion EState
 	  PState newPstate  = _pstate;
 	  //newPstate[globalVarIdByName("output")]=CodeThorn::AbstractValue(rers_result);
-	  newPstate.setVariableToValue(globalVarIdByName("output"),
+	  newPstate.writeToMemoryLocation(globalVarIdByName("output"),
                                        CodeThorn::AbstractValue(rers_result));
 	  EState _eState=createEState(edge.target(),newPstate,_cset,_io);
 	  return elistify(_eState);
@@ -2898,7 +2929,7 @@ std::list<EState> Analyzer::transferFunctionCallLocalEdge(Edge edge, const EStat
 	  ROSE_ASSERT(isLhsVar); // must hold
 	  // logger[DEBUG]<< "lhsvar:rers-result:"<<lhsVarId.toString()<<"="<<rers_result<<endl;
 	  //_pstate[lhsVarId]=AbstractValue(rers_result);
-	  _pstate.setVariableToValue(lhsVarId,AbstractValue(rers_result));
+	  _pstate.writeToMemoryLocation(lhsVarId,AbstractValue(rers_result));
 	  ConstraintSet _cset=*estate->constraints();
 	  _cset.removeAllConstraintsOfVar(lhsVarId);
 	  EState _eState=createEState(edge.target(),_pstate,_cset);
@@ -2983,13 +3014,12 @@ std::list<EState> Analyzer::transferFunctionCallReturn(Edge edge, const EState* 
       returnVarId=variableIdMapping.createUniqueTemporaryVariableId(string("$return"));
     }
 
-    if(newPState.find(returnVarId)!=newPState.end()) {
-      AValue evalResult=newPState[returnVarId];
+    if(newPState.varExists(returnVarId)) {
+      AbstractValue evalResult=newPState.readFromMemoryLocation(returnVarId);
       //newPState[lhsVarId]=evalResult;
-      newPState.setVariableToValue(lhsVarId,evalResult);
+      newPState.writeToMemoryLocation(lhsVarId,evalResult);
 
       cset.addAssignEqVarVar(lhsVarId,returnVarId);
-
       newPState.deleteVar(returnVarId); // remove $return from state
       cset.removeAllConstraintsOfVar(returnVarId); // remove constraints of $return
 
@@ -3043,7 +3073,7 @@ std::list<EState> Analyzer::transferFunctionExit(Edge edge, const EState* estate
     for(VariableIdMapping::VariableIdSet::iterator i=vars.begin();i!=vars.end();++i) {
       VariableId varId=*i;
       newPState.deleteVar(varId);
-        cset.removeAllConstraintsOfVar(varId);
+      cset.removeAllConstraintsOfVar(varId);
     }
     // ad 3)
     return elistify(createEState(edge.target(),newPState,cset));
@@ -3055,7 +3085,6 @@ std::list<EState> Analyzer::transferFunctionExit(Edge edge, const EState* estate
 
 SgNode* findExprNodeInAstUpwards(VariantT variant,SgNode* node) {
   while(node!=nullptr&&isSgExpression(node)&&(node->variantT()!=variant)) {
-    cout<<"DEBUG: findExprNode @"<<node->class_name()<<endl;
     node=node->get_parent();
   }
   if(node)
@@ -3075,7 +3104,7 @@ std::list<EState> Analyzer::transferFunctionCallExternal(Edge edge, const EState
   SgNode* nextNodeToAnalyze1=cfanalyzer->getNode(edge.source());
   ROSE_ASSERT(nextNodeToAnalyze1);
 
-  cout<<"DEBUG: external function call (statement): "<<nextNodeToAnalyze1->unparseToString()<<endl;
+  //cout<<"DEBUG: external function call (statement): "<<nextNodeToAnalyze1->unparseToString()<<endl;
 
   InputOutput newio;
   Label lab=getLabeler()->getLabel(nextNodeToAnalyze1);
@@ -3112,13 +3141,13 @@ std::list<EState> Analyzer::transferFunctionCallExternal(Edge edge, const EState
       if(boolOptions["input-values-as-constraints"]) {
         newCSet.removeAllConstraintsOfVar(varId);
         //newPState[varId]=CodeThorn::Top();
-        newPState.setVariableToTop(varId);
+        newPState.writeTopToMemoryLocation(varId);
         newCSet.addConstraint(Constraint(Constraint::EQ_VAR_CONST,varId,AbstractValue(newValue)));
         ROSE_ASSERT(newCSet.size()>0);
       } else {
         newCSet.removeAllConstraintsOfVar(varId);
         //newPState[varId]=AbstractValue(newValue);
-        newPState.setVariableToValue(varId,AbstractValue(newValue));
+        newPState.writeToMemoryLocation(varId,AbstractValue(newValue));
       }
       newio.recordVariable(InputOutput::STDIN_VAR,varId);
       EState estate=createEState(edge.target(),newPState,newCSet,newio);
@@ -3137,14 +3166,14 @@ std::list<EState> Analyzer::transferFunctionCallExternal(Edge edge, const EState
           if(boolOptions["input-values-as-constraints"]) {
             newCSet.removeAllConstraintsOfVar(varId);
             //newPState[varId]=CodeThorn::Top();
-            newPState.setVariableToTop(varId);
+            newPState.writeTopToMemoryLocation(varId);
             newCSet.addConstraint(Constraint(Constraint::EQ_VAR_CONST,varId,AbstractValue(*i)));
             assert(newCSet.size()>0);
           } else {
             newCSet.removeAllConstraintsOfVar(varId);
             // new input value must be const (otherwise constraints must be used)
             //newPState[varId]=AbstractValue(*i);
-            newPState.setVariableToValue(varId,AbstractValue(*i));
+            newPState.writeToMemoryLocation(varId,AbstractValue(*i));
           }
           newio.recordVariable(InputOutput::STDIN_VAR,varId);
           EState estate=createEState(edge.target(),newPState,newCSet,newio);
@@ -3159,7 +3188,7 @@ std::list<EState> Analyzer::transferFunctionCallExternal(Edge edge, const EState
         ConstraintSet newCSet=*currentEState.constraints();
         // update input var
         newCSet.removeAllConstraintsOfVar(varId);
-        newPState.setVariableToTop(varId);
+        newPState.writeTopToMemoryLocation(varId);
         newio.recordVariable(InputOutput::STDIN_VAR,varId);
         return elistify(createEState(edge.target(),newPState,newCSet,newio));
       }
@@ -3267,7 +3296,7 @@ list<EState> Analyzer::transferIncDecOp(SgNode* nextNodeToAnalyze2, Edge edge, c
     PState newPState=*estate.pstate();
     ConstraintSet cset=*estate.constraints();
 
-    AbstractValue varVal=newPState[var];
+    AbstractValue varVal=newPState.readFromMemoryLocation(var);
     AbstractValue const1=1;
     switch(nextNodeToAnalyze2->variantT()) {
     case V_SgPlusPlusOp:
@@ -3277,14 +3306,14 @@ list<EState> Analyzer::transferIncDecOp(SgNode* nextNodeToAnalyze2, Edge edge, c
       varVal=varVal-const1; // overloaded binary - operator
       break;
     default:
-      logger[ERROR] << "Operator-AST:"<<SPRAY::AstTerm::astTermToMultiLineString(nextNodeToAnalyze2,2)<<endl;
+      logger[ERROR] << "Operator-AST:"<<AstTerm::astTermToMultiLineString(nextNodeToAnalyze2,2)<<endl;
       logger[ERROR] << "Operator:"<<SgNodeHelper::nodeToString(nextNodeToAnalyze2)<<endl;
       logger[ERROR] << "Operand:"<<SgNodeHelper::nodeToString(nextNodeToAnalyze3)<<endl;
       logger[ERROR] <<"programmatic error in handling of inc/dec operators."<<endl;
       exit(1);
     }
     //newPState[var]=varVal;
-    newPState.setVariableToValue(var,varVal);
+    newPState.writeToMemoryLocation(var,varVal);
 
     if(!(*i).result.isTop())
       cset.removeAllConstraintsOfVar(var);
@@ -3312,24 +3341,15 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
       ConstraintSet cset=*estate.constraints();
       // only update integer variables. Ensure values of floating-point variables are not computed
       if(variableIdMapping.hasIntegerType(lhsVar)) {
-        if(variableValueMonitor.isActive() && variableValueMonitor.isHotVariable(this,lhsVar)) {
-          // logger[DEBUG]<<"Topifying hot variable :)"<<lhsVar.toString()<<endl;
-          newPState.setVariableToTop(lhsVar);
-        } else {
-          // logger[DEBUG]<<"assign lhs var:"<<lhsVar.toString()<<endl;
-          newPState.setVariableToValue(lhsVar,(*i).result);
-        }
+        newPState.writeToMemoryLocation(lhsVar,(*i).result);
       } else if(variableIdMapping.hasPointerType(lhsVar)) {
         // we assume here that only arrays (pointers to arrays) are assigned
         //newPState[lhsVar]=(*i).result;
-        if(variableValueMonitor.isActive() && variableValueMonitor.isHotVariable(this,lhsVar)) {
-          newPState.setVariableToTop(lhsVar);
-        } else {
-          newPState.setVariableToValue(lhsVar,(*i).result);
-        }
+        newPState.writeToMemoryLocation(lhsVar,(*i).result);
       }
-      if(!(*i).result.isTop())
+      if(!(*i).result.isTop()) {
         cset.removeAllConstraintsOfVar(lhsVar);
+      }
       estateList.push_back(createEState(edge.target(),newPState,cset));
     } else if(isSgPntrArrRefExp(lhs)) {
       // for now we ignore array refs on lhs
@@ -3349,19 +3369,21 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
         if(SgVarRefExp* varRefExp=isSgVarRefExp(arrExp)) {
           PState pstate2=oldPState;
           VariableId arrayVarId=_variableIdMapping->variableId(varRefExp);
-          AValue arrayPtrValue;
+          AbstractValue arrayPtrValue;
           // two cases
           if(_variableIdMapping->hasArrayType(arrayVarId)) {
-            // create array element 0 (in preparation to have index added, or, if not index is used, it is already the right index (=0).
+            // create array element 0 (in preparation to have index added, or, if not index is used, it is already the correct index (=0).
             arrayPtrValue=AbstractValue::createAddressOfArray(arrayVarId);
           } else if(_variableIdMapping->hasPointerType(arrayVarId)) {
             // in case it is a pointer retrieve pointer value
-            // logger[DEBUG]<<"pointer-array access!"<<endl;
-            if(pstate2.varExists(arrayVarId)) {
-              arrayPtrValue=pstate2[arrayVarId];
+            AbstractValue ptr=AbstractValue::createAddressOfArray(arrayVarId);
+            if(pstate2.varExists(ptr)) {
+              //cout<<"DEBUG: pointer exists (OK): "<<ptr.toString(_variableIdMapping)<<endl;
+              arrayPtrValue=pstate2.readFromMemoryLocation(ptr);
+              //cout<<"DEBUG: arrayPtrValue: "<<arrayPtrValue.toString(_variableIdMapping)<<endl;
               // convert integer to VariableId
               if(arrayPtrValue.isTop()||arrayPtrValue.isBot()) {
-                logger[ERROR] <<"pointer value in array access lhs is top or bot. Not supported yet."<<endl;
+                logger[ERROR] <<"Error: unsupported feature: "<<nextNodeToAnalyze2->unparseToString()<<arrayPtrValue.toString(_variableIdMapping)<<" array index is top or bot. Not supported yet."<<endl;
                 exit(1);
               }
               // logger[DEBUG]<<"defering pointer-to-array: ptr:"<<_variableIdMapping->variableName(arrayVarId);
@@ -3373,34 +3395,41 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
             logger[ERROR] <<"lhs array access: unkown type of array or pointer."<<endl;
             exit(1);
           }
-          VariableId arrayElementId;
-          //AValue aValue=(*i).value();
+          AbstractValue arrayElementId;
+          //AbstractValue aValue=(*i).value();
           list<SingleEvalResultConstInt> res=exprAnalyzer.evalConstInt(indexExp,currentEState,true);
           ROSE_ASSERT(res.size()==1); // TODO: temporary restriction
-          AValue indexValue=(*(res.begin())).value();
-          AValue arrayPtrPlusIndexValue=AbstractValue::operatorAdd(arrayPtrValue,indexValue);
-          VariableId arrayVarId2=arrayPtrPlusIndexValue.getVariableId();
-          int index2=arrayPtrPlusIndexValue.getIndexIntValue();
-          if(!exprAnalyzer.checkArrayBounds(arrayVarId2,index2)) {
-            cerr<<"Write access: "<<lhs->unparseToString()<<endl;
+          AbstractValue indexValue=(*(res.begin())).value();
+          AbstractValue arrayPtrPlusIndexValue=AbstractValue::operatorAdd(arrayPtrValue,indexValue);
+          //cout<<"DEBUG: arrayPtrPlusIndexValue: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
+
+          // TODO: rewrite to use AbstractValue only
+          {
+            VariableId arrayVarId2=arrayPtrPlusIndexValue.getVariableId();
+            int index2=arrayPtrPlusIndexValue.getIndexIntValue();
+            if(!exprAnalyzer.checkArrayBounds(arrayVarId2,index2)) {
+              cerr<<"Program error detected at "<<SgNodeHelper::sourceLineColumnToString(nextNodeToAnalyze2)<<" : write access out of bounds."<<endl;// ["<<lhs->unparseToString()<<"]"<<endl;
+            }
           }
-          arrayElementId=_variableIdMapping->variableIdOfArrayElement(arrayVarId2,index2);
+          arrayElementId=arrayPtrPlusIndexValue;
+          //cout<<"DEBUG: arrayElementId: "<<arrayElementId.toString(_variableIdMapping)<<endl;
           //logger[TRACE]<<"arrayElementVarId:"<<arrayElementId.toString()<<":"<<_variableIdMapping->variableName(arrayVarId)<<" Index:"<<index<<endl;
-          ROSE_ASSERT(arrayElementId.isValid());
+          ROSE_ASSERT(!arrayElementId.isBot());
           // read value of variable var id (same as for VarRefExp - TODO: reuse)
           // TODO: check whether arrayElementId (or array) is a constant array (arrayVarId)
           if(pstate2.varExists(arrayElementId)) {
             // TODO: handle constraints
-            pstate2[arrayElementId]=(*i).value(); // *i is assignment-rhs evaluation result
+            pstate2.writeToMemoryLocation(arrayElementId,(*i).value()); // *i is assignment-rhs evaluation result
             estateList.push_back(createEState(edge.target(),pstate2,oldcset));
           } else {
             // check that array is constant array (it is therefore ok that it is not in the state)
-            logger[ERROR] <<"Error: lhs array-access index does not exist in state. Array element id:"<<arrayElementId.toString()<<" PState size:"<<pstate2.size()<<endl;
-            logger[ERROR]<<"PState:"<<pstate2.toString(getVariableIdMapping())<<endl;
-            exit(1);
+            //logger[TRACE] <<"lhs array-access index does not exist in state (creating it now). Array element id:"<<arrayElementId.toString(_variableIdMapping)<<" PState size:"<<pstate2.size()<<endl;
+            //logger[TRACE]<<"PState:"<<pstate2.toString(getVariableIdMapping())<<endl;
+            pstate2.writeToMemoryLocation(arrayElementId,(*i).value()); // *i is assignment-rhs evaluation result
+            estateList.push_back(createEState(edge.target(),pstate2,oldcset));
           }
         } else {
-          logger[ERROR] <<"array-access uses expr for denoting the array. Not supported yet."<<endl;
+          logger[ERROR] <<"array-access uses expr for denoting the array. Normalization missing."<<endl;
           logger[ERROR] <<"expr: "<<lhs->unparseToString()<<endl;
           logger[ERROR] <<"arraySkip: "<<getSkipArrayAccesses()<<endl;
           exit(1);
@@ -3413,20 +3442,19 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
         throw CodeThorn::Exception("more than 1 execution path (probably due to abstraction) in operand's expression of pointer dereference operator on lhs of "+nextNodeToAnalyze2->unparseToString());
       }
       ROSE_ASSERT(resLhs.size()==1);
-      AValue lhsPointerValue=(*resLhs.begin()).result;
+      AbstractValue lhsPointerValue=(*resLhs.begin()).result;
       if(lhsPointerValue.isTop()) {
         // special case. Expr evaluates to top (should be dereferenced)
         PState pstate2=*(estate->pstate());
-         estateList.push_back(createEState(edge.target(),pstate2,*(estate->constraints())));
+        estateList.push_back(createEState(edge.target(),pstate2,*(estate->constraints())));
       }
       if(!(lhsPointerValue.isPtr())) {
-        cerr<<"Error: not a pointer value in dereference operator:"<<lhsPointerValue.toString()<<"<="<<lhs->unparseToString()<<endl;
+        cerr<<"Error: not a pointer value (or top) in dereference operator:"<<lhsPointerValue.toString()<<"<="<<lhs->unparseToString()<<endl;
         exit(1);
       }
-      cout<<lhsPointerValue.toString(getVariableIdMapping());
-      cout<<endl;
+      //cout<<"DEBUG: lhsPointerValue:"<<lhsPointerValue.toString(getVariableIdMapping())<<endl;
       PState pstate2=*(estate->pstate());
-      getExprAnalyzer()->writeToMemoryLocation(pstate2,lhsPointerValue,(*i).result);
+      pstate2.writeToMemoryLocation(lhsPointerValue,(*i).result);
       estateList.push_back(createEState(edge.target(),pstate2,*(estate->constraints())));
     } else {
       //cout<<"DEBUG: else (no var, no ptr) ... "<<endl;
@@ -3450,7 +3478,6 @@ list<EState> Analyzer::transferTrueFalseEdge(SgNode* nextNodeToAnalyze2, Edge ed
   PState newPState;
   ConstraintSet newCSet;
   list<SingleEvalResultConstInt> evalResultList=exprAnalyzer.evalConstInt(nextNodeToAnalyze2,currentEState,true);
-  //assert(evalResultList.size()==1);
   list<EState> newEStateList;
   for(list<SingleEvalResultConstInt>::iterator i=evalResultList.begin();
       i!=evalResultList.end();
@@ -3467,8 +3494,12 @@ list<EState> Analyzer::transferTrueFalseEdge(SgNode* nextNodeToAnalyze2, Edge ed
         ConstraintSet s1=*evalResult.estate.constraints();
         ConstraintSet s2=evalResult.exprConstraints;
         newCSet=s1+s2;
+      } else {
+        logger[ERROR]<<"Expected true/false edge. Found edge:"<<edge.toString()<<endl;
+        exit(1);
       }
-      newEStateList.push_back(createEState(newLabel,newPState,newCSet));
+      EState estate=createEState(newLabel,newPState,newCSet);
+      newEStateList.push_back(estate);
     } else {
       // we determined not to be on an execution path, therefore do nothing (do not add any result to resultlist)
     }
@@ -3476,3 +3507,10 @@ list<EState> Analyzer::transferTrueFalseEdge(SgNode* nextNodeToAnalyze2, Edge ed
   return newEStateList;
 }
 
+void Analyzer::setTypeSizeMapping(SgTypeSizeMapping* typeSizeMapping) {
+  AbstractValue::setTypeSizeMapping(typeSizeMapping);
+}
+
+SgTypeSizeMapping* Analyzer::getTypeSizeMapping() {
+  return AbstractValue::getTypeSizeMapping();
+}

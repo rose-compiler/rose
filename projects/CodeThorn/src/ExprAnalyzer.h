@@ -42,7 +42,7 @@ class SingleEvalResultConstInt {
   EState estate;
   ConstraintSet exprConstraints; // temporary during evaluation of expression
   AbstractValue result;
-  AValue value() {return result;}
+  AbstractValue value() {return result;}
   bool isConstInt() {return result.isConstInt();}
   bool isTop() {return result.isTop();}
   bool isTrue() {return result.isTrue();}
@@ -76,10 +76,11 @@ class ExprAnalyzer {
   bool getExternalFunctionSemantics();
 
   bool checkArrayBounds(VariableId arrayVarId,int accessIndex);
+
+  // deprecated
   VariableId resolveToAbsoluteVariableId(AbstractValue abstrValue) const;
-  AbstractValue readFromMemoryLocation(const PState* pState, AbstractValue abstrValue) const;
-  void writeToMemoryLocation(PState& pState, AbstractValue abstractMemLoc, AbstractValue abstrValue);
-private:
+
+ private:
   //! This function turn a single result into a one-elment list with
   //! this one result. This function is used to combine cases where the result
   //! might be empty or have multiple results as well.
@@ -208,6 +209,9 @@ private:
   list<SingleEvalResultConstInt> evalValueExp(SgValueExp* node, EState estate, bool useConstraints);
 
   list<SingleEvalResultConstInt> evalFunctionCallMalloc(SgFunctionCallExp* funCall, EState estate, bool useConstraints);
+  list<SingleEvalResultConstInt> evalFunctionCallMemCpy(SgFunctionCallExp* funCall, EState estate, bool useConstraints);
+  list<SingleEvalResultConstInt> evalFunctionCallFree(SgFunctionCallExp* funCall, EState estate, bool useConstraints);
+  int getMemoryRegionSize(CodeThorn::AbstractValue ptrToRegion);
 };
 
 } // end of namespace CodeThorn

@@ -461,62 +461,67 @@ void Rose::KeepGoing::generate_reports(SgProject* project,
   if (files_with_errors.size()>0)
   {
     AppendToFile (report_filename__fail, orig_command_str);
-  }
-  BOOST_FOREACH(SgFile* file, files_with_errors)
-  {
+
+    BOOST_FOREACH(SgFile* file, files_with_errors)
+    {
       std::string filename = file->getFileName();
-                  filename = StripPrefix(path_prefix, filename);
+      filename = StripPrefix(path_prefix, filename);
 
       if (verbose)
       {
-          std::cout
-              << "[ERROR] "
-              << "ROSE encountered an error while processing this file: "
-              << "'" << path_prefix << filename << "'"
-              << std::endl;
+        std::cout
+          << "[ERROR] "
+          << "ROSE encountered an error while processing this file: "
+          << "'" << path_prefix << filename << "'"
+          << std::endl;
       }
 
       // <file> <frontend> <unparser> <backend>
       std::stringstream ss;
-      ss << filename << " ";
+      // ss << filename << " "; // no need to output filename again, part of command line already.
+      // Keep all info. of one file into one line. Users can easily count the total failures. 
       if (file->get_frontendErrorCode())
-         ss << "\nFrontend Error Code:" << file->get_frontendErrorCode() ;
+        ss << "\t Frontend Error Code:" << file->get_frontendErrorCode() ;
       if (file->get_javacErrorCode())    
-         ss << "\nJAVA Error Code:"<< file->get_javacErrorCode(); 
+        ss << "\t JAVA Error Code:"<< file->get_javacErrorCode(); 
       if (file->get_unparserErrorCode())   
-         ss << "\nUnparser Error Code:"<< file->get_unparserErrorCode();
+        ss << "\t Unparser Error Code:"<< file->get_unparserErrorCode();
       if (file->get_backendCompilerErrorCode())   
-         ss << "\nBackend Compiler Error Code: " << file->get_backendCompilerErrorCode();
+        ss << "\t Backend Compiler Error Code: " << file->get_backendCompilerErrorCode();
       if (file->get_unparsedFileFailedCompilation())   
-         ss << "\nUnparsed File Failed Compilation Code: "<< file->get_unparsedFileFailedCompilation();
+        ss << "\t Unparsed File Failed Compilation Code: "<< file->get_unparsedFileFailedCompilation();
+      ss<<"\n";  
       AppendToFile(report_filename__fail, ss.str());
-  }
+    }
 
+  }
   // Report successes
   SgFilePtrList files_without_errors = project->get_files_without_errors();
   if (files_without_errors.size()>0)
   {
     AppendToFile (report_filename__pass, orig_command_str);
-  }
- 
-  BOOST_FOREACH(SgFile* file, files_without_errors)
-  {
+
+    BOOST_FOREACH(SgFile* file, files_without_errors)
+    {
       std::string filename = file->getFileName();
-                  filename = StripPrefix(path_prefix, filename);
+      filename = StripPrefix(path_prefix, filename);
 
       if (verbose)
       {
-          std::cout
-              << "[INFO] "
-              << "ROSE successfully compiled this file: "
-              << "'" << path_prefix << filename << "'"
-              << std::endl;
+        std::cout
+          << "[INFO] "
+          << "ROSE successfully compiled this file: "
+          << "'" << path_prefix << filename << "'"
+          << std::endl;
       }
 
+#if 0  // no need to output file name again, part of command line already
       std::stringstream ss;
       ss << filename;
 
       AppendToFile(report_filename__pass, ss.str());
+#endif       
+    }
   }
 
   if (!expectations_filename__fail.empty())
@@ -709,7 +714,7 @@ void Rose::KeepGoing::touch(const std::string& pathname)
 #endif
 }
 
-
+//! AppendToFile , automatically add a trailing \n .
 void
 Rose::KeepGoing::AppendToFile(const std::string& filename, const std::string& msg)
 {

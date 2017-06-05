@@ -114,10 +114,10 @@ bool VariableIdMapping::isConstantArray(VariableId varId) {
 void VariableIdMapping::toStream(ostream& os) {
   for(size_t i=0;i<mappingVarIdToSym.size();++i) {
     os<<""<<i
-      <<","<<mappingVarIdToSym[i]
-      <<","<<SgNodeHelper::symbolToString(mappingVarIdToSym[i])
-      <<","<<SgNodeHelper::uniqueLongVariableName(mappingVarIdToSym[i])
-      <<endl;
+      <<","<<mappingVarIdToSym[i];
+    os  <<","<<SgNodeHelper::symbolToString(mappingVarIdToSym[i])
+      //<<","<<SgNodeHelper::uniqueLongVariableName(mappingVarIdToSym[i])
+        <<endl;
     ROSE_ASSERT(modeVariableIdForEachArrayElement?true:mappingSymToVarId[mappingVarIdToSym[i]]==i);
   }
 }
@@ -242,7 +242,6 @@ void VariableIdMapping::generateDot(string filename, SgNode* astRoot) {
       if(sym)
         generateStmtSymbolDotEdge(myfile,initname,variableId(initname));
 #else          
-      cout << "AT:"<<initname->get_name()<<endl;
       if(initname->get_name()=="") {
         cerr<<"WARNING: SgInitializedName::get_name()==\"\" .. skipping."<<endl;
       } else {
@@ -345,7 +344,6 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
         }
         else {
           //cout << "computeVariableSymbolMapping: SgInitializedName \"" << initName->unparseToString() << "\" without associated symbol found." << endl;
-
           // Registration is not possible without symbol.
           // This is presumably a parameter in a declaration, a built-in variable (e.g. __builtin__x), an enum value, or a child of a SgCtorInitializerList.
           //  TODO: Is it possible to assert this?
@@ -366,7 +364,6 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
           // New symbol: Check for array symbol:
           if(SgArrayType* arrayType=isSgArrayType(type)) {
             // Try to find the array dimensions:
-            //cout<<"DEBUG: found array type."<<endl;
             // returns 0 if type does not contain size
             int arraySize = getArrayElementCount(arrayType);
             if(arraySize==0) {
@@ -538,6 +535,7 @@ bool VariableIdMapping::isVariableIdValid(VariableId varId) {
   * \author Markus Schordan
   * \date 2012.
  */
+// deprecated (use createAndRegisterVariableId instead)
 VariableId
 VariableIdMapping::createUniqueTemporaryVariableId(string name) {
   for(TemporaryVariableIdMapping::iterator i=temporaryVariableIdMapping.begin();
@@ -550,11 +548,30 @@ VariableIdMapping::createUniqueTemporaryVariableId(string name) {
     }
   }
   // temporary variable with name 'name' does not exist yet, create, register, and return
-  SgSymbol* sym=new UniqueTemporaryVariableSymbol(name);
-  registerNewSymbol(sym);
+  SgSymbol* sym=createAndRegisterNewSymbol(name);
   VariableId newVarId=variableId(sym);
   temporaryVariableIdMapping.insert(make_pair(newVarId,name));
   return newVarId;
+}
+
+SgSymbol* VariableIdMapping::createAndRegisterNewSymbol(std::string name) {
+  SgSymbol* sym=new UniqueTemporaryVariableSymbol(name);
+  registerNewSymbol(sym);
+  return sym;
+}
+
+SPRAY::VariableId VariableIdMapping::createAndRegisterNewVariableId(std::string name) {
+  SgSymbol* sym=createAndRegisterNewSymbol(name);
+  VariableId varId=variableId(sym);
+  setSize(varId,1); // default
+  return varId;
+}
+
+SPRAY::VariableId VariableIdMapping::createAndRegisterNewMemoryRegion(std::string name, int regionSize) {
+  SgSymbol* sym=createAndRegisterNewSymbol(name);
+  VariableId varId=variableId(sym);
+  setSize(varId,regionSize);
+  return varId;
 }
 
 void VariableIdMapping::registerNewArraySymbol(SgSymbol* sym, int arraySize) {
@@ -618,11 +635,13 @@ void VariableIdMapping::registerNewSymbol(SgSymbol* sym) {
  */
 // we use a function as a destructor may delete it multiple times
 void VariableIdMapping::deleteUniqueTemporaryVariableId(VariableId varId) {
-  if(isTemporaryVariableId(varId))
-    delete getSymbol(varId);
-  else
+  if(isTemporaryVariableId(varId)) {
+    cerr<<"DEBUG WARNING: not deleting temporary variable id symbol."<<endl;
+    //delete getSymbol(varId);
+  } else {
     throw SPRAY::Exception("VariableIdMapping::deleteUniqueTemporaryVariableSymbol: improper id operation.");
-}
+  }
+  }
 
 /*! 
   * \author Markus Schordan
@@ -663,14 +682,27 @@ VariableId::toString() const {
 }
 
 string
-VariableId::toString(VariableIdMapping& vim) const {
+VariableId::toUniqueString(VariableIdMapping& vim) const {
   return vim.uniqueShortVariableName(*this);
+}
+
+string
+VariableId::toUniqueString(VariableIdMapping* vim) const {
+  if(vim)
+    return vim->uniqueShortVariableName(*this);
+  else
+    return toString();
+}
+
+string
+VariableId::toString(VariableIdMapping& vim) const {
+  return vim.variableName(*this);
 }
 
 string
 VariableId::toString(VariableIdMapping* vim) const {
   if(vim)
-    return vim->uniqueShortVariableName(*this);
+    return vim->variableName(*this);
   else
     return toString();
 }

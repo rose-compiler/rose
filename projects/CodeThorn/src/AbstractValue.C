@@ -14,10 +14,14 @@
 #include "Miscellaneous.h"
 #include "Miscellaneous2.h"
 #include "CodeThornException.h"
+#include "VariableIdMapping.h"
+#include "TypeSizeMapping.h"
 
 using namespace std;
-
+using namespace SPRAY;
 using namespace CodeThorn;
+
+SgTypeSizeMapping* AbstractValue::_typeSizeMapping=new SgTypeSizeMapping();
 
 istream& CodeThorn::operator>>(istream& is, AbstractValue& value) {
   value.fromStream(is);
@@ -29,50 +33,96 @@ istream& CodeThorn::operator>>(istream& is, AbstractValue& value) {
 AbstractValue::AbstractValue():valueType(AbstractValue::BOT),intValue(0) {}
 
 // type conversion
+// TODO: represent value 'unitialized' here
+AbstractValue::AbstractValue(VariableId varId):valueType(AbstractValue::PTR),variableId(varId),intValue(0) {
+}
+
+// type conversion
 AbstractValue::AbstractValue(bool val) {
   if(val) {
-    valueType=AbstractValue::CONSTINT;
+    valueType=AbstractValue::INTEGER;
     intValue=1;
   } else {
-    valueType=AbstractValue::CONSTINT;
+    valueType=AbstractValue::INTEGER;
     intValue=0;
   }
+}
+
+void AbstractValue::setTypeSizeMapping(SgTypeSizeMapping* typeSizeMapping) {
+  if(AbstractValue::_typeSizeMapping!=nullptr) {
+    delete _typeSizeMapping;
+  }
+  AbstractValue::_typeSizeMapping=typeSizeMapping;
+}
+
+SgTypeSizeMapping* AbstractValue::getTypeSizeMapping() {
+  return  _typeSizeMapping;
+}
+
+void AbstractValue::calculateValueSize(CodeThorn::BuiltInType btype) {
+  ROSE_ASSERT(AbstractValue::_typeSizeMapping);
+  valueSize=AbstractValue::_typeSizeMapping->getTypeSize(btype);
+}
+
+void AbstractValue::setValue(long long int val) {
+  ROSE_ASSERT(valueSize!=0);
+  // TODO: truncate here if necessary
+  intValue=val;
+}
+
+AbstractValue AbstractValue::createIntegerValue(CodeThorn::BuiltInType btype, long long int ival) {
+  AbstractValue aval;
+  aval.init(btype,ival);
+  return aval;
+}
+
+void AbstractValue::init(CodeThorn::BuiltInType btype, long long int ival) {
+  valueType=AbstractValue::INTEGER;
+  calculateValueSize(btype);
+  setValue(ival);
 }
 
 // type conversion
 AbstractValue::AbstractValue(Top e) {valueType=AbstractValue::TOP;intValue=0;}
 // type conversion
 AbstractValue::AbstractValue(Bot e) {valueType=AbstractValue::BOT;intValue=0;}
-// type conversion
-AbstractValue::AbstractValue(unsigned char x) {valueType=AbstractValue::CONSTINT;intValue=(int)x;}
-AbstractValue::AbstractValue(signed char x) {valueType=AbstractValue::CONSTINT;intValue=(int)x;}
-AbstractValue::AbstractValue(short x) {valueType=AbstractValue::CONSTINT;intValue=(int)x;}
-AbstractValue::AbstractValue(int x) {valueType=AbstractValue::CONSTINT;intValue=x;}
+
+AbstractValue::AbstractValue(unsigned char x) {
+  init(BITYPE_UCHAR,x);
+}
+AbstractValue::AbstractValue(signed char x) {
+  init(BITYPE_SCHAR,x);
+}
+AbstractValue::AbstractValue(short x) {
+  init(BITYPE_SSHORT,x);
+}
+AbstractValue::AbstractValue(int x) {
+  init(BITYPE_SINT,x);
+}
 AbstractValue::AbstractValue(long int x) {
-  if((x<INT_MIN || x>INT_MAX)) throw CodeThorn::Exception("Error: numbers outside 'signed int' range not supported.");
-   valueType=AbstractValue::CONSTINT;intValue=(int)x;
+  init(BITYPE_SLONG,x);
 }
 AbstractValue::AbstractValue(long long int x) {
-  if((x<INT_MIN || x>INT_MAX)) throw CodeThorn::Exception("Error: numbers outside 'signed int' range not supported.");
-  valueType=AbstractValue::CONSTINT;intValue=(int)x;
-}
-AbstractValue::AbstractValue(unsigned short int x) {
-  if((x>INT_MAX)) throw CodeThorn::Exception("Error: numbers outside 'signed int' range not supported.");
-  valueType=AbstractValue::CONSTINT;intValue=(int)x;
-}
-AbstractValue::AbstractValue(unsigned int x) {
-  if((x>INT_MAX)) throw CodeThorn::Exception("Error: numbers outside 'signed int' range not supported.");
-  valueType=AbstractValue::CONSTINT;intValue=(int)x;
-}
-AbstractValue::AbstractValue(unsigned long int x) {
-  if((x>INT_MAX)) throw CodeThorn::Exception("Error: numbers outside 'signed int' range not supported.");
-  valueType=AbstractValue::CONSTINT;intValue=(int)x;
-}
-AbstractValue::AbstractValue(unsigned long long int x) {
-  if((x>INT_MAX)) throw CodeThorn::Exception("Error: numbers outside 'signed int' range not supported.");
-  valueType=AbstractValue::CONSTINT;intValue=(int)x;
+  init(BITYPE_SLONG_LONG,x);
 }
 
+AbstractValue::AbstractValue(unsigned short int x) {
+  init(BITYPE_USHORT,x);
+}
+AbstractValue::AbstractValue(unsigned int x) {
+  init(BITYPE_UINT,x);
+}
+AbstractValue::AbstractValue(unsigned long int x) {
+  init(BITYPE_ULONG,x);
+}
+AbstractValue::AbstractValue(unsigned long long int x) {
+  init(BITYPE_ULONG_LONG,x);
+}
+
+AbstractValue 
+AbstractValue::createAddressOfVariable(SPRAY::VariableId varId) {
+  return AbstractValue::createAddressOfArray(varId);
+}
 AbstractValue 
 AbstractValue::createAddressOfArray(SPRAY::VariableId arrayVarId) {
   return AbstractValue::createAddressOfArrayElement(arrayVarId,AbstractValue(0));
@@ -99,22 +149,21 @@ AbstractValue::createAddressOfArrayElement(SPRAY::VariableId arrayVariableId,
 std::string AbstractValue::valueTypeToString() const {
   switch(valueType) {
   case TOP: return "top";
-  case CONSTINT: return "constint";
+  case INTEGER: return "constint";
+  case FLOAT: return "float";
   case PTR: return "ptr";
-  case RAW_PTR: return "rawptr";
+  case REF: return "ref";
   case BOT: return "bot";
   default:
     return "unknown";
   }
 }
 
-int AbstractValue::intLength() { return sizeof(int); }
-
 bool AbstractValue::isTop() const {return valueType==AbstractValue::TOP;}
-bool AbstractValue::isTrue() const {return valueType==AbstractValue::CONSTINT && intValue!=0;}
-bool AbstractValue::isFalse() const {return valueType==AbstractValue::CONSTINT && intValue==0;}
+bool AbstractValue::isTrue() const {return valueType==AbstractValue::INTEGER && intValue!=0;}
+bool AbstractValue::isFalse() const {return valueType==AbstractValue::INTEGER && intValue==0;}
 bool AbstractValue::isBot() const {return valueType==AbstractValue::BOT;}
-bool AbstractValue::isConstInt() const {return valueType==AbstractValue::CONSTINT;}
+bool AbstractValue::isConstInt() const {return valueType==AbstractValue::INTEGER;}
 bool AbstractValue::isPtr() const {return valueType==AbstractValue::PTR;}
 
 long AbstractValue::hash() const {
@@ -128,7 +177,7 @@ long AbstractValue::hash() const {
 AbstractValue AbstractValue::operatorNot() {
   AbstractValue tmp;
   switch(valueType) {
-  case AbstractValue::CONSTINT: 
+  case AbstractValue::INTEGER: 
     tmp.valueType=valueType;
     if(intValue==0) {
       tmp.intValue=1;
@@ -211,7 +260,11 @@ bool CodeThorn::strictWeakOrderingIsSmaller(const AbstractValue& c1, const Abstr
       if(c1.getVariableId()!=c2.getVariableId()) {
         return c1.getVariableId()<c2.getVariableId();
       } else {
-        return c1.getIntValue()<c2.getIntValue();
+        if(c1.getIntValue()!=c2.getIntValue()) {
+          return c1.getIntValue()<c2.getIntValue();
+        } else {
+          return c1.getValueSize()<c2.getValueSize();
+        }
       }
     } else if (c1.isBot()==c2.isBot()) {
       return false;
@@ -226,9 +279,9 @@ bool CodeThorn::strictWeakOrderingIsSmaller(const AbstractValue& c1, const Abstr
 bool CodeThorn::strictWeakOrderingIsEqual(const AbstractValue& c1, const AbstractValue& c2) {
   if(c1.getValueType()==c2.getValueType()) {
     if(c1.isConstInt() && c2.isConstInt())
-      return c1.getIntValue()==c2.getIntValue();
+      return c1.getIntValue()==c2.getIntValue() && c1.getValueSize()==c2.getValueSize();
     else if(c1.isPtr() && c2.isPtr()) {
-      return c1.getVariableId()==c2.getVariableId() && c1.getIntValue()==c2.getIntValue();
+      return c1.getVariableId()==c2.getVariableId() && c1.getIntValue()==c2.getIntValue() && c1.getValueSize()==c2.getValueSize();
     } else {
       ROSE_ASSERT((c1.isTop()&&c2.isTop()) || (c1.isBot()&&c2.isBot()));
       return true;
@@ -243,8 +296,17 @@ bool CodeThorn::AbstractValueCmp::operator()(const AbstractValue& c1, const Abst
   return CodeThorn::strictWeakOrderingIsSmaller(c1,c2);
 }
 
-bool AbstractValue::operator==(AbstractValue other) const {
+//bool AbstractValue::operator==(AbstractValue other) const {
+//  return CodeThorn::strictWeakOrderingIsEqual(*this,other);
+//}
+//bool AbstractValue::operator!=(AbstractValue other) const {
+//  return !CodeThorn::strictWeakOrderingIsEqual(*this,other);
+//}
+bool AbstractValue::operator==(const AbstractValue other) const {
   return CodeThorn::strictWeakOrderingIsEqual(*this,other);
+}
+bool AbstractValue::operator!=(const AbstractValue other) const {
+  return !CodeThorn::strictWeakOrderingIsEqual(*this,other);
 }
 bool AbstractValue::operator<(AbstractValue other) const {
   return CodeThorn::strictWeakOrderingIsSmaller(*this,other);
@@ -262,9 +324,9 @@ AbstractValue AbstractValue::operatorEq(AbstractValue other) const {
   } else if(other.valueType==BOT) { 
     return *this;
   } else if(isPtr() && other.isPtr()) {
-    return AbstractValue(variableId==other.variableId && intValue==other.intValue);
+    return AbstractValue(variableId==other.variableId && intValue==other.intValue && getValueSize()==other.getValueSize());
   } else if(isConstInt() && other.isConstInt()) {
-    return AbstractValue(intValue==other.intValue);
+    return AbstractValue(intValue==other.intValue && getValueSize()==other.getValueSize());
   } else {
     return AbstractValue(Top()); // all other cases can be true or false
   }
@@ -380,18 +442,67 @@ AbstractValue AbstractValue::operatorBitwiseShiftRight(AbstractValue other) cons
   return getIntValue()>>other.getIntValue();
 }
 
-string AbstractValue::toString(SPRAY::VariableIdMapping* vim) const {
+string AbstractValue::toLhsString(SPRAY::VariableIdMapping* vim) const {
   switch(valueType) {
   case TOP: return "top";
   case BOT: return "bot";
-  case CONSTINT: {
+  case INTEGER: {
     stringstream ss;
     ss<<getIntValue();
     return ss.str();
   }
   case PTR: {
     stringstream ss;
-    ss<<"("<<variableId.toString(vim)<<","<<getIntValue()<<")";
+    if(vim->getSize(variableId)==1) {
+      ss<<variableId.toString(vim); // variables are arrays of size 1
+    } else {
+      ss<<variableId.toString(vim)<<"["<<getIntValue()<<"]";
+    }
+    return ss.str();
+  }
+  default:
+    throw CodeThorn::Exception("Error: AbstractValue::toLhsString operation failed. Unknown abstraction type.");
+  }
+}
+
+string AbstractValue::toRhsString(SPRAY::VariableIdMapping* vim) const {
+  switch(valueType) {
+  case TOP: return "top";
+  case BOT: return "bot";
+  case INTEGER: {
+    stringstream ss;
+    ss<<getIntValue();
+    return ss.str();
+  }
+  case PTR: {
+    stringstream ss;
+    ss<<"&"; // on the rhs an abstract pointer is always a pointer value of some abstract value
+    if(vim->getSize(variableId)==1) {
+      ss<<variableId.toString(vim); // variables are arrays of size 1
+    } else {
+      ss<<variableId.toString(vim)<<"["<<getIntValue()<<"]";
+    }
+    return ss.str();
+  }
+  default:
+    throw CodeThorn::Exception("Error: AbstractValue::toRhsString operation failed. Unknown abstraction type.");
+  }
+}
+
+string AbstractValue::toString(SPRAY::VariableIdMapping* vim) const {
+  switch(valueType) {
+  case TOP: return "top";
+  case BOT: return "bot";
+  case INTEGER: {
+    stringstream ss;
+    ss<<getIntValue();
+    return ss.str();
+  }
+  case PTR: {
+    stringstream ss;
+    ss<<"(";
+    ss<<variableId.toString(vim);
+    ss<<","<<getIntValue()<<")";
     return ss.str();
   }
   default:
@@ -403,7 +514,7 @@ string AbstractValue::toString() const {
   switch(valueType) {
   case TOP: return "top";
   case BOT: return "bot";
-  case CONSTINT: {
+  case INTEGER: {
     stringstream ss;
     ss<<getIntValue();
     return ss.str();
@@ -419,14 +530,16 @@ string AbstractValue::toString() const {
 }
 
 void AbstractValue::fromStream(istream& is) {
+  int tmpintValue=0;
   if(SPRAY::Parse::checkWord("top",is)) {
     valueType=TOP;
     intValue=0;
   } else if(SPRAY::Parse::checkWord("bot",is)) {
     valueType=BOT;
     intValue=0;
-  } else if(SPRAY::Parse::integer(is,intValue)) {
-    valueType=CONSTINT;
+  } else if(SPRAY::Parse::integer(is,tmpintValue)) {
+    valueType=INTEGER;
+    intValue=tmpintValue;
   } else {
     throw CodeThorn::Exception("Error: ConstIntLattic::fromStream failed.");
   }
@@ -434,6 +547,14 @@ void AbstractValue::fromStream(istream& is) {
 
 AbstractValue::ValueType AbstractValue::getValueType() const {
   return valueType;
+}
+
+uint8_t AbstractValue::getValueSize() const {
+  return valueSize;
+}
+
+void AbstractValue::setValueSize(uint8_t valueSize) {
+  this->valueSize=valueSize;
 }
 
 int AbstractValue::getIndexIntValue() const { 
@@ -447,7 +568,7 @@ int AbstractValue::getIndexIntValue() const {
 
 int AbstractValue::getIntValue() const { 
   // PTR will be removed once all ptrs are adapted to getIndexIntValue
-  if(valueType!=CONSTINT && valueType!=PTR) {
+  if(valueType!=INTEGER && valueType!=PTR) {
     cerr << "AbstractValue: valueType="<<valueTypeToString()<<endl;
     throw CodeThorn::Exception("Error: AbstractValue::getIntValue operation failed.");
   }
@@ -468,8 +589,8 @@ int AbstractValue::getIntValue() const {
 AbstractValue AbstractValue::operatorUnaryMinus() {
   AbstractValue tmp;
   switch(valueType) {
-  case AbstractValue::CONSTINT: 
-    tmp.valueType=AbstractValue::CONSTINT;
+  case AbstractValue::INTEGER: 
+    tmp.valueType=AbstractValue::INTEGER;
     tmp.intValue=-intValue; // unary minus
     break;
   case AbstractValue::TOP: tmp=Top();break;
@@ -516,7 +637,7 @@ AbstractValue AbstractValue::operatorSub(AbstractValue& a,AbstractValue& b) {
     if(a.getVariableId()==b.getVariableId()) {
       AbstractValue val;
       val.intValue=a.intValue-b.intValue;
-      val.valueType=CONSTINT;
+      val.valueType=INTEGER;
       val.variableId=a.variableId; // same as b.variableId
       return val;
     } else {
@@ -583,4 +704,11 @@ AbstractValue CodeThorn::operator/(AbstractValue& a,AbstractValue& b) {
 }
 AbstractValue CodeThorn::operator%(AbstractValue& a,AbstractValue& b) {
   return AbstractValue::operatorMod(a,b);
+}
+
+AbstractValueSet& CodeThorn::operator+=(AbstractValueSet& s1, AbstractValueSet& s2) {
+  for(AbstractValueSet::iterator i=s2.begin();i!=s2.end();++i) {
+    s1.insert(*i);
+  }
+  return s1;
 }

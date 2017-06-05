@@ -20,7 +20,7 @@ namespace CodeThorn {
   * \author Markus Schordan
   * \date 2012.
  */
-void InputOutput::recordVariable(OpType op0,VariableId varId) {
+void InputOutput::recordVariable(OpType op0,AbstractValue varId) {
   switch(op0) {
   case STDIN_VAR:
   case STDOUT_VAR:
@@ -57,7 +57,8 @@ void InputOutput::recordVerificationError() {
 void InputOutput::recordConst(OpType op0,AbstractValue constvalue) {
   ROSE_ASSERT(op0==STDOUT_CONST || op0==STDERR_CONST);
   op=op0;
-  var=VariableId();
+  var=AbstractValue();
+  ROSE_ASSERT(constvalue.isConstInt());
   val=constvalue;
 }
 void InputOutput::recordConst(OpType op0,int value) {
@@ -92,7 +93,7 @@ string InputOutput::toString() const {
  */
 string InputOutput::toString(VariableIdMapping* variableIdMapping) const {
   string str;
-  string varName=variableIdMapping->uniqueLongVariableName(var);
+  string varName=var.toString(variableIdMapping);
   switch(op) {
   case NONE: str="none";break;
   case STDIN_VAR: str="stdin:"+varName;break;

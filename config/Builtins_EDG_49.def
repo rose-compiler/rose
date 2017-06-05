@@ -625,9 +625,10 @@ BUILTIN(__builtin_abort, "v", "Fnr")
 BUILTIN(__builtin_index, "c*cC*i", "Fn")
 BUILTIN(__builtin_rindex, "c*cC*i", "Fn")
 
+// DQ (4/23/2017): This needs to be specified seperately so that we can skip it for Microsoft mode using EDG.
 // Microsoft builtins.
 // BUILTIN(__assume, "vb", "n")
-BUILTIN(__noop, "v.", "n")
+// BUILTIN(__noop, "v.", "n")
 
 // C99 library functions
 // C99 stdlib.h
