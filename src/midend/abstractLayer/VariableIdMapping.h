@@ -91,9 +91,21 @@ class VariableIdMapping {
   std::string uniqueShortVariableName(VariableId varId);
 
   // set the size of the memory region determined by this variableid
+  // deprecated
   void setSize(VariableId variableId, size_t size);
   // get the size of the memory region determined by this variableid
+  // deprecated
   size_t getSize(VariableId variableId);
+
+  // set number of elements of the memory region determined by this variableid
+  void setNumberOfElements(VariableId variableId, size_t size);
+  // get number of elements of the memory region determined by this variableid
+  size_t getNumberOfElements(VariableId variableId);
+
+  // set the size of an element of the memory region determined by this variableid
+  void setElementSize(VariableId variableId, size_t size);
+  // get the size of an element of the memory region determined by this variableid
+  size_t getElementSize(VariableId variableId);
 
   SgSymbol* createAndRegisterNewSymbol(std::string name);
   SPRAY::VariableId createAndRegisterNewVariableId(std::string name);
@@ -131,7 +143,8 @@ class VariableIdMapping {
 
   // used for mapping in both directions
   std::vector<SgSymbol*> mappingVarIdToSym;
-  std::map<size_t,size_t> mappingVarIdToSize;
+  std::map<size_t,size_t> mappingVarIdToNumberOfElements;
+  std::map<size_t,size_t> mappingVarIdToElementSize;
   std::map<SgSymbol*,size_t> mappingSymToVarId;
   bool modeVariableIdForEachArrayElement;
 }; // end of class VariableIdMapping
