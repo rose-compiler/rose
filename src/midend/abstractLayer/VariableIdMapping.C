@@ -113,11 +113,14 @@ bool VariableIdMapping::isConstantArray(VariableId varId) {
  */
 void VariableIdMapping::toStream(ostream& os) {
   for(size_t i=0;i<mappingVarIdToSym.size();++i) {
-    os<<""<<i
-      <<","<<mappingVarIdToSym[i];
-    os  <<","<<SgNodeHelper::symbolToString(mappingVarIdToSym[i])
-      //<<","<<SgNodeHelper::uniqueLongVariableName(mappingVarIdToSym[i])
-        <<endl;
+    VariableId varId=variableIdFromCode(i);
+    os<<i
+      <<","<<varId.toString(this)
+      //<<","<<SgNodeHelper::symbolToString(mappingVarIdToSym[i])  
+      <<","<<mappingVarIdToSym[i]
+      <<","<<getNumberOfElements(varId)
+      <<","<<getElementSize(varId)
+      <<endl;
     ROSE_ASSERT(modeVariableIdForEachArrayElement?true:mappingSymToVarId[mappingVarIdToSym[i]]==i);
   }
 }
@@ -299,15 +302,28 @@ SgSymbol* VariableIdMapping::getSymbol(VariableId varid) {
 //}
 
 void VariableIdMapping::setSize(VariableId variableId, size_t size) {
-  //ROSE_ASSERT(hasArrayType(variableId));
-  mappingVarIdToSize[variableId._id]=size;
+  mappingVarIdToNumberOfElements[variableId._id]=size;
 }
 
 size_t VariableIdMapping::getSize(VariableId variableId) {
-  //ROSE_ASSERT(hasArrayType(variableId));
-  return mappingVarIdToSize[variableId._id];
+  return mappingVarIdToNumberOfElements[variableId._id];
 }
 
+void VariableIdMapping::setNumberOfElements(VariableId variableId, size_t size) {
+  mappingVarIdToNumberOfElements[variableId._id]=size;
+}
+
+size_t VariableIdMapping::getNumberOfElements(VariableId variableId) {
+  return mappingVarIdToNumberOfElements[variableId._id];
+}
+
+void VariableIdMapping::setElementSize(VariableId variableId, size_t size) {
+  mappingVarIdToElementSize[variableId._id]=size;
+}
+
+size_t VariableIdMapping::getElementSize(VariableId variableId) {
+  return mappingVarIdToElementSize[variableId._id];
+}
 
 /*! 
   * \author Markus Schordan
