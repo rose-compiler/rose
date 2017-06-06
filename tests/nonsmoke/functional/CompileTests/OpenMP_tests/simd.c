@@ -26,6 +26,16 @@ void foo3 (int n, double *a, double* b)
 void foo32 (int n, double *a, double* b)
 {
   int j=0, k=0;
+#pragma omp simd linear(j,k)
+  for (int i=0; i<n; i++,j++,k++)
+  {
+    a[i]=b[i]+j+k;
+  }
+}
+
+void foo33 (int n, double *a, double* b)
+{
+  int j=0, k=0;
 #pragma omp simd linear(j,k:1)
   for (int i=0; i<n; i++,j++,k++)
   {
@@ -33,7 +43,29 @@ void foo32 (int n, double *a, double* b)
   }
 }
 
+void fooAligned (int n, double *a, double* b)
+{
+  int j=0, k=0;
+#pragma omp simd aligned(j,k)
+  for (int i=0; i<n; i++,j++,k++)
+  {
+    a[i]=b[i]+j+k;
+  }
+}
+
+
+void fooAligned2 (int n, double *a, double* b)
+{
+  int j=0, k=0;
+#pragma omp simd aligned(j,k:1)
+  for (int i=0; i<n; i++,j++,k++)
+  {
+    a[i]=b[i]+j+k;
+  }
+}
+
 #if 0
+
 
 #define N 45
 int a[N], b[N], c[N];

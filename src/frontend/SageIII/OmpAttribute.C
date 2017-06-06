@@ -1201,10 +1201,27 @@ namespace OmpSupport
           (omp_type == e_lastprivate)
           )
       {
+
         result += OmpSupport::toString(omp_type);
         string varListString = toOpenMPString(getVariableList(omp_type));
-        result+=" (" + varListString + ")"; 
-      }
+        result+=" (" + varListString;
+
+         // aligned and linear may have optional :exp for step or alignment 
+        string expStr; 
+        if ((omp_type == e_linear)||(omp_type == e_aligned))
+        {
+          if (getExpression(omp_type).second !=  NULL)
+             expStr = getExpression(omp_type).second->unparseToString();
+          if (expStr.size()>0)
+            expStr =":"+expStr; 
+        }
+        
+        if (expStr.size()>0)
+          result+=expStr;
+
+        result+= ")"; 
+
+     }
       // default scoping values
       else if (omp_type == e_default)
       {
