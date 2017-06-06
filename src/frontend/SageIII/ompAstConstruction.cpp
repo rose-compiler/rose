@@ -1245,6 +1245,9 @@ namespace OmpSupport
       case e_for:  
         result = new SgOmpForStatement(NULL, body); 
         break;
+      case e_for_simd:  
+        result = new SgOmpForSIMDStatement(NULL, body); 
+        break;
       case e_single:
         result = new SgOmpSingleStatement(NULL, body); 
         break;
@@ -1437,7 +1440,7 @@ namespace OmpSupport
         case e_collapse:
         case e_ordered_clause:
           {
-            if (!isSgOmpForStatement(second_stmt) && !isSgOmpDoStatement(second_stmt))
+            if (!isSgOmpForStatement(second_stmt) && !isSgOmpForSIMDStatement(second_stmt) && !isSgOmpDoStatement(second_stmt))
             {
               printf("Error: buildOmpParallelStatementFromCombinedDirectives(): unacceptable clauses for parallel for/do\n");
               att->print();
@@ -1656,6 +1659,7 @@ This is no perfect solution until we handle preprocessing information as structu
           case e_ordered_directive:
           case e_parallel:
           case e_for:
+          case e_for_simd:
           case e_single:
           case e_task:
           case e_sections: 

@@ -6343,6 +6343,18 @@ SgOmpForStatement* SgOmpForStatement::build_node_from_nonlist_children ( Sg_File
 
      return returnNode;
    }
+SgOmpForSIMDStatement* SgOmpForSIMDStatement::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgStatement* body )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgOmpForSIMDStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgStatement* body): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgOmpForSIMDStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
 
 
 /* #line 6156 "../../../src/frontend/SageIII//Cxx_GrammarAtermNodeBuildFunctions.C" */

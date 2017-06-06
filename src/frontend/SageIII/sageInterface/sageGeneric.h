@@ -279,6 +279,7 @@ namespace sg
     GEN_VISIT(SgOmpSimdStatement)
     GEN_VISIT(SgOmpTaskStatement)
     GEN_VISIT(SgOmpForStatement)
+    GEN_VISIT(SgOmpForSIMDStatement)
     GEN_VISIT(SgOmpDoStatement)
     GEN_VISIT(SgOmpSectionsStatement)
     GEN_VISIT(SgOmpClauseBodyStatement)

@@ -278,6 +278,7 @@ Grammar::setUpStatements ()
     NEW_TERMINAL_MACRO (OmpSingleStatement,    "OmpSingleStatement",     "OMP_SINGLE_STMT" );
     NEW_TERMINAL_MACRO (OmpTaskStatement,      "OmpTaskStatement",       "OMP_TASK_STMT" );
     NEW_TERMINAL_MACRO (OmpForStatement,       "OmpForStatement",        "OMP_FOR_STMT" );
+    NEW_TERMINAL_MACRO (OmpForSIMDStatement,   "OmpForSIMDStatement",     "OMP_FOR_SIMD_STMT" );
     NEW_TERMINAL_MACRO (OmpDoStatement,        "OmpDoStatement",         "OMP_DO_STMT" );
     NEW_TERMINAL_MACRO (OmpSectionsStatement,  "OmpSectionsStatement",   "OMP_SECTIONS_STMT" );
     // OpenMP 4.x : atomic can have clause now. 
@@ -294,7 +295,7 @@ Grammar::setUpStatements ()
     // sensitive to 
     NEW_NONTERMINAL_MACRO (OmpClauseBodyStatement,  OmpParallelStatement | OmpSingleStatement | OmpAtomicStatement |
               OmpTaskStatement| OmpForStatement| OmpDoStatement | OmpSectionsStatement | OmpTargetStatement| OmpTargetDataStatement |
-              OmpSimdStatement,
+              OmpSimdStatement| OmpForSIMDStatement ,
         "OmpClauseBodyStatement",   "OMP_CLAUSEBODY_STMT", false );
 
     // + a statement / block 
@@ -4072,6 +4073,7 @@ Grammar::setUpStatements ()
 
     OmpThreadprivateStatement.setFunctionSource            ("SOURCE_OMP_THREADPRIVATE_STATEMENT", "../Grammar/Statement.code" );
     OmpForStatement.setFunctionSource            ("SOURCE_OMP_FOR_STATEMENT", "../Grammar/Statement.code" );
+    OmpForSIMDStatement.setFunctionSource            ("SOURCE_OMP_FOR_SIMD_STATEMENT", "../Grammar/Statement.code" );
     OmpAtomicStatement.setFunctionSource            ("SOURCE_OMP_ATOMIC_STATEMENT", "../Grammar/Statement.code" );
     OmpBarrierStatement.setFunctionSource            ("SOURCE_OMP_BARRIER_STATEMENT", "../Grammar/Statement.code" );
     OmpMasterStatement.setFunctionSource            ("SOURCE_OMP_MASTER_STATEMENT", "../Grammar/Statement.code" );

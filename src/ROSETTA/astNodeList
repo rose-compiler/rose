@@ -508,6 +508,7 @@ SgOmpBodyStatement
 SgOmpDoStatement
 SgOmpFlushStatement
 SgOmpForStatement
+SgOmpForSIMDStatement
 SgOmpMasterStatement
 SgOmpOrderedStatement
 SgOmpParallelStatement

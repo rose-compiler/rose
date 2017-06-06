@@ -6962,6 +6962,13 @@ void UnparseLanguageIndependentConstructs::unparseOmpDirectivePrefixAndName (SgS
         curprint(string ("for "));
         break;
       }
+         case V_SgOmpForSIMDStatement:
+      {
+        unparseOmpPrefix(info);
+        curprint(string ("for simd "));
+        break;
+      }
+ 
         case V_SgOmpDoStatement:
       {
         unparseOmpPrefix(info);

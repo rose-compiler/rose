@@ -64,7 +64,18 @@ void fooAligned2 (int n, double *a, double* b)
   }
 }
 
-#if 0
+double work( double *a, double *b, int n )
+{
+   int i; 
+   double tmp, sum;
+   sum = 0.0;
+   #pragma omp simd private(tmp) reduction(+:sum)
+   for (i = 0; i < n; i++) {
+      tmp = a[i] + b[i];
+      sum += tmp;
+   }
+   return sum;
+}
 
 
 #define N 45
@@ -78,7 +89,8 @@ void foo4(int i, double* P)
     j = P[i];
   }
 }
-void work( double **a, double **b, double **c, int n )
+
+void work2( double **a, double **b, double **c, int n )
 {
   int i, j;
   double tmp;
@@ -91,6 +103,7 @@ void work( double **a, double **b, double **c, int n )
   }  
 }
 
+#if 0
 // declare simd can show up several times!
 #pragma omp declare simd linear(p:1)
 float bar(int * p) {
