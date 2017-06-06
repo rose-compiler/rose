@@ -742,11 +742,14 @@ aligned_clause : ALIGNED {
                          ompattribute->addClause(e_aligned);
                          omptype = e_aligned; 
                        }
-                       '(' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list =false;}
-                | ALIGNED
-                  { ompattribute->addClause(e_reduction);}
-                  '(' reduction_operator ':' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list =false;}
-                ;
+                       '(' {b_within_variable_list = true;} variable_list {b_within_variable_list =false;} aligned_clause_optseq ')'
+               ;
+aligned_clause_optseq: /* empty */
+                        | aligned_clause_alignment
+                        ;
+
+aligned_clause_alignment: ':' expression {addExpression(""); } 
+
 
 linear_clause :  LINEAR { 
                          ompattribute->addClause(e_linear);

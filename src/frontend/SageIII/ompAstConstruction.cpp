@@ -955,9 +955,16 @@ namespace OmpSupport
           result = new SgOmpSharedClause(buildExprListExp());
           break;
         }
-     case e_linear:
+     case e_linear: // TODO: need better solution for clauses with both variable list and expression. 
+        { // TODO checkOmpExpressionClause() to handle macro
+          SgExpression* stepExp= att->getExpression(e_linear).second;
+          result = new SgOmpLinearClause(buildExprListExp(), stepExp);
+          break;
+        }
+     case e_aligned:
         {
-          result = new SgOmpLinearClause(buildExprListExp(), NULL);
+          SgExpression* alignExp= att->getExpression(e_aligned).second;
+          result = new SgOmpAlignedClause(buildExprListExp(), alignExp);
           break;
         }
       case e_reduction:
@@ -1051,6 +1058,7 @@ namespace OmpSupport
       case e_private:
       case e_shared:
       case e_linear:
+      case e_aligned:
         {
           result = buildOmpVariableClause(att, c_clause_type);
           break;

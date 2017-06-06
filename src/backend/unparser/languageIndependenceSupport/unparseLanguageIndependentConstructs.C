@@ -6640,6 +6640,13 @@ void UnparseLanguageIndependentConstructs::unparseOmpVariablesClause(SgOmpClause
     curprint(string(":"));
     unparseExpression(isSgOmpLinearClause(c)->get_step(), info);
   }
+  
+   // optional :alignment for aligned(list:alignment)
+  if (isSgOmpAlignedClause(c) && isSgOmpAlignedClause(c)->get_alignment())
+  {
+    curprint(string(":"));
+    unparseExpression(isSgOmpAlignedClause(c)->get_alignment(), info);
+  }
  
   curprint(string(")"));
 }
@@ -6676,14 +6683,6 @@ void UnparseLanguageIndependentConstructs::unparseOmpExpressionClause(SgOmpClaus
   {
     cerr<<"Error: missing expression within unparseOmpExpressionClause():"<< clause->class_name()<<endl;
     ROSE_ASSERT(false);
-  }
-
-  SgOmpLinearClause* lc = isSgOmpLinearClause(clause);
-  if (lc && lc->get_step())
-  {
-    // unparse the expression
-    curprint(string(":"));
-    unparseExpression(lc->get_step(), info);
   }
 
   curprint(string(")"));
