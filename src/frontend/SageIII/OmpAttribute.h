@@ -60,6 +60,7 @@ namespace OmpSupport
 
     e_threadprivate,
     e_parallel_for,
+    e_parallel_for_simd,
     e_parallel_do,
     e_parallel_sections,
     e_parallel_workshare,

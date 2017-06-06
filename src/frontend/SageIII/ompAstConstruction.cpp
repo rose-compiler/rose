@@ -1136,6 +1136,7 @@ namespace OmpSupport
         c_clause_type == e_master||
         c_clause_type == e_critical||
         c_clause_type == e_parallel_for||
+        c_clause_type == e_parallel_for_simd||
         c_clause_type == e_parallel_do||
         c_clause_type == e_simd||
         c_clause_type == e_atomic
@@ -1364,6 +1365,13 @@ namespace OmpSupport
           setOneSourcePositionForTransformation(second_stmt);
           break;
         }
+      case e_parallel_for_simd:
+        {
+          second_stmt = new SgOmpForSIMDStatement(NULL, body);
+          setOneSourcePositionForTransformation(second_stmt);
+          break;
+        }
+ 
       case e_parallel_sections:
         {
           second_stmt = new SgOmpSectionsStatement(NULL, body);
@@ -1435,14 +1443,19 @@ namespace OmpSupport
             sgclause->set_parent(first_stmt);
             break;
           }
-          // unique clauses allocated to omp for
+          // unique clauses allocated to omp for  or omp for simd
         case e_schedule:
         case e_collapse:
         case e_ordered_clause:
+        case e_safelen:
+        case e_simdlen:
+        case e_uniform:
+        case e_aligned:
+        case e_linear:
           {
             if (!isSgOmpForStatement(second_stmt) && !isSgOmpForSIMDStatement(second_stmt) && !isSgOmpDoStatement(second_stmt))
             {
-              printf("Error: buildOmpParallelStatementFromCombinedDirectives(): unacceptable clauses for parallel for/do\n");
+              printf("Error: buildOmpParallelStatementFromCombinedDirectives(): unacceptable clauses for parallel for/do [simd]\n");
               att->print();
               ROSE_ASSERT(false);
             }
@@ -1674,6 +1687,7 @@ This is no perfect solution until we handle preprocessing information as structu
               break;
             }
           case e_parallel_for:
+          case e_parallel_for_simd:
           case e_parallel_sections:
           case e_parallel_workshare://fortran
           case e_parallel_do:

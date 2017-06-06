@@ -141,6 +141,7 @@ openmp_directive : parallel_directive
                  | sections_directive
                  | single_directive
                  | parallel_for_directive
+                 | parallel_for_simd_directive
                  | parallel_sections_directive
                  | task_directive
                  | master_directive
@@ -388,6 +389,32 @@ parallel_for_clause : unique_parallel_clause
                     | proc_bind_clause
                    ;
 
+parallel_for_simd_directive : /* #pragma */ OMP PARALLEL FOR SIMD { 
+                           ompattribute = buildOmpAttribute(e_parallel_for_simd, gNode, true); 
+                         } parallel_for_simd_clauseoptseq
+                       ;
+
+parallel_for_simd_clauseoptseq : /* empty */
+                          | parallel_for_simd_clause_seq
+
+parallel_for_simd_clause_seq : parallel_for_simd_clause
+                        | parallel_for_simd_clause_seq parallel_for_simd_clause
+                        | parallel_for_simd_clause_seq ',' parallel_for_simd_clause
+                          
+parallel_for_simd_clause: unique_parallel_clause 
+                    | unique_for_clause 
+                    | unique_simd_clause
+                    | data_default_clause
+                    | private_clause
+                    | firstprivate_clause
+                    | lastprivate_clause
+                    | share_clause
+                    | reduction_clause
+                    | if_clause
+                    | num_threads_clause
+                    | proc_bind_clause
+                   ; 
+ 
 parallel_sections_directive : /* #pragma */ OMP PARALLEL SECTIONS { 
                                 ompattribute =buildOmpAttribute(e_parallel_sections,gNode, true); 
                                 omptype = e_parallel_sections; 
@@ -728,7 +755,14 @@ simd_clause_seq
                 | simd_clause_seq ',' simd_clause
                 ;
 
-simd_clause : SAFELEN {
+simd_clause     : unique_simd_clause
+                | reduction_clause
+                | collapse_clause
+                | private_clause
+                | lastprivate_clause
+              ;
+
+unique_simd_clause: SAFELEN {
                         ompattribute->addClause(e_safelen);
                         omptype = e_safelen;
                       } '(' expression ')' {
@@ -740,16 +774,13 @@ simd_clause : SAFELEN {
                           } '(' expression ')' {
                           addExpression("");
                       }
-                | reduction_clause
                 | uniform_clause
                 | aligned_clause
-                | collapse_clause
-                | private_clause
-                | lastprivate_clause
                 | linear_clause
                 | INBRANCH { ompattribute->addClause(e_inbranch); omptype = e_inbranch; /*TODO: this is temporary, to be moved to declare simd */}
                 | NOTINBRANCH { ompattribute->addClause(e_notinbranch); omptype = e_notinbranch; /*TODO: this is temporary, to be moved to declare simd */ }
-              ;
+                ;
+
 
 uniform_clause : UNIFORM { 
                          ompattribute->addClause(e_uniform);

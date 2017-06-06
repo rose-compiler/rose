@@ -579,6 +579,7 @@ namespace OmpSupport
 
       case e_threadprivate: result = "threadprivate"; break;
       case e_parallel_for: result = "parallel for"; break;
+      case e_parallel_for_simd: result = "parallel for simd"; break;
       case e_parallel_do: result = "parallel do"; break;
       case e_parallel_sections: result = "parallel sections"; break;
       case e_parallel_workshare: result = "parallel workshare"; break;
@@ -734,6 +735,7 @@ namespace OmpSupport
 
       case e_threadprivate:
       case e_parallel_for:
+      case e_parallel_for_simd:
       case e_parallel_do: //fortran
       case e_parallel_sections:
       case e_parallel_workshare://fortran
@@ -962,6 +964,7 @@ namespace OmpSupport
 
         //      case e_threadprivate:
       case e_parallel_for:
+      case e_parallel_for_simd:
       case e_parallel_do: //fortran
       case e_parallel_sections:
       case e_parallel_workshare://fortran
@@ -1506,7 +1509,10 @@ namespace OmpSupport
       for (riter=attlist->ompAttriList.rbegin(); riter !=attlist->ompAttriList.rend();riter++)
       {
         OmpAttribute* att = *riter; //getOmpAttribute(sg_node);
-        if (att->getOmpDirectiveType() ==e_for || att->getOmpDirectiveType() ==e_for_simd ||att->getOmpDirectiveType() ==e_parallel_for)
+        if (att->getOmpDirectiveType() ==e_for || 
+          att->getOmpDirectiveType() ==e_for_simd ||
+          att->getOmpDirectiveType() ==e_parallel_for_simd ||
+          att->getOmpDirectiveType() ==e_parallel_for)
           ROSE_ASSERT(isSgForStatement(cur_stmt) != NULL);
 
         string pragma_str= att->toOpenMPString();
@@ -1567,7 +1573,10 @@ namespace OmpSupport
           rtxt = rtxt + os2.str()+"\n";
         }
         OmpAttribute* att = *riter; //getOmpAttribute(sg_node);
-        if (att->getOmpDirectiveType() ==e_for || att->getOmpDirectiveType() ==e_for_simd ||att->getOmpDirectiveType() ==e_parallel_for)
+        if (att->getOmpDirectiveType() ==e_for || 
+            att->getOmpDirectiveType() ==e_for_simd ||
+            att->getOmpDirectiveType() ==e_parallel_for_simd ||
+            att->getOmpDirectiveType() ==e_parallel_for)
           ROSE_ASSERT(isSgForStatement(cur_stmt) != NULL);
 
         string pragma_str= att->toOpenMPString();
