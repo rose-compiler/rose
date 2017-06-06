@@ -2791,7 +2791,7 @@ SgOmpUniformClause* SgOmpUniformClause::build_node_from_nonlist_children ( Sg_Fi
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgOmpAlignedClause* SgOmpAlignedClause::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct , SgExprListExp* variables )
+SgOmpAlignedClause* SgOmpAlignedClause::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct , SgExprListExp* variables, SgExpression* alignment)
    {
 #if 0
   // debugging information!
