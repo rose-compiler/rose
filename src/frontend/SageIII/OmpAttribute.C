@@ -563,6 +563,7 @@ namespace OmpSupport
       case e_unknown: result ="unknown" ; break;
       case e_parallel: result = "parallel" ; break;
       case e_for: result = "for"; break;
+      case e_for_simd: result = "for simd"; break;
       case e_do: result = "do"; break;
       case e_workshare: result = "workshare"; break;
       case e_sections: result = "sections"; break;
@@ -718,6 +719,7 @@ namespace OmpSupport
       //+2 for Fortran
       case e_parallel:
       case e_for:
+      case e_for_simd:
       case e_do:
       case e_workshare:
       case e_sections:
@@ -942,6 +944,7 @@ namespace OmpSupport
       //+2 for Fortran
       case e_parallel:
       case e_for:
+      case e_for_simd:
       case e_do:
       case e_workshare:
       case e_sections:
@@ -1151,21 +1154,6 @@ namespace OmpSupport
       {
         result += " " + getCriticalName(); 
       }
-#if 0  // clauses are handled separately      
-      // optional nowait for fortran: end do, end sections, end workshare, end single
-      else if ((omp_type == e_for) 
-          || (omp_type == e_sections)
-          || (omp_type == e_single)
-          || (omp_type == e_end_do)
-          ||(omp_type == e_end_sections)
-          ||(omp_type == e_end_workshare
-            ||(omp_type == e_end_single)))
-      {
-        if (hasClause(e_nowait)) 
-          result += " "+ OmpSupport::toString(e_nowait);
-      }
-#endif      
-
     } // end if directives
     //Clauses ------------------
     else if (isClause(omp_type))
@@ -1518,7 +1506,7 @@ namespace OmpSupport
       for (riter=attlist->ompAttriList.rbegin(); riter !=attlist->ompAttriList.rend();riter++)
       {
         OmpAttribute* att = *riter; //getOmpAttribute(sg_node);
-        if (att->getOmpDirectiveType() ==e_for ||att->getOmpDirectiveType() ==e_parallel_for)
+        if (att->getOmpDirectiveType() ==e_for || att->getOmpDirectiveType() ==e_for_simd ||att->getOmpDirectiveType() ==e_parallel_for)
           ROSE_ASSERT(isSgForStatement(cur_stmt) != NULL);
 
         string pragma_str= att->toOpenMPString();
@@ -1579,7 +1567,7 @@ namespace OmpSupport
           rtxt = rtxt + os2.str()+"\n";
         }
         OmpAttribute* att = *riter; //getOmpAttribute(sg_node);
-        if (att->getOmpDirectiveType() ==e_for ||att->getOmpDirectiveType() ==e_parallel_for)
+        if (att->getOmpDirectiveType() ==e_for || att->getOmpDirectiveType() ==e_for_simd ||att->getOmpDirectiveType() ==e_parallel_for)
           ROSE_ASSERT(isSgForStatement(cur_stmt) != NULL);
 
         string pragma_str= att->toOpenMPString();

@@ -107,7 +107,7 @@ corresponding C type is union name defaults to YYSTYPE.
         SUB_ASSIGN2 MUL_ASSIGN2 DIV_ASSIGN2 MOD_ASSIGN2 AND_ASSIGN2 
         XOR_ASSIGN2 OR_ASSIGN2
         LEXICALERROR IDENTIFIER 
-        READ WRITE CAPTURE INBRANCH NOTINBRANCH SIMDLEN
+        READ WRITE CAPTURE SIMDLEN
 /*We ignore NEWLINE since we only care about the pragma string , We relax the syntax check by allowing it as part of line continuation */
 %token <itype> ICONSTANT   
 %token <stype> EXPRESSION ID_EXPRESSION 
@@ -137,6 +137,7 @@ corresponding C type is union name defaults to YYSTYPE.
 
 openmp_directive : parallel_directive 
                  | for_directive
+                 | for_simd_directive
                  | sections_directive
                  | single_directive
                  | parallel_for_directive
@@ -174,10 +175,10 @@ parallel_clause_seq : parallel_clause
 
 parallel_clause : unique_parallel_clause 
                 | data_default_clause
-                | data_privatization_clause
-                | data_privatization_in_clause
-                | data_sharing_clause
-                | data_reduction_clause
+                | private_clause
+                | firstprivate_clause
+                | share_clause
+                | reduction_clause
                 | if_clause
                 | num_threads_clause
                 | proc_bind_clause
@@ -229,10 +230,10 @@ for_clause_seq : for_clause
                ;
 
 for_clause : unique_for_clause 
-           | data_privatization_clause
-           | data_privatization_in_clause
-           | data_privatization_out_clause
-           | data_reduction_clause
+           | private_clause
+           | firstprivate_clause
+           | lastprivate_clause
+           | reduction_clause
            | NOWAIT { 
                ompattribute->addClause(e_nowait);
                //Not correct since nowait cannot have expression or var_list
@@ -255,13 +256,17 @@ unique_for_clause : ORDERED {
                     } expression ')' { 
                       addExpression("");
                     }
-                  | COLLAPSE {
+                  | collapse_clause  
+                 ;
+
+collapse_clause: COLLAPSE {
                       ompattribute->addClause(e_collapse);
                       omptype = e_collapse;
                     } '(' expression ')' { 
                       addExpression("");
                     }
                   ;
+ 
 
 schedule_kind : STATIC  { $$ = e_schedule_static; }
               | DYNAMIC { $$ = e_schedule_dynamic; }
@@ -284,10 +289,10 @@ sections_clause_seq : sections_clause
                     | sections_clause_seq ',' sections_clause
                     ;
 
-sections_clause : data_privatization_clause
-                | data_privatization_in_clause
-                | data_privatization_out_clause
-                | data_reduction_clause
+sections_clause : private_clause
+                | firstprivate_clause
+                | lastprivate_clause
+                | reduction_clause
                 | NOWAIT {
                     ompattribute->addClause(e_nowait);
                   }
@@ -314,8 +319,8 @@ single_clause_seq : single_clause
                   ;
 
 single_clause : unique_single_clause
-              | data_privatization_clause
-              | data_privatization_in_clause
+              | private_clause
+              | firstprivate_clause
               | NOWAIT { 
                   ompattribute->addClause(e_nowait);
                 }
@@ -340,9 +345,9 @@ task_clause_optseq :  /* empty */
 
 task_clause : unique_task_clause
             | data_default_clause
-            | data_privatization_clause
-            | data_privatization_in_clause
-            | data_sharing_clause
+            | private_clause
+            | firstprivate_clause
+            | share_clause
             ;
 
 unique_task_clause : IF { 
@@ -373,11 +378,11 @@ parallel_for_clause_seq : parallel_for_clause
 parallel_for_clause : unique_parallel_clause 
                     | unique_for_clause 
                     | data_default_clause
-                    | data_privatization_clause
-                    | data_privatization_in_clause
-                    | data_privatization_out_clause
-                    | data_sharing_clause
-                    | data_reduction_clause
+                    | private_clause
+                    | firstprivate_clause
+                    | lastprivate_clause
+                    | share_clause
+                    | reduction_clause
                     | if_clause
                     | num_threads_clause
                     | proc_bind_clause
@@ -400,11 +405,11 @@ parallel_sections_clause_seq : parallel_sections_clause
 
 parallel_sections_clause : unique_parallel_clause 
                          | data_default_clause
-                         | data_privatization_clause
-                         | data_privatization_in_clause
-                         | data_privatization_out_clause
-                         | data_sharing_clause
-                         | data_reduction_clause
+                         | private_clause
+                         | firstprivate_clause
+                         | lastprivate_clause
+                         | share_clause
+                         | reduction_clause
                          | if_clause
                          | num_threads_clause
                          | proc_bind_clause
@@ -511,29 +516,29 @@ proc_bind_clause : PROC_BIND '(' MASTER ')' {
                       }
                     ;
                     
-data_privatization_clause : PRIVATE {
+private_clause : PRIVATE {
                               ompattribute->addClause(e_private); omptype = e_private;
                             } '(' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list = false;}
                           ;
 
-data_privatization_in_clause : FIRSTPRIVATE { 
+firstprivate_clause : FIRSTPRIVATE { 
                                  ompattribute->addClause(e_firstprivate); 
                                  omptype = e_firstprivate;
                                } '(' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list = false;}
                              ;
 
-data_privatization_out_clause : LASTPRIVATE { 
+lastprivate_clause : LASTPRIVATE { 
                                   ompattribute->addClause(e_lastprivate); 
                                   omptype = e_lastprivate;
                                 } '(' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list = false;}
                               ;
 
-data_sharing_clause : SHARED {
+share_clause : SHARED {
                         ompattribute->addClause(e_shared); omptype = e_shared; 
                       } '(' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list = false;}
                     ;
 
-data_reduction_clause : REDUCTION { 
+reduction_clause : REDUCTION { 
                           ompattribute->addClause(e_reduction);
                         } '(' reduction_operator ':' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list = false;}
                       ;
@@ -694,6 +699,18 @@ map_clause_optseq: /* empty, default to be tofrom*/ { ompattribute->setMapVarian
                     | TOFROM  ':' { ompattribute->setMapVariant(e_map_tofrom); omptype = e_map_tofrom; } 
                     ;
 
+for_simd_directive : /* #pragma */ OMP FOR SIMD { 
+                  ompattribute = buildOmpAttribute(e_for_simd, gNode,true); 
+                }
+                for_simd_clause_optseq
+              ;
+
+
+for_simd_clause_optseq:  /* empty*/
+                      | for_clause_seq
+                      | simd_clause_seq
+                      ;
+
 simd_directive: /* # pragma */ OMP SIMD
                   { ompattribute = buildOmpAttribute(e_simd,gNode,true); 
                     omptype = e_simd; }
@@ -723,9 +740,12 @@ simd_clause : SAFELEN {
                           } '(' expression ')' {
                           addExpression("");
                       }
-                | data_reduction_clause
+                | reduction_clause
                 | uniform_clause
                 | aligned_clause
+                | collapse_clause
+                | private_clause
+                | lastprivate_clause
                 | linear_clause
                 | INBRANCH { ompattribute->addClause(e_inbranch); omptype = e_inbranch; /*TODO: this is temporary, to be moved to declare simd */}
                 | NOTINBRANCH { ompattribute->addClause(e_notinbranch); omptype = e_notinbranch; /*TODO: this is temporary, to be moved to declare simd */ }

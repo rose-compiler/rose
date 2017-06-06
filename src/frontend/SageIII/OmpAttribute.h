@@ -35,6 +35,7 @@ namespace OmpSupport
     // 16 directives as OpenMP 3.0
     e_parallel,
     e_for,
+    e_for_simd,
     e_do,
     e_workshare,
     e_sections,
