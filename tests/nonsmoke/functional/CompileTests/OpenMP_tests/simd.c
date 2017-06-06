@@ -103,6 +103,19 @@ void work2( double **a, double **b, double **c, int n )
   }  
 }
 
+void work3( double **a, double **b, double **c, int n )
+{
+  int i, j;
+  double tmp;
+#pragma omp parallel for simd collapse(2) private(tmp)
+  for (i = 0; i < n; i++) {
+    for (j = 0; j < n; j++) {
+      tmp = a[i][j] + b[i][j];
+      c[i][j] = tmp;
+    }
+  }  
+}
+
 #if 0
 // declare simd can show up several times!
 #pragma omp declare simd linear(p:1)
