@@ -91,13 +91,6 @@ class VariableIdMapping {
   std::string uniqueLongVariableName(VariableId varId);
   std::string uniqueShortVariableName(VariableId varId);
 
-  // set the size of the memory region determined by this variableid
-  // deprecated
-  void setSize(VariableId variableId, size_t size);
-  // get the size of the memory region determined by this variableid
-  // deprecated
-  size_t getSize(VariableId variableId);
-
   // set number of elements of the memory region determined by this variableid
   void setNumberOfElements(VariableId variableId, size_t size);
   // get number of elements of the memory region determined by this variableid
