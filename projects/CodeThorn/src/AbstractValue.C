@@ -453,7 +453,7 @@ string AbstractValue::toLhsString(SPRAY::VariableIdMapping* vim) const {
   }
   case PTR: {
     stringstream ss;
-    if(vim->getSize(variableId)==1) {
+    if(vim->getNumberOfElements(variableId)==1) {
       ss<<variableId.toString(vim); // variables are arrays of size 1
     } else {
       ss<<variableId.toString(vim)<<"["<<getIntValue()<<"]";
@@ -477,7 +477,7 @@ string AbstractValue::toRhsString(SPRAY::VariableIdMapping* vim) const {
   case PTR: {
     stringstream ss;
     ss<<"&"; // on the rhs an abstract pointer is always a pointer value of some abstract value
-    if(vim->getSize(variableId)==1) {
+    if(vim->getNumberOfElements(variableId)==1) {
       ss<<variableId.toString(vim); // variables are arrays of size 1
     } else {
       ss<<variableId.toString(vim)<<"["<<getIntValue()<<"]";

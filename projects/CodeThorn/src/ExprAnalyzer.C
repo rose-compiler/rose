@@ -984,7 +984,7 @@ int ExprAnalyzer::getMemoryRegionSize(CodeThorn::AbstractValue ptrToRegion) {
   ROSE_ASSERT(ptrToRegion.isPtr());
   VariableId ptrVariableId=ptrToRegion.getVariableId();
   //cout<<"DEBUG: ptrVariableId:"<<ptrVariableId<<" "<<_variableIdMapping->variableName(ptrVariableId)<<endl;
-  int size=_variableIdMapping->getSize(ptrVariableId);
+  int size=_variableIdMapping->getNumberOfElements(ptrVariableId);
   return size;
 }
 
@@ -1066,7 +1066,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMemCpy(SgFunctionCa
 
 bool ExprAnalyzer::checkArrayBounds(VariableId arrayVarId,int accessIndex) {
   // check array bounds
-  int arraySize=_variableIdMapping->getSize(arrayVarId);
+  int arraySize=_variableIdMapping->getNumberOfElements(arrayVarId);
   if(accessIndex<0||accessIndex>=arraySize) {  
     // this will throw a specific exception that will be caught by the analyzer to report verification results
     cerr<<"Detected out of bounds array access in application: ";

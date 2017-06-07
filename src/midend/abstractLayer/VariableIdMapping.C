@@ -297,17 +297,6 @@ SgSymbol* VariableIdMapping::getSymbol(VariableId varid) {
   ROSE_ASSERT(((size_t)varid._id)<mappingVarIdToSym.size());
   return mappingVarIdToSym[varid._id];
 }
-//SgSymbol* VariableIdMapping::getSymbol(VariableId varId) {
-//  return varId.getSymbol();
-//}
-
-void VariableIdMapping::setSize(VariableId variableId, size_t size) {
-  mappingVarIdToNumberOfElements[variableId._id]=size;
-}
-
-size_t VariableIdMapping::getSize(VariableId variableId) {
-  return mappingVarIdToNumberOfElements[variableId._id];
-}
 
 void VariableIdMapping::setNumberOfElements(VariableId variableId, size_t size) {
   mappingVarIdToNumberOfElements[variableId._id]=size;
@@ -579,14 +568,14 @@ SgSymbol* VariableIdMapping::createAndRegisterNewSymbol(std::string name) {
 SPRAY::VariableId VariableIdMapping::createAndRegisterNewVariableId(std::string name) {
   SgSymbol* sym=createAndRegisterNewSymbol(name);
   VariableId varId=variableId(sym);
-  setSize(varId,1); // default
+  setNumberOfElements(varId,1); // default
   return varId;
 }
 
 SPRAY::VariableId VariableIdMapping::createAndRegisterNewMemoryRegion(std::string name, int regionSize) {
   SgSymbol* sym=createAndRegisterNewSymbol(name);
   VariableId varId=variableId(sym);
-  setSize(varId,regionSize);
+  setNumberOfElements(varId,regionSize);
   return varId;
 }
 
@@ -607,7 +596,7 @@ void VariableIdMapping::registerNewArraySymbol(SgSymbol* sym, int arraySize) {
       mappingVarIdToSym.push_back(sym);
     }
     // size needs to be set *after* mappingVarIdToSym has been updated
-    setSize(tmpVarId,arraySize);
+    setNumberOfElements(tmpVarId,arraySize);
   } else {
     stringstream ss;
     ss<< "VariableIdMapping: registerNewArraySymbol: attempt to register existing array symbol "<<sym<<":"<<SgNodeHelper::symbolToString(sym);
@@ -634,7 +623,7 @@ void VariableIdMapping::registerNewSymbol(SgSymbol* sym) {
     // set size to 1 (to compute bytes, multiply by size of type)
     VariableId newVarId;
     newVarId.setIdCode(newIdCode);
-    setSize(newVarId,1);
+    setNumberOfElements(newVarId,1);
     // Mapping in both directions must be possible:
     ROSE_ASSERT(mappingSymToVarId.at(mappingVarIdToSym[newIdCode]) == newIdCode);
     ROSE_ASSERT(mappingVarIdToSym[mappingSymToVarId.at(sym)] == sym);
