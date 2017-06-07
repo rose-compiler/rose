@@ -57,9 +57,9 @@ class AbstractValue {
   AbstractValue(long long int x);
   AbstractValue(unsigned long long int x);
   AbstractValue(SPRAY::VariableId varId); // allows implicit type conversion
-  void init(CodeThorn::BuiltInType btype, long long int ival);
-  static AbstractValue createIntegerValue(CodeThorn::BuiltInType btype, long long int ival);
-  void calculateValueSize(CodeThorn::BuiltInType btype);
+  void init(SPRAY::BuiltInType btype, long long int ival);
+  static AbstractValue createIntegerValue(SPRAY::BuiltInType btype, long long int ival);
+  void calculateValueSize(SPRAY::BuiltInType btype);
   bool isTop() const;
   bool isTrue() const;
   bool isFalse() const;
@@ -123,14 +123,14 @@ class AbstractValue {
 
   uint8_t getValueSize() const;
   void setValueSize(uint8_t valueSize);
-  static void setTypeSizeMapping(SgTypeSizeMapping* typeSizeMapping);
-  static SgTypeSizeMapping* getTypeSizeMapping();
+  static void setTypeSizeMapping(SPRAY::SgTypeSizeMapping* typeSizeMapping);
+  static SPRAY::SgTypeSizeMapping* getTypeSizeMapping();
  private:
   ValueType valueType;
   SPRAY::VariableId variableId;
   long long int intValue;
   uint8_t valueSize=0; // size of value in bytes
-  static SgTypeSizeMapping* _typeSizeMapping;
+  static SPRAY::SgTypeSizeMapping* _typeSizeMapping;
 };
 
 // arithmetic operators
