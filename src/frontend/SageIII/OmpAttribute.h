@@ -178,6 +178,7 @@ namespace OmpSupport
 
     // experimental SIMD directive, phlin 8/5/2013
     e_simd,
+    e_declare_simd,
     e_safelen,
     e_simdlen,
     e_uniform,

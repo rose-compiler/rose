@@ -18398,6 +18398,30 @@ SgOmpFlushStatement::post_construction_initialization()
    {}
 SOURCE_OMP_FLUSH_STATEMENT_END
 
+HEADER_OMP_DECLARE_SIMD_STATEMENT_START
+//! Required for any declaration statement
+     virtual SgName get_mangled_name(void) const $ROSE_OVERRIDE;
+HEADER_OMP_DECLARE_SIMD_STATEMENT_END
+
+SOURCE_OMP_DECLARE_SIMD_STATEMENT_START
+void
+SgOmpDeclareSIMDStatement::post_construction_initialization()
+   {}
+
+SgName
+SgOmpDeclareSIMDStatement::get_mangled_name(void) const
+   {
+     SgName returnName;
+       // The semantics of get_scope is that it can never be NULL (SgGlobal returns itself as its scope!)
+     SgScopeStatement* scope = get_scope();
+     ROSE_ASSERT(scope != NULL);
+      
+     returnName = scope->get_mangled_name() + SgName("_omp_declaration_simd_");
+      //TODO: need more unique name adding clauses, followed function, etc.
+     return returnName;
+   }
+
+SOURCE_OMP_DECLARE_SIMD_STATEMENT_END
 
 SOURCE_OMP_DO_STATEMENT_START
 void

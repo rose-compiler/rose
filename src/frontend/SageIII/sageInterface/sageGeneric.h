@@ -344,6 +344,7 @@ namespace sg
     GEN_VISIT(SgClinkageEndStatement)
     GEN_VISIT(SgClinkageDeclarationStatement)
     GEN_VISIT(SgOmpFlushStatement)
+    GEN_VISIT(SgOmpDeclareSIMDStatement)
     GEN_VISIT(SgOmpBarrierStatement)
     GEN_VISIT(SgOmpTaskwaitStatement)
     GEN_VISIT(SgOmpThreadprivateStatement)

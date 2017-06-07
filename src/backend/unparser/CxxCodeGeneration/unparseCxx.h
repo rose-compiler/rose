@@ -29,6 +29,7 @@ class SgOmpClause;
 class SgOmpBodyStatement;
 class SgOmpThreadBodyStatement;
 class SgOmpFlushStatement;
+class SgOmpDeclareSIMDStatement;
 class SgOmpBarrierStatement;
 class SgOmpTaskwaitStatement;
 class SgNamespaceDefinitionStatement;

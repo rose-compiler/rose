@@ -923,51 +923,58 @@ namespace OmpSupport
     if (!att->hasClause(clause_type))
       return NULL;
     SgOmpVariablesClause* result = NULL;  
+    SgExprListExp * explist = buildExprListExp(); 
+    ROSE_ASSERT(explist != NULL);
     switch (clause_type) 
     {
       case e_copyin:
         {
-          result = new SgOmpCopyinClause(buildExprListExp());
+          result = new SgOmpCopyinClause(explist);
           break;
         }
       case e_copyprivate:
         {
-          result = new SgOmpCopyprivateClause(buildExprListExp());
+          result = new SgOmpCopyprivateClause(explist);
           break;
         }
       case e_firstprivate:
         {
-          result = new SgOmpFirstprivateClause(buildExprListExp());
+          result = new SgOmpFirstprivateClause(explist);
           break;
         }
       case e_lastprivate:
         {
-          result = new SgOmpLastprivateClause(buildExprListExp());
+          result = new SgOmpLastprivateClause(explist);
           break;
         }
       case e_private:
         {
-          result = new SgOmpPrivateClause(buildExprListExp());
+          result = new SgOmpPrivateClause(explist);
           break;
         }
       case e_shared:
         {
-          result = new SgOmpSharedClause(buildExprListExp());
+          result = new SgOmpSharedClause(explist);
           break;
         }
      case e_linear: // TODO: need better solution for clauses with both variable list and expression. 
         { // TODO checkOmpExpressionClause() to handle macro
           SgExpression* stepExp= att->getExpression(e_linear).second;
-          result = new SgOmpLinearClause(buildExprListExp(), stepExp);
+          result = new SgOmpLinearClause(explist, stepExp);
           break;
         }
      case e_aligned:
         {
           SgExpression* alignExp= att->getExpression(e_aligned).second;
-          result = new SgOmpAlignedClause(buildExprListExp(), alignExp);
+          result = new SgOmpAlignedClause(explist, alignExp);
           break;
         }
-      case e_reduction:
+     case e_uniform:
+        {
+          result = new SgOmpUniformClause(explist);
+          break;
+        }
+     case e_reduction:
         {
           printf("error: buildOmpVariableClause() does not handle reduction\n");
           ROSE_ASSERT(false);
@@ -980,8 +987,9 @@ namespace OmpSupport
         }
     } //end switch
 
-    //build varlist
     ROSE_ASSERT(result != NULL);
+    explist->set_parent(result);
+    //build varlist
     setClauseVariableList(result, att, clause_type);
     return result;
   }
@@ -1146,6 +1154,78 @@ namespace OmpSupport
     }
     return result;
   }
+
+  // a bit hack since declare simd is an outlier statement with clauses. 
+  /*
+     clause:
+      simdlen(length)
+      linear(linear-list[ : linear-step])
+      aligned(argument-list[ : alignment])
+      uniform(argument-list)
+      inbranch
+      notinbranch 
+   * */
+  static void appendOmpClauses(SgOmpDeclareSIMDStatement* target, OmpAttribute* att)
+  {
+    ROSE_ASSERT(target && att);
+    // must copy those clauses here, since they will be deallocated later on
+    vector<omp_construct_enum> clause_vector = att->getClauses();
+    std::vector<omp_construct_enum>::iterator citer;
+    for (citer = clause_vector.begin(); citer != clause_vector.end(); citer++)
+    {
+      omp_construct_enum c_clause = *citer;
+      if (!isClause(c_clause))
+      {
+        //      printf ("Found a construct which is not a clause:%s\n within attr:%p\n", OmpSupport::toString(c_clause).c_str(), att);
+        ROSE_ASSERT(isClause(c_clause));
+        continue;
+      }
+
+      SgOmpClause* result = NULL; 
+      //------------------ 
+
+      if (!att->hasClause(c_clause))
+        continue; 
+      switch (c_clause) 
+      {
+        case e_inbranch:
+          {
+            result = buildOmpInbranchClause(att); 
+            break;
+          }
+        case e_notinbranch:
+          {
+            result = buildOmpNotinbranchClause(att); 
+            break;
+          }
+        case e_simdlen:
+          {
+            result = buildOmpExpressionClause(att, c_clause);
+            break;
+          }
+        case e_linear:
+        case e_aligned:
+        case e_uniform: 
+          {
+            result = buildOmpVariableClause(att, c_clause);
+            break;
+          }
+        default:
+          {
+            printf("Warning: buildOmpNoReductionClause(): unhandled clause type: %s\n", OmpSupport::toString(c_clause).c_str());
+            ROSE_ASSERT(false);
+            break;
+          }
+      }
+      ROSE_ASSERT(result != NULL);
+      setOneSourcePositionForTransformation(result);
+
+      //cout<<"push a clause "<< result->class_name() <<endl;
+      target->get_clauses().push_back(result);
+      result->set_parent(target); // is This right?
+    }
+  }
+
 
   //add clauses to target based on OmpAttribute
   static void appendOmpClauses(SgOmpClauseBodyStatement* target, OmpAttribute* att)
@@ -1320,6 +1400,19 @@ namespace OmpSupport
     }
     return result;
   }
+
+  SgOmpDeclareSIMDStatement* buildOmpDeclareSIMDStatement(OmpAttribute* att)
+  {
+    ROSE_ASSERT(att != NULL);
+    SgOmpDeclareSIMDStatement* result = new SgOmpDeclareSIMDStatement();
+    result->set_firstNondefiningDeclaration(result);
+    ROSE_ASSERT(result !=NULL);
+    setOneSourcePositionForTransformation(result);
+
+    appendOmpClauses(isSgOmpDeclareSIMDStatement(result), att);
+    return result;
+  }
+
 
   SgOmpThreadprivateStatement* buildOmpThreadprivateStatement(OmpAttribute* att)
   {
@@ -1662,6 +1755,11 @@ This is no perfect solution until we handle preprocessing information as structu
           case e_flush:
             {
               omp_stmt = buildOmpFlushStatement(oa);
+              break;
+            }
+          case e_declare_simd:
+            {
+              omp_stmt = buildOmpDeclareSIMDStatement(oa);
               break;
             }
             // with a structured block/statement followed
