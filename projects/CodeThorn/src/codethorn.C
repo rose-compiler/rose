@@ -440,7 +440,7 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
     ("input-values",po::value< string >(),"specify a set of input values (e.g. \"{1,2,3}\")")
     ("input-values-as-constraints",po::value<string >(),"represent input var values as constraints (otherwise as constants in PState)")
     ("input-sequence",po::value< string >(),"specify a sequence of input values (e.g. \"[1,2,3]\")")
-    ("log-level",po::value< string >()->default_value("none,>=warn"),"Set the log level (none|info|warn|trace)")
+    ("log-level",po::value< string >()->default_value("none,>=warn"),"Set the log level (none|info|warn|trace|debug)")
     ("max-transitions",po::value< int >(),"Passes (possibly) incomplete STG to verifier after max transitions (default: no limit).")
     ("max-iterations",po::value< int >(),"Passes (possibly) incomplete STG to verifier after max loop iterations (default: no limit). Currently requires --exploration-mode=loop-aware[-sync].")
     ("max-memory",po::value< long int >(),"Stop computing the STG after a total physical memory consumption of approximately <arg> Bytes has been reached. (default: no limit). Currently requires --solver=12 and only supports Unix systems.")

@@ -2907,7 +2907,7 @@ std::list<EState> Analyzer::transferFunctionCallLocalEdge(Edge edge, const EStat
 	  ROSE_ASSERT(index>=0 && index <=99);
 	  binaryBindingAssert[index]=true;
 	  //reachabilityResults.reachable(index); //previous location in code
-	  // logger[DEBUG]<<"found assert Error "<<index<<endl;
+	  //logger[DEBUG]<<"found assert Error "<<index<<endl;
 	  ConstraintSet _cset=*estate->constraints();
 	  InputOutput _io;
 	  _io.recordFailedAssert();
@@ -2920,6 +2920,10 @@ std::list<EState> Analyzer::transferFunctionCallLocalEdge(Edge edge, const EStat
 	  return elistify(_eState);
         }
         RERS_Problem::rersGlobalVarsCallReturnInit(this,_pstate, omp_get_thread_num());
+	InputOutput newio;
+	if (rers_result == -2) {
+	  newio.recordVariable(InputOutput::STDERR_VAR,globalVarIdByName("input"));	  
+	}
         // TODO: _pstate[VariableId(output)]=rers_result;
         // matches special case of function call with return value, otherwise handles call without return value (function call is matched above)
         if(SgNodeHelper::Pattern::matchExprStmtAssignOpVarRefExpFunctionCallExp(nodeToAnalyze)) {
@@ -2932,11 +2936,11 @@ std::list<EState> Analyzer::transferFunctionCallLocalEdge(Edge edge, const EStat
 	  _pstate.writeToMemoryLocation(lhsVarId,AbstractValue(rers_result));
 	  ConstraintSet _cset=*estate->constraints();
 	  _cset.removeAllConstraintsOfVar(lhsVarId);
-	  EState _eState=createEState(edge.target(),_pstate,_cset);
+	  EState _eState=createEState(edge.target(),_pstate,_cset,newio);
 	  return elistify(_eState);
 	} else {
 	  ConstraintSet _cset=*estate->constraints();
-	  EState _eState=createEState(edge.target(),_pstate,_cset);
+	  EState _eState=createEState(edge.target(),_pstate,_cset,newio);
 	  return elistify(_eState);
 	}
         cout <<"PState:"<< _pstate<<endl;
