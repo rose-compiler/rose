@@ -13,6 +13,7 @@
 
 #include "RoseAst.h"
 #include "SgNodeHelper.h"
+#include "TypeSizeMapping.h"
 
 namespace SPRAY {
 
