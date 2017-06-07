@@ -113,11 +113,14 @@ bool VariableIdMapping::isConstantArray(VariableId varId) {
  */
 void VariableIdMapping::toStream(ostream& os) {
   for(size_t i=0;i<mappingVarIdToSym.size();++i) {
-    os<<""<<i
-      <<","<<mappingVarIdToSym[i];
-    os  <<","<<SgNodeHelper::symbolToString(mappingVarIdToSym[i])
-      //<<","<<SgNodeHelper::uniqueLongVariableName(mappingVarIdToSym[i])
-        <<endl;
+    VariableId varId=variableIdFromCode(i);
+    os<<i
+      <<","<<varId.toString(this)
+      //<<","<<SgNodeHelper::symbolToString(mappingVarIdToSym[i])  
+      <<","<<mappingVarIdToSym[i]
+      <<","<<getNumberOfElements(varId)
+      <<","<<getElementSize(varId)
+      <<endl;
     ROSE_ASSERT(modeVariableIdForEachArrayElement?true:mappingSymToVarId[mappingVarIdToSym[i]]==i);
   }
 }
@@ -294,20 +297,22 @@ SgSymbol* VariableIdMapping::getSymbol(VariableId varid) {
   ROSE_ASSERT(((size_t)varid._id)<mappingVarIdToSym.size());
   return mappingVarIdToSym[varid._id];
 }
-//SgSymbol* VariableIdMapping::getSymbol(VariableId varId) {
-//  return varId.getSymbol();
-//}
 
-void VariableIdMapping::setSize(VariableId variableId, size_t size) {
-  //ROSE_ASSERT(hasArrayType(variableId));
-  mappingVarIdToSize[variableId._id]=size;
+void VariableIdMapping::setNumberOfElements(VariableId variableId, size_t size) {
+  mappingVarIdToNumberOfElements[variableId._id]=size;
 }
 
-size_t VariableIdMapping::getSize(VariableId variableId) {
-  //ROSE_ASSERT(hasArrayType(variableId));
-  return mappingVarIdToSize[variableId._id];
+size_t VariableIdMapping::getNumberOfElements(VariableId variableId) {
+  return mappingVarIdToNumberOfElements[variableId._id];
 }
 
+void VariableIdMapping::setElementSize(VariableId variableId, size_t size) {
+  mappingVarIdToElementSize[variableId._id]=size;
+}
+
+size_t VariableIdMapping::getElementSize(VariableId variableId) {
+  return mappingVarIdToElementSize[variableId._id];
+}
 
 /*! 
   * \author Markus Schordan
@@ -563,14 +568,14 @@ SgSymbol* VariableIdMapping::createAndRegisterNewSymbol(std::string name) {
 SPRAY::VariableId VariableIdMapping::createAndRegisterNewVariableId(std::string name) {
   SgSymbol* sym=createAndRegisterNewSymbol(name);
   VariableId varId=variableId(sym);
-  setSize(varId,1); // default
+  setNumberOfElements(varId,1); // default
   return varId;
 }
 
 SPRAY::VariableId VariableIdMapping::createAndRegisterNewMemoryRegion(std::string name, int regionSize) {
   SgSymbol* sym=createAndRegisterNewSymbol(name);
   VariableId varId=variableId(sym);
-  setSize(varId,regionSize);
+  setNumberOfElements(varId,regionSize);
   return varId;
 }
 
@@ -591,7 +596,7 @@ void VariableIdMapping::registerNewArraySymbol(SgSymbol* sym, int arraySize) {
       mappingVarIdToSym.push_back(sym);
     }
     // size needs to be set *after* mappingVarIdToSym has been updated
-    setSize(tmpVarId,arraySize);
+    setNumberOfElements(tmpVarId,arraySize);
   } else {
     stringstream ss;
     ss<< "VariableIdMapping: registerNewArraySymbol: attempt to register existing array symbol "<<sym<<":"<<SgNodeHelper::symbolToString(sym);
@@ -618,7 +623,7 @@ void VariableIdMapping::registerNewSymbol(SgSymbol* sym) {
     // set size to 1 (to compute bytes, multiply by size of type)
     VariableId newVarId;
     newVarId.setIdCode(newIdCode);
-    setSize(newVarId,1);
+    setNumberOfElements(newVarId,1);
     // Mapping in both directions must be possible:
     ROSE_ASSERT(mappingSymToVarId.at(mappingVarIdToSym[newIdCode]) == newIdCode);
     ROSE_ASSERT(mappingVarIdToSym[mappingSymToVarId.at(sym)] == sym);

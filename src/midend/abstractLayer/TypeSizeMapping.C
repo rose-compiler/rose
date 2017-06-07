@@ -1,21 +1,21 @@
 #include "TypeSizeMapping.h"
-#include "CodeThornException.h"
+#include "SprayException.h"
 
-namespace CodeThorn {
+namespace SPRAY {
   
-  void TypeSizeMapping::setMapping(std::vector<CodeThorn::TypeSize> mapping) {
+  void TypeSizeMapping::setMapping(std::vector<SPRAY::TypeSize> mapping) {
     if(mapping.size()==_mapping.size()) {
       _mapping=mapping;
     } else {
-      throw CodeThorn::Exception("TypeSizeMapping: wrong number of type-size mapping values.");
+      throw SPRAY::Exception("TypeSizeMapping: wrong number of type-size mapping values.");
     }
   }
   
-  void TypeSizeMapping::setTypeSize(BuiltInType bitype, CodeThorn::TypeSize size) {
+  void TypeSizeMapping::setTypeSize(BuiltInType bitype, SPRAY::TypeSize size) {
     _mapping[bitype]=size;
   }
   
-  CodeThorn::TypeSize TypeSizeMapping::getTypeSize(BuiltInType bitype) {
+  SPRAY::TypeSize TypeSizeMapping::getTypeSize(BuiltInType bitype) {
     return _mapping[bitype];
   }
   
@@ -32,4 +32,4 @@ namespace CodeThorn {
       && sizeOfOp(BITYPE_SLONG)<=sizeOfOp(BITYPE_SLONG_LONG);
   }
   
-} // end of namespace CodeThorn
+} // end of namespace SPRAY

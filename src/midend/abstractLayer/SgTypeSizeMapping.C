@@ -1,9 +1,9 @@
 #include "sage3basic.h"
 #include "SgTypeSizeMapping.h"
 
-namespace CodeThorn {
+namespace SPRAY {
 
-  CodeThorn::TypeSize SgTypeSizeMapping::determineTypeSize(SgType* sgType) {
+  SPRAY::TypeSize SgTypeSizeMapping::determineTypeSize(SgType* sgType) {
     switch (sgType->variantT()) {
 
     case V_SgPointerType:
@@ -58,10 +58,10 @@ namespace CodeThorn {
     }
   }
 
-  CodeThorn::TypeSize SgTypeSizeMapping::determineTypeSizePointedTo(SgPointerType* sgType) {
+  SPRAY::TypeSize SgTypeSizeMapping::determineTypeSizePointedTo(SgPointerType* sgType) {
     SgType* typePointedTo=sgType->get_base_type();
     return determineTypeSize(typePointedTo);
   }
 
 
-} // end of namespace CodeThorn
+} // end of namespace SPRAY

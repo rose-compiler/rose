@@ -59,7 +59,7 @@ SgTypeSizeMapping* AbstractValue::getTypeSizeMapping() {
   return  _typeSizeMapping;
 }
 
-void AbstractValue::calculateValueSize(CodeThorn::BuiltInType btype) {
+void AbstractValue::calculateValueSize(SPRAY::BuiltInType btype) {
   ROSE_ASSERT(AbstractValue::_typeSizeMapping);
   valueSize=AbstractValue::_typeSizeMapping->getTypeSize(btype);
 }
@@ -70,13 +70,13 @@ void AbstractValue::setValue(long long int val) {
   intValue=val;
 }
 
-AbstractValue AbstractValue::createIntegerValue(CodeThorn::BuiltInType btype, long long int ival) {
+AbstractValue AbstractValue::createIntegerValue(SPRAY::BuiltInType btype, long long int ival) {
   AbstractValue aval;
   aval.init(btype,ival);
   return aval;
 }
 
-void AbstractValue::init(CodeThorn::BuiltInType btype, long long int ival) {
+void AbstractValue::init(SPRAY::BuiltInType btype, long long int ival) {
   valueType=AbstractValue::INTEGER;
   calculateValueSize(btype);
   setValue(ival);
@@ -453,7 +453,7 @@ string AbstractValue::toLhsString(SPRAY::VariableIdMapping* vim) const {
   }
   case PTR: {
     stringstream ss;
-    if(vim->getSize(variableId)==1) {
+    if(vim->getNumberOfElements(variableId)==1) {
       ss<<variableId.toString(vim); // variables are arrays of size 1
     } else {
       ss<<variableId.toString(vim)<<"["<<getIntValue()<<"]";
@@ -477,7 +477,7 @@ string AbstractValue::toRhsString(SPRAY::VariableIdMapping* vim) const {
   case PTR: {
     stringstream ss;
     ss<<"&"; // on the rhs an abstract pointer is always a pointer value of some abstract value
-    if(vim->getSize(variableId)==1) {
+    if(vim->getNumberOfElements(variableId)==1) {
       ss<<variableId.toString(vim); // variables are arrays of size 1
     } else {
       ss<<variableId.toString(vim)<<"["<<getIntValue()<<"]";

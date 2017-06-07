@@ -724,7 +724,7 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
         PState newPState=*currentEState.pstate();
         if(variableIdMapping.hasArrayType(initDeclVarId)) {
           // add default array elements to PState
-          size_t length=variableIdMapping.getSize(initDeclVarId);
+          size_t length=variableIdMapping.getNumberOfElements(initDeclVarId);
           for(size_t elemIndex=0;elemIndex<length;elemIndex++) {
             AbstractValue newArrayElementId=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(elemIndex));
             // set default init value
