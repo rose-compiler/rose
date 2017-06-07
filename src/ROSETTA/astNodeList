@@ -507,6 +507,7 @@ SgOmpClauseBodyStatement
 SgOmpBodyStatement
 SgOmpDoStatement
 SgOmpFlushStatement
+SgOmpDeclareSIMDStatement
 SgOmpForStatement
 SgOmpForSIMDStatement
 SgOmpMasterStatement

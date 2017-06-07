@@ -116,10 +116,17 @@ void work3( double **a, double **b, double **c, int n )
   }  
 }
 
+// declare simd can show up several times!
+#pragma omp declare simd simdlen(1) notinbranch
+float bar(int * p) {
+   *p = *p +10;
+   return *p; 
+}
+
 #if 0
 // declare simd can show up several times!
 #pragma omp declare simd linear(p:1)
-float bar(int * p) {
+float bar2(int * p) {
    *p = *p +10;
    return *p; 
 }

@@ -6059,6 +6059,14 @@ SgOmpFlushStatement* SgOmpFlushStatement::build_node_from_nonlist_children ( Sg_
      return returnNode;
    }
 
+SgOmpDeclareSIMDStatement* SgOmpDeclareSIMDStatement::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct )
+   {
+     SgOmpDeclareSIMDStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
 
 /* #line 5940 "../../../src/frontend/SageIII//Cxx_GrammarAtermNodeBuildFunctions.C" */
 

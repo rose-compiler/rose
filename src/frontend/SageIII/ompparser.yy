@@ -138,6 +138,7 @@ corresponding C type is union name defaults to YYSTYPE.
 openmp_directive : parallel_directive 
                  | for_directive
                  | for_simd_directive
+                 | declare_simd_directive
                  | sections_directive
                  | single_directive
                  | parallel_for_directive
@@ -768,19 +769,43 @@ unique_simd_clause: SAFELEN {
                       } '(' expression ')' {
                         addExpression("");
                       }
-                | SIMDLEN {
+                | simdlen_clause
+                | aligned_clause
+                | linear_clause
+                ;
+
+
+simdlen_clause: SIMDLEN {
                           ompattribute->addClause(e_simdlen);
                           omptype = e_simdlen;
                           } '(' expression ')' {
-                          addExpression("");
-                      }
-                | uniform_clause
-                | aligned_clause
+                          addExpression(""); 
+                      } 
+                  ;
+
+declare_simd_directive: OMP DECLARE SIMD {
+                        ompattribute = buildOmpAttribute(e_declare_simd, gNode,true);
+                     }
+                     declare_simd_clause_optseq
+                     ;
+
+declare_simd_clause_optseq : /* empty*/
+                        | declare_simd_clause_seq
+                        ;
+
+declare_simd_clause_seq
+                : declare_simd_clause
+                | declare_simd_clause_seq declare_simd_clause
+                | declare_simd_clause_seq ',' declare_simd_clause
+                ; 
+
+declare_simd_clause     : simdlen_clause
                 | linear_clause
+                | aligned_clause
+                | uniform_clause
                 | INBRANCH { ompattribute->addClause(e_inbranch); omptype = e_inbranch; /*TODO: this is temporary, to be moved to declare simd */}
                 | NOTINBRANCH { ompattribute->addClause(e_notinbranch); omptype = e_notinbranch; /*TODO: this is temporary, to be moved to declare simd */ }
-                ;
-
+              ;
 
 uniform_clause : UNIFORM { 
                          ompattribute->addClause(e_uniform);

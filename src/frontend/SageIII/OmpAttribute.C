@@ -688,6 +688,7 @@ namespace OmpSupport
        
 
       case e_simd: result = "simd"; break;
+      case e_declare_simd: result = "declare simd"; break;
       case e_safelen: result = "safelen"; break;
       case e_simdlen: result = "simdlen"; break;
       case e_linear: result = "linear"; break;
@@ -764,6 +765,7 @@ namespace OmpSupport
       case e_target_data:
       case e_target_update: //TODO more later
       case e_simd:
+      case e_declare_simd:
 
         result = true;
         break;

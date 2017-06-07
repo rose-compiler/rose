@@ -10836,16 +10836,18 @@ Unparse_ExprStmt::unparseOmpBeginDirectiveClauses (SgStatement* stmt,     SgUnpa
 {
   ROSE_ASSERT (stmt != NULL);
   // optional clauses
-  if (isSgOmpClauseBodyStatement(stmt))
+  SgOmpClauseBodyStatement* bodystmt= isSgOmpClauseBodyStatement(stmt);
+  SgOmpDeclareSIMDStatement* simdstmt= isSgOmpDeclareSIMDStatement(stmt);
+  if (bodystmt||simdstmt)
   {
-    const SgOmpClausePtrList& clause_ptr_list = isSgOmpClauseBodyStatement(stmt)->get_clauses();
+    const SgOmpClausePtrList& clause_ptr_list = bodystmt?bodystmt->get_clauses():simdstmt->get_clauses();
     SgOmpClausePtrList::const_iterator i;
     for (i= clause_ptr_list.begin(); i!= clause_ptr_list.end(); i++)
     {
       SgOmpClause* c_clause = *i;
       unparseOmpClause(c_clause, info);
     }
-  }
+  } 
 }
 
 

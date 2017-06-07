@@ -3003,11 +3003,17 @@ std::string SageInterface::extractPragmaKeyword(const SgPragmaDeclaration *pragm
 }
 
 //! Check if a node is SgOmp*Statement
+// TODO: move all Omp*statement under a parent SgOmpStatement
 bool SageInterface::isOmpStatement(SgNode* n)
 {
   ROSE_ASSERT (n != NULL);
   bool result = false;
-  if (isSgOmpBarrierStatement(n)||isSgOmpBodyStatement(n)|| isSgOmpFlushStatement(n)|| isSgOmpTaskwaitStatement(n) )
+  if (isSgOmpBarrierStatement(n)||
+      isSgOmpBodyStatement(n)||
+      isSgOmpDeclareSIMDStatement(n) ||
+      isSgOmpFlushStatement(n)|| 
+      isSgOmpThreadprivateStatement(n)|| 
+      isSgOmpTaskwaitStatement(n) )
     result = true;
 
   return result;
