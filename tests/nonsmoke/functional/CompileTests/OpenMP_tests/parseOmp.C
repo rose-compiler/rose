@@ -25,7 +25,7 @@ void visitorTraversal::visit(SgNode* node)
   {
 //    cout<<"Found att attached to "<<node<<" "<<node->class_name()<<" at line "
 //      <<node->get_file_info()->get_line()<<endl;
-    attributelist->print();//debug only for now
+//    attributelist->print();//debug only for now
   }
 #if 0  
   // Show OpenMP nodes also for -rose:openmp:ast_only

@@ -847,8 +847,10 @@ namespace OmpSupport
     if (!att->hasReductionOperator(reduction_op))
       return NULL;
     SgOmpClause::omp_reduction_operator_enum  sg_op = toSgOmpClauseReductionOperator(reduction_op); 
-    SgOmpReductionClause* result = new SgOmpReductionClause(buildExprListExp(), sg_op);
+    SgExprListExp* explist=buildExprListExp();
+    SgOmpReductionClause* result = new SgOmpReductionClause(explist, sg_op);
     ROSE_ASSERT(result != NULL);
+    explist->set_parent(result);
     setOneSourcePositionForTransformation(result);
     
     // build variable list
@@ -866,9 +868,11 @@ namespace OmpSupport
     if (!att->hasMapVariant(map_op))
       return NULL;
     SgOmpClause::omp_map_operator_enum  sg_op = toSgOmpClauseMapOperator(map_op); 
-    SgOmpMapClause* result = new SgOmpMapClause(buildExprListExp(), sg_op);
-    setOneSourcePositionForTransformation(result);
+    SgExprListExp* explist=buildExprListExp();
+    SgOmpMapClause* result = new SgOmpMapClause(explist, sg_op);
     ROSE_ASSERT(result != NULL);
+    setOneSourcePositionForTransformation(result);
+    explist->set_parent(result);
 
     // build variable list
     setClauseVariableList(result, att, map_op); 
@@ -1396,7 +1400,9 @@ namespace OmpSupport
     {
       SgInitializedName* iname = isSgInitializedName((*iter).second);
       ROSE_ASSERT(iname !=NULL);
-      result->get_variables().push_back(buildVarRefExp(iname));
+      SgVarRefExp* varref = buildVarRefExp(iname);
+      result->get_variables().push_back(varref);
+      varref->set_parent(result);
     }
     return result;
   }
@@ -1428,7 +1434,9 @@ namespace OmpSupport
     {
       SgInitializedName* iname = isSgInitializedName((*iter).second);
       ROSE_ASSERT(iname !=NULL);
-      result->get_variables().push_back(buildVarRefExp(iname));
+      SgVarRefExp* varref = buildVarRefExp(iname);
+      result->get_variables().push_back(varref);
+      varref->set_parent(result);
     }
     result->set_definingDeclaration(result);
     return result;
