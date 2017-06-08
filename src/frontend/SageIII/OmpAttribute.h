@@ -190,6 +190,11 @@ namespace OmpSupport
 
   }; //end omp_construct_enum
 
+  // A new variable to communicate the context of OpenMP parser
+  // what directive is being parsed right now. 
+  // This is useful for rare case of parsing "declare simd"
+  extern omp_construct_enum cur_omp_directive; 
+   
   //-------------------------------------------------------------------
   // some utility functions
 

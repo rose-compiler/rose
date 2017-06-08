@@ -162,6 +162,7 @@ openmp_directive : parallel_directive
 parallel_directive : /* #pragma */ OMP PARALLEL {
                        ompattribute = buildOmpAttribute(e_parallel,gNode,true);
                        omptype = e_parallel; 
+                       cur_omp_directive=omptype;
                      }
                      parallel_clause_optseq 
                    ;
@@ -218,6 +219,8 @@ unique_parallel_clause : IF {
 
 for_directive : /* #pragma */ OMP FOR { 
                   ompattribute = buildOmpAttribute(e_for,gNode,true); 
+                  omptype = e_for; 
+                  cur_omp_directive=omptype;
                 }
                 for_clause_optseq
               ;
@@ -336,6 +339,7 @@ unique_single_clause : COPYPRIVATE {
 task_directive : /* #pragma */ OMP TASK {
                    ompattribute = buildOmpAttribute(e_task,gNode,true);
                    omptype = e_task; 
+                   cur_omp_directive = omptype; 
                  } task_clause_optseq
                ;
 
@@ -365,6 +369,8 @@ unique_task_clause : IF {
                    
 parallel_for_directive : /* #pragma */ OMP PARALLEL FOR { 
                            ompattribute = buildOmpAttribute(e_parallel_for,gNode, true); 
+                           omptype=e_parallel_for; 
+                           cur_omp_directive = omptype;
                          } parallel_for_clauseoptseq
                        ;
 
@@ -392,6 +398,8 @@ parallel_for_clause : unique_parallel_clause
 
 parallel_for_simd_directive : /* #pragma */ OMP PARALLEL FOR SIMD { 
                            ompattribute = buildOmpAttribute(e_parallel_for_simd, gNode, true); 
+                           omptype= e_parallel_for_simd;
+                           cur_omp_directive = omptype;
                          } parallel_for_simd_clauseoptseq
                        ;
 
@@ -419,6 +427,7 @@ parallel_for_simd_clause: unique_parallel_clause
 parallel_sections_directive : /* #pragma */ OMP PARALLEL SECTIONS { 
                                 ompattribute =buildOmpAttribute(e_parallel_sections,gNode, true); 
                                 omptype = e_parallel_sections; 
+                                cur_omp_directive = omptype;
                               } parallel_sections_clause_optseq
                             ;
 
@@ -444,11 +453,14 @@ parallel_sections_clause : unique_parallel_clause
                          ;
 
 master_directive : /* #pragma */ OMP MASTER { 
-                     ompattribute = buildOmpAttribute(e_master, gNode, true);}
+                     ompattribute = buildOmpAttribute(e_master, gNode, true);
+                     cur_omp_directive = e_master; 
+}
                  ;
 
 critical_directive : /* #pragma */ OMP CRITICAL {
                        ompattribute = buildOmpAttribute(e_critical, gNode, true); 
+                       cur_omp_directive = e_critical;
                      } region_phraseopt
                    ;
 
@@ -466,15 +478,20 @@ region_phrase : '(' ID_EXPRESSION ')' {
               ;
 
 barrier_directive : /* #pragma */ OMP BARRIER { 
-                      ompattribute = buildOmpAttribute(e_barrier,gNode, true); }
+                      ompattribute = buildOmpAttribute(e_barrier,gNode, true); 
+                      cur_omp_directive = e_barrier;
+}
                   ;
 
 taskwait_directive : /* #pragma */ OMP TASKWAIT { 
-                       ompattribute = buildOmpAttribute(e_taskwait, gNode, true); } 
+                       ompattribute = buildOmpAttribute(e_taskwait, gNode, true);  
+                       cur_omp_directive = e_taskwait;
+                       }
                    ;
 
 atomic_directive : /* #pragma */ OMP ATOMIC { 
                      ompattribute = buildOmpAttribute(e_atomic,gNode, true); 
+                     cur_omp_directive = e_atomic;
                      } atomic_clauseopt
                  ;
 
@@ -499,6 +516,7 @@ atomic_clause : READ { ompattribute->addClause(e_atomic_clause);
 flush_directive : /* #pragma */ OMP FLUSH {
                     ompattribute = buildOmpAttribute(e_flush,gNode, true);
                     omptype = e_flush; 
+                    cur_omp_directive = omptype;
                   } flush_varsopt
                 ;
 
@@ -511,12 +529,14 @@ flush_vars : '(' {b_within_variable_list = true;} variable_list ')' {b_within_va
 
 ordered_directive : /* #pragma */ OMP ORDERED { 
                       ompattribute = buildOmpAttribute(e_ordered_directive,gNode, true); 
+                      cur_omp_directive = e_ordered_directive;
                     }
                   ;
 
 threadprivate_directive : /* #pragma */ OMP THREADPRIVATE {
                             ompattribute = buildOmpAttribute(e_threadprivate,gNode, true); 
                             omptype = e_threadprivate; 
+                            cur_omp_directive = omptype;
                           } '(' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list = false;}
                         ;
 
@@ -625,6 +645,7 @@ target_data_clause : device_clause
 target_directive: /* #pragma */ OMP TARGET {
                        ompattribute = buildOmpAttribute(e_target,gNode,true);
                        omptype = e_target;
+                       cur_omp_directive = omptype;
                      }
                      target_clause_optseq 
                    ;
@@ -729,6 +750,7 @@ map_clause_optseq: /* empty, default to be tofrom*/ { ompattribute->setMapVarian
 
 for_simd_directive : /* #pragma */ OMP FOR SIMD { 
                   ompattribute = buildOmpAttribute(e_for_simd, gNode,true); 
+                  cur_omp_directive = e_for_simd;
                 }
                 for_simd_clause_optseq
               ;
@@ -741,7 +763,9 @@ for_simd_clause_optseq:  /* empty*/
 
 simd_directive: /* # pragma */ OMP SIMD
                   { ompattribute = buildOmpAttribute(e_simd,gNode,true); 
-                    omptype = e_simd; }
+                    omptype = e_simd; 
+                    cur_omp_directive = omptype;
+                    }
                    simd_clause_optseq
                 ;
 
@@ -785,6 +809,7 @@ simdlen_clause: SIMDLEN {
 
 declare_simd_directive: OMP DECLARE SIMD {
                         ompattribute = buildOmpAttribute(e_declare_simd, gNode,true);
+                        cur_omp_directive = e_declare_simd;
                      }
                      declare_simd_clause_optseq
                      ;
