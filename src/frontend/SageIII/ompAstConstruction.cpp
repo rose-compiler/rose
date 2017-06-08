@@ -1165,7 +1165,7 @@ namespace OmpSupport
       inbranch
       notinbranch 
    * */
-  static void appendOmpClauses(SgOmpDeclareSIMDStatement* target, OmpAttribute* att)
+  static void appendOmpClauses(SgOmpDeclareSimdStatement* target, OmpAttribute* att)
   {
     ROSE_ASSERT(target && att);
     // must copy those clauses here, since they will be deallocated later on
@@ -1327,7 +1327,7 @@ namespace OmpSupport
         result = new SgOmpForStatement(NULL, body); 
         break;
       case e_for_simd:  
-        result = new SgOmpForSIMDStatement(NULL, body); 
+        result = new SgOmpForSimdStatement(NULL, body); 
         break;
       case e_single:
         result = new SgOmpSingleStatement(NULL, body); 
@@ -1401,15 +1401,15 @@ namespace OmpSupport
     return result;
   }
 
-  SgOmpDeclareSIMDStatement* buildOmpDeclareSIMDStatement(OmpAttribute* att)
+  SgOmpDeclareSimdStatement* buildOmpDeclareSimdStatement(OmpAttribute* att)
   {
     ROSE_ASSERT(att != NULL);
-    SgOmpDeclareSIMDStatement* result = new SgOmpDeclareSIMDStatement();
+    SgOmpDeclareSimdStatement* result = new SgOmpDeclareSimdStatement();
     result->set_firstNondefiningDeclaration(result);
     ROSE_ASSERT(result !=NULL);
     setOneSourcePositionForTransformation(result);
 
-    appendOmpClauses(isSgOmpDeclareSIMDStatement(result), att);
+    appendOmpClauses(isSgOmpDeclareSimdStatement(result), att);
     return result;
   }
 
@@ -1460,7 +1460,7 @@ namespace OmpSupport
         }
       case e_parallel_for_simd:
         {
-          second_stmt = new SgOmpForSIMDStatement(NULL, body);
+          second_stmt = new SgOmpForSimdStatement(NULL, body);
           setOneSourcePositionForTransformation(second_stmt);
           break;
         }
@@ -1546,7 +1546,7 @@ namespace OmpSupport
         case e_aligned:
         case e_linear:
           {
-            if (!isSgOmpForStatement(second_stmt) && !isSgOmpForSIMDStatement(second_stmt) && !isSgOmpDoStatement(second_stmt))
+            if (!isSgOmpForStatement(second_stmt) && !isSgOmpForSimdStatement(second_stmt) && !isSgOmpDoStatement(second_stmt))
             {
               printf("Error: buildOmpParallelStatementFromCombinedDirectives(): unacceptable clauses for parallel for/do [simd]\n");
               att->print();
@@ -1759,7 +1759,7 @@ This is no perfect solution until we handle preprocessing information as structu
             }
           case e_declare_simd:
             {
-              omp_stmt = buildOmpDeclareSIMDStatement(oa);
+              omp_stmt = buildOmpDeclareSimdStatement(oa);
               break;
             }
             // with a structured block/statement followed

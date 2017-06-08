@@ -507,9 +507,9 @@ SgOmpClauseBodyStatement
 SgOmpBodyStatement
 SgOmpDoStatement
 SgOmpFlushStatement
-SgOmpDeclareSIMDStatement
+SgOmpDeclareSimdStatement
 SgOmpForStatement
-SgOmpForSIMDStatement
+SgOmpForSimdStatement
 SgOmpMasterStatement
 SgOmpOrderedStatement
 SgOmpParallelStatement

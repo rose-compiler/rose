@@ -3010,7 +3010,7 @@ bool SageInterface::isOmpStatement(SgNode* n)
   bool result = false;
   if (isSgOmpBarrierStatement(n)||
       isSgOmpBodyStatement(n)||
-      isSgOmpDeclareSIMDStatement(n) ||
+      isSgOmpDeclareSimdStatement(n) ||
       isSgOmpFlushStatement(n)|| 
       isSgOmpThreadprivateStatement(n)|| 
       isSgOmpTaskwaitStatement(n) )

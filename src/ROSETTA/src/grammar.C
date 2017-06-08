@@ -4002,8 +4002,8 @@ Grammar::GrammarNodeInfo Grammar::getGrammarNodeInfo(AstNodeClass* grammarnode) 
         ||nodeName == "SgOmpSimdStatement"
         ||nodeName == "SgOmpTaskStatement"
         ||nodeName == "SgOmpForStatement"
-        ||nodeName == "SgOmpForSIMDStatement"
-        ||nodeName == "SgOmpForSIMDStatement"
+        ||nodeName == "SgOmpForSimdStatement"
+        ||nodeName == "SgOmpForSimdStatement"
         ||nodeName == "SgOmpDoStatement"
         ||nodeName == "SgOmpAtomicStatement"
         ||nodeName == "SgExprListExp");
@@ -4303,8 +4303,8 @@ Grammar::buildTreeTraversalFunctions(AstNodeClass& node, StringUtility::FileWith
                  ||string(node.getName()) == "SgOmpTargetStatement"
                  ||string(node.getName()) == "SgOmpTargetDataStatement"
                  ||string(node.getName()) == "SgOmpForStatement"
-                 ||string(node.getName()) == "SgOmpForSIMDStatement"
-                 ||string(node.getName()) == "SgOmpForSIMDStatement"
+                 ||string(node.getName()) == "SgOmpForSimdStatement"
+                 ||string(node.getName()) == "SgOmpForSimdStatement"
                  ||string(node.getName()) == "SgOmpDoStatement"
                  ||string(node.getName()) == "SgOmpAtomicStatement"
                  )
@@ -4412,7 +4412,7 @@ Grammar::buildTreeTraversalFunctions(AstNodeClass& node, StringUtility::FileWith
                  ||string(node.getName()) == "SgOmpTargetStatement"
                  ||string(node.getName()) == "SgOmpTargetDataStatement"
                  ||string(node.getName()) == "SgOmpForStatement"
-                 ||string(node.getName()) == "SgOmpForSIMDStatement"
+                 ||string(node.getName()) == "SgOmpForSimdStatement"
                  ||string(node.getName()) == "SgOmpDoStatement"
                  ||string(node.getName()) == "SgOmpAtomicStatement"
                  )
