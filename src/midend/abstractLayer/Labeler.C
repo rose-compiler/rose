@@ -248,7 +248,7 @@ int Labeler::isLabelRelevantNode(SgNode* node) {
   case V_SgOmpDoStatement:
   case V_SgOmpFlushStatement:   
   case V_SgOmpForStatement:
-  case V_SgOmpForSIMDStatement:
+  case V_SgOmpForSimdStatement:
   case V_SgOmpMasterStatement:
   case V_SgOmpOrderedStatement:
   case V_SgOmpParallelStatement:

@@ -2417,7 +2417,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                     case V_SgOmpBarrierStatement:           unparseOmpSimpleStatement        (stmt, info);break;
                     case V_SgOmpThreadprivateStatement:     unparseOmpThreadprivateStatement (stmt, info);break;
                     case V_SgOmpFlushStatement:             unparseOmpFlushStatement         (stmt, info);break;
-                    case V_SgOmpDeclareSIMDStatement:       unparseOmpDeclareSIMDStatement   (stmt, info);break;
+                    case V_SgOmpDeclareSimdStatement:       unparseOmpDeclareSimdStatement   (stmt, info);break;
 
                  // Generic OpenMP directives with a format of : begin-directive, begin-clauses, body, end-directive , end-clauses
                     case V_SgOmpCriticalStatement:
@@ -6844,10 +6844,10 @@ void UnparseLanguageIndependentConstructs::unparseOmpFlushStatement(SgStatement*
   unp->u_sage->curprint_newline();
 }
 
-void UnparseLanguageIndependentConstructs::unparseOmpDeclareSIMDStatement(SgStatement* stmt,     SgUnparse_Info& info)
+void UnparseLanguageIndependentConstructs::unparseOmpDeclareSimdStatement(SgStatement* stmt,     SgUnparse_Info& info)
 {
   ROSE_ASSERT (stmt != NULL);
-  SgOmpDeclareSIMDStatement * s = isSgOmpDeclareSIMDStatement(stmt);
+  SgOmpDeclareSimdStatement * s = isSgOmpDeclareSimdStatement(stmt);
   ROSE_ASSERT (s!= NULL);
 //cout<<"debug "<<s->get_clauses().size()<<endl;
   unparseOmpDirectivePrefixAndName(stmt, info); 
@@ -6977,7 +6977,7 @@ void UnparseLanguageIndependentConstructs::unparseOmpDirectivePrefixAndName (SgS
         curprint(string ("for "));
         break;
       }
-         case V_SgOmpForSIMDStatement:
+         case V_SgOmpForSimdStatement:
       {
         unparseOmpPrefix(info);
         curprint(string ("for simd "));
@@ -7019,7 +7019,7 @@ void UnparseLanguageIndependentConstructs::unparseOmpDirectivePrefixAndName (SgS
         curprint(string ("simd"));
         break;
       }
-      case V_SgOmpDeclareSIMDStatement:
+      case V_SgOmpDeclareSimdStatement:
       {
         unparseOmpPrefix(info);
         curprint(string ("declare simd"));

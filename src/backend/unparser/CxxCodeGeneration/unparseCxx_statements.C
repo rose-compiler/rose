@@ -1533,7 +1533,7 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
 
        // Liao, 5/31/2009, add OpenMP support, TODO refactor some code to language independent part
           case V_SgOmpForStatement:                      unparseOmpForStatement(stmt, info); break;
-          case V_SgOmpForSIMDStatement:                  unparseOmpForSIMDStatement(stmt, info); break;
+          case V_SgOmpForSimdStatement:                  unparseOmpForSimdStatement(stmt, info); break;
 
        // DQ (4/16/2011): Added Java specific IR node until we support the Java specific unparsing.
           case V_SgJavaImportStatement:
@@ -10806,10 +10806,10 @@ void Unparse_ExprStmt::unparseOmpForStatement (SgStatement* stmt,     SgUnparse_
   }
 }
 
-void Unparse_ExprStmt::unparseOmpForSIMDStatement (SgStatement* stmt,     SgUnparse_Info& info)
+void Unparse_ExprStmt::unparseOmpForSimdStatement (SgStatement* stmt,     SgUnparse_Info& info)
 {
   ROSE_ASSERT (stmt != NULL);
-  SgOmpForSIMDStatement * f_stmt = isSgOmpForSIMDStatement (stmt);
+  SgOmpForSimdStatement * f_stmt = isSgOmpForSimdStatement (stmt);
   ROSE_ASSERT (f_stmt != NULL);
 
   unparseOmpDirectivePrefixAndName(stmt, info);
@@ -10837,7 +10837,7 @@ Unparse_ExprStmt::unparseOmpBeginDirectiveClauses (SgStatement* stmt,     SgUnpa
   ROSE_ASSERT (stmt != NULL);
   // optional clauses
   SgOmpClauseBodyStatement* bodystmt= isSgOmpClauseBodyStatement(stmt);
-  SgOmpDeclareSIMDStatement* simdstmt= isSgOmpDeclareSIMDStatement(stmt);
+  SgOmpDeclareSimdStatement* simdstmt= isSgOmpDeclareSimdStatement(stmt);
   if (bodystmt||simdstmt)
   {
     const SgOmpClausePtrList& clause_ptr_list = bodystmt?bodystmt->get_clauses():simdstmt->get_clauses();
