@@ -123,12 +123,12 @@ float bar(int * p) {
    return *p; 
 }
 
-#if 0
 // declare simd can show up several times!
 #pragma omp declare simd linear(p:1)
+#pragma omp declare simd uniform(p)
+#pragma omp declare simd simdlen(1) notinbranch
 float bar2(int * p) {
    *p = *p +10;
    return *p; 
 }
 
-#endif

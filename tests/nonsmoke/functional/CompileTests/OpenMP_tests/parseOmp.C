@@ -23,11 +23,11 @@ void visitorTraversal::visit(SgNode* node)
   OmpAttributeList* attributelist = getOmpAttributeList(node);
   if (attributelist)
   {
-    cout<<"Found att attached to "<<node<<" "<<node->class_name()<<" at line "
-      <<node->get_file_info()->get_line()<<endl;
+//    cout<<"Found att attached to "<<node<<" "<<node->class_name()<<" at line "
+//      <<node->get_file_info()->get_line()<<endl;
     attributelist->print();//debug only for now
   }
-#if 1  
+#if 0  
   // Show OpenMP nodes also for -rose:openmp:ast_only
   if (SageInterface::isOmpStatement(node))
   {
