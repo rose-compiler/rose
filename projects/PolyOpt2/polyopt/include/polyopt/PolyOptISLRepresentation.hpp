@@ -71,6 +71,8 @@ public:
   std::vector<isl_set*> stmt_iterdom;
   // Statement body (text representation).
   std::vector<std::string> stmt_body;
+  // Statement body (SageIII representation).
+  std::vector<SgNode*> stmt_body_ir;
   // Union of all access functions intersected with domain.
   isl_union_map* scop_reads;
   // Union of all access functions intersected with domain.

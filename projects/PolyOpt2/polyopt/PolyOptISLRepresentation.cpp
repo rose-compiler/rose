@@ -73,6 +73,7 @@ PolyOptISLRepresentation::PolyOptISLRepresentation()
   stmt_schedule = std::vector<isl_map*>();
   stmt_iterdom = std::vector<isl_set*>();
   stmt_body = std::vector<std::string>();
+  stmt_body_ir = std::vector<SgNode*>();
 }
 
 PolyOptISLRepresentation::~PolyOptISLRepresentation()
@@ -445,6 +446,7 @@ PolyOptISLRepresentation::convertScoplibToISL (scoplib_scop_p scop)
 
       // 4. Finalize info about the statement.
       stmt_body.push_back (((SgNode*)(s->body))->unparseToCompleteString());
+      stmt_body_ir.push_back ((SgNode*)(s->body));
     }
 
   // // Debug.
