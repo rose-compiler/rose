@@ -86,17 +86,7 @@ namespace BinaryAnalysis {
  *  individual instruction are indistinguishable, but a BB "does more". Most analysis is more efficient when it's able to
  *  perform larger units of work.
  *
- * @subsection binfaq_disassembly_3 Q3. Why are there two partitioners?
- *
- *  There are actually three. Originally the @ref BinaryAnalysis::Disassembler had its own recursive-descent algorithm and
- *  those functions are still present for backward compatibility (we'll likely deprecate them once @ref Partitioner2 is
- *  ready). The @ref BinaryAnalysis::Partitioner was the first version to exist separately from the disassembler and is the
- *  version currently (June 2015) used by ROSE's @ref frontend function.  This one is well tested, but doesn't allow for much
- *  customization. In confusing situations it sometimes creates far more "functions" than what actually exist. Finally, the
- *  @ref Partitioner2 is a completely new design that allows users to customize how partitioning is performed. It is currently
- *  under development, although many new tools are already using it.  Its main drawback is that it goes to the opposite
- *  extreme of @ref Partitioner, failing to create functions for code with confusing CFG (this is a temporary condition, and in
- *  any case, users have enough information to create additional functions from the missed instructions).
+ * @subsection binfaq_disassembly_3 Q3. (No longer applicable.)
  *
  * @subsection binfaq_disassembly_4 Q4. Why is ROSE's CFG structured the way it is?
  *
@@ -220,16 +210,12 @@ namespace BinaryAnalysis {
  *
  * @subsection binfaq_semantics_7 Q7. Can I attach information to symbolic expressions?
  *
- *  It is not possible to directly attach user-defined data to the @ref SymbolicExpr::TreeNode that serves as a base class
- *  for symbolic expressions and which is pointed to by the values (i.e., @c SValue) of the instruction semantic's
- *  @ref InstructionSemantics2::SymbolicSemantics "symbolic domain".  One reason is that these trees undergo extensive
- *  simplification both within ROSE and possibly within other tools, and user-defined data would likely get lost in the
- *  translation. Not to mention that user-defined data might even need to influence how simplifications or other
- *  transformations would occur.
- *
- *  However, one can attach arbitrary information to the @c SValue classes. This is done by subclassing @c SValue to add new
- *  data members, and subclassing and overriding any necessary methods in @c RiscOperators that might need to know about the
- *  user-defined data members. It's described in the answer to a previous question. */
+ *  Each symbolic expression node can store one user-defined datum of arbitrary, copyable type via @ref
+ *  SymbolicExpr::Node::userData property.  The user data is mutable, does not participate in expression hashes, and can be
+ *  clobbered by ROSE's built-in simplification layer. Users can change the value at any time from any thread (with
+ *  user-supplied synchronization) regardless of how many expressions are sharing this subexpression.  The @c boost::any type
+ *  is used as the storage machanism because the AST attribute storage mechanism is too expensive (it's common to have hundreds
+ *  of millions of these nodes creating during an analysis). */
 
 } // namespace
 } // namespace
