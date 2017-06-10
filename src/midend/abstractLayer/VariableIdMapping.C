@@ -712,32 +712,6 @@ VariableId::toString(VariableIdMapping* vim) const {
     return toString();
 }
 
-#if 0
-VariableId::VariableId(SgSymbol* sym):sym(sym){
-}
-SgSymbol* VariableId::getSymbol() const {
-  return sym;
-}
-
-string
-VariableId::variableName() const {
-  SgSymbol* sym=getSymbol();
-  if(sym==0) return "id-no-var";
-  //stringstream ss;
-  //ss<<sym<<":"<<SgNodeHelper::symbolToString(sym);
-  //return ss.str();
-  return SgNodeHelper::symbolToString(sym);
-}
-
-string
-VariableId::longVariableName() const {
-  SgSymbol* sym=getSymbol();
-  if(sym==0) return "id-no-var";
-  // TODO: MS: long names do not work with SgNodehelper from SgSymbol. We can only support this with precomputed VariableIdMappings (we do not want to use mangled names)
-  return variableName();
-}
-#endif
-
 bool SPRAY::operator<(VariableId id1, VariableId id2) {
   return id1._id<id2._id;
 }
