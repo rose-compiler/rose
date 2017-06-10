@@ -205,7 +205,6 @@ int main(int argc, char* argv[]) {
 
   boolOptions.init(argc,argv);
   // temporary fake optinos
-  boolOptions.registerOption("arith-top",false); // temporary
   boolOptions.registerOption("semantic-fold",false); // temporary
   boolOptions.registerOption("post-semantic-fold",false); // temporary
   // regular options

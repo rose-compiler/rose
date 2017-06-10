@@ -15,7 +15,9 @@ ExprAnalyzer::ExprAnalyzer():
   _variableIdMapping(0),
   _skipSelectedFunctionCalls(false),
   _skipArrayAccesses(false), 
-  _externalFunctionSemantics(false) {
+  _stdFunctionSemantics(true),
+  _svCompFunctionSemantics(false)
+{
 }
 
 void ExprAnalyzer::setSkipSelectedFunctionCalls(bool skip) {
@@ -34,12 +36,16 @@ bool ExprAnalyzer::getSkipArrayAccesses() {
   return _skipArrayAccesses;
 }
 
-void ExprAnalyzer::setExternalFunctionSemantics(bool flag) {
-  _externalFunctionSemantics=flag;
+void ExprAnalyzer::setSVCompFunctionSemantics(bool flag) {
+  _svCompFunctionSemantics=flag;
 }
 
-bool ExprAnalyzer::getExternalFunctionSemantics() {
-  return _externalFunctionSemantics;
+bool ExprAnalyzer::getSVCompFunctionSemantics() {
+  return _svCompFunctionSemantics;
+}
+
+bool ExprAnalyzer::stdFunctionSemantics() {
+  return _stdFunctionSemantics;
 }
 
 bool ExprAnalyzer::variable(SgNode* node, string& varName) {
@@ -896,7 +902,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp*
   if(getSkipSelectedFunctionCalls()) {
     // return default value
     return listify(res);
-  } else if(getExternalFunctionSemantics()) {
+  } else if(stdFunctionSemantics()) {
     //cout<<"DEBUG: FOUND function call inside expression (external): "<<funCall->unparseToString()<<endl;
     string funName=SgNodeHelper::getFunctionName(funCall);
     if(funName=="malloc") {
@@ -906,7 +912,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp*
     } else if(funName=="free") {
       return evalFunctionCallFree(funCall,estate,useConstraints);
     } else {
-      cout<<"WARNING: unknown external function ("<<funName<<") inside expression detected. Assuming it is side-effect free."<<endl;
+      cout<<"WARNING: unknown std function ("<<funName<<") inside expression detected. Assuming it is side-effect free."<<endl;
       return listify(res);
     }
   } else {
