@@ -709,11 +709,18 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
           }
           return createEState(targetLabel,newPState,cset);
         } else if(SgAssignInitializer* assignInitializer=isSgAssignInitializer(initializer)) {
-          // an single AssignInitializer on the rhs is a constant expression that evaluates to a known value at compile time
           SgExpression* rhs=assignInitializer->get_operand_i();
           ROSE_ASSERT(rhs);
-          //cout<<"DEBUG: assign initializer:"<<assignInitializer->unparseToString()<<":"<<rhs->unparseToString()<<endl;
-          PState newPState=analyzeAssignRhs(*currentEState.pstate(),initDeclVarId,rhs,cset);
+          //cout<<"DEBUG: assign initializer:"<<" lhs:"<<initDeclVarId.toString(getVariableIdMapping())<<" rhs:"<<assignInitializer->unparseToString()<<" decl-term:"<<AstTerm::astTermWithNullValuesToString(initName)<<endl;
+          // build lhs-value dependent on type of declared variable
+          AbstractValue lhsAbstractAddress=AbstractValue(initDeclVarId); // creates a pointer to initDeclVar
+          list<SingleEvalResultConstInt> res=exprAnalyzer.evalConstInt(rhs,currentEState,true);
+          ROSE_ASSERT(res.size()==1);
+          SingleEvalResultConstInt evalResult=*res.begin();
+          EState estate=evalResult.estate;
+          PState newPState=*estate.pstate();
+          newPState.writeToMemoryLocation(lhsAbstractAddress,evalResult.value());
+          ConstraintSet cset=*estate.constraints();
           return createEState(targetLabel,newPState,cset);
         } else {
           logger[ERROR] << "unsupported initializer in declaration: "<<decl->unparseToString()<<endl;
