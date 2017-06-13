@@ -255,7 +255,7 @@ endif (WIN32)
 
 # Ensure that Boost is found. Environment variable BOOST_ROOT can help to find a user-specified path to Boost.
 #SET(Boost_ADDITIONAL_VERSIONS "1.59.0" "1.55.0" "1.36.0" "1.37" "1.37.0" "1.38.0" "1.39.0" "1.40.0" )
-find_package( Boost 1.36.0 COMPONENTS date_time filesystem iostreams program_options regex system wave thread REQUIRED)
+find_package( Boost 1.36.0 COMPONENTS chrono date_time filesystem iostreams program_options regex system wave thread REQUIRED)
 
 if(NOT Boost_FOUND)
     message(FATAL_ERROR "Could not find Boost version 1.35.0 or newer command")
