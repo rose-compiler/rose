@@ -238,8 +238,8 @@ ScopExtractorVisitor::postOrderVisit(SgNode* node)
 	      // outside the loop which defines it (live-out iterator).
 	      if (_scopParser.checkIteratorUsedOutsideLoop(siblings, *i))
 		{
-		  // 2- Ensure no symbol produced in 'siblings U *i' is used in
-		  // any affine expression in siblings U *i.
+		  // 2- Ensure no symbol produced in 'siblings' is used in
+		  // any affine expression.
 		  if (_scopParser.checkAffineExpressionsReadOnlySymbols
 		      (siblings, *i))
 		    siblings.push_back(*i);

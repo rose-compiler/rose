@@ -17,6 +17,8 @@ using namespace SageBuilder;
 
 namespace OmpSupport
 {
+  omp_construct_enum cur_omp_directive;
+
   //! A builder for OmpAttribute
   OmpAttribute* buildOmpAttribute(omp_construct_enum directive_type, SgNode* node, bool userDefined)
   {
@@ -352,6 +354,34 @@ namespace OmpSupport
     if ((sgvar == NULL)&&(mNode!=NULL))
     {
       SgScopeStatement* scope = SageInterface::getScope(mNode);
+     
+      // special handling for omp declare simd directive 
+      // It may have clauses referencing a variable declared in an immediately followed function's parameter list
+      if (cur_omp_directive ==e_declare_simd && ( targetConstruct==e_linear||
+          targetConstruct==e_simdlen||
+          targetConstruct==e_aligned||
+          targetConstruct==e_uniform)
+         )
+      {
+        SgStatement* cur_stmt= getEnclosingStatement(mNode);
+        ROSE_ASSERT (isSgPragmaDeclaration(cur_stmt));
+        
+        // omp declare simd may show up several times before the impacted function declaration.
+        SgStatement* nstmt = getNextStatement(cur_stmt);
+        ROSE_ASSERT (nstmt); // must have next statement followed.
+        // skip possible multiple pragma declarations
+        while (isSgPragmaDeclaration(nstmt))
+        {
+          nstmt = getNextStatement (nstmt);
+          ROSE_ASSERT (nstmt); 
+        }
+        // At this point, it must be a function declaration
+        SgFunctionDeclaration* func = isSgFunctionDeclaration(nstmt);
+        ROSE_ASSERT (func);
+        SgFunctionDefinition* def = func->get_definition();
+        scope = def->get_body();
+      }
+
       ROSE_ASSERT(scope!=NULL);
       //resolve the variable here
       symbol = lookupVariableSymbolInParentScopes (varString, scope);
@@ -563,6 +593,7 @@ namespace OmpSupport
       case e_unknown: result ="unknown" ; break;
       case e_parallel: result = "parallel" ; break;
       case e_for: result = "for"; break;
+      case e_for_simd: result = "for simd"; break;
       case e_do: result = "do"; break;
       case e_workshare: result = "workshare"; break;
       case e_sections: result = "sections"; break;
@@ -578,6 +609,7 @@ namespace OmpSupport
 
       case e_threadprivate: result = "threadprivate"; break;
       case e_parallel_for: result = "parallel for"; break;
+      case e_parallel_for_simd: result = "parallel for simd"; break;
       case e_parallel_do: result = "parallel do"; break;
       case e_parallel_sections: result = "parallel sections"; break;
       case e_parallel_workshare: result = "parallel workshare"; break;
@@ -686,6 +718,7 @@ namespace OmpSupport
        
 
       case e_simd: result = "simd"; break;
+      case e_declare_simd: result = "declare simd"; break;
       case e_safelen: result = "safelen"; break;
       case e_simdlen: result = "simdlen"; break;
       case e_linear: result = "linear"; break;
@@ -718,6 +751,7 @@ namespace OmpSupport
       //+2 for Fortran
       case e_parallel:
       case e_for:
+      case e_for_simd:
       case e_do:
       case e_workshare:
       case e_sections:
@@ -732,6 +766,7 @@ namespace OmpSupport
 
       case e_threadprivate:
       case e_parallel_for:
+      case e_parallel_for_simd:
       case e_parallel_do: //fortran
       case e_parallel_sections:
       case e_parallel_workshare://fortran
@@ -760,6 +795,7 @@ namespace OmpSupport
       case e_target_data:
       case e_target_update: //TODO more later
       case e_simd:
+      case e_declare_simd:
 
         result = true;
         break;
@@ -942,6 +978,7 @@ namespace OmpSupport
       //+2 for Fortran
       case e_parallel:
       case e_for:
+      case e_for_simd:
       case e_do:
       case e_workshare:
       case e_sections:
@@ -959,6 +996,7 @@ namespace OmpSupport
 
         //      case e_threadprivate:
       case e_parallel_for:
+      case e_parallel_for_simd:
       case e_parallel_do: //fortran
       case e_parallel_sections:
       case e_parallel_workshare://fortran
@@ -1151,21 +1189,6 @@ namespace OmpSupport
       {
         result += " " + getCriticalName(); 
       }
-#if 0  // clauses are handled separately      
-      // optional nowait for fortran: end do, end sections, end workshare, end single
-      else if ((omp_type == e_for) 
-          || (omp_type == e_sections)
-          || (omp_type == e_single)
-          || (omp_type == e_end_do)
-          ||(omp_type == e_end_sections)
-          ||(omp_type == e_end_workshare
-            ||(omp_type == e_end_single)))
-      {
-        if (hasClause(e_nowait)) 
-          result += " "+ OmpSupport::toString(e_nowait);
-      }
-#endif      
-
     } // end if directives
     //Clauses ------------------
     else if (isClause(omp_type))
@@ -1201,10 +1224,27 @@ namespace OmpSupport
           (omp_type == e_lastprivate)
           )
       {
+
         result += OmpSupport::toString(omp_type);
         string varListString = toOpenMPString(getVariableList(omp_type));
-        result+=" (" + varListString + ")"; 
-      }
+        result+=" (" + varListString;
+
+         // aligned and linear may have optional :exp for step or alignment 
+        string expStr; 
+        if ((omp_type == e_linear)||(omp_type == e_aligned))
+        {
+          if (getExpression(omp_type).second !=  NULL)
+             expStr = getExpression(omp_type).second->unparseToString();
+          if (expStr.size()>0)
+            expStr =":"+expStr; 
+        }
+        
+        if (expStr.size()>0)
+          result+=expStr;
+
+        result+= ")"; 
+
+     }
       // default scoping values
       else if (omp_type == e_default)
       {
@@ -1501,7 +1541,10 @@ namespace OmpSupport
       for (riter=attlist->ompAttriList.rbegin(); riter !=attlist->ompAttriList.rend();riter++)
       {
         OmpAttribute* att = *riter; //getOmpAttribute(sg_node);
-        if (att->getOmpDirectiveType() ==e_for ||att->getOmpDirectiveType() ==e_parallel_for)
+        if (att->getOmpDirectiveType() ==e_for || 
+          att->getOmpDirectiveType() ==e_for_simd ||
+          att->getOmpDirectiveType() ==e_parallel_for_simd ||
+          att->getOmpDirectiveType() ==e_parallel_for)
           ROSE_ASSERT(isSgForStatement(cur_stmt) != NULL);
 
         string pragma_str= att->toOpenMPString();
@@ -1562,7 +1605,10 @@ namespace OmpSupport
           rtxt = rtxt + os2.str()+"\n";
         }
         OmpAttribute* att = *riter; //getOmpAttribute(sg_node);
-        if (att->getOmpDirectiveType() ==e_for ||att->getOmpDirectiveType() ==e_parallel_for)
+        if (att->getOmpDirectiveType() ==e_for || 
+            att->getOmpDirectiveType() ==e_for_simd ||
+            att->getOmpDirectiveType() ==e_parallel_for_simd ||
+            att->getOmpDirectiveType() ==e_parallel_for)
           ROSE_ASSERT(isSgForStatement(cur_stmt) != NULL);
 
         string pragma_str= att->toOpenMPString();

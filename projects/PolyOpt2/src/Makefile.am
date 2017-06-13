@@ -1,20 +1,24 @@
 ## LNP: FIXME: Insert headers!
-include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
-
-POCC_INSTALL = $(top_builddir)/src/3rdPartyLibraries/pocc
-
-DEFS = 
 
 #############################################################################
-AM_CPPFLAGS = -I$(srcdir)/include	$(ROSE_INCLUDES)\
-	-I$(srcdir)							\
-	-I$(srcdir)/../polyopt/include					\
+SUBDIRS 		=
+
+#############################################################################
+MAINTAINERCLEANFILES	= Makefile.in
+
+POCC_INSTALL = @pocc_install_prefix@
+
+INCLUDES		=						\
+	-I$(top_builddir)						\
+	-I$(top_builddir)/polyopt/include				\
+	-I$(top_builddir)/src						\
 	-I$(POCC_INSTALL)/driver/pocc/include				\
 	-I$(POCC_INSTALL)/driver/pocc-utils/include			\
 	-I$(POCC_INSTALL)/optimizers/install-letsee/include		\
 	-I$(POCC_INSTALL)/optimizers/install-pluto/include		\
-	-I$(POCC_INSTALL)/optimizers/install-storcompacter/include	\
 	-I$(POCC_INSTALL)/optimizers/install-vectorizer/include		\
+	-I$(POCC_INSTALL)/optimizers/install-parr/include		\
+	-I$(POCC_INSTALL)/optimizers/install-psimdkzer/include		\
 	-I$(POCC_INSTALL)/ir/install-scoplib/include			\
 	-I$(POCC_INSTALL)/ir/install-scoptools/include			\
 	-I$(POCC_INSTALL)/ir/install-past/include			\
@@ -24,29 +28,67 @@ AM_CPPFLAGS = -I$(srcdir)/include	$(ROSE_INCLUDES)\
 	-I$(POCC_INSTALL)/analyzers/install-polyfeat/include		\
 	-I$(POCC_INSTALL)/generators/install-cloog/include		\
 	-I$(POCC_INSTALL)/generators/install-pragmatize/include		\
-	-I$(POCC_INSTALL)/generators/install-clastannotation/include	\
 	-I$(POCC_INSTALL)/generators/install-clasttools/include		\
+	-I$(POCC_INSTALL)/generators/install-kunroller/include		\
+	-I$(POCC_INSTALL)/generators/install-rotreg/include		\
+	-I$(POCC_INSTALL)/generators/install-sicgen/include		\
 	-I$(POCC_INSTALL)/generators/install-ptile/include		\
+	-I$(POCC_INSTALL)/math/external/install/include			\
 	-I$(POCC_INSTALL)/math/install-piplib-hybrid/include		\
 	-I$(POCC_INSTALL)/math/install-piplib/include			\
 	-I$(POCC_INSTALL)/math/install-polylib/include			\
 	-I$(POCC_INSTALL)/math/install-fm/include			\
-	-I$(POCC_INSTALL)/math/install-isl/include			\
-	-I$(POCC_INSTALL)/math/external/install/include			
+	-I$(top_srcdir)							\
+	-I$(top_srcdir)/polyopt/include					\
+	-I$(top_srcdir)/src						\
+	-I$(top_srcdir)/pocc/driver/pocc/include			\
+	-I$(top_srcdir)/pocc/driver/pocc-utils/include			\
+	-I$(top_srcdir)/pocc/optimizers/install-letsee/include		\
+	-I$(top_srcdir)/pocc/optimizers/install-pluto/include		\
+	-I$(top_srcdir)/pocc/optimizers/install-vectorizer/include	\
+	-I$(top_srcdir)/pocc/optimizers/install-parr/include		\
+	-I$(top_srcdir)/pocc/optimizers/install-psimdkzer/include	\
+	-I$(top_srcdir)/pocc/ir/install-scoplib/include			\
+	-I$(top_srcdir)/pocc/ir/install-scoptools/include		\
+	-I$(top_srcdir)/pocc/ir/install-past/include			\
+	-I$(top_srcdir)/pocc/ir/install-irconverter/include		\
+	-I$(top_srcdir)/pocc/analyzers/install-clan/include		\
+	-I$(top_srcdir)/pocc/analyzers/install-candl/include		\
+	-I$(top_srcdir)/pocc/analyzers/install-polyfeat/include		\
+	-I$(top_srcdir)/pocc/generators/install-cloog/include		\
+	-I$(top_srcdir)/pocc/generators/install-pragmatize/include	\
+	-I$(top_srcdir)/pocc/generators/install-clasttools/include	\
+	-I$(top_srcdir)/pocc/generators/install-ptile/include		\
+	-I$(top_srcdir)/pocc/generators/install-kunroller/include	\
+	-I$(top_srcdir)/pocc/generators/install-rotreg/include		\
+	-I$(top_srcdir)/pocc/generators/install-sicgen/include		\
+	-I$(top_srcdir)/pocc/math/external/install/include		\
+	-I$(top_srcdir)/pocc/math/install-piplib-hybrid/include		\
+	-I$(top_srcdir)/pocc/math/install-piplib/include		\
+	-I$(top_srcdir)/pocc/math/install-polylib/include		\
+	-I$(top_srcdir)/pocc/math/install-fm/include			\
+	$(ROSE_CPPFLAGS) $(BOOST_CPPFLAGS)
 
 #############################################################################
 
-bin_PROGRAMS		= PolyOpt
+EXTRA_DIST		 =
+
+#############################################################################
+
+noinst_HEADERS		=
+
+bin_PROGRAMS		= PolyRose
 
 
-PolyOpt_SOURCES	=			\
+PolyRose_SOURCES	=			\
 	Main.cpp
 
-#PolyOpt_CFLAGS		=					\
-#	-DPOCC_ROOT_DIR=$(abs_top_srcdir)/pocc $(ROSE_CPPFLAGS) $(BOOST_CPPFLAGS)
+PolyRose_CFLAGS		=					\
+	-DPOCC_ROOT_DIR=$(abs_top_srcdir)/pocc $(ROSE_CPPFLAGS) $(BOOST_CPPFLAGS)
 
-PolyOpt_CPPFLAGS	= -Wno-deprecated
+PolyRose_CPPFLAGS	= -Wno-deprecated
 
-PolyOpt_LDADD		= $(builddir)/../polyopt/libpolyopt.la $(ROSE_LIBS)
+PolyRose_LDADD		= $(top_builddir)/polyopt/libpolyopt.la $(ROSE_ROOT)/lib/librose.la
 
+PolyRose_LDFLAGS	= -lboost_iostreams -lboost_system -L${BOOST_ROOT}/lib
 #############################################################################

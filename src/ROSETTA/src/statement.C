@@ -278,6 +278,7 @@ Grammar::setUpStatements ()
     NEW_TERMINAL_MACRO (OmpSingleStatement,    "OmpSingleStatement",     "OMP_SINGLE_STMT" );
     NEW_TERMINAL_MACRO (OmpTaskStatement,      "OmpTaskStatement",       "OMP_TASK_STMT" );
     NEW_TERMINAL_MACRO (OmpForStatement,       "OmpForStatement",        "OMP_FOR_STMT" );
+    NEW_TERMINAL_MACRO (OmpForSimdStatement,   "OmpForSimdStatement",     "OMP_FOR_SIMD_STMT" );
     NEW_TERMINAL_MACRO (OmpDoStatement,        "OmpDoStatement",         "OMP_DO_STMT" );
     NEW_TERMINAL_MACRO (OmpSectionsStatement,  "OmpSectionsStatement",   "OMP_SECTIONS_STMT" );
     // OpenMP 4.x : atomic can have clause now. 
@@ -294,7 +295,7 @@ Grammar::setUpStatements ()
     // sensitive to 
     NEW_NONTERMINAL_MACRO (OmpClauseBodyStatement,  OmpParallelStatement | OmpSingleStatement | OmpAtomicStatement |
               OmpTaskStatement| OmpForStatement| OmpDoStatement | OmpSectionsStatement | OmpTargetStatement| OmpTargetDataStatement |
-              OmpSimdStatement,
+              OmpSimdStatement| OmpForSimdStatement ,
         "OmpClauseBodyStatement",   "OMP_CLAUSEBODY_STMT", false );
 
     // + a statement / block 
@@ -482,6 +483,7 @@ Grammar::setUpStatements ()
 
   // + variable list
      NEW_TERMINAL_MACRO (OmpFlushStatement,     "OmpFlushStatement",      "OMP_FLUSH_STMT" );
+     NEW_TERMINAL_MACRO (OmpDeclareSimdStatement, "OmpDeclareSimdStatement",  "OMP_DECLARE_SIMD_STMT" );
   // simplest directives, just one line 
      NEW_TERMINAL_MACRO (OmpBarrierStatement,   "OmpBarrierStatement",   "OMP_BARRIER_STMT" );
      NEW_TERMINAL_MACRO (OmpTaskwaitStatement,  "OmpTaskwaitStatement",  "OMP_TASKWAIT_STMT" );
@@ -507,7 +509,7 @@ Grammar::setUpStatements ()
           FunctionDeclaration                  /* | ModuleStatement */        | ContainsStatement            |
           C_PreprocessorDirectiveStatement        | OmpThreadprivateStatement | FortranIncludeLine           | 
           JavaImportStatement                     | JavaPackageStatement      | StmtDeclarationStatement     |
-          StaticAssertionDeclaration              | MicrosoftAttributeDeclaration /*| ClassPropertyList |*/, 
+          StaticAssertionDeclaration              | OmpDeclareSimdStatement   | MicrosoftAttributeDeclaration /*| ClassPropertyList |*/, 
           "DeclarationStatement", "DECL_STMT", false);
 
 
@@ -4057,10 +4059,12 @@ Grammar::setUpStatements ()
     OmpClauseBodyStatement.setFunctionPrototype         ( "HEADER_OMP_CLAUSEBODY_STATEMENT", "../Grammar/Statement.code" );
     OmpClauseBodyStatement.setFunctionSource            ("SOURCE_OMP_CLAUSEBODY_STATEMENT", "../Grammar/Statement.code" );
 
-    OmpBodyStatement.setFunctionPrototype         ( "HEADER_OMP_BODY_STATEMENT", "../Grammar/Statement.code" );
-    OmpBodyStatement.setFunctionSource            ("SOURCE_OMP_BODY_STATEMENT", "../Grammar/Statement.code" );
-    OmpCriticalStatement.setFunctionSource            ("SOURCE_OMP_CRITICAL_STATEMENT", "../Grammar/Statement.code" );
+    OmpBodyStatement.setFunctionPrototype         ("HEADER_OMP_BODY_STATEMENT", "../Grammar/Statement.code");
+    OmpBodyStatement.setFunctionSource            ("SOURCE_OMP_BODY_STATEMENT", "../Grammar/Statement.code");
+    OmpCriticalStatement.setFunctionSource            ("SOURCE_OMP_CRITICAL_STATEMENT", "../Grammar/Statement.code");
     OmpFlushStatement.setFunctionSource            ("SOURCE_OMP_FLUSH_STATEMENT", "../Grammar/Statement.code" );
+    OmpDeclareSimdStatement.setFunctionPrototype   ("HEADER_OMP_DECLARE_SIMD_STATEMENT", "../Grammar/Statement.code");
+    OmpDeclareSimdStatement.setFunctionSource      ("SOURCE_OMP_DECLARE_SIMD_STATEMENT", "../Grammar/Statement.code");
 
     OmpParallelStatement.setFunctionSource            ("SOURCE_OMP_PARALLEL_STATEMENT", "../Grammar/Statement.code" );
     OmpSectionsStatement.setFunctionSource            ("SOURCE_OMP_SECTIONS_STATEMENT", "../Grammar/Statement.code" );
@@ -4072,6 +4076,7 @@ Grammar::setUpStatements ()
 
     OmpThreadprivateStatement.setFunctionSource            ("SOURCE_OMP_THREADPRIVATE_STATEMENT", "../Grammar/Statement.code" );
     OmpForStatement.setFunctionSource            ("SOURCE_OMP_FOR_STATEMENT", "../Grammar/Statement.code" );
+    OmpForSimdStatement.setFunctionSource            ("SOURCE_OMP_FOR_SIMD_STATEMENT", "../Grammar/Statement.code" );
     OmpAtomicStatement.setFunctionSource            ("SOURCE_OMP_ATOMIC_STATEMENT", "../Grammar/Statement.code" );
     OmpBarrierStatement.setFunctionSource            ("SOURCE_OMP_BARRIER_STATEMENT", "../Grammar/Statement.code" );
     OmpMasterStatement.setFunctionSource            ("SOURCE_OMP_MASTER_STATEMENT", "../Grammar/Statement.code" );
@@ -4094,8 +4099,11 @@ Grammar::setUpStatements ()
     //OmpFlushStatement.setDataPrototype( "SgInitializedNamePtrList", "variables", "",
     OmpFlushStatement.setDataPrototype( "SgVarRefExpPtrList", "variables", "",
                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-            // omp threadprivate [(var-list)]   
-    //OmpThreadprivateStatement.setDataPrototype( "SgInitializedNamePtrList", "variables", "",
+
+    OmpDeclareSimdStatement.setDataPrototype("SgOmpClausePtrList", "clauses", "",
+                              NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+            
+   // omp threadprivate [(var-list)]   
     OmpThreadprivateStatement.setDataPrototype( "SgVarRefExpPtrList", "variables", "",
                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
    // Directives with a statement/ structured body
