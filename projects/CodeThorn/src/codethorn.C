@@ -366,7 +366,7 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
     ("semantic-fold-threshold",po::value< int >(),"Set threshold with <arg> for semantic fold operation (experimental)")
     ("post-semantic-fold",po::value< string >(),"compute semantically folded state transition graph only after the complete transition graph has been computed. [=yes|no]")
     ("set-stg-incomplete", po::value< string >(), "set to true if the generated STG will not contain all possible execution paths (e.g. if only a subset of the input values is used). [=yes|no]")
-    ("tg-trace", po::value< string >(), "generate STG computation trace [=filename]")
+    ("trace-file", po::value< string >(), "generate STG computation trace [=filename]")
     ("explicit-arrays","represent all arrays ecplicitly in every state.")
     ;
 
@@ -378,14 +378,13 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
     ("iseq-random-num", po::value< int >(), "select random search and number of paths.")
     ("rers-binary",po::value< string >(),"Call rers binary functions in analysis. Use [=yes|no]")
     ("rers-numeric", po::value< string >(), "print rers I/O values as raw numeric numbers.")
-    ("rersmode", po::value< string >(), "deprecated. Use rers-mode instead.")
-    ("rers-mode", "sets several options such that RERS-specifics are utilized and observed.")
+    ("rersmode", po::value< string >(), "sets several options such that RERS-specifics are utilized and observed.")
     ("stderr-like-failed-assert", po::value< string >(), "treat output on stderr similar to a failed assert [arg] (default:no)")
     ;
 
   svcompOptions.add_options()
     ("svcomp-mode", "sets default options for all following SVCOMP-specific options.")
-    ("external-function-semantics",  "assumes specific semantics for the external functions: __VERIFIER_error, __VERIFIER_nondet_int, exit, memcpy.")
+    //("external-function-semantics",  "assumes specific semantics for the external functions: __VERIFIER_error, __VERIFIER_nondet_int, exit, memcpy.")
     ("error-function", po::value< string >(), "detect a verifier error function with name [arg] (terminates verification)")
     ;
 
@@ -442,7 +441,7 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
     ("input-values",po::value< string >(),"specify a set of input values (e.g. \"{1,2,3}\")")
     ("input-values-as-constraints",po::value<string >(),"represent input var values as constraints (otherwise as constants in PState)")
     ("input-sequence",po::value< string >(),"specify a sequence of input values (e.g. \"[1,2,3]\")")
-    ("log-level",po::value< string >()->default_value("none,>=warn"),"Set the log level (none|info|warn|trace)")
+    ("log-level",po::value< string >()->default_value("none,>=warn"),"Set the log level (none|info|warn|trace|debug)")
     ("max-transitions",po::value< int >(),"Passes (possibly) incomplete STG to verifier after max transitions (default: no limit).")
     ("max-iterations",po::value< int >(),"Passes (possibly) incomplete STG to verifier after max loop iterations (default: no limit). Currently requires --exploration-mode=loop-aware[-sync].")
     ("max-memory",po::value< long int >(),"Stop computing the STG after a total physical memory consumption of approximately <arg> Bytes has been reached. (default: no limit). Currently requires --solver=12 and only supports Unix systems.")
@@ -553,7 +552,6 @@ BoolOptions& parseBoolOptions(int argc, char* argv[]) {
 
   boolOptions.registerOption("input-values-as-constraints",false);
 
-  boolOptions.registerOption("arith-top",false);
   boolOptions.registerOption("rers-binary",false);
   boolOptions.registerOption("relop-constraints",false); // not accessible on command line
   boolOptions.registerOption("stderr-like-failed-assert",false);
@@ -600,8 +598,8 @@ BoolOptions& parseBoolOptions(int argc, char* argv[]) {
   boolOptions.registerOption("svcomp-mode",false);
   boolOptions.registerOption("data-race",false);
   boolOptions.registerOption("data-race-fail",false);
-  boolOptions.registerOption("reduce-cfg",true); // MS (2016-06-28): enabled reduce-cfg by default
-  boolOptions.registerOption("explicit-arrays",false);
+  boolOptions.registerOption("reduce-cfg",true); // MS (2016-06-28): enabled by default
+  boolOptions.registerOption("explicit-arrays",true); // MS (2017-06-09): enabled by default
   boolOptions.registerOption("status",false);
 
   boolOptions.processZeroArgumentsOption("svcomp-mode");
@@ -880,8 +878,8 @@ void analyzerSetup(Analyzer& analyzer, const po::variables_map& args, Sawyer::Me
     exit(1);
   }
 
-  if(args.count("tg-trace")) {
-    analyzer.setStgTraceFileName(args["tg-trace"].as<string>());
+  if(args.count("trace-file")) {
+    analyzer.setStgTraceFileName(args["trace-file"].as<string>());
   }
 
   if(args.count("input-values")) {
@@ -1267,13 +1265,13 @@ int main( int argc, char * argv[] ) {
     }
 
     if(args.count("svcomp-mode")) {
-      analyzer.enableExternalFunctionSemantics();
+      analyzer.enableSVCompFunctionSemantics();
       string errorFunctionName="__VERIFIER_error";
       analyzer.setExternalErrorFunctionName(errorFunctionName);
     }
 
     if(args.count("external-function-semantics")) {
-      analyzer.enableExternalFunctionSemantics();
+      // obsolete
     }
 
     if(args.count("error-function")) {

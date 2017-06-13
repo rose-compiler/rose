@@ -252,9 +252,10 @@ namespace CodeThorn {
     void setGlobalTopifyMode(GlobalTopifyMode mode);
     void setExternalErrorFunctionName(std::string externalErrorFunctionName);
     // enables external function semantics 
-    void enableExternalFunctionSemantics();
-    void disableExternalFunctionSemantics();
-    bool isUsingExternalFunctionSemantics() { return _externalFunctionSemantics; }
+    void enableSVCompFunctionSemantics();
+    void disableSVCompFunctionSemantics();
+    bool svCompFunctionSemantics() { return _svCompFunctionSemantics; }
+    bool stdFunctionSemantics() { return _stdFunctionSemantics; }
     void setModeLTLDriven(bool ltlDriven) { transitionGraph.setModeLTLDriven(ltlDriven); }
     bool getModeLTLDriven() { return transitionGraph.getModeLTLDriven(); }
     long analysisRunTimeInSeconds(); 
@@ -341,11 +342,15 @@ namespace CodeThorn {
     int _approximated_iterations;
     int _curr_iteration_cnt;
     int _next_iteration_cnt;
-    bool _externalFunctionSemantics;
+
+    bool _stdFunctionSemantics=true;
+
+    bool _svCompFunctionSemantics;
     string _externalErrorFunctionName; // the call of this function causes termination of analysis
     string _externalNonDetIntFunctionName;
     string _externalNonDetLongFunctionName;
     string _externalExitFunctionName;
+
     Timer _analysisTimer;
 
     // =======================================================================
@@ -494,9 +499,6 @@ namespace CodeThorn {
     const EState* _estateBeforeMissingInput;
     const EState* _latestOutputEState;
     const EState* _latestErrorEState;
-
-
-
   }; // end of class Analyzer
 
 } // end of namespace CodeThorn

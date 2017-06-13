@@ -90,18 +90,18 @@ bool Analyzer::isFunctionCallWithAssignment(Label lab,VariableId* varIdPtr){
   return false;
 }
 
-void Analyzer::enableExternalFunctionSemantics() {
-  _externalFunctionSemantics=true;
-  exprAnalyzer.setExternalFunctionSemantics(true);
+void Analyzer::enableSVCompFunctionSemantics() {
+  _svCompFunctionSemantics=true;
+  exprAnalyzer.setSVCompFunctionSemantics(true);
   _externalErrorFunctionName="__VERIFIER_error";
   _externalNonDetIntFunctionName="__VERIFIER_nondet_int";
   _externalNonDetLongFunctionName="__VERIFIER_nondet_long";
   _externalExitFunctionName="exit";
 }
 
-void Analyzer::disableExternalFunctionSemantics() {
-  _externalFunctionSemantics=false;
-  exprAnalyzer.setExternalFunctionSemantics(false);
+void Analyzer::disableSVCompFunctionSemantics() {
+  _svCompFunctionSemantics=false;
+  exprAnalyzer.setSVCompFunctionSemantics(false);
   _externalErrorFunctionName="";
   _externalNonDetIntFunctionName="";
   _externalNonDetLongFunctionName="";
@@ -140,7 +140,7 @@ Analyzer::Analyzer():
   _approximated_iterations(0),
   _curr_iteration_cnt(0),
   _next_iteration_cnt(0),
-  _externalFunctionSemantics(false)
+  _svCompFunctionSemantics(false)
 {
   _analysisTimer.start();
   _analysisTimer.stop();
@@ -709,11 +709,18 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
           }
           return createEState(targetLabel,newPState,cset);
         } else if(SgAssignInitializer* assignInitializer=isSgAssignInitializer(initializer)) {
-          // an single AssignInitializer on the rhs is a constant expression that evaluates to a known value at compile time
           SgExpression* rhs=assignInitializer->get_operand_i();
           ROSE_ASSERT(rhs);
-          //cout<<"DEBUG: assign initializer:"<<assignInitializer->unparseToString()<<":"<<rhs->unparseToString()<<endl;
-          PState newPState=analyzeAssignRhs(*currentEState.pstate(),initDeclVarId,rhs,cset);
+          //cout<<"DEBUG: assign initializer:"<<" lhs:"<<initDeclVarId.toString(getVariableIdMapping())<<" rhs:"<<assignInitializer->unparseToString()<<" decl-term:"<<AstTerm::astTermWithNullValuesToString(initName)<<endl;
+          // build lhs-value dependent on type of declared variable
+          AbstractValue lhsAbstractAddress=AbstractValue(initDeclVarId); // creates a pointer to initDeclVar
+          list<SingleEvalResultConstInt> res=exprAnalyzer.evalConstInt(rhs,currentEState,true);
+          ROSE_ASSERT(res.size()==1);
+          SingleEvalResultConstInt evalResult=*res.begin();
+          EState estate=evalResult.estate;
+          PState newPState=*estate.pstate();
+          newPState.writeToMemoryLocation(lhsAbstractAddress,evalResult.value());
+          ConstraintSet cset=*estate.constraints();
           return createEState(targetLabel,newPState,cset);
         } else {
           logger[ERROR] << "unsupported initializer in declaration: "<<decl->unparseToString()<<endl;
@@ -1188,6 +1195,7 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
       rhsIntVal=currentPState.readFromMemoryLocation(rhsVarId);
     } else {
       if(variableIdMapping.isConstantArray(rhsVarId) && boolOptions["rersmode"]) {
+        ROSE_ASSERT(false); // should no longer be reachable
         // in case of an array the id itself is the pointer value
         ROSE_ASSERT(rhsVarId.isValid());
         rhsIntVal=rhsVarId.getIdCode();
@@ -1241,7 +1249,7 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
       // update of existing variable with new value
       //newPState[lhsVar]=rhsIntVal;
       newPState.writeToMemoryLocation(lhsVar,rhsIntVal);
-      if((!rhsIntVal.isTop() && !isRhsVar) || boolOptions["arith-top"])
+      if((!rhsIntVal.isTop() && !isRhsVar))
         cset.removeAllConstraintsOfVar(lhsVar);
       return newPState;
     }
@@ -1764,7 +1772,7 @@ Analyzer::SubSolverResultType Analyzer::subSolver(const EState* currentEStatePtr
 }
 
 void Analyzer::runSolver11() {
-  if(isUsingExternalFunctionSemantics()) {
+  if(svCompFunctionSemantics()) {
     reachabilityResults.init(1); // in case of svcomp mode set single program property to unknown
   } else {
     reachabilityResults.init(getNumberOfErrorLabels()); // set all reachability results to unknown
@@ -1815,7 +1823,7 @@ void Analyzer::runSolver11() {
 
 void Analyzer::runSolver12() {
   _analysisTimer.start();
-  if(isUsingExternalFunctionSemantics()) {
+  if(svCompFunctionSemantics()) {
     reachabilityResults.init(1); // in case of svcomp mode set single program property to unknown
   } else {
     reachabilityResults.init(getNumberOfErrorLabels()); // set all reachability results to unknown
@@ -2907,7 +2915,7 @@ std::list<EState> Analyzer::transferFunctionCallLocalEdge(Edge edge, const EStat
 	  ROSE_ASSERT(index>=0 && index <=99);
 	  binaryBindingAssert[index]=true;
 	  //reachabilityResults.reachable(index); //previous location in code
-	  // logger[DEBUG]<<"found assert Error "<<index<<endl;
+	  //logger[DEBUG]<<"found assert Error "<<index<<endl;
 	  ConstraintSet _cset=*estate->constraints();
 	  InputOutput _io;
 	  _io.recordFailedAssert();
@@ -2920,6 +2928,10 @@ std::list<EState> Analyzer::transferFunctionCallLocalEdge(Edge edge, const EStat
 	  return elistify(_eState);
         }
         RERS_Problem::rersGlobalVarsCallReturnInit(this,_pstate, omp_get_thread_num());
+	InputOutput newio;
+	if (rers_result == -2) {
+	  newio.recordVariable(InputOutput::STDERR_VAR,globalVarIdByName("input"));	  
+	}
         // TODO: _pstate[VariableId(output)]=rers_result;
         // matches special case of function call with return value, otherwise handles call without return value (function call is matched above)
         if(SgNodeHelper::Pattern::matchExprStmtAssignOpVarRefExpFunctionCallExp(nodeToAnalyze)) {
@@ -2932,11 +2944,11 @@ std::list<EState> Analyzer::transferFunctionCallLocalEdge(Edge edge, const EStat
 	  _pstate.writeToMemoryLocation(lhsVarId,AbstractValue(rers_result));
 	  ConstraintSet _cset=*estate->constraints();
 	  _cset.removeAllConstraintsOfVar(lhsVarId);
-	  EState _eState=createEState(edge.target(),_pstate,_cset);
+	  EState _eState=createEState(edge.target(),_pstate,_cset,newio);
 	  return elistify(_eState);
 	} else {
 	  ConstraintSet _cset=*estate->constraints();
-	  EState _eState=createEState(edge.target(),_pstate,_cset);
+	  EState _eState=createEState(edge.target(),_pstate,_cset,newio);
 	  return elistify(_eState);
 	}
         cout <<"PState:"<< _pstate<<endl;
@@ -3116,7 +3128,7 @@ std::list<EState> Analyzer::transferFunctionCallExternal(Edge edge, const EState
 
   // TODO: check whether the following test is superfluous meanwhile, since isStdInLabel does take NonDetX functions into account
   bool isExternalNonDetXFunction=false;
-  if(isUsingExternalFunctionSemantics()) {
+  if(svCompFunctionSemantics()) {
     if(funCall) {
       string externalFunctionName=SgNodeHelper::getFunctionName(funCall);
       if(externalFunctionName==_externalNonDetIntFunctionName||externalFunctionName==_externalNonDetLongFunctionName) {
@@ -3208,7 +3220,7 @@ std::list<EState> Analyzer::transferFunctionCallExternal(Edge edge, const EState
   /* handling of specific semantics for external function */ 
   if(funCall) {
     string funName=SgNodeHelper::getFunctionName(funCall);
-    if(isUsingExternalFunctionSemantics()) {
+    if(svCompFunctionSemantics()) {
       if(funName==_externalErrorFunctionName) {
         //cout<<"DETECTED error function: "<<_externalErrorFunctionName<<endl;
         return elistify(createVerificationErrorEState(currentEState,edge.target()));
@@ -3449,7 +3461,7 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
         estateList.push_back(createEState(edge.target(),pstate2,*(estate->constraints())));
       }
       if(!(lhsPointerValue.isPtr())) {
-        cerr<<"Error: not a pointer value (or top) in dereference operator:"<<lhsPointerValue.toString()<<"<="<<lhs->unparseToString()<<endl;
+        cerr<<"Error: not a pointer value (or top) in dereference operator: lhs-value:"<<lhsPointerValue.toLhsString(getVariableIdMapping())<<" lhs: "<<lhs->unparseToString()<<endl;
         exit(1);
       }
       //cout<<"DEBUG: lhsPointerValue:"<<lhsPointerValue.toString(getVariableIdMapping())<<endl;

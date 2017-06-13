@@ -147,7 +147,7 @@ void Analyzer::runSolver4() {
 }
 
 void Analyzer::runSolver5() {
-  if(isUsingExternalFunctionSemantics()) {
+  if(svCompFunctionSemantics()) {
     reachabilityResults.init(1); // in case of svcomp mode set single program property to unknown
   } else {
     reachabilityResults.init(getNumberOfErrorLabels()); // set all reachability results to unknown
