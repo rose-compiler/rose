@@ -13,7 +13,7 @@ procedure Demo_Dot is
    begin
       ATI.Put_Line ("// " & Title & ":");
       ATI.Put_Line ("//");
-      Graph.Put;
+      Graph.Put (ATI.Standard_Output);
       ATI.New_Line;
       ATI.New_Line;
    end;
@@ -237,7 +237,21 @@ procedure Demo_Dot is
       Print (Graph, "One node, with HTML-like label");
    end;
 
+   procedure Demo_File_Output is
+      Graph : Dot.Graphs.Access_Class := Create_Graph;
+      Name : constant String := "demo_dot";
+   begin
+      Graph.Set_Is_Digraph (False);
+      Graph.Set_Is_Strict (False);
+      ATI.Put_Line ("// " & "Writing file to " & Name & ".dot");
+      ATI.Put_Line ("//");
+      Graph.Write_File
+        (Name      => Name,
+         Overwrite => True);
+      ATI.Put_Line ("// " & "Done.");
+      ATI.New_Line;
 
+   end;
 
 begin
    Demo_Default_Graph;
@@ -261,5 +275,7 @@ begin
    Demo_Two_Edges;
 
    Demo_HTML_Like_Label;
+
+   Demo_File_Output;
 
 end Demo_Dot;

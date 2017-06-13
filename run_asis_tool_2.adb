@@ -53,6 +53,6 @@ begin
       Success      => Compile_Succeeded,
       Display_Call => True);
    if Compile_Succeeded then
-      Tool.Process;
+      Tool.Process (Options.File_Name.all);
    end if;
 end Run_Asis_Tool_2;

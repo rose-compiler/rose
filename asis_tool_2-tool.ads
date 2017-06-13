@@ -8,7 +8,8 @@ package Asis_Tool_2.Tool is
    type Class is tagged limited private;
 
    procedure Process
-     (This : in out Class);
+     (This      : in out Class;
+      File_Name : in     String);
 
 private
 

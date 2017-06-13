@@ -20,7 +20,8 @@ package body Dot is
       -- EXPORTED
       ------------
       procedure Put
-        (These : in List_Of_Access_All_Class)
+        (These : in List_Of_Access_All_Class;
+         File  : in ATI.File_Type)
       is
          First_Item : Boolean := True;
       begin
@@ -29,10 +30,10 @@ package body Dot is
             if First_Item Then
                First_Item := False;
             else
-               Indented.Put (";");
+               Indented.Put (File, ";");
             end if;
-            Indented.End_Line_If_Needed;
-            Item.Put;
+            Indented.End_Line_If_Needed (File);
+            Item.Put (File);
          end loop;
          Indented.Dedent;
       end Put;
@@ -45,18 +46,20 @@ package body Dot is
       -- EXPORTED
       ------------
       procedure Put
-        (This : in Class) is
+        (This : in Class;
+         File : in ATI.File_Type) is
       begin
-         Put (This.L);
-         Indented.Put ("=");
-         Put (This.R);
+         Put (This.L, File);
+         Indented.Put (File, "=");
+         Put (This.R, File);
       end Put;
 
       ------------
       -- EXPORTED
       ------------
       procedure Put
-        (These : in List_Of_Class)
+        (These : in List_Of_Class;
+         File  : in ATI.File_Type)
       is
          First_Item : Boolean := True;
       begin
@@ -65,14 +68,17 @@ package body Dot is
             if First_Item Then
                First_Item := False;
             else
-               Indented.Put (",");
+               Indented.Put (File, ",");
             end if;
-            Indented.End_Line_If_Needed;
-            Item.Put;
+            Indented.End_Line_If_Needed (File);
+            Item.Put (File);
          end loop;
          Indented.Dedent;
       end Put;
 
+      ------------
+      -- EXPORTED
+      ------------
       procedure Append
         (These : in out List_Of_Class;
          L, R  : in     String) is
@@ -82,6 +88,14 @@ package body Dot is
              R => To_ID_Type (R)));
       end Append;
 
+      ------------unction Empty_List return List_Of_Class
+      -- EXPORTED
+      ------------
+      function Empty_List return List_Of_Class is
+      begin
+         return List_Of_Class'(Lists.Empty_List with null record);
+      end Empty_List;
+
    end Assign;
 
    package body Attr is
@@ -90,12 +104,13 @@ package body Dot is
       -- EXPORTED
       ------------
       procedure Put
-        (This : in Class) is
+        (This : in Class;
+         File : in ATI.File_Type) is
       begin
          Indented.Indent;
-         Indented.Put ("[");
-         This.A_List.Put;
-         Indented.Put (" ]");
+         Indented.Put (File, "[");
+         This.A_List.Put (File);
+         Indented.Put (File, " ]");
          Indented.Dedent;
      end Put;
 
@@ -103,13 +118,14 @@ package body Dot is
       -- EXPORTED
       ------------
       procedure Put
-        (These : in List_Of_Class)
+        (These : in List_Of_Class;
+         File  : in ATI.File_Type)
       is
       begin
          Indented.Indent;
          for Item of These loop
-            Indented.End_Line_If_Needed;
-            Item.Put;
+            Indented.End_Line_If_Needed (File);
+            Item.Put (File);
          end loop;
          Indented.Dedent;
       end Put;
@@ -143,17 +159,18 @@ package body Dot is
       -- EXPORTED
       ------------
       procedure Put
-        (This     : in Class) is
+        (This : in Class;
+         File : in ATI.File_Type) is
       begin
          case This.Kind is
             when Graph =>
-               Indented.Put ("graph");
+               Indented.Put (File, "graph");
             when Node =>
-               Indented.Put ("node");
+               Indented.Put (File, "node");
             when Edge =>
-               Indented.Put ("edge");
+               Indented.Put (File, "edge");
          end case;
-         This.Attr_List.Put;
+         This.Attr_List.Put (File);
       end Put;
 
       ------------
@@ -173,25 +190,29 @@ package body Dot is
       ------------
       -- EXPORTED
       ------------
-      procedure Put (This : in Port_Class) is
+      procedure Put
+        (This : in Port_Class;
+         File : in ATI.File_Type) is
       begin
          if This.Has_ID then
-            Indented.Put (":");
-            Put (This.ID);
+            Indented.Put (File, ":");
+            Put (This.ID, File);
          end if;
          if This.Has_Compass_Pt then
-            Indented.Put (":");
-            Indented.Put (To_String (This.Compass_Pt));
+            Indented.Put (File, ":");
+            Indented.Put (File, To_String (This.Compass_Pt));
          end if;
       end Put;
 
       ------------
       -- EXPORTED
       ------------
-      procedure Put (This : in Class) is
+      procedure Put
+        (This : in Class;
+         File : in ATI.File_Type) is
       begin
-         Put (This.ID);
-         This.Port.Put;
+         Put (This.ID, File);
+         This.Port.Put (File);
       end Put;
 
    end Node_ID;
@@ -202,10 +223,11 @@ package body Dot is
       -- EXPORTED:
       ------------
       procedure Put
-        (This : in Class) is
+        (This : in Class;
+         File : in ATI.File_Type) is
       begin
-         This.Node_Id.Put;
-         This.Attr_List.Put;
+         This.Node_Id.Put (File);
+         This.Attr_List.Put (File);
       end Put;
 
       ------------
@@ -339,25 +361,27 @@ package body Dot is
    package body Subgraphs is
 
       procedure Put
-        (This : in Class) is
+        (This : in Class;
+         File : in ATI.File_Type) is
       begin
          if Length (This.ID) > 0 then
-            Indented.Put ("subgraph ");
-            Put (This.ID);
+            Indented.Put (File, "subgraph ");
+            Put (This.ID, File);
          end if;
-         This.Stmt_List.Put;
+         This.Stmt_List.Put (File);
       end Put;
 
    end Subgraphs;
 
    package body Edges is
 
-      procedure Put_Edgeop is
+      procedure Put_Edgeop
+        (File : in ATI.File_Type) is
       begin
          if Is_Digraph then
-            Indented.Put (" -> ");
+            Indented.Put (File, " -> ");
          else
-            Indented.Put (" -- ");
+            Indented.Put (File, " -- ");
          end if;
       end Put_Edgeop;
 
@@ -370,26 +394,29 @@ package body Dot is
          -- EXPORTED
          ------------
          procedure Put
-           (This : in Class) is
+           (This : in Class;
+            File : in ATI.File_Type) is
          begin
             case This.Kind is
                when Node_Kind =>
-                  This.Node_Id.Put;
+                  This.Node_Id.Put (File);
                when Subgraph_Kind =>
-                  This.Subgraph.Put;
+                  This.Subgraph.Put (File);
             end case;
          end Put;
-
 
          ------------
          -- EXPORTED
          ------------
          procedure Put
-           (These : in List_Of_Class) is
+           (These : in List_Of_Class;
+            File  : in ATI.File_Type) is
          begin
             for This of These loop
-               Put_Edgeop;
-               Put(This);
+               Put_Edgeop (File);
+               -- Why doesn't this compile?
+               -- This.Put (File);
+               Put(This, File);
                end loop;
          end Put;
 
@@ -404,13 +431,14 @@ package body Dot is
          -- EXPORTED
          ------------
          procedure Put
-           (This : in Class) is
+           (This : in Class;
+            File : in ATI.File_Type) is
          begin
-            Terminals.Put (This.LHS);
-            Put_Edgeop;
-            Terminals.Put (This.RHS);
-            This.RHSs.Put;
-            This.Attr_List.Put;
+            Terminals.Put (This.LHS, File);
+            Put_Edgeop (File);
+            Terminals.Put (This.RHS, File);
+            This.RHSs.Put (File);
+            This.Attr_List.Put (File);
          end Put;
 
          ------------
@@ -499,24 +527,68 @@ package body Dot is
       -- EXPORTED
       ------------
       procedure Put
-        (This : access Class) is
+        (This : access Class;
+         File : in     ATI.File_Type) is
       begin
          if This.Strict then
-            Indented.Put ("strict ");
+            Indented.Put (File, "strict ");
          end if;
          if This.Digraph then
-            Indented.Put ("digraph ");
+            Indented.Put (File, "digraph ");
             Is_Digraph := True;
          else
-            Indented.Put ("graph ");
+            Indented.Put (File, "graph ");
             Is_Digraph := False;
          end if;
-         Indented.Put_Spaced (To_String(This.ID));
-         Indented.Put ("{");
-         This.Stmt_List.Put;
-         Indented.New_Line;
-         Indented.Put ("}");
+         Indented.Put_Spaced (File, To_String(This.ID));
+         Indented.Put (File, "{");
+         This.Stmt_List.Put (File);
+         Indented.New_Line (File);
+         Indented.Put (File, "}");
       end Put;
+
+      ------------
+      -- EXPORTED
+      ------------
+      procedure Write_File
+        (This      : access Class;
+         Name      : in     String;
+         Overwrite : in     Boolean := False)
+      is
+         Output_File : ATI.File_Type;
+         procedure Create is
+            File_Name   : constant String := Name & ".dot";
+         begin
+--              if Overwrite then
+--                 -- Delete the file if it already exists:
+--                 begin
+--                    ATI.Open (File => Output_File,
+--                              Mode => ATI.In_File,
+--                              Name => File_Name);
+--                    -- Only if there is such a file:
+--                    ATI.Delete (Output_File);
+--                 exception
+--                    when ATI.Name_Error =>
+--                       ATI.Put_Line ("Got Name_Error trying to open """ & File_Name & """");
+--                       null;
+--                 end;
+--              end if;
+            begin
+               ATI.Put_Line ("Creating """ & File_Name & """");
+               ATI.Create (File => Output_File,
+                           Mode => ATI.Out_File,
+                           Name => File_Name);
+            exception
+               when ATI.Use_Error =>
+                  raise Usage_Error with
+                    "Could not create file """ & File_Name & """.";
+            end;
+         end Create;
+      begin
+         Create;
+         This.Put (Output_File);
+         ATI.Close (Output_File);
+      end Write_File;
 
    end Graphs;
 
@@ -525,19 +597,20 @@ package body Dot is
    -----------
    package body Indented is
 
-      Indent_Level : Natural := 0;
       Indent_Size  : constant Natural := 2;
+      Indent_Level : Natural := 0;
 
       function Current_Indent_Col return ATI.Positive_Count is
         (ATI.Positive_Count((Indent_Level * Indent_Size) + 1));
 
-      -- If the indent is increased in the middle of a line, this will ensure
-      -- that the next put is at that indent or better:
-      procedure Put_Indent is
+      -----------
+      -- PRIVATE:
+      -----------
+      procedure Put_Indent (File : in ATI.File_Type) is
          use type ATI.Positive_Count;
       begin
-         if ATI.Col < Current_Indent_Col then
-            ATI.Set_Col (Current_Indent_Col);
+         if ATI.Col (File) < Current_Indent_Col then
+            ATI.Set_Col (File, Current_Indent_Col);
          end if;
       end Put_Indent;
 
@@ -560,38 +633,42 @@ package body Dot is
       ------------
       -- EXPORTED
       ------------
-      procedure Put (Item : in String) is
+      procedure Put
+        (File : in ATI.File_Type;
+         Item : in String) is
       begin
-         Put_Indent;
-         ATI.Put (Item);
+         Put_Indent (File);
+         ATI.Put (File, Item);
       end Put;
 
       ------------
       -- EXPORTED
       ------------
-      procedure New_Line is
+      procedure New_Line (File : in ATI.File_Type) is
       begin
-         ATI.New_Line;
+         ATI.New_Line (File);
       end New_Line;
 
       ------------
       -- EXPORTED
       ------------
-      procedure End_Line_If_Needed is
+      procedure End_Line_If_Needed  (File : in ATI.File_Type) is
          use type ATI.Positive_Count;
       begin
-         if ATI.Col > Current_Indent_Col then
-            New_Line;
+         if ATI.Col (File) > Current_Indent_Col then
+            New_Line (File);
          end if;
       end End_Line_If_Needed;
 
       ------------
       -- EXPORTED
       ------------
-      procedure Put_Spaced (Item : in String) is
+      procedure Put_Spaced
+        (File : in ATI.File_Type;
+         Item : in String) is
       begin
          if Item'Length > 0 then
-            Put (Item & " ");
+            Put (File, Item & " ");
          end if;
       end Put_Spaced;
 
@@ -675,9 +752,11 @@ package body Dot is
    ------------
    -- PRIVATE:
    ------------
-   procedure Put (This : in ID_Type) is
+   procedure Put
+     (This : in ID_Type;
+      File : in ATI.File_Type) is
    begin
-      Indented.Put (To_String(This));
+      Indented.Put (File, To_String(This));
    end Put;
 
 end Dot;

@@ -48,6 +48,9 @@ with Ada.Text_IO;
 
 package Dot is
 
+   -- For convenience:
+   package ATI renames Ada.Text_IO;
+
    -- Using the exact spellings from the grammar for the record components
    -- instead of spelling things out:
 
@@ -65,7 +68,8 @@ package Dot is
       type Access_All_Class is access all Class'Class;
 
       procedure Put
-        (This : in Class) is abstract;
+        (This : in     Class;
+         File : in ATI.File_Type) is abstract;
 
       package Lists is new
         Ada.Containers.Doubly_Linked_Lists (Access_All_Class);
@@ -73,7 +77,8 @@ package Dot is
       type List_Of_Access_All_Class is new Lists.List with null record;
 
       procedure Put
-        (These : in List_Of_Access_All_Class);
+        (These : in List_Of_Access_All_Class;
+         File  : in ATI.File_Type);
 
    end Stmt;
    -----------------------------------------------------------------------------
@@ -89,7 +94,8 @@ package Dot is
       end record;
 
       procedure Put
-        (This : in Class);
+        (This : in Class;
+         File : in ATI.File_Type);
 
       package Lists is new
         Ada.Containers.Doubly_Linked_Lists (Class);
@@ -97,7 +103,8 @@ package Dot is
       type List_Of_Class is new Lists.List with null record; -- Initialized
 
       procedure Put
-        (These : in List_Of_Class);
+        (These : in List_Of_Class;
+         File  : in ATI.File_Type);
 
       -- Convenience: converts L, R to ID_Type and appends a Class to the list.
       -- Allows this:
@@ -111,8 +118,7 @@ package Dot is
         (These : in out List_Of_Class;
          L, R  : in     String);
 
-      Empty_List : constant List_Of_Class := List_Of_Class'(Lists.Empty_List
-                                                              with null record);
+      function Empty_List return List_Of_Class;
 
    end Assign;
    -----------------------------------------------------------------------------
@@ -129,7 +135,8 @@ package Dot is
       Null_Class : constant Class;
 
       procedure Put
-        (This : in Class);
+        (This : in Class;
+         File : in ATI.File_Type);
 
       package Lists is new
         Ada.Containers.Doubly_Linked_Lists (Class);
@@ -137,7 +144,8 @@ package Dot is
       type List_Of_Class is new Lists.List with null record;
 
       procedure Put
-        (These : in List_Of_Class);
+        (These : in List_Of_Class;
+         File  : in ATI.File_Type);
 
    -- Add an assign to the first attr of the list. If there is no first attr,
    -- add one:
@@ -168,7 +176,8 @@ package Dot is
 
       overriding
       procedure Put
-        (This : in Class);
+        (This : in Class;
+         File : in ATI.File_Type);
 
       -- Creates a Class object on the heap:
       procedure Append_To
@@ -189,7 +198,8 @@ package Dot is
       end record;
 
       procedure Put
-        (This : in Port_Class);
+        (This : in Port_Class;
+         File : in ATI.File_Type);
 
       Null_Port_Class : constant Port_Class;
 
@@ -199,7 +209,8 @@ package Dot is
       end record;
 
       procedure Put
-        (This : in Class);
+        (This : in Class;
+         File : in ATI.File_Type);
 
    private
       Default_Port_Class : Port_Class;
@@ -256,7 +267,8 @@ package Dot is
 
       overriding
       procedure Put
-        (This : in Class);
+        (This : in Class;
+         File : in ATI.File_Type);
 
       -- Creates a Class object on the heap:
       procedure Append_To
@@ -279,7 +291,8 @@ package Dot is
       end record;
 
       procedure Put
-        (This : in Class);
+        (This : in Class;
+         File : in ATI.File_Type);
 
    end Subgraphs;
    -----------------------------------------------------------------------------
@@ -302,7 +315,8 @@ package Dot is
          end record;
 
          procedure Put
-           (This : in Class);
+           (This : in Class;
+            File : in ATI.File_Type);
 
          package Lists is new
            Ada.Containers.Doubly_Linked_Lists (Class);
@@ -310,7 +324,8 @@ package Dot is
          type List_Of_Class is new Lists.List with null record;
 
          procedure Put
-           (These : in List_Of_Class);
+           (These : in List_Of_Class;
+            File  : in ATI.File_Type);
 
       end Terminals;
 
@@ -326,7 +341,8 @@ package Dot is
 
          overriding
          procedure Put
-           (This : in Class);
+           (This : in Class;
+            File : in ATI.File_Type);
 
          -- Creates a Class object on the heap:
          procedure Append_To
@@ -370,11 +386,21 @@ package Dot is
          return Natural;
 
       procedure Put
-        (This : access Class);
+        (This : access Class;
+         File : in     ATI.File_Type);
+
+      -- Writes a file <Name>.dot. If Overwrite is true, overwrites an existing
+      -- file. If it is not and the file exists, raises Usage_Error:
+      procedure Write_File
+        (This      : access Class;
+         Name      : in     String;
+         Overwrite : in     Boolean := False);
+
+      Usage_Error : Exception;
 
    private
 
-      type Class is tagged-- Initialized
+      type Class is tagged -- Initialized
          record
             Digraph   : Boolean := True;
             Strict    : Boolean := True;
@@ -387,26 +413,33 @@ package Dot is
 
 private
    package ASU renames Ada.Strings.Unbounded;
-   package ATI renames Ada.Text_IO;
-
-   -----------------------------------------------------------------------------
-   -- Output support:
 
    package Indented is
+
       procedure Indent;
       procedure Dedent;
-      procedure Put (Item : in String);
-      procedure New_Line;
 
+      procedure Put
+        (File : in ATI.File_Type;
+         Item : in String);
+      procedure New_Line
+        (File : in ATI.File_Type);
       -- Calls New_Line if the current col is greater than the indent col:
-      procedure End_Line_If_Needed;
-
+      procedure End_Line_If_Needed
+        (File : in ATI.File_Type);
       -- Put nothing if Item is empty, else Put it with a trailing space:
-      procedure Put_Spaced (Item : in String);
-   end Indented;
+      procedure Put_Spaced
+        (File : in ATI.File_Type;
+         Item : in String);
 
-   -- END Output support
-   -----------------------------------------------------------------------------
+   private
+
+      -- If the indent is increased in the middle of a line, this will ensure
+      -- that the next put is at that indent or better:
+      procedure Put_Indent
+        (File : in ATI.File_Type);
+
+   end Indented;
 
 
    function To_String (Item : in Compass_Pt_Type)
@@ -417,7 +450,8 @@ private
    function To_String (Item : in ID_Type)
                        return String;
 
-   procedure Put (This : in ID_Type);
-
+   procedure Put
+     (This : in ID_Type;
+      File : in ATI.File_Type);
 
 end Dot;
