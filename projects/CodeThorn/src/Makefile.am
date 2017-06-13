@@ -526,7 +526,7 @@ check-codethorn-internal:
 	@echo RUNNING CODETHORN INTERNAL CHECKS
 	@echo ================================================================
 	@./codethorn --internal-checks	
-	@./codethorn --edg:no_warnings $(srcdir)/tests/typetest1.C 
+#	@./codethorn --edg:no_warnings $(srcdir)/tests/typetest1.C 
 
 #check-local: check-codethorn-internal check-data-races check-flow-insenstive check-ltl
 check-local: check-codethorn-internal check-data-races check-ltl

@@ -90,6 +90,7 @@ bool ExprAnalyzer::variable(SgNode* node, VariableId& varId) {
 }
 
 AbstractValue ExprAnalyzer::constIntLatticeFromSgValueExp(SgValueExp* valueExp) {
+  ROSE_ASSERT(valueExp);
   if(isSgFloatVal(valueExp)
      ||isSgDoubleVal(valueExp)
      ||isSgLongDoubleVal(valueExp)
@@ -135,6 +136,9 @@ AbstractValue ExprAnalyzer::constIntLatticeFromSgValueExp(SgValueExp* valueExp) 
   } else if(SgUnsignedLongVal* exp=isSgUnsignedLongVal(valueExp)) {
     unsigned long int val=exp->get_value();
     return AbstractValue(val);
+  } else if(SgCharVal* exp=isSgCharVal(valueExp)) {
+    unsigned char val=(unsigned char)(signed char)exp->get_value();
+    return AbstractValue((int)val);
   } else if(SgWcharVal* exp=isSgWcharVal(valueExp)) {
     long int val=exp->get_value();
     return AbstractValue(val);
@@ -144,7 +148,12 @@ AbstractValue ExprAnalyzer::constIntLatticeFromSgValueExp(SgValueExp* valueExp) 
     int val=exp->get_value();
     return AbstractValue(val);
   } else {
-    throw CodeThorn::Exception("Error: constIntLatticeFromSgValueExp::unsupported number type in SgValueExp.");
+    string s;
+    if(valueExp)
+      s=valueExp->class_name();
+    else
+      s="nullptr";
+    throw CodeThorn::Exception("Error: constIntLatticeFromSgValueExp::unsupported number type in SgValueExp ("+s+")");
   }
 }
 
@@ -257,7 +266,8 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
   // EXPRESSION LEAF NODES
   // this test holds for all subclasses of SgValueExp
   if(SgValueExp* exp=isSgValueExp(node)) {
-    return evalValueExp(isSgValueExp(exp),estate,useConstraints);
+    ROSE_ASSERT(exp!=nullptr);
+    return evalValueExp(exp,estate,useConstraints);
   }
   switch(node->variantT()) {
   case V_SgVarRefExp:
@@ -890,6 +900,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarExp(SgVarRefExp* node,
 }
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalValueExp(SgValueExp* node, EState estate, bool useConstraints) {
+  ROSE_ASSERT(node);
   SingleEvalResultConstInt res;
   res.init(estate,*estate.constraints(),AbstractValue(CodeThorn::Bot()));
   res.result=constIntLatticeFromSgValueExp(node);
