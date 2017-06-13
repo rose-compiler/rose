@@ -1227,6 +1227,10 @@ Grammar::setUpNodes ()
      // linear (varlist[:step])
      OmpLinearClause.setDataPrototype ( "SgExpression*", "step", "= NULL",
                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
+     
+     // aligned (varlist[:alignment])
+     OmpAlignedClause.setDataPrototype ( "SgExpression*", "alignment", "= NULL",
+                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
 
       // default (private | firstprivate | shared | none)
      OmpDefaultClause.setDataPrototype("SgOmpClause::omp_default_option_enum", "data_sharing", "=e_omp_default_unknown",

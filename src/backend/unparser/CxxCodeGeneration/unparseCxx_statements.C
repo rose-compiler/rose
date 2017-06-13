@@ -1533,6 +1533,7 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
 
        // Liao, 5/31/2009, add OpenMP support, TODO refactor some code to language independent part
           case V_SgOmpForStatement:                      unparseOmpForStatement(stmt, info); break;
+          case V_SgOmpForSimdStatement:                  unparseOmpForSimdStatement(stmt, info); break;
 
        // DQ (4/16/2011): Added Java specific IR node until we support the Java specific unparsing.
           case V_SgJavaImportStatement:
@@ -10805,21 +10806,48 @@ void Unparse_ExprStmt::unparseOmpForStatement (SgStatement* stmt,     SgUnparse_
   }
 }
 
+void Unparse_ExprStmt::unparseOmpForSimdStatement (SgStatement* stmt,     SgUnparse_Info& info)
+{
+  ROSE_ASSERT (stmt != NULL);
+  SgOmpForSimdStatement * f_stmt = isSgOmpForSimdStatement (stmt);
+  ROSE_ASSERT (f_stmt != NULL);
+
+  unparseOmpDirectivePrefixAndName(stmt, info);
+
+  unparseOmpBeginDirectiveClauses(stmt, info);
+  // TODO a better way to new line? and add indentation 
+  curprint (string ("\n"));
+
+  SgUnparse_Info ninfo(info);
+  if (f_stmt->get_body())
+  {
+    unparseStatement(f_stmt->get_body(), ninfo);
+  }
+  else
+  {
+    cerr<<"Error: empty body for:"<<stmt->class_name()<<" is not allowed!"<<endl;
+    ROSE_ASSERT(false);
+  }
+}
+
+
 void
 Unparse_ExprStmt::unparseOmpBeginDirectiveClauses (SgStatement* stmt,     SgUnparse_Info& info)
 {
   ROSE_ASSERT (stmt != NULL);
   // optional clauses
-  if (isSgOmpClauseBodyStatement(stmt))
+  SgOmpClauseBodyStatement* bodystmt= isSgOmpClauseBodyStatement(stmt);
+  SgOmpDeclareSimdStatement* simdstmt= isSgOmpDeclareSimdStatement(stmt);
+  if (bodystmt||simdstmt)
   {
-    const SgOmpClausePtrList& clause_ptr_list = isSgOmpClauseBodyStatement(stmt)->get_clauses();
+    const SgOmpClausePtrList& clause_ptr_list = bodystmt?bodystmt->get_clauses():simdstmt->get_clauses();
     SgOmpClausePtrList::const_iterator i;
     for (i= clause_ptr_list.begin(); i!= clause_ptr_list.end(); i++)
     {
       SgOmpClause* c_clause = *i;
       unparseOmpClause(c_clause, info);
     }
-  }
+  } 
 }
 
 
