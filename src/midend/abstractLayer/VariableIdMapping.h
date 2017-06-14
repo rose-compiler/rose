@@ -83,7 +83,6 @@ class VariableIdMapping {
   bool hasPointerType(VariableId varId);
   bool hasArrayType(VariableId varId);
   bool hasClassType(VariableId varId);
-  bool isConstantArray(VariableId varId);
   SgVariableDeclaration* getVariableDeclaration(VariableId varId);
   // schroder3 (2016-07-05): Returns whether the given variable is valid in this mapping
   bool isVariableIdValid(VariableId varId);
