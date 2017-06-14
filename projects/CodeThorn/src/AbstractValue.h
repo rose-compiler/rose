@@ -107,6 +107,7 @@ class AbstractValue {
   string toString(SPRAY::VariableIdMapping* vim) const;
   string toLhsString(SPRAY::VariableIdMapping* vim) const;
   string toRhsString(SPRAY::VariableIdMapping* vim) const;
+  string arrayVariableNameToString(SPRAY::VariableIdMapping* vim) const;
   
   friend ostream& operator<<(ostream& os, const AbstractValue& value);
   friend istream& operator>>(istream& os, AbstractValue& value);

@@ -489,6 +489,18 @@ string AbstractValue::toRhsString(SPRAY::VariableIdMapping* vim) const {
   }
 }
 
+string AbstractValue::arrayVariableNameToString(SPRAY::VariableIdMapping* vim) const {
+  switch(valueType) {
+  case PTR: {
+    stringstream ss;
+    ss<<variableId.toString(vim);
+    return ss.str();
+  }
+  default:
+    throw CodeThorn::Exception("Error: AbstractValue::arrayVariableNameToString operation failed. Unknown abstraction type.");
+  }
+}
+
 string AbstractValue::toString(SPRAY::VariableIdMapping* vim) const {
   switch(valueType) {
   case TOP: return "top";
