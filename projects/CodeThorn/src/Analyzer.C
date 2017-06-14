@@ -1155,7 +1155,6 @@ PState Analyzer::analyzeAssignRhsExpr(PState currentPState,VariableId lhsVar, Sg
 }
 
 // TODO: this function should be implemented with a call of ExprAnalyzer::evalConstInt
-// TODO: currently all rhs which are not a variable are evaluated to top by this function
 PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode* rhs, ConstraintSet& cset) {
   ROSE_ASSERT(isSgExpression(rhs));
   AbstractValue rhsIntVal=CodeThorn::Top();
@@ -1194,21 +1193,20 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
     if(currentPState.varExists(rhsVarId)) {
       rhsIntVal=currentPState.readFromMemoryLocation(rhsVarId);
     } else {
-      if(variableIdMapping.isConstantArray(rhsVarId) && boolOptions["rersmode"]) {
-        ROSE_ASSERT(false); // should no longer be reachable
+      if(variableIdMapping.hasArrayType(rhsVarId) && boolOptions["explicit-arrays"]==false) {
         // in case of an array the id itself is the pointer value
         ROSE_ASSERT(rhsVarId.isValid());
         rhsIntVal=rhsVarId.getIdCode();
       } else {
         logger[WARN]<< "access to variable "<<variableIdMapping.uniqueLongVariableName(rhsVarId)<< " id:"<<rhsVarId.toString()<<" on rhs of assignment, but variable does not exist in state. Initializing with top."<<endl;
         rhsIntVal=CodeThorn::Top();
-        isRhsIntVal=true;
+        isRhsIntVal=true; 
       }
     }
   }
   PState newPState=currentPState;
 
-  // handle pointer assignment/initialization
+  // handle pointer assignment
   if(variableIdMapping.hasPointerType(lhsVar)) {
     //cout<<"DEBUG: "<<lhsVar.toString()<<" = "<<rhs->unparseToString()<<" : "<<astTermWithNullValuesToString(rhs)<<" : ";
     //cout<<"LHS: pointer variable :: "<<lhsVar.toString()<<endl;

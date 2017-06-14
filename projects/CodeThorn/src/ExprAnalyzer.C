@@ -755,7 +755,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
         return listify(res);
       } else {
         // array variable NOT in state. Special space optimization case for constant array.
-        if(_variableIdMapping->isConstantArray(arrayVarId)) {
+        if(_variableIdMapping->hasArrayType(arrayVarId) && boolOptions["explicit-arrays"]==false) {
           SgExpressionPtrList& initList=_variableIdMapping->getInitializerListOfArrayVariable(arrayVarId);
           int elemIndex=0;
           // TODO: slow linear lookup (TODO: pre-compute all values and provide access function)
@@ -883,10 +883,10 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarExp(SgVarRefExp* node,
     }
     return listify(res);
   } else {
-    // special modes to represent information not stored in the state
+    // special mode to represent information not stored in the state
     // i) unmodified arrays: data can be stored outside the state
     // ii) undefined variables mapped to 'top' (abstraction by removing variables from state)
-    if(_variableIdMapping->isConstantArray(varId) && boolOptions["rersmode"]) {
+    if(_variableIdMapping->hasArrayType(varId) && boolOptions["explicit-arrays"]==false) {
       // currently only used in rersmode
       res.result=AbstractValue(varId.getIdCode());
       return listify(res);
