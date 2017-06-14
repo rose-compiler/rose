@@ -124,6 +124,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	subteam.c \
 	task_array.c \
 	task_array2.c \
+	task_dep1.c \
 	task_largenumber.c \
 	task_orphaned.c \
 	task_outlining.c \
