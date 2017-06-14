@@ -105,7 +105,7 @@ corresponding C type is union name defaults to YYSTYPE.
         '(' ')' ',' ':' '+' '*' '-' '&' '^' '|' LOGAND LOGOR SHLEFT SHRIGHT PLUSPLUS MINUSMINUS PTR_TO '.'
         LE_OP2 GE_OP2 EQ_OP2 NE_OP2 RIGHT_ASSIGN2 LEFT_ASSIGN2 ADD_ASSIGN2
         SUB_ASSIGN2 MUL_ASSIGN2 DIV_ASSIGN2 MOD_ASSIGN2 AND_ASSIGN2 
-        XOR_ASSIGN2 OR_ASSIGN2
+        XOR_ASSIGN2 OR_ASSIGN2 DEPEND IN OUT INOUT
         LEXICALERROR IDENTIFIER 
         READ WRITE CAPTURE SIMDLEN
 /*We ignore NEWLINE since we only care about the pragma string , We relax the syntax check by allowing it as part of line continuation */
@@ -354,6 +354,7 @@ task_clause : unique_task_clause
             | private_clause
             | firstprivate_clause
             | share_clause
+            | depend_clause
             ;
 
 unique_task_clause : IF { 
@@ -367,6 +368,26 @@ unique_task_clause : IF {
                      }
                    ;
                    
+depend_clause : DEPEND { 
+                          ompattribute->addClause(e_depend);
+                        } '(' dependence_type ':' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list = false;}
+                      ;
+
+dependence_type : IN {
+                       ompattribute->setDependenceType(e_depend_in); 
+                       omptype = e_depend_in; /*variables are stored for each operator*/
+                     }
+                   | OUT {
+                       ompattribute->setDependenceType(e_depend_out);  
+                       omptype = e_depend_out;
+                     }
+                   | INOUT {
+                       ompattribute->setDependenceType(e_depend_inout); 
+                       omptype = e_depend_inout;
+                      }
+                   ;
+
+
 parallel_for_directive : /* #pragma */ OMP PARALLEL FOR { 
                            ompattribute = buildOmpAttribute(e_parallel_for,gNode, true); 
                            omptype=e_parallel_for; 

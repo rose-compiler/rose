@@ -730,6 +730,7 @@ namespace sg
     GEN_VISIT(SgOmpReductionClause)
     GEN_VISIT(SgOmpVariablesClause)
     GEN_VISIT(SgOmpScheduleClause)
+    GEN_VISIT(SgOmpDependClause)
     GEN_VISIT(SgOmpClause)
     GEN_VISIT(SgRenamePair)
     GEN_VISIT(SgInterfaceBody)

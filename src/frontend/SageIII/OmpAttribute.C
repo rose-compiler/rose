@@ -505,6 +505,7 @@ namespace OmpSupport
     return atomicity;
   }
 
+  //--------------------------------------------------------------- 
   // Reduction clause's operator, 
   // we store reduction clauses of the same operators into a single entity
   void OmpAttribute::setReductionOperator(omp_construct_enum operatorx)
@@ -525,6 +526,29 @@ namespace OmpSupport
   {
     return (find(reduction_operators.begin(), reduction_operators.end(),operatorx) != reduction_operators.end());
   }
+ //--------------------------------------------------------------- 
+  // depend clause's type
+  // we store depend clauses of the same type into a single entity
+  void OmpAttribute::setDependenceType(omp_construct_enum operatorx)
+  {
+    assert(isDependenceType(operatorx));
+    std::vector<omp_construct_enum>::iterator hit = 
+      find(dependence_types.begin(),dependence_types.end(), operatorx); 
+    if (hit == dependence_types.end())   
+      dependence_types.push_back(operatorx);
+  }
+  // 
+  std::vector<omp_construct_enum> OmpAttribute::getDependenceTypes()
+  {
+    return dependence_types;
+  }
+
+  bool OmpAttribute::hasDependenceType(omp_construct_enum operatorx)
+  {
+    return (find(dependence_types.begin(), dependence_types.end(), operatorx) != dependence_types.end());
+  }
+
+  //--------------------------------------------------------------- 
   // Map clause's variant, alloc, to, from, tofrom 
   // we store map clauses of the same variants into a single entity
   void OmpAttribute::setMapVariant(omp_construct_enum operatorx)
@@ -535,7 +559,7 @@ namespace OmpSupport
     if (hit == map_variants.end())   
       map_variants.push_back(operatorx);
   }
-  // 
+
   std::vector<omp_construct_enum> OmpAttribute::getMapVariants()
   {
     return map_variants;
@@ -730,6 +754,11 @@ namespace OmpSupport
 
       case e_inbranch: result = "inbranch"; break;
       case e_notinbranch:   result = "notinbranch";   break;
+
+      case e_depend:       result = "depend";   break;
+      case e_depend_in:    result = "int";   break;
+      case e_depend_out:   result = "out";   break;
+      case e_depend_inout: result = "inout";   break;
 
       case e_not_omp: result = "not_omp"; break;
       default: 
@@ -1074,6 +1103,8 @@ namespace OmpSupport
 
       case e_inbranch:
       case e_notinbranch:
+
+      case e_depend:
         result = true; 
         break;
       default:
@@ -1109,6 +1140,24 @@ namespace OmpSupport
     }
     return result;
   }
+
+  bool isDependenceType(omp_construct_enum omp_type)
+  {
+    bool result = false;
+    switch (omp_type)
+    {
+      case e_depend_in:
+      case e_depend_out:
+      case e_depend_inout:
+       result = true;
+        break;
+      default:
+        result = false;
+        break;
+    }
+    return result;
+  }
+
 
   bool  OmpAttribute::isMapVariant(omp_construct_enum omp_type)
   {
