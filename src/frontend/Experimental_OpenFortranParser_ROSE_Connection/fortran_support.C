@@ -111,7 +111,7 @@ experimental_openFortranParser_main(int argc, char **argv)
      commandString += filenameWithPath;
 
   // Add source code location information to output
-     commandString += " --preserve-positions";
+     commandString += " --preserve-locations";
 
 #if USE_STRATEGO_TRANSFORMATION
      string path_to_fortran_stratego_transformations_directory

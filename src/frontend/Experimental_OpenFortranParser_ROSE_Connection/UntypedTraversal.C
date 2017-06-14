@@ -35,8 +35,8 @@ UntypedTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute curre
 
    else if (isSgUntypedProgramHeaderDeclaration(n) != NULL)
       {
-      // SgUntypedProgramHeaderDeclaration* ut_program = dynamic_cast<SgUntypedProgramHeaderDeclaration*>(n);
-      // SgProgramHeaderStatement*          sg_program = UntypedConverter::convertSgUntypedProgramHeaderDeclaration(ut_program,currentScope);
+         SgUntypedProgramHeaderDeclaration* ut_program = dynamic_cast<SgUntypedProgramHeaderDeclaration*>(n);
+         UntypedConverter::convertSgUntypedProgramHeaderDeclaration(ut_program,currentScope);
 
          currentScope = SageBuilder::topScopeStack();
       }
