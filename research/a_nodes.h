@@ -418,7 +418,8 @@ enum Clause_Kinds {
 ///////////////////////////////////////////////////////////////////////////////
 
 // For Defining_Operator_Symbol:
-  enum Operator_Kind {
+// For Expression:
+  enum Operator_Kinds {
     Not_An_Operator,                   // An unexpected element
 
     An_And_Operator,                   // and
@@ -444,6 +445,201 @@ enum Clause_Kinds {
     A_Not_Operator                     // not
 };
 
+// For Declaration:
+enum Declaration_Origins {
+  Not_A_Declaration_Origin,
+  //  An unexpected element
+
+  An_Explicit_Declaration,
+  //  3.1(5) explicitly declared in the text of a program, or within
+  //  an expanded generic template
+
+  An_Implicit_Predefined_Declaration,
+  //  3.1(5), 3.2.3(1), A.1(2)
+
+  An_Implicit_Inherited_Declaration
+  //  3.1(5), 3.4(6-35)
+};
+
+// For Declaration:
+enum Mode_Kinds {
+  Not_A_Mode,              // An unexpected element
+
+  A_Default_In_Mode,       // procedure A(B :        C);
+  An_In_Mode,              // procedure A(B : IN     C);
+  An_Out_Mode,             // procedure A(B :    OUT C);
+  An_In_Out_Mode           // procedure A(B : IN OUT C);
+};
+  
+// For Declaration:
+enum Subprogram_Default_Kinds {
+      Not_A_Default,         // An unexpected element
+
+      A_Name_Default,        // with subprogram_specification is default_name;
+      A_Box_Default,         // with subprogram_specification is <>;
+//  //|A2005 start
+      A_Null_Default,        // with subprogram_specification is null;
+//  //|A2005 end
+      A_Nil_Default          // with subprogram_specification;
+};
+
+// For Declaration:
+enum Trait_Kinds {
+  Not_A_Trait,                         // An unexpected element
+
+  An_Ordinary_Trait,
+  //  The declaration or definition does not contain the reserved words
+  //  "aliased", "reverse", "private", "limited", "abstract", or "access"
+  //  in an access_definition
+
+  An_Aliased_Trait,
+  //  "aliased" is present
+
+  An_Access_Definition_Trait,
+  //  "access" in an access_definition is present
+  //  //|A2005 start
+  A_Null_Exclusion_Trait,
+  //  "not null" is present
+  //  //|A2005 end
+  A_Reverse_Trait,
+  //  "reverse" is present
+  A_Private_Trait,
+  //  Only "private" is present
+  A_Limited_Trait,
+  //  Only "limited" is present
+  A_Limited_Private_Trait,
+  //  "limited" and "private" are present
+  An_Abstract_Trait,
+  //  Only "abstract" is present
+  An_Abstract_Private_Trait,
+  //  "abstract" and "private" are present
+  An_Abstract_Limited_Trait,
+  //  "abstract" and "limited" are present
+  An_Abstract_Limited_Private_Trait
+  //  "abstract", "limited", and "private" are present
+
+  //  //|D2005 start
+  //  We need a note saying that An_Access_Definition_Trait is an obsolescent
+  //  value kept only because of upward compatibility reasons. Now an
+  //  access_definition that defines an anonymous access kind is represented as
+  //  a first-class citizen in the ASIS Element classification hierarchy
+  //  (An_Access_Definition value in Definition_Kinds and the subordinate
+  //  Access_Definition_Kinds type).
+  //  //|D2005 end
+};
+
+// For Expression:
+enum Attribute_Kinds {
+  Not_An_Attribute,              // An unexpected element
+
+  An_Access_Attribute,           // 3.10.2(24), 3.10.2(32), K(2), K(4)
+  An_Address_Attribute,          // 13.3(11), J.7.1(5), K(6)
+  An_Adjacent_Attribute,         // A.5.3(48), K(8)
+  An_Aft_Attribute,              // 3.5.10(5), K(12)
+  An_Alignment_Attribute,        // 13.3(23), K(14)
+  A_Base_Attribute,              // 3.5(15), K(17)
+  A_Bit_Order_Attribute,         // 13.5.3(4), K(19)
+  A_Body_Version_Attribute,      // E.3(4), K(21)
+  A_Callable_Attribute,          // 9.9(2), K(23)
+  A_Caller_Attribute,            // C.7.1(14), K(25)
+  A_Ceiling_Attribute,           // A.5.3(33), K(27)
+  A_Class_Attribute,             // 3.9(14), 7.3.1(9), K(31), K(34)
+  A_Component_Size_Attribute,    // 13.3(69), K(36)
+  A_Compose_Attribute,           // A.5.3(24), K(38)
+  A_Constrained_Attribute,       // 3.7.2(3), J.4(2), K(42)
+  A_Copy_Sign_Attribute,         // A.5.3(51), K(44)
+  A_Count_Attribute,             // 9.9(5), K(48)
+  A_Definite_Attribute,          // 12.5.1(23), K(50)
+  A_Delta_Attribute,             // 3.5.10(3), K(52)
+  A_Denorm_Attribute,            // A.5.3(9), K(54)
+  A_Digits_Attribute,            // 3.5.8(2), 3.5.10(7), K(56), K(58)
+  An_Exponent_Attribute,         // A.5.3(18), K(60)
+  An_External_Tag_Attribute,     // 13.3(75), K(64)
+  A_First_Attribute,             // 3.5(12), 3.6.2(3), K(68), K(70)
+  A_First_Bit_Attribute,         // 13.5.2(3), K(72)
+  A_Floor_Attribute,             // A.5.3(30), K(74)
+  A_Fore_Attribute,              // 3.5.10(4), K(78)
+  A_Fraction_Attribute,          // A.5.3(21), K(80)
+  An_Identity_Attribute,         // 11.4.1(9), C.7.1(12), K(84), K(86)
+  An_Image_Attribute,            // 3.5(35), K(88)
+  An_Input_Attribute,            // 13.13.2(22), 13.13.2(32), K(92), K(96)
+  A_Last_Attribute,              // 3.5(13), 3.6.2(5), K(102), K(104)
+  A_Last_Bit_Attribute,          // 13.5.2(4), K(106)
+  A_Leading_Part_Attribute,      // A.5.3(54), K(108)
+  A_Length_Attribute,            // 3.6.2(9), K(117)
+  A_Machine_Attribute,           // A.5.3(60), K(119)
+  A_Machine_Emax_Attribute,      // A.5.3(8), K(123)
+  A_Machine_Emin_Attribute,      // A.5.3(7), K(125)
+  A_Machine_Mantissa_Attribute,  // A.5.3(6), K(127)
+  A_Machine_Overflows_Attribute, // A.5.3(12), A.5.4(4), K(129), K(131)
+  A_Machine_Radix_Attribute,     // A.5.3(2), A.5.4(2), K(133), K(135)
+  A_Machine_Rounds_Attribute,    // A.5.3(11), A.5.4(3), K(137), K(139)
+  A_Max_Attribute,               // 3.5(19), K(141)
+  A_Max_Size_In_Storage_Elements_Attribute, //   13.11.1(3), K(145)
+  A_Min_Attribute,               // 3.5(16), K(147)
+  A_Model_Attribute,             // A.5.3(68), G.2.2(7), K(151)
+  A_Model_Emin_Attribute,        // A.5.3(65), G.2.2(4), K(155)
+  A_Model_Epsilon_Attribute,     // A.5.3(66), K(157)
+  A_Model_Mantissa_Attribute,    // A.5.3(64), G.2.2(3), K(159)
+  A_Model_Small_Attribute,       // A.5.3(67), K(161)
+  A_Modulus_Attribute,           // 3.5.4(17), K(163)
+  An_Output_Attribute,           // 13.13.2(19), 13.13.2(29), K(165), K(169)
+  A_Partition_ID_Attribute,      // E.1(9), K(173)
+  A_Pos_Attribute,               // 3.5.5(2), K(175)
+  A_Position_Attribute,          // 13.5.2(2), K(179)
+  A_Pred_Attribute,              // 3.5(25), K(181)
+  A_Range_Attribute,             // 3.5(14), 3.6.2(7), K(187), ú(189)
+  A_Read_Attribute,              // 13.13.2(6), 13.13.2(14), K(191), K(195)
+  A_Remainder_Attribute,         // A.5.3(45), K(199)
+  A_Round_Attribute,             // 3.5.10(12), K(203)
+  A_Rounding_Attribute,          // A.5.3(36), K(207)
+  A_Safe_First_Attribute,        // A.5.3(71), G.2.2(5), K(211)
+  A_Safe_Last_Attribute,         // A.5.3(72), G.2.2(6), K(213)
+  A_Scale_Attribute,             // 3.5.10(11), K(215)
+  A_Scaling_Attribute,           // A.5.3(27), K(217)
+  A_Signed_Zeros_Attribute,      // A.5.3(13), K(221)
+  A_Size_Attribute,              // 13.3(40), 13.3(45), K(223), K(228)
+  A_Small_Attribute,             // 3.5.10(2), K(230)
+  A_Storage_Pool_Attribute,      // 13.11(13), K(232)
+  A_Storage_Size_Attribute,      // 13.3(60), 13.11(14), J.9(2), K(234),
+  //                                 K(236)
+  A_Succ_Attribute,              // 3.5(22), K(238)
+  A_Tag_Attribute,               // 3.9(16), 3.9(18), K(242), K(244)
+  A_Terminated_Attribute,        // 9.9(3), K(246)
+  A_Truncation_Attribute,        // A.5.3(42), K(248)
+  An_Unbiased_Rounding_Attribute, // A.5.3(39), K(252)
+  An_Unchecked_Access_Attribute,  // 13.10(3), H.4(18), K(256)
+  A_Val_Attribute,                // 3.5.5(5), K(258)
+  A_Valid_Attribute,              // 13.9.2(3), H(6), K(262)
+  A_Value_Attribute,              // 3.5(52), K(264)
+  A_Version_Attribute,            // E.3(3), K(268)
+  A_Wide_Image_Attribute,         // 3.5(28), K(270)
+  A_Wide_Value_Attribute,         // 3.5(40), K(274)
+  A_Wide_Width_Attribute,         // 3.5(38), K(278)
+  A_Width_Attribute,              // 3.5(39), K(280)
+  A_Write_Attribute,              // 13.13.2(3), 13.13.2(11), K(282), K(286)
+
+  //  |A2005 start
+  //  New Ada 2005 attributes. To be alphabetically ordered later
+  A_Machine_Rounding_Attribute,
+  A_Mod_Attribute,
+  A_Priority_Attribute,
+  A_Stream_Size_Attribute,
+  A_Wide_Wide_Image_Attribute,
+  A_Wide_Wide_Value_Attribute,
+  A_Wide_Wide_Width_Attribute,
+  //  |A2005 end
+
+  //  |A2012 start
+  //  New Ada 2012 attributes. To be alphabetically ordered later
+  A_Max_Alignment_For_Allocation_Attribute,
+  An_Overlaps_Storage_Attribute,
+  //  |A2012 end
+
+  An_Implementation_Defined_Attribute,  // Reference Manual, Annex M
+  An_Unknown_Attribute           // Unknown to ASIS
+};
+
 ///////////////////////////////////////////////////////////////////////////////
 // END supporting kinds
 ///////////////////////////////////////////////////////////////////////////////
@@ -454,7 +650,7 @@ struct Pragma_Struct {
 };
 
 struct Defining_Operator_Symbol_Struct {
-  enum Operator_Kind kind;
+  enum Operator_Kinds kind;
 };
 
 union Defining_Name_Union {
@@ -468,7 +664,32 @@ struct Defining_Name_Struct {
 };
 
 struct Declaration_Struct {
-  enum Declaration_Kinds kind;
+  enum Declaration_Kinds   kind;
+  enum Declaration_Origins origin;
+  
+  // Only for kind ==
+  // A_Parameter_Specification |
+  // A_Formal_Object_Declaration:
+  enum Mode_Kinds          mode;
+  
+  // Only for kind ==
+  // A_Formal_Function_Declaration |
+  // A_Formal_Procedure_Declaration:
+  enum Subprogram_Default_Kinds subprogram_default;
+  
+  // Only for kind ==
+  // A_Private_Type_Declaration |
+  // A_Private_Extension_Declaration |
+  // A_Variable_Declaration |
+  // A_Constant_Declaration |
+  // A_Deferred_Constant_Declaration |
+  // A_Discriminant_Specification |
+  // A_Loop_Parameter_Specification |
+  // A_Generalized_Iterator_Specification |
+  // An_Element_Iterator_Specification |
+  // A_Procedure_Declaration |
+  // A_Function_Declaration:
+  enum Trait_Kinds         trait;
 };
 
 struct Definition_Struct {
@@ -477,6 +698,24 @@ struct Definition_Struct {
 
 struct Expression_Struct {
   enum Expression_Kinds kind;
+  
+  // Only for kind ==
+  // An_Identifier |                              // 4.1
+  // An_Operator_Symbol |                         // 4.1
+  // A_Character_Literal |                        // 4.1
+  // An_Enumeration_Literal:
+  char *name_image;
+  
+  // Only for kind ==
+  // An_Operator_Symbol:
+  enum Operator_Kinds operator_kind;
+  
+  // Only for kind ==
+  // An_Attribute_Reference :
+  enum Attribute_Kinds atribute_kind;
+  
+  // TODO: INCOMPLETE! See asis_tool_2-element.adb.Process_Expression
+    
 };
 
 struct Association_Struct {
@@ -499,7 +738,7 @@ struct Exception_Handler_Struct {
 };
 
 union Element_Union {
-  struct Pragma_Struct            pragma;
+  struct Pragma_Struct            the_pragma; // pragma is a reserverd word in Ada
   struct Defining_Name_Struct     defining_name;
   struct Declaration_Struct       declaration;
   struct Definition_Struct        definition;
@@ -511,20 +750,12 @@ union Element_Union {
   struct Exception_Handler_Struct exception_handler;
 };
 
-struct Element_Struct;
-
-// This turns into System.Address:
-typedef struct Element_Struct *Element_Struct_Pointer;
-
 struct Element_Struct {
   char                  *id;
+  char                  *enclosing_id;
   char                  *source_location;
   enum  Element_Kinds    kind;
-  Element_Struct_Pointer next;
+  struct Element_Struct *next;
   union Element_Union    element;
 };
-
-// This turns into access all Element_Struct:
-typedef struct Element_Struct *Element_Struct_Access;
-
 
