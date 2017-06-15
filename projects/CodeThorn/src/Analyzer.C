@@ -172,7 +172,7 @@ void Analyzer::setExternalErrorFunctionName(std::string externalErrorFunctionNam
 }
 
 bool Analyzer::isPrecise() {
-  return !(isActiveGlobalTopify());
+  return !(isActiveGlobalTopify()) && boolOptions["explicit-arrays"]==true;
 }
 
 bool Analyzer::isInExplicitStateMode() {
@@ -391,9 +391,9 @@ bool Analyzer::isActiveGlobalTopify() {
 #pragma omp critical(ACTIVATE_TOPIFY_MODE)
     {
       if (!_topifyModeActive) {
-	_topifyModeActive=true;
-	eventGlobalTopifyTurnedOn();
-	boolOptions.setOption("rers-binary",false);
+        _topifyModeActive=true;
+        eventGlobalTopifyTurnedOn();
+        boolOptions.setOption("rers-binary",false);
       }
     }
     return true;

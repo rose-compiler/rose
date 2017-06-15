@@ -887,8 +887,9 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarExp(SgVarRefExp* node,
     // i) unmodified arrays: data can be stored outside the state
     // ii) undefined variables mapped to 'top' (abstraction by removing variables from state)
     if(_variableIdMapping->hasArrayType(varId) && boolOptions["explicit-arrays"]==false) {
-      // currently only used in rersmode
-      res.result=AbstractValue(varId.getIdCode());
+      // variable is used on the rhs and it has array type implies it avalates to a pointer to that array
+      //res.result=AbstractValue(varId.getIdCode());
+      res.result=AbstractValue::createAddressOfArray(varId);
       return listify(res);
     } else {
       res.result=CodeThorn::Top();

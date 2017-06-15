@@ -183,23 +183,14 @@ void checkTypes() {
     cout << "------------------------------------------"<<endl;
     cout << "RUNNING CHECKS FOR CONSTRAINT TYPE:"<<endl;
     VariableId var_x=variableIdMapping.createUniqueTemporaryVariableId("x");
-    cout<<"DEBUG: P1"<<endl;
     VariableId var_y=variableIdMapping.createUniqueTemporaryVariableId("y");
-    cout<<"DEBUG: P2"<<endl;
-    variableIdMapping.toStream(cout);
     Constraint c1(Constraint::EQ_VAR_CONST,var_x,1);
-    cerr<<"DEBUG: P3"<<endl;
-    cerr<< "c1:"<<endl;
-    cerr<<c1.toString(&variableIdMapping)<<endl;
     Constraint c2(Constraint::NEQ_VAR_CONST,var_y,2);
-    cout<< "c2:"<<c2.toString(&variableIdMapping)<<endl;
     Constraint c3=DISEQUALITYCONSTRAINT;
     Constraint c4=Constraint(Constraint::EQ_VAR_CONST,var_y,2);
     ConstraintSet cs;
     cs.addConstraint(c1);
-    cout << "CS1:"<<cs.toString()<<endl;
     cs.addConstraint(c2);
-    cout << "CS2:"<<cs.toString()<<endl;
     check("inserted 2 different constraints, size of constraint set == 2",cs.size()==2);
     check("c1:constraintExists(EQ_VAR_CONST,x,1) == true",cs.constraintExists(Constraint::EQ_VAR_CONST,var_x,1));
     check("c1:constraintExists(NEQ_VAR_CONST,x,1) == false",!cs.constraintExists(Constraint::NEQ_VAR_CONST,var_x,1));
@@ -227,7 +218,6 @@ void checkTypes() {
         cs1.addConstraint(c2);
         Constraint c5(Constraint::EQ_VAR_VAR,var_x,var_y);
         cs1.addConstraint(c5);
-        cout<<cs1.toString()<<endl;
         check("cs1.disequalityExists()==true",cs1.disequalityExists());
       }
       {

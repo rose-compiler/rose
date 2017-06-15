@@ -367,7 +367,7 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
     ("post-semantic-fold",po::value< string >(),"compute semantically folded state transition graph only after the complete transition graph has been computed. [=yes|no]")
     ("set-stg-incomplete", po::value< string >(), "set to true if the generated STG will not contain all possible execution paths (e.g. if only a subset of the input values is used). [=yes|no]")
     ("trace-file", po::value< string >(), "generate STG computation trace [=filename]")
-    ("explicit-arrays","represent all arrays ecplicitly in every state.")
+    ("explicit-arrays",po::value< string >(),"represent all arrays ecplicitly in every state.")
     ;
 
   rersOptions.add_options()
@@ -577,6 +577,7 @@ BoolOptions& parseBoolOptions(int argc, char* argv[]) {
   boolOptions.registerOption("refinement-constraints-demo",false);
   boolOptions.registerOption("determine-prefix-depth",false);
   boolOptions.registerOption("set-stg-incomplete",false);
+  boolOptions.registerOption("explicit-arrays",true); // MS (2017-06-09): enabled by default
 
   boolOptions.registerOption("keep-systems",true);
   boolOptions.registerOption("parallel-composition-only",false);
@@ -599,14 +600,12 @@ BoolOptions& parseBoolOptions(int argc, char* argv[]) {
   boolOptions.registerOption("data-race",false);
   boolOptions.registerOption("data-race-fail",false);
   boolOptions.registerOption("reduce-cfg",true); // MS (2016-06-28): enabled by default
-  boolOptions.registerOption("explicit-arrays",true); // MS (2017-06-09): enabled by default
   boolOptions.registerOption("status",false);
 
   boolOptions.processZeroArgumentsOption("svcomp-mode");
   boolOptions.processZeroArgumentsOption("reduce-cfg"); // this handles 'no-reduce-cfg'
   boolOptions.processZeroArgumentsOption("data-race");
   boolOptions.processZeroArgumentsOption("data-race-fail");
-  boolOptions.processZeroArgumentsOption("explicit-arrays");
   boolOptions.processZeroArgumentsOption("status");
 
   return boolOptions;
@@ -847,6 +846,10 @@ void generateAutomata(const po::variables_map& args) {
 }
 
 void analyzerSetup(Analyzer& analyzer, const po::variables_map& args, Sawyer::Message::Facility logger) {
+  if(boolOptions["explicit-arrays"]==false) {
+    analyzer.setSkipArrayAccesses(true);
+  }
+  
   // this must be set early, as subsequent initialization depends on this flag
   if (args.count("ltl-driven")) {
     analyzer.setModeLTLDriven(true);
@@ -1249,6 +1252,7 @@ int main( int argc, char * argv[] ) {
     if(args.count("dump-sorted")>0 || args.count("dump-non-sorted")>0 || args.count("equivalence-check")>0) {
       analyzer.setSkipSelectedFunctionCalls(true);
       analyzer.setSkipArrayAccesses(true);
+      boolOptions.setOption("explicit-arrays",false);
       if(analyzer.getNumberOfThreadsToUse()>1) {
         logger[ERROR] << "multi threaded rewrite not supported yet."<<endl;
         exit(1);
@@ -1342,6 +1346,7 @@ int main( int argc, char * argv[] ) {
       // do specialization and setup data structures
       analyzer.setSkipSelectedFunctionCalls(true);
       analyzer.setSkipArrayAccesses(true);
+      boolOptions.setOption("explicit-arrays",false);
 
       //TODO1: refactor into separate function
       int numSubst=0;

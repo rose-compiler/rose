@@ -526,30 +526,37 @@ check-codethorn-internal:
 	@echo RUNNING CODETHORN INTERNAL CHECKS
 	@echo ================================================================
 	@./codethorn --internal-checks	
-#	@./codethorn --edg:no_warnings $(srcdir)/tests/typetest1.C 
+
+check-domain:
+	@echo ================================================================
+	@echo DOMAIN TESTS
+	@echo ================================================================
+	@./codethorn --edg:no_warnings $(srcdir)/tests/typetest1.C 
+	@./codethorn --edg:no_warnings $(srcdir)/tests/domaintest1.C 
+	@./codethorn --edg:no_warnings $(srcdir)/tests/domaintest2.C 
 
 #check-local: check-codethorn-internal check-data-races check-flow-insenstive check-ltl
-check-local: check-codethorn-internal check-data-races check-ltl
+check-local: check-codethorn-internal check-domain check-data-races check-ltl
 	@echo ================================================================
 	@echo RUNNING VERIFICATION ERROR TESTS
 	@echo ================================================================
-	@./codethorn --enable-external-function-semantics $(srcdir)/tests/svcomp-test2.c --edg:no_warnings
-	@./codethorn --enable-external-function-semantics $(srcdir)/tests/svcomp-test4.c --max-transitions=10 --edg:no_warnings
-	@./codethorn --enable-external-function-semantics $(srcdir)/tests/svcomp-test5.c --edg:no_warnings
+	@./codethorn $(srcdir)/tests/svcomp-test2.c --edg:no_warnings
+	@./codethorn $(srcdir)/tests/svcomp-test4.c --max-transitions=10 --edg:no_warnings
+	@./codethorn $(srcdir)/tests/svcomp-test5.c --edg:no_warnings
 
 	@echo ================================================================
 	@echo RUNNING UPDATE SEQUENCE VERIFICATION TESTS
 	@echo ================================================================
 	@./codethorn --edg:no_warnings $(srcdir)/tests/jacobi-1d-imper_mod.c --dump-non-sorted=tmp.nsdump
 	@diff tmp.nsdump $(srcdir)/tests/jacobi-1d-imper_mod.c.nsdump
-	@rm tmp.nsdump
+	@rm -f tmp.nsdump
 
 check-data-races:
 	@echo ================================================================
 	@echo RUNNING DATA RACE VERIFICATION TESTS
 	@echo ================================================================
-	@./codethorn --data-race  $(srcdir)/tests/datarace/anti_dep_1.yes.c --max-time=5 --solver=12 --explicit-arrays
-	@./codethorn --data-race  $(srcdir)/tests/datarace/inner_only_1.no.c --max-time=5 --solver=12 --explicit-arrays
+	@./codethorn --data-race  $(srcdir)/tests/datarace/anti_dep_1.yes.c --max-time=5 --solver=12 --explicit-arrays=yes
+	@./codethorn --data-race  $(srcdir)/tests/datarace/inner_only_1.no.c --max-time=5 --solver=12 --explicit-arrays=yes
 
 
 check-flow-insenstive:
@@ -577,10 +584,10 @@ check-ltl:
 	@./codethorn $(srcdir)/tests/rers/Problem1401_opt.c --solver=5 --exploration-mode=breadth-first --edg:no_warnings --rers-binary=no --rersmode=yes --with-ltl-counterexamples=no --counterexamples-with-output=no --input-values="{1,2,3,4,5}" --ltl-in-alphabet="{1,2,3,4,5}" --ltl-out-alphabet="{18,19,20,21,22,23,24,25,26}" --max-transitions-forced-top=1000 --check-ltl=$(srcdir)/tests/rers/constraints-RERS14-5.txt --csv-spot-ltl="Problem1401_ltl_results_forcedtop_1000_n_bf.csv" --csv-assert="Problem1401_assert_results_forcedtop_1000_n_bf.csv" --threads=4  --csv-stats="Problem1401_stats_forcedtop_1000_n_bf_t4.csv" --display-diff=100000 # run abstract mode test
 
 check-arrays:
-	./codethorn $(srcdir)/tests/pointer/test48.cpp --explicit-arrays --viz=yes && dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
+	./codethorn $(srcdir)/tests/pointer/test48.cpp --explicit-arrays=yes --viz=yes && dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
 
 check-array-bounds: ./codethorn
-	./codethorn --explicit-arrays $(srcdir)/tests/arraybounds1.C 
+	./codethorn --explicit-arrays=yes $(srcdir)/tests/arraybounds1.C 
 
 # MS: 1-6 is reasonable for V1.2
 RERS=$(patsubst %,Problem%.log, $(shell seq 6))
