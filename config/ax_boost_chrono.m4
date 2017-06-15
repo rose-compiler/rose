@@ -62,6 +62,10 @@ AC_DEFUN([AX_BOOST_CHRONO],
 		LDFLAGS="$LDFLAGS $BOOST_LDFLAGS"
 		export LDFLAGS
 
+		LIBS_SAVED="$LIBS"
+		LIBS="$LIBS $BOOST_SYSTEM_LIB $BOOST_THREAD_LIB"
+		export LIBS
+
         AC_CACHE_CHECK(whether the Boost::Chrono library is available,
 					   ax_cv_boost_chrono,
         [AC_LANG_PUSH([C++])
@@ -114,5 +118,6 @@ AC_DEFUN([AX_BOOST_CHRONO],
 
 		CPPFLAGS="$CPPFLAGS_SAVED"
 	LDFLAGS="$LDFLAGS_SAVED"
+	LIBS="$LIBS_SAVED"
 	fi
 ])
