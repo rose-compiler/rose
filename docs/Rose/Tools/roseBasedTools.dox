@@ -76,7 +76,7 @@
  *     <td>Reads a binary analysis state file and shows information about the simulated virtual memory.
  *
  * <tr><td>bat-stack-deltas             <td>Megachiropteran
- *     <td>Reads a binary analysis state file, runs the stack delta analsysis for functions where it hasn't already been run
+ *     <td>Reads a binary analysis state file, runs the stack delta analysis for functions where it hasn't already been run
  *     (in parallel), and reports the results in a format that's easy for other tools to read.  The output consists of memory
  *     address intervals for instruction sequences and how their incoming and outgoing stack pointers relate to the initial
  *     stack pointer at the start of the function. This is useful for unwinding call frames when there's no frame pointer
@@ -92,7 +92,7 @@
  * <tr><td>bROwSE-server                <td>ROSE
  *     <td>This was our first foray into embedding the ROSE library in a web server. The server analyzes the binary and the
  *     user connects to it with a web browser to see results. The server supports analyzing any binary format and architecture
- *     supported by ROSE, interactive adjustments to the virtual memory map, disassemblying and partitioning, program indexed
+ *     supported by ROSE, interactive adjustments to the virtual memory map, disassembling and partitioning, program indexed
  *     by functions showing various function properties that can be sorted, graph-based disassembly listings using the CFG,
  *     traditional linear assembly listings, cross references for constants, decoded strings, hexdumps of virtual memory,
  *     symbolic data-flow results, lists of magic numbers, etc.
@@ -176,7 +176,7 @@
  *     <td>This is a suite of tools to "execute" a program by using concrete instruction semantics and a Linux system call
  *     translation layer that can be modified by the user.  It can handle amd64, m68k, or x86 instruction sets (those
  *     instructions for which ROSE knows the semantics) and Linux x86 and amd64 system calls or raw hardware; it can
- *     initilalize its simulation memory from some combination of files, ELF or PE containers, Motorola S-Records, and running
+ *     initialize its simulation memory from some combination of files, ELF or PE containers, Motorola S-Records, and running
  *     or stopped Linux executables; it can trace system calls similar to the "strace" command, instructions, and memory
  *     access; it partially supports multi-threaded applications; user can adjust instruction, memory, and syscall behavior
  *     through callbacks; it's able to selectively disable certain system calls; it can trace file and socket I/O; it has an
