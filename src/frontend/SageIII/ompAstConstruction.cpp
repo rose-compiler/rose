@@ -1316,7 +1316,7 @@ namespace OmpSupport
         }
       }
       // special handling for depend(type:varlist)
-      if (c_clause == e_depend) 
+      else if (c_clause == e_depend) 
       {
         std::vector<omp_construct_enum> rops  = att->getDependenceTypes();
         ROSE_ASSERT(rops.size()!=0);
