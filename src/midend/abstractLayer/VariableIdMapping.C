@@ -634,7 +634,7 @@ void VariableIdMapping::registerNewSymbol(SgSymbol* sym) {
 // we use a function as a destructor may delete it multiple times
 void VariableIdMapping::deleteUniqueTemporaryVariableId(VariableId varId) {
   if(isTemporaryVariableId(varId)) {
-    cerr<<"DEBUG WARNING: not deleting temporary variable id symbol."<<endl;
+    //cerr<<"DEBUG WARNING: not deleting temporary variable id symbol."<<endl;
     //delete getSymbol(varId);
   } else {
     throw SPRAY::Exception("VariableIdMapping::deleteUniqueTemporaryVariableSymbol: improper id operation.");
