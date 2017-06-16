@@ -4,8 +4,8 @@
 
 #include "Diagnostics.h"
 
-using namespace rose;
-using namespace rose::Diagnostics;
+using namespace Rose;
+using namespace Rose::Diagnostics;
 
 /* Constructor reads symbol table entries beginning at entry 'i'. We can't pass an array of COFFSymbolEntry_disk structs
  * because the disk size is 18 bytes, which is not properly aligned according to the C standard. Therefore we pass the actual

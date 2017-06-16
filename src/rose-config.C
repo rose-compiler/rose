@@ -6,8 +6,8 @@
 #include <string>
 #include <vector>
 
-using namespace rose;
-using namespace rose::Diagnostics;
+using namespace Rose;
+using namespace Rose::Diagnostics;
 
 // The following symbols should be defined on our compile command line:
 //   CXX

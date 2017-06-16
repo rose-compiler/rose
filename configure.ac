@@ -128,7 +128,7 @@ if echo "$BOOST_CPPFLAGS" |grep -- -pthread >/dev/null; then
    ROSE_CONFIG_TOKEN="$ROSE_CONFIG_TOKEN pthread"
 fi
 AC_DEFINE_UNQUOTED(ROSE_CONFIG_TOKEN, ["$ROSE_CONFIG_TOKEN"],
-    [Encapsulates some important configuration details for rose::initialize])
+    [Encapsulates some important configuration details for Rose::initialize])
 
 dnl Fail gracefully for blacklisted dependencies and other situations
 ROSE_CONFIGURE_SECTION([Checking blacklisted configurations])

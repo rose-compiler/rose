@@ -7,7 +7,7 @@
 
 #include <set>
 using namespace std;
-using namespace rose;
+using namespace Rose;
 //namespace CallGraph
 //{
 

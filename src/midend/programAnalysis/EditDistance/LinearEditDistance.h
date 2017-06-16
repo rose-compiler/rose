@@ -3,7 +3,7 @@
 
 #include <EditDistance/Levenshtein.h>
 
-namespace rose {
+namespace Rose {
 namespace EditDistance {
 
 /** Edit distance for ASTs.
@@ -15,7 +15,7 @@ namespace EditDistance {
  *  Example usage:
  *
  * @code
- *  using namespace rose::EditDistance;
+ *  using namespace Rose::EditDistance;
  *  SgNode *ast1=..., *ast2=...;
  *
  *  // Compare AST nodes only by their class
