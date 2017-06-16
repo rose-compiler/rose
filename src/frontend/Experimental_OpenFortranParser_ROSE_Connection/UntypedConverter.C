@@ -19,7 +19,7 @@ static void setFortranNumericLabel(SgStatement* stmt, int label_value, SgLabelSy
       }
    ROSE_ASSERT (label_scope != NULL);
 
-   SgName label_name(rose::StringUtility::numberToString(label_value));
+   SgName label_name(Rose::StringUtility::numberToString(label_value));
    SgLabelSymbol * symbol = label_scope->lookup_label_symbol (label_name);
    if (symbol == NULL)
       {

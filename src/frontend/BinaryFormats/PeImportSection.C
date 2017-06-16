@@ -4,7 +4,7 @@
 #include "sage3basic.h"
 #include "Diagnostics.h"
 
-using namespace rose::Diagnostics;
+using namespace Rose::Diagnostics;
 
 /** Counter for import_mesg() */
 size_t SgAsmPEImportSection::mesg_nprinted = 0;

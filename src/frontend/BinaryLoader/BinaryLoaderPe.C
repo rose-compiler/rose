@@ -3,7 +3,7 @@
 #include "Diagnostics.h"
 #include "MemoryMap.h"
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /* This binary loader can handle all PE files. */

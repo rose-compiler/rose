@@ -9,7 +9,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/regex.hpp>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 static boost::regex hexLiteralRe, signedDecimalLiteralRe;

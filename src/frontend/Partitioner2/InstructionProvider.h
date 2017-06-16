@@ -10,7 +10,7 @@
 #include <Sawyer/Map.h>
 #include <Sawyer/SharedPointer.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /** Provides and caches instructions.

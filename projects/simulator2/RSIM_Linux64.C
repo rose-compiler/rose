@@ -20,9 +20,9 @@
 #include <sys/vfs.h>                                    // for the statfs syscalls
 #include <sys/wait.h>                                   // for the wait4 syscall
 
-using namespace rose;
-using namespace rose::Diagnostics;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;
+using namespace Rose::Diagnostics;
+using namespace Rose::BinaryAnalysis;
 
 void
 RSIM_Linux64::init() {

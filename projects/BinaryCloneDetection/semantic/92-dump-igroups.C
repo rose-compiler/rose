@@ -2,7 +2,7 @@
 #include "sage3basic.h"
 #include "SqlDatabase.h"
 
-using namespace rose;
+using namespace Rose;
 
 std::string argv0;
 

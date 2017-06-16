@@ -2,7 +2,7 @@
 
 #include "BinaryString.h"
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 

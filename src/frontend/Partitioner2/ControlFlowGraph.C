@@ -2,7 +2,7 @@
 #include <Partitioner2/ControlFlowGraph.h>
 #include <Sawyer/GraphTraversal.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 

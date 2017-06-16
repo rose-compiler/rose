@@ -4,7 +4,7 @@
 // related to any particular element of the ROSE API (i.e., this document is a doxygen "@page").  See
 // docs/testDoxygen/HowToDocumentROSE.docs details about style, etc.
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /** @page binary_faq Binary analysis FAQ
@@ -29,7 +29,7 @@ namespace BinaryAnalysis {
  * @subsection binfaq_general_2 Q2. I'm interested in binary analysis. Where is a good place to start?
  *
  *  Most of the binary analysis capabilities are documented in the library itself and are part the doxygen output. The best
- *  place to start is the @ref rose::BinaryAnalysis "BinaryAnalysis" namespace.  In short,
+ *  place to start is the @ref Rose::BinaryAnalysis "BinaryAnalysis" namespace.  In short,
  *
  *  + ROSE parses an ELF (Unix) or PE/DOS (Windows) container (executable, library, object file, or core dump) and builds an
  *    abstract syntax tree (AST).

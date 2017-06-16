@@ -4,7 +4,7 @@
 #include "CloneDetectionLib.h"
 #include <cerrno>
 
-using namespace rose;
+using namespace Rose;
 using namespace CloneDetection;
 std::string argv0;
 

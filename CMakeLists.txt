@@ -202,10 +202,10 @@ message(STATUS "The ROSE SCM version identifier is ${ROSE_SCM_VERSION_ID}")
 message(STATUS "The ROSE SCM version Unix timestamp is ${ROSE_SCM_VERSION_UNIX_DATE}")
 
 #-------------------------------------------------------------------------------
-# Configuration synopsis used by rose::initialize.  The ROSE_CONFIG_TOKEN is
+# Configuration synopsis used by Rose::initialize.  The ROSE_CONFIG_TOKEN is
 # #define'd as a string in rose_config.h and ultimately rosePublicConfig.h and
 # the string is a synopsis of some important configuration details. This string
-# is passed by user code to the rose::initialize function which compares it
+# is passed by user code to the Rose::initialize function which compares it
 # against the same macro compiled into the ROSE library. If their contents differ
 # it means that the ROSE header files being used by the user are not the same
 # as the ROSE header files that were used to compile librose being linked by the

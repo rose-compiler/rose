@@ -11,7 +11,7 @@
 #define foreach BOOST_FOREACH
 using namespace std;
 using namespace boost;
-using namespace rose;
+using namespace Rose;
 
 /** Return all the reaching definitions from a VariableRenaming rename table. */
 set<SgNode*> renameTableToDefNodes(const VariableRenaming::NumNodeRenameEntry& entry);

@@ -15,9 +15,9 @@
 #include <Wt/WText>
 #include <Wt/WVBoxLayout>
 
-using namespace rose;
-using namespace rose::BinaryAnalysis;
-using namespace rose::Diagnostics;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
+using namespace Rose::Diagnostics;
 
 namespace bROwSE {
 
@@ -497,7 +497,7 @@ WStrings::crossReferences(size_t stringIdx) {
     return model_->xrefs_.getOrDefault(P2::Reference(stringVa));
 }
 
-const rose::BinaryAnalysis::Strings::EncodedString&
+const Rose::BinaryAnalysis::Strings::EncodedString&
 WStrings::string(size_t stringIdx) {
     ASSERT_require(stringIdx < model_->rows_.size());
     return model_->rows_[stringIdx].string;

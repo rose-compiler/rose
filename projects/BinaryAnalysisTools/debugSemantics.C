@@ -50,11 +50,11 @@
 //                                      End of user-contributed semantics
 //=============================================================================================================================
 
-using namespace rose;
-using namespace rose::BinaryAnalysis;
-using namespace rose::BinaryAnalysis::InstructionSemantics2;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
+using namespace Rose::BinaryAnalysis::InstructionSemantics2;
 using namespace Sawyer::Message::Common;                // DEBUG, INFO, WARN, ERROR etc.
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 Sawyer::Message::Facility mlog;
 
@@ -256,7 +256,7 @@ static SMTSolver *
 makeSolver(const Settings &settings) {
     if (settings.solverName == "list") {
         std::cout <<"SMT solver names:\n"
-                  <<"  yices            rose::BinaryAnalysis::YicesSolver\n";
+                  <<"  yices            Rose::BinaryAnalysis::YicesSolver\n";
         return NULL;
     } else if (settings.solverName == "") {
         return NULL;                                    // solvers are optional
@@ -277,12 +277,12 @@ makeProtoVal(const Settings &settings) {
 #ifdef EXAMPLE_EXTENSIONS
                   <<"  example          com::example::semantics::SValue\n"
 #endif
-                  <<"  concrete         rose::BinaryAnalysis::InstructionSemantics2::ConcreteSemantics::SValue\n"
-                  <<"  interval         rose::BinaryAnalysis::InstructionSemantics2::IntervalSemantics::SValue\n"
-                  <<"  null             rose::BinaryAnalysis::InstructionSemantics2::NullSemantics::SValue\n"
-                  <<"  partial          rose::BinaryAnalysis::InstructionSemantics2::PartialSymbolicSemantics::SValue\n"
-                  <<"  partitioner2     rose::BinaryAnalysis::Partitioner2::Semantics::SValue\n"
-                  <<"  symbolic         rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::SValue\n";
+                  <<"  concrete         Rose::BinaryAnalysis::InstructionSemantics2::ConcreteSemantics::SValue\n"
+                  <<"  interval         Rose::BinaryAnalysis::InstructionSemantics2::IntervalSemantics::SValue\n"
+                  <<"  null             Rose::BinaryAnalysis::InstructionSemantics2::NullSemantics::SValue\n"
+                  <<"  partial          Rose::BinaryAnalysis::InstructionSemantics2::PartialSymbolicSemantics::SValue\n"
+                  <<"  partitioner2     Rose::BinaryAnalysis::Partitioner2::Semantics::SValue\n"
+                  <<"  symbolic         Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::SValue\n";
         return BaseSemantics::SValuePtr();
 #ifdef EXAMPLE_EXTENSIONS
     } else if (className == "example") {
@@ -313,14 +313,14 @@ makeRegisterState(const Settings &settings, const BaseSemantics::SValuePtr &prot
 #ifdef EXAMPLE_EXTENSIONS
                   <<"  example          com::example::semantics::RegisterState\n"
 #endif
-                  <<"  concrete         rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterStateGeneric\n"
-                  <<"  generic          rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterStateGeneric\n"
-                  <<"  interval         rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterStateGeneric\n"
-                  <<"  null             rose::BinaryAnalysis::InstructionSemantics2::NullSemantics::RegisterState\n"
-                  <<"  partial          rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterStateGeneric\n"
-                  <<"  partitioner2     rose::BinaryAnalysis::Partitioner2::Semantics::RegisterState\n"
-                  <<"  symbolic         rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterStateGeneric\n"
-                  <<"  x86              rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterStateX86\n";
+                  <<"  concrete         Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterStateGeneric\n"
+                  <<"  generic          Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterStateGeneric\n"
+                  <<"  interval         Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterStateGeneric\n"
+                  <<"  null             Rose::BinaryAnalysis::InstructionSemantics2::NullSemantics::RegisterState\n"
+                  <<"  partial          Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterStateGeneric\n"
+                  <<"  partitioner2     Rose::BinaryAnalysis::Partitioner2::Semantics::RegisterState\n"
+                  <<"  symbolic         Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterStateGeneric\n"
+                  <<"  x86              Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterStateX86\n";
         return BaseSemantics::RegisterStatePtr();
 #ifdef EXAMPLE_EXTENSIONS
     } else if (className == "example") {
@@ -356,14 +356,14 @@ makeMemoryState(const Settings &settings, const P2::Engine &engine, const BaseSe
 #ifdef EXAMPLE_EXTENSIONS
                   <<"  example          com::example::semantics::MemoryState\n"
 #endif
-                  <<"  concrete         rose::BinaryAnalysis::InstructionSemantics2::ConcreteSemantics::MemoryState\n"
-                  <<"  interval         rose::BinaryAnalysis::InstructionSemantics2::IntervalSemantics::MemoryState\n"
-                  <<"  null             rose::BinaryAnalysis::InstructionSemantics2::NullSemantics::MemoryState\n"
-                  <<"  partial          rose::BinaryAnalysis::InstructionSemantics2::PartialSymbolicSemantics default\n"
-                  <<"  p2-list          rose::BinaryAnalysis::Partitioner2::Semantics::MemoryListState\n"
-                  <<"  p2-map           rose::BinaryAnalysis::Partitioner2::Semantics::MemoryMapState\n"
-                  <<"  symbolic-list    rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::MemoryListState\n"
-                  <<"  symbolic-map     rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::MemoryMapState\n";
+                  <<"  concrete         Rose::BinaryAnalysis::InstructionSemantics2::ConcreteSemantics::MemoryState\n"
+                  <<"  interval         Rose::BinaryAnalysis::InstructionSemantics2::IntervalSemantics::MemoryState\n"
+                  <<"  null             Rose::BinaryAnalysis::InstructionSemantics2::NullSemantics::MemoryState\n"
+                  <<"  partial          Rose::BinaryAnalysis::InstructionSemantics2::PartialSymbolicSemantics default\n"
+                  <<"  p2-list          Rose::BinaryAnalysis::Partitioner2::Semantics::MemoryListState\n"
+                  <<"  p2-map           Rose::BinaryAnalysis::Partitioner2::Semantics::MemoryMapState\n"
+                  <<"  symbolic-list    Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::MemoryListState\n"
+                  <<"  symbolic-map     Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::MemoryMapState\n";
         return BaseSemantics::MemoryStatePtr();
 #ifdef EXAMPLE_EXTENSIONS
     } else if (className == "example") {
@@ -401,12 +401,12 @@ listRiscOperators() {
 #ifdef EXAMPLE_EXTENSIONS
               <<"  example          com::example::semantics::RiscOperators\n"
 #endif
-              <<"  concrete         rose::BinaryAnalysis::InstructionSemantics2::ConcreteSemantics::RiscOperators\n"
-              <<"  interval         rose::BinaryAnalysis::InstructionSemantics2::IntervalSemantics::RiscOperators\n"
-              <<"  null             rose::BinaryAnalysis::InstructionSemantics2::NullSemantics::RiscOperators\n"
-              <<"  partial          rose::BinaryAnalysis::InstructionSemantics2::PartialSymbolicSemantics::RiscOperators\n"
-              <<"  partitioner2     rose::BinaryAnalysis::Partitioner2::Semantics::RiscOperators\n"
-              <<"  symbolic         rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::RiscOperators\n";
+              <<"  concrete         Rose::BinaryAnalysis::InstructionSemantics2::ConcreteSemantics::RiscOperators\n"
+              <<"  interval         Rose::BinaryAnalysis::InstructionSemantics2::IntervalSemantics::RiscOperators\n"
+              <<"  null             Rose::BinaryAnalysis::InstructionSemantics2::NullSemantics::RiscOperators\n"
+              <<"  partial          Rose::BinaryAnalysis::InstructionSemantics2::PartialSymbolicSemantics::RiscOperators\n"
+              <<"  partitioner2     Rose::BinaryAnalysis::Partitioner2::Semantics::RiscOperators\n"
+              <<"  symbolic         Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::RiscOperators\n";
 }
 
 static BaseSemantics::RiscOperatorsPtr

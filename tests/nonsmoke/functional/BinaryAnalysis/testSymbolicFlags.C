@@ -13,7 +13,7 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #include <rose.h>
 #include <BinarySymbolicExpr.h>
 
-using namespace rose::BinaryAnalysis;
+using namespace Rose::BinaryAnalysis;
 
 // Bit flags (low-order 16 bits are reserved for ROSE, so don't use them)
 static const unsigned UNDEFINED = 0x00010000;

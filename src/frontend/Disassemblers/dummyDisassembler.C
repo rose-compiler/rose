@@ -5,7 +5,7 @@
 #include "Diagnostics.h"
 #include "Disassembler.h"
 
-using namespace rose::BinaryAnalysis;
+using namespace Rose::BinaryAnalysis;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmExecutableFileFormat
@@ -174,7 +174,7 @@ SgAsmType* SgAsmVectorType::get_elmtType() const { return 0; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Disassembler
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis{
 void Disassembler::initDiagnostics() {}
 } // namespace

@@ -3,9 +3,9 @@
 #include "Diagnostics.h"
 #include "DispatcherPowerpc.h"
 
-using namespace rose::Diagnostics;
+using namespace Rose::Diagnostics;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 

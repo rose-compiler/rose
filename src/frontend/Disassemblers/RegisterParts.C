@@ -2,7 +2,7 @@
 #include "Registers.h"
 #include "RegisterParts.h"
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 void

@@ -2,8 +2,8 @@
 #include <DwarfLineMapper.h>
 #include <Partitioner2/Engine.h>
 
-using namespace rose::BinaryAnalysis;
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
+using namespace Rose::BinaryAnalysis;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 int
 main(int argc, char *argv[]) {

@@ -15,7 +15,7 @@
 # include <boost/archive/text_iarchive.hpp>
 #endif
 
-using namespace rose::BinaryAnalysis;
+using namespace Rose::BinaryAnalysis;
 
 static SymbolicExprParser
 symbolicParser() {
@@ -116,7 +116,7 @@ main(int argc, char *argv[]) {
                 std::cerr <<"    input: " <<line <<"\n"
                           <<"    here---" <<std::string(e.columnNumber, '-') <<"^\n\n";
             }
-        } catch (const rose::FailedAssertion &e) {
+        } catch (const Rose::FailedAssertion &e) {
             std::cerr <<"\n"; // message has already been printed.
         }
 

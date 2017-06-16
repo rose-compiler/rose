@@ -71,7 +71,7 @@ ArrayAssignmentStatementTransformation::targetForTransformation( SgNode* astNode
                   {
 #if 0
                     printf ("@@@@@@@@@@@ ArrayStatementTransformation::targetForTransformation(): file = %s line #%d \n",
-                         rose::getFileName(expressionStatement), rose::getLineNumber(expressionStatement));
+                         Rose::getFileName(expressionStatement), Rose::getLineNumber(expressionStatement));
 #endif
                     returnValue = TRUE;
                   }

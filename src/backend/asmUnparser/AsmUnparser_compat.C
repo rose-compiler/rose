@@ -5,8 +5,8 @@
 #include "Diagnostics.h"
 #include "Disassembler.h"
 
-using namespace rose;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 
 /* FIXME: this should be a SgAsmInstruction class method. */
 std::string unparseInstruction(SgAsmInstruction* insn, const AsmUnparser::LabelMap *labels, const RegisterDictionary *registers) {
@@ -123,15 +123,15 @@ unparseAsmInterpretation(SgAsmInterpretation* interp)
     AsmUnparser unparser;
 
     // Build a control flow graph, but exclude all the basic blocks that are marked as disassembly leftovers.
-    struct NoLeftovers: public rose::BinaryAnalysis::ControlFlow::VertexFilter {
-        virtual bool operator()(rose::BinaryAnalysis::ControlFlow*, SgAsmNode *node) {
+    struct NoLeftovers: public Rose::BinaryAnalysis::ControlFlow::VertexFilter {
+        virtual bool operator()(Rose::BinaryAnalysis::ControlFlow*, SgAsmNode *node) {
             SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(node);
             return func && 0==(func->get_reason() & SgAsmFunction::FUNC_LEFTOVERS);
         }
     } vertex_filter;
-    rose::BinaryAnalysis::ControlFlow cfg_analyzer;
+    Rose::BinaryAnalysis::ControlFlow cfg_analyzer;
     cfg_analyzer.set_vertex_filter(&vertex_filter);
-    rose::BinaryAnalysis::ControlFlow::Graph cfg;
+    Rose::BinaryAnalysis::ControlFlow::Graph cfg;
     cfg_analyzer.build_block_cfg_from_ast(interp, cfg/*out*/);
 
     // We will try to disassemble static data blocks (i.e., disassembling data as instructions), but we need to choose an

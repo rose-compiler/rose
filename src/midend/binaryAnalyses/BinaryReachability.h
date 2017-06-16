@@ -5,7 +5,7 @@
 #include <set>
 #include <vector>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /** Analysis that computes reachability of CFG vertices.

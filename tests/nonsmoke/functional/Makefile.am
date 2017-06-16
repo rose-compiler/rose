@@ -41,7 +41,7 @@ endif
 SUBDIRS += Utility
 
 ########################################################################################################################
-# rose::BinaryAnalysis
+# Rose::BinaryAnalysis
 
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 if !ROSE_USE_INSURE

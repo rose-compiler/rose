@@ -1,4 +1,4 @@
-// Example of using rose::BinaryAnalysis::PointerDetection to find pointer variables in a binary specimen.
+// Example of using Rose::BinaryAnalysis::PointerDetection to find pointer variables in a binary specimen.
 #include "conditionalDisable.h"
 #ifdef ROSE_BINARY_TEST_DISABLED
 #include <iostream>
@@ -16,9 +16,9 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #include <string>
 #include <vector>
 
-using namespace rose::Diagnostics;
-using namespace rose::BinaryAnalysis;
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
+using namespace Rose::Diagnostics;
+using namespace Rose::BinaryAnalysis;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 struct Settings {
     std::vector<std::string> functionNames;
@@ -32,7 +32,7 @@ parseCommandLine(int argc, char *argv[], Partitioner2::Engine &engine, Settings 
     std::string description =
         "This tool disassembles the binary specimen and examines each function to find memory locations that are "
         "used as pointers, and whether they're pointers to code or data. It's primary purpose is to test the "
-        "rose::BinaryAnalysis::PointerDetection analysis.";
+        "Rose::BinaryAnalysis::PointerDetection analysis.";
 
     SwitchGroup tool("Tool-specific switches");
     tool.insert(Switch("function")

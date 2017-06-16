@@ -13,10 +13,10 @@
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 // DQ (3/24/2016): Adding Robb's message logging mechanism to contrl output debug message from the EDG/ROSE connection code.
-using namespace rose::Diagnostics;
+using namespace Rose::Diagnostics;
 
 // DQ (3/24/2016): Adding Message logging mechanism.
 Sawyer::Message::Facility UnparseLanguageIndependentConstructs::mlog;
@@ -41,7 +41,7 @@ UnparseLanguageIndependentConstructs::initDiagnostics()
      if (!initialized) 
         {
           initialized = true;
-          rose::Diagnostics::initAndRegister(&mlog, "rose::UnparseLanguageIndependentConstructs");
+          Rose::Diagnostics::initAndRegister(&mlog, "Rose::UnparseLanguageIndependentConstructs");
         }
    }
 
@@ -277,7 +277,7 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
        else
         {
        // Compare the file names from the file info object in each statement
-       // char* statementfilename = rose::getFileName(stmt);
+       // char* statementfilename = Rose::getFileName(stmt);
        // const char* statementfilename = "default";
           string statementfilename = "default";
 
@@ -321,7 +321,7 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
              {
             // DQ (8/17/2005): Need to replace this with call to compare Sg_File_Info::file_id 
             // numbers so that we can remove the string comparision operator.
-            // statementfilename = rose::getFileName(stmt);
+            // statementfilename = Rose::getFileName(stmt);
 
             // DQ (9/20/2013): We need to use the physical file name in checking which statements to unparse.
             // statementfilename = stmt->get_file_info()->get_filenameString();
@@ -3341,9 +3341,9 @@ UnparseLanguageIndependentConstructs::unparseGlobalStmt (SgStatement* stmt, SgUn
 #if 1
                          << currentStatement->get_file_info()->displayString()
 #else
-                         << rose::getLineNumber(currentStatement)
+                         << Rose::getLineNumber(currentStatement)
                          << " getFileName(currentStatement) = " 
-                         << rose::getFileName(currentStatement)
+                         << Rose::getFileName(currentStatement)
 #endif
                          << " unp->cur_index = " 
                          << unp->cur_index

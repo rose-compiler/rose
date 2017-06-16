@@ -1498,7 +1498,7 @@ Facility::get(Importance imp) {
         //
         // ROSE users: librose does not currently (2017-04-10) initialize libsawyer until the ROSE frontend() is called. If
         // you're calling into librose before calling "frontend" then you probably want to explicitly initialize ROSE by using
-        // adding "ROSE_INITIALIZE;" or "rose::initialize(ROSE_CONFIG_TOKEN)" to the beginning of your "main" function. This
+        // adding "ROSE_INITIALIZE;" or "Rose::initialize(ROSE_CONFIG_TOKEN)" to the beginning of your "main" function. This
         // will cause all of ROSE's Facility objects (among other things) to be constructed.
         std::ostringstream ss;
         ss <<"Sawyer stream " <<stringifyImportance(imp) <<" in facility " <<this <<" is default constructed";

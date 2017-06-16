@@ -6,7 +6,7 @@
 #include <string>
 #include <rosedll.h>
 
-namespace rose {
+namespace Rose {
 
 /** Colors. */
 namespace Color {

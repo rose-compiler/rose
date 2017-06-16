@@ -3,7 +3,7 @@
 #ifndef ROSE_DISASSEMBLER_ARM_H
 #define ROSE_DISASSEMBLER_ARM_H
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /** Disassembler for the ARM architecture. Most of the useful disassembly methods can be found in the superclass. */

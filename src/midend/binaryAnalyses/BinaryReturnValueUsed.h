@@ -4,7 +4,7 @@
 #include <Partitioner2/BasicTypes.h>
 #include <Partitioner2/ControlFlowGraph.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /** Contains functions that analyze whether a function returns a value which is used by the caller.

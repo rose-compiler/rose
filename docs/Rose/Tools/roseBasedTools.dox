@@ -169,7 +169,7 @@
  *
  * <tr><td>rxml                         <td>ROSE
  *     <td>This tool generates an XML representation of various ROSE data structures, such as the entire @ref
- *     rose::BinaryAnalysis::Partitioner2::Partitioner "Partitioner" binary analysis state, or the binary components of an
+ *     Rose::BinaryAnalysis::Partitioner2::Partitioner "Partitioner" binary analysis state, or the binary components of an
  *     AST.  Various free tools are able to convert XML to JSON.
  *
  * <tr><td>simulator2                   <td>ROSE

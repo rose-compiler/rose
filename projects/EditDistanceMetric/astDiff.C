@@ -13,7 +13,7 @@
 #include <Sawyer/Stopwatch.h>
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 // #include "labelTrace.h"
 #include "treeIsomorphism.h"

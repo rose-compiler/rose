@@ -47,7 +47,7 @@ conditionalDisable_SOURCES = conditionalDisable.C
 conditionalDisable_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
 
 ###############################################################################################################################
-# Check parsing of symbolic expressions via rose::BinaryAnalysis::SymbolicExprParser
+# Check parsing of symbolic expressions via Rose::BinaryAnalysis::SymbolicExprParser
 ###############################################################################################################################
 noinst_PROGRAMS += testSymbolicExprParser
 testSymbolicExprParser_SOURCES = testSymbolicExprParser.C
@@ -867,7 +867,7 @@ verifySemantics.passed: $(TEST_EXIT_STATUS) verifySemantics
 
 
 ###############################################################################################################################
-# Disassembly tests using rose::BinaryAnalysis::Partitioner2
+# Disassembly tests using Rose::BinaryAnalysis::Partitioner2
 ###############################################################################################################################
 
 # Disassembles executables using Partitioner2

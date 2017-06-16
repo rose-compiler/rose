@@ -9,8 +9,8 @@
 #include <Wt/WText>
 #include <Wt/WVBoxLayout>
 
-using namespace rose;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 
 namespace bROwSE {
 
@@ -27,7 +27,7 @@ enum ColumnNumber {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class MagicModel: public Wt::WAbstractTableModel {
-    rose::BinaryAnalysis::MagicNumber analyzer_;
+    Rose::BinaryAnalysis::MagicNumber analyzer_;
     MemoryMap::Ptr memoryMap_;
 public:
     MemoryMap::Ptr memoryMap() const {

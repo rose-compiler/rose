@@ -10,7 +10,7 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 
 #include <boost/graph/graphviz.hpp>
 
-using namespace rose;
+using namespace Rose;
 
 /* Label the graphviz vertices with function entry addresses rather than vertex numbers. */
 template<class FunctionCallGraph>
@@ -26,8 +26,8 @@ struct GraphvizVertexWriter {
 
 /* Filter that rejects basic block that are uncategorized.  I.e., those blocks that were disassemble but not ultimately
  * linked into the list of known functions.  We excluded these because their control flow information is often nonsensical. */
-struct ExcludeLeftovers: public rose::BinaryAnalysis::FunctionCall::VertexFilter {
-    bool operator()(rose::BinaryAnalysis::FunctionCall *analyzer, SgAsmFunction *func) {
+struct ExcludeLeftovers: public Rose::BinaryAnalysis::FunctionCall::VertexFilter {
+    bool operator()(Rose::BinaryAnalysis::FunctionCall *analyzer, SgAsmFunction *func) {
         return func && 0==(func->get_reason() & SgAsmFunction::FUNC_LEFTOVERS);
     }
 };
@@ -53,8 +53,8 @@ main(int argc, char *argv[])
 
     /* Calculate plain old CG over entire interpretation. */
     if (algorithm=="A") {
-        typedef rose::BinaryAnalysis::FunctionCall::Graph CG;
-        rose::BinaryAnalysis::FunctionCall cg_analyzer;
+        typedef Rose::BinaryAnalysis::FunctionCall::Graph CG;
+        Rose::BinaryAnalysis::FunctionCall cg_analyzer;
         cg_analyzer.set_vertex_filter(&exclude_leftovers);
         CG cg = cg_analyzer.build_cg_from_ast<CG>(interps.back());
         boost::write_graphviz(std::cout, cg, GraphvizVertexWriter<CG>(cg));
@@ -62,10 +62,10 @@ main(int argc, char *argv[])
 
     /* Calculate the call graph from the control flow graph. */
     if (algorithm=="B") {
-        typedef rose::BinaryAnalysis::ControlFlow::Graph CFG;
-        typedef rose::BinaryAnalysis::FunctionCall::Graph CG;
-        CFG cfg = rose::BinaryAnalysis::ControlFlow().build_block_cfg_from_ast<CFG>(interps.back());
-        rose::BinaryAnalysis::FunctionCall cg_analyzer;
+        typedef Rose::BinaryAnalysis::ControlFlow::Graph CFG;
+        typedef Rose::BinaryAnalysis::FunctionCall::Graph CG;
+        CFG cfg = Rose::BinaryAnalysis::ControlFlow().build_block_cfg_from_ast<CFG>(interps.back());
+        Rose::BinaryAnalysis::FunctionCall cg_analyzer;
         cg_analyzer.set_vertex_filter(&exclude_leftovers);
         CG cg = cg_analyzer.build_cg_from_cfg<CG>(cfg);
         boost::write_graphviz(std::cout, cg, GraphvizVertexWriter<CG>(cg));

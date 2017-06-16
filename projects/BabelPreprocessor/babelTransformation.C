@@ -4,7 +4,7 @@
 
 // DQ (1/1/2006): This is OK if not declared in a header file
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 // Main transfromation mechanism
 #include "babelTransformation.h"
@@ -97,7 +97,7 @@ SIDL_TreeTraversal::evaluateSynthesizedAttribute ( SgNode* astNode, SubTreeSynth
 
 #if 0
 	printf ("Processing Source Line %d \n",
-			isSgLocatedNode(locatedNode) ? rose::getLineNumber(locatedNode) : -1 );
+			isSgLocatedNode(locatedNode) ? Rose::getLineNumber(locatedNode) : -1 );
 #endif
 
 	// Need to handle all unary and binary operators and variables (but not much else)
@@ -131,10 +131,10 @@ SIDL_TreeTraversal::evaluateSynthesizedAttribute ( SgNode* astNode, SubTreeSynth
 				SgFile* file = isSgFile(astNode);
 				ROSE_ASSERT (file != NULL);
 
-         // string fileNameWithPath    = rose::getFileName(file);
+         // string fileNameWithPath    = Rose::getFileName(file);
             string fileNameWithPath    = file->getFileName();
-				string fileNameWithoutPath = rose::utility_stripPathFromFileName ( (char*) fileNameWithPath.c_str() );
-				string pathOfFile          = rose::getPathFromFileName ( (char*) fileNameWithPath.c_str() );
+				string fileNameWithoutPath = Rose::utility_stripPathFromFileName ( (char*) fileNameWithPath.c_str() );
+				string pathOfFile          = Rose::getPathFromFileName ( (char*) fileNameWithPath.c_str() );
 				
 
 				// printf ("fileNameWithPath    = %s \n",fileNameWithPath.c_str());
@@ -209,7 +209,7 @@ SIDL_TreeTraversal::evaluateSynthesizedAttribute ( SgNode* astNode, SubTreeSynth
 
 #if 0
 				printf ("Found a member function declaration (BabelTransformation.C) line %d \n",
-						rose::getLineNumber(locatedNode));
+						Rose::getLineNumber(locatedNode));
 #endif
 
 				SgClassDeclaration* classDeclaration = isSgClassDeclaration(astNode);

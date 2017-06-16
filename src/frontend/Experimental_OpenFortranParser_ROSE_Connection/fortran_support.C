@@ -18,7 +18,7 @@
 #include "UntypedTraversal.h"
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 #define DEBUG_ROSE_EXPERIMENTAL 0
 

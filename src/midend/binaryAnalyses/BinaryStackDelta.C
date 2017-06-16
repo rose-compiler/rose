@@ -9,13 +9,13 @@
 #include <Sawyer/ProgressBar.h>
 #include <integerOps.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace StackDelta {
 
-using namespace rose::Diagnostics;
-using namespace rose::BinaryAnalysis::InstructionSemantics2;
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
+using namespace Rose::Diagnostics;
+using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 
 Sawyer::Message::Facility mlog;
@@ -25,7 +25,7 @@ initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        Diagnostics::initAndRegister(&mlog, "rose::BinaryAnalysis::StackDelta");
+        Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::StackDelta");
     }
 }
 

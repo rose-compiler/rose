@@ -20,11 +20,11 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #include <Sawyer/ProgressBar.h>
 #include <TraceSemantics2.h>
 
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
-using namespace rose;
-using namespace rose::Diagnostics;
-using namespace rose::BinaryAnalysis;
-using namespace rose::BinaryAnalysis::InstructionSemantics2;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
+using namespace Rose;
+using namespace Rose::Diagnostics;
+using namespace Rose::BinaryAnalysis;
+using namespace Rose::BinaryAnalysis::InstructionSemantics2;
 
 Sawyer::Message::Facility mlog;
 

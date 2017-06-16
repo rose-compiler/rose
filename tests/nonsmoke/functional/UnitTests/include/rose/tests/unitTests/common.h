@@ -30,11 +30,11 @@ bool isNull(SgNode* n) {
 }
 
 namespace Diagnostics {
-using namespace rose::Diagnostics;
+using namespace Rose::Diagnostics;
 
 void initialize() {
-  rose::Diagnostics::initialize();
-  rose::Diagnostics::mfacilities.control("all");
+  Rose::Diagnostics::initialize();
+  Rose::Diagnostics::mfacilities.control("all");
 }
 
 }//::Rose::Tests::UnitTests::Diagnostics
