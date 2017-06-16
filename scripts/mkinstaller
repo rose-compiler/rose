@@ -1,0 +1,3178 @@
+#!/bin/bash
+Interpreter="/bin/bash"
+# MyUniqueFileId: 40d99c5e-0b9b-415c-bfe4-dfc3e32ba1bd
+
+mkinstaller_ver_major="0"
+mkinstaller_ver_minor="0"
+mkinstaller_ver_build="3"
+mkinstaller_ver_patch=""
+mkinstaller_ver_name="0.0.3"
+mkinstaller_ver_time=" 6Jun2017 22:25:59z"
+mkinstaller_ver_id="@(#)mkinstaller 0.0.3 -  6Jun2017 22:25:59z"
+
+# MyUniqueFileId: ccd6493d-b346-404f-afe8-4f492a73a724
+#-------------------------------------------------------------------------------
+#
+#   Copyright 1985-99,2000-17 James Frederick Reus
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#
+#-------------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------------
+#
+#  Initialize...
+#
+#-------------------------------------------------------------------------------
+
+addTarball=true
+Contact=""
+CCname=""
+CXXname=""
+debugging=false
+dirList=""
+ForProject=""
+FORTRANname=""
+here="`pwd`"
+keep=false
+myPath=""
+OSname=""
+ProjectName=""
+ProjectVer=""
+ProjectVerMajor=""
+ProjectVerMinor=""
+ProjectVerBuild=""
+ProjectVerSuffix=""
+scriptName=""
+scriptNameU=""
+SCRIPTNAME=""
+TmpDir=""
+TmpFile=""
+verbosityLevel=0
+wrapperDir="wrapper"
+
+if [ "X${DEBUG_mkinstaller}" != "X" ]
+then
+   debugging=true
+fi
+
+#-------------------------------------------------------------------------------
+#
+#  Deal with TMPDIR...
+#
+#  Note: It would be desirable to replace the next 183 lines with a call
+#        to the findTempDir Perl script. However that does introduce an
+#        outside dependency which we'd like to avoid in this script.
+#
+#-------------------------------------------------------------------------------
+
+if [ "X${debugging}" != "Xfalse" ]
+then
+   echo "mkinstaller: identify temp directory..." >&2
+fi
+if [ "X${MKINSTALLER_TMPDIR}" != "X" ]
+then
+   if [ -d "${MKINSTALLER_TMPDIR}" ]
+   then
+      if [ -w "${MKINSTALLER_TMPDIR}" ]
+      then
+	 if [ "X${debugging}" != "Xfalse" ]
+	 then
+	    echo "mkinstaller: ...from MKINSTALLER_TMPDIR" >&2
+	 fi
+	 TMPDIR="${MKINSTALLER_TMPDIR}" ; export TMPDIR
+      fi
+   fi
+fi
+
+#---------------------------------------
+#
+#  If TMPDIR was specified then
+#  make sure its valid...
+#
+#---------------------------------------
+
+if [ "X${TMPDIR}" != "X" ]
+then
+   if [ -d "${TMPDIR}" ]
+   then
+      if [ -w "${TMPDIR}" ]
+      then
+	 true
+	 if [ "X${debugging}" != "Xfalse" ]
+	 then
+	    echo "mkinstaller: ...from TMPDIR" >&2
+	 fi
+      else
+	 TMPDIR="" ; export TMPDIR
+      fi
+   else
+      TMPDIR="" ; export TMPDIR
+   fi
+fi
+
+#---------------------------------------
+#
+#  If TMPDIR was NOT specified then
+#  try using TMP if it is defined and
+#  is valid...
+#
+#---------------------------------------
+
+if [ "X${TMPDIR}" = "X" ]
+then
+   if [ "X${TMP}" != "X" ]
+   then
+      tryDir="${TMP}"
+      if [ -d "${tryDir}" ]
+      then
+	 if [ -w "${tryDir}" ]
+	 then
+	    TMPDIR="${tryDir}" ; export TMPDIR
+	    if [ "X${debugging}" != "Xfalse" ]
+	    then
+	       echo "mkinstaller: ...from TMP" >&2
+	    fi
+	 fi
+      fi
+   fi
+fi
+
+#---------------------------------------
+#
+#  If TMPDIR was NOT specified then
+#  try using TEMP if it is defined and
+#  is valid...
+#
+#---------------------------------------
+
+if [ "X${TMPDIR}" = "X" ]
+then
+   if [ "X${TEMP}" != "X" ]
+   then
+      tryDir="${TEMP}"
+      if [ -d "${tryDir}" ]
+      then
+	 if [ -w "${tryDir}" ]
+	 then
+	    TMPDIR="${tryDir}" ; export TMPDIR
+	    if [ "X${debugging}" != "Xfalse" ]
+	    then
+	       echo "mkinstaller: ...from TEMP" >&2
+	    fi
+	 fi
+      fi
+   fi
+fi
+
+#---------------------------------------
+#
+#  If TMPDIR was NOT specified then
+#  try using tmp in the user's home
+#  directory...
+#
+#---------------------------------------
+
+if [ "X${TMPDIR}" = "X" ]
+then
+   if [ "X${HOME}" != "X" ]
+   then
+      tryDir="${HOME}/tmp"
+      if [ -d "${tryDir}" ]
+      then
+	 if [ -w "${tryDir}" ]
+	 then
+	    TMPDIR="${tryDir}" ; export TMPDIR
+	    if [ "X${debugging}" != "Xfalse" ]
+	    then
+	       echo "mkinstaller: ...from \"\${HOME}/tmp\" " >&2
+	    fi
+	 fi
+      fi
+   fi
+fi
+
+#---------------------------------------
+#
+#  If TMPDIR was NOT specified then
+#  try using /tmp directory...
+#
+#---------------------------------------
+
+if [ "X${TMPDIR}" = "X" ]
+then
+   tryDir="/tmp"
+   if [ -d "${tryDir}" ]
+   then
+      if [ -w "${tryDir}" ]
+      then
+	 TMPDIR="${tryDir}" ; export TMPDIR
+      fi
+   fi
+fi
+
+#---------------------------------------
+#
+#  If TMPDIR was NOT specified then
+#  try using /var/tmp directory...
+#
+#---------------------------------------
+
+if [ "X${TMPDIR}" = "X" ]
+then
+   tryDir="/var/tmp"
+   if [ -d "${tryDir}" ]
+   then
+      if [ -w "${tryDir}" ]
+      then
+	 TMPDIR="${tryDir}" ; export TMPDIR
+      fi
+   fi
+fi
+
+#---------------------------------------
+#
+#  If TMPDIR was NOT specified then
+#  try using the current directory...
+#
+#---------------------------------------
+
+if [ "X${TMPDIR}" = "X" ]
+then
+   tryDir="."
+   if [ -d "${tryDir}" ]
+   then
+      if [ -w "${tryDir}" ]
+      then
+	 TMPDIR="${tryDir}" ; export TMPDIR
+      fi
+   fi
+fi
+
+#---------------------------------------
+#
+#  Adjust the result so that it is an
+#  absolute pathname...
+#
+#---------------------------------------
+
+if [ "X${TMPDIR}" = "X" ]
+then
+   echo "mkinstaller: can't decide on a location for a temp directory" >&2
+   echo "mkinstaller: ...set TMPDIR or MKINSTALLER_TMPDIR" >&2
+   exit 1
+else
+   case "${TMPDIR}" in
+      /*)
+	  ;;
+      *)
+	  TMPDIR="`pwd`/${TMPDIR}" ; export TMPDIR
+	  ;;
+   esac
+fi
+
+if [ "X${debugging}" != "Xfalse" ]
+then
+   echo "mkinstaller: ...as \"${TMPDIR}\" " >&2
+fi
+TmpDir="${TMPDIR}"
+TmpFile="${TmpDir}/mki.$$.tmp"
+
+#-------------------------------------------------------------------------------
+#
+#  Process command line...
+#
+#-------------------------------------------------------------------------------
+
+if [ "X${debugging}" != "Xfalse" ]
+then
+   echo "mkinstaller: process command line" >&2
+fi
+while [ $# != 0 ]
+do
+   opt="$1"
+   if [ "X$1" != "X" ]
+   then
+      case "$1" in
+	 #---------------------------------------
+	 #
+	 #  Standard options...
+	 #
+	 #---------------------------------------
+
+	 -copyright|--copyright)
+			       echo
+			       echo "Copyright 1985-99,2000-17 James Frederick Reus"
+			       echo
+			       echo "Licensed under the Apache License, Version 2.0 (the \"License\");"
+			       echo "you may not use this file except in compliance with the License."
+			       echo "You may obtain a copy of the License at"
+			       echo
+			       echo "    http://www.apache.org/licenses/LICENSE-2.0"
+			       echo
+			       echo "Unless required by applicable law or agreed to in writing, software"
+			       echo "distributed under the License is distributed on an \"AS IS\" BASIS,"
+			       echo "WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied."
+			       echo "See the License for the specific language governing permissions and"
+			       echo "limitations under the License."
+			       echo
+			       exit 0
+			       ;;
+
+	 -help|--help)
+			       echo
+			       echo "mkinstaller(1x)                                                  mkinstaller(1x)"
+			       echo
+			       echo "NAME"
+			       echo "    mkinstaller -- Generate self-extracting installer script."
+			       echo
+			       echo "USAGE"
+			       echo "    mkinstaller --copyright"
+			       echo "    mkinstaller --help"
+			       echo "    mkinstaller --html <pathname>"
+			       echo "    mkinstaller --vernum"
+			       echo "    mkinstaller --version"
+			       echo
+			       echo "    mkinstaller [<options> ...] <pathname> ..."
+			       echo
+			       echo "DESCRIPTION"
+			       echo "    This script is used to generate an \"installer\" script implemented as"
+			       echo "    a bash script. This generated installer script supports a number"
+			       echo "    of options for specifying where the various directories are to be"
+			       echo "    installed (prefix directory pathnames). This installer script is"
+			       echo "    implemented as a self-extracting script carrying a tarball as a payload."
+			       echo
+			       echo "    The installer script construction process:"
+			       echo
+			       echo "       1) Determination of a suitable temp directory. Much of the work"
+			       echo "          done by the mkinstaller script is done in a temp directory."
+			       echo "       2) Creation of a \"wrapper\" directory in the temp directory."
+			       echo "          this \"wrapper\" directory will be used to carry the"
+			       echo "          individual directory tarballs (such as bin.tar.gz, lib.tar.gz"
+			       echo "          and so on."
+			       echo "       3) From each of the specified directories to be installed such"
+			       echo "          as .../bin, .../lib, specified on the mkinstaller command line"
+			       echo "          tarup the individual directory forming tarballs in the wrapper"
+			       echo "          directory in the temp directory."
+			       echo "       4) Tarup the wrapper directory in to the original directory where"
+			       echo "          mkinstaller command was run (forming wrapper.tar file)."
+			       echo "       5) Generate the \"installer\" script in the original directory where"
+			       echo "          the mkinstaller command was run customized with options for"
+			       echo "          specifying an overall prefix directory and individual prefixes"
+			       echo "          for each of the directories specified on the mkinstaller command"
+			       echo "          line."
+			       echo "       6) Add the tarball built in (4) to the end of the script generated"
+			       echo "          in (5) forming the distribution self-extracting installation"
+			       echo "          script."
+			       echo "       7) Cleanup."
+			       echo
+			       echo "    In the end the only product is the desired distribution self-extracting"
+			       echo "    installation script in the directory where the mkinstaller command was"
+			       echo "    run. Everything else produced along the way (directories and files) is"
+			       echo "    considered a temporary and is destroyed."
+			       echo
+			       echo "OPTIONS"
+			       echo "    \"mkinstaller\" supports the following options:"
+			       echo
+			       echo "        -copyright"
+			       echo
+			       echo "            Output copyright and license info to <stdout> and quit."
+			       echo
+			       echo "        -help"
+			       echo
+			       echo "            Output this man page to <stdout> and quit."
+			       echo
+			       echo "        -html <pathname>"
+			       echo
+			       echo "            Output this man page as HTML to the given file pathname and quit."
+			       echo
+			       echo "        -vernum"
+			       echo
+			       echo "            Output version number to <stdout> and quit."
+			       echo
+			       echo "        -version"
+			       echo
+			       echo "            Output version number and revision date to <stdout> and quit."
+			       echo
+			       echo "        --cc=<string>"
+			       echo
+			       echo "            The C compiler name and version number that had been used in"
+			       echo "            building the software being installed. Note that the string"
+			       echo "            is expected to a blank separated pair: the name and version"
+			       echo "            number. The default is the string \"- -\" (meaning \"unknown\" "
+			       echo "            or \"don't care\")."
+			       echo
+			       echo "            Example:"
+			       echo
+			       echo "            --cc=\"gcc 4.5.1\" "
+			       echo
+			       echo "        --contact=<address>"
+			       echo
+			       echo "            A contact email address. There is no default contact address."
+			       echo
+			       echo "        -c <name>"
+			       echo "        --create=<name>"
+			       echo
+			       echo "            The name of the script to generate. By default the script will"
+			       echo "            be named \"installer\"."
+			       echo
+			       echo "        --cxx=<string>"
+			       echo
+			       echo "            The C++ compiler name and version number that had been used in"
+			       echo "            building the software being installed. Note that the string"
+			       echo "            is expected to a blank separated pair: the name and version"
+			       echo "            number. The default is the string \"- -\" (meaning \"unknown\" "
+			       echo "            or \"don't care\")."
+			       echo
+			       echo "            Example:"
+			       echo
+			       echo "            --cxx=\"g++ 4.5.1\" "
+			       echo
+			       echo "        -d"
+			       echo "        --debug"
+			       echo
+			       echo "            Produce extra output useful when debugging the \"mkinstaller\" "
+			       echo "            script itself."
+			       echo
+			       echo "        --fortran=<string>"
+			       echo
+			       echo "            The FORTRAN compiler name and version number that had been used"
+			       echo "            in building the software being installed. Note that the string"
+			       echo "            is expected to a blank separated pair: the name and version"
+			       echo "            number. The default is the string \"- -\" (meaning \"unknown\" "
+			       echo "            or \"don't care\")."
+			       echo
+			       echo "            Example:"
+			       echo
+			       echo "            -fortranx=\"gfortran 4.5.1\" "
+			       echo
+			       echo "        -n"
+			       echo "        --notarball"
+			       echo
+			       echo "            Don't actually add the wrapper tarball to the installer script."
+			       echo "            This option is only usefull when debugging \"mkinstaller\" "
+			       echo "            itself. The default is of course to add the wrapper tarball."
+			       echo
+			       echo "        --os=<string>"
+			       echo
+			       echo "            The OS on the system on which the installer is being generated."
+			       echo "            This string is encoded in the installer script as an aid in"
+			       echo "            determining if the generated script is applicable to the system"
+			       echo "            where it is run. The default is to use uname -s and uname -r to"
+			       echo "            determine this string."
+			       echo
+			       echo "        --prjnam=<name>"
+			       echo
+			       echo "            The name of the project to be installed by the generated installer"
+			       echo "            script. There is no default project name."
+			       echo
+			       echo "        --prjver=<A>.<B>[.<C>[.<D>]][<suffix>]"
+			       echo
+			       echo "            The version number of the project to be installed by the generated"
+			       echo "            installer script. Note that the given version number is expected to"
+			       echo "            have 2, 3, or 4 dot-separated numeric components and an optional"
+			       echo "            suffix. If the --prjver option is used then the --prjnam option"
+			       echo "            must also be used. There is no default project version number."
+			       echo
+			       echo "        -v[<digit>]"
+			       echo "        --verbose[<digit>]"
+			       echo
+			       echo "            Operate in a verbose mode."
+			       echo
+			       echo "            Repeating this option increases the amount of output produced."
+			       echo "            Note that the option may end with an optional digit which"
+			       echo "            indicates a repetition count. Thus the option:"
+			       echo
+			       echo "               -v3"
+			       echo
+			       echo "            is equavalent to:"
+			       echo
+			       echo "               -v -v -v"
+			       echo
+			       echo "        <pathname>"
+			       echo
+			       echo "            The pathnames of one or more directories which will be embedded"
+			       echo "            as tarballs within the generated installer script. Typical"
+			       echo "            directory basenames are: bin, include, lib, ... Note that at"
+			       echo "            least one such directory pathname is required."
+			       echo
+			       echo "RETURNS"
+			       echo "    \"mkinstaller\" returns the standard exit codes:"
+			       echo
+			       echo "       0 -- success"
+			       echo "       1 -- failure"
+			       echo
+			       echo "ENVIRONMENT"
+			       echo "    \"mkinstaller\" refers to the following environment variables:"
+			       echo
+			       echo "        DEBUG_mkinstaller"
+			       echo
+			       echo "            Generate extra output which is only usefull when debugging the"
+			       echo "            \"mkinstaller\" script itself."
+			       echo
+			       echo "        MKINSTALLER_TMPDIR"
+			       echo
+			       echo "            Consider this pathname before considering TMPDIR (see"
+			       echo "            step (0) in the NOTES section below)."
+			       echo
+			       echo "INPLEMENTATION"
+			       echo "    \"mkinstaller\" is implemented as a bash script."
+			       echo
+			       echo "SEE ALSO"
+			       echo "    sh(1), tar(1)"
+			       echo
+			       echo "NOTES"
+			       echo "    The directory where temporary files are to be placed is determined"
+			       echo "    as follows:"
+			       echo
+			       echo "        0) If MKINSTALLER_TMPDIR is defined and is not empty then"
+			       echo "           consider its value as a directory pathname. If this pathname"
+			       echo "           exists and is a directory and is writable then temporary"
+			       echo "           files will be placed in this directory. Otherwise..."
+			       echo "        1) If TMPDIR is defined and is not empty then consider its"
+			       echo "           value as a directory pathname. If this pathname exists"
+			       echo "           and is a directory and is writable then temporary files"
+			       echo "           will be placed in this directory. Otherwise..."
+			       echo "        2) If TMP is defined and is not empty then consider its"
+			       echo "           value as a directory pathname. If this pathname exists"
+			       echo "           and is a directory and is writable then temporary files"
+			       echo "           will be placed in this directory. Otherwise..."
+			       echo "        3) If TEMP is defined and is not empty then consider its"
+			       echo "           value as a directory pathname. If this pathname exists"
+			       echo "           and is a directory and is writable then temporary files"
+			       echo "           will be placed in this directory. Otherwise..."
+			       echo "        4) If the user's home directory can be determined and if"
+			       echo "           this home directory contains a subdirectory named tmp"
+			       echo "           that is itself writable then temporary files will be"
+			       echo "           placed in this directory. Otherwise..."
+			       echo "        5) If \"C:<userProfile>\\AppData\\Local\\temp\" exists and"
+			       echo "           is a writable directory then temporary files will be"
+			       echo "           placed in this directory. Otherwise..."
+			       echo "        6) If \"/tmp\" exists and is writable then temporary files"
+			       echo "           will be placed in this directory. Otherwise..."
+			       echo "        7) If \"/var/tmp\" exists and is writable then temporary files"
+			       echo "           will be placed in this directory. Otherwise..."
+			       echo "        8) If \"C:\\Temp\" exists and is writable then temporary files"
+			       echo "           will be placed in this directory. Otherwise..."
+			       echo "        9) If \"C:\\Windows\\Temp\" exists and is writable then temporary"
+			       echo "           files will be placed in this directory. Otherwise..."
+			       echo "       10) If the current directory is writable then temporary files"
+			       echo "           will be placed in the current directory. Otherwise..."
+			       echo "       11) A fatal error message will be sent to <stderr> and"
+			       echo "           the program will exit with a non-zero exit code."
+			       echo
+			       echo "    Note that 5, 8, and 9 are only applicable on Windows-like hosts."
+			       echo
+			       echo "AUTHOR"
+			       echo "    Jim Reus (jim.reus@gmail.com)"
+			       echo
+			       echo "CONTACT"
+			       echo "    Please contact:"
+			       echo
+			       echo "        totebag.help (totebag.help@gmail.com) with questions."
+			       echo
+			       echo "        totebag.bugs (totebag.bugs@gmail.com) to report problems."
+			       echo
+			       echo "        totebag.more (totebag.more@gmail.com) to request enhancements."
+			       echo
+			       echo
+			       echo "    Be sure to provide as much information as possible."
+			       echo
+			       exit 0
+			       ;;
+
+	    -html|--html)
+			       shift
+			       if [ "X$1" = "X" ]
+			       then
+				  echo "mkinstaller: missing or zero-length argument to $opt option" >&2
+				  exit 1
+			       fi
+			       name="$1"
+			       echo "<!doctype html public \"-//w3c//dtd html 4.0 transitional//en\">"                   >${name}
+			       echo "<html>"                                                                            >>${name}
+			       echo "   <!-- --------------------------------------------------------------------------------------------------------------------------->" >>${name}
+			       echo "   <a name=\"mkinstaller\"></a>"                                                   >>${name}
+			       echo "   <head>"                                                                         >>${name}
+			       echo "      <meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-1\">" >>${name}
+			       echo "      <meta name=\"GENERATOR\" content=\"arg 1.7.1\">"                             >>${name}
+			       echo "      <link rel=\"shortcut icon\" href=\"../../icons/myShortcutIcon.png\">"        >>${name}
+			       echo "      <title>mkinstaller - Generate self-extracting installer script.</title>"     >>${name}
+			       echo "   </head>"                                                                        >>${name}
+			       echo "   <body>"                                                                         >>${name}
+			       echo "      <h3>"                                                                        >>${name}
+			       echo "         <center>"                                                                 >>${name}
+			       echo "            <nobr>"                                                                >>${name}
+			       echo "               mkinstaller (rev. ${mkinstaller_ver_name})"                         >>${name}
+			       echo "            </nobr>"                                                               >>${name}
+			       echo "         </center>"                                                                >>${name}
+			       echo "      </h3>"                                                                       >>${name}
+			       echo ""                                                                                  >>${name}
+			       echo "      <h3>"                                                                        >>${name}
+			       echo "         NAME"                                                                     >>${name}
+			       echo "      </h3>"                                                                       >>${name}
+			       echo "      <blockquote>"                                                                >>${name}
+			       echo "         <i>mkinstaller</i>&nbsp;-&nbsp;Generate self-extracting installer script." >>${name}
+			       echo "      </blockquote>"                                                               >>${name}
+			       echo ""                                                                                  >>${name}
+			       echo "      <h3>"                                                                        >>${name}
+			       echo "         SYNOPSIS"                                                                 >>${name}
+			       echo "      </h3>"                                                                       >>${name}
+			       echo "      <blockquote>"                                                                >>${name}
+			       echo "         <b>mkinstaller</b> <b>--copyright</b>"                                    >>${name}
+			       echo "      </blockquote>"                                                               >>${name}
+			       echo "      <blockquote>"                                                                >>${name}
+			       echo "         <b>mkinstaller</b> <b>--help</b>"                                         >>${name}
+			       echo "      </blockquote>"                                                               >>${name}
+			       echo "      <blockquote>"                                                                >>${name}
+			       echo "         <b>mkinstaller</b> <b>--html</b>&nbsp;&nbsp;<i>pathname</i>"              >>${name}
+			       echo "      </blockquote>"                                                               >>${name}
+			       echo "      <blockquote>"                                                                >>${name}
+			       echo "         <b>mkinstaller</b> <b>--vernum</b>"                                       >>${name}
+			       echo "      </blockquote>"                                                               >>${name}
+			       echo "      <blockquote>"                                                                >>${name}
+			       echo "         <b>mkinstaller</b> <b>--version</b>"                                      >>${name}
+			       echo "      </blockquote>"                                                               >>${name}
+			       echo "      <br>"                                                                        >>${name}
+			       echo "      <blockquote>"                                                                >>${name}
+			       echo "         <b>mkinstaller</b>"                                                       >>${name}
+			       echo "         <big>[</big><i>options</i> ...<big>]</big>"                               >>${name}
+			       echo "         <i>pathname</i> ..."                                                      >>${name}
+			       echo "      </blockquote>"                                                               >>${name}
+			       echo "      <br>"                                                                        >>${name}
+			       echo ""                                                                                  >>${name}
+			       echo "      <h3>"                                                                        >>${name}
+			       echo "         DESCRIPTION"                                                              >>${name}
+			       echo "      </h3>"                                                                       >>${name}
+			       echo "      <blockquote>"                                                                >>${name}
+			       echo "         This script is used to generate an \"installer\" script implemented as"   >>${name}
+			       echo "         a bash script. This generated installer script supports a number"         >>${name}
+			       echo "         of options for specifying where the various directories are to be"        >>${name}
+			       echo "         installed (prefix directory pathnames). This installer script is"         >>${name}
+			       echo "         implemented as a self-extracting script carrying a tarball as a payload." >>${name}
+			       echo "      </blockquote>"                                                               >>${name}
+			       echo "      <blockquote>"                                                                >>${name}
+			       echo "         The installer script construction process:"                               >>${name}
+			       echo "         <blockquote>"                                                             >>${name}
+			       echo "            <ol>"                                                                  >>${name}
+			       echo "               <li>Determination of a suitable temp directory. Much of the work"   >>${name}
+			       echo "                   done by the mkinstaller script is done in a temp directory."    >>${name}
+			       echo "               </li>"                                                              >>${name}
+			       echo "               <li>Creation of a \"wrapper\" directory in the temp directory."     >>${name}
+			       echo "                   this \"wrapper\" directory will be used to carry the"           >>${name}
+			       echo "                   individual directory tarballs (such as bin.tar.gz, lib.tar.gz"  >>${name}
+			       echo "                   and so on."                                                     >>${name}
+			       echo "               </li>"                                                              >>${name}
+			       echo "               <li>From each of the specified directories to be installed such"    >>${name}
+			       echo "                   as .../bin, .../lib, specified on the mkinstaller command line" >>${name}
+			       echo "                   tarup the individual directory forming tarballs in the wrapper" >>${name}
+			       echo "                   directory in the temp directory."                               >>${name}
+			       echo "               </li>"                                                              >>${name}
+			       echo "               <li>Tarup the wrapper directory in to the original directory where" >>${name}
+			       echo "                   mkinstaller command was run (forming wrapper.tar file)."        >>${name}
+			       echo "               </li>"                                                              >>${name}
+			       echo "               <li>Generate the \"installer\" script in the original directory where" >>${name}
+			       echo "                   the mkinstaller command was run customized with options for"    >>${name}
+			       echo "                   specifying an overall prefix directory and individual prefixes" >>${name}
+			       echo "                   for each of the directories specified on the mkinstaller command" >>${name}
+			       echo "                   line."                                                          >>${name}
+			       echo "               </li>"                                                              >>${name}
+			       echo "               <li>Add the tarball built in (4) to the end of the script generated" >>${name}
+			       echo "                   in (5) forming the distribution self-extracting installation"   >>${name}
+			       echo "                   script."                                                        >>${name}
+			       echo "               </li>"                                                              >>${name}
+			       echo "               <li>Cleanup."                                                       >>${name}
+			       echo "               </li>"                                                              >>${name}
+			       echo "            </ol>"                                                                 >>${name}
+			       echo "         </blockquote>"                                                            >>${name}
+			       echo "         In the end the only product is the desired distribution self-extracting"  >>${name}
+			       echo "         installation script in the directory where the mkinstaller command was"   >>${name}
+			       echo "         run. Everything else produced along the way (directories and files) is"   >>${name}
+			       echo "         considered a temporary and is destroyed."                                 >>${name}
+			       echo "      </blockquote>"                                                               >>${name}
+			       echo ""                                                                                  >>${name}
+			       echo "      <h3>"                                                                        >>${name}
+			       echo "         OPTIONS"                                                                  >>${name}
+			       echo "      </h3>"                                                                       >>${name}
+			       echo "      <blockquote>"                                                                >>${name}
+			       echo "         <i>mkinstaller</i> supports the following options:"                       >>${name}
+			       echo "         <blockquote>"                                                             >>${name}
+			       echo ""                                                                                  >>${name}
+			       echo "            <b>-copyright</b>"                                                     >>${name}
+			       echo "            <blockquote>"                                                          >>${name}
+			       echo "               Output copyright and license to <i>stdout</i> and quit."            >>${name}
+			       echo "            </blockquote>"                                                         >>${name}
+			       echo ""                                                                                  >>${name}
+			       echo "            <b>-help</b>"                                                          >>${name}
+			       echo "            <blockquote>"                                                          >>${name}
+			       echo "               Output this man page to <i>stdout</i> and quit."                    >>${name}
+			       echo "            </blockquote>"                                                         >>${name}
+			       echo ""                                                                                  >>${name}
+			       echo "            <b>-html</b>&nbsp;&nbsp;<i>pathname</i>"                               >>${name}
+			       echo "            <blockquote>"                                                          >>${name}
+			       echo "               Output this man page as HTML to the given file pathname and quit."  >>${name}
+			       echo "            </blockquote>"                                                         >>${name}
+			       echo ""                                                                                  >>${name}
+			       echo "            <b>-vernum</b>"                                                        >>${name}
+			       echo "            <blockquote>"                                                          >>${name}
+			       echo "               Output version number to <i>stdout</i> and quit."                   >>${name}
+			       echo "            </blockquote>"                                                         >>${name}
+			       echo ""                                                                                  >>${name}
+			       echo "            <b>-version</b>"                                                       >>${name}
+			       echo "            <blockquote>"                                                          >>${name}
+			       echo "               Output version number and revision date to <i>stdout</i> and quit." >>${name}
+			       echo "            </blockquote>"                                                         >>${name}
+			       echo ""                                                                                  >>${name}
+			       echo "            <b>--cc=</b><i>string</i>"                                             >>${name}
+			       echo "            <blockquote>"                                                          >>${name}
+			       echo "               The C compiler name and version number that had been used in"       >>${name}
+			       echo "               building the software being installed. Note that the string"        >>${name}
+			       echo "               is expected to a blank separated pair: the name and version"        >>${name}
+			       echo "               number. The default is the string \"- -\" (meaning \"unknown\" "    >>${name}
+			       echo "               or \"don't care\")."                                                >>${name}
+			       echo "            </blockquote>"                                                         >>${name}
+			       echo ""                                                                                  >>${name}
+			       echo "            <blockquote>"                                                          >>${name}
+			       echo "               Example:"                                                           >>${name}
+			       echo "               <blockquote>"                                                       >>${name}
+			       echo "                  --cc=\"gcc 4.5.1\" "                                             >>${name}
+			       echo "               </blockquote>"                                                      >>${name}
+			       echo "            </blockquote>"                                                         >>${name}
+			       echo ""                                                                                  >>${name}
+			       echo "            <b>--contact=</b><i>address</i>"                                       >>${name}
+			       echo "            <blockquote>"                                                          >>${name}
+			       echo "               A contact email address. There is no default contact address."      >>${name}
+			       echo "            </blockquote>"                                                         >>${name}
+			       echo ""                                                                                  >>${name}
+			       echo "            <b>-c</b> <i>name</i> <br>"                                            >>${name}
+			       echo "            <b>--create=</b><i>name</i>"                                           >>${name}
+			       echo "            <blockquote>"                                                          >>${name}
+			       echo "               The name of the script to generate. By default the script will"     >>${name}
+			       echo "               be named \"installer\"."                                            >>${name}
+			       echo "            </blockquote>"                                                         >>${name}
+			       echo ""                                                                                  >>${name}
+			       echo "            <b>--cxx=</b><i>string</i>"                                            >>${name}
+			       echo "            <blockquote>"                                                          >>${name}
+			       echo "               The C++ compiler name and version number that had been used in"     >>${name}
+			       echo "               building the software being installed. Note that the string"        >>${name}
+			       echo "               is expected to a blank separated pair: the name and version"        >>${name}
+			       echo "               number. The default is the string \"- -\" (meaning \"unknown\" "    >>${name}
+			       echo "               or \"don't care\")."                                                >>${name}
+			       echo "            </blockquote>"                                                         >>${name}
+			       echo ""                                                                                  >>${name}
+			       echo "            <blockquote>"                                                          >>${name}
+			       echo "               Example:"                                                           >>${name}
+			       echo "               <blockquote>"                                                       >>${name}
+			       echo "                  --cxx=\"g++ 4.5.1\" "                                            >>${name}
+			       echo "               </blockquote>"                                                      >>${name}
+			       echo "            </blockquote>"                                                         >>${name}
+			       echo ""                                                                                  >>${name}
+			       echo "            <b>-d</b> <br>"                                                        >>${name}
+			       echo "            <b>--debug</b>"                                                        >>${name}
+			       echo "            <blockquote>"                                                          >>${name}
+			       echo "               Produce extra output useful when debugging the <i>mkinstaller</i>"  >>${name}
+			       echo "               script itself."                                                     >>${name}
+			       echo "            </blockquote>"                                                         >>${name}
+			       echo ""                                                                                  >>${name}
+			       echo "            <b>--fortran=</b><i>string</i>"                                        >>${name}
+			       echo "            <blockquote>"                                                          >>${name}
+			       echo "               The FORTRAN compiler name and version number that had been used"    >>${name}
+			       echo "               in building the software being installed. Note that the string"     >>${name}
+			       echo "               is expected to a blank separated pair: the name and version"        >>${name}
+			       echo "               number. The default is the string \"- -\" (meaning \"unknown\" "    >>${name}
+			       echo "               or \"don't care\")."                                                >>${name}
+			       echo "            </blockquote>"                                                         >>${name}
+			       echo ""                                                                                  >>${name}
+			       echo "            <blockquote>"                                                          >>${name}
+			       echo "               Example:"                                                           >>${name}
+			       echo "               <blockquote>"                                                       >>${name}
+			       echo "                  --fortran=\"gfortran 4.5.1\" "                                   >>${name}
+			       echo "               </blockquote>"                                                      >>${name}
+			       echo "            </blockquote>"                                                         >>${name}
+			       echo ""                                                                                  >>${name}
+			       echo "            <b>-n</b> <br>"                                                        >>${name}
+			       echo "            <b>-notarball</b>"                                                     >>${name}
+			       echo "            <blockquote>"                                                          >>${name}
+			       echo "               Don't actually add the wrapper tarball to the installer script."    >>${name}
+			       echo "               This option is only usefull when debugging <i>mkinstaller</i>"      >>${name}
+			       echo "               itself. The default is of course to add the wrapper tarball."       >>${name}
+			       echo "            </blockquote>"                                                         >>${name}
+			       echo ""                                                                                  >>${name}
+			       echo "            <b>--os=</b><i>string</i>"                                             >>${name}
+			       echo "            <blockquote>"                                                          >>${name}
+			       echo "               The OS on the system on which the installer is being generated."    >>${name}
+			       echo "               This string is encoded in the installer script as an aid in"        >>${name}
+			       echo "               determining if the generated script is applicable to the system"    >>${name}
+			       echo "               where it is run. The default is to use <b><big><code>uname -s</code></big></b> and <b><big><code>uname -r</code></big></b> to" >>${name}
+			       echo "               determine this string."                                             >>${name}
+			       echo "            </blockquote>"                                                         >>${name}
+			       echo ""                                                                                  >>${name}
+			       echo "            <b>--prjnam=</b><i>name</i>"                                           >>${name}
+			       echo "            <blockquote>"                                                          >>${name}
+			       echo "               The name of the project to be installed by the generated installer" >>${name}
+			       echo "               script. There is no default project name."                          >>${name}
+			       echo "            </blockquote>"                                                         >>${name}
+			       echo ""                                                                                  >>${name}
+			       echo "            <b>--prjver=</b><i>A</i><b>.</b><i>B</i>[<b>.</b><i>C</i>[<b>.</b><i>D</i>]][<i>suffix</i>]" >>${name}
+			       echo "            <blockquote>"                                                          >>${name}
+			       echo "               The version number of the project to be installed by the generated" >>${name}
+			       echo "               installer script. Note that the given version number is expected to" >>${name}
+			       echo "               have 2, 3, or 4 dot-separated numeric components and an optional"   >>${name}
+			       echo "               suffix. If the --prjver option is used then the --prjnam option"    >>${name}
+			       echo "               must also be used. There is no default project version number."     >>${name}
+			       echo "            </blockquote>"                                                         >>${name}
+			       echo ""                                                                                  >>${name}
+			       echo "            <b>-v</b>[<i>digit</i>] <br>"                                          >>${name}
+			       echo "            <b>-verbose</b>[<i>digit</i>]"                                         >>${name}
+			       echo "            <blockquote>"                                                          >>${name}
+			       echo "               Operate in a \"verbose\" mode. "                                    >>${name}
+			       echo "            </blockquote>"                                                         >>${name}
+			       echo "            <blockquote>"                                                          >>${name}
+			       echo "               Repeating this option increases the amount of output produced."     >>${name}
+			       echo "               Note that the option may end with an optional digit which"          >>${name}
+			       echo "               indicates a repetition count. Thus the option: <br>"                >>${name}
+			       echo "               <p>"                                                                >>${name}
+			       echo "<p>"                                                                               >>${name}
+			       echo "<pre>"                                                                             >>${name}
+			       echo "   -v3"                                                                            >>${name}
+			       echo "</pre>"                                                                            >>${name}
+			       echo "<p>"                                                                               >>${name}
+			       echo "               is equavalent to: <br>"                                             >>${name}
+			       echo "               <p>"                                                                >>${name}
+			       echo "<p>"                                                                               >>${name}
+			       echo "<pre>"                                                                             >>${name}
+			       echo "   -v -v -v"                                                                       >>${name}
+			       echo "</pre>"                                                                            >>${name}
+			       echo "            </blockquote>"                                                         >>${name}
+			       echo ""                                                                                  >>${name}
+			       echo "            <i>pathname</i>"                                                       >>${name}
+			       echo "            <blockquote>"                                                          >>${name}
+			       echo "               The name of one or more directories which will be embedded"         >>${name}
+			       echo "               as tarballs within the generated installer script. Typical"         >>${name}
+			       echo "               directory names are: bin, include, lib, ..."                        >>${name}
+			       echo "            </blockquote>"                                                         >>${name}
+			       echo ""                                                                                  >>${name}
+			       echo "         </blockquote>"                                                            >>${name}
+			       echo "      </blockquote>"                                                               >>${name}
+			       echo ""                                                                                  >>${name}
+			       echo "      <h3>"                                                                        >>${name}
+			       echo "         RETURNS"                                                                  >>${name}
+			       echo "      </h3>"                                                                       >>${name}
+			       echo "      <blockquote>"                                                                >>${name}
+			       echo "         \"mkinstaller\" returns the standard exit codes:"                         >>${name}
+			       echo "         <blockquote>"                                                             >>${name}
+			       echo "            <table border=0><smaller>"                                             >>${name}
+			       echo "               <tr>"                                                               >>${name}
+			       echo "                  <td align=right>0</td>"                                          >>${name}
+			       echo "                  <td align=left>--</td>"                                          >>${name}
+			       echo "                  <td align=left>success</td>"                                     >>${name}
+			       echo "               </tr>"                                                              >>${name}
+			       echo "               <tr>"                                                               >>${name}
+			       echo "                  <td align=right>1</td>"                                          >>${name}
+			       echo "                  <td align=left>--</td>"                                          >>${name}
+			       echo "                  <td align=left>failure</td>"                                     >>${name}
+			       echo "               </tr>"                                                              >>${name}
+			       echo "            </table>"                                                              >>${name}
+			       echo "         </blockquote>"                                                            >>${name}
+			       echo "      </blockquote>"                                                               >>${name}
+			       echo ""                                                                                  >>${name}
+			       echo "      <h3>"                                                                        >>${name}
+			       echo "         ENVIRONMENT"                                                              >>${name}
+			       echo "      </h3>"                                                                       >>${name}
+			       echo "      <blockquote>"                                                                >>${name}
+			       echo "         <i>mkinstaller</i> refers to the following environment variables:"        >>${name}
+			       echo "         <blockquote>"                                                             >>${name}
+			       echo ""                                                                                  >>${name}
+			       echo "            DEBUG_mkinstaller"                                                     >>${name}
+			       echo "            <blockquote>"                                                          >>${name}
+			       echo "               Generate extra output which is only usefull when debugging the"     >>${name}
+			       echo "               <i>mkinstaller</i> script itself."                                  >>${name}
+			       echo "            </blockquote>"                                                         >>${name}
+			       echo ""                                                                                  >>${name}
+			       echo "            MKINSTALLER_TMPDIR"                                                    >>${name}
+			       echo "            <blockquote>"                                                          >>${name}
+			       echo "               Consider this pathname before considering TMPDIR (see"              >>${name}
+			       echo "               step (0) in the <b>NOTES</b> section below)."                       >>${name}
+			       echo "            </blockquote>"                                                         >>${name}
+			       echo ""                                                                                  >>${name}
+			       echo "         </blockquote>"                                                            >>${name}
+			       echo "      </blockquote>"                                                               >>${name}
+			       echo ""                                                                                  >>${name}
+			       echo "      <h3>"                                                                        >>${name}
+			       echo "         IMPLEMENTATION"                                                           >>${name}
+			       echo "      </h3>"                                                                       >>${name}
+			       echo "      <blockquote>"                                                                >>${name}
+			       echo "         <i>mkinstaller</i> is implemented as a bash script."                      >>${name}
+			       echo "      </blockquote>"                                                               >>${name}
+			       echo ""                                                                                  >>${name}
+			       echo "      <h3>"                                                                        >>${name}
+			       echo "         SEE&nbsp;ALSO"                                                            >>${name}
+			       echo "      </h3>"                                                                       >>${name}
+			       echo "      <blockquote>"                                                                >>${name}
+			       echo "         sh(1), <br>"                                                              >>${name}
+			       echo "         tar(1)"                                                                   >>${name}
+			       echo "      </blockquote>"                                                               >>${name}
+			       echo ""                                                                                  >>${name}
+			       echo "      <h3>"                                                                        >>${name}
+			       echo "         NOTES"                                                                    >>${name}
+			       echo "      </h3>"                                                                       >>${name}
+			       echo "      <blockquote>"                                                                >>${name}
+			       echo "         The directory where temporary files are to be placed is determined"       >>${name}
+			       echo "         as follows:"                                                              >>${name}
+			       echo "         <blockquote>"                                                             >>${name}
+			       echo "            <ol start="0">"                                                        >>${name}
+			       echo "               <li>If <b><big><code>MKINSTALLER_TMPDIR</code></big></b> is defined and is not empty then" >>${name}
+			       echo "                   consider its value as a directory pathname. If this pathname"   >>${name}
+			       echo "                   exists and is a directory and is writable then temporary"       >>${name}
+			       echo "                   files will be placed in this directory. Otherwise..."           >>${name}
+			       echo "               <li>If <b><big><code>TMPDIR</code></big></b> is defined and is not empty then consider its" >>${name}
+			       echo "                   value as a directory pathname. If this pathname exists"         >>${name}
+			       echo "                   and is a directory and is writable then temporary files"        >>${name}
+			       echo "                   will be placed in this directory. Otherwise..."                 >>${name}
+			       echo "               </li>"                                                              >>${name}
+			       echo "               <li>If <b><big><code>TMP</code></big></b> is defined and is not empty then consider its" >>${name}
+			       echo "                   value as a directory pathname. If this pathname exists"         >>${name}
+			       echo "                   and is a directory and is writable then temporary files"        >>${name}
+			       echo "                   will be placed in this directory. Otherwise..."                 >>${name}
+			       echo "               </li>"                                                              >>${name}
+			       echo "               <li>If <b><big><code>TEMP</code></big></b> is defined and is not empty then consider its" >>${name}
+			       echo "                   value as a directory pathname. If this pathname exists"         >>${name}
+			       echo "                   and is a directory and is writable then temporary files"        >>${name}
+			       echo "                   will be placed in this directory. Otherwise..."                 >>${name}
+			       echo "               </li>"                                                              >>${name}
+			       echo "               <li>If the user's home directory can be determined and if"          >>${name}
+			       echo "                   this home directory contains a subdirectory named <b><big><code>tmp</code></big></b>" >>${name}
+			       echo "                   that is itself writable then temporary files will be"           >>${name}
+			       echo "                   placed in this directory. Otherwise..."                         >>${name}
+			       echo "               </li>"                                                              >>${name}
+			       echo "               <li>If <b><big><code>C:</code></big></b><i>userProfile</i><b><big><code>\\AppData\\Local\\temp</code></big></b> exists and is writable then temporary files" >>${name}
+			       echo "                   will be placed in this directory. Otherwise..."                 >>${name}
+			       echo "               </li>"                                                              >>${name}
+			       echo "               <li>If <b><big><code>/tmp</code></big></b> exists and is writable then temporary files" >>${name}
+			       echo "                   will be placed in this directory. Otherwise..."                 >>${name}
+			       echo "               </li>"                                                              >>${name}
+			       echo "               <li>If <b><big><code>/var/tmp</code></big></b> exists and is writable then temporary files" >>${name}
+			       echo "                   will be placed in this directory. Otherwise..."                 >>${name}
+			       echo "               </li>"                                                              >>${name}
+			       echo "               <li>If <b><big><code>C:\\Temp</code></big></b> exists and is writable then temporary files" >>${name}
+			       echo "                   will be placed in this directory. Otherwise..."                 >>${name}
+			       echo "               </li>"                                                              >>${name}
+			       echo "               <li>If <b><big><code>C:\\Windows\\Temp</code></big></b> exists and is writable then temporary files" >>${name}
+			       echo "                   will be placed in this directory. Otherwise..."                 >>${name}
+			       echo "               </li>"                                                              >>${name}
+			       echo "               <li>If the current directory is writable then temporary"            >>${name}
+			       echo "                   files will be placed in the current directory."                 >>${name}
+			       echo "                   Otherwise..."                                                   >>${name}
+			       echo "               </li>"                                                              >>${name}
+			       echo "               <li>A fatal error message will be sent to <i>stderr</i> and"        >>${name}
+			       echo "                   the script will exit with a non-zero exit code."                >>${name}
+			       echo "               </li>"                                                              >>${name}
+			       echo "            </ol>"                                                                 >>${name}
+			       echo "         </blockquote>"                                                            >>${name}
+			       echo "         Note that 5, 8, and 9 are only applicable on Windows-like hosts."         >>${name}
+			       echo "      </blockquote>"                                                               >>${name}
+			       echo                                                                                     >>${name}
+			       echo "      <h3>"                                                                        >>${name}
+			       echo "         AUTHOR"                                                                   >>${name}
+			       echo "      </h3>"                                                                       >>${name}
+			       echo "      <blockquote>"                                                                >>${name}
+			       echo "         <a href=\"mailto:jim.reus@gmail.com?subject=mkinstaller\">Jim Reus</a> <br>" >>${name}
+			       echo "      </blockquote>"                                                               >>${name}
+			       echo ""                                                                                  >>${name}
+			       echo "      <h3>"                                                                        >>${name}
+			       echo "         CONTACT"                                                                  >>${name}
+			       echo "      </h3>"                                                                       >>${name}
+			       echo "      <blockquote>"                                                                >>${name}
+			       echo "         Please contact: <br>"                                                     >>${name}
+			       echo "         <blockquote>"                                                             >>${name}
+			       echo "            <a href=\"mailto:totebag.help@gmail.com?subject=Help: mkinstaller\">totebag.help</a> with questions. <br>" >>${name}
+			       echo "            <br>"                                                                  >>${name}
+			       echo "            <a href=\"mailto:totebag.bugs@gmail.com?subject=Bug: mkinstaller\">totebag.bugs</a> to report problems. <br>" >>${name}
+			       echo "            <br>"                                                                  >>${name}
+			       echo "            <a href=\"mailto:totebag.more@gmail.com?subject=Enhance: mkinstaller\">totebag.more</a> to request enhancements. <br>" >>${name}
+			       echo "            <br>"                                                                  >>${name}
+			       echo "         </blockquote>"                                                            >>${name}
+			       echo "         Be sure to provide as much information as possible."                      >>${name}
+			       echo "      </blockquote>"                                                               >>${name}
+			       echo ""                                                                                  >>${name}
+			       echo "      <h3>"                                                                        >>${name}
+			       echo "         <center>"                                                                 >>${name}
+			       echo "            <nobr>"                                                                >>${name}
+			       echo "               mkinstaller (rev. ${mkinstaller_ver_name})"                         >>${name}
+			       echo "            </nobr>"                                                               >>${name}
+			       echo "         </center>"                                                                >>${name}
+			       echo "      </h3>"                                                                       >>${name}
+			       echo ""                                                                                  >>${name}
+			       echo "      <i>This man page was generated by mkinstaller ${mkinstaller_ver_name} using the <code>-html</code> option. Revised ${mkinstaller_ver_time}</i>" >>${name}
+			       echo "   </body>"                                                                        >>${name}
+			       echo "</html>"                                                                           >>${name}
+			       exit 0
+			       ;;
+
+	    -vernum|--vernum)
+			       echo "${mkinstaller_ver_name}"
+			       exit 0
+			       ;;
+
+	    -version|--version)
+			       echo "mkinstaller: version ${mkinstaller_ver_name} rev. ${mkinstaller_ver_time}"
+			       exit 0
+			       ;;
+
+	    #---------------------------------------
+	    #
+	    #  Non-standard options...
+	    #
+	    #---------------------------------------
+
+	    -c)
+			       shift
+			       if [ "X$1" = "X" ]
+			       then
+				  echo "mkinstaller: missing or zero-length argument to $opt option" >&2
+				  exit 1
+			       fi
+			       given="$1"
+			       b=`basename ${given}`
+			       if [ "X${given}" != "X${b}" ]
+			       then
+				  echo "mkinstaller: invalid argument(=\"${given}\") to $opt option" >&2
+				  echo "mkinstaller: ...script name must be simple" >&2
+				  exit 1
+			       fi
+			       if [ "X${scriptName}" != "X" ]
+			       then
+				  echo "mkinstaller: unexpected $opt \"${given}\" " >&2
+				  echo "mkinstaller: ...already specified name of generated script as \"${scriptName}\" " >&2
+				  exit 1
+			       fi
+			       scriptName="${given}"
+			       ;;
+
+	    --cc)
+			       echo "mkinstaller: missing or zero-length argument to $opt option" >&2
+			       exit 1
+			       ;;
+
+	    --cc=*)
+			       given="$1"
+			       stmp=`echo ${given} | sed -e 's/^--cc=\(.*\)$/\1/'`
+			       given="${stmp}"
+			       if [ "X${given}" = "X" ]
+			       then
+				  echo "mkinstaller: missing or zero-length argument to --cc option" >&2
+				  exit 1
+			       fi
+			       if [ "X${CCname}" != "X" ]
+			       then
+				  echo "mkinstaller: unexpected ${opt}" >&2
+				  exit 1
+			       fi
+			       CCname="${given}"
+			       ;;
+
+	    --contact)
+			       echo "mkinstaller: missing or zero-length argument to $opt option" >&2
+			       exit 1
+			       ;;
+
+	    --contact=*)
+			       given="$1"
+			       stmp=`echo ${given} | sed -e 's/^--contact=\(.*\)$/\1/'`
+			       given="${stmp}"
+			       if [ "X${given}" = "X" ]
+			       then
+				  echo "mkinstaller: missing or zero-length argument to --contact option" >&2
+				  exit 1
+			       fi
+			       if [ "X${Contact}" != "X" ]
+			       then
+				  echo "mkinstaller: unexpected ${opt}" >&2
+				  exit 1
+			       fi
+			       Contact="${given}"
+			       ;;
+
+	    --create)
+			       echo "mkinstaller: missing or zero-length argument to $opt option" >&2
+			       exit 1
+			       ;;
+
+	    --create=*)
+			       given="$1"
+			       stmp=`echo ${given} | sed -e 's/^--create=\(.*\)$/\1/'`
+			       given="${stmp}"
+			       if [ "X${given}" = "X" ]
+			       then
+				  echo "mkinstaller: missing or zero-length argument to --create option" >&2
+				  exit 1
+			       fi
+			       if [ "X${scriptName}" != "X" ]
+			       then
+				  echo "mkinstaller: unexpected ${opt}" >&2
+				  exit 1
+			       fi
+			       scriptName="${given}"
+			       ;;
+
+	    --cxx)
+			       echo "mkinstaller: missing or zero-length argument to $opt option" >&2
+			       exit 1
+			       ;;
+
+	    --cxx=*)
+			       given="$1"
+			       stmp=`echo ${given} | sed -e 's/^--cxx=\(.*\)$/\1/'`
+			       given="${stmp}"
+			       if [ "X${given}" = "X" ]
+			       then
+				  echo "mkinstaller: missing or zero-length argument to --cxx option" >&2
+				  exit 1
+			       fi
+			       if [ "X${CXXname}" != "X" ]
+			       then
+				  echo "mkinstaller: unexpected ${opt}" >&2
+				  exit 1
+			       fi
+			       CXXname="${given}"
+			       ;;
+
+	    -d|--debug)
+			       debugging=true
+			       ;;
+
+	    --fortran)
+			       echo "mkinstaller: missing or zero-length argument to $opt option" >&2
+			       exit 1
+			       ;;
+
+	    --fortran=*)
+			       given="$1"
+			       stmp=`echo ${given} | sed -e 's/^--fortran=\(.*\)$/\1/'`
+			       given="${stmp}"
+			       if [ "X${given}" = "X" ]
+			       then
+				  echo "mkinstaller: missing or zero-length argument to --fortran option" >&2
+				  exit 1
+			       fi
+			       if [ "X${FORTRANname}" != "X" ]
+			       then
+				  echo "mkinstaller: unexpected ${opt}" >&2
+				  exit 1
+			       fi
+			       FORTRANname="${given}"
+			       ;;
+
+	    -k|--keep)
+			       keep=true
+			       ;;
+
+	    -n|--notarball)
+			       addTarball=false
+			       ;;
+
+	    --os)
+			       echo "mkinstaller: missing or zero-length argument to $opt option" >&2
+			       exit 1
+			       ;;
+
+	    --os=*)
+			       given="$1"
+			       stmp=`echo ${given} | sed -e 's/^--os=\(.*\)$/\1/'`
+			       given="${stmp}"
+			       if [ "X${given}" = "X" ]
+			       then
+				  echo "mkinstaller: missing or zero-length argument to --os option" >&2
+				  exit 1
+			       fi
+			       if [ "X${OSname}" != "X" ]
+			       then
+				  echo "mkinstaller: unexpected ${opt}" >&2
+				  exit 1
+			       fi
+			       OSname="${given}"
+			       ;;
+
+	    --prjnam)
+			       echo "mkinstaller: missing or zero-length argument to $opt option" >&2
+			       exit 1
+			       ;;
+
+	    --prjnam=*)
+			       given="$1"
+			       stmp=`echo ${given} | sed -e 's/^--prjnam=\(.*\)$/\1/'`
+			       given="${stmp}"
+			       if [ "X${given}" = "X" ]
+			       then
+				  echo "mkinstaller: missing or zero-length argument to --prjnam option" >&2
+				  exit 1
+			       fi
+			       if [ "X${ProjectName}" != "X" ]
+			       then
+				  echo "mkinstaller: unexpected ${opt}" >&2
+				  exit 1
+			       fi
+			       ProjectName="${given}"
+			       ;;
+
+	    --prjver)
+			       echo "mkinstaller: missing or zero-length argument to $opt option" >&2
+			       ;;
+
+	    --prjver=*)
+			       given="$1"
+			       stmp=`echo ${given} | sed -e 's/^--prjver=\(.*\)$/\1/'`
+			       given="${stmp}"
+			       if [ "X${given}" = "X" ]
+			       then
+				  echo "mkinstaller: missing or zero-length argument to --prjver option" >&2
+				  exit 1
+			       fi
+			       if [ "X${ProjectVer}" != "X" ]
+			       then
+				  echo "mkinstaller: unexpected ${opt}" >&2
+				  exit 1
+			       fi
+			       ProjectVer="${given}"
+				#                                                 1                2              3   4              5   6                      7
+			        ProjectVerMajor=`echo ${ProjectVer} | sed -e 's/^\([0-9][0-9]*\)\.\([0-9][0-9]*\)\(\.\([0-9][0-9]*\)\(\.\([0-9][0-9]*\)\)\?\)\?\([^0-9].*\)\?$/\1/'`
+			        ProjectVerMinor=`echo ${ProjectVer} | sed -e 's/^\([0-9][0-9]*\)\.\([0-9][0-9]*\)\(\.\([0-9][0-9]*\)\(\.\([0-9][0-9]*\)\)\?\)\?\([^0-9].*\)\?$/\2/'`
+			        ProjectVerBuild=`echo ${ProjectVer} | sed -e 's/^\([0-9][0-9]*\)\.\([0-9][0-9]*\)\(\.\([0-9][0-9]*\)\(\.\([0-9][0-9]*\)\)\?\)\?\([^0-9].*\)\?$/\4/'`
+			        ProjectVerPatch=`echo ${ProjectVer} | sed -e 's/^\([0-9][0-9]*\)\.\([0-9][0-9]*\)\(\.\([0-9][0-9]*\)\(\.\([0-9][0-9]*\)\)\?\)\?\([^0-9].*\)\?$/\6/'`
+			       ProjectVerSuffix=`echo ${ProjectVer} | sed -e 's/^\([0-9][0-9]*\)\.\([0-9][0-9]*\)\(\.\([0-9][0-9]*\)\(\.\([0-9][0-9]*\)\)\?\)\?\([^0-9].*\)\?$/\7/'`
+			       if [ "X${ProjectVerMajor}" = "X${ProjectVer}" ]
+			       then
+				  echo "mkinstaller: invalid version number" >&2
+				  exit 1
+			       fi
+			       if [ "X${ProjectVerMinor}" = "X${ProjectVer}" ]
+			       then
+				  echo "mkinstaller: invalid version number" >&2
+				  exit 1
+			       fi
+			       if [ "X${ProjectVerBuild}" = "X${ProjectVer}" ]
+			       then
+				  echo "mkinstaller: invalid version number" >&2
+				  exit 1
+			       fi
+			       if [ "X${ProjectVerPatch}" = "X${ProjectVer}" ]
+			       then
+				  echo "mkinstaller: invalid version number" >&2
+				  exit 1
+			       fi
+			       if [ "X${ProjectVerSuffix}" = "X${ProjectVer}" ]
+			       then
+				  echo "mkinstaller: invalid version number" >&2
+				  exit 1
+			       fi
+			       ;;
+
+	    #---------------------------------------
+	    #
+	    #  "Semi-standard" options...
+	    #
+	    #---------------------------------------
+
+	    -v|--verbose)
+			       verbosityLevel=`expr ${verbosityLevel} + 1`
+			       ;;
+
+	    -v[0-9])           given=$1
+			       itmp=`echo ${given} | sed -e 's/^-v\([0-9]\)$/\1/'`
+			       verbosityLevel=`expr ${verbosityLevel} + ${itmp}`
+			       ;;
+
+	    --verbose[0-9])
+			       given=$1
+			       itmp=`echo ${given} | sed -e 's/^-verbose\([0-9]\)$/\1/'`
+			       verbosityLevel=`expr ${verbosityLevel} + ${itmp}`
+			       ;;
+
+	    #---------------------------------------
+	    #
+	    #  Unknown options...
+	    #
+	    #---------------------------------------
+
+	    -*)                echo "mkinstaller: unknown option \"$opt\" " >&2
+			       echo "mkinstaller: ...if \"$opt\" is not meant to be a pathname try using './$opt' " >&2
+			       exit 1
+			       ;;
+
+	    #---------------------------------------
+	    #
+	    #  Parameters...
+	    #
+	    #---------------------------------------
+
+	    *)                 given=$1
+			       if [ -L "${given}" ]
+			       then
+				  if [ -e "${given}" ]
+				  then
+				     echo "mkinstaller: \"${given}\" is a symbolic-link not a directory" >&2
+				  else
+				     echo "mkinstaller: \"${given}\" is a broken symbolic-link not a directory" >&2
+				  fi
+				  exit 1
+			       else
+				  if [ -d "${given}" ]
+				  then
+				     if [ "X${dirList}" != "X" ]
+				     then
+					dirList="${dirList} ${given}"
+				     else
+					dirList="${given}"
+				     fi
+				  else
+				     if [ -e "${given}" ]
+				     then
+					echo "mkinstaller: \"${given}\" isn't a directory" >&2
+				     else
+					echo "mkinstaller: \"${given}\" doesn't exist or isn't readable" >&2
+				     fi
+				     exit 1
+				  fi
+			       fi
+			       ;;
+      esac
+   fi
+   shift
+done
+if [ "X${debugging}" != "Xfalse" ]
+then
+   echo "mkinstaller: ...done" >&2
+fi
+
+#---------------------------------------
+#
+#  Deal with defaults...
+#
+#---------------------------------------
+
+if [ "X${dirList}" = "X" ]
+then
+   echo "mkinstaller: expected at least 1 directory pathname" >&2
+   exit 1
+fi
+
+if [ "X${OSname}" = "X" ]
+then
+   OSname="`uname -s` `uname -r`"
+fi
+
+if [ "X${ProjectVer}" != "X" ]
+then
+   if [ "X${ProjectName}" = "X" ]
+   then
+      echo "mkinstaller: use of --prjver requires use of --prjnam" >&2
+      exit 1
+   fi
+fi
+
+if [ "X${scriptName}" = "X" ]
+then
+   scriptName="installer"
+fi
+scriptNameU=`echo ${scriptName} | tr -d '[:cntrl:]\n' | tr -c '[:alnum:]_' _`
+SCRIPTNAME=`echo ${scriptNameU} | tr a-z A-Z`
+
+#---------------------------------------
+#
+#  Construct the title line used at the
+#  top of the -help output...
+#
+#---------------------------------------
+
+gapString="   "
+titleLine="${scriptName}(1x)${gapString}${scriptName}(1x)"
+LtitleLine=`expr "${titleLine}" : ".*"`
+while [ ${LtitleLine} -lt 80 ]
+do
+   gapString="${gapString} "
+   titleLine="${scriptName}(1x)${gapString}${scriptName}(1x)"
+   LtitleLine=`expr "${titleLine}" : ".*"`
+done
+
+#---------------------------------------
+#
+#  Prepare a string with the project
+#  name an version used in the -help
+#  output...
+#
+#---------------------------------------
+
+if [ "X${ProjectName}" != "X" ]
+then
+   if [ "X${ProjectVer}" != "X" ]
+   then
+      ForProject=" for ${ProjectName} ver. ${ProjectVer}"
+   else
+      ForProject=" for ${ProjectName}"
+   fi
+else
+   ForProject=""
+fi
+
+#-------------------------------------------------------------------------------
+#
+#  The real work...
+#
+#-------------------------------------------------------------------------------
+
+if [ 1 -le ${verbosityLevel} ]
+then
+   echo "mkinstaller: version ${mkinstaller_ver_name} rev. ${mkinstaller_ver_time}" >&2
+   if [ "X${OSname}" != "X" ]
+   then
+      echo "mkinstaller: ...running on \"${OSname}\" " >&2
+   fi
+   echo "mkinstaller: ...running in \"${here}\" " >&2
+   if [ "X${ProjectName}" != "X" ]
+   then
+      echo "mkinstaller: ...project = \"${ProjectName}\" " >&2
+      if [ "X${ProjectVer}" != "X" ]
+      then
+	 echo "mkinstaller:    version = \"${ProjectVer}\" " >&2
+      fi
+   fi
+   echo "mkinstaller: ...initial cleanup" >&2
+fi
+
+#---------------------------------------
+#
+#  Destroy existing script...
+#
+#---------------------------------------
+
+if [ "X${debugging}" != "Xfalse" ]
+then
+   echo "mkinstaller: script is/will be \"${here}/${scriptName}\" " >&2
+fi
+if [ -L "${here}/${scriptName}" ]
+then
+   if [ -e "${here}/${scriptName}" ]
+   then
+      echo "mkinstaller: \"${here}/${scriptName}\" is a symbolic-link not a file" >&2
+   else
+      echo "mkinstaller: \"${here}/${scriptName}\" is a broken symbolic-link not a file" >&2
+   fi
+   exit 1
+else
+   if [ -f "${here}/${scriptName}" ]
+   then
+      if [ 1 -le ${verbosityLevel} ]
+      then
+	 echo "mkinstaller:    destroy existing \"${here}/${scriptName}\" script" >&2
+      fi
+      rm -rf "${here}/${scriptName}" >/dev/null 2>&1
+      status=$?
+      if [ "X${status}" != "X0" ]
+      then
+	 echo "mkinstaller: can't destroy existing \"${here}/${scriptName}\" file" >&2
+	 exit 1
+      else
+	 if [ -f "${here}/${scriptName}" ]
+	 then
+	    echo "mkinstaller: didn't destroy existing \"${here}/${scriptName}\" file" >&2
+	    exit 1
+	 fi
+      fi
+      if [ 2 -le ${verbosityLevel} ]
+      then
+	 echo "mkinstaller:    ...done" >&2
+      fi
+   else
+      if [ -e "${here}/${scriptName}" ]
+      then
+	 echo "mkinstaller: existing \"${here}/${scriptName}\" is not a file" >&2
+	 exit 1
+      fi
+   fi
+fi
+
+#---------------------------------------
+#
+#  Destroy existing wrapper tarball...
+#
+#---------------------------------------
+
+if [ -L "${here}/${wrapperDir}.tar.gz" ]
+then
+   if [ -e "${here}/${wrapperDir}.tar.gz" ]
+   then
+      echo "mkinstaller: \"${here}/${wrapperDir}.tar.gz\" is a symbolic-link not a file" >&2
+   else
+      echo "mkinstaller: \"${here}/${wrapperDir}.tar.gz\" is a broken symbolic-link not a file" >&2
+   fi
+   exit 1
+else
+   if [ -e "${here}/${wrapperDir}.tar.gz" ]
+   then
+      if [ -f "${wrapperDir}.tar.gz" ]
+      then
+	 if [ 1 -le ${verbosityLevel} ]
+	 then
+	    echo "mkinstaller:    destroy existing \"${here}/${wrapperDir}.tar.gz\" file" >&2
+	 fi
+	 rm -f "${here}/${wrapperDir}.tar.gz" >/dev/null 2>&1
+	 status=$?
+	 if [ "X${status}" != "X0" ]
+	 then
+	    echo "mkinstaller: can't destroy existing \"${here}/${wrapperDir}.tar.gz\" file" >&2
+	    exit 1
+	 else
+	    if [ -f "${here}/${wrapperDir}.tar.gz" ]
+	    then
+	       echo "mkinstaller: didn't destroy existing \"${here}/${wrapperDir}.tar.gz\" file" >&2
+	       exit 1
+	    fi
+	 fi
+	 if [ 2 -le ${verbosityLevel} ]
+	 then
+	    echo "mkinstaller:    ...done" >&2
+	 fi
+      else
+	 echo "mkinstaller: existing \"${here}/${wrapperDir}.tar.gz\" is not a file" >&2
+	 exit 1
+      fi
+   fi
+fi
+
+if [ -L "${here}/${wrapperDir}.tar" ]
+then
+   if [ -e "${here}/${wrapperDir}.tar" ]
+   then
+      echo "mkinstaller: \"${here}/${wrapperDir}.tar\" is a symbolic-link not a file" >&2
+   else
+      echo "mkinstaller: \"${here}/${wrapperDir}.tar\" is a broken symbolic-link not a file" >&2
+   fi
+   exit 1
+else
+   if [ -e "${here}/${wrapperDir}.tar" ]
+   then
+      if [ -f "${wrapperDir}.tar" ]
+      then
+	 if [ 1 -le ${verbosityLevel} ]
+	 then
+	    echo "mkinstaller:    destroy existing \"${here}/${wrapperDir}.tar\" file" >&2
+	 fi
+	 rm -f "${here}/${wrapperDir}.tar" >/dev/null 2>&1
+	 status=$?
+	 if [ "X${status}" != "X0" ]
+	 then
+	    echo "mkinstaller: can't destroy existing \"${here}/${wrapperDir}.tar\" file" >&2
+	    exit 1
+	 else
+	    if [ -f "${here}/${wrapperDir}.tar" ]
+	    then
+	       echo "mkinstaller: didn't destroy existing \"${here}/${wrapperDir}.tar\" file" >&2
+	       exit 1
+	    fi
+	 fi
+	 if [ 2 -le ${verbosityLevel} ]
+	 then
+	    echo "mkinstaller:    ...done" >&2
+	 fi
+      else
+	 echo "mkinstaller: existing \"${here}/${wrapperDir}.tar\" is not a file" >&2
+	 exit 1
+      fi
+   fi
+fi
+
+#---------------------------------------
+#
+#  Create wrapper directory to receive
+#  the individual directory tarballs...
+#
+#---------------------------------------
+
+mustCreate=false
+if [ -L "${here}/${wrapperDir}" ]
+then
+   if [ -e "${here}/${wrapperDir}" ]
+   then
+      echo "mkinstaller: \"${here}/${wrapperDir}\" is a symbolic-link not a directory" >&2
+   else
+      echo "mkinstaller: \"${here}/${wrapperDir}\" is a broken symbolic-link not a directory" >&2
+   fi
+   exit 1
+else
+   if [ -e "${here}/${wrapperDir}" ]
+   then
+      if [ -d "${here}/${wrapperDir}" ]
+      then
+	 if [ 1 -le ${verbosityLevel} ]
+	 then
+	    echo "mkinstaller:    destroy existing \"${here}/${wrapperDir}\" directory" >&2
+	 fi
+	 rm -rf "${here}/${wrapperDir}" >/dev/null 2>&1
+	 status=$?
+	 if [ "X${status}" != "X0" ]
+	 then
+	    echo "mkinstaller: can't destroy existing \"${here}/${wrapperDir}\" directory" >&2
+	    exit 1
+	 else
+	    if [ -d "${here}/${wrapperDir}" ]
+	    then
+	       echo "mkinstaller: didn't destroy existing \"${here}/${wrapperDir}\" directory" >&2
+	       exit 1
+	    fi
+	 fi
+	 if [ 2 -le ${verbosityLevel} ]
+	 then
+	    echo "mkinstaller:    ...done" >&2
+	 fi
+	 mustCreate=true
+      else
+	 echo "mkinstaller: existing \"${here}/${wrapperDir}\" is not a directory" >&2
+	 exit 1
+      fi
+   else
+      mustCreate=true
+   fi
+fi
+
+if [ "X${mustCreate}" != "Xfalse" ]
+then
+   if [ 1 -le ${verbosityLevel} ]
+   then
+      echo "mkinstaller: ...create \"${here}/${wrapperDir}\" directory" >&2
+   fi
+   mkdir "${here}/${wrapperDir}" >/dev/null 2>&1
+   status=$?
+   if [ "X${status}" != "X0" ]
+   then
+      echo "mkinstaller: can't create \"${here}/${wrapperDir}\" directory" >&2
+      exit 1
+   else
+      if [ ! -d "${here}/${wrapperDir}" ]
+      then
+	 echo "mkinstaller: didn't create \"${here}/${wrapperDir}\" directory" >&2
+	 exit 1
+      fi
+   fi
+   if [ 2 -le ${verbosityLevel} ]
+   then
+      echo "mkinstaller:    done" >&2
+   fi
+fi
+
+#---------------------------------------
+#
+#  Tarup each of the individual directories
+#  placing the individual tarballs into
+#  the wrapper directory...
+#
+#  Note that these individual tarballs
+#  are compressed (.tar.gz files).
+#
+#---------------------------------------
+
+for d in ${dirList}
+do
+   if [ 1 -le ${verbosityLevel} ]
+   then
+      echo "mkinstaller: ...working \"${d}\" " >&2
+   fi
+   dn=`dirname ${d}`
+   bn=`basename ${d}`
+   cd ${dn}
+      status=$?
+      if [ "X${status}" != "X0" ]
+      then
+	 echo "mkinstaller: can't cd to \"${dn}\" " >&2
+	 exit 1
+      fi
+      tar -czf "${here}/${wrapperDir}/${bn}.tar.gz" "${bn}" >/dev/null 2>&1
+      status=$?
+      if [ "X${status}" != "X0" ]
+      then
+	 echo "mkinstaller: can't tarup \"${d}\" " >&2
+	 echo "mkinstaller: ...[tar -czf \"${here}/${wrapperDir}/${bn}.tar.gz\" \"${bn}\"], returned ${status}" >&2
+	 exit 1
+      else
+	 if [ ! -f "${here}/${wrapperDir}/${bn}.tar.gz" ]
+	 then
+	    echo "mkinstaller: didn't tarup \"${d}\" " >&2
+	    echo "mkinstaller: ...[tar -czf \"${here}/${wrapperDir}/${bn}.tar.gz\" \"${bn}\"], failed" >&2
+	    echo "mkinstaller: ...can't find \"${here}/${wrapperDir}/${bn}.tar.gz\" " >&2
+	    exit 1
+	 fi
+      fi
+   cd ${here}
+   if [ 2 -le ${verbosityLevel} ]
+   then
+      echo "mkinstaller:    done" >&2
+   fi
+done
+
+#---------------------------------------
+#
+#  Tarup the wrapper directory (carrying
+#  the individual tarballs)...
+#
+#  Note that this wrapper tarball is NOT
+#  compressed (.tar file).
+#
+#---------------------------------------
+
+if [ 2 -le ${verbosityLevel} ]
+then
+   echo "mkinstaller: ...tarup \"${wrapperDir}\" " >&2
+fi
+tar -cf "${here}/${wrapperDir}.tar" "${wrapperDir}" >/dev/null 2>&1
+status=$?
+if [ "X${status}" != "X0" ]
+then
+   echo "mkinstaller: can't tarup \"${wrapperDir}\" " >&2
+   echo "mkinstaller: ...[tar -cf \"${here}/${wrapperDir}.tar\" \"${wrapperDir}\"], returned ${status}" >&2
+   exit 1
+else
+   if [ ! -f "${here}/${wrapperDir}.tar" ]
+   then
+      echo "mkinstaller: didn't tarup \"${wrapperDir}\" " >&2
+      echo "mkinstaller: ...[tar -cf \"${here}/${wrapperDir}.tar\" \"${wrapperDir}\"], failed" >&2
+      echo "mkinstaller: ...can't find \"${here}/${wrapperDir}.tar\" " >&2
+      exit 1
+   fi
+fi
+if [ 3 -le ${verbosityLevel} ]
+then
+   echo "mkinstaller:    done" >&2
+fi
+
+#-------------------------------------------------------------------------------
+#
+#  At this point the tarball (aka. the payload) is ready. It is now time to
+#  generate the installer script. Note that the text part is a sort-of "here
+#  document" being output to a temporary text file. After this is completed
+#  this text file and the tarball will be joined (using cat) to form the
+#  actual self-extracting installer script.
+#
+#  Sadly the "here document" implementation is rather complex due to the
+#  various options to the generation of the script.
+#
+#-------------------------------------------------------------------------------
+
+if [ 1 -le ${verbosityLevel} ]
+then
+   echo "mkinstaller: ...forming \"${scriptName}\" " >&2
+fi
+rm -f ${TmpFile}
+cat << EOF01 >>${TmpFile}
+#!/bin/bash
+
+#-------------------------------------------------------------------------------
+#
+#   ${scriptName}
+#
+#   Generated by mkinstaller version ${mkinstaller_ver_name} rev. ${mkinstaller_ver_time}
+#
+#-------------------------------------------------------------------------------
+
+commandPathname="\$0"
+debugging=false
+here="\`pwd\`"
+keep=false
+PREFIX=""
+EOF01
+
+for d in ${dirList}
+do
+   bn=`basename ${d}`
+   echo "PREFIX_${bn}=\"\" "                                                                                            >>${TmpFile}
+done
+
+cat << EOF02 >>${TmpFile}
+MyTmpDir=""
+BuiltOn="${OSname}"
+CCname="${CCname}"
+CXXname="${CXXname}"
+FORTRANname="${FORTRANname}"
+TmpDir=""
+verbosityLevel=0
+
+if [ "X\${DEBUG_${scriptNameU}}" != "X" ]
+then
+   debugging=true
+fi
+
+#---------------------------------------
+#
+#   We will eventually need to know
+#   where this script is actually
+#   located.
+#
+#---------------------------------------
+
+if [ "X\${debugging}" != "Xfalse" ]
+then
+   echo "${scriptName}: locate this script..." >&2
+fi
+bn=\`basename \${commandPathname}\`
+if [ "X\${commandPathname}" = "X\${bn}" ]
+then
+   if [ "X\${debugging}" != "Xfalse" ]
+   then
+      echo "${scriptName}: ...\"\${commandPathname}\" is simple" >&2
+   fi
+   if [ "X\${PATH}" != "X" ]
+   then
+      myPath=\`echo \${PATH} | tr ":" " "\`
+   else
+      echo "\${scriptName}: PATH is not set" >&2
+      exit 1
+   fi
+   foundIn=
+   for d in \${myPath}
+   do
+      if [ -d "\${d}" ]
+      then
+         case "X\${d}" in
+            X/*)
+                 ;;
+            X*)  d="\${here}/\${d}"
+                 ;;
+         esac
+         if [ -f "\${d}/${scriptName}" ]
+         then
+            if [ -x "\${d}/${scriptName}" ]
+            then
+               foundIn="\${d}"
+               commandPathname="\${d}/${scriptName}"
+               break
+            fi
+         fi
+      fi
+   done
+   if [ "X\${foundIn}" = "X" ]
+   then
+      echo "${scriptName}: can't locate this script" >&2
+      exit 1
+   fi
+else
+   if [ "X\${debugging}" != "Xfalse" ]
+   then
+      echo "${scriptName}: ...\"\${commandPathname}\" is NOT simple" >&2
+   fi
+   dn=\`dirname \${commandPathname}\`
+   bn=\`basename \${commandPathname}\`
+   case "X\${dn}" in
+      X/*)
+           if [ "X\${debugging}" != "Xfalse" ]
+           then
+              echo "${scriptName}:    \"\${commandPathname}\" is absolute" >&2
+           fi
+           ;;
+      X*)  if [ "X\${debugging}" != "Xfalse" ]
+           then
+              echo "${scriptName}:    \"\${commandPathname}\" is releative" >&2
+           fi
+           commandPathname="\`pwd\`/\${commandPathname}"
+           if [ "X\${debugging}" != "Xfalse" ]
+           then
+              echo "${scriptName}:    ...consider \"\${commandPathname}\" " >&2
+           fi
+           dn=\`dirname "\${commandPathname}"\`
+           bn=\`basename "\${commandPathname}"\`
+           if [ "X\${debugging}" != "Xfalse" ]
+           then
+              echo "${scriptName}:       is in \"\${dn}\" " >&2
+              echo "${scriptName}:       is called \"\${bn}\" " >&2
+           fi
+           ;;
+   esac
+   foundIn="\${dn}"
+   commandPathname="\${dn}/\${bn}"
+fi
+if [ "X\${debugging}" != "Xfalse" ]
+then
+   echo "${scriptName}: ...in \"\${foundIn}\" " >&2
+   echo "${scriptName}:    as \"\${commandPathname}\" " >&2
+fi
+
+#-------------------------------------------------------------------------------
+#
+#  Deal with TMPDIR...
+#
+#  Note: It would be desirable to replace the next 183 lines with a call
+#        to the findTempDir Perl script. However that does introduce an
+#        outside dependency which we'd like to avoid in this script.
+#
+#-------------------------------------------------------------------------------
+
+if [ "X\${debugging}" != "Xfalse" ]
+then
+   echo "${scriptName}: identify temp directory..." >&2
+fi
+
+if [ "X\${${SCRIPTNAME}_TMPDIR}" != "X" ]
+then
+   if [ -d "\${${SCRIPTNAME}_TMPDIR}" ]
+   then
+      if [ -w "\${${SCRIPTNAME}_TMPDIR}" ]
+      then
+         TMPDIR="\${${SCRIPTNAME}_TMPDIR}" ; export TMPDIR
+         if [ "X\${debugging}" != "Xfalse" ]
+         then
+            echo "${scriptName}: ...from ${SCRIPTNAME}_TMPDIR" >&2
+         fi
+      fi
+   fi
+fi
+
+#---------------------------------------
+#
+#  If TMPDIR was specified then
+#  make sure its valid...
+#
+#---------------------------------------
+
+if [ "X\${TMPDIR}" != "X" ]
+then
+   if [ -d "\${TMPDIR}" ]
+   then
+      if [ -w "\${TMPDIR}" ]
+      then
+         true
+         if [ "X\${debugging}" != "Xfalse" ]
+         then
+            echo "${scriptName}: ...from TMPDIR" >&2
+         fi
+      else
+         TMPDIR="" ; export TMPDIR
+      fi
+   else
+      TMPDIR="" ; export TMPDIR
+   fi
+fi
+
+#---------------------------------------
+#
+#  If TMPDIR was NOT specified then
+#  try using TMP if it is defined and
+#  is valid...
+#
+#---------------------------------------
+
+if [ "X\${TMPDIR}" = "X" ]
+then
+   if [ "X\${TMP}" != "X" ]
+   then
+      tryDir="\${TMP}"
+      if [ -d "\${tryDir}" ]
+      then
+         if [ -w "\${tryDir}" ]
+         then
+            TMPDIR="\${tryDir}" ; export TMPDIR
+            if [ "X\${debugging}" != "Xfalse" ]
+            then
+               echo "${scriptName}: ...from TMP" >&2
+            fi
+         fi
+      fi
+   fi
+fi
+
+#---------------------------------------
+#
+#  If TMPDIR was NOT specified then
+#  try using TEMP if it is defined and
+#  is valid...
+#
+#---------------------------------------
+
+if [ "X\${TMPDIR}" = "X" ]
+then
+   if [ "X\${TEMP}" != "X" ]
+   then
+      tryDir="\${TEMP}"
+      if [ -d "\${tryDir}" ]
+      then
+         if [ -w "\${tryDir}" ]
+         then
+            TMPDIR="\${tryDir}" ; export TMPDIR
+            if [ "X\${debugging}" != "Xfalse" ]
+            then
+               echo "${scriptName}: ...from TEMP" >&2
+            fi
+         fi
+      fi
+   fi
+fi
+
+#---------------------------------------
+#
+#  If TMPDIR was NOT specified then
+#  try using tmp in the user's home
+#  directory...
+#
+#---------------------------------------
+
+if [ "X\${TMPDIR}" = "X" ]
+then
+   if [ "X\${HOME}" != "X" ]
+   then
+      tryDir="\${HOME}/tmp"
+      if [ -d "\${tryDir}" ]
+      then
+         if [ -w "\${tryDir}" ]
+         then
+            TMPDIR="\${tryDir}" ; export TMPDIR
+            if [ "X\${debugging}" != "Xfalse" ]
+            then
+               echo "${scriptName}: ...using HOME" >&2
+            fi
+         fi
+      fi
+   fi
+fi
+
+#---------------------------------------
+#
+#  If TMPDIR was NOT specified then
+#  try using /tmp directory...
+#
+#---------------------------------------
+
+if [ "X\${TMPDIR}" = "X" ]
+then
+   tryDir="/tmp"
+   if [ -d "\${tryDir}" ]
+   then
+      if [ -w "\${tryDir}" ]
+      then
+         TMPDIR="\${tryDir}" ; export TMPDIR
+      fi
+   fi
+fi
+
+#---------------------------------------
+#
+#  If TMPDIR was NOT specified then
+#  try using /var/tmp directory...
+#
+#---------------------------------------
+
+if [ "X\${TMPDIR}" = "X" ]
+then
+   tryDir="/var/tmp"
+   if [ -d "\${tryDir}" ]
+   then
+      if [ -w "\${tryDir}" ]
+      then
+         TMPDIR="\${tryDir}" ; export TMPDIR
+      fi
+   fi
+fi
+
+#---------------------------------------
+#
+#  If TMPDIR was NOT specified then
+#  try using the current directory...
+#
+#---------------------------------------
+
+if [ "X\${TMPDIR}" = "X" ]
+then
+   tryDir="."
+   if [ -d "\${tryDir}" ]
+   then
+      if [ -w "\${tryDir}" ]
+      then
+         TMPDIR="\${tryDir}" ; export TMPDIR
+      fi
+   fi
+fi
+
+#---------------------------------------
+#
+#  Adjust the result so that it is an
+#  absolute pathname...
+#
+#---------------------------------------
+
+if [ "X\${TMPDIR}" = "X" ]
+then
+   echo "${scriptName}: can't decide on a location for a temp directory" >&2
+   echo "${scriptName}: ...set TMPDIR or ${SCRIPTNAME}_TMPDIR" >&2
+   exit 1
+else
+   case "\${TMPDIR}" in
+      /*)
+          ;;
+      *)
+          TMPDIR="\`pwd\`/\${TMPDIR}" ; export TMPDIR
+          ;;
+   esac
+fi
+
+if [ "X\${debugging}" != "Xfalse" ]
+then
+   echo "${scriptName}: ...as \"\${TMPDIR}\" " >&2
+fi
+
+TmpDir="\${TMPDIR}"
+MyTmpDir="\${TmpDir}/${scriptName}.\$\$.tmp"
+
+#---------------------------------------
+#
+#  We'll do everything from here on in
+#  a temporary directory...
+#
+#---------------------------------------
+
+if [ "X\${debugging}" != "Xfalse" ]
+then
+   echo "${scriptName}: create \"\${MyTmpDir}\" ">&2
+fi
+if [ -d "\${MyTmpDir}" ]
+then
+   echo "${scriptName}: "\${MyTmpDir}" already exists" >&2
+   exit 1
+fi
+if [ "X\${debugging}" != "Xfalse" ]
+then
+   echo "${scriptName}: ...run [mkdir \"\${MyTmpDir}\" ]" >&2
+fi
+mkdir "\${MyTmpDir}" >/dev/null 2>&1
+status=\$?
+if [ "X\${status}" != "X0" ]
+then
+   echo "${scriptName}: can't create directory \"\${MyTmpDir}\" " >&2
+   exit 1
+fi
+
+cd "\${MyTmpDir}"
+status=\$?
+if [ "X\${status}" != "X0" ]
+then
+   echo "${scriptName}: can't cd to directory \"\${MyTmpDir}\" " >&2
+   exit 1
+fi
+
+#-------------------------------------------------------------------------------
+#
+#  Command line processing...
+#
+#-------------------------------------------------------------------------------
+
+while [ \$# != 0 ]
+do
+   opt="\$1"
+   if [ "X\$1" != "X" ]
+   then
+      case "\$1" in
+         #---------------------------------------
+         #
+         #  Standard options...
+         #
+         #---------------------------------------
+
+         -help|--help)
+                            echo
+                            echo "${titleLine}"
+                            echo
+                            echo "NAME"
+                            echo "    ${scriptName} -- Self-extracting installer script${ForProject}."
+                            echo
+                            echo "USAGE"
+                            echo "    ${scriptName} --help"
+                            echo "    ${scriptName} --vernum"
+                            echo "    ${scriptName} --version"
+                            echo
+EOF02
+exampleLine="${scriptName} [--keep] [--prefix=<pathname>]"
+for d in ${dirList}
+do
+   bn=`basename ${d}`
+   exampleLine="${exampleLine} [--prefix_${bn}=<pathname>]"
+done
+exampleLine="${exampleLine} [-v[erbose][<digit>]]"
+cat << EOF03 >>${TmpFile}
+                            echo "    ${exampleLine}"
+                            echo
+                            echo "DESCRIPTION"
+                            echo "    This script is a \"self-extracting installer\" script implemented as"
+                            echo "    a bash script and carries a tarball as a payload. This generated"
+                            echo "    installer script supports a number of options for specifying where"
+                            echo "    the various directories are to be installed (prefix directory pathnames)."
+                            echo
+                            echo "    The installation process:"
+                            echo
+                            echo "       1) Determination of a suitable temp directory. Much of the work"
+                            echo "          done by the ${scriptName} script is done in a temp directory."
+                            echo "          Once an appropriate temporary directory has been arranged"
+                            echo "          the ${scriptName} script will cd to this directory and work from"
+                            echo "          there for much of the remaining work."
+                            echo "       2) Using the command line options the this installer script will"
+                            echo "          determine proper installation PREFIX directories for each of"
+                            echo "          the directories to be installed. Note that each of the PREFIX"
+                            echo "          directories will be created if necessary."
+                            echo "       3) The \"wrapper\" tarball is extracted from this installer script"
+                            echo "          landing in the temp directory."
+                            echo "       4) The wrapper tarball is unwrapped using tar to form the \"wrapper\" "
+                            echo "          directory in the temp directory. Note that this wrapper directory"
+                            echo "          contains the individual tarballs of the directories to be installed."
+                            echo "       5) For each of individual tarballs the script will cd to the appropriate"
+                            echo "          prefix firectory and unwraps the individual tarball (found in the"
+                            echo "          wrapper directory under the temp directory). This is the actual"
+                            echo "          \"install\" step."
+                            echo "       6) Cleanup if the --keep wasn't used."
+                            echo
+                            echo "OPTIONS"
+                            echo "    \"${scriptName}\" supports the following options:"
+                            echo
+                            echo "        --help"
+                            echo
+                            echo "            Output this man page to <stdout> and quit."
+EOF03
+if [ "X${ProjectVer}" != "X" ]
+then
+   cat << EOF04 >>${TmpFile}
+                            echo
+                            echo "        --vernum"
+                            echo
+                            echo "            Output version number of the payload to <stdout> and quit."
+EOF04
+   if [ "X${ProjectVer}" != "X" ]
+   then
+      cat << EOF05 >>${TmpFile}
+                            echo
+                            echo "        --version"
+                            echo
+                            echo "            Output project name and version number of the payload to <stdout>"
+                            echo "            and quit."
+EOF05
+   fi
+fi
+cat << EOF06 >>${TmpFile}
+                            echo
+                            echo "        -k"
+                            echo "        --keep"
+                            echo
+                            echo "            Don't cleanup intermediate temporary files and directories that"
+                            echo "            are produced during the extraction and installation process."
+                            echo
+                            echo "        --prefix=<pathname>"
+                            echo
+                            echo "            The pathname of the single directory where all of the payload"
+                            echo "            directories are to be placed."
+EOF06
+for d in ${dirList}
+do
+   bn=`basename ${d}`
+   echo "                            echo "                                                                             >>${TmpFile}
+   echo "                            echo \"        --prefix_${bn}=<pathname>\" "                                       >>${TmpFile}
+   echo "                            echo "                                                                             >>${TmpFile}
+   echo "                            echo \"            The pathname of the directory where the \\\"${bn}\\\" payload directory\" " >>${TmpFile}
+   echo "                            echo \"            is to be placed. Note that if this option is not specified then the\" " >>${TmpFile}
+   echo "                            echo \"            overall --prefix=<pathname> should be used.\" "                 >>${TmpFile}
+done
+cat << EOF07 >>${TmpFile}
+                            echo
+                            echo "        -v[erbose][<digit>]"
+                            echo
+                            echo "            Operate in a verbose mode."
+                            echo
+                            echo "            Repeating this option increases the amount of output produced."
+                            echo "            Note that the option may end with an optional digit which"
+                            echo "            indicates a repetition count. Thus the option:"
+                            echo
+                            echo "               -v3"
+                            echo
+                            echo "            is equavalent to:"
+                            echo
+                            echo "               -v -v -v"
+                            echo
+                            echo "    Note that if no prefix is specified then this script will prompt for one."
+                            echo
+                            echo "RETURNS"
+                            echo "    \"${scriptName}\" returns the standard exit codes:"
+                            echo
+                            echo "       0 -- success"
+                            echo "       1 -- failure"
+                            echo
+                            echo "ENVIRONMENT"
+                            echo "    \"${scriptName}\" refers to the following environment variables:"
+                            echo
+                            echo "        DEBUG_${scriptNameU}"
+                            echo
+                            echo "            Generate extra output which is only usefull when debugging the"
+                            echo "            \"${scriptName}\" script itself. Note that at this time this"
+                            echo "            environment variable is ignored."
+                            echo
+			    echo "        ${SCRIPTNAME}_TMPDIR"
+			    echo
+			    echo "            Consider this pathname before considering TMPDIR (see"
+			    echo "            step (0) in the NOTES section below)."
+			    echo
+                            echo "INPLEMENTATION"
+                            echo "    \"${scriptName}\" is implemented as a bash script."
+                            echo
+                            echo "SEE ALSO"
+                            echo "    mkinstaller(1x), sh(1), tar(1)"
+                            echo
+                            echo "NOTES"
+EOF07
+if [ "X${OSname}" != "X" ]
+then
+   echo "                            echo \"    This installer script was built on \\\"${OSname}\\\" \" "               >>${TmpFile}
+   echo "                            echo "                                                                             >>${TmpFile}
+fi
+if [ "X${CCname}" != "X" ]
+then
+   echo "                            echo \"    The C compiler \\\"${CCname}\\\" was used to build the payload.\" "     >>${TmpFile}
+   echo "                            echo "                                                                             >>${TmpFile}
+fi
+if [ "X${CXXname}" != "X" ]
+then
+   echo "                            echo \"    The C++ compiler \\\"${CXXname}\\\" was used to build the payload.\" "  >>${TmpFile}
+   echo "                            echo "                                                                             >>${TmpFile}
+fi
+if [ "X${FORTRANname}" != "X" ]
+then
+   echo "                            echo \"    The FORTRAN compiler \\\"${FORTRANname}\\\" was used to build the payload.\" "  >>${TmpFile}
+   echo "                            echo "                                                                             >>${TmpFile}
+fi
+cat << EOF07a >>${TmpFile}
+                            echo "    The directory where temporary files are to be placed is determined"
+                            echo "    as follows:"
+                            echo
+			    echo "        0) If ${SCRIPTNAME}_TMPDIR is defined and is not empty then"
+			    echo "           consider its value as a directory pathname. If this pathname"
+			    echo "           exists and is a directory and is writable then temporary"
+			    echo "           files will be placed in this directory. Otherwise..."
+                            echo "        1) If TMPDIR is defined and is not empty then consider its"
+                            echo "           value as a directory pathname. If this pathname exists"
+                            echo "           and is a directory and is writable then temporary files"
+                            echo "           will be placed in this directory. Otherwise..."
+                            echo "        2) If TMP is defined and is not empty then consider its"
+                            echo "           value as a directory pathname. If this pathname exists"
+                            echo "           and is a directory and is writable then temporary files"
+                            echo "           will be placed in this directory. Otherwise..."
+                            echo "        3) If TEMP is defined and is not empty then consider its"
+                            echo "           value as a directory pathname. If this pathname exists"
+                            echo "           and is a directory and is writable then temporary files"
+                            echo "           will be placed in this directory. Otherwise..."
+                            echo "        4) If the user's home directory can be determined and if"
+                            echo "           this home directory contains a subdirectory named tmp"
+                            echo "           that is itself writable then temporary files will be"
+                            echo "           placed in this directory. Otherwise..."
+                            echo "        5) If \"C:<userProfile>\\\\AppData\\\\Local\\\\temp\" exists and"
+                            echo "           is a writable directory then temporary files will be"
+                            echo "           placed in this directory. Otherwise..."
+                            echo "        6) If \"/tmp\" exists and is writable then temporary files"
+                            echo "           will be placed in this directory. Otherwise..."
+                            echo "        7) If \"/var/tmp\" exists and is writable then temporary files"
+                            echo "           will be placed in this directory. Otherwise..."
+                            echo "        8) If \"C:\\\\Temp\" exists and is writable then temporary files"
+                            echo "           will be placed in this directory. Otherwise..."
+                            echo "        9) If \"C:\\\\Windows\\\\Temp\" exists and is writable then temporary"
+                            echo "           files will be placed in this directory. Otherwise..."
+                            echo "       10) If the current directory is writable then temporary files"
+                            echo "           will be placed in the current directory. Otherwise..."
+                            echo "       11) A fatal error message will be sent to <stderr> and"
+                            echo "           the program will exit with a non-zero exit code."
+                            echo
+                            echo "    Note that 5, 8, and 9 are only applicable on Windows-like hosts."
+                            echo
+                            echo "AUTHOR"
+                            echo "    mkinstaller version ${mkinstaller_ver_name} rev. ${mkinstaller_ver_time}"
+EOF07a
+if [ "X${Contact}" != "X" ]
+then
+   echo "                            echo "                                                                             >>${TmpFile}
+   echo "                            echo \"CONTACT\" "                                                                 >>${TmpFile}
+   if [ "X${ProjectName}" != "X" ]
+   then
+   echo "                            echo \"    Please contact the ${ProjectName} team at:\" "                          >>${TmpFile}
+   else
+   echo "                            echo \"    Please contact:\" "                                                     >>${TmpFile}
+   fi
+   echo "                            echo "                                                                             >>${TmpFile}
+   echo "                            echo \"        ${Contact}\" "                                                      >>${TmpFile}
+fi
+cat << EOF08 >>${TmpFile}
+                            echo
+                            exit 0
+                            ;;
+EOF08
+if [ "X${ProjectVer}" != "X" ]
+then
+   echo ""                                                                                                              >>${TmpFile}
+   echo "         --vernum)          echo ${ProjectVer}"                                                                >>${TmpFile}
+   echo "                            ;;"                                                                                >>${TmpFile}
+   if [ "X${ProjectName}" != "X" ]
+   then
+      echo ""                                                                                                           >>${TmpFile}
+      echo "         --version)         echo ${ProjectName}: version ${ProjectVer}"                                     >>${TmpFile}
+      echo "                            ;;"                                                                             >>${TmpFile}
+   fi
+fi
+cat << EOF09 >>${TmpFile}
+
+         #---------------------------------------
+         #
+         #  Non-standard options...
+         #
+         #---------------------------------------
+
+         -k|--keep)         keep=true
+                            ;;
+
+         --prefix=*)        given="\$1"
+                            stmp=\`echo \${given} | sed -e 's/^--prefix=\(.*\)\$/\1/'\`
+                            given="\${stmp}"
+                            if [ "X\${given}" = "X" ]
+                            then
+                               echo "${scriptName}: missing or zero-length argument to --prefix option" >&2
+                               exit 1
+                            fi
+                            PREFIX="\${given}"
+                            ;;
+EOF09
+for d in ${dirList}
+do
+   echo ""                                                                                                              >>${TmpFile}
+   bn=`basename ${d}`
+   echo "         --prefix_${bn}=*)"                                                                                    >>${TmpFile}
+   echo "                            given=\"\$1\" "                                                                    >>${TmpFile}
+   echo "                            stmp=\`echo \${given} | sed -e 's/^--prefix_${bn}=\\(.*\\)\$/\\1/'\`"              >>${TmpFile}
+   echo "                            given=\"\${stmp}\" "                                                               >>${TmpFile}
+   echo "                            if [ \"X\${given}\" = \"X\" ]"                                                     >>${TmpFile}
+   echo "                            then"                                                                              >>${TmpFile}
+   echo "                               echo \"${scriptName}: missing or zero-length argument to --prefix_${bn} option\" >&2" >>${TmpFile}
+   echo "                               exit 1"                                                                         >>${TmpFile}
+   echo "                            fi"                                                                                >>${TmpFile}
+   echo "                            PREFIX_${bn}=\"\${given}\" "                                                       >>${TmpFile}
+   echo "                            ;;"                                                                                >>${TmpFile}
+done
+cat << EOF10 >>${TmpFile}
+
+         #---------------------------------------
+         #
+         #  "Semi-standard" options...
+         #
+         #---------------------------------------
+
+         -v)                verbosityLevel=\`expr \${verbosityLevel} + 1\`
+                            ;;
+
+         -v0)               verbosityLevel=0
+                            ;;
+
+         -v[0-9])           given=\$1
+                            itmp=\`echo \${given} | sed -e 's/^-v\([0-9]\)\$/\1/'\`
+                            verbosityLevel=\`expr \${verbosityLevel} + \${itmp}\`
+                            ;;
+
+         --verbose)         verbosityLevel=\`expr \${verbosityLevel} + 1\`
+                            ;;
+
+         --verbose0)        verbosityLevel=0
+                            ;;
+
+         --verbose[0-9])    given="\$1"
+                            itmp=\`echo \${given} | sed -e 's/^--verbose\([0-9]\)\$/\1/'\`
+                            verbosityLevel=\`expr \${verbosityLevel} + \${itmp}\`
+                            ;;
+
+         #---------------------------------------
+         #
+         #  Unknown options...
+         #
+         #---------------------------------------
+
+         -*)                echo "${scriptName}: unknown option \"\$opt\" " >&2
+                            echo "${scriptName}: ...if \"\$opt\" is meant to be a pathname try using \'./\$opt\' " >&2
+                            exit 1
+                            ;;
+
+         #---------------------------------------
+         #
+         #  Parameters...
+         #
+         #---------------------------------------
+
+         *)                 echo "${scriptName}: unexpected \"\$1\" " >&2
+                            exit 1
+                            ;;
+
+      esac
+   else
+      echo "${scriptName}: zero-length parameter" >&2
+      exit 1
+   fi
+   shift
+done
+
+#-------------------------------------------------------------------------------
+#
+#  A reminder that we're doing this all from a temporary directory.
+#
+#-------------------------------------------------------------------------------
+
+if [ 1 -le \${verbosityLevel} ]
+then
+   echo "${scriptName}: running \"\${commandPathname}\" " >&2
+   if [ "X\${BuiltOn}" != "X" ]
+   then
+      echo "${scriptName}: ...built on \"\${BuiltOn}\" " >&2
+   fi
+   amNowIn="\`pwd\`"
+   echo "${scriptName}: working in \"\${amNowIn}\" " >&2
+   if [ "X\${debugging}" != "Xfalse" ]
+   then
+      /bin/ls -alF >&2
+   fi
+fi
+
+#-------------------------------------------------------------------------------
+#
+#  Dealing with PREFIX...
+#
+#  The overall PREFIX is only needed if one or more of the individual PREFIX...
+#  pathnames wasn't specified using the appropriate options. In this case we'll
+#  have to ask for the overall PREFIX if it wasn't supplied then use it to set
+#  each of the PREFIX... pathnames that wern't supplied.
+#
+#-------------------------------------------------------------------------------
+
+haveAll=true
+EOF10
+for d in ${dirList}
+do
+   bn=`basename ${d}`
+   echo "if [ \"X\${PREFIX_${bn}}\" = \"X\" ]"                                                                          >>${TmpFile}
+   echo "then"                                                                                                          >>${TmpFile}
+   echo "   haveAll=false"                                                                                              >>${TmpFile}
+   echo "fi"                                                                                                            >>${TmpFile}
+done
+cat << EOF11 >>${TmpFile}
+
+if [ "X\${haveAll}" != Xtrue ]
+then
+   #---------------------------------------
+   #
+   #  Ask for PREFIX if one wasn't given...
+   #
+   #---------------------------------------
+
+   while [ "X\${PREFIX}" = "X" ]
+   do
+      [ "\${PREFIX}" != "" ] || read -e -p "${scriptName}: Enter the PREFIX path: " PREFIX
+      if [ "X\${PREFIX}" = "X" ]
+      then
+         echo "${scriptName}: can't have empty PREFIX, try again"
+      fi
+   done
+
+   #---------------------------------------
+   #
+   #  Force PREFIX to be absolute.
+   #
+   #---------------------------------------
+
+   case "\${PREFIX}" in
+      /*)
+          ;;
+      *)
+          PREFIX="\${here}/\${PREFIX}"
+          ;;
+   esac
+EOF11
+for d in ${dirList}
+do
+   bn=`basename ${d}`
+   echo ""                                                                                                              >>${TmpFile}
+   echo "   #---------------------------------------"                                                                   >>${TmpFile}
+   echo "   #"                                                                                                          >>${TmpFile}
+   echo "   #  Set PREFIX_${bn} from PREFIX if we must."                                                                >>${TmpFile}
+   echo "   #"                                                                                                          >>${TmpFile}
+   echo "   #---------------------------------------"                                                                   >>${TmpFile}
+   echo ""                                                                                                              >>${TmpFile}
+   echo "   if [ \"X\${PREFIX_${bn}}\" = \"X\" ]"                                                                       >>${TmpFile}
+   echo "   then"                                                                                                       >>${TmpFile}
+   echo "      PREFIX_${bn}=\"\${PREFIX}\" "                                                                            >>${TmpFile}
+   echo "   fi"                                                                                                         >>${TmpFile}
+done
+cat << EOF12 >>${TmpFile}
+fi
+
+if [ 1 -le \${verbosityLevel} ]
+then
+   echo "${scriptName}: install under:"
+   echo "${scriptName}: ...PREFIX=\"\${PREFIX}\" "
+EOF12
+for d in ${dirList}
+do
+   bn=`basename ${d}`
+   echo "   echo \"${scriptName}: ...PREFIX_${bn}=\\\"\${PREFIX_${bn}}\\\" \" "                                         >>${TmpFile}
+done
+cat << EOF13 >>${TmpFile}
+fi
+
+#---------------------------------------
+#
+#  Create the installation PREFIX
+#  directories if necessary...
+#
+#---------------------------------------
+
+if [ "X\${PREFIX}" != "X" ]
+then
+   if [ ! -d "\${PREFIX}" ]
+   then
+      if [ 1 -le \${verbosityLevel} ]
+      then
+         echo "${scriptName}: creating directory \"\${PREFIX}\" "
+      fi
+      mkdir "\${PREFIX}" >/dev/null 2>&1
+      status=\$?
+      if [ "X\${status}" != "X0" ]
+      then
+         echo "${scriptName}: can't create directory \"\${PREFIX}\" "
+         echo "${scriptName}: ...[mkdir \"\${PREFIX}\"] returned exit code \${status}" >&2
+         exit 1
+      fi
+      if [ ! -d "\${PREFIX}" ]
+      then
+         echo "${scriptName}: didn't create directory \"\${PREFIX}\" " >&2
+         exit 1
+      fi
+   fi
+fi
+EOF13
+for d in ${dirList}
+do
+   bn=`basename ${d}`
+   echo ""                                                                                                              >>${TmpFile}
+   echo "if [ \"X\${PREFIX_${bn}}\" != \"X\" ]"                                                                         >>${TmpFile}
+   echo "then"                                                                                                          >>${TmpFile}
+   echo "   if [ ! -d \"\${PREFIX_${bn}}\" ]"                                                                           >>${TmpFile}
+   echo "   then"                                                                                                       >>${TmpFile}
+   echo "      if [ 1 -le \${verbosityLevel} ]"                                                                         >>${TmpFile}
+   echo "      then"                                                                                                    >>${TmpFile}
+   echo "         echo \"${scriptName}: creating directory \\\"\${PREFIX_${bn}}\\\" \" "                                >>${TmpFile}
+   echo "      fi"                                                                                                      >>${TmpFile}
+   echo "      mkdir \"\${PREFIX_${bn}}\" >/dev/null 2>&1 "                                                             >>${TmpFile}
+   echo "      status=\$?"                                                                                              >>${TmpFile}
+   echo "      if [ \"X\${status}\" != \"X0\" ]"                                                                        >>${TmpFile}
+   echo "      then"                                                                                                    >>${TmpFile}
+   echo "         echo \"${scriptName}: can't create directory \\\"\${PREFIX_${bn}}\\\" \" "                            >>${TmpFile}
+   echo "         echo \"${scriptName}: ...[mkdir \\\"\${PREFIX_${bn}}\\\"] returned exit code \${status}\" >&2"        >>${TmpFile}
+   echo "         exit 1"                                                                                               >>${TmpFile}
+   echo "      fi"                                                                                                      >>${TmpFile}
+   echo "      if [ ! -d \"\${PREFIX_${bn}}\" ]"                                                                        >>${TmpFile}
+   echo "      then"                                                                                                    >>${TmpFile}
+   echo "         echo \"${scriptName}: didn't create directory \\\"\${PREFIX_${bn}}\\\" \" >&2"                        >>${TmpFile}
+   echo "         exit 1"                                                                                               >>${TmpFile}
+   echo "      fi"                                                                                                      >>${TmpFile}
+   echo "   fi"                                                                                                         >>${TmpFile}
+   echo "fi"                                                                                                            >>${TmpFile}
+done
+if [ "X${addTarball}" != "Xfalse" ]
+then
+cat << EOF14 >>${TmpFile}
+
+if [ "X\${debugging}" != "Xfalse" ]
+then
+   amNowIn="\`pwd\`"
+   echo "${scriptName}: \"\${amNowIn}\" before extraction"
+   /bin/ls -alF
+fi
+
+#-------------------------------------------------------------------------------
+#
+#  The self-extraction magic...
+#
+#  FIX: The untar process reports:
+#
+#          wrapper/
+EOF14
+for d in ${dirList}
+do
+   bn=`basename ${d}`
+   echo "#          wrapper/${bn}.tar.gz"                                                                               >>${TmpFile}
+done
+cat << EOF15 >>${TmpFile}
+#
+#          gzip: stdin: unexpected end of file
+#          tar: Child returned status 1
+#          tar: Error is not recoverable: exiting now
+#
+#       Note that we've used a work-around: The wrapper tarball(=wrapper.tar)
+#       is not compressed (thus avoiding the above problem). This may seem a
+#       bit waseful but the contents of the wrapper directory are already
+#       compressed tarballs, compressing the wrapper directory actually gives
+#       very little improvement anyway.
+#
+#-------------------------------------------------------------------------------
+
+if [ 1 -le \${verbosityLevel} ]
+then
+   echo "${scriptName}: extracting wrapper tarball"
+fi
+
+if [ "X\${debugging}" != "Xfalse" ]
+then
+   nowIn="\`pwd\`"
+   echo "${scriptName}: ...in \"\${nowIn}\" " >&2
+   echo "${scriptName}: ...run [awk '/^__PAYLOAD_BELOW__/ {print NR + 1; exit 0; }' \"\${commandPathname}\" 2>/dev/null]" >&2
+fi
+PAYLOAD_LINE=\`awk '/^__PAYLOAD_BELOW__/ {print NR + 1; exit 0; }' "\${commandPathname}"\`
+if [ "X\${debugging}" != "Xfalse" ]
+then
+   echo "${scriptName}:    gives: [\${PAYLOAD_LINE}]" >&2
+   nowIn="\`pwd\`"
+   echo "${scriptName}: ...in \"\${nowIn}\" " >&2
+   echo "${scriptName}: ...run [tail -n+\${PAYLOAD_LINE} \"\${commandPathname}\" > \"wrapper.tar\"]" >&2
+fi
+tail -n+\${PAYLOAD_LINE} "\${commandPathname}" >"wrapper.tar" 2>/dev/null
+if [ "X\${debugging}" != "Xfalse" ]
+then
+   echo "${scriptName}:    done" >&2
+   nowIn="\`pwd\`"
+   echo "${scriptName}: ...in \"\${nowIn}\" " >&2
+   echo "${scriptName}: ...run [tar -xf \"wrapper.tar\"]" >&2
+fi
+tar -xf "wrapper.tar" >/dev/null 2>&1
+if [ "X\${status}" != "X0" ]
+then
+   echo "${scriptName}: problem extracting tarball(=\"wrapper.tar\") from script(=\"\${commandPathname}\")"
+   echo "${scriptName}: ...[tar -xf \"wrapper.tar\"] returned exit code \${status}" >&2
+   exit 1
+fi
+
+if [ 2 -le \${verbosityLevel} ]
+then
+   echo "${scriptName}: ...done"
+fi
+
+#-------------------------------------------------------------------------------
+#
+#  After extracting the wrapper directory from the wrapper directory from
+#  the wrapper tarball we can toss the wrapper tarball (it was just a copy
+#  extracter from the ${scriptName} script.
+#
+#-------------------------------------------------------------------------------
+
+if [ "X\${keep}" != "Xtrue" ]
+then
+   if [ "X\${debugging}" != "Xfalse" ]
+   then
+      echo "${scriptName}: cleanup tarball" >&2
+      amNowIn="\`pwd\`"
+      echo "${scriptName}: ...in \"\${amNowIn}\" " >&2
+      echo "${scriptName}: ...run [rm \"wrapper.tar\"]" >&2
+   fi
+   rm "wrapper.tar"
+   status=\$?
+   if [ "X\${status}" != "X0" ]
+   then
+      echo "${scriptName}: can't cleanup the tarball(=\"wrapper.tar\")"
+      echo "${scriptName}: ...[rm \"wrapper.tar\"] returned exit code \${status}" >&2
+      exit 1
+   fi
+else
+   echo "${scriptName}: keeping tarball(=\"wrapper.tar\")"
+   amNowIn="\`pwd\`"
+   echo "${scriptName}: ...in \"\${amNowIn}\" " >&2
+   lookFor="\${amNowIn}/wrapper.tar"
+   if [ -f "\${lookFor}" ]
+   then
+      echo "${scriptName}: ...have \"\${lookFor}\" " >&2
+   fi
+fi
+if [ "X\${debugging}" != "Xfalse" ]
+then
+   amNowIn="\`pwd\`"
+   echo "${scriptName}: \"\${amNowIn}\" after extraction..."
+   /bin/ls -alF
+fi
+
+#-------------------------------------------------------------------------------
+#
+#  The wrapper directory should now be in place. Remember that we're in the
+#  temporary directory. We now step into the wrapper directory and unwrap
+#  each individual tarball in to its proper place.
+#
+#-------------------------------------------------------------------------------
+
+cd "wrapper"
+
+if [ "X\${debugging}" != "Xfalse" ]
+then
+   amNowIn="\`pwd\`"
+   echo "${scriptName}: contents of \"\${amNowIn}\" "
+   /bin/ls -alF
+fi
+
+allThere=true
+EOF15
+   for d in ${dirList}
+   do
+      bn=`basename ${d}`
+      echo ""                                                                                                           >>${TmpFile}
+      echo "if [ ! -f \"${bn}.tar.gz\" ]"                                                                               >>${TmpFile}
+      echo "then"                                                                                                       >>${TmpFile}
+      echo "   echo \"${scriptName}: seem to be missing \\\"${bn}.tar.gz\\\" \" "                                       >>${TmpFile}
+      echo "   allThere=false"                                                                                          >>${TmpFile}
+      echo "else"                                                                                                       >>${TmpFile}
+      echo "   if [ 1 -le \${verbosityLevel} ]"                                                                         >>${TmpFile}
+      echo "   then"                                                                                                    >>${TmpFile}
+      echo "      echo \"${scriptName}: ...have \\\"${bn}.tar.gz\\\" in \\\"${wrapperDir}\\\" \" "                      >>${TmpFile}
+      echo "   fi"                                                                                                      >>${TmpFile}
+      echo "fi"                                                                                                         >>${TmpFile}
+   done
+cat << EOF16 >>${TmpFile}
+if [ "X\${allThere}" != "Xtrue" ]
+then
+   exit 1
+fi
+EOF16
+   for d in ${dirList}
+   do
+      bn=`basename ${d}`
+      echo "#---------------------------------------"                                                                   >>${TmpFile}
+      echo "#"                                                                                                          >>${TmpFile}
+      echo "#   Unwrap the individual ${bn}.tar.gz"                                                                     >>${TmpFile}
+      echo "#   tarball to form the PREFIX_${bn}/${bn}"                                                                 >>${TmpFile}
+      echo "#   directory."                                                                                             >>${TmpFile}
+      echo "#"                                                                                                          >>${TmpFile}
+      echo "#---------------------------------------"                                                                   >>${TmpFile}
+      echo ""                                                                                                           >>${TmpFile}
+      echo "wasIn=\"\`pwd\`\" "                                                                                         >>${TmpFile}
+      echo "if [ \"X\${debugging}\" != \"Xfalse\" ]"                                                                    >>${TmpFile}
+      echo "then"                                                                                                       >>${TmpFile}
+      echo "   echo \"${scriptName}: was in \\\"\${wasIn}\\\" \" "                                                      >>${TmpFile}
+      echo "fi"                                                                                                         >>${TmpFile}
+      echo "cd \"\${PREFIX_${bn}}\" "                                                                                   >>${TmpFile}
+      echo "   if [ 1 -le \${verbosityLevel} ]"                                                                         >>${TmpFile}
+      echo "   then"                                                                                                    >>${TmpFile}
+      echo "      echo \"${scriptName}: extracting \\\"${bn}\\\" \" "                                                   >>${TmpFile}
+      echo "   fi"                                                                                                      >>${TmpFile}
+      echo "   if [ \"X\${debugging}\" != \"Xfalse\" ]"                                                                 >>${TmpFile}
+      echo "   then"                                                                                                    >>${TmpFile}
+      echo "      nowIn=\"\`pwd\`\" "                                                                                   >>${TmpFile}
+      echo "      echo \"${scriptName}: ...in \\\"\${nowIn}\\\" \" "                                                    >>${TmpFile}
+      echo "      echo \"${scriptName}:    run [tar -xf \\\"\${wasIn}/${bn}.tar.gz\\\"]\" >&2"                          >>${TmpFile}
+      echo "   fi"                                                                                                      >>${TmpFile}
+      echo "   tar -xzf \"\${wasIn}/${bn}.tar.gz\" 2>/dev/null"                                                         >>${TmpFile}
+      echo "   status=\$?"                                                                                              >>${TmpFile}
+      echo "   if [ \"X\${status}\" != \"X0\" ]"                                                                        >>${TmpFile}
+      echo "   then"                                                                                                    >>${TmpFile}
+      echo "      echo \"${scriptName}: can't unwrap \\\"${bn}\\\" \" >&2"                                              >>${TmpFile}
+      echo "      echo \"${scriptName}: ...[tar -xzf \\\"\\\${wasIn}/${bn}.tar.gz\\\"] returned exit code \${status}\" >&2" >>${TmpFile}
+      echo "      exit 1"                                                                                               >>${TmpFile}
+      echo "   fi"                                                                                                      >>${TmpFile}
+      echo "   if [ \"X\${debugging}\" != \"Xfalse\" ]"                                                                 >>${TmpFile}
+      echo "   then"                                                                                                    >>${TmpFile}
+      echo "      echo \"${scriptName}:    done\" >&2"                                                                  >>${TmpFile}
+      echo "      if [ -d \"\${PREFIX_${bn}}/${bn}\" ] "                                                                >>${TmpFile}
+      echo "      then"                                                                                                 >>${TmpFile}
+      echo "         echo \"${scriptName}: ...found directory \\\"\${PREFIX_${bn}}/${bn}\\\" \" >&2"                    >>${TmpFile}
+      echo "      else"                                                                                                 >>${TmpFile}
+      echo "         echo \"${scriptName}: ...can't find directory \\\"\${PREFIX_${bn}}/${bn}\\\" \" >&2"               >>${TmpFile}
+      echo "      fi"                                                                                                   >>${TmpFile}
+      echo "   fi"                                                                                                      >>${TmpFile}
+      echo "cd \"\${wasIn}\" "                                                                                          >>${TmpFile}
+   done
+fi
+cat << EOF17 >>${TmpFile}
+
+#-------------------------------------------------------------------------------
+#
+#  Cleanup...
+#
+#-------------------------------------------------------------------------------
+
+if [ "X\${keep}" != "Xtrue" ]
+then
+   if [ 1 -le \${verbosityLevel} ]
+   then
+      echo "${scriptName}: cleanup"
+   fi
+   if [ "X\${debugging}" != "Xfalse" ]
+   then
+      nowIn="\`pwd\`"
+      echo "${scriptName}: ...in \"\${nowIn}\" " >&2
+      echo "${scriptName}: ...run [rm -rf \"\${MyTmpDir}\"]" >&2
+   fi
+   rm -rf "\${MyTmpDir}" >/dev/null 2>&1
+   status=\$?
+   if [ "X\${status}" != "X0" ]
+   then
+      echo "${scriptName}: can't cleanup the temporary directory(=\"\${MyTmpDir}\")"
+      echo "${scriptName}: ...[rm -rf \"\${MyTmpDir}\"] returned exit code \${status}" >&2
+      exit 1
+   else
+      if [ -d "\${MyTmpDir}" ]
+      then
+         echo "${scriptName}: didn't cleanup the temporary directory(=\"\${MyTmpDir}\")"
+         echo "${scriptName}: ...[rm -rf \"\${MyTmpDir}\"] failed" >&2
+         echo "${scriptName}:    directory \"\${MyTmpDir}\" is still there" >&2
+         exit 1
+      fi
+   fi
+else
+   echo "${scriptName}: note that the temporary directory(=\"\${MyTmpDir}\") has been left intact"
+fi
+
+#-------------------------------------------------------------------------------
+#
+#  All done.
+#
+#-------------------------------------------------------------------------------
+
+if [ 1 -le \${verbosityLevel} ]
+then
+   echo "${scriptName}: all done"
+fi
+
+exit 0
+__PAYLOAD_BELOW__
+EOF17
+
+if [ 2 -le ${verbosityLevel} ]
+then
+   echo "mkinstaller:    done" >&2
+fi
+
+#-------------------------------------------------------------------------------
+#
+#  Done generating the "script" part of the script, now append the wrapper
+#  tarball (the payload) to the end to form the self-extracting script.
+#
+#-------------------------------------------------------------------------------
+
+if [ "X${addTarball}" != "Xfalse" ]
+then
+   if [ 1 -le ${verbosityLevel} ]
+   then
+      echo "mkinstaller: ...adding the payload(\"${here}/${wrapperDir}.tar\") to \"${scriptName}\" script" >&2
+   fi
+   cat "${TmpFile}" "${here}/${wrapperDir}.tar" > "${scriptName}" 2>/dev/null
+   status=$?
+   if [ "X${status}" != "X0" ]
+   then
+      echo "mkinstaller: can't form \"${scriptName}\" " >&2
+      echo "mkinstaller: ...[cat \"${TmpFile}\" \"${here}/${wrapperDir}.tar\" > \"${scriptName}\"] returned exit code ${status}" >&2
+      exit 1
+   else
+      if [ ! -f "${scriptName}" ]
+      then
+	 echo "mkinstaller: didn't form \"${scriptName}\" " >&2
+	 exit 1
+      fi
+   fi
+else
+   if [ 1 -le ${verbosityLevel} ]
+   then
+      echo "mkinstaller: ...rename to form \"${scriptName}\" script (without payload)" >&2
+   fi
+   mv "${TmpFile}" "${scriptName}" >/dev/null 2>&1
+   status=$?
+   if [ "X${status}" != "X0" ]
+   then
+      echo "mkinstaller: can't form \"${scriptName}\" " >&2
+      echo "mkinstaller: ...[mv \"${TmpFile}\" \"${scriptName}\"] returned exit code ${status}" >&2
+      exit 1
+   else
+      if [ ! -f "${scriptName}" ]
+      then
+	 echo "mkinstaller: didn't form \"${scriptName}\" " >&2
+	 exit 1
+      fi
+   fi
+fi
+chmod +x "${scriptName}" >/dev/null 2>&1
+status=$?
+if [ "X${status}" != "X0" ]
+then
+   echo "mkinstaller: can't make \"${scriptName}\" executable" >&2
+   echo "mkinstaller: ...[chmod +x \"${scriptName}\"] returned exit code ${status}" >&2
+   exit 1
+fi
+
+if [ 2 -le ${verbosityLevel} ]
+then
+   echo "mkinstaller:    done" >&2
+fi
+
+#---------------------------------------
+#
+#  Cleanup
+#
+#---------------------------------------
+
+mustCleanup=false
+if [ -f "${here}/${wrapperDir}.tar" ]
+then
+   mustCleanup=true
+   if [ "X${debugging}" != "Xfalse" ]
+   then
+      echo "mkinstaller: have \"${here}/${wrapperDir}.tar\" " >&2
+   fi
+fi
+if [ -f "${here}/${wrapperDir}.tar.gz" ]
+then
+   mustCleanup=true
+   if [ "X${debugging}" != "Xfalse" ]
+   then
+      echo "mkinstaller: have \"${here}/${wrapperDir}.tar.gz\" " >&2
+   fi
+fi
+if [ -d "${here}/${wrapperDir}" ]
+then
+   mustCleanup=true
+   if [ "X${debugging}" != "Xfalse" ]
+   then
+      echo "mkinstaller: have \"${here}/${wrapperDir}\" " >&2
+   fi
+fi
+if [ -f "${TmpFile}" ]
+then
+   mustCleanup=true
+   if [ "X${debugging}" != "Xfalse" ]
+   then
+      echo "mkinstaller: have \"${TmpFile}\" " >&2
+   fi
+fi
+if [ "X${keep}" != "Xtrue" ]
+then
+   if [ "X${debugging}" != "Xfalse" ]
+   then
+      echo "mkinstaller: not keeping" >&2
+   fi
+   if [ "X${mustCleanup}" != "Xfalse" ]
+   then
+      if [ "X${debugging}" != "Xfalse" ]
+      then
+	 echo "mkinstaller: cleanup" >&2
+      fi
+      if [ 1 -le ${verbosityLevel} ]
+      then
+	 echo "mkinstaller: ...cleanup" >&2
+      fi
+      if [ -f "${here}/${wrapperDir}.tar" ]
+      then
+	 if [ 2 -le ${verbosityLevel} ]
+	 then
+	    echo "mkinstaller:    \"${here}/${wrapperDir}.tar\" " >&2
+	 fi
+	 rm "${here}/${wrapperDir}.tar" >/dev/null 2>&1
+	 status=$?
+	 if [ "X${status}" != "X0" ]
+	 then
+	    echo "mkinstaller: can't destroy \"${here}/${wrapperDir}.tar\" " >&2
+	    echo "mkinstaller: ...[rm \"${here}/${wrapperDir}.tar\"] returned exit code ${status}" >&2
+	    exit 1
+	 else
+	    if [ -f "${here}/${wrapperDir}.tar" ]
+	    then
+	       echo "mkinstaller: didn't destroy \"${here}/${wrapperDir}.tar\" " >&2
+	       exit 1
+	    fi
+	 fi
+      fi
+      if [ -f "${here}/${wrapperDir}.tar.gz" ]
+      then
+	 if [ 2 -le ${verbosityLevel} ]
+	 then
+	    echo "mkinstaller:    \"${here}/${wrapperDir}.tar.gz\" " >&2
+	 fi
+	 rm "${here}/${wrapperDir}.tar.gz" >/dev/null 2>&1
+	 status=$?
+	 if [ "X${status}" != "X0" ]
+	 then
+	    echo "mkinstaller: can't destroy \"${here}/${wrapperDir}.tar.gz\" " >&2
+	    echo "mkinstaller: ...[rm \"${here}/${wrapperDir}.tar.gz\"] returned exit code ${status}" >&2
+	    exit 1
+	 else
+	    if [ -f "${here}/${wrapperDir}.tar.gz" ]
+	    then
+	       echo "mkinstaller: didn't destroy \"${here}/${wrapperDir}.tar.gz\" " >&2
+	       exit 1
+	    fi
+	 fi
+      fi
+      if [ -d "${here}/${wrapperDir}" ]
+      then
+	 if [ 2 -le ${verbosityLevel} ]
+	 then
+	    echo "mkinstaller:    \"${here}/${wrapperDir}\" " >&2
+	 fi
+	 rm -rf "${here}/${wrapperDir}" >/dev/null 2>&1
+	 status=$?
+	 if [ "X${status}" != "X0" ]
+	 then
+	    echo "mkinstaller: can't destroy \"${here}/${wrapperDir}\" " >&2
+	    echo "mkinstaller: ...[rm -rf \"${here}/${wrapperDir}\"] returned exit code ${status}" >&2
+	    exit 1
+	 else
+	    if [ -d "${here}/${wrapperDir}" ]
+	    then
+	       echo "mkinstaller: didn't destroy \"${here}/${wrapperDir}\" " >&2
+	       exit 1
+	    fi
+	 fi
+      fi
+      if [ -f "${TmpFile}" ]
+      then
+	 if [ 2 -le ${verbosityLevel} ]
+	 then
+	    echo "mkinstaller:    \"${TmpFile}\" " >&2
+	 fi
+	 rm "${TmpFile}" >/dev/null 2>&1
+	 status=$?
+	 if [ "X${status}" != "X0" ]
+	 then
+	    echo "mkinstaller: can't destroy \"${TmpFile}\" " >&2
+	    echo "mkinstaller: ...[rm \"${TmpFile}\"] returned exit code ${status}" >&2
+	    exit 1
+	 else
+	    if [ -f "${TmpFile}" ]
+	    then
+	       echo "mkinstaller: didn't destroy \"${TmpFile}\" " >&2
+	       exit 1
+	    fi
+	 fi
+      fi
+      if [ 2 -le ${verbosityLevel} ]
+      then
+	 echo "mkinstaller:    done" >&2
+      fi
+   fi
+else
+   if [ "X${debugging}" != "Xfalse" ]
+   then
+      echo "mkinstaller: keeping" >&2
+   fi
+fi
+
+#-------------------------------------------------------------------------------
+#
+#  All done
+#
+#-------------------------------------------------------------------------------
+
+if [ 1 -le ${verbosityLevel} ]
+then
+   echo "mkinstaller: all done" >&2
+fi
+exit 0
+
