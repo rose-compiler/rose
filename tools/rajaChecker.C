@@ -809,6 +809,7 @@ void RoseVisitor::visit ( SgNode* n)
           if (RAJA_Checker::enable_debug)
           {
             ofile<<oss.str();
+            cout<<oss.str(); // also output to std out
           }
         }
       }
@@ -840,6 +841,7 @@ void RoseVisitor::visit ( SgNode* n)
             if (RAJA_Checker::enable_debug)
             {
               ofile<<oss.str();
+              cout<<oss.str(); // also output to std out
             }
           }
         }
