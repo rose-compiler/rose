@@ -2288,7 +2288,13 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
            }
 #endif
 
-  
+       // Rasmussen 6/14/2017: Ignore SgUntyped nodes for now.  Untyped nodes are currently used in
+       // parsing Fortran as a temporary conversion mechanism to store node information before complete
+       // type resolution has been done.
+          case V_SgUntypedProgramHeaderDeclaration:
+             {
+               break;
+             }
 
           default:
              {
