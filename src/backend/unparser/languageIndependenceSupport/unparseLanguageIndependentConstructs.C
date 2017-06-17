@@ -6425,6 +6425,38 @@ static std::string reductionOperatorToString(SgOmpClause::omp_reduction_operator
   return result;
 }
 
+//! A helper function to convert dependence type to strings
+// TODO put into a better place and expose it to users.
+static std::string dependenceTypeToString(SgOmpClause::omp_dependence_type_enum ro)
+{
+  string result;
+  switch (ro)
+  {
+    case SgOmpClause::e_omp_depend_in: 
+      {
+        result = "in";
+        break;
+      }
+    case SgOmpClause::e_omp_depend_out: 
+      {
+        result = "out";
+        break;
+      }
+    case SgOmpClause::e_omp_depend_inout:   
+      {
+        result = "inout";
+        break;
+      }
+    default:
+      {
+        cerr<<"Error: unhandled operator type"<<__func__<< "():"<< ro <<endl;
+        ROSE_ASSERT(false);
+      }
+  }
+  return result;
+}
+
+
 static std::string mapOperatorToString(SgOmpClause::omp_map_operator_enum ro)
 {
   string result;
@@ -6549,11 +6581,18 @@ void UnparseLanguageIndependentConstructs::unparseOmpVariablesClause(SgOmpClause
         //reductionOperatorToString() will handle language specific issues 
         curprint(reductionOperatorToString(isSgOmpReductionClause(c)->get_operation()));
         curprint(string(" : "));
-      break;
+        break;
+      }
+    case V_SgOmpDependClause:
+      {
+        curprint(string(" depend("));
+        curprint(dependenceTypeToString(isSgOmpDependClause(c)->get_dependence_type()));
+        curprint(string(" : "));
+        break;
+      }
     case V_SgOmpLinearClause:
       curprint(string(" linear("));
       break;
-      }
     case V_SgOmpMapClause:
       {
         is_map = true;
@@ -6769,6 +6808,7 @@ void UnparseLanguageIndependentConstructs::unparseOmpClause(SgOmpClause* clause,
     case V_SgOmpLastprivateClause:
     case V_SgOmpPrivateClause:
     case V_SgOmpReductionClause:
+    case V_SgOmpDependClause:
     case V_SgOmpMapClause:
     case V_SgOmpSharedClause:
     case V_SgOmpUniformClause:
