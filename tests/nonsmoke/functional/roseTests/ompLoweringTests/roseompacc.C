@@ -7,7 +7,7 @@
 #include <string>
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 int main(int argc, char * argv[])
 {

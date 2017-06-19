@@ -11,8 +11,8 @@
 #include <sys/user.h>
 #include <sys/types.h>
 
-using namespace rose;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 
 void
 RSIM_Linux::init() {}

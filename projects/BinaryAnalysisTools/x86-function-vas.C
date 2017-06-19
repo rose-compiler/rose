@@ -7,8 +7,8 @@
 #include <cstring>
 #include <iostream>
 
-using namespace rose;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 
 int
 main(int argc, char *argv[])

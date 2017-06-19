@@ -9,7 +9,7 @@
 #include <SqlDatabase.h>
 #include <time.h>
 
-using namespace rose;
+using namespace Rose;
 using namespace Sawyer::Message::Common;
 
 struct Settings {

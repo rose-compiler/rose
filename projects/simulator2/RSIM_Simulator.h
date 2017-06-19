@@ -745,7 +745,7 @@ public:
     virtual PtRegs initialRegistersArch(RSIM_Process*) = 0;
 
     /** Architecture specific loading and initialization using native method. */
-    virtual void loadSpecimenNative(RSIM_Process*, rose::BinaryAnalysis::Disassembler*, int existingPid=-1) = 0;
+    virtual void loadSpecimenNative(RSIM_Process*, Rose::BinaryAnalysis::Disassembler*, int existingPid=-1) = 0;
 
     /** Architecture specific loading. */
     virtual void loadSpecimenArch(RSIM_Process*, SgAsmInterpretation*, const std::string &interpName) = 0;

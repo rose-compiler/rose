@@ -10,7 +10,7 @@
 #include "stringify.h"
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 extern const Compass::CheckerUsingGraphProcessing* const cycleDetectionChecker;
 

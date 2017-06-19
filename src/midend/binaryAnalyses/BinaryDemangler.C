@@ -6,7 +6,7 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <Sawyer/FileSystem.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 void
@@ -53,7 +53,7 @@ Demangler::fillCache(const std::vector<std::string> &mangledNames) {
     }
 
     if (failure != NULL) {
-        throw std::runtime_error(std::string(failure) + " in rose::BinaryAnalysis::Demangler for command \"" +
+        throw std::runtime_error(std::string(failure) + " in Rose::BinaryAnalysis::Demangler for command \"" +
                                  StringUtility::cEscape(cmd) + "\"");
     }
 }

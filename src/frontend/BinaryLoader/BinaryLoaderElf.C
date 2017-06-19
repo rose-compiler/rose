@@ -10,7 +10,7 @@
 
 using namespace Sawyer::Message;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 std::ostream& operator<<(std::ostream &o, const BinaryLoaderElf::VersionedSymbol &x) { x.print(o); return o; }
@@ -376,7 +376,7 @@ BinaryLoaderElf::find_section_by_preferred_va(SgAsmGenericHeader* header, rose_a
                 elf_section->get_section_entry()->get_sh_type() == SgAsmElfSectionTableEntry::SHT_NOBITS) {
                 /* TODO: handle .tbss correctly */
             } else if (retval != NULL) {
-                using namespace rose::StringUtility;
+                using namespace Rose::StringUtility;
                 mlog[ERROR] <<"find_section_by_preferred_va: multiple sections match " <<addrToString(va) <<"\n";
                 mlog[ERROR] <<"  section at " <<addrToString(retval->get_mapped_actual_va())
                             <<" + " <<addrToString(retval->get_mapped_size())

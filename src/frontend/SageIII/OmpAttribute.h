@@ -35,6 +35,7 @@ namespace OmpSupport
     // 16 directives as OpenMP 3.0
     e_parallel,
     e_for,
+    e_for_simd,
     e_do,
     e_workshare,
     e_sections,
@@ -59,6 +60,7 @@ namespace OmpSupport
 
     e_threadprivate,
     e_parallel_for,
+    e_parallel_for_simd,
     e_parallel_do,
     e_parallel_sections,
     e_parallel_workshare,
@@ -176,6 +178,7 @@ namespace OmpSupport
 
     // experimental SIMD directive, phlin 8/5/2013
     e_simd,
+    e_declare_simd,
     e_safelen,
     e_simdlen,
     e_uniform,
@@ -187,6 +190,11 @@ namespace OmpSupport
 
   }; //end omp_construct_enum
 
+  // A new variable to communicate the context of OpenMP parser
+  // what directive is being parsed right now. 
+  // This is useful for rare case of parsing "declare simd"
+  extern omp_construct_enum cur_omp_directive; 
+   
   //-------------------------------------------------------------------
   // some utility functions
 

@@ -4,7 +4,7 @@
 #include <BaseSemantics2.h>
 #include <Sawyer/Message.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 class Disassembler;

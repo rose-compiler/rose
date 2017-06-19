@@ -82,7 +82,7 @@ Q2. If I create a new checker, where should I put it?
     Finally, decide what namespace, class, analysis, etc. the checker
     is validating and put it in a subdirectory that reflects its scope
     in the library. E.g., functional non-smoke checkers that validate the
-    host of things in rose::BinaryAnalysis might go in
+    host of things in Rose::BinaryAnalysis might go in
     tests/nonsmoke/functional/BinaryAnalysis. Use the same
     capitalization as the source code, but beware that some
     filesystems are case insensitive.

@@ -8,7 +8,7 @@
 #include <map>
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 using namespace OmpSupport;
 using namespace SageInterface;
 // Everything should go into the name space here!!

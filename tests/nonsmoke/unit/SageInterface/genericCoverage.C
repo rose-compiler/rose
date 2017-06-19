@@ -50,7 +50,7 @@ int main ( int argc, char* argv[] )
   SgFile*       firstfile = fl[0];
   ROSE_ASSERT(firstfile!=NULL);
 
-  std::string   filename = rose::StringUtility::stripPathFromFileName (firstfile->getFileName());
+  std::string   filename = Rose::StringUtility::stripPathFromFileName (firstfile->getFileName());
   std::string   ofilename = filename + ".genericCoverage.output";
   std::ofstream ofile(ofilename.c_str());
 

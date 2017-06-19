@@ -12,7 +12,7 @@
 using namespace Sawyer::Container;
 using namespace Sawyer::Container::Algorithm;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 namespace DataFlow {
@@ -287,9 +287,9 @@ dumpDfCfg(std::ostream &out, const DfCfg &dfCfg) {
 
 // If the expression is an offset from the initial stack register then return the offset, else nothing.
 static Sawyer::Optional<int64_t>
-isStackAddress(const rose::BinaryAnalysis::SymbolicExpr::Ptr &expr,
+isStackAddress(const Rose::BinaryAnalysis::SymbolicExpr::Ptr &expr,
                const BaseSemantics::SValuePtr &initialStackPointer, SMTSolver *solver) {
-    using namespace rose::BinaryAnalysis::InstructionSemantics2;
+    using namespace Rose::BinaryAnalysis::InstructionSemantics2;
 
     if (!initialStackPointer)
         return Sawyer::Nothing();
@@ -323,7 +323,7 @@ isStackAddress(const rose::BinaryAnalysis::SymbolicExpr::Ptr &expr,
 
 StackVariables
 findStackVariables(const BaseSemantics::RiscOperatorsPtr &ops, const BaseSemantics::SValuePtr &initialStackPointer) {
-    using namespace rose::BinaryAnalysis::InstructionSemantics2;
+    using namespace Rose::BinaryAnalysis::InstructionSemantics2;
     ASSERT_not_null(ops);
     ASSERT_not_null(initialStackPointer);
     BaseSemantics::StatePtr state = ops->currentState();

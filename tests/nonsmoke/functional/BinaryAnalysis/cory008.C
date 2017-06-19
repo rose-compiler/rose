@@ -15,8 +15,8 @@ static const char *description = "Parses the specimen given on the command line 
 #include <Partitioner2/Engine.h>
 #include <Sawyer/Map.h>
 
-using namespace rose;
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
+using namespace Rose;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 // List of integers per heading, where heading is just some arbitrary title string
 typedef Sawyer::Container::Map<std::string /*heading*/, std::vector<SgAsmIntegerValueExpression*> > IntegersByHeading;

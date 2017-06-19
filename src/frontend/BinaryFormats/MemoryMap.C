@@ -19,15 +19,15 @@
 
 // This is the other half of the BOOST_CLASS_EXPORT_KEY from the header file.
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-BOOST_CLASS_EXPORT_IMPLEMENT(rose::BinaryAnalysis::MemoryMap::AllocatingBuffer);
-BOOST_CLASS_EXPORT_IMPLEMENT(rose::BinaryAnalysis::MemoryMap::MappedBuffer);
-BOOST_CLASS_EXPORT_IMPLEMENT(rose::BinaryAnalysis::MemoryMap::NullBuffer);
-BOOST_CLASS_EXPORT_IMPLEMENT(rose::BinaryAnalysis::MemoryMap::StaticBuffer);
+BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::MemoryMap::AllocatingBuffer);
+BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::MemoryMap::MappedBuffer);
+BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::MemoryMap::NullBuffer);
+BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::MemoryMap::StaticBuffer);
 #endif
 
-using namespace rose::Diagnostics;
+using namespace Rose::Diagnostics;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 

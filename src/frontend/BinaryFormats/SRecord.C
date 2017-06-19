@@ -6,9 +6,9 @@
 #include "integerOps.h"
 #include <boost/foreach.hpp>
 
-using namespace rose::Diagnostics;
+using namespace Rose::Diagnostics;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 std::ostream&

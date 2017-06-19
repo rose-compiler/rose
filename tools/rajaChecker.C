@@ -873,7 +873,7 @@ static void initDebugOutputFile(SgProject* project)
   SgFile* firstfile = fl[0];
   ROSE_ASSERT (firstfile!=NULL);
 
-  string filename = rose::StringUtility::stripPathFromFileName (firstfile->getFileName());
+  string filename = Rose::StringUtility::stripPathFromFileName (firstfile->getFileName());
   string ofilename = filename+".output";
   ofile.open(ofilename.c_str());
 }

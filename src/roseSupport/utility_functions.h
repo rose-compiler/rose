@@ -132,7 +132,7 @@ struct generateDOTExtendedforMultipleFile ;
 // src/util/stringSupport/string_functions.h:223: Error: Previous declaration of 'getPathFromFileName'
 // So exclude this code below.
 
-namespace rose
+namespace Rose
    {
   // This class serves as a catch all location for functions of general use within ROSE
   // we have added variables that are set using command line parameters to avoid the use of

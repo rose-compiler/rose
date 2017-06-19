@@ -14,7 +14,7 @@
 #include <string>
 #include <vector>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /** Various tools for data-flow analysis.
@@ -54,7 +54,7 @@ namespace BinaryAnalysis {
  *   instance, one can use abstract locations (@ref AbstractLocation) to represent variables. An abstract location is either a
  *   register or a memory address.  Registers are represented by a @ref RegisterDescriptor while addresses are represented by a
  *   semantic value in some user-specified domain (often symbolic, see @ref
- *   rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValue).
+ *   Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValue).
  *
  *  @section s2 Prerequisites for the core data flow-engine
  *
@@ -77,7 +77,7 @@ public:
      *
      *  A variable in binary data-flow analysis is an abstract location referencing either a register or memory cell.  The
      *  address for memory locations is an arbitrary semantic expression (@ref
-     *  rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValue). */
+     *  Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValue). */
     typedef AbstractLocation Variable;
 
     /** List of variables. */
@@ -122,7 +122,7 @@ public:
 
     /** Initialize diagnostics.
      *
-     *  This is called by rose::Diagnostics::initialize. */
+     *  This is called by Rose::Diagnostics::initialize. */
     static void initDiagnostics();
 
 public:

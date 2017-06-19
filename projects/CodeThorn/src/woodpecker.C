@@ -124,12 +124,12 @@ void printCodeStatistics(SgNode* root) {
 int main(int argc, char* argv[]) {
   ROSE_INITIALIZE;
 
-  rose::Diagnostics::mprefix->showProgramName(false);
-  rose::Diagnostics::mprefix->showThreadId(false);
-  rose::Diagnostics::mprefix->showElapsedTime(false);
+  Rose::Diagnostics::mprefix->showProgramName(false);
+  Rose::Diagnostics::mprefix->showThreadId(false);
+  Rose::Diagnostics::mprefix->showElapsedTime(false);
 
   Sawyer::Message::Facility logger;
-  rose::Diagnostics::initAndRegister(&logger, "Woodpecker");
+  Rose::Diagnostics::initAndRegister(&logger, "Woodpecker");
 
   try {
     if(argc==1) {

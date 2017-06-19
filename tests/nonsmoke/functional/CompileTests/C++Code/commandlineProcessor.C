@@ -14,7 +14,7 @@
 
 #include "sageCommonSourceHeader.h"
 
-using namespace rose;
+using namespace Rose;
 
 extern an_il_header il_header;
 
@@ -69,7 +69,7 @@ main ( int argc, char* argv[] )
           CommandlineProcessing::isOption(argc,argv,"--","(h|help)",true) )
         {
           printf ("\nROSE (pre-release alpha version: %s) \n",VERSION);
-          rose::usage(0);
+          Rose::usage(0);
           exit(0);
         }
 

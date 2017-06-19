@@ -143,6 +143,9 @@ if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
 #	../../../testTranslator -i $(@:.o=.f90.aterm)
 #	../../../testTranslator -rose:experimental_fortran_frontend -c $(srcdir)/$(@:.o=.f90)
 	../../../testTranslator -rose:experimental_fortran_frontend -rose:experimental_fortran_frontend_OFP_test -c $(srcdir)/$(@:.o=.f90)
+## make sure output file is not empty
+#
+	@test -n "$$(find rose_$(@:.o=.f90) -size +0c)"
 endif
 
 junk.ast-info.pp: $(srcdir)/junk.f90 $(top_builddir)/src/3rdPartyLibraries/experimental-fortran-parser/Fortran.tbl

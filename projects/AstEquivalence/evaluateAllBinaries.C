@@ -16,7 +16,7 @@
 using namespace std;
 using namespace sqlite3x;
 using namespace boost;
-using namespace rose;
+using namespace Rose;
 
 using namespace boost::filesystem;
 using namespace boost::program_options;

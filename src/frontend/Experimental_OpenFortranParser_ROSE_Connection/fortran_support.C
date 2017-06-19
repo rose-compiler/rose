@@ -18,7 +18,7 @@
 #include "UntypedTraversal.h"
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 #define DEBUG_ROSE_EXPERIMENTAL 0
 
@@ -109,6 +109,9 @@ experimental_openFortranParser_main(int argc, char **argv)
 
      commandString += "-i ";
      commandString += filenameWithPath;
+
+  // Add source code location information to output
+     commandString += " --preserve-locations";
 
 #if USE_STRATEGO_TRANSFORMATION
      string path_to_fortran_stratego_transformations_directory

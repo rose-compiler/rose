@@ -14,7 +14,7 @@
 #include <time.h>
 #include <unistd.h>
 
-using namespace rose;
+using namespace Rose;
 
 #define MAX_VERTICES (2*1000*1000)
 #define MAX_EDGES (4*MAX_VERTICES)

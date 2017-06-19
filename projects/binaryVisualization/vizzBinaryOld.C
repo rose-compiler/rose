@@ -12,7 +12,7 @@ using namespace std;
 #include <math.h>
 #include "helper.h"
 
-using namespace rose;
+using namespace Rose;
 
 
 #define DELTA 5

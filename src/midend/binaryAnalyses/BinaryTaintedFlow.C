@@ -3,7 +3,7 @@
 #include "stringify.h"
 #include <sstream>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 Sawyer::Message::Facility TaintedFlow::mlog;
@@ -13,7 +13,7 @@ TaintedFlow::initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        rose::Diagnostics::initAndRegister(&mlog, "rose::BinaryAnalysis::TaintedFlow");
+        Rose::Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::TaintedFlow");
     }
 }
 

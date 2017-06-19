@@ -18,7 +18,7 @@
 #include <libgen.h>             /* basename(), dirame()               */
 
 using namespace std;
-using namespace rose::StringUtility;
+using namespace Rose::StringUtility;
 
 
 void 

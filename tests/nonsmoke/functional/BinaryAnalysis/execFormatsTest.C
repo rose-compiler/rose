@@ -12,7 +12,7 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #include "rose.h"
 #include "stringify.h"
 
-using namespace rose;
+using namespace Rose;
 
 /* Check that all nodes have the correct parent.  Not thread safe. */
 struct AstChecker: public AstPrePostProcessing {

@@ -19,7 +19,7 @@ static void setFortranNumericLabel(SgStatement* stmt, int label_value, SgLabelSy
       }
    ROSE_ASSERT (label_scope != NULL);
 
-   SgName label_name(rose::StringUtility::numberToString(label_value));
+   SgName label_name(Rose::StringUtility::numberToString(label_value));
    SgLabelSymbol * symbol = label_scope->lookup_label_symbol (label_name);
    if (symbol == NULL)
       {
@@ -782,6 +782,10 @@ UntypedConverter::initialize_global_scope(SgSourceFile* file)
     ROSE_ASSERT(globalScope != NULL);
     ROSE_ASSERT(globalScope->get_parent() != NULL);
 
+#if DEBUG_UNTYPED_CONVERTER
+    std::cout << "UntypedConverter::initialize_global_scope: " << file->getFileName() << std::endl;
+#endif
+
  // Fortran is case insensitive
     globalScope->setCaseInsensitive(true);
 
@@ -816,6 +820,10 @@ UntypedConverter::setSourcePositionUnknown(SgLocatedNode* locatedNode)
 {
   // This function sets the source position to be marked as not available (since we don't have token information)
   // These nodes WILL be unparsed in the code generation phase.
+
+#if DEBUG_UNTYPED_CONVERTER
+     printf ("UntypedConverter::setSourcePositionUnknown: locatedNode = %p = %s \n",locatedNode,locatedNode->class_name().c_str());
+#endif
 
   // The SgLocatedNode has both a startOfConstruct and endOfConstruct source position.
      ROSE_ASSERT(locatedNode != NULL);

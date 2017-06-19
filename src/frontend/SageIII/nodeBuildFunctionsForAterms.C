@@ -6059,6 +6059,14 @@ SgOmpFlushStatement* SgOmpFlushStatement::build_node_from_nonlist_children ( Sg_
      return returnNode;
    }
 
+SgOmpDeclareSimdStatement* SgOmpDeclareSimdStatement::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct )
+   {
+     SgOmpDeclareSimdStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
 
 /* #line 5940 "../../../src/frontend/SageIII//Cxx_GrammarAtermNodeBuildFunctions.C" */
 
@@ -6343,6 +6351,18 @@ SgOmpForStatement* SgOmpForStatement::build_node_from_nonlist_children ( Sg_File
 
      return returnNode;
    }
+SgOmpForSimdStatement* SgOmpForSimdStatement::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgStatement* body )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgOmpForSimdStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgStatement* body): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgOmpForSimdStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
 
 
 /* #line 6156 "../../../src/frontend/SageIII//Cxx_GrammarAtermNodeBuildFunctions.C" */

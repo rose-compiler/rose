@@ -5,7 +5,7 @@
 #include <Sawyer/Map.h>
 #include <boost/serialization/access.hpp>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /** Holds a set of registers without regard for register boundaries.

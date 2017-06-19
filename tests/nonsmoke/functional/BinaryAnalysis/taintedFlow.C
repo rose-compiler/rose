@@ -84,8 +84,8 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #include <Sawyer/Map.h>
 #include <Sawyer/Message.h>
 
-using namespace rose;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 using namespace Sawyer::Message::Common;
 
 // Diagnostic output for this tool; initialized in main()
@@ -146,7 +146,7 @@ static void analyze(SgAsmFunction *specimen, TaintedFlow::Approximation approxim
     // location -- symbolic values are instantiated as variables when needed.
     //
     // So we create a symbolic domain and link it into an instruction dispatcher that knows about Intel x86 instructions.  The
-    // rose::BinaryAnalysis::DataFlow object provides the API for discovering intra-function or intra-block data flows.
+    // Rose::BinaryAnalysis::DataFlow object provides the API for discovering intra-function or intra-block data flows.
     BaseSemantics::RiscOperatorsPtr symbolicOps = SymbolicSemantics::RiscOperators::instance(regdict);
     DispatcherX86Ptr cpu = DispatcherX86::instance(symbolicOps, 32); // assuming the specimen is x86-based
 #if 0
@@ -155,7 +155,7 @@ static void analyze(SgAsmFunction *specimen, TaintedFlow::Approximation approxim
 #endif
     BaseSemantics::SValuePtr esp_0 = symbolicOps->readRegister(cpu->REG_ESP); // initial value of stack pointer
 
-    // The rose::BinaryAnalysis::TaintedFlow class encapsulates all the methods we need to perform tainted flow analysis.
+    // The Rose::BinaryAnalysis::TaintedFlow class encapsulates all the methods we need to perform tainted flow analysis.
     TaintedFlow taintAnalysis(cpu);
     taintAnalysis.approximation(approximation);
 #if defined(ROSE_HAVE_LIBYICES) || defined(ROSE_YICES)
@@ -229,8 +229,8 @@ int main(int argc, char *argv[])
 {
     // Configure diagnostic output
     ROSE_INITIALIZE;
-    rose::Diagnostics::initAndRegister(&::mlog, "taintedFlow");
-    rose::Diagnostics::mfacilities.control("taintedFlow(>=where)"); // the default
+    Rose::Diagnostics::initAndRegister(&::mlog, "taintedFlow");
+    Rose::Diagnostics::mfacilities.control("taintedFlow(>=where)"); // the default
 
     // Describe the command-line
     using namespace Sawyer::CommandLine;

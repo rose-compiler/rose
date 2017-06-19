@@ -1,7 +1,7 @@
 #include <sage3basic.h>
 #include <BinaryUnparserPowerpc.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Unparser {
 
