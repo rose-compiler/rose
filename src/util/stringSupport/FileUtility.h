@@ -5,7 +5,7 @@
 
 #include <StringUtility.h>
 
-namespace rose {
+namespace Rose {
 
 // [Robb P Matzke 2016-06-16]: These file utilities were all originally part of StringUtility. I'm leaving them here for now
 // just so I don't need to make so many changes to projects that use these, but you should expect these to be moved sometime in
@@ -16,7 +16,7 @@ namespace StringUtility {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // This part of the StringUtility API deals with file names and should be moved to some other name space. In particular, it
 // provides no definitions for "path", "filename", "extension", etc. and many of these functions won't work properly on a
-// non-POSIX system. Therefore, consider using rose::FileSystem, which is mostly a thin wrapper around boost::filesystem. The
+// non-POSIX system. Therefore, consider using Rose::FileSystem, which is mostly a thin wrapper around boost::filesystem. The
 // boost::filesystem documentation has good definitions for what the various terms should mean and works on non-POSIX file
 // systems.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -130,7 +130,7 @@ ROSE_UTIL_API std::string fileNameSuffix(const std::string &fileName);
 //   1. It appears to not be used anywhere in ROSE, projects, tests, or documentation.
 //   2. The name is spelled wrong (should be "findFile")
 //   3. File operations should not be in StringUtility since they have nothing to do with string manipulation
-//   4. rose::FileSystem::findNames does something similar.
+//   4. Rose::FileSystem::findNames does something similar.
 
 /** Find file names non-recursively.
  *
@@ -141,7 +141,7 @@ ROSE_UTIL_API std::string fileNameSuffix(const std::string &fileName);
  *  This function does not work for non-POSIX systems. Consider using boost::filesystem instead, which has a directory iterator
  *  that works for non-POSIX systems also. */
 ROSE_UTIL_API std::list<std::string> findfile(std::string patternString, std::string pathString)
-    SAWYER_DEPRECATED("use rose::FileSystem functions instead"); // ROSE_DEPRECATED is not defined here
+    SAWYER_DEPRECATED("use Rose::FileSystem functions instead"); // ROSE_DEPRECATED is not defined here
 
 /* File name location.
  *

@@ -26,17 +26,17 @@
 // This class is used to cache files read in as part of the processing of a grammar
 class GrammarFile {
      public:
-       GrammarFile( std::string, const rose::StringUtility::FileWithLineNumbers inputBuffer);
+       GrammarFile( std::string, const Rose::StringUtility::FileWithLineNumbers inputBuffer);
        GrammarFile( const GrammarFile & X );
        ~GrammarFile();
        GrammarFile& operator=( const GrammarFile & X );
        void setFilename( const std::string& inputFilename );
        std::string getFilename() const;
-       void setBuffer ( const rose::StringUtility::FileWithLineNumbers& inputBuffer );
-       const rose::StringUtility::FileWithLineNumbers& getBuffer() const;
+       void setBuffer ( const Rose::StringUtility::FileWithLineNumbers& inputBuffer );
+       const Rose::StringUtility::FileWithLineNumbers& getBuffer() const;
      private:
        std::string filename;
-       rose::StringUtility::FileWithLineNumbers buffer;
+       Rose::StringUtility::FileWithLineNumbers buffer;
 
     };
 #endif

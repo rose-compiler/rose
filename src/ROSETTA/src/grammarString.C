@@ -10,7 +10,7 @@
 #include <sstream>
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 // ################################################################
 // #            GrammarString Member Functions                    #

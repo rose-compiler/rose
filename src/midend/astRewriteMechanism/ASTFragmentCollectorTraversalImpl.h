@@ -497,7 +497,7 @@ evaluateInheritedAttribute (
           SgFile* file = dynamic_cast<SgFile*>(astNode);
           ROSE_ASSERT(file != NULL);
 
-       // returnAttribute.currentFileName             = rose::getFileName(file);
+       // returnAttribute.currentFileName             = Rose::getFileName(file);
           returnAttribute.currentFileName             = file->getFileName();
           returnAttribute.treeFragmentFromCorrectFile = true;
         }
@@ -515,8 +515,8 @@ evaluateInheritedAttribute (
        // figure that out, except to test the symbol tables for declarations of the same name.
           if (statementNode != NULL)
              {
-            // DQ (5/26/2005): Modified to use minimalist Sage III interface (trying to remove several rose::xxx() member functions)
-            // std::string nodeFileName = rose::getFileName(statementNode);
+            // DQ (5/26/2005): Modified to use minimalist Sage III interface (trying to remove several Rose::xxx() member functions)
+            // std::string nodeFileName = Rose::getFileName(statementNode);
                std::string nodeFileName = statementNode->get_file_info()->get_filename();
 #if 0
                printf ("nodeFileName = %s returnAttribute.currentFileName = %s \n",
@@ -583,12 +583,12 @@ evaluateSynthesizedAttribute (
      if (isSgStatement(astNode) != NULL)
         {
           SgStatement* statement = isSgStatement(astNode);
-          printf ("rose::getLineNumber(statement) = %d \n",rose::getLineNumber(statement));
+          printf ("Rose::getLineNumber(statement) = %d \n",Rose::getLineNumber(statement));
           printf ("statement->sage_class_name() = %s \n",statement->sage_class_name());
           printf ("statement->unparseToString() = %s \n",statement->unparseToString().c_str());
 
        // We can't assert this since a SgGlobal is defined to have a linenumber == 0
-       // ROSE_ASSERT (rose::getLineNumber(statement) > 0);
+       // ROSE_ASSERT (Rose::getLineNumber(statement) > 0);
         }
 #endif
 
