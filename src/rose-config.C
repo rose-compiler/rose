@@ -32,7 +32,7 @@ static const char *description =
     "@named{prefix}{ROSE installation prefix. This is the name of the directory that includes \"lib\" and \"include\" "
     "subdirectories (among others) where the ROSE library and its headers are installed.}";
 
-#include <rose.h>
+#include <rose.h>                                       // POLICY_OK -- this is not a ROSE library source file
 #include <Diagnostics.h>
 #include <rose_getline.h>
 
