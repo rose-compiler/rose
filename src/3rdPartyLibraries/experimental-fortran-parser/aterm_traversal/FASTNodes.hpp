@@ -148,12 +148,17 @@ class UseStmt : public Statement
  */
 class Procedure : public FASTNode
 {
+ public:
+   Procedure(PosInfo pos) : FASTNode(pos)
+   {
+   }
 };
 
 class MainProgram : public Procedure
 {
  public:
-   MainProgram(ProgramStmt* program, Scope* scope, ContainsStmt* contains, EndProgramStmt* end)
+   MainProgram(ProgramStmt* program, Scope* scope, ContainsStmt* contains, EndProgramStmt* end, PosInfo pos)
+      : Procedure(pos)
      {
         pProgramStmt = program;
         pScope = scope;

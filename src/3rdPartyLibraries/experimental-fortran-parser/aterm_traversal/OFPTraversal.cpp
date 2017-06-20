@@ -23,6 +23,17 @@ static FAST::PosInfo getLocation(ATerm term)
 }
 
 
+// This version can be used to drop eol (EndOfLine) location
+//
+static FAST::PosInfo getLocation(ATerm startTerm, ATerm endTerm)
+{
+   FAST::PosInfo start = getLocation(startTerm);
+   FAST::PosInfo   end = getLocation(  endTerm);
+   
+   return FAST::PosInfo(start.getStartLine(),start.getStartCol(),end.getEndLine(),end.getEndCol());
+}
+
+
 //========================================================================================
 // Program
 //----------------------------------------------------------------------------------------
@@ -138,7 +149,8 @@ ATbool Traversal::traverse_MainProgram(ATerm term, FAST::MainProgram** program)
     } else return ATfalse;
   } else return ATfalse;
 
-  *program = new FAST::MainProgram(program_stmt, local_scope, NULL/*contains*/, end_program_stmt);
+  *program = new FAST::MainProgram(program_stmt, local_scope,
+                                   NULL/*contains*/, end_program_stmt, getLocation(term));
 
   return ATtrue;
 }
@@ -169,7 +181,7 @@ ATbool Traversal::traverse_OptProgramStmt(ATerm term, FAST::ProgramStmt** var_Op
       // MATCHED eos string
     } else return ATfalse;
 
-    *var_OptProgramStmt = new FAST::ProgramStmt(label, name, eos, getLocation(term));
+    *var_OptProgramStmt = new FAST::ProgramStmt(label, name, eos, getLocation(term,term2));
   }
   else if (ATmatch(term, "no-program-stmt()")) {
      // MATCHED no-program-stmt
@@ -206,7 +218,7 @@ ATbool Traversal::traverse_EndProgramStmt(ATerm term, FAST::EndProgramStmt** var
     } else return ATfalse;
   } else return ATfalse;
 
-  *var_EndProgramStmt = new FAST::EndProgramStmt(label, name, eos, getLocation(term));
+  *var_EndProgramStmt = new FAST::EndProgramStmt(label, name, eos, getLocation(term,term2));
 
   return ATtrue;
 }
@@ -419,7 +431,7 @@ ATbool Traversal::traverse_ListStarOfSpecAndExecConstruct(ATerm term, FAST::Scop
 
    ATermList tail = (ATermList) ATmake("<term>", term);
    while (! ATisEmpty(tail)) {
-      ATerm head = ATgetFirst(tail);
+      /* TODO: ATerm head = ATgetFirst(tail); */
       tail = ATgetNext(tail);
 
       if (seen_first_exec_stmt == false) {
