@@ -315,9 +315,22 @@ void Analyzer::printStatusMessage(bool forceDisplay) {
        <<estateWorkListCurrentSize
        <<"/"<<getIterations()<<"-"<<getApproximatedIterations()
       ;
+    ss<<" "<<analyzerStateToString();
     ss<<endl;
     printStatusMessage(ss.str());
   }
+}
+
+string Analyzer::analyzerStateToString() {
+  stringstream ss;
+  ss<<"isPrec:"<<isPrecise();
+  ss<<" ";
+  ss<<"TopMode:"<<_globalTopifyMode;
+  ss<<" ";
+  ss<<"RBin:"<<boolOptions["rers-binary"];
+  ss<<" ";
+  ss<<"incSTGReady:"<<isIncompleteSTGReady();
+  return ss.str();
 }
 
 bool Analyzer::isInWorkList(const EState* estate) {
@@ -1803,15 +1816,10 @@ void Analyzer::runSolver11() {
     reachabilityResults.finishedReachability(isPrecise(),!isComplete);
     transitionGraph.setIsComplete(!isComplete);
   } else {
-    bool complete;
-    if(boolOptions["set-stg-incomplete"]) {
-      complete=false;
-    } else {
-      complete=true;
-    }
-    reachabilityResults.finishedReachability(isPrecise(),complete);
+    bool tmpcomplete=true;
+    reachabilityResults.finishedReachability(isPrecise(),tmpcomplete);
     printStatusMessage(true);
-    transitionGraph.setIsComplete(complete);
+    transitionGraph.setIsComplete(tmpcomplete);
     logger[TRACE]<< "analysis finished (worklist is empty)."<<endl;
   }
   transitionGraph.setIsPrecise(isPrecise());
@@ -2066,15 +2074,10 @@ void Analyzer::runSolver12() {
     reachabilityResults.finishedReachability(isPrecise(),!isComplete);
     transitionGraph.setIsComplete(!isComplete);
   } else {
-    bool complete;
-    if(boolOptions["set-stg-incomplete"]) {
-      complete=false;
-    } else {
-      complete=true;
-    }
-    reachabilityResults.finishedReachability(isPrecise(),complete);
+    bool tmpcomplete=true;
+    reachabilityResults.finishedReachability(isPrecise(),tmpcomplete);
     printStatusMessage(true);
-    transitionGraph.setIsComplete(complete);
+    transitionGraph.setIsComplete(tmpcomplete);
     logger[TRACE]<< "analysis finished (worklist is empty)."<<endl;
   }
   transitionGraph.setIsPrecise(isPrecise());

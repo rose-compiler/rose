@@ -365,7 +365,6 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
     ("semantic-fold",po::value< string >(),"compute semantically folded state transition graph [=yes|no]")
     ("semantic-fold-threshold",po::value< int >(),"Set threshold with <arg> for semantic fold operation (experimental)")
     ("post-semantic-fold",po::value< string >(),"compute semantically folded state transition graph only after the complete transition graph has been computed. [=yes|no]")
-    ("set-stg-incomplete", po::value< string >(), "set to true if the generated STG will not contain all possible execution paths (e.g. if only a subset of the input values is used). [=yes|no]")
     ("trace-file", po::value< string >(), "generate STG computation trace [=filename]")
     ("explicit-arrays",po::value< string >(),"represent all arrays ecplicitly in every state.")
     ;
@@ -576,7 +575,6 @@ BoolOptions& parseBoolOptions(int argc, char* argv[]) {
   boolOptions.registerOption("cegpra-ltl-all",false);
   boolOptions.registerOption("refinement-constraints-demo",false);
   boolOptions.registerOption("determine-prefix-depth",false);
-  boolOptions.registerOption("set-stg-incomplete",false);
   boolOptions.registerOption("explicit-arrays",true); // MS (2017-06-09): enabled by default
 
   boolOptions.registerOption("keep-systems",true);

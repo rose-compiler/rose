@@ -96,6 +96,7 @@ namespace CodeThorn {
     void printStatusMessage(string s);
     void printStatusMessageLine(string s);
     void printStatusMessage(string s, bool newLineFlag);
+    std::string analyzerStateToString();
     static string lineColSource(SgNode* node);
     void recordTransition(const EState* sourceEState, Edge e, const EState* targetEState);
     void printStatusMessage(bool);
