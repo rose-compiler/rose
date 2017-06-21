@@ -327,15 +327,10 @@ void Analyzer::runSolver5() {
     reachabilityResults.finishedReachability(isPrecise(),!isComplete);
     transitionGraph.setIsComplete(!isComplete);
   } else {
-    bool complete;
-    if(boolOptions["set-stg-incomplete"]) {
-      complete=false;
-    } else {
-      complete=true;
-    }
-    reachabilityResults.finishedReachability(isPrecise(),complete);
+    bool tmpcomplete=true;
+    reachabilityResults.finishedReachability(isPrecise(),tmpcomplete);
     printStatusMessage(true);
-    transitionGraph.setIsComplete(complete);
+    transitionGraph.setIsComplete(tmpcomplete);
     logger[TRACE]<< "analysis finished (worklist is empty)."<<endl;
   }
   transitionGraph.setIsPrecise(isPrecise());
