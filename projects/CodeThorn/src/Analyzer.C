@@ -709,7 +709,6 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
           int elemIndex=0;
           SgExpressionPtrList& initList=SgNodeHelper::getInitializerListOfAggregateDeclaration(decl);
           variableIdMapping.setNumberOfElements(initDeclVarId,initList.size());
-          // TODO: determine element type of array type
           SgArrayType* arrayType=isSgArrayType(initializer->get_type());
           ROSE_ASSERT(arrayType);
           SgType* arrayElementType=arrayType->get_base_type();
@@ -759,14 +758,18 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
         }
       } else {
         // no initializer (model default cases)
-        
-        ROSE_ASSERT(initializer==nullptr);
-        // set type info for initDeclVarId: TODO
-        variableIdMapping.setNumberOfElements(initDeclVarId,1); // single variable
-        SgType* variableType=initName->get_type();
-        //cout<<"DEBUG: initName:"<<initName->unparseToString();
-        setElementSize(initDeclVarId,variableType);
-        //cout<<" elemSize:"<<variableIdMapping.getElementSize(initDeclVarId)<<endl;
+        ROSE_ASSERT(initName!=nullptr);
+        SgArrayType* arrayType=isSgArrayType(initName->get_type());
+        if(arrayType) {
+          SgType* arrayElementType=arrayType->get_base_type();
+          setElementSize(initDeclVarId,arrayElementType);
+          variableIdMapping.setNumberOfElements(initDeclVarId,variableIdMapping.getArrayElementCount(arrayType));
+        } else {
+          // set type info for initDeclVarId
+          variableIdMapping.setNumberOfElements(initDeclVarId,1); // single variable
+          SgType* variableType=initName->get_type();
+          setElementSize(initDeclVarId,variableType);
+        }
         
         PState newPState=*currentEState.pstate();
         if(variableIdMapping.hasArrayType(initDeclVarId)) {
