@@ -172,7 +172,13 @@ void Analyzer::setExternalErrorFunctionName(std::string externalErrorFunctionNam
 }
 
 bool Analyzer::isPrecise() {
-  return !(isActiveGlobalTopify()) && boolOptions["explicit-arrays"]==true;
+  if (isActiveGlobalTopify()) {
+    return false;
+  }
+  if (boolOptions["explicit-arrays"]==false && !boolOptions["rers-binary"]) {
+    return false;
+  }
+  return true;
 }
 
 bool Analyzer::isInExplicitStateMode() {
@@ -180,11 +186,15 @@ bool Analyzer::isInExplicitStateMode() {
 }
 
 bool Analyzer::isIncompleteSTGReady() {
-  if(_maxTransitions==-1 && _maxIterations==-1)
+  if(_maxTransitions==-1 && _maxIterations==-1 && _maxBytes==-1 && _maxSeconds==-1)
     return false;
   else if ((_maxTransitions!=-1) && ((long int) transitionGraph.size()>=_maxTransitions))
     return true;
   else if ((_maxIterations!=-1) && ((long int) getIterations() > _maxIterations))
+    return true;
+  else if ((_maxBytes!=-1) && ((long int) getPhysicalMemorySize() > _maxBytes))
+    return true;
+  else if ((_maxSeconds!=-1) && ((long int) analysisRunTimeInSeconds() > _maxSeconds))
     return true;
   else // at least one maximum mode is active, but the corresponding limit has not yet been reached
     return false;
@@ -478,7 +488,9 @@ void Analyzer::eventGlobalTopifyTurnedOn() {
     nt++;
   }
 
-  logger[TRACE] << "switched to static analysis (approximating "<<n<<" of "<<nt<<" variables with top-conversion)."<<endl;
+  if(getOptionStatusMessages()) {
+    cout << "switched to static analysis (approximating "<<n<<" of "<<nt<<" variables with top-conversion)."<<endl;
+  }
   //switch to the counter for approximated loop iterations if currently in a mode that counts iterations
   if (getExplorationMode()==EXPL_LOOP_AWARE || getExplorationMode()==EXPL_LOOP_AWARE_SYNC) {
 #pragma omp atomic
@@ -1835,8 +1847,8 @@ void Analyzer::runSolver12() {
     reachabilityResults.init(getNumberOfErrorLabels()); // set all reachability results to unknown
   }
   logger[INFO]<<"number of error labels: "<<reachabilityResults.size()<<endl;
-  size_t prevStateSetSizeDisplay=0; // force immediate report at start
-  size_t prevStateSetSizeResource=0; // force immediate report at start
+  size_t prevStateSetSizeDisplay=0; 
+  size_t prevStateSetSizeResource=0;
   int threadNum;
   int workers=_numberOfThreadsToUse;
   vector<bool> workVector(_numberOfThreadsToUse);
@@ -1887,61 +1899,34 @@ void Analyzer::runSolver12() {
 	  isActiveGlobalTopify();
 	}
       }
-
-      // logger[DEBUG]<<"running : WL:"<<estateWorkListCurrent->size()<<endl;
       unsigned long estateSetSize;
+      // print status message if required
+      if (getOptionStatusMessages() && _displayDiff) {
 #pragma omp critical(HASHSET)
-      {
-	estateSetSize = estateSet.size();
+	{
+	  estateSetSize = estateSet.size();
+	}
+	if(threadNum==0 && (estateSetSize>(prevStateSetSizeDisplay+_displayDiff))) {
+	  printStatusMessage(true);
+	  prevStateSetSizeDisplay=estateSetSize;
+	}
       }
-      if(threadNum==0 && _displayDiff && (estateSetSize>(prevStateSetSizeDisplay+_displayDiff))) {
-        printStatusMessage(true);
-        prevStateSetSizeDisplay=estateSetSize;
-      }
-
-      if (args.count("max-memory") || args.count("max-memory-forced-top")) {
+      // switch to topify mode or terminate analysis if resource limits are exceeded
+      if (_maxBytes != -1 || _maxBytesForcedTop != -1 || _maxSeconds != -1 || _maxSecondsForcedTop != -1
+	  || _maxTransitions != -1 || _maxTransitionsForcedTop != -1 || _maxIterations != -1 || _maxIterationsForcedTop != -1) {
 #pragma omp critical(HASHSET)
 	{
 	  estateSetSize = estateSet.size();
 	}
 	if(threadNum==0 && _resourceLimitDiff && (estateSetSize>(prevStateSetSizeResource+_resourceLimitDiff))) {
-	  if (args.count("max-memory")) {
-	    if (getPhysicalMemorySize() >= _maxBytes) {
-#pragma omp critical(ESTATEWL)
-              {
-                terminate = true;
-	 	terminatedWithIncompleteStg = true;
-	      }
-            }
-	  } else if (args.count("max-memory-forced-top")){
+	  if (isIncompleteSTGReady()) {
 #pragma omp critical(ESTATEWL)
 	    {
-	      isActiveGlobalTopify();
-	    }
+	      terminate = true;
+	      terminatedWithIncompleteStg = true;
+	    }	  
 	  }
-	  prevStateSetSizeResource=estateSetSize;
-	}
-      }
-      if (args.count("max-time") || args.count("max-time-forced-top")) {
-#pragma omp critical(HASHSET)
-	{
-	  estateSetSize = estateSet.size();
-	}
-	if(threadNum==0 && _resourceLimitDiff && (estateSetSize>(prevStateSetSizeResource+_resourceLimitDiff))) {
-	  if (args.count("max-time")) {
-	    if (analysisRunTimeInSeconds() >= _maxSeconds) {
-#pragma omp critical(ESTATEWL)
-              {
-                terminate = true;
-	 	terminatedWithIncompleteStg = true;
-	      }
-            }
-	  } else if (args.count("max-time-forced-top")){
-#pragma omp critical(ESTATEWL)
-	    {
-	      isActiveGlobalTopify();
-	    }
-	  }
+	  isActiveGlobalTopify(); // Checks if a switch to topify is necessary. If yes, it changes the analyzer state.
 	  prevStateSetSizeResource=estateSetSize;
 	}
       }
@@ -1957,7 +1942,7 @@ void Analyzer::runSolver12() {
           }
         }
       }
-      if(isEmptyWorkList()||isIncompleteSTGReady()) {
+      if(isEmptyWorkList()) {
 #pragma omp critical
         {
           workVector[threadNum]=false;
