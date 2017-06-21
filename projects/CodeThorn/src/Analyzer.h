@@ -74,6 +74,9 @@ namespace CodeThorn {
     void initializeTraceSolver(std::string functionToStartAt,SgNode* root);
     void continueAnalysisFrom(EState* newStartEState);
     
+    // set the size of an element determined by this type
+    void setElementSize(VariableId variableId, SgType* elementType);
+
     EState analyzeVariableDeclaration(SgVariableDeclaration* nextNodeToAnalyze1,EState currentEState, Label targetLabel);
 
     PState analyzeAssignRhsExpr(PState currentPState,VariableId lhsVar, SgNode* rhs,ConstraintSet& cset);
