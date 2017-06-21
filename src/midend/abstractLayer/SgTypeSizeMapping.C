@@ -51,6 +51,7 @@ namespace SPRAY {
       return getTypeSize(BITYPE_LONG_DOUBLE);
 
       // TODO: SgArrayType,SgFunctionType,SgReferenceType,SgTypeComplex
+      // TODO: structs/class/union
 
     default:
       // return size 0 for all other cases

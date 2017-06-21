@@ -18,7 +18,7 @@ namespace SPRAY {
   SPRAY::TypeSize TypeSizeMapping::getTypeSize(BuiltInType bitype) {
     return _mapping[bitype];
   }
-  
+
   std::size_t TypeSizeMapping::sizeOfOp(BuiltInType bitype) {
     return getTypeSize(bitype);
   }

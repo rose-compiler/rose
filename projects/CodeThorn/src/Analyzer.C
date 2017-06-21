@@ -669,6 +669,11 @@ const EState* Analyzer::addToWorkListIfNew(EState estate) {
   }
 }
 
+// set the size of an element determined by this type
+void Analyzer::setElementSize(VariableId variableId, SgType* elementType) {
+  variableIdMapping.setElementSize(variableId,getTypeSizeMapping()->determineTypeSize(elementType));
+}
+
 EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState currentEState, Label targetLabel) {
 
   /*
@@ -715,8 +720,12 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
           PState newPState=*currentEState.pstate();
           int elemIndex=0;
           SgExpressionPtrList& initList=SgNodeHelper::getInitializerListOfAggregateDeclaration(decl);
+          variableIdMapping.setNumberOfElements(initDeclVarId,initList.size());
+          SgArrayType* arrayType=isSgArrayType(initializer->get_type());
+          ROSE_ASSERT(arrayType);
+          SgType* arrayElementType=arrayType->get_base_type();
+          setElementSize(initDeclVarId,arrayElementType);
           for(SgExpressionPtrList::iterator i=initList.begin();i!=initList.end();++i) {
-            //OLD VariableId arrayElemId=variableIdMapping.variableIdOfArrayElement(initDeclVarId,elemIndex);
             AbstractValue arrayElemId=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(elemIndex));
             SgExpression* exp=*i;
             SgAssignInitializer* assignInit=isSgAssignInitializer(exp);
@@ -737,11 +746,19 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
           SgExpression* rhs=assignInitializer->get_operand_i();
           ROSE_ASSERT(rhs);
           //cout<<"DEBUG: assign initializer:"<<" lhs:"<<initDeclVarId.toString(getVariableIdMapping())<<" rhs:"<<assignInitializer->unparseToString()<<" decl-term:"<<AstTerm::astTermWithNullValuesToString(initName)<<endl;
+
+          // set type info for initDeclVarId
+          variableIdMapping.setNumberOfElements(initDeclVarId,1); // single variable
+          SgType* variableType=initializer->get_type();
+          setElementSize(initDeclVarId,variableType);
+          
           // build lhs-value dependent on type of declared variable
           AbstractValue lhsAbstractAddress=AbstractValue(initDeclVarId); // creates a pointer to initDeclVar
           list<SingleEvalResultConstInt> res=exprAnalyzer.evalConstInt(rhs,currentEState,true);
+
           ROSE_ASSERT(res.size()==1);
           SingleEvalResultConstInt evalResult=*res.begin();
+
           EState estate=evalResult.estate;
           PState newPState=*estate.pstate();
           newPState.writeToMemoryLocation(lhsAbstractAddress,evalResult.value());
@@ -753,6 +770,19 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
         }
       } else {
         // no initializer (model default cases)
+        ROSE_ASSERT(initName!=nullptr);
+        SgArrayType* arrayType=isSgArrayType(initName->get_type());
+        if(arrayType) {
+          SgType* arrayElementType=arrayType->get_base_type();
+          setElementSize(initDeclVarId,arrayElementType);
+          variableIdMapping.setNumberOfElements(initDeclVarId,variableIdMapping.getArrayElementCount(arrayType));
+        } else {
+          // set type info for initDeclVarId
+          variableIdMapping.setNumberOfElements(initDeclVarId,1); // single variable
+          SgType* variableType=initName->get_type();
+          setElementSize(initDeclVarId,variableType);
+        }
+        
         PState newPState=*currentEState.pstate();
         if(variableIdMapping.hasArrayType(initDeclVarId)) {
           // add default array elements to PState
