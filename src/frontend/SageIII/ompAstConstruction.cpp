@@ -830,13 +830,31 @@ namespace OmpSupport
     std::vector<std::pair<std::string,SgNode* > >::iterator iter;
     for (iter = varlist.begin(); iter!= varlist.end(); iter ++)
     {
-      SgInitializedName* iname = isSgInitializedName((*iter).second);
-      ROSE_ASSERT(iname !=NULL);
-      //target->get_variables().push_back(iname);
-      // Liao 1/27/2010, fix the empty parent pointer of the SgVarRefExp here
-      SgVarRefExp * var_ref = buildVarRefExp(iname);
-      target->get_variables()->get_expressions().push_back(var_ref);
-      var_ref->set_parent(target);
+//      cout<<"debug setClauseVariableList: " << target <<":"<<(*iter).second->class_name()  <<endl;
+      // We now start to use SgExpression* to store variables showing up in a varlist
+      if (SgInitializedName* iname = isSgInitializedName((*iter).second))
+      {
+        //target->get_variables().push_back(iname);
+        // Liao 1/27/2010, fix the empty parent pointer of the SgVarRefExp here
+        SgVarRefExp * var_ref = buildVarRefExp(iname);
+        target->get_variables()->get_expressions().push_back(var_ref);
+        var_ref->set_parent(target);
+      }
+      else if (SgPntrArrRefExp* aref= isSgPntrArrRefExp((*iter).second))
+      {
+        target->get_variables()->get_expressions().push_back(aref);
+        aref->set_parent(target);
+      }
+      else if (SgVarRefExp* vref = isSgVarRefExp((*iter).second))
+      {
+        target->get_variables()->get_expressions().push_back(vref);
+        vref->set_parent(target);
+      }
+      else
+      {
+          cerr<<"error: unhandled type of variable within a list:"<< ((*iter).second)->class_name();
+          ROSE_ASSERT(false);
+      }
     }
   }
 
@@ -904,6 +922,12 @@ namespace OmpSupport
     
     // build variable list
     setClauseVariableList(result, att, dep_type); 
+
+    //this is somewhat inefficient. 
+    // since the attribute has dimension info for all map clauses
+    //But we don't want to move the dimension info to directive level 
+    result->set_array_dimensions(att->array_dimensions);
+
     return result;
   }
 
