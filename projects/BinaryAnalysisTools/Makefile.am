@@ -305,6 +305,15 @@ dwarf_lines_CPPFLAGS = $(ROSE_INCLUDES)
 dwarf_lines_LDFLAGS = $(ROSE_RPATHS)
 dwarf_lines_LDADD = $(ROSE_LIBS)
 
+#------------------------------------------------------------------------------------------------------------------------
+# Very fast XML to JSON converter
+
+bin_PROGRAMS += xml2json
+xml2json_SOURCES = xml2json.C
+xml2json_CPPFLAGS = $(ROSE_INCLUDES)
+xml2json_LDFLAGS = $(ROSE_RPATHS)
+xml2json_LDADD = $(ROSE_LIBS)
+
 
 ########################################################################################################################
 ########################################################################################################################
