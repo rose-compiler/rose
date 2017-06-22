@@ -175,10 +175,6 @@ bool Analyzer::isPrecise() {
   return !(isActiveGlobalTopify()) && boolOptions["explicit-arrays"]==true;
 }
 
-bool Analyzer::isInExplicitStateMode() {
-  return isPrecise();
-}
-
 bool Analyzer::isIncompleteSTGReady() {
   if(_maxTransitions==-1 && _maxIterations==-1)
     return false;
@@ -1241,14 +1237,14 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
     }
   }
 
-  if(isRhsIntVal && isInExplicitStateMode()) {
+  if(isRhsIntVal && isPrecise()) {
     ROSE_ASSERT(!rhsIntVal.isTop());
   }
 
   if(newPState.varExists(lhsVar)) {
     if(!isRhsIntVal && !isRhsVar) {
       rhsIntVal=CodeThorn::Top();
-      ROSE_ASSERT(!isInExplicitStateMode());
+      ROSE_ASSERT(!isPrecise());
     }
     // we are using AbstractValue here (and  operator== is overloaded for AbstractValue==AbstractValue)
     // for this comparison isTrue() is also false if any of the two operands is CodeThorn::Top()

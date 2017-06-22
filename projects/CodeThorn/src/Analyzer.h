@@ -68,7 +68,6 @@ namespace CodeThorn {
     static void initDiagnostics();
     static std::string nodeToString(SgNode* node);
     void initAstNodeInfo(SgNode* node);
-    bool isInExplicitStateMode();
     bool isActiveGlobalTopify();
     void initializeSolver1(std::string functionToStartAt,SgNode* root, bool oneFunctionOnly);
     void initializeTraceSolver(std::string functionToStartAt,SgNode* root);
