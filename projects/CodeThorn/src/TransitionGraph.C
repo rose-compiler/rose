@@ -482,9 +482,6 @@ void TransitionGraph::setIsComplete(bool v) {
 }
 
 bool TransitionGraph::isPrecise() {
-  if(boolOptions["rers-binary"]) {
-    return true;
-  }
   return _preciseSTG;
 }
 
