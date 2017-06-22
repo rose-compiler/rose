@@ -1,0 +1,2 @@
+#pragma omp parallel  reduction(+ : sum)
+#pragma omp single 

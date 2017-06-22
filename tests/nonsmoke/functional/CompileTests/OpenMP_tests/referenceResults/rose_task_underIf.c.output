@@ -1,0 +1,4 @@
+#pragma omp task  if(i < cutoff)
+#pragma omp task 
+#pragma omp task 
+#pragma omp task 

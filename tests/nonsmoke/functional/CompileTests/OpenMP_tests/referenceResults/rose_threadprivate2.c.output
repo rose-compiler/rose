@@ -1,0 +1,6 @@
+#pragma omp threadprivate (counter)
+#pragma omp parallel 
+#pragma omp for 
+#pragma omp parallel 
+#pragma omp for 
+#pragma omp parallel 
