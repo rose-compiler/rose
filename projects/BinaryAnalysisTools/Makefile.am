@@ -342,7 +342,33 @@ testAdaptiveRegisters.passed: $(srcdir)/specimens/x86-64-adaptiveRegs		\
 		ANS=$(srcdir)/TestAnswers/testAdaptiveRegisters.ans						\
 		$(top_srcdir)/scripts/test_with_answer $@
 
+# Tests that the xml2json tool works correctly
 
+xml2json_inputs =				\
+	xml2json-test01.xml			\
+	xml2json-test02.xml			\
+	xml2json-test03.xml			\
+	xml2json-test04.xml			\
+	xml2json-test05.xml			\
+	xml2json-test06.xml			\
+	xml2json-test07.xml			\
+	xml2json-test08.xml			\
+	xml2json-test09.xml			\
+	xml2json-test10.xml			\
+	xml2json-test11.xml			\
+	xml2json-test12.xml
+
+xml2json_tests = $(addsuffix .passed, $(xml2json_inputs))
+TEST_TARGETS += $(xml2json_tests)
+check-xml2json: $(xml2json_tests)
+
+$(xml2json_tests): %.passed: $(abspath $(srcdir))/specimens/% xml2json
+	@$(RTH_RUN)									\
+		TITLE="convert $(notdir $<) to JSON [$@]"				\
+		USE_SUBDIR=yes								\
+		CMD="$$(pwd)/xml2json $< $(notdir $<).json && cat $(notdir $<).json"	\
+		ANS="$(srcdir)/TestAnswers/$*.ans"					\
+		$(top_srcdir)/scripts/test_with_answer $@
 
 endif
 
