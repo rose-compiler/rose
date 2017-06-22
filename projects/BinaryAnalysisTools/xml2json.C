@@ -13,6 +13,10 @@ static const char *description =
 #include <Sawyer/LineVector.h>
 #include <Sawyer/ProgressBar.h>
 
+#if 0 // [Robb P Matzke 2017-06-22]: define on command-line if you need this. Disabling saves ~2% elapsed time.
+#define XML2JSON_SUPPORT_CHECK                          // if defined, then the --check switch is supported.
+#endif
+
 using namespace Sawyer::Message::Common;
 
 Sawyer::Message::Facility mlog;
@@ -30,15 +34,17 @@ parseCommandLine(int argc, char *argv[]) {
     using namespace Sawyer::CommandLine;
     Settings retval;
 
+    Parser p = /*Rose*/::CommandlineProcessing::createEmptyParser(purpose, description);
+    p.with(/*Rose*/::CommandlineProcessing::genericSwitches());
+    p.doc("Synopsis", "@prop{programName} [@v{switches}] @v{xml_input_file} @v{json_output_file}");
+    p.errorStream(mlog[FATAL]);
+
+#ifdef XML2JSON_SUPPORT_CHECK
     SwitchGroup tool("Tool-specific switches");
     tool.name("tool");
     /*Rose*/::CommandlineProcessing::insertBooleanSwitch(tool, "check", retval.check, "Perform extra input checking.");
-    
-    Parser p = /*Rose*/::CommandlineProcessing::createEmptyParser(purpose, description);
-    p.with(/*Rose*/::CommandlineProcessing::genericSwitches());
     p.with(tool);
-    p.doc("Synopsis", "@prop{programName} [@v{switches}] @v{xml_input_file} @v{json_output_file}");
-    p.errorStream(mlog[FATAL]);
+#endif
 
     std::vector<std::string> args = p.parse(argc, argv).apply().unreachedArgs();
     if (args.size() != 2) {
@@ -88,7 +94,8 @@ public:
     }
 };
 
-class Token {
+// Warning: This must be defined in such a way that bitblit will work (e.g., no virtual functions).
+struct Token {
     friend class TokenStream;
 
     TokenType type_;                                    // type of this token
@@ -112,16 +119,18 @@ class TokenStream {
     std::string fileName_;                              // name of source file
     Sawyer::Container::LineVector content_;             // content of source file
     size_t at_;                                         // cursor position in buffer
-    std::vector<Token> tokens_;                         // token stream filled on demand
+    enum { MAX_LOOKAHEAD = 3 };
+    Token tokens_[MAX_LOOKAHEAD];                       // current token and a few lookahead tokens
+    size_t nTokens_;                                    // number of tokens in the tokens_ array
 
 public:
     // Create a token stream that will process the specified file. The file is memory mapped rather than read.
     explicit TokenStream(const std::string &fileName)
-        : fileName_(fileName), content_(fileName), at_(0) {}
+        : fileName_(fileName), content_(fileName), at_(0), nTokens_(0) {}
 
     // Create a token stream using the specified content buffer. The file name is only used for diagnostics.
     TokenStream(const std::string &fileName, const Sawyer::Container::Buffer<size_t, char>::Ptr &buffer)
-        : fileName_(fileName), content_(buffer), at_(0) {}
+        : fileName_(fileName), content_(buffer), at_(0), nTokens_(0) {}
 
     const std::string& fileName() const {
         return fileName_;
@@ -140,26 +149,27 @@ public:
     // Similar to operator[], except allows the specified token to be TOK_TEXT
     const Token& get(size_t lookahead, PossibleText::Boolean possibleText) {
         // If we're allowing the token to be TEXT, then we should undo things if we've already parsed tokens as non-TEXT.
-        if (possibleText && tokens_.size() > lookahead) {
+        if (possibleText && nTokens_ > lookahead) {
             at_ = tokens_[lookahead].begin_;
-            tokens_.resize(lookahead);
+            nTokens_ = lookahead;
         }
 
-        while (lookahead >= tokens_.size()) {
-            makeNextToken(possibleText && tokens_.size()==lookahead ? PossibleText::YES : PossibleText::NO);
-            ASSERT_require(!tokens_.empty());
-            if (tokens_.back().type() == TOK_EOF)
-                return tokens_.back();
+        while (lookahead >= nTokens_) {
+            makeNextToken(possibleText && nTokens_==lookahead ? PossibleText::YES : PossibleText::NO);
+            ASSERT_forbid(nTokens_ == 0);
+            if (tokens_[nTokens_-1].type() == TOK_EOF)
+                return tokens_[nTokens_-1];
         }
         return tokens_[lookahead];
     }
-    
+
     // Consume some tokens, advancing the current token pointer to a later token. The consumed tokens are forever lost.
-    void consume(size_t nTokens = 1) {
-        if (nTokens >= tokens_.size()) {
-            tokens_.clear();
+    void consume(size_t n = 1) {
+        if (n >= nTokens_) {
+            nTokens_ = 0;
         } else {
-            tokens_.erase(tokens_.begin(), tokens_.begin()+nTokens);
+            nTokens_ -= n;
+            memmove(tokens_, tokens_+n, nTokens_*sizeof(tokens_[0]));
         }
     }
 
@@ -167,7 +177,7 @@ public:
     SharedString lexeme(const Token &t) const {
         return SharedString(content_.characters(t.begin_), t.end_ - t.begin_);
     }
-    
+
     // Returns the line of source in which the token appears, including line termination if present.
     std::string line(const Token &t) const {
         if (t.type() == TOK_EOF)
@@ -177,7 +187,7 @@ public:
         size_t n = content_.nCharacters(lineIdx);
         return std::string(s, n);
     }
-    
+
     // Determines if the current token matches the specified string. This is the preferred, fast way of testing a token -- use
     // matches(token,"foo") instead of lexeme(token) == "foo" -- because it never actually needs to create a string.
     bool matches(const Token &t, const char *s) const {
@@ -188,7 +198,7 @@ public:
         const char *lexeme = content_.characters(t.begin_);
         return 0 == strncmp(s, lexeme, n1);
     }
-    
+
     // Emit an error message that shows the entire line containing the token, and a pointer to the token within the line.
     void emit(const std::string &fileName, const Token &t, const std::string &message) const {
         std::pair<size_t, size_t> loc = content_.location(t.begin_);
@@ -201,7 +211,7 @@ public:
             mlog[ERROR] <<"        " <<std::string(loc.second, ' ') <<"^\n";
         }
     }
-    
+
     // Return the line number and column for the start of the specified token. The line number is 1-origin, and the column
     // number is 0-origin.
     std::pair<size_t, size_t> location(const Token &t) const {
@@ -236,8 +246,9 @@ private:
 
     // Add the next token to the end of the tokens_ vector
     void makeNextToken(PossibleText::Boolean possibleText) {
-        if (!tokens_.empty() && tokens_.back().type() == TOK_EOF)
+        if (nTokens_>0 && tokens_[nTokens_-1].type() == TOK_EOF)
             return;
+        ASSERT_require(nTokens_ < MAX_LOOKAHEAD);
 
         // Skip white space
         int c = content_.character(at_);
@@ -246,64 +257,64 @@ private:
 
         // End of file?
         if (EOF == c) {
-            tokens_.push_back(Token(TOK_EOF, at_, at_));
+            tokens_[nTokens_++] = Token(TOK_EOF, at_, at_);
             return;
         }
 
         if (possibleText) {
             if ('<' == c) {
-                tokens_.push_back(Token(TOK_LT, at_, at_+1));
+                tokens_[nTokens_++] = Token(TOK_LT, at_, at_+1);
                 ++at_;
             } else {
-                tokens_.push_back(Token(TOK_TEXT, at_, at_+1));
+                tokens_[nTokens_] = Token(TOK_TEXT, at_, at_);
                 scanText();
-                tokens_.back().end_ = at_;
+                tokens_[nTokens_++].end_ = at_;
             }
         } else {
             switch (int c = content_.character(at_)) {
                 case EOF:
-                    tokens_.push_back(Token(TOK_EOF, at_, at_));
+                    tokens_[nTokens_++] = Token(TOK_EOF, at_, at_);
                     break;
                 case '<':
-                    tokens_.push_back(Token(TOK_LT, at_, at_+1));
+                    tokens_[nTokens_++] = Token(TOK_LT, at_, at_+1);
                     ++at_;
                     break;
                 case '>':
-                    tokens_.push_back(Token(TOK_GT, at_, at_+1));
+                    tokens_[nTokens_++] = Token(TOK_GT, at_, at_+1);
                     ++at_;
                     break;
                 case '=':
-                    tokens_.push_back(Token(TOK_EQ, at_, at_+1));
+                    tokens_[nTokens_++] = Token(TOK_EQ, at_, at_+1);
                     ++at_;
                     break;
                 case '?':
-                    tokens_.push_back(Token(TOK_QMARK, at_, at_+1));
+                    tokens_[nTokens_++] = Token(TOK_QMARK, at_, at_+1);
                     ++at_;
                     break;
                 case TOK_EQ:
-                    tokens_.push_back(Token(TOK_EQ, at_, at_+1));
+                    tokens_[nTokens_++] = Token(TOK_EQ, at_, at_+1);
                     ++at_;
                     break;
                 case '!':
-                    tokens_.push_back(Token(TOK_BANG, at_, at_+1));
+                    tokens_[nTokens_++] = Token(TOK_BANG, at_, at_+1);
                     ++at_;
                     break;
                 case '/':
-                    tokens_.push_back(Token(TOK_SLASH, at_, at_+1));
+                    tokens_[nTokens_++] = Token(TOK_SLASH, at_, at_+1);
                     ++at_;
                     break;
                 case '"': // exclude the delimiting quotes
-                    tokens_.push_back(Token(TOK_STRING, at_+1, at_+2));
+                    tokens_[nTokens_] = Token(TOK_STRING, at_+1, at_+1);
                     scanString();
-                    tokens_.back().end_ = at_-1;
+                    tokens_[nTokens_++].end_ = at_-1;
                     break;
                 default:
                     if (isalpha(c)) {
-                        tokens_.push_back(Token(TOK_SYMBOL, at_, at_+1));
+                        tokens_[nTokens_] = Token(TOK_SYMBOL, at_, at_);
                         scanSymbol();
-                        tokens_.back().end_ = at_;
+                        tokens_[nTokens_++].end_ = at_;
                     } else {
-                        tokens_.push_back(Token(TOK_OTHER, at_, at_+1));
+                        tokens_[nTokens_++] = Token(TOK_OTHER, at_, at_+1);
                         ++at_;
                     }
                     break;
@@ -346,7 +357,7 @@ public:
             lseek(fd_, maxSize-1, SEEK_SET) == off_t(-1) ||
             ::write(fd_, "\0", 1) != 1)
             throw std::runtime_error(strerror(errno) + (": " + fileName));
-        
+
         file_.open(fileName, boost::iostreams::mapped_file::readwrite, maxSize);
         data_ = file_.data();
         end_ = maxSize;
@@ -359,7 +370,7 @@ public:
                 throw std::runtime_error(strerror(errno) + (": " + fileName_));
         }
     }
-    
+
     // Current position, adjusted after each write
     size_t curpos() const {
         return at_;
@@ -369,14 +380,14 @@ public:
     size_t eof() const {
         return highwater_;
     }
-    
+
     void truncate(size_t n) {
         if (at_ > n)
             at_ = n;
         if (highwater_ > n)
             highwater_ = n;
     }
-    
+
     // Writes N bytes of DATA into the output at the specified POSITION without updating the current position.
     JsonOutput& write(const char *data, size_t position, size_t n, Escape::Boolean doEscape) {
         ASSERT_require(position + n <= end_);
@@ -462,10 +473,12 @@ class XmlParser {
         size_t nChildren;
         XmlLexer::SharedString lastChild;               // name of the latest-added child
         size_t lastChildPlaceholders;                   // position of latest-added child's placeholders
+#ifdef XML2JSON_SUPPORT_CHECK
         AttributeMap childTagMap;
+#endif
 
         PathElement(): placeholders(0), nChildren(0), lastChildPlaceholders(0) {} // needed by std::vector
-        
+
         explicit PathElement(const XmlLexer::Token &tag)
             : tag(tag), placeholders(0), nChildren(0), lastChildPlaceholders(0) {}
     };
@@ -488,30 +501,28 @@ public:
     // Perform extra input checking?
     bool check() const { return check_; }
     void check(bool b) { check_ = b; }
-    
+
     // TagName := TOK_QMARK TOK_SYMBOL
     //          | TOK_BANG TOK_SYMBOL
     //          | TOK_SLASH TOK_SYMBOL
     //          | TOK_SYMBOL
     // Returns the type of the first token and the TOK_SYMBOL token.
     std::pair<XmlLexer::TokenType, XmlLexer::Token> parseTagName() {
-        if (tokens_[0].type() == XmlLexer::TOK_QMARK ||
-            tokens_[0].type() == XmlLexer::TOK_BANG ||
-            tokens_[0].type() == XmlLexer::TOK_SLASH) {
-            ASSERT_require(tokens_[1].type() == XmlLexer::TOK_SYMBOL);
-            XmlLexer::TokenType type = tokens_[0].type();
-            XmlLexer::Token name = tokens_[1];
-            tokens_.consume(2);
-            return std::make_pair(type, name);
-        } else {
-            ASSERT_require(tokens_[0].type() == XmlLexer::TOK_SYMBOL);
-            XmlLexer::TokenType type = XmlLexer::TOK_SYMBOL;
-            XmlLexer::Token name = tokens_[0];
+        const XmlLexer::TokenType tt = tokens_[0].type();
+        if (XmlLexer::TOK_SYMBOL == tt) {
+            const std::pair<XmlLexer::TokenType, XmlLexer::Token> retval(tt, tokens_[0]);
             tokens_.consume(1);
-            return std::make_pair(type, name);
+            return retval;
+        } else {
+            ASSERT_require(XmlLexer::TOK_QMARK==tt || XmlLexer::TOK_BANG==tt || XmlLexer::TOK_SLASH==tt);
+            ASSERT_require(tokens_[1].type() == XmlLexer::TOK_SYMBOL);
+            const std::pair<XmlLexer::TokenType, XmlLexer::Token> retval(tt, tokens_[1]);
+            tokens_.consume(2);
+            return retval;
         }
     }
 
+#ifdef XML2JSON_SUPPORT_CHECK
     // Returns true if the specified tag is unique for the parent and then remembers it. If not unique, prints an
     // error message and returns false.  As a special case, returns true if the specified tag is not unique but happens
     // to match its previous sibling (because that's an array).
@@ -530,10 +541,11 @@ public:
         }
         return true;
     }
-    
+#endif
+
     // This is called when we see "<tag", "<!tag" or "<?tag" in the input XML
     void tagStartCallback(const XmlLexer::Token &tag) {
-        if (++nTags_ % 10000 == 0)
+        if ((++nTags_ & 0x1fffff) == 0)                 // try not to adjust progress_ too often since this is hot
             progress_.value(tag.offset());
 
         if (!path_.empty()) {
@@ -544,8 +556,10 @@ public:
             if (++path_.back().nChildren > 1)
                 json_ <<",";
 
+#ifdef XML2JSON_SUPPORT_CHECK
             if (check_)
                 isUniqueSibling(tag);
+#endif
         }
 
         // Append a new path element
@@ -639,7 +653,7 @@ public:
         json_.append(tokens_.lexeme(t), Escape::YES);
         json_ <<"\"";
     }
-    
+
     // Parse a '<' .... '>' construct
     void parseTag() {
         ASSERT_require(tokens_[0].type() == XmlLexer::TOK_LT);
@@ -649,7 +663,7 @@ public:
 
         if (tag.first != XmlLexer::TOK_SLASH)
             tagStartCallback(tag.second);
-        
+
         bool terminated = false;
         while (true) {
             // Look for endings: '>' or '?>' or '/>'
@@ -672,7 +686,7 @@ public:
                 tokens_.emit(tokens_.fileName(), tokens_[0], "'>' expected");
                 return;
             }
-            
+
             // We must be inside a '<tag ...>' so look for SYMBOL = STRING, or just a SYMBOL
             if (tokens_[0].type() != XmlLexer::TOK_SYMBOL) {
                 tokens_.emit(tokens_.fileName(), tokens_[0], "property name expected");
