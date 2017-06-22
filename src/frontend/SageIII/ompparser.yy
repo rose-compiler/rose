@@ -49,6 +49,8 @@ static int omp_error(const char*);
 //Insert variable into var_list of some clause
 static bool addVar(const char* var);
 
+static bool addVarExp(SgExpression* var);
+
 //Insert expression into some clause
 static bool addExpression(const char* expr);
 
@@ -81,6 +83,9 @@ bool b_within_variable_list  = false;  // a flag to indicate if the program is n
 static SgVariableSymbol* array_symbol; 
 static SgExpression* lower_exp = NULL;
 static SgExpression* length_exp = NULL;
+// check if the parsed a[][] is an array element access a[i][j] or array section a[lower:length][lower:length]
+// 
+static bool arraySection=true; 
 
 %}
 
@@ -117,9 +122,9 @@ corresponding C type is union name defaults to YYSTYPE.
 %type <ptype> expression assignment_expr conditional_expr 
               logical_or_expr logical_and_expr
               inclusive_or_expr exclusive_or_expr and_expr
-              equality_expr relational_expr
+              equality_expr relational_expr 
               shift_expr additive_expr multiplicative_expr 
-              primary_expr incr_expr unary_expr
+              primary_expr unary_expr postfix_expr variable_exp_list
               device_clause if_clause num_threads_clause
               simd_clause proc_bind_clause
 
@@ -370,7 +375,11 @@ unique_task_clause : IF {
                    
 depend_clause : DEPEND { 
                           ompattribute->addClause(e_depend);
-                        } '(' dependence_type ':' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list = false;}
+                        } '(' dependence_type ':' {b_within_variable_list = true; array_symbol=NULL; } variable_exp_list ')' 
+                        {
+                          assert ((ompattribute->getVariableList(omptype)).size()>0); /* I believe that depend() must have variables */
+                          b_within_variable_list = false;
+                        }
                       ;
 
 dependence_type : IN {
@@ -1143,55 +1152,98 @@ multiplicative_expr : primary_expr
                       }
                     ;
 
-primary_expr : unary_expr
+primary_expr : ICONSTANT {
+               current_exp = SageBuilder::buildIntVal($1);
+               $$ = current_exp;
+              }
+             | ID_EXPRESSION {
+               current_exp = SageBuilder::buildVarRefExp(
+                 (const char*)($1),SageInterface::getScope(gNode)
+               );
+               $$ = current_exp;
+              }
              | '(' expression ')' {
                  $$ = current_exp;
                } 
-             | incr_expr;
              ;
 
-incr_expr : PLUSPLUS unary_expr {
+unary_expr : postfix_expr {
+             current_exp = (SgExpression*)($1);
+             $$ = current_exp;
+            }  
+           |PLUSPLUS unary_expr {
               current_exp = SageBuilder::buildPlusPlusOp(
                 (SgExpression*)($2),
                 SgUnaryOp::prefix
-              ); 
-              $$ = current_exp; 
-            }
-          | unary_expr PLUSPLUS {
-              current_exp = SageBuilder::buildPlusPlusOp(
-                (SgExpression*)($1),
-                SgUnaryOp::postfix
-              ); 
-              $$ = current_exp; 
+              );
+              $$ = current_exp;
             }
           | MINUSMINUS unary_expr {
               current_exp = SageBuilder::buildMinusMinusOp(
                 (SgExpression*)($2),
                 SgUnaryOp::prefix
-              ); 
-              $$ = current_exp; 
+              );
+              $$ = current_exp;
             }
-          | unary_expr MINUSMINUS {
-              current_exp = SageBuilder::buildMinusMinusOp(
-                (SgExpression*)($1),
-                SgUnaryOp::postfix
-              ); 
-              $$ = current_exp; 
-            }
-          ;
 
-unary_expr : ICONSTANT {
-               current_exp = SageBuilder::buildIntVal($1); 
-               $$ = current_exp; 
-             }
-           | ID_EXPRESSION { 
-               current_exp = SageBuilder::buildVarRefExp(
-                 (const char*)($1),SageInterface::getScope(gNode)
-               ); 
-               $$ = current_exp; 
-             }
            ;
                 
+postfix_expr:
+            |primary_expr {
+               arraySection= false; 
+                 current_exp = (SgExpression*)($1);
+                 $$ = current_exp;
+             }
+            |postfix_expr '[' expression ']' {
+               arraySection= false; 
+               current_exp = SageBuilder::buildPntrArrRefExp((SgExpression*)($1), (SgExpression*)($3));
+               $$ = current_exp;
+             }
+            | postfix_expr '[' expression ':' expression ']'
+             {
+               arraySection= true; // array section // TODO; BEST solution: still need a tree here!!
+               // only add  symbol to the attribute for this first time 
+               // postfix_expr should be ID_EXPRESSION
+               if (!array_symbol)
+               {  
+                 SgVarRefExp* vref = isSgVarRefExp((SgExpression*)($1));
+                 assert (vref);
+                 array_symbol = ompattribute->addVariable(omptype, vref->unparseToString());
+                 // if (!addVar((const char*) )) YYABORT;
+                 //std::cout<<("!array_symbol, add variable for \n")<< vref->unparseToString()<<std::endl;
+               }
+               lower_exp= NULL; 
+               length_exp= NULL; 
+               lower_exp = (SgExpression*)($3);
+               length_exp = (SgExpression*)($5);
+               assert (array_symbol != NULL);
+               SgType* t = array_symbol->get_type();
+               bool isPointer= (isSgPointerType(t) != NULL );
+               bool isArray= (isSgArrayType(t) != NULL);
+               if (!isPointer && ! isArray )
+               {
+                 std::cerr<<"Error. ompparser.yy expects a pointer or array type."<<std::endl;
+                 std::cerr<<"while seeing "<<t->class_name()<<std::endl;
+               }
+               assert (lower_exp && length_exp);
+               ompattribute->array_dimensions[array_symbol].push_back( std::make_pair (lower_exp, length_exp));
+             }  
+            | postfix_expr PLUSPLUS {
+                  current_exp = SageBuilder::buildPlusPlusOp(
+                    (SgExpression*)($1),
+                    SgUnaryOp::postfix
+                  ); 
+                  $$ = current_exp; 
+                }
+             | postfix_expr MINUSMINUS {
+                  current_exp = SageBuilder::buildMinusMinusOp(
+                    (SgExpression*)($1),
+                    SgUnaryOp::postfix
+                  ); 
+                  $$ = current_exp; 
+             }
+            ;
+
 /* ----------------------end for parsing expressions ------------------*/
 
 /*  in C
@@ -1204,7 +1256,21 @@ variable_list : ID_EXPRESSION { if (!addVar((const char*)$1)) YYABORT; }
               | variable_list ',' ID_EXPRESSION { if (!addVar((const char*)$3)) YYABORT; }
               ;
 
-/* */ 
+/*  depend( array1[i][k], array2[p][l]), real array references in the list  */
+variable_exp_list : postfix_expr { 
+                 if (!arraySection) // regular array or scalar references: we add the entire array reference to the variable list
+                   if (!addVarExp((SgExpression*)$1)) YYABORT; 
+                 array_symbol = NULL; //reset array symbol when done.   
+               }
+              | variable_exp_list ',' postfix_expr 
+                { 
+                 if (!arraySection)
+                    if (!addVarExp((SgExpression*)$3)) YYABORT; 
+                }
+              ;
+
+
+/* map (array[lower:length][lower:length])  , not array references, but array section notations */ 
 variable_list : id_expression_opt_dimension
               | variable_list ',' id_expression_opt_dimension
               ;
@@ -1275,6 +1341,12 @@ static bool addVar(const char* var)  {
     array_symbol = ompattribute->addVariable(omptype,var);
     return true;
 }
+
+static bool addVarExp(SgExpression* exp)  { // new interface to add variables, supporting array reference expressions
+    array_symbol = ompattribute->addVariable(omptype,exp);
+    return true;
+}
+
 
 // The ROSE's string-based AST construction is not stable,
 // pass real expressions as SgExpression, Liao

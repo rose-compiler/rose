@@ -335,6 +335,70 @@ namespace OmpSupport
     return this->dist_data_policies[array_symbol];  
   }
 
+   //! Add a variable ref expression to a clause: this is useful for  array reference expression. A single variable symbol is not sufficient 
+   SgVariableSymbol* OmpAttribute::addVariable(omp_construct_enum targetConstruct, SgExpression* varExp)
+   {
+    SgVariableSymbol* symbol = NULL;
+    string varString; 
+    ROSE_ASSERT (varExp);
+    varString=varExp->unparseToString();
+
+    //Special handling for reduction clauses
+    if (targetConstruct == e_reduction)
+    {
+      cerr<<"Fatal: cannot add variables into e_reduction, You have to specify e_reduction_operatorX instead!"<<endl;
+      assert(false);
+    } 
+    if (isReductionOperator(targetConstruct))
+    {
+      addClause(e_reduction);
+      setReductionOperator(targetConstruct);
+    }  
+
+    // Try to resolve the variable reference expression's symbol
+      //resolve the variable here
+    if (SgPntrArrRefExp * aref = isSgPntrArrRefExp(varExp))
+    {
+      SgExpression* lhs = NULL; 
+      while (aref)
+      {
+        lhs = aref-> get_lhs_operand_i();
+        aref=isSgPntrArrRefExp(lhs);
+      }
+      SgVarRefExp* vref= isSgVarRefExp(lhs);
+      ROSE_ASSERT (vref);
+      symbol = vref->get_symbol();
+    }
+    else if (SgVarRefExp* vref = isSgVarRefExp (varExp) )
+    {
+      symbol = vref->get_symbol();
+    }
+    else
+    {
+      // TODO: add other types of variable reference expressions 
+      cerr<<"OmpAttribute::addVariable() : unhandled expression type:"<<varExp->class_name() <<endl;
+      ROSE_ASSERT(false);
+    }
+
+    if (symbol == NULL)          
+    {
+      cerr<<"Error: OmpAttribute::addVariable() cannot find symbol for variable:"<<varString<<endl;
+      ROSE_ASSERT(symbol!= NULL);
+    }
+
+    //debug clause var_list
+    // if (targetConstruct== e_copyin) cout<<"debug: adding variable to copyin()"<<endl;
+    variable_lists[targetConstruct].push_back(make_pair(varString, varExp));
+    // maintain the var-clause map also
+    var_clauses[varString].push_back(targetConstruct);
+
+    // Don't forget this! But directive like threadprivate could have variable list also
+    if (isClause(targetConstruct)) 
+      addClause(targetConstruct);
+    return symbol;   
+
+   }
+   
   //! Insert a variable into a variable list for clause "targetConstruct", maintain the reversed variable-clause mapping also.
   SgVariableSymbol* OmpAttribute::addVariable(omp_construct_enum targetConstruct, const std::string& varString, SgInitializedName* sgvar/*=NULL*/)
   {
@@ -1328,6 +1392,8 @@ namespace OmpSupport
           result += varListString + ")";
         }  
       } 
+//      else if  (omp_type == e_depend)
+//      {       }  
       // schedule(kind, exp)
       else if (omp_type == e_schedule)
       { 

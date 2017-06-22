@@ -15,6 +15,11 @@ AM_CPPFLAGS = $(ROSE_INCLUDES)
 AM_LDFLAGS = $(ROSE_RPATHS)
 LDADD    = $(ROSE_LIBS)
 
+# put macroCalls.c here since it requires -rose:wave, which causes seg fault on 64-bit machine
+TESTCODE_CURRENTLY_FAILING = \
+	ompfor7.c \
+	macroCalls.c
+
 C_TESTCODES_REQUIRED_TO_PASS = \
 	3loops.c \
 	affinity.c \
@@ -125,6 +130,9 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	task_array.c \
 	task_array2.c \
 	task_dep1.c \
+	task_dep2.c \
+	task_dep3.c \
+	task_dep.load.compute.c \
 	task_largenumber.c \
 	task_orphaned.c \
 	task_outlining.c \
@@ -204,11 +212,6 @@ if !USING_INTEL_COMPILER
 C_TESTCODES_REQUIRED_TO_PASS += \
 	init.c 
 endif
-
-# put macroCalls.c here since it requires -rose:wave, which causes seg fault on 64-bit machine
-TESTCODE_CURRENTLY_FAILING = \
-	ompfor7.c \
-	macroCalls.c 
 
 ROSE_FLAGS = -rose:openmp:ast_only --edg:no_warnings -w -rose:verbose 0 --edg:restrict #-rose:wave
 # used to find omp.h, added it as one of  rose headers

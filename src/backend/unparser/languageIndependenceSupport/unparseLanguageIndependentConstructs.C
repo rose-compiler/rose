@@ -6551,6 +6551,7 @@ void UnparseLanguageIndependentConstructs::unparseOmpVariablesClause(SgOmpClause
   SgOmpVariablesClause* c= isSgOmpVariablesClause (clause);  
   ROSE_ASSERT(c!= NULL);
   bool is_map = false;
+  bool is_depend= false;
   // unparse the  clause name first
   switch (c->variantT())
   {
@@ -6588,6 +6589,7 @@ void UnparseLanguageIndependentConstructs::unparseOmpVariablesClause(SgOmpClause
         curprint(string(" depend("));
         curprint(dependenceTypeToString(isSgOmpDependClause(c)->get_dependence_type()));
         curprint(string(" : "));
+        is_depend = true; 
         break;
       }
     case V_SgOmpLinearClause:
@@ -6620,48 +6622,93 @@ void UnparseLanguageIndependentConstructs::unparseOmpVariablesClause(SgOmpClause
     ROSE_ASSERT (m_clause != NULL);
     dims = m_clause->get_array_dimensions();
     dist_policies = m_clause->get_dist_data_policies();
-  }  
+  } 
+  else if (is_depend) // task depend(A[i:BS][j:BS]) , is also stored as array section. 
+   // TODO: long term, we need a dedicated array section AST node
+  {
+    SgOmpDependClause* m_clause = isSgOmpDependClause (clause);
+    ROSE_ASSERT (m_clause != NULL);
+    dims = m_clause->get_array_dimensions();
+  }
 
   //unparse variable list then
   SgExpressionPtrList::iterator p = c->get_variables()->get_expressions().begin();
   while ( p != c->get_variables()->get_expressions().end() )
   {
-    SgInitializedName* init_name = isSgVarRefExp(*p)->get_symbol()->get_declaration();           
-    SgName tmp_name  = init_name->get_name();
-    curprint( tmp_name.str());
-    SgVariableSymbol * sym  = isSgVarRefExp(*p)->get_symbol();
-    ROSE_ASSERT (sym != NULL);
-    if (is_map)
+    // We now try to put array reference expression into variable list.
+    if (SgPntrArrRefExp* aref = isSgPntrArrRefExp(*p)) 
     {
-      std::vector<std::pair<SgExpression*, SgExpression*> > bounds = dims[sym];
-      if (bounds.size() >0)
+      // curprint (aref->unparseToString()); // This does not work!
+      SgUnparse_Info ninfo(info);
+      unparseExpression(aref, ninfo);
+    }
+    else if (SgVarRefExp* vref= isSgVarRefExp(*p))
+    {
+      SgInitializedName* init_name = vref->get_symbol()->get_declaration();           
+      SgName tmp_name  = init_name->get_name();
+      curprint( tmp_name.str());
+      SgVariableSymbol * sym  = isSgVarRefExp(*p)->get_symbol();
+      ROSE_ASSERT (sym != NULL);
+      if (is_map)
       {
-        std::vector<std::pair<SgExpression*, SgExpression*> >:: const_iterator iter;
-        for (iter = bounds.begin(); iter != bounds.end(); iter ++)
+        std::vector<std::pair<SgExpression*, SgExpression*> > bounds = dims[sym];
+        if (bounds.size() >0)
         {
-          SgUnparse_Info ninfo(info);
-          std::pair<SgExpression*, SgExpression*> bound  = (*iter);
-          SgExpression* lower = bound.first;
-          SgExpression* upper = bound.second;
-          ROSE_ASSERT (lower != NULL);
-          ROSE_ASSERT (upper != NULL);
+          std::vector<std::pair<SgExpression*, SgExpression*> >:: const_iterator iter;
+          for (iter = bounds.begin(); iter != bounds.end(); iter ++)
+          {
+            SgUnparse_Info ninfo(info);
+            std::pair<SgExpression*, SgExpression*> bound  = (*iter);
+            SgExpression* lower = bound.first;
+            SgExpression* upper = bound.second;
+            ROSE_ASSERT (lower != NULL);
+            ROSE_ASSERT (upper != NULL);
 
-          curprint(string("["));
-//          curprint(lower->unparseToString());
-          unparseExpression(lower, ninfo);
-          curprint(string(":"));
-//          curprint(upper->unparseToString());
-          unparseExpression(upper, ninfo);
-          curprint(string("]"));
-       
-          std::vector< std::pair< SgOmpClause::omp_map_dist_data_enum, SgExpression * > > policies = dist_policies[sym];
-          if (policies.size() !=0)
-            unparseMapDistDataPoliciesToString (policies, ninfo);
+            curprint(string("["));
+            //          curprint(lower->unparseToString());
+            unparseExpression(lower, ninfo);
+            curprint(string(":"));
+            //          curprint(upper->unparseToString());
+            unparseExpression(upper, ninfo);
+            curprint(string("]"));
+
+            std::vector< std::pair< SgOmpClause::omp_map_dist_data_enum, SgExpression * > > policies = dist_policies[sym];
+            if (policies.size() !=0)
+              unparseMapDistDataPoliciesToString (policies, ninfo);
             //curprint(mapDistDataPoliciesToString (policies));
 
-        } // end for
-      } // end if has bounds
-    } // end if map 
+          } // end for
+        } // end if has bounds
+      } // end if map 
+      else if (is_depend)
+      {
+        std::vector<std::pair<SgExpression*, SgExpression*> > bounds = dims[sym];
+        if (bounds.size() >0)
+        {
+          std::vector<std::pair<SgExpression*, SgExpression*> >:: const_iterator iter;
+          for (iter = bounds.begin(); iter != bounds.end(); iter ++)
+          {
+            SgUnparse_Info ninfo(info);
+            std::pair<SgExpression*, SgExpression*> bound  = (*iter);
+            SgExpression* lower = bound.first;
+            SgExpression* upper = bound.second;
+            ROSE_ASSERT (lower != NULL);
+            ROSE_ASSERT (upper != NULL);
+
+            curprint(string("["));
+            unparseExpression(lower, ninfo);
+            curprint(string(":"));
+            unparseExpression(upper, ninfo);
+            curprint(string("]"));
+          } // end for
+        } // end if has bounds
+      }
+    }
+    else
+    {
+      cerr<<"Unhandled type of variable in a varlist:"<< (*p)->class_name()<<endl;
+      ROSE_ASSERT (false);
+    }
 
     // output the optional dimension info for map() variable 
     // Move to the next argument
