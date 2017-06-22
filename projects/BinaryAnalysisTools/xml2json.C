@@ -72,24 +72,6 @@ namespace PossibleText {
 enum Boolean { NO=0, YES=1 };
 } // namespace
 
-std::string
-stringify(TokenType tt) {
-    switch (tt) {
-        case TOK_EOF:    return "TOK_EOF";
-        case TOK_LT:     return "TOK_LT";
-        case TOK_GT:     return "TOK_GT";
-        case TOK_QMARK:  return "TOK_QMARK";
-        case TOK_EQ:     return "TOK_EQ";
-        case TOK_BANG:   return "TOK_BANG";
-        case TOK_SLASH:  return "TOK_SLASH";
-        case TOK_SYMBOL: return "TOK_SYMBOL";
-        case TOK_STRING: return "TOK_STRING";
-        case TOK_TEXT:   return "TOK_TEXT";
-        case TOK_OTHER:  return "TOK_OTHER";
-    }
-    ASSERT_not_reachable("invalid token type " + boost::lexical_cast<std::string>(tt));
-}
-
 // An std::string-like object that points directly into a shared storage area (such as a memory-mapped file).
 class SharedString {
     const char *s_;
@@ -184,11 +166,6 @@ public:
     // Return token lexeme as a shared string. I.e., an object that points directly into the file.
     SharedString lexeme(const Token &t) const {
         return SharedString(content_.characters(t.begin_), t.end_ - t.begin_);
-    }
-    
-    // Return the string of a token for diagnostics. This includes the token type, a space, and the lexeme.
-    std::string toString(const Token &t) const {
-        return stringify(t.type()) + " " + lexeme(t).toString();
     }
     
     // Returns the line of source in which the token appears, including line termination if present.
@@ -339,10 +316,12 @@ private:
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#if 0 // [Robb P Matzke 2017-06-22]
 std::ostream& operator<<(std::ostream &out, const XmlLexer::SharedString &s) {
     out <<s.toString();
     return out;
 }
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 namespace Escape {
@@ -493,7 +472,6 @@ class XmlParser {
 
     XmlLexer::TokenStream tokens_;
     std::vector<PathElement> path_;                     // nested tags from root to current
-    bool trace_;
     JsonOutput json_;
     Sawyer::ProgressBar<size_t> progress_;
     size_t nTags_;
@@ -502,7 +480,7 @@ class XmlParser {
 
 public:
     XmlParser(const std::string &xmlFileName, const std::string &jsonFileName)
-        : tokens_(xmlFileName), trace_(false), json_(jsonFileName, tokens_.fileSize()+4096),
+        : tokens_(xmlFileName), json_(jsonFileName, tokens_.fileSize()+4096),
           progress_(tokens_.fileSize(), mlog[MARCH], "bytes read"), nTags_(0), check_(false), PLACEHOLDERS("  ") {
         ASSERT_require(strlen(PLACEHOLDERS) == NPLACEHOLDERS);
     }
@@ -557,11 +535,6 @@ public:
     void tagStartCallback(const XmlLexer::Token &tag) {
         if (++nTags_ % 10000 == 0)
             progress_.value(tag.offset());
-
-        if (trace_) {
-            mlog[DEBUG] <<std::string(path_.size(), ' ') <<"starting \""
-                        <<tokens_.lexeme(tag) <<"\" at level " <<path_.size() <<"\n";
-        }
 
         if (!path_.empty()) {
             // Parent must be an object
@@ -625,11 +598,6 @@ public:
         ASSERT_require(!path_.empty());
         ASSERT_require(tokens_.lexeme(path_.back().tag) == tokens_.lexeme(tag));
 
-        if (trace_) {
-            mlog[DEBUG] <<std::string(path_.size()-1, ' ') <<"ending   \"" <<tokens_.lexeme(tag)
-                        <<"\" at level " <<path_.size() <<"\n";
-        }
-
         // Finish this path element and pop it from the path
         if (0 == path_.back().nChildren) {
             json_ <<"null";
@@ -647,10 +615,6 @@ public:
 
     void valuePropertyCallback(const XmlLexer::Token &name, const XmlLexer::Token &value) {
         ASSERT_require(!path_.empty());
-        if (trace_) {
-            mlog[DEBUG] <<std::string(path_.size(), ' ')
-                        <<"property \"" <<tokens_.lexeme(name) <<"\" = " <<tokens_.lexeme(value) <<"\n";
-        }
 
         // Make sure the output is an object, i.e., the curly brace in '"object_name":{...'
         json_.write("{", path_.back().placeholders+LEFT_OBJECT, 1, Escape::NO);
@@ -669,9 +633,6 @@ public:
 
     void textCallback(const XmlLexer::Token &t) {
         ASSERT_require(!path_.empty());
-        if (trace_)
-            mlog[DEBUG] <<std::string(path_.size(), ' ') <<"text = \"" <<tokens_.lexeme(t) <<"\"\n";
-
         if (++path_.back().nChildren > 1)
             json_ <<",\"#text\":";
         json_ <<"\"";
