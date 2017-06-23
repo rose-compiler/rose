@@ -7,6 +7,8 @@ typedef Element_ID Declaration_ID;
 typedef Element_ID Defining_Name_ID;
 typedef Element_ID Discrete_Range_ID;
 typedef Element_ID Expression_ID;
+typedef Element_ID Name_ID;
+typedef Element_ID Statement_ID;
 typedef Element_ID Subtype_Indication_ID;
 
 typedef struct Element_ID_List_Struct {
@@ -14,9 +16,14 @@ typedef struct Element_ID_List_Struct {
   Element_ID *elements;
 } Element_List;
 typedef Element_List Association_List;
+typedef Element_List Declarative_Item_List;
 typedef Element_List Defining_Name_List;
+typedef Element_List Exception_Handler_List;
 typedef Element_List Expression_List;
 typedef Element_List Expression_Path_List;
+typedef Element_List Path_List;
+typedef Element_List Parameter_Specification_List;
+typedef Element_List Statement_List;
 
 enum Element_Kinds {
   Not_An_Element,            // Nil_Element
@@ -687,7 +694,8 @@ union Defining_Name_Union {
 struct Defining_Name_Struct {
   enum Defining_Name_Kinds  kind;
   char                     *name_image;
-  // Only for kind ==
+  
+  // These fields are only valid for the kinds above them:
   // A_Defining_Operator_Symbol:
   union Defining_Name_Union defining_name;
 };
@@ -696,17 +704,13 @@ struct Declaration_Struct {
   enum Declaration_Kinds   kind;
   enum Declaration_Origins origin;
   
-  // Only for kind ==
+  // These fields are only valid for the kinds above them:
   // A_Parameter_Specification |
   // A_Formal_Object_Declaration:
   enum Mode_Kinds          mode;
-  
-  // Only for kind ==
   // A_Formal_Function_Declaration |
   // A_Formal_Procedure_Declaration:
   enum Subprogram_Default_Kinds subprogram_default;
-  
-  // Only for kind ==
   // A_Private_Type_Declaration |
   // A_Private_Extension_Declaration |
   // A_Variable_Declaration |
@@ -728,7 +732,7 @@ struct Definition_Struct {
 struct Expression_Struct {
   enum Expression_Kinds kind;
   
-  // Only for kind ==
+  // These fields are only valid for the kinds above them:  
   // An_Identifier |                              // 4.1
   // An_Operator_Symbol |                         // 4.1
   // A_Character_Literal |                        // 4.1
@@ -737,12 +741,8 @@ struct Expression_Struct {
   Defining_Name_ID   Corresponding_Name_Definition;
   Defining_Name_List Corresponding_Name_Definition_List; // Only >1 if the expression in a pragma is ambiguous
   Element_ID         Corresponding_Name_Declaration; // Decl or stmt
-  
-  // Only for kind ==
   // An_Operator_Symbol:
   enum Operator_Kinds operator_kind;
-  
-  // Only for kind ==
   // An_Explicit_Dereference =>                   // 4.1
   // A_Function_Call =>                           // 4.1
   // An_Indexed_Component =>                      // 4.1.1
@@ -750,96 +750,59 @@ struct Expression_Struct {
   // A_Selected_Component =>                      // 4.1.3
   // An_Attribute_Reference =>                    // 4.1.4
   Expression_ID Prefix;
-  
-  // Only for kind ==
   // A_Function_Call =>                           // 4.1 
   // An_Indexed_Component (Is_Generalized_Indexing == true) //ASIS 2012 // 4.1.1
   Declaration_ID Corresponding_Called_Function;
-
-  // Only for kind ==
   // A_Function_Call =>                           // 4.1
   bool           Is_Prefix_Call;
   Element_List   Function_Call_Parameters;
-
-  // Only for kind ==
   // An_Indexed_Component =>                      // 4.1.1
   Expression_List Index_Expressions;
   bool            Is_Generalized_Indexing;
-  
-  // Only for kind ==
   // A_Slice =>                                   // 4.1.2
   Discrete_Range_ID Slice_Range;
-
-  // Only for kind ==
   // A_Selected_Component =>                      // 4.1.3
   Expression_ID Selector;
-
-  // Only for kind ==
   // An_Attribute_Reference :
   enum Attribute_Kinds atribute_kind;
   Expression_ID Attribute_Designator_Identifier;
   Expression_List Attribute_Designator_Expressions;
-  
-  // Only for kind ==
   // A_Record_Aggregate =>                        // 4.3
   // An_Extension_Aggregate =>                    // 4.3
   Association_List Record_Component_Associations;
- 
-  // Only for kind ==
   // An_Extension_Aggregate =>                    // 4.3
   Expression_ID Extension_Aggregate_Expression;
-
-  // Only for kind ==
   // A_Positional_Array_Aggregate |               // 4.3
   // A_Named_Array_Aggregate =>                   // 4.3  
   Association_List Array_Component_Associations;
-
-  // Only for kind ==
   // An_And_Then_Short_Circuit |                  // 4.4
   // An_Or_Else_Short_Circuit =>                  // 4.4
   Expression_ID Short_Circuit_Operation_Left_Expression;
   Expression_ID Short_Circuit_Operation_Right_Expression;
-  
-  // Only for kind ==
   // An_In_Membership_Test |                      // 4.4  Ada 2012
   // A_Not_In_Membership_Test =>                  // 4.4  Ada 2012
   Expression_ID Membership_Test_Expression;
   Element_List Membership_Test_Choices;
-  
-  // Only for kind ==
   // A_Parenthesized_Expression =>                // 4.4
   Expression_ID Expression_Parenthesized;
-  
-  // Only for kind ==
   // A_Type_Conversion =>                         // 4.6
   // A_Qualified_Expression =>                    // 4.7
   Expression_ID Converted_Or_Qualified_Subtype_Mark;
   Expression_ID Converted_Or_Qualified_Expression;
   Expression_ID Predicate;
-  
-  // Only for kind ==
   // An_Allocation_From_Subtype =>                // 4.8
   // An_Allocation_From_Qualified_Expression =>   // 4.8
   Expression_ID Subpool_Name;
-  
-  // Only for kind ==
   // An_Allocation_From_Subtype =>                // 4.8
   Subtype_Indication_ID Allocator_Subtype_Indication;
-
-  // Only for kind ==
   // An_Allocation_From_Qualified_Expression =>   // 4.8
   Expression_ID Allocator_Qualified_Expression;
-
-  // Only for kind ==
   // A_Case_Expression |                          // Ada 2012
   // An_If_Expression =>                          // Ada 2012
   Expression_Path_List Expression_Paths;
-
-  // Only for kind ==
   // A_For_All_Quantified_Expression |            // Ada 2012
   // A_For_Some_Quantified_Expression =>          // Ada 2012
   Declaration_ID Iterator_Specification;
-
 };
 
 struct Association_Struct {
@@ -848,6 +811,83 @@ struct Association_Struct {
 
 struct Statement_Struct {
   enum Statement_Kinds kind;
+  
+  // These fields are only valid for the kinds above them:  
+  //   An_Assignment_Statement,             // 5.2
+  Expression_ID Assignment_Variable_Name;
+  Expression_ID Assignment_Expression;
+  //   An_If_Statement,                     // 5.3
+  //   A_Case_Statement,                    // 5.4
+  //   A_Selective_Accept_Statement,        // 9.7.1
+  //   A_Timed_Entry_Call_Statement,        // 9.7.2
+  //   A_Conditional_Entry_Call_Statement,  // 9.7.3
+  //   An_Asynchronous_Select_Statement,    // 9.7.4
+  Path_List Statement_Paths;
+  //   A_Case_Statement,                    // 5.4
+  Expression_ID Case_Expression;
+  //   A_Loop_Statement,                    // 5.5
+  //   A_While_Loop_Statement,              // 5.5
+  //   A_For_Loop_Statement,                // 5.5
+  //   A_Block_Statement,                   // 5.6
+  Defining_Name_ID Statement_Identifier;
+  //   A_Loop_Statement,                    // 5.5
+  //   A_Block_Statement,                   // 5.6
+  //   An_Accept_Statement,                 // 9.5.2
+  bool Is_Name_Repeated;
+  //   A_While_Loop_Statement,              // 5.5
+  Expression_ID While_Condition;
+  //   A_For_Loop_Statement,                // 5.5
+  Declaration_ID For_Loop_Parameter_Specification;
+  //   A_Loop_Statement,                    // 5.5
+  //   A_While_Loop_Statement,              // 5.5
+  //   A_For_Loop_Statement,                // 5.5
+  Statement_List Loop_Statements;
+  //   A_Block_Statement,                   // 5.6
+  bool                   Is_Declare_Block;
+  Declarative_Item_List  Block_Declarative_Items;
+  Statement_List         Block_Statements;
+  Exception_Handler_List Block_Exception_Handlers;
+  //   An_Exit_Statement,                   // 5.7
+  Expression_ID Exit_Loop_Name;
+  Expression_ID Exit_Condition;
+  Expression_ID Corresponding_Loop_Exited;
+  //   A_Goto_Statement,                    // 5.8
+  Expression_ID Goto_Label;
+  Statement_ID  Corresponding_Destination_Statement;
+  //   A_Procedure_Call_Statement,          // 6.4
+  //   An_Entry_Call_Statement,             // 9.5.3
+  Expression_ID    Called_Name;
+  Declaration_ID   Corresponding_Called_Entity;
+  Association_List Call_Statement_Parameters;
+  //   A_Return_Statement,                  // 6.5
+  Expression_ID Return_Expression;
+  //   //  //|A2005 start
+  //   An_Extended_Return_Statement,        // 6.5
+  Declaration_ID         Return_Object_Declaration;
+  Statement_List         Extended_Return_Statements;
+  Exception_Handler_List Extended_Return_Exception_Handlers;
+  //   //  //|A2005 end
+  //   An_Accept_Statement,                 // 9.5.2
+  Expression_ID  Accept_Entry_Index;
+  Name_ID        Accept_Entry_Direct_Name;
+  Parameter_Specification_List 
+                 Accept_Parameters;
+  Statement_List Accept_Body_Statements;
+  Statement_List Accept_Body_Exception_Handlers;
+  Declaration_ID Corresponding_Entry;
+  //   A_Requeue_Statement,                 // 9.5.4
+  //   A_Requeue_Statement_With_Abort,      // 9.5.4
+  Name_ID Requeue_Entry_Name;
+  //   A_Delay_Until_Statement,             // 9.6
+  //   A_Delay_Relative_Statement,          // 9.6
+  Expression_ID Delay_Expression;
+  //   An_Abort_Statement,                  // 9.8
+  Expression_List Aborted_Tasks;
+  //   A_Raise_Statement,                   // 11.3
+  Expression_ID Raised_Exception;
+  Expression_ID Associated_Message;
+  //   A_Code_Statement                     // 13.8
+  Expression_ID Qualified_Expression;
 };
 
 struct Path_Struct {
