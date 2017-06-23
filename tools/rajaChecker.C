@@ -613,7 +613,7 @@ bool RAJA_Checker::isNodalAccumulationLoop(SgForStatement* forloop, SgExprStatem
   if (body == NULL) 
   {
     if (RAJA_Checker::enable_debug)
-      cout<< "NULL body, return false;"<<endl;;
+      cout<< "NULL body, return false;"<<endl;
     return false;
   }
 
@@ -621,7 +621,7 @@ bool RAJA_Checker::isNodalAccumulationLoop(SgForStatement* forloop, SgExprStatem
   if (bb == NULL) 
   {
     if (RAJA_Checker::enable_debug)
-      cout<< "NULL Basic Block as body, return false;"<<endl;;
+      cout<< "NULL Basic Block as body, return false;"<<endl;
     return false;
   }
 
@@ -805,7 +805,9 @@ void RoseVisitor::visit ( SgNode* n)
             oss<<"\t The first accumulation statement is at line:"<< fstmt->get_file_info()->get_line()<<endl;
 
             SgSourceFile* file = getEnclosingSourceFile(forloop);
-            Rose::KeepGoing::File2StringMap[file]+=oss.str();
+            string s(":");
+            string entry= forloop->get_file_info()->get_filename()+s+oss.str(); // add full filename to each log entries
+            Rose::KeepGoing::File2StringMap[file]+= entry;
           if (RAJA_Checker::enable_debug)
           {
             ofile<<oss.str();
@@ -837,7 +839,9 @@ void RoseVisitor::visit ( SgNode* n)
                 oss<<"\t This labmda function is used as a function parameter in a RAJA function is at line:"<< callstmt->get_file_info()->get_line()<<endl;
 
               SgSourceFile* file = getEnclosingSourceFile(le);
-              Rose::KeepGoing::File2StringMap[file]+=oss.str();
+              string s(":");
+              string entry= le->get_file_info()->get_filename()+s+oss.str(); // add full filename to each log entries.
+              Rose::KeepGoing::File2StringMap[file]+= entry;
             if (RAJA_Checker::enable_debug)
             {
               ofile<<oss.str();
