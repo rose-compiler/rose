@@ -1,3 +1,8 @@
+2017-06-23  Louis-Noel Pouchet  <pouchet@colostate.edu>
+
+	* projects/PolyOpt2/tests/scripts/checker.sh: update to loosen
+	constraints on the order of iterator declaration.
+
 2017-06-09  Louis-Noel Pouchet  <pouchet@colostate.edu>
 
 	* projects/PolyOpt2/polyopt/include/polyopt/PolyOptISLRepresentation.hpp,
