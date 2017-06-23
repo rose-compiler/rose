@@ -1,6 +1,6 @@
 // -*- c++ -*-
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /** @page binary_tutorial Binary analysis tutorial
@@ -225,7 +225,7 @@ namespace BinaryAnalysis {
  *
  *  @snippet binaryCallGraph.C namespaces
  *
- *  This time we'll use a few namespaces to reduce our typing. The @ref rose::Diagnostics namespace brings into scope the
+ *  This time we'll use a few namespaces to reduce our typing. The @ref Rose::Diagnostics namespace brings into scope the
  *  diagnostic support (@c mlog and @c FATAL in this example) which is accessed through the "--log" or "-L" command-line
  *  switches and controls what kinds of debugging output is produced. If you run this program with "-L all" you'll get traces
  *  and debugging from all the ROSE components that use this mechanism; see "-L help" for info about fine tuning this.
@@ -334,7 +334,7 @@ namespace BinaryAnalysis {
  *
  *  @section bintut_next Next steps
  *
- *  Most binary analysis capabilities are documented in the @ref rose::BinaryAnalysis namespace. The test directory,
+ *  Most binary analysis capabilities are documented in the @ref Rose::BinaryAnalysis namespace. The test directory,
  *  "$ROSE_SOURCE/tests/nonsmoke/functional/roseTests/BinaryTests", also has many examples, some of which are slightly hard to read since there
  *  main purpose is to test rather than demonstrate.  The "$ROSE_SOURCE/projects/BinaryAnalysisTools" directory (as well as
  *  some other project directories) has real programs that use the binary analysis interface. */

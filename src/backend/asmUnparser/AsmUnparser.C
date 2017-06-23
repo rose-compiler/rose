@@ -3,7 +3,7 @@
 #include "AsmUnparser_compat.h" /*FIXME: needed until no longer dependent upon unparseInstruction()*/
 #include "Disassembler.h"
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 using namespace Diagnostics;
@@ -71,7 +71,7 @@ void AsmUnparser::initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        Diagnostics::initAndRegister(&mlog, "rose::BinaryAnalysis::AsmUnparser");
+        Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::AsmUnparser");
     }
 }
 

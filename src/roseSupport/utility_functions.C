@@ -37,7 +37,7 @@
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 // global variable for turning on and off internal debugging
 int ROSE_DEBUG = 0;
@@ -57,15 +57,15 @@ const int roseTargetCacheLineSize = 32;
 #endif
 
 // DQ (8/10/2004): This was moved to the SgFile a long time ago and should not be used any more)
-// bool rose::verbose                 = false;
+// bool Rose::verbose                 = false;
 // DQ (8/11/2004): build a global state here
-// int rose::roseVerbose = 0;
+// int Rose::roseVerbose = 0;
 
 // DQ (3/6/2017): Adding ROSE options data structure to support frontend and backend options (see header file for details).
-rose::Options rose::global_options;
+Rose::Options Rose::global_options;
 
 // DQ (3/6/2017): Adding ROSE options data structure to support frontend and backend options (see header file for details).
-rose::Options::Options()
+Rose::Options::Options()
    {
   // DQ (3/6/2017): Default option value to minimize the chattyness of ROSE based tools.
      frontend_notes    = false;
@@ -75,7 +75,7 @@ rose::Options::Options()
    }
 
 // DQ (3/6/2017): Adding ROSE options data structure to support frontend and backend options (see header file for details).
-rose::Options::Options(const Options & X)
+Rose::Options::Options(const Options & X)
    {
   // DQ (3/6/2017): Default option value to minimize the chattyness of ROSE based tools.
      frontend_notes    = X.frontend_notes;
@@ -85,7 +85,7 @@ rose::Options::Options(const Options & X)
    }
 
 // DQ (3/6/2017): Adding ROSE options data structure to support frontend and backend options (see header file for details).
-Options & rose::Options::operator= (const Options & X)
+Options & Rose::Options::operator= (const Options & X)
    {
   // DQ (3/6/2017): Default option value to minimize the chattyness of ROSE based tools.
      frontend_notes    = X.frontend_notes;
@@ -96,42 +96,42 @@ Options & rose::Options::operator= (const Options & X)
      return *this;
    }
 
-bool rose::Options::get_frontend_notes()
+bool Rose::Options::get_frontend_notes()
    {
      return frontend_notes;
    }
 
-void rose::Options::set_frontend_notes(bool flag)
+void Rose::Options::set_frontend_notes(bool flag)
    {
      frontend_notes = flag;
    }
 
-bool rose::Options::get_frontend_warnings()
+bool Rose::Options::get_frontend_warnings()
    {
      return frontend_warnings;
    }
 
-void rose::Options::set_frontend_warnings(bool flag)
+void Rose::Options::set_frontend_warnings(bool flag)
    {
      frontend_warnings = flag;
    }
 
-bool rose::Options::get_backend_notes()
+bool Rose::Options::get_backend_notes()
    {
      return backend_notes;
    }
 
-void rose::Options::set_backend_notes(bool flag)
+void Rose::Options::set_backend_notes(bool flag)
    {
      backend_notes = flag;
    }
 
-bool rose::Options::get_backend_warnings()
+bool Rose::Options::get_backend_warnings()
    {
      return backend_warnings;
    }
 
-void rose::Options::set_backend_warnings(bool flag)
+void Rose::Options::set_backend_warnings(bool flag)
    {
      backend_warnings = flag;
    }
@@ -142,42 +142,42 @@ void rose::Options::set_backend_warnings(bool flag)
 
 
 // DQ (10/28/2013): Put the token sequence map here, it is set and accessed via member functions on the SgSourceFile IR node.
-std::map<SgNode*,TokenStreamSequenceToNodeMapping*> rose::tokenSubsequenceMap;
+std::map<SgNode*,TokenStreamSequenceToNodeMapping*> Rose::tokenSubsequenceMap;
 
 // DQ (11/27/2013): Adding vector of nodes in the AST that defines the token unparsing AST frontier.
-// std::vector<FrontierNode*> rose::frontierNodes;
-std::map<SgStatement*,FrontierNode*> rose::frontierNodes;
+// std::vector<FrontierNode*> Rose::frontierNodes;
+std::map<SgStatement*,FrontierNode*> Rose::frontierNodes;
 
 // DQ (11/27/2013): Adding adjacency information for the nodes in the token unparsing AST frontier.
-std::map<SgNode*,PreviousAndNextNodeData*> rose::previousAndNextNodeMap;
+std::map<SgNode*,PreviousAndNextNodeData*> Rose::previousAndNextNodeMap;
 
 // DQ (11/29/2013): Added to support access to multi-map of redundant mapping of frontier IR nodes to token subsequences.
-std::multimap<int,SgStatement*> rose::redundantlyMappedTokensToStatementMultimap;
-std::set<int> rose::redundantTokenEndingsSet;
+std::multimap<int,SgStatement*> Rose::redundantlyMappedTokensToStatementMultimap;
+std::set<int> Rose::redundantTokenEndingsSet;
 
 // DQ (11/20/2015): Provide a statement to use as a key in the token sequence map to get representative whitespace.
-std::map<SgScopeStatement*,SgStatement*> rose::representativeWhitespaceStatementMap;
+std::map<SgScopeStatement*,SgStatement*> Rose::representativeWhitespaceStatementMap;
 
 // DQ (11/30/2015): Provide a statement to use as a key in the macro expansion map to get info about macro expansions.
-std::map<SgStatement*,MacroExpansion*> rose::macroExpansionMap;
+std::map<SgStatement*,MacroExpansion*> Rose::macroExpansionMap;
 
 
 // DQ (3/24/2016): Adding Robb's message logging mechanism to contrl output debug message from the EDG/ROSE connection code.
-using namespace rose::Diagnostics;
+using namespace Rose::Diagnostics;
 
 // DQ (3/5/2017): Added general IR node specific message stream to support debugging message from the ROSE IR nodes.
-Sawyer::Message::Facility rose::ir_node_mlog;
+Sawyer::Message::Facility Rose::ir_node_mlog;
 
-void rose::initDiagnostics() 
+void Rose::initDiagnostics() 
    {
      static bool initialized = false;
      if (!initialized) 
         {
           initialized = true;
-       // printf ("In rose::initDiagnostics(): Calling Sawyer::Message::Facility() \n");
-          ir_node_mlog = Sawyer::Message::Facility("rose_ir_node", rose::Diagnostics::destination);
-          rose::Diagnostics::mfacilities.insertAndAdjust(ir_node_mlog);
-       // printf ("In rose::initDiagnostics(): DONE Calling Sawyer::Message::Facility() \n");
+       // printf ("In Rose::initDiagnostics(): Calling Sawyer::Message::Facility() \n");
+          ir_node_mlog = Sawyer::Message::Facility("rose_ir_node", Rose::Diagnostics::destination);
+          Rose::Diagnostics::mfacilities.insertAndAdjust(ir_node_mlog);
+       // printf ("In Rose::initDiagnostics(): DONE Calling Sawyer::Message::Facility() \n");
         }
    }
 
@@ -460,7 +460,7 @@ frontend (const std::vector<std::string>& argv, bool frontendConstantFolding )
   // make sure that there is some sort of commandline (at least a file specified)
      if (argv.size() == 1)
         {
-       // rose::usage(1);      // Print usage and exit with exit status == 1
+       // Rose::usage(1);      // Print usage and exit with exit status == 1
           SgFile::usage(1);      // Print usage and exit with exit status == 1
         }
 
@@ -1056,11 +1056,11 @@ pdfPrintAbstractSyntaxTreeEDG ( SgFile *file )
   // Use the PDF file declared in the EDG/src/displayTree.C
      extern PDF* pdfGlobalFile;
 
-     printf ("rose::getWorkingDirectory() = %s \n",rose::getWorkingDirectory());
-     sprintf(filename,"%s/%s.edg.pdf",rose::getWorkingDirectory(),rose::utility_stripPathFromFileName(rose::getFileName(file)));
+     printf ("Rose::getWorkingDirectory() = %s \n",Rose::getWorkingDirectory());
+     sprintf(filename,"%s/%s.edg.pdf",Rose::getWorkingDirectory(),Rose::utility_stripPathFromFileName(Rose::getFileName(file)));
      printf ("filename = %s \n",filename);
 
-     ifstream sourceFile (rose::getFileName(file));
+     ifstream sourceFile (Rose::getFileName(file));
      if (!sourceFile)
           cerr << "ERROR opening sourceFile" << endl;
      ROSE_ASSERT (sourceFile);
@@ -1186,7 +1186,7 @@ generatePDFofEDG ( const SgProject & project )
 
 #if 1
 int
-rose::getLineNumber ( SgLocatedNode* locatedNodePointer )
+Rose::getLineNumber ( SgLocatedNode* locatedNodePointer )
    {
   // Get the line number from the Sage II statement object
      ROSE_ASSERT (locatedNodePointer != NULL);
@@ -1206,7 +1206,7 @@ rose::getLineNumber ( SgLocatedNode* locatedNodePointer )
 #endif
 #if 1
 int
-rose::getColumnNumber ( SgLocatedNode* locatedNodePointer )
+Rose::getColumnNumber ( SgLocatedNode* locatedNodePointer )
    {
   // Get the line number from the Sage II statement object
      ROSE_ASSERT (locatedNodePointer != NULL);
@@ -1226,7 +1226,7 @@ rose::getColumnNumber ( SgLocatedNode* locatedNodePointer )
 #endif
 #if 1
 std::string
-rose::getFileName ( SgLocatedNode* locatedNodePointer )
+Rose::getFileName ( SgLocatedNode* locatedNodePointer )
    {
   // Get the filename from the Sage II statement object
      ROSE_ASSERT (locatedNodePointer != NULL);
@@ -1236,7 +1236,7 @@ rose::getFileName ( SgLocatedNode* locatedNodePointer )
      if (locatedNodePointer->get_file_info() != NULL)
         {
           ROSE_ASSERT (locatedNodePointer->get_file_info() != NULL);
-       // printf ("In rose::getFileName(): locatedNodePointer->get_file_info() = %p \n",locatedNodePointer->get_file_info());
+       // printf ("In Rose::getFileName(): locatedNodePointer->get_file_info() = %p \n",locatedNodePointer->get_file_info());
           Sg_File_Info* fileInfo = locatedNodePointer->get_file_info();
           fileName = fileInfo->get_filenameString();
         }
@@ -1245,7 +1245,7 @@ rose::getFileName ( SgLocatedNode* locatedNodePointer )
    }
 #endif
 #if 1
-bool rose:: isPartOfTransformation( SgLocatedNode* locatedNodePointer )
+bool Rose:: isPartOfTransformation( SgLocatedNode* locatedNodePointer )
 {
   bool result = false;
   Sg_File_Info *fileInfo = locatedNodePointer->get_file_info();
@@ -1256,7 +1256,7 @@ bool rose:: isPartOfTransformation( SgLocatedNode* locatedNodePointer )
 #endif
 
 std::string
-rose::getFileNameWithoutPath ( SgStatement* statementPointer )
+Rose::getFileNameWithoutPath ( SgStatement* statementPointer )
    {
   // Get the filename from the Sage III statement object
      ROSE_ASSERT (statementPointer != NULL);
@@ -1270,7 +1270,7 @@ rose::getFileNameWithoutPath ( SgStatement* statementPointer )
 
 #if 1
 std::string
-rose::utility_stripPathFromFileName ( const std::string& fileNameWithPath )
+Rose::utility_stripPathFromFileName ( const std::string& fileNameWithPath )
    {
      size_t pos = fileNameWithPath.rfind('/');
      if (pos == std::string::npos || pos == fileNameWithPath.size() - 1) {
@@ -1283,7 +1283,7 @@ rose::utility_stripPathFromFileName ( const std::string& fileNameWithPath )
 
 #if 0
 std::string
-rose::stripFileSuffixFromFileName ( const std::string& fileNameWithSuffix )
+Rose::stripFileSuffixFromFileName ( const std::string& fileNameWithSuffix )
    {
   // This function is not sophisticated enough to handle binaries with paths such as:
   //    ROSE/ROSE_CompileTree/svn-LINUX-64bit-4.2.2/tutorial/inputCode_binaryAST_1
@@ -1309,7 +1309,7 @@ rose::stripFileSuffixFromFileName ( const std::string& fileNameWithSuffix )
 #if 1
 // DQ (3/15/2005): New, simpler and better implementation suggested function from Tom, thanks Tom!
 string
-rose::getPathFromFileName ( const string fileName )
+Rose::getPathFromFileName ( const string fileName )
    {
      size_t pos = fileName.rfind('/');
      if (pos == std::string::npos) {
@@ -1325,14 +1325,14 @@ rose::getPathFromFileName ( const string fileName )
 #if 0
  //! get the source directory (requires an input string currently)
 char*
-rose::getSourceDirectory ( char* fileNameWithPath )
+Rose::getSourceDirectory ( char* fileNameWithPath )
    {
      return getPathFromFileName (fileNameWithPath);
    }
 #else
  //! get the source directory (requires an input string currently)
 string
-rose::getSourceDirectory ( string fileNameWithPath )
+Rose::getSourceDirectory ( string fileNameWithPath )
    {
      return getPathFromFileName (fileNameWithPath);
    }
@@ -1341,7 +1341,7 @@ rose::getSourceDirectory ( string fileNameWithPath )
 #if 0
  //! get the current directory
 char*
-rose::getWorkingDirectory ()
+Rose::getWorkingDirectory ()
    {
      int i = 0;  // index variable declaration
 
@@ -1356,8 +1356,8 @@ rose::getWorkingDirectory ()
      ROSE_ASSERT (returnString != NULL);
 
   // The semantics of the getcwd is that these should be the same (see if they are)
-  // printf ("In rose::getWorkingDirectory: Current directory = %s \n",currentDirectory);
-  // printf ("In rose::getWorkingDirectory: Current directory = %s \n",returnString);
+  // printf ("In Rose::getWorkingDirectory: Current directory = %s \n",currentDirectory);
+  // printf ("In Rose::getWorkingDirectory: Current directory = %s \n",returnString);
 
   // live with the possible memory leak for now
   // delete currentDirectory;
@@ -1368,7 +1368,7 @@ rose::getWorkingDirectory ()
 #else
  //! get the current directory
 string
-rose::getWorkingDirectory ()
+Rose::getWorkingDirectory ()
    {
   // DQ (9/5/2006): Increase the buffer size
   // const int maxPathNameLength = 1024;
@@ -1393,7 +1393,7 @@ rose::getWorkingDirectory ()
 #endif
 
 SgName
-rose::concatenate ( const SgName & X, const SgName & Y )
+Rose::concatenate ( const SgName & X, const SgName & Y )
    {
      return X + Y;
    }
@@ -1401,7 +1401,7 @@ rose::concatenate ( const SgName & X, const SgName & Y )
 #if 0
 // DQ (9/5/2008): Try to remove this function!
 std::string
-rose::getFileName ( const SgFile* file )
+Rose::getFileName ( const SgFile* file )
    {
   // Get the filename from the Sage II file object
      ROSE_ASSERT (file != NULL);
@@ -1417,7 +1417,7 @@ rose::getFileName ( const SgFile* file )
 #if 1
 // DQ (9/5/2008): Try to remove this function!
 string
-rose::getFileNameByTraversalBackToFileNode ( const SgNode* astNode )
+Rose::getFileNameByTraversalBackToFileNode ( const SgNode* astNode )
    {
      string returnString;
 
@@ -1444,7 +1444,7 @@ rose::getFileNameByTraversalBackToFileNode ( const SgNode* astNode )
           ROSE_ASSERT (file != NULL);
           if (file != NULL)
              {
-            // returnString = rose::getFileName(file);
+            // returnString = Rose::getFileName(file);
                returnString = file->getFileName();
              }
 
@@ -1457,20 +1457,20 @@ rose::getFileNameByTraversalBackToFileNode ( const SgNode* astNode )
 #endif
 
 void
-rose::usage (int status)
+Rose::usage (int status)
    {
      SgFile::usage(status);
   // exit(status);
    }
 
 int 
-rose::containsString ( const std::string& masterString, const std::string& targetString )
+Rose::containsString ( const std::string& masterString, const std::string& targetString )
    {
      return masterString.find(targetString) != string::npos;
    }
 
 void
-rose::filterInputFile ( const string inputFileName, const string outputFileName )
+Rose::filterInputFile ( const string inputFileName, const string outputFileName )
    {
   // This function filters the input file to remove ^M characters and expand tabs etc.
   // Any possible processing of the input file, before being compiled, should be done
@@ -1480,7 +1480,7 @@ rose::filterInputFile ( const string inputFileName, const string outputFileName 
    }
 
 SgStatement*
-rose::getNextStatement ( SgStatement *currentStatement )
+Rose::getNextStatement ( SgStatement *currentStatement )
    {
      ROSE_ASSERT (currentStatement  != NULL);
   // CI (1/3/2007): This used to be not implemented ,,, here is my try
@@ -1618,7 +1618,7 @@ rose::getNextStatement ( SgStatement *currentStatement )
 
          
 SgStatement*
-rose::getPreviousStatement ( SgStatement *targetStatement , bool climbOutScope /*= true*/)
+Rose::getPreviousStatement ( SgStatement *targetStatement , bool climbOutScope /*= true*/)
    {
      ROSE_ASSERT (targetStatement  != NULL);
 
@@ -1639,10 +1639,10 @@ rose::getPreviousStatement ( SgStatement *targetStatement , bool climbOutScope /
      ROSE_ASSERT (scope != targetStatement);
 
 #if 0
-     printf ("@@@@@ In rose::getPreviousStatement(): targetStatement = %s \n",targetStatement->sage_class_name());
-     printf ("@@@@@ In rose::getPreviousStatement(): targetStatement->unparseToString() = %s \n",targetStatement->unparseToString().c_str());
-     printf ("@@@@@ In rose::getPreviousStatement(): scope = %s \n",scope->sage_class_name());
-     printf ("@@@@@ In rose::getPreviousStatement(): scope->unparseToString() = %s \n",scope->unparseToString().c_str());
+     printf ("@@@@@ In Rose::getPreviousStatement(): targetStatement = %s \n",targetStatement->sage_class_name());
+     printf ("@@@@@ In Rose::getPreviousStatement(): targetStatement->unparseToString() = %s \n",targetStatement->unparseToString().c_str());
+     printf ("@@@@@ In Rose::getPreviousStatement(): scope = %s \n",scope->sage_class_name());
+     printf ("@@@@@ In Rose::getPreviousStatement(): scope->unparseToString() = %s \n",scope->unparseToString().c_str());
 #endif
 
      switch (targetStatement->variantT())

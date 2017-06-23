@@ -27,7 +27,7 @@
 #endif
 
 using namespace std;                                    // DQ (12/31/2005): This is OK if not declared in a header file
-using namespace rose;                                   // until this file is all moved into the rose namespace
+using namespace Rose;                                   // until this file is all moved into the rose namespace
 
 void
 AstDOTGeneration::generate(SgNode* node, string filename, traversalType tt, string filenamePostfix)
@@ -885,8 +885,8 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
                string original_filename = file->getFileName();
 
             // DQ (7/4/2008): Fix filenamePostfix to go before the "."
-            // string filename = string("./") + rose::utility_stripPathFromFileName(original_filename) + "."+filenamePostfix+"dot";
-               string filename = string("./") + rose::utility_stripPathFromFileName(original_filename) + filenamePostfix + ".dot";
+            // string filename = string("./") + Rose::utility_stripPathFromFileName(original_filename) + "."+filenamePostfix+"dot";
+               string filename = string("./") + Rose::utility_stripPathFromFileName(original_filename) + filenamePostfix + ".dot";
 
             // printf ("generated filename for dot file (from SgSourceFile or SgBinaryComposite) = %s file->get_parent() = %p \n",filename.c_str(),file->get_parent());
 
@@ -956,7 +956,7 @@ generateFileLineColumnString (Sg_File_Info* fileInfo)
 
      ROSE_ASSERT(fileInfo != NULL);
      string file = fileInfo->get_filename();
-     file = rose::utility_stripPathFromFileName(file);
+     file = Rose::utility_stripPathFromFileName(file);
 
      int line    = fileInfo->get_line();
      int column  = fileInfo->get_col();

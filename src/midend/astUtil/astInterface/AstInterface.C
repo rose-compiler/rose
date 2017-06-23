@@ -116,7 +116,7 @@ AstNodePtr AstInterface::GetFunctionDefinition( const AstNodePtr &n, std::string
 
 std::string get_type_name( SgType* t);
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 // Removing the leading "::" from a qualified name
 string StripGlobalQualifier(string name)
@@ -899,7 +899,7 @@ globalUnparseToString_Fortran (const SgNode* astNode, SgUnparse_Info* inputUnpar
 
        // DQ (5/31/2005): Get the filename from a traversal back through the parents to the SgFile
        // fileNameOfStatementsToUnparse = locatedNode->getFileName();
-       // fileNameOfStatementsToUnparse = rose::getFileNameByTraversalBackToFileNode(locatedNode);
+       // fileNameOfStatementsToUnparse = Rose::getFileNameByTraversalBackToFileNode(locatedNode);
           if (locatedNode->get_parent() == NULL)
              {
             // DQ (7/29/2005):
@@ -922,7 +922,7 @@ globalUnparseToString_Fortran (const SgNode* astNode, SgUnparse_Info* inputUnpar
                  else
                   {
 #if 1
-                    fileNameOfStatementsToUnparse = rose::getFileNameByTraversalBackToFileNode(locatedNode);
+                    fileNameOfStatementsToUnparse = Rose::getFileNameByTraversalBackToFileNode(locatedNode);
 #else
                     SgSourceFile* sourceFile = TransformationSupport::getSourceFile(locatedNode);
                     ROSE_ASSERT(sourceFile != NULL);
@@ -1068,8 +1068,8 @@ globalUnparseToString_Fortran (const SgNode* astNode, SgUnparse_Info* inputUnpar
                     SgFile* file = project->get_fileList()[i];
                     ROSE_ASSERT(file != NULL);
                     string unparsedFileString = globalUnparseToString_Fortran(file,inputUnparseInfoPointer);
-                 // string prefixString       = string("/* TOP:")      + string(rose::getFileName(file)) + string(" */ \n");
-                 // string suffixString       = string("\n/* BOTTOM:") + string(rose::getFileName(file)) + string(" */ \n\n");
+                 // string prefixString       = string("/* TOP:")      + string(Rose::getFileName(file)) + string(" */ \n");
+                 // string suffixString       = string("\n/* BOTTOM:") + string(Rose::getFileName(file)) + string(" */ \n\n");
                     string prefixString       = string("/* TOP:")      + file->getFileName() + string(" */ \n");
                     string suffixString       = string("\n/* BOTTOM:") + file->getFileName() + string(" */ \n\n");
                     returnString += prefixString + unparsedFileString + suffixString;
@@ -1168,8 +1168,8 @@ globalUnparseToString_Fortran (const SgNode* astNode, SgUnparse_Info* inputUnpar
                               SgFile* file = &(project->get_file(i));
                               ROSE_ASSERT(file != NULL);
                               string unparsedFileString = globalUnparseToString_OpenMPSafe(file,inputUnparseInfoPointer);
-                              string prefixString       = string("/* TOP:")      + string(rose::getFileName(file)) + string(" */ \n");
-                              string suffixString       = string("\n/* BOTTOM:") + string(rose::getFileName(file)) + string(" */ \n\n");
+                              string prefixString       = string("/* TOP:")      + string(Rose::getFileName(file)) + string(" */ \n");
+                              string suffixString       = string("\n/* BOTTOM:") + string(Rose::getFileName(file)) + string(" */ \n\n");
                               returnString += prefixString + unparsedFileString + suffixString;
                             }
                          break;
