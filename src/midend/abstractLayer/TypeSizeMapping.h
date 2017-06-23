@@ -2,12 +2,11 @@
 #define TYPE_SIZE_MAPPING_H
 
 #include <vector>
-#include <cstdint>
 
 namespace SPRAY {
 
   // typesize in bytes
-  typedef std::uint32_t TypeSize;
+  typedef unsigned int TypeSize;
   
   enum BuiltInType {
     BITYPE_BOOL,
@@ -42,6 +41,8 @@ namespace SPRAY {
                                         4,8,16,
                                         8
     };
+#else
+    std::vector<SPRAY::TypeSize> _mapping;
 #endif
   };
 
