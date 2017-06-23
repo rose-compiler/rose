@@ -3,6 +3,18 @@
 
 namespace SPRAY {
 
+  TypeSizeMapping::TypeSizeMapping() {
+    // C++98 version
+    static const TypeSize mapping[]={1U,
+                                                          1,1,2,2,4,4,
+                                                          2,2,4,4,4,4,8,8,
+                                                          4,8,16,
+                                                          8
+    };
+    std::vector<TypeSize> mappingVec (mapping, mapping + sizeof(mapping) / sizeof(mapping[0]) );
+    setMapping(mappingVec);
+  }
+
   SPRAY::TypeSize SgTypeSizeMapping::determineTypeSize(SgType* sgType) {
     switch (sgType->variantT()) {
 
