@@ -7,16 +7,12 @@ SRCDIR=$1
 BUILDDIR=$2
 
 P1="Problem1"
-P2="Problem2"
-P3="Problem3"
-P4="Problem28"
-P5="Problem1T_size5_14"
 
 MAKE_CHECK="_make_check"
 
-echo ".================================."
-echo "| testing RERS ltl results (SPOT)|"
-echo "*================================*"
+echo ".====================================================================."
+echo "| testing RERS ltl results, different versions of Problem1 from 2012 |"
+echo "*====================================================================*"
 
 #create a temp directory
 CURRENT_TIME=`date '+%m-%d-%y_%H:%M:%S'`
@@ -24,7 +20,7 @@ TEMP_DIR="make_check_log_"${CURRENT_TIME}
 mkdir ${2}/${TEMP_DIR}
 echo "created directory for temporary files: <CodeThorn build dir>/src/${TEMP_DIR}"
 
-for i in {1..5} #test all versions listed as P1,P2,... above
+for i in 1 #test all versions listed as P1,P2,... above
 do
   for v in {1..4}  #iterate over four different versions of each RERS problem
   do
@@ -81,6 +77,6 @@ done
 rm -rf ${2}/${TEMP_DIR}
 echo "removed directory for temporary files: <CodeThorn build dir>/src/${TEMP_DIR}"
     
-echo ".==============================================."
-echo "| RERS LTL tests (SPOT) completed successfully |"
-echo "*==============================================*"
+echo ".===================================================================================."
+echo "| RERS LTL tests (different versions of Problem 1 from 2012) completed successfully |"
+echo "*===================================================================================*"
