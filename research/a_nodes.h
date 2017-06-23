@@ -1,3 +1,23 @@
+#include <stdbool.h>
+
+typedef int        Node_ID;
+typedef Node_ID    Unit_ID;
+typedef Node_ID    Element_ID;
+typedef Element_ID Declaration_ID;
+typedef Element_ID Defining_Name_ID;
+typedef Element_ID Discrete_Range_ID;
+typedef Element_ID Expression_ID;
+typedef Element_ID Subtype_Indication_ID;
+
+typedef struct Element_ID_List_Struct {
+  int length;
+  Element_ID *elements;
+} Element_List;
+typedef Element_List Association_List;
+typedef Element_List Defining_Name_List;
+typedef Element_List Expression_List;
+typedef Element_List Expression_Path_List;
+
 enum Element_Kinds {
   Not_An_Element,            // Nil_Element
   A_Pragma,                  // Asis.Elements
@@ -640,26 +660,35 @@ enum Attribute_Kinds {
   An_Unknown_Attribute           // Unknown to ASIS
 };
 
+// For Element_Struct:
+enum Enclosing_Kinds {
+  Element_Kind,
+  Unit_Kind 
+};
+
 ///////////////////////////////////////////////////////////////////////////////
 // END supporting kinds
 ///////////////////////////////////////////////////////////////////////////////
-
 
 struct Pragma_Struct {
   enum Pragma_Kinds kind;
 };
 
+// TODO: Necessary?
 struct Defining_Operator_Symbol_Struct {
   enum Operator_Kinds kind;
 };
 
+// TODO: Necessary?
 union Defining_Name_Union {
   struct Defining_Operator_Symbol_Struct defining_operator_symbol;
 };
 
 struct Defining_Name_Struct {
   enum Defining_Name_Kinds  kind;
-  char                     *name;
+  char                     *name_image;
+  // Only for kind ==
+  // A_Defining_Operator_Symbol:
   union Defining_Name_Union defining_name;
 };
 
@@ -704,18 +733,113 @@ struct Expression_Struct {
   // An_Operator_Symbol |                         // 4.1
   // A_Character_Literal |                        // 4.1
   // An_Enumeration_Literal:
-  char *name_image;
+  char           *name_image;
+  Defining_Name_ID   Corresponding_Name_Definition;
+  Defining_Name_List Corresponding_Name_Definition_List; // Only >1 if the expression in a pragma is ambiguous
+  Element_ID         Corresponding_Name_Declaration; // Decl or stmt
   
   // Only for kind ==
   // An_Operator_Symbol:
   enum Operator_Kinds operator_kind;
   
   // Only for kind ==
+  // An_Explicit_Dereference =>                   // 4.1
+  // A_Function_Call =>                           // 4.1
+  // An_Indexed_Component =>                      // 4.1.1
+  // A_Slice =>                                   // 4.1.2
+  // A_Selected_Component =>                      // 4.1.3
+  // An_Attribute_Reference =>                    // 4.1.4
+  Expression_ID Prefix;
+  
+  // Only for kind ==
+  // A_Function_Call =>                           // 4.1 
+  // An_Indexed_Component (Is_Generalized_Indexing == true) //ASIS 2012 // 4.1.1
+  Declaration_ID Corresponding_Called_Function;
+
+  // Only for kind ==
+  // A_Function_Call =>                           // 4.1
+  bool           Is_Prefix_Call;
+  Element_List   Function_Call_Parameters;
+
+  // Only for kind ==
+  // An_Indexed_Component =>                      // 4.1.1
+  Expression_List Index_Expressions;
+  bool            Is_Generalized_Indexing;
+  
+  // Only for kind ==
+  // A_Slice =>                                   // 4.1.2
+  Discrete_Range_ID Slice_Range;
+
+  // Only for kind ==
+  // A_Selected_Component =>                      // 4.1.3
+  Expression_ID Selector;
+
+  // Only for kind ==
   // An_Attribute_Reference :
   enum Attribute_Kinds atribute_kind;
+  Expression_ID Attribute_Designator_Identifier;
+  Expression_List Attribute_Designator_Expressions;
   
-  // TODO: INCOMPLETE! See asis_tool_2-element.adb.Process_Expression
-    
+  // Only for kind ==
+  // A_Record_Aggregate =>                        // 4.3
+  // An_Extension_Aggregate =>                    // 4.3
+  Association_List Record_Component_Associations;
+ 
+  // Only for kind ==
+  // An_Extension_Aggregate =>                    // 4.3
+  Expression_ID Extension_Aggregate_Expression;
+
+  // Only for kind ==
+  // A_Positional_Array_Aggregate |               // 4.3
+  // A_Named_Array_Aggregate =>                   // 4.3  
+  Association_List Array_Component_Associations;
+
+  // Only for kind ==
+  // An_And_Then_Short_Circuit |                  // 4.4
+  // An_Or_Else_Short_Circuit =>                  // 4.4
+  Expression_ID Short_Circuit_Operation_Left_Expression;
+  Expression_ID Short_Circuit_Operation_Right_Expression;
+  
+  // Only for kind ==
+  // An_In_Membership_Test |                      // 4.4  Ada 2012
+  // A_Not_In_Membership_Test =>                  // 4.4  Ada 2012
+  Expression_ID Membership_Test_Expression;
+  Element_List Membership_Test_Choices;
+  
+  // Only for kind ==
+  // A_Parenthesized_Expression =>                // 4.4
+  Expression_ID Expression_Parenthesized;
+  
+  // Only for kind ==
+  // A_Type_Conversion =>                         // 4.6
+  // A_Qualified_Expression =>                    // 4.7
+  Expression_ID Converted_Or_Qualified_Subtype_Mark;
+  Expression_ID Converted_Or_Qualified_Expression;
+  Expression_ID Predicate;
+  
+  // Only for kind ==
+  // An_Allocation_From_Subtype =>                // 4.8
+  // An_Allocation_From_Qualified_Expression =>   // 4.8
+  Expression_ID Subpool_Name;
+  
+  // Only for kind ==
+  // An_Allocation_From_Subtype =>                // 4.8
+  Subtype_Indication_ID Allocator_Subtype_Indication;
+
+  // Only for kind ==
+  // An_Allocation_From_Qualified_Expression =>   // 4.8
+  Expression_ID Allocator_Qualified_Expression;
+
+  // Only for kind ==
+  // A_Case_Expression |                          // Ada 2012
+  // An_If_Expression =>                          // Ada 2012
+  Expression_Path_List Expression_Paths;
+
+  // Only for kind ==
+  // A_For_All_Quantified_Expression |            // Ada 2012
+  // A_For_Some_Quantified_Expression =>          // Ada 2012
+  Declaration_ID Iterator_Specification;
+
 };
 
 struct Association_Struct {
@@ -738,7 +862,7 @@ struct Exception_Handler_Struct {
 };
 
 union Element_Union {
-  struct Pragma_Struct            the_pragma; // pragma is a reserverd word in Ada
+  struct Pragma_Struct            the_pragma; // pragma is an Ada reserverd word
   struct Defining_Name_Struct     defining_name;
   struct Declaration_Struct       declaration;
   struct Definition_Struct        definition;
@@ -751,11 +875,13 @@ union Element_Union {
 };
 
 struct Element_Struct {
-  char                  *id;
-  char                  *enclosing_id;
+  Element_ID             id;
+  enum Element_Kinds     kind;
+  Node_ID                enclosing_id;
+  enum Enclosing_Kinds   enclosing_kind;
   char                  *source_location;
-  enum  Element_Kinds    kind;
-  struct Element_Struct *next;
   union Element_Union    element;
 };
 
+
+  
