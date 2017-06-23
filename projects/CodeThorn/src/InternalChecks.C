@@ -145,7 +145,7 @@ void checkTypes() {
   }
 
   {
-    cout << "RUNNING CHECKS FOR CONSTINT LATTICE TYPE:"<<endl;
+    cout << "RUNNING CHECKS FOR NUMBER LATTICE TYPE:"<<endl;
     AbstractValue a;
     a=true;
     check("a=true => isTrue",a.isTrue());
@@ -183,17 +183,24 @@ void checkTypes() {
     cout << "------------------------------------------"<<endl;
     cout << "RUNNING CHECKS FOR CONSTRAINT TYPE:"<<endl;
     VariableId var_x=variableIdMapping.createUniqueTemporaryVariableId("x");
+    cout<<"DEBUG: P1"<<endl;
     VariableId var_y=variableIdMapping.createUniqueTemporaryVariableId("y");
+    cout<<"DEBUG: P2"<<endl;
+    variableIdMapping.toStream(cout);
     Constraint c1(Constraint::EQ_VAR_CONST,var_x,1);
+    cerr<<"DEBUG: P3"<<endl;
+    cerr<< "c1:"<<endl;
+    cerr<<c1.toString(&variableIdMapping)<<endl;
     Constraint c2(Constraint::NEQ_VAR_CONST,var_y,2);
+    cout<< "c2:"<<c2.toString(&variableIdMapping)<<endl;
     Constraint c3=DISEQUALITYCONSTRAINT;
     Constraint c4=Constraint(Constraint::EQ_VAR_CONST,var_y,2);
     ConstraintSet cs;
     cs.addConstraint(c1);
-    //cout << "CS1:"<<cs.toString()<<endl;
+    cout << "CS1:"<<cs.toString()<<endl;
     cs.addConstraint(c2);
-    //cout << "CS2:"<<cs.toString()<<endl;
-    check("inserted 2 different constraints, size of constraint set == 3",cs.size()==2);
+    cout << "CS2:"<<cs.toString()<<endl;
+    check("inserted 2 different constraints, size of constraint set == 2",cs.size()==2);
     check("c1:constraintExists(EQ_VAR_CONST,x,1) == true",cs.constraintExists(Constraint::EQ_VAR_CONST,var_x,1));
     check("c1:constraintExists(NEQ_VAR_CONST,x,1) == false",!cs.constraintExists(Constraint::NEQ_VAR_CONST,var_x,1));
     check("c2:constraintExists(NEQ_VAR_CONST,y,2) == true",cs.constraintExists(Constraint::NEQ_VAR_CONST,var_y,2));
@@ -220,6 +227,7 @@ void checkTypes() {
         cs1.addConstraint(c2);
         Constraint c5(Constraint::EQ_VAR_VAR,var_x,var_y);
         cs1.addConstraint(c5);
+        cout<<cs1.toString()<<endl;
         check("cs1.disequalityExists()==true",cs1.disequalityExists());
       }
       {
@@ -285,7 +293,7 @@ void checkTypes() {
   }
   {  
     cout << "------------------------------------------"<<endl;
-    cout << "RUNNING CHECKS FOR CONSTINTLATTICE (formerly CPPCAPSULE):"<<endl;
+    cout << "RUNNING CHECKS FOR NUMBER LATTICE:"<<endl;
     AbstractValue cint1(1);
     check("cint1 == 1",cint1.getIntValue()==1);
     AbstractValue cint2=CodeThorn::Top();
@@ -307,37 +315,37 @@ void checkTypes() {
     PState s2;
     PState s3;
     PState s5;
-    AValue valtop=CodeThorn::Top();
-    AValue val1=500;
-    AValue val2=501;
+    AbstractValue valtop=CodeThorn::Top();
+    AbstractValue val1=500;
+    AbstractValue val2=501;
     PStateSet pstateSet;
     VariableId x=variableIdMapping.createUniqueTemporaryVariableId("x");
     VariableId y=variableIdMapping.createUniqueTemporaryVariableId("y");
     check("var x not in pstate1",s1.varExists(x)==false);
     check("var y not in pstate2",s2.varExists(y)==false);
-    s1[x]=val1;
-    s2[y]=val2;
-    s3[x]=val2;
-    s5[x]=valtop;
-    s5[y]=valtop;
+    s1.writeToMemoryLocation(x,val1);
+    s2.writeToMemoryLocation(y,val2);
+    s3.writeToMemoryLocation(x,val2);
+    s5.writeToMemoryLocation(x,valtop);
+    s5.writeToMemoryLocation(y,valtop);
     check("var x exists in pstate s1",s1.varExists(x)==true);
-    check("var x==500",((s1[x].operatorEq(val1)).isTrue())==true);
+    check("var x==500",((s1.readFromMemoryLocation(x).operatorEq(val1)).isTrue())==true);
     check("var y exists in pstate s2",s2.varExists(y)==true);
-    check("var y==501",((s2[y].operatorEq(val2)).isTrue())==true);
+    check("var y==501",((s2.readFromMemoryLocation(y).operatorEq(val2)).isTrue())==true);
     //check("s0 < s1",(s0<s1)==true);
     //check("s0 < s2",(s0<s2)==true);
     check("!(s1 == s2)",(s1==s2)==false);
     check("s1<s2 xor s2<s1)",(s1<s2)^(s2<s1));
     check("var x in pstate s3",s3.varExists(x)==true);
-    check("s3[x]==501",((s3[x].operatorEq(val2)).isTrue())==true);
+    check("s3[x]==501",((s3.readFromMemoryLocation(x).operatorEq(val2)).isTrue())==true);
     check("!(s1==s2)",(!(s1==s2))==true);
     check("!(s1==s3)",(!(s1==s3))==true);
     check("!(s2==s3)",(!(s2==s3))==true);
     PState s4=s1;
     check("s1==s4",(s1==s4)==true);
 
-    s1[x]=val2;
-    check("s1.size()==1",s1.size()==1);
+    s1.writeToMemoryLocation(x,val2);
+    check("s1.size()==1",s1.stateSize()==1);
 
     pstateSet.process(s0);
     check("empty pstate s0 inserted in pstateSet => size of pstateSet == 1",pstateSet.size()==1);
@@ -362,8 +370,8 @@ void checkTypes() {
     check("constint-strictWeak-equality-1",strictWeakOrderingIsEqual(val1,val2)==false);
     check("constint-strictWeak-smaller-1",strictWeakOrderingIsSmaller(val1,val2)==true);
 
-    s4[x]=valtop;
-    check("created s4; inserted x=top; s4[x].isTop",s4[x].isTop());    
+    s4.writeToMemoryLocation(x,valtop);
+    check("created s4; inserted x=top; s4.readFromMemoryLocation(x).isTop",s4.readFromMemoryLocation(x).isTop());    
     pstateSet.processNewOrExisting(s4);
     check("inserted s4 => size of pstateSet == 4",pstateSet.size()==4);    
     const PState* pstateptr4=pstateSet.processNewOrExisting(s4); // version 1
@@ -485,51 +493,6 @@ void checkTypes() {
     check("Parse: Testing test1 on test1.",SPRAY::Parse::checkWord("test1",ss3));
     //cout << "Remaing stream: "<<ss3.str()<<endl;
 
-    CodeThorn::AbstractValue x;
-    stringstream ss4;
-    ss4<<"top";
-    x.fromStream(ss4);
-    check("AbstractValue: streaminput: top",x.toString()=="top");
-    stringstream ss5;
-    ss5<<"12";
-    x.fromStream(ss5);
-    check("AbstractValue: streaminput: 12",x.toString()=="12");
-    stringstream ss6;
-    ss6<<"15top16";
-    ss6>>x;
-    check("AbstractValue: streaminput: 15",x.toString()=="15");
-    ss6>>x;
-    check("AbstractValue: streaminput: top",x.toString()=="top");
-    ss6>>x;
-    check("AbstractValue: streaminput: 16",x.toString()=="16");
-
-    {
-      PState ps;
-      stringstream ss1;
-      string pstateString="{}";
-      ss1<<pstateString;
-      ps.fromStream(ss1);
-      string checkString=(string("stream input PState: ")+pstateString);
-      bool checkresult=(ps.toString()==pstateString);
-      check(checkString,checkresult);
-      if(checkresult==false) {
-        cout << "Error: input stream result: "<<ps.toString()<<endl;
-      }
-    }
-    {
-      PState ps;
-      stringstream ss0;
-      string pstateString="{(V0,5),(V1,top),(V2,bot)}";
-      ss0<<pstateString;
-      ss0>>ps;
-      string checkString=(string("stream input PState: ")+pstateString);
-      bool checkresult=(ps.toString()==pstateString);
-      check(checkString,checkresult);
-      if(checkresult==false) {
-        cout << "pstateString :"<<pstateString<<":"<<endl;
-        cout << "ps.toString():"<<ps.toString()<<":"<<endl;
-      }
-    }
     {
       stringstream ss;
       string s="aaabbb";
@@ -539,37 +502,6 @@ void checkTypes() {
       char next;
       ss>>next;
       check(string("Parsing: ")+parseString+" from:"+s+" Next:"+next,true);      
-    }
-    {
-      Constraint cs;
-      stringstream ss;
-      stringstream ssout;
-      string cstring="V1==V2";
-      ss<<cstring;
-      cs.fromStream(ss);
-      cs.toStream(ssout);
-      check("Stream I/O constraint: "+cstring,ssout.str()==cstring);
-    }
-    {
-      Constraint cs;
-      stringstream ss;
-      stringstream ssout;
-      string cstring="V3!=4";
-      ss<<cstring;
-      cs.fromStream(ss);
-      cs.toStream(ssout);
-      check("Stream I/O constraint: "+cstring,ssout.str()==cstring);
-    }
-    {
-      Constraint cs;
-      cs=DISEQUALITYCONSTRAINT;
-      stringstream ss;
-      stringstream ssout;
-      string cstring=cs.toString();
-      ss<<cstring;
-      cs.fromStream(ss);
-      cs.toStream(ssout);
-      check("Stream I/O DEQ constraint: "+cstring,ssout.str()==cstring);
     }
 #ifndef EXCLUDE_RDANALYSIS
     {

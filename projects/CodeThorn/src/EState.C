@@ -25,16 +25,15 @@ string EState::predicateToString(VariableIdMapping* variableIdMapping) const {
   string pred;
   const PState* ps=pstate();
   const ConstraintSet* cset=constraints(); 
-  PState::const_iterator i=ps->begin();
-  VariableIdSet varIdSet=ps->getVariableIds();
+  AbstractValueSet varIdSet=ps->getVariableIds();
   string s;
   if(cset->disequalityExists()) {
     return "false";
   }
   bool firstPred=true;
-  for(VariableIdSet::iterator i=varIdSet.begin();i!=varIdSet.end();++i) {
-    VariableId varId=*i;
-    string variableName=variableIdMapping->variableName(varId);
+  for(AbstractValueSet::iterator i=varIdSet.begin();i!=varIdSet.end();++i) {
+    AbstractValue varId=*i;
+    string variableName=varId.toLhsString(variableIdMapping);
     // ignore this variable
     if(variableName=="__PRETTY_FUNCTION__")
       continue;
@@ -139,8 +138,8 @@ ConstraintSet EState::allInfoAsConstraints() const {
   */
   const PState* pstate=this->pstate();
   for(PState::const_iterator j=pstate->begin();j!=pstate->end();++j) {
-    VariableId varId=(*j).first;
-    AValue val=pstate->varValue(varId);
+    AbstractValue varId=(*j).first;
+    AbstractValue val=pstate->varValue(varId);
     if(!val.isTop()&&!val.isBot()) {
       cset.insert(Constraint(Constraint::EQ_VAR_CONST,varId,val));
     }
@@ -152,17 +151,20 @@ CodeThorn::AbstractValue EState::determineUniqueIOValue() const {
   // this returns 1 (TODO: investigate)
   CodeThorn::AbstractValue value;
   if(io.op==InputOutput::STDIN_VAR||io.op==InputOutput::STDOUT_VAR||io.op==InputOutput::STDERR_VAR) {
-    VariableId varId=io.var;
-    assert(_pstate->varExists(varId));
+    AbstractValue varId=io.var;
+    ROSE_ASSERT(_pstate->varExists(varId));
     // case 1: check PState
     if(_pstate->varIsConst(varId)) {
       PState pstate2=*_pstate;
-      AbstractValue varVal=(pstate2)[varId];
+      AbstractValue varVal=pstate2.readFromMemoryLocation(varId);
       return varVal;
     }
     // case 2: check constraint if var is top
-    if(_pstate->varIsTop(varId))
+    if(_pstate->varIsTop(varId)) {
       return constraints()->varAbstractValue(varId);
+    } else {
+      cout<<"DEBUG: could not determine constant value from constraints."<<endl;
+    }
   }
   if(io.op==InputOutput::STDOUT_CONST||io.op==InputOutput::STDERR_CONST) {
     value=io.val;
@@ -270,9 +272,9 @@ bool EState::isConst(VariableIdMapping* vim) const {
   ROSE_ASSERT(ps);
   ROSE_ASSERT(cs);
   for(PState::const_iterator i=ps->begin();i!=ps->end();++i) {
-    VariableId varId=(*i).first;
+    AbstractValue varId=(*i).first;
     // the following two variables are special variables that are not considered to contribute to const-ness in an EState
-    if(vim->variableName(varId)=="__PRETTY_FUNCTION__"||vim->variableName(varId)=="stderr") {
+    if(varId.toString(vim)=="__PRETTY_FUNCTION__"||varId.toString(vim)=="stderr") {
       continue;
     }
 
@@ -288,12 +290,13 @@ bool EState::isConst(VariableIdMapping* vim) const {
   return true;
 }
 
+// TODO: remove this function
 bool EState::isRersTopified(VariableIdMapping* vim) const {
   boost::regex re("a(.)*");
   const PState* pstate = this->pstate();
-  VariableIdSet varSet=pstate->getVariableIds();
-  for (VariableIdSet::iterator l=varSet.begin();l!=varSet.end();++l) {
-    string varName=SgNodeHelper::symbolToString(vim->getSymbol(*l));
+  AbstractValueSet varSet=pstate->getVariableIds();
+  for (AbstractValueSet::iterator l=varSet.begin();l!=varSet.end();++l) {
+    string varName=(*l).toLhsString(vim);
     if (boost::regex_match(varName, re)) { //matches internal RERS variables (e.g. "int a188")
       if (pstate->varIsConst(*l)) {  // is a concrete (therefore prefix) state
         return false;

@@ -16,13 +16,15 @@ sub is_warning {
 
     $line =~ /(.+?):\d+:\d+: warning: (.*)/ and return ($1,$2);	    	# GCC and LLVM warnings with line and column numbers
     $line =~ /(.+?):\d+: warning: (.*)/ and return ($1,$2);         	# GCC and LLVM warnings with only line numbers
-    $line =~ /(.+?)\(\d+\): warning #\d+: (.*)/ and return ($1,$2); 	# Intel warnings
-    $line =~ /(.+?):\d+-(\d+\.)?\d+: warning: (.*)/ and return ($1,$2); # yacc location range: L1.C1-C2 or L1.C1-L2.C2
+    $line =~ /(.+?)\(\d+\): warning #\d+: (.*)/ and return ($1,$3); 	# Intel warnings
+    $line =~ /(.+?):[.0-9]+-[.0-9]+: warning: (.*)/ and return ($1,$3); # yacc location range: L1.C1-C2 or L1.C1-L2.C2
     $line =~ /(.+\.yy): warning: (.*)/ and return ($1,$2);              # yacc file name w/out location
 
     # Some tool-specific warnings that lack location information
     $line =~ /^clang: warning: (.*)/ and return ("unknown","clang $1");
     $line =~ /^libtool: warning: (.*)/ and return ("unknown","libtool $1");
+    $line =~ /^libtool: install: warning: (.*)/ and return ("unkonwn","libtool $1");
+    $line =~ /^warning: (unknown warning option.*)/ and return ("unknown", $1);
 
     return ();
 }
@@ -84,6 +86,16 @@ sub count_types {
 }
 
 ########################################################################################################################
+# Filter out warnings, emitting all other lines
+
+sub filter_out {
+    while (<>) {
+	my($file,$mesg) = is_warning $_;
+	print $_ unless $file;
+    }
+}
+
+########################################################################################################################
 
 # Parse arguments
 my $action = \&count_locations;
@@ -96,6 +108,9 @@ while (@ARGV) {
 	shift @ARGV;
     } elsif ($ARGV[0] =~ /^-?-types?$/) {
 	$action = \&count_types;
+	shift @ARGV;
+    } elsif ($ARGV[0] =~ /^-?-filter$/) {
+	$action = \&filter_out;
 	shift @ARGV;
     } elsif ($ARGV[0] =~ /^-/) {
 	die "$0: invalid switch: $ARGV[0]\n";

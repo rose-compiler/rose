@@ -10,13 +10,12 @@
 #include "SgNodeHelper.h"
 
 using namespace std;
-using namespace SPRAY;
 
 /*! 
  *  \author    Markus Schordan
  *  \date      2012
  */
-std::string SPRAY::AstTerm::nodeTypeName(SgNode* node) {
+std::string AstTerm::nodeTypeName(SgNode* node) {
   if(node==0) {
     return "null";
   } else {
@@ -28,7 +27,7 @@ std::string SPRAY::AstTerm::nodeTypeName(SgNode* node) {
   }
 }
 
-std::string SPRAY::AstTerm::astTermToMultiLineString(SgNode* node,int tab, int pos) {
+std::string AstTerm::astTermToMultiLineString(SgNode* node,int tab, int pos) {
   std::string tabstring;
   for(int t=0;t<pos;t++) tabstring+=" ";
 
@@ -55,7 +54,7 @@ std::string SPRAY::AstTerm::astTermToMultiLineString(SgNode* node,int tab, int p
   return s;
 }
 
-std::string SPRAY::AstTerm::astTermWithNullValuesToString(SgNode* node) {
+std::string AstTerm::astTermWithNullValuesToString(SgNode* node) {
   if(node==0)
     return "null";
   std::string s=nodeTypeName(node);
@@ -72,7 +71,7 @@ std::string SPRAY::AstTerm::astTermWithNullValuesToString(SgNode* node) {
   return s;
 }
 
-std::string SPRAY::AstTerm::pointerExprToString(SgNode* node) {
+std::string AstTerm::pointerExprToString(SgNode* node) {
   // MS: TODO: type check is required to ensure the expression is indeed a pointer expression
   // e.g. for return 0 it produces "null" even if the integer 0 is returned.
 #if 0
@@ -158,7 +157,7 @@ std::string SPRAY::AstTerm::pointerExprToString(SgNode* node) {
   return s;
 }
 
-std::string SPRAY::AstTerm::astTermWithoutNullValuesToDot(SgNode* root) {
+std::string AstTerm::astTermWithoutNullValuesToDot(SgNode* root) {
   RoseAst ast(root);
   std::stringstream ss;
   ss << "digraph G {\n ordering=out;\n";
@@ -172,7 +171,7 @@ std::string SPRAY::AstTerm::astTermWithoutNullValuesToDot(SgNode* root) {
   return ss.str();
 }
 
-std::string SPRAY::AstTerm::functionAstTermsWithNullValuesToDot(SgNode* root) {
+std::string AstTerm::functionAstTermsWithNullValuesToDot(SgNode* root) {
   RoseAst ast(root);
   string fragments;
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
@@ -183,14 +182,14 @@ std::string SPRAY::AstTerm::functionAstTermsWithNullValuesToDot(SgNode* root) {
   return dotFragmentToDot(fragments);
 }
 
-std::string SPRAY::AstTerm::dotFragmentToDot(string fragment) {
+std::string AstTerm::dotFragmentToDot(string fragment) {
   std::stringstream ss;
   ss << "digraph G {\n ordering=out;\n";
   ss << fragment;
   ss<<"}\n";
   return ss.str();
 }
-std::string SPRAY::AstTerm::astTermWithNullValuesToDot(SgNode* root) {
+std::string AstTerm::astTermWithNullValuesToDot(SgNode* root) {
   std::stringstream ss;
   ss << "digraph G {\n ordering=out;\n";
   ss << astTermWithNullValuesToDotFragment(root);
@@ -198,7 +197,7 @@ std::string SPRAY::AstTerm::astTermWithNullValuesToDot(SgNode* root) {
   return ss.str();
 }
 
-std::string SPRAY::AstTerm::astTermWithNullValuesToDotFragment(SgNode* root) {
+std::string AstTerm::astTermWithNullValuesToDotFragment(SgNode* root) {
   RoseAst ast(root);
   std::stringstream ss;
   for(RoseAst::iterator i=ast.begin().withNullValues();i!=ast.end();++i) {
@@ -219,7 +218,7 @@ std::string SPRAY::AstTerm::astTermWithNullValuesToDotFragment(SgNode* root) {
   return ss.str();
 }
 
-std::string SPRAY::AstTerm::astTermToDot(RoseAst::iterator start, RoseAst::iterator end) {
+std::string AstTerm::astTermToDot(RoseAst::iterator start, RoseAst::iterator end) {
   std::stringstream ss;
   SgNode* root=*start;
   long int visitCnt=1;

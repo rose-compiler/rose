@@ -36,6 +36,7 @@
 // we use INT_MIN, INT_MAX
 #include "limits.h"
 #include "AstNodeInfo.h"
+#include "TypeSizeMapping.h"
 
 namespace CodeThorn {
 
@@ -73,8 +74,11 @@ namespace CodeThorn {
     void initializeTraceSolver(std::string functionToStartAt,SgNode* root);
     void continueAnalysisFrom(EState* newStartEState);
     
-    PState analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode* rhs,ConstraintSet& cset);
     EState analyzeVariableDeclaration(SgVariableDeclaration* nextNodeToAnalyze1,EState currentEState, Label targetLabel);
+
+    PState analyzeAssignRhsExpr(PState currentPState,VariableId lhsVar, SgNode* rhs,ConstraintSet& cset);
+    // to be replaced by above function
+    PState analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode* rhs,ConstraintSet& cset);
     
     void addToWorkList(const EState* estate);
     const EState* addToWorkListIfNew(EState estate);
@@ -86,6 +90,13 @@ namespace CodeThorn {
     void swapWorkLists();
     size_t memorySizeContentEStateWorkLists();
     
+    void setOptionStatusMessages(bool flag);
+    bool getOptionStatusMessages();
+    // thread save; only prints if option status messages is enabled.
+    void printStatusMessage(string s);
+    void printStatusMessageLine(string s);
+    void printStatusMessage(string s, bool newLineFlag);
+    static string lineColSource(SgNode* node);
     void recordTransition(const EState* sourceEState, Edge e, const EState* targetEState);
     void printStatusMessage(bool);
     bool isStartLabel(Label label);
@@ -188,7 +199,8 @@ namespace CodeThorn {
     //! compute the VariableIds of SgInitializedNamePtrList
     VariableIdMapping::VariableIdSet determineVariableIdsOfSgInitializedNames(SgInitializedNamePtrList& namePtrList);
     
-    std::set<std::string> variableIdsToVariableNames(VariableIdMapping::VariableIdSet);
+    std::set<std::string> variableIdsToVariableNames(CodeThorn::AbstractValueSet);
+    std::set<std::string> variableIdsToVariableNames(SPRAY::VariableIdSet);
     typedef std::list<SgVariableDeclaration*> VariableDeclarationList;
     VariableDeclarationList computeUnusedGlobalVariableDeclarationList(SgProject* root);
     VariableDeclarationList computeUsedGlobalVariableDeclarationList(SgProject* root);
@@ -222,8 +234,8 @@ namespace CodeThorn {
 
     void setDisplayDiff(int diff) { _displayDiff=diff; }
     void setResourceLimitDiff(int diff) { _resourceLimitDiff=diff; }
-    void setSolver(int solver) { _solver=solver; }
-    int getSolver() { return _solver;}
+    void setSolver(int solver);
+    int getSolver();
     void setSemanticFoldThreshold(int t) { _semanticFoldThreshold=t; }
     void setNumberOfThreadsToUse(int n) { _numberOfThreadsToUse=n; }
     int getNumberOfThreadsToUse() { return _numberOfThreadsToUse; }
@@ -233,9 +245,9 @@ namespace CodeThorn {
 
     boost::unordered_map <std::string,int*> mapGlobalVarAddress;
     boost::unordered_map <int*,std::string> mapAddressGlobalVar;
-    void setCompoundIncVarsSet(set<VariableId> ciVars);
-    void setSmallActivityVarsSet(set<VariableId> ciVars);
-    void setAssertCondVarsSet(set<VariableId> acVars);
+    void setCompoundIncVarsSet(set<AbstractValue> ciVars);
+    void setSmallActivityVarsSet(set<AbstractValue> ciVars);
+    void setAssertCondVarsSet(set<AbstractValue> acVars);
     enum GlobalTopifyMode {GTM_IO, GTM_IOCF, GTM_IOCFPTR, GTM_COMPOUNDASSIGN, GTM_FLAGS};
     void setGlobalTopifyMode(GlobalTopifyMode mode);
     void setExternalErrorFunctionName(std::string externalErrorFunctionName);
@@ -247,16 +259,16 @@ namespace CodeThorn {
     bool getModeLTLDriven() { return transitionGraph.getModeLTLDriven(); }
     long analysisRunTimeInSeconds(); 
 
-    void setVariableValueThreshold(int threshold) { variableValueMonitor.setThreshold(threshold); }
-
     void set_finished(std::vector<bool>& v, bool val);
     bool all_false(std::vector<bool>& v);
 
+    void setTypeSizeMapping(TypeSizeMapping* typeSizeMapping);
+    TypeSizeMapping* getTypeSizeMapping();
   private:
     GlobalTopifyMode _globalTopifyMode;
-    set<VariableId> _compoundIncVarsSet;
-    set<VariableId> _smallActivityVarsSet;
-    set<VariableId> _assertCondVarsSet;
+    set<AbstractValue> _compoundIncVarsSet;
+    set<AbstractValue> _smallActivityVarsSet;
+    set<AbstractValue> _assertCondVarsSet;
     set<int> _inputVarValues;
     std::list<int> _inputSequence;
     std::list<int>::iterator _inputSequenceIterator;
@@ -289,6 +301,7 @@ namespace CodeThorn {
     long int _maxBytesForcedTop;
     long int _maxSecondsForcedTop;
     PState _startPState;
+    bool _optionStatusMessages;
 
     std::list<EState> elistify();
     std::list<EState> elistify(EState res);
@@ -304,7 +317,7 @@ namespace CodeThorn {
     const EState* processNew(EState& s);
     const EState* processNewOrExisting(EState& s);
     const EState* processCompleteNewOrExisting(const EState* es);
-    void topifyVariable(PState& pstate, ConstraintSet& cset, VariableId varId);
+    void topifyVariable(PState& pstate, ConstraintSet& cset, AbstractValue varId);
     bool isTopified(EState& s);
     EStateSet::ProcessingResult process(EState& s);
     EStateSet::ProcessingResult process(Label label, PState pstate, ConstraintSet cset, InputOutput io);
@@ -312,7 +325,8 @@ namespace CodeThorn {
     
     EState createEState(Label label, PState pstate, ConstraintSet cset);
     EState createEState(Label label, PState pstate, ConstraintSet cset, InputOutput io);
-
+    
+    TypeSizeMapping* _typeSizeMapping;
     VariableValueMonitor variableValueMonitor;
 
     bool _treatStdErrLikeFailedAssert;

@@ -2,6 +2,7 @@
 #define CODETHORN_EXCEPTION
 
 #include <exception>
+#include <string>
 
 namespace CodeThorn {
   class Exception : public std::exception {

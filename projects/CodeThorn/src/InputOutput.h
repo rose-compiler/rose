@@ -15,14 +15,14 @@ namespace CodeThorn {
 
   class InputOutput {
   public:
-  InputOutput():op(NONE),var(SPRAY::VariableId()){ val=CodeThorn::Bot();}
+  InputOutput():op(NONE),var(CodeThorn::AbstractValue()){ val=CodeThorn::Bot();}
     enum OpType {NONE,STDIN_VAR,STDOUT_VAR,STDOUT_CONST,STDERR_VAR,STDERR_CONST, FAILED_ASSERT,VERIFICATION_ERROR};
     OpType op;
-    SPRAY::VariableId var;
+    CodeThorn::AbstractValue var;
     CodeThorn::AbstractValue val;
     string toString() const;
     string toString(SPRAY::VariableIdMapping* variableIdMapping) const;
-    void recordVariable(OpType op, SPRAY::VariableId varId);
+    void recordVariable(OpType op, CodeThorn::AbstractValue varId);
     void recordConst(OpType op, CodeThorn::AbstractValue val);
     void recordConst(OpType op, int val);
     void recordFailedAssert();
