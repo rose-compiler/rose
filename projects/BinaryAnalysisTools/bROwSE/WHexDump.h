@@ -11,7 +11,7 @@ namespace bROwSE {
 
 /** Data model for the WHexDump widget. */
 class HexDumpModel: public Wt::WAbstractTableModel {
-    rose::BinaryAnalysis::MemoryMap::Ptr memoryMap_;
+    Rose::BinaryAnalysis::MemoryMap::Ptr memoryMap_;
     size_t nRows_;                                      // total number of table rows
 
     typedef Sawyer::Container::Map<rose_addr_t, size_t> AddrRowMap;
@@ -31,8 +31,8 @@ public:
     /** Memory map supplying data.
      *
      * @{ */
-    rose::BinaryAnalysis::MemoryMap::Ptr memoryMap() const { return memoryMap_; }
-    void memoryMap(const rose::BinaryAnalysis::MemoryMap::Ptr&);
+    Rose::BinaryAnalysis::MemoryMap::Ptr memoryMap() const { return memoryMap_; }
+    void memoryMap(const Rose::BinaryAnalysis::MemoryMap::Ptr&);
     /** @} */
 
     /** Return address for start of table row.
@@ -45,7 +45,7 @@ public:
     /** Return segment contained in row.
      *
      *  Returns information about the memory segment that the specified row contains. */
-    rose::BinaryAnalysis::MemoryMap::ConstNodeIterator rowSegment(size_t row) const;
+    Rose::BinaryAnalysis::MemoryMap::ConstNodeIterator rowSegment(size_t row) const;
 
     /** Return the address for a table cell.
      *
@@ -115,8 +115,8 @@ public:
     /** Memory map supplying data.
      *
      * @{ */
-    rose::BinaryAnalysis::MemoryMap::Ptr memoryMap() const { return model_->memoryMap(); }
-    void memoryMap(const rose::BinaryAnalysis::MemoryMap::Ptr &m) { model_->memoryMap(m); }
+    Rose::BinaryAnalysis::MemoryMap::Ptr memoryMap() const { return model_->memoryMap(); }
+    void memoryMap(const Rose::BinaryAnalysis::MemoryMap::Ptr &m) { model_->memoryMap(m); }
     /** @} */
 
     /** Emitted when a byte is clicked. */

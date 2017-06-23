@@ -9,7 +9,7 @@
 #include <Partitioner2/Utility.h>
 #include <Sawyer/DistinctList.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
@@ -59,8 +59,8 @@ namespace Partitioner2 {
  *  @code
  *   #include <rose.h>
  *   #include <Partitioner2/Engine.h>
- *   using namespace rose;
- *   namespace P2 = rose::BinaryAnalysis::Partitioner2;
+ *   using namespace Rose;
+ *   namespace P2 = Rose::BinaryAnalysis::Partitioner2;
  *
  *   int main(int argc, char *argv[]) {
  *       std::string purpose = "disassembles a binary specimen";

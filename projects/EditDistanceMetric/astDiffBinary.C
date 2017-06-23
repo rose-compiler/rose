@@ -13,8 +13,8 @@
 #endif
 
 
-using namespace rose;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 using namespace Sawyer::Message::Common;
 
 static std::vector<std::string>

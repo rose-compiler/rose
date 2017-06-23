@@ -11,9 +11,9 @@
 #include "Disassembler.h"
 #include "dwarfSupport.h"
 
-using namespace rose::Diagnostics;
+using namespace Rose::Diagnostics;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 Sawyer::Message::Facility BinaryLoader::mlog;
@@ -46,7 +46,7 @@ void BinaryLoader::initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        Diagnostics::initAndRegister(&mlog, "rose::BinaryAnalysis::BinaryLoader");
+        Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::BinaryLoader");
     }
 }
 

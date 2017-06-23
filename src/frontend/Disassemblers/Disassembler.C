@@ -16,7 +16,7 @@
 #include <boost/thread/mutex.hpp>
 #include <stdarg.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 using namespace Diagnostics;
@@ -38,7 +38,7 @@ void Disassembler::initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        Diagnostics::initAndRegister(&mlog, "rose::BinaryAnalysis::Disassembler");
+        Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::Disassembler");
     }
 }
 

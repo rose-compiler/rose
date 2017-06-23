@@ -80,7 +80,7 @@ static int WSTOPSIG(int) { return 0; }                  // Windows dud
 
 #endif
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 static long

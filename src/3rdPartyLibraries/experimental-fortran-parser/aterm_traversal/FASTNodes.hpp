@@ -6,20 +6,46 @@
 
 namespace FAST {
 
+class PosInfo
+{
+ public:
+   PosInfo() : pStartLine(0), pStartCol(0), pEndLine(0), pEndCol(0)
+    {
+    }
+
+   PosInfo(int strtLine, int strtCol, int endLine,  int endCol)
+     {
+        pStartLine = strtLine;
+        pStartCol  = strtCol;
+        pEndLine   = endLine;
+        pEndCol    = endCol;
+     }
+
+   int  getStartLine()          { return pStartLine; }
+   int  getStartCol()           { return pStartCol; }
+   int  getEndLine()            { return pEndLine; }
+   int  getEndCol()             { return pEndCol; }
+
+ protected:
+   int pStartLine, pStartCol;  // location (line,col) of first character ( 1 based)
+   int pEndLine,   pEndCol;    // location (line,col) of last  character (+1 col)
+};
+
 class FASTNode
 {
  public:
-   FASTNode() : pStart(0), pStop(0)
+
+   FASTNode()
      {
      }
 
-   FASTNode(int start, int stop) : pStart(start), pStop(stop)
+   FASTNode(PosInfo position)
      {
+        pPosInfo = position;
      }
 
  protected:
-   int pStart;
-   int pStop;
+   PosInfo pPosInfo;           // location of node
 };
 
 class Statement;
@@ -47,7 +73,8 @@ class Scope : public FASTNode
 class Statement : public FASTNode
 {
  public:
-   Statement(std::string label, std::string eos) : pLabel(label), pEOS(eos)
+   Statement(std::string label, std::string eos, PosInfo pos)
+      :  FASTNode(pos), pLabel(label), pEOS(eos)
      {
      }
 
@@ -57,6 +84,9 @@ class Statement : public FASTNode
    std::string & getEOS()                     {return pEOS;}
    void          setEOS(std::string eos)      {pEOS = eos;}
 
+   PosInfo     & getPosInfo()                 {return pPosInfo;}
+   void          setPosInfo(PosInfo pos)      {pPosInfo = pos;}
+
  protected:
    std::string pLabel;
    std::string pEOS;
@@ -65,7 +95,8 @@ class Statement : public FASTNode
 class ProgramStmt : public Statement
 {
  public:
-   ProgramStmt(std::string label, std::string name, std::string eos) : Statement(label,eos), pName(name)
+   ProgramStmt(std::string label, std::string name, std::string eos, PosInfo pos)
+      : Statement(label,eos,pos), pName(name)
      {
      }
 
@@ -79,7 +110,8 @@ class ProgramStmt : public Statement
 class EndProgramStmt : public Statement
 {
  public:
-   EndProgramStmt(std::string label, std::string name, std::string eos) : Statement(label,eos), pName(name)
+   EndProgramStmt(std::string label, std::string name, std::string eos, PosInfo pos)
+      : Statement(label,eos,pos), pName(name)
      {
      }
 
@@ -97,7 +129,8 @@ class ContainsStmt : public Statement
 class UseStmt : public Statement
 {
  public:
-   UseStmt(std::string label, std::string name, std::string eos) : Statement(label,eos), pName(name)
+   UseStmt(std::string label, std::string name, std::string eos, PosInfo pos)
+      : Statement(label,eos,pos), pName(name)
      {
      }
 
@@ -115,12 +148,17 @@ class UseStmt : public Statement
  */
 class Procedure : public FASTNode
 {
+ public:
+   Procedure(PosInfo pos) : FASTNode(pos)
+   {
+   }
 };
 
 class MainProgram : public Procedure
 {
  public:
-   MainProgram(ProgramStmt* program, Scope* scope, ContainsStmt* contains, EndProgramStmt* end)
+   MainProgram(ProgramStmt* program, Scope* scope, ContainsStmt* contains, EndProgramStmt* end, PosInfo pos)
+      : Procedure(pos)
      {
         pProgramStmt = program;
         pScope = scope;

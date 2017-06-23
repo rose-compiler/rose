@@ -4,6 +4,36 @@
 
 using namespace OFP;
 
+static FAST::PosInfo getLocation(ATerm term)
+{
+   FAST::PosInfo pinfo;
+   
+   ATerm annotations = ATgetAnnotations(term);
+   if (annotations) {
+      int i1,i2,i3,i4;
+      ATerm loc = ATgetFirst(annotations);
+      if (ATmatch(loc, "Location(<int>,<int>,<int>,<int>)", &i1,&i2,&i3,&i4)) {
+#if PRINT_ATERM_TRAVERSAL
+         printf("... loc: %d %d %d %d\n", i1,i2,i3,i4);
+#endif
+         pinfo = FAST::PosInfo(i1,i2,i3,i4);
+      }
+   }
+   return pinfo;
+}
+
+
+// This version can be used to drop eol (EndOfLine) location
+//
+static FAST::PosInfo getLocation(ATerm startTerm, ATerm endTerm)
+{
+   FAST::PosInfo start = getLocation(startTerm);
+   FAST::PosInfo   end = getLocation(  endTerm);
+   
+   return FAST::PosInfo(start.getStartLine(),start.getStartCol(),end.getEndLine(),end.getEndCol());
+}
+
+
 //========================================================================================
 // Program
 //----------------------------------------------------------------------------------------
@@ -119,7 +149,8 @@ ATbool Traversal::traverse_MainProgram(ATerm term, FAST::MainProgram** program)
     } else return ATfalse;
   } else return ATfalse;
 
-  *program = new FAST::MainProgram(program_stmt, local_scope, NULL/*contains*/, end_program_stmt);
+  *program = new FAST::MainProgram(program_stmt, local_scope,
+                                   NULL/*contains*/, end_program_stmt, getLocation(term));
 
   return ATtrue;
 }
@@ -149,7 +180,8 @@ ATbool Traversal::traverse_OptProgramStmt(ATerm term, FAST::ProgramStmt** var_Op
     if (traverse_eos(term3, eos)) {
       // MATCHED eos string
     } else return ATfalse;
-    *var_OptProgramStmt = new FAST::ProgramStmt(label, name, eos);
+
+    *var_OptProgramStmt = new FAST::ProgramStmt(label, name, eos, getLocation(term,term2));
   }
   else if (ATmatch(term, "no-program-stmt()")) {
      // MATCHED no-program-stmt
@@ -171,6 +203,7 @@ ATbool Traversal::traverse_EndProgramStmt(ATerm term, FAST::EndProgramStmt** var
   std::string label;
   std::string name;
   std::string eos;
+  FAST::PosInfo pinfo;
 
   *var_EndProgramStmt = NULL;
   if (ATmatch(term, "EndProgramStmt(<term>,<term>,<term>)", &term1,&term2,&term3)) {
@@ -185,7 +218,7 @@ ATbool Traversal::traverse_EndProgramStmt(ATerm term, FAST::EndProgramStmt** var
     } else return ATfalse;
   } else return ATfalse;
 
-  *var_EndProgramStmt = new FAST::EndProgramStmt(label, name, eos);
+  *var_EndProgramStmt = new FAST::EndProgramStmt(label, name, eos, getLocation(term,term2));
 
   return ATtrue;
 }
@@ -398,7 +431,7 @@ ATbool Traversal::traverse_ListStarOfSpecAndExecConstruct(ATerm term, FAST::Scop
 
    ATermList tail = (ATermList) ATmake("<term>", term);
    while (! ATisEmpty(tail)) {
-      ATerm head = ATgetFirst(tail);
+      /* TODO: ATerm head = ATgetFirst(tail); */
       tail = ATgetNext(tail);
 
       if (seen_first_exec_stmt == false) {

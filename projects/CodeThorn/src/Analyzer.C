@@ -63,8 +63,8 @@ void Analyzer::initDiagnostics() {
   static bool initialized = false;
   if (!initialized) {
     initialized = true;
-    logger = Sawyer::Message::Facility("CodeThorn::Analyzer", rose::Diagnostics::destination);
-    rose::Diagnostics::mfacilities.insertAndAdjust(logger);
+    logger = Sawyer::Message::Facility("CodeThorn::Analyzer", Rose::Diagnostics::destination);
+    Rose::Diagnostics::mfacilities.insertAndAdjust(logger);
   }
 }
 

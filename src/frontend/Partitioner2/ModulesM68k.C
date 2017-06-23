@@ -4,12 +4,12 @@
 #include <boost/foreach.hpp>
 #include <set>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 namespace ModulesM68k {
 
-using namespace rose::Diagnostics;
+using namespace Rose::Diagnostics;
 
 bool
 MatchLink::match(const Partitioner &partitioner, rose_addr_t anchor) {

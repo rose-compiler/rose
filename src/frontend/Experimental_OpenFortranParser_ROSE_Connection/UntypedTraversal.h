@@ -6,13 +6,15 @@
 // convert them to regular SgNodes.
 //-----------------------------------------------------------------------------------
 
+#include "UntypedConverter.h"
+
 namespace Fortran {
 namespace Untyped {
 
 typedef SgScopeStatement*  InheritedAttribute;
 typedef SgExpression*      SynthesizedAttribute;
 
-class UntypedTraversal : public SgTopDownBottomUpProcessing<InheritedAttribute, SynthesizedAttribute>
+class UntypedTraversal : public SgTopDownBottomUpProcessing<InheritedAttribute, SynthesizedAttribute>, public FortranBuilderInterface
   {
     public:
 
@@ -20,11 +22,20 @@ class UntypedTraversal : public SgTopDownBottomUpProcessing<InheritedAttribute, 
       virtual SynthesizedAttribute evaluateSynthesizedAttribute (SgNode* n, InheritedAttribute inheritedAttribute
                                                                           , SynthesizedAttributesList childAttrs  );
 
+      virtual ~UntypedTraversal();
+
       UntypedTraversal(SgSourceFile* sourceFile);
+
+
+      std::string getCurrentFilename()
+         {
+             return p_source_file->get_sourceFileNameWithPath();
+         }
 
     private:
 
       SgSourceFile* p_source_file;
+      UntypedConverter* pConverter;
   };
 
 } // namespace Fortran

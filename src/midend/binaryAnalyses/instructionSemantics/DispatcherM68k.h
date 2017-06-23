@@ -8,7 +8,7 @@
 #include <boost/serialization/export.hpp>
 #include <boost/serialization/split_member.hpp>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 
@@ -138,7 +138,7 @@ public:
 } // namespace
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::InstructionSemantics2::DispatcherM68k);
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::InstructionSemantics2::DispatcherM68k);
 #endif
 
 #endif

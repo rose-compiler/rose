@@ -11,10 +11,10 @@
 #define pclose _pclose
 #endif
 
-using namespace rose::Diagnostics;
+using namespace Rose::Diagnostics;
 using namespace Sawyer::Container::Algorithm;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 namespace GraphViz {
@@ -159,7 +159,7 @@ CfgEmitter::CfgEmitter(const Partitioner &partitioner, const ControlFlowGraph &g
 
 void
 CfgEmitter::init() {
-    using namespace rose::BinaryAnalysis::InstructionSemantics2;
+    using namespace Rose::BinaryAnalysis::InstructionSemantics2;
 
     // Class initialization
     if (0 == versionDate_) {

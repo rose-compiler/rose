@@ -7,7 +7,7 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #include "rose.h"
 #include "BinaryControlFlow.h"
 
-using namespace rose::BinaryAnalysis;
+using namespace Rose::BinaryAnalysis;
 
 void foo(SgAsmFunction* func) {
   ControlFlow cfg_analyzer;

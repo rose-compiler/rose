@@ -8,7 +8,7 @@
 using namespace Sawyer::Container;
 typedef Sawyer::Container::BitVector::BitRange BitRange;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace ConcreteSemantics {

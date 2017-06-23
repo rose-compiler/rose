@@ -6,7 +6,7 @@
 
 #include <iomanip>
 
-using namespace rose;
+using namespace Rose;
 using namespace Diagnostics;
 using namespace BinaryAnalysis;
 

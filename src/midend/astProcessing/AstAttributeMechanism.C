@@ -8,8 +8,8 @@
 #include <Sawyer/Map.h>
 #include <Sawyer/Set.h>
 
-using namespace rose;
-using namespace rose::Diagnostics;
+using namespace Rose;
+using namespace Rose::Diagnostics;
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

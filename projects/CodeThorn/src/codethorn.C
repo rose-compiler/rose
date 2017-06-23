@@ -97,7 +97,7 @@ void handler(int sig) {
 }
 
 void CodeThorn::initDiagnostics() {
-  rose::Diagnostics::initialize();
+  Rose::Diagnostics::initialize();
   Analyzer::initDiagnostics();
   RewriteSystem::initDiagnostics();
 }
@@ -1046,12 +1046,12 @@ int main( int argc, char * argv[] ) {
   signal(SIGSEGV, handler);   // install handler for backtrace
   CodeThorn::initDiagnostics();
 
-  rose::Diagnostics::mprefix->showProgramName(false);
-  rose::Diagnostics::mprefix->showThreadId(false);
-  rose::Diagnostics::mprefix->showElapsedTime(false);
+  Rose::Diagnostics::mprefix->showProgramName(false);
+  Rose::Diagnostics::mprefix->showThreadId(false);
+  Rose::Diagnostics::mprefix->showElapsedTime(false);
 
   Sawyer::Message::Facility logger;
-  rose::Diagnostics::initAndRegister(&logger, "CodeThorn");
+  Rose::Diagnostics::initAndRegister(&logger, "CodeThorn");
 
   try {
     Timer timer;

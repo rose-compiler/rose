@@ -10,11 +10,11 @@
 #include <Sawyer/Stopwatch.h>
 #include <Sawyer/ThreadWorkers.h>
 
-using namespace rose::Diagnostics;
-using namespace rose::BinaryAnalysis::InstructionSemantics2;
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
+using namespace Rose::Diagnostics;
+using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 
@@ -37,7 +37,7 @@ FunctionSimilarity::initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        Diagnostics::initAndRegister(&mlog, "rose::BinaryAnalysis::FunctionSimilarity");
+        Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::FunctionSimilarity");
     }
 }
 

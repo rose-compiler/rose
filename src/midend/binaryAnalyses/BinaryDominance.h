@@ -6,7 +6,7 @@
 #include <boost/graph/depth_first_search.hpp>
 #include <boost/graph/reverse_graph.hpp>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /** Class for calculating dominance on control flow graphs.
@@ -55,20 +55,20 @@ namespace BinaryAnalysis {
  *  Most of the methods of this class are function templates that take any kind of boost graph providing it satisfies
  *  certain interface constraints: the vertices must be stored in a vector, the graph must be bidirectional, and the
  *  boost::vertex_name property must point to a SgAsmBlock.  This is the same interface used for control flow graphs, so
- *  the user can use rose::BinaryAnalysis::ControlFlow::Graph, BinaryAnalysis::Dominance::Graph, or any other Boost graph
+ *  the user can use Rose::BinaryAnalysis::ControlFlow::Graph, BinaryAnalysis::Dominance::Graph, or any other Boost graph
  *  satisfying these requirements.
  *
  *  @code
  *  // The AST traversal.
  *  struct CalculateDominance: public AstSimpleProcessing {
- *      rose::BinaryAnalysis::ControlFlow &cfg_analysis;
- *      rose::BinaryAnalysis::Dominance &dom_analysis;
- *      CalculateDominance(rose::BinaryAnalysis::ControlFlow &cfg_analysis,
- *                         rose::BinaryAnalysis::Dominance &dom_analysis)
+ *      Rose::BinaryAnalysis::ControlFlow &cfg_analysis;
+ *      Rose::BinaryAnalysis::Dominance &dom_analysis;
+ *      CalculateDominance(Rose::BinaryAnalysis::ControlFlow &cfg_analysis,
+ *                         Rose::BinaryAnalysis::Dominance &dom_analysis)
  *          : cfg_analysis(cfg_analysis), dom_analysis(dom_analysis)
  *          {}
  *      void visit(SgNode *node) {
- *          using namespace rose::BinaryAnalysis;
+ *          using namespace Rose::BinaryAnalysis;
  *          SgAsmFunction *func = isSgAsmFunction(node);
  *          if (func) {
  *              ControlFlow::Graph cfg = cfg_analysis.build_block_cfg_from_ast<ControlFlow::Graph>(func);
@@ -83,8 +83,8 @@ namespace BinaryAnalysis {
  *  };
  *
  *  // Create the analysis objects
- *  rose::BinaryAnalysis::ControlFlow cfg_analysis;
- *  rose::BinaryAnalysis::Dominance   dom_analysis;
+ *  Rose::BinaryAnalysis::ControlFlow cfg_analysis;
+ *  Rose::BinaryAnalysis::Dominance   dom_analysis;
  *  //dom_analysis.set_debug(stderr);
  *
  *  // Perform the analysis; results are stored in the AST.
@@ -334,7 +334,7 @@ public:
      *  instructions and would have no virtual address, making it a bit problematic.  Furthermore, the function may contain
      *  basic blocks whose successors are statically unknown (e.g., computed branches).  Therefore, this method temporarily
      *  modifies the CFG (specifically, a copy thereof), if necessary, by adding a unique exit vertex and adjusting all
-     *  vertices identified by rose::BinaryAnalysis::ControlFlow::return_blocks() so they point to the unique exit vertex.  If
+     *  vertices identified by Rose::BinaryAnalysis::ControlFlow::return_blocks() so they point to the unique exit vertex.  If
      *  the exit vertex was added, it will be removed (along with its edges) from the returned post dominator graph.
      *  Alternatively, an explicit @p stop vertex can be specified.
      *
@@ -411,7 +411,7 @@ void
 Dominance::apply_to_ast(const DominanceGraph &idg)
 {
     if (debug)
-        fprintf(debug, "rose::BinaryAnalysis::Dominance::apply_to_ast:\n");
+        fprintf(debug, "Rose::BinaryAnalysis::Dominance::apply_to_ast:\n");
 
     typename boost::graph_traits<DominanceGraph>::edge_iterator ei, ei_end;
     for (boost::tie(ei, ei_end)=edges(idg); ei!=ei_end; ++ei) {
@@ -544,7 +544,7 @@ Dominance::build_idom_relation_from_cfg(const ControlFlowGraph &cfg,
     };
 
     if (debug) {
-        fprintf(debug, "rose::BinaryAnalysis::Dominance::build_idom_relation_from_cfg: starting at vertex %" PRIuPTR "\n", start);
+        fprintf(debug, "Rose::BinaryAnalysis::Dominance::build_idom_relation_from_cfg: starting at vertex %" PRIuPTR "\n", start);
         SgAsmBlock *block = get(boost::vertex_name, cfg, start);
         SgAsmFunction *func = block ? block->get_enclosing_function() : NULL;
         if (func) {
@@ -790,7 +790,7 @@ Dominance::build_postdom_relation_from_cfg(const ControlFlowGraph &cfg,
                                            RelationMap<ControlFlowGraph> &result)
 {
     if (debug) {
-        fprintf(debug, "rose::BinaryAnalysis::Dominance::build_postdom_relation_from_cfg: starting at vertex %" PRIuPTR "\n", start);
+        fprintf(debug, "Rose::BinaryAnalysis::Dominance::build_postdom_relation_from_cfg: starting at vertex %" PRIuPTR "\n", start);
         SgAsmBlock *block = get(boost::vertex_name, cfg, start);
         SgAsmFunction *func = block ? block->get_enclosing_function() : NULL;
         if (func) {
@@ -885,7 +885,7 @@ Dominance::build_graph_from_relation(const ControlFlowGraph &cfg,
     typedef typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor CFG_Vertex;
 
     if (debug) {
-        fprintf(debug, "rose::BinaryAnalysis::Dominance::build_graph_from_relation:\n");
+        fprintf(debug, "Rose::BinaryAnalysis::Dominance::build_graph_from_relation:\n");
         fprintf(debug, "  building from this relation:\n");
         for (size_t i=0; i<relmap.size(); i++) {
             if (relmap[i]==boost::graph_traits<ControlFlowGraph>::null_vertex()) {

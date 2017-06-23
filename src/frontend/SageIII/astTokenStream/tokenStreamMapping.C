@@ -67,7 +67,7 @@
 #define ERROR_CHECKING 0
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 // namespace for token ID values.
 using namespace ROSE_token_ids;

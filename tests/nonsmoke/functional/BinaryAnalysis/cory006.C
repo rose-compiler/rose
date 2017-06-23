@@ -26,9 +26,9 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #include <BinaryControlFlow.h>
 #include <Partitioner2/Engine.h>
 
-using namespace rose;
-using namespace rose::BinaryAnalysis;
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 static bool
 isGoodBasicBlock(const P2::BasicBlock::Ptr &bb) {

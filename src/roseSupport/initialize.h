@@ -2,7 +2,7 @@
 #define ROSE_initialize_H
 
 /** Main namespace for the ROSE library. */
-namespace rose {
+namespace Rose {
 
 /** Initialize the library.
  *
@@ -33,7 +33,7 @@ namespace rose {
  *   #include <rose.h>
  *
  *   int main(int argc, char *argv[]) {
- *       ROSE_INITIALIZE; // or rose::initialize(ROSE_CONFIG_TOKEN);
+ *       ROSE_INITIALIZE; // or Rose::initialize(ROSE_CONFIG_TOKEN);
  *  @endcode
  *
  *  <b>ROSE developers:</b> If you want to have @ref initialize (specifically, @ref checkConfigToken) check for consistency in
@@ -44,7 +44,7 @@ namespace rose {
  *  consistency.
  *
  *  See also, @ref isInitialized and @ref checkConfigToken. The @c ROSE_INITIALIZE C preprocessor-defined symbol expands to
- *  <code>rose::initialize(ROSE_CONFIG_TOKEN)</code> but might be easier to remember. */
+ *  <code>Rose::initialize(ROSE_CONFIG_TOKEN)</code> but might be easier to remember. */
 ROSE_DLL_API void initialize(const char *configToken);
 
 /** Checks whether the library has been initialized.
@@ -79,6 +79,6 @@ ROSE_DLL_API bool checkConfigToken(const char *configTokenToken);
 bool checkVersionNumber(const std::string &need);
 
 // A slightly more memorable way to initialize ROSE
-#define ROSE_INITIALIZE rose::initialize(ROSE_CONFIG_TOKEN)
+#define ROSE_INITIALIZE Rose::initialize(ROSE_CONFIG_TOKEN)
 
 #endif

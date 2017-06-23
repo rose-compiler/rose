@@ -9,7 +9,7 @@
 #include <gcrypt.h>
 #endif
 
-using namespace rose;
+using namespace Rose;
 
 std::string
 SgAsmFunction::reason_key(const std::string &prefix)

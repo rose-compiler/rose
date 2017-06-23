@@ -10,7 +10,7 @@
 #include <boost/thread/mutex.hpp>
 #include <inttypes.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /** Interface to Satisfiability Modulo Theory (SMT) solvers.

@@ -47,7 +47,7 @@ extern Settings settings;
 typedef Sawyer::Container::Map<std::string /*name*/, std::string /*comment*/> VarComments;
 
 // Tool diagnostics
-extern rose::Diagnostics::Facility mlog;
+extern Rose::Diagnostics::Facility mlog;
 
 } // namespace
 

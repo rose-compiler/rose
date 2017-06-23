@@ -3,7 +3,7 @@
 #include "sage3basic.h"
 #include "CloneDetectionLib.h"
 
-using namespace rose;
+using namespace Rose;
 
 std::string argv0;
 

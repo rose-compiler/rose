@@ -11,7 +11,7 @@
 
 #include "BaseSemantics2.h"
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 

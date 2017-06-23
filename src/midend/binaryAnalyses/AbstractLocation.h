@@ -3,7 +3,7 @@
 
 #include "BaseSemantics2.h"
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /** Abstract location.
@@ -14,7 +14,7 @@ namespace BinaryAnalysis {
  *  For instance, to represent abstract locations where memory addresses have symbolic values, one uses:
  *
  *  @code
- *   using namespace rose::BinaryAnalysis;
+ *   using namespace Rose::BinaryAnalysis;
  *   AbstractLocation aloc1(REG_EAX); // REG_EAX is a RegisterDescriptor
  *   AbstractLocation aloc2(addr); // addr is an SValuePtr for the symbolic semantics domain
  *  @endcode

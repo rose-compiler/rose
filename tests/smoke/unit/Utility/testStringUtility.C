@@ -11,8 +11,8 @@
 #define check(X) ASSERT_always_require(X)
 #define check2(X, MESG) ASSERT_always_require2((X), (MESG))
 
-using namespace rose;
-using namespace rose::StringUtility;
+using namespace Rose;
+using namespace Rose::StringUtility;
 
 static std::string
 got(const std::string &s) {

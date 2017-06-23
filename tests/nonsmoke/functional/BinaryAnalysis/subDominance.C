@@ -8,9 +8,9 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #include "rose.h"
 #include "BinaryDominance.h"
 
-class MyDominance: public rose::BinaryAnalysis::Dominance {
+class MyDominance: public Rose::BinaryAnalysis::Dominance {
 protected:
-    typedef rose::BinaryAnalysis::Dominance Super;
+    typedef Rose::BinaryAnalysis::Dominance Super;
 public:
 
 
@@ -48,10 +48,10 @@ public:
     }
 };
 
-typedef rose::BinaryAnalysis::ControlFlow::Graph CFG;
+typedef Rose::BinaryAnalysis::ControlFlow::Graph CFG;
 typedef boost::graph_traits<CFG>::vertex_descriptor CFG_Vertex;
-typedef rose::BinaryAnalysis::Dominance::Graph DG;
-typedef rose::BinaryAnalysis::Dominance::RelationMap<CFG> DG_RelMap;
+typedef Rose::BinaryAnalysis::Dominance::Graph DG;
+typedef Rose::BinaryAnalysis::Dominance::RelationMap<CFG> DG_RelMap;
 
 static struct MyVisitor: AstSimpleProcessing {
     size_t nvisits;
@@ -60,10 +60,10 @@ static struct MyVisitor: AstSimpleProcessing {
         SgAsmFunction *func = isSgAsmFunction(node);
         if (func && 0==func->get_name().compare("simple06")) {
             ++nvisits;
-            CFG cfg = rose::BinaryAnalysis::ControlFlow().build_block_cfg_from_ast<CFG>(func);
+            CFG cfg = Rose::BinaryAnalysis::ControlFlow().build_block_cfg_from_ast<CFG>(func);
             CFG_Vertex start = 0;
             assert(get(boost::vertex_name, cfg, start)==func->get_entry_block());
-            DG_RelMap dgmap1 = rose::BinaryAnalysis::Dominance().build_postdom_relation_from_cfg(cfg, start);
+            DG_RelMap dgmap1 = Rose::BinaryAnalysis::Dominance().build_postdom_relation_from_cfg(cfg, start);
             DG_RelMap dgmap2 = MyDominance().build_postdom_relation_from_cfg(cfg, start);
         }
     }
