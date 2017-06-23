@@ -11,10 +11,11 @@ typedef Element_ID Name_ID;
 typedef Element_ID Statement_ID;
 typedef Element_ID Subtype_Indication_ID;
 
-typedef struct Element_ID_List_Struct {
+struct Element_ID_List_Struct {
   int length;
-  Element_ID *elements;
-} Element_List;
+  Element_ID elements[];
+};
+typedef struct Element_ID_List_Struct *Element_List;
 typedef Element_List Association_List;
 typedef Element_List Declarative_Item_List;
 typedef Element_List Defining_Name_List;
