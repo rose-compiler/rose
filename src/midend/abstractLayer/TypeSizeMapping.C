@@ -4,7 +4,7 @@
 namespace SPRAY {
   
   void TypeSizeMapping::setMapping(std::vector<SPRAY::TypeSize> mapping) {
-    if(mapping.size()==_mapping.size()) {
+    if(_mapping.size()==0 || mapping.size()==_mapping.size()) {
       _mapping=mapping;
     } else {
       throw SPRAY::Exception("TypeSizeMapping: wrong number of type-size mapping values.");
