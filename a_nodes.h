@@ -1,3 +1,6 @@
+#ifndef A_NODES_H
+#define A_NODES_H
+
 #include <stdbool.h>
 
 typedef int        Node_ID;
@@ -928,5 +931,5 @@ struct Element_Struct {
   union Element_Union    element;
 };
 
+#endif //ifndef A_NODES_H
 
-  

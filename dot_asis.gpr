@@ -2,16 +2,19 @@ with "asis";
 
 project DOT_ASIS is
 
-   for Main use
-     ("demo_dot.adb",
-      "run_asis_tool_2.adb",
-      "test_gnat_command_line.adb");
-
    for Source_Dirs use
      (".",
       "test_units");
 
    for Object_Dir use "./obj";
+
+   for Languages use ("Ada", "C");
+
+   for Main use
+     ("demo_dot.adb",
+      "run_asis_tool_2.adb",
+      "test_gnat_command_line.adb",
+      "call_asis_tool_2.c");
 
    package Compiler is
       for Default_Switches ("ada") use ("-gnat12", "-gnata", "-g");
