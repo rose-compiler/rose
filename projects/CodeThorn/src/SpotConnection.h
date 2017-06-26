@@ -114,6 +114,8 @@ namespace CodeThorn {
       void setModeLTLDriven(bool ltlDriven);
       // read in an LTL formula string and return a formula with the same semantics in SPIN's syntax
       std::string spinSyntax(std::string ltlFormula);
+      // returns a set of strings that represent the atomic propositions used in "ltlFormula"
+      std::set<std::string> atomicPropositions(std::string ltlFormula);
 
     private:
       //Removes every "WU" in a string with 'W". Necessary because only accepts this syntax.
