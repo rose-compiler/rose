@@ -730,6 +730,7 @@ struct Definition_Struct {
   enum Definition_Kinds kind;
 };
 
+// May take 32*4 bytes - 19 IDs, 8 Lists, 1 bool, 3 enums, 1 char*:
 struct Expression_Struct {
   enum Expression_Kinds kind;
   
@@ -810,6 +811,7 @@ struct Association_Struct {
   enum Association_Kinds kind;
 };
 
+// May take 37*4 bytes - 22 IDs, 12 Lists, 2 bools, and 1 enum:
 struct Statement_Struct {
   enum Statement_Kinds kind;
   
@@ -902,6 +904,7 @@ struct Clause_Struct {
 struct Exception_Handler_Struct {
 };
 
+// May take 37*4 bytes (largest component):
 union Element_Union {
   struct Pragma_Struct            the_pragma; // pragma is an Ada reserverd word
   struct Defining_Name_Struct     defining_name;
@@ -915,6 +918,7 @@ union Element_Union {
   struct Exception_Handler_Struct exception_handler;
 };
 
+// May take 42*4 bytes - a 37*4 union, 2 IDs, 1 char* 2 enums:
 struct Element_Struct {
   Element_ID             id;
   enum Element_Kinds     kind;

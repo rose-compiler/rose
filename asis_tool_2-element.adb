@@ -261,8 +261,6 @@ package body Asis_Tool_2.Element is
             when A_Raise_Expression =>                        -- 4.4 Ada 2012 (AI12-0022-1)
                -- No subprograms in Asis.Elements for this element type.  Should we call something else?
                State.Add_Not_Implemented;
-               null;
-               -- No more info.
 
             when A_Type_Conversion =>                         -- 4.6
                State.Add_Not_Implemented;
