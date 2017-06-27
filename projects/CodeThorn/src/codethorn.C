@@ -1470,7 +1470,7 @@ int main( int argc, char * argv[] ) {
       exit(0);
     }
 
-    logger[TRACE]<< "INIT: creating solver."<<endl;
+    logger[TRACE]<< "INIT: creating solver "<<analyzer.getSolver()<<"."<<endl;
 
     if(option_specialize_fun_name!="") {
       analyzer.initializeSolver1(option_specialize_fun_name,root,true);
