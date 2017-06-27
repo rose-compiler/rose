@@ -3,8 +3,9 @@
 
 #include "a_nodes.h"
 
-extern void tool_2_wrapper
-  (char *target_file_in,
-  struct Element_Struct *elements_out);
+extern
+struct Element_Struct *
+  tool_2_wrapper
+  (char *target_file_in);
 
 #endif // ifndef TOOL_2_WRAPPER_H

@@ -16,7 +16,7 @@ typedef Element_ID Subtype_Indication_ID;
 
 struct Element_ID_List_Struct {
   int length;
-  Element_ID elements[];
+  Element_ID IDs[];
 };
 typedef struct Element_ID_List_Struct *Element_List;
 typedef Element_List Association_List;
@@ -673,8 +673,9 @@ enum Attribute_Kinds {
 
 // For Element_Struct:
 enum Enclosing_Kinds {
-  Element_Kind,
-  Unit_Kind 
+  Not_Enclosing,
+  Enclosing_Element,
+  Enclosing_Unit 
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -909,6 +910,7 @@ struct Exception_Handler_Struct {
 
 // May take 37*4 bytes (largest component):
 union Element_Union {
+  int                             no_element; // For Ada default initialization
   struct Pragma_Struct            the_pragma; // pragma is an Ada reserverd word
   struct Defining_Name_Struct     defining_name;
   struct Declaration_Struct       declaration;
@@ -921,15 +923,20 @@ union Element_Union {
   struct Exception_Handler_Struct exception_handler;
 };
 
-// May take 42*4 bytes - a 37*4 union, 2 IDs, 1 char* 2 enums:
+// May take 44*4 bytes - a 37*4 union, 2 IDs, 1 char*, 2 enums, 1 ptr, 1 int:
 struct Element_Struct {
   Element_ID             id;
   enum Element_Kinds     kind;
   Node_ID                enclosing_id;
   enum Enclosing_Kinds   enclosing_kind;
   char                  *source_location;
+  struct Element_Struct *next;
+  // Number of Element_Structs in the _next_ list:
+  int                    next_count;
   union Element_Union    element;
 };
+
+typedef struct Element_Struct *Element_Struct_Ptr;
 
 #endif //ifndef A_NODES_H
 
