@@ -32,9 +32,18 @@ ATbool traverse_eos(ATerm term, std::string & var_eos);
 ATbool traverse_InitialSpecPart(ATerm term, FAST::Scope* scope);
 ATbool traverse_ListStarOfUseStmt(ATerm term, FAST::Scope* scope);
 ATbool traverse_UseStmt(ATerm term, FAST::UseStmt** var_UseStmt);
+ATbool traverse_OptModuleNature(ATerm term, FAST::UseStmt::ModuleNature* var_OptModuleNature);
 ATbool traverse_SpecAndExecPart(ATerm term, FAST::Scope* scope);
 ATbool traverse_ListStarOfSpecAndExecConstruct(ATerm term, FAST::Scope* scope);
+
+ATbool traverse_SpecStmt(ATerm term, FAST::Scope* scope);
+
+ATbool traverse_ImplicitStmt(ATerm term, FAST::ImplicitStmt** var_ImplicitStmt);
+ATbool traverse_ImplicitSpecList(ATerm term, std::vector<FAST::ImplicitSpec> & ref_ImplicitSpecList);
+
 ATbool traverse_OptInternalSubprogramPart(ATerm term, FAST::Scope* scope);
+
+ATbool traverse_IntrinsicType(ATerm term, FAST::IntrinsicTypeSpec* type_spec);
 
 }; // class Traversal
 }  // namespace OFP

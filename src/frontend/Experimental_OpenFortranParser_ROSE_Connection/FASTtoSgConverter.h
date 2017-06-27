@@ -14,10 +14,6 @@ class FASTtoSgConverter : public FAST::Converter
 
    virtual void convert_MainProgram(FAST::MainProgram* main_program);
 
-   static void convert_scope_lists(FAST::Scope* function_scope, SgUntypedDeclarationStatementList* sg_decls,
-                                                                SgUntypedStatementList* sg_stmts,
-                                                                SgUntypedFunctionDeclarationList* sg_funcs);
-
    void setSourcePosition( SgLocatedNode* locatedNode, FAST::PosInfo & pos );
    void setSourcePosition( SgLocatedNode* locatedNode, FAST::PosInfo & start, FAST::PosInfo & end );
 
@@ -25,6 +21,11 @@ class FASTtoSgConverter : public FAST::Converter
       {
          return pSourceFile->get_sourceFileNameWithPath();
       }
+
+ private:
+   void convert_scope_lists(FAST::Scope* function_scope, SgUntypedDeclarationStatementList* sg_decls,
+                                                         SgUntypedStatementList* sg_stmts,
+                                                         SgUntypedFunctionDeclarationList* sg_funcs);
 
  protected:
    SgUntypedFile* pUntypedFile;

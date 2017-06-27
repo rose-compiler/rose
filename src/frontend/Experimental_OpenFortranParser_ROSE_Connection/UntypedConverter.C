@@ -512,7 +512,7 @@ UntypedConverter::convertSgUntypedImplicitDeclaration(SgUntypedImplicitDeclarati
    bool isImplicitNone = true;
 
    SgImplicitStatement* implicitStatement = new SgImplicitStatement(isImplicitNone);
-   setSourcePositionUnknown(implicitStatement);
+   setSourcePositionFrom(implicitStatement, ut_decl);
 
    ROSE_ASSERT(scope->variantT() == V_SgBasicBlock);
    scope->append_statement(implicitStatement);
