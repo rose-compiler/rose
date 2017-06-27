@@ -1,3 +1,34 @@
+2017-06-23  Louis-Noel Pouchet  <pouchet@colostate.edu>
+
+	* projects/PolyOpt2/tests/scripts/checker.sh: update to loosen
+	constraints on the order of iterator declaration.
+
+2017-06-09  Louis-Noel Pouchet  <pouchet@colostate.edu>
+
+	* projects/PolyOpt2/polyopt/include/polyopt/PolyOptISLRepresentation.hpp,
+	* projects/PolyOpt2/src/Makefile.am: Store stmt_body_ir, the SgNode*
+	sub-AST (shallow copy) that represents the statement being modeled.
+
+2017-06-02  Louis-Noel Pouchet  <pouchet@colostate.edu>
+
+	* projects/PolyOpt2/polyopt/include/polyopt/PolyOpt.hpp,
+	* projects/PolyOpt2/polyopt/include/polyopt/PolyOptISLRepresentation.hpp,
+	* projects/PolyOpt2/src/Makefile.am: Robustify links/includes to ISL.
+
+2017-06-01  Louis-Noel Pouchet  <pouchet@colostate.edu>
+
+	* polyopt/PolyOptISLRepresentation.cpp,
+	* polyopt/include/polyopt/PolyOptISLRepresentation.hpp: New. Unit to translate
+	a scoplib_scop_p to ISL representation, for processing by PolyCheck.
+	* polyopt/PolyOpt.cpp: New API to only recognize scops, for subsequent
+	translation to ISL:
+	std::vector<std::pair<SgNode*,scoplib_scop_p> >
+	PolyOptRecognizeScopsSubTree(SgNode* root, PolyRoseOptions& polyoptions);
+	and then, on each scop in the output vector, call:
+	PolyOptISLRepresentation
+        PolyOptConvertScopToISL(scoplib_scop_p scop)
+	* polyopt/Makefile.am: Update for new unit.
+
 2017-05-29  Louis-Noel Pouchet  <pouchet@colostate.edu>
 
 	* bootstrap.sh: Add.
