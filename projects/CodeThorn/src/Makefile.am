@@ -591,6 +591,10 @@ check-arrays:
 check-array-bounds: ./codethorn
 	./codethorn --explicit-arrays=yes $(srcdir)/tests/arraybounds1.C 
 
+check-ltl-driven:
+	./codethorn $(srcdir)/tests/Problem1403.c --rersmode=yes --with-counterexamples=yes --counterexamples-with-output=yes --input-values="{1,2,3,4,5}" --ltl-in-alphabet="{1,2,3,4,5}" --ltl-out-alphabet="{18,19,20,21,22,23,24,25,26}" --check-ltl=constraints-RERS14-5.txt  --display-diff=100000 --status --ltl-driven
+
+
 # MS: 1-6 is reasonable for V1.2
 RERS=$(patsubst %,Problem%.log, $(shell seq 6))
 rers: $(RERS)
