@@ -142,7 +142,7 @@ void checkStaticArrayBounds(SgProject* root, SPRAY::IntervalAnalysis* intervalAn
               cerr<<"Internal error: determined array variable, but it is not registered as array variable."<<endl;
               exit(1);
             }
-            size_t arraySize=variableIdMapping->getSize(arrayVarId);
+            size_t arraySize=variableIdMapping->getNumberOfElements(arrayVarId);
             if(intervalPropertyState->variableExists(indexVarId)) {
               NumberIntervalLattice indexVariableInterval=intervalPropertyState->getVariable(indexVarId);
               if(indexVariableInterval.isTop()

@@ -36,7 +36,7 @@ void VariableValueMonitor::init(const PState* pstate) {
 }
 
 AbstractValueSet VariableValueMonitor::getHotVariables(Analyzer* analyzer, const PState* pstate) {
-  if(pstate->size()!=_variablesMap.size()) {
+  if(pstate->stateSize()!=_variablesMap.size()) {
     // found a new variable during analysis (e.g. local variable)
     init(pstate);
   }
@@ -58,7 +58,7 @@ AbstractValueSet VariableValueMonitor::getHotVariables(Analyzer* analyzer, const
 void VariableValueMonitor::update(Analyzer* analyzer,EState* estate) {
   AbstractValueSet hotVariables=getHotVariables(analyzer,estate);
   const PState* pstate=estate->pstate();
-  if(pstate->size()!=_variablesMap.size()) {
+  if(pstate->stateSize()!=_variablesMap.size()) {
     //cerr<<"WARNING: variable map size mismatch (probably local var)"<<endl;
     //cerr<<"... reinitializing."<<endl;
     init(estate);
@@ -70,7 +70,7 @@ void VariableValueMonitor::update(Analyzer* analyzer,EState* estate) {
     bool isHotVariable=hotVariables.find(varId)!=hotVariables.end();
     if(!isHotVariable) {
       if(pstate->varIsConst(varId)) {
-        AValue abstractVal=pstate->varValue(varId);
+        AbstractValue abstractVal=pstate->varValue(varId);
         ROSE_ASSERT(abstractVal.isConstInt());
         int intVal=abstractVal.getIntValue();
         _variablesMap[varId]->insert(intVal);

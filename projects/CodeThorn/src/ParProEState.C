@@ -26,10 +26,10 @@ string ParProEState::toString() const {
   ParProLabel label = getLabel();
   bool firstEntry = true;
   stringstream ss;
-  ss << "Label_";
+  ss << "";
   for (ParProLabel::iterator i=label.begin(); i!=label.end(); i++) {
     if (!firstEntry) {
-      ss << "_";
+      ss << ",";
     }
     firstEntry = false;
     ss << *i;
