@@ -1,0 +1,4 @@
+!$omp flush (x,p,q)
+!$omp barrier 
+!$omp parallel  reduction(+ : sum) num_threads(10)
+!$omp end parallel 

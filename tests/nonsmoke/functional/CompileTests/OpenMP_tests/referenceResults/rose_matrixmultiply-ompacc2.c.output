@@ -1,0 +1,4 @@
+#pragma omp parallel  shared(GPU_N,a,b,c,n) private(idev)
+#pragma omp target  device(tid) map(tofrom : c[offset:size][0:n]) map(to : a[offset:size][0:n],b[0:n][0:n],offset,size,n)
+#pragma omp parallel  shared(a,b,c,n,offset,size)
+#pragma omp for  private(i,j,k)
