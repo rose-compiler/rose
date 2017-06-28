@@ -31,15 +31,10 @@ int main (int argc, char* argv[])
   Rose::global_options.set_frontend_warnings(false);
   Rose::global_options.set_backend_warnings(false);
 
-  int statementTransformations=0;
 
   vector<string> argvList(argv, argv+argc);
   argvList.push_back("-rose:skipfinalCompileStep");
-  // Build the AST used by ROSE
-  //SgProject* sageProject = frontend(argc,argv);
   SgProject* sageProject=frontend (argvList); 
-
-  
   // Run internal consistency tests on AST
   //AstTests::runAllTests(sageProject);
   //AstDOTGeneration dotGen;
@@ -51,11 +46,10 @@ int main (int argc, char* argv[])
   std::string matchexpression="$CastNode=SgCastExp($CastOpChild)";
   AstMatching m;
   MatchResult r=m.performMatching(matchexpression,root);
-  // print result in readable form for demo purposes
   //std::cout << "Number of matched patterns with bound variables: " << r.size() << std::endl;
   list<string> report;
+  int statementTransformations=0;
   for(MatchResult::reverse_iterator i=r.rbegin();i!=r.rend();++i) {
-    //for(MatchResult::iterator i=r.begin();i!=r.end();++i) {
     statementTransformations++;
     SgCastExp* castExp=isSgCastExp((*i)["$CastNode"]);
     ROSE_ASSERT(castExp);
@@ -76,7 +70,7 @@ int main (int argc, char* argv[])
       report.push_front(reportLine); 
 
       string newSourceCode;
-      newSourceCode="/* ("+castTypeString+") */";
+      newSourceCode="/* CAST ("+castTypeString+") */";
       newSourceCode+=castExp->unparseToString();
       castExp->unsetCompilerGenerated(); // otherwise it is not replaced
       SgNodeHelper::replaceAstWithString(castExp,newSourceCode);
