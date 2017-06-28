@@ -337,6 +337,10 @@ namespace OmpSupport
       //!--------var list --------------
       //! Add a variable into a variable list of an OpenMP construct ,return the symbol of the variable added, if possible
       SgVariableSymbol* addVariable(omp_construct_enum targetConstruct, const std::string& varString, SgInitializedName* sgvar=NULL);
+
+      //! Add a variable ref expression to a clause: this is useful for  array reference expression. A single variable symbol is not sufficient 
+      SgVariableSymbol* addVariable(omp_construct_enum targetConstruct, SgExpression* varExp);
+
       //! Check if a variable list is associated with a construct
       bool hasVariableList(omp_construct_enum);
       //! Get the variable list associated with a construct
