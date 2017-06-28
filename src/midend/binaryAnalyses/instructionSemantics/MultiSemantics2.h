@@ -3,7 +3,7 @@
 
 #include "BaseSemantics2.h"
 
-namespace rose {                                // documented elsewhere
+namespace Rose {                                // documented elsewhere
 namespace BinaryAnalysis {                      // documented elsewhere
 namespace InstructionSemantics2 {               // documented elsewhere
 

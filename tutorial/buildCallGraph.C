@@ -2,8 +2,8 @@
 #include <CallGraph.h>
 #include <iostream>
 using namespace std;
-using namespace rose;
-using namespace rose::StringUtility;
+using namespace Rose;
+using namespace Rose::StringUtility;
 
 // A Function object used as a predicate that determines which functions are 
 // to be represented in the call graph.
@@ -52,7 +52,7 @@ struct keepFunction : public unary_function<bool,SgFunctionDeclaration*>
 };
 int main( int argc, char * argv[] ) 
 {
-  // Initialize and check compatibility. See rose::initialize
+  // Initialize and check compatibility. See Rose::initialize
   ROSE_INITIALIZE;
 
   SgProject* project = new SgProject(argc, argv);

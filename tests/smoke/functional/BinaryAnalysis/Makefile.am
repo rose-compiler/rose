@@ -13,7 +13,7 @@ AM_LDFLAGS = $(ROSE_RPATHS)
 LDADD = $(ROSE_LIBS)
 
 ###############################################################################################################################
-# Disassembly tests using rose::BinaryAnalysis::Partitioner2
+# Disassembly tests using Rose::BinaryAnalysis::Partitioner2
 ###############################################################################################################################
 
 noinst_PROGRAMS += testPartitioner2

@@ -33,7 +33,7 @@ extern VariableIdMapping variableIdMapping;
 
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 using namespace DSL_Support;
 

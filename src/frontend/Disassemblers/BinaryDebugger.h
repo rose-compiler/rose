@@ -3,7 +3,7 @@
 
 #include <Sawyer/BitVector.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /** Simple debugger.

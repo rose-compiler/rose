@@ -10,7 +10,7 @@
     #include <dlib/optimization.h>
 #endif
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /** Analysis to test the similarity of two functions.

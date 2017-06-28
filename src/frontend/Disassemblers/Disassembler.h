@@ -3,7 +3,7 @@
 
 #include "BinaryCallingConvention.h"
 #include "BinaryUnparser.h"
-#include "Diagnostics.h"                                // rose::Diagnostics
+#include "Diagnostics.h"                                // Rose::Diagnostics
 #include "Registers.h"
 #include "MemoryMap.h"
 #include "integerOps.h"
@@ -13,7 +13,7 @@
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/string.hpp>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /** Virtual base class for instruction disassemblers.
@@ -22,7 +22,7 @@ namespace BinaryAnalysis {
  *  instructions; architecture-specific components are in subclasses @ref DisassemblerArm, @ref DisassemblerPowerpc, @ref
  *  DisassemblerX86, and others. In general, there is no need to explicitly instantiate or call functions in any of these
  *  subclasses.  A @ref Disassembler is responsible for disassembling a single instruction at a time at some specified address,
- *  whereas the classes in @ref rose::BinaryAnalysis::Partitioner2 are responsible for deciding what addresses should be
+ *  whereas the classes in @ref Rose::BinaryAnalysis::Partitioner2 are responsible for deciding what addresses should be
  *  disassembled.
  *
  *  The main interface to a @ref Disassembler is the @ref disassembleOne method. It tries to disassemble one instruction at the
@@ -271,7 +271,7 @@ public:
      *  If instruction semantics are implemented for this architecure then return a pointer to a dispatcher. The dispatcher
      *  will have no attached RISC operators and can only be used to create a new dispatcher via its virtual constructor.  If
      *  instruction semantics are not implemented then the null pointer is returned. */
-    const rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::DispatcherPtr& dispatcher() const {
+    const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::DispatcherPtr& dispatcher() const {
         return p_proto_dispatcher;
     }
 

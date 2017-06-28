@@ -76,9 +76,9 @@ namespace Rose {
                 extern jmethodID createTempNamedDirectoryMethod;
 
             } // ::Rose::Frontend::Java::Ecj
-        }// ::rose::frontend::java
-    }// ::rose::frontend
-}// ::rose
+        }// ::Rose::frontend::java
+    }// ::Rose::frontend
+}// ::Rose
 
 using namespace Rose::Frontend::Java::Ecj;
 
@@ -119,7 +119,7 @@ namespace SageInterface
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
-using namespace rose;
+using namespace Rose;
 using namespace SageBuilder;
 
 
@@ -8839,12 +8839,12 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
 SgStatement* SageInterface::getNextStatement(SgStatement * currentStmt)
    {
   // reuse the implementation in ROSE namespace from src/roseSupport/utility_functions.C
-     return rose::getNextStatement(currentStmt);
+     return Rose::getNextStatement(currentStmt);
    }
 
 SgStatement* SageInterface::getPreviousStatement(SgStatement * currentStmt, bool climbOutScope /*= true*/)
    {
-     return rose::getPreviousStatement(currentStmt, climbOutScope);
+     return Rose::getPreviousStatement(currentStmt, climbOutScope);
    }
 
 bool SageInterface::isEqualToIntConst(SgExpression* e, int value) {

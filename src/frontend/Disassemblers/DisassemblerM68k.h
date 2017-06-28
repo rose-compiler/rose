@@ -11,7 +11,7 @@
 #include <boost/serialization/export.hpp>
 #include <boost/serialization/split_member.hpp>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /** Disassembler for Motorola M68k-based instruction set architectures. */
@@ -241,7 +241,7 @@ private:
 } // namespace
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::DisassemblerM68k);
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::DisassemblerM68k);
 #endif
 
 #endif

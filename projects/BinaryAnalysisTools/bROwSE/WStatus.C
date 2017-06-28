@@ -16,7 +16,7 @@
 #include <Wt/WTreeTableNode>
 #include <Wt/WVBoxLayout>
 
-using namespace rose;
+using namespace Rose;
 
 namespace bROwSE {
 
@@ -269,7 +269,7 @@ WStatus::init() {
 
     // Wire up ROSE diagnostics to the MessageModel
     MessageTransfer::Ptr xfer = MessageTransfer::instance(ctx_.application, model_, this);
-    Sawyer::Message::MultiplexerPtr mplex = rose::Diagnostics::destination.dynamicCast<Sawyer::Message::Multiplexer>();
+    Sawyer::Message::MultiplexerPtr mplex = Rose::Diagnostics::destination.dynamicCast<Sawyer::Message::Multiplexer>();
     ASSERT_not_null(mplex);
     mplex->addDestination(xfer);
 }

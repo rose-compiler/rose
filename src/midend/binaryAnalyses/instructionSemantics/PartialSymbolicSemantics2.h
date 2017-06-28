@@ -23,7 +23,7 @@
 #include "RegisterStateGeneric.h"
 #include "MemoryCellList.h"
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {              // documented elsewhere
 namespace InstructionSemantics2 {       // documented elsewhere
 
@@ -790,7 +790,7 @@ protected:
             Policy<State, SValue>::SHA1(unsigned char digest[20]) const
             {
 #ifdef ROSE_HAVE_GCRYPT_H
-                // libgcrypt should have been initialized by rose::initialize already.
+                // libgcrypt should have been initialized by Rose::initialize already.
                 std::stringstream s;
                 RenameMap rmap;
                 print_diff(s, &rmap);

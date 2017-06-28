@@ -27,23 +27,23 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 
 #include "DispatcherX86.h"
 #include "TestSemantics2.h"
-using namespace rose::BinaryAnalysis::InstructionSemantics2;
+using namespace Rose::BinaryAnalysis::InstructionSemantics2;
 
 #if !defined(SMT_SOLVER) || SMT_SOLVER == NO_SOLVER
 #   include "SMTSolver.h"
-    rose::BinaryAnalysis::SMTSolver *make_solver() { return NULL; }
+    Rose::BinaryAnalysis::SMTSolver *make_solver() { return NULL; }
 #elif SMT_SOLVER == YICES_LIB
 #   include "YicesSolver.h"
-    rose::BinaryAnalysis::SMTSolver *make_solver() {
-        rose::BinaryAnalysis::YicesSolver *solver = new rose::BinaryAnalysis::YicesSolver;
-        solver->set_linkage(rose::BinaryAnalysis::YicesSolver::LM_LIBRARY);
+    Rose::BinaryAnalysis::SMTSolver *make_solver() {
+        Rose::BinaryAnalysis::YicesSolver *solver = new Rose::BinaryAnalysis::YicesSolver;
+        solver->set_linkage(Rose::BinaryAnalysis::YicesSolver::LM_LIBRARY);
         return solver;
     }
 #elif SMT_SOLVER == YICES_EXE
 #   include "YicesSolver.h"
-    rose::BinaryAnalysis::SMTSolver *make_solver() {
-        rose::BinaryAnalysis::YicesSolver *solver = new rose::BinaryAnalysis::YicesSolver;
-        solver->set_linkage(rose::BinaryAnalysis::YicesSolver::LM_EXECUTABLE);
+    Rose::BinaryAnalysis::SMTSolver *make_solver() {
+        Rose::BinaryAnalysis::YicesSolver *solver = new Rose::BinaryAnalysis::YicesSolver;
+        solver->set_linkage(Rose::BinaryAnalysis::YicesSolver::LM_EXECUTABLE);
         return solver;
     }
 #else

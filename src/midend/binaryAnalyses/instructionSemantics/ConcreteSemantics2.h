@@ -11,7 +11,7 @@
 #include "RegisterStateGeneric.h"
 #include <Sawyer/BitVector.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {              // documented elsewhere
 namespace InstructionSemantics2 {       // documented elsewhere
 

@@ -1,6 +1,5 @@
 #include "sage3basic.h"
 #include "UntypedTraversal.h"
-#include "UntypedConverter.h"
 
 #define DEBUG_UNTYPED_TRAVERSAL 0
 
@@ -10,8 +9,13 @@ using namespace Fortran::Untyped;
 UntypedTraversal::UntypedTraversal(SgSourceFile* sourceFile)
 {
    p_source_file = sourceFile;
+   pConverter = new UntypedConverter(this);
 }
 
+UntypedTraversal::~UntypedTraversal()
+{
+   if (pConverter) delete pConverter;
+}
 
 InheritedAttribute
 UntypedTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute currentScope)
@@ -36,7 +40,7 @@ UntypedTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute curre
    else if (isSgUntypedProgramHeaderDeclaration(n) != NULL)
       {
          SgUntypedProgramHeaderDeclaration* ut_program = dynamic_cast<SgUntypedProgramHeaderDeclaration*>(n);
-         UntypedConverter::convertSgUntypedProgramHeaderDeclaration(ut_program,currentScope);
+         pConverter->convertSgUntypedProgramHeaderDeclaration(ut_program,currentScope);
 
          currentScope = SageBuilder::topScopeStack();
       }
@@ -68,13 +72,13 @@ UntypedTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute curre
    else if (isSgUntypedVariableDeclaration(n) != NULL)
       {
          SgUntypedVariableDeclaration* ut_decl = dynamic_cast<SgUntypedVariableDeclaration*>(n);
-         UntypedConverter::convertSgUntypedVariableDeclaration(ut_decl, currentScope);
+         pConverter->convertSgUntypedVariableDeclaration(ut_decl, currentScope);
       }
 
    else if (isSgUntypedImplicitDeclaration(n) != NULL)
       {
          SgUntypedImplicitDeclaration* ut_decl = dynamic_cast<SgUntypedImplicitDeclaration*>(n);
-         UntypedConverter::convertSgUntypedImplicitDeclaration(ut_decl, currentScope);
+         pConverter->convertSgUntypedImplicitDeclaration(ut_decl, currentScope);
       }
 
    else

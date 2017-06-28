@@ -11,11 +11,11 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/logic/tribool.hpp>
 
-using namespace rose::BinaryAnalysis::InstructionSemantics2;
+using namespace Rose::BinaryAnalysis::InstructionSemantics2;
 using namespace Sawyer::Message::Common;
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 namespace {
@@ -126,20 +126,20 @@ public:
 
 protected:
     RiscOperators(const P2::Partitioner *partitioner, const BaseSemantics::SValuePtr &protoval,
-                  rose::BinaryAnalysis::SMTSolver *solver)
+                  Rose::BinaryAnalysis::SMTSolver *solver)
         : Super(protoval, solver), pathInsnIndex_(-1), partitioner_(partitioner) {
         name("FindPath");
     }
 
     RiscOperators(const P2::Partitioner *partitioner, const BaseSemantics::StatePtr &state,
-                  rose::BinaryAnalysis::SMTSolver *solver)
+                  Rose::BinaryAnalysis::SMTSolver *solver)
         : Super(state, solver), pathInsnIndex_(-1), partitioner_(partitioner) {
         name("FindPath");
     }
 
 public:
     static RiscOperatorsPtr instance(const P2::Partitioner *partitioner, const RegisterDictionary *regdict,
-                                     FeasiblePath::SearchMode searchMode, rose::BinaryAnalysis::SMTSolver *solver=NULL) {
+                                     FeasiblePath::SearchMode searchMode, Rose::BinaryAnalysis::SMTSolver *solver=NULL) {
         BaseSemantics::SValuePtr protoval = SValue::instance();
         BaseSemantics::RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
         BaseSemantics::MemoryStatePtr memory;
@@ -162,23 +162,23 @@ public:
     }
 
     static RiscOperatorsPtr instance(const P2::Partitioner *partitioner, const BaseSemantics::SValuePtr &protoval,
-                                     rose::BinaryAnalysis::SMTSolver *solver=NULL) {
+                                     Rose::BinaryAnalysis::SMTSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(partitioner, protoval, solver));
     }
 
     static RiscOperatorsPtr instance(const P2::Partitioner *partitioner, const BaseSemantics::StatePtr &state,
-                                     rose::BinaryAnalysis::SMTSolver *solver=NULL) {
+                                     Rose::BinaryAnalysis::SMTSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(partitioner, state, solver));
     }
 
 public:
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
-                                                   rose::BinaryAnalysis::SMTSolver *solver=NULL) const ROSE_OVERRIDE {
+                                                   Rose::BinaryAnalysis::SMTSolver *solver=NULL) const ROSE_OVERRIDE {
         return instance(NULL, protoval, solver);
     }
 
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr &state,
-                                                   rose::BinaryAnalysis::SMTSolver *solver=NULL) const ROSE_OVERRIDE {
+                                                   Rose::BinaryAnalysis::SMTSolver *solver=NULL) const ROSE_OVERRIDE {
         return instance(NULL, state, solver);
     }
 
@@ -400,7 +400,7 @@ FeasiblePath::initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        Diagnostics::initAndRegister(&mlog, "rose::BinaryAnalysis::FeasiblePath");
+        Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::FeasiblePath");
     }
 }
 
@@ -417,7 +417,7 @@ FeasiblePath::buildVirtualCpu(const P2::Partitioner &partitioner) {
     // Augment the register dictionary with a "path" register that holds the expression describing how the location is
     // reachable along some path.
     if (NULL == registers_) {
-        registers_ = new RegisterDictionary("rose::BinaryAnalysis::FeasiblePath");
+        registers_ = new RegisterDictionary("Rose::BinaryAnalysis::FeasiblePath");
         registers_->insert(partitioner.instructionProvider().registerDictionary());
         ASSERT_forbid(REG_PATH.is_valid());
         REG_PATH = RegisterDescriptor(registers_->firstUnusedMajor(), 0, 0, 1);

@@ -12,9 +12,9 @@
 #include <Wt/WTableView>
 #include <Wt/WText>
 
-using namespace rose;
-using namespace rose::BinaryAnalysis;
-using namespace rose::BinaryAnalysis::InstructionSemantics2;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
+using namespace Rose::BinaryAnalysis::InstructionSemantics2;
 
 namespace bROwSE {
 
@@ -64,7 +64,7 @@ public:
     }
 
     void reload(const BaseSemantics::StatePtr &state, WSemantics::Mode mode, const FunctionDataFlow &dfInfo) {
-        using namespace rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
+        using namespace Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
         layoutAboutToBeChanged().emit();
         locValPairs_.clear();
         if (state) {

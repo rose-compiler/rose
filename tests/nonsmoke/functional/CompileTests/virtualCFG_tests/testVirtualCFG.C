@@ -4,7 +4,7 @@
 #include "rose.h"
 #include <algorithm>
 using namespace std;
-using namespace rose;
+using namespace Rose;
 using namespace VirtualCFG;
 
 //! start from a CFG node 'n', collect all other CFG nodes which can be reached from 'n'

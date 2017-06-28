@@ -12,10 +12,10 @@
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Message.h>
 
-using namespace rose;
+using namespace Rose;
 using namespace Sawyer::Message::Common;
-using namespace rose::BinaryAnalysis;
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
+using namespace Rose::BinaryAnalysis;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 static Diagnostics::Facility mlog;                      // further initialization in main()
 

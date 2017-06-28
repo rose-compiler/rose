@@ -48,7 +48,7 @@ operator<<(std::basic_ostream<char, std::char_traits<char> >& os, std::vector<bo
 
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 using namespace SageInterface;
 using namespace SageBuilder;
 using namespace OmpSupport;
@@ -1693,8 +1693,8 @@ SgProject::parseCommandLine(std::vector<std::string> argv)
 
      using namespace Sawyer::CommandLine;
 
-     using namespace rose;                   // the ROSE team is migrating everything to this namespace
-     using namespace rose::Diagnostics;      // for mlog, INFO, WARN, ERROR, FATAL, etc.
+     using namespace Rose;                   // the ROSE team is migrating everything to this namespace
+     using namespace Rose::Diagnostics;      // for mlog, INFO, WARN, ERROR, FATAL, etc.
 
   // Use CommandlineProcessing to create a consistent parser among all tools.  If you want a tool's parser to be different
   // then either create one yourself, or modify the parser properties after createParser returns. The createEmptyParserStage
@@ -2542,7 +2542,7 @@ SgFile::doSetupForConstructor(const vector<string>& argv, SgProject* project)
 
   // printf ("In SgFile::setupSourceFilename(const vector<string>& argv): p_sourceFileNameWithPath = %s \n",get_sourceFileNameWithPath().c_str());
   // tps: 08/18/2010, This should call StringUtility for WINDOWS- there are two implementations of this?
-  // set_sourceFileNameWithoutPath( rose::utility_stripPathFromFileName(get_sourceFileNameWithPath().c_str()) );
+  // set_sourceFileNameWithoutPath( Rose::utility_stripPathFromFileName(get_sourceFileNameWithPath().c_str()) );
      set_sourceFileNameWithoutPath( StringUtility::stripPathFromFileName(get_sourceFileNameWithPath().c_str()) );
 
      initializeSourcePosition(sourceFilename);
@@ -2802,7 +2802,7 @@ SgFile::callFrontEnd()
       // should be "disable_edg" instead of "disable_edg_backend".
           get_disable_edg_backend() == false && get_new_frontend() == true)
         {
-       // rose::new_frontend = true;
+       // Rose::new_frontend = true;
 
        // We can either use the newest EDG frontend separately (useful for debugging)
        // or the EDG frontend that is included in SAGE III (currently EDG 3.3).
@@ -2824,7 +2824,7 @@ SgFile::callFrontEnd()
 
       // Use the current version of the EDG frontend from EDG (or any other version)
       // abort();
-         printf ("rose::new_frontend == true (call edgFrontEnd using unix system() function!) \n");
+         printf ("Rose::new_frontend == true (call edgFrontEnd using unix system() function!) \n");
 
          std::string frontEndCommandLineString;
          if ( get_KCC_frontend() == true )
@@ -3501,13 +3501,13 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           string preprocessFilename = (abs_dir / boost::filesystem::unique_path(base.string() + "-%%%%%%%%.F90")).string();
 
           // The Sawyer::FileSystem::TemporaryFile d'tor will delete the file. We close the file after it's created because
-          // rose::FileSystem::copyFile will reopen it in binary mode anyway.
+          // Rose::FileSystem::copyFile will reopen it in binary mode anyway.
           Sawyer::FileSystem::TemporaryFile tempFile(preprocessFilename);
           tempFile.stream().close();
 
           // copy source file to pseudonym file
           try {
-              rose::FileSystem::copyFile(sourceFilename, preprocessFilename);
+              Rose::FileSystem::copyFile(sourceFilename, preprocessFilename);
           } catch(exception &e) {
               cerr << "Error in copying file " << sourceFilename << " to " << preprocessFilename
                    << " (" << e.what() << ")" << endl;
@@ -5302,10 +5302,10 @@ SgBinaryComposite::buildAST(vector<string> /*argv*/, vector<string> /*inputComma
 
     // Disassemble each interpretation
     if (!get_read_executable_file_format_only()) {
-        namespace P2 = rose::BinaryAnalysis::Partitioner2;
+        namespace P2 = Rose::BinaryAnalysis::Partitioner2;
         const SgAsmInterpretationPtrList &interps = get_interpretations()->get_interpretations();
         for (size_t i=0; i<interps.size(); i++)
-            rose::BinaryAnalysis::Partitioner2::Engine::disassembleForRoseFrontend(interps[i]);
+            Rose::BinaryAnalysis::Partitioner2::Engine::disassembleForRoseFrontend(interps[i]);
     }
 
     // DQ (1/22/2008): The generated unparsed assemble code can not currently be compiled because the
@@ -5621,7 +5621,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
   // Rose_STL_Container<string> fileList = CommandlineProcessing::generateSourceFilenames(argc,argv);
   // ROSE_ASSERT (fileList.size() == 1);
   // p_sourceFileNameWithPath    = *(fileList.begin());
-  // p_sourceFileNameWithoutPath = rose::utility_stripPathFromFileName(p_sourceFileNameWithPath.c_str());
+  // p_sourceFileNameWithoutPath = Rose::utility_stripPathFromFileName(p_sourceFileNameWithPath.c_str());
 
 #if 1
   // ROSE_ASSERT (get_unparse_output_filename().empty() == true);
@@ -5656,7 +5656,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
 #endif
                if (project->get_unparse_in_same_directory_as_input_file() == true)
                   {
-                    outputFilename = rose::getPathFromFileName(get_sourceFileNameWithPath()) + "/rose_" + get_sourceFileNameWithoutPath();
+                    outputFilename = Rose::getPathFromFileName(get_sourceFileNameWithPath()) + "/rose_" + get_sourceFileNameWithoutPath();
 
                     printf ("In SgFile::compileOutput(): Using filename for unparsed file into same directory as input file: outputFilename = %s \n",outputFilename.c_str());
 
@@ -5725,7 +5725,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
 #if 1
                     printf ("NOTE: keep_going option supporting direct copy of original input file to overwrite the unparsed file \n");
 #endif
-                    rose::FileSystem::copyFile(original_file, unparsed_file);
+                    Rose::FileSystem::copyFile(original_file, unparsed_file);
                   }
              }
 
@@ -7519,7 +7519,7 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
                ROSE_ASSERT(functionExp->get_file_info() != NULL);
 
             // DQ (3/15/2017): Fixed to use mlog message logging.
-               if (rose::ir_node_mlog[rose::Diagnostics::DEBUG])
+               if (Rose::ir_node_mlog[Rose::Diagnostics::DEBUG])
                   {
                     functionExp->get_file_info()->display("In SgFunctionCallExp::getAssociatedFunctionSymbol(): case not supported: debug");
                   }

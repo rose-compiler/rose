@@ -13,7 +13,7 @@
 #include <sys/utsname.h>
 #include <unistd.h>
 
-using namespace rose;
+using namespace Rose;
 using namespace Sawyer::Message::Common;
 
 struct Settings {

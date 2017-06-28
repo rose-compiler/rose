@@ -4,9 +4,9 @@
 #include <BinaryDataFlow.h>
 #include <Partitioner2/Partitioner.h>
 
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 void

@@ -6,9 +6,70 @@
 using namespace Fortran::Untyped;
 
 
+void
+UntypedConverter::setSourcePositionFrom ( SgLocatedNode* toNode, SgLocatedNode* fromNode )
+{
+   ROSE_ASSERT(toNode != NULL && fromNode != NULL);
+
+   Sg_File_Info* start = fromNode->get_startOfConstruct();
+   Sg_File_Info*   end = fromNode->get_endOfConstruct();
+
+   ROSE_ASSERT(start != NULL && end != NULL);
+   ROSE_ASSERT(toNode->get_startOfConstruct() == NULL);
+   ROSE_ASSERT(toNode->get_endOfConstruct()   == NULL);
+
+#if DEBUG_UNTYPED_CONVERTER
+   std::cout << "UntypedConverter::setSourcePositionFrom: filename is " << start->get_filenameString();
+   printf("   --- toNode: %p", toNode);
+   std::cout << " strt: " << start->get_line() << " " << start->get_col();
+   std::cout << " end:  " <<   end->get_line() << " " <<   end->get_col() << std::endl;
+#endif
+
+   std::string filename = start->get_filenameString();
+
+   toNode->set_startOfConstruct(new Sg_File_Info(filename, start->get_line(), start->get_col()));
+   toNode->get_startOfConstruct()->set_parent(toNode);
+
+   toNode->set_endOfConstruct(new Sg_File_Info(filename, end->get_line(), end->get_col()));
+   toNode->get_endOfConstruct()->set_parent(toNode);
+
+   SageInterface::setSourcePosition(toNode);
+}
+
+void
+UntypedConverter::setSourcePositionFrom ( SgLocatedNode* toNode, SgLocatedNode* startNode, SgLocatedNode* endNode )
+{
+   ROSE_ASSERT(toNode != NULL && startNode != NULL && endNode != NULL);
+
+   Sg_File_Info* start = startNode->get_startOfConstruct();
+   Sg_File_Info* end = endNode->get_endOfConstruct();
+
+   ROSE_ASSERT(start != NULL && end != NULL);
+   ROSE_ASSERT(toNode->get_startOfConstruct() == NULL);
+   ROSE_ASSERT(toNode->get_endOfConstruct()   == NULL);
+
+#if DEBUG_UNTYPED_CONVERTER
+   std::cout << "UntypedConverter::setSourcePositionFrom: filename is " << start->get_filenameString();
+   printf("   --- toNode: %p", toNode);
+   std::cout << " strt: " << start->get_line() << " " << start->get_col();
+   std::cout << " end:  " <<   end->get_line() << " " <<   end->get_col() << std::endl;
+#endif
+
+   std::string filename = start->get_filenameString();
+
+   toNode->set_startOfConstruct(new Sg_File_Info(filename, start->get_line(), start->get_col()));
+   toNode->get_startOfConstruct()->set_parent(toNode);
+
+   toNode->set_endOfConstruct(new Sg_File_Info(filename, end->get_line(), end->get_col()));
+   toNode->get_endOfConstruct()->set_parent(toNode);
+
+   SageInterface::setSourcePosition(toNode);
+}
+
 //! Set a numerical label for a Fortran statement. The statement should have a enclosing function definition already. SgLabelSymbol and SgLabelR
 //efExp are created transparently as needed.
-static void setFortranNumericLabel(SgStatement* stmt, int label_value, SgLabelSymbol::label_type_enum label_type, SgScopeStatement* label_scope = NULL)
+static void
+setFortranNumericLabel(SgStatement* stmt, int label_value, SgLabelSymbol::label_type_enum label_type, SgScopeStatement* label_scope = NULL)
 {
    ROSE_ASSERT (stmt != NULL);
    ROSE_ASSERT (label_value >0 && label_value <=99999); //five digits for Fortran label
@@ -19,7 +80,7 @@ static void setFortranNumericLabel(SgStatement* stmt, int label_value, SgLabelSy
       }
    ROSE_ASSERT (label_scope != NULL);
 
-   SgName label_name(rose::StringUtility::numberToString(label_value));
+   SgName label_name(Rose::StringUtility::numberToString(label_value));
    SgLabelSymbol * symbol = label_scope->lookup_label_symbol (label_name);
    if (symbol == NULL)
       {
@@ -265,8 +326,8 @@ UntypedConverter::convertSgUntypedProgramHeaderDeclaration (SgUntypedProgramHead
    programBody->set_parent(programDefinition);
    programDefinition->set_parent(programDeclaration);
 
-   UntypedConverter::setSourcePositionUnknown(programDeclaration);
-   UntypedConverter::setSourcePositionUnknown(programDeclaration->get_parameterList());
+   UntypedConverter::setSourcePositionFrom(programDeclaration, ut_program, ut_program_end_statement);
+   UntypedConverter::setSourcePositionFrom(programDeclaration->get_parameterList(), ut_program);
 
 // Convert the labels for the program begin and end statements
    UntypedConverter::convertLabel(ut_program,               programDeclaration, SgLabelSymbol::e_start_label_type, /*label_scope=*/ programDefinition);
@@ -301,8 +362,10 @@ UntypedConverter::convertSgUntypedProgramHeaderDeclaration (SgUntypedProgramHead
         UntypedConverter::setSourcePosition(programBody, tokenList);
 #endif
 
-   UntypedConverter::setSourcePositionUnknown(programDefinition);
-   UntypedConverter::setSourcePositionUnknown(programBody);
+//TODO - the start for both of these should be the first statement in the program (if non-empty)
+//TODO - perhaps the end of the block could be the last statement in the program
+   UntypedConverter::setSourcePositionFrom(programDefinition, ut_program_end_statement);
+   UntypedConverter::setSourcePositionFrom(programBody, ut_program_end_statement);
 
    ROSE_ASSERT(programDeclaration->get_firstNondefiningDeclaration() != programDeclaration);
    ROSE_ASSERT(programDeclaration->get_firstNondefiningDeclaration() == NULL);
@@ -449,7 +512,7 @@ UntypedConverter::convertSgUntypedImplicitDeclaration(SgUntypedImplicitDeclarati
    bool isImplicitNone = true;
 
    SgImplicitStatement* implicitStatement = new SgImplicitStatement(isImplicitNone);
-   setSourcePositionUnknown(implicitStatement);
+   setSourcePositionFrom(implicitStatement, ut_decl);
 
    ROSE_ASSERT(scope->variantT() == V_SgBasicBlock);
    scope->append_statement(implicitStatement);

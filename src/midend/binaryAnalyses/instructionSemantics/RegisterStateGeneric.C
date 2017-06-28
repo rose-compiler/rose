@@ -10,12 +10,12 @@
 // because it didn't always cause registers to spring into existence the first time they were read.
 //#define RegisterStateGeneric_20150924
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace BaseSemantics {
 
-using namespace rose::Diagnostics;
+using namespace Rose::Diagnostics;
 
 static bool
 sortByOffset(const RegisterStateGeneric::RegPair &a, const RegisterStateGeneric::RegPair &b) {
@@ -832,5 +832,5 @@ RegisterStateGeneric::print(std::ostream &stream, Formatter &fmt) const
 } // namespace
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-BOOST_CLASS_EXPORT_IMPLEMENT(rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterStateGeneric);
+BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterStateGeneric);
 #endif

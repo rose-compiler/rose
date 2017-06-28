@@ -22,7 +22,7 @@
 #define DEBUG 1
 using namespace DominatorTreesAndDominanceFrontiers;
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 int main(int argc, char *argv[])
 {

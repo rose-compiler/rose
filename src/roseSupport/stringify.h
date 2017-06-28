@@ -5,7 +5,7 @@
 
 #include <string>
 
-namespace rose {
+namespace Rose {
 
 /** Shortens names of long stringifiers.
  *

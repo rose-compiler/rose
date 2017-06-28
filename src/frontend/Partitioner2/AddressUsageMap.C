@@ -5,7 +5,7 @@
 #include <boost/foreach.hpp>
 #include <integerOps.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 

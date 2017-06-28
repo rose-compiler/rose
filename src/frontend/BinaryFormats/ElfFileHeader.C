@@ -3,7 +3,7 @@
 #include "sage3basic.h"
 #include "Diagnostics.h"
 
-using namespace rose::Diagnostics;
+using namespace Rose::Diagnostics;
 
 void
 SgAsmElfFileHeader::ctor()

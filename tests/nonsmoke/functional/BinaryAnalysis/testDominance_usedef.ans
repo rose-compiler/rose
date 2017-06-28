@@ -1,0 +1,14 @@
+CFG dominators for function 0x080480a0 "_start":
+  dominator of 0x08048105<0> is 0x080480f8<1>
+  dominator of 0x080480f8<1> is 0x080480ed<2>
+  dominator of 0x080480ed<2> is 0x080480dd<12>
+  dominator of 0x080480a0<3> is none
+  dominator of 0x080480a2<4> is 0x080480a0<3>
+  dominator of 0x080480a3<5> is 0x080480a0<3>
+  dominator of 0x080480a9<6> is 0x080480a3<5>
+  dominator of 0x080480b1<7> is 0x080480a9<6>
+  dominator of 0x080480b8<8> is 0x080480b1<7>
+  dominator of 0x080480c8<9> is 0x080480b8<8>
+  dominator of 0x080480d5<10> is 0x080480c8<9>
+  dominator of 0x080480d9<11> is 0x080480d5<10>
+  dominator of 0x080480dd<12> is 0x080480d9<11>

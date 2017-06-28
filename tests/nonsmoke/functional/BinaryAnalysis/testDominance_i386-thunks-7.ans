@@ -1,0 +1,5 @@
+CFG dominators for function 0x080480a0 "_start":
+  dominator of 0x080480aa<0> is 0x080480a0<1>
+  dominator of 0x080480a0<1> is none
+CFG dominators for function 0x080480b1 "thunk1":
+  dominator of 0x080480b1<0> is none

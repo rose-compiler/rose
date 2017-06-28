@@ -17,8 +17,8 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
-using namespace rose;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 
 namespace CloneDetection {
 

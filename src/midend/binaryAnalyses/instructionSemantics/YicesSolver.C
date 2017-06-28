@@ -11,7 +11,7 @@
 #define strtoull _strtoui64
 #endif
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 void
@@ -1197,5 +1197,5 @@ YicesSolver::ctx_read(const SymbolicExpr::InteriorPtr &in)
 } // namespace
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-BOOST_CLASS_EXPORT_IMPLEMENT(rose::BinaryAnalysis::YicesSolver);
+BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::YicesSolver);
 #endif

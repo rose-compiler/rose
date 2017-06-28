@@ -7,8 +7,8 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
-using namespace rose;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 
 /** Creates text sections from supplied instructions.
  *

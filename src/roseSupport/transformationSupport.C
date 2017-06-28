@@ -10,7 +10,7 @@ using namespace std;
 
 // DQ (3/6/2017): Added support for message logging to control output from ROSE tools.
 #undef mprintf
-#define mprintf rose::Diagnostics::mfprintf(rose::ir_node_mlog[rose::Diagnostics::DEBUG])
+#define mprintf Rose::Diagnostics::mfprintf(Rose::ir_node_mlog[Rose::Diagnostics::DEBUG])
 
 
 #if 0
@@ -492,7 +492,7 @@ TransformationSupport::buildOperatorString ( SgNode* astNode )
 
                SgName name = memberFunctionSymbol->get_name();
             // printf ("name = %s \n",name.str());
-            // string tempName = rose::stringDuplicate(name.str());
+            // string tempName = Rose::stringDuplicate(name.str());
                string tempName = name.str();
 
             // int stringLength = strlen(tempName);
@@ -523,7 +523,7 @@ TransformationSupport::buildOperatorString ( SgNode* astNode )
 
                SgName name = functionSymbol->get_name();
             // printf ("name = %s \n",name.str());
-            // string tempName = rose::stringDuplicate(name.str());
+            // string tempName = Rose::stringDuplicate(name.str());
                string tempName = name.str();
 
             // int stringLength = strlen(tempName);
@@ -608,7 +608,7 @@ TransformationSupport::getFunctionName ( SgFunctionCallExp* functionCallExp )
        // There will be a lot of different possible overloaded operators called
        // and "operator()" is just one of them (that we are debugging presently)
 
-       // returnNameString = rose::stringDuplicate(memberFunctionSymbol->get_name().str());
+       // returnNameString = Rose::stringDuplicate(memberFunctionSymbol->get_name().str());
           returnNameString = memberFunctionSymbol->get_name().str();
           ROSE_ASSERT (returnNameString.length() > 0);
         }
@@ -619,7 +619,7 @@ TransformationSupport::getFunctionName ( SgFunctionCallExp* functionCallExp )
          SgFunctionSymbol* functionSymbol = isSgFunctionSymbol(functionReferenceExp->get_symbol());
          ROSE_ASSERT (functionSymbol != NULL);
          
-         // returnNameString = rose::stringDuplicate(functionSymbol->get_name().str());
+         // returnNameString = Rose::stringDuplicate(functionSymbol->get_name().str());
          returnNameString = functionSymbol->get_name().str();
          
          // ROSE_ASSERT (returnNameString != NULL);
@@ -647,7 +647,7 @@ TransformationSupport::getFunctionName ( SgFunctionCallExp* functionCallExp )
          // There will be a lot of different possible overloaded operators called
          // and "operator()" is just one of them (that we are debugging presently)
          
-         // returnNameString = rose::stringDuplicate(memberFunctionSymbol->get_name().str());
+         // returnNameString = Rose::stringDuplicate(memberFunctionSymbol->get_name().str());
          returnNameString = memberFunctionSymbol->get_name().str();
          ROSE_ASSERT (returnNameString.length() > 0);
        }
@@ -843,7 +843,7 @@ TransformationSupport::getTypeName ( SgType* type )
         }
 
   // Fix for purify problem report
-  // typeName = rose::stringDuplicate(typeName);
+  // typeName = Rose::stringDuplicate(typeName);
 
      return typeName;
    }
@@ -1032,11 +1032,11 @@ TransformationSupport::getTypeName ( SgType* type )
         }
 
   // Fix for purify problem report
-  // typeName = rose::stringDuplicate(typeName);
+  // typeName = Rose::stringDuplicate(typeName);
 
      ROSE_ASSERT(typeName.c_str() != NULL);
   // return typeName;
-     return rose::stringDuplicate(typeName.c_str());
+     return Rose::stringDuplicate(typeName.c_str());
    }
 #endif
 
@@ -1076,7 +1076,7 @@ TransformationSupport::getFunctionTypeName ( SgFunctionCallExp* functionCallExpr
           SgMemberFunctionType* memberFunctionType = isSgMemberFunctionType(memberFunctionRefExp->get_type());
 
           ROSE_ASSERT (memberFunctionType != NULL);
-       // functionTypeName = rose::stringDuplicate(TransformationSupport::getTypeName ( memberFunctionType ));
+       // functionTypeName = Rose::stringDuplicate(TransformationSupport::getTypeName ( memberFunctionType ));
           functionTypeName = TransformationSupport::getTypeName ( memberFunctionType );
         }
      else if ( arrowExpression != NULL )
@@ -1095,7 +1095,7 @@ TransformationSupport::getFunctionTypeName ( SgFunctionCallExp* functionCallExpr
           SgMemberFunctionType* memberFunctionType = isSgMemberFunctionType(memberFunctionRefExp->get_type());
 
           ROSE_ASSERT (memberFunctionType != NULL);
-       // functionTypeName = rose::stringDuplicate(TransformationSupport::getTypeName ( memberFunctionType ));
+       // functionTypeName = Rose::stringDuplicate(TransformationSupport::getTypeName ( memberFunctionType ));
           functionTypeName = TransformationSupport::getTypeName ( memberFunctionType );
        }
        else
@@ -1120,13 +1120,13 @@ TransformationSupport::buildMacro ( string s )
   // so that it can be precessed by the unparser.
 
 #if 0
-     char* returnString = rose::stringDuplicate(s);
+     char* returnString = Rose::stringDuplicate(s);
      char* roseMacroMarkerString = "ROSE-TRANSFORMATION-MACRO:";
-     returnString = rose::stringConcatinate (roseMacroMarkerString,returnString);
+     returnString = Rose::stringConcatinate (roseMacroMarkerString,returnString);
 
   // Wrap the string into quotes for use as a C++ string expression
-     returnString = rose::stringConcatinate ("\"",returnString);
-     returnString = rose::stringConcatinate (returnString,"\";");
+     returnString = Rose::stringConcatinate ("\"",returnString);
+     returnString = Rose::stringConcatinate (returnString,"\";");
      ROSE_ASSERT (returnString != NULL);
 #else
      string returnString = s;
@@ -1272,7 +1272,7 @@ TransformationSupport::getTransformationOptions (
                            // printf ("Type is: (named type) = %s \n",nameString);
                               ROSE_ASSERT (identifingTypeName.c_str() != NULL);
                            // ROSE_ASSERT (typeName != NULL);
-                           // if ( (typeName != NULL) && (rose::isSameName(typeName,identifingTypeName) == true) )
+                           // if ( (typeName != NULL) && (Rose::isSameName(typeName,identifingTypeName) == true) )
                               if ( typeName == identifingTypeName )
                                  {
                                 // Now look at the parameter list to the constructor and save the
@@ -1700,8 +1700,8 @@ TransformationSupport::getTransformationOptionsFromVariableDeclarationConstructo
                       // printf ("Name = %s value = %d \n",enumName.str(),enumValue);
                       // printf ("Name = %s \n",enumName.str());
 
-                      // string name ( rose::stringDuplicate( enumName.str() ) );
-                      // char* name = rose::stringDuplicate( enumName.str() );
+                      // string name ( Rose::stringDuplicate( enumName.str() ) );
+                      // char* name = Rose::stringDuplicate( enumName.str() );
 
                       // Put the value at the start of the list so that the list can be processed in
                       // consecutive order to establish options for consecutive scopes (root to
@@ -1780,8 +1780,8 @@ TransformationSupport::getTransformationOptionsFromVariableDeclarationConstructo
                       // printf ("Name = %s value = %d \n",enumName.str(),enumValue);
                       // printf ("Name = %s \n",enumName.str());
 
-                         string name ( rose::stringDuplicate( enumName.str() ) );
-                      // char* name = rose::stringDuplicate( enumName.str() );
+                         string name ( Rose::stringDuplicate( enumName.str() ) );
+                      // char* name = Rose::stringDuplicate( enumName.str() );
 
                       // Put the value at the start of the list so that the list can be processed in
                       // consecutive order to establish options for consecutive scopes (root to
@@ -1864,8 +1864,8 @@ TransformationSupport::getTransformationOptionsFromVariableDeclarationConstructo
                       // printf ("Name = %s value = %d \n",enumName.str(),enumValue);
                       // printf ("Name = %s \n",enumName.str());
 
-                         string name ( rose::stringDuplicate( enumName.str() ) );
-                      // char* name = rose::stringDuplicate( enumName.str() );
+                         string name ( Rose::stringDuplicate( enumName.str() ) );
+                      // char* name = Rose::stringDuplicate( enumName.str() );
 
                       // Put the value at the start of the list so that the list can be processed in
                       // consecutive order to establish options for consecutive scopes (root to
@@ -1962,15 +1962,15 @@ $VARIABLE_DECLARATIONS\n\n\
                     (*variableListStringElementIterator).c_str());
 #endif
 
-               string variableName = rose::stringDuplicate((*variableListStringElementIterator).c_str());
-               string typeName = rose::stringDuplicate((*typeListStringElementIterator).c_str());
+               string variableName = Rose::stringDuplicate((*variableListStringElementIterator).c_str());
+               string typeName = Rose::stringDuplicate((*typeListStringElementIterator).c_str());
                string localOperandDataTemplate =
                     SgNode::copyEdit (staticVariableDeclarationString,"$VARIABLE_NAME",variableName);
                localOperandDataTemplate =
                     SgNode::copyEdit (localOperandDataTemplate,"$TYPE_NAME",typeName);
 
             // Append the new variable declaration to the variableDeclarationString
-            // variableDeclarationString = rose::stringConcatinate (variableDeclarationString,localOperandDataTemplate);
+            // variableDeclarationString = Rose::stringConcatinate (variableDeclarationString,localOperandDataTemplate);
                variableDeclarationString =  variableDeclarationString + localOperandDataTemplate;
              }
 #if 0

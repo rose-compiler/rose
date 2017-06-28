@@ -6,7 +6,7 @@
 #include "integerOps.h"
 #include "sageBuilderAsm.h"
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /** Disassembler for the PowerPC architecture. */

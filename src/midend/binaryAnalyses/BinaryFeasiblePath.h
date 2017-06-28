@@ -7,7 +7,7 @@
 #include <SMTSolver.h>
 #include <boost/filesystem/path.hpp>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /** Feasible path analysis.

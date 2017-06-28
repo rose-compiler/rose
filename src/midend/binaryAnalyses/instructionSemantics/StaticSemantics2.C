@@ -4,7 +4,7 @@
 #include "Disassembler.h"
 #include "stringify.h"
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace StaticSemantics {

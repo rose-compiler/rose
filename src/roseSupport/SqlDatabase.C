@@ -27,7 +27,7 @@
 
 #include <cassert>
 
-using namespace rose;
+using namespace Rose;
 
 namespace SqlDatabase {
 

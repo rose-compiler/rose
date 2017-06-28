@@ -13,7 +13,7 @@
 SgSourceFile* OpenFortranParser_globalFilePointer = NULL;
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 std::list<SgInterfaceStatement*> astInterfaceStack;
 

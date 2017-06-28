@@ -1,7 +1,7 @@
 #ifndef ROSE_SageBuilderAsm_H
 #define ROSE_SageBuilderAsm_H
 
-namespace rose {
+namespace Rose {
 
 /** Functions to build binary analysis ASTs. */
 namespace SageBuilderAsm {
