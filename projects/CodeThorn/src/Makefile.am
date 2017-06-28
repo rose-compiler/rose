@@ -491,6 +491,12 @@ varp3_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
 varp3__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
 varp3_SOURCES = Timer.cpp varp3.C
 
+check-varp3: varp3
+	rm -f rose_casttest1.C
+	./varp3 tests/casttest1.C
+	g++ rose_casttest1.C
+	rm -f a.out
+
 #MS: iterator_test not ingegrated yet
 #iterator_test_SOURCES = iterator_test.C ShowSeq.h
 #iterator_test_LDADD = -lrose libmatcher.la
