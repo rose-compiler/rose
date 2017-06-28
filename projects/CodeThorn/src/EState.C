@@ -164,7 +164,8 @@ CodeThorn::AbstractValue EState::determineUniqueIOValue() const {
     if(_pstate->varIsTop(varId)) {
       return constraints()->varAbstractValue(varId);
     } else {
-      cout<<"DEBUG: could not determine constant value from constraints."<<endl;
+      cerr<<"Error: could not determine constant value from constraints."<<endl;
+      exit(1);
     }
   }
   if(io.op==InputOutput::STDOUT_CONST||io.op==InputOutput::STDERR_CONST) {

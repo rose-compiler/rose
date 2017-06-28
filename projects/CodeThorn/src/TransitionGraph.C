@@ -136,22 +136,23 @@ TransitionGraph::TransitionPtrSet TransitionGraph::outEdges(const EState* estate
       ROSE_ASSERT(_analyzer);
       Analyzer::SubSolverResultType subSolverResult=_analyzer->subSolver(estate);
       EStateWorkList& deferedWorkList=subSolverResult.first;
-      EStateSet& existingEStateSet=subSolverResult.second;
+      EStatePtrSet& existingEStateSet=subSolverResult.second;
       EStatePtrSet succNodes;
       for(EStateWorkList::iterator i=deferedWorkList.begin();i!=deferedWorkList.end();++i) {
         succNodes.insert(*i);
       }
-      for(EStateSet::iterator i=existingEStateSet.begin();i!=existingEStateSet.end();++i) {
+      for(EStatePtrSet::iterator i=existingEStateSet.begin();i!=existingEStateSet.end();++i) {
         succNodes.insert(*i);
       }
       //cout<<"DEBUG: succ:"<<deferedWorkList.size()<<","<<existingEStateSet.size()<<":"<<succNodes.size()<<endl;
       for(EStatePtrSet::iterator j=succNodes.begin();j!=succNodes.end();++j) {
+        ROSE_ASSERT(*j);
         Edge newEdge(estate->label(),EDGE_PATH,(*j)->label());
         Transition t(estate,newEdge,*j);
         add(t);
       }
     }
-    //if(_outEdges[estate].size()>0) cout<<"DEBUG: #out-edges="<<_outEdges[estate].size()<<endl;
+    //if(_outEdges[estate].size()>0) cerr<<"DEBUG: #out-edges="<<_outEdges[estate].size()<<endl;
   }
   return _outEdges[estate];
 }
