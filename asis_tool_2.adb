@@ -24,6 +24,14 @@ package body Asis_Tool_2 is
    -----------
    -- PRIVATE:
    -----------
+   function To_Chars_Ptr (Item : in Wide_String) return Interfaces.C.Strings.chars_ptr is
+   begin
+      return Interfaces.C.Strings.New_String (To_String(Item));
+   end;
+
+   -----------
+   -- PRIVATE:
+   -----------
    procedure Trace_Put (Message : in Wide_String) is
    begin
       if Trace_On then

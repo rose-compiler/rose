@@ -9,15 +9,15 @@ int main (int argc, char *argv[])
 {
   adainit();
   char *target_file = "test_units/unit_2.adb";
-  struct Element_Struct *last_element;
+  struct List_Node_Struct *head_node;
   printf ("c_main: Calling tool_2_wrapper with %s\n" ,target_file);
-  last_element = tool_2_wrapper (target_file);
+  head_node = tool_2_wrapper (target_file);
   printf ("c_main: Returned from tool_2_wrapper.\n");
 
-  if (last_element == 0) {
+  if (head_node == 0) {
     printf ("c_main: Returned NO elements.\n");
   } else {
-    printf ("c_main: Returned %i elements.\n", last_element->next_count + 1);
+    printf ("c_main: Returned %i elements.\n", head_node->next_count + 1);
   }
 
   // Skipping adafinal for now because it hangs in

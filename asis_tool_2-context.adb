@@ -7,8 +7,10 @@ with Asis.Exceptions; use ASIS.Exceptions;
 with Asis.Errors;
 with Asis.Implementation;
 with GNAT.Directory_Operations;
+with Interfaces.C.Strings;
 
 with Asis_Tool_2.Unit;
+with a_nodes_h.Support;
 
 package body Asis_Tool_2.Context is
 
@@ -18,22 +20,49 @@ package body Asis_Tool_2.Context is
    procedure Process
      (This        : in out Class;
       Graph       : in     Dot.Graphs.Access_Class;
-      A_Node_List : in     A_Nodes.Access_Class) is
+      A_Node_List : in     A_Nodes.Access_Class)
+   is
+      Directory : constant String := GNAT.Directory_Operations.Get_Current_Dir;
+      procedure Begin_Environment is begin
+         -- This just names the Context.  It does not control what it processes:
+         Asis.Ada_Environments.Associate
+           (This.Asis_Context,
+            To_Wide_String (Directory));
+         Asis.Ada_Environments.Open (This.Asis_Context);
+         Trace_Put_Line ("Context info: " & Asis.Ada_Environments.Debug_Image
+                         (This.Asis_Context));
+      end;
+      procedure End_Environment is begin
+         Asis.Ada_Environments.Close (This.Asis_Context);
+         Asis.Ada_Environments.Dissociate (This.Asis_Context);
+      end;
+      -- Call Begin_Environment first:
+      procedure Do_Graph is begin
+         This.Graph := Graph;
+         This.Graph.Set_ID
+           ("""" & To_String (Asis.Ada_Environments.Name (This.Asis_Context)) & """");
+      end;
+      procedure Do_Node is
+         Context : a_nodes_h.Context_Struct :=
+           a_nodes_h.Support.Context_Struct_Default;
+         Node    : a_nodes_h.Node_Struct :=
+           a_nodes_h.Support.Node_Struct_Default;
+         use Asis.Ada_Environments;
+      begin
+         This.A_Node_List := A_Node_List;
+         Context.name := To_Chars_Ptr (Name (This.Asis_Context));
+         Context.parameters := To_Chars_Ptr (Parameters (This.Asis_Context));
+         Context.debug_image := To_Chars_Ptr (Debug_Image (This.Asis_Context));
+         Node.kind := a_nodes_h.A_Context_Node;
+         Node.the_union.context := a_nodes_h.Support.Context_Struct_Default;
+         This.A_Node_List.Push (Node);
+      end;
    begin
-      This.A_Node_List := A_Node_List;
-      This.Graph := Graph;
-      -- This just names the Context.  It does not control what it processes:
-      Asis.Ada_Environments.Associate
-        (This.Asis_Context,
-         To_Wide_String (GNAT.Directory_Operations.Get_Current_Dir));
-      Asis.Ada_Environments.Open (This.Asis_Context);
-      Trace_Put_Line ("Context info: " & Asis.Ada_Environments.Debug_Image
-                     (This.Asis_Context));
-      This.Graph.Set_ID
-        ("""" & To_String (Asis.Ada_Environments.Name (This.Asis_Context)) & """");
+      Begin_Environment;
+      Do_Graph;
+      Do_Node;
       This.Process_Units;
-      Asis.Ada_Environments.Close (This.Asis_Context);
-      Asis.Ada_Environments.Dissociate (This.Asis_Context);
+      End_Environment;
    end Process;
 
    -----------

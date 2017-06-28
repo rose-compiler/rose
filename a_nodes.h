@@ -3,8 +3,166 @@
 
 #include <stdbool.h>
 
-typedef int        Node_ID;
-typedef Node_ID    Unit_ID;
+enum Node_Kinds {
+  Not_A_Node,
+  A_Context_Node,
+  A_Unit_Node,
+  An_Element_Node
+};
+
+typedef int Node_ID;
+
+///////////////////////////////////////////////////////////////////////////////
+// BEGIN context
+///////////////////////////////////////////////////////////////////////////////
+
+struct Context_Struct {
+  char *name;
+  char *parameters;
+  char *debug_image;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// END context
+///////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////
+// BEGIN unit
+///////////////////////////////////////////////////////////////////////////////
+typedef Node_ID Unit_ID;
+
+enum Unit_Kinds {
+  Not_A_Unit,
+
+  A_Procedure,
+  A_Function,
+  A_Package,
+
+  A_Generic_Procedure,
+  A_Generic_Function,
+  A_Generic_Package,
+
+  A_Procedure_Instance,
+  A_Function_Instance,
+  A_Package_Instance,
+
+  A_Procedure_Renaming,
+  A_Function_Renaming,
+  A_Package_Renaming,
+
+  A_Generic_Procedure_Renaming,
+  A_Generic_Function_Renaming,
+  A_Generic_Package_Renaming,
+
+  A_Procedure_Body,
+  //  A unit interpreted only as the completion of a procedure, or a unit
+  //  interpreted as both the declaration and body of a library
+  //  procedure. Reference Manual 10.1.4(4)
+  A_Function_Body,
+  //  A unit interpreted only as the completion of a function, or a unit
+  //  interpreted as both the declaration and body of a library
+  //  function. Reference Manual 10.1.4(4)
+  A_Package_Body,
+
+  A_Procedure_Body_Subunit,
+  A_Function_Body_Subunit,
+  A_Package_Body_Subunit,
+  A_Task_Body_Subunit,
+  A_Protected_Body_Subunit,
+
+  A_Nonexistent_Declaration,
+  //  A unit that does not exist but is:
+  //    1) mentioned in a with clause of another unit or,
+  //    2) a required corresponding library_unit_declaration
+  A_Nonexistent_Body,
+  //  A unit that does not exist but is:
+  //     1) known to be a corresponding subunit or,
+  //     2) a required corresponding library_unit_body
+  A_Configuration_Compilation,
+  //  Corresponds to the whole content of a compilation with no
+  //  compilation_unit, but possibly containing comments, configuration
+  //  pragmas, or both. Any Context can have at most one unit of
+  //  A_Configuration_Compilation kind. A unit of
+  //  A_Configuration_Compilation does not have a name. This unit
+  //  represents configuration pragmas that are "in effect".
+  //
+  //  GNAT-specific note: In case of GNAT the requirement to have at most
+  //  one unit of A_Configuration_Compilation kind does not make sense: in
+  //  GNAT compilation model configuration pragmas are contained in
+  //  configuration files, and a compilation may use an arbitrary number
+  //  of configuration files. That is, (Elements representing) different
+  //  configuration pragmas may have different enclosing compilation units
+  //  with different text names. So in the ASIS implementation for GNAT a
+  //  Context may contain any number of units of
+  //  A_Configuration_Compilation kind
+  An_Unknown_Unit
+};
+
+enum Unit_Classes {
+  Not_A_Class,
+  //  A nil, nonexistent, unknown, or configuration compilation unit class.
+  A_Public_Declaration,
+  //  library_unit_declaration or library_unit_renaming_declaration.
+  A_Public_Body,
+  //  library_unit_body interpreted only as a completion. Its declaration
+  //  is public.
+  A_Public_Declaration_And_Body,
+  //  subprogram_body interpreted as both a declaration and body of a
+  //  library subprogram - Reference Manual 10.1.4(4).
+  A_Private_Declaration,
+  //  private library_unit_declaration or private
+  //  library_unit_renaming_declaration.
+  A_Private_Body,
+  //  library_unit_body interpreted only as a completion. Its declaration
+  //  is private.
+  A_Separate_Body
+  //  separate (parent_unit_name) proper_body.
+};
+  
+enum Unit_Origins {
+  Not_An_Origin,
+  //  A nil or nonexistent unit origin. An_Unknown_Unit can be any origin
+  A_Predefined_Unit,
+  //  Ada predefined language environment units listed in Annex A(2).
+  //  These include Standard and the three root library units: Ada,
+  //  Interfaces, and System, and their descendants.  i.e., Ada.Text_Io,
+  //  Ada.Calendar, Interfaces.C, etc.
+  An_Implementation_Unit,
+  //  Implementation specific library units, e.g., runtime support
+  //  packages, utility libraries, etc. It is not required that any
+  //  implementation supplied units have this origin. This is a suggestion.
+  //  Implementations might provide, for example, precompiled versions of
+  //  public domain software that could have An_Application_Unit origin.
+  An_Application_Unit
+  //  Neither A_Predefined_Unit or An_Implementation_Unit
+};
+
+
+// May take 8*4 bytes - 1 ID, 3 enum, 4 char*:
+struct Unit_Struct {
+  Unit_ID           id;
+  enum Unit_Kinds   kind;
+  enum Unit_Classes the_class; // class is a C++ reserved word
+  enum Unit_Origins origin;
+  char             *full_name; // Ada name
+  char             *unique_name; // file name etc.
+  char             *text_name; // needed?
+  char             *debug_image;
+  // Corresponding_Declaration; // needed?
+  // Corresponding_Body; // needed?
+  // Corresponding_Children; // needed?
+  // Corresponding_Parent_Declaration; // needed?
+  // Subunits; // needed?
+  // Corresponding_Subunit_Parent_Body; // needed?
+};
+///////////////////////////////////////////////////////////////////////////////
+// END unit 
+///////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////
+// BEGIN element 
+///////////////////////////////////////////////////////////////////////////////
+
 typedef Node_ID    Element_ID;
 typedef Element_ID Declaration_ID;
 typedef Element_ID Defining_Name_ID;
@@ -682,29 +840,22 @@ enum Enclosing_Kinds {
 // END supporting kinds
 ///////////////////////////////////////////////////////////////////////////////
 
+// May take ??*4 bytes (unfinished):
 struct Pragma_Struct {
   enum Pragma_Kinds kind;
 };
 
-// TODO: Necessary?
-struct Defining_Operator_Symbol_Struct {
-  enum Operator_Kinds kind;
-};
-
-// TODO: Necessary?
-union Defining_Name_Union {
-  struct Defining_Operator_Symbol_Struct defining_operator_symbol;
-};
-
+// May take 3*4 bytes - 2 enums, 1 char*:
 struct Defining_Name_Struct {
   enum Defining_Name_Kinds  kind;
   char                     *name_image;
   
   // These fields are only valid for the kinds above them:
   // A_Defining_Operator_Symbol:
-  union Defining_Name_Union defining_name;
+  enum Operator_Kinds       operator_kind;
 };
 
+// May take 5*4 bytes - 5 enums:
 struct Declaration_Struct {
   enum Declaration_Kinds   kind;
   enum Declaration_Origins origin;
@@ -730,6 +881,7 @@ struct Declaration_Struct {
   enum Trait_Kinds         trait;
 };
 
+// May take ??*4 bytes (unfinished):
 struct Definition_Struct {
   enum Definition_Kinds kind;
 };
@@ -811,6 +963,7 @@ struct Expression_Struct {
   Declaration_ID Iterator_Specification;
 };
 
+// May take ??*4 bytes (unfinished):
 struct Association_Struct {
   enum Association_Kinds kind;
 };
@@ -897,20 +1050,23 @@ struct Statement_Struct {
   Expression_ID Qualified_Expression;
 };
 
+// May take ??*4 bytes (unfinished):
 struct Path_Struct {
   enum Path_Kinds kind;
 };
 
+// May take ??*4 bytes (unfinished):
 struct Clause_Struct {
   enum Clause_Kinds kind;
 };
 
+// May take ??*4 bytes (unfinished):
 struct Exception_Handler_Struct {
 };
 
-// May take 37*4 bytes (largest component):
+// May take 37*4 bytes (Statement_Struct, the largest component):
 union Element_Union {
-  int                             no_element; // For Ada default initialization
+  int                             dummy_member; // For Ada default initialization
   struct Pragma_Struct            the_pragma; // pragma is an Ada reserverd word
   struct Defining_Name_Struct     defining_name;
   struct Declaration_Struct       declaration;
@@ -930,13 +1086,40 @@ struct Element_Struct {
   Node_ID                enclosing_id;
   enum Enclosing_Kinds   enclosing_kind;
   char                  *source_location;
-  struct Element_Struct *next;
-  // Number of Element_Structs in the _next_ list:
-  int                    next_count;
-  union Element_Union    element;
+  union Element_Union    the_union;
 };
 
-typedef struct Element_Struct *Element_Struct_Ptr;
+///////////////////////////////////////////////////////////////////////////////
+// END element 
+///////////////////////////////////////////////////////////////////////////////
+
+// May take  44*4 bytes (Element_Struct, the largest component):
+union Node_Union {
+  int                   dummy_member; // For Ada default initialization
+  struct Context_Struct context;
+  struct Unit_Struct    unit;
+  struct Element_Struct element;
+};
+
+// May take 45*4 bytes - a 44*4 Node_Union, 1 enum:
+struct Node_Struct {
+  enum Node_Kinds  kind;
+  union Node_Union the_union;
+};
+
+// May take 47*4 bytes - 45*4 Node_Struct, 1 ptr, 1 int:
+struct List_Node_Struct {
+  struct Node_Struct       node;
+  struct List_Node_Struct *next;
+  // Number of nodes in next :
+  int                      next_count;
+};
+
+typedef struct List_Node_Struct *Node_List_Ptr;
+
+
+
+
 
 #endif //ifndef A_NODES_H
 

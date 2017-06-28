@@ -1,6 +1,7 @@
 private with Ada.Exceptions;
 private with Ada.Wide_Text_IO;
 private with Asis;
+private with Interfaces.C.Strings;
 
 private with Dot;
 
@@ -14,12 +15,15 @@ private
 
    package Aex renames Ada.Exceptions;
    package Awti renames Ada.Wide_Text_IO;
+   package ICS renames Interfaces.C.Strings;
 
    function To_String (Item : in Wide_String) return String;
    function "+"(Item : in Wide_String) return String renames To_String;
 
    function To_Wide_String (Item : in String) return Wide_String;
    function "+"(Item : in String) return Wide_String renames To_Wide_String;
+
+   function To_Chars_Ptr (Item : in Wide_String) return Interfaces.C.Strings.chars_ptr;
 
    procedure Trace_Put (Message : in Wide_String);
 

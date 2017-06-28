@@ -14,6 +14,7 @@ package body Asis_Tool_2.Tool is
       This.Graph := Dot.Graphs.Create (Is_Digraph => True,
                                        Is_Strict  => False);
       This.A_Node_List := new A_Nodes.Class;
+      -- TODO: use File_Name:
       This.My_Context.Process (Graph       => This.Graph,
                                A_Node_List => This.A_Node_List);
       Awti.New_Line;
@@ -24,11 +25,11 @@ package body Asis_Tool_2.Tool is
    ------------
    -- EXPORTED:
    ------------
-   function Get_Elements
+   function Get_Nodes
      (This      : in out Class)
-      return a_nodes_h.Element_Struct_Ptr is
+      return a_nodes_h.Node_List_Ptr is
    begin
       return This.A_Node_List.Get_Head;
-   end Get_Elements;
+   end Get_Nodes;
 
 end Asis_Tool_2.Tool;

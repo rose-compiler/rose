@@ -4,7 +4,7 @@
 #include "a_nodes.h"
 
 extern
-struct Element_Struct *
+Node_List_Ptr
   tool_2_wrapper
   (char *target_file_in);
 

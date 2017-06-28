@@ -14,9 +14,9 @@ package Asis_Tool_2.Tool is
       File_Name : in     String);
 
    -- Call Process first:
-   function Get_Elements
+   function Get_Nodes
      (This      : in out Class)
-      return a_nodes_h.Element_Struct_Ptr;
+      return a_nodes_h.Node_List_Ptr;
 
 private
 
