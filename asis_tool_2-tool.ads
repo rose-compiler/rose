@@ -2,6 +2,8 @@
 
 private with Asis_Tool_2.Context;
 private with Dot;
+with A_Nodes;
+with a_nodes_h;
 
 package Asis_Tool_2.Tool is
 
@@ -11,12 +13,18 @@ package Asis_Tool_2.Tool is
      (This      : in out Class;
       File_Name : in     String);
 
+   -- Call Process first:
+   function Get_Elements
+     (This      : in out Class)
+      return a_nodes_h.Element_Struct_Ptr;
+
 private
 
    type Class is tagged limited -- Initialized
       record
-         My_Context : Asis_Tool_2.Context.Class; -- Initialized
-         Graph      : Dot.Graphs.Access_Class; -- Initialized
+         My_Context  : Asis_Tool_2.Context.Class; -- Initialized
+         Graph       : Dot.Graphs.Access_Class; -- Initialized
+         A_Node_List : A_Nodes.Access_Class; -- Initialized
       end record;
 
 end Asis_Tool_2.Tool;

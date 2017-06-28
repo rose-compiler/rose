@@ -16,9 +16,11 @@ package body Asis_Tool_2.Context is
    -- EXPORTED:
    ------------
    procedure Process
-     (This : in out Class;
-     Graph : in     Dot.Graphs.Access_Class) is
+     (This        : in out Class;
+      Graph       : in     Dot.Graphs.Access_Class;
+      A_Node_List : in     A_Nodes.Access_Class) is
    begin
+      This.A_Node_List := A_Node_List;
       This.Graph := Graph;
       -- This just names the Context.  It does not control what it processes:
       Asis.Ada_Environments.Associate
@@ -46,7 +48,10 @@ package body Asis_Tool_2.Context is
          declare
             Tool_Unit : Asis_Tool_2.Unit.Class;
          begin
-            Tool_Unit.Process (Asis_Unit, This.Graph);
+            Tool_Unit.Process
+              (Asis_Unit   => Asis_Unit,
+               Graph       => This.Graph,
+               A_Node_List => This.A_Node_List);
          end;
       end loop;
    exception

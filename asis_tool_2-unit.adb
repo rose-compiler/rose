@@ -30,8 +30,9 @@ package body Asis_Tool_2.Unit is
             Tool_Element : Element.Class; -- Initialized
          begin
             Tool_Element.Process_Element_Tree
-              (Element => Context_Clause,
-               Graph   => This.Graph);
+              (Element     => Context_Clause,
+               Graph       => This.Graph,
+               A_Node_List => This.A_Node_List);
          end;
       end loop;
    end Process_Context_Clauses;
@@ -53,8 +54,9 @@ package body Asis_Tool_2.Unit is
             Include_Pragmas => Include_Pragmas);
       end if;
       Tool_Element.Process_Element_Tree
-        (Element => Top_Element,
-         Graph   => This.Graph);
+        (Element     => Top_Element,
+         Graph       => This.Graph,
+         A_Node_List => This.A_Node_List);
    exception
       when X : others =>
          Print_Exception_Info (X);
@@ -116,13 +118,15 @@ package body Asis_Tool_2.Unit is
    -- EXPORTED:
    ------------
    procedure Process
-     (This      : in out Class;
-      Asis_Unit : in     Asis.Compilation_Unit;
-      Graph     : in     Dot.Graphs.Access_Class)
+     (This        : in out Class;
+      Asis_Unit   : in     Asis.Compilation_Unit;
+      Graph       : in     Dot.Graphs.Access_Class;
+      A_Node_List : in     A_Nodes.Access_Class)
    is
    begin
       This.Asis_Unit := Asis_Unit;
       This.Graph := Graph;
+      This.A_Node_List := A_Node_List;
       declare
          Unit_Full_Name : constant Wide_String       := Acu.Unit_Full_Name (This.Asis_Unit);
          Unit_Origin    : constant Asis.Unit_Origins := Acu.Unit_Origin (This.Asis_Unit);
