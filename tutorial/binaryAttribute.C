@@ -4,7 +4,7 @@
 
 //! [setup]
 #include <Sawyer/Attribute.h>
-using namespace rose;
+using namespace Rose;
 //! [setup]
 
 
@@ -604,7 +604,7 @@ method_3() {
 
 int
 main() {
-    // Initialize and check compatibility. See rose::initialize
+    // Initialize and check compatibility. See Rose::initialize
     ROSE_INITIALIZE;
 
     example_usage();
