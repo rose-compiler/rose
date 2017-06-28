@@ -491,6 +491,12 @@ varp3_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
 varp3__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
 varp3_SOURCES = Timer.cpp varp3.C
 
+check-varp3: varp3
+	rm -f rose_casttest1.C
+	./varp3 tests/casttest1.C
+	g++ rose_casttest1.C
+	rm -f a.out
+
 #MS: iterator_test not ingegrated yet
 #iterator_test_SOURCES = iterator_test.C ShowSeq.h
 #iterator_test_LDADD = -lrose libmatcher.la
@@ -520,6 +526,16 @@ check-matcher-demo:
 check-matcher:
 	./matcher_demo  --edg:no_warnings $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat
 
+# check-flow-insenstive
+check-local: check-codethorn-internal check-domain check-equivalence-checking check-data-races check-ltl check-ltl-driven
+
+check-svcomp:
+	@echo ================================================================
+	@echo RUNNING VERIFICATION ERROR TESTS
+	@echo ================================================================
+	@./codethorn $(srcdir)/tests/svcomp-test2.c --edg:no_warnings
+	@./codethorn $(srcdir)/tests/svcomp-test4.c --max-transitions=10 --edg:no_warnings
+	@./codethorn $(srcdir)/tests/svcomp-test5.c --edg:no_warnings
 
 check-codethorn-internal:
 	@echo ================================================================
@@ -535,28 +551,12 @@ check-domain:
 	@./codethorn --edg:no_warnings $(srcdir)/tests/domaintest1.C 
 	@./codethorn --edg:no_warnings $(srcdir)/tests/domaintest2.C 
 
-#check-local: check-codethorn-internal check-data-races check-flow-insenstive check-ltl
-check-local: check-codethorn-internal check-domain check-data-races check-ltl
-	@echo ================================================================
-	@echo RUNNING VERIFICATION ERROR TESTS
-	@echo ================================================================
-	@./codethorn $(srcdir)/tests/svcomp-test2.c --edg:no_warnings
-	@./codethorn $(srcdir)/tests/svcomp-test4.c --max-transitions=10 --edg:no_warnings
-	@./codethorn $(srcdir)/tests/svcomp-test5.c --edg:no_warnings
-
-	@echo ================================================================
-	@echo RUNNING UPDATE SEQUENCE VERIFICATION TESTS
-	@echo ================================================================
-	@./codethorn --edg:no_warnings $(srcdir)/tests/jacobi-1d-imper_mod.c --dump-non-sorted=tmp.nsdump
-	@diff tmp.nsdump $(srcdir)/tests/jacobi-1d-imper_mod.c.nsdump
-	@rm -f tmp.nsdump
-
 check-data-races:
 	@echo ================================================================
 	@echo RUNNING DATA RACE VERIFICATION TESTS
 	@echo ================================================================
-	@./codethorn --data-race  $(srcdir)/tests/datarace/anti_dep_1.yes.c --max-time=5 --solver=12 --explicit-arrays=yes
-	@./codethorn --data-race  $(srcdir)/tests/datarace/inner_only_1.no.c --max-time=5 --solver=12 --explicit-arrays=yes
+	@./codethorn --data-race  $(srcdir)/tests/datarace/anti_dep_1.yes.c --max-time=5 --solver=12
+	@./codethorn --data-race  $(srcdir)/tests/datarace/inner_only_1.no.c --max-time=5 --solver=12
 
 
 check-flow-insenstive:
@@ -590,6 +590,18 @@ check-arrays:
 
 check-array-bounds: ./codethorn
 	./codethorn --explicit-arrays=yes $(srcdir)/tests/arraybounds1.C 
+
+check-ltl-driven:
+	./codethorn $(srcdir)/tests/rers/Problem1401_opt.c --rersmode=yes --with-counterexamples=yes --counterexamples-with-output=yes --input-values="{1,2,3,4,5}" --ltl-in-alphabet="{1,2,3,4,5}" --ltl-out-alphabet="{18,19,20,21,22,23,24,25,26}" --check-ltl=$(srcdir)/tests/rers/constraints-RERS14-5.txt  --display-diff=100000 --status --ltl-driven --log-level=trace
+
+check-equivalence-checking:
+@echo ================================================================
+	@echo RUNNING UPDATE SEQUENCE VERIFICATION TESTS
+	@echo ================================================================
+	@./codethorn --edg:no_warnings $(srcdir)/tests/jacobi-1d-imper_mod.c --dump-non-sorted=tmp.nsdump
+	@diff tmp.nsdump $(srcdir)/tests/jacobi-1d-imper_mod.c.nsdump
+	@rm -f tmp.nsdump
+
 
 # MS: 1-6 is reasonable for V1.2
 RERS=$(patsubst %,Problem%.log, $(shell seq 6))

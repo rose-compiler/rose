@@ -763,7 +763,7 @@ void automataDotInput(const po::variables_map& args, Sawyer::Message::Facility l
   }
   
   if (args.count("check-ltl")) {
-    PropertyValueTable* ltlResults;
+    PropertyValueTable* ltlResults=nullptr;
     if (boolOptions["promela-output-only"]) { // just read the properties into a PropertyValueTable
       SpotConnection spotConnection(args["check-ltl"].as<string>());
       ltlResults = spotConnection.getLtlResults();
@@ -1470,7 +1470,7 @@ int main( int argc, char * argv[] ) {
       exit(0);
     }
 
-    logger[TRACE]<< "INIT: creating solver."<<endl;
+    logger[TRACE]<< "INIT: creating solver "<<analyzer.getSolver()<<"."<<endl;
 
     if(option_specialize_fun_name!="") {
       analyzer.initializeSolver1(option_specialize_fun_name,root,true);
@@ -1700,27 +1700,31 @@ int main( int argc, char * argv[] ) {
       if (args.count("ltl-in-alphabet")) {
         string setstring=args["ltl-in-alphabet"].as<string>();
         ltlInAlphabet=Parse::integerSet(setstring);
-        logger[TRACE] << "STATUS: LTL input alphabet explicitly selected: "<< setstring << endl;
+        logger[TRACE] << "LTL input alphabet explicitly selected: "<< setstring << endl;
       }
       //take ltl output alphabet if specifically described, otherwise take the old RERS specific 21...26 (a.k.a. oU...oZ)
       std::set<int> ltlOutAlphabet = Parse::integerSet("{21,22,23,24,25,26}");
       if (args.count("ltl-out-alphabet")) {
         string setstring=args["ltl-out-alphabet"].as<string>();
         ltlOutAlphabet=Parse::integerSet(setstring);
-        logger[TRACE] << "STATUS: LTL output alphabet explicitly selected: "<< setstring << endl;
+        logger[TRACE] << "LTL output alphabet explicitly selected: "<< setstring << endl;
       }
-      PropertyValueTable* ltlResults;
+      PropertyValueTable* ltlResults=nullptr;
       SpotConnection spotConnection(ltl_filename);
       spotConnection.setModeLTLDriven(analyzer.getModeLTLDriven());
 
       logger[TRACE] << "STATUS: generating LTL results"<<endl;
       bool spuriousNoAnswers = false;
       if (boolOptions["check-ltl-counterexamples"]) {
-        spuriousNoAnswers = true;
+        spuriousNoAnswers = true;   
       }
+      logger[TRACE] << "LTL: check properties. "<<endl;
       spotConnection.checkLtlProperties( *(analyzer.getTransitionGraph()), ltlInAlphabet, ltlOutAlphabet, withCounterexample, spuriousNoAnswers);
       spotLtlAnalysisTime=timer.getElapsedTimeInMilliSec();
+      logger[TRACE] << "LTL: get results from spot connection. "<<endl;
       ltlResults = spotConnection.getLtlResults();
+      logger[TRACE] << "LTL: results computed. "<<endl;
+
       if (args.count("cegpra-ltl") || boolOptions["cegpra-ltl-all"]) {
         if (args.count("csv-stats-cegpra")) {
           statisticsCegpra << "init,";

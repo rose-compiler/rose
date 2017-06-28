@@ -1719,6 +1719,7 @@ bool Analyzer::all_false(std::vector<bool>& v) {
 }
 
 bool Analyzer::isLTLRelevantEState(const EState* estate) {
+  ROSE_ASSERT(estate);
   return ((estate)->io.isStdInIO()
           || (estate)->io.isStdOutIO()
           || (estate)->io.isStdErrIO()
@@ -1728,7 +1729,7 @@ bool Analyzer::isLTLRelevantEState(const EState* estate) {
 Analyzer::SubSolverResultType Analyzer::subSolver(const EState* currentEStatePtr) {
   EStateWorkList localWorkList;
   EStateWorkList deferedWorkList;
-  EStateSet existingEStateSet;
+  std::set<const EState*> existingEStateSet;
   localWorkList.push_back(currentEStatePtr);
   while(!localWorkList.empty()) {
     // logger[DEBUG]<<"local work list size: "<<localWorkList.size()<<endl;
@@ -1753,6 +1754,7 @@ Analyzer::SubSolverResultType Analyzer::subSolver(const EState* currentEStatePtr
         if((!newEState.constraints()->disequalityExists()) &&(!isFailedAssertEState(&newEState)&&!isVerificationErrorEState(&newEState))) {
           HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=process(newEState);
           const EState* newEStatePtr=pres.second;
+          ROSE_ASSERT(newEStatePtr);
           if(pres.first==true) {
             if(isLTLRelevantEState(newEStatePtr)) {
               deferedWorkList.push_back(newEStatePtr);
@@ -1762,6 +1764,7 @@ Analyzer::SubSolverResultType Analyzer::subSolver(const EState* currentEStatePtr
           } else {
             // we have found an existing state, but need to make also sure it's a relevent one
             if(isLTLRelevantEState(newEStatePtr)) {
+              ROSE_ASSERT(newEStatePtr!=nullptr);
               existingEStateSet.insert(const_cast<EState*>(newEStatePtr));
             } else {
               // TODO: use a unique list
@@ -1787,7 +1790,7 @@ Analyzer::SubSolverResultType Analyzer::subSolver(const EState* currentEStatePtr
             // set flag for terminating early
             reachabilityResults.reachable(0);
             EStateWorkList emptyWorkList;
-            EStateSet emptyExistingStateSet;
+            EStatePtrSet emptyExistingStateSet;
             return make_pair(emptyWorkList,emptyExistingStateSet);
           } else if(isFailedAssertEState(&newEState)) {
             // record failed assert

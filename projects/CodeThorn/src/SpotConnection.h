@@ -68,10 +68,10 @@ namespace CodeThorn {
   // an interface used to test LTL formulas on CodeThorns TransitionGraphs
   class SpotConnection {
     public:
-      SpotConnection() {};
+      SpotConnection();
       //constructors with automatic initialization
-      SpotConnection(std::string ltl_formulae_file) { init(ltl_formulae_file); }
-      SpotConnection(std::list<std::string> ltl_formulae) { init(ltl_formulae); }
+      SpotConnection(std::string ltl_formulae_file);
+      SpotConnection(std::list<std::string> ltl_formulae);
       //an initilaization that reads in a text file with ltl formulae (RERS 2014 format). Extracts the behaviorProperties
       // and creates an ltlResults table of the respective size (all results initialized to be "unknown").
       void init(std::string ltl_formulae_file);
@@ -157,8 +157,8 @@ namespace CodeThorn {
       //a list of all properties 
       //      std::list<LtlProperty> behaviorProperties; 
       //a container for the results of the LTL property evaluation
-      PropertyValueTable* ltlResults;
-      bool modeLTLDriven;
+      PropertyValueTable* ltlResults=nullptr;
+      bool modeLTLDriven=false;
   };
 };
 #endif
