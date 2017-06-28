@@ -22,13 +22,14 @@ namespace Container {
  *  This is a character array indexed lines. The line indexes are computed only when necessary. */
 class LineVector {
     Buffer<size_t, char>::Ptr buffer_;
-    const char *charBuf_;
+    const char *charBuf_;                               // cached ptr to first byte of buffer
+    size_t bufSize_;                                    // cached size of buffer
     mutable std::vector<size_t> lineFeeds_;
     mutable size_t nextCharToScan_;
 
 public:
     /** Constructor that creates an empty line vector. */
-    LineVector(): charBuf_(NULL) {}
+    LineVector(): charBuf_(NULL), bufSize_(0) {}
 
     /** Constructor that opens a file.
      *
@@ -59,7 +60,7 @@ public:
         lineFeeds_.clear();
         nextCharToScan_ = 0;
     }
-    
+
     /** Number of lines.
      *
      *  Total number of lines including any final line that lacks line termination. Calling this function will cause the entire
@@ -69,7 +70,9 @@ public:
     /** Number of characters.
      *
      *  Total number of characters including all line termination characters. */
-    size_t nCharacters() const;
+    size_t nCharacters() const {
+        return bufSize_;
+    }
 
     /** Number of characters in a line.
      *
@@ -81,7 +84,9 @@ public:
      *
      *  Returns the character (as an int) at the specified file offset. If the @p charIdx is beyond the end of the file then
      *  EOF is returned. */
-    int character(size_t charIdx) const;
+    int character(size_t charIdx) const {
+        return charIdx >= nCharacters() ? EOF : (int)charBuf_[charIdx];
+    }
 
     /** Characters at file offset.
      *

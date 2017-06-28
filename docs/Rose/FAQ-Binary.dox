@@ -48,7 +48,7 @@ namespace BinaryAnalysis {
  *
  *  + Various kins of analysis can be performed and can make limited changes to the AST.
  *
- *  + An @ref AsmUnparser can generate an assembly listing (for human consumption, not reassembly), the @ref backend can
+ *  + An @ref AsmUnparser can generate an assembly listing (for human consumption, not reassembly), the @ref ::backend can
  *    generate a new executable, the @ref Partitioner2::GraphViz "GraphViz" class can generate graphs.
  *
  * @subsection binfaq_general_3 Q3. Why is binary analysis slow, and what can I do about it?
