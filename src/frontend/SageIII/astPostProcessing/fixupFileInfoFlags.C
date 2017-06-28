@@ -3,7 +3,7 @@
 
 // #include "stringify.h"
 
-using namespace rose;
+using namespace Rose;
 
 // documented in header file
 size_t

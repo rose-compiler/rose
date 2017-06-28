@@ -41,12 +41,13 @@ endif
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 noinst_PROGRAMS +=				\
-   binaryAnalysis_symbolTable			\
-   binaryCallGraph				\
-   binaryFunctionCfg				\
-   binaryHelloWorld				\
-   binaryStrings				\
-   binaryAttribute
+	binaryAnalysis_symbolTable		\
+	binaryAttribute				\
+	binaryCallGraph				\
+	binaryDominance				\
+	binaryFunctionCfg			\
+	binaryHelloWorld			\
+	binaryStrings
 
 SUBDIRS += binaryAnalysis
 
@@ -174,6 +175,8 @@ binaryHelloWorld_SOURCES = binaryHelloWorld.C
 binaryStrings_SOURCES = binaryStrings.C
 
 binaryAttribute_SOURCES = binaryAttribute.C
+
+binaryDominance_SOURCES = binaryDominance.C
 
 ASTGraphGenerator_SOURCES = ASTGraphGenerator.C
 

@@ -9,7 +9,7 @@
 #define ALIAS_SYMBOL_DEBUGGING 0
 
 // DQ (3/24/2016): Adding Robb's message logging mechanism to contrl output debug message from the EDG/ROSE connection code.
-using namespace rose::Diagnostics;
+using namespace Rose::Diagnostics;
 
 // DQ (3/24/2016): Adding Message logging mechanism.
 Sawyer::Message::Facility FixupAstSymbolTablesToSupportAliasedSymbols::mlog;
@@ -51,7 +51,7 @@ void FixupAstSymbolTablesToSupportAliasedSymbols::initDiagnostics()
      if (!initialized) 
         {
           initialized = true;
-          rose::Diagnostics::initAndRegister(&mlog, "rose::FixupAstSymbolTablesToSupportAliasedSymbols");
+          Rose::Diagnostics::initAndRegister(&mlog, "Rose::FixupAstSymbolTablesToSupportAliasedSymbols");
         }
    }
 

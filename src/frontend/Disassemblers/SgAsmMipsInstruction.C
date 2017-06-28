@@ -2,7 +2,7 @@
  * file) because then they won't get indexed/formatted/etc. by C-aware tools. */
 
 #include "sage3basic.h"
-using namespace rose;
+using namespace Rose;
 
 unsigned
 SgAsmMipsInstruction::get_anyKind() const {

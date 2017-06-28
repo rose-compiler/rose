@@ -5,7 +5,7 @@
 
 #include <Cxx_GrammarSerialization.h>                   // the compile-time generated support
 
-namespace rose {
+namespace Rose {
 
 /** Save an AST to an archive.
  *
