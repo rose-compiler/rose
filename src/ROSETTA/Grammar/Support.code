@@ -82,6 +82,15 @@ HEADER_OMP_CLAUSE_START
             e_omp_reduction_last
         };
 
+        enum omp_dependence_type_enum
+        {
+            e_omp_depend_unknown,
+            e_omp_depend_in,
+            e_omp_depend_out,
+            e_omp_depend_inout,
+            e_omp_depend_last
+        };
+       
         // Liao 1/22/2012: experimental support for OpenMP Accelerator model 
         enum omp_map_operator_enum
         {
