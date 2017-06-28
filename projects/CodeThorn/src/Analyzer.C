@@ -184,16 +184,16 @@ bool Analyzer::isPrecise() {
 bool Analyzer::isIncompleteSTGReady() {
   if(_maxTransitions==-1 && _maxIterations==-1 && _maxBytes==-1 && _maxSeconds==-1)
     return false;
-  else if ((_maxTransitions!=-1) && ((long int) transitionGraph.size()>=_maxTransitions))
+  if ((_maxTransitions!=-1) && ((long int) transitionGraph.size()>=_maxTransitions))
     return true;
-  else if ((_maxIterations!=-1) && ((long int) getIterations() > _maxIterations))
+  if ((_maxIterations!=-1) && ((long int) getIterations() > _maxIterations))
     return true;
-  else if ((_maxBytes!=-1) && ((long int) getPhysicalMemorySize() > _maxBytes))
+  if ((_maxBytes!=-1) && ((long int) getPhysicalMemorySize() > _maxBytes))
     return true;
-  else if ((_maxSeconds!=-1) && ((long int) analysisRunTimeInSeconds() > _maxSeconds))
+  if ((_maxSeconds!=-1) && ((long int) analysisRunTimeInSeconds() > _maxSeconds))
     return true;
-  else // at least one maximum mode is active, but the corresponding limit has not yet been reached
-    return false;
+  // at least one maximum mode is active, but the corresponding limit has not yet been reached
+  return false;
 }
 
 ExprAnalyzer* Analyzer::getExprAnalyzer() {
@@ -2260,7 +2260,9 @@ int Analyzer::pStateDepthFirstSearch(PState* startPState, int maxDepth, int thre
   int displayDiff=1000;
   while(!workList.empty()) {
     if(displayDiff && (processedStates >= (previousProcessedStates+displayDiff))) {
-      logger[TRACE]<< "STATUS: #processed PStates suffix dfs (thread_id: " << thread_id << "): " << processedStates << "   wl size: " << workList.size() << endl;
+      if (getOptionStatusMessages()) {
+	logger[TRACE]<< "STATUS: #processed PStates suffix dfs (thread_id: " << thread_id << "): " << processedStates << "   wl size: " << workList.size() << endl;
+      }
       previousProcessedStates=processedStates;
     }
     // pop worklist
@@ -2297,8 +2299,10 @@ int Analyzer::pStateDepthFirstSearch(PState* startPState, int maxDepth, int thre
                 ceTrace.push_back(*n);
               }
               int prefixLength = (partialTrace->size() - (2 * patternIterations * patternLength)) / 2;
-              logger[TRACE]<< "STATUS: found a trace leading to failing assertion #" << index << " (input lengths: reused prefix: " << prefixLength;
-              logger[TRACE]<< ", pattern: " <<patternLength << ", suffix: " << ((newHistory.size()+1) / 2) << ", total: " << ((ceTrace.size()+1) / 2) << ")." << endl;
+	      if (getOptionStatusMessages()) {
+	        cout<< "STATUS: found a trace leading to failing assertion #" << index << " (input lengths: reused prefix: " << prefixLength;
+	        cout<< ", pattern: " <<patternLength << ", suffix: " << ((newHistory.size()+1) / 2) << ", total: " << ((ceTrace.size()+1) / 2) << ")." << endl;
+              }
               string ce = convertToCeString(ceTrace, maxInputVal);
               reachabilityResults.setPropertyValue(index, PROPERTY_VALUE_YES);
               reachabilityResults.setCounterexample(index, ce);
