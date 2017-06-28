@@ -14,7 +14,7 @@
 #include "AsmUnparser_compat.h"
 #endif
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 using namespace Diagnostics;
@@ -5045,5 +5045,5 @@ DisassemblerM68k::init()
 } // namespace
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-BOOST_CLASS_EXPORT_IMPLEMENT(rose::BinaryAnalysis::DisassemblerM68k);
+BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::DisassemblerM68k);
 #endif

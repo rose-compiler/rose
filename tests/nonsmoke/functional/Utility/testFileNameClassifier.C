@@ -4,7 +4,7 @@
 #include <vector>
 
 using namespace std;
-using namespace rose::StringUtility;
+using namespace Rose::StringUtility;
 
 int
 main(int argc, char** argv)

@@ -5,7 +5,7 @@
 #include <Partitioner2/Engine.h>
 #include <Sawyer/Set.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /** Finds best address for mapping code.
@@ -66,7 +66,7 @@ public:
 
     /** Initialize diagnostic streams.
      *
-     *  This is called automatically by @ref rose::Diagnostics::initialize. */
+     *  This is called automatically by @ref Rose::Diagnostics::initialize. */
     static void initDiagnostics();
 
     /** Property: Number of bits in an address.

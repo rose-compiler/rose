@@ -8,7 +8,7 @@
 #include <boost/shared_ptr.hpp>
 #include <stdexcept>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /** Various tools for performing tainted flow analysis.
@@ -177,7 +177,7 @@ public:
 
     /** Initialize diagnostics.
      *
-     *  This is called by rose::Diagnostics::initialize. */
+     *  This is called by Rose::Diagnostics::initialize. */
     static void initDiagnostics();
 
     /** Property: approximation.
@@ -206,7 +206,7 @@ public:
      *
      *  This method computes a data flow graph for each reachable vertex of the control flow graph, and as a result also
      *  obtains the list of variables over which the tainted flow analysis will operate.  It uses whatever algorithm is
-     *  implemented in @ref rose::BinaryAnalysis::DataFlow::buildGraphPerVertex. */
+     *  implemented in @ref Rose::BinaryAnalysis::DataFlow::buildGraphPerVertex. */
     template<class CFG>
     void computeFlowGraphs(const CFG &cfg, size_t cfgStartVertex) {
         using namespace Diagnostics;

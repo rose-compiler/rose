@@ -6,7 +6,7 @@
 #include <Sawyer/Interval.h>
 #include <boost/serialization/access.hpp>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /** Information about the location of a stack variable. */

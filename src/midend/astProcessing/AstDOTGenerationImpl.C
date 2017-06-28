@@ -57,7 +57,7 @@ AstDOTGenerationExtended<ExtraNodeInfo_t, ExtraNodeOptions_t, ExtraEdgeInfo_t, E
         // future from the kind and the tostring() function.
 #if 1
           string unparsedInstruction = unparseInstruction(genericInstruction);
-          string addressString       = rose::StringUtility::numberToString( (void*) genericInstruction->get_address() );
+          string addressString       = Rose::StringUtility::numberToString( (void*) genericInstruction->get_address() );
         // string name = genericInstruction->get_mnemonic();
           string name = unparsedInstruction + "\\n address: " + addressString;
 #else
@@ -137,9 +137,9 @@ AstDOTGenerationExtended<ExtraNodeInfo_t, ExtraNodeOptions_t, ExtraEdgeInfo_t, E
           if (asmDwarfLine != NULL)
                  {
                 // It does not work to embed the "\n" into the single sprintf parameter.
-                     name = "Addr: " + rose::StringUtility::addrToString(asmDwarfLine->get_address()) +
-                            "\\nline: " + rose::StringUtility::numberToString(asmDwarfLine->get_line()) +
-                            " col: " + rose::StringUtility::numberToString(asmDwarfLine->get_column());
+                     name = "Addr: " + Rose::StringUtility::addrToString(asmDwarfLine->get_address()) +
+                            "\\nline: " + Rose::StringUtility::numberToString(asmDwarfLine->get_line()) +
+                            " col: " + Rose::StringUtility::numberToString(asmDwarfLine->get_column());
                  }
 
           SgAsmDwarfConstruct* asmDwarfConstruct = isSgAsmDwarfConstruct(node);
@@ -380,9 +380,9 @@ AstDOTGenerationExtended<ExtraNodeInfo_t, ExtraNodeOptions_t, ExtraEdgeInfo_t, E
                    string original_filename = file->getFileName();
 
                 // DQ (7/4/2008): Fix filenamePostfix to go before the "."
-                // string filename = string("./") + rose::utility_stripPathFromFileName(original_filename) + "."+filenamePostfix+"dot";
-//                 string filename = string("./") + rose::utility_stripPathFromFileName(original_filename) + filenamePostfix + ".dot";
-                   string filename = string("./") + rose::StringUtility::stripPathFromFileName(original_filename) + filenamePostfix + ".dot";
+                // string filename = string("./") + Rose::utility_stripPathFromFileName(original_filename) + "."+filenamePostfix+"dot";
+//                 string filename = string("./") + Rose::utility_stripPathFromFileName(original_filename) + filenamePostfix + ".dot";
+                   string filename = string("./") + Rose::StringUtility::stripPathFromFileName(original_filename) + filenamePostfix + ".dot";
 
                 // printf ("generated filename for dot file (from SgSourceFile or SgBinaryComposite) = %s file->get_parent() = %p \n",filename.c_str(),file->get_parent());
 

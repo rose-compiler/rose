@@ -1,7 +1,7 @@
 #ifndef ROSE_BinaryFormats_SRecord_H
 #define ROSE_BinaryFormats_SRecord_H
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /** Motorola S-Record.

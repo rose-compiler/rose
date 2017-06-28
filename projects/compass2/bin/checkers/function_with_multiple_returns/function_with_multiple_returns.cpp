@@ -17,7 +17,7 @@
 #include "CodeThorn/src/AstTerm.h"
 #include "compass2/compass.h"
 
-using namespace rose::StringUtility;
+using namespace Rose::StringUtility;
 
 extern const Compass::Checker* const functionWithMultipleReturnsChecker;
 

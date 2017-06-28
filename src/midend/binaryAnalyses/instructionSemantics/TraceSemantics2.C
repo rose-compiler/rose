@@ -2,7 +2,7 @@
 #include "TraceSemantics2.h"
 #include "AsmUnparser_compat.h"
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace TraceSemantics {

@@ -21,7 +21,7 @@ OntoGeneratorInterface * onto_generator;
 #define ON(tag) if(tag)
 #define BUILDTAG true
 
-#define N2S(x) rose::StringUtility::numberToString((x))
+#define N2S(x) Rose::StringUtility::numberToString((x))
 
 // compose a URI with prefix p and x
 #define MAKE_IRI_W_PREFIX(p, x) (std::string(p) + ":" + (x))
@@ -64,9 +64,9 @@ static std::string current_file_prefix;
 //TODO: move to Rose namespace
 static bool checkRoseVersionNumber(const std::string &need) 
 {
-  std::vector<std::string> needParts = rose::StringUtility::split('.',
+  std::vector<std::string> needParts = Rose::StringUtility::split('.',
       need);
-  std::vector<std::string> haveParts = rose::StringUtility::split('.',
+  std::vector<std::string> haveParts = Rose::StringUtility::split('.',
       ROSE_PACKAGE_VERSION);
 
   for (size_t i=0; i < needParts.size() && i < haveParts.size(); ++i) {
@@ -85,7 +85,7 @@ int main(int argc, char ** argv)
     struct timespec ts_now;
     long mtime_0, mtime_1, mtime_ft;
 
- //TODO:  use rose::checkVersionNumber()
+ //TODO:  use Rose::checkVersionNumber()
     string ROSE_version_needed="0.9.8.50";
     if(! checkRoseVersionNumber (ROSE_version_needed))
     {

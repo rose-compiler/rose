@@ -45,7 +45,7 @@ void PromelaMarker::visit(SgNode * node)
 
 			if (stmnt == NULL)
 				cout << "error" << endl;
-			SgStatement *next = rose::getNextStatement(stmnt);
+			SgStatement *next = Rose::getNextStatement(stmnt);
 			markForPromelaTransformation(next);
 //	modelTargetList.push_back(next);
 

@@ -6,7 +6,7 @@
 
 #include <boost/foreach.hpp>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 

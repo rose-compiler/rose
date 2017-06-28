@@ -6,11 +6,11 @@
 #include <MemoryCellList.h>
 #include <SymbolicSemantics2.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
-using namespace rose::Diagnostics;
-using namespace rose::BinaryAnalysis::InstructionSemantics2;
+using namespace Rose::Diagnostics;
+using namespace Rose::BinaryAnalysis::InstructionSemantics2;
 
 Sawyer::Message::Facility NoOperation::mlog;
 
@@ -19,7 +19,7 @@ NoOperation::initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        Diagnostics::initAndRegister(&mlog, "rose::BinaryAnalysis::NoOperation");
+        Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::NoOperation");
     }
 }
     

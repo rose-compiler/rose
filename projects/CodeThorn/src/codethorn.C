@@ -97,7 +97,7 @@ void handler(int sig) {
 }
 
 void CodeThorn::initDiagnostics() {
-  rose::Diagnostics::initialize();
+  Rose::Diagnostics::initialize();
   Analyzer::initDiagnostics();
   RewriteSystem::initDiagnostics();
 }
@@ -264,6 +264,7 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
   po::options_description dataRaceOptions("Data race detection options");
   po::options_description experimentalOptions("Experimental options");
   po::options_description visualizationOptions("Visualization options");
+  po::options_description infoOptions("Program information options");
 
   ltlOptions.add_options()
     ("csv-ltl", po::value< string >(), "output LTL verification results into a CSV file [arg]")
@@ -336,20 +337,23 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
     ("num-intersections-range",po::value< string >(),"select a range for the number of intersections of a newly added circle with existing circles in the automaton (csv pair of integers).")
     ("automata-dot-input",po::value< string >(),"reads in parallel automata with synchronized transitions from a given .dot file.")
     ("keep-systems",po::value< string >(),"store computed parallel systems (over- and under-approximated STGs) during exploration  so that they do not need to be recomputed ([yes]|no).")
-    ("use-components",po::value< string >(),"Selects which parallel components are chosen for analyzing the (approximated) state space ([all] | subset-fixed | subset-random).")
-    ("fixed-components",po::value< string >(),"A list of IDs of parallel components used for analysis (e.g. \"1,2,4,7\"). Use only with \"--use-components=subset-fixed\".")
-    ("num-random-components",po::value< int >(),"Number of different random components used for the analysis. Use only with \"--use-components=subset-random\". Default: min(3, <num-parallel-components>)")
+    ("use-components",po::value< string >(),"Selects which parallel components are chosen for analyzing the (approximated) state space ([all] | subsets-fixed | subsets-random).")
+    ("fixed-subsets",po::value< string >(),"A list of sets of parallel component IDs used for analysis (e.g. \"{1,2},{4,7}\"). Use only with \"--use-components=subsets-fixed\".")
+    ("num-random-components",po::value< int >(),"Number of different random components used for the analysis. Use only with \"--use-components=subsets-random\". Default: min(3, <num-parallel-components>)")
+    ("parallel-composition-only",po::value< string >(),"If set to \"yes\", then no approximation will take place. Instead, the parallel compositions of the respective sub-systems will be expanded (sequentialized). Skips any LTL analysis. (Default: \"no\")")
     ("num-components-ltl",po::value< int >(),"Number of different random components used to generate a random LTL property. Default: value of option --num-random-components (a.k.a. all analyzed components)")
     ("minimum-components",po::value< int >(),"Number of different parallel components that need to be explored together in order to be able to analyze the mined properties. (default: 3).")
-    ("different-component-subsets",po::value< int >(),"Number of random component subsets. The solver will be run for each of the random subsets. Use only with \"--use-components=subset-random\" (default: no termination).")
+    ("different-component-subsets",po::value< int >(),"Number of random component subsets. The solver will be run for each of the random subsets. Use only with \"--use-components=subsets-random\" (default: no termination).")
     ("ltl-mode",po::value< string >(),"\"check\" checks the properties passed to option \"--check-ltl=<filename>\". \"mine\" searches for automatically generated properties that adhere to certain criteria. \"none\" means no LTL analysis (default).")
     ("mine-num-verifiable",po::value< int >(),"Number of verifiable properties satisfying given requirements that should be collected (default: 10).")
     ("mine-num-falsifiable",po::value< int >(),"Number of falsifiable properties satisfying given requirements that should be collected (default: 10).")
     ("minings-per-subsets",po::value< int >(),"Number of randomly generated properties that are evaluated based on one subset of parallel components (default: 50).")
     ("ltl-properties-output",po::value< string >(),"Writes the analyzed LTL properties to file <arg>.")
     ("promela-output",po::value< string >(),"Writes a promela program reflecting the synchronized automata of option \"--automata-dot-input\" to file <arg>. Includes LTL properties if analyzed.")
+    ("promela-output-only",po::value< string >(),"Only generate Promela code, skip analysis of the input .dot graphs (yes|[no]).")
     ("output-with-results",po::value< string >(),"include results for the LTL properties in generated promela code and LTL property files (yes|[no]).")
     ("output-with-annotations",po::value< string >(),"include annotations for the LTL properties in generated promela code and LTL property files (yes|[no]).")
+    ("verification-engine",po::value< string >(),"Choose which backend verification engine is used (ltsmin|[spot]).")
     ;
 
   experimentalOptions.add_options()
@@ -361,9 +365,8 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
     ("semantic-fold",po::value< string >(),"compute semantically folded state transition graph [=yes|no]")
     ("semantic-fold-threshold",po::value< int >(),"Set threshold with <arg> for semantic fold operation (experimental)")
     ("post-semantic-fold",po::value< string >(),"compute semantically folded state transition graph only after the complete transition graph has been computed. [=yes|no]")
-    ("set-stg-incomplete", po::value< string >(), "set to true if the generated STG will not contain all possible execution paths (e.g. if only a subset of the input values is used). [=yes|no]")
-    ("tg-trace", po::value< string >(), "generate STG computation trace [=filename]")
-    ("explicit-arrays","represent all arrays ecplicitly in every state.")
+    ("trace-file", po::value< string >(), "generate STG computation trace [=filename]")
+    ("explicit-arrays",po::value< string >(),"represent all arrays ecplicitly in every state.")
     ;
 
   rersOptions.add_options()
@@ -374,14 +377,13 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
     ("iseq-random-num", po::value< int >(), "select random search and number of paths.")
     ("rers-binary",po::value< string >(),"Call rers binary functions in analysis. Use [=yes|no]")
     ("rers-numeric", po::value< string >(), "print rers I/O values as raw numeric numbers.")
-    ("rersmode", po::value< string >(), "deprecated. Use rers-mode instead.")
-    ("rers-mode", "sets several options such that RERS-specifics are utilized and observed.")
+    ("rersmode", po::value< string >(), "sets several options such that RERS-specifics are utilized and observed.")
     ("stderr-like-failed-assert", po::value< string >(), "treat output on stderr similar to a failed assert [arg] (default:no)")
     ;
 
   svcompOptions.add_options()
     ("svcomp-mode", "sets default options for all following SVCOMP-specific options.")
-    ("external-function-semantics",  "assumes specific semantics for the external functions: __VERIFIER_error, __VERIFIER_nondet_int, exit, memcpy.")
+    //("external-function-semantics",  "assumes specific semantics for the external functions: __VERIFIER_error, __VERIFIER_nondet_int, exit, memcpy.")
     ("error-function", po::value< string >(), "detect a verifier error function with name [arg] (terminates verification)")
     ;
 
@@ -431,13 +433,14 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
     ("help-par", "show options for analyzing parallel programs")
     ("help-vis", "show options for visualization output files")
     ("help-data-race", "show options for data race detection")
+    ("help-info", "show options for program info")
     ("status", "show status messages")
     ("no-reduce-cfg","Do not reduce CFG nodes that are irrelevant for the analysis.")
     ("internal-checks", "run internal consistency checks (without input program)")
     ("input-values",po::value< string >(),"specify a set of input values (e.g. \"{1,2,3}\")")
     ("input-values-as-constraints",po::value<string >(),"represent input var values as constraints (otherwise as constants in PState)")
     ("input-sequence",po::value< string >(),"specify a sequence of input values (e.g. \"[1,2,3]\")")
-    ("log-level",po::value< string >()->default_value("none,>=warn"),"Set the log level (none|info|warn|trace)")
+    ("log-level",po::value< string >()->default_value("none,>=warn"),"Set the log level (none|info|warn|trace|debug)")
     ("max-transitions",po::value< int >(),"Passes (possibly) incomplete STG to verifier after max transitions (default: no limit).")
     ("max-iterations",po::value< int >(),"Passes (possibly) incomplete STG to verifier after max loop iterations (default: no limit). Currently requires --exploration-mode=loop-aware[-sync].")
     ("max-memory",po::value< long int >(),"Stop computing the STG after a total physical memory consumption of approximately <arg> Bytes has been reached. (default: no limit). Currently requires --solver=12 and only supports Unix systems.")
@@ -453,6 +456,11 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
     ("threads",po::value< int >(),"Run analyzer in parallel using <arg> threads (experimental)")
     ("version,v", "display the version")
     ;
+
+  infoOptions.add_options()
+    ("print-varid-mapping","Print all information stored in var-id mapping after analysis.")
+    ;
+
   po::options_description all("All supported options");
   all.add(visibleOptions)
     .add(hiddenOptions)
@@ -466,7 +474,9 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
     .add(svcompOptions)
     .add(dataRaceOptions)
     .add(visualizationOptions)
+    .add(infoOptions)
     ;
+
   po::store(po::command_line_parser(argc, argv).options(all).allow_unregistered().run(), args);
   po::notify(args);
 
@@ -503,6 +513,9 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
   } else if(args.count("help-data-race")) {
     cout << dataRaceOptions << "\n";
     exit(0);
+  } else if(args.count("help-info")) {
+    cout << infoOptions << "\n";
+    exit(0);
   } else if (args.count("version")) {
     cout << "CodeThorn version 1.8.1 (beta)\n";
     cout << "Written by Markus Schordan, Marc Jasper, Joshua Asplund, Adrian Prantl\n";
@@ -538,7 +551,6 @@ BoolOptions& parseBoolOptions(int argc, char* argv[]) {
 
   boolOptions.registerOption("input-values-as-constraints",false);
 
-  boolOptions.registerOption("arith-top",false);
   boolOptions.registerOption("rers-binary",false);
   boolOptions.registerOption("relop-constraints",false); // not accessible on command line
   boolOptions.registerOption("stderr-like-failed-assert",false);
@@ -563,11 +575,13 @@ BoolOptions& parseBoolOptions(int argc, char* argv[]) {
   boolOptions.registerOption("cegpra-ltl-all",false);
   boolOptions.registerOption("refinement-constraints-demo",false);
   boolOptions.registerOption("determine-prefix-depth",false);
-  boolOptions.registerOption("set-stg-incomplete",false);
+  boolOptions.registerOption("explicit-arrays",true); // MS (2017-06-09): enabled by default
 
   boolOptions.registerOption("keep-systems",true);
+  boolOptions.registerOption("parallel-composition-only",false);
   boolOptions.registerOption("output-with-results",false);
   boolOptions.registerOption("output-with-annotations",false);
+  boolOptions.registerOption("promela-output-only",false);
 
   boolOptions.registerOption("print-update-infos",false);
   boolOptions.registerOption("verify-update-sequence-race-conditions",true);
@@ -583,15 +597,13 @@ BoolOptions& parseBoolOptions(int argc, char* argv[]) {
   boolOptions.registerOption("svcomp-mode",false);
   boolOptions.registerOption("data-race",false);
   boolOptions.registerOption("data-race-fail",false);
-  boolOptions.registerOption("reduce-cfg",true); // MS (2016-06-28): enabled reduce-cfg by default
-  boolOptions.registerOption("explicit-arrays",false);
+  boolOptions.registerOption("reduce-cfg",true); // MS (2016-06-28): enabled by default
   boolOptions.registerOption("status",false);
 
   boolOptions.processZeroArgumentsOption("svcomp-mode");
   boolOptions.processZeroArgumentsOption("reduce-cfg"); // this handles 'no-reduce-cfg'
   boolOptions.processZeroArgumentsOption("data-race");
   boolOptions.processZeroArgumentsOption("data-race-fail");
-  boolOptions.processZeroArgumentsOption("explicit-arrays");
   boolOptions.processZeroArgumentsOption("status");
 
   return boolOptions;
@@ -639,8 +651,19 @@ void automataDotInput(const po::variables_map& args, Sawyer::Message::Facility l
   }
 
   ParProExplorer explorer(cfgsAsVector, edgeAnnotationMap);
+  if (args.count("verification-engine")) {
+    string verificationEngine = args["verification-engine"].as<string>();
+    if (verificationEngine == "ltsmin") {
+      explorer.setUseLtsMin(true);
+    }
+  } 
   if (boolOptions["keep-systems"]) {
     explorer.setStoreComputedSystems(true);
+  } else {
+    explorer.setStoreComputedSystems(false);
+  }
+  if (boolOptions["parallel-composition-only"]) {
+    explorer.setParallelCompositionOnly(true);
   } else {
     explorer.setStoreComputedSystems(false);
   }
@@ -648,18 +671,24 @@ void automataDotInput(const po::variables_map& args, Sawyer::Message::Facility l
     string componentSelection = args["use-components"].as<string>();
     if (componentSelection == "all") {
       explorer.setComponentSelection(PAR_PRO_COMPONENTS_ALL);
-    } else if (componentSelection == "subset-fixed") {
+      if (args.count("ltl-mode")) {
+	string ltlMode= args["ltl-mode"].as<string>();
+	if (ltlMode == "mine") {
+	  explorer.setRandomSubsetMode(PAR_PRO_NUM_SUBSETS_INFINITE);
+	}
+      }
+    } else if (componentSelection == "subsets-fixed") {
       explorer.setComponentSelection(PAR_PRO_COMPONENTS_SUBSET_FIXED);
       explorer.setRandomSubsetMode(PAR_PRO_NUM_SUBSETS_FINITE);
-      if (args.count("fixed-components")) {
-        string setstring=args["fixed-components"].as<string>();
-        set<int> intSet=Parse::integerSet(setstring);
-        explorer.setFixedComponentIds(intSet);
+      if (args.count("fixed-subsets")) {
+        string setsstring=args["fixed-subsets"].as<string>();
+        list<set<int> > intSets=Parse::integerSetList(setsstring);
+        explorer.setFixedComponentSubsets(intSets);
       } else {
-        logger[ERROR] << "selected a fixed set of components but no were selected. Please use option \"--fixed-components=<csv-id-list>\".";
+        logger[ERROR] << "selected a fixed set of components but no were selected. Please use option \"--fixed-subsets=<csv-id-list>\".";
         ROSE_ASSERT(0);
       }
-    } else if (componentSelection == "subset-random") {
+    } else if (componentSelection == "subsets-random") {
       explorer.setComponentSelection(PAR_PRO_COMPONENTS_SUBSET_RANDOM);
       if (args.count("num-random-components")) {
         explorer.setNumberRandomComponents(args["num-random-components"].as<int>());
@@ -668,13 +697,19 @@ void automataDotInput(const po::variables_map& args, Sawyer::Message::Facility l
       }
       if (args.count("different-component-subsets")) {
         explorer.setRandomSubsetMode(PAR_PRO_NUM_SUBSETS_FINITE);
-        explorer.setNumberDifferentComponentSubsets(args["use-components"].as<int>());
+        explorer.setNumberDifferentComponentSubsets(args["different-component-subsets"].as<int>());
       } else {
         explorer.setRandomSubsetMode(PAR_PRO_NUM_SUBSETS_INFINITE);
       }
     }
   } else {
     explorer.setComponentSelection(PAR_PRO_COMPONENTS_ALL);
+    if (args.count("ltl-mode")) {
+      string ltlMode= args["ltl-mode"].as<string>();
+      if (ltlMode == "mine") {
+	explorer.setRandomSubsetMode(PAR_PRO_NUM_SUBSETS_INFINITE);
+      }
+    }
   }
 
   if ( args.count("check-ltl") ) {
@@ -723,10 +758,18 @@ void automataDotInput(const po::variables_map& args, Sawyer::Message::Facility l
     explorer.setVisualize(true);
   }
 
-  explorer.explore();
-
+  if (!boolOptions["promela-output-only"]) {
+    explorer.explore();
+  }
+  
   if (args.count("check-ltl")) {
-    PropertyValueTable* ltlResults = explorer.propertyValueTable();
+    PropertyValueTable* ltlResults=nullptr;
+    if (boolOptions["promela-output-only"]) { // just read the properties into a PropertyValueTable
+      SpotConnection spotConnection(args["check-ltl"].as<string>());
+      ltlResults = spotConnection.getLtlResults();
+    } else {
+      ltlResults = explorer.propertyValueTable();
+    }
     bool withCounterexamples = false;
     ltlResults-> printResults("YES (verified)", "NO (falsified)", "ltl_property_", withCounterexamples);
     cout << "=============================================================="<<endl;
@@ -737,7 +780,14 @@ void automataDotInput(const po::variables_map& args, Sawyer::Message::Facility l
   bool withResults = boolOptions["output-with-results"];
   bool withAnnotations = boolOptions["output-with-annotations"];
   if (args.count("promela-output")) {
-    string promelaLtlFormulae = explorer.propertyValueTable()->getLtlsAsPromelaCode(withResults, withAnnotations);
+    PropertyValueTable* ltlResults;
+    if (boolOptions["promela-output-only"]) { // just read the properties into a PropertyValueTable
+      SpotConnection spotConnection(args["check-ltl"].as<string>());
+      ltlResults = spotConnection.getLtlResults();
+    } else {
+      ltlResults = explorer.propertyValueTable();
+    }
+    string promelaLtlFormulae = ltlResults->getLtlsAsPromelaCode(withResults, withAnnotations);
     promelaCode += "\n" + promelaLtlFormulae;
     string filename = args["promela-output"].as<string>();
     write_file(filename, promelaCode);
@@ -794,6 +844,10 @@ void generateAutomata(const po::variables_map& args) {
 }
 
 void analyzerSetup(Analyzer& analyzer, const po::variables_map& args, Sawyer::Message::Facility logger) {
+  if(boolOptions["explicit-arrays"]==false) {
+    analyzer.setSkipArrayAccesses(true);
+  }
+  
   // this must be set early, as subsequent initialization depends on this flag
   if (args.count("ltl-driven")) {
     analyzer.setModeLTLDriven(true);
@@ -825,8 +879,8 @@ void analyzerSetup(Analyzer& analyzer, const po::variables_map& args, Sawyer::Me
     exit(1);
   }
 
-  if(args.count("tg-trace")) {
-    analyzer.setStgTraceFileName(args["tg-trace"].as<string>());
+  if(args.count("trace-file")) {
+    analyzer.setStgTraceFileName(args["trace-file"].as<string>());
   }
 
   if(args.count("input-values")) {
@@ -1046,12 +1100,12 @@ int main( int argc, char * argv[] ) {
   signal(SIGSEGV, handler);   // install handler for backtrace
   CodeThorn::initDiagnostics();
 
-  rose::Diagnostics::mprefix->showProgramName(false);
-  rose::Diagnostics::mprefix->showThreadId(false);
-  rose::Diagnostics::mprefix->showElapsedTime(false);
+  Rose::Diagnostics::mprefix->showProgramName(false);
+  Rose::Diagnostics::mprefix->showThreadId(false);
+  Rose::Diagnostics::mprefix->showElapsedTime(false);
 
   Sawyer::Message::Facility logger;
-  rose::Diagnostics::initAndRegister(&logger, "CodeThorn");
+  Rose::Diagnostics::initAndRegister(&logger, "CodeThorn");
 
   try {
     Timer timer;
@@ -1179,7 +1233,8 @@ int main( int argc, char * argv[] ) {
           || string(argv[i]).find("--specialize-fun-name")==0
           || string(argv[i]).find("--specialize-fun-param")==0
           || string(argv[i]).find("--use-components")==0
-          || string(argv[i]).find("--fixed-components")==0
+          || string(argv[i]).find("--verification-engine")==0
+          || string(argv[i]).find("--fixed-subsets")==0
           || string(argv[i]).find("--specialize-fun-param")==0
           ) {
             // do not confuse ROSE frontend
@@ -1195,6 +1250,7 @@ int main( int argc, char * argv[] ) {
     if(args.count("dump-sorted")>0 || args.count("dump-non-sorted")>0 || args.count("equivalence-check")>0) {
       analyzer.setSkipSelectedFunctionCalls(true);
       analyzer.setSkipArrayAccesses(true);
+      boolOptions.setOption("explicit-arrays",false);
       if(analyzer.getNumberOfThreadsToUse()>1) {
         logger[ERROR] << "multi threaded rewrite not supported yet."<<endl;
         exit(1);
@@ -1211,13 +1267,13 @@ int main( int argc, char * argv[] ) {
     }
 
     if(args.count("svcomp-mode")) {
-      analyzer.enableExternalFunctionSemantics();
+      analyzer.enableSVCompFunctionSemantics();
       string errorFunctionName="__VERIFIER_error";
       analyzer.setExternalErrorFunctionName(errorFunctionName);
     }
 
     if(args.count("external-function-semantics")) {
-      analyzer.enableExternalFunctionSemantics();
+      // obsolete
     }
 
     if(args.count("error-function")) {
@@ -1288,6 +1344,7 @@ int main( int argc, char * argv[] ) {
       // do specialization and setup data structures
       analyzer.setSkipSelectedFunctionCalls(true);
       analyzer.setSkipArrayAccesses(true);
+      boolOptions.setOption("explicit-arrays",false);
 
       //TODO1: refactor into separate function
       int numSubst=0;
@@ -1413,7 +1470,7 @@ int main( int argc, char * argv[] ) {
       exit(0);
     }
 
-    logger[TRACE]<< "INIT: creating solver."<<endl;
+    logger[TRACE]<< "INIT: creating solver "<<analyzer.getSolver()<<"."<<endl;
 
     if(option_specialize_fun_name!="") {
       analyzer.initializeSolver1(option_specialize_fun_name,root,true);
@@ -1643,27 +1700,31 @@ int main( int argc, char * argv[] ) {
       if (args.count("ltl-in-alphabet")) {
         string setstring=args["ltl-in-alphabet"].as<string>();
         ltlInAlphabet=Parse::integerSet(setstring);
-        logger[TRACE] << "STATUS: LTL input alphabet explicitly selected: "<< setstring << endl;
+        logger[TRACE] << "LTL input alphabet explicitly selected: "<< setstring << endl;
       }
       //take ltl output alphabet if specifically described, otherwise take the old RERS specific 21...26 (a.k.a. oU...oZ)
       std::set<int> ltlOutAlphabet = Parse::integerSet("{21,22,23,24,25,26}");
       if (args.count("ltl-out-alphabet")) {
         string setstring=args["ltl-out-alphabet"].as<string>();
         ltlOutAlphabet=Parse::integerSet(setstring);
-        logger[TRACE] << "STATUS: LTL output alphabet explicitly selected: "<< setstring << endl;
+        logger[TRACE] << "LTL output alphabet explicitly selected: "<< setstring << endl;
       }
-      PropertyValueTable* ltlResults;
+      PropertyValueTable* ltlResults=nullptr;
       SpotConnection spotConnection(ltl_filename);
       spotConnection.setModeLTLDriven(analyzer.getModeLTLDriven());
 
       logger[TRACE] << "STATUS: generating LTL results"<<endl;
       bool spuriousNoAnswers = false;
       if (boolOptions["check-ltl-counterexamples"]) {
-        spuriousNoAnswers = true;
+        spuriousNoAnswers = true;   
       }
+      logger[TRACE] << "LTL: check properties. "<<endl;
       spotConnection.checkLtlProperties( *(analyzer.getTransitionGraph()), ltlInAlphabet, ltlOutAlphabet, withCounterexample, spuriousNoAnswers);
       spotLtlAnalysisTime=timer.getElapsedTimeInMilliSec();
+      logger[TRACE] << "LTL: get results from spot connection. "<<endl;
       ltlResults = spotConnection.getLtlResults();
+      logger[TRACE] << "LTL: results computed. "<<endl;
+
       if (args.count("cegpra-ltl") || boolOptions["cegpra-ltl-all"]) {
         if (args.count("csv-stats-cegpra")) {
           statisticsCegpra << "init,";
@@ -2167,6 +2228,10 @@ int main( int argc, char * argv[] ) {
       logger[INFO] << "Generating annotated program."<<endl;
       //backend(sageProject);
       sageProject->unparse(0,0);
+    }
+
+    if(args.count("print-varid-mapping")) {
+      analyzer.getVariableIdMapping()->toStream(cout);
     }
     // reset terminal
     cout<<color("normal")<<"done."<<endl;

@@ -5,7 +5,7 @@
 ## Contact: <louis-noel.pouchet@inria.fr>
 ##
 ## Started on  Sat Jul 18 16:57:09 2009 Louis-Noel Pouchet
-## Last update Tue May 30 08:53:50 2017 Louis-Noel Pouchet
+## Last update Fri Jun 23 05:37:16 2017 Louis-Noel Pouchet
 ##
 
 output=0
@@ -29,9 +29,9 @@ for i in $TEST_FILES; do
     esac;
     ## (1) Check that generated files are the same.
 #    $top_builddir/src/PolyRose $options $TESTS_PREFIX_SRC/$i -rose:o $TESTS_PREFIX_BLD/$outfile.test.c 2>/tmp/poccout >/dev/null
- #   z=`diff --ignore-matching-lines='CLooG' --ignore-matching-lines='rose\[WARN' --ignore-blank-lines $TESTS_PREFIX_BLD/$outfile.test.c $TESTS_PREFIX_SRC/$outfile.c 2>&1`
+ #   z=`diff --ignore-matching-lines='CLooG' --ignore-matching-lines='rose\[WARN' --ignore-matching-lines='int c' --ignore-blank-lines $TESTS_PREFIX_BLD/$outfile.test.c $TESTS_PREFIX_SRC/$outfile.c 2>&1`
     $top_builddir/src/PolyRose $options $i -rose:o $outfile.test.c 2>/tmp/poccout >/dev/null
-    z=`diff --ignore-matching-lines='CLooG' --ignore-matching-lines='rose\[WARN' --ignore-blank-lines $outfile.test.c $outfile.c 2>&1`
+    z=`diff --ignore-matching-lines='CLooG' --ignore-matching-lines='rose\[WARN' --ignore-matching-lines='int c' --ignore-blank-lines $outfile.test.c $outfile.c 2>&1`
     err=`cat /tmp/poccout | grep -v "\[CLooG\] INFO:"`;
     if ! [ -z "$z" ]; then
 	echo "\033[31m[FAIL] PoCC -> generated codes are different\033[0m";

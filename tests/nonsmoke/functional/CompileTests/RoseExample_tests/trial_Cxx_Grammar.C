@@ -12,7 +12,7 @@ using namespace std;
 
 // Simplify code by using std namespace (never put into header files since it effects users) 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 static struct 
    { 
@@ -840,8 +840,8 @@ SgNode::buildCommandLineToSubstituteTransformationFile( const vector<string>& ar
                if ( (length > 2) && (argv[i][length-2] == '.') && ( (argv[i][length-1] == 'c') || (argv[i][length-1] == 'C') ) )
                   {
                  // printf ("Found a filename = %s \n",argv[i]);
-                 // rose::sourceFileNamesWithPath    [fileNameCounter] = strdup(argv[i]);
-                 // rose::sourceFileNamesWithoutPath [fileNameCounter] = strdup(argv[i]);
+                 // Rose::sourceFileNamesWithPath    [fileNameCounter] = strdup(argv[i]);
+                 // Rose::sourceFileNamesWithoutPath [fileNameCounter] = strdup(argv[i]);
                  // argv[i] = "rose_transformation.C";
                  // transformation_argv[i] = "rose_transformation.C";
                     transformation_argv[i] = strdup(newFileName.c_str());
@@ -9490,7 +9490,7 @@ SgFile::setupSourceFilename ( const vector<string>& argv )
                set_sourceFileUsesCppFileExtension(false);
              }
 
-          p_sourceFileNameWithoutPath = rose::utility_stripPathFromFileName(p_sourceFileNameWithPath.c_str());
+          p_sourceFileNameWithoutPath = Rose::utility_stripPathFromFileName(p_sourceFileNameWithPath.c_str());
         }
        else
         {
@@ -10216,7 +10216,7 @@ SgFile::callFrontEnd ()
   // should be "disable_edg" instead of "disable_edg_backend".
      if ( get_disable_edg_backend() == false )
         {
-       // rose::new_frontend = true;
+       // Rose::new_frontend = true;
 
        // We can either use the newest EDG frontend separately (useful for debugging) 
        // or the EDG frontend that is included in SAGE III (currently EDG 3.3). 
@@ -10240,7 +10240,7 @@ SgFile::callFrontEnd ()
           if ( get_new_frontend() == true )
              {
             // Use the current version of the EDG frontend from EDG (or any other version)
-               printf ("rose::new_frontend == true (call edgFrontEnd using unix system() function!) \n");
+               printf ("Rose::new_frontend == true (call edgFrontEnd using unix system() function!) \n");
 
                if ( get_KCC_frontend() == true )
                   {
@@ -10618,7 +10618,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           CommandlineProcessing::isOption(argv,"-","(h|help)",true)      == true )
         {
           printf ("\nROSE (pre-release alpha version: %s) \n",VERSION);
-       // rose::usage(0);
+       // Rose::usage(0);
           usage(0);
        // exit(0);
         }
@@ -12208,8 +12208,8 @@ SgFile::getWorkingDirectory ()
      currentDirectory[maxPathNameLength - 1] = 0; // Just in case
 
   // The semantics of the getcwd is that these shuld be the same (see if they are)
-  // printf ("In rose::getWorkingDirectory: Current directory = %s \n",currentDirectory);
-  // printf ("In rose::getWorkingDirectory: Current directory = %s \n",returnString);
+  // printf ("In Rose::getWorkingDirectory: Current directory = %s \n",currentDirectory);
+  // printf ("In Rose::getWorkingDirectory: Current directory = %s \n",returnString);
 
   // live with the possible memory leak for now
   // delete currentDirectory;
@@ -12246,7 +12246,7 @@ SgFile::generateOutputFileName() const
 
      std::string sourceFileName = get_sourceFileNameWithPath();
 
-  // std::string baseFileName    = rose::utility_stripPathFromFileName(sourceFileName.c_str());
+  // std::string baseFileName    = Rose::utility_stripPathFromFileName(sourceFileName.c_str());
      std::string baseFileName    = StringUtility::stripPathFromFileName(sourceFileName);
 
      std::string baseFileNameWithoutSuffix = StringUtility::stripFileSuffixFromFileName(baseFileName);
@@ -12552,8 +12552,8 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
      std::string sourceFileName = get_sourceFileNameWithPath();
 
-     std::string oldFileNamePathOnly = rose::getPathFromFileName(sourceFileName.c_str());
-     std::string oldFileName         = rose::utility_stripPathFromFileName(sourceFileName.c_str());
+     std::string oldFileNamePathOnly = Rose::getPathFromFileName(sourceFileName.c_str());
+     std::string oldFileName         = Rose::utility_stripPathFromFileName(sourceFileName.c_str());
 
 #if 0
      printf ("oldFileNamePathOnly = %s \n",oldFileNamePathOnly.c_str());
@@ -12712,7 +12712,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex, const string& c
   // Rose_STL_Container<string> fileList = CommandlineProcessing::generateSourceFilenames(argc,argv);
   // ROSE_ASSERT (fileList.size() == 1);
   // p_sourceFileNameWithPath    = *(fileList.begin());
-  // p_sourceFileNameWithoutPath = rose::utility_stripPathFromFileName(p_sourceFileNameWithPath.c_str());
+  // p_sourceFileNameWithoutPath = Rose::utility_stripPathFromFileName(p_sourceFileNameWithPath.c_str());
 
 #if 1
   // ROSE_ASSERT (get_unparse_output_filename().empty() == true);
@@ -14050,7 +14050,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
         {
        // printf ("option -help found \n");
           printf ("\nROSE (pre-release alpha version: %s) \n",VERSION);
-       // rose::usage(0);
+       // Rose::usage(0);
           SgFile::usage(0);
           exit(0);
         }
@@ -14067,7 +14067,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
         {
        // printf ("option --help found \n");
           printf ("\nROSE (pre-release alpha version: %s) \n",VERSION);
-       // rose::usage(0);
+       // Rose::usage(0);
           SgFile::usage(0);
           exit(0);
         }
@@ -14225,9 +14225,9 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           unsigned int length = argv[i].size();
 
        // printf ("assemble compiler command line option: argv[%d] = %s length = %d \n",i,argv[i],length);
-       // printf ("rose::sourceFileNamesWithoutPath[%d] = \n",sourceFileNameCounter,
-       //     rose::sourceFileNamesWithoutPath[sourceFileNameCounter]);
-       // ROSE_ASSERT (rose::sourceFileNamesWithoutPath[sourceFileNameCounter] != NULL);
+       // printf ("Rose::sourceFileNamesWithoutPath[%d] = \n",sourceFileNameCounter,
+       //     Rose::sourceFileNamesWithoutPath[sourceFileNameCounter]);
+       // ROSE_ASSERT (Rose::sourceFileNamesWithoutPath[sourceFileNameCounter] != NULL);
 
        // PC (4/27/2006): Support for custom source file suffixes
           if ( CommandlineProcessing::isSourceFilename(argv[i]) )

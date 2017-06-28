@@ -5,7 +5,7 @@
 #include <iostream>
 #include <Sawyer/Stopwatch.h>
 
-using namespace rose;
+using namespace Rose;
 
 // Things we're sorting
 struct Thing {
@@ -47,7 +47,7 @@ int main(int argc, char *argv[]) {
                          
     std::cerr <<"Sorting with " <<nthreads <<" threads... ";
     Sawyer::Stopwatch sorting;
-    rose::ParallelSort::quicksort(&values[0], &values[0]+values.size(), compare, nthreads);
+    Rose::ParallelSort::quicksort(&values[0], &values[0]+values.size(), compare, nthreads);
     std::cerr <<"done (" <<sorting.stop() <<" seconds)\n";
 
     std::cerr <<"Checking results...\n";

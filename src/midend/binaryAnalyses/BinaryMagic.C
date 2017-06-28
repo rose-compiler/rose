@@ -13,9 +13,9 @@
 typedef int magic_t;
 #endif
 
-using namespace rose::Diagnostics;
+using namespace Rose::Diagnostics;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 // details are defined in this .C files so users don't end up including <magic.h> into the global namespace.

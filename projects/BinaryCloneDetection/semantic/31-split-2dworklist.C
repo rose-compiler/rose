@@ -4,7 +4,7 @@
 #include <boost/thread.hpp>
 #include <cerrno>
 
-using namespace rose;
+using namespace Rose;
 using namespace StringUtility;
 
 static std::string argv0;

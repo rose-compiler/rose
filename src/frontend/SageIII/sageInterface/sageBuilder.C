@@ -45,7 +45,7 @@
 #define BUILDER_MAKE_REDUNDANT_CALLS_TO_SYMBOL_TABLE_LOOKUP 0
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 using namespace SageInterface;
 
 // MS 2015: utility functions used in the implementation of SageBuilder functions, but are not exposed in the SageBuilder-Interface.
@@ -60,7 +60,7 @@ initDiagnostics()
      if (!initialized)
         {
           initialized = true;
-          rose::Diagnostics::initAndRegister(&mlog, "rose::SageBuilder");
+          Rose::Diagnostics::initAndRegister(&mlog, "Rose::SageBuilder");
         }
    }
 

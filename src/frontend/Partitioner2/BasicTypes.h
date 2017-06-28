@@ -11,7 +11,7 @@
 // inexpensive) checks are performed.
 #define ROSE_PARTITIONER_EXPENSIVE_CHECKS 0
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 

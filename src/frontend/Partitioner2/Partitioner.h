@@ -36,7 +36,7 @@
 #include <DispatcherX86.h>
 #include <YicesSolver.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /** Binary function detection.

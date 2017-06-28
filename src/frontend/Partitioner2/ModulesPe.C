@@ -5,12 +5,12 @@
 
 #include <boost/foreach.hpp>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 namespace ModulesPe {
 
-using namespace rose::Diagnostics;
+using namespace Rose::Diagnostics;
 
 // convert "EncodePointer@KERNEL32.dll" (ROSE's canonical form) to "KERNEL32.dll:EncodePointer" (typical of Windows)
 std::string

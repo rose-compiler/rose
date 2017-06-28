@@ -10,9 +10,9 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #include <Partitioner2/Engine.h>
 #include <Sawyer/CommandLine.h>
 
-using namespace rose;
-using namespace rose::BinaryAnalysis;
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 struct Settings {
     Sawyer::Optional<rose_addr_t> initialStackPointer;

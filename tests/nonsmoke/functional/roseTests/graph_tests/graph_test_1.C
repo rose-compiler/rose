@@ -7,7 +7,7 @@
 
 using namespace std;
 using namespace boost;
-using namespace rose::StringUtility;
+using namespace Rose::StringUtility;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Graph types

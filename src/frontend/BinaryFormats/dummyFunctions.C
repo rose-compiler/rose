@@ -1,6 +1,6 @@
 #include "sage3basic.h"
 
-using namespace rose::BinaryAnalysis;
+using namespace Rose::BinaryAnalysis;
 
 // This file contains the function definitions required within ROSE if Binary Analysis 
 // support is NOT enabled.  In each case I can't eliminate the function (usually the 
@@ -90,7 +90,7 @@ void SgAsmDOSExtendedHeader::dump(FILE *f, const char *prefix, ssize_t idx) cons
 void SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx) const {}
 void SgAsmPEImportItem::dump(FILE*f, char const *prefix, ssize_t idx) const {}
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 void MemoryMap::dump(FILE *f, const char *prefix) const {}
 } // namespace

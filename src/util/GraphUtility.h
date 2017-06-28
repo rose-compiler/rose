@@ -4,7 +4,7 @@
 #include <boost/cstdint.hpp>
 #include <Sawyer/Graph.h>
 
-namespace rose {
+namespace Rose {
 
 /** Graph utilities. */
 namespace GraphUtility {

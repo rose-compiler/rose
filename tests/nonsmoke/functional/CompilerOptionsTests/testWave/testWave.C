@@ -2,7 +2,7 @@
 #include <fstream>
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 void
 print_out_all_macros(std::ostream& outStream, SgProject* project){

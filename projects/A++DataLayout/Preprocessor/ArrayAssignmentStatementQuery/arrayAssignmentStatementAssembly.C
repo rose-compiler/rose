@@ -1,7 +1,7 @@
 #include "arrayPreprocessor.h"
 
 #include "arrayAssignmentStatementTransformation.h"
-using namespace rose;
+using namespace Rose;
 using namespace SageInterface;
 using namespace SageBuilder;
 

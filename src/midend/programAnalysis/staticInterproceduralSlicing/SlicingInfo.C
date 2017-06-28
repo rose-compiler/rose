@@ -40,7 +40,7 @@ void SlicingInfo::visit(SgNode * node)
 
                                         if (stmnt == NULL)
                                                 cout << "error" << endl;
-                                        SgStatement *next = rose::getNextStatement(stmnt);
+                                        SgStatement *next = Rose::getNextStatement(stmnt);
 
                                         if (next == NULL)
                                                 cout << "Next is NULL" << endl;

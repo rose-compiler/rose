@@ -3,8 +3,8 @@
 #include "sage3basic.h"
 #include "AsmUnparser_compat.h"
 
-// Dummy declaration for the rose::BinaryAnalysis namespace
-namespace rose {
+// Dummy declaration for the Rose::BinaryAnalysis namespace
+namespace Rose {
 namespace BinaryAnalysis {
 
 size_t
@@ -383,7 +383,7 @@ AsmUnparser::find_unparsable_nodes(SgNode *ast)
 } // namespace
 } // namespace
 
-std::string unparseExpression(SgAsmExpression*, const rose::BinaryAnalysis::AsmUnparser::LabelMap*, const RegisterDictionary*) {
+std::string unparseExpression(SgAsmExpression*, const Rose::BinaryAnalysis::AsmUnparser::LabelMap*, const RegisterDictionary*) {
     abort();
 }
 

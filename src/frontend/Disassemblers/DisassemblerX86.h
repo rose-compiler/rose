@@ -12,7 +12,7 @@
 #include <boost/serialization/export.hpp>
 #include <boost/serialization/split_member.hpp>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /** Disassembler for the x86 architecture.  Most of the useful disassembly methods can be found in the superclass. There's
@@ -461,7 +461,7 @@ private:
 } // namespace
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::DisassemblerX86);
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::DisassemblerX86);
 #endif
 
 #endif

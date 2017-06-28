@@ -13,7 +13,7 @@
 
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 using namespace dbglog;
 //namespace bll = boost::lambda;
 

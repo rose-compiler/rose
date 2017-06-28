@@ -8,7 +8,7 @@
 #include <set>
 #include <string>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
@@ -378,6 +378,6 @@ public:
 } // namespace
 } // namespace
 
-std::ostream& operator<<(std::ostream&, const rose::BinaryAnalysis::Partitioner2::Configuration&);
+std::ostream& operator<<(std::ostream&, const Rose::BinaryAnalysis::Partitioner2::Configuration&);
 
 #endif

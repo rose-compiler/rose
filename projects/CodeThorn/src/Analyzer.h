@@ -36,7 +36,7 @@
 // we use INT_MIN, INT_MAX
 #include "limits.h"
 #include "AstNodeInfo.h"
-#include "TypeSizeMapping.h"
+#include "SgTypeSizeMapping.h"
 
 namespace CodeThorn {
 
@@ -68,12 +68,14 @@ namespace CodeThorn {
     static void initDiagnostics();
     static std::string nodeToString(SgNode* node);
     void initAstNodeInfo(SgNode* node);
-    bool isInExplicitStateMode();
     bool isActiveGlobalTopify();
     void initializeSolver1(std::string functionToStartAt,SgNode* root, bool oneFunctionOnly);
     void initializeTraceSolver(std::string functionToStartAt,SgNode* root);
     void continueAnalysisFrom(EState* newStartEState);
     
+    // set the size of an element determined by this type
+    void setElementSize(VariableId variableId, SgType* elementType);
+
     EState analyzeVariableDeclaration(SgVariableDeclaration* nextNodeToAnalyze1,EState currentEState, Label targetLabel);
 
     PState analyzeAssignRhsExpr(PState currentPState,VariableId lhsVar, SgNode* rhs,ConstraintSet& cset);
@@ -96,6 +98,7 @@ namespace CodeThorn {
     void printStatusMessage(string s);
     void printStatusMessageLine(string s);
     void printStatusMessage(string s, bool newLineFlag);
+    std::string analyzerStateToString();
     static string lineColSource(SgNode* node);
     void recordTransition(const EState* sourceEState, Edge e, const EState* targetEState);
     void printStatusMessage(bool);
@@ -234,8 +237,8 @@ namespace CodeThorn {
 
     void setDisplayDiff(int diff) { _displayDiff=diff; }
     void setResourceLimitDiff(int diff) { _resourceLimitDiff=diff; }
-    void setSolver(int solver) { _solver=solver; }
-    int getSolver() { return _solver;}
+    void setSolver(int solver);
+    int getSolver();
     void setSemanticFoldThreshold(int t) { _semanticFoldThreshold=t; }
     void setNumberOfThreadsToUse(int n) { _numberOfThreadsToUse=n; }
     int getNumberOfThreadsToUse() { return _numberOfThreadsToUse; }
@@ -252,9 +255,10 @@ namespace CodeThorn {
     void setGlobalTopifyMode(GlobalTopifyMode mode);
     void setExternalErrorFunctionName(std::string externalErrorFunctionName);
     // enables external function semantics 
-    void enableExternalFunctionSemantics();
-    void disableExternalFunctionSemantics();
-    bool isUsingExternalFunctionSemantics() { return _externalFunctionSemantics; }
+    void enableSVCompFunctionSemantics();
+    void disableSVCompFunctionSemantics();
+    bool svCompFunctionSemantics() { return _svCompFunctionSemantics; }
+    bool stdFunctionSemantics() { return _stdFunctionSemantics; }
     void setModeLTLDriven(bool ltlDriven) { transitionGraph.setModeLTLDriven(ltlDriven); }
     bool getModeLTLDriven() { return transitionGraph.getModeLTLDriven(); }
     long analysisRunTimeInSeconds(); 
@@ -262,8 +266,8 @@ namespace CodeThorn {
     void set_finished(std::vector<bool>& v, bool val);
     bool all_false(std::vector<bool>& v);
 
-    void setTypeSizeMapping(TypeSizeMapping* typeSizeMapping);
-    TypeSizeMapping* getTypeSizeMapping();
+    void setTypeSizeMapping(SgTypeSizeMapping* typeSizeMapping);
+    SgTypeSizeMapping* getTypeSizeMapping();
   private:
     GlobalTopifyMode _globalTopifyMode;
     set<AbstractValue> _compoundIncVarsSet;
@@ -326,7 +330,6 @@ namespace CodeThorn {
     EState createEState(Label label, PState pstate, ConstraintSet cset);
     EState createEState(Label label, PState pstate, ConstraintSet cset, InputOutput io);
     
-    TypeSizeMapping* _typeSizeMapping;
     VariableValueMonitor variableValueMonitor;
 
     bool _treatStdErrLikeFailedAssert;
@@ -342,11 +345,15 @@ namespace CodeThorn {
     int _approximated_iterations;
     int _curr_iteration_cnt;
     int _next_iteration_cnt;
-    bool _externalFunctionSemantics;
+
+    bool _stdFunctionSemantics=true;
+
+    bool _svCompFunctionSemantics;
     string _externalErrorFunctionName; // the call of this function causes termination of analysis
     string _externalNonDetIntFunctionName;
     string _externalNonDetLongFunctionName;
     string _externalExitFunctionName;
+
     Timer _analysisTimer;
 
     // =======================================================================
@@ -437,7 +444,7 @@ namespace CodeThorn {
     void setAnalyzerToSolver8(EState* startEState, bool resetAnalyzerData);
 
     // first: list of new states (worklist), second: set of found existing states
-    typedef pair<EStateWorkList,EStateSet> SubSolverResultType;
+    typedef pair<EStateWorkList,std::set<const EState*> > SubSolverResultType;
     SubSolverResultType subSolver(const EState* currentEStatePtr);
 
     PropertyValueTable* loadAssertionsToReconstruct(string filePath);
@@ -495,9 +502,6 @@ namespace CodeThorn {
     const EState* _estateBeforeMissingInput;
     const EState* _latestOutputEState;
     const EState* _latestErrorEState;
-
-
-
   }; // end of class Analyzer
 
 } // end of namespace CodeThorn

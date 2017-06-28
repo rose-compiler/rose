@@ -23,11 +23,11 @@
 #include <SymbolicSemantics2.h>
 #include <YicesSolver.h>
 
-using namespace rose;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 using namespace Sawyer::Message::Common;
 using namespace Sawyer::Container::Algorithm;
-using namespace rose::BinaryAnalysis::InstructionSemantics2; // BaseSemantics, SymbolicSemantics
+using namespace Rose::BinaryAnalysis::InstructionSemantics2; // BaseSemantics, SymbolicSemantics
 using namespace PathFinder;
 namespace P2 = Partitioner2;
 

@@ -47,7 +47,7 @@ conditionalDisable_SOURCES = conditionalDisable.C
 conditionalDisable_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
 
 ###############################################################################################################################
-# Check parsing of symbolic expressions via rose::BinaryAnalysis::SymbolicExprParser
+# Check parsing of symbolic expressions via Rose::BinaryAnalysis::SymbolicExprParser
 ###############################################################################################################################
 noinst_PROGRAMS += testSymbolicExprParser
 testSymbolicExprParser_SOURCES = testSymbolicExprParser.C
@@ -136,32 +136,6 @@ testFunctionCall-B.passed: $(TEST_WITH_ANSWER) testFunctionCall testFunctionCall
 		CMD="./testFunctionCall B $(SPECIMEN_DIR)/buffer2.bin"	\
 		ANS="$(srcdir)/testFunctionCall-B.ans"			\
 		$< $@
-
-
-###############################################################################################################################
-# Tests for control flow dominance graphs.
-###############################################################################################################################
-noinst_PROGRAMS += testDominance
-testDominance_SOURCES = testDominance.C
-testDominance_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-
-testDominance_algorithms = A B C D
-testDominance_targets = $(addsuffix .passed, $(addprefix testDominance-, $(testDominance_algorithms)))
-testDominance_answers = $(testDominance_targets:.passed=.ans)
-
-EXTRA_DIST += $(testDominance_answers)
-TEST_TARGETS += $(testDominance_targets)
-
-$(testDominance_targets): testDominance-%.passed: $(TEST_WITH_ANSWER) testDominance testDominance-%.ans conditionalDisable
-	@$(RTH_RUN)							\
-		TITLE="graph dominance, algorithm $* [$@]"		\
-		DISABLED="$$(./conditionalDisable)"			\
-		CMD="./testDominance $* $(SPECIMEN_DIR)/buffer2.bin"	\
-		ANS="$(srcdir)/testDominance-$*.ans"			\
-		$< $@
-
-PHONIES += check-testDominance
-check-testDominance: $(testDominance_targets)
 
 
 ###############################################################################################################################
@@ -309,14 +283,6 @@ shiftResizeSection.passed: $(TEST_WITH_ANSWER) shiftResizeSection execFormatsTes
 		ANS="$(srcdir)/shiftResizeSection.ans"							\
 		USE_SUBDIR=yes										\
 		$< $@
-
-
-###############################################################################################################################
-# Check whether the dominance classes can be specialized.  This is a compile-only test.
-###############################################################################################################################
-noinst_PROGRAMS += subDominance
-subDominance_SOURCES = subDominance.C
-subDominance_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
 
 
 ###############################################################################################################################
@@ -867,7 +833,7 @@ verifySemantics.passed: $(TEST_EXIT_STATUS) verifySemantics
 
 
 ###############################################################################################################################
-# Disassembly tests using rose::BinaryAnalysis::Partitioner2
+# Disassembly tests using Rose::BinaryAnalysis::Partitioner2
 ###############################################################################################################################
 
 # Disassembles executables using Partitioner2
@@ -925,6 +891,35 @@ testP2map_%.passed: $(SPECIMEN_DIR)/% $(SMOKE_BLDDIR)/testPartitioner2 condition
 
 PHONIES += check-testPartitioner2
 check-testPartitioner2: $(testPartitioner2_test_targets) $(testP2map_test_targets)
+
+
+###############################################################################################################################
+# CFG dominance tests
+###############################################################################################################################
+
+noinst_PROGRAMS += testDominance
+testDominance_SOURCES = testDominance.C
+testDominance_CPPFLAGS = -I$(top_srcdir)
+testDominance_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
+testDominance_specimens = $(testPartitioner2_specimens)
+testDominance_test_targets = $(patsubst %, testDominance_%.passed, $(testDominance_specimens))
+testDominance_answers = $(testDominance_test_targets:.passed=.ans)
+
+EXTRA_DIST += $(testDominance_answers)
+TEST_TARGETS += $(testDominance_test_targets)
+
+$(testDominance_test_targets): testDominance_%.passed: $(SPECIMEN_DIR)/% testDominance testDominance_%.ans conditionalDisable
+	@$(RTH_RUN)						\
+		TITLE="graph dominance $(notdir $<) [$@]"	\
+		DISABLED="$$(./conditionalDisable)"		\
+		USE_SUBDIR=yes					\
+		CMD="$$(pwd)/testDominance $<"			\
+		ANS="$(srcdir)/testDominance_$*.ans"		\
+		$(top_srcdir)/scripts/test_with_answer $@
+
+PHONIES += check-testDominance
+check-testDominance: $(testDominance_test_targets)
 
 
 ###############################################################################################################################

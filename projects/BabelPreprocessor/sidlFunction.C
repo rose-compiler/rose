@@ -6,7 +6,7 @@
 
 // DQ (1/1/2006): This is OK if not declared in a header file
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 // We need this header file so that we can use the global tree traversal mechanism
 // #include "Cxx_GrammarTreeTraversalClass.h"
@@ -501,7 +501,7 @@ SIDL_TreeTraversal::generateSIDLFunctionDeclaration(SgFunctionDeclaration* funct
 			functionType->set_has_ellipses(true);
 		}
 		//else if (type->variantT() == V_SgTypeVoid)
-		/*else if (rose::stringDuplicate(type->sage_class_name()) == "SgTypeVoid")
+		/*else if (Rose::stringDuplicate(type->sage_class_name()) == "SgTypeVoid")
 		{
 			printf("found a void\n");
 			//void type is only viable for a pointer.  foo(void) will just become foo()
