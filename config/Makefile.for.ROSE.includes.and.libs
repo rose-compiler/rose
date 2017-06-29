@@ -501,6 +501,7 @@ ROSE_LIBS = $(abspath $(top_builddir)/src/librose.la) -lm  $(JAVA_JVM_LINK) \
   $(ROSE_YAML_LIBS_WITH_PATH) $(ROSE_LIBMAGIC_LIBS_WITH_PATH) $(ROSE_READLINE_LIBS_WITH_PATH) \
   $(ROSE_DLIB_LIBS_WITH_PATH)
 
+#========================================================================================================================
 # These are the "-R directory" switches that need to be passed to libtool running in link mode to make sure that ROSE
 # executables have rpath properties that point to the directories containing the libraries we're using. Do not add
 # system directories (or at least not at the front of this list) because that will cause the system-installed version of
@@ -560,6 +561,41 @@ show-rpaths:
 	@echo "ROSE_LIBS = $(ROSE_LIBS)"
 	@echo "ROSE_RPATHS = $(ROSE_RPATHS)"
 
+#========================================================================================================================
+# These are the installation prefixes of ROSE dependencies that should be distributed as part of a binary archive.
+# The ROSE_DEPENDENCY_ROOTS variable is constructed from a number of other "make" variables that normally come from
+# optional exported shell variables.  Various build systems used by the ROSE development team places each dependency
+# in its own installation prefix and exports a %_ROOT variable where % is the name of the name of the dependency.
+# We need to be careful not to distribute things whose roots are /usr or /usr/local for obvious reasons.
+#
+# We cannot distribute Oracle Java because it requires the user to agree to a license. The user must download it themselves.
+#
+# We cannot distribute CXX_ROOT or C_ROOT because it might be pointing to an Intel compiler, which needs to be purchased
+# by the user.
+#
+# We cannot distribute Yices because it requires the user to agree to a license. The user must download it themselves.
+
+ROSE_DEPENDENCY_BINARY_DISTRIB =		\
+	$(filter-out / /usr /usr/local,		\
+	    $(BOOST_ROOT)			\
+	    $(CMAKE_ROOT)			\
+	    $(DLIB_ROOT)			\
+	    $(GNU_COMPILERS_ROOT)		\
+	    $(LIBBZ2_ROOT)			\
+	    $(LIBGCRYPT_ROOT)			\
+	    $(LIBGPG_ERROR_ROOT)		\
+	    $(LIBGRAPHICSMAGICK_ROOT)		\
+	    $(LIBJPEG_ROOT)			\
+	    $(LIBLCMS_ROOT)			\
+	    $(LIBLZMA_ROOT)			\
+	    $(LIBPNG_ROOT)			\
+	    $(LIBTIFF_ROOT)			\
+	    $(PYTHON_ROOT)			\
+	    $(SPOT_ROOT)			\
+	    $(WT_ROOT)				\
+	    $(YAML_CPP_ROOT)			\
+	    $(ZLIB_ROOT)			\
+	)
 
 # DQ (3/8/2009): This fails when I try to include it (fails in rose/src/testSharedRoseLib).
 #  $(INTEL_PIN_LIB_PATHS) $(INTEL_PIN_LIBS)

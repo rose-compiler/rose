@@ -110,6 +110,20 @@ install-rose-library: install-data-local
 	$(MAKE) -C $(top_builddir)/src install
 	cp rosePublicConfig.h $(pkgincludedir)
 
+# Build a binary release of the ROSE library.  This assumes that you're running in the RMC-2 environment because it uses
+# some "make" variables that are initialized from shell exported variables. Other build environments will need other targets.
+#
+# It installs whatever is in the ROSE installation prefix, but at least the ROSE library and supporting header files.
+rose-installer-rmc2: install-rose-library
+	$(top_srcdir)/scripts/mkinstaller			\
+		--create="$@"					\
+		--cc="$(C_VENDOR) $(C_VERSION)"			\
+		--cxx="$(CXX_VENDOR) $(CXX_VERSION)"		\
+		--os="$(RMC_OS_NAME)"				\
+		--prjnam=ROSE					\
+		--prjver=$(PACKAGE_VERSION)			\
+		$(prefix)/* $(ROSE_DEPENDENCY_BINARY_DISTRIB)/*
+
 
 # DQ (10/2/10): Of course this will over-rise the "make install" rule, so we can't 
 # allow exactly this (what was I thinking?). Commented out until I get a better fix.
