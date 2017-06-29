@@ -3,7 +3,12 @@
 
 #include <stdbool.h>
 
-enum Node_Kinds {
+///////////////////////////////////////////////////////////////////////////////
+// NOTE: All of the enums below that duplicate ASIS enumerated types MUST match
+// the ASIS types exactly, because we do unchecked conversions between them.
+///////////////////////////////////////////////////////////////////////////////
+
+enum Node_Kinds { // Not an ASIS type
   Not_A_Node,
   A_Context_Node,
   A_Unit_Node,
@@ -830,7 +835,7 @@ enum Attribute_Kinds {
 };
 
 // For Element_Struct:
-enum Enclosing_Kinds {
+enum Enclosing_Kinds { // Not an ASIS type
   Not_Enclosing,
   Enclosing_Element,
   Enclosing_Unit 

@@ -642,16 +642,16 @@ package body Asis_Tool_2.Element is
    -- EXPORTED:
    ------------
    procedure Process_Element_Tree
-     (This        : in out Class;
-      Element     : in     Asis.Element;
-      Graph       : in     Dot.Graphs.Access_Class;
-      A_Node_List : in     A_Nodes.Access_Class)
+     (This    : in out Class;
+      Element : in     Asis.Element;
+      Graph   : in     Dot.Graphs.Access_Class;
+      A_Nodes : in     Standard.A_Nodes.Access_Class)
    is
       Process_Control : Asis.Traverse_Control := Asis.Continue;
    begin
       This.The_Element := Element;
       This.Graph := Graph;
-      This.A_Node_List := A_Node_List;
+      This.A_Nodes := A_Nodes;
       Traverse_Element
         (Element => Element,
          Control => Process_Control,

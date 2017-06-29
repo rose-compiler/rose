@@ -9,10 +9,10 @@ package Asis_Tool_2.Element is
 
    -- Process an element and all of its components:
    procedure Process_Element_Tree
-     (This        : in out Class;
-      Element     : in     Asis.Element;
-      Graph       : in     Dot.Graphs.Access_Class;
-      A_Node_List : in     A_Nodes.Access_Class);
+     (This    : in out Class;
+      Element : in     Asis.Element;
+      Graph   : in     Dot.Graphs.Access_Class;
+      A_Nodes : in     Standard.A_Nodes.Access_Class);
 
 private
 
@@ -25,7 +25,7 @@ private
          Graph         : Dot.Graphs.Access_Class; -- Initialized
          Current_Node  : Dot.Node_Stmt.Class; -- Initialized
          Current_Label : Dot.HTML_Like_Labels.Class; -- Initialized
-         A_Node_List   : A_Nodes.Access_Class; -- Initialized
+         A_Nodes       : Standard.A_Nodes.Access_Class; -- Initialized
       end record;
 
    -- Add this info to the label, and print it if trace is on:

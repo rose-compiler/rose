@@ -7,13 +7,14 @@ with Asis.Iterator;
 -- GNAT-specific:
 with Asis.Set_Get;
 
+with a_nodes_h.Support;
 with Asis_Tool_2.Element;
 with Dot;
 
 package body Asis_Tool_2.Unit is
 
-   package Acu renames Asis.Compilation_Units;
-
+   package ACU renames Asis.Compilation_Units;
+   package anhS renames a_nodes_h.Support;
 
    procedure Process_Context_Clauses
      (This            : in out Class;
@@ -30,9 +31,9 @@ package body Asis_Tool_2.Unit is
             Tool_Element : Element.Class; -- Initialized
          begin
             Tool_Element.Process_Element_Tree
-              (Element     => Context_Clause,
-               Graph       => This.Graph,
-               A_Node_List => This.A_Node_List);
+              (Element => Context_Clause,
+               Graph   => This.Graph,
+               A_Nodes => This.A_Nodes);
          end;
       end loop;
    end Process_Context_Clauses;
@@ -54,9 +55,9 @@ package body Asis_Tool_2.Unit is
             Include_Pragmas => Include_Pragmas);
       end if;
       Tool_Element.Process_Element_Tree
-        (Element     => Top_Element,
-         Graph       => This.Graph,
-         A_Node_List => This.A_Node_List);
+        (Element => Top_Element,
+         Graph   => This.Graph,
+         A_Nodes => This.A_Nodes);
    exception
       when X : others =>
          Print_Exception_Info (X);
@@ -114,24 +115,46 @@ package body Asis_Tool_2.Unit is
       Graph.Append_Stmt (new Dot.Node_Stmt.Class'(Node));
    end Add_To_Graph;
 
+   procedure Do_Node
+     (Asis_Unit : in Asis.Compilation_Unit;
+      A_Nodes   : in Standard.A_Nodes.Access_Class)
+   is
+      Unit : a_nodes_h.Unit_Struct :=
+        anhS.Unit_Struct_Default;
+      Node : a_nodes_h.Node_Struct :=
+        anhS.Node_Struct_Default;
+   begin
+      Unit.id := Interfaces.C.int(Asis.Set_Get.Get_Unit_Id (Asis_Unit));
+      Unit.kind := anhS.To_Unit_Kinds (ACU.Unit_Kind (Asis_Unit));
+      Unit.the_class := anhS.To_Unit_Classes (ACU.Unit_Class (Asis_Unit));
+      Unit.origin := anhS.To_Unit_Origins (ACU.Unit_Origin (Asis_Unit));
+      Unit.full_name := To_Chars_Ptr (ACU.Unit_Full_Name (Asis_Unit));
+      Unit.unique_name := To_Chars_Ptr (ACU.Unique_Name (Asis_Unit));
+      Unit.text_name := To_Chars_Ptr (ACU.Text_Name( Asis_Unit));
+      Unit.debug_image := To_Chars_Ptr (ACU.Debug_Image (Asis_Unit));
+
+      Node.kind := a_nodes_h.A_Unit_Node;
+      Node.the_union.unit := Unit;
+      A_Nodes.Push (Node);
+   end;
+
    ------------
    -- EXPORTED:
    ------------
    procedure Process
-     (This        : in out Class;
-      Asis_Unit   : in     Asis.Compilation_Unit;
-      Graph       : in     Dot.Graphs.Access_Class;
-      A_Node_List : in     A_Nodes.Access_Class)
+     (This      : in out Class;
+      Asis_Unit : in     Asis.Compilation_Unit;
+      Graph     : in     Dot.Graphs.Access_Class;
+      A_Nodes   : in     Standard.A_Nodes.Access_Class)
    is
+      Unit_Full_Name : constant Wide_String       := Acu.Unit_Full_Name (This.Asis_Unit);
+      Unit_Origin    : constant Asis.Unit_Origins := Acu.Unit_Origin (This.Asis_Unit);
    begin
       This.Asis_Unit := Asis_Unit;
       This.Graph := Graph;
-      This.A_Node_List := A_Node_List;
-      declare
-         Unit_Full_Name : constant Wide_String       := Acu.Unit_Full_Name (This.Asis_Unit);
-         Unit_Origin    : constant Asis.Unit_Origins := Acu.Unit_Origin (This.Asis_Unit);
-      begin
-         case Unit_Origin is
+      This.A_Nodes := A_Nodes;
+      Do_Node (Asis_Unit, A_Nodes);
+      case Unit_Origin is
          when Asis.An_Application_Unit =>
             Awti.New_Line;
             Awti.Put_Line
@@ -151,8 +174,7 @@ package body Asis_Tool_2.Unit is
             Trace_Put_Line ("Skipped " & Unit_Full_Name & " (implementation-defined unit)");
          when Asis.Not_An_Origin =>
             Trace_Put_Line ("Skipped " & Unit_Full_Name & " (non-existent unit)");
-         end case;
-      end;
+      end case;
    end Process;
 
 

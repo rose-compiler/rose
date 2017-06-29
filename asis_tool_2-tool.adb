@@ -13,10 +13,10 @@ package body Asis_Tool_2.Tool is
       Asis.Implementation.Initialize;
       This.Graph := Dot.Graphs.Create (Is_Digraph => True,
                                        Is_Strict  => False);
-      This.A_Node_List := new A_Nodes.Class;
+      This.A_Nodes := new A_Nodes.Class;
       -- TODO: use File_Name:
-      This.My_Context.Process (Graph       => This.Graph,
-                               A_Node_List => This.A_Node_List);
+      This.My_Context.Process (Graph   => This.Graph,
+                               A_Nodes => This.A_Nodes);
       Awti.New_Line;
       This.Graph.Write_File (File_Name);
       Asis.Implementation.Finalize;
@@ -29,7 +29,7 @@ package body Asis_Tool_2.Tool is
      (This      : in out Class)
       return a_nodes_h.Node_List_Ptr is
    begin
-      return This.A_Node_List.Get_Head;
+      return This.A_Nodes.Get_Head;
    end Get_Nodes;
 
 end Asis_Tool_2.Tool;

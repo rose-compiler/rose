@@ -24,7 +24,7 @@ private
       record
          My_Context  : Asis_Tool_2.Context.Class; -- Initialized
          Graph       : Dot.Graphs.Access_Class; -- Initialized
-         A_Node_List : A_Nodes.Access_Class; -- Initialized
+         A_Nodes     : Standard.A_Nodes.Access_Class; -- Initialized
       end record;
 
 end Asis_Tool_2.Tool;

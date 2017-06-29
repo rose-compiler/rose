@@ -14,13 +14,32 @@ with a_nodes_h.Support;
 
 package body Asis_Tool_2.Context is
 
+   procedure Do_Node
+     (Asis_Context : in Asis.Context;
+      A_Nodes      : in Standard.A_Nodes.Access_Class)
+   is
+      Context : a_nodes_h.Context_Struct :=
+        a_nodes_h.Support.Context_Struct_Default;
+      Node    : a_nodes_h.Node_Struct :=
+        a_nodes_h.Support.Node_Struct_Default;
+      use Asis.Ada_Environments;
+   begin
+      Context.name := To_Chars_Ptr (Name (Asis_Context));
+      Context.parameters := To_Chars_Ptr (Parameters (Asis_Context));
+      Context.debug_image := To_Chars_Ptr (Debug_Image (Asis_Context));
+
+      Node.kind := a_nodes_h.A_Context_Node;
+      Node.the_union.context := Context;
+      A_Nodes.Push (Node);
+   end;
+
    ------------
    -- EXPORTED:
    ------------
    procedure Process
-     (This        : in out Class;
-      Graph       : in     Dot.Graphs.Access_Class;
-      A_Node_List : in     A_Nodes.Access_Class)
+     (This    : in out Class;
+      Graph   : in     Dot.Graphs.Access_Class;
+      A_Nodes : in     Standard.A_Nodes.Access_Class)
    is
       Directory : constant String := GNAT.Directory_Operations.Get_Current_Dir;
       procedure Begin_Environment is begin
@@ -42,33 +61,20 @@ package body Asis_Tool_2.Context is
          This.Graph.Set_ID
            ("""" & To_String (Asis.Ada_Environments.Name (This.Asis_Context)) & """");
       end;
-      procedure Do_Node is
-         Context : a_nodes_h.Context_Struct :=
-           a_nodes_h.Support.Context_Struct_Default;
-         Node    : a_nodes_h.Node_Struct :=
-           a_nodes_h.Support.Node_Struct_Default;
-         use Asis.Ada_Environments;
-      begin
-         This.A_Node_List := A_Node_List;
-         Context.name := To_Chars_Ptr (Name (This.Asis_Context));
-         Context.parameters := To_Chars_Ptr (Parameters (This.Asis_Context));
-         Context.debug_image := To_Chars_Ptr (Debug_Image (This.Asis_Context));
-         Node.kind := a_nodes_h.A_Context_Node;
-         Node.the_union.context := a_nodes_h.Support.Context_Struct_Default;
-         This.A_Node_List.Push (Node);
-      end;
    begin
       Begin_Environment;
       Do_Graph;
-      Do_Node;
-      This.Process_Units;
+      Do_Node (This.Asis_Context, A_Nodes);
+      This.Process_Units (A_Nodes);
       End_Environment;
    end Process;
 
    -----------
    -- PRIVATE:
    -----------
-   procedure Process_Units (This : in out Class) is
+   procedure Process_Units
+     (This    : in out Class;
+      A_Nodes : in     Standard.A_Nodes.Access_Class) is
       use Asis.Exceptions;
       Asis_Units : Asis.Compilation_Unit_List :=
         Asis.Compilation_Units.Compilation_Units (This.Asis_Context);
@@ -78,9 +84,9 @@ package body Asis_Tool_2.Context is
             Tool_Unit : Asis_Tool_2.Unit.Class;
          begin
             Tool_Unit.Process
-              (Asis_Unit   => Asis_Unit,
-               Graph       => This.Graph,
-               A_Node_List => This.A_Node_List);
+              (Asis_Unit => Asis_Unit,
+               Graph     => This.Graph,
+               A_Nodes   => A_Nodes);
          end;
       end loop;
    exception
