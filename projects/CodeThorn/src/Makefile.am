@@ -101,7 +101,7 @@ codethorn_YFLAGS = -p ltl_ # yacc flags for LTL parser
 codethorn_CXXFLAGS = -fopenmp -Wall -O3 -march=native -ftree-vectorize
 codethorn_DEPENDENCIES=libspray.la
 #codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspot -lbdd -lspray
-codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray -lspot -lbdd
+codethorn_LDADD = -lspray -lspot -lbdd
 #codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray -lspot -lbdd -lz3
 codethorn_LDFLAGS = -L$(SPOT_PREFIX)/lib
 
@@ -583,7 +583,7 @@ RERS=$(patsubst %,Problem%.log, $(shell seq 6))
 rers: $(RERS)
 
 docs:
-	doxygen Doxyfile
+	cd "$(srcdir)" && doxygen
 
 viz: transitiongraph1.dot transitiongraph2.dot cfg.dot ast.dot
 	dot -Tps transitiongraph1.dot -oviz/transitiongraph1.ps
