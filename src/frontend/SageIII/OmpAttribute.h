@@ -108,6 +108,8 @@ namespace OmpSupport
     e_inbranch,
     e_notinbranch,
 
+    e_depend, // OpenMP 4.0 task clauses
+
     // Simple values for some clauses
 
     //4 values for default clause 
@@ -141,7 +143,7 @@ namespace OmpSupport
     e_reduction_logand,  // &&  
     e_reduction_logor,   // || 
 
-    // fortran operator
+    // Fortran operator
     e_reduction_and, // .and.
     e_reduction_or, // .or.
     e_reduction_eqv,   // fortran .eqv. 
@@ -185,6 +187,11 @@ namespace OmpSupport
     e_aligned,
     e_linear,
 
+    // task dependence type
+    e_depend_in, 
+    e_depend_out, 
+    e_depend_inout, 
+
     // not an OpenMP construct
     e_not_omp
 
@@ -219,6 +226,9 @@ namespace OmpSupport
 
   //! Check if an OpenMP construct is a reduction operator
   bool isReductionOperator(omp_construct_enum omp_type);
+
+  //! Check if an OpenMP construct is a dependence type for omp task depend 
+  bool isDependenceType(omp_construct_enum omp_type);
 
   class OmpAttribute;
   //! Some utility functions to manipulate OmpAttribute
@@ -327,6 +337,10 @@ namespace OmpSupport
       //!--------var list --------------
       //! Add a variable into a variable list of an OpenMP construct ,return the symbol of the variable added, if possible
       SgVariableSymbol* addVariable(omp_construct_enum targetConstruct, const std::string& varString, SgInitializedName* sgvar=NULL);
+
+      //! Add a variable ref expression to a clause: this is useful for  array reference expression. A single variable symbol is not sufficient 
+      SgVariableSymbol* addVariable(omp_construct_enum targetConstruct, SgExpression* varExp);
+
       //! Check if a variable list is associated with a construct
       bool hasVariableList(omp_construct_enum);
       //! Get the variable list associated with a construct
@@ -366,12 +380,26 @@ namespace OmpSupport
       // Reduction needs special handling 
       // since multiple ones with different operator types can co-exist within one pragma
       // We categories reduction clauses by their operator type and store variable lists for each of the reduction operator type, not with the reduction clause
-      // Add a new reduction clauses with the specified operator
+
+      // Add a new reduction clause with the specified operator
       void setReductionOperator(omp_construct_enum operatorx);
+
       //! Get reduction clauses for each operations,  reduction(op:kind)
       std::vector<omp_construct_enum> getReductionOperators();
+
       //! Check if a reduction operation exists
       bool hasReductionOperator(omp_construct_enum operatorx);
+      
+      //------------------------------------------
+      // Add a new clause with the specified operator
+      void setDependenceType(omp_construct_enum operatorx);
+
+      //! Get dependence clauses for each type,  depend(type:varlist)
+      std::vector<omp_construct_enum> getDependenceTypes();
+
+      //! Check if a depend type exists
+      bool hasDependenceType(omp_construct_enum operatorx);
+
 
       // map clause is similar to reduction clause, 
       //
@@ -471,7 +499,9 @@ namespace OmpSupport
       // Multiple reduction clauses, each has a different operator
       //value for reduction operation: + -, * & | etc
       std::vector<omp_construct_enum> reduction_operators;
-      //omp_construct_enum reduction_operator;
+
+      //! depend types: in, out, or inout
+      std::vector<omp_construct_enum> dependence_types;
 
       // Liao, 1/15/2013, map variant:
       // there could be multiple map clause with the same variant type: alloc, to, from , and tofrom.

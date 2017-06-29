@@ -120,6 +120,10 @@ proc_bind       { return cond_return ( PROC_BIND); }
 close           { return cond_return ( CLOSE ); }
 spread          { return cond_return ( SPREAD ); } /* master should already be recognized */
 
+depend          { return cond_return ( DEPEND ); } 
+in              { return cond_return ( IN ); } 
+out             { return cond_return ( OUT ); } 
+inout           { return cond_return ( INOUT ); } 
 
 read            { return cond_return ( READ ); }
 write           { return cond_return ( WRITE ); }
