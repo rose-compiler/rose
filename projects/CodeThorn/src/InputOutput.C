@@ -16,6 +16,13 @@ using namespace SPRAY;
 
 namespace CodeThorn {
 
+  bool InputOutput::isStdInIO() const { return op==STDIN_VAR; }
+  bool InputOutput::isStdOutIO() const { return op==STDOUT_VAR || op==STDOUT_CONST; }
+  bool InputOutput::isStdErrIO() const { return op==STDERR_VAR || op==STDERR_CONST; }
+  bool InputOutput::isFailedAssertIO() const { return op==FAILED_ASSERT; }
+  bool InputOutput::isVerificationError() const { return op==VERIFICATION_ERROR; }
+  bool InputOutput::isNonIO() const { return !(isStdInIO()||isStdOutIO()||isStdErrIO()); }
+  
 /*! 
   * \author Markus Schordan
   * \date 2012.

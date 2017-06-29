@@ -1,0 +1,5 @@
+#pragma omp parallel  if(1)
+#pragma omp sections  reduction(+ : sum) private(i)
+#pragma omp section 
+#pragma omp section 
+#pragma omp section 

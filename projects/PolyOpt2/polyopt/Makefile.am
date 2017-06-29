@@ -18,6 +18,7 @@ INCLUDES		=						\
 	-I$(POCC_INSTALL)/optimizers/install-vectorizer/include		\
 	-I$(POCC_INSTALL)/optimizers/install-parr/include		\
 	-I$(POCC_INSTALL)/optimizers/install-psimdkzer/include		\
+	-I$(POCC_INSTALL)/optimizers/install-ponos/include		\
 	-I$(POCC_INSTALL)/ir/install-scoplib/include			\
 	-I$(POCC_INSTALL)/ir/install-scoptools/include			\
 	-I$(POCC_INSTALL)/ir/install-past/include			\
@@ -38,6 +39,8 @@ INCLUDES		=						\
 	-I$(POCC_INSTALL)/math/install-polylib/include			\
 	-I$(POCC_INSTALL)/math/install-fm/include			\
 	-I$(POCC_INSTALL)/math/install-isl/include			\
+	-I$(POCC_INSTALL)/math/install-barvinok/include			\
+	-I$(POCC_INSTALL)/math/install-ntl-6.2.0/include			\
 	-I$(POCC_INSTALL)/math/external/install/include			\
 	-I$(top_srcdir)/polyopt/include					\
 	-I$(top_srcdir)/pocc/driver/pocc/include			\
@@ -48,6 +51,7 @@ INCLUDES		=						\
 	-I$(top_srcdir)/pocc/optimizers/install-vectorizer/include	\
 	-I$(top_srcdir)/pocc/optimizers/install-psimdkzer/include	\
 	-I$(top_srcdir)/pocc/optimizers/install-parr/include		\
+	-I$(top_srcdir)/pocc/optimizers/install-ponos/include		\
 	-I$(top_srcdir)/pocc/ir/install-scoplib/include			\
 	-I$(top_srcdir)/pocc/ir/install-scoptools/include		\
 	-I$(top_srcdir)/pocc/ir/install-past/include			\
@@ -69,6 +73,8 @@ INCLUDES		=						\
 	-I$(top_srcdir)/pocc/math/install-polylib/include		\
 	-I$(top_srcdir)/pocc/math/install-fm/include			\
 	-I$(top_srcdir)/pocc/math/install-isl/include			\
+	-I$(top_srcdir)/pocc/math/install-barvinok/include			\
+	-I$(top_srcdir)/pocc/math/install-ntl-6.2.0/include			\
 	$(ROSE_CPPFLAGS) $(BOOST_CPPFLAGS)
 
 #############################################################################
@@ -89,7 +95,8 @@ pkginclude_HEADERS 	=				\
 	include/polyopt/SageTools.hpp			\
 	include/polyopt/ScopExtractor.hpp		\
 	include/polyopt/ScopExtractorVisitor.hpp	\
-	include/polyopt/ScopParser.hpp
+	include/polyopt/ScopParser.hpp			\
+	include/polyopt/PolyOptISLRepresentation.hpp
 
 lib_LTLIBRARIES 	= libpolyopt.la
 
@@ -110,7 +117,8 @@ libpolyopt_la_SOURCES 	=			\
 	SageTools.cpp				\
 	ScopExtractor.cpp			\
 	ScopExtractorVisitor.cpp		\
-	ScopParser.cpp
+	ScopParser.cpp				\
+	PolyOptISLRepresentation.cpp
 
 libpolyopt_la_CPPFLAGS	=
 	-DHAVE_LIBPOCC_UTILS -DPOCC_ROOT_DIR=$(abs_top_srcdir)/pocc \

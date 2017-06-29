@@ -2731,6 +2731,14 @@ SgOmpReductionClause* SgOmpReductionClause::build_node_from_nonlist_children ( S
      return returnNode;
    }
 
+SgOmpDependClause* SgOmpDependClause::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct , SgExprListExp* variables , SgOmpClause::omp_dependence_type_enum operation )
+   {
+     SgOmpDependClause* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
 
 /* #line 2700 "../../../src/frontend/SageIII//Cxx_GrammarAtermNodeBuildFunctions.C" */
 

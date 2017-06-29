@@ -579,7 +579,7 @@ int AbstractValue::getIndexIntValue() const {
 }
 
 int AbstractValue::getIntValue() const { 
-  // PTR will be removed once all ptrs are adapted to getIndexIntValue
+  // TODO: PTR will be removed once all ptrs are adapted to getIndexIntValue
   if(valueType!=INTEGER && valueType!=PTR) {
     cerr << "AbstractValue: valueType="<<valueTypeToString()<<endl;
     throw CodeThorn::Exception("Error: AbstractValue::getIntValue operation failed.");

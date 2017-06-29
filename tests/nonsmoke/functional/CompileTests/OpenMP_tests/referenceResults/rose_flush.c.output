@@ -1,0 +1,4 @@
+#pragma omp parallel  if(a) num_threads(4)
+#pragma omp flush 
+#pragma omp flush (a,b)
+#pragma omp barrier 

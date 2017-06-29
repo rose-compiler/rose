@@ -444,7 +444,7 @@ namespace CodeThorn {
     void setAnalyzerToSolver8(EState* startEState, bool resetAnalyzerData);
 
     // first: list of new states (worklist), second: set of found existing states
-    typedef pair<EStateWorkList,EStateSet> SubSolverResultType;
+    typedef pair<EStateWorkList,std::set<const EState*> > SubSolverResultType;
     SubSolverResultType subSolver(const EState* currentEStatePtr);
 
     PropertyValueTable* loadAssertionsToReconstruct(string filePath);

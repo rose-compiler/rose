@@ -45,8 +45,8 @@ class UntypedConverter
 
    // Declaration statements
    //
-      static SgImplicitStatement*   convertSgUntypedImplicitDeclaration (SgUntypedImplicitDeclaration* ut_decl, SgScopeStatement* scope);
-      static SgVariableDeclaration* convertSgUntypedVariableDeclaration (SgUntypedVariableDeclaration* ut_decl, SgScopeStatement* scope);
+      SgImplicitStatement*   convertSgUntypedImplicitDeclaration (SgUntypedImplicitDeclaration* ut_decl, SgScopeStatement* scope);
+      SgVariableDeclaration* convertSgUntypedVariableDeclaration (SgUntypedVariableDeclaration* ut_decl, SgScopeStatement* scope);
 
    // Executable statements
    //

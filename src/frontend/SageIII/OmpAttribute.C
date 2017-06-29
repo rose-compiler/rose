@@ -335,6 +335,70 @@ namespace OmpSupport
     return this->dist_data_policies[array_symbol];  
   }
 
+   //! Add a variable ref expression to a clause: this is useful for  array reference expression. A single variable symbol is not sufficient 
+   SgVariableSymbol* OmpAttribute::addVariable(omp_construct_enum targetConstruct, SgExpression* varExp)
+   {
+    SgVariableSymbol* symbol = NULL;
+    string varString; 
+    ROSE_ASSERT (varExp);
+    varString=varExp->unparseToString();
+
+    //Special handling for reduction clauses
+    if (targetConstruct == e_reduction)
+    {
+      cerr<<"Fatal: cannot add variables into e_reduction, You have to specify e_reduction_operatorX instead!"<<endl;
+      assert(false);
+    } 
+    if (isReductionOperator(targetConstruct))
+    {
+      addClause(e_reduction);
+      setReductionOperator(targetConstruct);
+    }  
+
+    // Try to resolve the variable reference expression's symbol
+      //resolve the variable here
+    if (SgPntrArrRefExp * aref = isSgPntrArrRefExp(varExp))
+    {
+      SgExpression* lhs = NULL; 
+      while (aref)
+      {
+        lhs = aref-> get_lhs_operand_i();
+        aref=isSgPntrArrRefExp(lhs);
+      }
+      SgVarRefExp* vref= isSgVarRefExp(lhs);
+      ROSE_ASSERT (vref);
+      symbol = vref->get_symbol();
+    }
+    else if (SgVarRefExp* vref = isSgVarRefExp (varExp) )
+    {
+      symbol = vref->get_symbol();
+    }
+    else
+    {
+      // TODO: add other types of variable reference expressions 
+      cerr<<"OmpAttribute::addVariable() : unhandled expression type:"<<varExp->class_name() <<endl;
+      ROSE_ASSERT(false);
+    }
+
+    if (symbol == NULL)          
+    {
+      cerr<<"Error: OmpAttribute::addVariable() cannot find symbol for variable:"<<varString<<endl;
+      ROSE_ASSERT(symbol!= NULL);
+    }
+
+    //debug clause var_list
+    // if (targetConstruct== e_copyin) cout<<"debug: adding variable to copyin()"<<endl;
+    variable_lists[targetConstruct].push_back(make_pair(varString, varExp));
+    // maintain the var-clause map also
+    var_clauses[varString].push_back(targetConstruct);
+
+    // Don't forget this! But directive like threadprivate could have variable list also
+    if (isClause(targetConstruct)) 
+      addClause(targetConstruct);
+    return symbol;   
+
+   }
+   
   //! Insert a variable into a variable list for clause "targetConstruct", maintain the reversed variable-clause mapping also.
   SgVariableSymbol* OmpAttribute::addVariable(omp_construct_enum targetConstruct, const std::string& varString, SgInitializedName* sgvar/*=NULL*/)
   {
@@ -505,6 +569,7 @@ namespace OmpSupport
     return atomicity;
   }
 
+  //--------------------------------------------------------------- 
   // Reduction clause's operator, 
   // we store reduction clauses of the same operators into a single entity
   void OmpAttribute::setReductionOperator(omp_construct_enum operatorx)
@@ -525,6 +590,29 @@ namespace OmpSupport
   {
     return (find(reduction_operators.begin(), reduction_operators.end(),operatorx) != reduction_operators.end());
   }
+ //--------------------------------------------------------------- 
+  // depend clause's type
+  // we store depend clauses of the same type into a single entity
+  void OmpAttribute::setDependenceType(omp_construct_enum operatorx)
+  {
+    assert(isDependenceType(operatorx));
+    std::vector<omp_construct_enum>::iterator hit = 
+      find(dependence_types.begin(),dependence_types.end(), operatorx); 
+    if (hit == dependence_types.end())   
+      dependence_types.push_back(operatorx);
+  }
+  // 
+  std::vector<omp_construct_enum> OmpAttribute::getDependenceTypes()
+  {
+    return dependence_types;
+  }
+
+  bool OmpAttribute::hasDependenceType(omp_construct_enum operatorx)
+  {
+    return (find(dependence_types.begin(), dependence_types.end(), operatorx) != dependence_types.end());
+  }
+
+  //--------------------------------------------------------------- 
   // Map clause's variant, alloc, to, from, tofrom 
   // we store map clauses of the same variants into a single entity
   void OmpAttribute::setMapVariant(omp_construct_enum operatorx)
@@ -535,7 +623,7 @@ namespace OmpSupport
     if (hit == map_variants.end())   
       map_variants.push_back(operatorx);
   }
-  // 
+
   std::vector<omp_construct_enum> OmpAttribute::getMapVariants()
   {
     return map_variants;
@@ -730,6 +818,11 @@ namespace OmpSupport
 
       case e_inbranch: result = "inbranch"; break;
       case e_notinbranch:   result = "notinbranch";   break;
+
+      case e_depend:       result = "depend";   break;
+      case e_depend_in:    result = "int";   break;
+      case e_depend_out:   result = "out";   break;
+      case e_depend_inout: result = "inout";   break;
 
       case e_not_omp: result = "not_omp"; break;
       default: 
@@ -1074,6 +1167,8 @@ namespace OmpSupport
 
       case e_inbranch:
       case e_notinbranch:
+
+      case e_depend:
         result = true; 
         break;
       default:
@@ -1109,6 +1204,24 @@ namespace OmpSupport
     }
     return result;
   }
+
+  bool isDependenceType(omp_construct_enum omp_type)
+  {
+    bool result = false;
+    switch (omp_type)
+    {
+      case e_depend_in:
+      case e_depend_out:
+      case e_depend_inout:
+       result = true;
+        break;
+      default:
+        result = false;
+        break;
+    }
+    return result;
+  }
+
 
   bool  OmpAttribute::isMapVariant(omp_construct_enum omp_type)
   {
@@ -1279,6 +1392,8 @@ namespace OmpSupport
           result += varListString + ")";
         }  
       } 
+//      else if  (omp_type == e_depend)
+//      {       }  
       // schedule(kind, exp)
       else if (omp_type == e_schedule)
       { 

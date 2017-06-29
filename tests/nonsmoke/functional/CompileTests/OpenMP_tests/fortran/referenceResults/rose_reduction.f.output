@@ -1,0 +1,4 @@
+!$omp parallel 
+!$omp do  reduction(+ : sum1)
+!$omp end do 
+!$omp end parallel 

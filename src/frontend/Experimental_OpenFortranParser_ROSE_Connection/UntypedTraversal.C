@@ -72,13 +72,13 @@ UntypedTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute curre
    else if (isSgUntypedVariableDeclaration(n) != NULL)
       {
          SgUntypedVariableDeclaration* ut_decl = dynamic_cast<SgUntypedVariableDeclaration*>(n);
-         UntypedConverter::convertSgUntypedVariableDeclaration(ut_decl, currentScope);
+         pConverter->convertSgUntypedVariableDeclaration(ut_decl, currentScope);
       }
 
    else if (isSgUntypedImplicitDeclaration(n) != NULL)
       {
          SgUntypedImplicitDeclaration* ut_decl = dynamic_cast<SgUntypedImplicitDeclaration*>(n);
-         UntypedConverter::convertSgUntypedImplicitDeclaration(ut_decl, currentScope);
+         pConverter->convertSgUntypedImplicitDeclaration(ut_decl, currentScope);
       }
 
    else

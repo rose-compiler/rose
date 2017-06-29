@@ -1,0 +1,5 @@
+#pragma omp parallel 
+#pragma omp single 
+//#pragma omp task depend(out:i) firstprivate(i) // wrong, must dep on a[i] to have distinct dep pairs.
+#pragma omp task  depend(out : a[i]) firstprivate(i)
+#pragma omp task  depend(in : a[i]) firstprivate(i)

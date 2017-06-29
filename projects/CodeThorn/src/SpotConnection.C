@@ -4,6 +4,12 @@
 using namespace CodeThorn;
 using namespace std;
 
+SpotConnection::SpotConnection() {};
+
+//constructors with automatic initialization
+SpotConnection::SpotConnection(std::string ltl_formulae_file) { init(ltl_formulae_file); }
+SpotConnection::SpotConnection(std::list<std::string> ltl_formulae) { init(ltl_formulae); }
+
 void SpotConnection::init(std::string ltl_formulae_file) {
   //open text file that contains the properties
   ifstream ltl_input(ltl_formulae_file.c_str());
@@ -11,6 +17,9 @@ void SpotConnection::init(std::string ltl_formulae_file) {
     ltlResults = new PropertyValueTable();
     //load the containing formulae
     loadFormulae(ltl_input);  //load the formulae into class member "ltlResults"
+  } else {
+    cerr<<"Error: could not open file "<<ltl_formulae_file<<endl;
+    exit(1);
   }
 }
 
@@ -27,16 +36,18 @@ PropertyValueTable* SpotConnection::getLtlResults() {
   if (ltlResults) {
     return ltlResults; 
   } else {
-    cout<< "ERROR: LTL results requested even though the SpotConnection has not been initialized yet." << endl;
+    cerr<< "ERROR: LTL results requested even though the SpotConnection has not been initialized yet." << endl;
     assert(0);
   }
 }
 
 void SpotConnection::resetLtlResults() { 
+  ROSE_ASSERT(ltlResults);
   ltlResults->init(ltlResults->size()); 
 }
 
 void SpotConnection::resetLtlResults(int property) { 
+  ROSE_ASSERT(ltlResults);
   ltlResults->setPropertyValue(property, PROPERTY_VALUE_UNKNOWN);
   ltlResults->setCounterexample(property, "");
 }
@@ -145,10 +156,11 @@ void SpotConnection::checkAndUpdateResults(LtlProperty property, SpotTgba* ct_tg
 void SpotConnection::checkLtlProperties(TransitionGraph& stg,
 						std::set<int> inVals, std::set<int> outVals, bool withCounterexample, bool spuriousNoAnswers) {
   if (stg.size() == 0 && !modeLTLDriven) {
-    cout << "STATUS: the transition system used as a model is empty, LTL behavior could not be checked." << endl;
+    cout << "STATUS: the transition system used as a model is empty, LTL behavior cannot be checked." << endl;
     return;
   }
   if (!stg.isPrecise() && !stg.isComplete()) {
+    cout << "STATUS: neither falsification nor verification possible (STG is not precise and not complete)." << endl;
     return;  //neither falsification nor verification works
   } else {  //prepare the analysis
     //determine largest input Value, then merge input and output alphabet
@@ -163,6 +175,7 @@ void SpotConnection::checkLtlProperties(TransitionGraph& stg,
     //create a tgba from CodeThorn's STG model
     SpotTgba* ct_tgba = new SpotTgba(stg, *sap, dict, inVals, outVals);
     std::string* pCounterExample; 
+    ROSE_ASSERT(ltlResults);
     std::list<int>* yetToEvaluate = ltlResults->getPropertyNumbers(PROPERTY_VALUE_UNKNOWN);
     for (std::list<int>::iterator i = yetToEvaluate->begin(); i != yetToEvaluate->end(); ++i) {
       if (checkFormula(ct_tgba, ltlResults->getFormula(*i), ct_tgba->get_dict(), &pCounterExample)) {  //SPOT returns that the formula could be verified
