@@ -10,15 +10,6 @@ with Types;
 
 package body Asis_Tool_2.Element is
 
---     function Node_Id_Image
---       (Element : in Asis.Element)
---        return String
---     is
---        Leading_Space_Image : constant String := Asis.Set_Get.Node(Element)'Image;
---     begin
---        return "element_" & Leading_Space_Image (2 .. Leading_Space_Image'Last);
---     end Node_Id_Image;
-
    -- Return the name image for declarations:
    function Name
      (Element : in Asis.Element)
@@ -553,23 +544,26 @@ package body Asis_Tool_2.Element is
          New_Node     : Dot.Node_Stmt.Class; -- Initialized
          New_Label    : Dot.HTML_Like_Labels.Class; -- Initialized
          Edge_Stmt    : Dot.Edges.Stmts.Class; -- Initialized
+
          procedure Start_Node is begin
-            State.Current_Node := New_Node;
-            State.Current_Node.Node_ID.ID := Element_Id;
-            State.Current_Label := New_Label;
+            State.Current_Dot_Node := New_Node;
+            State.Current_Dot_Node.Node_ID.ID := Element_Id;
+            State.Current_Dot_Label := New_Label;
             State.Add_To_Label ("ID", Node_Id_Image (Element));
             State.Add_To_Label ("Source", Source_Location_Image (Element));
          end Start_Node;
+
          procedure Finish_Node is begin
-            State.Current_Node.Add_Label (State.Current_Label);
-            State.Graph.Append_Stmt (new Dot.Node_Stmt.Class'(State.Current_Node));
+            State.Current_Dot_Node.Add_Label (State.Current_Dot_Label);
+            State.Outputs.Graph.Append_Stmt (new Dot.Node_Stmt.Class'(State.Current_Dot_Node));
          State.Text.End_Line;
          State.Text.Indent;
          end Finish_Node;
+
          procedure Add_Enclosing_Edge is begin
             Edge_Stmt.LHS.Node_Id.ID := Get_Enclosing_ID (Element);
             Edge_Stmt.RHS.Node_Id.ID := Element_Id;
-            State.Graph.Append_Stmt (new Dot.Edges.Stmts.Class'(Edge_Stmt));
+            State.Outputs.Graph.Append_Stmt (new Dot.Edges.Stmts.Class'(Edge_Stmt));
          end Add_Enclosing_Edge;
       begin
          Add_Enclosing_Edge;
@@ -644,14 +638,17 @@ package body Asis_Tool_2.Element is
    procedure Process_Element_Tree
      (This    : in out Class;
       Element : in     Asis.Element;
-      Graph   : in     Dot.Graphs.Access_Class;
-      A_Nodes : in     Standard.A_Nodes.Access_Class)
+      Outputs : in     Output_Accesses_Record)
    is
       Process_Control : Asis.Traverse_Control := Asis.Continue;
    begin
       This.The_Element := Element;
-      This.Graph := Graph;
-      This.A_Nodes := A_Nodes;
+      -- I like to just pass Outputs through and not store it in the object,
+      -- since it is all pointers and we doesn't need to store their values
+      -- between calls to Process_Element_Tree. Outputs has to go into
+      -- State_Information in the Traverse_Element instatiation, though,
+      -- so we'll put it in the object and pass that:
+      This.Outputs := Outputs;
       Traverse_Element
         (Element => Element,
          Control => Process_Control,
@@ -672,7 +669,7 @@ package body Asis_Tool_2.Element is
 --        This.Current_Node.Attr_List.Add_Assign_To_First_Attr
 --          (Name  => Name,
 --           Value => Value);
-      This.Current_Label.Add_Eq_Row(L => Name, R => Value);
+      This.Current_Dot_Label.Add_Eq_Row(L => Name, R => Value);
    end;
 
    -----------

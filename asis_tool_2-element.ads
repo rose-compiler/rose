@@ -11,8 +11,7 @@ package Asis_Tool_2.Element is
    procedure Process_Element_Tree
      (This    : in out Class;
       Element : in     Asis.Element;
-      Graph   : in     Dot.Graphs.Access_Class;
-      A_Nodes : in     Standard.A_Nodes.Access_Class);
+      Outputs : in     Output_Accesses_Record);
 
 private
 
@@ -20,12 +19,11 @@ private
    -- want limited state information:
    type Class is tagged -- Initialized
       record
-         The_Element   : Asis.Element; -- Initialized
-         Text          : Indented_Text.Class; -- Initialized
-         Graph         : Dot.Graphs.Access_Class; -- Initialized
-         Current_Node  : Dot.Node_Stmt.Class; -- Initialized
-         Current_Label : Dot.HTML_Like_Labels.Class; -- Initialized
-         A_Nodes       : Standard.A_Nodes.Access_Class; -- Initialized
+         The_Element       : Asis.Element; -- Initialized
+         Text              : Indented_Text.Class; -- Initialized
+         Current_Dot_Node  : Dot.Node_Stmt.Class; -- Initialized
+         Current_Dot_Label : Dot.HTML_Like_Labels.Class; -- Initialized
+         Outputs           : Output_Accesses_Record; -- Initialized
       end record;
 
    -- Add this info to the label, and print it if trace is on:

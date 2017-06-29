@@ -17,8 +17,8 @@ package body Asis_Tool_2.Unit is
    package anhS renames a_nodes_h.Support;
 
    procedure Process_Context_Clauses
-     (This            : in out Class;
-      Asis_Unit       : in Asis.Compilation_Unit;
+     (Asis_Unit       : in Asis.Compilation_Unit;
+      Outputs         : in Output_Accesses_Record;
       Include_Pragmas : in Boolean := True)
    is
       Context_Clauses : constant Asis.Element_List :=
@@ -32,8 +32,7 @@ package body Asis_Tool_2.Unit is
          begin
             Tool_Element.Process_Element_Tree
               (Element => Context_Clause,
-               Graph   => This.Graph,
-               A_Nodes => This.A_Nodes);
+               Outputs => Outputs);
          end;
       end loop;
    end Process_Context_Clauses;
@@ -41,29 +40,30 @@ package body Asis_Tool_2.Unit is
 
    -- Process all the elements in the compilation unit:
    procedure Process_Element_Trees
-     (This               : in out Class;
+     (Asis_Unit          : in     Asis.Compilation_Unit;
+      Outputs            : in     Output_Accesses_Record;
       Do_Context_Clauses : in     Boolean := True;
       Include_Pragmas    : in     Boolean := True)
    is
-      Top_Element  : Asis.Element := Asis.Elements.Unit_Declaration (This.Asis_Unit);
+      Top_Element_Asis  : Asis.Element := Asis.Elements.Unit_Declaration (Asis_Unit);
       Tool_Element : Element.Class; -- Initialized
       use Ada.Wide_Text_IO;
    begin
       if Do_Context_Clauses then
-         This.Process_Context_Clauses
-           (Asis_Unit       => This.Asis_Unit,
+         Process_Context_Clauses
+           (Asis_Unit       => Asis_Unit,
+            Outputs         => Outputs,
             Include_Pragmas => Include_Pragmas);
       end if;
       Tool_Element.Process_Element_Tree
-        (Element => Top_Element,
-         Graph   => This.Graph,
-         A_Nodes => This.A_Nodes);
+        (Element => Top_Element_Asis,
+         Outputs => Outputs);
    exception
       when X : others =>
          Print_Exception_Info (X);
          Put_Line
            ("EXCEPTION when processing unit " &
-              Acu.Unit_Full_Name (This.Asis_Unit));
+              Acu.Unit_Full_Name (Asis_Unit));
          raise;
    end Process_Element_Trees;
 
@@ -84,6 +84,7 @@ package body Asis_Tool_2.Unit is
             return Asis.Unit_Classes'Wide_Image(this);
       end case;
    end To_Wide_String;
+
 
    -- Create a node for this unit, add all the attributes, and append it to the
    -- graph:
@@ -115,7 +116,7 @@ package body Asis_Tool_2.Unit is
       Graph.Append_Stmt (new Dot.Node_Stmt.Class'(Node));
    end Add_To_Graph;
 
-   procedure Do_Node
+   procedure Create_And_Push_New_A_Node
      (Asis_Unit : in Asis.Compilation_Unit;
       A_Nodes   : in Standard.A_Nodes.Access_Class)
    is
@@ -144,30 +145,28 @@ package body Asis_Tool_2.Unit is
    procedure Process
      (This      : in out Class;
       Asis_Unit : in     Asis.Compilation_Unit;
-      Graph     : in     Dot.Graphs.Access_Class;
-      A_Nodes   : in     Standard.A_Nodes.Access_Class)
+      Outputs   : in     Output_Accesses_Record)
    is
-      Unit_Full_Name : constant Wide_String       := Acu.Unit_Full_Name (This.Asis_Unit);
-      Unit_Origin    : constant Asis.Unit_Origins := Acu.Unit_Origin (This.Asis_Unit);
+      Unit_Origin    : constant Asis.Unit_Origins := Acu.Unit_Origin (Asis_Unit);
+      Unit_Full_Name : constant Wide_String       := Acu.Unit_Full_Name (Asis_Unit);
+      Unit_Class     : constant Asis.Unit_Classes := Acu.Unit_Class (Asis_Unit);
    begin
       This.Asis_Unit := Asis_Unit;
-      This.Graph := Graph;
-      This.A_Nodes := A_Nodes;
-      Do_Node (Asis_Unit, A_Nodes);
       case Unit_Origin is
          when Asis.An_Application_Unit =>
             Awti.New_Line;
             Awti.Put_Line
-              ("Processing " & Acu.Unit_Full_Name (This.Asis_Unit) & " " &
+              ("Processing " & Unit_Full_Name & " " &
                  To_Wide_String (Acu.Unit_Class (This.Asis_Unit)));
 
             -- Do actual work:
-            Add_To_Graph (This.Asis_Unit, This.Graph);
-            This.Process_Element_Trees;
+            Create_And_Push_New_A_Node (Asis_Unit, Outputs.A_Nodes);
+            Add_To_Graph (Asis_Unit, Outputs.Graph);
+            Process_Element_Trees (Asis_Unit, Outputs);
 
             Awti.Put_Line
               ("DONE processing " & Unit_Full_Name & " " &
-                 To_Wide_String (Acu.Unit_Class (This.Asis_Unit)));
+                 To_Wide_String (Unit_Class));
          when Asis.A_Predefined_Unit =>
             Trace_Put_Line ("Skipped " & Unit_Full_Name & " (predefined unit)");
          when Asis.An_Implementation_Unit =>

@@ -3,13 +3,19 @@ private with Ada.Wide_Text_IO;
 private with Asis;
 private with Interfaces.C.Strings;
 
-private with Dot;
+with A_Nodes;
+with Dot;
 
 -- Contains supporting declarations for child packages
 package Asis_Tool_2 is
 
    -- Controls behavior of Trace_Put:
    Trace_On : Boolean := False;
+
+   type Output_Accesses_Record is record -- Initialized
+      A_Nodes : Standard.A_Nodes.Access_Class; -- Initialized
+      Graph   : Dot.Graphs.Access_Class; -- Initialized
+   end record;
 
 private
 

@@ -1,20 +1,16 @@
-with Ada.Exceptions;
-with Ada.Wide_Text_IO;
-with Asis;
 with Asis.Ada_Environments;
 with Asis.Compilation_Units;
-with Asis.Exceptions; use ASIS.Exceptions;
+with Asis.Exceptions;
 with Asis.Errors;
 with Asis.Implementation;
 with GNAT.Directory_Operations;
-with Interfaces.C.Strings;
 
 with Asis_Tool_2.Unit;
 with a_nodes_h.Support;
 
 package body Asis_Tool_2.Context is
 
-   procedure Do_Node
+   procedure Create_And_Push_New_A_Node
      (Asis_Context : in Asis.Context;
       A_Nodes      : in Standard.A_Nodes.Access_Class)
    is
@@ -33,48 +29,9 @@ package body Asis_Tool_2.Context is
       A_Nodes.Push (Node);
    end;
 
-   ------------
-   -- EXPORTED:
-   ------------
-   procedure Process
-     (This    : in out Class;
-      Graph   : in     Dot.Graphs.Access_Class;
-      A_Nodes : in     Standard.A_Nodes.Access_Class)
-   is
-      Directory : constant String := GNAT.Directory_Operations.Get_Current_Dir;
-      procedure Begin_Environment is begin
-         -- This just names the Context.  It does not control what it processes:
-         Asis.Ada_Environments.Associate
-           (This.Asis_Context,
-            To_Wide_String (Directory));
-         Asis.Ada_Environments.Open (This.Asis_Context);
-         Trace_Put_Line ("Context info: " & Asis.Ada_Environments.Debug_Image
-                         (This.Asis_Context));
-      end;
-      procedure End_Environment is begin
-         Asis.Ada_Environments.Close (This.Asis_Context);
-         Asis.Ada_Environments.Dissociate (This.Asis_Context);
-      end;
-      -- Call Begin_Environment first:
-      procedure Do_Graph is begin
-         This.Graph := Graph;
-         This.Graph.Set_ID
-           ("""" & To_String (Asis.Ada_Environments.Name (This.Asis_Context)) & """");
-      end;
-   begin
-      Begin_Environment;
-      Do_Graph;
-      Do_Node (This.Asis_Context, A_Nodes);
-      This.Process_Units (A_Nodes);
-      End_Environment;
-   end Process;
-
-   -----------
-   -- PRIVATE:
-   -----------
    procedure Process_Units
      (This    : in out Class;
-      A_Nodes : in     Standard.A_Nodes.Access_Class) is
+      Outputs : in     Output_Accesses_Record) is
       use Asis.Exceptions;
       Asis_Units : Asis.Compilation_Unit_List :=
         Asis.Compilation_Units.Compilation_Units (This.Asis_Context);
@@ -83,10 +40,7 @@ package body Asis_Tool_2.Context is
          declare
             Tool_Unit : Asis_Tool_2.Unit.Class;
          begin
-            Tool_Unit.Process
-              (Asis_Unit => Asis_Unit,
-               Graph     => This.Graph,
-               A_Nodes   => A_Nodes);
+            Tool_Unit.Process (Asis_Unit, Outputs);
          end;
       end loop;
    exception
@@ -110,5 +64,36 @@ package body Asis_Tool_2.Context is
          Print_Exception_Info (X);
          Awti.Put_Line ("Continuing...");
    end Process_Units;
+
+   ------------
+   -- EXPORTED:
+   ------------
+   procedure Process
+     (This    : in out Class;
+      Outputs : in     Output_Accesses_Record)
+   is
+      Directory : constant String := GNAT.Directory_Operations.Get_Current_Dir;
+      procedure Begin_Environment is begin
+         -- This just names the Context.  It does not control what it processes:
+         Asis.Ada_Environments.Associate
+           (This.Asis_Context,
+            To_Wide_String (Directory));
+         Asis.Ada_Environments.Open (This.Asis_Context);
+         Trace_Put_Line ("Context info: " & Asis.Ada_Environments.Debug_Image
+                         (This.Asis_Context));
+      end;
+      procedure End_Environment is begin
+         Asis.Ada_Environments.Close (This.Asis_Context);
+         Asis.Ada_Environments.Dissociate (This.Asis_Context);
+      end;
+   begin
+      Begin_Environment;
+      -- Call Begin_Environment first:
+      Outputs.Graph.Set_ID
+        ("""" & To_String (Asis.Ada_Environments.Name (This.Asis_Context)) & """");
+      Create_And_Push_New_A_Node (This.Asis_Context, Outputs.A_Nodes);
+      Process_Units (This, Outputs);
+      End_Environment;
+   end Process;
 
 end Asis_Tool_2.Context;
