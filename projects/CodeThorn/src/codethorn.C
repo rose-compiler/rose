@@ -271,6 +271,7 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
     ("csv-spot-ltl", po::value< string >(), "output SPOT's LTL verification results into a CSV file [arg]")
     ("csv-stats-size-and-ltl",po::value< string >(),"output statistics regarding the final model size and results for LTL properties into a CSV file [arg]")
     ("check-ltl", po::value< string >(), "take a text file of LTL I/O formulae [arg] and check whether or not the analyzed program satisfies these formulae. Formulae should start with '('. Use \"csv-spot-ltl\" option to specify an output csv file for the results.")
+    ("single-property", po::value< int >(), "number (ID) of the property that is supposed to be analyzed. All other LTL properties will be ignored. ( Use \"check-ltl\" option to specify an input property file).")
     ("check-ltl-counterexamples", po::value< string >(), "report ltl counterexamples if and only if they are not spurious [=yes|no]")
     ("check-ltl-sol", po::value< string >(), "take a source code file and an LTL formulae+solutions file ([arg], see RERS downloads for examples). Display if the formulae are satisfied and if the expected solutions are correct.")
     ("counterexamples-with-output", po::value< string >(), "reported counterexamples for LTL or reachability properties also include output values [=yes|no]")
@@ -975,14 +976,16 @@ void analyzerSetup(Analyzer& analyzer, const po::variables_map& args, Sawyer::Me
 
   if (args.count("max-memory") || args.count("max-memory-forced-top") || args.count("max-time") || args.count("max-time-forced-top")) {
     bool notSupported=false;
-    if(args.count("solver")) {
-      int solver=args["solver"].as<int>();
-      if (solver != 12) {
-        notSupported = true;
+    if (!args.count("ltl-driven")) {
+      if(args.count("solver")) {
+	int solver=args["solver"].as<int>();
+	if (solver != 12) {
+	  notSupported = true;
+	}
+      } else {
+	cout<<"ERROR: solver 12 is currently not the default solver."<<endl;
+	notSupported=true;
       }
-    } else {
-      cout<<"ERROR: solver 12 is currently not the default solver."<<endl;
-      notSupported=true;
     }
     if(notSupported) {
       cout << "ERROR: options \"--max-memory\", \"--max-time\", \"--max-memory-forced-top\", and \"--max-time-forced-top\" currently require \"--solver=12\"." << endl;
@@ -1712,6 +1715,9 @@ int main( int argc, char * argv[] ) {
       PropertyValueTable* ltlResults=nullptr;
       SpotConnection spotConnection(ltl_filename);
       spotConnection.setModeLTLDriven(analyzer.getModeLTLDriven());
+      if (analyzer.getModeLTLDriven()) {
+	analyzer.setSpotConnection(&spotConnection);
+      }
 
       logger[TRACE] << "STATUS: generating LTL results"<<endl;
       bool spuriousNoAnswers = false;
@@ -1719,7 +1725,12 @@ int main( int argc, char * argv[] ) {
         spuriousNoAnswers = true;   
       }
       logger[TRACE] << "LTL: check properties. "<<endl;
-      spotConnection.checkLtlProperties( *(analyzer.getTransitionGraph()), ltlInAlphabet, ltlOutAlphabet, withCounterexample, spuriousNoAnswers);
+      if (args.count("single-property")) {
+	int propertyNum = args["single-property"].as<int>();
+	spotConnection.checkSingleProperty(propertyNum, *(analyzer.getTransitionGraph()), ltlInAlphabet, ltlOutAlphabet, withCounterexample, spuriousNoAnswers);
+      } else {
+	spotConnection.checkLtlProperties( *(analyzer.getTransitionGraph()), ltlInAlphabet, ltlOutAlphabet, withCounterexample, spuriousNoAnswers);
+      }
       spotLtlAnalysisTime=timer.getElapsedTimeInMilliSec();
       logger[TRACE] << "LTL: get results from spot connection. "<<endl;
       ltlResults = spotConnection.getLtlResults();
