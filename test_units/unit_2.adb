@@ -9,10 +9,13 @@ package body Unit_2 is
       Result : Integer := 0;
       Factor : constant Positive := 2;
    begin
-      accept Drop_Off_Work (Work_In : in Range_Type) do
-         Work := Work_In;
-      end Drop_Off_Work;
-      Result := Integer (Work) * Factor;
+      -- Never ends:
+      loop
+         accept Drop_Off_Work (Work_In : in Range_Type) do
+            Work := Work_In;
+         end Drop_Off_Work;
+         Result := Integer (Work) * Factor;
+      end loop;
    end Boring_Task_Type;
 
    Boring_Task : Boring_Task_Type;
