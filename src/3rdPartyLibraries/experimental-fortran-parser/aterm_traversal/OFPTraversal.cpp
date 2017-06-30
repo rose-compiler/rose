@@ -291,6 +291,7 @@ ATbool Traversal::traverse_MainProgram(ATerm term, FAST::MainProgram** program)
 
   ATerm term1, term2, term3, term4, term5;
   FAST::ProgramStmt* program_stmt;
+  FAST::ContainsStmt* contains_stmt;
   FAST::EndProgramStmt* end_program_stmt;
   
   FAST::Scope* local_scope = new FAST::Scope();
@@ -305,7 +306,7 @@ ATbool Traversal::traverse_MainProgram(ATerm term, FAST::MainProgram** program)
     if (traverse_SpecAndExecPart(term3, local_scope)) {
       // SpecAndExecPart
     } else return ATfalse;
-    if (traverse_OptInternalSubprogramPart(term4, local_scope)) {
+    if (traverse_OptInternalSubprogramPart(term4, &contains_stmt, local_scope)) {
       // OptInternalSubprogramPart
     } else return ATfalse;
     if (traverse_EndProgramStmt(term5, &end_program_stmt)) {
@@ -314,7 +315,7 @@ ATbool Traversal::traverse_MainProgram(ATerm term, FAST::MainProgram** program)
   } else return ATfalse;
 
   *program = new FAST::MainProgram(program_stmt, local_scope,
-                                   NULL/*contains*/, end_program_stmt, getLocation(term));
+                                   contains_stmt, end_program_stmt, getLocation(term));
 
   return ATtrue;
 }
@@ -705,10 +706,10 @@ ATbool Traversal::traverse_SpecStmt(ATerm term, FAST::Scope* scope)
   printf("... traverse_SpecStmt: %s\n", ATwriteToString(term));
 #endif
   
-  FAST::ImplicitStmt* implicit_stmt = NULL;
-
-  if (traverse_ImplicitStmt(term, &implicit_stmt)) {
-     scope->get_declaration_list().push_back(implicit_stmt);
+  if (traverse_ImplicitStmt(term, scope)) {
+     return ATtrue;
+  }
+  else if (traverse_TypeDeclarationStmt(term, scope)) {
      return ATtrue;
   }
 
@@ -758,11 +759,11 @@ class ImplicitSpecMatch
     ATbool operator() (ATerm term)
       {
          ATerm term1, term2;
-         FAST::IntrinsicTypeSpec type_spec;
+         FAST::TypeSpec* type_spec;
          std::vector<FAST::LetterSpec> letter_spec_list;
          LetterSpecMatch match_letter_spec(&letter_spec_list);
          if (ATmatch(term, "ImplicitSpec(<term>,<term>)", &term1, &term2)) {
-            if (pTraversal->traverse_IntrinsicType(term1, &type_spec)) {
+            if (pTraversal->traverse_DeclarationTypeSpec(term1, &type_spec)) {
             } else return ATfalse;
             if (traverse_List(term2, match_letter_spec)) {
             } else return ATfalse;
@@ -779,17 +780,85 @@ class ImplicitSpecMatch
 };
 
 //========================================================================================
-// IntrinsicType
+// AttrSpec
 //----------------------------------------------------------------------------------------
-ATbool Traversal::traverse_IntrinsicType(ATerm term, FAST::IntrinsicTypeSpec* type_spec)
+class AttrSpecMatch
+{
+ public:
+   AttrSpecMatch(std::vector<FAST::AttrSpec*>* list) : pAttrSpecList(list)
+      {
+      }
+    ATbool operator() (ATerm term)
+      {
+         FAST::AttrSpec* attr_spec = NULL;
+
+         if (ATmatch(term, "PUBLIC()")) {
+            attr_spec = new FAST::AttrSpec(FAST::AttrSpec::Public, getLocation(term));
+         } else return ATfalse;
+
+         pAttrSpecList->push_back(attr_spec);
+
+         return ATtrue;
+      }
+ protected:
+   std::vector<FAST::AttrSpec*>* pAttrSpecList;
+};
+
+//========================================================================================
+// EntityDecl
+//----------------------------------------------------------------------------------------
+class EntityDeclMatch
+{
+ public:
+   EntityDeclMatch(std::vector<FAST::EntityDecl*>* list) : pEntityDeclList(list)
+      {
+      }
+    ATbool operator() (ATerm term)
+      {
+         char* name;
+         FAST::EntityDecl* entity_decl = NULL;
+
+         if (ATmatch(term, "EntityDecl(<str>, no-list(), no-list(), no-char-length(), no-init())", &name)) {
+            entity_decl = new FAST::EntityDecl(name, getLocation(term));
+         } else return ATfalse;
+
+         pEntityDeclList->push_back(entity_decl);
+
+         return ATtrue;
+      }
+ protected:
+   std::vector<FAST::EntityDecl*>* pEntityDeclList;
+};
+
+//========================================================================================
+// DeclarationTypeSpec
+//----------------------------------------------------------------------------------------
+ATbool Traversal::traverse_DeclarationTypeSpec(ATerm term, FAST::TypeSpec** type_spec)
 {
 #if PRINT_ATERM_TRAVERSAL
-  printf("... traverse_IntrinsicType: %s\n", ATwriteToString(term));
+  printf("... traverse_DeclarationTypeSpec: %s\n", ATwriteToString(term));
+#endif
+  
+  if (traverse_IntrinsicTypeSpec(term, type_spec)) {
+     //MATCHED IntrinsicTypeSpec
+  }
+//TODO DerivedTypeSpec
+  else return ATfalse;
+
+  return ATtrue;
+}
+
+//========================================================================================
+// IntrinsicTypeSpec
+//----------------------------------------------------------------------------------------
+ATbool Traversal::traverse_IntrinsicTypeSpec(ATerm term, FAST::TypeSpec** type_spec)
+{
+#if PRINT_ATERM_TRAVERSAL
+  printf("... traverse_IntrinsicTypeSpec: %s\n", ATwriteToString(term));
 #endif
   
   if (ATmatch(term, "IntrinsicType(INTEGER())")) {
-     type_spec->setTypeEnum(FAST::TypeSpec::Integer);
-     type_spec->setPosInfo(getLocation(term));
+     *type_spec = new FAST::IntrinsicTypeSpec(FAST::TypeSpec::Integer, getLocation(term));
   }
   else return ATfalse;
 
@@ -799,31 +868,31 @@ ATbool Traversal::traverse_IntrinsicType(ATerm term, FAST::IntrinsicTypeSpec* ty
 //========================================================================================
 // ImplicitStmt
 //----------------------------------------------------------------------------------------
-ATbool Traversal::traverse_ImplicitStmt(ATerm term, FAST::ImplicitStmt** var_ImplicitStmt)
+ATbool Traversal::traverse_ImplicitStmt(ATerm term, FAST::Scope* scope)
 {
 #if PRINT_ATERM_TRAVERSAL
   printf("... traverse_ImplicitStmt: %s\n", ATwriteToString(term));
 #endif
   
-  ATerm term1, term2, term3;
+  ATerm term1, term2, term_eos;
   std::string label;
   std::string eos;
   std::vector<FAST::ImplicitSpec> spec_list;
   ImplicitSpecMatch match_spec(this, &spec_list);
   FAST::PosInfo pinfo;
 
-  *var_ImplicitStmt = NULL;
-  if (ATmatch(term, "ImplicitNoneStmt(<term>,<term>)", &term1,&term2)) {
+  FAST::ImplicitStmt* implicit_stmt = NULL;
+
+  if (ATmatch(term, "ImplicitNoneStmt(<term>,<term>)", &term1,&term_eos)) {
     if (traverse_OptLabel(term1, label)) {
       // MATCHED OptLabel
     } else return ATfalse;
-    if (traverse_eos(term2, eos)) {
+    if (traverse_eos(term_eos, eos)) {
       // MATCHED eos string
     } else return ATfalse;
-    *var_ImplicitStmt = new FAST::ImplicitStmt(label, spec_list, eos, getLocationFromEOS(term,term2));
   }
 
-  else if (ATmatch(term, "ImplicitStmt(<term>,<term>,<term>)", &term1,&term2,&term3)) {
+  else if (ATmatch(term, "ImplicitStmt(<term>,<term>,<term>)", &term1,&term2,&term_eos)) {
     std::vector<FAST::ImplicitSpec> spec_list;
     if (traverse_OptLabel(term1, label)) {
       // MATCHED OptLabel
@@ -831,12 +900,59 @@ ATbool Traversal::traverse_ImplicitStmt(ATerm term, FAST::ImplicitStmt** var_Imp
     if (traverse_List(term2, match_spec)) {
       // MATCHED ImplicitSpecList
     } else return ATfalse;
-    if (traverse_eos(term3, eos)) {
+    if (traverse_eos(term_eos, eos)) {
       // MATCHED eos string
     } else return ATfalse;
-    *var_ImplicitStmt = new FAST::ImplicitStmt(label, spec_list, eos, getLocationFromEOS(term,term3));
   }
   else return ATfalse;
+
+  implicit_stmt = new FAST::ImplicitStmt(label, spec_list, eos, getLocationFromEOS(term,term_eos));
+  scope->get_declaration_list().push_back(implicit_stmt);
+
+  return ATtrue;
+}
+
+//========================================================================================
+// TypeDeclarationStmt
+//----------------------------------------------------------------------------------------
+ATbool Traversal::traverse_TypeDeclarationStmt(ATerm term, FAST::Scope* scope)
+{
+#if PRINT_ATERM_TRAVERSAL
+  printf("... traverse_TypeDeclarationStmt: %s\n", ATwriteToString(term));
+#endif
+  
+  ATerm term1, term2, term3, term4, term_eos;
+  std::string label;
+  std::string eos;
+  FAST::TypeSpec* type_spec;
+  std::vector<FAST::AttrSpec*> attr_list;
+  std::vector<FAST::EntityDecl*> entity_decl_list;
+  AttrSpecMatch match_attrs(&attr_list);
+  EntityDeclMatch match_entity_decls(&entity_decl_list);
+
+  FAST::TypeDeclarationStmt* type_decl_stmt = NULL;
+
+  if (ATmatch(term, "TypeDeclarationStmt(<term>,<term>,<term>,<term>,<term>)", &term1,&term2,&term3,&term4,&term_eos)) {
+    if (traverse_OptLabel(term1, label)) {
+      // MATCHED OptLabel
+    } else return ATfalse;
+    if (traverse_DeclarationTypeSpec(term2, &type_spec)) {
+      // MATCHED DeclarationTypeSpec
+    } else return ATfalse;
+    if (traverse_OptCommaList(term3, match_attrs)) {
+      // MATCHED AttrSpecList
+    } else return ATfalse;
+    if (traverse_List(term4, match_entity_decls)) {
+      // MATCHED EntityDeclList
+    } else return ATfalse;
+    if (traverse_eos(term_eos, eos)) {
+      // MATCHED eos string
+    } else return ATfalse;
+  }
+  else return ATfalse;
+
+  type_decl_stmt = new FAST::TypeDeclarationStmt(label, type_spec, attr_list, entity_decl_list, eos, getLocationFromEOS(term,term_eos));
+  scope->get_declaration_list().push_back(type_decl_stmt);
 
   return ATtrue;
 }
@@ -844,19 +960,58 @@ ATbool Traversal::traverse_ImplicitStmt(ATerm term, FAST::ImplicitStmt** var_Imp
 //========================================================================================
 // OptInternalSubprogramPart
 //----------------------------------------------------------------------------------------
-ATbool Traversal::traverse_OptInternalSubprogramPart(ATerm term, FAST::Scope* scope)
+ATbool Traversal::traverse_OptInternalSubprogramPart(ATerm term, FAST::ContainsStmt** contains_stmt, FAST::Scope* scope)
 {
 #if PRINT_ATERM_TRAVERSAL
   printf("... traverse_OptInternalSubprogramPart: %s\n", ATwriteToString(term));
 #endif
   
+  ATerm term1, term2;
+
   if (ATmatch(term, "no-subprogram-part()")) {
      // MATCHED no-subprogram-part
-  } else if (false) {
-     //TODO match subprogram-part
-     // starts with contains-stmt
+  } else if (ATmatch(term, "SubprogramPart(<term>,<term>)", &term1,&term2)) {
+    if (traverse_ContainsStmt(term1, contains_stmt)) {
+      // MATCHED ContainsStmt
+    } else return ATfalse;
+#ifdef TODO
+    if (traverse_List(term4, match_internal_subprogram)) {
+      // MATCHED InternalSubprogram
+    } else return ATfalse;
+#endif
   } else return ATfalse;
 
   return ATtrue;
 }
+
+//========================================================================================
+// ContainsStmt
+//----------------------------------------------------------------------------------------
+ATbool Traversal::traverse_ContainsStmt(ATerm term, FAST::ContainsStmt** contains_stmt)
+{
+#if PRINT_ATERM_TRAVERSAL
+  printf("... traverse_ContainsStmt: %s\n", ATwriteToString(term));
+#endif
+  
+  ATerm term1, term_eos;
+  std::string label;
+  std::string eos;
+
+  *contains_stmt = NULL;
+
+  if (ATmatch(term, "ContainsStmt(<term>,<term>)", &term1,&term_eos)) {
+    if (traverse_OptLabel(term1, label)) {
+      // MATCHED OptLabel
+    } else return ATfalse;
+    if (traverse_eos(term_eos, eos)) {
+      // MATCHED eos string
+    } else return ATfalse;
+  }
+  else return ATfalse;
+
+  *contains_stmt = new FAST::ContainsStmt(label, eos, getLocationFromEOS(term,term_eos));
+
+  return ATtrue;
+}
+
 

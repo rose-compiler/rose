@@ -226,7 +226,16 @@ SgInitializedName*
 UntypedConverter::convertSgUntypedInitializedName (SgUntypedInitializedName* ut_name, SgType* sg_type, SgInitializer* sg_init)
 {
    SgInitializedName* sg_name = SageBuilder::buildInitializedName(ut_name->get_name(), sg_type, sg_init);
-   setSourcePositionUnknown(sg_name);
+// SageBuilder builds FileInfo for the variable declaration
+   if (sg_name->get_startOfConstruct() != NULL) {
+      delete sg_name->get_startOfConstruct();
+      sg_name->set_startOfConstruct(NULL);
+   }
+   if (sg_name->get_endOfConstruct() != NULL) {
+      delete sg_name->get_endOfConstruct();
+      sg_name->set_endOfConstruct(NULL);
+   }
+   setSourcePositionFrom(sg_name, ut_name);
 
 #if DEBUG_UNTYPED_CONVERTER
    printf("--- finished converting initialized name %s\n", ut_name->get_name().c_str());
@@ -430,13 +439,44 @@ UntypedConverter::convertSgUntypedVariableDeclaration (SgUntypedVariableDeclarat
    ROSE_ASSERT(scope->variantT() == V_SgBasicBlock || scope->variantT() == V_SgClassDefinition);
 
    SgUntypedType* ut_type = ut_decl->get_type();
+std::cout << "Will convert\n";
    SgType*        sg_type = convertSgUntypedType(ut_type, scope);
+std::cout << "Did convert\n";
 
    SgUntypedInitializedNamePtrList ut_vars = ut_decl->get_parameters()->get_name_list();
    SgUntypedInitializedNamePtrList::const_iterator i = ut_vars.begin();
 
 // Declare the first variable
+#if 1
    SgVariableDeclaration* sg_decl = SageBuilder::buildVariableDeclaration((*i)->get_name(), sg_type, /*sg_init*/NULL, scope);
+
+//RASMUSSEN - temporary debuggin information
+   printf("--- wantSourcePosition from node %p for node %p\n", ut_decl, sg_decl);
+   printf("--- to start: %p stop: %p\n", sg_decl->get_startOfConstruct(), sg_decl->get_endOfConstruct());
+
+// SageBuilder builds FileInfo for the variable declaration
+   if (sg_decl->get_startOfConstruct() != NULL) {
+      printf("--- isCompGen: %d\n", sg_decl->get_startOfConstruct()->isCompilerGenerated());
+      delete sg_decl->get_startOfConstruct();
+      sg_decl->set_startOfConstruct(NULL);
+   }
+   if (sg_decl->get_endOfConstruct() != NULL) {
+      delete sg_decl->get_endOfConstruct();
+      sg_decl->set_endOfConstruct(NULL);
+   }
+#endif
+
+#if 0
+   SgVariableDeclaration* sg_decl = new SgVariableDeclaration();
+   sg_decl->set_parent(scope);
+   sg_decl->set_definingDeclaration(sg_decl);
+   sg_decl->get_declarationModifier().get_accessModifier().setUndefined();
+   //        DeclAttributes.setDeclAttrSpecs();
+        DeclAttributes.setBaseType(astBaseTypeStack.front());
+#endif
+
+   setSourcePositionFrom(sg_decl, ut_decl);
+
 
 // And now the rest of the variables
    for (i = ut_vars.begin() + 1; i != ut_vars.end(); i++)
