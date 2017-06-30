@@ -13556,6 +13556,7 @@ Sg_File_Info::Sg_File_Info()
 // away from C style strings to C++ style strings.
 Sg_File_Info::Sg_File_Info ( const std::string & filename, int line, int col )
    : p_line(line), p_col(col),
+     p_classificationBitField(0),
      p_physical_file_id(NULL_FILE_ID),
      p_physical_line(0),
      p_source_sequence_number(0)
