@@ -1,7 +1,6 @@
 
 int main()
 {
-  int i;
   int n;
   int a;
   

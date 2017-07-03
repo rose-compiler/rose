@@ -2,7 +2,6 @@
 
 int main()
 {
-  int i;
   int n;
   
 #pragma scop
