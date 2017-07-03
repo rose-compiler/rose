@@ -44,7 +44,46 @@ void FASTtoSgConverter::convert_scope_lists(FAST::Scope* function_scope, SgUntyp
          sg_decl = new SgUntypedImplicitDeclaration(stmt->getLabel(), SgToken::FORTRAN_IMPLICIT_NONE);
       }
 
+      if (dynamic_cast<FAST::TypeDeclarationStmt*>(stmt)) {
+         std::string type_name = "INTEGER";
+         std::string char_length_string = "";
+         SgUntypedType::type_enum type_enum_id = SgUntypedType::e_int;
+         SgUntypedExpression* type_kind = NULL;
+         SgUntypedExpression* char_length_expression = NULL;
+         bool has_kind = false;
+         bool is_literal = false;
+         bool is_class = false;
+         bool is_intrinsic = true;
+         bool is_constant = false;
+         bool is_user_defined = false;
+         bool char_length_is_string = false;
+
+         FAST::TypeDeclarationStmt* decl = dynamic_cast<FAST::TypeDeclarationStmt*>(stmt);
+         std::vector<FAST::AttrSpec*>   & attrs = decl->getAttrSpecList();
+         std::vector<FAST::EntityDecl*> & vars  = decl->getEntityDeclList();
+
+         SgUntypedType* sg_type = new SgUntypedType(type_name, type_kind, has_kind, is_literal,
+                                                    is_class, is_intrinsic, is_constant, is_user_defined,
+                                                    char_length_expression, char_length_string, char_length_is_string,
+                                                    type_enum_id);
+
+         SgUntypedInitializedNameList* sg_vars = new SgUntypedInitializedNameList();
+         for (std::vector<FAST::EntityDecl*>::iterator it = vars.begin(); it != vars.end(); ++it) {
+            FAST::EntityDecl* entity_decl = *it;
+            SgUntypedInitializedName* sg_var = new SgUntypedInitializedName(sg_type, entity_decl->getName());
+            setSourcePosition(sg_var, entity_decl->getPosInfo());
+            sg_vars->get_name_list().push_back(sg_var);
+         }
+
+         sg_decl = new SgUntypedVariableDeclaration(decl->getLabel(),SgToken::FORTRAN_TYPE,sg_type,sg_vars);
+      }
+
       ROSE_ASSERT(sg_decl != NULL);
+#if DEBUG_FAST_CONVERTER
+  FAST::PosInfo pos = stmt->getPosInfo();
+  std::cout << "setSourcePosition: " << pos.getStartLine() << " " <<  pos.getStartCol();
+  std::cout <<                   " " << pos.getEndLine()   << " " <<  pos.getEndCol() << std::endl;
+#endif
       setSourcePosition(sg_decl, stmt->getPosInfo());
       sg_decls->get_decl_list().push_back(sg_decl);
    }
@@ -88,7 +127,7 @@ void FASTtoSgConverter::convert_MainProgram(FAST::MainProgram* main_program)
 
    FAST::ProgramStmt*    programStmt    = main_program->getProgramStmt();
    FAST::Scope*          programScope   = main_program->getScope();
-// FAST::ContainsStmt*   containsStmt   = main_program->getContainsStmt();
+   FAST::ContainsStmt*   containsStmt   = main_program->getContainsStmt();
    FAST::EndProgramStmt* endProgramStmt = main_program->getEndProgramStmt();
 
 // convert EndProgramStmt first as constructor arguments are readily available
@@ -96,6 +135,14 @@ void FASTtoSgConverter::convert_MainProgram(FAST::MainProgram* main_program)
    keyword = SgToken::FORTRAN_END_PROGRAM;
    name    = endProgramStmt->getName();
    SgUntypedNamedStatement* sg_end_stmt = new SgUntypedNamedStatement(label,keyword,name);
+
+   bool hasImplicitProgramStmt = false;
+   if (programStmt == NULL) {
+   // need to create an implicit ProgramStmt
+      hasImplicitProgramStmt = true;
+      FAST::PosInfo pos(1,1,1,1);
+      programStmt = new FAST::ProgramStmt("", "rose_fortran_main", "", pos);
+   }
 
 // convert ProgramStmt
    label   = programStmt->getLabel();
@@ -124,6 +171,10 @@ void FASTtoSgConverter::convert_MainProgram(FAST::MainProgram* main_program)
 // add program to the global scope
    get_scope()->get_function_list()->get_func_list().push_back(sg_program);
    ROSE_ASSERT(get_scope()->get_function_list()->get_func_list().size() > 0);
+
+   if (hasImplicitProgramStmt) {
+      delete programStmt;
+   }
 }
 
 void

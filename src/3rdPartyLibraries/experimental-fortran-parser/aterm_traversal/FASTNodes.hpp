@@ -120,6 +120,82 @@ class IntrinsicTypeSpec : public TypeSpec
    IntrinsicTypeSpec() : TypeSpec(TypeSpec::Unknown)
      {
      }
+
+   IntrinsicTypeSpec(TypeEnum type_id, PosInfo pos) : TypeSpec(type_id, pos)
+     {
+     }
+
+   //TODO kind, ...
+};
+
+/* Attribute Specifications
+ */
+class AttrSpec : public FASTNode
+{
+ public:
+   enum AttrEnum
+     {
+        Unknown = 0,
+        Public,
+        Private,
+        Allocatable,
+        Asynchronous,
+        // CODIMENSION [ coarray-spec ]
+        Codimension,
+        Contiguous,
+        // DIMENSION   (   array-spec )
+        Dimension,
+        External,
+        // INTENT      (  intent-spec )
+        IntentIn,
+        IntentOut,
+        IntentInOut,
+        Intent,
+        Intrinsic,
+        // language-binding-spec
+        Bind,
+        Optional,
+        Parameter,
+        Pointer,
+        Protected,
+        Save,
+        Target,
+        Value,
+        Volatile
+     };
+
+   AttrSpec(AttrEnum attr_id) : pAttrEnum(attr_id)
+     {
+     }
+
+   AttrSpec(AttrEnum attr_id, PosInfo pos) : FASTNode(pos), pAttrEnum(attr_id)
+     {
+     }
+
+   AttrEnum  getAttrEnum()                    {return pAttrEnum;}
+   void      setAttrEnum(AttrEnum attr_enum)  {pAttrEnum = attr_enum;}
+
+ protected:
+   AttrEnum pAttrEnum;
+};
+
+
+/* Variable entity declarations
+ */
+class EntityDecl : public FASTNode
+{
+ public:
+   EntityDecl(std::string name, PosInfo pos)
+      : FASTNode(pos), pName(name)
+     {
+     }
+
+   std::string & getName()                   {return pName;}
+   void          setName(std::string name)   {pName = name;}
+
+ protected:
+   std::string pName;
+   //TODO - arrayness, char-length, initialization
 };
 
 
@@ -176,6 +252,10 @@ class EndProgramStmt : public Statement
 
 class ContainsStmt : public Statement
 {
+ public:
+   ContainsStmt(std::string label, std::string eos, PosInfo pos) : Statement(label,eos,pos)
+     {
+     }
 };
 
 class UseStmt : public Statement
@@ -242,15 +322,18 @@ class LetterSpec : public FASTNode
 class ImplicitSpec : public FASTNode
 {
  public:
-   ImplicitSpec(TypeSpec spec, PosInfo pos) : FASTNode(pos), pTypeSpec(spec)
+   ImplicitSpec(TypeSpec* spec, PosInfo pos) : FASTNode(pos), pTypeSpec(spec)
      {
      }
 
-   std::vector<LetterSpec> & getLetterSpecList()             {return pLetterSpecList;}
-   void setLetterSpecList(std::vector<LetterSpec> list)      {pLetterSpecList = list;}
+   TypeSpec*  getTypeSpec()                              {return pTypeSpec;}
+   void       setTypeSpec(TypeSpec* spec)                {pTypeSpec = spec;}
+
+   std::vector<LetterSpec> & getLetterSpecList()         {return pLetterSpecList;}
+   void setLetterSpecList(std::vector<LetterSpec> list)  {pLetterSpecList = list;}
 
  protected:
-   TypeSpec pTypeSpec;
+   TypeSpec* pTypeSpec;  // polymorphic
    std::vector<LetterSpec> pLetterSpecList;
 };
 
@@ -269,6 +352,31 @@ class ImplicitStmt : public Statement
  protected:
    std::vector<ImplicitSpec> pImplicitSpecList;
 };
+
+class TypeDeclarationStmt : public Statement
+{
+ public:
+
+   TypeDeclarationStmt(std::string label, TypeSpec* type_spec, std::vector<AttrSpec*> attrs, std::vector<EntityDecl*> vars, std::string eos, PosInfo pos)
+      : Statement(label,eos,pos), pTypeSpec(type_spec), pAttrSpecList(attrs), pEntityDeclList(vars)
+     {
+     }
+
+   TypeSpec* getTypeSpec()                                {return pTypeSpec;}
+   void      setTypeSpec(TypeSpec* spec)                  {pTypeSpec = spec;}
+
+   std::vector<AttrSpec*> & getAttrSpecList()             {return pAttrSpecList;}
+   void setAttrSpecList(std::vector<AttrSpec*> list)      {pAttrSpecList = list;}
+
+   std::vector<EntityDecl*> & getEntityDeclList()         {return pEntityDeclList;}
+   void setEntityDeclList(std::vector<EntityDecl*> list)  {pEntityDeclList = list;}
+
+ protected:
+   TypeSpec*                pTypeSpec;
+   std::vector<AttrSpec*>   pAttrSpecList;
+   std::vector<EntityDecl*> pEntityDeclList;
+};
+
 
 /* Procedures
  */
