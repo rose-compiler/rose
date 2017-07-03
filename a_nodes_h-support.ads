@@ -5,18 +5,20 @@ package a_nodes_h.Support is
 
    package ICS renames Interfaces.C.Strings;
 
+   Default_Node_ID   : constant Node_ID := -1;
+   Default_chars_ptr : constant ICS. chars_ptr := ICS.Null_Ptr;
+
    -- Normally these records' fields would already have default values, but
    -- a_nodes_h.ads is generated from C, so they are here.
+   --
+   -- Order below is same as in a_nodes.h:
 
-   Context_Struct_Default : constant Context_Struct :=
+   Default_Context_Struct : constant Context_Struct :=
      (name        => ICS.Null_Ptr,
       parameters  => ICS.Null_Ptr,
       debug_image => ICS.Null_Ptr);
 
-   Default_Node_ID   : constant Node_ID := -1;
-   Default_chars_ptr : constant ICS. chars_ptr := ICS.Null_Ptr;
-
-   Unit_Struct_Default : constant Unit_Struct :=
+   Default_Unit_Struct : constant Unit_Struct :=
      (id          => Default_Node_ID,
       kind        => Not_A_Unit,
       the_class   => Not_A_Class,
@@ -26,31 +28,145 @@ package a_nodes_h.Support is
       text_name   => Default_chars_ptr,
       debug_image => Default_chars_ptr);
 
+   -- Element union component default structs go here
 
-   Element_Union_Default : constant Element_Union :=
+   Default_Element_ID   : constant Element_ID := Default_Node_ID;
+   Default_Element_List : constant Element_List := Null;
+   Default_Bool         : constant Extensions.bool := 0;
+
+   Default_Pragma_Struct : constant Pragma_Struct :=
+     (kind => Not_A_Pragma);
+
+   Default_Defining_Name_Struct : constant Defining_Name_Struct :=
+     (kind          => Not_A_Defining_Name,
+      name_image    => ICS.Null_Ptr,
+      operator_kind => Not_An_Operator);
+
+   Default_Declaration_Struct : constant Declaration_Struct :=
+     (kind               => Not_A_Declaration,
+      origin             => Not_A_Declaration_Origin,
+      mode               => Not_A_Mode,
+      subprogram_default => Not_A_Default,
+      trait              => Not_A_Trait);
+
+   Default_Definition_Struct : constant Definition_Struct :=
+     (kind => Not_A_Definition);
+
+   Default_Expression_Struct : constant Expression_Struct :=
+     (kind                                     => Not_An_Expression,
+      name_image                               => ICS.Null_Ptr,
+      Corresponding_Name_Definition            => Default_Element_ID,
+      Corresponding_Name_Definition_List       => Default_Element_List,
+      Corresponding_Name_Declaration           => Default_Element_ID,
+      operator_kind                            => Not_An_Operator,
+      Prefix                                   => Default_Element_ID,
+      Corresponding_Called_Function            => Default_Element_ID,
+      Is_Prefix_Call                           => Default_Bool,
+      Function_Call_Parameters                 => Default_Element_List,
+      Index_Expressions                        => Default_Element_List,
+      Is_Generalized_Indexing                  => Default_Bool,
+      Slice_Range                              => Default_Element_ID,
+      Selector                                 => Default_Element_ID,
+      atribute_kind                            => Not_An_Attribute,
+      Attribute_Designator_Identifier          => Default_Element_ID,
+      Attribute_Designator_Expressions         => Default_Element_List,
+      Record_Component_Associations            => Default_Element_List,
+      Extension_Aggregate_Expression           => Default_Element_ID,
+      Array_Component_Associations             => Default_Element_List,
+      Short_Circuit_Operation_Left_Expression  => Default_Element_ID,
+      Short_Circuit_Operation_Right_Expression => Default_Element_ID,
+      Membership_Test_Expression               => Default_Element_ID,
+      Membership_Test_Choices                  => Default_Element_List,
+      Expression_Parenthesized                 => Default_Element_ID,
+      Converted_Or_Qualified_Subtype_Mark      => Default_Element_ID,
+      Converted_Or_Qualified_Expression        => Default_Element_ID,
+      Predicate                                => Default_Element_ID,
+      Subpool_Name                             => Default_Element_ID,
+      Allocator_Subtype_Indication             => Default_Element_ID,
+      Allocator_Qualified_Expression           => Default_Element_ID,
+      Expression_Paths                         => Default_Element_List,
+      Iterator_Specification                   => Default_Element_ID);
+
+   Default_Association_Struct : constant Association_Struct :=
+     (kind => Not_An_Association);
+
+   Default_Statement_Struct : constant Statement_Struct :=
+     (kind                                => Not_A_Statement,
+      Assignment_Variable_Name            => Default_Element_ID,
+      Assignment_Expression               => Default_Element_ID,
+      Statement_Paths                     => Default_Element_List,
+      Case_Expression                     => Default_Element_ID,
+      Statement_Identifier                => Default_Element_ID,
+      Is_Name_Repeated                    => Default_Bool,
+      While_Condition                     => Default_Element_ID,
+      For_Loop_Parameter_Specification    => Default_Element_ID,
+      Loop_Statements                     => Default_Element_List,
+      Is_Declare_Block                    => Default_Bool,
+      Block_Declarative_Items             => Default_Element_List,
+      Block_Statements                    => Default_Element_List,
+      Block_Exception_Handlers            => Default_Element_List,
+      Exit_Loop_Name                      => Default_Element_ID,
+      Exit_Condition                      => Default_Element_ID,
+      Corresponding_Loop_Exited           => Default_Element_ID,
+      Goto_Label                          => Default_Element_ID,
+      Corresponding_Destination_Statement => Default_Element_ID,
+      Called_Name                         => Default_Element_ID,
+      Corresponding_Called_Entity         => Default_Element_ID,
+      Call_Statement_Parameters           => Default_Element_List,
+      Return_Expression                   => Default_Element_ID,
+      Return_Object_Declaration           => Default_Element_ID,
+      Extended_Return_Statements          => Default_Element_List,
+      Extended_Return_Exception_Handlers  => Default_Element_List,
+      Accept_Entry_Index                  => Default_Element_ID,
+      Accept_Entry_Direct_Name            => Default_Element_ID,
+      Accept_Parameters                   => Default_Element_List,
+      Accept_Body_Statements              => Default_Element_List,
+      Accept_Body_Exception_Handlers      => Default_Element_List,
+      Corresponding_Entry                 => Default_Element_ID,
+      Requeue_Entry_Name                  => Default_Element_ID,
+      Delay_Expression                    => Default_Element_ID,
+      Aborted_Tasks                       => Default_Element_List,
+      Raised_Exception                    => Default_Element_ID,
+      Associated_Message                  => Default_Element_ID,
+      Qualified_Expression                => Default_Element_ID);
+
+   Default_Path_Struct : constant Path_Struct :=
+     (kind => Not_A_Path);
+
+   Default_Clause_Struct : constant Clause_Struct :=
+     (kind => Not_A_Clause);
+
+   -- Currently a null record, so we can't do this:
+   -- Default_Exception_Handler_Struct : constant Exception_Handler_Struct :=
+   -- (
+   --  );
+   Default_Exception_Handler_Struct : Exception_Handler_Struct;
+
+   Default_Element_Union : constant Element_Union :=
      (discr        => 0,
       dummy_member => 0);
 
-   Element_Struct_Default : constant Element_Struct :=
+   Default_Element_Struct : constant Element_Struct :=
      (id              => Default_Node_ID,
       kind            => Not_An_Element,
       enclosing_id    => Default_Node_ID,
       enclosing_kind  => Not_Enclosing,
       source_location => Default_chars_ptr,
-      the_union       => Element_Union_Default);
+      the_union       => Default_Element_Union);
 
-   Node_Union_Default : constant Node_Union :=
+   Default_Node_Union : constant Node_Union :=
      (discr        => 0,
       dummy_member => 0);
 
-   Node_Struct_Default : constant Node_Struct :=
+   Default_Node_Struct : constant Node_Struct :=
      (kind      => Not_A_Node,
-      the_union => Node_Union_Default);
+      the_union => Default_Node_Union);
 
-   List_Node_Struct_Default : constant List_Node_Struct :=
-     (node       => Node_Struct_Default,
+   Default_List_Node_Struct : constant List_Node_Struct :=
+     (node       => Default_Node_Struct,
       next       => null,
       next_count => 0);
+
 
    -- Order below is same as in a_nodes.h:
    function To_Unit_Kinds is new Unchecked_Conversion
@@ -117,7 +233,7 @@ package a_nodes_h.Support is
      (Source => Asis.Mode_Kinds,
       Target => a_nodes_h.Mode_Kinds);
 
-   function To_Subprogram_Default_Kinds is new Unchecked_Conversion
+   function Subprogram_Default_Kinds is new Unchecked_Conversion
      (Source => Asis.Subprogram_Default_Kinds,
       Target => a_nodes_h.Subprogram_Default_Kinds);
 

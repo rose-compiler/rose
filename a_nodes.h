@@ -177,8 +177,15 @@ typedef Element_ID Name_ID;
 typedef Element_ID Statement_ID;
 typedef Element_ID Subtype_Indication_ID;
 
+// The GNAT C-to-Ada translator does not do what I want with a pointer to an
+// array (gives me an Ada pointer to the first element), so instead of this:
+//
+// typedef Element_ID *Element_ID_Array_Ptr[];
+// 
+// I am typedef-ing several pointers to this struct:
+
 struct Element_ID_List_Struct {
-  int length;
+  int        length;
   Element_ID IDs[];
 };
 typedef struct Element_ID_List_Struct *Element_List;
