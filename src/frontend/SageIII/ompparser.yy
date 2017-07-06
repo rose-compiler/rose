@@ -110,9 +110,9 @@ corresponding C type is union name defaults to YYSTYPE.
         '(' ')' ',' ':' '+' '*' '-' '&' '^' '|' LOGAND LOGOR SHLEFT SHRIGHT PLUSPLUS MINUSMINUS PTR_TO '.'
         LE_OP2 GE_OP2 EQ_OP2 NE_OP2 RIGHT_ASSIGN2 LEFT_ASSIGN2 ADD_ASSIGN2
         SUB_ASSIGN2 MUL_ASSIGN2 DIV_ASSIGN2 MOD_ASSIGN2 AND_ASSIGN2 
-        XOR_ASSIGN2 OR_ASSIGN2 DEPEND IN OUT INOUT
+        XOR_ASSIGN2 OR_ASSIGN2 DEPEND IN OUT INOUT MERGEABLE
         LEXICALERROR IDENTIFIER 
-        READ WRITE CAPTURE SIMDLEN
+        READ WRITE CAPTURE SIMDLEN FINAL PRIORITY
 /*We ignore NEWLINE since we only care about the pragma string , We relax the syntax check by allowing it as part of line continuation */
 %token <itype> ICONSTANT   
 %token <stype> EXPRESSION ID_EXPRESSION 
@@ -368,8 +368,23 @@ unique_task_clause : IF {
                      } '(' expression ')' { 
                        addExpression("");
                      }
+                   | FINAL { 
+                       ompattribute->addClause(e_final);
+                       omptype = e_final; 
+                     } '(' expression ')' { 
+                       addExpression("");
+                     }
+                   | PRIORITY { 
+                       ompattribute->addClause(e_priority);
+                       omptype = e_priority; 
+                     } '(' expression ')' { 
+                       addExpression("");
+                     }
                    | UNTIED {
                        ompattribute->addClause(e_untied);
+                     }
+                   | MERGEABLE {
+                       ompattribute->addClause(e_mergeable);
                      }
                    ;
                    
