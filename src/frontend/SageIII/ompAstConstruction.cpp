@@ -491,7 +491,7 @@ namespace OmpSupport
       return (returnNewExpression ? newExp : clause_expression);
   }
 
-  //Build if clause
+  //Build expression clauses
   SgOmpExpressionClause* buildOmpExpressionClause(OmpAttribute* att, omp_construct_enum clause_type)
   {
     ROSE_ASSERT(att != NULL);
@@ -536,6 +536,18 @@ namespace OmpSupport
         {
           SgExpression* param = checkOmpExpressionClause( att->getExpression(e_simdlen).second, global, e_simdlen );
           result = new SgOmpSimdlenClause(param);
+          break;
+        }
+       case e_final:
+        {
+          SgExpression* Param = checkOmpExpressionClause( att->getExpression(e_final).second, global, e_final );
+          result = new SgOmpFinalClause(Param);
+          break;
+        }
+       case e_priority:
+        {
+          SgExpression* Param = checkOmpExpressionClause( att->getExpression(e_priority).second, global, e_priority );
+          result = new SgOmpPriorityClause(Param);
           break;
         }
  
@@ -608,6 +620,18 @@ namespace OmpSupport
     setOneSourcePositionForTransformation(result);
     return result;
   }
+
+  SgOmpMergeableClause * buildOmpMergeableClause(OmpAttribute* att)
+  {
+    ROSE_ASSERT(att != NULL);
+    if (!att->hasClause(e_mergeable))
+      return NULL;
+    SgOmpMergeableClause* result = new SgOmpMergeableClause();
+    ROSE_ASSERT(result);
+    setOneSourcePositionForTransformation(result);
+    return result;
+  }
+
 
   SgOmpInbranchClause * buildOmpInbranchClause(OmpAttribute* att)
   {
@@ -1116,6 +1140,11 @@ namespace OmpSupport
           result = buildOmpUntiedClause(att); 
           break;
         }
+      case e_mergeable:
+        {
+          result = buildOmpMergeableClause(att); 
+          break;
+        }
       case e_inbranch:
         {
           result = buildOmpInbranchClause(att); 
@@ -1127,6 +1156,8 @@ namespace OmpSupport
           break;
         }
       case e_if:
+      case e_final:
+      case e_priority:
       case e_collapse:
       case e_num_threads:
       case e_device:

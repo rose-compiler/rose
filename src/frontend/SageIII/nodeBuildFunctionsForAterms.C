@@ -2461,6 +2461,14 @@ SgOmpUntiedClause* SgOmpUntiedClause::build_node_from_nonlist_children ( Sg_File
      return returnNode;
    }
 
+SgOmpMergeableClause* SgOmpMergeableClause::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct )
+   {
+     SgOmpMergeableClause* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
 
 /* #line 2430 "../../../src/frontend/SageIII//Cxx_GrammarAtermNodeBuildFunctions.C" */
 
@@ -2532,6 +2540,22 @@ SgOmpIfClause* SgOmpIfClause::build_node_from_nonlist_children ( Sg_File_Info* s
 
      return returnNode;
    }
+
+SgOmpFinalClause* SgOmpFinalClause::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgExpression* expression )
+   {
+     SgOmpFinalClause* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+SgOmpPriorityClause* SgOmpPriorityClause::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgExpression* expression )
+   {
+     SgOmpPriorityClause* returnNode = NULL;
+
+     return returnNode;
+   }
+
 
 
 /* #line 2502 "../../../src/frontend/SageIII//Cxx_GrammarAtermNodeBuildFunctions.C" */
