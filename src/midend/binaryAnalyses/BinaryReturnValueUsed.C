@@ -7,11 +7,11 @@
 #include <AsmUnparser_compat.h>
 #endif
 
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
-namespace S2 = rose::BinaryAnalysis::InstructionSemantics2;
-using namespace rose::Diagnostics;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
+namespace S2 = Rose::BinaryAnalysis::InstructionSemantics2;
+using namespace Rose::Diagnostics;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace ReturnValueUsed {
 
@@ -22,7 +22,7 @@ initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        Diagnostics::initAndRegister(&mlog, "rose::BinaryAnalysis::ReturnValueUsed");
+        Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::ReturnValueUsed");
     }
 }
 

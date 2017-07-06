@@ -4,15 +4,15 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 
-using namespace rose;
-using namespace rose::Diagnostics;
+using namespace Rose;
+using namespace Rose::Diagnostics;
 
 int
 main() {
     // Force all ROSE diagnostics to go to our string stream instead of standard error. Normal programs would either only call
     // Diagnostics::initialize or frontend.
     std::ostringstream ss;
-    rose::Diagnostics::destination = Sawyer::Message::StreamSink::instance(ss);
+    Rose::Diagnostics::destination = Sawyer::Message::StreamSink::instance(ss);
     ROSE_INITIALIZE;
 
     // Emit some message and check that it appeared

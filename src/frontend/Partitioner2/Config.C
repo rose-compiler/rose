@@ -11,14 +11,14 @@
 #include <yaml-cpp/yaml.h>
 #endif
 
-std::ostream& operator<<(std::ostream &out, const rose::BinaryAnalysis::Partitioner2::Configuration &c) {
+std::ostream& operator<<(std::ostream &out, const Rose::BinaryAnalysis::Partitioner2::Configuration &c) {
     c.print(out);
     return out;
 }
 
-using namespace rose::Diagnostics;
+using namespace Rose::Diagnostics;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 

@@ -6,9 +6,70 @@
 using namespace Fortran::Untyped;
 
 
+void
+UntypedConverter::setSourcePositionFrom ( SgLocatedNode* toNode, SgLocatedNode* fromNode )
+{
+   ROSE_ASSERT(toNode != NULL && fromNode != NULL);
+
+   Sg_File_Info* start = fromNode->get_startOfConstruct();
+   Sg_File_Info*   end = fromNode->get_endOfConstruct();
+
+   ROSE_ASSERT(start != NULL && end != NULL);
+   ROSE_ASSERT(toNode->get_startOfConstruct() == NULL);
+   ROSE_ASSERT(toNode->get_endOfConstruct()   == NULL);
+
+#if DEBUG_UNTYPED_CONVERTER
+   std::cout << "UntypedConverter::setSourcePositionFrom: filename is " << start->get_filenameString();
+   printf("   --- toNode: %p", toNode);
+   std::cout << " strt: " << start->get_line() << " " << start->get_col();
+   std::cout << " end:  " <<   end->get_line() << " " <<   end->get_col() << std::endl;
+#endif
+
+   std::string filename = start->get_filenameString();
+
+   toNode->set_startOfConstruct(new Sg_File_Info(filename, start->get_line(), start->get_col()));
+   toNode->get_startOfConstruct()->set_parent(toNode);
+
+   toNode->set_endOfConstruct(new Sg_File_Info(filename, end->get_line(), end->get_col()));
+   toNode->get_endOfConstruct()->set_parent(toNode);
+
+   SageInterface::setSourcePosition(toNode);
+}
+
+void
+UntypedConverter::setSourcePositionFrom ( SgLocatedNode* toNode, SgLocatedNode* startNode, SgLocatedNode* endNode )
+{
+   ROSE_ASSERT(toNode != NULL && startNode != NULL && endNode != NULL);
+
+   Sg_File_Info* start = startNode->get_startOfConstruct();
+   Sg_File_Info* end = endNode->get_endOfConstruct();
+
+   ROSE_ASSERT(start != NULL && end != NULL);
+   ROSE_ASSERT(toNode->get_startOfConstruct() == NULL);
+   ROSE_ASSERT(toNode->get_endOfConstruct()   == NULL);
+
+#if DEBUG_UNTYPED_CONVERTER
+   std::cout << "UntypedConverter::setSourcePositionFrom: filename is " << start->get_filenameString();
+   printf("   --- toNode: %p", toNode);
+   std::cout << " strt: " << start->get_line() << " " << start->get_col();
+   std::cout << " end:  " <<   end->get_line() << " " <<   end->get_col() << std::endl;
+#endif
+
+   std::string filename = start->get_filenameString();
+
+   toNode->set_startOfConstruct(new Sg_File_Info(filename, start->get_line(), start->get_col()));
+   toNode->get_startOfConstruct()->set_parent(toNode);
+
+   toNode->set_endOfConstruct(new Sg_File_Info(filename, end->get_line(), end->get_col()));
+   toNode->get_endOfConstruct()->set_parent(toNode);
+
+   SageInterface::setSourcePosition(toNode);
+}
+
 //! Set a numerical label for a Fortran statement. The statement should have a enclosing function definition already. SgLabelSymbol and SgLabelR
 //efExp are created transparently as needed.
-static void setFortranNumericLabel(SgStatement* stmt, int label_value, SgLabelSymbol::label_type_enum label_type, SgScopeStatement* label_scope = NULL)
+static void
+setFortranNumericLabel(SgStatement* stmt, int label_value, SgLabelSymbol::label_type_enum label_type, SgScopeStatement* label_scope = NULL)
 {
    ROSE_ASSERT (stmt != NULL);
    ROSE_ASSERT (label_value >0 && label_value <=99999); //five digits for Fortran label
@@ -19,7 +80,7 @@ static void setFortranNumericLabel(SgStatement* stmt, int label_value, SgLabelSy
       }
    ROSE_ASSERT (label_scope != NULL);
 
-   SgName label_name(rose::StringUtility::numberToString(label_value));
+   SgName label_name(Rose::StringUtility::numberToString(label_value));
    SgLabelSymbol * symbol = label_scope->lookup_label_symbol (label_name);
    if (symbol == NULL)
       {
@@ -165,7 +226,16 @@ SgInitializedName*
 UntypedConverter::convertSgUntypedInitializedName (SgUntypedInitializedName* ut_name, SgType* sg_type, SgInitializer* sg_init)
 {
    SgInitializedName* sg_name = SageBuilder::buildInitializedName(ut_name->get_name(), sg_type, sg_init);
-   setSourcePositionUnknown(sg_name);
+// SageBuilder builds FileInfo for the variable declaration
+   if (sg_name->get_startOfConstruct() != NULL) {
+      delete sg_name->get_startOfConstruct();
+      sg_name->set_startOfConstruct(NULL);
+   }
+   if (sg_name->get_endOfConstruct() != NULL) {
+      delete sg_name->get_endOfConstruct();
+      sg_name->set_endOfConstruct(NULL);
+   }
+   setSourcePositionFrom(sg_name, ut_name);
 
 #if DEBUG_UNTYPED_CONVERTER
    printf("--- finished converting initialized name %s\n", ut_name->get_name().c_str());
@@ -265,8 +335,8 @@ UntypedConverter::convertSgUntypedProgramHeaderDeclaration (SgUntypedProgramHead
    programBody->set_parent(programDefinition);
    programDefinition->set_parent(programDeclaration);
 
-   UntypedConverter::setSourcePositionUnknown(programDeclaration);
-   UntypedConverter::setSourcePositionUnknown(programDeclaration->get_parameterList());
+   UntypedConverter::setSourcePositionFrom(programDeclaration, ut_program, ut_program_end_statement);
+   UntypedConverter::setSourcePositionFrom(programDeclaration->get_parameterList(), ut_program);
 
 // Convert the labels for the program begin and end statements
    UntypedConverter::convertLabel(ut_program,               programDeclaration, SgLabelSymbol::e_start_label_type, /*label_scope=*/ programDefinition);
@@ -301,8 +371,10 @@ UntypedConverter::convertSgUntypedProgramHeaderDeclaration (SgUntypedProgramHead
         UntypedConverter::setSourcePosition(programBody, tokenList);
 #endif
 
-   UntypedConverter::setSourcePositionUnknown(programDefinition);
-   UntypedConverter::setSourcePositionUnknown(programBody);
+//TODO - the start for both of these should be the first statement in the program (if non-empty)
+//TODO - perhaps the end of the block could be the last statement in the program
+   UntypedConverter::setSourcePositionFrom(programDefinition, ut_program_end_statement);
+   UntypedConverter::setSourcePositionFrom(programBody, ut_program_end_statement);
 
    ROSE_ASSERT(programDeclaration->get_firstNondefiningDeclaration() != programDeclaration);
    ROSE_ASSERT(programDeclaration->get_firstNondefiningDeclaration() == NULL);
@@ -367,13 +439,44 @@ UntypedConverter::convertSgUntypedVariableDeclaration (SgUntypedVariableDeclarat
    ROSE_ASSERT(scope->variantT() == V_SgBasicBlock || scope->variantT() == V_SgClassDefinition);
 
    SgUntypedType* ut_type = ut_decl->get_type();
+std::cout << "Will convert\n";
    SgType*        sg_type = convertSgUntypedType(ut_type, scope);
+std::cout << "Did convert\n";
 
    SgUntypedInitializedNamePtrList ut_vars = ut_decl->get_parameters()->get_name_list();
    SgUntypedInitializedNamePtrList::const_iterator i = ut_vars.begin();
 
 // Declare the first variable
+#if 1
    SgVariableDeclaration* sg_decl = SageBuilder::buildVariableDeclaration((*i)->get_name(), sg_type, /*sg_init*/NULL, scope);
+
+//RASMUSSEN - temporary debuggin information
+   printf("--- wantSourcePosition from node %p for node %p\n", ut_decl, sg_decl);
+   printf("--- to start: %p stop: %p\n", sg_decl->get_startOfConstruct(), sg_decl->get_endOfConstruct());
+
+// SageBuilder builds FileInfo for the variable declaration
+   if (sg_decl->get_startOfConstruct() != NULL) {
+      printf("--- isCompGen: %d\n", sg_decl->get_startOfConstruct()->isCompilerGenerated());
+      delete sg_decl->get_startOfConstruct();
+      sg_decl->set_startOfConstruct(NULL);
+   }
+   if (sg_decl->get_endOfConstruct() != NULL) {
+      delete sg_decl->get_endOfConstruct();
+      sg_decl->set_endOfConstruct(NULL);
+   }
+#endif
+
+#if 0
+   SgVariableDeclaration* sg_decl = new SgVariableDeclaration();
+   sg_decl->set_parent(scope);
+   sg_decl->set_definingDeclaration(sg_decl);
+   sg_decl->get_declarationModifier().get_accessModifier().setUndefined();
+   //        DeclAttributes.setDeclAttrSpecs();
+        DeclAttributes.setBaseType(astBaseTypeStack.front());
+#endif
+
+   setSourcePositionFrom(sg_decl, ut_decl);
+
 
 // And now the rest of the variables
    for (i = ut_vars.begin() + 1; i != ut_vars.end(); i++)
@@ -449,7 +552,7 @@ UntypedConverter::convertSgUntypedImplicitDeclaration(SgUntypedImplicitDeclarati
    bool isImplicitNone = true;
 
    SgImplicitStatement* implicitStatement = new SgImplicitStatement(isImplicitNone);
-   setSourcePositionUnknown(implicitStatement);
+   setSourcePositionFrom(implicitStatement, ut_decl);
 
    ROSE_ASSERT(scope->variantT() == V_SgBasicBlock);
    scope->append_statement(implicitStatement);
@@ -782,6 +885,10 @@ UntypedConverter::initialize_global_scope(SgSourceFile* file)
     ROSE_ASSERT(globalScope != NULL);
     ROSE_ASSERT(globalScope->get_parent() != NULL);
 
+#if DEBUG_UNTYPED_CONVERTER
+    std::cout << "UntypedConverter::initialize_global_scope: " << file->getFileName() << std::endl;
+#endif
+
  // Fortran is case insensitive
     globalScope->setCaseInsensitive(true);
 
@@ -816,6 +923,10 @@ UntypedConverter::setSourcePositionUnknown(SgLocatedNode* locatedNode)
 {
   // This function sets the source position to be marked as not available (since we don't have token information)
   // These nodes WILL be unparsed in the code generation phase.
+
+#if DEBUG_UNTYPED_CONVERTER
+     printf ("UntypedConverter::setSourcePositionUnknown: locatedNode = %p = %s \n",locatedNode,locatedNode->class_name().c_str());
+#endif
 
   // The SgLocatedNode has both a startOfConstruct and endOfConstruct source position.
      ROSE_ASSERT(locatedNode != NULL);

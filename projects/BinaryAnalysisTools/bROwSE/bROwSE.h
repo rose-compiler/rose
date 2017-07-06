@@ -32,7 +32,7 @@ class WStringDetail;
 class WStrings;
 class WToggleButton;
 
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 static const rose_addr_t NO_ADDRESS(-1);
 
@@ -96,7 +96,7 @@ extern Sawyer::Message::Facility mlog;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Convert a color from ROSE's representation to Wt's representation. */
-Wt::WColor toWt(const rose::Color::RGB&);
+Wt::WColor toWt(const Rose::Color::RGB&);
 
 
 } // namespace

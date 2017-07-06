@@ -3,7 +3,7 @@
 
 #include "BinaryLoaderElf.h"
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /** A loader suitable for ELF object files.

@@ -9,7 +9,7 @@
 // #include <limits.h>
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 std::map<const PreprocessingInfo*, DoxygenComment* > commentMap;
 

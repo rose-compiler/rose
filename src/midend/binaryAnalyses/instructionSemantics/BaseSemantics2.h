@@ -21,7 +21,7 @@
 #include <Sawyer/Optional.h>
 #include <Sawyer/Set.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /** Binary instruction semantics.
@@ -97,7 +97,7 @@ namespace BinaryAnalysis {
  *  @code
  *      // user code
  *      #include <IntervalSemantics.h>
- *      using namespace rose::BinaryAnalysis::InstructionSemantics2;
+ *      using namespace Rose::BinaryAnalysis::InstructionSemantics2;
  *      BaseSemantics::SValuePtr value = IntervalSemantics::SValue::instance();
  *      // no need to ever delete the object that 'value' points to
  *  @endcode
@@ -247,8 +247,8 @@ namespace BinaryAnalysis {
  *
  *  @section instruction_semantics_changes Other major changes
  *
- *  The new API exists in the rose::BinaryAnalysis::InstructionSemantics2 name space and can coexist with the original API in
- *  rose::BinaryAnalysis::InstructionSemantics&mdash;a program can use both APIs at the same time.
+ *  The new API exists in the Rose::BinaryAnalysis::InstructionSemantics2 name space and can coexist with the original API in
+ *  Rose::BinaryAnalysis::InstructionSemantics&mdash;a program can use both APIs at the same time.
  *
  *  The mapping of class names (and some method) from old API to new API is:
  *  <ul>
@@ -288,12 +288,12 @@ namespace BinaryAnalysis {
  *
  *  @code
  *   // New API 
- *   using namespace rose::BinaryAnalysis::InstructionSemantics2;
+ *   using namespace Rose::BinaryAnalysis::InstructionSemantics2;
  *   BaseSemantics::RiscOperatorsPtr operators = SymbolicSemantics::RiscOperators::instance();
  *   BaseSemantics::DispatcherPtr dispatcher = DispatcherX86::instance(operators);
  *
  *   // Old API for comparison
- *   using namespace rose::BinaryAnalysis::InstructionSemantics;
+ *   using namespace Rose::BinaryAnalysis::InstructionSemantics;
  *   typedef SymbolicSemantics::Policy<> Policy;
  *   Policy policy;
  *   X86InstructionSemantics<Policy, SymbolicSemantics::ValueType> semantics(policy);
@@ -305,7 +305,7 @@ namespace BinaryAnalysis {
  *  @code
  *   // New API, constructing the lattice from bottom up.
  *   // Almost copied from SymbolicSemantics::RiscOperators::instance()
- *   using namespace rose::BinaryAnalysis::InstructionSemantics2;
+ *   using namespace Rose::BinaryAnalysis::InstructionSemantics2;
  *   BaseSemantics::SValuePtr protoval = MySemanticValue::instance();
  *   BaseSemantics::RegisterStatePtr regs = BaseSemantics::RegisterStateX86::instance(protoval);
  *   BaseSemantics::MemoryStatePtr mem = SymbolicSemantics::MemoryState::instance(protoval);
@@ -316,7 +316,7 @@ namespace BinaryAnalysis {
  *   // components as easily, and the implementation of MySemanticValue would certainly have been
  *   // more complex, not to mention that it wasn't even possible for end users to always correctly
  *   // override a particular method by subclassing.
- *   using namespace rose::BinaryAnalysis::InstructionSemantics;
+ *   using namespace Rose::BinaryAnalysis::InstructionSemantics;
  *   typedef SymbolicSemantics::Policy<SymbolicSemantics::State, MySemanticValue> Policy;
  *   Policy policy;
  *   X86InstructionSemantics<Policy, MySemanticValue> semantics(policy);
@@ -533,7 +533,7 @@ typedef Sawyer::SharedPointer<class SValue> SValuePtr;
  *  data in intervals, etc.
  *
  *  Semantics value objects are allocated on the heap and reference counted.  The BaseSemantics::SValue is an abstract class
- *  that defines the interface.  See the rose::BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts
+ *  that defines the interface.  See the Rose::BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts
  *  fit together.*/
 class SValue: public Sawyer::SharedObject, public Sawyer::SharedFromThis<SValue>, public Sawyer::SmallObject {
 protected:
@@ -754,7 +754,7 @@ typedef boost::shared_ptr<class RegisterState> RegisterStatePtr;
 
 /** The set of all registers and their values. RegisterState objects are allocated on the heap and reference counted.  The
  *  BaseSemantics::RegisterState is an abstract class that defines the interface.  See the
- *  rose::BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts fit together.*/
+ *  Rose::BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts fit together.*/
 class RegisterState: public boost::enable_shared_from_this<RegisterState> {
 private:
     MergerPtr merger_;
@@ -1057,7 +1057,7 @@ typedef boost::shared_ptr<class MemoryState> MemoryStatePtr;
 
 /** Represents all memory in the state. MemoryState objects are allocated on the heap and reference counted.  The
  *  BaseSemantics::MemoryState is an abstract class that defines the interface.  See the
- *  rose::BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts fit together.*/
+ *  Rose::BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts fit together.*/
 class MemoryState: public boost::enable_shared_from_this<MemoryState> {
     SValuePtr addrProtoval_;                            /**< Prototypical value for addresses. */
     SValuePtr valProtoval_;                             /**< Prototypical value for values. */
@@ -1267,7 +1267,7 @@ typedef boost::shared_ptr<class State> StatePtr;
  *  vertex.
  *
  *  State objects are allocated on the heap and reference counted.  The BaseSemantics::State is an abstract class that defines
- *  the interface.  See the rose::BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts fit
+ *  the interface.  See the Rose::BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts fit
  *  together.  */
 class State: public boost::enable_shared_from_this<State> {
     SValuePtr protoval_;                                // Initial value used to create additional values as needed.
@@ -1526,7 +1526,7 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
  *  a data-flow can be stored elsewhere, such as data members of a subclass or the @ref initialState property.
  *
  *  RiscOperator objects are allocated on the heap and reference counted.  The BaseSemantics::RiscOperator is an abstract class
- *  that defines the interface.  See the rose::BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts
+ *  that defines the interface.  See the Rose::BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts
  *  fit together. */
 class RiscOperators: public boost::enable_shared_from_this<RiscOperators> {
     SValuePtr protoval_;                                // Prototypical value used for its virtual constructors
@@ -2239,7 +2239,7 @@ public:
  *  counted; they are owned by the dispatcher and deleted when the dispatcher is destroyed. [Robb Matzke 2013-03-04])
  *
  *  Dispatcher objects are allocated on the heap and reference counted.  The BaseSemantics::Dispatcher is an abstract class
- *  that defines the interface.  See the rose::BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts
+ *  that defines the interface.  See the Rose::BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts
  *  fit together. */
 class Dispatcher: public boost::enable_shared_from_this<Dispatcher> {
 protected:

@@ -5,7 +5,7 @@
 
 // DQ (1/1/2006): This is OK if not declared in a header file
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 #include "testNewRewrite.h"
 // #include "AstPreorderTraversal.h"
@@ -24,7 +24,7 @@ main( int argc, char * argv[] )
      if (argc == 1)
         {
        // Print usage and exit with exit status == 1
-          rose::usage (1);
+          Rose::usage (1);
         }
 
   // Build the project object which we will fill up with multiple files and use as a

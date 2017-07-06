@@ -22,11 +22,11 @@ LDADD    = $(ROSE_LIBS) -L../../../../src/3rdPartyLibraries/experimental-fortran
 # F90_TESTCODES = main_program_2008_01.f90 main_program_2014_01.f90
 # F90_TESTCODES = test2014_02.f90
 F90_TESTCODES = \
+ R1101a.f90 \
+ R1101b.f90 \
  R1101c.f90
 
 F90_TESTCODES_WORKING_ON = \
- R1101a.f90 \
- R1101b.f90 \
  R1101d.f90 \
  R1101e.f90 \
  R1101f.f90 \
@@ -143,6 +143,9 @@ if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
 #	../../../testTranslator -i $(@:.o=.f90.aterm)
 #	../../../testTranslator -rose:experimental_fortran_frontend -c $(srcdir)/$(@:.o=.f90)
 	../../../testTranslator -rose:experimental_fortran_frontend -rose:experimental_fortran_frontend_OFP_test -c $(srcdir)/$(@:.o=.f90)
+## make sure output file is not empty
+#
+	@test -n "$$(find rose_$(@:.o=.f90) -size +0c)"
 endif
 
 junk.ast-info.pp: $(srcdir)/junk.f90 $(top_builddir)/src/3rdPartyLibraries/experimental-fortran-parser/Fortran.tbl

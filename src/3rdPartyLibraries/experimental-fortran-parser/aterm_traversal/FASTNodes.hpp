@@ -1,25 +1,62 @@
 #ifndef FAST_NODES_H
 #define FAST_NODES_H
 
+#include <map>
 #include <string>
 #include <vector>
 
 namespace FAST {
 
+class PosInfo
+{
+ public:
+   PosInfo() : pStartLine(0), pStartCol(0), pEndLine(0), pEndCol(0)
+    {
+    }
+
+   PosInfo(int strtLine, int strtCol, int endLine, int endCol)
+     {
+        pStartLine = strtLine;
+        pStartCol  = strtCol;
+        pEndLine   = endLine;
+        pEndCol    = endCol;
+     }
+
+   int  getStartLine()             { return pStartLine; }
+   int  getStartCol()              { return pStartCol;  }
+   int  getEndLine()               { return pEndLine;   }
+   int  getEndCol()                { return pEndCol;    }
+
+   void setStartLine ( int line )  { pStartLine = line; }
+   void setStartCol  ( int col  )  { pStartCol  = col;  }
+   void setEndLine   ( int line )  { pEndLine   = line; }
+   void setEndCol    ( int col  )  { pEndCol    = col;  }
+
+ protected:
+   int pStartLine, pStartCol;  // location (line,col) of first character ( 1 based)
+   int pEndLine,   pEndCol;    // location (line,col) of last  character (+1 col)
+};
+
 class FASTNode
 {
  public:
-   FASTNode() : pStart(0), pStop(0)
+
+   FASTNode()
      {
      }
 
-   FASTNode(int start, int stop) : pStart(start), pStop(stop)
+   FASTNode(PosInfo position)
      {
+        pPosInfo = position;
      }
+
+   virtual ~FASTNode() { }
+
+   PosInfo & getPosInfo()                 {return pPosInfo;}
+   void      setPosInfo(PosInfo pos)      {pPosInfo = pos;}
 
  protected:
-   int pStart;
-   int pStop;
+   PosInfo pPosInfo;           // location of node
 };
 
 class Statement;
@@ -42,12 +79,133 @@ class Scope : public FASTNode
 
 };
 
+
+/* Type Specifications
+ */
+class TypeSpec : public FASTNode
+{
+ public:
+   enum TypeEnum
+     {
+        Unknown = 0,
+        Void,
+        Integer,
+        Real,
+        Double,
+        Complex,
+        DoubleComplex,
+        Boolean,
+        Character,
+        Derived  //TODO-SgUntyped
+     };
+
+   TypeSpec(TypeEnum type_id) : pTypeEnum(type_id)
+     {
+     }
+
+   TypeSpec(TypeEnum type_id, PosInfo pos) : FASTNode(pos), pTypeEnum(type_id)
+     {
+     }
+
+   TypeEnum  getTypeEnum()                    {return pTypeEnum;}
+   void      setTypeEnum(TypeEnum type_enum)  {pTypeEnum = type_enum;}
+
+ protected:
+   TypeEnum pTypeEnum;
+};
+
+class IntrinsicTypeSpec : public TypeSpec
+{
+ public:
+   IntrinsicTypeSpec() : TypeSpec(TypeSpec::Unknown)
+     {
+     }
+
+   IntrinsicTypeSpec(TypeEnum type_id, PosInfo pos) : TypeSpec(type_id, pos)
+     {
+     }
+
+   //TODO kind, ...
+};
+
+/* Attribute Specifications
+ */
+class AttrSpec : public FASTNode
+{
+ public:
+   enum AttrEnum
+     {
+        Unknown = 0,
+        Public,
+        Private,
+        Allocatable,
+        Asynchronous,
+        // CODIMENSION [ coarray-spec ]
+        Codimension,
+        Contiguous,
+        // DIMENSION   (   array-spec )
+        Dimension,
+        External,
+        // INTENT      (  intent-spec )
+        IntentIn,
+        IntentOut,
+        IntentInOut,
+        Intent,
+        Intrinsic,
+        // language-binding-spec
+        Bind,
+        Optional,
+        Parameter,
+        Pointer,
+        Protected,
+        Save,
+        Target,
+        Value,
+        Volatile
+     };
+
+   AttrSpec(AttrEnum attr_id) : pAttrEnum(attr_id)
+     {
+     }
+
+   AttrSpec(AttrEnum attr_id, PosInfo pos) : FASTNode(pos), pAttrEnum(attr_id)
+     {
+     }
+
+   AttrEnum  getAttrEnum()                    {return pAttrEnum;}
+   void      setAttrEnum(AttrEnum attr_enum)  {pAttrEnum = attr_enum;}
+
+ protected:
+   AttrEnum pAttrEnum;
+};
+
+
+/* Variable entity declarations
+ */
+class EntityDecl : public FASTNode
+{
+ public:
+   EntityDecl(std::string name, PosInfo pos)
+      : FASTNode(pos), pName(name)
+     {
+     }
+
+   std::string & getName()                   {return pName;}
+   void          setName(std::string name)   {pName = name;}
+
+ protected:
+   std::string pName;
+   //TODO - arrayness, char-length, initialization
+};
+
+
 /* Statements
  */
 class Statement : public FASTNode
 {
  public:
-   Statement(std::string label, std::string eos) : pLabel(label), pEOS(eos)
+   Statement(std::string label, std::string eos, PosInfo pos)
+      :  FASTNode(pos), pLabel(label), pEOS(eos)
      {
      }
 
@@ -65,7 +223,8 @@ class Statement : public FASTNode
 class ProgramStmt : public Statement
 {
  public:
-   ProgramStmt(std::string label, std::string name, std::string eos) : Statement(label,eos), pName(name)
+   ProgramStmt(std::string label, std::string name, std::string eos, PosInfo pos)
+      : Statement(label,eos,pos), pName(name)
      {
      }
 
@@ -79,7 +238,8 @@ class ProgramStmt : public Statement
 class EndProgramStmt : public Statement
 {
  public:
-   EndProgramStmt(std::string label, std::string name, std::string eos) : Statement(label,eos), pName(name)
+   EndProgramStmt(std::string label, std::string name, std::string eos, PosInfo pos)
+      : Statement(label,eos,pos), pName(name)
      {
      }
 
@@ -92,22 +252,129 @@ class EndProgramStmt : public Statement
 
 class ContainsStmt : public Statement
 {
+ public:
+   ContainsStmt(std::string label, std::string eos, PosInfo pos) : Statement(label,eos,pos)
+     {
+     }
 };
 
 class UseStmt : public Statement
 {
  public:
-   UseStmt(std::string label, std::string name, std::string eos) : Statement(label,eos), pName(name)
+
+   enum ModuleNature
+     {
+        None = 0,
+        Intrinsic,
+        NonIntrinsic
+     };
+
+   UseStmt(std::string label, std::string name, ModuleNature nature, std::string eos, PosInfo pos)
+      : Statement(label,eos,pos), pName(name), pNature(nature)
      {
      }
 
-   std::string & getName()                   {return pName;}
-   void          setName(std::string name)   {pName = name;}
+   std::string & getName()                  {return pName;}
+   void          setName(std::string name)  {pName = name;}
+
+   ModuleNature  getModuleNature()                     {return pNature;}
+   void          setModuleNature(ModuleNature nature)  {pNature = nature;}
+
+   std::vector<std::string> & getOnlyList()            {return pOnlyList;}
+   void setOnlyList(std::vector<std::string> list)     {pOnlyList = list;}
+
+   std::map<std::string, std::string> & getRenameMap() {return pRenameMap;}
+   void setRenameMap(std::map<std::string, std::string> map) {pRenameMap = map;}
 
  protected:
    std::string pName;
-// TODO -> UseStmt(OptLabel,OptModuleNature,Name,ListStarOfRename)
-// OptModuleNature, ListStarOfRename
+   ModuleNature pNature;
+   std::vector<std::string> pOnlyList;
+   std::map<std::string, std::string> pRenameMap;
+};
+
+class LetterSpec : public FASTNode
+{
+ public:
+   LetterSpec() : pLetterBegin(0), pLetterEnd(0)
+     {
+     }
+   LetterSpec(char begin, PosInfo pos)
+      : FASTNode(pos), pLetterBegin(begin), pLetterEnd(0)
+     {
+     }
+   LetterSpec(char begin, char end, PosInfo pos)
+      : FASTNode(pos), pLetterBegin(begin), pLetterEnd(end)
+     {
+     }
+
+   char getLetterBegin()             {return pLetterBegin;}
+   void setLetterBegin(char letter)  {pLetterBegin = letter;}
+
+   char getLetterEnd()             {return pLetterEnd;}
+   void setLetterEnd(char letter)  {pLetterEnd = letter;}
+
+ protected:
+   char pLetterBegin;
+   char pLetterEnd;
+};
+
+class ImplicitSpec : public FASTNode
+{
+ public:
+   ImplicitSpec(TypeSpec* spec, PosInfo pos) : FASTNode(pos), pTypeSpec(spec)
+     {
+     }
+
+   TypeSpec*  getTypeSpec()                              {return pTypeSpec;}
+   void       setTypeSpec(TypeSpec* spec)                {pTypeSpec = spec;}
+
+   std::vector<LetterSpec> & getLetterSpecList()         {return pLetterSpecList;}
+   void setLetterSpecList(std::vector<LetterSpec> list)  {pLetterSpecList = list;}
+
+ protected:
+   TypeSpec* pTypeSpec;  // polymorphic
+   std::vector<LetterSpec> pLetterSpecList;
+};
+
+class ImplicitStmt : public Statement
+{
+ public:
+
+   ImplicitStmt(std::string label, std::vector<ImplicitSpec> spec_list, std::string eos, PosInfo pos)
+      : Statement(label,eos,pos), pImplicitSpecList(spec_list)
+     {
+     }
+
+   std::vector<ImplicitSpec> & getImplicitSpecList()             {return pImplicitSpecList;}
+   void setImplicitSpecList(std::vector<ImplicitSpec> list)      {pImplicitSpecList = list;}
+
+ protected:
+   std::vector<ImplicitSpec> pImplicitSpecList;
+};
+
+class TypeDeclarationStmt : public Statement
+{
+ public:
+
+   TypeDeclarationStmt(std::string label, TypeSpec* type_spec, std::vector<AttrSpec*> attrs, std::vector<EntityDecl*> vars, std::string eos, PosInfo pos)
+      : Statement(label,eos,pos), pTypeSpec(type_spec), pAttrSpecList(attrs), pEntityDeclList(vars)
+     {
+     }
+
+   TypeSpec* getTypeSpec()                                {return pTypeSpec;}
+   void      setTypeSpec(TypeSpec* spec)                  {pTypeSpec = spec;}
+
+   std::vector<AttrSpec*> & getAttrSpecList()             {return pAttrSpecList;}
+   void setAttrSpecList(std::vector<AttrSpec*> list)      {pAttrSpecList = list;}
+
+   std::vector<EntityDecl*> & getEntityDeclList()         {return pEntityDeclList;}
+   void setEntityDeclList(std::vector<EntityDecl*> list)  {pEntityDeclList = list;}
+
+ protected:
+   TypeSpec*                pTypeSpec;
+   std::vector<AttrSpec*>   pAttrSpecList;
+   std::vector<EntityDecl*> pEntityDeclList;
 };
 
 
@@ -115,12 +382,17 @@ class UseStmt : public Statement
  */
 class Procedure : public FASTNode
 {
+ public:
+   Procedure(PosInfo pos) : FASTNode(pos)
+   {
+   }
 };
 
 class MainProgram : public Procedure
 {
  public:
-   MainProgram(ProgramStmt* program, Scope* scope, ContainsStmt* contains, EndProgramStmt* end)
+   MainProgram(ProgramStmt* program, Scope* scope, ContainsStmt* contains, EndProgramStmt* end, PosInfo pos)
+      : Procedure(pos)
      {
         pProgramStmt = program;
         pScope = scope;
@@ -129,6 +401,7 @@ class MainProgram : public Procedure
      }
    virtual ~MainProgram()
      {
+        printf("--- DESTROYING MainProgram \n");
         if (pProgramStmt) delete pProgramStmt;
         delete pScope;
         if (pContainsStmt) delete pContainsStmt;

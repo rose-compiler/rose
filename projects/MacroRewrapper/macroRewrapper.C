@@ -5,7 +5,7 @@
 #include "helpFunctions.h"
 //#define VERBOSE_MESSAGES_OF_WAVE true
 
-using namespace rose;
+using namespace Rose;
 
 
 bool noMapping(SgNode* node)

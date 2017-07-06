@@ -12,7 +12,7 @@
 #  include <yices_c.h>
 #endif
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 
@@ -175,7 +175,7 @@ private:
 } // namespace
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::YicesSolver);
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::YicesSolver);
 #endif
 
 #endif

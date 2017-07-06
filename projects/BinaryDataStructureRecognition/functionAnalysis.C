@@ -3,7 +3,7 @@
 #include "astStructRecognition.h"
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 FunctionAnalysisAttribute::FunctionAnalysisAttribute ( string n, SgAsmFunctionDeclaration* f, SgProject* p )
    : name(n), function(f), project(p)

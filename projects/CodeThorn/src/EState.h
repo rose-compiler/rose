@@ -89,20 +89,6 @@ namespace CodeThorn {
    * \author Markus Schordan
    * \date 2012.
    */
-#ifdef USE_CUSTOM_HSET
-  class EStateHashFun {
-  public:
-  EStateHashFun(long prime=9999991) : tabSize(prime) {}
-    long operator()(EState s) const {
-      unsigned int hash=1;
-      hash=(long)s.label()*(((long)s.pstate())+1)*(((long)s.constraints())+1);
-      return long(hash) % tabSize;
-    }
-    long tableSize() const { return tabSize;}
-  private:
-    long tabSize;
-  };
-#else
 class EStateHashFun {
  public:
   EStateHashFun() {}
@@ -113,7 +99,6 @@ class EStateHashFun {
   }
  private:
 };
-#endif
  class EStateEqualToPred {
  public:
    EStateEqualToPred() {}

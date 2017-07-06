@@ -8,7 +8,7 @@
 #include <map>
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 using namespace OmpSupport;
 using namespace SageInterface;
 // Everything should go into the name space here!!
@@ -1229,7 +1229,7 @@ namespace AutoParallelization
               {
                 if (enable_debug)
                 {
-                  cout<<"Eliminating a dep relation due to scalar dep type for at least one array variable"<<endl; 
+                  cout<<"Non-aliasing assumed, eliminating a dep relation due to scalar dep type for at least one array variable (pointers used as arrays)"<<endl; 
                   info.Dump();
                 }
                 continue;
@@ -1301,7 +1301,7 @@ namespace AutoParallelization
             {
               if (enable_debug)
               {
-                cout<<"Eliminating a dep relation between two different memory locations"<<endl; 
+                cout<<"Eliminating a dep relation between two instances of the same data member from different parent aggregate data"<<endl; 
                 info.Dump();
               }
               continue;
@@ -2037,9 +2037,13 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
     return s; 
   }
   
-  //! Check if two expressions access different memory locations. If in double, return false (not certain, may alias to each other).
+  //! Check if two expressions access different memory locations from the same aggregate types. 
+  // If in double, return false (not certain, may alias to each other).
   //This is helpful to exclude some dependence relations involving two obvious different memory location accesses
   //TODO: move to SageInterface when ready
+  //For example:  class VectorXY {int y} may have two different objects o1 and o2. 
+  //But o1.y and o2.y will be recognized as the same references to symbol y. 
+  // We need to get their parent objects and compare them. 
   bool differentMemoryLocation(SgExpression* e1, SgExpression* e2)
   {
     bool retval = false; 
@@ -2062,9 +2066,9 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
     ROSE_ASSERT (isSgArrowExp(var2)== NULL);
 
     if (var1 != NULL && var2 !=NULL)
-    {
-      if (getSymbol(var1)!= getSymbol(var2))
-        retval = true; // pointing to two different symbols? must be different!
+    { // We must check if e1's top variable is itself: If yes, no aggregate types are involved. e1 and e2 may be pointer scalars aliasing to each other
+      if (getSymbol(var1)!= getSymbol(var2)  && (e1!=var1 && e2!=var2) )
+        retval = true; // pointing to two different parent symbols? 
     }
     return retval;
   }

@@ -23,7 +23,7 @@
 #include <Sawyer/SmallObject.h>
 #include <set>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 class SMTSolver;
@@ -1267,8 +1267,8 @@ findCommonSubexpressions(InputIterator begin, InputIterator end) {
 } // namespace
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::SymbolicExpr::Interior);
-BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::SymbolicExpr::Leaf);
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::SymbolicExpr::Interior);
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::SymbolicExpr::Leaf);
 #endif
 
 #endif

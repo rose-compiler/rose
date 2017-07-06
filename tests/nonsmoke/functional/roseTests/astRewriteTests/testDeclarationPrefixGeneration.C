@@ -126,9 +126,9 @@ PrefixSuffixGenerationTraversal::evaluateInheritedAttribute (
      if ( currentStatement != NULL )
         {
        // printf ("Found a statement! \n");
-       // string declarationFilename   = rose::getFileName(currentStatement);
+       // string declarationFilename   = Rose::getFileName(currentStatement);
           string declarationFilename   = currentStatement->get_file_info()->get_filename();
-          string targetFilename        = rose::getFileNameByTraversalBackToFileNode(currentStatement);
+          string targetFilename        = Rose::getFileNameByTraversalBackToFileNode(currentStatement);
 
        // printf ("targetFilename = %s declarationFilename = %s counter = %d (*i)->sage_class_name() = %s \n",
        //      targetFilename.c_str(),declarationFilename.c_str(),counter,(*i)->sage_class_name());

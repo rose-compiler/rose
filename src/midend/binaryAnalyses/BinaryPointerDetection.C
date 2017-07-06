@@ -12,12 +12,12 @@
 #include <Sawyer/ProgressBar.h>
 #include <SymbolicSemantics2.h>
 
-using namespace rose::Diagnostics;
-using namespace rose::BinaryAnalysis;
-using namespace rose::BinaryAnalysis::InstructionSemantics2;
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
+using namespace Rose::Diagnostics;
+using namespace Rose::BinaryAnalysis;
+using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace PointerDetection {
 
@@ -28,7 +28,7 @@ initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        Diagnostics::initAndRegister(&mlog, "rose::BinaryAnalysis::PointerDetection");
+        Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::PointerDetection");
     }
 }
 

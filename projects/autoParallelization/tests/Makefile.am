@@ -50,6 +50,7 @@ output_dep2.c \
 output_dep3.c \
 plusAssign.c \
 plusplus.c \
+pointers.c \
 private.c \
 reduction.c \
 reduction_2.c \

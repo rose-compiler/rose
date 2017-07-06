@@ -14,8 +14,8 @@ static const char *description =
 #include <vector>
 #include <string>
 
-using namespace rose;                                   // the ROSE team is migrating everything to this namespace
-using namespace rose::Diagnostics;                      // for mlog, INFO, WARN, ERROR, etc.
+using namespace Rose;                                   // the ROSE team is migrating everything to this namespace
+using namespace Rose::Diagnostics;                      // for mlog, INFO, WARN, ERROR, etc.
 
 Diagnostics::Facility mlog;                             // most ROSE tools use a diagnostics logging facility
 
@@ -115,7 +115,7 @@ parseCommandLine(int argc, char *argv[]) {
 int
 main (int argc, char* argv[])
 {
-  // Initialize and check compatibility. See rose::initialize
+  // Initialize and check compatibility. See Rose::initialize
   ROSE_INITIALIZE;
   ::mlog = Diagnostics::Facility("tool", Diagnostics::destination);
   Diagnostics::mfacilities.insertAndAdjust(::mlog);

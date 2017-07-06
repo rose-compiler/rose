@@ -15,24 +15,24 @@ namespace CodeThorn {
 
   class InputOutput {
   public:
-  InputOutput():op(NONE),var(CodeThorn::VarAbstractValue()){ val=CodeThorn::Bot();}
+  InputOutput():op(NONE),var(CodeThorn::AbstractValue()){ val=CodeThorn::Bot();}
     enum OpType {NONE,STDIN_VAR,STDOUT_VAR,STDOUT_CONST,STDERR_VAR,STDERR_CONST, FAILED_ASSERT,VERIFICATION_ERROR};
     OpType op;
-    CodeThorn::VarAbstractValue var;
+    CodeThorn::AbstractValue var;
     CodeThorn::AbstractValue val;
     string toString() const;
     string toString(SPRAY::VariableIdMapping* variableIdMapping) const;
-    void recordVariable(OpType op, CodeThorn::VarAbstractValue varId);
+    void recordVariable(OpType op, CodeThorn::AbstractValue varId);
     void recordConst(OpType op, CodeThorn::AbstractValue val);
     void recordConst(OpType op, int val);
     void recordFailedAssert();
     void recordVerificationError();
-    bool isStdInIO() const { return op==STDIN_VAR; }
-    bool isStdOutIO() const { return op==STDOUT_VAR || op==STDOUT_CONST; }
-    bool isStdErrIO() const { return op==STDERR_VAR || op==STDERR_CONST; }
-    bool isFailedAssertIO() const { return op==FAILED_ASSERT; }
-    bool isVerificationError() const { return op==VERIFICATION_ERROR; }
-    bool isNonIO() const { return op==NONE; }
+    bool isStdInIO() const;
+    bool isStdOutIO() const;
+    bool isStdErrIO() const;
+    bool isFailedAssertIO() const;
+    bool isVerificationError() const;
+    bool isNonIO() const;
   };
   
   bool operator<(const InputOutput& c1, const InputOutput& c2);

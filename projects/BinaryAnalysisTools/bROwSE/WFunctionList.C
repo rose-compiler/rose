@@ -8,8 +8,8 @@
 #include <Wt/WText>
 #include <Wt/WVBoxLayout>
 
-using namespace rose;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 
 namespace bROwSE {
 

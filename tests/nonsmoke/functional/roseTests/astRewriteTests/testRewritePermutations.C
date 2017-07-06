@@ -4,7 +4,7 @@
 #include "rose.h"
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 #include "testNewRewrite.h"
 

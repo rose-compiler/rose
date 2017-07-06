@@ -12,7 +12,7 @@
 #include <algorithm>
 #include <ostream>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 

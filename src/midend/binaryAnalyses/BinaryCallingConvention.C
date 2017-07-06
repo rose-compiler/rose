@@ -10,12 +10,12 @@
 #include <Partitioner2/Function.h>                      // Fast function data structures
 #include <Sawyer/ProgressBar.h>
 
-using namespace rose::Diagnostics;
-using namespace rose::BinaryAnalysis::InstructionSemantics2;
-using namespace rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
+using namespace Rose::Diagnostics;
+using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+using namespace Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace CallingConvention {
 
@@ -26,7 +26,7 @@ initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        Diagnostics::initAndRegister(&mlog, "rose::BinaryAnalysis::CallingConvention");
+        Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::CallingConvention");
     }
 }
 

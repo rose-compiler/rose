@@ -14,7 +14,7 @@
 #include "stringify.h"
 #endif
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 static bool
 is_type_node(SgNode *node) {

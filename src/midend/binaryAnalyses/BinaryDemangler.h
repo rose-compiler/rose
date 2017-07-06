@@ -1,7 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_Demangler_H
 #define ROSE_BinaryAnalysis_Demangler_H
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 class Demangler {

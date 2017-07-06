@@ -3,7 +3,7 @@
 
 #include <MemoryMap.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /** Identifies magic numbers in binaries.

@@ -18,7 +18,7 @@
 #include <fstream>
 #include <iostream>
 
-using namespace rose;
+using namespace Rose;
 
 
 // Default setting for verbosity level (-1 is silent, and values greater then zero indicate different levels of verbosity)

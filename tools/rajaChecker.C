@@ -613,7 +613,7 @@ bool RAJA_Checker::isNodalAccumulationLoop(SgForStatement* forloop, SgExprStatem
   if (body == NULL) 
   {
     if (RAJA_Checker::enable_debug)
-      cout<< "NULL body, return false;"<<endl;;
+      cout<< "NULL body, return false;"<<endl;
     return false;
   }
 
@@ -621,7 +621,7 @@ bool RAJA_Checker::isNodalAccumulationLoop(SgForStatement* forloop, SgExprStatem
   if (bb == NULL) 
   {
     if (RAJA_Checker::enable_debug)
-      cout<< "NULL Basic Block as body, return false;"<<endl;;
+      cout<< "NULL Basic Block as body, return false;"<<endl;
     return false;
   }
 
@@ -805,10 +805,13 @@ void RoseVisitor::visit ( SgNode* n)
             oss<<"\t The first accumulation statement is at line:"<< fstmt->get_file_info()->get_line()<<endl;
 
             SgSourceFile* file = getEnclosingSourceFile(forloop);
-            Rose::KeepGoing::File2StringMap[file]+=oss.str();
+            string s(":");
+            string entry= forloop->get_file_info()->get_filename()+s+oss.str(); // add full filename to each log entries
+            Rose::KeepGoing::File2StringMap[file]+= entry;
           if (RAJA_Checker::enable_debug)
           {
             ofile<<oss.str();
+            cout<<oss.str(); // also output to std out
           }
         }
       }
@@ -836,10 +839,13 @@ void RoseVisitor::visit ( SgNode* n)
                 oss<<"\t This labmda function is used as a function parameter in a RAJA function is at line:"<< callstmt->get_file_info()->get_line()<<endl;
 
               SgSourceFile* file = getEnclosingSourceFile(le);
-              Rose::KeepGoing::File2StringMap[file]+=oss.str();
+              string s(":");
+              string entry= le->get_file_info()->get_filename()+s+oss.str(); // add full filename to each log entries.
+              Rose::KeepGoing::File2StringMap[file]+= entry;
             if (RAJA_Checker::enable_debug)
             {
               ofile<<oss.str();
+              cout<<oss.str(); // also output to std out
             }
           }
         }
@@ -873,7 +879,7 @@ static void initDebugOutputFile(SgProject* project)
   SgFile* firstfile = fl[0];
   ROSE_ASSERT (firstfile!=NULL);
 
-  string filename = rose::StringUtility::stripPathFromFileName (firstfile->getFileName());
+  string filename = Rose::StringUtility::stripPathFromFileName (firstfile->getFileName());
   string ofilename = filename+".output";
   ofile.open(ofilename.c_str());
 }
@@ -886,8 +892,20 @@ main ( int argc, char* argv[])
   vector<string> argvList(argv, argv+argc);
   argvList = commandline_processing (argvList);
 
+// check if the translator is running in -E mode, if yes, skip the work
+  bool preprocessingOnly = false; 
+
+   if (CommandlineProcessing::isOption (argvList,"-E","",false))
+   {
+     preprocessingOnly = true; 
+     // we should not put debugging info here. Otherwise polluting the generated preprocessed file!!
+   }
+
   SgProject* project = frontend(argvList);
   ROSE_ASSERT (project != NULL);
+
+  if (preprocessingOnly)
+     return backend(project);
 
   // register midend signal handling function                                                                         
   if (KEEP_GOING_CAUGHT_MIDEND_SIGNAL)                                                                                
@@ -943,6 +961,7 @@ label_end:
     std::vector<std::string> orig_rose_cmdline(argv, argv+argc);
     Rose::KeepGoing::generate_reports (project, orig_rose_cmdline);
   }  
+
   //return backend(project);
   return status;
 }

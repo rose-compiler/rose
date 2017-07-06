@@ -10,9 +10,9 @@
 
 #include <boost/shared_ptr.hpp>
 
-using namespace rose::Diagnostics;
+using namespace Rose::Diagnostics;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 void

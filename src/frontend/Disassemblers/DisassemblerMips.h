@@ -6,7 +6,7 @@
 #include "InstructionEnumsMips.h"
 #include "sageBuilderAsm.h"
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 class DisassemblerMips: public Disassembler {

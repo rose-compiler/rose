@@ -18,7 +18,7 @@
 #include <cstdlib>
 #include <cstring>
 
-namespace rose {
+namespace Rose {
 
 std::ostream& operator<<(std::ostream &o, const SnippetInsertion &inserted) {
     o <<"(inserted=(" <<inserted.inserted->class_name() <<"*)" <<inserted.inserted
@@ -87,7 +87,7 @@ SnippetFile::lookup(const std::string &fileName)
 {
     struct stat sb;
     if (-1 == stat(fileName.c_str(), &sb))
-        throw std::runtime_error(std::string("rose::Snippet: ") + strerror(errno) + ": " + fileName);
+        throw std::runtime_error(std::string("Rose::Snippet: ") + strerror(errno) + ": " + fileName);
     return registry.get_value_or(fileName, SnippetFilePtr());
 }
 
@@ -554,7 +554,7 @@ Snippet::instance(const std::string &snippetName, const SnippetFilePtr &snippetF
 
     SnippetPtr retval = snippetFile->findSnippet(snippetName);
     if (!retval)
-        throw std::runtime_error("rose::Snippet: snippet '"+snippetName+"' not found in file '"+snippetFile->getName()+"'");
+        throw std::runtime_error("Rose::Snippet: snippet '"+snippetName+"' not found in file '"+snippetFile->getName()+"'");
     return retval;
 }
 
@@ -730,7 +730,7 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
     SgFunctionDeclaration *snippet_fdecl = ast->get_declaration();
     const SgInitializedNamePtrList &formals = snippet_fdecl->get_parameterList()->get_args();
     if (actuals.size()!=formals.size()) {
-        throw std::runtime_error("rose::Snippet: mismatched snippet arguments: expected " +
+        throw std::runtime_error("Rose::Snippet: mismatched snippet arguments: expected " +
                                  plural(formals.size(), "arguments") + " but got " +
                                  numberToString(actuals.size()));
     }
@@ -738,9 +738,9 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
         SgSymbol *formalSymbol = formals[i]->search_for_symbol_from_symbol_table();
         assert(formalSymbol!=NULL);
         if (actuals[i]==NULL)
-            throw std::runtime_error("rose::Snippet: snippet '"+name+"' actual argument "+numberToString(i+1)+" is null");
+            throw std::runtime_error("Rose::Snippet: snippet '"+name+"' actual argument "+numberToString(i+1)+" is null");
         if (!isSgInitializedName(actuals[i]) && !isSgExpression(actuals[i]))
-            throw std::runtime_error("rose::Snippet: snippet '"+name+"' actual argument "+numberToString(i+1)+
+            throw std::runtime_error("Rose::Snippet: snippet '"+name+"' actual argument "+numberToString(i+1)+
                                      " must be a variable declaration or expression"
                                      " but has type "+actuals[i]->class_name());
         bindings[formalSymbol] = actuals[i];

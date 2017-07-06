@@ -4,7 +4,7 @@
 #include "stringify.h"
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 /** Show an error message about a node. */
 static void

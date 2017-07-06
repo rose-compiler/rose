@@ -5,11 +5,11 @@
 #include <Sawyer/CommandLine.h>
 #include <TraceSemantics2.h>
 
-using namespace rose;
-using namespace rose::BinaryAnalysis;
-using namespace rose::BinaryAnalysis::InstructionSemantics2;
-using namespace rose::Diagnostics;
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
+using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+using namespace Rose::Diagnostics;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 Sawyer::Message::Facility mlog;
 

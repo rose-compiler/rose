@@ -6,7 +6,7 @@
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/list.hpp>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace BaseSemantics {

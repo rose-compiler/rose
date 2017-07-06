@@ -384,7 +384,7 @@ sub output_decl {
 
 #include <string>
 
-namespace rose {
+namespace Rose {
 
 /** Shortens names of long stringifiers.
  *
@@ -447,7 +447,7 @@ sub output_defn {
     print OUTPUT "#include <cstring>\n";
     print OUTPUT "#include <sstream>\n";
     print OUTPUT "\n";
-    print OUTPUT "namespace rose {\n";
+    print OUTPUT "namespace Rose {\n";
   } else {
     *OUTPUT = *STDOUT;
   }

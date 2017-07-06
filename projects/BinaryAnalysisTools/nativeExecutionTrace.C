@@ -4,10 +4,10 @@
 #include <Partitioner2/Engine.h>
 #include <Sawyer/CommandLine.h>
 
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
-using namespace rose;
-using namespace rose::BinaryAnalysis;
-using namespace rose::Diagnostics;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
+using namespace Rose::Diagnostics;
 
 Sawyer::Message::Facility mlog;
 

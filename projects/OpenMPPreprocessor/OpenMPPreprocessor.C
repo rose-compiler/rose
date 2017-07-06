@@ -5,7 +5,7 @@
 
 // DQ (1/1/2006): This is OK if not declared in a header file
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 // Build an inherited attribute for the tree traversal to test the rewrite mechanism
 class OpenMPInheritedAttribute
@@ -54,7 +54,7 @@ OpenMPTraversal::evaluateRewriteInheritedAttribute (
 SgStatement*
 getPreviousStatement ( SgStatement *targetStatement )
    {
-     SgStatement *previousStatement = rose::getPreviousStatement(targetStatement);
+     SgStatement *previousStatement = Rose::getPreviousStatement(targetStatement);
      return previousStatement;
    }
 

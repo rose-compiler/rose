@@ -7,7 +7,7 @@
 #include "RSIM_Linux32.h"
 #include "RSIM_Adapter.h"
 
-using namespace rose;
+using namespace Rose;
 
 class MemoryTransactionTester: public RSIM_Callbacks::InsnCallback {
 public:

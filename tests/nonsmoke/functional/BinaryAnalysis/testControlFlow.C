@@ -12,9 +12,9 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #include <Partitioner2/GraphViz.h>
 #include <Partitioner2/Partitioner.h>
 
-using namespace rose;
-using namespace rose::BinaryAnalysis;
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 int
 main(int argc, char *argv[]) {

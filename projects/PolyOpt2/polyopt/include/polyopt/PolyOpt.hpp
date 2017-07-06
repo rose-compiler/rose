@@ -28,7 +28,7 @@
 #include <rose.h>
 
 #include <polyopt/PolyRoseOptions.hpp>
-
+#include <polyopt/PolyOptISLRepresentation.hpp>
 
 
 /******************************************************************************/
@@ -48,6 +48,23 @@ int PolyOptOptimizeProject(SgProject* project, PolyRoseOptions& polyoptions);
  *
  */
 int PolyOptOptimizeSubTree(SgNode* root, PolyRoseOptions& polyoptions);
+
+/**
+ * Recognize if a sub-tree meets polyhedral restrictions.
+ *
+ *
+ */
+std::vector<std::pair<SgNode*,scoplib_scop_p> >
+PolyOptRecognizeScopsSubTree(SgNode* root, PolyRoseOptions& polyoptions);
+
+
+/**
+ * Translate a SCoP into ISL format.
+ *
+ *
+ */
+PolyOptISLRepresentation
+PolyOptConvertScopToISL(scoplib_scop_p scop);
 
 
 
@@ -95,5 +112,10 @@ int PolyOptAnnotateProject(SgProject* project, PolyRoseOptions& polyoptions);
 int PolyOptAnnotateSubTree(SgNode* root, PolyRoseOptions& polyoptions);
 
 
+/**
+ * LNP: Experimental.
+ *
+ */
 int PolyOptLoopTiling(SgForStatement* forStmt, int tileArg1, int tileArg2, int tileArg3);
+
 #endif

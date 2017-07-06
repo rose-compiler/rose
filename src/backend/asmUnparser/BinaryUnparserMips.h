@@ -3,7 +3,7 @@
 
 #include <BinaryUnparserBase.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Unparser {
 

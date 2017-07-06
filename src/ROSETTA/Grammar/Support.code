@@ -82,6 +82,15 @@ HEADER_OMP_CLAUSE_START
             e_omp_reduction_last
         };
 
+        enum omp_dependence_type_enum
+        {
+            e_omp_depend_unknown,
+            e_omp_depend_in,
+            e_omp_depend_out,
+            e_omp_depend_inout,
+            e_omp_depend_last
+        };
+       
         // Liao 1/22/2012: experimental support for OpenMP Accelerator model 
         enum omp_map_operator_enum
         {
@@ -2876,7 +2885,7 @@ $CLASSNAME::displayString() const
 
   // DQ (6/13/2008): Added support for layout and shared use with "strict" or "relaxed"
      s += std::string("get_isShared() = ")  + std::string(get_isShared() ? "true " : "false ");
-     s += std::string("get_layout() = ")  + rose::StringUtility::numberToString(get_layout());
+     s += std::string("get_layout() = ")  + Rose::StringUtility::numberToString(get_layout());
 
      s += ")";
      return s;
@@ -3551,11 +3560,11 @@ $CLASSNAME::displayString() const
      s += std::string("isUnknown() = ")                + std::string(isUnknown()  ? "true " : "false ");
      s += std::string("isDefault() = ")                + std::string(isDefault()  ? "true " : "false ");
      s += std::string("isRestrict() = ")               + std::string(isRestrict() ? "true " : "false ");
-     s += std::string("gnu_extension_machine_mode = ") + rose::StringUtility::numberToString((int)p_gnu_extension_machine_mode) + " ";
-     s += std::string("gnu_attribute_alignment = ")    + rose::StringUtility::numberToString((int)p_gnu_attribute_alignment)    + " ";
-     s += std::string("gnu_attribute_sentinel = ")     + rose::StringUtility::numberToString((int)p_gnu_attribute_sentinel)     + " ";
-     s += std::string("address_space_value = ")        + rose::StringUtility::numberToString((int)p_address_space_value)        + " ";
-     s += std::string("vector_size = ")                + rose::StringUtility::numberToString((int)p_vector_size)                + " ";
+     s += std::string("gnu_extension_machine_mode = ") + Rose::StringUtility::numberToString((int)p_gnu_extension_machine_mode) + " ";
+     s += std::string("gnu_attribute_alignment = ")    + Rose::StringUtility::numberToString((int)p_gnu_attribute_alignment)    + " ";
+     s += std::string("gnu_attribute_sentinel = ")     + Rose::StringUtility::numberToString((int)p_gnu_attribute_sentinel)     + " ";
+     s += std::string("address_space_value = ")        + Rose::StringUtility::numberToString((int)p_address_space_value)        + " ";
+     s += std::string("vector_size = ")                + Rose::StringUtility::numberToString((int)p_vector_size)                + " ";
 #if 0
      s += std::string("\n     ")                       + get_constVolatileModifier().displayString()                      + " ";
      s += std::string("\n     ")                       + get_upcModifier().displayString()                                + " ";
@@ -7108,7 +7117,7 @@ SgSymbolTable::get_name( const SgNode* node) const
                   }
                  else
                   {
-                 // name = rose::StringUtility::numberToString(labelStatement->get_numeric_label()->get_name());
+                 // name = Rose::StringUtility::numberToString(labelStatement->get_numeric_label()->get_name());
                     assert(labelStatement->get_numeric_label() != NULL);
                     name = labelStatement->get_numeric_label()->get_name();
                   }
@@ -11209,7 +11218,7 @@ SgSymbolTable::print( std::string label, VariantT nodeType )
                          if (labelStatement == NULL)
                             {
                               assert(symbol->get_numeric_label_value() >= 0);
-                              mangledName = rose::StringUtility::numberToString(symbol->get_numeric_label_value());
+                              mangledName = Rose::StringUtility::numberToString(symbol->get_numeric_label_value());
                             }
                            else
                             {
@@ -13482,8 +13491,8 @@ Sg_File_Info::displayString(const std::string & label ) const
      s += std::string("isCompilerGenerated = ") + std::string(isCompilerGenerated() ? "true " : "false ") + std::string(" ");
      if (!isTransformation() && !isCompilerGenerated())
         {
-          s += std::string("line number = ")   + rose::StringUtility::numberToString(get_line()) + std::string(" ");
-          s += std::string("column number = ") + rose::StringUtility::numberToString(get_col())  + std::string(" ");
+          s += std::string("line number = ")   + Rose::StringUtility::numberToString(get_line()) + std::string(" ");
+          s += std::string("column number = ") + Rose::StringUtility::numberToString(get_col())  + std::string(" ");
           s += std::string("filename = ")      + std::string(get_filename()) + std::string(" ");
         }
 
@@ -15657,8 +15666,8 @@ SgFile::getWorkingDirectory ()
      currentDirectory[maxPathNameLength - 1] = 0; // Just in case
 
   // The semantics of the getcwd is that these shuld be the same (see if they are)
-  // printf ("In rose::getWorkingDirectory: Current directory = %s \n",currentDirectory);
-  // printf ("In rose::getWorkingDirectory: Current directory = %s \n",returnString);
+  // printf ("In Rose::getWorkingDirectory: Current directory = %s \n",currentDirectory);
+  // printf ("In Rose::getWorkingDirectory: Current directory = %s \n",returnString);
 
   // live with the possible memory leak for now
   // delete currentDirectory;
@@ -15687,7 +15696,7 @@ SgFile::getSourceDirectory ()
 
      string sourceFile = get_sourceFileNameWithPath();
      assert(sourceFile.empty() == false);
-     return rose::StringUtility::getPathFromFileName(sourceFile);
+     return Rose::StringUtility::getPathFromFileName(sourceFile);
    }
 
 
@@ -15699,10 +15708,10 @@ SgFile::generateOutputFileName() const
 
      std::string sourceFileName = get_sourceFileNameWithPath();
 
-  // std::string baseFileName    = rose::utility_stripPathFromFileName(sourceFileName.c_str());
-     std::string baseFileName    = rose::StringUtility::stripPathFromFileName(sourceFileName);
+  // std::string baseFileName    = Rose::utility_stripPathFromFileName(sourceFileName.c_str());
+     std::string baseFileName    = Rose::StringUtility::stripPathFromFileName(sourceFileName);
 
-     std::string baseFileNameWithoutSuffix = rose::StringUtility::stripFileSuffixFromFileName(baseFileName);
+     std::string baseFileNameWithoutSuffix = Rose::StringUtility::stripFileSuffixFromFileName(baseFileName);
 
   // printf ("sourceFileName = %s oldFileName = %s\n",sourceFileName.c_str(),baseFileName.c_str());
 
@@ -16179,14 +16188,14 @@ SgSourceFile::set_tokenSubsequenceMap(std::map<SgNode*,TokenStreamSequenceToNode
    {
   // DQ (10/28/2013): Not sure I want this to be copy by value, but OK for now.
   // We could later make this a map of maps using the SgSourceFile IR node as the key (or the Sg_File_Info fileId value (which is tied to the filename)).
-     rose::tokenSubsequenceMap = tokenStreamSequenceMap;
+     Rose::tokenSubsequenceMap = tokenStreamSequenceMap;
    }
 
 std::map<SgNode*,TokenStreamSequenceToNodeMapping*> &
 SgSourceFile::get_tokenSubsequenceMap()
    {
   // DQ (10/28/2013): Not sure I want this to be copy by value, but OK for now.
-     return rose::tokenSubsequenceMap;
+     return Rose::tokenSubsequenceMap;
    }
 
 // void SgSourceFile::set_token_unparse_frontier(std::vector<FrontierNode*> & tokenStreamSequenceMap)
@@ -16195,7 +16204,7 @@ SgSourceFile::set_token_unparse_frontier(std::map<SgStatement*,FrontierNode*> & 
    {
   // DQ (10/28/2013): Not sure I want this to be copy by value, but OK for now.
   // We could later make this a map of maps using the SgSourceFile IR node as the key (or the Sg_File_Info fileId value (which is tied to the filename)).
-     rose::frontierNodes = tokenStreamSequenceMap;
+     Rose::frontierNodes = tokenStreamSequenceMap;
    }
 
 // std::vector<FrontierNode*> & SgSourceFile::get_token_unparse_frontier()
@@ -16203,7 +16212,7 @@ std::map<SgStatement*,FrontierNode*> &
 SgSourceFile::get_token_unparse_frontier()
    {
   // DQ (10/28/2013): Not sure I want this to be copy by value, but OK for now.
-     return rose::frontierNodes;
+     return Rose::frontierNodes;
    }
 
 void 
@@ -16211,14 +16220,14 @@ SgSourceFile::set_token_unparse_frontier_adjacency(std::map<SgNode*,PreviousAndN
    {
   // DQ (10/28/2013): Not sure I want this to be copy by value, but OK for now.
   // We could later make this a map of maps using the SgSourceFile IR node as the key (or the Sg_File_Info fileId value (which is tied to the filename)).
-     rose::previousAndNextNodeMap = tokenStreamSequenceMap;
+     Rose::previousAndNextNodeMap = tokenStreamSequenceMap;
    }
 
 std::map<SgNode*,PreviousAndNextNodeData*> &
 SgSourceFile::get_token_unparse_frontier_adjacency()
    {
   // DQ (10/28/2013): Not sure I want this to be copy by value, but OK for now.
-     return rose::previousAndNextNodeMap;
+     return Rose::previousAndNextNodeMap;
    }
 
 
@@ -16226,14 +16235,14 @@ SgSourceFile::get_token_unparse_frontier_adjacency()
 void
 SgSourceFile::set_redundantlyMappedTokensToStatementMultimap(std::multimap<int,SgStatement*> & X)
    {
-     rose::redundantlyMappedTokensToStatementMultimap = X;
+     Rose::redundantlyMappedTokensToStatementMultimap = X;
    }
 
 // DQ (11/29/2013): Added to support access to multi-map of redundant mapping of frontier IR nodes to token subsequences.
 std::multimap<int,SgStatement*> &
 SgSourceFile::get_redundantlyMappedTokensToStatementMultimap()
    {
-     return rose::redundantlyMappedTokensToStatementMultimap;
+     return Rose::redundantlyMappedTokensToStatementMultimap;
    }
 
 
@@ -16241,14 +16250,14 @@ SgSourceFile::get_redundantlyMappedTokensToStatementMultimap()
 void
 SgSourceFile::set_redundantTokenEndingsSet(std::set<int> & X)
    {
-     rose::redundantTokenEndingsSet = X;
+     Rose::redundantTokenEndingsSet = X;
    }
 
 // DQ (11/29/2013): Added to support access to multi-map of redundant mapping of frontier IR nodes to token subsequences.
 std::set<int> &
 SgSourceFile::get_redundantTokenEndingsSet()
    {
-     return rose::redundantTokenEndingsSet;
+     return Rose::redundantTokenEndingsSet;
    }
 
 
@@ -16256,7 +16265,7 @@ void
 SgSourceFile::set_representativeWhitespaceStatementMap(std::map<SgScopeStatement*,SgStatement*> & representativeWhitespaceStatementMap)
    {
   // DQ (11/20/2015): Provide a statement to use as a key in the token sequence map to get representative whitespace.
-     rose::representativeWhitespaceStatementMap = representativeWhitespaceStatementMap;
+     Rose::representativeWhitespaceStatementMap = representativeWhitespaceStatementMap;
    }
 
 std::map<SgScopeStatement*,SgStatement*> &
@@ -16264,7 +16273,7 @@ SgSourceFile::get_representativeWhitespaceStatementMap()
    {
   // DQ (11/20/2015): Provide a statement to use as a key in the token sequence map to get representative whitespace.
   // DQ (11/20/2015): Not sure I want this to be copy by value, but OK for now.
-     return rose::representativeWhitespaceStatementMap;
+     return Rose::representativeWhitespaceStatementMap;
    }
 
 
@@ -16272,7 +16281,7 @@ void
 SgSourceFile::set_macroExpansionMap(std::map<SgStatement*,MacroExpansion*> & macroExpansionMap)
    {
   // DQ (11/30/2015): Provide a statement to use as a key in the macro expansion map to get info about macro expansions.
-     rose::macroExpansionMap = macroExpansionMap;
+     Rose::macroExpansionMap = macroExpansionMap;
    }
 
 std::map<SgStatement*,MacroExpansion*> &
@@ -16280,7 +16289,7 @@ SgSourceFile::get_macroExpansionMap()
    {
   // DQ (11/30/2015): Provide a statement to use as a key in the macro expansion map to get info about macro expansions.
   // DQ (11/30/2015): Not sure I want this to be copy by value, but OK for now.
-     return rose::macroExpansionMap;
+     return Rose::macroExpansionMap;
    }
 
 
@@ -17390,7 +17399,7 @@ std::string
 SgProject::get_Java_destdir (void) const
    {
     if (p_Java_destdir == "") {
-      return rose::getWorkingDirectory();
+      return Rose::getWorkingDirectory();
     }
     return p_Java_destdir;
    }
@@ -17425,7 +17434,7 @@ std::string
 SgProject::get_Java_source_destdir (void) const
    {
     if (p_Java_source_destdir == "") {
-      return rose::getWorkingDirectory();
+      return Rose::getWorkingDirectory();
     }
     return p_Java_source_destdir;
   }
@@ -17481,22 +17490,22 @@ SgProject::display ( const std::string & label ) const
      printf ("   p_outputFileName                          = %s \n",p_outputFileName.c_str());
 
      printf ("   p_sourceFileNameList.size()               = %" PRIuPTR " \n", p_sourceFileNameList.size());
-     printf ("   p_sourceFileNameList                      = \n      %s \n",rose::StringUtility::listToString(p_sourceFileNameList).c_str());
+     printf ("   p_sourceFileNameList                      = \n      %s \n",Rose::StringUtility::listToString(p_sourceFileNameList).c_str());
 
      printf ("   p_objectFileNameList.size()               = %" PRIuPTR " \n", p_objectFileNameList.size());
-     printf ("   p_objectFileNameList                      = \n      %s \n",rose::StringUtility::listToString(p_objectFileNameList).c_str());
+     printf ("   p_objectFileNameList                      = \n      %s \n",Rose::StringUtility::listToString(p_objectFileNameList).c_str());
 
      printf ("   p_libraryFileList.size()                  = %" PRIuPTR " \n", p_libraryFileList.size());
-     printf ("   p_libraryFileList                         = \n      %s \n",rose::StringUtility::listToString(p_libraryFileList).c_str());
+     printf ("   p_libraryFileList                         = \n      %s \n",Rose::StringUtility::listToString(p_libraryFileList).c_str());
 
      printf ("   p_librarySpecifierList.size()             = %" PRIuPTR " \n", p_librarySpecifierList.size());
-     printf ("   p_librarySpecifierList                    = \n      %s \n",rose::StringUtility::listToString(p_librarySpecifierList).c_str());
+     printf ("   p_librarySpecifierList                    = \n      %s \n",Rose::StringUtility::listToString(p_librarySpecifierList).c_str());
 
      printf ("   p_libraryDirectorySpecifierList.size()    = %" PRIuPTR " \n", p_libraryDirectorySpecifierList.size());
-     printf ("   p_libraryDirectorySpecifierList           = \n      %s \n",rose::StringUtility::listToString(p_libraryDirectorySpecifierList).c_str());
+     printf ("   p_libraryDirectorySpecifierList           = \n      %s \n",Rose::StringUtility::listToString(p_libraryDirectorySpecifierList).c_str());
 
      printf ("   p_includeDirectorySpecifierList.size()    = %" PRIuPTR " \n", p_includeDirectorySpecifierList.size());
-     printf ("   p_includeDirectorySpecifierList           = \n      %s \n",rose::StringUtility::listToString(p_includeDirectorySpecifierList).c_str());
+     printf ("   p_includeDirectorySpecifierList           = \n      %s \n",Rose::StringUtility::listToString(p_includeDirectorySpecifierList).c_str());
 
      printf ("   p_compileOnly                             = %s \n",(p_compileOnly == true) ? "true" : "false");
      printf ("   p_prelink                                 = %s \n",(p_prelink     == true) ? "true" : "false");
@@ -17515,22 +17524,22 @@ SgProject::display ( const std::string & label ) const
   // printf ("   p_lookForExcludePaths                     = %s \n",(p_lookForExcludePaths == true) ? "true" : "false");
 
      printf ("   p_includePathList.size()                  = %" PRIuPTR " \n", p_includePathList.size());
-     printf ("   p_includePathList                         = \n      %s \n",rose::StringUtility::listToString(p_includePathList).c_str());
+     printf ("   p_includePathList                         = \n      %s \n",Rose::StringUtility::listToString(p_includePathList).c_str());
 
      printf ("   p_excludePathList.size()                  = %" PRIuPTR " \n", p_excludePathList.size());
-     printf ("   p_excludePathList                         = \n      %s \n",rose::StringUtility::listToString(p_excludePathList).c_str());
+     printf ("   p_excludePathList                         = \n      %s \n",Rose::StringUtility::listToString(p_excludePathList).c_str());
 
      printf ("   p_includeFileList.size()                  = %" PRIuPTR " \n", p_includeFileList.size());
-     printf ("   p_includeFileList                         = \n      %s \n",rose::StringUtility::listToString(p_includeFileList).c_str());
+     printf ("   p_includeFileList                         = \n      %s \n",Rose::StringUtility::listToString(p_includeFileList).c_str());
 
      printf ("   p_excludeFileList.size()                  = %" PRIuPTR " \n", p_excludeFileList.size());
-     printf ("   p_excludeFileList                         = \n      %s \n",rose::StringUtility::listToString(p_excludeFileList).c_str());
+     printf ("   p_excludeFileList                         = \n      %s \n",Rose::StringUtility::listToString(p_excludeFileList).c_str());
 
      printf ("   p_preincludeFileList.size()               = %" PRIuPTR " \n", p_preincludeFileList.size());
-     printf ("   p_preincludeFileList                      = \n      %s \n",rose::StringUtility::listToString(p_preincludeFileList).c_str());
+     printf ("   p_preincludeFileList                      = \n      %s \n",Rose::StringUtility::listToString(p_preincludeFileList).c_str());
 
      printf ("   p_preincludeDirectoryList.size()          = %" PRIuPTR " \n", p_preincludeDirectoryList.size());
-     printf ("   p_preincludeDirectoryList                 = \n      %s \n",rose::StringUtility::listToString(p_preincludeDirectoryList).c_str());
+     printf ("   p_preincludeDirectoryList                 = \n      %s \n",Rose::StringUtility::listToString(p_preincludeDirectoryList).c_str());
 
   // DQ (2/4/2009): Moved from SgFile to SgProject.
      printf ("   p_binary_only()                           = %s \n",(p_binary_only == true) ? "true" : "false");
@@ -18925,13 +18934,13 @@ SgUnparse_Info::displayString ( const std::string & label ) const
         }
 
      returnString += std::string("p_structureTagProcessingList.size() = ") + 
-                     rose::StringUtility::numberToString(p_structureTagProcessingList.size()) + std::string("\n");
+                     Rose::StringUtility::numberToString(p_structureTagProcessingList.size()) + std::string("\n");
      SgTypePtrList::iterator i;
      for (i = p_structureTagProcessingList.begin(); i != p_structureTagProcessingList.end(); i++)
         {
        // print out the pointer values
           returnString += std::string("--- structure tag pointer = ") + 
-                          rose::StringUtility::numberToString((void*)(*i)) + 
+                          Rose::StringUtility::numberToString((void*)(*i)) + 
                           std::string("= class name = ") + std::string((*i)->sage_class_name()) + std::string("\n");
           SgClassType* classType = isSgClassType(*i);
           if (classType != NULL)
@@ -19365,7 +19374,7 @@ SgTemplateArgument::get_mangled_name (void) const
 #if 0
                     printf ("In SgTemplateArgument::get_mangled_name(): case SgTemplateArgument::type_argument: templateClassInstantiationDeclaration = %p name = %s \n",templateClassInstantiationDeclaration,templateClassInstantiationDeclaration->get_name().str());
 #endif
-                    mangled_type += rose::StringUtility::numberToString(templateClassInstantiationDeclaration);
+                    mangled_type += Rose::StringUtility::numberToString(templateClassInstantiationDeclaration);
 
                  // DQ (12/26/2012): This assert fails for copyAST_tests/copytest2007_40.C, but I think it is unreasonable 
                  // to expect it to always be true.  So I have made it a warning for now.

@@ -1,4 +1,4 @@
-// src/roseSupport/utility_functions.C:1358: SgStatement* rose::getNextStatement(SgStatement*): Assertion `false' failed.
+// src/roseSupport/utility_functions.C:1358: SgStatement* Rose::getNextStatement(SgStatement*): Assertion `false' failed.
 
 // This test code also demonstrates the introduction of a larger 
 // amount of new lines when using the -rose:unparse_tokens option.

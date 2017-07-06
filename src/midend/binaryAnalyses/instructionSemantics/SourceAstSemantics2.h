@@ -6,13 +6,13 @@
 #include "RegisterStateGeneric.h"
 #include "NullSemantics2.h"
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {              // documented elsewhere
 namespace InstructionSemantics2 {       // documented elsewhere
 
 /** Generate C source AST from binary AST.
  *
- *  This semantic domain is used by the @ref rose::BinaryAnalysis::BinaryToSource "BinaryToSource" analysis to generate
+ *  This semantic domain is used by the @ref Rose::BinaryAnalysis::BinaryToSource "BinaryToSource" analysis to generate
  *  low-level C source code from a binary.  The semantic values of this domain are C expressions as source code strings. When a
  *  RISC operator, such as "add" is invoked on two semantic values, say C expressions "123" and "x", the result is a new value
  *  that holds a larger C expression, such as "(123 + x)".  The concept is quite simple, but in practice this domain needs to
@@ -42,7 +42,7 @@ namespace InstructionSemantics2 {       // documented elsewhere
  *  the generated code performs all calculations up front using static single assignment (SSA) and then generates the side
  *  effects that update the C program state.
  *
- *  For clues about how to use this domain, see @ref rose::BinaryAnalysis::BinaryToSource. In general, one constructs the
+ *  For clues about how to use this domain, see @ref Rose::BinaryAnalysis::BinaryToSource. In general, one constructs the
  *  domain and processes one instruction at a time.  For each instruction, the domain's state is reset to an initial value,
  *  then the instruction is processed, then the side effect list is examined to generate the C code for the instruction. */
 namespace SourceAstSemantics {

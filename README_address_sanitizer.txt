@@ -60,7 +60,7 @@ Experiences on use with "make check" (53,000 tests) are:
       These are all the same issue:
      ==9813== ERROR: AddressSanitizer: alloc-dealloc-mismatch (malloc vs operator delete) on 0x600400be4810
          #0 0x2b5fa646ba5a in operator delete(void*) /nfs/casc/overture/ROSE/opt/rhel7/x86_64/gcc/4.8.3/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/workspace/gcc-4.8.3/libsanitizer/asan/asan_new_delete.cc:57
-         #1 0x2b5fac9fb351 in rose::BinaryAnalysis::AsmUnparser::StaticDataRawBytes::operator()(bool, rose::BinaryAnalysis::AsmUnparser::UnparserCallback::StaticDataArgs const&) /home/quinlan1/ROSE/git_rose_upgrade_to_edg_411/src/backend/asmUnparser/AsmUnparser.C:932
+         #1 0x2b5fac9fb351 in Rose::BinaryAnalysis::AsmUnparser::StaticDataRawBytes::operator()(bool, Rose::BinaryAnalysis::AsmUnparser::UnparserCallback::StaticDataArgs const&) /home/quinlan1/ROSE/git_rose_upgrade_to_edg_411/src/backend/asmUnparser/AsmUnparser.C:932
 
      I will let Robb look into this issue, since it is binary analysis specific (unparsing ASM).
 
@@ -74,7 +74,7 @@ Experiences on use with "make check" (53,000 tests) are:
    12) The BinaryAnalysis test have a number of failing tests (94 pass and 55 fail).
      testElfStrtab [err]: ==39677== ERROR: AddressSanitizer: alloc-dealloc-mismatch (malloc vs operator delete) on 0x600400643e50
      testElfStrtab [err]:     #0 0x7f13eaea1a5a in operator delete(void*) /nfs/casc/overture/ROSE/opt/rhel7/x86_64/gcc/4.8.3/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/workspace/gcc-4.8.3/libsanitizer/asan/asan_new_delete.cc:57
-     testElfStrtab [err]:     #1 0x7f13e2862351 in rose::BinaryAnalysis::AsmUnparser::StaticDataRawBytes::operator()(bool, rose::BinaryAnalysis::AsmUnparser::UnparserCallback::StaticDataArgs const&) /home/quinlan1/ROSE/git_rose_upgrade_to_edg_411/src/backend/asmUnparser/AsmUnparser.C:932
+     testElfStrtab [err]:     #1 0x7f13e2862351 in Rose::BinaryAnalysis::AsmUnparser::StaticDataRawBytes::operator()(bool, Rose::BinaryAnalysis::AsmUnparser::UnparserCallback::StaticDataArgs const&) /home/quinlan1/ROSE/git_rose_upgrade_to_edg_411/src/backend/asmUnparser/AsmUnparser.C:932
 
        Note that this is the same problem as in point #10 (above).  Also all fialing tests appear to be the same.
 
