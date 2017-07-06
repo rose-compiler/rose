@@ -4,7 +4,7 @@ dnl    https://projects.coin-or.org/BuildTools/wiki/user-configure
 dnl The version number in the AC_INIT expression has been placed there automatically by the "build" script. We cannot
 dnl do the replacement here in the configure file because AC_INIT's second argument must be a literal string, not a
 dnl shell variable.
-AC_INIT([ROSE], [0.9.9.44])
+AC_INIT([ROSE], [0.9.9.71])
 AC_PREREQ([2.59])
 
 dnl +--------------------------------------------------------------------------+
@@ -128,7 +128,7 @@ if echo "$BOOST_CPPFLAGS" |grep -- -pthread >/dev/null; then
    ROSE_CONFIG_TOKEN="$ROSE_CONFIG_TOKEN pthread"
 fi
 AC_DEFINE_UNQUOTED(ROSE_CONFIG_TOKEN, ["$ROSE_CONFIG_TOKEN"],
-    [Encapsulates some important configuration details for rose::initialize])
+    [Encapsulates some important configuration details for Rose::initialize])
 
 dnl Fail gracefully for blacklisted dependencies and other situations
 ROSE_CONFIGURE_SECTION([Checking blacklisted configurations])

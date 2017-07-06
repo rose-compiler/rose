@@ -11,8 +11,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-using namespace rose;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 
 void
 SgAsmGenericFile::ctor()

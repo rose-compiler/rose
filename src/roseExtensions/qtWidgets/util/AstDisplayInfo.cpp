@@ -4,7 +4,7 @@
 #include "AstDisplayInfo.h"
 #include <string>
 
-using namespace rose;
+using namespace Rose;
 
 namespace AstDisplayInfo
 {

@@ -1,0 +1,4603 @@
+#!/usr/bin/perl
+$Interpreter ||= "/usr/bin/perl";
+#-------------------------------------------------------------------------------
+#
+#   Copyright 1985-99,2000-17 James Frederick Reus
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#
+#-------------------------------------------------------------------------------
+
+# MyUniqueFileId: 05bfd522-45a2-4dfa-ca27-420e6c630546
+
+$mkinstaller_ver_major = "0";
+$mkinstaller_ver_minor = "0";
+$mkinstaller_ver_build = "5";
+$mkinstaller_ver_patch = "";
+$mkinstaller_ver_name  = "0.0.5";
+$mkinstaller_ver_time  = "30Jun2017 18:04:18z";
+$mkinstaller_ver_id    = "@(#)mkinstaller 0.0.5 - 30Jun2017 18:04:18z";
+
+@defaultCopyrightOwners
+  = ( "Copyright 1985-99,2000-17 James Frederick Reus\n"
+    );
+
+@defaultCopyrightStatement
+  = ( "Licensed under the Apache License, Version 2.0 (the \"License\");\n"
+    , "you may not use this file except in compliance with the License.\n"
+    , "You may obtain a copy of the License at\n"
+    , "\n"
+    , "    http://www.apache.org/licenses/LICENSE-2.0\n"
+    , "\n"
+    , "Unless required by applicable law or agreed to in writing, software\n"
+    , "distributed under the License is distributed on an \"AS IS\" BASIS,\n"
+    , "WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n"
+    , "See the License for the specific language governing permissions and\n"
+    , "limitations under the License.\n"
+    );
+
+# MyUniqueFileId: 8428f7ce-97e8-4d57-c29f-84c52fae80f1
+$theCommand   = $0;
+$theCommand   =~ tr/\\/\//;
+$foundInDir   = "";
+
+$debugging    = 0;
+if ( exists $ENV{"DEBUG_mkinstaller"}) {
+   $debugging = 1;
+}
+
+{
+   #----------------------------------------------------------------------------
+   #
+   #  Initialization...
+   #
+   #----------------------------------------------------------------------------
+
+   print "mkinstaller: initialization...\n" if $debugging;
+   my $addTarball          = 1;
+   my $Contact             = "";
+   my $CCname              = "";
+   my $CXXname             = "";
+   my %dirBasenames        = ( );
+   my @dirBasenames        = ( );
+   my %dirPathnames        = ( );
+   my @dirPathnames        = ( );
+   my $dirPathnamesCount   = 0;
+   my $ForProject          = "";
+   my $FORTRANname         = "";
+   my $here                = `pwd`; chomp $here;
+   my $keep                = 0;
+   my $myPath              = "";
+   my @myPath              = ( );
+   my $OSname              = "";
+   my $postInstallBasename = "";
+   my $postInstallPathname = "";
+   my $postInstallStyle    = "";
+   my $ProjectName         = "";
+   my $ProjectVer          = "";
+   my $ProjectVerMajor     = "";
+   my $ProjectVerMinor     = "";
+   my $ProjectVerBuild     = "";
+   my $ProjectVerPatch     = "";
+   my $ProjectVerSuffix    = "";
+   my $scriptName          = "";
+   my $scriptNameU         = "";
+   my $SCRIPTNAME          = "";
+   my $SCRIPTNAME_TMPDIR   = "";
+   my @theNotice           = ( );
+   my $titleLine           = "";
+   my $TmpDir              = "";
+   my $TmpDirA             = "";
+   my $TmpDirI             = "";
+   my $TmpDirT             = "";
+   my $TmpDirW             = "";
+   my $TmpFile             = "";
+   my $verbosityLevel      = 0;
+   my $withNotice          = "";
+   print "mkinstaller: ...done\n" if $debugging;
+
+   #----------------------------------------------------------------------------
+   #
+   #  Process command line...
+   #
+   #  First take stuff from OPTS_mkinstaller
+   #  environment variable and put it at the
+   #  start of the command line...
+   #
+   #----------------------------------------------------------------------------
+
+   if ( exists $ENV{'OPTS_mkinstaller'} ) {
+      print "mkinstaller: deal with OPTS_mkinstaller...\n" if $debugging;
+      my $tmp = $ENV{'OPTS_mkinstaller'};
+      if ($tmp ne "") {
+         my @tmp = split /\s/, $tmp;
+         my $i;
+         for ($i=$#tmp; 0<=$i; $i-=1) {
+            unshift @ARGV, $tmp[$i];
+         }
+      }
+      print "mkinstaller: ...done\n" if $debugging;
+   }
+
+   #---------------------------------------
+   #
+   #  Then step through the command line...
+   #
+   #---------------------------------------
+
+   print "mkinstaller: process command line...\n" if $debugging;
+   {
+      my $i;
+      for ($i=0; $i<=$#ARGV; $i+=1) {
+         my $opt = $ARGV[$i];
+         print "mkinstaller: ...found \"$opt\"\n" if $debugging;
+         $_      = $opt;
+         parseArgs: {
+                       #---------------------------------------
+                       #
+                       #  Standard options...
+                       #
+                       #---------------------------------------
+
+                       /^-?-help$/
+
+                          && do {
+                             print "mkinstaller:    is $opt\n" if $debugging;
+                             help();
+                             exit 0;
+                          };
+
+                       /^-?-html$/
+
+                          && do {
+                             $i += 1;
+                             if ($#ARGV < $i) {
+                                print STDERR "mkinstaller: missing argument to $opt option\n";
+                                exit 1;
+                             }
+                             my $given = $ARGV[$i];
+                             $given    =~ tr/\\/\//;
+                             if ($given eq "") {
+                                print STDERR "mkinstaller: empty argument to $opt option\n";
+                                exit 1;
+                             }
+                             print "mkinstaller:    is $opt\n" if $debugging;
+                             print "mkinstaller:    ...with \"$given\"\n" if $debugging;
+                             html($given);
+                             exit 0;
+                          };
+
+                       /^-?-vernum$/
+
+                          && do {
+                             print "mkinstaller:    is $opt\n" if $debugging;
+                             print "$mkinstaller_ver_name\n";
+                             exit 0;
+                          };
+
+                       /^-?-version$/
+
+                          && do {
+                             print "mkinstaller:    is $opt\n" if $debugging;
+                             print "mkinstaller: version $mkinstaller_ver_name rev. $mkinstaller_ver_time\n";
+                             exit 0;
+                          };
+
+                       /^-?-copyright$/
+
+                          && do {
+                             copyright();
+                             exit 0;
+                          };
+
+                       #---------------------------------------
+                       #
+                       #  Non-standard options...
+                       #
+                       #---------------------------------------
+
+                       /^-c$/
+
+                          && do {
+                             $i += 1;
+                             if ($#ARGV < $i) {
+                                print STDERR "mkinstaller: missing argument to $opt option\n";
+                                exit 1;
+                             }
+                             my $given = $ARGV[$i];
+                             my $bn    = basename($given);
+                             if ($given ne $bn) {
+                                print STDERR "mkinstaller: invalid argument(=\"".$given."\" to ".$opt." option\n";
+                                print STDERR "mkinstaller: ..script name must be simple\n";
+                                exit 1;
+                             }
+                             if ($scriptName ne "") {
+                                print STDERR "mkinstaller: unexpected $opt \"".$given."\"\n";
+                                print STDERR "mkinstaller: ...already specified name of generated script as \"".$scriptName."\"\n";
+                                exit 1;
+                             }
+                             $scriptName = $given;
+                             last parseArgs;
+                          };
+
+                       /^-?-cc$/
+
+                          && do {
+                             print STDERR "mkinstaller: missing or zero-length argument to $opt option\n";
+                             exit 1;
+                          };
+
+                       /^(-?-cc)=(.*)$/
+
+                          && do {
+                             my $optName = $1;
+                             my $given   = $2;
+                             if ($given eq "") {
+                                print STDERR "mkinstaller: missing or zero-length argument to $optName option\n";
+                                exit 1;
+                             }
+                             if ($CCname ne "") {
+                                print STDERR "mkinstaller: unexpected $optName=\"$given\"\n";
+                                exit 1;
+                             }
+                             $CCname = $given;
+                             last parseArgs;
+                          };
+
+                       /^-?-contact$/
+
+                          && do {
+                             print STDERR "mkinstaller: missing or zero-length argument to $opt option\n";
+                             exit 1;
+                          };
+
+                       /^(-?-contact)=(.*)$/
+
+                          && do {
+                             my $optName = $1;
+                             my $given   = $2;
+                             if ($given eq "") {
+                                print STDERR "mkinstaller: missing or zero-length argument to $optName option\n";
+                                exit 1;
+                             }
+                             if ($Contact ne "") {
+                                print STDERR "mkinstaller: unexpected $optName=\"$given\"\n";
+                                exit 1;
+                             }
+                             $Contact = $given;
+                             last parseArgs;
+                          };
+
+                       /^-?-create$/
+
+                          && do {
+                             print STDERR "mkinstaller: missing or zero-length argument to $opt option\n";
+                             exit 1;
+                          };
+
+                       /^(-?-create)=(.*)$/
+
+                          && do {
+                             my $optName = $1;
+                             my $given   = $2;
+                             if ($given eq "") {
+                                print STDERR "mkinstaller: missing or zero-length argument to $optName option\n";
+                                exit 1;
+                             }
+                             my $bn      = basename($given);
+                             if ($given ne $bn) {
+                                print STDERR "mkinstaller: invalid argument(=\"".$given."\" to ".$opt." option\n";
+                                print STDERR "mkinstaller: ..script name must be simple\n";
+                                exit 1;
+                             }
+                             if ($scriptName ne "") {
+                                print STDERR "mkinstaller: unexpected $optName=\"$given\"\n";
+                                exit 1;
+                             }
+                             $scriptName = $given;
+                             last parseArgs;
+                          };
+
+                       /^-?-cxx$/
+
+                          && do {
+                             print STDERR "mkinstaller: missing or zero-length argument to $opt option\n";
+                             exit 1;
+                          };
+
+                       /^(-?-cxx)=(.*)$/
+
+                          && do {
+                             my $optName = $1;
+                             my $given   = $2;
+                             if ($given eq "") {
+                                print STDERR "mkinstaller: missing or zero-length argument to $optName option\n";
+                                exit 1;
+                             }
+                             if ($CXXname ne "") {
+                                print STDERR "mkinstaller: unexpected $optName=\"$given\"\n";
+                                exit 1;
+                             }
+                             $CXXname = $given;
+                             last parseArgs;
+                          };
+
+                       /^-d$/
+
+                          && do {
+                             $debugging = 1;
+                             last parseArgs;
+                          };
+
+                       /^-?-debug$/
+
+                          && do {
+                             $debugging = 1;
+                             last parseArgs;
+                          };
+
+                       /^-?-fortran$/
+
+                          && do {
+                             print STDERR "mkinstaller: missing or zero-length argument to $opt option\n";
+                             exit 1;
+                          };
+
+                       /^(-?-fortran)=(.*)$/
+
+                          && do {
+                             my $optName = $1;
+                             my $given   = $2;
+                             if ($given eq "") {
+                                print STDERR "mkinstaller: missing or zero-length argument to $optName option\n";
+                                exit 1;
+                             }
+                             if ($FORTRANname ne "") {
+                                print STDERR "mkinstaller: unexpected $optName=\"$given\"\n";
+                                exit 1;
+                             }
+                             $FORTRANname = $given;
+                             last parseArgs;
+                          };
+
+                       /^-k$/
+
+                          && do {
+                             $keep = 1;
+                             last parseArgs;
+                          };
+
+                       /^-?-keep$/
+
+                          && do {
+                             $keep = 1;
+                             last parseArgs;
+                          };
+
+                       /^-n$/
+
+                          && do {
+                             $addTarball = 0;
+                             last parseArgs;
+                          };
+
+                       /^-?-notarball$/
+
+                          && do {
+                             $addTarball = 0;
+                             last parseArgs;
+                          };
+
+                       /^-?-os$/
+
+                          && do {
+                             print STDERR "mkinstaller: missing or zero-length argument to $opt option\n";
+                             exit 1;
+                          };
+
+                       /^(-?-os)=(.*)$/
+
+                          && do {
+                             my $optName = $1;
+                             my $given   = $2;
+                             if ($given eq "") {
+                                print STDERR "mkinstaller: missing or zero-length argument to $optName option\n";
+                                exit 1;
+                             }
+                             if ($OSname ne "") {
+                                print STDERR "mkinstaller: unexpected $optName=\"$given\"\n";
+                                exit 1;
+                             }
+                             $OSname = $given;
+                             last parseArgs;
+                          };
+
+                       /^-?-postinstall-perl$/
+
+                          && do {
+                             print STDERR "mkinstaller: missing or zero-length argument to $opt option\n";
+                             exit 1;
+                          };
+
+                       /^(-?-postinstall-perl)=(.*)$/
+
+                          && do {
+                             my $optName = $1;
+                             my $given   = $2;
+                             if ($given eq "") {
+                                print STDERR "mkinstaller: missing or zero-length argument to $optName option\n";
+                                exit 1;
+                             }
+                             if ($postInstallPathname ne "") {
+                                print STDERR "mkinstaller: unexpected $optName=\"$given\"\n";
+                                exit 1;
+                             }
+                             $postInstallPathname = $given;
+                             $postInstallBasename = basename($postInstallPathname);
+                             $postInstallStyle    = "perl";
+                             if ($postInstallBasename eq "") {
+                                print STDERR "mkinstaller: can't extract basename of \"$postInstallPathname\"\n";
+                                exit 1;
+                             }
+                             last parseArgs;
+                          };
+
+                       /^-?-postinstall-python$/
+
+                          && do {
+                             print STDERR "mkinstaller: missing or zero-length argument to $opt option\n";
+                             exit 1;
+                          };
+
+                       /^(-?-postinstall-python)=(.*)$/
+
+                          && do {
+                             my $optName = $1;
+                             my $given   = $2;
+                             if ($given eq "") {
+                                print STDERR "mkinstaller: missing or zero-length argument to $optName option\n";
+                                exit 1;
+                             }
+                             if ($postInstallPathname ne "") {
+                                print STDERR "mkinstaller: unexpected $optName=\"$given\"\n";
+                                exit 1;
+                             }
+                             $postInstallPathname = $given;
+                             $postInstallBasename = basename($postInstallPathname);
+                             $postInstallStyle    = "python";
+                             if ($postInstallBasename eq "") {
+                                print STDERR "mkinstaller: can't extract basename of \"$postInstallPathname\"\n";
+                                exit 1;
+                             }
+                             last parseArgs;
+                          };
+
+                       /^-?-postinstall-sh$/
+
+                          && do {
+                             print STDERR "mkinstaller: missing or zero-length argument to $opt option\n";
+                             exit 1;
+                          };
+
+                       /^(-?-postinstall-sh)=(.*)$/
+
+                          && do {
+                             my $optName = $1;
+                             my $given   = $2;
+                             if ($given eq "") {
+                                print STDERR "mkinstaller: missing or zero-length argument to $optName option\n";
+                                exit 1;
+                             }
+                             if ($postInstallPathname ne "") {
+                                print STDERR "mkinstaller: unexpected $optName=\"$given\"\n";
+                                exit 1;
+                             }
+                             $postInstallPathname = $given;
+                             $postInstallBasename = basename($postInstallPathname);
+                             $postInstallStyle    = "sh";
+                             if ($postInstallBasename eq "") {
+                                print STDERR "mkinstaller: can't extract basename of \"$postInstallPathname\"\n";
+                                exit 1;
+                             }
+                             last parseArgs;
+                          };
+
+                       /^-?-prjnam$/
+
+                          && do {
+                             print STDERR "mkinstaller: missing or zero-length argument to $opt option\n";
+                             exit 1;
+                          };
+
+                       /^(-?-prjnam)=(.*)$/
+
+                          && do {
+                             my $optName = $1;
+                             my $given   = $2;
+                             if ($given eq "") {
+                                print STDERR "mkinstaller: missing or zero-length argument to $optName option\n";
+                                exit 1;
+                             }
+                             if ($ProjectName ne "") {
+                                print STDERR "mkinstaller: unexpected $optName=\"$given\"\n";
+                                exit 1;
+                             }
+                             $ProjectName = $given;
+                             last parseArgs;
+                          };
+
+                       /^-?-prjver$/
+
+                          && do {
+                             print STDERR "mkinstaller: missing or zero-length argument to $opt option\n";
+                             exit 1;
+                          };
+
+                       /^(-?-prjver)=(.*)$/
+
+                          && do {
+                             my $optName = $1;
+                             my $given   = $2;
+                             if ($given eq "") {
+                                print STDERR "mkinstaller: missing or zero-length argument to $optName option\n";
+                                exit 1;
+                             }
+                             if ($ProjectVer ne "") {
+                                print STDERR "mkinstaller: unexpected $optName=\"$given\"\n";
+                                exit 1;
+                             }
+                             if ( ! ($given =~ /^\d+(\.\d+(\.\d+(\.(\d+))?)?)?(\D\S*)?$/)) {
+                                print STDERR "mkinstaller: invalid argument(=$given) to $optName option\n";
+                                print STDERR "mkinstaller: ...expected something of the form:\n";
+                                print STDERR "mkinstaller:\n";
+                                print STDERR "mkinstaller:    --prjver=A[.B[.C[.D]]][S]\n";
+                                print STDERR "mkinstaller:\n";
+                                print STDERR "mkinstaller:    where A, B, C, and D are sequences of 1 or more digits each (B,\n";
+                                print STDERR "mkinstaller:    C, D are optional and S is an optional string which may not\n";
+                                print STDERR "mkinstaller:    start with a digit and may not contain spaces and/or tabs.\n";
+                                print STDERR "mkinstaller:\n";
+                                exit 1;
+                             }
+                             $ProjectVerMajor  = $given; $ProjectVerMajor  =~ s/^(\d+)\.(\d+)\.(\d+)(\.(\d+))?(\D\S*)?$/$1/;
+                             $ProjectVerMinor  = $given; $ProjectVerMinor  =~ s/^(\d+)\.(\d+)\.(\d+)(\.(\d+))?(\D\S*)?$/$2/;
+                             $ProjectVerBuild  = $given; $ProjectVerBuild  =~ s/^(\d+)\.(\d+)\.(\d+)(\.(\d+))?(\D\S*)?$/$3/;
+                             $ProjectVerPatch  = $given; $ProjectVerPatch  =~ s/^(\d+)\.(\d+)\.(\d+)(\.(\d+))?(\D\S*)?$/$5/;
+                             $ProjectVerSuffix = $given; $ProjectVerSuffix =~ s/^(\d+)\.(\d+)\.(\d+)(\.(\d+))?(\D\S*)?$/$6/;
+                             $ProjectVer       = $given;
+                             last parseArgs;
+                          };
+
+                       /^-w$/
+
+                          && do {
+                             $i += 1;
+                             if ($#ARGV < $i) {
+                                print STDERR "mkinstaller: missing argument to $opt option\n";
+                                exit 1;
+                             }
+                             my $given = $ARGV[$i];
+                             if ($given eq "") {
+                                print STDERR "mkinstaller: zero-length argument to $opt option\n";
+                                exit 1;
+                             }
+                             if ($withNotice ne "") {
+                                print STDERR "mkinstaller: unexpected $opt \"".$given."\"\n";
+                                print STDERR "mkinstaller: ...already file containing payload copyright notice as \"".$withNotice."\"\n";
+                                exit 1;
+                             }
+                             if ( ! -f $given) {
+                                print STDERR "mkinstaller: invalid argument(=\"".$given."\") to $opt option\n";
+                                if ( -e $given) {
+                                   print STDERR "mkinstaller: ...\"".$given."\" doesn't appear to be a file\n";
+                                }
+                                else {
+                                   print STDERR "mkinstaller: ...can't find/read \"".$given."\"\n";
+                                }
+                                exit 0;
+                             }
+                             if ( ! -T $given) {
+                                print STDERR "mkinstaller: invalid argument(=\"".$given."\") to $opt option\n";
+                                print STDERR "mkinstaller: ...\"".$given."\" doesn't appear to be a text file\n";
+                                exit 1;
+                             }
+                             $withNotice = $given;
+                             @theNotice  = slurpPathnameIntoArray($withNotice,"mkinstaller");
+                             last parseArgs;
+                          };
+
+                       /^(-?-with-notice)=(.*)$/
+
+                          && do {
+                             my $optName = $1;
+                             my $given   = $2;
+                             if ($given eq "") {
+                                print STDERR "mkinstaller: zero-length argument to $optName option\n";
+                                exit 1;
+                             }
+                             if ($withNotice ne "") {
+                                print STDERR "mkinstaller: unexpected $optName=\"".$given."\"\n";
+                                print STDERR "mkinstaller: ...already file containing payload copyright notice as \"".$withNotice."\"\n";
+                                exit 1;
+                             }
+                             if ( ! -f $given) {
+                                print STDERR "mkinstaller: invalid argument(=\"".$given."\") to $optName option\n";
+                                if ( -e $given) {
+                                   print STDERR "mkinstaller: ...\"".$given."\" doesn't appear to be a file\n";
+                                }
+                                else {
+                                   print STDERR "mkinstaller: ...can't find/read \"".$given."\"\n";
+                                }
+                                exit 0;
+                             }
+                             if ( ! -T $given) {
+                                print STDERR "mkinstaller: invalid argument(=\"".$given."\") to $optName option\n";
+                                print STDERR "mkinstaller: ...\"".$given."\" doesn't appear to be a text file\n";
+                                exit 1;
+                             }
+                             $withNotice = $given;
+                             @theNotice  = slurpPathnameIntoArray($withNotice,"mkinstaller");
+                             last parseArgs;
+                          };
+
+                    #---------------------------------------
+                    #
+                    #  "Semi-standard" options...
+                    #
+                    #---------------------------------------
+
+                    /^-v$/
+
+                       && do {
+                          $verbosityLevel += 1;
+                          last parseArgs;
+                       };
+
+                    /^-v0$/
+
+                       && do {
+                          $verbosityLevel  = 0;
+                          last parseArgs;
+                       };
+
+                    /^-v([1-9][0-9]*)$/
+
+                       && do {
+                          $verbosityLevel += $1;
+                          last parseArgs;
+                       };
+
+                    /^-?-verbose$/
+
+                       && do {
+                          $verbosityLevel += 1;
+                          last parseArgs;
+                       };
+
+                    /^-?-verbose0$/
+
+                       && do {
+                          $verbosityLevel  = 0;
+                          last parseArgs;
+                       };
+
+                    /^-?-verbose([1-9][0-9]*)$/
+
+                       && do {
+                          $verbosityLevel += $1;
+                          last parseArgs;
+                       };
+
+                    #---------------------------------------
+                    #
+                    #  Unknown options...
+                    #
+                    #---------------------------------------
+
+                    /^-([^-].*)$/
+
+                       && do {
+                          print STDERR "mkinstaller: unknown option $opt\n";
+                          print STDERR "mkinstaller: ...did you mean: -$opt ...\n";
+                          exit 1;
+                       };
+
+                    /^--(.*)$/
+
+                       && do {
+                          print STDERR "mkinstaller: unknown option $opt\n";
+                          exit 1;
+                       };
+
+                    #---------------------------------------
+                    #
+                    #  Parameters...
+                    #
+                    #---------------------------------------
+
+                    /^.*$/
+
+                       && do {
+                          print "mkinstaller:    is $opt\n" if $debugging;
+                          my $given = $opt;
+                          if ($given eq "") {
+                             print STDERR "mkinstaller: missing or zero-length directory pathname\n";
+                             exit 1;
+                          }
+                          if ( -l $given) {
+                             if ( -e $given) {
+                                print STDERR "mkinstaller: \"$given\" is a symbolic-link not a directory\n";
+                             }
+                             else {
+                                print STDERR "mkinstaller: \"$given\" is a broken symbolic-link not a directory\n";
+                             }
+                             exit 1;
+                          }
+                          elsif ( -d $given) {
+                             if ( exists $dirPathnames{$given}) {
+                                print STDERR "mkinstaller: unexpected \"$given\"\n";
+                                exit 1;
+                             }
+                             print "mkinstaller:    ...a directory\n" if $debugging;
+                             my $bn                = basename($given);
+                             $dirPathnames{$given} = $bn;
+                             if ( ! exists $dirBasenames{$bn}) {
+                                print "mkinstaller:       new basename \"$bn\"\n" if $debugging;
+                                my $jdx                         = $#dirBasenames + 1;
+                                $dirBasenames[$jdx]             = $bn;
+                                $dirBasenames{$bn}{"pathnames"} = [ ];
+                                $dirBasenames{$bn}{"indices"}   = [ ];
+                                $dirBasenames{$bn}{"which"}     = $jdx;
+                                $dirBasenames{$bn}{"count"}     = 0;
+                             }
+                             else {
+                                print "mkinstaller:       known basename \"$bn\"\n" if $debugging;
+                             }
+                             my $idx             = $#dirPathnames + 1;
+                             $dirPathnames[$idx] = $given;
+                             $dirPathnamesCount += 1;
+                             push @{ $dirBasenames{$bn}{"pathnames"} }, $given;
+                             push @{ $dirBasenames{$bn}{"indices"} },   $idx;
+                             $dirBasenames{$bn}{"count"} += 1;
+                          }
+                          else {
+                             if ( -e $given) {
+                                print STDERR "mkinstaller: \"$given\" is not a directory\n";
+                             }
+                             else {
+                                print STDERR "mkinstaller: can't find/read \"$given\"\n";
+                             }
+                             exit 1;
+                          }
+                          last parseArgs;
+                       };
+
+                    }
+      }
+   }
+   print "mkinstaller: ...done\n" if $debugging;
+
+   #----------------------------------------------------------------------------
+   #
+   #  Deal with defaults...
+   #
+   #----------------------------------------------------------------------------
+
+   print "mkinstaller: deal with defaults...\n" if $debugging;
+   {
+      if ($dirPathnamesCount <= 0) {
+         print STDERR "mkinstaller: expected at least 1 directory pathname\n";
+         exit 1;
+      }
+      if ($ProjectVer ne "") {
+         if ($ProjectName eq "") {
+            print STDERR "mkinstaller: use of --prjver requires use of --prjnam\n";
+            exit 1;
+         }
+      }
+      if ($postInstallPathname ne "") {
+         if ( ! -f $postInstallPathname) {
+            print STDERR "mkinstaller: can't find post-install script \"$postInstallPathname\"\n";
+            exit 1;
+         }
+         my $ok = 0;
+         if ($postInstallStyle eq "perl") {
+            $ok = 1;
+         }
+         elsif ($postInstallStyle eq "python") {
+            $ok = 1;
+         }
+         elsif ($postInstallStyle eq "sh") {
+            $ok = 1;
+         }
+         if ( ! $ok) {
+            print STDERR "mkinstaller: invalid post-install style(=\"$postInstallStyle\")\n";
+            exit 1;
+         }
+         my $sbn = basename($postInstallPathname);
+         foreach $bn (sort keys %dirBasenames) {
+            if ($bn eq $sbn) {
+               print STDERR "mkinstaller: name of post-install script \"$postInstallPathname\" collides with basename of:\n";
+               my @dirs = @{ $dirBasenames{$bn}{"pathnames"} };
+               my $i;
+               for ($i=0; $i<=$#dirs; $i+=1) {
+                  my $pathname = $dirs[$i];
+                  if ($i == 0) {
+                     print STDERR "mkinstaller: ...\"$pathname\"\n";
+                  }
+                  else {
+                     print STDERR "mkinstaller:    \"$pathname\"\n";
+                  }
+               }
+               exit 1;
+            }
+         }
+      }
+      else {
+         $postInstallStyle = "";
+      }
+
+      if ($OSname eq "") {
+         print "mkinstaller: ...identify host OS\n" if $debugging;
+         my $Sreturn = "";
+         my $Rreturn = "";
+         my $cmd     = "uname -s";
+         print "mkinstaller:    run [$cmd]\n" if $debugging;
+         my $gives   = `$cmd`;
+         my $status  = $? >> 8; chomp $gives;
+         chomp $gives;
+         if ($status != 0) {
+            print "mkinstaller:    ...failed, exit code $status\n" if $debugging;
+            $Sreturn = "";
+         }
+         else {
+            print "mkinstaller:    ...suceeded, giving \"$Sreturn\"\n" if $debugging;
+            $Sreturn = $gives;
+         }
+         $cmd        = "uname -r";
+         print "mkinstaller:    run [$cmd]\n" if $debugging;
+         $gives      = `$cmd`;
+         my $status  = $? >> 8; chomp $gives;
+         chomp $gives;
+         if ($status != 0) {
+            print "mkinstaller:    ...failed, exit code $status\n" if $debugging;
+            $Rreturn = "";
+         }
+         else {
+            print "mkinstaller:    ...suceeded, giving \"$Sreturn\"\n" if $debugging;
+            $Rreturn = $gives;
+         }
+         if ($Sreturn ne "") {
+            if ($Rreturn ne "") {
+               $OSname = "$Sreturn $Rreturn";
+               print "mkinstaller:    host OS = \"$OSname\"\n" if $debugging;
+            }
+         }
+      }
+      if ($scriptName eq "") {
+         $scriptName = "installer";
+      }
+      print "mkinstaller: ...done\n" if $debugging;
+      print "mkinstaller:    scriptName        = \"$scriptName\"\n" if $debugging;
+
+      $scriptNameU       = $scriptName;
+      $scriptNameU       =~ tr/\x20-\x7f//cd;
+      $scriptNameU       =~ tr/a-zA-Z0-9_/_/c;
+      print "mkinstaller:    scriptNameU       = \"$scriptNameU\"\n" if $debugging;
+
+      $SCRIPTNAME        = $scriptNameU;
+      $SCRIPTNAME        =~ tr/a-z/A-Z/;
+      print "mkinstaller:    SCRIPTNAME        = \"$SCRIPTNAME\"\n" if $debugging;
+      $SCRIPTNAME_TMPDIR = $SCRIPTNAME."_TMPDIR";
+      print "mkinstaller:    SCRIPTNAME_TMPDIR = \"$SCRIPTNAME_TMPDIR\"\n" if $debugging;
+   }
+
+   #---------------------------------------
+   #
+   #  Construct the title line used at the
+   #  top of the -help output...
+   #
+   #---------------------------------------
+
+   print "mkinstaller: prepare help title...\n" if $debugging;
+   {
+      my $gapString  = "   ";
+      $titleLine     = $scriptName."(1x)".$gapString.$scriptName."(1x)";
+      my $LtitleLine = length $titleLine;
+      while ($LtitleLine < 80) {
+         $gapString  = $gapString." ";
+         $titleLine  = $scriptName."(1x)".$gapString.$scriptName."(1x)";
+         $LtitleLine = length $titleLine;
+      }
+      print "mkinstaller:    [--------------------------------------------------------------------------------]\n" if $debugging;
+      print "mkinstaller:    [".$titleLine."]\n" if $debugging;
+   }
+   print "mkinstaller: ...done\n" if $debugging;
+
+   #---------------------------------------
+   #
+   #  Prepare a string with the project
+   #  name an version used in the -help
+   #  output...
+   #
+   #---------------------------------------
+
+   print "mkinstaller: prepare project name version string for help...\n" if $debugging;
+   {
+      if ($ProjectName ne "") {
+         print "mkinstaller: ...project name    = [$ProjectName]\n" if $debugging;
+         if ($ProjectVer ne "") {
+            print "mkinstaller: ...project version = [$ProjectVer]\n" if $debugging;
+            $ForProject = " for ".$ProjectName." ver. ".$ProjectVer;
+         }
+         else {
+            $ForProject = " for ".$ProjectName;
+            print "mkinstaller: ...no project version\n" if $debugging;
+         }
+      }
+      else {
+         print "mkinstaller: ...no project name\n" if $debugging;
+         $ForProject = "";
+      }
+      print "mkinstaller:    [".$ForProject."]\n" if $debugging;
+   }
+   print "mkinstaller: ...done\n" if $debugging;
+
+   #----------------------------------------------------------------------------
+   #
+   #  Locate a directory for temporaries...
+   #
+   #  Intents: TmpDirI -- Individual directories (such as bin/) are tar'd-up
+   #                      from their given site into TmpDirI.
+   #           TmpDirA -- The tarball (bin.tar.gz) is then expanded from the
+   #                      into the accumulator directory TmpDirA (overlaying
+   #                      what may be there). The tarball in TmpDirI may then
+   #                      be deleted.
+   #
+   #           TmpDirW -- The directories (such as bin/) in the accumulator
+   #                      directory TmpDirA are then tar'd up in to the wrapper
+   #                      directory TmpDirW which is eventually tar'd up as the
+   #                      collective payload (wrapper.tar).
+   #           TmpFile -- The partially built installer script. To be joined
+   #                      with the collective payload to form the installer
+   #                      script.
+   #
+   #----------------------------------------------------------------------------
+
+   print "mkinstaller: identify temp directory...\n" if $debugging;
+   if ($TmpDir eq "") {
+      $TmpDir = findTempDir();
+      if ($TmpDir eq "") {
+         print STDERR "mkinstaller: can't decide on a location for a temp directory\n";
+         exit 1;
+      }
+   }
+   print "mkinstaller: ...done\n" if $debugging;
+   $TmpDir  = absname($TmpDir);
+   print "mkinstaller:    use: \"$TmpDir\"\n" if $debugging;
+   $TmpDirT = "$TmpDir/mki.$$";
+   print "mkinstaller:         \"$TmpDirT\"\n" if $debugging;
+   $TmpDirA = "$TmpDirT/accumulator";
+   print "mkinstaller:         \"$TmpDirA\"\n" if $debugging;
+   $TmpDirI = "$TmpDirT/initial";
+   print "mkinstaller:         \"$TmpDirI\"\n" if $debugging;
+   $TmpDirW = "$TmpDirT/wrapper";
+   print "mkinstaller:         \"$TmpDirW\"\n" if $debugging;
+   $TmpFile = "$TmpDirT/script.tmp";
+   print "mkinstaller:         \"$TmpFile\"\n" if $debugging;
+
+   #----------------------------------------------------------------------------
+   #
+   #  The real work...
+   #
+   #----------------------------------------------------------------------------
+
+   if (1 <= $verbosityLevel) {
+      print STDERR "mkinstaller: version ".$mkinstaller_ver_name." rev. ".$mkinstaller_ver_time."\n";
+      if ($OSname ne "") {
+         print STDERR "mkinstaller: ...running on \"".$OSname."\"\n";
+      }
+      print STDERR "mkinstaller: ...running in \"".$here."\"\n";
+      if ($ProjectName ne "") {
+         print STDERR "mkinstaller: ...project = \"".$ProjectName."\"\n";
+        if ($ProjectVer ne "") {
+            print STDERR "mkinstaller:    version = \"".$ProjectVer."\"\n";
+        }
+      }
+   }
+
+   #---------------------------------------
+   #
+   #  Prepare temporary directories...
+   #
+   #---------------------------------------
+
+   print STDERR "mkinstaller: prepare temporary directories...\n" if $debugging;
+   {
+      print STDERR "mkinstaller: ...check for \"$TmpDirT\"\n" if $debugging;
+      if ( -l $TmpDirT) {
+         print STDERR "mkinstaller: \"$TmpDirT\" already exists\n";
+         if ( -e $TmpDirT) {
+            print STDERR "mkinstaller: ...as a symbolic-link\n";
+         }
+         else {
+            print STDERR "mkinstaller: ...as a broken symbolic-link\n";
+         }
+         cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+         exit 1;
+      }
+      if ( -e $TmpDirT) {
+         print STDERR "mkinstaller: \"$TmpDirT\" already exists\n";
+         if ( -d $TmpDirT) {
+            print STDERR "mkinstaller: ...as a directory\n";
+         }
+         elsif ( -f $TmpDirT) {
+            print STDERR "mkinstaller: ...as a file\n";
+         }
+         cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+         exit 1;
+      }
+      print STDERR "mkinstaller: ...create \"$TmpDirT\"\n" if $debugging;
+      if ( ! mkDirectory($TmpDirT,1)) {
+         print STDERR "mkinstaller: can't create new \"$TmpDirT\" directory\n";
+         cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+         exit 1;
+      }
+      print STDERR "mkinstaller: ...create \"$TmpDirA\"\n" if $debugging;
+      if ( ! mkDirectory($TmpDirA,1)) {
+         print STDERR "mkinstaller: can't create new \"$TmpDirA\" directory\n";
+         cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+         exit 1;
+      }
+      print STDERR "mkinstaller: ...create \"$TmpDirI\"\n" if $debugging;
+      if ( ! mkDirectory($TmpDirI,1)) {
+         print STDERR "mkinstaller: can't create new \"$TmpDirI\" directory\n";
+         cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+         exit 1;
+      }
+      print STDERR "mkinstaller: ...create \"$TmpDirW\"\n" if $debugging;
+      if ( ! mkDirectory($TmpDirW,1)) {
+         print STDERR "mkinstaller: can't create new \"$TmpDirW\" directory\n";
+         cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+         exit 1;
+      }
+   }
+   print STDERR "mkinstaller: ...done\n" if $debugging;
+
+   #---------------------------------------
+   #
+   #  Destroy existing script (if any)...
+   #
+   #---------------------------------------
+
+   print STDERR "mkinstaller: cleanup existing script...\n" if $debugging;
+   {
+      print STDERR "mkinstaller: ...initial cleanup\n" if (1 <= $verbosityLevel);
+      if ( -l "$here/$scriptName") {
+         if ( -e "$here/$scriptName") {
+            print STDERR "mkinstaller: \"$here/$scriptName\" is a symbolic-link not a file\n";
+         }
+         else {
+            print STDERR "mkinstaller: \"$here/$scriptName\" is a broken symbolic-link not a file\n";
+         }
+         cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+         exit 1;
+      }
+      elsif ( -f "$here/$scriptName") {
+         print STDERR "mkinstaller:    destroy existing \"$here/$scriptName\" script\n" if (1 <= $verbosityLevel);
+         my $Ndeleted = unlink "$here/$scriptName";
+         if ($Ndeleted < 1) {
+            print STDERR "mkinstaller: can't destroy existing \"$here/$scriptName\" file\n";
+            cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+            exit 1;
+         }
+         if ( -f "$here/$scriptName") {
+            print STDERR "mkinstaller: didn't destroy existing \"$here/$scriptName\" file\n";
+            cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+            exit 1;
+         }
+         print STDERR "mkinstaller:    ...done\n" if (2 <= $verbosityLevel);
+      }
+      elsif ( -e "$here/$scriptName") {
+         print STDERR "mkinstaller: existing \"$here/$scriptName\" is not a file\n";
+         cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+         exit 1;
+      }
+      print STDERR "mkinstaller:    done\n" if (2 <= $verbosityLevel);
+   }
+   print STDERR "mkinstaller: ...done\n" if $debugging;
+
+   #---------------------------------------
+   #
+   #  Tarup each of the individual directories
+   #  from their given sites placing the
+   #  individual tarballs into the wrapper
+   #  directory TmpDirW.
+   #
+   #  Note that these individual tarballs
+   #  are compressed (.tar.gz files).
+   #
+   #---------------------------------------
+
+   print STDERR "mkinstaller: process give directories...\n" if $debugging;
+   print STDERR "mkinstaller: ...first tarup to $TmpDirI directory...\n" if $debugging;
+   print STDERR "mkinstaller:    then untar to $TmpDirA directory (to merge)\n" if $debugging;
+   {
+      my $bn;
+      foreach $bn (sort keys %dirBasenames) {
+         print STDERR "mkinstaller: working \"$bn\"\n" if (1 <= $verbosityLevel);
+         my @dirs = @{ $dirBasenames{$bn}{"pathnames"} };
+         my $i;
+         for ($i=0; $i<=$#dirs; $i+=1) {
+            my $pathname = $dirs[$i];
+            print STDERR "mkinstaller: ...\"$pathname\"\n" if $debugging;
+            print STDERR "mkinstaller: ...\"$pathname\"\n" if (1 <= $verbosityLevel);
+            my $dn       = dirname($pathname);
+            my $bn       = basename($pathname);
+            if ( ! chdir($dn)) {
+               print STDERR "mkinstaller: can't cd into \"$dn\"\n";
+               cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+               exit 1;
+            }
+            {
+               #
+               #  First tar it up in to the individual tarball directory TmpDirI
+               #
+               print STDERR "mkinstaller:    tarup \"$dn/$bn\" to form \"$TmpDirI/$bn.tar.gz\"\n" if $debugging;
+               my $cmd    = "tar -czf \"$TmpDirI/$bn.tar.gz\" \"$bn\"";
+               print STDERR "mkinstaller:    ...run [$cmd]\n" if $debugging;
+               my $status = system "$cmd >/dev/null 2>&1";
+               if ($status != 0) {
+                  print STDERR "mkinstaller:       failed, exit code $status\n" if $debugging;
+                  print STDERR "mkinstaller: can't tarup \"$bn\"\n";
+                  print STDERR "mkinstaller: ...[$cmd] failed, returning exit code $status\n";
+                  print STDERR "mkinstaller:    was done from in \"$dn\"\n";
+                  cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+                  exit 1;
+               }
+               print STDERR "mkinstaller:       succeeded\n" if $debugging;
+               if ( ! -f "$TmpDirI/$bn.tar.gz") {
+                  print STDERR "mkinstaller: didn't tarup \"$bn\"\n";
+                  print STDERR "mkinstaller: ...[$cmd] failed\n";
+                  print STDERR "mkinstaller:    was done from in \"$dn\"\n";
+                  print STDERR "mkinstaller: ...can't find \"$TmpDirI/$bn.tar.gz\"\n";
+                  cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+                  exit 1;
+               }
+            }
+            if ( ! chdir($here)) {
+               print STDERR "mkinstaller: can't cd back to \"$here\"\n";
+               cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+               exit 1;
+            }
+            if ( ! chdir($TmpDirA)) {
+               print STDERR "mkinstaller: can't cd into \"$TmpDirA\"\n";
+               cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+               exit 1;
+            }
+            {
+               #
+               #  Then untar the individual tarball over any existing
+               #  directory in to the accumulator directory TmpDirA
+               #
+               my $cmd    = "tar -xzf \"$TmpDirI/$bn.tar.gz\"";
+               print STDERR "mkinstaller:    run [$cmd]\n" if $debugging;
+               my $status = system "$cmd >/dev/null 2>&1";
+               if ($status != 0) {
+                  print STDERR "mkinstaller:    ...failed, exit code $status\n" if $debugging;
+                  print STDERR "mkinstaller: can't tarup \"$bn\"\n";
+                  print STDERR "mkinstaller: ...[$cmd] failed, returning exit code $status\n";
+                  print STDERR "mkinstaller:    was done from in \"$TmpDirA\"\n";
+                  cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+                  exit 1;
+               }
+               print STDERR "mkinstaller:    ...succeeded\n" if $debugging;
+               if ( ! -d "$TmpDirA/$bn") {
+                  print STDERR "mkinstaller: didn't untar \"$bn\"\n";
+                  print STDERR "mkinstaller: ...[$cmd] failed\n";
+                  print STDERR "mkinstaller: ...can't find \"$TmpDirA/$bn\"\n";
+                  print STDERR "mkinstaller:    was done from in \"$TmpDirA\"\n";
+                  cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+                  exit 1;
+               }
+               if ( -f "$TmpDirI/$bn.tar.gz") {
+                  if ( ! unlink("$TmpDirI/$bn.tar.gz")) {
+                     print STDERR "mkinstaller: can't delete \"$TmpDirI/$bn.tar.gz\"\n";
+                     cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+                     exit 1;
+                  }
+                  if ( -f "$TmpDirI/$bn.tar.gz") {
+                     print STDERR "mkinstaller: didn't delete \"$TmpDirI/$bn.tar.gz\"\n";
+                     cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+                     exit 1;
+                  }
+               }
+            }
+            if ( ! chdir($here)) {
+               print STDERR "mkinstaller: can't cd back to \"$here\"\n";
+               cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+               exit 1;
+            }
+            print STDERR "mkinstaller:    done\n" if (2 <= $verbosityLevel);
+         }
+         print STDERR "mkinstaller: ...done\n" if (2 <= $verbosityLevel);
+      }
+      #
+      #  The merging process is done, now tarup the merged individual
+      #  directories from the accumulator directory in to the wrapper
+      #  directory TmpDirW
+      #
+      print STDERR "mkinstaller: ...tarup the individual directories into the wrapper directory\n" if $debugging;
+      if ( ! chdir($TmpDirA)) {
+         print STDERR "mkinstaller: can't cd into \"$TmpDirA\"\n";
+         cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+         exit 1;
+      }
+      {
+         my $bn;
+         foreach $bn (sort keys %dirBasenames) {
+            print STDERR "mkinstaller:    \"$bn\"\n" if $debugging;
+            if ( ! -d $bn) {
+               print STDERR "mkinstaller: can't find \"$TmpDirA/$bn\"\n";
+               cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+               exit 1;
+            }
+            my $cmd    = "tar -czf \"$TmpDirW/$bn.tar.gz\" \"$bn\"";
+            print STDERR "mkinstaller:    ...run [$cmd]\n" if $debugging;
+            my $status = system "$cmd >/dev/null 2>&1";
+            if ($status != 0) {
+               print STDERR "mkinstaller:       failed, exit code $status\n" if $debugging;
+               print STDERR "mkinstaller: can't tarup \"$bn\"\n";
+               print STDERR "mkinstaller: ...[$cmd] failed, returning exit code $status\n";
+               print STDERR "mkinstaller:    was done from in \"$TmpDirA\"\n";
+               cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+               exit 1;
+            }
+            print STDERR "mkinstaller:       succeeded\n" if $debugging;
+            if ( ! -f "$TmpDirW/$bn.tar.gz") {
+               print STDERR "mkinstaller: didn't tarup \"$bn\"\n";
+               print STDERR "mkinstaller: ...[$cmd] failed\n";
+               print STDERR "mkinstaller: ...can't find \"$TmpDirW/$bn.tar.gz\"\n";
+               print STDERR "mkinstaller:    was done from in \"$TmpDirA\"\n";
+               cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+               exit 1;
+            }
+         }
+      }
+      if ( ! chdir($here)) {
+         print STDERR "mkinstaller: can't cd back to \"$here\"\n";
+         cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+         exit 1;
+      }
+   }
+   print STDERR "mkinstaller: ...done\n" if $debugging;
+
+   #---------------------------------------
+   #
+   #  Add the given post-install script (if
+   #  any) to the wrapper directory.
+   #
+   #---------------------------------------
+
+   if ($postInstallPathname ne "") {
+      print STDERR "mkinstaller: add \"$postInstallPathname \" wrapper directory...\n" if $debugging;
+      my $bn     = basename($postInstallPathname);
+      my $cmd    = "cp -p \"$postInstallPathname\" \"$TmpDirW/$bn\"";
+      print STDERR "mkinstaller: ...run [$cmd]\n" if $debugging;
+      my $status = system "$cmd >/dev/null 2>&1";
+      if ($status != 0) {
+         print STDERR "mkinstaller:    failed, exit code $status\n" if $debugging;
+         print STDERR "mkinstaller: can't add post-install script to wrapper directory\n";
+         print STDERR "mkinstaller: ...[$cmd] failed, returning exit code $status\n";
+         print STDERR "mkinstaller:    was done from in \"$here\"\n";
+         cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+         exit 1;
+      }
+      else {
+         print STDERR "mkinstaller:    succeeded\n" if $debugging;
+         if ( ! -f "$TmpDirW/$bn") {
+            print STDERR "mkinstaller: didn't add post-install script to wrapper directory\n";
+            print STDERR "mkinstaller: ...[$cmd] failed\n";
+            print STDERR "mkinstaller: ...can't find \"$TmpDirW/$bn\"\n";
+            print STDERR "mkinstaller:    was done from in \"$here\"\n";
+            cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+            exit 1;
+         }
+      }
+      print STDERR "mkinstaller: ...done\n" if $debugging;
+   }
+
+   #---------------------------------------
+   #
+   #  Finally arup the temporary wrapper
+   #  directory TmpDirW carrying the individual
+   #  tarballs).
+   #
+   #  Note that this wrapper tarball is NOT
+   #  compressed (so giving a .tar file).
+   #
+   #---------------------------------------
+
+   print STDERR "mkinstaller: tarup wrapper directory \"$TmpDirW\"...\n" if $debugging;
+   {
+      my $wasIn   = getWorkingDirectory(); # Should be same as $here
+      my $under   = dirname($TmpDirW);
+      my $wrapper = basename($TmpDirW);
+      print STDERR "mkinstaller: ...under = \"$under\"\n" if $debugging;
+      print STDERR "mkinstaller:     name = \"$wrapper\"\n" if $debugging;
+      if ( ! chdir($under)) {
+         print STDERR "mkinstaller: can't cd into \"$under\"\n";
+         cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+         exit 1;
+      }
+      {
+         print STDERR "mkinstaller: tarup wrapper directory \"$under/$wrapper\"\n" if (1 <= $verbosityLevel);
+         my $cmd    = "tar -cf \"$wrapper.tar\" \"$wrapper\"";
+         print STDERR "mkinstaller: ...run [$cmd]\n" if $debugging;
+         my $status = system "$cmd >/dev/null 2>&1";
+         if ($status != 0) {
+            print STDERR "mkinstaller:    failed, exit code $status\n" if $debugging;
+            print STDERR "mkinstaller: can't tarup \"$under/$wrapper\"\n";
+            print STDERR "mkinstaller: ...[$cmd], failed returning exit code $status\n";
+            print STDERR "mkinstaller:    was done from in \"$under\"\n";
+            cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+            exit 1;
+         }
+         print STDERR "mkinstaller:    suceeded\n" if $debugging;
+         if ( ! -f "$wrapper.tar") {
+            print STDERR "mkinstaller: didn't tarup \"$under/$wrapper\"\n";
+            print STDERR "mkinstaller: ...[$cmd], failed\n";
+            print STDERR "mkinstaller:    was done from in \"$under\"\n";
+            print STDERR "mkinstaller: ...can't find \"$under/$wrapper.tar\"\n";
+            cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+            exit 1;
+         }
+         print STDERR "mkinstaller: ...done\n" if (2 <= $verbosityLevel);
+      }
+      if ( ! chdir($wasIn)) {
+         print STDERR "mkinstaller: can't cd back to \"$wasIn\"\n";
+         cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+         exit 1;
+      }
+   }
+   print STDERR "mkinstaller: ...done\n" if $debugging;
+
+   #----------------------------------------------------------------------------
+   #
+   #  At this point the tarball (aka. the payload) is ready. It is now time to
+   #  generate the installer script. Note that the generated installer script
+   #  is a Bourne-Shell script. This is done using a "here document" technique
+   #  the output being sent to a temporary text file. After this is completed
+   #  this temporary text file and the tarball will be joined (using cat) to
+   #  form the actual self-extracting installer script.
+   #
+   #----------------------------------------------------------------------------
+
+   print STDERR "mkinstaller: form the script...\n" if $debugging;
+   {
+      print STDERR "mkinstaller: forming \"$scriptName\" script\n" if (1 <= $verbosityLevel);
+      if ( -f $TmpFile) {
+         print STDERR "mkinstaller: ...delete old \"$scriptName\"\n" if (1 <= $verbosityLevel);
+         if ( ! unlink $TmpFile) {
+            print STDERR "mkinstaller: can't delete existing \"$scriptName\"\n";
+            cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+            exit 1;
+         }
+         if ( -f $TmpFile) {
+            print STDERR "mkinstaller: didn't delete existing \"$scriptName\"\n";
+            cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+            exit 1;
+         }
+      }
+      print STDERR "mkinstaller: ...create new \"$scriptName\"\n" if (1 <= $verbosityLevel);
+      if ( ! open(SCRIPT,"> $TmpFile")) {
+         print STDERR "mkinstaller: can't create/write \"$scriptName\"\n";
+         cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+         exit 1;
+      }
+      print SCRIPT "#!/bin/bash\n";
+      if ($withNotice ne "") {
+         print SCRIPT "#-------------------------------------------------------------------------------\n";
+         print SCRIPT "#\n";
+         my $i;
+         for ($i=0; $i<=$#theNotice; $i+=1) {
+            my $lineOfText = $theNotice[$i];
+            if ($lineOfText ne "") {
+               print SCRIPT "#   $lineOfText\n";
+            }
+            else {
+               print SCRIPT "#\n";
+            }
+         }
+         print SCRIPT "#\n";
+         print SCRIPT "#-------------------------------------------------------------------------------\n";
+      }
+      print SCRIPT fixIndentStuff(<<"EOF01");
+      |
+      |#-------------------------------------------------------------------------------
+      |#
+      |#   $scriptName
+      |#
+      |#   Generated by mkinstaller version $mkinstaller_ver_name rev. $mkinstaller_ver_time
+      |#
+      |#-------------------------------------------------------------------------------
+      |
+      |commandPathname="\$0"
+      |debugging=false
+      |here="\`pwd\`"
+      |keep=false
+      |
+      |PREFIX=""
+EOF01
+
+      my $bn;
+      foreach $bn (sort keys %dirBasenames) {
+         print SCRIPT "PREFIX_$bn=\"\"\n";
+      }
+      if ($postInstallBasename ne "") {
+         print STDERR "mkinstaller: ...has a post-install script\n" if $debugging;
+         print SCRIPT "PostInstallScriptName=\"$postInstallBasename\"\n";
+         print SCRIPT "PostInstallScriptStyle=\"$postInstallStyle\"\n";
+      }
+      else {
+         print STDERR "mkinstaller: ...has NO post-install script\n" if $debugging;
+         print SCRIPT "PostInstallScriptName=\"\"\n";
+         print SCRIPT "PostInstallScriptStyle=\"\"\n";
+      }
+
+      print SCRIPT fixIndentStuff(<<"EOF02a");
+      |
+      |BuiltOn="$OSname"
+      |CCname="$CCname"
+      |CXXname="$CXXname"
+      |FORTRANname="$FORTRANname"
+      |MyTmpDir=""
+      |TmpDir=""
+      |verbosityLevel=0
+      |
+      |if [ "X\${DEBUG_$scriptNameU}" != "X" ]
+      |then
+      |   debugging=true
+      |fi
+      |
+      |#---------------------------------------
+      |#
+      |#   We will eventually need to know
+      |#   where this script is actually
+      |#   located.
+      |#
+      |#---------------------------------------
+      |
+      |if [ "X\${debugging}" != "Xfalse" ]
+      |then
+      |   echo "$scriptName: locate this script..." >&2
+      |fi
+      |bn=\`basename \${commandPathname}\`
+      |if [ "X\${commandPathname}" = "X\${bn}" ]
+      |then
+      |   if [ "X\${debugging}" != "Xfalse" ]
+      |   then
+      |      echo "$scriptName: ...\\"\${commandPathname}\\" is simple" >&2
+      |   fi
+      |   if [ "X\${PATH}" != "X" ]
+      |   then
+      |      myPath=\`echo \${PATH} | tr ":" " "\`
+      |   else
+      |      echo "\${scriptName}: PATH is not set" >&2
+      |      exit 1
+      |   fi
+      |   foundIn=
+      |   for d in \${myPath}
+      |   do
+      |      if [ -d "\${d}" ]
+      |      then
+      |         case "X\${d}" in
+      |            X/*)
+      |                 ;;
+      |            X*)  d="\${here}/\${d}"
+      |                 ;;
+      |         esac
+      |         if [ -f "\${d}/$scriptName" ]
+      |         then
+      |            if [ -x "\${d}/$scriptName" ]
+      |            then
+      |               foundIn="\${d}"
+      |               commandPathname="\${d}/$scriptName"
+      |               break
+      |            fi
+      |         fi
+      |      fi
+      |   done
+      |   if [ "X\${foundIn}" = "X" ]
+      |   then
+      |      echo "$scriptName: can't locate this script" >&2
+      |      exit 1
+      |   fi
+      |else
+      |   if [ "X\${debugging}" != "Xfalse" ]
+      |   then
+      |      echo "$scriptName: ...\\"\${commandPathname}\\" is NOT simple" >&2
+      |   fi
+      |   dn=\`dirname \${commandPathname}\`
+      |   bn=\`basename \${commandPathname}\`
+      |   case "X\${dn}" in
+      |      X/*)
+      |           if [ "X\${debugging}" != "Xfalse" ]
+      |           then
+      |              echo "$scriptName:    \\"\${commandPathname}\\" is absolute" >&2
+      |           fi
+      |           ;;
+      |      X*)  if [ "X\${debugging}" != "Xfalse" ]
+      |           then
+      |              echo "$scriptName:    \\"\${commandPathname}\\" is releative" >&2
+      |           fi
+      |           commandPathname="\`pwd\`/\${commandPathname}"
+      |           if [ "X\${debugging}" != "Xfalse" ]
+      |           then
+      |              echo "$scriptName:    ...consider \\"\${commandPathname}\\" " >&2
+      |           fi
+      |           dn=\`dirname "\${commandPathname}"\`
+      |           bn=\`basename "\${commandPathname}"\`
+      |           if [ "X\${debugging}" != "Xfalse" ]
+      |           then
+      |              echo "$scriptName:       is in \\"\${dn}\\" " >&2
+      |              echo "$scriptName:       is called \\"\${bn}\\" " >&2
+      |           fi
+      |           ;;
+      |   esac
+      |   foundIn="\${dn}"
+      |   commandPathname="\${dn}/\${bn}"
+      |fi
+      |if [ "X\${debugging}" != "Xfalse" ]
+      |then
+      |   echo "$scriptName: ...in \\"\${foundIn}\\" " >&2
+      |   echo "$scriptName:    as \\"\${commandPathname}\\" " >&2
+      |fi
+      |
+      |#-------------------------------------------------------------------------------
+      |#
+      |#  Deal with TMPDIR...
+      |#
+      |#  Note: It would be desirable to replace the next 183 lines with a call
+      |#        to the findTempDir Perl script. However that does introduce an
+      |#        outside dependency which we'd like to avoid in this script.
+      |#
+      |#-------------------------------------------------------------------------------
+      |
+      |if [ "X\${debugging}" != "Xfalse" ]
+      |then
+      |   echo "$scriptName: identify temp directory..." >&2
+      |fi
+      |
+      |if [ "X\${$SCRIPTNAME_TMPDIR}" != "X" ]
+      |then
+      |   if [ -d "\${$SCRIPTNAME_TMPDIR}" ]
+      |   then
+      |      if [ -w "\${$SCRIPTNAME_TMPDIR}" ]
+      |      then
+      |         TMPDIR="\${$SCRIPTNAME_TMPDIR}" ; export TMPDIR
+      |         if [ "X\${debugging}" != "Xfalse" ]
+      |         then
+      |            echo "$scriptName: ...from $SCRIPTNAME_TMPDIR" >&2
+      |         fi
+      |      fi
+      |   fi
+      |fi
+      |
+      |#---------------------------------------
+      |#
+      |#  If TMPDIR was specified then
+      |#  make sure its valid...
+      |#
+      |#---------------------------------------
+      |
+      |if [ "X\${TMPDIR}" != "X" ]
+      |then
+      |   if [ -d "\${TMPDIR}" ]
+      |   then
+      |      if [ -w "\${TMPDIR}" ]
+      |      then
+      |         true
+      |         if [ "X\${debugging}" != "Xfalse" ]
+      |         then
+      |            echo "$scriptName: ...from TMPDIR" >&2
+      |         fi
+      |      else
+      |         TMPDIR="" ; export TMPDIR
+      |      fi
+      |   else
+      |      TMPDIR="" ; export TMPDIR
+      |   fi
+      |fi
+      |
+      |#---------------------------------------
+      |#
+      |#  If TMPDIR was NOT specified then
+      |#  try using TMP if it is defined and
+      |#  is valid...
+      |#
+      |#---------------------------------------
+      |
+      |if [ "X\${TMPDIR}" = "X" ]
+      |then
+      |   if [ "X\${TMP}" != "X" ]
+      |   then
+      |      tryDir="\${TMP}"
+      |      if [ -d "\${tryDir}" ]
+      |      then
+      |         if [ -w "\${tryDir}" ]
+      |         then
+      |            TMPDIR="\${tryDir}" ; export TMPDIR
+      |            if [ "X\${debugging}" != "Xfalse" ]
+      |            then
+      |               echo "$scriptName: ...from TMP" >&2
+      |            fi
+      |         fi
+      |      fi
+      |   fi
+      |fi
+      |
+      |#---------------------------------------
+      |#
+      |#  If TMPDIR was NOT specified then
+      |#  try using TEMP if it is defined and
+      |#  is valid...
+      |#
+      |#---------------------------------------
+      |
+      |if [ "X\${TMPDIR}" = "X" ]
+      |then
+      |   if [ "X\${TEMP}" != "X" ]
+      |   then
+      |      tryDir="\${TEMP}"
+      |      if [ -d "\${tryDir}" ]
+      |      then
+      |         if [ -w "\${tryDir}" ]
+      |         then
+      |            TMPDIR="\${tryDir}" ; export TMPDIR
+      |            if [ "X\${debugging}" != "Xfalse" ]
+      |            then
+      |               echo "$scriptName: ...from TEMP" >&2
+      |            fi
+      |         fi
+      |      fi
+      |   fi
+      |fi
+      |
+      |#---------------------------------------
+      |#
+      |#  If TMPDIR was NOT specified then
+      |#  try using tmp in the user's home
+      |#  directory...
+      |#
+      |#---------------------------------------
+      |
+      |if [ "X\${TMPDIR}" = "X" ]
+      |then
+      |   if [ "X\${HOME}" != "X" ]
+      |   then
+      |      tryDir="\${HOME}/tmp"
+      |      if [ -d "\${tryDir}" ]
+      |      then
+      |         if [ -w "\${tryDir}" ]
+      |         then
+      |            TMPDIR="\${tryDir}" ; export TMPDIR
+      |            if [ "X\${debugging}" != "Xfalse" ]
+      |            then
+      |               echo "$scriptName: ...using HOME" >&2
+      |            fi
+      |         fi
+      |      fi
+      |   fi
+      |fi
+      |
+      |#---------------------------------------
+      |#
+      |#  If TMPDIR was NOT specified then
+      |#  try using /tmp directory...
+      |#
+      |#---------------------------------------
+      |
+      |if [ "X\${TMPDIR}" = "X" ]
+      |then
+      |   tryDir="/tmp"
+      |   if [ -d "\${tryDir}" ]
+      |   then
+      |      if [ -w "\${tryDir}" ]
+      |      then
+      |         TMPDIR="\${tryDir}" ; export TMPDIR
+      |      fi
+      |   fi
+      |fi
+      |
+      |#---------------------------------------
+      |#
+      |#  If TMPDIR was NOT specified then
+      |#  try using /var/tmp directory...
+      |#
+      |#---------------------------------------
+      |
+      |if [ "X\${TMPDIR}" = "X" ]
+      |then
+      |   tryDir="/var/tmp"
+      |   if [ -d "\${tryDir}" ]
+      |   then
+      |      if [ -w "\${tryDir}" ]
+      |      then
+      |         TMPDIR="\${tryDir}" ; export TMPDIR
+      |      fi
+      |   fi
+      |fi
+      |
+      |#---------------------------------------
+      |#
+      |#  If TMPDIR was NOT specified then
+      |#  try using the current directory...
+      |#
+      |#---------------------------------------
+      |
+      |if [ "X\${TMPDIR}" = "X" ]
+      |then
+      |   tryDir="."
+      |   if [ -d "\${tryDir}" ]
+      |   then
+      |      if [ -w "\${tryDir}" ]
+      |      then
+      |         TMPDIR="\${tryDir}" ; export TMPDIR
+      |      fi
+      |   fi
+      |fi
+      |
+      |#---------------------------------------
+      |#
+      |#  Adjust the result so that it is an
+      |#  absolute pathname...
+      |#
+      |#---------------------------------------
+      |
+      |if [ "X\${TMPDIR}" = "X" ]
+      |then
+      |   echo "$scriptName: can't decide on a location for a temp directory" >&2
+      |   echo "$scriptName: ...set TMPDIR or $SCRIPTNAME_TMPDIR" >&2
+      |   exit 1
+      |else
+      |   case "\${TMPDIR}" in
+      |      /*)
+      |          ;;
+      |      *)
+      |          TMPDIR="\`pwd\`/\${TMPDIR}" ; export TMPDIR
+      |          ;;
+      |   esac
+      |fi
+      |
+      |if [ "X\${debugging}" != "Xfalse" ]
+      |then
+      |   echo "$scriptName: ...as \\"\${TMPDIR}\\" " >&2
+      |fi
+      |
+      |MyTmpDir="\${TMPDIR}/$scriptName.\$\$.tmp"
+      |
+      |#---------------------------------------
+      |#
+      |#  We'll do everything from here on in
+      |#  a temporary directory...
+      |#
+      |#---------------------------------------
+      |
+      |if [ "X\${debugging}" != "Xfalse" ]
+      |then
+      |   echo "$scriptName: create \\"\${MyTmpDir}\\" ">&2
+      |fi
+      |if [ -d "\${MyTmpDir}" ]
+      |then
+      |   echo "$scriptName: \\"\${MyTmpDir}\\" already exists" >&2
+      |   exit 1
+      |fi
+      |if [ "X\${debugging}" != "Xfalse" ]
+      |then
+      |   echo "$scriptName: ...run [mkdir \\"\${MyTmpDir}\\" ]" >&2
+      |fi
+      |mkdir "\${MyTmpDir}" >/dev/null 2>&1
+      |status=\$?
+      |if [ "X\${status}" != "X0" ]
+      |then
+      |   echo "$scriptName: can't create directory \\"\${MyTmpDir}\\" " >&2
+      |   exit 1
+      |fi
+      |
+      |cd "\${MyTmpDir}"
+      |status=\$?
+      |if [ "X\${status}" != "X0" ]
+      |then
+      |   echo "$scriptName: can't cd to directory \\"\${MyTmpDir}\\" " >&2
+      |   exit 1
+      |fi
+      |
+      |#-------------------------------------------------------------------------------
+      |#
+      |#  Command line processing...
+      |#
+      |#-------------------------------------------------------------------------------
+      |
+      |while [ \$# != 0 ]
+      |do
+      |   opt="\$1"
+      |   if [ "X\$1" != "X" ]
+      |   then
+      |      case "\$1" in
+      |         #---------------------------------------
+      |         #
+      |         #  Standard options...
+      |         #
+      |         #---------------------------------------
+      |
+EOF02a
+      if ($withNotice ne "") {
+         print SCRIPT fixIndentStuff(<<"EOF02b");
+      |         -copyright|--copyright)
+      |                            echo
+EOF02b
+         my $i;
+         for ($i=0; $i<=$#theNotice; $i+=1) {
+            my $lineOfText = $theNotice[$i];
+            $lineOfText    =~ s/\\/\\\\/g;
+            $lineOfText    =~ s/"/\\"/g;
+            $lineOfText    =~ s/\$/\\\$/g;
+#           $lineOfText    =~ s/@/\\@/g;
+            print SCRIPT "                            echo \"$lineOfText\"\n";
+         }
+         print SCRIPT fixIndentStuff(<<"EOF02c");
+      |                            echo
+      |                            exit 0
+      |                            ;;
+EOF02c
+      }
+      print SCRIPT fixIndentStuff(<<"EOF02d");
+      |         -help|--help)
+      |                            echo
+      |                            echo "$titleLine"
+      |                            echo
+      |                            echo "NAME"
+      |                            echo "    $scriptName -- Self-extracting installer script$ForProject."
+      |                            echo
+      |                            echo "USAGE"
+EOF02d
+      if ($withNotice ne "") {
+         print SCRIPT "                            echo \"    $scriptName --copyright\"\n";
+      }
+      print SCRIPT fixIndentStuff(<<"EOF02e");
+      |                            echo "    $scriptName --help"
+      |                            echo "    $scriptName --vernum"
+      |                            echo "    $scriptName --version"
+      |                            echo
+EOF02e
+      my $exampleLine = $scriptName." [--keep] [--prefix=<pathname>]";
+      my $bn;
+      foreach $bn (sort keys %dirBasenames) {
+         $exampleLine = $exampleLine." [--prefix_$bn=<pathname>]";
+      }
+      $exampleLine    = $exampleLine." [-v[erbose][<digit>]]";
+      print SCRIPT fixIndentStuff(<<"EOF03");
+      |                            echo "    $exampleLine"
+      |                            echo
+      |                            echo "DESCRIPTION"
+      |                            echo "    This script is a \\"self-extracting installer\\" script implemented as"
+      |                            echo "    a bash script and carries a tarball as a payload. This generated"
+      |                            echo "    installer script supports a number of options for specifying where"
+      |                            echo "    the various directories are to be installed (prefix directory pathnames)."
+      |                            echo
+      |                            echo "    The installation process:"
+      |                            echo
+      |                            echo "       1) Determination of a suitable temp directory. Much of the work"
+      |                            echo "          done by the $scriptName script is done in a temp directory."
+      |                            echo "          Once an appropriate temporary directory has been arranged"
+      |                            echo "          the $scriptName script will cd to this directory and work from"
+      |                            echo "          there for much of the remaining work."
+      |                            echo "       2) Using the command line options the this installer script will"
+      |                            echo "          determine proper installation PREFIX directories for each of"
+      |                            echo "          the directories to be installed. Note that each of the PREFIX"
+      |                            echo "          directories will be created if necessary."
+      |                            echo "       3) The \\"wrapper\\" tarball is extracted from this installer script"
+      |                            echo "          landing in the temp directory."
+      |                            echo "       4) The wrapper tarball is unwrapped using tar to form the \\"wrapper\\" "
+      |                            echo "          directory in the temp directory. Note that this wrapper directory"
+      |                            echo "          contains the individual tarballs of the directories to be installed."
+      |                            echo "       5) For each of individual tarballs the script will cd to the appropriate"
+      |                            echo "          prefix firectory and unwraps the individual tarball (found in the"
+      |                            echo "          wrapper directory under the temp directory). This is the actual"
+      |                            echo "          \\"install\\" step."
+      |                            echo "       6) Cleanup if the --keep wasn't used."
+      |                            echo
+      |                            echo "OPTIONS"
+      |                            echo "    \\"$scriptName\\" supports the following options:"
+      |                            echo
+      |                            echo "        --help"
+      |                            echo
+      |                            echo "            Output this man page to <stdout> and quit."
+EOF03
+      if ($ProjectVer ne "") {
+         print SCRIPT fixIndentStuff(<<"EOF04");
+      |                            echo
+      |                            echo "        --vernum"
+      |                            echo
+      |                            echo "            Output version number of the payload to <stdout> and quit."
+EOF04
+      }
+      if ($ProjectName ne "") {
+         if ($ProjectVer ne "") {
+            print SCRIPT fixIndentStuff(<<"EOF05");
+      |                            echo
+      |                            echo "        --version"
+      |                            echo
+      |                            echo "            Output project name and version number of the payload to <stdout>"
+      |                            echo "            and quit."
+EOF05
+         }
+      }
+      print SCRIPT fixIndentStuff(<<"EOF06");
+      |                            echo
+      |                            echo "        -k"
+      |                            echo "        --keep"
+      |                            echo
+      |                            echo "            Don't cleanup intermediate temporary files and directories that"
+      |                            echo "            are produced during the extraction and installation process."
+      |                            echo
+      |                            echo "        --prefix=<pathname>"
+      |                            echo
+      |                            echo "            The pathname of the single directory where all of the payload"
+      |                            echo "            directories are to be placed."
+EOF06
+      my $bn;
+      foreach $bn (sort keys %dirBasenames) {
+         print SCRIPT fixIndentStuff(<<"EOF07");
+      |                            echo
+      |                            echo "        --prefix_$bn=<pathname>"
+      |                            echo
+      |                            echo "            The pathname of the directory where the \\"$bn\\" payload directory"
+      |                            echo "            is to be placed. Note that if this option is not specified then the"
+      |                            echo "            overall --prefix=<pathname> should be used."
+EOF07
+      }
+      print SCRIPT fixIndentStuff(<<"EOF08");
+      |                            echo
+      |                            echo "        -v[erbose][<digit>]"
+      |                            echo
+      |                            echo "            Operate in a verbose mode."
+      |                            echo
+      |                            echo "            Repeating this option increases the amount of output produced."
+      |                            echo "            Note that the option may end with an optional digit which"
+      |                            echo "            indicates a repetition count. Thus the option:"
+      |                            echo
+      |                            echo "               -v3"
+      |                            echo
+      |                            echo "            is equavalent to:"
+      |                            echo
+      |                            echo "               -v -v -v"
+      |                            echo
+      |                            echo "    Note that if no prefix is specified then this script will prompt for one."
+      |                            echo
+      |                            echo "RETURNS"
+      |                            echo "    \\"$scriptName\\" returns the standard exit codes:"
+      |                            echo
+      |                            echo "       0 -- success"
+      |                            echo "       1 -- failure"
+      |                            echo
+      |                            echo "ENVIRONMENT"
+      |                            echo "    \\"$scriptName\\" refers to the following environment variables:"
+      |                            echo
+      |                            echo "        DEBUG_$scriptNameU"
+      |                            echo
+      |                            echo "            Generate extra output which is only usefull when debugging the"
+      |                            echo "            \\"$scriptName\\" script itself. Note that at this time this"
+      |                            echo "            environment variable is ignored."
+      |                            echo
+      |                            echo "        $SCRIPTNAME_TMPDIR"
+      |                            echo
+      |                            echo "            Consider this pathname before considering TMPDIR (see"
+      |                            echo "            step (0) in the NOTES section below)."
+      |                            echo
+      |                            echo "INPLEMENTATION"
+      |                            echo "    \\"$scriptName\\" is implemented as a bash script."
+      |                            echo
+      |                            echo "SEE ALSO"
+      |                            echo "    mkinstaller(1x), sh(1), tar(1)"
+      |                            echo
+      |                            echo "NOTES"
+EOF08
+      if ($OSname ne "") {
+      print SCRIPT "                            echo \"    This installer script was built on \\\"$OSname\\\" \"\n";
+      print SCRIPT "                            echo\n";
+      }
+      if ($CCname ne "") {
+      print SCRIPT "                            echo \"    The C compiler \\\"$CCname\\\" was used to build the payload.\"\n";
+      print SCRIPT "                            echo\n";
+      }
+      if ($CXXname ne "") {
+      print SCRIPT "                            echo \"    The C++ compiler \\\"$CXXname\\\" was used to build the payload.\"\n";
+      print SCRIPT "                            echo\n";
+      }
+      if ($FORTRANname ne "") {
+      print SCRIPT "                            echo \"    The FORTRAN compiler \\\"$FORTRANname\\\" was used to build the payload.\"\n";
+      print SCRIPT "                            echo\n";
+      }
+      print SCRIPT fixIndentStuff(<<"EOF09");
+      |                            echo "    The directory where temporary files are to be placed is determined"
+      |                            echo "    as follows:"
+      |                            echo
+      |                            echo "        0) If $SCRIPTNAME_TMPDIR is defined and is not empty then"
+      |                            echo "           consider its value as a directory pathname. If this pathname"
+      |                            echo "           exists and is a directory and is writable then temporary"
+      |                            echo "           files will be placed in this directory. Otherwise..."
+      |                            echo "        1) If TMPDIR is defined and is not empty then consider its"
+      |                            echo "           value as a directory pathname. If this pathname exists"
+      |                            echo "           and is a directory and is writable then temporary files"
+      |                            echo "           will be placed in this directory. Otherwise..."
+      |                            echo "        2) If TMP is defined and is not empty then consider its"
+      |                            echo "           value as a directory pathname. If this pathname exists"
+      |                            echo "           and is a directory and is writable then temporary files"
+      |                            echo "           will be placed in this directory. Otherwise..."
+      |                            echo "        3) If TEMP is defined and is not empty then consider its"
+      |                            echo "           value as a directory pathname. If this pathname exists"
+      |                            echo "           and is a directory and is writable then temporary files"
+      |                            echo "           will be placed in this directory. Otherwise..."
+      |                            echo "        4) If the user's home directory can be determined and if"
+      |                            echo "           this home directory contains a subdirectory named tmp"
+      |                            echo "           that is itself writable then temporary files will be"
+      |                            echo "           placed in this directory. Otherwise..."
+      |                            echo "        5) If \\"C:<userProfile>\\\\AppData\\\\Local\\\\temp\\" exists and"
+      |                            echo "           is a writable directory then temporary files will be"
+      |                            echo "           placed in this directory. Otherwise..."
+      |                            echo "        6) If \\"/tmp\\" exists and is writable then temporary files"
+      |                            echo "           will be placed in this directory. Otherwise..."
+      |                            echo "        7) If \\"/var/tmp\\" exists and is writable then temporary files"
+      |                            echo "           will be placed in this directory. Otherwise..."
+      |                            echo "        8) If \\"C:\\\\Temp\\" exists and is writable then temporary files"
+      |                            echo "           will be placed in this directory. Otherwise..."
+      |                            echo "        9) If \\"C:\\\\Windows\\\\Temp\\" exists and is writable then temporary"
+      |                            echo "           files will be placed in this directory. Otherwise..."
+      |                            echo "       10) If the current directory is writable then temporary files"
+      |                            echo "           will be placed in the current directory. Otherwise..."
+      |                            echo "       11) A fatal error message will be sent to <stderr> and"
+      |                            echo "           the program will exit with a non-zero exit code."
+      |                            echo
+      |                            echo "    Note that 5, 8, and 9 are only applicable on Windows-like hosts."
+      |                            echo
+      |                            echo "AUTHOR"
+      |                            echo "    mkinstaller version $mkinstaller_ver_name rev. $mkinstaller_ver_time"
+EOF09
+      if ($Contact ne "") {
+         print SCRIPT "                            echo\n";
+         print SCRIPT "                            echo \"CONTACT\"\n";
+         if ($ProjectName ne "") {
+            print SCRIPT "                            echo \"    Please contact the $ProjectName team at:\"\n";
+         }
+         else {
+            print SCRIPT "                            echo \"    Please contact:\"\n";
+         }
+         print SCRIPT "                            echo\n";
+         print SCRIPT "                            echo \"        $Contact\"\n";
+      }
+      print SCRIPT fixIndentStuff(<<"EOF10");
+      |                            echo
+      |                            exit 0
+      |                            ;;
+EOF10
+      if ($ProjectVer ne "") {
+         print SCRIPT "\n";
+         print SCRIPT "         --vernum)          echo $ProjectVer\n";
+         print SCRIPT "                            ;;\n";
+         if ($ProjectName ne "") {
+            print SCRIPT "\n";
+            print SCRIPT "         --version)         echo $ProjectName: version $ProjectVer\n";
+            print SCRIPT "                            ;;\n";
+         }
+      }
+      print SCRIPT fixIndentStuff(<<"EOF11");
+      |
+      |         #---------------------------------------
+      |         #
+      |         #  Non-standard options...
+      |         #
+      |         #---------------------------------------
+      |
+      |         -k|--keep)         keep=true
+      |                            ;;
+      |
+      |         --prefix=*)        given="\$1"
+      |                            stmp=\`echo \${given} | sed -e 's/^--prefix=\\(.*\\)\$/\\1/'\`
+      |                            given="\${stmp}"
+      |                            if [ "X\${given}" = "X" ]
+      |                            then
+      |                               echo "$scriptName: missing or zero-length argument to --prefix option" >&2
+      |                               exit 1
+      |                            fi
+      |                            PREFIX="\${given}"
+      |                            ;;
+EOF11
+      my $bn;
+      foreach $bn (sort keys %dirBasenames) {
+         print SCRIPT fixIndentStuff(<<"EOF12");
+      |
+      |         --prefix_$bn=*)
+      |                            given="\$1"
+      |                            stmp=\`echo \${given} | sed -e 's/^--prefix_$bn=\\(.*\\)\$/\\1/'\`
+      |                            given="\${stmp}"
+      |                            if [ "X\${given}" = "X" ]
+      |                            then
+      |                               echo "$scriptName: missing or zero-length argument to --prefix_$bn option" >&2
+      |                               exit 1
+      |                            fi
+      |                            PREFIX_$bn="\${given}"
+      |                            ;;
+EOF12
+      }
+      print SCRIPT fixIndentStuff(<<"EOF13");
+      |
+      |         #---------------------------------------
+      |         #
+      |         #  "Semi-standard" options...
+      |         #
+      |         #---------------------------------------
+      |
+      |         -v)                verbosityLevel=\`expr \${verbosityLevel} + 1\`
+      |                            ;;
+      |
+      |         -v0)               verbosityLevel=0
+      |                            ;;
+      |
+      |         -v[0-9])           given=\$1
+      |                            itmp=\`echo \${given} | sed -e 's/^-v\\([0-9]\\)\$/\\1/'\`
+      |                            verbosityLevel=\`expr \${verbosityLevel} + \${itmp}\`
+      |                            ;;
+      |
+      |         --verbose)         verbosityLevel=\`expr \${verbosityLevel} + 1\`
+      |                            ;;
+      |
+      |         --verbose0)        verbosityLevel=0
+      |                            ;;
+      |
+      |         --verbose[0-9])    given="\$1"
+      |                            itmp=\`echo \${given} | sed -e 's/^--verbose\\([0-9]\\)\$/\\1/'\`
+      |                            verbosityLevel=\`expr \${verbosityLevel} + \${itmp}\`
+      |                            ;;
+      |
+      |         #---------------------------------------
+      |         #
+      |         #  Unknown options...
+      |         #
+      |         #---------------------------------------
+      |
+      |         -*)                echo "$scriptName: unknown option \\"\$opt\\" " >&2
+      |                            echo "$scriptName: ...if \\"\$opt\\" is meant to be a pathname try using \\'./\$opt\\' " >&2
+      |                            exit 1
+      |                            ;;
+      |
+      |         #---------------------------------------
+      |         #
+      |         #  Parameters...
+      |         #
+      |         #---------------------------------------
+      |
+      |         *)                 echo "$scriptName: unexpected \\"\$1\\" " >&2
+      |                            exit 1
+      |                            ;;
+      |
+      |      esac
+      |   else
+      |      echo "$scriptName: zero-length parameter" >&2
+      |      exit 1
+      |   fi
+      |   shift
+      |done
+      |
+      |#-------------------------------------------------------------------------------
+      |#
+      |#  A reminder that we're doing this all from a temporary directory.
+      |#
+      |#-------------------------------------------------------------------------------
+      |
+      |if [ 1 -le \${verbosityLevel} ]
+      |then
+      |   echo "$scriptName: running \\"\${commandPathname}\\" " >&2
+      |   if [ "X\${BuiltOn}" != "X" ]
+      |   then
+      |      echo "$scriptName: ...built on \\"\${BuiltOn}\\" " >&2
+      |   fi
+      |   amNowIn="\`pwd\`"
+      |   echo "$scriptName: working in \\"\${amNowIn}\\" " >&2
+      |   if [ "X\${debugging}" != "Xfalse" ]
+      |   then
+      |      /bin/ls -alF >&2
+      |   fi
+      |fi
+      |
+      |#-------------------------------------------------------------------------------
+      |#
+      |#  Dealing with PREFIX...
+      |#
+      |#  The overall PREFIX is only needed if one or more of the individual PREFIX...
+      |#  pathnames wasn't specified using the appropriate options. In this case we'll
+      |#  have to ask for the overall PREFIX if it wasn't supplied then use it to set
+      |#  each of the PREFIX... pathnames that wern't supplied.
+      |#
+      |#-------------------------------------------------------------------------------
+      |
+      |haveAll=true
+EOF13
+      my $bn;
+      foreach $bn (sort keys %dirBasenames) {
+         print SCRIPT fixIndentStuff(<<"EOF14");
+      |if [ "X\${PREFIX_$bn}" = "X" ]
+      |then
+      |   haveAll=false
+      |fi
+EOF14
+      }
+      print SCRIPT fixIndentStuff(<<"EOF15");
+      |
+      |if [ "X\${haveAll}" != Xtrue ]
+      |then
+      |   #---------------------------------------
+      |   #
+      |   #  Ask for PREFIX if one wasn't given...
+      |   #
+      |   #---------------------------------------
+      |
+      |   while [ "X\${PREFIX}" = "X" ]
+      |   do
+      |      [ "\${PREFIX}" != "" ] || read -e -p "$scriptName: Enter the PREFIX path: " PREFIX
+      |      if [ "X\${PREFIX}" = "X" ]
+      |      then
+      |         echo "$scriptName: can't have empty PREFIX, try again"
+      |      fi
+      |   done
+      |
+      |   #---------------------------------------
+      |   #
+      |   #  Force PREFIX to be absolute.
+      |   #
+      |   #---------------------------------------
+      |
+      |   case "\${PREFIX}" in
+      |      /*)
+      |          ;;
+      |      *)
+      |          PREFIX=\"\${here}/\${PREFIX}\"
+      |          ;;
+      |   esac
+EOF15
+      my $bn;
+      foreach $bn (sort keys %dirBasenames) {
+         print SCRIPT fixIndentStuff(<<"EOF16");
+      |
+      |   #---------------------------------------
+      |   #
+      |   #  Set PREFIX_$bn from PREFIX if we must.
+      |   #
+      |   #---------------------------------------
+      |
+      |   if [ "X\${PREFIX_$bn}" = "X" ]
+      |   then
+      |      PREFIX_$bn="\${PREFIX}"
+      |   fi
+EOF16
+      }
+      print SCRIPT fixIndentStuff(<<"EOF17");
+      |fi
+      |
+      |if [ 1 -le \${verbosityLevel} ]
+      |then
+      |   echo "$scriptName: install under:"
+      |   echo "$scriptName: ...PREFIX=\\"\${PREFIX}\\" "
+EOF17
+      my $bn;
+      foreach $bn (sort keys %dirBasenames) {
+         print SCRIPT fixIndentStuff(<<"EOF18");
+      |   echo "$scriptName: ...PREFIX_$bn=\\"\${PREFIX_$bn}\\" "
+EOF18
+      }
+      print SCRIPT fixIndentStuff(<<"EOF19");
+      |fi
+      |
+      |#---------------------------------------
+      |#
+      |#  Create the installation PREFIX
+      |#  directories if necessary...
+      |#
+      |#---------------------------------------
+      |
+      |if [ "X\${PREFIX}" != "X" ]
+      |then
+      |   if [ ! -d "\${PREFIX}" ]
+      |   then
+      |      if [ 1 -le \${verbosityLevel} ]
+      |      then
+      |         echo "$scriptName: creating directory \\"\${PREFIX}\\" "
+      |      fi
+      |      mkdir "\${PREFIX}" >/dev/null 2>&1
+      |      status=\$?
+      |      if [ "X\${status}" != "X0" ]
+      |      then
+      |         echo "$scriptName: can't create directory \\"\${PREFIX}\\" "
+      |         echo "$scriptName: ...[mkdir \\"\${PREFIX}\\"] returned exit code \${status}" >&2
+      |         exit 1
+      |      fi
+      |      if [ ! -d "\${PREFIX}" ]
+      |      then
+      |         echo "$scriptName: didn't create directory \\"\${PREFIX}\\" " >&2
+      |         exit 1
+      |      fi
+      |   fi
+      |fi
+EOF19
+      my $bn;
+      foreach $bn (sort keys %dirBasenames) {
+         print SCRIPT fixIndentStuff(<<"EOF20");
+      |
+      |if [ "X\${PREFIX_$bn}" != "X" ]
+      |then
+      |   if [ ! -d "\${PREFIX_$bn}" ]
+      |   then
+      |      if [ 1 -le \${verbosityLevel} ]
+      |      then
+      |         echo "$scriptName: creating directory \\"\${PREFIX_$bn}\\" "
+      |      fi
+      |      mkdir "\${PREFIX_$bn}" >/dev/null 2>&1
+      |      status=\$?
+      |      if [ "X\${status}" != "X0" ]
+      |      then
+      |         echo "$scriptName: can't create directory \\"\${PREFIX_$bn}\\" "
+      |         echo "$scriptName: ...[mkdir \\"\${PREFIX_$bn}\\"] returned exit code \${status}" >&2
+      |         exit 1
+      |      fi
+      |      if [ ! -d "\${PREFIX_$bn}" ]
+      |      then
+      |         echo "$scriptName: didn't create directory \\"\${PREFIX_$bn}\\" " >&2
+      |         exit 1
+      |      fi
+      |   fi
+      |fi
+EOF20
+      }
+      if ($addTarball) {
+         print SCRIPT fixIndentStuff(<<"EOF21");
+      |
+      |if [ "X\${debugging}" != "Xfalse" ]
+      |then
+      |   amNowIn="\`pwd\`"
+      |   echo "$scriptName: \"\${amNowIn}\" before extraction"
+      |   /bin/ls -alF
+      |fi
+      |
+      |#-------------------------------------------------------------------------------
+      |#
+      |#  The self-extraction magic...
+      |#
+      |#  FIX: The untar process reports:
+      |#
+      |#          wrapper/
+EOF21
+         my $bn;
+         foreach $bn (sort keys %dirBasenames) {
+            print SCRIPT fixIndentStuff(<<"EOF22");
+      |#          wrapper/$bn.tar.gz
+EOF22
+         }
+         print SCRIPT fixIndentStuff(<<"EOF23");
+      |#
+      |#          gzip: stdin: unexpected end of file
+      |#          tar: Child returned status 1
+      |#          tar: Error is not recoverable: exiting now
+      |#
+      |#       Note that we've used a work-around: The wrapper tarball(=wrapper.tar)
+      |#       is not compressed (thus avoiding the above problem). This may seem a
+      |#       bit waseful but the contents of the wrapper directory are already
+      |#       compressed tarballs, compressing the wrapper directory actually gives
+      |#       very little improvement anyway.
+      |#
+      |#-------------------------------------------------------------------------------
+      |
+      |if [ 1 -le \${verbosityLevel} ]
+      |then
+      |   echo "$scriptName: extracting wrapper tarball"
+      |fi
+      |
+      |if [ "X\${debugging}" != "Xfalse" ]
+      |then
+      |   nowIn="\`pwd\`"
+      |   echo "$scriptName: ...in \"\${nowIn}\" " >&2
+      |   echo "$scriptName: ...run [awk '/^__PAYLOAD_BELOW__/ {print NR + 1; exit 0; }' \"\${commandPathname}\" 2>/dev/null]" >&2
+      |fi
+      |PAYLOAD_LINE=\`awk '/^__PAYLOAD_BELOW__/ {print NR + 1; exit 0; }' "\${commandPathname}"\`
+      |if [ "X\${debugging}" != "Xfalse" ]
+      |then
+      |   echo "$scriptName:    gives: [\${PAYLOAD_LINE}]" >&2
+      |   nowIn="\`pwd\`"
+      |   echo "$scriptName: ...in \"\${nowIn}\" " >&2
+      |   echo "$scriptName: ...run [tail -n+\${PAYLOAD_LINE} \"\${commandPathname}\" > \"wrapper.tar\"]" >&2
+      |fi
+      |tail -n+\${PAYLOAD_LINE} "\${commandPathname}" >"wrapper.tar" 2>/dev/null
+      |if [ "X\${debugging}" != "Xfalse" ]
+      |then
+      |   echo "$scriptName:    done" >&2
+      |   nowIn="\`pwd\`"
+      |   echo "$scriptName: ...in \"\${nowIn}\" " >&2
+      |   echo "$scriptName: ...run [tar -xf \"wrapper.tar\"]" >&2
+      |fi
+      |tar -xf "wrapper.tar" >/dev/null 2>&1
+      |if [ "X\${status}" != "X0" ]
+      |then
+      |   echo "$scriptName: problem extracting tarball(=\"wrapper.tar\") from script(=\"\${commandPathname}\")"
+      |   echo "$scriptName: ...[tar -xf \"wrapper.tar\"] returned exit code \${status}" >&2
+      |   exit 1
+      |fi
+      |
+      |if [ 2 -le \${verbosityLevel} ]
+      |then
+      |   echo "$scriptName: ...done"
+      |fi
+      |
+      |#-------------------------------------------------------------------------------
+      |#
+      |#  After extracting the wrapper directory from the wrapper directory from
+      |#  the wrapper tarball we can toss the wrapper tarball (it was just a copy
+      |#  extracter from the $scriptName script.
+      |#
+      |#-------------------------------------------------------------------------------
+      |
+      |if [ "X\${keep}" != "Xtrue" ]
+      |then
+      |   if [ "X\${debugging}" != "Xfalse" ]
+      |   then
+      |      echo "$scriptName: cleanup tarball" >&2
+      |      amNowIn="\`pwd\`"
+      |      echo "$scriptName: ...in \"\${amNowIn}\" " >&2
+      |      echo "$scriptName: ...run [rm \"wrapper.tar\"]" >&2
+      |   fi
+      |   rm "wrapper.tar"
+      |   status=\$?
+      |   if [ "X\${status}" != "X0" ]
+      |   then
+      |      echo "$scriptName: can't cleanup the tarball(=\"wrapper.tar\")"
+      |      echo "$scriptName: ...[rm \"wrapper.tar\"] returned exit code \${status}" >&2
+      |      exit 1
+      |   fi
+      |else
+      |   echo "$scriptName: keeping tarball(=\"wrapper.tar\")"
+      |   amNowIn="\`pwd\`"
+      |   echo "$scriptName: ...in \"\${amNowIn}\" " >&2
+      |   lookFor="\${amNowIn}/wrapper.tar"
+      |   if [ -f "\${lookFor}" ]
+      |   then
+      |      echo "$scriptName: ...have \"\${lookFor}\" " >&2
+      |   fi
+      |fi
+      |if [ "X\${debugging}" != "Xfalse" ]
+      |then
+      |   amNowIn="\`pwd\`"
+      |   echo "$scriptName: \"\${amNowIn}\" after extraction..."
+      |   /bin/ls -alF
+      |fi
+      |
+      |#-------------------------------------------------------------------------------
+      |#
+      |#  The wrapper directory should now be in place. Remember that we're in the
+      |#  temporary directory. We now step into the wrapper directory and unwrap
+      |#  each individual tarball in to its proper place.
+      |#
+      |#-------------------------------------------------------------------------------
+      |
+      |cd "wrapper"
+      |
+      |if [ "X\${debugging}" != "Xfalse" ]
+      |then
+      |   amNowIn="\`pwd\`"
+      |   echo "$scriptName: contents of \"\${amNowIn}\" "
+      |   /bin/ls -alF
+      |fi
+      |
+      |allThere=true
+EOF23
+         my $bn;
+         foreach $bn (sort keys %dirBasenames) {
+            print SCRIPT fixIndentStuff(<<"EOF24");
+      |
+      |if [ ! -f "$bn.tar.gz" ]
+      |then
+      |   echo "$scriptName: seem to be missing \\"$bn.tar.gz\\" "
+      |   allThere=false
+      |else
+      |   if [ 1 -le \${verbosityLevel} ]
+      |   then
+      |      echo "$scriptName: ...have \\"$bn.tar.gz\\" in \\"wrapper\\" "
+      |   fi
+      |fi
+EOF24
+         }
+         print SCRIPT fixIndentStuff(<<"EOF25");
+      |if [ "X\${allThere}" != "Xtrue" ]
+      |then
+      |   exit 1
+      |fi
+EOF25
+         my $bn;
+         foreach $bn (sort keys %dirBasenames) {
+            print SCRIPT fixIndentStuff(<<"EOF26");
+      |#---------------------------------------
+      |#
+      |#   Unwrap the individual $bn.tar.gz
+      |#   tarball to form the PREFIX_$bn/$bn
+      |#   directory.
+      |#
+      |#---------------------------------------
+      |
+      |wasIn="\`pwd\`"
+      |if [ "X\${debugging}" != "Xfalse" ]
+      |then
+      |   echo "$scriptName: was in \\"\${wasIn}\\" "
+      |fi
+      |cd "\${PREFIX_$bn}"
+      |   if [ 1 -le \${verbosityLevel} ]
+      |   then
+      |      echo "$scriptName: extracting \\"$bn\\" "
+      |   fi
+      |   if [ "X\${debugging}" != "Xfalse" ]
+      |   then
+      |      nowIn="\`pwd\`"
+      |      echo "$scriptName: ...in \\"\${nowIn}\\" "
+      |      echo "$scriptName:    run [tar -xf \\"\${wasIn}/$bn.tar.gz\\"]" >&2
+      |   fi
+      |   tar -xzf "\${wasIn}/$bn.tar.gz" 2>/dev/null
+      |   status=\$?
+      |   if [ "X\${status}" != "X0" ]
+      |   then
+      |      echo "$scriptName: can't unwrap \\"$bn\\" " >&2
+      |      echo "$scriptName: ...[tar -xzf \\"\\\${wasIn}/$bn.tar.gz\\"] returned exit code \${status}" >&2
+      |      exit 1
+      |   fi
+      |   if [ "X\${debugging}" != "Xfalse" ]
+      |   then
+      |      echo "$scriptName:    done" >&2
+      |      if [ -d "\${PREFIX_$bn}/$bn" ]
+      |      then
+      |         echo "$scriptName: ...found directory \\"\${PREFIX_$bn}/$bn\\" " >&2
+      |      else
+      |         echo "$scriptName: ...can't find directory \\"\${PREFIX_$bn}/$bn\\" " >&2
+      |      fi
+      |   fi
+      |cd "\${wasIn}"
+EOF26
+         }
+      }
+      if ($postInstallBasename) {
+         print SCRIPT fixIndentStuff(<<"EOF27");
+         |
+         |#-------------------------------------------------------------------------------
+         |#
+         |#  Run the post-install script...
+         |#
+         |#  Note that this is done from the temporary wrapper directory and that the
+         |#  prefix directories are passed as options on the command line (so that the
+         |#  script knows where to find things.
+         |#
+         |#-------------------------------------------------------------------------------
+         |
+         |if [ -f "$postInstallBasename" ]
+         |then
+         |   amIn=\`pwd\`
+         |   if [ 1 -le \${verbosityLevel} ]
+         |   then
+         |      echo "$scriptName: running post-install script \\"\${PostInstallScriptName}\\" "
+         |   fi
+EOF27
+         my $theCmd = "\"./$postInstallBasename\"";
+         my $bn;
+         foreach $bn (sort keys %dirBasenames) {
+            $theCmd = $theCmd." --prefix_$bn=\"\${PREFIX_$bn}\"";
+         }
+         print SCRIPT fixIndentStuff(<<"EOF28");
+         |   if [ 3 -le \${verbosityLevel} ]
+         |   then
+         |      echo "$scriptName: ...from \\"\${amIn}\\" " >&2
+         |      echo "$scriptName:    run [\${PostInstallScriptStyle} $theCmd]" >&2
+         |   fi
+         |   \${PostInstallScriptStyle} $theCmd >&2
+         |   status=\$?
+         |   if [ "X\${status}" != "X0" ]
+         |   then
+         |      echo "$scriptName: post-install script(=\\"$postInstallBasename\\") failed" >&2
+         |      echo "$scriptName: ...[\${PostInstallScriptStyle} $theCmd] returned exit code \${status}" >&2
+         |      exit 1
+         |   fi
+         |   if [ 2 -le \${verbosityLevel} ]
+         |   then
+         |      echo "$scriptName: ...done"
+         |   fi
+         |else
+         |   echo "$scriptName: ...didn't find post-install script \\"$postInstallBasename\\" " >&2
+         |   exit 1
+         |fi
+EOF28
+      }
+      print SCRIPT fixIndentStuff(<<"EOF29");
+      |
+      |#-------------------------------------------------------------------------------
+      |#
+      |#  Cleanup...
+      |#
+      |#-------------------------------------------------------------------------------
+      |
+      |if [ "X\${keep}" != "Xtrue" ]
+      |then
+      |   if [ 1 -le \${verbosityLevel} ]
+      |   then
+      |      echo "$scriptName: cleanup"
+      |   fi
+      |   if [ "X\${debugging}" != "Xfalse" ]
+      |   then
+      |      nowIn="\`pwd\`"
+      |      echo "$scriptName: ...in \\"\${nowIn}\\" " >&2
+      |      echo "$scriptName: ...run [rm -rf \\"\${MyTmpDir}\\"]" >&2
+      |   fi
+      |   rm -rf "\${MyTmpDir}" >/dev/null 2>&1
+      |   status=\$?
+      |   if [ "X\${status}" != "X0" ]
+      |   then
+      |      echo "$scriptName: can't cleanup the temporary directory(=\\"\${MyTmpDir}\\")"
+      |      echo "$scriptName: ...[rm -rf \\"\${MyTmpDir}\\"] returned exit code \${status}" >&2
+      |      exit 1
+      |   else
+      |      if [ -d "\${MyTmpDir}" ]
+      |      then
+      |         echo "$scriptName: didn't cleanup the temporary directory(=\\"\${MyTmpDir}\\")"
+      |         echo "$scriptName: ...[rm -rf \\"\${MyTmpDir}\\"] failed" >&2
+      |         echo "$scriptName:    directory \\"\${MyTmpDir}\\" is still there" >&2
+      |         exit 1
+      |      fi
+      |   fi
+      |else
+      |   echo "$scriptName: note that the temporary directory(=\\"\${MyTmpDir}\\") has been left intact"
+      |fi
+      |
+      |#-------------------------------------------------------------------------------
+      |#
+      |#  All done.
+      |#
+      |#-------------------------------------------------------------------------------
+      |
+      |if [ 1 -le \${verbosityLevel} ]
+      |then
+      |   echo "$scriptName: all done"
+      |fi
+      |
+      |exit 0
+      |__PAYLOAD_BELOW__
+EOF29
+
+      print STDERR "mkinstaller:    done\n" if (2 <= $verbosityLevel);
+
+      #-------------------------------------------------------------------------
+      #
+      #  Done generating the "script" part of the script, now append the wrapper
+      #  tarball (the payload) to the end to form the self-extracting script.
+      #
+      #-------------------------------------------------------------------------
+
+      if ($addTarball) {
+         print STDERR "mkinstaller: ...adding the payload(\"$TmpDirT/wrapper.tar\") to \"$scriptName\" script\n" if (1 <= $verbosityLevel);
+         my $cmd    = "cat \"$TmpFile\" \"$TmpDirT/wrapper.tar\" > \"$scriptName\"";
+         my $status = system "$cmd 2>/dev/null";
+         if ($status != 0) {
+            print STDERR "mkinstaller: can't form \"$scriptName\"\n";
+            print STDERR "mkinstaller: ...[$cmd] failed, returning exit code $status\n";
+            cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+            exit 1;
+         }
+         if ( ! -f $scriptName) {
+            print STDERR "mkinstaller: didn't form \"$scriptName\"\n";
+            print STDERR "mkinstaller: ...[$cmd] failed\n";
+            print STDERR "mkinstaller: ...can't find \"$scriptName\"\n";
+            cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+            exit 1;
+         }
+      }
+      else {
+         print STDERR "mkinstaller: ...rename to form \"$scriptName\" script (without payload)\n" if (1 <= $verbosityLevel);
+         my $cmd    = "mv \"$TmpFile\" \"$scriptName\"";
+         my $status = system "$cmd >/dev/null 2>&1";
+         if ($status != 0) {
+            print STDERR "mkinstaller: can't form \"$scriptName\"\n";
+            print STDERR "mkinstaller: ...[$cmd] failed, returning exit code $status\n";
+            cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+            exit 1;
+         }
+         if ( ! -f $scriptName) {
+            print STDERR "mkinstaller: didn't form \"$scriptName\"\n";
+            print STDERR "mkinstaller: ...[$cmd] failed\n";
+            print STDERR "mkinstaller: ...can't find \"$scriptName\"\n";
+            cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+            exit 1;
+         }
+      }
+      print STDERR "mkinstaller:    done\n" if (2 <= $verbosityLevel);
+      print STDERR "mkinstaller: ...make \"$scriptName\" executable\n" if (1 <= $verbosityLevel);
+      my $cmd    = "chmod +x \"$scriptName\"";
+      my $status = system "$cmd >/dev/null 2>&1";
+      if ($status != 0) {
+         print STDERR "mkinstaller: can't make \"$scriptName\" executable\n";
+         print STDERR "mkinstaller: ...[$cmd] failed, returning exit code $status\n";
+         cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+         exit 1;
+      }
+      print STDERR "mkinstaller:    done\n" if (2 <= $verbosityLevel);
+   }
+   print STDERR "mkinstaller: ...done\n" if $debugging;
+
+   #---------------------------------------
+   #
+   #  Cleanup
+   #
+   #---------------------------------------
+
+   print STDERR "mkinstaller: cleanup...\n" if $debugging;
+   {
+      cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
+   }
+   print STDERR "mkinstaller: ...done\n" if $debugging;
+
+   #----------------------------------------------------------------------------
+   #
+   #  All done
+   #
+   #----------------------------------------------------------------------------
+
+   print STDERR "mkinstaller: all done\n" if (1 <= $verbosityLevel);
+   exit 0;
+
+##============================================================================##
+##============================================================================##
+##                                                                            ##
+##  Local functions...                                                        ##
+##                                                                            ##
+##============================================================================##
+##============================================================================##
+
+   #----------------------------------------------------------------------------
+   #
+   #  Cleanup any temporaries.
+   #
+   #----------------------------------------------------------------------------
+
+   sub cleanupTemps {
+      my $myTmpDirT      = shift;
+      my $keep           = shift;
+      my $verbosityLevel = shift;
+      my $debugging      = shift;
+
+      if ( ! $keep) {
+         print STDERR "mkinstaller:    not keeping\n" if $debugging;
+         print STDERR "mkinstaller: ...cleanup\n" if (1 <= $verbosityLevel);
+         if ( -d "$TmpDirT") {
+            print STDERR "mkinstaller:    ...have \"$TmpDirT\" directory\n" if $debugging;
+            if ( ! deleteDirectoryOrFile($TmpDirT)) {
+               print STDERR "mkinstaller: can't delete \"$TmpDirT\"\n";
+               exit 1;
+            }
+         }
+         print STDERR "mkinstaller:    done\n" if (2 <= $verbosityLevel);
+      }
+      else {
+         print STDERR "mkinstaller:    keeping \"$TmpDirT\"\n" if $debugging;
+      }
+
+   }
+
+   #----------------------------------------------------------------------------
+   #
+   #  Output the copyright notice to stdout.
+   #
+   #----------------------------------------------------------------------------
+
+   sub copyright {
+      my $Nowners    = $#defaultCopyrightOwners + 1;
+      my $Nstatement = $#defaultCopyrightStatement + 1;
+      my $didOne     = 0;
+      my $i;
+      if (0 < $Nowners) {
+         print "\n";
+         for ($i=0; $i<$Nowners; $i+=1) {
+            print $defaultCopyrightOwners[$i];
+         }
+         $didOne = 1;
+      }
+      if (0 < $Nstatement) {
+         print "\n";
+         for ($i=0; $i<$Nstatement; $i+=1) {
+            print $defaultCopyrightStatement[$i];
+         }
+         $didOne = 1;
+      }
+      if ($didOne) {
+         print "\n";
+      }
+   }
+
+}
+
+# MyUniqueFileId: d1e4e179-f5ab-4da0-a4b3-3904cdc4feb2
+#-------------------------------------------------------------------------------
+#
+#  This subroutine is used to translate a relative pathname to an absolute
+#  pathname.
+#
+#  see: totebag/src/perl-lib/absname.psub
+#
+#-------------------------------------------------------------------------------
+
+sub absname {
+   my $pathname = shift;
+   my $result   = "";
+   if ($pathname =~ /^[\/\\]/) {
+      $result   = $pathname;
+   }
+   else {
+      my $here  = getWorkingDirectory();
+      $result   = joinpath($here,$pathname);
+   }
+   $result      = fixpath($result);
+   return $result;
+}
+
+# MyUniqueFileId: c16cf2c9-02f4-48a7-bf6f-6d74697af801
+#-------------------------------------------------------------------------------
+#
+#  Basename from pathname.
+#
+#  This function is used to extract the basename (the final component) from a
+#  given pathname. Note that this kind of operation is generally available in
+#  the File module.
+#
+#  This function uses: fixpath()
+#
+#  see: totebag/src/perl-lib/basename.psub
+#
+#-------------------------------------------------------------------------------
+
+sub basename {
+   my $pathname = shift(@_);
+   $_           = fixpath($pathname);
+   parse: {
+             /^(.+)[\/\\]([^\/\\]*)$/
+
+                && do {
+                   return $2;
+                };
+
+             /^[\/\\]([^\/\\]*)$/
+
+                && do {
+                   return $1;
+                };
+
+             /^([^\/\\]*)$/
+
+                && do {
+                   return $1;
+                };
+
+          }
+}
+
+# MyUniqueFileId: efcba8f6-5d35-47f7-833b-664f20eca9af
+#-------------------------------------------------------------------------------
+#
+#  This subroutine deletes a directory and all of its contents. Note that it
+#  is assumed that the directory tree only contains files and/or directories.
+#
+#  see: totebag/src/perl-lib/deleteDirectoryOrFile.psub
+#
+#-------------------------------------------------------------------------------
+
+sub deleteDirectoryOrFile {
+   my $name        = shift;
+   my $sponsor     = shift;
+   my $debugging   = 0;
+
+   print STDERR "deleteDirectoryOrFile[ name=\"$name\", sponsor=\"$sponsor\"...\n" if $debugging;
+   my $result      = 1;
+   my @nameList    = ();
+   my @typeList    = ();
+   print STDERR "deleteDirectoryOrFile: ...start accumulating\n" if $debugging;
+   my $i           = 0;
+   my $idx         = $#nameList + 1;
+   $nameList[$idx] = $name;
+   $typeList[$idx] = "unknown";
+   print STDERR "deleteDirectoryOrFile:    \"".$nameList[$idx]."\"\n" if $debugging;
+   for ($i=0; $i<=$#nameList; ++$i) {
+      my $theName = $nameList[$i];
+      my $theType = $typeList[$i];
+      if ( -l $theName) {
+         $typeList[$i] = "symbolic-link";
+      }
+      elsif ( -f $theName) {
+         $typeList[$i] = "file";
+      }
+      elsif ( -d $theName ) {
+         $typeList[$i] = "directory";
+         if (! opendir(DIR,$theName)) {
+            print STDERR $sponsor."can't read directory \"$theName\"\n" if $sponsor;
+            $result = 0;
+         }
+         else {
+            while (defined($tmp = readdir(DIR))) {
+               if (($tmp ne "" ) && ($tmp ne ".") && ($tmp ne "..")) {
+                  my $idx         = $#nameList + 1;
+                  $nameList[$idx] = "$nameList[$i]"."/"."$tmp";
+                  $typeList[$idx] = "unknown";
+                  print STDERR "deleteDirectoryOrFile:    \"".$nameList[$idx]."\"\n" if $debugging;
+               }
+            }
+            closedir(DIR);
+         }
+      }
+      else {
+         $typeList[$i] = "other";
+      }
+   }
+   print STDERR "deleteDirectoryOrFile:    done\n" if $debugging;
+   print STDERR "deleteDirectoryOrFile: ...start removing\n" if $debugging;
+   for ($i=$#nameList; 0<=$i; $i--) {
+      my $theName = $nameList[$i];
+      my $theType = $typeList[$i];
+      if ($theType eq "directory") {
+         print STDERR "deleteDirectoryOrFile:    d \"".$theName."\"\n" if $debugging;
+         if ( ! rmdir($theName)) {
+            print STDERR $sponsor."can't delete \"".$theName."\"\n" if $sponsor;
+            print STDERR $sponsor."...rmdir(\"".$theName."\") failed\n" if $sponsor;
+            $result = 0;
+         }
+         else {
+            if ( -d $theName) {
+               print STDERR $sponsor."can't delete \"".$theName."\"\n" if $sponsor;
+               print STDERR $sponsor."...directory \"".$theName."\" is still there\n" if $sponsor;
+               $result = 0;
+            }
+         }
+      }
+      elsif ($theType eq "file") {
+         print STDERR "deleteDirectoryOrFile:    f \"".$theName."\"\n" if $debugging;
+         if ( ! unlink($theName)) {
+            print STDERR $sponsor."can't delete directory \"".$theName."\"\n" if $sponsor;
+            print STDERR $sponsor."...unlink(\"".$theName."\") failed\n" if $sponsor;
+            $result = 0;
+         }
+         else {
+            if ( -f $theName) {
+               print STDERR $sponsor."can't delete file \"".$theName."\"\n" if $sponsor;
+               print STDERR $sponsor."...file \"".$theName."\" is still there\n" if $sponsor;
+               $result = 0;
+            }
+         }
+      }
+      elsif ($theType eq "symbolic-link") {
+         print STDERR "deleteDirectoryOrFile:    l \"".$theName."\"\n" if $debugging;
+         if ( ! unlink($theName)) {
+            print STDERR $sponsor."can't delete symbolic-link \"".$theName."\"\n" if $sponsor;
+            print STDERR $sponsor."...unlink(\"".$theName."\") failed\n" if $sponsor;
+            $result = 0;
+         }
+         else {
+            if ( -l $theName) {
+               print STDERR $sponsor."can't delete symbolic-link \"".$theName."\"\n" if $sponsor;
+               print STDERR $sponsor."...symbolic-link \"".$theName."\" is still there\n" if $sponsor;
+               $result = 0;
+            }
+         }
+      }
+      else {
+         print STDERR "deleteDirectoryOrFile:    ? \"".$theName."\"\n" if $debugging;
+         print STDERR $sponsor."can't delete \"".$theName."\"\n" if $sponsor;
+         print STDERR $sponsor."...\"".$theName."\" isn't file, directory, or symbolic-link\"\n" if $sponsor;
+      }
+      if (-e $nameList[$i]) {
+         print STDERR $sponsor."can't delete \"".$theName."\"\n" if $sponsor;
+         $result = 0;
+      }
+   }
+   print STDERR "deleteDirectoryOrFile:    done\n" if $debugging;
+   print STDERR "deleteDirectoryOrFile] ...done(=$result)\n" if $debugging;
+   return $result;
+}
+
+# MyUniqueFileId: 8beb72f4-0e19-46e2-effb-336240c9fb42
+#-------------------------------------------------------------------------------
+#
+#  Dirname of pathname.
+#
+#  This function is used to extract the directory name (all but the final
+#  component) from a given pathname. Note that this kind of operation is
+#  generally available in the File module.
+#
+#  This function uses: fixpath()
+#
+#  see: totebag/src/perl-lib/dirname.psub
+#
+#-------------------------------------------------------------------------------
+
+sub dirname {
+   my $pathname = shift(@_);
+   $_           = fixpath($pathname);
+   parse: {
+             /^(.+)[\/\\]([^\/\\]*)$/
+
+                && do {
+                   return $1;
+                };
+
+             /^([\/\\])([^\/\\]*)$/
+
+                && do {
+                   return $1;
+                };
+
+             /^([^\/\\]*)$/
+
+                && do {
+                   return ".";
+                };
+
+          }
+}
+
+# MyUniqueFileId: 5d2ae091-e40c-43d2-e81f-811e7bdf3ef7
+#--------------------------------------------------------------------------------
+#
+#  Use the appropriate environment variable(s) to figure-out where the home
+#  directory of the user is...
+#
+#  1) Try HOME environment variable
+#  2) Try HOMEDRIVE and HOMEPATH environment variables
+#  3) Try USERPROFILE environment variable
+#
+#  see: totebag/src/perl-lib/findHomeDirectory.psub
+#
+#--------------------------------------------------------------------------------
+
+sub findHomeDirectory {
+   my $result = "";
+   #---------------------------------------
+   #
+   #  First try HOME environment variable...
+   #
+   if ($result eq "") {
+      if ( exists $ENV{'HOME'}) {
+         $result = $ENV{'HOME'};
+         $result =~ tr/\\/\//;
+         if ( ! -d $result) {
+            $result = "";
+         }
+      }
+   }
+   #---------------------------------------
+   #
+   #  ...then try HOMEDRIVE and HOMEPATH
+   #     environment variables...
+   #
+   if ($result eq "") {
+      if ( exists $ENV{'HOMEDRIVE'}) {
+         my $HOMEDRIVE = $ENV{'HOMEDRIVE'};
+         if ( exists $ENV{'HOMEPATH'}) {
+            my $HOMEPATH = $ENV{'HOMEPATH'};
+            $result      = "$HOMEDRIVE$HOMEPATH";
+            $result      =~ tr/\\/\//;
+            if ( ! -d $result) {
+               $result = "";
+            }
+         }
+      }
+   }
+   #---------------------------------------
+   #
+   #  ...finally try USERPROFILE environment
+   #     variables...
+   #
+   if ($result eq "") {
+      if ( exists $ENV{'USERPROFILE'}) {
+         $result = $ENV{'USERPROFILE'};
+         $result =~ tr/\\/\//;
+         if ( ! -d $result) {
+            $result = "";
+         }
+      }
+   }
+   return $result;
+}
+
+# MyUniqueFileId: c58e95af-7811-46b9-ba94-c63e6b2ed7ee
+#-------------------------------------------------------------------------------
+#
+#  Decide where to place tempfiles.
+#
+#  1) Try the pathname in TMPDIR
+#  2) Try the pathname in TMP
+#  3) Try the pathname in TEMP
+#  4) Try ~/tmp (tmp under home directory)
+#  5) Try c:<usrProf>\AppData\Local\temp directory
+#  6) Try /tmp
+#  7) Try /var/tmp
+#  8) Try c:\Temp
+#  9) Try c:\Windows\Temp
+#  10) Try .
+#
+#  Note that 5, 8, and 9 are only applicable on Windows-like hosts.
+#
+#  This function uses: findHomeDirectory(),
+#                      getOSclass()
+#
+#  see: totebag/src/perl-lib/findTempDir.psub
+#
+#-------------------------------------------------------------------------------
+
+sub findTempDir {
+
+   #---------------------------------------
+   #
+   #  First try TMPDIR environment variable...
+   #
+   my $tmpdir;
+   if ($tmpdir eq "") {
+      if ( exists $ENV{'TMPDIR'}) {
+         my $trydir = $ENV{'TMPDIR'};
+         if ( -d $trydir) {
+            if ( -w $trydir) {
+               $tmpdir = $trydir;
+            }
+         }
+      }
+   }
+
+   #---------------------------------------
+   #
+   #  ...then try TMP environment variable...
+   #
+   if ($tmpdir eq "") {
+      if ( exists $ENV{'TMP'}) {
+         my $trydir = $ENV{'TMP'};
+         if ( -d $trydir) {
+            if ( -w $trydir) {
+               $tmpdir = $trydir;
+            }
+         }
+      }
+   }
+
+   #---------------------------------------
+   #
+   #  ...then try TEMP environment variable...
+   #
+   if ($tmpdir eq "") {
+      if ( exists $ENV{'TEMP'}) {
+         my $trydir = $ENV{'TEMP'};
+         if ( -d $trydir) {
+            if ( -w $trydir) {
+               $tmpdir = $trydir;
+            }
+         }
+      }
+   }
+
+   #---------------------------------------
+   #
+   #  ...then try tmp subdirectory of the
+   #     user's home directory...
+   #
+   if ($tmpdir eq "") {
+      #---------------------------------------
+      #
+      #  Find the user's home directory
+      #
+      my $theHomeDir = findHomeDirectory();
+      if ($theHomeDir ne "") {
+         if ( -d $theHomeDir) {
+            my $trydir = $theHomeDir."/tmp";
+            if ( -d $trydir) {
+               if ( -w $trydir) {
+                  $tmpdir = $trydir;
+               }
+            }
+         }
+      }
+   }
+
+   if ($tmpdir eq "") {
+      if (getOSclass() eq "Windows-like") {
+
+         #---------------------------------
+         #
+         #  ...then try "c:<usrProf>\AppData\Local\Temp"
+         #     directory...
+         #
+         if ( exists $ENV{'USERPROFILE'} ) {
+            my $usrProf   = $ENV{'USERPROFILE'};
+            if ($usrProf ne "") {
+               my $trydir = "$usrProf\\AppData\\Local\\Temp";
+               if ( -d $trydir) {
+                  if ( -w $trydir) {
+                     $tmpdir = $trydir;
+                  }
+               }
+            }
+         }
+      }
+   }
+
+   #---------------------------------------
+   #
+   #  ...then try "/tmp" directory...
+   #
+   if ($tmpdir eq "") {
+      my $trydir = "/tmp";
+      if ( -d $trydir) {
+         if ( -w $trydir) {
+            $tmpdir = $trydir;
+         }
+      }
+   }
+
+   if ($tmpdir eq "") {
+      if (getOSclass() eq "Windows-like") {
+
+         #---------------------------------
+         #
+         #  ...then try "c:\Temp" directory...
+         #
+         if ($tmpdir eq "") {
+            my $trydir = "c:\\Temp";
+            if ( -d $trydir) {
+               if ( -w $trydir) {
+                  $tmpdir = $trydir;
+               }
+            }
+         }
+
+         #---------------------------------
+         #
+         #  ...then try "c:\Windows\Temp" directory...
+         #
+         if ($tmpdir eq "") {
+            my $trydir = "c:\\Windows\\Temp";
+            if ( -d $trydir) {
+               if ( -w $trydir) {
+                  $tmpdir = $trydir;
+               }
+            }
+         }
+      }
+   }
+
+   #---------------------------------------
+   #
+   #  ...finally try "." directory...
+   #
+   if ($tmpdir eq "") {
+      my $trydir = ".";
+      if ( -w $trydir) {
+         $tmpdir = $trydir;
+      }
+   }
+
+   return $tmpdir;
+}
+
+# MyUniqueFileId: dde1497c-fc31-40f3-d176-bec0f0a9de83
+#-------------------------------------------------------------------------------
+#
+#  This little function is used to deal with indented "here" documents. It
+#  just strips away leading spaces/tabs up to and including a vertical bar.
+#
+#  see: totebag/src/perl-lib/fixIndentStuff.psub
+#
+#-------------------------------------------------------------------------------
+
+sub fixIndentStuff {
+   my $tmp = shift;
+   $tmp    =~ s/^\|?[ \t]*\|//gm;
+   return $tmp;
+}
+
+# MyUniqueFileId: 2e9bd476-985f-408b-feb6-4fdb9639eed5
+#-------------------------------------------------------------------------------
+#
+#  "Fixing" a pathname. This gets rid of excess dots and such that don't
+#  make any difference but are hard to read.
+#
+#  Note that this function uses: getOSclass()
+#
+#  see: totebag/src/perl-lib/fixpath.psub
+#
+#-------------------------------------------------------------------------------
+
+sub fixpath {
+   my $pathname = shift;
+   my $result   = "";
+   my $abslash;
+   my $useslash;
+   if (getOSclass() eq "UNIX-like") {
+      $useslash = "/";
+   }
+   else {
+      $useslash = "\\";
+   }
+   if ($pathname ne "") {
+      if ($pathname eq ".") {
+         #---------------------------------------
+         #
+         #  Trivial "."
+         #
+         $result = ".";
+      }
+      elsif (($pathname eq "/") || ($pathname eq "\\")) {
+         #---------------------------------------
+         #
+         #  Trivial "/"
+         #
+         $result = $pathname;
+      }
+      else {
+         #---------------------------------------
+         #
+         #  If non-trivial first get rid of repeated slashes (/)...
+         #
+         $pathname =~ s![/\\][/\\]*!$useslash!;
+         #---------------------------------------
+         #
+         #  Note if absolute or relative. If absolute
+         #  then toss the leading slash for now...
+         #
+         if ( $pathname =~ /^\//) {
+            $pathname =~ s!^/!!;
+            $absolute = 1;
+            $abslash  = "/";
+         }
+         elsif ( $pathname =~ /^\\/) {
+            $pathname =~ s!^\\!!;
+            $absolute = 1;
+            $abslash  = "\\";
+         }
+         else {
+            $absolute = 0;
+            $abslash  = "";
+         }
+         #---------------------------------------
+         #
+         #  Split the pathname up into components...
+         #
+         @components = split(/[\/\\]/,$pathname);
+         #---------------------------------------
+         #
+         #  Scan for single dots and remove them...
+         #
+         $changed = 1;
+         while ($changed) {
+            $changed = 0;
+            my $j;
+            for ($j=0; $j<=$#components; $j+=1) {
+               if ($components[$j] eq ".") {
+                  splice(@components,$j,1);
+                  $changed = 1;
+               }
+            }
+         }
+         #---------------------------------------
+         #
+         #  Scan for double dots and resolve them...
+         #
+         if (1 <= $#components) {
+            $changed = 1;
+            while ($changed) {
+               $changed = 0;
+               if ($absolute && ($components[0] eq "..")) {
+                  splice(@components,0,1);
+                  $changed = 1;
+               }
+               else {
+                  my $j;
+                  for ($j=1; $j<=$#components; $j+=1) {
+                     if (($components[$j] eq "..") && ($components[$j-1] ne "..")) {
+                        splice(@components,$j-1,2);
+                        $changed = 1;
+                     }
+                  }
+               }
+            }
+         }
+         #
+         #  Output what we've found...
+         #
+         if ($#components < 0) {
+            if ($absolute) {
+               $result = $abslash;
+            }
+            else {
+               $result = ".";
+            }
+         }
+         else {
+            if ($absolute) {
+               $result = $abslash;
+            }
+            else {
+               $result = "";
+            }
+            my $j;
+            for ($j=0; $j<=$#components; $j+=1) {
+               if (0 < $j) {
+                  $result = $result . $useslash;
+               }
+               $result = $result . $components[$j];
+            }
+         }
+      }
+   }
+   return $result;
+}
+
+# MyUniqueFileId: 14888b4a-e281-4663-9f7c-63017caea3ca
+#-------------------------------------------------------------------------------
+#
+#  Get the OS class.
+#
+#  This function is used to determine the OS class of of the host system.
+#
+#  Returns: Any of:
+#
+#              "UNIX-like"
+#              "Windows-like"
+#              "unknown" (failure)
+#
+#  see: totebag/src/perl-lib/getOSclass.psub
+#
+#-------------------------------------------------------------------------------
+
+sub getOSclass {
+   my $result;
+   #---------------------------------------
+   #
+   #  First try to use a (fast) direct
+   #  method...
+   #
+   my $theOSname = $^O;
+   if ($theOSname =~ /^linux$/) {
+      $result = "UNIX-like";
+   }
+   elsif ($theOSname =~ /^MSWin32$/) {
+      $result = "Windows-like";
+   }
+   elsif ($theOSname =~ /^darwin$/) {
+      $result = "UNIX-like";
+   }
+   elsif ($theOSname =~ /^freebsd$/) {
+      $result = "UNIX-like";
+   }
+   elsif ($theOSname =~ /^solaris$/) {
+      $result = "UNIX-like";
+   }
+   elsif ($theOSname =~ /^aix$/) {
+      $result = "UNIX-like";
+   }
+   elsif ($theOSname =~ /^dec_osf$/) {
+      $result = "UNIX-like";
+   }
+   elsif ($theOSname =~ /^hpux$/) {
+      $result = "UNIX-like";
+   }
+   elsif ($theOSname =~ /^irix$/) {
+      $result = "UNIX-like";
+   }
+   else {
+      #---------------------------------------
+      #
+      #  The hard way...
+      #
+      #  If it isn't directly known, try to
+      #  figure it out the hard way. UNIX-like
+      #  hosts use colons (:) as the separator
+      #  in PATH, but Windows-like hosts use
+      #  semicolons (;).
+      #
+      #  Note: Must check for semicolons first
+      #        (Windows) as Windows may have
+      #        colons too as drive letter
+      #        separators.
+      #
+      if ( defined $ENV{'PATH'} ) {
+         my $tmpPath = $ENV{'PATH'};
+         if ($tmpPath =~ /;/) {
+            $result = "Windows-like";
+         }
+         elsif ($tmpPath =~ /:/) {
+            $result = "UNIX-like";
+         }
+         else {
+            $result = "unknown";
+         }
+      }
+      else {
+         $result = "unknown";
+      }
+   }
+   return $result;
+}
+
+# MyUniqueFileId: c01f73fc-3153-477a-c68b-cbb74bc9526f
+#-------------------------------------------------------------------------------
+#
+#  Get the current working directory.
+#
+#  This function is used to determine the current working directory. Note
+#  that this sort of thing is generally supplied by a standard module but
+#  Perl installations have been sometimes found to lack this (rarely but...).
+#  Note that this does this operation the hard way.
+#
+#  This function uses: findHomeDirectory(),
+#                      findTempDir(),
+#                      getOSclass(),
+#
+#  see: totebag/src/perl-lib/getWorkingDirectory.psub
+#
+#-------------------------------------------------------------------------------
+
+sub getWorkingDirectory {
+   my $sponsor  = shift;
+   my $exitCode;
+   my $gives;
+   my $tmpdir   = findTempDir();
+   my $osClass  = getOSclass();
+   if ($osClass eq "UNIX-like") {
+      my $pathname = "$tmpdir/pwd-$$.tmp";;
+      $gives       = `pwd 2>$pathname`;
+      $exitCode    = $? + 0;
+      chomp $gives;
+      unlink $pathname if -f $pathname;
+   }
+   elsif ($osClass eq "Windows-like") {
+      my $pathname = "$tmpdir\\pwd-$$.tmp";
+      $gives       = `cd 2>$pathname`;
+      $exitCode    = $? + 0;
+      chomp $gives;
+      unlink $pathname if -f $pathname;
+   }
+   else {
+      $gives    = "";
+      $exitCode = 1;
+   }
+   if ($exitCode != 0) {
+      if ($sponsor ne "") {
+         print STDERR "$sponsor: can't determine current working directory\n";
+         exit 1;
+      }
+      $gives = "";
+   }
+   return $gives;
+}
+
+# MyUniqueFileId: d9ff6301-50cf-45f8-ec93-88caac284048
+#-------------------------------------------------------------------------------
+#
+#  This function is used to join pathname fragments or component to form a
+#  single pathname. The result is normalized.
+#
+#  This function uses: basename(),
+#                      fixpath(),
+#                      getOSclass()
+#
+#  see: totebag/src/perl-lib/joinpath.psub
+#
+#-------------------------------------------------------------------------------
+
+sub joinpath {
+   my @theComponents  = @_;
+   my $Ncomponents    = $#theComponents + 1;
+   my $wasSpecialCase = 0;
+   my $result;
+
+   if ($Ncomponents == 2) {
+      my $Lpart = $theComponents[0];
+      my $Rpart = $theComponents[1];
+      if ($Lpart eq ".") {
+         my $bn = basename($Rpart);
+         if ($Rpart eq $bn) {
+            if (getOSclass() eq "UNIX-like") {
+               $result      = $Lpart."/".$Rpart;
+            }
+            else {
+               $result      = $Lpart."\\".$Rpart;
+            }
+            $wasSpecialCase = 1;
+         }
+      }
+   }
+
+   if ( ! $wasSpecialCase) {
+      $result = $theComponents[0];
+      if (0 < $#theComponents) {
+         my $i;
+         for ($i=1; $i<=$#theComponents; ++$i) {
+            my $component = $theComponents[$i];
+            if (getOSclass() eq "UNIX-like") {
+               if ($component =~ "^/") {
+                  $result = $component;
+               }
+               else {
+                  $result = $result."/".$component;
+               }
+            }
+            else {
+               if ($component =~ '^\\\\') {
+                  $result = $component;
+               }
+               else {
+                  $result = $result."\\".$component;
+               }
+            }
+            $result = fixpath($result);
+         }
+      }
+      else {
+         $result = fixpath($result);
+      }
+   }
+   return $result;
+}
+
+# MyUniqueFileId: b90a4088-bb21-40f6-a8be-7ef0f940fb1b
+#-------------------------------------------------------------------------------
+#
+#  This function is used to create a directory...
+#
+#     mkDirectory($pathname,$pflag)
+#
+#        $pathname
+#
+#           The pathname of the directory which is to be created.
+#
+#        $pflag
+#
+#           A flag, set if the parent (grandparent, ...) is to be created
+#           if necessary. Analogous to mkdir's -p option.
+#
+#  Note: this function may call:
+#
+#           dirname
+#
+#-------------------------------------------------------------------------------
+
+sub mkDirectory {
+   my $pathname = shift;
+   my $pFlag    = shift;
+   my $sponsor  = shift;
+
+   my $result;
+   if ( -e $pathname) {
+      if ( -d $pathname) {
+         $result = 1;
+      }
+      else {
+         $result = 0;
+      }
+   }
+   else {
+      if ($pFlag) {
+         my $haveParent;
+         my $Dname = dirname(pathname);
+         if ( -d $Dname) {
+            $haveParent = 1;
+         }
+         else {
+            $haveParent = mkDirectory($Dname);
+         }
+         if ($haveParent) {
+            $result = mkdir($pathname,0777);
+         }
+         else {
+            $result = 0;
+         }
+      }
+      else {
+         $result = mkdir($pathname,0777);
+      }
+   }
+   return result;
+}
+
+# MyUniqueFileId: 7b1bd298-6cb1-478a-8d02-9eee62a15d0a
+#-------------------------------------------------------------------------------
+#
+#  This function is used to read a given file returning the contents of
+#  the ENTIRE FILE as an array of strings (retaining all embedded whitespace).
+#
+#-------------------------------------------------------------------------------
+
+sub slurpPathnameIntoArray {
+   my $pathname  = shift;
+   my $sponsor   = shift;
+   my @contents;
+   if ( open(F, "< $pathname") ) {
+      while (<F>) {
+         chomp;
+         $contents[$#contents+1] = $_;
+      }
+      close F;
+   }
+   else {
+      if ($sponsor ne "") {
+         print STDERR $sponsor.": can't find/read \"$pathname\"\n" if $sponsor ne "";
+         exit 1;
+      }
+   }
+   return @contents;
+}
+
+# MyUniqueFileId: 4a1ca40a-2769-45a8-dd88-74686e4806a7
+#-------------------------------------------------------------------------------
+#
+#  This is the subroutine which generates help output for the mkinstaller
+#  tool itself. Somehow we've got to merge common functionality with html
+#  the replicated work is just awful.
+#
+#-------------------------------------------------------------------------------
+
+sub help {
+   print fixIndentStuff(<<"EOF");
+   |
+   |mkinstaller(1x)                                                  mkinstaller(1x)
+   |
+   |NAME
+   |    mkinstaller -- Generate self-extracting installer script.
+   |
+   |USAGE
+   |    mkinstaller --copyright
+   |    mkinstaller --help
+   |    mkinstaller --html <pathname>
+   |    mkinstaller --vernum
+   |    mkinstaller --version
+   |
+   |    mkinstaller [<options> ...] <pathname> ...
+   |
+   |DESCRIPTION
+   |    This script is used to generate an "installer" script implemented as
+   |    a bash script. This generated installer script supports a number
+   |    of options for specifying where the various directories are to be
+   |    installed (prefix directory pathnames). This installer script is
+   |    implemented as a self-extracting script carrying a tarball as a payload.
+   |
+   |    The installer script construction process:
+   |
+   |       1) Determination of a suitable temp directory. Much of the work
+   |          done by the mkinstaller script is done in a temp directory.
+   |       2) Creation of a top level temporary directory under which all
+   |          other temporaries will be created. Creation of an "accumulator",
+   |          an "intermediate" and a "wrapper" directory in the top level
+   |          temp directory. A tarup/untar process will use both the
+   |          "intermediate" and "accumulator" directories to merge given
+   |          directories with the same basename. The "wrapper" directory
+   |          will be used to carry the individual directory tarballs.
+   |       3) From each of the specified directories to be installed such
+   |          as .../bin, .../lib, specified on the mkinstaller command line
+   |          tarup the individual directory forming tarballs in the wrapper
+   |          directory in the temp directory.
+   |       4) Tarup the temporary wrapper directory for eventual inclusion
+   |          in the generated installer.
+   |       5) Generate the text of the "installer" script in the temporary
+   |          directory customizing it with with options for specifying an
+   |          overall prefix directory and individual prefixes for each of
+   |          the directories specified on the mkinstaller command line.
+   |       6) Add the tarball built in (4) to the end of the script generated
+   |          in (5) forming the distribution self-extracting installation
+   |          script in the directory where mkinstaller was run.
+   |       7) Cleanup.
+   |
+   |    In the end the only product is the desired distribution self-extracting
+   |    installation script in the directory where the mkinstaller command was
+   |    run. Everything else produced along the way (directories and files) is
+   |    considered temporary and is destroyed.
+   |
+   |    The generated installer script operation:
+   |
+   |       1) The installer script locates itself. This may seem to be an
+   |          obvious and or silly question but the actual location of the
+   |          script file is necessary for the actual extraction (the script
+   |          file must be read by the standard "tail" utility).
+   |       2) Determination of a suitable temp directory. Much of the work
+   |          done by the generated installer script is done in a temp
+   |          directory. Creation of a top level temporary directory under
+   |          which all other temporaries will be created. This temp
+   |          directory is created under the standard temp directory
+   |          determined at the start of this step (see NOTES).
+   |       3) PREFIX and PREFIX_xxx values are established from command
+   |          line options. If appropriate options aren't supplied to
+   |          install all directories then the installer script will propmpt
+   |          for the necessary pathname(s). The installer script will
+   |          create the directories if necessary.
+   |       4) The tarball embedded in the installer script is extracted from
+   |          the installer script into the temp directory created in (2).
+   |       5) The tarball in (4) is unwrapped revealing one or more tarballs
+   |          (one for each installation directory such as bin.tar.gz/
+   |          include.tar.gz/ lib.tar.gz/ ...). If a post-install script was
+   |          supplied to mkinstaller when the generated installer script
+   |          was produced then it will be revealed at this time.
+   |       6) Each individual tarball revealed (5) is unwrapped into the
+   |          approperiate PREFIX directory overlying anything already
+   |          there.
+   |       7) If (5) revealed a post-install script then it will be executed
+   |          by the approptiate interpreter. Note that each of the PREFIX
+   |          directories will be supplied as an option to this post-install
+   |          script (such as --prefix_bin=<pathname>).
+   |       8) Cleanup.
+   |
+   |OPTIONS
+   |    "mkinstaller" supports the following options:
+   |
+   |        --copyright
+   |
+   |            Output copyright and license info to <stdout> and quit.
+   |
+   |        --help
+   |
+   |            Output this man page to <stdout> and quit.
+   |
+   |        --html <pathname>
+   |
+   |            Output this man page as HTML to the given file pathname and quit.
+   |
+   |        --vernum
+   |
+   |            Output version number to <stdout> and quit.
+   |
+   |        --version
+   |
+   |            Output version number and revision date to <stdout> and quit.
+   |
+   |        --cc=<string>
+   |
+   |            The C compiler name and version number that had been used in
+   |            building the software being installed. Note that the string
+   |            is expected to a blank separated pair: the name and version
+   |            number. The default is the string "- -" (meaning "unknown"
+   |            or "don't care").
+   |
+   |            Example:
+   |
+   |            --cc="gcc 4.5.1"
+   |
+   |        --contact=<address>
+   |
+   |            A contact email address. There is no default contact address.
+   |
+   |        -c <name>
+   |        --create=<name>
+   |
+   |            The name of the script to generate. By default the script will
+   |            be named "installer".
+   |
+   |        --cxx=<string>
+   |
+   |            The C++ compiler name and version number that had been used
+   |            in building the software being installed. Note that the string
+   |            is expected to a blank separated pair: the name and version
+   |            number. The default is the string "- -" (meaning "unknown"
+   |            or "don't care").
+   |
+   |            Example:
+   |
+   |            --cxx="g++ 4.5.1"
+   |
+   |        -d
+   |        --debug
+   |
+   |            Produce extra output useful when debugging the "mkinstaller"
+   |            script itself.
+   |
+   |        --fortran=<string>
+   |
+   |            The FORTRAN compiler name and version number that had been
+   |            used in building the software being installed. Note that the
+   |            string is expected to a blank separated pair: the name and
+   |            version number. The default is the string "- -" (meaning
+   |            "unknown" or "don't care").
+   |
+   |            Example:
+   |
+   |            -fortranx="gfortran 4.5.1"
+   |
+   |        -n
+   |        --notarball
+   |
+   |            Don't actually add the wrapper tarball to the installer script.
+   |            This option is only usefull when debugging "mkinstaller"
+   |            itself. The default is of course to add the wrapper tarball.
+   |
+   |        --os=<string>
+   |
+   |            The OS on the system on which the installer is being generated.
+   |            This string is encoded in the installer script as an aid in
+   |            determining if the generated script is applicable to the
+   |            system where it is run. The default is to use uname -s and
+   |            uname -r to determine this string.
+   |
+   |        --postinstall-perl=<pathname>
+   |
+   |            The pathname of a Perl script which is to be included with
+   |            the installer's payload. It will be run by the generated
+   |            installer after all of the payload directories have been
+   |            extracted and installed.
+   |
+   |        --postinstall-python=<pathname>
+   |
+   |            The pathname of a Python script which is to be included with
+   |            the installer's payload. It will be run by the generated
+   |            installer after all of the payload directories have been
+   |            extracted and installed.
+   |
+   |        --postinstall-sh=<pathname>
+   |
+   |            The pathname of a Bourne-shell script which is to be included
+   |            with the installer's payload. It will be run by the generated
+   |            installer after all of the payload directories have been
+   |            extracted and installed.
+   |
+   |        --prjnam=<name>
+   |
+   |            The name of the project to be installed by the generated
+   |            installer script. There is no default project name.
+   |
+   |        --prjver=<A>.<B>[.<C>[.<D>]][<suffix>]
+   |
+   |            The version number of the project to be installed by the
+   |            generated installer script. Note that the given version number
+   |            is expected to have 2, 3, or 4 dot-separated numeric components
+   |            and an optional suffix. If the --prjver option is used then
+   |            the --prjnam option must also be used. There is no default
+   |            project version number.
+   |
+   |        -v[<digit>]
+   |        --verbose[<digit>]
+   |
+   |            Operate in a verbose mode.
+   |
+   |            Repeating this option increases the amount of output produced.
+   |            Note that the option may end with an optional digit which
+   |            indicates a repetition count. Thus the option:
+   |
+   |               -v3
+   |
+   |            is equavalent to:
+   |
+   |               -v -v -v
+   |
+   |        -w <pathname>
+   |        --with-notice=<pathname>
+   |
+   |            The pathname of a text file which contains the copyright
+   |            notice that is to be output by the generated installer script
+   |            when the installer's --copyright option is used. By default
+   |            the generated installer doesn't support a --copyright option.
+   |
+   |        <pathname>
+   |
+   |            The pathnames of one or more directories which will be
+   |            embedded as tarballs within the generated installer script.
+   |            Typical directory basenames are: bin, include, lib, ... Note
+   |            that at least one such directory pathname is required.
+   |
+   |RETURNS
+   |    "mkinstaller" returns the standard exit codes:
+   |
+   |       0 -- success
+   |       1 -- failure
+   |
+   |ENVIRONMENT
+   |    "mkinstaller" refers to the following environment variables:
+   |
+   |        DEBUG_mkinstaller
+   |
+   |            Generate extra output which is only usefull when debugging the
+   |            "mkinstaller" script itself.
+   |
+   |        MKINSTALLER_TMPDIR
+   |
+   |            Consider this pathname before considering TMPDIR (see
+   |            step (0) in the NOTES section below).
+   |
+   |INPLEMENTATION
+   |    "mkinstaller" is implemented as a Perl script.
+   |
+   |SEE ALSO
+   |    sh(1), tar(1)
+   |
+   |NOTES
+   |    The directory where temporary files are to be placed is determined
+   |    as follows:
+   |
+   |        0) If MKINSTALLER_TMPDIR is defined and is not empty then
+   |           consider its value as a directory pathname. If this pathname
+   |           exists and is a directory and is writable then temporary
+   |           files will be placed in this directory. Otherwise...
+   |        1) If TMPDIR is defined and is not empty then consider its
+   |           value as a directory pathname. If this pathname exists
+   |           and is a directory and is writable then temporary files
+   |           will be placed in this directory. Otherwise...
+   |        2) If TMP is defined and is not empty then consider its
+   |           value as a directory pathname. If this pathname exists
+   |           and is a directory and is writable then temporary files
+   |           will be placed in this directory. Otherwise...
+   |        3) If TEMP is defined and is not empty then consider its
+   |           value as a directory pathname. If this pathname exists
+   |           and is a directory and is writable then temporary files
+   |           will be placed in this directory. Otherwise...
+   |        4) If the user's home directory can be determined and if
+   |           this home directory contains a subdirectory named tmp
+   |           that is itself writable then temporary files will be
+   |           placed in this directory. Otherwise...
+   |        5) If "C:<userProfile>\\AppData\\Local\\temp" exists and
+   |           is a writable directory then temporary files will be
+   |           placed in this directory. Otherwise...
+   |        6) If "/tmp" exists and is writable then temporary files
+   |           will be placed in this directory. Otherwise...
+   |        7) If "/var/tmp" exists and is writable then temporary files
+   |           will be placed in this directory. Otherwise...
+   |        8) If "C:\\Temp" exists and is writable then temporary files
+   |           will be placed in this directory. Otherwise...
+   |        9) If "C:\\Windows\\Temp" exists and is writable then temporary
+   |           files will be placed in this directory. Otherwise...
+   |       10) If the current directory is writable then temporary files
+   |           will be placed in the current directory. Otherwise...
+   |       11) A fatal error message will be sent to <stderr> and
+   |           the program will exit with a non-zero exit code.
+   |
+   |    Note that 5, 8, and 9 are only applicable on Windows-like hosts.
+   |
+   |AUTHOR
+   |    Jim Reus (jim.reus\@gmail.com)
+   |
+   |CONTACT
+   |    Please contact:
+   |
+   |        totebag.help (totebag.help\@gmail.com) with questions.
+   |
+   |        totebag.bugs (totebag.bugs\@gmail.com) to report problems.
+   |
+   |        totebag.more (totebag.more\@gmail.com) to request enhancements.
+   |
+   |
+   |    Be sure to provide as much information as possible.
+   |
+EOF
+   exit 0;
+}
+
+# MyUniqueFileId: 86c5676c-f385-41d3-c876-6e18a9b0ea51
+#-------------------------------------------------------------------------------
+#
+#  This is the subroutine which generates help output for the mkinstaller
+#  tool itself. Somehow we've got to merge common functionality with html
+#  the replicated work is just awful.
+#
+#-------------------------------------------------------------------------------
+
+sub html {
+   my $pathname = shift;
+   if (! open(HTML,"> $pathname")) {
+      print STDERR "mkinstaller: can't create/write \"$pathname\"\n";
+      exit 1;
+   }
+   print HTML fixIndentStuff(<<"EOF");
+   |<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+   |<html>
+   |   <!-- --------------------------------------------------------------------------------------------------------------------------->
+   |   <a name="mkinstaller"></a>
+   |   <head>
+   |      <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   |      <meta name="GENERATOR" content="arg 1.7.1">
+   |      <link rel="shortcut icon" href="../../icons/myShortcutIcon.png">
+   |      <title>mkinstaller - Generate self-extracting installer script.</title>
+   |   </head>
+   |   <body>
+   |      <h3>
+   |         <center>
+   |            <nobr>
+   |               mkinstaller (rev. $mkinstaller_ver_name)
+   |            </nobr>
+   |         </center>
+   |      </h3>
+   |
+   |      <h3>
+   |         NAME
+   |      </h3>
+   |      <blockquote>
+   |         <i>mkinstaller</i>&nbsp;-&nbsp;Generate self-extracting installer script.
+   |      </blockquote>
+   |
+   |      <h3>
+   |         SYNOPSIS
+   |      </h3>
+   |      <blockquote>
+   |         <b>mkinstaller</b> <b>--copyright</b>
+   |      </blockquote>
+   |      <blockquote>
+   |         <b>mkinstaller</b> <b>--help</b>
+   |      </blockquote>
+   |      <blockquote>
+   |         <b>mkinstaller</b> <b>--html</b>&nbsp;&nbsp;<i>pathname</i>
+   |      </blockquote>
+   |      <blockquote>
+   |         <b>mkinstaller</b> <b>--vernum</b>
+   |      </blockquote>
+   |      <blockquote>
+   |         <b>mkinstaller</b> <b>--version</b>
+   |      </blockquote>
+   |      <br>
+   |      <blockquote>
+   |         <b>mkinstaller</b>
+   |         <big>[</big><i>options</i> ...<big>]</big>
+   |         <i>pathname</i> ...
+   |      </blockquote>
+   |      <br>
+   |
+   |      <h3>
+   |         DESCRIPTION
+   |      </h3>
+   |      <blockquote>
+   |         This script is used to generate an "installer" script implemented as
+   |         a bash script. This generated installer script supports a number
+   |         of options for specifying where the various directories are to be
+   |         installed (prefix directory pathnames). This installer script is
+   |         implemented as a self-extracting script carrying a tarball as a payload.
+   |      </blockquote>
+   |      <blockquote>
+   |         The installer script construction process:
+   |         <blockquote>
+   |            <ol>
+   |               <li>Determination of a suitable temp directory. Much of the work
+   |                   done by the mkinstaller script is done in a temp directory.
+   |               </li>
+   |               <li>Creation of a top level temporary directory under which all
+   |                   other temporaries will be created. Creation of an "accumulator",
+   |                   an "intermediate" and a "wrapper" directory in the top level
+   |                   temp directory. A tarup/untar process will use both the
+   |                   "intermediate" and "accumulator" directories to merge given
+   |                   directories with the same basename. The "wrapper" directory
+   |                   will be used to carry the individual directory tarballs.
+   |               </li>
+   |               <li>From each of the specified directories to be installed such
+   |                   as .../bin, .../lib, specified on the mkinstaller command line
+   |                   tarup the individual directory forming tarballs in the wrapper
+   |                   directory in the temp directory.
+   |               </li>
+   |               <li>Tarup the temporary wrapper directory for eventual inclusion
+   |                   in the generated installer.
+   |               </li>
+   |               <li>Generate the text of the "installer" script in the temporary
+   |                   directory customizing it with with options for specifying an
+   |                   overall prefix directory and individual prefixes for each of
+   |                   the directories specified on the mkinstaller command line.
+   |               </li>
+   |               <li>Add the tarball built in (4) to the end of the script generated
+   |                   in (5) forming the distribution self-extracting installation
+   |                   script in the directory where <i>mkinstaller</i> was run.
+   |               </li>
+   |               <li>Cleanup.
+   |               </li>
+   |            </ol>
+   |            In the end the only product is the desired distribution self-extracting
+   |            installation script in the directory where the <i>mkinstaller</i> command was
+   |            run. Everything else produced along the way (directories and files) is
+   |            considered temporary and is destroyed.
+   |         </blockquote>
+   |         The generated installer script operation:
+   |         <blockquote>
+   |            <ol>
+   |               <li>The installer script locates itself. This may seem to be an
+   |                   obvious and or silly question but the actual location of the
+   |                   script file is necessary for the actual extraction (the script
+   |                   file must be read by the standard "tail" utility).
+   |               </li>
+   |               <li>Determination of a suitable temp directory. Much of the work
+   |                   done by the generated installer script is done in a temp
+   |                   directory. Creation of a top level temporary directory under
+   |                   which all other temporaries will be created. This temp
+   |                   directory is created under the standard temp directory
+   |                   determined at the start of this step (see NOTES).
+   |               </li>
+   |               <li>PREFIX and PREFIX_<i>xxx</i> values are established from command
+   |                   line options. If appropriate options aren't supplied to
+   |                   install all directories then the installer script will propmpt
+   |                   for the necessary pathname(s). The installer script will
+   |                   create the directories if necessary.
+   |               </li>
+   |               <li>The tarball embedded in the installer script is extracted from
+   |                   the installer script into the temp directory created in (2).
+   |               </li>
+   |               <li>The tarball in (4) is unwrapped revealing one or more tarballs
+   |                   (one for each installation directory such as <b><big><code>bin.tar.gz</code></big></b>
+   |                   <b><big><code>include.tar.gz</code></big></b> <b><big><code>lib.tar.gz</code></big></b> ...). If a post-install script was
+   |                   supplied to <i>mkinstaller</i> when the generated installer script
+   |                   was produced then it will be revealed at this time.
+   |               </li>
+   |               <li>Each individual tarball revealed (5) is unwrapped into the
+   |                   approperiate PREFIX directory overlying anything already
+   |                   there.
+   |               </li>
+   |               <li>If (5) revealed a post-install script then it will be executed
+   |                   by the approptiate interpreter. Note that each of the PREFIX
+   |                   directories will be supplied as an option to this post-install
+   |                   script (such as <b><big><code>--prefix_bin=</code></big></b><i>pathname</i>).
+   |               </li>
+   |               <li>Cleanup.
+   |               </li>
+   |            </ol>
+   |         </blockquote>
+   |      </blockquote>
+   |
+   |      <h3>
+   |         OPTIONS
+   |      </h3>
+   |      <blockquote>
+   |         <i>mkinstaller</i> supports the following options:
+   |         <blockquote>
+   |
+   |            <b>--copyright</b>
+   |            <blockquote>
+   |               Output copyright and license to <i>stdout</i> and quit.
+   |            </blockquote>
+   |
+   |            <b>--help</b>
+   |            <blockquote>
+   |               Output this man page to <i>stdout</i> and quit.
+   |            </blockquote>
+   |
+   |            <b>--html</b>&nbsp;&nbsp;<i>pathname</i>
+   |            <blockquote>
+   |               Output this man page as HTML to the given file pathname and quit.
+   |            </blockquote>
+   |
+   |            <b>--vernum</b>
+   |            <blockquote>
+   |               Output version number to <i>stdout</i> and quit.
+   |            </blockquote>
+   |
+   |            <b>--version</b>
+   |            <blockquote>
+   |               Output version number and revision date to <i>stdout</i> and quit.
+   |            </blockquote>
+   |
+   |            <b>--cc=</b><i>string</i>
+   |            <blockquote>
+   |               The C compiler name and version number that had been used in
+   |               building the software being installed. Note that the string
+   |               is expected to a blank separated pair: the name and version
+   |               number. The default is the string "- -" (meaning "unknown"
+   |               or "don't care").
+   |            </blockquote>
+   |
+   |            <blockquote>
+   |               Example:
+   |               <blockquote>
+   |                  --cc="gcc 4.5.1"
+   |               </blockquote>
+   |            </blockquote>
+   |
+   |            <b>--contact=</b><i>address</i>
+   |            <blockquote>
+   |               A contact email address. There is no default contact address.
+   |            </blockquote>
+   |
+   |            <b>-c</b> <i>name</i> <br>
+   |            <b>--create=</b><i>name</i>
+   |            <blockquote>
+   |               The name of the script to generate. By default the script will
+   |               be named "installer".
+   |            </blockquote>
+   |
+   |            <b>--cxx=</b><i>string</i>
+   |            <blockquote>
+   |               The C++ compiler name and version number that had been used
+   |               in building the software being installed. Note that the string
+   |               is expected to a blank separated pair: the name and version
+   |               number. The default is the string "- -" (meaning "unknown"
+   |               or "don't care").
+   |            </blockquote>
+   |
+   |            <blockquote>
+   |               Example:
+   |               <blockquote>
+   |                  --cxx="g++ 4.5.1"
+   |               </blockquote>
+   |            </blockquote>
+   |
+   |            <b>-d</b> <br>
+   |            <b>--debug</b>
+   |            <blockquote>
+   |               Produce extra output useful when debugging the <i>mkinstaller</i>
+   |               script itself.
+   |            </blockquote>
+   |
+   |            <b>--fortran=</b><i>string</i>
+   |            <blockquote>
+   |               The FORTRAN compiler name and version number that had been used
+   |               in building the software being installed. Note that the string
+   |               is expected to a blank separated pair: the name and version
+   |               number. The default is the string "- -" (meaning "unknown"
+   |               or "don't care").
+   |            </blockquote>
+   |
+   |            <blockquote>
+   |               Example:
+   |               <blockquote>
+   |                  --fortran="gfortran 4.5.1"
+   |               </blockquote>
+   |            </blockquote>
+   |
+   |            <b>-n</b> <br>
+   |            <b>-notarball</b>
+   |            <blockquote>
+   |               Don't actually add the wrapper tarball to the installer script.
+   |               This option is only usefull when debugging <i>mkinstaller</i>
+   |               itself. The default is of course to add the wrapper tarball.
+   |            </blockquote>
+   |
+   |            <b>--os=</b><i>string</i>
+   |            <blockquote>
+   |               The OS on the system on which the installer is being generated.
+   |               This string is encoded in the installer script as an aid in
+   |               determining if the generated script is applicable to the
+   |               system where it is run. The default is to use <b><big><code>uname -s</code></big></b> and
+   |               <b><big><code>uname -r</code></big></b> to determine this string.
+   |            </blockquote>
+   |
+   |            <b>--postinstall-perl=</b><i>pathname</i>
+   |            <blockquote>
+   |               The pathname of a Perl script which is to be included with
+   |               the installer's payload. It will be run by the generated
+   |               installer after all of the payload directories have been
+   |               extracted and installed.
+   |            </blockquote>
+   |
+   |            <b>--postinstall-python=</b><i>pathname</i>
+   |            <blockquote>
+   |               The pathname of a Python script which is to be included with
+   |               the installer's payload. It will be run by the generated
+   |               installer after all of the payload directories have been
+   |               extracted and installed.
+   |            </blockquote>
+   |
+   |            <b>--postinstall-sh=</b><i>pathname</i>
+   |            <blockquote>
+   |               The pathname of a Bourne-shell script which is to be included
+   |               with the installer's payload. It will be run by the generated
+   |               installer after all of the payload directories have been
+   |               extracted and installed.
+   |            </blockquote>
+   |
+   |            <b>--prjnam=</b><i>name</i>
+   |            <blockquote>
+   |               The name of the project to be installed by the generated
+   |               installer script. There is no default project name.
+   |            </blockquote>
+   |
+   |            <b>--prjver=</b><i>A</i><b>.</b><i>B</i>[<b>.</b><i>C</i>[<b>.</b><i>D</i>]][<i>suffix</i>]
+   |            <blockquote>
+   |               The version number of the project to be installed by the
+   |               generated installer script. Note that the given version number
+   |               is expected to have 2, 3, or 4 dot-separated numeric components
+   |               and an optional suffix. If the <b><big><code>--prjver</code></big></b> option is used then
+   |               the <b><big><code>--prjnam</code></big></b> option must also be used. There is no default
+   |               project version number.
+   |            </blockquote>
+   |
+   |            <b>-v</b>[<i>digit</i>] <br>
+   |            <b>--verbose</b>[<i>digit</i>]
+   |            <blockquote>
+   |               Operate in a "verbose" mode.
+   |            </blockquote>
+   |            <blockquote>
+   |               Repeating this option increases the amount of output produced.
+   |               Note that the option may end with an optional digit which
+   |               indicates a repetition count. Thus the option: <br>
+   |               <p>
+   |<p>
+   |<pre>
+   |   -v3
+   |</pre>
+   |<p>
+   |               is equavalent to: <br>
+   |               <p>
+   |<p>
+   |<pre>
+   |   -v -v -v
+   |</pre>
+   |            </blockquote>
+   |
+   |            <b>-w</b> <i>pathname</i> <br>
+   |            <b>--with-notice=</b><i>pathname</i>
+   |            <blockquote>
+   |               The pathname of a text file which contains the copyright
+   |               notice that is to be output by the generated installer script
+   |               when the installer's <b><big><code>--copyright</code></big></b> option is used. By default
+   |               the generated installer doesn't support a <b><big><code>--copyright</code></big></b> option.
+   |            </blockquote>
+   |
+   |            <i>pathname</i>
+   |            <blockquote>
+   |               The name of one or more directories which will be embedded
+   |               as tarballs within the generated installer script. Typical
+   |               directory names are: bin, include, lib, ...
+   |            </blockquote>
+   |
+   |         </blockquote>
+   |      </blockquote>
+   |
+   |      <h3>
+   |         RETURNS
+   |      </h3>
+   |      <blockquote>
+   |         "mkinstaller" returns the standard exit codes:
+   |         <blockquote>
+   |            <table border=0><smaller>
+   |               <tr>
+   |                  <td align=right>0</td>
+   |                  <td align=left>--</td>
+   |                  <td align=left>success</td>
+   |               </tr>
+   |               <tr>
+   |                  <td align=right>1</td>
+   |                  <td align=left>--</td>
+   |                  <td align=left>failure</td>
+   |               </tr>
+   |            </table>
+   |         </blockquote>
+   |      </blockquote>
+   |
+   |      <h3>
+   |         ENVIRONMENT
+   |      </h3>
+   |      <blockquote>
+   |         <i>mkinstaller</i> refers to the following environment variables:
+   |         <blockquote>
+   |
+   |            DEBUG_mkinstaller
+   |            <blockquote>
+   |               Generate extra output which is only usefull when debugging the
+   |               <i>mkinstaller</i> script itself.
+   |            </blockquote>
+   |
+   |            MKINSTALLER_TMPDIR
+   |            <blockquote>
+   |               Consider this pathname before considering TMPDIR (see
+   |               step (0) in the <b>NOTES</b> section below).
+   |            </blockquote>
+   |
+   |         </blockquote>
+   |      </blockquote>
+   |
+   |      <h3>
+   |         IMPLEMENTATION
+   |      </h3>
+   |      <blockquote>
+   |         <i>mkinstaller</i> is implemented as a Perl script.
+   |      </blockquote>
+   |
+   |      <h3>
+   |         SEE&nbsp;ALSO
+   |      </h3>
+   |      <blockquote>
+   |         sh(1), <br>
+   |         tar(1)
+   |      </blockquote>
+   |
+   |      <h3>
+   |         NOTES
+   |      </h3>
+   |      <blockquote>
+   |         The directory where temporary files are to be placed is determined
+   |         as follows:
+   |         <blockquote>
+   |            <ol start="0">
+   |               <li>If <b><big><code>MKINSTALLER_TMPDIR</code></big></b> is defined and is not empty then
+   |                   consider its value as a directory pathname. If this pathname
+   |                   exists and is a directory and is writable then temporary
+   |                   files will be placed in this directory. Otherwise...
+   |               <li>If <b><big><code>TMPDIR</code></big></b> is defined and is not empty then consider its
+   |                   value as a directory pathname. If this pathname exists
+   |                   and is a directory and is writable then temporary files
+   |                   will be placed in this directory. Otherwise...
+   |               </li>
+   |               <li>If <b><big><code>TMP</code></big></b> is defined and is not empty then consider its
+   |                   value as a directory pathname. If this pathname exists
+   |                   and is a directory and is writable then temporary files
+   |                   will be placed in this directory. Otherwise...
+   |               </li>
+   |               <li>If <b><big><code>TEMP</code></big></b> is defined and is not empty then consider its
+   |                   value as a directory pathname. If this pathname exists
+   |                   and is a directory and is writable then temporary files
+   |                   will be placed in this directory. Otherwise...
+   |               </li>
+   |               <li>If the user's home directory can be determined and if
+   |                   this home directory contains a subdirectory named <b><big><code>tmp</code></big></b>
+   |                   that is itself writable then temporary files will be
+   |                   placed in this directory. Otherwise...
+   |               </li>
+   |               <li>If <b><big><code>C:</code></big></b><i>userProfile</i><b><big><code>\\AppData\\Local\\temp</code></big></b> exists and is writable then temporary files
+   |                   will be placed in this directory. Otherwise...
+   |               </li>
+   |               <li>If <b><big><code>/tmp</code></big></b> exists and is writable then temporary files
+   |                   will be placed in this directory. Otherwise...
+   |               </li>
+   |               <li>If <b><big><code>/var/tmp</code></big></b> exists and is writable then temporary files
+   |                   will be placed in this directory. Otherwise...
+   |               </li>
+   |               <li>If <b><big><code>C:\\Temp</code></big></b> exists and is writable then temporary files
+   |                   will be placed in this directory. Otherwise...
+   |               </li>
+   |               <li>If <b><big><code>C:\\Windows\\Temp</code></big></b> exists and is writable then temporary files
+   |                   will be placed in this directory. Otherwise...
+   |               </li>
+   |               <li>If the current directory is writable then temporary
+   |                   files will be placed in the current directory.
+   |                   Otherwise...
+   |               </li>
+   |               <li>A fatal error message will be sent to <i>stderr</i> and
+   |                   the script will exit with a non-zero exit code.
+   |               </li>
+   |            </ol>
+   |         </blockquote>
+   |         Note that 5, 8, and 9 are only applicable on Windows-like hosts.
+   |      </blockquote>
+   |
+   |      <h3>
+   |         AUTHOR
+   |      </h3>
+   |      <blockquote>
+   |         <a href="mailto:jim.reus\@gmail.com?subject=mkinstaller">Jim Reus</a> <br>
+   |      </blockquote>
+   |
+   |      <h3>
+   |         CONTACT
+   |      </h3>
+   |      <blockquote>
+   |         Please contact: <br>
+   |         <blockquote>
+   |            <a href="mailto:totebag.help\@gmail.com?subject=Help: mkinstaller">totebag.help</a> with questions. <br>
+   |            <br>
+   |            <a href="mailto:totebag.bugs\@gmail.com?subject=Bug: mkinstaller">totebag.bugs</a> to report problems. <br>
+   |            <br>
+   |            <a href="mailto:totebag.more\@gmail.com?subject=Enhance: mkinstaller">totebag.more</a> to request enhancements. <br>
+   |            <br>
+   |         </blockquote>
+   |         Be sure to provide as much information as possible.
+   |      </blockquote>
+   |
+   |      <h3>
+   |         <center>
+   |            <nobr>
+   |               mkinstaller (rev. $mkinstaller_ver_name)
+   |            </nobr>
+   |         </center>
+   |      </h3>
+   |
+   |      <i>This man page was generated by mkinstaller $mkinstaller_ver_name using the <code>-html</code> option. Revised $mkinstaller_ver_time</i>
+   |   </body>
+   |</html>
+EOF
+   close(HTML);
+}
+
