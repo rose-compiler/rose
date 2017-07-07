@@ -33,7 +33,7 @@ class UntypedConverter
       static void convertLabel(SgUntypedStatement* ut_stmt, SgStatement* sg_stmt,
                                SgLabelSymbol::label_type_enum label_type = SgLabelSymbol::e_start_label_type, SgScopeStatement* label_scope = NULL);
 
-      static SgInitializedName*     convertSgUntypedInitializedName    (SgUntypedInitializedName* ut_name, SgType* sg_type, SgInitializer* sg_init);
+      SgInitializedName*     convertSgUntypedInitializedName    (SgUntypedInitializedName* ut_name, SgType* sg_type, SgInitializer* sg_init);
 
       static SgType*                convertSgUntypedType               (SgUntypedType* ut_type,                SgScopeStatement* scope);
       static SgGlobal*              convertSgUntypedGlobalScope        (SgUntypedGlobalScope* ut_scope,        SgScopeStatement* scope);
