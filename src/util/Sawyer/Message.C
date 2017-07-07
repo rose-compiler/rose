@@ -794,7 +794,7 @@ UnformattedSink::init() {
     defaultPropertiesNS().isBuffered = false;
     defaultPropertiesNS().completionStr = "";
     defaultPropertiesNS().interruptionStr = "...";
-    defaultPropertiesNS().cancelationStr = "... [CANCELD]";
+    defaultPropertiesNS().cancelationStr = "... [CANCELED]";
     defaultPropertiesNS().lineTermination = "\n";
     defaultPropertiesNS().useColor = true;
 }
