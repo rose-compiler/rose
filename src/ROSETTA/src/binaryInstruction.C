@@ -9033,7 +9033,7 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericHeader);
             s & BOOST_SERIALIZATION_NVP(p_e_last_page_size);
             s & BOOST_SERIALIZATION_NVP(p_e_total_pages);
             s & BOOST_SERIALIZATION_NVP(p_e_nrelocs);
