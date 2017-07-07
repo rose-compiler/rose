@@ -892,8 +892,20 @@ main ( int argc, char* argv[])
   vector<string> argvList(argv, argv+argc);
   argvList = commandline_processing (argvList);
 
+// check if the translator is running in -E mode, if yes, skip the work
+  bool preprocessingOnly = false; 
+
+   if (CommandlineProcessing::isOption (argvList,"-E","",false))
+   {
+     preprocessingOnly = true; 
+     // we should not put debugging info here. Otherwise polluting the generated preprocessed file!!
+   }
+
   SgProject* project = frontend(argvList);
   ROSE_ASSERT (project != NULL);
+
+  if (preprocessingOnly)
+     return backend(project);
 
   // register midend signal handling function                                                                         
   if (KEEP_GOING_CAUGHT_MIDEND_SIGNAL)                                                                                
@@ -949,6 +961,7 @@ label_end:
     std::vector<std::string> orig_rose_cmdline(argv, argv+argc);
     Rose::KeepGoing::generate_reports (project, orig_rose_cmdline);
   }  
+
   //return backend(project);
   return status;
 }
