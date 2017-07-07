@@ -2593,7 +2593,7 @@ SgOmpSafelenClause* SgOmpSafelenClause::build_node_from_nonlist_children ( Sg_Fi
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgOmpVariablesClause* SgOmpVariablesClause::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct )
+SgOmpVariablesClause* SgOmpVariablesClause::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct , SgExprListExp* variables)
    {
 #if 0
   // debugging information!
@@ -2611,7 +2611,7 @@ SgOmpVariablesClause* SgOmpVariablesClause::build_node_from_nonlist_children ( S
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgOmpCopyprivateClause* SgOmpCopyprivateClause::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct )
+SgOmpCopyprivateClause* SgOmpCopyprivateClause::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct , SgExprListExp* variables)
    {
 #if 0
   // debugging information!
@@ -2629,7 +2629,7 @@ SgOmpCopyprivateClause* SgOmpCopyprivateClause::build_node_from_nonlist_children
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgOmpPrivateClause* SgOmpPrivateClause::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct )
+SgOmpPrivateClause* SgOmpPrivateClause::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct , SgExprListExp* variables)
    {
 #if 0
   // debugging information!
@@ -2647,7 +2647,7 @@ SgOmpPrivateClause* SgOmpPrivateClause::build_node_from_nonlist_children ( Sg_Fi
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgOmpFirstprivateClause* SgOmpFirstprivateClause::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct )
+SgOmpFirstprivateClause* SgOmpFirstprivateClause::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct , SgExprListExp* variables)
    {
 #if 0
   // debugging information!
@@ -2665,7 +2665,7 @@ SgOmpFirstprivateClause* SgOmpFirstprivateClause::build_node_from_nonlist_childr
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgOmpSharedClause* SgOmpSharedClause::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct )
+SgOmpSharedClause* SgOmpSharedClause::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct , SgExprListExp* variables)
    {
 #if 0
   // debugging information!
@@ -2683,7 +2683,7 @@ SgOmpSharedClause* SgOmpSharedClause::build_node_from_nonlist_children ( Sg_File
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgOmpCopyinClause* SgOmpCopyinClause::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct )
+SgOmpCopyinClause* SgOmpCopyinClause::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgExprListExp* variables )
    {
 #if 0
   // debugging information!
@@ -2701,7 +2701,7 @@ SgOmpCopyinClause* SgOmpCopyinClause::build_node_from_nonlist_children ( Sg_File
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgOmpLastprivateClause* SgOmpLastprivateClause::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct )
+SgOmpLastprivateClause* SgOmpLastprivateClause::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgExprListExp* variables )
    {
 #if 0
   // debugging information!
@@ -2719,7 +2719,7 @@ SgOmpLastprivateClause* SgOmpLastprivateClause::build_node_from_nonlist_children
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgOmpReductionClause* SgOmpReductionClause::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgOmpClause::omp_reduction_operator_enum operation )
+SgOmpReductionClause* SgOmpReductionClause::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct , SgExprListExp* variables , SgOmpClause::omp_reduction_operator_enum operation )
    {
 #if 0
   // debugging information!
@@ -2737,7 +2737,7 @@ SgOmpReductionClause* SgOmpReductionClause::build_node_from_nonlist_children ( S
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgOmpMapClause* SgOmpMapClause::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgOmpClause::omp_map_operator_enum operation )
+SgOmpMapClause* SgOmpMapClause::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgExprListExp* variables, SgOmpClause::omp_map_operator_enum operation )
    {
 #if 0
   // debugging information!
@@ -2755,7 +2755,7 @@ SgOmpMapClause* SgOmpMapClause::build_node_from_nonlist_children ( Sg_File_Info*
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgOmpLinearClause* SgOmpLinearClause::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct )
+SgOmpLinearClause* SgOmpLinearClause::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct , SgExprListExp* variables, SgExpression* step)
    {
 #if 0
   // debugging information!
@@ -2773,7 +2773,7 @@ SgOmpLinearClause* SgOmpLinearClause::build_node_from_nonlist_children ( Sg_File
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgOmpUniformClause* SgOmpUniformClause::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct )
+SgOmpUniformClause* SgOmpUniformClause::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct , SgExprListExp* variables)
    {
 #if 0
   // debugging information!
@@ -2791,7 +2791,7 @@ SgOmpUniformClause* SgOmpUniformClause::build_node_from_nonlist_children ( Sg_Fi
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgOmpAlignedClause* SgOmpAlignedClause::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct )
+SgOmpAlignedClause* SgOmpAlignedClause::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct , SgExprListExp* variables, SgExpression* alignment)
    {
 #if 0
   // debugging information!
@@ -6059,6 +6059,14 @@ SgOmpFlushStatement* SgOmpFlushStatement::build_node_from_nonlist_children ( Sg_
      return returnNode;
    }
 
+SgOmpDeclareSimdStatement* SgOmpDeclareSimdStatement::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct )
+   {
+     SgOmpDeclareSimdStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
 
 /* #line 5940 "../../../src/frontend/SageIII//Cxx_GrammarAtermNodeBuildFunctions.C" */
 
@@ -6095,6 +6103,75 @@ SgOmpAtomicStatement* SgOmpAtomicStatement::build_node_from_nonlist_children ( S
      return returnNode;
    }
 
+// Rasmussen (05/24/2017): not actually generated but should be
+// Generated static function for building IR nodes for Aterm support (like a constructor).
+SgOmpAtomicClause* SgOmpAtomicClause::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgOmpClause::omp_atomic_clause_enum clause_enum )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgOmpAtomicClause::build_node_from_nonlist_children (Sg_File_Info*, SgOmpClause::omp_atomic_clause_enum): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgOmpAtomicClause* returnNode = NULL;
+
+     return returnNode;
+   }
+
+// Rasmussen (05/24/2017): not actually generated but should be
+// Generated static function for building IR nodes for Aterm support (like a constructor).
+SgOmpProcBindClause* SgOmpProcBindClause::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgOmpClause::omp_proc_bind_policy_enum policy_enum)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgOmpProcBindClause::build_node_from_nonlist_children (Sg_File_Info*, SgOmpClause::omp_proc_bind_policy_enum): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgOmpProcBindClause* returnNode = NULL;
+
+     return returnNode;
+   }
+
+// Rasmussen (05/25/2017): not actually generated but should be
+// Generated static function for building IR nodes for Aterm support (like a constructor).
+SgOmpNotinbranchClause* SgOmpNotinbranchClause::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgOmpNotinbranchClause::build_node_from_nonlist_children (Sg_File_Info*): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgOmpNotinbranchClause* returnNode = NULL;
+
+     return returnNode;
+   }
+
+// Rasmussen (05/25/2017): not actually generated but should be
+// Generated static function for building IR nodes for Aterm support (like a constructor).
+SgOmpInbranchClause* SgOmpInbranchClause::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgOmpInbranchClause::build_node_from_nonlist_children (Sg_File_Info*): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+      SgOmpInbranchClause* returnNode = NULL;
+
+      return returnNode;
+}
+
+// Rasmussen (05/25/2017): not actually generated but should be
+// Generated static function for building IR nodes for Aterm support (like a constructor).
+SgOmpSimdlenClause* SgOmpSimdlenClause::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgExpression* expr )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgOmpSimdlenClause::build_node_from_nonlist_children (Sg_File_Info*, SgExpression*): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgOmpSimdlenClause* returnNode = NULL;
+
+     return returnNode;
+   }
 
 /* #line 5976 "../../../src/frontend/SageIII//Cxx_GrammarAtermNodeBuildFunctions.C" */
 
@@ -6274,6 +6351,18 @@ SgOmpForStatement* SgOmpForStatement::build_node_from_nonlist_children ( Sg_File
 
      return returnNode;
    }
+SgOmpForSimdStatement* SgOmpForSimdStatement::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgStatement* body )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgOmpForSimdStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgStatement* body): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgOmpForSimdStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
 
 
 /* #line 6156 "../../../src/frontend/SageIII//Cxx_GrammarAtermNodeBuildFunctions.C" */

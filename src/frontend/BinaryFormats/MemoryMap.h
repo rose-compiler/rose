@@ -1,5 +1,5 @@
-#ifndef ROSE_MemoryMap_H
-#define ROSE_MemoryMap_H
+#ifndef ROSE_BinaryAnalysis_MemoryMap_H
+#define ROSE_BinaryAnalysis_MemoryMap_H
 
 #include "ByteOrder.h"
 
@@ -14,6 +14,9 @@
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/export.hpp>
+
+namespace Rose {
+namespace BinaryAnalysis {
 
 /** Align address downward to boundary.
  *
@@ -44,6 +47,13 @@ T alignDown(T address, T alignment) {
  *  shared-ownership smart pointers (@ref heap_object_shared_ownership).  Always refer to a buffer with its @c Ptr type. They
  *  should be created with various @c instance class methods, and they should never be explicitly freed.
  *
+ *  MemoryMap objects are reference counted and always created on the heap. They are referred to by the @ref Ptr type which can
+ *  be usually treated as an ordinary C++ pointer.  Objects can be created with the static method @ref instance, or by doing a
+ *  shallow copy of an existing object using the @ref shallowCopy method. Plain assignment (operator=) is similar to @ref
+ *  shallowCopy in that after the assignment the two objects will have independent copies of the segment information but will
+ *  share the underlying data buffers.  MemoryMap objects should not be explicitly deleted since the shared pointers will
+ *  delete the object when it's no longer referenced.
+ *
  *  Here's an example of mapping a file into an address space at virtual address 0x08040000 and then temporarily replacing the
  *  second 1kB page of the file with our own data.  We demonstrate using a @ref Sawyer::Container::MappedBuffer because these
  *  are very fast for large files, especially if only small parts of the file are accessed due to their use of OS-level memory
@@ -62,10 +72,10 @@ T alignDown(T address, T alignment) {
  *  Buffer::Ptr dataBuf = StaticBuffer::instance(myData, myDataSize);
  *
  *  // Create the memory map.
- *  MemoryMap map;
- *  map.insert(AddressInterval::baseSize(0x08040000, fileBuf->size()),
- *             AddressSegment(fileBuf, 0, MemoryMap::MM_PROT_READ, "the file contents"));
- *  map.insert(AddressInterval::baseSize(0x08040000+1024, dataBuf->size()),
+ *  MemoryMap::Ptr map = MemoryMap::instance();
+ *  map->insert(AddressInterval::baseSize(0x08040000, fileBuf->size()),
+ *              AddressSegment(fileBuf, 0, MemoryMap::MM_PROT_READ, "the file contents"));
+ *  map->insert(AddressInterval::baseSize(0x08040000+1024, dataBuf->size()),
  *             AddressSegment(dataBuf, 0, MemoryMap::MM_PROT_RW, "data overlay"));
  * @endcode
  *
@@ -76,14 +86,15 @@ T alignDown(T address, T alignment) {
  * @code
  *  // read part of the data, right across the file/overlay boundary
  *  uint8_t data[4096];
- *  size_t nRead = map.at(0x08040100).limit(sizeof data).read(data).size();
+ *  size_t nRead = map->at(0x08040100).limit(sizeof data).read(data).size();
  *  assert(nread==sizeof data);
  * @endcode
  *
  *  The Sawyer documentation contains many more examples.
  */
-class MemoryMap: public Sawyer::Container::AddressMap<rose_addr_t, uint8_t> {
+class MemoryMap: public Sawyer::Container::AddressMap<rose_addr_t, uint8_t>, public Sawyer::SharedObject {
 public:
+    typedef Sawyer::SharedPointer<MemoryMap> Ptr;
     typedef rose_addr_t Address;
     typedef uint8_t Value;
     typedef Sawyer::Container::AddressMap<Address, Value> Super;
@@ -152,14 +163,14 @@ public:
     /** Exception for MemoryMap operations. */
     class Exception: public std::runtime_error {
     public:
-        Exception(const std::string &mesg, const MemoryMap *map): std::runtime_error(mesg), map(map) {}
+        Exception(const std::string &mesg, const MemoryMap::Ptr map): std::runtime_error(mesg), map(map) {}
         virtual ~Exception() throw() {}
         virtual std::string leader(std::string dflt="memory map problem") const;   /**< Leading part of the error message. */
         virtual std::string details(bool) const; /**< Details emitted on following lines, indented two spaces. */
         virtual void print(std::ostream&, bool verbose=true) const;
         friend std::ostream& operator<<(std::ostream&, const Exception&);
     public:
-        const MemoryMap *map;           /**< Map that caused the exception if available, null otherwise. */
+        MemoryMap::Ptr map;                             /**< Map that caused the exception if available, null otherwise. */
     };
 
     /** Exception for an inconsistent mapping. This exception occurs when an attemt is made to insert a new segment but the
@@ -167,7 +178,7 @@ public:
      *  information about the segment that was being inserted, and the @p old_range and @p old_segment is information about
      *  an existing segment that conflicts with the new one. */
     struct Inconsistent : public Exception {
-        Inconsistent(const std::string &mesg, const MemoryMap *map,
+        Inconsistent(const std::string &mesg, const MemoryMap::Ptr &map,
                      const AddressInterval &new_range, const Segment &new_segment,
                      const AddressInterval &old_range, const Segment &old_segment)
             : Exception(mesg, map),
@@ -182,7 +193,7 @@ public:
 
     /** Exception for when we try to access a virtual address that isn't mapped. */
     struct NotMapped : public Exception {
-        NotMapped(const std::string &mesg, const MemoryMap *map, rose_addr_t va)
+        NotMapped(const std::string &mesg, const MemoryMap::Ptr &map, rose_addr_t va)
             : Exception(mesg, map), va(va) {}
         virtual ~NotMapped() throw() {}
         virtual void print(std::ostream&, bool verbose=true) const;
@@ -192,7 +203,7 @@ public:
 
     /** Exception thrown by find_free() when there's not enough free space left. */
     struct NoFreeSpace : public Exception {
-        NoFreeSpace(const std::string &mesg, const MemoryMap *map, size_t size)
+        NoFreeSpace(const std::string &mesg, const MemoryMap::Ptr &map, size_t size)
             : Exception(mesg, map), size(size) {}
         virtual ~NoFreeSpace() throw() {}
         virtual void print(std::ostream&, bool verbose=true) const;
@@ -202,7 +213,8 @@ public:
 
     /** Exception thrown by load() when there's a syntax error in the index file. */
     struct SyntaxError: public Exception {
-        SyntaxError(const std::string &mesg, const MemoryMap *map, const std::string &filename, unsigned linenum, int colnum=-1)
+        SyntaxError(const std::string &mesg, const MemoryMap::Ptr &map, const std::string &filename,
+                    unsigned linenum, int colnum=-1)
             : Exception(mesg, map), filename(filename), linenum(linenum), colnum(colnum) {}
         virtual ~SyntaxError() throw() {}
         virtual void print(std::ostream&, bool verbose=true) const;
@@ -212,10 +224,23 @@ public:
         int colnum;                             /**< Optional column number (0-origin; negative if unknown). */
     };
 
-public:
+protected:
     /** Constructs an empty memory map. */
     MemoryMap(): endianness_(ByteOrder::ORDER_UNSPECIFIED) {}
 
+public:
+    /** Construct an empty memory map. */
+    static Ptr instance() {
+        return Ptr(new MemoryMap);
+    }
+
+    /** Create a new copy of the memory map.
+     *
+     *  The copy maintains its own independent list of segments, but points to the same data buffers as the source map. */
+    Ptr shallowCopy() {
+        return Ptr(new MemoryMap(*this));
+    }
+    
     /** Property: byte order.
      *
      *  Every map has a default byte order property which can be used by functions that read and write multi-byte values when
@@ -396,12 +421,16 @@ public:
     friend std::ostream& operator<<(std::ostream&, const MemoryMap&);
 };
 
+} // namespace
+} // namespace
+
 // Register the types needed for serialization since some of them are derived from polymorphic class templates.
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-BOOST_CLASS_EXPORT_KEY(MemoryMap::AllocatingBuffer);
-BOOST_CLASS_EXPORT_KEY(MemoryMap::MappedBuffer);
-BOOST_CLASS_EXPORT_KEY(MemoryMap::NullBuffer);
-BOOST_CLASS_EXPORT_KEY(MemoryMap::StaticBuffer);
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::MemoryMap::AllocatingBuffer);
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::MemoryMap::MappedBuffer);
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::MemoryMap::NullBuffer);
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::MemoryMap::StaticBuffer);
 #endif
+
 
 #endif

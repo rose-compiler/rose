@@ -11,7 +11,8 @@ TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 noinst_PROGRAMS += inlineEverything
 inlineEverything_SOURCES = inlineEverything.C
 inlineEverything_CPPFLAGS = $(ROSE_INCLUDES)
-inlineEverything_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+inlineEverything_LDFLAGS = $(ROSE_RPATHS)
+inlineEverything_LDADD = $(ROSE_SEPARATE_LIBS)
 
 # The specimens are named so that the number between the "_" and next "." is the number of function calls that
 # we expect this specimen to inline.

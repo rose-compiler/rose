@@ -63,8 +63,8 @@ void Analyzer::initDiagnostics() {
   static bool initialized = false;
   if (!initialized) {
     initialized = true;
-    logger = Sawyer::Message::Facility("CodeThorn::Analyzer", rose::Diagnostics::destination);
-    rose::Diagnostics::mfacilities.insertAndAdjust(logger);
+    logger = Sawyer::Message::Facility("CodeThorn::Analyzer", Rose::Diagnostics::destination);
+    Rose::Diagnostics::mfacilities.insertAndAdjust(logger);
   }
 }
 
@@ -90,18 +90,18 @@ bool Analyzer::isFunctionCallWithAssignment(Label lab,VariableId* varIdPtr){
   return false;
 }
 
-void Analyzer::enableExternalFunctionSemantics() {
-  _externalFunctionSemantics=true;
-  exprAnalyzer.setExternalFunctionSemantics(true);
+void Analyzer::enableSVCompFunctionSemantics() {
+  _svCompFunctionSemantics=true;
+  exprAnalyzer.setSVCompFunctionSemantics(true);
   _externalErrorFunctionName="__VERIFIER_error";
   _externalNonDetIntFunctionName="__VERIFIER_nondet_int";
   _externalNonDetLongFunctionName="__VERIFIER_nondet_long";
   _externalExitFunctionName="exit";
 }
 
-void Analyzer::disableExternalFunctionSemantics() {
-  _externalFunctionSemantics=false;
-  exprAnalyzer.setExternalFunctionSemantics(false);
+void Analyzer::disableSVCompFunctionSemantics() {
+  _svCompFunctionSemantics=false;
+  exprAnalyzer.setSVCompFunctionSemantics(false);
   _externalErrorFunctionName="";
   _externalNonDetIntFunctionName="";
   _externalNonDetLongFunctionName="";
@@ -140,7 +140,7 @@ Analyzer::Analyzer():
   _approximated_iterations(0),
   _curr_iteration_cnt(0),
   _next_iteration_cnt(0),
-  _externalFunctionSemantics(false)
+  _svCompFunctionSemantics(false)
 {
   initDiagnostics();
   _analysisTimer.start();
@@ -155,11 +155,9 @@ Analyzer::Analyzer():
   pstateSet.max_load_factor(0.7);
   constraintSetMaintainer.max_load_factor(0.7);
   resetInputSequenceIterator();
-  _typeSizeMapping=new TypeSizeMapping();
 }
 
 Analyzer::~Analyzer() {
-  delete _typeSizeMapping;
 }
 
 size_t Analyzer::getNumberOfErrorLabels() {
@@ -175,22 +173,28 @@ void Analyzer::setExternalErrorFunctionName(std::string externalErrorFunctionNam
 }
 
 bool Analyzer::isPrecise() {
-  return !(isActiveGlobalTopify());
-}
-
-bool Analyzer::isInExplicitStateMode() {
-  return isPrecise();
+  if (isActiveGlobalTopify()) {
+    return false;
+  }
+  if (boolOptions["explicit-arrays"]==false && !boolOptions["rers-binary"]) {
+    return false;
+  }
+  return true;
 }
 
 bool Analyzer::isIncompleteSTGReady() {
-  if(_maxTransitions==-1 && _maxIterations==-1)
+  if(_maxTransitions==-1 && _maxIterations==-1 && _maxBytes==-1 && _maxSeconds==-1)
     return false;
-  else if ((_maxTransitions!=-1) && ((long int) transitionGraph.size()>=_maxTransitions))
+  if ((_maxTransitions!=-1) && ((long int) transitionGraph.size()>=_maxTransitions))
     return true;
-  else if ((_maxIterations!=-1) && ((long int) getIterations() > _maxIterations))
+  if ((_maxIterations!=-1) && ((long int) getIterations() > _maxIterations))
     return true;
-  else // at least one maximum mode is active, but the corresponding limit has not yet been reached
-    return false;
+  if ((_maxBytes!=-1) && ((long int) getPhysicalMemorySize() > _maxBytes))
+    return true;
+  if ((_maxSeconds!=-1) && ((long int) analysisRunTimeInSeconds() > _maxSeconds))
+    return true;
+  // at least one maximum mode is active, but the corresponding limit has not yet been reached
+  return false;
 }
 
 ExprAnalyzer* Analyzer::getExprAnalyzer() {
@@ -318,9 +322,22 @@ void Analyzer::printStatusMessage(bool forceDisplay) {
        <<estateWorkListCurrentSize
        <<"/"<<getIterations()<<"-"<<getApproximatedIterations()
       ;
+    ss<<" "<<analyzerStateToString();
     ss<<endl;
     printStatusMessage(ss.str());
   }
+}
+
+string Analyzer::analyzerStateToString() {
+  stringstream ss;
+  ss<<"isPrec:"<<isPrecise();
+  ss<<" ";
+  ss<<"TopMode:"<<_globalTopifyMode;
+  ss<<" ";
+  ss<<"RBin:"<<boolOptions["rers-binary"];
+  ss<<" ";
+  ss<<"incSTGReady:"<<isIncompleteSTGReady();
+  return ss.str();
 }
 
 bool Analyzer::isInWorkList(const EState* estate) {
@@ -394,9 +411,9 @@ bool Analyzer::isActiveGlobalTopify() {
 #pragma omp critical(ACTIVATE_TOPIFY_MODE)
     {
       if (!_topifyModeActive) {
-	_topifyModeActive=true;
-	eventGlobalTopifyTurnedOn();
-	boolOptions.setOption("rers-binary",false);
+        _topifyModeActive=true;
+        eventGlobalTopifyTurnedOn();
+        boolOptions.setOption("rers-binary",false);
       }
     }
     return true;
@@ -468,7 +485,9 @@ void Analyzer::eventGlobalTopifyTurnedOn() {
     nt++;
   }
 
-  logger[TRACE] << "switched to static analysis (approximating "<<n<<" of "<<nt<<" variables with top-conversion)."<<endl;
+  if(getOptionStatusMessages()) {
+    cout << "switched to static analysis (approximating "<<n<<" of "<<nt<<" variables with top-conversion)."<<endl;
+  }
   //switch to the counter for approximated loop iterations if currently in a mode that counts iterations
   if (getExplorationMode()==EXPL_LOOP_AWARE || getExplorationMode()==EXPL_LOOP_AWARE_SYNC) {
 #pragma omp atomic
@@ -498,7 +517,7 @@ EState Analyzer::createEState(Label label, PState pstate, ConstraintSet cset) {
     //pstate.topifyState();
 #endif
     // set cset in general to empty cset, otherwise cset can grow again arbitrarily
-    ConstraintSet cset0; // xxx2
+    ConstraintSet cset0;
     cset=cset0;
   }
   const PState* newPStatePtr=processNewOrExisting(pstate);
@@ -647,6 +666,11 @@ const EState* Analyzer::addToWorkListIfNew(EState estate) {
   }
 }
 
+// set the size of an element determined by this type
+void Analyzer::setElementSize(VariableId variableId, SgType* elementType) {
+  variableIdMapping.setElementSize(variableId,getTypeSizeMapping()->determineTypeSize(elementType));
+}
+
 EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState currentEState, Label targetLabel) {
 
   /*
@@ -693,8 +717,12 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
           PState newPState=*currentEState.pstate();
           int elemIndex=0;
           SgExpressionPtrList& initList=SgNodeHelper::getInitializerListOfAggregateDeclaration(decl);
+          variableIdMapping.setNumberOfElements(initDeclVarId,initList.size());
+          SgArrayType* arrayType=isSgArrayType(initializer->get_type());
+          ROSE_ASSERT(arrayType);
+          SgType* arrayElementType=arrayType->get_base_type();
+          setElementSize(initDeclVarId,arrayElementType);
           for(SgExpressionPtrList::iterator i=initList.begin();i!=initList.end();++i) {
-            //OLD VariableId arrayElemId=variableIdMapping.variableIdOfArrayElement(initDeclVarId,elemIndex);
             AbstractValue arrayElemId=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(elemIndex));
             SgExpression* exp=*i;
             SgAssignInitializer* assignInit=isSgAssignInitializer(exp);
@@ -712,11 +740,26 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
           }
           return createEState(targetLabel,newPState,cset);
         } else if(SgAssignInitializer* assignInitializer=isSgAssignInitializer(initializer)) {
-          // an single AssignInitializer on the rhs is a constant expression that evaluates to a known value at compile time
           SgExpression* rhs=assignInitializer->get_operand_i();
           ROSE_ASSERT(rhs);
-          //cout<<"DEBUG: assign initializer:"<<assignInitializer->unparseToString()<<":"<<rhs->unparseToString()<<endl;
-          PState newPState=analyzeAssignRhs(*currentEState.pstate(),initDeclVarId,rhs,cset);
+          //cout<<"DEBUG: assign initializer:"<<" lhs:"<<initDeclVarId.toString(getVariableIdMapping())<<" rhs:"<<assignInitializer->unparseToString()<<" decl-term:"<<AstTerm::astTermWithNullValuesToString(initName)<<endl;
+
+          // set type info for initDeclVarId
+          variableIdMapping.setNumberOfElements(initDeclVarId,1); // single variable
+          SgType* variableType=initializer->get_type();
+          setElementSize(initDeclVarId,variableType);
+          
+          // build lhs-value dependent on type of declared variable
+          AbstractValue lhsAbstractAddress=AbstractValue(initDeclVarId); // creates a pointer to initDeclVar
+          list<SingleEvalResultConstInt> res=exprAnalyzer.evalConstInt(rhs,currentEState,true);
+
+          ROSE_ASSERT(res.size()==1);
+          SingleEvalResultConstInt evalResult=*res.begin();
+
+          EState estate=evalResult.estate;
+          PState newPState=*estate.pstate();
+          newPState.writeToMemoryLocation(lhsAbstractAddress,evalResult.value());
+          ConstraintSet cset=*estate.constraints();
           return createEState(targetLabel,newPState,cset);
         } else {
           logger[ERROR] << "unsupported initializer in declaration: "<<decl->unparseToString()<<endl;
@@ -724,10 +767,23 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
         }
       } else {
         // no initializer (model default cases)
+        ROSE_ASSERT(initName!=nullptr);
+        SgArrayType* arrayType=isSgArrayType(initName->get_type());
+        if(arrayType) {
+          SgType* arrayElementType=arrayType->get_base_type();
+          setElementSize(initDeclVarId,arrayElementType);
+          variableIdMapping.setNumberOfElements(initDeclVarId,variableIdMapping.getArrayElementCount(arrayType));
+        } else {
+          // set type info for initDeclVarId
+          variableIdMapping.setNumberOfElements(initDeclVarId,1); // single variable
+          SgType* variableType=initName->get_type();
+          setElementSize(initDeclVarId,variableType);
+        }
+        
         PState newPState=*currentEState.pstate();
         if(variableIdMapping.hasArrayType(initDeclVarId)) {
           // add default array elements to PState
-          size_t length=variableIdMapping.getSize(initDeclVarId);
+          size_t length=variableIdMapping.getNumberOfElements(initDeclVarId);
           for(size_t elemIndex=0;elemIndex<length;elemIndex++) {
             AbstractValue newArrayElementId=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(elemIndex));
             // set default init value
@@ -1151,7 +1207,6 @@ PState Analyzer::analyzeAssignRhsExpr(PState currentPState,VariableId lhsVar, Sg
 }
 
 // TODO: this function should be implemented with a call of ExprAnalyzer::evalConstInt
-// TODO: currently all rhs which are not a variable are evaluated to top by this function
 PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode* rhs, ConstraintSet& cset) {
   ROSE_ASSERT(isSgExpression(rhs));
   AbstractValue rhsIntVal=CodeThorn::Top();
@@ -1190,20 +1245,20 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
     if(currentPState.varExists(rhsVarId)) {
       rhsIntVal=currentPState.readFromMemoryLocation(rhsVarId);
     } else {
-      if(variableIdMapping.isConstantArray(rhsVarId) && boolOptions["rersmode"]) {
+      if(variableIdMapping.hasArrayType(rhsVarId) && boolOptions["explicit-arrays"]==false) {
         // in case of an array the id itself is the pointer value
         ROSE_ASSERT(rhsVarId.isValid());
         rhsIntVal=rhsVarId.getIdCode();
       } else {
         logger[WARN]<< "access to variable "<<variableIdMapping.uniqueLongVariableName(rhsVarId)<< " id:"<<rhsVarId.toString()<<" on rhs of assignment, but variable does not exist in state. Initializing with top."<<endl;
         rhsIntVal=CodeThorn::Top();
-        isRhsIntVal=true;
+        isRhsIntVal=true; 
       }
     }
   }
   PState newPState=currentPState;
 
-  // handle pointer assignment/initialization
+  // handle pointer assignment
   if(variableIdMapping.hasPointerType(lhsVar)) {
     //cout<<"DEBUG: "<<lhsVar.toString()<<" = "<<rhs->unparseToString()<<" : "<<astTermWithNullValuesToString(rhs)<<" : ";
     //cout<<"LHS: pointer variable :: "<<lhsVar.toString()<<endl;
@@ -1225,14 +1280,14 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
     }
   }
 
-  if(isRhsIntVal && isInExplicitStateMode()) {
+  if(isRhsIntVal && isPrecise()) {
     ROSE_ASSERT(!rhsIntVal.isTop());
   }
 
   if(newPState.varExists(lhsVar)) {
     if(!isRhsIntVal && !isRhsVar) {
       rhsIntVal=CodeThorn::Top();
-      ROSE_ASSERT(!isInExplicitStateMode());
+      ROSE_ASSERT(!isPrecise());
     }
     // we are using AbstractValue here (and  operator== is overloaded for AbstractValue==AbstractValue)
     // for this comparison isTrue() is also false if any of the two operands is CodeThorn::Top()
@@ -1244,7 +1299,7 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
       // update of existing variable with new value
       //newPState[lhsVar]=rhsIntVal;
       newPState.writeToMemoryLocation(lhsVar,rhsIntVal);
-      if((!rhsIntVal.isTop() && !isRhsVar) || boolOptions["arith-top"])
+      if((!rhsIntVal.isTop() && !isRhsVar))
         cset.removeAllConstraintsOfVar(lhsVar);
       return newPState;
     }
@@ -1665,6 +1720,7 @@ bool Analyzer::all_false(std::vector<bool>& v) {
 }
 
 bool Analyzer::isLTLRelevantEState(const EState* estate) {
+  ROSE_ASSERT(estate);
   return ((estate)->io.isStdInIO()
           || (estate)->io.isStdOutIO()
           || (estate)->io.isStdErrIO()
@@ -1672,9 +1728,67 @@ bool Analyzer::isLTLRelevantEState(const EState* estate) {
 }
 
 Analyzer::SubSolverResultType Analyzer::subSolver(const EState* currentEStatePtr) {
+  // start the timer if not yet done
+  if (!_timerRunning) {
+    _analysisTimer.start();
+    _timerRunning=true;
+  }
+  // first, check size of global EStateSet and print status or switch to topify/terminate analysis accordingly.
+  unsigned long estateSetSize;
+  bool earlyTermination = false;
+  int threadNum = 0; //subSolver currently does not support multiple threads.
+  // print status message if required
+  if (getOptionStatusMessages() && _displayDiff) {
+#pragma omp critical(HASHSET)
+    {
+      estateSetSize = estateSet.size();
+    }
+    if(threadNum==0 && (estateSetSize>(_prevStateSetSizeDisplay+_displayDiff))) {
+      printStatusMessage(true);
+      _prevStateSetSizeDisplay=estateSetSize;
+    }
+  }
+  // switch to topify mode or terminate analysis if resource limits are exceeded
+  if (_maxBytes != -1 || _maxBytesForcedTop != -1 || _maxSeconds != -1 || _maxSecondsForcedTop != -1
+      || _maxTransitions != -1 || _maxTransitionsForcedTop != -1 || _maxIterations != -1 || _maxIterationsForcedTop != -1) {
+#pragma omp critical(HASHSET)
+    {
+      estateSetSize = estateSet.size();
+    }
+    if(threadNum==0 && _resourceLimitDiff && (estateSetSize>(_prevStateSetSizeResource+_resourceLimitDiff))) {
+      if (isIncompleteSTGReady()) {
+#pragma omp critical(ESTATEWL)
+	{
+	  earlyTermination = true;
+	}	  
+      }
+      isActiveGlobalTopify(); // Checks if a switch to topify is necessary. If yes, it changes the analyzer state.
+      _prevStateSetSizeResource=estateSetSize;
+    }
+  } 
+  if (earlyTermination) {
+    if(getOptionStatusMessages()) {
+      cout << "STATUS: Early termination within subSolver (resource limit reached)." << endl;
+    }
+    PropertyValueTable* ltlResults = _spotConnection->getLtlResults();
+    bool withCounterexample = true;
+    if(getOptionStatusMessages()) {
+      ltlResults-> printResults("YES (verified)", "NO (falsified)", "ltl_property_", withCounterexample);
+      printStatusMessageLine("==============================================================");
+      ltlResults->printResultsStatistics();
+      printStatusMessageLine("==============================================================");
+    }
+    if (args.count("csv-spot-ltl")) {  //write results to a file instead of displaying them directly
+      std::string csv_filename = args["csv-spot-ltl"].as<string>();
+      logger[TRACE] << "STATUS: writing ltl results to file: " << csv_filename << endl;
+      ltlResults->writeFile(csv_filename.c_str(), false, 0, withCounterexample);
+    }
+    exit(0);
+  }
+  // run the actual sub-solver
   EStateWorkList localWorkList;
   EStateWorkList deferedWorkList;
-  EStateSet existingEStateSet;
+  std::set<const EState*> existingEStateSet;
   localWorkList.push_back(currentEStatePtr);
   while(!localWorkList.empty()) {
     // logger[DEBUG]<<"local work list size: "<<localWorkList.size()<<endl;
@@ -1699,6 +1813,7 @@ Analyzer::SubSolverResultType Analyzer::subSolver(const EState* currentEStatePtr
         if((!newEState.constraints()->disequalityExists()) &&(!isFailedAssertEState(&newEState)&&!isVerificationErrorEState(&newEState))) {
           HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=process(newEState);
           const EState* newEStatePtr=pres.second;
+          ROSE_ASSERT(newEStatePtr);
           if(pres.first==true) {
             if(isLTLRelevantEState(newEStatePtr)) {
               deferedWorkList.push_back(newEStatePtr);
@@ -1708,6 +1823,7 @@ Analyzer::SubSolverResultType Analyzer::subSolver(const EState* currentEStatePtr
           } else {
             // we have found an existing state, but need to make also sure it's a relevent one
             if(isLTLRelevantEState(newEStatePtr)) {
+              ROSE_ASSERT(newEStatePtr!=nullptr);
               existingEStateSet.insert(const_cast<EState*>(newEStatePtr));
             } else {
               // TODO: use a unique list
@@ -1733,7 +1849,7 @@ Analyzer::SubSolverResultType Analyzer::subSolver(const EState* currentEStatePtr
             // set flag for terminating early
             reachabilityResults.reachable(0);
             EStateWorkList emptyWorkList;
-            EStateSet emptyExistingStateSet;
+            EStatePtrSet emptyExistingStateSet;
             return make_pair(emptyWorkList,emptyExistingStateSet);
           } else if(isFailedAssertEState(&newEState)) {
             // record failed assert
@@ -1767,7 +1883,7 @@ Analyzer::SubSolverResultType Analyzer::subSolver(const EState* currentEStatePtr
 }
 
 void Analyzer::runSolver11() {
-  if(isUsingExternalFunctionSemantics()) {
+  if(svCompFunctionSemantics()) {
     reachabilityResults.init(1); // in case of svcomp mode set single program property to unknown
   } else {
     reachabilityResults.init(getNumberOfErrorLabels()); // set all reachability results to unknown
@@ -1800,15 +1916,10 @@ void Analyzer::runSolver11() {
     reachabilityResults.finishedReachability(isPrecise(),!isComplete);
     transitionGraph.setIsComplete(!isComplete);
   } else {
-    bool complete;
-    if(boolOptions["set-stg-incomplete"]) {
-      complete=false;
-    } else {
-      complete=true;
-    }
-    reachabilityResults.finishedReachability(isPrecise(),complete);
+    bool tmpcomplete=true;
+    reachabilityResults.finishedReachability(isPrecise(),tmpcomplete);
     printStatusMessage(true);
-    transitionGraph.setIsComplete(complete);
+    transitionGraph.setIsComplete(tmpcomplete);
     logger[TRACE]<< "analysis finished (worklist is empty)."<<endl;
   }
   transitionGraph.setIsPrecise(isPrecise());
@@ -1818,14 +1929,14 @@ void Analyzer::runSolver11() {
 
 void Analyzer::runSolver12() {
   _analysisTimer.start();
-  if(isUsingExternalFunctionSemantics()) {
+  if(svCompFunctionSemantics()) {
     reachabilityResults.init(1); // in case of svcomp mode set single program property to unknown
   } else {
     reachabilityResults.init(getNumberOfErrorLabels()); // set all reachability results to unknown
   }
   logger[INFO]<<"number of error labels: "<<reachabilityResults.size()<<endl;
-  size_t prevStateSetSizeDisplay=0; // force immediate report at start
-  size_t prevStateSetSizeResource=0; // force immediate report at start
+  size_t prevStateSetSizeDisplay=0; 
+  size_t prevStateSetSizeResource=0;
   int threadNum;
   int workers=_numberOfThreadsToUse;
   vector<bool> workVector(_numberOfThreadsToUse);
@@ -1876,61 +1987,34 @@ void Analyzer::runSolver12() {
 	  isActiveGlobalTopify();
 	}
       }
-
-      // logger[DEBUG]<<"running : WL:"<<estateWorkListCurrent->size()<<endl;
       unsigned long estateSetSize;
+      // print status message if required
+      if (getOptionStatusMessages() && _displayDiff) {
 #pragma omp critical(HASHSET)
-      {
-	estateSetSize = estateSet.size();
+	{
+	  estateSetSize = estateSet.size();
+	}
+	if(threadNum==0 && (estateSetSize>(prevStateSetSizeDisplay+_displayDiff))) {
+	  printStatusMessage(true);
+	  prevStateSetSizeDisplay=estateSetSize;
+	}
       }
-      if(threadNum==0 && _displayDiff && (estateSetSize>(prevStateSetSizeDisplay+_displayDiff))) {
-        printStatusMessage(true);
-        prevStateSetSizeDisplay=estateSetSize;
-      }
-
-      if (args.count("max-memory") || args.count("max-memory-forced-top")) {
+      // switch to topify mode or terminate analysis if resource limits are exceeded
+      if (_maxBytes != -1 || _maxBytesForcedTop != -1 || _maxSeconds != -1 || _maxSecondsForcedTop != -1
+	  || _maxTransitions != -1 || _maxTransitionsForcedTop != -1 || _maxIterations != -1 || _maxIterationsForcedTop != -1) {
 #pragma omp critical(HASHSET)
 	{
 	  estateSetSize = estateSet.size();
 	}
 	if(threadNum==0 && _resourceLimitDiff && (estateSetSize>(prevStateSetSizeResource+_resourceLimitDiff))) {
-	  if (args.count("max-memory")) {
-	    if (getPhysicalMemorySize() >= _maxBytes) {
-#pragma omp critical(ESTATEWL)
-              {
-                terminate = true;
-	 	terminatedWithIncompleteStg = true;
-	      }
-            }
-	  } else if (args.count("max-memory-forced-top")){
+	  if (isIncompleteSTGReady()) {
 #pragma omp critical(ESTATEWL)
 	    {
-	      isActiveGlobalTopify();
-	    }
+	      terminate = true;
+	      terminatedWithIncompleteStg = true;
+	    }	  
 	  }
-	  prevStateSetSizeResource=estateSetSize;
-	}
-      }
-      if (args.count("max-time") || args.count("max-time-forced-top")) {
-#pragma omp critical(HASHSET)
-	{
-	  estateSetSize = estateSet.size();
-	}
-	if(threadNum==0 && _resourceLimitDiff && (estateSetSize>(prevStateSetSizeResource+_resourceLimitDiff))) {
-	  if (args.count("max-time")) {
-	    if (analysisRunTimeInSeconds() >= _maxSeconds) {
-#pragma omp critical(ESTATEWL)
-              {
-                terminate = true;
-	 	terminatedWithIncompleteStg = true;
-	      }
-            }
-	  } else if (args.count("max-time-forced-top")){
-#pragma omp critical(ESTATEWL)
-	    {
-	      isActiveGlobalTopify();
-	    }
-	  }
+	  isActiveGlobalTopify(); // Checks if a switch to topify is necessary. If yes, it changes the analyzer state.
 	  prevStateSetSizeResource=estateSetSize;
 	}
       }
@@ -1946,7 +2030,7 @@ void Analyzer::runSolver12() {
           }
         }
       }
-      if(isEmptyWorkList()||isIncompleteSTGReady()) {
+      if(isEmptyWorkList()) {
 #pragma omp critical
         {
           workVector[threadNum]=false;
@@ -2063,15 +2147,10 @@ void Analyzer::runSolver12() {
     reachabilityResults.finishedReachability(isPrecise(),!isComplete);
     transitionGraph.setIsComplete(!isComplete);
   } else {
-    bool complete;
-    if(boolOptions["set-stg-incomplete"]) {
-      complete=false;
-    } else {
-      complete=true;
-    }
-    reachabilityResults.finishedReachability(isPrecise(),complete);
+    bool tmpcomplete=true;
+    reachabilityResults.finishedReachability(isPrecise(),tmpcomplete);
     printStatusMessage(true);
-    transitionGraph.setIsComplete(complete);
+    transitionGraph.setIsComplete(tmpcomplete);
     logger[TRACE]<< "analysis finished (worklist is empty)."<<endl;
   }
   transitionGraph.setIsPrecise(isPrecise());
@@ -2240,7 +2319,9 @@ int Analyzer::pStateDepthFirstSearch(PState* startPState, int maxDepth, int thre
   int displayDiff=1000;
   while(!workList.empty()) {
     if(displayDiff && (processedStates >= (previousProcessedStates+displayDiff))) {
-      logger[TRACE]<< "STATUS: #processed PStates suffix dfs (thread_id: " << thread_id << "): " << processedStates << "   wl size: " << workList.size() << endl;
+      if (getOptionStatusMessages()) {
+	logger[TRACE]<< "STATUS: #processed PStates suffix dfs (thread_id: " << thread_id << "): " << processedStates << "   wl size: " << workList.size() << endl;
+      }
       previousProcessedStates=processedStates;
     }
     // pop worklist
@@ -2277,8 +2358,10 @@ int Analyzer::pStateDepthFirstSearch(PState* startPState, int maxDepth, int thre
                 ceTrace.push_back(*n);
               }
               int prefixLength = (partialTrace->size() - (2 * patternIterations * patternLength)) / 2;
-              logger[TRACE]<< "STATUS: found a trace leading to failing assertion #" << index << " (input lengths: reused prefix: " << prefixLength;
-              logger[TRACE]<< ", pattern: " <<patternLength << ", suffix: " << ((newHistory.size()+1) / 2) << ", total: " << ((ceTrace.size()+1) / 2) << ")." << endl;
+	      if (getOptionStatusMessages()) {
+	        cout<< "STATUS: found a trace leading to failing assertion #" << index << " (input lengths: reused prefix: " << prefixLength;
+	        cout<< ", pattern: " <<patternLength << ", suffix: " << ((newHistory.size()+1) / 2) << ", total: " << ((ceTrace.size()+1) / 2) << ")." << endl;
+              }
               string ce = convertToCeString(ceTrace, maxInputVal);
               reachabilityResults.setPropertyValue(index, PROPERTY_VALUE_YES);
               reachabilityResults.setCounterexample(index, ce);
@@ -2910,7 +2993,7 @@ std::list<EState> Analyzer::transferFunctionCallLocalEdge(Edge edge, const EStat
 	  ROSE_ASSERT(index>=0 && index <=99);
 	  binaryBindingAssert[index]=true;
 	  //reachabilityResults.reachable(index); //previous location in code
-	  // logger[DEBUG]<<"found assert Error "<<index<<endl;
+	  //logger[DEBUG]<<"found assert Error "<<index<<endl;
 	  ConstraintSet _cset=*estate->constraints();
 	  InputOutput _io;
 	  _io.recordFailedAssert();
@@ -2923,6 +3006,10 @@ std::list<EState> Analyzer::transferFunctionCallLocalEdge(Edge edge, const EStat
 	  return elistify(_eState);
         }
         RERS_Problem::rersGlobalVarsCallReturnInit(this,_pstate, omp_get_thread_num());
+	InputOutput newio;
+	if (rers_result == -2) {
+	  newio.recordVariable(InputOutput::STDERR_VAR,globalVarIdByName("input"));	  
+	}
         // TODO: _pstate[VariableId(output)]=rers_result;
         // matches special case of function call with return value, otherwise handles call without return value (function call is matched above)
         if(SgNodeHelper::Pattern::matchExprStmtAssignOpVarRefExpFunctionCallExp(nodeToAnalyze)) {
@@ -2935,11 +3022,11 @@ std::list<EState> Analyzer::transferFunctionCallLocalEdge(Edge edge, const EStat
 	  _pstate.writeToMemoryLocation(lhsVarId,AbstractValue(rers_result));
 	  ConstraintSet _cset=*estate->constraints();
 	  _cset.removeAllConstraintsOfVar(lhsVarId);
-	  EState _eState=createEState(edge.target(),_pstate,_cset);
+	  EState _eState=createEState(edge.target(),_pstate,_cset,newio);
 	  return elistify(_eState);
 	} else {
 	  ConstraintSet _cset=*estate->constraints();
-	  EState _eState=createEState(edge.target(),_pstate,_cset);
+	  EState _eState=createEState(edge.target(),_pstate,_cset,newio);
 	  return elistify(_eState);
 	}
         cout <<"PState:"<< _pstate<<endl;
@@ -3119,7 +3206,7 @@ std::list<EState> Analyzer::transferFunctionCallExternal(Edge edge, const EState
 
   // TODO: check whether the following test is superfluous meanwhile, since isStdInLabel does take NonDetX functions into account
   bool isExternalNonDetXFunction=false;
-  if(isUsingExternalFunctionSemantics()) {
+  if(svCompFunctionSemantics()) {
     if(funCall) {
       string externalFunctionName=SgNodeHelper::getFunctionName(funCall);
       if(externalFunctionName==_externalNonDetIntFunctionName||externalFunctionName==_externalNonDetLongFunctionName) {
@@ -3211,7 +3298,7 @@ std::list<EState> Analyzer::transferFunctionCallExternal(Edge edge, const EState
   /* handling of specific semantics for external function */
   if(funCall) {
     string funName=SgNodeHelper::getFunctionName(funCall);
-    if(isUsingExternalFunctionSemantics()) {
+    if(svCompFunctionSemantics()) {
       if(funName==_externalErrorFunctionName) {
         //cout<<"DETECTED error function: "<<_externalErrorFunctionName<<endl;
         return elistify(createVerificationErrorEState(currentEState,edge.target()));
@@ -3452,7 +3539,7 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
         estateList.push_back(createEState(edge.target(),pstate2,*(estate->constraints())));
       }
       if(!(lhsPointerValue.isPtr())) {
-        cerr<<"Error: not a pointer value (or top) in dereference operator:"<<lhsPointerValue.toString()<<"<="<<lhs->unparseToString()<<endl;
+        cerr<<"Error: not a pointer value (or top) in dereference operator: lhs-value:"<<lhsPointerValue.toLhsString(getVariableIdMapping())<<" lhs: "<<lhs->unparseToString()<<endl;
         exit(1);
       }
       //cout<<"DEBUG: lhsPointerValue:"<<lhsPointerValue.toString(getVariableIdMapping())<<endl;
@@ -3481,7 +3568,6 @@ list<EState> Analyzer::transferTrueFalseEdge(SgNode* nextNodeToAnalyze2, Edge ed
   PState newPState;
   ConstraintSet newCSet;
   list<SingleEvalResultConstInt> evalResultList=exprAnalyzer.evalConstInt(nextNodeToAnalyze2,currentEState,true);
-  //assert(evalResultList.size()==1);
   list<EState> newEStateList;
   for(list<SingleEvalResultConstInt>::iterator i=evalResultList.begin();
       i!=evalResultList.end();
@@ -3498,8 +3584,12 @@ list<EState> Analyzer::transferTrueFalseEdge(SgNode* nextNodeToAnalyze2, Edge ed
         ConstraintSet s1=*evalResult.estate.constraints();
         ConstraintSet s2=evalResult.exprConstraints;
         newCSet=s1+s2;
+      } else {
+        logger[ERROR]<<"Expected true/false edge. Found edge:"<<edge.toString()<<endl;
+        exit(1);
       }
-      newEStateList.push_back(createEState(newLabel,newPState,newCSet));
+      EState estate=createEState(newLabel,newPState,newCSet);
+      newEStateList.push_back(estate);
     } else {
       // we determined not to be on an execution path, therefore do nothing (do not add any result to resultlist)
     }
@@ -3507,13 +3597,10 @@ list<EState> Analyzer::transferTrueFalseEdge(SgNode* nextNodeToAnalyze2, Edge ed
   return newEStateList;
 }
 
-void Analyzer::setTypeSizeMapping(TypeSizeMapping* typeSizeMapping) {
-  // a default type size mapping is set in initialization and must exist
-  ROSE_ASSERT(_typeSizeMapping);
-  delete _typeSizeMapping;
-  _typeSizeMapping=typeSizeMapping;
+void Analyzer::setTypeSizeMapping(SgTypeSizeMapping* typeSizeMapping) {
+  AbstractValue::setTypeSizeMapping(typeSizeMapping);
 }
 
-TypeSizeMapping* Analyzer::getTypeSizeMapping() {
-  return _typeSizeMapping;
+SgTypeSizeMapping* Analyzer::getTypeSizeMapping() {
+  return AbstractValue::getTypeSizeMapping();
 }

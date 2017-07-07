@@ -5,7 +5,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # globalVariablesInLambdas_SOURCES = globalVariablesInLambdas.C
 
 AM_CPPFLAGS = $(ROSE_INCLUDES)
-LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+AM_LDFLAGS = $(ROSE_RPATHS)
+LDADD    = $(ROSE_LIBS)
 
 
 
@@ -124,7 +125,28 @@ test2017_04.C \
 test2017_07.C \
 test2017_08.C \
 test2017_09.C \
+test2017_11.C \
+test2017_12.C \
+test2017_13.C \
+test2017_14.C \
+test2017_15.C \
+test2017_16.C \
+test2017_19.C \
+test2017_20.C \
+test2017_21.C \
+test2017_22.C \
+test2017_23.C \
 last.C
+
+# DQ (5/12/2017): Note that tests test2017_21.C and test2017_22.C will fail using the 
+# testTemplates translator, but test2017_23.C will pass. This is part of on-going work 
+# to support the output of template instantiations.
+
+# DQ (5/12/2017: Failing tests:
+# test2017_10.C 
+# test2017_17.C 
+# test2017_18.C 
+
 
 # DQ (2/21/2017): This fails due to missing builtin functions (still to be addressed).
 if !USING_CLANG_COMPILER
@@ -401,47 +423,10 @@ endif # USING_INTEL_COMPILER
 endif # USING_CLANG_COMPILER
 endif # USING_GNU_COMPILER
 endif # ROSE_USE_EDG_VERSION_4_9
-
-
-
-
-old_rule:
-# DQ (10/23/2016): We don't need this logic since we only use EDG 4.9 and later versions of EDG now.
-# if ROSE_USING_GCC_VERSION_LATER_4_8
-#	@echo "C++11 tests using GNU version 4.8 backend compiler."
-#	@$(MAKE) $(PASSING_TEST_Objects)
-# else
-if ROSE_USE_EDG_VERSION_4_9
-if ROSE_USING_GCC_VERSION_LATER_4_9
-	@echo "C++11 tests using EDG 4.9 and GNU version 4.9 backend compiler are disabled."
-else
-if USING_INTEL_COMPILER
-# DQ (1/24/2017): I think this should work.
-	@echo "C++11 tests using EDG 4.9 Intel backend compiler are allowed."
-	@$(MAKE) $(PASSING_TEST_Objects)
-else
-if USING_CLANG_COMPILER
-# DQ (2/18/2017): These tests will fail using the Clang header files (since they are borrowed from GNU 4.9).
-# DQ (1/24/2017): I think this should work.
-#	    @echo "C++11 tests using EDG 4.9 Clang backend compiler are allowed."
-#	    @$(MAKE) $(PASSING_TEST_Objects)
-	    @echo "C++11 tests using EDG 4.9 Clang backend compiler are NOT allowed with the EDG 4.9 frontend."
-else
-if ROSE_USING_GCC_VERSION_LATER_4_8
-	       @echo "C++11 tests using EDG 4.9 and GNU version 4.8 backend compiler are allowed."
-	       @$(MAKE) $(PASSING_TEST_Objects)
-endif
-endif
-endif
-endif
-else
-	@echo "C++11 tests require configuration with either EDG version 4.9 and GNU version 4.8 or backend compiler or EDG 4.12 and 4.8 or any later GNU compiler."
-	@echo "C++11 tests using EDG 4.12 and any supported backend compiler are allowed."
-	@$(MAKE) $(PASSING_TEST_Objects)
-endif
 	@echo "*********************************************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/Cxx11_tests: make check rule complete (terminated normally) ******"
 	@echo "*********************************************************************************************************************"
+
 
 clean-local:
 	rm -f a.out *.o rose_*.[cC] roseTestProgram.C *.dot

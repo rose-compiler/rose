@@ -21,8 +21,9 @@
 #include <Wt/WText>
 #include <Wt/WVBoxLayout>
 
-using namespace rose;
+using namespace Rose;
 using namespace Sawyer::Message::Common;
+using namespace Rose::BinaryAnalysis;
 
 namespace bROwSE {
 
@@ -386,8 +387,8 @@ WPartitioner::loadSpecimen() {
 void
 WPartitioner::undoLoadSpecimen() {
     if (ctx_.engine.interpretation())
-        ctx_.engine.interpretation()->set_map(NULL);
-    ctx_.engine.memoryMap(MemoryMap());
+        ctx_.engine.interpretation()->set_map(MemoryMap::Ptr());
+    ctx_.engine.memoryMap(MemoryMap::Ptr());
     specimenLoaded_.emit(false);
 }
 
@@ -444,7 +445,7 @@ public:
 
         // Disassemble and partition
         size_t expectedTotal = 0;
-        BOOST_FOREACH (const MemoryMap::Node &node, ctx_->engine.memoryMap().nodes()) {
+        BOOST_FOREACH (const MemoryMap::Node &node, ctx_->engine.memoryMap()->nodes()) {
             if (0 != (node.value().accessibility() & MemoryMap::EXECUTABLE))
                 expectedTotal += node.key().size();
         }

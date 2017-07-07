@@ -16,7 +16,7 @@ ROSE_LIBS = -Wl,-rpath -Wl,$(ROSE_LIB_DIR) -L $(ROSE_LIB_DIR) -L $(ROSE_LIB_DIR)
 
 CPPFLAGS              = -O2 -w -march=native -ftree-vectorize $(EXTRA_INCLUDES) -fopenmp -I.
 #CXXCPPFLAGS           = @CXXCPPFLAGS@
-CXXFLAGS              = -Wno-deprecated
+CXXFLAGS              = -Wno-deprecated -std=c++11
 LDFLAGS               = 
 YACC                  = bison
 

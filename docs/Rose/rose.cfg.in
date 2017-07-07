@@ -690,49 +690,9 @@ INPUT                  = @top_srcdir@/docs/Rose/MainPage.dox \
                          @top_srcdir@/docs/testDoxygen \
                          @top_srcdir@/src/ROSETTA/src/binaryInstruction.C \
                          @top_srcdir@/src/frontend/Disassemblers \
-                         @top_srcdir@/src/frontend/Disassemblers/DisassemblerArm.C \
-                         @top_srcdir@/src/frontend/Disassemblers/Expressions.C \
-                         @top_srcdir@/src/frontend/Disassemblers/Partitioner.C \
-                         @top_srcdir@/src/frontend/Disassemblers/Registers.C \
-                         @top_srcdir@/src/frontend/Disassemblers/SgAsmBlock.C \
-                         @top_srcdir@/src/frontend/Disassemblers/SgAsmFloatValueExpression.C \
-                         @top_srcdir@/src/frontend/Disassemblers/SgAsmFunction.C \
-                         @top_srcdir@/src/frontend/Disassemblers/SgAsmInterpretation.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/DataConversion.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/ElfDynamicLinking.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/ElfErrorFrame.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/ElfFileHeader.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/ElfNote.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/ElfRelocation.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/ElfSection.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/ElfSectionTable.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/ElfSegmentTable.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/ElfStringTable.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/ElfSymbolTable.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/ElfSymbolVersion.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/ExecDOS.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/ExecGeneric.C \
                          @top_srcdir@/src/frontend/BinaryFormats/ExecLE.C \
                          @top_srcdir@/src/frontend/BinaryFormats/ExecNE.C \
                          @top_srcdir@/src/frontend/BinaryFormats/ExtentMap.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/GenericDynamicLinking.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/GenericFile.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/GenericFormat.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/GenericHeader.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/GenericSection.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/GenericString.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/Hexdump.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/IntelPinSupport.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/MemoryMap.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/PeExport.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/PeFileHeader.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/PeImportDirectory.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/PeImportItem.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/PeImportSection.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/PeRvaSizePair.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/PeSection.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/PeSectionTable.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/PeStringTable.C \
                          @top_srcdir@/src/frontend/BinaryFormats/PeSymbolTable.C \
                          @top_srcdir@/src/frontend/BinaryFormats/Rva.C \
                          @top_srcdir@/src/frontend/BinaryLoader \
@@ -749,7 +709,6 @@ INPUT                  = @top_srcdir@/docs/Rose/MainPage.dox \
                          @top_srcdir@/src/midend/binaryAnalyses \
                          @top_srcdir@/src/midend/binaryAnalyses/dataflowanalyses \
                          @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics \
-                         @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/YicesSolver.C \
                          @top_srcdir@/src/midend/binaryAnalyses/libraryIdentification \
                          @top_srcdir@/src/midend/programTransformation/ompLowering \
                          @top_srcdir@/src/midend/midend.docs \
@@ -777,7 +736,6 @@ INPUT                  = @top_srcdir@/docs/Rose/MainPage.dox \
                          @top_srcdir@/src/backend/asmUnparser/unparseX86Asm.C \
                          @top_srcdir@/src/backend/asmUnparser/unparseArmAsm.C \
                          @top_srcdir@/src/backend/asmUnparser/unparsePowerpcAsm.C \
-                         @top_srcdir@/src/backend/asmUnparser/AsmUnparser.C \
                          @top_srcdir@/src/backend/unparser/unparser.docs \
                          @top_srcdir@/src/backend/unparser/languageIndependenceSupport/documentation.docs \
                          @top_srcdir@/src/backend/unparser/CxxCodeGeneration/documentation.docs \
@@ -846,16 +804,6 @@ EXCLUDE                = @top_srcdir@/src/frontend/CxxFrontend/EDG \
                          @top_srcdir@/util/roseString.C \
                          @top_srcdir@/docs/Rose/AstProcessing \
                          @top_srcdir@/docs/Rose/Tutorial \
-			 @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/BaseSemantics.h \
-			 @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/FindRegisterDefs.h \
-			 @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/IntervalSemantics.h \
-			 @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/MultiSemantics.h \
-			 @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/NullSemantics.h \
-			 @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/PartialSymbolicSemantics.h \
-			 @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/ReadWriteRegisterFragment.h \
-			 @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/SymbolicSemantics.h \
-			 @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/flowEquations.h \
-			 @top_srcdir@/src/midend/binaryAnalyses/instructionSemantics/x86InstructionSemantics.h \
                          @top_pwd@/src/frontend/SageIII/StorageClasses.h
 
 # The EXCLUDE_SYMLINKS tag can be used to select whether or not files or

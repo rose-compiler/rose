@@ -24,6 +24,7 @@ SMOKE_SRCDIR = $(abspath $(top_srcdir))/tests/smoke/functional/BinaryAnalysis
 
 # To keep compile commands tidy, please ONLY put required include flags here.
 AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/binaryAnalyses/libraryIdentification
+AM_LDFLAGS = $(ROSE_RPATHS)
 
 TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 TEST_WITH_ANSWER = $(top_srcdir)/scripts/test_with_answer
@@ -46,7 +47,7 @@ conditionalDisable_SOURCES = conditionalDisable.C
 conditionalDisable_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
 
 ###############################################################################################################################
-# Check parsing of symbolic expressions via rose::BinaryAnalysis::SymbolicExprParser
+# Check parsing of symbolic expressions via Rose::BinaryAnalysis::SymbolicExprParser
 ###############################################################################################################################
 noinst_PROGRAMS += testSymbolicExprParser
 testSymbolicExprParser_SOURCES = testSymbolicExprParser.C
@@ -88,12 +89,13 @@ testControlFlow_answers = $(testControlFlow_targets:.passed=.ans)
 EXTRA_DIST += $(testControlFlow_answers)
 TEST_TARGETS += $(testControlFlow_targets)
 
-$(testControlFlow_targets): testControlFlow-%.passed: $(TEST_WITH_ANSWER) testControlFlow testControlFlow-%.dot conditionalDisable
+$(testControlFlow_targets): \
+testControlFlow-%.passed: $(TEST_WITH_ANSWER) testControlFlow testControlFlow-%.ans conditionalDisable
 	@$(RTH_RUN)							\
 		TITLE="AST-based control flow graph, algorithm $* [$@]"	\
 		DISABLED="$$(./conditionalDisable)"			\
 		CMD="./testControlFlow $* $(SPECIMEN_DIR)/buffer2.bin"	\
-		ANS="$(srcdir)/testControlFlow-$*.dot"			\
+		ANS="$(srcdir)/testControlFlow-$*.ans"			\
 		$< $@
 
 
@@ -117,22 +119,22 @@ testFunctionCall_SOURCES = testFunctionCall.C
 testFunctionCall_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 TEST_TARGETS += testFunctionCall-A.passed testFunctionCall-B.passed
-EXTRA_DIST += testFunctionCall-A.dot testFunctionCall-B.dot
+EXTRA_DIST += testFunctionCall-A.ans testFunctionCall-B.ans
 
-testFunctionCall-A.passed: $(TEST_WITH_ANSWER) testFunctionCall testFunctionCall-A.dot conditionalDisable
+testFunctionCall-A.passed: $(TEST_WITH_ANSWER) testFunctionCall testFunctionCall-A.ans conditionalDisable
 	@$(RTH_RUN)							\
 		TITLE="function calls, algorithm A [$@]"		\
 		DISABLED="$$(./conditionalDisable)"			\
 		CMD="./testFunctionCall A $(SPECIMEN_DIR)/buffer2.bin"	\
-		ANS="$(srcdir)/testFunctionCall-A.dot"			\
+		ANS="$(srcdir)/testFunctionCall-A.ans"			\
 		$< $@
 
-testFunctionCall-B.passed: $(TEST_WITH_ANSWER) testFunctionCall testFunctionCall-B.dot conditionalDisable
+testFunctionCall-B.passed: $(TEST_WITH_ANSWER) testFunctionCall testFunctionCall-B.ans conditionalDisable
 	@$(RTH_RUN)							\
 		TITLE="function calls, algorithm B [$@]"		\
 		DISABLED="$$(./conditionalDisable)"			\
 		CMD="./testFunctionCall B $(SPECIMEN_DIR)/buffer2.bin"	\
-		ANS="$(srcdir)/testFunctionCall-B.dot"			\
+		ANS="$(srcdir)/testFunctionCall-B.ans"			\
 		$< $@
 
 
@@ -404,7 +406,7 @@ rot13.passed: rot13.conf rot13 conditionalDisable
 
 
 ###############################################################################################################################
-# Program to test the assembler (see also "disassemble --assemble")
+# Program to test the assembler
 ###############################################################################################################################
 noinst_PROGRAMS += testAssembler
 testAssembler_SOURCES=testAssembler.C
@@ -504,7 +506,7 @@ if ROSE_USE_SQLITE_DATABASE
 
 noinst_PROGRAMS += testLibraryDb
 testLibraryDb_SOURCES = testLibraryDb.C
-testLibraryDb_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+testLibraryDb_LDADD = $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += testLibraryDb.passed
 
@@ -524,7 +526,7 @@ endif
 ###############################################################################################################################
 noinst_PROGRAMS += testPeImports
 testPeImports_SOURCES = testPeImports.C
-testPeImports_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+testPeImports_LDADD = $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += testPeImports.passed
 EXTRA_DIST += testPeImports.ans
@@ -544,7 +546,7 @@ testPeImports.passed: $(TEST_WITH_ANSWER) testPeImports testPeImports.ans condit
 ###############################################################################################################################
 noinst_PROGRAMS += cory002
 cory002_SOURCES = cory002.C
-cory002_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+cory002_LDADD = $(ROSE_SEPARATE_LIBS)
 
 
 ###############################################################################################################################
@@ -552,7 +554,7 @@ cory002_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 ###############################################################################################################################
 noinst_PROGRAMS += cory003
 cory003_SOURCES = cory003.C
-cory003_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+cory003_LDADD = $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += cory003.passed
 
@@ -569,7 +571,7 @@ cory003.passed: $(TEST_EXIT_STATUS) cory003 conditionalDisable
 ###############################################################################################################################
 noinst_PROGRAMS += cory004
 cory004_SOURCES = cory004.C
-cory004_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+cory004_LDADD = $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += cory004.passed
 
@@ -586,7 +588,7 @@ cory004.passed: $(TEST_EXIT_STATUS) cory004 conditionalDisable
 ###############################################################################################################################
 noinst_PROGRAMS += cory006
 cory006_SOURCES = cory006.C
-cory006_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+cory006_LDADD = $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += cory006.passed
 
@@ -603,7 +605,7 @@ cory006.passed: $(TEST_EXIT_STATUS) cory006 conditionalDisable
 ###############################################################################################################################
 noinst_PROGRAMS += cory007
 cory007_SOURCES = cory007.C
-cory007_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+cory007_LDADD = $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += cory007.passed
 
@@ -620,7 +622,7 @@ cory007.passed: $(TEST_EXIT_STATUS) cory007 conditionalDisable
 ###############################################################################################################################
 noinst_PROGRAMS += cory008
 cory008_SOURCES = cory008.C
-cory008_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+cory008_LDADD = $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += cory008.passed
 EXTRA_DIST += cory008.ans
@@ -639,7 +641,7 @@ cory008.passed: $(TEST_WITH_ANSWER) cory008 cory008.ans conditionalDisable
 ###############################################################################################################################
 noinst_PROGRAMS += testSymReadWrite
 testSymReadWrite_SOURCES = testSymReadWrite.C
-testSymReadWrite_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+testSymReadWrite_LDADD = $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += testSymReadWrite.passed
 EXTRA_DIST += testSymReadWrite.conf testSymReadWrite.ans
@@ -658,7 +660,7 @@ testSymReadWrite.passed: testSymReadWrite.conf testSymReadWrite.ans testSymReadW
 ###############################################################################################################################
 noinst_PROGRAMS += testWorkList
 testWorkList_SOURCES = testWorkList.C
-testWorkList_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+testWorkList_LDADD = $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += testWorkList.passed
 
@@ -675,7 +677,7 @@ testWorkList.passed: $(TEST_EXIT_STATUS) testWorkList conditionalDisable
 ###############################################################################################################################
 noinst_PROGRAMS += testMap
 testMap_SOURCES = testMap.C
-testMap_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+testMap_LDADD = $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += testMap.passed
 
@@ -692,7 +694,7 @@ testMap.passed: $(TEST_EXIT_STATUS) testMap conditionalDisable
 ###############################################################################################################################
 noinst_PROGRAMS += testPointerDetection
 testPointerDetection_SOURCES = testPointerDetection.C
-testPointerDetection_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+testPointerDetection_LDADD = $(ROSE_SEPARATE_LIBS)
 
 PointerDetectionSpecimen = $(SPECIMEN_DIR)/i386-pointers
 PointerDetectionSpecimenFunctions =											\
@@ -724,7 +726,7 @@ testPointerDetection.passed: $(TEST_WITH_ANSWER) testPointerDetection testPointe
 ###############################################################################################################################
 noinst_PROGRAMS += testCallDetection
 testCallDetection_SOURCES = testCallDetection.C
-testCallDetection_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+testCallDetection_LDADD = $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += testCallDetection.passed
 EXTRA_DIST += testCallDetection.ans
@@ -745,7 +747,7 @@ testCallDetection.passed: $(TEST_WITH_ANSWER) $(SPECIMEN_DIR)/i386-fcalls testCa
 noinst_PROGRAMS += testReturnsValue
 testReturnsValue_SOURCES = testReturnsValue.C
 testReturnsValue_CPPFLAGS = -DROSE_BINARY_TEST_DISABLED='"deprecation"' $(AM_CPPFLAGS)
-testReturnsValue_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+testReturnsValue_LDADD = $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += testReturnsValue.passed
 
@@ -780,7 +782,7 @@ usedef.passed: usedef.conf symbolicSemantics2 $(SPECIMEN_DIR)/usedef conditional
 ###############################################################################################################################
 noinst_PROGRAMS += testBitPattern
 testBitPattern_SOURCES = testBitPattern.C
-testBitPattern_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+testBitPattern_LDADD = $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += testBitPattern.passed
 
@@ -797,7 +799,7 @@ testBitPattern.passed: $(TEST_EXIT_STATUS) testBitPattern conditionalDisable
 ###############################################################################################################################
 noinst_PROGRAMS += testRNG
 testRNG_SOURCES = testRNG.C
-testRNG_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+testRNG_LDADD = $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += testRNG.passed
 
@@ -814,7 +816,7 @@ testRNG.passed: $(TEST_EXIT_STATUS) testRNG conditionalDisable
 ###############################################################################################################################
 noinst_PROGRAMS += testSymbolicSimplification
 testSymbolicSimplification_SOURCES = testSymbolicSimplification.C
-testSymbolicSimplification_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+testSymbolicSimplification_LDADD = $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += testSymbolicSimplification.passed
 EXTRA_DIST += testSymbolicSimplification.ans
@@ -833,7 +835,7 @@ testSymbolicSimplification.passed: $(TEST_WITH_ANSWER) testSymbolicSimplificatio
 ###############################################################################################################################
 noinst_PROGRAMS += testSymbolicFlags
 testSymbolicFlags_SOURCES = testSymbolicFlags.C
-testSymbolicFlags_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+testSymbolicFlags_LDADD = $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += testSymbolicFlags.passed
 EXTRA_DIST += testSymbolicFlags.ans
@@ -852,7 +854,7 @@ testSymbolicFlags.passed: $(TEST_WITH_ANSWER) testSymbolicFlags testSymbolicFlag
 ###############################################################################################################################
 noinst_PROGRAMS += verifySemantics
 verifySemantics_SOURCES = verifySemantics.C
-verifySemantics_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+verifySemantics_LDADD = $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += verifySemantics.passed
 
@@ -865,7 +867,7 @@ verifySemantics.passed: $(TEST_EXIT_STATUS) verifySemantics
 
 
 ###############################################################################################################################
-# Disassembly tests using rose::BinaryAnalysis::Partitioner2
+# Disassembly tests using Rose::BinaryAnalysis::Partitioner2
 ###############################################################################################################################
 
 # Disassembles executables using Partitioner2
@@ -923,90 +925,6 @@ testP2map_%.passed: $(SPECIMEN_DIR)/% $(SMOKE_BLDDIR)/testPartitioner2 condition
 
 PHONIES += check-testPartitioner2
 check-testPartitioner2: $(testPartitioner2_test_targets) $(testP2map_test_targets)
-
-
-
-
-###############################################################################################################################
-# Disassembly tests using the old partitioner (deprecated)
-###############################################################################################################################
-
-noinst_PROGRAMS += disassemble
-disassemble_SOURCES = disassemble.C linux_syscalls.C
-disassemble_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-
-# Disassembly of executable files (DOS, ELF, PE) of various architectures (amd64, Arm, Mips, M68k, PowerPC, x86)
-# MIPS specimens are currently failing a FIXME assertion in makeShadowRegister()
-# PowerPC specimens have lots of "XL-Form xoOpcode = 36 not handled!" and similar errors
-# Be careful where the comma is located!
-disassemble1_specimens =					\
-	$(filter-out						\
-		$(nonsmoke_specimens_binary_any_any_mips)	\
-		$(nonsmoke_specimens_binary_any_any_ppc)	\
-		$(nonsmoke_specimens_binary_large),		\
-		$(nonsmoke_specimens_binary_any_exe_any))
-disassemble1_test_targets = $(addprefix disassemble1_, $(addsuffix .passed, $(disassemble1_specimens)))
-disassemble1_answers = $(disassemble1_test_targets:.passed=.ans)
-
-EXTRA_DIST += $(disassemble1_answers) disassemble.conf
-TEST_TARGETS += $(disassemble1_test_targets)
-
-$(disassemble1_test_targets): disassemble1_%.passed: $(SPECIMEN_DIR)/% disassemble disassemble.conf disassemble1_%.ans conditionalDisable
-	@$(RTH_RUN)						\
-		TITLE="disassemble $(notdir $<) [$@]"		\
-		DISABLED="$$(./conditionalDisable)"		\
-		USE_SUBDIR=yes					\
-		EXE="$$(pwd)/disassemble"			\
-		SWITCHES=					\
-		PSEARCH="-rose:partitioner_search -leftovers"	\
-		ARGS="$<"					\
-		$(srcdir)/disassemble.conf $@
-
-# Disassembly of raw x86 buffers (these should probably have position independent code)
-disassemble2_specimens = $(filter-out $(nonsmoke_specimens_binary_large), $(nonsomke_specimens_binary_raw_insns_x86))
-disassemble2_test_targets = $(addprefix disassemble2_, $(addsuffix .passed, $(disassemble2_specimens)))
-disassemble2_answers = $(disassemble2_test_targets:.passed=.ans)
-
-EXTRA_DIST += $(disassemble2_answers)
-TEST_TARGETS += $(disassemble2_test_targets)
-
-disassemble2_buffer2.raw.passed: $(SPECIMEN_DIR)/buffer2.raw disassemble disassemble.conf disassemble2_buffer2.raw.ans conditionalDisable
-	@$(RTH_RUN)													\
-		TITLE="disassemble $(notdir $<) [$@]"									\
-		DISABLED="$$(./conditionalDisable)"									\
-		USE_SUBDIR=yes												\
-		EXE="$$(pwd)/disassemble"										\
-		SWITCHES="--disassemble --linear --raw=0x08048310"							\
-		DSEARCH="-rose:disassembler_search following,immediate,words,-allbytes,unused,nonexe,deadend,-unknown"	\
-		ARGS="$< 0x08048310"											\
-		$(srcdir)/disassemble.conf $@
-
-disassemble2_vm-final.raw.passed: $(SPECIMEN_DIR)/vm-final.raw disassemble disassemble.conf disassemble2_vm-final.raw.ans
-	@$(RTH_RUN)													\
-		DISABLED="This takes forever to run"									\
-		TITLE="disassemble $(notdir $<) [$@]"									\
-		USE_SUBDIR=yes												\
-		EXE="$$(pwd)/disassemble"										\
-		SWITCHES="--disassemble --linear --raw=0x00c01000"							\
-		DSEARCH="-rose:disassembler_search following,immediate,words,-allbytes,unused,nonexe,deadend,-unknown"	\
-		ARGS="$< 0x00c00000"											\
-		$(srcdir)/disassemble.conf $@
-
-disassemble2_other_targets = $(filter-out	\
-	disassemble2_buffer2.raw.passed		\
-	disassemble2_vm-final.raw.passed	\
-	,$(disassemble2_test_targets))
-
-$(disassemble2_other_targets): disassemble2_%.passed: $(SPECIMEN_DIR)/% disassemble
-	@$(RTH_RUN)						\
-		DISABLED="unknown map and entry address"	\
-		TITLE="disassemble $(notdir $<) [$@]"		\
-		CMD=false					\
-		$(srcdir)/disassemble.conf $@
-
-# A convenient target for just testing the disassembler
-PHONIES += check-disassemble
-check-disassemble: $(disassemble1_test_targets) $(disassemble2_test_targets)
 
 
 ###############################################################################################################################
@@ -1289,7 +1207,7 @@ EXTRA_DIST += llvmAnalysis.conf
 #TEST_TARGETS += $(llvmAnalysis_TestTargets)
 MOSTLYCLEANFILES += $(llvmAnalysis_TestTargets) $(llvmAnalysis_TestTargets:.passed=.failed)
 
-$(llvmAnalysis_TestTargets): llvm-analysis-%.passed: $(llvmAnalysis_SpecimenDir)/%.c llvmTranscoder disassemble conditionalDisable
+$(llvmAnalysis_TestTargets): llvm-analysis-%.passed: $(llvmAnalysis_SpecimenDir)/%.c llvmTranscoder conditionalDisable
 	@$(RTH_RUN)											\
 		TITLE="LLVM analysis for $(notdir $<) [$@]"						\
 		DISABLED="$$(./conditionalDisable)"							\
@@ -1372,7 +1290,7 @@ check-noop: $(testNoop_TestTargets)
 
 noinst_PROGRAMS += testStaticSemantics
 testStaticSemantics_SOURCES = testStaticSemantics.C
-testStaticSemantics_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+testStaticSemantics_LDADD = $(ROSE_SEPARATE_LIBS)
 
 # We lack semantics for some architectures, so don't try to test them (the result would be an std::runtime_error with the
 # message "no instruction semantics for architecture".  Also, we skip pocketputty2.exe because it takes too long with lots
@@ -1406,7 +1324,7 @@ check-testStaticSemantics: $(testStaticSemantics_test_targets)
 
 noinst_PROGRAMS += testLazyInitialStates
 testLazyInitialStates_SOURCES = testLazyInitialStates.C
-testLazyInitialStates_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+testLazyInitialStates_LDADD = $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += testLazyInitialStates.passed
 
@@ -1422,88 +1340,6 @@ testLazyInitialStates.passed: $(SPECIMEN_DIR)/i386-initialState testLazyInitialS
 ###############################################################################################################################
 # Test various things for all our sample binaries
 ###############################################################################################################################
-# These all depend on the deprecated "disassemble" tool.
-
-#--------------------------------------------------------------------------------
-parse_Specimens = $(filter-out $(nonsmoke_specimens_binary_large), $(nonsmoke_specimens_binary_any_exe_any))
-parse_Targets = $(addprefix parse_, $(addsuffix .passed, $(parse_Specimens)))
-
-TEST_TARGETS += $(parse_Targets)
-
-$(parse_Targets): parse_%.passed: $(SPECIMEN_DIR)/% disassemble conditionalDisable
-	@$(RTH_RUN)					\
-		TITLE="parse $(notdir $<) [$@]"		\
-		DISABLED="$$(./conditionalDisable)"	\
-		CMD="$$(pwd)/disassemble $(abspath $<)"	\
-		USE_SUBDIR=yes				\
-		$(TEST_EXIT_STATUS) $@
-
-PHONIES += check_parse_container
-check_parse_container: $(parse_Targets)
-
-#--------------------------------------------------------------------------------
-#FIXME: MIPS parser chokes on unimplemented DisassemblerMips::makeShadowRegister() [Robb Matzke 2013-08-30]
-disassemble_Specimens =						\
-	$(filter-out						\
-		$(nonsmoke_specimens_binary_any_any_mips)	\
-		$(nonsmoke_specimens_binary_large),		\
-		$(nonsmoke_specimens_binary_any_exe_any))
-
-disassemble_Targets = $(addprefix disassemble_, $(addsuffix .passed, $(disassemble_Specimens)))
-
-TEST_TARGETS += $(disassemble_Targets)
-
-$(disassemble_Targets): disassemble_%.passed: $(SPECIMEN_DIR)/% disassemble conditionalDisable
-	@$(RTH_RUN)						\
-		TITLE="disassemble $(notdir $<) [$@]"		\
-		DISABLED="$$(./conditionalDisable)"		\
-		CMD="$$(pwd)/disassemble --quiet $(abspath $<)"	\
-		USE_SUBDIR=yes					\
-		$(TEST_EXIT_STATUS) $@
-
-PHONIES += check_disassemble
-check_disassemble: $(disassemble_Targets)
-
-#--------------------------------------------------------------------------------
-#FIXME: MIPS parser chokes on unimplemented DisassemblerMips::makeShadowRegister() [Robb Matzke 2013-08-30]
-unparse_Specimens =						\
-	$(filter-out						\
-		$(nonsmoke_specimens_binary_any_any_mips)	\
-		$(nonsmoke_specimens_binary_large),		\
-		$(nonsmoke_specimens_binary_any_exe_any))
-
-unparse_Targets = $(addprefix unparse_, $(addsuffix .passed, $(unparse_Specimens)))
-
-TEST_TARGETS += $(unparse_Targets)
-
-$(unparse_Targets): unparse_%.passed: $(SPECIMEN_DIR)/% disassemble conditionalDisable
-	@$(RTH_RUN)					\
-		TITLE="unparse $(notdir $<) [$@]"	\
-		DISABLED="$$(./conditionalDisable)"	\
-		CMD="$$(pwd)/disassemble $(abspath $<)"	\
-		USE_SUBDIR=yes				\
-		$(TEST_EXIT_STATUS) $@
-
-PHONIES += check_unparse
-check_unparse: $(unparse_Targets)
-
-#--------------------------------------------------------------------------------
-#FIXME: all of the x86 executables have at least one thing that doesn't assemble [Robb Matzke 2013-08-30]
-#assemble_Specimens = $(nonsmoke_specimens_binary_any_exe_x86)
-assemble_Targets = $(addprefix assemble_, $(addsuffix .passed, $(assemble_Specimens)))
-
-TEST_TARGETS += $(assemble_Targets)
-
-$(assemble_Targets): assemble_%.passed: $(SPECIMEN_DIR)/% disassemble conditionalDisable
-	@$(RTH_RUN)									\
-		TITLE="assemble $(notdir $<) [$@]"					\
-		DISABLED="$$(./conditionalDisable)"					\
-		CMD="$$(pwd)/disassemble --quiet --reassemble --show-bad $(abspath $<)"	\
-		USE_SUBDIR=yes								\
-		$(TEST_EXIT_STATUS) $@
-
-PHONIES += check_assemble
-check_assemble: $(assemble_Targets)
 
 #--------------------------------------------------------------------------------
 #FIXME: all the ARM specimens are failing, and have been. This might be due to poor disassembly. [Robb Matzke 2013-08-30]
@@ -1538,7 +1374,7 @@ check_specimens: check_parse_container check_disassemble check_unparse check_ass
 
 noinst_PROGRAMS += testRandomInput
 testRandomInput_SOURCES = testRandomInput.C
-testRandomInput_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+testRandomInput_LDADD = $(ROSE_SEPARATE_LIBS)
 
 testRandomInput_ISAs = amd64 arm coldfire i386 m68040 mips-be mips-le ppc
 testRandomInput_Targets = $(addprefix tri_, $(addsuffix .passed, $(testRandomInput_ISAs)))
@@ -1561,7 +1397,7 @@ check-random-input: $(testRandomInput_Targets)
 # DQ (2/6/2017): This fails to to compile with GNU 4.8.4 and Boost 1.60.
 # noinst_PROGRAMS += testSageSerialization
 # testSageSerialization_SOURCES = testSageSerialization.C
-# testSageSerialization_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+# testSageSerialization_LDADD = $(ROSE_SEPARATE_LIBS)
 
 # TEST_TARGETS += testSageSerialization.passed
 
@@ -1596,10 +1432,12 @@ test_small_pdf_generation.passed: $(test_pdf_small_specimen) $(test_pdf_translat
 		CMD="$(test_pdf_translator) -rose:verbose 0 $< && ls -l *.pdf"	\
 		$(TEST_EXIT_STATUS) $@
 
+# Matzke (2017-05-08): Disabled because it can take >900 seconds when debugging is enabled, and the
+# functionality is already mostly tested by test_small_pdf_generation.passed
 test_large_pdf_generation.passed: $(test_pdf_large_specimen) $(test_pdf_translator) conditionalDisable
 	@$(RTH_RUN)								\
 		TITLE="generation of large PDF file [$@]"			\
-		DISABLED="$$(./conditionalDisable)"				\
+		DISABLED="takes too long"					\
 		USE_SUBDIR=yes							\
 		CMD="$(test_pdf_translator) -rose:verbose 0 $< && ls -l *.pdf"	\
 		$(TEST_EXIT_STATUS) $@
@@ -1611,15 +1449,15 @@ test_large_pdf_generation.passed: $(test_pdf_large_specimen) $(test_pdf_translat
 
 if ROSE_BUILD_OS_IS_CYGWIN
 # DQ (3/21/2009): These tests don't appear to run under Cygwin.
-check-nonsmoke-local:
+check-local:
 	@echo "  TESTING (disabled: all tests disabled for Cygwin)"
 else
 # Binary analysis is enabled and supported
-check-nonsmoke-local: $(TEST_TARGETS)
+check-local: $(TEST_TARGETS)
 endif
 else
 # Binary analysis is not enabled
-check-nonsmoke-local:
+check-local:
 	@echo "  TESTING (disabled: binary frontend is not enabled)"
 endif
 

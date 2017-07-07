@@ -1,24 +1,15 @@
-/****************************************************
- * RoseBin :: Binary Analysis for ROSE
- * Author : tps
- * Date : 5Apr07
- * Decription : unparser
- ****************************************************/
-
-// tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
 #include "AsmUnparser.h"
 
 #include <iomanip>
 #include <boost/lexical_cast.hpp>
 #include "integerOps.h"
-#include "powerpcInstructionProperties.h"
 #include "Registers.h"
 #include "Diagnostics.h"
 
-using namespace rose;
-using namespace rose::Diagnostics;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;
+using namespace Rose::Diagnostics;
+using namespace Rose::BinaryAnalysis;
 
 /****************************************************
  * resolve expression
@@ -93,7 +84,6 @@ static std::string unparsePowerpcExpression(SgAsmExpression* expr, const AsmUnpa
             ASSERT_not_reachable("invalid PowerPC expression: " + expr->class_name());
         }
     }
-    result = StringUtility::appendAsmComment(result, expr->get_replacement());
     result = StringUtility::appendAsmComment(result, expr->get_comment());
     return result;
 }

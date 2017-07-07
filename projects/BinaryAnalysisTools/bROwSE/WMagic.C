@@ -9,7 +9,8 @@
 #include <Wt/WText>
 #include <Wt/WVBoxLayout>
 
-using namespace rose;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 
 namespace bROwSE {
 
@@ -26,21 +27,21 @@ enum ColumnNumber {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class MagicModel: public Wt::WAbstractTableModel {
-    rose::BinaryAnalysis::MagicNumber analyzer_;
-    MemoryMap memoryMap_;
+    Rose::BinaryAnalysis::MagicNumber analyzer_;
+    MemoryMap::Ptr memoryMap_;
 public:
-    const MemoryMap& memoryMap() const {
+    MemoryMap::Ptr memoryMap() const {
         return memoryMap_;
     }
 
-    void memoryMap(const MemoryMap &map) {
+    void memoryMap(const MemoryMap::Ptr &map) {
         layoutAboutToBeChanged().emit();
         memoryMap_ = map;
         layoutChanged().emit();
     }
 
     rose_addr_t addressForRow(size_t row) const {
-        BOOST_FOREACH (const AddressInterval &interval, memoryMap_.intervals()) {
+        BOOST_FOREACH (const AddressInterval &interval, memoryMap_->intervals()) {
             if (row < interval.size())
                 return interval.least() + row;
             row -= interval.size();
@@ -49,7 +50,7 @@ public:
     }
 
     virtual int rowCount(const Wt::WModelIndex &parent) const ROSE_OVERRIDE {
-        return parent.isValid() ? 0 : memoryMap_.size();
+        return parent.isValid() ? 0 : memoryMap_->size();
     }
 
     virtual int columnCount(const Wt::WModelIndex &parent) const ROSE_OVERRIDE {
@@ -79,7 +80,7 @@ public:
                 return Wt::WString(StringUtility::addrToString(va));
             } else if (index.column()>=FirstByteColumn && index.column()<=LastByteColumn) {
                 uint8_t ch;
-                if (memoryMap_.at(va + index.column()-FirstByteColumn).limit(1).read(&ch)) {
+                if (memoryMap_->at(va + index.column()-FirstByteColumn).limit(1).read(&ch)) {
                     std::string s = charToString(ch);
                     if (s.empty()) {
                         char buf[8];
@@ -141,13 +142,13 @@ WMagic::init() {
     hbox->addWidget(wTableView_);
 }
 
-const MemoryMap&
+MemoryMap::Ptr
 WMagic::memoryMap() const {
     return model_->memoryMap();
 }
 
 void
-WMagic::memoryMap(const MemoryMap &map) {
+WMagic::memoryMap(const MemoryMap::Ptr &map) {
     model_->memoryMap(map);
 }
 

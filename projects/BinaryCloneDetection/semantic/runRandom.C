@@ -22,11 +22,11 @@
 # define INSTRUCTION_POINTER eip
 #endif
 
-using namespace rose;
+using namespace Rose;
 using namespace StringUtility;
 using namespace BinaryAnalysis;
 using namespace Sawyer::Message::Common;
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 static Sawyer::Message::Facility mlog;
 
@@ -291,7 +291,7 @@ main(int argc, char *argv[]) {
     P2::Partitioner partitioner = engine.partition();
     if (settings.showMaps) {
         std::cout <<"ROSE loader specimen memory map:\n";
-        partitioner.memoryMap().dump(std::cout);
+        partitioner.memoryMap()->dump(std::cout);
     }
     std::vector<P2::Function::Ptr> functions = partitioner.functions();
     info <<"; completed in " <<partitionTimer <<" seconds.\n";

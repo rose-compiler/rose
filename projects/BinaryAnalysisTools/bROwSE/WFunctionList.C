@@ -8,7 +8,8 @@
 #include <Wt/WText>
 #include <Wt/WVBoxLayout>
 
-using namespace rose;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 
 namespace bROwSE {
 
@@ -100,7 +101,7 @@ WFunctionList::functions() const {
 // Internal: called when top gutter is clicked. Zoom to segment and emit segmentAddressClicked
 void
 WFunctionList::selectSegmentByAddress(rose_addr_t va, const Wt::WMouseEvent &event) {
-    boost::iterator_range<MemoryMap::ConstNodeIterator> found = ctx_.partitioner.memoryMap().at(va).nodes();
+    boost::iterator_range<MemoryMap::ConstNodeIterator> found = ctx_.partitioner.memoryMap()->at(va).nodes();
     if (found.begin() != found.end()) {
         const AddressInterval &interval = found.begin()->key();
         wAddressSpace_->displayedDomain(interval);

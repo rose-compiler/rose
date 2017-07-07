@@ -8,7 +8,7 @@
 #include <boost/shared_ptr.hpp>
 #include <stdexcept>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /** Various tools for performing tainted flow analysis.
@@ -133,11 +133,25 @@ protected:
 
         StatePtr operator()(size_t cfgVertex, const StatePtr &in);
 
-        StatePtr operator()(const StatePtr &in) {
-            return in->copy();
-        }
+        std::string printState(const StatePtr &in);
     };
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Merge function
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+protected:
+    class MergeFunction {
+    public:
+        bool operator()(StatePtr &dst /*in,out*/, const StatePtr &src) const {
+            ASSERT_not_null(src);
+            if (!dst) {
+                dst = src->copy();
+                return true;                            // destination changed
+            }
+            return dst->merge(src);
+        }
+    };
+    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Data members
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -163,7 +177,7 @@ public:
 
     /** Initialize diagnostics.
      *
-     *  This is called by rose::Diagnostics::initialize. */
+     *  This is called by Rose::Diagnostics::initialize. */
     static void initDiagnostics();
 
     /** Property: approximation.
@@ -192,7 +206,7 @@ public:
      *
      *  This method computes a data flow graph for each reachable vertex of the control flow graph, and as a result also
      *  obtains the list of variables over which the tainted flow analysis will operate.  It uses whatever algorithm is
-     *  implemented in @ref rose::BinaryAnalysis::DataFlow::buildGraphPerVertex. */
+     *  implemented in @ref Rose::BinaryAnalysis::DataFlow::buildGraphPerVertex. */
     template<class CFG>
     void computeFlowGraphs(const CFG &cfg, size_t cfgStartVertex) {
         using namespace Diagnostics;
@@ -264,7 +278,8 @@ public:
         Stream mesg(mlog[WHERE] <<"runToFixedPoint starting at CFG vertex " <<cfgStartVertex);
         results_.clear();
         TransferFunction xfer(vertexFlowGraphs_, approximation_, smtSolver_, mlog);
-        DataFlow::Engine<CFG, StatePtr, TransferFunction> dfEngine(cfg, xfer);
+        MergeFunction merge;
+        DataFlow::Engine<CFG, StatePtr, TransferFunction, MergeFunction> dfEngine(cfg, xfer, merge);
         dfEngine.runToFixedPoint(cfgStartVertex, initialState);
         results_ = dfEngine.getFinalStates();
         mesg <<"; results for " <<StringUtility::plural(results_.size(), "vertices", "vertex") <<"\n";

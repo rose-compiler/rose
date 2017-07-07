@@ -36,7 +36,7 @@
 // we use INT_MIN, INT_MAX
 #include "limits.h"
 #include "AstNodeInfo.h"
-#include "TypeSizeMapping.h"
+#include "SgTypeSizeMapping.h"
 
 namespace CodeThorn {
 
@@ -48,6 +48,8 @@ namespace CodeThorn {
   typedef std::pair<int, const EState*> FailedAssertion;
   typedef std::pair<PState,  std::list<int> > PStatePlusIOHistory;
   enum AnalyzerMode { AM_ALL_STATES, AM_LTL_STATES };
+
+  class SpotConnection;
 
 /*! 
   * \author Markus Schordan
@@ -68,12 +70,14 @@ namespace CodeThorn {
     static void initDiagnostics();
     static std::string nodeToString(SgNode* node);
     void initAstNodeInfo(SgNode* node);
-    bool isInExplicitStateMode();
     bool isActiveGlobalTopify();
     void initializeSolver1(std::string functionToStartAt,SgNode* root, bool oneFunctionOnly);
     void initializeTraceSolver(std::string functionToStartAt,SgNode* root);
     void continueAnalysisFrom(EState* newStartEState);
     
+    // set the size of an element determined by this type
+    void setElementSize(VariableId variableId, SgType* elementType);
+
     EState analyzeVariableDeclaration(SgVariableDeclaration* nextNodeToAnalyze1,EState currentEState, Label targetLabel);
 
     PState analyzeAssignRhsExpr(PState currentPState,VariableId lhsVar, SgNode* rhs,ConstraintSet& cset);
@@ -96,6 +100,7 @@ namespace CodeThorn {
     void printStatusMessage(string s);
     void printStatusMessageLine(string s);
     void printStatusMessage(string s, bool newLineFlag);
+    std::string analyzerStateToString();
     static string lineColSource(SgNode* node);
     void recordTransition(const EState* sourceEState, Edge e, const EState* targetEState);
     void printStatusMessage(bool);
@@ -252,18 +257,22 @@ namespace CodeThorn {
     void setGlobalTopifyMode(GlobalTopifyMode mode);
     void setExternalErrorFunctionName(std::string externalErrorFunctionName);
     // enables external function semantics 
-    void enableExternalFunctionSemantics();
-    void disableExternalFunctionSemantics();
-    bool isUsingExternalFunctionSemantics() { return _externalFunctionSemantics; }
+    void enableSVCompFunctionSemantics();
+    void disableSVCompFunctionSemantics();
+    bool svCompFunctionSemantics() { return _svCompFunctionSemantics; }
+    bool stdFunctionSemantics() { return _stdFunctionSemantics; }
     void setModeLTLDriven(bool ltlDriven) { transitionGraph.setModeLTLDriven(ltlDriven); }
     bool getModeLTLDriven() { return transitionGraph.getModeLTLDriven(); }
+    // only used in LTL-driven mode
+    void setSpotConnection(SpotConnection* connection) { _spotConnection = connection; }
+
     long analysisRunTimeInSeconds(); 
 
     void set_finished(std::vector<bool>& v, bool val);
     bool all_false(std::vector<bool>& v);
 
-    void setTypeSizeMapping(TypeSizeMapping* typeSizeMapping);
-    TypeSizeMapping* getTypeSizeMapping();
+    void setTypeSizeMapping(SgTypeSizeMapping* typeSizeMapping);
+    SgTypeSizeMapping* getTypeSizeMapping();
   private:
     GlobalTopifyMode _globalTopifyMode;
     set<AbstractValue> _compoundIncVarsSet;
@@ -300,6 +309,10 @@ namespace CodeThorn {
     long int _maxIterationsForcedTop;
     long int _maxBytesForcedTop;
     long int _maxSecondsForcedTop;
+    // only used in LTL-driven mode
+    size_t _prevStateSetSizeDisplay = 0;
+    size_t _prevStateSetSizeResource = 0;
+
     PState _startPState;
     bool _optionStatusMessages;
 
@@ -326,7 +339,6 @@ namespace CodeThorn {
     EState createEState(Label label, PState pstate, ConstraintSet cset);
     EState createEState(Label label, PState pstate, ConstraintSet cset, InputOutput io);
     
-    TypeSizeMapping* _typeSizeMapping;
     VariableValueMonitor variableValueMonitor;
 
     bool _treatStdErrLikeFailedAssert;
@@ -342,12 +354,17 @@ namespace CodeThorn {
     int _approximated_iterations;
     int _curr_iteration_cnt;
     int _next_iteration_cnt;
-    bool _externalFunctionSemantics;
+
+    bool _stdFunctionSemantics=true;
+
+    bool _svCompFunctionSemantics;
     string _externalErrorFunctionName; // the call of this function causes termination of analysis
     string _externalNonDetIntFunctionName;
     string _externalNonDetLongFunctionName;
     string _externalExitFunctionName;
+
     Timer _analysisTimer;
+    bool _timerRunning = false;
 
     // =======================================================================
     // ========================== LTLAnalyzer ================================
@@ -437,7 +454,7 @@ namespace CodeThorn {
     void setAnalyzerToSolver8(EState* startEState, bool resetAnalyzerData);
 
     // first: list of new states (worklist), second: set of found existing states
-    typedef pair<EStateWorkList,EStateSet> SubSolverResultType;
+    typedef pair<EStateWorkList,std::set<const EState*> > SubSolverResultType;
     SubSolverResultType subSolver(const EState* currentEStatePtr);
 
     PropertyValueTable* loadAssertionsToReconstruct(string filePath);
@@ -495,8 +512,8 @@ namespace CodeThorn {
     const EState* _estateBeforeMissingInput;
     const EState* _latestOutputEState;
     const EState* _latestErrorEState;
-
-
+    // only used in LTL-driven mode
+    SpotConnection* _spotConnection = nullptr;
 
   }; // end of class Analyzer
 

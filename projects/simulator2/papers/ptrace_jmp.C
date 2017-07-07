@@ -20,7 +20,7 @@
 #include "rose.h"
 #include "RSIM_Private.h"
 
-using namespace rose;
+using namespace Rose;
 
 #if defined(ROSE_ENABLE_SIMULATOR) && __WORDSIZE==64 /* protects this whole file */
 

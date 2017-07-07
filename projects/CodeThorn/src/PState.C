@@ -19,6 +19,7 @@ PState::PState() {
 void PState::toStream(ostream& os) const {
   os<<toString();
 }
+
 string PState::toString() const {
   stringstream ss;
   //ss << "PState=";
@@ -269,14 +270,12 @@ bool CodeThorn::operator!=(const PState& c1, const PState& c2) {
   return !(c1==c2);
 }
 
-AbstractValue PState::readFromMemoryLocation(AbstractValue abstrValue) const {
-  if(abstrValue.isTop()) {
-    // report potential memory violation
-    cout<<"WARNING: reading from unknown memory location (top)."<<endl;
-    // result can be any value.
-    return abstrValue;
+AbstractValue PState::readFromMemoryLocation(AbstractValue abstractMemLoc) const {
+  if(abstractMemLoc.isTop()) {
+    // result can be any value
+    return AbstractValue(CodeThorn::Top());
   }
-  return this->varValue(abstrValue);
+  return this->varValue(abstractMemLoc);
 }
 
 void PState::writeToMemoryLocation(AbstractValue abstractMemLoc,

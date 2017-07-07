@@ -21,6 +21,10 @@
 #   include "unparseFortran_modfile.h"
 #endif
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#   include <Partitioner2/Engine.h>
+#endif
+
 #include <algorithm>
 
 #include <boost/algorithm/string/join.hpp>
@@ -44,7 +48,7 @@ operator<<(std::basic_ostream<char, std::char_traits<char> >& os, std::vector<bo
 
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 using namespace SageInterface;
 using namespace SageBuilder;
 using namespace OmpSupport;
@@ -604,10 +608,7 @@ isBinaryExecutableFile ( string sourceFilename )
   // Open file for reading
      FILE* f = fopen(sourceFilename.c_str(), "rb");
      if (!f)
-        {
-          printf ("Could not open file");
-          ROSE_ASSERT(false);
-        }
+         return false;                                  // a file that cannot be opened is not a binary file
 
      int character0 = fgetc(f);
      int character1 = fgetc(f);
@@ -645,10 +646,7 @@ isLibraryArchiveFile ( string sourceFilename )
   // Open file for reading
      FILE* f = fopen(sourceFilename.c_str(), "rb");
      if (!f)
-        {
-          printf ("Could not open file in isLibraryArchiveFile()");
-          ROSE_ASSERT(false);
-        }
+         return false;                                  // a non-existing file is not a library archive
 
      string magicHeader;
      for (int i = 0; i < 7; i++)
@@ -844,9 +842,12 @@ cout.flush();
        // Zack Galbreath 1/9/2014: Windows absolute paths do not begin with "/".
        // The following printf could cause problems for our testing systems because
        // it contains the word "error".
+       // [Robb P Matzke 2017-04-21]: Such a low-level utility function as this shouldn't be emitting output at all, especially
+       // not on standard output, because it makes it problematic to call this in situations where the file might not
+       // exist.
        #ifndef _MSC_VER
-          if (sourceFilename.substr(0,targetSubstring.size()) != targetSubstring)
-               printf ("sourceFilename encountered an error in filename\n");
+          //if (sourceFilename.substr(0,targetSubstring.size()) != targetSubstring)
+          //     printf ("sourceFilename encountered an error in filename\n");
        #endif
        
        // DQ (11/29/2006): Even if this is C mode, we have to define the __cplusplus macro
@@ -1692,8 +1693,8 @@ SgProject::parseCommandLine(std::vector<std::string> argv)
 
      using namespace Sawyer::CommandLine;
 
-     using namespace rose;                   // the ROSE team is migrating everything to this namespace
-     using namespace rose::Diagnostics;      // for mlog, INFO, WARN, ERROR, FATAL, etc.
+     using namespace Rose;                   // the ROSE team is migrating everything to this namespace
+     using namespace Rose::Diagnostics;      // for mlog, INFO, WARN, ERROR, FATAL, etc.
 
   // Use CommandlineProcessing to create a consistent parser among all tools.  If you want a tool's parser to be different
   // then either create one yourself, or modify the parser properties after createParser returns. The createEmptyParserStage
@@ -2223,7 +2224,7 @@ SgProject::parse()
 
           nameIterator++;
           i++;
-        }
+        } // end while
 
 #if 0
      printf ("In Project::parse(): (calling the frontend on all previously setup SgFile objects) vectorOfFiles.size() = %" PRIuPTR " \n",vectorOfFiles.size());
@@ -2238,7 +2239,7 @@ SgProject::parse()
 #endif
 
   // DQ (6/13/2013): Test the new function to lookup the SgFile from the name with full path.
-  // This is a simple consistancy test for that new function.
+  // This is a simple consistency test for that new function.
      for (size_t i = 0; i < vectorOfFiles.size(); i++)
         {
           string filename = vectorOfFiles[i]->get_sourceFileNameWithPath();
@@ -2332,7 +2333,9 @@ SgProject::parse()
                       << "[FATAL] "
                       << "Unable to keep going due to an unrecoverable internal error"
                       << std::endl;
-                  exit(1);
+  // Liao, 4/25/2017. one assertion failure may trigger other assertion failures. We still want to keep going.              
+                    exit(1);
+//                  return std::max(100, errorCode);
               }
           }
           else
@@ -2444,7 +2447,7 @@ SgProject::parse()
         }
 
      return errorCode;
-   }
+   } // end parse(;
 
 //negara1 (07/29/2011)
 //The returned file path is not normalized. 
@@ -2539,7 +2542,7 @@ SgFile::doSetupForConstructor(const vector<string>& argv, SgProject* project)
 
   // printf ("In SgFile::setupSourceFilename(const vector<string>& argv): p_sourceFileNameWithPath = %s \n",get_sourceFileNameWithPath().c_str());
   // tps: 08/18/2010, This should call StringUtility for WINDOWS- there are two implementations of this?
-  // set_sourceFileNameWithoutPath( rose::utility_stripPathFromFileName(get_sourceFileNameWithPath().c_str()) );
+  // set_sourceFileNameWithoutPath( Rose::utility_stripPathFromFileName(get_sourceFileNameWithPath().c_str()) );
      set_sourceFileNameWithoutPath( StringUtility::stripPathFromFileName(get_sourceFileNameWithPath().c_str()) );
 
      initializeSourcePosition(sourceFilename);
@@ -2799,7 +2802,7 @@ SgFile::callFrontEnd()
       // should be "disable_edg" instead of "disable_edg_backend".
           get_disable_edg_backend() == false && get_new_frontend() == true)
         {
-       // rose::new_frontend = true;
+       // Rose::new_frontend = true;
 
        // We can either use the newest EDG frontend separately (useful for debugging)
        // or the EDG frontend that is included in SAGE III (currently EDG 3.3).
@@ -2821,7 +2824,7 @@ SgFile::callFrontEnd()
 
       // Use the current version of the EDG frontend from EDG (or any other version)
       // abort();
-         printf ("rose::new_frontend == true (call edgFrontEnd using unix system() function!) \n");
+         printf ("Rose::new_frontend == true (call edgFrontEnd using unix system() function!) \n");
 
          std::string frontEndCommandLineString;
          if ( get_KCC_frontend() == true )
@@ -3498,13 +3501,13 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           string preprocessFilename = (abs_dir / boost::filesystem::unique_path(base.string() + "-%%%%%%%%.F90")).string();
 
           // The Sawyer::FileSystem::TemporaryFile d'tor will delete the file. We close the file after it's created because
-          // rose::FileSystem::copyFile will reopen it in binary mode anyway.
+          // Rose::FileSystem::copyFile will reopen it in binary mode anyway.
           Sawyer::FileSystem::TemporaryFile tempFile(preprocessFilename);
           tempFile.stream().close();
 
           // copy source file to pseudonym file
           try {
-              rose::FileSystem::copyFile(sourceFilename, preprocessFilename);
+              Rose::FileSystem::copyFile(sourceFilename, preprocessFilename);
           } catch(exception &e) {
               cerr << "Error in copying file " << sourceFilename << " to " << preprocessFilename
                    << " (" << e.what() << ")" << endl;
@@ -5294,15 +5297,15 @@ SgBinaryComposite::buildAST(vector<string> /*argv*/, vector<string> /*inputComma
         }
     } else {
         ROSE_ASSERT(get_libraryArchiveObjectFileNameList().empty());
-        BinaryLoader::load(this, get_read_executable_file_format_only());
+        BinaryAnalysis::BinaryLoader::load(this, get_read_executable_file_format_only());
     }
 
-    /* Disassemble each interpretation */
+    // Disassemble each interpretation
     if (!get_read_executable_file_format_only()) {
+        namespace P2 = Rose::BinaryAnalysis::Partitioner2;
         const SgAsmInterpretationPtrList &interps = get_interpretations()->get_interpretations();
-        for (size_t i=0; i<interps.size(); i++) {
-            rose::BinaryAnalysis::Partitioner::disassembleInterpretation(interps[i]);
-        }
+        for (size_t i=0; i<interps.size(); i++)
+            Rose::BinaryAnalysis::Partitioner2::Engine::disassembleForRoseFrontend(interps[i]);
     }
 
     // DQ (1/22/2008): The generated unparsed assemble code can not currently be compiled because the
@@ -5527,7 +5530,11 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
             // ROSE_ABORT("Errors in Processing: (frontend_failed)");
             // printf ("Errors in Processing Input File: (throwing an instance of \"frontend_failed\" exception due to errors detected in the input code), have a nice day! \n");
                printf ("Errors in Processing Input File: throwing an instance of \"frontend_failed\" exception due to syntax errors detected in the input code \n");
-               exit(1);
+               if (Rose::KeepGoing::g_keep_going) {
+                 raise(SIGABRT); // raise a signal to be handled by the keep going support , instead of exit. Liao 4/25/2017
+               }
+               else  
+                  exit(1);
              }
         }
 
@@ -5614,7 +5621,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
   // Rose_STL_Container<string> fileList = CommandlineProcessing::generateSourceFilenames(argc,argv);
   // ROSE_ASSERT (fileList.size() == 1);
   // p_sourceFileNameWithPath    = *(fileList.begin());
-  // p_sourceFileNameWithoutPath = rose::utility_stripPathFromFileName(p_sourceFileNameWithPath.c_str());
+  // p_sourceFileNameWithoutPath = Rose::utility_stripPathFromFileName(p_sourceFileNameWithPath.c_str());
 
 #if 1
   // ROSE_ASSERT (get_unparse_output_filename().empty() == true);
@@ -5649,7 +5656,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
 #endif
                if (project->get_unparse_in_same_directory_as_input_file() == true)
                   {
-                    outputFilename = rose::getPathFromFileName(get_sourceFileNameWithPath()) + "/rose_" + get_sourceFileNameWithoutPath();
+                    outputFilename = Rose::getPathFromFileName(get_sourceFileNameWithPath()) + "/rose_" + get_sourceFileNameWithoutPath();
 
                     printf ("In SgFile::compileOutput(): Using filename for unparsed file into same directory as input file: outputFilename = %s \n",outputFilename.c_str());
 
@@ -5718,7 +5725,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
 #if 1
                     printf ("NOTE: keep_going option supporting direct copy of original input file to overwrite the unparsed file \n");
 #endif
-                    rose::FileSystem::copyFile(original_file, unparsed_file);
+                    Rose::FileSystem::copyFile(original_file, unparsed_file);
                   }
              }
 
@@ -5851,18 +5858,20 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                          std::cout  << "[FATAL] "
                                     << "Original input file is invalid: "
                                     << "'" << this->getFileName() << "'"
-                                    << std::endl;
-                         exit(1);
+                                    << "\n\treported by " << __FILE__ <<":"<<__LINE__ <<std::endl;
+                         if (Rose::KeepGoing::g_keep_going)  
+                           raise(SIGABRT); // raise a signal to be handled by the keep going support , instead of exit. Liao 4/25/2017  
+                         else  
+                           exit(1);
                        }
                       else
-                       {
-                      // The ROSE unparsed file is invalid...
-                         this->set_frontendErrorCode(-1);
-                         this->set_unparsedFileFailedCompilation(true);
+                      {
+                        // The ROSE unparsed file is invalid...
+                        this->set_frontendErrorCode(-1);
+                        this->set_unparsedFileFailedCompilation(true);
 
-                      // So try to compile the original input file instead...
                          returnValueForCompiler = this->compileOutput(argv, fileNameIndex);
-                       }
+                      }
                   }
                //
                // Note that in the case of java, a correct unparsed file may not compile because it 
@@ -5987,7 +5996,9 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
         }
 
   // printf ("Program Terminated Normally (exit status = %d)! \n\n\n\n",finalCompiledExitStatus);
-
+   // Liao, 4/26/2017. KeepGoingTranslator should keep going no mater what. 
+    if (Rose::KeepGoing::g_keep_going)
+      finalCompiledExitStatus = 0; 
      return finalCompiledExitStatus;
    }
 
@@ -7508,7 +7519,7 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
                ROSE_ASSERT(functionExp->get_file_info() != NULL);
 
             // DQ (3/15/2017): Fixed to use mlog message logging.
-               if (rose::ir_node_mlog[rose::Diagnostics::DEBUG])
+               if (Rose::ir_node_mlog[Rose::Diagnostics::DEBUG])
                   {
                     functionExp->get_file_info()->display("In SgFunctionCallExp::getAssociatedFunctionSymbol(): case not supported: debug");
                   }

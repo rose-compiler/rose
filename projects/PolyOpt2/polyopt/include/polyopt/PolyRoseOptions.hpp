@@ -69,6 +69,27 @@ public:
   void setScalarPrivatization(bool val);
   bool getScalarPrivatization();
 
+  void setPoCC_Past2Past(bool val);
+  bool getPoCC_Past2Past();
+  void setHighOrderStencil(bool val);
+  bool getHighOrderStencil();
+
+  void setExtractorFunctionName(char* val);
+  char* getExtractorFunctionName();
+
+  void setHistencilOptfilename(char* val);
+  char* getHistencilOptfilename();
+
+  bool isTilingAPIOnly();
+  void setTilingAPIOnly(bool val);
+
+  bool getScWithPragmaOnly();
+  void setScWithPragmaOnly(bool val);
+
+  bool getScopInSeparateFile();
+  void setScopInSeparateFile(bool val);
+
+
   /**
    * Static attributes for verbosity.
    *
@@ -93,11 +114,18 @@ private:
   bool		sc_approximate_scop_extractor;
   bool		sc_f2c_scop_extractor;
   bool          sc_allow_math_func;
+  char*		polyopt_single_function_name;
+  bool		polyopt_pocc_past2past;
+  bool		sc_with_pragmas_only;
+
+  // Histencil mode option.
+  char*		polyopt_histencil_optfilename;
 
   // Dependence analysis.
   bool		polyopt_scalar_privatization;
 
   // Main Optimization options.
+  bool		polyopt_highorderstencil;
   bool		polyopt_fixed_tiling;
   bool		polyopt_parametric_tiling;
   bool		polyopt_parallel_only;
@@ -109,6 +137,8 @@ private:
   bool		polyopt_compute_ddv;
   bool		polyopt_hullify_ddv;
   bool		polyopt_optimize;
+  bool		polyopt_tilingapi_only;
+  bool		polyopt_scop_in_separate_files;
 
   // Codegen options.
   bool		polyopt_codegen_use_past;

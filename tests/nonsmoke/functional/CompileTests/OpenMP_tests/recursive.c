@@ -1,5 +1,5 @@
 int counter = 0;
-int foo()
+void foo()
 {
 #pragma omp critical
   {

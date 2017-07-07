@@ -20,10 +20,10 @@
 #include <Sawyer/Stopwatch.h>
 #include <Sawyer/ThreadWorkers.h>
 
-using namespace rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
-using namespace rose::Diagnostics;
+using namespace Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
+using namespace Rose::Diagnostics;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
@@ -34,7 +34,7 @@ Partitioner::Partitioner()
     init(NULL, memoryMap_);
 }
 
-Partitioner::Partitioner(Disassembler *disassembler, const MemoryMap &map)
+Partitioner::Partitioner(Disassembler *disassembler, const MemoryMap::Ptr &map)
     : memoryMap_(map), solver_(NULL), progressTotal_(0), isReportingProgress_(true),
       autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1),
       semanticMemoryParadigm_(LIST_BASED_MEMORY) {
@@ -86,7 +86,7 @@ Partitioner::operator=(const Partitioner &other) {
 Partitioner::~Partitioner() {}
 
 void
-Partitioner::init(Disassembler *disassembler, const MemoryMap &map) {
+Partitioner::init(Disassembler *disassembler, const MemoryMap::Ptr &map) {
     if (disassembler) {
         instructionProvider_ = InstructionProvider::instance(disassembler, map);
         unparser_ = disassembler->unparser()->copy();
@@ -225,7 +225,7 @@ Partitioner::reportProgress() const {
     static Sawyer::ProgressBar<size_t, ProgressBarSuffix> *bar = NULL;
 
     if (0==progressTotal_) {
-        BOOST_FOREACH (const MemoryMap::Node &node, memoryMap_.nodes()) {
+        BOOST_FOREACH (const MemoryMap::Node &node, memoryMap_->nodes()) {
             if (0 != (node.value().accessibility() & MemoryMap::EXECUTABLE))
                 progressTotal_ += node.key().size();
         }
@@ -363,9 +363,9 @@ Partitioner::newOperators(SemanticMemoryParadigm memType) const {
         Semantics::RiscOperators::instance(instructionProvider_->registerDictionary(), solver_, memType);
     BaseSemantics::MemoryStatePtr mem = ops->currentState()->memoryState();
     if (Semantics::MemoryListStatePtr ml = boost::dynamic_pointer_cast<Semantics::MemoryListState>(mem)) {
-        ml->memoryMap(&memoryMap_);
+        ml->memoryMap(memoryMap_);
     } else if (Semantics::MemoryMapStatePtr mm = boost::dynamic_pointer_cast<Semantics::MemoryMapState>(mem)) {
-        mm->memoryMap(&memoryMap_);
+        mm->memoryMap(memoryMap_);
     }
     return ops;
 }
@@ -761,7 +761,7 @@ Partitioner::basicBlockSuccessors(const BasicBlock::Ptr &bb) const {
         // if our try failed then this one probably will too.  In fact, this one will be even slower because it must reprocess
         // the entire basic block each time it's called because it is stateless, whereas ours above only needed to process each
         // instruction as it was appended to the block.
-        std::set<rose_addr_t> successorVas = lastInsn->getSuccessors(bb->instructions(), &complete, &memoryMap_);
+        std::set<rose_addr_t> successorVas = lastInsn->getSuccessors(bb->instructions(), &complete, memoryMap_);
 #else
         // Look only at the final instruction of the basic block.  This is probably quite fast compared to looking at a whole
         // basic block.
@@ -899,6 +899,13 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb) const {
                     calleeBb = discoverBasicBlock(calleeVa);
                 }
                 if (!calleeBb) {
+                    allCalleesPopWithoutReturning = false;
+                    break;
+                }
+
+                // If the called block is also a function return (i.e., we're calling a function which is only one block long),
+                // then of course the block will pop the return address even though it's a legitimate function.
+                if (basicBlockIsFunctionReturn(calleeBb)) {
                     allCalleesPopWithoutReturning = false;
                     break;
                 }
@@ -1847,7 +1854,7 @@ Partitioner::cfgGraphViz(std::ostream &out, const AddressInterval &restrict,
 
 std::vector<Function::Ptr>
 Partitioner::nextFunctionPrologue(rose_addr_t startVa) {
-    while (memoryMap_.atOrAfter(startVa).require(MemoryMap::EXECUTABLE).next().assignTo(startVa)) {
+    while (memoryMap_->atOrAfter(startVa).require(MemoryMap::EXECUTABLE).next().assignTo(startVa)) {
         Sawyer::Optional<rose_addr_t> unmappedVa = aum_.leastUnmapped(startVa);
         if (!unmappedVa)
             return std::vector<Function::Ptr>();        // empty; no higher unused address
@@ -2129,7 +2136,7 @@ struct CallingConventionWorker {
         Sawyer::Stopwatch t;
         partitioner.functionCallingConvention(function, dfltCc);
 
-        // Show some results. We're using rose::BinaryAnalysis::CallingConvention::mlog[TRACE] for the messages, so the mutex
+        // Show some results. We're using Rose::BinaryAnalysis::CallingConvention::mlog[TRACE] for the messages, so the mutex
         // here doesn't really protect it. However, since that analysis doesn't produce much output on that stream, this mutex
         // helps keep the output lines separated from one another where there's lots of worker threads, especially when they're
         // all first starting up.
@@ -2152,7 +2159,7 @@ Partitioner::allFunctionCallingConvention(const CallingConvention::Definition::P
     Sawyer::ProgressBar<size_t> progress(cg.nVertices(), mlog[MARCH], "call-conv analysis");
     Sawyer::Message::FacilitiesGuard guard;
     if (nThreads != 1)                                  // lots of threads doing progress reports won't look too good!
-        rose::BinaryAnalysis::CallingConvention::mlog[MARCH].disable();
+        Rose::BinaryAnalysis::CallingConvention::mlog[MARCH].disable();
     Sawyer::workInParallel(cg, nThreads, CallingConventionWorker(*this, progress, dfltCc));
 }
 

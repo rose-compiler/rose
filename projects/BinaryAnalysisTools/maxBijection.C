@@ -2,6 +2,7 @@
 #include "rose_getline.h"
 #include "rose_strtoull.h"
 #include "Diagnostics.h"
+#include "integerOps.h"
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/ProgressBar.h>
 #include <set>
@@ -9,8 +10,8 @@
 typedef rose_addr_t Value;
 typedef std::set<Value> Set;
 
-using namespace rose;
-using namespace rose::Diagnostics;
+using namespace Rose;
+using namespace Rose::Diagnostics;
 
 struct Settings {
     unsigned nBits;

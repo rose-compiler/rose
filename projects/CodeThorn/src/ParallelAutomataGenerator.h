@@ -28,7 +28,6 @@ namespace SPRAY {
     NumberGenerator(int start);
     int next();
   private:
-    int _start;
     int _current;
   };
 

@@ -202,10 +202,10 @@ message(STATUS "The ROSE SCM version identifier is ${ROSE_SCM_VERSION_ID}")
 message(STATUS "The ROSE SCM version Unix timestamp is ${ROSE_SCM_VERSION_UNIX_DATE}")
 
 #-------------------------------------------------------------------------------
-# Configuration synopsis used by rose::initialize.  The ROSE_CONFIG_TOKEN is
+# Configuration synopsis used by Rose::initialize.  The ROSE_CONFIG_TOKEN is
 # #define'd as a string in rose_config.h and ultimately rosePublicConfig.h and
 # the string is a synopsis of some important configuration details. This string
-# is passed by user code to the rose::initialize function which compares it
+# is passed by user code to the Rose::initialize function which compares it
 # against the same macro compiled into the ROSE library. If their contents differ
 # it means that the ROSE header files being used by the user are not the same
 # as the ROSE header files that were used to compile librose being linked by the
@@ -255,7 +255,7 @@ endif (WIN32)
 
 # Ensure that Boost is found. Environment variable BOOST_ROOT can help to find a user-specified path to Boost.
 #SET(Boost_ADDITIONAL_VERSIONS "1.59.0" "1.55.0" "1.36.0" "1.37" "1.37.0" "1.38.0" "1.39.0" "1.40.0" )
-find_package( Boost 1.36.0 COMPONENTS date_time filesystem iostreams program_options regex system wave thread REQUIRED)
+find_package( Boost 1.36.0 COMPONENTS chrono date_time filesystem iostreams program_options regex system wave thread REQUIRED)
 
 if(NOT Boost_FOUND)
     message(FATAL_ERROR "Could not find Boost version 1.35.0 or newer command")
@@ -1001,7 +1001,6 @@ endif (HAVE_DLFCN_H)
      ${ROSE_TOP_SRC_DIR}/src/frontend/PythonFrontend 
      ${ROSE_TOP_SRC_DIR}/src/frontend/BinaryFormats 
      ${ROSE_TOP_SRC_DIR}/src/frontend/BinaryLoader
-     ${ROSE_TOP_SRC_DIR}/src/frontend/BinaryDisassembly 
      ${ROSE_TOP_SRC_DIR}/src/frontend/Disassemblers 
      ${ROSE_TOP_SRC_DIR}/src/frontend/ExecFormats
      ${ROSE_TOP_SRC_DIR}/src/frontend
@@ -1048,14 +1047,13 @@ endif (HAVE_DLFCN_H)
      ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/ompLowering 
      ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis 
      ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/CFG 
-     ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/CallGraphAnalysis 
+     ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/CallGraphAnalysis
      ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/OAWrap 
      ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/bitvectorDataflow 
      ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/VirtualFunctionAnalysis 
      ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/defUseAnalysis 
      ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/distributedMemoryAnalysis 
      ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/dominanceAnalysis 
-     ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/graphAnalysis 
      ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/pointerAnal 
      ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/staticSingleAssignment
      ${ROSE_TOP_SRC_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing 

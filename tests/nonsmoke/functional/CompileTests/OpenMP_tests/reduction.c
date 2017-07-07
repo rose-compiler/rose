@@ -32,7 +32,7 @@ int main()
 #pragma omp critical
     sum = sum + sum0; 
   }
-  printf("sum of 1 to %d = %d\n",total,sum);
+  printf("sum of 1 to %d = %ld\n",total,sum);
 
   return 0;
 }

@@ -45,7 +45,7 @@
 #define BUILDER_MAKE_REDUNDANT_CALLS_TO_SYMBOL_TABLE_LOOKUP 0
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 using namespace SageInterface;
 
 // MS 2015: utility functions used in the implementation of SageBuilder functions, but are not exposed in the SageBuilder-Interface.
@@ -60,7 +60,7 @@ initDiagnostics()
      if (!initialized)
         {
           initialized = true;
-          rose::Diagnostics::initAndRegister(&mlog, "rose::SageBuilder");
+          Rose::Diagnostics::initAndRegister(&mlog, "Rose::SageBuilder");
         }
    }
 
@@ -547,6 +547,11 @@ SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplat
 
      info->set_language(SgFile::e_Cxx_output_language);
 
+  // DQ (4/28/2017): For template arguments we never want to output the definitions of classes, and enums.
+     info->set_SkipClassDefinition();
+     info->set_SkipEnumDefinition();
+     info->set_use_generated_name_for_template_arguments(true);
+
      bool emptyArgumentList = templateArgumentsList.empty();
 
   // DQ (9/24/2012): Don't add "< >" if there are no template arguments (see test2012_221.C).
@@ -563,6 +568,87 @@ SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplat
 #endif
 #if 0
           string s = string("/* templateArgument is explicitlySpecified = ") + (((*i)->get_explicitlySpecified() == true) ? "true" : "false") + " */";
+#endif
+
+#if 0
+       // DQ (4/29/2017): This is testing code for what is not better implemented in the unparseToString() function via a new filed to SgUnparse_Info.
+
+       // DQ (4/27/2017): Check for un-named types since they have to be handled in special ways (template arguments should not be empty strings).
+          if ((*i)->get_argumentType() == SgTemplateArgument::type_argument)
+             {
+               printf ("In parse_template_arguments(): (*i)->get_type() = %p = %s \n",(*i)->get_type(),(*i)->get_type()->class_name().c_str());
+               printf ("(*i)->get_type() = %s \n",(*i)->get_type()->unparseToString(info).c_str());
+
+            // DQ (4/27/2017): where this is generating a empty string it sppears to be due to a class declaration that is the closure class for a lambda.
+               SgNamedType* namedType = isSgNamedType((*i)->get_type());
+
+               SgReferenceType* referenceType = isSgReferenceType((*i)->get_type());
+
+            // Handle the case of SgClassType for the moment.
+               SgClassType* classType = isSgClassType(namedType);
+               if (classType != NULL)
+                  {
+                    ROSE_ASSERT(classType->get_declaration() != NULL);
+                    SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
+                    ROSE_ASSERT(classDeclaration != NULL);
+                    SgSymbol* symbol = classDeclaration->get_symbol_from_symbol_table();
+                    ROSE_ASSERT(symbol != NULL);
+                    SgClassSymbol* classSymbol = isSgClassSymbol(symbol);
+                    ROSE_ASSERT(classSymbol != NULL);
+
+                    bool isUnnamed = (string(classSymbol->get_name()).substr(0,14) == "__anonymous_0x");
+#if 1
+                    printf ("In SageBuilder::appendTemplateArgumentsToName(): isUnnamed = %s \n",isUnnamed ? "true" : "false");
+#endif
+                    if (isUnnamed == true)
+                       {
+                      // DQ (4/27/2017): Use the generated name to support the name used for the template instantiation.
+                         returnName += classSymbol->get_name();
+#if 0
+                         printf ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+#endif
+                       }
+                  }
+
+               if (referenceType != NULL)
+                  {
+                    printf ("referenceType = %p base_type = %p = %s \n",referenceType,referenceType->get_base_type(),referenceType->get_base_type()->class_name().c_str());
+
+                 // DQ (4/27/2017): where this is generating a empty string it sppears to be due to a class declaration that is the closure class for a lambda.
+                    SgNamedType* namedType = isSgNamedType(referenceType->get_base_type());
+
+                    printf ("In parse_template_arguments(): handle reference type: referenceType->get_base_type() = %p = %s \n",referenceType->get_base_type(),referenceType->get_base_type()->class_name().c_str());
+                    printf ("referenceType->get_base_type() = %s \n",referenceType->get_base_type()->unparseToString(info).c_str());
+
+                 // Handle the case of SgClassType for the moment.
+                    SgClassType* classType = isSgClassType(namedType);
+                    if (classType != NULL)
+                       {
+                         ROSE_ASSERT(classType->get_declaration() != NULL);
+                         SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
+                         ROSE_ASSERT(classDeclaration != NULL);
+                         SgSymbol* symbol = classDeclaration->get_symbol_from_symbol_table();
+                         ROSE_ASSERT(symbol != NULL);
+                         SgClassSymbol* classSymbol = isSgClassSymbol(symbol);
+                         ROSE_ASSERT(classSymbol != NULL);
+
+                         bool isUnnamed = (string(classSymbol->get_name()).substr(0,14) == "__anonymous_0x");
+#if 1
+                         printf ("In SageBuilder::appendTemplateArgumentsToName(): handle reference type: isUnnamed = %s \n",isUnnamed ? "true" : "false");
+#endif
+                         if (isUnnamed == true)
+                            {
+                           // DQ (4/27/2017): Use the generated name to support the name used for the template instantiation.
+                              returnName += classSymbol->get_name();
+#if 0
+                              printf ("Handling reference to class: Exiting as a test! \n");
+                              ROSE_ASSERT(false);
+#endif
+                            }
+                       }
+                  }
+             }
 #endif
 
        // DQ (9/15/2012): We need to communicate that the language so that SgBoolVal will not be unparsed to "1" instead of "true" (see test2012_215.C).
@@ -596,7 +682,7 @@ SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplat
      if (emptyArgumentList == false)
           returnName += " > ";
 
-#if DEBUG_APPEND_TEMPLATE_ARGUMENT_LIST
+#if DEBUG_APPEND_TEMPLATE_ARGUMENT_LIST || 0
      printf ("Leaving SageBuilder::appendTemplateArgumentsToName(): returnName = %s \n",returnName.str());
 #endif
 
@@ -7224,7 +7310,7 @@ SageBuilder::buildOpaqueVarRefExp(const std::string& name,SgScopeStatement* scop
           result = buildVarRefExp(isSgVariableSymbol(symbol));
 
        // DQ (4/2/2012): Output a warning:
-          printf ("WARNING: In SageBuilder::buildOpaqueVarRefExp(): proper symbol used to build SgVarRefExp = %p \n",result);
+       //   printf ("WARNING: In SageBuilder::buildOpaqueVarRefExp(): proper symbol used to build SgVarRefExp = %p \n",result);
         }
        else
         {
@@ -7239,7 +7325,7 @@ SageBuilder::buildOpaqueVarRefExp(const std::string& name,SgScopeStatement* scop
          result = buildVarRefExp(fakeSymbol);
 
        // DQ (4/2/2012): Output a warning:
-          printf ("WARNING: In SageBuilder::buildOpaqueVarRefExp(): fake symbol generated to build SgVarRefExp = %p (but not put into symbol table) \n",result);
+       //   printf ("WARNING: In SageBuilder::buildOpaqueVarRefExp(): fake symbol generated to build SgVarRefExp = %p (but not put into symbol table) \n",result);
         }
 
      return result;

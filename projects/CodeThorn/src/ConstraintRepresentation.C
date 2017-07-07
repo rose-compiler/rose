@@ -215,9 +215,9 @@ string Constraint::toString(VariableIdMapping* variableIdMapping) const {
   if(isDisequation())
     return "V0##0";
   if(isVarVarOp()) {
-    ss<<lhsVar().toLhsString(variableIdMapping)<<(*this).opToString()<<rhsVar().toString(variableIdMapping);
+    ss<<lhsVar().toLhsString(variableIdMapping)<<(*this).opToString()<<rhsVar().toLhsString(variableIdMapping);
   } else if (isVarValOp()) {
-    ss<<lhsVar().toLhsString(variableIdMapping)<<(*this).opToString()<<rhsVal().toString(variableIdMapping);
+    ss<<lhsVar().toLhsString(variableIdMapping)<<(*this).opToString()<<rhsVal().toLhsString(variableIdMapping);
   } else {
     throw CodeThorn::Exception( "Error: Constraint::toString: unknown operator.");
   }

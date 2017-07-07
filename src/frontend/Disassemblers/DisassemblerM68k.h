@@ -11,7 +11,7 @@
 #include <boost/serialization/export.hpp>
 #include <boost/serialization/split_member.hpp>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /** Disassembler for Motorola M68k-based instruction set architectures. */
@@ -39,7 +39,7 @@ public:
 
 private:
     M68kFamily  family;                         /**< Specific family being disassembled. */
-    const MemoryMap *map;                       /**< Map from which to read instruction words. */
+    MemoryMap::Ptr map;                         /**< Map from which to read instruction words. */
     rose_addr_t insn_va;                        /**< Address of instruction. */
     uint16_t    iwords[11];                     /**< Instruction words. */
     size_t      niwords;                        /**< Number of instruction words read. */
@@ -87,7 +87,7 @@ private:
 protected:
     // undocumented constructor for serialization. The init() will be called by the serialization.
     DisassemblerM68k()
-        : family(m68k_freescale_cpu32), map(NULL), insn_va(0), niwords(0), niwords_used(0) {}
+        : family(m68k_freescale_cpu32), insn_va(0), niwords(0), niwords_used(0) {}
         
 public:
     /** Constructor for a specific family.
@@ -99,13 +99,14 @@ public:
      *  Disassembler *disassembler = new DisassemblerM68k(m68k_freescale_isab);
      * @endcode */
     explicit DisassemblerM68k(M68kFamily family)
-        : family(family), map(NULL), insn_va(0), niwords(0), niwords_used(0) {
+        : family(family), insn_va(0), niwords(0), niwords_used(0) {
         init();
     }
     virtual DisassemblerM68k *clone() const ROSE_OVERRIDE { return new DisassemblerM68k(*this); }
-    virtual bool can_disassemble(SgAsmGenericHeader*) const ROSE_OVERRIDE;
-    virtual SgAsmInstruction *disassembleOne(const MemoryMap*, rose_addr_t start_va, AddressSet *successors=NULL) ROSE_OVERRIDE;
-    virtual SgAsmInstruction *make_unknown_instruction(const Disassembler::Exception&) ROSE_OVERRIDE;
+    virtual bool canDisassemble(SgAsmGenericHeader*) const ROSE_OVERRIDE;
+    virtual SgAsmInstruction *disassembleOne(const MemoryMap::Ptr&, rose_addr_t start_va,
+                                             AddressSet *successors=NULL) ROSE_OVERRIDE;
+    virtual SgAsmInstruction *makeUnknownInstruction(const Disassembler::Exception&) ROSE_OVERRIDE;
     virtual Unparser::BasePtr unparser() const ROSE_OVERRIDE;
 
     typedef std::pair<SgAsmExpression*, SgAsmExpression*> ExpressionPair;
@@ -120,7 +121,7 @@ public:
     void insert_idis(M68k*);
 
     /** Called by disassembleOne() to initialize the disassembler state for the next instruction. */
-    void start_instruction(const MemoryMap *map, rose_addr_t start_va) {
+    void start_instruction(const MemoryMap::Ptr &map, rose_addr_t start_va) {
         this->map = map;
         insn_va = start_va;
         niwords = 0;
@@ -240,7 +241,7 @@ private:
 } // namespace
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::DisassemblerM68k);
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::DisassemblerM68k);
 #endif
 
 #endif

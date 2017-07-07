@@ -12,6 +12,7 @@
 #include "SpotConnection.h"
 #include "ParProAnalyzer.h"
 #include "PropertyValueTable.h"
+#include "LtsminConnection.h"
 
 // BOOST includes
 #include "boost/lexical_cast.hpp"
@@ -20,8 +21,6 @@
 #include "boost/algorithm/string.hpp"
 #include "boost/algorithm/string/trim.hpp"
 #include "boost/algorithm/string/regex.hpp"
-
-using namespace CodeThorn;
 
 namespace CodeThorn {
 
@@ -40,6 +39,7 @@ namespace CodeThorn {
     std::string toString() const;
 
     std::map<int, Flow*> components() const { return _components; }  // TODO: remove const and add other functions to query the component ids
+    EdgeAnnotationMap edgeAnnotationMap();
     void setComponents(std::map<int, Flow*> components) { _components=components; } 
     bool hasStg() const { return (_stg != NULL); }
     ParProTransitionGraph* stg() { return _stg; }
@@ -105,6 +105,7 @@ namespace CodeThorn {
 
     PropertyValueTable* mineProperties(ParallelSystem& system, int minNumComponents);
     PropertyValueTable* mineProperties(ParallelSystem& system, int minNumComponents, int minNumVerifiable, int minNumFalsifiable);
+    PropertyValueTable* minePropertiesLtsMin(ParallelSystem& system, int minNumComponents, int minNumVerifiable, int minNumFalsifiable);
     void setNumberOfMiningsPerSubsystem(unsigned int numMinings) { _numberOfMiningsPerSubsystem = numMinings; }
     void setNumberOfComponentsForLtlAnnotations(unsigned int numComponentsLtl) { _numComponentsForLtlAnnotations = numComponentsLtl; }
     void setStoreComputedSystems(bool storeSystems) { _storeComputedSystems = storeSystems; }
@@ -130,6 +131,7 @@ namespace CodeThorn {
 					   ComponentApproximation approxMode, 
 					   std::list<ParallelSystem>& worklist);
     list<ParallelSystem> initiateSubsystemsOf(ParallelSystem& system);
+    bool passesFilterLtsMin(string ltlProperty, PropertyValue correctValue, ParallelSystem& system, int minNumComponents);
     
     unsigned int _numComponentsForLtlAnnotations;
     unsigned int _numberOfMiningsPerSubsystem;
@@ -139,6 +141,7 @@ namespace CodeThorn {
     ParallelSystemSet _subsystems;
     ParallelSystemDag _subsystemsOf;
     SpotConnection _spotConnection;
+    LtsminConnection _ltsminConnection;
   };
 
 } // end of namespace CodeThorn

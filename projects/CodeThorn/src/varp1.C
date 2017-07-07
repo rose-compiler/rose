@@ -26,9 +26,9 @@ void write_file(std::string filename, std::string data) {
 
 int main (int argc, char* argv[])
 {
-  rose::global_options.set_frontend_notes(false);
-  rose::global_options.set_frontend_warnings(false);
-  rose::global_options.set_backend_warnings(false);
+  Rose::global_options.set_frontend_notes(false);
+  Rose::global_options.set_frontend_warnings(false);
+  Rose::global_options.set_backend_warnings(false);
 
   int readTransformations=0;
   int writeTransformations=0;

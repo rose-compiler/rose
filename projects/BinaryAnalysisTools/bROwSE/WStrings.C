@@ -15,9 +15,9 @@
 #include <Wt/WText>
 #include <Wt/WVBoxLayout>
 
-using namespace rose;
-using namespace rose::BinaryAnalysis;
-using namespace rose::Diagnostics;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
+using namespace Rose::Diagnostics;
 
 namespace bROwSE {
 
@@ -47,7 +47,7 @@ public:
             : string(string), nrefs(nrefs), isMatching(false) {}
     };
 
-    MemoryMap memoryMap_;
+    MemoryMap::Ptr memoryMap_;
     bool isOutOfDate_;                                  // true if memoryMap has changed since rows_ and xrefs_ were set
     std::vector<Row> rows_;
     P2::CrossReferences xrefs_;                         // from string address to instruction
@@ -227,7 +227,7 @@ public:
         layoutChanged().emit();
     }
     
-    void memoryMap(const MemoryMap &map) {
+    void memoryMap(const MemoryMap::Ptr &map) {
         memoryMap_ = map;
         isOutOfDate_ = true;
     }
@@ -240,7 +240,7 @@ public:
             rows_.clear();
             xrefs_.clear();
 
-            ByteOrder::Endianness sex = memoryMap_.byteOrder();
+            ByteOrder::Endianness sex = memoryMap_->byteOrder();
             if (ByteOrder::ORDER_UNSPECIFIED == sex)
                 sex = ByteOrder::ORDER_LSB;
 
@@ -250,7 +250,7 @@ public:
             analyzer.settings().keepingOnlyLongest = true;
             analyzer.insertCommonEncoders(sex);
             analyzer.insertUncommonEncoders(sex);
-            analyzer.find(memoryMap_.require(MemoryMap::READABLE));
+            analyzer.find(memoryMap_->require(MemoryMap::READABLE));
             BOOST_FOREACH (const Strings::EncodedString &string, analyzer.strings()) {
                 size_t nrefs = xrefs_.getOrDefault(P2::Reference(string.address())).size();
                 rows_.push_back(Row(string, nrefs));
@@ -438,18 +438,18 @@ WStrings::searchNavigate(int direction) {
     wTableView_->setSelectedIndexes(Wt::WModelIndexSet());
 }
 
-const MemoryMap&
+MemoryMap::Ptr
 WStrings::memoryMap() const {
     return model_->memoryMap_;
 }
 
 void
-WStrings::memoryMap(const MemoryMap &map) {
+WStrings::memoryMap(const MemoryMap::Ptr &map) {
     model_->memoryMap(map);
 }
 
 void
-WStrings::redrawAddressSpace(const MemoryMap &map) {
+WStrings::redrawAddressSpace(const MemoryMap::Ptr &map) {
     wAddressSpace_->insert(map, SegmentsBar);
     WAddressSpace::HeatMap &hmap = wAddressSpace_->map(StringsBar);
     WAddressSpace::HeatMap &gutter = wAddressSpace_->bottomGutterMap();
@@ -497,7 +497,7 @@ WStrings::crossReferences(size_t stringIdx) {
     return model_->xrefs_.getOrDefault(P2::Reference(stringVa));
 }
 
-const rose::BinaryAnalysis::Strings::EncodedString&
+const Rose::BinaryAnalysis::Strings::EncodedString&
 WStrings::string(size_t stringIdx) {
     ASSERT_require(stringIdx < model_->rows_.size());
     return model_->rows_[stringIdx].string;

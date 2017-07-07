@@ -15,8 +15,9 @@
 #include <Wt/WText>
 #include <Wt/WVBoxLayout>
 
-using namespace rose;
-using namespace rose::Diagnostics;
+using namespace Rose;
+using namespace Rose::Diagnostics;
+using namespace Rose::BinaryAnalysis;
 
 namespace bROwSE {
 
@@ -33,7 +34,7 @@ HexDumpModel::init() {
 }
 
 void
-HexDumpModel::memoryMap(const MemoryMap &map) {
+HexDumpModel::memoryMap(const MemoryMap::Ptr &map) {
     layoutAboutToBeChanged().emit();
     memoryMap_ = map;
 
@@ -45,7 +46,7 @@ HexDumpModel::memoryMap(const MemoryMap &map) {
     size_t row = 0;
     addrRow_.clear();
     rowAddr_.clear();
-    BOOST_FOREACH (const AddressInterval &interval, memoryMap_.intervals()) {
+    BOOST_FOREACH (const AddressInterval &interval, memoryMap_->intervals()) {
         addrRow_.insert(interval.least(), row);
         rowAddr_.insert(row, interval.least());
         rose_addr_t beginVa = alignDown(interval.least(), bytesPerRow);
@@ -75,11 +76,11 @@ HexDumpModel::rowSegment(size_t row) const {
     rose_addr_t segmentVa = found->value();
     rose_addr_t segmentRowVa = alignDown(segmentVa, bytesPerRow);
     if (row == segmentRowIdx)
-        return memoryMap_.at(segmentVa).findNode();
+        return memoryMap_->at(segmentVa).findNode();
     rose_addr_t rowVa = segmentRowVa + (row - segmentRowIdx) * bytesPerRow;
-    MemoryMap::ConstNodeIterator mmIter = memoryMap_.at(segmentVa).findNode();
+    MemoryMap::ConstNodeIterator mmIter = memoryMap_->at(segmentVa).findNode();
     if (!mmIter->key().isContaining(rowVa))
-        return memoryMap_.nodes().end();// segment separator row
+        return memoryMap_->nodes().end();// segment separator row
     return mmIter;
 }
 
@@ -105,7 +106,7 @@ HexDumpModel::rowAddress(size_t row) const {
     // If the first cell of the row has a address that's unmapped or belongs to some other segment then this must be an empty
     // segement-separator row that has no address.
     rose_addr_t segmentVa = found->value();
-    if (memoryMap_.at(segmentVa).findNode() != memoryMap_.at(rowVa).findNode())
+    if (memoryMap_->at(segmentVa).findNode() != memoryMap_->at(rowVa).findNode())
         return Sawyer::Nothing();
     return rowVa;
 }
@@ -145,7 +146,7 @@ HexDumpModel::cellAddress(size_t row, size_t pseudoColumn) const {
 
     // If the cellVa comes from a different memory segment then it has no address
     rose_addr_t segmentVa = found->value();
-    if (memoryMap_.at(segmentVa).findNode() != memoryMap_.at(cellVa).findNode())
+    if (memoryMap_->at(segmentVa).findNode() != memoryMap_->at(cellVa).findNode())
         return Sawyer::Nothing();
 
     return cellVa;
@@ -154,7 +155,7 @@ HexDumpModel::cellAddress(size_t row, size_t pseudoColumn) const {
 Sawyer::Optional<uint8_t>
 HexDumpModel::readByte(const Sawyer::Optional<rose_addr_t> &cellVa) const {
     uint8_t byte;
-    if (cellVa && memoryMap_.at(*cellVa).limit(1).read(&byte))
+    if (cellVa && memoryMap_->at(*cellVa).limit(1).read(&byte))
         return byte;
     return Sawyer::Nothing();
 }
@@ -250,19 +251,19 @@ HexDumpModel::data(const Wt::WModelIndex &index, int role) const {
             ASSERT_not_reachable("this column needs data");
         }
     } else if (role == Wt::ToolTipRole) {
-        MemoryMap::ConstNodeIterator mmNode = memoryMap_.nodes().end();
+        MemoryMap::ConstNodeIterator mmNode = memoryMap_->nodes().end();
         rose_addr_t va = 0;
         if (column == addressColumn) {
             mmNode = rowSegment(row);
             va = cellAddress(row, 0).orElse(0);
         } else if (column >= bytesColumn && column < bytesColumn + bytesPerRow &&
                    cellAddress(row, column-bytesColumn).assignTo(va)) {
-            mmNode = memoryMap_.at(va).findNode();
+            mmNode = memoryMap_->at(va).findNode();
         } else if (column >= asciiColumn && column < asciiColumn + bytesPerRow &&
                    cellAddress(row, column-asciiColumn).assignTo(va)) {
-            mmNode = memoryMap_.at(va).findNode();
+            mmNode = memoryMap_->at(va).findNode();
         }
-        if (mmNode != memoryMap_.nodes().end()) {
+        if (mmNode != memoryMap_->nodes().end()) {
             const AddressInterval &interval = mmNode->key();
             const MemoryMap::Segment &segment = mmNode->value();
             std::string tip = StringUtility::htmlEscape(segment.name());
@@ -283,7 +284,7 @@ HexDumpModel::data(const Wt::WModelIndex &index, int role) const {
             }
         } else if (column == addressColumn) {
             MemoryMap::ConstNodeIterator mmIter = rowSegment(row);
-            ASSERT_require(mmIter != memoryMap_.nodes().end()); // would have been caught above
+            ASSERT_require(mmIter != memoryMap_->nodes().end()); // would have been caught above
             unsigned a = mmIter->value().accessibility();
             std::string style;
             if (0!=(a & MemoryMap::READABLE))
@@ -420,7 +421,7 @@ WHexDump::handleSearch() {
 
     // If the search region is empty then start from the beginning again.
     if (!searchRegion_)
-        searchRegion_ = model_->memoryMap().hull();
+        searchRegion_ = model_->memoryMap()->hull();
 
     // Find the vector
     Sawyer::Message::Stream info(mlog[INFO] <<"searching for " <<str);
@@ -430,12 +431,12 @@ WHexDump::handleSearch() {
 #if 0 // [Robb P. Matzke 2015-05-04]
     std::vector<uint8_t> leadBytes(1, bytes[0]);
     while (!found && searchRegion_) {
-        if (model_->memoryMap().findAny(searchRegion_, leadBytes, 0, 0).assignTo(startVa) &&
+        if (model_->memoryMap()->findAny(searchRegion_, leadBytes, 0, 0).assignTo(startVa) &&
             startVa <= searchRegion_.greatest()) {
             
             searchRegion_ = AddressInterval::hull(startVa, searchRegion_.greatest());
             std::vector<uint8_t> readBytes(bytes.size());
-            if (model_->memoryMap().at(startVa).read(readBytes).size() == bytes.size() &&
+            if (model_->memoryMap()->at(startVa).read(readBytes).size() == bytes.size() &&
                 std::equal(bytes.begin(), bytes.end(), readBytes.begin())) {
                 found = true;
             }
@@ -447,7 +448,7 @@ WHexDump::handleSearch() {
         }
     }
 #else
-    if (model_->memoryMap().findSequence(searchRegion_, bytes).assignTo(startVa)) {
+    if (model_->memoryMap()->findSequence(searchRegion_, bytes).assignTo(startVa)) {
         found = true;
         searchRegion_ = startVa==searchRegion_.greatest() ?
                         AddressInterval() :
@@ -472,7 +473,7 @@ void
 WHexDump::partitioner(const P2::Partitioner &p) {
     memoryMap(p.memoryMap());
 
-    AddressIntervalSet allAddresses = p.memoryMap().intervals();
+    AddressIntervalSet allAddresses = p.memoryMap()->intervals();
     xrefs_ = p.instructionCrossReferences(allAddresses);
 }
 

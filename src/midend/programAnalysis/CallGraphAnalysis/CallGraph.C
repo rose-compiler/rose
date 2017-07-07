@@ -15,7 +15,7 @@
 #define foreach BOOST_FOREACH
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 /***************************************************
  * Get the vector of base types for the current type

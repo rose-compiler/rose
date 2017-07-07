@@ -198,7 +198,7 @@ $(C_TEST_Generated_Files):../autoPar
 # TODO not good enough, we want to depend on individual generated file here
 $(C_TEST_DIFF_FILES): $(C_TEST_Generated_Files) 
 	echo "Verifying autoPar translation by using diff ..."; \
-	if $(DIFF) $(@:.c.diff=.c) $(REFERENCE_PATH)/$(@:.c.diff=.c) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; cat $@; rm -rf $@; exit 1; fi
+	if $(DIFF) $(@:.c.diff=.c) $(REFERENCE_PATH)/$(@:.c.diff=.c) > $@ ; then echo "Test Passed" ; else echo "Files differ; test failed"; cat $@; rm -rf $@; exit 1; fi
 
 $(CXX_TEST_DIFF_FILES): $(CXX_TEST_Generated_Files) 
 	echo "Verifying autoPar translation by using diff ..."; \

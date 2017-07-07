@@ -36,7 +36,7 @@
 #include <DispatcherX86.h>
 #include <YicesSolver.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /** Binary function detection.
@@ -306,7 +306,7 @@ private:
     BasePartitionerSettings settings_;                  // settings adjustable from the command-line
     Configuration config_;                              // configuration information about functions, blocks, etc.
     InstructionProvider::Ptr instructionProvider_;      // cache for all disassembled instructions
-    MemoryMap memoryMap_;                               // description of memory, especially insns and non-writable
+    MemoryMap::Ptr memoryMap_;                          // description of memory, especially insns and non-writable
     ControlFlowGraph cfg_;                              // basic blocks that will become part of the ROSE AST
     CfgVertexIndex vertexIndex_;                        // Vertex-by-address index for the CFG
     AddressUsageMap aum_;                               // How addresses are used for each address represented by the CFG
@@ -420,7 +420,7 @@ public:
      *
      *  The partitioner must be provided with a disassembler, which also determines the specimen's target architecture, and a
      *  memory map that represents a (partially) loaded instance of the specimen (i.e., a process). */
-    Partitioner(Disassembler *disassembler, const MemoryMap &map);
+    Partitioner(Disassembler *disassembler, const MemoryMap::Ptr &map);
 
     // FIXME[Robb P. Matzke 2014-11-08]: This is not ready for use yet.  The problem is that because of the shallow copy, both
     // partitioners are pointing to the same basic blocks, data blocks, and functions.  This is okay by itself since these
@@ -464,13 +464,12 @@ public:
      *  memory anymore.
      *
      *  @{ */
-    const MemoryMap& memoryMap() const /*final*/ { return memoryMap_; }
-    MemoryMap& memoryMap() /*final*/ { return memoryMap_; }
+    MemoryMap::Ptr memoryMap() const /*final*/ { return memoryMap_; }
     /** @} */
 
     /** Returns true if address is executable. */
     bool addressIsExecutable(rose_addr_t va) const /*final*/ {
-        return memoryMap_.at(va).require(MemoryMap::EXECUTABLE).exists();
+        return memoryMap_!=NULL && memoryMap_->at(va).require(MemoryMap::EXECUTABLE).exists();
     }
 
     /** Returns an unparser.
@@ -2121,7 +2120,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
-    void init(Disassembler*, const MemoryMap&);
+    void init(Disassembler*, const MemoryMap::Ptr&);
     void init(const Partitioner&);
     void reportProgress() const;
 

@@ -12,7 +12,7 @@
 #include <sstream>
 #include <cassert>
 using namespace std;
-using namespace rose::StringUtility;
+using namespace Rose::StringUtility;
 using namespace SageInterface;
 using namespace SageBuilder;
 

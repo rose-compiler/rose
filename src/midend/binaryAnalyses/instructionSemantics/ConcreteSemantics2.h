@@ -11,7 +11,7 @@
 #include "RegisterStateGeneric.h"
 #include <Sawyer/BitVector.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {              // documented elsewhere
 namespace InstructionSemantics2 {       // documented elsewhere
 
@@ -162,7 +162,7 @@ typedef boost::shared_ptr<class MemoryState> MemoryStatePtr;
  *  This class represents an entire state of memory via MemoryMap, allocating new memory in units of pages (the size of a page
  *  is configurable. */
 class MemoryState: public BaseSemantics::MemoryState {
-    MemoryMap map_;
+    MemoryMap::Ptr map_;
     rose_addr_t pageSize_;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -176,8 +176,10 @@ protected:
 
     MemoryState(const MemoryState &other)
         : BaseSemantics::MemoryState(other), map_(other.map_), pageSize_(other.pageSize_) {
-        BOOST_FOREACH (MemoryMap::Segment &segment, map_.values())
-            segment.buffer()->copyOnWrite(true);
+        if (map_) {
+            BOOST_FOREACH (MemoryMap::Segment &segment, map_->values())
+                segment.buffer()->copyOnWrite(true);
+        }
     }
     
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -234,7 +236,7 @@ public:
     // Methods we inherited
 public:
     virtual void clear() ROSE_OVERRIDE {
-        map_.clear();
+        map_ = MemoryMap::Ptr();
     }
 
     virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;
@@ -253,14 +255,14 @@ public:
     // Methods first declared in this class
 public:
     /** Returns the memory map. */
-    const MemoryMap& memoryMap() const { return map_; }
+    const MemoryMap::Ptr memoryMap() const { return map_; }
 
     /** Set memory map.
      *
      *  If the specified map's areas are not in units of pages then padding segments will be added to this memory state. The
      *  padding segments will either have the accessibility specified by @p padAccess, or will have the same accessibility as
      *  the memory region being padded.  All padding segments will be named "padding". */
-    void memoryMap(const MemoryMap&, Sawyer::Optional<unsigned> padAccess = Sawyer::Nothing());
+    void memoryMap(const MemoryMap::Ptr&, Sawyer::Optional<unsigned> padAccess = Sawyer::Nothing());
 
     /** Size of each page of memory.
      *

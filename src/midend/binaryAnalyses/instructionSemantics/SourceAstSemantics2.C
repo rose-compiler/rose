@@ -7,9 +7,9 @@
 #include <TraceSemantics2.h>
 #include <integerOps.h>
 
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace SourceAstSemantics {

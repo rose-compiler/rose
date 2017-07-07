@@ -4,8 +4,9 @@
 #include "MemoryMap.h"
 #include "Diagnostics.h"
 
-using namespace rose;
-using namespace rose::Diagnostics;
+using namespace Rose;
+using namespace Rose::Diagnostics;
+using namespace Rose::BinaryAnalysis;
 
 SgAsmPESectionTableEntry::SgAsmPESectionTableEntry(const SgAsmPESectionTableEntry::PESectionTableEntry_disk *disk) {
     ctor(disk);
@@ -30,7 +31,6 @@ SgAsmPESectionTableEntry::ctor(const PESectionTableEntry_disk *disk)
     p_flags            = ByteOrder::le_to_host(disk->flags);
 }
 
-/** Update this section table entry with newer information from the section */
 void
 SgAsmPESectionTableEntry::update_from_section(SgAsmPESection *section)
 {
@@ -242,7 +242,7 @@ SgAsmPESectionTable::parse()
     ROSE_ASSERT(NULL==fhdr->get_loader_map());
     BinaryLoader *loader = BinaryLoader::lookup(fhdr); /*no need to clone; we're not changing any settings*/
     ROSE_ASSERT(loader!=NULL);
-    MemoryMap *loader_map = new MemoryMap;
+    MemoryMap::Ptr loader_map = MemoryMap::instance();
     loader->remap(loader_map, fhdr);
     fhdr->set_loader_map(loader_map);
 
@@ -253,9 +253,6 @@ SgAsmPESectionTable::parse()
     return this;
 }
 
-/** Attaches a previously unattached PE Section to the PE Section Table. This method complements
- *  SgAsmPESection::init_from_section_table. This method initializes the section table from the section while
- *  init_from_section_table() initializes the section from the section table. */
 void
 SgAsmPESectionTable::add_section(SgAsmPESection *section)
 {

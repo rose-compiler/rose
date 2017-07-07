@@ -8,7 +8,7 @@
 #include "taintAnalysis.h"
 #include "stringify.h"
 
-using namespace rose;
+using namespace Rose;
 
 /******************************************************************************************************************************
  *                                      Taint Lattice

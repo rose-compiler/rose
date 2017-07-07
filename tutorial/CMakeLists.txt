@@ -24,7 +24,7 @@ set(tutorials
   addVariableDeclaration addVariableDeclaration2
   addAssignmentStmt addExpression addFunctionCalls addFunctionDeclaration
   addFunctionDeclaration2 addFunctionDeclaration3 loopOptimization LoopProcessor
-  binaryAnalysisExample binaryAnalysis_symbolTable
+  binaryAnalysis_symbolTable
   bin_example buildCallGraph buildVFA livenessAnalysis CharmSupport
   debuggingIRnodeToString debuggingSourceCodePositionInformation
   commandlineProcessing interveneAtVariables changeFunction classHierarchyGraph
@@ -109,9 +109,5 @@ target_link_libraries(abstractHandle1 ROSE_DLL ${Boost_LIBRARIES})
 
 add_executable(abstractHandle2 abstractHandle2.cpp)
 target_link_libraries(abstractHandle2 ROSE_DLL ${Boost_LIBRARIES})
-
-add_executable(sb_callgraphAnalysis callGraphSourceBinaryExample.C)
-target_link_libraries(sb_callgraphAnalysis ROSE_DLL ${Boost_LIBRARIES})
-
 
 ########### install files ###############

@@ -10,7 +10,7 @@ static const char *description =
 #include <Diagnostics.h>
 #include <Sawyer/CommandLine.h>
 
-using namespace rose;
+using namespace Rose;
 namespace cl = Sawyer::CommandLine;
 
 int

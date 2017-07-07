@@ -139,7 +139,6 @@ install(TARGETS graph_test_6 DESTINATION bin)
 #graph_test_5_SOURCES = graph_test_5.C
 #graph_test_6_SOURCES = graph_test_6.C
 #
-#LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 #
 #test_hash_multimap: hash_multimap
 #	$(VALGRIND) ./hash_multimap

@@ -18,6 +18,7 @@
  * Nov 3, 2008
  */
 #include "rose.h"
+#include "keep_going.h" // enable logging files which cannot be processed by AutoPar due to various reasons
 // all kinds of analyses needed
 #include "autoParSupport.h" 
 #include <string> 
@@ -80,7 +81,7 @@ void findCandidateFunctionDefinitions (SgProject* project, std::vector<SgFunctio
   } // end for file list
 }
 
-// normalize all loops within candidate function defintions
+// normalize all loops within candidate function definitions
 void normalizeLoops (std::vector<SgFunctionDefinition* > candidateFuncDefs)
 {
   for (std::vector<SgFunctionDefinition* >::iterator iter = candidateFuncDefs.begin(); iter != candidateFuncDefs.end(); iter++)
@@ -146,6 +147,12 @@ void normalizeLoops (std::vector<SgFunctionDefinition* > candidateFuncDefs)
 Sawyer::CommandLine::SwitchGroup commandLineSwitches() {
   using namespace Sawyer::CommandLine;
 
+
+  // Default log files for keep_going option
+  Rose::KeepGoing::report_filename__fail = "autoPar-failed-files.txt";
+  Rose::KeepGoing::report_filename__pass = "autoPar-passed-files.txt";
+
+
   SwitchGroup switches("autoPar's switches");
   switches.doc("These switches control the autoPar tool. ");
   switches.name("rose:autopar"); 
@@ -153,6 +160,19 @@ Sawyer::CommandLine::SwitchGroup commandLineSwitches() {
   switches.insert(Switch("enable_debug")
       .intrinsicValue(true, AutoParallelization::enable_debug)
       .doc("Enable the debugging mode."));
+
+  // Keep going option of autoPar
+  switches.insert(Switch("keep_going")
+      .intrinsicValue(true, AutoParallelization::keep_going)
+      .doc("Allow auto parallelization to keep going if errors happen"));
+
+  switches.insert(Switch("failure_report")
+      .argument("string", anyParser(Rose::KeepGoing::report_filename__fail))
+      .doc("Specify the report file for logging files autoPar cannot process"));
+
+  switches.insert(Switch("success_report")
+      .argument("string", anyParser(Rose::KeepGoing::report_filename__pass))
+      .doc("Specify the report file for logging files autoPar can process"));
 
   switches.insert(Switch("enable_patch")
       .intrinsicValue(true, AutoParallelization::enable_patch)
@@ -213,11 +233,14 @@ static std::vector<std::string> commandline_processing(std::vector< std::string 
   std::vector<std::string> remainingArgs = p.parse(argvList).apply().unparsedArgs(true);
 
   // add back -annot file TODO: how about multiple appearances?
-  for (int i=0; i<AutoParallelization::annot_filenames.size(); i++)
+  for (size_t i=0; i<AutoParallelization::annot_filenames.size(); i++)
   {
     remainingArgs.push_back("-annot");
     remainingArgs.push_back(AutoParallelization::annot_filenames[i]);
   }
+
+  if (AutoParallelization::keep_going)
+    remainingArgs.push_back("-rose:keep_going");
 
 // AFTER parse the command-line, you can do this:
  if (showRoseHelp)
@@ -231,6 +254,7 @@ static std::vector<std::string> commandline_processing(std::vector< std::string 
  ReadAnnotation::get_inst()->read();
  if (AutoParallelization::dump_annot_file)  
    annot->Dump();
+
  //Strip off custom options and their values to enable backend compiler 
  CommandlineProcessing::removeArgsWithParameters(remainingArgs,"-annot");      
 
@@ -248,7 +272,7 @@ main (int argc, char *argv[])
 {
   vector<string> argvList(argv, argv+argc);
   //Processing debugging and annotation options
-//  autopar_command_processing(argvList);
+  //  autopar_command_processing(argvList);
   argvList = commandline_processing (argvList);
   // enable parsing user-defined pragma if enable_diff is true
   // -rose:openmp:parse_only
@@ -257,54 +281,66 @@ main (int argc, char *argv[])
   SgProject *project = frontend (argvList);
   ROSE_ASSERT (project != NULL);
 
-  std::vector<SgFunctionDefinition* > candidateFuncDefs; 
+  // register midend signal handling function
+  if (KEEP_GOING_CAUGHT_MIDEND_SIGNAL)
+  {
+    std::cout
+      << "[WARN] "
+      << "Configured to keep going after catching a "
+      << "signal in AutoPar"
+      << std::endl;
+    Rose::KeepGoing::setMidendErrorCode (project, 100);
+    goto label_end;
+  }   
 
-  findCandidateFunctionDefinitions (project, candidateFuncDefs);
+  // create a block to avoid jump crosses initialization of candidateFuncDefs etc.
+  {                             
+    std::vector<SgFunctionDefinition* > candidateFuncDefs; 
+    findCandidateFunctionDefinitions (project, candidateFuncDefs);
+    normalizeLoops (candidateFuncDefs);
 
-  normalizeLoops (candidateFuncDefs);
+    //Prepare liveness analysis etc.
+    //Too much output for analysis debugging info.
+    //initialize_analysis (project,enable_debug);   
+    initialize_analysis (project, false);   
 
-  //Prepare liveness analysis etc.
-  //Too much output for analysis debugging info.
-  //initialize_analysis (project,enable_debug);   
-  initialize_analysis (project, false);   
-
-  // This is a bit redundant with findCandidateFunctionDefinitions ()
-  // But we do need the per file control to decide if omp.h is needed for each file
-  //
-  // For each source file in the project
-  SgFilePtrList & ptr_list = project->get_fileList();
+    // This is a bit redundant with findCandidateFunctionDefinitions ()
+    // But we do need the per file control to decide if omp.h is needed for each file
+    //
+    // For each source file in the project
+    SgFilePtrList & ptr_list = project->get_fileList();
     for (SgFilePtrList::iterator iter = ptr_list.begin(); iter!=ptr_list.end();
         iter++)
-   {
-     SgFile* sageFile = (*iter);
-     SgSourceFile * sfile = isSgSourceFile(sageFile);
-     ROSE_ASSERT(sfile);
-     SgGlobal *root = sfile->get_globalScope();
+    {
+      SgFile* sageFile = (*iter);
+      SgSourceFile * sfile = isSgSourceFile(sageFile);
+      ROSE_ASSERT(sfile);
+      SgGlobal *root = sfile->get_globalScope();
 
-     Rose_STL_Container<SgNode*> defList = NodeQuery::querySubTree(sfile, V_SgFunctionDefinition); 
-     bool hasOpenMP= false; // flag to indicate if omp.h is needed in this file
+      Rose_STL_Container<SgNode*> defList = NodeQuery::querySubTree(sfile, V_SgFunctionDefinition); 
+      bool hasOpenMP= false; // flag to indicate if omp.h is needed in this file
 
-    //For each function body in the scope
-     //for (SgDeclarationStatementPtrList::iterator p = declList.begin(); p != declList.end(); ++p) 
-     for (Rose_STL_Container<SgNode*>::iterator p = defList.begin(); p != defList.end(); ++p) 
-     {
+      //For each function body in the scope
+      //for (SgDeclarationStatementPtrList::iterator p = declList.begin(); p != declList.end(); ++p) 
+      for (Rose_STL_Container<SgNode*>::iterator p = defList.begin(); p != defList.end(); ++p) 
+      {
 
-//      cout<<"\t loop at:"<< cur_loop->get_file_info()->get_line() <<endl;
+        //      cout<<"\t loop at:"<< cur_loop->get_file_info()->get_line() <<endl;
 
         SgFunctionDefinition *defn = isSgFunctionDefinition(*p);
         ROSE_ASSERT (defn != NULL);
 
         SgFunctionDeclaration *func = defn->get_declaration();
         ROSE_ASSERT (func != NULL);
-        
-         //ignore functions in system headers, Can keep them to test robustness
+
+        //ignore functions in system headers, Can keep them to test robustness
         if (defn->get_file_info()->get_filename()!=sageFile->get_file_info()->get_filename())
         {
           continue;
         }
 
         SgBasicBlock *body = defn->get_body();  
-       // For each loop 
+        // For each loop 
         Rose_STL_Container<SgNode*> loops = NodeQuery::querySubTree(defn,V_SgForStatement); 
         if (loops.size()==0) 
         {
@@ -314,34 +350,34 @@ main (int argc, char *argv[])
         }
 
 #if 0 // Moved to be executed before running liveness analysis.
-      // normalize C99 style for (int i= x, ...) to C89 style: int i;  (i=x, ...)
-       // Liao, 10/22/2009. Thank Jeff Keasler for spotting this bug
-         for (Rose_STL_Container<SgNode*>::iterator iter = loops.begin();
-                     iter!= loops.end(); iter++ )
-         {
-           SgForStatement* cur_loop = isSgForStatement(*iter);
-           ROSE_ASSERT(cur_loop);
-           SageInterface::normalizeForLoopInitDeclaration(cur_loop);
-         }
+        // normalize C99 style for (int i= x, ...) to C89 style: int i;  (i=x, ...)
+        // Liao, 10/22/2009. Thank Jeff Keasler for spotting this bug
+        for (Rose_STL_Container<SgNode*>::iterator iter = loops.begin();
+            iter!= loops.end(); iter++ )
+        {
+          SgForStatement* cur_loop = isSgForStatement(*iter);
+          ROSE_ASSERT(cur_loop);
+          SageInterface::normalizeForLoopInitDeclaration(cur_loop);
+        }
 #endif
         // X. Replace operators with their equivalent counterparts defined 
         // in "inline" annotations
         AstInterfaceImpl faImpl_1(body);
         CPPAstInterface fa_body(&faImpl_1);
         OperatorInlineRewrite()( fa_body, AstNodePtrImpl(body));
-         
-	 // Pass annotations to arrayInterface and use them to collect 
-         // alias info. function info etc.  
-         ArrayAnnotation* annot = ArrayAnnotation::get_inst(); 
-         ArrayInterface array_interface(*annot);
-         array_interface.initialize(fa_body, AstNodePtrImpl(defn));
-         array_interface.observe(fa_body);
-	
-	//FR(06/07/2011): aliasinfo was not set which caused segfault
-	LoopTransformInterface::set_aliasInfo(&array_interface);
-       
-	for (Rose_STL_Container<SgNode*>::iterator iter = loops.begin(); 
-	    iter!= loops.end(); iter++ ) 
+
+        // Pass annotations to arrayInterface and use them to collect 
+        // alias info. function info etc.  
+        ArrayAnnotation* annot = ArrayAnnotation::get_inst(); 
+        ArrayInterface array_interface(*annot);
+        array_interface.initialize(fa_body, AstNodePtrImpl(defn));
+        array_interface.observe(fa_body);
+
+        //FR(06/07/2011): aliasinfo was not set which caused segfault
+        LoopTransformInterface::set_aliasInfo(&array_interface);
+
+        for (Rose_STL_Container<SgNode*>::iterator iter = loops.begin(); 
+            iter!= loops.end(); iter++ ) 
         {
           SgNode* current_loop = *iter;
 
@@ -370,34 +406,46 @@ main (int argc, char *argv[])
         }// end for loops
       } // end for-loop for declarations
 
-     // insert omp.h if needed
-     if (hasOpenMP && !enable_diff)
-     {
-       SageInterface::insertHeader("omp.h",PreprocessingInfo::after,false,root);
-       if (enable_patch)
-         generatePatchFile(sfile); 
-     }
-     // compare user-defined and compiler-generated OmpAttributes
-     if (enable_diff)
-       diffUserDefinedAndCompilerGeneratedOpenMP(sfile); 
-   } //end for-loop of files
+      // insert omp.h if needed
+      if (hasOpenMP && !enable_diff)
+      {
+        SageInterface::insertHeader("omp.h",PreprocessingInfo::after,false,root);
+        if (enable_patch)
+          generatePatchFile(sfile); 
+      }
+      // compare user-defined and compiler-generated OmpAttributes
+      if (enable_diff)
+        diffUserDefinedAndCompilerGeneratedOpenMP(sfile); 
+    } //end for-loop of files
 
 #if 1
-  // undo loop normalization
-  std::map <SgForStatement* , bool >::iterator iter = trans_records.forLoopInitNormalizationTable.begin();
-  for (; iter!= trans_records.forLoopInitNormalizationTable.end(); iter ++) 
-  {
-    SgForStatement* for_loop = (*iter).first; 
-    unnormalizeForLoopInitDeclaration (for_loop);
-  }
+    // undo loop normalization
+    std::map <SgForStatement* , bool >::iterator iter = trans_records.forLoopInitNormalizationTable.begin();
+    for (; iter!= trans_records.forLoopInitNormalizationTable.end(); iter ++) 
+    {
+      SgForStatement* for_loop = (*iter).first; 
+      unnormalizeForLoopInitDeclaration (for_loop);
+    }
 #endif
-  // Qing's loop normalization is not robust enough to pass all tests
-  //AstTests::runAllTests(project);
-  
+    // Qing's loop normalization is not robust enough to pass all tests
+    //AstTests::runAllTests(project);
 
-  // clean up resources for analyses
-  release_analysis();
+
+    // clean up resources for analyses
+    release_analysis();
+  }
+
+label_end: 
+  // Report errors
+  int status = backend (project);
+  if (keep_going)
+  {
+    std::vector<std::string> orig_rose_cmdline(argv, argv+argc);
+    Rose::KeepGoing::generate_reports (project, orig_rose_cmdline);
+  }
 
   //project->unparse();
-  return backend (project);
+  //return backend (project);
+  return status; 
+
 }

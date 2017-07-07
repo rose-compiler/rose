@@ -4,7 +4,8 @@ EXTRA_DIST =
 noinst_PROGRAMS = TestUnparseHeaders
 TestUnparseHeaders_SOURCES = UnparseHeadersTransformVisitor.C TestUnparseHeaders.C
 TestUnparseHeaders_CPPFLAGS = $(ROSE_INCLUDES)
-TestUnparseHeaders_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+TestUnparseHeaders_LDFLAGS = $(ROSE_RPATHS)
+TestUnparseHeaders_LDADD = $(ROSE_LIBS)
 
 
 # Test specimens are actually directories, each of which contains a ROSE Test Harness "config" file.

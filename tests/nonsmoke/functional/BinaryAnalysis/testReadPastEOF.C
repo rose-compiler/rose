@@ -7,6 +7,7 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #include "rose.h"
 #include "BinaryLoader.h"
 
+using namespace Rose::BinaryAnalysis;
 
 int
 main(int argc, char *argv[])
@@ -22,7 +23,7 @@ main(int argc, char *argv[])
         BinaryLoader *loader = BinaryLoader::lookup(*ii);
         //loader->set_debug(stderr);
         loader->remap(*ii);
-        MemoryMap *mm = (*ii)->get_map();
+        MemoryMap::Ptr mm = (*ii)->get_map();
         if (mm) {
             mm->dump(stdout, "    ");
 

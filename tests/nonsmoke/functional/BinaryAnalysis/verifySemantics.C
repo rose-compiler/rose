@@ -20,11 +20,11 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #include <Sawyer/ProgressBar.h>
 #include <TraceSemantics2.h>
 
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
-using namespace rose;
-using namespace rose::Diagnostics;
-using namespace rose::BinaryAnalysis;
-using namespace rose::BinaryAnalysis::InstructionSemantics2;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
+using namespace Rose;
+using namespace Rose::Diagnostics;
+using namespace Rose::BinaryAnalysis;
+using namespace Rose::BinaryAnalysis::InstructionSemantics2;
 
 Sawyer::Message::Facility mlog;
 
@@ -276,7 +276,7 @@ main(int argc, char *argv[]) {
     if (!disassembler)
         throw std::runtime_error("architecture is not supported by this tool");
     size_t addrWidth = disassembler->stackPointerRegister().get_nbits();
-    const RegisterDictionary *registerDictionary = disassembler->get_registers();
+    const RegisterDictionary *registerDictionary = disassembler->registerDictionary();
     typedef Sawyer::Container::Map<rose_addr_t, SgAsmInstruction*> InstructionMap;
     InstructionMap insns;
 

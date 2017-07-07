@@ -15,7 +15,8 @@ TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 noinst_PROGRAMS += outline
 outline_SOURCES = outline.cc
 outline_CPPFLAGS = $(ROSE_INCLUDES)
-outline_LDFLAGS = $(ROSE_LIBS)
+outline_LDFLAGS = $(ROSE_RPATHS)
+outline_LDADD = $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
 # injectOutlinePragmas
@@ -23,7 +24,8 @@ outline_LDFLAGS = $(ROSE_LIBS)
 noinst_PROGRAMS += injectOutlinePragmas
 injectOutlinePragmas_SOURCES = RandomStmtSelector.cc injectOutlinePragmas.cc
 injectOutlinePragmas_CPPFLAGS = $(ROSE_INCLUDES)
-injectOutlinePragmas_LDFLAGS = $(ROSE_LIBS)
+injectOutlinePragmas_LDFLAGS = $(ROSE_RPATHS)
+injectOutlinePragmas_LDADD = $(ROSE_LIBS)
 
 TEST_TARGETS += injectOutlinePragmas.passed
 injectOutlinePragmas.passed: injectOutlinePragmas
@@ -35,7 +37,8 @@ injectOutlinePragmas.passed: injectOutlinePragmas
 noinst_PROGRAMS += outlineRandom
 outlineRandom_SOURCES = RandomStmtSelector.cc outlineRandom.cc
 outlineRandom_CPPFLAGS = $(ROSE_INCLUDES)
-outlineRandom_LDFLAGS = $(ROSE_LIBS)
+outlineRandom_LDFLAGS = $(ROSE_RPATHS)
+outlineRandom_LDADD = $(ROSE_LIBS)
 EXTRA_DIST += RandomStmtSelector.hh
 
 TEST_TARGETS += outlineRandom.passed
@@ -48,7 +51,8 @@ outlineRandom.passed: outlineRandom
 noinst_PROGRAMS += outlineSelection
 outlineSelection_SOURCES = outlineSelection.cc
 outlineSelection_CPPFLAGS = $(ROSE_INCLUDES)
-outlineSelection_LDFLAGS = $(ROSE_LIBS)
+outlineSelection_LDFLAGS = $(ROSE_RPATHS)
+outlineSelection_LDADD = $(ROSE_LIBS)
 
 #########################################################################################################################
 #						TEST SPECIMENS
@@ -204,6 +208,7 @@ OUTLINE_FLAGS= --edg:no_warnings -rose:verbose 0 -rose:outline:parameter_wrapper
 #------------------------------------------------------------------------------------------------------------------------
 # Test outlining using the classic scheme
 
+FORTRAN_RESULTS = 
 classic_test_targets = $(addprefix classic_, $(addsuffix .passed, $(C_TESTCODES_REQUIRED_TO_PASS)))
 TEST_TARGETS += $(classic_test_targets)
 
@@ -281,6 +286,7 @@ noswitch_test_targets = $(addprefix noswitch_, $(addsuffix .passed, $(FORTRAN_TE
 
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 TEST_TARGETS += $(noswitch_test_targets)
+FORTRAN_RESULTS += $(noswitch_test_targets)
 endif
 
 $(noswitch_test_targets): noswitch_%.passed: % outline
@@ -312,6 +318,7 @@ seq7b_test_targets = $(addprefix seq7b_, $(addsuffix .passed, $(FORTRAN_TESTCODE
 
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 TEST_TARGETS += $(seq7b_test_targets)
+FORTRAN_RESULTS += $(seq7b_test_targets)
 endif
 
 $(seq7b_test_targets): seq7b_%.passed: % outlineSelection
@@ -352,6 +359,8 @@ test_class_ODR_violation: $(srcdir)/test_class_ODR_violation_main.C $(srcdir)/te
 #########################################################################################################################
 #					AUTOMAKE BOILERPLATE
 #########################################################################################################################
+# a shortcut to test Fortran only
+test-fortran: $(FORTRAN_RESULTS)
 
 check-local: $(TEST_TARGETS)
 

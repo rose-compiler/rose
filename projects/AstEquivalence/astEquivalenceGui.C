@@ -25,7 +25,7 @@ using namespace boost::filesystem;
 using namespace std;
 using namespace boost;
 using namespace __gnu_cxx;
-using namespace rose;
+using namespace Rose;
 
 
 static string htmlEscape(const string& s) {

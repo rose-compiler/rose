@@ -8,7 +8,7 @@
 #include <unistd.h>
 #include <cmath>
 
-using namespace rose::BinaryAnalysis;
+using namespace Rose::BinaryAnalysis;
 
 static double sigma(double variance) { return variance*variance; }
 
@@ -75,10 +75,10 @@ main(int argc, char *argv[])
     std::string filename = argv[1];
 
     rose_addr_t start_va = 0;
-    MemoryMap map;
+    MemoryMap::Ptr map = MemoryMap::instance();
     MemoryMap::Buffer::Ptr buffer = MemoryMap::MappedBuffer::instance(filename);
-    map.insert(AddressInterval::baseSize(start_va, buffer->size()),
-               MemoryMap::Segment(buffer, 0, MemoryMap::READABLE|MemoryMap::EXECUTABLE, filename));
+    map->insert(AddressInterval::baseSize(start_va, buffer->size()),
+                MemoryMap::Segment(buffer, 0, MemoryMap::READABLE|MemoryMap::EXECUTABLE, filename));
 
     SgAsmGenericHeader *fake_header = new SgAsmPEFileHeader(new SgAsmGenericFile());
     Disassembler *disassembler = Disassembler::lookup(fake_header)->clone();
@@ -86,14 +86,14 @@ main(int argc, char *argv[])
     Disassembler::AddressSet worklist;
     worklist.insert(start_va);
     Disassembler::BadMap bad;
-    Disassembler::InstructionMap insns = disassembler->disassembleBuffer(&map, worklist, NULL, &bad);
+    Disassembler::InstructionMap insns = disassembler->disassembleBuffer(map, worklist, NULL, &bad);
 
     Partitioner *partitioner = new Partitioner();
     partitioner->add_instructions(insns);
 
-    MemoryMap map2 = map;
-    map2.require(MemoryMap::EXECUTABLE).keep();
-    AddressIntervalSet extent(map);
+    MemoryMap::Ptr map2 = map->shallowCopy();
+    map2->require(MemoryMap::EXECUTABLE).keep();
+    AddressIntervalSet extent(*map);
     Partitioner::RegionStats *stats = partitioner->region_statistics(toExtentMap(extent));
 
     /* Initialize a code criteria object with some reasonable values. */

@@ -12,7 +12,7 @@
 #include "AstMatching.h"
 
 using std::string;
-using namespace rose::StringUtility;
+using namespace Rose::StringUtility;
 
 extern const Compass::Checker* const forbiddenFunctionsChecker;
 

@@ -2,12 +2,13 @@
 #include <rose_isnan.h>
 #include "ConcreteSemantics2.h"
 #include "integerOps.h"
+#include "sageBuilderAsm.h"
 #include <Sawyer/BitVectorSupport.h>
 
 using namespace Sawyer::Container;
 typedef Sawyer::Container::BitVector::BitRange BitRange;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace ConcreteSemantics {
@@ -69,41 +70,46 @@ SValue::print(std::ostream &out, BaseSemantics::Formatter&) const {
 
 void
 MemoryState::pageSize(rose_addr_t nBytes) {
-    ASSERT_require(map_.isEmpty());
+    ASSERT_require(map_ == NULL || map_->isEmpty());
     pageSize_ = std::max(nBytes, (rose_addr_t)1);
 }
 
 void
 MemoryState::allocatePage(rose_addr_t va) {
+    if (!map_)
+        map_ = MemoryMap::instance();
     rose_addr_t pageVa = alignDown(va, pageSize_);
     unsigned acc = MemoryMap::READABLE | MemoryMap::WRITABLE;
-    map_.insert(AddressInterval::baseSize(pageVa, pageSize_),
-                MemoryMap::Segment(MemoryMap::AllocatingBuffer::instance(pageSize_),
-                                   0, acc, "ConcreteSemantics demand allocated"));
+    map_->insert(AddressInterval::baseSize(pageVa, pageSize_),
+                 MemoryMap::Segment(MemoryMap::AllocatingBuffer::instance(pageSize_),
+                                    0, acc, "ConcreteSemantics demand allocated"));
 }
 
 void
-MemoryState::memoryMap(const MemoryMap &map, Sawyer::Optional<unsigned> padAccess) {
+MemoryState::memoryMap(const MemoryMap::Ptr &map, Sawyer::Optional<unsigned> padAccess) {
     map_ = map;
+    if (!map)
+        return;
+
     rose_addr_t va = 0;
-    while (map_.atOrAfter(va).next().assignTo(va)) {
+    while (map_->atOrAfter(va).next().assignTo(va)) {
         rose_addr_t pageVa = alignDown(va, pageSize_);
 
         // Mapped area must begin at a page boundary.
         if (pageVa < va) {
-            unsigned acc = padAccess ? *padAccess : map_.get(va).accessibility();
-            map_.insert(AddressInterval::hull(pageVa, va-1),
-                        MemoryMap::Segment(MemoryMap::AllocatingBuffer::instance(va-pageVa), 0, acc, "padding"));
+            unsigned acc = padAccess ? *padAccess : map_->get(va).accessibility();
+            map_->insert(AddressInterval::hull(pageVa, va-1),
+                         MemoryMap::Segment(MemoryMap::AllocatingBuffer::instance(va-pageVa), 0, acc, "padding"));
         }
 
         // Mapped area must end at the last byte before a page boundary.
-        if (AddressInterval unused = map_.unmapped(va)) {
+        if (AddressInterval unused = map_->unmapped(va)) {
             va = unused.least();
             rose_addr_t nextPageVa = alignUp(va, pageSize_);
             if (nextPageVa > va) {
-                unsigned acc = padAccess ? *padAccess : map_.get(va-1).accessibility();
-                map_.insert(AddressInterval::hull(va, nextPageVa-1),
-                            MemoryMap::Segment(MemoryMap::AllocatingBuffer::instance(nextPageVa-va), 0, acc, "padding"));
+                unsigned acc = padAccess ? *padAccess : map_->get(va-1).accessibility();
+                map_->insert(AddressInterval::hull(va, nextPageVa-1),
+                             MemoryMap::Segment(MemoryMap::AllocatingBuffer::instance(nextPageVa-va), 0, acc, "padding"));
                 va = nextPageVa - 1;
             }
         } else {
@@ -119,12 +125,12 @@ MemoryState::readMemory(const BaseSemantics::SValuePtr &addr_, const BaseSemanti
     ASSERT_require2(8==dflt_->get_width(), "ConcreteSemantics::MemoryState requires memory cells contain 8-bit data");
     rose_addr_t addr = addr_->get_number();
     uint8_t dflt = dflt_->get_number();
-    if (!map_.at(addr).exists()) {
+    if (!map_ || !map_->at(addr).exists()) {
         allocatePage(addr);
-        map_.at(addr).limit(1).write(&dflt);
+        map_->at(addr).limit(1).write(&dflt);
         return dflt_;
     }
-    map_.at(addr).limit(1).read(&dflt);
+    map_->at(addr).limit(1).read(&dflt);
     return dflt_->number_(8, dflt);
 }
 
@@ -134,9 +140,9 @@ MemoryState::writeMemory(const BaseSemantics::SValuePtr &addr_, const BaseSemant
     ASSERT_require2(8==value_->get_width(), "ConcreteSemantics::MemoryState requires memory cells contain 8-bit data");
     rose_addr_t addr = addr_->get_number();
     uint8_t value = value_->get_number();
-    if (!map_.at(addr).exists())
+    if (!map_ || !map_->at(addr).exists())
         allocatePage(addr);
-    map_.at(addr).limit(1).write(&value);
+    map_->at(addr).limit(1).write(&value);
 }
 
 bool
@@ -147,20 +153,24 @@ MemoryState::merge(const BaseSemantics::MemoryStatePtr &other, BaseSemantics::Ri
 
 void
 MemoryState::print(std::ostream &out, Formatter&) const {
-    map_.dump(out);
-    rose_addr_t pageVa = 0;
-    uint8_t* page = new uint8_t[pageSize_];
-    while (map_.atOrAfter(pageVa).next().assignTo(pageVa)) {
-        size_t nread = map_.at(pageVa).limit(pageSize_).read(page).size();
-        ASSERT_always_require(nread == pageSize_);
-        HexdumpFormat fmt;
-        SgAsmExecutableFileFormat::hexdump(out, pageVa, (const unsigned char*)page, pageSize_, fmt);
-        out <<"\n";
-        if (pageVa + (pageSize_-1) == map_.hull().greatest())
-            break;
-        pageVa += pageSize_;
+    if (!map_) {
+        out <<"no memory map\n";
+    } else {
+        map_->dump(out);
+        rose_addr_t pageVa = 0;
+        uint8_t* page = new uint8_t[pageSize_];
+        while (map_->atOrAfter(pageVa).next().assignTo(pageVa)) {
+            size_t nread = map_->at(pageVa).limit(pageSize_).read(page).size();
+            ASSERT_always_require(nread == pageSize_);
+            HexdumpFormat fmt;
+            SgAsmExecutableFileFormat::hexdump(out, pageVa, (const unsigned char*)page, pageSize_, fmt);
+            out <<"\n";
+            if (pageVa + (pageSize_-1) == map_->hull().greatest())
+                break;
+            pageVa += pageSize_;
+        }
+        delete [] page;
     }
-    delete [] page;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

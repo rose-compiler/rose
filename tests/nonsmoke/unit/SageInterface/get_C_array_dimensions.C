@@ -53,7 +53,7 @@ int main(int argc, char * argv[])
   SgFile* firstfile = fl[0];
   ROSE_ASSERT (firstfile!=NULL);
   
-  string filename = rose::StringUtility::stripPathFromFileName (firstfile->getFileName());
+  string filename = Rose::StringUtility::stripPathFromFileName (firstfile->getFileName());
   string ofilename = filename+".get_C_array_dimensions.output";
   ofile.open(ofilename.c_str());
   visitorTraversal myvisitor;

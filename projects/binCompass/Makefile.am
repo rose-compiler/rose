@@ -5,10 +5,11 @@ EXTRA_DIST = buffer2.bin
 SUBDIRS = analyses graphanalyses
 
 AM_CPPFLAGS = $(ROSE_INCLUDES) -I. $(LTDLINCL)
+AM_LDFLAGS = $(ROSE_RPATHS)
 
 bin_PROGRAMS = binCompassMain 
 
-LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -ldl $(LIBLTDL)
+LDADD = $(ROSE_LIBS) -ldl $(LIBLTDL)
 
 binCompassMain_SOURCES = binCompassMain.cpp  
 

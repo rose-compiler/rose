@@ -11,7 +11,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-using namespace rose;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 
 void
 SgAsmGenericFile::ctor()
@@ -147,7 +148,7 @@ SgAsmGenericFile::read_content(rose_addr_t offset, void *dst_buf, rose_addr_t si
 }
 
 size_t
-SgAsmGenericFile::read_content(const MemoryMap *map, rose_addr_t start_va, void *dst_buf, rose_addr_t size, bool strict)
+SgAsmGenericFile::read_content(const MemoryMap::Ptr &map, rose_addr_t start_va, void *dst_buf, rose_addr_t size, bool strict)
 {
     ROSE_ASSERT(map!=NULL);
 
@@ -181,7 +182,7 @@ SgAsmGenericFile::read_content(const MemoryMap *map, rose_addr_t start_va, void 
 }
 
 std::string
-SgAsmGenericFile::read_content_str(const MemoryMap *map, rose_addr_t va, bool strict)
+SgAsmGenericFile::read_content_str(const MemoryMap::Ptr &map, rose_addr_t va, bool strict)
 {
     static char *buf=NULL;
     static size_t nalloc=0;

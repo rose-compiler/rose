@@ -14,9 +14,9 @@
 #include <Sawyer/CommandLine.h>
 #include <stringify.h>
 
-using namespace rose::Diagnostics;
+using namespace Rose::Diagnostics;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 namespace Modules {
@@ -344,11 +344,11 @@ HexDumper::operator()(bool chain, const AttachedBasicBlock &args) {
         fmt.prefix = "    ";                            // prefix before each line
 
         rose_addr_t va = settings_.what.least();
-        while (AddressInterval avail = args.partitioner->memoryMap().atOrAfter(va).singleSegment().available()) {
+        while (AddressInterval avail = args.partitioner->memoryMap()->atOrAfter(va).singleSegment().available()) {
             if (avail.least() > settings_.what.greatest())
                 break;
             const size_t nPrint = std::min(settings_.what.greatest()+1-avail.least(), avail.size());
-            const MemoryMap::Node &node = *args.partitioner->memoryMap().find(avail.least());
+            const MemoryMap::Node &node = *args.partitioner->memoryMap()->find(avail.least());
             const MemoryMap::Segment &segment = node.value();
             const AddressInterval segmentInterval = node.key();
             size_t offsetWithinSegment = avail.least() - segmentInterval.least();
@@ -432,14 +432,15 @@ Debugger::debug(rose_addr_t va, const BasicBlock::Ptr &bblock) {
 }
 
 AddressIntervalSet
-deExecuteZeros(MemoryMap &map /*in,out*/, size_t threshold, size_t leaveAtFront, size_t leaveAtBack) {
+deExecuteZeros(const MemoryMap::Ptr &map /*in,out*/, size_t threshold, size_t leaveAtFront, size_t leaveAtBack) {
+    ASSERT_not_null(map);
     AddressIntervalSet changes;
     if (leaveAtFront + leaveAtBack >= threshold)
         return changes;
-    rose_addr_t va = map.hull().least();
+    rose_addr_t va = map->hull().least();
     AddressInterval zeros;
     uint8_t buf[4096];
-    while (AddressInterval accessed = map.atOrAfter(va).limit(sizeof buf).require(MemoryMap::EXECUTABLE).read(buf)) {
+    while (AddressInterval accessed = map->atOrAfter(va).limit(sizeof buf).require(MemoryMap::EXECUTABLE).read(buf)) {
         size_t nRead = accessed.size();
         size_t firstZero = 0;
         while (firstZero < nRead) {
@@ -456,7 +457,7 @@ deExecuteZeros(MemoryMap &map /*in,out*/, size_t threshold, size_t leaveAtFront,
                     if (zeros.size() >= threshold && zeros.size() > leaveAtFront + leaveAtBack) {
                         AddressInterval affected = AddressInterval::hull(zeros.least()+leaveAtFront,
                                                                          zeros.greatest()-leaveAtBack);
-                        map.within(affected).changeAccess(0, MemoryMap::EXECUTABLE);
+                        map->within(affected).changeAccess(0, MemoryMap::EXECUTABLE);
                         changes.insert(affected);
                     }
                     zeros = AddressInterval::baseSize(va+firstZero, nZeros);
@@ -465,13 +466,13 @@ deExecuteZeros(MemoryMap &map /*in,out*/, size_t threshold, size_t leaveAtFront,
                 firstZero += nZeros+1;
             }
         }
-        if (accessed.greatest() == map.greatest())
+        if (accessed.greatest() == map->greatest())
             break;                                      // avoid possible overflow in next statement
         va = accessed.greatest() + 1;
     }
     if (zeros.size() >= threshold && zeros.size() > leaveAtFront + leaveAtBack) {
         AddressInterval affected = AddressInterval::hull(zeros.least()+leaveAtFront, zeros.greatest()-leaveAtBack);
-        map.within(affected).changeAccess(0, MemoryMap::EXECUTABLE);
+        map->within(affected).changeAccess(0, MemoryMap::EXECUTABLE);
         changes.insert(affected);
     }
     return changes;
@@ -502,13 +503,13 @@ labelSymbolAddresses(Partitioner &partitioner, SgAsmGenericHeader *fileHeader) {
                         section->get_mapped_preferred_va() != section->get_mapped_actual_va()) {
                         va += section->get_mapped_actual_va() - section->get_mapped_preferred_va();
                     }
-                    if (partitioner.memoryMap().at(va).exists())
+                    if (partitioner.memoryMap()->at(va).exists())
                         partitioner.addressName(va, name);
 
                     // Sometimes weak symbol values are offsets w.r.t. their linked section.
                     if (section && symbol->get_binding() == SgAsmGenericSymbol::SYM_WEAK) {
                         va = value + section->get_mapped_actual_va();
-                        if (partitioner.memoryMap().at(va).exists())
+                        if (partitioner.memoryMap()->at(va).exists())
                             partitioner.addressName(va, name);
                     }
                 }
@@ -543,7 +544,7 @@ nameStrings(const Partitioner &partitioner) {
                         ival->set_comment(label);
                     } else if (partitioner.instructionsOverlapping(va).empty()) {
                         stringFinder.reset();
-                        stringFinder.find(partitioner.memoryMap().at(va));
+                        stringFinder.find(partitioner.memoryMap()->at(va));
                         if (!stringFinder.strings().empty()) {
                             ASSERT_require(stringFinder.strings().front().address() == va);
                             std::string str = stringFinder.strings().front().narrow(); // front is the longest string
@@ -772,7 +773,7 @@ SgAsmBlock*
 buildDataBlockAst(const Partitioner &partitioner, const DataBlock::Ptr &dblock, const AstConstructionSettings &settings) {
     // Build the static data item
     SgUnsignedCharList rawBytes(dblock->size(), 0);
-    size_t nRead = partitioner.memoryMap().at(dblock->address()).read(rawBytes).size();
+    size_t nRead = partitioner.memoryMap()->at(dblock->address()).read(rawBytes).size();
     ASSERT_always_require(nRead==dblock->size());
     SgAsmStaticData *datum = SageBuilderAsm::buildStaticData(dblock->address(), rawBytes);
 

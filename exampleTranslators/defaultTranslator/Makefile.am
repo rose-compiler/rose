@@ -1,15 +1,17 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 AM_CPPFLAGS = $(ROSE_INCLUDES)
+AM_LDFLAGS = $(ROSE_RPATHS)
 
-bin_PROGRAMS = defaultTranslator preprocessingInfoDumper mangledNameDumper qualifiedNameDumper
+bin_PROGRAMS = defaultTranslator preprocessingInfoDumper mangledNameDumper qualifiedNameDumper KeepGoingTranslator
 
 defaultTranslator_SOURCES = defaultTranslator.C 
 preprocessingInfoDumper_SOURCES = preprocessingInfoDumper.C
 mangledNameDumper_SOURCES = mangledNameDumper.C
 qualifiedNameDumper_SOURCES = qualifiedNameDumper.C
+KeepGoingTranslator_SOURCES = KeepGoingTranslator.cpp
 
-LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+LDADD = $(ROSE_LIBS)
 
 EXTRA_DIST = CMakeLists.txt  test_mangeldName.c test_qualifiedName.cpp
 CLEANFILES = 

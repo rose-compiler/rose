@@ -6,10 +6,10 @@
 #include <Sawyer/ProgressBar.h>
 #include <Sawyer/ThreadWorkers.h>
 
-using namespace rose::Diagnostics;
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
+using namespace Rose::Diagnostics;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 Sawyer::Message::Facility BestMapAddress::mlog;
@@ -20,7 +20,7 @@ BestMapAddress::initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        mlog = Sawyer::Message::Facility("rose::BinaryAnalysis::BestMapAddress", Diagnostics::destination);
+        mlog = Sawyer::Message::Facility("Rose::BinaryAnalysis::BestMapAddress", Diagnostics::destination);
         Diagnostics::mfacilities.insertAndAdjust(mlog);
     }
 }
@@ -46,7 +46,7 @@ BestMapAddress::gatherAddresses(P2::Engine &engine) {
         if (!dis)
             throw Exception("no disassembler");
         nBits_ = dis->instructionPointerRegister().get_nbits();
-    } else if (dis->get_wordsize() != nBits_) {
+    } else if (dis->wordSizeBytes()*8 != nBits_) {
         throw Exception("mismatched address sizes");
     }
 

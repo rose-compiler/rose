@@ -8,8 +8,8 @@
 
 #include <sys/wait.h>
 
-using namespace rose;
-using namespace rose::Diagnostics;
+using namespace Rose;
+using namespace Rose::Diagnostics;
 
 SAWYER_THREAD_TRAITS::RecursiveMutex RSIM_Simulator::class_rwlock;
 RSIM_Simulator *RSIM_Simulator::active_sim = NULL;
@@ -187,7 +187,7 @@ RSIM_Simulator::ctor()
     static bool classInitialized = false;
     if (!classInitialized) {
         ROSE_INITIALIZE;
-        rose::Diagnostics::initAndRegister(&mlog, "RSIM");
+        Rose::Diagnostics::initAndRegister(&mlog, "RSIM");
         classInitialized = true;
     }
     
@@ -446,7 +446,7 @@ RSIM_Simulator::loadSpecimen(const std::vector<std::string> &args, int existingP
 
     if ((process->tracingFlags() & tracingFacilityBit(TRACE_MMAP))) {
         fprintf(process->tracingFile(), "memory map after program load:\n");
-        process->get_memory().dump(process->tracingFile(), "  ");
+        process->get_memory()->dump(process->tracingFile(), "  ");
     }
 
     mainThread->tracing(TRACE_STATE) <<"Initial state:\n"

@@ -11,8 +11,8 @@
 #include <sys/user.h>
 #include <sys/types.h>
 
-using namespace rose;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 
 void
 RSIM_Linux::init() {}
@@ -106,7 +106,7 @@ public:
     /* Load the specified file as a virtual dynamic shared object. Returns true if the vdso was found and mapped. The side
      * effect is that the "vdso", "vdso_mapped_va", and "vdso_entry_va" data members are initialized when the vdso is found and
      * mapped into memory. */
-    bool map_vdso(const std::string &vdso_name, SgAsmInterpretation *interpretation, MemoryMap *map) {
+    bool map_vdso(const std::string &vdso_name, SgAsmInterpretation *interpretation, const MemoryMap::Ptr &map) {
         ROSE_ASSERT(vdso==NULL);
         ROSE_ASSERT(vdso_mapped_va==0);
         ROSE_ASSERT(vdso_entry_va==0);
@@ -182,7 +182,7 @@ RSIM_Linux::loadSpecimenArch(RSIM_Process *process, SgAsmInterpretation *interpr
     loader->load(interpretation);
     ASSERT_require(process->mem_ntransactions() == 0);
     process->mem_transaction_start("specimen main memory");
-    process->get_memory() = *interpretation->get_map(); // shallow copy, new segments point to same old data
+    *process->get_memory() = *interpretation->get_map(); // shallow copy, new segments point to same old data
 
     /* Load and map the virtual dynamic shared library. */
     bool vdso_loaded = false;
@@ -198,7 +198,7 @@ RSIM_Linux::loadSpecimenArch(RSIM_Process *process, SgAsmInterpretation *interpr
         for (int j=0; j<2 && !vdso_loaded; ++j) {
             FileSystem::Path name = j ? path / vdsoName_ : path;
             if (FileSystem::isFile(name) &&
-                (vdso_loaded = loader->map_vdso(FileSystem::toString(name), interpretation, &process->get_memory()))) {
+                (vdso_loaded = loader->map_vdso(FileSystem::toString(name), interpretation, process->get_memory()))) {
                 vdsoMappedVa_ = loader->vdso_mapped_va;
                 vdsoEntryVa_ = loader->vdso_entry_va;
                 headers.push_back(loader->vdso);
@@ -234,7 +234,7 @@ RSIM_Linux::initializeSimulatedOs(RSIM_Process *process, SgAsmGenericHeader *mai
     t1.traverse(mainHeader, preorder);
 
     AddressInterval restriction = AddressInterval::hull(t1.max_mapped_va, AddressInterval::whole().greatest());
-    process->brkVa(process->get_memory().findFreeSpace(PAGE_SIZE, PAGE_SIZE, restriction).orElse(0));
+    process->brkVa(process->get_memory()->findFreeSpace(PAGE_SIZE, PAGE_SIZE, restriction).orElse(0));
 
     // File descriptors. For now we just re-use ROSE's standard I/O, but in the future we could open new host descriptors to
     // serve as standard I/O for the guest.
@@ -399,9 +399,9 @@ RSIM_Linux::initializeStackArch(RSIM_Thread *thread, SgAsmGenericHeader *_fhdr) 
     rose_addr_t origSp = thread->operators()->readRegister(SP)->get_number();
     rose_addr_t sp = origSp;
     rose_addr_t stack_addr = sp - stack_size;
-    process->get_memory().insert(AddressInterval::baseSize(stack_addr, stack_size),
-                                 MemoryMap::Segment::anonymousInstance(stack_size, MemoryMap::READABLE|MemoryMap::WRITABLE,
-                                                                       "[stack]"));
+    process->get_memory()->insert(AddressInterval::baseSize(stack_addr, stack_size),
+                                  MemoryMap::Segment::anonymousInstance(stack_size, MemoryMap::READABLE|MemoryMap::WRITABLE,
+                                                                        "[stack]"));
 
     // Top eight bytes on the stack seem to be always zero.
     static const uint8_t unknown_top[] = {0, 0, 0, 0, 0, 0, 0, 0};
@@ -1632,7 +1632,7 @@ RSIM_Linux::syscall_madvise_body(RSIM_Thread *t, int callno)
     ExtentMap mapped_mem;
     {
         SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(t->get_process()->rwlock());
-        AddressIntervalSet addresses(t->get_process()->get_memory());
+        AddressIntervalSet addresses(*t->get_process()->get_memory());
         mapped_mem = toExtentMap(addresses);
     }
     ExtentMap unmapped = mapped_mem.subtract_from(Extent(start, size));

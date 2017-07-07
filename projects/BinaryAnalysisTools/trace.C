@@ -26,9 +26,9 @@ static const char *description =
 #include <Sawyer/Trace.h>
 #include <StringUtility.h>                              // ROSE header
 
-using namespace rose;
+using namespace Rose;
 using namespace Sawyer::Message::Common;                // INFO, WARN, ERROR, FATAL, etc.
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 Sawyer::Message::Facility mlog;
 
@@ -108,7 +108,7 @@ main(int argc, char *argv[]) {
     BinaryAnalysis::BinaryDebugger debugger(command);
     std::string specimenResourceName = "proc:noattach:" + StringUtility::numberToString(debugger.isAttached());
     P2::Partitioner partitioner = engine.partition(specimenResourceName);
-    partitioner.memoryMap().dump(std::cerr);            // show the memory map as a debugging aid
+    partitioner.memoryMap()->dump(std::cerr);           // show the memory map as a debugging aid
 
     // Create a global control flow graph whose vertices are instructions from a global CFG whose verts are mostly basic
     // blocks.

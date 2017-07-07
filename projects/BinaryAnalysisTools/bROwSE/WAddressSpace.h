@@ -39,15 +39,15 @@ private:
     int bottomGutterArrowWidth_;                        // size of base of arrow either side of point of arrow
     AddressInterval displayedDomain_;                   // addresses displayed by the map
     Sawyer::Container::IndexedList<HeatMap> maps_;      // the maps to display
-    Sawyer::Container::IndexedList<rose::Color::Gradient> gradients_; // color gradient for each map
+    Sawyer::Container::IndexedList<Rose::Color::Gradient> gradients_; // color gradient for each map
     Sawyer::Container::IndexedList<Properties> properties_;
     Sawyer::Container::IndexedList<AddressIntervalSet> highlights_; // areas to highlight
-    rose::Color::HSV borderColor_;                      // border color
-    rose::Color::HSV bgColor_;                          // background color
+    Rose::Color::HSV borderColor_;                      // border color
+    Rose::Color::HSV bgColor_;                          // background color
     HeatMap topGutterMap_;
-    rose::Color::Gradient topGutterGradient_;
+    Rose::Color::Gradient topGutterGradient_;
     HeatMap bottomGutterMap_;
-    rose::Color::Gradient bottomGutterGradient_;
+    Rose::Color::Gradient bottomGutterGradient_;
     Wt::Signal<rose_addr_t, Wt::WMouseEvent> topGutterClicked_;
     Wt::Signal<rose_addr_t, Wt::WMouseEvent> bottomGutterClicked_;
     Wt::Signal<rose_addr_t, size_t, Wt::WMouseEvent> barGraphClicked_;
@@ -58,7 +58,7 @@ public:
           barWidth_(980), horizontalMargin_(10),
           topMargin_(2), topGutterHeight_(8), barHeight_(30), bottomGutterHeight_(8), bottomMargin_(2),
           topGutterArrowWidth_(3), bottomGutterArrowWidth_(3),
-          borderColor_(rose::Color::black), bgColor_(rose::Color::black) {
+          borderColor_(Rose::Color::black), bgColor_(Rose::Color::black) {
         init();
     }
 
@@ -132,8 +132,8 @@ public:
      *  The color of the box drawn around the widget.  The default is black.
      *
      * @{ */
-    const rose::Color::HSV& borderColor() const { return borderColor_; }
-    void borderColor(const rose::Color::HSV &c) { borderColor_ = c; }
+    const Rose::Color::HSV& borderColor() const { return borderColor_; }
+    void borderColor(const Rose::Color::HSV &c) { borderColor_ = c; }
     /** @} */
 
     /** Property: background color.
@@ -142,8 +142,8 @@ public:
      *  default is black.
      *
      * @{ */
-    const rose::Color::HSV &bgColor() const { return bgColor_; }
-    void bgColor(const rose::Color::HSV &c) { bgColor_ = c; }
+    const Rose::Color::HSV &bgColor() const { return bgColor_; }
+    void bgColor(const Rose::Color::HSV &c) { bgColor_ = c; }
     /** @} */
 
     /** Number of maps defined. */
@@ -174,8 +174,8 @@ public:
      *  Returns the gradient for the specified heat map.
      *
      * @{ */
-    const rose::Color::Gradient& gradient(size_t idx) const { return gradients_[idx]; }
-    rose::Color::Gradient& gradient(size_t idx);
+    const Rose::Color::Gradient& gradient(size_t idx) const { return gradients_[idx]; }
+    Rose::Color::Gradient& gradient(size_t idx);
     /** @} */
 
     /** Reference to properties for specified map.
@@ -197,10 +197,10 @@ public:
     /** Gutter gradients.
      *
      * @{ */
-    const rose::Color::Gradient& topGutterGradient() const { return topGutterGradient_; }
-    rose::Color::Gradient& topGutterGradient() { return topGutterGradient_; }
-    const rose::Color::Gradient& bottomGutterGradient() const { return bottomGutterGradient_; }
-    rose::Color::Gradient& bottomGutterGradient() { return bottomGutterGradient_; }
+    const Rose::Color::Gradient& topGutterGradient() const { return topGutterGradient_; }
+    Rose::Color::Gradient& topGutterGradient() { return topGutterGradient_; }
+    const Rose::Color::Gradient& bottomGutterGradient() const { return bottomGutterGradient_; }
+    Rose::Color::Gradient& bottomGutterGradient() { return bottomGutterGradient_; }
     /** @} */
 
     /** Clear all maps and gradients.
@@ -218,7 +218,7 @@ public:
      *  layer is used in the address map, otherwise a new layer is created. In any case, the layer used is returned.  If @p
      *  showStarts is true then the starting address of each function will be added to the gutter (top gutter for layer zero,
      *  bottom gutter for other layers).  The gutter is cleared first. */
-    size_t insert(const MemoryMap&, size_t idx=0, bool showStarts=true);
+    size_t insert(const Rose::BinaryAnalysis::MemoryMap::Ptr&, size_t idx=0, bool showStarts=true);
 
     /** Initialize with function addresses.
      *

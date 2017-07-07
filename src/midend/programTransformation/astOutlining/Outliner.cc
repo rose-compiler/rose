@@ -20,7 +20,7 @@ namespace bfs=boost::filesystem;
 // =====================================================================
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 namespace Outliner {
   //! A set of flags to control the internal behavior of the outliner

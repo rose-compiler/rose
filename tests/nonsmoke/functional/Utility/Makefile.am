@@ -8,11 +8,12 @@ noinst_PROGRAMS =
 TEST_TARGETS =
 
 AM_CPPFLAGS = $(ROSE_INCLUDES)
-AM_LDFLAGS = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+AM_LDFLAGS = $(ROSE_RPATHS)
+LDADD = $(ROSE_LIBS)
 
 
 ########################################################################################################################
-# Test that rose::FileSystem::copyFile works
+# Test that Rose::FileSystem::copyFile works
 ########################################################################################################################
 
 noinst_PROGRAMS += testCopyFile
@@ -113,13 +114,8 @@ graphIO.passed: $(top_srcdir)/scripts/test_exit_status graphIO
 # Boilerplate
 ########################################################################################################################
 
-check-smoke-local:
-check-nonsmoke-local: $(TEST_TARGETS)
 
-# FIXME: check-local temporarily runs non-smoke tests as well until Jenkins and the matrix are fixed [Matzke, 2016-09-07]
-#check-local: check-smoke-local
-check-local: check-smoke-local check-nonsmoke-local
-check-all-local: check-smoke-local check-nonsmoke-local
+check-local: $(TEST_TARGETS)
 
 clean-local:
 	rm -f $(MOSTLYCLEANFILES)

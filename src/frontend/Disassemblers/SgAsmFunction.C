@@ -9,7 +9,7 @@
 #include <gcrypt.h>
 #endif
 
-using namespace rose;
+using namespace Rose;
 
 std::string
 SgAsmFunction::reason_key(const std::string &prefix)
@@ -195,8 +195,6 @@ SgAsmFunction::get_sha1(uint8_t digest[20], NodeSelector *selector)
 #endif
 }
 
-/** Function entry basic block.  Returns the basic block that represents the function entry point. Returns null for a function
- *  that contains no instructions (e.g., has only static data blocks). */
 SgAsmBlock *
 SgAsmFunction::get_entry_block() const {
     for (SgAsmStatementPtrList::const_iterator si=p_statementList.begin(); si!=p_statementList.end(); ++si) {

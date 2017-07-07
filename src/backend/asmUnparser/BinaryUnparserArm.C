@@ -2,7 +2,7 @@
 #include <BinaryUnparserArm.h>
 #include <stringify.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Unparser {
 
@@ -181,8 +181,6 @@ Arm::outputExpr(std::ostream &out, SgAsmExpression *expr, State &state, std::str
         }
     }
 
-    if (!expr->get_replacement().empty())
-        comments.push_back(expr->get_replacement());
     if (!expr->get_comment().empty())
         comments.push_back(expr->get_comment());
     if (!comments.empty())

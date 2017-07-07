@@ -13,7 +13,7 @@
 #include <iostream>
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 // MS: temporary (TODO: move to processing class)
 static string RTIContainerName = "rtiContainer";  // put this into the respective processing class as private member
@@ -3463,11 +3463,11 @@ Grammar::buildCode ()
   // the more sophisticated Saywer support for diagnostic messages.
   // Insert:
   //    #undef mprintf
-  //    #define mprintf rose::Diagnostics::mfprintf(rose::mlog[rose::Diagnostics::DEBUG])
+  //    #define mprintf Rose::Diagnostics::mfprintf(Rose::mlog[Rose::Diagnostics::DEBUG])
 
      string defines4 = "#undef mprintf\n";
      includeHeaderString += defines4;
-     string defines5 = "#define mprintf rose::Diagnostics::mfprintf(rose::ir_node_mlog[rose::Diagnostics::DEBUG])\n\n";
+     string defines5 = "#define mprintf Rose::Diagnostics::mfprintf(Rose::ir_node_mlog[Rose::Diagnostics::DEBUG])\n\n";
      includeHeaderString += defines5;
 
 
@@ -4002,7 +4002,10 @@ Grammar::GrammarNodeInfo Grammar::getGrammarNodeInfo(AstNodeClass* grammarnode) 
         ||nodeName == "SgOmpSimdStatement"
         ||nodeName == "SgOmpTaskStatement"
         ||nodeName == "SgOmpForStatement"
+        ||nodeName == "SgOmpForSimdStatement"
+        ||nodeName == "SgOmpForSimdStatement"
         ||nodeName == "SgOmpDoStatement"
+        ||nodeName == "SgOmpAtomicStatement"
         ||nodeName == "SgExprListExp");
   }
   return info;
@@ -4300,7 +4303,10 @@ Grammar::buildTreeTraversalFunctions(AstNodeClass& node, StringUtility::FileWith
                  ||string(node.getName()) == "SgOmpTargetStatement"
                  ||string(node.getName()) == "SgOmpTargetDataStatement"
                  ||string(node.getName()) == "SgOmpForStatement"
+                 ||string(node.getName()) == "SgOmpForSimdStatement"
+                 ||string(node.getName()) == "SgOmpForSimdStatement"
                  ||string(node.getName()) == "SgOmpDoStatement"
+                 ||string(node.getName()) == "SgOmpAtomicStatement"
                  )
                   {
                     outputFile << "if (idx == 0) return p_body;\n"
@@ -4406,7 +4412,9 @@ Grammar::buildTreeTraversalFunctions(AstNodeClass& node, StringUtility::FileWith
                  ||string(node.getName()) == "SgOmpTargetStatement"
                  ||string(node.getName()) == "SgOmpTargetDataStatement"
                  ||string(node.getName()) == "SgOmpForStatement"
+                 ||string(node.getName()) == "SgOmpForSimdStatement"
                  ||string(node.getName()) == "SgOmpDoStatement"
+                 ||string(node.getName()) == "SgOmpAtomicStatement"
                  )
                   {
                      outputFile << "if (child == p_body) return 0;\n"

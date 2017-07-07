@@ -1,6 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 AM_CPPFLAGS = $(ROSE_INCLUDES)
-LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+AM_LDFLAGS = $(ROSE_RPATHS)
+LDADD = $(ROSE_LIBS)
 
 SUBDIRS =
 
@@ -108,8 +109,8 @@ check-local: $(nonsmoke_getDataSharingAttribute_c_output) $(nonsmoke_getDataShar
              $(nonsmoke_genericCoverage_c_output) $(nonsmoke_genericCoverage_c_output_diff)
 else
 # DQ (4/5/2017): GNU 6.1 includes language features that this test does not support.
-check-local: $(nonsmoke_getDataSharingAttribute_c_output) $(nonsmoke_getDataSharingAttribute_c_output_diff) \
-             $(nonsmoke_get_C_array_dimensions_c_output) $(nonsmoke_get_C_array_dimensions_c_output_diff) 
+check-local: $(nonsmoke_getDataSharingAttribute_c_output) (nonsmoke_getDataSharingAttribute_c_output_diff) \
+             $(nonsmoke_get_C_array_dimensions_c_output) $(nonsmoke_get_C_array_dimensions_c_output_diff)
 endif
 
 clean-local:

@@ -5,7 +5,7 @@
 #include "Diagnostics.h"
 #include "BinaryUnparserMips.h"
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 using namespace IntegerOps;
@@ -78,7 +78,7 @@ static SgAsmType *type_U16() { return SageBuilderAsm::buildTypeU16(); }
 
 // see base class
 bool
-DisassemblerMips::can_disassemble(SgAsmGenericHeader *header) const
+DisassemblerMips::canDisassemble(SgAsmGenericHeader *header) const
 {
     SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
     return (isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_MIPS_Family;
@@ -91,16 +91,16 @@ DisassemblerMips::unparser() const {
 
 // see base class
 SgAsmInstruction *
-DisassemblerMips::disassembleOne(const MemoryMap *map, rose_addr_t start_va, AddressSet *successors)
+DisassemblerMips::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va, AddressSet *successors)
 {
     // Instructions are always four-byte, naturally-aligned, in big- or little-endian order.
     insn_va = start_va;
     if (start_va & 0x03)
         throw Exception("non-aligned instruction", start_va);
     uint32_t insn_disk; // instruction in file byte order
-    if (4!=map->at(start_va).limit(4).require(get_protection()).read((uint8_t*)&insn_disk).size())
+    if (4!=map->at(start_va).limit(4).require(MemoryMap::EXECUTABLE).read((uint8_t*)&insn_disk).size())
         throw Exception("short read", start_va);
-    unsigned insn_bits = ByteOrder::disk_to_host(get_sex(), insn_disk);
+    unsigned insn_bits = ByteOrder::disk_to_host(byteOrder(), insn_disk);
     SgAsmMipsInstruction *insn = disassemble_insn(insn_bits);
     if (!insn)
         throw Exception("cannot disassemble MIPS instruction: " + StringUtility::addrToString(insn_bits));
@@ -111,14 +111,12 @@ DisassemblerMips::disassembleOne(const MemoryMap *map, rose_addr_t start_va, Add
         AddressSet suc2 = insn->getSuccessors(&complete);
         successors->insert(suc2.begin(), suc2.end());
     }
-
-    update_progress(insn);
     return insn;
 }
 
 // see base class
 SgAsmInstruction *
-DisassemblerMips::make_unknown_instruction(const Disassembler::Exception &e)
+DisassemblerMips::makeUnknownInstruction(const Disassembler::Exception &e)
 {
     SgAsmMipsInstruction *insn = makeInstruction(mips_unknown_instruction, "unknown");
     insn->set_raw_bytes(e.bytes);
@@ -160,7 +158,7 @@ SgAsmRegisterReferenceExpression *
 DisassemblerMips::makeRegister(unsigned regnum)
 {
     std::string regname = "r" + StringUtility::numberToString(regnum);
-    const RegisterDescriptor *regdesc = get_registers()->lookup(regname);
+    const RegisterDescriptor *regdesc = registerDictionary()->lookup(regname);
     if (!regdesc)
         throw Exception("no such register: "+regname);
     return new SgAsmDirectRegisterExpression(*regdesc);
@@ -170,7 +168,7 @@ SgAsmRegisterReferenceExpression *
 DisassemblerMips::makeFpRegister(unsigned regnum)
 {
     std::string regname = "f" + StringUtility::numberToString(regnum);
-    const RegisterDescriptor *regdesc = get_registers()->lookup(regname);
+    const RegisterDescriptor *regdesc = registerDictionary()->lookup(regname);
     if (!regdesc)
         throw Exception("no such register: "+regname);
     return new SgAsmDirectRegisterExpression(*regdesc);
@@ -404,7 +402,7 @@ DisassemblerMips::makeCp0Register(unsigned regnum, unsigned sel)
     if (s.empty())
         throw Exception("invalid CP0 register "+StringUtility::numberToString(regnum)+
                         " (sel="+StringUtility::numberToString(sel)+")");
-    const RegisterDescriptor *regdesc = get_registers()->lookup(s);
+    const RegisterDescriptor *regdesc = registerDictionary()->lookup(s);
     if (!regdesc)
         throw Exception("no such register: " + s);
     return new SgAsmDirectRegisterExpression(*regdesc);
@@ -414,7 +412,7 @@ SgAsmRegisterReferenceExpression *
 DisassemblerMips::makeFpccRegister(unsigned cc)
 {
     ASSERT_require(cc<=7);
-    const RegisterDescriptor *regdesc = get_registers()->lookup("fscr");
+    const RegisterDescriptor *regdesc = registerDictionary()->lookup("fscr");
     if (!regdesc)
         throw Exception("no such register: fcsr");
     RegisterDescriptor r(regdesc->get_major(), regdesc->get_minor(), cc?24+cc:23, 1);
@@ -3610,13 +3608,12 @@ DisassemblerMips::init(ByteOrder::Endianness sex)
             ASSERT_not_reachable("invalid MIPS disassembler byte order");
     }
 
-    set_registers(RegisterDictionary::dictionary_mips32());     // only a default
-    REG_IP = *get_registers()->lookup("pc");
-    REG_SP = *get_registers()->lookup("sp");
+    registerDictionary(RegisterDictionary::dictionary_mips32()); // only a default
+    REG_IP = *registerDictionary()->lookup("pc");
+    REG_SP = *registerDictionary()->lookup("sp");
 
-    set_wordsize(4);
-    set_alignment(4);
-    set_sex(sex);
+    wordSizeBytes(4);
+    byteOrder(sex);
     callingConventions(CallingConvention::dictionaryMips());
 
     insert_idis(&mips32_abs_s);

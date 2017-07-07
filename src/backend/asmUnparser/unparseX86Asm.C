@@ -6,7 +6,7 @@
 
 #include <iomanip>
 
-using namespace rose;
+using namespace Rose;
 using namespace Diagnostics;
 using namespace BinaryAnalysis;
 
@@ -162,7 +162,6 @@ std::string unparseX86Expression(SgAsmExpression *expr, const AsmUnparser::Label
         }
     }
 
-    result = StringUtility::appendAsmComment(result, expr->get_replacement());
     result = StringUtility::appendAsmComment(result, expr->get_comment());
     return result;
 }

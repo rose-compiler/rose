@@ -2,7 +2,7 @@
 #include "SymbolicMemory2.h"
 #include "SymbolicSemantics2.h"
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace BaseSemantics {

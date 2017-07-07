@@ -41,7 +41,7 @@ endif
 SUBDIRS += Utility
 
 ########################################################################################################################
-# rose::BinaryAnalysis
+# Rose::BinaryAnalysis
 
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 if !ROSE_USE_INSURE
@@ -59,9 +59,8 @@ endif
 #  Phase 2) Analysis and code generation, compiles the original code
 #  Phase 3) analysis, code generation, and compiling the generated code
 
-#Installable programs
-bin_PROGRAMS = \
-  KeepGoingTranslator
+$(top_builddir)/exampleTranslators/defaultTranslator/KeepGoingTranslator: $(top_srcdir)/exampleTranslators/defaultTranslator/KeepGoingTranslator.cpp
+	make -C $(top_builddir)/exampleTranslators/defaultTranslator
 
 #  Non-installed programs
 noinst_PROGRAMS = \
@@ -177,10 +176,10 @@ endif
 # Use names set in ROSE/config/Makefile.for.ROSE.includes.and.libs
 # AM_CPPFLAGS = $(ROSE_INCLUDES) $(ATERM_INCLUDE)
 AM_CPPFLAGS = $(ROSE_INCLUDES)
-LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+AM_LDFLAGS  = $(ROSE_RPATHS)
+LDADD       = $(ROSE_LIBS)
 
-# testAtermGraphGeneration_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(ATERM_LIB_DIR)/libATerm.a 
-testAtermGraphGeneration_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+testAtermGraphGeneration_LDADD = $(ROSE_LIBS)
 
 EXTRA_DIST = CMakeLists.txt input_codes inputFile.C tests.tex
 
@@ -397,13 +396,8 @@ endif
 
 # Liao, 4/12/2017 restrict_template_parameter.C will trigger frontend error.
 # __minimal_input_code is defined in input_codes/Makefile.for.input.codes
-# Failed test: $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests/test2017_12_Liao.C
-# Failed test: $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests/test2017_13_Liao.C
-testKeepGoingTranslator: KeepGoingTranslator
-	./KeepGoingTranslator -c $(__minimal_input_code) $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests/restrict_template_parameter.C  
-#	./KeepGoingTranslator -rose:Cxx11_only -c $(__minimal_input_code) $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests/restrict_template_parameter.C  
-#	$(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests/test2017_13_Liao.C
-#	$(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests/test2017_12_Liao.C
+testKeepGoingTranslator: $(top_builddir)/exampleTranslators/defaultTranslator/KeepGoingTranslator
+	./$(top_builddir)/exampleTranslators/defaultTranslator/KeepGoingTranslator -c $(__minimal_input_code) $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests/restrict_template_parameter.C $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests/test2017_13_Liao.C $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests/test2017_12_Liao.C
 
 # DQ (7/2/2015): template test code that marks all template instantiations for output (as a test).
 test_testTemplates: testTemplates

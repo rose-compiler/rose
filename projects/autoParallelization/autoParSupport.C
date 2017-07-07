@@ -8,7 +8,7 @@
 #include <map>
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 using namespace OmpSupport;
 using namespace SageInterface;
 // Everything should go into the name space here!!
@@ -16,6 +16,7 @@ namespace AutoParallelization
 {
   bool enable_debug;
   bool enable_patch;
+  bool keep_going;
   bool enable_diff;
   bool b_unique_indirect_index;
   bool enable_distance;
@@ -27,6 +28,7 @@ namespace AutoParallelization
   DFAnalysis * defuse = NULL;
   LivenessAnalysis* liv = NULL;
 
+#if 0
   //! Command line processing
   void autopar_command_processing(vector<string>&argvList)
   {
@@ -109,7 +111,7 @@ namespace AutoParallelization
     }
 
   } // end of processing command line
-
+#endif
   bool initialize_analysis(SgProject* project/*=NULL*/,bool debug/*=false*/)
   {
     if (project == NULL)

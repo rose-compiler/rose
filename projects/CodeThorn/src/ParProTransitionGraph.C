@@ -2,6 +2,9 @@
 
 #include "ParProTransitionGraph.h"
 
+#include <unordered_set>
+#include <unordered_map>
+
 using namespace SPRAY;
 using namespace std;
 
@@ -63,11 +66,52 @@ size_t ParProTransitionGraph::size() {
   return size;
 }
 
+
+size_t ParProTransitionGraph::numStates() {
+  size_t size = 0;
+  unordered_set<const ParProEState*> visited;
+  for (EStateTransitionMap::iterator i=_outEdges.begin(); i!=_outEdges.end(); i++) {
+    for (ParProTransitions::iterator k=(*i).second.begin(); k!=(*i).second.end(); ++k) {
+      if (visited.find((*k).source) == visited.end()) {
+	visited.insert((*k).source);
+	++size;
+      }
+      if (visited.find((*k).target) == visited.end()) {
+	visited.insert((*k).target);
+	++size;
+      }
+    }
+  }
+  return size;
+}
+
+
 set<string> ParProTransitionGraph::getAllAnnotations() {
   set<string> result;
   for (EStateTransitionMap::iterator i=_outEdges.begin(); i!=_outEdges.end(); i++) {
     for (ParProTransitions::iterator k=i->second.begin(); k!=i->second.end(); k++) {
       result.insert(k->edge.getAnnotation());
+    }
+  }
+  return result;
+}
+
+Flow* ParProTransitionGraph::toFlowEnumerateStates(NumberGenerator& numGen) {
+  Flow* result = new Flow();
+  unordered_map<const ParProEState*, Label> eState2Label;
+  for (EStateTransitionMap::iterator i=_outEdges.begin(); i!=_outEdges.end(); i++) {
+    for (ParProTransitions::iterator k=i->second.begin(); k!=i->second.end(); k++) {
+      const ParProEState* source = (*k).source;
+      if (eState2Label.find(source) == eState2Label.end()) {
+	eState2Label[source] = Label(numGen.next());
+      }
+      const ParProEState* target = (*k).target;
+      if (eState2Label.find(target) == eState2Label.end()) {
+	eState2Label[target] = Label(numGen.next());
+      }
+      Edge e(eState2Label[source], eState2Label[target]);
+      e.setAnnotation(k->edge.getAnnotation());
+      result->insert(e);
     }
   }
   return result;

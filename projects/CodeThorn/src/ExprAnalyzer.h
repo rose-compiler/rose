@@ -72,8 +72,9 @@ class ExprAnalyzer {
   bool getSkipSelectedFunctionCalls();
   void setSkipArrayAccesses(bool skip);
   bool getSkipArrayAccesses();
-  void setExternalFunctionSemantics(bool flag);
-  bool getExternalFunctionSemantics();
+  void setSVCompFunctionSemantics(bool flag);
+  bool getSVCompFunctionSemantics();
+  bool stdFunctionSemantics();
 
   bool checkArrayBounds(VariableId arrayVarId,int accessIndex);
 
@@ -89,7 +90,8 @@ class ExprAnalyzer {
   // Options
   bool _skipSelectedFunctionCalls;
   bool _skipArrayAccesses;
-  bool _externalFunctionSemantics;
+  bool _stdFunctionSemantics=true;
+  bool _svCompFunctionSemantics=false;
 
  public:
   //! returns true if node is a VarRefExp and sets varName=name, otherwise false and varName="$".

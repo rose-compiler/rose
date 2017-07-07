@@ -3,6 +3,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 AM_CPPFLAGS = -I$(srcdir)/.. -I$(srcdir)/../../compassSupport $(ROSE_INCLUDES)
+AM_LDFLAGS = $(ROSE_RPATHS)
 
 #==========================================================================
 # Auxiliary library.
@@ -32,7 +33,6 @@ noinst_PROGRAMS = testC-API
 # this problem still need to be solved in the future
 LDADD = $(ROSE_LIBS_WITH_PATH) ../../compassSupport/libCompass.la libC-API.la
 #LDADD = ../../compassSupport/libCompass.la libC-API.la $(ROSE_LIBS_WITH_PATH)
-#LDADD = ../../compassSupport/libCompass.la libC-API.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 testC_API_SOURCES = testC-API.C
 

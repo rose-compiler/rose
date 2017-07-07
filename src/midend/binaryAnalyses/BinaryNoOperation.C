@@ -6,11 +6,11 @@
 #include <MemoryCellList.h>
 #include <SymbolicSemantics2.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
-using namespace rose::Diagnostics;
-using namespace rose::BinaryAnalysis::InstructionSemantics2;
+using namespace Rose::Diagnostics;
+using namespace Rose::BinaryAnalysis::InstructionSemantics2;
 
 Sawyer::Message::Facility NoOperation::mlog;
 
@@ -19,7 +19,7 @@ NoOperation::initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        Diagnostics::initAndRegister(&mlog, "rose::BinaryAnalysis::NoOperation");
+        Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::NoOperation");
     }
 }
     
@@ -126,7 +126,7 @@ NoOperation::NoOperation(Disassembler *disassembler) {
     normalizer_ = StateNormalizer::instance();
 
     if (disassembler) {
-        const RegisterDictionary *registerDictionary = disassembler->get_registers();
+        const RegisterDictionary *registerDictionary = disassembler->registerDictionary();
         ASSERT_not_null(registerDictionary);
         size_t addrWidth = disassembler->instructionPointerRegister().get_nbits();
 
@@ -250,6 +250,24 @@ NoOperation::findNoopSubsequences(const std::vector<SgAsmInstruction*> &insns) c
             debug <<"  normalized state #" <<states.size()-1 <<":\n" <<StringUtility::prefixLines(states.back(), "    ");
     }
 
+    // Ignore terminal branches?  I.e., if set, then given a block like "inc eax; jmp x" where x is not the fall-through
+    // address, the JMP is not a no-op. However, if a block consists of only a JMP then it is considered a no-op because the
+    // predecessors could have branched directly to the JMP target instead.
+    //
+    // FIXME[Robb P Matzke 2017-05-31]: We look at the terminal instruction in isolation to find its successors, but maybe a
+    // better way would be to use the instruction pointer register from the state we already computed. Doing so would be a
+    // more accurate way to handle opaque predicates.
+    if (ignoreTerminalBranches_ && insns.size() > 1) {
+        ASSERT_forbid(states.size() == insns.size());
+        bool isComplete = true;
+        std::set<rose_addr_t> succs = insns.back()->getSuccessors(&isComplete);
+        if (succs.size() > 1 || isComplete) {
+            states.pop_back();
+        } else if (succs.size() == 1 && *succs.begin() != insns.back()->get_address() + insns.back()->get_size()) {
+            states.pop_back();
+        }
+    }
+    
     // Look for pairs of states that are the same, and call that sequence of instructions a no-op
     for (size_t i=0; i+1<states.size(); ++i) {
         for (size_t j=i+1; j<states.size(); ++j) {

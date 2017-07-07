@@ -33,9 +33,9 @@
  | FindPostFunctionInsns  |                                                           |
  */
 
-using namespace rose;
-using namespace rose::BinaryAnalysis;
-using namespace rose::Diagnostics;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
+using namespace Rose::Diagnostics;
 
 namespace P2 = Partitioner2;
 
@@ -347,7 +347,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
                     "and exclusive end separated by a hpyhen as in \"20-30\", or a beginning and size separated by a \"+\" "
                     "as in \"20+10\"."
                     "\n\n"
-                    "Debugging aids generally send their output to the rose::BinaryAnalysis::Partitioner2[DEBUG] stream. "
+                    "Debugging aids generally send their output to the Rose::BinaryAnalysis::Partitioner2[DEBUG] stream. "
                     "There is no need to turn this stream on explicitly from the command line since the debugging aids "
                     "temporarily enable it.  They assume that if you took the time to specify their parameters then you "
                     "probably want to see their output!"
@@ -398,7 +398,7 @@ public:
 //                                              Function-making
 //
 // These functions demonstrate how to make a function at a particular address. See also the "make*" functions in
-// rose::BinaryAnalysis::Partitioner2::Engine.
+// Rose::BinaryAnalysis::Partitioner2::Engine.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Make functions for any x86 CALL instruction. This is intended to be a demonstration of how to search for specific
@@ -409,7 +409,8 @@ makeCallTargetFunctions(P2::Partitioner &partitioner, size_t alignment=1) {
     std::set<rose_addr_t> targets;                      // distinct call targets
 
     // Iterate over every executable address in the memory map
-    for (rose_addr_t va=0; partitioner.memoryMap().atOrAfter(va).require(MemoryMap::EXECUTABLE).next().assignTo(va); ++va) {
+    ASSERT_not_null(partitioner.memoryMap());
+    for (rose_addr_t va=0; partitioner.memoryMap()->atOrAfter(va).require(MemoryMap::EXECUTABLE).next().assignTo(va); ++va) {
         if (alignment>1)                                // apply alignment here as an optimization
             va = ((va+alignment-1)/alignment)*alignment;
 
@@ -420,7 +421,7 @@ makeCallTargetFunctions(P2::Partitioner &partitioner, size_t alignment=1) {
             std::vector<SgAsmInstruction*> bb(1, insn);
             rose_addr_t target = NO_ADDRESS;
             if (insn->isFunctionCallFast(bb, &target, NULL) &&
-                partitioner.memoryMap().at(target).require(MemoryMap::EXECUTABLE).exists()) {
+                partitioner.memoryMap()->at(target).require(MemoryMap::EXECUTABLE).exists()) {
                 targets.insert(target);
             }
         }
@@ -655,7 +656,7 @@ selectFunctions(P2::Engine &engine, const P2::Partitioner &partitioner, const Se
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char *argv[]) {
-    ROSE_INITIALIZE;                                    // see rose::initialize
+    ROSE_INITIALIZE;                                    // see Rose::initialize
 
     // Use a partitioning engine since this makes this tool much easier to write.
     P2::Engine engine;
@@ -671,8 +672,9 @@ int main(int argc, char *argv[]) {
     SgAsmInterpretation *interp = engine.interpretation();
 
     // Some analyses need to know what part of the address space is being disassembled.
+    ASSERT_not_null(engine.memoryMap());
     AddressIntervalSet executableSpace;
-    BOOST_FOREACH (const MemoryMap::Node &node, engine.memoryMap().nodes()) {
+    BOOST_FOREACH (const MemoryMap::Node &node, engine.memoryMap()->nodes()) {
         if ((node.value().accessibility() & MemoryMap::EXECUTABLE)!=0)
             executableSpace.insert(node.key());
     }
@@ -704,9 +706,9 @@ int main(int argc, char *argv[]) {
     }
 
     // Show what we'll be working on (stdout for the record, and diagnostics also)
-    partitioner.memoryMap().dump(mlog[INFO]);
+    partitioner.memoryMap()->dump(mlog[INFO]);
     if (settings.doShowMap)
-        partitioner.memoryMap().dump(std::cout);
+        partitioner.memoryMap()->dump(std::cout);
 
     // Run the partitioner
     engine.runPartitioner(partitioner);
@@ -806,7 +808,7 @@ int main(int argc, char *argv[]) {
         analyzer.settings().keepingOnlyLongest = true;
         analyzer.discardingCodePoints(false);
         analyzer.insertCommonEncoders(ByteOrder::ORDER_LSB);
-        analyzer.find(partitioner.memoryMap().any());
+        analyzer.find(partitioner.memoryMap()->any());
         BOOST_FOREACH (const Strings::EncodedString &string, analyzer.strings()) {
             std::cout <<string.where() <<" " <<string.encoder()->length() <<"-character " <<string.encoder()->name() <<"\n";
             std::cout <<"  \"" <<StringUtility::cEscape(string.narrow()) <<"\"\n";

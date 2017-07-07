@@ -57,7 +57,7 @@ namespace CodeThorn {
     void writeTopToAllMemoryLocations();
     void writeValueToAllMemoryLocations(CodeThorn::AbstractValue val);
     void writeTopToMemoryLocation(AbstractValue varId);
-    AbstractValue readFromMemoryLocation(AbstractValue abstrValue) const;
+    AbstractValue readFromMemoryLocation(AbstractValue abstractMemLoc) const;
     void writeToMemoryLocation(AbstractValue abstractMemLoc,
                                AbstractValue abstractValue);
     size_t stateSize() const;
@@ -65,6 +65,7 @@ namespace CodeThorn {
     PState::iterator end();
     PState::const_iterator begin() const;
     PState::const_iterator end() const;
+  private:
   };
   
   std::ostream& operator<<(std::ostream& os, const PState& value);

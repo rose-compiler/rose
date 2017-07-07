@@ -3,7 +3,7 @@
 // Liao 2013-1-10
 int main()
 {
-  int i=100,sum=0;
+//  int i=100,sum=0;
 #pragma omp parallel 
   {
      __PRETTY_FUNCTION__;

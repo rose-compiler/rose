@@ -5,7 +5,7 @@
 #include "mpiCodeGenerator.h"
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 using namespace AstFromString; // parser building blocks
 using namespace SageInterface;
 using namespace SageBuilder;

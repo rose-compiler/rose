@@ -2,6 +2,7 @@
 #define ROSE_RSIM_Tools_H
 
 #include "stringify.h"          // Needed by the MemoryAccessWatcher tool
+#include <Disassembler.h>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -41,7 +42,7 @@ public:
         if (enabled && args.reason==FORK) {
             std::cerr <<"ForkPauser: pid=" <<getpid();
             if (pause_on_fork) {
-                std::string filename("/tmp/paused_"); filename += rose::StringUtility::numberToString(getpid());
+                std::string filename("/tmp/paused_"); filename += Rose::StringUtility::numberToString(getpid());
                 int status __attribute__((unused)) = mkfifo(filename.c_str(), 0666);
                 assert(status>=0);
                 std::cerr <<"; paused -- say \"echo >" <<filename <<"\" to resume...";
@@ -206,7 +207,7 @@ public:
     virtual FunctionIndex *clone() { return this; }
 
     virtual bool operator()(bool enabled, const Args &args) {
-        using namespace rose::Diagnostics;
+        using namespace Rose::Diagnostics;
         if (enabled && !triggered && args.insn->get_address()==when) {
             triggered = true;
             Sawyer::Message::Stream &m = args.thread->tracing(TRACE_MISC);
@@ -235,14 +236,15 @@ public:
                         std::string name = defn->get_name();
                         if (name.empty()) {
                             SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(process->rwlock());
-                            if (process->get_memory().at(defn->get_entry_va()).exists()) {
-                                const MemoryMap::Segment &sgmt = process->get_memory().find(defn->get_entry_va())->value();
+                            if (process->get_memory()->at(defn->get_entry_va()).exists()) {
+                                const Rose::BinaryAnalysis::MemoryMap::Segment &sgmt =
+                                    process->get_memory()->find(defn->get_entry_va())->value();
                                 if (!sgmt.name().empty())
                                     name = "in " + sgmt.name();
                             }
                         }
                         if (defn->get_entry_va()!=func_start)
-                            name += " (" + rose::StringUtility::addrToString(defn->get_entry_va()) + ")";
+                            name += " (" + Rose::StringUtility::addrToString(defn->get_entry_va()) + ")";
 
                         /* Print the whole line at once */
                         mfprintf(m)("    %3zu 0x%08" PRIx64" 0x%08" PRIx64" %5zu/%-6zu %s %s\n",
@@ -262,7 +264,7 @@ public:
             assert(top!=NULL);
             while (top->get_parent()) top = top->get_parent();
             mfprintf(m)("FunctionIndex triggered: showing all functions in the AST rooted at (%s*)%p\n",
-                        top?rose::stringifyVariantT(top->variantT(), "V_").c_str() : "void", top);
+                        top?Rose::stringifyVariantT(top->variantT(), "V_").c_str() : "void", top);
             m <<"    Key for reason(s) address is a suspected function:\n";
             m <<"      E = entry address         C = function call(*)      X = exception frame\n";
             m <<"      S = function symbol       P = instruction pattern   G = interblock branch graph\n";
@@ -317,7 +319,7 @@ public:
     virtual FunctionReporter *clone() { return this; }
 
     virtual bool operator()(bool enabled, const Args &args) {
-        using namespace rose::Diagnostics;
+        using namespace Rose::Diagnostics;
         RSIM_Process *process = args.thread->get_process();
         SgAsmBlock *basic_block = isSgAsmBlock(args.insn->get_parent());
         SgAsmFunction *func = basic_block ? basic_block->get_enclosing_function() : NULL;
@@ -356,7 +358,7 @@ public:
                             bp_not_pushed = true;
                         }
                     }
-                } catch (const rose::BinaryAnalysis::Disassembler::Exception&) {
+                } catch (const Rose::BinaryAnalysis::Disassembler::Exception&) {
                     /* ignored -- it just means the top of stack probably doesn't even point to executable memory */
                 }
                 args.thread->report_stack_frames(args.thread->tracing(TRACE_MISC), "FunctionReporter: stack frames",
@@ -431,9 +433,9 @@ public:
     virtual MemoryAccessWatcher *clone() { return this; }
 
     virtual bool operator()(bool enabled, const Args &args) {
-        using namespace rose::Diagnostics;
+        using namespace Rose::Diagnostics;
         if (enabled && 0!=(args.how & how) && 0!=(args.req_perms & req_perms) && args.va<va+nbytes && args.va+args.nbytes>=va) {
-            std::string operation = args.how==MemoryMap::READABLE ? "READ" : "WRITE";
+            std::string operation = args.how == Rose::BinaryAnalysis::MemoryMap::READABLE ? "READ" : "WRITE";
             for (size_t i=0; i<operation.size(); i++)
                 operation[i] = tolower(operation[i]);
             mfprintf(mesg)("MemoryAccessWatcher: triggered for %s access at 0x%08" PRIx64" for %zu byte%s\n",
@@ -483,7 +485,7 @@ public:
     virtual MemoryChecker *clone() { return this; }
 
     virtual bool operator()(bool enabled, const Args &args) {
-        using namespace rose::Diagnostics;
+        using namespace Rose::Diagnostics;
         if (armed) {
             size_t nread = args.thread->get_process()->mem_read(buffer, va, nbytes);
             if (nread<nbytes && report_short) {
@@ -544,7 +546,7 @@ public:
             m <<"MemoryDisassembler triggered: disassembling now...\n";
             SgAsmBlock *block = args.thread->get_process()->disassemble();
             if (show)
-                rose::BinaryAnalysis::AsmUnparser().unparse(std::cout, block);
+                Rose::BinaryAnalysis::AsmUnparser().unparse(std::cout, block);
         }
         return enabled;
     }
@@ -593,11 +595,11 @@ public:
     virtual MemoryDumper *clone() { return this; }
 
     virtual bool operator()(bool enabled, const Args &args) {
-        using namespace rose::Diagnostics;
+        using namespace Rose::Diagnostics;
         if (enabled && args.insn->get_address()==when) {
             Sawyer::Message::Stream m(args.thread->tracing(TRACE_MISC));
-            m <<"MemoryDumper triggered: dumping " <<rose::StringUtility::plural(nbytes, "bytse")
-              <<" at " <<rose::StringUtility::addrToString(va) <<"\n";
+            m <<"MemoryDumper triggered: dumping " <<Rose::StringUtility::plural(nbytes, "bytse")
+              <<" at " <<Rose::StringUtility::addrToString(va) <<"\n";
             if (do_binary) {
                 /* Raw output to a file */
                 assert(!filename.empty());
@@ -706,7 +708,7 @@ public:
         if (enabled && !triggered && args.insn->get_address()==when) {
             triggered = true;
             size_t total_written=0;
-            unsigned perms = need_write_perm ? MemoryMap::WRITABLE : 0;
+            unsigned perms = need_write_perm ? Rose::BinaryAnalysis::MemoryMap::WRITABLE : 0;
 
             if (new_value) {
                 total_written = args.thread->get_process()->mem_write(new_value, memaddr, nbytes, perms);
@@ -739,8 +741,8 @@ public:
                 close(fd);
             }
             Sawyer::Message::Stream m(args.thread->tracing(TRACE_MISC));
-            m <<"MemoryInitializer triggered: wrote " <<rose::StringUtility::plural(total_written, "bytes")
-              <<" at " <<rose::StringUtility::addrToString(memaddr) <<"\n";
+            m <<"MemoryInitializer triggered: wrote " <<Rose::StringUtility::plural(total_written, "bytes")
+              <<" at " <<Rose::StringUtility::addrToString(memaddr) <<"\n";
         }
         return enabled;
     }

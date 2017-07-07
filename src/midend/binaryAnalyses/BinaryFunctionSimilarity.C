@@ -10,11 +10,11 @@
 #include <Sawyer/Stopwatch.h>
 #include <Sawyer/ThreadWorkers.h>
 
-using namespace rose::Diagnostics;
-using namespace rose::BinaryAnalysis::InstructionSemantics2;
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
+using namespace Rose::Diagnostics;
+using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 
@@ -37,7 +37,7 @@ FunctionSimilarity::initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        Diagnostics::initAndRegister(&mlog, "rose::BinaryAnalysis::FunctionSimilarity");
+        Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::FunctionSimilarity");
     }
 }
 
@@ -418,18 +418,12 @@ FunctionSimilarity::compareManyToMany(const std::vector<P2::Function::Ptr> &list
     return retval;
 }
 
-std::vector<FunctionSimilarity::FunctionPair>
-FunctionSimilarity::findMinimumCostMapping(const std::vector<P2::Function::Ptr> &list1,
-                                       const std::vector<P2::Function::Ptr> &list2) const {
+FunctionSimilarity::DistanceMatrix
+FunctionSimilarity::compareManyToManyMatrix(const std::vector<P2::Function::Ptr> &list1,
+                                            const std::vector<P2::Function::Ptr> &list2) const {
     size_t nThreads = CommandlineProcessing::genericSwitchArgs.threads;
     if (0 == nThreads)
         nThreads = boost::thread::hardware_concurrency();
-
-    Sawyer::Message::Stream where = mlog[WHERE], debug = mlog[DEBUG];
-    SAWYER_MESG(where) <<"minimum mapping between " <<StringUtility::plural(list1.size(), "functions")
-                       <<" and " <<StringUtility::plural(list2.size(), "functions")
-                       <<" with " <<StringUtility::plural(nThreads, "threads");
-    Sawyer::Stopwatch stopwatch;
 
     // Reserve space for the comparison matrix.
     size_t n = std::max(list1.size(), list2.size());
@@ -472,8 +466,6 @@ FunctionSimilarity::findMinimumCostMapping(const std::vector<P2::Function::Ptr> 
             }
         }
     }
-    SAWYER_MESG(debug) <<StringUtility::plural(tasks.nVertices(), "tasks")
-                       <<" for " <<StringUtility::plural(nThreads, "threads") <<"\n";
 
 #ifndef NDEBUG
     {
@@ -487,6 +479,20 @@ FunctionSimilarity::findMinimumCostMapping(const std::vector<P2::Function::Ptr> 
     // Initialize the distance matrix
     Sawyer::ProgressBar<size_t> progress(tasks.nVertices(), mlog[MARCH]);
     Sawyer::workInParallel(tasks, nThreads, ComparisonFunctor(this, progress));
+    return dm;
+}
+
+std::vector<FunctionSimilarity::FunctionPair>
+FunctionSimilarity::findMinimumCostMapping(const std::vector<P2::Function::Ptr> &list1,
+                                           const std::vector<P2::Function::Ptr> &list2) const {
+    Sawyer::Message::Stream where = mlog[WHERE], debug = mlog[DEBUG];
+    SAWYER_MESG(where) <<"minimum mapping between " <<StringUtility::plural(list1.size(), "functions")
+                       <<" and " <<StringUtility::plural(list2.size(), "functions") <<"\n";
+    Sawyer::Stopwatch stopwatch;
+
+    DistanceMatrix dm = compareManyToManyMatrix(list1, list2);
+    ASSERT_require(dm.nr() == dm.nc());
+    size_t n = dm.nr();
 
     // Find the minimum total cost 1:1 assignment of list1 functions (rows) to list2 functions (cols)
     debug <<"starting Kuhn-Munkres";
@@ -688,6 +694,67 @@ FunctionSimilarity::printCharacteristicValues(std::ostream &out) const {
                 out <<", empty\n";
             }
         }
+    }
+}
+
+// class method
+double
+FunctionSimilarity::maximumDistance(const DistanceMatrix &dm) {
+    double retval = NAN;
+    for (long i=0; i<dm.nr(); ++i) {
+        for (long j=0; j<dm.nc(); ++j) {
+            double d = dm(i, j);
+            if (!rose_isnan(d)) {
+                if (rose_isnan(retval)) {
+                    retval = d;
+                } else {
+                    retval = std::max(retval, d);
+                }
+            }
+        }
+    }
+    return retval;
+}
+
+// class method
+double
+FunctionSimilarity::averageDistance(const DistanceMatrix &dm) {
+    double sum = 0.0;
+    size_t n = 0;
+    for (long i=0; i<dm.nr(); ++i) {
+        for (long j=0; j<dm.nc(); ++j) {
+            double d = dm(i, j);
+            if (!rose_isnan(d)) {
+                sum += d;
+                ++n;
+            }
+        }
+    }
+    return n > 0 ? sum / n : NAN;
+}
+
+// class method
+double
+FunctionSimilarity::medianDistance(const DistanceMatrix &dm) {
+    std::vector<double> list;
+    list.reserve(dm.nr() * dm.nc());
+    for (long i=0; i<dm.nr(); ++i) {
+        for (long j=0; j<dm.nc(); ++j) {
+            double d = dm(i, j);
+            if (!rose_isnan(d))
+                list.push_back(d);
+        }
+    }
+    if (list.empty())
+        return NAN;
+
+    size_t half = list.size() / 2;
+    std::nth_element(list.begin(), list.begin()+half, list.end());
+    if (list.size() % 2 == 1) {
+        return list[half];
+    } else {
+        double m = *std::max_element(list.begin(), list.begin()+half);
+        return (m + list[half]) / 2.0;
     }
 }
 

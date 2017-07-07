@@ -13,7 +13,7 @@
 #include "BoolLattice.h"
 #include "VariableIdMapping.h"
 #include <cstdint>
-#include "TypeSizeMapping.h"
+#include "SgTypeSizeMapping.h"
 
 using std::string;
 using std::istream;
@@ -57,8 +57,9 @@ class AbstractValue {
   AbstractValue(long long int x);
   AbstractValue(unsigned long long int x);
   AbstractValue(SPRAY::VariableId varId); // allows implicit type conversion
-  AbstractValue createIntegerValue(CodeThorn::BuiltInType btype, long long int ival, TypeSizeMapping* tsm);
-  void setValueSize(CodeThorn::BuiltInType btype, TypeSizeMapping* tsm);
+  void init(SPRAY::BuiltInType btype, long long int ival);
+  static AbstractValue createIntegerValue(SPRAY::BuiltInType btype, long long int ival);
+  void calculateValueSize(SPRAY::BuiltInType btype);
   bool isTop() const;
   bool isTrue() const;
   bool isFalse() const;
@@ -106,6 +107,7 @@ class AbstractValue {
   string toString(SPRAY::VariableIdMapping* vim) const;
   string toLhsString(SPRAY::VariableIdMapping* vim) const;
   string toRhsString(SPRAY::VariableIdMapping* vim) const;
+  string arrayVariableNameToString(SPRAY::VariableIdMapping* vim) const;
   
   friend ostream& operator<<(ostream& os, const AbstractValue& value);
   friend istream& operator>>(istream& os, AbstractValue& value);
@@ -115,18 +117,21 @@ class AbstractValue {
   int getIntValue() const;
   int getIndexIntValue() const;
   SPRAY::VariableId getVariableId() const;
-  uint8_t getValueSize() const;
-  void setValueSize(uint8_t valueSize);
   // sets value according to type size (truncates if necessary)
   void setValue(long long int val);
-
   long hash() const;
   std::string valueTypeToString() const;
+
+  uint8_t getValueSize() const;
+  void setValueSize(uint8_t valueSize);
+  static void setTypeSizeMapping(SPRAY::SgTypeSizeMapping* typeSizeMapping);
+  static SPRAY::SgTypeSizeMapping* getTypeSizeMapping();
  private:
   ValueType valueType;
   SPRAY::VariableId variableId;
-  int intValue;
+  long long int intValue;
   uint8_t valueSize=0; // size of value in bytes
+  static SPRAY::SgTypeSizeMapping* _typeSizeMapping;
 };
 
 // arithmetic operators

@@ -21,8 +21,8 @@ int main()
 #include "BinaryFunctionCall.h"                 /* function call graphs */
 #include "BinaryCallingConvention.h"            /* for testing the calling convention analysis. */
 
-using namespace rose;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 
 class IdaFile {
 public:
@@ -589,7 +589,7 @@ main(int argc, char *argv[])
     //loader->set_debug(stderr);
     loader->set_perform_remap(true);
     loader->load(interp);
-    MemoryMap *map = interp->get_map();
+    MemoryMap::Ptr map = interp->get_map();
     assert(map!=NULL);
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -603,9 +603,9 @@ main(int argc, char *argv[])
     // outside the import section.  Even when the IATs are inside, setting the entire import section to read-only first keeps
     // the MemoryMap simpler.
     struct ReadonlyImports: public AstSimpleProcessing {
-        MemoryMap *map;
+        MemoryMap::Ptr map;
         SgAsmGenericHeader *fhdr;
-        ReadonlyImports(MemoryMap *map, SgAsmGenericHeader *fhdr): map(map), fhdr(fhdr) {}
+        ReadonlyImports(const MemoryMap::Ptr &map, SgAsmGenericHeader *fhdr): map(map), fhdr(fhdr) {}
         void visit(SgNode *node) {
             SgAsmPEImportSection *isec = isSgAsmPEImportSection(node);
             if (isec) {
@@ -624,16 +624,16 @@ main(int argc, char *argv[])
     };
 
     // We must traverse the headers explicitly because they're not under the SgAsmInterpretation in the AST
-    MemoryMap ro_map = *map;
+    MemoryMap::Ptr ro_map = map->shallowCopy();
     for (SgAsmGenericHeaderPtrList::const_iterator hi=headers.begin(); hi!=headers.end(); ++hi)
-        ReadonlyImports(&ro_map, *hi).traverse(*hi, preorder);
-    ro_map.prohibit(MemoryMap::WRITABLE).prune();
+        ReadonlyImports(ro_map, *hi).traverse(*hi, preorder);
+    ro_map->prohibit(MemoryMap::WRITABLE).prune();
     map->eraseZeros(8192);
 
     std::cerr <<"Disassembly map:\n";
     map->dump(stderr, "    ");
     std::cerr <<"Memory initialization map:\n";
-    ro_map.dump(stderr, "    ");
+    ro_map->dump(stderr, "    ");
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     std::cerr <<"Running the recursive disassembler...\n";
@@ -658,7 +658,7 @@ main(int argc, char *argv[])
     std::cerr <<"Partitioning instructions into functions...\n";
     Partitioner *partitioner = new Partitioner();
     partitioner->set_search(SgAsmFunction::FUNC_DEFAULT | SgAsmFunction::FUNC_LEFTOVERS);
-    partitioner->set_map(map, &ro_map);
+    partitioner->set_map(map, ro_map);
     //partitioner->set_debug(stderr);
     SgAsmBlock *gblock = partitioner->partition(interp, insns);
     interp->set_global_block(gblock);

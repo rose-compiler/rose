@@ -3,8 +3,9 @@
 #include "MemoryMap.h"
 #include "Diagnostics.h"
 
-using namespace rose;
-using namespace rose::Diagnostics;
+using namespace Rose;
+using namespace Rose::Diagnostics;
+using namespace Rose::BinaryAnalysis;
 
 /* The __attribute__ mechanism is only supported by GNU compilers */
 #ifndef __GNUC__
@@ -12,8 +13,6 @@ using namespace rose::Diagnostics;
 #define  __attribute(x)    /*NOTHING*/
 #endif
 
-/** Convert an RVA/Size Pair index number into a section name. This is different than stringifySgAsmPEFileHeaderPairPurpose()
- * because it returns a section name rather than an enum name. */
 std::string
 SgAsmPEFileHeader::rvasize_pair_name(PairPurpose idx, const char **short_name)
 {
@@ -82,9 +81,6 @@ SgAsmPEFileHeader::ctor()
     p_e_nt_hdr_size = sizeof(PE32OptHeader_disk);
 }
 
-/** Return true if the file looks like it might be a PE file according to the magic number.  The file must contain what
- *  appears to be a DOS File Header at address zero, and what appears to be a PE File Header at a file offset specified in
- *  part of the DOS File Header (actually, in the bytes that follow the DOS File Header). */
 bool
 SgAsmPEFileHeader::is_PE(SgAsmGenericFile *file)
 {
@@ -119,8 +115,8 @@ SgAsmPEFileHeader::is_PE(SgAsmGenericFile *file)
     return true;
 }
 
-/** Initialize the header with information parsed from the file and construct and parse everything that's reachable from the
- *  header. The PE File Header should have been constructed such that SgAsmPEFileHeader::ctor() was called. */
+/* Initialize the header with information parsed from the file and construct and parse everything that's reachable from the
+ * header. The PE File Header should have been constructed such that SgAsmPEFileHeader::ctor() was called. */
 SgAsmPEFileHeader*
 SgAsmPEFileHeader::parse()
 {
@@ -456,7 +452,6 @@ SgAsmPEFileHeader::encode(PE64OptHeader_disk *disk) const
     return disk;
 }
 
-/** Define an RVA/Size pair in the PE file header. */
 void
 SgAsmPEFileHeader::set_rvasize_pair(PairPurpose idx, SgAsmPESection *section)
 {
@@ -512,7 +507,6 @@ SgAsmPEFileHeader::set_rvasize_pair(PairPurpose idx, SgAsmPESection *section)
     }
 }
 
-/** Update all the RVA/Size pair info from the section to which it points. */
 void
 SgAsmPEFileHeader::update_rvasize_pairs()
 {
@@ -570,7 +564,7 @@ SgAsmPEFileHeader::create_table_sections()
          *        contiguous and we'll just ignore this for now.  In any case, as long as these sections only ever read their
          *        data via the same MemoryMap that we use here, everything should be fine. [RPM 2009-08-17] */
         rose_addr_t pair_va = get_base_va() + pair->get_e_rva();
-        MemoryMap *map = get_loader_map();
+        MemoryMap::Ptr map = get_loader_map();
         ROSE_ASSERT(map!=NULL);
         if (!map->baseSize(pair_va, pair->get_e_size()).exists(Sawyer::Container::MATCH_WHOLE)) {
             mlog[WARN] <<"SgAsmPEFileHeader::create_table_sections: pair-" <<i
@@ -939,7 +933,7 @@ SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
         hexdump(f, 0, std::string(p)+"data at ", p_data);
 
     /* Show the simulated loader memory map */
-    const MemoryMap *map = get_loader_map();
+    const MemoryMap::Ptr map = get_loader_map();
     if (map) {
         map->dump(f, (std::string(p)+"loader_map: ").c_str());
     } else {

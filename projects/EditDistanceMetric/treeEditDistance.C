@@ -1,4 +1,4 @@
-// This functionality has been moved into librose. See rose::EditDistance::TreeEditDistance. [Robb P. Matzke 2014-09-22]
+// This functionality has been moved into librose. See Rose::EditDistance::TreeEditDistance. [Robb P. Matzke 2014-09-22]
 
 
 
@@ -7,7 +7,7 @@
 #include "rose.h"
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 #include "treeEditDistance.h"
 #include "sequenceGeneration.h"

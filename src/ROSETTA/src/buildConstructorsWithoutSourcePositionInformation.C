@@ -9,7 +9,7 @@
 #include <sstream>
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 void
 Grammar::markNodeForConstructorWithoutSourcePositionInformation ( AstNodeClass & node )

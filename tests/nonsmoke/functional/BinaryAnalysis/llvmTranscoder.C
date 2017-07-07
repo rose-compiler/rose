@@ -11,12 +11,12 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #include <Partitioner2/Engine.h>
 #include <Sawyer/CommandLine.h>
 
-using namespace rose;
+using namespace Rose;
 using namespace Sawyer::Message::Common;
 using namespace StringUtility;
 using namespace SageInterface;
-using namespace rose::BinaryAnalysis::InstructionSemantics2;
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
+using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 static Sawyer::Message::Facility mlog;
 
@@ -78,7 +78,7 @@ int
 main(int argc, char *argv[])
 {
     ROSE_INITIALIZE;
-    rose::Diagnostics::initAndRegister(&::mlog, "tool");
+    Rose::Diagnostics::initAndRegister(&::mlog, "tool");
 
     Settings settings;
     SgProject *project = buildAst(argc, argv, settings);

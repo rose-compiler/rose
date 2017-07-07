@@ -2,13 +2,16 @@
 #define ROSE_Partitioner2_BasicTypes_H
 
 #include <boost/serialization/access.hpp>
+#include <boost/serialization/nvp.hpp>
+#include <string>
+#include <vector>
 
 // Define this as one if you want extra invariant checks that are quite expensive, or define as zero. This only makes a
 // difference if NDEBUG and SAWYER_NDEBUG are both undefined--if either one of them are defined then no expensive (or
 // inexpensive) checks are performed.
 #define ROSE_PARTITIONER_EXPENSIVE_CHECKS 0
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
@@ -349,6 +352,10 @@ public:
  *  descriptions and command-line parser for these switches can be obtained from @ref engineBehaviorSwitches. */
 struct EngineSettings {
     std::vector<std::string> configurationNames;    /**< List of configuration files and/or directories. */
+    bool exitOnError;                               /**< If true, emit error message and exit non-zero, else throw. */
+
+    EngineSettings()
+        : exitOnError(true) {}
 
 private:
     friend class boost::serialization::access;
@@ -356,6 +363,7 @@ private:
     template<class S>
     void serialize(S &s, unsigned version) {
         s & configurationNames;
+        s & exitOnError;
     }
 };
 

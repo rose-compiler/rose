@@ -9,7 +9,7 @@
 #include <boost/serialization/export.hpp>
 #include <boost/serialization/vector.hpp>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 namespace Semantics {
@@ -40,7 +40,7 @@ public:
     typedef boost::shared_ptr<MemoryState> Ptr;
 
 private:
-    const MemoryMap *map_;
+    MemoryMap::Ptr map_;
     std::vector<SValuePtr> addressesRead_;
     bool enabled_;
 
@@ -59,13 +59,14 @@ private:
 
 protected:
     MemoryState()                                       // for serialization
-        : map_(NULL), enabled_(true) {}
+        : enabled_(true) {}
 
     explicit MemoryState(const InstructionSemantics2::BaseSemantics::MemoryCellPtr &protocell)
-        : Super(protocell), map_(NULL), enabled_(true) {}
+        : Super(protocell), enabled_(true) {}
+
     MemoryState(const InstructionSemantics2::BaseSemantics::SValuePtr &addrProtoval,
                 const InstructionSemantics2::BaseSemantics::SValuePtr &valProtoval)
-        : Super(addrProtoval, valProtoval), map_(NULL), enabled_(true) {}
+        : Super(addrProtoval, valProtoval), enabled_(true) {}
 
 public:
     /** Instantiates a new memory state having specified prototypical cells and value. */
@@ -132,8 +133,8 @@ public:
      *  warnings and no operation to be performed.
      *
      *  @{ */
-    const MemoryMap* memoryMap() const;
-    void memoryMap(const MemoryMap *map) { map_=map; }
+    MemoryMap::Ptr memoryMap() const { return map_; }
+    void memoryMap(const MemoryMap::Ptr &map) { map_ = map; }
     /** @} */
 
     /** Property: concrete virtual addresses that were read.
@@ -286,12 +287,6 @@ public:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 template<class Super>
-const MemoryMap*
-MemoryState<Super>::memoryMap() const {
-    return map_;
-}
-
-template<class Super>
 InstructionSemantics2::BaseSemantics::SValuePtr
 MemoryState<Super>::readMemory(const InstructionSemantics2::BaseSemantics::SValuePtr &addr,
                                const InstructionSemantics2::BaseSemantics::SValuePtr &dflt,
@@ -342,9 +337,9 @@ MemoryState<Super>::writeMemory(const InstructionSemantics2::BaseSemantics::SVal
 } // namespace
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::Partitioner2::Semantics::MemoryListState);
-BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::Partitioner2::Semantics::MemoryMapState);
-BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::Partitioner2::Semantics::RiscOperators);
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::Partitioner2::Semantics::MemoryListState);
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::Partitioner2::Semantics::MemoryMapState);
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::Partitioner2::Semantics::RiscOperators);
 #endif
 
 #endif

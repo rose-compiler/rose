@@ -9,7 +9,8 @@ SUBDIRS =
 # Global Build Flags
 #------------------------------------------------------------------------------
 AM_CPPFLAGS = $(ROSE_INCLUDES)
-LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+AM_LDFLAGS = $(ROSE_RPATHS)
+LDADD    = $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------
 # ROSE Dependency

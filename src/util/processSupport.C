@@ -18,7 +18,7 @@
 #include <assert.h>
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 int systemFromVector(const vector<string>& argv) {
   assert (!argv.empty());
@@ -146,7 +146,7 @@ void ROSE_ABORT() __THROW __attribute__ ((__noreturn__))
  #endif // USE_ROSE
 #endif
 
-namespace rose {
+namespace Rose {
 
 ROSE_UTIL_API void
 abortOnFailedAssertion(const char *mesg, const char *expr, const std::string &note, const char *fileName,

@@ -13,7 +13,7 @@
 #include <Sawyer/SharedObject.h>
 #include <Sawyer/SharedPointer.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 // Forwards

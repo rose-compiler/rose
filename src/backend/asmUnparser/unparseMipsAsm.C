@@ -5,9 +5,9 @@
 
 #include <iomanip>
 
-using namespace rose;
-using namespace rose::Diagnostics;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;
+using namespace Rose::Diagnostics;
+using namespace Rose::BinaryAnalysis;
 
 /** Returns a string containing everthing before the first operand in a typical x86 assembly statement. */
 std::string unparseMipsMnemonic(SgAsmMipsInstruction *insn) {
@@ -107,7 +107,6 @@ std::string unparseMipsExpression(SgAsmExpression *expr, const AsmUnparser::Labe
         }
     }
 
-    result = StringUtility::appendAsmComment(result, expr->get_replacement());
     result = StringUtility::appendAsmComment(result, expr->get_comment());
     return result;
 }

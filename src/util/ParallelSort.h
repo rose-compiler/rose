@@ -6,7 +6,7 @@
 #include <list>
 #include <vector>
 
-namespace rose {
+namespace Rose {
 
 /** Algorithms for parallel sorting.
  *

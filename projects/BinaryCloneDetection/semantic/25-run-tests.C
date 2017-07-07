@@ -7,8 +7,8 @@
 #include <cerrno>
 #include <csignal>
 
-using namespace rose;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 using namespace CloneDetection;
 using namespace CloneDetection::RunTests;
 
@@ -64,7 +64,7 @@ main(int argc, char *argv[])
     InputGroup igroup;
     InstructionProvidor insns;
     SgAsmInterpretation *prev_interp = NULL;
-    MemoryMap ro_map;
+    MemoryMap::Ptr ro_map = MemoryMap::instance();
     AddressIdMap entry2id;                              // maps function entry address to function ID
     Tracer tracer;
     InsnCoverage insn_coverage;
@@ -153,11 +153,11 @@ main(int argc, char *argv[])
         if (interp!=prev_interp) {
             prev_interp = interp;
             assert(interp->get_map()!=NULL);
-            ro_map = *interp->get_map();
-            ro_map.require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE).keep();
+            ro_map = interp->get_map()->shallowCopy();
+            ro_map->require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE).keep();
             Disassembler::AddressSet whitelist_imports = get_import_addresses(interp, builtin_function_names);
             whitelist_exports.clear(); // imports are addresses of import table slots; exports are functions
-            overmap_dynlink_addresses(interp, insns, opt.params.follow_calls, &ro_map, GOTPLT_VALUE,
+            overmap_dynlink_addresses(interp, insns, opt.params.follow_calls, ro_map, GOTPLT_VALUE,
                                       whitelist_imports, whitelist_exports/*out*/);
             if (opt.verbosity>=EFFUSIVE) {
                 std::cerr <<argv0 <<": memory map for SgAsmInterpretation:\n";
@@ -167,7 +167,7 @@ main(int argc, char *argv[])
 
         // Run the test
         runOneTest(tx, workItem, pointers, func, function_ids, insn_coverage, dynamic_cg, tracer, consumed_inputs,
-                   interp, whitelist_exports, cmd_id, igroup, funcinfo, insns, &ro_map, entry2id, ogroups);
+                   interp, whitelist_exports, cmd_id, igroup, funcinfo, insns, ro_map, entry2id, ogroups);
         ++ntests_ran;
 
         // Check for user interrupts

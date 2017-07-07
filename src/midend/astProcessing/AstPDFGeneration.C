@@ -84,7 +84,7 @@ AstPDFGeneration_private::generate(SgProject* projectNode) {
     ROSE_ASSERT(*fl_iter!=0);
     SgFile* fp = *fl_iter;
     std::string filename = fp->getFileName(); 
-    filename = rose::StringUtility::stripPathFromFileName(filename);
+    filename = Rose::StringUtility::stripPathFromFileName(filename);
     generate(filename,  *fl_iter);
   }
 }
@@ -116,8 +116,8 @@ AstPDFGeneration_private::generateWithinFile(const string& pdffilename, SgFile* 
 
 void
 AstPDFGeneration_private::generateWithinFile(SgFile* node) {
-// string pdffilename=string("./")+string(rose::utility_stripPathFromFileName(rose::getFileName(node)));
-  string pdffilename = string("./") + string(rose::utility_stripPathFromFileName(node->getFileName()));
+// string pdffilename=string("./")+string(Rose::utility_stripPathFromFileName(Rose::getFileName(node)));
+  string pdffilename = string("./") + string(Rose::utility_stripPathFromFileName(node->getFileName()));
   generateWithinFile (pdffilename, node);
 }
 

@@ -28,7 +28,8 @@ if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 bin_PROGRAMS += dumpMemory
 dumpMemory_SOURCES = dumpMemory.C
 dumpMemory_CPPFLAGS = $(ROSE_INCLUDES)
-dumpMemory_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+dumpMemory_LDFLAGS = $(ROSE_RPATHS)
+dumpMemory_LDADD = $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
 # linear disassembly at specified addresses
@@ -36,7 +37,8 @@ dumpMemory_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 bin_PROGRAMS += linearDisassemble
 linearDisassemble_SOURCES = linearDisassemble.C
 linearDisassemble_CPPFLAGS = $(ROSE_INCLUDES)
-linearDisassemble_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+linearDisassemble_LDFLAGS = $(ROSE_RPATHS)
+linearDisassemble_LDADD = $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
 # disassembler using the new partitioner
@@ -44,7 +46,8 @@ linearDisassemble_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 bin_PROGRAMS += recursiveDisassemble
 recursiveDisassemble_SOURCES = recursiveDisassemble.C
 recursiveDisassemble_CPPFLAGS = $(ROSE_INCLUDES)
-recursiveDisassemble_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+recursiveDisassemble_LDFLAGS = $(ROSE_RPATHS)
+recursiveDisassemble_LDADD = $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
 # Run specimen natively by single stepping
@@ -52,7 +55,8 @@ recursiveDisassemble_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 bin_PROGRAMS += nativeExecutionTrace
 nativeExecutionTrace_SOURCES = nativeExecutionTrace.C
 nativeExecutionTrace_CPPFLAGS = $(ROSE_INCLUDES)
-nativeExecutionTrace_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+nativeExecutionTrace_LDFLAGS = $(ROSE_RPATHS)
+nativeExecutionTrace_LDADD = $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
 # Single-step a process and compare execution addresses with a list of addresses
@@ -60,7 +64,8 @@ nativeExecutionTrace_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 bin_PROGRAMS += checkExecutionAddresses
 checkExecutionAddresses_SOURCES = checkExecutionAddresses.C
 checkExecutionAddresses_CPPFLAGS = $(ROSE_INCLUDES)
-checkExecutionAddresses_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+checkExecutionAddresses_LDFLAGS = $(ROSE_RPATHS)
+checkExecutionAddresses_LDADD = $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
 # Scans memory for magic numbers
@@ -68,7 +73,8 @@ checkExecutionAddresses_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 bin_PROGRAMS += magicScanner
 magicScanner_SOURCES = magicScanner.C
 magicScanner_CPPFLAGS = $(ROSE_INCLUDES)
-magicScanner_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+magicScanner_LDFLAGS = $(ROSE_RPATHS)
+magicScanner_LDADD = $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
 # Execute instructions
@@ -76,7 +82,8 @@ magicScanner_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 bin_PROGRAMS += simulate
 simulate_SOURCES = simulate.C
 simulate_CPPFLAGS = $(ROSE_INCLUDES)
-simulate_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+simulate_LDFLAGS = $(ROSE_RPATHS)
+simulate_LDADD = $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
 # Decode encoded strings
@@ -84,7 +91,8 @@ simulate_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 bin_PROGRAMS += stringDecoder
 stringDecoder_SOURCES = stringDecoder.C
 stringDecoder_CPPFLAGS = $(ROSE_INCLUDES)
-stringDecoder_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+stringDecoder_LDFLAGS = $(ROSE_RPATHS)
+stringDecoder_LDADD = $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
 # Find code that cannot be reached according to static analysis
@@ -92,7 +100,8 @@ stringDecoder_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 bin_PROGRAMS += findDeadCode
 findDeadCode_SOURCES = findDeadCode.C
 findDeadCode_CPPFLAGS = $(ROSE_INCLUDES)
-findDeadCode_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+findDeadCode_LDFLAGS = $(ROSE_RPATHS)
+findDeadCode_LDADD = $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
 # Parse and simplify symbolic expressions
@@ -100,7 +109,8 @@ findDeadCode_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 bin_PROGRAMS += symbolicSimplifier
 symbolicSimplifier_SOURCES = symbolicSimplifier.C
 symbolicSimplifier_CPPFLAGS = $(ROSE_INCLUDES)
-symbolicSimplifier_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+symbolicSimplifier_LDFLAGS = $(ROSE_RPATHS)
+symbolicSimplifier_LDADD = $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
 # Generate source code from a binary specimen
@@ -108,7 +118,8 @@ symbolicSimplifier_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 bin_PROGRAMS += binaryToSource
 binaryToSource_SOURCES = binaryToSource.C
 binaryToSource_CPPFLAGS = $(ROSE_INCLUDES)
-binaryToSource_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+binaryToSource_LDFLAGS = $(ROSE_RPATHS)
+binaryToSource_LDADD = $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
 # Generate a program trace and show some properties of it
@@ -116,7 +127,8 @@ binaryToSource_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 bin_PROGRAMS += trace
 trace_SOURCES = trace.C
 trace_CPPFLAGS = $(ROSE_INCLUDES)
-trace_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+trace_LDFLAGS = $(ROSE_RPATHS)
+trace_LDADD = $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
 # Not distributed; not part of the Git repo
@@ -174,7 +186,8 @@ bROwSE_server_SOURCES =				\
 	bROwSE/WStrings.C			\
 	bROwSE/WToggleButton.C
 bROwSE_server_CPPFLAGS = -I$(ROSE_INCLUDES) -I$(top_builddir)/src/roseSupport -I$(WT_PREFIX)/include
-bROwSE_server_LDADD = -L$(WT_PREFIX)/lib -lwt -lwthttp $(LIBS_WITH_RPATH) -lboost_signals $(ROSE_LIBS)
+bROwSE_server_LDFLAGS = $(ROSE_RPATHS)
+bROwSE_server_LDADD = -L$(WT_PREFIX)/lib -lwt -lwthttp -lboost_signals $(ROSE_LIBS)
 
 pkginclude_HEADERS += 				\
         bROwSE/Application.h			\
@@ -215,7 +228,8 @@ endif
 bin_PROGRAMS += generatePaths
 generatePaths_SOURCES = generatePaths.C
 generatePaths_CPPFLAGS = $(ROSE_INCLUDES)
-generatePaths_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+generatePaths_LDFLAGS = $(ROSE_RPATHS)
+generatePaths_LDADD = $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
 # Find paths in the CFG
@@ -226,7 +240,8 @@ findPath_SOURCES =				\
 	PathFinder/semantics.C			\
 	PathFinder/findPath.C
 findPath_CPPFLAGS = $(ROSE_INCLUDES)
-findPath_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+findPath_LDFLAGS = $(ROSE_RPATHS)
+findPath_LDADD = $(ROSE_LIBS)
 
 pkginclude_HEADERS +=				\
 	PathFinder/PathFinder.h			\
@@ -240,7 +255,8 @@ if ROSE_HAVE_DLIB
 bin_PROGRAMS += findSimilarFunctions
 findSimilarFunctions_SOURCES = findSimilarFunctions.C
 findSimilarFunctions_CPPFLAGS = $(ROSE_INCLUDES)
-findSimilarFunctions_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+findSimilarFunctions_LDFLAGS = $(ROSE_RPATHS)
+findSimilarFunctions_LDADD = $(ROSE_LIBS)
 
 endif
 
@@ -250,7 +266,8 @@ endif
 bin_PROGRAMS += maxBijection
 maxBijection_SOURCES = maxBijection.C
 maxBijection_CPPFLAGS = $(ROSE_INCLUDES)
-maxBijection_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+maxBijection_LDFLAGS = $(ROSE_RPATHS)
+maxBijection_LDADD = $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
 # debug instruction semantics
@@ -258,7 +275,8 @@ maxBijection_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 bin_PROGRAMS += debugSemantics
 debugSemantics_SOURCES = debugSemantics.C
 debugSemantics_CPPFLAGS = $(ROSE_INCLUDES)
-debugSemantics_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+debugSemantics_LDFLAGS = $(ROSE_RPATHS)
+debugSemantics_LDADD = $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
 # x86-call-targets
@@ -266,15 +284,26 @@ debugSemantics_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 bin_PROGRAMS += x86-call-targets
 x86_call_targets_SOURCES = x86-call-targets.C
 x86_call_targets_CPPFLAGS = $(ROSE_INCLUDES)
-x86_call_targets_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+x86_call_targets_LDFLAGS = $(ROSE_RPATHS)
+x86_call_targets_LDADD = $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
-# x86-function-vas
+# generate XML from ROSE internals
 
-bin_PROGRAMS += x86-function-vas
-x86_function_vas_SOURCES = x86-function-vas.C
-x86_function_vas_CPPFLAGS = $(ROSE_INCLUDES)
-x86_function_vas_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+bin_PROGRAMS += rxml
+rxml_SOURCES = rxml.C
+rxml_CPPFLAGS = $(ROSE_INCLUDES)
+rxml_LDFLAGS = $(ROSE_RPATHS)
+rxml_LDADD = $(ROSE_LIBS)
+
+#------------------------------------------------------------------------------------------------------------------------
+# DWARF line numbers
+
+bin_PROGRAMS += dwarf-lines
+dwarf_lines_SOURCES = dwarf-lines.C
+dwarf_lines_CPPFLAGS = $(ROSE_INCLUDES)
+dwarf_lines_LDFLAGS = $(ROSE_RPATHS)
+dwarf_lines_LDADD = $(ROSE_LIBS)
 
 
 ########################################################################################################################
@@ -314,5 +343,5 @@ endif
 clean-local:
 	rm -f $(MOSTLYCLEANFILES)
 
-check-nonsmoke: $(TEST_TARGETS)
+check-local: $(TEST_TARGETS)
 

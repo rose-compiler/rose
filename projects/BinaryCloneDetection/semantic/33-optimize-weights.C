@@ -8,7 +8,7 @@
 
 #undef DEBUGGING
 
-using namespace rose;
+using namespace Rose;
 
 static std::string argv0;
 

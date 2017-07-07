@@ -147,7 +147,7 @@ void Analyzer::runSolver4() {
 }
 
 void Analyzer::runSolver5() {
-  if(isUsingExternalFunctionSemantics()) {
+  if(svCompFunctionSemantics()) {
     reachabilityResults.init(1); // in case of svcomp mode set single program property to unknown
   } else {
     reachabilityResults.init(getNumberOfErrorLabels()); // set all reachability results to unknown
@@ -327,15 +327,10 @@ void Analyzer::runSolver5() {
     reachabilityResults.finishedReachability(isPrecise(),!isComplete);
     transitionGraph.setIsComplete(!isComplete);
   } else {
-    bool complete;
-    if(boolOptions["set-stg-incomplete"]) {
-      complete=false;
-    } else {
-      complete=true;
-    }
-    reachabilityResults.finishedReachability(isPrecise(),complete);
+    bool tmpcomplete=true;
+    reachabilityResults.finishedReachability(isPrecise(),tmpcomplete);
     printStatusMessage(true);
-    transitionGraph.setIsComplete(complete);
+    transitionGraph.setIsComplete(tmpcomplete);
     logger[TRACE]<< "analysis finished (worklist is empty)."<<endl;
   }
   transitionGraph.setIsPrecise(isPrecise());
@@ -517,8 +512,10 @@ void Analyzer::runSolver10() {
   logger[INFO]<<"maximum input depth for the pattern search: "<< _patternSearchMaxDepth << endl;
   logger[INFO]<<"following " << _patternSearchRepetitions << " pattern iterations before the suffix search." << endl;
   logger[INFO]<<"maximum input depth of the counterexample suffix: "<<_patternSearchMaxSuffixDepth << endl;
-  logger[TRACE]<<"STATUS: Running parallel solver 10 (I/O-pattern search) with "<<_numberOfThreadsToUse<<" threads."<<endl;
-  logger[TRACE]<<"STATUS: This may take a while. Please expect a line of output every 10.000 non-error states." << endl;
+  if (getOptionStatusMessages()) {
+    cout<<"STATUS: Running parallel solver 10 (I/O-pattern search) with "<<_numberOfThreadsToUse<<" threads."<<endl;
+    cout<<"STATUS: This may take a while. Please expect a line of output every 10.000 non-error states." << endl;
+  }
   // create a new instance of the startPState
   //TODO: check why init of "output" is necessary
   PState newStartPState = _startPState;
@@ -559,7 +556,9 @@ void Analyzer::runSolver10() {
       }
       // display a status report every ~10.000 non-error PStates
       if(threadNum==0 && _displayDiff && (processedStates >= (previousProcessedStates+_displayDiff))) {
-        logger[TRACE]<< "STATUS: #processed PStates: " << processedStates << "   currentMaxDepth: " << currentMaxDepth << "   wl size: " << workList.size() << endl;
+	if (getOptionStatusMessages()) {
+	  cout<< "STATUS: #processed PStates: " << processedStates << "   currentMaxDepth: " << currentMaxDepth << "   wl size: " << workList.size() << endl;
+	}
         previousProcessedStates=processedStates;
       }
 // updated workVector
@@ -622,8 +621,10 @@ bool isEmptyWorkList;
 #pragma omp critical(CSV_ASSERT_RESULTS)
             {
 	      if (reachabilityResults.getPropertyValue(index) == PROPERTY_VALUE_UNKNOWN) {
-		logger[TRACE]<< "STATUS: found a trace leading to failing assertion #" << index;
-		logger[TRACE]<< " (no pattern. total input length: " << ((newHistory.size()+1) / 2) << ")." << endl;
+		if (getOptionStatusMessages()) {
+		  cout<< "STATUS: found a trace leading to failing assertion #" << index;
+		  cout<< " (no pattern. total input length: " << ((newHistory.size()+1) / 2) << ")." << endl;
+		}
 		string ce = convertToCeString(newHistory, maxInputVal);
 		reachabilityResults.setPropertyValue(index, PROPERTY_VALUE_YES);
                 reachabilityResults.setCounterexample(index, ce);
@@ -646,12 +647,12 @@ bool isEmptyWorkList;
             if (containsPattern) {
               // modulo 4: sets of input and output symbols are distinct & the system always alternates between input / ouput
               ROSE_ASSERT( (newHistory.size() - ps)  % 4 == 0 );
-              if (logger[DEBUG]) {
-                logger[DEBUG]<< "found pattern (start index " << ps << "): ";
+              if (getOptionStatusMessages()) {
+                cout<< "found pattern (start index " << ps << "): ";
                 for (list<int>::iterator it = newHistory.begin(); it != newHistory.end(); it++) {
-                  logger[DEBUG] << *it <<",";
+                  cout << *it <<",";
                 }
-                logger[DEBUG]<< endl;
+                cout<< endl;
               }
               PState backupPState = PState(newPState);
               list<int> backupHistory = list<int>(newHistory);
@@ -707,8 +708,12 @@ bool isEmptyWorkList;
     } // while
   } // omp parallel
   if (earlyTermination) {
-    logger[TRACE]<< "STATUS: solver 10 finished (found all assertions)." << endl;
+    if (getOptionStatusMessages())  {
+      cout<< "STATUS: solver 10 finished (found all assertions)." << endl;
+    }
   } else {
-  logger[TRACE]<< "STATUS: solver 10 finished (empty worklist). " << endl;
+    if (getOptionStatusMessages()) {
+      cout<< "STATUS: solver 10 finished (empty worklist). " << endl;
+    }
  }
 }
