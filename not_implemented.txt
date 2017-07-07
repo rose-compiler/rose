@@ -1,0 +1,37 @@
+Lines with two leading spaces are actually implemented, but were not a few days ago.
+
+Element_Kind => "AN_ASSOCIATION"
+Association_Kind => "A_PARAMETER_ASSOCIATION"
+
+Element_Kind => "A_CLAUSE"
+Clause_Kind => "A_WITH_CLAUSE"
+
+  Element_Kind => "A_DECLARATION"
+  Declaration_Kind => "A_COMPONENT_DECLARATION"
+  Declaration_Origin => "AN_EXPLICIT_DECLARATION"
+
+Element_Kind => "A_DEFINITION"
+Definition_Kind => "A_TYPE_DEFINITION"
+Definition_Kind => "A_CONSTRAINT"
+Definition_Kind => "A_COMPONENT_DEFINITION"
+
+Element_Kind => "AN_EXCEPTION_HANDLER"
+
+Element_Kind => "AN_EXPRESSION"
+Expression_Kind => "A_FUNCTION_CALL"
+  Expression_Kind => "AN_INTEGER_LITERAL"
+Expression_Kind => "A_SELECTED_COMPONENT"
+Expression_Kind => "A_TYPE_CONVERSION"
+
+Element_Kind => "A_PATH"
+
+Element_Kind => "A_STATEMENT"
+Statement_Kind => "AN_ACCEPT_STATEMENT"
+Statement_Kind => "AN_ASSIGNMENT_STATEMENT"
+Statement_Kind => "AN_ENTRY_CALL_STATEMENT"
+Statement_Kind => "AN_IF_STATEMENT"
+Statement_Kind => "A_LOOP_STATEMENT"
+Statement_Kind => "A_PROCEDURE_CALL_STATEMENT"
+Statement_Kind => "A_RAISE_STATEMENT"
+Statement_Kind => "A_RETURN_STATEMENT"
+
