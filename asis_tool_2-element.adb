@@ -342,44 +342,81 @@ package body Asis_Tool_2.Element is
            Asis.Elements.Association_Kind (Element);
          A_Association : a_nodes_h.Association_Struct :=
            a_nodes_h.Support.Default_Association_Struct;
+         procedure Add_Formal_Parameter is
+            Formal_Parameter : constant Asis.Element :=
+              Asis.Expressions.Formal_Parameter (Element);
+            Formal_Parameter_ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Formal_Parameter);
+         begin
+            State.Add_To_Dot_Label ("Formal_Parameter", To_String (Formal_Parameter_ID));
+            A_Association.Formal_Parameter := a_nodes_h.Node_ID (Formal_Parameter_ID);
+         end;
+         procedure Add_Actual_Parameter is
+            Actual_Parameter : constant Asis.Element :=
+              Asis.Expressions.Actual_Parameter (Element);
+            Actual_Parameter_ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Actual_Parameter);
+         begin
+            State.Add_To_Dot_Label ("Actual_Parameter", To_String (Actual_Parameter_ID));
+            A_Association.Actual_Parameter := a_nodes_h.Node_ID (Actual_Parameter_ID);
+         end;
+         procedure Add_Is_Defaulted_Association is
+            Is_Defaulted_Association : Boolean :=
+              Asis.Expressions.Is_Defaulted_Association (Element);
+         begin
+            State.Add_To_Dot_Label
+              ("Is_Defaulted_Association", Is_Defaulted_Association'Image);
+            A_Association.Is_Defaulted_Association :=
+              a_nodes_h.Support.To_bool (Is_Defaulted_Association);
+         end;
+         procedure Add_Is_Normalized is
+            Is_Normalized : Boolean :=
+              Asis.Expressions.Is_Normalized (Element);
+         begin
+            State.Add_To_Dot_Label
+              ("Is_Normalized", Is_Normalized'Image);
+            A_Association.Is_Normalized :=
+              a_nodes_h.Support.To_bool (Is_Normalized);
+         end;
+         use all type Asis.Association_Kinds;
       begin
          State.Add_To_Dot_Label ("Association_Kind", Association_Kind'Image);
          A_Association.kind := anhS.To_Association_Kinds (Association_Kind);
-
---    // An_Array_Component_Association,        // 4.3.3
---    Expression_List Array_Component_Choices;
---    // A_Record_Component_Association,        // 4.3.1
---    Expression_List Record_Component_Choices;
---    // An_Array_Component_Association,        // 4.3.3
---    // A_Record_Component_Association,        // 4.3.1
---    Expression_ID   Component_Expression;
---    // A_Pragma_Argument_Association,         // 2.8
---    // A_Parameter_Association,               // 6.4
---    // A_Generic_Association                  // 12.3
---    Expression_ID   Formal_Parameter;
---    Expression_ID   Actual_Parameter;
---    // A_Discriminant_Association,            // 3.7.1
---    Expression_List Discriminant_Selector_Names;
---    Expression_ID   Discriminant_Expression;
---    // A_Discriminant_Association,            // 3.7.1
---    // A_Record_Component_Association,        // 4.3.1
---    // A_Parameter_Association,               // 6.4
---    // A_Generic_Association                  // 12.3
---    bool            Is_Normalized;
---    // A_Parameter_Association
---    // A_Generic_Association
---    //  //|A2005 start
---    // A_Record_Component_Association
---    //  //|A2005 end
---    bool            Is_Defaulted_Association;
-
+         case Association_Kind is
+            when Not_An_Association =>                         -- An unexpected element
+               raise Program_Error with
+                 "Element.Pre_Children.Process_Association called with: " &
+                 Association_Kind'Image;
+            when A_Pragma_Argument_Association =>
+--                 Add_Formal_Parameter;
+--                 Add_Actual_Parameter;
+               State.Add_Not_Implemented;
+            when A_Discriminant_Association =>
+--                 Add_Discriminant_Selector_Names;
+--                 Add_Discriminant_Expression;
+--                 Add_Is_Normalized;
+               State.Add_Not_Implemented;
+            when A_Record_Component_Association =>
+--                 Add_Record_Component_Choices;
+--                 Add_Component_Expression;
+--                 Add_Is_Normalized;
+--                 Add_Is_Defaulted_Association;
+               State.Add_Not_Implemented;
+            when An_Array_Component_Association =>
+--                 Add_Array_Component_Choices;
+--                 Add_Component_Expression;
+               State.Add_Not_Implemented;
+            when A_Parameter_Association |
+                 A_Generic_Association =>
+               Add_Formal_Parameter;
+               Add_Actual_Parameter;
+               Add_Is_Defaulted_Association;
+               Add_Is_Normalized;
+         end case;
 
 
          State.A_Element.kind := a_nodes_h.An_Association;
          State.A_Element.the_union.association := A_Association;
-         --        An_Association        -> Association_Kinds
-         --
-         State.Add_Not_Implemented;
       end Process_Association;
 
       procedure Process_Statement
@@ -422,11 +459,12 @@ package body Asis_Tool_2.Element is
                -- Case_Expression
             when A_Loop_Statement =>                    -- 5.5
                declare
-               Statement_Identifier : constant Asis.Defining_Name :=
+                  Statement_Identifier : constant Asis.Defining_Name :=
                     Asis.Statements.Statement_Identifier (Element);
                   Statement_Identifier_ID : constant Types.Node_Id :=
                     Asis.Set_Get.Node (Statement_Identifier);
-               -- While_Condition
+               -- Statement_Identifier
+               -- Is_Name_Repeated
                -- Loop_Statements
                begin
                   State.Add_To_Dot_Label
@@ -438,7 +476,7 @@ package body Asis_Tool_2.Element is
             when A_While_Loop_Statement =>              -- 5.5
                State.Add_Not_Implemented;
                -- Statement_Identifier
-               -- Is_Name_Repeated
+               -- While_Condition
                -- Loop_Statements
             when A_For_Loop_Statement =>                -- 5.5
                State.Add_Not_Implemented;

@@ -243,7 +243,7 @@ package a_nodes_h.Support is
      (Source => Asis.Mode_Kinds,
       Target => a_nodes_h.Mode_Kinds);
 
-   function Subprogram_Default_Kinds is new Unchecked_Conversion
+   function To_Subprogram_Default_Kinds is new Unchecked_Conversion
      (Source => Asis.Subprogram_Default_Kinds,
       Target => a_nodes_h.Subprogram_Default_Kinds);
 
@@ -254,5 +254,12 @@ package a_nodes_h.Support is
    function To_Attribute_Kinds is new Unchecked_Conversion
      (Source => Asis.Attribute_Kinds,
       Target => a_nodes_h.Attribute_Kinds);
+
+   -- Not in a_nodes.h:
+   function To_bool
+     (Item : in Boolean)
+      return Interfaces.C.Extensions.bool
+   is
+      (if Item then 1 else 0);
 
 end a_nodes_h.Support;
