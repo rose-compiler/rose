@@ -1,7 +1,7 @@
 #ifndef ROSE_EditDistance_Levenshtein_H
 #define ROSE_EditDistance_Levenshtein_H
 
-namespace rose {
+namespace Rose {
 namespace EditDistance {
 
 // Stack for Levenshtein distance. Used internally

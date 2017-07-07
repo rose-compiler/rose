@@ -234,6 +234,11 @@ if ROSE_USE_BOOST_WAVE
 else
 	@echo "Automake conditional ROSE_USE_BOOST_WAVE: NOT defined"
 endif
+if ROSE_HAVE_LIBELF
+	@echo "Automake conditional ROSE_HAVE_LIBELF: DEFINED"
+else
+	@echo "Automake conditional ROSE_HAVE_LIBELF: NOT defined"
+endif
 if ROSE_HAVE_LIBDWARF
 	@echo "Automake conditional ROSE_HAVE_LIBDWARF: DEFINED"
 else

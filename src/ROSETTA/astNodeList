@@ -507,7 +507,9 @@ SgOmpClauseBodyStatement
 SgOmpBodyStatement
 SgOmpDoStatement
 SgOmpFlushStatement
+SgOmpDeclareSimdStatement
 SgOmpForStatement
+SgOmpForSimdStatement
 SgOmpMasterStatement
 SgOmpOrderedStatement
 SgOmpParallelStatement
@@ -544,9 +546,14 @@ SgOmpUntiedClause
 SgOmpVariablesClause
 SgOmpMapClause
 SgOmpSafelenClause
+SgOmpSimdlenClause
 SgOmpLinearClause
 SgOmpUniformClause
 SgOmpAlignedClause
+SgOmpProcBindClause
+SgOmpAtomicClause
+SgOmpInbranchClause
+SgOmpNotinbranchClause
 SgOpenclAccessModeModifier
 SgOpenStatement
 SgOptions

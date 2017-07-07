@@ -17,6 +17,8 @@ using namespace SageBuilder;
 
 namespace OmpSupport
 {
+  omp_construct_enum cur_omp_directive;
+
   //! A builder for OmpAttribute
   OmpAttribute* buildOmpAttribute(omp_construct_enum directive_type, SgNode* node, bool userDefined)
   {
@@ -352,6 +354,34 @@ namespace OmpSupport
     if ((sgvar == NULL)&&(mNode!=NULL))
     {
       SgScopeStatement* scope = SageInterface::getScope(mNode);
+     
+      // special handling for omp declare simd directive 
+      // It may have clauses referencing a variable declared in an immediately followed function's parameter list
+      if (cur_omp_directive ==e_declare_simd && ( targetConstruct==e_linear||
+          targetConstruct==e_simdlen||
+          targetConstruct==e_aligned||
+          targetConstruct==e_uniform)
+         )
+      {
+        SgStatement* cur_stmt= getEnclosingStatement(mNode);
+        ROSE_ASSERT (isSgPragmaDeclaration(cur_stmt));
+        
+        // omp declare simd may show up several times before the impacted function declaration.
+        SgStatement* nstmt = getNextStatement(cur_stmt);
+        ROSE_ASSERT (nstmt); // must have next statement followed.
+        // skip possible multiple pragma declarations
+        while (isSgPragmaDeclaration(nstmt))
+        {
+          nstmt = getNextStatement (nstmt);
+          ROSE_ASSERT (nstmt); 
+        }
+        // At this point, it must be a function declaration
+        SgFunctionDeclaration* func = isSgFunctionDeclaration(nstmt);
+        ROSE_ASSERT (func);
+        SgFunctionDefinition* def = func->get_definition();
+        scope = def->get_body();
+      }
+
       ROSE_ASSERT(scope!=NULL);
       //resolve the variable here
       symbol = lookupVariableSymbolInParentScopes (varString, scope);
@@ -420,12 +450,59 @@ namespace OmpSupport
     }
   }
 
+  void OmpAttribute::setAtomicAtomicity(omp_construct_enum valuex)
+  {
+    switch (valuex)
+    {
+      case e_atomic_read: 
+      case e_atomic_write: 
+      case e_atomic_update: 
+      case e_atomic_capture: 
+        atomicity = valuex;
+        break;
+      default:
+        cerr<<__FUNCTION__<<" Illegal atomicity value:"<<valuex<<endl;
+        ROSE_ASSERT(false);
+    }
+  }
+
+
+  void OmpAttribute::setProcBindPolicy(omp_construct_enum valuex)
+  {
+    switch (valuex)
+    {
+      case  e_proc_bind_master:
+      case  e_proc_bind_close:
+      case  e_proc_bind_spread:
+        proc_bind_policy = valuex;
+        break;
+      default:
+        cerr<<"OmpAttribute::setProcBindValue() Illegal default scoping value:"<<valuex<<endl;
+        ROSE_ASSERT(false);
+    }
+  }
+
+
   enum omp_construct_enum OmpAttribute::getDefaultValue()
   {
     // It does not make sense to get the default value
     // if there is no default clause
     ROSE_ASSERT(hasClause(e_default));
     return default_scope;
+  }
+
+  enum omp_construct_enum OmpAttribute::getProcBindPolicy()
+  {
+    // It does not make sense to get the default value
+    // if there is no default clause
+    ROSE_ASSERT(hasClause(e_proc_bind));
+    return proc_bind_policy;
+  }
+
+  enum omp_construct_enum OmpAttribute::getAtomicAtomicity()
+  {
+    ROSE_ASSERT(hasClause(e_atomic_clause));
+    return atomicity;
   }
 
   // Reduction clause's operator, 
@@ -516,6 +593,7 @@ namespace OmpSupport
       case e_unknown: result ="unknown" ; break;
       case e_parallel: result = "parallel" ; break;
       case e_for: result = "for"; break;
+      case e_for_simd: result = "for simd"; break;
       case e_do: result = "do"; break;
       case e_workshare: result = "workshare"; break;
       case e_sections: result = "sections"; break;
@@ -531,6 +609,7 @@ namespace OmpSupport
 
       case e_threadprivate: result = "threadprivate"; break;
       case e_parallel_for: result = "parallel for"; break;
+      case e_parallel_for_simd: result = "parallel for simd"; break;
       case e_parallel_do: result = "parallel do"; break;
       case e_parallel_sections: result = "parallel sections"; break;
       case e_parallel_workshare: result = "parallel workshare"; break;
@@ -557,7 +636,7 @@ namespace OmpSupport
       case e_end_task:result = "end task"; break;
       case e_end_workshare:result = "end workshare"; break;
 
-                           // clauses
+      // clauses
       case e_default: result = "default"; break;
       case e_shared: result = "shared"; break;
       case e_private: result = "private"; break;
@@ -565,7 +644,8 @@ namespace OmpSupport
       case e_lastprivate: result = "lastprivate"; break;
       case e_copyin: result = "copyin"; break;
       case e_copyprivate: result = "copyprivate"; break;
-
+      case e_proc_bind:        result = "proc_bind"; break;
+      case e_atomic_clause:    result = "atomic_clause" ; break; //TODO
 
       case e_if: result = "if"; break;
       case e_num_threads: result = "num_threads"; break;
@@ -584,6 +664,16 @@ namespace OmpSupport
       case e_default_shared: result = "shared"; break;
       case e_default_private: result = "private"; break;
       case e_default_firstprivate: result = "firstprivate"; break;
+
+
+      case e_proc_bind_master: result = "master"; break;
+      case e_proc_bind_close:  result = "close"; break;
+      case e_proc_bind_spread: result = "spread"; break;
+
+      case e_atomic_read:    result = "read" ; break; 
+      case e_atomic_write:    result = "write" ; break; 
+      case e_atomic_update:    result = "update" ; break; 
+      case e_atomic_capture:    result = "capture" ; break; 
 
       case e_reduction_plus: result = "+"; break;
       case e_reduction_minus: result = "-"; break;
@@ -628,13 +718,18 @@ namespace OmpSupport
        
 
       case e_simd: result = "simd"; break;
+      case e_declare_simd: result = "declare simd"; break;
       case e_safelen: result = "safelen"; break;
+      case e_simdlen: result = "simdlen"; break;
       case e_linear: result = "linear"; break;
       case e_uniform: result = "uniform"; break;
       case e_aligned: result = "aligned"; break;
 
       case e_begin: result = "begin"; break;
       case e_end:   result = "end";   break;
+
+      case e_inbranch: result = "inbranch"; break;
+      case e_notinbranch:   result = "notinbranch";   break;
 
       case e_not_omp: result = "not_omp"; break;
       default: 
@@ -656,6 +751,7 @@ namespace OmpSupport
       //+2 for Fortran
       case e_parallel:
       case e_for:
+      case e_for_simd:
       case e_do:
       case e_workshare:
       case e_sections:
@@ -670,6 +766,7 @@ namespace OmpSupport
 
       case e_threadprivate:
       case e_parallel_for:
+      case e_parallel_for_simd:
       case e_parallel_do: //fortran
       case e_parallel_sections:
       case e_parallel_workshare://fortran
@@ -698,6 +795,7 @@ namespace OmpSupport
       case e_target_data:
       case e_target_update: //TODO more later
       case e_simd:
+      case e_declare_simd:
 
         result = true;
         break;
@@ -880,6 +978,7 @@ namespace OmpSupport
       //+2 for Fortran
       case e_parallel:
       case e_for:
+      case e_for_simd:
       case e_do:
       case e_workshare:
       case e_sections:
@@ -897,6 +996,7 @@ namespace OmpSupport
 
         //      case e_threadprivate:
       case e_parallel_for:
+      case e_parallel_for_simd:
       case e_parallel_do: //fortran
       case e_parallel_sections:
       case e_parallel_workshare://fortran
@@ -955,6 +1055,9 @@ namespace OmpSupport
       case e_collapse:
       case e_untied:
 
+      case e_proc_bind:
+      case e_atomic_clause:
+
      // experimental accelerator clauses 
       case e_map:
       case e_dist_data:
@@ -964,10 +1067,13 @@ namespace OmpSupport
       case e_end:
 
       case e_safelen:
+      case e_simdlen:
       case e_linear:
       case e_uniform:
       case e_aligned:
 
+      case e_inbranch:
+      case e_notinbranch:
         result = true; 
         break;
       default:
@@ -1083,21 +1189,6 @@ namespace OmpSupport
       {
         result += " " + getCriticalName(); 
       }
-#if 0  // clauses are handled separately      
-      // optional nowait for fortran: end do, end sections, end workshare, end single
-      else if ((omp_type == e_for) 
-          || (omp_type == e_sections)
-          || (omp_type == e_single)
-          || (omp_type == e_end_do)
-          ||(omp_type == e_end_sections)
-          ||(omp_type == e_end_workshare
-            ||(omp_type == e_end_single)))
-      {
-        if (hasClause(e_nowait)) 
-          result += " "+ OmpSupport::toString(e_nowait);
-      }
-#endif      
-
     } // end if directives
     //Clauses ------------------
     else if (isClause(omp_type))
@@ -1107,6 +1198,7 @@ namespace OmpSupport
           (omp_type ==e_num_threads)||
           (omp_type ==e_device)||
           (omp_type ==e_safelen)||
+          (omp_type ==e_simdlen)||
           (omp_type == e_collapse)
         )
       {
@@ -1132,15 +1224,42 @@ namespace OmpSupport
           (omp_type == e_lastprivate)
           )
       {
+
         result += OmpSupport::toString(omp_type);
         string varListString = toOpenMPString(getVariableList(omp_type));
-        result+=" (" + varListString + ")"; 
-      }
+        result+=" (" + varListString;
+
+         // aligned and linear may have optional :exp for step or alignment 
+        string expStr; 
+        if ((omp_type == e_linear)||(omp_type == e_aligned))
+        {
+          if (getExpression(omp_type).second !=  NULL)
+             expStr = getExpression(omp_type).second->unparseToString();
+          if (expStr.size()>0)
+            expStr =":"+expStr; 
+        }
+        
+        if (expStr.size()>0)
+          result+=expStr;
+
+        result+= ")"; 
+
+     }
       // default scoping values
       else if (omp_type == e_default)
       {
         result += OmpSupport::toString(omp_type);
         result+=" ("+ OmpSupport::toString(getDefaultValue())+")";
+      } 
+      else if (omp_type == e_proc_bind)
+      {
+        result += OmpSupport::toString(omp_type);
+        result+=" ("+ OmpSupport::toString(getProcBindPolicy())+")";
+      } 
+      else if (omp_type == e_atomic_clause)
+      {
+      //   result += OmpSupport::toString(omp_type);
+        result+= OmpSupport::toString(getAtomicAtomicity());
       } 
       // reduction (op:var-list)
       // could have multiple reduction clauses 
@@ -1422,7 +1541,10 @@ namespace OmpSupport
       for (riter=attlist->ompAttriList.rbegin(); riter !=attlist->ompAttriList.rend();riter++)
       {
         OmpAttribute* att = *riter; //getOmpAttribute(sg_node);
-        if (att->getOmpDirectiveType() ==e_for ||att->getOmpDirectiveType() ==e_parallel_for)
+        if (att->getOmpDirectiveType() ==e_for || 
+          att->getOmpDirectiveType() ==e_for_simd ||
+          att->getOmpDirectiveType() ==e_parallel_for_simd ||
+          att->getOmpDirectiveType() ==e_parallel_for)
           ROSE_ASSERT(isSgForStatement(cur_stmt) != NULL);
 
         string pragma_str= att->toOpenMPString();
@@ -1483,7 +1605,10 @@ namespace OmpSupport
           rtxt = rtxt + os2.str()+"\n";
         }
         OmpAttribute* att = *riter; //getOmpAttribute(sg_node);
-        if (att->getOmpDirectiveType() ==e_for ||att->getOmpDirectiveType() ==e_parallel_for)
+        if (att->getOmpDirectiveType() ==e_for || 
+            att->getOmpDirectiveType() ==e_for_simd ||
+            att->getOmpDirectiveType() ==e_parallel_for_simd ||
+            att->getOmpDirectiveType() ==e_parallel_for)
           ROSE_ASSERT(isSgForStatement(cur_stmt) != NULL);
 
         string pragma_str= att->toOpenMPString();

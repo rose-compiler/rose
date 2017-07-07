@@ -100,13 +100,14 @@ corresponding C type is union name defaults to YYSTYPE.
 %token  OMP PARALLEL IF NUM_THREADS ORDERED SCHEDULE STATIC DYNAMIC GUIDED RUNTIME SECTIONS SINGLE NOWAIT SECTION
         FOR MASTER CRITICAL BARRIER ATOMIC FLUSH TARGET UPDATE DIST_DATA BLOCK DUPLICATE CYCLIC
         THREADPRIVATE PRIVATE COPYPRIVATE FIRSTPRIVATE LASTPRIVATE SHARED DEFAULT NONE REDUCTION COPYIN 
-        TASK TASKWAIT UNTIED COLLAPSE AUTO DECLARE DATA DEVICE MAP ALLOC TO FROM TOFROM
+        TASK TASKWAIT UNTIED COLLAPSE AUTO DECLARE DATA DEVICE MAP ALLOC TO FROM TOFROM PROC_BIND CLOSE SPREAD
         SIMD SAFELEN ALIGNED LINEAR UNIFORM INBRANCH NOTINBRANCH MPI MPI_ALL MPI_MASTER TARGET_BEGIN TARGET_END
         '(' ')' ',' ':' '+' '*' '-' '&' '^' '|' LOGAND LOGOR SHLEFT SHRIGHT PLUSPLUS MINUSMINUS PTR_TO '.'
         LE_OP2 GE_OP2 EQ_OP2 NE_OP2 RIGHT_ASSIGN2 LEFT_ASSIGN2 ADD_ASSIGN2
         SUB_ASSIGN2 MUL_ASSIGN2 DIV_ASSIGN2 MOD_ASSIGN2 AND_ASSIGN2 
         XOR_ASSIGN2 OR_ASSIGN2
         LEXICALERROR IDENTIFIER 
+        READ WRITE CAPTURE SIMDLEN
 /*We ignore NEWLINE since we only care about the pragma string , We relax the syntax check by allowing it as part of line continuation */
 %token <itype> ICONSTANT   
 %token <stype> EXPRESSION ID_EXPRESSION 
@@ -120,7 +121,7 @@ corresponding C type is union name defaults to YYSTYPE.
               shift_expr additive_expr multiplicative_expr 
               primary_expr incr_expr unary_expr
               device_clause if_clause num_threads_clause
-              simd_clause
+              simd_clause proc_bind_clause
 
 %type <itype> schedule_kind
 
@@ -136,9 +137,12 @@ corresponding C type is union name defaults to YYSTYPE.
 
 openmp_directive : parallel_directive 
                  | for_directive
+                 | for_simd_directive
+                 | declare_simd_directive
                  | sections_directive
                  | single_directive
                  | parallel_for_directive
+                 | parallel_for_simd_directive
                  | parallel_sections_directive
                  | task_directive
                  | master_directive
@@ -158,6 +162,7 @@ openmp_directive : parallel_directive
 parallel_directive : /* #pragma */ OMP PARALLEL {
                        ompattribute = buildOmpAttribute(e_parallel,gNode,true);
                        omptype = e_parallel; 
+                       cur_omp_directive=omptype;
                      }
                      parallel_clause_optseq 
                    ;
@@ -173,12 +178,13 @@ parallel_clause_seq : parallel_clause
 
 parallel_clause : unique_parallel_clause 
                 | data_default_clause
-                | data_privatization_clause
-                | data_privatization_in_clause
-                | data_sharing_clause
-                | data_reduction_clause
+                | private_clause
+                | firstprivate_clause
+                | share_clause
+                | reduction_clause
                 | if_clause
                 | num_threads_clause
+                | proc_bind_clause
                 ;
 
 unique_parallel_clause : IF { 
@@ -193,6 +199,18 @@ unique_parallel_clause : IF {
                          } '(' expression ')' { 
                            addExpression("");
                          }
+                       |PROC_BIND '(' MASTER ')' {
+                           ompattribute->addClause(e_proc_bind);
+                           ompattribute->setProcBindPolicy (e_proc_bind_master);
+                         }
+                       | PROC_BIND '(' CLOSE ')' {
+                           ompattribute->addClause(e_proc_bind);
+                           ompattribute->setProcBindPolicy (e_proc_bind_close);
+                         }
+                       | PROC_BIND '(' SPREAD ')' {
+                           ompattribute->addClause(e_proc_bind);
+                           ompattribute->setProcBindPolicy (e_proc_bind_spread);
+                         }  
                        | COPYIN { 
                            ompattribute->addClause(e_copyin);
                            omptype = e_copyin;
@@ -201,6 +219,8 @@ unique_parallel_clause : IF {
 
 for_directive : /* #pragma */ OMP FOR { 
                   ompattribute = buildOmpAttribute(e_for,gNode,true); 
+                  omptype = e_for; 
+                  cur_omp_directive=omptype;
                 }
                 for_clause_optseq
               ;
@@ -215,10 +235,10 @@ for_clause_seq : for_clause
                ;
 
 for_clause : unique_for_clause 
-           | data_privatization_clause
-           | data_privatization_in_clause
-           | data_privatization_out_clause
-           | data_reduction_clause
+           | private_clause
+           | firstprivate_clause
+           | lastprivate_clause
+           | reduction_clause
            | NOWAIT { 
                ompattribute->addClause(e_nowait);
                //Not correct since nowait cannot have expression or var_list
@@ -241,13 +261,17 @@ unique_for_clause : ORDERED {
                     } expression ')' { 
                       addExpression("");
                     }
-                  | COLLAPSE {
+                  | collapse_clause  
+                 ;
+
+collapse_clause: COLLAPSE {
                       ompattribute->addClause(e_collapse);
                       omptype = e_collapse;
                     } '(' expression ')' { 
                       addExpression("");
                     }
                   ;
+ 
 
 schedule_kind : STATIC  { $$ = e_schedule_static; }
               | DYNAMIC { $$ = e_schedule_dynamic; }
@@ -270,10 +294,10 @@ sections_clause_seq : sections_clause
                     | sections_clause_seq ',' sections_clause
                     ;
 
-sections_clause : data_privatization_clause
-                | data_privatization_in_clause
-                | data_privatization_out_clause
-                | data_reduction_clause
+sections_clause : private_clause
+                | firstprivate_clause
+                | lastprivate_clause
+                | reduction_clause
                 | NOWAIT {
                     ompattribute->addClause(e_nowait);
                   }
@@ -300,8 +324,8 @@ single_clause_seq : single_clause
                   ;
 
 single_clause : unique_single_clause
-              | data_privatization_clause
-              | data_privatization_in_clause
+              | private_clause
+              | firstprivate_clause
               | NOWAIT { 
                   ompattribute->addClause(e_nowait);
                 }
@@ -315,6 +339,7 @@ unique_single_clause : COPYPRIVATE {
 task_directive : /* #pragma */ OMP TASK {
                    ompattribute = buildOmpAttribute(e_task,gNode,true);
                    omptype = e_task; 
+                   cur_omp_directive = omptype; 
                  } task_clause_optseq
                ;
 
@@ -326,9 +351,9 @@ task_clause_optseq :  /* empty */
 
 task_clause : unique_task_clause
             | data_default_clause
-            | data_privatization_clause
-            | data_privatization_in_clause
-            | data_sharing_clause
+            | private_clause
+            | firstprivate_clause
+            | share_clause
             ;
 
 unique_task_clause : IF { 
@@ -344,6 +369,8 @@ unique_task_clause : IF {
                    
 parallel_for_directive : /* #pragma */ OMP PARALLEL FOR { 
                            ompattribute = buildOmpAttribute(e_parallel_for,gNode, true); 
+                           omptype=e_parallel_for; 
+                           cur_omp_directive = omptype;
                          } parallel_for_clauseoptseq
                        ;
 
@@ -359,18 +386,48 @@ parallel_for_clause_seq : parallel_for_clause
 parallel_for_clause : unique_parallel_clause 
                     | unique_for_clause 
                     | data_default_clause
-                    | data_privatization_clause
-                    | data_privatization_in_clause
-                    | data_privatization_out_clause
-                    | data_sharing_clause
-                    | data_reduction_clause
+                    | private_clause
+                    | firstprivate_clause
+                    | lastprivate_clause
+                    | share_clause
+                    | reduction_clause
                     | if_clause
                     | num_threads_clause
-                    ;
+                    | proc_bind_clause
+                   ;
 
+parallel_for_simd_directive : /* #pragma */ OMP PARALLEL FOR SIMD { 
+                           ompattribute = buildOmpAttribute(e_parallel_for_simd, gNode, true); 
+                           omptype= e_parallel_for_simd;
+                           cur_omp_directive = omptype;
+                         } parallel_for_simd_clauseoptseq
+                       ;
+
+parallel_for_simd_clauseoptseq : /* empty */
+                          | parallel_for_simd_clause_seq
+
+parallel_for_simd_clause_seq : parallel_for_simd_clause
+                        | parallel_for_simd_clause_seq parallel_for_simd_clause
+                        | parallel_for_simd_clause_seq ',' parallel_for_simd_clause
+                          
+parallel_for_simd_clause: unique_parallel_clause 
+                    | unique_for_clause 
+                    | unique_simd_clause
+                    | data_default_clause
+                    | private_clause
+                    | firstprivate_clause
+                    | lastprivate_clause
+                    | share_clause
+                    | reduction_clause
+                    | if_clause
+                    | num_threads_clause
+                    | proc_bind_clause
+                   ; 
+ 
 parallel_sections_directive : /* #pragma */ OMP PARALLEL SECTIONS { 
                                 ompattribute =buildOmpAttribute(e_parallel_sections,gNode, true); 
                                 omptype = e_parallel_sections; 
+                                cur_omp_directive = omptype;
                               } parallel_sections_clause_optseq
                             ;
 
@@ -385,21 +442,25 @@ parallel_sections_clause_seq : parallel_sections_clause
 
 parallel_sections_clause : unique_parallel_clause 
                          | data_default_clause
-                         | data_privatization_clause
-                         | data_privatization_in_clause
-                         | data_privatization_out_clause
-                         | data_sharing_clause
-                         | data_reduction_clause
+                         | private_clause
+                         | firstprivate_clause
+                         | lastprivate_clause
+                         | share_clause
+                         | reduction_clause
                          | if_clause
                          | num_threads_clause
+                         | proc_bind_clause
                          ;
 
 master_directive : /* #pragma */ OMP MASTER { 
-                     ompattribute = buildOmpAttribute(e_master, gNode, true);}
+                     ompattribute = buildOmpAttribute(e_master, gNode, true);
+                     cur_omp_directive = e_master; 
+}
                  ;
 
 critical_directive : /* #pragma */ OMP CRITICAL {
                        ompattribute = buildOmpAttribute(e_critical, gNode, true); 
+                       cur_omp_directive = e_critical;
                      } region_phraseopt
                    ;
 
@@ -417,20 +478,45 @@ region_phrase : '(' ID_EXPRESSION ')' {
               ;
 
 barrier_directive : /* #pragma */ OMP BARRIER { 
-                      ompattribute = buildOmpAttribute(e_barrier,gNode, true); }
+                      ompattribute = buildOmpAttribute(e_barrier,gNode, true); 
+                      cur_omp_directive = e_barrier;
+}
                   ;
 
 taskwait_directive : /* #pragma */ OMP TASKWAIT { 
-                       ompattribute = buildOmpAttribute(e_taskwait, gNode, true); } 
+                       ompattribute = buildOmpAttribute(e_taskwait, gNode, true);  
+                       cur_omp_directive = e_taskwait;
+                       }
                    ;
 
 atomic_directive : /* #pragma */ OMP ATOMIC { 
-                     ompattribute = buildOmpAttribute(e_atomic,gNode, true); }
+                     ompattribute = buildOmpAttribute(e_atomic,gNode, true); 
+                     cur_omp_directive = e_atomic;
+                     } atomic_clauseopt
                  ;
 
+atomic_clauseopt : /* empty */
+                 | atomic_clause
+                 ;
+
+atomic_clause : READ { ompattribute->addClause(e_atomic_clause);
+                       ompattribute->setAtomicAtomicity(e_atomic_read);
+                      }
+               | WRITE{ ompattribute->addClause(e_atomic_clause);
+                       ompattribute->setAtomicAtomicity(e_atomic_write);
+                  }
+
+               | UPDATE { ompattribute->addClause(e_atomic_clause);
+                       ompattribute->setAtomicAtomicity(e_atomic_update);
+                  }
+               | CAPTURE { ompattribute->addClause(e_atomic_clause);
+                       ompattribute->setAtomicAtomicity(e_atomic_capture);
+                  }
+                ;
 flush_directive : /* #pragma */ OMP FLUSH {
                     ompattribute = buildOmpAttribute(e_flush,gNode, true);
                     omptype = e_flush; 
+                    cur_omp_directive = omptype;
                   } flush_varsopt
                 ;
 
@@ -443,12 +529,14 @@ flush_vars : '(' {b_within_variable_list = true;} variable_list ')' {b_within_va
 
 ordered_directive : /* #pragma */ OMP ORDERED { 
                       ompattribute = buildOmpAttribute(e_ordered_directive,gNode, true); 
+                      cur_omp_directive = e_ordered_directive;
                     }
                   ;
 
 threadprivate_directive : /* #pragma */ OMP THREADPRIVATE {
                             ompattribute = buildOmpAttribute(e_threadprivate,gNode, true); 
                             omptype = e_threadprivate; 
+                            cur_omp_directive = omptype;
                           } '(' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list = false;}
                         ;
 
@@ -461,30 +549,44 @@ data_default_clause : DEFAULT '(' SHARED ')' {
                         ompattribute->setDefaultValue(e_default_none);
                       }
                     ;
+
+proc_bind_clause : PROC_BIND '(' MASTER ')' { 
+                        ompattribute->addClause(e_proc_bind);
+                        ompattribute->setProcBindPolicy (e_proc_bind_master); 
+                      }
+                    | PROC_BIND '(' CLOSE ')' {
+                        ompattribute->addClause(e_proc_bind);
+                        ompattribute->setProcBindPolicy (e_proc_bind_close); 
+                      }
+                    | PROC_BIND '(' SPREAD ')' {
+                        ompattribute->addClause(e_proc_bind);
+                        ompattribute->setProcBindPolicy (e_proc_bind_spread); 
+                      }
+                    ;
                     
-data_privatization_clause : PRIVATE {
+private_clause : PRIVATE {
                               ompattribute->addClause(e_private); omptype = e_private;
                             } '(' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list = false;}
                           ;
 
-data_privatization_in_clause : FIRSTPRIVATE { 
+firstprivate_clause : FIRSTPRIVATE { 
                                  ompattribute->addClause(e_firstprivate); 
                                  omptype = e_firstprivate;
                                } '(' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list = false;}
                              ;
 
-data_privatization_out_clause : LASTPRIVATE { 
+lastprivate_clause : LASTPRIVATE { 
                                   ompattribute->addClause(e_lastprivate); 
                                   omptype = e_lastprivate;
                                 } '(' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list = false;}
                               ;
 
-data_sharing_clause : SHARED {
+share_clause : SHARED {
                         ompattribute->addClause(e_shared); omptype = e_shared; 
                       } '(' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list = false;}
                     ;
 
-data_reduction_clause : REDUCTION { 
+reduction_clause : REDUCTION { 
                           ompattribute->addClause(e_reduction);
                         } '(' reduction_operator ':' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list = false;}
                       ;
@@ -543,6 +645,7 @@ target_data_clause : device_clause
 target_directive: /* #pragma */ OMP TARGET {
                        ompattribute = buildOmpAttribute(e_target,gNode,true);
                        omptype = e_target;
+                       cur_omp_directive = omptype;
                      }
                      target_clause_optseq 
                    ;
@@ -645,9 +748,24 @@ map_clause_optseq: /* empty, default to be tofrom*/ { ompattribute->setMapVarian
                     | TOFROM  ':' { ompattribute->setMapVariant(e_map_tofrom); omptype = e_map_tofrom; } 
                     ;
 
+for_simd_directive : /* #pragma */ OMP FOR SIMD { 
+                  ompattribute = buildOmpAttribute(e_for_simd, gNode,true); 
+                  cur_omp_directive = e_for_simd;
+                }
+                for_simd_clause_optseq
+              ;
+
+
+for_simd_clause_optseq:  /* empty*/
+                      | for_clause_seq
+                      | simd_clause_seq
+                      ;
+
 simd_directive: /* # pragma */ OMP SIMD
                   { ompattribute = buildOmpAttribute(e_simd,gNode,true); 
-                    omptype = e_simd; }
+                    omptype = e_simd; 
+                    cur_omp_directive = omptype;
+                    }
                    simd_clause_optseq
                 ;
 
@@ -662,16 +780,56 @@ simd_clause_seq
                 | simd_clause_seq ',' simd_clause
                 ;
 
-simd_clause : SAFELEN {
+simd_clause     : unique_simd_clause
+                | reduction_clause
+                | collapse_clause
+                | private_clause
+                | lastprivate_clause
+              ;
+
+unique_simd_clause: SAFELEN {
                         ompattribute->addClause(e_safelen);
                         omptype = e_safelen;
                       } '(' expression ')' {
                         addExpression("");
                       }
-                | data_reduction_clause
-                | uniform_clause
+                | simdlen_clause
                 | aligned_clause
                 | linear_clause
+                ;
+
+
+simdlen_clause: SIMDLEN {
+                          ompattribute->addClause(e_simdlen);
+                          omptype = e_simdlen;
+                          } '(' expression ')' {
+                          addExpression(""); 
+                      } 
+                  ;
+
+declare_simd_directive: OMP DECLARE SIMD {
+                        ompattribute = buildOmpAttribute(e_declare_simd, gNode,true);
+                        cur_omp_directive = e_declare_simd;
+                     }
+                     declare_simd_clause_optseq
+                     ;
+
+declare_simd_clause_optseq : /* empty*/
+                        | declare_simd_clause_seq
+                        ;
+
+declare_simd_clause_seq
+                : declare_simd_clause
+                | declare_simd_clause_seq declare_simd_clause
+                | declare_simd_clause_seq ',' declare_simd_clause
+                ; 
+
+declare_simd_clause     : simdlen_clause
+                | linear_clause
+                | aligned_clause
+                | uniform_clause
+                | INBRANCH { ompattribute->addClause(e_inbranch); omptype = e_inbranch; /*TODO: this is temporary, to be moved to declare simd */}
+                | NOTINBRANCH { ompattribute->addClause(e_notinbranch); omptype = e_notinbranch; /*TODO: this is temporary, to be moved to declare simd */ }
               ;
 
 uniform_clause : UNIFORM { 
@@ -685,21 +843,28 @@ aligned_clause : ALIGNED {
                          ompattribute->addClause(e_aligned);
                          omptype = e_aligned; 
                        }
-                       '(' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list =false;}
-                | ALIGNED
-                  { ompattribute->addClause(e_reduction);}
-                  '(' reduction_operator ':' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list =false;}
-                ;
+                       '(' {b_within_variable_list = true;} variable_list {b_within_variable_list =false;} aligned_clause_optseq ')'
+               ;
+aligned_clause_optseq: /* empty */
+                        | aligned_clause_alignment
+                        ;
 
-linear_clause : LINEAR { 
+aligned_clause_alignment: ':' expression {addExpression(""); } 
+
+
+linear_clause :  LINEAR { 
                          ompattribute->addClause(e_linear);
                          omptype = e_linear; 
-                       }
-                       '(' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list =false;}
-                | LINEAR
-                  { ompattribute->addClause(e_reduction);}
-                  '(' reduction_operator ':' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list =false;}
+                        }
+                       '(' {b_within_variable_list = true;} variable_list {b_within_variable_list =false;}  linear_clause_step_optseq ')'
                 ;
+
+linear_clause_step_optseq: /* empty */
+                        | linear_clause_step
+                        ;
+
+linear_clause_step: ':' expression {addExpression(""); } 
+
 /* parsing real expressions here, Liao, 10/12/2008
    */       
 /* expression: { omp_parse_expr(); } EXPRESSION { if (!addExpression((const char*)$2)) YYABORT; }
@@ -1071,7 +1236,8 @@ dist_size_opt: /*empty*/ {current_exp = NULL;}
 %%
 int yyerror(const char *s) {
     printf("%s!\n", s);
-    return 0;
+    assert(0);
+    return 0; // we want to the program to stop on error
 }
 
 

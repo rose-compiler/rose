@@ -6,8 +6,9 @@
 #include "MemoryMap.h"
 #include "Diagnostics.h"
 
-using namespace rose;
-using namespace rose::Diagnostics;
+using namespace Rose;
+using namespace Rose::Diagnostics;
+using namespace Rose::BinaryAnalysis;
 
 void
 SgAsmGenericSection::ctor(SgAsmGenericFile *ef, SgAsmGenericHeader *hdr)
@@ -273,7 +274,7 @@ SgAsmGenericSection::read_content(rose_addr_t start_offset, void *dst_buf, rose_
 }
 
 size_t
-SgAsmGenericSection::read_content(const MemoryMap *map, rose_addr_t start_va, void *dst_buf, rose_addr_t size, bool strict)
+SgAsmGenericSection::read_content(const MemoryMap::Ptr &map, rose_addr_t start_va, void *dst_buf, rose_addr_t size, bool strict)
 {
     SgAsmGenericFile *file = get_file();
     ROSE_ASSERT(file!=NULL);
@@ -281,7 +282,8 @@ SgAsmGenericSection::read_content(const MemoryMap *map, rose_addr_t start_va, vo
 }
 
 size_t
-SgAsmGenericSection::read_content(const MemoryMap *map, const rose_rva_t &start, void *dst_buf, rose_addr_t size, bool strict) {
+SgAsmGenericSection::read_content(const MemoryMap::Ptr &map, const rose_rva_t &start, void *dst_buf,
+                                  rose_addr_t size, bool strict) {
     return read_content(map, start.get_va(), dst_buf, size, strict);
 }
 
@@ -321,7 +323,7 @@ SgAsmGenericSection::read_content_local_ucl(rose_addr_t rel_offset, rose_addr_t 
 }
 
 std::string
-SgAsmGenericSection::read_content_str(const MemoryMap *map, rose_addr_t start_va, bool strict)
+SgAsmGenericSection::read_content_str(const MemoryMap::Ptr &map, rose_addr_t start_va, bool strict)
 {
     SgAsmGenericFile *file = get_file();
     ROSE_ASSERT(file!=NULL);

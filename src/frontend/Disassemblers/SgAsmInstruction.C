@@ -6,9 +6,9 @@
 #include "Diagnostics.h"
 #include "Disassembler.h"
 
-using namespace rose;
-using namespace rose::Diagnostics;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;
+using namespace Rose::Diagnostics;
+using namespace Rose::BinaryAnalysis;
 
 /** Indicates concrete stack delta is not known or not calculated. */
 const int64_t SgAsmInstruction::INVALID_STACK_DELTA = (uint64_t)1 << 63; // fairly arbitrary, but far from zero
@@ -16,59 +16,6 @@ const int64_t SgAsmInstruction::INVALID_STACK_DELTA = (uint64_t)1 << 63; // fair
 void
 SgAsmInstruction::appendSources(SgAsmInstruction *inst) {
     p_sources.push_back(inst);
-}
-
-SgAsmInstruction*
-SgAsmInstruction::cfgBinFlowOutEdge(const VirtualBinCFG::AuxiliaryInformation *info) {
-    if (!isAsmUnconditionalBranch(this)) {
-        SgAsmInstruction* next = info->getInstructionAtAddress(this->get_address() + this->get_raw_bytes().size());
-        return next;
-    }
-    return NULL;
-}
-
-std::vector<VirtualBinCFG::CFGEdge>
-SgAsmInstruction::cfgBinOutEdges(const VirtualBinCFG::AuxiliaryInformation *info) {
-    std::vector<VirtualBinCFG::CFGEdge> result;
-    uint64_t nextAddr = this->get_address() + this->get_raw_bytes().size();
-
-    if (isAsmBranch(this)) {
-        uint64_t addr = 0;
-        bool knownTarget = getBranchTarget(&addr);
-        if (knownTarget) {
-            SgAsmInstruction* tgt = info->getInstructionAtAddress(addr);
-            if (tgt)
-                makeEdge(this, tgt, info, result);
-        } else {
-            // Unknown target
-            const std::set<uint64_t> successorAddrs = info->getPossibleSuccessors(this);
-            for (std::set<uint64_t>::const_iterator i = successorAddrs.begin(); i != successorAddrs.end(); ++i) {
-                SgAsmInstruction* tgt = info->getInstructionAtAddress(*i);
-                if (tgt)
-                    makeEdge(this, tgt, info, result);
-            }
-        }
-    }
-
-    if ((!isSgAsmX86Instruction(this) ||
-         (isSgAsmX86Instruction(this)->get_kind() != x86_ret && isSgAsmX86Instruction(this)->get_kind() != x86_hlt))) {
-        SgAsmInstruction* next = info->getInstructionAtAddress(nextAddr);
-        if (next)
-            makeEdge(this, next, info, result);
-    }
-    return result;
-}
-
-std::vector<VirtualBinCFG::CFGEdge>
-SgAsmInstruction::cfgBinInEdges(const VirtualBinCFG::AuxiliaryInformation *info) {
-    std::vector<VirtualBinCFG::CFGEdge> result;
-    const std::set<uint64_t>& preds = info->getPossiblePredecessors(this);
-    for (std::set<uint64_t>::const_iterator i = preds.begin(); i != preds.end(); ++i) {
-        SgAsmInstruction* tgt = info->getInstructionAtAddress(*i);
-        if (tgt)
-            makeEdge(this, tgt, info, result);
-    }
-    return result;
 }
 
 unsigned
@@ -87,7 +34,7 @@ SgAsmInstruction::getSuccessors(bool *complete) {
 
 std::set<rose_addr_t>
 SgAsmInstruction::getSuccessors(const std::vector<SgAsmInstruction*>& basic_block, bool *complete/*out*/,
-                                const MemoryMap *initial_memory/*=NULL*/)
+                                const MemoryMap::Ptr &initial_memory/*=NULL*/)
 {
     if (basic_block.size()==0) {
         if (complete) *complete = true;

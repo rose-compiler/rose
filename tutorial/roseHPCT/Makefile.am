@@ -3,7 +3,7 @@
 
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-LDADD = $(LIBS_WITH_RPATH) $(WAVE_LDFLAGS) $(ROSE_SEPARATE_LIBS) 
+LDADD = $(WAVE_LDFLAGS) $(ROSE_SEPARATE_LIBS) 
 
 # HPCToolkit-generated files.
 HPCT_FILES = PAPI_FP_OPS.xml \
@@ -69,6 +69,7 @@ if !ROSE_BUILD_OS_IS_CYGWIN
 noinst_PROGRAMS = attachMetrics
 attachMetrics_SOURCES = attachMetrics.cc
 attachMetrics_LDFLAGS = \
+	$(ROSE_RPATHS) \
 	$(ROSE_ROSEHPCT_LIBS_WITH_PATH) \
 	$(ROSE_LIBS_WITH_PATH) \
 	$(ROSEHPCT_DEP_LIBS) \

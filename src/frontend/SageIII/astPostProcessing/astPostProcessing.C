@@ -13,7 +13,7 @@
 
 // DQ (3/6/2017): Added support for message logging to control output from ROSE tools.
 #undef mprintf
-#define mprintf rose::Diagnostics::mfprintf(rose::ir_node_mlog[rose::Diagnostics::DEBUG])
+#define mprintf Rose::Diagnostics::mfprintf(Rose::ir_node_mlog[Rose::Diagnostics::DEBUG])
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
@@ -39,7 +39,9 @@ void AstPostProcessing (SgNode* node)
   // improved by enforcing that this could not be called at the SgFile level of the hierarchy.
      if (isSgProject(node) == NULL)
         {
-          printf ("Error: AstPostProcessing should only be called on SgProject (due to repeated memory pool traversals when multiple files are specified on the command line). node = %s \n",node->class_name().c_str());
+       // DQ (5/17/17): Note that this function is called, and this message is output, from the outliner, which is OK but not ideal.
+          printf ("Warning: AstPostProcessing should ideally be called on SgProject (due to repeated memory pool traversals and quadratic \n");
+          printf ("         behavior (over files) when multiple files are specified on the command line): node = %s \n",node->class_name().c_str());
         }
   // DQ (1/31/2014): This is a problem to enforce this for at least (this test program): 
   //      tests/nonsmoke/functional/roseTests/astRewriteTests/testIncludeDirectiveInsertion.C
@@ -555,6 +557,14 @@ void postProcessingSupport (SgNode* node)
        // DQ (4/24/2013): Detect the correct function declaration to declare the use of default arguments.
        // This can only be a single function and it can't be any function (this is a moderately complex issue).
           fixupFunctionDefaultArguments(node);
+
+          if (SgProject::get_verbose() > 1)
+             {
+               printf ("Calling addPrototypesForTemplateInstantiations() \n");
+             }
+
+       // DQ (5/18/2017): Adding missing prototypes.
+          addPrototypesForTemplateInstantiations(node);
 
           if (SgProject::get_verbose() > 1)
              {

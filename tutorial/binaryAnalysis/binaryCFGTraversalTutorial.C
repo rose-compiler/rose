@@ -10,7 +10,7 @@
 using namespace std;
 // you need boost to put together the graph
 using namespace boost;
-using namespace rose;
+using namespace Rose;
 
 //renaming to Vertex and Edge to save space
 typedef boost::graph_traits<BinaryAnalysis::ControlFlow::Graph>::vertex_descriptor Vertex;   /**< Graph vertex type. */
@@ -40,7 +40,7 @@ void visitorTraversal::analyzePath(vector<Vertex>& pth) {
 
 
 int main(int argc, char *argv[]) {
-    // Initialize and check compatibility. See rose::initialize
+    // Initialize and check compatibility. See Rose::initialize
     ROSE_INITIALIZE;
 
     /* Parse the binary file */

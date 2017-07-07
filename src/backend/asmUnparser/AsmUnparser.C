@@ -3,31 +3,29 @@
 #include "AsmUnparser_compat.h" /*FIXME: needed until no longer dependent upon unparseInstruction()*/
 #include "Disassembler.h"
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 using namespace Diagnostics;
 
 Sawyer::Message::Facility AsmUnparser::mlog;
 
-/** Returns a vector of booleans indicating whether an instruction is part of a no-op sequence.  The sequences returned by
- *  SgAsmInstruction::findNoopSubsequences() can overlap, but we cannot assume that removing overlapping sequences will
- *  result in a meaningful basic block.  For instance, consider the following block:
+/* Returns a vector of booleans indicating whether an instruction is part of a no-op sequence.  The sequences returned by
+ * SgAsmInstruction::findNoopSubsequences() can overlap, but we cannot assume that removing overlapping sequences will
+ * result in a meaningful basic block.  For instance, consider the following block:
  *
- *  \code
  *      1: mov eax, 1
  *      2: mov eax, 2
  *      3: mov eax, 1
  *      4: mov eax, 2
- *  \endcode
  *
- *  The subsequences <2,3> and <3,4> are both no-ops when considered independently.  However, we cannot remove all four
- *  instructions because the sequence <1,2,3,4> is not a no-op.
+ * The subsequences <2,3> and <3,4> are both no-ops when considered independently.  However, we cannot remove all four
+ * instructions because the sequence <1,2,3,4> is not a no-op.
  *
- *  Therefore, this function takes the list returned by findNoopSubsequences and greedily selects the longest non-overlapping
- *  sequences, and returns a vector indexed by instruction position and containing a boolean to indicate whether that
- *  instruction is part of a selected no-op sequence.  Note that this algorithm does not necessarily maximize the number of
- *  no-op instructions. */
+ * Therefore, this function takes the list returned by findNoopSubsequences and greedily selects the longest non-overlapping
+ * sequences, and returns a vector indexed by instruction position and containing a boolean to indicate whether that
+ * instruction is part of a selected no-op sequence.  Note that this algorithm does not necessarily maximize the number of
+ * no-op instructions. */
 static std::vector<bool>
 build_noop_index(const std::vector <std::pair <size_t, size_t> > &noops)
 {
@@ -73,7 +71,7 @@ void AsmUnparser::initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        Diagnostics::initAndRegister(&mlog, "rose::BinaryAnalysis::AsmUnparser");
+        Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::AsmUnparser");
     }
 }
 
@@ -768,21 +766,46 @@ AsmUnparser::BasicBlockOutgoingStackDelta::operator()(bool enabled, const BasicB
     return enabled;
 }
 
+static bool
+increasing_block_address(SgAsmBlock *a, SgAsmBlock *b) {
+    if (NULL == b)
+        return false;
+    if (NULL == a)
+        return true;
+    return a->get_address() < b->get_address();
+}
+
+static bool
+increasing_integer_expr(SgAsmIntegerValueExpression *a, SgAsmIntegerValueExpression *b) {
+    if (NULL == b)
+        return false;
+    if (NULL == a)
+        return true;
+    return a->get_absoluteValue() < b->get_absoluteValue();
+}
+
 bool
 AsmUnparser::BasicBlockSuccessors::operator()(bool enabled, const BasicBlockArgs &args)
 {
     if (enabled) {
-            size_t nsucs = 0;
-            args.output <<args.unparser->line_prefix() <<"Successor blocks: ";
+        size_t nsucs = 0;
+        args.output <<args.unparser->line_prefix() <<"Successor blocks: ";
         SgAsmFunction *my_func = args.block->get_enclosing_function();
 
         CFG_BlockMap::const_iterator bmi = args.unparser->cfg_blockmap.find(args.block);
         if (bmi!=args.unparser->cfg_blockmap.end()) {
             // Use the unparser's CFG if it contains info for this block.
             CFG_Vertex vertex = bmi->second;
+            std::vector<SgAsmBlock*> suc_blks;
+
             boost::graph_traits<CFG>::out_edge_iterator ei, ei_end;
             for (boost::tie(ei, ei_end)=out_edges(vertex, args.unparser->cfg); ei!=ei_end; ++ei) {
                 SgAsmBlock *suc_blk = get(boost::vertex_name, args.unparser->cfg, target(*ei, args.unparser->cfg));
+                suc_blks.push_back(suc_blk);
+            }
+            std::sort(suc_blks.begin(), suc_blks.end(), increasing_block_address);
+
+            BOOST_FOREACH (SgAsmBlock *suc_blk, suc_blks) {
                 SgAsmFunction *suc_func = suc_blk->get_enclosing_function();
                 if (suc_blk) {
                     args.output <<(0==nsucs++?"":", ") <<StringUtility::addrToString(suc_blk->get_address());
@@ -801,7 +824,8 @@ AsmUnparser::BasicBlockSuccessors::operator()(bool enabled, const BasicBlockArgs
             // Use the successors cached in the AST. We print them as absolute virtual addresses rather than using
             // SgAsmIntegerValueExpression::get_label() because the value would probably have already been printed using
             // get_label() in the previous disassembled instruction.
-            const SgAsmIntegerValuePtrList &successors = args.block->get_successors();
+            SgAsmIntegerValuePtrList successors = args.block->get_successors();
+            std::sort(successors.begin(), successors.end(), increasing_integer_expr);
             for (SgAsmIntegerValuePtrList::const_iterator si=successors.begin(); si!=successors.end(); ++si) {
                 args.output <<(0==nsucs++?"":", ") <<StringUtility::addrToString((*si)->get_absoluteValue());
                 SgAsmBlock *suc_blk = isSgAsmBlock((*si)->get_baseNode());
@@ -1007,17 +1031,17 @@ AsmUnparser::StaticDataDisassembler::operator()(bool enabled, const StaticDataAr
         0==(block->get_reason() & SgAsmBlock::BLK_PADDING) &&
         0==(block->get_reason() & SgAsmBlock::BLK_JUMPTABLE)) {
         SgUnsignedCharList data = args.data->get_raw_bytes();
-        MemoryMap map;
-        map.insert(AddressInterval::baseSize(args.data->get_address(), data.size()),
-                   MemoryMap::Segment::staticInstance(&data[0], data.size(), MemoryMap::READABLE|MemoryMap::EXECUTABLE,
-                                                      "static data block"));
+        MemoryMap::Ptr map = MemoryMap::instance();
+        map->insert(AddressInterval::baseSize(args.data->get_address(), data.size()),
+                    MemoryMap::Segment::staticInstance(&data[0], data.size(), MemoryMap::READABLE|MemoryMap::EXECUTABLE,
+                                                       "static data block"));
         unparser->set_prefix_format(args.unparser->get_prefix_format());
         rose_addr_t offset=0, nskipped=0;
         while (offset < data.size()) {
             rose_addr_t insn_va = args.data->get_address() + offset;
             SgAsmInstruction *insn = NULL;
             try {
-                insn = disassembler->disassembleOne(&map, insn_va, NULL);
+                insn = disassembler->disassembleOne(map, insn_va, NULL);
                 unparser->unparse(args.output, insn);
                 offset += insn->get_size();
                 SageInterface::deleteAST(insn);

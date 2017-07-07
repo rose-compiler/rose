@@ -58,7 +58,7 @@ filterOnNodes::operator()(filterOnNodes::argument_type x) const
      if ( locatedNode != NULL )
         {
           Sg_File_Info* fileInfo = locatedNode->get_file_info();
-          std::string filename(rose::utility_stripPathFromFileName(fileInfo->get_filename()));
+          std::string filename(Rose::utility_stripPathFromFileName(fileInfo->get_filename()));
 
 
 
@@ -115,7 +115,7 @@ filterOnEdges::operator()(SgNode* node, pair<SgNode*,std::string>& x) const
 int
 main ( int argc, char* argv[] )
    {
-     // Initialize and check compatibility. See rose::initialize
+     // Initialize and check compatibility. See Rose::initialize
      ROSE_INITIALIZE;
 
      SgProject* project = frontend(argc,argv);

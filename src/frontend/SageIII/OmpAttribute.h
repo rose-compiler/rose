@@ -35,6 +35,7 @@ namespace OmpSupport
     // 16 directives as OpenMP 3.0
     e_parallel,
     e_for,
+    e_for_simd,
     e_do,
     e_workshare,
     e_sections,
@@ -59,6 +60,7 @@ namespace OmpSupport
 
     e_threadprivate,
     e_parallel_for,
+    e_parallel_for_simd,
     e_parallel_do,
     e_parallel_sections,
     e_parallel_workshare,
@@ -91,6 +93,7 @@ namespace OmpSupport
     e_lastprivate,
     e_copyin,
     e_copyprivate,
+    e_proc_bind, 
 
     //8 misc clauses
     e_if, // used with omp parallel or omp task
@@ -101,6 +104,9 @@ namespace OmpSupport
     e_schedule,
     e_collapse,
     e_untied, 
+    e_atomic_clause, 
+    e_inbranch,
+    e_notinbranch,
 
     // Simple values for some clauses
 
@@ -111,6 +117,16 @@ namespace OmpSupport
     //Fortran default values
     e_default_private,
     e_default_firstprivate,
+
+    // proc_bind(master|close|spread)
+    e_proc_bind_master, 
+    e_proc_bind_close, 
+    e_proc_bind_spread, 
+
+    e_atomic_read, 
+    e_atomic_write, 
+    e_atomic_update, 
+    e_atomic_capture, 
 
     // reduction operations
     //8 operand for C/C++
@@ -162,7 +178,9 @@ namespace OmpSupport
 
     // experimental SIMD directive, phlin 8/5/2013
     e_simd,
+    e_declare_simd,
     e_safelen,
+    e_simdlen,
     e_uniform,
     e_aligned,
     e_linear,
@@ -172,6 +190,11 @@ namespace OmpSupport
 
   }; //end omp_construct_enum
 
+  // A new variable to communicate the context of OpenMP parser
+  // what directive is being parsed right now. 
+  // This is useful for rare case of parsing "declare simd"
+  extern omp_construct_enum cur_omp_directive; 
+   
   //-------------------------------------------------------------------
   // some utility functions
 
@@ -366,6 +389,14 @@ namespace OmpSupport
       void setDefaultValue(omp_construct_enum valuex);
       omp_construct_enum getDefaultValue();
 
+      // proc_bind() policy 
+      void setProcBindPolicy(omp_construct_enum valuex);
+      omp_construct_enum getProcBindPolicy();
+
+      //Atomicity of Atomic Clause 
+      void setAtomicAtomicity(omp_construct_enum valuex);
+      omp_construct_enum getAtomicAtomicity();
+
       // Schedule kind
       omp_construct_enum getScheduleKind(); 
       void setScheduleKind(omp_construct_enum kindx);
@@ -467,6 +498,12 @@ namespace OmpSupport
       // values for default() clause: data scoping information
       // choices are: none,shared, private, firstprivate
       omp_construct_enum default_scope; 
+
+     // values for proc_bind() clause
+      omp_construct_enum proc_bind_policy; 
+
+      // Atomic clause's atomicity
+      omp_construct_enum atomicity; 
 
       // value for omp for's schedule policies
       omp_construct_enum schedule_kind;
