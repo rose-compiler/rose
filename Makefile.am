@@ -114,16 +114,55 @@ install-rose-library: install-data-local
 # some "make" variables that are initialized from shell exported variables. Other build environments will need other targets.
 #
 # It installs whatever is in the ROSE installation prefix, but at least the ROSE library and supporting header files.
+#
+# We cannot distribute Oracle Java because it requires the user to agree to a license. The user must download it themselves.
+#
+# We cannot distribute CXX_ROOT or C_ROOT because it might be pointing to an Intel compiler, which needs to be purchased
+# by the user.
+#
+# We cannot distribute Yices because it requires the user to agree to a license. The user must download it themselves.
+#
+# We should not distribute /usr or /usr/local as these are general locations with lots of other software.
 rose-installer-rmc2: install-rose-library
-	$(top_srcdir)/scripts/mkinstaller			\
+	rm -rf $@.tmp
+	mkdir  $@.tmp
+	TMPDIR=$@.tmp $(top_srcdir)/scripts/mkinstaller	\
 		--create="$@"					\
 		--cc="$(C_VENDOR) $(C_VERSION)"			\
 		--cxx="$(CXX_VENDOR) $(CXX_VERSION)"		\
+		--contact="http://rosecompiler.org"		\
 		--os="$(RMC_OS_NAME)"				\
 		--prjnam=ROSE					\
 		--prjver=$(PACKAGE_VERSION)			\
-		$(prefix)/* $(ROSE_DEPENDENCY_BINARY_DISTRIB)/*
+		$(prefix)/*					\
+		$(addsuffix /*, $(filter-out / /usr /usr/local,	\
+		    $(BOOST_ROOT)				\
+		    $(CMAKE_ROOT)				\
+		    $(DLIB_ROOT)				\
+		    $(GNU_COMPILERS_ROOT)			\
+		    $(LIBBZ2_ROOT)				\
+		    $(LIBGCRYPT_ROOT)				\
+		    $(LIBGPG_ERROR_ROOT)			\
+		    $(LIBGRAPHICSMAGICK_ROOT)			\
+		    $(LIBJPEG_ROOT)				\
+		    $(LIBLCMS_ROOT)				\
+		    $(LIBLZMA_ROOT)				\
+		    $(LIBPNG_ROOT)				\
+		    $(LIBTIFF_ROOT)				\
+		    $(PYTHON_ROOT)				\
+		    $(SPOT_ROOT)				\
+		    $(WT_ROOT)					\
+		    $(YAMLCPP_ROOT)				\
+		    $(ZLIB_ROOT)				\
+		))
+	rm -rf $@.tmp
 
+check-rose-installer-rmc2: rose-installer-rmc2
+	rm -rf $@.tmp installed installed-binary
+	mkdir  $@.tmp
+	TMPDIR=$@.tmp ./rose-installer-rmc2 --prefix=installed-binary
+	LD_LIBRARY_PATH=installed-binary/lib ./installed-binary/bin/rose-config --version
+	rm -rf $@.tmp installed-binary
 
 # DQ (10/2/10): Of course this will over-rise the "make install" rule, so we can't 
 # allow exactly this (what was I thinking?). Commented out until I get a better fix.
