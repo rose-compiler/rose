@@ -6,7 +6,7 @@ package a_nodes_h.Support is
    package ICS renames Interfaces.C.Strings;
 
    Default_Node_ID   : constant Node_ID := -1;
-   Default_chars_ptr : constant ICS. chars_ptr := ICS.Null_Ptr;
+   Default_chars_ptr : constant ICS.chars_ptr := ICS.Null_Ptr;
 
    -- Normally these records' fields would already have default values, but
    -- a_nodes_h.ads is generated from C, so they are here.
@@ -54,6 +54,7 @@ package a_nodes_h.Support is
 
    Default_Expression_Struct : constant Expression_Struct :=
      (kind                                     => Not_An_Expression,
+      value_image                               => ICS.Null_Ptr,
       name_image                               => ICS.Null_Ptr,
       Corresponding_Name_Definition            => Default_Element_ID,
       Corresponding_Name_Definition_List       => Default_Element_List,
@@ -88,7 +89,16 @@ package a_nodes_h.Support is
       Iterator_Specification                   => Default_Element_ID);
 
    Default_Association_Struct : constant Association_Struct :=
-     (kind => Not_An_Association);
+     (kind                        => Not_An_Association,
+      Array_Component_Choices     => Default_Element_List,
+      Record_Component_Choices    => Default_Element_List,
+      Component_Expression        => Default_Element_ID,
+      Formal_Parameter            => Default_Element_ID,
+      Actual_Parameter            => Default_Element_ID,
+      Discriminant_Selector_Names => Default_Element_List,
+      Discriminant_Expression     => Default_Element_ID,
+      Is_Normalized               => Default_Bool,
+      Is_Defaulted_Association    => Default_Bool);
 
    Default_Statement_Struct : constant Statement_Struct :=
      (kind                                => Not_A_Statement,

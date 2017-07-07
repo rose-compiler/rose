@@ -17,6 +17,7 @@ package body tool_2_wrapper_h is
       Compile_Succeeded : Boolean  := False;
       Tool              : Asis_Tool_2.Tool.Class; -- Initialized
    begin
+      -- Debug:
       Asis.Extensions.Compile
         (Source_File  => Target_File_In_String_Access,
          Args         => (1..0 => null),

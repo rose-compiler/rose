@@ -20,18 +20,25 @@ private
    type Class is tagged -- Initialized
       record
          The_Element       : Asis.Element; -- Initialized
+
+         -- Current, in-progress intermediate output products.  These need to be
+         -- turned into stacks if they are ever used in Post_Operation.  Now
+         -- their usage ends at the end of Pre_Operation:
+         Dot_Node  : Dot.Node_Stmt.Class; -- Initialized
+         Dot_Label : Dot.HTML_Like_Labels.Class; -- Initialized
+         A_Element : a_nodes_h.Element_Struct; -- Initialized
+
+         -- Outputs:
          Text              : Indented_Text.Class; -- Initialized
-         Current_Dot_Node  : Dot.Node_Stmt.Class; -- Initialized
-         Current_Dot_Label : Dot.HTML_Like_Labels.Class; -- Initialized
          Outputs           : Output_Accesses_Record; -- Initialized
       end record;
 
    -- Add this info to the label, and print it if trace is on:
-   procedure Add_To_Label
+   procedure Add_To_Dot_Label
      (This  : in out Class;
       Name  : in     String;
       Value : in     String);
-   procedure Add_To_Label
+   procedure Add_To_Dot_Label
      (This  : in out Class;
       Name  : in     String;
       Value : in     Wide_String);

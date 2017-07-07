@@ -16,7 +16,6 @@ private
    type Class is tagged limited -- Initialized
       record
          Asis_Context : Asis.Context; -- Initialized
---           Graph        : Dot.Graphs.Access_Class; -- Initialized
       end record;
 
 end Asis_Tool_2.Context;

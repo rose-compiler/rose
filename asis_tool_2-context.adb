@@ -15,9 +15,9 @@ package body Asis_Tool_2.Context is
       A_Nodes      : in Standard.A_Nodes.Access_Class)
    is
       Context : a_nodes_h.Context_Struct :=
-        a_nodes_h.Support.Context_Struct_Default;
+        a_nodes_h.Support.Default_Context_Struct;
       Node    : a_nodes_h.Node_Struct :=
-        a_nodes_h.Support.Node_Struct_Default;
+        a_nodes_h.Support.Default_Node_Struct;
       use Asis.Ada_Environments;
    begin
       Context.name := To_Chars_Ptr (Name (Asis_Context));

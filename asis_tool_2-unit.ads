@@ -16,7 +16,7 @@ private
 
    type Class (Trace : Boolean := False) is tagged limited
       record
-         Asis_Unit : Asis.Compilation_Unit := Asis.Nil_Compilation_Unit;
+         null;
       end record;
 
 end Asis_Tool_2.Unit;

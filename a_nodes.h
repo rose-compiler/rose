@@ -898,11 +898,15 @@ struct Definition_Struct {
   enum Definition_Kinds kind;
 };
 
-// May take 32*4 bytes - 19 IDs, 8 Lists, 1 bool, 3 enums, 1 char*:
+// May take 33*4 bytes - 19 IDs, 8 Lists, 1 bool, 3 enums, 2 char*:
 struct Expression_Struct {
   enum Expression_Kinds kind;
   
   // These fields are only valid for the kinds above them:  
+  // An_Integer_Literal,                        // 2.4
+  // A_Real_Literal,                            // 2.4.1
+  // A_String_Literal,                          // 2.6
+  char           *value_image;  
   // An_Identifier |                              // 4.1
   // An_Operator_Symbol |                         // 4.1
   // A_Character_Literal |                        // 4.1
@@ -978,6 +982,33 @@ struct Expression_Struct {
 // May take ??*4 bytes (unfinished):
 struct Association_Struct {
   enum Association_Kinds kind;
+  // These fields are only valid for the kinds above them:  
+  // An_Array_Component_Association,        // 4.3.3
+  Expression_List Array_Component_Choices;
+  // A_Record_Component_Association,        // 4.3.1
+  Expression_List Record_Component_Choices;
+  // An_Array_Component_Association,        // 4.3.3
+  // A_Record_Component_Association,        // 4.3.1
+  Expression_ID   Component_Expression;
+  // A_Pragma_Argument_Association,         // 2.8
+  // A_Parameter_Association,               // 6.4
+  // A_Generic_Association                  // 12.3
+  Expression_ID   Formal_Parameter;
+  Expression_ID   Actual_Parameter;
+  // A_Discriminant_Association,            // 3.7.1  
+  Expression_List Discriminant_Selector_Names;
+  Expression_ID   Discriminant_Expression;
+  // A_Discriminant_Association,            // 3.7.1
+  // A_Record_Component_Association,        // 4.3.1
+  // A_Parameter_Association,               // 6.4
+  // A_Generic_Association                  // 12.3
+  bool            Is_Normalized;
+  // A_Parameter_Association
+  // A_Generic_Association
+  //  //|A2005 start
+  // A_Record_Component_Association
+  //  //|A2005 end
+  bool            Is_Defaulted_Association;
 };
 
 // May take 37*4 bytes - 22 IDs, 12 Lists, 2 bools, and 1 enum:

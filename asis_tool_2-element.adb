@@ -3,6 +3,7 @@ with Asis.Declarations;
 with Asis.Elements;
 with Asis.Expressions;
 with Asis.Iterator;
+with Asis.Statements;
 -- GNAT-specific:
 with Asis.Set_Get;
 with Asis.Text;
@@ -45,7 +46,7 @@ package body Asis_Tool_2.Element is
       begin
          --        A_Pragma              -> Pragma_Kinds
          --
-         State.Add_To_Label
+         State.Add_To_Dot_Label
            (Name => "Pragma_Kind",
             Value => Pragma_Kind'Image);
          State.Add_Not_Implemented;
@@ -60,13 +61,13 @@ package body Asis_Tool_2.Element is
       begin
          --        A_Defining_Name       -> Defining_Name_Kinds
          --                                         -> Operator_Kinds
-         State.Add_To_Label (Name => "Defining_Name_Kind",
+         State.Add_To_Dot_Label (Name => "Defining_Name_Kind",
                               Value => Defining_Name_Kind'Image);
-         State.Add_To_Label (Name => "Name",
+         State.Add_To_Dot_Label (Name => "Name",
                               Value => Name (Element));
          case Defining_Name_Kind is
             when Asis.A_Defining_Operator_Symbol =>
-               State.Add_To_Label (Name => "Operator_Kind",
+               State.Add_To_Dot_Label (Name => "Operator_Kind",
                                     Value => Asis.Elements.Operator_Kind (Element)'Image);
             when others => null;
          end case;
@@ -85,14 +86,14 @@ package body Asis_Tool_2.Element is
          --                                         -> Declaration_Origin
          --                                         -> Mode_Kinds
          --                                         -> Subprogram_Default_Kinds
-         State.Add_To_Label (Name => "Declaration_Kind",
+         State.Add_To_Dot_Label (Name => "Declaration_Kind",
                               Value => Declaration_Kind'Image);
-         State.Add_To_Label (Name => "Declaration_Origin",
+         State.Add_To_Dot_Label (Name => "Declaration_Origin",
                               Value => Asis.Elements.Declaration_Origin (Element)'Image);
          case Declaration_Kind is
             when A_Parameter_Specification |
                  A_Formal_Object_Declaration =>
-               State.Add_To_Label (Name => "Mode_Kind",
+               State.Add_To_Dot_Label (Name => "Mode_Kind",
                                     Value => Asis.Elements.Mode_Kind (Element)'Image);
             when others =>
                null;
@@ -100,7 +101,7 @@ package body Asis_Tool_2.Element is
          case Declaration_Kind is
             when A_Formal_Function_Declaration |
                  A_Formal_Procedure_Declaration =>
-               State.Add_To_Label (Name => "Subprogram_Default_Kind",
+               State.Add_To_Dot_Label (Name => "Subprogram_Default_Kind",
                                     Value => Asis.Elements.Default_Kind (Element)'Image);
             when others =>
                null;
@@ -117,7 +118,7 @@ package body Asis_Tool_2.Element is
                  An_Element_Iterator_Specification |
                  A_Procedure_Declaration |
                  A_Function_Declaration =>
-               State.Add_To_Label (Name => "Trait_Kind",
+               State.Add_To_Dot_Label (Name => "Trait_Kind",
                                     Value => Asis.Elements.Trait_Kind (Element)'Image);
             when others =>
                null;
@@ -128,7 +129,50 @@ package body Asis_Tool_2.Element is
         (Element : in     Asis.Element;
          State   : in out Class)
       is
+         Definition_Kind : Asis.Definition_Kinds :=
+           Asis.Elements.Definition_Kind (Element);
+         A_Definition : a_nodes_h.Definition_Struct :=
+           a_nodes_h.Support.Default_Definition_Struct;
+         -- Tired of typing "Asis." in front of enum values:
+         use all type Asis.Definition_Kinds;
       begin
+         State.Add_To_Dot_Label ("Definition_Kind", Definition_Kind'Image);
+         A_Definition.kind := anhS.To_Definition_Kinds (Definition_Kind);
+
+         case Definition_Kind is
+            when A_Type_Definition =>
+--                 declare
+--                    Type_Kind : constant Asis.Type_Kinds :=
+--                      Asis.Elements.Type_Kind (A_Definition);
+--                 begin
+--                    State.Add_To_Dot_Label ("Type_Kind", Type_Kind'Image);
+--                    A_Definition.type_kind := anhS.To_Type_Kinds (Type_Kind);
+--                 end;
+               State.Add_Not_Implemented;
+            when A_Constraint =>
+               -- Constraint_Kinds
+               State.Add_Not_Implemented;
+            when A_Component_Definition |
+                 A_Private_Type_Definition |
+                 A_Tagged_Private_Type_Definition |
+                 A_Private_Extension_Definition =>
+               -- Trait_Kinds
+               State.Add_Not_Implemented;
+            when A_Discrete_Subtype_Definition |
+                 A_Discrete_Range =>
+               -- Discrete_Range_Kinds
+               State.Add_Not_Implemented;
+            when An_Access_Definition =>
+               -- Access_Definition_Kinds
+               State.Add_Not_Implemented;
+            when A_Formal_Type_Definition =>
+               -- Formal_Type_Kinds
+               State.Add_Not_Implemented;
+            when others =>
+               null;
+               -- TODO: Root_Type_Kinds??
+         end case;
+
          --        A_Definition          -> Definition_Kinds
          --                                         -> Trait_Kinds
          --                                         -> Type_Kinds
@@ -137,28 +181,31 @@ package body Asis_Tool_2.Element is
          --                                         -> Root_Type_Kinds
          --                                         -> Constraint_Kinds
          --                                         -> Discrete_Range_Kinds
-         State.Add_Not_Implemented;
       end Process_Definition;
 
       procedure Process_Expression
         (Element : in     Asis.Element;
          State   : in out Class)
       is
-         Expression_Kind : constant Asis.Expression_Kinds :=
+        Expression_Kind : Asis.Expression_Kinds :=
            Asis.Elements.Expression_Kind (Element);
+         A_Expression : a_nodes_h.Expression_Struct :=
+           a_nodes_h.Support.Default_Expression_Struct;
          use all type Asis.Expression_Kinds;
       begin
+         State.Add_To_Dot_Label ("Expression_Kind", Expression_Kind'Image);
+         A_Expression.kind := anhS.To_Expression_Kinds (Expression_Kind);
          --        An_Expression         -> Expression_Kinds
          --                                         -> Operator_Kinds
          --                                         -> Attribute_Kinds
          --
-         State.Add_To_Label ("Expression_Kind", Expression_Kind'Image);
          -- Kind ordering and grouping is from Asis.Expression_Kinds.
          -- "when" comment is Ada LRM section.
          case Expression_Kind is
             when Not_An_Expression =>                         -- An unexpected element
-               raise Program_Error with "Element.Pre_Children.Process_Expression called with: " & Expression_Kind'Image;
-
+               raise Program_Error with
+                 "Element.Pre_Children.Process_Expression called with: " &
+                 Expression_Kind'Image;
             when A_Box_Expression =>                          --  Ada 2005
                                                               --  4.3.1(4), 4.3.3(3,6)
                null;
@@ -167,14 +214,19 @@ package body Asis_Tool_2.Element is
             when An_Integer_Literal |                         -- 2.4
                  A_Real_Literal |                             -- 2.4.1
                  A_String_Literal =>                          -- 2.6
-               State.Add_Not_Implemented;
-               -- Value_Image
+               declare
+                  Value_Image : constant Wide_String :=
+                    Asis.Expressions.Value_Image (Element);
+               begin
+                  State.Add_To_Dot_Label ("Value_Image", Value_Image);
+                  A_Expression.value_image := To_Chars_Ptr (Value_Image);
+               end;
 
             when An_Identifier |                              -- 4.1
                  An_Operator_Symbol |                         -- 4.1
                  A_Character_Literal |                        -- 4.1
                  An_Enumeration_Literal =>                    -- 4.1
-               State.Add_To_Label ("Name_Image",
+               State.Add_To_Dot_Label ("Name_Image",
                                     '"' & Asis.Expressions.Name_Image (Element) & '"');
                -- Name_Image
                -- Corresponding_Name_Definition
@@ -183,7 +235,7 @@ package body Asis_Tool_2.Element is
                -- Subpool_Name
                case Expression_Kind is
                   when An_Operator_Symbol =>
-                     State.Add_To_Label ("Operator_Kind",
+                     State.Add_To_Dot_Label ("Operator_Kind",
                                           Asis.Elements.Operator_Kind (Element)'Image);
                   when others =>
                      null;
@@ -213,7 +265,7 @@ package body Asis_Tool_2.Element is
                -- Prefix
                -- Selector
             when An_Attribute_Reference =>                    -- 4.1.4  -> Attribute_Kinds
-               State.Add_To_Label ("Attribute_Kind",
+               State.Add_To_Dot_Label ("Attribute_Kind",
                                     Asis.Elements.Attribute_Kind (Element)'Image);
                -- Prefix
                -- Attribute_Designator_Identifier
@@ -286,7 +338,45 @@ package body Asis_Tool_2.Element is
         (Element : in     Asis.Element;
          State   : in out Class)
       is
+         Association_Kind : Asis.Association_Kinds :=
+           Asis.Elements.Association_Kind (Element);
+         A_Association : a_nodes_h.Association_Struct :=
+           a_nodes_h.Support.Default_Association_Struct;
       begin
+         State.Add_To_Dot_Label ("Association_Kind", Association_Kind'Image);
+         A_Association.kind := anhS.To_Association_Kinds (Association_Kind);
+
+--    // An_Array_Component_Association,        // 4.3.3
+--    Expression_List Array_Component_Choices;
+--    // A_Record_Component_Association,        // 4.3.1
+--    Expression_List Record_Component_Choices;
+--    // An_Array_Component_Association,        // 4.3.3
+--    // A_Record_Component_Association,        // 4.3.1
+--    Expression_ID   Component_Expression;
+--    // A_Pragma_Argument_Association,         // 2.8
+--    // A_Parameter_Association,               // 6.4
+--    // A_Generic_Association                  // 12.3
+--    Expression_ID   Formal_Parameter;
+--    Expression_ID   Actual_Parameter;
+--    // A_Discriminant_Association,            // 3.7.1
+--    Expression_List Discriminant_Selector_Names;
+--    Expression_ID   Discriminant_Expression;
+--    // A_Discriminant_Association,            // 3.7.1
+--    // A_Record_Component_Association,        // 4.3.1
+--    // A_Parameter_Association,               // 6.4
+--    // A_Generic_Association                  // 12.3
+--    bool            Is_Normalized;
+--    // A_Parameter_Association
+--    // A_Generic_Association
+--    //  //|A2005 start
+--    // A_Record_Component_Association
+--    //  //|A2005 end
+--    bool            Is_Defaulted_Association;
+
+
+
+         State.A_Element.kind := a_nodes_h.An_Association;
+         State.A_Element.the_union.association := A_Association;
          --        An_Association        -> Association_Kinds
          --
          State.Add_Not_Implemented;
@@ -298,11 +388,15 @@ package body Asis_Tool_2.Element is
       is
          Statement_Kind : constant Asis.Statement_Kinds :=
            Asis.Elements.Statement_Kind (Element);
+         A_Statement : a_nodes_h.Statement_Struct :=
+           a_nodes_h.Support.Default_Statement_Struct;
          use all type Asis.Statement_Kinds;
       begin
          --        A_Statement           -> Statement_Kinds
          --
-         State.Add_To_Label ("Statement_Kind", Statement_Kind'Image);
+         State.Add_To_Dot_Label ("Statement_Kind", Statement_Kind'Image);
+         A_Statement.kind := anhS.To_Statement_Kinds (Statement_Kind);
+
          -- All Statements can have:
          -- Label_Names
 
@@ -310,8 +404,9 @@ package body Asis_Tool_2.Element is
          -- "when" comment is Ada LRM section.
          case Statement_Kind is
             when Not_A_Statement =>
-               raise Program_Error with "Element.Pre_Children.Process_Statement called with: " & Statement_Kind'Image;
-
+               raise Program_Error with
+                 "Element.Pre_Children.Process_Statement called with: " &
+                 Statement_Kind'Image;
             when A_Null_Statement =>                    -- 5.1
                null;
                -- No more info.
@@ -325,16 +420,25 @@ package body Asis_Tool_2.Element is
             when A_Case_Statement =>                    -- 5.4
                State.Add_Not_Implemented;
                -- Case_Expression
-
             when A_Loop_Statement =>                    -- 5.5
-               State.Add_Not_Implemented;
-               -- Statement_Identifier
-               -- Is_Name_Repeated
+               declare
+               Statement_Identifier : constant Asis.Defining_Name :=
+                    Asis.Statements.Statement_Identifier (Element);
+                  Statement_Identifier_ID : constant Types.Node_Id :=
+                    Asis.Set_Get.Node (Statement_Identifier);
+               -- While_Condition
                -- Loop_Statements
+               begin
+                  State.Add_To_Dot_Label
+                    ("Statement_Identifier", To_String (Statement_Identifier_ID));
+                  A_Statement.Statement_Identifier := a_nodes_h.Node_ID
+                    (Statement_Identifier_ID);
+                  end;
+               State.Add_Not_Implemented;
             when A_While_Loop_Statement =>              -- 5.5
                State.Add_Not_Implemented;
                -- Statement_Identifier
-               -- While_Condition
+               -- Is_Name_Repeated
                -- Loop_Statements
             when A_For_Loop_Statement =>                -- 5.5
                State.Add_Not_Implemented;
@@ -449,7 +553,7 @@ package body Asis_Tool_2.Element is
       begin
          --        A_Clause              -> Clause_Kinds
          --                                         -> Representation_Clause_Kinds
-         State.Add_To_Label ("Clause_Kind", Clause_Kind'Image);
+         State.Add_To_Dot_Label ("Clause_Kind", Clause_Kind'Image);
          case Clause_Kind is
             when Asis.Not_A_Clause =>
                raise Program_Error with "Element.Pre_Children.Process_Clause called with: " & Clause_Kind'Image;
@@ -482,17 +586,28 @@ package body Asis_Tool_2.Element is
          return Dot.ID_Type
       is
          Result : Dot.ID_Type; -- Initilaized
-         Enclosing_Element : constant Asis.Element :=
-           Asis.Elements.Enclosing_Element (Element);
-         Enclosing_Element_Node_Id : constant Natural :=
-           Natural (Asis.Set_Get.Node_Value (Enclosing_Element));
+         Enclosing_Element_Id : constant Types.Node_Id :=
+           Asis.Set_Get.Node_Value (Asis.Elements.Enclosing_Element (Element));
+         Enclosing_Unit_Id : constant A4G.A_Types.Unit_Id :=
+           Asis.Set_Get.Encl_Unit_Id (Element);
+         function Enclosing_Is_Element return boolean
+           is (Types."/=" (Enclosing_Element_Id, Types.Empty));
       begin
-         if Enclosing_Element_Node_Id /= Natural (Types.Empty) then
-            Result := To_Dot_ID_Type (Enclosing_Element);
+         if Enclosing_Is_Element then
+            Result := To_Dot_ID_Type (Enclosing_Element_Id);
          else
-            Result := To_Dot_ID_Type (Asis.Set_Get.Encl_Unit (Element));
+            Result := To_Dot_ID_Type (Enclosing_Unit_Id);
          end if;
          return Result;
+      end Get_Enclosing_ID;
+
+      function Get_Enclosing_ID
+        (Element : in Asis.Element)
+         return a_nodes_h.Node_ID is
+      begin
+         return a_nodes_h.Node_ID
+           (Asis.Set_Get.Node_Value
+              (Asis.Elements.Enclosing_Element (Element)));
       end Get_Enclosing_ID;
 
       function Source_Location_Image
@@ -540,35 +655,70 @@ package body Asis_Tool_2.Element is
       is
          Element_Kind : constant Asis.Element_Kinds :=
            Asis.Elements.Element_Kind (Element);
-         Element_Id   : Dot.ID_Type := To_Dot_ID_Type (Element);
-         New_Node     : Dot.Node_Stmt.Class; -- Initialized
-         New_Label    : Dot.HTML_Like_Labels.Class; -- Initialized
-         Edge_Stmt    : Dot.Edges.Stmts.Class; -- Initialized
+         Element_Id   : constant Types.Node_Id := Asis.Set_Get.Node (Element);
 
-         procedure Start_Node is begin
-            State.Current_Dot_Node := New_Node;
-            State.Current_Dot_Node.Node_ID.ID := Element_Id;
-            State.Current_Dot_Label := New_Label;
-            State.Add_To_Label ("ID", Node_Id_Image (Element));
-            State.Add_To_Label ("Source", Source_Location_Image (Element));
-         end Start_Node;
+         procedure Start_Output
+         is
+            Default_Node  : Dot.Node_Stmt.Class; -- Initialized
+            Default_Label : Dot.HTML_Like_Labels.Class; -- Initialized
+         begin
+            State.Text.Indent;
+            State.Text.End_Line;
+            State.Dot_Node := Default_Node;
+            State.Dot_Label := Default_Label;
+            State.A_Element := a_nodes_h.Support.Default_Element_Struct;
 
-         procedure Finish_Node is begin
-            State.Current_Dot_Node.Add_Label (State.Current_Dot_Label);
-            State.Outputs.Graph.Append_Stmt (new Dot.Node_Stmt.Class'(State.Current_Dot_Node));
-         State.Text.End_Line;
-         State.Text.Indent;
-         end Finish_Node;
+            State.Dot_Node.Node_ID.ID := To_Dot_ID_Type (Element_Id);
+            State.A_Element.id := a_nodes_h.Node_ID (Element_Id);
 
-         procedure Add_Enclosing_Edge is begin
-            Edge_Stmt.LHS.Node_Id.ID := Get_Enclosing_ID (Element);
-            Edge_Stmt.RHS.Node_Id.ID := Element_Id;
+            State.Add_To_Dot_Label ("Element_Kind", Element_Kind'Image);
+            State.A_Element.kind := anhS.To_Element_Kinds (Element_Kind);
+
+            State.Add_To_Dot_Label ("ID", To_String (Element_Id));
+            -- ID is in the Dot node twice, but not in the a_node.
+
+            State.Add_To_Dot_Label ("Source", Source_Location_Image (Element));
+            State.A_Element.source_location :=
+              To_Chars_Ptr (Source_Location_Image (Element));
+         end;
+
+         procedure Add_Enclosing_Edge
+         is
+            Edge_Stmt : Dot.Edges.Stmts.Class; -- Initialized
+            Enclosing_Element : constant Asis.Element :=
+              Asis.Elements.Enclosing_Element (Element);
+            Enclosing_Element_Id : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Enclosing_Element);
+--    enum Enclosing_Kinds   enclosing_kind;
+         begin
+            Edge_Stmt.LHS.Node_Id.ID := To_Dot_ID_Type (Enclosing_Element_Id);
+            State.A_Element.enclosing_id := a_nodes_h.Node_ID (Enclosing_Element_Id);
+
+            Edge_Stmt.RHS.Node_Id.ID := To_Dot_ID_Type (Element_Id);
+
             State.Outputs.Graph.Append_Stmt (new Dot.Edges.Stmts.Class'(Edge_Stmt));
-         end Add_Enclosing_Edge;
+         end;
+
+         procedure Finish_Output
+         is
+            A_Node    : a_nodes_h.Node_Struct := anhS.Default_Node_Struct;
+         begin
+            Add_Enclosing_Edge;
+            State.Dot_Node.Add_Label (State.Dot_Label);
+
+            State.Outputs.Graph.Append_Stmt
+              (new Dot.Node_Stmt.Class'(State.Dot_Node));
+
+            A_Node.kind := a_nodes_h.An_Element_Node;
+            A_Node.the_union.element := State.A_Element;
+            State.Outputs.A_Nodes.Push (A_Node);
+
+            State.Text.End_Line;
+            State.Text.Dedent;
+         end;
+
       begin
-         Add_Enclosing_Edge;
-         Start_Node;
-         State.Add_To_Label ("Element_Kind", Element_Kind'Image);
+         Start_Output;
          case Element_Kind is
          when Asis.Not_An_Element =>
             Null;
@@ -593,7 +743,7 @@ package body Asis_Tool_2.Element is
          when Asis.An_Exception_Handler =>
             Process_Exception_Handler (Element, State);
          end case;
-         Finish_Node;
+         Finish_Output;
       end Process_Element;
 
    end Pre_Children;
@@ -618,7 +768,7 @@ package body Asis_Tool_2.Element is
          Control : in out Asis.Traverse_Control;
          State   : in out Class) is
       begin
-         State.Text.Dedent;
+         Null;
       end Process_Element;
 
    end Post_Children;
@@ -658,37 +808,34 @@ package body Asis_Tool_2.Element is
    -----------
    -- PRIVATE:
    -----------
-   procedure Add_To_Label
+   procedure Add_To_Dot_Label
      (This  : in out Class;
       Name  : in     String;
-      Value : in     String)
-   is
+      Value : in     String) is
    begin
-      This.Text.Put_Indented_Line (Name & " => """ & Value & """");
 -- Instead of this, put the "attribute" in the label:
---        This.Current_Node.Attr_List.Add_Assign_To_First_Attr
+--        This.Node.Attr_List.Add_Assign_To_First_Attr
 --          (Name  => Name,
 --           Value => Value);
-      This.Current_Dot_Label.Add_Eq_Row(L => Name, R => Value);
+      This.Dot_Label.Add_Eq_Row(L => Name, R => Value);
+      This.Text.Put_Indented_Line (Name & " => """ & Value & """");
    end;
 
    -----------
    -- PRIVATE:
    -----------
-   procedure Add_To_Label
+   procedure Add_To_Dot_Label
      (This  : in out Class;
       Name  : in     String;
-      Value : in     Wide_String)
-   is
+      Value : in     Wide_String) is
    begin
-      This.Add_To_Label (Name, To_String (Value));
+      This.Add_To_Dot_Label (Name, To_String (Value));
    end;
 
    procedure Add_Not_Implemented
-     (This  : in out Class)
-   is
+     (This  : in out Class) is
    begin
-      This.Add_To_Label ("ASIS_PROCESSING", String'("NOT_COMPLETELY_IMPLEMENTED"));
+      This.Add_To_Dot_Label ("ASIS_PROCESSING", String'("NOT_COMPLETELY_IMPLEMENTED"));
    end Add_Not_Implemented;
 
 

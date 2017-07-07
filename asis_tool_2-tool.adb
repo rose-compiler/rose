@@ -11,14 +11,13 @@ package body Asis_Tool_2.Tool is
       File_Name : in     String) is
    begin
       Asis.Implementation.Initialize;
-      This.Graph := Dot.Graphs.Create (Is_Digraph => True,
+      This.Outputs.Graph := Dot.Graphs.Create (Is_Digraph => True,
                                        Is_Strict  => False);
-      This.A_Nodes := new A_Nodes.Class;
+      This.Outputs.A_Nodes := new A_Nodes.Class;
       -- TODO: use File_Name:
-      This.My_Context.Process (Graph   => This.Graph,
-                               A_Nodes => This.A_Nodes);
+      This.My_Context.Process (This.Outputs);
       Awti.New_Line;
-      This.Graph.Write_File (File_Name);
+      This.Outputs.Graph.Write_File (File_Name);
       Asis.Implementation.Finalize;
    end Process;
 
@@ -29,7 +28,7 @@ package body Asis_Tool_2.Tool is
      (This      : in out Class)
       return a_nodes_h.Node_List_Ptr is
    begin
-      return This.A_Nodes.Get_Head;
+      return This.Outputs.A_Nodes.Get_Head;
    end Get_Nodes;
 
 end Asis_Tool_2.Tool;

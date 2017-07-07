@@ -1,10 +1,16 @@
+with A_Nodes;
+with Dot;
+
 private with Ada.Exceptions;
 private with Ada.Wide_Text_IO;
 private with Asis;
 private with Interfaces.C.Strings;
 
-with A_Nodes;
-with Dot;
+-- GNAT-specific:
+private with A4G.A_Types;
+private with Types;
+
+private with a_nodes_h.Support;
 
 -- Contains supporting declarations for child packages
 package Asis_Tool_2 is
@@ -22,6 +28,7 @@ private
    package Aex renames Ada.Exceptions;
    package Awti renames Ada.Wide_Text_IO;
    package ICS renames Interfaces.C.Strings;
+   package anhS renames a_nodes_h.Support;
 
    function To_String (Item : in Wide_String) return String;
    function "+"(Item : in Wide_String) return String renames To_String;
@@ -29,7 +36,11 @@ private
    function To_Wide_String (Item : in String) return Wide_String;
    function "+"(Item : in String) return Wide_String renames To_Wide_String;
 
-   function To_Chars_Ptr (Item : in Wide_String) return Interfaces.C.Strings.chars_ptr;
+   function To_Chars_Ptr (Item : in Wide_String)
+                          return Interfaces.C.Strings.chars_ptr;
+   function To_Chars_Ptr (Item : in String)
+                          return Interfaces.C.Strings.chars_ptr
+     renames Interfaces.C.Strings.New_String;
 
    procedure Trace_Put (Message : in Wide_String);
 
@@ -41,10 +52,10 @@ private
    function Spaceless_Image (Item : in Natural) return String;
    function NLB_Image (Item : in Natural) return String renames Spaceless_Image;
 
-   function Node_Id_Image (Unit : in Asis.Compilation_Unit) return String;
-   function To_Dot_ID_Type (Unit : in Asis.Compilation_Unit) return Dot.ID_Type;
-   function Node_Id_Image (Element : in Asis.Element) return String;
-   function To_Dot_ID_Type (Element : in Asis.Element) return Dot.ID_Type;
+   function To_String (Unit_Id : in A4G.A_Types.Unit_Id) return String;
+   function To_String (Element_Id : in Types.Node_Id) return String;
+   function To_Dot_ID_Type (Unit_Id : in A4G.A_Types.Unit_Id) return Dot.ID_Type;
+   function To_Dot_ID_Type (Element_Id : in Types.Node_Id) return Dot.ID_Type;
 
       -- At the beginning of each line, puts out white space relative to the
    -- current indent.  Emits Wide text:

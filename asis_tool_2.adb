@@ -66,39 +66,39 @@ package body Asis_Tool_2 is
       Leading_Space_Image : constant String := Item'Image;
    begin
       return Leading_Space_Image (2 .. Leading_Space_Image'Last);
-   end Spaceless_Image;
+   end;
 
    -----------
    -- PRIVATE:
    -----------
-   function Node_Id_Image (Element : in Asis.Element) return String is
+   function To_String (Unit_Id : in A4G.A_Types.Unit_Id) return String is
    begin
-      return "element_" & Spaceless_Image (Natural (Asis.Set_Get.Node(Element)));
-   end Node_Id_Image;
+      return "unit_" & Spaceless_Image (Natural (Unit_Id));
+   end;
 
    -----------
    -- PRIVATE:
    -----------
-   function Node_Id_Image (Unit : in Asis.Compilation_Unit) return String is
+   function To_String (Element_Id : in Types.Node_Id) return String is
    begin
-      return "unit_" & Spaceless_Image (Natural (Asis.Set_Get.Get_Unit_Id (Unit)));
-   end Node_Id_Image;
+      return "element_" & Spaceless_Image (Natural (Element_Id));
+   end;
 
    -----------
    -- PRIVATE:
    -----------
-   function To_Dot_ID_Type (Element : in Asis.Element) return Dot.ID_Type is
+   function To_Dot_ID_Type (Unit_Id : in A4G.A_Types.Unit_Id) return Dot.ID_Type is
    begin
-      return Dot.To_ID_Type (Node_Id_Image (Element));
-   end To_Dot_ID_Type;
+      return Dot.To_ID_Type (To_String (Unit_Id));
+   end;
 
    -----------
    -- PRIVATE:
    -----------
-   function To_Dot_ID_Type (Unit : in Asis.Compilation_Unit) return Dot.ID_Type is
+   function To_Dot_ID_Type (Element_Id : in Types.Node_Id) return Dot.ID_Type is
    begin
-      return Dot.To_ID_Type (Node_Id_Image (Unit));
-   end To_Dot_ID_Type;
+      return Dot.To_ID_Type (To_String (Element_Id));
+   end;
 
    -----------
    -- PRIVATE:
@@ -131,7 +131,11 @@ package body Asis_Tool_2 is
       ------------
       procedure Dedent (This : in out Class) is
       begin
-         This.Indent_Level := This.Indent_Level - 1;
+         if This.Indent_Level = 0 then
+            Put_Line ("(Attempted negative indent)");
+         else
+            This.Indent_Level := This.Indent_Level - 1;
+         end if;
       end Dedent;
 
       ------------
