@@ -315,7 +315,7 @@ REQUIRED_LIBS = librose.la
 # DQ (3/14/2009): We have to clear the LDFLAGS variable...  This is not so great.
 LDFLAGS =
 if OS_MACOSX
-if HAS_LIBRARY_GCRYPT
+if ROSE_HAVE_LIBGCRYPT
 PORT_PATH = $(shell which port)
 PORT_HOME = $(shell dirname $(PORT_PATH))/..
 LDFLAGS += -L$(PORT_HOME)/lib -lgcrypt 
