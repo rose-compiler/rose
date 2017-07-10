@@ -6749,6 +6749,10 @@ void UnparseLanguageIndependentConstructs::unparseOmpExpressionClause(SgOmpClaus
     curprint(string(" collapse("));
   else if (isSgOmpIfClause(c))
     curprint(string(" if("));
+  else if (isSgOmpFinalClause(c))
+    curprint(string(" final("));
+  else if (isSgOmpPriorityClause(c))
+    curprint(string(" priority("));
   else if (isSgOmpNumThreadsClause(c))
     curprint(string(" num_threads("));
   else if (isSgOmpDeviceClause(c))
@@ -6823,6 +6827,11 @@ void UnparseLanguageIndependentConstructs::unparseOmpClause(SgOmpClause* clause,
         curprint(string(" untied"));
         break;
       }
+    case V_SgOmpMergeableClause:
+      {
+        curprint(string(" mergeable"));
+        break;
+      }
     case V_SgOmpBeginClause:
       {
         curprint(string(" begin"));
@@ -6841,6 +6850,8 @@ void UnparseLanguageIndependentConstructs::unparseOmpClause(SgOmpClause* clause,
     case V_SgOmpDeviceClause:
     case V_SgOmpCollapseClause:
     case V_SgOmpIfClause:  
+    case V_SgOmpFinalClause:  
+    case V_SgOmpPriorityClause:  
     case V_SgOmpNumThreadsClause:  
     case V_SgOmpSafelenClause:  
     case V_SgOmpSimdlenClause:  
