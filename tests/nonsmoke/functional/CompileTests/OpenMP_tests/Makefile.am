@@ -133,9 +133,12 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	task_dep2.c \
 	task_dep3.c \
 	task_dep.load.compute.c \
+	task_final.c \
 	task_largenumber.c \
+	task_mergeable.c \
 	task_orphaned.c \
 	task_outlining.c \
+	task_priority.c \
 	task_untied.c \
 	task_untied2.c \
 	task_untied3.c \
