@@ -141,7 +141,8 @@ namespace Rose {
 
                 void jserver_start(JvmT* je) {
                     JavaVMInitArgs jvm_args;  /* VM initialization args.  */
-                    jvm_args.version = JNI_VERSION_1_4;
+                    // Pei-Hung (7/6/2017): Bumped to latest(?), unsure why 1_4 was used
+                    jvm_args.version = JNI_VERSION_1_6;
                     jvm_args.ignoreUnrecognized = JNI_FALSE;
 
                     //----------------------------------------------------------------------------
@@ -152,6 +153,10 @@ namespace Rose {
 
                     std::string classpath = Rose::Cmdline::X10::X10c::GetRoseClasspath();
                     jvm_options.push_back(classpath);
+
+                    // Pei-Hung (7/6/2017): Increasing stacksize fixes crashes on some rhel7 systems
+                    std::string stack_option = "-Xss2m";
+                    jvm_options.push_back(stack_option);
 
                     jvm_args.nOptions = jvm_options.size();
                     jvm_args.options = new JavaVMOption[jvm_args.nOptions];
