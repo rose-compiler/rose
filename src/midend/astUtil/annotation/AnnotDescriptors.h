@@ -9,7 +9,6 @@
 #include <sstream>
 #include <assert.h>
 #include <stdio.h>
-
 //! Input interface of a container
 // 'Container' contains element of 'Member' type 
 // Its string format uses 'char sep' as the separator (delimitor) , 
@@ -21,7 +20,6 @@ class ReadContainer
      //! Fill in the content of container 'c' from the input stream 'in'
      static bool read( Container& c, std::istream& in) ;
 };
-
 //! Output interface of a container
 template <class Container, char sep, char left, char right>
 class WriteContainer 
@@ -31,7 +29,6 @@ class WriteContainer
     //, beginning character 'left' and ending character 'right'
     static void write( const Container& c, std::ostream& out);
 };
-
 //! A pair of items separated by 'sep'
 template <class First, class Second, char sep>
 struct CollectPair : public std::pair<First, Second>
@@ -46,7 +43,6 @@ struct CollectPair : public std::pair<First, Second>
    void Dump() const  { write(std::cerr); }
    std::string ToString() const { std::stringstream out; write(out); return out.str(); }
 };
-
 //! Similar to CollectPair, but the second item may start with 'sel' without 'sep' in front of it.
 template <class First, class Second, char sep, char sel>
 struct SelectPair : public std::pair<First, Second>
@@ -63,7 +59,6 @@ struct SelectPair : public std::pair<First, Second>
    std::string ToString() const { std::stringstream out; write(out); return out.str(); }
 };
 
-//! Container for a list of members
 template <class Container, class Member, char sep, char left, char right>
 class ContainerDescriptor : public Container
 {
@@ -107,7 +102,6 @@ class SetDescriptor : public std::set<Member>
             }
 
     };
-
 //! 'char sep' means the separator (delimitor) , 
 // left and right are the beginning and end characters, such as '{' and '}'
 template <class Key, class Member, char sep, char left, char right>
@@ -147,7 +141,7 @@ class MapDescriptor : public std::map< Key,Member>
           { WriteContainer<MapDescriptor<Key,Member,sep,left,right>, sep, left, right>::write(*this, out); }
      void Dump() const  { write(std::cerr); }
      std::string ToString() const { std::stringstream out; write(out); return out.str(); }
-};
+    };
 
 //! A descriptor for an identifier
 class StringDescriptor
@@ -217,10 +211,9 @@ class IntDescriptor
   void Dump() const { write(std::cerr); }
   std::string ToString() const { std::stringstream out; write(out); return out.str(); }
 };
-
 //! A descriptor with begin(left) and end(right) characters, such as {x}, (x), etc
 template <class Descriptor, char left, char right>
-class ROSE_DLL_API CloseDescriptor : public Descriptor {
+class CloseDescriptor : public Descriptor {
  public:
   bool read( std::istream& in);
   void write(std::ostream& out) const ;

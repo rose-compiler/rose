@@ -51,21 +51,21 @@ may_alias(AstInterface& _fa, const AstNodePtr& r1, const AstNodePtr& r2)
   else if ( (elem1 && elem2)  || (len1 && len2)) {
      if (may_alias(fa, array1, array2)) {
         if (DebugAliasAnal())
-            std::cerr << "has alias between " << AstToString(r1) << " and " << AstToString(r2) << std::endl;
+            std::cerr << "has alias between " << AstInterface::AstToString(r1) << " and " << AstInterface::AstToString(r2) << std::endl;
         return true;
      }
   }
   else if (elem1 || len1) {
      if (may_alias(fa, array1, r2)) {
         if (DebugAliasAnal())
-            std::cerr << "has alias between " << AstToString(r1) << " and " << AstToString(r2) << std::endl;
+            std::cerr << "has alias between " << AstInterface::AstToString(r1) << " and " << AstInterface::AstToString(r2) << std::endl;
         return true;
      }
   }
   else if (elem2 || len2) {
      if (may_alias(fa, r1, array2)) {
         if (DebugAliasAnal())
-            std::cerr << "has alias between " << AstToString(r1) << " and " << AstToString(r2) << std::endl;
+            std::cerr << "has alias between " << AstInterface::AstToString(r1) << " and " << AstInterface::AstToString(r2) << std::endl;
         return true;
      }
   }
@@ -77,7 +77,7 @@ may_alias(AstInterface& _fa, const AstNodePtr& r1, const AstNodePtr& r2)
           AstNodePtr cur = *p;
           if (may_alias( fa, cur, r2)) {
             if (DebugAliasAnal())
-               std::cerr << "has alias between " << AstToString(r1) << " and " << AstToString(r2) << std::endl;
+               std::cerr << "has alias between " << AstInterface::AstToString(r1) << " and " << AstInterface::AstToString(r2) << std::endl;
              return true;
           }
         }
@@ -89,7 +89,7 @@ may_alias(AstInterface& _fa, const AstNodePtr& r1, const AstNodePtr& r2)
           AstNodePtr cur = *p;
           if (may_alias( fa, cur, r1)) {
             if (DebugAliasAnal())
-               std::cerr << "has alias between " << AstToString(r1) << " and " << AstToString(r2) << std::endl;
+               std::cerr << "has alias between " << AstInterface::AstToString(r1) << " and " << AstInterface::AstToString(r2) << std::endl;
              return true;
           }
         }
@@ -262,7 +262,7 @@ is_array_mod_op( CPPAstInterface& fa, const AstNodePtr& arrayExp, AstNodePtr* ar
 bool ArrayInterface::
 is_array_construct_op( CPPAstInterface& fa, const AstNodePtr& arrayExp, 
                        AstInterface::AstNodeList* alias,int *dimp, 
-                              SymbolicFunctionDeclarationGroup *len, SymbolicFunctionDeclarationGroup* elem)
+                               SymbolicFunctionDeclarationGroup *len, SymbolicFunctionDeclarationGroup* elem)
 {
   ArrayDescriptor desc;
   if (ArrayAnnotation::get_inst()->is_array_construct_op( fa, arrayExp, alias, &desc) ) {
@@ -297,7 +297,7 @@ is_array_construct_op( CPPAstInterface& fa, const AstNodePtr& arrayExp,
 
 
 AstNodePtr ArrayInterface::
-impl_array_opt_init( CPPAstInterface& fa, const AstNodePtr& array, bool insertInit)
+impl_array_opt_init( CPPAstInterface& fa, const AstNodePtr& array, const AstNodePtr& block)
 {
   ArrayOptDescriptor desc;
 
@@ -307,7 +307,7 @@ impl_array_opt_init( CPPAstInterface& fa, const AstNodePtr& array, bool insertIn
   int dim;
   if (!is_array_exp( fa, array, &dim))
     assert(false);
-  AstNodePtr result = insertInit? AST_NULL : fa.CreateBlock();
+  AstNodePtr result = block;
   for (ArrayOptDescriptor::InitVarIterator p = desc.init_var_begin();
        p != desc.init_var_end(); ++p) {
     DefineVariableDescriptor& cur = *p;
@@ -328,17 +328,7 @@ impl_array_opt_init( CPPAstInterface& fa, const AstNodePtr& array, bool insertIn
         initval.replace_var(extname, i); 
       }
       AstNodePtr init = initval.get_val().CodeGen(fa);
-      if (insertInit) {
-        std::string varname1 = fa.NewVar( fa.GetType(vartype), varname, false, AST_NULL, init);
-        assert( varname1 == varname);
-      }
-      else {
-        std::string varname1 = fa.NewVar( fa.GetType(vartype), varname);
-        assert( varname1 == varname);
-        AstNodePtr var = fa.CreateVarRef( varname);
-        AstNodePtr assign = fa.CreateAssignment( var, init);
-        fa.BlockAppendStmt(result, assign);
-      }
+      fa.NewVar( fa.GetType(vartype), varname, false, false, result, init);
     }
   }
   return result;
@@ -370,7 +360,7 @@ impl_reshape_array( CPPAstInterface& fa,
 
 AstNodePtr ArrayInterface::
 impl_access_array_elem (CPPAstInterface& fa, const AstNodePtr& array,
-                           AstInterface::AstNodeList& ivarAst)
+                           const AstInterface::AstNodeList& ivarAst)
 {
   SymbolicFunctionDeclarationGroup elem;
 
@@ -452,7 +442,7 @@ IsArrayAccess( AstInterface& _fa, const AstNodePtr& s, AstNodePtr* arrayp,
 
 AstNodePtr ArrayInterface::
 CreateArrayAccess(AstInterface& _fa, const AstNodePtr& arr, 
-                          AstInterface::AstNodeList& index)
+                          const AstNodeList& index)
 {
   CPPAstInterface& fa = static_cast<CPPAstInterface&>(_fa);
   return impl_access_array_elem(  fa, arr, index); 
@@ -479,9 +469,11 @@ GetArrayBound( AstInterface& _fa, const AstNodePtr& array,
   return true;
 }
 
-ArrayInterface::ArrayInterfaceMapT ArrayInterface::instMap = ArrayInterface::ArrayInterfaceMapT();
+typedef std::map<SgFunctionDefinition *, ArrayInterface *> ArrayInterfaceMapT;
+static ArrayInterfaceMapT instMap;
+
 ArrayInterface * ArrayInterface::
-get_inst( ArrayAnnotation& a, AstInterface& fa, SgFunctionDefinition* funcDef, AstNodePtrImpl node)
+get_inst( ArrayAnnotation& a, AstInterface& fa, SgFunctionDefinition* funcDef, const AstNodePtr& node)
 {
   assert( funcDef != NULL );
   ArrayInterfaceMapT::iterator i = instMap.find(funcDef);
