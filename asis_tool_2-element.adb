@@ -1,3 +1,4 @@
+with Asis.Clauses;
 with Asis.Compilation_Units;
 with Asis.Declarations;
 with Asis.Elements;
@@ -429,8 +430,6 @@ package body Asis_Tool_2.Element is
            a_nodes_h.Support.Default_Statement_Struct;
          use all type Asis.Statement_Kinds;
       begin
-         --        A_Statement           -> Statement_Kinds
-         --
          State.Add_To_Dot_Label ("Statement_Kind", Statement_Kind'Image);
          A_Statement.kind := anhS.To_Statement_Kinds (Statement_Kind);
 
@@ -570,6 +569,9 @@ package body Asis_Tool_2.Element is
                State.Add_Not_Implemented;
                -- Qualified_Expression
          end case;
+
+         State.A_Element.kind := a_nodes_h.A_Statement;
+         State.A_Element.the_union.statement := A_Statement;
       end Process_Statement;
 
       procedure Process_Path
@@ -588,26 +590,70 @@ package body Asis_Tool_2.Element is
       is
          Clause_Kind : constant Asis.Clause_Kinds :=
            Asis.Elements.Clause_Kind (Element);
+         A_Clause : a_nodes_h.Clause_Struct :=
+           a_nodes_h.Support.Default_Clause_Struct;
+
+         procedure Add_Clause_Names is
+            Clause_Names : constant Asis.Name_List :=
+              Asis.Clauses.Clause_Names (Element);
+            A_Name_Count : constant Natural :=
+              Clause_Names'Length;
+            IDs : anhS.Element_ID_Array_Access := new
+              anhS.Element_ID_Array (1 .. A_Name_Count);
+            A_Name_List : a_nodes_h.Name_List :=
+              (length => Interfaces.C.int(A_Name_Count),
+               IDs => anhS.To_Element_ID_Ptr (IDs));
+            IDs_Index : Positive := IDs'First;
+         begin
+            for Clause_Name of Clause_Names loop
+               declare
+                  Clause_Name_ID : constant Types.Node_ID :=
+                    Asis.Set_Get.Node (Clause_Name);
+               begin
+                  IDs (IDs_Index) := Interfaces.C.int (Clause_Name_ID);
+                  State.Add_To_Dot_Label
+                    ("Clause_Name (" & IDs_Index'Image & ")",
+                     To_String (Clause_Name_ID));
+                  IDs_Index := IDs_Index + 1;
+               end;
+            end loop;
+         end;
+
+         use all type Asis.Clause_Kinds;
       begin
-         --        A_Clause              -> Clause_Kinds
-         --                                         -> Representation_Clause_Kinds
          State.Add_To_Dot_Label ("Clause_Kind", Clause_Kind'Image);
+         A_Clause.kind := anhS.To_Clause_Kinds (Clause_Kind);
+
          case Clause_Kind is
-            when Asis.Not_A_Clause =>
-               raise Program_Error with "Element.Pre_Children.Process_Clause called with: " & Clause_Kind'Image;
-            when Asis.A_Use_Package_Clause =>
+            when Not_A_Clause =>
+               raise Program_Error with
+                 "Element.Pre_Children.Process_Clause called with: " &
+                 Clause_Kind'Image;
+
+            when A_Use_Package_Clause =>
+               Add_Clause_Names;
                State.Add_Not_Implemented;
-            when Asis.A_Use_Type_Clause =>
+
+            when A_Use_Type_Clause =>
+               Add_Clause_Names;
                State.Add_Not_Implemented;
-            when Asis.A_Use_All_Type_Clause =>
+
+            when A_Use_All_Type_Clause =>
+               Add_Clause_Names;
                State.Add_Not_Implemented;
-            when Asis.A_With_Clause =>
+
+            when A_With_Clause =>
+               Add_Clause_Names;
+
+            when A_Representation_Clause =>
+         --                                         -> Representation_Clause_Kinds
                State.Add_Not_Implemented;
-            when Asis.A_Representation_Clause =>
-               State.Add_Not_Implemented;
-            when Asis.A_Component_Clause =>
+            when A_Component_Clause =>
                State.Add_Not_Implemented;
          end case;
+
+         State.A_Element.kind := a_nodes_h.A_Clause;
+         State.A_Element.the_union.clause := A_Clause;
       end Process_Clause;
 
       procedure Process_Exception_Handler

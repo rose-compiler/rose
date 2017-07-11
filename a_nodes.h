@@ -177,24 +177,37 @@ typedef Element_ID Name_ID;
 typedef Element_ID Statement_ID;
 typedef Element_ID Subtype_Indication_ID;
 
-// The GNAT C-to-Ada translator does not do what I want with a pointer to an
-// array (gives me an Ada pointer to the first element), so instead of this:
+// For this:
+//   typedef Element_ID Element_ID_Array[];
+//   typedef Element_ID_Array *Element_ID_Array_Ptr2;
+// GNAT C-to-Ada translator produces (array is consrtained!):
+//   type Element_ID_Array is array (size_t) of aliased Element_ID;
+//   type Element_ID_Array_Ptr2 is access all Element_ID_Array;
 //
-// typedef Element_ID *Element_ID_Array_Ptr[];
-// 
-// I am typedef-ing several pointers to this struct:
+// For this:
+//   typedef Element_ID *Element_ID_Array_Ptr[];
+// GNAT C-to-Ada translator produces:
+//   type Element_ID_Array_Ptr is array (size_t) of access Element_ID;
+//
+// So, we are just going to use a pointer to an Element_ID and treat it as an 
+// array:
 
-struct Element_ID_List_Struct {
-  int        length;
-  Element_ID IDs[];
+typedef Element_ID *Element_ID_Ptr;
+
+// _IDs_ points to the first of _length_ IDs:
+struct Element_ID_Array_Struct {
+  int            length;
+  Element_ID_Ptr IDs;
 };
-typedef struct Element_ID_List_Struct *Element_List;
+typedef struct Element_ID_Array_Struct Element_List;
 typedef Element_List Association_List;
+typedef Element_List Component_Clause_List;
 typedef Element_List Declarative_Item_List;
 typedef Element_List Defining_Name_List;
 typedef Element_List Exception_Handler_List;
 typedef Element_List Expression_List;
 typedef Element_List Expression_Path_List;
+typedef Element_List Name_List;
 typedef Element_List Path_List;
 typedef Element_List Parameter_Specification_List;
 typedef Element_List Statement_List;
@@ -1098,9 +1111,16 @@ struct Path_Struct {
   enum Path_Kinds kind;
 };
 
-// May take ??*4 bytes (unfinished):
+// May take 2*4 bytes - 1 enum, 1 List:
 struct Clause_Struct {
   enum Clause_Kinds kind;
+  // These fields are only valid for the kinds above them:
+  //   A_Use_Package_Clause
+  //   A_Use_Type_Clause
+  //   A_Use_All_Type_Clause
+  //   A_With_Clause
+  Name_List Clause_Names;
+  // TODO: Incomplete
 };
 
 // May take ??*4 bytes (unfinished):

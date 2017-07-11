@@ -1,6 +1,3 @@
-Element_Kind => "A_CLAUSE"
-Clause_Kind => "A_WITH_CLAUSE"
-
 Element_Kind => "A_DEFINITION"
 Definition_Kind => "A_TYPE_DEFINITION"
 Definition_Kind => "A_CONSTRAINT"

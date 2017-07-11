@@ -1,4 +1,4 @@
-with Asis;
+with Asis.Set_Get;
 with Unchecked_Conversion;
 
 package a_nodes_h.Support is
@@ -31,7 +31,11 @@ package a_nodes_h.Support is
    -- Element union component default structs go here
 
    Default_Element_ID   : constant Element_ID := Default_Node_ID;
-   Default_Element_List : constant Element_List := Null;
+   Default_Element_List : constant Element_List :=
+     (length => 0,
+      IDs => null);
+   Default_Name_List    : constant Name_List :=
+     Name_List (Default_Element_List);
    Default_Bool         : constant Extensions.bool := 0;
 
    Default_Pragma_Struct : constant Pragma_Struct :=
@@ -144,7 +148,8 @@ package a_nodes_h.Support is
      (kind => Not_A_Path);
 
    Default_Clause_Struct : constant Clause_Struct :=
-     (kind => Not_A_Clause);
+     (kind         => Not_A_Clause,
+      Clause_Names => Default_Name_List);
 
    -- Currently a null record, so we can't do this:
    -- Default_Exception_Handler_Struct : constant Exception_Handler_Struct :=
@@ -255,11 +260,29 @@ package a_nodes_h.Support is
      (Source => Asis.Attribute_Kinds,
       Target => a_nodes_h.Attribute_Kinds);
 
+   function To_Element_ID
+     (Item : in Asis.Element)
+      return a_nodes_h.Node_ID
+   is
+     (a_nodes_h.Node_ID (Asis.Set_Get.Node_Value (Item)));
+
    -- Not in a_nodes.h:
+
    function To_bool
      (Item : in Boolean)
       return Interfaces.C.Extensions.bool
    is
-      (if Item then 1 else 0);
+     (if Item then 1 else 0);
+
+   type Element_ID_Array is array (Positive range <>) of aliased Element_ID;
+   -- Not called _Ptr so we don't forget a pointer to this is not the same as a
+   -- pointer to a C array.  We just need this to create the array on the hea:
+   type Element_ID_Array_Access is access Element_ID_Array;
+
+   function To_Element_ID_Ptr
+     (Item : not null access Element_ID_Array)
+      return Element_ID_Ptr is
+      (Item.all (Item.all'First)'Unchecked_Access);
+
 
 end a_nodes_h.Support;
