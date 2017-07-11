@@ -8,7 +8,7 @@ CXX_TEMPLATE_REPOSITORY_PATH = .
 libdriverSources = \
    BlockingAnal.C  FusionAnal.C   CopyArrayAnal.C  LoopTransformOptions.C   \
    TransformComputation.C InterchangeAnal.C  TypedFusionImpl.C \
-   ParallelizeLoop.C LoopTransformInterface.C NormalizeCPP.C
+   ParallelizeLoop.C LoopTransformInterface.C NormalizeCPP.C AutoTuningInterface.C
 
 # lib_LTLIBRARIES = libdriver.a
 # libdriver_a_SOURCES  = $(libdriverSources)

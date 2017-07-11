@@ -17,11 +17,7 @@ int LoopTransformInterface::configIndex = 0;
 AliasAnalysisInterface* LoopTransformInterface::aliasInfo = 0;
 FunctionSideEffectInterface* LoopTransformInterface::funcInfo = 0;
 ArrayAbstractionInterface* LoopTransformInterface::arrayInfo = 0;
-
-// DQ (1/14/2017): make dependence on POET optional.
-#ifdef ROSE_USE_POET
 AutoTuningInterface* LoopTransformInterface::tuning = 0;
-#endif
 
 using namespace std;
 
@@ -105,19 +101,30 @@ CreateArrayAccess( const SymbolicVal& arr, const SymbolicVal& index)
    return SymbolicFunction(AstInterface::OP_ARRAY_ACCESS,funcname, arr,index);
 }
 
+AstNodePtr LoopTransformInterface::
+CreateArrayAccess( const AstNodePtr& arr, AstInterface::AstList& index) 
+  { assert(fa != 0);
+    if (arrayInfo != 0){ return arrayInfo->CreateArrayAccess(*fa,arr,index); }
+    else {
+       AstNodePtr res = arr;
+       for (AstNodeList::const_reverse_iterator p = index.rbegin(); 
+            p != index.rend(); ++p) 
+         { res = AstInterface::CreateArrayAccess(res, *p); }
+       return res;
+    }
+  }
+
 AstNodePtr ArrayUseAccessFunction::
 CreateArrayAccess( AstInterface& fa, const AstNodePtr& arr,
-                                AstInterface::AstNodeList& index)
+                                const AstNodeList& index)
 {
   if (prev != 0)
      return prev->CreateArrayAccess(fa, arr, index);
-  if (index.size() > 1) {
-     AstInterface::AstNodeList tmp = index;
-     tmp.push_front(arr);
-     return fa.CreateFunctionCall(funcname, tmp);
-  }
-  else 
-     return fa.CreateArrayAccess(arr, index);
+  AstNodeList nindex;
+  nindex.push_back(arr.get_ptr());
+  for (AstNodeList::const_iterator p = index.begin(); p != index.end(); ++p) 
+     nindex.push_back(*p);
+  return fa.CreateFunctionCall(funcname,nindex.begin(), nindex.end()) ;
 }
 
 AstNodePtr LoopTransformInterface::
@@ -125,18 +132,14 @@ CreateArrayAccess(const std::string& arrname,
                             const std::vector<SymbolicVal>& arrindex) 
   {
      assert(fa != 0);
-     AstInterface::AstNodeList indexlist;
+     AstNodePtr res = fa->CreateVarRef(arrname);
+     AstNodeList args;
      for (std::vector<SymbolicVal>::const_iterator indexp = arrindex.begin();
           indexp != arrindex.end(); ++indexp) {
-         AstNodePtr cur = (*indexp).CodeGen(*fa);
-         if (cur == AST_NULL) {
-            std::cerr << "Empty AST from Symbolic Val: " << (*indexp).toString() << "\n";
-            assert(0);
-         }
-         indexlist.push_back(cur);
+        AstNodePtr cur = (*indexp).CodeGen(*fa);
+        args.push_back(cur.get_ptr());
      }
-     AstNodePtr res = CreateArrayAccess(fa->CreateVarRef(arrname),indexlist);
-     return res;
+    return CreateArrayAccess(res,args);
    }
 
 class LoopTransformationWrap : public TransformAstTree
@@ -157,14 +160,11 @@ std::cerr << "LoopTransformationWrap:operator()\n";
 void LoopTransformInterface:: set_astInterface( AstInterface& _fa)
 { fa = &_fa; }
 
-// DQ (1/14/2017): make dependence on POET optional.
-#ifdef ROSE_USE_POET
 void LoopTransformInterface::
 set_tuningInterface(AutoTuningInterface* _tuning)
 { tuning = _tuning;  
   if (arrayInfo != 0) tuning->set_arrayInfo(*arrayInfo); 
 }
-#endif
 
 void LoopTransformInterface::
 cmdline_configure(std::vector<std::string>& argv)
@@ -190,10 +190,7 @@ cmdline_configure(std::vector<std::string>& argv)
            ArrayUseAccessFunction* r = new ArrayUseAccessFunction(name, arrayInfo, funcInfo);
            funcInfo = r;
            arrayInfo = r;
-// DQ (1/14/2017): make dependence on POET optional.
-#ifdef ROSE_USE_POET
            if (tuning != 0) tuning->set_arrayInfo(*r);
-#endif
         }
         else if (opt == "-poet");
         else 
@@ -208,11 +205,7 @@ TransformTraverse(AstInterfaceImpl& scope,const AstNodePtr& head)
 {
   assert(aliasInfo!=0);  /*QY: alias analysis should never be null*/ 
   AstInterface _fa(&scope);
-
-// DQ (1/14/2017): make dependence on POET optional.
-#ifdef ROSE_USE_POET
   if (tuning != 0) tuning->set_astInterface(_fa);
-#endif
 
   fa = &_fa;  /*QY: use static member variable to save the AstInterface*/
 
@@ -239,11 +232,7 @@ TransformTraverse(AstInterfaceImpl& scope,const AstNodePtr& head)
        result = LoopUnrolling()(result);
   _fa.SetRoot(result);
 
-// DQ (1/14/2017): make dependence on POET optional.
-#ifdef ROSE_USE_POET
   if (tuning != 0)  tuning->ApplyOpt(_fa);
-#endif
-
   fa = 0;
   return result;
 }
@@ -282,17 +271,17 @@ CreateDynamicFusionConfig( const AstNodePtr& groupNum, AstInterface::AstNodeList
 { assert(fa != 0); 
   std::string name = "DynamicFusionConfig";
   ++configIndex;
-  args.push_front( fa->CreateConstInt( args.size() ) );
-  args.push_front( fa->CreateConstInt(configIndex) );
-  AstNodePtr invoc = fa->CreateFunctionCall( "DynamicFusionConfig",  args); 
+  args.push_back( fa->CreateConstInt(configIndex).get_ptr() );
+  args.push_back( fa->CreateConstInt( args.size() ).get_ptr() );
+  AstNodePtr invoc = fa->CreateFunctionCall( "DynamicFusionConfig",  args.begin(), args.end()); 
   return fa->CreateAssignment ( groupNum, invoc) ;
 }
 
 AstNodePtr LoopTransformInterface::CreateDynamicFusionEnd( int id)
 { assert(fa != 0);
   AstInterface::AstNodeList args;
-  args.push_back( fa->CreateConstInt(id));
-  return fa->CreateFunctionCall("DynamicFusionEnd", args);
+  args.push_back( fa->CreateConstInt(id).get_ptr());
+  return fa->CreateFunctionCall("DynamicFusionEnd", args.begin(), args.end());
 }
 
 bool LoopTransformInterface::
