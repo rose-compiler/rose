@@ -1502,7 +1502,7 @@ Parser::parseInternal(const std::vector<std::string> &programArguments) {
         if (!unresolvableAmbiguities.isEmpty()) {
             // This is for authors, so report by exception
             std::ostringstream ss;
-            ss <<"ambiguous switches declared:\n";
+            ss <<"programmer error: ambiguous switches declared:\n";
             printIndex(ss, unresolvableAmbiguities, "             ");
             throw std::runtime_error(ss.str());
         }
