@@ -616,6 +616,9 @@ if(enable-scoplib)
     DOC "Path to a valid ScopLib installation")
 endif()
 
+option(enable-poet
+  "Enable POET support" OFF)
+
 option(enable-yices "Use the Yices Satisfiability Modulo Theories (SMT)")
 if(enable-yices)
   find_path(with-yices bin/yices DOC
