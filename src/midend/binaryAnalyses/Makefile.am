@@ -78,6 +78,7 @@ pkginclude_HEADERS =					\
     BinaryFunctionCall.h				\
     BinaryFunctionSimilarity.h				\
     BinaryMagic.h					\
+    BinaryMatrix.h					\
     BinaryNoOperation.h					\
     BinaryPointerDetection.h				\
     BinaryReachability.h				\

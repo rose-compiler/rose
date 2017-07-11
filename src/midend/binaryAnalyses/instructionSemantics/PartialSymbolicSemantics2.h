@@ -12,7 +12,7 @@
 #include <vector>
 
 #include "rosePublicConfig.h"
-#ifdef ROSE_HAVE_GCRYPT_H
+#ifdef ROSE_HAVE_LIBGCRYPT
 #include <gcrypt.h>
 #endif
 
@@ -789,7 +789,7 @@ protected:
             bool
             Policy<State, SValue>::SHA1(unsigned char digest[20]) const
             {
-#ifdef ROSE_HAVE_GCRYPT_H
+#ifdef ROSE_HAVE_LIBGCRYPT
                 // libgcrypt should have been initialized by Rose::initialize already.
                 std::stringstream s;
                 RenameMap rmap;
