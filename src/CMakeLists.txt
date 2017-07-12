@@ -208,15 +208,25 @@ add_library(ROSE_DLL SHARED ${rose_LIB_SRCS} )
 target_link_libraries(ROSE_DLL ${link_with_libraries})
 # Generate the list of libraries that ROSE needs to link against.
 # tps : independant Components : ROSE, libhpdf
-set(LINK_FILES
-   roseutil
-   poet
-#   PHP_FRONTEND_LIB
-   libhpdf
-#   libdl
-   ${CMAKE_DL_LIBS}
-   libX10Traversal
-)
+if(enable-poet)
+  set(LINK_FILES
+     roseutil
+     poet
+#     PHP_FRONTEND_LIB
+     libhpdf
+#     libdl
+     ${CMAKE_DL_LIBS}
+     libX10Traversal
+  )
+else()
+  set(LINK_FILES
+     roseutil
+#     PHP_FRONTEND_LIB
+     libhpdf
+#     libdl
+     ${CMAKE_DL_LIBS}
+     libX10Traversal
+endif()
 #add_executable(bill bill.C)
 #target_link_libraries(bill roseutil)
 
@@ -262,10 +272,15 @@ set_target_properties(ROSE_DLL PROPERTIES
   DEFINE_SYMBOL ROSE_DLL_EXPORTS
 )
 
-add_dependencies(ROSE_DLL
-  OMPPARSER ROSE_PREPROCESSOR ${edg_lib} libhpdf
-  generate_rosePublicConfig poet)
-
+if(enable-poet)
+  add_dependencies(ROSE_DLL
+    OMPPARSER ROSE_PREPROCESSOR ${edg_lib} libhpdf
+    generate_rosePublicConfig poet)
+else()
+  add_dependencies(ROSE_DLL
+    OMPPARSER ROSE_PREPROCESSOR ${edg_lib} libhpdf
+    generate_rosePublicConfig)
+endif()
 
 ########### next targets ###############
 remove_definitions(-DROSE_DLL_EXPORTS)
