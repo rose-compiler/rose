@@ -51,6 +51,7 @@ class UntypedConverter
    // Executable statements
    //
       static SgExprStatement* convertSgUntypedAssignmentStatement (SgUntypedAssignmentStatement* ut_stmt, SgExpressionPtrList& children, SgScopeStatement* scope);
+      static SgStatement*     convertSgUntypedOtherStatement      (SgUntypedOtherStatement* ut_stmt, SgScopeStatement* scope);
 
    // Expressions
    //
