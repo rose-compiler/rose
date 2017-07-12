@@ -39,6 +39,7 @@ if (NOT enable-internalFrontendDevelopment)
     driver/BlockingAnal.C
     driver/TypedFusionImpl.C
     driver/ParallelizeLoop.C
+    driver/AutoTuningInterface.C
     depInfo/StmtDepAnal.C
     depInfo/DepInfo.C
     depInfo/DepRel.C
