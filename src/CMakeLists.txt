@@ -226,6 +226,7 @@ else()
 #     libdl
      ${CMAKE_DL_LIBS}
      libX10Traversal
+ )
 endif()
 #add_executable(bill bill.C)
 #target_link_libraries(bill roseutil)
