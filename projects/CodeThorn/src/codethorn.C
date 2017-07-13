@@ -1543,6 +1543,7 @@ int main( int argc, char * argv[] ) {
     if ( boolOptions["with-counterexamples"] || boolOptions["with-assert-counterexamples"]) {
       logger[TRACE] << "STATUS: extracting assertion traces (this may take some time)"<<endl;
       timer.start();
+
       maxOfShortestAssertInput = analyzer.extractAssertionTraces();
       extractAssertionTracesTime = timer.getElapsedTimeInMilliSec();
       if (maxOfShortestAssertInput > -1) {

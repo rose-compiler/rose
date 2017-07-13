@@ -20,8 +20,10 @@ namespace CodeThorn {
     ~ExecutionTrace() {};
 
     std::string toString() const;
-    std::string toString(SPRAY::VariableIdMapping* variableIdMapping) const;
+    std::string toString(SPRAY::VariableIdMapping*) const;
 
+    ExecutionTrace onlyIOStates() const;
+    
   };
 
 /**
@@ -34,6 +36,8 @@ namespace CodeThorn {
     ~CounterexampleGenerator();
     static void initDiagnostics();
 
+    list<ExecutionTrace> createExecutionTraces(Analyzer*);
+
 /**
  * @brief Extracts an execution trace using a breadth first search
  * @details This will search backwards from source towards target and will return a forward
@@ -44,7 +48,19 @@ namespace CodeThorn {
  * @param target The search will end when encountering this state
  * @return A trace starting at target and ending at source.
  */
-    ExecutionTrace traceBreadthFirst(TransitionGraph* transitionGraph, const EState* source, const EState* target);
+    ExecutionTrace traceBreadthFirst(TransitionGraph*, const EState*, const EState*);
+
+/**
+ * @brief Extracts an execution trace using Dijkstra's algorithm
+ * @details This will search backwards from source towards target and will return a forward
+ *    trace. That is, the order of the trace will follow execution order.
+ * 
+ * @param transitionGraph The transition graph describing program execution
+ * @param source The search will starting here, moving backwards along the transition graph
+ * @param target The search will end when encountering this state
+ * @return A trace starting at target and ending at source.
+ */
+    ExecutionTrace traceDijkstra(TransitionGraph*, const EState*, const EState*);
 
   protected:
     static Sawyer::Message::Facility logger;
