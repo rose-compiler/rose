@@ -273,15 +273,16 @@ CreateDynamicFusionConfig( const AstNodePtr& groupNum, AstInterface::AstNodeList
   ++configIndex;
   args.push_back( fa->CreateConstInt(configIndex).get_ptr() );
   args.push_back( fa->CreateConstInt( args.size() ).get_ptr() );
-  AstNodePtr invoc = fa->CreateFunctionCall( "DynamicFusionConfig",  args.begin(), args.end()); 
+  AstNodePtr invoc = fa->CreateFunctionCall( name,  args.begin(), args.end()); 
   return fa->CreateAssignment ( groupNum, invoc) ;
 }
 
 AstNodePtr LoopTransformInterface::CreateDynamicFusionEnd( int id)
 { assert(fa != 0);
+  std::string name = "DynamicFusionEnd";
   AstInterface::AstNodeList args;
   args.push_back( fa->CreateConstInt(id).get_ptr());
-  return fa->CreateFunctionCall("DynamicFusionEnd", args.begin(), args.end());
+  return fa->CreateFunctionCall(name, args.begin(), args.end());
 }
 
 bool LoopTransformInterface::

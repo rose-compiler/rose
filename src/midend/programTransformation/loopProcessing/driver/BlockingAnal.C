@@ -32,7 +32,8 @@ static SymbolicVal GetDefaultBlockSize(const CompSlice* slice)
  
            l.push_back(fa.CreateConstInt(1).get_ptr());
            l.push_back(size.CodeGen(fa).get_ptr());
-           AstNodePtr init = fa.CreateFunctionCall("getTuningValue", l.begin(), l.end());
+           std::string name = "getTuningValue";
+           AstNodePtr init = fa.CreateFunctionCall(name, l.begin(), l.end());
            return SymbolicVar(fa.NewVar(fa.GetType("int"), "",true,true,AST_NULL, init),AST_NULL); 
        }
     }
