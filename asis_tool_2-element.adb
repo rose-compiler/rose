@@ -968,9 +968,43 @@ package body Asis_Tool_2.Element is
         (Element : in     Asis.Element;
          State   : in out Class)
       is
+           A_Exception_Handler : a_nodes_h.Exception_Handler_Struct :=
+           a_nodes_h.Support.Default_Exception_Handler_Struct;
+
+         procedure Add_Choice_Parameter_Specification is
+            Choice_Parameter_Specification_ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Statements.Choice_Parameter_Specification (Element));
+         begin
+            State.Add_To_Dot_Label
+              ("Choice_Parameter_Specification", To_String (Choice_Parameter_Specification_ID));
+            A_Exception_Handler.Choice_Parameter_Specification :=
+              a_nodes_h.Node_ID (Choice_Parameter_Specification_ID);
+         end;
+
+         procedure Add_Exception_Choices is
+         begin
+            Add_Element_List
+              (This           => State,
+               Elements_In    => Asis.Statements.Exception_Choices (Element),
+               Dot_Label_Name => "Exception_Choices",
+               List_Out       => A_Exception_Handler.Exception_Choices);
+         end;
+
+         procedure Add_Handler_Statements is
+         begin
+            Add_Element_List
+              (This           => State,
+               Elements_In    => Asis.Statements.Handler_Statements (Element),
+               Dot_Label_Name => "Handler_Statements",
+               List_Out       => A_Exception_Handler.Handler_Statements);
+         end;
+
       begin
-         --        An_Exception_Handler
-         State.Add_Not_Implemented;
+         Add_Choice_Parameter_Specification;
+         Add_Exception_Choices;
+         Add_Handler_Statements;
+         State.A_Element.kind := a_nodes_h.An_Exception_Handler;
+         State.A_Element.the_union.exception_handler := A_Exception_Handler;
       end Process_Exception_Handler;
 
       function Get_Enclosing_ID

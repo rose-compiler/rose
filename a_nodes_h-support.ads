@@ -166,11 +166,10 @@ package a_nodes_h.Support is
       Trait_Kind   => Not_A_Trait,
       Clause_Names => Default_Name_List);
 
-   -- Currently a null record, so we can't do this:
-   -- Default_Exception_Handler_Struct : constant Exception_Handler_Struct :=
-   -- (
-   --  );
-   Default_Exception_Handler_Struct : Exception_Handler_Struct;
+   Default_Exception_Handler_Struct : constant Exception_Handler_Struct :=
+     (Choice_Parameter_Specification => Default_Element_ID,
+      Exception_Choices              => Default_Element_List,
+      Handler_Statements             => Default_Element_List);
 
    Default_Element_Union : constant Element_Union :=
      (discr        => 0,

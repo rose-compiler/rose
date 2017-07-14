@@ -194,6 +194,7 @@ typedef Element_ID Subtype_Indication_ID;
 
 typedef Element_ID *Element_ID_Ptr;
 
+// May take 2*4 bytes - 1 int, 1 ptr:
 // _IDs_ points to the first of _length_ IDs:
 struct Element_ID_Array_Struct {
   int            length;
@@ -1192,7 +1193,7 @@ struct Path_Struct {
   enum Path_Kinds kind;
 };
 
-// May take 2*4 bytes - 1 enum, 1 List:
+// May take 3*4 bytes - 1 enum, 1 List:
 struct Clause_Struct {
   enum Clause_Kinds kind;
   // These fields are only valid for the kinds above them:
@@ -1206,8 +1207,11 @@ struct Clause_Struct {
   // TODO: Incomplete
 };
 
-// May take ??*4 bytes (unfinished):
+// May take 5*4 bytes - 1 ID, 2 List:
 struct Exception_Handler_Struct {
+  Declaration_ID Choice_Parameter_Specification;
+  Element_List   Exception_Choices;
+  Statement_List Handler_Statements;
 };
 
 // May take 37*4 bytes (Statement_Struct, the largest component):

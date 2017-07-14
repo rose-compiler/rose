@@ -1,5 +1,3 @@
-Element_Kind => "AN_EXCEPTION_HANDLER"
-
 Element_Kind => "AN_EXPRESSION"
 Expression_Kind => "A_FUNCTION_CALL"
 Expression_Kind => "A_SELECTED_COMPONENT"
