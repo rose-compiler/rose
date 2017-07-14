@@ -327,7 +327,7 @@ enum Declaration_Kinds {
   A_Real_Number_Declaration,                // 3.5.6(2)
 
   An_Enumeration_Literal_Specification,     // 3.5.1(3)
-
+  
   A_Discriminant_Specification,             // 3.7(5)   -> Trait_Kinds
   A_Component_Declaration,                  // 3.8(6)
 
@@ -746,7 +746,7 @@ enum Subprogram_Default_Kinds {
       A_Nil_Default          // with subprogram_specification;
 };
 
-// For Declaration:
+// For Declaration, Definition, Clause:
 enum Trait_Kinds {
   Not_A_Trait,                         // An unexpected element
 
@@ -952,7 +952,7 @@ struct Declaration_Struct {
   // An_Element_Iterator_Specification |
   // A_Procedure_Declaration |
   // A_Function_Declaration:
-  enum Trait_Kinds         trait;
+  enum Trait_Kinds         Trait_Kind;
 };
 
 // May take ??*4 bytes (unfinished):
@@ -960,6 +960,13 @@ struct Definition_Struct {
   enum Definition_Kinds Kind;
   
   // These fields are only valid for the kinds above them:
+  // A_Component_Definition
+  // A_Private_Type_Definition
+  // A_Tagged_Private_Type_Definition
+  // A_Private_Extension_Definition
+  // A_Subtype_Indication
+  // An_Access_Definition
+  enum Trait_Kinds      Trait_Kind;
   // A_Type_Definition
   enum Type_Kinds       Type_Kind;
   // A_Derived_Type_Definition
@@ -979,7 +986,9 @@ struct Definition_Struct {
   // A_Simple_Expression_Range
   Expression_ID         Lower_Bound;
   Expression_ID         Upper_Bound;
-  
+  // A_Component_Definition
+  Subtype_Indication_ID Component_Subtype_Indication;
+  Definition_ID         Component_Definition_View;
   // TODO: not done yet
 };
 
@@ -1191,7 +1200,9 @@ struct Clause_Struct {
   //   A_Use_Type_Clause
   //   A_Use_All_Type_Clause
   //   A_With_Clause
-  Name_List Clause_Names;
+  Name_List         Clause_Names;
+  //   A_With_Clause
+  enum Trait_Kinds  Trait_Kind;
   // TODO: Incomplete
 };
 

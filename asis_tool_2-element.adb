@@ -57,6 +57,18 @@ package body Asis_Tool_2.Element is
          IDs    => anhS.To_Element_ID_Ptr (IDs));
    end Add_Element_List;
 
+   function Add_Trait_Kind
+     (Element : in     Asis.Element;
+      State   : in out Class)
+            return a_nodes_h.Trait_Kinds
+   is
+      Trait_Kind : Asis.Trait_Kinds := Asis.Elements.Trait_Kind (Element);
+   begin
+      State.Add_To_Dot_Label
+        ("Trait_Kind", Trait_Kind'Image);
+      return a_nodes_h.Support.To_Trait_Kinds (Trait_Kind);
+   end;
+
    package Pre_Children is
 
       procedure Process_Element
@@ -89,6 +101,7 @@ package body Asis_Tool_2.Element is
       is
          Defining_Name_Kind : Asis.Defining_Name_Kinds :=
            Asis.Elements.Defining_Name_Kind (Element);
+         use all type Asis.Defining_Name_Kinds;
       begin
          --        A_Defining_Name       -> Defining_Name_Kinds
          --                                         -> Operator_Kinds
@@ -97,10 +110,15 @@ package body Asis_Tool_2.Element is
          State.Add_To_Dot_Label (Name => "Name",
                               Value => Name (Element));
          case Defining_Name_Kind is
-            when Asis.A_Defining_Operator_Symbol =>
+            when Not_A_Defining_Name =>
+               raise Program_Error with
+                 "Element.Pre_Children.Process_Defining_Name called with: " &
+                 Defining_Name_Kind'Image;
+            when A_Defining_Operator_Symbol =>
                State.Add_To_Dot_Label (Name => "Operator_Kind",
                                     Value => Asis.Elements.Operator_Kind (Element)'Image);
-            when others => null;
+            when others =>
+               State.Add_Not_Implemented;
          end case;
       end Process_Defining_Name;
 
@@ -110,8 +128,9 @@ package body Asis_Tool_2.Element is
       is
          Declaration_Kind : Asis.Declaration_Kinds :=
            Asis.Elements.Declaration_Kind (Element);
-         -- Tired of typing "Asis." in front of enum values:
-         use Asis;
+          A_Declaration : a_nodes_h.Declaration_Struct :=
+           a_nodes_h.Support.Default_Declaration_Struct;
+         use all type Asis.Declaration_Kinds;
       begin
          --        A_Declaration         -> Declaration_Kinds
          --                                         -> Declaration_Origin
@@ -148,14 +167,20 @@ package body Asis_Tool_2.Element is
                  A_Generalized_Iterator_Specification |
                  An_Element_Iterator_Specification |
                  A_Procedure_Declaration |
-                 A_Function_Declaration =>
+                 A_Function_Declaration |
+                 An_Object_Renaming_Declaration |
+                 A_Formal_Object_Declaration |
+                 A_Formal_Procedure_Declaration |
+                 A_Formal_Function_Declaration =>
                State.Add_To_Dot_Label (Name => "Trait_Kind",
                                     Value => Asis.Elements.Trait_Kind (Element)'Image);
+               A_Declaration.Trait_Kind := Add_Trait_Kind (Element, State);
             when others =>
                null;
          end case;
       end Process_Declaration;
 
+      -- TODO: Process_Formal_Type_Definition?
 
       procedure Process_Type_Definition
         (State        : in out Class;
@@ -241,13 +266,14 @@ package body Asis_Tool_2.Element is
          use all type Asis.Type_Kinds;
       begin -- Process_Type_Definition
          State.Add_To_Dot_Label ("Type_Kind", Type_Kind'Image);
-         A_Definition.type_kind := anhS.To_Type_Kinds (Type_Kind);
+         A_Definition.Type_Kind := anhS.To_Type_Kinds (Type_Kind);
          case Type_Kind is
             when Not_A_Type_Definition =>
                raise Program_Error with
                  "Element.Pre_Children.Process_Definition.Process_Type_Definition called with: " &
                  Type_Kind'Image;
             when A_Derived_Type_Definition =>
+               A_Definition.Trait_Kind := Add_Trait_Kind (Element, State);
                Add_Parent_Subtype_Indication;
                Add_Implicit_Inherited_Declarations;
                Add_Implicit_Inherited_Subprograms;
@@ -255,6 +281,7 @@ package body Asis_Tool_2.Element is
                Add_Corresponding_Root_Type;
                Add_Corresponding_Type_Structure;
             when A_Derived_Record_Extension_Definition =>
+               A_Definition.Trait_Kind := Add_Trait_Kind (Element, State);
                Add_Parent_Subtype_Indication;
                Add_Record_Definition;
                Add_Implicit_Inherited_Declarations;
@@ -270,13 +297,16 @@ package body Asis_Tool_2.Element is
                  An_Ordinary_Fixed_Point_Definition |
                  A_Decimal_Fixed_Point_Definition |
                  An_Unconstrained_Array_Definition |
-                 A_Constrained_Array_Definition |
-                 A_Record_Type_Definition =>
+                 A_Constrained_Array_Definition =>
                State.Add_Not_Implemented;
-            when A_Tagged_Record_Type_Definition =>
+            when A_Record_Type_Definition |
+                 A_Tagged_Record_Type_Definition =>
+               A_Definition.Trait_Kind := Add_Trait_Kind (Element, State);
                Add_Record_Definition;
-            when An_Interface_Type_Definition |
-                 An_Access_Type_Definition =>
+            when An_Interface_Type_Definition =>
+               State.Add_Not_Implemented;
+            when An_Access_Type_Definition =>
+               A_Definition.Trait_Kind := Add_Trait_Kind (Element, State);
                State.Add_Not_Implemented;
          end case;
       end Process_Type_Definition;
@@ -368,6 +398,17 @@ package body Asis_Tool_2.Element is
       end Process_Constraint;
 
 
+      procedure Process_Component_Definition
+        (State        : in out Class;
+         Element      : in     Asis.Element;
+         A_Definition : in out a_nodes_h.Definition_Struct)
+      is
+         Constraint_Kind : constant Asis.Constraint_Kinds :=
+           Asis.Elements.Constraint_Kind (Element);
+      begin
+         State.Add_Not_Implemented;
+      end Process_Component_Definition;
+
       procedure Process_Definition
         (Element : in     Asis.Element;
          State   : in out Class)
@@ -376,6 +417,27 @@ package body Asis_Tool_2.Element is
            Asis.Elements.Definition_Kind (Element);
          A_Definition : a_nodes_h.Definition_Struct :=
            a_nodes_h.Support.Default_Definition_Struct;
+
+         procedure Add_Component_Subtype_Indication is
+            Component_Subtype_Indication_ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Definitions.Component_Subtype_Indication (Element));
+         begin
+            State.Add_To_Dot_Label
+              ("Component_Subtype_Indication", To_String (Component_Subtype_Indication_ID));
+            A_Definition.Component_Subtype_Indication :=
+              a_nodes_h.Node_ID (Component_Subtype_Indication_ID);
+         end;
+
+         procedure Add_Component_Definition_View is
+            Component_Definition_View_ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Definitions.Component_Definition_View (Element));
+         begin
+            State.Add_To_Dot_Label
+              ("Component_Definition_View", To_String (Component_Definition_View_ID));
+            A_Definition.Component_Definition_View :=
+              a_nodes_h.Node_ID (Component_Definition_View_ID);
+         end;
+
          use all type Asis.Definition_Kinds;
       begin -- Process_Definition
          State.Add_To_Dot_Label ("Definition_Kind", Definition_Kind'Image);
@@ -388,27 +450,60 @@ package body Asis_Tool_2.Element is
                  Definition_Kind'Image;
             when A_Type_Definition =>
                Process_Type_Definition (State, Element, A_Definition);
+            when A_Subtype_Indication =>
+               A_Definition.Trait_Kind := Add_Trait_Kind (Element, State);
+               State.Add_Not_Implemented;
             when A_Constraint =>
                Process_Constraint (State, Element, A_Definition);
-            when A_Component_Definition |
-                 A_Private_Type_Definition |
-                 A_Tagged_Private_Type_Definition |
-                 A_Private_Extension_Definition =>
-               -- Trait_Kinds
-               State.Add_Not_Implemented;
-            when A_Discrete_Subtype_Definition |
-                 A_Discrete_Range =>
+            when A_Component_Definition =>
+               A_Definition.Trait_Kind := Add_Trait_Kind (Element, State);
+               Add_Component_Subtype_Indication;
+               Add_Component_Definition_View;
+            when A_Discrete_Subtype_Definition =>
                -- Discrete_Range_Kinds
                State.Add_Not_Implemented;
+            when A_Discrete_Range =>
+               -- Discrete_Range_Kinds
+               State.Add_Not_Implemented;
+            when An_Unknown_Discriminant_Part =>
+               null;
+            when A_Known_Discriminant_Part =>
+               State.Add_Not_Implemented;
+            when A_Record_Definition =>
+               State.Add_Not_Implemented;
+            when A_Null_Record_Definition =>
+               null;
+            when A_Null_Component =>
+               null;
+            when A_Variant_Part =>
+               State.Add_Not_Implemented;
+            when A_Variant =>
+               State.Add_Not_Implemented;
+            when An_Others_Choice =>
+               State.Add_Not_Implemented;
             when An_Access_Definition =>
+               A_Definition.Trait_Kind := Add_Trait_Kind (Element, State);
                -- Access_Definition_Kinds
+               State.Add_Not_Implemented;
+            when A_Private_Type_Definition =>
+               A_Definition.Trait_Kind := Add_Trait_Kind (Element, State);
+               State.Add_Not_Implemented;
+            when A_Tagged_Private_Type_Definition =>
+               A_Definition.Trait_Kind := Add_Trait_Kind (Element, State);
+               State.Add_Not_Implemented;
+            when A_Private_Extension_Definition =>
+               A_Definition.Trait_Kind := Add_Trait_Kind (Element, State);
+               State.Add_Not_Implemented;
+            when A_Task_Definition =>
+               State.Add_Not_Implemented;
+            when A_Protected_Definition =>
                State.Add_Not_Implemented;
             when A_Formal_Type_Definition =>
                -- Formal_Type_Kinds
+               -- some Trait_Kinds
                State.Add_Not_Implemented;
-            when others =>
-               null;
-               -- TODO: Root_Type_Kinds??
+            when An_Aspect_Specification =>
+               State.Add_Not_Implemented;
          end case;
 
          --        A_Definition          -> Definition_Kinds
@@ -856,6 +951,7 @@ package body Asis_Tool_2.Element is
             when A_Use_All_Type_Clause =>
                Add_Clause_Names;
             when A_With_Clause =>
+               A_Clause.Trait_Kind := Add_Trait_Kind (Element, State);
                Add_Clause_Names;
             when A_Representation_Clause =>
          --                                         -> Representation_Clause_Kinds
@@ -1016,28 +1112,30 @@ package body Asis_Tool_2.Element is
       begin
          Start_Output;
          case Element_Kind is
-         when Asis.Not_An_Element =>
-            Null;
-         when Asis.A_Pragma =>
-            Process_Pragma (Element, State);
-         when Asis.A_Defining_Name =>
-            Process_Defining_Name (Element, State);
-         when Asis.A_Declaration =>
-            Process_Declaration (Element, State);
-         when Asis.A_Definition =>
-            Process_Definition (Element, State);
-         when Asis.An_Expression =>
-            Process_Expression (Element, State);
-         when Asis.An_Association =>
-            Process_Association (Element, State);
-         when Asis.A_Statement =>
-            Process_Statement (Element, State);
-         when Asis.A_Path =>
-            Process_Path (Element, State);
-         when Asis.A_Clause =>
-            Process_Clause (Element, State);
-         when Asis.An_Exception_Handler =>
-            Process_Exception_Handler (Element, State);
+            when Asis.Not_An_Element =>
+               raise Program_Error with
+                 "Element.Pre_Children.Process_Element called with: " &
+                 Element_Kind'Image;
+            when Asis.A_Pragma =>
+               Process_Pragma (Element, State);
+            when Asis.A_Defining_Name =>
+               Process_Defining_Name (Element, State);
+            when Asis.A_Declaration =>
+               Process_Declaration (Element, State);
+            when Asis.A_Definition =>
+               Process_Definition (Element, State);
+            when Asis.An_Expression =>
+               Process_Expression (Element, State);
+            when Asis.An_Association =>
+               Process_Association (Element, State);
+            when Asis.A_Statement =>
+               Process_Statement (Element, State);
+            when Asis.A_Path =>
+               Process_Path (Element, State);
+            when Asis.A_Clause =>
+               Process_Clause (Element, State);
+            when Asis.An_Exception_Handler =>
+               Process_Exception_Handler (Element, State);
          end case;
          Finish_Output;
       end Process_Element;

@@ -48,13 +48,14 @@ package a_nodes_h.Support is
 
    Default_Declaration_Struct : constant Declaration_Struct :=
      (kind               => Not_A_Declaration,
+      Trait_Kind         => Not_A_Trait,
       origin             => Not_A_Declaration_Origin,
       mode               => Not_A_Mode,
-      subprogram_default => Not_A_Default,
-      trait              => Not_A_Trait);
+      subprogram_default => Not_A_Default);
 
    Default_Definition_Struct : constant Definition_Struct :=
      (Kind                            => Not_A_Definition,
+      Trait_Kind                      => Not_A_Trait,
       Type_Kind                       => Not_A_Type_Definition,
       Parent_Subtype_Indication       => Default_Element_ID,
       Record_Definition               => Default_Element_ID,
@@ -65,7 +66,9 @@ package a_nodes_h.Support is
       Corresponding_Type_Structure    => Default_Element_ID,
       Constraint_Kind                 => Not_A_Constraint,
       Lower_Bound                     => Default_Element_ID,
-      Upper_Bound                     => Default_Element_ID);
+      Upper_Bound                     => Default_Element_ID,
+      Component_Subtype_Indication    => Default_Element_ID,
+      Component_Definition_View       => Default_Element_ID);
 
    Default_Expression_Struct : constant Expression_Struct :=
      (kind                                     => Not_An_Expression,
@@ -160,6 +163,7 @@ package a_nodes_h.Support is
 
    Default_Clause_Struct : constant Clause_Struct :=
      (kind         => Not_A_Clause,
+      Trait_Kind   => Not_A_Trait,
       Clause_Names => Default_Name_List);
 
    -- Currently a null record, so we can't do this:

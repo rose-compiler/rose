@@ -1,6 +1,3 @@
-Element_Kind => "A_DEFINITION"
-Definition_Kind => "A_COMPONENT_DEFINITION"
-
 Element_Kind => "AN_EXCEPTION_HANDLER"
 
 Element_Kind => "AN_EXPRESSION"
