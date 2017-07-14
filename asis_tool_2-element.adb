@@ -156,6 +156,218 @@ package body Asis_Tool_2.Element is
          end case;
       end Process_Declaration;
 
+
+      procedure Process_Type_Definition
+        (State        : in out Class;
+         Element      : in     Asis.Element;
+         A_Definition : in out a_nodes_h.Definition_Struct)
+      is
+         Type_Kind : constant Asis.Type_Kinds :=
+           Asis.Elements.Type_Kind (Element);
+
+         procedure Add_Parent_Subtype_Indication is
+            Parent_Subtype_Indication_ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Definitions.Parent_Subtype_Indication
+                                 (Element));
+         begin
+            State.Add_To_Dot_Label
+              ("Parent_Subtype_Indication", To_String (Parent_Subtype_Indication_ID));
+            A_Definition.Parent_Subtype_Indication :=
+              a_nodes_h.Node_ID (Parent_Subtype_Indication_ID);
+         end;
+
+         procedure Add_Record_Definition is
+            Record_Definition_ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Definitions.Record_Definition
+                                 (Element));
+         begin
+            State.Add_To_Dot_Label
+              ("Record_Definition", To_String (Record_Definition_ID));
+            A_Definition.Record_Definition :=
+              a_nodes_h.Node_ID (Record_Definition_ID);
+         end;
+
+         procedure Add_Implicit_Inherited_Declarations is
+         begin
+            Add_Element_List
+              (This           => State,
+               Elements_In    => Asis.Definitions.Implicit_Inherited_Declarations (Element),
+               Dot_Label_Name => "Implicit_Inherited_Declarations",
+               List_Out       => A_Definition.Implicit_Inherited_Declarations);
+         end;
+
+         procedure Add_Implicit_Inherited_Subprograms is
+         begin
+            Add_Element_List
+              (This           => State,
+               Elements_In    => Asis.Definitions.Implicit_Inherited_Subprograms (Element),
+               Dot_Label_Name => "Implicit_Inherited_Subprograms",
+               List_Out       => A_Definition.Implicit_Inherited_Subprograms);
+         end;
+
+         procedure Add_Corresponding_Parent_Subtype is
+            Corresponding_Parent_Subtype_ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Definitions.Corresponding_Parent_Subtype
+                                 (Element));
+         begin
+            State.Add_To_Dot_Label
+              ("Corresponding_Parent_Subtype", To_String (Corresponding_Parent_Subtype_ID));
+            A_Definition.Corresponding_Parent_Subtype :=
+              a_nodes_h.Node_ID (Corresponding_Parent_Subtype_ID);
+         end;
+
+         procedure Add_Corresponding_Root_Type is
+            Corresponding_Root_Type_ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Definitions.Corresponding_Root_Type
+                                 (Element));
+         begin
+            State.Add_To_Dot_Label
+              ("Corresponding_Root_Type", To_String (Corresponding_Root_Type_ID));
+            A_Definition.Corresponding_Root_Type :=
+              a_nodes_h.Node_ID (Corresponding_Root_Type_ID);
+         end;
+
+         procedure Add_Corresponding_Type_Structure is
+            Corresponding_Type_Structure_ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Definitions.Corresponding_Type_Structure
+                                 (Element));
+         begin
+            State.Add_To_Dot_Label
+              ("Corresponding_Type_Structure", To_String (Corresponding_Type_Structure_ID));
+            A_Definition.Corresponding_Type_Structure :=
+              a_nodes_h.Node_ID (Corresponding_Type_Structure_ID);
+         end;
+
+         use all type Asis.Type_Kinds;
+      begin -- Process_Type_Definition
+         State.Add_To_Dot_Label ("Type_Kind", Type_Kind'Image);
+         A_Definition.type_kind := anhS.To_Type_Kinds (Type_Kind);
+         case Type_Kind is
+            when Not_A_Type_Definition =>
+               raise Program_Error with
+                 "Element.Pre_Children.Process_Definition.Process_Type_Definition called with: " &
+                 Type_Kind'Image;
+            when A_Derived_Type_Definition =>
+               Add_Parent_Subtype_Indication;
+               Add_Implicit_Inherited_Declarations;
+               Add_Implicit_Inherited_Subprograms;
+               Add_Corresponding_Parent_Subtype;
+               Add_Corresponding_Root_Type;
+               Add_Corresponding_Type_Structure;
+            when A_Derived_Record_Extension_Definition =>
+               Add_Parent_Subtype_Indication;
+               Add_Record_Definition;
+               Add_Implicit_Inherited_Declarations;
+               Add_Implicit_Inherited_Subprograms;
+               Add_Corresponding_Parent_Subtype;
+               Add_Corresponding_Root_Type;
+               Add_Corresponding_Type_Structure;
+            when An_Enumeration_Type_Definition |
+                 A_Signed_Integer_Type_Definition |
+                 A_Modular_Type_Definition |
+                 A_Root_Type_Definition |
+                 A_Floating_Point_Definition |
+                 An_Ordinary_Fixed_Point_Definition |
+                 A_Decimal_Fixed_Point_Definition |
+                 An_Unconstrained_Array_Definition |
+                 A_Constrained_Array_Definition |
+                 A_Record_Type_Definition =>
+               State.Add_Not_Implemented;
+            when A_Tagged_Record_Type_Definition =>
+               Add_Record_Definition;
+            when An_Interface_Type_Definition |
+                 An_Access_Type_Definition =>
+               State.Add_Not_Implemented;
+         end case;
+      end Process_Type_Definition;
+
+
+      procedure Process_Constraint
+        (State        : in out Class;
+         Element      : in     Asis.Element;
+         A_Definition : in out a_nodes_h.Definition_Struct)
+      is
+         Constraint_Kind : constant Asis.Constraint_Kinds :=
+           Asis.Elements.Constraint_Kind (Element);
+
+         procedure Add_Digits_Expression is
+         begin
+            State.Add_Not_Implemented;
+         end;
+
+         procedure Add_Delta_Expression is
+         begin
+            State.Add_Not_Implemented;
+         end;
+
+         procedure Add_Real_Range_Constraint is
+         begin
+            State.Add_Not_Implemented;
+         end;
+
+         procedure Add_Lower_Bound is
+            Lower_Bound_ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Definitions.Lower_Bound (Element));
+         begin
+            State.Add_To_Dot_Label
+              ("Lower_Bound", To_String (Lower_Bound_ID));
+            A_Definition.Lower_Bound :=
+              a_nodes_h.Node_ID (Lower_Bound_ID);
+         end;
+
+         procedure Add_Upper_Bound is
+            Upper_Bound_ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Definitions.Upper_Bound (Element));
+         begin
+            State.Add_To_Dot_Label
+              ("Upper_Bound", To_String (Upper_Bound_ID));
+            A_Definition.Upper_Bound :=
+              a_nodes_h.Node_ID (Upper_Bound_ID);
+         end;
+
+         procedure Add_Range_Attribute is
+         begin
+            State.Add_Not_Implemented;
+         end;
+
+         procedure Add_Discrete_Ranges is
+         begin
+            State.Add_Not_Implemented;
+         end;
+
+         procedure Add_Discriminant_Associations is
+         begin
+            State.Add_Not_Implemented;
+         end;
+
+         use all type Asis.Constraint_Kinds;
+      begin
+         State.Add_To_Dot_Label ("Constraint_Kind", Constraint_Kind'Image);
+         A_Definition.Constraint_Kind := anhS.To_Constraint_Kinds (Constraint_Kind);
+         case Constraint_Kind is
+            when Not_A_Constraint =>
+               raise Program_Error with
+                 "Element.Pre_Children.Process_Definition.Process_Constraint called with: " &
+                 Constraint_Kind'Image;
+            when A_Range_Attribute_Reference =>
+               Add_Range_Attribute;
+            when A_Simple_Expression_Range =>
+               Add_Lower_Bound;
+               Add_Upper_Bound;
+            when A_Digits_Constraint =>
+               Add_Digits_Expression;
+               Add_Real_Range_Constraint;
+            when A_Delta_Constraint =>
+               Add_Delta_Expression;
+               Add_Real_Range_Constraint;
+            when An_Index_Constraint =>
+               Add_Discrete_Ranges;
+            when A_Discriminant_Constraint =>
+               Add_Discriminant_Associations;
+         end case;
+      end Process_Constraint;
+
+
       procedure Process_Definition
         (Element : in     Asis.Element;
          State   : in out Class)
@@ -164,127 +376,6 @@ package body Asis_Tool_2.Element is
            Asis.Elements.Definition_Kind (Element);
          A_Definition : a_nodes_h.Definition_Struct :=
            a_nodes_h.Support.Default_Definition_Struct;
-
-         procedure Process_Type_Definition is
-            Type_Kind : constant Asis.Type_Kinds :=
-              Asis.Elements.Type_Kind (Element);
-
-            procedure Add_Parent_Subtype_Indication is
-               Parent_Subtype_Indication_ID : constant Types.Node_Id :=
-                 Asis.Set_Get.Node (Asis.Definitions.Parent_Subtype_Indication
-                                    (Element));
-            begin
-               State.Add_To_Dot_Label
-                 ("Parent_Subtype_Indication", To_String (Parent_Subtype_Indication_ID));
-               A_Definition.Parent_Subtype_Indication :=
-                 a_nodes_h.Node_ID (Parent_Subtype_Indication_ID);
-            end;
-
-            procedure Add_Record_Definition is
-               Record_Definition_ID : constant Types.Node_Id :=
-                 Asis.Set_Get.Node (Asis.Definitions.Record_Definition
-                                    (Element));
-            begin
-               State.Add_To_Dot_Label
-                 ("Record_Definition", To_String (Record_Definition_ID));
-               A_Definition.Record_Definition :=
-                 a_nodes_h.Node_ID (Record_Definition_ID);
-            end;
-
-            procedure Add_Implicit_Inherited_Declarations is
-            begin
-               Add_Element_List
-                 (This           => State,
-                  Elements_In    => Asis.Definitions.Implicit_Inherited_Declarations (Element),
-                  Dot_Label_Name => "Implicit_Inherited_Declarations",
-                  List_Out       => A_Definition.Implicit_Inherited_Declarations);
-            end;
-
-            procedure Add_Implicit_Inherited_Subprograms is
-            begin
-               Add_Element_List
-                 (This           => State,
-                  Elements_In    => Asis.Definitions.Implicit_Inherited_Subprograms (Element),
-                  Dot_Label_Name => "Implicit_Inherited_Subprograms",
-                  List_Out       => A_Definition.Implicit_Inherited_Subprograms);
-            end;
-
-            procedure Add_Corresponding_Parent_Subtype is
-               Corresponding_Parent_Subtype_ID : constant Types.Node_Id :=
-                 Asis.Set_Get.Node (Asis.Definitions.Corresponding_Parent_Subtype
-                                    (Element));
-            begin
-               State.Add_To_Dot_Label
-                 ("Corresponding_Parent_Subtype", To_String (Corresponding_Parent_Subtype_ID));
-               A_Definition.Corresponding_Parent_Subtype :=
-                 a_nodes_h.Node_ID (Corresponding_Parent_Subtype_ID);
-            end;
-
-            procedure Add_Corresponding_Root_Type is
-               Corresponding_Root_Type_ID : constant Types.Node_Id :=
-                 Asis.Set_Get.Node (Asis.Definitions.Corresponding_Root_Type
-                                    (Element));
-            begin
-               State.Add_To_Dot_Label
-                 ("Corresponding_Root_Type", To_String (Corresponding_Root_Type_ID));
-               A_Definition.Corresponding_Root_Type :=
-                 a_nodes_h.Node_ID (Corresponding_Root_Type_ID);
-            end;
-
-            procedure Add_Corresponding_Type_Structure is
-               Corresponding_Type_Structure_ID : constant Types.Node_Id :=
-                 Asis.Set_Get.Node (Asis.Definitions.Corresponding_Type_Structure
-                                    (Element));
-            begin
-               State.Add_To_Dot_Label
-                 ("Corresponding_Type_Structure", To_String (Corresponding_Type_Structure_ID));
-               A_Definition.Corresponding_Type_Structure :=
-                 a_nodes_h.Node_ID (Corresponding_Type_Structure_ID);
-            end;
-
-            use all type Asis.Type_Kinds;
-         begin -- Process_Type_Definition
-            State.Add_To_Dot_Label ("Type_Kind", Type_Kind'Image);
-            A_Definition.type_kind := anhS.To_Type_Kinds (Type_Kind);
-            case Type_Kind is
-               when Not_A_Type_Definition =>
-                  raise Program_Error with
-                    "Element.Pre_Children.Process_Definition.Process_Type_Definition called with: " &
-                    Type_Kind'Image;
-               when A_Derived_Type_Definition =>
-                  Add_Parent_Subtype_Indication;
-                  Add_Implicit_Inherited_Declarations;
-                  Add_Implicit_Inherited_Subprograms;
-                  Add_Corresponding_Parent_Subtype;
-                  Add_Corresponding_Root_Type;
-                  Add_Corresponding_Type_Structure;
-               when A_Derived_Record_Extension_Definition =>
-                  Add_Parent_Subtype_Indication;
-                  Add_Record_Definition;
-                  Add_Implicit_Inherited_Declarations;
-                  Add_Implicit_Inherited_Subprograms;
-                  Add_Corresponding_Parent_Subtype;
-                  Add_Corresponding_Root_Type;
-                  Add_Corresponding_Type_Structure;
-               when An_Enumeration_Type_Definition |
-                    A_Signed_Integer_Type_Definition |
-                    A_Modular_Type_Definition |
-                    A_Root_Type_Definition |
-                    A_Floating_Point_Definition |
-                    An_Ordinary_Fixed_Point_Definition |
-                    A_Decimal_Fixed_Point_Definition |
-                    An_Unconstrained_Array_Definition |
-                    A_Constrained_Array_Definition |
-                    A_Record_Type_Definition =>
-                  State.Add_Not_Implemented;
-               when A_Tagged_Record_Type_Definition =>
-                  Add_Record_Definition;
-               when An_Interface_Type_Definition |
-                    An_Access_Type_Definition =>
-                  State.Add_Not_Implemented;
-                  end case;
-         end Process_Type_Definition;
-
          use all type Asis.Definition_Kinds;
       begin -- Process_Definition
          State.Add_To_Dot_Label ("Definition_Kind", Definition_Kind'Image);
@@ -296,10 +387,9 @@ package body Asis_Tool_2.Element is
                  "Element.Pre_Children.Process_Definition called with: " &
                  Definition_Kind'Image;
             when A_Type_Definition =>
-               Process_Type_Definition;
+               Process_Type_Definition (State, Element, A_Definition);
             when A_Constraint =>
-               -- Constraint_Kinds
-               State.Add_Not_Implemented;
+               Process_Constraint (State, Element, A_Definition);
             when A_Component_Definition |
                  A_Private_Type_Definition |
                  A_Tagged_Private_Type_Definition |

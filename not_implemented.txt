@@ -1,5 +1,4 @@
 Element_Kind => "A_DEFINITION"
-Definition_Kind => "A_CONSTRAINT"
 Definition_Kind => "A_COMPONENT_DEFINITION"
 
 Element_Kind => "AN_EXCEPTION_HANDLER"

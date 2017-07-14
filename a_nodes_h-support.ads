@@ -54,15 +54,18 @@ package a_nodes_h.Support is
       trait              => Not_A_Trait);
 
    Default_Definition_Struct : constant Definition_Struct :=
-     (kind                            => Not_A_Definition,
-      type_kind                       => Not_A_Type_Definition,
+     (Kind                            => Not_A_Definition,
+      Type_Kind                       => Not_A_Type_Definition,
       Parent_Subtype_Indication       => Default_Element_ID,
       Record_Definition               => Default_Element_ID,
       Implicit_Inherited_Declarations => Default_Element_List,
       Implicit_Inherited_Subprograms  => Default_Element_List,
       Corresponding_Parent_Subtype    => Default_Element_ID,
       Corresponding_Root_Type         => Default_Element_ID,
-      Corresponding_Type_Structure    => Default_Element_ID );
+      Corresponding_Type_Structure    => Default_Element_ID,
+      Constraint_Kind                 => Not_A_Constraint,
+      Lower_Bound                     => Default_Element_ID,
+      Upper_Bound                     => Default_Element_ID);
 
    Default_Expression_Struct : constant Expression_Struct :=
      (kind                                     => Not_An_Expression,
@@ -203,6 +206,10 @@ package a_nodes_h.Support is
    function To_Clause_Kinds is new Unchecked_Conversion
      (Source => Asis.Clause_Kinds,
       Target => a_nodes_h.Clause_Kinds);
+
+   function To_Constraint_Kinds is new Unchecked_Conversion
+     (Source => Asis.Constraint_Kinds,
+      Target => a_nodes_h.Constraint_Kinds);
 
    function To_Declaration_Kinds is new Unchecked_Conversion
      (Source => Asis.Declaration_Kinds,

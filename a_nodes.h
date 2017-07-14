@@ -453,34 +453,44 @@ typedef Element_ID   Definition_ID;
 typedef Element_List Definition_ID_List;
 
 enum Type_Kinds {
-      Not_A_Type_Definition,                 // An unexpected element
+  Not_A_Type_Definition,                 // An unexpected element
 
-      A_Derived_Type_Definition,             // 3.4(2)     -> Trait_Kinds
-      A_Derived_Record_Extension_Definition, // 3.4(2)     -> Trait_Kinds
+  A_Derived_Type_Definition,             // 3.4(2)     -> Trait_Kinds
+  A_Derived_Record_Extension_Definition, // 3.4(2)     -> Trait_Kinds
 
-      An_Enumeration_Type_Definition,        // 3.5.1(2)
+  An_Enumeration_Type_Definition,        // 3.5.1(2)
 
-      A_Signed_Integer_Type_Definition,      // 3.5.4(3)
-      A_Modular_Type_Definition,             // 3.5.4(4)
+  A_Signed_Integer_Type_Definition,      // 3.5.4(3)
+  A_Modular_Type_Definition,             // 3.5.4(4)
 
-      A_Root_Type_Definition,                // 3.5.4(14), 3.5.6(3)
-      //                                               -> Root_Type_Kinds
-      A_Floating_Point_Definition,           // 3.5.7(2)
+  A_Root_Type_Definition,                // 3.5.4(14), 3.5.6(3)
+  //                                               -> Root_Type_Kinds
+  A_Floating_Point_Definition,           // 3.5.7(2)
 
-      An_Ordinary_Fixed_Point_Definition,    // 3.5.9(3)
-      A_Decimal_Fixed_Point_Definition,      // 3.5.9(6)
+  An_Ordinary_Fixed_Point_Definition,    // 3.5.9(3)
+  A_Decimal_Fixed_Point_Definition,      // 3.5.9(6)
 
-      An_Unconstrained_Array_Definition,     // 3.6(2)
-      A_Constrained_Array_Definition,        // 3.6(2)
+  An_Unconstrained_Array_Definition,     // 3.6(2)
+  A_Constrained_Array_Definition,        // 3.6(2)
 
-      A_Record_Type_Definition,              // 3.8(2)     -> Trait_Kinds
-      A_Tagged_Record_Type_Definition,       // 3.8(2)     -> Trait_Kinds
+  A_Record_Type_Definition,              // 3.8(2)     -> Trait_Kinds
+  A_Tagged_Record_Type_Definition,       // 3.8(2)     -> Trait_Kinds
 
-//  //|A2005 start
-      An_Interface_Type_Definition,          // 3.9.4      -> Interface_Kinds
-//  //|A2005 end
-      An_Access_Type_Definition            // 3.10(2)    -> Access_Type_Kinds
-  };
+  //  //|A2005 start
+  An_Interface_Type_Definition,          // 3.9.4      -> Interface_Kinds
+  //  //|A2005 end
+  An_Access_Type_Definition            // 3.10(2)    -> Access_Type_Kinds
+};
+
+enum Constraint_Kinds {
+  Not_A_Constraint,                      // An unexpected element
+  A_Range_Attribute_Reference,           // 3.5(2)
+  A_Simple_Expression_Range,             // 3.2.2, 3.5(3)
+  A_Digits_Constraint,                   // 3.2.2, 3.5.9
+  A_Delta_Constraint,                    // 3.2.2, J.3
+  An_Index_Constraint,                   // 3.2.2, 3.6.1
+  A_Discriminant_Constraint              // 3.2.2
+};
 ///////////////////////////////////////////////////////////////////////////////
 // END Definition types
 ///////////////////////////////////////////////////////////////////////////////
@@ -947,11 +957,11 @@ struct Declaration_Struct {
 
 // May take ??*4 bytes (unfinished):
 struct Definition_Struct {
-  enum Definition_Kinds kind;
+  enum Definition_Kinds Kind;
   
   // These fields are only valid for the kinds above them:
   // A_Type_Definition
-  enum Type_Kinds       type_kind;
+  enum Type_Kinds       Type_Kind;
   // A_Derived_Type_Definition
   // A_Derived_Record_Extension_Definition
   Subtype_Indication_ID Parent_Subtype_Indication;
@@ -964,9 +974,13 @@ struct Definition_Struct {
   Definition_ID         Corresponding_Parent_Subtype;
   Definition_ID         Corresponding_Root_Type;
   Definition_ID         Corresponding_Type_Structure;
+  // A_Constraint
+  enum Constraint_Kinds Constraint_Kind;
+  // A_Simple_Expression_Range
+  Expression_ID         Lower_Bound;
+  Expression_ID         Upper_Bound;
   
-  
-/*   enum  */
+  // TODO: not done yet
 };
 
 // May take 33*4 bytes - 19 IDs, 8 Lists, 1 bool, 3 enums, 2 char*:
