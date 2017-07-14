@@ -14,21 +14,21 @@ gettimeofday(struct timeval *tp, void *dummy)
     LARGE_INTEGER   li;
     __int64         t;
 
-	SYSTEMTIME		st;
-	FILETIME		ft2;
-	LARGE_INTEGER   li2;
-	__int64			t2;
+   SYSTEMTIME      st;
+   FILETIME        ft2;
+   LARGE_INTEGER   li2;
+    __int64        t2;
 
-	st.wYear = 1970;
-	st.wHour = 0;
-	st.wMinute = 0;
-	st.wSecond = 0;
-	st.wMilliseconds = 1;
+    st.wYear = 1970;
+    st.wHour = 0;
+    st.wMinute = 0;
+    st.wSecond = 0;
+    st.wMilliseconds = 1;
 
-	SystemTimeToFileTime(&st, &ft2);
-	li2.LowPart = ft2.dwLowDateTime;
-	li2.HighPart = ft2.dwHighDateTime;
-	t2 = li2.QuadPart;
+    SystemTimeToFileTime(&st, &ft2);
+    li2.LowPart = ft2.dwLowDateTime;
+    li2.HighPart = ft2.dwHighDateTime;
+    t2 = li2.QuadPart;
 
     GetSystemTimeAsFileTime(&ft);
     li.LowPart  = ft.dwLowDateTime;
