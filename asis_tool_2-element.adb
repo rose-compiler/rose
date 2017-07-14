@@ -1,6 +1,7 @@
 with Asis.Clauses;
 with Asis.Compilation_Units;
 with Asis.Declarations;
+with Asis.Definitions;
 with Asis.Elements;
 with Asis.Expressions;
 with Asis.Iterator;
@@ -26,6 +27,35 @@ package body Asis_Tool_2.Element is
       end case;
    end Name;
 
+
+   procedure Add_Element_List
+     (This           : in out Class;
+      Elements_In    : in     Asis.Element_List;
+      Dot_Label_Name : in     String;
+      List_Out       :    out a_nodes_h.Element_List)
+   is
+      Element_Count : constant Natural :=
+        Elements_In'Length;
+      IDs : anhS.Element_ID_Array_Access := new
+        anhS.Element_ID_Array (1 .. Element_Count);
+      IDs_Index : Positive := IDs'First;
+   begin
+      for Element of Elements_In loop
+         declare
+            Element_ID : constant Types.Node_ID :=
+              Asis.Set_Get.Node (Element);
+         begin
+            IDs (IDs_Index) := Interfaces.C.int (Element_ID);
+            This.Add_To_Dot_Label
+              (Dot_Label_Name & " (" & IDs_Index'Image & ")",
+               To_String (Element_ID));
+            IDs_Index := IDs_Index + 1;
+         end;
+      end loop;
+      List_Out :=
+        (length => Interfaces.C.int(Element_Count),
+         IDs    => anhS.To_Element_ID_Ptr (IDs));
+   end Add_Element_List;
 
    package Pre_Children is
 
@@ -134,22 +164,139 @@ package body Asis_Tool_2.Element is
            Asis.Elements.Definition_Kind (Element);
          A_Definition : a_nodes_h.Definition_Struct :=
            a_nodes_h.Support.Default_Definition_Struct;
-         -- Tired of typing "Asis." in front of enum values:
+
+         procedure Process_Type_Definition is
+            Type_Kind : constant Asis.Type_Kinds :=
+              Asis.Elements.Type_Kind (Element);
+
+            procedure Add_Parent_Subtype_Indication is
+               Parent_Subtype_Indication_ID : constant Types.Node_Id :=
+                 Asis.Set_Get.Node (Asis.Definitions.Parent_Subtype_Indication
+                                    (Element));
+            begin
+               State.Add_To_Dot_Label
+                 ("Parent_Subtype_Indication", To_String (Parent_Subtype_Indication_ID));
+               A_Definition.Parent_Subtype_Indication :=
+                 a_nodes_h.Node_ID (Parent_Subtype_Indication_ID);
+            end;
+
+            procedure Add_Record_Definition is
+               Record_Definition_ID : constant Types.Node_Id :=
+                 Asis.Set_Get.Node (Asis.Definitions.Record_Definition
+                                    (Element));
+            begin
+               State.Add_To_Dot_Label
+                 ("Record_Definition", To_String (Record_Definition_ID));
+               A_Definition.Record_Definition :=
+                 a_nodes_h.Node_ID (Record_Definition_ID);
+            end;
+
+            procedure Add_Implicit_Inherited_Declarations is
+            begin
+               Add_Element_List
+                 (This           => State,
+                  Elements_In    => Asis.Definitions.Implicit_Inherited_Declarations (Element),
+                  Dot_Label_Name => "Implicit_Inherited_Declarations",
+                  List_Out       => A_Definition.Implicit_Inherited_Declarations);
+            end;
+
+            procedure Add_Implicit_Inherited_Subprograms is
+            begin
+               Add_Element_List
+                 (This           => State,
+                  Elements_In    => Asis.Definitions.Implicit_Inherited_Subprograms (Element),
+                  Dot_Label_Name => "Implicit_Inherited_Subprograms",
+                  List_Out       => A_Definition.Implicit_Inherited_Subprograms);
+            end;
+
+            procedure Add_Corresponding_Parent_Subtype is
+               Corresponding_Parent_Subtype_ID : constant Types.Node_Id :=
+                 Asis.Set_Get.Node (Asis.Definitions.Corresponding_Parent_Subtype
+                                    (Element));
+            begin
+               State.Add_To_Dot_Label
+                 ("Corresponding_Parent_Subtype", To_String (Corresponding_Parent_Subtype_ID));
+               A_Definition.Corresponding_Parent_Subtype :=
+                 a_nodes_h.Node_ID (Corresponding_Parent_Subtype_ID);
+            end;
+
+            procedure Add_Corresponding_Root_Type is
+               Corresponding_Root_Type_ID : constant Types.Node_Id :=
+                 Asis.Set_Get.Node (Asis.Definitions.Corresponding_Root_Type
+                                    (Element));
+            begin
+               State.Add_To_Dot_Label
+                 ("Corresponding_Root_Type", To_String (Corresponding_Root_Type_ID));
+               A_Definition.Corresponding_Root_Type :=
+                 a_nodes_h.Node_ID (Corresponding_Root_Type_ID);
+            end;
+
+            procedure Add_Corresponding_Type_Structure is
+               Corresponding_Type_Structure_ID : constant Types.Node_Id :=
+                 Asis.Set_Get.Node (Asis.Definitions.Corresponding_Type_Structure
+                                    (Element));
+            begin
+               State.Add_To_Dot_Label
+                 ("Corresponding_Type_Structure", To_String (Corresponding_Type_Structure_ID));
+               A_Definition.Corresponding_Type_Structure :=
+                 a_nodes_h.Node_ID (Corresponding_Type_Structure_ID);
+            end;
+
+            use all type Asis.Type_Kinds;
+         begin -- Process_Type_Definition
+            State.Add_To_Dot_Label ("Type_Kind", Type_Kind'Image);
+            A_Definition.type_kind := anhS.To_Type_Kinds (Type_Kind);
+            case Type_Kind is
+               when Not_A_Type_Definition =>
+                  raise Program_Error with
+                    "Element.Pre_Children.Process_Definition.Process_Type_Definition called with: " &
+                    Type_Kind'Image;
+               when A_Derived_Type_Definition =>
+                  Add_Parent_Subtype_Indication;
+                  Add_Implicit_Inherited_Declarations;
+                  Add_Implicit_Inherited_Subprograms;
+                  Add_Corresponding_Parent_Subtype;
+                  Add_Corresponding_Root_Type;
+                  Add_Corresponding_Type_Structure;
+               when A_Derived_Record_Extension_Definition =>
+                  Add_Parent_Subtype_Indication;
+                  Add_Record_Definition;
+                  Add_Implicit_Inherited_Declarations;
+                  Add_Implicit_Inherited_Subprograms;
+                  Add_Corresponding_Parent_Subtype;
+                  Add_Corresponding_Root_Type;
+                  Add_Corresponding_Type_Structure;
+               when An_Enumeration_Type_Definition |
+                    A_Signed_Integer_Type_Definition |
+                    A_Modular_Type_Definition |
+                    A_Root_Type_Definition |
+                    A_Floating_Point_Definition |
+                    An_Ordinary_Fixed_Point_Definition |
+                    A_Decimal_Fixed_Point_Definition |
+                    An_Unconstrained_Array_Definition |
+                    A_Constrained_Array_Definition |
+                    A_Record_Type_Definition =>
+                  State.Add_Not_Implemented;
+               when A_Tagged_Record_Type_Definition =>
+                  Add_Record_Definition;
+               when An_Interface_Type_Definition |
+                    An_Access_Type_Definition =>
+                  State.Add_Not_Implemented;
+                  end case;
+         end Process_Type_Definition;
+
          use all type Asis.Definition_Kinds;
-      begin
+      begin -- Process_Definition
          State.Add_To_Dot_Label ("Definition_Kind", Definition_Kind'Image);
          A_Definition.kind := anhS.To_Definition_Kinds (Definition_Kind);
 
          case Definition_Kind is
+            when Not_A_Definition =>
+               raise Program_Error with
+                 "Element.Pre_Children.Process_Definition called with: " &
+                 Definition_Kind'Image;
             when A_Type_Definition =>
---                 declare
---                    Type_Kind : constant Asis.Type_Kinds :=
---                      Asis.Elements.Type_Kind (A_Definition);
---                 begin
---                    State.Add_To_Dot_Label ("Type_Kind", Type_Kind'Image);
---                    A_Definition.type_kind := anhS.To_Type_Kinds (Type_Kind);
---                 end;
-               State.Add_Not_Implemented;
+               Process_Type_Definition;
             when A_Constraint =>
                -- Constraint_Kinds
                State.Add_Not_Implemented;
@@ -594,29 +741,12 @@ package body Asis_Tool_2.Element is
            a_nodes_h.Support.Default_Clause_Struct;
 
          procedure Add_Clause_Names is
-            Clause_Names : constant Asis.Name_List :=
-              Asis.Clauses.Clause_Names (Element);
-            A_Name_Count : constant Natural :=
-              Clause_Names'Length;
-            IDs : anhS.Element_ID_Array_Access := new
-              anhS.Element_ID_Array (1 .. A_Name_Count);
-            A_Name_List : a_nodes_h.Name_List :=
-              (length => Interfaces.C.int(A_Name_Count),
-               IDs => anhS.To_Element_ID_Ptr (IDs));
-            IDs_Index : Positive := IDs'First;
          begin
-            for Clause_Name of Clause_Names loop
-               declare
-                  Clause_Name_ID : constant Types.Node_ID :=
-                    Asis.Set_Get.Node (Clause_Name);
-               begin
-                  IDs (IDs_Index) := Interfaces.C.int (Clause_Name_ID);
-                  State.Add_To_Dot_Label
-                    ("Clause_Name (" & IDs_Index'Image & ")",
-                     To_String (Clause_Name_ID));
-                  IDs_Index := IDs_Index + 1;
-               end;
-            end loop;
+            Add_Element_List
+              (This           => State,
+               Elements_In    => Asis.Clauses.Clause_Names (Element),
+               Dot_Label_Name => "Clause_Name",
+               List_Out       => A_Clause.Clause_Names);
          end;
 
          use all type Asis.Clause_Kinds;
@@ -629,22 +759,14 @@ package body Asis_Tool_2.Element is
                raise Program_Error with
                  "Element.Pre_Children.Process_Clause called with: " &
                  Clause_Kind'Image;
-
             when A_Use_Package_Clause =>
                Add_Clause_Names;
-               State.Add_Not_Implemented;
-
             when A_Use_Type_Clause =>
                Add_Clause_Names;
-               State.Add_Not_Implemented;
-
             when A_Use_All_Type_Clause =>
                Add_Clause_Names;
-               State.Add_Not_Implemented;
-
             when A_With_Clause =>
                Add_Clause_Names;
-
             when A_Representation_Clause =>
          --                                         -> Representation_Clause_Kinds
                State.Add_Not_Implemented;
