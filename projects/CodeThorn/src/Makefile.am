@@ -458,6 +458,11 @@ analyterix_SOURCES = \
   UDAstAttribute.h \
   analyterix.C
 
+roseonlytools: woodpecker analyterix
+
+check-roseonlytools: check-flow-insenstive
+
+
 # obsolete since integration into ROSE
 # explicit rules because of multiple bison parser
 #matcherparser.C: $(srcdir)/matcherlexer.ll $(srcdir)/matcherparser.yy
@@ -510,7 +515,7 @@ astinfo_DEPENDENCIES=
 astinfo_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 astinfo_SOURCES = astinfo.C LineColInfo.C
 
-check-astinfo:
+check-astinfo: astinfo
 	@echo "-------------------------------------------------------------"
 	./astinfo --classname --edg:no_warnings $(srcdir)/tests/bugs/bug1.C
 	@echo "-------------------------------------------------------------"
