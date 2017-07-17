@@ -19,14 +19,14 @@ package a_nodes_h.Support is
       debug_image => ICS.Null_Ptr);
 
    Default_Unit_Struct : constant Unit_Struct :=
-     (id          => Default_Node_ID,
-      kind        => Not_A_Unit,
-      the_class   => Not_A_Class,
-      origin      => Not_An_Origin,
-      full_name   => Default_chars_ptr,
-      unique_name => Default_chars_ptr,
-      text_name   => Default_chars_ptr,
-      debug_image => Default_chars_ptr);
+     (ID          => Default_Node_ID,
+      Unit_Kind   => Not_A_Unit,
+      Unit_Class  => Not_A_Class,
+      Unit_Origin => Not_An_Origin,
+      Full_Name   => Default_chars_ptr,
+      Unique_Name => Default_chars_ptr,
+      Text_Name   => Default_chars_ptr,
+      Debug_Image => Default_chars_ptr);
 
    -- Element union component default structs go here
 
@@ -39,22 +39,22 @@ package a_nodes_h.Support is
    Default_Bool         : constant Extensions.bool := 0;
 
    Default_Pragma_Struct : constant Pragma_Struct :=
-     (kind => Not_A_Pragma);
+     (Pragma_Kind => Not_A_Pragma);
 
    Default_Defining_Name_Struct : constant Defining_Name_Struct :=
-     (kind          => Not_A_Defining_Name,
-      name_image    => ICS.Null_Ptr,
-      operator_kind => Not_An_Operator);
+     (Defining_Name_Kind     => Not_A_Defining_Name,
+      Name_Image    => ICS.Null_Ptr,
+      Operator_Kind => Not_An_Operator);
 
    Default_Declaration_Struct : constant Declaration_Struct :=
-     (kind               => Not_A_Declaration,
+     (Declaration_Kind   => Not_A_Declaration,
       Trait_Kind         => Not_A_Trait,
-      origin             => Not_A_Declaration_Origin,
-      mode               => Not_A_Mode,
+      Declaration_Origin => Not_A_Declaration_Origin,
+      Mode_Kind          => Not_A_Mode,
       subprogram_default => Not_A_Default);
 
    Default_Definition_Struct : constant Definition_Struct :=
-     (Kind                            => Not_A_Definition,
+     (Definition_Kind                 => Not_A_Definition,
       Trait_Kind                      => Not_A_Trait,
       Type_Kind                       => Not_A_Type_Definition,
       Parent_Subtype_Indication       => Default_Element_ID,
@@ -71,13 +71,14 @@ package a_nodes_h.Support is
       Component_Definition_View       => Default_Element_ID);
 
    Default_Expression_Struct : constant Expression_Struct :=
-     (kind                                     => Not_An_Expression,
-      value_image                               => ICS.Null_Ptr,
-      name_image                               => ICS.Null_Ptr,
+     (Expression_Kind                          => Not_An_Expression,
+      Corresponding_Expression_Type            => Default_Element_ID,
+      Value_Image                              => ICS.Null_Ptr,
+      Name_Image                               => ICS.Null_Ptr,
       Corresponding_Name_Definition            => Default_Element_ID,
       Corresponding_Name_Definition_List       => Default_Element_List,
       Corresponding_Name_Declaration           => Default_Element_ID,
-      operator_kind                            => Not_An_Operator,
+      Operator_Kind                            => Not_An_Operator,
       Prefix                                   => Default_Element_ID,
       Corresponding_Called_Function            => Default_Element_ID,
       Is_Prefix_Call                           => Default_Bool,
@@ -86,7 +87,7 @@ package a_nodes_h.Support is
       Is_Generalized_Indexing                  => Default_Bool,
       Slice_Range                              => Default_Element_ID,
       Selector                                 => Default_Element_ID,
-      atribute_kind                            => Not_An_Attribute,
+      Atribute_Kind                            => Not_An_Attribute,
       Attribute_Designator_Identifier          => Default_Element_ID,
       Attribute_Designator_Expressions         => Default_Element_List,
       Record_Component_Associations            => Default_Element_List,
@@ -107,7 +108,7 @@ package a_nodes_h.Support is
       Iterator_Specification                   => Default_Element_ID);
 
    Default_Association_Struct : constant Association_Struct :=
-     (kind                        => Not_An_Association,
+     (Association_Kind            => Not_An_Association,
       Array_Component_Choices     => Default_Element_List,
       Record_Component_Choices    => Default_Element_List,
       Component_Expression        => Default_Element_ID,
@@ -119,7 +120,7 @@ package a_nodes_h.Support is
       Is_Defaulted_Association    => Default_Bool);
 
    Default_Statement_Struct : constant Statement_Struct :=
-     (kind                                => Not_A_Statement,
+     (Statement_Kind                      => Not_A_Statement,
       Assignment_Variable_Name            => Default_Element_ID,
       Assignment_Expression               => Default_Element_ID,
       Statement_Paths                     => Default_Element_List,
@@ -159,10 +160,10 @@ package a_nodes_h.Support is
       Qualified_Expression                => Default_Element_ID);
 
    Default_Path_Struct : constant Path_Struct :=
-     (kind => Not_A_Path);
+     (Path_Kind => Not_A_Path);
 
    Default_Clause_Struct : constant Clause_Struct :=
-     (kind         => Not_A_Clause,
+     (Clause_Kind  => Not_A_Clause,
       Trait_Kind   => Not_A_Trait,
       Clause_Names => Default_Name_List);
 
@@ -172,29 +173,29 @@ package a_nodes_h.Support is
       Handler_Statements             => Default_Element_List);
 
    Default_Element_Union : constant Element_Union :=
-     (discr        => 0,
-      dummy_member => 0);
+     (Discr        => 0,
+      Dummy_Member => 0);
 
    Default_Element_Struct : constant Element_Struct :=
-     (id              => Default_Node_ID,
-      kind            => Not_An_Element,
-      enclosing_id    => Default_Node_ID,
-      enclosing_kind  => Not_Enclosing,
-      source_location => Default_chars_ptr,
-      the_union       => Default_Element_Union);
+     (ID              => Default_Node_ID,
+      Element_Kind    => Not_An_Element,
+      Enclosing_Id    => Default_Node_ID,
+      Enclosing_Kind  => Not_Enclosing,
+      Source_Location => Default_chars_ptr,
+      The_Union       => Default_Element_Union);
 
    Default_Node_Union : constant Node_Union :=
-     (discr        => 0,
-      dummy_member => 0);
+     (Discr        => 0,
+      Dummy_member => 0);
 
    Default_Node_Struct : constant Node_Struct :=
-     (kind      => Not_A_Node,
-      the_union => Default_Node_Union);
+     (Node_kind => Not_A_Node,
+      The_Union => Default_Node_Union);
 
    Default_List_Node_Struct : constant List_Node_Struct :=
-     (node       => Default_Node_Struct,
-      next       => null,
-      next_count => 0);
+     (Node       => Default_Node_Struct,
+      Next       => null,
+      Next_count => 0);
 
 
    -- Order below is alphabetical:

@@ -191,25 +191,20 @@ package body Asis_Tool_2.Element is
            Asis.Elements.Type_Kind (Element);
 
          procedure Add_Parent_Subtype_Indication is
-            Parent_Subtype_Indication_ID : constant Types.Node_Id :=
+            ID : constant Types.Node_Id :=
               Asis.Set_Get.Node (Asis.Definitions.Parent_Subtype_Indication
                                  (Element));
          begin
-            State.Add_To_Dot_Label
-              ("Parent_Subtype_Indication", To_String (Parent_Subtype_Indication_ID));
-            A_Definition.Parent_Subtype_Indication :=
-              a_nodes_h.Node_ID (Parent_Subtype_Indication_ID);
+            State.Add_To_Dot_Label ("Parent_Subtype_Indication", To_String (ID));
+            A_Definition.Parent_Subtype_Indication := a_nodes_h.Node_ID (ID);
          end;
 
          procedure Add_Record_Definition is
-            Record_Definition_ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Definitions.Record_Definition
-                                 (Element));
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Definitions.Record_Definition (Element));
          begin
-            State.Add_To_Dot_Label
-              ("Record_Definition", To_String (Record_Definition_ID));
-            A_Definition.Record_Definition :=
-              a_nodes_h.Node_ID (Record_Definition_ID);
+            State.Add_To_Dot_Label ("Record_Definition", To_String (ID));
+            A_Definition.Record_Definition := a_nodes_h.Node_ID (ID);
          end;
 
          procedure Add_Implicit_Inherited_Declarations is
@@ -231,36 +226,30 @@ package body Asis_Tool_2.Element is
          end;
 
          procedure Add_Corresponding_Parent_Subtype is
-            Corresponding_Parent_Subtype_ID : constant Types.Node_Id :=
+            ID : constant Types.Node_Id :=
               Asis.Set_Get.Node (Asis.Definitions.Corresponding_Parent_Subtype
                                  (Element));
          begin
-            State.Add_To_Dot_Label
-              ("Corresponding_Parent_Subtype", To_String (Corresponding_Parent_Subtype_ID));
-            A_Definition.Corresponding_Parent_Subtype :=
-              a_nodes_h.Node_ID (Corresponding_Parent_Subtype_ID);
+            State.Add_To_Dot_Label ("Corresponding_Parent_Subtype", To_String (ID));
+            A_Definition.Corresponding_Parent_Subtype := a_nodes_h.Node_ID (ID);
          end;
 
          procedure Add_Corresponding_Root_Type is
-            Corresponding_Root_Type_ID : constant Types.Node_Id :=
+            ID : constant Types.Node_Id :=
               Asis.Set_Get.Node (Asis.Definitions.Corresponding_Root_Type
                                  (Element));
          begin
-            State.Add_To_Dot_Label
-              ("Corresponding_Root_Type", To_String (Corresponding_Root_Type_ID));
-            A_Definition.Corresponding_Root_Type :=
-              a_nodes_h.Node_ID (Corresponding_Root_Type_ID);
+            State.Add_To_Dot_Label ("Corresponding_Root_Type", To_String (ID));
+            A_Definition.Corresponding_Root_Type := a_nodes_h.Node_ID (ID);
          end;
 
          procedure Add_Corresponding_Type_Structure is
-            Corresponding_Type_Structure_ID : constant Types.Node_Id :=
+            ID : constant Types.Node_Id :=
               Asis.Set_Get.Node (Asis.Definitions.Corresponding_Type_Structure
                                  (Element));
          begin
-            State.Add_To_Dot_Label
-              ("Corresponding_Type_Structure", To_String (Corresponding_Type_Structure_ID));
-            A_Definition.Corresponding_Type_Structure :=
-              a_nodes_h.Node_ID (Corresponding_Type_Structure_ID);
+            State.Add_To_Dot_Label ("Corresponding_Type_Structure", To_String (ID));
+            A_Definition.Corresponding_Type_Structure := a_nodes_h.Node_ID (ID);
          end;
 
          use all type Asis.Type_Kinds;
@@ -336,23 +325,19 @@ package body Asis_Tool_2.Element is
          end;
 
          procedure Add_Lower_Bound is
-            Lower_Bound_ID : constant Types.Node_Id :=
+            ID : constant Types.Node_Id :=
               Asis.Set_Get.Node (Asis.Definitions.Lower_Bound (Element));
          begin
-            State.Add_To_Dot_Label
-              ("Lower_Bound", To_String (Lower_Bound_ID));
-            A_Definition.Lower_Bound :=
-              a_nodes_h.Node_ID (Lower_Bound_ID);
+            State.Add_To_Dot_Label ("Lower_Bound", To_String (ID));
+            A_Definition.Lower_Bound := a_nodes_h.Node_ID (ID);
          end;
 
          procedure Add_Upper_Bound is
-            Upper_Bound_ID : constant Types.Node_Id :=
+            ID : constant Types.Node_Id :=
               Asis.Set_Get.Node (Asis.Definitions.Upper_Bound (Element));
          begin
-            State.Add_To_Dot_Label
-              ("Upper_Bound", To_String (Upper_Bound_ID));
-            A_Definition.Upper_Bound :=
-              a_nodes_h.Node_ID (Upper_Bound_ID);
+            State.Add_To_Dot_Label ("Upper_Bound", To_String (ID));
+            A_Definition.Upper_Bound := a_nodes_h.Node_ID (ID);
          end;
 
          procedure Add_Range_Attribute is
@@ -419,29 +404,26 @@ package body Asis_Tool_2.Element is
            a_nodes_h.Support.Default_Definition_Struct;
 
          procedure Add_Component_Subtype_Indication is
-            Component_Subtype_Indication_ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Definitions.Component_Subtype_Indication (Element));
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Definitions.Component_Subtype_Indication
+                                 (Element));
          begin
-            State.Add_To_Dot_Label
-              ("Component_Subtype_Indication", To_String (Component_Subtype_Indication_ID));
-            A_Definition.Component_Subtype_Indication :=
-              a_nodes_h.Node_ID (Component_Subtype_Indication_ID);
+            State.Add_To_Dot_Label ("Component_Subtype_Indication", To_String (ID));
+            A_Definition.Component_Subtype_Indication := a_nodes_h.Node_ID (ID);
          end;
 
          procedure Add_Component_Definition_View is
-            Component_Definition_View_ID : constant Types.Node_Id :=
+            ID : constant Types.Node_Id :=
               Asis.Set_Get.Node (Asis.Definitions.Component_Definition_View (Element));
          begin
-            State.Add_To_Dot_Label
-              ("Component_Definition_View", To_String (Component_Definition_View_ID));
-            A_Definition.Component_Definition_View :=
-              a_nodes_h.Node_ID (Component_Definition_View_ID);
+            State.Add_To_Dot_Label ("Component_Definition_View", To_String (ID));
+            A_Definition.Component_Definition_View := a_nodes_h.Node_ID (ID);
          end;
 
          use all type Asis.Definition_Kinds;
       begin -- Process_Definition
          State.Add_To_Dot_Label ("Definition_Kind", Definition_Kind'Image);
-         A_Definition.kind := anhS.To_Definition_Kinds (Definition_Kind);
+         A_Definition.Definition_Kind := anhS.To_Definition_Kinds (Definition_Kind);
 
          case Definition_Kind is
             when Not_A_Definition =>
@@ -524,146 +506,237 @@ package body Asis_Tool_2.Element is
            Asis.Elements.Expression_Kind (Element);
          A_Expression : a_nodes_h.Expression_Struct :=
            a_nodes_h.Support.Default_Expression_Struct;
+
+         -- Supporting procedures are in alphabetical order:
+         procedure Add_Converted_Or_Qualified_Expression is
+            ID : constant Types.Node_Id := Asis.Set_Get.Node
+              (Asis.Expressions.Converted_Or_Qualified_Expression (Element));
+         begin
+            State.Add_To_Dot_Label
+              ("Converted_Or_Qualified_Expression", To_String (ID));
+            A_Expression.Converted_Or_Qualified_Expression :=
+              a_nodes_h.Node_ID (ID);
+         end;
+
+         procedure Add_Converted_Or_Qualified_Subtype_Mark is
+            ID : constant Types.Node_Id := Asis.Set_Get.Node
+              (Asis.Expressions.Converted_Or_Qualified_Subtype_Mark (Element));
+         begin
+            State.Add_To_Dot_Label
+              ("Converted_Or_Qualified_Subtype_Mark", To_String (ID));
+            A_Expression.Converted_Or_Qualified_Subtype_Mark :=
+              a_nodes_h.Node_ID (ID);
+         end;
+
+         procedure Add_Corresponding_Called_Function is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Expressions.Corresponding_Called_Function
+                                 (Element));
+         begin
+            State.Add_To_Dot_Label
+              ("Corresponding_Called_Function", To_String (ID));
+            A_Expression.Corresponding_Called_Function := a_nodes_h.Node_ID (ID);
+         end;
+
+         procedure Add_Corresponding_Expression_Type is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Expressions.Corresponding_Expression_Type
+                                 (Element));
+         begin
+            State.Add_To_Dot_Label
+              ("Corresponding_Expression_Type", To_String (ID));
+            A_Expression.Corresponding_Expression_Type := a_nodes_h.Node_ID (ID);
+         end;
+
+         procedure Add_Corresponding_Name_Declaration is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Expressions.Corresponding_Name_Declaration
+                                 (Element));
+         begin
+            State.Add_To_Dot_Label
+              ("Corresponding_Name_Declaration", To_String (ID));
+            A_Expression.Corresponding_Name_Declaration := a_nodes_h.Node_ID (ID);
+         end;
+
+         procedure Add_Corresponding_Name_Definition is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Expressions.Corresponding_Name_Definition
+                                 (Element));
+         begin
+            State.Add_To_Dot_Label
+              ("Corresponding_Name_Definition", To_String (ID));
+            A_Expression.Corresponding_Name_Definition := a_nodes_h.Node_ID (ID);
+         end;
+
+         procedure Add_Corresponding_Name_Definition_List is
+         begin
+            Add_Element_List
+              (This           => State,
+               Elements_In    => Asis.Expressions.
+                 Corresponding_Name_Definition_List (Element),
+               Dot_Label_Name => "Corresponding_Name_Definition_List",
+               List_Out       => A_Expression.Corresponding_Name_Definition_List);
+         end;
+
+         procedure Add_Function_Call_Parameters is
+         begin
+            Add_Element_List
+              (This           => State,
+               Elements_In    => Asis.Expressions.
+                 Function_Call_Parameters (Element),
+               Dot_Label_Name => "Function_Call_Parameters",
+               List_Out       => A_Expression.Function_Call_Parameters);
+         end;
+
+         procedure Add_Name_Image is
+            Name_Image : constant Wide_String :=
+              Asis.Expressions.Name_Image (Element);
+         begin
+            State.Add_To_Dot_Label ("Name_Image", To_String (Name_Image));
+            A_Expression.Name_Image := To_Chars_Ptr(Name_Image);
+         end;
+
+         procedure Add_Prefix is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Expressions.Prefix (Element));
+         begin
+            State.Add_To_Dot_Label ("Prefix", To_String (ID));
+            A_Expression.Prefix := a_nodes_h.Node_ID (ID);
+         end;
+
+         procedure Add_Selector is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Expressions.Selector (Element));
+         begin
+            State.Add_To_Dot_Label ("Selector", To_String (ID));
+            A_Expression.Selector := a_nodes_h.Node_ID (ID);
+         end;
+
+         procedure Add_Subpool_Name is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Expressions.Subpool_Name (Element));
+         begin
+            State.Add_To_Dot_Label ("Subpool_Name", To_String (ID));
+            A_Expression.Subpool_Name := a_nodes_h.Node_ID (ID);
+         end;
+
+         procedure Add_Value_Image is
+            Value_Image : constant Wide_String :=
+              Asis.Expressions.Value_Image (Element);
+         begin
+            State.Add_To_Dot_Label ("Value_Image", To_String (Value_Image));
+            A_Expression.Value_Image := To_Chars_Ptr(Value_Image);
+         end;
+
          use all type Asis.Expression_Kinds;
       begin
          State.Add_To_Dot_Label ("Expression_Kind", Expression_Kind'Image);
-         A_Expression.kind := anhS.To_Expression_Kinds (Expression_Kind);
+         A_Expression.Expression_Kind := anhS.To_Expression_Kinds (Expression_Kind);
          --        An_Expression         -> Expression_Kinds
          --                                         -> Operator_Kinds
          --                                         -> Attribute_Kinds
          --
-         -- Kind ordering and grouping is from Asis.Expression_Kinds.
-         -- "when" comment is Ada LRM section.
+         Add_Corresponding_Expression_Type;
+
          case Expression_Kind is
-            when Not_An_Expression =>                         -- An unexpected element
+            when Not_An_Expression =>
                raise Program_Error with
                  "Element.Pre_Children.Process_Expression called with: " &
                  Expression_Kind'Image;
-            when A_Box_Expression =>                          --  Ada 2005
-                                                              --  4.3.1(4), 4.3.3(3,6)
+            when A_Box_Expression =>
+               -- No more info:
                null;
-               -- No more info.
-
-            when An_Integer_Literal |                         -- 2.4
-                 A_Real_Literal |                             -- 2.4.1
-                 A_String_Literal =>                          -- 2.6
-               declare
-                  Value_Image : constant Wide_String :=
-                    Asis.Expressions.Value_Image (Element);
-               begin
-                  State.Add_To_Dot_Label ("Value_Image", Value_Image);
-                  A_Expression.value_image := To_Chars_Ptr (Value_Image);
-               end;
-
-            when An_Identifier |                              -- 4.1
-                 An_Operator_Symbol |                         -- 4.1
-                 A_Character_Literal |                        -- 4.1
-                 An_Enumeration_Literal =>                    -- 4.1
-               State.Add_To_Dot_Label ("Name_Image",
-                                    '"' & Asis.Expressions.Name_Image (Element) & '"');
-               -- Name_Image
-               -- Corresponding_Name_Definition
-               -- Corresponding_Name_Definition_List
-               -- Corresponding_Name_Declaration
-               -- Subpool_Name
-               case Expression_Kind is
-                  when An_Operator_Symbol =>
+            when An_Integer_Literal =>
+               Add_Value_Image;
+            when A_Real_Literal =>
+               Add_Value_Image;
+            when A_String_Literal =>
+               Add_Value_Image;
+            when An_Identifier =>
+               Add_Name_Image;
+               Add_Corresponding_Name_Definition;
+               Add_Corresponding_Name_Definition_List;
+               Add_Corresponding_Name_Declaration;
+            when An_Operator_Symbol =>
+               Add_Name_Image;
+               Add_Corresponding_Name_Definition;
+               Add_Corresponding_Name_Definition_List;
+               Add_Corresponding_Name_Declaration;
                      State.Add_To_Dot_Label ("Operator_Kind",
                                           Asis.Elements.Operator_Kind (Element)'Image);
-                  when others =>
-                     null;
-               end case;
-            when An_Explicit_Dereference =>                   -- 4.1
+            when A_Character_Literal =>
+               Add_Name_Image;
+               Add_Corresponding_Name_Definition;
+               Add_Corresponding_Name_Definition_List;
+               Add_Corresponding_Name_Declaration;
+            when An_Enumeration_Literal =>
+               Add_Name_Image;
+               Add_Corresponding_Name_Definition;
+               Add_Corresponding_Name_Definition_List;
+               Add_Corresponding_Name_Declaration;
+            when An_Explicit_Dereference =>
                State.Add_Not_Implemented;
-               -- Prefix
-            when A_Function_Call =>                           -- 4.1
+            when A_Function_Call =>
+               Add_Prefix;
+               Add_Corresponding_Called_Function;
+               Add_Function_Call_Parameters;
+            when An_Indexed_Component =>
                State.Add_Not_Implemented;
-               -- Prefix
-               -- Is_Prefix_Call
-               -- Corresponding_Called_Function
-               -- Function_Call_Parameters
-
-            when An_Indexed_Component =>                      -- 4.1.1
+            when A_Slice =>
                State.Add_Not_Implemented;
-               -- Prefix
-               -- Index_Expressions
-               -- Corresponding_Called_Function (Is_Generalized_Indexing)  --ASIS 2012
-               -- Is_Generalized_Indexing
-            when A_Slice =>                                   -- 4.1.2
-               State.Add_Not_Implemented;
-               -- Prefix
-               -- Slice_Range
-            when A_Selected_Component =>                      -- 4.1.3
-               State.Add_Not_Implemented;
-               -- Prefix
-               -- Selector
-            when An_Attribute_Reference =>                    -- 4.1.4  -> Attribute_Kinds
+            when A_Selected_Component =>
+               Add_Prefix;
+               Add_Selector;
+            when An_Attribute_Reference =>
                State.Add_To_Dot_Label ("Attribute_Kind",
                                     Asis.Elements.Attribute_Kind (Element)'Image);
                -- Prefix
                -- Attribute_Designator_Identifier
                -- Attribute_Designator_Expressions
-
-            when A_Record_Aggregate =>                        -- 4.3
                State.Add_Not_Implemented;
-               -- Record_Component_Associations
-            when An_Extension_Aggregate =>                    -- 4.3
+            when A_Record_Aggregate =>
                State.Add_Not_Implemented;
-               -- Record_Component_Associations
-               -- Extension_Aggregate_Expression
-            when A_Positional_Array_Aggregate |               -- 4.3
-                 A_Named_Array_Aggregate =>                   -- 4.3
+            when An_Extension_Aggregate =>
                State.Add_Not_Implemented;
-               -- Array_Component_Associations
-
-            when An_And_Then_Short_Circuit |                  -- 4.4
-                 An_Or_Else_Short_Circuit =>                  -- 4.4
+            when A_Positional_Array_Aggregate =>
                State.Add_Not_Implemented;
-               -- Short_Circuit_Operation_Left_Expression
-               -- Short_Circuit_Operation_Right_Expression
-
-            when An_In_Membership_Test |                      -- 4.4  Ada 2012
-                 A_Not_In_Membership_Test =>                  -- 4.4  Ada 2012
+            when A_Named_Array_Aggregate =>
                State.Add_Not_Implemented;
-               -- Membership_Test_Expression
-               -- Membership_Test_Choices
-
-            when A_Null_Literal =>                            -- 4.4
+            when An_And_Then_Short_Circuit =>
+               State.Add_Not_Implemented;
+            when An_Or_Else_Short_Circuit =>
+               State.Add_Not_Implemented;
+            when An_In_Membership_Test =>
+               State.Add_Not_Implemented;
+            when A_Not_In_Membership_Test =>
+               State.Add_Not_Implemented;
+            when A_Null_Literal =>
+               -- No more information:
                null;
-               -- No more info.
-            when A_Parenthesized_Expression =>                -- 4.4
                State.Add_Not_Implemented;
-               -- Expression_Parenthesized
-            when A_Raise_Expression =>                        -- 4.4 Ada 2012 (AI12-0022-1)
-               -- No subprograms in Asis.Elements for this element type.  Should we call something else?
+            when A_Parenthesized_Expression =>
                State.Add_Not_Implemented;
-
-            when A_Type_Conversion =>                         -- 4.6
+            when A_Raise_Expression =>
                State.Add_Not_Implemented;
-               -- Converted_Or_Qualified_Subtype_Mark
-               -- Converted_Or_Qualified_Expression
-            when A_Qualified_Expression =>                    -- 4.7
+            when A_Type_Conversion =>
+               Add_Converted_Or_Qualified_Subtype_Mark;
+               Add_Converted_Or_Qualified_Expression;
+            when A_Qualified_Expression =>
                State.Add_Not_Implemented;
-               -- Converted_Or_Qualified_Subtype_Mark
-               -- Converted_Or_Qualified_Expression
-               -- Predicate
-
-            when An_Allocation_From_Subtype =>                -- 4.8
+            when An_Allocation_From_Subtype =>
+               Add_Subpool_Name;
                State.Add_Not_Implemented;
-               -- Allocator_Subtype_Indication
-               -- Subpool_Name
-            when An_Allocation_From_Qualified_Expression =>   -- 4.8
+            when An_Allocation_From_Qualified_Expression =>
+               Add_Subpool_Name;
                State.Add_Not_Implemented;
-               -- Allocator_Qualified_Expression
-               -- Subpool_Name
-            when A_Case_Expression |                          -- Ada 2012
-                 An_If_Expression =>                          -- Ada 2012
+            when A_Case_Expression =>
                State.Add_Not_Implemented;
-               -- Expression_Paths
-            when A_For_All_Quantified_Expression |            -- Ada 2012
-                 A_For_Some_Quantified_Expression =>          -- Ada 2012
+            when An_If_Expression =>
                State.Add_Not_Implemented;
-               -- Iterator_Specification
+            when A_For_All_Quantified_Expression =>
+               State.Add_Not_Implemented;
+            when A_For_Some_Quantified_Expression =>
+               State.Add_Not_Implemented;
          end case;
       end Process_Expression;
 
@@ -675,24 +748,23 @@ package body Asis_Tool_2.Element is
            Asis.Elements.Association_Kind (Element);
          A_Association : a_nodes_h.Association_Struct :=
            a_nodes_h.Support.Default_Association_Struct;
+
          procedure Add_Formal_Parameter is
-            Formal_Parameter : constant Asis.Element :=
-              Asis.Expressions.Formal_Parameter (Element);
-            Formal_Parameter_ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Formal_Parameter);
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Expressions.Formal_Parameter (Element));
          begin
-            State.Add_To_Dot_Label ("Formal_Parameter", To_String (Formal_Parameter_ID));
-            A_Association.Formal_Parameter := a_nodes_h.Node_ID (Formal_Parameter_ID);
+            State.Add_To_Dot_Label ("Formal_Parameter", To_String (ID));
+            A_Association.Formal_Parameter := a_nodes_h.Node_ID (ID);
          end;
+
          procedure Add_Actual_Parameter is
-            Actual_Parameter : constant Asis.Element :=
-              Asis.Expressions.Actual_Parameter (Element);
-            Actual_Parameter_ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Actual_Parameter);
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Expressions.Actual_Parameter (Element));
          begin
-            State.Add_To_Dot_Label ("Actual_Parameter", To_String (Actual_Parameter_ID));
-            A_Association.Actual_Parameter := a_nodes_h.Node_ID (Actual_Parameter_ID);
+            State.Add_To_Dot_Label ("Actual_Parameter", To_String (ID));
+            A_Association.Actual_Parameter := a_nodes_h.Node_ID (ID);
          end;
+
          procedure Add_Is_Defaulted_Association is
             Is_Defaulted_Association : Boolean :=
               Asis.Expressions.Is_Defaulted_Association (Element);
@@ -702,19 +774,18 @@ package body Asis_Tool_2.Element is
             A_Association.Is_Defaulted_Association :=
               a_nodes_h.Support.To_bool (Is_Defaulted_Association);
          end;
+
          procedure Add_Is_Normalized is
-            Is_Normalized : Boolean :=
-              Asis.Expressions.Is_Normalized (Element);
+            Is_Normalized : Boolean := Asis.Expressions.Is_Normalized (Element);
          begin
-            State.Add_To_Dot_Label
-              ("Is_Normalized", Is_Normalized'Image);
-            A_Association.Is_Normalized :=
-              a_nodes_h.Support.To_bool (Is_Normalized);
+            State.Add_To_Dot_Label ("Is_Normalized", Is_Normalized'Image);
+            A_Association.Is_Normalized := a_nodes_h.Support.To_bool (Is_Normalized);
          end;
+
          use all type Asis.Association_Kinds;
       begin
          State.Add_To_Dot_Label ("Association_Kind", Association_Kind'Image);
-         A_Association.kind := anhS.To_Association_Kinds (Association_Kind);
+         A_Association.Association_Kind := anhS.To_Association_Kinds (Association_Kind);
          case Association_Kind is
             when Not_An_Association =>                         -- An unexpected element
                raise Program_Error with
@@ -748,7 +819,7 @@ package body Asis_Tool_2.Element is
          end case;
 
 
-         State.A_Element.kind := a_nodes_h.An_Association;
+         State.A_Element.Element_Kind := a_nodes_h.An_Association;
          State.A_Element.the_union.association := A_Association;
       end Process_Association;
 
@@ -763,7 +834,7 @@ package body Asis_Tool_2.Element is
          use all type Asis.Statement_Kinds;
       begin
          State.Add_To_Dot_Label ("Statement_Kind", Statement_Kind'Image);
-         A_Statement.kind := anhS.To_Statement_Kinds (Statement_Kind);
+         A_Statement.Statement_Kind := anhS.To_Statement_Kinds (Statement_Kind);
 
          -- All Statements can have:
          -- Label_Names
@@ -902,7 +973,7 @@ package body Asis_Tool_2.Element is
                -- Qualified_Expression
          end case;
 
-         State.A_Element.kind := a_nodes_h.A_Statement;
+         State.A_Element.Element_Kind := a_nodes_h.A_Statement;
          State.A_Element.the_union.statement := A_Statement;
       end Process_Statement;
 
@@ -937,7 +1008,7 @@ package body Asis_Tool_2.Element is
          use all type Asis.Clause_Kinds;
       begin
          State.Add_To_Dot_Label ("Clause_Kind", Clause_Kind'Image);
-         A_Clause.kind := anhS.To_Clause_Kinds (Clause_Kind);
+         A_Clause.Clause_Kind := anhS.To_Clause_Kinds (Clause_Kind);
 
          case Clause_Kind is
             when Not_A_Clause =>
@@ -960,7 +1031,7 @@ package body Asis_Tool_2.Element is
                State.Add_Not_Implemented;
          end case;
 
-         State.A_Element.kind := a_nodes_h.A_Clause;
+         State.A_Element.Element_Kind := a_nodes_h.A_Clause;
          State.A_Element.the_union.clause := A_Clause;
       end Process_Clause;
 
@@ -972,13 +1043,13 @@ package body Asis_Tool_2.Element is
            a_nodes_h.Support.Default_Exception_Handler_Struct;
 
          procedure Add_Choice_Parameter_Specification is
-            Choice_Parameter_Specification_ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Statements.Choice_Parameter_Specification (Element));
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Statements.Choice_Parameter_Specification
+                                 (Element));
          begin
-            State.Add_To_Dot_Label
-              ("Choice_Parameter_Specification", To_String (Choice_Parameter_Specification_ID));
+            State.Add_To_Dot_Label ("Choice_Parameter_Specification", To_String (ID));
             A_Exception_Handler.Choice_Parameter_Specification :=
-              a_nodes_h.Node_ID (Choice_Parameter_Specification_ID);
+              a_nodes_h.Node_ID (ID);
          end;
 
          procedure Add_Exception_Choices is
@@ -1003,7 +1074,7 @@ package body Asis_Tool_2.Element is
          Add_Choice_Parameter_Specification;
          Add_Exception_Choices;
          Add_Handler_Statements;
-         State.A_Element.kind := a_nodes_h.An_Exception_Handler;
+         State.A_Element.Element_Kind := a_nodes_h.An_Exception_Handler;
          State.A_Element.the_union.exception_handler := A_Exception_Handler;
       end Process_Exception_Handler;
 
@@ -1098,7 +1169,7 @@ package body Asis_Tool_2.Element is
             State.A_Element.id := a_nodes_h.Node_ID (Element_Id);
 
             State.Add_To_Dot_Label ("Element_Kind", Element_Kind'Image);
-            State.A_Element.kind := anhS.To_Element_Kinds (Element_Kind);
+            State.A_Element.Element_Kind := anhS.To_Element_Kinds (Element_Kind);
 
             State.Add_To_Dot_Label ("ID", To_String (Element_Id));
             -- ID is in the Dot node twice, but not in the a_node.
@@ -1135,7 +1206,7 @@ package body Asis_Tool_2.Element is
             State.Outputs.Graph.Append_Stmt
               (new Dot.Node_Stmt.Class'(State.Dot_Node));
 
-            A_Node.kind := a_nodes_h.An_Element_Node;
+            A_Node.Node_Kind := a_nodes_h.An_Element_Node;
             A_Node.the_union.element := State.A_Element;
             State.Outputs.A_Nodes.Push (A_Node);
 

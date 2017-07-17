@@ -20,11 +20,11 @@ package body Asis_Tool_2.Context is
         a_nodes_h.Support.Default_Node_Struct;
       use Asis.Ada_Environments;
    begin
-      Context.name := To_Chars_Ptr (Name (Asis_Context));
-      Context.parameters := To_Chars_Ptr (Parameters (Asis_Context));
-      Context.debug_image := To_Chars_Ptr (Debug_Image (Asis_Context));
+      Context.Name := To_Chars_Ptr (Name (Asis_Context));
+      Context.Parameters := To_Chars_Ptr (Parameters (Asis_Context));
+      Context.Debug_Image := To_Chars_Ptr (Debug_Image (Asis_Context));
 
-      Node.kind := a_nodes_h.A_Context_Node;
+      Node.Node_Kind := a_nodes_h.A_Context_Node;
       Node.the_union.context := Context;
       A_Nodes.Push (Node);
    end;

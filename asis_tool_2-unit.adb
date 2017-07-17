@@ -133,20 +133,20 @@ package body Asis_Tool_2.Unit is
       A_Unit.unique_name := To_Chars_Ptr (Unique_Name);
 
       Dot_Label.Add_Eq_Row ("Unit_Class", Unit_Class'Image);
-      A_Unit.the_class := anhS.To_Unit_Classes (Unit_Class);
+      A_Unit.Unit_Class := anhS.To_Unit_Classes (Unit_Class);
 
       Dot_Label.Add_Eq_Row ("Unit_Full_Name", To_String (Unit_Full_Name));
       A_Unit.full_name := To_Chars_Ptr (Unit_Full_Name);
 
       Dot_Label.Add_Eq_Row ("Unit_Kind", Unit_Kind'Image);
-      A_Unit.kind := anhS.To_Unit_Kinds (Unit_Kind);
+      A_Unit.Unit_Kind := anhS.To_Unit_Kinds (Unit_Kind);
 
       Dot_Label.Add_Eq_Row ("Unit_Origin", Unit_Origin'Image);
-      A_Unit.origin := anhS.To_Unit_Origins (Unit_Origin);
+      A_Unit.Unit_Origin := anhS.To_Unit_Origins (Unit_Origin);
 
       Dot_Node.Add_Label (Dot_Label);
       Outputs.Graph.Append_Stmt (new Dot.Node_Stmt.Class'(Dot_Node));
-      A_Node.kind := a_nodes_h.A_Unit_Node;
+      A_Node.Node_Kind := a_nodes_h.A_Unit_Node;
       A_Node.the_union.unit := A_Unit;
       Outputs.A_Nodes.Push (A_Node);
    end;

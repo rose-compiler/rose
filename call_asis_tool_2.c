@@ -17,7 +17,7 @@ int main (int argc, char *argv[])
   if (head_node == 0) {
     printf ("c_main: Returned NO elements.\n");
   } else {
-    printf ("c_main: Returned %i elements.\n", head_node->next_count + 1);
+    printf ("c_main: Returned %i elements.\n", head_node->Next_Count + 1);
   }
 
   // Skipping adafinal for now because it hangs in
