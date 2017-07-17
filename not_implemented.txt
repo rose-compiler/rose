@@ -1,8 +1,3 @@
 Element_Kind => "A_DEFINING_NAME"
-Defining_Name_Kind => "A_DEFINING_IDENTIFIER"
-
-Element_Kind => "A_DEFINITION"
-Definition_Kind => "A_TASK_DEFINITION"
-Definition_Kind => "A_SUBTYPE_INDICATION"
-Definition_Kind => "A_RECORD_DEFINITION"
+ Defining_Name_Kind => "A_DEFINING_IDENTIFIER"
 

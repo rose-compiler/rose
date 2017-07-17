@@ -420,6 +420,69 @@ package body Asis_Tool_2.Element is
             A_Definition.Component_Definition_View := a_nodes_h.Node_ID (ID);
          end;
 
+         procedure Add_Implicit_Components is
+            -- Not implemented in ASIS for GNAT GPL 2017 (20170515-63)GNAT GPL 2017 (20170515-63):
+            Implemented_In_Asis : constant Boolean := False;
+         begin
+            if Implemented_In_Asis then
+               Add_Element_List
+                 (This           => State,
+                  Elements_In    => Asis.Definitions.Implicit_Components (Element),
+                  Dot_Label_Name => "Implicit_Components",
+                  List_Out       => A_Definition.Implicit_Components);
+            end if;
+         end;
+
+         procedure Add_Is_Private_Present is
+            Value : Boolean := Asis.Definitions.Is_Private_Present (Element);
+         begin
+            State.Add_To_Dot_Label ("Is_Private_Present", Value'Image);
+            A_Definition.Is_Private_Present := a_nodes_h.Support.To_bool (Value);
+         end;
+
+         procedure Add_Private_Part_Items is
+         begin
+            Add_Element_List
+              (This           => State,
+               Elements_In    => Asis.Definitions.Private_Part_Items (Element),
+               Dot_Label_Name => "Private_Part_Items",
+               List_Out       => A_Definition.Private_Part_Items);
+         end;
+
+         procedure Add_Subtype_Constraint is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Definitions.Subtype_Constraint (Element));
+         begin
+            State.Add_To_Dot_Label ("Subtype_Constraint", To_String (ID));
+            A_Definition.Subtype_Constraint := a_nodes_h.Node_ID (ID);
+         end;
+
+         procedure Add_Subtype_Mark is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Definitions.Subtype_Mark (Element));
+         begin
+            State.Add_To_Dot_Label ("Subtype_Mark", To_String (ID));
+            A_Definition.Subtype_Mark := a_nodes_h.Node_ID (ID);
+         end;
+
+         procedure Add_Record_Components is
+         begin
+            Add_Element_List
+              (This           => State,
+               Elements_In    => Asis.Definitions.Record_Components (Element),
+               Dot_Label_Name => "Record_Components",
+               List_Out       => A_Definition.Record_Components);
+         end;
+
+         procedure Add_Visible_Part_Items is
+         begin
+            Add_Element_List
+              (This           => State,
+               Elements_In    => Asis.Definitions.Visible_Part_Items (Element),
+               Dot_Label_Name => "Visible_Part_Items",
+               List_Out       => A_Definition.Visible_Part_Items);
+         end;
+
          use all type Asis.Definition_Kinds;
       begin -- Process_Definition
          State.Add_To_Dot_Label ("Definition_Kind", Definition_Kind'Image);
@@ -430,60 +493,85 @@ package body Asis_Tool_2.Element is
                raise Program_Error with
                  "Element.Pre_Children.Process_Definition called with: " &
                  Definition_Kind'Image;
+
             when A_Type_Definition =>
                Process_Type_Definition (State, Element, A_Definition);
+
             when A_Subtype_Indication =>
                A_Definition.Trait_Kind := Add_Trait_Kind (Element, State);
-               State.Add_Not_Implemented;
+               Add_Subtype_Mark;
+               Add_Subtype_Constraint;
+
             when A_Constraint =>
                Process_Constraint (State, Element, A_Definition);
+
             when A_Component_Definition =>
                A_Definition.Trait_Kind := Add_Trait_Kind (Element, State);
                Add_Component_Subtype_Indication;
                Add_Component_Definition_View;
+
             when A_Discrete_Subtype_Definition =>
                -- Discrete_Range_Kinds
                State.Add_Not_Implemented;
+
             when A_Discrete_Range =>
                -- Discrete_Range_Kinds
                State.Add_Not_Implemented;
+
             when An_Unknown_Discriminant_Part =>
                null;
+
             when A_Known_Discriminant_Part =>
                State.Add_Not_Implemented;
+
             when A_Record_Definition =>
-               State.Add_Not_Implemented;
+               Add_Record_Components;
+               Add_Implicit_Components;
+
             when A_Null_Record_Definition =>
                null;
             when A_Null_Component =>
                null;
+
             when A_Variant_Part =>
                State.Add_Not_Implemented;
+
             when A_Variant =>
                State.Add_Not_Implemented;
+
             when An_Others_Choice =>
                State.Add_Not_Implemented;
+
             when An_Access_Definition =>
                A_Definition.Trait_Kind := Add_Trait_Kind (Element, State);
                -- Access_Definition_Kinds
                State.Add_Not_Implemented;
+
             when A_Private_Type_Definition =>
                A_Definition.Trait_Kind := Add_Trait_Kind (Element, State);
                State.Add_Not_Implemented;
+
             when A_Tagged_Private_Type_Definition =>
                A_Definition.Trait_Kind := Add_Trait_Kind (Element, State);
                State.Add_Not_Implemented;
+
             when A_Private_Extension_Definition =>
                A_Definition.Trait_Kind := Add_Trait_Kind (Element, State);
                State.Add_Not_Implemented;
+
             when A_Task_Definition =>
-               State.Add_Not_Implemented;
+               Add_Visible_Part_Items;
+               Add_Private_Part_Items;
+               Add_Is_Private_Present;
+
             when A_Protected_Definition =>
                State.Add_Not_Implemented;
+
             when A_Formal_Type_Definition =>
                -- Formal_Type_Kinds
                -- some Trait_Kinds
                State.Add_Not_Implemented;
+
             when An_Aspect_Specification =>
                State.Add_Not_Implemented;
          end case;

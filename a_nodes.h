@@ -450,8 +450,11 @@ enum Definition_Kinds {
 ///////////////////////////////////////////////////////////////////////////////
 // BEGIN Definition types
 ///////////////////////////////////////////////////////////////////////////////
+typedef Element_ID   Constraint_ID;
 typedef Element_ID   Definition_ID;
 typedef Element_List Definition_ID_List;
+typedef Element_List Declarative_Item_ID_List;
+typedef Element_List Record_Component_List;
 
 enum Type_Kinds {
   Not_A_Type_Definition,                 // An unexpected element
@@ -988,9 +991,23 @@ struct Definition_Struct {
   // A_Simple_Expression_Range
   Expression_ID         Lower_Bound;
   Expression_ID         Upper_Bound;
+  // A_Subtype_Indication
+  // A_Discrete_Subtype_Definition (See Discrete_Range_Kinds)
+  // A_Discrete_Range (See Discrete_Range_Kinds)
+  Expression_ID         Subtype_Mark;
+  Constraint_ID         Subtype_Constraint;
   // A_Component_Definition
   Subtype_Indication_ID Component_Subtype_Indication;
   Definition_ID         Component_Definition_View;
+  
+  // A_Record_Definition
+  // A_Variant
+  Record_Component_List Record_Components;
+  Record_Component_List Implicit_Components;
+  
+  Declarative_Item_ID_List Visible_Part_Items;
+  Declarative_Item_ID_List Private_Part_Items;
+  bool                     Is_Private_Present;
   // TODO: not done yet
 };
 

@@ -67,8 +67,16 @@ package a_nodes_h.Support is
       Constraint_Kind                 => Not_A_Constraint,
       Lower_Bound                     => Default_Element_ID,
       Upper_Bound                     => Default_Element_ID,
+      Subtype_Mark                    => Default_Element_ID,
+      Subtype_Constraint              => Default_Element_ID,
       Component_Subtype_Indication    => Default_Element_ID,
-      Component_Definition_View       => Default_Element_ID);
+      Component_Definition_View       => Default_Element_ID,
+      Record_Components               => Default_Element_List,
+      Implicit_Components             => Default_Element_List,
+      Visible_Part_Items              => Default_Element_List,
+      Private_Part_Items              => Default_Element_List,
+      Is_Private_Present              => Default_Bool
+     );
 
    Default_Expression_Struct : constant Expression_Struct :=
      (Expression_Kind                          => Not_An_Expression,
