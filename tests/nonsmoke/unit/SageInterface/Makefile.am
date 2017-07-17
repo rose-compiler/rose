@@ -25,20 +25,21 @@ include $(nonsmoke_specimens_openmp_path)/Specimens.inc
 nonsmoke_specimens_C_tests_path=$(top_srcdir)/tests/nonsmoke/functional/CompileTests/C_tests
 include $(nonsmoke_specimens_C_tests_path)/Specimens.inc
 
-# input for genericCoverage()
+# input for genericCoverage(), collectFunctionSideEffect.C
 nonsmoke_specimens_Cxx_tests_path=$(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests
 include $(nonsmoke_specimens_Cxx_tests_path)/Specimens.inc
-
 
 ###############################################################################
 # A checker to test OmpSupport::getDataSharingAttribute()
 
-noinst_PROGRAMS += getDataSharingAttribute get_C_array_dimensions genericCoverage
+noinst_PROGRAMS += getDataSharingAttribute get_C_array_dimensions genericCoverage collectFunctionSideEffect
 getDataSharingAttribute_SOURCES = getDataSharingAttribute.C
 
 get_C_array_dimensions_SOURCES = get_C_array_dimensions.C
 
 genericCoverage_SOURCES = genericCoverage.C
+
+collectFunctionSideEffect_SOURCES = collectFunctionSideEffect.C
 
 # nonsmoke_getDataSharingAttribute_c defines the set of c files to test getDataSharingAttribute
 
@@ -46,17 +47,20 @@ genericCoverage_SOURCES = genericCoverage.C
 rose_nonsmoke_getDataSharingAttribute_c = $(addprefix rose_, ${nonsmoke_getDataSharingAttribute_c})
 rose_nonsmoke_get_C_array_dimensions_c = $(addprefix rose_, ${nonsmoke_get_C_array_dimensions_c})
 rose_nonsmoke_genericCoverage_c = $(addprefix rose_, ${nonsmoke_genericCoverage_c})
+rose_nonsmoke_collectFunctionSideEffect_cpp= $(addprefix rose_, ${nonsmoke_almost_all_cpp})
 
 # Output to .output file
 nonsmoke_getDataSharingAttribute_c_output = $(addsuffix .output, ${nonsmoke_getDataSharingAttribute_c})
 nonsmoke_get_C_array_dimensions_c_output = $(addsuffix .get_C_array_dimensions.output, ${nonsmoke_get_C_array_dimensions_c})
 nonsmoke_genericCoverage_c_output = $(addsuffix .genericCoverage.output, ${nonsmoke_genericCoverage_c})
+nonsmoke_collectFunctionSideEffect_cpp_output = $(addsuffix .collectFunctionSideEffect.output, ${nonsmoke_almost_all_cpp})
 
 # small set to be verified for now
 # It could be a subset of all the tests
 nonsmoke_getDataSharingAttribute_c_output_verify = $(addsuffix .output, ${nonsmoke_getDataSharingAttribute_c_verify})
 nonsmoke_get_C_array_dimensions_c_output_verify = $(addsuffix .get_C_array_dimensions.output, ${nonsmoke_get_C_array_dimensions_c_verify})
 nonsmoke_genericCoverage_c_output_verify = $(addsuffix .genericCoverage.output, ${nonsmoke_genericCoverage_c_verify})
+nonsmoke_collectFunctionSideEffect_cpp_output_verify = $(addsuffix .collectFunctionSideEffect.output, ${nonsmoke_almost_all_cpp})
 
 #$(rose_nonsmoke_getDataSharingAttribute_c): $(nonsmoke_specimens_openmp_path)/$(@:rose_%=%) getDataSharingAttribute
 #	$(VALGRIND) ./getDataSharingAttribute $(TEST_CXXFLAGS) -c -rose:openmp:ast_only $(nonsmoke_specimens_openmp_path)/$(@:rose_%=%) > $(@:rose_%=%).output
@@ -71,6 +75,9 @@ $(nonsmoke_get_C_array_dimensions_c_output): get_C_array_dimensions
 $(nonsmoke_genericCoverage_c_output): genericCoverage
 	echo $(VALGRIND) ./genericCoverage $(TEST_CXXFLAGS) -c $(nonsmoke_specimens_Cxx_tests_path)/$(@:%.genericCoverage.output=%)
 	$(VALGRIND) ./genericCoverage $(TEST_CXXFLAGS) -c $(nonsmoke_specimens_Cxx_tests_path)/$(@:%.genericCoverage.output=%)
+
+$(nonsmoke_collectFunctionSideEffect_cpp_output): collectFunctionSideEffect
+	$(VALGRIND) ./collectFunctionSideEffect $(TEST_CXXFLAGS) -c $(nonsmoke_specimens_Cxx_tests_path)/$(@:%.collectFunctionSideEffect.output=%)
 
 # the diff files .output.diff
 nonsmoke_getDataSharingAttribute_c_output_diff = $(addsuffix .diff, ${nonsmoke_getDataSharingAttribute_c_output_verify})
@@ -106,7 +113,8 @@ genericCoverage_diff_check: $(nonsmoke_genericCoverage_c_output_diff)
 if !ROSE_USING_GCC_VERSION_LATER_6_1
 check-local: $(nonsmoke_getDataSharingAttribute_c_output) $(nonsmoke_getDataSharingAttribute_c_output_diff) \
              $(nonsmoke_get_C_array_dimensions_c_output) $(nonsmoke_get_C_array_dimensions_c_output_diff) \
-             $(nonsmoke_genericCoverage_c_output) $(nonsmoke_genericCoverage_c_output_diff)
+             $(nonsmoke_genericCoverage_c_output) $(nonsmoke_genericCoverage_c_output_diff) \
+	     $(nonsmoke_collectFunctionSideEffect_cpp_output)
 else
 # DQ (4/5/2017): GNU 6.1 includes language features that this test does not support.
 check-local: $(nonsmoke_getDataSharingAttribute_c_output) (nonsmoke_getDataSharingAttribute_c_output_diff) \
@@ -117,5 +125,6 @@ clean-local:
 	rm -rf $(rose_nonsmoke_getDataSharingAttribute_c) $(nonsmoke_getDataSharingAttribute_c_output) $(nonsmoke_getDataSharingAttribute_c_output_diff)
 	rm -rf $(rose_nonsmoke_get_C_array_dimensions_c) $(nonsmoke_get_C_array_dimensions_c_output) $(nonsmoke_get_C_array_dimensions_c_output_diff)
 	rm -rf $(rose_nonsmoke_genericCoverage_c) $(nonsmoke_genericCoverage_c_output) $(nonsmoke_genericCoverage_c_output_diff)
+	rm -rf *.output *.diff rose_*.*
 
 endif

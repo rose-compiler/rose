@@ -107,6 +107,19 @@ ProcessTree( AstInterface &fa, const AstNodePtr& s,
      if (mp == 0 || mp->find(lhs) == mp->end()) {
         modstack.push_back(s);
         modstack.back().modmap[lhs] =  ModRecord( rhs,readlhs); 
+        // Liao 7/17/2017.  To support assignment like this->x = 0.9, 
+        // we have to also record this expression AND x VarRefExp as the lhs for the assignment. 
+        // So later traversal of this and x will not put it into the read set.
+        AstNodePtr op1, op2; 
+        AstInterface::OperatorEnum opr; 
+        if (fa.IsBinaryOp(lhs, &opr,&op1, &op2 ))
+        {
+          if (opr==AstInterface::BOP_DOT_ACCESS || opr== AstInterface::BOP_ARROW_ACCESS)
+          {
+            modstack.back().modmap[op1] =  ModRecord( rhs,readlhs); 
+            modstack.back().modmap[op2] =  ModRecord( rhs,readlhs); 
+          } 
+        }
      }
    }
    else if (fa.IsUnaryOp(s, &opr, &lhs) && 
