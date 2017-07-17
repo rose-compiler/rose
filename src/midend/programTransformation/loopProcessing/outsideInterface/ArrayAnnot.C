@@ -270,12 +270,11 @@ is_array_mod_op( CPPAstInterface& fa, const AstNodePtr& arrayExp,
   if (!arrayModify.known_operator( fa, arrayExp, &args, &desc, true)) {
      if (DebugArrayAnnot()) {
         std::cerr << "NOT mod-array operator: ";
-        std::cerr << AstToString(arrayExp);
+        std::cerr << AstInterface::AstToString(arrayExp);
         std::cerr << std::endl;
      }
     return false;
   }
-
   if (arrayp != 0) {
     if (!desc.first.get_val().isAstWrap(*arrayp))
        assert( false);
@@ -290,7 +289,7 @@ is_array_mod_op( CPPAstInterface& fa, const AstNodePtr& arrayExp,
 
   if (DebugArrayAnnot()) {
      std::cerr << "recognized mod-array operator: ";
-     std::cerr << AstToString(arrayExp);
+     std::cerr << AstInterface::AstToString(arrayExp);
      std::cerr << std::endl;
 
      return true;
@@ -317,7 +316,7 @@ is_array_construct_op( CPPAstInterface& fa, const AstNodePtr& arrayExp, CPPAstIn
        AstNodePtr curarg;
        if (!cur.get_val().isAstWrap(curarg))
            assert(false);
-       alias->push_back(curarg);
+       alias->push_back(curarg.get_ptr());
     }
   }
   return true;
@@ -356,7 +355,7 @@ create_access_array_length( CPPAstInterface& fa, const AstNodePtr& array,
                             int dim)
 {
   CPPAstInterface::AstNodeList args;
-  args.push_back( fa.CreateConstInt(dim));
+  args.push_back( fa.CreateConstInt(dim).get_ptr());
   return arrays.create_known_member_function( fa, array, "length", args);
 }
 
@@ -369,7 +368,14 @@ is_access_array_length( CPPAstInterface& fa, const SymbolicVal& orig,
      assert(args.size() == 1);
      if (dim != 0)
         *dim = args.front();
+     if (DebugArrayAnnot()) {
+        std::cerr << "Recognized access-array-length operator: " << orig.toString() << "\n";
+        }
      return true;
+  }
+  if (DebugArrayAnnot()) {
+        std::cerr << "NOT access-array-length operator: " << orig.toString();
+        std::cerr << std::endl;
   }
   return false;
 }
@@ -388,8 +394,18 @@ is_access_array_length( CPPAstInterface& fa, const AstNodePtr& orig, AstNodePtr*
           if (!fa.IsConstInt(cur, dim))
               assert(false);
       }
+      if (DebugArrayAnnot()) {
+        std::cerr << "Recognized access-array-length operator: ";
+        std::cerr << AstInterface::AstToString(orig);
+        std::cerr << std::endl;
+      }
       return true;
    }
+  if (DebugArrayAnnot()) {
+        std::cerr << "NOT access-array-length operator: ";
+        std::cerr << AstInterface::AstToString(orig);
+        std::cerr << std::endl;
+  }
    return false;
 }
 
@@ -397,7 +413,15 @@ bool ArrayAnnotation ::
 is_access_array_elem( CPPAstInterface& fa, const SymbolicVal& orig, AstNodePtr* array, SymbolicFunction::Arguments* args)
 {
   if (arrays.is_known_member_function( fa, orig, array, args) == "elem") {
+     if (DebugArrayAnnot()) {
+        std::cerr << "Recognized access-array-elem operator: " << orig.toString();
+        std::cerr << std::endl;
+     }
     return true;
+  }
+  if (DebugArrayAnnot()) {
+        std::cerr << "NOT access-array-elem operator: " << orig.toString();
+        std::cerr << std::endl;
   }
   return false;
 }
@@ -408,7 +432,15 @@ is_access_array_elem( CPPAstInterface& fa, const AstNodePtr& orig,
                       CPPAstInterface::AstNodeList* args)
 {
   if (arrays.is_known_member_function( fa, orig, arrayp, args) == "elem") {
+     if (DebugArrayAnnot()) {
+        std::cerr << "Recognized access-array-elem operator: " << AstInterface::AstToString(orig);
+        std::cerr << std::endl;
+     }
     return true;
+  }
+  if (DebugArrayAnnot()) {
+        std::cerr << "NOT access-array-elem operator: " << AstInterface::AstToString(orig);
+        std::cerr << std::endl;
   }
   return false;
 }

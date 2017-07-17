@@ -3,7 +3,7 @@
 #include <rose_config.h>                                // needed for VERSION with cmake
 #include <initialize.h>
 
-#ifdef ROSE_HAVE_GCRYPT_H
+#ifdef ROSE_HAVE_LIBGCRYPT
 #include <gcrypt.h>
 #endif
 #include <Diagnostics.h>
@@ -38,7 +38,7 @@ public:
 
         Sawyer::initializeLibrary();
 
-#ifdef ROSE_HAVE_GCRYPT_H
+#ifdef ROSE_HAVE_LIBGCRYPT
         gcry_check_version(NULL);
 #endif
 

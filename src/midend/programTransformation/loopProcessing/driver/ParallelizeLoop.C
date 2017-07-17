@@ -6,11 +6,8 @@ apply( const CompSliceDepGraphNode::FullNestInfo& nestInfo,
               LoopTreeDepComp& comp, DependenceHoisting &op, 
               LoopTreeNode *&top)
 {
-// DQ (1/14/2017): make dependence on POET optional.
-#ifdef ROSE_USE_POET
   AutoTuningInterface* tuning = LoopTransformInterface::getAutoTuningInterface();
   assert(tuning != 0);
-#endif
 
   const CompSliceNest* pslices = nestInfo.GetNest();
   assert(pslices != 0);
@@ -26,11 +23,6 @@ apply( const CompSliceDepGraphNode::FullNestInfo& nestInfo,
   /*QY: parallelize the outermost loop*/
   top = op.Transform( comp, outer, top);
   int bsize = LoopTransformOptions::GetInstance()->GetParBlockSize();
-
-// DQ (1/14/2017): make dependence on POET optional.
-#ifdef ROSE_USE_POET
   tuning->ParallelizeLoop(top, bsize);  
-#endif
-
   return top;
 }
