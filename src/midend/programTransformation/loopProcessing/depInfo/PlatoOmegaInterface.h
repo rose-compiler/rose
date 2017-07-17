@@ -1,7 +1,7 @@
 /********************************
-*       FILE: PlatoOmegaInterface.h
-*       AUTHOR: Mike Stiles
-*       University of Texas at San Antonio 2007
+*        FILE: PlatoOmegaInterface.h
+*        AUTHOR: Mike Stiles
+*        University of Texas at San Antonio 2007
 *********************************/
 
 #ifndef PLATO_OMEGA_INTERFACE
@@ -30,22 +30,22 @@
 #include "DDTesting.h"
 
 /**
-*       This Header file defines the interface to the Plato and Omega
-*       dependency testing libraries.
+*        This Header file defines the interface to the Plato and Omega
+*        dependency testing libraries.
 *
-*       Variables or functions that are specific to one of the libraries
-*       will have Plato or Omega in the name.
-*       
-*       Classes and functions have the first letter of each word
-*       capitalized with no underscores.
+*        Variables or functions that are specific to one of the libraries
+*        will have Plato or Omega in the name.
+*        
+*        Classes and functions have the first letter of each word
+*        capitalized with no underscores.
 *
-*       typedefs are normally all capitalized with underscores between
-*       each word.
+*        typedefs are normally all capitalized with underscores between
+*        each word.
 *
-*       Class variables start with an underscore and have no capitals.
+*        Class variables start with an underscore and have no capitals.
 *
-*       Function variables do not start with an underscore but still
-*       have them between words, and there is no capitals.
+*        Function variables do not start with an underscore but still
+*        have them between words, and there is no capitals.
 **/
 
 namespace PlatoOmegaInterface
@@ -63,17 +63,17 @@ namespace PlatoOmegaInterface
         typedef plato::Variable PLATO_STD_VAR;
         typedef plato::Variable PLATO_FREE_VAR;
 
-        /**     These structures hold pointers to the actual library variables.
-        *               They only hold one or the other depending on the 
-        *               test being utilized (Plato or Omega).
-        *               Since they are pointers, a union is not recommended.
+        /**        These structures hold pointers to the actual library variables.
+        *                They only hold one or the other depending on the 
+        *                test being utilized (Plato or Omega).
+        *                Since they are pointers, a union is not recommended.
         **/
 
         typedef struct VAR_U { OMEGA_FREE_VAR *_omega_free_var; PLATO_FREE_VAR  *_plato_free_var; } FREE_VAR_U;
         typedef struct VAR_ID_U { OMEGA_STD_VAR _omega_std_var; PLATO_STD_VAR *_plato_std_var; } STD_VAR_U;
 
-        /**     FreeVar is an abstraction for the free variables in the
-        *               Plato and Omega libraries.
+        /**        FreeVar is an abstraction for the free variables in the
+        *                Plato and Omega libraries.
         **/
 
         class FreeVar
@@ -97,8 +97,8 @@ namespace PlatoOmegaInterface
                         FREE_VAR_U *_free_var_u;
         };
 
-        /**     StandardVar is an abstraction for the induction
-        *               variables in the Plato and Omega libraries.
+        /**        StandardVar is an abstraction for the induction
+        *                variables in the Plato and Omega libraries.
         **/
         
         class StandardVar
@@ -143,9 +143,9 @@ namespace PlatoOmegaInterface
                         typedef std::map<std::string, StandardVar*> STD_VAR_MAP;
                         typedef std::map<std::string, FreeVar*> FREE_VAR_MAP;
 
-                        /**     PlatoRelation is analogous to the Omega Relation
-                        *               in that it is what is used to add all of the
-                        *               dependency constraints for the Plato library.
+                        /**        PlatoRelation is analogous to the Omega Relation
+                        *                in that it is what is used to add all of the
+                        *                dependency constraints for the Plato library.
                         **/
 
                         class PlatoRelation : public plato::RationalVITestProblem
@@ -157,13 +157,13 @@ namespace PlatoOmegaInterface
                                         PlatoRelation( int loop_nest_size,bool aFlag = false) : _loop_nest_size(loop_nest_size),
                                                                                 RationalVITestProblem(aFlag) { };
                                         virtual ~PlatoRelation() { };
-                                        virtual bool testDV (const plato::AbstractDirectionVector & dv, bool & accurate);                                       
+                                        virtual bool testDV (const plato::AbstractDirectionVector & dv, bool & accurate);                                        
                                         virtual int getLoopNestSize() const { return _loop_nest_size; };
                         };
 
-                        /**     PlatoDriver is the class that actually runs the
-                        *               Plato dependency tests after the relation has been
-                        *               built.
+                        /**        PlatoDriver is the class that actually runs the
+                        *                Plato dependency tests after the relation has been
+                        *                built.
                         **/
 
                         class PlatoDriver : public plato::DVHierarchyDriver {
@@ -174,7 +174,7 @@ namespace PlatoOmegaInterface
                                         PlatoDriver(PlatoRelation & aProblem, bool aFlag = false) :
                                                 plato::DVHierarchyDriver(aProblem,aFlag), _saved_dv(0) { };
                                         virtual void StoreDependence (plato::dddir dv) {
-                                                _saved_dv = (_saved_dv | dv);                                           
+                                                _saved_dv = (_saved_dv | dv);                                                
                                         };
                                         inline plato::ddep doDDTest() { return doHierarchy (DDALLDV, 1); };
                                         inline plato::dddir GetDirectionVector() { return _saved_dv; };
@@ -209,7 +209,7 @@ namespace PlatoOmegaInterface
                         bool _omega_negate_expr;
                         bool _is_input_expr;
                         bool _plato_is_bound;
-                        bool _plato_is_lower_bound;                     
+                        bool _plato_is_lower_bound;                        
 
                         /** Dependence testing results variables **/
                         bool _nonLinear;
@@ -229,7 +229,7 @@ namespace PlatoOmegaInterface
 
                         /** Dependence testing functions **/
                         void AddConstraintsImposedByDV(Relation &relation,F_And &constraints,const plato::dddir &dv);
-                        Relation GetNewRelationFromDV(const plato::dddir &dv);          
+                        Relation GetNewRelationFromDV(const plato::dddir &dv);                
                         void doHierarchy(SetDep& setdep, DepInfo &result, plato::dddir dv, int level, DepRel& rel);
 
                         /** Parsing the variables functions **/
@@ -314,7 +314,7 @@ namespace PlatoOmegaInterface
                 {
                         assert(other._std_var_u->_plato_std_var);
                         _std_var_u->_plato_std_var = other._std_var_u->_plato_std_var;
-                }               
+                }                
         }
 
         inline StandardVar::~StandardVar()

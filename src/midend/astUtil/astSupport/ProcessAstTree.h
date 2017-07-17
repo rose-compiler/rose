@@ -5,7 +5,7 @@
 #include "AstInterface.h"
 #include "SinglyLinkedList.h"
 
-class ROSE_DLL_API ProcessAstTreeBase : public ProcessAstNode
+class ProcessAstTreeBase : public ProcessAstNode
 {
  public:
   typedef enum {BEFORE = 1, AT = 2, INSIDE = 4, BEFORE_AT = 3, INSIDE_AT = 6} TraverseLocation;
@@ -49,8 +49,8 @@ class ProcessAstTree : public ProcessAstTreeBase
 {
  protected:
   virtual bool ProcessLoop(AstInterface &fa, const AstNodePtr& s, 
-                               const AstNodePtr& body,
-                               AstInterface::TraversalVisitType t) ;
+                           const AstNodePtr& body,
+                           AstInterface::TraversalVisitType t) ;
   virtual bool ProcessIf( AstInterface &fa, const AstNodePtr& s,
                              const AstNodePtr& cond, const AstNodePtr& truebody,
                              const AstNodePtr& falsebody, 

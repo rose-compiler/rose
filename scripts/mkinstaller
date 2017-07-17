@@ -22,11 +22,11 @@ $Interpreter ||= "/usr/bin/perl";
 
 $mkinstaller_ver_major = "0";
 $mkinstaller_ver_minor = "0";
-$mkinstaller_ver_build = "5";
+$mkinstaller_ver_build = "6";
 $mkinstaller_ver_patch = "";
-$mkinstaller_ver_name  = "0.0.5";
-$mkinstaller_ver_time  = "30Jun2017 18:04:18z";
-$mkinstaller_ver_id    = "@(#)mkinstaller 0.0.5 - 30Jun2017 18:04:18z";
+$mkinstaller_ver_name  = "0.0.6";
+$mkinstaller_ver_time  = " 7Jul2017 18:46:52z";
+$mkinstaller_ver_id    = "@(#)mkinstaller 0.0.6 -  7Jul2017 18:46:52z";
 
 @defaultCopyrightOwners
   = ( "Copyright 1985-99,2000-17 James Frederick Reus\n"
@@ -975,7 +975,19 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
 
    print "mkinstaller: identify temp directory...\n" if $debugging;
    if ($TmpDir eq "") {
-      $TmpDir = findTempDir();
+      if ( exists $ENV{'MKINSTALLER_TMPDIR'} ) {
+         my $TryTmp = $ENV{'MKINSTALLER_TMPDIR'};
+         print "mkinstaller: ...MKINSTALLER_TMPDIR gave \"$TmpDir\"\n" if $debugging;
+         if ( -d $TryTmp) {
+            $TmpDir = $TryTmp;
+         }
+         else {
+            print "mkinstaller:    which is not a valid directory\n" if $debugging;
+         }
+      }
+   }
+   if ($TmpDir eq "") {
+      $TmpDir = findTempDir("MKINSTALLER_TMPDIR");
       if ($TmpDir eq "") {
          print STDERR "mkinstaller: can't decide on a location for a temp directory\n";
          exit 1;
@@ -1032,7 +1044,7 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
          else {
             print STDERR "mkinstaller: ...as a broken symbolic-link\n";
          }
-         cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+         cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
          exit 1;
       }
       if ( -e $TmpDirT) {
@@ -1043,31 +1055,31 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
          elsif ( -f $TmpDirT) {
             print STDERR "mkinstaller: ...as a file\n";
          }
-         cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+         cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
          exit 1;
       }
       print STDERR "mkinstaller: ...create \"$TmpDirT\"\n" if $debugging;
       if ( ! mkDirectory($TmpDirT,1)) {
          print STDERR "mkinstaller: can't create new \"$TmpDirT\" directory\n";
-         cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+         cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
          exit 1;
       }
       print STDERR "mkinstaller: ...create \"$TmpDirA\"\n" if $debugging;
       if ( ! mkDirectory($TmpDirA,1)) {
          print STDERR "mkinstaller: can't create new \"$TmpDirA\" directory\n";
-         cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+         cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
          exit 1;
       }
       print STDERR "mkinstaller: ...create \"$TmpDirI\"\n" if $debugging;
       if ( ! mkDirectory($TmpDirI,1)) {
          print STDERR "mkinstaller: can't create new \"$TmpDirI\" directory\n";
-         cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+         cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
          exit 1;
       }
       print STDERR "mkinstaller: ...create \"$TmpDirW\"\n" if $debugging;
       if ( ! mkDirectory($TmpDirW,1)) {
          print STDERR "mkinstaller: can't create new \"$TmpDirW\" directory\n";
-         cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+         cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
          exit 1;
       }
    }
@@ -1089,7 +1101,7 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
          else {
             print STDERR "mkinstaller: \"$here/$scriptName\" is a broken symbolic-link not a file\n";
          }
-         cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+         cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
          exit 1;
       }
       elsif ( -f "$here/$scriptName") {
@@ -1097,19 +1109,19 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
          my $Ndeleted = unlink "$here/$scriptName";
          if ($Ndeleted < 1) {
             print STDERR "mkinstaller: can't destroy existing \"$here/$scriptName\" file\n";
-            cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+            cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
             exit 1;
          }
          if ( -f "$here/$scriptName") {
             print STDERR "mkinstaller: didn't destroy existing \"$here/$scriptName\" file\n";
-            cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+            cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
             exit 1;
          }
          print STDERR "mkinstaller:    ...done\n" if (2 <= $verbosityLevel);
       }
       elsif ( -e "$here/$scriptName") {
          print STDERR "mkinstaller: existing \"$here/$scriptName\" is not a file\n";
-         cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+         cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
          exit 1;
       }
       print STDERR "mkinstaller:    done\n" if (2 <= $verbosityLevel);
@@ -1145,7 +1157,7 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
             my $bn       = basename($pathname);
             if ( ! chdir($dn)) {
                print STDERR "mkinstaller: can't cd into \"$dn\"\n";
-               cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+               cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
                exit 1;
             }
             {
@@ -1161,7 +1173,7 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                   print STDERR "mkinstaller: can't tarup \"$bn\"\n";
                   print STDERR "mkinstaller: ...[$cmd] failed, returning exit code $status\n";
                   print STDERR "mkinstaller:    was done from in \"$dn\"\n";
-                  cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+                  cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
                   exit 1;
                }
                print STDERR "mkinstaller:       succeeded\n" if $debugging;
@@ -1170,18 +1182,18 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                   print STDERR "mkinstaller: ...[$cmd] failed\n";
                   print STDERR "mkinstaller:    was done from in \"$dn\"\n";
                   print STDERR "mkinstaller: ...can't find \"$TmpDirI/$bn.tar.gz\"\n";
-                  cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+                  cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
                   exit 1;
                }
             }
             if ( ! chdir($here)) {
                print STDERR "mkinstaller: can't cd back to \"$here\"\n";
-               cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+               cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
                exit 1;
             }
             if ( ! chdir($TmpDirA)) {
                print STDERR "mkinstaller: can't cd into \"$TmpDirA\"\n";
-               cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+               cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
                exit 1;
             }
             {
@@ -1197,7 +1209,7 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                   print STDERR "mkinstaller: can't tarup \"$bn\"\n";
                   print STDERR "mkinstaller: ...[$cmd] failed, returning exit code $status\n";
                   print STDERR "mkinstaller:    was done from in \"$TmpDirA\"\n";
-                  cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+                  cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
                   exit 1;
                }
                print STDERR "mkinstaller:    ...succeeded\n" if $debugging;
@@ -1206,25 +1218,25 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                   print STDERR "mkinstaller: ...[$cmd] failed\n";
                   print STDERR "mkinstaller: ...can't find \"$TmpDirA/$bn\"\n";
                   print STDERR "mkinstaller:    was done from in \"$TmpDirA\"\n";
-                  cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+                  cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
                   exit 1;
                }
                if ( -f "$TmpDirI/$bn.tar.gz") {
                   if ( ! unlink("$TmpDirI/$bn.tar.gz")) {
                      print STDERR "mkinstaller: can't delete \"$TmpDirI/$bn.tar.gz\"\n";
-                     cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+                     cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
                      exit 1;
                   }
                   if ( -f "$TmpDirI/$bn.tar.gz") {
                      print STDERR "mkinstaller: didn't delete \"$TmpDirI/$bn.tar.gz\"\n";
-                     cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+                     cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
                      exit 1;
                   }
                }
             }
             if ( ! chdir($here)) {
                print STDERR "mkinstaller: can't cd back to \"$here\"\n";
-               cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+               cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
                exit 1;
             }
             print STDERR "mkinstaller:    done\n" if (2 <= $verbosityLevel);
@@ -1239,7 +1251,7 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
       print STDERR "mkinstaller: ...tarup the individual directories into the wrapper directory\n" if $debugging;
       if ( ! chdir($TmpDirA)) {
          print STDERR "mkinstaller: can't cd into \"$TmpDirA\"\n";
-         cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+         cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
          exit 1;
       }
       {
@@ -1248,7 +1260,7 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
             print STDERR "mkinstaller:    \"$bn\"\n" if $debugging;
             if ( ! -d $bn) {
                print STDERR "mkinstaller: can't find \"$TmpDirA/$bn\"\n";
-               cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+               cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
                exit 1;
             }
             my $cmd    = "tar -czf \"$TmpDirW/$bn.tar.gz\" \"$bn\"";
@@ -1259,7 +1271,7 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                print STDERR "mkinstaller: can't tarup \"$bn\"\n";
                print STDERR "mkinstaller: ...[$cmd] failed, returning exit code $status\n";
                print STDERR "mkinstaller:    was done from in \"$TmpDirA\"\n";
-               cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+               cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
                exit 1;
             }
             print STDERR "mkinstaller:       succeeded\n" if $debugging;
@@ -1268,14 +1280,14 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                print STDERR "mkinstaller: ...[$cmd] failed\n";
                print STDERR "mkinstaller: ...can't find \"$TmpDirW/$bn.tar.gz\"\n";
                print STDERR "mkinstaller:    was done from in \"$TmpDirA\"\n";
-               cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+               cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
                exit 1;
             }
          }
       }
       if ( ! chdir($here)) {
          print STDERR "mkinstaller: can't cd back to \"$here\"\n";
-         cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+         cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
          exit 1;
       }
    }
@@ -1299,7 +1311,7 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
          print STDERR "mkinstaller: can't add post-install script to wrapper directory\n";
          print STDERR "mkinstaller: ...[$cmd] failed, returning exit code $status\n";
          print STDERR "mkinstaller:    was done from in \"$here\"\n";
-         cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+         cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
          exit 1;
       }
       else {
@@ -1309,7 +1321,7 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
             print STDERR "mkinstaller: ...[$cmd] failed\n";
             print STDERR "mkinstaller: ...can't find \"$TmpDirW/$bn\"\n";
             print STDERR "mkinstaller:    was done from in \"$here\"\n";
-            cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+            cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
             exit 1;
          }
       }
@@ -1336,7 +1348,7 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
       print STDERR "mkinstaller:     name = \"$wrapper\"\n" if $debugging;
       if ( ! chdir($under)) {
          print STDERR "mkinstaller: can't cd into \"$under\"\n";
-         cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+         cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
          exit 1;
       }
       {
@@ -1349,7 +1361,7 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
             print STDERR "mkinstaller: can't tarup \"$under/$wrapper\"\n";
             print STDERR "mkinstaller: ...[$cmd], failed returning exit code $status\n";
             print STDERR "mkinstaller:    was done from in \"$under\"\n";
-            cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+            cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
             exit 1;
          }
          print STDERR "mkinstaller:    suceeded\n" if $debugging;
@@ -1358,14 +1370,14 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
             print STDERR "mkinstaller: ...[$cmd], failed\n";
             print STDERR "mkinstaller:    was done from in \"$under\"\n";
             print STDERR "mkinstaller: ...can't find \"$under/$wrapper.tar\"\n";
-            cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+            cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
             exit 1;
          }
          print STDERR "mkinstaller: ...done\n" if (2 <= $verbosityLevel);
       }
       if ( ! chdir($wasIn)) {
          print STDERR "mkinstaller: can't cd back to \"$wasIn\"\n";
-         cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+         cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
          exit 1;
       }
    }
@@ -1389,19 +1401,19 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
          print STDERR "mkinstaller: ...delete old \"$scriptName\"\n" if (1 <= $verbosityLevel);
          if ( ! unlink $TmpFile) {
             print STDERR "mkinstaller: can't delete existing \"$scriptName\"\n";
-            cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+            cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
             exit 1;
          }
          if ( -f $TmpFile) {
             print STDERR "mkinstaller: didn't delete existing \"$scriptName\"\n";
-            cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+            cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
             exit 1;
          }
       }
       print STDERR "mkinstaller: ...create new \"$scriptName\"\n" if (1 <= $verbosityLevel);
       if ( ! open(SCRIPT,"> $TmpFile")) {
          print STDERR "mkinstaller: can't create/write \"$scriptName\"\n";
-         cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+         cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
          exit 1;
       }
       print SCRIPT "#!/bin/bash\n";
@@ -2699,14 +2711,14 @@ EOF29
          if ($status != 0) {
             print STDERR "mkinstaller: can't form \"$scriptName\"\n";
             print STDERR "mkinstaller: ...[$cmd] failed, returning exit code $status\n";
-            cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+            cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
             exit 1;
          }
          if ( ! -f $scriptName) {
             print STDERR "mkinstaller: didn't form \"$scriptName\"\n";
             print STDERR "mkinstaller: ...[$cmd] failed\n";
             print STDERR "mkinstaller: ...can't find \"$scriptName\"\n";
-            cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+            cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
             exit 1;
          }
       }
@@ -2717,14 +2729,14 @@ EOF29
          if ($status != 0) {
             print STDERR "mkinstaller: can't form \"$scriptName\"\n";
             print STDERR "mkinstaller: ...[$cmd] failed, returning exit code $status\n";
-            cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+            cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
             exit 1;
          }
          if ( ! -f $scriptName) {
             print STDERR "mkinstaller: didn't form \"$scriptName\"\n";
             print STDERR "mkinstaller: ...[$cmd] failed\n";
             print STDERR "mkinstaller: ...can't find \"$scriptName\"\n";
-            cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+            cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
             exit 1;
          }
       }
@@ -2735,7 +2747,7 @@ EOF29
       if ($status != 0) {
          print STDERR "mkinstaller: can't make \"$scriptName\" executable\n";
          print STDERR "mkinstaller: ...[$cmd] failed, returning exit code $status\n";
-         cleanupTemps($myTmpDirT,1,$verbosityLevel,$debugging);
+         cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
          exit 1;
       }
       print STDERR "mkinstaller:    done\n" if (2 <= $verbosityLevel);
@@ -3127,6 +3139,8 @@ sub findHomeDirectory {
 #
 #  Decide where to place tempfiles.
 #
+#  0) Try the pathname in in the environment variable that
+#     was passed as the single parameter.
 #  1) Try the pathname in TMPDIR
 #  2) Try the pathname in TMP
 #  3) Try the pathname in TEMP
@@ -3148,12 +3162,30 @@ sub findHomeDirectory {
 #-------------------------------------------------------------------------------
 
 sub findTempDir {
+   my $envVarName = shift;
+   my $tmpdir     = "";
 
    #---------------------------------------
    #
-   #  First try TMPDIR environment variable...
+   #  First try the given environment variable...
    #
-   my $tmpdir;
+   if ($tmpdir eq "") {
+      if ($envVarName ne "") {
+         if ( exists $ENV{$envVarName}) {
+            my $trydir = $ENV{$envVarName};
+            if ( -d $trydir) {
+               if ( -w $trydir) {
+                  $tmpdir = $trydir;
+               }
+            }
+         }
+      }
+   }
+
+   #---------------------------------------
+   #
+   #  ...then try TMPDIR environment variable...
+   #
    if ($tmpdir eq "") {
       if ( exists $ENV{'TMPDIR'}) {
          my $trydir = $ENV{'TMPDIR'};
@@ -3560,7 +3592,7 @@ sub getWorkingDirectory {
    my $sponsor  = shift;
    my $exitCode;
    my $gives;
-   my $tmpdir   = findTempDir();
+   my $tmpdir   = findTempDir("");
    my $osClass  = getOSclass();
    if ($osClass eq "UNIX-like") {
       my $pathname = "$tmpdir/pwd-$$.tmp";;

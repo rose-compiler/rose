@@ -33,6 +33,10 @@ endif
 #    SUBDIRS += POET
 # endif
 # endif
+# Pei-Hung (06/28/2017): add POET support
+if ROSE_WITH_POET
+   SUBDIRS += POET
+endif
 
 # Pei-Hung (12/17/2014): installing POCC
 if ROSE_WITH_POCC
