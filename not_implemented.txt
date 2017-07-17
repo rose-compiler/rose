@@ -1,10 +1,8 @@
-Element_Kind => "A_STATEMENT"
-Statement_Kind => "AN_ACCEPT_STATEMENT"
-Statement_Kind => "AN_ASSIGNMENT_STATEMENT"
-Statement_Kind => "AN_ENTRY_CALL_STATEMENT"
-Statement_Kind => "AN_IF_STATEMENT"
-Statement_Kind => "A_LOOP_STATEMENT"
-Statement_Kind => "A_PROCEDURE_CALL_STATEMENT"
-Statement_Kind => "A_RAISE_STATEMENT"
-Statement_Kind => "A_RETURN_STATEMENT"
+Element_Kind => "A_DEFINING_NAME"
+Defining_Name_Kind => "A_DEFINING_IDENTIFIER"
+
+Element_Kind => "A_DEFINITION"
+Definition_Kind => "A_TASK_DEFINITION"
+Definition_Kind => "A_SUBTYPE_INDICATION"
+Definition_Kind => "A_RECORD_DEFINITION"
 

@@ -1111,6 +1111,7 @@ struct Association_Struct {
 // May take 37*4 bytes - 22 IDs, 12 Lists, 2 bools, and 1 enum:
 struct Statement_Struct {
   enum Statement_Kinds   Statement_Kind;
+  Defining_Name_List     Label_Names;
   
   // These fields are only valid for the kinds above them:  
   //   An_Assignment_Statement,             // 5.2

@@ -121,6 +121,7 @@ package a_nodes_h.Support is
 
    Default_Statement_Struct : constant Statement_Struct :=
      (Statement_Kind                      => Not_A_Statement,
+      Label_Names                         => Default_Element_List,
       Assignment_Variable_Name            => Default_Element_ID,
       Assignment_Expression               => Default_Element_ID,
       Statement_Paths                     => Default_Element_List,

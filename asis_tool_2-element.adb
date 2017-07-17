@@ -831,61 +831,208 @@ package body Asis_Tool_2.Element is
            Asis.Elements.Statement_Kind (Element);
          A_Statement : a_nodes_h.Statement_Struct :=
            a_nodes_h.Support.Default_Statement_Struct;
+
+         -- Supporting procedures are in alphabetical order:
+         procedure Add_Accept_Body_Exception_Handlers is
+         begin
+            Add_Element_List
+              (This           => State,
+               Elements_In    => Asis.Statements.Accept_Body_Exception_Handlers (Element),
+               Dot_Label_Name => "Accept_Body_Exception_Handlers",
+               List_Out       => A_Statement.Accept_Body_Exception_Handlers);
+         end;
+
+         procedure Add_Accept_Body_Statements is
+         begin
+            Add_Element_List
+              (This           => State,
+               Elements_In    => Asis.Statements.Accept_Body_Statements (Element),
+               Dot_Label_Name => "Accept_Body_Statements",
+               List_Out       => A_Statement.Accept_Body_Statements);
+         end;
+
+         procedure Add_Accept_Entry_Direct_Name is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Statements.Accept_Entry_Direct_Name (Element));
+         begin
+            State.Add_To_Dot_Label ("Accept_Entry_Direct_Name", To_String (ID));
+            A_Statement.Accept_Entry_Direct_Name := a_nodes_h.Node_ID (ID);
+         end;
+
+         procedure Add_Accept_Entry_Index is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Statements.Accept_Entry_Index (Element));
+         begin
+            State.Add_To_Dot_Label ("Accept_Entry_Index", To_String (ID));
+            A_Statement.Accept_Entry_Index := a_nodes_h.Node_ID (ID);
+         end;
+
+         procedure Add_Accept_Parameters is
+         begin
+            Add_Element_List
+              (This           => State,
+               Elements_In    => Asis.Statements.Accept_Parameters (Element),
+               Dot_Label_Name => "Accept_Parameters",
+               List_Out       => A_Statement.Accept_Parameters);
+         end;
+
+         procedure Add_Assignment_Expression is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Statements.Assignment_Expression (Element));
+         begin
+            State.Add_To_Dot_Label ("Assignment_Expression", To_String (ID));
+            A_Statement.Assignment_Expression := a_nodes_h.Node_ID (ID);
+         end;
+
+         procedure Add_Assignment_Variable_Name is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Statements.Assignment_Variable_Name (Element));
+         begin
+            State.Add_To_Dot_Label ("Assignment_Variable_Name", To_String (ID));
+            A_Statement.Assignment_Variable_Name := a_nodes_h.Node_ID (ID);
+         end;
+
+         procedure Add_Associated_Message is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Statements.Associated_Message (Element));
+         begin
+            State.Add_To_Dot_Label ("Associated_Message", To_String (ID));
+            A_Statement.Associated_Message := a_nodes_h.Node_ID (ID);
+         end;
+
+         procedure Add_Call_Statement_Parameters is
+         begin
+            Add_Element_List
+              (This           => State,
+               Elements_In    => Asis.Statements.Call_Statement_Parameters (Element),
+               Dot_Label_Name => "Call_Statement_Parameters",
+               List_Out       => A_Statement.Call_Statement_Parameters);
+         end;
+
+         procedure Add_Called_Name is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Statements.Called_Name (Element));
+         begin
+            State.Add_To_Dot_Label ("Called_Name", To_String (ID));
+            A_Statement.Called_Name := a_nodes_h.Node_ID (ID);
+         end;
+
+         procedure Add_Corresponding_Called_Entity is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Statements.Corresponding_Called_Entity (Element));
+         begin
+            State.Add_To_Dot_Label ("Corresponding_Called_Entity", To_String (ID));
+            A_Statement.Corresponding_Called_Entity := a_nodes_h.Node_ID (ID);
+         end;
+
+         procedure Add_Corresponding_Entry is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Statements.Corresponding_Entry (Element));
+         begin
+            State.Add_To_Dot_Label ("Corresponding_Entry", To_String (ID));
+            A_Statement.Corresponding_Entry := a_nodes_h.Node_ID (ID);
+         end;
+
+         procedure Add_Is_Name_Repeated is
+            Value : Boolean := Asis.Statements.Is_Name_Repeated (Element);
+         begin
+            State.Add_To_Dot_Label ("Is_Name_Repeated", Value'Image);
+            A_Statement.Is_Name_Repeated := a_nodes_h.Support.To_bool (Value);
+         end;
+
+         procedure Add_Label_Names is
+         begin
+            Add_Element_List
+              (This           => State,
+               Elements_In    => Asis.Statements.Label_Names (Element),
+               Dot_Label_Name => "Label_Names",
+               List_Out       => A_Statement.Label_Names);
+         end;
+
+         procedure Add_Loop_Statements is
+         begin
+            Add_Element_List
+              (This           => State,
+               Elements_In    => Asis.Statements.Loop_Statements (Element),
+               Dot_Label_Name => "Loop_Statements",
+               List_Out       => A_Statement.Loop_Statements);
+         end;
+
+         procedure Add_Raised_Exception is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Statements.Raised_Exception (Element));
+         begin
+            State.Add_To_Dot_Label ("Raised_Exception", To_String (ID));
+            A_Statement.Raised_Exception := a_nodes_h.Node_ID (ID);
+         end;
+
+         procedure Add_Return_Expression is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Statements.Return_Expression (Element));
+         begin
+            State.Add_To_Dot_Label ("Return_Expression", To_String (ID));
+            A_Statement.Return_Expression := a_nodes_h.Node_ID (ID);
+         end;
+
+         procedure Add_Statement_Identifier is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Statements.Statement_Identifier (Element));
+         begin
+            State.Add_To_Dot_Label ("Statement_Identifier", To_String (ID));
+            A_Statement.Statement_Identifier := a_nodes_h.Node_ID (ID);
+         end;
+
+         procedure Add_Statement_Paths is
+         begin
+            Add_Element_List
+              (This           => State,
+               Elements_In    => Asis.Statements.Statement_Paths (Element),
+               Dot_Label_Name => "Statement_Paths",
+               List_Out       => A_Statement.Statement_Paths);
+         end;
+
+
          use all type Asis.Statement_Kinds;
       begin
          State.Add_To_Dot_Label ("Statement_Kind", Statement_Kind'Image);
          A_Statement.Statement_Kind := anhS.To_Statement_Kinds (Statement_Kind);
+         Add_Label_Names;
 
-         -- All Statements can have:
-         -- Label_Names
-
-         -- Kind ordering and grouping is from Asis.Statement_Kinds.
-         -- "when" comment is Ada LRM section.
          case Statement_Kind is
             when Not_A_Statement =>
                raise Program_Error with
                  "Element.Pre_Children.Process_Statement called with: " &
                  Statement_Kind'Image;
-            when A_Null_Statement =>                    -- 5.1
-               null;
-               -- No more info.
-            when An_Assignment_Statement =>             -- 5.2
-               State.Add_Not_Implemented;
-               -- Assignment_Variable_Name
-               -- Assignment_Expression
-            when An_If_Statement =>                     -- 5.3
-               State.Add_Not_Implemented;
-               -- Statement_Paths
-            when A_Case_Statement =>                    -- 5.4
+
+            when A_Null_Statement =>
+               null; -- No more info.
+
+            when An_Assignment_Statement =>
+               Add_Assignment_Variable_Name;
+               Add_Assignment_Expression;
+
+            when An_If_Statement =>
+               Add_Statement_Paths;
+
+            when A_Case_Statement =>
                State.Add_Not_Implemented;
                -- Case_Expression
-            when A_Loop_Statement =>                    -- 5.5
-               declare
-                  Statement_Identifier : constant Asis.Defining_Name :=
-                    Asis.Statements.Statement_Identifier (Element);
-                  Statement_Identifier_ID : constant Types.Node_Id :=
-                    Asis.Set_Get.Node (Statement_Identifier);
-               -- Statement_Identifier
-               -- Is_Name_Repeated
-               -- Loop_Statements
-               begin
-                  State.Add_To_Dot_Label
-                    ("Statement_Identifier", To_String (Statement_Identifier_ID));
-                  A_Statement.Statement_Identifier := a_nodes_h.Node_ID
-                    (Statement_Identifier_ID);
-                  end;
+
+            when A_Loop_Statement =>
+               Add_Statement_Identifier;
+               Add_Is_Name_Repeated;
+               Add_Loop_Statements;
+
+            when A_While_Loop_Statement =>
                State.Add_Not_Implemented;
-            when A_While_Loop_Statement =>              -- 5.5
-               State.Add_Not_Implemented;
-               -- Statement_Identifier
-               -- While_Condition
-               -- Loop_Statements
-            when A_For_Loop_Statement =>                -- 5.5
+
+            when A_For_Loop_Statement =>
                State.Add_Not_Implemented;
                -- Statement_Identifier
                -- For_Loop_Parameter_Specification
                -- Loop_Statements
-            when A_Block_Statement =>                   -- 5.6
+
+            when A_Block_Statement =>
                State.Add_Not_Implemented;
                -- Statement_Identifier
                -- Is_Name_Repeated
@@ -893,82 +1040,84 @@ package body Asis_Tool_2.Element is
                -- Block_Declarative_Items
                -- Block_Statements
                -- Block_Exception_Handlers
-            when An_Exit_Statement =>                   -- 5.7
+
+            when An_Exit_Statement =>
                State.Add_Not_Implemented;
                -- Exit_Loop_Name
                -- Exit_Condition
                -- Corresponding_Loop_Exited
-            when A_Goto_Statement =>                    -- 5.8
+
+            when A_Goto_Statement =>
                State.Add_Not_Implemented;
                -- Goto_Label
                -- Corresponding_Destination_Statement
 
-            when A_Procedure_Call_Statement =>          -- 6.4
-               State.Add_Not_Implemented;
-               -- Called_Name
-               -- Corresponding_Called_Entity
-               -- Call_Statement_Parameters
-            when A_Return_Statement =>                  -- 6.5
-               State.Add_Not_Implemented;
-               -- Return_Expression
-            when An_Extended_Return_Statement =>        -- 6.5 (Ada 2005)
-               State.Add_Not_Implemented;
-               -- Return_Object_Declaration
-               -- Extended_Return_Statements
-               -- Extended_Return_Exception_Handlers
+            when A_Procedure_Call_Statement =>
+               Add_Called_Name;
+               Add_Corresponding_Called_Entity;
+               Add_Call_Statement_Parameters;
 
-            when An_Accept_Statement =>                 -- 9.5.2
-               State.Add_Not_Implemented;
-               -- Accept_Entry_Index
-               -- Accept_Entry_Direct_Name
-               -- Accept_Parameters
-               -- Accept_Body_Statements
-               -- Accept_Body_Exception_Handlers
-               -- Corresponding_Entry
-            when An_Entry_Call_Statement =>             -- 9.5.3
-               State.Add_Not_Implemented;
-               -- Called_Name
-               -- Corresponding_Called_Entity
-               -- Call_Statement_Parameters
+            when A_Return_Statement =>
+               Add_Return_Expression;
 
-            when A_Requeue_Statement =>                 -- 9.5.4
+            when An_Extended_Return_Statement =>
+               State.Add_Not_Implemented;
+
+            when An_Accept_Statement =>
+               Add_Accept_Entry_Index;
+               Add_Accept_Entry_Direct_Name;
+               Add_Accept_Parameters;
+               Add_Accept_Body_Statements;
+               Add_Accept_Body_Exception_Handlers;
+               Add_Corresponding_Entry;
+
+            when An_Entry_Call_Statement =>
+               Add_Called_Name;
+               Add_Corresponding_Called_Entity;
+               Add_Call_Statement_Parameters;
+
+            when A_Requeue_Statement =>
                State.Add_Not_Implemented;
                -- Requeue_Entry_Name
-            when A_Requeue_Statement_With_Abort =>      -- 9.5.4
+            when A_Requeue_Statement_With_Abort =>
                State.Add_Not_Implemented;
                -- Requeue_Entry_Name
 
-            when A_Delay_Until_Statement =>             -- 9.6
+            when A_Delay_Until_Statement =>
                State.Add_Not_Implemented;
                -- Delay_Expression
-            when A_Delay_Relative_Statement =>          -- 9.6
+            when A_Delay_Relative_Statement =>
                State.Add_Not_Implemented;
                -- Delay_Expression
 
-            when A_Terminate_Alternative_Statement =>   -- 9.7.1
-               null;
-               -- No more info.
-            when A_Selective_Accept_Statement =>        -- 9.7.1
-               State.Add_Not_Implemented;
-               -- Statement_Paths
-            when A_Timed_Entry_Call_Statement =>        -- 9.7.2
-               State.Add_Not_Implemented;
-               -- Statement_Paths
-            when A_Conditional_Entry_Call_Statement =>  -- 9.7.3
-               State.Add_Not_Implemented;
-               -- Statement_Paths
-            when An_Asynchronous_Select_Statement =>    -- 9.7.4
+            when A_Terminate_Alternative_Statement =>
+               null; -- No more info
+
+            when A_Selective_Accept_Statement =>
                State.Add_Not_Implemented;
                -- Statement_Paths
 
-            when An_Abort_Statement =>                  -- 9.8
+            when A_Timed_Entry_Call_Statement =>
+               State.Add_Not_Implemented;
+               -- Statement_Paths
+
+            when A_Conditional_Entry_Call_Statement =>
+               State.Add_Not_Implemented;
+               -- Statement_Paths
+
+            when An_Asynchronous_Select_Statement =>
+               State.Add_Not_Implemented;
+               -- Statement_Paths
+
+            when An_Abort_Statement =>
                State.Add_Not_Implemented;
                -- Aborted_Tasks
-            when A_Raise_Statement =>                   -- 11.3
-               State.Add_Not_Implemented;
-               -- Raised_Exception
-               -- Associated_Message
-            when A_Code_Statement =>                    -- 13.8
+
+            when A_Raise_Statement =>
+               Add_Raised_Exception;
+               Add_Associated_Message;
+
+            when A_Code_Statement =>
                State.Add_Not_Implemented;
                -- Qualified_Expression
          end case;
