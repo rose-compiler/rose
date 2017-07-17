@@ -18297,7 +18297,7 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
    }
 
 
-//! Variable references can be introduced by SgVarRef, SgPntrArrRefExp, SgInitializedName, SgMemberFunctionRef etc. This function will convert them all to  a top level SgInitializedName.
+//! Variable references can be introduced by SgVarRef, SgPntrArrRefExp, SgInitializedName, SgMemberFunctionRef etc. For dot and arrow expressions, a top level SgInitializedName.
 //TODO consult  AstInterface::IsVarRef() for more cases
 SgInitializedName* SageInterface::convertRefToInitializedName(SgNode* current)
 {
@@ -18318,6 +18318,7 @@ SgInitializedName* SageInterface::convertRefToInitializedName(SgNode* current)
   }
   else if (isSgVarRefExp(current))
   {
+#if 0  // we want to directly return the init name of varRefExp   
     SgNode* parent = current->get_parent();
     if (isSgDotExp(parent))
     {
@@ -18329,6 +18330,7 @@ SgInitializedName* SageInterface::convertRefToInitializedName(SgNode* current)
       if (isSgArrowExp(parent)->get_rhs_operand() == current)
         return convertRefToInitializedName(parent);
     }
+#endif    
     name = isSgVarRefExp(current)->get_symbol()->get_declaration();
   }
   else if (isSgDotExp(current))
@@ -18494,7 +18496,10 @@ SageInterface::collectReadWriteRefs(SgStatement* stmt, std::vector<SgNode*>& rea
   }
 
   // get function level information
-  SgFunctionDefinition* funcDef = SageInterface::getEnclosingFunctionDefinition(stmt);
+  SgFunctionDefinition* funcDef = isSgFunctionDefinition(stmt);
+  if (!funcDef)
+     funcDef= SageInterface::getEnclosingFunctionDefinition(stmt);
+
   ROSE_ASSERT(funcDef != NULL);
   SgBasicBlock* funcBody = funcDef->get_body();
   ROSE_ASSERT(funcBody!= NULL);
@@ -18558,6 +18563,15 @@ SageInterface::collectReadWriteRefs(SgStatement* stmt, std::vector<SgNode*>& rea
   return true;
 }
 
+// The side effect analysis will report three references for a statement like this->x = ...
+// 1.SgThisExp 2. SgArrowExp  3. SgVarRefExp
+// We only need to keep SgVarRefExp and skip the other two.
+static bool skipSomeRefs(SgNode* n)
+{
+  ROSE_ASSERT (n);
+  return (isSgThisExp(n)||isSgArrowExp(n)||isSgDotExp(n));
+}
+
 //!Collect unique variables which are read or written within a statement. Note that a variable can be both read and written. The statement can be either of a function, a scope, or a single line statement.
 bool SageInterface::collectReadWriteVariables(SgStatement* stmt, set<SgInitializedName*>& readVars, set<SgInitializedName*>& writeVars)
 {
@@ -18572,38 +18586,24 @@ bool SageInterface::collectReadWriteVariables(SgStatement* stmt, set<SgInitializ
   for (; iter!=readRefs.end();iter++)
   {
     SgNode* current = *iter;
+    if (skipSomeRefs(current)) continue;
     SgInitializedName* name = convertRefToInitializedName(current);
+    ROSE_ASSERT (name);
    // Only insert unique ones
-#if 0   //
-    vector <SgInitializedName*>::iterator iter2 = find (readVars.begin(), readVars.end(), name);
-    if (iter2==readVars.end())
-    {
-      readVars.push_back(name);
-    //  cout<<"inserting read SgInitializedName:"<<name->unparseToString()<<endl;
-    }
-#else
-    // We use std::set to ensure uniqueness now
+   // We use std::set to ensure uniqueness now
     readVars.insert(name);
-#endif
   }
   // process write references
   vector<SgNode*>::iterator iterw = writeRefs.begin();
   for (; iterw!=writeRefs.end();iterw++)
   {
     SgNode* current = *iterw;
+    if (skipSomeRefs(current)) continue;
     SgInitializedName* name = convertRefToInitializedName(current);
+    ROSE_ASSERT (name);
    // Only insert unique ones
-#if 0   //
-    vector <SgInitializedName*>::iterator iter2 = find (writeVars.begin(), writeVars.end(), name);
-    if (iter2==writeVars.end())
-    {
-      writeVars.push_back(name);
-     // cout<<"inserting written SgInitializedName:"<<name->unparseToString()<<endl;
-    }
-#else
-    // We use std::set to ensure uniqueness now
+   // We use std::set to ensure uniqueness now
     writeVars.insert(name);
-#endif
   }
   return true;
 }

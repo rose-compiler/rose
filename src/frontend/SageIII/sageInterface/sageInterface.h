@@ -589,7 +589,7 @@ class StatementGenerator {
 //! Return the left hand, right hand expressions and if the left hand variable is also being read
   bool isAssignmentStatement(SgNode* _s, SgExpression** lhs=NULL, SgExpression** rhs=NULL, bool* readlhs=NULL);
 
-//! Variable references can be introduced by SgVarRef, SgPntrArrRefExp, SgInitializedName, SgMemberFunctionRef etc. This function will convert them all to  a top level SgInitializedName.
+//! Variable references can be introduced by SgVarRef, SgPntrArrRefExp, SgInitializedName, SgMemberFunctionRef etc. For Dot and Arrow Expressions, their lhs is used to obtain SgInitializedName.
 ROSE_DLL_API SgInitializedName* convertRefToInitializedName(SgNode* current);
 
 //! Build an abstract handle from an AST node, reuse previously built handle when possible
