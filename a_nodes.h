@@ -1193,6 +1193,10 @@ struct Statement_Struct {
 // May take ??*4 bytes (unfinished):
 struct Path_Struct {
   enum Path_Kinds Path_Kind;
+  Statement_List Sequence_Of_Statements;
+  Expression_ID  Condition_Expression;
+  Element_List   Case_Path_Alternative_Choices;
+  Expression_ID  Guard;
 };
 
 // May take 3*4 bytes - 1 enum, 1 List:

@@ -160,7 +160,11 @@ package a_nodes_h.Support is
       Qualified_Expression                => Default_Element_ID);
 
    Default_Path_Struct : constant Path_Struct :=
-     (Path_Kind => Not_A_Path);
+     (Path_Kind                     => Not_A_Path,
+      Sequence_Of_Statements        => Default_Element_List,
+      Condition_Expression          => Default_Element_ID,
+      Case_Path_Alternative_Choices => Default_Element_List,
+      Guard                         => Default_Element_ID);
 
    Default_Clause_Struct : constant Clause_Struct :=
      (Clause_Kind  => Not_A_Clause,

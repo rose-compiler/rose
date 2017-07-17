@@ -1,5 +1,3 @@
-Element_Kind => "A_PATH"
-
 Element_Kind => "A_STATEMENT"
 Statement_Kind => "AN_ACCEPT_STATEMENT"
 Statement_Kind => "AN_ASSIGNMENT_STATEMENT"

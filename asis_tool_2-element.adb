@@ -981,10 +981,79 @@ package body Asis_Tool_2.Element is
         (Element : in     Asis.Element;
          State   : in out Class)
       is
+         Path_Kind : constant Asis.Path_Kinds := Asis.Elements.Path_Kind (Element);
+         A_Path : a_nodes_h.Path_Struct :=
+           a_nodes_h.Support.Default_Path_Struct;
+
+         procedure Add_Case_Path_Alternative_Choices is
+         begin
+            Add_Element_List
+              (This           => State,
+               Elements_In    => Asis.Statements.Case_Path_Alternative_Choices (Element),
+               Dot_Label_Name => "Case_Path_Alternative_Choices",
+               List_Out       => A_Path.Case_Path_Alternative_Choices);
+         end;
+
+         procedure Add_Condition_Expression is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Statements.Condition_Expression (Element));
+         begin
+            State.Add_To_Dot_Label ("Condition_Expression", To_String (ID));
+            A_Path.Condition_Expression := a_nodes_h.Node_ID (ID);
+         end;
+
+         procedure Add_Guard is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Statements.Guard (Element));
+         begin
+            State.Add_To_Dot_Label ("Guard", To_String (ID));
+            A_Path.Guard := a_nodes_h.Node_ID (ID);
+         end;
+
+         procedure Add_Sequence_Of_Statements is
+         begin
+            Add_Element_List
+              (This           => State,
+               Elements_In    => Asis.Statements.Sequence_Of_Statements (Element),
+               Dot_Label_Name => "Sequence_Of_Statements",
+               List_Out       => A_Path.Sequence_Of_Statements);
+         end;
+
+         use all type Asis.Path_Kinds;
       begin
-         --        A_Path                -> Path_Kinds
-         --
-         State.Add_Not_Implemented;
+         State.Add_To_Dot_Label ("Path_Kind", Path_Kind'Image);
+         A_Path.Path_Kind := anhS.To_Path_Kinds (Path_Kind);
+         Add_Sequence_Of_Statements;
+         case Path_Kind is
+            when Not_A_Path =>
+               raise Program_Error with
+                 "Element.Pre_Children.Process_Path called with: " &
+                 Path_Kind'Image;
+            when An_If_Path =>
+               Add_Condition_Expression;
+            when An_Elsif_Path =>
+               Add_Condition_Expression;
+            when An_Else_Path =>
+               null; -- No more info
+            when A_Case_Path =>
+               Add_Case_Path_Alternative_Choices;
+            when A_Select_Path =>
+               Add_Guard;
+            when An_Or_Path =>
+               Add_Guard;
+            when A_Then_Abort_Path =>
+               null; -- No more info
+            when A_Case_Expression_Path =>
+               Add_Case_Path_Alternative_Choices;
+            when An_If_Expression_Path =>
+               Add_Condition_Expression;
+            when An_Elsif_Expression_Path =>
+               Add_Condition_Expression;
+            when An_Else_Expression_Path =>
+               null; -- No more info
+         end case;
+         State.A_Element.Element_Kind := a_nodes_h.A_Path;
+         State.A_Element.The_Union.Path := A_Path;
       end Process_Path;
 
       procedure Process_Clause
