@@ -59,7 +59,7 @@ FunctionSimilarity::cartesianDistance(const FunctionSimilarity::CartesianPoint &
 }
 
 // class method
-std::vector<long>
+std::vector<size_t>
 FunctionSimilarity::findMinimumAssignment(const DistanceMatrix &matrix) {
 #ifdef ROSE_HAVE_DLIB
     ASSERT_forbid(matrix.size() == 0);
@@ -69,9 +69,9 @@ FunctionSimilarity::findMinimumAssignment(const DistanceMatrix &matrix) {
     double minValue, maxValue;
     dlib::find_min_and_max(matrix.dlib(), minValue /*out*/, maxValue /*out*/);
     if (minValue == maxValue) {
-        std::vector<long> ident;
+        std::vector<size_t> ident;
         ident.reserve(matrix.nr());
-        for (long i=0; i<matrix.nr(); ++i)
+        for (size_t i=0; i<matrix.nr(); ++i)
             ident.push_back(i);
         return ident;
     }
@@ -81,11 +81,17 @@ FunctionSimilarity::findMinimumAssignment(const DistanceMatrix &matrix) {
     // but not so large that things might overflow.
     const int iGreatest = 1000000;                      // arbitrary upper bound for integer interval
     dlib::matrix<long> intMatrix(matrix.nr(), matrix.nc());
-    for (long i=0; i<matrix.nr(); ++i) {
-        for (long j=0; j<matrix.nc(); ++j)
+    for (size_t i=0; i<matrix.nr(); ++i) {
+        for (size_t j=0; j<matrix.nc(); ++j)
             intMatrix(i, j) = round(-iGreatest * (matrix(i, j) - minValue) / (maxValue - minValue));
     }
-    return dlib::max_cost_assignment(intMatrix);
+
+    // Return a proper type -- indexes and sizes should never be signed types since it makes no sense for them to be negative.
+    std::vector<size_t> retval;
+    retval.reserve(matrix.nr());
+    BOOST_FOREACH (double d, dlib::max_cost_assignment(intMatrix))
+        retval.push_back(d);
+    return retval;
 #else
     throw FunctionSimilarity::Exception("dlib support is necessary for FunctionSimilarity analysis"
                                         "; see ROSE installation instructions");
@@ -94,11 +100,11 @@ FunctionSimilarity::findMinimumAssignment(const DistanceMatrix &matrix) {
 
 // class method
 double
-FunctionSimilarity::totalAssignmentCost(const DistanceMatrix &matrix, const std::vector<long> &assignment) {
+FunctionSimilarity::totalAssignmentCost(const DistanceMatrix &matrix, const std::vector<size_t> &assignment) {
     double sum = 0.0;
     ASSERT_require(matrix.nr() == matrix.nc());
     ASSERT_require((size_t)matrix.nr() == assignment.size());
-    for (long i=0; i<matrix.nr(); ++i) {
+    for (size_t i=0; i<matrix.nr(); ++i) {
         ASSERT_require(assignment[i] < matrix.nc());
         sum += matrix(i, assignment[i]);
     }
@@ -496,7 +502,7 @@ FunctionSimilarity::findMinimumCostMapping(const std::vector<P2::Function::Ptr> 
 
     // Find the minimum total cost 1:1 assignment of list1 functions (rows) to list2 functions (cols)
     debug <<"starting Kuhn-Munkres";
-    std::vector<long> assignment = findMinimumAssignment(dm);
+    std::vector<size_t> assignment = findMinimumAssignment(dm);
     ASSERT_require(assignment.size() == n);
     debug <<"; done\n";
     
@@ -701,8 +707,8 @@ FunctionSimilarity::printCharacteristicValues(std::ostream &out) const {
 double
 FunctionSimilarity::maximumDistance(const DistanceMatrix &dm) {
     double retval = NAN;
-    for (long i=0; i<dm.nr(); ++i) {
-        for (long j=0; j<dm.nc(); ++j) {
+    for (size_t i=0; i<dm.nr(); ++i) {
+        for (size_t j=0; j<dm.nc(); ++j) {
             double d = dm(i, j);
             if (!rose_isnan(d)) {
                 if (rose_isnan(retval)) {
@@ -721,8 +727,8 @@ double
 FunctionSimilarity::averageDistance(const DistanceMatrix &dm) {
     double sum = 0.0;
     size_t n = 0;
-    for (long i=0; i<dm.nr(); ++i) {
-        for (long j=0; j<dm.nc(); ++j) {
+    for (size_t i=0; i<dm.nr(); ++i) {
+        for (size_t j=0; j<dm.nc(); ++j) {
             double d = dm(i, j);
             if (!rose_isnan(d)) {
                 sum += d;
@@ -738,8 +744,8 @@ double
 FunctionSimilarity::medianDistance(const DistanceMatrix &dm) {
     std::vector<double> list;
     list.reserve(dm.nr() * dm.nc());
-    for (long i=0; i<dm.nr(); ++i) {
-        for (long j=0; j<dm.nc(); ++j) {
+    for (size_t i=0; i<dm.nr(); ++i) {
+        for (size_t j=0; j<dm.nc(); ++j) {
             double d = dm(i, j);
             if (!rose_isnan(d))
                 list.push_back(d);

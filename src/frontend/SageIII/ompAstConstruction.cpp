@@ -491,7 +491,7 @@ namespace OmpSupport
       return (returnNewExpression ? newExp : clause_expression);
   }
 
-  //Build if clause
+  //Build expression clauses
   SgOmpExpressionClause* buildOmpExpressionClause(OmpAttribute* att, omp_construct_enum clause_type)
   {
     ROSE_ASSERT(att != NULL);
@@ -536,6 +536,18 @@ namespace OmpSupport
         {
           SgExpression* param = checkOmpExpressionClause( att->getExpression(e_simdlen).second, global, e_simdlen );
           result = new SgOmpSimdlenClause(param);
+          break;
+        }
+       case e_final:
+        {
+          SgExpression* Param = checkOmpExpressionClause( att->getExpression(e_final).second, global, e_final );
+          result = new SgOmpFinalClause(Param);
+          break;
+        }
+       case e_priority:
+        {
+          SgExpression* Param = checkOmpExpressionClause( att->getExpression(e_priority).second, global, e_priority );
+          result = new SgOmpPriorityClause(Param);
           break;
         }
  
@@ -608,6 +620,18 @@ namespace OmpSupport
     setOneSourcePositionForTransformation(result);
     return result;
   }
+
+  SgOmpMergeableClause * buildOmpMergeableClause(OmpAttribute* att)
+  {
+    ROSE_ASSERT(att != NULL);
+    if (!att->hasClause(e_mergeable))
+      return NULL;
+    SgOmpMergeableClause* result = new SgOmpMergeableClause();
+    ROSE_ASSERT(result);
+    setOneSourcePositionForTransformation(result);
+    return result;
+  }
+
 
   SgOmpInbranchClause * buildOmpInbranchClause(OmpAttribute* att)
   {
@@ -830,13 +854,31 @@ namespace OmpSupport
     std::vector<std::pair<std::string,SgNode* > >::iterator iter;
     for (iter = varlist.begin(); iter!= varlist.end(); iter ++)
     {
-      SgInitializedName* iname = isSgInitializedName((*iter).second);
-      ROSE_ASSERT(iname !=NULL);
-      //target->get_variables().push_back(iname);
-      // Liao 1/27/2010, fix the empty parent pointer of the SgVarRefExp here
-      SgVarRefExp * var_ref = buildVarRefExp(iname);
-      target->get_variables()->get_expressions().push_back(var_ref);
-      var_ref->set_parent(target);
+//      cout<<"debug setClauseVariableList: " << target <<":"<<(*iter).second->class_name()  <<endl;
+      // We now start to use SgExpression* to store variables showing up in a varlist
+      if (SgInitializedName* iname = isSgInitializedName((*iter).second))
+      {
+        //target->get_variables().push_back(iname);
+        // Liao 1/27/2010, fix the empty parent pointer of the SgVarRefExp here
+        SgVarRefExp * var_ref = buildVarRefExp(iname);
+        target->get_variables()->get_expressions().push_back(var_ref);
+        var_ref->set_parent(target);
+      }
+      else if (SgPntrArrRefExp* aref= isSgPntrArrRefExp((*iter).second))
+      {
+        target->get_variables()->get_expressions().push_back(aref);
+        aref->set_parent(target);
+      }
+      else if (SgVarRefExp* vref = isSgVarRefExp((*iter).second))
+      {
+        target->get_variables()->get_expressions().push_back(vref);
+        vref->set_parent(target);
+      }
+      else
+      {
+          cerr<<"error: unhandled type of variable within a list:"<< ((*iter).second)->class_name();
+          ROSE_ASSERT(false);
+      }
     }
   }
 
@@ -855,6 +897,61 @@ namespace OmpSupport
     
     // build variable list
     setClauseVariableList(result, att, reduction_op); 
+    return result;
+  }
+  //! A helper function to convert OmpAttribute depend type operator to SgClause's one 
+  //TODO move to sageInterface?
+  static   SgOmpClause::omp_dependence_type_enum toSgOmpClauseDependenceType(omp_construct_enum at_op)
+  {
+    SgOmpClause::omp_dependence_type_enum result = SgOmpClause::e_omp_depend_unknown;
+    switch (at_op)
+    {
+      case e_depend_in: 
+        {
+          result = SgOmpClause::e_omp_depend_in;
+          break;
+        }
+      case e_depend_out: 
+        {
+          result = SgOmpClause::e_omp_depend_out;
+          break;
+        }
+      case e_depend_inout:
+        {
+          result = SgOmpClause::e_omp_depend_inout;
+          break;
+        }
+     default:
+        {
+          printf("error: unacceptable omp construct enum for dependence type conversion:%s\n", OmpSupport::toString(at_op).c_str());
+          ROSE_ASSERT(false);
+          break;
+        }
+    }
+    ROSE_ASSERT(result != SgOmpClause::e_omp_depend_unknown);
+    return result;
+  }
+  //! Try to build a depend clause with a given operation type from OmpAttribute
+  SgOmpDependClause* buildOmpDependClause(OmpAttribute* att, omp_construct_enum dep_type)
+  {
+    ROSE_ASSERT(att !=NULL);
+    if (!att->hasDependenceType(dep_type))
+      return NULL;
+    SgOmpClause::omp_dependence_type_enum  sg_op = toSgOmpClauseDependenceType(dep_type); 
+    SgExprListExp* explist=buildExprListExp();
+    SgOmpDependClause* result = new SgOmpDependClause(explist, sg_op);
+    ROSE_ASSERT(result != NULL);
+    explist->set_parent(result);
+    setOneSourcePositionForTransformation(result);
+    
+    // build variable list
+    setClauseVariableList(result, att, dep_type); 
+
+    //this is somewhat inefficient. 
+    // since the attribute has dimension info for all map clauses
+    //But we don't want to move the dimension info to directive level 
+    result->set_array_dimensions(att->array_dimensions);
+
     return result;
   }
 
@@ -1043,6 +1140,11 @@ namespace OmpSupport
           result = buildOmpUntiedClause(att); 
           break;
         }
+      case e_mergeable:
+        {
+          result = buildOmpMergeableClause(att); 
+          break;
+        }
       case e_inbranch:
         {
           result = buildOmpInbranchClause(att); 
@@ -1054,6 +1156,8 @@ namespace OmpSupport
           break;
         }
       case e_if:
+      case e_final:
+      case e_priority:
       case e_collapse:
       case e_num_threads:
       case e_device:
@@ -1262,6 +1366,20 @@ namespace OmpSupport
         {
           omp_construct_enum rop = *iter;
           SgOmpClause* sgclause = buildOmpReductionClause(att, rop);
+          target->get_clauses().push_back(sgclause);
+          sgclause->set_parent(target);
+        }
+      }
+      // special handling for depend(type:varlist)
+      else if (c_clause == e_depend) 
+      {
+        std::vector<omp_construct_enum> rops  = att->getDependenceTypes();
+        ROSE_ASSERT(rops.size()!=0);
+        std::vector<omp_construct_enum>::iterator iter;
+        for (iter=rops.begin(); iter!=rops.end();iter++)
+        {
+          omp_construct_enum rop = *iter;
+          SgOmpClause* sgclause = buildOmpDependClause(att, rop);
           target->get_clauses().push_back(sgclause);
           sgclause->set_parent(target);
         }

@@ -3633,6 +3633,24 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
 #ifdef DOCUMENTATION
+        /** Property: Holds the immediate dominator block in the control flow graph.
+         *
+         *  The immediate dominator is the closest block to this one (by following reverse control flow edges) through which
+         *  all control paths pass in order to get from the function entry block to this block.
+         *
+         *  The @ref Rose::BinaryAnalysis::Partitioner2 "Partitioner2" name space has a more useful definition of control flow
+         *  graph that can reference indeterminate addresses and store data in the edges, and which is copiable.
+         *
+         * @{ */
+        SgAsmBlock* get_immediate_dominator() const;
+        void set_immediate_dominator(SgAsmBlock*);
+        /** @} */
+#else
+        AsmBlock.setDataPrototype("SgAsmBlock*", "immediate_dominator", "=NULL",
+                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
         /** Property: Cached vertex for control flow graphs.
          *
          *  This property is used by the virtual control flow graph mechanism.
@@ -3694,6 +3712,7 @@ void Grammar::setUpBinaryInstructions() {
             s & BOOST_SERIALIZATION_NVP(p_statementList);
             s & BOOST_SERIALIZATION_NVP(p_successors);
             s & BOOST_SERIALIZATION_NVP(p_successors_complete);
+            s & BOOST_SERIALIZATION_NVP(p_immediate_dominator);
             s & BOOST_SERIALIZATION_NVP(p_cached_vertex);
             s & BOOST_SERIALIZATION_NVP(p_code_likelihood);
             s & BOOST_SERIALIZATION_NVP(p_stackDeltaOut);
@@ -9014,7 +9033,7 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned version) {
-            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericHeader);
             s & BOOST_SERIALIZATION_NVP(p_e_last_page_size);
             s & BOOST_SERIALIZATION_NVP(p_e_total_pages);
             s & BOOST_SERIALIZATION_NVP(p_e_nrelocs);
