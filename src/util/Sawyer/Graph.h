@@ -1316,20 +1316,19 @@ private:
     void load(S &s, const unsigned /*version*/) {
         clear();
         size_t nv = 0;
-        s >>BOOST_SERIALIZATION_NVP(nv);
+        s >>nv;
         for (size_t i=0; i<nv; ++i) {
             VertexValue vv;
-            s >>boost::serialization::make_nvp("vertex", vv);
+            s >>vv;
             insertVertex(vv);
         }
 
         size_t ne = 0;
-        s >>BOOST_SERIALIZATION_NVP(ne);
+        s >>ne;
         for (size_t i=0; i<ne; ++i) {
             EdgeValue ev;
             size_t srcId = 0, tgtId = 0;
-            s >>boost::serialization::make_nvp("edge", ev);
-            s >>BOOST_SERIALIZATION_NVP(srcId) >>BOOST_SERIALIZATION_NVP(tgtId);
+            s >> ev >>srcId >>tgtId;
             ASSERT_require(srcId < nv && tgtId < nv);
             insertEdge(findVertex(srcId), findVertex(tgtId), ev);
         }

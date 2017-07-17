@@ -49,6 +49,8 @@ namespace CodeThorn {
   typedef std::pair<PState,  std::list<int> > PStatePlusIOHistory;
   enum AnalyzerMode { AM_ALL_STATES, AM_LTL_STATES };
 
+  class SpotConnection;
+
 /*! 
   * \author Markus Schordan
   * \date 2012.
@@ -261,6 +263,9 @@ namespace CodeThorn {
     bool stdFunctionSemantics() { return _stdFunctionSemantics; }
     void setModeLTLDriven(bool ltlDriven) { transitionGraph.setModeLTLDriven(ltlDriven); }
     bool getModeLTLDriven() { return transitionGraph.getModeLTLDriven(); }
+    // only used in LTL-driven mode
+    void setSpotConnection(SpotConnection* connection) { _spotConnection = connection; }
+
     long analysisRunTimeInSeconds(); 
 
     void set_finished(std::vector<bool>& v, bool val);
@@ -304,6 +309,10 @@ namespace CodeThorn {
     long int _maxIterationsForcedTop;
     long int _maxBytesForcedTop;
     long int _maxSecondsForcedTop;
+    // only used in LTL-driven mode
+    size_t _prevStateSetSizeDisplay = 0;
+    size_t _prevStateSetSizeResource = 0;
+
     PState _startPState;
     bool _optionStatusMessages;
 
@@ -355,6 +364,7 @@ namespace CodeThorn {
     string _externalExitFunctionName;
 
     Timer _analysisTimer;
+    bool _timerRunning = false;
 
     // =======================================================================
     // ========================== LTLAnalyzer ================================
@@ -502,6 +512,9 @@ namespace CodeThorn {
     const EState* _estateBeforeMissingInput;
     const EState* _latestOutputEState;
     const EState* _latestErrorEState;
+    // only used in LTL-driven mode
+    SpotConnection* _spotConnection = nullptr;
+
   }; // end of class Analyzer
 
 } // end of namespace CodeThorn

@@ -82,7 +82,7 @@ bool Analyzer::isFunctionCallWithAssignment(Label lab,VariableId* varIdPtr){
     std::pair<SgVarRefExp*,SgFunctionCallExp*> p=SgNodeHelper::Pattern::matchExprStmtAssignOpVarRefExpFunctionCallExp2(node);
     if(p.first) {
       if(varIdPtr) {
-	*varIdPtr=variableIdMapping.variableId(p.first);
+        *varIdPtr=variableIdMapping.variableId(p.first);
       }
       return true;
     }
@@ -142,6 +142,7 @@ Analyzer::Analyzer():
   _next_iteration_cnt(0),
   _svCompFunctionSemantics(false)
 {
+  initDiagnostics();
   _analysisTimer.start();
   _analysisTimer.stop();
   variableIdMapping.setModeVariableIdForEachArrayElement(true);
@@ -788,7 +789,7 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
             // set default init value
             newPState.writeTopToMemoryLocation(newArrayElementId);
           }
-          
+
         } else if(variableIdMapping.hasClassType(initDeclVarId)) {
           // not supported yet. Declarations may exist in header files,
           // therefore silently ignore it here, but if will cause an
@@ -1727,6 +1728,64 @@ bool Analyzer::isLTLRelevantEState(const EState* estate) {
 }
 
 Analyzer::SubSolverResultType Analyzer::subSolver(const EState* currentEStatePtr) {
+  // start the timer if not yet done
+  if (!_timerRunning) {
+    _analysisTimer.start();
+    _timerRunning=true;
+  }
+  // first, check size of global EStateSet and print status or switch to topify/terminate analysis accordingly.
+  unsigned long estateSetSize;
+  bool earlyTermination = false;
+  int threadNum = 0; //subSolver currently does not support multiple threads.
+  // print status message if required
+  if (getOptionStatusMessages() && _displayDiff) {
+#pragma omp critical(HASHSET)
+    {
+      estateSetSize = estateSet.size();
+    }
+    if(threadNum==0 && (estateSetSize>(_prevStateSetSizeDisplay+_displayDiff))) {
+      printStatusMessage(true);
+      _prevStateSetSizeDisplay=estateSetSize;
+    }
+  }
+  // switch to topify mode or terminate analysis if resource limits are exceeded
+  if (_maxBytes != -1 || _maxBytesForcedTop != -1 || _maxSeconds != -1 || _maxSecondsForcedTop != -1
+      || _maxTransitions != -1 || _maxTransitionsForcedTop != -1 || _maxIterations != -1 || _maxIterationsForcedTop != -1) {
+#pragma omp critical(HASHSET)
+    {
+      estateSetSize = estateSet.size();
+    }
+    if(threadNum==0 && _resourceLimitDiff && (estateSetSize>(_prevStateSetSizeResource+_resourceLimitDiff))) {
+      if (isIncompleteSTGReady()) {
+#pragma omp critical(ESTATEWL)
+	{
+	  earlyTermination = true;
+	}	  
+      }
+      isActiveGlobalTopify(); // Checks if a switch to topify is necessary. If yes, it changes the analyzer state.
+      _prevStateSetSizeResource=estateSetSize;
+    }
+  } 
+  if (earlyTermination) {
+    if(getOptionStatusMessages()) {
+      cout << "STATUS: Early termination within subSolver (resource limit reached)." << endl;
+    }
+    PropertyValueTable* ltlResults = _spotConnection->getLtlResults();
+    bool withCounterexample = true;
+    if(getOptionStatusMessages()) {
+      ltlResults-> printResults("YES (verified)", "NO (falsified)", "ltl_property_", withCounterexample);
+      printStatusMessageLine("==============================================================");
+      ltlResults->printResultsStatistics();
+      printStatusMessageLine("==============================================================");
+    }
+    if (args.count("csv-spot-ltl")) {  //write results to a file instead of displaying them directly
+      std::string csv_filename = args["csv-spot-ltl"].as<string>();
+      logger[TRACE] << "STATUS: writing ltl results to file: " << csv_filename << endl;
+      ltlResults->writeFile(csv_filename.c_str(), false, 0, withCounterexample);
+    }
+    exit(0);
+  }
+  // run the actual sub-solver
   EStateWorkList localWorkList;
   EStateWorkList deferedWorkList;
   std::set<const EState*> existingEStateSet;
@@ -3236,7 +3295,7 @@ std::list<EState> Analyzer::transferFunctionCallExternal(Edge edge, const EState
     ROSE_ASSERT(newio.var==varId);
   }
 
-  /* handling of specific semantics for external function */ 
+  /* handling of specific semantics for external function */
   if(funCall) {
     string funName=SgNodeHelper::getFunctionName(funCall);
     if(svCompFunctionSemantics()) {
