@@ -926,12 +926,21 @@ struct Pragma_Struct {
 // May take 3*4 bytes - 2 enums, 1 char*:
 struct Defining_Name_Struct {
   enum Defining_Name_Kinds  Defining_Name_Kind;
-  char                     *Name_Image;
+  char                     *Defining_Name_Image;
   
   // These fields are only valid for the kinds above them:
+  // A_Defining_Character_Literal
+  // A_Defining_Enumeration_Literal
+  char                     *Position_Number_Image;
+  char                     *Representation_Value_Image;
+  // A_Defining_Expanded_Name 
+  Name_ID                   Defining_Prefix;
+  Defining_Name_ID          Defining_Selector;
+  // When this is the name of a constant or a deferred constant:
+  Declaration_ID            Corresponding_Constant_Declaration;
   // A_Defining_Operator_Symbol:
   enum Operator_Kinds       Operator_Kind;
-};
+  };
 
 // May take 5*4 bytes - 5 enums:
 struct Declaration_Struct {

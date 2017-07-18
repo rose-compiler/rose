@@ -42,9 +42,15 @@ package a_nodes_h.Support is
      (Pragma_Kind => Not_A_Pragma);
 
    Default_Defining_Name_Struct : constant Defining_Name_Struct :=
-     (Defining_Name_Kind     => Not_A_Defining_Name,
-      Name_Image    => ICS.Null_Ptr,
-      Operator_Kind => Not_An_Operator);
+     (Defining_Name_Kind         => Not_A_Defining_Name,
+      Defining_Name_Image        => ICS.Null_Ptr,
+      Position_Number_Image      => ICS.Null_Ptr,
+      Representation_Value_Image => ICS.Null_Ptr,
+      Defining_Prefix            => Default_Node_ID,
+      Defining_Selector          => Default_Node_ID,
+      Corresponding_Constant_Declaration
+                                 => Default_Node_ID,
+      Operator_Kind              => Not_An_Operator);
 
    Default_Declaration_Struct : constant Declaration_Struct :=
      (Declaration_Kind   => Not_A_Declaration,

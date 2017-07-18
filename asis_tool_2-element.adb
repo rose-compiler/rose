@@ -13,21 +13,6 @@ with Types;
 
 package body Asis_Tool_2.Element is
 
-   -- Return the name image for declarations:
-   function Name
-     (Element : in Asis.Element)
-      return Wide_String
-   is
-   begin
-      case Asis.Elements.Element_Kind (Element) is
-         when Asis.A_Defining_Name =>
-            return '"' & Asis.Declarations.Defining_Name_Image (Element) & '"';
-         when others =>
-            return "";
-      end case;
-   end Name;
-
-
    procedure Add_Element_List
      (This           : in out Class;
       Elements_In    : in     Asis.Element_List;
@@ -57,15 +42,26 @@ package body Asis_Tool_2.Element is
          IDs    => anhS.To_Element_ID_Ptr (IDs));
    end Add_Element_List;
 
+   function Add_Operator_Kind
+     (State   : in out Class;
+      Element : in     Asis.Element)
+      return a_nodes_h.Operator_Kinds
+   is
+      Operator_Kind : constant Asis.Operator_Kinds :=
+        Asis.Elements.Operator_Kind (Element);
+   begin
+      State.Add_To_Dot_Label ("Operator_Kind", Operator_Kind'Image);
+      return anhS.To_Operator_Kinds (Operator_Kind);
+   end;
+
    function Add_Trait_Kind
-     (Element : in     Asis.Element;
-      State   : in out Class)
-            return a_nodes_h.Trait_Kinds
+     (State   : in out Class;
+      Element : in     Asis.Element)
+      return a_nodes_h.Trait_Kinds
    is
       Trait_Kind : Asis.Trait_Kinds := Asis.Elements.Trait_Kind (Element);
    begin
-      State.Add_To_Dot_Label
-        ("Trait_Kind", Trait_Kind'Image);
+      State.Add_To_Dot_Label ("Trait_Kind", Trait_Kind'Image);
       return a_nodes_h.Support.To_Trait_Kinds (Trait_Kind);
    end;
 
@@ -101,25 +97,98 @@ package body Asis_Tool_2.Element is
       is
          Defining_Name_Kind : Asis.Defining_Name_Kinds :=
            Asis.Elements.Defining_Name_Kind (Element);
+         A_Defining_Name : a_nodes_h.Defining_Name_Struct :=
+           a_nodes_h.Support.Default_Defining_Name_Struct;
+
+         -- Supporting procedures are in alphabetical order:
+         procedure Add_Defining_Name_Image is
+            WS : constant Wide_String := Asis.Declarations.Defining_Name_Image (Element);
+         begin
+            State.Add_To_Dot_Label ("Defining_Name_Image", To_String (WS));
+            A_Defining_Name.Defining_Name_Image := To_Chars_Ptr(WS);
+         end;
+
+         procedure Add_Defining_Prefix is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Declarations.Defining_Prefix (Element));
+         begin
+            State.Add_To_Dot_Label ("Defining_Prefix", To_String (ID));
+            A_Defining_Name.Defining_Prefix := a_nodes_h.Node_ID (ID);
+         end;
+
+         procedure Add_Defining_Selector is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Declarations.Defining_Selector (Element));
+         begin
+            State.Add_To_Dot_Label ("Defining_Selector", To_String (ID));
+            A_Defining_Name.Defining_Selector := a_nodes_h.Node_ID (ID);
+         end;
+
+         procedure Add_Position_Number_Image is
+            WS : constant Wide_String := Asis.Declarations.Position_Number_Image (Element);
+         begin
+            State.Add_To_Dot_Label ("Position_Number_Image", To_String (WS));
+            A_Defining_Name.Position_Number_Image := To_Chars_Ptr(WS);
+         end;
+
+         procedure Add_Representation_Value_Image is
+            WS : constant Wide_String := Asis.Declarations.Representation_Value_Image (Element);
+         begin
+            State.Add_To_Dot_Label ("Representation_Value_Image", To_String (WS));
+            A_Defining_Name.Representation_Value_Image := To_Chars_Ptr(WS);
+         end;
+
+         -- True if this is the name of a constant or a deferred constant.
+         -- TODO: Implement
+         function Is_Constant return Boolean is
+           (False);
+
+         procedure Add_Corresponding_Constant_Declaration is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node
+                (Asis.Declarations.Corresponding_Constant_Declaration (Element));
+         begin
+            State.Add_To_Dot_Label ("Corresponding_Constant_Declaration", To_String (ID));
+            A_Defining_Name.Corresponding_Constant_Declaration := a_nodes_h.Node_ID (ID);
+         end;
+
          use all type Asis.Defining_Name_Kinds;
       begin
-         --        A_Defining_Name       -> Defining_Name_Kinds
-         --                                         -> Operator_Kinds
-         State.Add_To_Dot_Label (Name => "Defining_Name_Kind",
-                              Value => Defining_Name_Kind'Image);
-         State.Add_To_Dot_Label (Name => "Name",
-                              Value => Name (Element));
+         State.Add_To_Dot_Label
+           (Name => "Defining_Name_Kind", Value => Defining_Name_Kind'Image);
+         A_Defining_Name.Defining_Name_Kind :=
+           anhS.To_Defining_Name_Kinds (Defining_Name_Kind);
+
          case Defining_Name_Kind is
             when Not_A_Defining_Name =>
                raise Program_Error with
                  "Element.Pre_Children.Process_Defining_Name called with: " &
                  Defining_Name_Kind'Image;
+
+            when A_Defining_Identifier =>
+               null; -- No more info
+
+            when A_Defining_Character_Literal =>
+               Add_Position_Number_Image;
+               Add_Representation_Value_Image;
+
+            when A_Defining_Enumeration_Literal =>
+               Add_Position_Number_Image;
+               Add_Representation_Value_Image;
+
             when A_Defining_Operator_Symbol =>
-               State.Add_To_Dot_Label (Name => "Operator_Kind",
-                                    Value => Asis.Elements.Operator_Kind (Element)'Image);
-            when others =>
-               State.Add_Not_Implemented;
+               A_Defining_Name.Operator_Kind := Add_Operator_Kind (State, Element);
+
+            when A_Defining_Expanded_Name =>
+               Add_Defining_Prefix;
+               Add_Defining_Selector;
          end case;
+
+         if Is_Constant then
+            Add_Corresponding_Constant_Declaration;
+         end if;
+
+
       end Process_Defining_Name;
 
       procedure Process_Declaration
@@ -128,7 +197,7 @@ package body Asis_Tool_2.Element is
       is
          Declaration_Kind : Asis.Declaration_Kinds :=
            Asis.Elements.Declaration_Kind (Element);
-          A_Declaration : a_nodes_h.Declaration_Struct :=
+         A_Declaration : a_nodes_h.Declaration_Struct :=
            a_nodes_h.Support.Default_Declaration_Struct;
          use all type Asis.Declaration_Kinds;
       begin
@@ -174,7 +243,7 @@ package body Asis_Tool_2.Element is
                  A_Formal_Function_Declaration =>
                State.Add_To_Dot_Label (Name => "Trait_Kind",
                                     Value => Asis.Elements.Trait_Kind (Element)'Image);
-               A_Declaration.Trait_Kind := Add_Trait_Kind (Element, State);
+               A_Declaration.Trait_Kind := Add_Trait_Kind (State, Element);
             when others =>
                null;
          end case;
@@ -262,7 +331,7 @@ package body Asis_Tool_2.Element is
                  "Element.Pre_Children.Process_Definition.Process_Type_Definition called with: " &
                  Type_Kind'Image;
             when A_Derived_Type_Definition =>
-               A_Definition.Trait_Kind := Add_Trait_Kind (Element, State);
+               A_Definition.Trait_Kind := Add_Trait_Kind (State, Element);
                Add_Parent_Subtype_Indication;
                Add_Implicit_Inherited_Declarations;
                Add_Implicit_Inherited_Subprograms;
@@ -270,7 +339,7 @@ package body Asis_Tool_2.Element is
                Add_Corresponding_Root_Type;
                Add_Corresponding_Type_Structure;
             when A_Derived_Record_Extension_Definition =>
-               A_Definition.Trait_Kind := Add_Trait_Kind (Element, State);
+               A_Definition.Trait_Kind := Add_Trait_Kind (State, Element);
                Add_Parent_Subtype_Indication;
                Add_Record_Definition;
                Add_Implicit_Inherited_Declarations;
@@ -290,12 +359,12 @@ package body Asis_Tool_2.Element is
                State.Add_Not_Implemented;
             when A_Record_Type_Definition |
                  A_Tagged_Record_Type_Definition =>
-               A_Definition.Trait_Kind := Add_Trait_Kind (Element, State);
+               A_Definition.Trait_Kind := Add_Trait_Kind (State, Element);
                Add_Record_Definition;
             when An_Interface_Type_Definition =>
                State.Add_Not_Implemented;
             when An_Access_Type_Definition =>
-               A_Definition.Trait_Kind := Add_Trait_Kind (Element, State);
+               A_Definition.Trait_Kind := Add_Trait_Kind (State, Element);
                State.Add_Not_Implemented;
          end case;
       end Process_Type_Definition;
@@ -498,7 +567,7 @@ package body Asis_Tool_2.Element is
                Process_Type_Definition (State, Element, A_Definition);
 
             when A_Subtype_Indication =>
-               A_Definition.Trait_Kind := Add_Trait_Kind (Element, State);
+               A_Definition.Trait_Kind := Add_Trait_Kind (State, Element);
                Add_Subtype_Mark;
                Add_Subtype_Constraint;
 
@@ -506,7 +575,7 @@ package body Asis_Tool_2.Element is
                Process_Constraint (State, Element, A_Definition);
 
             when A_Component_Definition =>
-               A_Definition.Trait_Kind := Add_Trait_Kind (Element, State);
+               A_Definition.Trait_Kind := Add_Trait_Kind (State, Element);
                Add_Component_Subtype_Indication;
                Add_Component_Definition_View;
 
@@ -543,20 +612,20 @@ package body Asis_Tool_2.Element is
                State.Add_Not_Implemented;
 
             when An_Access_Definition =>
-               A_Definition.Trait_Kind := Add_Trait_Kind (Element, State);
+               A_Definition.Trait_Kind := Add_Trait_Kind (State, Element);
                -- Access_Definition_Kinds
                State.Add_Not_Implemented;
 
             when A_Private_Type_Definition =>
-               A_Definition.Trait_Kind := Add_Trait_Kind (Element, State);
+               A_Definition.Trait_Kind := Add_Trait_Kind (State, Element);
                State.Add_Not_Implemented;
 
             when A_Tagged_Private_Type_Definition =>
-               A_Definition.Trait_Kind := Add_Trait_Kind (Element, State);
+               A_Definition.Trait_Kind := Add_Trait_Kind (State, Element);
                State.Add_Not_Implemented;
 
             when A_Private_Extension_Definition =>
-               A_Definition.Trait_Kind := Add_Trait_Kind (Element, State);
+               A_Definition.Trait_Kind := Add_Trait_Kind (State, Element);
                State.Add_Not_Implemented;
 
             when A_Task_Definition =>
@@ -677,11 +746,10 @@ package body Asis_Tool_2.Element is
          end;
 
          procedure Add_Name_Image is
-            Name_Image : constant Wide_String :=
-              Asis.Expressions.Name_Image (Element);
+            WS : constant Wide_String := Asis.Expressions.Name_Image (Element);
          begin
-            State.Add_To_Dot_Label ("Name_Image", To_String (Name_Image));
-            A_Expression.Name_Image := To_Chars_Ptr(Name_Image);
+            State.Add_To_Dot_Label ("Name_Image", To_String (WS));
+            A_Expression.Name_Image := To_Chars_Ptr (WS);
          end;
 
          procedure Add_Prefix is
@@ -709,11 +777,10 @@ package body Asis_Tool_2.Element is
          end;
 
          procedure Add_Value_Image is
-            Value_Image : constant Wide_String :=
-              Asis.Expressions.Value_Image (Element);
+            WS : constant Wide_String := Asis.Expressions.Value_Image (Element);
          begin
-            State.Add_To_Dot_Label ("Value_Image", To_String (Value_Image));
-            A_Expression.Value_Image := To_Chars_Ptr(Value_Image);
+            State.Add_To_Dot_Label ("Value_Image", To_String (WS));
+            A_Expression.Value_Image := To_Chars_Ptr(WS);
          end;
 
          use all type Asis.Expression_Kinds;
@@ -750,8 +817,7 @@ package body Asis_Tool_2.Element is
                Add_Corresponding_Name_Definition;
                Add_Corresponding_Name_Definition_List;
                Add_Corresponding_Name_Declaration;
-                     State.Add_To_Dot_Label ("Operator_Kind",
-                                          Asis.Elements.Operator_Kind (Element)'Image);
+               A_Expression.Operator_Kind := Add_Operator_Kind (State, Element);
             when A_Character_Literal =>
                Add_Name_Image;
                Add_Corresponding_Name_Definition;
@@ -1328,7 +1394,7 @@ package body Asis_Tool_2.Element is
             when A_Use_All_Type_Clause =>
                Add_Clause_Names;
             when A_With_Clause =>
-               A_Clause.Trait_Kind := Add_Trait_Kind (Element, State);
+               A_Clause.Trait_Kind := Add_Trait_Kind (State, Element);
                Add_Clause_Names;
             when A_Representation_Clause =>
          --                                         -> Representation_Clause_Kinds
