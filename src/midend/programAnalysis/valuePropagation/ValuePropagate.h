@@ -5,7 +5,7 @@
 #include <ValueAnnot.h>
 #include <FunctionObject.h>
 
-class ROSE_DLL_API ValuePropagateNode : public DefUseChainNode
+class ValuePropagateNode : public DefUseChainNode
 {
   HasValueDescriptor desc;
  public:
@@ -18,7 +18,7 @@ class ROSE_DLL_API ValuePropagateNode : public DefUseChainNode
   virtual std::string toString() const;
 };
 
-class ROSE_DLL_API HasValueMap : public AstObserver
+class HasValueMap : public AstObserver
 {
   std::map<AstNodePtr, HasValueDescriptor> valmap;
 
@@ -47,14 +47,14 @@ class HasValueMapReplace
      : valmap(_m), fa(_fa), usedefault(_usedefault) {}
 };
 
-class ROSE_DLL_API HasValueCodeGen : public Map2Object<AstInterface*, AstNodePtr, AstNodePtr>
+class HasValueCodeGen : public Map2Object<AstInterface*, AstNodePtr, AstNodePtr>
 {
   std::map<AstNodePtr, AstNodePtr> astmap;
  public:
   AstNodePtr operator() (AstInterface* const& fa, const AstNodePtr& orig);
 };
 
-class ROSE_DLL_API ValuePropagate 
+class ValuePropagate 
 : public DefUseChain<ValuePropagateNode>
 {
   std::map<AstNodePtr, ValuePropagateNode*> nodemap;

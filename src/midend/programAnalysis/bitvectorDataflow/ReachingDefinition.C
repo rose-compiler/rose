@@ -30,12 +30,12 @@ class ConstructReachingDefinitionBase
     if (fa.IsVarRef(mod.first, 0, &varname, &scope)) {
       base.add_ref( varname, scope, mod);
       if (DebugReachingDef()) 
-         std::cerr << "collecting var ref: " << varname << ":" << AstToString(mod.second) << std::endl;
+         std::cerr << "collecting var ref: " << varname << ":" << AstInterface::AstToString(mod.second) << std::endl;
     }
     else {
       base.add_unknown_def( mod);
       if (DebugReachingDef()) 
-         std::cerr << "collecting unknown ref: " << AstToString(mod.first) << ":" << AstToString(mod.second) << std::endl;
+         std::cerr << "collecting unknown ref: " << AstInterface::AstToString(mod.first) << ":" << AstInterface::AstToString(mod.second) << std::endl;
     }
     return true;
   }
@@ -47,7 +47,7 @@ public:
 void ReachingDefinitionBase:: 
 add_ref( const std::string& varname, const AstNodePtr& scope, const std::pair<AstNodePtr,AstNodePtr>& def)
 { 
-   std::string scopename = scopemap.get_string(scope);
+   std::string scopename = Ast2StringMap::inst()->get_string(scope);
    std::string name = varname + scopename;
    if (DebugReachingDef()) 
        std:: cerr << "adding variable name: " << name << "\n";
@@ -76,7 +76,7 @@ void ReachingDefinitionGenerator::
 add_def( ReachingDefinitions& repr, const std::string& varname, const AstNodePtr& scope,
                 const std::pair<AstNodePtr,AstNodePtr>& def) const
 {
-   std::string scopename = scopemap.get_string(scope);
+   std::string scopename = Ast2StringMap::inst()->get_string(scope);
    std::string name = varname + scopename;
    add_member(repr, name, def);
 }
@@ -84,7 +84,7 @@ add_def( ReachingDefinitions& repr, const std::string& varname, const AstNodePtr
 ReachingDefinitions ReachingDefinitionGenerator::
 get_def_set( const std::string& varname, const AstNodePtr& scope) const
 {
-   std::string scopename = scopemap.lookup_string(scope);
+   std::string scopename = Ast2StringMap::inst()->lookup_string(scope);
    if (scopename != "") {
       std::string name = varname + scopename;
       return get_data_set(name);
