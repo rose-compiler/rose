@@ -24,7 +24,7 @@
 #include <set>
 using namespace std;
 
-#if 1
+#if 0
 //testing a new version with better conversion, obtain the current level granularity, not always converting to top level objects!!
 SgInitializedName* convertRefToInitializedName2(SgNode* current)
 {
@@ -141,8 +141,8 @@ int main(int argc, char * argv[])
       if (*iter)
       {
         cout<<"\t"<<(*iter)->class_name()<<"\t@"<<(*iter)<< "  ";
-        if (convertRefToInitializedName2(*iter))
-           cout<<convertRefToInitializedName2(*iter)->get_qualified_name()<<endl;
+        if (SgInitializedName* iname= SageInterface::convertRefToInitializedName(*iter, false))
+           cout<<iname->get_qualified_name()<<endl;
         else
           cout<<"NULL SgInitializedName"<<endl;
           
@@ -159,8 +159,8 @@ int main(int argc, char * argv[])
       cout<<"\t"<<(*iter)->class_name()<<"\t@"<<(*iter)<< "  ";
       if ((*iter) )
       {  
-        if (convertRefToInitializedName2(*iter))
-          cout<<convertRefToInitializedName2(*iter)->get_qualified_name()<<endl;
+        if (SgInitializedName* iname = SageInterface::convertRefToInitializedName(*iter, false))
+          cout<<iname->get_qualified_name()<<endl;
         else 
           cout<<"NULL SgInitializedName" <<endl;
       }
@@ -170,7 +170,7 @@ int main(int argc, char * argv[])
     
     //-------------------------------------------------------------------
     set<SgInitializedName*> readNames, writeNames; 
-    if (!SageInterface::collectReadWriteVariables(func->get_definition(),readNames,writeNames))
+    if (!SageInterface::collectReadWriteVariables(func->get_definition(),readNames,writeNames, false))
     {
       cerr<<"Warning: SageInterface::collectReadWriteVariables() returns false."<<endl;
       continue; 
