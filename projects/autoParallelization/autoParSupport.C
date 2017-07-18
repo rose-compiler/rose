@@ -185,7 +185,6 @@ namespace AutoParallelization
   LoopTreeDepGraph*  ComputeDependenceGraph(SgNode* loop, ArrayInterface* array_interface, ArrayAnnotation* annot)
   {
 
-    LoopTreeDepComp::supportNonFortranLoop=true;
     ROSE_ASSERT(loop && array_interface&& annot);
     //TODO check if its a canonical loop
 
@@ -201,7 +200,9 @@ namespace AutoParallelization
     LoopTransformInterface::set_arrayInfo(array_interface);
     LoopTransformInterface::set_aliasInfo(array_interface);
     LoopTransformInterface::set_sideEffectInfo(annot);
-    LoopTreeDepCompCreate* comp = new LoopTreeDepCompCreate(head);// TODO when to release this?
+    LoopTreeDepCompCreate* comp = new LoopTreeDepCompCreate(head,true,true);
+    // the third parameter sets supportNonFortranLoop to true
+       // TODO when to release this?
     // Retrieve dependence graph here!
     if (enable_debug) 
     {

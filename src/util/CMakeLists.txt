@@ -79,6 +79,6 @@ install(FILES
 	      Color.h Combinatorics.h FileSystem.h FormatRestorer.h
  	      setup.h processSupport.h rose_paths.h
 	      compilationFileDatabase.h LinearCongruentialGenerator.h
-	      Map.h rose_getline.h rose_override.h rose_strtoull.h
+	      Map.h timing.h rose_getline.h rose_override.h rose_strtoull.h
               roseTraceLib.c ParallelSort.h GraphUtility.h
         DESTINATION ${INCLUDE_INSTALL_DIR})

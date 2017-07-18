@@ -96,10 +96,10 @@ int MintOptions::getNumberOfSharedMemPlanes()
 
   size_t numplanes=0;
 
-  if (config == CmdOptions::GetInstance()->opts.end())
+  if (config == CmdOptions::GetInstance()->end())
     return 0;
 
-  assert (config != CmdOptions::GetInstance()->opts.end());
+  assert (config != CmdOptions::GetInstance()->end());
 
   string sharedmem_param = (*config).c_str() ;
 
