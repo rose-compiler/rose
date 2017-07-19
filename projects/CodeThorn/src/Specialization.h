@@ -127,7 +127,6 @@ class Specialization {
   // replace each use of a SgVarRefExp according to constReporter
   int substituteVariablesWithConst(SgNode* node, ConstReporter* constReporter);
 
-  bool isAtMarker(Label lab, const EState* estate);
   SgNode* findDefAssignOfArrayElementUse(SgPntrArrRefExp* useRefNode, ArrayUpdatesSequence& arrayUpdates, ArrayUpdatesSequence::iterator pos, VariableIdMapping* variableIdMapping);
   SgNode* findDefAssignOfUse(SgVarRefExp* useRefNode, ArrayUpdatesSequence& arrayUpdates, ArrayUpdatesSequence::iterator pos, VariableIdMapping* variableIdMapping);
   void attachSsaNumberingtoDefs(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping);

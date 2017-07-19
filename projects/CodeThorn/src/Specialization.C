@@ -220,12 +220,6 @@ int Specialization::substituteVariablesWithConst(SgNode* node, ConstReporter* co
    return (int)substitutionList.size();
  }
 
-
- bool Specialization::isAtMarker(Label lab, const EState* estate) {
-   Label elab=estate->label();
-   return elab==lab;
- }
-
 void Specialization::extractArrayUpdateOperations(Analyzer* ana,
                                                   ArrayUpdatesSequence& arrayUpdates,
                                                   RewriteSystem& rewriteSystem,
