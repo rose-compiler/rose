@@ -22,15 +22,17 @@ private
          -- Current, in-progress intermediate output products.  These need to be
          -- turned into stacks if they are ever used in Post_Operation.  Now
          -- their usage ends at the end of Pre_Operation:
-         Dot_Node  : Dot.Node_Stmt.Class; -- Initialized
-         Dot_Label : Dot.HTML_Like_Labels.Class; -- Initialized
-         A_Element : a_nodes_h.Element_Struct := anhS.Default_Element_Struct;
+         Dot_Node   : Dot.Node_Stmt.Class; -- Initialized
+         Dot_Label  : Dot.HTML_Like_Labels.Class; -- Initialized
+         A_Element  : a_nodes_h.Element_Struct := anhS.Default_Element_Struct;
+         -- Used when making dot edges to child nodes:
+         Element_ID : Types.Node_Id := Types.Error;
       -- I would like to just pass Outputs through and not store it in the
       -- object, since it is all pointers and we doesn't need to store their
       -- values between calls to Process_Element_Tree. Outputs has to go into
       -- State_Information in the Traverse_Element instatiation, though, so
       -- we'll put it in the object and pass that:
-         Outputs   : Output_Accesses_Record; -- Initialized
+         Outputs    : Output_Accesses_Record; -- Initialized
       end record;
 
    -- Add <Name> => <Value> to the label, and print it if trace is on:
@@ -47,6 +49,19 @@ private
    procedure Add_To_Dot_Label
      (This  : in out Class;
       Value : in     String);
+
+   -- Add an edge node the the dot graph:
+   procedure Add_Dot_Edge
+     (This  : in out Class;
+      From  : in     Types.Node_Id;
+      To    : in     Types.Node_Id;
+      Label : in     String);
+
+   -- Add an edge and a dot label:
+   procedure Add_To_Dot_Label_And_Edge
+     (This  : in out Class;
+      Label : in     String;
+      To    : in     Types.Node_Id);
 
    -- Add attribute: Traversal="***NOT_IMPLEMENTED"
    procedure Add_Not_Implemented

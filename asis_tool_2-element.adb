@@ -17,7 +17,8 @@ package body Asis_Tool_2.Element is
      (This           : in out Class;
       Elements_In    : in     Asis.Element_List;
       Dot_Label_Name : in     String;
-      List_Out       :    out a_nodes_h.Element_List)
+      List_Out       :    out a_nodes_h.Element_List;
+      Add_Edges      : in     Boolean := False)
    is
       Element_Count : constant Natural :=
         Elements_In'Length;
@@ -29,11 +30,16 @@ package body Asis_Tool_2.Element is
          declare
             Element_ID : constant Types.Node_ID :=
               Asis.Set_Get.Node_Value (Element);
+            Label : constant String :=
+              Dot_Label_Name & " (" & IDs_Index'Image & ")";
          begin
             IDs (IDs_Index) := Interfaces.C.int (Element_ID);
-            This.Add_To_Dot_Label
-              (Dot_Label_Name & " (" & IDs_Index'Image & ")",
-               To_String (Element_ID));
+            This.Add_To_Dot_Label (Label, To_String (Element_ID));
+            if Add_Edges then
+               This.Add_Dot_Edge (From  => This.Element_ID,
+                                  To    => Element_ID,
+                                  Label => Label);
+            end if;
             IDs_Index := IDs_Index + 1;
          end;
       end loop;
@@ -112,7 +118,7 @@ package body Asis_Tool_2.Element is
             ID : constant Types.Node_Id :=
               Asis.Set_Get.Node (Asis.Declarations.Defining_Prefix (Element));
          begin
-            State.Add_To_Dot_Label ("Defining_Prefix", To_String (ID));
+            State.Add_To_Dot_Label_And_Edge ("Defining_Prefix", ID);
             A_Defining_Name.Defining_Prefix := a_nodes_h.Node_ID (ID);
          end;
 
@@ -120,7 +126,7 @@ package body Asis_Tool_2.Element is
             ID : constant Types.Node_Id :=
               Asis.Set_Get.Node (Asis.Declarations.Defining_Selector (Element));
          begin
-            State.Add_To_Dot_Label ("Defining_Selector", To_String (ID));
+            State.Add_To_Dot_Label_And_Edge ("Defining_Selector", ID);
             A_Defining_Name.Defining_Selector := a_nodes_h.Node_ID (ID);
          end;
 
@@ -148,7 +154,7 @@ package body Asis_Tool_2.Element is
               Asis.Set_Get.Node
                 (Asis.Declarations.Corresponding_Constant_Declaration (Element));
          begin
-            State.Add_To_Dot_Label ("Corresponding_Constant_Declaration", To_String (ID));
+            State.Add_To_Dot_Label ("Corresponding_Constant_Declaration", To_String(ID));
             A_Defining_Name.Corresponding_Constant_Declaration := a_nodes_h.Node_ID (ID);
          end;
 
@@ -269,7 +275,7 @@ package body Asis_Tool_2.Element is
               Asis.Set_Get.Node (Asis.Definitions.Parent_Subtype_Indication
                                  (Element));
          begin
-            State.Add_To_Dot_Label ("Parent_Subtype_Indication", To_String (ID));
+            State.Add_To_Dot_Label_And_Edge ("Parent_Subtype_Indication", ID);
             A_Definition.Parent_Subtype_Indication := a_nodes_h.Node_ID (ID);
          end;
 
@@ -277,7 +283,7 @@ package body Asis_Tool_2.Element is
             ID : constant Types.Node_Id :=
               Asis.Set_Get.Node (Asis.Definitions.Record_Definition (Element));
          begin
-            State.Add_To_Dot_Label ("Record_Definition", To_String (ID));
+            State.Add_To_Dot_Label_And_Edge ("Record_Definition", ID);
             A_Definition.Record_Definition := a_nodes_h.Node_ID (ID);
          end;
 
@@ -402,7 +408,7 @@ package body Asis_Tool_2.Element is
             ID : constant Types.Node_Id :=
               Asis.Set_Get.Node (Asis.Definitions.Lower_Bound (Element));
          begin
-            State.Add_To_Dot_Label ("Lower_Bound", To_String (ID));
+            State.Add_To_Dot_Label_And_Edge ("Lower_Bound", ID);
             A_Definition.Lower_Bound := a_nodes_h.Node_ID (ID);
          end;
 
@@ -410,7 +416,7 @@ package body Asis_Tool_2.Element is
             ID : constant Types.Node_Id :=
               Asis.Set_Get.Node (Asis.Definitions.Upper_Bound (Element));
          begin
-            State.Add_To_Dot_Label ("Upper_Bound", To_String (ID));
+            State.Add_To_Dot_Label_And_Edge ("Upper_Bound", ID);
             A_Definition.Upper_Bound := a_nodes_h.Node_ID (ID);
          end;
 
@@ -482,7 +488,7 @@ package body Asis_Tool_2.Element is
               Asis.Set_Get.Node (Asis.Definitions.Component_Subtype_Indication
                                  (Element));
          begin
-            State.Add_To_Dot_Label ("Component_Subtype_Indication", To_String (ID));
+            State.Add_To_Dot_Label_And_Edge ("Component_Subtype_Indication", ID);
             A_Definition.Component_Subtype_Indication := a_nodes_h.Node_ID (ID);
          end;
 
@@ -490,7 +496,7 @@ package body Asis_Tool_2.Element is
             ID : constant Types.Node_Id :=
               Asis.Set_Get.Node (Asis.Definitions.Component_Definition_View (Element));
          begin
-            State.Add_To_Dot_Label ("Component_Definition_View", To_String (ID));
+            State.Add_To_Dot_Label_And_Edge ("Component_Definition_View", ID);
             A_Definition.Component_Definition_View := a_nodes_h.Node_ID (ID);
          end;
 
@@ -520,14 +526,15 @@ package body Asis_Tool_2.Element is
               (This           => State,
                Elements_In    => Asis.Definitions.Private_Part_Items (Element),
                Dot_Label_Name => "Private_Part_Items",
-               List_Out       => A_Definition.Private_Part_Items);
+               List_Out       => A_Definition.Private_Part_Items,
+               Add_Edges      => True);
          end;
 
          procedure Add_Subtype_Constraint is
             ID : constant Types.Node_Id :=
               Asis.Set_Get.Node (Asis.Definitions.Subtype_Constraint (Element));
          begin
-            State.Add_To_Dot_Label ("Subtype_Constraint", To_String (ID));
+            State.Add_To_Dot_Label_And_Edge ("Subtype_Constraint", ID);
             A_Definition.Subtype_Constraint := a_nodes_h.Node_ID (ID);
          end;
 
@@ -535,7 +542,7 @@ package body Asis_Tool_2.Element is
             ID : constant Types.Node_Id :=
               Asis.Set_Get.Node (Asis.Definitions.Subtype_Mark (Element));
          begin
-            State.Add_To_Dot_Label ("Subtype_Mark", To_String (ID));
+            State.Add_To_Dot_Label_And_Edge ("Subtype_Mark", ID);
             A_Definition.Subtype_Mark := a_nodes_h.Node_ID (ID);
          end;
 
@@ -545,7 +552,8 @@ package body Asis_Tool_2.Element is
               (This           => State,
                Elements_In    => Asis.Definitions.Record_Components (Element),
                Dot_Label_Name => "Record_Components",
-               List_Out       => A_Definition.Record_Components);
+               List_Out       => A_Definition.Record_Components,
+               Add_Edges      => True);
          end;
 
          procedure Add_Visible_Part_Items is
@@ -554,7 +562,8 @@ package body Asis_Tool_2.Element is
               (This           => State,
                Elements_In    => Asis.Definitions.Visible_Part_Items (Element),
                Dot_Label_Name => "Visible_Part_Items",
-               List_Out       => A_Definition.Visible_Part_Items);
+               List_Out       => A_Definition.Visible_Part_Items,
+               Add_Edges      => True);
          end;
 
          use all type Asis.Definition_Kinds;
@@ -664,7 +673,7 @@ package body Asis_Tool_2.Element is
         (Element : in     Asis.Element;
          State   : in out Class)
       is
-        Expression_Kind : Asis.Expression_Kinds :=
+         Expression_Kind : Asis.Expression_Kinds :=
            Asis.Elements.Expression_Kind (Element);
          A_Expression : a_nodes_h.Expression_Struct :=
            a_nodes_h.Support.Default_Expression_Struct;
@@ -674,8 +683,8 @@ package body Asis_Tool_2.Element is
             ID : constant Types.Node_Id := Asis.Set_Get.Node
               (Asis.Expressions.Converted_Or_Qualified_Expression (Element));
          begin
-            State.Add_To_Dot_Label
-              ("Converted_Or_Qualified_Expression", To_String (ID));
+            State.Add_To_Dot_Label_And_Edge
+              ("Converted_Or_Qualified_Expression", ID);
             A_Expression.Converted_Or_Qualified_Expression :=
               a_nodes_h.Node_ID (ID);
          end;
@@ -684,8 +693,8 @@ package body Asis_Tool_2.Element is
             ID : constant Types.Node_Id := Asis.Set_Get.Node
               (Asis.Expressions.Converted_Or_Qualified_Subtype_Mark (Element));
          begin
-            State.Add_To_Dot_Label
-              ("Converted_Or_Qualified_Subtype_Mark", To_String (ID));
+            State.Add_To_Dot_Label_And_Edge
+              ("Converted_Or_Qualified_Subtype_Mark", ID);
             A_Expression.Converted_Or_Qualified_Subtype_Mark :=
               a_nodes_h.Node_ID (ID);
          end;
@@ -747,7 +756,8 @@ package body Asis_Tool_2.Element is
                Elements_In    => Asis.Expressions.
                  Function_Call_Parameters (Element),
                Dot_Label_Name => "Function_Call_Parameters",
-               List_Out       => A_Expression.Function_Call_Parameters);
+               List_Out       => A_Expression.Function_Call_Parameters,
+               Add_Edges      => True);
          end;
 
          procedure Add_Name_Image is
@@ -761,7 +771,7 @@ package body Asis_Tool_2.Element is
             ID : constant Types.Node_Id :=
               Asis.Set_Get.Node (Asis.Expressions.Prefix (Element));
          begin
-            State.Add_To_Dot_Label ("Prefix", To_String (ID));
+            State.Add_To_Dot_Label_And_Edge ("Prefix", ID);
             A_Expression.Prefix := a_nodes_h.Node_ID (ID);
          end;
 
@@ -769,7 +779,7 @@ package body Asis_Tool_2.Element is
             ID : constant Types.Node_Id :=
               Asis.Set_Get.Node (Asis.Expressions.Selector (Element));
          begin
-            State.Add_To_Dot_Label ("Selector", To_String (ID));
+            State.Add_To_Dot_Label_And_Edge ("Selector", ID);
             A_Expression.Selector := a_nodes_h.Node_ID (ID);
          end;
 
@@ -777,7 +787,7 @@ package body Asis_Tool_2.Element is
             ID : constant Types.Node_Id :=
               Asis.Set_Get.Node (Asis.Expressions.Subpool_Name (Element));
          begin
-            State.Add_To_Dot_Label ("Subpool_Name", To_String (ID));
+            State.Add_To_Dot_Label_And_Edge ("Subpool_Name", ID);
             A_Expression.Subpool_Name := a_nodes_h.Node_ID (ID);
          end;
 
@@ -918,7 +928,7 @@ package body Asis_Tool_2.Element is
             ID : constant Types.Node_Id :=
               Asis.Set_Get.Node (Asis.Expressions.Formal_Parameter (Element));
          begin
-            State.Add_To_Dot_Label ("Formal_Parameter", To_String (ID));
+            State.Add_To_Dot_Label_And_Edge ("Formal_Parameter", ID);
             A_Association.Formal_Parameter := a_nodes_h.Node_ID (ID);
          end;
 
@@ -926,7 +936,7 @@ package body Asis_Tool_2.Element is
             ID : constant Types.Node_Id :=
               Asis.Set_Get.Node (Asis.Expressions.Actual_Parameter (Element));
          begin
-            State.Add_To_Dot_Label ("Actual_Parameter", To_String (ID));
+            State.Add_To_Dot_Label_And_Edge ("Actual_Parameter", ID);
             A_Association.Actual_Parameter := a_nodes_h.Node_ID (ID);
          end;
 
@@ -1004,7 +1014,8 @@ package body Asis_Tool_2.Element is
               (This           => State,
                Elements_In    => Asis.Statements.Accept_Body_Exception_Handlers (Element),
                Dot_Label_Name => "Accept_Body_Exception_Handlers",
-               List_Out       => A_Statement.Accept_Body_Exception_Handlers);
+               List_Out       => A_Statement.Accept_Body_Exception_Handlers,
+               Add_Edges      => True);
          end;
 
          procedure Add_Accept_Body_Statements is
@@ -1013,14 +1024,15 @@ package body Asis_Tool_2.Element is
               (This           => State,
                Elements_In    => Asis.Statements.Accept_Body_Statements (Element),
                Dot_Label_Name => "Accept_Body_Statements",
-               List_Out       => A_Statement.Accept_Body_Statements);
+               List_Out       => A_Statement.Accept_Body_Statements,
+               Add_Edges      => True);
          end;
 
          procedure Add_Accept_Entry_Direct_Name is
             ID : constant Types.Node_Id :=
               Asis.Set_Get.Node (Asis.Statements.Accept_Entry_Direct_Name (Element));
          begin
-            State.Add_To_Dot_Label ("Accept_Entry_Direct_Name", To_String (ID));
+            State.Add_To_Dot_Label_And_Edge ("Accept_Entry_Direct_Name", ID);
             A_Statement.Accept_Entry_Direct_Name := a_nodes_h.Node_ID (ID);
          end;
 
@@ -1028,7 +1040,7 @@ package body Asis_Tool_2.Element is
             ID : constant Types.Node_Id :=
               Asis.Set_Get.Node (Asis.Statements.Accept_Entry_Index (Element));
          begin
-            State.Add_To_Dot_Label ("Accept_Entry_Index", To_String (ID));
+            State.Add_To_Dot_Label_And_Edge ("Accept_Entry_Index", ID);
             A_Statement.Accept_Entry_Index := a_nodes_h.Node_ID (ID);
          end;
 
@@ -1038,7 +1050,8 @@ package body Asis_Tool_2.Element is
               (This           => State,
                Elements_In    => Asis.Statements.Accept_Parameters (Element),
                Dot_Label_Name => "Accept_Parameters",
-               List_Out       => A_Statement.Accept_Parameters);
+               List_Out       => A_Statement.Accept_Parameters,
+               Add_Edges      => True);
          end;
 
          procedure Add_Assignment_Expression is
@@ -1053,7 +1066,7 @@ package body Asis_Tool_2.Element is
             ID : constant Types.Node_Id :=
               Asis.Set_Get.Node (Asis.Statements.Assignment_Variable_Name (Element));
          begin
-            State.Add_To_Dot_Label ("Assignment_Variable_Name", To_String (ID));
+            State.Add_To_Dot_Label_And_Edge ("Assignment_Variable_Name", ID);
             A_Statement.Assignment_Variable_Name := a_nodes_h.Node_ID (ID);
          end;
 
@@ -1061,7 +1074,7 @@ package body Asis_Tool_2.Element is
             ID : constant Types.Node_Id :=
               Asis.Set_Get.Node (Asis.Statements.Associated_Message (Element));
          begin
-            State.Add_To_Dot_Label ("Associated_Message", To_String (ID));
+            State.Add_To_Dot_Label_And_Edge ("Associated_Message", ID);
             A_Statement.Associated_Message := a_nodes_h.Node_ID (ID);
          end;
 
@@ -1071,14 +1084,15 @@ package body Asis_Tool_2.Element is
               (This           => State,
                Elements_In    => Asis.Statements.Call_Statement_Parameters (Element),
                Dot_Label_Name => "Call_Statement_Parameters",
-               List_Out       => A_Statement.Call_Statement_Parameters);
+               List_Out       => A_Statement.Call_Statement_Parameters,
+               Add_Edges      => True);
          end;
 
          procedure Add_Called_Name is
             ID : constant Types.Node_Id :=
               Asis.Set_Get.Node (Asis.Statements.Called_Name (Element));
          begin
-            State.Add_To_Dot_Label ("Called_Name", To_String (ID));
+            State.Add_To_Dot_Label_And_Edge ("Called_Name", ID);
             A_Statement.Called_Name := a_nodes_h.Node_ID (ID);
          end;
 
@@ -1111,7 +1125,8 @@ package body Asis_Tool_2.Element is
               (This           => State,
                Elements_In    => Asis.Statements.Label_Names (Element),
                Dot_Label_Name => "Label_Names",
-               List_Out       => A_Statement.Label_Names);
+               List_Out       => A_Statement.Label_Names,
+               Add_Edges      => True);
          end;
 
          procedure Add_Loop_Statements is
@@ -1120,14 +1135,15 @@ package body Asis_Tool_2.Element is
               (This           => State,
                Elements_In    => Asis.Statements.Loop_Statements (Element),
                Dot_Label_Name => "Loop_Statements",
-               List_Out       => A_Statement.Loop_Statements);
+               List_Out       => A_Statement.Loop_Statements,
+               Add_Edges      => True);
          end;
 
          procedure Add_Raised_Exception is
             ID : constant Types.Node_Id :=
               Asis.Set_Get.Node (Asis.Statements.Raised_Exception (Element));
          begin
-            State.Add_To_Dot_Label ("Raised_Exception", To_String (ID));
+            State.Add_To_Dot_Label_And_Edge ("Raised_Exception", ID);
             A_Statement.Raised_Exception := a_nodes_h.Node_ID (ID);
          end;
 
@@ -1135,7 +1151,7 @@ package body Asis_Tool_2.Element is
             ID : constant Types.Node_Id :=
               Asis.Set_Get.Node (Asis.Statements.Return_Expression (Element));
          begin
-            State.Add_To_Dot_Label ("Return_Expression", To_String (ID));
+            State.Add_To_Dot_Label_And_Edge ("Return_Expression", ID);
             A_Statement.Return_Expression := a_nodes_h.Node_ID (ID);
          end;
 
@@ -1153,9 +1169,9 @@ package body Asis_Tool_2.Element is
               (This           => State,
                Elements_In    => Asis.Statements.Statement_Paths (Element),
                Dot_Label_Name => "Statement_Paths",
-               List_Out       => A_Statement.Statement_Paths);
+               List_Out       => A_Statement.Statement_Paths,
+               Add_Edges      => True);
          end;
-
 
          use all type Asis.Statement_Kinds;
       begin
@@ -1305,14 +1321,15 @@ package body Asis_Tool_2.Element is
               (This           => State,
                Elements_In    => Asis.Statements.Case_Path_Alternative_Choices (Element),
                Dot_Label_Name => "Case_Path_Alternative_Choices",
-               List_Out       => A_Path.Case_Path_Alternative_Choices);
+               List_Out       => A_Path.Case_Path_Alternative_Choices,
+               Add_Edges      => True);
          end;
 
          procedure Add_Condition_Expression is
             ID : constant Types.Node_Id :=
               Asis.Set_Get.Node (Asis.Statements.Condition_Expression (Element));
          begin
-            State.Add_To_Dot_Label ("Condition_Expression", To_String (ID));
+            State.Add_To_Dot_Label_And_Edge ("Condition_Expression", ID);
             A_Path.Condition_Expression := a_nodes_h.Node_ID (ID);
          end;
 
@@ -1320,7 +1337,7 @@ package body Asis_Tool_2.Element is
             ID : constant Types.Node_Id :=
               Asis.Set_Get.Node (Asis.Statements.Guard (Element));
          begin
-            State.Add_To_Dot_Label ("Guard", To_String (ID));
+            State.Add_To_Dot_Label_And_Edge ("Guard", ID);
             A_Path.Guard := a_nodes_h.Node_ID (ID);
          end;
 
@@ -1330,7 +1347,8 @@ package body Asis_Tool_2.Element is
               (This           => State,
                Elements_In    => Asis.Statements.Sequence_Of_Statements (Element),
                Dot_Label_Name => "Sequence_Of_Statements",
-               List_Out       => A_Path.Sequence_Of_Statements);
+               List_Out       => A_Path.Sequence_Of_Statements,
+               Add_Edges      => True);
          end;
 
          use all type Asis.Path_Kinds;
@@ -1385,7 +1403,8 @@ package body Asis_Tool_2.Element is
               (This           => State,
                Elements_In    => Asis.Clauses.Clause_Names (Element),
                Dot_Label_Name => "Clause_Name",
-               List_Out       => A_Clause.Clause_Names);
+               List_Out       => A_Clause.Clause_Names,
+               Add_Edges      => True);
          end;
 
          use all type Asis.Clause_Kinds;
@@ -1430,7 +1449,7 @@ package body Asis_Tool_2.Element is
               Asis.Set_Get.Node (Asis.Statements.Choice_Parameter_Specification
                                  (Element));
          begin
-            State.Add_To_Dot_Label ("Choice_Parameter_Specification", To_String (ID));
+            State.Add_To_Dot_Label_And_Edge ("Choice_Parameter_Specification", ID);
             A_Exception_Handler.Choice_Parameter_Specification :=
               a_nodes_h.Node_ID (ID);
          end;
@@ -1441,7 +1460,8 @@ package body Asis_Tool_2.Element is
               (This           => State,
                Elements_In    => Asis.Statements.Exception_Choices (Element),
                Dot_Label_Name => "Exception_Choices",
-               List_Out       => A_Exception_Handler.Exception_Choices);
+               List_Out       => A_Exception_Handler.Exception_Choices,
+               Add_Edges      => True);
          end;
 
          procedure Add_Handler_Statements is
@@ -1450,7 +1470,8 @@ package body Asis_Tool_2.Element is
               (This           => State,
                Elements_In    => Asis.Statements.Handler_Statements (Element),
                Dot_Label_Name => "Handler_Statements",
-               List_Out       => A_Exception_Handler.Handler_Statements);
+               List_Out       => A_Exception_Handler.Handler_Statements,
+               Add_Edges      => True);
          end;
 
       begin
@@ -1537,13 +1558,13 @@ package body Asis_Tool_2.Element is
       is
          Element_Kind : constant Asis.Element_Kinds :=
            Asis.Elements.Element_Kind (Element);
-         Element_Id   : constant Types.Node_Id := Asis.Set_Get.Node (Element);
 
          procedure Add_Element_ID is begin
-            State.Dot_Node.Node_ID.ID := To_Dot_ID_Type (Element_Id);
-            State.Add_To_Dot_Label (To_String (Element_Id));
+            State.Element_ID := Asis.Set_Get.Node (Element);
+            State.Dot_Node.Node_ID.ID := To_Dot_ID_Type (State.Element_ID);
+            State.Add_To_Dot_Label (To_String (State.Element_ID));
             -- ID is in the Dot node twice, but not in the a_node twice.
-            State.A_Element.id := a_nodes_h.Node_ID (Element_Id);
+            State.A_Element.id := a_nodes_h.Node_ID (State.Element_ID);
          end;
 
          procedure Add_Element_Kind is begin
@@ -1590,21 +1611,18 @@ package body Asis_Tool_2.Element is
          end;
 
          procedure Add_Enclosing_Element is
-            Enclosing_Element_Id : constant Types.Node_Id :=
+             Enclosing_Element_Id : constant Types.Node_Id :=
               Asis.Set_Get.Node (Asis.Elements.Enclosing_Element (Element));
-            Edge_Stmt            : Dot.Edges.Stmts.Class; -- Initialized
          begin
             State.A_Element.Enclosing_Element_Id :=
               a_nodes_h.Node_ID (Enclosing_Element_Id);
-            Edge_Stmt.LHS.Node_Id.ID := To_Dot_ID_Type (Enclosing_Element_Id);
-            Edge_Stmt.RHS.Node_Id.ID := To_Dot_ID_Type (Element_Id);
-            Edge_Stmt.Attr_List.Add_Assign_To_First_Attr
-              (Name  => "label",
-               Value => "Child");
-            State.Outputs.Graph.Append_Stmt (new Dot.Edges.Stmts.Class'(Edge_Stmt));
+            State.Add_Dot_Edge (From  => Enclosing_Element_Id,
+                            To    => State.Element_Id,
+                            Label => "Child");
          end;
 
       begin
+         State.Element_ID := Asis.Set_Get.Node (Element);
          Start_Output;
          case Element_Kind is
             when Asis.Not_An_Element =>
@@ -1732,6 +1750,9 @@ package body Asis_Tool_2.Element is
       This.Outputs.Text.Put_Indented_Line (Value);
    end;
 
+   -----------
+   -- PRIVATE:
+   -----------
    procedure Add_Not_Implemented
      (This  : in out Class) is
    begin
@@ -1739,4 +1760,40 @@ package body Asis_Tool_2.Element is
    end Add_Not_Implemented;
 
 
+   -----------
+   -- PRIVATE:
+   -----------
+   procedure Add_Dot_Edge
+     (This  : in out Class;
+      From  : in     Types.Node_Id;
+      To    : in     Types.Node_Id;
+      Label : in     String)
+   is
+      Edge_Stmt : Dot.Edges.Stmts.Class; -- Initialized
+   begin
+      if not Types."=" (To, Types.Empty) then
+         Edge_Stmt.LHS.Node_Id.ID := To_Dot_ID_Type (From);
+         Edge_Stmt.RHS.Node_Id.ID := To_Dot_ID_Type (To);
+         Edge_Stmt.Attr_List.Add_Assign_To_First_Attr
+           (Name  => "label",
+            Value => Label);
+         This.Outputs.Graph.Append_Stmt (new Dot.Edges.Stmts.Class'(Edge_Stmt));
+      end if;
+   end;
+
+   -----------
+   -- PRIVATE:
+   -----------
+   procedure Add_To_Dot_Label_And_Edge
+     (This  : in out Class;
+      Label : in     String;
+      To    : in     Types.Node_Id) is
+   begin
+      This.Add_To_Dot_Label (Label, To_String (To));
+      This.Add_Dot_Edge (From  => This.Element_ID,
+                         To    => To,
+                         Label => Label);
+   end;
+
 end Asis_Tool_2.Element;
+
