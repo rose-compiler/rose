@@ -24,6 +24,9 @@
 #include <set>
 using namespace std;
 
+// using a log file to avoid new screen output from interfering with correctness checking
+ofstream ofile;
+
 #if 0
 //testing a new version with better conversion, obtain the current level granularity, not always converting to top level objects!!
 SgInitializedName* convertRefToInitializedName2(SgNode* current)
@@ -99,20 +102,69 @@ SgInitializedName* convertRefToInitializedName2(SgNode* current)
 
 #endif
 
+
+void dumpVectorNodes( vector<SgNode*>& Refs, const string & header, ofstream & ofile)
+{
+  vector<SgNode*>::iterator iter;
+  for (iter=Refs.begin();iter!=Refs.end();iter++)
+  {
+    if (iter== Refs.begin())
+      ofile<<header<<endl; 
+    //ofile<<"read references:"<<endl; 
+
+    if (*iter)
+    {
+      SgLocatedNode* lnode = isSgLocatedNode(*iter);
+      ROSE_ASSERT (lnode);
+      ofile<<"\t"<<(*iter)->class_name()<<"@" << lnode->get_file_info()->get_line()<<":"<<lnode->get_file_info()->get_col() <<  "\t";
+      if (SgInitializedName* iname= SageInterface::convertRefToInitializedName(*iter, false))
+        ofile<<iname->get_qualified_name()<<endl;
+      else
+        ofile<<"NULL SgInitializedName"<<endl;
+
+    }
+    else  
+      ofile<<"NULL ref"<<endl;
+  }
+}
+
+void dumpSetNames(set<SgInitializedName*>& Names,  const string & header, ofstream & ofile)
+{
+  set<SgInitializedName*>::iterator iter2;
+  for (iter2=Names.begin();iter2!=Names.end();iter2++)
+  {
+    if (iter2== Names.begin())
+      ofile<<header<<endl; 
+    ofile<<"\t"<<(*iter2)->get_qualified_name()<<endl;
+  }
+}
+
 int main(int argc, char * argv[])
 {
-  SgProject *project = frontend (argc, argv);
-
   vector<string> remainingArgs (argv, argv+argc);
+
+   //We must processing options first, before calling frontend!!
   // work with the parser of the ArrayAbstraction module
   //Read in annotation files after -annot 
   CmdOptions::GetInstance()->SetOptions(remainingArgs);
+  bool dumpAnnot = CommandlineProcessing::isOption(remainingArgs,"","-dumpannot",true);
   ArrayAnnotation* annot = ArrayAnnotation::get_inst();
   annot->register_annot();
   ReadAnnotation::get_inst()->read();
-
+  if (dumpAnnot)
+    annot->Dump();
   //Strip off custom options and their values to enable backend compiler 
   CommandlineProcessing::removeArgsWithParameters(remainingArgs,"-annot");
+
+  SgProject *project = frontend (remainingArgs);
+  // our tests only use one single file for now.
+  SgFilePtrList fl = project->get_files();
+  SgFile* firstfile = fl[0];
+  ROSE_ASSERT (firstfile!=NULL);
+
+  string filename = Rose::StringUtility::stripPathFromFileName (firstfile->getFileName());
+  string ofilename = filename+".collectFunctionSideEffect.output";
+  ofile.open(ofilename.c_str());
 
   RoseAst ast(project);
   for (RoseAst::iterator i=ast.begin();i!=ast.end();++i)
@@ -120,79 +172,33 @@ int main(int argc, char * argv[])
     SgFunctionDeclaration* func = isSgFunctionDeclaration (*i);
     if (!func) continue;  
     if (func->get_definition() == NULL) continue; // skip prototype declaration
-    cout<<"--------------------------------------------------"<<endl;
-    cout<<"Function name:"<<func->get_qualified_name()<<endl;
+    ofile<<"--------------------------------------------------"<<endl;
+    ofile<<"Function name:"<<func->get_qualified_name()<<endl;
 
     vector<SgNode*> readRefs, writeRefs;
     // focus on definition only
     if (!SageInterface::collectReadWriteRefs(func->get_definition(),readRefs, writeRefs))
     {
-      cerr<<"Warning: SageInterface::collectReadWriteRefs() returns false."<<endl;
+      ofile<<"Warning: SageInterface::collectReadWriteRefs() returns false."<<endl;
       continue; 
     }
 
-    // i, j, b , k, argc, argv
-    vector<SgNode*>::iterator iter;
-    for (iter=readRefs.begin();iter!=readRefs.end();iter++)
-    {
-      if (iter== readRefs.begin())
-        cout<<"read references:"<<endl; 
-
-      if (*iter)
-      {
-        cout<<"\t"<<(*iter)->class_name()<<"\t@"<<(*iter)<< "  ";
-        if (SgInitializedName* iname= SageInterface::convertRefToInitializedName(*iter, false))
-           cout<<iname->get_qualified_name()<<endl;
-        else
-          cout<<"NULL SgInitializedName"<<endl;
-          
-      }
-      else  
-        cout<<"NULL ref"<<endl;
-    }
-    /* i, j, a, b
-    */
-    for (iter=writeRefs.begin();iter!=writeRefs.end();iter++)
-    {
-      if (iter== writeRefs.begin())
-        cout<<"write references:"<<endl; 
-      cout<<"\t"<<(*iter)->class_name()<<"\t@"<<(*iter)<< "  ";
-      if ((*iter) )
-      {  
-        if (SgInitializedName* iname = SageInterface::convertRefToInitializedName(*iter, false))
-          cout<<iname->get_qualified_name()<<endl;
-        else 
-          cout<<"NULL SgInitializedName" <<endl;
-      }
-      else  
-        cout<<"NULL ref"<<endl;
-    }
-    
+    dumpVectorNodes(readRefs, "Read references:", ofile);
+    dumpVectorNodes(writeRefs, "Write references:", ofile);
+   
     //-------------------------------------------------------------------
     set<SgInitializedName*> readNames, writeNames; 
     if (!SageInterface::collectReadWriteVariables(func->get_definition(),readNames,writeNames, false))
     {
-      cerr<<"Warning: SageInterface::collectReadWriteVariables() returns false."<<endl;
+      ofile<<"Warning: SageInterface::collectReadWriteVariables() returns false."<<endl;
       continue; 
     }
 
-    set<SgInitializedName*>::iterator iter2;
-    for (iter2=readNames.begin();iter2!=readNames.end();iter2++)
-    {
-      if (iter2== readNames.begin())
-        cout<<"read var names:"<<endl; 
-      cout<<"\t"<<(*iter2)->get_qualified_name()<<endl;
-    }
-
-    for (iter2=writeNames.begin();iter2!=writeNames.end();iter2++)
-    {
-      if (iter2== writeNames.begin())
-        cout<<"write var names:"<<endl; 
-      cout<<"\t"<<(*iter2)->get_qualified_name()<<endl;
-    }
+   dumpSetNames(readNames, "Read var names:" , ofile);
+   dumpSetNames(writeNames, "Write var names:" , ofile);
 
 #if 0
-    // read only variables  // TODO: why THIS ???
+    // read only variables  
     set<SgInitializedName*> readOnlyVars;
     SageInterface::collectReadOnlyVariables(func,readOnlyVars);
     for (iter=readOnlyVars.begin();iter!=readOnlyVars.end();iter++)
@@ -206,6 +212,8 @@ int main(int argc, char * argv[])
     }
 #endif
   }
+
+  ofile.close();
   // Generate source code from AST and call the vendor's compiler
   return backend(project);
 }

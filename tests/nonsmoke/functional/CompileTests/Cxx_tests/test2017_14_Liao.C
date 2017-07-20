@@ -39,3 +39,13 @@ void foo()
     bcVelocity[i] = VectorXY(0xdeadbeef, 0xdeadbeef);   // VectorXY::VectorXY () side effect unknown, even the source code is available. 
 }
 #endif
+
+#if 0
+void foo2()
+{
+  VectorXY * bcVelocity;
+  double d1=0xdeadbeef, d2=0xdeadbeef; 
+  for (int i = 0; i < 4; i ++)
+    bcVelocity[i] = VectorXY(d1, d2);   // VectorXY::VectorXY () side effect unknown, even the source code is available. 
+}
+#endif

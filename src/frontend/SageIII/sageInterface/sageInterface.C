@@ -18384,8 +18384,12 @@ SgInitializedName* SageInterface::convertRefToInitializedName(SgNode* current, b
   }
  else
   {
-    cerr<<"In SageInterface::convertRefToInitializedName(): unhandled reference type:"<<current->class_name()<<endl;
-    ROSE_ASSERT(false);
+    // side effect analysis will return rhs of  Class A a = A(); as a read ref exp. SgConstructorInitializer 
+    if (!isSgConstructorInitializer(current)) 
+    {
+      cerr<<"In SageInterface::convertRefToInitializedName(): unhandled reference type:"<<current->class_name()<<endl;
+      ROSE_ASSERT(false);
+    }
   }
   //ROSE_ASSERT(name != NULL);
   return name;
