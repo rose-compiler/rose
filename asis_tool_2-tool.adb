@@ -11,6 +11,7 @@ package body Asis_Tool_2.Tool is
       File_Name : in     String) is
    begin
       Asis.Implementation.Initialize;
+      This.Outputs.Text := new Indented_Text.Class;
       This.Outputs.Graph := Dot.Graphs.Create (Is_Digraph => True,
                                        Is_Strict  => False);
       This.Outputs.A_Nodes := new A_Nodes.Class;

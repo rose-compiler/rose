@@ -31,16 +31,17 @@ package body Asis_Tool_2.Context is
 
    procedure Process_Units
      (This    : in out Class;
-      Outputs : in     Output_Accesses_Record) is
+      Outputs : in     Output_Accesses_Record)
+   is
       use Asis.Exceptions;
-      Asis_Units : Asis.Compilation_Unit_List :=
+      Units : Asis.Compilation_Unit_List :=
         Asis.Compilation_Units.Compilation_Units (This.Asis_Context);
    begin
-      for Asis_Unit of Asis_Units loop
+      for Unit of Units loop
          declare
             Tool_Unit : Asis_Tool_2.Unit.Class;
          begin
-            Tool_Unit.Process (Asis_Unit, Outputs);
+            Tool_Unit.Process (Unit, Outputs);
          end;
       end loop;
    exception

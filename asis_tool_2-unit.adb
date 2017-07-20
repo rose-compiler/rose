@@ -16,9 +16,35 @@ package body Asis_Tool_2.Unit is
 
    package ACU renames Asis.Compilation_Units;
 
+   procedure Add_Unit_List
+     (Dot_Label      : in out Dot.HTML_Like_Labels.Class;
+      Units_In       : in     Asis.Compilation_Unit_List;
+      Dot_Label_Name : in     String;
+      List_Out       :    out a_nodes_h.Unit_List)
+   is
+      Count : constant Natural := Units_In'Length;
+      IDs : anhS.Unit_ID_Array_Access := new
+        anhS.Unit_ID_Array (1 .. Count);
+      IDs_Index : Positive := IDs'First;
+   begin
+      for Unit of Units_In loop
+         declare
+            ID : constant A4G.A_Types.Unit_ID := Asis.Set_Get.Get_Unit_Id (Unit);
+         begin
+            IDs (IDs_Index) := Interfaces.C.int (ID);
+            Dot_Label.Add_Eq_Row
+              (Dot_Label_Name & " (" & IDs_Index'Image & ")", To_String (ID));
+            IDs_Index := IDs_Index + 1;
+         end;
+      end loop;
+      List_Out :=
+        (length => Interfaces.C.int(Count),
+         IDs    => anhS.To_Unit_ID_Ptr (IDs));
+   end Add_Unit_List;
+
    procedure Process_Context_Clauses
-     (Asis_Unit       : in Asis.Compilation_Unit;
-      Outputs         : in Output_Accesses_Record;
+     (This            : in out Class;
+      Asis_Unit       : in Asis.Compilation_Unit;
       Include_Pragmas : in Boolean := True)
    is
       Context_Clauses : constant Asis.Element_List :=
@@ -32,7 +58,7 @@ package body Asis_Tool_2.Unit is
          begin
             Tool_Element.Process_Element_Tree
               (Element => Context_Clause,
-               Outputs => Outputs);
+               Outputs => This.Outputs);
          end;
       end loop;
    end Process_Context_Clauses;
@@ -40,8 +66,8 @@ package body Asis_Tool_2.Unit is
 
    -- Process all the elements in the compilation unit:
    procedure Process_Element_Trees
-     (Asis_Unit          : in     Asis.Compilation_Unit;
-      Outputs            : in     Output_Accesses_Record;
+     (This               : in out Class;
+      Asis_Unit          : in     Asis.Compilation_Unit;
       Do_Context_Clauses : in     Boolean := True;
       Include_Pragmas    : in     Boolean := True)
    is
@@ -50,14 +76,11 @@ package body Asis_Tool_2.Unit is
       use Ada.Wide_Text_IO;
    begin
       if Do_Context_Clauses then
-         Process_Context_Clauses
-           (Asis_Unit       => Asis_Unit,
-            Outputs         => Outputs,
-            Include_Pragmas => Include_Pragmas);
+         Process_Context_Clauses (This, Asis_Unit, Include_Pragmas);
       end if;
       Tool_Element.Process_Element_Tree
         (Element => Top_Element_Asis,
-         Outputs => Outputs);
+         Outputs => This.Outputs);
    exception
       when X : others =>
          Print_Exception_Info (X);
@@ -76,7 +99,7 @@ package body Asis_Tool_2.Unit is
             return "spec";
          when Asis.A_Public_Body              |
               Asis.A_Public_Declaration_And_Body |
-              Asis.A_Private_Body                =>
+              Asis.A_Private_Body =>
             return "body";
          when Asis.A_Separate_Body =>
             return "subunit";
@@ -87,96 +110,360 @@ package body Asis_Tool_2.Unit is
 
 
    -- Create a Dot node for this unit, add all the attributes, and append it to the
-   -- graph.  Do the A_Node at the same time:
-   procedure Add_Output
-     (Asis_Unit : in Asis.Compilation_Unit;
-      Outputs   : in Output_Accesses_Record)
+   -- graph.  Do the A_Unit and the A_Node at the same time:
+   procedure Process_Application_Unit
+     (This    : in out Class;
+      Unit    : in Asis.Compilation_Unit)
    is
-      Dot_Node  : Dot.Node_Stmt.Class; -- Initialized
-      Dot_Label : Dot.HTML_Like_Labels.Class; -- Initialized
-      A_Unit    : a_nodes_h.Unit_Struct := anhS.Default_Unit_Struct;
-      A_Node    : a_nodes_h.Node_Struct := anhS.Default_Node_Struct;
-
-      Unit_Id        : constant A4G.A_Types.Unit_Id := Asis.Set_Get.Get_Unit_Id (Asis_Unit);
-      -- These are in alphabetical order:
-      Compilation_Command_Line_Options : constant Wide_String :=
-        Acu.Compilation_Command_Line_Options (Asis_Unit);
-      Debug_Image    : constant Wide_String := ACU.Debug_Image (Asis_Unit);
-      Text_Name      : constant Wide_String := ACU.Text_Name (Asis_Unit);
-      Unique_Name    : constant Wide_String := ACU.Unique_Name (Asis_Unit);
-      Unit_Class     : constant Asis.Unit_Classes := ACU.Unit_Class (Asis_Unit);
-      Unit_Full_Name : constant Wide_String := ACU.Unit_Full_Name (Asis_Unit);
-      Unit_Kind      : constant Asis.Unit_Kinds := ACU.Unit_Kind (Asis_Unit);
-      Unit_Origin    : constant Asis.Unit_Origins := ACU.Unit_Origin (Asis_Unit);
-   begin
-      Dot_Node.Node_ID.ID := To_Dot_ID_Type (Unit_Id);
-      A_Unit.id := Interfaces.C.int(Unit_Id);
-      Dot_Label.Add_3_Col_Cell (To_String (Unit_Id));
+      A_Node         : a_nodes_h.Node_Struct      := anhS.Default_Node_Struct;
+      Unit_Class     : constant Asis.Unit_Classes := ACU.Unit_Class (Unit);
+      Unit_Full_Name : constant Wide_String       := Acu.Unit_Full_Name (Unit);
+      Unit_Kind      : constant Asis.Unit_Kinds   := ACU.Unit_Kind (Unit);
 
       -- These are in alphabetical order:
-      Dot_Label.Add_Eq_Row ("Compilation_Command_Line_Options",
-                            To_String (Compilation_Command_Line_Options));
+      procedure Add_Can_Be_Main_Program is
+         Value : Boolean := ACU.Exists (Unit);
+      begin
+         This.Add_To_Dot_Label ("Can_Be_Main_Program", Value'Image);
+         This.A_Unit.Can_Be_Main_Program := a_nodes_h.Support.To_bool (Value);
+      end;
 
-      -- Empty:
-      -- Dot_Node.Attrs.Add_Assign_To_First_Attr ("This_Form",      To_String (Acu.Object_Form (Asis_Unit)));
-      -- Empty:
-      -- Dot_Node.Attrs.Add_Assign_To_First_Attr ("Object_Name",    To_String (Acu.Object_Name (Asis_Unit)));
-      -- Empty:
-      -- Dot_Node.Attrs.Add_Assign_To_First_Attr ("Text_Form",      To_String (Acu.Text_Form (Asis_Unit)));
+      procedure Add_Compilation_Command_Line_Options is
+         WS : constant Wide_String :=
+           Acu.Compilation_Command_Line_Options (Unit);
+      begin
+        This.Add_To_Dot_Label ("Compilation_Command_Line_Options", To_String (WS));
+      end;
 
-      A_Unit.debug_image := To_Chars_Ptr (Debug_Image);
+      procedure Add_Corresponding_Body is
+         ID : constant A4G.A_Types.Unit_Id := Asis.Set_Get.Get_Unit_Id
+           (ACU.Corresponding_Body (Unit));
+      begin
+         This.Add_To_Dot_Label ("Corresponding_Body", To_String (ID));
+         This.A_Unit.Corresponding_Body := a_nodes_h.Node_ID (ID);
+      end;
 
-      Dot_Label.Add_Eq_Row ("Text_Name", To_String (Text_Name));
-      A_Unit.text_name := To_Chars_Ptr (Text_Name);
+      procedure Add_Corresponding_Children is
+      begin
+         Add_Unit_List
+           (Dot_Label      => This.Dot_Label,
+            Units_In       => ACU.Corresponding_Children (Unit),
+            Dot_Label_Name => "Corresponding_Children",
+            List_Out       => This.A_Unit.Corresponding_Children);
+      end;
 
-      Dot_Label.Add_Eq_Row ("Unique_Name", To_String (Unique_Name));
-      A_Unit.unique_name := To_Chars_Ptr (Unique_Name);
+      procedure Add_Corresponding_Declaration is
+         ID : constant A4G.A_Types.Unit_Id := Asis.Set_Get.Get_Unit_Id
+           (ACU.Corresponding_Declaration (Unit));
+      begin
+         This.Add_To_Dot_Label ("Corresponding_Declaration", To_String (ID));
+         This.A_Unit.Corresponding_Declaration := a_nodes_h.Node_ID (ID);
+      end;
 
-      Dot_Label.Add_Eq_Row ("Unit_Class", Unit_Class'Image);
-      A_Unit.Unit_Class := anhS.To_Unit_Classes (Unit_Class);
+      procedure Add_Corresponding_Parent_Declaration is
+         ID : constant A4G.A_Types.Unit_Id := Asis.Set_Get.Get_Unit_Id
+           (ACU.Corresponding_Parent_Declaration (Unit));
+      begin
+         This.Add_To_Dot_Label ("Corresponding_Parent_Declaration", To_String (ID));
+         This.A_Unit.Corresponding_Parent_Declaration := a_nodes_h.Node_ID (ID);
+      end;
 
-      Dot_Label.Add_Eq_Row ("Unit_Full_Name", To_String (Unit_Full_Name));
-      A_Unit.full_name := To_Chars_Ptr (Unit_Full_Name);
+      procedure Add_Corresponding_Subunit_Parent_Body is
+         ID : constant A4G.A_Types.Unit_Id := Asis.Set_Get.Get_Unit_Id
+           (ACU.Corresponding_Subunit_Parent_Body (Unit));
+      begin
+         This.Add_To_Dot_Label ("Corresponding_Subunit_Parent_Body", To_String (ID));
+         This.A_Unit.Corresponding_Subunit_Parent_Body := a_nodes_h.Node_ID (ID);
+      end;
 
-      Dot_Label.Add_Eq_Row ("Unit_Kind", Unit_Kind'Image);
-      A_Unit.Unit_Kind := anhS.To_Unit_Kinds (Unit_Kind);
+      procedure Add_Debug_Image is
+         WS : constant Wide_String := ACU.Debug_Image (Unit);
+      begin
+         This.A_Unit.Debug_Image := To_Chars_Ptr (WS);
+      end;
 
-      Dot_Label.Add_Eq_Row ("Unit_Origin", Unit_Origin'Image);
-      A_Unit.Unit_Origin := anhS.To_Unit_Origins (Unit_Origin);
+      procedure Add_Enclosing_Container is
+--           Container : constant Asis.Ada_Environments.Containers.Container :=
+--             ACU.Enclosing_Container (Unit);
+      begin
+         null; -- TODO: Finish if needed:
+--           This.A_Unit.Enclosing_Container := Container;
+      end;
 
-      Dot_Node.Add_Label (Dot_Label);
-      Outputs.Graph.Append_Stmt (new Dot.Node_Stmt.Class'(Dot_Node));
-      A_Node.Node_Kind := a_nodes_h.A_Unit_Node;
-      A_Node.the_union.unit := A_Unit;
-      Outputs.A_Nodes.Push (A_Node);
-   end;
+      procedure Add_Enclosing_Context is
+        Context : constant Asis.Context := ACU.Enclosing_Context (Unit);
+      begin
+         null; -- TODO: Finish if needed:
+--           This.A_Unit.Enclosing_Context := Context;
+      end;
+
+      procedure Add_Exists is
+         Value : Boolean := ACU.Exists (Unit);
+      begin
+         This.Add_To_Dot_Label ("Exists", Value'Image);
+         This.A_Unit.Exists := a_nodes_h.Support.To_bool (Value);
+      end;
+
+      procedure Add_Is_Body_Required is
+         Value : Boolean := ACU.Exists (Unit);
+      begin
+         This.Add_To_Dot_Label ("Is_Body_Required", Value'Image);
+         This.A_Unit.Is_Body_Required := a_nodes_h.Support.To_bool (Value);
+      end;
+
+      procedure Add_Object_Form is
+         WS : constant Wide_String := ACU.Object_Form (Unit);
+      begin
+         null; -- Empty:
+--           This.Add_To_Dot_Label ("Object_Form", To_String (WS));
+--           This.A_Unit.Object_Form := To_Chars_Ptr (WS);
+      end;
+
+      procedure Add_Object_Name is
+         WS : constant Wide_String := ACU.Object_Name (Unit);
+      begin
+         null; -- Empty:
+--           This.Add_To_Dot_Label ("Object_Name", To_String (WS));
+--           This.A_Unit.Object_Name := To_Chars_Ptr (WS);
+      end;
+
+      procedure Add_Subunits is
+      begin
+         Add_Unit_List
+           (Dot_Label      => This.Dot_Label,
+            Units_In       => ACU.Subunits (Unit),
+            Dot_Label_Name => "Subunits",
+            List_Out       => This.A_Unit.Subunits);
+      end;
+
+      procedure Add_Text_Form is
+         WS : constant Wide_String := ACU.Text_Form (Unit);
+      begin
+         null; -- Empty:
+--           This.Add_To_Dot_Label ("Text_Form", To_String (WS));
+--           This.A_Unit.Text_Form := To_Chars_Ptr (WS);
+      end;
+
+      procedure Add_Text_Name is
+         WS : constant Wide_String := ACU.Text_Name (Unit);
+      begin
+         This.Add_To_Dot_Label ("Text_Name", To_String (WS));
+         This.A_Unit.Text_Name := To_Chars_Ptr (WS);
+      end;
+
+      procedure Add_Unique_Name is
+         WS : constant Wide_String := ACU.Unique_Name (Unit);
+      begin
+         This.Add_To_Dot_Label ("Unique_Name", To_String (WS));
+         This.A_Unit.Unique_Name := To_Chars_Ptr (WS);
+      end;
+
+      procedure Add_Unit_Class is
+      begin
+         This.Add_To_Dot_Label ("Unit_Class", Unit_Class'Image);
+         This.A_Unit.Unit_Class := anhS.To_Unit_Classes (Unit_Class);
+      end;
+
+      procedure Add_Unit_Full_Name is
+         WS : constant Wide_String := ACU.Unit_Full_Name (Unit);
+      begin
+         This.Add_To_Dot_Label ("Unit_Full_Name", To_String (WS));
+         This.A_Unit.Unit_Full_Name := To_Chars_Ptr (WS);
+      end;
+
+      procedure Add_Unit_Id is
+         ID : constant A4G.A_Types.Unit_Id := Asis.Set_Get.Get_Unit_Id (Unit);
+      begin
+         This.Dot_Node.Node_ID.ID := To_Dot_ID_Type (ID);
+         This.A_Unit.id := Interfaces.C.int(ID);
+         This.Add_To_Dot_Label(To_String (ID));
+      end;
+
+      procedure Add_Unit_Kind is
+      begin
+         This.Add_To_Dot_Label ("Unit_Kind", Unit_Kind'Image);
+         This.A_Unit.Unit_Kind := anhS.To_Unit_Kinds (Unit_Kind);
+      end;
+
+      procedure Add_Unit_Origin is
+         Unit_Origin : constant Asis.Unit_Origins := ACU.Unit_Origin (Unit);
+      begin
+         This.Add_To_Dot_Label ("Unit_Origin", Unit_Origin'Image);
+         This.A_Unit.Unit_Origin := anhS.To_Unit_Origins (Unit_Origin);
+      end;
+
+      procedure Start_Output is
+         Default_Node  : Dot.Node_Stmt.Class; -- Initialized
+         Default_Label : Dot.HTML_Like_Labels.Class; -- Initialized
+      begin
+         Awti.New_Line;
+         Awti.Put_Line ("Processing " & Unit_Full_Name & " " &
+                          To_Wide_String (Unit_Class));
+
+         This.Outputs.Text.Indent;
+         This.Outputs.Text.End_Line;
+         This.Dot_Node := Default_Node;
+         This.Dot_Label := Default_Label;
+         This.A_Unit := a_nodes_h.Support.Default_Unit_Struct;
+
+         -- Want these at the top:
+         Add_Unit_Id;
+         Add_Unit_Kind;
+
+         -- Common items, in Asis order:
+         Add_Unit_Class;
+         Add_Unit_Origin;
+         if not Asis.Compilation_Units.Is_Nil (Unit) then
+            Add_Enclosing_Context;
+            Add_Enclosing_Container;
+         end if;
+         Add_Unit_Full_Name;
+         Add_Unique_Name;
+         Add_Exists;
+         Add_Can_Be_Main_Program;
+         Add_Is_Body_Required;
+         Add_Text_Name;
+         Add_Text_Form;
+         Add_Object_Name;
+         Add_Object_Form;
+         Add_Compilation_Command_Line_Options;
+         Add_Debug_Image;
+      end;
+
+      procedure Finish_Output is
+         A_Node : a_nodes_h.Node_Struct := anhS.Default_Node_Struct;
+      begin
+         This.Dot_Node.Add_Label (This.Dot_Label);
+
+         This.Outputs.Graph.Append_Stmt
+           (new Dot.Node_Stmt.Class'(This.Dot_Node));
+
+         A_Node.Node_Kind := a_nodes_h.A_Unit_Node;
+         A_Node.The_Union.Unit := This.A_Unit;
+         This.Outputs.A_Nodes.Push (A_Node);
+
+         This.Outputs.Text.End_Line;
+         This.Outputs.Text.Dedent;
+
+         Awti.Put_Line
+           ("DONE processing " & Unit_Full_Name & " " &
+              To_Wide_String (Unit_Class));
+         Awti.New_Line;
+      end;
+
+      use all type Asis.Unit_Kinds;
+   begin -- Process_Application_Unit
+      If Unit_Kind /= Not_A_Unit then
+         Start_Output;
+      end if;
+
+      -- Not common items, in Asis order:
+      case Unit_Kind is
+         when Not_A_Unit =>
+               raise Program_Error with
+                 "Unit.Add_Output called with: " & Unit_Kind'Image;
+         when A_Procedure =>
+            Add_Corresponding_Parent_Declaration;
+            Add_Corresponding_Body;
+         when A_Function =>
+            Add_Corresponding_Parent_Declaration;
+            Add_Corresponding_Body;
+         when A_Package =>
+            Add_Corresponding_Children;
+            Add_Corresponding_Parent_Declaration;
+            Add_Corresponding_Body;
+         when A_Generic_Procedure =>
+            Add_Corresponding_Parent_Declaration;
+            Add_Corresponding_Body;
+         when A_Generic_Function =>
+            Add_Corresponding_Parent_Declaration;
+            Add_Corresponding_Body;
+         when A_Generic_Package =>
+            Add_Corresponding_Children;
+            Add_Corresponding_Parent_Declaration;
+            Add_Corresponding_Body;
+         when A_Procedure_Instance =>
+            Add_Corresponding_Parent_Declaration;
+         when A_Function_Instance =>
+            Add_Corresponding_Parent_Declaration;
+         when A_Package_Instance =>
+            Add_Corresponding_Children;
+            Add_Corresponding_Parent_Declaration;
+         when A_Procedure_Renaming =>
+            Add_Corresponding_Parent_Declaration;
+         when A_Function_Renaming =>
+            Add_Corresponding_Parent_Declaration;
+         when A_Package_Renaming =>
+            Add_Corresponding_Parent_Declaration;
+         when A_Generic_Procedure_Renaming =>
+            Add_Corresponding_Parent_Declaration;
+         when A_Generic_Function_Renaming =>
+            Add_Corresponding_Parent_Declaration;
+         when A_Generic_Package_Renaming =>
+            Add_Corresponding_Parent_Declaration;
+         when A_Procedure_Body =>
+            Add_Corresponding_Declaration;
+            Add_Corresponding_Parent_Declaration;
+            Add_Subunits;
+         when A_Function_Body =>
+            Add_Corresponding_Declaration;
+            Add_Corresponding_Parent_Declaration;
+            Add_Subunits;
+         when A_Package_Body =>
+            Add_Corresponding_Declaration;
+            Add_Corresponding_Parent_Declaration;
+            Add_Subunits;
+         when A_Procedure_Body_Subunit =>
+            Add_Subunits;
+            Add_Corresponding_Subunit_Parent_Body;
+         when A_Function_Body_Subunit =>
+            Add_Subunits;
+            Add_Corresponding_Subunit_Parent_Body;
+         when A_Package_Body_Subunit =>
+            Add_Subunits;
+            Add_Corresponding_Subunit_Parent_Body;
+         when A_Task_Body_Subunit =>
+            Add_Subunits;
+            Add_Corresponding_Subunit_Parent_Body;
+         when A_Protected_Body_Subunit =>
+            Add_Subunits;
+            Add_Corresponding_Subunit_Parent_Body;
+         when A_Nonexistent_Declaration =>
+            null; -- No more info
+         when A_Nonexistent_Body =>
+            null; -- No more info
+         when A_Configuration_Compilation =>
+            null; -- No more info
+         when An_Unknown_Unit=>
+            Add_Corresponding_Declaration;
+      end case;
+
+      Finish_Output;
+
+   end Process_Application_Unit;
 
    ------------
    -- EXPORTED:
    ------------
    procedure Process
-     (This      : in out Class;
-      Asis_Unit : in     Asis.Compilation_Unit;
-      Outputs   : in     Output_Accesses_Record)
+     (This    : in out Class;
+      Unit    : in     Asis.Compilation_Unit;
+      Outputs : in     Output_Accesses_Record)
    is
-      Unit_Origin    : constant Asis.Unit_Origins := Acu.Unit_Origin (Asis_Unit);
-      Unit_Full_Name : constant Wide_String       := Acu.Unit_Full_Name (Asis_Unit);
-      Unit_Class     : constant Asis.Unit_Classes := Acu.Unit_Class (Asis_Unit);
+      Unit_Full_Name : constant Wide_String       := Acu.Unit_Full_Name (Unit);
+      Unit_Origin    : constant Asis.Unit_Origins := Acu.Unit_Origin (Unit);
    begin
+      -- I would like to just pass Outputs through and not store it in the
+      -- object, since it is all pointers and we doesn't need to store their
+      -- values between calls to Process_Element_Tree. Outputs has to go into
+      -- Add_To_Dot_Label, though, so  we'll put it in the object and pass
+      -- that:
+      This.Outputs := Outputs;
+
       case Unit_Origin is
          when Asis.An_Application_Unit =>
-            Awti.New_Line;
-            Awti.Put_Line
-              ("Processing " & Unit_Full_Name & " " &
-                 To_Wide_String (Acu.Unit_Class (Asis_Unit)));
-
-            -- Do actual work:
-            Add_Output (Asis_Unit, Outputs);
-            Process_Element_Trees (Asis_Unit, Outputs);
-
-            Awti.Put_Line
-              ("DONE processing " & Unit_Full_Name & " " &
-                 To_Wide_String (Unit_Class));
+            Process_Application_Unit (This, Unit);
+            Process_Element_Trees (This, Unit);
          when Asis.A_Predefined_Unit =>
             Trace_Put_Line ("Skipped " & Unit_Full_Name & " (predefined unit)");
          when Asis.An_Implementation_Unit =>
@@ -184,7 +471,45 @@ package body Asis_Tool_2.Unit is
          when Asis.Not_An_Origin =>
             Trace_Put_Line ("Skipped " & Unit_Full_Name & " (non-existent unit)");
       end case;
+
    end Process;
 
+   -----------
+   -- PRIVATE:
+   -----------
+   procedure Add_To_Dot_Label
+     (This  : in out Class;
+      Name  : in     String;
+      Value : in     String) is
+   begin
+-- Instead of this, put the "attribute" in the label:
+--        This.Node.Attr_List.Add_Assign_To_First_Attr
+--          (Name  => Name,
+--           Value => Value);
+      This.Dot_Label.Add_Eq_Row(L => Name, R => Value);
+      This.Outputs.Text.Put_Indented_Line (Name & " => " & Value);
+   end;
+
+   -----------
+   -- PRIVATE:
+   -----------
+   procedure Add_To_Dot_Label
+     (This  : in out Class;
+      Name  : in     String;
+      Value : in     Wide_String) is
+   begin
+      This.Add_To_Dot_Label (Name, To_String (Value));
+   end;
+
+   -----------
+   -- PRIVATE:
+   -----------
+   procedure Add_To_Dot_Label
+     (This  : in out Class;
+      Value : in     String) is
+   begin
+      This.Dot_Label.Add_3_Col_Cell(Value);
+      This.Outputs.Text.Put_Indented_Line (Value);
+   end;
 
 end Asis_Tool_2.Unit;

@@ -36,6 +36,16 @@ struct Context_Struct {
 ///////////////////////////////////////////////////////////////////////////////
 typedef Node_ID Unit_ID;
 
+typedef Unit_ID *Unit_ID_Ptr;
+
+// May take 2*4 bytes - 1 int, 1 ptr:
+// _IDs_ points to the first of _length_ IDs:
+struct Unit_ID_Array_Struct {
+  int         Length;
+  Unit_ID_Ptr IDs;
+};
+typedef struct Unit_ID_Array_Struct Unit_List;
+
 enum Unit_Kinds {
   Not_A_Unit,
 
@@ -149,16 +159,25 @@ struct Unit_Struct {
   enum Unit_Kinds   Unit_Kind;
   enum Unit_Classes Unit_Class;
   enum Unit_Origins Unit_Origin;
-  char             *Full_Name; // Ada name
+  // Enclosing_Context
+  // Enclosing_Container
+  Unit_List        Corresponding_Children;
+  Unit_ID          Corresponding_Parent_Declaration;
+  Unit_ID          Corresponding_Declaration;
+  Unit_ID          Corresponding_Body;
+  char             *Unit_Full_Name; // Ada name
   char             *Unique_Name; // file name etc.
-  char             *Text_Name; // needed?
+  bool              Exists;
+  bool              Can_Be_Main_Program;
+  bool              Is_Body_Required;
+  char             *Text_Name;
+  char             *Text_Form;
+  char             *Object_Name;
+  char             *Object_Form;
+  char             *Compilation_Command_Line_Options;
+  Unit_List         Subunits;
+  Unit_ID           Corresponding_Subunit_Parent_Body;
   char             *Debug_Image;
-  // Corresponding_Declaration; // needed?
-  // Corresponding_Body; // needed?
-  // Corresponding_Children; // needed?
-  // Corresponding_Parent_Declaration; // needed?
-  // Subunits; // needed?
-  // Corresponding_Subunit_Parent_Body; // needed?
 };
 ///////////////////////////////////////////////////////////////////////////////
 // END unit 
@@ -1264,12 +1283,12 @@ union Element_Union {
 
 // May take 44*4 bytes - a 37*4 union, 2 IDs, 1 char*, 2 enums, 1 ptr, 1 int:
 struct Element_Struct {
-  Element_ID             ID;
-  enum Element_Kinds     Element_Kind;
-  Node_ID                Enclosing_ID;
-  enum Enclosing_Kinds   Enclosing_Kind;
-  char                  *Source_Location;
-  union Element_Union    The_Union;
+  Element_ID            ID;
+  enum Element_Kinds    Element_Kind;
+  Node_ID               Enclosing_Element_ID;
+  enum Enclosing_Kinds  Enclosing_Kind;
+  char                 *Source_Location;
+  union Element_Union   The_Union;
 };
 
 ///////////////////////////////////////////////////////////////////////////////

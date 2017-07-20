@@ -333,10 +333,10 @@ package Dot is
 
          -- There must be at least one RHS:
          type Class is new Stmt.Class with record -- Initialized
-            LHS : Terminals.Class; -- Initialized
-            RHS : Terminals.Class; -- Initialized
-            RHSs : Terminals.List_Of_Class; -- Initialized
-            Attr_List      : Dot.Attr.List_Of_Class; -- Initialized
+            LHS       : Terminals.Class; -- Initialized
+            RHS       : Terminals.Class; -- Initialized
+            RHSs      : Terminals.List_Of_Class; -- Initialized
+            Attr_List : Dot.Attr.List_Of_Class; -- Initialized
          end record;
 
          overriding

@@ -5,8 +5,9 @@ package a_nodes_h.Support is
 
    package ICS renames Interfaces.C.Strings;
 
-   Default_Node_ID   : constant Node_ID := -1;
+   Default_Bool      : constant Extensions.bool := 0;
    Default_chars_ptr : constant ICS.chars_ptr := ICS.Null_Ptr;
+   Default_Node_ID   : constant Node_ID := -1;
 
    -- Normally these records' fields would already have default values, but
    -- a_nodes_h.ads is generated from C, so they are here.
@@ -18,15 +19,33 @@ package a_nodes_h.Support is
       parameters  => ICS.Null_Ptr,
       debug_image => ICS.Null_Ptr);
 
+   Default_Unit_ID   : constant Unit_ID := Default_Node_ID;
+   Default_Unit_List : constant Unit_List :=
+     (length => 0,
+      IDs => null);
+
    Default_Unit_Struct : constant Unit_Struct :=
-     (ID          => Default_Node_ID,
-      Unit_Kind   => Not_A_Unit,
-      Unit_Class  => Not_A_Class,
-      Unit_Origin => Not_An_Origin,
-      Full_Name   => Default_chars_ptr,
-      Unique_Name => Default_chars_ptr,
-      Text_Name   => Default_chars_ptr,
-      Debug_Image => Default_chars_ptr);
+     (ID                                => Default_Unit_ID,
+      Unit_Kind                         => Not_A_Unit,
+      Unit_Class                        => Not_A_Class,
+      Unit_Origin                       => Not_An_Origin,
+      Corresponding_Children            => Default_Unit_List,
+      Corresponding_Parent_Declaration  => Default_Unit_ID,
+      Corresponding_Declaration         => Default_Unit_ID,
+      Corresponding_Body                => Default_Unit_ID,
+      Unit_Full_Name                    => Default_chars_ptr,
+      Unique_Name                       => Default_chars_ptr,
+      Exists                            => Default_Bool,
+      Can_Be_Main_Program               => Default_Bool,
+      Is_Body_Required                  => Default_Bool,
+      Text_Name                         => Default_chars_ptr,
+      Text_Form                         => Default_chars_ptr,
+      Object_Name                       => Default_chars_ptr,
+      Object_Form                       => Default_chars_ptr,
+      Compilation_Command_Line_Options  => Default_chars_ptr,
+      Subunits                          => Default_Unit_List,
+      Corresponding_Subunit_Parent_Body => Default_Unit_ID,
+      Debug_Image                       => Default_chars_ptr);
 
    -- Element union component default structs go here
 
@@ -36,7 +55,6 @@ package a_nodes_h.Support is
       IDs => null);
    Default_Name_List    : constant Name_List :=
      Name_List (Default_Element_List);
-   Default_Bool         : constant Extensions.bool := 0;
 
    Default_Pragma_Struct : constant Pragma_Struct :=
      (Pragma_Kind => Not_A_Pragma);
@@ -196,12 +214,12 @@ package a_nodes_h.Support is
       Dummy_Member => 0);
 
    Default_Element_Struct : constant Element_Struct :=
-     (ID              => Default_Node_ID,
-      Element_Kind    => Not_An_Element,
-      Enclosing_Id    => Default_Node_ID,
-      Enclosing_Kind  => Not_Enclosing,
-      Source_Location => Default_chars_ptr,
-      The_Union       => Default_Element_Union);
+     (ID                   => Default_Node_ID,
+      Element_Kind         => Not_An_Element,
+      Enclosing_Element_Id => Default_Node_ID,
+      Enclosing_Kind       => Not_Enclosing,
+      Source_Location      => Default_chars_ptr,
+      The_Union            => Default_Element_Union);
 
    Default_Node_Union : constant Node_Union :=
      (Discr        => 0,
@@ -318,6 +336,19 @@ package a_nodes_h.Support is
    is
      (if Item then 1 else 0);
 
+   type Unit_ID_Array is array (Positive range <>) of aliased Unit_ID;
+   -- Not called _Ptr so we don't forget a pointer to this is not the same as a
+   -- pointer to a C array.  We just need this to create the array on the hea:
+   type Unit_ID_Array_Access is access Unit_ID_Array;
+
+   function To_Unit_ID_Ptr
+     (Item : not null access Unit_ID_Array)
+      return Unit_ID_Ptr is
+     (if Item.all'Length = 0 then
+         null
+      else
+         Item.all (Item.all'First)'Unchecked_Access);
+
    type Element_ID_Array is array (Positive range <>) of aliased Element_ID;
    -- Not called _Ptr so we don't forget a pointer to this is not the same as a
    -- pointer to a C array.  We just need this to create the array on the hea:
@@ -330,6 +361,5 @@ package a_nodes_h.Support is
          null
       else
          Item.all (Item.all'First)'Unchecked_Access);
-
 
 end a_nodes_h.Support;

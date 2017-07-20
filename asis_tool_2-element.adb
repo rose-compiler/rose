@@ -28,7 +28,7 @@ package body Asis_Tool_2.Element is
       for Element of Elements_In loop
          declare
             Element_ID : constant Types.Node_ID :=
-              Asis.Set_Get.Node (Element);
+              Asis.Set_Get.Node_Value (Element);
          begin
             IDs (IDs_Index) := Interfaces.C.int (Element_ID);
             This.Add_To_Dot_Label
@@ -104,7 +104,7 @@ package body Asis_Tool_2.Element is
          procedure Add_Defining_Name_Image is
             WS : constant Wide_String := Asis.Declarations.Defining_Name_Image (Element);
          begin
-            State.Add_To_Dot_Label ("Defining_Name_Image", To_String (WS));
+            State.Add_To_Dot_Label ("Defining_Name_Image", To_Quoted_String (WS));
             A_Defining_Name.Defining_Name_Image := To_Chars_Ptr(WS);
          end;
 
@@ -166,20 +166,25 @@ package body Asis_Tool_2.Element is
                  Defining_Name_Kind'Image;
 
             when A_Defining_Identifier =>
+               Add_Defining_Name_Image;
                null; -- No more info
 
             when A_Defining_Character_Literal =>
+               Add_Defining_Name_Image;
                Add_Position_Number_Image;
                Add_Representation_Value_Image;
 
             when A_Defining_Enumeration_Literal =>
+               Add_Defining_Name_Image;
                Add_Position_Number_Image;
                Add_Representation_Value_Image;
 
             when A_Defining_Operator_Symbol =>
+               Add_Defining_Name_Image;
                A_Defining_Name.Operator_Kind := Add_Operator_Kind (State, Element);
 
             when A_Defining_Expanded_Name =>
+               Add_Defining_Name_Image;
                Add_Defining_Prefix;
                Add_Defining_Selector;
          end case;
@@ -748,7 +753,7 @@ package body Asis_Tool_2.Element is
          procedure Add_Name_Image is
             WS : constant Wide_String := Asis.Expressions.Name_Image (Element);
          begin
-            State.Add_To_Dot_Label ("Name_Image", To_String (WS));
+            State.Add_To_Dot_Label ("Name_Image", To_Quoted_String (WS));
             A_Expression.Name_Image := To_Chars_Ptr (WS);
          end;
 
@@ -778,8 +783,14 @@ package body Asis_Tool_2.Element is
 
          procedure Add_Value_Image is
             WS : constant Wide_String := Asis.Expressions.Value_Image (Element);
+            use all type Asis.Expression_Kinds;
          begin
-            State.Add_To_Dot_Label ("Value_Image", To_String (WS));
+            State.Add_To_Dot_Label
+              ("Value_Image",
+               (if Expression_Kind = A_String_Literal then
+                     To_Quoted_String (WS)
+                else
+                     To_String (WS)));
             A_Expression.Value_Image := To_Chars_Ptr(WS);
          end;
 
@@ -1489,6 +1500,7 @@ package body Asis_Tool_2.Element is
            (Asis.Compilation_Units.Unit_Full_Name (Unit));
          Unit_Class : constant Asis.Unit_Classes := Asis.Compilation_Units.Unit_Class (Unit);
          Span : constant Asis.Text.Span := Asis.Text.Element_Span (Element);
+
          function Spec_Or_Body return String is
             use all type Asis.Unit_Classes;
          begin
@@ -1507,10 +1519,11 @@ package body Asis_Tool_2.Element is
                   return "(separate body)";
             end case;
          end Spec_Or_Body;
+
       begin
-         return Unit_Name & Spec_Or_Body & ":" &
+         return Unit_Name & Spec_Or_Body & " - " &
            NLB_Image (Span.First_Line) & ":" & NLB_Image (Span.First_Column) &
-           ".." &
+           " .. " &
            NLB_Image (Span.Last_Line) & ":" & NLB_Image (Span.Last_Column);
       end Source_Location_Image;
 
@@ -1526,64 +1539,69 @@ package body Asis_Tool_2.Element is
            Asis.Elements.Element_Kind (Element);
          Element_Id   : constant Types.Node_Id := Asis.Set_Get.Node (Element);
 
-         procedure Start_Output
-         is
+         procedure Add_Element_ID is begin
+            State.Dot_Node.Node_ID.ID := To_Dot_ID_Type (Element_Id);
+            State.Add_To_Dot_Label (To_String (Element_Id));
+            -- ID is in the Dot node twice, but not in the a_node twice.
+            State.A_Element.id := a_nodes_h.Node_ID (Element_Id);
+         end;
+
+         procedure Add_Element_Kind is begin
+            State.Add_To_Dot_Label ("Element_Kind", Element_Kind'Image);
+            State.A_Element.Element_Kind := anhS.To_Element_Kinds (Element_Kind);
+         end;
+
+         procedure Add_Source_Location_Image is
+            Image : constant string := Source_Location_Image (Element);
+         begin
+            State.Add_To_Dot_Label ("Source", Image);
+            State.A_Element.source_location := To_Chars_Ptr (Image);
+         end;
+
+         procedure Start_Output is
             Default_Node  : Dot.Node_Stmt.Class; -- Initialized
             Default_Label : Dot.HTML_Like_Labels.Class; -- Initialized
          begin
-            State.Text.Indent;
-            State.Text.End_Line;
+            State.Outputs.Text.Indent;
+            State.Outputs.Text.End_Line;
             State.Dot_Node := Default_Node;
             State.Dot_Label := Default_Label;
             State.A_Element := a_nodes_h.Support.Default_Element_Struct;
 
-            State.Dot_Node.Node_ID.ID := To_Dot_ID_Type (Element_Id);
-            State.A_Element.id := a_nodes_h.Node_ID (Element_Id);
-
-            State.Add_To_Dot_Label ("Element_Kind", Element_Kind'Image);
-            State.A_Element.Element_Kind := anhS.To_Element_Kinds (Element_Kind);
-
-            State.Add_To_Dot_Label ("ID", To_String (Element_Id));
-            -- ID is in the Dot node twice, but not in the a_node.
-
-            State.Add_To_Dot_Label ("Source", Source_Location_Image (Element));
-            State.A_Element.source_location :=
-              To_Chars_Ptr (Source_Location_Image (Element));
+            Add_Element_ID;
+            Add_Element_Kind;
+            Add_Source_Location_Image;
          end;
 
-         procedure Add_Enclosing_Edge
-         is
-            Edge_Stmt : Dot.Edges.Stmts.Class; -- Initialized
-            Enclosing_Element : constant Asis.Element :=
-              Asis.Elements.Enclosing_Element (Element);
-            Enclosing_Element_Id : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Enclosing_Element);
---    enum Enclosing_Kinds   enclosing_kind;
+         procedure Finish_Output is
+            A_Node : a_nodes_h.Node_Struct := anhS.Default_Node_Struct;
          begin
-            Edge_Stmt.LHS.Node_Id.ID := To_Dot_ID_Type (Enclosing_Element_Id);
-            State.A_Element.enclosing_id := a_nodes_h.Node_ID (Enclosing_Element_Id);
-
-            Edge_Stmt.RHS.Node_Id.ID := To_Dot_ID_Type (Element_Id);
-
-            State.Outputs.Graph.Append_Stmt (new Dot.Edges.Stmts.Class'(Edge_Stmt));
-         end;
-
-         procedure Finish_Output
-         is
-            A_Node    : a_nodes_h.Node_Struct := anhS.Default_Node_Struct;
-         begin
-            Add_Enclosing_Edge;
             State.Dot_Node.Add_Label (State.Dot_Label);
 
             State.Outputs.Graph.Append_Stmt
               (new Dot.Node_Stmt.Class'(State.Dot_Node));
 
             A_Node.Node_Kind := a_nodes_h.An_Element_Node;
-            A_Node.the_union.element := State.A_Element;
+            A_Node.The_Union.element := State.A_Element;
             State.Outputs.A_Nodes.Push (A_Node);
 
-            State.Text.End_Line;
-            State.Text.Dedent;
+            State.Outputs.Text.End_Line;
+            State.Outputs.Text.Dedent;
+         end;
+
+         procedure Add_Enclosing_Element is
+            Enclosing_Element_Id : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Elements.Enclosing_Element (Element));
+            Edge_Stmt            : Dot.Edges.Stmts.Class; -- Initialized
+         begin
+            State.A_Element.Enclosing_Element_Id :=
+              a_nodes_h.Node_ID (Enclosing_Element_Id);
+            Edge_Stmt.LHS.Node_Id.ID := To_Dot_ID_Type (Enclosing_Element_Id);
+            Edge_Stmt.RHS.Node_Id.ID := To_Dot_ID_Type (Element_Id);
+            Edge_Stmt.Attr_List.Add_Assign_To_First_Attr
+              (Name  => "label",
+               Value => "Child");
+            State.Outputs.Graph.Append_Stmt (new Dot.Edges.Stmts.Class'(Edge_Stmt));
          end;
 
       begin
@@ -1614,6 +1632,7 @@ package body Asis_Tool_2.Element is
             when Asis.An_Exception_Handler =>
                Process_Exception_Handler (Element, State);
          end case;
+         Add_Enclosing_Element;
          Finish_Output;
       end Process_Element;
 
@@ -1663,12 +1682,11 @@ package body Asis_Tool_2.Element is
    is
       Process_Control : Asis.Traverse_Control := Asis.Continue;
    begin
-      This.The_Element := Element;
-      -- I like to just pass Outputs through and not store it in the object,
-      -- since it is all pointers and we doesn't need to store their values
-      -- between calls to Process_Element_Tree. Outputs has to go into
-      -- State_Information in the Traverse_Element instatiation, though,
-      -- so we'll put it in the object and pass that:
+      -- I would like to just pass Outputs through and not store it in the
+      -- object, since it is all pointers and we doesn't need to store their
+      -- values between calls to Process_Element_Tree. Outputs has to go into
+      -- State_Information in the Traverse_Element instatiation, though, so
+      -- we'll put it in the object and pass that:
       This.Outputs := Outputs;
       Traverse_Element
         (Element => Element,
@@ -1689,7 +1707,7 @@ package body Asis_Tool_2.Element is
 --          (Name  => Name,
 --           Value => Value);
       This.Dot_Label.Add_Eq_Row(L => Name, R => Value);
-      This.Text.Put_Indented_Line (Name & " => """ & Value & """");
+      This.Outputs.Text.Put_Indented_Line (Name & " => " & Value);
    end;
 
    -----------
@@ -1703,10 +1721,21 @@ package body Asis_Tool_2.Element is
       This.Add_To_Dot_Label (Name, To_String (Value));
    end;
 
+   -----------
+   -- PRIVATE:
+   -----------
+   procedure Add_To_Dot_Label
+     (This  : in out Class;
+      Value : in     String) is
+   begin
+      This.Dot_Label.Add_3_Col_Cell(Value);
+      This.Outputs.Text.Put_Indented_Line (Value);
+   end;
+
    procedure Add_Not_Implemented
      (This  : in out Class) is
    begin
-      This.Add_To_Dot_Label ("ASIS_PROCESSING", String'("NOT_COMPLETELY_IMPLEMENTED"));
+      This.Add_To_Dot_Label ("ASIS_PROCESSING", String'("NOT_IMPLEMENTED_COMPLETELY"));
    end Add_Not_Implemented;
 
 
