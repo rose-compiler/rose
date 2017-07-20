@@ -436,6 +436,31 @@ class MainProgram : public Procedure
    EndProgramStmt* pEndProgramStmt;
 };
 
+// R1226
+class PrefixSpec : public FASTNode
+{
+ public:
+
+   enum PrefixEnum
+     {
+        None = 0,
+        Elemental,
+        Impure,
+        Module,
+        Pure,
+        Recursive
+     };
+
+   PrefixSpec(PrefixEnum prefix_enum) : pPrefixEnum(prefix_enum)
+     {
+     }
+
+   PrefixEnum   getPrefixEnum()            { return pPrefixEnum; }
+
+ protected:
+   PrefixEnum pPrefixEnum;
+};
+
 class Converter
 {
  public:

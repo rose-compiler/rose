@@ -288,8 +288,7 @@ UntypedConverter::convertSgUntypedInitializedName (SgUntypedInitializedName* ut_
 SgGlobal*
 UntypedConverter::convertSgUntypedGlobalScope (SgUntypedGlobalScope* ut_scope, SgScopeStatement* scope)
 {
-// The global scope should have neither declarations nor executables
-   ROSE_ASSERT(ut_scope->get_declaration_list()-> get_traversalSuccessorContainer().size() == 0);
+// The global scope should not have executables
    ROSE_ASSERT(ut_scope->get_statement_list()  -> get_traversalSuccessorContainer().size() == 0);
 
    SgGlobal* sg_scope = isSgGlobal(scope);
