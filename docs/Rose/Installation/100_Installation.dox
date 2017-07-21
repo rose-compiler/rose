@@ -273,8 +273,8 @@
  *    <tr>
  *      <td><a href="http://www.webtoolkit.eu/wt">Wt</a></td>
  *      <td>Optional</td>
- *      <td>3.3.3 through 3.3.5</td>
- *      <td>3.3.3 through 3.3.5</td>
+ *      <td>3.3.3 through 3.3.7</td>
+ *      <td>3.3.3 through 3.3.7</td>
  *      <td>For binary analysis tools that present results through a web server. Wt must be compiled against the same version
  *      of Boost used by ROSE. See @ref installing_wt.</td>
  *    </tr>
