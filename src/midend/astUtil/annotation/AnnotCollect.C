@@ -23,6 +23,11 @@ void ReadAnnotation::read()
            p++;
            string p1 = *p;
            ifstream is(p1.c_str());
+           if (!is.is_open())
+           {
+             cerr<<"Error! Cannot find and open the annotation file "<<p1.c_str()<<endl;
+             exit(1);
+           }
            read(is);
          }
        }
