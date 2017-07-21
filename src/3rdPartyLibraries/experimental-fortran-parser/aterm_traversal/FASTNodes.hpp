@@ -378,6 +378,22 @@ class TypeDeclarationStmt : public Statement
 };
 
 
+/* R854 ContinueStmt
+ */
+class ContinueStmt : public Statement
+{
+ public:
+   ContinueStmt(std::string label, std::string eos, PosInfo pos) : Statement(label,eos,pos)
+     {
+     }
+};
+
+/* 8.4 Stop and Error Stop statements
+  StopStmt                            %% R855
+  ErrorStopStmt                       %% R856
+ */
+
+
 /* Procedures
  */
 class Procedure : public FASTNode

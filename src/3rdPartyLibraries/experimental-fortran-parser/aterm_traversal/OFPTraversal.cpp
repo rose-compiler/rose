@@ -5,6 +5,8 @@
 
 using namespace OFP;
 
+#ifdef TO_BE_REMOVED
+
 static void fixupLocation(FAST::PosInfo & loc)
 {
    int end_col = loc.getEndCol();
@@ -664,9 +666,13 @@ ATbool Traversal::traverse_ListStarOfSpecAndExecConstruct(ATerm term, FAST::Scop
       if (seen_first_exec_stmt == false) {
          if (traverse_SpecStmt(head, scope)) {
             // MATCHED a declaration
+            return ATtrue;
          }
-         //TODO - perhaps an exec stmt
-         else return ATfalse;
+         else if (traverse_ExecStmt(head, scope)) {
+            // MATCHED an executable statement
+            seen_first_exec_stmt = true;
+            return ATtrue;
+         } else return ATfalse;
       }
       else {
 #if 0 //TODO
@@ -710,6 +716,22 @@ ATbool Traversal::traverse_SpecStmt(ATerm term, FAST::Scope* scope)
      return ATtrue;
   }
   else if (traverse_TypeDeclarationStmt(term, scope)) {
+     return ATtrue;
+  }
+
+  return ATfalse;
+}
+
+//========================================================================================
+// Traverse executable statements
+//----------------------------------------------------------------------------------------
+ATbool Traversal::traverse_ExecStmt(ATerm term, FAST::Scope* scope)
+{
+#if PRINT_ATERM_TRAVERSAL
+  printf("... traverse_ExecStmt: %s\n", ATwriteToString(term));
+#endif
+
+  if (traverse_ContinueStmt(term, scope)) {
      return ATtrue;
   }
 
@@ -985,6 +1007,37 @@ ATbool Traversal::traverse_OptInternalSubprogramPart(ATerm term, FAST::ContainsS
 }
 
 //========================================================================================
+// ContinueStmt
+//----------------------------------------------------------------------------------------
+ATbool Traversal::traverse_ContinueStmt(ATerm term, FAST::Scope* scope)
+{
+#if PRINT_ATERM_TRAVERSAL
+  printf("... traverse_ContinueStmt: %s\n", ATwriteToString(term));
+#endif
+
+  ATerm term1, term_eos;
+  std::string label;
+  std::string eos;
+
+  FAST::ContinueStmt* continue_stmt = NULL;
+
+  if (ATmatch(term, "ContinueStmt(<term>,<term>)", &term1,&term_eos)) {
+    if (traverse_OptLabel(term1, label)) {
+      // MATCHED OptLabel
+    } else return ATfalse;
+    if (traverse_eos(term_eos, eos)) {
+      // MATCHED eos string
+    } else return ATfalse;
+  }
+  else return ATfalse;
+
+  continue_stmt = new FAST::ContinueStmt(label, eos, getLocationFromEOS(term,term_eos));
+  scope->get_declaration_list().push_back(continue_stmt);
+
+  return ATtrue;
+}
+
+//========================================================================================
 // ContainsStmt
 //----------------------------------------------------------------------------------------
 ATbool Traversal::traverse_ContainsStmt(ATerm term, FAST::ContainsStmt** contains_stmt)
@@ -1013,5 +1066,4 @@ ATbool Traversal::traverse_ContainsStmt(ATerm term, FAST::ContainsStmt** contain
 
   return ATtrue;
 }
-
-
+#endif
