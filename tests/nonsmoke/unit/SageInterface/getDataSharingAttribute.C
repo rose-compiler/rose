@@ -8,7 +8,7 @@
 using namespace std;
 using namespace OmpSupport;
 using namespace SageInterface;
-
+// using a log file to avoid new screen output from interfering with correctness checking
 ofstream ofile; 
 
 class visitorTraversal : public AstSimpleProcessing

@@ -394,9 +394,122 @@ std::string unparseToString( SgNode* s)
   return r;
 }
 
+
+// We now allow fully qualified names in annotations for side effects
+// e.g.  VectorXY::a   : static vs. non-static class members
+//  Namespace1::space2::y
+//  Start from the simplest case first, to be extended later on.
+//  Case 1:  class::member
+SgVariableSymbol* LookupQualifiedVar (const std::string& name, SgScopeStatement* loc)
+{
+  int sz=name.size();
+  assert (sz!=0); 
+  assert (loc); 
+
+  int pos=0; 
+  // skip leading :: if they are present.
+  if (sz>=2 && name[0]==':' && name[1]==':')
+    pos=2; 
+
+  assert (sz-2!=0); 
+
+  SgScopeStatement* cur_scope = SageInterface::getGlobalScope(loc);
+
+  // split the name into segments
+  string currentname; 
+  SgDeclarationStatement* matched_decl= NULL;  // matched decl
+  SgInitializedName* initname = NULL; 
+  while (pos<= sz) // we reach the last + 1 pos, very tricky here!!
+  {
+    if (name[pos]==':' || pos==sz)  // reached last char +1 or current is :. we have a complete name so far.
+    {
+      assert (currentname.size()!=0);
+      if (name[pos]==':') 
+      {
+        if (name[pos-1]!=':') // this is the first : of ::
+        {
+          assert(pos+1< sz && name[pos+1]==':'); 
+          pos+=2;  // skip two chars
+        }
+        else //this is the second :, impossible if we always skip by two :
+        {
+          cerr<<"Error: unexpected : appears in LookUpQualifiedVar()"<<endl;
+          assert (false);
+        }
+      }
+      else // last char? 
+        pos++; 
+
+      // we now have find a full name, use it to find the declaration matching the name
+      assert (cur_scope);
+      SgDeclarationStatementPtrList decl_ptr_list = cur_scope->getDeclarationList();
+      for (size_t i=0; i< decl_ptr_list.size(); i++)
+      {
+        SgDeclarationStatement* cur_decl= decl_ptr_list[i];
+        if (SgClassDeclaration* class_decl = isSgClassDeclaration (cur_decl)) 
+        {
+          // must be a defining class declaration
+          class_decl= isSgClassDeclaration (class_decl->get_definingDeclaration());
+          if (!class_decl) continue; 
+
+          if (class_decl->get_name().getString() == currentname)
+          {
+            matched_decl = cur_decl; 
+            // update the scope to be the new declaration, when applicable 
+            cur_scope = class_decl->get_definition();
+            break;
+          }
+        }
+        else if (SgNamespaceDeclarationStatement* ns_decl = isSgNamespaceDeclarationStatement (cur_decl))
+        {
+          // must be a defining declaration
+          ns_decl = isSgNamespaceDeclarationStatement (ns_decl->get_definingDeclaration());
+          if (ns_decl->get_name().getString() == currentname)
+          {
+            matched_decl = cur_decl; 
+            cur_scope = ns_decl->get_definition(); 
+            break;
+          }
+        }
+        else if (SgVariableDeclaration* var_decl = isSgVariableDeclaration(cur_decl))
+        {
+          // var declaration only has a nondefining one
+          if ((initname = var_decl->get_decl_item(SgName(currentname))))
+          {
+            matched_decl = cur_decl; 
+            cur_scope = NULL; 
+            break;
+          }
+        }
+        // other types of declarations, we just skip them. no use in qualified names TODO: double check this
+      }
+      if (!matched_decl) 
+      {
+        cerr<<"Warning: cannot find qualified name for "<< currentname << " within scope " << cur_scope->class_name() << " @ " << cur_scope->get_file_info()->get_line() <<endl;
+        return NULL; // cannot find the declaration
+      }
+
+      // reset name to accept next name   
+      currentname = ""; 
+    }
+    else // characters other than :, accumulate to current name
+    {
+      currentname.push_back(name[pos++]);
+    }
+  }
+
+  assert (initname);
+  return isSgVariableSymbol(initname->search_for_symbol_from_symbol_table ());
+}
+
 SgVariableSymbol* LookupVar( const std::string& name, SgScopeStatement* loc)
 {
   const char* start = name.c_str();
+
+  // check if it is a fully qualified name, if yes, use the special lookup function instead
+  if (name.find("::")!=string::npos)
+    return LookupQualifiedVar (name, loc);
+
   SgClassDefinition *cdef = isSgClassDefinition(loc);
   if (cdef != 0) {
      SgVariableSymbol* r = cdef->lookup_variable_symbol(start);
