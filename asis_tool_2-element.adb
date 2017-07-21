@@ -199,8 +199,10 @@ package body Asis_Tool_2.Element is
             Add_Corresponding_Constant_Declaration;
          end if;
 
-
+         State.A_Element.Element_Kind := a_nodes_h.A_Defining_Name;
+         State.A_Element.The_Union.Defining_Name := A_Defining_Name;
       end Process_Defining_Name;
+
 
       procedure Process_Declaration
         (Element : in     Asis.Element;
@@ -210,54 +212,632 @@ package body Asis_Tool_2.Element is
            Asis.Elements.Declaration_Kind (Element);
          A_Declaration : a_nodes_h.Declaration_Struct :=
            a_nodes_h.Support.Default_Declaration_Struct;
+
+         -- Supporting procedures are in alphabetical order:
+         procedure Add_Aspect_Specifications is begin
+            Add_Element_List
+              (This           => State,
+               Elements_In    => Asis.Declarations.Aspect_Specifications (Element),
+               Dot_Label_Name => "Aspect_Specifications",
+               List_Out       => A_Declaration.Aspect_Specifications,
+               Add_Edges      => True);
+         end;
+
+         procedure Add_Body_Block_Statement is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Declarations.Body_Block_Statement (Element));
+         begin
+            State.Add_To_Dot_Label_And_Edge ("Body_Block_Statement", ID);
+            A_Declaration.Body_Block_Statement := a_nodes_h.Node_ID (ID);
+         end;
+
+         procedure Add_Body_Declarative_Items is begin
+            Add_Element_List
+              (This           => State,
+               Elements_In    => Asis.Declarations.Body_Declarative_Items (Element),
+               Dot_Label_Name => "Body_Declarative_Items",
+               List_Out       => A_Declaration.Body_Declarative_Items,
+               Add_Edges      => True);
+         end;
+
+         procedure Add_Body_Exception_Handlers is begin
+            Add_Element_List
+              (This           => State,
+               Elements_In    => Asis.Declarations.Body_Exception_Handlers (Element),
+               Dot_Label_Name => "Body_Exception_Handlers",
+               List_Out       => A_Declaration.Body_Exception_Handlers,
+               Add_Edges      => True);
+         end;
+
+         procedure Add_Body_Statements is begin
+            Add_Element_List
+              (This           => State,
+               Elements_In    => Asis.Declarations.Body_Statements (Element),
+               Dot_Label_Name => "Body_Statements",
+               List_Out       => A_Declaration.Body_Statements,
+               Add_Edges      => True);
+         end;
+
+         procedure Add_Corresponding_Body is
+--              ID : constant Types.Node_Id :=
+--                Asis.Set_Get.Node (Asis.Declarations.Corresponding_Body (Element));
+         begin
+            -- Todo: Finish
+            null;
+--              State.Add_To_Dot_Label ("Corresponding_Body", ID);
+--              A_Declaration.Corresponding_Body := a_nodes_h.Node_ID (ID);
+         end;
+
+         procedure Add_Corresponding_Body_Stub is
+--              ID : constant Types.Node_Id :=
+--                Asis.Set_Get.Node (Asis.Declarations.Corresponding_Body_Stub (Element));
+         begin
+            -- Todo: Finish
+            null;
+--              State.Add_To_Dot_Label ("Corresponding_Body_Stub", ID);
+--              A_Declaration.Corresponding_Body_Stub := a_nodes_h.Node_ID (ID);
+         end;
+
+         procedure Add_Corresponding_Declaration is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Declarations.Corresponding_Declaration (Element));
+         begin
+            State.Add_To_Dot_Label ("Corresponding_Declaration", ID);
+            A_Declaration.Corresponding_Declaration := a_nodes_h.Node_ID (ID);
+         end;
+
+         procedure Add_Corresponding_Equality_Operator is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Declarations.Corresponding_Equality_Operator (Element));
+         begin
+            State.Add_To_Dot_Label ("Corresponding_Equality_Operator", ID);
+            A_Declaration.Corresponding_Equality_Operator := a_nodes_h.Node_ID (ID);
+         end;
+
+         procedure Add_Corresponding_First_Subtype is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Declarations.Corresponding_First_Subtype (Element));
+         begin
+            State.Add_To_Dot_Label ("Corresponding_First_Subtype", ID);
+            A_Declaration.Corresponding_First_Subtype := a_nodes_h.Node_ID (ID);
+         end;
+
+         procedure Add_Corresponding_Last_Constraint is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Declarations.Corresponding_Last_Constraint (Element));
+         begin
+            State.Add_To_Dot_Label ("Corresponding_Last_Constraint", ID);
+            A_Declaration.Corresponding_Last_Constraint := a_nodes_h.Node_ID (ID);
+         end;
+
+         procedure Add_Corresponding_Last_Subtype is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Declarations.Corresponding_Last_Subtype (Element));
+         begin
+            State.Add_To_Dot_Label ("Corresponding_Last_Subtype", ID);
+            A_Declaration.Corresponding_Last_Subtype := a_nodes_h.Node_ID (ID);
+         end;
+
+         procedure Add_Corresponding_Representation_Clauses is begin
+            Add_Element_List
+              (This           => State,
+               Elements_In    => Asis.Declarations.Corresponding_Representation_Clauses (Element),
+               Dot_Label_Name => "Corresponding_Representation_Clauses",
+               List_Out       => A_Declaration.Corresponding_Representation_Clauses);
+         end;
+
+         procedure Add_Corresponding_Subprogram_Derivation is
+--              ID : constant Types.Node_Id :=
+--                Asis.Set_Get.Node (Asis.Declarations.Corresponding_Subprogram_Derivation (Element));
+         begin
+            -- TODO: Finish
+            null;
+--              State.Add_To_Dot_Label ("Corresponding_Subprogram_Derivation", ID);
+--              A_Declaration.Corresponding_Subprogram_Derivation := a_nodes_h.Node_ID (ID);
+         end;
+
+         procedure Add_Corresponding_Type is
+--              ID : constant Types.Node_Id :=
+--                Asis.Set_Get.Node (Asis.Declarations.Corresponding_Type (Element));
+         begin
+            -- TODO: Finish
+            null;
+--              State.Add_To_Dot_Label ("Corresponding_Type", ID);
+--              A_Declaration.Corresponding_Type := a_nodes_h.Node_ID (ID);
+         end;
+
+         procedure Add_Corresponding_Type_Declaration is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Declarations.Corresponding_Type_Declaration (Element));
+         begin
+            State.Add_To_Dot_Label ("Corresponding_Type_Declaration", ID);
+            A_Declaration.Corresponding_Type_Declaration := a_nodes_h.Node_ID (ID);
+         end;
+
+         procedure Add_Corresponding_Type_Partial_View is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Declarations.Corresponding_Type_Partial_View (Element));
+         begin
+            State.Add_To_Dot_Label ("Corresponding_Type_Partial_View", ID);
+            A_Declaration.Corresponding_Type_Partial_View := a_nodes_h.Node_ID (ID);
+         end;
+
+         procedure Add_Declaration_Interface_List is begin
+            Add_Element_List
+              (This           => State,
+               Elements_In    => Asis.Declarations.Declaration_Interface_List (Element),
+               Dot_Label_Name => "Declaration_Interface_List",
+               List_Out       => A_Declaration.Declaration_Interface_List,
+               Add_Edges      => True);
+         end;
+
+         procedure Add_Declaration_Kind is
+            -- Hides same thing in outer scope:
+            Value : Asis.Declaration_Kinds :=  Asis.Elements.Declaration_Kind (Element);
+         begin
+            State.Add_To_Dot_Label ("Declaration_Kind", Value'Image);
+            A_Declaration.Declaration_Kind :=
+              a_nodes_h.Support.To_Declaration_Kinds (Value);
+         end;
+
+         procedure Add_Declaration_Origin is
+            Value : Asis.Declaration_Origins :=  Asis.Elements.Declaration_Origin (Element);
+         begin
+            State.Add_To_Dot_Label ("Declaration_Origin", Value'Image);
+            A_Declaration.Declaration_Origin :=
+              a_nodes_h.Support.To_Declaration_Origins (Value);
+         end;
+
+         procedure Add_Discriminant_Part is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Declarations.Discriminant_Part (Element));
+         begin
+            State.Add_To_Dot_Label_And_Edge ("Discriminant_Part", ID);
+            A_Declaration.Discriminant_Part := a_nodes_h.Node_ID (ID);
+         end;
+
+         procedure Add_Entry_Family_Definition is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Declarations.Entry_Family_Definition (Element));
+         begin
+            State.Add_To_Dot_Label_And_Edge ("Entry_Family_Definition", ID);
+            A_Declaration.Entry_Family_Definition := a_nodes_h.Node_ID (ID);
+         end;
+
+         procedure Add_Entry_Index_Specification is
+--              ID : constant Types.Node_Id :=
+--                Asis.Set_Get.Node (Asis.Declarations.Entry_Index_Specification (Element));
+         begin
+            -- TODO: Finish
+            null;
+--              State.Add_To_Dot_Label_And_Edge ("Entry_Index_Specification", ID);
+--              A_Declaration.Entry_Index_Specification := a_nodes_h.Node_ID (ID);
+         end;
+
+         procedure Add_Initialization_Expression is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Declarations.Initialization_Expression (Element));
+         begin
+            State.Add_To_Dot_Label_And_Edge ("Initialization_Expression", ID);
+            A_Declaration.Initialization_Expression := a_nodes_h.Node_ID (ID);
+         end;
+
+         procedure Add_Is_Dispatching_Operation is
+            Value : Boolean := Asis.Declarations.Is_Dispatching_Operation (Element);
+         begin
+            State.Add_To_Dot_Label ("Is_Dispatching_Operation", Value'Image);
+            A_Declaration.Is_Dispatching_Operation := a_nodes_h.Support.To_bool (Value);
+         end;
+
+         procedure Add_Is_Name_Repeated is
+            Value : Boolean := Asis.Declarations.Is_Name_Repeated (Element);
+         begin
+            State.Add_To_Dot_Label ("Is_Name_Repeated", Value'Image);
+            A_Declaration.Is_Name_Repeated := a_nodes_h.Support.To_bool (Value);
+         end;
+
+         procedure Add_Is_Not_Overriding_Declaration is
+            Value : Boolean := Asis.Declarations.Is_Not_Overriding_Declaration (Element);
+         begin
+            State.Add_To_Dot_Label ("Is_Not_Overriding_Declaration", Value'Image);
+            A_Declaration.Is_Not_Overriding_Declaration := a_nodes_h.Support.To_bool (Value);
+         end;
+
+         procedure Add_Is_Overriding_Declaration is
+            Value : Boolean := Asis.Declarations.Is_Overriding_Declaration (Element);
+         begin
+            State.Add_To_Dot_Label ("Is_Overriding_Declaration", Value'Image);
+            A_Declaration.Is_Overriding_Declaration := a_nodes_h.Support.To_bool (Value);
+         end;
+
+         procedure Add_Is_Private_Present is
+            Value : Boolean := Asis.Declarations.Is_Private_Present (Element);
+         begin
+            State.Add_To_Dot_Label ("Is_Private_Present", Value'Image);
+            A_Declaration.Is_Private_Present := a_nodes_h.Support.To_bool (Value);
+         end;
+
+         procedure Add_Is_Subunit is
+            Value : Boolean := Asis.Declarations.Is_Subunit (Element);
+         begin
+            State.Add_To_Dot_Label ("Is_Subunit", Value'Image);
+            A_Declaration.Is_Subunit := a_nodes_h.Support.To_bool (Value);
+         end;
+
+         procedure Add_Mode_Kind is
+            Value : Asis.Mode_Kinds :=  Asis.Elements.Mode_Kind (Element);
+         begin
+            State.Add_To_Dot_Label ("Mode_Kind", Value'Image);
+            A_Declaration.Mode_Kind := a_nodes_h.Support.To_Mode_Kinds (Value);
+         end;
+
+         procedure Add_Names is begin
+            Add_Element_List
+              (This           => State,
+               Elements_In    => Asis.Declarations.Names (Element),
+               Dot_Label_Name => "Names",
+               List_Out       => A_Declaration.Names,
+               Add_Edges      => True);
+         end;
+
+         procedure Add_Object_Declaration_View is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Declarations.Object_Declaration_View (Element));
+         begin
+            State.Add_To_Dot_Label_And_Edge ("Object_Declaration_View", ID);
+            A_Declaration.Object_Declaration_View := a_nodes_h.Node_ID (ID);
+         end;
+
+         procedure Add_Parameter_Profile is begin
+            Add_Element_List
+              (This           => State,
+               Elements_In    => Asis.Declarations.Parameter_Profile (Element),
+               Dot_Label_Name => "Parameter_Profile",
+               List_Out       => A_Declaration.Parameter_Profile,
+               Add_Edges      => True);
+         end;
+
+         procedure Add_Private_Part_Declarative_Items is begin
+            Add_Element_List
+              (This           => State,
+               Elements_In    => Asis.Declarations.Private_Part_Declarative_Items (Element),
+               Dot_Label_Name => "Private_Part_Declarative_Items",
+               List_Out       => A_Declaration.Private_Part_Declarative_Items,
+               Add_Edges      => True);
+         end;
+
+         procedure Add_Result_Profile is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Declarations.Result_Profile (Element));
+         begin
+            State.Add_To_Dot_Label_And_Edge ("Result_Profile", ID);
+            A_Declaration.Result_Profile := a_nodes_h.Node_ID (ID);
+         end;
+
+         procedure Add_Trait_Kind is
+            Value : Asis.Trait_Kinds :=  Asis.Elements.Trait_Kind (Element);
+         begin
+            State.Add_To_Dot_Label ("Trait_Kind", Value'Image);
+            A_Declaration.Trait_Kind := a_nodes_h.Support.To_Trait_Kinds (Value);
+         end;
+
+         procedure Add_Type_Declaration_View is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Declarations.Type_Declaration_View (Element));
+         begin
+            State.Add_To_Dot_Label_And_Edge ("Type_Declaration_View", ID);
+            A_Declaration.Type_Declaration_View := a_nodes_h.Node_ID (ID);
+         end;
+
+         procedure Add_Visible_Part_Declarative_Items is
+         begin
+            Add_Element_List
+              (This           => State,
+               Elements_In    => Asis.Declarations.Visible_Part_Declarative_Items (Element),
+               Dot_Label_Name => "Visible_Part_Declarative_Items",
+               List_Out       => A_Declaration.Visible_Part_Declarative_Items,
+               Add_Edges      => True);
+         end;
+
          use all type Asis.Declaration_Kinds;
       begin
-         --        A_Declaration         -> Declaration_Kinds
-         --                                         -> Declaration_Origin
-         --                                         -> Mode_Kinds
-         --                                         -> Subprogram_Default_Kinds
-         State.Add_To_Dot_Label (Name => "Declaration_Kind",
-                              Value => Declaration_Kind'Image);
-         State.Add_To_Dot_Label (Name => "Declaration_Origin",
-                              Value => Asis.Elements.Declaration_Origin (Element)'Image);
+         -- Raise the exception in the case statement:
+         if Declaration_Kind /= Not_A_Declaration then
+            Add_Declaration_Kind;
+            Add_Declaration_Origin;
+            Add_Names;
+            Add_Aspect_Specifications;
+            Add_Corresponding_Representation_Clauses;
+         end if;
+
          case Declaration_Kind is
-            when A_Parameter_Specification |
-                 A_Formal_Object_Declaration =>
-               State.Add_To_Dot_Label (Name => "Mode_Kind",
-                                    Value => Asis.Elements.Mode_Kind (Element)'Image);
-            when others =>
-               null;
+            when Not_A_Declaration =>
+               raise Program_Error with
+                 "Element.Pre_Children.Process_Declaration called with: " &
+                 Declaration_Kind'Image;
+
+            when An_Ordinary_Type_Declaration =>
+               Add_Discriminant_Part;
+               Add_Type_Declaration_View;
+               Add_Corresponding_Type_Declaration;
+               Add_Corresponding_Type_Partial_View;
+               Add_Corresponding_First_Subtype;
+               Add_Corresponding_Last_Constraint;
+               Add_Corresponding_Last_Subtype;
+
+            when A_Task_Type_Declaration =>
+               Add_Discriminant_Part;
+               Add_Type_Declaration_View;
+               Add_Corresponding_Type_Declaration;
+               Add_Corresponding_Type_Partial_View;
+               Add_Corresponding_First_Subtype;
+               Add_Corresponding_Last_Constraint;
+               Add_Corresponding_Last_Subtype;
+               Add_Is_Name_Repeated;
+               Add_Corresponding_Declaration;
+               Add_Corresponding_Body;
+               Add_Declaration_Interface_List;
+
+            when A_Protected_Type_Declaration =>
+               State.Add_Not_Implemented;
+
+            when An_Incomplete_Type_Declaration =>
+               State.Add_Not_Implemented;
+
+            when A_Tagged_Incomplete_Type_Declaration =>
+               State.Add_Not_Implemented;
+
+            when A_Private_Type_Declaration =>
+               State.Add_Not_Implemented;
+
+            when A_Private_Extension_Declaration =>
+               State.Add_Not_Implemented;
+
+            when A_Subtype_Declaration =>
+               State.Add_Not_Implemented;
+
+            when A_Variable_Declaration =>
+               Add_Object_Declaration_View;
+               Add_Initialization_Expression;
+
+            when A_Constant_Declaration =>
+               Add_Object_Declaration_View;
+               Add_Initialization_Expression;
+
+            when A_Deferred_Constant_Declaration =>
+               State.Add_Not_Implemented;
+
+            when A_Single_Task_Declaration =>
+               State.Add_Not_Implemented;
+
+            when A_Single_Protected_Declaration =>
+               State.Add_Not_Implemented;
+
+            when An_Integer_Number_Declaration =>
+               State.Add_Not_Implemented;
+
+            when A_Real_Number_Declaration =>
+               State.Add_Not_Implemented;
+
+            when An_Enumeration_Literal_Specification =>
+               State.Add_Not_Implemented;
+
+            when A_Discriminant_Specification =>
+               State.Add_Not_Implemented;
+
+            when A_Component_Declaration =>
+               Add_Object_Declaration_View;
+               Add_Initialization_Expression;
+
+            when A_Loop_Parameter_Specification =>
+               State.Add_Not_Implemented;
+
+            when A_Generalized_Iterator_Specification =>
+               State.Add_Not_Implemented;
+
+            when An_Element_Iterator_Specification =>
+               State.Add_Not_Implemented;
+
+            when A_Procedure_Declaration =>
+               Add_Trait_Kind;
+               Add_Parameter_Profile;
+               Add_Is_Overriding_Declaration;
+               Add_Is_Not_Overriding_Declaration;
+               Add_Corresponding_Declaration;
+               Add_Corresponding_Body;
+               Add_Corresponding_Subprogram_Derivation;
+               Add_Corresponding_Type;
+               Add_Is_Dispatching_Operation;
+
+            when A_Function_Declaration =>
+               Add_Trait_Kind;
+               Add_Parameter_Profile;
+               Add_Result_Profile;
+               Add_Is_Overriding_Declaration;
+               Add_Is_Not_Overriding_Declaration;
+               Add_Corresponding_Declaration;
+               Add_Corresponding_Body;
+               Add_Corresponding_Subprogram_Derivation;
+               Add_Corresponding_Type;
+               Add_Corresponding_Equality_Operator;
+               Add_Is_Dispatching_Operation;
+
+            when A_Parameter_Specification =>
+               Add_Trait_Kind;
+               Add_Mode_Kind;
+               Add_Object_Declaration_View;
+               Add_Initialization_Expression;
+
+            when A_Procedure_Body_Declaration =>
+               Add_Parameter_Profile;
+               Add_Is_Overriding_Declaration;
+               Add_Is_Not_Overriding_Declaration;
+               Add_Body_Declarative_Items;
+               Add_Body_Statements;
+               Add_Body_Exception_Handlers;
+               Add_Body_Block_Statement;
+               Add_Is_Name_Repeated;
+               Add_Corresponding_Declaration;
+               Add_Is_Subunit;
+               Add_Corresponding_Body_Stub;
+               Add_Is_Dispatching_Operation;
+
+            when A_Function_Body_Declaration =>
+               Add_Parameter_Profile;
+               Add_Result_Profile;
+               Add_Is_Overriding_Declaration;
+               Add_Is_Not_Overriding_Declaration;
+               Add_Body_Declarative_Items;
+               Add_Body_Statements;
+               Add_Body_Exception_Handlers;
+               Add_Body_Block_Statement;
+               Add_Is_Name_Repeated;
+               Add_Corresponding_Declaration;
+               Add_Is_Subunit;
+               Add_Corresponding_Body_Stub;
+               Add_Is_Dispatching_Operation;
+
+            when A_Return_Variable_Specification =>
+               State.Add_Not_Implemented;
+
+            when A_Return_Constant_Specification =>
+               State.Add_Not_Implemented;
+
+            when A_Null_Procedure_Declaration =>
+               State.Add_Not_Implemented;
+
+            when An_Expression_Function_Declaration =>
+               State.Add_Not_Implemented;
+
+            when A_Package_Declaration =>
+               Add_Is_Name_Repeated;
+               Add_Corresponding_Declaration;
+               Add_Corresponding_Body;
+               Add_Visible_Part_Declarative_Items;
+               Add_Is_Private_Present;
+               Add_Private_Part_Declarative_Items;
+
+            when A_Package_Body_Declaration =>
+               Add_Body_Declarative_Items;
+               Add_Body_Statements;
+               Add_Body_Exception_Handlers;
+               Add_Body_Block_Statement;
+               Add_Is_Name_Repeated;
+               Add_Corresponding_Declaration;
+               Add_Is_Subunit;
+               Add_Corresponding_Body_Stub;
+
+            when An_Object_Renaming_Declaration =>
+               State.Add_Not_Implemented;
+
+            when An_Exception_Renaming_Declaration =>
+               State.Add_Not_Implemented;
+
+            when A_Package_Renaming_Declaration =>
+               State.Add_Not_Implemented;
+
+            when A_Procedure_Renaming_Declaration =>
+               State.Add_Not_Implemented;
+
+            when A_Function_Renaming_Declaration =>
+               State.Add_Not_Implemented;
+
+            when A_Generic_Package_Renaming_Declaration =>
+               State.Add_Not_Implemented;
+
+            when A_Generic_Procedure_Renaming_Declaration =>
+               State.Add_Not_Implemented;
+
+            when A_Generic_Function_Renaming_Declaration =>
+               State.Add_Not_Implemented;
+
+            when A_Task_Body_Declaration =>
+               Add_Body_Declarative_Items;
+               Add_Body_Statements;
+               Add_Body_Exception_Handlers;
+               Add_Body_Block_Statement;
+               Add_Is_Name_Repeated;
+               Add_Corresponding_Declaration;
+               Add_Is_Subunit;
+               Add_Corresponding_Body_Stub;
+
+            when A_Protected_Body_Declaration =>
+               State.Add_Not_Implemented;
+
+            when An_Entry_Declaration =>
+               Add_Parameter_Profile;
+               Add_Is_Overriding_Declaration;
+               Add_Is_Not_Overriding_Declaration;
+               Add_Corresponding_Body;
+               Add_Entry_Family_Definition;
+
+            when An_Entry_Body_Declaration =>
+               State.Add_Not_Implemented;
+
+            when An_Entry_Index_Specification =>
+               State.Add_Not_Implemented;
+
+            when A_Procedure_Body_Stub =>
+               State.Add_Not_Implemented;
+
+            when A_Function_Body_Stub =>
+               State.Add_Not_Implemented;
+
+            when A_Package_Body_Stub =>
+               State.Add_Not_Implemented;
+
+            when A_Task_Body_Stub =>
+               State.Add_Not_Implemented;
+
+            when A_Protected_Body_Stub =>
+               State.Add_Not_Implemented;
+
+            when An_Exception_Declaration =>
+               null; -- No more info
+
+            when A_Choice_Parameter_Specification =>
+               null; -- No more info
+
+            when A_Generic_Procedure_Declaration =>
+               State.Add_Not_Implemented;
+
+            when A_Generic_Function_Declaration =>
+               State.Add_Not_Implemented;
+
+            when A_Generic_Package_Declaration =>
+               State.Add_Not_Implemented;
+
+            when A_Package_Instantiation =>
+               State.Add_Not_Implemented;
+
+            when A_Procedure_Instantiation =>
+               State.Add_Not_Implemented;
+
+            when A_Function_Instantiation =>
+               State.Add_Not_Implemented;
+
+            when A_Formal_Object_Declaration =>
+               State.Add_Not_Implemented;
+
+            when A_Formal_Type_Declaration =>
+               State.Add_Not_Implemented;
+
+            when A_Formal_Incomplete_Type_Declaration =>
+               State.Add_Not_Implemented;
+
+            when A_Formal_Procedure_Declaration =>
+               State.Add_Not_Implemented;
+
+            when A_Formal_Function_Declaration =>
+               State.Add_Not_Implemented;
+
+            when A_Formal_Package_Declaration =>
+               State.Add_Not_Implemented;
+
+            when A_Formal_Package_Declaration_With_Box =>
+               State.Add_Not_Implemented;
          end case;
-         case Declaration_Kind is
-            when A_Formal_Function_Declaration |
-                 A_Formal_Procedure_Declaration =>
-               State.Add_To_Dot_Label (Name => "Subprogram_Default_Kind",
-                                    Value => Asis.Elements.Default_Kind (Element)'Image);
-            when others =>
-               null;
-         end case;
-         case Declaration_Kind is
-            when A_Private_Type_Declaration |
-                 A_Private_Extension_Declaration |
-                 A_Variable_Declaration |
-                 A_Constant_Declaration |
-                 A_Deferred_Constant_Declaration |
-                 A_Discriminant_Specification |
-                 A_Loop_Parameter_Specification |
-                 A_Generalized_Iterator_Specification |
-                 An_Element_Iterator_Specification |
-                 A_Procedure_Declaration |
-                 A_Function_Declaration |
-                 An_Object_Renaming_Declaration |
-                 A_Formal_Object_Declaration |
-                 A_Formal_Procedure_Declaration |
-                 A_Formal_Function_Declaration =>
-               State.Add_To_Dot_Label (Name => "Trait_Kind",
-                                    Value => Asis.Elements.Trait_Kind (Element)'Image);
-               A_Declaration.Trait_Kind := Add_Trait_Kind (State, Element);
-            when others =>
-               null;
-         end case;
+
       end Process_Declaration;
 
       -- TODO: Process_Formal_Type_Definition?
@@ -335,7 +915,8 @@ package body Asis_Tool_2.Element is
          use all type Asis.Type_Kinds;
       begin -- Process_Type_Definition
          State.Add_To_Dot_Label ("Type_Kind", Type_Kind'Image);
-         A_Definition.Type_Kind := anhS.To_Type_Kinds (Type_Kind);
+            A_Definition.Type_Kind := anhS.To_Type_Kinds (Type_Kind);
+
          case Type_Kind is
             when Not_A_Type_Definition =>
                raise Program_Error with
@@ -473,6 +1054,7 @@ package body Asis_Tool_2.Element is
       begin
          State.Add_Not_Implemented;
       end Process_Component_Definition;
+
 
       procedure Process_Definition
         (Element : in     Asis.Element;
@@ -667,6 +1249,8 @@ package body Asis_Tool_2.Element is
          --                                         -> Root_Type_Kinds
          --                                         -> Constraint_Kinds
          --                                         -> Discrete_Range_Kinds
+         State.A_Element.Element_Kind := a_nodes_h.A_Definition;
+         State.A_Element.The_Union.Definition := A_Definition;
       end Process_Definition;
 
       procedure Process_Expression
@@ -913,6 +1497,9 @@ package body Asis_Tool_2.Element is
             when A_For_Some_Quantified_Expression =>
                State.Add_Not_Implemented;
          end case;
+
+         State.A_Element.Element_Kind := a_nodes_h.An_Expression;
+         State.A_Element.The_Union.Expression := A_Expression;
       end Process_Expression;
 
       procedure Process_Association
@@ -941,20 +1528,19 @@ package body Asis_Tool_2.Element is
          end;
 
          procedure Add_Is_Defaulted_Association is
-            Is_Defaulted_Association : Boolean :=
-              Asis.Expressions.Is_Defaulted_Association (Element);
+            Value : Boolean := Asis.Expressions.Is_Defaulted_Association (Element);
          begin
             State.Add_To_Dot_Label
-              ("Is_Defaulted_Association", Is_Defaulted_Association'Image);
+              ("Is_Defaulted_Association", Value'Image);
             A_Association.Is_Defaulted_Association :=
-              a_nodes_h.Support.To_bool (Is_Defaulted_Association);
+              a_nodes_h.Support.To_bool (Value);
          end;
 
          procedure Add_Is_Normalized is
-            Is_Normalized : Boolean := Asis.Expressions.Is_Normalized (Element);
+            Value : Boolean := Asis.Expressions.Is_Normalized (Element);
          begin
-            State.Add_To_Dot_Label ("Is_Normalized", Is_Normalized'Image);
-            A_Association.Is_Normalized := a_nodes_h.Support.To_bool (Is_Normalized);
+            State.Add_To_Dot_Label ("Is_Normalized", Value'Image);
+            A_Association.Is_Normalized := a_nodes_h.Support.To_bool (Value);
          end;
 
          use all type Asis.Association_Kinds;
@@ -993,9 +1579,8 @@ package body Asis_Tool_2.Element is
                Add_Is_Normalized;
          end case;
 
-
          State.A_Element.Element_Kind := a_nodes_h.An_Association;
-         State.A_Element.the_union.association := A_Association;
+         State.A_Element.The_union.association := A_Association;
       end Process_Association;
 
       procedure Process_Statement
@@ -1058,7 +1643,7 @@ package body Asis_Tool_2.Element is
             ID : constant Types.Node_Id :=
               Asis.Set_Get.Node (Asis.Statements.Assignment_Expression (Element));
          begin
-            State.Add_To_Dot_Label ("Assignment_Expression", To_String (ID));
+            State.Add_To_Dot_Label_And_Edge ("Assignment_Expression", ID);
             A_Statement.Assignment_Expression := a_nodes_h.Node_ID (ID);
          end;
 
@@ -1384,6 +1969,7 @@ package body Asis_Tool_2.Element is
             when An_Else_Expression_Path =>
                null; -- No more info
          end case;
+
          State.A_Element.Element_Kind := a_nodes_h.A_Path;
          State.A_Element.The_Union.Path := A_Path;
       end Process_Path;
@@ -1478,6 +2064,7 @@ package body Asis_Tool_2.Element is
          Add_Choice_Parameter_Specification;
          Add_Exception_Choices;
          Add_Handler_Statements;
+
          State.A_Element.Element_Kind := a_nodes_h.An_Exception_Handler;
          State.A_Element.the_union.exception_handler := A_Exception_Handler;
       end Process_Exception_Handler;
@@ -1610,16 +2197,16 @@ package body Asis_Tool_2.Element is
             State.Outputs.Text.Dedent;
          end;
 
-         procedure Add_Enclosing_Element is
-             Enclosing_Element_Id : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Elements.Enclosing_Element (Element));
-         begin
-            State.A_Element.Enclosing_Element_Id :=
-              a_nodes_h.Node_ID (Enclosing_Element_Id);
-            State.Add_Dot_Edge (From  => Enclosing_Element_Id,
-                            To    => State.Element_Id,
-                            Label => "Child");
-         end;
+--           procedure Add_Enclosing_Element is
+--               Enclosing_Element_Id : constant Types.Node_Id :=
+--                Asis.Set_Get.Node (Asis.Elements.Enclosing_Element (Element));
+--           begin
+--              State.A_Element.Enclosing_Element_Id :=
+--                a_nodes_h.Node_ID (Enclosing_Element_Id);
+--              State.Add_Dot_Edge (From  => Enclosing_Element_Id,
+--                              To    => State.Element_Id,
+--                              Label => "Child");
+--           end;
 
       begin
          State.Element_ID := Asis.Set_Get.Node (Element);
@@ -1650,7 +2237,7 @@ package body Asis_Tool_2.Element is
             when Asis.An_Exception_Handler =>
                Process_Exception_Handler (Element, State);
          end case;
-         Add_Enclosing_Element;
+--           Add_Enclosing_Element;
          Finish_Output;
       end Process_Element;
 
@@ -1737,6 +2324,17 @@ package body Asis_Tool_2.Element is
       Value : in     Wide_String) is
    begin
       This.Add_To_Dot_Label (Name, To_String (Value));
+   end;
+
+   -----------
+   -- PRIVATE:
+   -----------
+   procedure Add_To_Dot_Label
+     (This  : in out Class;
+      Name  : in     String;
+      ID    : in     Types.Node_Id) is
+   begin
+      This.Add_To_Dot_Label (Name, To_String (ID));
    end;
 
    -----------

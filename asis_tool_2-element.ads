@@ -44,6 +44,10 @@ private
      (This  : in out Class;
       Name  : in     String;
       Value : in     Wide_String);
+   procedure Add_To_Dot_Label
+     (This  : in out Class;
+      Name  : in     String;
+      ID    : in     Types.Node_Id);
 
    -- Add <Value> to the label, and print it if trace is on:
    procedure Add_To_Dot_Label

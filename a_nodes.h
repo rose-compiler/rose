@@ -191,10 +191,12 @@ typedef Node_ID    Element_ID;
 typedef Element_ID Declaration_ID;
 typedef Element_ID Defining_Name_ID;
 typedef Element_ID Discrete_Range_ID;
+typedef Element_ID Discrete_Subtype_Definition_ID;
 typedef Element_ID Expression_ID;
 typedef Element_ID Name_ID;
 typedef Element_ID Statement_ID;
 typedef Element_ID Subtype_Indication_ID;
+typedef Element_ID Type_Definition_ID;
 
 // For this:
 //   typedef Element_ID Element_ID_Array[];
@@ -222,6 +224,7 @@ struct Element_ID_Array_Struct {
 typedef struct Element_ID_Array_Struct Element_List;
 typedef Element_List Association_List;
 typedef Element_List Component_Clause_List;
+typedef Element_List Declaration_List;
 typedef Element_List Declarative_Item_List;
 typedef Element_List Defining_Name_List;
 typedef Element_List Exception_Handler_List;
@@ -230,6 +233,7 @@ typedef Element_List Expression_Path_List;
 typedef Element_List Name_List;
 typedef Element_List Path_List;
 typedef Element_List Parameter_Specification_List;
+typedef Element_List Representation_Clause_List;
 typedef Element_List Statement_List;
 
 enum Element_Kinds {
@@ -973,7 +977,7 @@ struct Declaration_Struct {
   // A_Formal_Function_Declaration |
   // A_Formal_Procedure_Declaration:
   enum Subprogram_Default_Kinds 
-                           Subprogram_Default;
+                           Default_Kind;
   // A_Private_Type_Declaration |
   // A_Private_Extension_Declaration |
   // A_Variable_Declaration |
@@ -986,6 +990,58 @@ struct Declaration_Struct {
   // A_Procedure_Declaration |
   // A_Function_Declaration:
   enum Trait_Kinds         Trait_Kind;
+  
+  // TODO: add remaining valid kinds comments:
+  Defining_Name_List             Names;
+  Definition_ID                  Discriminant_Part;
+  Definition_ID                  Type_Declaration_View;
+  Definition_ID                  Object_Declaration_View;
+  Element_List                   Aspect_Specifications;
+  Expression_ID                  Initialization_Expression;
+  Declaration_ID                 Corresponding_Type_Declaration;
+  Declaration_ID                 Corresponding_Type_Completion;
+  Declaration_ID                 Corresponding_Type_Partial_View;
+  Declaration_ID                 Corresponding_First_Subtype;
+  Declaration_ID                 Corresponding_Last_Constraint;
+  Declaration_ID                 Corresponding_Last_Subtype;
+  Representation_Clause_List     Corresponding_Representation_Clauses;
+  Discrete_Subtype_Definition_ID Specification_Subtype_Definition;
+  Element_ID                     Iteration_Scheme_Name;
+  Element_ID                     Subtype_Indication;
+  Parameter_Specification_List   Parameter_Profile;
+  Element_ID                     Result_Profile;
+  Expression_ID                  Result_Expression;
+  bool                           Is_Overriding_Declaration;
+  bool                           Is_Not_Overriding_Declaration;
+  Element_List                   Body_Declarative_Items;
+  Statement_List                 Body_Statements;
+  Exception_Handler_List         Body_Exception_Handlers;
+  Declaration_ID                 Body_Block_Statement;
+  bool                           Is_Name_Repeated;
+  Declaration_ID                 Corresponding_Declaration;
+  Declaration_ID                 Corresponding_Body;
+  Declaration_ID                 Corresponding_Subprogram_Derivation;
+  Type_Definition_ID             Corresponding_Type;
+  Declaration_ID                 Corresponding_Equality_Operator;
+  Declarative_Item_List          Visible_Part_Declarative_Items;
+  bool                           Is_Private_Present;
+  Declarative_Item_List	         Private_Part_Declarative_Items;
+  Expression_List                Declaration_Interface_List;
+  Expression_ID                  Renamed_Entity;
+  Expression_ID                  Corresponding_Base_Entity;
+  Declaration_List               Protected_Operation_Items;
+  Discrete_Subtype_Definition_ID Entry_Family_Definition;
+  Declaration_ID                 Entry_Index_Specification;
+  Expression_ID                  Entry_Barrier;
+  Declaration_ID                 Corresponding_Subunit;
+  bool                           Is_Subunit;
+  Declaration_ID                 Corresponding_Body_Stub;
+  Element_List                   Generic_Formal_Part;
+  Expression_ID                  Generic_Unit_Name;
+  Association_List               Generic_Actual_Part;
+  Expression_ID                  Formal_Subprogram_Default;
+  Defining_Name_ID               Corresponding_Generic_Element;
+  bool                           Is_Dispatching_Operation;
 };
 
 // May take ??*4 bytes (unfinished):
