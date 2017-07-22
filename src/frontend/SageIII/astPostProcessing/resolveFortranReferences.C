@@ -3,7 +3,7 @@
 #include "transformationSupport.h"
 #include "resolveFortranReferences.h"
 
-using namespace rose;
+using namespace Rose;
 
 void fixupFortranReferences (SgNode* node)
    {

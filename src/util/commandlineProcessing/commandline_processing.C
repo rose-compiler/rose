@@ -28,7 +28,7 @@
 // DQ (12/31/2005): This is allowed in C files where it can not 
 // effect the users application (just not in header files).
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 Rose_STL_Container<std::string> CommandlineProcessing::extraCppSourceFileSuffixes;
 
@@ -136,7 +136,7 @@ CommandlineProcessing::genericSwitches() {
                .doc("Shows the dotted quad ROSE version and then exits.  See also @s{version-long}, which prints much more "
                     "information."));
 
-    // Control how a failing assertion acts. It could abort, exit with non-zero, or throw rose::Diagnostics::FailedAssertion.
+    // Control how a failing assertion acts. It could abort, exit with non-zero, or throw Rose::Diagnostics::FailedAssertion.
     gen.insert(Switch("assert")
                .action(FailedAssertionBehaviorAdjuster::instance())
                .argument("how", enumParser<FailedAssertionBehaviorAdjuster::Behavior>()
@@ -144,7 +144,7 @@ CommandlineProcessing::genericSwitches() {
                          ->with("abort", FailedAssertionBehaviorAdjuster::ABORT_ON_FAILURE)
                          ->with("throw", FailedAssertionBehaviorAdjuster::THROW_ON_FAILURE))
                .doc("Determines how a failed assertion behaves.  The choices are \"abort\", \"exit\" with a non-zero value, "
-                    "or \"throw\" a rose::Diagnostics::FailedAssertion exception. The default behavior depends on how ROSE "
+                    "or \"throw\" a Rose::Diagnostics::FailedAssertion exception. The default behavior depends on how ROSE "
                     "was configured."));
 
     // Number of threads to use for algorithms that support multi-threading.  NOTE: we should really have a Settings struct for

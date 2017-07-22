@@ -1,0 +1,46 @@
+## A sample Makefile to build a ROSE tool.
+##
+## Important: remember that Makefile recipes must contain tabs:
+##
+##     <target>: [ <dependency > ]*
+##         [ <TAB> <command> <endl> ]+
+## So you have to replace spaces with Tabs if you copy&paste this file from a browser!
+
+## ROSE installation contains
+##   * libraries, e.g. "librose.la"
+##   * headers, e.g. "rose.h"
+ROSE_INSTALL=/home/liao6/workspace/raja/rose/install
+
+## ROSE uses the BOOST C++ libraries
+BOOST_INSTALL=/nfs/casc/overture/ROSE/opt/rhel7/x86_64/boost/1_55_0/gcc/4.9.3/
+
+## Your translator
+TRANSLATOR=rajaChecker
+TRANSLATOR_SOURCE=$(TRANSLATOR).C
+
+## Input testcode for your translator
+TESTCODE=hello.cpp
+
+#BOOST_LIBS
+# the Sawyer lib uses a long list of boost libs
+BOOST_LIBS=-lboost_date_time -lboost_thread -lboost_filesystem -lboost_program_options -lboost_regex -lboost_system -lboost_serialization -lboost_wave -lboost_iostreams 
+LINK_FLAGS=-Wl,-rpath=$(ROSE_INSTALL)/lib -L$(ROSE_INSTALL)/lib -lrose -pthread -Wl,-rpath=$(BOOST_INSTALL)/lib -L$(BOOST_INSTALL)/lib $(BOOST_LIBS) -lm
+#-------------------------------------------------------------
+# Makefile Targets
+#-------------------------------------------------------------
+
+all: $(TRANSLATOR)
+
+# compile the translator and generate an executable
+# -g is recommended to be used by default to enable debugging your code
+# Note: depending on the version of boost, you may have to use something like -I $(BOOST_ROOT)/include/boost-1_40 instead. 
+$(TRANSLATOR): $(TRANSLATOR_SOURCE)
+	g++ -g $(TRANSLATOR_SOURCE) -I$(BOOST_INSTALL)/include -I$(ROSE_INSTALL)/include/rose $(LINK_FLAGS) -o $(TRANSLATOR)
+
+# test the translator
+check: $(TRANSLATOR)
+	./$(TRANSLATOR) -c -I. -I$(ROSE_INSTALL)/include $(TESTCODE) 
+
+clean:
+	rm -rf $(TRANSLATOR) *.o rose_* *.dot
+

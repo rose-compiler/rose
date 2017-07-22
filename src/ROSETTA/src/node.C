@@ -72,6 +72,7 @@ Grammar::setUpNodes ()
      NEW_TERMINAL_MACRO (OmpBeginClause, "OmpBeginClause", "OmpBeginClauseTag" );
      NEW_TERMINAL_MACRO (OmpEndClause, "OmpEndClause", "OmpEndClauseTag" );
      NEW_TERMINAL_MACRO (OmpUntiedClause, "OmpUntiedClause", "OmpUntiedClauseTag" );
+     NEW_TERMINAL_MACRO (OmpMergeableClause, "OmpMergeableClause", "OmpMergeableClauseTag" );
      NEW_TERMINAL_MACRO (OmpDefaultClause, "OmpDefaultClause", "OmpDefaultClauseTag" );
      NEW_TERMINAL_MACRO (OmpAtomicClause, "OmpAtomicClause", "OmpAtomicClauseTag" );
      NEW_TERMINAL_MACRO (OmpProcBindClause, "OmpProcBindClause", "OmpProcBindClauseTag" );
@@ -80,13 +81,15 @@ Grammar::setUpNodes ()
 
      NEW_TERMINAL_MACRO (OmpCollapseClause, "OmpCollapseClause", "OmpCollapseClauseTag" );
      NEW_TERMINAL_MACRO (OmpIfClause, "OmpIfClause", "OmpIfClauseTag" );
+     NEW_TERMINAL_MACRO (OmpFinalClause, "OmpFinalClause", "OmpFinalClauseTag" );
+     NEW_TERMINAL_MACRO (OmpPriorityClause, "OmpPriorityClause", "OmpPriorityClauseTag" );
      NEW_TERMINAL_MACRO (OmpNumThreadsClause, "OmpNumThreadsClause", "OmpNumThreadsClauseTag" );
      NEW_TERMINAL_MACRO (OmpDeviceClause, "OmpDeviceClause", "OmpIfDeviceTag" );
      NEW_TERMINAL_MACRO (OmpSafelenClause, "OmpSafelenClause", "OmpSafelenTag" );
      NEW_TERMINAL_MACRO (OmpSimdlenClause, "OmpSimdlenClause", "OmpSimdlenTag" );
 
      NEW_NONTERMINAL_MACRO (OmpExpressionClause, OmpCollapseClause | OmpIfClause | OmpNumThreadsClause | OmpDeviceClause |
-                            OmpSafelenClause | OmpSimdlenClause
+                            OmpSafelenClause | OmpSimdlenClause | OmpFinalClause | OmpPriorityClause
          ,"OmpExpressionClause", "OmpExpressionClauseTag",false );
 
 
@@ -97,6 +100,7 @@ Grammar::setUpNodes ()
      NEW_TERMINAL_MACRO (OmpCopyinClause, "OmpCopyinClause", "OmpCopyinClauseTag" );
      NEW_TERMINAL_MACRO (OmpLastprivateClause, "OmpLastprivateClause", "OmpLastprivateClauseTag" );
      NEW_TERMINAL_MACRO (OmpReductionClause, "OmpReductionClause", "OmpReductionClauseTag" );
+     NEW_TERMINAL_MACRO (OmpDependClause,    "OmpDependClause", "OmpDependClauseTag" );
 
      NEW_TERMINAL_MACRO (OmpMapClause, "OmpMapClause", "OmpMapClauseTag" );
      NEW_TERMINAL_MACRO (OmpLinearClause, "OmpLinearClause", "OmpLinearClauseTag" );
@@ -105,14 +109,14 @@ Grammar::setUpNodes ()
 
      NEW_NONTERMINAL_MACRO (OmpVariablesClause, OmpCopyprivateClause| OmpPrivateClause |OmpFirstprivateClause|
          OmpSharedClause |OmpCopyinClause| OmpLastprivateClause| OmpReductionClause | OmpMapClause | 
-         OmpUniformClause | OmpAlignedClause | OmpLinearClause ,
+         OmpUniformClause | OmpAlignedClause | OmpLinearClause | OmpDependClause ,
          "OmpVariablesClause", "OmpVariablesClauseTag", false);
 
      NEW_TERMINAL_MACRO (OmpScheduleClause, "OmpScheduleClause", "OmpScheduleClauseTag" );
 
      NEW_NONTERMINAL_MACRO (OmpClause, OmpOrderedClause | OmpNowaitClause | OmpBeginClause |OmpEndClause | OmpUntiedClause |
          OmpDefaultClause | OmpAtomicClause | OmpProcBindClause | OmpExpressionClause | OmpInbranchClause | OmpNotinbranchClause |
-         OmpVariablesClause | OmpScheduleClause ,
+         OmpVariablesClause | OmpScheduleClause | OmpMergeableClause ,
          "OmpClause", "OmpClauseTag", false);
 #endif
      
@@ -1247,6 +1251,12 @@ Grammar::setUpNodes ()
      // reduction(op:variables) 
      OmpReductionClause.setDataPrototype("SgOmpClause::omp_reduction_operator_enum", "operation", "=e_omp_reduction_unknown",
                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     
+     // depend(type:variables) 
+     OmpDependClause.setDataPrototype("SgOmpClause::omp_dependence_type_enum", "dependence_type", "=e_omp_depend_unknown",
+                          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     OmpDependClause.setDataPrototype("std::map<SgSymbol*,  std::vector < std::pair <SgExpression*, SgExpression*> > >", "array_dimensions", "",
+                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      // map (inout|alloc|in|out:variable_list) , a variable could be array type with additional dimension info, such as a[0:n][0:m]
      OmpMapClause.setDataPrototype("SgOmpClause::omp_map_operator_enum", "operation", "=e_omp_map_unknown",

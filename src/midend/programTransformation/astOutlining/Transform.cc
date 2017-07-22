@@ -19,7 +19,7 @@
 // =====================================================================
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 using namespace SageBuilder;
 using namespace SageInterface;
 // =====================================================================
