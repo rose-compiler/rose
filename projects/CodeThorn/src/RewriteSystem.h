@@ -26,7 +26,7 @@ private:
 class RewriteSystem {
  public:
   RewriteSystem();
-  void rewriteAst(SgNode*& root, SPRAY::VariableIdMapping* variableIdMapping, bool rewriteTrace=false, bool ruleAddReorder=false, bool performCompoundAssignmentsElimination=false);
+  void rewriteAst(SgNode*& root, SPRAY::VariableIdMapping* variableIdMapping, bool rewriteTrace=false, bool ruleAddReorder=false, bool performCompoundAssignmentsElimination=false, bool ruleAlgebraic=false);
   bool getRewriteCondStmt();
   void setRewriteCondStmt(bool);
 

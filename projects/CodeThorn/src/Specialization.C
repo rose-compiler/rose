@@ -523,6 +523,15 @@ void Specialization::substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates, Var
       }
     }
   }
+  // normalization phase
+  RewriteSystem rewriteSystem2;
+  for(ArrayUpdatesSequence::iterator i=arrayUpdates.begin();i!=arrayUpdates.end();++i) {
+    SgExpression* exp=(*i).second;
+    SgNode* node=exp;
+    bool ruleAlgebraic=true;
+    //cout<<"DEBUG: Rewrite phase 2 :"<<exp->unparseToString()<<endl;
+    rewriteSystem2.rewriteAst(node,variableIdMapping,false,false,false,ruleAlgebraic);
+  }
 }
 
 void Specialization::printUpdateInfos(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping) {

@@ -251,7 +251,7 @@ void RewriteSystem::normalizeFloatingPointNumbersForUnparsing(SgNode*& root) {
 // rewrites an AST
 // requirements: all variables have been replaced by constants
 // uses AstMatching to match patterns.
-void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMapping, bool rewriteTrace, bool ruleAddReorder, bool performCompoundAssignmentsElimination) {
+void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMapping, bool rewriteTrace, bool ruleAddReorder, bool performCompoundAssignmentsElimination, bool ruleAlgebraic) {
    //  cout<<"Rewriting AST:"<<endl;
    bool someTransformationApplied=false;
    bool transformationApplied=false;
@@ -300,6 +300,39 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
        }
      } while(transformationApplied); // a loop will eliminate -(-(5)) to 5
 
+#if 0
+     if(ruleAlgebraic) {
+       cout<<"DEBUG: Applying rule algebraic."<<endl;
+       int cnt=0;
+       do {
+         // the following rules guarantee convergence
+
+         // REWRITE: re-ordering (normalization) of expressions
+         // Rewrite-rule 1: SgAddOp(SgAddOp($Remains,$Other),$IntVal=SgIntVal) => SgAddOp(SgAddOp($Remains,$IntVal),$Other)
+         //                 where $Other!=SgIntVal && $Other!=SgFloatVal && $Other!=SgDoubleVal; ($Other notin {SgIntVal,SgFloatVal,SgDoubleVal})
+         transformationApplied=false;
+         //MatchResult res=m.performMatching("$BinaryOp1=SgMultiplyOp($Remains,$Val=SgFloatVal|$Val=SgDoubleVal|$Val=SgIntVal)",root);
+         MatchResult res=m.performMatching("$BinaryOp1=SgMultiplyOp($Remains,$Val=SgDoubleVal)",root);
+         if(res.size()>0) {
+           cout<<"DEBUG: matched "<<res.size()<<" expr: X * Val "<<endl;
+           for(MatchResult::iterator kk=res.begin();kk!=res.end();++kk) {
+             // match found
+             SgExpression* other=isSgExpression((*kk)["$Val"]);
+             SgExpression* op=isSgExpression((*kk)["$BinaryOp1"]);
+             cout<<"DEBUG: other:"<<other<<" op:"<<op<<endl;
+             if(other && op) {
+               if(isSgIntVal(other) || isSgFloatVal(other) || isSgDoubleVal(other)) {
+                 cout<<"DEBUG: Found value in multiplication (TODO: test for 0!) :"<<cnt<<": "<<op->unparseToString()<<endl;
+                 // no transformation applied yet, have to remain false.
+                 //transformationApplied=true; 
+                 //someTransformationApplied=true;
+               }
+             }
+           }
+         }
+       } while(transformationApplied);
+     }
+#endif
      if(ruleAddReorder) {
        do {
          // the following rules guarantee convergence

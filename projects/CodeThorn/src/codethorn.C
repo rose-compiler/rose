@@ -1840,6 +1840,7 @@ int main( int argc, char * argv[] ) {
       ara.annotateAstAttributesAsCommentsBeforeStatements(sageProject,"ctgen-pre-condition");
       logger[TRACE] << "STATUS: Generated assertions."<<endl;
     }
+
     double arrayUpdateExtractionRunTime=0.0;
     double arrayUpdateSsaNumberingRunTime=0.0;
     double sortingAndIORunTime=0.0;
@@ -1896,6 +1897,7 @@ int main( int argc, char * argv[] ) {
           useConstSubstitutionRule
           );
       speci.substituteArrayRefs(arrayUpdates, analyzer.getVariableIdMapping(), sarMode);
+      // rewrite final result xxx
       arrayUpdateExtractionRunTime=timer.getElapsedTimeInMilliSec();
 
       if(boolOptions["verify-update-sequence-race-conditions"]) {
