@@ -9,7 +9,7 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
-#include <AstSerialization.h>                           // needed for rose::saveAst and rose::restoreAst
+#include <AstSerialization.h>                           // needed for Rose::saveAst and Rose::restoreAst
 #include <sageBuilderAsm.h>                             // used to build some IR nodes for testing
 
 // binary archives should work equally well, but we use text here to aid in debugging.
@@ -24,7 +24,7 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #define equal(IN, OUT, FIELD) ASSERT_always_require(IN->FIELD == OUT->FIELD)
 #define check(COND) ASSERT_always_require(COND)
 
-namespace Builder = rose::SageBuilderAsm;
+namespace Builder = Rose::SageBuilderAsm;
 
 // Serialize and then unserialize an AST
 template<class T>
@@ -32,11 +32,11 @@ static void
 serunser(SgNode *nodeOut, T *&retval) {
     std::ostringstream oss;
     boost::archive::text_oarchive out(oss);
-    rose::saveAst(out, nodeOut);
+    Rose::saveAst(out, nodeOut);
 
     std::istringstream iss(oss.str());
     boost::archive::text_iarchive in(iss);
-    SgNode *nodeIn = rose::restoreAst(in);
+    SgNode *nodeIn = Rose::restoreAst(in);
 
     ASSERT_always_require((nodeOut==NULL && nodeIn==NULL) || (nodeOut!=NULL && nodeIn!=NULL));
     retval = dynamic_cast<T*>(nodeIn);

@@ -23,9 +23,9 @@
 #include <yaml-cpp/yaml.h>
 #endif
 
-using namespace rose::Diagnostics;
+using namespace Rose::Diagnostics;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
@@ -36,7 +36,7 @@ namespace Partitioner2 {
 void
 Engine::init() {
     ASSERT_require(map_ == NULL);
-    rose::initialize(NULL);
+    Rose::initialize(NULL);
 #if ROSE_PARTITIONER_EXPENSIVE_CHECKS == 1
     static bool emitted = false;
     if (!emitted) {

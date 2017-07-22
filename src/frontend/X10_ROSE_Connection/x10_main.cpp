@@ -199,8 +199,9 @@ CreateJvm(const struct Commandline a_cmdline)
 {
   struct JVM jvm;
 
-  JavaVMOption* options = new JavaVMOption[6];
+  JavaVMOption* options = new JavaVMOption[7];
   std::string jvm_max_heap = "-Xmx" + a_cmdline.jvm_max_heap;
+  std::string jvm_max_stack = "-Xss2m";
   std::string file_encoding = "-Dfile.encoding=UTF-8";
   std::string x10_dist = "-Dx10.dist=" + std::string(X10_INSTALL_PATH);
   std::string x10c_ecj_jar = "-Dx10c.ecj.jar=ecj-4.3.2.jar";
@@ -223,11 +224,12 @@ CreateJvm(const struct Commandline a_cmdline)
   options[3].optionString = (char*) x10c_math_jar.c_str();
   options[4].optionString = (char*) classpath.c_str();
   options[5].optionString = (char*) libpath.c_str();
-  //options[5].optionString = (char*) jvm_max_heap.c_str();
+  options[6].optionString = (char*) jvm_max_stack.c_str();
+  //options[6].optionString = (char*) jvm_max_heap.c_str();
   //options[6].optionString = "-verbose:jni"; // print JNI-related messages
 
   jvm.vm_args.version = JNI_VERSION_1_6;
-  jvm.vm_args.nOptions = 6;
+  jvm.vm_args.nOptions = 7;
   jvm.vm_args.options = options;
   jvm.vm_args.ignoreUnrecognized = true;
 

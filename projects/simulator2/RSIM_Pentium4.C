@@ -6,9 +6,9 @@
 #include "RSIM_Pentium4.h"
 #include <Partitioner2/Engine.h>
 
-using namespace rose;
-using namespace rose::Diagnostics;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;
+using namespace Rose::Diagnostics;
+using namespace Rose::BinaryAnalysis;
 
 void
 RSIM_Pentium4::init() {}
@@ -20,7 +20,7 @@ RSIM_Pentium4::updateExecutablePath() {
 
 SgAsmInterpretation*
 RSIM_Pentium4::parseMainExecutable(RSIM_Process *process) {
-    namespace P2 = rose::BinaryAnalysis::Partitioner2;
+    namespace P2 = Rose::BinaryAnalysis::Partitioner2;
     using namespace Sawyer::CommandLine;
 
     // This is raw hardware, so assume that all the arguments are for loading the specimen.
@@ -82,7 +82,7 @@ RSIM_Pentium4::initialRegistersArch(RSIM_Process *process) {
 }
 
 void
-RSIM_Pentium4::loadSpecimenNative(RSIM_Process*, rose::BinaryAnalysis::Disassembler*, int existingPid) {
+RSIM_Pentium4::loadSpecimenNative(RSIM_Process*, Rose::BinaryAnalysis::Disassembler*, int existingPid) {
     ASSERT_not_reachable("native loading not possible for naked hardware");
 }
 

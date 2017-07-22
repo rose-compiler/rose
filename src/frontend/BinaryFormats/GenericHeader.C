@@ -5,7 +5,7 @@
 #include "sage3basic.h"
 #include "stringify.h"
 
-using namespace rose;
+using namespace Rose;
 
 const char *
 SgAsmGenericHeader::format_name() const

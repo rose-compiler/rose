@@ -1,9 +1,9 @@
 #include "sage3basic.h"
 #include "Registers.h"
 
-// These are here temporarily until the classes in this file can be moved into rose::BinaryAnalysis
-using namespace rose;
-using namespace rose::BinaryAnalysis;
+// These are here temporarily until the classes in this file can be moved into Rose::BinaryAnalysis
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 
 std::ostream&
 operator<<(std::ostream &o, const RegisterDictionary &dict)

@@ -7,7 +7,7 @@
 #include <Sawyer/SharedObject.h>
 #include <Registers.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /** Generates pseudo-assembly listings. */

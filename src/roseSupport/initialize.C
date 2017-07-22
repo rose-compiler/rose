@@ -3,15 +3,15 @@
 #include <rose_config.h>                                // needed for VERSION with cmake
 #include <initialize.h>
 
-#ifdef ROSE_HAVE_GCRYPT_H
+#ifdef ROSE_HAVE_LIBGCRYPT
 #include <gcrypt.h>
 #endif
 #include <Diagnostics.h>
 #include <Sawyer/Synchronization.h>
 
-namespace rose {
+namespace Rose {
 
-using namespace rose::Diagnostics;
+using namespace Rose::Diagnostics;
 
 #if SAWYER_MULTI_THREADED
 static boost::once_flag initFlag = BOOST_ONCE_INIT;
@@ -38,7 +38,7 @@ public:
 
         Sawyer::initializeLibrary();
 
-#ifdef ROSE_HAVE_GCRYPT_H
+#ifdef ROSE_HAVE_LIBGCRYPT
         gcry_check_version(NULL);
 #endif
 
@@ -60,7 +60,7 @@ initialize(const char *configToken) {
 #if SAWYER_MULTI_THREADED
     boost::call_once(initFlag, init);
 #else
-    if (!::rose::isInitialized())                       // qualified for sake of Microsoft
+    if (!::Rose::isInitialized())                       // qualified for sake of Microsoft
         init();
 #endif
 
@@ -98,11 +98,11 @@ checkConfigToken(const char *configToken) {
 
 bool
 checkVersionNumber(const std::string &need) {
-    std::vector<std::string> needParts = rose::StringUtility::split('.', need);
+    std::vector<std::string> needParts = Rose::StringUtility::split('.', need);
 #if defined(ROSE_PACKAGE_VERSION)                       // autoconf
-    std::vector<std::string> haveParts = rose::StringUtility::split('.', ROSE_PACKAGE_VERSION);
+    std::vector<std::string> haveParts = Rose::StringUtility::split('.', ROSE_PACKAGE_VERSION);
 #elif defined(VERSION)                                  // cmake
-    std::vector<std::string> haveParts = rose::StringUtility::split('.', VERSION);
+    std::vector<std::string> haveParts = Rose::StringUtility::split('.', VERSION);
 #else
     #error "unknown ROSE version number"
 #endif

@@ -192,7 +192,9 @@ string PromelaCodeGenerator::generateCode(Flow& automaton, int id, EdgeAnnotatio
       ss << "      :: "<<communicationDetails((*i).getAnnotation(), id, edgeAnnotationMap, useTransitionIds, transitionIdMap) << endl;
       ss << "        state = "<<(*i).target().getId()<<";" << endl;
       if (visited.find((*i).target()) == visited.end()) {
-	worklist.push_back((*i).target());
+	if (automaton.outEdges((*i).target()).size() > 0) { // no need to create a case for leaves, nothing happens anymore (deadlock)
+	  worklist.push_back((*i).target());
+	}
         visited.insert((*i).target());
       }
     }

@@ -10,8 +10,8 @@
 typedef rose_addr_t Value;
 typedef std::set<Value> Set;
 
-using namespace rose;
-using namespace rose::Diagnostics;
+using namespace Rose;
+using namespace Rose::Diagnostics;
 
 struct Settings {
     unsigned nBits;

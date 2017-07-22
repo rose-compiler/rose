@@ -2,7 +2,7 @@
 #include "Diagnostics.h"
 #include <EditDistance/EditDistance.h>
 
-namespace rose {
+namespace Rose {
 namespace EditDistance {
 
 Sawyer::Message::Facility mlog;
@@ -12,7 +12,7 @@ initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        Diagnostics::initAndRegister(&mlog, "rose::EditDistance");
+        Diagnostics::initAndRegister(&mlog, "Rose::EditDistance");
     }
 }
 

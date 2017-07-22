@@ -8,7 +8,7 @@ ParProSpotSuccIter::ParProSpotSuccIter(ParProTransitionGraph& tg, const ParProES
 				       const boost::unordered_map<string, int>& p2d) 
                                       : _source(state), stg(tg), propName2DictNum(p2d) {
   _outEdges = stg.succ(&state);
-  if (stg.isComplete()) {
+  if (stg.isComplete() && !stg.isPrecise()) {
     _needToAddSelfLoop = true;
     _upcomingSelfLoop = true;
   } else {

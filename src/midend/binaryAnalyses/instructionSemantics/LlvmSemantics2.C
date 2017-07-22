@@ -6,12 +6,12 @@
 #include "integerOps.h"
 #include "stringify.h"
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace LlvmSemantics {
 
-using namespace rose::Diagnostics;
+using namespace Rose::Diagnostics;
 
 static unsigned nVersionWarnings = 0;
 

@@ -5,8 +5,8 @@
 #include <cerrno>
 #include <csignal>
 
-using namespace rose;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 
 namespace CloneDetection {
 namespace RunTests {

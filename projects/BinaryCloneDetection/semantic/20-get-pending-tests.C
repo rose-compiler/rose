@@ -7,7 +7,7 @@
 #include "CloneDetectionLib.h"
 #include <cerrno>
 
-using namespace rose;
+using namespace Rose;
 
 std::string argv0;
 

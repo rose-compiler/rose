@@ -20,11 +20,11 @@ class ArrayAbstractionInterface {
                                  const AstNodePtr& array, 
                                  int dim, int &lb, int &ub) = 0;
   virtual AstNodePtr CreateArrayAccess( AstInterface& fa, const AstNodePtr& arr,
-                                AstInterface::AstNodeList& index) = 0;
+                                const AstNodeList& index) = 0;
   virtual SymbolicVal CreateArrayAccess(
                                 const SymbolicVal& arr,
                                 const SymbolicVal& index) 
-     { /*QY: need to be defined by a derived class*/ assert(0); return SymbolicVal(0); }
+     { /*QY: need to be defined by a derived class*/ assert(0); }
   virtual ~ArrayAbstractionInterface() {}
 };
 
@@ -46,7 +46,7 @@ class ArrayUseAccessFunction
                                  const AstNodePtr& array,
                                  int dim, int &lb, int &ub);
   virtual AstNodePtr CreateArrayAccess( AstInterface& fa, const AstNodePtr& arr,
-                                AstInterface::AstNodeList& index);
+                                const AstNodeList& index);
   virtual SymbolicVal CreateArrayAccess(
                                 const SymbolicVal& arr,
                                 const SymbolicVal& index) ;
@@ -63,18 +63,14 @@ class AutoTuningInterface ;
 QY: Singular interface class which remembers configurations for loop 
     optimizations
 ***********/
-class ROSE_DLL_API LoopTransformInterface 
+class LoopTransformInterface 
 {
   static AstInterface* fa;
   static int configIndex;
   static AliasAnalysisInterface* aliasInfo;
   static FunctionSideEffectInterface* funcInfo;
   static ArrayAbstractionInterface* arrayInfo;
-
-// DQ (1/15/2017): make dependence on POET optional.
-#ifdef ROSE_USE_POET
   static AutoTuningInterface* tuning;
-#endif
 
  public:
 
@@ -85,23 +81,14 @@ class ROSE_DLL_API LoopTransformInterface
   static void set_arrayInfo( ArrayAbstractionInterface* array)
     { arrayInfo = array; }
   static void set_astInterface( AstInterface& _fa);
-
-// DQ (1/15/2017): make dependence on POET optional.
-#ifdef ROSE_USE_POET
   static void set_tuningInterface(AutoTuningInterface* _tuning);
-#endif
-
   static void cmdline_configure(std::vector<std::string>& argv);
 
   static AstInterface& getAstInterface() { assert(fa != 0); return *fa; }
   static AliasAnalysisInterface* getAliasInfo() { return aliasInfo; }
   static FunctionSideEffectInterface* getSideEffectInterface() 
             { return funcInfo; }
-
-// DQ (1/15/2017): make dependence on POET optional.
-#ifdef ROSE_USE_POET
   static AutoTuningInterface* getAutoTuningInterface() { return tuning; }
-#endif
 
   static bool IsAliasedRef( const AstNodePtr& r1, const AstNodePtr& r2)
     { assert(fa != 0 && aliasInfo!=0); return aliasInfo->may_alias(*fa, r1, r2); }
@@ -123,13 +110,7 @@ class ROSE_DLL_API LoopTransformInterface
             || fa->IsArrayAccess(s, array, index); }
 
   static AstNodePtr CreateArrayAccess( const AstNodePtr& arr,
-                                AstInterface::AstNodeList& index) 
-  { assert(fa != 0);
-    AstNodePtr r = (arrayInfo == 0)? AST_NULL : arrayInfo->CreateArrayAccess(*fa,arr,index);
-    if (r == AST_NULL)
-       r = fa->CreateArrayAccess(arr, index);
-    return r;
-  }
+                                AstInterface::AstList& index) ;
   static AstNodePtr CreateArrayAccess(const std::string& arrname, 
                             const std::vector<SymbolicVal>& arrindex);
   static bool GetArrayBound( const AstNodePtr& array,int dim, int &lb, int &ub) 
@@ -163,7 +144,7 @@ class ROSE_DLL_API LoopTransformInterface
   i++ is normalized to i=i+1
   i-- is normalized to i=i-1
 */
-ROSE_DLL_API void NormalizeForLoop (AstInterface& fa, const AstNodePtr& head) ;
+void NormalizeForLoop (AstInterface& fa, const AstNodePtr& head) ;
 
 
 #endif

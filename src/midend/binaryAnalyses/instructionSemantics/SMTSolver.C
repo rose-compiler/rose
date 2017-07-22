@@ -10,7 +10,7 @@
 #include <Sawyer/FileSystem.h>
 #include <Sawyer/Stopwatch.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 

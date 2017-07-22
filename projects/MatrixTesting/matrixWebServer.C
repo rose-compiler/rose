@@ -55,7 +55,7 @@ static Sawyer::Message::Facility mlog;
 #include <Wt/WText>
 #include <Wt/WVBoxLayout>
 
-using namespace rose;
+using namespace Rose;
 
 static const char* WILD_CARD_STR = "*";
 enum ChartType { BAR_CHART, LINE_CHART };
@@ -3766,22 +3766,22 @@ public:
         // Colors for pass-ratios.
         //   Classes redgreen-N vary from red to green as N goes from integer 0 through 100.
         //   Classes redgreen-N-S are similar except S is a saturation amount from 0 through 4 (desaturated).
-        rose::Color::Gradient redgreen;
-        redgreen.insert(0.0, rose::Color::HSV(0.00, 0.50, 0.50));
-        redgreen.insert(0.5, rose::Color::HSV(0.17, 0.40, 0.50));
-        redgreen.insert(1.0, rose::Color::HSV(0.33, 0.50, 0.50));
+        Rose::Color::Gradient redgreen;
+        redgreen.insert(0.0, Rose::Color::HSV(0.00, 0.50, 0.50));
+        redgreen.insert(0.5, Rose::Color::HSV(0.17, 0.40, 0.50));
+        redgreen.insert(1.0, Rose::Color::HSV(0.33, 0.50, 0.50));
         for (int i=0; i<=100; ++i) {
-            rose::Color::RGB c = redgreen.interpolate(i/100.0);
+            Rose::Color::RGB c = redgreen.interpolate(i/100.0);
             std::string cssClass = ".redgreen-" + StringUtility::numberToString(i);
             std::string bgColor = "background-color:" + c.toHtml() + ";";
             styleSheet().addRule(cssClass, bgColor);
             for (int j=0; j<5; ++j) {
                 std::string cssClass2 = cssClass + "-" + StringUtility::numberToString(j);
-                bgColor = "background-color:" + rose::Color::lighten(c, 1.0-j*0.25).toHtml() + ";";
+                bgColor = "background-color:" + Rose::Color::lighten(c, 1.0-j*0.25).toHtml() + ";";
                 styleSheet().addRule(cssClass2, bgColor);
             }
         }
-        styleSheet().addRule(".chart-zero", "background-color:" + rose::Color::HSV(0, 0, 1).toHtml() + ";");
+        styleSheet().addRule(".chart-zero", "background-color:" + Rose::Color::HSV(0, 0, 1).toHtml() + ";");
 
         // Styles of error priority table cells
         styleSheet().addRule(".error-count-cell", "border:1px solid black;");

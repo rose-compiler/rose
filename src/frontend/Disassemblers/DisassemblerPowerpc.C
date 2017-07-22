@@ -8,7 +8,7 @@
 #include "BinaryUnparserPowerpc.h"
 #include "DispatcherPowerpc.h"
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /* See header file for full documentation. */

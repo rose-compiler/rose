@@ -2,7 +2,7 @@
 #include "rosePublicConfig.h"
 #include "DwarfLineMapper.h"
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 std::ostream &

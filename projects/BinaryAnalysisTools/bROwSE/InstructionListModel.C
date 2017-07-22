@@ -1,7 +1,7 @@
 #include <rose.h>
 #include <bROwSE/InstructionListModel.h>
 
-using namespace rose;
+using namespace Rose;
 
 namespace bROwSE {
 

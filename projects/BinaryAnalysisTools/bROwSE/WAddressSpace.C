@@ -5,8 +5,8 @@
 #include <Wt/WPaintedWidget>
 #include <Wt/WPainter>
 
-using namespace rose;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 
 namespace bROwSE {
 

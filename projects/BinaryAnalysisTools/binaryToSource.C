@@ -5,9 +5,9 @@
 #include <Partitioner2/Engine.h>
 #include <Sawyer/CommandLine.h>
 
-using namespace rose::Diagnostics;
-using namespace rose::BinaryAnalysis;
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
+using namespace Rose::Diagnostics;
+using namespace Rose::BinaryAnalysis;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 // Global settings adjusted from the command-line
 struct Settings {

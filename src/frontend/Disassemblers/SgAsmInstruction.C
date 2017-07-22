@@ -6,9 +6,9 @@
 #include "Diagnostics.h"
 #include "Disassembler.h"
 
-using namespace rose;
-using namespace rose::Diagnostics;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;
+using namespace Rose::Diagnostics;
+using namespace Rose::BinaryAnalysis;
 
 /** Indicates concrete stack delta is not known or not calculated. */
 const int64_t SgAsmInstruction::INVALID_STACK_DELTA = (uint64_t)1 << 63; // fairly arbitrary, but far from zero

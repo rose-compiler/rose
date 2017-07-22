@@ -422,14 +422,7 @@
  *
  *  @section installation_using Using the library
  *
- *  Once the ROSE library has been configured, built, and installed it can be used. Any program that uses ROSE will likely need
- *  to be compiled with the same switches and software components as ROSE itself.  The easiest way to get this information is
- *  by running "rose-config --help".
- *
- *  Here's an example makefile:
- *
- *  @includelineno SampleMakefile
- *
+ *  If you're interested in ROSE tool development, read the @ref tooldev "Developing ROSE-based tools documentation".
  *
  *
  *  @section installation_nextsteps Next steps

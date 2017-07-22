@@ -154,7 +154,7 @@ class LoopTreeDepGraphCreate
 };
 
 
-class ROSE_DLL_API LoopTreeDepComp 
+class LoopTreeDepComp 
 {
   LoopTreeNode *root;
   LoopTreeCreate* tc;
@@ -188,10 +188,6 @@ class ROSE_DLL_API LoopTreeDepComp
   void DumpTree() const;
   void DumpDep() const;
   void DumpNode( LoopTreeNode *s) const;
-
-  // a hack to support building loop tree with non-canonical loops in order to generate dependence graph
-  // Liao, 1/25/2017
-  static bool supportNonFortranLoop; 
 };
 
 class LoopTreeDepGraphSubtree : public GraphSelect<LoopTreeDepGraph>
@@ -226,7 +222,7 @@ class LoopTreeDepCompSubtree : public LoopTreeDepComp
   virtual ~LoopTreeDepCompSubtree() { delete GetDepGraph(); }
 };
 
-class ROSE_DLL_API LoopTreeDepCompCreate : public LoopTreeDepComp, public MultiGraphObserver
+class LoopTreeDepCompCreate : public LoopTreeDepComp, public MultiGraphObserver
 {
   DepInfoAnal anal;
   PtrMapWrap <LoopTreeNode, LoopTreeDepGraphNode> nodeMap;
@@ -237,7 +233,7 @@ class ROSE_DLL_API LoopTreeDepCompCreate : public LoopTreeDepComp, public MultiG
   void UpdateDeleteNode( const MultiGraphElem *n);
  public:
   LoopTreeDepCompCreate( const AstNodePtr& top, 
-                         bool buildDepGraph = true);
+                         bool buildDepGraph = true, bool supportNonFortranLoop=false);
   ~LoopTreeDepCompCreate(); 
 
   void BuildDepGraph();

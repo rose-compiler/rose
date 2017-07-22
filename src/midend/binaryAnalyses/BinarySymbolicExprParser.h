@@ -4,7 +4,7 @@
 #include <BinarySymbolicExpr.h>
 #include <Sawyer/SharedPointer.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /** Parses symbolic expressions from text.

@@ -62,7 +62,7 @@ SgVarRefExp* PStateConstReporter::getVarRefExp() {
 }
 int PStateConstReporter::getConstInt() {
   VariableId varRefId=_variableIdMapping->variableId(_varRefExp);
-  AValue varVal=_pstate->varValue(varRefId);
+  AbstractValue varVal=_pstate->varValue(varRefId);
   ROSE_ASSERT(varVal.isConstInt());
   int varIntValue=varVal.getIntValue();
   return varIntValue;
@@ -167,7 +167,7 @@ int Specialization::substituteConstArrayIndexExprsWithConst(VariableIdMapping* v
            if(evalResultList.size()==1) {
              list<SingleEvalResultConstInt>::iterator i=evalResultList.begin();
              ROSE_ASSERT(evalResultList.size()==1);
-             AValue varVal=(*i).value();
+             AbstractValue varVal=(*i).value();
              if(varVal.isConstInt()) {
                int varIntValue=varVal.getIntValue();
                //cout<<"INFO: const: "<<varIntValue<<" substituting: "<<arrayIndexExpr->unparseToString()<<endl;

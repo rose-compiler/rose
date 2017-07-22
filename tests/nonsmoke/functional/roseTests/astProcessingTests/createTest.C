@@ -10,7 +10,7 @@
 #include <sys/resource.h>
 using namespace std;
 using namespace boost;
-using namespace rose;
+using namespace Rose;
 
 
 

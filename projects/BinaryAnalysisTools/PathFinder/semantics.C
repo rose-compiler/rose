@@ -4,11 +4,11 @@
 #include <PathFinder/semantics.h>
 #include <SymbolicMemory2.h>
 
-using namespace rose;
-using namespace rose::Diagnostics;
-using namespace rose::BinaryAnalysis;
-namespace BaseSemantics = rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
-namespace SymbolicSemantics = rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
+using namespace Rose;
+using namespace Rose::Diagnostics;
+using namespace Rose::BinaryAnalysis;
+namespace BaseSemantics = Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
+namespace SymbolicSemantics = Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
 
 namespace PathFinder {
 

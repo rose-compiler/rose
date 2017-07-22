@@ -6,9 +6,9 @@
 #include "RSIM_ColdFire.h"
 #include <Partitioner2/Engine.h>
 
-using namespace rose;
-using namespace rose::Diagnostics;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;
+using namespace Rose::Diagnostics;
+using namespace Rose::BinaryAnalysis;
 
 void
 RSIM_ColdFire::init() {}
@@ -20,7 +20,7 @@ RSIM_ColdFire::updateExecutablePath() {
 
 SgAsmInterpretation*
 RSIM_ColdFire::parseMainExecutable(RSIM_Process *process) {
-    namespace P2 = rose::BinaryAnalysis::Partitioner2;
+    namespace P2 = Rose::BinaryAnalysis::Partitioner2;
     using namespace Sawyer::CommandLine;
 
     // This is raw hardware, so assume that all the arguments are for loading the specimen.
@@ -78,7 +78,7 @@ RSIM_ColdFire::initialRegistersArch(RSIM_Process *process) {
 }
 
 void
-RSIM_ColdFire::loadSpecimenNative(RSIM_Process*, rose::BinaryAnalysis::Disassembler*, int existingPid) {
+RSIM_ColdFire::loadSpecimenNative(RSIM_Process*, Rose::BinaryAnalysis::Disassembler*, int existingPid) {
     ASSERT_not_reachable("native loading not possible for naked hardware");
 }
 

@@ -533,6 +533,8 @@ SgOmpEndClause
 SgOmpExpressionClause
 SgOmpFirstprivateClause
 SgOmpIfClause
+SgOmpFinalClause
+SgOmpPriorityClause
 SgOmpDeviceClause
 SgOmpLastprivateClause
 SgOmpNowaitClause
@@ -543,6 +545,7 @@ SgOmpReductionClause
 SgOmpScheduleClause
 SgOmpSharedClause
 SgOmpUntiedClause
+SgOmpMergeableClause
 SgOmpVariablesClause
 SgOmpMapClause
 SgOmpSafelenClause
@@ -554,6 +557,7 @@ SgOmpProcBindClause
 SgOmpAtomicClause
 SgOmpInbranchClause
 SgOmpNotinbranchClause
+SgOmpDependClause
 SgOpenclAccessModeModifier
 SgOpenStatement
 SgOptions

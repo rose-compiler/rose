@@ -1,0 +1,3 @@
+#pragma omp for  schedule(static , 3)
+#pragma omp parallel 
+#pragma omp single 

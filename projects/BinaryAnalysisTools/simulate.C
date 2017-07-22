@@ -5,10 +5,10 @@
 #include <Partitioner2/Engine.h>
 #include <ConcreteSemantics2.h>
 
-using namespace rose;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 using namespace Sawyer::Message::Common;
-using namespace rose::BinaryAnalysis::InstructionSemantics2;
+using namespace Rose::BinaryAnalysis::InstructionSemantics2;
 
 Diagnostics::Facility mlog;
 

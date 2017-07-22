@@ -4,7 +4,7 @@
 #include "SymbolicSemantics2.h"
 #include "DispatcherX86.h"
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 

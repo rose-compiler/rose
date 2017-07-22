@@ -1,6 +1,6 @@
 #include "rose.h"
 
-#ifndef ROSE_HAVE_GCRYPT_H
+#ifndef ROSE_HAVE_LIBGCRYPT
 int main()
 {
     fprintf(stderr, "This project requires <gcrypt.h>\n");
@@ -21,8 +21,8 @@ int main()
 #include "BinaryFunctionCall.h"                 /* function call graphs */
 #include "BinaryCallingConvention.h"            /* for testing the calling convention analysis. */
 
-using namespace rose;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 
 class IdaFile {
 public:
@@ -758,4 +758,4 @@ main(int argc, char *argv[])
     return 0;
 }
 
-#endif /* HAVE_GCRYPT_H */
+#endif

@@ -1,7 +1,7 @@
 #include "sage3basic.h"
 #include "InstructionProvider.h"
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 SgAsmInstruction*

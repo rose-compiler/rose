@@ -3,7 +3,7 @@
 
 #include "Sawyer/Message.h"
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /** Base class for loading a static or dynamic object.
@@ -303,7 +303,7 @@ public:
 
     /** Remaps the sections for a particular header.  This method is often replaced by subclasses since this is where
      *  decisions are made about alignment.  Different operating systems and their loaders have different alignment policies. */
-    virtual void remap(rose::BinaryAnalysis::MemoryMap::Ptr&/*in,out*/, SgAsmGenericHeader*);
+    virtual void remap(Rose::BinaryAnalysis::MemoryMap::Ptr&/*in,out*/, SgAsmGenericHeader*);
 
     /** Selects those sections of a header that should be mapped. Returns the sections in the order they should be mapped. */
     virtual SgAsmGenericSectionPtrList get_remap_sections(SgAsmGenericHeader *header) {

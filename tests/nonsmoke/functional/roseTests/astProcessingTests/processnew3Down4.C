@@ -9,7 +9,7 @@
 
 using namespace std;
 using namespace boost;
-using namespace rose;
+using namespace Rose;
 
 using namespace Backstroke;
 

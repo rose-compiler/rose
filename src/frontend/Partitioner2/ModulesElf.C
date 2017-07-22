@@ -6,12 +6,12 @@
 
 #include <boost/foreach.hpp>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 namespace ModulesElf {
 
-using namespace rose::Diagnostics;
+using namespace Rose::Diagnostics;
 
 size_t
 findErrorHandlingFunctions(SgAsmElfFileHeader *elfHeader, std::vector<Function::Ptr> &functions) {

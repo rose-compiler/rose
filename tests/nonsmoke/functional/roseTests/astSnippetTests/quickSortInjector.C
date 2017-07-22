@@ -1,7 +1,7 @@
 // Inject a few things into the quicksort.c or QuickSort.java specimen
 #include "snippetTests.h"
 
-using namespace rose;
+using namespace Rose;
 
 // Find the first statement of the specified type under the specified AST.
 template<typename StatementType>

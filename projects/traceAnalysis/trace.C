@@ -34,7 +34,7 @@
 using namespace std;
 using namespace SageInterface;
 using namespace SageBuilder;
-using namespace rose::BinaryAnalysis;
+using namespace Rose::BinaryAnalysis;
 
 
 #if 0

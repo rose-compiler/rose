@@ -147,7 +147,7 @@ void Analyzer::runSolver4() {
 }
 
 void Analyzer::runSolver5() {
-  if(isUsingExternalFunctionSemantics()) {
+  if(svCompFunctionSemantics()) {
     reachabilityResults.init(1); // in case of svcomp mode set single program property to unknown
   } else {
     reachabilityResults.init(getNumberOfErrorLabels()); // set all reachability results to unknown
@@ -327,15 +327,10 @@ void Analyzer::runSolver5() {
     reachabilityResults.finishedReachability(isPrecise(),!isComplete);
     transitionGraph.setIsComplete(!isComplete);
   } else {
-    bool complete;
-    if(boolOptions["set-stg-incomplete"]) {
-      complete=false;
-    } else {
-      complete=true;
-    }
-    reachabilityResults.finishedReachability(isPrecise(),complete);
+    bool tmpcomplete=true;
+    reachabilityResults.finishedReachability(isPrecise(),tmpcomplete);
     printStatusMessage(true);
-    transitionGraph.setIsComplete(complete);
+    transitionGraph.setIsComplete(tmpcomplete);
     logger[TRACE]<< "analysis finished (worklist is empty)."<<endl;
   }
   transitionGraph.setIsPrecise(isPrecise());
@@ -522,7 +517,7 @@ void Analyzer::runSolver10() {
   // create a new instance of the startPState
   //TODO: check why init of "output" is necessary
   PState newStartPState = _startPState;
-  newStartPState[globalVarIdByName("output")]=CodeThorn::AbstractValue(-7);
+  newStartPState.writeToMemoryLocation(globalVarIdByName("output"),CodeThorn::AbstractValue(-7));
   // initialize worklist
   PStatePlusIOHistory startState = PStatePlusIOHistory(newStartPState, list<int>());
   std::list<PStatePlusIOHistory> workList;
@@ -602,7 +597,7 @@ bool isEmptyWorkList;
       for (set<int>::iterator inputVal=_inputVarValues.begin(); inputVal!=_inputVarValues.end(); inputVal++) {
         // copy the state and initialize new input
         PState newPState = currentState.first;
-        newPState[globalVarIdByName("input")]=CodeThorn::AbstractValue(*inputVal);
+        newPState.writeToMemoryLocation(globalVarIdByName("input"),CodeThorn::AbstractValue(*inputVal));
         list<int> newHistory = currentState.second;
         ROSE_ASSERT(newHistory.size() % 2 == 0);
         newHistory.push_back(*inputVal);
