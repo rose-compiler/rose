@@ -5,6 +5,7 @@ mAstProcessing_la_sources=\
 	$(mAstProcessingPath)/AstTextAttributesHandling.C \
 	$(mAstProcessingPath)/AstDOTGeneration.C \
 	$(mAstProcessingPath)/AstProcessing.C \
+	$(mAstProcessingPath)/plugin.C \
 	$(mAstProcessingPath)/AstSimpleProcessing.C \
 	$(mAstProcessingPath)/AstNodePtrs.C \
 	$(mAstProcessingPath)/AstSuccessorsSelectors.C \
@@ -30,6 +31,7 @@ mAstProcessing_includeHeaders=\
 	$(mAstProcessingPath)/AstTextAttributesHandling.h \
 	$(mAstProcessingPath)/AstDOTGeneration.h \
 	$(mAstProcessingPath)/AstProcessing.h \
+	$(mAstProcessingPath)/plugin.h \
 	$(mAstProcessingPath)/AstSimpleProcessing.h \
 	$(mAstProcessingPath)/AstTraverseToRoot.h \
 	$(mAstProcessingPath)/AstNodePtrs.h \
