@@ -6,7 +6,6 @@
 #include <EditDistance/LinearEditDistance.h>
 #include <Partitioner2/Partitioner.h>
 
-#include <Sawyer/ProgressBar.h>
 #include <Sawyer/Stopwatch.h>
 #include <Sawyer/ThreadWorkers.h>
 
@@ -368,8 +367,8 @@ FunctionSimilarity::compareOneToMany(const P2::Function::Ptr &needle, const std:
 #endif
 
     // Do the work and store the results in retval
-    Sawyer::ProgressBar<size_t> progress(tasks.nVertices(), mlog[MARCH]);
-    Sawyer::workInParallel(tasks, nThreads, ComparisonFunctor(this, progress));
+    progressBar_.value(0, 0, tasks.nVertices());
+    Sawyer::workInParallel(tasks, nThreads, ComparisonFunctor(this, progressBar_));
     SAWYER_MESG(where) <<"; completed in " <<stopwatch <<" seconds\n";
     return retval;
 }
@@ -418,8 +417,8 @@ FunctionSimilarity::compareManyToMany(const std::vector<P2::Function::Ptr> &list
 #endif
 
     // Do the work and store the results in retval
-    Sawyer::ProgressBar<size_t> progress(tasks.nVertices(), mlog[MARCH]);
-    Sawyer::workInParallel(tasks, nThreads, ComparisonFunctor(this, progress));
+    progressBar_.value(0, 0, tasks.nVertices());
+    Sawyer::workInParallel(tasks, nThreads, ComparisonFunctor(this, progressBar_));
     SAWYER_MESG(where) <<"; completed in " <<stopwatch <<" seconds\n";
     return retval;
 }
@@ -483,8 +482,8 @@ FunctionSimilarity::compareManyToManyMatrix(const std::vector<P2::Function::Ptr>
 #endif
 
     // Initialize the distance matrix
-    Sawyer::ProgressBar<size_t> progress(tasks.nVertices(), mlog[MARCH]);
-    Sawyer::workInParallel(tasks, nThreads, ComparisonFunctor(this, progress));
+    progressBar_.value(0, 0, tasks.nVertices());
+    Sawyer::workInParallel(tasks, nThreads, ComparisonFunctor(this, progressBar_));
     return dm;
 }
 
@@ -762,6 +761,11 @@ FunctionSimilarity::medianDistance(const DistanceMatrix &dm) {
         double m = *std::max_element(list.begin(), list.begin()+half);
         return (m + list[half]) / 2.0;
     }
+}
+
+double
+FunctionSimilarity::progressRatio() const {
+    return progressBar_.ratio();
 }
 
 } // namespace
