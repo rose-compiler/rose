@@ -5,6 +5,7 @@
 #include <Partitioner2/Function.h>
 #include <Sawyer/Graph.h>
 #include <Sawyer/Map.h>
+#include <Sawyer/ProgressBar.h>
 
 #ifdef ROSE_HAVE_DLIB
     #include <dlib/optimization.h>
@@ -132,13 +133,24 @@ private:
     // How to combine category distances to obtain a function distance
     Statistic categoryAccumulatorType_;
 
+    // Progress bar for reporting percent done
+    mutable Sawyer::ProgressBar<size_t> progressBar_;
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Constructors
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     FunctionSimilarity()
-        : categoryAccumulatorType_(AVERAGE) {}
+        : categoryAccumulatorType_(AVERAGE), progressBar_(mlog[Sawyer::Message::MARCH], "comparison") {}
 
+    void clear() {
+        categories_.clear();
+        categoryNames_.clear();
+        functions_.clear();
+        categoryAccumulatorType_ = AVERAGE;
+        progressBar_.value(0, 0, 0);
+    }
+    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -154,6 +166,14 @@ public:
     void categoryAccumulatorType(Statistic s) { categoryAccumulatorType_ = s; }
     /** @} */
 
+    /** Property: Completion ratio for progress reporting.
+     *
+     *  Returns the ratio [0..1] of the number of comparisons completed to the number of comparisons in total.  This function
+     *  is intended to be for applications where one thread is executing a long-running method and another thread needs to be
+     *  able to report the progress.
+     *
+     *  Thread safety: Thread safe. */
+    double progressRatio() const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Category declarations

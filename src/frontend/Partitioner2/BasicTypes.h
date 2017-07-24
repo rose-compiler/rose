@@ -367,6 +367,17 @@ private:
     }
 };
 
+/** Phase name and ratio of completion. */
+struct ProgressReport {
+    std::string phase;                              /**< Name of algorithm reporting progress. */
+    double ratio;                                   /**< Amount completed divided by total expected. */
+
+    ProgressReport()
+        : ratio(NAN) {}
+    ProgressReport(const std::string &phase, double ratio)
+        : phase(phase), ratio(ratio) {}
+};
+
 // Additional declarations w/out definitions yet.
 class Partitioner;
 class Function;

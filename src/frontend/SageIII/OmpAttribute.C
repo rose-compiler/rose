@@ -743,6 +743,7 @@ namespace OmpSupport
       case e_schedule: result = "schedule"; break;
       case e_collapse: result = "collapse"; break;
       case e_untied: result = "untied"; break;
+      case e_mergeable: result = "mergeable"; break;
 
       case e_map: result = "map"; break;
       case e_device: result = "device"; break;
@@ -823,6 +824,9 @@ namespace OmpSupport
       case e_depend_in:    result = "int";   break;
       case e_depend_out:   result = "out";   break;
       case e_depend_inout: result = "inout";   break;
+
+      case e_final : result = "final";   break;
+      case e_priority: result = "priority";   break;
 
       case e_not_omp: result = "not_omp"; break;
       default: 
@@ -1147,6 +1151,7 @@ namespace OmpSupport
       case e_schedule:
       case e_collapse:
       case e_untied:
+      case e_mergeable:
 
       case e_proc_bind:
       case e_atomic_clause:
@@ -1165,6 +1170,8 @@ namespace OmpSupport
       case e_uniform:
       case e_aligned:
 
+      case e_final:
+      case e_priority:
       case e_inbranch:
       case e_notinbranch:
 
@@ -1312,6 +1319,8 @@ namespace OmpSupport
           (omp_type ==e_device)||
           (omp_type ==e_safelen)||
           (omp_type ==e_simdlen)||
+          (omp_type ==e_final)||
+          (omp_type ==e_priority)||
           (omp_type == e_collapse)
         )
       {
