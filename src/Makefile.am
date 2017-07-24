@@ -375,6 +375,7 @@ rose_config_installed_ldflags =			\
 	$(BOOST_SERIALIZATION_LIB)		\
 	$(BOOST_WAVE_LIB)			\
 	$(BOOST_IOSTREAMS_LIB)			\
+	$(BOOST_CHRONO_LIB)			\
 	$(JAVA_JVM_LINK)			\
 	$(SQLITE_DATABASE_LIBS)			\
 	$(RT_LIBS)				\
