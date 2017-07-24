@@ -54,13 +54,13 @@ package body Asis_Tool_2 is
    -- PRIVATE:
    -----------
    function To_String (Unit_Id : in A4G.A_Types.Unit_Id) return String is
-     ("Unit " & Spaceless_Image (Natural (Unit_Id)));
+     ("Unit_" & Spaceless_Image (Natural (Unit_Id)));
 
    -----------
    -- PRIVATE:
    -----------
    function To_String (Element_Id : in Types.Node_Id) return String is
-     ("Element " & Spaceless_Image (Natural (Element_Id)));
+     ("Element_" & Spaceless_Image (Natural (Element_Id)));
 
    -----------
    -- PRIVATE:

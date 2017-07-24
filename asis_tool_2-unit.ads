@@ -16,6 +16,7 @@ private
 
    type Class (Trace : Boolean := False) is tagged limited
       record
+         Unit_ID   : A4G.A_Types.Unit_Id := A4G.A_Types.No_Unit_Id;
          Dot_Node  : Dot.Node_Stmt.Class; -- Initialized
          Dot_Label : Dot.HTML_Like_Labels.Class; -- Initialized
          A_Unit    : a_nodes_h.Unit_Struct := anhS.Default_Unit_Struct;
@@ -26,20 +27,5 @@ private
          -- that:
          Outputs   : Output_Accesses_Record; -- Initialized
       end record;
-
-   -- Add <Name> => <Value> to the label, and print it if trace is on:
-   procedure Add_To_Dot_Label
-     (This  : in out Class;
-      Name  : in     String;
-      Value : in     String);
-   procedure Add_To_Dot_Label
-     (This  : in out Class;
-      Name  : in     String;
-      Value : in     Wide_String);
-
-   -- Add <Value> to the label, and print it if trace is on:
-   procedure Add_To_Dot_Label
-     (This  : in out Class;
-      Value : in     String);
 
 end Asis_Tool_2.Unit;

@@ -16,6 +16,74 @@ package body Asis_Tool_2.Unit is
 
    package ACU renames Asis.Compilation_Units;
 
+   -- Add <Name> = <Value> to the label, and print it if trace is on.
+   procedure Add_To_Dot_Label
+     (This  : in out Class;
+      Name  : in     String;
+      Value : in     String) is
+   begin
+-- Instead of this, put the "attribute" in the label:
+--        This.Node.Attr_List.Add_Assign_To_First_Attr
+--          (Name  => Name,
+--           Value => Value);
+      This.Dot_Label.Add_Eq_Row(L => Name, R => Value);
+      This.Outputs.Text.Put_Indented_Line (Name & " => " & Value);
+   end;
+
+
+   -- Add <Name> = <Value> to the label, and print it if trace is on.
+   procedure Add_To_Dot_Label
+     (This  : in out Class;
+      Name  : in     String;
+      Value : in     Wide_String) is
+   begin
+      This.Add_To_Dot_Label (Name, To_String (Value));
+   end;
+
+
+   -- Add <Value> to the label in one wide cell, and print it if trace is on.
+   procedure Add_To_Dot_Label
+     (This  : in out Class;
+      Value : in     String) is
+   begin
+      This.Dot_Label.Add_3_Col_Cell(Value);
+      This.Outputs.Text.Put_Indented_Line (Value);
+   end;
+
+
+   procedure Add_Dot_Edge
+     (Graph : not null access Dot.Graphs.Class;
+      From  : in     A4G.A_Types.Unit_Id;
+      To    : in     Types.Node_Id;
+      Label : in     String)
+   is
+      Edge_Stmt : Dot.Edges.Stmts.Class; -- Initialized
+   begin
+      if not Types."=" (To, Types.Empty) then
+         Edge_Stmt.LHS.Node_Id.ID := To_Dot_ID_Type (From);
+         Edge_Stmt.RHS.Node_Id.ID := To_Dot_ID_Type (To);
+         Edge_Stmt.Attr_List.Add_Assign_To_First_Attr
+           (Name  => "label",
+            Value => Label);
+         Graph.Append_Stmt (new Dot.Edges.Stmts.Class'(Edge_Stmt));
+      end if;
+   end;
+
+
+   -- Add an edge and a dot label for a child element:
+   procedure Add_To_Dot_Label_And_Edge
+     (This  : in out Class;
+      Label : in     String;
+      To    : in     Types.Node_Id) is
+   begin
+      This.Add_To_Dot_Label (Label, To_String (To));
+      Add_Dot_Edge (Graph => This.Outputs.Graph,
+                    From  => This.Unit_ID,
+                    To    => To,
+                    Label => Label);
+   end;
+
+
    procedure Add_Unit_List
      (Dot_Label      : in out Dot.HTML_Like_Labels.Class;
       Units_In       : in     Asis.Compilation_Unit_List;
@@ -42,6 +110,23 @@ package body Asis_Tool_2.Unit is
          IDs    => anhS.To_Unit_ID_Ptr (IDs));
    end Add_Unit_List;
 
+   -----------
+   -- PRIVATE:
+   -----------
+   procedure Process_Element_Tree
+     (This         : in out Class;
+      Asis_Element : in     Asis.Element)
+   is
+      Tool_Element : Element.Class; -- Initialized
+   begin
+      This.Add_To_Dot_Label_And_Edge
+        (Label => "Element",
+         To    =>  Asis.Set_Get.Node (Asis_Element));
+      Tool_Element.Process_Element_Tree
+        (Element => Asis_Element,
+         Outputs => This.Outputs);
+   end;
+
    procedure Process_Context_Clauses
      (This            : in out Class;
       Asis_Unit       : in Asis.Compilation_Unit;
@@ -53,13 +138,7 @@ package body Asis_Tool_2.Unit is
            Include_Pragmas  => Include_Pragmas);
    begin
       for Context_Clause of Context_Clauses loop
-         declare
-            Tool_Element : Element.Class; -- Initialized
-         begin
-            Tool_Element.Process_Element_Tree
-              (Element => Context_Clause,
-               Outputs => This.Outputs);
-         end;
+         This.Process_Element_Tree (Context_Clause);
       end loop;
    end Process_Context_Clauses;
 
@@ -72,19 +151,15 @@ package body Asis_Tool_2.Unit is
       Include_Pragmas    : in     Boolean := True)
    is
       Top_Element_Asis  : Asis.Element := Asis.Elements.Unit_Declaration (Asis_Unit);
-      Tool_Element : Element.Class; -- Initialized
-      use Ada.Wide_Text_IO;
    begin
       if Do_Context_Clauses then
          Process_Context_Clauses (This, Asis_Unit, Include_Pragmas);
       end if;
-      Tool_Element.Process_Element_Tree
-        (Element => Top_Element_Asis,
-         Outputs => This.Outputs);
+      Process_Element_Tree (This, Top_Element_Asis);
    exception
       when X : others =>
          Print_Exception_Info (X);
-         Put_Line
+         Awti.Put_Line
            ("EXCEPTION when processing unit " &
               Acu.Unit_Full_Name (Asis_Unit));
          raise;
@@ -274,6 +349,7 @@ package body Asis_Tool_2.Unit is
       procedure Add_Unit_Id is
          ID : constant A4G.A_Types.Unit_Id := Asis.Set_Get.Get_Unit_Id (Unit);
       begin
+         This.Unit_ID := ID;
          This.Dot_Node.Node_ID.ID := To_Dot_ID_Type (ID);
          This.A_Unit.id := Interfaces.C.int(ID);
          This.Add_To_Dot_Label(To_String (ID));
@@ -439,7 +515,7 @@ package body Asis_Tool_2.Unit is
       end case;
 
       Finish_Output;
-
+      Process_Element_Trees (This, Unit);
    end Process_Application_Unit;
 
    ------------
@@ -463,7 +539,6 @@ package body Asis_Tool_2.Unit is
       case Unit_Origin is
          when Asis.An_Application_Unit =>
             Process_Application_Unit (This, Unit);
-            Process_Element_Trees (This, Unit);
          when Asis.A_Predefined_Unit =>
             Trace_Put_Line ("Skipped " & Unit_Full_Name & " (predefined unit)");
          when Asis.An_Implementation_Unit =>
@@ -473,43 +548,5 @@ package body Asis_Tool_2.Unit is
       end case;
 
    end Process;
-
-   -----------
-   -- PRIVATE:
-   -----------
-   procedure Add_To_Dot_Label
-     (This  : in out Class;
-      Name  : in     String;
-      Value : in     String) is
-   begin
--- Instead of this, put the "attribute" in the label:
---        This.Node.Attr_List.Add_Assign_To_First_Attr
---          (Name  => Name,
---           Value => Value);
-      This.Dot_Label.Add_Eq_Row(L => Name, R => Value);
-      This.Outputs.Text.Put_Indented_Line (Name & " => " & Value);
-   end;
-
-   -----------
-   -- PRIVATE:
-   -----------
-   procedure Add_To_Dot_Label
-     (This  : in out Class;
-      Name  : in     String;
-      Value : in     Wide_String) is
-   begin
-      This.Add_To_Dot_Label (Name, To_String (Value));
-   end;
-
-   -----------
-   -- PRIVATE:
-   -----------
-   procedure Add_To_Dot_Label
-     (This  : in out Class;
-      Value : in     String) is
-   begin
-      This.Dot_Label.Add_3_Col_Cell(Value);
-      This.Outputs.Text.Put_Indented_Line (Value);
-   end;
 
 end Asis_Tool_2.Unit;
