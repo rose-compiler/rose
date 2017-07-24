@@ -9,7 +9,7 @@
 #include <Partitioner2/ControlFlowGraph.h>
 #include <Partitioner2/FunctionCallGraph.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 

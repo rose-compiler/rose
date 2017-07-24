@@ -14,7 +14,7 @@
 class SgNode;
 class SgAsmBlock;
 
-namespace rose {
+namespace Rose {
 
 /** Binary analysis.
  *
@@ -63,7 +63,7 @@ namespace BinaryAnalysis {
  *  two different interpretations might share the same virtual address). Usually one creates CFGs that span a single
  *  function or a whole interpretation.  The vertex and edge filtes can restrict which vertices and edges are considered by
  *  the various methods of this class.  For instance, to create a global CFG that has no inter-function edges
- *  one could do the following (see also, rose::BinaryAnalysis::FunctionCall):
+ *  one could do the following (see also, Rose::BinaryAnalysis::FunctionCall):
  *
  *  @code
  *  // Create a filter that rejects all inter-function edges
@@ -104,7 +104,7 @@ namespace BinaryAnalysis {
  *  CFG_I cfg4 = analyzer.copy(cfg3);
  *  @endcode
  *
- *  See also, rose::BinaryAnalysis::FunctionCall, which computes a function call graph whose vertices are functions rather
+ *  See also, Rose::BinaryAnalysis::FunctionCall, which computes a function call graph whose vertices are functions rather
  *  than the basic blocks or instructions used in a CFG.
  *
  *  Since binary control flow graphs follow the BGL API they can be easily printed as GraphViz graphs using
@@ -116,9 +116,9 @@ namespace BinaryAnalysis {
  *  // Label the graphviz vertices with basic block addresses.
  *  // Boost requires this to be declared at file scope.
  *  struct GraphvizVertexWriter {
- *      const rose::BinaryAnalysis::ControlFlow::Graph &cfg;
- *      GraphvizVertexWriter(rose::BinaryAnalysis::ControlFlow::Graph &cfg): cfg(cfg) {}
- *      typedef boost::graph_traits<rose::BinaryAnalysis::ControlFlow::Graph>::vertex_descriptor Vertex;
+ *      const Rose::BinaryAnalysis::ControlFlow::Graph &cfg;
+ *      GraphvizVertexWriter(Rose::BinaryAnalysis::ControlFlow::Graph &cfg): cfg(cfg) {}
+ *      typedef boost::graph_traits<Rose::BinaryAnalysis::ControlFlow::Graph>::vertex_descriptor Vertex;
  *      void operator()(std::ostream &output, const Vertex &v) {
  *          SgAsmBlock *block = get_ast_node(cfg, v);
  *          output <<"[ label=\"" <<StringUtility::addrToString(block->get_address()) <<"\" ]";
@@ -187,7 +187,7 @@ public:
                                   boost::bidirectionalS,
                                   boost::property<boost::vertex_name_t, SgAsmInstruction*> > InsnGraph;
 
-    /** Default control flow graph.  The original rose::BinaryAnalysis::ControlFlow API defined only "Graph", which was a
+    /** Default control flow graph.  The original Rose::BinaryAnalysis::ControlFlow API defined only "Graph", which was a
      *  basic-block control flow graph.  We continue to define that type for backward compatibility. */
     typedef BlockGraph Graph;
 

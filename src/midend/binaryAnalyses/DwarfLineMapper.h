@@ -1,7 +1,7 @@
 #ifndef ROSE_DwarfLineMapper_H
 #define ROSE_DwarfLineMapper_H
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 

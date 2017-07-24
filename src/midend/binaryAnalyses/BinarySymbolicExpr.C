@@ -13,11 +13,11 @@
 #include <boost/thread/mutex.hpp>
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-BOOST_CLASS_EXPORT_IMPLEMENT(rose::BinaryAnalysis::SymbolicExpr::Interior);
-BOOST_CLASS_EXPORT_IMPLEMENT(rose::BinaryAnalysis::SymbolicExpr::Leaf);
+BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::SymbolicExpr::Interior);
+BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::SymbolicExpr::Leaf);
 #endif
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace SymbolicExpr {
 

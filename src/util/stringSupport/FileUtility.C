@@ -30,7 +30,7 @@
 # include <unistd.h>                                    // tps (11/10/2009): This is needed in windows to find the realpath
 #endif
 
-namespace rose {
+namespace Rose {
 namespace StringUtility {
 
 // [Robb Matzke 2016-05-06] deprecated

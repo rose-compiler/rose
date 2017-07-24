@@ -92,7 +92,7 @@ namespace SPRAY {
 
     // schroder3 (2016-08-11): Replaced node iterator wrapper classes by typedefs of the
     //  already existing Sawyer graph vertex value iterator classes.
-    // schroder3 (2016-08-08): Added nodes iterators:
+    // schroder3 (2016-08-08): Added node iterators:
     typedef SawyerCfg::VertexValueIterator node_iterator;
     typedef SawyerCfg::ConstVertexValueIterator const_node_iterator;
 #else

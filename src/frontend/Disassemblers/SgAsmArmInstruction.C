@@ -4,7 +4,7 @@
 #include "sage3basic.h"
 #include "Disassembler.h"
 
-using namespace rose;                                   // temporary until this lives in "rose"
+using namespace Rose;                                   // temporary until this lives in "rose"
 
 unsigned
 SgAsmArmInstruction::get_anyKind() const {

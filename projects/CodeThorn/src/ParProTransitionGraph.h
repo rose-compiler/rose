@@ -6,8 +6,9 @@
 #include "sage3basic.h"
 
 // SPRAY includes
-// #include "Flow.h"
+#include "Flow.h"
 #include "ParProEState.h"
+#include "ParallelAutomataGenerator.h"
 
 // CodeThorn includes
 
@@ -51,11 +52,13 @@ namespace SPRAY {
     ParProTransitions succ(const ParProEState* source);
     EStateTransitionMap* getOutEdgesMap() { return &_outEdges; }
     size_t size();
+    size_t numStates();
     std::set<std::string> getAllAnnotations();
     bool isPrecise() { return _preciseStg; }
     void setIsPrecise(bool p) { _preciseStg = p; }
     bool isComplete() { return _completeStg; }
     void setIsComplete(bool c) { _completeStg = c; }
+    Flow* toFlowEnumerateStates(NumberGenerator& numGen);
 
   private:
     EStateTransitionMap _outEdges;

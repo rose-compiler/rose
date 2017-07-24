@@ -6,7 +6,7 @@
 #include <sageBuilderAsm.h>
 #include <stringify.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Unparser {
 

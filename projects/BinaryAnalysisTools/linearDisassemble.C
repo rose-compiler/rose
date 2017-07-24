@@ -13,11 +13,11 @@
 #include <Sawyer/Message.h>
 #include <string>
 
-using namespace rose;
-using namespace rose::BinaryAnalysis::InstructionSemantics2;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+using namespace Rose::BinaryAnalysis;
 using namespace Sawyer::Message::Common;
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 Sawyer::Message::Facility mlog;
 

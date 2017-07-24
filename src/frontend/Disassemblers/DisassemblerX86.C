@@ -18,7 +18,7 @@
 
 #include <sstream>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 
@@ -5938,5 +5938,5 @@ DisassemblerX86::decodeGroupP()
 } // namespace
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-BOOST_CLASS_EXPORT_IMPLEMENT(rose::BinaryAnalysis::DisassemblerX86);
+BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::DisassemblerX86);
 #endif

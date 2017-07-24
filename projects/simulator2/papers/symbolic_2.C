@@ -53,10 +53,10 @@ public:
 
     // The actual analysis, triggered when we reach the specified execution address...
     virtual bool operator()(bool enabled, const Args &args) try {
-        using namespace rose::BinaryAnalysis::InstructionSemantics;
+        using namespace Rose::BinaryAnalysis::InstructionSemantics;
 
         static const char *name = "Analysis";
-        using namespace rose::BinaryAnalysis::SymbolicExpr;
+        using namespace Rose::BinaryAnalysis::SymbolicExpr;
         if (enabled && args.insn->get_address()==trigger_addr) {
             RTS_Message *trace = args.thread->tracing(TRACE_MISC);
             trace->mesg("%s triggered: analyzing function at 0x%08"PRIx64, name, analysis_addr);
@@ -64,8 +64,8 @@ public:
             // An SMT solver is necessary for this example to work correctly. ROSE should have been configured with
             // "--with-yices=/full/path/to/yices/installation".  If not, you'll get a failed assertion when ROSE tries to use
             // the solver.
-            rose::BinaryAnalysis::YicesSolver smt_solver;
-            smt_solver.set_linkage(rose::BinaryAnalysis::YicesSolver::LM_EXECUTABLE);
+            Rose::BinaryAnalysis::YicesSolver smt_solver;
+            smt_solver.set_linkage(Rose::BinaryAnalysis::YicesSolver::LM_EXECUTABLE);
             //smt_solver.set_debug(stdout);
 
             // We deactive the simulator while we're doing this analysis.  If the simulator remains activated, then the SIGCHLD
@@ -150,7 +150,7 @@ public:
                     TreeNodePtr c = InternalNode::create(32, OP_EQ, policy.readRegister<32>("eip").get_expression(),
                                                          LeafNode::create_integer(32, target));
                     constraints.push_back(c); // shouldn't really have to do this again if we could save some state
-                    if (rose::BinaryAnalysis::SMTSolver::SAT_YES == smt_solver.satisfiable(constraints)) {
+                    if (Rose::BinaryAnalysis::SMTSolver::SAT_YES == smt_solver.satisfiable(constraints)) {
                         policy.writeRegister("eip", SymbolicSemantics::ValueType<32>(target));
                     } else {
                         trace->mesg("%s: chosen control flow path is not feasible (or unknown).", name);
@@ -162,12 +162,12 @@ public:
             // Show the value of the EAX register since this is where GCC puts the function's return value.  If we did things
             // right, the return value should depend only on the unknown bytes from the beginning of the buffer.
             SymbolicSemantics::ValueType<32> result = policy.readRegister<32>("eax");
-            std::set<rose::BinaryAnalysis::SymbolicExpr::LeafNodePtr> vars = result.get_expression()->get_variables();
+            std::set<Rose::BinaryAnalysis::SymbolicExpr::LeafNodePtr> vars = result.get_expression()->get_variables();
             {
                 std::ostringstream s;
                 s <<name <<": symbolic return value is " <<result <<"\n"
                   <<name <<": return value has " <<vars.size() <<" variables:";
-                for (std::set<rose::BinaryAnalysis::SymbolicExpr::LeafNodePtr>::iterator vi=vars.begin();
+                for (std::set<Rose::BinaryAnalysis::SymbolicExpr::LeafNodePtr>::iterator vi=vars.begin();
                      vi!=vars.end(); ++vi)
                     s <<" " <<*vi;
                 s <<"\n";
@@ -190,7 +190,7 @@ public:
                     expr = InternalNode::create(32, OP_EQ, *vi, LeafNode::create_integer(32, (int)'x'));
                     exprs.push_back(expr);
                 }
-                if (rose::BinaryAnalysis::SMTSolver::SAT_YES == smt_solver.satisfiable(exprs)) {
+                if (Rose::BinaryAnalysis::SMTSolver::SAT_YES == smt_solver.satisfiable(exprs)) {
                     LeafNodePtr result_value = smt_solver.evidence_for_variable(result_var)->isLeafNode();
                     if (!result_value) {
                         trace->mesg("%s: evaluation result could not be determined. ERROR!", name);
@@ -212,7 +212,7 @@ public:
                 TreeNodePtr expr = InternalNode::create(32, OP_EQ, result.get_expression(),
                                                         LeafNode::create_integer(32, 0xff015e7c));
                 exprs.push_back(expr);
-                if (rose::BinaryAnalysis::SMTSolver::SAT_YES == smt_solver.satisfiable(exprs)) {
+                if (Rose::BinaryAnalysis::SMTSolver::SAT_YES == smt_solver.satisfiable(exprs)) {
                     for (std::set<LeafNodePtr>::iterator vi=vars.begin(); vi!=vars.end(); ++vi) {
                         LeafNodePtr var_val = smt_solver.evidence_for_variable(*vi)->isLeafNode();
                         if (var_val && var_val->is_known())

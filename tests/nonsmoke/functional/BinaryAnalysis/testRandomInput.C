@@ -14,10 +14,10 @@ static const char *description =
 #include <Sawyer/CommandLine.h>
 #include <SymbolicSemantics2.h>
 
-using namespace rose;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 using namespace Sawyer::Message::Common;
-namespace S2 = rose::BinaryAnalysis::InstructionSemantics2;
+namespace S2 = Rose::BinaryAnalysis::InstructionSemantics2;
 
 Facility mlog;
 

@@ -1,13 +1,13 @@
 #include "sage3basic.h"
 #include <Partitioner2/Semantics.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 namespace Semantics {
 
-namespace BaseSemantics = rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
-namespace SymbolicSemantics = rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
+namespace BaseSemantics = Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
+namespace SymbolicSemantics = Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Risc Operators
@@ -33,7 +33,7 @@ RiscOperators::startInstruction(SgAsmInstruction *insn) {
 } // namespace
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-BOOST_CLASS_EXPORT_IMPLEMENT(rose::BinaryAnalysis::Partitioner2::Semantics::MemoryListState);
-BOOST_CLASS_EXPORT_IMPLEMENT(rose::BinaryAnalysis::Partitioner2::Semantics::MemoryMapState);
-BOOST_CLASS_EXPORT_IMPLEMENT(rose::BinaryAnalysis::Partitioner2::Semantics::RiscOperators);
+BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::Partitioner2::Semantics::MemoryListState);
+BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::Partitioner2::Semantics::MemoryMapState);
+BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::Partitioner2::Semantics::RiscOperators);
 #endif

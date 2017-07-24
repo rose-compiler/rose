@@ -7,10 +7,10 @@
 #include <boost/lexical_cast.hpp>
 #include <sstream>
 
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
-namespace S2 = rose::BinaryAnalysis::InstructionSemantics2;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
+namespace S2 = Rose::BinaryAnalysis::InstructionSemantics2;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Unparser {
 

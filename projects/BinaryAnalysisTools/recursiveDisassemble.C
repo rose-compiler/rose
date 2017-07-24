@@ -33,9 +33,9 @@
  | FindPostFunctionInsns  |                                                           |
  */
 
-using namespace rose;
-using namespace rose::BinaryAnalysis;
-using namespace rose::Diagnostics;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
+using namespace Rose::Diagnostics;
 
 namespace P2 = Partitioner2;
 
@@ -347,7 +347,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
                     "and exclusive end separated by a hpyhen as in \"20-30\", or a beginning and size separated by a \"+\" "
                     "as in \"20+10\"."
                     "\n\n"
-                    "Debugging aids generally send their output to the rose::BinaryAnalysis::Partitioner2[DEBUG] stream. "
+                    "Debugging aids generally send their output to the Rose::BinaryAnalysis::Partitioner2[DEBUG] stream. "
                     "There is no need to turn this stream on explicitly from the command line since the debugging aids "
                     "temporarily enable it.  They assume that if you took the time to specify their parameters then you "
                     "probably want to see their output!"
@@ -398,7 +398,7 @@ public:
 //                                              Function-making
 //
 // These functions demonstrate how to make a function at a particular address. See also the "make*" functions in
-// rose::BinaryAnalysis::Partitioner2::Engine.
+// Rose::BinaryAnalysis::Partitioner2::Engine.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Make functions for any x86 CALL instruction. This is intended to be a demonstration of how to search for specific
@@ -656,7 +656,7 @@ selectFunctions(P2::Engine &engine, const P2::Partitioner &partitioner, const Se
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char *argv[]) {
-    ROSE_INITIALIZE;                                    // see rose::initialize
+    ROSE_INITIALIZE;                                    // see Rose::initialize
 
     // Use a partitioning engine since this makes this tool much easier to write.
     P2::Engine engine;

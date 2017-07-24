@@ -8,7 +8,7 @@
 
 #include <boost/lexical_cast.hpp>
 
-using namespace rose;
+using namespace Rose;
 
 std::string argv0;
 

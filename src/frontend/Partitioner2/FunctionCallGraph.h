@@ -4,7 +4,7 @@
 #include <Partitioner2/BasicTypes.h>
 #include <Sawyer/Graph.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 

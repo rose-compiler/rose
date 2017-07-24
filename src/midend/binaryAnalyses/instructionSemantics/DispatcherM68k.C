@@ -8,10 +8,10 @@
 #include "stringify.h"
 #include <boost/foreach.hpp>
 
-using namespace rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
-using namespace rose::Diagnostics;
+using namespace Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
+using namespace Rose::Diagnostics;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 
@@ -3913,5 +3913,5 @@ DispatcherM68k::adjustFpConditionCodes(const SValuePtr &result, SgAsmFloatType *
 } // namespace
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-BOOST_CLASS_EXPORT_IMPLEMENT(rose::BinaryAnalysis::InstructionSemantics2::DispatcherM68k);
+BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::InstructionSemantics2::DispatcherM68k);
 #endif

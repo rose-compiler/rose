@@ -2,7 +2,7 @@
 
 #include "snippetTests.h"
 
-using namespace rose;
+using namespace Rose;
 
 
 int

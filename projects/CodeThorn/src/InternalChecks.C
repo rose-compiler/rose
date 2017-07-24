@@ -183,23 +183,14 @@ void checkTypes() {
     cout << "------------------------------------------"<<endl;
     cout << "RUNNING CHECKS FOR CONSTRAINT TYPE:"<<endl;
     VariableId var_x=variableIdMapping.createUniqueTemporaryVariableId("x");
-    cout<<"DEBUG: P1"<<endl;
     VariableId var_y=variableIdMapping.createUniqueTemporaryVariableId("y");
-    cout<<"DEBUG: P2"<<endl;
-    variableIdMapping.toStream(cout);
     Constraint c1(Constraint::EQ_VAR_CONST,var_x,1);
-    cerr<<"DEBUG: P3"<<endl;
-    cerr<< "c1:"<<endl;
-    cerr<<c1.toString(&variableIdMapping)<<endl;
     Constraint c2(Constraint::NEQ_VAR_CONST,var_y,2);
-    cout<< "c2:"<<c2.toString(&variableIdMapping)<<endl;
     Constraint c3=DISEQUALITYCONSTRAINT;
     Constraint c4=Constraint(Constraint::EQ_VAR_CONST,var_y,2);
     ConstraintSet cs;
     cs.addConstraint(c1);
-    cout << "CS1:"<<cs.toString()<<endl;
     cs.addConstraint(c2);
-    cout << "CS2:"<<cs.toString()<<endl;
     check("inserted 2 different constraints, size of constraint set == 2",cs.size()==2);
     check("c1:constraintExists(EQ_VAR_CONST,x,1) == true",cs.constraintExists(Constraint::EQ_VAR_CONST,var_x,1));
     check("c1:constraintExists(NEQ_VAR_CONST,x,1) == false",!cs.constraintExists(Constraint::NEQ_VAR_CONST,var_x,1));
@@ -227,7 +218,6 @@ void checkTypes() {
         cs1.addConstraint(c2);
         Constraint c5(Constraint::EQ_VAR_VAR,var_x,var_y);
         cs1.addConstraint(c5);
-        cout<<cs1.toString()<<endl;
         check("cs1.disequalityExists()==true",cs1.disequalityExists());
       }
       {
@@ -315,37 +305,37 @@ void checkTypes() {
     PState s2;
     PState s3;
     PState s5;
-    AValue valtop=CodeThorn::Top();
-    AValue val1=500;
-    AValue val2=501;
+    AbstractValue valtop=CodeThorn::Top();
+    AbstractValue val1=500;
+    AbstractValue val2=501;
     PStateSet pstateSet;
     VariableId x=variableIdMapping.createUniqueTemporaryVariableId("x");
     VariableId y=variableIdMapping.createUniqueTemporaryVariableId("y");
     check("var x not in pstate1",s1.varExists(x)==false);
     check("var y not in pstate2",s2.varExists(y)==false);
-    s1[x]=val1;
-    s2[y]=val2;
-    s3[x]=val2;
-    s5[x]=valtop;
-    s5[y]=valtop;
+    s1.writeToMemoryLocation(x,val1);
+    s2.writeToMemoryLocation(y,val2);
+    s3.writeToMemoryLocation(x,val2);
+    s5.writeToMemoryLocation(x,valtop);
+    s5.writeToMemoryLocation(y,valtop);
     check("var x exists in pstate s1",s1.varExists(x)==true);
-    check("var x==500",((s1[x].operatorEq(val1)).isTrue())==true);
+    check("var x==500",((s1.readFromMemoryLocation(x).operatorEq(val1)).isTrue())==true);
     check("var y exists in pstate s2",s2.varExists(y)==true);
-    check("var y==501",((s2[y].operatorEq(val2)).isTrue())==true);
+    check("var y==501",((s2.readFromMemoryLocation(y).operatorEq(val2)).isTrue())==true);
     //check("s0 < s1",(s0<s1)==true);
     //check("s0 < s2",(s0<s2)==true);
     check("!(s1 == s2)",(s1==s2)==false);
     check("s1<s2 xor s2<s1)",(s1<s2)^(s2<s1));
     check("var x in pstate s3",s3.varExists(x)==true);
-    check("s3[x]==501",((s3[x].operatorEq(val2)).isTrue())==true);
+    check("s3[x]==501",((s3.readFromMemoryLocation(x).operatorEq(val2)).isTrue())==true);
     check("!(s1==s2)",(!(s1==s2))==true);
     check("!(s1==s3)",(!(s1==s3))==true);
     check("!(s2==s3)",(!(s2==s3))==true);
     PState s4=s1;
     check("s1==s4",(s1==s4)==true);
 
-    s1[x]=val2;
-    check("s1.size()==1",s1.size()==1);
+    s1.writeToMemoryLocation(x,val2);
+    check("s1.size()==1",s1.stateSize()==1);
 
     pstateSet.process(s0);
     check("empty pstate s0 inserted in pstateSet => size of pstateSet == 1",pstateSet.size()==1);
@@ -370,8 +360,8 @@ void checkTypes() {
     check("constint-strictWeak-equality-1",strictWeakOrderingIsEqual(val1,val2)==false);
     check("constint-strictWeak-smaller-1",strictWeakOrderingIsSmaller(val1,val2)==true);
 
-    s4[x]=valtop;
-    check("created s4; inserted x=top; s4[x].isTop",s4[x].isTop());    
+    s4.writeToMemoryLocation(x,valtop);
+    check("created s4; inserted x=top; s4.readFromMemoryLocation(x).isTop",s4.readFromMemoryLocation(x).isTop());    
     pstateSet.processNewOrExisting(s4);
     check("inserted s4 => size of pstateSet == 4",pstateSet.size()==4);    
     const PState* pstateptr4=pstateSet.processNewOrExisting(s4); // version 1

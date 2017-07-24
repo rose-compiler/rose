@@ -8,7 +8,7 @@
 #include <Partitioner2/Function.h>
 #include <Sawyer/Graph.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
@@ -205,10 +205,10 @@ public:
  *
  *  Computes the meet of two states, merging the source state into the destination state and returning true iff the destination
  *  state changed. */
-typedef rose::BinaryAnalysis::DataFlow::SemanticsMerge MergeFunction;
+typedef Rose::BinaryAnalysis::DataFlow::SemanticsMerge MergeFunction;
 
 /** Data-Flow engine. */
-typedef rose::BinaryAnalysis::DataFlow::Engine<DfCfg, BaseSemantics::StatePtr, TransferFunction, MergeFunction> Engine;
+typedef Rose::BinaryAnalysis::DataFlow::Engine<DfCfg, BaseSemantics::StatePtr, TransferFunction, MergeFunction> Engine;
 
 /** Returns the list of all known stack variables.
  *

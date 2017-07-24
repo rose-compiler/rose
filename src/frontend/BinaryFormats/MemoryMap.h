@@ -15,7 +15,7 @@
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/export.hpp>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /** Align address downward to boundary.
@@ -426,10 +426,10 @@ public:
 
 // Register the types needed for serialization since some of them are derived from polymorphic class templates.
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::MemoryMap::AllocatingBuffer);
-BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::MemoryMap::MappedBuffer);
-BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::MemoryMap::NullBuffer);
-BOOST_CLASS_EXPORT_KEY(rose::BinaryAnalysis::MemoryMap::StaticBuffer);
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::MemoryMap::AllocatingBuffer);
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::MemoryMap::MappedBuffer);
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::MemoryMap::NullBuffer);
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::MemoryMap::StaticBuffer);
 #endif
 
 

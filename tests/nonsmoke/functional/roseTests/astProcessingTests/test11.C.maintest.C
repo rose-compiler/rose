@@ -3,7 +3,7 @@
 #include <staticCFG.h>
 using namespace std;
 using namespace boost;
-using namespace rose;
+using namespace Rose;
 typedef myGraph CFGforT;
 class visitorTraversal : public SgGraphTraversal<CFGforT>
   {

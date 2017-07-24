@@ -1,0 +1,6 @@
+!$omp parallel 
+!$omp single  private(i)
+!$omp task 
+!$omp end task 
+!$omp end single 
+!$omp end parallel 

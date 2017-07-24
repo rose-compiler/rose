@@ -109,7 +109,7 @@ static const char *description =
     "As a result, less variables need to be shared.";
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 using namespace SageInterface;
 
 class Scope_Node;

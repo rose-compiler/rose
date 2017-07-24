@@ -11,13 +11,13 @@
 #include "cmdline.h"
 #include "keep_going.h"
 #include "FileUtility.h"
-#include "Diagnostics.h"                                // rose::Diagnostics
+#include "Diagnostics.h"                                // Rose::Diagnostics
 
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string/replace.hpp>
 #include <Sawyer/CommandLine.h>
 
-using namespace rose;                                   // temporary, until this file lives in namespace rose
+using namespace Rose;                                   // temporary, until this file lives in namespace Rose
 
 #include <inttypes.h> /* for %" PRIuPTR " vs. %Iu handling */
 
@@ -314,7 +314,7 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
           argument == "-rose:o" ||                          // Used to specify output file to ROSE (alternative to -rose:output)
           argument == "-rose:compilationPerformanceFile" || // Use to output performance information about ROSE compilation phases
           argument == "-rose:verbose" ||                    // Used to specify output of internal information about ROSE phases
-          argument == "-rose:log" ||                        // Used to conntrol rose::Diagnostics
+          argument == "-rose:log" ||                        // Used to conntrol Rose::Diagnostics
           argument == "-rose:assert" ||                     // Controls behavior of failed assertions
           argument == "-rose:test" ||
           argument == "-rose:backendCompileFormat" ||
@@ -693,7 +693,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           printf ("This is a deprecated option in ROSE (use --h or --help instead).\n");
   // Default
           cout << version_message() << endl;
-       // rose::usage(0);
+       // Rose::usage(0);
           SgFile::usage(0);
           exit(0);
         }
@@ -712,7 +712,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
        // printf ("option --help found \n");
        // printf ("\nROSE (pre-release alpha version: %s) \n",VERSION);
        // version();
-       // rose::usage(0);
+       // Rose::usage(0);
           cout << version_message() << endl;
           SgFile::usage(0);
           exit(0);
@@ -1316,9 +1316,9 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           unsigned int length = argv[i].size();
 
        // printf ("assemble compiler command line option: argv[%d] = %s length = %d \n",i,argv[i],length);
-       // printf ("rose::sourceFileNamesWithoutPath[%d] = \n",sourceFileNameCounter,
-       //     rose::sourceFileNamesWithoutPath[sourceFileNameCounter]);
-       // ROSE_ASSERT (rose::sourceFileNamesWithoutPath[sourceFileNameCounter] != NULL);
+       // printf ("Rose::sourceFileNamesWithoutPath[%d] = \n",sourceFileNameCounter,
+       //     Rose::sourceFileNamesWithoutPath[sourceFileNameCounter]);
+       // ROSE_ASSERT (Rose::sourceFileNamesWithoutPath[sourceFileNameCounter] != NULL);
 
        // DQ (12/8/2007): This leverages existing support in commandline processing
        // p_sourceFileNameList = CommandlineProcessing::generateSourceFilenames(argv);
@@ -1449,7 +1449,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
                   if (false == is_directory)
                   {
                  // DQ (3/15/2017): Fixed to use mlog message logging.
-                    if (rose::ir_node_mlog[rose::Diagnostics::DEBUG])
+                    if (Rose::ir_node_mlog[Rose::Diagnostics::DEBUG])
                        {
                          std::cout  << "[WARN] "
                               << "Invalid argument to -I; path does not exist: "
@@ -1578,7 +1578,7 @@ NormalizeIncludePathOptions (std::vector<std::string>& argv)
           if (false == is_directory)
           {
           // DQ (3/15/2017): Fixed to use mlog message logging.
-             if (rose::ir_node_mlog[rose::Diagnostics::DEBUG])
+             if (Rose::ir_node_mlog[Rose::Diagnostics::DEBUG])
                 {
                   std::cout  << "[WARN] "
                         << "Invalid argument to -I; path does not exist: "
@@ -3246,6 +3246,18 @@ SgFile::usage ( int status )
 "     -rose:skipAstConsistancyTests\n"
 "                             skip AST consitancy testing (for better performance)\n"
 "\n"
+"Plugin Mode:\n"
+"     -rose:plugin_lib <shared_lib_filename>\n"
+"                             Specify the file path to a shared library built from plugin source files \n"
+"                             This option can repeat multiple times to load multiple libraries \n"
+"     -rose:plugin_action <act_name>\n"
+"                             Specify the plugin action to be executed\n"
+"                             This option can repeat multiple times to execute multiple actions \n"
+"                             in the order shown up in command line \n"
+"     -rose:plugin_arg_<act_name>  <option>\n"
+"                             Specify one option to be passed to a plugin named act_name\n"
+"                             This option can repeat multiple times to provide multiple options to a plugin \n"
+"\n"
 "GNU g++ options recognized:\n"
 "     -ansi                   equivalent to -rose:strict\n"
 "     -fno-implicit-templates disable output of template instantiations in\n"
@@ -3278,7 +3290,7 @@ SgFile::usage ( int status )
 "     -rose:assert HOW\n"
 "                             Determines how a failed assertion is handled. The value\n"
 "                             for HOW should be 'abort', 'exit' with non-zero status, or\n"
-"                             'throw' a rose::Diagnostics::FailedAssertion exception. Only\n"
+"                             'throw' a Rose::Diagnostics::FailedAssertion exception. Only\n"
 "                             assertions that use the Sawyer mechanism are affected.\n"
 "     -rose:output_parser_actions\n"
 "                             call parser with --dump option (fortran only)\n"
@@ -3540,7 +3552,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           CommandlineProcessing::isOption(argv,"-","(h|help)",true)      == true )
         {
        // printf ("\nROSE (pre-release alpha version: %s) \n",VERSION);
-       // rose::usage(0);
+       // Rose::usage(0);
           cout << version_message() << endl;
           usage(0);
        // exit(0);
@@ -3563,7 +3575,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
   // code in sla++.C is basically unreadable and its minimal documentation doesn't seem to match its macro-hidden API,
   // specifically the part about being able to return an array of values.
   //
-     rose::initialize(NULL);
+     Rose::initialize(NULL);
      static const std::string removalString = "(--REMOVE_ME--)";
      for (size_t i=0; i<argv.size(); ++i) {
          if ((0==strcmp(argv[i].c_str(), "-rose:log")) && i+1 < argv.size()) {
@@ -3596,15 +3608,15 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
              std::string switchValue = argv[i+1];
              Sawyer::Assert::AssertFailureHandler handler = NULL;
              if (switchValue == "abort") {
-                 handler = rose::abortOnFailedAssertion;
+                 handler = Rose::abortOnFailedAssertion;
              } else if (switchValue == "exit") {
-                 handler = rose::exitOnFailedAssertion;
+                 handler = Rose::exitOnFailedAssertion;
              } else if (switchValue == "throw") {
-                 handler = rose::throwOnFailedAssertion;
+                 handler = Rose::throwOnFailedAssertion;
              }
              if (handler != NULL) {
                  argv[i] = argv[i+1] = removalString;
-                 rose::failedAssertionBehavior(handler);
+                 Rose::failedAssertionBehavior(handler);
              }
          }
      }
@@ -7181,7 +7193,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
   // DQ (3/6/2017): Adding support to read the ROSE options data structure to trigger suppression of warnings.
   // printf ("In build_EDG_CommandLine(): get_output_warnings() = %s \n",get_output_warnings() ? "true" : "false");
-     if (rose::global_options.get_frontend_warnings())
+     if (Rose::global_options.get_frontend_warnings())
         {
        // The EDG default is to output warnings (so we need not do anything to adjust the command line).
           set_output_warnings(true);
@@ -7984,7 +7996,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
   // DQ (3/6/2017): Adding support to read the ROSE options data structure to trigger suppression of warnings.
   // printf ("In build_EDG_CommandLine(): get_output_warnings() = %s \n",get_output_warnings() ? "true" : "false");
-     if (rose::global_options.get_backend_warnings())
+     if (Rose::global_options.get_backend_warnings())
         {
        // The EDG default is to output warnings (so we need not do anything to adjust the command line).
        // set_output_warnings(true);
@@ -8006,7 +8018,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
         }
 
 #if 0
-     printf ("In buildCompilerCommandLineOptions(): After adding options from rose::global_options: argcArgvList.size() = %" PRIuPTR " argcArgvList = %s \n",
+     printf ("In buildCompilerCommandLineOptions(): After adding options from Rose::global_options: argcArgvList.size() = %" PRIuPTR " argcArgvList = %s \n",
           argcArgvList.size(),StringUtility::listToString(argcArgvList).c_str());
 #endif
 #if 0
@@ -8252,8 +8264,8 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
      std::string sourceFileName = get_sourceFileNameWithPath();
 
-     std::string oldFileNamePathOnly = rose::getPathFromFileName(sourceFileName.c_str());
-     std::string oldFileName         = rose::utility_stripPathFromFileName(sourceFileName.c_str());
+     std::string oldFileNamePathOnly = Rose::getPathFromFileName(sourceFileName.c_str());
+     std::string oldFileName         = Rose::utility_stripPathFromFileName(sourceFileName.c_str());
 
 #if 0
      printf ("oldFileNamePathOnly = %s \n",oldFileNamePathOnly.c_str());

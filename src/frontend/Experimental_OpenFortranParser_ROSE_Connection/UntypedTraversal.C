@@ -1,6 +1,5 @@
 #include "sage3basic.h"
 #include "UntypedTraversal.h"
-#include "UntypedConverter.h"
 
 #define DEBUG_UNTYPED_TRAVERSAL 0
 
@@ -10,8 +9,13 @@ using namespace Fortran::Untyped;
 UntypedTraversal::UntypedTraversal(SgSourceFile* sourceFile)
 {
    p_source_file = sourceFile;
+   pConverter = new UntypedConverter(this);
 }
 
+UntypedTraversal::~UntypedTraversal()
+{
+   if (pConverter) delete pConverter;
+}
 
 InheritedAttribute
 UntypedTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute currentScope)
@@ -35,16 +39,16 @@ UntypedTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute curre
 
    else if (isSgUntypedProgramHeaderDeclaration(n) != NULL)
       {
-      // SgUntypedProgramHeaderDeclaration* ut_program = dynamic_cast<SgUntypedProgramHeaderDeclaration*>(n);
-      // SgProgramHeaderStatement*          sg_program = UntypedConverter::convertSgUntypedProgramHeaderDeclaration(ut_program,currentScope);
+         SgUntypedProgramHeaderDeclaration* ut_program = dynamic_cast<SgUntypedProgramHeaderDeclaration*>(n);
+         pConverter->convertSgUntypedProgramHeaderDeclaration(ut_program,currentScope);
 
          currentScope = SageBuilder::topScopeStack();
       }
 
    else if (isSgUntypedSubroutineDeclaration (n) != NULL)
       {
-      // SgUntypedSubroutineDeclaration* ut_function = dynamic_cast<SgUntypedSubroutineDeclaration*>(n);
-      // SgProcedureHeaderStatement*     sg_function = UntypedConverter::convertSgUntypedSubroutineDeclaration(ut_function, currentScope);
+         SgUntypedSubroutineDeclaration* ut_function = dynamic_cast<SgUntypedSubroutineDeclaration*>(n);
+         pConverter->convertSgUntypedSubroutineDeclaration(ut_function, currentScope);
 
          currentScope = SageBuilder::topScopeStack();
       }
@@ -68,13 +72,13 @@ UntypedTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute curre
    else if (isSgUntypedVariableDeclaration(n) != NULL)
       {
          SgUntypedVariableDeclaration* ut_decl = dynamic_cast<SgUntypedVariableDeclaration*>(n);
-         UntypedConverter::convertSgUntypedVariableDeclaration(ut_decl, currentScope);
+         pConverter->convertSgUntypedVariableDeclaration(ut_decl, currentScope);
       }
 
    else if (isSgUntypedImplicitDeclaration(n) != NULL)
       {
          SgUntypedImplicitDeclaration* ut_decl = dynamic_cast<SgUntypedImplicitDeclaration*>(n);
-         UntypedConverter::convertSgUntypedImplicitDeclaration(ut_decl, currentScope);
+         pConverter->convertSgUntypedImplicitDeclaration(ut_decl, currentScope);
       }
 
    else
@@ -83,6 +87,7 @@ UntypedTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute curre
          printf ("Down traverse: found a node of type ... %s\n", n->class_name().c_str());
 #endif
       }
+
    return currentScope;
 }
 
@@ -109,12 +114,17 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* n, InheritedAttribute cur
 
          UntypedConverter::convertSgUntypedAssignmentStatement(ut_stmt, children, currentScope);
       }
+   else if ( isSgUntypedOtherStatement(n) != NULL )
+      {
+         SgUntypedOtherStatement* ut_stmt = dynamic_cast<SgUntypedOtherStatement*>(n);
+         UntypedConverter::convertSgUntypedOtherStatement(ut_stmt, currentScope);
+      }
    else
       {
 #if DEBUG_UNTYPED_TRAVERSAL
          printf ("Up   traverse: found a node of type ... %s\n", n->class_name().c_str());
 #endif
       }
-   
+
    return sg_expr;
 }

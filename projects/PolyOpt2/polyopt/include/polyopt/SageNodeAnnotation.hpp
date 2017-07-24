@@ -63,6 +63,10 @@ public:
   virtual AstAttribute* copy() const {
     return new SageForInfo(*this);
   }
+  std::string attribute_class_name()  const { return std::string("SageForInfo"); }
+  virtual AstAttribute::OwnershipPolicy getOwnershipPolicy() const ROSE_OVERRIDE {
+    return CONTAINER_OWNERSHIP;
+  }
 
   static std::string name() { return std::string("SageForInfo"); }
 };
@@ -103,6 +107,12 @@ public:
       SageInterface::deepDelete(alignmentExpression);
   }
 
+  std::string attribute_class_name()  const {
+    return std::string("SageMemoryReferenceInfo");
+  }
+  virtual AstAttribute::OwnershipPolicy getOwnershipPolicy() const ROSE_OVERRIDE {
+    return CONTAINER_OWNERSHIP;
+  }
   virtual AstAttribute* copy() const {
     return new SageMemoryReferenceInfo(*this);
   }
@@ -122,6 +132,12 @@ public:
   SgVariableSymbol*	iterator;
   int			astId;
 
+  std::string attribute_class_name()  const {
+    return std::string("ScopFor");
+  }
+  virtual AstAttribute::OwnershipPolicy getOwnershipPolicy() const ROSE_OVERRIDE {
+    return CONTAINER_OWNERSHIP;
+  }
   virtual AstAttribute* copy() const { return new ScopForAnnotation(); }
 };
 
@@ -132,6 +148,12 @@ public:
   SgExpression* conditional;
 
 
+  std::string attribute_class_name()  const {
+    return std::string("ScopIf");
+  }
+  virtual AstAttribute::OwnershipPolicy getOwnershipPolicy() const ROSE_OVERRIDE {
+    return CONTAINER_OWNERSHIP;
+  }
   virtual AstAttribute* copy() const { return new ScopIfAnnotation(); }
 };
 
@@ -157,6 +179,10 @@ public:
     writeAffineRefs(Other.writeAffineRefs) {
     }
 
+  std::string attribute_class_name()  const { return std::string("ScopStmt"); }
+  virtual AstAttribute::OwnershipPolicy getOwnershipPolicy() const ROSE_OVERRIDE {
+    return CONTAINER_OWNERSHIP;
+  }
 
   virtual AstAttribute* copy() const { return new ScopStatementAnnotation(); }
 };
@@ -168,6 +194,12 @@ public:
   std::set<SgVariableSymbol*> linearizedArraysAsArrays;
   std::map<std::string, SgVariableSymbol*> fakeSymbolMap;
   int scopId;
+  std::string attribute_class_name()  const {
+    return std::string("ScopRoot");
+  }
+  virtual AstAttribute::OwnershipPolicy getOwnershipPolicy() const ROSE_OVERRIDE {
+    return CONTAINER_OWNERSHIP;
+  }
   virtual AstAttribute* copy() const { return new ScopRootAnnotation(); }
 };
 
@@ -176,6 +208,12 @@ class ScopParentAnnotation : public AstAttribute
 {
 public:
   std::vector<SgNode*> privateVars;
+  std::string attribute_class_name()  const {
+    return std::string("ScopParent");
+  }
+  virtual AstAttribute::OwnershipPolicy getOwnershipPolicy() const ROSE_OVERRIDE {
+    return CONTAINER_OWNERSHIP;
+  }
   virtual AstAttribute* copy() const { return new ScopParentAnnotation(); }
 };
 

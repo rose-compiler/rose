@@ -17,7 +17,7 @@
 
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
   //------------ function level dot graph output ----------------
   // this is purposely put outside of the namespace scope for simplicity 

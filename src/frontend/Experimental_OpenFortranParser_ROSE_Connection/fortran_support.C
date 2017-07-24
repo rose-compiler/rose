@@ -13,17 +13,24 @@
 #include "fortran_support.h"
 
 #include <aterm2.h>
-#include "OFPTraversal.hpp"
-#include "FASTtoSgConverter.h"
 #include "UntypedTraversal.h"
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 #define DEBUG_ROSE_EXPERIMENTAL 0
 
 #define USE_STRATEGO_TRANSFORMATION 0
 #define USE_EXECUTABLE_FROM_PATH 1
+#define USE_FAST 0
+
+#if USE_FAST
+#include "OFPTraversal.hpp"
+#include "FASTtoSgConverter.h"
+#else
+#include "ATtoUntypedTraversal.h"
+#endif
+
 
 int
 experimental_openFortranParser_main(int argc, char **argv)
@@ -32,8 +39,12 @@ experimental_openFortranParser_main(int argc, char **argv)
 
      int i, err;
      string parse_table;
+#if USE_FAST
      FASTtoSgConverter* fast_converter = NULL;
-     OFP::Traversal*     ofp_traversal = NULL;
+     OFP::Traversal* ofp_traversal = NULL;
+#else
+     OFP::ATtoUntypedTraversal* ofp_traversal = NULL;
+#endif
 
      if (argc < 4)
         {
@@ -109,6 +120,9 @@ experimental_openFortranParser_main(int argc, char **argv)
 
      commandString += "-i ";
      commandString += filenameWithPath;
+
+  // Add source code location information to output
+     commandString += " --preserve-locations";
 
 #if USE_STRATEGO_TRANSFORMATION
      string path_to_fortran_stratego_transformations_directory
@@ -206,7 +220,6 @@ experimental_openFortranParser_main(int argc, char **argv)
 
        // Read the ATerm file that was created by the parser
           FILE * file = fopen(filenameWithoutPath.c_str(), "r");
-
           if (file == NULL)
              {
                fprintf(stderr, "\nFAILED: in experimental_openFortranParser_main(), unable to open file %s\n\n", filenameWithoutPath.c_str());
@@ -220,8 +233,12 @@ experimental_openFortranParser_main(int argc, char **argv)
           printf ("In experimental_openFortranParser_main(): Calling traverse_SgUntypedFile() \n");
 #endif
 
-          fast_converter = new FASTtoSgConverter();
+#if USE_FAST
+          fast_converter = new FASTtoSgConverter(OpenFortranParser_globalFilePointer);
           ofp_traversal  = new OFP::Traversal(fast_converter);
+#else
+          ofp_traversal  = new OFP::ATtoUntypedTraversal(OpenFortranParser_globalFilePointer);
+#endif
 
        // Rasmussen (4/15/2017): changing from using stratego transformations
        // if (traverse_SgUntypedFile(SgUntypedFile_term, &untypedFile) != ATtrue || untypedFile == NULL)
@@ -232,9 +249,9 @@ experimental_openFortranParser_main(int argc, char **argv)
              }
         }
 
-     if (fast_converter == NULL || ofp_traversal == NULL)
+     if (ofp_traversal == NULL)
         {
-           fprintf(stderr, "\nFAILED: in experimental_openFortranParser_main(), fast_converter or ofp_traversal is NULL\n\n");
+           fprintf(stderr, "\nFAILED: in experimental_openFortranParser_main(), ofp_traversal is NULL\n\n");
            return 1;
         }
 
@@ -252,9 +269,11 @@ experimental_openFortranParser_main(int argc, char **argv)
      Fortran::Untyped::InheritedAttribute scope = NULL;
 
   // Traverse the untyped tree and convert to sage nodes
-     sg_traversal.traverse(fast_converter->get_file(),scope);
+     sg_traversal.traverse(ofp_traversal->get_file(),scope);
 
+#if USE_FAST
      if (fast_converter) delete fast_converter;
+#endif
      if (ofp_traversal)  delete ofp_traversal;
 
      return 0;

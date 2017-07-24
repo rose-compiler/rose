@@ -12,16 +12,16 @@ class RSIM_Thread;
 
 namespace RSIM_Semantics {
 
-typedef rose::BinaryAnalysis::InstructionSemantics2::ConcreteSemantics::SValue SValue;
-typedef rose::BinaryAnalysis::InstructionSemantics2::ConcreteSemantics::SValuePtr SValuePtr;
-typedef rose::BinaryAnalysis::InstructionSemantics2::NullSemantics::MemoryState MemoryState;
-typedef rose::BinaryAnalysis::InstructionSemantics2::NullSemantics::MemoryStatePtr MemoryStatePtr;
-typedef rose::BinaryAnalysis::InstructionSemantics2::ConcreteSemantics::RegisterState RegisterState;
-typedef rose::BinaryAnalysis::InstructionSemantics2::ConcreteSemantics::RegisterStatePtr RegisterStatePtr;
-typedef rose::BinaryAnalysis::InstructionSemantics2::ConcreteSemantics::State State;
-typedef rose::BinaryAnalysis::InstructionSemantics2::ConcreteSemantics::StatePtr StatePtr;
-typedef rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::Dispatcher Dispatcher;
-typedef rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::DispatcherPtr DispatcherPtr;
+typedef Rose::BinaryAnalysis::InstructionSemantics2::ConcreteSemantics::SValue SValue;
+typedef Rose::BinaryAnalysis::InstructionSemantics2::ConcreteSemantics::SValuePtr SValuePtr;
+typedef Rose::BinaryAnalysis::InstructionSemantics2::NullSemantics::MemoryState MemoryState;
+typedef Rose::BinaryAnalysis::InstructionSemantics2::NullSemantics::MemoryStatePtr MemoryStatePtr;
+typedef Rose::BinaryAnalysis::InstructionSemantics2::ConcreteSemantics::RegisterState RegisterState;
+typedef Rose::BinaryAnalysis::InstructionSemantics2::ConcreteSemantics::RegisterStatePtr RegisterStatePtr;
+typedef Rose::BinaryAnalysis::InstructionSemantics2::ConcreteSemantics::State State;
+typedef Rose::BinaryAnalysis::InstructionSemantics2::ConcreteSemantics::StatePtr StatePtr;
+typedef Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::Dispatcher Dispatcher;
+typedef Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::DispatcherPtr DispatcherPtr;
 
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
@@ -55,9 +55,9 @@ struct Interrupt {
  *    <li>The x86 @c interrupt operator is intercepted and results in either a syscall being processed or an interrupt
  *        exception being thrown.</li>
  *  </ul> */
-class RiscOperators: public rose::BinaryAnalysis::InstructionSemantics2::ConcreteSemantics::RiscOperators {
+class RiscOperators: public Rose::BinaryAnalysis::InstructionSemantics2::ConcreteSemantics::RiscOperators {
 public:
-    typedef rose::BinaryAnalysis::InstructionSemantics2::ConcreteSemantics::RiscOperators Super;
+    typedef Rose::BinaryAnalysis::InstructionSemantics2::ConcreteSemantics::RiscOperators Super;
 
     struct SegmentInfo {
         rose_addr_t base, limit;
@@ -81,19 +81,19 @@ private:
     
 protected:
     RiscOperators(Architecture arch, RSIM_Thread *thread,
-                  const rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &protoval,
-                  rose::BinaryAnalysis::SMTSolver *solver)
+                  const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &protoval,
+                  Rose::BinaryAnalysis::SMTSolver *solver)
         : Super(protoval, solver), architecture_(arch), allocateOnDemand_(false), thread_(thread) {}
 
     RiscOperators(Architecture arch, RSIM_Thread *thread,
-                  const rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::StatePtr &state,
-                  rose::BinaryAnalysis::SMTSolver *solver)
+                  const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::StatePtr &state,
+                  Rose::BinaryAnalysis::SMTSolver *solver)
         : Super(state, solver), architecture_(arch), allocateOnDemand_(false), thread_(thread) {}
 
 public:
     static RiscOperatorsPtr instance(Architecture arch, RSIM_Thread *thread, const RegisterDictionary *regdict,
-                                     rose::BinaryAnalysis::SMTSolver *solver=NULL) {
-        using namespace rose::BinaryAnalysis::InstructionSemantics2;
+                                     Rose::BinaryAnalysis::SMTSolver *solver=NULL) {
+        using namespace Rose::BinaryAnalysis::InstructionSemantics2;
         BaseSemantics::SValuePtr protoval = SValue::instance();
         BaseSemantics::RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
         BaseSemantics::MemoryStatePtr memory = MemoryState::instance(protoval, protoval);
@@ -102,46 +102,46 @@ public:
     }
 
     static RiscOperatorsPtr instance(Architecture arch, RSIM_Thread *thread,
-                                     const rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &protoval,
-                                     rose::BinaryAnalysis::SMTSolver *solver=NULL) {
+                                     const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &protoval,
+                                     Rose::BinaryAnalysis::SMTSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(arch, thread, protoval, solver));
     }
 
     static RiscOperatorsPtr instance(Architecture arch, RSIM_Thread *thread,
-                                     const rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::StatePtr &state,
-                                     rose::BinaryAnalysis::SMTSolver *solver=NULL) {
+                                     const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::StatePtr &state,
+                                     Rose::BinaryAnalysis::SMTSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(arch, thread, state, solver));
     }
 
 public:
-    virtual rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RiscOperatorsPtr
-    create(const rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &protoval,
-           rose::BinaryAnalysis::SMTSolver *solver=NULL) const ROSE_OVERRIDE {
+    virtual Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RiscOperatorsPtr
+    create(const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &protoval,
+           Rose::BinaryAnalysis::SMTSolver *solver=NULL) const ROSE_OVERRIDE {
         ASSERT_not_reachable("no architecture or thread available");
     }
 
-    virtual rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RiscOperatorsPtr
+    virtual Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RiscOperatorsPtr
     create(Architecture arch, RSIM_Thread *thread,
-           const rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &protoval,
-           rose::BinaryAnalysis::SMTSolver *solver=NULL) const {
+           const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &protoval,
+           Rose::BinaryAnalysis::SMTSolver *solver=NULL) const {
         return instance(arch, thread, protoval, solver);
     }
 
-    virtual rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RiscOperatorsPtr
-    create(const rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::StatePtr &state,
-           rose::BinaryAnalysis::SMTSolver *solver=NULL) const ROSE_OVERRIDE {
+    virtual Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RiscOperatorsPtr
+    create(const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::StatePtr &state,
+           Rose::BinaryAnalysis::SMTSolver *solver=NULL) const ROSE_OVERRIDE {
         ASSERT_not_reachable("no architecture or thread available");
     }
 
-    virtual rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RiscOperatorsPtr
+    virtual Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RiscOperatorsPtr
     create(Architecture arch, RSIM_Thread *thread,
-           const rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::StatePtr &state,
-           rose::BinaryAnalysis::SMTSolver *solver=NULL) const {
+           const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::StatePtr &state,
+           Rose::BinaryAnalysis::SMTSolver *solver=NULL) const {
         return instance(arch, thread, state, solver);
     }
 
 public:
-    static RiscOperatorsPtr promote(const rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &x) {
+    static RiscOperatorsPtr promote(const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &x) {
         RiscOperatorsPtr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
         ASSERT_not_null(retval);
         return retval;
@@ -162,7 +162,7 @@ public:
     SegmentInfo& segmentInfo(X86SegmentRegister sr);
 
     // Semantics of an x86 POP instruction so the simulator can easily pop a word from the top of the stack.
-    rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr pop();
+    Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr pop();
 
     // Dump lots of info to the TRACE_STATE stream (even if it is disabled)
     void dumpState();
@@ -182,20 +182,20 @@ public:
 
     // Special handling for segment registers.
     virtual void writeRegister(const RegisterDescriptor &reg,
-                               const rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &value) ROSE_OVERRIDE;
+                               const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &value) ROSE_OVERRIDE;
 
     // Read and write memory from the memory map directly.
-    virtual rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr
+    virtual Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr
     readMemory(const RegisterDescriptor &segreg,
-               const rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &address,
-               const rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &dflt,
-               const rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
+               const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &address,
+               const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &dflt,
+               const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
 
     virtual void
     writeMemory(const RegisterDescriptor &segreg,
-                const rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &address,
-                const rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &value,
-                const rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
+                const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &address,
+                const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &value,
+                const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
 };
 
 /** Create a new dispatcher.

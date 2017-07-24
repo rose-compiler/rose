@@ -810,7 +810,6 @@ ROSE_DLL_API SgLambdaCapture* buildLambdaCapture_nfi(SgExpression* capture_varia
 ROSE_DLL_API SgLambdaCaptureList* buildLambdaCaptureList    ();
 ROSE_DLL_API SgLambdaCaptureList* buildLambdaCaptureList_nfi();
 
-
 //@}
 
 //@{
@@ -1609,9 +1608,9 @@ namespace Rose {
             extern ROSE_DLL_API SgClassType *ClassClassType;
             extern ROSE_DLL_API SgVariableSymbol *lengthSymbol;
 
-        }// ::rose::frontend::java
-    }// ::rose::frontend
-}// ::rose
+        }// ::Rose::frontend::java
+    }// ::Rose::frontend
+}// ::Rose
 //-----------------------------------------------------------------------------
 //#endif // ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 //-----------------------------------------------------------------------------

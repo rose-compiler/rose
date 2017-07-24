@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-using namespace rose;
+using namespace Rose;
 using namespace Sawyer::Message::Common;
 
 Sawyer::Message::Facility mlog;

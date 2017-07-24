@@ -20,10 +20,10 @@
 #include <Sawyer/Stopwatch.h>
 #include <Sawyer/ThreadWorkers.h>
 
-using namespace rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
-using namespace rose::Diagnostics;
+using namespace Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
+using namespace Rose::Diagnostics;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
@@ -2136,7 +2136,7 @@ struct CallingConventionWorker {
         Sawyer::Stopwatch t;
         partitioner.functionCallingConvention(function, dfltCc);
 
-        // Show some results. We're using rose::BinaryAnalysis::CallingConvention::mlog[TRACE] for the messages, so the mutex
+        // Show some results. We're using Rose::BinaryAnalysis::CallingConvention::mlog[TRACE] for the messages, so the mutex
         // here doesn't really protect it. However, since that analysis doesn't produce much output on that stream, this mutex
         // helps keep the output lines separated from one another where there's lots of worker threads, especially when they're
         // all first starting up.
@@ -2159,7 +2159,7 @@ Partitioner::allFunctionCallingConvention(const CallingConvention::Definition::P
     Sawyer::ProgressBar<size_t> progress(cg.nVertices(), mlog[MARCH], "call-conv analysis");
     Sawyer::Message::FacilitiesGuard guard;
     if (nThreads != 1)                                  // lots of threads doing progress reports won't look too good!
-        rose::BinaryAnalysis::CallingConvention::mlog[MARCH].disable();
+        Rose::BinaryAnalysis::CallingConvention::mlog[MARCH].disable();
     Sawyer::workInParallel(cg, nThreads, CallingConventionWorker(*this, progress, dfltCc));
 }
 

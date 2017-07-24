@@ -8,7 +8,7 @@
 #include "Diagnostics.h"
 #include "BinaryUnparserArm.h"
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 using namespace Diagnostics;

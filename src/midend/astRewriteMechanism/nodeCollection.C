@@ -10,7 +10,7 @@
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 // ************************************************************
 // ************************************************************
@@ -1157,7 +1157,7 @@ HighLevelInterfaceNodeCollection::insertStatementListWithMarkers (
        else
         {
        // For now pass along information about the attempt to the users (for temp debugging)
-          printf ("WARNING: Attempt to insert/replace statement with empty list of new statements or comments/directives at line = %d \n",rose::getLineNumber(target));
+          printf ("WARNING: Attempt to insert/replace statement with empty list of new statements or comments/directives at line = %d \n",Rose::getLineNumber(target));
       // ROSE_ABORT();
         }
 #endif

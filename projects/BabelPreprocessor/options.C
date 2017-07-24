@@ -5,7 +5,7 @@
 
 // DQ (1/1/2006): This is OK if not declared in a header file
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 void
 TransformationSupport::getTransformationOptions ( SgNode* astNode, list<OptionDeclaration> & generatedList, string identifingTypeName )
@@ -329,7 +329,7 @@ TransformationSupport::getTransformationOptionsFromVariableDeclarationConstructo
                                 // printf ("Name = %s \n",enumName.str());
 
                                    string name = enumName.str();
-                                // char* name = rose::stringDuplicate( enumName.str() );
+                                // char* name = Rose::stringDuplicate( enumName.str() );
 
                                 // Put the value at the start of the list so that the list can be processed in
                                 // consecutive order to establish options for consecutive scopes (root to

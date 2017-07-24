@@ -4,7 +4,7 @@
 #include "BaseSemantics2.h"
 #include "Diagnostics.h"
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {                      // documented elsewhere
 namespace InstructionSemantics2 {               // documented elsewhere
 
@@ -211,7 +211,7 @@ public:
     /** @} */
 
     /** Property: output stream to which tracing is emitted.  The default is the INFO stream of the
-     * rose::BinaryAnalysis::InstructionSemantics2 message facility. Output will only show up when this stream is enabled.
+     * Rose::BinaryAnalysis::InstructionSemantics2 message facility. Output will only show up when this stream is enabled.
      *
      * @{ */
     Sawyer::Message::Stream& stream() { return stream_; }

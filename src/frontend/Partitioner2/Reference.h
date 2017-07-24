@@ -5,7 +5,7 @@
 #include <Partitioner2/Function.h>
 #include <set>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
