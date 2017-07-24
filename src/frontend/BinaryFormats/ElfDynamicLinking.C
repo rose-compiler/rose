@@ -2,7 +2,7 @@
 #include "sage3basic.h"
 #include "stringify.h"
 
-using namespace rose;
+using namespace Rose;
 
 void
 SgAsmElfDynamicEntry::ctor(SgAsmElfDynamicSection *dynsec)
