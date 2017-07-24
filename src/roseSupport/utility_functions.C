@@ -7,10 +7,11 @@
 #include "AstDOTGeneration.h"
 
 #include "wholeAST_API.h"
-#include "plugin.h"
 
 #ifdef _MSC_VER
 #include <direct.h>     // getcwd
+#else
+#include "plugin.h"  // dlopen() is not available on Windows
 #endif
 
 #include <time.h>
@@ -34,8 +35,6 @@
 // This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
 // Interestingly it must be at the top of the list of include files.
 #include "rose_config.h"
-
-#include "plugin.h"
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
@@ -470,7 +469,12 @@ frontend (const std::vector<std::string>& argv, bool frontendConstantFolding )
 
   // We parse plugin related command line options before calling project();
      std::vector<std::string> argv2= argv;  // workaround const argv
+#ifdef _MSC_VER
+    if ( SgProject::get_verbose() >= 1 )
+        printf ("Note: Dynamic Loadable Plugins are not supported on Microsoft Windows yet. Skipping Rose::processPluginCommandLine () ...\n");
+#else
      Rose::processPluginCommandLine(argv2);
+#endif
 
   // Error code checks and reporting are done in SgProject constructor
   // return new SgProject (argc,argv);
@@ -497,8 +501,12 @@ frontend (const std::vector<std::string>& argv, bool frontendConstantFolding )
        SageBuilder::setSourcePositionClassificationMode(SageBuilder::e_sourcePositionTransformation);
 
   // Connect to Ast Plugin Mechanism
+#ifdef _MSC_VER
+    if ( SgProject::get_verbose() >= 1 )
+        printf ("Note: Dynamic Loadable Plugins are not supported on Microsoft Windows yet. Skipping Rose::obtainAndExecuteActions ()\n");
+#else  
      Rose::obtainAndExecuteActions(project);
-
+#endif
      return project;
    }
 
