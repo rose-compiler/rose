@@ -161,10 +161,10 @@ struct Unit_Struct {
   enum Unit_Origins Unit_Origin;
   // Enclosing_Context
   // Enclosing_Container
-  Unit_List        Corresponding_Children;
-  Unit_ID          Corresponding_Parent_Declaration;
-  Unit_ID          Corresponding_Declaration;
-  Unit_ID          Corresponding_Body;
+  Unit_List         Corresponding_Children;
+  Unit_ID           Corresponding_Parent_Declaration;
+  Unit_ID           Corresponding_Declaration;
+  Unit_ID           Corresponding_Body;
   char             *Unit_Full_Name; // Ada name
   char             *Unique_Name; // file name etc.
   bool              Exists;
