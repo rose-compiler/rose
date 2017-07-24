@@ -8,6 +8,8 @@
 #include "DisassemblerM68k.h"
 #include "DisassemblerX86.h"
 #include "SRecord.h"
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/split.hpp>
 #include <Partitioner2/Engine.h>
 #include <Partitioner2/Modules.h>
 #include <Partitioner2/ModulesElf.h>
@@ -648,7 +650,14 @@ Engine::specimenNameDocumentation() {
             "\"fontend\" function, and then during a second pass it will be loaded natively under a debugger, run until "
             "a mapped executable address is reached, and then its memory is copied into ROSE's memory map possibly "
             "overwriting existing parts of the map.  This can be useful when the user wants accurate information about "
-            "how that native loader links in shared objects since ROSE's linker doesn't always have identical behavior.}"
+            "how that native loader links in shared objects since ROSE's linker doesn't always have identical behavior. "
+            "The syntax syntax of this form is \"run:@v{options}:@v{filename}\" where @v{options} is a comma-separated "
+            "list of options that control the finer details. The following options are recognized:"
+
+            "@named{replace}{This option causes the memory map to be entirely replaced with the process map rather than "
+            "the default behavior of the process map augmenting the map created by the ROSE loader.  This can be useful "
+            "if ROSE's internal loader resulted in wrong addresses, although symbols will then probably also be pointing to "
+            "those wrong addresses and will be dangling when those addresses are removed from the map.}}"
 
             "@bullet{If the file name begins with the string \"srec:\" then it is treated as Motorola S-Record format. "
             "Mapping attributes are stored after the first column and before the second; the file name appears after the "
@@ -746,7 +755,14 @@ Engine::parseContainers(const std::vector<std::string> &fileNames) {
         std::vector<std::string> frontendNames;
         BOOST_FOREACH (const std::string &fileName, fileNames) {
             if (boost::starts_with(fileName, "run:") && fileName.size()>4) {
-                frontendNames.push_back(fileName.substr(4));
+                static size_t colon1 = 3;
+                size_t colon2 = fileName.find(':', colon1+1);
+                if (colon2 == std::string::npos) {
+                    // [Robb Matzke 2017-07-24]: deprecated: use two colons for consistency with other schemas
+                    frontendNames.push_back(fileName.substr(colon1+1));
+                } else {
+                    frontendNames.push_back(fileName.substr(colon2+1));
+                }
             } else if (!isNonContainer(fileName)) {
                 frontendNames.push_back(fileName);
             }
@@ -835,16 +851,56 @@ Engine::loadNonContainers(const std::vector<std::string> &fileNames) {
             std::string resource = fileName.substr(4);  // remove "proc", leaving colon and the rest of the string
             map_->insertProcess(resource);
         } else if (boost::starts_with(fileName, "run:")) {
-            std::string exeName = fileName.substr(4);
+            // Parse the options between the two colons in "run:OPTIONS:EXECUTABLE"
+            static const size_t colon1 = 3;             // index of first colon in fileName
+            const size_t colon2 = fileName.find(':', colon1+1); // index of second colon in FileName
+            std::string exeName;
+            bool doReplace = false;
+            if (colon2 == std::string::npos) {
+                // [Robb Matzke 2017-07-24]: deprecated. ROSE used to accept "run:/name/of/executable" which is a
+                // different syntax than what all the other methods accept (the others all have two colons).
+                exeName = fileName.substr(colon1+1);
+            } else {
+                std::string optionsStr = fileName.substr(colon1+1, colon2-(colon1+1));
+                exeName = fileName.substr(colon2+1);
+                std::vector<std::string> options;
+                boost::split(options, optionsStr, boost::is_any_of(","));
+                BOOST_FOREACH (const std::string &option, options) {
+                    if (option.empty()) {
+                    } else if ("replace" == option) {
+                        doReplace = true;
+                    } else {
+                        throw std::runtime_error("option \"" + StringUtility::cEscape(option) + "\" not recognized"
+                                                 " in resource \"" + StringUtility::cEscape(fileName) + "\"");
+                    }
+                }
+            }
+                
             BinaryDebugger debugger(exeName);
-            BOOST_FOREACH (const MemoryMap::Node &node, map_->nodes()) {
-                if (0 != (node.value().accessibility() & MemoryMap::EXECUTABLE))
+
+            // Set breakpoints for all executable addresses in the memory map created by the Linux kernel. Since we're doing
+            // this before the first instruction executes, no shared libraries have been loaded yet. However, the dynamic
+            // linker itself is present as are the vdso and vsyscall segments.  We don't want to set breakpoints in anything
+            // that the dynamic linker might call because the whole purpose of the "run:" URL is to get an accurate memory map
+            // of the process after shared libraries are loaded. We assume that the kernel has loaded the executable at the
+            // lowest address.
+            MemoryMap::Ptr procMap = MemoryMap::instance();
+            procMap->insertProcess(debugger.isAttached(), MemoryMap::Attach::NO);
+            procMap->require(MemoryMap::EXECUTABLE).keep();
+            if (procMap->isEmpty())
+                throw std::runtime_error(exeName + " has no executable addresses");
+            std::string name = procMap->segments().begin()->name(); // lowest segment is always part of the main executable
+            BOOST_FOREACH (const MemoryMap::Node &node, procMap->nodes()) {
+                if (node.value().name() == name)        // usually just one match; names are like "proc:123(/bin/ls)"
                     debugger.setBreakpoint(node.key());
             }
+
             debugger.runToBreakpoint();
             if (debugger.isTerminated())
                 throw std::runtime_error(exeName + " " + debugger.howTerminated() + " without reaching a breakpoint");
-            map_->insertProcess(":noattach:" + StringUtility::numberToString(debugger.isAttached()));
+            if (doReplace)
+                map_->clear();
+            map_->insertProcess(debugger.isAttached(), MemoryMap::Attach::NO);
             debugger.terminate();
         } else if (boost::starts_with(fileName, "srec:") || boost::ends_with(fileName, ".srec")) {
             std::string resource;                       // name of file to open

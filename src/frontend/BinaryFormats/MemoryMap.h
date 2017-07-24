@@ -107,6 +107,14 @@ public:
     typedef Sawyer::Container::AddressMapConstraints<Sawyer::Container::AddressMap<rose_addr_t, uint8_t> > Constraints;
     typedef Sawyer::Container::AddressMapConstraints<const Sawyer::Container::AddressMap<rose_addr_t, uint8_t> > ConstConstraints;
 
+    /** Attach with ptrace first when reading a process? */
+    struct Attach {                                     // For consistency with other <Feature>::Boolean types
+        enum Boolean {
+            NO,                                         /**< Assume ptrace is attached and process is stopped. */
+            YES                                         /**< Attach with ptrace, get memory, then detach. */
+        };
+    };
+
 private:
     ByteOrder::Endianness endianness_;
 
@@ -339,6 +347,11 @@ public:
     static std::string insertFileDocumentation();
 
     /** Insert the memory of some other process into this memory map. */
+    void insertProcess(pid_t pid, Attach::Boolean attach);
+
+    /** Insert the memory of some other process into this memory map.
+     *
+     *  The locator string follows the syntax described in @ref insertProcessDocumentation. */
     void insertProcess(const std::string &locatorString);
 
     /** Documentation string for @ref insertProcess. */
