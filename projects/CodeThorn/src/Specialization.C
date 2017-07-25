@@ -530,7 +530,7 @@ void Specialization::substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates, Var
     SgNode* node=exp;
     bool ruleAlgebraic=true;
     //cout<<"DEBUG: Rewrite phase 2 :"<<exp->unparseToString()<<endl;
-    rewriteSystem2.rewriteAst(node,variableIdMapping,false,false,false,ruleAlgebraic);
+    rewriteSystem2.rewriteAst(node,variableIdMapping,false,false,ruleAlgebraic);
   }
 }
 

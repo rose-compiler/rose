@@ -528,8 +528,7 @@ check-matcher:
 	./matcher_demo  --edg:no_warnings $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat
 
 # check-flow-insenstive
-check-local: check-codethorn-internal check-domain check-data-races check-ltl check-ltl-driven
-#check-local: check-codethorn-internal check-domain check-equivalence-checking check-data-races check-ltl check-ltl-driven
+check-local: check-codethorn-internal check-domain check-equivalence-checking check-data-races check-ltl check-ltl-driven
 
 check-svcomp:
 	@echo ================================================================

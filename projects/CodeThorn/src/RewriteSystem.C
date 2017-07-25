@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 #include "RewriteSystem.h"
 #include "Timer.h"
+#include "AstTerm.h"
 
 using namespace std;
 using namespace SPRAY;
@@ -8,7 +9,15 @@ using namespace Sawyer::Message;
 
 Sawyer::Message::Facility RewriteSystem::logger;
 
-RewriteSystem::RewriteSystem():_rewriteCondStmt(false) {
+RewriteSystem::RewriteSystem():_trace(false),_rewriteCondStmt(false) {
+}
+
+void RewriteSystem::setTrace(bool trace) {
+  _trace=trace;
+}
+
+bool RewriteSystem::getTrace() {
+  return _trace;
 }
 
 RewriteStatistics RewriteSystem::getRewriteStatistics() {
@@ -207,10 +216,10 @@ void RewriteSystem::rewriteCondStmt(SgNode* condStmt) {
   if(SgNodeHelper::isCondStmt(condStmt) /*&& !isSgSwitchStatement(condStmt)*/) {
     ROSE_ASSERT(isSgStatement(condStmt));
     SgNode* cond=SgNodeHelper::getCond(condStmt);
-    cout<<"DEBUG: cond:"<<cond->unparseToString()<<endl;
+    //cout<<"DEBUG: cond:"<<cond->unparseToString()<<endl;
     //SgStatementExpression* normalizedCond=SageBuilder::buildStatementExpression(isSgStatement(cond));
     SgStatement* normalizedCond=SageBuilder::buildBasicBlock(isSgStatement(cond));
-    cout<<"DEBUG: condStmt:"<<condStmt->unparseToString()<<":"<<condStmt->class_name()<<endl;
+    //cout<<"DEBUG: condStmt:"<<condStmt->unparseToString()<<":"<<condStmt->class_name()<<endl;
     //cout<<"DEBUG: gnu     :"<<gnuStmtExpr->unparseToString()<<endl;
     SgNodeHelper::setCond(isSgStatement(condStmt),normalizedCond);
   }
@@ -226,22 +235,18 @@ bool RewriteSystem::getRewriteCondStmt() {
 
 void RewriteSystem::normalizeFloatingPointNumbersForUnparsing(SgNode*& root) {
   RoseAst ast(root);
-  //cout<<"DEBUG:FF:"<<root->unparseToString()<<endl;
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
     // due to lack of a common base class this testing has to be done for each class
     if(SgFloatVal* val=isSgFloatVal(*i)) {
       if(val->get_valueString()!="") {
-        //cout<<"DEBUG:"<<val->get_valueString()<<endl;
         val->set_valueString("");
       }
     } else if(SgDoubleVal* val=isSgDoubleVal(*i)) {
       if(val->get_valueString()!="") {
-        //cout<<"DEBUG:"<<val->get_valueString()<<endl;
         val->set_valueString("");
       }
     } else if(SgLongDoubleVal* val=isSgLongDoubleVal(*i)) {
       if(val->get_valueString()!="") {
-        //cout<<"DEBUG:"<<val->get_valueString()<<endl;
         val->set_valueString("");
       }
     }
@@ -251,24 +256,24 @@ void RewriteSystem::normalizeFloatingPointNumbersForUnparsing(SgNode*& root) {
 // rewrites an AST
 // requirements: all variables have been replaced by constants
 // uses AstMatching to match patterns.
-void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMapping, bool rewriteTrace, bool ruleAddReorder, bool performCompoundAssignmentsElimination, bool ruleAlgebraic) {
-   //  cout<<"Rewriting AST:"<<endl;
-   bool someTransformationApplied=false;
-   bool transformationApplied=false;
-   AstMatching m;
-   // outer loop (overall fixpoint on all transformations)
+void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMapping, bool ruleAddReorder, bool performCompoundAssignmentsElimination, bool ruleAlgebraic) {
+  //cout<<"Rewriting AST:"<<AstTerm::astTermWithNullValuesToString(root)<<endl;
+  bool someTransformationApplied=false;
+  bool transformationApplied=false;
+  AstMatching m;
+  // outer loop (overall fixpoint on all transformations)
    /* Transformations:
       1) eliminate unary operator -(integer) in tree
       2) normalize expressions (reordering of inner nodes and leave nodes)
       3) constant folding (leave nodes)
    */
-
-   if(getRewriteCondStmt()) {
-     rewriteCondStmtInAst(root);
-   }
-
-   if(performCompoundAssignmentsElimination) {
-     rewriteCompoundAssignments(root,variableIdMapping);
+  
+  if(getRewriteCondStmt()) {
+    rewriteCondStmtInAst(root);
+  }
+  
+  if(performCompoundAssignmentsElimination) {
+    rewriteCompoundAssignments(root,variableIdMapping);
    }
 
    do {
@@ -300,33 +305,82 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
        }
      } while(transformationApplied); // a loop will eliminate -(-(5)) to 5
 
-#if 0
+#if 1
      if(ruleAlgebraic) {
-       cout<<"DEBUG: Applying rule algebraic."<<endl;
        int cnt=0;
        do {
          // the following rules guarantee convergence
-
-         // REWRITE: re-ordering (normalization) of expressions
-         // Rewrite-rule 1: SgAddOp(SgAddOp($Remains,$Other),$IntVal=SgIntVal) => SgAddOp(SgAddOp($Remains,$IntVal),$Other)
-         //                 where $Other!=SgIntVal && $Other!=SgFloatVal && $Other!=SgDoubleVal; ($Other notin {SgIntVal,SgFloatVal,SgDoubleVal})
          transformationApplied=false;
-         //MatchResult res=m.performMatching("$BinaryOp1=SgMultiplyOp($Remains,$Val=SgFloatVal|$Val=SgDoubleVal|$Val=SgIntVal)",root);
-         MatchResult res=m.performMatching("$BinaryOp1=SgMultiplyOp($Remains,$Val=SgDoubleVal)",root);
+         //MatchResult res=m.performMatching("$MultiplyOp=SgMultiplyOp($Remains,$Val=SgFloatVal|$Val=SgDoubleVal|$Val=SgIntVal)",root);
+         string mulRightVal="$IdentityOp=SgMultiplyOp($Remains,$Val=SgDoubleVal)|$IdentityOp=SgMultiplyOp($Remains,$Val=SgFloatVal)|$IdentityOp=SgMultiplyOp($Remains,$Val=SgIntVal)";
+         string mulLeftVal="$IdentityOp=SgMultiplyOp($Val=SgDoubleVal,$Remains)|$IdentityOp=SgMultiplyOp($Val=SgFloatVal,$Remains)|$IdentityOp=SgMultiplyOp($Val=SgIntVal,$Remains)";
+         string addRightVal="$IdentityOp=SgAddOp($Remains,$Val=SgDoubleVal)|$IdentityOp=SgAddOp($Remains,$Val=SgFloatVal)|$IdentityOp=SgAddOp($Remains,$Val=SgIntVal)";
+         string addLeftVal="$IdentityOp=SgAddOp($Val=SgDoubleVal,$Remains)|$IdentityOp=SgAddOp($Val=SgFloatVal,$Remains)|$IdentityOp=SgAddOp($Val=SgIntVal,$Remains)";
+         MatchResult res=m.performMatching(mulLeftVal+"|"+mulRightVal+"|"+addRightVal+"|"+addLeftVal,root);
          if(res.size()>0) {
-           cout<<"DEBUG: matched "<<res.size()<<" expr: X * Val "<<endl;
            for(MatchResult::iterator kk=res.begin();kk!=res.end();++kk) {
              // match found
-             SgExpression* other=isSgExpression((*kk)["$Val"]);
-             SgExpression* op=isSgExpression((*kk)["$BinaryOp1"]);
-             cout<<"DEBUG: other:"<<other<<" op:"<<op<<endl;
-             if(other && op) {
-               if(isSgIntVal(other) || isSgFloatVal(other) || isSgDoubleVal(other)) {
-                 cout<<"DEBUG: Found value in multiplication (TODO: test for 0!) :"<<cnt<<": "<<op->unparseToString()<<endl;
-                 // no transformation applied yet, have to remain false.
-                 //transformationApplied=true; 
-                 //someTransformationApplied=true;
+#if 0
+             for(SingleMatchVarBindings::iterator vars_iter=(*kk).begin();vars_iter!=(*kk).end();++vars_iter) {
+               SgNode* matchedTerm=(*vars_iter).second;
+               std::cout << "DEBUG:::  VAR: " << (*vars_iter).first << "=" << AstTerm::astTermWithNullValuesToString(matchedTerm) << " @" << matchedTerm << std::endl;
+             }
+#endif
+             SgExpression* valueNode=isSgExpression((*kk)["$Val"]);
+             SgExpression* op=isSgExpression((*kk)["$IdentityOp"]);
+             SgExpression* remainsNode=isSgExpression((*kk)["$Remains"]);
+
+             bool algebraicIdentityTransformation=false;
+             if(valueNode && isSgMultiplyOp(op)) {
+               if(SgIntVal* val=isSgIntVal(valueNode)) {
+                 int value=val->get_value();
+                 if(value==1) {
+                   algebraicIdentityTransformation=true;
+                 }
+               } else if(SgFloatVal* val=isSgFloatVal(valueNode)) {
+                 float value=val->get_value();
+                 if(value==1.0f) {
+                   algebraicIdentityTransformation=true;
+                 }
+               } else if(SgDoubleVal* val=isSgDoubleVal(valueNode)) {
+                 double value=val->get_value();
+                 if(value==1.0d) {
+                   algebraicIdentityTransformation=true;
+                 }
+               } else {
+                 //not normalize
+                 //cout<<"WARNING: Found unsupported value-type in alebraic multiply-transformation rule :"<<cnt<<": "<<op->unparseToString()<<endl;
                }
+             }
+             if(valueNode && isSgAddOp(op)) {
+               if(SgIntVal* val=isSgIntVal(valueNode)) {
+                 int value=val->get_value();
+                 if(value==0) {
+                   algebraicIdentityTransformation=true;
+                 }
+               } else if(SgFloatVal* val=isSgFloatVal(valueNode)) {
+                 float value=val->get_value();
+                 if(value==0.0f) {
+                   algebraicIdentityTransformation=true;
+                 }
+               } else if(SgDoubleVal* val=isSgDoubleVal(valueNode)) {
+                 double value=val->get_value();
+                 if(value==0.0d) {
+                   algebraicIdentityTransformation=true;
+                 }
+               } else {
+                 //not normalized
+                 //cout<<"DEBUG: Found unsupported value-type in alebraic multiply-transformation rule :"<<cnt<<": "<<op->unparseToString()<<endl;
+               }
+             }
+             if(algebraicIdentityTransformation) {
+               if(getTrace()) {
+                 cout<<"Rule algebraic: "<<op->unparseToString()<<" => "<<remainsNode->unparseToString()<<endl;
+               }
+               SgNodeHelper::replaceExpression(op,remainsNode,false);
+               transformationApplied=true; 
+               someTransformationApplied=true;
+               cnt++;
              }
            }
          }
@@ -351,7 +405,7 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
                  //SgNode* op1=(*i)["$BinaryOp1"];
                  SgExpression* val=isSgExpression((*i)["$IntVal"]);
                  //cout<<"FOUND: "<<op1->unparseToString()<<endl;
-                 if(rewriteTrace) {
+                 if(getTrace()) {
                    cout<<"Rule AddOpReorder: "<<((*i)["$BinaryOp1"])->unparseToString()<<" => ";
                  }
                  // replace op1-rhs with op2-rhs
@@ -362,7 +416,7 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
                  //cout<<"REPLACED: "<<op1->unparseToString()<<endl;
                  transformationApplied=true;
                  someTransformationApplied=true;
-                 if(rewriteTrace)
+                 if(getTrace())
                    cout<<((*i)["$BinaryOp1"])->unparseToString()<<endl;
                  dump1_stats.numAddOpReordering++;
                }
