@@ -37,6 +37,7 @@ ATbool traverse_SpecAndExecPart(ATerm term, FAST::Scope* scope);
 ATbool traverse_ListStarOfSpecAndExecConstruct(ATerm term, FAST::Scope* scope);
 
 ATbool traverse_SpecStmt(ATerm term, FAST::Scope* scope);
+ATbool traverse_ExecStmt(ATerm term, FAST::Scope* scope);
 
 ATbool traverse_ImplicitStmt(ATerm term, FAST::Scope* scope);
 ATbool traverse_ImplicitSpecList(ATerm term, std::vector<FAST::ImplicitSpec> & ref_ImplicitSpecList);
@@ -49,6 +50,8 @@ ATbool traverse_ContainsStmt(ATerm term, FAST::ContainsStmt** contains_stmt);
 ATbool traverse_DeclarationTypeSpec (ATerm term, FAST::TypeSpec** type_spec);
 ATbool traverse_IntrinsicTypeSpec   (ATerm term, FAST::TypeSpec** type_spec);
 //TODO traverse_DerivedTypeSpec
+
+ATbool traverse_ContinueStmt(ATerm term, FAST::Scope* scope);
 
 }; // class Traversal
 }  // namespace OFP

@@ -616,6 +616,9 @@ if(enable-scoplib)
     DOC "Path to a valid ScopLib installation")
 endif()
 
+option(enable-poet
+  "Enable POET support" OFF)
+
 option(enable-yices "Use the Yices Satisfiability Modulo Theories (SMT)")
 if(enable-yices)
   find_path(with-yices bin/yices DOC
@@ -1070,11 +1073,15 @@ endif (HAVE_DLFCN_H)
      ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/libharu-2.1.0/include 
      ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/qrose/Framework 
      ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/qrose/Widgets  
-     ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/POET
      ${ROSE_TOP_SRC_DIR}/projects/dataBase 
      ${ROSE_TOP_SRC_DIR}/src/util/graphs 
      ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/libharu-2.1.0/win32/include/
      ${ROSE_TOP_SRC_DIR}/src/midend/astUtil/astInterface )
+
+if(enable-poet)
+set( ROSE_INCLUDES ${ROSE_INCLUDES}
+     ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/POET)
+endif()
 
 IF(WIN32) 
 set( ROSE_INCLUDES ${ROSE_INCLUDES}

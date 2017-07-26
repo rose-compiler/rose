@@ -26,7 +26,7 @@ void goo (char* f(char*))
 void test() 
 {
         int intArray[10];
-       int *intArray2 = (int *) malloc(sizeof(int) * 10);
+        int *intArray2 = (int *) malloc(sizeof(int) * 10);
 
         intArray2[1] = 1;
         intArray[1] = 1;

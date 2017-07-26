@@ -1,4 +1,4 @@
-%%%%%%%%%%
+%%%%%%%%%
 %% This Fortran grammar is structured according to document ISO/IEC 1539:1991. 
 %% Rulenumbers are named R2xx - R12xx as in Annex D of 1539:1991
 %% The grammar is adapted from an ELI project grammer, http://eli-project.cvs.sourceforge.net/eli-project
@@ -11,6 +11,8 @@ module Main
 
 imports FortranLex
 imports FortranLexFree
+imports FortranObsolete
+imports FortranExtensions
 
 exports
 
@@ -32,6 +34,7 @@ sorts
   DeclarationConstruct                %% R207
   ExecutionPart                       %% R208
   ExecutionPartConstruct              %% R209
+  BlockExecutionPartConstruct         %% replacement for use in Block to allow FormatStmt, for example
   InternalSubprogramPart              %% R210
   InternalSubprogram                  %% R211
   OtherSpecificationStmt              %% R212
@@ -61,6 +64,7 @@ sorts
   CharConstant                        %% R308
   LblRef                              %% R312
 
+  IncludeStmt                         %% not an actual statement
   OptLabel
 
 %% 4.2 Type parameters
@@ -98,8 +102,8 @@ sorts
   CharLiteralConstant                 %% R423
   LogicalLiteralConstant              %% R424
 
-  NoKindParam OptKindSelector
-  NoKindSelector OptCharSelector NoLengthSelector
+  OptKindSelector IconVal
+  NoKindSelector NoLengthSelector
 
 %% 4.5 Derived types
 
@@ -333,7 +337,7 @@ sorts
   Stride                              %% R622
   VectorSubscript                     %% R623
 
-  OptSectionSubscripts OptStride OptSubscript
+  SectionSubscripts OptSectionSubscripts OptStride OptSubscript
   NoSubstringRange
 
 %% 6.6 Image selectors
@@ -381,22 +385,22 @@ sorts
 
   Primary                             %% R701
 
-                                      %% R702  Level1Expr
+  Level1Expr                          %% R702  Level1Expr
   DefinedUnaryOp                      %% R703
-                                      %% R704  MultOperand
-                                      %% R705  AddOperand
-                                      %% R706  Level2Expr
+  MultOperand                         %% R704  MultOperand
+  AddOperand                          %% R705  AddOperand
+  Level2Expr                          %% R706  Level2Expr
   PowerOp                             %% R707
   MultOp                              %% R708
   AddOp                               %% R709
-                                      %% R710  Level3Expr
+  Level3Expr                          %% R710  Level3Expr
   ConcatOp                            %% R711
-                                      %% R712  Level4Expr
+  Level4Expr                          %% R712  Level4Expr
   RelOp                               %% R713
-                                      %% R714  AndOperand
-                                      %% R715  OrOperand
-                                      %% R716  EquivOperand
-                                      %% R717  Level5Expr
+  AndOperand                          %% R714  AndOperand
+  OrOperand                           %% R715  OrOperand
+  EquivOperand                        %% R716  EquivOperand
+  Level5Expr                          %% R717  Level5Expr
   NotOp                               %% R718
   AndOp                               %% R719
   OrOp                                %% R720
@@ -415,7 +419,7 @@ sorts
   AssignmentStmt                      %% R732
   PointerAssignmentStmt               %% R733
   DataPointerObject                   %% R734
-                                      %% R735  BoundsSpec  %% using BoundsRemapping instead (with no-upper-bounds)
+                                      %% R735  BoundsSpec  %% using BoundsRemapping instead (with no-upper-bound)
   BoundsRemapping                     %% R736
   DataTarget                          %% R737
                                       %% R738  ProcPointerObject  %% removed to fix AMBIGUITY in PointerAssignmentStmt
@@ -576,11 +580,12 @@ sorts
   CloseStmt                           %% R908
   CloseSpec                           %% R909
 
-  IoUnitNoKW FormatNoKW NameListNoKW
+  IoUnitNoKW FormatNoKW
 
 %% 9.6 Data transfer statements
 
   ReadStmt                            %% R910
+  ReadFMTStmt
   WriteStmt                           %% R911
   PrintStmt                           %% R912
   IoControlSpec                       %% R913
@@ -595,7 +600,7 @@ sorts
   IoImpliedDoInput IoImpliedDoOutput
   OptInputItemList OptOutputItemList
   IoControlSpecList OptIoControlSpecList
-  NoStride ReadFormat
+  NoStride FormatSTAR
 
 %% 9.7 Waiting on pending data transfer
 
@@ -651,9 +656,9 @@ sorts
   DecimalEditDesc                     %% R1020
   CharStringEditDesc                  %% R1021
 
-  NoFormatItems NoUnlimitedFormatItem
-  OptE OptM OptR OptW OptVList OptIOType
-  NoD NoE NoR
+  NoFormatItems NoUnlimitedFormatItem FirstSlashEditDesc
+  OptE OptM OptR OptW OptVList NoIOType
+  NoR
 
   MainProgram                         %% R1101
   ProgramStmt                         %% R1102
@@ -739,7 +744,7 @@ sorts
 %%StmtFunctionStmt                    %% R1243  %% AMBIGUOUS with array assignment
 
   NoActualArgSpecList DummyArgList NoDummyArgList OptDummyArgList
-  OptGenericSpec  OptPrefix
+  OptGenericSpec OptPrefix
   NoProcLanguageBindingSpec OptProcLanguageBindingSpec
   NoProcAttrSpecList OptProcAttrSpecList OptProcInterface NoProcPointerInit
   NoProcedureName NoSuffix OptSuffix Result
@@ -751,6 +756,7 @@ sorts
   GenericName ImportName IntrinsicProcedureName
   ProcedureEntityName ResultName NoResultName
   SubroutineName NoSubroutineName OptSubroutineName
+
 
 context-free syntax
 
@@ -804,6 +810,15 @@ context-free syntax
   LblDef                                -> OptLabel
   % empty %                             -> OptLabel         {cons("no-label")}
 
+%% Include line (not an actual statement; label not allowed)
+%%
+  'INCLUDE' CharLiteralConstant      EOS -> IncludeStmt     {cons("IncludeStmt")}
+
+  IncludeStmt                            -> ProgramUnit           %% allows before/after a program-unit
+  IncludeStmt                            -> DeclarationConstruct  {prefer}
+  IncludeStmt                            -> ExecutableConstruct
+
+
 %%%%%%%%%%
 %% Fortran ISO/IEC 1539:1991 4xx DataTypes
 %%%%%%%%%%
@@ -840,21 +855,28 @@ context-free syntax
 %%
 
 %%R404
-  'INTEGER'            OptKindSelector  -> IntrinsicTypeSpec    {cons("INTEGER")}
-  'REAL'               OptKindSelector  -> IntrinsicTypeSpec    {cons("REAL")}
+  'INTEGER'                             -> IntrinsicTypeSpec    {cons("INTEGER")}    %% FAST term
+  'INTEGER'               KindSelector  -> IntrinsicTypeSpec    {cons("INTEGER")}    %% FAST term
+  'REAL'                                -> IntrinsicTypeSpec    {cons("REAL")}       %% FAST term
+  'REAL'                  KindSelector  -> IntrinsicTypeSpec    {cons("REAL")}       %% FAST term
   'DOUBLE' 'PRECISION'                  -> IntrinsicTypeSpec    {cons("DOUBLEPRECISION")}
-  'COMPLEX'            OptKindSelector  -> IntrinsicTypeSpec    {cons("COMPLEX")}
-  'CHARACTER'          OptCharSelector  -> IntrinsicTypeSpec    {cons("CHARACTER")}
-  'LOGICAL'            OptKindSelector  -> IntrinsicTypeSpec    {cons("LOGICAL")}
+  'COMPLEX'                             -> IntrinsicTypeSpec    {cons("COMPLEX")}    %% FAST term
+  'COMPLEX'               KindSelector  -> IntrinsicTypeSpec    {cons("COMPLEX")}    %% FAST term
+  'CHARACTER'                           -> IntrinsicTypeSpec    {cons("CHARACTER")}  %% FAST term
+  'CHARACTER'             CharSelector  -> IntrinsicTypeSpec    {cons("CHARACTER")}  %% FAST term
+  'LOGICAL'                             -> IntrinsicTypeSpec    {cons("LOGICAL")}    %% FAST term
+  'LOGICAL'               KindSelector  -> IntrinsicTypeSpec    {cons("LOGICAL")}    %% FAST term
   'DOUBLE' 'COMPLEX'                    -> IntrinsicTypeSpec    {cons("DOUBLECOMPLEX")}
 
 %%R405
 %%       expr substituted for scalar-int-constant-expr
 %%       NONSTANDARD: e.g., integer*8 complex*8 complex*16
 %%
-  '(' 'KIND' '=' Expr ')'               -> KindSelector  {cons("KindSelector")}
-  '('            Expr ')'               -> KindSelector  {cons("KindSelector")}
-  '*' Icon                              -> KindSelector  {cons("KindSelector_STAR")}
+  '(' 'KIND' '=' Expr ')'               -> KindSelector  {cons("Kind")}              %% FAST term
+  '('            Expr ')'               -> KindSelector  {cons("Kind")}              %% FAST term
+  '*' IconVal                           -> KindSelector  {cons("Kind")}
+
+  Icon                                  -> IconVal       {cons("IntVal")}            %% FAST term
 
   KindSelector                          -> OptKindSelector
   % empty %                             -> OptKindSelector  {cons("no-kind")}
@@ -865,13 +887,11 @@ context-free syntax
   Sign IntLiteralConstant            -> SignedIntLiteralConstant  {cons("SignedIntLiteralConstant")}
 
 %%R407
-  DigitString   NoKindParam             -> IntLiteralConstant  {cons("IntLiteralConstant")}
-  DigitString '_' KindParam             -> IntLiteralConstant  {cons("IntLiteralConstant")}
-
-  % empty %                             -> NoKindParam         {cons("no-kind")}
+  DigitString                           -> IntLiteralConstant  {cons("IntVal")}      %% FAST term
+  DigitString '_' KindParam             -> IntLiteralConstant  {cons("IntVal")}      %% FAST term
 
 %%R408
-  DigitString NoKindParam               -> KindParam           {cons("IntLiteralConstant")}
+  DigitString                           -> KindParam           {cons("IntVal")}      %% FAST term
   ScalarIntConstantName                 -> KindParam           {cons("VarRef")}
 
   Ident                                 -> ScalarIntConstantName
@@ -892,8 +912,8 @@ context-free syntax
   Sign RealLiteralConstant              -> SignedRealLiteralConstant  {cons("SignedRealLiteralConstant")}
 
 %%R413
-  Rcon   NoKindParam                    -> RealLiteralConstant        {cons("RealLiteralConstant")}
-  Rcon '_' KindParam                    -> RealLiteralConstant        {cons("RealLiteralConstant")}
+  Rcon                                  -> RealLiteralConstant        {cons("RealVal")}  %% FAST term
+  Rcon '_' KindParam                    -> RealLiteralConstant        {cons("RealVal")}  %% FAST term
 
 %%R414 significand     - lex
 
@@ -924,30 +944,27 @@ context-free syntax
   '(' 'KIND' '=' Expr ',' 'LEN' '=' TypeParamValue   ')'       -> CharSelector     {cons("CharSelector_KIND_LEN")}
   '(' 'KIND' '=' Expr               NoLengthSelector ')'       -> CharSelector     {cons("CharSelector_KIND_LEN")}
 
-  % empty %                                                    -> NoLengthSelector {cons("no-length-selector")}
-
-  CharSelector                                                 -> OptCharSelector
-  % empty %                                                    -> OptCharSelector  {cons("no-char-selector")}
+  % empty %                                                    -> NoLengthSelector {cons("no-char-length")}
 
 %%R421
-  '(' 'LEN' '=' TypeParamValue ')'                             -> LengthSelector  {cons("LengthSelector")}
-  '('           TypeParamValue ')'                             -> LengthSelector  {cons("LengthSelector")}
-  '*' CharLength ','                                           -> LengthSelector  {cons("LengthSelector_STAR")}
-  '*' CharLength                                               -> LengthSelector  {cons("LengthSelector_STAR")}
+  '(' 'LEN' '=' TypeParamValue ')'                             -> LengthSelector  {cons("length-selector")}
+  '('           TypeParamValue ')'                             -> LengthSelector  {cons("length-selector")}
+  '*' CharLength ','                                           -> LengthSelector  {cons("length-selector")}
+  '*' CharLength                                               -> LengthSelector  {cons("length-selector")}
 
 %%R422
-  '(' TypeParamValue ')'                                       -> CharLength      {cons("CharLength")}
-  Icon                                                         -> CharLength
+  '(' TypeParamValue ')'                                       -> CharLength      {cons("char-length")}
+  Icon                                                         -> CharLength      {cons("IntVal")}  %% FAST term
 
 %%R423
   KindParam '_' Scon                    -> CharLiteralConstant     {cons("CharLiteralConstant")}
                 Scon                    -> CharLiteralConstant
 
 %%R424
-  '.TRUE.'      NoKindParam             -> LogicalLiteralConstant  {cons("TRUE")}
-  '.TRUE.'  '_'   KindParam             -> LogicalLiteralConstant  {cons("TRUE")}
-  '.FALSE.'     NoKindParam             -> LogicalLiteralConstant  {cons("FALSE")}
-  '.FALSE.' '_'   KindParam             -> LogicalLiteralConstant  {cons("FALSE")}
+  '.TRUE.'                              -> LogicalLiteralConstant  {cons("TRUE")}   %% FAST term
+  '.TRUE.'  '_'   KindParam             -> LogicalLiteralConstant  {cons("TRUE")}   %% FAST term
+  '.FALSE.'                             -> LogicalLiteralConstant  {cons("FALSE")}  %% FAST term
+  '.FALSE.' '_'   KindParam             -> LogicalLiteralConstant  {cons("FALSE")}  %% FAST term
 
 
 %% 4.5 Derived types
@@ -1050,7 +1067,7 @@ context-free syntax
 
   Ident                                       -> ComponentName
 
-  '(' ComponentArraySpec ')'                  -> OptComponentArraySpec     {cons("opt-component-array-spec")}
+  '(' ComponentArraySpec ')'                  -> OptComponentArraySpec     {cons("ArraySpec")}
   ComponentInitialization                     -> OptComponentInitialization
 
   % empty %                                   -> OptComponentArraySpec     {cons("no-list")}
@@ -1073,9 +1090,9 @@ context-free syntax
   AccessSpec                                  -> ProcComponentAttrSpec
 
 %%R442
-  '=' Expr                                    -> ComponentInitialization   {cons("ComponentInit")}
-  '=>' NullInit                               -> ComponentInitialization   {cons("ComponentPointerInit")}
-  '=>' InitialDataTarget                      -> ComponentInitialization   {cons("ComponentPointerInit")}
+  '=' ConstantExpr       -> ComponentInitialization  {cons("Init")}
+  '=>' NullInit          -> ComponentInitialization  {cons("PointerInit")}
+%%'=>' InitialDataTarget -> ComponentInitialization  {cons("PointerInit")}  %%AMBIGUOUS with FunctionReference in NullInit
 
 %%R443
   Designator                                  -> InitialDataTarget
@@ -1136,7 +1153,7 @@ context-free syntax
   AccessSpec                                       -> BindingAttr
 
   Ident                                            -> ArgName
-  % empty %                                        -> NoArgName               {cons("no-arg-name")}
+  % empty %                                        -> NoArgName               {cons("no-name")}
 
 %%452
   OptLabel 'FINAL' '::' {FinalSubroutineName ','}+ EOS -> FinalProcedureStmt  {cons("FinalProcedureStmt")}
@@ -1198,9 +1215,9 @@ context-free syntax
 %%
 
 %%R463
-  BinaryConstant                                   -> BozLiteralConstant      {cons("BozLiteralConstant_BC")}
-  OctalConstant                                    -> BozLiteralConstant      {cons("BozLiteralConstant_OC")}
-  HexConstant                                      -> BozLiteralConstant      {cons("BozLiteralConstant_HC")}
+  BinaryConstant                                   -> BozLiteralConstant      {cons("BinVal")}
+  OctalConstant                                    -> BozLiteralConstant      {cons("OctVal")}
+  HexConstant                                      -> BozLiteralConstant      {cons("HexVal")}
 
 %%R464
 %% BinaryConstant - lex
@@ -1314,8 +1331,8 @@ context-free syntax
 
   Ident                                                 -> ObjectName
 
-  '(' ArraySpec   ')'                                   -> OptArraySpec      {cons("opt-array-spec")}
-  '[' CoarraySpec ']'                                   -> OptCoarraySpec    {cons("opt-coarray-spec")}
+  '(' ArraySpec   ')'                                   -> OptArraySpec      {cons("ArraySpec")}
+  '[' CoarraySpec ']'                                   -> OptCoarraySpec    {cons("CoarraySpec")}
   '*' CharLength                                        -> OptCharLength     {cons("opt-char-length")}
   Initialization                                        -> OptInitialization
 
@@ -1328,12 +1345,12 @@ context-free syntax
 %%Name - lex
 
 %%R505
-  '='   ConstantExpr                                    -> Initialization  {cons("Init")}
-  '=>'  NullInit                                        -> Initialization  {cons("PointerInit")}
-  '=>'  InitialDataTarget                               -> Initialization  {cons("PointerInit")}
+  '='   ConstantExpr       -> Initialization  {cons("Init")}
+  '=>'  NullInit           -> Initialization  {cons("PointerInit")}
+%%'=>'  InitialDataTarget  -> Initialization  {cons("PointerInit")} %%AMBIGUOUS with FunctionReference in NullInit
 
 %%R506
-  FunctionReference                                     -> NullInit        {cons("NullInit")}
+  FunctionReference                                     -> NullInit
 
 
 %% 5.3 Attributes
@@ -1351,7 +1368,7 @@ context-free syntax
   ',' 'NAME' '=' Scon                                   -> LanguageBindingName  {cons("BindingName")}
 
   LanguageBindingName                                   -> OptLanguageBindingName
-  % empty %                                             -> OptLanguageBindingName {cons("no-binding-name")}
+  % empty %                                             -> OptLanguageBindingName {cons("no-name")}
 
 %%R509
   {DeferredCoshapeSpec ','}+           -> CoarraySpec
@@ -1411,8 +1428,8 @@ context-free syntax
 %%R521
 %%AMB: explicit-shape-spec list made non-empty to remove ambiguity with implied-shape-spec-list
 %%
-  {ExplicitShapeSpec ','}+ ',' '*'                 -> AssumedSizeSpec    {cons("AssumedSize")}
-  {ExplicitShapeSpec ','}+ ',' LowerBound ':' '*'  -> AssumedSizeSpec    {cons("AssumedSize")}
+  {ExplicitShapeSpec ','}+ ',' NoLowerBound     '*'  -> AssumedSizeSpec    {cons("AssumedSize")}
+  {ExplicitShapeSpec ','}+ ','   LowerBound ':' '*'  -> AssumedSizeSpec    {cons("AssumedSize")}
 
 %%R522a
   '..'                                          -> AssumedRankSpec       {cons("AssumedRank")}
@@ -1512,8 +1529,10 @@ context-free syntax
 %%         Icon substituted for scalar-int-constant
 %%         int-constant-subobject substituted for scalar-int-constant-subobject
 %%
-  Icon                                                      ->   DataStmtRepeat
-  IntConstantSubobject                                      ->   DataStmtRepeat
+%% FIXME - breaks Main.rtg creation
+%%
+  Icon                                                      ->   DataStmtRepeat {cons("DataStmtRepeat")}
+  IntConstantSubobject                                      ->   DataStmtRepeat {cons("DataStmtRepeat")}
   % empty %                                                 -> NoDataStmtRepeat {cons("no-repeat")}
 
 %%R542
@@ -1529,9 +1548,9 @@ context-free syntax
   ConstantSubobject                                         -> DataStmtConstant
   SignedIntLiteralConstant                                  -> DataStmtConstant
   SignedRealLiteralConstant                                 -> DataStmtConstant
-%%NullInit                                                  -> DataStmtConstant  %%AMBIGUOUS with StructureConstructure
-%%InitialDataTarget                                         -> DataStmtConstant  %%AMBIGUOUS with ConstantSubobject
-  StructureConstructor                                      -> DataStmtConstant
+%%NullInit                                                  -> DataStmtConstant %%AMBIGUOUS with ConstantSubobject
+%%InitialDataTarget                                         -> DataStmtConstant %%AMBIGUOUS with ConstantSubobject
+%%StructureConstructor                                      -> DataStmtConstant %%AMBIGUOUS with ConstantSubobject
 
 %%R543
   ConstantSubobject                                         -> IntConstantSubobject
@@ -1651,7 +1670,7 @@ context-free syntax
 %%Substring        %% Ambiguous - included in variable
 
 %%R568
-  OptLabel 'COMMON' CommonBlockEntry1 CommonBlockEntry*  EOS -> CommonStmt  {cons("common-stmt")}
+  OptLabel 'COMMON' CommonBlockEntry1 CommonBlockEntry*  EOS -> CommonStmt  {cons("CommonStmt")}
 
    '/' OptCommonBlockName '/' {CommonBlockObject ','}+       -> CommonBlockEntry1    {cons("CommonBlockEntry")}
                    NoName     {CommonBlockObject ','}+       -> CommonBlockEntry1    {cons("CommonBlockEntry")}
@@ -1660,7 +1679,7 @@ context-free syntax
        '/' OptCommonBlockName '/' {CommonBlockObject ','}+   -> CommonBlockEntry     {cons("CommonBlockEntry")}
 
   %% NOTE - keep this constructor for printing '/' '/'
-  CommonBlockName                                            -> OptCommonBlockName   {cons("CommonBlockName")}
+  CommonBlockName                                            -> OptCommonBlockName
   % empty %                                                  -> OptCommonBlockName   {cons("no-name")}
   Ident                                                      -> CommonBlockName
 
@@ -1689,6 +1708,7 @@ context-free syntax
 
 %%  ObjectName
 %%  CoindexedNamedObject
+
   DataRef                              -> Designator
   Substring                            -> Designator
 
@@ -1733,20 +1753,33 @@ context-free syntax
 %%
 
 %%608
-  ParentString '(' SubstringRange ')'  -> Substring        {cons("Substring")}
+%% AMBIGUOUS
+%%
+%% Substring is ambiguous with PartRef unless ParentString is an array,
+%% e.g., B(1)(1:5), from Note 6.2.  Explicitly catch this case so that it can
+%% be parsed.  Other substrings will appear as part-refs and will have to be
+%% fixed in later phase.
+
+%% AMBIGUOUS - Substring preferred but could be a DataRef
+%%
+  ParentString '(' SubstringRange ')'      -> Substring      {cons("Substring")}
 
 %%609
 %% AMBIGUOUS
-%%      constant substituted for scalar-constant
+%%      CharLiteralConstant substituted scalar-constant
 %%      structure-component substituted for scalar-structure-component
 %%
-  ScalarVariableName                   -> ParentString     {reject}  %% AMBIGUOUS with StructureComponent
-  ArrayElement                         -> ParentString     {reject}  %% AMBIGUOUS with StructureComponent
-  CoindexedNamedObject                 -> ParentString     {reject}  %% AMBIGUOUS with StructureComponent
-  StructureComponent                   -> ParentString
-  Constant                             -> ParentString
+%%  ScalarVariableName                     -> ParentString   {reject}  %% AMBIGUOUS with StructureComponent
+%%  ArrayElement                           -> ParentString   {reject}  %% AMBIGUOUS with StructureComponent
+%%  CoindexedNamedObject                   -> ParentString   {reject}  %% AMBIGUOUS with StructureComponent
+%%  StructureComponent                     -> ParentString   {reject}  %% AMBIGUOUS with with PartRef
 
-  Ident                                -> ScalarVariableName                 {cons("VarRef")}
+%%DataRef                                  -> ParentString
+  CharLiteralConstant                      -> ParentString
+
+  '(' {SectionSubscript ','}+ ')'          -> SectionSubscripts   {cons("paren-list")}
+
+  Ident                                    -> ScalarVariableName  {cons("VarRef")}
 
 %%R610
 %%      int-expr substituted for scalar-int-expr
@@ -1764,6 +1797,8 @@ context-free syntax
 
   % empty %                                              -> OptSectionSubscripts  {cons("no-section-subscripts")}
   '(' {SectionSubscript ','}+ ')'                        -> OptSectionSubscripts  {cons("paren-list")}
+  '(' {SectionSubscript ','}+ ')' '(' SubstringRange ')' -> OptSectionSubscripts  {cons("substring-section-range")}
+  '(' ')'                                                -> OptSectionSubscripts  {cons("function-ref-no-args")}
 
   Ident                                                  -> PartName
 
@@ -1778,7 +1813,7 @@ context-free syntax
   Designator '%' 'IM'                                    -> ComplexPartDesignator {cons("ComplexPartDesignator_IM")}
 
 %%R616
-  Designator '%' TypeParamName                           -> TypeParamInquiry     {cons("TypeParamInquiry")}
+  Designator '%' TypeParamName                           -> TypeParamInquiry      {cons("TypeParamInquiry")}
 
 
 %% 6.5 Arrays
@@ -1808,6 +1843,9 @@ context-free syntax
 %%VectorSubscript                                        -> SectionSubscript     %%AMBIGUOUS with Subscript
 %%
 %%TODO-F08 - need to add keyword arguments so that his can stand in for actual args in FunctionReference
+  Keyword '=' ActualArg                                  -> SectionSubscript     {cons("ActualArgSpec")}
+  AltReturnSpec                                          -> SectionSubscript
+
 
 %%R621
   OptSubscript ':' OptSubscript OptStride                -> SubscriptTriplet     {cons("Triplet")}
@@ -1830,6 +1868,7 @@ context-free syntax
 %%R624
   '[' {Cosubscript ','}+ ']'                             -> ImageSelector        {cons("ImageSelector")}
   ImageSelector                                          -> OptImageSelector
+  ImageSelector '(' SubstringRange ')'                   -> OptImageSelector     {cons("substring-section-range")}
   % empty %                                              -> OptImageSelector     {cons("no-image-selector")}
 
 %%625
@@ -1955,7 +1994,7 @@ context-free syntax
 %%R310
 %% Keep for now for disambiguation
 %%
-  DefinedUnaryOp                -> DefinedOperator
+  DefinedUnaryOp                -> DefinedOperator {prefer} %% AMBIGUOUS both unary and binary are DOP
   DefinedBinaryOp               -> DefinedOperator
   ExtendedIntrinsicOp           -> DefinedOperator
 
@@ -1964,35 +2003,44 @@ context-free syntax
 
 %%R701
   Constant                      -> Primary
-  Designator                    -> Primary
+  Designator                    -> Primary  {prefer}        %% AMBIGUOUS prefer over FunctionReference
   ArrayConstructor              -> Primary
-  StructureConstructor          -> Primary
-%%FunctionReference             -> Primary  {reject}        %% AMBIGUOUS > Designator - TODO: need ActualArgSpec with keyword
+%%StructureConstructor          -> Primary                  %% AMBIGUOUS with FunctionReference
+%%FunctionReference             -> Primary
 %%TypeParamInquiry              -> Primary  {reject}        %% AMBIGUOUS > Designator
 %%TypeParamName                 -> Primary  {reject}        %% AMBIGUOUS > Designator
   '(' Expr ')'                  -> Primary  {cons("Parens")}
 
-%%TODO-DELETE   Scon                          -> Primary          {cons("PrimaryScon")}
-%%TODO-DELETE   UnsignedArithmeticConstant    -> Primary          {cons("ConstExpr")}
-%%TODO- needed to resolve ambiguity? DataRef
-%%TODO ???????  ArrayConstructor              -> SFPrimary
+
+%% 7.1.2.3 Level-1 expressions
+%%
 
 %%R702
-%%DefinedUnaryOp? Primary                  -> Level1Expr      {cons("Level1Expr")}
+  Primary                                  -> Level1Expr
+  DefinedUnaryOp Primary                   -> Level1Expr      {cons("DefUnaryExpr")}
 
 %%R703
   Dop                                      -> DefinedUnaryOp
 
+
+%% 7.1.2.4 Level-2 expressions
+%%
+
 %%R704
-%%Level1Expr (PowerOp MultOperand)?        -> MultOperand     {cons("MultOperand")}
+  Level1Expr                               -> MultOperand
+  Level1Expr '**' MultOperand              -> MultOperand     {cons("Power")}
 
 %%R705
-%%(AddOperand MultOp)? MultOperand         -> AddOperand      {cons("AddOperand")}
+  MultOperand                              -> AddOperand
+  AddOperand '*' MultOperand               -> AddOperand      {cons("Mult")}
+  AddOperand '/' MultOperand               -> AddOperand      {cons("Div")}
 
-%%R706 % ELI: "We need to distinguish unary operators" SDF: ambig on "-2" on next 2 lines 
-%%TODO-F08: is this still true?
 %%R706
-%%(Level2Expr? AddOp)? AddOperand          -> Level2Expr      {cons("Level2Expr")}
+  AddOperand                               -> Level2Expr
+             '+' AddOperand                -> Level2Expr      {cons("UnaryPlus"),  prefer}
+             '-' AddOperand                -> Level2Expr      {cons("UnaryMinus"), prefer}
+  Level2Expr '+' AddOperand                -> Level2Expr      {cons("Plus")}
+  Level2Expr '-' AddOperand                -> Level2Expr      {cons("Minus")}
 
 %%R707
   '**'                                     -> PowerOp         {cons("PowerOp")}
@@ -2005,14 +2053,36 @@ context-free syntax
   '+'                                      -> AddOp           {cons("PLUS")}
   '-'                                      -> AddOp           {cons("MINUS")}
 
+
+%% 7.1.2.5 Level-3 expressions
+%%
+
 %%R710
-%%(Level3Expr ConcatOp)? Level2Expr        -> Level3Expr      {cons("Level3Expr")}
+  Level2Expr                               -> Level3Expr
+  Substring  '//' Level2Expr               -> Level3Expr      {cons("Concat"), prefer}
+  Level3Expr '//' Level2Expr               -> Level3Expr      {cons("Concat")}
 
 %%R711
   '//'                                     -> ConcatOp        {cons("ConcatOp")}
 
+
+%% 7.1.2.6 Level-4 expressions
+%%
+
 %%R712
-%%(Level3Expr RelOp)? Level3Expr           -> Level4Expr      {cons("Level4Expr")}
+  Level3Expr                               -> Level4Expr
+  Level3Expr '.EQ.' Level3Expr             -> Level4Expr      {cons("EQ")}
+  Level3Expr '.NE.' Level3Expr             -> Level4Expr      {cons("NE")}
+  Level3Expr '.LT.' Level3Expr             -> Level4Expr      {cons("LT")}
+  Level3Expr '.LE.' Level3Expr             -> Level4Expr      {cons("LE")}
+  Level3Expr '.GT.' Level3Expr             -> Level4Expr      {cons("GT")}
+  Level3Expr '.GE.' Level3Expr             -> Level4Expr      {cons("GE")}
+  Level3Expr  '=='  Level3Expr             -> Level4Expr      {cons("EQ")}
+  Level3Expr  '/='  Level3Expr             -> Level4Expr      {cons("NE")}
+  Level3Expr  '<'   Level3Expr             -> Level4Expr      {cons("LT")}
+  Level3Expr  '<='  Level3Expr             -> Level4Expr      {cons("LE")}
+  Level3Expr  '>'   Level3Expr             -> Level4Expr      {cons("GT")}
+  Level3Expr  '>='  Level3Expr             -> Level4Expr      {cons("GE")}
 
 %%R713
   '.EQ.'                                   -> RelOp           {cons("RelOp_EQ")}
@@ -2028,17 +2098,26 @@ context-free syntax
   '>'                                      -> RelOp           {cons("RelOp_GT")}
   '>='                                     -> RelOp           {cons("RelOp_GE")}
 
+
+%% 7.1.2.7 Level-5 expressions
+%%
+
 %%R714
-%%NotOp? Level4Expr                        -> AndOperand      {cons("AndOperand")}
+  Level4Expr                               -> AndOperand
+  '.NOT.' Level4Expr                       -> AndOperand      {cons("NOT")}
 
 %%R715
-%%(OrOperand AndOp)? AndOperand            -> OrOperand       {cons("OrOperand")}
+  AndOperand                               -> OrOperand
+  OrOperand '.AND.' AndOperand             -> OrOperand       {cons("AND")}
 
 %%R716
-%%(EquivOperand OrOp)? OrOperand           -> EquivOperand    {cons("EquivOperand")}
+  OrOperand                                -> EquivOperand
+  EquivOperand '.OR.' OrOperand            -> EquivOperand    {cons("OR")}
 
 %%R717
-%%(Level5Expr EquivOp)? EquivOperand       -> Level5Expr      {cons("Level5Expr")}
+  EquivOperand                             -> Level5Expr
+  Level5Expr '.EQV.'  EquivOperand         -> Level5Expr      {cons("EQV")}
+  Level5Expr '.NEQV.' EquivOperand         -> Level5Expr      {cons("NEQV")}
 
 %%R718
   '.NOT.'                                  -> NotOp           {cons("NotOp")}
@@ -2054,22 +2133,24 @@ context-free syntax
   '.NEQV.'                                 -> EquivOp         {cons("EquivOp_NEQV")}
 
 %%R722
-%%TODO-short circuit the expr nonsense above and make it more sensible
-%%( Expr DefinedBinaryOp )? Level5Expr     -> Expr            {cons("Expr")}
+  Level5Expr                               -> Expr
+  Expr DefinedBinaryOp Level5Expr          -> Expr            {cons("DefBinExpr")}
 
-Primary                                    -> Expr
+%% Try using the standard mechanism for priority to see if ambiguities can be fixed easier.
+%%
+%%Primary                                  -> Expr
 
 %%R723
   Dop                                      -> DefinedBinaryOp
-
-%%TODO - what to do about this
-%%R725-R734 chain rule deleted
 
 %%R724
   Expr                                     -> LogicalExpr
 
 %%R725
   Expr                                     -> DefaultCharExpr
+  IntLiteralConstant                       -> DefaultCharExpr  {reject}  %% Fixes AMBIGUOUS IoControlSpecList
+  ComplexLiteralConstant                   -> DefaultCharExpr  {reject}  %% Fixes AMBIGUOUS IoControlSpecList
+  "(" IntLiteralConstant ")"               -> DefaultCharExpr  {reject}  %% Fixes AMBIGUOUS Format
 
 %%R726
   Expr                                     -> IntExpr
@@ -2092,12 +2173,18 @@ Primary                                    -> Expr
   IntExpr                                  -> IntConstantExpr
 
 %%R732
-  OptLabel Variable '=' Expr           EOS -> AssignmentStmt  {cons("AssignmentStmt")}
+%% AMBIGUOUS - Substring preferred but could be a DataRef, also prefer FunctionReferences over arrays
+%%
+%%  OptLabel Substring '=' Expr               EOS -> AssignmentStmt  {cons("AssignmentStmt"), prefer}
+%%  OptLabel DataRef   '=' Expr               EOS -> AssignmentStmt  {cons("AssignmentStmt")}
+%%  OptLabel DataRef   '=' FunctionReference  EOS -> AssignmentStmt  {cons("AssignmentStmt"), prefer}
+%%  OptLabel DataRef   '=' Substring          EOS -> AssignmentStmt  {cons("AssignmentStmt"), prefer}
+    OptLabel Variable  '=' Expr               EOS -> AssignmentStmt  {cons("AssignmentStmt")}
 
 %%R733
   OptLabel DataPointerObject OptBoundsRemappingList
                              '=>' DataTarget       EOS -> PointerAssignmentStmt  {cons("PointerAssignmentStmt")}
-%%OptLabel ProcPointerObject '=>' ProcTarget       EOS -> PointerAssignmentStmt  {reject} %% AMBIGUOUS
+%%OptLabel ProcPointerObject '=>' ProcTarget       EOS -> PointerAssignmentStmt  %% AMBIGUOUS
 
   '(' {BoundsRemapping ','}+ ')'                       -> OptBoundsRemappingList {cons("paren-list")}
   % empty %                                            -> OptBoundsRemappingList {cons("no-list")}
@@ -2109,17 +2196,17 @@ Primary                                    -> Expr
   Variable '%'   DataPointerComponentName               -> DataPointerObject  {cons("DataPointerObject")}
 
   Ident                                                 -> DataPointerComponentName
-  % empty %                                             -> NoDataPointerComponentName {cons("no-component-name")}
+  % empty %                                             -> NoDataPointerComponentName {cons("no-name")}
 
 %%R735
-%% NOTE - replaced by BoundsRemapping with no-upper-bounds
+%% NOTE - replaced by BoundsRemapping with no-upper-bound
 %%LowerBoundExpr ':'                                    -> BoundsSpec         {cons("BoundsSpec")}
 
 %%R736
   LowerBoundExpr ':' NoUpperBoundExpr                   -> BoundsRemapping    {cons("BoundsRemapping")}
   LowerBoundExpr ':' UpperBoundExpr                     -> BoundsRemapping    {cons("BoundsRemapping")}
 
-  % empty %                                             -> NoUpperBoundExpr   {cons("no-upper-bounds")}
+  % empty %                                             -> NoUpperBoundExpr   {cons("no-upper-bound")}
 
 %%R737
 %%       Variable changed to Expr to include ProcTarget
@@ -2178,8 +2265,8 @@ Primary                                    -> Expr
 
   Ident                                            -> WhereConstructName
 
-  WhereConstructName ':'                           -> OptWhereConstructName          {cons("where-construct-name-colon")}
-  % empty %                                        -> OptWhereConstructName          {cons("no-name")}
+  WhereConstructName ':'                           -> OptWhereConstructName  {cons("where-construct-name")}
+  % empty %                                        -> OptWhereConstructName  {cons("no-name")}
 
 %%R744
   WhereAssignmentStmt                              -> WhereBodyConstruct
@@ -2187,8 +2274,6 @@ Primary                                    -> Expr
   WhereConstruct                                   -> WhereBodyConstruct
 
 %%R745
-%%TODO-F08 - make it so label can't be part of assignment-stmt
-%%
   AssignmentStmt                                   -> WhereAssignmentStmt
 
 %%R746
@@ -2197,17 +2282,17 @@ Primary                                    -> Expr
 %%R747
 %%       Ident substituted for where-construct-name
 %%
-  OptLabel 'ELSEWHERE' '(' MaskExpr ')'
-                            WhereConstructName EOS -> MaskedElsewhereStmt {cons("MaskedElsewhereStmt")}
-  OptLabel 'ELSEWHERE' '(' MaskExpr ')' NoName EOS -> MaskedElsewhereStmt {cons("MaskedElsewhereStmt")}
+  OptLabel 'ELSE' 'WHERE' '(' MaskExpr ')'
+                               WhereConstructName EOS -> MaskedElsewhereStmt {cons("MaskedElsewhereStmt")}
+  OptLabel 'ELSE' 'WHERE' '(' MaskExpr ')' NoName EOS -> MaskedElsewhereStmt {cons("MaskedElsewhereStmt")}
 
 %%R748
-  OptLabel 'ELSEWHERE' WhereConstructName      EOS -> ElsewhereStmt       {cons("ElsewhereStmt")}
-  OptLabel 'ELSEWHERE'             NoName      EOS -> ElsewhereStmt       {cons("ElsewhereStmt")}
+  OptLabel 'ELSE' 'WHERE' WhereConstructName      EOS -> ElsewhereStmt       {cons("ElsewhereStmt")}
+  OptLabel 'ELSE' 'WHERE'             NoName      EOS -> ElsewhereStmt       {cons("ElsewhereStmt")}
 
 %%R749
-  OptLabel 'END' 'WHERE' WhereConstructName    EOS -> EndWhereStmt        {cons("EndWhereStmt")}
-  OptLabel 'END' 'WHERE'             NoName    EOS -> EndWhereStmt        {cons("EndWhereStmt")}
+  OptLabel 'END' 'WHERE' WhereConstructName       EOS -> EndWhereStmt        {cons("EndWhereStmt")}
+  OptLabel 'END' 'WHERE'             NoName       EOS -> EndWhereStmt        {cons("EndWhereStmt")}
 
 %%R750
   ForallConstructStmt
@@ -2306,58 +2391,6 @@ Primary                                    -> Expr
 %%  '(' Expr ')'                                  -> SFPrimary
 
 
-context-free priorities
-
-%% See Clause 7.1.3 for precedence of operators
-
-%% defined-unary-op has highest priority followed by **
-%%
-    DefinedUnaryOp Expr   -> Expr {cons("DefUnaryExpr")}
-  >
-    Expr '**' Expr        -> Expr {cons("Power"), right}
-  >
-  { left:
-    Expr '*' Expr       -> Expr {cons("Mult"), left}
-    Expr '/' Expr       -> Expr {cons("Div"),  left}
-  }
-  >
-  {
-    '+' Expr            -> Expr {cons("UnaryPlus")}
-    '-' Expr            -> Expr {cons("UnaryMinus")}
-  }
-  >
-  { left:
-    Expr '+'  Expr      -> Expr {cons("Plus"),  left}
-    Expr '-'  Expr      -> Expr {cons("Minus"), left}
-  }
-  > Expr '//' Expr      -> Expr {cons("Concat"), left}
-  >
-  { left:
-    Expr '.EQ.' Expr    -> Expr {cons("EQ"), left}
-    Expr '.NE.' Expr    -> Expr {cons("NE"), left}
-    Expr '.LT.' Expr    -> Expr {cons("LT"), left}
-    Expr '.LE.' Expr    -> Expr {cons("LE"), left}
-    Expr '.GT.' Expr    -> Expr {cons("GT"), left}
-    Expr '.GE.' Expr    -> Expr {cons("GE"), left}
-    Expr '=='   Expr    -> Expr {cons("EQ"), left}
-    Expr '/='   Expr    -> Expr {cons("NE"), left}
-    Expr '<'    Expr    -> Expr {cons("LT"), left}
-    Expr '<='   Expr    -> Expr {cons("LE"), left}
-    Expr '>'    Expr    -> Expr {cons("GT"), left}
-    Expr '>='   Expr    -> Expr {cons("GE"), left}
-  }
-  >      '.NOT.' Expr   -> Expr {cons("NOT")}
-  > Expr '.AND.' Expr   -> Expr {cons("AND"), left}
-  > Expr '.OR.'  Expr   -> Expr {cons("OR"),  left}
-  >
-  { left:
-    Expr '.EQV.'  Expr  -> Expr {cons("EQV"),  left}
-    Expr '.NEQV.' Expr  -> Expr {cons("NEQV"), left}
-  }
-%%
-%% defined-binary-op has lowest priority
-  > Expr DefinedBinaryOp Expr -> Expr {cons("DefBinExpr"), left}
-
 
 context-free syntax
       
@@ -2369,7 +2402,7 @@ context-free syntax
 %%
 
 %%R801
-  ExecutionPartConstruct*                               -> Block              {cons("Block")}
+  BlockExecutionPartConstruct*                          -> Block              {cons("Block")}
 
 %%R802
   AssociateStmt
@@ -2629,7 +2662,6 @@ context-free syntax
 
   TypeGuardStmt Block                                   -> TypeGuardStmtAndBlock {cons("TypeGuardStmtBlock")}
 
-
 %%R847
   OptLabel SelectConstructName ':'
   'SELECT' 'TYPE' '(' OptAssociateName Selector ')' EOS -> SelectTypeStmt        {cons("SelectTypeStmt")}
@@ -2748,10 +2780,6 @@ context-free syntax
 %%
   Variable                                              -> LockVariable
 
-%% Deleted Statements
-%%
-  OptLabel 'PAUSE' OptStopCode                      EOS -> PauseStmt            {cons("PauseStmt")}
-
 
 %%%%%%%%%%
 %% Fortran ISO/IEC 1539:1991 section R9xx Input/Output Statements
@@ -2809,7 +2837,7 @@ context-free syntax
   'ROUND'        '='  DefaultCharExpr            -> ConnectSpec   {cons("ROUND")}
   'SIGN'         '='  DefaultCharExpr            -> ConnectSpec   {cons("SIGN")}
   'STATUS'       '='  DefaultCharExpr            -> ConnectSpec   {cons("STATUS")}
-%%'TEAM'         '='  ImageTeam          %%TODO - is this in standard for F08?
+%%'TEAM'         '='  ImageTeam          %%TODO - F2015
 
 %%R906
 %%           default-char-expr substituted for scalar-default-char-expr
@@ -2837,10 +2865,12 @@ context-free syntax
 %%
 
 %%910
-  OptLabel 'READ' '(' IoControlSpecList ')' {InputItem ','}*    EOS -> ReadStmt   {cons("ReadStmt")}
-  OptLabel 'READ' ReadFormat                OptInputItemList    EOS -> ReadStmt   {cons("ReadStmt")}
+  OptLabel 'READ' '(' IoControlSpecList ')' {InputItem ','}*    EOS -> ReadStmt         {cons("ReadStmt")}
+  OptLabel 'READ' '(' Format ')'                                EOS -> ReadFMTStmt      {reject} %% fixes issue-37
+  OptLabel 'READ' Format                    OptInputItemList    EOS -> ReadFMTStmt      {cons("ReadFMTStmt")}
 
-  Format                                                            -> ReadFormat {cons("read-format")}
+  ',' {InputItem ','}+                                              -> OptInputItemList {cons("comma-list")}
+  % empty %                                                         -> OptInputItemList {cons("no-list")}
 
 %%R911
   OptLabel 'WRITE' '(' IoControlSpecList ')' {OutputItem ','}*  EOS -> WriteStmt  {cons("WriteStmt")}
@@ -2851,9 +2881,11 @@ context-free syntax
 %%R913
 %%     default-char-expr substituted for scalar-default-char-expr
 %%
-%%     io-unit                       must be first and second (without {UNIT}=)
+%%     io-unit                       must be first            (without {UNIT}=)
 %%     io-unit and format            must be first and second (without {UNIT,FMT}=)
 %% or  io-unit and NamelistGroupName must be first and second (without {UNIT,NML}=)
+%%
+%% thus FMT or NML without specifying FMT or NML is ambiguous
 %%
 %%                    IoUnit                      -> IoControlSpec  {cons("UNIT")}
 %%                    Format                      -> IoControlSpec  {cons("FMT")}
@@ -2882,28 +2914,32 @@ context-free syntax
                               {IoControlSpec ','}+  -> IoControlSpecList    {cons("io-control-spec-list")}
   IoUnitNoKW                  OptIoControlSpecList  -> IoControlSpecList    {cons("io-control-spec-list")}
   IoUnitNoKW ',' FormatNoKW   OptIoControlSpecList  -> IoControlSpecList    {cons("io-control-spec-list")}
-  IoUnitNoKW ',' NameListNoKW OptIoControlSpecList  -> IoControlSpecList    {cons("io-control-spec-list")}
+%%IoUnitNoKW ',' NameListNoKW OptIoControlSpecList  -> IoControlSpecList    {cons("io-control-spec-list")}
 
-  ',' {IoControlSpec ','}+                          -> OptIoControlSpecList {cons("a-list")}
+  ',' {IoControlSpec ','}+                          -> OptIoControlSpecList {cons("comma-list")}
   % empty %                                         -> OptIoControlSpecList {cons("no-list")}
 
   IoUnit                                            -> IoUnitNoKW         {cons("UNIT")}
-  Format                                            -> FormatNoKW         {cons("FMT")}
-  NamelistGroupName                                 -> NameListNoKW       {cons("NML")}
+%%Format                                            -> FormatNoKW         {cons("FMT-or-NML")}
+%%NamelistGroupName                                 -> NameListNoKW       {cons("NML")}
+%% replaced FormatNoKW production with 3 following
+  DefaultCharExpr                                   -> FormatNoKW         {cons("FMT-or-NML")}
+  Label                                             -> FormatNoKW         {cons("FMT")}
+  FormatSTAR                                        -> FormatNoKW         {cons("FMT")}
+
+  '*'                                               -> FormatSTAR     {cons("STAR")}
 
 %%R914
   IntVariable                                       -> IdVariable     {cons("IdVariable")}
 
 %%R915
   DefaultCharExpr                                   -> Format
-%%Label                                             -> Format
+  Label                                             -> Format
   '*'                                               -> Format         {cons("STAR")}
 
 %%R916
   Variable                                          -> InputItem
   IoImpliedDoInput                                  -> InputItem
-
-  ',' {InputItem ','}+                              -> OptInputItemList   {cons("comma-list")}
 
 %%R917
   Expr                                              -> OutputItem
@@ -2950,17 +2986,22 @@ context-free syntax
 %% 9.8 File positioning statements
 %%
 
+%% The following four productions (include FlushStmt) are ambiguous.  The first rule in the
+%% productions with FileUnitNumber without parentheses is ambiguous with a FileUnitNumber
+%% within parentheses because ( Expr ) -> Primary {cons(Parens)}.
+%%
+
 %%R924
   OptLabel 'BACKSPACE' FileUnitNumber              EOS -> BackspaceStmt   {cons("backspace-unit-stmt")}
-  OptLabel 'BACKSPACE' '(' {PositionSpec ','}+ ')' EOS -> BackspaceStmt   {cons("BackspaceStmt")}
+  OptLabel 'BACKSPACE' '(' {PositionSpec ','}+ ')' EOS -> BackspaceStmt   {cons("BackspaceStmt"), prefer}
 
 %%R925
   OptLabel 'END' 'FILE' FileUnitNumber             EOS -> EndfileStmt     {cons("endfile-unit-stmt")}
-  OptLabel 'END' 'FILE' '('{PositionSpec ','}+ ')' EOS -> EndfileStmt     {cons("EndfileStmt")}
+  OptLabel 'END' 'FILE' '('{PositionSpec ','}+ ')' EOS -> EndfileStmt     {cons("EndfileStmt"), prefer}
 
 %%R926
   OptLabel 'REWIND' FileUnitNumber                 EOS -> RewindStmt      {cons("rewind-unit-stmt")}
-  OptLabel 'REWIND' '(' {PositionSpec ','}+ ')'    EOS -> RewindStmt      {cons("RewindStmt")}
+  OptLabel 'REWIND' '(' {PositionSpec ','}+ ')'    EOS -> RewindStmt      {cons("RewindStmt"), prefer}
 
 %%R927
                  FileUnitNumber                        -> PositionSpec    {cons("UNIT")}
@@ -2975,7 +3016,7 @@ context-free syntax
 
 %%R928
   OptLabel 'FLUSH' FileUnitNumber                   EOS -> FlushStmt      {cons("flush-unit-stmt")}
-  OptLabel 'FLUSH' '(' {FlushSpec ','}+ ')'         EOS -> FlushStmt      {cons("FlushStmt")}
+  OptLabel 'FLUSH' '(' {FlushSpec ','}+ ')'         EOS -> FlushStmt      {cons("FlushStmt"), prefer}
 
 %%R929
 %%           int-variable substituted for scalar-int-variable
@@ -3014,7 +3055,7 @@ context-free syntax
   'DIRECT'       '='  DefaultCharExpr                  -> InquireSpec  {cons("DIRECT")}
   'ENCODING'     '='  DefaultCharExpr                  -> InquireSpec  {cons("ENCODING")}
   'ERR'          '='  LblRef                           -> InquireSpec  {cons("ERR")}
-  'EXIST '       '='  LogicalVariable                  -> InquireSpec  {cons("EXIST")}
+  'EXIST'        '='  LogicalVariable                  -> InquireSpec  {cons("EXIST")}
   'FORM'         '='  DefaultCharExpr                  -> InquireSpec  {cons("FORM")}
   'FORMATTED'    '='  DefaultCharExpr                  -> InquireSpec  {cons("FORMATTED")}
   'ID'           '='  IntExpr                          -> InquireSpec  {cons("ID")}
@@ -3037,7 +3078,7 @@ context-free syntax
   'SIGN'         '='  DefaultCharExpr                  -> InquireSpec  {cons("SIGN")}
   'SIZE'         '='  IntVariable                      -> InquireSpec  {cons("SIZE")}
   'STREAM'       '='  DefaultCharExpr                  -> InquireSpec  {cons("STREAM")}
-%%'TEAM'         '='  ImageTeam          %%TODO-F08
+%%'TEAM'         '='  ImageTeam          %%TODO-F2015
   'UNFORMATTED'  '='  DefaultCharExpr                  -> InquireSpec  {cons("UNFORMATTED")}  
   'WRITE'        '='  DefaultCharExpr                  -> InquireSpec  {cons("WRITE")}
 
@@ -3067,6 +3108,7 @@ context-free syntax
 
 %%R1003
   FormatItem                                        -> FormatItems          {cons("format-items-first")}
+  FirstSlashEditDesc                                -> FormatItems          {cons("format-items-first")}
   FormatItems ',' FormatItem                        -> FormatItems          {cons("format-items")}
   FormatItems     FormatItem                        -> FormatItems          {cons("format-items")}
 
@@ -3093,11 +3135,12 @@ context-free syntax
   OptR 'EN' IntLiteralConstant  '.' IntLiteralConstant OptE -> DataEditDesc {cons("EN")}
   OptR 'ES' IntLiteralConstant  '.' IntLiteralConstant OptE -> DataEditDesc {cons("ES")}
   OptR 'G'  IntLiteralConstant  '.' IntLiteralConstant OptE -> DataEditDesc {cons("G")}
-  OptR 'G'  IntLiteralConstant  NoD       NoE               -> DataEditDesc {cons("G")}
+  OptR 'G'  IntLiteralConstant                              -> DataEditDesc {cons("GnoDnoE")}
   OptR 'L'  IntLiteralConstant                              -> DataEditDesc {cons("L")}
   OptR 'A'  OptW                                            -> DataEditDesc {cons("A")}
   OptR 'D'  IntLiteralConstant  '.' IntLiteralConstant      -> DataEditDesc {cons("D")}
-  OptR 'DT' OptIOType OptVList                              -> DataEditDesc {cons("DT")}
+  OptR 'DT' CharLiteralConstant OptVList                    -> DataEditDesc {cons("DT"), prefer}  %% otherwise could create an excess FormatItem
+  OptR 'DT' NoIOType            OptVList                    -> DataEditDesc {cons("DT")}
 
   IntLiteralConstant                    -> OptW                 {cons("opt-w")}
   % empty %                             -> OptW                 {cons("no-w")}
@@ -3107,22 +3150,20 @@ context-free syntax
 
   'E' IntLiteralConstant                -> OptE                 {cons("opt-e")}
   % empty %                             -> OptE                 {cons("no-e")}
-  % empty %                             ->  NoE                 {cons("no-e")}
-  % empty %                             ->  NoD                 {cons("no-d")}
 
-  CharLiteralConstant                   -> OptIOType            {cons("opt-iotype")}
-  % empty %                             -> OptIOType            {cons("no-iotype")}
+  % empty %                             -> NoIOType             {cons("no-iotype")}
 
-  '(' {VEditDesc ','}+ ')'              -> OptVList             {cons("paren-list")}
+  '(' {VEditDesc ','}+ ')'              -> OptVList             {cons("VEditDescList")}
   % empty %                             -> OptVList             {cons("no-list")}
 
 %%R1012
-  SignedIntLiteralConstant              -> VEditDesc            {cons("V")}
+  SignedIntLiteralConstant              -> VEditDesc
 
 %%R1013
   PositionEditDesc                      -> ControlEditDesc
-  ',' IntLiteralConstant '/'            -> ControlEditDesc      {cons("SLASH")}
-  NoR '/'                               -> ControlEditDesc      {cons("SLASH")}
+      IntLiteralConstant '/'            -> FirstSlashEditDesc   {cons("SLASH")}           %% could be the first edit descriptor
+  ',' IntLiteralConstant '/'            -> ControlEditDesc      {cons("SLASH"), prefer}   %% otherwise comma is required C1002
+  NoR '/'                               -> ControlEditDesc      {cons("SLASH"), prefer}   %% select no-r over splitting up an int literal (r)
   ':'                                   -> ControlEditDesc      {cons("COLON_ED")}
   SignEditDesc                          -> ControlEditDesc
   SignedIntLiteralConstant 'P'          -> ControlEditDesc      {cons("P")}
@@ -3137,7 +3178,7 @@ context-free syntax
        IntLiteralConstant 'X'           -> PositionEditDesc     {cons("X")}
 
 %%R1017
-  'SS'                                  -> SignEditDesc         {cons("SS")}
+  'SS'                                  -> SignEditDesc         {cons("SS"), prefer}  %% prefer longest string
   'SP'                                  -> SignEditDesc         {cons("SP")}
   'S'                                   -> SignEditDesc         {cons("S")}
 
@@ -3188,7 +3229,7 @@ context-free syntax
 %%R204
 %% - Refactored to fix ambiguity with FormatStmt appearing in Spec and Exec parts
   UseStmt*
-  ImportStmt*                            -> InitialSpecPart     {cons("initial-spec-part")}
+  ImportStmt*                            -> InitialSpecPart     {cons("InitialSpecPart")}
 
 %%R204
   UseStmt*
@@ -3241,6 +3282,14 @@ context-free syntax
 %%FormatStmt                             -> ExecutionPartConstruct
 %%EntryStmt                              -> ExecutionPartConstruct
 %%DataStmt                               -> ExecutionPartConstruct
+
+%% This is needed to allow FormatStmt, ... within a block
+%%   WARNING-MODIFICATION
+%%    This appears to allow an ActionStmt to precede a declaration
+  ExecutableConstruct                    -> BlockExecutionPartConstruct
+  FormatStmt                             -> BlockExecutionPartConstruct
+  EntryStmt                              -> BlockExecutionPartConstruct
+  DataStmt                               -> BlockExecutionPartConstruct
 
 %%R210
   ContainsStmt InternalSubprogram*       -> InternalSubprogramPart    {cons("SubprogramPart")}
@@ -3304,10 +3353,10 @@ context-free syntax
   ContinueStmt                           -> ActionStmt
   CycleStmt                              -> ActionStmt
   DeallocateStmt                         -> ActionStmt
-  EndFunctionStmt                        -> ActionStmt
-  EndMpSubprogramStmt                    -> ActionStmt
-  EndProgramStmt                         -> ActionStmt
-  EndSubroutineStmt                      -> ActionStmt
+  EndFunctionStmt                        -> ActionStmt  {reject}  %% creates ambiguity for "end" statement with no "FUNCTION"
+  EndMpSubprogramStmt                    -> ActionStmt  {reject}  %% creates ambiguity for "end" statement with no "PROCEDURE"
+  EndProgramStmt                         -> ActionStmt  {reject}  %% creates ambiguity for "end" statement with no "PROGRAM"
+  EndSubroutineStmt                      -> ActionStmt  {reject}  %% creates ambiguity for "end" statement with no "SUBROUTINE"
   EndfileStmt                            -> ActionStmt
   ErrorStopStmt                          -> ActionStmt
   ExitStmt                               -> ActionStmt
@@ -3322,6 +3371,7 @@ context-free syntax
   PointerAssignmentStmt                  -> ActionStmt
   PrintStmt                              -> ActionStmt
   ReadStmt                               -> ActionStmt
+  ReadFMTStmt                            -> ActionStmt
   ReturnStmt                             -> ActionStmt
   RewindStmt                             -> ActionStmt
   StopStmt                               -> ActionStmt
@@ -3338,8 +3388,6 @@ context-free syntax
   LabelDoStmt                            -> ActionStmt
   NonlabelDoStmt                         -> ActionStmt
   EndDoStmt                              -> ActionStmt
-%% Deleted features
-  PauseStmt                              -> ActionStmt
 
 %%215
   Name                                   -> Keyword
@@ -3369,8 +3417,8 @@ context-free syntax
   OptLabel 'END' 'PROGRAM' OptProgramName  EOS -> EndProgramStmt   {cons("EndProgramStmt")}
 
   Ident                                        -> ProgramName
-  % empty %                                    -> NoProgramName    {cons("no-program-name")}
-  % empty %                                    -> OptProgramName   {cons("no-program-name")}
+  % empty %                                    -> NoProgramName    {cons("no-name")}
+  % empty %                                    -> OptProgramName   {cons("no-name")}
   ProgramName                                  -> OptProgramName
 
 %%R1104
@@ -3391,8 +3439,8 @@ context-free syntax
   OptLabel 'END' 'MODULE' OptModuleName    EOS -> EndModuleStmt    {cons("EndModuleStmt")}
 
   Ident                                        -> ModuleName
-  % empty %                                    -> NoModuleName     {cons("no-module-name")}
-  % empty %                                    -> OptModuleName    {cons("no-module-name")}
+  % empty %                                    -> NoModuleName     {cons("no-name")}
+  % empty %                                    -> OptModuleName    {cons("no-name")}
   ModuleName                                   -> OptModuleName
 
 %%R1107
@@ -3448,12 +3496,12 @@ context-free syntax
   Ident                                        -> OnlyUseName {cons("OnlyUseName")}
 
 %%R1114
-  DefinedUnaryOp                               -> LocalDefinedOperator  {cons("LocalDefinedOperator_DUO")}
-  DefinedBinaryOp                              -> LocalDefinedOperator  {cons("LocalDefinedOperator_DBO")}
+  DefinedUnaryOp                               -> LocalDefinedOperator
+  DefinedBinaryOp                              -> LocalDefinedOperator  {prefer}  %% totally AMBIGUOUS, pick one
 
 %%R1115
-  DefinedUnaryOp                               -> UseDefinedOperator    {cons("UseDefinedOperator_DUO")}
-  DefinedBinaryOp                              -> UseDefinedOperator    {cons("UseDefinedOperator_DBO")}
+  DefinedUnaryOp                               -> UseDefinedOperator
+  DefinedBinaryOp                              -> UseDefinedOperator    {prefer}    %% totally AMBIGUOUS, pick one
 
 %%R1116
 %%     WARNING-MODIFICATION: 
@@ -3470,7 +3518,7 @@ context-free syntax
          SubmoduleName                       EOS -> SubmoduleStmt     {cons("SubmoduleStmt")}
 
   Ident                                          -> SubmoduleName
-  % empty %                                      -> NoSubmoduleName   {cons("no-submodule-name")}
+  % empty %                                      -> NoSubmoduleName   {cons("no-name")}
 
 %%R1118
   AncestorModuleName ':' ParentSubmoduleName     -> ParentIdentifier  {cons("ParentIdentifier")}
@@ -3478,7 +3526,7 @@ context-free syntax
 
   Ident                                          -> AncestorModuleName
   Ident                                          -> ParentSubmoduleName
-  % empty %                                      -> NoParentSubmoduleName {cons("no-parent-submodule-name")}
+  % empty %                                      -> NoParentSubmoduleName {cons("no-name")}
 
 %%R1119
   OptLabel 'END' 'SUBMODULE' SubmoduleName   EOS -> EndSubmoduleStmt  {cons("EndSubmoduleStmt")}
@@ -3502,8 +3550,8 @@ context-free syntax
   OptLabel 'END'                 NoBlockDataName EOS -> EndBlockDataStmt  {cons("EndBlockDataStmt")}
 
   BlockDataName                                      -> OptBlockDataName
-  % empty %                                          -> OptBlockDataName  {cons("no-block-data-name")}
-  % empty %                                          ->  NoBlockDataName  {cons("no-block-data-name")}
+  % empty %                                          -> OptBlockDataName  {cons("no-name")}
+  % empty %                                          ->  NoBlockDataName  {cons("no-name")}
   Ident                                              ->    BlockDataName
 
 %%context-free priorities
@@ -3550,7 +3598,7 @@ context-free syntax
   OptLabel          'PROCEDURE'      {ProcedureName ','}+ EOS -> ProcedureStmt  {cons("ProcedureStmt")}
 
   Ident                            -> ProcedureName
-  % empty %                        -> NoProcedureName  {cons("no-procedure-name")}
+  % empty %                        -> NoProcedureName  {cons("no-name")}
 
 %%R1207
   GenericName                                   -> GenericSpec
@@ -3641,8 +3689,8 @@ context-free syntax
 
 %%R1221
   ProcedureName                                       -> ProcedureDesignator {cons("ProcedureDesignator")}
-%%ProcComponentRef   %% AMB with alt3
-  DataRef '%' BindingName                             -> ProcedureDesignator {cons("ProcedureDesignator")}
+  ProcComponentRef                                    -> ProcedureDesignator {cons("ProcedureDesignator")}
+%%DataRef '%' BindingName                                                    %%AMBIGUOUS with ProcComponentRef
 
 %%R1222
   NoKeyword   ActualArg                               -> ActualArgSpec       {cons("ActualArgSpec")}
@@ -3719,8 +3767,8 @@ context-free syntax
   OptLabel 'END' 'FUNCTION' OptFunctionName         EOS -> EndFunctionStmt  {cons("EndFunctionStmt")}
 
   Ident                                                 -> FunctionName
-  % empty %                                             -> NoFunctionName   {cons("no-function-name")}
-  % empty %                                             -> OptFunctionName  {cons("no-function-name")}
+  % empty %                                             -> NoFunctionName   {cons("no-name")}
+  % empty %                                             -> OptFunctionName  {cons("no-name")}
   FunctionName                                          -> OptFunctionName
 
 
@@ -3759,8 +3807,8 @@ context-free syntax
   OptLabel 'END' 'SUBROUTINE' OptSubroutineName  EOS -> EndSubroutineStmt  {cons("EndSubroutineStmt")}
 
   Ident                                              -> SubroutineName
-  % empty %                                          -> NoSubroutineName   {cons("no-subroutine-name")}
-  % empty %                                          -> OptSubroutineName  {cons("no-subroutine-name")}
+  % empty %                                          -> NoSubroutineName   {cons("no-name")}
+  % empty %                                          -> OptSubroutineName  {cons("no-name")}
   SubroutineName                                     -> OptSubroutineName
 
 %%R1237

@@ -57,6 +57,7 @@ pkginclude_HEADERS =				\
 	GraphUtility.h				\
 	LinearCongruentialGenerator.h		\
 	Map.h					\
+	timing.h				\
 	ParallelSort.h				\
 	processSupport.h			\
 	rose_isnan.h				\

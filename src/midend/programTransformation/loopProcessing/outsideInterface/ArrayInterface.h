@@ -6,23 +6,18 @@
 #include <StmtInfoCollect.h>
 #include <ValuePropagate.h>
 #include <LoopTransformInterface.h>
-#include <AstInterface_ROSE.h>
 
-class SgFunctionDefinition; // Sneak in a forward reference
-
-class ROSE_DLL_API ArrayInterface 
+class SgFunctionDefinition;
+class ArrayInterface 
   : public AstObserver, public AliasAnalysisInterface, public ArrayAbstractionInterface
 {
- public: typedef std::map<SgFunctionDefinition *, ArrayInterface *> ArrayInterfaceMapT;
  private:
   StmtVarAliasCollect aliasCollect;
   ValuePropagate valueCollect;
-
-  static ArrayInterfaceMapT instMap;
-
   std::map <AstNodePtr, int> dimmap;
   std::map <AstNodePtr, SymbolicFunctionDeclarationGroup> lenmap;
   std::map <std::string, ArrayOptDescriptor> optmap;
+
   void ObserveCopyAst( AstInterfaceImpl& fa, const AstNodePtr& orig, const AstNodePtr& copy);
 
   virtual bool IsArrayRef( CPPAstInterface& fa, const AstNodePtr& t);
@@ -33,10 +28,8 @@ class ROSE_DLL_API ArrayInterface
   virtual bool GetArrayBound( AstInterface& fa,
                                  const AstNodePtr& array,
                                  int dim, int &lb, int &ub) ;
-
-  virtual AstNodePtr CreateArrayAccess(AstInterface& fa, 
-                                       const AstNodePtr& arr, 
-                                       AstInterface::AstNodeList& index);
+  virtual AstNodePtr CreateArrayAccess( AstInterface& fa, const AstNodePtr& arr,
+                                const AstNodeList& index);
   bool get_array_opt(CPPAstInterface& fa, const AstNodePtr& array, ArrayOptDescriptor& d);
  public:
   ArrayInterface( ArrayAnnotation& a) : aliasCollect(&a) {}
@@ -57,16 +50,14 @@ class ROSE_DLL_API ArrayInterface
                               AstInterface::AstNodeList* alias = 0,
                               int *dimp = 0, SymbolicFunctionDeclarationGroup *len = 0, SymbolicFunctionDeclarationGroup* elem = 0);
  
-  static ArrayInterface * get_inst( ArrayAnnotation& a, AstInterface& fa, SgFunctionDefinition* funcDef, AstNodePtrImpl node );
-
-  AstNodePtr impl_array_opt_init( CPPAstInterface& fa, const AstNodePtr& array, 
-                                  bool insertinit = false);
+  AstNodePtr impl_array_opt_init( CPPAstInterface& fa, const AstNodePtr& array, const AstNodePtr& scope);
   AstNodePtr impl_access_array_length(  CPPAstInterface& fa, const AstNodePtr& array, int dim,
                                         int plus = 0);
   AstNodePtr impl_access_array_elem(  CPPAstInterface& fa, const AstNodePtr& array, 
-                                      AstInterface::AstNodeList& args );
+                                      const AstInterface::AstNodeList& args );
   AstNodePtr impl_reshape_array(  CPPAstInterface& fa, const AstNodePtr& array, 
                                   AstInterface::AstNodeList& args );
+ static ArrayInterface * get_inst( ArrayAnnotation& a, AstInterface& fa, SgFunctionDefinition* funcDef, const AstNodePtr& node );
 };
 
 #endif

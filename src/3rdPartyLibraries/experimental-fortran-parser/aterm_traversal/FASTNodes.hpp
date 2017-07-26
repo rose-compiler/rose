@@ -378,6 +378,22 @@ class TypeDeclarationStmt : public Statement
 };
 
 
+/* R854 ContinueStmt
+ */
+class ContinueStmt : public Statement
+{
+ public:
+   ContinueStmt(std::string label, std::string eos, PosInfo pos) : Statement(label,eos,pos)
+     {
+     }
+};
+
+/* 8.4 Stop and Error Stop statements
+  StopStmt                            %% R855
+  ErrorStopStmt                       %% R856
+ */
+
+
 /* Procedures
  */
 class Procedure : public FASTNode
@@ -418,6 +434,31 @@ class MainProgram : public Procedure
    Scope* pScope;
    ContainsStmt* pContainsStmt;
    EndProgramStmt* pEndProgramStmt;
+};
+
+// R1226
+class PrefixSpec : public FASTNode
+{
+ public:
+
+   enum PrefixEnum
+     {
+        None = 0,
+        Elemental,
+        Impure,
+        Module,
+        Pure,
+        Recursive
+     };
+
+   PrefixSpec(PrefixEnum prefix_enum) : pPrefixEnum(prefix_enum)
+     {
+     }
+
+   PrefixEnum   getPrefixEnum()            { return pPrefixEnum; }
+
+ protected:
+   PrefixEnum pPrefixEnum;
 };
 
 class Converter
