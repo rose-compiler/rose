@@ -37,6 +37,14 @@ UntypedTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute curre
          currentScope = sg_scope;
       }
 
+   else if (isSgUntypedModuleDeclaration(n) != NULL)
+      {
+         SgUntypedModuleDeclaration* ut_module = dynamic_cast<SgUntypedModuleDeclaration*>(n);
+         pConverter->convertSgUntypedModuleDeclaration(ut_module,currentScope);
+
+         currentScope = SageBuilder::topScopeStack();
+      }
+
    else if (isSgUntypedProgramHeaderDeclaration(n) != NULL)
       {
          SgUntypedProgramHeaderDeclaration* ut_program = dynamic_cast<SgUntypedProgramHeaderDeclaration*>(n);
@@ -105,19 +113,19 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* n, InheritedAttribute cur
          SgUntypedExpression* ut_expr = isSgUntypedExpression(n);
          SgExpressionPtrList children(childAttrs);
 
-         sg_expr = UntypedConverter::convertSgUntypedExpression(ut_expr, children, currentScope);
+         sg_expr = pConverter->convertSgUntypedExpression(ut_expr, children, currentScope);
       }
    else if ( isSgUntypedAssignmentStatement(n) != NULL )
       {
          SgUntypedAssignmentStatement* ut_stmt = dynamic_cast<SgUntypedAssignmentStatement*>(n);
          SgExpressionPtrList children(childAttrs);
 
-         UntypedConverter::convertSgUntypedAssignmentStatement(ut_stmt, children, currentScope);
+         pConverter->convertSgUntypedAssignmentStatement(ut_stmt, children, currentScope);
       }
    else if ( isSgUntypedOtherStatement(n) != NULL )
       {
          SgUntypedOtherStatement* ut_stmt = dynamic_cast<SgUntypedOtherStatement*>(n);
-         UntypedConverter::convertSgUntypedOtherStatement(ut_stmt, currentScope);
+         pConverter->convertSgUntypedOtherStatement(ut_stmt, currentScope);
       }
    else
       {

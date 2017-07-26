@@ -18,6 +18,11 @@ class ATtoUntypedTraversal
    SgUntypedFile*        get_file()  { return pUntypedFile; }
    SgUntypedGlobalScope* get_scope() { return pUntypedFile->get_scope(); }
 
+   std::string getCurrentFilename()
+      {
+         return pSourceFile->get_sourceFileNameWithPath();
+      }
+
  protected:
    SgUntypedFile* pUntypedFile;
    SgSourceFile*  pSourceFile;
@@ -25,6 +30,15 @@ class ATtoUntypedTraversal
  public:
 
 static void setSourcePositionUnknown(SgLocatedNode* locatedNode);
+
+static FAST::PosInfo getLocation(ATerm term);
+
+void setSourcePosition              ( SgLocatedNode* locatedNode, ATerm term );
+void setSourcePosition              ( SgLocatedNode* locatedNode, FAST::PosInfo & pos );
+void setSourcePositionFrom          ( SgLocatedNode* locatedNode, SgLocatedNode* fromNode );
+void setSourcePositionUptoTerm      ( SgLocatedNode* locatedNode, ATerm startTerm, ATerm endTerm );
+void setSourcePositionIncludingTerm ( SgLocatedNode* locatedNode, ATerm startTerm, ATerm endTerm );
+void setSourcePositionIncludingNode ( SgLocatedNode* locatedNode, ATerm startTerm, SgLocatedNode* endNode );
 
 // These should probably go in UntypedBuilder class
 static SgUntypedType* buildType(SgUntypedType::type_enum type_enum = SgUntypedType::e_unknown);
