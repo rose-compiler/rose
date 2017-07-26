@@ -7,10 +7,11 @@
 #include "AstDOTGeneration.h"
 
 #include "wholeAST_API.h"
-// #include "wholeAST.h"
 
 #ifdef _MSC_VER
 #include <direct.h>     // getcwd
+#else
+#include "plugin.h"  // dlopen() is not available on Windows
 #endif
 
 #include <time.h>
@@ -466,9 +467,18 @@ frontend (const std::vector<std::string>& argv, bool frontendConstantFolding )
 
   // printf ("In frontend(const std::vector<std::string>& argv): frontendConstantFolding = %s \n",frontendConstantFolding == true ? "true" : "false");
 
+  // We parse plugin related command line options before calling project();
+     std::vector<std::string> argv2= argv;  // workaround const argv
+#ifdef _MSC_VER
+    if ( SgProject::get_verbose() >= 1 )
+        printf ("Note: Dynamic Loadable Plugins are not supported on Microsoft Windows yet. Skipping Rose::processPluginCommandLine () ...\n");
+#else
+     Rose::processPluginCommandLine(argv2);
+#endif
+
   // Error code checks and reporting are done in SgProject constructor
   // return new SgProject (argc,argv);
-     SgProject* project = new SgProject (argv,frontendConstantFolding);
+     SgProject* project = new SgProject (argv2,frontendConstantFolding);
      ROSE_ASSERT (project != NULL);
 
   // DQ (9/6/2005): I have abandoned this form or prelinking (AT&T C Front style).
@@ -485,9 +495,18 @@ frontend (const std::vector<std::string>& argv, bool frontendConstantFolding )
   // checkIsModifiedFlag(project);
      unsetNodesMarkedAsModified(project);
 
+   
   // set the mode to be transformation, mostly for Fortran. Liao 8/1/2013
      if (SageBuilder::SourcePositionClassificationMode == SageBuilder::e_sourcePositionFrontendConstruction);
        SageBuilder::setSourcePositionClassificationMode(SageBuilder::e_sourcePositionTransformation);
+
+  // Connect to Ast Plugin Mechanism
+#ifdef _MSC_VER
+    if ( SgProject::get_verbose() >= 1 )
+        printf ("Note: Dynamic Loadable Plugins are not supported on Microsoft Windows yet. Skipping Rose::obtainAndExecuteActions ()\n");
+#else  
+     Rose::obtainAndExecuteActions(project);
+#endif
      return project;
    }
 

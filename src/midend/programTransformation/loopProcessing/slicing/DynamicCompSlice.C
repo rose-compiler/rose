@@ -97,7 +97,7 @@ Transform( LoopTreeDepComp& c, const CompSlice *_slice, LoopTreeNode *root)
        sprintf(buf, "%1d", i);
        std::string name = groupVar + buf;
        fa.NewVar(fa.GetType("int"), name);
-       args.push_back( fa.CreateVarRef( name) );
+       args.push_back( fa.CreateVarRef( name).get_ptr() );
     }
     int id;
     AstNodePtr config = LoopTransformInterface::CreateDynamicFusionConfig( fa.CreateVarRef(groupVarN), args, id); 
