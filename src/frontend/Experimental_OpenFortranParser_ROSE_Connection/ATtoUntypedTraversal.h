@@ -36,7 +36,7 @@ static FAST::PosInfo getLocation(ATerm term);
 void setSourcePosition              ( SgLocatedNode* locatedNode, ATerm term );
 void setSourcePosition              ( SgLocatedNode* locatedNode, FAST::PosInfo & pos );
 void setSourcePositionFrom          ( SgLocatedNode* locatedNode, SgLocatedNode* fromNode );
-void setSourcePositionUptoTerm      ( SgLocatedNode* locatedNode, ATerm startTerm, ATerm endTerm );
+void setSourcePositionExcludingTerm ( SgLocatedNode* locatedNode, ATerm startTerm, ATerm endTerm );
 void setSourcePositionIncludingTerm ( SgLocatedNode* locatedNode, ATerm startTerm, ATerm endTerm );
 void setSourcePositionIncludingNode ( SgLocatedNode* locatedNode, ATerm startTerm, SgLocatedNode* endNode );
 
@@ -141,6 +141,11 @@ ATbool traverse_AssignmentStmt(ATerm term, SgUntypedStatementList* stmt_list);
 // R854
 ATbool traverse_ContinueStmt(ATerm term, SgUntypedStatementList* stmt_list);
 
+// R855
+ATbool traverse_StopStmt      ( ATerm term, SgUntypedStatementList* stmt_list  );
+ATbool traverse_ErrorStopStmt ( ATerm term, SgUntypedStatementList* stmt_list  );
+ATbool traverse_OptStopCode   ( ATerm term, SgUntypedExpression** var_StopCode );
+
 // R1101
 ATbool traverse_MainProgram(ATerm term, SgUntypedScope* scope);
 ATbool traverse_OptProgramStmt(ATerm term, SgUntypedNamedStatement** program_stmt);
@@ -215,10 +220,10 @@ ATbool traverse_EndMpSubprogramStmt ( ATerm term, SgUntypedNamedStatement** end_
 // R1240 entry-stmt
 
 // R1141
-ATbool traverse_ReturnStmt   ( ATerm term, SgUntypedExpressionStatement** return_stmt );
+ATbool traverse_ReturnStmt   ( ATerm term, SgUntypedStatementList* stmt_list );
 
 // R1142
-ATbool traverse_ContainsStmt ( ATerm term, SgUntypedOtherStatement**    contains_stmt );
+ATbool traverse_ContainsStmt ( ATerm term, SgUntypedOtherStatement** contains_stmt );
 
 
 }; // class Traversal

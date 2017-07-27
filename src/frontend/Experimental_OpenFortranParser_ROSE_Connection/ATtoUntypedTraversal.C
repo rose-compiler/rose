@@ -5,7 +5,6 @@
 
 #define PRINT_ATERM_TRAVERSAL 0
 #define PRINT_SOURCE_POSITION 0
-#define SET_SOURCE_POSITION_UNKNOWN 0
 
 using namespace OFP;
 
@@ -69,7 +68,7 @@ ATtoUntypedTraversal::setSourcePositionFrom( SgLocatedNode* locatedNode, SgLocat
 }
 
 void
-ATtoUntypedTraversal::setSourcePositionUptoTerm( SgLocatedNode* locatedNode, ATerm startTerm, ATerm endTerm )
+ATtoUntypedTraversal::setSourcePositionExcludingTerm( SgLocatedNode* locatedNode, ATerm startTerm, ATerm endTerm )
 {
    FAST::PosInfo pos = getLocation(startTerm);
    FAST::PosInfo end = getLocation(endTerm);
@@ -1092,6 +1091,15 @@ ATbool ATtoUntypedTraversal::traverse_ExecStmt(ATerm term, SgUntypedStatementLis
    else if (traverse_ContinueStmt(term, stmt_list)) {
       // Matched ContinueStmt
    }
+   else if (traverse_StopStmt(term, stmt_list)) {
+      // Matched StopStmt
+   }
+   else if (traverse_ErrorStopStmt(term, stmt_list)) {
+      // Matched ErrorStopStmt
+   }
+   else if (traverse_ReturnStmt(term, stmt_list)) {
+      // Matched ReturnStmt
+   }
    else {
       return ATfalse;
    }
@@ -1425,7 +1433,7 @@ ATbool ATtoUntypedTraversal::traverse_TypeDeclarationStmt(ATerm term, SgUntypedD
    std::cerr << "...TODO... implement AttrSpecList in TypeDeclarationStmt" << std::endl;
 
    variable_decl = new SgUntypedVariableDeclaration(label, SgToken::FORTRAN_TYPE, declared_type, var_name_list);
-   setSourcePositionUptoTerm(variable_decl, term, term_eos);
+   setSourcePositionExcludingTerm(variable_decl, term, term_eos);
 
    decl_list->get_decl_list().push_back(variable_decl);
 
@@ -1771,7 +1779,20 @@ ATbool ATtoUntypedTraversal::traverse_OptExpr( ATerm term, SgUntypedExpression**
   printf("... traverse_OptExpr: %s\n", ATwriteToString(term));
 #endif
 
-   return ATfalse;
+//TODO - there is an OptExpr term cons "opt-expr"
+//     - maybe this shouldn't be shared, determine for LoopControl implementation
+
+   if (ATmatch(term, "no-expr()")) {
+      // No Expression
+      *expr = new SgUntypedOtherExpression(SgToken::FORTRAN_NULL);
+      setSourcePosition(*expr, term);
+   }
+   else if (traverse_Expression(term, expr)) {
+      // MATCHED an Expression
+   }
+   else return ATfalse;
+
+   return ATtrue;
 }
 
 //========================================================================================
@@ -1849,6 +1870,99 @@ ATbool ATtoUntypedTraversal::traverse_ContinueStmt(ATerm term, SgUntypedStatemen
 }
 
 //========================================================================================
+// R855 stop-stmt
+//----------------------------------------------------------------------------------------
+ATbool ATtoUntypedTraversal::traverse_StopStmt(ATerm term, SgUntypedStatementList* stmt_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+  printf("... traverse_StopStmt: %s\n", ATwriteToString(term));
+#endif
+  
+   ATerm term1, term2, term_eos;
+   std::string label;
+   std::string eos;
+   SgUntypedExpression* stop_code;
+
+   SgToken::ROSE_Fortran_Keywords keyword = SgToken::FORTRAN_STOP;
+
+   if (ATmatch(term, "StopStmt(<term>,<term>,<term>)", &term1,&term2,&term_eos)) {
+      if (traverse_OptLabel(term1, label)) {
+         // MATCHED OptLabel
+      } else return ATfalse;
+      if (traverse_OptStopCode(term2, &stop_code)) {
+         // MATCHED OptStopCode
+      } else return ATfalse;
+      if (traverse_eos(term_eos, eos)) {
+         // MATCHED eos string
+      } else return ATfalse;
+   }
+   else return ATfalse;
+
+   SgUntypedExpressionStatement* stop_stmt = new SgUntypedExpressionStatement(label, keyword, stop_code);
+   setSourcePositionExcludingTerm(stop_stmt, term, term_eos);
+
+   stmt_list->get_stmt_list().push_back(stop_stmt);
+
+   return ATtrue;
+}
+
+//========================================================================================
+// R856 error-stop-stmt
+//----------------------------------------------------------------------------------------
+ATbool ATtoUntypedTraversal::traverse_ErrorStopStmt(ATerm term, SgUntypedStatementList* stmt_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+  printf("... traverse_ErrorStopStmt: %s\n", ATwriteToString(term));
+#endif
+  
+   ATerm term1, term2, term_eos;
+   std::string label;
+   std::string eos;
+   SgUntypedExpression* stop_code;
+
+   SgToken::ROSE_Fortran_Keywords keyword = SgToken::FORTRAN_ERROR_STOP;
+
+   if (ATmatch(term, "ErrorStopStmt(<term>,<term>,<term>)", &term1,&term2,&term_eos)) {
+      if (traverse_OptLabel(term1, label)) {
+         // MATCHED OptLabel
+      } else return ATfalse;
+      if (traverse_OptStopCode(term2, &stop_code)) {
+         // MATCHED OptStopCode
+      } else return ATfalse;
+      if (traverse_eos(term_eos, eos)) {
+         // MATCHED eos string
+      } else return ATfalse;
+   }
+   else return ATfalse;
+
+   SgUntypedExpressionStatement* error_stop_stmt = new SgUntypedExpressionStatement(label, keyword, stop_code);
+   setSourcePositionExcludingTerm(error_stop_stmt, term, term_eos);
+
+   stmt_list->get_stmt_list().push_back(error_stop_stmt);
+
+   return ATtrue;
+}
+
+ATbool ATtoUntypedTraversal::traverse_OptStopCode(ATerm term, SgUntypedExpression** stop_code)
+{
+#if PRINT_ATERM_TRAVERSAL
+  printf("... traverse_OptStopStmt: %s\n", ATwriteToString(term));
+#endif
+  
+   if (ATmatch(term, "no-stop-code()")) {
+      // No StopCode
+      *stop_code = new SgUntypedOtherExpression(SgToken::FORTRAN_NULL);
+      setSourcePosition(*stop_code, term);
+   }
+   else if (traverse_Expression(term, stop_code)) {
+      // MATCHED StopCode
+   }
+   else return ATfalse;
+
+   return ATtrue;
+}
+
+//========================================================================================
 // MainProgram (R1101)
 //----------------------------------------------------------------------------------------
 ATbool ATtoUntypedTraversal::traverse_MainProgram(ATerm term, SgUntypedScope* scope)
@@ -1916,12 +2030,7 @@ ATbool ATtoUntypedTraversal::traverse_MainProgram(ATerm term, SgUntypedScope* sc
 // create the program
    main_program   = new SgUntypedProgramHeaderDeclaration(label,keyword,name,param_list,type,function_scope,end_program_stmt);
 
-// set source positions
-#if SET_SOURCE_POSITION_UNKNOWN
-   ATtoUntypedTraversal::setSourcePositionUnknown(main_program);
-#else
    setSourcePositionIncludingNode(main_program, term, end_program_stmt);
-#endif
 
 // add program to the global scope
    scope->get_function_list()->get_func_list().push_back(main_program);
@@ -1961,7 +2070,7 @@ ATbool ATtoUntypedTraversal::traverse_OptProgramStmt(ATerm term, SgUntypedNamedS
     } else return ATfalse;
 
     *program_stmt = new SgUntypedNamedStatement(label,keyword,name);
-    setSourcePositionUptoTerm(*program_stmt, term, term_eos);
+    setSourcePositionExcludingTerm(*program_stmt, term, term_eos);
   }
   else if (ATmatch(term, "no-program-stmt()")) {
    // There is no program-stmt so mark the name as special so that ROSE
@@ -2004,7 +2113,7 @@ ATbool ATtoUntypedTraversal::traverse_EndProgramStmt(ATerm term, SgUntypedNamedS
    } else return ATfalse;
 
    *end_program_stmt = new SgUntypedNamedStatement(label,keyword,name);
-   setSourcePositionUptoTerm(*end_program_stmt, term, term_eos);
+   setSourcePositionExcludingTerm(*end_program_stmt, term, term_eos);
 
   return ATtrue;
 }
@@ -2060,13 +2169,7 @@ ATbool ATtoUntypedTraversal::traverse_Module(ATerm term, SgUntypedScope* scope)
 
    module = new SgUntypedModuleDeclaration(label,keyword,name,module_scope,end_module_stmt);
 
-// set source positions
-#if SET_SOURCE_POSITION_UNKNOWN
-   ATtoUntypedTraversal::setSourcePositionUnknown(module);
-   ATtoUntypedTraversal::setSourcePositionUnknown(end_module_stmt);
-#else
    setSourcePositionIncludingNode(module, term, end_module_stmt);
-#endif
 
 // add the module to the outer scope
    scope->get_declaration_list()->get_decl_list().push_back(module);
@@ -2108,7 +2211,7 @@ ATbool ATtoUntypedTraversal::traverse_ModuleStmt(ATerm term, SgUntypedNamedState
    else return ATfalse;
 
    *module_stmt = new SgUntypedNamedStatement(label,keyword,name);
-   setSourcePositionUptoTerm(*module_stmt, term, term_eos);
+   setSourcePositionExcludingTerm(*module_stmt, term, term_eos);
 
   return ATtrue;
 }
@@ -2143,7 +2246,7 @@ ATbool ATtoUntypedTraversal::traverse_EndModuleStmt(ATerm term, SgUntypedNamedSt
    else return ATfalse;
 
    *end_module_stmt = new SgUntypedNamedStatement(label,keyword,name);
-   setSourcePositionUptoTerm(*end_module_stmt, term, term_eos);
+   setSourcePositionExcludingTerm(*end_module_stmt, term, term_eos);
 
    return ATtrue;
 }
@@ -2464,14 +2567,7 @@ ATbool ATtoUntypedTraversal::traverse_FunctionSubprogram(ATerm term, SgUntypedSc
 // create the subroutine
    function = new SgUntypedFunctionDeclaration(label,keyword,name,param_list,
                                                function_type,function_scope,end_function_stmt);
-
-// set source positions
-#if SET_SOURCE_POSITION_UNKNOWN
-   ATtoUntypedTraversal::setSourcePositionUnknown(function);
-   ATtoUntypedTraversal::setSourcePositionUnknown(end_function_stmt);
-#else
    setSourcePositionIncludingNode(function, term, end_function_stmt);
-#endif
 
 // add the subroutine to the outer scope
    scope->get_function_list()->get_func_list().push_back(function);
@@ -2547,7 +2643,7 @@ ATbool ATtoUntypedTraversal::traverse_EndFunctionStmt(ATerm term, SgUntypedNamed
    else return ATfalse;
 
    *end_function_stmt = new SgUntypedNamedStatement(label,keyword,name);
-   setSourcePositionUptoTerm(*end_function_stmt, term, term_eos);
+   setSourcePositionExcludingTerm(*end_function_stmt, term, term_eos);
 
    return ATtrue;
 }
@@ -2640,14 +2736,7 @@ ATbool ATtoUntypedTraversal::traverse_SubroutineSubprogram(ATerm term, SgUntyped
 
 // create the subroutine
    subroutine = new SgUntypedSubroutineDeclaration(label,keyword,name,param_list,type,function_scope,end_subroutine_stmt);
-
-// set source positions
-#if SET_SOURCE_POSITION_UNKNOWN
-   ATtoUntypedTraversal::setSourcePositionUnknown(subroutine);
-   ATtoUntypedTraversal::setSourcePositionUnknown(end_subroutine_stmt);
-#else
    setSourcePositionIncludingNode(subroutine, term, end_subroutine_stmt);
-#endif
 
 // add the subroutine to the outer scope
    scope->get_function_list()->get_func_list().push_back(subroutine);
@@ -2715,7 +2804,7 @@ ATbool ATtoUntypedTraversal::traverse_EndSubroutineStmt(ATerm term, SgUntypedNam
    else return ATfalse;
 
    *end_subroutine_stmt = new SgUntypedNamedStatement(label,keyword,name);
-   setSourcePositionUptoTerm(*end_subroutine_stmt, term, term_eos);
+   setSourcePositionExcludingTerm(*end_subroutine_stmt, term, term_eos);
 
    return ATtrue;
 }
@@ -2782,14 +2871,7 @@ ATbool ATtoUntypedTraversal::traverse_SeparateModuleSubprogram(ATerm term, SgUnt
 
 // create the subroutine
    mp_subprogram = new SgUntypedSubroutineDeclaration(label,keyword,name,param_list,type,function_scope,end_mp_subprogram_stmt);
-
-// set source positions
-#if SET_SOURCE_POSITION_UNKNOWN
-   ATtoUntypedTraversal::setSourcePositionUnknown(mp_subprogram);
-   ATtoUntypedTraversal::setSourcePositionUnknown(end_mp_subprogram_stmt);
-#else
    setSourcePositionIncludingNode(mp_subprogram, term, end_mp_subprogram_stmt);
-#endif
 
 // add the subprogram to the outer scope
    scope->get_function_list()->get_func_list().push_back(mp_subprogram);
@@ -2828,7 +2910,7 @@ ATbool ATtoUntypedTraversal::traverse_MpSubprogramStmt(ATerm term, SgUntypedName
    else return ATfalse;
 
    *mp_subprogram_stmt = new SgUntypedNamedStatement(label,keyword,name);
-   setSourcePositionUptoTerm(*mp_subprogram_stmt, term, term_eos);
+   setSourcePositionExcludingTerm(*mp_subprogram_stmt, term, term_eos);
 
   return ATtrue;
 }
@@ -2864,7 +2946,7 @@ ATbool ATtoUntypedTraversal::traverse_EndMpSubprogramStmt(ATerm term, SgUntypedN
    } else return ATfalse;
 
    *end_mp_subprogram_stmt = new SgUntypedNamedStatement(label,keyword,name);
-   setSourcePositionUptoTerm(*end_mp_subprogram_stmt, term, term_eos);
+   setSourcePositionExcludingTerm(*end_mp_subprogram_stmt, term, term_eos);
 
   return ATtrue;
 }
@@ -2876,7 +2958,7 @@ ATbool ATtoUntypedTraversal::traverse_EndMpSubprogramStmt(ATerm term, SgUntypedN
 //========================================================================================
 // R1241 return-stmt
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_ReturnStmt(ATerm term, SgUntypedExpressionStatement** return_stmt)
+ATbool ATtoUntypedTraversal::traverse_ReturnStmt(ATerm term, SgUntypedStatementList* stmt_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_ReturnStmt: %s\n", ATwriteToString(term));
@@ -2887,7 +2969,7 @@ ATbool ATtoUntypedTraversal::traverse_ReturnStmt(ATerm term, SgUntypedExpression
    std::string eos;
    SgUntypedExpression* expr;
 
-   *return_stmt = NULL;
+   SgToken::ROSE_Fortran_Keywords keyword = SgToken::FORTRAN_RETURN;
 
    if (ATmatch(term, "ReturnStmt(<term>,<term>,<term>)", &term1,&term2,&term_eos)) {
       if (traverse_OptLabel(term1, label)) {
@@ -2902,11 +2984,10 @@ ATbool ATtoUntypedTraversal::traverse_ReturnStmt(ATerm term, SgUntypedExpression
    }
    else return ATfalse;
 
-#ifdef NEW_UNTYPED_STATEMENT
-   SgToken::ROSE_Fortran_Keywords keyword = SgToken::FORTRAN_RETURN;
-   *return_stmt = new SgUntypedExpressionStatement(label, keyword, expr);
-   setSourcePositionUptoTerm(*return_stmt, term, term_eos);
-#endif
+   SgUntypedExpressionStatement* return_stmt = new SgUntypedExpressionStatement(label, keyword, expr);
+   setSourcePositionExcludingTerm(return_stmt, term, term_eos);
+
+   stmt_list->get_stmt_list().push_back(return_stmt);
 
    return ATtrue;
 }
@@ -2939,7 +3020,7 @@ ATbool ATtoUntypedTraversal::traverse_ContainsStmt(ATerm term, SgUntypedOtherSta
    else return ATfalse;
 
    *contains_stmt = new SgUntypedOtherStatement(label, keyword);
-   setSourcePositionUptoTerm(*contains_stmt, term, term_eos);
+   setSourcePositionExcludingTerm(*contains_stmt, term, term_eos);
 
    return ATtrue;
 }

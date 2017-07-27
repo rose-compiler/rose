@@ -187,6 +187,7 @@ Grammar::setUpNodes ()
      NEW_TERMINAL_MACRO (UntypedFunctionCallStatement, "UntypedFunctionCallStatement", "TEMP_UntypedFunctionCallStatement" );
      NEW_TERMINAL_MACRO (UntypedBlockStatement,        "UntypedBlockStatement",        "TEMP_UntypedBlockStatement" );
      NEW_TERMINAL_MACRO (UntypedNamedStatement,        "UntypedNamedStatement",        "TEMP_UntypedNamedStatement" );
+     NEW_TERMINAL_MACRO (UntypedExpressionStatement,   "UntypedExpressionStatement",   "TEMP_UntypedExpressionStatement" );
      NEW_TERMINAL_MACRO (UntypedOtherStatement,        "UntypedOtherStatement",        "TEMP_UntypedOtherStatement" );
 
   // DQ (3/6/2014): Added new IR node for untyped representation of scopes.
@@ -198,7 +199,8 @@ Grammar::setUpNodes ()
          "UntypedScope", "UntypedScopeTag", false);
 
      NEW_NONTERMINAL_MACRO (UntypedStatement, UntypedDeclarationStatement | UntypedAssignmentStatement | 
-         UntypedFunctionCallStatement | UntypedBlockStatement | UntypedNamedStatement | UntypedOtherStatement | UntypedScope,
+         UntypedFunctionCallStatement | UntypedBlockStatement | UntypedNamedStatement | UntypedExpressionStatement |
+         UntypedOtherStatement | UntypedScope,
          "UntypedStatement", "UntypedStatementTag", false);
 
      NEW_TERMINAL_MACRO (UntypedArrayType, "UntypedArrayType", "TEMP_UntypedArrayType" );
@@ -580,9 +582,13 @@ Grammar::setUpNodes ()
      UntypedStatement.setDataPrototype     ( "SgToken::ROSE_Fortran_Keywords", "statement_enum", "= SgToken::FORTRAN_UNKNOWN",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-     UntypedNamedStatement.setFunctionPrototype             ( "HEADER_UNTYPED_NAMED_STATEMENT", "../Grammar/LocatedNode.code");
-     UntypedNamedStatement.setDataPrototype     ( "std::string", "statement_name", "= \"\"",
+     UntypedNamedStatement.setFunctionPrototype      ( "HEADER_UNTYPED_NAMED_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedNamedStatement.setDataPrototype          ( "std::string", "statement_name", "= \"\"",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     UntypedExpressionStatement.setFunctionPrototype ( "HEADER_UNTYPED_EXPRESSION_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedExpressionStatement.setDataPrototype     ( "SgUntypedExpression*", "statement_expression", "= NULL",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      UntypedAssignmentStatement.setFunctionPrototype   ( "HEADER_UNTYPED_ASSIGNMENT_STATEMENT", "../Grammar/LocatedNode.code");
      UntypedAssignmentStatement.setDataPrototype     ( "SgUntypedExpression*", "lhs_operand", "= NULL",

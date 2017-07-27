@@ -2,7 +2,6 @@
 #include "UntypedConverter.h"
 
 #define DEBUG_UNTYPED_CONVERTER 0
-#define SET_SOURCE_POSITION_UNKNOWN 0
 
 using namespace Fortran::Untyped;
 
@@ -266,11 +265,7 @@ UntypedConverter::convertSgUntypedInitializedName (SgUntypedInitializedName* ut_
       delete sg_name->get_endOfConstruct();
       sg_name->set_endOfConstruct(NULL);
    }
-#if SET_SOURCE_POSITION_UNKNOWN
-   UntypedConverter::setSourcePositionUnknown(sg_name);
-#else
    setSourcePositionFrom(sg_name, ut_name);
-#endif
 
 #if DEBUG_UNTYPED_CONVERTER
    printf("--- finished converting initialized name %s\n", ut_name->get_name().c_str());
@@ -303,12 +298,10 @@ UntypedConverter::convertSgUntypedFunctionDeclarationList (SgUntypedFunctionDecl
                // Need to add a contains statement to the current scope as it currently
                // doesn't exist in OFP's Fortran AST (FAST) design (part of concrete syntax only)
                SgContainsStatement* containsStatement = new SgContainsStatement();
-#if SET_SOURCE_POSITION_UNKNOWN
                UntypedConverter::setSourcePositionUnknown(containsStatement);
-#else
-               UntypedConverter::setSourcePositionUnknown(containsStatement);
-//TODO - maybe ok             ROSE_ASSERT(0);
-#endif
+//TODO - maybe ok
+            // ROSE_ASSERT(0);
+
                containsStatement->set_definingDeclaration(containsStatement);
 
                scope->append_statement(containsStatement);
@@ -463,15 +456,10 @@ UntypedConverter::convertSgUntypedProgramHeaderDeclaration (SgUntypedProgramHead
    programBody->set_parent(programDefinition);
    programDefinition->set_parent(programDeclaration);
 
-#if SET_SOURCE_POSITION_UNKNOWN
-   UntypedConverter::setSourcePositionUnknown(programDeclaration);
-   UntypedConverter::setSourcePositionUnknown(programDeclaration->get_parameterList());
-#else
    UntypedConverter::setSourcePositionFrom(programDeclaration, ut_program);
 // TODO - see if param list unknown is ok (as there is no param list
 // UntypedConverter::setSourcePositionFrom(programDeclaration->get_parameterList(), ut_program);
    UntypedConverter::setSourcePositionUnknown(programDeclaration->get_parameterList());
-#endif
 
 // Convert the labels for the program begin and end statements
    UntypedConverter::convertLabel(ut_program,               programDeclaration, SgLabelSymbol::e_start_label_type, /*label_scope=*/ programDefinition);
@@ -508,13 +496,8 @@ UntypedConverter::convertSgUntypedProgramHeaderDeclaration (SgUntypedProgramHead
 //TODO - the start for both of these should be the first statement in the program (if non-empty)
 //TODO - perhaps the end of the block could be the last statement in the program
 //TODO - look at C for the answer (original front-end looks suspicious)
-#if SET_SOURCE_POSITION_UNKNOWN
-   UntypedConverter::setSourcePositionUnknown(programDefinition);
-   UntypedConverter::setSourcePositionUnknown(programBody);
-#else
    UntypedConverter::setSourcePositionIncluding(programDefinition, ut_program, ut_program_end_statement);
    UntypedConverter::setSourcePositionIncluding(programBody,       ut_program, ut_program_end_statement);
-#endif
 
 #if 0
    if (programDeclaration->get_program_statement_explicit() == false)
@@ -547,14 +530,9 @@ UntypedConverter::convertSgUntypedSubroutineDeclaration (SgUntypedSubroutineDecl
    // Note that a ProcedureHeaderStatement is derived from a SgFunctionDeclaration (and is Fortran specific).
       SgProcedureHeaderStatement* subroutineDeclaration = new SgProcedureHeaderStatement(name, functionType, NULL);
 
-#if SET_SOURCE_POSITION_UNKNOWN
-      UntypedConverter::setSourcePositionUnknown(subroutineDeclaration);
-      UntypedConverter::setSourcePositionUnknown(subroutineDeclaration->get_parameterList());
-#else
       setSourcePositionFrom(subroutineDeclaration,                      ut_function);
 //TODO - for now (param_list should have its own source position
       setSourcePositionFrom(subroutineDeclaration->get_parameterList(), ut_function);
-#endif
 
    // Mark this as a subroutine.
       subroutineDeclaration->set_subprogram_kind( SgProcedureHeaderStatement::e_subroutine_subprogram_kind );
@@ -737,6 +715,50 @@ UntypedConverter::convertSgUntypedAssignmentStatement (SgUntypedAssignmentStatem
    }
 
 SgStatement*
+UntypedConverter::convertSgUntypedExpressionStatement (SgUntypedExpressionStatement* ut_stmt, SgExpressionPtrList& children, SgScopeStatement* scope)
+   {
+      SgStatement* sg_stmt = NULL;
+
+      ROSE_ASSERT(children.size() == 1);
+
+      SgExpression* sg_expr = isSgExpression(children[0]);
+      ROSE_ASSERT(sg_expr != NULL);
+
+      switch (ut_stmt->get_statement_enum())
+      {
+        case SgToken::FORTRAN_STOP:
+          {
+             SgStopOrPauseStatement* stop_stmt = new SgStopOrPauseStatement(sg_expr);
+             stop_stmt->set_stop_or_pause(SgStopOrPauseStatement::e_stop);
+             sg_stmt = stop_stmt;
+             break;
+          }
+        case SgToken::FORTRAN_RETURN:
+          {
+             sg_stmt = new SgReturnStmt(sg_expr);
+             break;
+          }
+        default:
+          {
+             fprintf(stderr, "UntypedConverter::convertSgUntypedExpressionStatement: failed to find known statement enum, is %d\n", ut_stmt->get_statement_enum());
+             ROSE_ASSERT(0);
+          }
+      }
+      
+      ROSE_ASSERT(sg_stmt != NULL);
+      setSourcePositionFrom(sg_stmt, ut_stmt);
+
+   // any IR node can have a parent, it makes sense to associate the expression with the statement
+      sg_expr->set_parent(sg_stmt);
+
+      scope->append_statement(sg_stmt);
+
+      UntypedConverter::convertLabel(ut_stmt, sg_stmt);
+
+      return sg_stmt;
+   }
+
+SgStatement*
 UntypedConverter::convertSgUntypedOtherStatement (SgUntypedOtherStatement* ut_stmt, SgScopeStatement* scope)
    {
       switch (ut_stmt->get_statement_enum())
@@ -818,6 +840,15 @@ UntypedConverter::convertSgUntypedExpression(SgUntypedExpression* ut_expr, SgExp
 #if DEBUG_UNTYPED_CONVERTER
             printf ("  - reference expression ==>   %s\n", expr->get_name().c_str());
 #endif
+         }
+      else if ( isSgUntypedOtherExpression(ut_expr) != NULL )
+         {
+            SgUntypedOtherExpression* expr = dynamic_cast<SgUntypedOtherExpression*>(ut_expr);
+            if (expr->get_statement_enum() == SgToken::FORTRAN_NULL)
+               {
+                  sg_expr = new SgNullExpression();
+                  setSourcePositionFrom(sg_expr, ut_expr);
+               }
          }
 
       return sg_expr;
@@ -911,11 +942,7 @@ UntypedConverter::convertSgUntypedBinaryOperator(SgUntypedBinaryOperator* untype
                printf("  - FORTRAN_INTRINSIC_PLUS: lhs=%p rhs=%p \n", lhs, rhs);
 #endif
                op = new SgAddOp(lhs, rhs, NULL);
-#if SET_SOURCE_POSITION_UNKNOWN
-               UntypedConverter::setSourcePositionUnknown(op);
-#else
                setSourcePositionIncluding(op, lhs, rhs);
-#endif
                break;
             }
          case SgToken::FORTRAN_INTRINSIC_MINUS:
@@ -924,11 +951,7 @@ UntypedConverter::convertSgUntypedBinaryOperator(SgUntypedBinaryOperator* untype
                printf("  - FORTRAN_INTRINSIC_MINUS: lhs=%p rhs=%p\n", lhs, rhs);
 #endif
                op = new SgSubtractOp(lhs, rhs, NULL);
-#if SET_SOURCE_POSITION_UNKNOWN
-               UntypedConverter::setSourcePositionUnknown(op);
-#else
                setSourcePositionIncluding(op, lhs, rhs);
-#endif
                break;
             }
          case SgToken::FORTRAN_INTRINSIC_POWER:
@@ -937,11 +960,7 @@ UntypedConverter::convertSgUntypedBinaryOperator(SgUntypedBinaryOperator* untype
                printf("  - FORTRAN_INTRINSIC_POWER:\n");
 #endif
                op = new SgExponentiationOp(lhs, rhs, NULL);
-#if SET_SOURCE_POSITION_UNKNOWN
-               UntypedConverter::setSourcePositionUnknown(op);
-#else
                setSourcePositionIncluding(op, lhs, rhs);
-#endif
                break;
             }
          case SgToken::FORTRAN_INTRINSIC_CONCAT:
@@ -950,11 +969,7 @@ UntypedConverter::convertSgUntypedBinaryOperator(SgUntypedBinaryOperator* untype
                printf("  - FORTRAN_INTRINSIC_CONCAT:\n");
 #endif
                op = new SgConcatenationOp(lhs, rhs, NULL);
-#if SET_SOURCE_POSITION_UNKNOWN
-               UntypedConverter::setSourcePositionUnknown(op);
-#else
                setSourcePositionIncluding(op, lhs, rhs);
-#endif
                break;
             }
          case SgToken::FORTRAN_INTRINSIC_TIMES:
@@ -963,11 +978,7 @@ UntypedConverter::convertSgUntypedBinaryOperator(SgUntypedBinaryOperator* untype
                printf("  - FORTRAN_INTRINSIC_TIMES: lhs=%p rhs=%p\n", lhs, rhs);
 #endif
                op = new SgMultiplyOp(lhs, rhs, NULL);
-#if SET_SOURCE_POSITION_UNKNOWN
-               UntypedConverter::setSourcePositionUnknown(op);
-#else
                setSourcePositionIncluding(op, lhs, rhs);
-#endif
                break;
             }
          case SgToken::FORTRAN_INTRINSIC_DIVIDE:
@@ -976,11 +987,7 @@ UntypedConverter::convertSgUntypedBinaryOperator(SgUntypedBinaryOperator* untype
                printf("  - FORTRAN_INTRINSIC_DIVIDE: lhs=%p rhs=%p\n", lhs, rhs);
 #endif
                op = new SgDivideOp(lhs, rhs, NULL);
-#if SET_SOURCE_POSITION_UNKNOWN
-               UntypedConverter::setSourcePositionUnknown(op);
-#else
                setSourcePositionIncluding(op, lhs, rhs);
-#endif
                break;
             }
          case SgToken::FORTRAN_INTRINSIC_AND:
@@ -989,12 +996,7 @@ UntypedConverter::convertSgUntypedBinaryOperator(SgUntypedBinaryOperator* untype
                printf("  - FORTRAN_INTRINSIC_AND:\n");
 #endif
                op = new SgAndOp(lhs, rhs, NULL);
-#if SET_SOURCE_POSITION_UNKNOWN
                setSourcePositionIncluding(op, lhs, rhs);
-               UntypedConverter::setSourcePositionUnknown(op);
-#else
-               setSourcePositionIncluding(op, lhs, rhs);
-#endif
                break;
             }
          case SgToken::FORTRAN_INTRINSIC_OR:
@@ -1003,11 +1005,7 @@ UntypedConverter::convertSgUntypedBinaryOperator(SgUntypedBinaryOperator* untype
                printf("  - FORTRAN_INTRINSIC_OR:\n");
 #endif
                op = new SgOrOp(lhs, rhs, NULL);
-#if SET_SOURCE_POSITION_UNKNOWN
-               UntypedConverter::setSourcePositionUnknown(op);
-#else
                setSourcePositionIncluding(op, lhs, rhs);
-#endif
                break;
             }
          case SgToken::FORTRAN_INTRINSIC_EQV:
@@ -1017,11 +1015,7 @@ UntypedConverter::convertSgUntypedBinaryOperator(SgUntypedBinaryOperator* untype
 #endif
                op = new SgEqualityOp(lhs, rhs, NULL);
                ROSE_ASSERT(0);  // check on logical operands
-#if SET_SOURCE_POSITION_UNKNOWN
-               UntypedConverter::setSourcePositionUnknown(op);
-#else
                setSourcePositionIncluding(op, lhs, rhs);
-#endif
                break;
             }
          case SgToken::FORTRAN_INTRINSIC_NEQV:
@@ -1031,11 +1025,7 @@ UntypedConverter::convertSgUntypedBinaryOperator(SgUntypedBinaryOperator* untype
 #endif
                op = new SgNotEqualOp(lhs, rhs, NULL);
                ROSE_ASSERT(0);  // check on logical operands
-#if SET_SOURCE_POSITION_UNKNOWN
-               UntypedConverter::setSourcePositionUnknown(op);
-#else
                setSourcePositionIncluding(op, lhs, rhs);
-#endif
                break;
             }
          case SgToken::FORTRAN_INTRINSIC_EQ:
@@ -1044,11 +1034,7 @@ UntypedConverter::convertSgUntypedBinaryOperator(SgUntypedBinaryOperator* untype
                printf("  - FORTRAN_INTRINSIC_EQ:\n");
 #endif
                op = new SgEqualityOp(lhs, rhs, NULL);
-#if SET_SOURCE_POSITION_UNKNOWN
-               UntypedConverter::setSourcePositionUnknown(op);
-#else
                setSourcePositionIncluding(op, lhs, rhs);
-#endif
                break;
             }
          case SgToken::FORTRAN_INTRINSIC_NE:
@@ -1057,11 +1043,7 @@ UntypedConverter::convertSgUntypedBinaryOperator(SgUntypedBinaryOperator* untype
                printf("  - FORTRAN_INTRINSIC_NE:\n");
 #endif
                op = new SgNotEqualOp(lhs, rhs, NULL);
-#if SET_SOURCE_POSITION_UNKNOWN
-               UntypedConverter::setSourcePositionUnknown(op);
-#else
                setSourcePositionIncluding(op, lhs, rhs);
-#endif
                break;
             }
          case SgToken::FORTRAN_INTRINSIC_GE:
@@ -1070,11 +1052,7 @@ UntypedConverter::convertSgUntypedBinaryOperator(SgUntypedBinaryOperator* untype
                printf("  - FORTRAN_INTRINSIC_GE:\n");
 #endif
                op = new SgGreaterOrEqualOp(lhs, rhs, NULL);
-#if SET_SOURCE_POSITION_UNKNOWN
-               UntypedConverter::setSourcePositionUnknown(op);
-#else
                setSourcePositionIncluding(op, lhs, rhs);
-#endif
                break;
             }
          case SgToken::FORTRAN_INTRINSIC_LE:
@@ -1083,11 +1061,7 @@ UntypedConverter::convertSgUntypedBinaryOperator(SgUntypedBinaryOperator* untype
                printf("  - FORTRAN_INTRINSIC_LE:\n");
 #endif
                op = new SgLessOrEqualOp(lhs, rhs, NULL);
-#if SET_SOURCE_POSITION_UNKNOWN
-               UntypedConverter::setSourcePositionUnknown(op);
-#else
                setSourcePositionIncluding(op, lhs, rhs);
-#endif
                break;
             }
          case SgToken::FORTRAN_INTRINSIC_LT:
@@ -1096,11 +1070,7 @@ UntypedConverter::convertSgUntypedBinaryOperator(SgUntypedBinaryOperator* untype
                printf("  - FORTRAN_INTRINSIC_LT:\n");
 #endif
                op = new SgLessThanOp(lhs, rhs, NULL);
-#if SET_SOURCE_POSITION_UNKNOWN
-               UntypedConverter::setSourcePositionUnknown(op);
-#else
                setSourcePositionIncluding(op, lhs, rhs);
-#endif
                break;
             }
          case SgToken::FORTRAN_INTRINSIC_GT:
@@ -1109,11 +1079,7 @@ UntypedConverter::convertSgUntypedBinaryOperator(SgUntypedBinaryOperator* untype
                printf("  - FORTRAN_INTRINSIC_GT:\n");
 #endif
                op = new SgGreaterThanOp(lhs, rhs, NULL);
-#if SET_SOURCE_POSITION_UNKNOWN
-               UntypedConverter::setSourcePositionUnknown(op);
-#else
                setSourcePositionIncluding(op, lhs, rhs);
-#endif
                break;
             }
          default:
@@ -1341,11 +1307,7 @@ UntypedConverter::buildProcedureSupport (SgUntypedFunctionDeclaration* ut_functi
             // DQ (12/17/2007): set the scope
                initializedName->set_scope(astScopeStack.front());
 
-#if SET_SOURCE_POSITION_UNKNOWN
-               setSourcePositionUnknown(initializedName);
-#else
                setSourcePosition(initializedName,astNameStack.front());
-#endif
 
                ROSE_ASSERT(astNameStack.empty() == false);
                astNameStack.pop_front();

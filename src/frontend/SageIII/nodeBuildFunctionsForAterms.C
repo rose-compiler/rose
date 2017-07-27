@@ -3231,6 +3231,19 @@ SgUntypedNamedStatement* SgUntypedNamedStatement::build_node_from_nonlist_childr
      return returnNode;
    }
 
+//TODO: Rasmussen - figure out how to get this file generated
+SgUntypedExpressionStatement* SgUntypedExpressionStatement::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgUntypedExpression* statement_expression )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedExpressionStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgUntypedExpression* statement_expression): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedExpressionStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
 
 /* #line 3168 "../../../src/frontend/SageIII//Cxx_GrammarAtermNodeBuildFunctions.C" */
 

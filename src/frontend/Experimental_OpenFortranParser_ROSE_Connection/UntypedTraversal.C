@@ -122,6 +122,13 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* n, InheritedAttribute cur
 
          pConverter->convertSgUntypedAssignmentStatement(ut_stmt, children, currentScope);
       }
+   else if ( isSgUntypedExpressionStatement(n) != NULL )
+      {
+         SgUntypedExpressionStatement* ut_stmt = dynamic_cast<SgUntypedExpressionStatement*>(n);
+         SgExpressionPtrList children(childAttrs);
+
+         pConverter->convertSgUntypedExpressionStatement(ut_stmt, children, currentScope);
+      }
    else if ( isSgUntypedOtherStatement(n) != NULL )
       {
          SgUntypedOtherStatement* ut_stmt = dynamic_cast<SgUntypedOtherStatement*>(n);
