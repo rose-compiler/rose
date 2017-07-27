@@ -529,8 +529,9 @@ void Specialization::substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates, Var
     SgExpression* exp=(*i).second;
     SgNode* node=exp;
     bool ruleAlgebraic=true;
+    bool ruleCommutativeSorting=true;
     //cout<<"DEBUG: Rewrite phase 2 :"<<exp->unparseToString()<<endl;
-    rewriteSystem2.rewriteAst(node,variableIdMapping,false,false,ruleAlgebraic);
+    rewriteSystem2.rewriteAst(node,variableIdMapping,false,false,ruleAlgebraic,ruleCommutativeSorting);
   }
 }
 

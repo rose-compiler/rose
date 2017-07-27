@@ -2,6 +2,8 @@
 #include "RewriteSystem.h"
 #include "Timer.h"
 #include "AstTerm.h"
+#include "RoseAst.h"
+#include <list>
 
 using namespace std;
 using namespace SPRAY;
@@ -253,10 +255,34 @@ void RewriteSystem::normalizeFloatingPointNumbersForUnparsing(SgNode*& root) {
   }
 }
 
+void RewriteSystem::establishCommutativeOrder(SgNode*& root, VariableIdMapping* variableIdMapping) {
+  RoseAst ast(root);
+  list<SgNode*> nodes;
+  // prepare reverse pre-order order
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+    nodes.push_front(*i);
+  }
+  // perform rewrite on reverse pre-order
+  for(list<SgNode*>::iterator i=nodes.begin();i!=nodes.end();++i) {
+    SgBinaryOp* op=nullptr;
+    if(isSgAddOp(*i)||isSgMultiplyOp(op)) {
+      op=isSgBinaryOp(*i);
+      ROSE_ASSERT(op);
+      SgExpression* lhs=op->get_lhs_operand();
+      SgExpression* rhs=op->get_rhs_operand();
+      if(!(lhs->variantT()<=rhs->variantT())) {
+        // swap lhs and rhs
+        op->set_lhs_operand(rhs);
+        op->set_rhs_operand(lhs);
+      }
+    }
+  }
+}
+
 // rewrites an AST
 // requirements: all variables have been replaced by constants
 // uses AstMatching to match patterns.
-void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMapping, bool ruleAddReorder, bool performCompoundAssignmentsElimination, bool ruleAlgebraic) {
+void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMapping, bool ruleAddReorder, bool performCompoundAssignmentsElimination, bool ruleAlgebraic,bool ruleCommutativeOrder) {
   //cout<<"Rewriting AST:"<<AstTerm::astTermWithNullValuesToString(root)<<endl;
   bool someTransformationApplied=false;
   bool transformationApplied=false;
@@ -477,4 +503,7 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
 
      //if(someTransformationApplied) cout<<"DEBUG: transformed: "<<root->unparseToString()<<endl;
    } while(someTransformationApplied);
+   if(ruleCommutativeOrder) {
+     establishCommutativeOrder(root,variableIdMapping);
+   }
 }

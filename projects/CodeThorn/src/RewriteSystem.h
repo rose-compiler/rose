@@ -26,7 +26,7 @@ private:
 class RewriteSystem {
  public:
   RewriteSystem();
-  void rewriteAst(SgNode*& root, SPRAY::VariableIdMapping* variableIdMapping, bool ruleAddReorder=false, bool performCompoundAssignmentsElimination=false, bool ruleAlgebraic=false);
+  void rewriteAst(SgNode*& root, SPRAY::VariableIdMapping* variableIdMapping, bool ruleAddReorder=false, bool performCompoundAssignmentsElimination=false, bool ruleAlgebraic=false, bool ruleCommutativeOrder=false);
   bool getRewriteCondStmt();
   void setRewriteCondStmt(bool);
 
@@ -38,6 +38,10 @@ class RewriteSystem {
   void rewriteCompoundAssignmentsInAst(SgNode* root, SPRAY::VariableIdMapping* variableIdMapping);
   void rewriteCompoundAssignments(SgNode*& root, SPRAY::VariableIdMapping* variableIdMapping);
   SgNode* buildRewriteCompoundAssignment(SgNode* root, SPRAY::VariableIdMapping* variableIdMapping);
+
+  // sorts nodes of operators SgAddOp and SgMultiplyOp according to variantT bottom up
+  // shallow sort at each node
+  void establishCommutativeOrder(SgNode*& root, SPRAY::VariableIdMapping* variableIdMapping);
 
   // transform conditions in 'SgDoWhileStatement', 'SgWhileStatement',
   // 'SgForStatement', 'ifStatement' into SgStatementExpressions that
