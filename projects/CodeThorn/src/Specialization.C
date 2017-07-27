@@ -220,12 +220,6 @@ int Specialization::substituteVariablesWithConst(SgNode* node, ConstReporter* co
    return (int)substitutionList.size();
  }
 
-
- bool Specialization::isAtMarker(Label lab, const EState* estate) {
-   Label elab=estate->label();
-   return elab==lab;
- }
-
 void Specialization::extractArrayUpdateOperations(Analyzer* ana,
                                                   ArrayUpdatesSequence& arrayUpdates,
                                                   RewriteSystem& rewriteSystem,
@@ -528,6 +522,16 @@ void Specialization::substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates, Var
         //cout<<"INFO: UpdateExtraction: ignored expression on rhs:"<<(*j)->unparseToString()<<endl;
       }
     }
+  }
+  // normalization phase
+  RewriteSystem rewriteSystem2;
+  for(ArrayUpdatesSequence::iterator i=arrayUpdates.begin();i!=arrayUpdates.end();++i) {
+    SgExpression* exp=(*i).second;
+    SgNode* node=exp;
+    bool ruleAlgebraic=true;
+    bool ruleCommutativeSorting=true;
+    //cout<<"DEBUG: Rewrite phase 2 :"<<exp->unparseToString()<<endl;
+    rewriteSystem2.rewriteAst(node,variableIdMapping,false,false,ruleAlgebraic,ruleCommutativeSorting);
   }
 }
 

@@ -398,6 +398,7 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
     ("rewrite-ssa", "rewrite SSA form (rewrite rules perform semantics preserving operations).")
     //    ("equivalence-check", "Check programs provided on the command line for equivalence")
     //("limit-to-fragment",po::value< string >(), "the argument is used to find fragments marked by two prgagmas of that '<name>' and 'end<name>'")
+    ("rewrite-trace", "print trace of rewrite rules.")
     ("print-update-infos",po::value< string >(), "[experimental] print information about array updates on stdout")
     ("rule-const-subst",po::value< string >(), " [experimental] use const-expr substitution rule <arg>")
     ("specialize-fun-name", po::value< string >(), "function of name [arg] to be specialized")
@@ -1290,6 +1291,9 @@ int main( int argc, char * argv[] ) {
       exit(1);
     }
     RewriteSystem rewriteSystem;
+    if(args.count("rewrite-trace")) {
+      rewriteSystem.setTrace(true);
+    }
     if(args.count("dump-sorted")>0 || args.count("dump-non-sorted")>0 || args.count("equivalence-check")>0) {
       analyzer.setSkipSelectedFunctionCalls(true);
       analyzer.setSkipArrayAccesses(true);
@@ -1419,7 +1423,7 @@ int main( int argc, char * argv[] ) {
       logger[TRACE]<<"STATUS: rewrite started."<<endl;
       rewriteSystem.resetStatistics();
       rewriteSystem.setRewriteCondStmt(false); // experimental: supposed to normalize conditions
-      rewriteSystem.rewriteAst(root,analyzer.getVariableIdMapping() ,true,false,true);
+      rewriteSystem.rewriteAst(root,analyzer.getVariableIdMapping(), false, true/*eliminate compound assignments*/);
       // TODO: Outputs statistics
       cout <<"Rewrite statistics:"<<endl<<rewriteSystem.getStatistics().toString()<<endl;
       sageProject->unparse(0,0);
@@ -1878,6 +1882,7 @@ int main( int argc, char * argv[] ) {
       ara.annotateAstAttributesAsCommentsBeforeStatements(sageProject,"ctgen-pre-condition");
       logger[TRACE] << "STATUS: Generated assertions."<<endl;
     }
+
     double arrayUpdateExtractionRunTime=0.0;
     double arrayUpdateSsaNumberingRunTime=0.0;
     double sortingAndIORunTime=0.0;
@@ -1934,6 +1939,7 @@ int main( int argc, char * argv[] ) {
           useConstSubstitutionRule
           );
       speci.substituteArrayRefs(arrayUpdates, analyzer.getVariableIdMapping(), sarMode);
+      // rewrite final result xxx
       arrayUpdateExtractionRunTime=timer.getElapsedTimeInMilliSec();
 
       if(boolOptions["verify-update-sequence-race-conditions"]) {
