@@ -1233,6 +1233,7 @@ generate_override_keyword( AstNodeClass & node, GrammarString & data )
           (nodeName == "JavaMemberValuePair"        && variableNameString == "name")  ||
           (nodeName == "UntypedReferenceExpression" && variableNameString == "name")  ||
           (nodeName == "UntypedFunctionDeclaration" && variableNameString == "name")  ||
+          (nodeName == "UntypedModuleDeclaration"   && variableNameString == "name")  ||
           (nodeName == "UntypedInitializedName"     && variableNameString == "name")  ||
           (nodeName == "EnumDeclaration"            && variableNameString == "name")  ||
           (nodeName == "TemplateDeclaration"        && variableNameString == "name")  ||
@@ -1337,6 +1338,7 @@ generate_override_keyword_for_set_functions( AstNodeClass & node, GrammarString 
           (nodeName == "JavaMemberValuePair"        && variableNameString == "name")  ||
           (nodeName == "UntypedReferenceExpression" && variableNameString == "name")  ||
           (nodeName == "UntypedFunctionDeclaration" && variableNameString == "name")  ||
+          (nodeName == "UntypedModuleDeclaration"   && variableNameString == "name")  ||
           (nodeName == "UntypedInitializedName"     && variableNameString == "name")  ||
           (nodeName == "EnumDeclaration"            && variableNameString == "name")  ||
           (nodeName == "TemplateDeclaration"        && variableNameString == "name")  ||
