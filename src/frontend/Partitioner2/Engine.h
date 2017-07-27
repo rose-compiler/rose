@@ -7,6 +7,7 @@
 #include <Partitioner2/Function.h>
 #include <Partitioner2/Partitioner.h>
 #include <Partitioner2/Utility.h>
+#include <Progress.h>
 #include <Sawyer/DistinctList.h>
 
 namespace Rose {
@@ -191,6 +192,7 @@ private:
     MemoryMap::Ptr map_;                                // memory map initialized by load()
     BasicBlockWorkList::Ptr basicBlockWorkList_;        // what blocks to work on next
     CodeConstants::Ptr codeFunctionPointers_;           // generates constants that are found in instruction ASTs
+    Progress::Ptr progress_;                            // optional progress reporting
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Constructors
@@ -198,14 +200,15 @@ private:
 public:
     /** Default constructor. */
     Engine()
-        : interp_(NULL), binaryLoader_(NULL), disassembler_(NULL), basicBlockWorkList_(BasicBlockWorkList::instance(this)) {
+        : interp_(NULL), binaryLoader_(NULL), disassembler_(NULL), basicBlockWorkList_(BasicBlockWorkList::instance(this)),
+        progress_(Progress::instance()) {
         init();
     }
 
     /** Construct engine with settings. */
     explicit Engine(const Settings &settings)
-        : settings_(settings),
-          interp_(NULL), binaryLoader_(NULL), disassembler_(NULL), basicBlockWorkList_(BasicBlockWorkList::instance(this)) {
+        : settings_(settings), interp_(NULL), binaryLoader_(NULL), disassembler_(NULL),
+        basicBlockWorkList_(BasicBlockWorkList::instance(this)), progress_(Progress::instance()) {
         init();
     }
 
@@ -921,6 +924,15 @@ public:
      * @{ */
     bool exitOnError() const /*final*/ { return settings_.engine.exitOnError; }
     virtual void exitOnError(bool b) { settings_.engine.exitOnError = b; }
+    /** @} */
+
+    /** Property: progress reporting.
+     *
+     *  The optional object to receive progress reports.
+     *
+     * @{ */
+    Progress::Ptr progress() const /*final*/ { return progress_; }
+    virtual void progress(const Progress::Ptr &progress) { progress_ = progress; }
     /** @} */
 
     /** Property: interpretation

@@ -988,6 +988,7 @@ Engine::createBarePartitioner() {
     checkCreatePartitionerPrerequisites();
     Partitioner p(disassembler_, map_);
     p.settings(settings_.partitioner.base);
+    p.progress(progress_);
 
     // Load configuration files
     if (!settings_.engine.configurationNames.empty()) {
