@@ -18,6 +18,11 @@ class ATtoUntypedTraversal
    SgUntypedFile*        get_file()  { return pUntypedFile; }
    SgUntypedGlobalScope* get_scope() { return pUntypedFile->get_scope(); }
 
+   std::string getCurrentFilename()
+      {
+         return pSourceFile->get_sourceFileNameWithPath();
+      }
+
  protected:
    SgUntypedFile* pUntypedFile;
    SgSourceFile*  pSourceFile;
@@ -25,6 +30,15 @@ class ATtoUntypedTraversal
  public:
 
 static void setSourcePositionUnknown(SgLocatedNode* locatedNode);
+
+static FAST::PosInfo getLocation(ATerm term);
+
+void setSourcePosition              ( SgLocatedNode* locatedNode, ATerm term );
+void setSourcePosition              ( SgLocatedNode* locatedNode, FAST::PosInfo & pos );
+void setSourcePositionFrom          ( SgLocatedNode* locatedNode, SgLocatedNode* fromNode );
+void setSourcePositionExcludingTerm ( SgLocatedNode* locatedNode, ATerm startTerm, ATerm endTerm );
+void setSourcePositionIncludingTerm ( SgLocatedNode* locatedNode, ATerm startTerm, ATerm endTerm );
+void setSourcePositionIncludingNode ( SgLocatedNode* locatedNode, ATerm startTerm, SgLocatedNode* endNode );
 
 // These should probably go in UntypedBuilder class
 static SgUntypedType* buildType(SgUntypedType::type_enum type_enum = SgUntypedType::e_unknown);
@@ -127,6 +141,11 @@ ATbool traverse_AssignmentStmt(ATerm term, SgUntypedStatementList* stmt_list);
 // R854
 ATbool traverse_ContinueStmt(ATerm term, SgUntypedStatementList* stmt_list);
 
+// R855
+ATbool traverse_StopStmt      ( ATerm term, SgUntypedStatementList* stmt_list  );
+ATbool traverse_ErrorStopStmt ( ATerm term, SgUntypedStatementList* stmt_list  );
+ATbool traverse_OptStopCode   ( ATerm term, SgUntypedExpression** var_StopCode );
+
 // R1101
 ATbool traverse_MainProgram(ATerm term, SgUntypedScope* scope);
 ATbool traverse_OptProgramStmt(ATerm term, SgUntypedNamedStatement** program_stmt);
@@ -201,10 +220,10 @@ ATbool traverse_EndMpSubprogramStmt ( ATerm term, SgUntypedNamedStatement** end_
 // R1240 entry-stmt
 
 // R1141
-ATbool traverse_ReturnStmt   ( ATerm term, SgUntypedExpressionStatement** return_stmt );
+ATbool traverse_ReturnStmt   ( ATerm term, SgUntypedStatementList* stmt_list );
 
 // R1142
-ATbool traverse_ContainsStmt ( ATerm term, SgUntypedOtherStatement**    contains_stmt );
+ATbool traverse_ContainsStmt ( ATerm term, SgUntypedOtherStatement** contains_stmt );
 
 
 }; // class Traversal

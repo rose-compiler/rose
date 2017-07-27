@@ -3147,11 +3147,11 @@ SgUntypedSubroutineDeclaration* SgUntypedSubroutineDeclaration::build_node_from_
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgUntypedModuleDeclaration* SgUntypedModuleDeclaration::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct )
+SgUntypedModuleDeclaration* SgUntypedModuleDeclaration::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, std::string name )
    {
 #if 0
   // debugging information!
-     printf ("In SgUntypedModuleDeclaration::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In SgUntypedModuleDeclaration::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, std::string name): this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
      SgUntypedModuleDeclaration* returnNode = NULL;
@@ -3227,6 +3227,19 @@ SgUntypedNamedStatement* SgUntypedNamedStatement::build_node_from_nonlist_childr
 #endif
 
      SgUntypedNamedStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+//TODO: Rasmussen - figure out how to get this file generated
+SgUntypedExpressionStatement* SgUntypedExpressionStatement::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgUntypedExpression* statement_expression )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedExpressionStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgUntypedExpression* statement_expression): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedExpressionStatement* returnNode = NULL;
 
      return returnNode;
    }
