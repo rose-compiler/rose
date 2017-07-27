@@ -13,6 +13,7 @@
 #include "ParProAnalyzer.h"
 #include "ParProLtlMiner.h"
 #include "SpotConnection.h"
+#include "Visualizer.h"
 
 // CodeThorn includes
 

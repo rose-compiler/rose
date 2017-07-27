@@ -1,3 +1,6 @@
+#include "rose_config.h"
+#ifdef HAVE_SPOT
+
 #ifndef SPOT_MISCELLANEOUS_H
 #define SPOT_MISCELLANEOUS_H
 
@@ -53,3 +56,5 @@ public:
 };
 
 #endif 
+
+#endif // end of "#ifdef HAVE_SPOT"

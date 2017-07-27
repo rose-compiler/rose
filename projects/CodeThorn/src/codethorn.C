@@ -6,6 +6,8 @@
 
 #include "rose.h"
 
+#include "rose_config.h"
+
 #include "codethorn.h"
 #include "SgNodeHelper.h"
 #include "Labeler.h"
@@ -790,11 +792,13 @@ void automataDotInput(const po::variables_map& args, Sawyer::Message::Facility l
     } else {
       ltlResults = explorer.propertyValueTable();
     }
+#ifdef HAVE_SPOT
     string promelaLtlFormulae = ltlResults->getLtlsAsPromelaCode(withResults, withAnnotations);
     promelaCode += "\n" + promelaLtlFormulae;
     string filename = args["promela-output"].as<string>();
     write_file(filename, promelaCode);
     cout << "generated " << filename  <<"."<<endl;
+#endif
   }
   if (args.count("ltl-properties-output")) {
     string ltlFormulae = explorer.propertyValueTable()->getLtlsRersFormat(withResults, withAnnotations);
@@ -1118,6 +1122,40 @@ int main( int argc, char * argv[] ) {
 
     po::variables_map args = parseCommandLine(argc, argv);
     BoolOptions boolOptions = parseBoolOptions(argc, argv);
+
+    // Check if chosen options are available
+
+#ifndef HAVE_SPOT
+    // display error message and exit in case SPOT is not avaiable, but related options are selected
+    if (args.count("csv-stats-cegpra") ||
+	args.count("cegpra-ltl") ||
+	args.count("cegpra-ltl-all") ||
+	args.count("cegpra-max-iterations") ||
+	args.count("viz-cegpra-detailed") ||
+	args.count("csv-spot-ltl") ||
+	args.count("check-ltl") ||
+	args.count("single-property") ||
+	args.count("check-ltl-counterexamples") ||
+	args.count("check-ltl-sol") ||
+	args.count("ltl-in-alphabet") ||
+	args.count("ltl-out-alphabet") ||
+	args.count("ltl-driven") ||
+	args.count("spot-stg") ||
+	args.count("tg-ltl-reduced") ||
+	args.count("with-ltl-counterexamples") ||
+	args.count("mine-num-verifiable") ||
+	args.count("mine-num-falsifiable") ||
+	args.count("ltl-mode") ||
+	args.count("ltl-properties-output") ||
+	args.count("promela-output") ||
+	args.count("promela-output-only") ||
+	args.count("output-with-results") ||
+	args.count("output-with-annotations")){
+      cerr << "Error: Options selected that require the SPOT library, however SPOT was not selected during configuration." << endl;
+      exit(1);
+
+    }
+#endif
 
     // Start execution
 

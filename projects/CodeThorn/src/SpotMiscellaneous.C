@@ -1,3 +1,6 @@
+#include "rose_config.h"
+#ifdef HAVE_SPOT
+
 #include "sage3basic.h"
 #include "SpotMiscellaneous.h"
 
@@ -27,3 +30,5 @@ std::string SpotMiscellaneous::spinSyntax(std::string ltlFormula) {
   formula->destroy();
   return result;
 }
+
+#endif // end of "#ifdef HAVE_SPOT"

@@ -12,8 +12,13 @@
 #include "AstAnnotator.h"
 #include "AbstractValue.h"
 #include "Miscellaneous2.h"
+
+#include "rose_config.h"
+#ifdef HAVE_SPOT
+// SPOT includes
 #include "tgba/succiter.hh"
 #include "tgba/state.hh"
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // BEGIN OF VISUALIZER
@@ -704,6 +709,7 @@ string Visualizer::foldedTransitionGraphToDot() {
   return ss.str();
 }
 
+#ifdef HAVE_SPOT
 struct spot_state_compare {
   bool operator() (spot::state* const& lhs, spot::state* const& rhs) const {
     if (lhs->compare(rhs) < 0) {
@@ -743,6 +749,7 @@ string Visualizer::spotTgbaToDot(spot::tgba& tgba) {
   ss << "}" << endl;
   return ss.str();
 }
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // END OF VISUALIZER

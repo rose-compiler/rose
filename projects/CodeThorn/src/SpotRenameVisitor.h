@@ -1,3 +1,5 @@
+#include "rose_config.h"
+#ifdef HAVE_SPOT
 
 #ifndef SPOT_RENAME_VISITOR_H
 #define SPOT_RENAME_VISITOR_H
@@ -25,3 +27,5 @@ private:
 };
 
 #endif // SPOT_RENAME_VISITOR_H
+
+#endif // end of "#ifdef HAVE_SPOT"

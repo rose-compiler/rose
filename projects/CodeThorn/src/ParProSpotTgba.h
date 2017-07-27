@@ -1,3 +1,6 @@
+#include "rose_config.h"
+#ifdef HAVE_SPOT
+
 #ifndef PAR_PRO_SPOT_TGBA_HH
 #define PAR_PRO_SPOT_TGBA_HH
 
@@ -64,3 +67,5 @@ namespace CodeThorn {
 }  //end of namespace CodeThorn
 
 #endif
+
+#endif // end of "#ifdef HAVE_SPOT"

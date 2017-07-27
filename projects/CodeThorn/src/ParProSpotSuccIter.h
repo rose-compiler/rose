@@ -1,3 +1,5 @@
+#include "rose_config.h"
+#ifdef HAVE_SPOT
 
 #ifndef PAR_PRO_SPOT_SUCC_ITERATOR_HH
 #define PAR_PRO_SPOT_SUCC_ITERATOR_HH
@@ -67,3 +69,5 @@ typedef boost::unordered_map<string, int> String2Int;
 }
 
 #endif
+
+#endif // end of "#ifdef HAVE_SPOT"

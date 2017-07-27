@@ -9,6 +9,9 @@
 #include <cassert>
 #include <algorithm>
 
+#include "rose_config.h"
+#ifdef HAVE_SPOT
+
 //CodeThorn includes
 #include "EState.h"
 #include "SpotTgba.h"
@@ -161,4 +164,44 @@ namespace CodeThorn {
       bool modeLTLDriven=false;
   };
 };
+#else
+
+#include "TransitionGraph.h"
+#include "ParProTransitionGraph.h"
+#include "PropertyValueTable.h"
+
+namespace CodeThorn {
+
+  class ParProSpotTgba;
+
+  class SpotConnection {
+    public:
+      SpotConnection();
+      SpotConnection(std::string ltl_formulae_file);
+      SpotConnection(std::list<std::string> ltl_formulae);
+      void init(std::string ltl_formulae_file);
+      void init(std::list<std::string> ltl_formulae);
+      void checkLtlProperties(TransitionGraph& stg,
+					std::set<int> inVals, std::set<int> outVals, bool withCounterExample, bool spuriousNoAnswers);
+      void checkLtlPropertiesParPro(ParProTransitionGraph& stg, bool withCounterexample, bool spuriousNoAnswers, set<std::string> annotationsOfModeledTransitions);
+      void checkSingleProperty(int propertyNum, TransitionGraph& stg,
+						std::set<int> inVals, std::set<int> outVals, bool withCounterexample, bool spuriousNoAnswers);
+      PropertyValue checkPropertyParPro(string ltlProperty, ParProTransitionGraph& stg, set<std::string> annotationsOfModeledTransitions);
+      ParProSpotTgba* toTgba(ParProTransitionGraph& stg);
+      void compareResults(std::string tgba_file, std::string ltl_fsPlusRes_file);
+      void compareResults(TransitionGraph& stg, std::string ltl_fsPlusRes_file, 
+					std::set<int> inVals, std::set<int> outVals);
+      PropertyValueTable* getLtlResults();
+      void resetLtlResults();
+      void resetLtlResults(int property);
+      std::string int2PropName(int ioVal, int maxInVal);
+      void setModeLTLDriven(bool ltlDriven);
+      std::string spinSyntax(std::string ltlFormula);
+      std::set<std::string> atomicPropositions(std::string ltlFormula);
+  private:
+      void reportUndefinedFunction();
+  };
+};
 #endif
+
+#endif // end of "#ifndef SPOT_CONNECTION_H"

@@ -9,7 +9,8 @@
 #include "Analyzer.h"
 #include "PropertyValueTable.h"
 #include "EState.h"
-#include "SpotConnection.h" 
+#include "SpotConnection.h"
+#include "Visualizer.h"
 
 //BOOST includes
 #include "boost/lexical_cast.hpp"

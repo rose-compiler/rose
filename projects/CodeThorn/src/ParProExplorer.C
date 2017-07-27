@@ -1,6 +1,7 @@
 // Author: Marc Jasper, 2016.
 
 #include "ParProExplorer.h"
+#include "rose_config.h"
 
 #include "LtsminConnection.h"
 #include "ParallelAutomataGenerator.h"
@@ -53,6 +54,7 @@ PropertyValueTable* ParProExplorer::ltlAnalysis(ParallelSystem system) {
       bool spuriousNoAnswers = false;
       if (system.hasStg()) {
 	if (_visualize) {
+#if HAVE_SPOT
 	  ParProSpotTgba* spotTgba = spotConnection.toTgba(*(system.stg()));
 	  Visualizer visualizer;
 	  string dotTgba = visualizer.spotTgbaToDot(*spotTgba);
@@ -61,12 +63,14 @@ PropertyValueTable* ParProExplorer::ltlAnalysis(ParallelSystem system) {
 	  string outputFilename = "spotTgba_no_approx.dot";
 	  write_file(outputFilename, dotTgba);
 	  cout << "generated " << outputFilename <<"."<<endl;
+#endif
 	}  
 	spotConnection.checkLtlPropertiesParPro(*(system.stg()), withCounterexample, spuriousNoAnswers, system.getAnnotations());
 	result = spotConnection.getLtlResults();
       } else {
 	if (system.hasStgOverApprox()) {
 	  if (_visualize) {
+#if HAVE_SPOT
 	    ParProSpotTgba* spotTgba = spotConnection.toTgba(*(system.stgOverApprox()));
 	    Visualizer visualizer;
 	    string dotTgba = visualizer.spotTgbaToDot(*spotTgba);
@@ -75,11 +79,13 @@ PropertyValueTable* ParProExplorer::ltlAnalysis(ParallelSystem system) {
 	    string outputFilename = "spotTgba_over_approx.dot";
 	    write_file(outputFilename, dotTgba);
 	    cout << "generated " << outputFilename <<"."<<endl;
+#endif
 	  }  
 	  spotConnection.checkLtlPropertiesParPro(*(system.stgOverApprox()), withCounterexample, spuriousNoAnswers, system.getAnnotations());
 	}
 	if (system.hasStgUnderApprox()) {
 	  if (_visualize) {
+#if HAVE_SPOT
 	    ParProSpotTgba* spotTgba = spotConnection.toTgba(*(system.stgUnderApprox()));
 	    Visualizer visualizer;
 	    string dotTgba = visualizer.spotTgbaToDot(*spotTgba);
@@ -88,6 +94,7 @@ PropertyValueTable* ParProExplorer::ltlAnalysis(ParallelSystem system) {
 	    string outputFilename = "spotTgba_under_approx.dot";
 	    write_file(outputFilename, dotTgba);
 	    cout << "generated " << outputFilename <<"."<<endl;
+#endif
 	  }
 	  spotConnection.checkLtlPropertiesParPro(*(system.stgUnderApprox()), withCounterexample, spuriousNoAnswers, system.getAnnotations());
 	}

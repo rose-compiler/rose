@@ -4,6 +4,9 @@
 using namespace CodeThorn;
 using namespace std;
 
+#include "rose_config.h"
+#ifdef HAVE_SPOT
+
 SpotConnection::SpotConnection() {};
 
 //constructors with automatic initialization
@@ -773,3 +776,95 @@ set<string> SpotConnection::atomicPropositions(string ltlFormula) {
   }
   return result;
 }
+
+#else
+
+SpotConnection::SpotConnection() {  reportUndefinedFunction(); };
+SpotConnection::SpotConnection(std::string ltl_formulae_file) {  reportUndefinedFunction(); }
+SpotConnection::SpotConnection(std::list<std::string> ltl_formulae) { reportUndefinedFunction(); }
+
+void SpotConnection::init(std::string ltl_formulae_file) {
+  reportUndefinedFunction();
+}
+
+void SpotConnection::init(std::list<std::string> ltl_formulae) {
+  reportUndefinedFunction();
+}
+
+PropertyValueTable* SpotConnection::getLtlResults() {
+  reportUndefinedFunction();
+}
+
+void SpotConnection::resetLtlResults() { 
+  reportUndefinedFunction();
+}
+
+void SpotConnection::resetLtlResults(int property) { 
+  reportUndefinedFunction();
+}
+
+void SpotConnection::setModeLTLDriven(bool ltlDriven) {
+  reportUndefinedFunction();
+}
+void SpotConnection::checkSingleProperty(int propertyNum, TransitionGraph& stg, 
+						std::set<int> inVals, std::set<int> outVals, bool withCounterexample, bool spuriousNoAnswers) {
+  reportUndefinedFunction();
+}
+
+PropertyValue SpotConnection::checkPropertyParPro(string ltlProperty, ParProTransitionGraph& stg, set<string> annotationsOfModeledTransitions) {
+  reportUndefinedFunction();
+}
+
+void SpotConnection::checkLtlProperties(TransitionGraph& stg,
+						std::set<int> inVals, std::set<int> outVals, bool withCounterexample, bool spuriousNoAnswers) {
+  reportUndefinedFunction();
+}
+
+ParProSpotTgba* SpotConnection::toTgba(ParProTransitionGraph& stg) {
+  reportUndefinedFunction();
+}
+
+void SpotConnection::checkLtlPropertiesParPro(ParProTransitionGraph& stg, bool withCounterexample, bool spuriousNoAnswers, set<string> annotationsOfModeledTransitions) {
+  reportUndefinedFunction();
+}
+
+void SpotConnection::compareResults(TransitionGraph& stg, std::string ltl_fsPlusRes_file,
+					std::set<int> inVals, std::set<int> outVals) {
+  reportUndefinedFunction();
+}
+
+void SpotConnection::compareResults(std::string tgba_file, std::string ltl_fsPlusRes_file) {
+  reportUndefinedFunction();
+}
+
+
+
+// TODO: move to a more appropriate class (does not utilize SPOT, but handles the RERS input/output encoding)
+std::string SpotConnection::int2PropName(int ioVal, int maxInputVal)  {
+  std::string result;
+  if (ioVal >maxInputVal && ioVal <= 26) {
+    result = "o";  //an output variable follows (RERS mapping)
+  } else if (ioVal >= 1 && ioVal <= maxInputVal) {
+    result = "i";  //an input variable follows (RERS mapping)
+  } else {
+    cerr << "ERROR: input/output variable not recognized (not rers format)" << endl;
+    assert(0);
+  }
+  char atomicProp = (char) (ioVal + ((int) 'A') - 1);
+  result += boost::lexical_cast<string>(atomicProp);
+  return result;
+}
+
+std::string SpotConnection::spinSyntax(std::string ltlFormula) {
+  reportUndefinedFunction();
+}
+
+set<string> SpotConnection::atomicPropositions(string ltlFormula) {
+  reportUndefinedFunction();
+}
+
+void SpotConnection::reportUndefinedFunction() {
+  throw CodeThorn::Exception("Error: Called a function of class SpotConnection even though CodeThorn was compiled without SPOT.");
+}
+
+#endif

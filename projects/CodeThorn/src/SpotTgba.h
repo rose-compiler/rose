@@ -1,3 +1,6 @@
+#include "rose_config.h"
+#ifdef HAVE_SPOT
+
 #ifndef SPOT_TGBA_HH
 #define SPOT_TGBA_HH
 
@@ -67,3 +70,5 @@ namespace CodeThorn {
 }  //end of namespace CodeThorn
 
 #endif
+
+#endif // end of "#ifdef HAVE_SPOT"

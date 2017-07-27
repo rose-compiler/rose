@@ -1,3 +1,5 @@
+#include "rose_config.h"
+#ifdef HAVE_SPOT
 
 #ifndef SPOT_SUCC_ITERATOR_HH
 #define SPOT_SUCC_ITERATOR_HH
@@ -56,3 +58,5 @@ namespace CodeThorn {
 }
 
 #endif
+
+#endif // end of "#ifdef HAVE_SPOT"
