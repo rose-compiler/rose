@@ -23,6 +23,10 @@
 #include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
 #include <boost/interprocess/sync/file_lock.hpp>
+#include <boost/interprocess/sync/scoped_lock.hpp>
+
+using namespace std; 
+using namespace boost::interprocess; 
 
 namespace Rose {
 namespace KeepGoing {
@@ -820,54 +824,39 @@ Rose::KeepGoing::AppendToFile(const std::string& filename, const std::string& ms
   // if filename is NULL, no action is needed. 
   if (filename.size()==0)
     return; 
-
+ // use a separated file for the file lock
+  string lock_file_name = filename+".lock"; 
   touch(filename);
+  touch(lock_file_name); //this lock file must exist. Or later flock() will fail.
 
-  boost::interprocess::file_lock flock;
-  try
+  boost::interprocess::file_lock flock (lock_file_name.c_str());
+  // introduce a scope to use the scoped lock, which automatically unlock when existing the scope
   {
-      boost::interprocess::file_lock* flock_tmp =
-          new boost::interprocess::file_lock(filename.c_str());
-      flock.swap(*flock_tmp);
-      delete flock_tmp;
-      flock.lock();
-  }
-  catch (boost::interprocess::interprocess_exception &ex)
-  {
-      std::cout << ex.what() << std::endl;
-
+    scoped_lock<file_lock> e_lock(flock);
+    std::ofstream fout(filename.c_str(), std::ios::app);
+    if(!fout.is_open())
+    {
       std::cerr
-          << "[FATAL] "
-          << "Couldn't lock "
-          << "'" << filename << "'"
-          << std::endl;
-
-      exit(1);
-  }
-
-  std::ofstream fout(filename.c_str(), std::ios::app);
-
-  if(!fout.is_open())
-  {
-      std::cerr
-          << "[FATAL] "
-          << "Couldn't open "
-          << "'" << filename << "'"
-          << std::endl;
-      flock.unlock();
-      exit(1);
-  }
-
+        << "[FATAL] "
+        << "Couldn't open "
+        << "'" << filename << "'"
+        << std::endl;
+    }
+    else
+    {  
 #if 0
-  fout
-      << GetTimestamp()  << " "
-      << getpid() << " "
-      << msg
-      << std::endl;
+      fout
+        << GetTimestamp()  << " "
+        << getpid() << " "
+        << msg
+        << std::endl;
 #endif
-  fout<<msg; 
-  fout.close();
-  flock.unlock();
+      fout<<msg; 
+      fout.flush();
+      fout.close();
+    }
+  } // end scope for the scoped lock
+  boost::filesystem::remove (lock_file_name);
 }
 
 std::map<std::string, std::string>
