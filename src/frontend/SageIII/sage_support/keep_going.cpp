@@ -515,6 +515,8 @@ void Rose::KeepGoing::generate_reports(SgProject* project,
       std::string filename = file->getFileName();
       filename = StripPrefix(path_prefix, filename);
 
+      std::stringstream ss;
+      ss <<"Processed File: With Errors " <<  filename << endl; // Help diagnosis , output full file name, even command lines may have partial file paths
       if (verbose)
       {
         std::cout
@@ -525,8 +527,6 @@ void Rose::KeepGoing::generate_reports(SgProject* project,
       }
 
       // <file> <frontend> <unparser> <backend>
-      std::stringstream ss;
-      // ss << filename << " "; // no need to output filename again, part of command line already.
       // Keep all info. of one file into one line. Users can easily count the total failures. 
       if (file->get_frontendErrorCode())
         ss << "\t Frontend Error Code:" << file->get_frontendErrorCode() ;
@@ -574,7 +574,7 @@ void Rose::KeepGoing::generate_reports(SgProject* project,
       std::string filename = StripPrefix(path_prefix, full_filename);
 
       // output file full path first
-      AppendToFile(report_filename__pass, full_filename+"\n");
+      AppendToFile(report_filename__pass, "Processed File: Without Errors:"+full_filename+"\n");
       if (verbose)
       {
         std::cout
@@ -623,7 +623,7 @@ void Rose::KeepGoing::generate_reports(SgProject* project,
           runonce = true; 
         }
 
-        AppendToFile(report_filename__pass, filename+"\n");
+        AppendToFile(report_filename__pass, "Processed File: With Backend Errors:"+filename+"\n");
         AppendToFile(report_filename__pass, oss.str());
       }
     }
