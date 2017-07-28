@@ -733,6 +733,13 @@ UntypedConverter::convertSgUntypedExpressionStatement (SgUntypedExpressionStatem
              sg_stmt = stop_stmt;
              break;
           }
+        case SgToken::FORTRAN_ERROR_STOP:
+          {
+             SgStopOrPauseStatement* stop_stmt = new SgStopOrPauseStatement(sg_expr);
+             stop_stmt->set_stop_or_pause(SgStopOrPauseStatement::e_error_stop);
+             sg_stmt = stop_stmt;
+             break;
+          }
         case SgToken::FORTRAN_RETURN:
           {
              sg_stmt = new SgReturnStmt(sg_expr);
