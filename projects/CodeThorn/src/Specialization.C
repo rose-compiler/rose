@@ -4,6 +4,7 @@
 
 #include <map>
 #include <sstream>
+#include "AstTerm.h"
 
 using namespace std;
 using namespace SPRAY;
@@ -533,6 +534,17 @@ void Specialization::substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates, Var
     //cout<<"DEBUG: Rewrite phase 2 :"<<exp->unparseToString()<<endl;
     rewriteSystem2.rewriteAst(node,variableIdMapping,false,false,ruleAlgebraic,ruleCommutativeSorting);
   }
+  std::ofstream fout;
+  fout.open("rewrite.dot");    // create new file/overwrite existing file
+  fout<<"digraph Rewrite {\n"<<endl;
+  for(ArrayUpdatesSequence::iterator i=arrayUpdates.begin();i!=arrayUpdates.end();++i) {
+    SgExpression* exp=(*i).second;
+    fout<<"//"<<exp->unparseToString()<<endl;
+    fout<<AstTerm::astTermWithNullValuesToDot(exp)<<endl;
+    //fout<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
+  }
+  fout<<"}\n";
+  fout.close();    // close. Will be used with append.
 }
 
 void Specialization::printUpdateInfos(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping) {
