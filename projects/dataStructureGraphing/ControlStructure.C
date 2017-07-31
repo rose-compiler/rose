@@ -2,7 +2,7 @@
 #include "ControlStructure.h"
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 /*
  * The function

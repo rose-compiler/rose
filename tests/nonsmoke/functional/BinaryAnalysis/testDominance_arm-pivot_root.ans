@@ -1,0 +1,12 @@
+CFG dominators for function 0x000082e8 "perror":
+  dominator of 0x000082e8<0> is none
+CFG dominators for function 0x000082f8 "fprintf":
+  dominator of 0x000082f8<0> is none
+CFG dominators for function 0x00008308 "syscall":
+  dominator of 0x00008308<0> is none
+CFG dominators for function 0x00008318 "abort":
+  dominator of 0x00008318<0> is none
+CFG dominators for function 0x00008328 "__libc_start_main":
+  dominator of 0x00008328<0> is none
+CFG dominators for function 0x00008338 "_start":
+  dominator of 0x00008338<0> is none

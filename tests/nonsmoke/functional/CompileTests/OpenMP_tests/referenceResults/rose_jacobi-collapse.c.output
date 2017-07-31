@@ -1,0 +1,9 @@
+#pragma omp parallel 
+#pragma omp single 
+#pragma omp parallel 
+#pragma omp for  private(xx,yy,j,i) collapse(2)
+#pragma omp parallel 
+#pragma omp for  private(j,i) collapse(2)
+#pragma omp for  private(resid,j,i) reduction(+ : error) collapse(2) nowait
+#pragma omp parallel 
+#pragma omp for  private(xx,yy,temp,j,i) reduction(+ : error) collapse(2)

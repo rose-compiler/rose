@@ -1,7 +1,7 @@
 #include "sage3basic.h"
 #include "MultiSemantics2.h"
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace MultiSemantics {

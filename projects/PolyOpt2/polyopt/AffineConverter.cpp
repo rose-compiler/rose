@@ -991,14 +991,14 @@ AffineConverter::parseExpression(SgExpression* expr,
 	    mat =
 	      parseBinExpr(lhs, 1, rhs, -1, -1, iteratorsMap, parametersMap);
 	  else if (isSgLessThanOp(expr))
-	    mat =
-	      parseBinExpr(lhs, -1, rhs, 1, -1, iteratorsMap, parametersMap);
+	      mat =
+		parseBinExpr(lhs, -1, rhs, 1, -1, iteratorsMap, parametersMap);
 	  else if (isSgGreaterOrEqualOp(expr))
-	    mat =
-	      parseBinExpr(lhs, 1, rhs, -1, 0, iteratorsMap, parametersMap);
+	      mat =
+		parseBinExpr(lhs, 1, rhs, -1, 0, iteratorsMap, parametersMap);
 	  else if (isSgLessOrEqualOp(expr))
-	    mat =
-	      parseBinExpr(lhs, -1, rhs, 1, 0, iteratorsMap, parametersMap);
+	      mat =
+		parseBinExpr(lhs, -1, rhs, 1, 0, iteratorsMap, parametersMap);
 	  else if (isSgEqualityOp(expr))
 	    {
 	      scoplib_matrix_p mat1 =
@@ -1163,18 +1163,6 @@ AffineConverter::parseMinMaxExpression(SgExpression* e,
       *rhs = cexp->get_false_exp();
       return true;
     }
-
-  SgFunctionCallExp* fe = isSgFunctionCallExp(e);
-  if (fe)
-    {
-      SgExprListExp* args = fe->get_args();
-      SgExpressionPtrList l = args->get_expressions();
-      ROSE_ASSERT (l.size() == 2);
-      *lhs = l[0];
-      *rhs = l[1];
-      return true;
-    }
-
   return false;
 }
 
@@ -1231,7 +1219,6 @@ AffineConverter::computeCoefficient(SgNode* e,
   SCOPVAL_init(res);
 
   SgBinaryOp* bop = isSgBinaryOp(e);
-  SgUnaryAddOp* aop = isSgUnaryAddOp(e);
   SgMinusOp* mop = isSgMinusOp(e);
 
   if (SageTools::isIntegerTypeValue(e))
@@ -1263,18 +1250,10 @@ AffineConverter::computeCoefficient(SgNode* e,
       SCOPVAL_clear(lhs);
       SCOPVAL_clear(rhs);
     }
-  else if (aop)
-    {
-      scoplib_int_t val = computeCoefficient(aop->get_operand_i(), symb);
-      SCOPVAL_assign(res, val);
-    }
   else if (mop)
     {
       scoplib_int_t val = computeCoefficient(mop->get_operand_i(), symb);
-      scoplib_int_t mone; SCOPVAL_init(mone); SCOPVAL_set_si(mone, -1);
       SCOPVAL_assign(res, val);
-      SCOPVAL_multo(res, res, mone);
-      SCOPVAL_clear(mone);
     }
 
   return res;

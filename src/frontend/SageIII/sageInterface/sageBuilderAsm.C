@@ -7,7 +7,7 @@
 #include <boost/foreach.hpp>
 #include <Sawyer/CommandLine.h>                         // needed for CommandLine::Parser.programName(), i.e., argv[0]
 
-namespace rose {
+namespace Rose {
 namespace SageBuilderAsm {
 
 SgBinaryComposite *

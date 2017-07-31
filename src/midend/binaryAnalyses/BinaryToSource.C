@@ -4,8 +4,8 @@
 #include <AsmUnparser_compat.h>
 #include <BinaryToSource.h>
 
-using namespace rose::BinaryAnalysis::InstructionSemantics2;
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
+using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 typedef SourceAstSemantics::SValue SValue;
 typedef SourceAstSemantics::SValuePtr SValuePtr;
@@ -18,7 +18,7 @@ typedef SourceAstSemantics::StatePtr StatePtr;
 typedef SourceAstSemantics::RiscOperators RiscOperators;
 typedef SourceAstSemantics::RiscOperatorsPtr RiscOperatorsPtr;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 void

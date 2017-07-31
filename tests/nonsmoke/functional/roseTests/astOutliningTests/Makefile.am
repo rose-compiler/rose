@@ -208,6 +208,7 @@ OUTLINE_FLAGS= --edg:no_warnings -rose:verbose 0 -rose:outline:parameter_wrapper
 #------------------------------------------------------------------------------------------------------------------------
 # Test outlining using the classic scheme
 
+FORTRAN_RESULTS = 
 classic_test_targets = $(addprefix classic_, $(addsuffix .passed, $(C_TESTCODES_REQUIRED_TO_PASS)))
 TEST_TARGETS += $(classic_test_targets)
 
@@ -285,6 +286,7 @@ noswitch_test_targets = $(addprefix noswitch_, $(addsuffix .passed, $(FORTRAN_TE
 
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 TEST_TARGETS += $(noswitch_test_targets)
+FORTRAN_RESULTS += $(noswitch_test_targets)
 endif
 
 $(noswitch_test_targets): noswitch_%.passed: % outline
@@ -316,6 +318,7 @@ seq7b_test_targets = $(addprefix seq7b_, $(addsuffix .passed, $(FORTRAN_TESTCODE
 
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 TEST_TARGETS += $(seq7b_test_targets)
+FORTRAN_RESULTS += $(seq7b_test_targets)
 endif
 
 $(seq7b_test_targets): seq7b_%.passed: % outlineSelection
@@ -356,6 +359,8 @@ test_class_ODR_violation: $(srcdir)/test_class_ODR_violation_main.C $(srcdir)/te
 #########################################################################################################################
 #					AUTOMAKE BOILERPLATE
 #########################################################################################################################
+# a shortcut to test Fortran only
+test-fortran: $(FORTRAN_RESULTS)
 
 check-local: $(TEST_TARGETS)
 

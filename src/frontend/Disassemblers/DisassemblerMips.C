@@ -5,7 +5,7 @@
 #include "Diagnostics.h"
 #include "BinaryUnparserMips.h"
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 using namespace IntegerOps;

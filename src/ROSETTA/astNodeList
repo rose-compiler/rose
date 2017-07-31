@@ -508,7 +508,9 @@ SgOmpClauseBodyStatement
 SgOmpBodyStatement
 SgOmpDoStatement
 SgOmpFlushStatement
+SgOmpDeclareSimdStatement
 SgOmpForStatement
+SgOmpForSimdStatement
 SgOmpMasterStatement
 SgOmpOrderedStatement
 SgOmpParallelStatement
@@ -532,6 +534,8 @@ SgOmpEndClause
 SgOmpExpressionClause
 SgOmpFirstprivateClause
 SgOmpIfClause
+SgOmpFinalClause
+SgOmpPriorityClause
 SgOmpDeviceClause
 SgOmpLastprivateClause
 SgOmpNowaitClause
@@ -542,14 +546,19 @@ SgOmpReductionClause
 SgOmpScheduleClause
 SgOmpSharedClause
 SgOmpUntiedClause
+SgOmpMergeableClause
 SgOmpVariablesClause
 SgOmpMapClause
 SgOmpSafelenClause
+SgOmpSimdlenClause
 SgOmpLinearClause
 SgOmpUniformClause
 SgOmpAlignedClause
 SgOmpProcBindClause
 SgOmpAtomicClause
+SgOmpInbranchClause
+SgOmpNotinbranchClause
+SgOmpDependClause
 SgOpenclAccessModeModifier
 SgOpenStatement
 SgOptions
@@ -725,6 +734,7 @@ SgUntypedOtherExpression
 SgUntypedFunctionCallOrArrayReferenceExpression
 SgUntypedStatement
 SgUntypedNamedStatement
+SgUntypedExpressionStatement
 SgUntypedAssignmentStatement
 SgUntypedFunctionCallStatement
 SgUntypedBlockStatement

@@ -493,6 +493,7 @@ OptimizeSingleScopWithPoccGeneric (scoplib_scop_p scop,
       coptions->scalar_privatization = 1;
       CandlProgram* cprogram = candl_program_convert_scop (scop, NULL);
       CandlDependence* deps = candl_dependence (cprogram, coptions);
+
       for (int k = 0; cprogram->scalars_privatizable[k] != -1; k += 2)
 	privateVars.insert(cprogram->scalars_privatizable[k]);
 
@@ -539,13 +540,16 @@ OptimizeSingleScopWithPoccGeneric (scoplib_scop_p scop,
      stm->nb_iterators += nb_tiled_dim;
 
       free(stm->body);
-      char commentStr[256];
-      sprintf (commentStr, "tiled for %d dims", nb_tiled_dim);
-      SgLocatedNode* locatedNode = isSgLocatedNode(sageStatementBodies[i]);
-      if(locatedNode)
-      {
-        SageBuilder::buildComment(locatedNode,commentStr,PreprocessingInfo::before,PreprocessingInfo::C_StyleComment);
-      }
+      if (polyoptions.isTilingAPIOnly())
+	{
+	  char commentStr[256];
+	  sprintf (commentStr, "tiled for %d dims", nb_tiled_dim);
+	  SgLocatedNode* locatedNode = isSgLocatedNode(sageStatementBodies[i]);
+	  if (locatedNode)
+	    SageBuilder::buildComment(locatedNode, commentStr,
+				      PreprocessingInfo::before,
+				      PreprocessingInfo::C_StyleComment);
+	}
       stm->body = (char*) sageStatementBodies[i];
     }
 
@@ -562,18 +566,17 @@ OptimizeSingleScopWithPoccGeneric (scoplib_scop_p scop,
 static
 void traverse_variable(s_past_node_t* node, void* data)
 {
-  if (past_node_is_a(node, past_variable))
+  if (past_node_is_a(node, past_varref))
     {
       void** vals = (void**) data;
       char* oldval = (char*) vals[0];
       void* newval = vals[1];
-      PAST_DECLARE_TYPED(variable, v, node);
-      if (v->symbol->is_char_data)
+      PAST_DECLARE_TYPED(varref, v, node);
+      if (v->symbol->name_str)
 	{
-	  if (! strcmp ((char*) v->symbol->data, oldval))
+	  if (! strcmp ((char*) v->symbol->name_str, oldval))
 	    {
 	      v->symbol->data = newval;
-	      v->symbol->is_char_data = 0;
 	    }
 	}
     }

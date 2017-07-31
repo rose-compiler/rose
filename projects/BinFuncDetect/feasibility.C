@@ -8,7 +8,7 @@
 #include <unistd.h>
 #include <cmath>
 
-using namespace rose::BinaryAnalysis;
+using namespace Rose::BinaryAnalysis;
 
 static double sigma(double variance) { return variance*variance; }
 

@@ -10,9 +10,9 @@
 #include <Sawyer/ProgressBar.h>
 #include <Sawyer/Stopwatch.h>
 
-using namespace rose;
-using namespace rose::BinaryAnalysis;
-using namespace rose::Diagnostics;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
+using namespace Rose::Diagnostics;
 
 namespace P2 = Partitioner2;
 
@@ -391,7 +391,7 @@ insertReachableByImmediates(AddressIntervalSet &reachable /*in,out*/, const P2::
 // Run a data-flow analysis on a whole function to generate a list of concrete values that are stored in registers or memory.
 static std::set<rose_addr_t>
 findDataFlowValues(const P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
-    using namespace rose::BinaryAnalysis::InstructionSemantics2;
+    using namespace Rose::BinaryAnalysis::InstructionSemantics2;
 
     std::set<rose_addr_t> retval;
     BaseSemantics::RiscOperatorsPtr ops = partitioner.newOperators();

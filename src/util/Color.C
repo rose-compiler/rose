@@ -5,7 +5,7 @@
 #include <cmath>
 #include <rose_isnan.h>
 
-namespace rose {
+namespace Rose {
 namespace Color {
 
 // Predefined colors names

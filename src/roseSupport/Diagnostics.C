@@ -4,17 +4,17 @@
 #include "Sawyer/ProgressBar.h"
 
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-#include "AsmUnparser.h"                                // rose::BinaryAnalysis::AsmUnparser
-#include "BinaryBestMapAddress.h"                       // rose::BinaryAnalysis::BestMapAddress
-#include "BinaryDataFlow.h"                             // rose::BinaryAnalysis::DataFlow
-#include "BinaryFeasiblePath.h"                         // rose::BinaryAnalysis::FeasiblePath
-#include "BinaryFunctionSimilarity.h"                   // rose::BinaryAnalysis::FunctionSimilarity
-#include "BinaryLoader.h"                               // rose::BinaryAnalysis::BinaryLoader
-#include "BinaryNoOperation.h"                          // rose::BinaryAnalysis::NoOperation
-#include "BinaryTaintedFlow.h"                          // rose::BinaryAnalysis::TaintedFlow
-#include "Disassembler.h"                               // rose::BinaryAnalysis::Disassembler
+#include "AsmUnparser.h"                                // Rose::BinaryAnalysis::AsmUnparser
+#include "BinaryBestMapAddress.h"                       // Rose::BinaryAnalysis::BestMapAddress
+#include "BinaryDataFlow.h"                             // Rose::BinaryAnalysis::DataFlow
+#include "BinaryFeasiblePath.h"                         // Rose::BinaryAnalysis::FeasiblePath
+#include "BinaryFunctionSimilarity.h"                   // Rose::BinaryAnalysis::FunctionSimilarity
+#include "BinaryLoader.h"                               // Rose::BinaryAnalysis::BinaryLoader
+#include "BinaryNoOperation.h"                          // Rose::BinaryAnalysis::NoOperation
+#include "BinaryTaintedFlow.h"                          // Rose::BinaryAnalysis::TaintedFlow
+#include "Disassembler.h"                               // Rose::BinaryAnalysis::Disassembler
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
     namespace CallingConvention { void initDiagnostics(); }
     namespace InstructionSemantics2 { void initDiagnostics(); }
@@ -27,8 +27,8 @@ namespace BinaryAnalysis {
 } // namespace
 #endif
 
-#include "Diagnostics.h"                                // rose::Diagnostics
-#include <EditDistance/EditDistance.h>                  // rose::EditDistance
+#include "Diagnostics.h"                                // Rose::Diagnostics
+#include <EditDistance/EditDistance.h>                  // Rose::EditDistance
 
 // DQ (3/24/2016): Adding support for EDG/ROSE frontend message logging.
 #ifndef ROSE_USE_CLANG_FRONTEND
@@ -50,7 +50,7 @@ namespace EDG_ROSE_Translation
 
 #include <cstdarg>
 
-namespace rose {
+namespace Rose {
 namespace Diagnostics {
 
 ROSE_DLL_API Sawyer::Message::DestinationPtr destination;
@@ -68,7 +68,7 @@ void initialize() {
 
         // Allow libsawyer to initialize itself if necessary.  Among other things, this makes Saywer::Message::merr actually
         // point to something.  This is also the place where one might want to assign some other message plumbing to
-        // rose::Diagnostics::destination (such as sending messages to additional locations).
+        // Rose::Diagnostics::destination (such as sending messages to additional locations).
         Sawyer::initializeLibrary();
         if (mprefix==NULL)
             mprefix = Sawyer::Message::Prefix::instance();
@@ -92,7 +92,7 @@ void initialize() {
 
         // (Re)construct the main librose Facility.  A Facility is constructed with all Stream objects enabled, but
         // insertAndAdjust will change that based on mfacilities' settings.
-        initAndRegister(&mlog, "rose");
+        initAndRegister(&mlog, "Rose");
 
         // Where should failed assertions go for the Sawyer::Assert macros like ASSERT_require()?
         Sawyer::Message::assertionStream = mlog[FATAL];
@@ -102,7 +102,7 @@ void initialize() {
         Sawyer::ProgressBarSettings::minimumUpdateInterval(2.5);
 
         // Register logging facilities from other software layers.  Calling these initializers should make all the streams
-        // point to the rose::Diagnostics::destination that we set above.  Generally speaking, if a frontend language is
+        // point to the Rose::Diagnostics::destination that we set above.  Generally speaking, if a frontend language is
         // disabled there should be a dummy initDiagnostics that does nothing so we don't need lots of #ifdefs here.
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
         BinaryAnalysis::BinaryLoader::initDiagnostics();
@@ -139,7 +139,7 @@ void initialize() {
 
 #if 1
      // DQ (3/5/2017): Adding message stream to support diagnostic message from the ROSE IR nodes.
-        rose::initDiagnostics();
+        Rose::initDiagnostics();
 #endif
     }
 }

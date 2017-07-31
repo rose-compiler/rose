@@ -589,8 +589,8 @@ class StatementGenerator {
 //! Return the left hand, right hand expressions and if the left hand variable is also being read
   bool isAssignmentStatement(SgNode* _s, SgExpression** lhs=NULL, SgExpression** rhs=NULL, bool* readlhs=NULL);
 
-//! Variable references can be introduced by SgVarRef, SgPntrArrRefExp, SgInitializedName, SgMemberFunctionRef etc. This function will convert them all to  a top level SgInitializedName.
-ROSE_DLL_API SgInitializedName* convertRefToInitializedName(SgNode* current);
+//! Variable references can be introduced by SgVarRef, SgPntrArrRefExp, SgInitializedName, SgMemberFunctionRef etc. For Dot and Arrow Expressions, their lhs is used to obtain SgInitializedName (coarse grain) by default. Otherwise, fine-grain rhs is used. 
+ROSE_DLL_API SgInitializedName* convertRefToInitializedName(SgNode* current, bool coarseGrain=true);
 
 //! Build an abstract handle from an AST node, reuse previously built handle when possible
 ROSE_DLL_API AbstractHandle::abstract_handle* buildAbstractHandle(SgNode*);
@@ -2003,14 +2003,14 @@ ROSE_DLL_API void updateDefiningNondefiningLinks(SgFunctionDeclaration* func, Sg
 ROSE_DLL_API bool
 collectReadWriteRefs(SgStatement* stmt, std::vector<SgNode*>& readRefs, std::vector<SgNode*>& writeRefs, bool useCachedDefUse=false);
 
-//!Collect unique variables which are read or written within a statement. Note that a variable can be both read and written. The statement can be either of a function, a scope, or a single line statement.
-ROSE_DLL_API bool collectReadWriteVariables(SgStatement* stmt, std::set<SgInitializedName*>& readVars, std::set<SgInitializedName*>& writeVars);
+//!Collect unique variables which are read or written within a statement. Note that a variable can be both read and written. The statement can be either of a function, a scope, or a single line statement. For accesses to members of aggregate data, we return the coarse grain aggregate mem obj by default. 
+ROSE_DLL_API bool collectReadWriteVariables(SgStatement* stmt, std::set<SgInitializedName*>& readVars, std::set<SgInitializedName*>& writeVars, bool coarseGrain=true);
 
-//!Collect read only variables within a statement. The statement can be either of a function, a scope, or a single line statement.
-ROSE_DLL_API void collectReadOnlyVariables(SgStatement* stmt, std::set<SgInitializedName*>& readOnlyVars);
+//!Collect read only variables within a statement. The statement can be either of a function, a scope, or a single line statement. For accesses to members of aggregate data, we return the coarse grain aggregate mem obj by default.
+ROSE_DLL_API void collectReadOnlyVariables(SgStatement* stmt, std::set<SgInitializedName*>& readOnlyVars, bool coarseGrain=true);
 
-//!Collect read only variable symbols within a statement. The statement can be either of a function, a scope, or a single line statement.
-ROSE_DLL_API void collectReadOnlySymbols(SgStatement* stmt, std::set<SgVariableSymbol*>& readOnlySymbols);
+//!Collect read only variable symbols within a statement. The statement can be either of a function, a scope, or a single line statement. For accesses to members of aggregate data, we return the coarse grain aggregate mem obj by default.
+ROSE_DLL_API void collectReadOnlySymbols(SgStatement* stmt, std::set<SgVariableSymbol*>& readOnlySymbols, bool coarseGrain=true);
 
 //! Check if a variable reference is used by its address: including &a expression and foo(a) when type2 foo(Type& parameter) in C++
 ROSE_DLL_API bool isUseByAddressVariableRef(SgVarRefExp* ref);

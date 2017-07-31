@@ -16,14 +16,19 @@ ReadAnnotation* ReadAnnotation::get_inst()
 //! Process command line and call read(istream & in)
 void ReadAnnotation::read()
     {
-       const vector<string>& opts = CmdOptions::GetInstance()->opts;
-       for (size_t i = 0; i < opts.size(); ++i) {
-         if (opts[i] == "-annot") {
-           assert (i + 1 < opts.size());
-           string p1 = opts[i + 1];
+       CmdOptions* inst = CmdOptions::GetInstance();
+       std::vector<std::string>::const_iterator p = inst->begin();
+       for ( ; p != inst->end(); p++) {
+         if ( (*p)  == "-annot") {
+           p++;
+           string p1 = *p;
            ifstream is(p1.c_str());
+           if (!is.is_open())
+           {
+             cerr<<"Error! Cannot find and open the annotation file "<<p1.c_str()<<endl;
+             exit(1);
+           }
            read(is);
-           ++i;
          }
        }
     }

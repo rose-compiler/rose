@@ -1,16 +1,16 @@
 #ifndef ROSE_BinaryAnalysis_FunctionSimilarity_H
 #define ROSE_BinaryAnalysis_FunctionSimilarity_H
 
+#include <BinaryMatrix.h>
 #include <Partitioner2/Function.h>
 #include <Sawyer/Graph.h>
 #include <Sawyer/Map.h>
 
 #ifdef ROSE_HAVE_DLIB
-    #include <dlib/matrix.h>
     #include <dlib/optimization.h>
 #endif
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /** Analysis to test the similarity of two functions.
@@ -93,32 +93,7 @@ public:
     static Sawyer::Message::Facility mlog;
 
     /** Square matrix representing distances. */
-    class DistanceMatrix {
-#ifdef ROSE_HAVE_DLIB
-    private:
-        dlib::matrix<double> data_;
-    public:
-        explicit DistanceMatrix(size_t n): data_(n, n) {}
-        long nr() const { return data_.nr(); }
-        long nc() const { return data_.nc(); }
-        double& operator()(long i, long j) { return data_(i, j); }
-        double operator()(long i, long j) const { return data_(i, j); }
-        const dlib::matrix<double>& dlib() const { return data_; }
-#else
-    private:
-        std::vector<std::vector<double> > data_;
-    public:
-        explicit DistanceMatrix(size_t n): data_(n, std::vector<double>(n, 0.0)) {}
-        long nr() const { return data_.size(); }
-        long nc() const { return data_.empty() ? (size_t)0 : data_[0].size(); }
-        double& operator()(long i, long j) { return data_[i][j]; }
-        double operator()(long i, long j) const { return data_[i][j]; }
-        // dlib::matrix<double> &dlib() -- cannot do this here since there's no dlib
-#endif
-    public:
-        long size() const { return nr()*nc(); }
-    };
-
+    typedef Matrix<double> DistanceMatrix;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Private types and data members
@@ -374,18 +349,36 @@ public:
     /** Compare many functions to many others.
      *
      *  Given two ordered lists of functions, calculate the distances from all functions of the first list to all functions of
-     *  the second list.  The return value is a matrix whose rows are indexed by the functions of the first list and whose
-     *  columns are indexed by the functions of the second list.
+     *  the second list.  The return value is a rectangular matrix whose rows are indexed by the functions of the first list
+     *  and whose columns are indexed by the functions of the second list.  See also, @ref compareManyToManyMatrix, which
+     *  returns a square matrix of function distances.
      *
      *  This analysis operates in parallel using multi-threading. It honors the global thread count usually specified with the
      *  <code>--threads=N</code> switch. */
     std::vector<std::vector<double> > compareManyToMany(const std::vector<Partitioner2::Function::Ptr>&,
                                                         const std::vector<Partitioner2::Function::Ptr>&) const;
 
+    /** Compare many functions to many others.
+     *
+     *  Given two ordered lists of functions, temporarily pad the shorter list with null functions to make both lists equal in
+     *  length. Then calculate the distances from all functions of the first list to all functions of the second
+     *  list, returning a square distance matrix.  See also, @ref compareManyToMany, which may be much faster if the two
+     *  function lists have wildly different sizes.
+     *
+     *  This analysis operates in parallel using multi-threading. It honors the global thread count usually specified with the
+     *  <code>--threads=N</code> switch. */
+    DistanceMatrix compareManyToManyMatrix(const std::vector<Partitioner2::Function::Ptr>&,
+                                           const std::vector<Partitioner2::Function::Ptr>&) const;
+
     /** Minimum cost 1:1 mapping.
      *
-     *  Compute the minimum cost 1:1 mapping of functions in the first list to those in the second.  If one list is smaller
-     *  than the other then it is temporarily padded with null functions. */
+     *  Compute the minimum cost 1:1 mapping of functions in the first list to those in the second.  The algorithm first calls
+     *  @ref compareManyToManyMatrix to obtain a square matrix of all functions compared with all other functions (null
+     *  functions are added as necessary to make the result square).  It then calls @ref findMinimumAssignment to find a 1:1
+     *  mapping between the two (padded) lists of functions. The return value represents the 1:1 mapping.
+     *
+     *  Since @ref findMinimumAssignment only works if ROSE is configured with dlib support, this function throws an @ref
+     *  Exception if that support is missing. */
     std::vector<FunctionPair> findMinimumCostMapping(const std::vector<Partitioner2::Function::Ptr> &list1,
                                                      const std::vector<Partitioner2::Function::Ptr> &list2) const;
 
@@ -434,14 +427,23 @@ public:
      *  Finds a 1:1 mapping from rows to columns of the specified square matrix such that the total cost is minimized. Returns
      *  a vector V such that V[i] = j maps rows i to columns j.
      *
-     *  This function will only work if ROSE has been compiled with dlib support. */
-    static std::vector<long> findMinimumAssignment(const DistanceMatrix&);
+     *  This function will only work if ROSE has been compiled with dlib support. Otherwise it throws an @ref Exception. */
+    static std::vector<size_t> findMinimumAssignment(const DistanceMatrix&);
 
     /** Total cost of a mapping.
      *
      *  Given a square matrix and a 1:1 mapping from rows to columns, return the total cost of the mapping. The @p assignment
      *  is like the value returned by @ref findMinimumAssignment. */
-    static double totalAssignmentCost(const DistanceMatrix&, const std::vector<long> &assignment);
+    static double totalAssignmentCost(const DistanceMatrix&, const std::vector<size_t> &assignment);
+
+    /** Maximum value in the distance matrix. */
+    static double maximumDistance(const DistanceMatrix&);
+
+    /** Average distance in the matrix. */
+    static double averageDistance(const DistanceMatrix&);
+
+    /** Median distance in the matrix. */
+    static double medianDistance(const DistanceMatrix&);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Internal functions

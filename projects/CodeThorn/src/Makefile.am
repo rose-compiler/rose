@@ -3,7 +3,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 COUNTEREXAMPLES = counterexamples/ltl2haskell.sh counterexamples/Makefile counterexamples/qc.hs counterexamples/log2csv.awk
 EXTRA_DIST = EqualityMaintainer.C Doxyfile $(TESTS) $(COUNTEREXAMPLES)
 
-bin_PROGRAMS = codethorn woodpecker analyterix matcher_demo matcher scat1 astinfo
+bin_PROGRAMS = codethorn woodpecker analyterix matcher_demo matcher varp1 varp3 astinfo
 noinst_PROGRAMS = addressTakenAnalysis matcher_demo matcher astinfo
 
 CLEANFILES = 
@@ -20,7 +20,6 @@ libspray_la_SOURCES=\
  AliasAnalysis.h \
  AnalysisAbstractionLayer.h \
  AnalysisAstAnnotator.h \
- AstTerm.h \
  AbstractValue.h \
  BoolLattice.h \
  CFAnalysis.h \
@@ -54,7 +53,6 @@ libspray_la_SOURCES=\
  WorkListSeq.h \
  AnalysisAstAnnotator.C \
  AliasAnalysis.C \
- AstTerm.C \
  AbstractValue.C \
  BoolLattice.C \
  CFAnalysis.C \
@@ -145,6 +143,8 @@ codethorn_SOURCES = \
   InternalChecks.h                 \
   LTL.h                            \
   LTLParser.y++                    \
+  LtsminConnection.h		   \
+  LtsminConnection.C		   \
   LanguageRestrictorCollection.C   \
   LanguageRestrictorCollection.h   \
   LoopInfo.h                       \
@@ -481,10 +481,15 @@ matcher_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
 matcher__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
 matcher_SOURCES = Timer.cpp matcher.C
 
-scat1_DEPENDENCIES=libspray.la
-scat1_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
-scat1__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
-scat1_SOURCES = Timer.cpp scat1.C
+varp1_DEPENDENCIES=libspray.la
+varp1_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
+varp1__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
+varp1_SOURCES = Timer.cpp varp1.C
+
+varp3_DEPENDENCIES=libspray.la
+varp3_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
+varp3__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
+varp3_SOURCES = Timer.cpp varp3.C
 
 #MS: iterator_test not ingegrated yet
 #iterator_test_SOURCES = iterator_test.C ShowSeq.h
@@ -521,30 +526,37 @@ check-codethorn-internal:
 	@echo RUNNING CODETHORN INTERNAL CHECKS
 	@echo ================================================================
 	@./codethorn --internal-checks	
+
+check-domain:
+	@echo ================================================================
+	@echo DOMAIN TESTS
+	@echo ================================================================
 	@./codethorn --edg:no_warnings $(srcdir)/tests/typetest1.C 
+	@./codethorn --edg:no_warnings $(srcdir)/tests/domaintest1.C 
+	@./codethorn --edg:no_warnings $(srcdir)/tests/domaintest2.C 
 
 #check-local: check-codethorn-internal check-data-races check-flow-insenstive check-ltl
-check-local: check-codethorn-internal check-data-races check-ltl
+check-local: check-codethorn-internal check-domain check-data-races check-ltl
 	@echo ================================================================
 	@echo RUNNING VERIFICATION ERROR TESTS
 	@echo ================================================================
-	@./codethorn --enable-external-function-semantics $(srcdir)/tests/svcomp-test2.c --edg:no_warnings
-	@./codethorn --enable-external-function-semantics $(srcdir)/tests/svcomp-test4.c --max-transitions=10 --edg:no_warnings
-	@./codethorn --enable-external-function-semantics $(srcdir)/tests/svcomp-test5.c --edg:no_warnings
+	@./codethorn $(srcdir)/tests/svcomp-test2.c --edg:no_warnings
+	@./codethorn $(srcdir)/tests/svcomp-test4.c --max-transitions=10 --edg:no_warnings
+	@./codethorn $(srcdir)/tests/svcomp-test5.c --edg:no_warnings
 
 	@echo ================================================================
 	@echo RUNNING UPDATE SEQUENCE VERIFICATION TESTS
 	@echo ================================================================
 	@./codethorn --edg:no_warnings $(srcdir)/tests/jacobi-1d-imper_mod.c --dump-non-sorted=tmp.nsdump
 	@diff tmp.nsdump $(srcdir)/tests/jacobi-1d-imper_mod.c.nsdump
-	@rm tmp.nsdump
+	@rm -f tmp.nsdump
 
 check-data-races:
 	@echo ================================================================
 	@echo RUNNING DATA RACE VERIFICATION TESTS
 	@echo ================================================================
-	@./codethorn --data-race  $(srcdir)/tests/datarace/anti_dep_1.yes.c --max-time=5 --solver=12 --explicit-arrays
-	@./codethorn --data-race  $(srcdir)/tests/datarace/inner_only_1.no.c --max-time=5 --solver=12 --explicit-arrays
+	@./codethorn --data-race  $(srcdir)/tests/datarace/anti_dep_1.yes.c --max-time=5 --solver=12 --explicit-arrays=yes
+	@./codethorn --data-race  $(srcdir)/tests/datarace/inner_only_1.no.c --max-time=5 --solver=12 --explicit-arrays=yes
 
 
 check-flow-insenstive:
@@ -564,18 +576,24 @@ check-ltl:
 	@echo RUNNING LTL VERIFICATION TESTS
 	@echo ================================================================
 	@rm -f *.consistent
-	@$(srcdir)/scripts/runRersLoopAwareSyncTest $(srcdir) $(top_builddir)/projects/CodeThorn/src #one test for the loop-aware-sync analysis (solver 12, ISoLA'16 paper)
+	@$(srcdir)/scripts/runRersTestsDifferentVersion $(srcdir) $(top_builddir)/projects/CodeThorn/src #run RERS Problem1 from 2012 in several versions and compare to previous results
+	@$(srcdir)/scripts/runRersArithmeticProblemTest $(srcdir) $(top_builddir)/projects/CodeThorn/src #test the parallel analysis of RERS Problem1402 (4 threads, problem features arithmetic)
 	@$(srcdir)/scripts/runRersArrayProblemTest $(srcdir) $(top_builddir)/projects/CodeThorn/src #test the analysis of RERS Problem1403 (which features arrays)
-	@$(srcdir)/scripts/runLtlRegressionTests $(srcdir) $(top_builddir)/projects/CodeThorn/src #run RERS examples in several versions and compare to previous results
-	@$(srcdir)/scripts/runBuechiTransformTests $(srcdir) $(top_builddir)/projects/CodeThorn/src #confirm that option --keep-error-states=yes does not lead to erroneous results
+	@$(srcdir)/scripts/runRersTopifyTest $(srcdir) $(top_builddir)/projects/CodeThorn/src #test the analysis of RERS Problem1403, abstracting from global variables after 10,000 transitions
+	@$(srcdir)/scripts/runRersMemoryBoundTest $(srcdir) $(top_builddir)/projects/CodeThorn/src #test the analysis of RERS Problem1603 while using up to 1GB of RAM up to and including the STG computation (4 threads)
+	@$(srcdir)/scripts/runRersTimeoutTest $(srcdir) $(top_builddir)/projects/CodeThorn/src #test the analysis of RERS Problem1402 and terminate after 5 seconds (4 threads)
+	@$(srcdir)/scripts/runRersLoopAwareSyncTest $(srcdir) $(top_builddir)/projects/CodeThorn/src #one test for the loop-aware-sync analysis (solver 12, ISoLA'16 paper)
 	@$(srcdir)/scripts/run_tests_cegpra $(srcdir) $(top_builddir)/projects/CodeThorn/src #run CEGPRA tests
-	@./codethorn $(srcdir)/tests/rers/Problem1401_opt.c --solver=5 --exploration-mode=breadth-first --edg:no_warnings --rers-binary=no --rersmode=yes --with-ltl-counterexamples=no --counterexamples-with-output=no --input-values="{1,2,3,4,5}" --ltl-in-alphabet="{1,2,3,4,5}" --ltl-out-alphabet="{18,19,20,21,22,23,24,25,26}" --max-transitions-forced-top=1000 --check-ltl=$(srcdir)/tests/rers/constraints-RERS14-5.txt --csv-spot-ltl="Problem1401_ltl_results_forcedtop_1000_n_bf.csv" --csv-assert="Problem1401_assert_results_forcedtop_1000_n_bf.csv" --threads=4  --csv-stats="Problem1401_stats_forcedtop_1000_n_bf_t4.csv" --display-diff=100000 # run abstract mode test
 
 check-arrays:
-	./codethorn $(srcdir)/tests/pointer/test48.cpp --explicit-arrays --viz=yes && dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
+	./codethorn $(srcdir)/tests/pointer/test48.cpp --explicit-arrays=yes --viz=yes && dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
 
 check-array-bounds: ./codethorn
-	./codethorn --explicit-arrays $(srcdir)/tests/arraybounds1.C 
+	./codethorn --explicit-arrays=yes $(srcdir)/tests/arraybounds1.C 
+
+check-ltl-driven:
+	./codethorn $(srcdir)/tests/rers/Problem1401_opt.c --rersmode=yes --with-counterexamples=yes --counterexamples-with-output=yes --input-values="{1,2,3,4,5}" --ltl-in-alphabet="{1,2,3,4,5}" --ltl-out-alphabet="{18,19,20,21,22,23,24,25,26}" --check-ltl=$(srcdir)/tests/rers/constraints-RERS14-5.txt  --display-diff=100000 --status --ltl-driven --log-level=trace
+
 
 # MS: 1-6 is reasonable for V1.2
 RERS=$(patsubst %,Problem%.log, $(shell seq 6))

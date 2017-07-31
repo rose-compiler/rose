@@ -7,9 +7,9 @@
 
 #undef si_value                                         // name pollution from siginfo.h
 
-using namespace rose::Diagnostics;
+using namespace Rose::Diagnostics;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 

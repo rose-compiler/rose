@@ -20,8 +20,8 @@
 #include <Wt/WTable>
 #include <Wt/WText>
 
-using namespace rose;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 
 namespace bROwSE {
 
@@ -783,7 +783,7 @@ WMemoryMap::prepareDownload() {
             tmp->erase(AddressInterval::hull(0, leastVa-1));
         if (greatestVa < tmp->hull().greatest())
             tmp->erase(AddressInterval::hull(greatestVa+1, tmp->hull().greatest()));
-        rose::BinaryAnalysis::SRecord::dump(tmp, output);
+        Rose::BinaryAnalysis::SRecord::dump(tmp, output);
     }
 
     wDownloadMessage_->setText(" for " + StringUtility::addrToString(leastVa) + "-" +

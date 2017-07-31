@@ -36,23 +36,6 @@ struct ParProEStateLessComp {
   }
 };
 
-#ifdef USE_CUSTOM_HSET
-class ParProEStateHashFun {
-   public:
-    ParProEStateHashFun(long prime=9999991) : tabSize(prime) {}
-    long operator()(ParProEState s) const {
-      unsigned int hash=1;
-      ParProLabel label=s->getLabel();
-      for (ParProLabel::iterator i=label.begin(); i!=label.end(); i++) {
-	hash*=(1 + *i.getId());
-      }
-      return long(hash) % tabSize;
-    }
-    long tableSize() const { return tabSize;}
-   private:
-    long tabSize;
-};
-#else
 class ParProEStateHashFun {
    public:
     ParProEStateHashFun() {}
@@ -66,7 +49,7 @@ class ParProEStateHashFun {
     }
    private:
 };
-#endif
+
 class ParProEStateEqualToPred {
    public:
     ParProEStateEqualToPred() {}

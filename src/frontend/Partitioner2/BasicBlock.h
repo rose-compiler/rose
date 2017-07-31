@@ -17,11 +17,11 @@
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/vector.hpp>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
-namespace BaseSemantics = rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
+namespace BaseSemantics = Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
 
 /** Basic block information.
  *

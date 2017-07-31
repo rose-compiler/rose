@@ -9,7 +9,7 @@
 #include <sstream>
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 // JJW helper macros
 #define DO_ON_CHILDREN(NODE, FUNCTION) \
@@ -802,7 +802,7 @@ AstNodeClass::evaluateType(std::string& varTypeString)
           returnType = ASTATTRIBUTEMECHANISM;
        }
      else  if ( varTypeString == "hash_iterator" ||
-                varTypeString == "const rose::BinaryAnalysis::CallingConvention::Definition*")
+                varTypeString == "const Rose::BinaryAnalysis::CallingConvention::Definition*")
        {
           returnType = SKIP_TYPE;
        }
@@ -849,6 +849,7 @@ AstNodeClass::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgOmpClause::omp_atomic_clause_enum" ) ||
                  ( varTypeString == "SgOmpClause::omp_schedule_kind_enum" ) ||
                  ( varTypeString == "SgOmpClause::omp_reduction_operator_enum" ) ||
+                 ( varTypeString == "SgOmpClause::omp_dependence_type_enum" ) ||
                  ( varTypeString == "SgOmpClause::omp_map_operator_enum" ) ||
                  ( varTypeString == "SgOmpClause::omp_map_dist_data_enum" ) ||
                  ( varTypeString == "SgProcedureHeaderStatement::subprogram_kind_enum" ) ||

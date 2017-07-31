@@ -2,7 +2,7 @@
 #include "DataFlowSemantics2.h"
 #include "Diagnostics.h"
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace DataFlowSemantics {

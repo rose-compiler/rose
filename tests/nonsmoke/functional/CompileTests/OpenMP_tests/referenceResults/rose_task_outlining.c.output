@@ -1,0 +1,44 @@
+#pragma omp task  shared(N)
+#pragma omp taskwait 
+#pragma omp task  firstprivate(N)
+#pragma omp taskwait 
+#pragma omp task  shared(M)
+#pragma omp taskwait 
+#pragma omp task  firstprivate(M)
+#pragma omp taskwait 
+#pragma omp task  shared(diag)
+#pragma omp taskwait 
+#pragma omp task  firstprivate(diag)
+#pragma omp taskwait 
+#pragma omp task  shared(c1)
+#pragma omp taskwait 
+#pragma omp task  firstprivate(c1)
+#pragma omp taskwait 
+#pragma omp task  shared(v1)
+#pragma omp taskwait 
+#pragma omp task  firstprivate(v1)
+#pragma omp taskwait 
+#pragma omp task  shared(v2)
+#pragma omp taskwait 
+#pragma omp task  firstprivate(v2)
+#pragma omp taskwait 
+#pragma omp task  shared(v3)
+#pragma omp taskwait 
+#pragma omp task  firstprivate(v3)
+#pragma omp taskwait 
+#pragma omp task  shared(i)
+#pragma omp taskwait 
+#pragma omp task  firstprivate(i)
+#pragma omp taskwait 
+#pragma omp task  shared(i_ptr)
+#pragma omp taskwait 
+#pragma omp task  firstprivate(i_ptr)
+#pragma omp taskwait 
+#pragma omp task  shared(j_ptr)
+#pragma omp taskwait 
+#pragma omp task  firstprivate(j_ptr)
+#pragma omp taskwait 
+#pragma omp task  shared(v4)
+#pragma omp taskwait 
+#pragma omp task  firstprivate(v4)
+#pragma omp taskwait 

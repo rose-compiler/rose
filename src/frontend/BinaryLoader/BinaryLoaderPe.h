@@ -3,7 +3,7 @@
 
 #include "BinaryLoader.h"
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 class BinaryLoaderPe: public BinaryLoader {

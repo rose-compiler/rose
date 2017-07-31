@@ -29,11 +29,12 @@ F90_TESTCODES = \
  R1101e.f90 \
  R1101f.f90 \
  R1101g.f90 \
- R404.f90   \
+ R854.f90   \
  test2014_02.f90 \
  tiny.f90
 
 F90_TESTCODES_WORKING_ON = \
+ R404.f90   \
  R1001.f90 \
  R1109.f90 \
  R1111.f90 \
@@ -78,7 +79,6 @@ F90_TESTCODES_WORKING_ON = \
  R851.f90 \
  R852.f90 \
  R853.f90 \
- R854.f90 \
  R856.f90 \
  R902.f90 \
  R904.f90 \
@@ -143,6 +143,9 @@ if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
 #	../../../testTranslator -i $(@:.o=.f90.aterm)
 #	../../../testTranslator -rose:experimental_fortran_frontend -c $(srcdir)/$(@:.o=.f90)
 	../../../testTranslator -rose:experimental_fortran_frontend -rose:experimental_fortran_frontend_OFP_test -c $(srcdir)/$(@:.o=.f90)
+## make sure output file is not empty
+#
+	@test -n "$$(find rose_$(@:.o=.f90) -size +0c)"
 endif
 
 junk.ast-info.pp: $(srcdir)/junk.f90 $(top_builddir)/src/3rdPartyLibraries/experimental-fortran-parser/Fortran.tbl

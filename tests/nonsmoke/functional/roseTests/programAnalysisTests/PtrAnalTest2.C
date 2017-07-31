@@ -31,14 +31,14 @@ class PrintPtrAnalMap : public ProcessAstNode
        if (n != AST_NULL) {
           PtrAnal::VarRef p = m.translate_exp(n);
           if (p.name != "") {
-            std::cout << AstToString(n) << ":" << 
+            std::cout << AstInterface::AstToString(n) << ":" << 
              ((long) p.stmt) << p.name << "\n"; 
           }
       }
       else if (fa.IsStatement(_n)) {
           PtrAnal::StmtRef p = m.translate_stmt(_n);
           if (p.size()) {
-            std::cout << AstToString(_n) << ":" << 
+            std::cout << AstInterface::AstToString(_n) << ":" << 
              ((long) p.front()) << "->" << ((long)p.back()) << "\n"; 
           }
       }
@@ -70,7 +70,7 @@ int a;
    int filenum = sageProject.numberOfFiles();
    for (int i = 0; i < filenum; ++i) {
      SgFile &sageFile = sageProject.get_file(i);
-     SgGlobal *root = sageFile.get_root();
+     SgGlobal *root = isSgSourceFile(&sageFile)->get_globalScope();
      AstInterfaceImpl scope(root);
      AstInterface fa(&scope);
      SgDeclarationStatementPtrList& declList = root->get_declarations ();

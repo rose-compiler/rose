@@ -1852,7 +1852,6 @@ AC_DEFUN([ROSE_SUPPORT_ROSE_PART_6],
 # JJW 1/30/2008: Removed rose_paths.h as it is now built by a separate Makefile included from $(top_srcdir)/Makefile.am
 AC_CONFIG_FILES([
 Makefile
-bin/Makefile
 config/Makefile
 demo/Makefile
 demo/qrose/Makefile
@@ -1960,9 +1959,6 @@ projects/OpenMP_Translator/tests/npb2.3-omp-c/LU/Makefile
 projects/OpenMP_Translator/tests/npb2.3-omp-c/MG/Makefile
 projects/OpenMP_Translator/tests/npb2.3-omp-c/Makefile
 projects/OpenMP_Translator/tests/npb2.3-omp-c/SP/Makefile
-projects/PolyOpt2/Makefile
-projects/PolyOpt2/polyopt/Makefile
-projects/PolyOpt2/src/Makefile
 projects/PolyhedralModel/Makefile
 projects/PolyhedralModel/docs/Makefile
 projects/PolyhedralModel/projects/Makefile
@@ -2453,6 +2449,7 @@ tests/roseTests/programAnalysisTests/typeTraitTests/Makefile
 tests/smoke/ExamplesForTestWriters/Makefile
 tests/smoke/Makefile
 tests/smoke/functional/BinaryAnalysis/Makefile
+tests/smoke/functional/Fortran/Makefile
 tests/smoke/functional/Makefile
 tests/smoke/specimens/Makefile
 tests/smoke/specimens/binary/Makefile
@@ -2465,6 +2462,7 @@ tests/smoke/unit/Makefile
 tests/smoke/unit/Sawyer/Makefile
 tests/smoke/unit/Utility/Makefile
 tools/Makefile
+tools/globalVariablesInLambdas/Makefile
 tutorial/Makefile
 tutorial/binaryAnalysis/Makefile
 tutorial/exampleMakefile

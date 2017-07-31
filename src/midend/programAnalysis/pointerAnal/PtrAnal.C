@@ -47,11 +47,8 @@ Local_GetFieldName(AstInterface& fa, const AstNodePtr& field)
        assert(name != "");
        return "d:" + name;
     }
-   std::cerr << "Not field name: " << AstToString(field) << "\n";
-   assert(false);
-
-// DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=return-type.
-   return "";
+   std::cerr << "Not field name: " << AstInterface::AstToString(field) << "\n";
+    assert(false);
 }
 
 static std::string 
@@ -135,18 +132,18 @@ Get_VarName(AstInterface& fa, const AstNodePtr& rhs)
         ProcessAssign(fa, lhs1, rhs1, readlhs);
         VarRef cur = namemap[lhs1.get_ptr()];
         if (cur.name == "") {
-           std::cerr << "does not have map for " << AstToString(lhs1) << " in " << AstToString(rhs) << "\n";
+           std::cerr << "does not have map for " << AstInterface::AstToString(lhs1) << " in " << AstInterface::AstToString(rhs) << "\n";
            assert(0);
         }
         namemap[rhs.get_ptr()] = cur;
         res = cur.name;
    }
    else  {
-      std::cerr << "No name found for " << AstToString(rhs) << "\n";
+      std::cerr << "No name found for " << AstInterface::AstToString(rhs) << "\n";
       assert(false);
    }
    if (res == "") {
-      std::cerr << "No name found for " << AstToString(rhs) << "\n";
+      std::cerr << "No name found for " << AstInterface::AstToString(rhs) << "\n";
       assert(false);
    }
    return res;
@@ -324,7 +321,7 @@ ProcessMod(AstInterface& fa, const std::string& readname,
             namemap[mod.get_ptr()] = VarRef(stmt_last, readname);
          }
          else {
-            std::cerr << "can't handle " << AstToString(mod) << "\n";
+            std::cerr << "can't handle " << AstInterface::AstToString(mod) << "\n";
             assert(false); // other operations? to be handled later  
          }
      }
@@ -335,7 +332,7 @@ ProcessMod(AstInterface& fa, const std::string& readname,
          namemap[mod.get_ptr()] = VarRef(stmt_last,lhs);
      }
      else {
-       std::cerr << "cannot process " << AstToString(mod) << "\n";
+       std::cerr << "cannot process " << AstInterface::AstToString(mod) << "\n";
        assert(false); // other operations? to be handled later  
     }
   }
@@ -397,7 +394,7 @@ void PtrAnal:: operator()( AstInterface& fa, const AstNodePtr& funcdef)
   AstInterface::AstNodeList params, outpars;
   std::string fname;
   if (!fa.IsFunctionDefinition(funcdef, &fname, &params, &outpars, &body)) {
-     std::cerr << "Error: analysis requires function definition as input instead of " << AstToString(funcdef) << std::endl;
+     std::cerr << "Error: analysis requires function definition as input instead of " << AstInterface::AstToString(funcdef) << std::endl;
      assert(false);
   }
   typedef std::pair<AstNodePtr,std::string>  RefRec;
@@ -438,7 +435,7 @@ ProcessTree( AstInterface &fa, const AstNodePtr& s, AstInterface::TraversalVisit
     AstInterface::AstNodeList vars, args;
     if (fa.IsStatement(s)) {
        if (DebugAliasAnal()) 
-           std::cerr << "pre visiting " << AstToString(s) << "\n";
+           std::cerr << "pre visiting " << AstInterface::AstToString(s) << "\n";
       stmt_active.push_back(stmts.size());
     }
 
@@ -477,7 +474,7 @@ ProcessTree( AstInterface &fa, const AstNodePtr& s, AstInterface::TraversalVisit
  }
  else {
    if (DebugAliasAnal()) 
-      std::cerr << "post visiting " << AstToString(s) << "\n";
+      std::cerr << "post visiting " << AstInterface::AstToString(s) << "\n";
    if (fa.IsStatement(s)) {
        size_t stmt_firstIndex = stmt_active.back();
        stmt_active.pop_back();
@@ -488,7 +485,7 @@ ProcessTree( AstInterface &fa, const AstNodePtr& s, AstInterface::TraversalVisit
        }
        else
           if (DebugAliasAnal()) 
-             std::cerr << "no translation: " << AstToString(s) << "\n"; 
+             std::cerr << "no translation: " << AstInterface::AstToString(s) << "\n"; 
   }
  }
  return true;

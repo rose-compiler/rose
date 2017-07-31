@@ -18,8 +18,8 @@ typedef Sawyer::Container::Map<rose_addr_t, Box> CfgVertexCoords;
 struct FunctionDataFlow {
     std::string error;
     P2::DataFlow::DfCfg dfCfg;                          // control flow graph used for dataflow
-    std::vector<rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::StatePtr> initialStates; // per dfCfg vertex
-    std::vector<rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::StatePtr> finalStates;   // per dfCfg vertex
+    std::vector<Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::StatePtr> initialStates; // per dfCfg vertex
+    std::vector<Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::StatePtr> finalStates;   // per dfCfg vertex
 };
 
 boost::filesystem::path uniquePath(const std::string &extension);
@@ -41,9 +41,9 @@ size_t functionNReturns(P2::Partitioner&, const P2::Function::Ptr&);
 MayReturn functionMayReturn(P2::Partitioner&, const P2::Function::Ptr&);
 int64_t functionStackDelta(P2::Partitioner&, const P2::Function::Ptr&);
 SgAsmFunction *functionAst(P2::Partitioner&, const P2::Function::Ptr&);
-rose::BinaryAnalysis::DataFlow::VariableList functionVariables(P2::Partitioner&, const P2::Function::Ptr&);
+Rose::BinaryAnalysis::DataFlow::VariableList functionVariables(P2::Partitioner&, const P2::Function::Ptr&);
 FunctionDataFlow functionDataFlow(P2::Partitioner&, const P2::Function::Ptr&);
-rose::BinaryAnalysis::CallingConvention::Definition::Ptr functionCallingConvention(P2::Partitioner&, const P2::Function::Ptr&);
+Rose::BinaryAnalysis::CallingConvention::Definition::Ptr functionCallingConvention(P2::Partitioner&, const P2::Function::Ptr&);
 
 /** Interface for computing some property of a function. */
 class FunctionAnalyzer: public Sawyer::SharedObject {
@@ -121,7 +121,7 @@ public:
         return Wt::WLength(6, Wt::WLength::FontEm);
     }
     boost::any data(P2::Partitioner&, const P2::Function::Ptr &f) const ROSE_OVERRIDE {
-        return Wt::WString(rose::StringUtility::addrToString(f->address()));
+        return Wt::WString(Rose::StringUtility::addrToString(f->address()));
     }
     bool isAscending(const P2::Function::Ptr &a, const P2::Function::Ptr &b) const ROSE_OVERRIDE {
         return a->address() < b->address();
@@ -148,9 +148,9 @@ public:
         if (!name.empty() && (!isgraph(name[0]) || !isgraph(name[name.size()-1]))) {
             // Add double quotes to the string after we escape it, otherwise the user can't tell that the name
             // has leading or trailing non-printable characters.
-            name = "\"" + rose::StringUtility::cEscape(name) + "\"";
+            name = "\"" + Rose::StringUtility::cEscape(name) + "\"";
         } else {
-            name = rose::StringUtility::cEscape(name);
+            name = Rose::StringUtility::cEscape(name);
         }
         return Wt::WString(name);
     }
@@ -584,19 +584,19 @@ public:
                 "matches the function's behavior; other calling convention definitions might also be valid.");
     }
     boost::any data(P2::Partitioner &p, const P2::Function::Ptr &f) const ROSE_OVERRIDE {
-        rose::BinaryAnalysis::CallingConvention::Definition::Ptr ccdef = functionCallingConvention(p, f);
+        Rose::BinaryAnalysis::CallingConvention::Definition::Ptr ccdef = functionCallingConvention(p, f);
         return ccdef ? Wt::WString(ccdef->name()) : Wt::WString("unknown");
     }
     bool isAscending(const P2::Function::Ptr &a, const P2::Function::Ptr &b) const ROSE_OVERRIDE {
-        rose::BinaryAnalysis::CallingConvention::Definition::Ptr NO_CC_DEF; // = NULL;
-        rose::BinaryAnalysis::CallingConvention::Definition::Ptr adef = a->attributeOrElse(ATTR_CallConvDef, NO_CC_DEF);
-        rose::BinaryAnalysis::CallingConvention::Definition::Ptr bdef = b->attributeOrElse(ATTR_CallConvDef, NO_CC_DEF);
+        Rose::BinaryAnalysis::CallingConvention::Definition::Ptr NO_CC_DEF; // = NULL;
+        Rose::BinaryAnalysis::CallingConvention::Definition::Ptr adef = a->attributeOrElse(ATTR_CallConvDef, NO_CC_DEF);
+        Rose::BinaryAnalysis::CallingConvention::Definition::Ptr bdef = b->attributeOrElse(ATTR_CallConvDef, NO_CC_DEF);
         if (NULL==adef || NULL==bdef)
             return NULL==adef && NULL!=bdef;
         return adef->name().compare(bdef->name()) < 0;
     }
     double heatValue(P2::Partitioner &p, const P2::Function::Ptr &f) const ROSE_OVERRIDE {
-        rose::BinaryAnalysis::CallingConvention::Definition::Ptr ccdef;
+        Rose::BinaryAnalysis::CallingConvention::Definition::Ptr ccdef;
         ccdef = f->attributeOrElse(ATTR_CallConvDef, ccdef);
         return ccdef ? 1.0 : 0.0;
     }

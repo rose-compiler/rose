@@ -10,7 +10,7 @@
 #include <Sawyer/Assert.h>
 #include <Sawyer/Graph.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace DataFlowSemantics {

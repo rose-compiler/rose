@@ -110,10 +110,10 @@ lexical syntax
 
 %%R409
   [Oo] [\'] [0-7]+ [\']            -> OctalConstant
-  [Oo] [\"] [0-7]+ [\']            -> OctalConstant
+  [Oo] [\"] [0-7]+ [\"]            -> OctalConstant
 
 %%R410
-  [Zz] [\'] [0-9A-Fa-f]+ [\"]      -> HexConstant
+  [Zz] [\'] [0-9A-Fa-f]+ [\']      -> HexConstant
   [Zz] [\"] [0-9A-Fa-f]+ [\"]      -> HexConstant
 
 %%R411
@@ -138,6 +138,8 @@ lexical syntax
 
 lexical restrictions
 
+%% -/- to be read as "cannot be followed by"
+%%
   SconSingle -/- [\']
   SconDouble -/- [\"]
 

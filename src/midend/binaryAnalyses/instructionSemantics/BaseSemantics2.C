@@ -4,7 +4,7 @@
 #include "Diagnostics.h"
 #include "RegisterStateGeneric.h"
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 
@@ -17,7 +17,7 @@ initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        Diagnostics::initAndRegister(&mlog, "rose::BinaryAnalysis::InstructionSemantics2");
+        Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::InstructionSemantics2");
     }
 }
 
@@ -94,7 +94,7 @@ std::ostream& operator<<(std::ostream &o, const RiscOperators::WithFormatter &x)
 void
 Exception::print(std::ostream &o) const
 {
-    o <<"rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::Exception: " <<what();
+    o <<"Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::Exception: " <<what();
     if (insn)
         o <<": " <<unparseInstructionWithAddress(insn);
     o <<"\n";

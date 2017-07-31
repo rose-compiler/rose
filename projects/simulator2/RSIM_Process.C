@@ -15,9 +15,9 @@
 #include <sys/types.h>
 #include <sys/user.h>
 
-using namespace rose;
-using namespace rose::BinaryAnalysis;
-using namespace rose::Diagnostics;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
+using namespace Rose::Diagnostics;
 
 RSIM_Process::~RSIM_Process() {
     delete futexes;
@@ -1343,7 +1343,7 @@ RSIM_Process::disassemble(bool fast, MemoryMap::Ptr map/*=null*/)
 
     } else {
         // Disassembly driven by partitioner.
-        namespace P2 = rose::BinaryAnalysis::Partitioner2;
+        namespace P2 = Rose::BinaryAnalysis::Partitioner2;
         P2::Engine engine;
         engine.memoryMap(map->shallowCopy());           // copied so we can make changes
         engine.adjustMemoryMap();

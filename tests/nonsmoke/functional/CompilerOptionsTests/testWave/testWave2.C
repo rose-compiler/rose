@@ -4,7 +4,7 @@
 #include <fstream>
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 bool
 sort_preprocessing_info(const PreprocessingInfo* left, const PreprocessingInfo* right )
