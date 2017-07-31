@@ -389,7 +389,7 @@ MemoryMap::insertProcessDocumentation() {
             "maps never have zero-length segments.");
 }
 
-#ifdef ROSE_WINDOWS
+#ifndef ROSE_WINDOWS
 static std::runtime_error
 insertProcessError(const std::string &prefix, pid_t pid = -1, const std::string &suffix = "") {
     std::string s = prefix;
