@@ -311,6 +311,7 @@ SgDataStatementValue
 SgDeadIfDirectiveStatement
 SgDeallocateStatement
 SgDeclarationModifier
+SgDeclarationScope
 SgDeclarationStatement
 SgDeclType
 SgDefaultOptionStmt

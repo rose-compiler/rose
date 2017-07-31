@@ -796,8 +796,21 @@ ROSE_SUPPORT_MAPLE
 # Setup Automake conditional in Projects/programModeling/Makefile.am
 AM_CONDITIONAL(ROSE_USE_MAPLE,test ! "$with_maple" = no)
 
+# DQ (5/21/2017): I don't think we use this anymore.
+ROSE_SUPPORT_VXWORKS
+
+# Setup Automake conditional.
+AM_CONDITIONAL(ROSE_USE_VXWORKS,test ! "$with_vxworks" = no)
+
+# DQ (6/8/2017): Adding ADA support using GNAT ASIS tool chain.
+ROSE_SUPPORT_GNAT
+
+# Setup Automake conditional.
+AM_CONDITIONAL(ROSE_USE_GNAT,test ! "$with_gnat" = no)
+
+# DQ (5/23/2017): I don't think we use this anymore.
 # DQ (4/10/2010): Added configure support for Backstroke project.
-ROSE_SUPPORT_BACKSTROKE
+# ROSE_SUPPORT_BACKSTROKE
 
 #Call supporting macro for IDA PRO
 ROSE_SUPPORT_IDA
@@ -2338,6 +2351,8 @@ tests/nonsmoke/functional/CompileTests/sizeofOperation_tests/Makefile
 tests/nonsmoke/functional/CompileTests/sourcePosition_tests/Makefile
 tests/nonsmoke/functional/CompileTests/staticCFG_tests/Makefile
 tests/nonsmoke/functional/CompileTests/systemc_tests/Makefile
+tests/nonsmoke/functional/CompileTests/vxworks_tests/Makefile
+tests/nonsmoke/functional/CompileTests/gnat_tests/Makefile
 tests/nonsmoke/functional/CompileTests/uninitializedField_tests/Makefile
 tests/nonsmoke/functional/CompileTests/unparseToString_tests/Makefile
 tests/nonsmoke/functional/CompileTests/virtualCFG_tests/Makefile

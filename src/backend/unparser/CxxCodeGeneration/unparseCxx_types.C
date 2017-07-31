@@ -250,6 +250,17 @@ string get_type_name(SgType* t)
 #if 0
                 printf ("In get_type_name(%p): nm = %s \n",t,nm.str());
 #endif
+#if 0
+                printf ("decl = %p = %s \n",decl,decl->class_name().c_str());
+                SgClassDeclaration* nondefining_decl = isSgClassDeclaration(decl->get_firstNondefiningDeclaration());
+                printf ("decl = %p = %s \n",nondefining_decl,nondefining_decl->class_name().c_str());
+                SgClassDeclaration* defining_decl    = isSgClassDeclaration(decl->get_definingDeclaration());
+                printf ("decl = %p = %s \n",defining_decl,defining_decl->class_name().c_str());
+#endif
+#if 0
+                printf ("In get_type_name(): case T_CLASS: Exiting as a test! \n");
+                ROSE_ASSERT(false);
+#endif
                 if (nm.getString() != "")
                     return nm.getString();
                 else
@@ -465,8 +476,8 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
 #if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES || 0
      string firstPartString  = (info.isTypeFirstPart()  == true) ? "true" : "false";
      string secondPartString = (info.isTypeSecondPart() == true) ? "true" : "false";
-     printf ("In Unparse_Type::unparseType(): type->class_name() = %s firstPart = %s secondPart = %s \n",
-             type->class_name().c_str(),firstPartString.c_str(),secondPartString.c_str());
+     printf ("In Unparse_Type::unparseType(): type = %p type->class_name() = %s firstPart = %s secondPart = %s \n",
+             type,type->class_name().c_str(),firstPartString.c_str(),secondPartString.c_str());
 #endif
 #if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES || 0
      curprint ( string("\n/* Top of unparseType name ") + type->class_name().c_str()
@@ -1414,26 +1425,39 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
 
 #if 0
      printf ("In unparseMemberPointerType(): btype = %p = %s \n",btype,(btype != NULL) ? btype->class_name().c_str() : "NULL" );
+#endif
+#if 0
      curprint("\n/* In unparseMemberPointerType() */ \n");
 #endif
 
      if ( (ftype = isSgMemberFunctionType(btype)) != NULL)
         {
-       /* pointer to member function data */
-       // printf ("In unparseMemberPointerType(): pointer to member function data \n");
-
+       // pointer to member function data
+#if 0
+          printf ("In unparseMemberPointerType(): pointer to member function data \n");
+#endif
           if (info.isTypeFirstPart())
              {
+#if 0
+               printf ("In unparseMemberPointerType(): pointer to member function data: first part of type \n");
+#endif
                unparseType(ftype->get_return_type(), info); // first part
                curprint ( "(");
             // curprint ( "\n/* mpointer_type->get_class_of() = " + mpointer_type->get_class_of()->sage_class_name() + " */ \n";
                curprint ( get_type_name(mpointer_type->get_class_type()) );
+#if 0
+               printf ("In unparseMemberPointerType(): pointer to member function data: mpointer_type->get_class_type()                = %s \n",mpointer_type->get_class_type()->class_name().c_str());
+               printf ("In unparseMemberPointerType(): pointer to member function data: get_type_name(mpointer_type->get_class_type()) = %s \n",get_type_name(mpointer_type->get_class_type()).c_str());
+#endif
                curprint ( "::*");
              }
             else
              {
                if (info.isTypeSecondPart())
                   {
+#if 0
+                    printf ("In unparseMemberPointerType(): pointer to member function data: second part of type \n");
+#endif
                     curprint(")");
 
                  // argument list
@@ -1476,8 +1500,11 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
                   }
                  else
                   {
-                 // not called from statement level (not sure where this is used, but it does showout in Kull)
+                 // not called from statement level (not sure where this is used, but it does show up in Kull)
                  // printf ("What is this 3rd case of neither 1st part nor 2nd part \n");
+#if 0
+                    printf ("In unparseMemberPointerType(): pointer to member function data: neither first not second part of type??? \n");
+#endif
                     SgUnparse_Info ninfo(info);
                     ninfo.set_isTypeFirstPart();
                     unparseType(mpointer_type, ninfo);
@@ -1494,6 +1521,9 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
 #endif
           if (info.isTypeFirstPart())
              {
+#if 0
+               printf ("In unparseMemberPointerType(): pointer to member data: first part of type \n");
+#endif
             // DQ (9/16/2004): This appears to be an error, btype should not be unparsed here (of maybe btype is not set properly)!
             // printf ("Handling the first part \n");
             // curprint ( "\n/* start of btype */ \n";
@@ -1508,7 +1538,8 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
                if (info.isTypeSecondPart())
                   {
 #if 0
-                    printf ("Handling the second part \n");
+                //  printf ("In unparseMemberPointerType(): Handling the second part \n");
+                    printf ("In unparseMemberPointerType(): pointer to member data: second part of type \n");
 #endif
                     curprint(")");
 
@@ -1517,7 +1548,7 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
                     if (arrayType != NULL)
                        {
 #if 0
-                         printf ("Handling the array type \n");
+                         printf ("In unparseMemberPointerType(): Handling the array type \n");
 #endif
                          SgUnparse_Info ninfo(info);
                          curprint("[");
@@ -3489,11 +3520,21 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
 
                curprint("[");
 
+#if DEBUG_ARRAY_TYPE
+            // DQ (6/3/2017): Added more debugging info.
+               printf ("##### array_type = %p array_type->get_index() = %p = %s \n",array_type,array_type->get_index(),array_type->get_index() != NULL ? array_type->get_index()->class_name().c_str() : "null");
+#endif
                if (array_type->get_index())
                   {
                  // JJW (12/14/2008): There may be types inside the size of an array, and they are not the second part of the type
                     SgUnparse_Info ninfo2(ninfo);
                     ninfo2.unset_isTypeSecondPart();
+#if 0
+                 // DQ (6/3/2017): I think a fix for multi-dimentional array types may be to disable this feature, 
+                 // sense we already build the array type with a SgNullExpression for the index.
+                    printf ("Test disabling supressArrayBound in array type \n");
+                    ninfo2.unset_supressArrayBound();
+#endif
 #if 0
                     printf ("In Unparse_Type::unparseArrayType(): ninfo2.isReferenceToSomething() = %s \n",ninfo2.isReferenceToSomething() ? "true" : "false");
                     printf ("In Unparse_Type::unparseArrayType(): ninfo2.isPointerToSomething()   = %s \n",ninfo2.isPointerToSomething()   ? "true" : "false");
@@ -3509,7 +3550,7 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
 #endif
                  // DQ (1/9/2014): These should have been setup to be the same.
                     ROSE_ASSERT(ninfo2.SkipClassDefinition() == ninfo2.SkipEnumDefinition());
-#if 0
+#if DEBUG_ARRAY_TYPE
                     printf ("In unparseArrayType(): ninfo2.supressArrayBound()  = %s \n",(ninfo2.supressArrayBound() == true) ? "true" : "false");
 #endif
                  // DQ (2/2/2014): Allow the array bound to be subressed (e.g. in secondary declarations of array variable using "[]" syntax.
@@ -3556,7 +3597,7 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
                        }
                       else
                        {
-#if 0
+#if DEBUG_ARRAY_TYPE
                          printf ("In unparseArrayType(): Detected info_for_type.supressArrayBound() == true \n");
 #endif
 #if 0

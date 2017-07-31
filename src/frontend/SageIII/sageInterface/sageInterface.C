@@ -1627,6 +1627,9 @@ SageInterface::get_name ( const SgScopeStatement* scope )
                name = (isSgJavaLabelStatement(scope)->get_label()).getString();
                break;
 
+       // DQ (7/18/2017): Added support for the new declaration scope.
+          case V_SgDeclarationScope:
+
        // DQ (11/30/2007): Added more fortran support.
           case V_SgAssociateStatement:
           case V_SgJavaForEachStatement:

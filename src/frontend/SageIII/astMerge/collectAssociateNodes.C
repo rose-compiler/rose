@@ -2133,6 +2133,9 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
 
           case V_SgMatlabForStatement:
 
+       // DQ (7/18/2017): Added support to ignore the new SgDeclarationScope.
+          case V_SgDeclarationScope:
+
        // Ignore these scope statements since they are not yet shared
           case V_SgScopeStatement:
           case V_SgBasicBlock:

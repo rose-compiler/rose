@@ -336,7 +336,9 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
      SubTreeSynthesizedAttributes::iterator iter;
      ROSE_ASSERT(node);
 
-  // printf ("AstDOTGeneration::evaluateSynthesizedAttribute(): node = %s \n",node->class_name().c_str());
+#if 0
+     printf ("AstDOTGeneration::evaluateSynthesizedAttribute(): node = %s \n",node->class_name().c_str());
+#endif
 
   // DQ (5/3/2006): Skip this IR node if it is specified as such in the inherited attribute
      if (ia.skipSubTree == true)
