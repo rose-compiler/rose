@@ -132,6 +132,7 @@ libroseLibraries = \
 else
 libroseLibraries = \
    $(top_builddir)/src/3rdPartyLibraries/MSTL/libmstl.la \
+   $(top_builddir)/src/3rdPartyLibraries/libharu-2.1.0/src/libhpdf.la \
    $(top_builddir)/src/backend/libbackend.la \
    $(top_builddir)/src/frontend/SageIII/libsage3.la \
    $(libroseCxxlibraries) \
@@ -155,6 +156,10 @@ libroseLibraries = \
    $(top_builddir)/src/roseExtensions/failSafe/libfailsafe.la \
    $(libroseSqlite3xConnection) \
    $(libroseQtExtension)
+
+# DQ (6/10/2017): Added libhpdf.la library and removed it from LIBADD rule.
+# This is being done to fix the "make install" rule (which failes for me).
+# Added: $(top_builddir)/src/3rdPartyLibraries/libharu-2.1.0/src/libhpdf.la above.
 
 # DQ (12/18/2016): Moved below to make POET optional.
 #  $(top_builddir)/src/3rdPartyLibraries/POET/libpoet.la
@@ -266,10 +271,14 @@ librose_la_LIBADD = $(BOOST_LDFLAGS) $(libroseLibraries) $(JAVA_JVM_FLAGS) $(LIB
           $(BOOST_THREAD_LIB) $(BOOST_FILESYSTEM_LIB) \
           $(BOOST_PROGRAM_OPTIONS_LIB) $(BOOST_REGEX_LIB) \
           $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB) \
-          $(BOOST_WAVE_LIB) $(BOOST_IOSTREAMS_LIB)\
-          -L$(top_builddir)/src/3rdPartyLibraries/libharu-2.1.0/src -lhpdf \
+          $(BOOST_WAVE_LIB) $(BOOST_IOSTREAMS_LIB) \
           $(OPT_SQLITE3_LDFLAGS) \
           $(OPT_MYSQL_LDFLAGS) $(ROSE_ATERM_LIBS)
+
+# DQ (6/9/2017): Removed because it failes for "make install" rule on my machine.
+# This was located after the BOOST_WAVE_LIB line in the librose_la_LIBADD rule above.
+#          -L$(top_builddir)/src/3rdPartyLibraries/libharu-2.1.0/src -lhpdf 
+# Added this library to the libroseLibraries rule farther above in this file.
 endif
 
 # DQ (6/5/2010): Suggested change by Peter to support dwarf that would simplify use with Haskell

@@ -1716,7 +1716,9 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, const SgTemplateArgume
      bool _forced_transformation_format = false;
      bool _unparse_includes             = false;
 
-  // printf ("In globalUnparseToString(): astNode->sage_class_name() = %s \n",astNode->sage_class_name());
+#if 0
+     printf ("In globalUnparseToString(): astNode->class_name() = %s \n",astNode->class_name().c_str());
+#endif
 
      Unparser_Opt roseOptions( _auto,
                                linefile,
@@ -2122,17 +2124,18 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, const SgTemplateArgume
                          const SgTemplateArgument* templateArgument = isSgTemplateArgument(astNode);
 #if 0
                       // printf ("In globalUnparseToString_OpenMPSafe(): case V_SgTemplateArgument (before): returnString = %s outputString = %s \n",returnString.c_str(),outputString.str());
-                         printf ("In globalUnparseToString_OpenMPSafe(): case V_SgTemplateArgument (before): returnString = %s outputString = %s \n",returnString.c_str(),outputString.str());
+                         printf ("In globalUnparseToString_OpenMPSafe(): case V_SgTemplateArgument (before): returnString = %s outputString = %s \n",returnString.c_str(),outputString.str().c_str());
                       // printf ("In globalUnparseToString_OpenMPSafe(): case V_SgTemplateArgument (before): returnString = %s \n",returnString.c_str());
 #endif
                       // DQ (2/2/2007): Note that we should modify the unparser to take the IR nodes as const pointers, but this is a bigger job than I want to do now!
                          ROSE_ASSERT(roseUnparser.u_exprStmt != NULL);
                          roseUnparser.u_exprStmt->unparseTemplateArgument(const_cast<SgTemplateArgument*>(templateArgument),inheritedAttributeInfo);
-#if 0
+
                       // printf ("In globalUnparseToString_OpenMPSafe(): case V_SgTemplateArgument (after): returnString = %s outputString = %s \n",returnString.c_str(),outputString.str());
                       // printf ("In globalUnparseToString_OpenMPSafe(): case V_SgTemplateArgument (after): returnString = %s outputString = %s \n",returnString.c_str(),outputString.str());
                       // printf ("In globalUnparseToString_OpenMPSafe(): case V_SgTemplateArgument (after): returnString = %s \n",returnString.c_str());
 
+#if 0
                          string local_returnString = outputString.str();
                          printf ("In globalUnparseToString_OpenMPSafe(): case V_SgTemplateArgument (after): local_returnString = %s \n",local_returnString.c_str());
 #endif

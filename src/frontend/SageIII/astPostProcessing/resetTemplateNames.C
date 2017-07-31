@@ -557,16 +557,17 @@ ResetTemplateNamesOnMemoryPool::visit ( SgNode* node )
              {
                SgTemplateInstantiationDecl* templateClassDeclaration = isSgTemplateInstantiationDecl(node);
                ROSE_ASSERT(templateClassDeclaration != NULL);
-
-            // string oldName     = templateClassDeclaration->get_name().str();
-            // string mangledName = templateClassDeclaration->get_mangled_name().str();
-            // printf ("template class: oldName = %s mangledName = %s \n",oldName.c_str(),mangledName.c_str());
-
+#if 0
+               string oldName     = templateClassDeclaration->get_name().str();
+               string mangledName = templateClassDeclaration->get_mangled_name().str();
+               printf ("template class: oldName = %s mangledName = %s \n",oldName.c_str(),mangledName.c_str());
+#endif
             // Calling resetTemplateName()
                templateClassDeclaration->resetTemplateName();
-
-            // string newName     = templateClassDeclaration->get_name().str();
-            // printf ("template class: oldName = %s mangledName = %s newName = %s \n",oldName.c_str(),mangledName.c_str(),newName.c_str());
+#if 0
+               string newName     = templateClassDeclaration->get_name().str();
+               printf ("template class: oldName = %s mangledName = %s newName = %s \n",oldName.c_str(),mangledName.c_str(),newName.c_str());
+#endif
                break;
              }
 
