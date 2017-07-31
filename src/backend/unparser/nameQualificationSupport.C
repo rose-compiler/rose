@@ -5,7 +5,7 @@
 using namespace std;
 
 // DQ (3/24/2016): Adding Robb's message logging mechanism to contrl output debug message from the EDG/ROSE connection code.
-using namespace rose::Diagnostics;
+using namespace Rose::Diagnostics;
 
 // DQ (3/24/2016): Adding Robb's meageage mechanism (data member and function).
 Sawyer::Message::Facility NameQualificationTraversal::mlog;
@@ -68,7 +68,7 @@ void NameQualificationTraversal::initDiagnostics()
      if (!initialized) 
         {
           initialized = true;
-          rose::Diagnostics::initAndRegister(&mlog, "rose::NameQualificationTraversal");
+          Rose::Diagnostics::initAndRegister(&mlog, "Rose::NameQualificationTraversal");
         }
    }
 

@@ -69,7 +69,7 @@ found in the directory ROSE/TESTS/KnownBugs/AttachPreprocessingInfo.
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 // Debug flag
 #define DEBUG_ATTACH_PREPROCESSING_INFO 0

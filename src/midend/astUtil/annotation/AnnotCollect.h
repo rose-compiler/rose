@@ -6,20 +6,17 @@
 
 typedef AnnotCollectionBase<OperatorDeclaration> OperatorCollectionBase;
 typedef ReadAnnotCollection<OperatorDeclaration, '{', ';','}'> ReadOperatorCollection;
-// Top level class to read annotations
+
 //! An interface to read into type(class) and operator(function) annotations
 // Each type of 
-class ROSE_DLL_API ReadAnnotation {
-
-  ReadTypeCollection typeInfo; // class annotation reader
-  ReadOperatorCollection opInfo;  // operator annotation reader
-
+class ReadAnnotation {
+  ReadTypeCollection typeInfo;
+  ReadOperatorCollection opInfo;
   static ReadAnnotation* inst;
   ReadAnnotation() {}
  public:
   void add_TypeCollection (TypeCollectionBase* c) 
     { typeInfo.push_back(c); }
-
   void add_OperatorCollection (OperatorCollectionBase *c)
     { opInfo.push_back(c); }
 
@@ -27,7 +24,6 @@ class ROSE_DLL_API ReadAnnotation {
   void read();
 
   static ReadAnnotation* get_inst();
-
   static std::string OptionString()
     {
       return "-annot <filename> ";

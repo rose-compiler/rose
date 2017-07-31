@@ -35,7 +35,7 @@ main( int argc, char * argv[] )
    {
   // This test code tests the AST rewrite mechanism to add TAU Instrumention to the AST.
 
-  // Initialize and check compatibility. See rose::initialize
+  // Initialize and check compatibility. See Rose::initialize
      ROSE_INITIALIZE;
 
      SgProject* project = frontend(argc,argv);

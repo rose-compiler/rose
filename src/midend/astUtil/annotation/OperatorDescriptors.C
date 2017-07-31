@@ -142,10 +142,10 @@ get_side_effect( AstInterface& fa,
   for (OperatorSideEffectDescriptor::const_iterator p = begin(); p != end(); ++p) {
       string varname = *p;
       AstNodePtr arg = paramMap.find(varname).get_ast();
-      if (arg != AST_NULL) {
+      if (arg != AST_NULL) {  // if it is one of the function arguments, collect it
         collect( arg);
       }
-      else {
+      else { // otherwise, it is a global variable, create a reference to it. 
         AstNodePtr var = fa.CreateVarRef(varname);
         collect( var);
       }

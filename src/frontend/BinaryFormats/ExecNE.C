@@ -3,7 +3,7 @@
 #include "sage3basic.h"
 #include "Diagnostics.h"
 
-using namespace rose::Diagnostics;
+using namespace Rose::Diagnostics;
 
 // Added to support RTI support in ROSE (not implemented)
 std::ostream & operator<< (std::ostream & os, const SgAsmNERelocEntry::iref_type & x)

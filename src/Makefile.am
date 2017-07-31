@@ -1,5 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 bin_PROGRAMS =
+MOSTLYCLEANFILES =
 
 if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 SUBDIRS = util ROSETTA roseSupport frontend midend backend \
@@ -281,6 +282,11 @@ librose_la_LIBADD = $(BOOST_LDFLAGS) $(libroseLibraries) $(JAVA_JVM_FLAGS) $(LIB
 # Added this library to the libroseLibraries rule farther above in this file.
 endif
 
+# libelf is a prerequisite for using libdwarf
+if ROSE_HAVE_LIBELF
+   librose_la_LIBADD += $(ROSE_ELF_LIBS_WITH_PATH)
+endif
+
 # DQ (6/5/2010): Suggested change by Peter to support dwarf that would simplify use with Haskell
 if ROSE_HAVE_LIBDWARF
    librose_la_LIBADD += $(ROSE_DWARF_LIBS_WITH_PATH)
@@ -318,7 +324,7 @@ REQUIRED_LIBS = librose.la
 # DQ (3/14/2009): We have to clear the LDFLAGS variable...  This is not so great.
 LDFLAGS =
 if OS_MACOSX
-if HAS_LIBRARY_GCRYPT
+if ROSE_HAVE_LIBGCRYPT
 PORT_PATH = $(shell which port)
 PORT_HOME = $(shell dirname $(PORT_PATH))/..
 LDFLAGS += -L$(PORT_HOME)/lib -lgcrypt 
@@ -327,19 +333,25 @@ LDFLAGS +=
 endif
 endif
 
-# AM_LDFLAGS = $(ROSE_LIBS) $(ROSE_DWARF_LIBS_WITH_PATH)
-# AM_LDFLAGS = $(ROSE_DWARF_LIBS_WITH_PATH)
-# AM_LDFLAGS =
 
+########################################################################################################################
 # This tool spits out information that tells users how to compile and link programs that use ROSE. Therefore, we have to
-# pass that information to the program when we compile it, and we do so with the "-DCXX", etc compiler switches. It's
-# also especially important that this tool uses rpaths to find its dynamically-linked libraries, otherwise the user will
-# be tempted to use LD_LIBRARY_PATH and complain when the tool segfaults, not realizing that the fault is because they
-# told the tool to use a library that is incompatible with the one it was compiled to use.
+# build a configuration file and compile its installed name into the rose-config tool. It's also especially important
+# that this tool uses rpaths to find its dynamically-linked libraries, otherwise the user will be tempted to use
+# LD_LIBRARY_PATH and complain when the tool segfaults, not realizing that the fault is because they told the tool to
+# use a library that is incompatible with the one it was compiled to use.
 bin_PROGRAMS += rose-config
 rose_config_SOURCES = rose-config.C
 rose_config_LDFLAGS = $(ROSE_RPATHS)
 rose_config_DEPENDENCIES = $(REQUIRED_LIBS)
+rose_config_CPPFLAGS = -DLIBDIR='"$(libdir)"'
+rose_config_LDADD = $(ROSE_LIBS)
+
+# DQ (4/12/2016): This is required for use with clang (not clear how to compile ROSE with out it).
+if USING_CLANG_COMPILER
+rose_config_LDADD += -lstdc++
+rose_config_LDFLAGS += -fno-rtti
+endif
 
 rose_config_installed_cppflags =		\
 	-I@includedir@/rose			\
@@ -349,6 +361,7 @@ rose_config_installed_cppflags =		\
 	$(ROSE_YICES_INCLUDES)			\
 	$(ROSE_YAML_INCLUDES)			\
 	$(ROSE_LIBMAGIC_INCLUDES)		\
+	$(ROSE_ELF_INCLUDES)			\
 	$(ROSE_DWARF_INCLUDES)			\
 	$(ROSE_WINE_INCLUDES)			\
 	$(ROSE_PCH_INCLUDE)			\
@@ -357,7 +370,6 @@ rose_config_installed_cppflags =		\
 	$(ROSE_ATERM_INCLUDE)			\
 	$(ROSE_DLIB_INCLUDES)			\
 	$(BOOST_CPPFLAGS)
-rose_config_build_cppflags = $(ROSE_INCLUDES)
 
 rose_config_installed_ldflags =			\
 	-L@libdir@ -lrose			\
@@ -376,6 +388,7 @@ rose_config_installed_ldflags =			\
 	$(RT_LIBS)				\
 	$(ROSE_YICES_LIBS_WITH_PATH)		\
 	$(ROSE_PHP_LIBS_WITH_PATH)		\
+	$(ROSE_ELF_LIBS_WITH_PATH)		\
 	$(ROSE_DWARF_LIBS_WITH_PATH)		\
 	$(ROSE_QT_LIBS_WITH_PATH)		\
 	$(ROSE_SSL_LIBS)			\
@@ -386,43 +399,36 @@ rose_config_installed_ldflags =			\
 	$(ROSE_LIBMAGIC_LIBS_WITH_PATH)		\
 	$(ROSE_DLIB_LIBS_WITH_PATH)		\
 	-lm
-rose_config_build_ldflags =			\
-	$(ROSE_LIBS)
 
-rose_config_CPPFLAGS =									\
-	-DCXX='"$(subst ",\",$(CXX))"'							\
-	-DINSTALLED_CPPFLAGS='"$(subst ",\",$(rose_config_installed_cppflags))"'	\
-	-DBUILD_CPPFLAGS='"$(subst ",\",$(rose_config_build_cppflags))"'		\
-	-DCFLAGS='"$(subst ",\",$(CFLAGS))"'						\
-	-DCXXFLAGS='"$(subst ",\",$(CXXFLAGS))"'					\
-	-DINSTALLED_LDFLAGS='"$(subst ",\",$(rose_config_installed_ldflags))"'		\
-	-DBUILD_LDFLAGS='"$(subst ",\",$(rose_config_build_ldflags))"'			\
-	-DPREFIX_DIR='"$(prefix)"'
+rose_config_cfgdir = $(libdir)
+rose_config_cfg_DATA = rose-config.cfg
 
-# DQ (4/12/2016): This is required for use with clang (not clear how to compile ROSE with out it).
-rose_config_LDADD = $(ROSE_LIBS)
+rose-config.cfg:
+	$(AM_V_GEN) (								\
+		echo "# Things that the 'rose-config' tool can report";		\
+		echo "cc       = $(CC)";					\
+		echo "cxx      = $(CXX)";					\
+		echo "cppflags = $(rose_config_installed_cppflags)";		\
+		echo "cflags   = $(CFLAGS)";					\
+		echo "cxxflags = $(CXXFLAGS)";					\
+		echo "ldflags  = $(rose_config_installed_ldflags)";		\
+		echo "libdirs  = $(filter-out -R, $(ROSE_RPATHS))";		\
+		echo "prefix   = $(prefix)";					\
+	) >$@
 
-if USING_CLANG_COMPILER
-# rose_config_LDADD += -lstdc++
-# rose_config_LDADD += -lstdc++ -fno-rtti
-rose_config_LDADD += -lstdc++
-rose_config_LDFLAGS += -fno-rtti
-endif
+MOSTLYCLEANFILES += rose-config.cfg
 
-print:
-	@echo "libroseLibraries = $(libroseLibraries)"
-	@echo "ROSE_LIBS = $(ROSE_LIBS)"
-	@echo "ROSE_RPATHS = $(ROSE_RPATHS)"
-	@echo "ROSE_DWARF_LIBS_WITH_PATH = $(ROSE_DWARF_LIBS_WITH_PATH)"
-	@echo "AM_LDFLAGS = $(AM_LDFLAGS)"
+########################################################################################################################
+
 
 # DQ (1/10/2004): remove the librose.a and libedg.a files so that distclean will work cleanly
+# Do not remove libraries indiscriminately with wildcards [Matzke, 2017-06-19]
 clean-local:
-	rm -rf *.a *.so testSharedRoseLib testMultiRoseLib $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files 
-
+	rm -rf librose.a librose.so testSharedRoseLib testMultiRoseLib $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files 
+	rm -rf $(MOSTLYCLEANFILES)
 
 distclean-local:
-	rm -rf *.a *.so testSharedRoseLib testMultiRoseLib Templates.DB 
+	rm -rf librose.a librose.so testSharedRoseLib testMultiRoseLib Templates.DB 
 
 cleanTest:
 	rm -rf *.lo testSharedRoseLib testMultiRoseLib
