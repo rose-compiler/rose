@@ -465,7 +465,7 @@ BinaryDebugger::readMemory(rose_addr_t va, size_t nBytes, uint8_t *buffer) {
     if (-1 == (mem.fd = open(memName.c_str(), O_RDONLY)))
         throw std::runtime_error("cannot open \"" + memName + "\": " + strerror(errno));
     if (-1 == lseek(mem.fd, va, SEEK_SET))
-        throw std::runtime_error(memName + " seek failed: " + strerror(errno));
+        return 0;                                       // bad address
     size_t totalRead = 0;
     while (nBytes > 0) {
         ssize_t nread = read(mem.fd, buffer, nBytes);
