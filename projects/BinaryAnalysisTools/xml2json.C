@@ -481,16 +481,28 @@ typedef std::pair<PathAction, std::string> PathComponent;
 typedef std::list<PathComponent> PathSpec;
 typedef std::vector<PathSpec> PathSpecs;
 
+bool
+consecutiveWildcards(const std::string &a, const std::string &b) {
+    return a == "*" && a == b;
+}
+
 PathSpec
 parsePathSpec(const std::string &name, const std::string &pstr, PathAction action) {
+    using namespace Rose::StringUtility;
     ASSERT_forbid(MATCH == action);
+
     std::vector<std::string> parts;
     boost::split(parts /*out*/, pstr, boost::is_any_of("."));
+    size_t n = parts.size();
+    parts.erase(std::unique(parts.begin(), parts.end(), consecutiveWildcards), parts.end());
+    if (n != parts.size())
+        throw std::runtime_error("consecutive wildcards in \"" + cEscape(pstr) + "\"");
+
     PathSpec retval;
     retval.push_back(std::make_pair(BEGIN, name));
     BOOST_FOREACH (const std::string &part, parts) {
         if (part.empty())
-            throw std::runtime_error("invalid path \"" + Rose::StringUtility::cEscape(pstr) + "\"");
+            throw std::runtime_error("invalid path \"" + cEscape(pstr) + "\"");
         retval.push_back(std::make_pair(MATCH, part));
     }
     retval.push_back(std::make_pair(action, std::string()));
@@ -641,7 +653,15 @@ public:
             return;                                     // no need to match further if we're suppressing output
         BOOST_FOREACH (PathSpec::const_iterator component, prevElmt.nextMatch) {
             ASSERT_require(component->first == MATCH);  // previous level must be trying to match this level
-            if (tokens_.matches(elmt.tag,  component->second.c_str())) {
+            if (component->second == "*") {
+                elmt.nextMatch.push_back(component);    // next level could match the '*' again
+                ++component;
+                if (MATCH == component->first) {
+                    elmt.nextMatch.push_back(component);// or it could match what follows the '*'
+                } else {
+                    setAction(elmt, component);
+                }
+            } else if (tokens_.matches(elmt.tag,  component->second.c_str())) {
                 ++component;
                 if (MATCH == component->first) {
                     elmt.nextMatch.push_back(component);// try to match the next lower level of the tree
@@ -878,7 +898,12 @@ main(int argc, char *argv[]) {
     PathSpecs pathsToMatch;
     for (size_t i=0; i<settings.deletions.size(); ++i) {
         std::string name = "cmdline delete-" + boost::lexical_cast<std::string>(i);
-        pathsToMatch.push_back(parsePathSpec(name, settings.deletions[i], DELETE));
+        try {
+            pathsToMatch.push_back(parsePathSpec(name, settings.deletions[i], DELETE));
+        } catch (const std::runtime_error &e) {
+            mlog[FATAL] <<"for --delete switch, " <<e.what() <<"\n";
+            exit(1);
+        }
     }
 
     XmlParser xml(settings.xmlFileName, settings.jsonFileName, pathsToMatch);
