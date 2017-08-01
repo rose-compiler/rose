@@ -482,7 +482,7 @@ public:
 // Path specification. This is used for paths specified on the command-line. It is too slow and heavy for paths encountered
 // during parsing. All path specifications are terminated by a special component that describes what to do when the path
 // matches in the XML input. This last component must be something other than MATCH.
-enum PathAction { BEGIN, MATCH, ECHO, DELETE };
+enum PathAction { BEGIN, MATCH, ECHO, DELETE, RENAME };
 
 typedef std::pair<PathAction, std::string> PathComponent;
 typedef std::list<PathComponent> PathSpec;
@@ -524,6 +524,63 @@ pathBegin(PathSpec::const_iterator component) {
     return component;
 }
 
+// Accumulates matching path actions and checks for conflicting actions
+class ActionAccumulator {
+    bool deleted_;                                      // a DELETE action was merged?
+    std::string renamed_;                               // replacement for a RENAME action
+    size_t nActions_;                                   // total number of actions merged
+
+public:
+    ActionAccumulator()
+        : deleted_(false), nActions_(0) {}
+
+    void merge(PathSpec::const_iterator action) {
+        using namespace Rose::StringUtility;
+        switch (action->first) {
+            case ECHO:
+                // Echo never conflicts, so we can do it right away
+                SAWYER_MESG(mlog[WHERE]) <<"echo \"" <<cEscape(action->second) <<"\"\n";
+                std::cout <<action->second <<"\n";
+                ++nActions_;
+                break;
+
+            case DELETE:
+                // Delete takes precedence over rename
+                SAWYER_MESG(mlog[WHERE]) <<"deleting path " <<pathBegin(action)->second <<"\n";
+                deleted_ = true;
+                renamed_.clear();
+                ++nActions_;
+                break;
+
+            case RENAME:
+                if (deleted_) {
+                    // Delete takes precedence over rename
+                } else if (!renamed_.empty() && renamed_ != action->second) {
+                    SAWYER_MESG(mlog[WARN]) <<"conflicting rename operations \"" <<cEscape(renamed_) <<"\" and \""
+                                            <<cEscape(action->second) <<"\"\n";
+                } else {
+                    SAWYER_MESG(mlog[WHERE]) <<"renaming path " <<pathBegin(action)->second <<"\n";
+                    renamed_ = action->second;
+                }
+                ++nActions_;
+                break;
+
+            case MATCH:
+            case BEGIN:
+                // Not an action; nothing to merge
+                break;
+        }
+    }
+
+    bool deleted() const {
+        return deleted_;
+    }
+
+    size_t nActions() const {
+        return nActions_;
+    }
+};
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class XmlParser {
     enum PlaceHolder { LEFT_ARRAY=0, LEFT_OBJECT=1, NPLACEHOLDERS };
@@ -537,7 +594,7 @@ class XmlParser {
         size_t lastChildPlaceholders;                   // position of latest-added child's placeholders
         std::vector<PathSpec::const_iterator> nextMatch;// next part of path to match
         bool suppressOutput;                            // avoid emitting anything for this subtree
-        
+
 #ifdef XML2JSON_SUPPORT_CHECK
         AttributeMap childTagMap;
 #endif
@@ -611,7 +668,8 @@ public:
     }
 #endif
 
-    void showCurrentPath(std::ostream &out, const XmlLexer::Token &token = XmlLexer::Token()) {
+    // Show the XML path, augmented by the optional token at the end.
+    void showXmlPath(std::ostream &out, const XmlLexer::Token &token = XmlLexer::Token()) {
         for (size_t i=1; i<path_.size(); ++i) {         // skip root since it's synthesized as "" at line 0 col 0
             std::pair<size_t, size_t> loc = tokens_.location(path_[i].tag);
             out <<"  \"" <<Rose::StringUtility::cEscape(tokens_.lexeme(path_[i].tag).toString()) <<"\""
@@ -623,29 +681,33 @@ public:
                 <<" at line " <<(loc.first+1) <<" col " <<(loc.second+1) <<"\n";
         }
     }
-    
-    // Adjusts ELMT to perform some kind of translation action, such as deletion or renaming.
-    void setAction(PathElement &elmt, PathSpec::const_iterator component) {
-        ASSERT_forbid(BEGIN == component->first);
-        ASSERT_forbid(MATCH == component->first);
 
-        // Find the beginning of the path (it's probably not too long)
-        switch (component->first) {
-            case ECHO:
-                SAWYER_MESG(mlog[WHERE]) <<"echo \"" <<Rose::StringUtility::cEscape(component->second) <<"\"\n";
-                std::cout <<component->second <<"\n";
-                break;
-            case DELETE:
-                SAWYER_MESG(mlog[WHERE]) <<"deleting path " <<pathBegin(component)->second <<"\n";
-                elmt.suppressOutput = true;
-                break;
-            default:
-                ASSERT_not_reachable("invalid action " + boost::lexical_cast<std::string>(component->first));
-        }
+    // Match tokenFirstChar+token against the component pattern. The match success if component is the last matching component
+    // and the next component in the list is some action like DELETE, ECHO, or RENAME.
+    bool matchPathPattern(char tokenFirstChar, const XmlLexer::Token &token, PathSpec::const_iterator component) {
+        ASSERT_require(MATCH == component->first);
+        ASSERT_forbid(component->second.empty());
+        return  (component->second == "*" ||
+                 (component->second[0] == tokenFirstChar && tokens_.matches(token, component->second.c_str()+1)));
     }
 
-    // Insert matching paths for the root tag. All paths match at the root. Returns true if anything matched.
-    bool insertMatchingPaths(PathElement &elmt /*out*/, const PathSpecs &pathsToMatch) {
+    // Matches the specified path component against a specific input token.
+    bool matchPathPattern(const XmlLexer::Token &token, PathSpec::const_iterator component) {
+        ASSERT_require(MATCH == component->first);
+        ASSERT_forbid(component->second.empty());
+        return component->second == "*" || tokens_.matches(token, component->second.c_str());
+    }
+
+    // Mathces the specified path component against a specific string
+    bool matchPathPattern(const std::string &haystack, PathSpec::const_iterator component) {
+        ASSERT_require(MATCH == component->first);
+        ASSERT_forbid(component->second.empty());
+        return component->second == "*" || component->second == haystack;
+    }
+
+    // Insert matching paths for the root tag, which is the synthesized "" at line 0 col 0 of the input.  All paths match at
+    // the root. Updates the action accumulator for those paths that completely matched at the root.
+    bool insertMatchingPaths(PathElement &elmt /*out*/, const PathSpecs &pathsToMatch, ActionAccumulator &actions /*out*/) {
         bool retval = false;
         elmt.nextMatch.reserve(pathsToMatch_.size());
         BOOST_FOREACH (const PathSpec &pathSpec, pathsToMatch_) {
@@ -656,35 +718,28 @@ public:
             if (MATCH == component->first) {
                 elmt.nextMatch.push_back(component);    // what to match at the next lower level of the tree
             } else {
-                setAction(elmt, component);             // do something at this level of the tree
+                actions.merge(component);
                 retval = true;
             }
         }
         return retval;
     }
 
-    // Insert matching paths based on paths matching at previous element. Returns true if anything matched.
-    bool insertMatchingPaths(PathElement &elmt /*out*/, const PathElement &prevElmt) {
+    // Insert matching paths into ELMT based on partial path matches at previous element. Returns true if anything matched, and
+    // updates the action accumulator.
+    bool insertMatchingPaths(PathElement &elmt /*out*/, const PathElement &prevElmt, ActionAccumulator &actions /*out*/) {
         bool retval = false;
         if (prevElmt.suppressOutput)
             return false;                               // no need to match further if we're suppressing output
         BOOST_FOREACH (PathSpec::const_iterator component, prevElmt.nextMatch) {
-            ASSERT_require(component->first == MATCH);  // previous level must be trying to match this level
-            if (component->second == "*") {
-                elmt.nextMatch.push_back(component);    // next level could match the '*' again
+            if (matchPathPattern(elmt.tag, component)) {
+                if (component->second == "*")
+                    elmt.nextMatch.push_back(component);// next level could match the '*' again
                 ++component;
                 if (MATCH == component->first) {
-                    elmt.nextMatch.push_back(component);// or it could match what follows the '*'
+                    elmt.nextMatch.push_back(component);
                 } else {
-                    setAction(elmt, component);
-                    retval = true;
-                }
-            } else if (tokens_.matches(elmt.tag,  component->second.c_str())) {
-                ++component;
-                if (MATCH == component->first) {
-                    elmt.nextMatch.push_back(component);// try to match the next lower level of the tree
-                } else {
-                    setAction(elmt, component);         // do something at this level of the tree
+                    actions.merge(component);
                     retval = true;
                 }
             }
@@ -698,20 +753,25 @@ public:
             progress_.value(tag.offset());
 
         // Append a new path element
-        PathElement elmt(tag);
-        bool matchesFound = false;
-        if (path_.empty()) {
-            matchesFound = insertMatchingPaths(elmt /*out*/, pathsToMatch_);
-        } else {
-            elmt.suppressOutput = path_.back().suppressOutput;
-            matchesFound = insertMatchingPaths(elmt /*out*/, path_.back());
+        ActionAccumulator actions;                      // actions for matched path specs
+        {
+            PathElement elmt(tag);
+            bool matchesFound = false;
+            if (path_.empty()) {
+                matchesFound = insertMatchingPaths(elmt /*out*/, pathsToMatch_, actions /*out*/);
+            } else {
+                elmt.suppressOutput = path_.back().suppressOutput;
+                matchesFound = insertMatchingPaths(elmt /*out*/, path_.back(), actions /*out*/);
+            }
+            if (matchesFound && mlog[WHERE]) {
+                mlog[WHERE] <<Rose::StringUtility::plural(actions.nActions(), "matches", "match") <<" occurred here:\n";
+                showXmlPath(mlog[WHERE], tag);
+            }
+            if (actions.deleted())
+                elmt.suppressOutput = true;
+            path_.push_back(elmt);
         }
-        path_.push_back(elmt);
-        if (matchesFound && mlog[WHERE]) {
-            mlog[WHERE] <<"match(es) occurred here:\n";
-            showCurrentPath(mlog[WHERE]);
-        }
-        
+
         // Back-patch the parent if necessary
         if (path_.size() > 1) {
             if (!path_.back().suppressOutput) {
@@ -798,43 +858,40 @@ public:
         valuePropertyCallback(name, name);
     }
 
+    // Find path patterns that match completely at the specified XML property
+    bool matchProperty(char firstChar, const XmlLexer::Token &name, ActionAccumulator &actions /*out*/) {
+        BOOST_FOREACH (PathSpec::const_iterator component, path_.back().nextMatch) {
+            if (matchPathPattern('@', name, component)) {
+                ++component;
+                actions.merge(component);
+            }
+        }
+        return actions.nActions() > 0;
+    }
+
+    // Ditto
+    bool matchProperty(const std::string &name, ActionAccumulator &actions /*out*/) {
+        BOOST_FOREACH (PathSpec::const_iterator component, path_.back().nextMatch) {
+            if (matchPathPattern(name, component)) {
+                ++component;
+                actions.merge(component);
+            }
+        }
+        return actions.nActions() > 0;
+    }
+
     void valuePropertyCallback(const XmlLexer::Token &name, const XmlLexer::Token &value) {
         ASSERT_require(!path_.empty());
         if (path_.back().suppressOutput)
             return;
 
-        // Some action for this tag?
-        bool suppressTag = false, matched = false;
-        BOOST_FOREACH (PathSpec::const_iterator component, path_.back().nextMatch) {
-            ASSERT_require(MATCH == component->first);
-            ASSERT_forbid(component->second.empty());
-            if (component->second == "*" ||
-                (component->second[0] == '@' && tokens_.matches(name, component->second.c_str()+1))) {
-                ++component;
-                switch (component->first) {
-                    case BEGIN:
-                        ASSERT_not_reachable("BEGIN is not valid here");
-                    case MATCH:
-                        // This isn't a match because we're at a leaf node and there's more to match
-                        break;
-                    case ECHO:
-                        SAWYER_MESG(mlog[WHERE]) <<"echo \"" <<Rose::StringUtility::cEscape(component->second) <<"\"\n";
-                        std::cout <<component->second <<"\n";
-                        matched = true;
-                        break;
-                    case DELETE:
-                        SAWYER_MESG(mlog[WHERE]) <<"deleting path " <<pathBegin(component)->second <<"\n";
-                        matched = suppressTag = true;
-                        break;
-                }
-            }
-        }
-        if (matched && mlog[WHERE]) {
-            mlog[WHERE] <<"match occurred here:\n";
-            showCurrentPath(mlog[WHERE], name);
+        ActionAccumulator actions;
+        if (matchProperty('@', name, actions /*out*/) && mlog[WHERE].enabled()) {
+            mlog[WHERE] <<Rose::StringUtility::plural(actions.nActions(), "matches", "match") <<" occurred here:\n";
+            showXmlPath(mlog[WHERE], name);
         }
 
-        if (!suppressTag) {
+        if (!actions.deleted()) {
             // Make sure the output is an object, i.e., the curly brace in '"object_name":{...'
             json_.write("{", path_.back().placeholders+LEFT_OBJECT, 1, Escape::NO);
 
@@ -853,7 +910,16 @@ public:
 
     void textCallback(const XmlLexer::Token &t) {
         ASSERT_require(!path_.empty());
-        if (!path_.back().suppressOutput) {
+        if (path_.back().suppressOutput)
+            return;
+
+        ActionAccumulator actions;
+        if (matchProperty("#text", actions) && mlog[WHERE].enabled()) {
+            mlog[WHERE] <<Rose::StringUtility::plural(actions.nActions(), "matches", "match") <<" occurred here:\n";
+            showXmlPath(mlog[WHERE]);                   // FIXME[Robb Matzke 2017-08-01]: what about "#text" location?
+        }
+
+        if (!actions.deleted()) {
             if (++path_.back().nChildren > 1)
                 json_ <<",\"#text\":";
             json_ <<"\"";
@@ -986,7 +1052,7 @@ main(int argc, char *argv[]) {
             exit(1);
         }
     }
-    
+
     XmlParser xml(settings.xmlFileName, settings.jsonFileName, pathsToMatch);
     xml.check(settings.check);
     xml.parse();
