@@ -220,8 +220,7 @@ public:
         }
     }
 
-    // Return the line number and column for the start of the specified token. The line number is 1-origin, and the column
-    // number is 0-origin.
+    // Return the line number and column for the start of the specified token. The line number and column number are 0-origin.
     std::pair<size_t, size_t> location(const Token &t) const {
         return content_.location(t.begin_);
     }
@@ -510,14 +509,17 @@ class XmlParser {
         XmlLexer::SharedString lastChild;               // name of the latest-added child
         size_t lastChildPlaceholders;                   // position of latest-added child's placeholders
         std::vector<PathSpec::const_iterator> nextMatch;// next part of path to match
+        bool suppressOutput;                            // avoid emitting anything for this subtree
+        
 #ifdef XML2JSON_SUPPORT_CHECK
         AttributeMap childTagMap;
 #endif
 
-        PathElement(): placeholders(0), nChildren(0), lastChildPlaceholders(0) {} // needed by std::vector
+        PathElement()                                   // needed by std::vector
+            : placeholders(0), nChildren(0), lastChildPlaceholders(0), suppressOutput(false) {}
 
         explicit PathElement(const XmlLexer::Token &tag)
-            : tag(tag), placeholders(0), nChildren(0), lastChildPlaceholders(0) {}
+            : tag(tag), placeholders(0), nChildren(0), lastChildPlaceholders(0), suppressOutput(false) {}
     };
 
     XmlLexer::TokenStream tokens_;
@@ -597,21 +599,22 @@ public:
                 break;
             case DELETE:
                 std::cout <<"deleting path " <<begin->second <<"\n";
+                elmt.suppressOutput = true;
                 break;
             default:
                 ASSERT_not_reachable("invalid action " + boost::lexical_cast<std::string>(component->first));
         }
 
         // What did the path match
-        for (size_t i=0; i<path_.size(); ++i) {
+        for (size_t i=1; i<path_.size(); ++i) {
             std::pair<size_t, size_t> loc = tokens_.location(path_[i].tag);
             std::cout <<"  matched \"" <<tokens_.lexeme(path_[i].tag).toString() <<"\""
-                      <<" at line " <<loc.first <<" col " <<loc.second <<"\n";
+                      <<" at line " <<(loc.first+1) <<" col " <<(loc.second+1) <<"\n";
         }
         if (&elmt != &path_.back()) {
             std::pair<size_t, size_t> loc = tokens_.location(elmt.tag);
             std::cout <<"  matched \"" <<tokens_.lexeme(elmt.tag).toString() <<"\""
-                      <<" at line " <<loc.first <<" col " <<loc.second <<"\n";
+                      <<" at line " <<(loc.first+1) <<" col " <<(loc.second+1) <<"\n";
         }
 
     }
@@ -634,6 +637,8 @@ public:
 
     // Insert matching paths based on paths matching at previous element
     void insertMatchingPaths(PathElement &elmt /*out*/, const PathElement &prevElmt) {
+        if (prevElmt.suppressOutput)
+            return;                                     // no need to match further if we're suppressing output
         BOOST_FOREACH (PathSpec::const_iterator component, prevElmt.nextMatch) {
             ASSERT_require(component->first == MATCH);  // previous level must be trying to match this level
             if (tokens_.matches(elmt.tag,  component->second.c_str())) {
@@ -652,13 +657,28 @@ public:
         if ((++nTags_ & 0x1fffff) == 0)                 // try not to adjust progress_ too often since this is hot
             progress_.value(tag.offset());
 
-        if (!path_.empty()) {
-            // Parent must be an object
-            json_.write("{", path_.back().placeholders+LEFT_OBJECT, 1, Escape::NO);
+        // Append a new path element
+        PathElement elmt(tag);
+        if (path_.empty()) {
+            insertMatchingPaths(elmt /*out*/, pathsToMatch_);
+        } else {
+            elmt.suppressOutput = path_.back().suppressOutput;
+            insertMatchingPaths(elmt /*out*/, path_.back());
+        }
+        path_.push_back(elmt);
 
-            // If we have siblings, then we need a comma
-            if (++path_.back().nChildren > 1)
-                json_ <<",";
+        // Back-patch the parent if necessary
+        if (path_.size() > 1) {
+            if (!path_.back().suppressOutput) {
+                PathElement &parent = path_[path_.size()-2];
+
+                // Parent must be an object
+                json_.write("{", parent.placeholders+LEFT_OBJECT, 1, Escape::NO);
+
+                // If we have siblings, then we need a comma
+                if (++parent.nChildren > 1)             // don't count the child if it's not emitted
+                    json_ <<",";
+            }
 
 #ifdef XML2JSON_SUPPORT_CHECK
             if (check_)
@@ -666,53 +686,46 @@ public:
 #endif
         }
 
-        // Append a new path element
-        PathElement elmt(tag);
-        if (path_.empty()) {
-            insertMatchingPaths(elmt /*out*/, pathsToMatch_);
-        } else {
-            insertMatchingPaths(elmt /*out*/, path_.back());
-        }
-        path_.push_back(elmt);
-
-        if (tag.size() == 0) {                          // top-level, anonymous object?
-            ASSERT_require(path_.size()==1);
-            path_.back().placeholders = json_.curpos();
-            json_ <<PLACEHOLDERS;
-        } else {
-            ASSERT_forbid(path_.empty());
-            PathElement &parent = path_[path_.size()-2];
-            if (parent.lastChild == tokens_.lexeme(tag)) {
-                // If this tag has the same name as the previous tag, then we're encountering an array. For instance, the input
-                // might be:
-                //   XML  |<vector>
-                //   XML  |  <elmt>0</elmt>
-                //   XML  |  <elmt>1</elmt>
-                //   XML  |  <elmt>2</elmt>
-                //   XML  |</vector>
-                // in which case we should generate
-                //   JSON |"vector":{
-                //   JSON |  "elmt":["0","1","2"]
-                //   JSON |}
-                size_t eof = json_.eof();
-                if (eof>=2 && ']'==json_[eof-2]) {      // file ends with "]," (the comma we added just above)
-                    json_.truncate(eof-2);
-                    json_ <<",";
-                } else {                                // we just learned this is an array (i.e., we're at the 2nd elmt)
-                    json_.write("[", parent.lastChildPlaceholders+LEFT_ARRAY, 1, Escape::NO);
-                }
-                path_.back().placeholders = parent.lastChildPlaceholders;
-                if ('{' == json_[parent.lastChildPlaceholders+LEFT_OBJECT])
-                    json_ <<"{";
-            } else {
-                json_ <<"\"" <<tokens_.lexeme(tag) <<"\":";
+        if (!path_.back().suppressOutput) {
+            if (tag.size() == 0) {                          // top-level, anonymous object?
+                ASSERT_require(path_.size()==1);
                 path_.back().placeholders = json_.curpos();
                 json_ <<PLACEHOLDERS;
+            } else {
+                ASSERT_forbid(path_.empty());
+                PathElement &parent = path_[path_.size()-2];
+                if (parent.lastChild == tokens_.lexeme(tag)) {
+                    // If this tag has the same name as the previous tag, then we're encountering an array. For instance, the
+                    // input might be:
+                    //   XML  |<vector>
+                    //   XML  |  <elmt>0</elmt>
+                    //   XML  |  <elmt>1</elmt>
+                    //   XML  |  <elmt>2</elmt>
+                    //   XML  |</vector>
+                    // in which case we should generate
+                    //   JSON |"vector":{
+                    //   JSON |  "elmt":["0","1","2"]
+                    //   JSON |}
+                    size_t eof = json_.eof();
+                    if (eof>=2 && ']'==json_[eof-2]) {      // file ends with "]," (the comma we added just above)
+                        json_.truncate(eof-2);
+                        json_ <<",";
+                    } else {                                // we just learned this is an array (i.e., we're at the 2nd elmt)
+                        json_.write("[", parent.lastChildPlaceholders+LEFT_ARRAY, 1, Escape::NO);
+                    }
+                    path_.back().placeholders = parent.lastChildPlaceholders;
+                    if ('{' == json_[parent.lastChildPlaceholders+LEFT_OBJECT])
+                        json_ <<"{";
+                } else {
+                    json_ <<"\"" <<tokens_.lexeme(tag) <<"\":";
+                    path_.back().placeholders = json_.curpos();
+                    json_ <<PLACEHOLDERS;
+                }
             }
         }
 
-        // Parent needs to store info about latest child
-        if (path_.size() > 1) {
+        // Parent needs to store info about latest emitted child
+        if (path_.size() > 1 && !path_.back().suppressOutput) {
             PathElement &parent = path_[path_.size()-2];
             parent.lastChild = tokens_.lexeme(tag);
             parent.lastChildPlaceholders = path_.back().placeholders;
@@ -724,13 +737,15 @@ public:
         ASSERT_require(tokens_.lexeme(path_.back().tag) == tokens_.lexeme(tag));
 
         // Finish this path element and pop it from the path
-        if (0 == path_.back().nChildren) {
-            json_ <<"null";
+        if (!path_.back().suppressOutput) {
+            if (0 == path_.back().nChildren) {
+                json_ <<"null";
+            }
+            if ('{' == json_[path_.back().placeholders+LEFT_OBJECT])
+                json_ <<"}";
+            if ('[' == json_[path_.back().placeholders+LEFT_ARRAY])
+                json_ <<"]";
         }
-        if ('{' == json_[path_.back().placeholders+LEFT_OBJECT])
-            json_ <<"}";
-        if ('[' == json_[path_.back().placeholders+LEFT_ARRAY])
-            json_ <<"]";
         path_.pop_back();
     }
 
@@ -740,29 +755,32 @@ public:
 
     void valuePropertyCallback(const XmlLexer::Token &name, const XmlLexer::Token &value) {
         ASSERT_require(!path_.empty());
+        if (!path_.back().suppressOutput) {
+            // Make sure the output is an object, i.e., the curly brace in '"object_name":{...'
+            json_.write("{", path_.back().placeholders+LEFT_OBJECT, 1, Escape::NO);
 
-        // Make sure the output is an object, i.e., the curly brace in '"object_name":{...'
-        json_.write("{", path_.back().placeholders+LEFT_OBJECT, 1, Escape::NO);
+            if (path_.back().nChildren++ > 0)
+                json_ <<",";
 
-        if (path_.back().nChildren++ > 0)
-            json_ <<",";
-
-        json_ <<"\"@" <<tokens_.lexeme(name) <<"\":";
+            json_ <<"\"@" <<tokens_.lexeme(name) <<"\":";
 #if 0 // good place for line-feeds if you need to debug malformed JSON
-        json_ <<"\n";
+            json_ <<"\n";
 #endif
-        json_ <<"\"";
-        json_.append(tokens_.lexeme(value), Escape::YES);
-        json_ <<"\"";
+            json_ <<"\"";
+            json_.append(tokens_.lexeme(value), Escape::YES);
+            json_ <<"\"";
+        }
     }
 
     void textCallback(const XmlLexer::Token &t) {
         ASSERT_require(!path_.empty());
-        if (++path_.back().nChildren > 1)
-            json_ <<",\"#text\":";
-        json_ <<"\"";
-        json_.append(tokens_.lexeme(t), Escape::YES);
-        json_ <<"\"";
+        if (!path_.back().suppressOutput) {
+            if (++path_.back().nChildren > 1)
+                json_ <<",\"#text\":";
+            json_ <<"\"";
+            json_.append(tokens_.lexeme(t), Escape::YES);
+            json_ <<"\"";
+        }
     }
 
     // Parse a '<' .... '>' construct
