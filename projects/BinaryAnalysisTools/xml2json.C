@@ -509,6 +509,14 @@ parsePathSpec(const std::string &name, const std::string &pstr, PathAction actio
     return retval;
 }
 
+// Return the first component of the path spec, which must have type BEGIN
+PathSpec::const_iterator
+pathBegin(PathSpec::const_iterator component) {
+    while (component->first != BEGIN)
+        --component;
+    return component;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class XmlParser {
     enum PlaceHolder { LEFT_ARRAY=0, LEFT_OBJECT=1, NPLACEHOLDERS };
@@ -596,43 +604,41 @@ public:
     }
 #endif
 
+    void showCurrentPath(std::ostream &out, const XmlLexer::Token &token = XmlLexer::Token()) {
+        for (size_t i=1; i<path_.size(); ++i) {         // skip root since it's synthesized as "" at line 0 col 0
+            std::pair<size_t, size_t> loc = tokens_.location(path_[i].tag);
+            out <<"  \"" <<Rose::StringUtility::cEscape(tokens_.lexeme(path_[i].tag).toString()) <<"\""
+                <<" at line " <<(loc.first+1) <<" col " <<(loc.second+1) <<"\n";
+        }
+        if (token.type() != XmlLexer::TOK_EOF) {
+            std::pair<size_t, size_t> loc = tokens_.location(token);
+            out <<"  \"" <<Rose::StringUtility::cEscape(tokens_.lexeme(token).toString()) <<"\""
+                <<" at line " <<(loc.first+1) <<" col " <<(loc.second+1) <<"\n";
+        }
+    }
+    
+    // Adjusts ELMT to perform some kind of translation action, such as deletion or renaming.
     void setAction(PathElement &elmt, PathSpec::const_iterator component) {
         ASSERT_forbid(BEGIN == component->first);
         ASSERT_forbid(MATCH == component->first);
 
         // Find the beginning of the path (it's probably not too long)
-        PathSpec::const_iterator begin = component;
-        while (begin->first != BEGIN)
-            --begin;
-
         switch (component->first) {
             case ECHO:
-                std::cout <<"found path " <<begin->second <<"\n";
+                SAWYER_MESG(mlog[DEBUG]) <<"found path " <<pathBegin(component)->second <<"\n";
                 break;
             case DELETE:
-                std::cout <<"deleting path " <<begin->second <<"\n";
+                SAWYER_MESG(mlog[DEBUG]) <<"deleting path " <<pathBegin(component)->second <<"\n";
                 elmt.suppressOutput = true;
                 break;
             default:
                 ASSERT_not_reachable("invalid action " + boost::lexical_cast<std::string>(component->first));
         }
-
-        // What did the path match
-        for (size_t i=1; i<path_.size(); ++i) {
-            std::pair<size_t, size_t> loc = tokens_.location(path_[i].tag);
-            std::cout <<"  matched \"" <<tokens_.lexeme(path_[i].tag).toString() <<"\""
-                      <<" at line " <<(loc.first+1) <<" col " <<(loc.second+1) <<"\n";
-        }
-        if (&elmt != &path_.back()) {
-            std::pair<size_t, size_t> loc = tokens_.location(elmt.tag);
-            std::cout <<"  matched \"" <<tokens_.lexeme(elmt.tag).toString() <<"\""
-                      <<" at line " <<(loc.first+1) <<" col " <<(loc.second+1) <<"\n";
-        }
-
     }
 
-    // Insert matching paths for the root tag. All paths match at the root.
-    void insertMatchingPaths(PathElement &elmt /*out*/, const PathSpecs &pathsToMatch) {
+    // Insert matching paths for the root tag. All paths match at the root. Returns true if anything matched.
+    bool insertMatchingPaths(PathElement &elmt /*out*/, const PathSpecs &pathsToMatch) {
+        bool retval = false;
         elmt.nextMatch.reserve(pathsToMatch_.size());
         BOOST_FOREACH (const PathSpec &pathSpec, pathsToMatch_) {
             ASSERT_forbid(pathSpec.empty());
@@ -643,14 +649,17 @@ public:
                 elmt.nextMatch.push_back(component);    // what to match at the next lower level of the tree
             } else {
                 setAction(elmt, component);             // do something at this level of the tree
+                retval = true;
             }
         }
+        return retval;
     }
 
-    // Insert matching paths based on paths matching at previous element
-    void insertMatchingPaths(PathElement &elmt /*out*/, const PathElement &prevElmt) {
+    // Insert matching paths based on paths matching at previous element. Returns true if anything matched.
+    bool insertMatchingPaths(PathElement &elmt /*out*/, const PathElement &prevElmt) {
+        bool retval = false;
         if (prevElmt.suppressOutput)
-            return;                                     // no need to match further if we're suppressing output
+            return false;                               // no need to match further if we're suppressing output
         BOOST_FOREACH (PathSpec::const_iterator component, prevElmt.nextMatch) {
             ASSERT_require(component->first == MATCH);  // previous level must be trying to match this level
             if (component->second == "*") {
@@ -660,6 +669,7 @@ public:
                     elmt.nextMatch.push_back(component);// or it could match what follows the '*'
                 } else {
                     setAction(elmt, component);
+                    retval = true;
                 }
             } else if (tokens_.matches(elmt.tag,  component->second.c_str())) {
                 ++component;
@@ -667,9 +677,11 @@ public:
                     elmt.nextMatch.push_back(component);// try to match the next lower level of the tree
                 } else {
                     setAction(elmt, component);         // do something at this level of the tree
+                    retval = true;
                 }
             }
         }
+        return retval;
     }
 
     // This is called when we see "<tag", "<!tag" or "<?tag" in the input XML
@@ -679,14 +691,19 @@ public:
 
         // Append a new path element
         PathElement elmt(tag);
+        bool matchesFound = false;
         if (path_.empty()) {
-            insertMatchingPaths(elmt /*out*/, pathsToMatch_);
+            matchesFound = insertMatchingPaths(elmt /*out*/, pathsToMatch_);
         } else {
             elmt.suppressOutput = path_.back().suppressOutput;
-            insertMatchingPaths(elmt /*out*/, path_.back());
+            matchesFound = insertMatchingPaths(elmt /*out*/, path_.back());
         }
         path_.push_back(elmt);
-
+        if (matchesFound && mlog[DEBUG]) {
+            mlog[DEBUG] <<"match occurred here:\n";
+            showCurrentPath(mlog[DEBUG]);
+        }
+        
         // Back-patch the parent if necessary
         if (path_.size() > 1) {
             if (!path_.back().suppressOutput) {
@@ -775,21 +792,40 @@ public:
 
     void valuePropertyCallback(const XmlLexer::Token &name, const XmlLexer::Token &value) {
         ASSERT_require(!path_.empty());
-        if (!path_.back().suppressOutput) {
-            // Make sure the output is an object, i.e., the curly brace in '"object_name":{...'
-            json_.write("{", path_.back().placeholders+LEFT_OBJECT, 1, Escape::NO);
+        if (path_.back().suppressOutput)
+            return;
 
-            if (path_.back().nChildren++ > 0)
-                json_ <<",";
-
-            json_ <<"\"@" <<tokens_.lexeme(name) <<"\":";
-#if 0 // good place for line-feeds if you need to debug malformed JSON
-            json_ <<"\n";
-#endif
-            json_ <<"\"";
-            json_.append(tokens_.lexeme(value), Escape::YES);
-            json_ <<"\"";
+        // Some action for this tag?
+        BOOST_FOREACH (PathSpec::const_iterator component, path_.back().nextMatch) {
+            ASSERT_require(MATCH == component->first);
+            ASSERT_forbid(component->second.empty());
+            if (component->second == "*" ||
+                (component->second[0] == '@' && tokens_.matches(name, component->second.c_str()+1))) {
+                ++component;
+                if (DELETE == component->first) {
+                    if (mlog[DEBUG]) {
+                        mlog[DEBUG] <<"deleting path " <<pathBegin(component)->second <<"\n";
+                        mlog[DEBUG] <<"match occurred here:\n";
+                        showCurrentPath(mlog[DEBUG], name);
+                    }
+                    return;
+                }
+            }
         }
+        
+        // Make sure the output is an object, i.e., the curly brace in '"object_name":{...'
+        json_.write("{", path_.back().placeholders+LEFT_OBJECT, 1, Escape::NO);
+
+        if (path_.back().nChildren++ > 0)
+            json_ <<",";
+
+        json_ <<"\"@" <<tokens_.lexeme(name) <<"\":";
+#if 0 // good place for line-feeds if you need to debug malformed JSON
+        json_ <<"\n";
+#endif
+        json_ <<"\"";
+        json_.append(tokens_.lexeme(value), Escape::YES);
+        json_ <<"\"";
     }
 
     void textCallback(const XmlLexer::Token &t) {
