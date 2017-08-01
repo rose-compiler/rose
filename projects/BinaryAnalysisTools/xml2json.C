@@ -28,6 +28,7 @@ struct Settings {
     std::string jsonFileName;                           // output file name
     bool check;                                         // perform extra XML input checking
     std::vector<std::string> deletions;                 // paths of subtrees to delete
+    std::vector<std::string> echoes;                    // paths that should be echoed for debugging
 
     Settings(): check(false) {}
 };
@@ -52,6 +53,12 @@ parseCommandLine(int argc, char *argv[]) {
                 .argument("path", anyParser(retval.deletions))
                 .whichValue(SAVE_ALL)
                 .doc("Path of subtrees to delete. See specifying paths for details. This switch may appear more than once."));
+
+    tool.insert(Switch("echo")
+                .argument("path:output", anyParser(retval.echoes))
+                .whichValue(SAVE_ALL)
+                .doc("Emit @v{output} to standard output whenever @v{path} matches. See specifying paths for details. "
+                     "This switch may appear more than once."));
 
     p.with(tool);
     std::vector<std::string> args = p.parse(argc, argv).apply().unreachedArgs();
@@ -487,7 +494,7 @@ consecutiveWildcards(const std::string &a, const std::string &b) {
 }
 
 PathSpec
-parsePathSpec(const std::string &name, const std::string &pstr, PathAction action) {
+parsePathSpec(const std::string &name, const std::string &pstr, PathAction action, const std::string &arg = "") {
     using namespace Rose::StringUtility;
     ASSERT_forbid(MATCH == action);
 
@@ -505,7 +512,7 @@ parsePathSpec(const std::string &name, const std::string &pstr, PathAction actio
             throw std::runtime_error("invalid path \"" + cEscape(pstr) + "\"");
         retval.push_back(std::make_pair(MATCH, part));
     }
-    retval.push_back(std::make_pair(action, std::string()));
+    retval.push_back(std::make_pair(action, arg));
     return retval;
 }
 
@@ -625,10 +632,11 @@ public:
         // Find the beginning of the path (it's probably not too long)
         switch (component->first) {
             case ECHO:
-                SAWYER_MESG(mlog[DEBUG]) <<"found path " <<pathBegin(component)->second <<"\n";
+                SAWYER_MESG(mlog[WHERE]) <<"echo \"" <<Rose::StringUtility::cEscape(component->second) <<"\"\n";
+                std::cout <<component->second <<"\n";
                 break;
             case DELETE:
-                SAWYER_MESG(mlog[DEBUG]) <<"deleting path " <<pathBegin(component)->second <<"\n";
+                SAWYER_MESG(mlog[WHERE]) <<"deleting path " <<pathBegin(component)->second <<"\n";
                 elmt.suppressOutput = true;
                 break;
             default:
@@ -699,9 +707,9 @@ public:
             matchesFound = insertMatchingPaths(elmt /*out*/, path_.back());
         }
         path_.push_back(elmt);
-        if (matchesFound && mlog[DEBUG]) {
-            mlog[DEBUG] <<"match occurred here:\n";
-            showCurrentPath(mlog[DEBUG]);
+        if (matchesFound && mlog[WHERE]) {
+            mlog[WHERE] <<"match(es) occurred here:\n";
+            showCurrentPath(mlog[WHERE]);
         }
         
         // Back-patch the parent if necessary
@@ -796,36 +804,51 @@ public:
             return;
 
         // Some action for this tag?
+        bool suppressTag = false, matched = false;
         BOOST_FOREACH (PathSpec::const_iterator component, path_.back().nextMatch) {
             ASSERT_require(MATCH == component->first);
             ASSERT_forbid(component->second.empty());
             if (component->second == "*" ||
                 (component->second[0] == '@' && tokens_.matches(name, component->second.c_str()+1))) {
                 ++component;
-                if (DELETE == component->first) {
-                    if (mlog[DEBUG]) {
-                        mlog[DEBUG] <<"deleting path " <<pathBegin(component)->second <<"\n";
-                        mlog[DEBUG] <<"match occurred here:\n";
-                        showCurrentPath(mlog[DEBUG], name);
-                    }
-                    return;
+                switch (component->first) {
+                    case BEGIN:
+                        ASSERT_not_reachable("BEGIN is not valid here");
+                    case MATCH:
+                        // This isn't a match because we're at a leaf node and there's more to match
+                        break;
+                    case ECHO:
+                        SAWYER_MESG(mlog[WHERE]) <<"echo \"" <<Rose::StringUtility::cEscape(component->second) <<"\"\n";
+                        std::cout <<component->second <<"\n";
+                        matched = true;
+                        break;
+                    case DELETE:
+                        SAWYER_MESG(mlog[WHERE]) <<"deleting path " <<pathBegin(component)->second <<"\n";
+                        matched = suppressTag = true;
+                        break;
                 }
             }
         }
-        
-        // Make sure the output is an object, i.e., the curly brace in '"object_name":{...'
-        json_.write("{", path_.back().placeholders+LEFT_OBJECT, 1, Escape::NO);
+        if (matched && mlog[WHERE]) {
+            mlog[WHERE] <<"match occurred here:\n";
+            showCurrentPath(mlog[WHERE], name);
+        }
 
-        if (path_.back().nChildren++ > 0)
-            json_ <<",";
+        if (!suppressTag) {
+            // Make sure the output is an object, i.e., the curly brace in '"object_name":{...'
+            json_.write("{", path_.back().placeholders+LEFT_OBJECT, 1, Escape::NO);
 
-        json_ <<"\"@" <<tokens_.lexeme(name) <<"\":";
+            if (path_.back().nChildren++ > 0)
+                json_ <<",";
+
+            json_ <<"\"@" <<tokens_.lexeme(name) <<"\":";
 #if 0 // good place for line-feeds if you need to debug malformed JSON
-        json_ <<"\n";
+            json_ <<"\n";
 #endif
-        json_ <<"\"";
-        json_.append(tokens_.lexeme(value), Escape::YES);
-        json_ <<"\"";
+            json_ <<"\"";
+            json_.append(tokens_.lexeme(value), Escape::YES);
+            json_ <<"\"";
+        }
     }
 
     void textCallback(const XmlLexer::Token &t) {
@@ -932,8 +955,10 @@ main(int argc, char *argv[]) {
     Settings settings = parseCommandLine(argc, argv);
 
     PathSpecs pathsToMatch;
+
+    // Deletions
     for (size_t i=0; i<settings.deletions.size(); ++i) {
-        std::string name = "cmdline delete-" + boost::lexical_cast<std::string>(i);
+        std::string name = "cmdline --delete #" + boost::lexical_cast<std::string>(i);
         try {
             pathsToMatch.push_back(parsePathSpec(name, settings.deletions[i], DELETE));
         } catch (const std::runtime_error &e) {
@@ -942,6 +967,26 @@ main(int argc, char *argv[]) {
         }
     }
 
+    // Echoing
+    for (size_t i=0; i<settings.echoes.size(); ++i) {
+        std::string name = "cmdline --echo #" + boost::lexical_cast<std::string>(i);
+        std::string spec = settings.echoes[i];
+        size_t colon = spec.find(':');
+        std::string emission;
+        if (std::string::npos == colon) {
+            emission = "found " + name + ": " + spec;
+        } else {
+            emission = spec.substr(colon+1);
+            spec = spec.substr(0, colon);
+        }
+        try {
+            pathsToMatch.push_back(parsePathSpec(name, spec, ECHO, emission));
+        } catch (const std::runtime_error &e) {
+            mlog[FATAL] <<"for --echo switch, " <<e.what() <<"\n";
+            exit(1);
+        }
+    }
+    
     XmlParser xml(settings.xmlFileName, settings.jsonFileName, pathsToMatch);
     xml.check(settings.check);
     xml.parse();
