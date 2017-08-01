@@ -6,6 +6,8 @@ static const char *description =
 #include <rose.h>                                       // Must be first ROSE include file
 #include <Diagnostics.h>                                // ROSE
 
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/iostreams/device/mapped_file.hpp>
 #include <boost/lexical_cast.hpp>
@@ -24,7 +26,8 @@ Sawyer::Message::Facility mlog;
 struct Settings {
     std::string xmlFileName;                            // input file name
     std::string jsonFileName;                           // output file name
-    bool check;                                         // perform extra input checking
+    bool check;                                         // perform extra XML input checking
+    std::vector<std::string> deletions;                 // paths of subtrees to delete
 
     Settings(): check(false) {}
 };
@@ -38,14 +41,19 @@ parseCommandLine(int argc, char *argv[]) {
     p.with(/*Rose*/::CommandlineProcessing::genericSwitches());
     p.doc("Synopsis", "@prop{programName} [@v{switches}] @v{xml_input_file} @v{json_output_file}");
     p.errorStream(mlog[FATAL]);
-
-#ifdef XML2JSON_SUPPORT_CHECK
     SwitchGroup tool("Tool-specific switches");
     tool.name("tool");
+
+#ifdef XML2JSON_SUPPORT_CHECK
     /*Rose*/::CommandlineProcessing::insertBooleanSwitch(tool, "check", retval.check, "Perform extra input checking.");
-    p.with(tool);
 #endif
 
+    tool.insert(Switch("delete")
+                .argument("path", anyParser(retval.deletions))
+                .whichValue(SAVE_ALL)
+                .doc("Path of subtrees to delete. See specifying paths for details. This switch may appear more than once."));
+
+    p.with(tool);
     std::vector<std::string> args = p.parse(argc, argv).apply().unreachedArgs();
     if (args.size() != 2) {
         mlog[FATAL] <<"incorrect usage; see --help\n";
@@ -463,6 +471,34 @@ public:
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Support for paths, which is a way of naming a subtree by describing how to get to its root from the main tree.
+
+// Path specification. This is used for paths specified on the command-line. It is too slow and heavy for paths encountered
+// during parsing. All path specifications are terminated by a special component that describes what to do when the path
+// matches in the XML input. This last component must be something other than MATCH.
+enum PathAction { BEGIN, MATCH, ECHO, DELETE };
+
+typedef std::pair<PathAction, std::string> PathComponent;
+typedef std::list<PathComponent> PathSpec;
+typedef std::vector<PathSpec> PathSpecs;
+
+PathSpec
+parsePathSpec(const std::string &name, const std::string &pstr, PathAction action) {
+    ASSERT_forbid(MATCH == action);
+    std::vector<std::string> parts;
+    boost::split(parts /*out*/, pstr, boost::is_any_of("."));
+    PathSpec retval;
+    retval.push_back(std::make_pair(BEGIN, name));
+    BOOST_FOREACH (const std::string &part, parts) {
+        if (part.empty())
+            throw std::runtime_error("invalid path \"" + Rose::StringUtility::cEscape(pstr) + "\"");
+        retval.push_back(std::make_pair(MATCH, part));
+    }
+    retval.push_back(std::make_pair(action, std::string()));
+    return retval;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class XmlParser {
     enum PlaceHolder { LEFT_ARRAY=0, LEFT_OBJECT=1, NPLACEHOLDERS };
     typedef std::map<std::string, XmlLexer::Token> AttributeMap;
@@ -473,6 +509,7 @@ class XmlParser {
         size_t nChildren;
         XmlLexer::SharedString lastChild;               // name of the latest-added child
         size_t lastChildPlaceholders;                   // position of latest-added child's placeholders
+        std::vector<PathSpec::const_iterator> nextMatch;// next part of path to match
 #ifdef XML2JSON_SUPPORT_CHECK
         AttributeMap childTagMap;
 #endif
@@ -490,11 +527,13 @@ class XmlParser {
     size_t nTags_;
     bool check_;
     char const* const PLACEHOLDERS;
+    PathSpecs pathsToMatch_;                            // source paths that should not be emitted
 
 public:
-    XmlParser(const std::string &xmlFileName, const std::string &jsonFileName)
+    XmlParser(const std::string &xmlFileName, const std::string &jsonFileName, const PathSpecs &pathsToMatch)
         : tokens_(xmlFileName), json_(jsonFileName, tokens_.fileSize()+4096),
-          progress_(tokens_.fileSize(), mlog[MARCH], "bytes read"), nTags_(0), check_(false), PLACEHOLDERS("  ") {
+          progress_(tokens_.fileSize(), mlog[MARCH], "bytes read"), nTags_(0), check_(false), PLACEHOLDERS("  "),
+          pathsToMatch_(pathsToMatch) {
         ASSERT_require(strlen(PLACEHOLDERS) == NPLACEHOLDERS);
     }
 
@@ -543,6 +582,71 @@ public:
     }
 #endif
 
+    void setAction(PathElement &elmt, PathSpec::const_iterator component) {
+        ASSERT_forbid(BEGIN == component->first);
+        ASSERT_forbid(MATCH == component->first);
+
+        // Find the beginning of the path (it's probably not too long)
+        PathSpec::const_iterator begin = component;
+        while (begin->first != BEGIN)
+            --begin;
+
+        switch (component->first) {
+            case ECHO:
+                std::cout <<"found path " <<begin->second <<"\n";
+                break;
+            case DELETE:
+                std::cout <<"deleting path " <<begin->second <<"\n";
+                break;
+            default:
+                ASSERT_not_reachable("invalid action " + boost::lexical_cast<std::string>(component->first));
+        }
+
+        // What did the path match
+        for (size_t i=0; i<path_.size(); ++i) {
+            std::pair<size_t, size_t> loc = tokens_.location(path_[i].tag);
+            std::cout <<"  matched \"" <<tokens_.lexeme(path_[i].tag).toString() <<"\""
+                      <<" at line " <<loc.first <<" col " <<loc.second <<"\n";
+        }
+        if (&elmt != &path_.back()) {
+            std::pair<size_t, size_t> loc = tokens_.location(elmt.tag);
+            std::cout <<"  matched \"" <<tokens_.lexeme(elmt.tag).toString() <<"\""
+                      <<" at line " <<loc.first <<" col " <<loc.second <<"\n";
+        }
+
+    }
+
+    // Insert matching paths for the root tag. All paths match at the root.
+    void insertMatchingPaths(PathElement &elmt /*out*/, const PathSpecs &pathsToMatch) {
+        elmt.nextMatch.reserve(pathsToMatch_.size());
+        BOOST_FOREACH (const PathSpec &pathSpec, pathsToMatch_) {
+            ASSERT_forbid(pathSpec.empty());
+            PathSpec::const_iterator component = pathSpec.begin();
+            ASSERT_require(BEGIN == component->first);  // all paths start with a BEGIN
+            ++component;
+            if (MATCH == component->first) {
+                elmt.nextMatch.push_back(component);    // what to match at the next lower level of the tree
+            } else {
+                setAction(elmt, component);             // do something at this level of the tree
+            }
+        }
+    }
+
+    // Insert matching paths based on paths matching at previous element
+    void insertMatchingPaths(PathElement &elmt /*out*/, const PathElement &prevElmt) {
+        BOOST_FOREACH (PathSpec::const_iterator component, prevElmt.nextMatch) {
+            ASSERT_require(component->first == MATCH);  // previous level must be trying to match this level
+            if (tokens_.matches(elmt.tag,  component->second.c_str())) {
+                ++component;
+                if (MATCH == component->first) {
+                    elmt.nextMatch.push_back(component);// try to match the next lower level of the tree
+                } else {
+                    setAction(elmt, component);         // do something at this level of the tree
+                }
+            }
+        }
+    }
+
     // This is called when we see "<tag", "<!tag" or "<?tag" in the input XML
     void tagStartCallback(const XmlLexer::Token &tag) {
         if ((++nTags_ & 0x1fffff) == 0)                 // try not to adjust progress_ too often since this is hot
@@ -563,7 +667,14 @@ public:
         }
 
         // Append a new path element
-        path_.push_back(PathElement(tag));
+        PathElement elmt(tag);
+        if (path_.empty()) {
+            insertMatchingPaths(elmt /*out*/, pathsToMatch_);
+        } else {
+            insertMatchingPaths(elmt /*out*/, path_.back());
+        }
+        path_.push_back(elmt);
+
         if (tag.size() == 0) {                          // top-level, anonymous object?
             ASSERT_require(path_.size()==1);
             path_.back().placeholders = json_.curpos();
@@ -746,7 +857,13 @@ main(int argc, char *argv[]) {
     Rose::Diagnostics::initAndRegister(&mlog, "tool");
     Settings settings = parseCommandLine(argc, argv);
 
-    XmlParser xml(settings.xmlFileName, settings.jsonFileName);
+    PathSpecs pathsToMatch;
+    for (size_t i=0; i<settings.deletions.size(); ++i) {
+        std::string name = "cmdline delete-" + boost::lexical_cast<std::string>(i);
+        pathsToMatch.push_back(parsePathSpec(name, settings.deletions[i], DELETE));
+    }
+
+    XmlParser xml(settings.xmlFileName, settings.jsonFileName, pathsToMatch);
     xml.check(settings.check);
     xml.parse();
 }
