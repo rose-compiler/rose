@@ -1,6 +1,7 @@
 #ifndef Rose_Progress_H
 #define Rose_Progress_H
 
+#include <boost/chrono.hpp>
 #include <rose_isnan.h>
 #include <Sawyer/SharedPointer.h>
 #include <Sawyer/Stopwatch.h>
@@ -336,6 +337,7 @@ public:
      *  Thread safety: This method is thread safe. */
     template<class Functor>
     bool reportRegularly(boost::chrono::milliseconds interval, Functor f, const std::string &nameSeparator = ".") const {
+#if SAWYER_MULTI_THREADED
         while (1) {
             std::pair<Report, double /*seconds*/> rpt = reportLatest(nameSeparator);
             if (!f(rpt.first, rpt.second))
@@ -344,6 +346,9 @@ public:
                 return true;
             boost::this_thread::sleep_for(interval);
         }
+#else
+        return false;                                   // makes no sense in single-threaded program
+#endif
     }
     
     /** Invoke the specified function each time the progress changes.
