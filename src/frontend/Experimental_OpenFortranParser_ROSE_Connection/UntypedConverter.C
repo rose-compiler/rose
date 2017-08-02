@@ -274,6 +274,56 @@ UntypedConverter::convertSgUntypedInitializedName (SgUntypedInitializedName* ut_
    return sg_name;
 }
 
+void
+UntypedConverter::convertFunctionPrefix (SgUntypedTokenList* prefix_list, SgFunctionDeclaration* function_decl)
+{
+   SgUntypedTokenPtrList tokens = prefix_list->get_token_list();
+   SgUntypedTokenPtrList::const_iterator i;
+
+   for (i = tokens.begin(); i != tokens.end(); i++)
+   {
+      SgUntypedToken* token = *i;
+      SgToken::ROSE_Fortran_Keywords keyword = static_cast<SgToken::ROSE_Fortran_Keywords>(token->get_classification_code());
+
+      switch(keyword)
+       {
+         case SgToken::FORTRAN_ELEMENTAL:
+            {
+               function_decl->get_functionModifier().setElemental();
+               break;
+            }
+#if 0
+      // TODO
+         case SgToken::FORTRAN_IMPURE:
+            {
+               function_decl->get_functionModifier().setImpure();
+               break;
+            }
+      // TODO
+         case SgToken::FORTRAN_MODULE:
+            {
+               function_decl->get_functionModifier().setModule();
+               break;
+            }
+#endif
+         case SgToken::FORTRAN_PURE:
+            {
+               function_decl->get_functionModifier().setPure();
+               break;
+            }
+         case SgToken::FORTRAN_RECURSIVE:
+            {
+               function_decl->get_functionModifier().setRecursive();
+               break;
+            }
+         default:
+            {
+               std::cerr << "ERROR: UntypedConverter::convertFunctionPrefix: unimplemented prefix " << token->get_lexeme_string() << "  " << token->get_classification_code() << std::endl;
+               ROSE_ASSERT(0);  // NOT IMPLEMENTED
+            }
+       }
+   }
+}
 
 SgGlobal*
 UntypedConverter::convertSgUntypedGlobalScope (SgUntypedGlobalScope* ut_scope, SgScopeStatement* scope)
@@ -537,10 +587,10 @@ UntypedConverter::convertSgUntypedSubroutineDeclaration (SgUntypedSubroutineDecl
    // Mark this as a subroutine.
       subroutineDeclaration->set_subprogram_kind( SgProcedureHeaderStatement::e_subroutine_subprogram_kind );
 
-   // TODO - prefix
    // TODO - suffix
+      printf ("...TODO... convert suffix\n");
 
-printf ("--- convert untyped sub: scope type ... %s\n", scope->class_name().c_str());
+printf ("...TODO... convert untyped sub: scope type ... %s\n", scope->class_name().c_str());
 
       buildProcedureSupport(ut_function, subroutineDeclaration, scope);
 
@@ -551,8 +601,16 @@ printf ("--- convert untyped sub: scope type ... %s\n", scope->class_name().c_st
 SgProcedureHeaderStatement*
 UntypedConverter::convertSgUntypedFunctionDeclaration (SgUntypedFunctionDeclaration* ut_function, SgScopeStatement* scope)
 {
-   SgProcedureHeaderStatement* sg_function = NULL;
-   return sg_function;
+// TODO
+   printf ("TODO: convert SgUntypedFunctionDeclaration\n");
+
+   SgProcedureHeaderStatement* functionDeclaration = NULL;
+
+#if 0
+   buildProcedureSupport(ut_function, subroutineDeclaration, scope);
+#endif
+
+   return functionDeclaration;
 }
 
 
@@ -1150,6 +1208,10 @@ void
 UntypedConverter::buildProcedureSupport (SgUntypedFunctionDeclaration* ut_function, SgProcedureHeaderStatement* procedureDeclaration, SgScopeStatement* scope)
    {
      ROSE_ASSERT(procedureDeclaration != NULL);
+
+   // Convert procedure prefix (e.g., PURE ELEMENTAL ...)
+      SgUntypedTokenList* prefix_list = ut_function->get_prefix_list();
+      convertFunctionPrefix(prefix_list, procedureDeclaration);
 
   // This will be the defining declaration
      procedureDeclaration->set_definingDeclaration(procedureDeclaration);

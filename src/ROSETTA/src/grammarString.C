@@ -1432,6 +1432,12 @@ GrammarString::containerElementTypeString(AstNodeClass & node) const
                goto done;
              }
 
+          if (typenameString == "SgUntypedTokenPtrList")
+             {
+               returnString = "SgUntypedToken";
+               goto done;
+             }
+
           if (typenameString == "SgExpressionPtrList")
              {
                returnString = "SgExpression";

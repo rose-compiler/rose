@@ -184,10 +184,10 @@ ATbool traverse_ImportStmtList(ATerm term, SgUntypedDeclarationStatementList* de
 ATbool traverse_ExternalStmt(ATerm term, SgUntypedDeclarationStatementList* decl_list);
 
 // R1225
-ATbool traverse_OptPrefix(ATerm term, std::vector<FAST::PrefixSpec*> & prefix_list, SgUntypedType** type);
+ATbool traverse_OptPrefix(ATerm term, SgUntypedTokenList* prefix_list, SgUntypedType** type);
 
 // R1226
-ATbool traverse_PrefixSpecList(ATerm term, std::vector<FAST::PrefixSpec*> & prefix_list, SgUntypedType** type);
+ATbool traverse_PrefixSpecList(ATerm term, SgUntypedTokenList* prefix_list, SgUntypedType** type);
 
 // R1227
 ATbool traverse_FunctionSubprogram(ATerm term, SgUntypedScope* scope);

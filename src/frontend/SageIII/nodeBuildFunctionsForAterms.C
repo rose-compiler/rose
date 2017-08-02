@@ -3497,6 +3497,33 @@ SgUntypedInitializedNameList* SgUntypedInitializedNameList::build_node_from_nonl
    }
 
 
+// Generated static function for building IR nodes for Aterm support (like a constructor).
+SgUntypedToken* SgUntypedToken::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, std::string lexeme_string, unsigned int classification_code )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedToken::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, std::string lexeme_string, unsigned int classification_code): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedToken* returnNode = NULL;
+
+     return returnNode;
+   }
+
+// Generated static function for building IR nodes for Aterm support (like a constructor).
+SgUntypedTokenList* SgUntypedTokenList::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedTokenList::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedTokenList* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
 /* #line 3420 "../../../src/frontend/SageIII//Cxx_GrammarAtermNodeBuildFunctions.C" */
 
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */

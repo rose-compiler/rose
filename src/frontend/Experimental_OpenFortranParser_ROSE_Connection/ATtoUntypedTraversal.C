@@ -1987,6 +1987,7 @@ ATbool ATtoUntypedTraversal::traverse_MainProgram(ATerm term, SgUntypedScope* sc
    SgUntypedStatementList*            stmt_list  = new SgUntypedStatementList();
    SgUntypedFunctionDeclarationList*  func_list  = new SgUntypedFunctionDeclarationList();
    SgUntypedInitializedNameList*     param_list  = new SgUntypedInitializedNameList();
+   SgUntypedTokenList*              prefix_list  = new SgUntypedTokenList();
 
    if (ATmatch(term, "MainProgram(<term>,<term>,<term>,<term>,<term>)", &term1,&term2,&term3,&term4,&term5)) {
       if (traverse_OptProgramStmt(term1, &program_stmt)) {
@@ -2028,7 +2029,8 @@ ATbool ATtoUntypedTraversal::traverse_MainProgram(ATerm term, SgUntypedScope* sc
 #endif
 
 // create the program
-   main_program   = new SgUntypedProgramHeaderDeclaration(label,keyword,name,param_list,type,function_scope,end_program_stmt);
+   main_program   = new SgUntypedProgramHeaderDeclaration(label, keyword, name, param_list,type,
+                                                          function_scope, prefix_list, end_program_stmt);
 
    setSourcePositionIncludingNode(main_program, term, end_program_stmt);
 
@@ -2419,7 +2421,7 @@ ATbool ATtoUntypedTraversal::traverse_ExternalStmt(ATerm term, SgUntypedDeclarat
 //========================================================================================
 // Prefix (R1225)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_OptPrefix(ATerm term, std::vector<FAST::PrefixSpec*> & prefix_list, SgUntypedType** type)
+ATbool ATtoUntypedTraversal::traverse_OptPrefix(ATerm term, SgUntypedTokenList* prefix_list, SgUntypedType** type)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_OptPrefix: %s\n", ATwriteToString(term));
@@ -2439,10 +2441,10 @@ ATbool ATtoUntypedTraversal::traverse_OptPrefix(ATerm term, std::vector<FAST::Pr
 //========================================================================================
 // PrefixSpecList (R1226)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_PrefixSpecList(ATerm term, std::vector<FAST::PrefixSpec*> & prefix_list, SgUntypedType** type)
+ATbool ATtoUntypedTraversal::traverse_PrefixSpecList(ATerm term, SgUntypedTokenList* prefix_list, SgUntypedType** type)
 {
 #if PRINT_ATERM_TRAVERSAL
-   printf("... traverse_SpecList: %s\n", ATwriteToString(term));
+   printf("... traverse_PrefixSpecList: %s\n", ATwriteToString(term));
 #endif
 
    ATermList tail = (ATermList) ATmake("<term>", term);
@@ -2453,19 +2455,19 @@ ATbool ATtoUntypedTraversal::traverse_PrefixSpecList(ATerm term, std::vector<FAS
          // MATCHED DeclarationTypeSpec
       }
       else if (ATmatch(head, "ELEMENTAL()")) {
-         prefix_list.push_back(new FAST::PrefixSpec(FAST::PrefixSpec::Elemental));
+         prefix_list->get_token_list().push_back(new SgUntypedToken("ELEMENTAL", SgToken::FORTRAN_ELEMENTAL));
       }
       else if (ATmatch(head, "IMPURE()")) {
-         prefix_list.push_back(new FAST::PrefixSpec(FAST::PrefixSpec::Impure));
+         prefix_list->get_token_list().push_back(new SgUntypedToken("IMPURE", SgToken::FORTRAN_IMPURE));
       }
       else if (ATmatch(head, "MODULE()")) {
-         prefix_list.push_back(new FAST::PrefixSpec(FAST::PrefixSpec::Impure));
+         prefix_list->get_token_list().push_back(new SgUntypedToken("MODULE", SgToken::FORTRAN_MODULE));
       }
       else if (ATmatch(head, "PURE()")) {
-         prefix_list.push_back(new FAST::PrefixSpec(FAST::PrefixSpec::Impure));
+         prefix_list->get_token_list().push_back(new SgUntypedToken("PURE", SgToken::FORTRAN_PURE));
       }
       else if (ATmatch(head, "RECURSIVE()")) {
-         prefix_list.push_back(new FAST::PrefixSpec(FAST::PrefixSpec::Impure));
+         prefix_list->get_token_list().push_back(new SgUntypedToken("RECURSIVE", SgToken::FORTRAN_RECURSIVE));
       }
       else return ATfalse;
    }
@@ -2490,7 +2492,6 @@ ATbool ATtoUntypedTraversal::traverse_FunctionSubprogram(ATerm term, SgUntypedSc
    SgUntypedNamedStatement* end_function_stmt;
    SgUntypedFunctionScope * function_scope;
 
-   std::vector<FAST::PrefixSpec*> prefix_list;
    SgUntypedType* function_type = NULL;
 
 // scope and parameter lists
@@ -2498,6 +2499,7 @@ ATbool ATtoUntypedTraversal::traverse_FunctionSubprogram(ATerm term, SgUntypedSc
    SgUntypedStatementList*            stmt_list  = new SgUntypedStatementList();
    SgUntypedFunctionDeclarationList*  func_list  = new SgUntypedFunctionDeclarationList();
    SgUntypedInitializedNameList*     param_list  = new SgUntypedInitializedNameList();
+   SgUntypedTokenList*              prefix_list  = new SgUntypedTokenList();
 
    SgToken::ROSE_Fortran_Keywords keyword = SgToken::FORTRAN_FUNCTION;
 
@@ -2565,8 +2567,8 @@ ATbool ATtoUntypedTraversal::traverse_FunctionSubprogram(ATerm term, SgUntypedSc
    }
 
 // create the subroutine
-   function = new SgUntypedFunctionDeclaration(label,keyword,name,param_list,
-                                               function_type,function_scope,end_function_stmt);
+   function = new SgUntypedFunctionDeclaration(label, keyword, name, param_list, function_type,
+                                               function_scope, prefix_list, end_function_stmt);
    setSourcePositionIncludingNode(function, term, end_function_stmt);
 
 // add the subroutine to the outer scope
@@ -2665,7 +2667,6 @@ ATbool ATtoUntypedTraversal::traverse_SubroutineSubprogram(ATerm term, SgUntyped
    SgUntypedNamedStatement* end_subroutine_stmt;
    SgUntypedFunctionScope * function_scope;
 
-   std::vector<FAST::PrefixSpec*> prefix_list;
    SgUntypedType* function_type = NULL;
 
 // scope and parameter lists
@@ -2673,6 +2674,7 @@ ATbool ATtoUntypedTraversal::traverse_SubroutineSubprogram(ATerm term, SgUntyped
    SgUntypedStatementList*            stmt_list  = new SgUntypedStatementList();
    SgUntypedFunctionDeclarationList*  func_list  = new SgUntypedFunctionDeclarationList();
    SgUntypedInitializedNameList*     param_list  = new SgUntypedInitializedNameList();
+   SgUntypedTokenList*              prefix_list  = new SgUntypedTokenList();
 
    SgToken::ROSE_Fortran_Keywords keyword = SgToken::FORTRAN_SUBROUTINE;
 
@@ -2735,7 +2737,8 @@ ATbool ATtoUntypedTraversal::traverse_SubroutineSubprogram(ATerm term, SgUntyped
    SgUntypedType* type = buildType(SgUntypedType::e_void);
 
 // create the subroutine
-   subroutine = new SgUntypedSubroutineDeclaration(label,keyword,name,param_list,type,function_scope,end_subroutine_stmt);
+   subroutine = new SgUntypedSubroutineDeclaration(label, keyword, name, param_list, type,
+                                                   function_scope, prefix_list, end_subroutine_stmt);
    setSourcePositionIncludingNode(subroutine, term, end_subroutine_stmt);
 
 // add the subroutine to the outer scope
@@ -2832,6 +2835,7 @@ ATbool ATtoUntypedTraversal::traverse_SeparateModuleSubprogram(ATerm term, SgUnt
    SgUntypedStatementList*            stmt_list  = new SgUntypedStatementList();
    SgUntypedFunctionDeclarationList*  func_list  = new SgUntypedFunctionDeclarationList();
    SgUntypedInitializedNameList*     param_list  = new SgUntypedInitializedNameList();
+   SgUntypedTokenList*              prefix_list  = new SgUntypedTokenList();
 
    SgToken::ROSE_Fortran_Keywords keyword = SgToken::FORTRAN_MODULE_PROC;
 
@@ -2870,7 +2874,8 @@ ATbool ATtoUntypedTraversal::traverse_SeparateModuleSubprogram(ATerm term, SgUnt
    SgUntypedType* type = buildType(SgUntypedType::e_void);
 
 // create the subroutine
-   mp_subprogram = new SgUntypedSubroutineDeclaration(label,keyword,name,param_list,type,function_scope,end_mp_subprogram_stmt);
+   mp_subprogram = new SgUntypedSubroutineDeclaration(label, keyword, name, param_list, type,
+                                                      function_scope, prefix_list, end_mp_subprogram_stmt);
    setSourcePositionIncludingNode(mp_subprogram, term, end_mp_subprogram_stmt);
 
 // add the subprogram to the outer scope
