@@ -76,7 +76,7 @@ namespace Rose {
  *      std::cout <<rpt.phase <<": " <<(100*rpt.completion) <<" percent completed\n";
  *      do_other_stuff();
  *  }
- * @code
+ * @endcode
  *
  *  The following guidelines should be used when writing a long-running task, such as a ROSE analysis or transformation, that
  *  supports progress reporting. These guidelines assume that the task is encapsulated in a class (as most analyses and
