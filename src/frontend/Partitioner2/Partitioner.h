@@ -22,6 +22,7 @@
 #include <Sawyer/SharedPointer.h>
 
 #include <BinaryUnparser.h>
+#include <Progress.h>
 
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/split_member.hpp>
@@ -334,11 +335,8 @@ private:
 
     // Protects the following data members
     mutable SAWYER_THREAD_TRAITS::Mutex mutex_;
-
-    // Progress
-    mutable ProgressReport progressReport_;             // latest progress report
+    Progress::Ptr progress_;                            // Progress reporter to update, or null
     mutable size_t cfgProgressTotal_;                   // Expected total for the CFG progress bar; initialized at first report
-    bool updatingProgress_;                             // update progress information?
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -389,9 +387,8 @@ private:
         // s & undiscoveredVertex_;             -- initialized by rebuildVertexIndices
         // s & indeterminateVertex_;            -- initialized by rebuildVertexIndices
         // s & nonexistingVertex_;              -- initialized by rebuildVertexIndices
-        // s & latestProgress_;                 -- not saved/restored
+        // s & progress_;                       -- not saved/restored
         // s & cfgProgressTotal_;               -- not saved/restored
-        // s & updatingProgress_;               -- not saved/restored
     }
 
     template<class S>
@@ -2221,43 +2218,32 @@ public:
     void settings(const BasePartitionerSettings &s) /*final*/ { settings_ = s; }
     /** @} */
 
-    /** Enable or disable progress updates.
+    /** Property: How to report progress.
      *
      *  Partitioning progress is reported in two ways:
      *
      *  @li Various diagnostic facilities use the @c MARCH stream to emit a progress report to the terminal. These streams can
      *      be enabled and disabled from the command-line or with function calls using the @ref Sawyer::Message API.
      *
-     *  @li The partitioner also has a @ref progressReport property that can be queried in thread-safe manners that allows one
+     *  @li The partitioner also has a @ref progress property that can be queried in thread-safe manners that allows one
      *      thread to run partitioner algorithms and other threads to query the progress.
      *
-     *  If the @ref isReportingProgress property is false, then the partitioner itself does not update the @ref progressPhase
-     *  or the @ref progressRatio properties, but leaves their updating to some other software layer. Turning off the updates
-     *  might also prevent @ref Sawyer::Message progress output for progress bars that depend on these properties.
+     *  If a non-null progress object is specified, then the partitioner will make progress reports to that object as well as
+     *  emitting a progress bar to the Partitioner2 diagnostic stream. The progress bar can be disabled independently of
+     *  reporting to a progress object, but no progress is reported if the progress object is null.
      *
      *  Thread safety: Thread safe.
      *
      *  @{ */
-    void enableProgressReports(bool b=true) /*final*/;
-    void disableProgressReports() /*final*/;
-    bool isReportingProgress() const /*final*/;
+    Progress::Ptr progress() const /*final*/;
+    void progress(const Progress::Ptr&) /*final*/;
     /** @} */
 
-    /** Progress values.
+    /** Update partitioner with a new progress report.
      *
-     *  The latest progress report stored in this partitioner.  It is permissible to update the progress report even for const
-     *  prtitioners since the progress report has nothing to do with updating the CFG or AUM, which are the things actually
-     *  protected by const.
-     *
-     *  Thread safety: Thread safe.
-     *
-     *  @sa enableProgressReports
-     *
-     * @{ */
-    ProgressReport progressReport() const;
-    void progressReport(const ProgressReport&) const;   // update possible even for const partitioners
-    void progressReport(const std::string &phase, double completnessRatio) const; // ditto
-    /** @} */
+     *  This method is const because it doesn't change the partitioner, it only forwards the phase and completion to whatever
+     *  @ref Progress object is associated with the partition, if any. */
+    void updateProgress(const std::string &phase, double completion) const;
 
     /** Use or not use symbolic semantics.
      *

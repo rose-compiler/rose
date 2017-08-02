@@ -149,7 +149,7 @@ struct StackDeltaWorker {
 
         // Progress reports
         ++progress;
-        partitioner.progressReport("stack-delta", progress.ratio());
+        partitioner.updateProgress("stack-delta", progress.ratio());
     }
 };
 

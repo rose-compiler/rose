@@ -29,14 +29,14 @@ namespace Partitioner2 {
 
 Partitioner::Partitioner()
     : solver_(NULL), autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1),
-      semanticMemoryParadigm_(LIST_BASED_MEMORY), cfgProgressTotal_(0), updatingProgress_(true) {
+      semanticMemoryParadigm_(LIST_BASED_MEMORY), progress_(Progress::instance()), cfgProgressTotal_(0) {
     init(NULL, memoryMap_);
 }
 
 Partitioner::Partitioner(Disassembler *disassembler, const MemoryMap::Ptr &map)
     : memoryMap_(map), solver_(NULL), autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true),
-      stackDeltaInterproceduralLimit_(1), semanticMemoryParadigm_(LIST_BASED_MEMORY), cfgProgressTotal_(0),
-      updatingProgress_(true) {
+      stackDeltaInterproceduralLimit_(1), semanticMemoryParadigm_(LIST_BASED_MEMORY),
+      progress_(Progress::instance()), cfgProgressTotal_(0) {
     init(disassembler, map);
 }
 
@@ -48,7 +48,7 @@ Partitioner::Partitioner(Disassembler *disassembler, const MemoryMap::Ptr &map)
 // after a while.
 Partitioner::Partitioner(const Partitioner &other)               // initialize just like default
     : solver_(NULL), autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), semanticMemoryParadigm_(LIST_BASED_MEMORY),
-      cfgProgressTotal_(0), updatingProgress_(true){
+      progress_(Progress::instance()), cfgProgressTotal_(0) {
     init(NULL, memoryMap_);                             // initialize just like default
     *this = other;                                      // then delegate to the assignment operator
 }
@@ -80,8 +80,7 @@ Partitioner::operator=(const Partitioner &other) {
     {
         SAWYER_THREAD_TRAITS::LockGuard2 lock(mutex_, other.mutex_);
         cfgProgressTotal_ = other.cfgProgressTotal_;
-        progressReport_ = other.progressReport_;
-        updatingProgress_ = other.updatingProgress_;
+        progress_ = other.progress_;
     }
 
     init(other);                                        // copies graph iterators, etc.
@@ -224,46 +223,39 @@ operator<<(std::ostream &out, const ProgressBarSuffix &x) {
     return out;
 };
 
-void
-Partitioner::enableProgressReports(bool b) {
+Progress::Ptr
+Partitioner::progress() const {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-    updatingProgress_ = b;
-}
-
-void
-Partitioner::disableProgressReports() {
-    enableProgressReports(false);
-}
-
-bool
-Partitioner::isReportingProgress() const {
-    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-    return updatingProgress_;
-}
-
-ProgressReport
-Partitioner::progressReport() const {
-    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-    return progressReport_;
+    return progress_;
 }
 
 void
-Partitioner::progressReport(const ProgressReport &pr) const {
+Partitioner::progress(const Progress::Ptr &p) {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-    progressReport_ = pr;
+    progress_ = p;
 }
 
 void
-Partitioner::progressReport(const std::string &phase, double ratio) const {
-    progressReport(ProgressReport(phase, ratio));
+Partitioner::updateProgress(const std::string &phase, double completion) const {
+    Progress::Ptr progress;
+    {
+        SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+        progress = progress_;
+    }
+    if (progress)
+        progress->update(Progress::Report(phase, completion));
 }
 
 // Updates progress information during the main partitioning phase. The progress is the ratio of the number of bytes
 // represented in the CFG to the number of executable bytes in the memory map.
 void
 Partitioner::updateCfgProgress() {
-    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-
+    {
+        SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+        if (!progress_)
+            return;
+    }
+    
     // How many bytes are mapped with execute permission
     if (0 == cfgProgressTotal_) {
         BOOST_FOREACH (const MemoryMap::Node &node, memoryMap_->nodes()) {
@@ -272,9 +264,9 @@ Partitioner::updateCfgProgress() {
         }
     }
 
-    // Update progress data members
-    progressReport_ = ProgressReport("partitioning", cfgProgressTotal_ > 0 ? (double)nBytes() / cfgProgressTotal_ : NAN);
-
+    double completion = cfgProgressTotal_ > 0 ? (double)nBytes() / cfgProgressTotal_ : 0.0;
+    updateProgress("partition", completion);
+    
     // All partitioners share a single progress bar for the CFG completion amount
     static Sawyer::ProgressBar<size_t, ProgressBarSuffix> *bar = NULL;
     if (!bar)
@@ -1405,8 +1397,7 @@ void
 Partitioner::bblockAttached(const ControlFlowGraph::VertexIterator &newVertex) {
     ASSERT_require(newVertex!=cfg_.vertices().end());
     ASSERT_require(newVertex->value().type() == V_BASIC_BLOCK);
-    if (isReportingProgress())
-        updateCfgProgress();
+    updateCfgProgress();
     rose_addr_t startVa = newVertex->value().address();
     BasicBlock::Ptr bblock = newVertex->value().bblock();
 
@@ -2195,7 +2186,7 @@ struct CallingConventionWorker {
 
         // Update progress reports
         ++progress;
-        partitioner.progressReport("call-conv", progress.ratio());
+        partitioner.updateProgress("call-conv", progress.ratio());
     }
 };
 

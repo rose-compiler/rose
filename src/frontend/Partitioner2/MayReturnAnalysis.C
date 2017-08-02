@@ -477,7 +477,7 @@ Partitioner::allFunctionMayReturn() const {
 
                     // Update progress reports
                     ++progress;
-                    progressReport("may-return", progress.ratio());
+                    updateProgress("may-return", progress.ratio());
                 }
             }
         }
