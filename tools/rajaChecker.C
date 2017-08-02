@@ -810,8 +810,9 @@ void RoseVisitor::visit ( SgNode* n)
             Rose::KeepGoing::File2StringMap[file]+= entry;
           if (RAJA_Checker::enable_debug)
           {
-            ofile<<oss.str();
-            cout<<oss.str(); // also output to std out
+            ofile<<oss.str(); // don't use absolute file name for the output file, which is used for correctness checking
+            cout<<forloop->get_file_info()->get_filename()+s+oss.str(); // also output to std out
+
           }
         }
       }
@@ -844,8 +845,8 @@ void RoseVisitor::visit ( SgNode* n)
               Rose::KeepGoing::File2StringMap[file]+= entry;
             if (RAJA_Checker::enable_debug)
             {
-              ofile<<oss.str();
-              cout<<oss.str(); // also output to std out
+              ofile<<oss.str(); // don't use absolute file name for the output file, which is used for correctness checking
+              cout<<le->get_file_info()->get_filename()+s+oss.str(); // also output to std out
             }
           }
         }
