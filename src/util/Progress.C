@@ -20,7 +20,9 @@ Progress::update(double completion) {
     reports_.back().completion = completion;
     ++reportNumber_;
     reportAge_.restart();
+#if SAWYER_MULTI_THREADED
     cv_.notify_all();
+#endif
 }
 
 void
@@ -30,7 +32,9 @@ Progress::update(const Report &report) {
     reports_.back() = report;
     ++reportNumber_;
     reportAge_.restart();
+#if SAWYER_MULTI_THREADED
     cv_.notify_all();
+#endif
 }
 
 Progress::Report
@@ -40,7 +44,9 @@ Progress::push() {
     reports_.push_back(Report());
     ++reportNumber_;
     reportAge_.restart();
+#if SAWYER_MULTI_THREADED
     cv_.notify_all();
+#endif
     return retval;
 }
 
@@ -58,7 +64,9 @@ Progress::push(const Report &report) {
     reports_.push_back(Report());
     ++reportNumber_;
     reportAge_.restart();
+#if SAWYER_MULTI_THREADED
     cv_.notify_all();
+#endif
     return retval;
 }
 
@@ -73,7 +81,9 @@ Progress::pop() {
         reportNumber_ = TERMINATING;
     }
     reportAge_.restart();
+#if SAWYER_MULTI_THREADED
     cv_.notify_all();
+#endif
 }
 
 void
@@ -88,7 +98,9 @@ Progress::pop(double completion) {
     }
     reports_.back().completion = completion;
     reportAge_.restart();
+#if SAWYER_MULTI_THREADED
     cv_.notify_all();
+#endif
 }
 
 void
@@ -103,7 +115,9 @@ Progress::pop(const Report &report) {
     }
     reports_.back() = report;
     reportAge_.restart();
+#if SAWYER_MULTI_THREADED
     cv_.notify_all();
+#endif
 }
         
 void
@@ -112,7 +126,9 @@ Progress::finished() {
     ASSERT_forbid(reports_.empty());
     if (1 == reports_.size()) {
         reportNumber_ = TERMINATING;
+#if SAWYER_MULTI_THREADED
         cv_.notify_all();
+#endif
     }
 }
 
@@ -126,7 +142,9 @@ Progress::finished(double completion) {
     } else {
         reportNumber_ = TERMINATING;
     }
+#if SAWYER_MULTI_THREADED
     cv_.notify_all();
+#endif
 }
 
 void
@@ -139,7 +157,9 @@ Progress::finished(const Report &report) {
     } else {
         reportNumber_ = TERMINATING;
     }
+#if SAWYER_MULTI_THREADED
     cv_.notify_all();
+#endif
 }
 
 std::pair<Progress::Report, double /*seconds*/>

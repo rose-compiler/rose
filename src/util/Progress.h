@@ -188,7 +188,9 @@ private:
 
     // Synchronized data members
     mutable SAWYER_THREAD_TRAITS::Mutex mutex_;         // protects the following data members
+#if SAWYER_MULTI_THREADED
     mutable SAWYER_THREAD_TRAITS::ConditionVariable cv_;// for signaling changes to the latestReport_
+#endif
     std::vector<Report> reports_;                       // report stack, one elemet per nested phase
     size_t reportNumber_;                               // sequence number of latestReport_, or TERMINATING
     Sawyer::Stopwatch reportAge_;                       // time since last report arrived (or since construction)
@@ -366,6 +368,7 @@ public:
      *  Thread safety: This method is thread safe. */
     template<class Functor>
     bool reportChanges(boost::chrono::milliseconds limit, Functor f, const std::string &nameSeparator = ".") const {
+#if SAWYER_MULTI_THREADED
         Sawyer::Stopwatch timer;
         size_t seen = TERMINATING - 1;
         while (1) {
@@ -384,6 +387,9 @@ public:
                 return true;
             boost::this_thread::sleep_for(limit);
         }
+#else
+        return false;                                   // doesn't make sense in a single-threaded program
+#endif
     }
 
 private:
