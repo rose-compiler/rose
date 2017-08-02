@@ -29,6 +29,7 @@ struct Settings {
     bool check;                                         // perform extra XML input checking
     std::vector<std::string> deletions;                 // paths of subtrees to delete
     std::vector<std::string> echoes;                    // paths that should be echoed for debugging
+    std::vector<std::string> renames;                   // paths whose final matching element should be renamed
 
     Settings(): check(false) {}
 };
@@ -52,15 +53,44 @@ parseCommandLine(int argc, char *argv[]) {
     tool.insert(Switch("delete")
                 .argument("path", anyParser(retval.deletions))
                 .whichValue(SAVE_ALL)
-                .doc("Path of subtrees to delete. See specifying paths for details. This switch may appear more than once."));
+                .doc("Path of subtrees to delete. See Path Specification for details. This switch may appear more than once."));
 
     tool.insert(Switch("echo")
-                .argument("path:output", anyParser(retval.echoes))
+                .argument("path[:output]", anyParser(retval.echoes))
                 .whichValue(SAVE_ALL)
-                .doc("Emit @v{output} to standard output whenever @v{path} matches. See specifying paths for details. "
-                     "This switch may appear more than once."));
+                .doc("Emit @v{output} [or the rule name] to standard output whenever @v{path} matches. See Path Specification "
+                     "for details. This switch may appear more than once."));
+
+    tool.insert(Switch("rename")
+                .argument("path:name", anyParser(retval.renames))
+                .whichValue(SAVE_ALL)
+                .doc("For each XML input path that matches @v{path}, the XML tag is renamed to @v{name} before being "
+                     "emitted as JSON.  If an XML path is matched by both @s{delete} and @s{rename} patterns, the deletion "
+                     "takes precedence. If an XML path is matched by multiple @s{rename} patterns with conflicting "
+                     "new names, a warning is reported and the first rename is used. See Path Specification for "
+                     "details."));
 
     p.with(tool);
+    p.doc("Path Specifications",
+          "Operations such as echo, delete, and rename are triggered by matching a path specification against an actual "
+          "tree path in the XML input. The path specification is written as one or more dot-separated components with "
+          "each component matching one level of the XML tree starting at the root. The special component named \"*\" "
+          "is a wildcard that matches zero or more levels of the XML tree.\n\n"
+
+          "Path specifications components match XML tags, properties, or text. When matching properties the names should "
+          "be prefixed with an \"@\" as they normally appear in the JSON output. When matching text that occurs between "
+          "XML tags (such as \"<tag>this is text</tag>\") the component should be named \"#text\"."
+
+          "@named{Example 1:}{The path specification \"foo\" matches the XML tag \"foo\" if it appears at the root of "
+          "the document.}"
+
+          "@named{Example 2:}{The spec \"foo.bar\" matches \"bar\" only when it appears within \"foo\" and \"foo\" is at "
+          "the root.}"
+
+          "@named{Example 3:}{The spec \"*.foo.*.bar\" matches \"bar\" anywhere as long as it's a descendant (possibly "
+          "an immediate child) of \"foo\" and \"foo\" can appear at any level of the tree.}");
+
+
     std::vector<std::string> args = p.parse(argc, argv).apply().unreachedArgs();
     if (args.size() != 2) {
         mlog[FATAL] <<"incorrect usage; see --help\n";
@@ -579,6 +609,10 @@ public:
     size_t nActions() const {
         return nActions_;
     }
+
+    const std::string& renamed() const {
+        return renamed_;
+    }
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -822,7 +856,11 @@ public:
                     if ('{' == json_[parent.lastChildPlaceholders+LEFT_OBJECT])
                         json_ <<"{";
                 } else {
-                    json_ <<"\"" <<tokens_.lexeme(tag) <<"\":";
+                    if (actions.renamed().empty()) {
+                        json_ <<"\"" <<tokens_.lexeme(tag) <<"\":";
+                    } else {
+                        json_ <<"\"" <<actions.renamed() <<"\":";
+                    }
                     path_.back().placeholders = json_.curpos();
                     json_ <<PLACEHOLDERS;
                 }
@@ -898,7 +936,11 @@ public:
             if (path_.back().nChildren++ > 0)
                 json_ <<",";
 
-            json_ <<"\"@" <<tokens_.lexeme(name) <<"\":";
+            if (actions.renamed().empty()) {
+                json_ <<"\"@" <<tokens_.lexeme(name) <<"\":";
+            } else {
+                json_ <<"\"" <<actions.renamed() <<"\":";
+            }
 #if 0 // good place for line-feeds if you need to debug malformed JSON
             json_ <<"\n";
 #endif
@@ -920,8 +962,13 @@ public:
         }
 
         if (!actions.deleted()) {
-            if (++path_.back().nChildren > 1)
-                json_ <<",\"#text\":";
+            if (++path_.back().nChildren > 1) {
+                if (actions.renamed().empty()) {
+                    json_ <<",\"#text\":";
+                } else {
+                    json_ <<",\"" <<actions.renamed() <<"\":";
+                }
+            }
             json_ <<"\"";
             json_.append(tokens_.lexeme(t), Escape::YES);
             json_ <<"\"";
@@ -1029,6 +1076,28 @@ main(int argc, char *argv[]) {
             pathsToMatch.push_back(parsePathSpec(name, settings.deletions[i], DELETE));
         } catch (const std::runtime_error &e) {
             mlog[FATAL] <<"for --delete switch, " <<e.what() <<"\n";
+            exit(1);
+        }
+    }
+
+    // Renames
+    for (size_t i=0; i<settings.renames.size(); ++i) {
+        std::string name = "cmdline --rename #" + boost::lexical_cast<std::string>(i);
+        std::string spec = settings.renames[i];
+        size_t colon = spec.find(':');
+        std::string newName;
+        if (std::string::npos == colon || colon+1 >= spec.size()) {
+            mlog[FATAL] <<"for --rename switch, no new name specified in \"" <<Rose::StringUtility::cEscape(spec) <<"\"\n";
+            exit(1);
+        } else {
+            newName = spec.substr(colon+1);
+            spec = spec.substr(0, colon);
+            ASSERT_forbid(newName.empty());
+        }
+        try {
+            pathsToMatch.push_back(parsePathSpec(name, spec, RENAME, newName));
+        } catch (const std::runtime_error &e) {
+            mlog[FATAL] <<"for --rename switch, " <<e.what() <<"\n";
             exit(1);
         }
     }
