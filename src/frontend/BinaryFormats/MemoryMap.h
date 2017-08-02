@@ -11,6 +11,7 @@
 #include <Sawyer/Optional.h>
 #include <Sawyer/StaticBuffer.h>
 
+#include <boost/config.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/export.hpp>
@@ -346,8 +347,12 @@ public:
     /** Documentation string for @ref insertFile. */
     static std::string insertFileDocumentation();
 
+#ifdef BOOST_WINDOWS
+    void insertProcess(int pid, Attach::Boolean attach);
+#else
     /** Insert the memory of some other process into this memory map. */
     void insertProcess(pid_t pid, Attach::Boolean attach);
+#endif
 
     /** Insert the memory of some other process into this memory map.
      *

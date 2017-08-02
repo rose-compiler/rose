@@ -389,7 +389,7 @@ MemoryMap::insertProcessDocumentation() {
             "maps never have zero-length segments.");
 }
 
-#ifndef ROSE_WINDOWS
+#ifndef BOOST_WINDOWS
 static std::runtime_error
 insertProcessError(const std::string &prefix, pid_t pid = -1, const std::string &suffix = "") {
     std::string s = prefix;
@@ -427,12 +427,13 @@ MemoryMap::insertProcess(const std::string &locatorString) {
 }
 
 // FIXME[Robb P. Matzke 2014-10-09]: No idea how to do this in Microsoft Windows!
+#ifdef BOOST_WINDOWS                                    // FIXME[Robb P. Matzke 2014-10-10]
+MemoryMap::insertProcess(int pid, Attach::Boolean doAttach) {
+    throw std::runtime_error("MemoryMap::insertProcess is not available on Microsoft Windows");
+}
+#else
 void
 MemoryMap::insertProcess(pid_t pid, Attach::Boolean doAttach) {
-#ifdef BOOST_WINDOWS                                    // FIXME[Robb P. Matzke 2014-10-10]
-    throw std::runtime_error("MemoryMap::insertProcess is not available on Microsoft Windows");
-#else
-
     // Resources that need to be cleaned up on return or exception
     struct T {
         FILE *mapsFile;                                 // file for /proc/xxx/maps
@@ -572,8 +573,8 @@ MemoryMap::insertProcess(pid_t pid, Attach::Boolean doAttach) {
         if (!segmentInterval.isEmpty())
             insert(segmentInterval, segment);
     }
-#endif
 }
+#endif
 
 SgUnsignedCharList
 MemoryMap::readVector(rose_addr_t va, size_t desired, unsigned requiredPerms) const
