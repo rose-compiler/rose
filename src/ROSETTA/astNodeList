@@ -746,6 +746,7 @@ SgUntypedProgramHeaderDeclaration
 SgUntypedFunctionDeclaration
 SgUntypedSubroutineDeclaration
 SgUntypedReferenceExpression
+SgUntypedToken
 SgUntypedType
 SgUntypedArrayType
 SgUntypedAttribute
@@ -759,6 +760,7 @@ SgUntypedStatementList
 SgUntypedDeclarationStatementList
 SgUntypedFunctionDeclarationList
 SgUntypedInitializedNameList
+SgUntypedTokenList
 SgUpcBarrierStatement
 SgUpcBlocksizeofExpression
 SgUpcElemsizeofExpression

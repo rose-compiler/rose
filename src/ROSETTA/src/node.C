@@ -206,8 +206,11 @@ Grammar::setUpNodes ()
      NEW_TERMINAL_MACRO (UntypedArrayType, "UntypedArrayType", "TEMP_UntypedArrayType" );
      NEW_NONTERMINAL_MACRO (UntypedType, UntypedArrayType, "UntypedType", "UntypedTypeTag", false);
 
+     NEW_TERMINAL_MACRO (UntypedToken,            "UntypedToken",            "TEMP_UntypedToken" );
+     NEW_TERMINAL_MACRO (UntypedTokenList,        "UntypedTokenList",        "TEMP_UntypedTokenList" );
+
      NEW_TERMINAL_MACRO (UntypedAttribute,        "UntypedAttribute",        "TEMP_UntypedAttribute" );
-     NEW_TERMINAL_MACRO (UntypedInitializedName,        "UntypedInitializedName",        "TEMP_UntypedInitializedName" );
+     NEW_TERMINAL_MACRO (UntypedInitializedName,  "UntypedInitializedName",  "TEMP_UntypedInitializedName" );
 
   // DQ (3/6/2014): Added new IR node for untyped fortran file.
      NEW_TERMINAL_MACRO (UntypedFile,        "UntypedFile",        "TEMP_UntypedFile" );
@@ -221,9 +224,9 @@ Grammar::setUpNodes ()
      NEW_TERMINAL_MACRO (UntypedFunctionDeclarationList, "UntypedFunctionDeclarationList", "TEMP_UntypedFunctionDeclarationList" );
      NEW_TERMINAL_MACRO (UntypedInitializedNameList,     "UntypedInitializedNameList",     "TEMP_UntypedInitializedNameList" );
 
-     NEW_NONTERMINAL_MACRO (UntypedNode, UntypedExpression | UntypedStatement | UntypedType | UntypedAttribute | 
-          UntypedInitializedName | UntypedFile | UntypedStatementList | UntypedDeclarationStatementList | 
-          UntypedFunctionDeclarationList | UntypedInitializedNameList,
+     NEW_NONTERMINAL_MACRO (UntypedNode, UntypedExpression | UntypedStatement | UntypedToken | UntypedType | UntypedAttribute |
+          UntypedInitializedName | UntypedFile | UntypedStatementList | UntypedDeclarationStatementList |
+          UntypedFunctionDeclarationList | UntypedInitializedNameList | UntypedTokenList,
          "UntypedNode", "UntypedNodeTag", false);
 
   // ***************************************************************************************
@@ -626,6 +629,8 @@ Grammar::setUpNodes ()
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      UntypedFunctionDeclaration.setDataPrototype     ( "SgUntypedFunctionScope*", "scope", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     UntypedFunctionDeclaration.setDataPrototype     ( "SgUntypedTokenList*", "prefix_list", "",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      UntypedFunctionDeclaration.setDataPrototype     ( "SgUntypedNamedStatement*", "end_statement", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #if 0
@@ -689,6 +694,16 @@ Grammar::setUpNodes ()
      UntypedInitializedNameList.setDataPrototype         ( "SgUntypedInitializedNamePtrList", "name_list", "",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
+     UntypedTokenList.setFunctionPrototype               ( "HEADER_UNTYPED_TOKEN_LIST", "../Grammar/LocatedNode.code");
+     UntypedTokenList.setDataPrototype                   ( "SgUntypedTokenPtrList", "token_list", "",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+     UntypedToken.setFunctionPrototype ( "HEADER_UNTYPED_TOKEN", "../Grammar/LocatedNode.code");
+     UntypedToken.setDataPrototype     ( "std::string", "lexeme_string", "= \"\"",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     UntypedToken.setDataPrototype     ( "unsigned int", "classification_code", "= 0",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
      UntypedType.setFunctionPrototype ( "HEADER_UNTYPED_TYPE", "../Grammar/LocatedNode.code");
      UntypedType.setDataPrototype     ( "std::string", "type_name", "= \"\"",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -716,7 +731,6 @@ Grammar::setUpNodes ()
   // DQ (12/9/2015): enum type for different types indentifable in the parsing.
      UntypedType.setDataPrototype     ( "SgUntypedType::type_enum", "type_enum_id", "= SgUntypedType::e_unknown",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
 
   // UntypedAttribute.setFunctionPrototype ( "HEADER_UNTYPED_ATTRIBUTE", "../Grammar/LocatedNode.code");
   // UntypedAttribute.setDataPrototype     ( "SgToken::ROSE_Fortran_Keywords", "type_name", "= SgToken::FORTRAN_UNKNOWN",
@@ -1161,9 +1175,12 @@ Grammar::setUpNodes ()
      UntypedFile.setFunctionSource            ( "SOURCE_UNTYPED_FILE", "../Grammar/LocatedNode.code");
 
      UntypedStatementList.setFunctionSource           ( "SOURCE_UNTYPED_STATEMENT_LIST", "../Grammar/LocatedNode.code");
-     UntypedDeclarationStatementList.setFunctionSource         ( "SOURCE_UNTYPED_DECLARATION_STATEMENT_LIST", "../Grammar/LocatedNode.code");
+     UntypedDeclarationStatementList.setFunctionSource( "SOURCE_UNTYPED_DECLARATION_STATEMENT_LIST", "../Grammar/LocatedNode.code");
      UntypedFunctionDeclarationList.setFunctionSource ( "SOURCE_UNTYPED_FUNCTION_DECLARATION_LIST", "../Grammar/LocatedNode.code");
      UntypedInitializedNameList.setFunctionSource     ( "SOURCE_UNTYPED_INITIALIZED_NAME_LIST", "../Grammar/LocatedNode.code");
+
+     UntypedToken.setFunctionSource                   ( "SOURCE_UNTYPED_TOKEN", "../Grammar/LocatedNode.code");
+     UntypedTokenList.setFunctionSource               ( "SOURCE_UNTYPED_TOKEN_LIST", "../Grammar/LocatedNode.code");
 
      UntypedType.setFunctionSource      ( "SOURCE_UNTYPED_TYPE", "../Grammar/LocatedNode.code");
      UntypedArrayType.setFunctionSource ( "SOURCE_UNTYPED_ARRAY_TYPE", "../Grammar/LocatedNode.code");
