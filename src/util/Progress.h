@@ -1,6 +1,7 @@
 #ifndef Rose_Progress_H
 #define Rose_Progress_H
 
+#include <rosePublicConfig.h>                           // for ROSE_USE_CMAKE
 #include <boost/chrono.hpp>
 #include <boost/thread.hpp>
 #include <rose_isnan.h>
@@ -338,7 +339,8 @@ public:
      *  Thread safety: This method is thread safe. */
     template<class Functor>
     bool reportRegularly(boost::chrono::milliseconds interval, Functor f, const std::string &nameSeparator = ".") const {
-#if SAWYER_MULTI_THREADED
+        // Makes no sense for single threaded. Does not compile when ROSE is built with CMake
+#if SAWYER_MULTI_THREADED && !defined(ROSE_USE_CMAKE)
         while (1) {
             std::pair<Report, double /*seconds*/> rpt = reportLatest(nameSeparator);
             if (!f(rpt.first, rpt.second))
@@ -348,7 +350,7 @@ public:
             boost::this_thread::sleep_for(interval);
         }
 #else
-        return false;                                   // makes no sense in single-threaded program
+        return false;
 #endif
     }
     
@@ -374,7 +376,7 @@ public:
      *  Thread safety: This method is thread safe. */
     template<class Functor>
     bool reportChanges(boost::chrono::milliseconds limit, Functor f, const std::string &nameSeparator = ".") const {
-#if SAWYER_MULTI_THREADED
+#if SAWYER_MULTI_THREADED && !defined(ROSE_USE_CMAKE)   // makes no sense for single threaded. Does not compile with cmake
         Sawyer::Stopwatch timer;
         size_t seen = TERMINATING - 1;
         while (1) {
@@ -394,7 +396,7 @@ public:
             boost::this_thread::sleep_for(limit);
         }
 #else
-        return false;                                   // doesn't make sense in a single-threaded program
+        return false;
 #endif
     }
 
