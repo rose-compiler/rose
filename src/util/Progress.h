@@ -2,6 +2,7 @@
 #define Rose_Progress_H
 
 #include <boost/chrono.hpp>
+#include <boost/thread.hpp>
 #include <rose_isnan.h>
 #include <Sawyer/SharedPointer.h>
 #include <Sawyer/Stopwatch.h>
