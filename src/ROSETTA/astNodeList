@@ -733,6 +733,7 @@ SgUntypedOtherExpression
 SgUntypedFunctionCallOrArrayReferenceExpression
 SgUntypedStatement
 SgUntypedNamedStatement
+SgUntypedExpressionStatement
 SgUntypedAssignmentStatement
 SgUntypedFunctionCallStatement
 SgUntypedBlockStatement

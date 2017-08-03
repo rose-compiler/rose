@@ -360,7 +360,9 @@ public:
     /** Changes the expression stored in the value.
      * @{ */
     virtual void set_expression(const ExprPtr &new_expr) {
+        ASSERT_not_null(new_expr);
         expr = new_expr;
+        width = new_expr->nBits();
     }
     virtual void set_expression(const SValuePtr &source) {
         set_expression(source->get_expression());

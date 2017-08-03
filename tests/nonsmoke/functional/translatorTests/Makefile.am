@@ -33,13 +33,14 @@ noinst_PROGRAMS = \
 	testCopyAndDelete \
    testTraversalOfTemplateInstantiations \
 	testTranslator2013_01 \
-	testTranslator2013_02
+	testTranslator2013_02 \
+	testPlugins
 #
 # a better alternative to identityTranslator
 # Liao 1/29/2009
 bin_PROGRAMS = roseCompiler
 roseCompiler_SOURCES = roseCompiler.C
-
+testPlugins_SOURCES = testPlugins.C
 
 # Example translators used in regression tests
 bug125_SOURCES = bug125.C
@@ -116,6 +117,18 @@ input_label_stmt_file_info_translator.o: label_stmt_file_info_translator
 
 input_testTranslator2012_01b.o: testTranslator2012_01
 	./testTranslator2012_01 -rose:verbose 0 $(srcdir)/input_testTranslator2012_01a.C $(srcdir)/input_testTranslator2012_01b.C && touch $@
+
+
+lib_LTLIBRARIES = libPrintNamesPlugin.la
+libPrintNamesPlugin_la_SOURCES = PrintNamesPlugin.cpp
+
+
+
+#PLUGIN_OPTS=-rose:plugin_lib lib.so -rose:plugin_lib lib2.so -rose:plugin_action act1 -rose:plugin_action act2 -rose:plugin_arg_act1 op1 -rose:plugin_arg_act1 op2 -rose:plugin_arg_act2 op3 -rose:plugin_arg_act2 op4
+PLUGIN_OPTS=-rose:plugin_lib .libs/libPrintNamesPlugin.so -rose:plugin_action print-names -rose:plugin_arg_print-names op1
+input_testPlugins.o: testPlugins libPrintNamesPlugin.la
+	./testPlugins $(PLUGIN_OPTS) -c $(srcdir)/input_testPlugins.C && touch $@
+
 
 # Fortran tests
 parameter.o: testFortranParameter

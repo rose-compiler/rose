@@ -21,6 +21,7 @@ TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 
 # Put test codes without main() entry here
 # They will be compiled only, not executed.
+#	ompfor8.c  , a case not yet supported: ordered schedule(static) , no chunk size is specified. 
 C_TESTCODES_REQUIRED_TO_COMPILE = \
 	alignment.c \
 	collapse.c \

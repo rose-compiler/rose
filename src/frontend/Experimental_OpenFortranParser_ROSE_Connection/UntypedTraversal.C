@@ -37,6 +37,14 @@ UntypedTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute curre
          currentScope = sg_scope;
       }
 
+   else if (isSgUntypedModuleDeclaration(n) != NULL)
+      {
+         SgUntypedModuleDeclaration* ut_module = dynamic_cast<SgUntypedModuleDeclaration*>(n);
+         pConverter->convertSgUntypedModuleDeclaration(ut_module,currentScope);
+
+         currentScope = SageBuilder::topScopeStack();
+      }
+
    else if (isSgUntypedProgramHeaderDeclaration(n) != NULL)
       {
          SgUntypedProgramHeaderDeclaration* ut_program = dynamic_cast<SgUntypedProgramHeaderDeclaration*>(n);
@@ -47,8 +55,8 @@ UntypedTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute curre
 
    else if (isSgUntypedSubroutineDeclaration (n) != NULL)
       {
-      // SgUntypedSubroutineDeclaration* ut_function = dynamic_cast<SgUntypedSubroutineDeclaration*>(n);
-      // SgProcedureHeaderStatement*     sg_function = UntypedConverter::convertSgUntypedSubroutineDeclaration(ut_function, currentScope);
+         SgUntypedSubroutineDeclaration* ut_function = dynamic_cast<SgUntypedSubroutineDeclaration*>(n);
+         pConverter->convertSgUntypedSubroutineDeclaration(ut_function, currentScope);
 
          currentScope = SageBuilder::topScopeStack();
       }
@@ -87,6 +95,7 @@ UntypedTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute curre
          printf ("Down traverse: found a node of type ... %s\n", n->class_name().c_str());
 #endif
       }
+
    return currentScope;
 }
 
@@ -104,14 +113,26 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* n, InheritedAttribute cur
          SgUntypedExpression* ut_expr = isSgUntypedExpression(n);
          SgExpressionPtrList children(childAttrs);
 
-         sg_expr = UntypedConverter::convertSgUntypedExpression(ut_expr, children, currentScope);
+         sg_expr = pConverter->convertSgUntypedExpression(ut_expr, children, currentScope);
       }
    else if ( isSgUntypedAssignmentStatement(n) != NULL )
       {
          SgUntypedAssignmentStatement* ut_stmt = dynamic_cast<SgUntypedAssignmentStatement*>(n);
          SgExpressionPtrList children(childAttrs);
 
-         UntypedConverter::convertSgUntypedAssignmentStatement(ut_stmt, children, currentScope);
+         pConverter->convertSgUntypedAssignmentStatement(ut_stmt, children, currentScope);
+      }
+   else if ( isSgUntypedExpressionStatement(n) != NULL )
+      {
+         SgUntypedExpressionStatement* ut_stmt = dynamic_cast<SgUntypedExpressionStatement*>(n);
+         SgExpressionPtrList children(childAttrs);
+
+         pConverter->convertSgUntypedExpressionStatement(ut_stmt, children, currentScope);
+      }
+   else if ( isSgUntypedOtherStatement(n) != NULL )
+      {
+         SgUntypedOtherStatement* ut_stmt = dynamic_cast<SgUntypedOtherStatement*>(n);
+         pConverter->convertSgUntypedOtherStatement(ut_stmt, currentScope);
       }
    else
       {
@@ -119,6 +140,6 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* n, InheritedAttribute cur
          printf ("Up   traverse: found a node of type ... %s\n", n->class_name().c_str());
 #endif
       }
-   
+
    return sg_expr;
 }

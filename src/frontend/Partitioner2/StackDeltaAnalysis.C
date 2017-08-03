@@ -147,7 +147,9 @@ struct StackDeltaWorker {
             trace <<"stack-delta for " <<function->printableName() <<" took " <<t <<" seconds\n";
         }
 
+        // Progress reports
         ++progress;
+        partitioner.updateProgress("stack-delta", progress.ratio());
     }
 };
 
