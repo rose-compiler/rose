@@ -9,6 +9,7 @@
  * @li The source files are currently located in rose/projects/autoParallelization
  * @li Test input files are located at rose/projects/autoParallelization/tests
  * @li There is a section 12.7 Automatic Parallelization in the ROSE pdf manual: http://rosecompiler.org/ROSE_UserManual/ROSE-UserManual.pdf
+ * @li More information available at: https://en.wikibooks.org/wiki/ROSE_Compiler_Framework/autoPar
  *
  * @section sec_install Installation
  *  Type make install-core -j4 under $ROSE_build will build and install the tool, autoPar, into $ROSE_INSTALL/bin.
