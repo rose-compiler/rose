@@ -529,10 +529,11 @@ void Specialization::substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates, Var
   for(ArrayUpdatesSequence::iterator i=arrayUpdates.begin();i!=arrayUpdates.end();++i) {
     SgExpression* exp=(*i).second;
     SgNode* node=exp;
+    bool ruleAddReorder=false;
     bool ruleAlgebraic=true;
     bool ruleCommutativeSorting=true;
     //cout<<"DEBUG: Rewrite phase 2 :"<<exp->unparseToString()<<endl;
-    rewriteSystem2.rewriteAst(node,variableIdMapping,false,false,ruleAlgebraic,ruleCommutativeSorting);
+    rewriteSystem2.rewriteAst(node,variableIdMapping,ruleAddReorder,false,ruleAlgebraic,ruleCommutativeSorting);
   }
   std::ofstream fout;
   fout.open("rewrite.dot");    // create new file/overwrite existing file

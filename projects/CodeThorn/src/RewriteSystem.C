@@ -255,25 +255,79 @@ void RewriteSystem::normalizeFloatingPointNumbersForUnparsing(SgNode*& root) {
   }
 }
 
+// returns true for swap, false for do not swap
+bool requiresSwap(SgExpression* lhs, SgExpression* rhs, VariableIdMapping* variableIdMapping) {
+  if(lhs->variantT()<rhs->variantT()) {
+    return false;
+  } else if(lhs->variantT()>rhs->variantT()) {
+    return true;
+  } else {
+    bool changed=false;
+    // lhs-variant equal rhs-variant, determine left-most and right-most child
+    if(SgBinaryOp* lhsOp=isSgBinaryOp(lhs)) {
+      lhs=lhsOp->get_lhs_operand();
+      changed=true;
+    } else if(SgUnaryOp* unaryOp=isSgUnaryOp(lhs)) {
+      lhs=unaryOp->get_operand();
+      changed=true;
+    }
+    if(SgBinaryOp* rhsOp=isSgBinaryOp(rhs)) {
+      rhs=rhsOp->get_rhs_operand();
+      changed=true;
+    } else if(SgUnaryOp* unaryOp=isSgUnaryOp(rhs)) {
+      rhs=unaryOp->get_operand();
+      changed=true;
+    }
+    SgVarRefExp* lhsvar=isSgVarRefExp(lhs);
+    SgVarRefExp* rhsvar=isSgVarRefExp(rhs);
+    if(lhsvar && rhsvar) {
+      if(variableIdMapping->variableId(lhsvar)<variableIdMapping->variableId(rhsvar)) {
+        return false;
+      } else if(variableIdMapping->variableId(lhsvar)==variableIdMapping->variableId(rhsvar)) {
+        return false;
+      } else {
+        // requires swap
+        return true;
+      }
+    }
+    SgValueExp* lhsval=isSgValueExp(lhs);
+    SgValueExp* rhsval=isSgValueExp(rhs);
+    if(lhsval && rhsval) {
+      // requires swap == true
+      return lhsval->unparseToString() > rhsval->unparseToString();
+    }
+    if(changed) {
+      return requiresSwap(lhs,rhs,variableIdMapping);
+    } else {
+      cout<<"WARNING: commutative sort undecided."<<endl;
+      return false;
+    }
+  }
+  return false;
+}
+
 void RewriteSystem::establishCommutativeOrder(SgNode*& root, VariableIdMapping* variableIdMapping) {
   RoseAst ast(root);
   list<SgNode*> nodes;
-  // prepare reverse pre-order order
+  // prepare reverse pre-order
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
     nodes.push_front(*i);
   }
   // perform rewrite on reverse pre-order
   for(list<SgNode*>::iterator i=nodes.begin();i!=nodes.end();++i) {
-    SgBinaryOp* op=nullptr;
-    if(isSgAddOp(*i)||isSgMultiplyOp(op)) {
-      op=isSgBinaryOp(*i);
+    if(isSgAddOp(*i)||isSgMultiplyOp(*i)) {
+      SgBinaryOp* op=isSgBinaryOp(*i);
       ROSE_ASSERT(op);
       SgExpression* lhs=op->get_lhs_operand();
       SgExpression* rhs=op->get_rhs_operand();
-      if(!(lhs->variantT()<=rhs->variantT())) {
+      if(requiresSwap(lhs,rhs,variableIdMapping)) {
+        //cout<<"DEBUG: swapping: "<<op->unparseToString()<<" ==> ";
         // swap lhs and rhs
         op->set_lhs_operand(rhs);
         op->set_rhs_operand(lhs);
+        //cout<<op->unparseToString()<<endl;
+      } else {
+        //cout<<"DEBUG: NOT swapping: "<<op->unparseToString()<<endl;
       }
     }
   }
