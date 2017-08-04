@@ -8,8 +8,18 @@ noinst_PROGRAMS = addressTakenAnalysis matcher_demo matcher astinfo
 
 CLEANFILES = 
 
+if USE_Z3
+Z3_INCLUDES = -I$(Z3_INCLUDE_PATH)
+Z3_LIB_INCLUDES = -L$(Z3_LIBRARY_PATH)
+Z3_LINK = -lz3
+else
+Z3_INCLUDES =
+Z3_LIB_INCLUDES = 
+Z3_LINK =
+endif
+
 if ROSE_WITH_SPOT
-AM_LDFLAGS = $(ROSE_LIBS) $(LIBS_WITH_RPATH) -fopenmp -L$(SPOT_LIBRARY_PATH) $(Z3_LIB_INCLUDES)
+AM_LDFLAGS = $(ROSE_LIBS) $(LIBS_WITH_RPATH) -fopenmp -L$(SPOT_LIBRARY_PATH) 
 AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/Codethorn/src -I$(SPOT_INCLUDE_PATH)/spot -I$(SPOT_INCLUDE_PATH) $(Z3_INCLUDES) -g -rdynamic
 else
 AM_LDFLAGS = $(ROSE_LIBS) $(LIBS_WITH_RPATH) -fopenmp $(Z3_LIB_INCLUDES)
@@ -107,8 +117,8 @@ codethorn_DEPENDENCIES=libspray.la
 
 #codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray -lspot -lbdd -lz3
 if ROSE_WITH_SPOT
-codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray -lspot -lbdd
-codethorn_LDFLAGS = -L$(SPOT_LIBRARY_PATH)
+codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray -lspot -lbdd $(Z3_LINK)
+codethorn_LDFLAGS = -L$(SPOT_LIBRARY_PATH) $(Z3_LIB_INCLUDES)
 else
 codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
 endif
@@ -150,6 +160,8 @@ codethorn_SOURCES = \
   HashFun.h                        \
   InternalChecks.C                 \
   InternalChecks.h                 \
+  ContNodeAttribute.h \
+  ContNodeAttribute.C \
   LTL.h                            \
   LTLParser.y++                    \
   LtsminConnection.h		   \
@@ -160,11 +172,17 @@ codethorn_SOURCES = \
   LoopInfo.C                       \
   Miscellaneous.C                  \
   Miscellaneous.h                  \
+  PhiAttribute.h \
+  PhiAttribute.C \
+  PhiStatement.h \
+  PhiStatement.C \
   PragmaHandler.h \
   PragmaHandler.C \
   PropertyValueTable.h \
   PropertyValueTable.C \
   ReachabilityAnalysis.h ReachabilityAnalysis.C \
+  ReachabilityAnalyzerZ3.h \
+  ReachabilityAnalyzerZ3.C \
   RefinementConstraints.C \
   RefinementConstraints.h \
   RERS_empty_specialization.C      \
@@ -185,6 +203,8 @@ codethorn_SOURCES = \
   SpotState.h \
   SpotSuccIter.C \
   SpotSuccIter.h \
+  SSAGenerator.h \
+  SSAGenerator.C \
   ParProSpotTgba.C \
   ParProSpotTgba.h \
   ParProSpotState.C \
@@ -215,7 +235,8 @@ codethorn_SOURCES = \
   AnalyzerTools.C                  \
   AnalyzerTools.h                  \
   codethorn.h \
-  codethorn.C
+  codethorn.C 
+
 
 addressTakenAnalysis_SOURCES = \
   Timer.cpp \
