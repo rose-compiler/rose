@@ -531,7 +531,7 @@ void Specialization::substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates, Var
     SgNode* node=exp;
     bool ruleAddReorder=false;
     bool ruleAlgebraic=true;
-    bool ruleCommutativeSorting=true;
+    bool ruleCommutativeSorting=false;
     //cout<<"DEBUG: Rewrite phase 2 :"<<exp->unparseToString()<<endl;
     rewriteSystem2.rewriteAst(node,variableIdMapping,ruleAddReorder,false,ruleAlgebraic,ruleCommutativeSorting);
   }

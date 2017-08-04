@@ -587,7 +587,7 @@ check-data-races:
 	@./codethorn --data-race  $(srcdir)/tests/datarace/inner_only_1.no.c --max-time=5 --solver=12
 
 
-check-flow-insenstive:
+check-flow-insensitive:
 	@echo ================================================================
 	@echo RUNNING STATIC PROGRAM ANALYSIS TESTS
 	@echo ================================================================
