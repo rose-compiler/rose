@@ -105,6 +105,14 @@ RegisterDictionary::lookup(const RegisterDescriptor &rdesc) const {
     return empty;
 }
 
+const RegisterDescriptor*
+RegisterDictionary::exists(const RegisterDescriptor &rdesc) const {
+    Reverse::const_iterator found = reverse.find(rdesc);
+    if (found == reverse.end())
+        return NULL;
+    return &found->first;
+}
+
 RegisterDescriptor
 RegisterDictionary::findLargestRegister(unsigned major, unsigned minor, size_t maxWidth) const {
     RegisterDescriptor retval;

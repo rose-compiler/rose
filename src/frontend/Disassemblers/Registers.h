@@ -216,6 +216,13 @@ public:
      *  according to the optional supplied NameGenerator. */
     const std::string& lookup(const RegisterDescriptor&) const;
 
+    /** Determine if a register descriptor exists.
+     *
+     *  This is similar to the @ref lookup method that takes a @ref RegisterDescriptor argument, but instead of returning the
+     *  name it returns a pointer to the @ref RegisterDescriptor in the dictionary. Returns null if the specified register does
+     *  not exist in this dictionary. Beware that this pointer is only valid until the dictionary is modified. */
+    const RegisterDescriptor* exists(const RegisterDescriptor&) const;
+
     /** Finds the first largest register with specified major and minor number.
      *
      *  Returns the first register with the largest width and having the specified major and minor numbers. Registers wider
