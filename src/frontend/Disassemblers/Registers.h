@@ -139,8 +139,7 @@ public:
     static const RegisterDictionary *dictionary_coldfire_emac();
 
 private:
-    typedef std::map<uint64_t/*desc_hash*/, std::vector<std::string> > Reverse;
-    static uint64_t hash(const RegisterDescriptor&);
+    typedef std::map<RegisterDescriptor, std::vector<std::string> > Reverse; // a descriptor can have more than one name
     std::string name; /*name of the dictionary, usually an architecture name like 'i386'*/
     Entries forward;
     Reverse reverse;

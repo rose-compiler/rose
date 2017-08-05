@@ -39,7 +39,7 @@ enum FollowCalls { SINGLE_FUNCTION, FOLLOW_CALLS };
 // so that they hopefully don't conflict with any real registers, which tend to start counting at zero.  Since we're using
 // BaseSemantics::RegisterStateGeneric, we can use its flexibility to store extra "registers" without making any other changes
 // to the architecture.
-static const RegisterDescriptor REG_PATH(99, 0, 0, 1);
+static const RegisterDescriptor REG_PATH(15, 1023, 0, 1);
 
 // This is the register where functions will store their return value.
 static RegisterDescriptor REG_RETURN;
