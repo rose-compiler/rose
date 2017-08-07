@@ -126,34 +126,35 @@ install-rose-library: install-data-local
 rose-installer-rmc2: install-rose-library
 	rm -rf $@.tmp
 	mkdir  $@.tmp
-	TMPDIR=$@.tmp $(top_srcdir)/scripts/mkinstaller	\
-		--create="$@"					\
-		--cc="$(C_VENDOR) $(C_VERSION)"			\
-		--cxx="$(CXX_VENDOR) $(CXX_VERSION)"		\
-		--contact="http://rosecompiler.org"		\
-		--os="$(RMC_OS_NAME)"				\
-		--prjnam=ROSE					\
-		--prjver=$(PACKAGE_VERSION)			\
-		$(prefix)/*					\
-		$(addsuffix /*, $(filter-out / /usr /usr/local,	\
-		    $(BOOST_ROOT)				\
-		    $(CMAKE_ROOT)				\
-		    $(DLIB_ROOT)				\
-		    $(GNU_COMPILERS_ROOT)			\
-		    $(LIBBZ2_ROOT)				\
-		    $(LIBGCRYPT_ROOT)				\
-		    $(LIBGPG_ERROR_ROOT)			\
-		    $(LIBGRAPHICSMAGICK_ROOT)			\
-		    $(LIBJPEG_ROOT)				\
-		    $(LIBLCMS_ROOT)				\
-		    $(LIBLZMA_ROOT)				\
-		    $(LIBPNG_ROOT)				\
-		    $(LIBTIFF_ROOT)				\
-		    $(PYTHON_ROOT)				\
-		    $(SPOT_ROOT)				\
-		    $(WT_ROOT)					\
-		    $(YAMLCPP_ROOT)				\
-		    $(ZLIB_ROOT)				\
+	TMPDIR=$@.tmp $(top_srcdir)/scripts/mkinstaller					\
+		--create="$@"								\
+		--cc="$(C_VENDOR) $(C_VERSION)"						\
+		--cxx="$(CXX_VENDOR) $(CXX_VERSION)"					\
+		--contact="http://rosecompiler.org"					\
+		--os="$(RMC_OS_NAME)"							\
+		--prjnam=ROSE								\
+		--prjver=$(PACKAGE_VERSION)						\
+		--postinstall-sh=$(top_srcdir)/scripts/mkinstaller-postinstall.sh	\
+		$(prefix)/*								\
+		$(addsuffix /*, $(filter-out / /usr /usr/local,				\
+		    $(BOOST_ROOT)							\
+		    $(CMAKE_ROOT)							\
+		    $(DLIB_ROOT)							\
+		    $(GNU_COMPILERS_ROOT)						\
+		    $(LIBBZ2_ROOT)							\
+		    $(LIBGCRYPT_ROOT)							\
+		    $(LIBGPG_ERROR_ROOT)						\
+		    $(LIBGRAPHICSMAGICK_ROOT)						\
+		    $(LIBJPEG_ROOT)							\
+		    $(LIBLCMS_ROOT)							\
+		    $(LIBLZMA_ROOT)							\
+		    $(LIBPNG_ROOT)							\
+		    $(LIBTIFF_ROOT)							\
+		    $(PYTHON_ROOT)							\
+		    $(SPOT_ROOT)							\
+		    $(WT_ROOT)								\
+		    $(YAMLCPP_ROOT)							\
+		    $(ZLIB_ROOT)							\
 		))
 	rm -rf $@.tmp
 
