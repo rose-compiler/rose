@@ -47,6 +47,8 @@
 #include "DataRaceDetection.h"
 
 // test
+#include "SSAGenerator.h"
+#include "ReachabilityAnalyzerZ3.h"
 #include "Evaluator.h"
 #include "DotGraphCfgFrontend.h"
 #include "ParProAnalyzer.h"
@@ -372,6 +374,10 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
     ("post-semantic-fold",po::value< string >(),"compute semantically folded state transition graph only after the complete transition graph has been computed. [=yes|no]")
     ("trace-file", po::value< string >(), "generate STG computation trace [=filename]")
     ("explicit-arrays",po::value< string >(),"represent all arrays ecplicitly in every state.")
+    ("z3", "RERS specific reachability analysis using z3")	
+    ("rers-upper-input-bound", po::value< int >(), "RERS specific parameter for z3")
+    ("rers-verifier-error-number",po::value< int >(), "RERS specific parameter for z3")
+    ("ssa", "Generate SSA form (only works for programs without function calls, loops, jumps, pointers and returns)")
     ;
 
   rersOptions.add_options()
@@ -1125,7 +1131,6 @@ int main( int argc, char * argv[] ) {
     BoolOptions boolOptions = parseBoolOptions(argc, argv);
 
     // Check if chosen options are available
-
 #ifndef HAVE_SPOT
     // display error message and exit in case SPOT is not avaiable, but related options are selected
     if (args.count("csv-stats-cegpra") ||
@@ -1154,12 +1159,19 @@ int main( int argc, char * argv[] ) {
 	args.count("output-with-annotations")){
       cerr << "Error: Options selected that require the SPOT library, however SPOT was not selected during configuration." << endl;
       exit(1);
-
     }
 #endif
 
-    // Start execution
+#ifndef HAVE_Z3
+    if (args.count("z3") ||
+	args.count("rers-upper-input-bound") ||
+	args.count("rers-verifier-error-number")){
+      cerr << "Error: Options selected that require the Z3 library, however Z3 was not selected during configuration." << endl;
+      exit(1);
+    }
+#endif	
 
+    // Start execution
     mfacilities.control(args["log-level"].as<string>());
     logger[TRACE] << "Log level is " << args["log-level"].as<string>() << endl;
 
@@ -1569,7 +1581,7 @@ int main( int argc, char * argv[] ) {
     if(boolOptions["semantic-fold"]) {
       analyzer.setSolver(4);
     }
-    if(!analyzer.getModeLTLDriven()) {
+    if(!analyzer.getModeLTLDriven() && args.count("z3") == 0 && args.count("ssa") == 0) {
       analyzer.runSolver();
     }
 
@@ -1629,6 +1641,29 @@ int main( int argc, char * argv[] ) {
     if(analyzer.getOptionStatusMessages()) {
       analyzer.reachabilityResults.printResultsStatistics();
       analyzer.printStatusMessageLine("==============================================================");
+    }
+
+#ifdef HAVE_Z3
+    if(args.count("z3"))
+    {
+	assert(args.count("rers-upper-input-bound") != 0 &&  args.count("rers-verifier-error-number") != 0);	
+	int RERSUpperBoundForInput = args["rers-upper-input-bound"].as<int>();
+	int RERSVerifierErrorNumber = args["rers-verifier-error-number"].as<int>();
+	cout << "generateSSAForm()" << endl;
+	ReachabilityAnalyzerZ3* reachAnalyzer = new ReachabilityAnalyzerZ3(RERSUpperBoundForInput, RERSVerifierErrorNumber, &analyzer, &logger);	
+	cout << "checkReachability()" << endl;
+	reachAnalyzer->checkReachability();
+
+	exit(0);
+    }
+#endif	
+
+    if(args.count("ssa"))
+    {
+	SSAGenerator* ssaGen = new SSAGenerator(&analyzer, &logger);
+	ssaGen->generateSSAForm();
+
+	exit(0);
     }
 
     long pstateSetSize=analyzer.getPStateSet()->size();
