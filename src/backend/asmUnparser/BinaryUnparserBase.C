@@ -1320,7 +1320,7 @@ Base::emitUnsignedInteger(std::ostream &out, const Sawyer::Container::BitVector 
 }
 
 void
-Base::emitRegister(std::ostream &out, const RegisterDescriptor &reg, State &state) const {
+Base::emitRegister(std::ostream &out, RegisterDescriptor reg, State &state) const {
     if (nextUnparser()) {
         nextUnparser()->emitRegister(out, reg, state);
     } else {

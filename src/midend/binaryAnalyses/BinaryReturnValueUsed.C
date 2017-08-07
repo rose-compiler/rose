@@ -30,7 +30,7 @@ static std::string
 locationNames(const RegisterParts &parts, const RegisterDictionary *regdict) {
     std::vector<std::string> retval;
     RegisterNames regNames(regdict);
-    BOOST_FOREACH (const RegisterDescriptor &reg, parts.listAll(regdict))
+    BOOST_FOREACH (RegisterDescriptor reg, parts.listAll(regdict))
         retval.push_back(regNames(reg));
     return boost::join(retval, ", ");
 }
@@ -159,7 +159,7 @@ public:
     /** @} */
 
 public:
-    virtual S2::BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg,
+    virtual S2::BaseSemantics::SValuePtr readRegister(RegisterDescriptor reg,
                                                       const S2::BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE {
         // Reading from a register that's still listed as an output means that it's definitely a used return value.
         RegisterParts found = calleeOutputRegisters_ & RegisterParts(reg);
@@ -173,7 +173,7 @@ public:
         return Super::readRegister(reg, dflt);
     }
 
-    virtual void writeRegister(const RegisterDescriptor &reg, const S2::BaseSemantics::SValuePtr &value) ROSE_OVERRIDE {
+    virtual void writeRegister(RegisterDescriptor reg, const S2::BaseSemantics::SValuePtr &value) ROSE_OVERRIDE {
         // Writing to a register means that the callee's return value is definitely not used.
         RegisterParts found = calleeOutputRegisters_ & RegisterParts(reg);
         if (!found.isEmpty()) {
@@ -186,14 +186,14 @@ public:
         Super::writeRegister(reg, value);
     }
 
-    virtual S2::BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg, const S2::BaseSemantics::SValuePtr &addr,
+    virtual S2::BaseSemantics::SValuePtr readMemory(RegisterDescriptor segreg, const S2::BaseSemantics::SValuePtr &addr,
                                                     const S2::BaseSemantics::SValuePtr &dflt,
                                                     const S2::BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE {
         // TODO
         return Super::readMemory(segreg, addr, dflt, cond);
     }
 
-    virtual void writeMemory(const RegisterDescriptor &segreg, const S2::BaseSemantics::SValuePtr &addr,
+    virtual void writeMemory(RegisterDescriptor segreg, const S2::BaseSemantics::SValuePtr &addr,
                              const S2::BaseSemantics::SValuePtr &value, const S2::BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE {
         // TODO
         Super::writeMemory(segreg, addr, value, cond);
@@ -413,7 +413,7 @@ Analysis::analyzeCallSite(const P2::Partitioner &partitioner, const P2::ControlF
                 if (callerBehavior.didConverge()) {
                     SAWYER_MESG(mlog[DEBUG]) <<"  return from " <<caller->printableName() <<" implicitly uses: "
                                              <<locationNames(callerBehavior.outputRegisters(), regdict) <<"\n";
-                    BOOST_FOREACH (const RegisterDescriptor &reg, callerBehavior.outputRegisters().listAll(regdict))
+                    BOOST_FOREACH (RegisterDescriptor reg, callerBehavior.outputRegisters().listAll(regdict))
                         (void) ops->readRegister(reg, ops->undefined_(reg.get_nbits()));
                 }
             }

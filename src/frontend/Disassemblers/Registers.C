@@ -18,7 +18,7 @@ operator<<(std::ostream &o, const RegisterDictionary &dict)
  *******************************************************************************************************************************/
 
 std::string
-RegisterNames::operator()(const RegisterDescriptor &rdesc, const RegisterDictionary *dict_/*=NULL*/) const
+RegisterNames::operator()(RegisterDescriptor rdesc, const RegisterDictionary *dict_/*=NULL*/) const
 {
     if (!rdesc.is_valid())
         return prefix + (prefix==""?"":"_") + "NONE";
@@ -46,7 +46,7 @@ RegisterNames::operator()(const RegisterDescriptor &rdesc, const RegisterDiction
  *******************************************************************************************************************************/
 
 void
-RegisterDictionary::insert(const std::string &name, const RegisterDescriptor &rdesc) {
+RegisterDictionary::insert(const std::string &name, RegisterDescriptor rdesc) {
     /* Erase the name from the reverse lookup map, indexed by the old descriptor. */
     Entries::iterator fi = forward.find(name);
     if (fi!=forward.end()) {
@@ -89,7 +89,7 @@ RegisterDictionary::lookup(const std::string &name) const {
 }
 
 const std::string &
-RegisterDictionary::lookup(const RegisterDescriptor &rdesc) const {
+RegisterDictionary::lookup(RegisterDescriptor rdesc) const {
     Reverse::const_iterator ri = reverse.find(rdesc);
     if (ri!=reverse.end()) {
         for (size_t i=ri->second.size(); i>0; --i) {
@@ -106,7 +106,7 @@ RegisterDictionary::lookup(const RegisterDescriptor &rdesc) const {
 }
 
 const RegisterDescriptor*
-RegisterDictionary::exists(const RegisterDescriptor &rdesc) const {
+RegisterDictionary::exists(RegisterDescriptor rdesc) const {
     Reverse::const_iterator found = reverse.find(rdesc);
     if (found == reverse.end())
         return NULL;
@@ -117,7 +117,7 @@ RegisterDescriptor
 RegisterDictionary::findLargestRegister(unsigned major, unsigned minor, size_t maxWidth) const {
     RegisterDescriptor retval;
     for (Entries::const_iterator iter=forward.begin(); iter!=forward.end(); ++iter) {
-        const RegisterDescriptor &reg = iter->second;
+        RegisterDescriptor reg = iter->second;
         if (major == reg.get_major() && minor == reg.get_minor()) {
             if (maxWidth > 0 && reg.get_nbits() > maxWidth) {
                 // ignore

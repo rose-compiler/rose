@@ -294,7 +294,7 @@ AsmUnparser::line_prefix() const
 }
 
 std::string
-AsmUnparser::invalid_register(SgAsmInstruction *insn, const RegisterDescriptor &reg, const RegisterDictionary *regdict)
+AsmUnparser::invalid_register(SgAsmInstruction *insn, RegisterDescriptor reg, const RegisterDictionary *regdict)
 {
     using namespace StringUtility;
     Stream warn(mlog[WARN]);

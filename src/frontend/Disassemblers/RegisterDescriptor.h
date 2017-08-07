@@ -170,7 +170,7 @@ public:
      *
      *  Two descriptors are equal if and only if they have the same major numbers, minor numbers, offsets, and width. Note that
      *  all properties are significant even if the width is zero or @ref isEmpty returns true. */
-    bool operator==(const RegisterDescriptor &other) const {
+    bool operator==(RegisterDescriptor other) const {
         return data_ == other.data_;
     }
 
@@ -178,7 +178,7 @@ public:
      *
      *  Two descriptors are unequal if they differ in major numbers, minor numbers, offsets, or widths. Note that all
      *  properties are significant even if the width is zero or @ref isEmpty returns true. */
-    bool operator!=(const RegisterDescriptor &other) const {
+    bool operator!=(RegisterDescriptor other) const {
         return data_ != other.data_;
     }
 
@@ -194,7 +194,7 @@ public:
         o <<"{" <<majorNumber() <<"," <<minorNumber() <<"," <<offset() <<"," <<nBits() <<"}";
     }
 
-    friend std::ostream& operator<<(std::ostream&, const RegisterDescriptor&);
+    friend std::ostream& operator<<(std::ostream&, RegisterDescriptor);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Old interface  (not deprecated yet, just implemented in terms of the new interface)

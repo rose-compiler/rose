@@ -194,7 +194,7 @@ public:
     SgAsmRegisterReferenceExpression *makeFPRegister(unsigned regnum);
 
     /** Generic ways to make a register. */
-    SgAsmRegisterReferenceExpression *makeRegister(const RegisterDescriptor&);
+    SgAsmRegisterReferenceExpression *makeRegister(RegisterDescriptor);
 
     /** Create an integer expression from a specified value. */
     SgAsmIntegerValueExpression *makeImmediateValue(M68kDataFormat fmt, unsigned value);

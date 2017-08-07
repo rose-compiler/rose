@@ -2151,7 +2151,7 @@ struct IP_mac: P {
         // Load the accumulator
         SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(args[3]);
         ASSERT_not_null2(rre, "fourth operand must be a MAC accumulator register");
-        const RegisterDescriptor &macAccReg = rre->get_descriptor();
+        RegisterDescriptor macAccReg = rre->get_descriptor();
         ASSERT_require2(macAccReg.get_major()==m68k_regclass_mac, "fourth operand must be a MAC accumulator register");
         ASSERT_require2(macAccReg.get_nbits()==32, "MAC accumulator register must be 32 bits");
         RegisterDescriptor macExtReg;

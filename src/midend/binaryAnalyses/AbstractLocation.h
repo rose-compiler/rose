@@ -44,7 +44,7 @@ public:
     /** Register referent.
      *
      *  Constructs an abstract location that refers to a register. */
-    explicit AbstractLocation(const RegisterDescriptor &reg, const RegisterDictionary *regdict=NULL)
+    explicit AbstractLocation(RegisterDescriptor reg, const RegisterDictionary *regdict=NULL)
         : reg_(reg), nBytes_(0), regdict_(regdict) {}
 
     /** Memory referent.
@@ -84,7 +84,7 @@ public:
      *  Returns the register to which this abstract location refers.  When called for an abstract location for which @ref
      *  isRegister returns false, the return value is an invalid register descriptor (i.e., one for which
      *  RegisterDescriptor::is_valid returns false. */
-    const RegisterDescriptor& getRegister() const { return reg_; }
+    RegisterDescriptor getRegister() const { return reg_; }
 
     /** Returns memory address.
      *

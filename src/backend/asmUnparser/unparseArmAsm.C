@@ -9,7 +9,7 @@ using namespace Diagnostics;
 using namespace BinaryAnalysis;
 
 static std::string unparseArmRegister(SgAsmRegisterReferenceExpression *reg, const RegisterDictionary *registers) {
-    const RegisterDescriptor &rdesc = reg->get_descriptor();
+    RegisterDescriptor rdesc = reg->get_descriptor();
     if (!registers)
         registers = RegisterDictionary::dictionary_arm7();
     

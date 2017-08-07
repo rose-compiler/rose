@@ -227,7 +227,7 @@ public:
     virtual void emitOperandBody(std::ostream&, SgAsmExpression*, State&) const;
     virtual void emitOperandEpilogue(std::ostream&, SgAsmExpression*, State&) const;
 
-    virtual void emitRegister(std::ostream&, const RegisterDescriptor&, State&) const;
+    virtual void emitRegister(std::ostream&, RegisterDescriptor, State&) const;
     virtual std::vector<std::string> emitUnsignedInteger(std::ostream&, const Sawyer::Container::BitVector&, State&) const;
     virtual std::vector<std::string> emitSignedInteger(std::ostream&, const Sawyer::Container::BitVector&, State&) const;
     virtual std::vector<std::string> emitInteger(std::ostream&, const Sawyer::Container::BitVector&, State&,

@@ -305,7 +305,7 @@ RiscOperators::substitute(const SValuePtr &from, const SValuePtr &to)
     struct RegSubst: RegisterState::Visitor {
         SValuePtr from, to;
         RegSubst(const SValuePtr &from, const SValuePtr &to): from(from), to(to) {}
-        virtual BaseSemantics::SValuePtr operator()(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &val_) {
+        virtual BaseSemantics::SValuePtr operator()(RegisterDescriptor reg, const BaseSemantics::SValuePtr &val_) {
             SValuePtr val = SValue::promote(val_);
             return val->substitute(from, to);
         }
@@ -998,7 +998,7 @@ RiscOperators::signExtend(const BaseSemantics::SValuePtr &a_, size_t new_width)
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::readRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &dflt) 
+RiscOperators::readRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &dflt) 
 {
     PartialDisableUsedef du(this);
     SValuePtr result = SValue::promote(BaseSemantics::RiscOperators::readRegister(reg, dflt));
@@ -1021,7 +1021,7 @@ RiscOperators::readRegister(const RegisterDescriptor &reg, const BaseSemantics::
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::peekRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &dflt) {
+RiscOperators::peekRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &dflt) {
     PartialDisableUsedef du(this);
     BaseSemantics::SValuePtr result = BaseSemantics::RiscOperators::peekRegister(reg, dflt);
     ASSERT_require(result!=NULL && result->get_width() == reg.get_nbits());
@@ -1029,7 +1029,7 @@ RiscOperators::peekRegister(const RegisterDescriptor &reg, const BaseSemantics::
 }
 
 void
-RiscOperators::writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &a_)
+RiscOperators::writeRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &a_)
 {
     SValuePtr a = SValue::promote(a_->copy());
     PartialDisableUsedef du(this);
@@ -1054,7 +1054,7 @@ RiscOperators::writeRegister(const RegisterDescriptor &reg, const BaseSemantics:
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::readMemory(const RegisterDescriptor &segreg,
+RiscOperators::readMemory(RegisterDescriptor segreg,
                           const BaseSemantics::SValuePtr &address,
                           const BaseSemantics::SValuePtr &dflt,
                           const BaseSemantics::SValuePtr &condition) {
@@ -1122,7 +1122,7 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg,
 }
 
 void
-RiscOperators::writeMemory(const RegisterDescriptor &segreg,
+RiscOperators::writeMemory(RegisterDescriptor segreg,
                            const BaseSemantics::SValuePtr &address_,
                            const BaseSemantics::SValuePtr &value_,
                            const BaseSemantics::SValuePtr &condition) {

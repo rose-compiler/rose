@@ -47,7 +47,7 @@ RegisterDescriptor::nBits(size_t width) {
 }
 
 std::ostream&
-operator<<(std::ostream &o, const RegisterDescriptor &reg) {
+operator<<(std::ostream &o, RegisterDescriptor reg) {
     reg.print(o);
     return o;
 }
