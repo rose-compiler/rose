@@ -23,10 +23,12 @@
  *  registers (such as "eax" and "rax", the 32- and 64-bit versions of a single CPU register) do, in fact, overlap in the
  *  RegisterDescriptor address space and that the overlap indicates how the registers are related.
  *
- *  Users should not assume that RegisterDescriptor entries from two separate dictionaries are compatible. Looking up the "eax"
- *  register in one dictionary may return a different descriptor than "eax" looked up in a different dictionary.  Components of
- *  the ROSE binary support that generate RegisterDescriptors provide a mechanism for obtaining (and possibly setting) the
- *  register dictionary.  For instance, the Disassembler class has get_registers() and set_registers() methods. */
+ *  Users should not assume that RegisterDescriptor entries from two separate dictionaries are compatible, although the
+ *  dictionaries created by the ROSE library do use compatible descriptors across each family. Looking up the "eax" register in
+ *  one dictionary may return a different descriptor than "eax" looked up in a different dictionary (but not in ROSE-created
+ *  dictinaries).  Components of the ROSE binary support that generate RegisterDescriptors provide a mechanism for obtaining
+ *  (and possibly setting) the register dictionary.  For instance, the Disassembler class has get_registers() and
+ *  set_registers() methods. */
 class RegisterDictionary {
 public:
     typedef std::map<std::string/*name*/, RegisterDescriptor> Entries;
@@ -139,8 +141,7 @@ public:
     static const RegisterDictionary *dictionary_coldfire_emac();
 
 private:
-    typedef std::map<uint64_t/*desc_hash*/, std::vector<std::string> > Reverse;
-    static uint64_t hash(const RegisterDescriptor&);
+    typedef std::map<RegisterDescriptor, std::vector<std::string> > Reverse; // a descriptor can have more than one name
     std::string name; /*name of the dictionary, usually an architecture name like 'i386'*/
     Entries forward;
     Reverse reverse;
@@ -188,7 +189,7 @@ public:
 
     /** Insert a definition into the dictionary.  If the name already exists in the dictionary then the new RegisterDescriptor
      *  will replace the one that already exists. */
-    void insert(const std::string &name, const RegisterDescriptor&);
+    void insert(const std::string &name, RegisterDescriptor);
 
     /** Insert a definition into the dictionary.  If the name already exists in the dictionary then the new RegisterDescriptor
      *  will replace the one that already exists. */
@@ -215,7 +216,14 @@ public:
     /** Returns a register name for a given descriptor. If more than one register has the same descriptor then the name added
      *  latest is returned.  If no register is found then either return the empty string (default) or generate a generic name
      *  according to the optional supplied NameGenerator. */
-    const std::string& lookup(const RegisterDescriptor&) const;
+    const std::string& lookup(RegisterDescriptor) const;
+
+    /** Determine if a register descriptor exists.
+     *
+     *  This is similar to the @ref lookup method that takes a @ref RegisterDescriptor argument, but instead of returning the
+     *  name it returns a pointer to the @ref RegisterDescriptor in the dictionary. Returns null if the specified register does
+     *  not exist in this dictionary. Beware that this pointer is only valid until the dictionary is modified. */
+    const RegisterDescriptor* exists(RegisterDescriptor) const;
 
     /** Finds the first largest register with specified major and minor number.
      *
@@ -266,7 +274,7 @@ public:
     public:
         enum Direction { ASCENDING, DESCENDING };
         explicit SortBySize(Direction d=DESCENDING): direction(d) {}
-        bool operator()(const RegisterDescriptor &a, const RegisterDescriptor &b) const {
+        bool operator()(RegisterDescriptor a, RegisterDescriptor b) const {
             return ASCENDING==direction ?
                 a.get_nbits() < b.get_nbits() :
                 a.get_nbits() > b.get_nbits();
@@ -351,7 +359,7 @@ public:
 
     /** Obtain a name for a register descriptor.  If a dictionary is supplied, then it will be used instead of the dictionary
      *  that was supplied to the constructor. */
-    std::string operator()(const RegisterDescriptor&, const RegisterDictionary *dict=NULL) const;
+    std::string operator()(RegisterDescriptor, const RegisterDictionary *dict=NULL) const;
 
     const RegisterDictionary *dflt_dict;/**< Dictionary supplied to the constructor. */
     std::string prefix;                 /**< The leading part of a register name. */

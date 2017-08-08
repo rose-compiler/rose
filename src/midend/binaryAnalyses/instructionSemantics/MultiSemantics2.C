@@ -806,7 +806,7 @@ RiscOperators::fpRoundTowardZero(const BaseSemantics::SValuePtr &a, SgAsmFloatTy
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::readRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &dflt)
+RiscOperators::readRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &dflt)
 {
     SValuePtr retval = svalue_empty(reg.get_nbits());
     SUBDOMAINS(sd, ())
@@ -815,14 +815,14 @@ RiscOperators::readRegister(const RegisterDescriptor &reg, const BaseSemantics::
 }
 
 void
-RiscOperators::writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &a)
+RiscOperators::writeRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &a)
 {
     SUBDOMAINS(sd, (a))
         sd->writeRegister(reg, sd(a));
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr,
+RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr,
                           const BaseSemantics::SValuePtr &dflt, const BaseSemantics::SValuePtr &cond)
 {
     SValuePtr retval = svalue_empty(dflt->get_width());
@@ -832,7 +832,7 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics:
 }
 
 void
-RiscOperators::writeMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr,
+RiscOperators::writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr,
                            const BaseSemantics::SValuePtr &data, const BaseSemantics::SValuePtr &cond)
 {
     SUBDOMAINS(sd, (addr, data, cond))

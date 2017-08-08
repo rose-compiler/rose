@@ -113,7 +113,7 @@ public:
     
 public:
     // Reads a register from the subordinate process, unless we've already written to that register.
-    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg) ROSE_OVERRIDE {
+    virtual BaseSemantics::SValuePtr readRegister(RegisterDescriptor reg) ROSE_OVERRIDE {
         using namespace Sawyer::Container;
         RegisterStatePtr regs = RegisterState::promote(currentState()->registerState());
         if (regs->is_partly_stored(reg))
@@ -129,7 +129,7 @@ public:
 
 public:
     // Reads memory from the subordinate process.
-    virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg,
+    virtual BaseSemantics::SValuePtr readMemory(RegisterDescriptor segreg,
                                                 const BaseSemantics::SValuePtr &addr,
                                                 const BaseSemantics::SValuePtr &dflt,
                                                 const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE {

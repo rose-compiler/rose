@@ -136,7 +136,7 @@ public:
      * @code
      *  uint64_t value = debugger.readRegister(RIP).toInteger();
      * @endcode */
-    Sawyer::Container::BitVector readRegister(const RegisterDescriptor&);
+    Sawyer::Container::BitVector readRegister(RegisterDescriptor);
 
     /** Read subordinate memory.
      *

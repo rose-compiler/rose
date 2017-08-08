@@ -883,7 +883,7 @@ public:
      *  registers are already initialized.
      *
      *  See @ref RiscOperators::readRegister for more details. */
-    virtual SValuePtr readRegister(const RegisterDescriptor &reg, const SValuePtr &dflt, RiscOperators *ops) = 0;
+    virtual SValuePtr readRegister(RegisterDescriptor reg, const SValuePtr &dflt, RiscOperators *ops) = 0;
 
     /** Write a value to a register.
      *
@@ -891,7 +891,7 @@ public:
      *  "ah", "ax", "eax", and "rax" are all the same hardware register on an amd64, but refer to different parts of that
      *  register). The RISC operations are provided so that they can be used to insert the @p value bits into a wider the
      *  hardware register if necessary. See @ref RiscOperators::readRegister for more details. */
-    virtual void writeRegister(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops) = 0;
+    virtual void writeRegister(RegisterDescriptor reg, const SValuePtr &value, RiscOperators *ops) = 0;
 
     /** Print the register contents. This emits one line per register and contains the register name and its value.
      *  @{ */
@@ -1016,8 +1016,8 @@ public:
 public:
     virtual void clear() ROSE_OVERRIDE;
     virtual void zero() ROSE_OVERRIDE;
-    virtual SValuePtr readRegister(const RegisterDescriptor &reg, const SValuePtr &dflt, RiscOperators *ops) ROSE_OVERRIDE;
-    virtual void writeRegister(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops) ROSE_OVERRIDE;
+    virtual SValuePtr readRegister(RegisterDescriptor reg, const SValuePtr &dflt, RiscOperators *ops) ROSE_OVERRIDE;
+    virtual void writeRegister(RegisterDescriptor reg, const SValuePtr &value, RiscOperators *ops) ROSE_OVERRIDE;
     virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;
     virtual bool merge(const RegisterStatePtr &other, RiscOperators *ops) ROSE_OVERRIDE;
 
@@ -1025,25 +1025,25 @@ public:
     // Methods first declared at this level of the class hierarchy
 protected:
     // helpers for readRegister()
-    virtual SValuePtr readRegisterGpr(const RegisterDescriptor &reg, RiscOperators *ops);
-    virtual SValuePtr readRegisterFlag(const RegisterDescriptor &reg, RiscOperators *ops);
-    virtual SValuePtr readRegisterSeg(const RegisterDescriptor &reg, RiscOperators *ops);
-    virtual SValuePtr readRegisterIp(const RegisterDescriptor &reg, RiscOperators *ops);
-    virtual SValuePtr readRegisterSt(const RegisterDescriptor &reg, RiscOperators *ops);
-    virtual SValuePtr readRegisterXmm(const RegisterDescriptor &reg, RiscOperators *ops);
-    virtual SValuePtr readRegisterFpStatus(const RegisterDescriptor &reg, RiscOperators *ops);
+    virtual SValuePtr readRegisterGpr(RegisterDescriptor reg, RiscOperators *ops);
+    virtual SValuePtr readRegisterFlag(RegisterDescriptor reg, RiscOperators *ops);
+    virtual SValuePtr readRegisterSeg(RegisterDescriptor reg, RiscOperators *ops);
+    virtual SValuePtr readRegisterIp(RegisterDescriptor reg, RiscOperators *ops);
+    virtual SValuePtr readRegisterSt(RegisterDescriptor reg, RiscOperators *ops);
+    virtual SValuePtr readRegisterXmm(RegisterDescriptor reg, RiscOperators *ops);
+    virtual SValuePtr readRegisterFpStatus(RegisterDescriptor reg, RiscOperators *ops);
 
     // helpers for writeRegister()
-    virtual void writeRegisterGpr(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops);
-    virtual void writeRegisterFlag(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops);
-    virtual void writeRegisterSeg(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops);
-    virtual void writeRegisterIp(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops);
-    virtual void writeRegisterSt(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops);
-    virtual void writeRegisterXmm(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops);
-    virtual void writeRegisterFpStatus(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops);
+    virtual void writeRegisterGpr(RegisterDescriptor reg, const SValuePtr &value, RiscOperators *ops);
+    virtual void writeRegisterFlag(RegisterDescriptor reg, const SValuePtr &value, RiscOperators *ops);
+    virtual void writeRegisterSeg(RegisterDescriptor reg, const SValuePtr &value, RiscOperators *ops);
+    virtual void writeRegisterIp(RegisterDescriptor reg, const SValuePtr &value, RiscOperators *ops);
+    virtual void writeRegisterSt(RegisterDescriptor reg, const SValuePtr &value, RiscOperators *ops);
+    virtual void writeRegisterXmm(RegisterDescriptor reg, const SValuePtr &value, RiscOperators *ops);
+    virtual void writeRegisterFpStatus(RegisterDescriptor reg, const SValuePtr &value, RiscOperators *ops);
 
     // Generate a name for initial values.
-    virtual std::string initialValueName(const RegisterDescriptor&) const;
+    virtual std::string initialValueName(RegisterDescriptor) const;
 };
 
 
@@ -1406,13 +1406,13 @@ public:
      *
      *  The @ref BaseSemantics::readRegister implementation simply delegates to the register state member of this state.  See
      *  @ref BaseSemantics::RiscOperators::readRegister for details. */
-    virtual SValuePtr readRegister(const RegisterDescriptor &desc, const SValuePtr &dflt, RiscOperators *ops);
+    virtual SValuePtr readRegister(RegisterDescriptor desc, const SValuePtr &dflt, RiscOperators *ops);
 
     /** Write a value to a register.
      *
      *  The @ref BaseSemantics::writeRegister implementation simply delegates to the register state member of this state.  See
      *  @ref BaseSemantics::RiscOperators::writeRegister for details. */
-    virtual void writeRegister(const RegisterDescriptor &desc, const SValuePtr &value, RiscOperators *ops);
+    virtual void writeRegister(RegisterDescriptor desc, const SValuePtr &value, RiscOperators *ops);
 
     /** Read a value from memory.
      *
@@ -2146,10 +2146,10 @@ public:
      *  which layer should invoke the @ref extract or @ref concat (or whatever other RISC operations might be necessary).
      *
      *  @{ */
-    virtual SValuePtr readRegister(const RegisterDescriptor &reg) { // old subclasses can still override this if they want,
-        return readRegister(reg, undefined_(reg.get_nbits()));      // but new subclasses should not override this method.
+    virtual SValuePtr readRegister(RegisterDescriptor reg) {   // old subclasses can still override this if they want,
+        return readRegister(reg, undefined_(reg.get_nbits())); // but new subclasses should not override this method.
     }
-    virtual SValuePtr readRegister(const RegisterDescriptor &reg, const SValuePtr &dflt); // new subclasses override this
+    virtual SValuePtr readRegister(RegisterDescriptor reg, const SValuePtr &dflt); // new subclasses override this
     /** @} */
 
     /** Writes a value to a register.
@@ -2161,7 +2161,7 @@ public:
      *  task of writing a value to the specified register when the underlying register state doesn't actually store a value for
      *  that specific register. The RiscOperations object is passed along for that purpose.  See @ref readRegister for more
      *  details. */
-    virtual void writeRegister(const RegisterDescriptor &reg, const SValuePtr &a) {
+    virtual void writeRegister(RegisterDescriptor reg, const SValuePtr &a) {
         ASSERT_not_null(currentState_);
         currentState_->writeRegister(reg, a, this);
     }
@@ -2188,7 +2188,7 @@ public:
      *
      *  The @p dflt argument determines the size of the value to be read. This argument is also passed along to the lower
      *  layers so that they can, if they desire, use it to initialize memory that has never been read or written before. */
-    virtual SValuePtr readMemory(const RegisterDescriptor &segreg, const SValuePtr &addr, const SValuePtr &dflt,
+    virtual SValuePtr readMemory(RegisterDescriptor segreg, const SValuePtr &addr, const SValuePtr &dflt,
                                  const SValuePtr &cond) = 0;
 
     /** Writes a value to memory.
@@ -2201,7 +2201,7 @@ public:
      *
      *  The @p cond argument is a Boolean value that indicates whether this is a true write operation. If @p cond can be proved
      *  to be false then writeMemory is a no-op. */
-    virtual void writeMemory(const RegisterDescriptor &segreg, const SValuePtr &addr, const SValuePtr &data,
+    virtual void writeMemory(RegisterDescriptor segreg, const SValuePtr &addr, const SValuePtr &data,
                              const SValuePtr &cond) = 0;
 
     /** Obtain a register value without side effects.
@@ -2209,7 +2209,7 @@ public:
      *  This is a lower-level operation than @ref readRegister in that it doesn't cause the register to be marked as having
      *  been read. It is typically used in situations where the register is being accessed for analysis purposes rather than as
      *  part of an instruction emulation. */
-    virtual SValuePtr peekRegister(const RegisterDescriptor&, const SValuePtr &dflt);
+    virtual SValuePtr peekRegister(RegisterDescriptor, const SValuePtr &dflt);
 };
 
 
@@ -2411,7 +2411,7 @@ public:
      *  name.  If a bit width is specified (@p nbits) then it must match the size of register that was found.  If a valid
      *  register cannot be found then either an exception is thrown or an invalid register is returned depending on whether
      *  @p allowMissing is false or true, respectively. */
-    virtual const RegisterDescriptor& findRegister(const std::string &regname, size_t nbits=0, bool allowMissing=false) const;
+    virtual RegisterDescriptor findRegister(const std::string &regname, size_t nbits=0, bool allowMissing=false) const;
 
     /** Property: Width of memory addresses.
      *

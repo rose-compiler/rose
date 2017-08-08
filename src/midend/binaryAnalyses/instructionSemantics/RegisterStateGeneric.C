@@ -77,7 +77,7 @@ has_null_value(const RegisterStateGeneric::RegPair &rp)
 }
 
 void
-RegisterStateGeneric::assertStorageConditions(const std::string &when, const RegisterDescriptor &reg) const {
+RegisterStateGeneric::assertStorageConditions(const std::string &when, RegisterDescriptor reg) const {
 #if !defined(NDEBUG) && defined(RegisterStateGeneric_ExtraAssertions)
 #if 1 // DEBUGGING [Robb P. Matzke 2015-09-28]
     static volatile size_t ncalls = 0;
@@ -120,7 +120,7 @@ RegisterStateGeneric::assertStorageConditions(const std::string &when, const Reg
 }
 
 RegisterStateGeneric::RegPairs&
-RegisterStateGeneric::scanAccessedLocations(const RegisterDescriptor &reg, RiscOperators *ops, bool markOverlapping,
+RegisterStateGeneric::scanAccessedLocations(RegisterDescriptor reg, RiscOperators *ops, bool markOverlapping,
                                             RegPairs &accessedParts /*out*/, RegPairs &preservedParts /*out*/) {
     BitRange accessedLocation = BitRange::baseSize(reg.get_offset(), reg.get_nbits());
     RegPairs &pairList = registers_.insertMaybeDefault(reg);
@@ -163,7 +163,7 @@ RegisterStateGeneric::scanAccessedLocations(const RegisterDescriptor &reg, RiscO
 }
 
 SValuePtr
-RegisterStateGeneric::readRegister(const RegisterDescriptor &reg, const SValuePtr &dflt, RiscOperators *ops)
+RegisterStateGeneric::readRegister(RegisterDescriptor reg, const SValuePtr &dflt, RiscOperators *ops)
 {
     ASSERT_require(reg.is_valid());
     ASSERT_not_null(dflt);
@@ -255,7 +255,7 @@ RegisterStateGeneric::readRegister(const RegisterDescriptor &reg, const SValuePt
 }
 
 void
-RegisterStateGeneric::writeRegister(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops)
+RegisterStateGeneric::writeRegister(RegisterDescriptor reg, const SValuePtr &value, RiscOperators *ops)
 {
     ASSERT_not_null(value);
     ASSERT_require2(reg.get_nbits()==value->get_width(), "value written to register must be the same width as the register");
@@ -348,14 +348,14 @@ RegisterStateGeneric::writeRegister(const RegisterDescriptor &reg, const SValueP
 }
 
 void
-RegisterStateGeneric::updateWriteProperties(const RegisterDescriptor &reg, InputOutputProperty prop) {
+RegisterStateGeneric::updateWriteProperties(RegisterDescriptor reg, InputOutputProperty prop) {
     insertProperties(reg, prop);
     if (prop == IO_WRITE)
         eraseProperties(reg, IO_READ_AFTER_WRITE);
 }
 
 void
-RegisterStateGeneric::updateReadProperties(const RegisterDescriptor &reg) {
+RegisterStateGeneric::updateReadProperties(RegisterDescriptor reg) {
     insertProperties(reg, IO_READ);
     BitProperties &props = properties_.insertMaybeDefault(reg);
     BitRange where = BitRange::baseSize(reg.get_offset(), reg.get_nbits());
@@ -371,7 +371,7 @@ RegisterStateGeneric::updateReadProperties(const RegisterDescriptor &reg) {
 }
 
 void
-RegisterStateGeneric::erase_register(const RegisterDescriptor &reg, RiscOperators *ops)
+RegisterStateGeneric::erase_register(RegisterDescriptor reg, RiscOperators *ops)
 {
     ASSERT_require(reg.is_valid());
     ASSERT_not_null(ops);
@@ -443,7 +443,7 @@ RegisterStateGeneric::deep_copy_values()
 }
 
 bool
-RegisterStateGeneric::is_partly_stored(const RegisterDescriptor &desc) const
+RegisterStateGeneric::is_partly_stored(RegisterDescriptor desc) const
 {
     BitRange want = BitRange::baseSize(desc.get_offset(), desc.get_nbits());
     BOOST_FOREACH (const RegPair &pair, registers_.getOrDefault(desc)) {
@@ -454,7 +454,7 @@ RegisterStateGeneric::is_partly_stored(const RegisterDescriptor &desc) const
 }
 
 bool
-RegisterStateGeneric::is_wholly_stored(const RegisterDescriptor &desc) const
+RegisterStateGeneric::is_wholly_stored(RegisterDescriptor desc) const
 {
     Sawyer::Container::IntervalSet<BitRange> desired;
     desired.insert(BitRange::baseSize(desc.get_offset(), desc.get_nbits()));
@@ -464,7 +464,7 @@ RegisterStateGeneric::is_wholly_stored(const RegisterDescriptor &desc) const
 }
 
 bool
-RegisterStateGeneric::is_exactly_stored(const RegisterDescriptor &desc) const
+RegisterStateGeneric::is_exactly_stored(RegisterDescriptor desc) const
 {
     BOOST_FOREACH (const RegPair &pair, registers_.getOrDefault(desc)) {
         if (desc == pair.desc)
@@ -474,7 +474,7 @@ RegisterStateGeneric::is_exactly_stored(const RegisterDescriptor &desc) const
 }
 
 ExtentMap
-RegisterStateGeneric::stored_parts(const RegisterDescriptor &desc) const
+RegisterStateGeneric::stored_parts(RegisterDescriptor desc) const
 {
     ExtentMap retval;
     Extent want(desc.get_offset(), desc.get_nbits());
@@ -486,7 +486,7 @@ RegisterStateGeneric::stored_parts(const RegisterDescriptor &desc) const
 }
 
 RegisterStateGeneric::RegPairs
-RegisterStateGeneric::overlappingRegisters(const RegisterDescriptor &needle) const {
+RegisterStateGeneric::overlappingRegisters(RegisterDescriptor needle) const {
     ASSERT_require(needle.is_valid());
     BitRange needleBits = BitRange::baseSize(needle.get_offset(), needle.get_nbits());
     RegPairs retval;
@@ -498,7 +498,7 @@ RegisterStateGeneric::overlappingRegisters(const RegisterDescriptor &needle) con
 }
 
 bool
-RegisterStateGeneric::insertWriters(const RegisterDescriptor &desc, const AddressSet &writerVas) {
+RegisterStateGeneric::insertWriters(RegisterDescriptor desc, const AddressSet &writerVas) {
     if (writerVas.isEmpty())
         return false;
     BitAddressSet &parts = writers_.insertMaybeDefault(desc);
@@ -507,7 +507,7 @@ RegisterStateGeneric::insertWriters(const RegisterDescriptor &desc, const Addres
 }
 
 void
-RegisterStateGeneric::eraseWriters(const RegisterDescriptor &desc, const AddressSet &writerVas) {
+RegisterStateGeneric::eraseWriters(RegisterDescriptor desc, const AddressSet &writerVas) {
     if (writerVas.isEmpty() || !writers_.exists(desc))
         return;
     BitAddressSet &parts = writers_[desc];
@@ -518,7 +518,7 @@ RegisterStateGeneric::eraseWriters(const RegisterDescriptor &desc, const Address
 }
 
 void
-RegisterStateGeneric::setWriters(const RegisterDescriptor &desc, const AddressSet &writerVas) {
+RegisterStateGeneric::setWriters(RegisterDescriptor desc, const AddressSet &writerVas) {
     if (writerVas.isEmpty()) {
         eraseWriters(desc);
     } else {
@@ -530,13 +530,13 @@ RegisterStateGeneric::setWriters(const RegisterDescriptor &desc, const AddressSe
 
 // [Robb P. Matzke 2015-08-07]: deprecated
 void
-RegisterStateGeneric::set_latest_writer(const RegisterDescriptor &desc, rose_addr_t writer_va)
+RegisterStateGeneric::set_latest_writer(RegisterDescriptor desc, rose_addr_t writer_va)
 {
     setWriters(desc, writer_va);
 }
 
 void
-RegisterStateGeneric::eraseWriters(const RegisterDescriptor &desc) {
+RegisterStateGeneric::eraseWriters(RegisterDescriptor desc) {
     if (!writers_.exists(desc))
         return;
     BitAddressSet &parts = writers_[desc];
@@ -548,7 +548,7 @@ RegisterStateGeneric::eraseWriters(const RegisterDescriptor &desc) {
 
 // [Robb P. Matzke 2015-08-07]: deprecated
 void
-RegisterStateGeneric::clear_latest_writer(const RegisterDescriptor &desc)
+RegisterStateGeneric::clear_latest_writer(RegisterDescriptor desc)
 {
     eraseWriters(desc);
 }
@@ -566,7 +566,7 @@ RegisterStateGeneric::clear_latest_writers()
 }
 
 bool
-RegisterStateGeneric::hasWritersAny(const RegisterDescriptor &desc) const {
+RegisterStateGeneric::hasWritersAny(RegisterDescriptor desc) const {
     if (!writers_.exists(desc))
         return false;
     const BitAddressSet &parts = writers_[desc];
@@ -575,7 +575,7 @@ RegisterStateGeneric::hasWritersAny(const RegisterDescriptor &desc) const {
 }
 
 bool
-RegisterStateGeneric::hasWritersAll(const RegisterDescriptor &desc) const {
+RegisterStateGeneric::hasWritersAll(RegisterDescriptor desc) const {
     if (!writers_.exists(desc))
         return false;
     const BitAddressSet &parts = writers_[desc];
@@ -584,7 +584,7 @@ RegisterStateGeneric::hasWritersAll(const RegisterDescriptor &desc) const {
 }
 
 RegisterStateGeneric::AddressSet
-RegisterStateGeneric::getWritersUnion(const RegisterDescriptor &desc) const {
+RegisterStateGeneric::getWritersUnion(RegisterDescriptor desc) const {
     if (!writers_.exists(desc))
         return AddressSet();
     const BitAddressSet &parts = writers_[desc];
@@ -593,7 +593,7 @@ RegisterStateGeneric::getWritersUnion(const RegisterDescriptor &desc) const {
 }
 
 RegisterStateGeneric::AddressSet
-RegisterStateGeneric::getWritersIntersection(const RegisterDescriptor &desc) const {
+RegisterStateGeneric::getWritersIntersection(RegisterDescriptor desc) const {
     if (!writers_.exists(desc))
         return AddressSet();
     const BitAddressSet &parts = writers_[desc];
@@ -603,7 +603,7 @@ RegisterStateGeneric::getWritersIntersection(const RegisterDescriptor &desc) con
 
 // [Robb P. Matzke 2015-08-07]: deprecated, use getWritersUnion instead
 std::set<rose_addr_t>
-RegisterStateGeneric::get_latest_writers(const RegisterDescriptor &desc) const
+RegisterStateGeneric::get_latest_writers(RegisterDescriptor desc) const
 {
     AddressSet writerVas = getWritersUnion(desc);
     std::set<rose_addr_t> retval(writerVas.values().begin(), writerVas.values().end());
@@ -611,7 +611,7 @@ RegisterStateGeneric::get_latest_writers(const RegisterDescriptor &desc) const
 }
 
 bool
-RegisterStateGeneric::hasPropertyAny(const RegisterDescriptor &reg, InputOutputProperty prop) const {
+RegisterStateGeneric::hasPropertyAny(RegisterDescriptor reg, InputOutputProperty prop) const {
     if (!properties_.exists(reg))
         return false;
     const BitProperties &bitProps = properties_[reg];
@@ -620,7 +620,7 @@ RegisterStateGeneric::hasPropertyAny(const RegisterDescriptor &reg, InputOutputP
 }
 
 bool
-RegisterStateGeneric::hasPropertyAll(const RegisterDescriptor &reg, InputOutputProperty prop) const {
+RegisterStateGeneric::hasPropertyAll(RegisterDescriptor reg, InputOutputProperty prop) const {
     if (!properties_.exists(reg))
         return false;
     const BitProperties &bitProps = properties_[reg];
@@ -629,7 +629,7 @@ RegisterStateGeneric::hasPropertyAll(const RegisterDescriptor &reg, InputOutputP
 }
 
 InputOutputPropertySet
-RegisterStateGeneric::getPropertiesUnion(const RegisterDescriptor &reg) const {
+RegisterStateGeneric::getPropertiesUnion(RegisterDescriptor reg) const {
     if (!properties_.exists(reg))
         return InputOutputPropertySet();
     const BitProperties &bitProps = properties_[reg];
@@ -638,7 +638,7 @@ RegisterStateGeneric::getPropertiesUnion(const RegisterDescriptor &reg) const {
 }
 
 InputOutputPropertySet
-RegisterStateGeneric::getPropertiesIntersection(const RegisterDescriptor &reg) const {
+RegisterStateGeneric::getPropertiesIntersection(RegisterDescriptor reg) const {
     if (!properties_.exists(reg))
         return InputOutputPropertySet();
     const BitProperties &bitProps = properties_[reg];
@@ -647,7 +647,7 @@ RegisterStateGeneric::getPropertiesIntersection(const RegisterDescriptor &reg) c
 }
 
 bool
-RegisterStateGeneric::insertProperties(const RegisterDescriptor &reg, const InputOutputPropertySet &props) {
+RegisterStateGeneric::insertProperties(RegisterDescriptor reg, const InputOutputPropertySet &props) {
     if (props.isEmpty())
         return false;
     BitProperties &bitProps = properties_.insertMaybeDefault(reg);
@@ -656,7 +656,7 @@ RegisterStateGeneric::insertProperties(const RegisterDescriptor &reg, const Inpu
 }
 
 bool
-RegisterStateGeneric::eraseProperties(const RegisterDescriptor &reg, const InputOutputPropertySet &props) {
+RegisterStateGeneric::eraseProperties(RegisterDescriptor reg, const InputOutputPropertySet &props) {
     if (props.isEmpty() || !properties_.exists(reg))
         return false;
     BitProperties &bitProps = properties_[reg];
@@ -668,7 +668,7 @@ RegisterStateGeneric::eraseProperties(const RegisterDescriptor &reg, const Input
 }
 
 void
-RegisterStateGeneric::setProperties(const RegisterDescriptor &reg, const InputOutputPropertySet &props) {
+RegisterStateGeneric::setProperties(RegisterDescriptor reg, const InputOutputPropertySet &props) {
     if (props.isEmpty()) {
         eraseProperties(reg);
     } else {
@@ -679,7 +679,7 @@ RegisterStateGeneric::setProperties(const RegisterDescriptor &reg, const InputOu
 }
 
 void
-RegisterStateGeneric::eraseProperties(const RegisterDescriptor &reg) {
+RegisterStateGeneric::eraseProperties(RegisterDescriptor reg) {
     if (!properties_.exists(reg))
         return;
     BitProperties &bitProps = properties_[reg];
@@ -723,7 +723,7 @@ RegisterStateGeneric::merge(const BaseSemantics::RegisterStatePtr &other_, RiscO
 
     // Merge values stored in registers.
     BOOST_FOREACH (const RegPair &otherRegVal, other->get_stored_registers()) {
-        const RegisterDescriptor &otherReg = otherRegVal.desc;
+        RegisterDescriptor otherReg = otherRegVal.desc;
         const BaseSemantics::SValuePtr &otherValue = otherRegVal.value;
         BaseSemantics::SValuePtr dflt = ops->undefined_(otherReg.get_nbits());
         BaseSemantics::SValuePtr thisValue = readRegister(otherReg, dflt, ops);

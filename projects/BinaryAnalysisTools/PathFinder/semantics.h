@@ -181,7 +181,7 @@ public:
 private:
     /** Create a comment to describe a variable stored in a register. */
     std::string
-    commentForVariable(const RegisterDescriptor&, const std::string &accessMode) const;
+    commentForVariable(RegisterDescriptor, const std::string &accessMode) const;
 
     /** Create a comment to describe a memory address if possible. The nBytes will be non-zero when we're describing
      *  an address as opposed to a value stored across some addresses. */
@@ -197,21 +197,21 @@ public:
     finishInstruction(SgAsmInstruction *insn) ROSE_OVERRIDE;
 
     virtual Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr
-    readRegister(const RegisterDescriptor &reg,
+    readRegister(RegisterDescriptor reg,
                  const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
 
     virtual void
-    writeRegister(const RegisterDescriptor &reg,
+    writeRegister(RegisterDescriptor reg,
                   const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &value) ROSE_OVERRIDE;
 
     virtual Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr
-    readMemory(const RegisterDescriptor &segreg,
+    readMemory(RegisterDescriptor segreg,
                const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &addr,
                const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &dflt_,
                const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
 
     virtual void
-    writeMemory(const RegisterDescriptor &segreg,
+    writeMemory(RegisterDescriptor segreg,
                 const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &addr,
                 const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &value,
                 const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;

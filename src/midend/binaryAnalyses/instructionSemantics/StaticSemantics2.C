@@ -431,25 +431,25 @@ RiscOperators::interrupt(int majr, int minr) {
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::readRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &dflt) {
+RiscOperators::readRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &dflt) {
     BaseSemantics::SValuePtr regExpr = makeSValue(reg.get_nbits(), new SgAsmDirectRegisterExpression(reg));
     return makeSValue(reg.get_nbits(), SgAsmRiscOperation::OP_readRegister, regExpr);
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::peekRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &dflt) {
+RiscOperators::peekRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &dflt) {
     BaseSemantics::SValuePtr regExpr = makeSValue(reg.get_nbits(), new SgAsmDirectRegisterExpression(reg));
     return makeSValue(reg.get_nbits(), SgAsmRiscOperation::OP_peekRegister, regExpr);
 }
 
 void
-RiscOperators::writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &a) {
+RiscOperators::writeRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &a) {
     BaseSemantics::SValuePtr regExpr = makeSValue(reg.get_nbits(), new SgAsmDirectRegisterExpression(reg));
     saveSemanticEffect(makeSValue(1 /*arbitrary*/, SgAsmRiscOperation::OP_writeRegister, regExpr, a)); 
 }
         
 BaseSemantics::SValuePtr
-RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &address,
+RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &address,
                           const BaseSemantics::SValuePtr &dflt, const BaseSemantics::SValuePtr &cond) {
     if (segreg.is_valid()) {
         BaseSemantics::SValuePtr segRegExpr = makeSValue(segreg.get_nbits(), new SgAsmDirectRegisterExpression(segreg));
@@ -460,7 +460,7 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics:
 }
 
 void
-RiscOperators::writeMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &address,
+RiscOperators::writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &address,
                            const BaseSemantics::SValuePtr &value, const BaseSemantics::SValuePtr &cond) {
     if (segreg.is_valid()) {
         BaseSemantics::SValuePtr segRegExpr = makeSValue(segreg.get_nbits(), new SgAsmDirectRegisterExpression(segreg));
