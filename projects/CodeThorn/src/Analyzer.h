@@ -135,7 +135,6 @@ namespace CodeThorn {
     void runSolver4();
     void runSolver5();
     void runSolver8();
-    void runSolver9();
     void runSolver10();
     void runSolver11();
     void runSolver12();
@@ -429,17 +428,14 @@ namespace CodeThorn {
     //returns the shortest possible number of input states on the path leading to "target".
     int inputSequenceLength(const EState* target);
 
-    // begin of solver 9 functions
-    bool searchForIOPatterns(PState* startPState, int assertion_id, std::list<int>& inputSuffix, std::list<int>* partialTrace = NULL, int* inputPatternLength=NULL);
+    // begin of solver 10 functions (black-box pattern search)
     bool containsPatternTwoRepetitions(std::list<int>& sequence);
     bool containsPatternTwoRepetitions(std::list<int>& sequence, int startIndex, int endIndex);
-    bool computePStateAfterInputs(PState& pState, std::list<int>& inputs, int thread_id, std::list<int>* iOSequence=NULL);
-    bool computePStateAfterInputs(PState& pState, int input, int thread_id, std::list<int>* iOSequence=NULL);
-    bool searchPatternPath(int assertion_id, PState& pState, std::list<int>& inputPattern, std::list<int>& inputSuffix, int thread_id,std::list<int>* iOSequence=NULL);
+    bool computePStateAfterInputs(PState& pState, std::list<int>& inputs, int thread_id, std::list<int>* iOSequence=NULL);;
     std::list<int> inputsFromPatternTwoRepetitions(std::list<int> pattern2r);
     string convertToCeString(std::list<int>& ceAsIntegers, int maxInputVal);
     int pStateDepthFirstSearch(PState* startPState, int maxDepth, int thread_id, std::list<int>* partialTrace, int maxInputVal, int patternLength, int PatternIterations);
-    // end of solver 9 functions
+    // end of solver 10 functions (black-box pattern search)
 
     void generateSpotTransition(std::stringstream& ss, const Transition& t);
     //less than comarisions on two states according to (#input transitions * #output transitions)
