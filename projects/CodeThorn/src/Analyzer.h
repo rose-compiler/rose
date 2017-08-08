@@ -375,8 +375,6 @@ namespace CodeThorn {
     bool isStdIOLabel(Label label);
     std::set<const EState*> nonLTLRelevantEStates();
 
-    std::string generateSpotSTG();
-
     // reduces all states different to stdin and stdout.
     void stdIOFoldingOfTransitionGraph();
     void semanticFoldingOfTransitionGraph();
@@ -437,8 +435,7 @@ namespace CodeThorn {
     int pStateDepthFirstSearch(PState* startPState, int maxDepth, int thread_id, std::list<int>* partialTrace, int maxInputVal, int patternLength, int PatternIterations);
     // end of solver 10 functions (black-box pattern search)
 
-    void generateSpotTransition(std::stringstream& ss, const Transition& t);
-    //less than comarisions on two states according to (#input transitions * #output transitions)
+    //less than comparisions on two states according to (#input transitions * #output transitions)
     bool indegreeTimesOutdegreeLessThan(const EState* a, const EState* b);
 
   public:

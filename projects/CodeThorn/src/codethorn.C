@@ -292,7 +292,6 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
     ("reconstruct-max-length", po::value< int >(), "parameter of option \"reconstruct-input-paths\". Sets the maximum length of cyclic I/O patterns found by the analysis. [=pattern_length]")
     ("reconstruct-max-repetitions", po::value< int >(), "parameter of option \"reconstruct-input-paths\". Sets the maximum number of pattern repetitions that the search is following. [=#pattern_repetitions]")
     ("refinement-constraints-demo", po::value< string >(), "display constraints that are collected in order to later on help a refined analysis avoid spurious counterexamples. [=yes|no]")
-    ("spot-stg",po::value< string >(), " generate STG in SPOT-format in file [arg]")
     ("std-io-only", po::value< string >(), "bypass and remove all states that are not standard I/O [=yes|no]")
     ("std-in-only", po::value< string >(), "bypass and remove all states that are not input-states [=yes|no]")
     ("std-out-only", po::value< string >(), "bypass and remove all states that are not output-states [=yes|no]")
@@ -1146,7 +1145,6 @@ int main( int argc, char * argv[] ) {
 	args.count("ltl-in-alphabet") ||
 	args.count("ltl-out-alphabet") ||
 	args.count("ltl-driven") ||
-	args.count("spot-stg") ||
 	args.count("tg-ltl-reduced") ||
 	args.count("with-ltl-counterexamples") ||
 	args.count("mine-num-verifiable") ||
@@ -1269,7 +1267,6 @@ int main( int argc, char * argv[] ) {
           || string(argv[i]).find("--display-diff")==0
           || string(argv[i]).find("--input-values")==0
           || string(argv[i]).find("--csv-ltl")==0
-          || string(argv[i]).find("--spot-stg")==0
           || string(argv[i]).find("--dump-sorted")==0
           || string(argv[i]).find("--dump-non-sorted")==0
           || string(argv[i]).find("--equivalence-check")==0
@@ -2245,24 +2242,6 @@ int main( int argc, char * argv[] ) {
       dotFile+=visualizer.abstractTransitionGraphToDot();
       dotFile+="}\n";
       write_file(filename, dotFile);
-      cout << "=============================================================="<<endl;
-    }
-
-    if (args.count("spot-stg")) {
-      string filename=args["spot-stg"].as<string>();
-      cout << "generating spot IO STG file:"<<filename<<endl;
-      if(boolOptions["rersmode"]) {  //reduce the graph accordingly, if not already done
-        if (!boolOptions["inf-paths-only"]) {
-          logger[TRACE] << "STATUS: recursively removing all leaves (due to RERS-mode (4)."<<endl;
-          analyzer.pruneLeavesRec();
-        }
-        if (!boolOptions["std-io-only"]) {
-          logger[TRACE] << "STATUS: bypassing all non standard I/O states (due to RERS-mode). (P4)"<<endl;
-          analyzer.removeNonIOStates();
-        }
-      }
-      string spotSTG=analyzer.generateSpotSTG();
-      write_file(filename, spotSTG);
       cout << "=============================================================="<<endl;
     }
 
