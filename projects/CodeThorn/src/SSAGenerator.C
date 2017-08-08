@@ -320,6 +320,7 @@ pair<Label, BranchReturns> SSAGenerator::findContinueNodes(Label* label, Label* 
 			return pair<Label, BranchReturns>(contRet.first, MAYBE); //The current branch may return				
 		}
 	}
+        ROSE_ASSERT(false);
 }
 
 
@@ -910,37 +911,4 @@ Condition* Condition::operator!()
 	return negCond;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 #endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
