@@ -450,7 +450,6 @@ namespace CodeThorn {
     typedef pair<EStateWorkList,std::set<const EState*> > SubSolverResultType;
     SubSolverResultType subSolver(const EState* currentEStatePtr);
 
-    PropertyValueTable* loadAssertionsToReconstruct(string filePath);
     void insertInputVarValue(int i) { _inputVarValues.insert(i); }
     void addInputSequenceValue(int i) { _inputSequence.push_back(i); }
     void resetToEmptyInputSequence() { _inputSequence.clear(); }
@@ -483,9 +482,6 @@ namespace CodeThorn {
     void setMaxSeconds(long int maxSeconds) { _maxSeconds=maxSeconds; }
     void setMaxSecondsForcedTop(long int maxSecondsForcedTop) { _maxSecondsForcedTop=maxSecondsForcedTop; }
     void setStartPState(PState startPState) { _startPState=startPState; }
-    void setReconstructMaxInputDepth(size_t inputDepth) { _reconstructMaxInputDepth=inputDepth; }
-    void setReconstructMaxRepetitions(size_t repetitions) { _reconstructMaxRepetitions=repetitions; }
-    void setReconstructPreviousResults(PropertyValueTable* previousResults) { _reconstructPreviousResults = previousResults; };
     void setPatternSearchMaxDepth(size_t iODepth) { _patternSearchMaxDepth=iODepth; }
     void setPatternSearchRepetitions(size_t patternReps) { _patternSearchRepetitions=patternReps; }
     void setPatternSearchMaxSuffixDepth(size_t suffixDepth) { _patternSearchMaxSuffixDepth=suffixDepth; }
@@ -493,9 +489,6 @@ namespace CodeThorn {
     void setPatternSearchExploration(ExplorationMode explorationMode) { _patternSearchExplorationMode = explorationMode; };
 
   private:
-    int _reconstructMaxInputDepth;
-    int _reconstructMaxRepetitions;
-    PropertyValueTable* _reconstructPreviousResults;
     PropertyValueTable*  _patternSearchAssertTable;
     int _patternSearchMaxDepth;
     int _patternSearchRepetitions;

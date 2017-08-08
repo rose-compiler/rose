@@ -20,7 +20,7 @@ CXXFLAGS              = -Wno-deprecated -std=c++11
 LDFLAGS               = 
 YACC                  = bison
 
-OBJECT_FILES=Analyzer.o CommandLineOptions.o ConstraintRepresentation.o ExprAnalyzer.o InternalChecks.o LanguageRestrictorCollection.o Miscellaneous.o StateRepresentations.o  Timer.cpp Visualizer.o PropertyValueTable.o RewriteSystem.o SpotConnection.o SpotTgba.o  SpotState.o SpotSuccIter.o CounterexampleAnalyzer.o RefinementConstraints.o ArrayElementAccessData.o Specialization.o  PragmaHandler.o
+OBJECT_FILES=Analyzer.o CommandLineOptions.o ConstraintRepresentation.o ExprAnalyzer.o InternalChecks.o LanguageRestrictorCollection.o Miscellaneous.o StateRepresentations.o  Timer.cpp Visualizer.o PropertyValueTable.o RewriteSystem.o SpotConnection.o SpotTgba.o  SpotState.o SpotSuccIter.o CounterexampleAnalyzer.o ArrayElementAccessData.o Specialization.o  PragmaHandler.o
 
 REGRESSION_DATA_DIR=regressiondata
 

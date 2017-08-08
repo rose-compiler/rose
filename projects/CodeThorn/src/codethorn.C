@@ -33,7 +33,6 @@
 #include "RewriteSystem.h"
 #include "SpotConnection.h"
 #include "CounterexampleAnalyzer.h"
-#include "RefinementConstraints.h"
 #include "AnalysisAbstractionLayer.h"
 #include "ArrayElementAccessData.h"
 #include "PragmaHandler.h"
@@ -288,10 +287,6 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
     ("ltl-out-alphabet",po::value< string >(),"specify an output alphabet used by the LTL formulae (e.g. \"{19,20,21,22,23,24,25,26}\")")
     ("ltl-driven","select mode to verify LTLs driven by spot's access to the state transitions")
     ("no-input-input",  po::value< string >(), "remove transitions where one input states follows another without any output in between. Removal occurs before the LTL check. [=yes|no]")
-    ("reconstruct-assert-paths", po::value< string >(), "takes a result file containing paths to reachable assertions and tries to reproduce them on the analyzed program. [=file-path]")
-    ("reconstruct-max-length", po::value< int >(), "parameter of option \"reconstruct-input-paths\". Sets the maximum length of cyclic I/O patterns found by the analysis. [=pattern_length]")
-    ("reconstruct-max-repetitions", po::value< int >(), "parameter of option \"reconstruct-input-paths\". Sets the maximum number of pattern repetitions that the search is following. [=#pattern_repetitions]")
-    ("refinement-constraints-demo", po::value< string >(), "display constraints that are collected in order to later on help a refined analysis avoid spurious counterexamples. [=yes|no]")
     ("std-io-only", po::value< string >(), "bypass and remove all states that are not standard I/O [=yes|no]")
     ("std-in-only", po::value< string >(), "bypass and remove all states that are not input-states [=yes|no]")
     ("std-out-only", po::value< string >(), "bypass and remove all states that are not output-states [=yes|no]")
@@ -584,7 +579,6 @@ BoolOptions& parseBoolOptions(int argc, char* argv[]) {
   boolOptions.registerOption("counterexamples-with-output",false);
   boolOptions.registerOption("check-ltl-counterexamples",false);
   boolOptions.registerOption("cegpra-ltl-all",false);
-  boolOptions.registerOption("refinement-constraints-demo",false);
   boolOptions.registerOption("determine-prefix-depth",false);
   boolOptions.registerOption("explicit-arrays",true); // MS (2017-06-09): enabled by default
 
@@ -1017,21 +1011,6 @@ void analyzerSetup(Analyzer& analyzer, const po::variables_map& args, Sawyer::Me
     }
   }
 
-  if(args.count("reconstruct-assert-paths")) {
-    string previousAssertFilePath=args["reconstruct-assert-paths"].as<string>();
-    PropertyValueTable* previousAssertResults=analyzer.loadAssertionsToReconstruct(previousAssertFilePath);
-    analyzer.setReconstructPreviousResults(previousAssertResults);
-  }
-
-  if(args.count("reconstruct-max-length")) {
-    // a cycilc pattern needs to be discovered two times, therefore multiply the length by 2
-    analyzer.setReconstructMaxInputDepth(args["reconstruct-max-length"].as<int>() * 2);
-  }
-
-  if(args.count("reconstruct-max-repetitions")) {
-    analyzer.setReconstructMaxRepetitions(args["reconstruct-max-repetitions"].as<int>());
-  }
-
   if(args.count("pattern-search-max-depth")) {
     analyzer.setPatternSearchMaxDepth(args["pattern-search-max-depth"].as<int>());
   } else {
@@ -1050,15 +1029,10 @@ void analyzerSetup(Analyzer& analyzer, const po::variables_map& args, Sawyer::Me
     analyzer.setPatternSearchMaxSuffixDepth(5);
   }
 
-  if(args.count("pattern-search-asserts")) {
-    string patternSearchAssertsPath=args["pattern-search-asserts"].as<string>();
-    PropertyValueTable* patternSearchAsserts=analyzer.loadAssertionsToReconstruct(patternSearchAssertsPath);
-    analyzer.setPatternSearchAssertTable(patternSearchAsserts);
-  } else {
-    PropertyValueTable* patternSearchAsserts = new PropertyValueTable(100);
-    patternSearchAsserts->convertValue(PROPERTY_VALUE_UNKNOWN, PROPERTY_VALUE_YES);
-    analyzer.setPatternSearchAssertTable(patternSearchAsserts);
-  }
+  // search for all 100 RERS counterexamples by default (paths to reachable failing assertions)
+  PropertyValueTable* patternSearchAsserts = new PropertyValueTable(100);
+  patternSearchAsserts->convertValue(PROPERTY_VALUE_UNKNOWN, PROPERTY_VALUE_YES);
+  analyzer.setPatternSearchAssertTable(patternSearchAsserts);
 
   if(args.count("pattern-search-exploration")) {
     string patternSearchExpMode=args["pattern-search-exploration"].as<string>();
@@ -1279,7 +1253,6 @@ int main( int argc, char * argv[] ) {
           || string(argv[i]).find("--ltl-driven")==0
           || string(argv[i]).find("--ltl-mode")==0
           || string(argv[i]).find("--ltl-properties-output")==0
-          || string(argv[i]).find("--reconstruct-assert-paths")==0
           || string(argv[i]).find("--pattern-search-asserts")==0
           || string(argv[i]).find("--pattern-search-exploration")==0
           || string(argv[i]).find("--promela-output")==0
@@ -1559,11 +1532,6 @@ int main( int argc, char * argv[] ) {
     }
     analyzer.initLabeledAssertNodes(sageProject);
 
-    if(args.count("reconstruct-assert-paths")) {
-      analyzer.setSolver(9);
-      analyzer.setStartPState(*analyzer.popWorkList()->pstate());
-    }
-
     if(args.count("pattern-search-max-depth") || args.count("pattern-search-max-suffix")
         || args.count("pattern-search-asserts") || args.count("pattern-search-max-exploration")) {
       logger[INFO] << "at least one of the parameters of mode \"pattern search\" was set. Choosing solver 10." << endl;
@@ -1837,8 +1805,6 @@ int main( int argc, char * argv[] ) {
       if (boolOptions["check-ltl-counterexamples"]) {
         logger[TRACE]<< "STATUS: checking for spurious counterexamples..."<<endl;
         CounterexampleAnalyzer ceAnalyzer(&analyzer);
-        RefinementConstraints constraintManager(analyzer.getFlow(), analyzer.getLabeler(),
-            analyzer.getExprAnalyzer(), analyzer.getCFAnalyzer(), analyzer.getVariableIdMapping());
         for (unsigned int i = 0; i < ltlResults->size(); i++) {
           //only check counterexamples
           if (ltlResults->getPropertyValue(i) == PROPERTY_VALUE_NO) {
@@ -1849,35 +1815,12 @@ int main( int argc, char * argv[] ) {
               ltlResults->setCounterexample(i, "");
               ltlResults->setPropertyValue(i, PROPERTY_VALUE_UNKNOWN);
               logger[INFO] << "property " << i << " was reset to unknown (spurious counterexample)." << endl;
-              if (boolOptions["refinement-constraints-demo"]) {
-                constraintManager.addConstraintsByLabel(ceAnalysisResult.spuriousTargetLabel);
-              }
             } else if (ceAnalysisResult.analysisResult == CE_TYPE_REAL) {
               //logger[DEBUG] << "counterexample is a real counterexample! success" << endl;
             }
           }
         }
         logger[TRACE] << "STATUS: counterexample check done."<<endl;
-        if (boolOptions["refinement-constraints-demo"]) {
-          cout << "=============================================================="<<endl;
-          logger[TRACE] << "STATUS: refinement constraints collected from all LTL counterexamples: "<< endl;
-          VariableIdSet varIds = (analyzer.getVariableIdMapping())->getVariableIdSet();
-          for (VariableIdSet::iterator i = varIds.begin(); i != varIds.end(); i++) {
-            set<int> constraints = constraintManager.getConstraintsForVariable(*i);
-            if (constraints.size() > 0) {
-              //print the constraints collected for this VariableId
-              cout << (analyzer.getVariableIdMapping())->variableName(*i) << ":";
-              for (set<int>::iterator k = constraints.begin(); k!= constraints.end(); ++k) {
-                if (k != constraints.begin()) {
-                  cout << ",";
-                }
-                cout << *k;
-              }
-              cout << endl;
-            }
-          }
-          cout << "=============================================================="<<endl;
-        }
       }
 
       if(analyzer.getOptionStatusMessages()) {

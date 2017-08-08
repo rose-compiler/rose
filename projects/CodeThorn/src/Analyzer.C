@@ -2254,30 +2254,6 @@ string Analyzer::convertToCeString(list<int>& ceAsIntegers, int maxInputVal) {
   return ss.str();
 }
 
-PropertyValueTable* Analyzer::loadAssertionsToReconstruct(string filePath) {
-  PropertyValueTable* result = new PropertyValueTable(100);
-  ifstream assert_input(filePath.c_str());
-  if (assert_input.is_open()) {
-    //load the containing counterexamples
-    std::string line;
-    while (std::getline(assert_input, line)){
-      std::vector<std::string> entries;
-      boost::algorithm::split(entries, line, boost::algorithm::is_any_of(","));
-      if (entries[1] == "yes") {
-        int property_id = boost::lexical_cast<int>(entries[0]);
-        if (args.count("reconstruct-assert-paths")) {
-          ROSE_ASSERT(entries.size() == 3);
-          ROSE_ASSERT(entries[2] != "");
-        }
-        result->setPropertyValue(property_id, PROPERTY_VALUE_YES);
-        result->setCounterexample(property_id, entries[2]);
-      }
-    }
-  }
-  assert_input.close();
-  return result;
-}
-
 int Analyzer::extractAssertionTraces() {
   int maxInputTraceLength = -1;
   for (list<pair<int, const EState*> >::iterator i = _firstAssertionOccurences.begin(); i != _firstAssertionOccurences.end(); ++i ) {

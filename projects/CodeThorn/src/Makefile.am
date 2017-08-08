@@ -183,8 +183,6 @@ codethorn_SOURCES = \
   ReachabilityAnalysis.h ReachabilityAnalysis.C \
   ReachabilityAnalyzerZ3.h \
   ReachabilityAnalyzerZ3.C \
-  RefinementConstraints.C \
-  RefinementConstraints.h \
   RERS_empty_specialization.C      \
   RewriteSystem.C \
   RewriteSystem.h \
