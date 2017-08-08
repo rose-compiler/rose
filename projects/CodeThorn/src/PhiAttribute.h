@@ -12,18 +12,17 @@ using namespace std;
 
 class PhiAttribute: public AstAttribute
 {
-	public:
-	vector<PhiStatement*> phiStatements;	
-	Condition* condition;
-	map<string, int> reachingNumbers;
-	set<string> varsDeclaredInTrueBranch;
-	set<string> varsDeclaredInFalseBranch;
-	PhiAttribute(map<string, int> reachingNumbers, Condition* condition): reachingNumbers(reachingNumbers), condition(condition){}
-	virtual string toString();
-	PhiStatement* getPhiFor(string varName);
-	PhiStatement* generatePhiFor(string varName);
-	int getReachingNumberFor(string varName);
-
+ public:
+  PhiAttribute(map<string, int> reachingNumbers, Condition* condition);
+  virtual string toString();
+  PhiStatement* getPhiFor(string varName);
+  PhiStatement* generatePhiFor(string varName);
+  int getReachingNumberFor(string varName);
+  vector<PhiStatement*> phiStatements;	
+  Condition* condition;
+  map<string, int> reachingNumbers;
+  set<string> varsDeclaredInTrueBranch;
+  set<string> varsDeclaredInFalseBranch;
 };
 
 
