@@ -1973,7 +1973,7 @@ int main( int argc, char * argv[] ) {
           rewriteSystem,
           useConstSubstitutionRule
           );
-      speci.substituteArrayRefs(arrayUpdates, analyzer.getVariableIdMapping(), sarMode);
+      speci.substituteArrayRefs(arrayUpdates, analyzer.getVariableIdMapping(), sarMode, rewriteSystem);
       // rewrite final result xxx
       arrayUpdateExtractionRunTime=timer.getElapsedTimeInMilliSec();
 

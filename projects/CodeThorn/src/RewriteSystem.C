@@ -255,55 +255,9 @@ void RewriteSystem::normalizeFloatingPointNumbersForUnparsing(SgNode*& root) {
   }
 }
 
-// returns true for swap, false for do not swap
+// returns true for required swap, false if no swap is required
 bool requiresSwap(SgExpression* lhs, SgExpression* rhs, VariableIdMapping* variableIdMapping) {
-  if(lhs->variantT()<rhs->variantT()) {
-    return false;
-  } else if(lhs->variantT()>rhs->variantT()) {
-    return true;
-  } else {
-    bool changed=false;
-    // lhs-variant equal rhs-variant, determine left-most and right-most child
-    if(SgBinaryOp* lhsOp=isSgBinaryOp(lhs)) {
-      lhs=lhsOp->get_lhs_operand();
-      changed=true;
-    } else if(SgUnaryOp* unaryOp=isSgUnaryOp(lhs)) {
-      lhs=unaryOp->get_operand();
-      changed=true;
-    }
-    if(SgBinaryOp* rhsOp=isSgBinaryOp(rhs)) {
-      rhs=rhsOp->get_rhs_operand();
-      changed=true;
-    } else if(SgUnaryOp* unaryOp=isSgUnaryOp(rhs)) {
-      rhs=unaryOp->get_operand();
-      changed=true;
-    }
-    SgVarRefExp* lhsvar=isSgVarRefExp(lhs);
-    SgVarRefExp* rhsvar=isSgVarRefExp(rhs);
-    if(lhsvar && rhsvar) {
-      if(variableIdMapping->variableId(lhsvar)<variableIdMapping->variableId(rhsvar)) {
-        return false;
-      } else if(variableIdMapping->variableId(lhsvar)==variableIdMapping->variableId(rhsvar)) {
-        return false;
-      } else {
-        // requires swap
-        return true;
-      }
-    }
-    SgValueExp* lhsval=isSgValueExp(lhs);
-    SgValueExp* rhsval=isSgValueExp(rhs);
-    if(lhsval && rhsval) {
-      // requires swap == true
-      return lhsval->unparseToString() > rhsval->unparseToString();
-    }
-    if(changed) {
-      return requiresSwap(lhs,rhs,variableIdMapping);
-    } else {
-      cout<<"WARNING: commutative sort undecided."<<endl;
-      return false;
-    }
-  }
-  return false;
+  return AstTerm::astTermWithNullValuesToString(lhs)>AstTerm::astTermWithNullValuesToString(rhs);
 }
 
 void RewriteSystem::establishCommutativeOrder(SgNode*& root, VariableIdMapping* variableIdMapping) {
@@ -354,7 +308,8 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
   
   if(performCompoundAssignmentsElimination) {
     rewriteCompoundAssignments(root,variableIdMapping);
-   }
+  }
+  normalizeFloatingPointNumbersForUnparsing(root);
 
    do {
      someTransformationApplied=false;
@@ -389,6 +344,10 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
      if(ruleAlgebraic) {
        int cnt=0;
        do {
+
+         // TODO: SgMultiplyOp($V1=SgDoubleVal,SgMinusOp($V2=SgDoubleVal==1.0)) ==> SgMultiplyOp(SgMinusOp($V1))
+         // TODO: SgMultiplyOp(SgMinusOp($V2=SgDoubleVal==1.0),$V1=SgDoubleVal) ==> SgMultiplyOp(SgMinusOp($V1))
+
          // the following rules guarantee convergence
          transformationApplied=false;
          //MatchResult res=m.performMatching("$MultiplyOp=SgMultiplyOp($Remains,$Val=SgFloatVal|$Val=SgDoubleVal|$Val=SgIntVal)",root);
@@ -396,7 +355,7 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
          string mulLeftVal="$IdentityOp=SgMultiplyOp($Val=SgDoubleVal,$Remains)|$IdentityOp=SgMultiplyOp($Val=SgFloatVal,$Remains)|$IdentityOp=SgMultiplyOp($Val=SgIntVal,$Remains)";
          string addRightVal="$IdentityOp=SgAddOp($Remains,$Val=SgDoubleVal)|$IdentityOp=SgAddOp($Remains,$Val=SgFloatVal)|$IdentityOp=SgAddOp($Remains,$Val=SgIntVal)";
          string addLeftVal="$IdentityOp=SgAddOp($Val=SgDoubleVal,$Remains)|$IdentityOp=SgAddOp($Val=SgFloatVal,$Remains)|$IdentityOp=SgAddOp($Val=SgIntVal,$Remains)";
-         MatchResult res=m.performMatching(mulLeftVal+"|"+mulRightVal+"|"+addRightVal+"|"+addLeftVal,root);
+         MatchResult res=m.performMatching(mulRightVal+"|"+mulLeftVal+"|"+addRightVal+"|"+addLeftVal,root);
          if(res.size()>0) {
            for(MatchResult::iterator kk=res.begin();kk!=res.end();++kk) {
              // match found
@@ -552,7 +511,6 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
        }
      } while(transformationApplied);
 
-     normalizeFloatingPointNumbersForUnparsing(root);
      //eliminateSuperfluousCasts(root);
 
      //if(someTransformationApplied) cout<<"DEBUG: transformed: "<<root->unparseToString()<<endl;
@@ -560,4 +518,5 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
    if(ruleCommutativeOrder) {
      establishCommutativeOrder(root,variableIdMapping);
    }
+   //cout<<"DEBUG: "<<AstTerm::astTermWithNullValuesToString(root)<<endl;
 }
