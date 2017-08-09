@@ -287,6 +287,47 @@ void RewriteSystem::establishCommutativeOrder(SgNode*& root, VariableIdMapping* 
   }
 }
 
+bool isValueOne(SgExpression* valueNode) {
+  if(SgIntVal* val=isSgIntVal(valueNode)) {
+    int value=val->get_value();
+    if(value==1) {
+      return true;
+    }
+  } else if(SgFloatVal* val=isSgFloatVal(valueNode)) {
+    float value=val->get_value();
+    if(value==1.0f) {
+      return true;
+    }
+  } else if(SgDoubleVal* val=isSgDoubleVal(valueNode)) {
+    double value=val->get_value();
+    if(value==1.0d) {
+      return true;
+    }
+  }
+  return false;
+}    
+
+bool isValueZero(SgExpression* valueNode) {
+  if(SgIntVal* val=isSgIntVal(valueNode)) {
+    int value=val->get_value();
+    if(value==0) {
+      return true;
+    }
+  } else if(SgFloatVal* val=isSgFloatVal(valueNode)) {
+    float value=val->get_value();
+    if(value==0.0f) {
+      return true;
+    }
+  } else if(SgDoubleVal* val=isSgDoubleVal(valueNode)) {
+    double value=val->get_value();
+    if(value==0.0d) {
+      return true;
+    }
+  }
+  return false;
+}
+
+
 // rewrites an AST
 // requirements: all variables have been replaced by constants
 // uses AstMatching to match patterns.
@@ -311,8 +352,9 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
   }
   normalizeFloatingPointNumbersForUnparsing(root);
 
-   do {
+  do {
      someTransformationApplied=false;
+#if 0
      do {
        // Rewrite-rule 1: $UnaryOpSg=MinusOp($IntVal1=SgIntVal) => SgIntVal.val=-$Intval.val
        transformationApplied=false;
@@ -330,7 +372,7 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
              SgNodeHelper::replaceExpression(op,SageBuilder::buildIntVal(-rawval),false);
              break;
            default:
-             cerr<<"Error: rewrite phase: unsopported operator in matched unary expression. Bailing out."<<endl;
+             cerr<<"Error: rewrite phase: unsupported operator in matched unary expression. Bailing out."<<endl;
              exit(1);
            }
            transformationApplied=true;
@@ -339,20 +381,75 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
          }
        }
      } while(transformationApplied); // a loop will eliminate -(-(5)) to 5
+#endif
+     
+     if(ruleAlgebraic) {
+       int cnt=0;
+       do {
+         // TODO: SgMultiplyOp($Remains,SgMinusOp($Val=SgDoubleVal==1.0)) ==> SgMinusOp($Remains)) : E*(-1.0)=>-E
+         // TODO: SgMultiplyOp(SgMinusOp($Val=SgDoubleVal==1.0),$Remains) ==> SgMinusOp($Remains)) : (-1.0)*E=>-E
+         // TODO: SgAddOp($Remains,SgMinusOp($Val=SgDoubleVal==1.0)) ==> SgSubtractOp($Remains,$Val): E+(-1.0)=>E-1.0
+         // TODO: SgAddOp(SgMinusOp($Val=SgDoubleVal==1.0),$Remains) ==> SgSubtractOp($Remains,$Val): (-1.0)+E=>E-1.0
 
-#if 1
+         // the following rules guarantee convergence
+         transformationApplied=false;
+         string multiplyMinusRight="$OriginalOp=SgMultiplyOp($Remains,$Minus=SgMinusOp($Val=SgDoubleVal))|$OriginalOp=SgMultiplyOp($Remains,$Minus=SgMinusOp($Val=SgFloatVal))";
+         string multiplyMinusLeft ="$OriginalOp=SgMultiplyOp($Minus=SgMinusOp($Val=SgDoubleVal),$Remains)|$OriginalOp=SgMultiplyOp($Minus=SgMinusOp($Val=SgFloatVal),$Remains)";
+         //string additionMinusRight="$OriginalOp=SgAddOp($Val=SgDoubleVal,$Remains)|$OriginalOp=SgAddOp($Val=SgFloatVal,$Remains)|$OriginalOp=SgAddOp($Val=SgIntVal,$Remains)";
+         MatchResult res=m.performMatching(multiplyMinusRight+"|"+multiplyMinusLeft,root);
+         if(res.size()>0) {
+           for(MatchResult::iterator kk=res.begin();kk!=res.end();++kk) {
+             // match found
+             SgExpression* valueNode=isSgExpression((*kk)["$Val"]);
+             SgExpression* op=isSgExpression((*kk)["$OriginalOp"]);
+             SgExpression* remainsNode=isSgExpression((*kk)["$Remains"]);
+             SgMinusOp* minusNode=isSgMinusOp((*kk)["$Minus"]);
+
+             bool algebraicIdentityTransformation=false;
+             if(valueNode && isSgMultiplyOp(op)) {
+               if(isValueOne(valueNode)) {
+                 algebraicIdentityTransformation=true;
+               } else {
+                 //not normalize
+                 //cout<<"WARNING: Found unsupported value-type in alebraic multiply-transformation rule :"<<cnt<<": "<<op->unparseToString()<<endl;
+               }
+             }
+             if(valueNode && isSgAddOp(op)) {
+               if(isValueZero(valueNode)) {
+                 algebraicIdentityTransformation=true;
+               } else {
+                 //not normalized
+                 //cout<<"DEBUG: Found unsupported value-type in alebraic multiply-transformation rule :"<<cnt<<": "<<op->unparseToString()<<endl;
+               }
+             }
+             if(algebraicIdentityTransformation) {
+               if(true||getTrace()) {
+                 cout<<"Rule algebraic2: "<<op->unparseToString()<<" => "<<remainsNode->unparseToString()<<endl;
+               }
+               minusNode->set_operand(remainsNode);
+               SgNodeHelper::replaceExpression(op,minusNode,false);
+               transformationApplied=true; 
+               someTransformationApplied=true;
+               cnt++;
+             }
+           }
+         }
+       } while(transformationApplied);
+     }
+
      if(ruleAlgebraic) {
        int cnt=0;
        do {
 
-         // TODO: SgMultiplyOp($V1,SgMinusOp($V2=SgDoubleVal==1.0)) ==> SgMinusOp($V1)) : E*(-1)=>-E
-         // TODO: SgMultiplyOp(SgMinusOp($V2=SgDoubleVal==1.0),$V1) ==> SgMinusOp($V1)) : (-1)*E=>-E
-         // TODO: SgAddOp($V1,SgMinusOp($V2=SgDoubleVal==1.0)) ==> SgSubtractOp($V1,$V2): E+(-1)=>E-1
-         // TODO: SgAddOp(SgMinusOp($V2=SgDoubleVal==1.0),$V1) ==> SgSubtractOp($V1,$V2): (-1)+E=>E-1
+         // TODO: SgMultiplyOp($Remains,SgMinusOp($Val=SgDoubleVal==1.0)) ==> SgMinusOp($Remains)) : E*(-1.0)=>-E
+         // TODO: SgMultiplyOp(SgMinusOp($Val=SgDoubleVal==1.0),$Remains) ==> SgMinusOp($Remains)) : (-1.0)*E=>-E
+         // TODO: SgAddOp($Remains,SgMinusOp($Val=SgDoubleVal==1.0)) ==> SgSubtractOp($Remains,$Val): E+(-1.0)=>E-1.0
+         // TODO: SgAddOp(SgMinusOp($Val=SgDoubleVal==1.0),$Remains) ==> SgSubtractOp($Remains,$Val): (-1.0)+E=>E-1.0
 
          // the following rules guarantee convergence
          transformationApplied=false;
          //MatchResult res=m.performMatching("$MultiplyOp=SgMultiplyOp($Remains,$Val=SgFloatVal|$Val=SgDoubleVal|$Val=SgIntVal)",root);
+         // E*1.0=>E, E+0.0=>E
          string mulRightVal="$IdentityOp=SgMultiplyOp($Remains,$Val=SgDoubleVal)|$IdentityOp=SgMultiplyOp($Remains,$Val=SgFloatVal)|$IdentityOp=SgMultiplyOp($Remains,$Val=SgIntVal)";
          string mulLeftVal="$IdentityOp=SgMultiplyOp($Val=SgDoubleVal,$Remains)|$IdentityOp=SgMultiplyOp($Val=SgFloatVal,$Remains)|$IdentityOp=SgMultiplyOp($Val=SgIntVal,$Remains)";
          string addRightVal="$IdentityOp=SgAddOp($Remains,$Val=SgDoubleVal)|$IdentityOp=SgAddOp($Remains,$Val=SgFloatVal)|$IdentityOp=SgAddOp($Remains,$Val=SgIntVal)";
@@ -373,42 +470,16 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
 
              bool algebraicIdentityTransformation=false;
              if(valueNode && isSgMultiplyOp(op)) {
-               if(SgIntVal* val=isSgIntVal(valueNode)) {
-                 int value=val->get_value();
-                 if(value==1) {
-                   algebraicIdentityTransformation=true;
-                 }
-               } else if(SgFloatVal* val=isSgFloatVal(valueNode)) {
-                 float value=val->get_value();
-                 if(value==1.0f) {
-                   algebraicIdentityTransformation=true;
-                 }
-               } else if(SgDoubleVal* val=isSgDoubleVal(valueNode)) {
-                 double value=val->get_value();
-                 if(value==1.0d) {
-                   algebraicIdentityTransformation=true;
-                 }
+               if(isValueOne(valueNode)) {
+                 algebraicIdentityTransformation=true;
                } else {
                  //not normalize
                  //cout<<"WARNING: Found unsupported value-type in alebraic multiply-transformation rule :"<<cnt<<": "<<op->unparseToString()<<endl;
                }
              }
              if(valueNode && isSgAddOp(op)) {
-               if(SgIntVal* val=isSgIntVal(valueNode)) {
-                 int value=val->get_value();
-                 if(value==0) {
-                   algebraicIdentityTransformation=true;
-                 }
-               } else if(SgFloatVal* val=isSgFloatVal(valueNode)) {
-                 float value=val->get_value();
-                 if(value==0.0f) {
-                   algebraicIdentityTransformation=true;
-                 }
-               } else if(SgDoubleVal* val=isSgDoubleVal(valueNode)) {
-                 double value=val->get_value();
-                 if(value==0.0d) {
-                   algebraicIdentityTransformation=true;
-                 }
+               if(isValueZero(valueNode)) {
+                 algebraicIdentityTransformation=true;
                } else {
                  //not normalized
                  //cout<<"DEBUG: Found unsupported value-type in alebraic multiply-transformation rule :"<<cnt<<": "<<op->unparseToString()<<endl;
@@ -427,7 +498,7 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
          }
        } while(transformationApplied);
      }
-#endif
+
      if(ruleAddReorder) {
        do {
          // the following rules guarantee convergence
