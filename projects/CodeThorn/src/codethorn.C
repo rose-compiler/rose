@@ -277,7 +277,6 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
     ("csv-stats-size-and-ltl",po::value< string >(),"output statistics regarding the final model size and results for LTL properties into a CSV file [arg]")
     ("check-ltl", po::value< string >(), "take a text file of LTL I/O formulae [arg] and check whether or not the analyzed program satisfies these formulae. Formulae should start with '('. Use \"csv-spot-ltl\" option to specify an output csv file for the results.")
     ("single-property", po::value< int >(), "number (ID) of the property that is supposed to be analyzed. All other LTL properties will be ignored. ( Use \"check-ltl\" option to specify an input property file).")
-    ("check-ltl-counterexamples", po::value< string >(), "report ltl counterexamples if and only if they are not spurious [=yes|no]")
     ("check-ltl-sol", po::value< string >(), "take a source code file and an LTL formulae+solutions file ([arg], see RERS downloads for examples). Display if the formulae are satisfied and if the expected solutions are correct.")
     ("counterexamples-with-output", po::value< string >(), "reported counterexamples for LTL or reachability properties also include output values [=yes|no]")
     ("determine-prefix-depth", po::value< string >(), "if possible, display a guarantee about the length of the discovered prefix of possible program traces. [=yes|no]")
@@ -577,7 +576,6 @@ BoolOptions& parseBoolOptions(int argc, char* argv[]) {
   boolOptions.registerOption("with-assert-counterexamples",false);
   boolOptions.registerOption("with-ltl-counterexamples",false);
   boolOptions.registerOption("counterexamples-with-output",false);
-  boolOptions.registerOption("check-ltl-counterexamples",false);
   boolOptions.registerOption("cegpra-ltl-all",false);
   boolOptions.registerOption("determine-prefix-depth",false);
   boolOptions.registerOption("explicit-arrays",true); // MS (2017-06-09): enabled by default
@@ -873,14 +871,6 @@ void analyzerSetup(Analyzer& analyzer, const po::variables_map& args, Sawyer::Me
     boolOptions.setOption("with-ltl-counterexamples",true);
   }
 
-  if (boolOptions["check-ltl-counterexamples"]) {
-    boolOptions.setOption("no-input-input",true);
-    boolOptions.setOption("with-ltl-counterexamples",true);
-    boolOptions.setOption("counterexamples-with-output",true);
-    cout << "STATUS: option check-ltl-counterexamples activated (analyzing counterexamples, returning those that are not spurious.)" << endl;
-    cout << "STATUS: option check-ltl-counterexamples: activates LTL counterexamples with output. Removes input state --> input state transitions in the approximated STG. " << endl;
-  }
-
   if(boolOptions["print-all-options"]) {
     cout<<boolOptions.toString(); // prints all bool options
     exit(1);
@@ -1114,7 +1104,6 @@ int main( int argc, char * argv[] ) {
 	args.count("csv-spot-ltl") ||
 	args.count("check-ltl") ||
 	args.count("single-property") ||
-	args.count("check-ltl-counterexamples") ||
 	args.count("check-ltl-sol") ||
 	args.count("ltl-in-alphabet") ||
 	args.count("ltl-out-alphabet") ||
@@ -1766,9 +1755,6 @@ int main( int argc, char * argv[] ) {
 
       logger[TRACE] << "STATUS: generating LTL results"<<endl;
       bool spuriousNoAnswers = false;
-      if (boolOptions["check-ltl-counterexamples"]) {
-        spuriousNoAnswers = true;   
-      }
       logger[TRACE] << "LTL: check properties. "<<endl;
       if (args.count("single-property")) {
 	int propertyNum = args["single-property"].as<int>();
@@ -1800,27 +1786,6 @@ int main( int argc, char * argv[] ) {
           int property = args["cegpra-ltl"].as<int>();
           ltlResults = ceAnalyzer.cegarPrefixAnalysisForLtl(property, spotConnection, ltlInAlphabet, ltlOutAlphabet);
         }
-      }
-
-      if (boolOptions["check-ltl-counterexamples"]) {
-        logger[TRACE]<< "STATUS: checking for spurious counterexamples..."<<endl;
-        CounterexampleAnalyzer ceAnalyzer(&analyzer);
-        for (unsigned int i = 0; i < ltlResults->size(); i++) {
-          //only check counterexamples
-          if (ltlResults->getPropertyValue(i) == PROPERTY_VALUE_NO) {
-            std::string counterexample = ltlResults->getCounterexample(i);
-            CEAnalysisResult ceAnalysisResult = ceAnalyzer.analyzeCounterexample(counterexample, NULL, true, true);
-            if (ceAnalysisResult.analysisResult == CE_TYPE_SPURIOUS) {
-              //reset property to unknown
-              ltlResults->setCounterexample(i, "");
-              ltlResults->setPropertyValue(i, PROPERTY_VALUE_UNKNOWN);
-              logger[INFO] << "property " << i << " was reset to unknown (spurious counterexample)." << endl;
-            } else if (ceAnalysisResult.analysisResult == CE_TYPE_REAL) {
-              //logger[DEBUG] << "counterexample is a real counterexample! success" << endl;
-            }
-          }
-        }
-        logger[TRACE] << "STATUS: counterexample check done."<<endl;
       }
 
       if(analyzer.getOptionStatusMessages()) {

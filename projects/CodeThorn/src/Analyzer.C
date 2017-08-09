@@ -352,6 +352,8 @@ bool Analyzer::isLoopCondLabel(Label lab) {
 }
 
 void Analyzer::addToWorkList(const EState* estate) {
+  ROSE_ASSERT(estate);
+  ROSE_ASSERT(estateWorkListCurrent);
 #pragma omp critical(ESTATEWL)
   {
     if(!estate) {
