@@ -345,8 +345,10 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
        int cnt=0;
        do {
 
-         // TODO: SgMultiplyOp($V1=SgDoubleVal,SgMinusOp($V2=SgDoubleVal==1.0)) ==> SgMultiplyOp(SgMinusOp($V1))
-         // TODO: SgMultiplyOp(SgMinusOp($V2=SgDoubleVal==1.0),$V1=SgDoubleVal) ==> SgMultiplyOp(SgMinusOp($V1))
+         // TODO: SgMultiplyOp($V1,SgMinusOp($V2=SgDoubleVal==1.0)) ==> SgMinusOp($V1)) : E*(-1)=>-E
+         // TODO: SgMultiplyOp(SgMinusOp($V2=SgDoubleVal==1.0),$V1) ==> SgMinusOp($V1)) : (-1)*E=>-E
+         // TODO: SgAddOp($V1,SgMinusOp($V2=SgDoubleVal==1.0)) ==> SgSubtractOp($V1,$V2): E+(-1)=>E-1
+         // TODO: SgAddOp(SgMinusOp($V2=SgDoubleVal==1.0),$V1) ==> SgSubtractOp($V1,$V2): (-1)+E=>E-1
 
          // the following rules guarantee convergence
          transformationApplied=false;
