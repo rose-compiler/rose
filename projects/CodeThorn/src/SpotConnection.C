@@ -292,70 +292,6 @@ void SpotConnection::checkLtlPropertiesParPro(ParProTransitionGraph& stg, bool w
   } //end of implicit condition (stg.isPrecise() || stg.isComplete())
 }
 
-void SpotConnection::compareResults(TransitionGraph& stg, std::string ltl_fsPlusRes_file,
-					std::set<int> inVals, std::set<int> outVals) {
-  //determine largest input Value, then merge input and output alphabet
-  int maxInputVal = *( std::max_element(inVals.begin(), inVals.end()) );
-  std::set<int> ioValues = inVals;
-  ioValues.insert(outVals.begin(), outVals.end());
-  //initializing the atomic propositions used based on I/O values
-  spot::ltl::atomic_prop_set* sap = getAtomicProps(ioValues, maxInputVal);
-  //instantiate a new dictionary for atomic propositions 
-  // (will be used by the model tgba as well as by the ltl formula tgbas)
-  spot::bdd_dict dict;
-  //create a tgba from CodeThorn's STG model
-  SpotTgba* ct_tgba = new SpotTgba(stg, *sap, dict, inVals, outVals);
-  // open the LTL text file
-  ifstream ltl_input(ltl_fsPlusRes_file.c_str());
-  if (ltl_input.is_open()) {
-    // parse all LTL formulas and their corresponding solutions
-    ltlData* inputs = parseSolutions(ltl_input);
-    // check each formula indivdually, using the same model tgba at all times
-    std::string* pCounterExample;
-    for (ltlData::iterator iter = inputs->begin(); iter != inputs->end(); ++iter) {
-      parseWeakUntil((*iter)->ltlString);
-      //check formula and print out how the result compares to the expected solution  
-      bool spotResult = checkFormula(ct_tgba, (*iter)->ltlString, ct_tgba->get_dict(), &pCounterExample);
-      cout << comparison(spotResult, (*iter)->expectedRes, (*iter)->ltlString, *pCounterExample) << endl;
-    }
-    ltl_input.close();
-  }
-  delete ct_tgba;
-  ct_tgba = NULL;
-}
-
-///deprecated. uses text format for the tgba. Newer version is implemented that could also make use of on the fly computation
-void SpotConnection::compareResults(std::string tgba_file, std::string ltl_fsPlusRes_file) {
-  
-  //cout<<"STATUS: reading STG from file: "<<tgba_file<<endl;
-  spot::bdd_dict* dict = new spot::bdd_dict();
-  spot::ltl::environment& env(spot::ltl::default_environment::instance());
-  spot::tgba_parse_error_list pel2;
-  spot::tgba_explicit_string* model_tgba = spot::tgba_parse(tgba_file.c_str(), pel2, dict, env);
-  if (spot::format_tgba_parse_errors(std::cerr, tgba_file.c_str(), pel2)) {
-    cerr<<"Error: stg format error."<<endl;
-    assert(0);
-  }
-  //open LTL text file and check for each formula if the provided solution is correct
-  ifstream ltl_input(ltl_fsPlusRes_file.c_str());
-  if (ltl_input.is_open()) {
-    ltlData* inputs = parseSolutions(ltl_input);
-    std::string* pCounterExample;
-    for (ltlData::iterator iter = inputs->begin(); iter != inputs->end(); ++iter) {
-      parseWeakUntil((*iter)->ltlString);
-      //check formula and print out how the result compares to the expected solution  
-      bool spotResult = checkFormula(dynamic_cast<spot::tgba*>(model_tgba), (*iter)->ltlString, dict, &pCounterExample);
-      cout << comparison(spotResult, (*iter)->expectedRes, (*iter)->ltlString, *pCounterExample) << endl;
-    }
-    delete inputs;
-    inputs = NULL;
-    ltl_input.close();
-  }
-  delete dict;
-  dict = NULL;
-}
-
-
 bool SpotConnection::checkFormula(spot::tgba* ct_tgba, std::string ltl_string, spot::bdd_dict* dict, std::string** ce_ptr) {
  
   bool result;
@@ -464,26 +400,6 @@ spot::ltl::atomic_prop_set* SpotConnection::getAtomicProps(std::set<int> ioVals,
   return sap;
 }
 
-std::string SpotConnection::comparison(bool spotRes, bool expectedRes, std::string& ltlFormula, std::string& ce) {
-  std::string result;
-  if (spotRes) {
-    if (expectedRes) {
-      result = "correct solution: true expected and model satisfies formula. Formula was " + ltlFormula;
-    } else {
-      result = "ERROR in solution: false expected but model satisfies formula. Formula was " + ltlFormula;
-    }
-  } else {
-    if (!expectedRes) {
-      result = "correct solution: false expected, model does not satisfy formula. Formula was " + ltlFormula; 
-    } else {
-      result = "ERROR in solution: true expected but counterexample exists. Formula was " + ltlFormula +"\n";
-      result += "counterexample: \n";
-      result += ce;
-    }
-  }
-  return result;
-}
-
 std::list<std::string>* SpotConnection::loadFormulae(istream& input) {
   std::list<std::string>* result = new std::list<std::string>(); //DEBUG: FIXE ME (REMOVE)
   std::string line;
@@ -512,30 +428,6 @@ std::list<std::string>* SpotConnection::loadFormulae(istream& input) {
   delete nextFormula;
   nextFormula = NULL;
   return result;   //DEBUG: FIXE ME (REMOVE)
-}
-
-ltlData* SpotConnection::parseSolutions(istream& input) {
-  ltlData* result = new ltlData();
-  std::string line;
-  FormulaPlusResult* current;	
-  while (std::getline(input, line)){
-    if (line.size() > 7 && line.at(7) == ':') {   //means that a formula follows ("Formula: (....)")	
-      line = line.substr(9, (line.size()-9));	//cut off non-formula line prefix
-      current = new FormulaPlusResult();
-      current->ltlString = line;
-      //look two lines underneath for the result
-      std::string resultLine;
-      std::getline(input, resultLine);
-      std::getline(input, resultLine);
-      if (resultLine.size() > 11 && resultLine.at(11) == 'n'){  // "Formula is not satisfied! ..."
-        current->expectedRes = false;
-      } else if (resultLine.size() > 11 &&  resultLine.at(11) == 's') { // "Formula is satisfied."
-        current->expectedRes = true;
-      } else {cout << "parse ERROR" << endl; assert(0);  }
-      result->push_back(current);
-    }
-  }
-  return result;
 }
 
 string& SpotConnection::parseWeakUntil(std::string& ltl_string) {
@@ -827,17 +719,6 @@ ParProSpotTgba* SpotConnection::toTgba(ParProTransitionGraph& stg) {
 void SpotConnection::checkLtlPropertiesParPro(ParProTransitionGraph& stg, bool withCounterexample, bool spuriousNoAnswers, set<string> annotationsOfModeledTransitions) {
   reportUndefinedFunction();
 }
-
-void SpotConnection::compareResults(TransitionGraph& stg, std::string ltl_fsPlusRes_file,
-					std::set<int> inVals, std::set<int> outVals) {
-  reportUndefinedFunction();
-}
-
-void SpotConnection::compareResults(std::string tgba_file, std::string ltl_fsPlusRes_file) {
-  reportUndefinedFunction();
-}
-
-
 
 // TODO: move to a more appropriate class (does not utilize SPOT, but handles the RERS input/output encoding)
 std::string SpotConnection::int2PropName(int ioVal, int maxInputVal)  {

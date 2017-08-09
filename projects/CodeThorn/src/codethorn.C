@@ -277,7 +277,6 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
     ("csv-stats-size-and-ltl",po::value< string >(),"output statistics regarding the final model size and results for LTL properties into a CSV file [arg]")
     ("check-ltl", po::value< string >(), "take a text file of LTL I/O formulae [arg] and check whether or not the analyzed program satisfies these formulae. Formulae should start with '('. Use \"csv-spot-ltl\" option to specify an output csv file for the results.")
     ("single-property", po::value< int >(), "number (ID) of the property that is supposed to be analyzed. All other LTL properties will be ignored. ( Use \"check-ltl\" option to specify an input property file).")
-    ("check-ltl-sol", po::value< string >(), "take a source code file and an LTL formulae+solutions file ([arg], see RERS downloads for examples). Display if the formulae are satisfied and if the expected solutions are correct.")
     ("counterexamples-with-output", po::value< string >(), "reported counterexamples for LTL or reachability properties also include output values [=yes|no]")
     ("determine-prefix-depth", po::value< string >(), "if possible, display a guarantee about the length of the discovered prefix of possible program traces. [=yes|no]")
     ("inf-paths-only", po::value< string >(), "recursively prune the graph so that no leaves exist [=yes|no]")
@@ -1104,7 +1103,6 @@ int main( int argc, char * argv[] ) {
 	args.count("csv-spot-ltl") ||
 	args.count("check-ltl") ||
 	args.count("single-property") ||
-	args.count("check-ltl-sol") ||
 	args.count("ltl-in-alphabet") ||
 	args.count("ltl-out-alphabet") ||
 	args.count("ltl-driven") ||
@@ -1236,7 +1234,6 @@ int main( int argc, char * argv[] ) {
           || string(argv[i]).find("--limit-to-fragment")==0
           || string(argv[i]).find("--check-ltl")==0
           || string(argv[i]).find("--csv-spot-ltl")==0
-          || string(argv[i]).find("--check-ltl-sol")==0
           || string(argv[i]).find("--ltl-in-alphabet")==0
           || string(argv[i]).find("--ltl-out-alphabet")==0
           || string(argv[i]).find("--ltl-driven")==0
@@ -2068,39 +2065,6 @@ int main( int argc, char * argv[] ) {
       string filename = args["csv-stats-cegpra"].as<string>();
       write_file(filename,statisticsCegpra.str());
       cout << "generated "<<filename<<endl;
-    }
-
-    if (args.count("check-ltl-sol")) {
-      string ltl_filename = args["check-ltl-sol"].as<string>();
-      // rers mode reduces the STG. In case of ltl-driven mode there is nothing to reduce.
-      if(boolOptions["rersmode"] && !analyzer.getModeLTLDriven()) {  //reduce the graph accordingly, if not already done
-        if (!boolOptions["inf-paths-only"]) {
-          logger[TRACE] << "STATUS: recursively removing all leaves (due to RERS-mode (3))."<<endl;
-          analyzer.pruneLeavesRec();
-        }
-        if (!boolOptions["std-io-only"]) {
-          logger[TRACE] << "STATUS: bypassing all non standard I/O states (due to RERS-mode). (P3)"<<endl;
-          analyzer.removeNonIOStates();
-        }
-      }
-      std::set<int> ltlInAlphabet = analyzer.getInputVarValues();
-      //take fixed ltl input alphabet if specified, instead of the input values used for stg computation
-      if (args.count("ltl-in-alphabet")) {
-        string setstring=args["ltl-in-alphabet"].as<string>();
-        ltlInAlphabet=Parse::integerSet(setstring);
-        logger[TRACE] << "STATUS: LTL input alphabet explicitly selected: "<< setstring << endl;
-      }
-      //take ltl output alphabet if specifically described, otherwise the usual 21...26 (a.k.a. oU...oZ)
-      std::set<int> ltlOutAlphabet = Parse::integerSet("{21,22,23,24,25,26}");
-      if (args.count("ltl-out-alphabet")) {
-        string setstring=args["ltl-out-alphabet"].as<string>();
-        ltlOutAlphabet=Parse::integerSet(setstring);
-        logger[TRACE] << "STATUS: LTL output alphabet explicitly selected: "<< setstring << endl;
-      }
-      SpotConnection* spotConnection = new SpotConnection();
-      spotConnection->setModeLTLDriven(analyzer.getModeLTLDriven());
-      spotConnection->compareResults( *(analyzer.getTransitionGraph()) , ltl_filename, ltlInAlphabet, ltlOutAlphabet);
-      cout << "=============================================================="<<endl;
     }
 
     Visualizer visualizer(analyzer.getLabeler(),analyzer.getVariableIdMapping(),analyzer.getFlow(),analyzer.getPStateSet(),analyzer.getEStateSet(),analyzer.getTransitionGraph());
