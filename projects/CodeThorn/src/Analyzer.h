@@ -427,7 +427,6 @@ namespace CodeThorn {
     int inputSequenceLength(const EState* target);
 
     // begin of solver 10 functions (black-box pattern search)
-    bool containsPatternTwoRepetitions(std::list<int>& sequence);
     bool containsPatternTwoRepetitions(std::list<int>& sequence, int startIndex, int endIndex);
     bool computePStateAfterInputs(PState& pState, std::list<int>& inputs, int thread_id, std::list<int>* iOSequence=NULL);;
     std::list<int> inputsFromPatternTwoRepetitions(std::list<int> pattern2r);

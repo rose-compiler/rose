@@ -4,8 +4,6 @@
 #ifndef SPOT_MISCELLANEOUS_H
 #define SPOT_MISCELLANEOUS_H
 
-//to-do: license, author etc.
-
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -49,7 +47,11 @@
 #include "boost/regex.hpp"
 #include "boost/lexical_cast.hpp"
 
-
+/*! 
+ * \brief Miscellaneous functions that rely on implementations of the SPOT library.
+ * \author Marc Jasper
+ * \date 2016, 2017.
+ */
 class SpotMiscellaneous {
 public:
   static std::string spinSyntax(std::string ltlFormula); 

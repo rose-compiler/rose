@@ -24,7 +24,11 @@
 using namespace std;
 
 namespace CodeThorn {
-  // a state in the SPOT tgba. Uses an ParProEState from Codethorn as its adaptee
+  /*! 
+   * \brief A state in the SPOT tgba. Uses an ParProEState from Codethorn as its adaptee (see SpotConnection).
+   * \author Marc Jasper
+   * \date 2016, 2017.
+   */
   class ParProSpotState : public spot::state {
   public:
     ParProSpotState(const ParProEState& estate);

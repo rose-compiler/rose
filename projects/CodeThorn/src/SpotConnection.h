@@ -1,8 +1,6 @@
 #ifndef SPOT_CONNECTION_H
 #define SPOT_CONNECTION_H
 
-//to-do: license, author etc.
-
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -65,8 +63,12 @@ namespace CodeThorn {
     int propertyNumber;
     std::string ltlString;
   };
-  
-  // an interface used to test LTL formulas on CodeThorns TransitionGraphs
+
+  /*! 
+   * \brief Checks LTL properties on CodeThorn's TransitionGraph using the SPOT library.
+   * \author Marc Jasper
+   * \date 2014, 2015, 2016, 2017.
+   */
   class SpotConnection {
     public:
       SpotConnection();

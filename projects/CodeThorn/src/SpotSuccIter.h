@@ -21,7 +21,11 @@
 using namespace std;
 
 namespace CodeThorn {
-  //An iterator over the successor states of the given parameter state
+  /*! 
+   * \brief SPOT-specific iterator over the successor states of an EState (see SpotConnection).
+   * \author Marc Jasper
+   * \date 2014, 2015, 2016, 2017.
+   */
   class SpotSuccIter : public spot::tgba_succ_iterator {
   public:
     SpotSuccIter(TransitionGraph& tg, const EState& state,

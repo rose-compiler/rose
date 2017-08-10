@@ -336,6 +336,10 @@ void Analyzer::runSolver5() {
   transitionGraph.setIsPrecise(isPrecise());
 }
 
+/*! 
+ * \author Marc Jasper
+ * \date 2014, 2015.
+ */
 // solver 8 is used to analyze traces of consecutively added input sequences
 void Analyzer::runSolver8() {
   int workers = 1; //only one thread
@@ -407,8 +411,16 @@ void Analyzer::runSolver8() {
   transitionGraph.setIsComplete(false);
 }
 
+/*! 
+ * \author Marc Jasper
+ * \date 2015.
+ */
 typedef std::pair<PState,  std::list<int> > PStatePlusIOHistory;
 
+/*! 
+ * \author Marc Jasper
+ * \date 2015.
+ */
 void Analyzer::runSolver10() {
   if(boolOptions["rers-binary"]) {
     //initialize the global variable arrays in the linked binary version of the RERS problem

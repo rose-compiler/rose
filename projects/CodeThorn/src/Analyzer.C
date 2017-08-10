@@ -1457,6 +1457,10 @@ void Analyzer::semanticFoldingOfTransitionGraph() {
   } // end of omp pragma
 }
 
+/*! 
+  * \author Marc Jasper
+  * \date 2014.
+ */
 void Analyzer::pruneLeavesRec() {
   EStatePtrSet states=transitionGraph.estateSet();
   std::set<EState*> workset;
@@ -1479,11 +1483,19 @@ void Analyzer::pruneLeavesRec() {
   }
 }
 
+/*! 
+  * \author Marc Jasper
+  * \date 2014.
+ */
 bool Analyzer::indegreeTimesOutdegreeLessThan(const EState* a, const EState* b) {
   return ( (transitionGraph.inEdges(a).size() * transitionGraph.outEdges(a).size()) <
              (transitionGraph.inEdges(b).size() * transitionGraph.outEdges(b).size()) );
 }
 
+/*! 
+  * \author Marc Jasper
+  * \date 2014.
+ */
 void Analyzer::removeNonIOStates() {
   EStatePtrSet states=transitionGraph.estateSet();
   if (states.size() == 0) {
@@ -1513,6 +1525,10 @@ void Analyzer::removeNonIOStates() {
   }
 }
 
+/*! 
+  * \author Marc Jasper
+  * \date 2014.
+ */
 void Analyzer::reduceGraphInOutWorklistOnly(bool includeIn, bool includeOut, bool includeErr) {
   // 1.) worklist_reduce <- list of startState and all input/output states
   std::list<const EState*> worklist_reduce;
@@ -1545,6 +1561,10 @@ void Analyzer::reduceGraphInOutWorklistOnly(bool includeIn, bool includeOut, boo
   }
 }
 
+/*! 
+  * \author Marc Jasper
+  * \date 2014.
+ */
 boost::unordered_set<Transition*>* Analyzer::transitionsToInOutErrAndWorklist( const EState* startState,
     bool includeIn, bool includeOut, bool includeErr) {
   // initialize result set and visited set (the latter for cycle checks)
@@ -1567,7 +1587,10 @@ boost::unordered_set<Transition*>* Analyzer::transitionsToInOutErrAndWorklist( c
   return result;
 }
 
-
+/*! 
+  * \author Marc Jasper
+  * \date 2014.
+ */
 boost::unordered_set<Transition*>*
 Analyzer::transitionsToInOutErrAndWorklist( const EState* currentState,
                                             const EState* startState,
@@ -1851,6 +1874,10 @@ void Analyzer::runSolver11() {
   logger[TRACE]<< "analysis with solver 11 finished (worklist is empty)."<<endl;
 }
 
+/*! 
+  * \author Marc Jasper
+  * \date 2016.
+ */
 void Analyzer::runSolver12() {
   _analysisTimer.start();
   if(svCompFunctionSemantics()) {
@@ -2080,6 +2107,10 @@ void Analyzer::runSolver12() {
   transitionGraph.setIsPrecise(isPrecise());
 }
 
+/*! 
+  * \author Marc Jasper
+  * \date 2015.
+ */
 int Analyzer::pStateDepthFirstSearch(PState* startPState, int maxDepth, int thread_id, list<int>* partialTrace, int maxInputVal, int patternLength, int patternIterations) {
   // initialize worklist
   PStatePlusIOHistory startState = PStatePlusIOHistory(*startPState, list<int>());
@@ -2160,6 +2191,10 @@ int Analyzer::pStateDepthFirstSearch(PState* startPState, int maxDepth, int thre
   return processedStates;
 }
 
+/*! 
+  * \author Marc Jasper
+  * \date 2015.
+ */
 list<int> Analyzer::inputsFromPatternTwoRepetitions(list<int> pattern2r) {
   ROSE_ASSERT(pattern2r.size() % 4 == 0);
   list<int> result;
@@ -2172,6 +2207,10 @@ list<int> Analyzer::inputsFromPatternTwoRepetitions(list<int> pattern2r) {
   return result;
 }
 
+/*! 
+  * \author Marc Jasper
+  * \date 2015.
+ */
 bool Analyzer::computePStateAfterInputs(PState& pState, list<int>& inputs, int thread_id, list<int>* iOSequence) {
   for (list<int>::iterator i = inputs.begin(); i !=inputs.end(); i++) {
     //pState[globalVarIdByName("input")]=CodeThorn::AbstractValue(*i);
@@ -2193,29 +2232,10 @@ bool Analyzer::computePStateAfterInputs(PState& pState, list<int>& inputs, int t
   return true;
 }
 
-bool Analyzer::containsPatternTwoRepetitions(std::list<int>& sequence) {
-  if (sequence.size() % 2 != 0) {
-    return false;
-  }
-  bool mismatch = false;
-  list<int>::iterator firstHalf = sequence.begin();
-  //get a pointer to the beginning of the second half of the list
-  list<int>::iterator secondHalf = sequence.begin();
-  for (unsigned int i = 0; i < (sequence.size() / 2); i++) {
-    secondHalf++;
-  }
-  // check for two consecutive repetitions of the same subsequence
-  while (!mismatch && secondHalf != sequence.end()) {
-    if (*firstHalf != *secondHalf) {
-      mismatch = true;
-    } else {
-      firstHalf++;
-      secondHalf++;
-    }
-  }
-  return (!mismatch);
-}
-
+/*! 
+  * \author Marc Jasper
+  * \date 2015.
+ */
 bool Analyzer::containsPatternTwoRepetitions(std::list<int>& sequence, int startIndex, int endIndex) {
   // copy the sublist to an array
   int patternLength = endIndex - startIndex + 1;
@@ -2240,6 +2260,10 @@ bool Analyzer::containsPatternTwoRepetitions(std::list<int>& sequence, int start
   return !mismatch;
 }
 
+/*! 
+  * \author Marc Jasper
+  * \date 2014.
+ */
 string Analyzer::convertToCeString(list<int>& ceAsIntegers, int maxInputVal) {
   SpotConnection spotConnection;
   stringstream ss;
@@ -2256,6 +2280,10 @@ string Analyzer::convertToCeString(list<int>& ceAsIntegers, int maxInputVal) {
   return ss.str();
 }
 
+/*! 
+  * \author Marc Jasper
+  * \date 2014.
+ */
 int Analyzer::extractAssertionTraces() {
   int maxInputTraceLength = -1;
   for (list<pair<int, const EState*> >::iterator i = _firstAssertionOccurences.begin(); i != _firstAssertionOccurences.end(); ++i ) {
@@ -2271,6 +2299,10 @@ int Analyzer::extractAssertionTraces() {
   return -1;
 }
 
+/*! 
+  * \author Marc Jasper
+  * \date 2014.
+ */
 list<const EState*> Analyzer::reverseInOutSequenceBreadthFirst(const EState* source, const EState* target, bool counterexampleWithOutput) {
   // 1.) init: list wl , hashset predecessor, hashset visited
   list<const EState*> worklist;
@@ -2313,6 +2345,10 @@ list<const EState*> Analyzer::reverseInOutSequenceBreadthFirst(const EState* sou
   return result;
 }
 
+/*! 
+  * \author Marc Jasper
+  * \date 2014.
+ */
 list<const EState*> Analyzer::reverseInOutSequenceDijkstra(const EState* source, const EState* target, bool counterexampleWithOutput) {
   EStatePtrSet states = transitionGraph.estateSet();
   boost::unordered_set<const EState*> worklist;
@@ -2381,6 +2417,10 @@ list<const EState*> Analyzer::reverseInOutSequenceDijkstra(const EState* source,
   return result;
 }
 
+/*! 
+  * \author Marc Jasper
+  * \date 2014.
+ */
 list<const EState*> Analyzer::filterStdInOutOnly(list<const EState*>& states, bool counterexampleWithOutput) const {
   list<const EState*> result;
   for (list<const EState*>::iterator i = states.begin(); i != states.end(); i++ ) {
@@ -2391,6 +2431,10 @@ list<const EState*> Analyzer::filterStdInOutOnly(list<const EState*>& states, bo
   return result;
 }
 
+/*! 
+  * \author Marc Jasper
+  * \date 2014.
+ */
 string Analyzer::reversedInOutRunToString(list<const EState*>& run) {
   string result = "[";
   for (list<const EState*>::reverse_iterator i = run.rbegin(); i != run.rend(); i++ ) {
@@ -2418,6 +2462,10 @@ string Analyzer::reversedInOutRunToString(list<const EState*>& run) {
   return result;
 }
 
+/*! 
+  * \author Marc Jasper
+  * \date 2014.
+ */
 int Analyzer::addCounterexample(int assertCode, const EState* assertEState) {
   list<const EState*> counterexampleRun;
   // TODO: fix the reported minimum depth to reach an assertion for the first time
@@ -2436,6 +2484,10 @@ int Analyzer::addCounterexample(int assertCode, const EState* assertEState) {
   return ceRunLength;
 }
 
+/*! 
+  * \author Marc Jasper
+  * \date 2014.
+ */
 int Analyzer::inputSequenceLength(const EState* target) {
   list<const EState*> run;
   if(boolOptions["rers-binary"] && (getExplorationMode() == EXPL_BREADTH_FIRST) ) {
@@ -2446,6 +2498,10 @@ int Analyzer::inputSequenceLength(const EState* target) {
   return run.size();
 }
 
+/*! 
+  * \author Marc Jasper
+  * \date 2014.
+ */
 void Analyzer::reduceToObservableBehavior() {
   EStatePtrSet states=transitionGraph.estateSet();
   std::list<const EState*>* worklist = new list<const EState*>(states.begin(), states.end());
@@ -2459,6 +2515,10 @@ void Analyzer::reduceToObservableBehavior() {
   }
 }
 
+/*! 
+  * \author Marc Jasper
+  * \date 2014.
+ */
 void Analyzer::removeOutputOutputTransitions() {
   EStatePtrSet states=transitionGraph.estateSet();
   std::list<const EState*>* worklist = new list<const EState*>(states.begin(), states.end());
@@ -2477,6 +2537,10 @@ void Analyzer::removeOutputOutputTransitions() {
   }
 }
 
+/*! 
+  * \author Marc Jasper
+  * \date 2014.
+ */
 void Analyzer::removeInputInputTransitions() {
   EStatePtrSet states=transitionGraph.estateSet();
   // input cannot directly follow another input in RERS'14 programs. Erase those transitions
@@ -2494,16 +2558,28 @@ void Analyzer::removeInputInputTransitions() {
   }
 }
 
+/*! 
+  * \author Marc Jasper
+  * \date 2014, 2015.
+ */
 void Analyzer::storeStgBackup() {
   backupTransitionGraph = transitionGraph;
 }
 
+/*! 
+  * \author Marc Jasper
+  * \date 2014, 2015.
+ */
 void Analyzer::swapStgWithBackup() {
   TransitionGraph tTemp = transitionGraph;
   transitionGraph = backupTransitionGraph;
   backupTransitionGraph = tTemp;
 }
 
+/*! 
+  * \author Marc Jasper
+  * \date 2014, 2015.
+ */
 void Analyzer::setAnalyzerToSolver8(EState* startEState, bool resetAnalyzerData) {
   ROSE_ASSERT(startEState);
   //set attributes specific to solver 8
@@ -2546,6 +2622,10 @@ void Analyzer::setAnalyzerToSolver8(EState* startEState, bool resetAnalyzerData)
   //cout << "STATUS: reset to solver 8 finished."<<endl;
 }
 
+/*! 
+  * \author Marc Jasper
+  * \date 2014, 2015.
+ */
 void Analyzer::continueAnalysisFrom(EState * newStartEState) {
   ROSE_ASSERT(newStartEState);
   addToWorkList(newStartEState);

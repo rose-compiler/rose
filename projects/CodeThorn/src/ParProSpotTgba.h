@@ -26,7 +26,12 @@
 using namespace std;
 
 namespace CodeThorn {
-  // An adapter which takes a CodeThorn ParProTransitionGraph and adheres to SPOT's TGBA interface
+  /*! 
+   * \brief An adapter which takes a CodeThorn ParProTransitionGraph and adheres 
+   to SPOT's TGBA interface (see SpotConnection).
+   * \author Marc Jasper
+   * \date 2016, 2017.
+   */
   class ParProSpotTgba : public spot::tgba {
   public:
     ParProSpotTgba(ParProTransitionGraph& ctstg, const spot::ltl::atomic_prop_set& sap, 

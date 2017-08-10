@@ -30,7 +30,11 @@ namespace CodeThorn {
 
 typedef boost::unordered_map<string, int> String2Int;
 
-  //An iterator over the successor states of the given parameter state
+  /*! 
+   * \brief SPOT-specific iterator over the successor states of a ParProEState (see SpotConnection).
+   * \author Marc Jasper
+   * \date 2016, 2017.
+   */
   class ParProSpotSuccIter : public spot::tgba_succ_iterator {
   public:
     ParProSpotSuccIter(ParProTransitionGraph& tg, const ParProEState& state,
