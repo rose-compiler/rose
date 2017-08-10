@@ -17,7 +17,8 @@ nonsmoke_genericCoverage_c_verify=$(nonsmoke_genericCoverage_c)
 
 # C++ tests 
 nonsmoke_almost_all_cpp = \
-   test2017_14_Liao.C
+   test2017_14_Liao.C \
+   test2017_15_Liao.C
 
 almost_all_cpp = \
    test2013_253.C \
