@@ -382,20 +382,94 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
        }
      } while(transformationApplied); // a loop will eliminate -(-(5)) to 5
 #endif
-     
+     if(ruleAlgebraic) {
+       {
+         // E1+(-E2) => E1-E2
+         string m1="$OriginalExp=SgAddOp($E1,SgMinusOp($E2))";
+         MatchResult res=m.performMatching(m1,root);
+         if(res.size()>0) {
+           for(MatchResult::iterator mr=res.begin();mr!=res.end();++mr) {
+             SgExpression* originalExp=isSgExpression((*mr)["$OriginalExp"]);
+             SgExpression* e1=isSgExpression((*mr)["$E1"]);
+             SgExpression* e2=isSgExpression((*mr)["$E2"]);
+             SgExpression* newSubtractOp=SageBuilder::buildSubtractOp(e1,e2);
+             if(getTrace()) {
+               cout<<"Rule algebraic: "<<originalExp->unparseToString()<<" => "<<newSubtractOp->unparseToString()<<endl;
+             }
+             SgNodeHelper::replaceExpression(originalExp,newSubtractOp,false);
+             someTransformationApplied=true;
+           }
+         }
+       }       
+       {
+         // (-E2)+E1 => E1-E2
+         string m2="$OriginalExp=SgAddOp(SgMinusOp($E2),$E1)"; // this must be a separate rule (cannot use 'or' with above rule) because both can match
+         MatchResult res=m.performMatching(m2,root);
+         if(res.size()>0) {
+           for(MatchResult::iterator mr=res.begin();mr!=res.end();++mr) {
+             SgExpression* originalExp=isSgExpression((*mr)["$OriginalExp"]);
+             SgExpression* e1=isSgExpression((*mr)["$E1"]);
+             SgExpression* e2=isSgExpression((*mr)["$E2"]);
+             SgExpression* newSubtractOp=SageBuilder::buildSubtractOp(e1,e2);
+             if(getTrace()) {
+             cout<<"Rule algebraic: "<<originalExp->unparseToString()<<" => "<<newSubtractOp->unparseToString()<<endl;
+             }
+             SgNodeHelper::replaceExpression(originalExp,newSubtractOp,false);
+             someTransformationApplied=true;
+           }
+         }       
+       }
+       {
+         // (-E1)-E2 => -(E1+E2)
+         string m3="$OriginalExp=SgSubtractOp(SgMinusOp($E1),$E2)";
+         MatchResult res=m.performMatching(m3,root);
+         if(res.size()>0) {
+           for(MatchResult::iterator mr=res.begin();mr!=res.end();++mr) {
+             SgExpression* originalExp=isSgExpression((*mr)["$OriginalExp"]);
+             SgExpression* e1=isSgExpression((*mr)["$E1"]);
+             SgExpression* e2=isSgExpression((*mr)["$E2"]);
+             SgExpression* newAddOp=SageBuilder::buildAddOp(e1,e2);
+             SgExpression* newMinusOp=SageBuilder::buildMinusOp(newAddOp);
+             if(getTrace()) {
+             cout<<"Rule algebraic: "<<originalExp->unparseToString()<<" => "<<newMinusOp->unparseToString()<<endl;
+             }
+             SgNodeHelper::replaceExpression(originalExp,newMinusOp,false);
+             someTransformationApplied=true;
+           }
+         }       
+       }
+       {
+         // E1-(-E2) => E1+E2
+         string m4="$OriginalExp=SgSubtractOp($E1,SgMinusOp($E2))";
+         MatchResult res=m.performMatching(m4,root);
+         if(res.size()>0) {
+           for(MatchResult::iterator mr=res.begin();mr!=res.end();++mr) {
+             SgExpression* originalExp=isSgExpression((*mr)["$OriginalExp"]);
+             SgExpression* e1=isSgExpression((*mr)["$E1"]);
+             SgExpression* e2=isSgExpression((*mr)["$E2"]);
+             SgExpression* newAddOp=SageBuilder::buildAddOp(e1,e2);
+             if(getTrace()) {
+             cout<<"Rule algebraic: "<<originalExp->unparseToString()<<" => "<<newAddOp->unparseToString()<<endl;
+             }
+             SgNodeHelper::replaceExpression(originalExp,newAddOp,false);
+             someTransformationApplied=true;
+           }
+         }       
+       }
+     }     
+
      if(ruleAlgebraic) {
        int cnt=0;
        do {
-         // TODO: SgMultiplyOp($Remains,SgMinusOp($Val=SgDoubleVal==1.0)) ==> SgMinusOp($Remains)) : E*(-1.0)=>-E
-         // TODO: SgMultiplyOp(SgMinusOp($Val=SgDoubleVal==1.0),$Remains) ==> SgMinusOp($Remains)) : (-1.0)*E=>-E
-         // TODO: SgAddOp($Remains,SgMinusOp($Val=SgDoubleVal==1.0)) ==> SgSubtractOp($Remains,$Val): E+(-1.0)=>E-1.0
-         // TODO: SgAddOp(SgMinusOp($Val=SgDoubleVal==1.0),$Remains) ==> SgSubtractOp($Remains,$Val): (-1.0)+E=>E-1.0
 
          // the following rules guarantee convergence
          transformationApplied=false;
+
+         // E*(-1) => -E
          string multiplyMinusRight="$OriginalOp=SgMultiplyOp($Remains,$Minus=SgMinusOp($Val=SgDoubleVal))|$OriginalOp=SgMultiplyOp($Remains,$Minus=SgMinusOp($Val=SgFloatVal))";
+         // (-1)*E => -E
          string multiplyMinusLeft ="$OriginalOp=SgMultiplyOp($Minus=SgMinusOp($Val=SgDoubleVal),$Remains)|$OriginalOp=SgMultiplyOp($Minus=SgMinusOp($Val=SgFloatVal),$Remains)";
-         //string additionMinusRight="$OriginalOp=SgAddOp($Val=SgDoubleVal,$Remains)|$OriginalOp=SgAddOp($Val=SgFloatVal,$Remains)|$OriginalOp=SgAddOp($Val=SgIntVal,$Remains)";
+
          MatchResult res=m.performMatching(multiplyMinusRight+"|"+multiplyMinusLeft,root);
          if(res.size()>0) {
            for(MatchResult::iterator kk=res.begin();kk!=res.end();++kk) {
@@ -423,8 +497,8 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
                }
              }
              if(algebraicIdentityTransformation) {
-               if(true||getTrace()) {
-                 cout<<"Rule algebraic2: "<<op->unparseToString()<<" => "<<remainsNode->unparseToString()<<endl;
+               if(getTrace()) {
+                 cout<<"Rule algebraic: "<<op->unparseToString()<<" => -"<<remainsNode->unparseToString()<<endl;
                }
                minusNode->set_operand(remainsNode);
                SgNodeHelper::replaceExpression(op,minusNode,false);
@@ -441,19 +515,65 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
        int cnt=0;
        do {
 
-         // TODO: SgMultiplyOp($Remains,SgMinusOp($Val=SgDoubleVal==1.0)) ==> SgMinusOp($Remains)) : E*(-1.0)=>-E
-         // TODO: SgMultiplyOp(SgMinusOp($Val=SgDoubleVal==1.0),$Remains) ==> SgMinusOp($Remains)) : (-1.0)*E=>-E
-         // TODO: SgAddOp($Remains,SgMinusOp($Val=SgDoubleVal==1.0)) ==> SgSubtractOp($Remains,$Val): E+(-1.0)=>E-1.0
-         // TODO: SgAddOp(SgMinusOp($Val=SgDoubleVal==1.0),$Remains) ==> SgSubtractOp($Remains,$Val): (-1.0)+E=>E-1.0
+         // the following rules guarantee convergence
+         transformationApplied=false;
+         // 0-E => -E
+         string subtractRight="$OriginalOp=SgSubtractOp($Val=SgDoubleVal,$Remains)";
+         MatchResult res=m.performMatching(subtractRight,root);
+         if(res.size()>0) {
+           for(MatchResult::iterator kk=res.begin();kk!=res.end();++kk) {
+             // match found
+             SgExpression* op=isSgExpression((*kk)["$OriginalOp"]);
+             SgExpression* valueNode=isSgExpression((*kk)["$Val"]);
+             SgExpression* remainsNode=isSgExpression((*kk)["$Remains"]);
+
+             if(getTrace() && op && remainsNode) {
+               cout<<"Rule algebraic matched: "<<op->unparseToString()<<" => -"<<remainsNode->unparseToString()<<endl;
+             }
+
+             bool algebraicIdentityTransformation=false;
+             if(valueNode && isSgSubtractOp(op)) {
+               if(isValueZero(valueNode)) {
+                 algebraicIdentityTransformation=true;
+               } else {
+                 //not normalized
+                 //cout<<"DEBUG: Found unsupported value-type in alebraic multiply-transformation rule :"<<cnt<<": "<<op->unparseToString()<<endl;
+               }
+             }
+             if(algebraicIdentityTransformation) {
+               if(getTrace()) {
+                 cout<<"Rule algebraic: "<<op->unparseToString()<<" => -"<<remainsNode->unparseToString()<<endl;
+               }
+               SgExpression* newMinusOp=SageBuilder::buildMinusOp(remainsNode);
+               SgNodeHelper::replaceExpression(op,newMinusOp,false);
+               transformationApplied=true; 
+               someTransformationApplied=true;
+               cnt++;
+             }
+           }
+         }
+       } while(transformationApplied);
+     }
+
+
+
+     if(ruleAlgebraic) {
+       int cnt=0;
+       do {
 
          // the following rules guarantee convergence
          transformationApplied=false;
          //MatchResult res=m.performMatching("$MultiplyOp=SgMultiplyOp($Remains,$Val=SgFloatVal|$Val=SgDoubleVal|$Val=SgIntVal)",root);
-         // E*1.0=>E, E+0.0=>E
+
+         // E*1.0=>E
          string mulRightVal="$IdentityOp=SgMultiplyOp($Remains,$Val=SgDoubleVal)|$IdentityOp=SgMultiplyOp($Remains,$Val=SgFloatVal)|$IdentityOp=SgMultiplyOp($Remains,$Val=SgIntVal)";
+         // 1.0*E=>E
          string mulLeftVal="$IdentityOp=SgMultiplyOp($Val=SgDoubleVal,$Remains)|$IdentityOp=SgMultiplyOp($Val=SgFloatVal,$Remains)|$IdentityOp=SgMultiplyOp($Val=SgIntVal,$Remains)";
+         // E+0.0=>E
          string addRightVal="$IdentityOp=SgAddOp($Remains,$Val=SgDoubleVal)|$IdentityOp=SgAddOp($Remains,$Val=SgFloatVal)|$IdentityOp=SgAddOp($Remains,$Val=SgIntVal)";
+         // 0.0+E=>E
          string addLeftVal="$IdentityOp=SgAddOp($Val=SgDoubleVal,$Remains)|$IdentityOp=SgAddOp($Val=SgFloatVal,$Remains)|$IdentityOp=SgAddOp($Val=SgIntVal,$Remains)";
+
          MatchResult res=m.performMatching(mulRightVal+"|"+mulLeftVal+"|"+addRightVal+"|"+addLeftVal,root);
          if(res.size()>0) {
            for(MatchResult::iterator kk=res.begin();kk!=res.end();++kk) {
@@ -507,6 +627,7 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
          // Rewrite-rule 1: SgAddOp(SgAddOp($Remains,$Other),$IntVal=SgIntVal) => SgAddOp(SgAddOp($Remains,$IntVal),$Other)
          //                 where $Other!=SgIntVal && $Other!=SgFloatVal && $Other!=SgDoubleVal; ($Other notin {SgIntVal,SgFloatVal,SgDoubleVal})
          transformationApplied=false;
+         // (R + O) + Int =>   (R + Int) + O
          MatchResult res=m.performMatching("$BinaryOp1=SgAddOp(SgAddOp($Remains,$Other),$IntVal=SgIntVal)",root);
          if(res.size()>0) {
            for(MatchResult::iterator i=res.begin();i!=res.end();++i) {
@@ -538,8 +659,7 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
        } while(transformationApplied);
      }
 
-     // REWRITE: constant folding of constant integer (!) expressions
-     // we intentionally avoid folding of float values
+     // REWRITE: constant folding of constant integer expressions (float values are not folded)
      do {
        // Rewrite-rule 2: SgAddOp($IntVal1=SgIntVal,$IntVal2=SgIntVal) => SgIntVal
        //                 where SgIntVal.val=$IntVal1.val+$IntVal2.val
