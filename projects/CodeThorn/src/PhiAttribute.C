@@ -8,6 +8,9 @@
 
 using namespace std;
 
+PhiAttribute::PhiAttribute(map<string, int> reachingNumbers, Condition* condition): condition(condition), reachingNumbers(reachingNumbers) {
+}
+
 std::string PhiAttribute::toString()
 {
 	stringstream s;

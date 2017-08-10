@@ -455,7 +455,7 @@ void Specialization::attachSsaNumberingtoDefs(ArrayUpdatesSequence& arrayUpdates
 }
 
 // this function has become superfluous for SSA numbering (but for substituting uses with rhs of defs it is still necessary (2/2)
-void Specialization::substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping, SAR_MODE sarMode) {
+void Specialization::substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping, SAR_MODE sarMode, RewriteSystem& rewriteSystem) {
   if(arrayUpdates.size()==0)
     return;
   ArrayUpdatesSequence::iterator i=arrayUpdates.begin();
@@ -525,16 +525,17 @@ void Specialization::substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates, Var
     }
   }
   // normalization phase
-  RewriteSystem rewriteSystem2;
+  //RewriteSystem rewriteSystem2;
   for(ArrayUpdatesSequence::iterator i=arrayUpdates.begin();i!=arrayUpdates.end();++i) {
     SgExpression* exp=(*i).second;
     SgNode* node=exp;
     bool ruleAddReorder=false;
     bool ruleAlgebraic=true;
-    bool ruleCommutativeSorting=false;
+    bool ruleCommutativeSorting=false; // TODO: make this an OPTION
     //cout<<"DEBUG: Rewrite phase 2 :"<<exp->unparseToString()<<endl;
-    rewriteSystem2.rewriteAst(node,variableIdMapping,ruleAddReorder,false,ruleAlgebraic,ruleCommutativeSorting);
+    rewriteSystem.rewriteAst(node,variableIdMapping,ruleAddReorder,false,ruleAlgebraic,ruleCommutativeSorting);
   }
+#if 0
   std::ofstream fout;
   fout.open("rewrite.dot");    // create new file/overwrite existing file
   fout<<"digraph Rewrite {\n"<<endl;
@@ -546,6 +547,7 @@ void Specialization::substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates, Var
   }
   fout<<"}\n";
   fout.close();    // close. Will be used with append.
+#endif
 }
 
 void Specialization::printUpdateInfos(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping) {
