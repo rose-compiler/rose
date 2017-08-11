@@ -1432,9 +1432,21 @@ GrammarString::containerElementTypeString(AstNodeClass & node) const
                goto done;
              }
 
+          if (typenameString == "SgUntypedNamePtrList")
+             {
+               returnString = "SgUntypedName";
+               goto done;
+             }
+
           if (typenameString == "SgUntypedTokenPtrList")
              {
                returnString = "SgUntypedToken";
+               goto done;
+             }
+
+          if (typenameString == "SgUntypedTokenPairPtrList")
+             {
+               returnString = "SgUntypedTokenPair";
                goto done;
              }
 
@@ -1812,9 +1824,21 @@ GrammarString::containerAppendFunctionNameString(AstNodeClass & node) const
                goto done;
              }
 
+          if (typenameString == "SgUntypedNamePtrList")
+             {
+               // returnString = "SgUntypedName";
+               goto done;
+             }
+
           if (typenameString == "SgUntypedTokenPtrList")
              {
                // returnString = "SgUntypedToken";
+               goto done;
+             }
+
+          if (typenameString == "SgUntypedTokenPairPtrList")
+             {
+               // returnString = "SgUntypedTokenPair";
                goto done;
              }
 
