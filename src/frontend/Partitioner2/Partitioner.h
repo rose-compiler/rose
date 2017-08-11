@@ -22,6 +22,7 @@
 #include <Sawyer/SharedPointer.h>
 
 #include <BinaryUnparser.h>
+#include <Progress.h>
 
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/split_member.hpp>
@@ -311,8 +312,6 @@ private:
     CfgVertexIndex vertexIndex_;                        // Vertex-by-address index for the CFG
     AddressUsageMap aum_;                               // How addresses are used for each address represented by the CFG
     SMTSolver *solver_;                                 // Satisfiable modulo theory solver used by semantic expressions
-    mutable size_t progressTotal_;                      // Expected total for the progress bar; initialized at first report
-    bool isReportingProgress_;                          // Emit automatic progress reports?
     Functions functions_;                               // List of all attached functions by entry address
     bool autoAddCallReturnEdges_;                       // Add E_CALL_RETURN edges when blocks are attached to CFG?
     bool assumeFunctionsReturn_;                        // Assume that unproven functions return to caller?
@@ -333,6 +332,11 @@ private:
     ControlFlowGraph::VertexIterator indeterminateVertex_;
     ControlFlowGraph::VertexIterator nonexistingVertex_;
     static const size_t nSpecialVertices = 3;
+
+    // Protects the following data members
+    mutable SAWYER_THREAD_TRAITS::Mutex mutex_;
+    Progress::Ptr progress_;                            // Progress reporter to update, or null
+    mutable size_t cfgProgressTotal_;                   // Expected total for the CFG progress bar; initialized at first report
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -369,8 +373,6 @@ private:
         // s & vertexIndex_;                    -- initialized by rebuildVertexIndices
         s & BOOST_SERIALIZATION_NVP(aum_);
         s & BOOST_SERIALIZATION_NVP(solver_);
-        s & BOOST_SERIALIZATION_NVP(progressTotal_);
-        s & BOOST_SERIALIZATION_NVP(isReportingProgress_);
         s & BOOST_SERIALIZATION_NVP(functions_);
         s & BOOST_SERIALIZATION_NVP(autoAddCallReturnEdges_);
         s & BOOST_SERIALIZATION_NVP(assumeFunctionsReturn_);
@@ -385,6 +387,8 @@ private:
         // s & undiscoveredVertex_;             -- initialized by rebuildVertexIndices
         // s & indeterminateVertex_;            -- initialized by rebuildVertexIndices
         // s & nonexistingVertex_;              -- initialized by rebuildVertexIndices
+        // s & progress_;                       -- not saved/restored
+        // s & cfgProgressTotal_;               -- not saved/restored
     }
 
     template<class S>
@@ -436,7 +440,9 @@ public:
     /** Return true if this is a default constructed partitioner.
      *
      *  Most methods won't work when applied to a default-constructed partitioner since it has no way to obtain instructions
-     *  and it has an empty memory map. */
+     *  and it has an empty memory map.
+     *
+     *  Thread safety: Not thread safe. */
     bool isDefaultConstructed() const { return instructionProvider_ == NULL; }
 
     /** Reset CFG/AUM to initial state. */
@@ -446,12 +452,17 @@ public:
      *
      *  The configuration holds information about functions and basic blocks which is used to provide default values and such.
      *
+     *  Thread safety: Not thread safe.
+     *
      * @{ */
     Configuration& configuration() { return config_; }
     const Configuration& configuration() const { return config_; }
     /** @} */
         
     /** Returns the instruction provider.
+     *
+     *  Thread safety: Not thread safe.
+     *
      *  @{ */
     InstructionProvider& instructionProvider() /*final*/ { return *instructionProvider_; }
     const InstructionProvider& instructionProvider() const /*final*/ { return *instructionProvider_; }
@@ -463,11 +474,15 @@ public:
      *  that means that any instructions or data obtained earlier from the map might not be an accurate representation of
      *  memory anymore.
      *
+     *  Thread safety: Not thread safe.
+     *
      *  @{ */
     MemoryMap::Ptr memoryMap() const /*final*/ { return memoryMap_; }
     /** @} */
 
-    /** Returns true if address is executable. */
+    /** Returns true if address is executable.
+     *
+     *  Thread safety: Not thread safe. */
     bool addressIsExecutable(rose_addr_t va) const /*final*/ {
         return memoryMap_!=NULL && memoryMap_->at(va).require(MemoryMap::EXECUTABLE).exists();
     }
@@ -477,6 +492,8 @@ public:
      *  This unparser is initiallly a copy of the one provided by the disassembler, but it can be reset to something else if
      *  desired. This is the unparser used by the @ref unparse method for the partitioner as a whole, functions, basic blocks,
      *  and data blocks.  Instructions use the @ref insnUnparser instead.
+     *
+     *  Thread safety: Not thread safe.
      *
      *  @{ */
     Unparser::BasePtr unparser() const /*final*/;
@@ -489,6 +506,8 @@ public:
      *  single instructions. By default, it prints the instruction address, mnemonic, and operands but not raw bytes, stack
      *  deltas, comments, or anything else.
      *
+     *  Thread safety: Not thread safe.
+     *
      * @{ */
     Unparser::BasePtr insnUnparser() const /*final*/;
     void insnUnparser(const Unparser::BasePtr&) /*final*/;
@@ -498,6 +517,8 @@ public:
      *
      *  Unparses an instruction, basic block, data block, function, or all functions using the unparser returned by @ref
      *  unparser (except for instructions, which use the unparser returned by @ref insnUnparser).
+     *
+     *  Thread safety: Not thread safe.
      *
      *  @{ */
     std::string unparse(SgAsmInstruction*) const;
@@ -516,12 +537,18 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Returns the number of bytes represented by the CFG.  This is a constant time operation. */
+    /** Returns the number of bytes represented by the CFG.
+     *
+     *  This is a constant time operation.
+     *
+     *  Thread safety: Not thread safe. */
     size_t nBytes() const /*final*/ { return aum_.size(); }
 
     /** Returns the special "undiscovered" vertex.
      *
      *  The incoming edges for this vertex originate from the basic block placeholder vertices.
+     *
+     *  Thread safety: Not thread safe.
      *
      * @{ */
     ControlFlowGraph::VertexIterator undiscoveredVertex() /*final*/ {
@@ -539,6 +566,8 @@ public:
      *
      *  Indeterminate successors result from, among other things, indirect jump instructions, like x86 "JMP [EAX]".
      *
+     *  Thread safety: Not thread safe.
+     *
      * @{ */
     ControlFlowGraph::VertexIterator indeterminateVertex() /*final*/ {
         return indeterminateVertex_;
@@ -554,6 +583,8 @@ public:
      *  placeholders.  Such basic blocks exist when an attempt is made to discover a basic block but its starting address is
      *  memory which is not mapped or memory which is mapped without execute permission.
      *
+     *  Thread safety: Not thread safe.
+     *
      *  @{ */
     ControlFlowGraph::VertexIterator nonexistingVertex() /*final*/ {
         return nonexistingVertex_;
@@ -566,13 +597,17 @@ public:
     /** Returns the control flow graph.
      *
      *  Returns the global control flow graph. The CFG should not be modified by the caller except through the partitioner's
-     *  own API. */
+     *  own API.
+     *
+     *  Thread safety: Not thread safe. */
     const ControlFlowGraph& cfg() const /*final*/ { return cfg_; }
 
     /** Returns the address usage map.
      *
      *  Returns the global address usage map.  The AUM should not be modified by the caller except through the paritioner's own
-     *  API. */
+     *  API.
+     *
+     *  Thread safety: Not thread safe. */
     const AddressUsageMap& aum() const /*final*/ { return aum_; }
 
     /** Returns the address usage map for a single function. */
@@ -581,6 +616,8 @@ public:
     /** Determine all ghost successors in the control flow graph.
      *
      *  The return value is a list of basic block ghost successors for which no basic block or basic block placeholder exists.
+     *
+     *  Thread safety: Not thread safe.
      *
      *  @sa basicBlockGhostSuccessors */
     std::set<rose_addr_t> ghostSuccessors() const /*final*/;
@@ -607,6 +644,8 @@ public:
      *
      *  When no function is specified it can be ambiguous as to whether a branch is intra- or inter-procedural; a branch could
      *  be both intra- and inter-procedural.
+     *
+     *  Thread safety: Not thread safe.
      *
      *  @sa isEdgeInterProcedural.
      *
@@ -646,6 +685,8 @@ public:
      *  When no functions are specified it can be ambiguous as to whether a branch is intra- or inter-procedural; a branch
      *  could be both intra- and inter-procedural.
      *
+     *  Thread safety: Not thread safe.
+     *
      *  @sa isEdgeIntraProcedural.
      *
      * @{ */
@@ -669,7 +710,9 @@ public:
 public:
     /** Returns the number of instructions attached to the CFG/AUM.
      *
-     *  This statistic is computed in time linearly proportional to the number of basic blocks in the control flow graph. */
+     *  This statistic is computed in time linearly proportional to the number of basic blocks in the control flow graph.
+     *
+     *  Thread safety: Not thread safe. */
     size_t nInstructions() const /*final*/;
 
     /** Determines whether an instruction is attached to the CFG/AUM.
@@ -677,6 +720,8 @@ public:
      *  If the CFG/AUM represents an instruction that starts at the specified address, then this method returns the
      *  instruction/block pair, otherwise it returns nothing. The initial instruction for a basic block does not exist if the
      *  basic block is only represented by a placeholder in the CFG; such a basic block is said to be "undiscovered".
+     *
+     *  Thread safety: Not thread safe.
      *
      *  @{ */
     Sawyer::Optional<AddressUser> instructionExists(rose_addr_t startVa) const /*final*/ {
@@ -690,7 +735,9 @@ public:
     /** Returns the CFG vertex containing specified instruction.
      *
      *  Returns the control flow graph vertex that contains the specified instruction. If the instruction does not exist in the
-     *  CFG then the end vertex is returned. */
+     *  CFG then the end vertex is returned.
+     *
+     *  Thread safety: Not thread safe. */
     ControlFlowGraph::ConstVertexIterator instructionVertex(rose_addr_t insnVa) const;
 
     /** Returns instructions that overlap with specified address interval.
@@ -698,7 +745,9 @@ public:
      *  Returns a sorted list of distinct instructions that are attached to the CFG/AUM and which overlap at least one byte in
      *  the specified address interval. An instruction overlaps the interval if any of its bytes are within the interval.
      *
-     *  The returned list of instructions are sorted by their starting address. */
+     *  The returned list of instructions are sorted by their starting address.
+     *
+     *  Thread safety: Not thread safe. */
     std::vector<SgAsmInstruction*> instructionsOverlapping(const AddressInterval&) const /*final*/;
 
     /** Returns instructions that span an entire address interval.
@@ -706,7 +755,9 @@ public:
      *  Returns a sorted list of distinct instructions that are attached to the CFG/AUM and which span the entire specified
      *  interval.  An instruction spans the interval if the set of addresses for all its bytes are a superset of the interval.
      *
-     *  The returned list of instructions are sorted by their starting address. */
+     *  The returned list of instructions are sorted by their starting address.
+     *
+     *  Thread safety: Not thread safe. */
     std::vector<SgAsmInstruction*> instructionsSpanning(const AddressInterval&) const /*final*/;
 
     /** Returns instructions that are fully contained in an address interval.
@@ -715,14 +766,18 @@ public:
      *  the specified interval.  In order to be fully contained in the interval, the set of addresses of the bytes in the
      *  instruction must be a subset of the specified interval.
      *
-     *  The returned list of instructions are sorted by their starting address. */
+     *  The returned list of instructions are sorted by their starting address.
+     *
+     *  Thread safety: Not thread safe. */
     std::vector<SgAsmInstruction*> instructionsContainedIn(const AddressInterval&) const /*final*/;
 
     /** Returns the address interval for an instruction.
      *
      *  Returns the minimal interval describing from where the instruction was disassembled.  An instruction always exists in a
      *  contiguous region of memory, therefore the return value is a single interval rather than a set of intervals. If a null
-     *  pointer is specified then an empty interval is returned. */
+     *  pointer is specified then an empty interval is returned.
+     *
+     *  Thread safety: Not thread safe. */
     AddressInterval instructionExtent(SgAsmInstruction*) const /*final*/;
 
     /** Discover an instruction.
@@ -734,7 +789,9 @@ public:
      *  pointer is returned.  If an instruction cannot be disassembled at the address (e.g., bad byte code or not implemented)
      *  then a special 1-byte "unknown" instruction is returned; such instructions have indeterminate control flow successors
      *  and no semantics.  If an instruction was previously returned for this address (including the "unknown" instruction)
-     *  then that same instruction will be returned this time. */
+     *  then that same instruction will be returned this time.
+     *
+     *  Thread safety: Not thread safe. */
     SgAsmInstruction* discoverInstruction(rose_addr_t startVa) const /*final*/;
 
     /** Cross references.
@@ -758,13 +815,17 @@ public:
      *  regardless of whether they point to a discovered basic block.  Note that vertices that are mere placeholders and don't
      *  point to a discovered basic block are not represented in the AUM since a placeholder has no instructions.
      *
-     *  This is a constant-time operation. */
-    size_t nPlaceholders() const /*final*/;
+     *  This is a constant-time operation.
+     *
+     *  Thread safety: Not thread safe. */
+     size_t nPlaceholders() const /*final*/;
 
     /** Determines whether a basic block placeholder exists in the CFG.
      *
      *  Returns true if the CFG contains a placeholder at the specified address, and false if no such placeholder exists.  The
      *  placeholder may or may not point to a discovered basic block.
+     *
+     *  Thread safety: Not thread safe.
      *
      *  @sa findPlaceholder */
     bool placeholderExists(rose_addr_t startVa) const /*final*/;
@@ -773,6 +834,8 @@ public:
      *  
      *  If the CFG contains a basic block placeholder at the specified address then that CFG vertex is returned, otherwise the
      *  end vertex (<code>partitioner.cfg().vertices().end()</code>) is returned.
+     *
+     *  Thread safety: Not thread safe.
      *
      *  @sa placeholderExists
      *
@@ -802,7 +865,9 @@ public:
      *  truncateBasicBlock), thereby inserting a new placeholder.
      *
      *  This method returns a pointer to either the existing placeholder (which may already point to an attached basic block)
-     *  or the new placeholder. */
+     *  or the new placeholder.
+     *
+     *  Thread safety: Not thread safe. */
     ControlFlowGraph::VertexIterator insertPlaceholder(rose_addr_t startVa) /*final*/;
 
     /** Remove a basic block placeholder from the CFG/AUM.
@@ -814,6 +879,8 @@ public:
      *
      *  If the placeholder pointed to a discovered basic block then that basic block is returned, otherwise the null pointer is
      *  returned.
+     *
+     *  Thread safety: Not thread safe.
      *
      *  @{ */
     BasicBlock::Ptr erasePlaceholder(const ControlFlowGraph::ConstVertexIterator &placeholder) /*final*/;
@@ -838,6 +905,8 @@ public:
      *  discovered.  Therefore, setting this property to true will cause a basic block's semantic information to be forgotten
      *  as soon as the basic block is attached to the CFG.
      *
+     *  Thread safety: Not thread safe.
+     *
      *  @sa basicBlockDropSemantics
      *
      * @{ */
@@ -850,6 +919,8 @@ public:
      *  Semantic information for all attached basic blocks is immediately forgotten by calling @ref
      *  BasicBlock::dropSemantics. It can be recomputed later if necessary.
      *
+     *  Thread safety: Not thread safe.
+     *
      *  @sa basicBlockSemanticsAutoDrop */
     void basicBlockDropSemantics() const /*final*/;
 
@@ -858,12 +929,16 @@ public:
      *  This method returns the number of CFG vertices that are more than mere placeholders in that they point to an actual,
      *  discovered basic block.
      *
-     *  This operation is linear in the number of vertices in the CFG.  Consider using @ref nPlaceholders instead. */
+     *  This operation is linear in the number of vertices in the CFG.  Consider using @ref nPlaceholders instead.
+     *
+     *  Thread safety: Not thread safe. */
     size_t nBasicBlocks() const /*final*/;
 
     /** Returns all basic blocks attached to the CFG.
      *
      *  The returned list contains distinct basic blocks sorted by their starting address.
+     *
+     *  Thread safety: Not thread safe.
      *
      * @sa basicBlocksOverlapping, @ref basicBlocksSpanning, @ref basicBlocksContainedIn */
     std::vector<BasicBlock::Ptr> basicBlocks() const /*final*/;
@@ -884,6 +959,8 @@ public:
      *  BasicBlock::Ptr similar = basicBlockExists(original->address());
      * @endcode
      *
+     *  Thread safety: Not thread safe.
+     *
      *  @sa placeholderExists
      *
      *  @{ */
@@ -897,7 +974,9 @@ public:
      *  the specified address interval.  By "overlap" we mean that the basic block has at least one instruction that overlaps
      *  with the specified interval.  An instruction overlaps the interval if any of its bytes are within the interval.
      *
-     *  The returned list of basic blocks are sorted by their starting address. */
+     *  The returned list of basic blocks are sorted by their starting address.
+     *
+     *  Thread safety: Not thread safe. */
     std::vector<BasicBlock::Ptr> basicBlocksOverlapping(const AddressInterval&) const /*final*/;
 
     /** Returns basic blocks that span an entire address interval.
@@ -907,7 +986,9 @@ public:
      *  words, the union of the addresses of the bytes contained in all the basic block's instructions is a superset of the
      *  specified interval.
      *
-     *  The returned list of basic blocks are sorted by their starting address. */
+     *  The returned list of basic blocks are sorted by their starting address.
+     *
+     *  Thread safety: Not thread safe. */
     std::vector<BasicBlock::Ptr> basicBlocksSpanning(const AddressInterval&) const /*final*/;
 
     /** Returns basic blocks that are fully contained in an address interval.
@@ -916,13 +997,17 @@ public:
      *  the specified interval.  In order to be fully contained in the interval, the union of the addresses of the bytes in the
      *  basic block's instructions must be a subset of the specified interval.
      *
-     *  The returned list of basic blocks are sorted by their starting address. */
+     *  The returned list of basic blocks are sorted by their starting address.
+     *
+     *  Thread safety: Not thread safe. */
     std::vector<BasicBlock::Ptr> basicBlocksContainedIn(const AddressInterval&) const /*final*/;
 
     /** Returns the basic block that contains a specific instruction address.
      *
      *  Returns the basic block that contains an instruction that starts at the specified address, or null if no such
-     *  instruction or basic block exists in the CFG/AUM. */
+     *  instruction or basic block exists in the CFG/AUM.
+     *
+     *  Thread safety: Not thread safe. */
     BasicBlock::Ptr basicBlockContainingInstruction(rose_addr_t insnVa) const /*final*/;
 
     /** Returns the addresses used by basic block instructions.
@@ -931,12 +1016,16 @@ public:
      *  basic blocks are contiguous in memory and can be represented by a single address interval, but this is not a
      *  requirement in ROSE.  ROSE only requires that the global control flow graph has edges that enter at only the initial
      *  instruction of the basic block and exit only from its final instruction.  The instructions need not be contiguous or
-     *  non-overlapping. */
+     *  non-overlapping.
+     *
+     *  Thread safety: Not thread safe. */
     AddressIntervalSet basicBlockInstructionExtent(const BasicBlock::Ptr&) const /*final*/;
 
     /** Returns the addresses used by basic block data.
      *
-     *  Returns an interval set which is the union of the extents for each data block referenced by this basic block. */
+     *  Returns an interval set which is the union of the extents for each data block referenced by this basic block.
+     *
+     *  Thread safety: Not thread safe. */
     AddressIntervalSet basicBlockDataExtent(const BasicBlock::Ptr&) const /*final*/;
 
     /** Detach a basic block from the CFG/AUM.
@@ -960,6 +1049,8 @@ public:
      *
      *  In order to completely remove a basic block, including its placeholder, use @ref eraseBasicBlock.
      *
+     *  Thread safety: Not thread safe.
+     *
      *  @{ */
     BasicBlock::Ptr detachBasicBlock(rose_addr_t startVa) /*final*/;
     BasicBlock::Ptr detachBasicBlock(const BasicBlock::Ptr &basicBlock) /*final*/;
@@ -975,7 +1066,9 @@ public:
      *  The specified block must exist and must have the specified instruction as a member.  The instruction must not be the
      *  first instruction of the block.
      *
-     *  The return value is the vertex for the new placeholder. */
+     *  The return value is the vertex for the new placeholder.
+     *
+     *  Thread safety: Not thread safe. */
     ControlFlowGraph::VertexIterator truncateBasicBlock(const ControlFlowGraph::ConstVertexIterator &basicBlock,
                                                         SgAsmInstruction *insn) /*final*/;
 
@@ -1005,6 +1098,8 @@ public:
      *
      *  A placeholder can be specified for better efficiency, in which case the placeholder must have the same address as the
      *  basic block.
+     *
+     *  Thread safety: Not thread safe.
      *
      *  @{ */
     void attachBasicBlock(const BasicBlock::Ptr&) /*final*/;
@@ -1093,6 +1188,8 @@ public:
      *      for the basic block also specifies a final instruction address and that address matches the current final
      *      instruction of the basic block.
      *
+     *  Thread safety: Not thread safe.
+     *
      *  @{ */
     BasicBlock::Ptr discoverBasicBlock(rose_addr_t startVa) const /*final*/;
     BasicBlock::Ptr discoverBasicBlock(const ControlFlowGraph::ConstVertexIterator &placeholder) const /*final*/;
@@ -1105,7 +1202,9 @@ public:
      *  basic block holds a successor cache which is consulted/updated by this method.
      *
      *  The basic block need not be complete or attached to the CFG/AUM. A basic block that has no instructions has no
-     *  successors. */
+     *  successors.
+     *
+     *  Thread safety: Not thread safe. */
     BasicBlock::Successors basicBlockSuccessors(const BasicBlock::Ptr&) const /*final*/;
 
     /** Determines concrete successors for a basic block.
@@ -1113,7 +1212,9 @@ public:
      *  Returns a vector of distinct, concrete successor addresses.  Semantics is identical to @ref bblockSuccessors except
      *  non-concrete values are removed from the list.  The optional @p isComplete argument is set to true or false depending
      *  on whether the set of returned concrete successors represents the complete set of successors (true) or some member in
-     *  the complete set is not concrete (false). */
+     *  the complete set is not concrete (false).
+     *
+     *  Thread safety: Not thread safe. */
     std::vector<rose_addr_t> basicBlockConcreteSuccessors(const BasicBlock::Ptr&, bool *isComplete=NULL) const /*final*/;
 
     /** Determine ghost successors for a basic block.
@@ -1130,14 +1231,19 @@ public:
      *  list of ghost successors.  The basic block holds a ghost successor cache which is consulted/updated by this method.
      *
      *  @todo Perhaps we need to represent these as edges rather than successors so that we also know which instruction they're
-     *  originating from since they can originate from anywhere in the basic block. */
+     *  originating from since they can originate from anywhere in the basic block.
+     *
+     *
+     *  Thread safety: Not thread safe. */
     std::set<rose_addr_t> basicBlockGhostSuccessors(const BasicBlock::Ptr&) const /*final*/;
 
     /** Determine if a basic block looks like a function call.
      *
      *  If the basic block appears to be a function call by some analysis then this function returns true.  The analysis may
      *  use instruction semantics to look at the stack, it may look at the kind of instructions in the block, it may look for
-     *  patterns at the callee address if known, etc. The basic block caches the result of this analysis. */
+     *  patterns at the callee address if known, etc. The basic block caches the result of this analysis.
+     *
+     *  Thread safety: Not thread safe. */
     bool basicBlockIsFunctionCall(const BasicBlock::Ptr&) const /*final*/;
 
     /** Determine if a basic block looks like a function return.
@@ -1147,7 +1253,9 @@ public:
      *  may look for patterns, etc.  The basic block caches the result of this analysis.
      *
      *  @todo Partitioner::basicBlockIsFunctionReturn does not currently detect callee-cleanup returns because the return
-     *  address is not the last thing popped from the stack. FIXME[Robb P. Matzke 2014-09-15] */
+     *  address is not the last thing popped from the stack. FIXME[Robb P. Matzke 2014-09-15]
+     *
+     *  Thread safety: Not thread safe. */
     bool basicBlockIsFunctionReturn(const BasicBlock::Ptr&) const /*final*/;
 
     /** Return the stack delta expression.
@@ -1184,6 +1292,8 @@ public:
      *  transfering to a non-linked dynamic function are given names by @ref ModulesPe::nameImportThunks, which runs after all
      *  basic blocks and functions have been discovered and attached to the CFG/AUM.
      *
+     *  Thread safety: Not thread safe.
+     *
      *  @sa functionStackDelta and @ref allFunctionStackDelta
      *
      * @{ */
@@ -1196,6 +1306,8 @@ public:
      *  Causes all stack deltas for basic blocks and functions that are attached to the CFG/AUM to be forgotten.  This is
      *  useful if one needs to recompute deltas in light of new information.
      *
+     *  Thread safety: Not thread safe.
+     *
      * @{ */
     void forgetStackDeltas() const /*final*/;
     void forgetStackDeltas(const Function::Ptr&) const /*final*/;
@@ -1206,6 +1318,8 @@ public:
      *  Stack delta analysis will be interprocedural when this property has a value greater than one. Interprocedural analysis
      *  is only used when a called function's stack delta is unknown.  Large values for this property will likely be clipped by
      *  the actual dataflow implementation.
+     *
+     *  Thread safety: Not thread safe.
      *
      * @{ */
     size_t stackDeltaInterproceduralLimit() const /*final*/ { return stackDeltaInterproceduralLimit_; }
@@ -1259,6 +1373,8 @@ public:
      *  recursively while it is being computed, the recursive call returns an indeterminate may-return.  Indeterminate results
      *  are indicated by returning nothing.
      *
+     *  Thread safety: Not thread safe.
+     *
      * @{ */
     Sawyer::Optional<bool> basicBlockOptionalMayReturn(const BasicBlock::Ptr&) const /*final*/;
 
@@ -1268,7 +1384,9 @@ public:
     /** Clear all may-return properties.
      *
      *  This function is const because it doesn't modify the CFG/AUM; it only removes the may-return property from all the
-     *  CFG/AUM basic blocks. */
+     *  CFG/AUM basic blocks.
+     *
+     *  Thread safety: Not thread safe. */
     void basicBlockMayReturnReset() const /*final*/;
 
 private:
@@ -1310,12 +1428,16 @@ private:
 public:
     /** Returns the number of data blocks attached to the CFG/AUM.
      *
-     *  This is a relatively expensive operation compared to querying the number of basic blocks or functions. */
+     *  This is a relatively expensive operation compared to querying the number of basic blocks or functions.
+     *
+     *  Thread safety: Not thread safe. */
     size_t nDataBlocks() const /*final*/;
 
     /** Determine if a data block is attached to the CFG/AUM.
      *
-     *  Returns true if this data block is attached to the CFG/AUM and false if not attached. */
+     *  Returns true if this data block is attached to the CFG/AUM and false if not attached.
+     *
+     *  Thread safety: Not thread safe. */
     bool dataBlockExists(const DataBlock::Ptr&) const /*final*/;
 
     /** Find an existing data block.
@@ -1323,7 +1445,9 @@ public:
      *  Finds a data block that spans the specified address interval or which can be extended to span the address interval.
      *  The first choice is to return the smallest data block that spans the entire interval; second choice is the largest
      *  block that contains the first byte of the interval.  If there is a tie in sizes then the block with the highest
-     *  starting address wins.  If no suitable data block can be found then the null pointer is returned. */
+     *  starting address wins.  If no suitable data block can be found then the null pointer is returned.
+     *
+     *  Thread safety: Not thread safe. */
     DataBlock::Ptr findBestDataBlock(const AddressInterval&) const /*final*/;
 
     /** Attach a data block to the CFG/AUM.
@@ -1331,13 +1455,17 @@ public:
      *  Attaches the data block to the CFG/AUM if it is not already attached.  A newly attached data block will have a
      *  ownership count of zero since none of its owners are attached (otherwise the data block would also have been
      *  already attached). Multiple data blocks having the same address can be attached. It is an error to supply a null
-     *  pointer. */
+     *  pointer.
+     *
+     *  Thread safety: Not thread safe. */
     void attachDataBlock(const DataBlock::Ptr&) /*final*/;
 
     /** Detaches a data block from the CFG/AUM.
      *
      *  The specified data block is detached from the CFG/AUM and thawed, and returned so it can be modified.  It is an error
-     *  to attempt to detach a data block which is owned by attached basic blocks or attached functions. */
+     *  to attempt to detach a data block which is owned by attached basic blocks or attached functions.
+     *
+     *  Thread safety: Not thread safe. */
     DataBlock::Ptr detachDataBlock(const DataBlock::Ptr&) /*final*/;
 
     /** Returns data blocks that overlap with specified address interval.
@@ -1346,7 +1474,9 @@ public:
      *  the specified address interval.  All bytes represented by the data block are returned, even if they are unused or
      *  marked as padding in the data block type.
      *
-     *  The returned list of data blocks are sorted by their starting address. */
+     *  The returned list of data blocks are sorted by their starting address.
+     *
+     *  Thread safety: Not thread safe. */
     std::vector<DataBlock::Ptr> dataBlocksOverlapping(const AddressInterval&) const /*final*/;
 
     /** Returns data blocks that span an entire address interval.
@@ -1355,7 +1485,9 @@ public:
      *  interval. All bytes represented by the data block are returned, even if they are unused or marked as padding in the
      *  data block type.
      *
-     *  The returned list of data blocks are sorted by their starting address. */
+     *  The returned list of data blocks are sorted by their starting address.
+     *
+     *  Thread safety: Not thread safe. */
     std::vector<DataBlock::Ptr> dataBlocksSpanning(const AddressInterval&) const /*final*/;
 
     /** Returns data blocks that are fully contained in an address interval.
@@ -1364,18 +1496,24 @@ public:
      *  specified interval.  All bytes represented by the data block are returned, even if they are unused or marked as padding
      *  in the data block type.
      *
-     *  The returned list of data blocks are sorted by their starting address. */
+     *  The returned list of data blocks are sorted by their starting address.
+     *
+     *  Thread safety: Not thread safe. */
     std::vector<DataBlock::Ptr> dataBlocksContainedIn(const AddressInterval&) const /*final*/;
 
     /** Returns the addresses used by a data block.
      *
      *  Returns an address interval describing all addresses of the data block, even if they are unused or marked as padding
-     *  in the data block type.  Since all addresses are returned, the extent of a data block is always contiguous. */
+     *  in the data block type.  Since all addresses are returned, the extent of a data block is always contiguous.
+     *
+     *  Thread safety: Not thread safe. */
     AddressInterval dataBlockExtent(const DataBlock::Ptr&) const /*final*/;
 
     /** Returns the list of all attached data blocks.
      *
-     *  Returns a sorted list of distinct data blocks that are attached to the CFG/AUM. */
+     *  Returns a sorted list of distinct data blocks that are attached to the CFG/AUM.
+     *
+     *  Thread safety: Not thread safe. */
     std::vector<DataBlock::Ptr> dataBlocks() const /*final*/;
 
 
@@ -1390,7 +1528,9 @@ public:
 public:
     /** Returns the number of functions attached to the CFG/AUM.
      *
-     *  This is a constant-time operation. */
+     *  This is a constant-time operation.
+     *
+     *  Thread safety: Not thread safe. */
     size_t nFunctions() const /*final*/ { return functions_.size(); }
 
     /** Determines whether a function exists in the CFG/AUM.
@@ -1408,6 +1548,8 @@ public:
      *  returns the argument if it exists, or else null if it doesn't exist. This test uses the function pointer directly, not
      *  the entry address -- it returns non-null only if the argument is the actual function object stored in the CFG/AUM.
      *
+     *  Thread safety: Not thread safe.
+     *
      *  @{ */
     Function::Ptr functionExists(rose_addr_t entryVa) const /*final*/;
     Function::Ptr functionExists(const BasicBlock::Ptr &entryBlock) const /*final*/;
@@ -1416,7 +1558,9 @@ public:
 
     /** All functions attached to the CFG/AUM.
      *
-     *  Returns a vector of distinct functions sorted by their entry address. */
+     *  Returns a vector of distinct functions sorted by their entry address.
+     *
+     *  Thread safety: Not thread safe. */
     std::vector<Function::Ptr> functions() const /*final*/;
 
     /** Returns functions that overlap with specified address interval.
@@ -1425,7 +1569,9 @@ public:
      *  the specified address interval.  By "overlap" we mean that the function owns at least one basic block or data block
      *  that overlaps with the interval.
      *
-     *  The returned list of funtions are sorted by their entry address. */
+     *  The returned list of funtions are sorted by their entry address.
+     *
+     *  Thread safety: Not thread safe. */
     std::vector<Function::Ptr> functionsOverlapping(const AddressInterval&) const /*final*/;
 
     /** Returns functions that span an entire address interval.
@@ -1435,7 +1581,9 @@ public:
      *  functionExtent.  In other words, the union of all the addresseses represented by the function's basic blocks and data
      *  blocks is a superset of the specified interval.
      *
-     *  The returned list of functions are sorted by their starting address. */
+     *  The returned list of functions are sorted by their starting address.
+     *
+     *  Thread safety: Not thread safe. */
     std::vector<Function::Ptr> functionsSpanning(const AddressInterval&) const /*final*/;
 
     /** Returns functions that are fully contained in an address interval.
@@ -1444,7 +1592,9 @@ public:
      *  the specified interval.  In order to be fully contained in the interval, the addresses represented by the function's
      *  basic blocks and data blocks must be a subset of the specified interval.
      *
-     *  The returned list of functions are sorted by their starting address. */
+     *  The returned list of functions are sorted by their starting address.
+     *
+     *  Thread safety: Not thread safe. */
     std::vector<Function::Ptr> functionsContainedIn(const AddressInterval&) const /*final*/;
 
     /** Returns the addresses used by a function.
@@ -1459,6 +1609,8 @@ public:
      *  @li @ref functionExtent -- addresses of all instructions and static data
      *  @li @ref functionBasicBlockExtent -- addresses of instructions
      *  @li @ref functionDataBlockExtent -- addresses of static data
+     *
+     *  Thread safety: Not thread safe.
      *
      * @{ */
     AddressIntervalSet functionExtent(const Function::Ptr&) const /*final*/;
@@ -1485,6 +1637,8 @@ public:
      *  be changed by using the partitioner's API, not the function's API.  This allows the partitioner to keep the CFG in a
      *  consistent state.
      *
+     *  Thread safety: Not thread safe.
+     *
      *  @{ */
     size_t attachFunction(const Function::Ptr&) /*final*/;
     size_t attachFunctions(const Functions&) /*final*/;
@@ -1500,7 +1654,9 @@ public:
      *  One of the things that are merged are the basic blocks.  If the function being attached is A and the partitioner
      *  already knows about B having the same entry address as A, then all basic blocks owned by A are now (also) owned by
      *  B. Some of those blocks happened to be owned by other functions also attached to the partitioner they continue to be
-     *  owned also by those other functions. */
+     *  owned also by those other functions.
+     *
+     *  Thread safety: Not thread safe. */
     Function::Ptr attachOrMergeFunction(const Function::Ptr&) /*final*/;
 
     /** Create placeholders for function basic blocks.
@@ -1515,6 +1671,8 @@ public:
      *
      *  @todo Does it make sense to call insertFunctionBasicBlocks on a function that's already attached to the CFG/AUM?
      *  Wouldn't its basic blocks already also be attached? [Robb P. Matzke 2014-08-15]
+     *
+     *  Thread safety: Not thread safe.
      *
      *  @{ */
     size_t attachFunctionBasicBlocks(const Functions&) /*final*/;
@@ -1531,7 +1689,9 @@ public:
      *  function as one of their owners.
      *
      *  Detaching a function from the CFG/AUM does not change the function other than thawing it so it can be modified by the
-     *  user directly through its API. Attempting to detach a function that is already detached has no effect. */
+     *  user directly through its API. Attempting to detach a function that is already detached has no effect.
+     *
+     *  Thread safety: Not thread safe. */
     void detachFunction(const Function::Ptr&) /*final*/;
 
     /** Attach a data block into an attached or detached function.
@@ -1541,12 +1701,16 @@ public:
      *  type rather than creating a new data block -- this will allow a data block's type to become more and more constrained
      *  as we learn more about how it is accessed.
      *
-     *  Returns the data block that has been attached to the function. */
+     *  Returns the data block that has been attached to the function.
+     *
+     *  Thread safety: Not thread safe. */
     DataBlock::Ptr attachFunctionDataBlock(const Function::Ptr&, rose_addr_t startVa, size_t nBytes) /*final*/;
 
     /** Attach a data block to an attached or detached function.
      *
-     *  Causes the specified function to become an owner of the specified data block. */
+     *  Causes the specified function to become an owner of the specified data block.
+     *
+     *  Thread safety: Not thread safe. */
     void attachFunctionDataBlock(const Function::Ptr&, const DataBlock::Ptr&) /*final*/;
 
     /** Finds functions that own the specified basic block.
@@ -1580,6 +1744,8 @@ public:
      *  The returned function will be a function that is attached to the CFG/AUM; detached functions are never returned since
      *  the partitioner does not necessarily know about them.
      *
+     *  Thread safety: Not thread safe.
+     *
      *  @{ */
     std::vector<Function::Ptr>
     functionsOwningBasicBlock(const ControlFlowGraph::Vertex&, bool doSort = true) const /*final*/;
@@ -1611,7 +1777,9 @@ public:
      *  at each call if one doesn't already exist in the CFG/AUM, and the list of created functions is returned.  None of the
      *  created functions are added to the CFG/AUM.
      *
-     *  See also @ref discoverFunctionEntryVertices which returns a superset of the functions returned by this method. */
+     *  See also @ref discoverFunctionEntryVertices which returns a superset of the functions returned by this method.
+     *
+     *  Thread safety: Not thread safe. */
     std::vector<Function::Ptr> discoverCalledFunctions() const /*final*/;
 
     /** Scans the CFG to find function entry basic blocks.
@@ -1622,7 +1790,9 @@ public:
      *
      *  The returned function pointers are sorted by function entry address.
      *
-     *  See also @ref discoverFunctionCalls which returns a subset of the functions returned by this method. */
+     *  See also @ref discoverFunctionCalls which returns a subset of the functions returned by this method.
+     *
+     *  Thread safety: Not thread safe. */
     std::vector<Function::Ptr> discoverFunctionEntryVertices() const /*final*/;
 
     /** True if function is a thunk.
@@ -1631,7 +1801,9 @@ public:
      *  returned.  A function is a thunk if it has the @ref SgAsmFunction::FUNC_THUNK bit set in its reason mask, and it has
      *  exactly one basic block, and the basic block has exactly one successor, and the successor is concrete.
      *
-     *  As a side effect, the basic block's outgoing edge type is changed to E_FUNCTION_XFER. */
+     *  As a side effect, the basic block's outgoing edge type is changed to E_FUNCTION_XFER.
+     *
+     *  Thread safety: Not thread safe. */
     Sawyer::Optional<Thunk> functionIsThunk(const Function::Ptr&) const /*final*/;
 
     /** Adds basic blocks to a function.
@@ -1641,20 +1813,26 @@ public:
      *  function transfers, or function returns and without following edges that lead to the entry point of another function.
      *
      *  The CFG is not modified by this method. The function is modified and must not exist in the CFG; the function must be in
-     *  a thawed state. */
+     *  a thawed state.
+     *
+     *  Thread safety: Not thread safe. */
     void discoverFunctionBasicBlocks(const Function::Ptr &function) const /*final*/;
 
     /** Returns ghost successors for a single function.
      *
      *  Returns the set of basic block starting addresses that are naive successors for the basic blocks of a function but
-     *  which are not actual control flow successors due to the presence of opaque predicates. */
+     *  which are not actual control flow successors due to the presence of opaque predicates.
+     *
+     *  Thread safety: Not thread safe. */
     std::set<rose_addr_t> functionGhostSuccessors(const Function::Ptr&) const /*final*/;
 
     /** Returns a function call graph.
      *
      *  If @p allowParallelEdges is true then the returned call graph will have one edge for each function call and each edge
      *  will have a count of one.  Otherwise multiple calls between the same pair of functions are coalesced into single edges
-     *  with non-unit counts in the call graph. */
+     *  with non-unit counts in the call graph.
+     *
+     *  Thread safety: Not thread safe. */
     FunctionCallGraph functionCallGraph(bool allowParallelEdges = true) const /*final*/;
 
     /** Stack delta analysis for one function.
@@ -1673,19 +1851,27 @@ public:
      *  non-null for each reachable block in the function.
      *
      *  If the configuration information specifies a stack delta for this function then that delta is used instead of
-     *  performing any analysis. */
+     *  performing any analysis.
+     *
+     *  Thread safety: Not thread safe. */
     BaseSemantics::SValuePtr functionStackDelta(const Function::Ptr &function) const /*final*/;
 
-    /** Compute stack delta analysis for all functions. */
+    /** Compute stack delta analysis for all functions.
+     *
+     *  Thread safety: Not thread safe. */
     void allFunctionStackDelta() const /*final*/;
 
     /** May-return analysis for one function.
      *
      *  Determines if a function can possibly return to its caller. This is a simple wrapper around @ref
-     *  basicBlockOptionalMayReturn invoked on the function's entry block. See that method for details. */
+     *  basicBlockOptionalMayReturn invoked on the function's entry block. See that method for details.
+     *
+     *  Thread safety: Not thread safe. */
     Sawyer::Optional<bool> functionOptionalMayReturn(const Function::Ptr &function) const /*final*/;
 
-    /** Compute may-return analysis for all functions. */
+    /** Compute may-return analysis for all functions.
+     *
+     *  Thread safety: Not thread safe. */
     void allFunctionMayReturn() const /*final*/;
 
     /** Calling convention analysis for one function.
@@ -1711,7 +1897,9 @@ public:
      *  <code>function->callingConventionAnalysis().clear()</code>.
      *
      *  See also, @ref allFunctionCallingConvention, which computes calling convention characteristics for all functions at
-     *  once, and @ref functionCallingConventionDefinitions, which returns matching definitions. */
+     *  once, and @ref functionCallingConventionDefinitions, which returns matching definitions.
+     *
+     *  Thread safety: Not thread safe. */
     const CallingConvention::Analysis&
     functionCallingConvention(const Function::Ptr&,
                               const CallingConvention::Definition::Ptr &dflt = CallingConvention::Definition::Ptr())
@@ -1726,7 +1914,9 @@ public:
      *  default is not inserted as a result--it only influences the data-flow portion of the analysis.
      *
      *  After this method runs, results can be queried per function with either @ref Function::callingConventionAnalysis or
-     *  @ref functionCallingConvention. */
+     *  @ref functionCallingConvention.
+     *
+     *  Thread safety: Not thread safe. */
     void
     allFunctionCallingConvention(const CallingConvention::Definition::Ptr &dflt = CallingConvention::Definition::Ptr())
         const /*final*/;
@@ -1752,6 +1942,8 @@ public:
      *  characteristics of the function, then an empty list is returned.  This method does not access the function's calling
      *  convention property -- it recomputes the list of matching definitions from scratch.
      *
+     *  Thread safety: Not thread safe.
+     *
      *  See also, @ref functionCallingConvention, which returns the calling convention characteristics of a function (rather
      *  than definitions), and @ref allFunctionCallingConvention, which runs that analysis over all functions. */
     CallingConvention::Dictionary
@@ -1768,7 +1960,9 @@ public:
      *
      *  If a default calling convention definition is provided, it gets passed to the @ref allFunctionCallingConvention
      *  analysis. The default is also assigned as the @ref Function::callingConventionDefinition property of any function for
-     *  which calling convention analysis fails. */
+     *  which calling convention analysis fails.
+     *
+     *  Thread safety: Not thread safe. */
     void
     allFunctionCallingConventionDefinition(const CallingConvention::Definition::Ptr &dflt =
                                            CallingConvention::Definition::Ptr()) const /*final*/;
@@ -1777,6 +1971,8 @@ public:
      *
      *  For any CFG edge whose source and destination are two different functions but whose type is @ref E_NORMAL, replace the
      *  edge with either a @ref E_FUNCTION_CALL or @ref E_FUNCTION_XFER edge as appropriate.
+     *
+     *  Thread safety: Not thread safe.
      *
      * @{ */
     void fixInterFunctionEdges() /*final*/;
@@ -1796,18 +1992,24 @@ public:
      *  then the old results are returned. The old results can be cleared on a per-function basis with
      *  <code>function->isNoop().clear()</code>.
      *
+     *  Thread safety: Not thread safe.
+     *
      *  See also, @ref allFunctionIsNoop, which analyzes all functions at once and which therefore may be faster than invoking
      *  the analysis one function at a time. */
     bool functionIsNoop(const Function::Ptr&) const /*final*/;
 
     /** Analyze all functions for whether they are effectivly no-ops.
      *
-     *  Invokes the @ref functionIsNoop analysis on each function, perhaps concurrently. */
+     *  Invokes the @ref functionIsNoop analysis on each function, perhaps concurrently.
+     *
+     *  Thread safety: Not thread safe. */
     void allFunctionIsNoop() const /*final*/;
 
     /** Clears cached function no-op analysis results.
      *
      *  Clears the function no-op analysis results for the specified function or all functions.
+     *
+     *  Thread safety: Not thread safe.
      *
      * @{ */
     void forgetFunctionIsNoop() const /*final*/;
@@ -1838,6 +2040,8 @@ public:
      *  partitioner.cfgAdjustmentCallbacks().append(MyCallback::instance());
      * @endcode
      *
+     * Thread safety: Not thread safe.
+     *
      *  @{ */
     CfgAdjustmentCallbacks& cfgAdjustmentCallbacks() /*final*/ { return cfgAdjustmentCallbacks_; }
     const CfgAdjustmentCallbacks& cfgAdjustmentCallbacks() const /*final*/ { return cfgAdjustmentCallbacks_; }
@@ -1848,6 +2052,8 @@ public:
      *  Each time an instruction is appended to a basic block these callbacks are invoked to make adjustments to the block.
      *  See @ref BasicBlockCallback and @ref discoverBasicBlock for details.
      *
+     *  Thread safety: Not thread safe.
+     *
      *  @{ */
     BasicBlockCallbacks& basicBlockCallbacks() /*final*/ { return basicBlockCallbacks_; }
     const BasicBlockCallbacks& basicBlockCallbacks() const /*final*/ { return basicBlockCallbacks_; }
@@ -1857,6 +2063,8 @@ public:
     /** Ordered list of function prologue matchers.
      *
      *  @sa nextFunctionPrologue
+     *
+     *  Thread safety: Not thread safe.
      *
      *  @{ */
     FunctionPrologueMatchers& functionPrologueMatchers() /*final*/ { return functionPrologueMatchers_; }
@@ -1879,11 +2087,15 @@ public:
      *  Some function prologue matchers can return multiple functions. For instance, a matcher for a thunk might return the
      *  thunk and the function to which it points.  In any case, the first function is the primary one.
      *
-     *  If no match is found then an empty vector is returned. */
+     *  If no match is found then an empty vector is returned.
+     *
+     *  Thread safety: Not thread safe. */
     std::vector<Function::Ptr> nextFunctionPrologue(rose_addr_t startVa) /*final*/;
 
 public:
     /** Ordered list of function padding matchers.
+     *
+     *  Thread safety: Not thread safe.
      *
      * @{ */
     FunctionPaddingMatchers& functionPaddingMatchers() /*final*/ { return functionPaddingMatchers_; }
@@ -1894,7 +2106,9 @@ public:
      *
      *  Scans backward from the specified function's entry address by invoking each function padding matcher in the order
      *  returned by @ref functionPaddingMatchers until one of them finds some padding.  Once found, a data block is created and
-     *  returned.  If no padding is found then the null pointer is returned. */
+     *  returned.  If no padding is found then the null pointer is returned.
+     *
+     *  Thread safety: Not thread safe. */
     DataBlock::Ptr matchFunctionPadding(const Function::Ptr&) /*final*/;
 
 
@@ -1915,7 +2129,9 @@ public:
      *
      *  A @p prefix can be specified to be added to the beginning of each line of output. If @p showBlocks is set then the
      *  instructions are shown for each basic block. If @p computeProperties is set then various properties are computed and
-     *  cached rather than only consulting the cache. */
+     *  cached rather than only consulting the cache.
+     *
+     *  Thread safety: Not thread safe. */
     void dumpCfg(std::ostream&, const std::string &prefix="", bool showBlocks=true,
                  bool computeProperties=true) const /*final*/;
 
@@ -1929,21 +2145,29 @@ public:
      *  abbreviated information in the GraphViz output.
      *
      *  This is only a simple wrapper around @ref GraphViz::dumpInterval. That API has many more options than are presented by
-     *  this method. */
+     *  this method.
+     *
+     *  Thread safety: Not thread safe. */
     void cfgGraphViz(std::ostream&, const AddressInterval &restrict = AddressInterval::whole(),
                      bool showNeighbors=true) const /*final*/;
 
     /** Name of a vertex.
+     *
+     *  Thread safety: Not thread safe.
      *
      *  @{ */
     static std::string vertexName(const ControlFlowGraph::Vertex&) /*final*/;
     std::string vertexName(const ControlFlowGraph::ConstVertexIterator&) const /*final*/;
     /** @} */
 
-    /** Name of last instruction in vertex. */
+    /** Name of last instruction in vertex.
+     *
+     *  Thread safety: Not thread safe. */
     static std::string vertexNameEnd(const ControlFlowGraph::Vertex&) /*final*/;
 
     /** Name of an incoming edge.
+     *
+     *  Thread safety: Not thread safe.
      *
      * @{ */
     static std::string edgeNameSrc(const ControlFlowGraph::Edge&) /*final*/;
@@ -1952,6 +2176,8 @@ public:
 
     /** Name of an outgoing edge.
      *
+     *  Thread safety: Not thread safe.
+     *
      * @{ */
     static std::string edgeNameDst(const ControlFlowGraph::Edge&) /*final*/;
     std::string edgeNameDst(const ControlFlowGraph::ConstEdgeIterator&) const /*final*/;
@@ -1959,44 +2185,72 @@ public:
 
     /** Name of an edge.
      *
+     *  Thread safety: Not thread safe.
+     *
      * @{ */
     static std::string edgeName(const ControlFlowGraph::Edge&) /*final*/;
     std::string edgeName(const ControlFlowGraph::ConstEdgeIterator&) const /*final*/;
     /** @} */
 
-    /** Name of a basic block. */
+    /** Name of a basic block.
+     *
+     *  Thread safety: Not thread safe. */
     static std::string basicBlockName(const BasicBlock::Ptr&) /*final*/;
 
-    /** Name of a data block. */
+    /** Name of a data block.
+     *
+     *  Thread safety: Not thread safe. */
     static std::string dataBlockName(const DataBlock::Ptr&) /*final*/;
 
-    /** Name of a function */
+    /** Name of a function.
+     *
+     *  Thread safety: Not thread safe. */
     static std::string functionName(const Function::Ptr&) /*final*/;
 
     /** Partitioner settings.
      *
      *  These are settings that are typically controlled from the command-line.
      *
+     *  Thread safety: Not thread safe.
+     *
      * @{ */
     const BasePartitionerSettings& settings() const /*final*/ { return settings_; }
     void settings(const BasePartitionerSettings &s) /*final*/ { settings_ = s; }
     /** @} */
 
-    /** Enable or disable progress reports.
+    /** Property: How to report progress.
      *
-     *  This controls the automatic progress reports, but the @ref reportProgress method can still be invoked explicitly by the
-     *  user to create a report nonetheless.
+     *  Partitioning progress is reported in two ways:
+     *
+     *  @li Various diagnostic facilities use the @c MARCH stream to emit a progress report to the terminal. These streams can
+     *      be enabled and disabled from the command-line or with function calls using the @ref Sawyer::Message API.
+     *
+     *  @li The partitioner also has a @ref progress property that can be queried in thread-safe manners that allows one
+     *      thread to run partitioner algorithms and other threads to query the progress.
+     *
+     *  If a non-null progress object is specified, then the partitioner will make progress reports to that object as well as
+     *  emitting a progress bar to the Partitioner2 diagnostic stream. The progress bar can be disabled independently of
+     *  reporting to a progress object, but no progress is reported if the progress object is null.
+     *
+     *  Thread safety: Thread safe.
      *
      *  @{ */
-    void enableProgressReports(bool b=true) /*final*/ { isReportingProgress_ = b; }
-    void disableProgressReports() /*final*/ { isReportingProgress_ = false; }
-    bool isReportingProgress() const /*final*/ { return isReportingProgress_; }
+    Progress::Ptr progress() const /*final*/;
+    void progress(const Progress::Ptr&) /*final*/;
     /** @} */
+
+    /** Update partitioner with a new progress report.
+     *
+     *  This method is const because it doesn't change the partitioner, it only forwards the phase and completion to whatever
+     *  @ref Progress object is associated with the partition, if any. */
+    void updateProgress(const std::string &phase, double completion) const;
 
     /** Use or not use symbolic semantics.
      *
      *  When true, a symbolic semantics domain will be used to reason about certain code properties such as successors for a
      *  basic block.  When false, more naive but faster methods are used.
+     *
+     *  Thread safety: Not thread safe.
      *
      *  @{ */
     void enableSymbolicSemantics(bool b=true) /*final*/ { settings_.usingSemantics = b; }
@@ -2022,6 +2276,8 @@ public:
      *  is the approach taken by the default @ref Engine -- it maintains a list of basic blocks that need to be investigated at
      *  a later time to determine if a call-return edge should be inserted, and it delays the decision as long as possible.
      *
+     *  Thread safety: Not thread safe.
+     *
      * @{ */
     void autoAddCallReturnEdges(bool b) /*final*/ { autoAddCallReturnEdges_ = b; }
     bool autoAddCallReturnEdges() const /*final*/ { return autoAddCallReturnEdges_; }
@@ -2038,6 +2294,8 @@ public:
      *  assumed to not return unless it can be proven that they can.  A whitelist is one way to prove that a function can
      *  return.
      *
+     *  Thread safety: Not thread safe.
+     *
      * @{ */
     void assumeFunctionsReturn(bool b) /*final*/ { assumeFunctionsReturn_ = b; }
     bool assumeFunctionsReturn() const /*final*/ { return assumeFunctionsReturn_; }
@@ -2049,6 +2307,8 @@ public:
      *  specified.  For instance, if a function that has no name is attached to the CFG/AUM  and a name has been specified for
      *  its entry address, then the function is given that name.
      *
+     *  Thread safety: Not thread safe.
+     *
      * @{ */
     void addressName(rose_addr_t, const std::string&) /*final*/;
     const std::string& addressName(rose_addr_t va) const /*final*/ { return addressNames_.getOrDefault(va); }
@@ -2058,6 +2318,8 @@ public:
     /** Property: Whether to look for function calls used as branches.
      *
      *  If this property is set, then function call instructions are not automatically assumed to be actual function calls.
+     *
+     *  Thread safety: Not thread safe.
      *
      * @{ */
     bool checkingCallBranch() const /*final*/ { return settings_.checkingCallBranch; }
@@ -2079,6 +2341,8 @@ public:
      *  precise, but the map-based states are faster.  This property determines which kind of state is created by the @ref
      *  newOperators method.
      *
+     *  Thread safety: Not thread safe.
+     *
      * @{ */
     SemanticMemoryParadigm semanticMemoryParadigm() const { return semanticMemoryParadigm_; }
     void semanticMemoryParadigm(SemanticMemoryParadigm p) { semanticMemoryParadigm_ = p; }
@@ -2087,7 +2351,9 @@ public:
     /** SMT solver.
      *
      *  Returns the SMT solver being used for instruction semantics. The partitioner owns the solver, so the caller should not
-     *  delete it.  Some configurations will not use a solver, in which case the null pointer is returned. */
+     *  delete it.  Some configurations will not use a solver, in which case the null pointer is returned.
+     *
+     *  Thread safety: Not thread safe. */
     SMTSolver *smtSolver() const /*final*/ { return solver_; }
 
     /** Obtain new RiscOperators.
@@ -2096,6 +2362,8 @@ public:
      *  memory state representations: list-based and map-based (see @ref semanticMemoryParadigm). If the memory paradigm is not
      *  specified then the partitioner's default paradigm is used. Returns a null pointer if the architecture does not support
      *  semantics.
+     *
+     *  Thread safety: Not thread safe.
      *
      * @{ */
     BaseSemantics::RiscOperatorsPtr newOperators() const /*final*/;
@@ -2106,7 +2374,9 @@ public:
      *
      *  Creates and returns a new dispatcher for the instruction semantics framework.  The dispatcher will contain a copy of
      *  the RiscOperators argument initialized with a new memory/register state.  Returns a null pointer if instruction
-     *  semantics are not supported for the specimen's architecture. */
+     *  semantics are not supported for the specimen's architecture.
+     *
+     *  Thread safety: Not thread safe. */
     BaseSemantics::DispatcherPtr newDispatcher(const BaseSemantics::RiscOperatorsPtr&) const /*final*/;
 
     
@@ -2122,7 +2392,7 @@ public:
 private:
     void init(Disassembler*, const MemoryMap::Ptr&);
     void init(const Partitioner&);
-    void reportProgress() const;
+    void updateCfgProgress();
 
 private:
     // Convert a CFG vertex iterator from one partitioner to another.  This is called during copy construction when the source

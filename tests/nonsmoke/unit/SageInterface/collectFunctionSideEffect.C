@@ -167,6 +167,8 @@ int main(int argc, char * argv[])
   ofile.open(ofilename.c_str());
 
   RoseAst ast(project);
+
+  // function level side effect results
   for (RoseAst::iterator i=ast.begin();i!=ast.end();++i)
   {
     SgFunctionDeclaration* func = isSgFunctionDeclaration (*i);
@@ -211,6 +213,37 @@ int main(int argc, char * argv[])
         cout<<"NULL"<<endl;
     }
 #endif
+  }
+
+  // loop level side effect results
+  for (RoseAst::iterator i=ast.begin();i!=ast.end();++i)
+  {
+    SgForStatement* target= isSgForStatement(*i);
+    if (!target) continue;  
+    ofile<<"--------------------------------------------------"<<endl;
+    ofile<<"Loop line:"<<target->get_file_info()->get_line()<<endl;
+
+    vector<SgNode*> readRefs, writeRefs;
+    // focus on definition only
+    if (!SageInterface::collectReadWriteRefs(target,readRefs, writeRefs))
+    {
+      ofile<<"Warning: SageInterface::collectReadWriteRefs() returns false."<<endl;
+      continue; 
+    }
+
+    dumpVectorNodes(readRefs, "Read references:", ofile);
+    dumpVectorNodes(writeRefs, "Write references:", ofile);
+   
+    //-------------------------------------------------------------------
+    set<SgInitializedName*> readNames, writeNames; 
+    if (!SageInterface::collectReadWriteVariables(target,readNames,writeNames, false))
+    {
+      ofile<<"Warning: SageInterface::collectReadWriteVariables() returns false."<<endl;
+      continue; 
+    }
+
+   dumpSetNames(readNames, "Read var names:" , ofile);
+   dumpSetNames(writeNames, "Write var names:" , ofile);
   }
 
   ofile.close();

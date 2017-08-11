@@ -207,7 +207,7 @@ main(int argc, char *argv[]) {
         map = engine.loadSpecimens(specimen_cmd[0]);
     } else {
         map = MemoryMap::instance();
-        map->insertProcess(":noattach:" + numberToString(pid));
+        map->insertProcess(pid, MemoryMap::Attach::NO);
     }
     map->dump(mlog[INFO]);
 
