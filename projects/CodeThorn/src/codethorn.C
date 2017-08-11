@@ -272,25 +272,23 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
   po::options_description infoOptions("Program information options");
 
   ltlOptions.add_options()
-    ("csv-ltl", po::value< string >(), "output LTL verification results into a CSV file [arg]")
     ("csv-spot-ltl", po::value< string >(), "output SPOT's LTL verification results into a CSV file [arg]")
     ("csv-stats-size-and-ltl",po::value< string >(),"output statistics regarding the final model size and results for LTL properties into a CSV file [arg]")
     ("check-ltl", po::value< string >(), "take a text file of LTL I/O formulae [arg] and check whether or not the analyzed program satisfies these formulae. Formulae should start with '('. Use \"csv-spot-ltl\" option to specify an output csv file for the results.")
     ("single-property", po::value< int >(), "number (ID) of the property that is supposed to be analyzed. All other LTL properties will be ignored. ( Use \"check-ltl\" option to specify an input property file).")
     ("counterexamples-with-output", po::value< string >(), "reported counterexamples for LTL or reachability properties also include output values [=yes|no]")
-    ("determine-prefix-depth", po::value< string >(), "if possible, display a guarantee about the length of the discovered prefix of possible program traces. [=yes|no]")
-    ("inf-paths-only", po::value< string >(), "recursively prune the graph so that no leaves exist [=yes|no]")
+    ("inf-paths-only", po::value< string >(), "recursively prune the transition graph so that only infinite paths remain when checking LTL properties [=yes|no]")
     ("io-reduction", po::value< int >(), "(work in progress) reduce the transition system to only input/output/worklist states after every <arg> computed EStates.")
     ("keep-error-states",  po::value< string >(), "Do not reduce error states for the LTL analysis. [=yes|no]")      ("ltl-in-alphabet",po::value< string >(),"specify an input alphabet used by the LTL formulae (e.g. \"{1,2,3}\")")
     ("ltl-out-alphabet",po::value< string >(),"specify an output alphabet used by the LTL formulae (e.g. \"{19,20,21,22,23,24,25,26}\")")
-    ("ltl-driven","select mode to verify LTLs driven by spot's access to the state transitions")
+    ("ltl-driven","select mode to verify LTLs driven by SPOT's access to the state transitions")
     ("no-input-input",  po::value< string >(), "remove transitions where one input states follows another without any output in between. Removal occurs before the LTL check. [=yes|no]")
     ("std-io-only", po::value< string >(), "bypass and remove all states that are not standard I/O [=yes|no]")
     ("std-in-only", po::value< string >(), "bypass and remove all states that are not input-states [=yes|no]")
     ("std-out-only", po::value< string >(), "bypass and remove all states that are not output-states [=yes|no]")
     ("tg-ltl-reduced",po::value< string >(),"(experimental) compute LTL-reduced transition graph based on a subset of computed estates [=yes|no]")
-    ("with-counterexamples", po::value< string >(), "adds counterexample traces to the analysis results. Applies to reachable assertions (work in progress) and falsified LTL properties. [=yes|no]")
-    ("with-assert-counterexamples", po::value< string >(), "report counterexamples leading to failing assertion states (work in progress) [=yes|no]")
+    ("with-counterexamples", po::value< string >(), "adds counterexample I/O traces to the analysis results. Applies to reachable assertions and falsified LTL properties (uses RERS-specific alphabet). [=yes|no]")
+    ("with-assert-counterexamples", po::value< string >(), "report counterexamples leading to failing assertion states [=yes|no]")
     ("with-ltl-counterexamples", po::value< string >(), "report counterexamples that violate LTL properties [=yes|no]")
     ;
 
@@ -308,7 +306,7 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
     ("cegpra-ltl",po::value< int >(),"Select the ID of an LTL property that should be checked using cegpra (between 0 and 99).")
     ("cegpra-ltl-all",po::value< string >(),"Check all specified LTL properties using cegpra [=yes|no]")
     ("cegpra-max-iterations",po::value< int >(),"Select a maximum number of counterexamples anaylzed by cegpra (default: no limit).")
-    ("viz-cegpra-detailed",po::value< string >(),"generate visualization (dot) output files with prefix <arg> for different stages within each loop of cegpra.")
+    ("viz-cegpra-detailed",po::value< string >(),"generate visualization (.dot) output files with prefix <arg> for different stages within each loop of cegpra.")
     ;
 
   visualizationOptions.add_options()
@@ -323,7 +321,7 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
     ("tg2-estate-properties", po::value< string >(),"transition graph 2: visualize all estate-properties [=yes|no]")
     ("tg2-estate-predicate", po::value< string >(), "transition graph 2: show estate as predicate [=yes|no]")
     ("visualize-read-write-sets",po::value< string >(), "generate one graph for each parallel loop that illustrates the read and write accesses of the involved threads.")
-    ("viz",po::value< string >(),"generate visualizations (dot) outputs [=yes|no]")
+    ("viz",po::value< string >(),"generate visualizations (.dot) outputs [=yes|no]")
     ;
 
   parallelProgramOptions.add_options()
@@ -445,14 +443,14 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
     ("input-values-as-constraints",po::value<string >(),"represent input var values as constraints (otherwise as constants in PState)")
     ("input-sequence",po::value< string >(),"specify a sequence of input values (e.g. \"[1,2,3]\")")
     ("log-level",po::value< string >()->default_value("none,>=warn"),"Set the log level (none|info|warn|trace|debug)")
-    ("max-transitions",po::value< int >(),"Passes (possibly) incomplete STG to verifier after max transitions (default: no limit).")
-    ("max-iterations",po::value< int >(),"Passes (possibly) incomplete STG to verifier after max loop iterations (default: no limit). Currently requires --exploration-mode=loop-aware[-sync].")
-    ("max-memory",po::value< long int >(),"Stop computing the STG after a total physical memory consumption of approximately <arg> Bytes has been reached. (default: no limit). Currently requires --solver=12 and only supports Unix systems.")
-    ("max-time",po::value< long int >(),"Stop computing the STG after an analysis time of approximately <arg> seconds has been reached. (default: no limit). Currently requires --solver=12.")
-    ("max-transitions-forced-top",po::value< int >(),"same as max-transitions-forced-top1 (default).")
+    ("max-transitions",po::value< int >(),"Passes (possibly) incomplete STG to verifier after <arg> transitions have been computed (default: no limit).")
+    ("max-iterations",po::value< int >(),"Passes (possibly) incomplete STG to verifier after <arg> loop iterations have been explored (default: no limit). Currently requires --exploration-mode=loop-aware[-sync].")
+    ("max-memory",po::value< long int >(),"Stop computing the STG after a total physical memory consumption of approximately <arg> Bytes has been reached. (default: no limit).")
+    ("max-time",po::value< long int >(),"Stop computing the STG after an analysis time of approximately <arg> seconds has been reached. (default: no limit).")
+    ("max-transitions-forced-top",po::value< int >(),"Performs approximation after <arg> transitions (default: no limit).")
     ("max-iterations-forced-top",po::value< int >(),"Performs approximation after <arg> loop iterations (default: no limit). Currently requires --exploration-mode=loop-aware[-sync].")
-    ("max-memory-forced-top",po::value< long int >(),"Performs approximation after <arg> bytes of physical memory have been used (default: no limit). Currently requires options --exploration-mode=loop-aware-sync, --solver=12, and only supports Unix systems.")
-    ("max-time-forced-top",po::value< long int >(),"Performs approximation after an analysis time of approximately <arg> seconds has been reached. (default: no limit). Currently requires --solver=12.")
+    ("max-memory-forced-top",po::value< long int >(),"Performs approximation after <arg> bytes of physical memory have been used (default: no limit).")
+    ("max-time-forced-top",po::value< long int >(),"Performs approximation after an analysis time of approximately <arg> seconds has been reached. (default: no limit).")
     ("resource-limit-diff",po::value< int >(),"Check if the resource limit is reached every <arg> computed estates.")
     ("print-all-options",po::value< string >(),"print the default values for all yes/no command line options.")
     ("rewrite","rewrite AST applying all rewrite system rules.")
@@ -576,7 +574,6 @@ BoolOptions& parseBoolOptions(int argc, char* argv[]) {
   boolOptions.registerOption("with-ltl-counterexamples",false);
   boolOptions.registerOption("counterexamples-with-output",false);
   boolOptions.registerOption("cegpra-ltl-all",false);
-  boolOptions.registerOption("determine-prefix-depth",false);
   boolOptions.registerOption("explicit-arrays",true); // MS (2017-06-09): enabled by default
 
   boolOptions.registerOption("keep-systems",true);
@@ -970,6 +967,7 @@ void analyzerSetup(Analyzer& analyzer, const po::variables_map& args, Sawyer::Me
   }
 
   if (args.count("max-memory") || args.count("max-memory-forced-top") || args.count("max-time") || args.count("max-time-forced-top")) {
+#if 0
     bool notSupported=false;
     if (!args.count("ltl-driven")) {
       if(args.count("solver")) {
@@ -986,6 +984,7 @@ void analyzerSetup(Analyzer& analyzer, const po::variables_map& args, Sawyer::Me
       cout << "ERROR: options \"--max-memory\", \"--max-time\", \"--max-memory-forced-top\", and \"--max-time-forced-top\" currently require \"--solver=12\"." << endl;
       exit(1);
     }
+#endif
     if (args.count("max-memory")) {
       analyzer.setMaxBytes(args["max-memory"].as<long int>());
     }
@@ -1227,7 +1226,6 @@ int main( int argc, char * argv[] ) {
           || string(argv[i]).find("--threads" )==0
           || string(argv[i]).find("--display-diff")==0
           || string(argv[i]).find("--input-values")==0
-          || string(argv[i]).find("--csv-ltl")==0
           || string(argv[i]).find("--dump-sorted")==0
           || string(argv[i]).find("--dump-non-sorted")==0
           || string(argv[i]).find("--equivalence-check")==0
@@ -1558,13 +1556,8 @@ int main( int argc, char * argv[] ) {
       }
     }
 
-    double determinePrefixDepthTime= 0;
+    double determinePrefixDepthTime= 0; // MJ: Determination of prefix depth currently deactivated.
     int inputSeqLengthCovered = -1;
-    if ( boolOptions["determine-prefix-depth"]) {
-      logger[ERROR] << "option \"determine-prefix-depth\" currenlty deactivated." << endl;
-      mfacilities.shutdown();
-      return 1;
-    }
     double totalInputTracesTime = extractAssertionTracesTime + determinePrefixDepthTime;
 
     bool withCe = boolOptions["with-counterexamples"] || boolOptions["with-assert-counterexamples"];

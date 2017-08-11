@@ -249,16 +249,6 @@ addressTakenAnalysis_DEPENDENCIES=libspray.la
 # workaround to intentionally fool policy
 faketarget:
 	RersSpecialization.h
-	RERS_Problem10_specialization.C
-	RERS_Problem1_specialization.C
-	RERS_Problem2_specialization.C
-	RERS_Problem3_specialization.C
-	RERS_Problem4_specialization.C
-	RERS_Problem5_specialization.C
-	RERS_Problem6_specialization.C
-	RERS_Problem7_specialization.C
-	RERS_Problem8_specialization.C
-	RERS_Problem9_specialization.C
 	rers_cpp_forward_decls.C
 	RDLattice.h
 	RDLattice.C
