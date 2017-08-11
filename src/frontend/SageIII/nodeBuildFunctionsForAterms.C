@@ -3057,6 +3057,19 @@ SgUntypedDeclarationStatement* SgUntypedDeclarationStatement::build_node_from_no
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
+SgUntypedNameListDeclaration* SgUntypedNameListDeclaration::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedNameListDeclaration::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedNameListDeclaration* returnNode = NULL;
+
+     return returnNode;
+   }
+
+// Generated static function for building IR nodes for Aterm support (like a constructor).
 SgUntypedImplicitDeclaration* SgUntypedImplicitDeclaration::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct )
    {
 #if 0
@@ -3137,6 +3150,19 @@ SgUntypedSubroutineDeclaration* SgUntypedSubroutineDeclaration::build_node_from_
 #endif
 
      SgUntypedSubroutineDeclaration* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+SgUntypedInterfaceDeclaration* SgUntypedInterfaceDeclaration::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, std::string name )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedInterfaceDeclaration::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, std::string name): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedInterfaceDeclaration* returnNode = NULL;
 
      return returnNode;
    }
@@ -3258,6 +3284,19 @@ SgUntypedOtherStatement* SgUntypedOtherStatement::build_node_from_nonlist_childr
 #endif
 
      SgUntypedOtherStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+SgUntypedUseStatement* SgUntypedUseStatement::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, std::string module_name, SgToken::ROSE_Fortran_Keywords module_nature, bool isOnlyList )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedUseStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, std::string module_name, SgToken::ROSE_Fortran_Keywords module_nature, bool isOnlyList): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedUseStatement* returnNode = NULL;
 
      return returnNode;
    }
@@ -3498,6 +3537,32 @@ SgUntypedInitializedNameList* SgUntypedInitializedNameList::build_node_from_nonl
 
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
+SgUntypedName* SgUntypedName::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, std::string name )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedName::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, std::string name): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedName* returnNode = NULL;
+
+     return returnNode;
+   }
+
+// Generated static function for building IR nodes for Aterm support (like a constructor).
+SgUntypedNameList* SgUntypedNameList::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedNameList::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedNameList* returnNode = NULL;
+
+     return returnNode;
+   }
+
+// Generated static function for building IR nodes for Aterm support (like a constructor).
 SgUntypedToken* SgUntypedToken::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, std::string lexeme_string, unsigned int classification_code )
    {
 #if 0
@@ -3519,6 +3584,31 @@ SgUntypedTokenList* SgUntypedTokenList::build_node_from_nonlist_children ( Sg_Fi
 #endif
 
      SgUntypedTokenList* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+SgUntypedTokenPair* SgUntypedTokenPair::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, std::string lexeme_string_1, unsigned int classification_code_1, std::string lexeme_string_2, unsigned int classification_code_2 )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedTokenPair::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, std::string lexeme_string, unsigned int classification_code): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedTokenPair* returnNode = NULL;
+
+     return returnNode;
+   }
+
+SgUntypedTokenPairList* SgUntypedTokenPairList::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedTokenPairList::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedTokenPairList* returnNode = NULL;
 
      return returnNode;
    }

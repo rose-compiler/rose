@@ -371,39 +371,6 @@ ATbool traverse_OptCommaList(ATerm term, FuncType & convert_item)
   return ATtrue;
 }
 
-// Traverse a use-stmt only list
-//
-ATbool traverse_OnlyList(ATerm term, std::vector<std::string> & only_list, std::map<std::string,std::string> & rename_map)
-{
-#if PRINT_ATERM_TRAVERSAL
-  printf("... traverse_OnlyList: %s\n", ATwriteToString(term));
-#endif
-
-  ATerm terms;
-  char * str1, * str2;
-
-  if (ATmatch(term, "OnlyList(<term>)", &terms)) {
-     ATermList tail = (ATermList) ATmake("<term>", terms);
-     while (! ATisEmpty(tail)) {
-        ATerm head = ATgetFirst(tail);
-        tail = ATgetNext(tail);
-        if (ATmatch(head, "<str>", &str1)) {
-           printf("--- Only: %s\n", str1);
-           only_list.push_back(str1);
-        }
-        else if (ATmatch(head, "Rename(<str>,<str>)", &str1, &str2)) {
-           printf("--- Rename: %s %s\n", str1, str2);
-           rename_map[str1] = str2;
-        }
-        else return ATfalse;
-     }
-  }
-  else return ATfalse;
-
-  return ATtrue;
-}
-
-
 //========================================================================================
 // Program (R201)
 //----------------------------------------------------------------------------------------
@@ -615,7 +582,7 @@ ATbool ATtoUntypedTraversal::traverse_OptName(ATerm term, std::string & name)
 //========================================================================================
 // NameList
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_NameList(ATerm term, std::vector<std::string> & name_list)
+ATbool ATtoUntypedTraversal::traverse_NameList(ATerm term, SgUntypedNameList* name_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_NameList: %s\n", ATwriteToString(term));
@@ -629,7 +596,9 @@ ATbool ATtoUntypedTraversal::traverse_NameList(ATerm term, std::vector<std::stri
       tail = ATgetNext(tail);
       if (ATmatch(head, "<str>", &arg1)) {
          // Matched a name
-         name_list.push_back(arg1);
+         SgUntypedName* name = new SgUntypedName(arg1);
+         setSourcePosition(name, head);
+         name_list->get_name_list().push_back(name);
       } else return ATfalse;
    }
 
@@ -683,130 +652,24 @@ ATbool ATtoUntypedTraversal::traverse_InitialSpecPart(ATerm term, SgUntypedDecla
 }
 
 //========================================================================================
-// UseStmtList
+// defined-operator (R310)
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_UseStmtList(ATerm term, SgUntypedDeclarationStatementList* decl_list)
+ATbool ATtoUntypedTraversal::traverse_DefinedOperator(ATerm term, std::string & name)
 {
 #if PRINT_ATERM_TRAVERSAL
-  printf("... traverse_UseStmtList: %s\n", ATwriteToString(term));
+   printf("... traverse_DefinedOperator: %s\n", ATwriteToString(term));
 #endif
 
-  ATermList tail = (ATermList) ATmake("<term>", term);
-  while (! ATisEmpty(tail)) {
-     ATerm head = ATgetFirst(tail);
-     tail = ATgetNext(tail);
-     if (traverse_UseStmt(head, decl_list)) {
-        // MATCHED UseStmt
-     } else return ATfalse;
-  }
+   std::cout << "TODO - traverse_DefinedOperator \n";
 
-  return ATtrue;
-}
+   //  DefinedUnaryOp                -> DefinedOperator {prefer} %% AMBIGUOUS both unary and binary are DOP
+   //  DefinedBinaryOp               -> DefinedOperator
+   //  ExtendedIntrinsicOp           -> DefinedOperator
+   //  Dop                           -> DefinedBinaryOp
 
-//========================================================================================
-// UseStmt
-//----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_UseStmt(ATerm term, SgUntypedDeclarationStatementList* decl_list)
-{
-#if PRINT_ATERM_TRAVERSAL
-  printf("... traverse_UseStmt: %s\n", ATwriteToString(term));
-#endif
+   //  "." Letter+ "."               -> Dop
 
-  ATerm term1, term2, term3, term4, term5;
-  std::string label;
-  FAST::UseStmt::ModuleNature nature;
-  std::string name;
-  std::map<std::string,std::string> rename_map;
-  std::vector<std::string> only_list;
-  ATListToMap convert_list_type("Rename(<str>,<str>)");
-  std::string eos;
-  
-  // Regular UseStmt without an ONLY clause
-  //
-  if (ATmatch(term, "UseStmt(<term>,<term>,<term>,<term>,<term>)", &term1,&term2,&term3,&term4,&term5)) {
-    if (traverse_OptLabel(term1, label)) {
-       // OptLabel
-    } else return ATfalse;
-    if (traverse_OptModuleNature(term2, &nature)) {
-       // OptModuleNature
-    } else return ATfalse;
-    if (traverse_Name(term3, name)) {
-       // ModuleName
-    } else return ATfalse;
-    if (traverse_OptCommaList(term4, convert_list_type)) {
-       // RenameMap
-       rename_map = convert_list_type.getMap();
-       printf("--- rename list size %ld\n", rename_map.size());
-    } else return ATfalse;
-    if (traverse_eos(term5, eos)) {
-       // EOS
-    } else return ATfalse;
-  }
-
-  // UseStmt with an ONLY clause (may also have rename in list)
-  //
-  else if (ATmatch(term, "UseOnlyStmt(<term>,<term>,<term>,<term>,<term>)", &term1,&term2,&term3,&term4,&term5)) {
-    if (traverse_OptLabel(term1, label)) {
-       // OptLabel
-    } else return ATfalse;
-    if (traverse_OptModuleNature(term2, &nature)) {
-       // OptModuleNature
-    } else return ATfalse;
-    if (traverse_Name(term3, name)) {
-       // ModuleName
-    } else return ATfalse;
-    if (traverse_OnlyList(term4, only_list, rename_map)) {
-       // OnlyList and RenameMap
-       printf("--- rename map size %ld\n", rename_map.size());
-       printf("--- only  list size %ld\n", only_list.size());
-    } else return ATfalse;
-    if (traverse_eos(term5, eos)) {
-       // EOS
-    } else return ATfalse;
-  } else return ATfalse;
-
-#ifdef REPLACE_WITH_SgUntyped
-  *var_UseStmt = new FAST::UseStmt(label, name, nature, eos, getLocation(term));
-  scope->get_declaration_list().push_back(stmt);
-
-  if (only_list.size() > 0) {
-     (*var_UseStmt)->setOnlyList(only_list);
-  }
-  if (rename_map.size() > 0) {
-     (*var_UseStmt)->setRenameMap(rename_map);
-  }
-#endif
-
-  return ATtrue;
-}
-
-//========================================================================================
-// OptModuleNature
-//----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_OptModuleNature(ATerm term, FAST::UseStmt::ModuleNature* var_OptModuleNature)
-{
-#if PRINT_ATERM_TRAVERSAL
-  printf("... traverse_OptModuleNature: %s\n", ATwriteToString(term));
-#endif
-
-  ATerm term1;
-  
-  if (ATmatch(term, "no-module-nature()")) {
-     // MATCHED no-module-nature
-     *var_OptModuleNature = FAST::UseStmt::None;
-  }
-  else if (ATmatch(term, "ModuleNature(<term>)", &term1)) {
-     if (ATmatch(term1, "INTRINSIC()")) {
-        // MATCHED INTRINSIC
-        *var_OptModuleNature = FAST::UseStmt::Intrinsic;
-     }
-     else if (ATmatch(term1, "NON_INTRINSIC()")) {
-        // MATCHED NON_INTRINSIC
-        *var_OptModuleNature = FAST::UseStmt::NonIntrinsic;
-     } else return ATfalse;
-  } else return ATfalse;
-
-  return ATtrue;
+   return ATfalse;
 }
 
 //========================================================================================
@@ -951,6 +814,10 @@ ATbool ATtoUntypedTraversal::traverse_DeclarationConstruct(ATerm term, SgUntyped
    printf("... traverse_DeclarationConstruct: %s\n", ATwriteToString(term));
 #endif
 
+   if (traverse_InterfaceBlock(term, decl_list)) {
+      // MATCHED InterfaceBlock
+   }
+
 #if 0
    if (traverse_DerivedTypeDef(term, decl_list)) {
       // MATCHED DerivedTypeDef
@@ -964,9 +831,6 @@ ATbool ATtoUntypedTraversal::traverse_DeclarationConstruct(ATerm term, SgUntyped
    else if (traverse_FormatStmt(term, decl_list)) {
       // MATCHED FormatStmt
    }
-   else if (traverse_InterfaceBlock(term, decl_list)) {
-      // MATCHED InterfaceBlock
-   }
    else if (traverse_ParameterStmt(term, decl_list)) {
       // MATCHED ParameterStmt
    }
@@ -974,9 +838,11 @@ ATbool ATtoUntypedTraversal::traverse_DeclarationConstruct(ATerm term, SgUntyped
       // MATCHED ProcedureDeclarationStmt
    }
 #endif
-   if (traverse_TypeDeclarationStmt(term, decl_list)) {
+
+   else if (traverse_TypeDeclarationStmt(term, decl_list)) {
       // MATCHED TypeDeclarationStmt
    }
+
 #if 0
 // TODO - is this correct?
    else if (traverse_IncludeStmt(term, decl_list)) {
@@ -1003,7 +869,7 @@ ATbool ATtoUntypedTraversal::traverse_DeclarationConstructList(ATerm term, SgUnt
       tail = ATgetNext(tail);
 
       if (traverse_DeclarationConstruct(head, decl_list)) {
-         // MATCHED ImplicitStmt
+         // MATCHED DeclarationConstruct
       }
       else return ATfalse;
    }
@@ -1170,33 +1036,6 @@ class ImplicitSpecMatch
  protected:
    ATtoUntypedTraversal* pTraversal;
    std::vector<FAST::ImplicitSpec>* pImplicitSpecList;
-};
-
-//========================================================================================
-// AttrSpec
-//----------------------------------------------------------------------------------------
-class AttrSpecMatch
-{
- public:
-   AttrSpecMatch(std::vector<FAST::AttrSpec*>* list) : pAttrSpecList(list)
-      {
-      }
-    ATbool operator() (ATerm term)
-      {
-         FAST::AttrSpec* attr_spec = NULL;
-
-         if (ATmatch(term, "PUBLIC()")) {
-#ifdef REPLACE_WITH_SgUntyped
-            attr_spec = new FAST::AttrSpec(FAST::AttrSpec::Public, getLocation(term));
-#endif
-         } else return ATfalse;
-
-         pAttrSpecList->push_back(attr_spec);
-
-         return ATtrue;
-      }
- protected:
-   std::vector<FAST::AttrSpec*>* pAttrSpecList;
 };
 
 //========================================================================================
@@ -1399,12 +1238,10 @@ ATbool ATtoUntypedTraversal::traverse_TypeDeclarationStmt(ATerm term, SgUntypedD
    std::string label;
    std::string eos;
    SgUntypedType* declared_type;
-//TODO_SgUntyped - need way to add attributes
-   std::vector<FAST::AttrSpec*> attr_list;
-   AttrSpecMatch match_attrs(&attr_list);
 
    SgUntypedVariableDeclaration* variable_decl = NULL;
    SgUntypedInitializedNameList* var_name_list = new SgUntypedInitializedNameList();
+   SgUntypedTokenList*               attr_list = new SgUntypedTokenList();
 
    if (ATmatch(term, "TypeDeclarationStmt(<term>,<term>,<term>,<term>,<term>)", &term1,&term2,&term3,&term4,&term_eos)) {
       if (traverse_OptLabel(term1, label)) {
@@ -1413,7 +1250,7 @@ ATbool ATtoUntypedTraversal::traverse_TypeDeclarationStmt(ATerm term, SgUntypedD
       if (traverse_DeclarationTypeSpec(term2, &declared_type)) {
          // MATCHED DeclarationTypeSpec
       } else return ATfalse;
-      if (traverse_OptCommaList(term3, match_attrs)) {
+      if (traverse_OptAttrSpecList(term3, attr_list)) {
          // MATCHED AttrSpecList
       //TODO_SgUntyped - need way to add attributes
       } else return ATfalse;
@@ -1429,13 +1266,103 @@ ATbool ATtoUntypedTraversal::traverse_TypeDeclarationStmt(ATerm term, SgUntypedD
 
 // SgUntyped additions:
 //   1. AttrSpecList, this can be a list of enums as the array specification can be placed in SgUntypedArrayType
+//   ! NO NO NO -> BIND(C,expression)
 
-   std::cerr << "...TODO... implement AttrSpecList in TypeDeclarationStmt" << std::endl;
+   std::cerr << "...TODO... fully implement AttrSpecList in TypeDeclarationStmt" << std::endl;
 
-   variable_decl = new SgUntypedVariableDeclaration(label, SgToken::FORTRAN_TYPE, declared_type, var_name_list);
+   variable_decl = new SgUntypedVariableDeclaration(label, SgToken::FORTRAN_TYPE, declared_type, attr_list, var_name_list);
    setSourcePositionExcludingTerm(variable_decl, term, term_eos);
 
    decl_list->get_decl_list().push_back(variable_decl);
+
+  return ATtrue;
+}
+
+//========================================================================================
+// R502 attr-spec
+//----------------------------------------------------------------------------------------
+ATbool ATtoUntypedTraversal::traverse_OptAttrSpecList(ATerm term, SgUntypedTokenList* attr_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+  printf("... traverse_OptAttrSpecList: %s\n", ATwriteToString(term));
+#endif
+
+  ATerm terms;
+  if (ATmatch(term, "no-list()")) {
+  }
+  else if (ATmatch(term, "comma-list(<term>)", &terms)) {
+     ATermList tail = (ATermList) ATmake("<term>", terms);
+     while (! ATisEmpty(tail)) {
+        SgUntypedToken* attr;
+        ATerm head = ATgetFirst(tail);
+        tail = ATgetNext(tail);
+        if (ATmatch(head, "PUBLIC()")) {
+           attr = new SgUntypedToken("PUBLIC", SgToken::FORTRAN_PUBLIC);
+        }
+        else if (ATmatch(head, "PRIVATE()")) {
+           attr = new SgUntypedToken("PRIVATE", SgToken::FORTRAN_PRIVATE);
+        }
+        else if (ATmatch(head, "ALLOCATABLE()")) {
+           attr = new SgUntypedToken("ALLOCATABLE", SgToken::FORTRAN_ALLOCATABLE);
+        }
+        else if (ATmatch(head, "ASYNCHRONOUS()")) {
+           attr = new SgUntypedToken("ASYNCHRONOUS", SgToken::FORTRAN_ASYNCHRONOUS);
+        }
+     // TODO - Codimension
+        else if (ATmatch(head, "CONTIGUOUS()")) {
+           attr = new SgUntypedToken("CONTIGUOUS", SgToken::FORTRAN_CONTIGUOUS);
+        }
+     // TODO - Dimension
+        else if (ATmatch(head, "EXTERNAL()")) {
+           attr = new SgUntypedToken("EXTERNAL", SgToken::FORTRAN_EXTERNAL);
+        }
+        else if (ATmatch(head, "Intent(IN())")) {
+           attr = new SgUntypedToken("INTENT(IN)", SgToken::FORTRAN_INTENT_IN);
+        }
+        else if (ATmatch(head, "Intent(OUT())")) {
+           attr = new SgUntypedToken("INTENT(IN)", SgToken::FORTRAN_INTENT_OUT);
+        }
+        else if (ATmatch(head, "Intent(INOUT())")) {
+           attr = new SgUntypedToken("INTENT(IN)", SgToken::FORTRAN_INTENT_INOUT);
+        }
+        else if (ATmatch(head, "INTRINSIC()")) {
+           attr = new SgUntypedToken("INTRINSIC", SgToken::FORTRAN_INTRINSIC);
+        }
+     // TODO - LanguageBindingSpec
+        else if (ATmatch(head, "OPTIONAL()")) {
+           attr = new SgUntypedToken("OPTIONAL", SgToken::FORTRAN_OPTIONAL);
+        }
+        else if (ATmatch(head, "PARAMETER()")) {
+           attr = new SgUntypedToken("PARAMETER", SgToken::FORTRAN_PARAMETER);
+        }
+        else if (ATmatch(head, "POINTER()")) {
+           attr = new SgUntypedToken("POINTER", SgToken::FORTRAN_POINTER);
+        }
+        else if (ATmatch(head, "PROTECTED()")) {
+           attr = new SgUntypedToken("PROTECTED", SgToken::FORTRAN_PROTECTED);
+        }
+        else if (ATmatch(head, "SAVE()")) {
+           attr = new SgUntypedToken("SAVE", SgToken::FORTRAN_SAVE);
+        }
+        else if (ATmatch(head, "TARGET()")) {
+           attr = new SgUntypedToken("TARGET", SgToken::FORTRAN_TARGET);
+        }
+        else if (ATmatch(head, "VALUE()")) {
+           attr = new SgUntypedToken("VALUE", SgToken::FORTRAN_VALUE);
+        }
+        else if (ATmatch(head, "VOLATILE()")) {
+           attr = new SgUntypedToken("VOLATILE", SgToken::FORTRAN_VOLATILE);
+        }
+        else {
+           std::cerr << "...TODO... finish attributes in OptAttrSpecList" << std::endl;
+           return ATfalse;
+        }
+
+        setSourcePosition(attr, head);
+        attr_list->get_token_list().push_back(attr);
+     }
+  }
+  else return ATfalse;
 
   return ATtrue;
 }
@@ -1459,6 +1386,7 @@ ATbool ATtoUntypedTraversal::traverse_EntityDecl(ATerm term, SgUntypedType* decl
 
 // TODO - is this ok (can pointers to types be shared/copied)
 // NO NO NO, Dan says don't do this...........
+// YES YES YES, Dan says it's ok...........
    std::cerr << "...TODO... WARNING may be sharing pointers to nodes (FIXME)" << std::endl;
 
    initialized_type = declared_type;
@@ -1983,16 +1911,24 @@ ATbool ATtoUntypedTraversal::traverse_MainProgram(ATerm term, SgUntypedScope* sc
    SgToken::ROSE_Fortran_Keywords keyword = SgToken::FORTRAN_PROGRAM;
 
 // scope and parameter lists
-   SgUntypedDeclarationStatementList* decl_list  = new SgUntypedDeclarationStatementList();
-   SgUntypedStatementList*            stmt_list  = new SgUntypedStatementList();
-   SgUntypedFunctionDeclarationList*  func_list  = new SgUntypedFunctionDeclarationList();
-   SgUntypedInitializedNameList*     param_list  = new SgUntypedInitializedNameList();
-   SgUntypedTokenList*              prefix_list  = new SgUntypedTokenList();
+   SgUntypedDeclarationStatementList* decl_list;
+   SgUntypedStatementList*            stmt_list;
+   SgUntypedFunctionDeclarationList*  func_list;
+   SgUntypedInitializedNameList*     param_list;
+   SgUntypedTokenList*              prefix_list;
 
-   if (ATmatch(term, "MainProgram(<term>,<term>,<term>,<term>,<term>)", &term1,&term2,&term3,&term4,&term5)) {
+   if (ATmatch(term, "MainProgram(<term>,<term>,<term>,<term>,<term>)", &term1,&term2,&term3,&term4,&term5))
+   {
       if (traverse_OptProgramStmt(term1, &program_stmt)) {
          // ProgramStmt
       } else return ATfalse;
+
+      decl_list   = new SgUntypedDeclarationStatementList();
+      stmt_list   = new SgUntypedStatementList();
+      func_list   = new SgUntypedFunctionDeclarationList();
+      param_list  = new SgUntypedInitializedNameList();
+      prefix_list = new SgUntypedTokenList();
+
       if (traverse_InitialSpecPart(term2, decl_list)) {
          // InitialSpecPart
       } else return ATfalse;
@@ -2138,46 +2074,51 @@ ATbool ATtoUntypedTraversal::traverse_Module(ATerm term, SgUntypedScope* scope)
    SgUntypedNamedStatement* end_module_stmt;
    SgUntypedModuleScope * module_scope;
 
-// scope and parameter lists
-   SgUntypedDeclarationStatementList* decl_list  = new SgUntypedDeclarationStatementList();
-   SgUntypedStatementList*            stmt_list  = new SgUntypedStatementList();
-   SgUntypedFunctionDeclarationList*  func_list  = new SgUntypedFunctionDeclarationList();
+// scope lists
+   SgUntypedDeclarationStatementList* decl_list;
+   SgUntypedStatementList*            stmt_list;
+   SgUntypedFunctionDeclarationList*  func_list;
 
    SgToken::ROSE_Fortran_Keywords keyword = SgToken::FORTRAN_MODULE;
 
-   if (ATmatch(term, "Module(<term>,<term>,<term>,<term>)", &term1,&term2,&term3,&term4)) {
-
+   if (ATmatch(term, "Module(<term>,<term>,<term>,<term>)", &term1,&term2,&term3,&term4))
+   {
       if (traverse_ModuleStmt(term1, &module_stmt)) {
          // MATCHED ModuleStmt
       } else return ATfalse;
+
+      decl_list = new SgUntypedDeclarationStatementList();
+      stmt_list = new SgUntypedStatementList();
+      func_list = new SgUntypedFunctionDeclarationList();
 
       label = module_stmt->get_label_string();
       name  = module_stmt->get_statement_name();
       module_scope = new SgUntypedModuleScope(label,keyword,decl_list,stmt_list,func_list);
 
       if (traverse_SpecificationPart(term2, decl_list)) {
-         // InitialSpecPart
+         // MATCHED SpecificationPart
          setSourcePosition(decl_list, term2);
       } else return ATfalse;
       if (traverse_OptModuleSubprogramPart(term3, &contains_stmt, module_scope)) {
-         // SpecAndExecPart
+         // MATCHED OptModuleSubprogramPart
          setSourcePosition(func_list, term3);
       } else return ATfalse;
 
       if (traverse_EndModuleStmt(term4, &end_module_stmt)) {
-         // EndSubroutineStmt
+         // MATCHED EndModuleStmt
       } else return ATfalse;
    } else return ATfalse;
 
    module = new SgUntypedModuleDeclaration(label,keyword,name,module_scope,end_module_stmt);
 
    setSourcePositionIncludingNode(module, term, end_module_stmt);
+   setSourcePositionIncludingNode(module->get_scope(), term2, end_module_stmt);
 
 // add the module to the outer scope
    scope->get_declaration_list()->get_decl_list().push_back(module);
-   //   scope->get_declaration_list().push_back(module);
 
-   std::cout << "...TODO... Need module name in SgUntypedModuleDeclaration" << std::endl;
+// no longer need module_stmt as this information is contained in the module declaration
+   delete module_stmt;
 
    return ATtrue;
 }
@@ -2231,7 +2172,6 @@ ATbool ATtoUntypedTraversal::traverse_EndModuleStmt(ATerm term, SgUntypedNamedSt
    std::string label, name, eos;
 
    SgToken::ROSE_Fortran_Keywords keyword = SgToken::FORTRAN_END_MODULE;
-   FAST::PosInfo pinfo;
 
    *end_module_stmt = NULL;
    if (ATmatch(term, "EndModuleStmt(<term>,<term>,<term>)", &term1,&term2,&term_eos)) {
@@ -2308,7 +2248,211 @@ ATbool ATtoUntypedTraversal::traverse_ModuleSubprogramList(ATerm term, SgUntyped
 }
 
 //========================================================================================
-// Submodule (R1116)
+// use-stmt (R1109)
+//----------------------------------------------------------------------------------------
+ATbool ATtoUntypedTraversal::traverse_UseStmt(ATerm term, SgUntypedDeclarationStatementList* decl_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_UseStmt: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm term1, term2, term3, term4, eos_term;
+   std::string label, name, eos;
+   SgUntypedTokenPairList* rename_or_only_list;
+   SgToken::ROSE_Fortran_Keywords module_nature;
+   SgToken::ROSE_Fortran_Keywords keyword = SgToken::FORTRAN_USE;
+
+   bool isOnlyList;
+
+  if (ATmatch(term, "UseStmt(<term>,<term>,<term>,<term>,<term>)", &term1,&term2,&term3,&term4,&eos_term))
+  {
+   // Regular UseStmt without an ONLY clause
+      isOnlyList = false;
+  }
+  else if (ATmatch(term, "UseOnlyStmt(<term>,<term>,<term>,<term>,<term>)", &term1,&term2,&term3,&term4,&eos_term))
+  {
+   // UseStmt with an ONLY clause (may also have rename in list)
+      isOnlyList = true;
+  }
+  else return ATfalse;
+
+  if (traverse_OptLabel(term1, label)) {
+     // MATCHED OptLabel
+  } else return ATfalse;
+  if (traverse_OptModuleNature(term2, module_nature)) {
+     // MATCHED OptModuleNature
+  } else return ATfalse;
+  if (traverse_Name(term3, name)) {
+     // MATCHED ModuleName
+  } else return ATfalse;
+
+  rename_or_only_list = new SgUntypedTokenPairList();
+
+  if (traverse_RenameOrOnlyList(term4, isOnlyList, rename_or_only_list)) {
+     // MATCHED a rename or only list
+  } else return ATfalse;
+
+  if (traverse_eos(eos_term, eos)) {
+     // MATCHED eos
+  } else return ATfalse;
+
+  std::cout << "--- rename_or_only_list length is " <<  rename_or_only_list->get_token_pair_list().size() << std::endl;
+
+  SgUntypedUseStatement* use_stmt = new SgUntypedUseStatement(label,keyword,name,module_nature,rename_or_only_list,isOnlyList);
+  setSourcePositionExcludingTerm(use_stmt, term, eos_term);
+
+  decl_list->get_decl_list().push_back(use_stmt);
+
+  return ATtrue;
+}
+
+//========================================================================================
+// use-stmt-list
+//----------------------------------------------------------------------------------------
+ATbool ATtoUntypedTraversal::traverse_UseStmtList(ATerm term, SgUntypedDeclarationStatementList* decl_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+  printf("... traverse_UseStmtList: %s\n", ATwriteToString(term));
+#endif
+
+  ATermList tail = (ATermList) ATmake("<term>", term);
+  while (! ATisEmpty(tail)) {
+     ATerm head = ATgetFirst(tail);
+     tail = ATgetNext(tail);
+     if (traverse_UseStmt(head, decl_list)) {
+        // MATCHED UseStmt
+     } else return ATfalse;
+  }
+
+  return ATtrue;
+}
+
+//========================================================================================
+// module-nature (R1110)
+//----------------------------------------------------------------------------------------
+ATbool ATtoUntypedTraversal::traverse_OptModuleNature(ATerm term, SgToken::ROSE_Fortran_Keywords & module_nature)
+{
+#if PRINT_ATERM_TRAVERSAL
+  printf("... traverse_OptModuleNature: %s\n", ATwriteToString(term));
+#endif
+
+  ATerm term1;
+  
+  if (ATmatch(term, "no-module-nature()")) {
+     // MATCHED no-module-nature
+     module_nature = SgToken::FORTRAN_UNKNOWN;
+  }
+  else if (ATmatch(term, "ModuleNature(<term>)", &term1)) {
+     if (ATmatch(term1, "INTRINSIC()")) {
+        // MATCHED INTRINSIC
+        module_nature = SgToken::FORTRAN_INTRINSIC;
+     }
+     else if (ATmatch(term1, "NON_INTRINSIC()")) {
+        // MATCHED NON_INTRINSIC
+        module_nature = SgToken::FORTRAN_NON_INTRINSIC;
+     } else return ATfalse;
+  } else return ATfalse;
+
+  return ATtrue;
+}
+
+// Traverse a use-stmt only list
+//
+//========================================================================================
+// rename (R1111), only (R1112)
+//----------------------------------------------------------------------------------------
+ATbool ATtoUntypedTraversal::traverse_RenameOrOnlyList(ATerm term, bool isOnlyList, SgUntypedTokenPairList* rename_or_only_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_RenameOrOnlyList: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm terms;
+
+// First match the cons name for the list to obtain the actual list [ ]
+//
+   if (isOnlyList) {
+      if (ATmatch(term, "OnlyList(<term>)", &terms)) {
+         // This is an only/rename-list
+      }
+      else return ATfalse;
+   }
+   else {
+      if (ATmatch(term, "no-list()")) {
+         // No rename list
+         return ATtrue;
+      }
+      else if (ATmatch(term, "comma-list(<term>)", &terms)) {
+         // This is a rename-list
+      }
+      else return ATfalse;
+   }
+
+// Now traverse the list
+//
+   ATermList tail = (ATermList) ATmake("<term>", terms);
+   while (! ATisEmpty(tail))
+   {
+      char * str1, * str2;
+      SgUntypedToken* generic_spec = NULL;
+      SgUntypedTokenPair* only_or_rename = NULL;
+
+      std::string only_name = "";
+
+      ATerm head = ATgetFirst(tail);
+      tail = ATgetNext(tail);
+
+   // Try matching GenericSpec (this will catch use-only name cases without a rename)
+      if (traverse_OptGenericSpec(head, only_name, &generic_spec))
+      {
+         if (only_name.length() > 0)
+         {
+            // There is an ONLY name and thus no rename clause
+            std::cout << "--- ONLY name is " << only_name << std::endl;
+            only_or_rename = new SgUntypedTokenPair(only_name, SgToken::FORTRAN_ONLY,
+                                                    "",        SgToken::FORTRAN_UNKNOWN);
+         }
+         else if (generic_spec->get_lexeme_string() == "NO_GENERIC_SPEC")
+            {
+               // No generic-spec so it must be a rename
+               if (ATmatch(head, "Rename(<str>,<str>)", &str1, &str2))
+                  {
+                     printf("--- RENAME: %s => %s\n", str1, str2);
+                     // TODO - would be nice to use FORTRAN_RENAME
+                     only_or_rename = new SgUntypedTokenPair(str1, SgToken::FORTRAN_UNKNOWN,
+                                                             str2, SgToken::FORTRAN_UNKNOWN);
+                  }
+               else if (ATmatch(head, "RenameOp(<str>,<str>)", &str1, &str2))
+                  {
+                     printf("--- REMANE_OP: %s => %s\n", str1, str2);
+                     // TODO - would be nice to use FORTRAN_RENAME
+                     only_or_rename = new SgUntypedTokenPair(str1, SgToken::FORTRAN_UNKNOWN,
+                                                             str2, SgToken::FORTRAN_UNKNOWN);
+                  }
+               else return ATfalse;
+            }
+         else
+            {
+               ROSE_ASSERT(generic_spec->get_lexeme_string()       == "NO_GENERIC_SPEC");
+               ROSE_ASSERT(generic_spec->get_classification_code() == SgToken::FORTRAN_UNKNOWN);
+               delete generic_spec;
+               // TODO - generic_spec should probably just be NULL
+               std::cout << "--- No generic spec - can we even be here\n";
+            }
+      }
+
+      if (only_or_rename != NULL)
+      {
+         setSourcePosition(only_or_rename, head);
+         rename_or_only_list->get_token_pair_list().push_back(only_or_rename);
+      }
+  }
+
+  return ATtrue;
+}
+
+//========================================================================================
+// submodule (R1116)
 //----------------------------------------------------------------------------------------
 ATbool ATtoUntypedTraversal::traverse_Submodule(ATerm term, SgUntypedScope* scope)
 {
@@ -2334,7 +2478,399 @@ ATbool ATtoUntypedTraversal::traverse_BlockData(ATerm term, SgUntypedScope* scop
 // TODO - implementation
    std::cerr << "...TODO... implement BlockData" << std::endl;
 
+   ATerm term1, term2, term3;
+   std::string label, name;
+
+// TODO - change/fix types
+   SgUntypedModuleDeclaration*  block_data;
+   SgUntypedNamedStatement*     block_data_stmt;
+   SgUntypedNamedStatement* end_block_data_stmt;
+   SgUntypedModuleScope *       block_data_scope;
+
+// scope lists
+   SgUntypedDeclarationStatementList* decl_list;
+   SgUntypedStatementList*            stmt_list;
+   SgUntypedFunctionDeclarationList*  func_list;
+
+   SgToken::ROSE_Fortran_Keywords keyword = SgToken::FORTRAN_BLOCK_DATA;
+
+   if (ATmatch(term, "BlockData(<term>,<term>,<term>)", &term1,&term2,&term3))
+   {
+      if (traverse_BlockDataStmt(term1, &block_data_stmt)) {
+         // MATCHED BlockDataStmt
+      } else return ATfalse;
+
+      decl_list = new SgUntypedDeclarationStatementList();
+      stmt_list = new SgUntypedStatementList();
+      func_list = new SgUntypedFunctionDeclarationList();
+
+   // Statement and function lists not used
+      setSourcePositionUnknown(stmt_list);
+      setSourcePositionUnknown(func_list);
+
+      label = block_data_stmt->get_label_string();
+      name  = block_data_stmt->get_statement_name();
+      block_data_scope = new SgUntypedModuleScope(label,keyword,decl_list,stmt_list,func_list);
+
+      if (traverse_SpecificationPart(term2, decl_list)) {
+         // MATCHED SpecificationPart
+         setSourcePosition(decl_list, term2);
+      } else return ATfalse;
+      if (traverse_EndBlockDataStmt(term3, &end_block_data_stmt)) {
+         // MATCHED EndBlockDataStmt
+      } else return ATfalse;
+   } else return ATfalse;
+
+   block_data = new SgUntypedModuleDeclaration(label,keyword,name,block_data_scope,end_block_data_stmt);
+
+   setSourcePositionIncludingNode(block_data, term, end_block_data_stmt);
+   setSourcePositionIncludingNode(block_data->get_scope(), term2, end_block_data_stmt);
+
+// add block data to the outer scope
+   scope->get_declaration_list()->get_decl_list().push_back(block_data);
+
+// no longer need block_data_stmt as this information is contained in the block data declaration
+   delete block_data_stmt;
+ 
+// TODO - implementation
+   std::cerr << "...TODO... almost finished exiting traverse_BlockData" << std::endl;
+
+  return ATfalse;
+}
+
+//========================================================================================
+// block-data-stmt (R1121)
+//----------------------------------------------------------------------------------------
+ATbool ATtoUntypedTraversal::traverse_BlockDataStmt(ATerm term, SgUntypedNamedStatement** block_data_stmt)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_BlockDataStmt: %s\n", ATwriteToString(term));
+#endif
+  
+   ATerm term1, term2, term_eos;
+   std::string label;
+   std::string name;
+   std::string eos;
+
+   SgToken::ROSE_Fortran_Keywords keyword = SgToken::FORTRAN_BLOCK_DATA;
+
+   *block_data_stmt = NULL; 
+   if (ATmatch(term, "BlockDataStmt(<term>,<term>,<term>)", &term1,&term2,&term_eos)) {
+      if (traverse_OptLabel(term1, label)) {
+         // MATCHED OptLabel
+      } else return ATfalse;
+      if (traverse_OptName(term2, name)) {
+         // MATCHED optional BlockDataName string
+      } else return ATfalse;
+      if (traverse_eos(term_eos, eos)) {
+         // MATCHED eos string
+      } else return ATfalse;
+   }
+   else return ATfalse;
+
+   *block_data_stmt = new SgUntypedNamedStatement(label,keyword,name);
+   setSourcePositionExcludingTerm(*block_data_stmt, term, term_eos);
+
+  return ATtrue;
+}
+
+//========================================================================================
+// end-block-data-stmt (R1122)
+//----------------------------------------------------------------------------------------
+ATbool ATtoUntypedTraversal::traverse_EndBlockDataStmt(ATerm term, SgUntypedNamedStatement** end_block_data_stmt)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_EndBlockDataStmt: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm term1, term2, term_eos;
+   std::string label, name, eos;
+
+   SgToken::ROSE_Fortran_Keywords keyword = SgToken::FORTRAN_END_BLOCK_DATA;
+
+   *end_block_data_stmt = NULL;
+   if (ATmatch(term, "EndBlockDataStmt(<term>,<term>,<term>)", &term1,&term2,&term_eos)) {
+      if (traverse_OptLabel(term1, label)) {
+         // MATCHED OptLabel
+      } else return ATfalse;
+      if (traverse_OptName(term2, name)) {
+         // MATCHED ModuleName string
+      } else return ATfalse;
+      if (traverse_eos(term_eos, eos)) {
+         // MATCHED eos string
+      } else return ATfalse;
+   }
+   else return ATfalse;
+
+   *end_block_data_stmt = new SgUntypedNamedStatement(label,keyword,name);
+   setSourcePositionExcludingTerm(*end_block_data_stmt, term, term_eos);
+
+   return ATtrue;
+}
+
+//========================================================================================
+// interface-block (R1201)
+//----------------------------------------------------------------------------------------
+ATbool ATtoUntypedTraversal::traverse_InterfaceBlock(ATerm term, SgUntypedDeclarationStatementList* parent_decl_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_InterfaceBlock: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm term1, term2, term3;
+   std::string label, name;
+
+   SgUntypedInterfaceDeclaration* interface_decl;
+   SgUntypedNamedStatement* end_interface_stmt;
+
+// scope lists
+   SgUntypedDeclarationStatementList* decl_list;
+   SgUntypedStatementList*            stmt_list;
+   SgUntypedFunctionDeclarationList*  func_list;
+
+   if (ATmatch(term, "InterfaceBlock(<term>,<term>,<term>)", &term1,&term2,&term3))
+   {
+      if (traverse_InterfaceStmt(term1, &interface_decl)) {
+         // MATCHED InterfaceStmt
+      } else return ATfalse;
+
+      decl_list = new SgUntypedDeclarationStatementList();
+      stmt_list = new SgUntypedStatementList();
+      func_list = new SgUntypedFunctionDeclarationList();
+
+   // Declarations and statements lists not used
+      setSourcePositionUnknown(decl_list);
+      setSourcePositionUnknown(stmt_list);
+
+      if (traverse_InterfaceSpecificationList(term2, func_list)) {
+         // MATCHED InitialSpecification
+         setSourcePosition(func_list, term2);
+      } else return ATfalse;
+      if (traverse_EndInterfaceStmt(term3, &end_interface_stmt)) {
+         // MATCHED EndInterfaceStmt
+         interface_decl->set_end_statement(end_interface_stmt);
+      } else return ATfalse;
+   } else return ATfalse;
+
+   setSourcePositionIncludingNode(interface_decl, term, end_interface_stmt);
+   setSourcePositionIncludingNode(interface_decl->get_scope(), term2, end_interface_stmt);
+
+   parent_decl_list->get_decl_list().push_back(interface_decl);
+
+   return ATtrue;
+}
+
+//========================================================================================
+// interface-specification (R1202)
+//----------------------------------------------------------------------------------------
+ATbool ATtoUntypedTraversal::traverse_InterfaceSpecificationList(ATerm term, SgUntypedFunctionDeclarationList* func_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_InterfaceSpecificationList: %s\n", ATwriteToString(term));
+#endif
+
+   ATermList tail = (ATermList) ATmake("<term>", term);
+   while (! ATisEmpty(tail)) {
+      ATerm head = ATgetFirst(tail);
+      tail = ATgetNext(tail);
+
+      if (traverse_InterfaceBody(head, func_list)) {
+         // MATCHED InterfaceBlock
+      }
+      else if (traverse_ProcedureStmt(head, func_list)) {
+         // MATCHED ProcedureStmt
+      }
+      else return ATfalse;
+   }
+
+   return ATtrue;
+}
+
+//========================================================================================
+// interface-stmt (R1203)
+//----------------------------------------------------------------------------------------
+ATbool ATtoUntypedTraversal::traverse_InterfaceStmt(ATerm term, SgUntypedInterfaceDeclaration** interface_decl)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_InterfaceStmt: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm term1, term2, eos_term;
+   std::string label, name, eos;
+
+   SgToken::ROSE_Fortran_Keywords keyword;
+   SgUntypedToken* generic_spec = NULL;
+
+   if (ATmatch(term, "InterfaceStmt(<term>,<term>)", &term1, &term2, &eos_term))
+   {
+      keyword = SgToken::FORTRAN_INTERFACE;
+
+      if (traverse_OptLabel(term1, label)) {
+         //MATCHED OptLabel
+      } else return ATfalse;
+      if (traverse_OptGenericSpec(term2, name, &generic_spec)) {
+         //MATCHED OptGenericSpec
+      } else return ATfalse;
+      if (traverse_eos(eos_term, eos)) {
+         //MATCHED EOS
+      } else return ATfalse;
+   }
+   else if (ATmatch(term, "AbstractInterfaceStmt(<term>,<term>)", &term1, &eos_term))
+   {
+      keyword = SgToken::FORTRAN_ABSTRACT_INTERFACE;
+
+      if (traverse_OptLabel(term1, label)) {
+         //MATCHED OptLabel
+      } else return ATfalse;
+
+      generic_spec = new SgUntypedToken("ABSTRACT INTERFACE", SgToken::FORTRAN_ABSTRACT_INTERFACE);
+      setSourcePosition(generic_spec, term);
+
+      if (traverse_eos(eos_term, eos)) {
+         //MATCHED EOS
+      } else return ATfalse;
+   }
+   else return ATfalse;
+
+// Scope lists (only function declaration list is potentially used)
+   SgUntypedDeclarationStatementList* decl_list = new SgUntypedDeclarationStatementList();
+   SgUntypedStatementList*            stmt_list = new SgUntypedStatementList();
+   SgUntypedFunctionDeclarationList*  func_list = new SgUntypedFunctionDeclarationList();
+   SgUntypedInitializedNameList*     param_list = new SgUntypedInitializedNameList();
+   SgUntypedTokenList*              prefix_list = new SgUntypedTokenList();
+
+   SgUntypedFunctionScope* interface_scope = new SgUntypedFunctionScope(label,keyword,decl_list,stmt_list,func_list);
+
+   *interface_decl = new SgUntypedInterfaceDeclaration(label, keyword, name, param_list, buildType(SgUntypedType::e_unknown),
+                                                       interface_scope, prefix_list, NULL);
+
+// Source positions can only be set once end-interface-stmt is matched
+
+   return ATtrue;
+}
+
+//========================================================================================
+// end-interface-stmt (R1204)
+//----------------------------------------------------------------------------------------
+ATbool ATtoUntypedTraversal::traverse_EndInterfaceStmt(ATerm term, SgUntypedNamedStatement** end_interface_stmt)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_EndInterfaceStmt: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm term1, term2, term_eos;
+   std::string label, name, eos;
+
+   SgToken::ROSE_Fortran_Keywords keyword = SgToken::FORTRAN_END_INTERFACE;
+   SgUntypedToken* generic_spec = NULL;
+
+   *end_interface_stmt = NULL;
+   if (ATmatch(term, "EndInterfaceStmt(<term>,<term>,<term>)", &term1,&term2,&term_eos)) {
+      if (traverse_OptLabel(term1, label)) {
+         // MATCHED OptLabel
+      } else return ATfalse;
+      if (traverse_OptGenericSpec(term2, name, &generic_spec)) {
+         // MATCHED OptGenericSpec string
+      } else return ATfalse;
+      if (traverse_eos(term_eos, eos)) {
+         // MATCHED eos string
+      } else return ATfalse;
+   }
+   else return ATfalse;
+
+// If there is a generic-spec it must match the original one from the interface-stmt,
+// thus, discard this one.  This constraint could be checked but currently isn't.
+// Ignore potential generic-name as well.
+
+   if (generic_spec != NULL)
+   {
+      delete generic_spec;
+   }
+
+   *end_interface_stmt = new SgUntypedNamedStatement(label,keyword,name);
+   setSourcePositionExcludingTerm(*end_interface_stmt, term, term_eos);
+
+   return ATtrue;
+}
+
+//========================================================================================
+// interface-body (R1205)
+//----------------------------------------------------------------------------------------
+ATbool ATtoUntypedTraversal::traverse_InterfaceBody(ATerm term, SgUntypedFunctionDeclarationList* func_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_InterfaceBody: %s\n", ATwriteToString(term));
+#endif
+
    return ATfalse;
+}
+
+//========================================================================================
+// procedure-stmt (R1206)
+//----------------------------------------------------------------------------------------
+ATbool ATtoUntypedTraversal::traverse_ProcedureStmt(ATerm term, SgUntypedFunctionDeclarationList* func_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_ProcedureStmt: %s\n", ATwriteToString(term));
+#endif
+
+   return ATfalse;
+}
+
+//========================================================================================
+// generic-spec (R1207)
+//----------------------------------------------------------------------------------------
+ATbool ATtoUntypedTraversal::traverse_OptGenericSpec(ATerm term, std::string & name, SgUntypedToken** generic_spec)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_OptGenericSpec: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm term1;
+   char* arg1;
+
+   std::string defined_operator;
+
+   std::cout << "TODO - OptGenericSpec: handle no-generic-spec() specifically (return NULL?)\n";
+
+   if (ATmatch(term, "<str>", &arg1)) {
+      // MATCHED GenericName
+      name = arg1;
+      std::cout << "TODO - OptGenericSpec is use of generic-name OK?\n";
+      *generic_spec = new SgUntypedToken(name, SgToken::FORTRAN_UNKNOWN);
+   }
+   else if (ATmatch(term, "OPERATOR(<term>)", &term1)) {
+      if (traverse_DefinedOperator(term1, defined_operator)) {
+         //MATCHED DefinedOperator
+         *generic_spec = new SgUntypedToken(defined_operator, SgToken::FORTRAN_OPERATOR);
+      } else return ATfalse;
+   }
+   else if (ATmatch(term, "ASSIGNMENT()")) {
+      *generic_spec = new SgUntypedToken("ASSIGNMENT", SgToken::FORTRAN_ASSIGNMENT);
+   }
+// DefinedIoGenericSpec
+//
+   else if (ATmatch(term, "READ_FORMATTED()")) {
+      *generic_spec = new SgUntypedToken("READ(FORMATTED)", SgToken::FORTRAN_READ_FORMATTED);
+   }
+   else if (ATmatch(term, "READ_UNFORMATTED()")) {
+      *generic_spec = new SgUntypedToken("READ(UNFORMATTED)", SgToken::FORTRAN_READ_UNFORMATTED);
+   }
+   else if (ATmatch(term, "WRITE_FORMATTED()")) {
+      *generic_spec = new SgUntypedToken("WRITE(FORMATTED)", SgToken::FORTRAN_WRITE_FORMATTED);
+   }
+   else if (ATmatch(term, "WRITE_UNFORMATTED()")) {
+      *generic_spec = new SgUntypedToken("WRITE(UNFORMATTED)", SgToken::FORTRAN_WRITE_UNFORMATTED);
+   }
+// Optional case, no generic name or other generic spec
+//
+   else {
+      *generic_spec = new SgUntypedToken("NO_GENERIC_SPEC", SgToken::FORTRAN_UNKNOWN);
+   }
+
+   setSourcePosition(*generic_spec, term);
+
+   return ATtrue;
 }
 
 //========================================================================================
@@ -2343,28 +2879,40 @@ ATbool ATtoUntypedTraversal::traverse_BlockData(ATerm term, SgUntypedScope* scop
 ATbool ATtoUntypedTraversal::traverse_ImportStmt(ATerm term, SgUntypedDeclarationStatementList* decl_list)
 {
 #if PRINT_ATERM_TRAVERSAL
-  printf("... traverse_ImportStmt: %s\n", ATwriteToString(term));
+   printf("... traverse_ImportStmt: %s\n", ATwriteToString(term));
 #endif
 
-  ATerm term1, term2, eos_term;
-  std::string label;
-  std::vector<std::string> name_list;
-  std::string eos;
+   ATerm term1, term2, eos_term;
+   std::string label;
+   std::string eos;
   
-  if (ATmatch(term, "ImportStmt(<term>,<term>,<term>", &term1,&term2,&eos_term)) {
-    if (traverse_OptLabel(term1, label)) {
-       //matched OptLabel
-    } else return ATfalse;
-    if (traverse_NameList(term2, name_list)) {
-       //matched NameList
-    } else return ATfalse;
-    if (traverse_eos(eos_term, eos)) {
-       //matched EOS
-    } else return ATfalse;
-  }
-  else return ATfalse;
+   SgUntypedNameList* name_list;
+   SgUntypedNameListDeclaration* import_stmt;
 
-  return ATtrue;
+   if (ATmatch(term, "ImportStmt(<term>,<term>,<term>)", &term1,&term2,&eos_term))
+   {
+      if (traverse_OptLabel(term1, label)) {
+         //matched OptLabel
+      } else return ATfalse;
+
+      name_list = new SgUntypedNameList();
+      setSourcePosition(name_list, term2);
+
+      if (traverse_NameList(term2, name_list)) {
+         //matched NameList
+      } else return ATfalse;
+      if (traverse_eos(eos_term, eos)) {
+         //matched EOS
+      } else return ATfalse;
+   }
+   else return ATfalse;
+
+   import_stmt = new SgUntypedNameListDeclaration(label, SgToken::FORTRAN_IMPORT, name_list);
+   setSourcePositionExcludingTerm(import_stmt, term, eos_term);
+
+   decl_list->get_decl_list().push_back(import_stmt);
+
+   return ATtrue;
 }
 
 //========================================================================================
@@ -2399,23 +2947,35 @@ ATbool ATtoUntypedTraversal::traverse_ExternalStmt(ATerm term, SgUntypedDeclarat
 
    ATerm term1, term2, eos_term;
    std::string label;
-   std::vector<std::string> name_list;
    std::string eos;
   
-  if (ATmatch(term, "ExternalStmt(<term>,<term>,<term>)", &term1,&term2,&eos_term)) {
-     if (traverse_OptLabel(term1, label)) {
-        // MATCHED OptLabel
-     } else return ATfalse;
-     if (traverse_NameList(term2, name_list)) {
-        // MATCHED NameList
-     } else return ATfalse;
-     if (traverse_eos(eos_term, eos)) {
-        // MATCHED EOS
-     } else return ATfalse;
-  }
-  else return ATfalse;
+   SgUntypedNameList* name_list;
+   SgUntypedNameListDeclaration* external_stmt;
 
-  return ATtrue;
+   if (ATmatch(term, "ExternalStmt(<term>,<term>,<term>)", &term1,&term2,&eos_term))
+   {
+      if (traverse_OptLabel(term1, label)) {
+         // MATCHED OptLabel
+      } else return ATfalse;
+
+      name_list = new SgUntypedNameList();
+      setSourcePosition(name_list, term2);
+
+      if (traverse_NameList(term2, name_list)) {
+         // MATCHED NameList
+      } else return ATfalse;
+      if (traverse_eos(eos_term, eos)) {
+         // MATCHED EOS
+      } else return ATfalse;
+   }
+   else return ATfalse;
+
+   external_stmt = new SgUntypedNameListDeclaration(label, SgToken::FORTRAN_EXTERNAL, name_list);
+   setSourcePositionExcludingTerm(external_stmt, term, eos_term);
+
+   decl_list->get_decl_list().push_back(external_stmt);
+
+   return ATtrue;
 }
 
 //========================================================================================
@@ -2427,49 +2987,44 @@ ATbool ATtoUntypedTraversal::traverse_OptPrefix(ATerm term, SgUntypedTokenList* 
    printf("... traverse_OptPrefix: %s\n", ATwriteToString(term));
 #endif
 
-   if (ATmatch(term, "no-prefix()")) {
+   if (ATmatch(term, "no-prefix()"))
+   {
       // there is no prefix
    }
-   else if (traverse_PrefixSpecList(term, prefix_list, type)) {
-      // MATCHED PrefixSpecList
-   }
-   else return ATfalse;
+   else
+   {
+   // Traverse the prefix-spec-list
+      ATermList tail = (ATermList) ATmake("<term>", term);
+      while (! ATisEmpty(tail))
+      {
+         SgUntypedToken* prefix = NULL;
+         ATerm head = ATgetFirst(tail);
+         tail = ATgetNext(tail);
+         if (traverse_DeclarationTypeSpec(head, type)) {
+            // MATCHED DeclarationTypeSpec
+         }
+         else if (ATmatch(head, "ELEMENTAL()")) {
+            prefix = new SgUntypedToken("ELEMENTAL", SgToken::FORTRAN_ELEMENTAL);
+         }
+         else if (ATmatch(head, "IMPURE()")) {
+            prefix = new SgUntypedToken("IMPURE", SgToken::FORTRAN_IMPURE);
+         }
+         else if (ATmatch(head, "MODULE()")) {
+            prefix = new SgUntypedToken("MODULE", SgToken::FORTRAN_MODULE);
+         }
+         else if (ATmatch(head, "PURE()")) {
+            prefix = new SgUntypedToken("PURE", SgToken::FORTRAN_PURE);
+         }
+         else if (ATmatch(head, "RECURSIVE()")) {
+            prefix = new SgUntypedToken("RECURSIVE", SgToken::FORTRAN_RECURSIVE);
+         }
+         else return ATfalse;
 
-   return ATtrue;
-}
-
-//========================================================================================
-// PrefixSpecList (R1226)
-//----------------------------------------------------------------------------------------
-ATbool ATtoUntypedTraversal::traverse_PrefixSpecList(ATerm term, SgUntypedTokenList* prefix_list, SgUntypedType** type)
-{
-#if PRINT_ATERM_TRAVERSAL
-   printf("... traverse_PrefixSpecList: %s\n", ATwriteToString(term));
-#endif
-
-   ATermList tail = (ATermList) ATmake("<term>", term);
-   while (! ATisEmpty(tail)) {
-      ATerm head = ATgetFirst(tail);
-      tail = ATgetNext(tail);
-      if (traverse_DeclarationTypeSpec(head, type)) {
-         // MATCHED DeclarationTypeSpec
+         if (prefix != NULL) {
+            setSourcePosition(prefix, head);
+            prefix_list->get_token_list().push_back(prefix);
+         }
       }
-      else if (ATmatch(head, "ELEMENTAL()")) {
-         prefix_list->get_token_list().push_back(new SgUntypedToken("ELEMENTAL", SgToken::FORTRAN_ELEMENTAL));
-      }
-      else if (ATmatch(head, "IMPURE()")) {
-         prefix_list->get_token_list().push_back(new SgUntypedToken("IMPURE", SgToken::FORTRAN_IMPURE));
-      }
-      else if (ATmatch(head, "MODULE()")) {
-         prefix_list->get_token_list().push_back(new SgUntypedToken("MODULE", SgToken::FORTRAN_MODULE));
-      }
-      else if (ATmatch(head, "PURE()")) {
-         prefix_list->get_token_list().push_back(new SgUntypedToken("PURE", SgToken::FORTRAN_PURE));
-      }
-      else if (ATmatch(head, "RECURSIVE()")) {
-         prefix_list->get_token_list().push_back(new SgUntypedToken("RECURSIVE", SgToken::FORTRAN_RECURSIVE));
-      }
-      else return ATfalse;
    }
 
    return ATtrue;
@@ -2495,25 +3050,34 @@ ATbool ATtoUntypedTraversal::traverse_FunctionSubprogram(ATerm term, SgUntypedSc
    SgUntypedType* function_type = NULL;
 
 // scope and parameter lists
-   SgUntypedDeclarationStatementList* decl_list  = new SgUntypedDeclarationStatementList();
-   SgUntypedStatementList*            stmt_list  = new SgUntypedStatementList();
-   SgUntypedFunctionDeclarationList*  func_list  = new SgUntypedFunctionDeclarationList();
-   SgUntypedInitializedNameList*     param_list  = new SgUntypedInitializedNameList();
-   SgUntypedTokenList*              prefix_list  = new SgUntypedTokenList();
+   SgUntypedDeclarationStatementList* decl_list;
+   SgUntypedStatementList*            stmt_list;
+   SgUntypedFunctionDeclarationList*  func_list;
+   SgUntypedInitializedNameList*     param_list;
+   SgUntypedTokenList*              prefix_list;
 
    SgToken::ROSE_Fortran_Keywords keyword = SgToken::FORTRAN_FUNCTION;
 
-   if (ATmatch(term, "FunctionSubprogram(<term>,<term>,<term>,<term>,<term>)", &term1,&term2,&term3,&term4,&term5,&term6)) {
+   if (ATmatch(term, "FunctionSubprogram(<term>,<term>,<term>,<term>,<term>)", &term1,&term2,&term3,&term4,&term5,&term6))
+   {
       ATerm label_term, prefix_term, name_term, arglist_term, suffix_term, eos_term;
       std::string eos;
 
    // retrieve the function-stmt
    //
       if (ATmatch(term1, "FunctionStmt(<term>,<term>,<term>,<term>,<term>,<term>)"
-                       , &label_term, &prefix_term, &name_term, &arglist_term, &suffix_term, &eos_term)) {
+                       , &label_term, &prefix_term, &name_term, &arglist_term, &suffix_term, &eos_term))
+      {
          if (traverse_OptLabel(label_term, label)) {
             // MATCHED OptLabel
          } else return ATfalse;
+
+         decl_list   = new SgUntypedDeclarationStatementList();
+         stmt_list   = new SgUntypedStatementList();
+         func_list   = new SgUntypedFunctionDeclarationList();
+         param_list  = new SgUntypedInitializedNameList();
+         prefix_list = new SgUntypedTokenList();
+
          if (traverse_OptPrefix(prefix_term, prefix_list, &function_type)) {
             // MATCHED OptPrefix
             std::cerr << "...TODO... implement function prefix in SgUntypedFunctionDeclaration" << std::endl;
@@ -2535,7 +3099,7 @@ ATbool ATtoUntypedTraversal::traverse_FunctionSubprogram(ATerm term, SgUntypedSc
       }
       else return ATfalse;
 
-   // retrieve the rest of the subroutine
+   // retrieve the rest of the function
    //
       if (traverse_InitialSpecPart(term2, decl_list)) {
          // InitialSpecPart
@@ -2554,7 +3118,7 @@ ATbool ATtoUntypedTraversal::traverse_FunctionSubprogram(ATerm term, SgUntypedSc
          setSourcePosition(func_list, term4);
       } else return ATfalse;
       if (traverse_EndFunctionStmt(term5, &end_function_stmt)) {
-         // EndSubroutineStmt
+         // TRAVERSED EndFunctionStmt
       } else return ATfalse;
    } else return ATfalse;
 
@@ -2566,12 +3130,13 @@ ATbool ATtoUntypedTraversal::traverse_FunctionSubprogram(ATerm term, SgUntypedSc
       std::cerr << "...TODO... implement function type SgUntypedFunctionDeclaration" << std::endl;
    }
 
-// create the subroutine
+// create the function
    function = new SgUntypedFunctionDeclaration(label, keyword, name, param_list, function_type,
                                                function_scope, prefix_list, end_function_stmt);
    setSourcePositionIncludingNode(function, term, end_function_stmt);
+   setSourcePositionIncludingNode(function_scope, term2, end_function_stmt);
 
-// add the subroutine to the outer scope
+// add the function to the outer scope
    scope->get_function_list()->get_func_list().push_back(function);
 
    return ATtrue;
@@ -2628,7 +3193,6 @@ ATbool ATtoUntypedTraversal::traverse_EndFunctionStmt(ATerm term, SgUntypedNamed
    std::string label, name, eos;
 
    SgToken::ROSE_Fortran_Keywords keyword = SgToken::FORTRAN_END_FUNCTION;
-   FAST::PosInfo pinfo;
 
    *end_function_stmt = NULL;
    if (ATmatch(term, "EndFunctionStmt(<term>,<term>,<term>)", &term1,&term2,&term_eos)) {
@@ -2670,25 +3234,34 @@ ATbool ATtoUntypedTraversal::traverse_SubroutineSubprogram(ATerm term, SgUntyped
    SgUntypedType* function_type = NULL;
 
 // scope and parameter lists
-   SgUntypedDeclarationStatementList* decl_list  = new SgUntypedDeclarationStatementList();
-   SgUntypedStatementList*            stmt_list  = new SgUntypedStatementList();
-   SgUntypedFunctionDeclarationList*  func_list  = new SgUntypedFunctionDeclarationList();
-   SgUntypedInitializedNameList*     param_list  = new SgUntypedInitializedNameList();
-   SgUntypedTokenList*              prefix_list  = new SgUntypedTokenList();
+   SgUntypedDeclarationStatementList* decl_list;
+   SgUntypedStatementList*            stmt_list;
+   SgUntypedFunctionDeclarationList*  func_list;
+   SgUntypedInitializedNameList*     param_list;
+   SgUntypedTokenList*              prefix_list;
 
    SgToken::ROSE_Fortran_Keywords keyword = SgToken::FORTRAN_SUBROUTINE;
 
-   if (ATmatch(term, "SubroutineSubprogram(<term>,<term>,<term>,<term>,<term>)", &term1,&term2,&term3,&term4,&term5)) {
+   if (ATmatch(term, "SubroutineSubprogram(<term>,<term>,<term>,<term>,<term>)", &term1,&term2,&term3,&term4,&term5))
+   {
       ATerm label_term, prefix_term, name_term, arglist_term, binding_term, eos_term;
       std::string eos;
 
    // retrieve the subroutine-stmt
    //
       if (ATmatch(term1, "SubroutineStmt(<term>,<term>,<term>,<term>,<term>,<term>)"
-                       , &label_term, &prefix_term, &name_term, &arglist_term, &binding_term, &eos_term)) {
+                       , &label_term, &prefix_term, &name_term, &arglist_term, &binding_term, &eos_term))
+      {
          if (traverse_OptLabel(label_term, label)) {
             // MATCHED OptLabel
          } else return ATfalse;
+
+         decl_list   = new SgUntypedDeclarationStatementList();
+         stmt_list   = new SgUntypedStatementList();
+         func_list   = new SgUntypedFunctionDeclarationList();
+         param_list  = new SgUntypedInitializedNameList();
+         prefix_list = new SgUntypedTokenList();
+
          if (traverse_OptPrefix(prefix_term, prefix_list, &function_type)) {
             // MATCHED OptPrefix
             ROSE_ASSERT(function_type == NULL);
@@ -2740,6 +3313,7 @@ ATbool ATtoUntypedTraversal::traverse_SubroutineSubprogram(ATerm term, SgUntyped
    subroutine = new SgUntypedSubroutineDeclaration(label, keyword, name, param_list, type,
                                                    function_scope, prefix_list, end_subroutine_stmt);
    setSourcePositionIncludingNode(subroutine, term, end_subroutine_stmt);
+   setSourcePositionIncludingNode(function_scope, term2, end_subroutine_stmt);
 
 // add the subroutine to the outer scope
    scope->get_function_list()->get_func_list().push_back(subroutine);
@@ -2756,23 +3330,24 @@ ATbool ATtoUntypedTraversal::traverse_OptDummyArgList(ATerm term, SgUntypedIniti
    printf("... traverse_OptDummyArgList: %s\n", ATwriteToString(term));
 #endif
 
-   std::vector<std::string> name_list;
-   std::vector<std::string>::iterator it;
+   char* arg;
 
    if (ATmatch(term, "no-list()")) {
       // there are no dummy arguments
    }
-   else if (traverse_NameList(term, name_list)) {
-      //MATCHED DummyArgList, e.g. ["i", "j", "k"]
-      for (it = name_list.begin(); it != name_list.end(); it++)
-       {
-          SgUntypedInitializedName* iname = new SgUntypedInitializedName(buildType(), *it);
-          param_list->get_name_list().push_back(iname);
-          std::cerr << "...TODO... setSourcePosition for OptDummArgList" << std::endl;
-       }
-      
+   else {
+      ATermList tail = (ATermList) ATmake("<term>", term);
+      while (! ATisEmpty(tail)) {
+         ATerm head = ATgetFirst(tail);
+         tail = ATgetNext(tail);
+         if (ATmatch(head, "<str>", &arg)) {
+            // Matched an arg name
+            SgUntypedInitializedName* iname = new SgUntypedInitializedName(buildType(SgUntypedType::e_unknown), arg);
+            setSourcePosition(iname, head);
+            param_list->get_name_list().push_back(iname);
+         } else return ATfalse;
+      }
    }
-   else return ATfalse;
 
    return ATtrue;
 }
@@ -2790,7 +3365,6 @@ ATbool ATtoUntypedTraversal::traverse_EndSubroutineStmt(ATerm term, SgUntypedNam
    std::string label, name, eos;
 
    SgToken::ROSE_Fortran_Keywords keyword = SgToken::FORTRAN_END_SUBROUTINE;
-   FAST::PosInfo pinfo;
 
    *end_subroutine_stmt = NULL;
    if (ATmatch(term, "EndSubroutineStmt(<term>,<term>,<term>)", &term1,&term2,&term_eos)) {
@@ -2831,19 +3405,26 @@ ATbool ATtoUntypedTraversal::traverse_SeparateModuleSubprogram(ATerm term, SgUnt
    SgUntypedFunctionScope * function_scope;
 
 // scope and parameter lists
-   SgUntypedDeclarationStatementList* decl_list  = new SgUntypedDeclarationStatementList();
-   SgUntypedStatementList*            stmt_list  = new SgUntypedStatementList();
-   SgUntypedFunctionDeclarationList*  func_list  = new SgUntypedFunctionDeclarationList();
-   SgUntypedInitializedNameList*     param_list  = new SgUntypedInitializedNameList();
-   SgUntypedTokenList*              prefix_list  = new SgUntypedTokenList();
+   SgUntypedDeclarationStatementList* decl_list;
+   SgUntypedStatementList*            stmt_list;
+   SgUntypedFunctionDeclarationList*  func_list;
+   SgUntypedInitializedNameList*     param_list;
+   SgUntypedTokenList*              prefix_list;
 
    SgToken::ROSE_Fortran_Keywords keyword = SgToken::FORTRAN_MODULE_PROC;
 
-   if (ATmatch(term, "SeparateModuleSubprogram(<term>,<term>,<term>,<term>,<term>)", &term1,&term2,&term3,&term4,&term5)) {
-
+   if (ATmatch(term, "SeparateModuleSubprogram(<term>,<term>,<term>,<term>,<term>)", &term1,&term2,&term3,&term4,&term5))
+   {
       if (traverse_MpSubprogramStmt(term1, &mp_subprogram_stmt)) {
          // MATCHED MpSubprogramStmt
       } else return ATfalse;
+
+      decl_list   = new SgUntypedDeclarationStatementList();
+      stmt_list   = new SgUntypedStatementList();
+      func_list   = new SgUntypedFunctionDeclarationList();
+      param_list  = new SgUntypedInitializedNameList();
+      prefix_list = new SgUntypedTokenList();
+
       if (traverse_InitialSpecPart(term2, decl_list)) {
          // InitialSpecPart
       } else return ATfalse;
@@ -2935,7 +3516,6 @@ ATbool ATtoUntypedTraversal::traverse_EndMpSubprogramStmt(ATerm term, SgUntypedN
    std::string eos;
 
    SgToken::ROSE_Fortran_Keywords keyword = SgToken::FORTRAN_UNKNOWN; // NEW_TOKEN::FORTRAN_END_MP_PROGRAM
-   FAST::PosInfo pinfo;
 
    *end_mp_subprogram_stmt = NULL;
    if (ATmatch(term, "EndMpSubprogramStmt(<term>,<term>,<term>)", &term1,&term2,&term_eos)) {

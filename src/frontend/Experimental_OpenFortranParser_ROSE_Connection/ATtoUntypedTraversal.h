@@ -81,9 +81,7 @@ ATbool traverse_OptName    ( ATerm term, std::string & name  );
 ATbool traverse_OptLabel   ( ATerm term, std::string & label );
 ATbool traverse_eos        ( ATerm term, std::string & eos   );
 
-//TODO - replace first one with second using SgUntypedNameList (when all changes in).
-ATbool traverse_NameList ( ATerm term, std::vector<std::string> & name_list);
-ATbool traverse_NameList ( ATerm term, SgUntypedNameList* name_list);
+ATbool traverse_NameList   ( ATerm term, SgUntypedNameList* name_list );
 
 ATbool traverse_StartCommentBlock(ATerm term, std::string & start_comments);
 ATbool traverse_OptModuleNature(ATerm term, FAST::UseStmt::ModuleNature* var_OptModuleNature);

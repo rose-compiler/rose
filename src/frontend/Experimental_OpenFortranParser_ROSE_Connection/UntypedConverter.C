@@ -169,6 +169,184 @@ UntypedConverter::convertLabel (SgUntypedStatement* ut_stmt, SgStatement* sg_stm
       }
 }
 
+void
+UntypedConverter::convertFunctionPrefix (SgUntypedTokenList* prefix_list, SgFunctionDeclaration* function_decl)
+{
+   SgUntypedTokenPtrList tokens = prefix_list->get_token_list();
+   SgUntypedTokenPtrList::const_iterator it;
+
+   for (it = tokens.begin(); it != tokens.end(); it++)
+   {
+      SgUntypedToken* token = *it;
+      SgToken::ROSE_Fortran_Keywords keyword = static_cast<SgToken::ROSE_Fortran_Keywords>(token->get_classification_code());
+
+      switch(keyword)
+       {
+         case SgToken::FORTRAN_ELEMENTAL:
+            {
+               function_decl->get_functionModifier().setElemental();
+               break;
+            }
+#if 0
+      // TODO
+         case SgToken::FORTRAN_IMPURE:
+            {
+               function_decl->get_functionModifier().setImpure();
+               break;
+            }
+      // TODO
+         case SgToken::FORTRAN_MODULE:
+            {
+               function_decl->get_functionModifier().setModule();
+               break;
+            }
+#endif
+         case SgToken::FORTRAN_PURE:
+            {
+               function_decl->get_functionModifier().setPure();
+               break;
+            }
+         case SgToken::FORTRAN_RECURSIVE:
+            {
+               function_decl->get_functionModifier().setRecursive();
+               break;
+            }
+         default:
+            {
+               std::cerr << "ERROR: UntypedConverter::convertFunctionPrefix: unimplemented prefix " << token->get_lexeme_string() << "  " << token->get_classification_code() << std::endl;
+               ROSE_ASSERT(0);  // NOT IMPLEMENTED                                                                  
+            }
+       }
+   }
+}
+
+void
+UntypedConverter::setDeclarationModifiers (SgDeclarationStatement* decl, SgUntypedTokenList* modifier_list)
+{
+   SgUntypedTokenPtrList modifiers = modifier_list->get_token_list();
+   SgUntypedTokenPtrList::const_iterator it;
+
+   // Set to undefined and change if necessary
+   decl->get_declarationModifier().get_accessModifier().setUndefined();
+
+   for (it = modifiers.begin(); it != modifiers.end(); it++)
+   {
+      SgUntypedToken* token = *it;
+      SgToken::ROSE_Fortran_Keywords keyword = static_cast<SgToken::ROSE_Fortran_Keywords>(token->get_classification_code());
+
+      switch(keyword)
+       {
+         case SgToken::FORTRAN_PUBLIC:
+            {
+               decl->get_declarationModifier().get_accessModifier().setPublic();
+               break;
+            }
+         case SgToken::FORTRAN_PRIVATE:
+            {
+               decl->get_declarationModifier().get_accessModifier().setPrivate();
+               break;
+            }
+         case SgToken::FORTRAN_ALLOCATABLE:
+            {
+               decl->get_declarationModifier().get_typeModifier().setAllocatable();
+               break;
+            }
+         case SgToken::FORTRAN_ASYNCHRONOUS:
+            {
+               decl->get_declarationModifier().get_typeModifier().setAsynchronous();
+               break;
+            }
+#if 0
+// TODO
+         case SgToken::FORTRAN_CONTIGUOUS:
+            {
+               decl->get_declarationModifier().get_storageModifier().setContiguous();
+               break;
+            }
+#endif
+         case SgToken::FORTRAN_EXTERNAL:
+            {
+               decl->get_declarationModifier().get_storageModifier().setExtern();
+               break;
+            }
+         case SgToken::FORTRAN_INTENT_IN:
+            {
+               decl->get_declarationModifier().get_typeModifier().setIntent_in();
+               break;
+            }
+         case SgToken::FORTRAN_INTENT_OUT:
+            {
+               decl->get_declarationModifier().get_typeModifier().setIntent_out();
+               break;
+            }
+         case SgToken::FORTRAN_INTENT_INOUT:
+            {
+               decl->get_declarationModifier().get_typeModifier().setIntent_inout();
+               break;
+            }
+         case SgToken::FORTRAN_INTRINSIC:
+            {
+               decl->get_declarationModifier().get_typeModifier().setIntrinsic();
+               break;
+            }
+         case SgToken::FORTRAN_OPTIONAL:
+            {
+               decl->get_declarationModifier().get_typeModifier().setOptional();
+               break;
+            }
+#if 0
+// TODO - Fortran is a special case and must be handled differently
+         case SgToken::FORTRAN_PARAMETER:
+            {
+               decl->get_declarationModifier().get_typeModifier().get_constVolatileModifier().setConst();
+               break;
+            }
+#endif
+#if 0
+// TODO - Fortran is a special case and must be handled differently
+         case SgToken::FORTRAN_POINTER:
+            {
+               decl->get_declarationModifier().get_typeModifier().setPointer();
+               break;
+            }
+#endif
+#if 0
+// TODO - Fortran is a special case and must be handled differently
+         case SgToken::FORTRAN_PROTECTED:
+            {
+               decl->get_declarationModifier().get_typeModifier().setProtected();
+               break;
+            }
+#endif
+         case SgToken::FORTRAN_SAVE:
+            {
+               decl->get_declarationModifier().get_typeModifier().setSave();
+               break;
+            }
+         case SgToken::FORTRAN_TARGET:
+            {
+               decl->get_declarationModifier().get_typeModifier().setTarget();
+               break;
+            }
+         case SgToken::FORTRAN_VALUE:
+            {
+               decl->get_declarationModifier().get_typeModifier().setValue();
+               break;
+            }
+         case SgToken::FORTRAN_VOLATILE:
+            {
+               decl->get_declarationModifier().get_typeModifier().get_constVolatileModifier().setVolatile();
+               break;
+            }
+         default:
+            {
+               std::cerr << "ERROR: UntypedConverter::setDeclarationModifiers: unimplemented modifier "
+                         << token->get_lexeme_string() << "  " << token->get_classification_code() << std::endl;
+               ROSE_ASSERT(0);  // NOT IMPLEMENTED                                                                  
+            }
+       }
+   }
+}
 
 SgType*
 UntypedConverter::convertSgUntypedType (SgUntypedType* ut_type, SgScopeStatement* scope)
@@ -274,57 +452,6 @@ UntypedConverter::convertSgUntypedInitializedName (SgUntypedInitializedName* ut_
    return sg_name;
 }
 
-void
-UntypedConverter::convertFunctionPrefix (SgUntypedTokenList* prefix_list, SgFunctionDeclaration* function_decl)
-{
-   SgUntypedTokenPtrList tokens = prefix_list->get_token_list();
-   SgUntypedTokenPtrList::const_iterator i;
-
-   for (i = tokens.begin(); i != tokens.end(); i++)
-   {
-      SgUntypedToken* token = *i;
-      SgToken::ROSE_Fortran_Keywords keyword = static_cast<SgToken::ROSE_Fortran_Keywords>(token->get_classification_code());
-
-      switch(keyword)
-       {
-         case SgToken::FORTRAN_ELEMENTAL:
-            {
-               function_decl->get_functionModifier().setElemental();
-               break;
-            }
-#if 0
-      // TODO
-         case SgToken::FORTRAN_IMPURE:
-            {
-               function_decl->get_functionModifier().setImpure();
-               break;
-            }
-      // TODO
-         case SgToken::FORTRAN_MODULE:
-            {
-               function_decl->get_functionModifier().setModule();
-               break;
-            }
-#endif
-         case SgToken::FORTRAN_PURE:
-            {
-               function_decl->get_functionModifier().setPure();
-               break;
-            }
-         case SgToken::FORTRAN_RECURSIVE:
-            {
-               function_decl->get_functionModifier().setRecursive();
-               break;
-            }
-         default:
-            {
-               std::cerr << "ERROR: UntypedConverter::convertFunctionPrefix: unimplemented prefix " << token->get_lexeme_string() << "  " << token->get_classification_code() << std::endl;
-               ROSE_ASSERT(0);  // NOT IMPLEMENTED
-            }
-       }
-   }
-}
-
 SgGlobal*
 UntypedConverter::convertSgUntypedGlobalScope (SgUntypedGlobalScope* ut_scope, SgScopeStatement* scope)
 {
@@ -336,7 +463,6 @@ UntypedConverter::convertSgUntypedGlobalScope (SgUntypedGlobalScope* ut_scope, S
 
    return sg_scope;
 }
-
 
 void
 UntypedConverter::convertSgUntypedFunctionDeclarationList (SgUntypedFunctionDeclarationList* ut_list, SgScopeStatement* scope)
@@ -601,14 +727,27 @@ printf ("...TODO... convert untyped sub: scope type ... %s\n", scope->class_name
 SgProcedureHeaderStatement*
 UntypedConverter::convertSgUntypedFunctionDeclaration (SgUntypedFunctionDeclaration* ut_function, SgScopeStatement* scope)
 {
-// TODO
-   printf ("TODO: convert SgUntypedFunctionDeclaration\n");
+   SgName name = ut_function->get_name();
 
-   SgProcedureHeaderStatement* functionDeclaration = NULL;
+// TODO - fix function type
+   SgType* returnType = SgTypeVoid::createType();
+   SgFunctionType* functionType = new SgFunctionType(returnType, false);
 
-#if 0
-   buildProcedureSupport(ut_function, subroutineDeclaration, scope);
-#endif
+// Note that a ProcedureHeaderStatement is derived from a SgFunctionDeclaration (and is Fortran specific).
+   SgProcedureHeaderStatement* functionDeclaration = new SgProcedureHeaderStatement(name, functionType, NULL);
+   setSourcePositionFrom(functionDeclaration, ut_function);
+// TODO - for now (param_list should have its own source position
+   setSourcePositionFrom(functionDeclaration->get_parameterList(), ut_function);
+
+// Mark this as a function.
+   functionDeclaration->set_subprogram_kind(SgProcedureHeaderStatement::e_function_subprogram_kind);
+
+// TODO - suffix
+   printf ("...TODO... convert suffix\n");
+
+printf ("...TODO... convert untyped function: scope type ... %s\n", scope->class_name().c_str());
+
+   buildProcedureSupport(ut_function, functionDeclaration, scope);
 
    return functionDeclaration;
 }
@@ -619,13 +758,14 @@ UntypedConverter::convertSgUntypedFunctionDeclaration (SgUntypedFunctionDeclarat
 SgVariableDeclaration*
 UntypedConverter::convertSgUntypedVariableDeclaration (SgUntypedVariableDeclaration* ut_decl, SgScopeStatement* scope)
 {
+   std::cerr << "convertSgUntypedVariableDeclaration: scope is " << scope->class_name() << std::endl;
    ROSE_ASSERT(scope->variantT() == V_SgBasicBlock || scope->variantT() == V_SgClassDefinition);
 
    SgUntypedType* ut_base_type = ut_decl->get_type();
    SgType*        sg_base_type = convertSgUntypedType(ut_base_type, scope);
 
-   SgUntypedInitializedNamePtrList ut_vars = ut_decl->get_parameters()->get_name_list();
-   SgUntypedInitializedNamePtrList::const_iterator i = ut_vars.begin();
+   SgUntypedInitializedNamePtrList ut_vars = ut_decl->get_variables()->get_name_list();
+   SgUntypedInitializedNamePtrList::const_iterator it;
 
 // Declare the first variable
 #if 0
@@ -650,13 +790,11 @@ UntypedConverter::convertSgUntypedVariableDeclaration (SgUntypedVariableDeclarat
 
    sg_decl->set_parent(scope);
    sg_decl->set_definingDeclaration(sg_decl);
-   sg_decl->get_declarationModifier().get_accessModifier().setUndefined();
-// TODO_SgUntyped - type declaration attributes
-// DeclAttributes.setDeclAttrSpecs();
+   setDeclarationModifiers(sg_decl, ut_decl->get_modifiers());
 #endif
 
 // add variables
-   for (i = ut_vars.begin(); i != ut_vars.end(); i++)
+   for (it = ut_vars.begin(); it != ut_vars.end(); it++)
    {
          // TODO
          //   1. initializer
@@ -665,37 +803,45 @@ UntypedConverter::convertSgUntypedVariableDeclaration (SgUntypedVariableDeclarat
          //   4. CoarraySpec: buildArrayType with coarray attribute
          //   5. Pointers: new SgPointerType(sg_type)
          //   7. Dan warned me about sharing types but it looks like the base type is shared in inames
-      SgInitializedName* initializedName = UntypedConverter::convertSgUntypedInitializedName((*i), sg_base_type, /*sg_init*/NULL);
+      SgInitializedName* initializedName = UntypedConverter::convertSgUntypedInitializedName((*it), sg_base_type, /*sg_init*/NULL);
       SgName variableName = initializedName->get_name();
 
       initializedName->set_declptr(sg_decl);
       sg_decl->append_variable(initializedName, /*sg_init*/NULL);
 
       SgVariableSymbol* variableSymbol = NULL;
-      SgFunctionDefinition * functionDefinition = SageInterface::getEnclosingProcedure(scope);
+      SgFunctionDefinition* functionDefinition = SageInterface::getEnclosingProcedure(scope);
       if (functionDefinition != NULL)
+      {
+      // Check in the function definition for an existing symbol
+         variableSymbol = functionDefinition->lookup_variable_symbol(variableName);
+         if (variableSymbol != NULL)
          {
-         // Check in the function definition for an existing symbol
-            variableSymbol = functionDefinition->lookup_variable_symbol(variableName);
-            if (variableSymbol != NULL) // found a function parameter with the same name
-               {
-                  // look at code in sageBuilder.C and fortran_support.C
-               }
+            std::cout << "--- but variable symbol is _NOT_ NULL for " << variableName << std::endl;
+
+         // This variable symbol has already been placed into the function definition's symbol table
+         // Link the SgInitializedName in the variable declaration with its entry in the function parameter list.
+            initializedName->set_prev_decl_item(variableSymbol->get_declaration());
+         // Set the referenced type in the function parameter to be the same as that in the declaration being processed.
+            variableSymbol->get_declaration()->set_type(initializedName->get_type());
+         // Function parameters are in the scope of the function definition (same for C/C++)
+            initializedName->set_scope(functionDefinition);
          }
+      }
 
       if (variableSymbol == NULL)
-         {
-         // Check the current scope
-            variableSymbol = scope->lookup_variable_symbol(variableName);
+      {
+      // Check the current scope
+         variableSymbol = scope->lookup_variable_symbol(variableName);
 
-            initializedName->set_scope(scope);
-            if (variableSymbol == NULL)
-               {
-                  variableSymbol = new SgVariableSymbol(initializedName);
-                  scope->insert_symbol(variableName,variableSymbol);
-                  ROSE_ASSERT (initializedName->get_symbol_from_symbol_table () != NULL);
-               }
+         initializedName->set_scope(scope);
+         if (variableSymbol == NULL)
+         {
+            variableSymbol = new SgVariableSymbol(initializedName);
+            scope->insert_symbol(variableName,variableSymbol);
+            ROSE_ASSERT (initializedName->get_symbol_from_symbol_table () != NULL);
          }
+      }
       ROSE_ASSERT(variableSymbol != NULL);
       ROSE_ASSERT(initializedName->get_scope() != NULL);
    }
@@ -720,7 +866,6 @@ UntypedConverter::convertSgUntypedVariableDeclaration (SgUntypedVariableDeclarat
    return sg_decl;
 }
 
-
 // R560 implicit-stmt
 //
 SgImplicitStatement*
@@ -743,6 +888,90 @@ UntypedConverter::convertSgUntypedImplicitDeclaration(SgUntypedImplicitDeclarati
 
    return implicitStatement;
 }
+
+SgDeclarationStatement*
+UntypedConverter::convertSgUntypedNameListDeclaration (SgUntypedNameListDeclaration* ut_decl, SgScopeStatement* scope)
+   {
+      SgUntypedNamePtrList ut_names = ut_decl->get_names()->get_name_list();
+      SgUntypedNamePtrList::const_iterator it;
+
+      switch (ut_decl->get_statement_enum())
+        {
+        case SgToken::FORTRAN_IMPORT:
+           {
+              SgImportStatement* importStatement = new SgImportStatement();
+              setSourcePositionFrom(importStatement, ut_decl);
+
+              importStatement->set_definingDeclaration(importStatement);
+              importStatement->set_firstNondefiningDeclaration(importStatement);
+
+              SgExpressionPtrList localList;
+
+              for (it = ut_names.begin(); it != ut_names.end(); it++)
+              {
+                 SgName name = (*it)->get_name();
+                 std::cout << "... IMPORT name is " << name << std::endl;
+                 SgVariableSymbol* variableSymbol = SageInterface::lookupVariableSymbolInParentScopes(name, scope);
+                 ROSE_ASSERT(variableSymbol != NULL);
+
+                 SgVarRefExp* variableReference = new SgVarRefExp(variableSymbol);
+              // TODO
+              // setSourcePositionFrom(variableReference);
+
+                 importStatement->get_import_list().push_back(variableReference);
+              }
+              scope->append_statement(importStatement);
+           }
+
+        case SgToken::FORTRAN_EXTERNAL:
+          {
+          // TODO - name seems to need a parent found in get_name sageInterface.c, line 1528
+          //      - actually may be attr_spec_stmt without a parent
+             SgAttributeSpecificationStatement* attr_spec_stmt = new SgAttributeSpecificationStatement();
+             setSourcePositionFrom(attr_spec_stmt, ut_decl);
+
+             attr_spec_stmt->set_definingDeclaration(attr_spec_stmt);
+             attr_spec_stmt->set_firstNondefiningDeclaration(attr_spec_stmt);
+
+             attr_spec_stmt->set_attribute_kind(SgAttributeSpecificationStatement::e_externalStatement);
+
+          // Build the SgExprListExp in the attributeSpecificationStatement if it has not already been built
+          // TODO - check to see if this is done in constructor?????????
+             if (attr_spec_stmt->get_parameter_list() == NULL)
+                {
+                   SgExprListExp* parameterList = new SgExprListExp();
+                   attr_spec_stmt->set_parameter_list(parameterList);
+                   parameterList->set_parent(attr_spec_stmt);
+                   setSourcePositionUnknown(parameterList);
+                }
+
+             for (it = ut_names.begin(); it != ut_names.end(); it++)
+             {
+                std::string name = (*it)->get_name();
+                std::cout << "... EXTERNAL name is " << name << std::endl;
+
+#if 0
+             // TODO - pick and implement one of these
+                SgExpression* parameterExpression = astExpressionStack.front();
+                SgFunctionRefExp* functionRefExp = generateFunctionRefExp(nameToken);
+
+                attr_spec_stmt->get_parameter_list()->prepend_expression(parameterExpression);
+#endif
+             }
+             scope->append_statement(attr_spec_stmt);     
+             UntypedConverter::convertLabel(ut_decl, attr_spec_stmt);
+
+             return attr_spec_stmt;
+         }
+
+       default:
+          {
+             fprintf(stderr, "UntypedConverter::convertSgUntypedNameListDeclaration: failed to find known statement enum, is %d\n", ut_decl->get_statement_enum());
+             ROSE_ASSERT(0);
+          }
+       }
+   }
+
 
 // Executable statements
 //----------------------
@@ -1169,11 +1398,6 @@ UntypedConverter::initialize_global_scope(SgSourceFile* file)
     ROSE_ASSERT(globalScope != NULL);
     ROSE_ASSERT(globalScope->get_parent() != NULL);
 
-#if DEBUG_UNTYPED_CONVERTER
-    std::cout << "UntypedConverter::initialize_global_scope: " << file->getFileName() << std::endl;
-    std::cout << "                ::          scope type is: " << globalScope->class_name() << std::endl;
-#endif
-
  // Fortran is case insensitive
     globalScope->setCaseInsensitive(true);
 
@@ -1210,8 +1434,8 @@ UntypedConverter::buildProcedureSupport (SgUntypedFunctionDeclaration* ut_functi
      ROSE_ASSERT(procedureDeclaration != NULL);
 
    // Convert procedure prefix (e.g., PURE ELEMENTAL ...)
-      SgUntypedTokenList* prefix_list = ut_function->get_prefix_list();
-      convertFunctionPrefix(prefix_list, procedureDeclaration);
+      SgUntypedTokenList* modifiers = ut_function->get_modifiers();
+      convertFunctionPrefix(modifiers, procedureDeclaration);
 
   // This will be the defining declaration
      procedureDeclaration->set_definingDeclaration(procedureDeclaration);
@@ -1248,7 +1472,7 @@ UntypedConverter::buildProcedureSupport (SgUntypedFunctionDeclaration* ut_functi
         }
 #endif
 
-  // Go looking for if this was a previously declared function
+  // See if this was previously declared
      SgFunctionSymbol* functionSymbol = SageInterface::lookupFunctionSymbolInParentScopes (procedureDeclaration->get_name(), scope);
 
 #if DEBUG_UNTYPED_CONVERTER
@@ -1288,16 +1512,18 @@ UntypedConverter::buildProcedureSupport (SgUntypedFunctionDeclaration* ut_functi
 #endif
         }
 
-  // Now push the function definition and the function body (SgBasicBlock) onto the astScopeStack
-     SgBasicBlock* procedureBody               = new SgBasicBlock();
+     SgBasicBlock*         procedureBody       = new SgBasicBlock();
      SgFunctionDefinition* procedureDefinition = new SgFunctionDefinition(procedureDeclaration,procedureBody);
+
+     setSourcePositionFrom(procedureDefinition, ut_function->get_scope());
+     setSourcePositionFrom(procedureBody,       ut_function->get_scope());
 
      ROSE_ASSERT(procedureDeclaration->get_definition() != NULL);
 
-  // Specify of case insensitivity for Fortran.
+  // Specify case insensitivity for Fortran.
      procedureBody->setCaseInsensitive(true);
      procedureDefinition->setCaseInsensitive(true);
-     procedureDeclaration->set_scope(currentScopeOfFunctionDeclaration);
+     procedureDeclaration->set_scope (currentScopeOfFunctionDeclaration);
      procedureDeclaration->set_parent(currentScopeOfFunctionDeclaration);
 
 #if TODO_TODO
@@ -1326,107 +1552,85 @@ UntypedConverter::buildProcedureSupport (SgUntypedFunctionDeclaration* ut_functi
        // printf ("Processing the return var in a function \n");
        // ROSE_ASSERT(false);
         }
+#endif // TODO_TODO
 
-     if (hasDummyArgList == true)
+     SgUntypedInitializedNamePtrList ut_params = ut_function->get_parameters()->get_name_list();
+     SgUntypedInitializedNamePtrList::const_iterator it;
+
+  // Add function arguments
+     for (it = ut_params.begin(); it != ut_params.end(); it++)
         {
-#if 0
-       // Output debugging information about saved state (stack) information.
-          outputState("In buildProcedureSupport(): building the function parameters");
-#endif
-       // Take the arguments off of the token stack (astNameStack).
-          while (astNameStack.empty() == false)
-             {
-            // Capture the procedure parameters.
-               SgName arg_name = astNameStack.front()->text;
+           SgUntypedInitializedName* ut_name = *it;
+           SgName arg_name = ut_name->get_name();
 
-            // printf ("arg_name = %s \n",arg_name.str());
+           std::cout << "In buildProcedureSupport(): building function parameter name " << arg_name << std::endl;
 
-            // Build a SgInitializedName with a SgTypeDefault and fixup the type later when we see the declaration inside the procedure.
-            // SgInitializedName* initializedName = new SgInitializedName(arg_name,SgTypeDefault::createType());
-            // SgInitializedName* initializedName = new SgInitializedName(arg_name,SgTypeDefault::createType(),NULL,NULL,NULL);
-            // SgInitializedName* initializedName = new SgInitializedName(arg_name,SgTypeDefault::createType());
-            // SgInitializedName* initializedName = new SgInitializedName(arg_name,SgTypeDefault::createType(),NULL,procedureDeclaration,NULL);
-            // SgInitializedName* initializedName = new SgInitializedName(arg_name,generateImplicitType(arg_name.str()),NULL,procedureDeclaration,NULL);
+        // The argument could be an alternate-return dummy argument
+           SgInitializedName* initializedName = NULL;
+           bool isAltReturn = (arg_name == "*");
+           if (isAltReturn == true)
+              {
+              // DQ (2/1/2011): Since we will generate a label and with name "*" and independently resolve which
+              // label argument is referenced in the return statement, we need not bury the name directly into
+              // the arg_name (unless we need to have the references be separate in the symbol table, so maybe we do!).
 
-            // DQ (1/31/2010): The argument could be a alternate-return dummy argument
-               SgInitializedName* initializedName = NULL;
-               bool isAnAlternativeReturnParameter = (arg_name == "*");
-               if (isAnAlternativeReturnParameter == true)
-                  {
-                 // DQ (2/1/2011): Since we will generate a label and with name "*" and independently resolve which
-                 // label argument is referenced in the return statement, we need not bury the name directly into
-                 // the arg_name (unless we need to have the references be seperate in the symbol table, so maybe we do!).
+              // Note that alternate return is an obsolescent feature in Fortran 95 and Fortran 90
+              // initializedName = new SgInitializedName(arg_name,SgTypeVoid::createType(),NULL,procedureDeclaration,NULL);
+                 initializedName = new SgInitializedName(arg_name,SgTypeLabel::createType(),NULL,procedureDeclaration,NULL);
+              }
+           else
+              {
+              // DQ (2/2/2011): The type might not be specified using implicit type rules, so we should likely define
+              // the type as SgTypeUnknown and then fix it up later (at the end of the functions declarations).
+       //           initializedName = new SgInitializedName(arg_name,generateImplicitType(arg_name.str()),NULL,procedureDeclaration,NULL);
+                 initializedName = new SgInitializedName(arg_name,SgTypeUnknown::createType(),NULL,procedureDeclaration,NULL);
 
-                 // Note that alternate return is an obsolescent feature in Fortran 95 and Fortran 90
-                 // initializedName = new SgInitializedName(arg_name,SgTypeVoid::createType(),NULL,procedureDeclaration,NULL);
-                    initializedName = new SgInitializedName(arg_name,SgTypeLabel::createType(),NULL,procedureDeclaration,NULL);
-                  }
-                 else
-                  {
-                 // DQ (2/2/2011): The type might not be specified using implicit type rules, so we should likely define
-                 // the type as SgTypeUnknown and then fix it up later (at the end of the functions declarations).
-                    initializedName = new SgInitializedName(arg_name,generateImplicitType(arg_name.str()),NULL,procedureDeclaration,NULL);
-                  }
+              }
+           setSourcePositionFrom(initializedName, ut_name);
+           procedureDeclaration->append_arg(initializedName);
 
-               procedureDeclaration->append_arg(initializedName);
+           initializedName->set_parent(procedureDeclaration->get_parameterList());
+           ROSE_ASSERT(initializedName->get_parent() != NULL);
 
-               initializedName->set_parent(procedureDeclaration->get_parameterList());
-               ROSE_ASSERT(initializedName->get_parent() != NULL);
+           initializedName->set_scope(procedureDefinition);
 
-            // DQ (12/17/2007): set the scope
-               initializedName->set_scope(astScopeStack.front());
+        // TODO
+        // setSourcePosition(initializedName,astNameStack.front());
 
-               setSourcePosition(initializedName,astNameStack.front());
+           if (isAltReturn == true)
+              {
+              // If this is a label argument then build a SgLabelSymbol.
+              // We might want them to be positionally relevant rather than name relevent,
+              // this would define a mechanism that was insensitive to transformations.
+              // We need a new SgLabelSymbol constructor to support the use here.
+              // SgLabelSymbol* labelSymbol = new SgLabelSymbol(arg_name);
+                 SgLabelSymbol* labelSymbol = new SgLabelSymbol(initializedName);
+                 procedureDefinition->insert_symbol(arg_name,labelSymbol);
+              }
+           else
+              {
+              // Now build associated SgVariableSymbol and put it into the current scope (function definition scope)
+                 SgVariableSymbol* variableSymbol = new SgVariableSymbol(initializedName);
+                 procedureDefinition->insert_symbol(arg_name,variableSymbol);
+              }
 
-               ROSE_ASSERT(astNameStack.empty() == false);
-               astNameStack.pop_front();
+        // DQ (12/17/2007): Make sure the scope was set!
+           ROSE_ASSERT(initializedName->get_scope() != NULL);
 
-               if (isAnAlternativeReturnParameter == true)
-                  {
-                 // If this is a label argument then build a SgLabelSymbol.
-                 // We might want them to be positionally relevant rather than name relevent,
-                 // this would define a mechanism that was insensitive to transformations.
-                 // We need a new SgLabelSymbol constructor to support the use here.
-                 // SgLabelSymbol* labelSymbol = new SgLabelSymbol(arg_name);
-                    SgLabelSymbol* labelSymbol = new SgLabelSymbol(initializedName);
-                    procedureDefinition->insert_symbol(arg_name,labelSymbol);
-                  }
-                 else
-                  {
-                 // Now build associated SgVariableSymbol and put it into the current scope (function definition scope)
-                    SgVariableSymbol* variableSymbol = new SgVariableSymbol(initializedName);
-                    procedureDefinition->insert_symbol(arg_name,variableSymbol);
-                  }
-
-            // DQ (12/17/2007): Make sure the scope was set!
-               ROSE_ASSERT(initializedName->get_scope() != NULL);
-             }
-
-          ROSE_ASSERT(procedureDeclaration->get_args().empty() == false);
-
-          SgFunctionType* functionType = isSgFunctionType(procedureDeclaration->get_type());
-          ROSE_ASSERT(functionType != NULL);
-
-       // DQ (2/2/2011): This should be empty at this point, it will be fixed up either as we process declarations
-       // in the function that will defin the types or types will be assigned using the implicit type rules (which
-       // might not have even been seen yet for the function) when we are finished processing all of the functions
-       // declarations.  Note that this information will be need by the alternative return support when we compute
-       // the index for the unparsed code.
-          ROSE_ASSERT(functionType->get_arguments().empty() == true);
         }
 
-  // printf ("Added function programName = %s (symbol = %p) to scope = %p = %s \n",tempName.str(),functionSymbol,astScopeStack.front(),astScopeStack.front()->class_name().c_str());
+     SgFunctionType* functionType = isSgFunctionType(procedureDeclaration->get_type());
+     ROSE_ASSERT(functionType != NULL);
 
-  // Now push the function definition and the function body (SgBasicBlock) onto the astScopeStack
-     astScopeStack.push_front(procedureBody);
-
-#endif // TODO_TODO
+  // DQ (2/2/2011): This should be empty at this point, it will be fixed up either as we process declarations
+  // in the function that will defin the types or types will be assigned using the implicit type rules (which
+  // might not have even been seen yet for the function) when we are finished processing all of the functions
+  // declarations.  Note that this information will be need by the alternative return support when we compute
+  // the index for the unparsed code.
+     ROSE_ASSERT(functionType->get_arguments().empty() == true);
 
      procedureBody->set_parent(procedureDefinition);
      procedureDefinition->set_parent(procedureDeclaration);
 
      ROSE_ASSERT(procedureDeclaration->get_parameterList() != NULL);
-
-     setSourcePositionFrom(procedureDefinition, ut_function);
-     setSourcePositionFrom(procedureBody,       ut_function);
    }

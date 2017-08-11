@@ -663,9 +663,17 @@ class SgUntypedInitializedName;
 typedef Rose_STL_Container<SgUntypedInitializedName*> SgUntypedInitializedNamePtrList;
 typedef SgUntypedInitializedNamePtrList*              SgUntypedInitializedNamePtrListPtr;
 
+class SgUntypedName;
+typedef Rose_STL_Container<SgUntypedName*> SgUntypedNamePtrList;
+typedef SgUntypedNamePtrList*              SgUntypedNamePtrListPtr;
+
 class SgUntypedToken;
 typedef Rose_STL_Container<SgUntypedToken*> SgUntypedTokenPtrList;
 typedef SgUntypedTokenPtrList*              SgUntypedTokenPtrListPtr;
+
+class SgUntypedTokenPair;
+typedef Rose_STL_Container<SgUntypedTokenPair*> SgUntypedTokenPairPtrList;
+typedef SgUntypedTokenPairPtrList*              SgUntypedTokenPairPtrListPtr;
 
 class SgUntypedStatement;
 typedef Rose_STL_Container<SgUntypedStatement*> SgUntypedStatementPtrList;
