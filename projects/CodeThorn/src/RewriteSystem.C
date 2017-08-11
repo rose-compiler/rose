@@ -331,7 +331,7 @@ bool isValueZero(SgExpression* valueNode) {
 // rewrites an AST
 // requirements: all variables have been replaced by constants
 // uses AstMatching to match patterns.
-void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMapping, bool ruleAddReorder, bool performCompoundAssignmentsElimination, bool ruleAlgebraic,bool ruleCommutativeOrder) {
+void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMapping, bool ruleAddReorder, bool performCompoundAssignmentsElimination, bool ruleAlgebraic) {
   //cout<<"Rewriting AST:"<<AstTerm::astTermWithNullValuesToString(root)<<endl;
   bool someTransformationApplied=false;
   bool transformationApplied=false;
@@ -707,9 +707,9 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
      //eliminateSuperfluousCasts(root);
 
      //if(someTransformationApplied) cout<<"DEBUG: transformed: "<<root->unparseToString()<<endl;
-   } while(someTransformationApplied);
-   if(ruleCommutativeOrder) {
-     establishCommutativeOrder(root,variableIdMapping);
-   }
+  } while(someTransformationApplied);
+  if(getRuleCommutativeSort()) {
+    establishCommutativeOrder(root,variableIdMapping);
+  }
    //cout<<"DEBUG: "<<AstTerm::astTermWithNullValuesToString(root)<<endl;
 }

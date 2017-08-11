@@ -391,12 +391,11 @@ po::variables_map& parseCommandLine(int argc, char* argv[]) {
   equivalenceCheckingOptions.add_options()
     ("dump-sorted",po::value< string >(), " [experimental] generates sorted array updates in file <file>")
     ("dump-non-sorted",po::value< string >(), " [experimental] generates non-sorted array updates in file <file>")
-    ("rewrite-ssa", "rewrite SSA form (rewrite rules perform semantics preserving operations).")
-    //    ("equivalence-check", "Check programs provided on the command line for equivalence")
-    //("limit-to-fragment",po::value< string >(), "the argument is used to find fragments marked by two prgagmas of that '<name>' and 'end<name>'")
-    ("rewrite-trace", "print trace of rewrite rules.")
-    ("print-update-infos",po::value< string >(), "[experimental] print information about array updates on stdout")
-    ("rule-const-subst",po::value< string >(), " [experimental] use const-expr substitution rule <arg>")
+    ("rewrite-ssa", "rewrite SSA form: replace use of SSA variable by rhs of its assignment (only applied outside loops or unrolled loops).")
+    ("print-rewrite-trace", "print trace of rewrite rules.")
+    ("print-update-infos",po::value< string >(), "print information about array updates on stdout")
+    ("rule-const-subst",po::value< string >(), "use const-expr substitution rule <arg>")
+    ("rule-commutative-sort", po::value< string >(), "apply rewrite rule for commutative sort of expression trees.")
     ("specialize-fun-name", po::value< string >(), "function of name [arg] to be specialized")
     ("specialize-fun-param", po::value< vector<int> >(), "function parameter number to be specialized (starting at 0)")
     ("specialize-fun-const", po::value< vector<int> >(), "constant [arg], the param is to be specialized to.")
@@ -561,6 +560,7 @@ BoolOptions& parseBoolOptions(int argc, char* argv[]) {
   boolOptions.registerOption("rers-numeric",false);
   boolOptions.registerOption("eliminate-stg-back-edges",false);
   boolOptions.registerOption("rule-const-subst",true);
+  boolOptions.registerOption("rule-commutative-sort",false);
 
   boolOptions.registerOption("inf-paths-only",false);
   boolOptions.registerOption("std-io-only",false);
@@ -1257,7 +1257,7 @@ int main( int argc, char * argv[] ) {
       exit(1);
     }
     RewriteSystem rewriteSystem;
-    if(args.count("rewrite-trace")) {
+    if(args.count("print-rewrite-trace")) {
       rewriteSystem.setTrace(true);
     }
     if(args.count("dump-sorted")>0 || args.count("dump-non-sorted")>0 || args.count("equivalence-check")>0) {
@@ -1860,14 +1860,16 @@ int main( int argc, char * argv[] ) {
       logger[TRACE] <<"STATUS: performing array analysis on STG."<<endl;
       logger[TRACE] <<"STATUS: identifying array-update operations in STG and transforming them."<<endl;
 
-      bool useConstSubstitutionRule=boolOptions["rule-const-subst"];
+      bool useRuleConstSubstitution=boolOptions["rule-const-subst"];
+      bool useRuleCommutativeSort=boolOptions["rule-commutative-sort"];
 
       timer.start();
       speci.extractArrayUpdateOperations(&analyzer,
           arrayUpdates,
           rewriteSystem,
-          useConstSubstitutionRule
+          useRuleConstSubstitution
           );
+      rewriteSystem.setRuleCommutativeSort(useRuleCommutativeSort); // commutative sort only used in substituteArrayRefs
       speci.substituteArrayRefs(arrayUpdates, analyzer.getVariableIdMapping(), sarMode, rewriteSystem);
       // rewrite final result xxx
       arrayUpdateExtractionRunTime=timer.getElapsedTimeInMilliSec();

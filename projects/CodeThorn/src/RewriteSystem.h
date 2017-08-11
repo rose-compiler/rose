@@ -26,7 +26,7 @@ private:
 class RewriteSystem {
  public:
   RewriteSystem();
-  void rewriteAst(SgNode*& root, SPRAY::VariableIdMapping* variableIdMapping, bool ruleAddReorder=false, bool performCompoundAssignmentsElimination=false, bool ruleAlgebraic=false, bool ruleCommutativeOrder=false);
+  void rewriteAst(SgNode*& root, SPRAY::VariableIdMapping* variableIdMapping, bool ruleAddReorder=false, bool performCompoundAssignmentsElimination=false, bool ruleAlgebraic=false);
   bool getRewriteCondStmt();
   void setRewriteCondStmt(bool);
 
@@ -55,6 +55,9 @@ class RewriteSystem {
   void setTrace(bool);
   bool getTrace();
 
+  void setRuleCommutativeSort(bool flag) { ruleCommutativeSort=flag; }
+  bool getRuleCommutativeSort() { return ruleCommutativeSort; }
+
  private:
   static Sawyer::Message::Facility logger;
   bool _trace;
@@ -62,6 +65,7 @@ class RewriteSystem {
   // sets valueString to empty string in SgFloatVal, SgDoubleVal, SgLongDoubleVal
   void normalizeFloatingPointNumbersForUnparsing(SgNode*& root);
   RewriteStatistics dump1_stats;
+  bool ruleCommutativeSort=false;
 };
 
 
