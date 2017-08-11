@@ -81,7 +81,9 @@ ATbool traverse_OptName    ( ATerm term, std::string & name  );
 ATbool traverse_OptLabel   ( ATerm term, std::string & label );
 ATbool traverse_eos        ( ATerm term, std::string & eos   );
 
+//TODO - replace first one with second using SgUntypedNameList (when all changes in).
 ATbool traverse_NameList ( ATerm term, std::vector<std::string> & name_list);
+ATbool traverse_NameList ( ATerm term, SgUntypedNameList* name_list);
 
 ATbool traverse_StartCommentBlock(ATerm term, std::string & start_comments);
 ATbool traverse_OptModuleNature(ATerm term, FAST::UseStmt::ModuleNature* var_OptModuleNature);
@@ -92,11 +94,17 @@ ATbool traverse_LiteralConstant(ATerm term, SgUntypedExpression** var_expr);
 // R309
 ATbool traverse_Operator(ATerm term, SgUntypedExpression** var_expr);
 
+// R310
+ATbool traverse_DefinedOperator(ATerm term, std::string & name);
+
 // R422
 ATbool traverse_OptCharLength(ATerm term, SgUntypedExpression** expr);
 
 // R501
 ATbool traverse_TypeDeclarationStmt(ATerm term, SgUntypedDeclarationStatementList* decl_list);
+
+// R502
+ATbool traverse_OptAttrSpecList(ATerm term, SgUntypedTokenList* attr_list);
 
 // R503
 ATbool traverse_EntityDecl     (ATerm term, SgUntypedType* declared_type, SgUntypedInitializedNameList* name_list);
@@ -170,11 +178,44 @@ ATbool traverse_ModuleSubprogramList(ATerm term, SgUntypedScope* scope);
 ATbool traverse_UseStmt(ATerm term, SgUntypedDeclarationStatementList* decl_list);
 ATbool traverse_UseStmtList(ATerm term, SgUntypedDeclarationStatementList* decl_list);
 
+// R1110
+ATbool traverse_OptModuleNature(ATerm term, SgToken::ROSE_Fortran_Keywords & module_nature);
+
+// R1111, R1112
+ATbool traverse_RenameOrOnlyList(ATerm term, bool isOnlyList, SgUntypedTokenPairList* rename_or_only_list);
+
 // R1116
 ATbool traverse_Submodule (ATerm term, SgUntypedScope* scope);
 
 // R1120
 ATbool traverse_BlockData (ATerm term, SgUntypedScope* scope);
+
+// R1121
+ATbool traverse_BlockDataStmt(ATerm term, SgUntypedNamedStatement** block_data_stmt);
+
+// R1122
+ATbool traverse_EndBlockDataStmt(ATerm term, SgUntypedNamedStatement** end_block_data_stmt);
+
+// R1201
+ATbool traverse_InterfaceBlock(ATerm term, SgUntypedDeclarationStatementList* parent_decl_list);
+
+// R1202
+ATbool traverse_InterfaceSpecificationList(ATerm term, SgUntypedFunctionDeclarationList* func_list);
+
+// R1203
+ATbool traverse_InterfaceStmt(ATerm term, SgUntypedInterfaceDeclaration** interface_decl);
+
+// R1204
+ATbool traverse_EndInterfaceStmt(ATerm term, SgUntypedNamedStatement** end_interface_stmt);
+
+// R1205
+ATbool traverse_InterfaceBody(ATerm term, SgUntypedFunctionDeclarationList* func_list);
+
+// R1206
+ATbool traverse_ProcedureStmt(ATerm term, SgUntypedFunctionDeclarationList* func_list);
+
+// R1207
+ATbool traverse_OptGenericSpec(ATerm term, std::string & name, SgUntypedToken** generic_spec);
 
 // R1209
 ATbool traverse_ImportStmt(ATerm term, SgUntypedDeclarationStatementList* decl_list);
@@ -185,9 +226,6 @@ ATbool traverse_ExternalStmt(ATerm term, SgUntypedDeclarationStatementList* decl
 
 // R1225
 ATbool traverse_OptPrefix(ATerm term, SgUntypedTokenList* prefix_list, SgUntypedType** type);
-
-// R1226
-ATbool traverse_PrefixSpecList(ATerm term, SgUntypedTokenList* prefix_list, SgUntypedType** type);
 
 // R1227
 ATbool traverse_FunctionSubprogram(ATerm term, SgUntypedScope* scope);
