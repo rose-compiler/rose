@@ -270,13 +270,16 @@ The following list of options is relevant to the program equivalence checking ca
                                         updates in file <file>
   --dump-non-sorted arg                  [experimental] generates non-sorted 
                                         array updates in file <file>
-  --rewrite-ssa                         rewrite SSA form (rewrite rules perform
-                                        semantics preserving operations).
-  --rewrite-trace                       print trace of rewrite rules.
-  --print-update-infos arg              [experimental] print information about 
-                                        array updates on stdout
-  --rule-const-subst arg                 [experimental] use const-expr 
-                                        substitution rule <arg>
+  --rewrite-ssa                         rewrite SSA form: replace use of SSA 
+                                        variable by rhs of its assignment (only
+                                        applied outside loops or unrolled 
+                                        loops).
+  --print-rewrite-trace                 print trace of rewrite rules.
+  --print-update-infos arg              print information about array updates 
+                                        on stdout
+  --rule-const-subst arg                use const-expr substitution rule <arg>
+  --rule-commutative-sort arg           apply rewrite rule for commutative sort
+                                        of expression trees.
   --specialize-fun-name arg             function of name [arg] to be 
                                         specialized
   --specialize-fun-param arg            function parameter number to be 
