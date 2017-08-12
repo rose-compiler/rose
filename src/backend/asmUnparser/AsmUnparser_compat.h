@@ -35,8 +35,8 @@ std::string unparseX86Mnemonic(SgAsmX86Instruction*);
 std::string unparseX86Expression(SgAsmExpression*, const Rose::BinaryAnalysis::AsmUnparser::LabelMap*, const RegisterDictionary*);
 std::string unparseX86Expression(SgAsmExpression*, const Rose::BinaryAnalysis::AsmUnparser::LabelMap*,
                                  const RegisterDictionary*, bool leaMode);
-std::string unparseX86Register(const RegisterDescriptor&, const RegisterDictionary*);
-std::string unparseX86Register(SgAsmInstruction*, const RegisterDescriptor&, const RegisterDictionary*);
+std::string unparseX86Register(RegisterDescriptor, const RegisterDictionary*);
+std::string unparseX86Register(SgAsmInstruction*, RegisterDescriptor, const RegisterDictionary*);
 
 /*-------------------------------------------------------------------------------------------------------------------------------
  * ARM
