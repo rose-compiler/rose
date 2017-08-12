@@ -1235,6 +1235,7 @@ generate_override_keyword( AstNodeClass & node, GrammarString & data )
           (nodeName == "UntypedFunctionDeclaration" && variableNameString == "name")  ||
           (nodeName == "UntypedModuleDeclaration"   && variableNameString == "name")  ||
           (nodeName == "UntypedInitializedName"     && variableNameString == "name")  ||
+          (nodeName == "UntypedName"                && variableNameString == "name")  ||
           (nodeName == "EnumDeclaration"            && variableNameString == "name")  ||
           (nodeName == "TemplateDeclaration"        && variableNameString == "name")  ||
           (nodeName == "UseStatement"               && variableNameString == "name")  ||
@@ -1340,6 +1341,7 @@ generate_override_keyword_for_set_functions( AstNodeClass & node, GrammarString 
           (nodeName == "UntypedFunctionDeclaration" && variableNameString == "name")  ||
           (nodeName == "UntypedModuleDeclaration"   && variableNameString == "name")  ||
           (nodeName == "UntypedInitializedName"     && variableNameString == "name")  ||
+          (nodeName == "UntypedName"                && variableNameString == "name")  ||
           (nodeName == "EnumDeclaration"            && variableNameString == "name")  ||
           (nodeName == "TemplateDeclaration"        && variableNameString == "name")  ||
           (nodeName == "UseStatement"               && variableNameString == "name")  ||
