@@ -44,7 +44,7 @@ public:
     class RegisterNotPresent: public std::runtime_error {
         RegisterDescriptor desc_;
     public:
-        explicit RegisterNotPresent(const RegisterDescriptor &d)
+        explicit RegisterNotPresent(RegisterDescriptor d)
             : std::runtime_error("accessed register is not available in register state") {}
     };
 
@@ -74,7 +74,7 @@ public:
     public:
         RegStore()                                      // for serialization
             : majr(0), minr(0) {}
-        RegStore(const RegisterDescriptor &d) // implicit
+        RegStore(RegisterDescriptor d) // implicit
             : majr(d.get_major()), minr(d.get_minor()) {}
         bool operator<(const RegStore &other) const {
             return majr<other.majr || (majr==other.majr && minr<other.minr);
@@ -106,7 +106,7 @@ public:
         RegPair() {}                                    // for serialization
 
     public:
-        RegPair(const RegisterDescriptor &desc, const SValuePtr &value): desc(desc), value(value) {}
+        RegPair(RegisterDescriptor desc, const SValuePtr &value): desc(desc), value(value) {}
         BitRange location() const { return BitRange::baseSize(desc.get_offset(), desc.get_nbits()); }
     };
 
@@ -345,8 +345,8 @@ public:
 public:
     virtual void clear() ROSE_OVERRIDE;
     virtual void zero() ROSE_OVERRIDE;
-    virtual SValuePtr readRegister(const RegisterDescriptor &reg, const SValuePtr &dflt, RiscOperators *ops) ROSE_OVERRIDE;
-    virtual void writeRegister(const RegisterDescriptor &reg, const SValuePtr &value, RiscOperators *ops) ROSE_OVERRIDE;
+    virtual SValuePtr readRegister(RegisterDescriptor reg, const SValuePtr &dflt, RiscOperators *ops) ROSE_OVERRIDE;
+    virtual void writeRegister(RegisterDescriptor reg, const SValuePtr &value, RiscOperators *ops) ROSE_OVERRIDE;
     virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;
     virtual bool merge(const RegisterStatePtr &other, RiscOperators *ops) ROSE_OVERRIDE;
 
@@ -398,35 +398,35 @@ public:
      *  assert(rstate->partly_exists(reg) == !parts_exist(reg).empty());
      * @endcode
      */
-    virtual bool is_partly_stored(const RegisterDescriptor&) const;
+    virtual bool is_partly_stored(RegisterDescriptor) const;
 
     /** Determines if the specified register is wholly stored in the state. Returns if the state contains data for the entire
      *  register, even if that data is split among several smaller parts or exists as a subset of a larger part. */
-    virtual bool is_wholly_stored(const RegisterDescriptor&) const;
+    virtual bool is_wholly_stored(RegisterDescriptor) const;
 
     /** Determines if the specified register is stored exactly in the state. Returns true only if the specified register wholly
      *  exists and a value can be returned without extracting or concatenating values from larger or smaller stored parts. Note
      *  that a value can also be returned without extracting or conctenating if the state contains no data for the specified
      *  register, as indicated by is_partly_stored() returning false. */
-    virtual bool is_exactly_stored(const RegisterDescriptor&) const;
+    virtual bool is_exactly_stored(RegisterDescriptor) const;
 
     /** Returns a description of which bits of a register are stored.
      *
      *  The return value is an ExtentMap that contains the bits that are stored in the state. This does not return the value of
      *  any parts of stored registers--one gets that with @ref readRegister. The return value does not contain any bits that
      *  are not part of the specified register. */
-    virtual ExtentMap stored_parts(const RegisterDescriptor&) const;
+    virtual ExtentMap stored_parts(RegisterDescriptor) const;
 
     /** Find stored registers overlapping with specified register.
      *
      *  Returns all stored registers that overlap with the specified register.  The registers in the returned vector will never
      *  overlap with each other, but they will all overlap with the specified register. */
-    virtual RegPairs overlappingRegisters(const RegisterDescriptor&) const;
+    virtual RegPairs overlappingRegisters(RegisterDescriptor) const;
 
     /** Cause a register to not be stored.  Erases all record of the specified register. The RiscOperators pointer is used for
      *  its extract operation if the specified register is not exactly stored in the state, such as if the state
      *  stores RIP and one wants to erase only the 32-bits overlapping with EIP. */
-    virtual void erase_register(const RegisterDescriptor&, RiscOperators*);
+    virtual void erase_register(RegisterDescriptor, RiscOperators*);
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -437,7 +437,7 @@ public:
     class Visitor {
     public:
         virtual ~Visitor() {}
-        virtual SValuePtr operator()(const RegisterDescriptor&, const SValuePtr&) = 0;
+        virtual SValuePtr operator()(RegisterDescriptor, const SValuePtr&) = 0;
     };
 
     /** Traverse register/value pairs.  Traverses all the (non-overlapping) registers and their values, calling the specified
@@ -453,7 +453,7 @@ public:
      *       Substitution(const SymbolicSemantics::SValuePtr &from, const SymbolicSemantics::SValuePtr &to)
      *           : from(from), to(to) {}
      *
-     *       BaseSemantics::SValuePtr operator()(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &val_) {
+     *       BaseSemantics::SValuePtr operator()(RegisterDescriptor reg, const BaseSemantics::SValuePtr &val_) {
      *           SymbolicSemantics::SValuePtr val = SymbolicSemantics::SValue::promote(val_);
      *           return val->substitute(from, to);
      *       }
@@ -487,8 +487,8 @@ public:
      *  writer).
      *
      * @{ */
-    virtual bool hasWritersAny(const RegisterDescriptor&) const;
-    virtual bool hasWritersAll(const RegisterDescriptor&) const;
+    virtual bool hasWritersAny(RegisterDescriptor) const;
+    virtual bool hasWritersAll(RegisterDescriptor) const;
     /** @} */
 
     /** Get writer information.
@@ -496,34 +496,34 @@ public:
      *  Returns all instruction addresses that have written to at least part of the specified register.  For instance, if
      *  instruction 0x1234 and 0x4321 wrote to AL and instruction 0x5678 wrote to AH then this method would return the set
      *  {0x1234, 0x4321, 0x5678} as the writers of AX. */
-    virtual AddressSet getWritersUnion(const RegisterDescriptor&) const;
+    virtual AddressSet getWritersUnion(RegisterDescriptor) const;
 
     /** Get writer information.
      *
      *  Returns the set of instruction addresses that have written to the entire specified register.  For instance, if
      *  instruction 0x1234 and 0x4321 wrote to AL and instructions 0x1234 and 0x5678 wrote to AH then this method will return
      *  the set {0x1234} as the writers of AX. */
-    virtual AddressSet getWritersIntersection(const RegisterDescriptor&) const;
+    virtual AddressSet getWritersIntersection(RegisterDescriptor) const;
 
     /** Insert writer information.
      *
      *  Adds the specified instruction addresses as writers of the specified register.  Any previously existing writer
      *  addresses are not affected. Returns true if any addresses were inserted, false if they all already existed.  A single
      *  writer address can also be specified due to the AddressSet implicit constructor. */
-    virtual bool insertWriters(const RegisterDescriptor&, const AddressSet &writerVas);
+    virtual bool insertWriters(RegisterDescriptor, const AddressSet &writerVas);
 
     /** Erase specified writers.
      *
      *  Removes the specified addresses from the set of writers for the register without affecting other addresses that might
      *  also be present. Returns true if none of the writer addresses existed, false if any were removed.  A single writer
      *  address can also be specified due to the AddressSet implicit constructor. */
-    virtual void eraseWriters(const RegisterDescriptor&, const AddressSet &writerVas);
+    virtual void eraseWriters(RegisterDescriptor, const AddressSet &writerVas);
 
     /** Set writer information.
      *
      *  Changes the writer information to be exactly the specified address or set of addresses.  A single writer address can
      *  also be specified due to the AddressSet implicit constructor. */
-    virtual void setWriters(const RegisterDescriptor&, const AddressSet &writers);
+    virtual void setWriters(RegisterDescriptor, const AddressSet &writers);
 
     /** Erase all writers.
      *
@@ -531,7 +531,7 @@ public:
      *  removed for all registers.
      *
      * @{ */
-    virtual void eraseWriters(const RegisterDescriptor&);
+    virtual void eraseWriters(RegisterDescriptor);
     virtual void eraseWriters();
     /** @} */
 
@@ -546,8 +546,8 @@ public:
      *  have the property, while the "All" version returns true if all bits of the register have the property.
      *
      * @{ */
-    virtual bool hasPropertyAny(const RegisterDescriptor&, InputOutputProperty) const;
-    virtual bool hasPropertyAll(const RegisterDescriptor&, InputOutputProperty) const;
+    virtual bool hasPropertyAny(RegisterDescriptor, InputOutputProperty) const;
+    virtual bool hasPropertyAll(RegisterDescriptor, InputOutputProperty) const;
     /** @} */
 
     /** Get properties.
@@ -557,8 +557,8 @@ public:
      *  defined for all bits of the register.
      *
      * @{ */
-    virtual InputOutputPropertySet getPropertiesUnion(const RegisterDescriptor&) const;
-    virtual InputOutputPropertySet getPropertiesIntersection(const RegisterDescriptor&) const;
+    virtual InputOutputPropertySet getPropertiesUnion(RegisterDescriptor) const;
+    virtual InputOutputPropertySet getPropertiesIntersection(RegisterDescriptor) const;
     /** @} */
 
     /** Insert Boolean properties.
@@ -566,27 +566,27 @@ public:
      *  Inserts the specified properties for all bits of the specified register without affecting any other properties.
      *  Returns true if a property was inserted anywhere, false if all specified properties already existed everywhere in the
      *  specified register.  A single property can also be specified due to the RegisterProperties implicit constructor. */
-    virtual bool insertProperties(const RegisterDescriptor&, const InputOutputPropertySet&);
+    virtual bool insertProperties(RegisterDescriptor, const InputOutputPropertySet&);
 
     /** Erase Boolean properties.
      *
      *  Removes the speciied properties from the specified register.  Returns true if any of the properties were erased, false
      *  if none of them already existed. A single property can also be specified due to the RegisterProperties implicit
      *  constructor. */
-    virtual bool eraseProperties(const RegisterDescriptor&, const InputOutputPropertySet&);
+    virtual bool eraseProperties(RegisterDescriptor, const InputOutputPropertySet&);
 
     /** Assign property set.
      *
      *  Assigns the specified property set (or single property) to the specified register. The register will then contain only
      *  those specified properties. */
-    virtual void setProperties(const RegisterDescriptor&, const InputOutputPropertySet&);
+    virtual void setProperties(RegisterDescriptor, const InputOutputPropertySet&);
 
     /** Erase all Boolean properties.
      *
      *  Removes all properties from the specified register (or all registers).
      *
      * @{ */
-    virtual void eraseProperties(const RegisterDescriptor&);
+    virtual void eraseProperties(RegisterDescriptor);
     virtual void eraseProperties();
     /** @} */
 
@@ -602,13 +602,13 @@ public:
      *
      *  Adds the specified property to all bits of the register.  The property can be anything, but is normally either IO_WRITE
      *  or IO_INIT depending on whether the writeRegister operation was on behalf of an instruction or not. */
-    virtual void updateWriteProperties(const RegisterDescriptor&, InputOutputProperty);
+    virtual void updateWriteProperties(RegisterDescriptor, InputOutputProperty);
 
     /** Update read properties.
      *
      *  Adds the READ property to all bits of the register. Also adds READ_BEFORE_WRITE and/or READ_UNINITIALIZED as
      *  appropriate depending on writer properties. */
-    virtual void updateReadProperties(const RegisterDescriptor&);
+    virtual void updateReadProperties(RegisterDescriptor);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Deprecated APIs
@@ -616,10 +616,10 @@ public:
 public:
 
     // Deprecated [Robb P. Matzke 2015-08-12]
-    virtual void set_latest_writer(const RegisterDescriptor&, rose_addr_t writer_va) ROSE_DEPRECATED("use setWriters instead");
-    virtual void clear_latest_writer(const RegisterDescriptor&) ROSE_DEPRECATED("use eraseWriters instead");
+    virtual void set_latest_writer(RegisterDescriptor, rose_addr_t writer_va) ROSE_DEPRECATED("use setWriters instead");
+    virtual void clear_latest_writer(RegisterDescriptor) ROSE_DEPRECATED("use eraseWriters instead");
     virtual void clear_latest_writers() ROSE_DEPRECATED("use eraseWriters instead");
-    virtual std::set<rose_addr_t> get_latest_writers(const RegisterDescriptor&) const
+    virtual std::set<rose_addr_t> get_latest_writers(RegisterDescriptor) const
         ROSE_DEPRECATED("use getWritersUnion instead");
 
     virtual bool get_coalesceOnRead() ROSE_DEPRECATED("use accessModifiesExistingLocations instead") {
@@ -643,10 +643,10 @@ public:
 protected:
     void deep_copy_values();
 
-    RegPairs& scanAccessedLocations(const RegisterDescriptor &reg, RiscOperators *ops, bool markOverlapping,
+    RegPairs& scanAccessedLocations(RegisterDescriptor reg, RiscOperators *ops, bool markOverlapping,
                                     RegPairs &accessedParts /*out*/, RegPairs &preservedParts /*out*/);
 
-    void assertStorageConditions(const std::string &where, const RegisterDescriptor &what) const;
+    void assertStorageConditions(const std::string &where, RegisterDescriptor what) const;
 };
 
 } // namespace

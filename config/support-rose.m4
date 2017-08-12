@@ -2442,6 +2442,7 @@ tests/smoke/specimens/c++/Makefile
 tests/smoke/specimens/c/Makefile
 tests/smoke/specimens/fortran/Makefile
 tests/smoke/specimens/java/Makefile
+tests/smoke/unit/BinaryAnalysis/Makefile
 tests/smoke/unit/Boost/Makefile
 tests/smoke/unit/Makefile
 tests/smoke/unit/Sawyer/Makefile

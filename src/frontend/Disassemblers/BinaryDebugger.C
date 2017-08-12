@@ -413,7 +413,7 @@ BinaryDebugger::kernelWordSize() {
 }
 
 Sawyer::Container::BitVector
-BinaryDebugger::readRegister(const RegisterDescriptor &desc) {
+BinaryDebugger::readRegister(RegisterDescriptor desc) {
     using namespace Sawyer::Container;
 
     // Lookup register according to kernel word size rather than the actual size of the register.

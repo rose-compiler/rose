@@ -126,7 +126,7 @@ public:
         throw std::runtime_error("execution limit exceeded ("+StringUtility::plural(settings.insnLimit, "instructions")+")");
     }
 
-    const RegisterDescriptor& regSs() const { return regSs_; }
+    RegisterDescriptor regSs() const { return regSs_; }
     rose_addr_t returnMarker() const { return returnMarker_; }
     size_t wordSize() const { return wordSize_; }
 };

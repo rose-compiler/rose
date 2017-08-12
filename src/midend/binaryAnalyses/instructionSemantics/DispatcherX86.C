@@ -4494,7 +4494,7 @@ DispatcherX86::stackPointerRegister() const {
 }
 
 static bool
-isStatusRegister(const RegisterDescriptor &reg) {
+isStatusRegister(RegisterDescriptor reg) {
     return reg.get_major()==x86_regclass_flags && reg.get_minor()==x86_flags_status;
 }
 
@@ -4503,7 +4503,7 @@ DispatcherX86::get_usual_registers() const
 {
     RegisterDictionary::RegisterDescriptors registers = regdict->get_largest_registers();
     registers.erase(std::remove_if(registers.begin(), registers.end(), isStatusRegister), registers.end());
-    BOOST_FOREACH (const RegisterDescriptor &reg, regdict->get_smallest_registers()) {
+    BOOST_FOREACH (RegisterDescriptor reg, regdict->get_smallest_registers()) {
         if (isStatusRegister(reg))
             registers.push_back(reg);
     }
@@ -5017,7 +5017,7 @@ DispatcherX86::doShiftOperation(X86InstructionKind kind, const BaseSemantics::SV
 }
 
 BaseSemantics::SValuePtr
-DispatcherX86::readRegister(const RegisterDescriptor &reg, AccessMode mode) {
+DispatcherX86::readRegister(RegisterDescriptor reg, AccessMode mode) {
     // When reading FLAGS, EFLAGS as a whole do not coalesce individual flags into the single register.
     if (reg.get_major()==x86_regclass_flags && reg.get_offset()==0 && reg.get_nbits()>1) {
         if (BaseSemantics::StatePtr ss = operators->currentState()) {
@@ -5043,7 +5043,7 @@ DispatcherX86::readRegister(const RegisterDescriptor &reg, AccessMode mode) {
 }
 
 void
-DispatcherX86::writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &value) {
+DispatcherX86::writeRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &value) {
     if (reg.get_nbits() == 32 && reg.get_offset() == 0 && REG_anyIP.get_nbits() == 64) {
         // Writing to a 32-bit GPR in x86-64 will also clear the upper 32 bits of the same 64-bit register. E.g., "MOV EDI,
         // EDI" is one way to clear the upper 32-bits in RDI.

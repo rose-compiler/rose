@@ -212,7 +212,7 @@ public:
 
 private:
     /** Description a variable stored in a register. */
-    FeasiblePath::VarDetail detailForVariable(const RegisterDescriptor &reg, const std::string &accessMode) const {
+    FeasiblePath::VarDetail detailForVariable(RegisterDescriptor reg, const std::string &accessMode) const {
         const RegisterDictionary *regs = currentState()->registerState()->get_register_dictionary();
         FeasiblePath::VarDetail retval;
         retval.registerName = RegisterNames(regs)(reg);
@@ -283,7 +283,7 @@ public:
         Super::finishInstruction(insn);
     }
 
-    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg,
+    virtual BaseSemantics::SValuePtr readRegister(RegisterDescriptor reg,
                  const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE {
         SValuePtr retval = SValue::promote(Super::readRegister(reg, dflt));
         SymbolicExpr::Ptr expr = retval->get_expression();
@@ -292,7 +292,7 @@ public:
         return retval;
     }
 
-    virtual void writeRegister(const RegisterDescriptor &reg,
+    virtual void writeRegister(RegisterDescriptor reg,
                   const BaseSemantics::SValuePtr &value) ROSE_OVERRIDE {
         SymbolicExpr::Ptr expr = SValue::promote(value)->get_expression();
         if (expr->isLeafNode())
@@ -303,7 +303,7 @@ public:
     // If multi-path is enabled, then return a new memory expression that describes the process of reading a value from the
     // specified address; otherwise, actually read the value and return it.  In any case, record some information about the
     // address that's being read if we've never seen it before.
-    virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr,
+    virtual BaseSemantics::SValuePtr readMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr,
                                                 const BaseSemantics::SValuePtr &dflt_,
                                                 const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE {
         BaseSemantics::SValuePtr dflt = dflt_;
@@ -347,7 +347,7 @@ public:
     // If multi-path is enabled, then return a new memory expression that updates memory with a new address/value pair;
     // otherwise update the memory directly.  In any case, record some information about the address that was written if we've
     // never seen it before.
-    virtual void writeMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr,
+    virtual void writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr,
                              const BaseSemantics::SValuePtr &value, const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE {
         if (cond->is_number() && !cond->get_number())
             return;

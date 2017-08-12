@@ -984,9 +984,10 @@ Engine::loadSpecimens(const std::string &fileName) {
 MemoryMap::Ptr
 Engine::loadSpecimens(const std::vector<std::string> &fileNames) {
     try {
-        map_ = MemoryMap::instance();
         if (!areContainersParsed())
             parseContainers(fileNames);
+        if (!map_)
+            map_ = MemoryMap::instance();
         loadContainers(fileNames);
         loadNonContainers(fileNames);
         adjustMemoryMap();

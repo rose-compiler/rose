@@ -74,7 +74,7 @@ public:
                     RegisterStateGenericPtr regState = RegisterStateGeneric::promote(state->registerState());
                     RegisterNames regName(regState->get_register_dictionary());
                     BOOST_FOREACH (const RegisterStateGeneric::RegPair &reg_val, regState->get_stored_registers()) {
-                        const RegisterDescriptor &reg = reg_val.desc;
+                        RegisterDescriptor reg = reg_val.desc;
 
                         // No need to show the instruction pointer since it's obvious; no need to show the stack pointer since the
                         // deltas are already shown.
@@ -285,7 +285,7 @@ WSemantics::changeBasicBlock(const P2::BasicBlock::Ptr &bblock, Mode mode) {
             wAddress_->setText("No block");
         }
         
-        const RegisterDescriptor &SP = ctx_.partitioner.instructionProvider().stackPointerRegister();
+        RegisterDescriptor SP = ctx_.partitioner.instructionProvider().stackPointerRegister();
         BaseSemantics::RiscOperatorsPtr ops = ctx_.partitioner.newOperators();
         BaseSemantics::SValuePtr initialStackPointer =
             df.initialStates[0]->readRegister(SP, ops->undefined_(SP.get_nbits()), ops.get());
