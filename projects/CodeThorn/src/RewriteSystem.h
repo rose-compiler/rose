@@ -26,7 +26,7 @@ private:
 class RewriteSystem {
  public:
   RewriteSystem();
-  void rewriteAst(SgNode*& root, SPRAY::VariableIdMapping* variableIdMapping, bool rewriteTrace=false, bool ruleAddReorder=false, bool performCompoundAssignmentsElimination=false);
+  void rewriteAst(SgNode*& root, SPRAY::VariableIdMapping* variableIdMapping, bool ruleAddReorder=false, bool performCompoundAssignmentsElimination=false, bool ruleAlgebraic=false);
   bool getRewriteCondStmt();
   void setRewriteCondStmt(bool);
 
@@ -39,6 +39,10 @@ class RewriteSystem {
   void rewriteCompoundAssignments(SgNode*& root, SPRAY::VariableIdMapping* variableIdMapping);
   SgNode* buildRewriteCompoundAssignment(SgNode* root, SPRAY::VariableIdMapping* variableIdMapping);
 
+  // sorts nodes of operators SgAddOp and SgMultiplyOp according to variantT bottom up
+  // shallow sort at each node
+  void establishCommutativeOrder(SgNode*& root, SPRAY::VariableIdMapping* variableIdMapping);
+
   // transform conditions in 'SgDoWhileStatement', 'SgWhileStatement',
   // 'SgForStatement', 'ifStatement' into SgStatementExpressions that
   // contain the original condition.
@@ -48,14 +52,20 @@ class RewriteSystem {
   void rewriteCondStmtInAst(SgNode* root);
 
   static void initDiagnostics();
+  void setTrace(bool);
+  bool getTrace();
+
+  void setRuleCommutativeSort(bool flag) { ruleCommutativeSort=flag; }
+  bool getRuleCommutativeSort() { return ruleCommutativeSort; }
 
  private:
   static Sawyer::Message::Facility logger;
-
+  bool _trace;
   bool _rewriteCondStmt;
   // sets valueString to empty string in SgFloatVal, SgDoubleVal, SgLongDoubleVal
   void normalizeFloatingPointNumbersForUnparsing(SgNode*& root);
   RewriteStatistics dump1_stats;
+  bool ruleCommutativeSort=false;
 };
 
 

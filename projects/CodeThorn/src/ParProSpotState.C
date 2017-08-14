@@ -1,3 +1,6 @@
+#include "rose_config.h"
+#ifdef HAVE_SPOT
+
 #include "sage3basic.h"
 #include "ParProSpotState.h"
 
@@ -36,3 +39,5 @@ std::string ParProSpotState::toString() const {
 const ParProEState& ParProSpotState::getEState() const {
   return estate;
 }
+
+#endif // end of "#ifdef HAVE_SPOT"

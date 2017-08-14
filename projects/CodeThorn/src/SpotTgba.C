@@ -1,3 +1,6 @@
+#include "rose_config.h"
+#ifdef HAVE_SPOT
+
 #include "sage3basic.h"
 #include "SpotTgba.h"
 
@@ -64,3 +67,5 @@ int SpotTgba::propName2Int(std::string propName)  {
   char id = propName.at(1);
   return ((int) id ) - ((int) 'A') + 1;
 }
+
+#endif // end of "#ifdef HAVE_SPOT"
