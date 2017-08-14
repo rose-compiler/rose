@@ -1,10 +1,11 @@
+
 //#pragma once
 #ifndef SSA_GENERATOR_C
 #define SSA_GENERATOR_C
-#include"SSAGenerator.h"
-
-#include<iostream>
 #include"sage3basic.h"
+
+#include"SSAGenerator.h"
+#include<iostream>
 #include"Analyzer.h"
 #include"staticSingleAssignment.h"
 #include"Flow.h"

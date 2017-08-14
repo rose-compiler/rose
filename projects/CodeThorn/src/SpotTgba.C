@@ -1,7 +1,7 @@
+#include "sage3basic.h"
 #include "rose_config.h"
 #ifdef HAVE_SPOT
 
-#include "sage3basic.h"
 #include "SpotTgba.h"
 
 using namespace CodeThorn;

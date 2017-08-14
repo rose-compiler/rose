@@ -1,9 +1,9 @@
 #ifndef CONT_NODE_ATTRIBUTE_C
 #define CONT_NODE_ATTRIBUTE_C
 
-#include"ContNodeAttribute.h"
-
 #include"sage3basic.h"
+
+#include"ContNodeAttribute.h"
 #include"Analyzer.h"
 #include"Flow.h"
 #include<sstream>

@@ -1,26 +1,26 @@
+#include "sage3basic.h"
 #include "rose_config.h"
 #ifdef HAVE_Z3
 
 #ifndef REACHABILITY_Analyzer_Z3_C
 #define REACHABILITY_Analyzer_Z3_C
 
-#include"ReachabilityAnalyzerZ3.h"
+#include "ReachabilityAnalyzerZ3.h"
 
-#include<iostream>
-#include"z3++.h"
-#include"sage3basic.h"
-#include"Analyzer.h"
-#include"staticSingleAssignment.h"
-#include"Flow.h"
-#include<assert.h>
-#include<set>
-#include<map>
-#include"PhiAttribute.h"
-#include"PhiStatement.h"
-#include"ContNodeAttribute.h"
-#include<sstream>
-#include"Sawyer/CommandLineBoost.h"
-#include<time.h>
+#include <iostream>
+#include "z3++.h"
+#include "Analyzer.h"
+#include "staticSingleAssignment.h"
+#include "Flow.h"
+#include <assert.h>
+#include <set>
+#include <map>
+#include "PhiAttribute.h"
+#include "PhiStatement.h"
+#include "ContNodeAttribute.h"
+#include <sstream>
+#include "Sawyer/CommandLineBoost.h"
+#include <time.h>
 
 using namespace std;
 using namespace z3;
