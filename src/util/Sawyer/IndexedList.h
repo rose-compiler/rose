@@ -320,14 +320,14 @@ private:
     void load(S &s, const unsigned /*version*/) {
         clear();
         size_t n = 0;
-        s >>BOOST_SERIALIZATION_NVP(n);
+        s >>n;
         ASSERT_require(index_.empty());
         index_.resize(n, NULL);
         for (size_t i=0; i<n; ++i) {
             size_t id = 0;
-            s >>BOOST_SERIALIZATION_NVP(id);
+            s >>id;
             Node *node = new (allocator_.allocate(sizeof(Node))) Node(id, Value());
-            s >>boost::serialization::make_nvp("value", node->value());
+            s >>node->value();
 
             ASSERT_require(id < index_.size());
             ASSERT_require(index_[id] == NULL);
