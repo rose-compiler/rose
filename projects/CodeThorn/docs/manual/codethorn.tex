@@ -80,9 +80,8 @@
 \begin{abstract}
 \noindent CodeThorn is a tool for analyzing C/C++ programs by combining approaches
 from data flow analysis, constraint-based analysis, and model
-checking. The main focus in the development of CodeThorn is the
-exploration of program analysis algorithms while combining above
-approaches and to explore methods for combining static analysis with
+checking. The main focus in the development of CodeThorn is to explore program analysis algorithms while combining above
+approaches and to investigate methods for combining static analysis with
 methods for software verification.
 
 The input language is currently restricted to a subset of C.
@@ -608,20 +607,20 @@ The following option allows to display additional information about the analysis
 The analysis is performed in five phases:
 
 \begin{enumerate}
-\item Syntactic and semantic analysis of the input program (ROSE). The program is analyzed and represented in memory as annotated abstract syntax tree (AST).
-\item Control flow analysis. We compute a control flow graph (CFG) for the AST. Transitions, as computed for the state transition graph in the next phase, correspond to edges in the CFG.
+\item Syntactic and semantic analysis of the input program (ROSE). The program is analyzed and represented in memory as an annotated abstract syntax tree (AST).
+\item Control flow analysis. We compute a control flow graph (CFG) for the AST. Transitions, as computed for the state transition system in the next phase, correspond to edges in the CFG.
 \item Computation of the state transition system.
-\item LTL checking. Input to the LTL checking phase are the state transition system and the LTL-formulae.
+\item LTL checking. Input to the LTL checking phase are the state transition system and the LTL formulae.
 \item Reporting of analysis results. Reachability of failing assertions or verification errors is computed based 
 on the transition system. Results for LTL formulae are computed solely by the LTL checker.
 \end{enumerate}
 
-States of the analyzed program are represented as follows:
+\noindent States of the analyzed program are represented as follows:
 
 \subsection{Program State}
 
 A program state consists of a label (lab), a property state (pstate),
-a constraint set (cset), an IO property (io). $PState = Var
+a constraint set (cset), and an IO property (io). $PState = Var
 \rightarrow Val$ where $Val$ is either a constant or $top$. $Val$ is a
 lifted integer set. An execution state is defined as $EState = Lab \times
 PState \times Constraints \times IO$ where $Constraints$ is a set of
@@ -630,37 +629,6 @@ an input or output variable. More specifically, whether a variable is
 read from stdin, or printed to stdout or stderr. Furthermore it
 determines whether the state produces an output which is caused by a
 failed assert.
-
-\ignore{
-Hence, the analysis information is represented as:
-
-\begin{itemize}
-\item Label: num
-\item PState: VarId $\rightarrow$ Val
-\item SState: Label $\times$ PStateId $\times$ ConstraintId $\times$ IOId
-\end{itemize}
-
-\subsection{IO Property - Input/Output and Exit Information}
-
-This property represents the information that the operation is either
-an input, an output, or a failed-assert operation. From the label and
-the associated statement, details as relevant to reporting the
-analysis results can be extracted. For example, in the RERS-problems
-we find the information for a failed-assert by a) using the label to
-find the corresponding statement and b) the associated C error label
-is then found in a look-up operation on the ROSE AST.
-
-\subsection{The State Transition System}
-
-\newcommand{\deqop}[0]{\#\#}
-\newcommand{\eq}[0]{=}
-
-The State Transition System is represented as a graph where nodes
-represent system states and edges represent the transition between two
-states as computed by the evaluations of the respective transfer
-function. They are therefore annotated with the respective statement
-which has been analyzed by the transfer function.
-}
 
 \bibliographystyle{plain}
 \bibliography{codethorn}
