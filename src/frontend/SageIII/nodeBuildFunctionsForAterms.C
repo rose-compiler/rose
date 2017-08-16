@@ -3186,6 +3186,20 @@ SgUntypedModuleDeclaration* SgUntypedModuleDeclaration::build_node_from_nonlist_
    }
 
 
+// Rasmussen (8/16/2017): Added UntypedSubmoduleDeclaration IR node (a submodule extends an existing module)
+SgUntypedSubmoduleDeclaration* SgUntypedSubmoduleDeclaration::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, std::string name, std::string submodule_ancestor, std::string submodule_parent )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedSubmoduleDeclaration::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, std::string name, std::string submodule_ancestor, std::string submodule_parent): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedSubmoduleDeclaration* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
 /* #line 3096 "../../../src/frontend/SageIII//Cxx_GrammarAtermNodeBuildFunctions.C" */
 
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */

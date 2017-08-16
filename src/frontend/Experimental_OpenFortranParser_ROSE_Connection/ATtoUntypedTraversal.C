@@ -539,7 +539,6 @@ ATbool ATtoUntypedTraversal::traverse_OptLabel(ATerm term, std::string & var_Opt
 
 //========================================================================================
 // Name
-// TODO - I think this can go away in OFP/FAST
 //----------------------------------------------------------------------------------------
 ATbool ATtoUntypedTraversal::traverse_Name(ATerm term, std::string & name)
 {
@@ -1545,6 +1544,7 @@ ATbool ATtoUntypedTraversal::traverse_ImplicitStmt(ATerm term, SgUntypedDeclarat
    }
 
    else if (ATmatch(term, "ImplicitStmt(<term>,<term>,<term>)", &term1,&term2,&term_eos)) {
+      std::cerr << "...TODO... matched ImplicitStmt (not IMPLICIT NONE)" << std::endl;
       std::vector<FAST::ImplicitSpec> spec_list;
       if (traverse_OptLabel(term1, label)) {
          // MATCHED OptLabel
@@ -2124,7 +2124,7 @@ ATbool ATtoUntypedTraversal::traverse_Module(ATerm term, SgUntypedScope* scope)
 }
 
 //========================================================================================
-// R1105 module-stmt
+// module-stmt (R1105)
 //----------------------------------------------------------------------------------------
 ATbool ATtoUntypedTraversal::traverse_ModuleStmt(ATerm term, SgUntypedNamedStatement** module_stmt)
 {
@@ -2463,7 +2463,159 @@ ATbool ATtoUntypedTraversal::traverse_Submodule(ATerm term, SgUntypedScope* scop
 // TODO - implementation
    std::cerr << "...TODO... implement Submodule" << std::endl;
 
+   ATerm term1, term2, term3, term4;
+   std::string label, name, ancestor, parent;
+
+   SgUntypedSubmoduleDeclaration* submodule;
+   SgUntypedNamedStatement* submodule_stmt;
+   SgUntypedOtherStatement* contains_stmt;
+   SgUntypedNamedStatement* end_submodule_stmt;
+   SgUntypedModuleScope * submodule_scope;
+
+// scope lists
+   SgUntypedDeclarationStatementList* decl_list;
+   SgUntypedStatementList*            stmt_list;
+   SgUntypedFunctionDeclarationList*  func_list;
+
+   SgToken::ROSE_Fortran_Keywords keyword = SgToken::FORTRAN_SUBMODULE;
+
+   if (ATmatch(term, "Submodule(<term>,<term>,<term>,<term>)", &term1,&term2,&term3,&term4))
+   {
+      if (traverse_SubmoduleStmt(term1, &submodule_stmt, ancestor, parent)) {
+         // MATCHED SubmoduleStmt
+      } else return ATfalse;
+
+      decl_list = new SgUntypedDeclarationStatementList();
+      stmt_list = new SgUntypedStatementList();
+      func_list = new SgUntypedFunctionDeclarationList();
+
+      label = submodule_stmt->get_label_string();
+      name  = submodule_stmt->get_statement_name();
+      submodule_scope = new SgUntypedModuleScope(label,keyword,decl_list,stmt_list,func_list);
+
+      if (traverse_SpecificationPart(term2, decl_list)) {
+         // MATCHED SpecificationPart
+         setSourcePosition(decl_list, term2);
+      } else return ATfalse;
+      if (traverse_OptModuleSubprogramPart(term3, &contains_stmt, submodule_scope)) {
+         // MATCHED OptModuleSubprogramPart
+         setSourcePosition(func_list, term3);
+      } else return ATfalse;
+
+      if (traverse_EndSubmoduleStmt(term4, &end_submodule_stmt)) {
+         // MATCHED EndSubmoduleStmt
+      } else return ATfalse;
+   } else return ATfalse;
+
+   submodule = new SgUntypedSubmoduleDeclaration(label,keyword,name,ancestor,parent,
+                                                 submodule_scope,end_submodule_stmt);
+
+   setSourcePositionIncludingNode(submodule, term, end_submodule_stmt);
+   setSourcePositionIncludingNode(submodule->get_scope(), term2, end_submodule_stmt);
+
+// add the submodule to the outer scope
+   scope->get_declaration_list()->get_decl_list().push_back(submodule);
+
+// no longer need submodule_stmt as this information is contained in the submodule declaration
+   delete submodule_stmt;
+
    return ATfalse;
+}
+
+//========================================================================================
+// submodule-stmt (R1117)
+//----------------------------------------------------------------------------------------
+ATbool ATtoUntypedTraversal::traverse_SubmoduleStmt(ATerm term, SgUntypedNamedStatement** submodule_stmt,
+                                                    std::string & ancestor, std::string & parent)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_SubmoduleStmt: %s\n", ATwriteToString(term));
+#endif
+  
+   ATerm term1, term2, term3, term_eos;
+   std::string label, name, eos;
+
+   SgToken::ROSE_Fortran_Keywords keyword = SgToken::FORTRAN_SUBMODULE;
+
+   *submodule_stmt = NULL; 
+   if (ATmatch(term, "SubmoduleStmt(<term>,<term>,<term>,<term>)", &term1,&term2,&term3,&term_eos)) {
+      if (traverse_OptLabel(term1, label)) {
+         // MATCHED OptLabel
+      } else return ATfalse;
+      if (traverse_Name(term2, name)) {
+         // MATCHED ProcedureName string
+      } else return ATfalse;
+      if (traverse_ParentIdentifier(term3, ancestor, parent)) {
+         // MATCHED ProcedureName string
+      } else return ATfalse;
+      if (traverse_eos(term_eos, eos)) {
+         // MATCHED eos string
+      } else return ATfalse;
+   }
+   else return ATfalse;
+
+   *submodule_stmt = new SgUntypedNamedStatement(label,keyword,name);
+   setSourcePositionExcludingTerm(*submodule_stmt, term, term_eos);
+
+  return ATtrue;
+}
+
+//========================================================================================
+// parent-identifier (R1118)
+//----------------------------------------------------------------------------------------
+ATbool ATtoUntypedTraversal::traverse_ParentIdentifier(ATerm term, std::string & ancestor, std::string & parent)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_ParentIdentifier: %s\n", ATwriteToString(term));
+#endif
+  
+   char * arg1, * arg2;
+
+   if (ATmatch(term, "ParentIdentifier(<str>,no-name())", &arg1)) {
+      // MATCHED ParentIdentifier (with no parent)
+      ancestor += arg1;
+   }
+   else if (ATmatch(term, "ParentIdentifier(<str>,<str>)", &arg1, &arg2)) {
+      // MATCHED ParentIdentifier (parent)
+      ancestor += arg1;
+      parent   += arg2;
+   } else return ATfalse;
+
+   return ATtrue;
+}
+
+//========================================================================================
+// end-module-stmt (R1119)
+//----------------------------------------------------------------------------------------
+ATbool ATtoUntypedTraversal::traverse_EndSubmoduleStmt(ATerm term, SgUntypedNamedStatement** end_submodule_stmt)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_EndSubmoduleStmt: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm term1, term2, term_eos;
+   std::string label, name, eos;
+
+   SgToken::ROSE_Fortran_Keywords keyword = SgToken::FORTRAN_END_SUBMODULE;
+
+   *end_submodule_stmt = NULL;
+   if (ATmatch(term, "EndSubmoduleStmt(<term>,<term>,<term>)", &term1,&term2,&term_eos)) {
+      if (traverse_OptLabel(term1, label)) {
+         // MATCHED OptLabel
+      } else return ATfalse;
+      if (traverse_OptName(term2, name)) {
+         // MATCHED SubmoduleName string
+      } else return ATfalse;
+      if (traverse_eos(term_eos, eos)) {
+         // MATCHED eos string
+      } else return ATfalse;
+   }
+   else return ATfalse;
+
+   *end_submodule_stmt = new SgUntypedNamedStatement(label,keyword,name);
+   setSourcePositionExcludingTerm(*end_submodule_stmt, term, term_eos);
+
+   return ATtrue;
 }
 
 //========================================================================================

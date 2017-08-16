@@ -185,6 +185,15 @@ ATbool traverse_RenameOrOnlyList(ATerm term, bool isOnlyList, SgUntypedTokenPair
 // R1116
 ATbool traverse_Submodule (ATerm term, SgUntypedScope* scope);
 
+// R1117
+ATbool traverse_SubmoduleStmt(ATerm term, SgUntypedNamedStatement** submodule_stmt,
+                              std::string & ancestor, std::string & parent);
+// R1118
+ATbool traverse_ParentIdentifier(ATerm term, std::string & ancestor, std::string & parent);
+
+// R1119
+ATbool traverse_EndSubmoduleStmt(ATerm term, SgUntypedNamedStatement** end_submodule_stmt);
+
 // R1120
 ATbool traverse_BlockData (ATerm term, SgUntypedScope* scope);
 
