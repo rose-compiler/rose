@@ -69,7 +69,7 @@ pair<int,int> CodeThorn::parseCsvIntPair(string toParse) {
 
 string CodeThorn::color(string name) {
 #ifndef CT_IGNORE_COLORS_BOOLOPTIONS
-  if(!boolOptions["colors"]) 
+  if(!args.isSet("colors")) 
     return "";
 #endif
   string c="\33[";
