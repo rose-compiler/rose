@@ -329,7 +329,7 @@ PropertyValueTable* CounterexampleAnalyzer::cegarPrefixAnalysisForLtl(int proper
       falsified = true;
       verified = false;
     } else if (ceaResult.analysisResult == CE_TYPE_SPURIOUS) {
-      if(!boolOptions["keep-error-states"]) {
+      if(!args.isSet("keep-error-states")) {
         // remove a trace leading to an error state and mark the branches to it (do not reconnect in phase 3) 
         removeAndMarkErroneousBranches(model);
       }
@@ -349,7 +349,7 @@ PropertyValueTable* CounterexampleAnalyzer::cegarPrefixAnalysisForLtl(int proper
     addAllPrefixOutputStates(startAndOuputStatesPrefix, model);
     for (set<const EState*>::iterator i=startAndOuputStatesPrefix.begin(); i!=startAndOuputStatesPrefix.end(); ++i) {
       vector<bool> inputSuccessors(ltlInAlphabet.size(), false);
-      if(!boolOptions["keep-error-states"]) {
+      if(!args.isSet("keep-error-states")) {
         inputSuccessors = setErrorBranches(inputSuccessors, *i); 
       }
       // determine which input states exist as successors in the prefix

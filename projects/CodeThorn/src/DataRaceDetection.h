@@ -20,8 +20,8 @@ class DataRaceDetection {
  public:
   DataRaceDetection();
   void setCsvFileName(std::string fileName);
-  void handleCommandLineOptions(CodeThorn::Analyzer& analyzer, BoolOptions& boolOptions);
-  bool run(CodeThorn::Analyzer& analyzer, BoolOptions& boolOptions);
+  void handleCommandLineOptions(CodeThorn::Analyzer& analyzer);
+  bool run(CodeThorn::Analyzer& analyzer);
  private:
   struct Options {
     Options();

@@ -896,8 +896,6 @@ int main(int argc, char* argv[]) {
     }
 
     cout << "INIT: Parsing and creating AST."<<endl;
-    boolOptions.registerOption("semantic-fold",false); // temporary
-    boolOptions.registerOption("post-semantic-fold",false); // temporary
     SgProject* root = frontend(argc,argv);
 
     if(option_trace) {

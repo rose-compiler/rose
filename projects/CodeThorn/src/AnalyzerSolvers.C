@@ -114,7 +114,7 @@ void Analyzer::runSolver4() {
         } // just for proper auto-formatting in emacs
       } // conditional: test if work is available
     } // worklist-parallel for
-    if(boolOptions["semantic-fold"]) {
+    if(args.isSet("semantic-fold")) {
       if(analyzedSemanticFoldingNode>_semanticFoldThreshold) {
         semanticFoldingOfTransitionGraph();
         analyzedSemanticFoldingNode=0;
@@ -127,7 +127,7 @@ void Analyzer::runSolver4() {
     }
     if(isIncompleteSTGReady()) {
       // ensure that the STG is folded properly when finished
-      if(boolOptions["semantic-fold"]) {
+      if(args.isSet("semantic-fold")) {
         semanticFoldingOfTransitionGraph();
       }
       // we report some information and finish the algorithm with an incomplete STG
@@ -138,7 +138,7 @@ void Analyzer::runSolver4() {
     }
   } // while
   // ensure that the STG is folded properly when finished
-  if(boolOptions["semantic-fold"]) {
+  if(args.isSet("semantic-fold")) {
     semanticFoldingOfTransitionGraph();
   }
   reachabilityResults.finished(); // sets all unknown entries to NO.
@@ -171,7 +171,7 @@ void Analyzer::runSolver5() {
     ioReductionThreshold = args["io-reduction"].as<int>();
   }
 
-  if(boolOptions["rers-binary"]) {
+  if(args.isSet("rers-binary")) {
     //initialize the global variable arrays in the linked binary version of the RERS problem
     logger[DEBUG]<< "init of globals with arrays for "<< workers << " threads. " << endl;
     RERS_Problem::rersGlobalVarsArrayInit(workers);
@@ -289,7 +289,7 @@ void Analyzer::runSolver5() {
               } else if(isFailedAssertEState(&newEState)) {
                 // record failed assert
                 int assertCode;
-                if(boolOptions["rers-binary"]) {
+                if(args.isSet("rers-binary")) {
                   assertCode=reachabilityAssertCode(newEStatePtr);
                 } else {
                   assertCode=reachabilityAssertCode(currentEStatePtr);
@@ -297,7 +297,7 @@ void Analyzer::runSolver5() {
                 if(assertCode>=0) {
 #pragma omp critical
                   {
-                    if(boolOptions["with-counterexamples"] || boolOptions["with-assert-counterexamples"]) {
+                    if(args.isSet("with-counterexamples") || args.isSet("with-assert-counterexamples")) {
                       //if this particular assertion was never reached before, compute and update counterexample
                       if (reachabilityResults.getPropertyValue(assertCode) != PROPERTY_VALUE_YES) {
                         _firstAssertionOccurences.push_back(pair<int, const EState*>(assertCode, newEStatePtr));
@@ -307,7 +307,7 @@ void Analyzer::runSolver5() {
                   }
                 } else {
                   // TODO: this is a workaround for isFailedAssert being true in case of rersmode for stderr (needs to be refined)
-                  if(!boolOptions["rersmode"]) {
+                  if(!args.isSet("rersmode")) {
                     // assert without label
                   }
                 }
@@ -344,7 +344,7 @@ void Analyzer::runSolver5() {
 // solver 8 is used to analyze traces of consecutively added input sequences
 void Analyzer::runSolver8() {
   int workers = 1; //only one thread
-  if(boolOptions["rers-binary"]) {
+  if(args.isSet("rers-binary")) {
     //initialize the global variable arrays in the linked binary version of the RERS problem
     // logger[DEBUG]<< "init of globals with arrays for "<< workers << " threads. " << endl;
     RERS_Problem::rersGlobalVarsArrayInit(workers);
@@ -423,7 +423,7 @@ typedef std::pair<PState,  std::list<int> > PStatePlusIOHistory;
  * \date 2015.
  */
 void Analyzer::runSolver10() {
-  if(boolOptions["rers-binary"]) {
+  if(args.isSet("rers-binary")) {
     //initialize the global variable arrays in the linked binary version of the RERS problem
     RERS_Problem::rersGlobalVarsArrayInit(_numberOfThreadsToUse);
     RERS_Problem::createGlobalVarAddressMaps(this);
