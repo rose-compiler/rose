@@ -5,7 +5,11 @@
 #include <BlockingAnal.h>
 #include <SymbolicExpr.h>
 
+#ifndef _MSC_VER
 #include <sys/time.h>
+#else
+#include "timing.h"
+#endif
 
 #define DEBUG
 
