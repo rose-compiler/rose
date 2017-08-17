@@ -82,6 +82,15 @@ HEADER_OMP_CLAUSE_START
             e_omp_reduction_last
         };
 
+        enum omp_dependence_type_enum
+        {
+            e_omp_depend_unknown,
+            e_omp_depend_in,
+            e_omp_depend_out,
+            e_omp_depend_inout,
+            e_omp_depend_last
+        };
+       
         // Liao 1/22/2012: experimental support for OpenMP Accelerator model 
         enum omp_map_operator_enum
         {
@@ -13556,6 +13565,7 @@ Sg_File_Info::Sg_File_Info()
 // away from C style strings to C++ style strings.
 Sg_File_Info::Sg_File_Info ( const std::string & filename, int line, int col )
    : p_line(line), p_col(col),
+     p_classificationBitField(0),
      p_physical_file_id(NULL_FILE_ID),
      p_physical_line(0),
      p_source_sequence_number(0)

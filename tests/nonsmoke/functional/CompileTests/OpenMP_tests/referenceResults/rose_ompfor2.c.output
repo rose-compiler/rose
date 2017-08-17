@@ -1,0 +1,16 @@
+#pragma omp single 
+#pragma omp for  nowait
+#pragma omp barrier 
+#pragma omp single 
+#pragma omp for  schedule(static)
+#pragma omp single 
+#pragma omp for  schedule(static , 5)
+#pragma omp single 
+#pragma omp for  schedule(dynamic , 3)
+#pragma omp single 
+#pragma omp for  schedule(guided)
+#pragma omp single 
+#pragma omp for  schedule(runtime) ordered
+//#pragma omp parallel for schedule (auto)
+#pragma omp parallel 
+#pragma omp single 

@@ -1,0 +1,3 @@
+#pragma omp parallel  private(i)
+#pragma omp single 
+#pragma omp task  priority(i)

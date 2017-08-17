@@ -1,0 +1,6 @@
+!         & \n !$omp .... 
+!         & \n !$omp & ....
+!$omp parallel  shared(aa,b,n) private(i)
+!$omp do 
+!$omp end do  nowait
+!$omp end parallel 

@@ -1,0 +1,4 @@
+//#pragma omp target map(tofrom:c[0:N][0:M]), map(to:a[0:N][0:M],b[0:M][0:K])
+#pragma omp target  map(tofrom : c) map(to : a,b)
+#pragma omp parallel 
+#pragma omp for  private(i,j,k)

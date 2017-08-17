@@ -5,7 +5,7 @@
 #include "stringify.h"
 
 #include "rosePublicConfig.h"
-#ifdef ROSE_HAVE_GCRYPT_H
+#ifdef ROSE_HAVE_LIBGCRYPT
 #include <gcrypt.h>
 #endif
 
@@ -154,7 +154,7 @@ SgAsmFunction::get_extent(AddressIntervalSet *extents, rose_addr_t *lo_addr, ros
 bool
 SgAsmFunction::get_sha1(uint8_t digest[20], NodeSelector *selector)
 {
-#ifdef ROSE_HAVE_GCRYPT_H
+#ifdef ROSE_HAVE_LIBGCRYPT
     struct T1: public AstSimpleProcessing {
         NodeSelector *selector;
         gcry_md_hd_t md; // message digest
