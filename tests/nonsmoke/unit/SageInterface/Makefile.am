@@ -77,7 +77,7 @@ $(nonsmoke_genericCoverage_c_output): genericCoverage
 	$(VALGRIND) ./genericCoverage $(TEST_CXXFLAGS) -c $(nonsmoke_specimens_Cxx_tests_path)/$(@:%.genericCoverage.output=%)
 
 $(nonsmoke_collectFunctionSideEffect_cpp_output): collectFunctionSideEffect
-	$(VALGRIND) ./collectFunctionSideEffect $(TEST_CXXFLAGS) -annot $(top_srcdir)/tests/nonsmoke/unit/SageInterface/vectorXY.annot -c $(nonsmoke_specimens_Cxx_tests_path)/$(@:%.collectFunctionSideEffect.output=%)
+	$(VALGRIND) ./collectFunctionSideEffect -sort $(TEST_CXXFLAGS) -annot $(top_srcdir)/tests/nonsmoke/unit/SageInterface/vectorXY.annot -c $(nonsmoke_specimens_Cxx_tests_path)/$(@:%.collectFunctionSideEffect.output=%)
 
 # the diff files .output.diff
 nonsmoke_getDataSharingAttribute_c_output_diff = $(addsuffix .diff, ${nonsmoke_getDataSharingAttribute_c_output_verify})
