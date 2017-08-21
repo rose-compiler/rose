@@ -608,7 +608,11 @@ string Visualizer::visualizeReadWriteAccesses(IndexToReadWriteDataMap& indexToRe
 	      node_shape = "[label = \"R/W race\", shape = doubleoctagon, style=filled, fillcolor = red, fontcolor=white, fontsize=18]";
 	      edge_color = "red";
 	    } else {
-	      node_shape = "[label = \"\", shape = point, fillcolor=red, color=red, style=filled, width="+racePointSizeStr+", height="+racePointSizeStr+"]";
+	      if (arrayElementsAsPoints) {
+		node_shape = "[label = \"\", shape = point, fillcolor=red, color=red, style=filled, width="+racePointSizeStr+", height="+racePointSizeStr+"]";
+	      } else {
+		node_shape = "[shape = rectangle, fillcolor=red, color=red, style=filled, width="+racePointSizeStr+", height="+racePointSizeStr+"]";
+	      }
 	      edge_color = "blue";	      
 	    }
 	  } else {
@@ -629,7 +633,7 @@ string Visualizer::visualizeReadWriteAccesses(IndexToReadWriteDataMap& indexToRe
 	  } else {
 	    string clusterstring;
 	    if (useClusters) {
-	      string clusterstring = "subgraph cluster_" + varName + " { \n";
+	      clusterstring = "subgraph cluster_" + varName + " { \n";
 	    }
 	    clusterstring += "\"" + (*i).toStringNoSsaSubscript(variableIdMapping) + "\"" + node_shape + "\n";
 	    clusters[varName] = clusterstring;
@@ -643,7 +647,11 @@ string Visualizer::visualizeReadWriteAccesses(IndexToReadWriteDataMap& indexToRe
 	      node_shape = "[label = \"R/W race\", shape = doubleoctagon, style=filled, fillcolor = red, fontcolor=white, fontsize=18]";
 	      edge_color = "red";
 	    } else {
-	      node_shape = "[label = \"\", shape = point, fillcolor=red, color=red, style=filled, width="+racePointSizeStr+", height="+racePointSizeStr+"]";
+	      if (arrayElementsAsPoints) {
+		node_shape = "[label = \"\", shape = point, fillcolor=red, color=red, style=filled, width="+racePointSizeStr+", height="+racePointSizeStr+"]";
+	      } else {
+		node_shape = "[shape = rectangle, fillcolor=red, color=red, style=filled, width="+racePointSizeStr+", height="+racePointSizeStr+"]";
+	      }
 	      edge_color = "\"#47A11D\"";	      
 	    }
 	  } else if (writeWriteRaces.find(*i) != writeWriteRaces.end()) {
@@ -651,7 +659,11 @@ string Visualizer::visualizeReadWriteAccesses(IndexToReadWriteDataMap& indexToRe
 	      node_shape = "[label = \"W/W race\", shape = doubleoctagon, style=filled, fillcolor = red, fontcolor=white, fontsize=18]";
 	      edge_color = "red";
 	    } else {
-	      node_shape = "[label = \"\", shape = point, fillcolor=red, color=red, style=filled, width="+racePointSizeStr+", height="+racePointSizeStr+"]";
+	      if (arrayElementsAsPoints) {
+		node_shape = "[label = \"\", shape = point, fillcolor=red, color=red, style=filled, width="+racePointSizeStr+", height="+racePointSizeStr+"]";
+	      } else {
+		node_shape = "[shape = rectangle, fillcolor=red, color=red, style=filled, width="+racePointSizeStr+", height="+racePointSizeStr+"]";
+	      }
 	      edge_color = "\"#47A11D\"";	      
 	    }
 	  } else {
@@ -672,7 +684,7 @@ string Visualizer::visualizeReadWriteAccesses(IndexToReadWriteDataMap& indexToRe
 	  } else {
 	    string clusterstring;
 	    if (useClusters) {
-	      string clusterstring = "subgraph cluster_" + varName + " { \n";
+	      clusterstring = "subgraph cluster_" + varName + " { \n";
 	    }
 	    clusterstring += "\"" + (*i).toStringNoSsaSubscript(variableIdMapping) + "\"" + node_shape + "\n";
 	    clusters[varName] = clusterstring;

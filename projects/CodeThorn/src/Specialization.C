@@ -837,10 +837,13 @@ int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet& loopInfoSet,
       }
       // a dot graph for visualizing reads and writes (including data races)
       if (_visualizeReadWriteAccesses) {
-	string filename = "readWriteSetGraph" + boost::lexical_cast<string>(parallelLoopIdx) + ".dot";
+	string filename = "readWriteSetGraph.dot";
 	Visualizer visualizer;
 	string dotGraph = visualizer.visualizeReadWriteAccesses(indexToReadWriteDataMap, variableIdMapping, 
-								readWriteRaces, writeWriteRaces, true, false, false);
+								readWriteRaces, writeWriteRaces, 
+								!args.isSet("rw-data"), 
+								args.isSet("rw-clusters"),
+								args.isSet("rw-highlight-races"));
 	write_file(filename, dotGraph);
 	cout << "STATUS: written graph that illustrates read and write accesses to file: " << filename << endl;
       }

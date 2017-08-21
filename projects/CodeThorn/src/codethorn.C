@@ -320,6 +320,9 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ;
 
   visualizationOptions.add_options()
+    ("rw-clusters", po::value< bool >()->default_value(false)->implicit_value(true), "Draw boxes around data elements from the same array (read/write-set graphs).")      
+    ("rw-data", po::value< bool >()->default_value(false)->implicit_value(true), "Display names of data elements (read/write-set graphs).") 
+    ("rw-highlight-races", po::value< bool >()->default_value(false)->implicit_value(true), "Highlight data races as large red dots (read/write-set graphs).") 
     ("dot-io-stg", po::value< string >(), "Output STG with explicit I/O node information in dot file <arg>.")
     ("dot-io-stg-forced-top", po::value< string >(), "Output STG with explicit I/O node information in dot file <arg>. Groups abstract states together.")
     ("tg1-estate-address", po::value< bool >()->default_value(false)->implicit_value(true), "Transition graph 1: Visualize address.")
@@ -330,7 +333,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("tg2-estate-id", po::value< bool >()->default_value(false)->implicit_value(true), "Transition graph 2: Visualize estate-id.")
     ("tg2-estate-properties", po::value< bool >()->default_value(false)->implicit_value(true),"Transition graph 2: Visualize all estate-properties.")
     ("tg2-estate-predicate", po::value< bool >()->default_value(false)->implicit_value(true), "Transition graph 2: Show estate as predicate.")
-    ("visualize-read-write-sets", po::value< bool >()->default_value(false)->implicit_value(true), "Generate one graph for each parallel loop that illustrates the read and write accesses of the involved threads.")
+    ("visualize-read-write-sets", po::value< bool >()->default_value(false)->implicit_value(true), "Generate a read/write-set graph that illustrates the read and write accesses of the involved threads.")
     ("viz", po::value< bool >()->default_value(false)->implicit_value(true),"Generate visualizations (.dot) outputs.")
     ;
 
