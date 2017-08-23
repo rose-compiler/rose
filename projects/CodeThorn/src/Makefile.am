@@ -183,6 +183,8 @@ codethorn_SOURCES = \
   ReachabilityAnalyzerZ3.h \
   ReachabilityAnalyzerZ3.C \
   RERS_empty_specialization.C      \
+  RewriteStatistics.C \
+  RewriteStatistics.h \
   RewriteSystem.C \
   RewriteSystem.h \
   SetAlgo.h \
@@ -452,6 +454,8 @@ woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C \
   ReachabilityAnalysis.h \
   ConversionFunctionsGenerator.h \
   ConversionFunctionsGenerator.C \
+  RewriteStatistics.h \
+  RewriteStatistics.C \
   RewriteSystem.h \
   RewriteSystem.C \
   SpotMiscellaneous.h \
@@ -605,8 +609,8 @@ check-data-races:
 	@echo ================================================================
 	@echo RUNNING DATA RACE VERIFICATION TESTS
 	@echo ================================================================
-	@./codethorn --data-race  $(srcdir)/tests/datarace/anti_dep_1.yes.c --max-time=5 --solver=12
-	@./codethorn --data-race  $(srcdir)/tests/datarace/inner_only_1.no.c --max-time=5 --solver=12
+	@./codethorn --data-race=yes  $(srcdir)/tests/datarace/anti_dep_1.yes.c --max-time=5 --solver=12
+	@./codethorn --data-race=yes  $(srcdir)/tests/datarace/inner_only_1.no.c --max-time=5 --solver=12
 
 
 check-flow-insensitive:
@@ -648,7 +652,7 @@ check-equivalence-checking:
 @echo ================================================================
 	@echo RUNNING UPDATE SEQUENCE VERIFICATION TESTS
 	@echo ================================================================
-	@./codethorn --edg:no_warnings $(srcdir)/tests/jacobi-1d-imper_mod.c --dump-non-sorted=tmp.nsdump
+	@./codethorn --edg:no_warnings $(srcdir)/tests/jacobi-1d-imper_mod.c --dump-non-sorted=tmp.nsdump --rule-commutative-sort=no
 	@diff tmp.nsdump $(srcdir)/tests/jacobi-1d-imper_mod.c.nsdump
 	@rm -f tmp.nsdump
 
