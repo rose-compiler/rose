@@ -184,6 +184,8 @@ codethorn_SOURCES = \
   ReachabilityAnalyzerZ3.h \
   ReachabilityAnalyzerZ3.C \
   RERS_empty_specialization.C      \
+  RewriteStatistics.C \
+  RewriteStatistics.h \
   RewriteSystem.C \
   RewriteSystem.h \
   SetAlgo.h \
@@ -439,6 +441,8 @@ woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C \
   ReachabilityAnalysis.h \
   ConversionFunctionsGenerator.h \
   ConversionFunctionsGenerator.C \
+  RewriteStatistics.h \
+  RewriteStatistics.C \
   RewriteSystem.h \
   RewriteSystem.C \
   SpotMiscellaneous.h \

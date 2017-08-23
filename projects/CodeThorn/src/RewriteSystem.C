@@ -22,26 +22,6 @@ bool RewriteSystem::getTrace() {
   return _trace;
 }
 
-RewriteStatistics RewriteSystem::getRewriteStatistics() {
-  return dump1_stats;
-}
-
-RewriteStatistics::RewriteStatistics() {
-  init();
-}
-
-void RewriteStatistics::init() {
-  numElimMinusOperator=0;
-  numElimAssignOperator=0;
-  numAddOpReordering=0;
-  numConstantFolding=0;
-  numVariableElim=0;
-  numArrayUpdates=0;
-  numConstExprElim=0;
-}
-void RewriteStatistics::reset() {
-  init();
-}
 
 void RewriteSystem::initDiagnostics() {
   static bool initialized = false;
@@ -53,36 +33,12 @@ void RewriteSystem::initDiagnostics() {
 }
 
 RewriteStatistics RewriteSystem::getStatistics() {
-  return dump1_stats;
+  return _rewriteStatistics;
 }
 
-string RewriteStatistics::toString() {
-  stringstream ss;
-  ss<<"Array updates  : "<<numArrayUpdates<<endl;
-  ss<<"Elim minus op  : "<<numElimMinusOperator<<endl;
-  ss<<"Elim assign op : "<<numElimAssignOperator<<endl;
-  ss<<"Add op reorder : "<<numAddOpReordering<<endl;
-  ss<<"Const fold     : "<<numConstantFolding<<endl;
-  ss<<"Variable elim  : "<<numVariableElim<<endl;
-  ss<<"Const expr elim: "<<numConstExprElim<<endl;
-  return ss.str();
-}
-
-string RewriteStatistics::toCsvString() {
-  stringstream ss;
-  ss<<numArrayUpdates
-    <<","<<numElimMinusOperator
-    <<","<<numElimAssignOperator
-    <<","<<numAddOpReordering
-    <<","<<numConstantFolding
-    <<","<<numVariableElim
-    <<","<<numConstExprElim
-    ;
-  return ss.str();
-}
 
 void RewriteSystem::resetStatistics() {
-  dump1_stats.reset();
+  _rewriteStatistics.reset();
 }
 
 void RewriteSystem::rewriteCompoundAssignmentsInAst(SgNode* root, VariableIdMapping* variableIdMapping) {
@@ -121,7 +77,7 @@ void RewriteSystem::rewriteCompoundAssignmentsInAst(SgNode* root, VariableIdMapp
 SgNode* RewriteSystem::buildRewriteCompoundAssignment(SgNode* root, VariableIdMapping* variableIdMapping) {
   // Rewrite-rule 0: $Left OP= $Right => $Left = $Left OP $Right
   if(isSgCompoundAssignOp(root)) {
-    dump1_stats.numElimAssignOperator++;
+    _rewriteStatistics.numElimAssignOperator++;
     SgExpression* lhsCopy=SageInterface::copyExpression(isSgExpression(SgNodeHelper::getLhs(root)));
     SgExpression* lhsCopy2=SageInterface::copyExpression(isSgExpression(SgNodeHelper::getLhs(root)));
     SgExpression* rhsCopy=SageInterface::copyExpression(isSgExpression(SgNodeHelper::getRhs(root)));
@@ -173,7 +129,7 @@ void RewriteSystem::rewriteCompoundAssignments(SgNode*& root, VariableIdMapping*
 #else
   // Rewrite-rule 0: $Left OP= $Right => $Left = $Left OP $Right
   if(isSgCompoundAssignOp(root)) {
-    dump1_stats.numElimAssignOperator++;
+    _rewriteStatistics.numElimAssignOperator++;
     SgExpression* lhsCopy=SageInterface::copyExpression(isSgExpression(SgNodeHelper::getLhs(root)));
     SgExpression* lhsCopy2=SageInterface::copyExpression(isSgExpression(SgNodeHelper::getLhs(root)));
     SgExpression* rhsCopy=SageInterface::copyExpression(isSgExpression(SgNodeHelper::getRhs(root)));
@@ -377,7 +333,7 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
            }
            transformationApplied=true;
            someTransformationApplied=true;
-           dump1_stats.numElimMinusOperator++;
+           _rewriteStatistics.numElimMinusOperator++;
          }
        }
      } while(transformationApplied); // a loop will eliminate -(-(5)) to 5
@@ -651,7 +607,7 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
                  someTransformationApplied=true;
                  if(getTrace())
                    cout<<((*i)["$BinaryOp1"])->unparseToString()<<endl;
-                 dump1_stats.numAddOpReordering++;
+                 _rewriteStatistics.numAddOpReordering++;
                }
              }
            }
@@ -699,7 +655,7 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
            }
            transformationApplied=true;
            someTransformationApplied=true;
-           dump1_stats.numConstantFolding++;
+           _rewriteStatistics.numConstantFolding++;
          }
        }
      } while(transformationApplied);
