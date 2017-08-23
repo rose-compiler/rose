@@ -1821,7 +1821,7 @@ int main( int argc, char * argv[] ) {
 
       bool useRuleConstSubstitution=args.isSet("rule-const-subst");
       bool useRuleCommutativeSort=args.isSet("rule-commutative-sort");
-
+      
       timer.start();
       speci.extractArrayUpdateOperations(&analyzer,
           arrayUpdates,
