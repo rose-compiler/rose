@@ -24,11 +24,3 @@ bool CommandLineOptions::isSet(string option) {
     throw CodeThorn::Exception("Command line option \"" + option + "\" accessed as Boolean value, but has different type.");
   }
 }
-
-void CommandLineOptions::setOption(string option, bool value) {
-  if (count(option) < 1) {
-    throw CodeThorn::Exception("Trying to set Boolean command line option \"" + option + "\" that does not exist.");
-  }
-  const_cast<boost::program_options::variable_value&>(operator[](option)) = 
-    boost::program_options::variable_value(boost::any(value), false);
-}

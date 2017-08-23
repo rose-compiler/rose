@@ -23,10 +23,25 @@ class CommandLineOptions
   {
 public:
   bool isSet(std::string option);
-  void setOption(std::string option, bool value);
+  template<typename T> void setOption(std::string option, T value);
 };
 
 extern CommandLineOptions args; // defined in CommandLineOptions.C
 
 extern int option_debug_mode;
+
+
+// template function implementation
+#include "CodeThornException.h"
+using namespace std;
+
+template<typename T>
+void CommandLineOptions::setOption(string option, T value) {
+  if (count(option) < 1) {
+    throw CodeThorn::Exception("Trying to set command line option \"" + option + "\" that does not exist.");
+  }
+  const_cast<boost::program_options::variable_value&>(operator[](option)) = 
+    boost::program_options::variable_value(boost::any(value), false);
+}
 #endif
+

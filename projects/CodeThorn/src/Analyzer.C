@@ -10,6 +10,7 @@
 #include "Miscellaneous.h"
 #include "Miscellaneous2.h"
 #include "AnalysisAbstractionLayer.h"
+#include "Solver8.h"
 #include "SpotConnection.h"
 #include "CodeThornException.h"
 
@@ -119,7 +120,7 @@ Analyzer::Analyzer():
   _resourceLimitDiff(10000),
   _numberOfThreadsToUse(1),
   _semanticFoldThreshold(5000),
-  _solver(5),
+  _solver(nullptr),
   _analyzerMode(AM_ALL_STATES),
   _maxTransitions(-1),
   _maxIterations(-1),
@@ -201,25 +202,17 @@ ExprAnalyzer* Analyzer::getExprAnalyzer() {
   return &exprAnalyzer;
 }
 
-void Analyzer::setSolver(int solver) {
+void Analyzer::setSolver(Solver* solver) {
   _solver=solver;
+  _solver->setAnalyzer(this);
 }
 
-int Analyzer::getSolver() {
+Solver* Analyzer::getSolver() {
   return _solver;
 }
 
 void Analyzer::runSolver() {
-  switch(_solver) {
-  case 4: runSolver4();break;
-  case 5: runSolver5();break;
-  case 8: runSolver8();break;
-  case 10: runSolver10();break;
-  case 11: runSolver11();break;
-  case 12: runSolver12();break;
-  default: logger[ERROR]<<"solver "<<_solver<<" does not exist."<<endl;
-    exit(1);
-  }
+  _solver->run();
 }
 
 set<string> Analyzer::variableIdsToVariableNames(AbstractValueSet s) {
@@ -1829,284 +1822,6 @@ Analyzer::SubSolverResultType Analyzer::subSolver(const EState* currentEStatePtr
   return make_pair(deferedWorkList,existingEStateSet);
 }
 
-void Analyzer::runSolver11() {
-  if(svCompFunctionSemantics()) {
-    reachabilityResults.init(1); // in case of svcomp mode set single program property to unknown
-  } else {
-    reachabilityResults.init(getNumberOfErrorLabels()); // set all reachability results to unknown
-  }
-  logger[INFO]<<"number of error labels: "<<reachabilityResults.size()<<endl;
-  size_t prevStateSetSize=0; // force immediate report at start
-  logger[TRACE]<<"STATUS: Running sequential solver 11 with 1 thread."<<endl;
-  printStatusMessage(true);
-  while(!isEmptyWorkList()) {
-    if(_displayDiff && (estateSet.size()>(prevStateSetSize+_displayDiff))) {
-      printStatusMessage(true);
-      prevStateSetSize=estateSet.size();
-    }
-    const EState* currentEStatePtr=popWorkList();
-    ROSE_ASSERT(currentEStatePtr);
-
-    SubSolverResultType subSolverResult=subSolver(currentEStatePtr);
-    EStateWorkList deferedWorkList=subSolverResult.first;
-    for(EStateWorkList::iterator i=deferedWorkList.begin();i!=deferedWorkList.end();++i) {
-      addToWorkList(*i);
-    }
-  } // while loop
-  const bool isComplete=true;
-  if (!isPrecise()) {
-    _firstAssertionOccurences = list<FailedAssertion>(); //ignore found assertions if the STG is not precise
-  }
-  if(isIncompleteSTGReady()) {
-    printStatusMessage(true);
-    logger[TRACE]<< "STATUS: analysis finished (incomplete STG due to specified resource restriction)."<<endl;
-    reachabilityResults.finishedReachability(isPrecise(),!isComplete);
-    transitionGraph.setIsComplete(!isComplete);
-  } else {
-    bool tmpcomplete=true;
-    reachabilityResults.finishedReachability(isPrecise(),tmpcomplete);
-    printStatusMessage(true);
-    transitionGraph.setIsComplete(tmpcomplete);
-    logger[TRACE]<< "analysis finished (worklist is empty)."<<endl;
-  }
-  transitionGraph.setIsPrecise(isPrecise());
-  printStatusMessage(true);
-  logger[TRACE]<< "analysis with solver 11 finished (worklist is empty)."<<endl;
-}
-
-/*! 
-  * \author Marc Jasper
-  * \date 2016.
- */
-void Analyzer::runSolver12() {
-  _analysisTimer.start();
-  if(svCompFunctionSemantics()) {
-    reachabilityResults.init(1); // in case of svcomp mode set single program property to unknown
-  } else {
-    reachabilityResults.init(getNumberOfErrorLabels()); // set all reachability results to unknown
-  }
-  logger[INFO]<<"number of error labels: "<<reachabilityResults.size()<<endl;
-  size_t prevStateSetSizeDisplay=0; 
-  size_t prevStateSetSizeResource=0;
-  int threadNum;
-  int workers=_numberOfThreadsToUse;
-  vector<bool> workVector(_numberOfThreadsToUse);
-  set_finished(workVector,true);
-  bool terminate=false;
-  bool terminatedWithIncompleteStg = false;
-  bool terminateEarly=false;
-  //omp_set_dynamic(0);     // Explicitly disable dynamic teams
-  omp_set_num_threads(workers);
-
-  bool ioReductionActive = false;
-  unsigned int ioReductionThreshold = 0;
-  unsigned int estatesLastReduction = 0;
-  if(args.count("io-reduction")) {
-    ioReductionActive = true;
-    ioReductionThreshold = args["io-reduction"].as<int>();
-  }
-
-  if(args.isSet("rers-binary")) {
-    //initialize the global variable arrays in the linked binary version of the RERS problem
-    logger[DEBUG]<< "init of globals with arrays for "<< workers << " threads. " << endl;
-    RERS_Problem::rersGlobalVarsArrayInit(workers);
-    RERS_Problem::createGlobalVarAddressMaps(this);
-  }
-
-  logger[TRACE]<<"STATUS: Running parallel solver 12 with "<<workers<<" threads."<<endl;
-  printStatusMessage(true);
-# pragma omp parallel shared(workVector, terminate, terminatedWithIncompleteStg) private(threadNum)
-  {
-    threadNum=omp_get_thread_num();
-    while(!terminate) {
-#pragma omp critical(ESTATEWL)
-      {
-        if (threadNum == 0 && all_false(workVector)) {
-          if ( (estateWorkListCurrent->empty() && estateWorkListNext->empty())) {
-            terminate = true;
-	  }
-	  if ( estateWorkListCurrent->empty() && !(estateWorkListNext->empty()) ){
-	    // swap worklists iff the maximum number of iterations has not been fully computed yet
-	    if (getIterations() == _maxIterations) {
-	      terminate = true;
-	      terminatedWithIncompleteStg = true;
-	    } else {
-	      swapWorkLists();
-	      _swapWorkListsCount++;
-	    }
-	  }
-	  isActiveGlobalTopify();
-	}
-      }
-      unsigned long estateSetSize;
-      // print status message if required
-      if (getOptionStatusMessages() && _displayDiff) {
-#pragma omp critical(HASHSET)
-	{
-	  estateSetSize = estateSet.size();
-	}
-	if(threadNum==0 && (estateSetSize>(prevStateSetSizeDisplay+_displayDiff))) {
-	  printStatusMessage(true);
-	  prevStateSetSizeDisplay=estateSetSize;
-	}
-      }
-      // switch to topify mode or terminate analysis if resource limits are exceeded
-      if (_maxBytes != -1 || _maxBytesForcedTop != -1 || _maxSeconds != -1 || _maxSecondsForcedTop != -1
-	  || _maxTransitions != -1 || _maxTransitionsForcedTop != -1 || _maxIterations != -1 || _maxIterationsForcedTop != -1) {
-#pragma omp critical(HASHSET)
-	{
-	  estateSetSize = estateSet.size();
-	}
-	if(threadNum==0 && _resourceLimitDiff && (estateSetSize>(prevStateSetSizeResource+_resourceLimitDiff))) {
-	  if (isIncompleteSTGReady()) {
-#pragma omp critical(ESTATEWL)
-	    {
-	      terminate = true;
-	      terminatedWithIncompleteStg = true;
-	    }	  
-	  }
-	  isActiveGlobalTopify(); // Checks if a switch to topify is necessary. If yes, it changes the analyzer state.
-	  prevStateSetSizeResource=estateSetSize;
-	}
-      }
-      //perform reduction to I/O/worklist states only if specified threshold was reached
-      if (ioReductionActive) {
-#pragma omp critical
-        {
-          if (estateSet.size() > (estatesLastReduction + ioReductionThreshold)) {
-            //int beforeReduction = estateSet.size();
-            reduceGraphInOutWorklistOnly();
-            estatesLastReduction = estateSet.size();
-            logger[TRACE]<< "STATUS: transition system reduced to I/O/worklist states. remaining transitions: " << transitionGraph.size() << endl;
-          }
-        }
-      }
-      if(isEmptyWorkList()) {
-#pragma omp critical
-        {
-          workVector[threadNum]=false;
-        }
-        continue;
-      } else {
-#pragma omp critical
-        {
-          if(terminateEarly)
-            workVector[threadNum]=false;
-          else
-            workVector[threadNum]=true;
-        }
-      }
-      const EState* currentEStatePtr=popWorkList();
-      // if we want to terminate early, we ensure to stop all threads and empty the worklist (e.g. verification error found).
-      if(terminateEarly)
-        continue;
-      if(!currentEStatePtr) {
-        //cerr<<"Thread "<<threadNum<<" found empty worklist. Continue without work. "<<endl;
-        ROSE_ASSERT(threadNum>=0 && threadNum<=_numberOfThreadsToUse);
-      } else {
-        ROSE_ASSERT(currentEStatePtr);
-        Flow edgeSet=flow.outEdges(currentEStatePtr->label());
-        // logger[DEBUG]<< "out-edgeSet size:"<<edgeSet.size()<<endl;
-        for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
-          Edge e=*i;
-          list<EState> newEStateList;
-          newEStateList=transferEdgeEState(e,currentEStatePtr);
-          for(list<EState>::iterator nesListIter=newEStateList.begin();
-              nesListIter!=newEStateList.end();
-              ++nesListIter) {
-            // newEstate is passed by value (not created yet)
-            EState newEState=*nesListIter;
-            ROSE_ASSERT(newEState.label()!=Labeler::NO_LABEL);
-            if(_stg_trace_filename.size()>0 && !newEState.constraints()->disequalityExists()) {
-              std::ofstream fout;
-              // _csv_stg_trace_filename is the member-variable of analyzer
-#pragma omp critical
-              {
-                fout.open(_stg_trace_filename.c_str(),ios::app);    // open file for appending
-                assert (!fout.fail( ));
-                fout<<"PSTATE-IN:"<<currentEStatePtr->pstate()->toString(&variableIdMapping);
-                string sourceString=getCFAnalyzer()->getLabeler()->getNode(currentEStatePtr->label())->unparseToString().substr(0,20);
-                if(sourceString.size()==20) sourceString+="...";
-                fout<<" ==>"<<"TRANSFER:"<<sourceString;
-                fout<<"==> "<<"PSTATE-OUT:"<<newEState.pstate()->toString(&variableIdMapping);
-                fout<<endl;
-                fout.close();
-                // logger[DEBUG]<<"generate STG-edge:"<<"ICFG-EDGE:"<<e.toString()<<endl;
-              }
-            }
-            if((!newEState.constraints()->disequalityExists()) &&(!isFailedAssertEState(&newEState)&&!isVerificationErrorEState(&newEState))) {
-              HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=process(newEState);
-              const EState* newEStatePtr=pres.second;
-              if(pres.first==true)
-                addToWorkList(newEStatePtr);
-	      recordTransition(currentEStatePtr,e,newEStatePtr);
-            }
-            if((!newEState.constraints()->disequalityExists()) && ((isFailedAssertEState(&newEState))||isVerificationErrorEState(&newEState))) {
-              // failed-assert end-state: do not add to work list but do add it to the transition graph
-              const EState* newEStatePtr;
-              newEStatePtr=processNewOrExisting(newEState);
-	      recordTransition(currentEStatePtr,e,newEStatePtr);
-
-              if(isVerificationErrorEState(&newEState)) {
-#pragma omp critical
-                {
-                  logger[TRACE]<<"STATUS: detected verification error state ... terminating early"<<endl;
-                  // set flag for terminating early
-                  reachabilityResults.reachable(0);
-                  terminateEarly=true;
-                }
-              } else if(isFailedAssertEState(&newEState)) {
-                // record failed assert
-                int assertCode;
-                if(args.isSet("rers-binary")) {
-                  assertCode=reachabilityAssertCode(newEStatePtr);
-                } else {
-                  assertCode=reachabilityAssertCode(currentEStatePtr);
-                }
-                if(assertCode>=0) {
-#pragma omp critical
-                  {
-                    if(args.isSet("with-counterexamples") || args.isSet("with-assert-counterexamples")) {
-                      //if this particular assertion was never reached before, compute and update counterexample
-                      if (reachabilityResults.getPropertyValue(assertCode) != PROPERTY_VALUE_YES) {
-                        _firstAssertionOccurences.push_back(pair<int, const EState*>(assertCode, newEStatePtr));
-                      }
-                    }
-                    reachabilityResults.reachable(assertCode);
-                  }
-                } else {
-                  // TODO: this is a workaround for isFailedAssert being true in case of rersmode for stderr (needs to be refined)
-                  if(!args.isSet("rersmode")) {
-                    // assert without label
-                  }
-                }
-              } // end of failed assert handling
-            } // end of if (no disequality (= no infeasable path))
-          } // end of loop on transfer function return-estates
-        } // edge set iterator
-      } // conditional: test if work is available
-    } // while
-  } // omp parallel
-  _analysisTimer.stop();
-  const bool isComplete=true;
-  if (!isPrecise()) {
-    _firstAssertionOccurences = list<FailedAssertion>(); //ignore found assertions if the STG is not precise
-  }
-  if(terminatedWithIncompleteStg || isIncompleteSTGReady()) {
-    printStatusMessage(true);
-    logger[TRACE]<< "STATUS: analysis finished (incomplete STG due to specified resource restriction)."<<endl;
-    reachabilityResults.finishedReachability(isPrecise(),!isComplete);
-    transitionGraph.setIsComplete(!isComplete);
-  } else {
-    bool tmpcomplete=true;
-    reachabilityResults.finishedReachability(isPrecise(),tmpcomplete);
-    printStatusMessage(true);
-    transitionGraph.setIsComplete(tmpcomplete);
-    logger[TRACE]<< "analysis finished (worklist is empty)."<<endl;
-  }
-  transitionGraph.setIsPrecise(isPrecise());
-}
-
 /*! 
   * \author Marc Jasper
   * \date 2015.
@@ -2584,7 +2299,7 @@ void Analyzer::setAnalyzerToSolver8(EState* startEState, bool resetAnalyzerData)
   ROSE_ASSERT(startEState);
   //set attributes specific to solver 8
   _numberOfThreadsToUse = 1;
-  _solver = 8;
+  setSolver(new Solver8());
   _maxTransitions = -1,
   _maxIterations = -1,
   _maxTransitionsForcedTop = -1;

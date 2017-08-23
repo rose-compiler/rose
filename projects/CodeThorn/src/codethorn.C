@@ -40,6 +40,12 @@
 #include "FIConstAnalysis.h"
 #include "ReachabilityAnalysis.h"
 #include "EquivalenceChecking.h"
+#include "Solver4.h"
+#include "Solver5.h"
+#include "Solver8.h"
+#include "Solver10.h"
+#include "Solver11.h"
+#include "Solver12.h"
 #include "SprayException.h"
 #include "CodeThornException.h"
 
@@ -301,7 +307,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("max-transitions-forced-top4",po::value< int >(),"Performs approximation after <arg> transitions (exact for all but inc-vars).")
     ("max-transitions-forced-top5",po::value< int >(),"Performs approximation after <arg> transitions (exact for input,output,df and vars with 0 to 2 assigned values)).")
     ("normalize", po::value< bool >()->default_value(true)->implicit_value(true),"Normalize AST before analysis .")
-    ("solver",po::value< int >(),"Set solver <arg> to use (one of 1,2,3,...).")
+    ("solver",po::value< int >()->default_value(5),"Set solver <arg> to use (one of 1,2,3,...).")
     ("relop-constraints", po::value< bool >()->default_value(false)->implicit_value(true),"Flag for the expression analyzer .")
     ;
 
@@ -1007,27 +1013,51 @@ void analyzerSetup(Analyzer& analyzer, Sawyer::Message::Facility logger) {
     int resourceLimitDiff=args["resource-limit-diff"].as<int>();
     analyzer.setResourceLimitDiff(resourceLimitDiff);
   }
-  int ltlSolverNr=11;
-  int loopAwareSyncSolverNr=12;
-  if(args.count("solver")) {
-    int solver=args["solver"].as<int>();
-    if(analyzer.getModeLTLDriven()) {
-      if(solver!=ltlSolverNr) {
-        logger[ERROR] <<"ltl-driven mode requires solver "<<ltlSolverNr<<", but solver "<<solver<<" was selected."<<endl;
-        exit(1);
-      }
-    }
-    if(analyzer.getExplorationMode() == Analyzer::EXPL_LOOP_AWARE_SYNC) {
-      if(solver!=loopAwareSyncSolverNr) {
-        logger[ERROR] <<"exploration mode loop-aware-sync requires solver "<<loopAwareSyncSolverNr<<", but solver "<<solver<<" was selected."<<endl;
-        exit(1);
-      }
-    }
-    analyzer.setSolver(solver);
-  }
+
+  Solver* solver = nullptr;
+  // overwrite solver ID based on other options
   if(analyzer.getModeLTLDriven()) {
-    analyzer.setSolver(ltlSolverNr);
+    args.setOption("solver", 11);
   }
+  ROSE_ASSERT(args.count("solver")); // Options should contain a default solver
+  int solverId=args["solver"].as<int>();
+  // solverId sanity checks
+  if(analyzer.getExplorationMode() == Analyzer::EXPL_LOOP_AWARE_SYNC &&
+     solverId != 12) {
+    logger[ERROR] <<"Exploration mode loop-aware-sync requires solver 12, but solver "<<solverId<<" was selected."<<endl;
+    exit(1);
+  }
+  if(analyzer.getModeLTLDriven() &&
+     solverId != 11) {
+    logger[ERROR] <<"Ltl-driven mode requires solver 11, but solver "<<solverId<<" was selected."<<endl;
+    exit(1);
+  }
+  // solver "factory"
+  switch(solverId) {
+  case 4 :  {  
+    solver = new Solver4(); break;
+  }
+  case 5 :  {  
+    solver = new Solver5(); break;
+  }
+  case 8 :  {  
+    solver = new Solver8(); break;
+  }
+  case 10 :  {  
+    solver = new Solver10(); break;
+  }
+  case 11 :  {  
+    solver = new Solver11(); break;
+  }
+  case 12 :  {  
+    solver = new Solver12(); break;
+  }
+  default :  { 
+    logger[ERROR] <<"Unknown solver ID: "<<solverId<<endl;
+    exit(1);
+  }
+  }
+  analyzer.setSolver(solver);
 }
 
 int main( int argc, char * argv[] ) {
@@ -1441,7 +1471,7 @@ int main( int argc, char * argv[] ) {
       exit(0);
     }
 
-    logger[TRACE]<< "INIT: creating solver "<<analyzer.getSolver()<<"."<<endl;
+    logger[TRACE]<< "INIT: creating solver "<<analyzer.getSolver()->getId()<<"."<<endl;
 
     if(option_specialize_fun_name!="") {
       analyzer.initializeSolver1(option_specialize_fun_name,root,true);
@@ -1478,7 +1508,7 @@ int main( int argc, char * argv[] ) {
        || !args["pattern-search-repetitions"].defaulted() || args.count("pattern-search-asserts") 
        || args.count("pattern-search-exploration")) {
       logger[INFO] << "at least one of the parameters of mode \"pattern search\" was set. Choosing solver 10." << endl;
-      analyzer.setSolver(10);
+      analyzer.setSolver(new Solver10());
       analyzer.setStartPState(*analyzer.popWorkList()->pstate());
     }
 
@@ -1487,7 +1517,7 @@ int main( int argc, char * argv[] ) {
     timer.start();
     analyzer.printStatusMessageLine("==============================================================");
     if(args.isSet("semantic-fold")) {
-      analyzer.setSolver(4);
+      analyzer.setSolver(new Solver4());
     }
     if(!analyzer.getModeLTLDriven() && args.count("z3") == 0 && !args.isSet("ssa")) {
       analyzer.runSolver();
@@ -1886,7 +1916,7 @@ int main( int argc, char * argv[] ) {
     cout << "Number of estates              : "<<color("cyan")<<eStateSetSize<<color("white")<<" (memory: "<<color("cyan")<<eStateSetBytes<<color("white")<<" bytes)"<<" ("<<""<<eStateSetLoadFactor<<  "/"<<eStateSetMaxCollisions<<")"<<endl;
     cout << "Number of transitions          : "<<color("blue")<<transitionGraphSize<<color("white")<<" (memory: "<<color("blue")<<transitionGraphBytes<<color("white")<<" bytes)"<<endl;
     cout << "Number of constraint sets      : "<<color("yellow")<<numOfconstraintSets<<color("white")<<" (memory: "<<color("yellow")<<constraintSetsBytes<<color("white")<<" bytes)"<<" ("<<""<<constraintSetsLoadFactor<<  "/"<<constraintSetsMaxCollisions<<")"<<endl;
-    if(analyzer.getNumberOfThreadsToUse()==1 && analyzer.getSolver()==5 && analyzer.getExplorationMode()==Analyzer::EXPL_LOOP_AWARE) {
+    if(analyzer.getNumberOfThreadsToUse()==1 && analyzer.getSolver()->getId()==5 && analyzer.getExplorationMode()==Analyzer::EXPL_LOOP_AWARE) {
       cout << "Number of iterations           : "<<analyzer.getIterations()<<"-"<<analyzer.getApproximatedIterations()<<endl;
     }
     cout << "=============================================================="<<endl;
@@ -1962,7 +1992,7 @@ int main( int argc, char * argv[] ) {
 
       // iterations (currently only supported for sequential analysis)
       text<<"iterations,";
-      if(analyzer.getNumberOfThreadsToUse()==1 && analyzer.getSolver()==5 && analyzer.getExplorationMode()==Analyzer::EXPL_LOOP_AWARE)
+      if(analyzer.getNumberOfThreadsToUse()==1 && analyzer.getSolver()->getId()==5 && analyzer.getExplorationMode()==Analyzer::EXPL_LOOP_AWARE)
         text<<analyzer.getIterations()<<","<<analyzer.getApproximatedIterations();
       else
         text<<"-1,-1";
@@ -2223,7 +2253,7 @@ void CodeThorn::printAnalyzerStatistics(Analyzer& analyzer, double totalRunTime,
   ss << "Number of estates              : "<<color("cyan")<<eStateSetSize<<color("white")<<" (memory: "<<color("cyan")<<eStateSetBytes<<color("white")<<" bytes)"<<" ("<<""<<eStateSetLoadFactor<<  "/"<<eStateSetMaxCollisions<<")"<<endl;
   ss << "Number of transitions          : "<<color("blue")<<transitionGraphSize<<color("white")<<" (memory: "<<color("blue")<<transitionGraphBytes<<color("white")<<" bytes)"<<endl;
   ss << "Number of constraint sets      : "<<color("yellow")<<numOfconstraintSets<<color("white")<<" (memory: "<<color("yellow")<<constraintSetsBytes<<color("white")<<" bytes)"<<" ("<<""<<constraintSetsLoadFactor<<  "/"<<constraintSetsMaxCollisions<<")"<<endl;
-  if(analyzer.getNumberOfThreadsToUse()==1 && analyzer.getSolver()==5 && analyzer.getExplorationMode()==Analyzer::EXPL_LOOP_AWARE) {
+  if(analyzer.getNumberOfThreadsToUse()==1 && analyzer.getSolver()->getId()==5 && analyzer.getExplorationMode()==Analyzer::EXPL_LOOP_AWARE) {
     ss << "Number of iterations           : "<<analyzer.getIterations()<<"-"<<analyzer.getApproximatedIterations()<<endl;
   }
   ss << "=============================================================="<<endl;

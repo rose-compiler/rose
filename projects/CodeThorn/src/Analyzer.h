@@ -32,6 +32,7 @@
 #include "PropertyValueTable.h"
 #include "CTIOLabeler.h"
 #include "VariableValueMonitor.h"
+#include "Solver.h"
 
 // we use INT_MIN, INT_MAX
 #include "limits.h"
@@ -56,6 +57,13 @@ namespace CodeThorn {
   * \date 2012.
  */
   class Analyzer {
+    friend class Solver;
+    friend class Solver4;
+    friend class Solver5;
+    friend class Solver8;
+    friend class Solver10;
+    friend class Solver11;
+    friend class Solver12;
     friend class Visualizer;
     friend class VariableValueMonitor;
 
@@ -132,12 +140,6 @@ namespace CodeThorn {
     bool checkTransitionGraph();
 
     //! requires init
-    void runSolver4();
-    void runSolver5();
-    void runSolver8();
-    void runSolver10();
-    void runSolver11();
-    void runSolver12();
     void runSolver();
     //! The analyzer requires a CFAnalysis to obtain the ICFG.
     void setCFAnalyzer(CFAnalysis* cf) { cfanalyzer=cf; }
@@ -238,8 +240,10 @@ namespace CodeThorn {
 
     void setDisplayDiff(int diff) { _displayDiff=diff; }
     void setResourceLimitDiff(int diff) { _resourceLimitDiff=diff; }
-    void setSolver(int solver);
-    int getSolver();
+
+    void setSolver(Solver* solver);
+    Solver* getSolver();
+
     void setSemanticFoldThreshold(int t) { _semanticFoldThreshold=t; }
     void setNumberOfThreadsToUse(int n) { _numberOfThreadsToUse=n; }
     int getNumberOfThreadsToUse() { return _numberOfThreadsToUse; }
@@ -297,7 +301,7 @@ namespace CodeThorn {
     int _numberOfThreadsToUse;
     int _semanticFoldThreshold;
     VariableIdMapping::VariableIdSet _variablesToIgnore;
-    int _solver;
+    Solver* _solver;
     AnalyzerMode _analyzerMode;
     set<const EState*> _newNodesToFold;
     long int _maxTransitions;
