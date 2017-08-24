@@ -26,6 +26,14 @@ RewriteStatistics RewriteSystem::getRewriteStatistics() {
   return _rewriteStatistics;
 }
 
+RewriteStatistics RewriteSystem::getStatistics() {
+  return _rewriteStatistics;
+}
+
+void RewriteSystem::resetStatistics() {
+  _rewriteStatistics.reset();
+}
+
 void RewriteSystem::initDiagnostics() {
   static bool initialized = false;
   if (!initialized) {
@@ -33,15 +41,6 @@ void RewriteSystem::initDiagnostics() {
     logger = Sawyer::Message::Facility("CodeThorn::RewriteSystem", Rose::Diagnostics::destination);
     Rose::Diagnostics::mfacilities.insertAndAdjust(logger);
   }
-}
-
-RewriteStatistics RewriteSystem::getStatistics() {
-  return _rewriteStatistics;
-}
-
-
-void RewriteSystem::resetStatistics() {
-  _rewriteStatistics.reset();
 }
 
 void RewriteSystem::rewriteCompoundAssignmentsInAst(SgNode* root, VariableIdMapping* variableIdMapping) {
@@ -125,10 +124,10 @@ SgNode* RewriteSystem::buildRewriteCompoundAssignment(SgNode* root, VariableIdMa
 }
 
 void RewriteSystem::rewriteCompoundAssignments(SgNode*& root, VariableIdMapping* variableIdMapping) {
-#if 0
-  SgNode* root2=*(&root);
-  root=buildRewriteCompoundAssignment(root2,variableIdMapping);
-  return;
+#if 1
+  SgNode* newRoot=buildRewriteCompoundAssignment(root,variableIdMapping);
+  if(newRoot)
+    root=newRoot;
 #else
   // Rewrite-rule 0: $Left OP= $Right => $Left = $Left OP $Right
   if(isSgCompoundAssignOp(root)) {
@@ -239,6 +238,7 @@ void RewriteSystem::establishCommutativeOrder(SgNode*& root, VariableIdMapping* 
         op->set_lhs_operand(rhs);
         op->set_rhs_operand(lhs);
         //cout<<op->unparseToString()<<endl;
+        _rewriteStatistics.numCommutativeSwap++;
       } else {
         //cout<<"DEBUG: NOT swapping: "<<op->unparseToString()<<endl;
       }

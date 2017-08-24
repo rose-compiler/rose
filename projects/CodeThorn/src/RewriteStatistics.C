@@ -39,34 +39,32 @@ string RewriteStatistics::toString() {
   ss<<"Const expr elim  : "<<numConstExprElim<<endl;
   ss<<"E1+(-E2) => E1-E2: "<<numUnaryMinusToBinaryMinusConversion<<endl; // E1+(-E2) => E1-E2, (-E2)+E1 => E1-E2
   ss<<"E1-(-E2) => E1+E2: "<<numBinaryAndUnaryMinusToBinaryAddConversion<<endl; // E1-(-E2) => E1+E2
-  ss<<"-E1-E2=>-(E1+E2) :"<<numBinaryAndUnaryMinusToBinarySubConversion<<endl; // (-E1)-E2 => -(E1+E2)
+  ss<<"-E1-E2=>-(E1+E2) : "<<numBinaryAndUnaryMinusToBinarySubConversion<<endl; // (-E1)-E2 => -(E1+E2)
   ss<<"E*(-1) => -E     : "<<numMultiplyMinusOneConversion<<endl; // E*(-1) => -E, (-1)*E => -E
   ss<<"0-E => -E        : "<<numZeroSubEConversion<<endl; // 0-E=>-E
   ss<<"E+0 => E         : "<<numAddZeroElim<<endl; // E+0=>E, 0+E=>E
   ss<<"E*1 => E         : "<<numMultiplyOneElim<<endl; // E*1=>E, 1*E=>E
-  numMultiplyOneElim=0; // E*1=>E, 1*E=>E
-
   ss<<"Commutative Swap : "<<numCommutativeSwap<<endl;
   return ss.str();
 }
 
 string RewriteStatistics::toCsvString() {
   stringstream ss;
-  ss<<numArrayUpdates
+  ss<<"U:"<<numArrayUpdates
     <<","<<numElimMinusOperator
     <<","<<numElimCompoundAssignOperator
     <<","<<numAddOpReordering
     <<","<<numConstantFolding
     <<","<<numVariableElim
     <<","<<numConstExprElim
-    <<","<<numUnaryMinusToBinaryMinusConversion // E1+(-E2) => E1-E2, (-E2)+E1 => E1-E2
+    <<",New:"<<numUnaryMinusToBinaryMinusConversion // E1+(-E2) => E1-E2, (-E2)+E1 => E1-E2
     <<","<<numBinaryAndUnaryMinusToBinaryAddConversion // E1-(-E2) => E1+E2
     <<","<<numBinaryAndUnaryMinusToBinarySubConversion // (-E1)-E2 => -(E1+E2)
     <<","<<numMultiplyMinusOneConversion // E*(-1) => -E, (-1)*E => -E
     <<","<<numZeroSubEConversion // 0-E=>-E
     <<","<<numAddZeroElim // E+0=>E, 0+E=>E
     <<","<<numMultiplyOneElim // E*1=>E, 1*E=>E
-    <<","<<numCommutativeSwap
+    <<",C:"<<numCommutativeSwap
     ;
   return ss.str();
 }
