@@ -1,0 +1,70 @@
+Association_Kind => A_PARAMETER_ASSOCIATION
+Clause_Kind => A_WITH_CLAUSE
+ Constraint_Kind => A_SIMPLE_EXPRESSION_RANGE
+Declaration_Kind => AN_ENTRY_DECLARATION
+Declaration_Kind => AN_EXCEPTION_DECLARATION
+Declaration_Kind => AN_ORDINARY_TYPE_DECLARATION
+Declaration_Kind => A_CHOICE_PARAMETER_SPECIFICATION
+Declaration_Kind => A_COMPONENT_DECLARATION
+Declaration_Kind => A_CONSTANT_DECLARATION
+Declaration_Kind => A_FUNCTION_BODY_DECLARATION
+Declaration_Kind => A_FUNCTION_DECLARATION
+Declaration_Kind => A_PACKAGE_BODY_DECLARATION
+Declaration_Kind => A_PACKAGE_DECLARATION
+Declaration_Kind => A_PARAMETER_SPECIFICATION
+Declaration_Kind => A_PROCEDURE_BODY_DECLARATION
+Declaration_Kind => A_PROCEDURE_DECLARATION
+Declaration_Kind => A_TASK_BODY_DECLARATION
+Declaration_Kind => A_TASK_TYPE_DECLARATION
+Declaration_Kind => A_VARIABLE_DECLARATION
+Defining_Name_Kind => A_DEFINING_IDENTIFIER
+Definition_Kind => A_COMPONENT_DEFINITION
+Definition_Kind => A_CONSTRAINT
+Definition_Kind => A_RECORD_DEFINITION
+Definition_Kind => A_SUBTYPE_INDICATION
+Definition_Kind => A_TASK_DEFINITION
+Definition_Kind => A_TYPE_DEFINITION
+Element_Kind => AN_ASSOCIATION
+Element_Kind => AN_EXCEPTION_HANDLER
+Element_Kind => AN_EXPRESSION
+Element_Kind => A_CLAUSE
+Element_Kind => A_DECLARATION
+Element_Kind => A_DEFINING_NAME
+Element_Kind => A_DEFINITION
+Element_Kind => A_PATH
+Element_Kind => A_STATEMENT
+Expression_Kind => AN_IDENTIFIER
+Expression_Kind => AN_INTEGER_LITERAL
+Expression_Kind => AN_OPERATOR_SYMBOL
+Expression_Kind => A_FUNCTION_CALL
+Expression_Kind => A_SELECTED_COMPONENT
+Expression_Kind => A_TYPE_CONVERSION
+ Mode_Kind => AN_IN_MODE
+ Mode_Kind => AN_IN_OUT_MODE
+ Operator_Kind => AN_EQUAL_OPERATOR
+ Operator_Kind => A_MULTIPLY_OPERATOR
+ Operator_Kind => A_PLUS_OPERATOR
+Path_Kind => AN_ELSE_PATH
+Path_Kind => AN_IF_PATH
+Statement_Kind => AN_ACCEPT_STATEMENT
+Statement_Kind => AN_ASSIGNMENT_STATEMENT
+Statement_Kind => AN_ENTRY_CALL_STATEMENT
+Statement_Kind => AN_IF_STATEMENT
+Statement_Kind => A_LOOP_STATEMENT
+Statement_Kind => A_NULL_STATEMENT
+Statement_Kind => A_PROCEDURE_CALL_STATEMENT
+Statement_Kind => A_RAISE_STATEMENT
+Statement_Kind => A_RETURN_STATEMENT
+ Trait_Kind => AN_ABSTRACT_TRAIT
+ Trait_Kind => AN_ORDINARY_TRAIT
+Type_Kind => A_DERIVED_RECORD_EXTENSION_DEFINITION
+Type_Kind => A_DERIVED_TYPE_DEFINITION
+Type_Kind => A_TAGGED_RECORD_TYPE_DEFINITION
+Unit_Kind => A_PACKAGE
+Unit_Kind => A_PACKAGE_BODY
+
+We can now extract from any compilable Ada unit, all the information for 47 of the 286 main ASIS Element kinds and Definition kinds, into textual output, GraphViz Dot graph output, and a C-compatible record structure.
+
+
+
+
