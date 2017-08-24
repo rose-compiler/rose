@@ -1769,10 +1769,10 @@ int main( int argc, char * argv[] ) {
           rewriteSystem,
           useRuleConstSubstitution
           );
-      cout<<"DEBUG: Rewrite1:"<<rewriteSystem.getStatistics().toString()<<endl;
+      //cout<<"DEBUG: Rewrite1:"<<rewriteSystem.getStatistics().toString()<<endl;
       rewriteSystem.setRuleCommutativeSort(useRuleCommutativeSort); // commutative sort only used in substituteArrayRefs
       speci.substituteArrayRefs(arrayUpdates, analyzer.getVariableIdMapping(), sarMode, rewriteSystem);
-      cout<<"DEBUG: Rewrite2:"<<rewriteSystem.getStatistics().toString()<<endl;
+      //cout<<"DEBUG: Rewrite2:"<<rewriteSystem.getStatistics().toString()<<endl;
       arrayUpdateExtractionRunTime=timer.getElapsedTimeInMilliSec();
 
       if(args.getBool("verify-update-sequence-race-conditions")) {

@@ -23,6 +23,7 @@ void RewriteStatistics::init() {
   numAddZeroElim=0; // E+0=>E, 0+E=>E
   numMultiplyOneElim=0; // E*1=>E, 1*E=>E
   numCommutativeSwap=0;
+  numSSAVarReplace=0;
 }
 void RewriteStatistics::reset() {
   init();
@@ -31,6 +32,7 @@ void RewriteStatistics::reset() {
 string RewriteStatistics::toString() {
   stringstream ss;
   ss<<"Array updates    : "<<numArrayUpdates<<endl;
+  ss<<"Num SSA Var repl : "<<numSSAVarReplace<<endl;
   ss<<"Elim minus op    : "<<numElimMinusOperator<<endl;
   ss<<"Elim assign op   : "<<numElimCompoundAssignOperator<<endl;
   ss<<"Add op reorder   : "<<numAddOpReordering<<endl;
@@ -51,6 +53,7 @@ string RewriteStatistics::toString() {
 string RewriteStatistics::toCsvString() {
   stringstream ss;
   ss<<"U:"<<numArrayUpdates
+    <<",SSA:"<<numSSAVarReplace
     <<","<<numElimMinusOperator
     <<","<<numElimCompoundAssignOperator
     <<","<<numAddOpReordering

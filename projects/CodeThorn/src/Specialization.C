@@ -481,6 +481,8 @@ void Specialization::substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates, Var
           switch(sarMode) {
           case SAR_SUBSTITUTE: {
             SgNodeHelper::replaceExpression(useRef,SageInterface::copyExpression(defRhs),true); // must be true (otherwise internal error)
+            cout<<"DEBUG: adding SSA."<<endl;
+            rewriteSystem.getRewriteStatisticsPtr()->numSSAVarReplace++;
             break;
           }
           case SAR_SSA: {
@@ -508,6 +510,8 @@ void Specialization::substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates, Var
           switch(sarMode) {
           case SAR_SUBSTITUTE: {
             SgNodeHelper::replaceExpression(useRef,SageInterface::copyExpression(defRhs),true); // must be true (otherwise internal error)
+            cout<<"DEBUG: adding SSA."<<endl;
+            rewriteSystem.getRewriteStatisticsPtr()->numSSAVarReplace++;
             break;
           }
           case SAR_SSA: {

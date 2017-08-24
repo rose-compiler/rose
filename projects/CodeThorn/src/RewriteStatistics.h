@@ -17,6 +17,7 @@ struct RewriteStatistics {
   int numAddZeroElim=0; // E+0=>E, 0+E=>E
   int numMultiplyOneElim=0; // E*1=>E, 1*E=>E
   int numCommutativeSwap=0;
+  int numSSAVarReplace=0;
   void reset();
   std::string toString();
   // create a comma separated value string
