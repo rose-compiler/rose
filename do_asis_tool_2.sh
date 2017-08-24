@@ -19,7 +19,7 @@ script_dir=`(cd ${rel_script_dir}; pwd)`
 current_dir=`pwd`
 tool_name=run_asis_tool_2
 target_dir=./test_units
-target_units="unit_2.adb"
+target_units="test_unit.adb"
 
 use_gnat () {
   # Make GNAT compiler and gprbuild available:
