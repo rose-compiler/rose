@@ -602,7 +602,7 @@ ExprAnalyzer::evalGreaterOrEqualOp(SgGreaterOrEqualOp* node,
   SingleEvalResultConstInt res;
   res.estate=estate;
   res.result=(lhsResult.result.operatorMoreOrEq(rhsResult.result));
-  if(args.isSet("relop-constraints")) {
+  if(args.getBool("relop-constraints")) {
     if(res.result.isTop())
       throw CodeThorn::Exception("Error: Top found in relational operator (not supported yet).");
   }
@@ -620,7 +620,7 @@ ExprAnalyzer::evalGreaterThanOp(SgGreaterThanOp* node,
   SingleEvalResultConstInt res;
   res.estate=estate;
   res.result=(lhsResult.result.operatorMore(rhsResult.result));
-  if(args.isSet("relop-constraints")) {
+  if(args.getBool("relop-constraints")) {
     if(res.result.isTop())
       throw CodeThorn::Exception("Error: Top found in relational operator (not supported yet).");
   }
@@ -638,7 +638,7 @@ ExprAnalyzer::evalLessOrEqualOp(SgLessOrEqualOp* node,
   SingleEvalResultConstInt res;
   res.estate=estate;
   res.result=(lhsResult.result.operatorLessOrEq(rhsResult.result));
-  if(args.isSet("relop-constraints")) {
+  if(args.getBool("relop-constraints")) {
     if(res.result.isTop())
       throw CodeThorn::Exception("Error: Top found in relational operator (not supported yet).");
   }
@@ -656,7 +656,7 @@ ExprAnalyzer::evalLessThanOp(SgLessThanOp* node,
   SingleEvalResultConstInt res;
   res.estate=estate;
   res.result=(lhsResult.result.operatorLess(rhsResult.result));
-  if(args.isSet("relop-constraints")) {
+  if(args.getBool("relop-constraints")) {
     if(res.result.isTop())
       throw CodeThorn::Exception("Error: Top found in relational operator (not supported yet).");
   }
@@ -755,7 +755,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
         return listify(res);
       } else {
         // array variable NOT in state. Special space optimization case for constant array.
-        if(_variableIdMapping->hasArrayType(arrayVarId) && args.isSet("explicit-arrays")==false) {
+        if(_variableIdMapping->hasArrayType(arrayVarId) && args.getBool("explicit-arrays")==false) {
           SgExpressionPtrList& initList=_variableIdMapping->getInitializerListOfArrayVariable(arrayVarId);
           int elemIndex=0;
           // TODO: slow linear lookup (TODO: pre-compute all values and provide access function)
@@ -886,7 +886,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarExp(SgVarRefExp* node,
     // special mode to represent information not stored in the state
     // i) unmodified arrays: data can be stored outside the state
     // ii) undefined variables mapped to 'top' (abstraction by removing variables from state)
-    if(_variableIdMapping->hasArrayType(varId) && args.isSet("explicit-arrays")==false) {
+    if(_variableIdMapping->hasArrayType(varId) && args.getBool("explicit-arrays")==false) {
       // variable is used on the rhs and it has array type implies it avalates to a pointer to that array
       //res.result=AbstractValue(varId.getIdCode());
       res.result=AbstractValue::createAddressOfArray(varId);

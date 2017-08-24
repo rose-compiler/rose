@@ -33,6 +33,7 @@
 #include "CTIOLabeler.h"
 #include "VariableValueMonitor.h"
 #include "Solver.h"
+#include "AnalysisParameters.h"
 
 // we use INT_MIN, INT_MAX
 #include "limits.h"
@@ -102,8 +103,6 @@ namespace CodeThorn {
     void swapWorkLists();
     size_t memorySizeContentEStateWorkLists();
     
-    void setOptionStatusMessages(bool flag);
-    bool getOptionStatusMessages();
     // thread save; only prints if option status messages is enabled.
     void printStatusMessage(string s);
     void printStatusMessageLine(string s);
@@ -165,7 +164,6 @@ namespace CodeThorn {
     SgNode* startFunRoot;
     CFAnalysis* cfanalyzer;
 
-    enum ExplorationMode { EXPL_DEPTH_FIRST, EXPL_BREADTH_FIRST, EXPL_LOOP_AWARE, EXPL_LOOP_AWARE_SYNC, EXPL_RANDOM_MODE1 };
     void eventGlobalTopifyTurnedOn();
     bool isIncompleteSTGReady();
     bool isPrecise();
@@ -185,15 +183,7 @@ namespace CodeThorn {
     }
     ExprAnalyzer* getExprAnalyzer();
     std::list<FailedAssertion> getFirstAssertionOccurences(){return _firstAssertionOccurences;}
-    void incIterations() {
-      if(isPrecise()) {
-#pragma omp atomic
-        _iterations+=1;
-      } else {
-#pragma omp atomic
-        _approximated_iterations+=1;
-      }
-    }
+    void incIterations();
     bool isLoopCondLabel(Label lab);
     int getApproximatedIterations() { return _approximated_iterations; }
     int getIterations() { return _iterations; }
@@ -317,7 +307,6 @@ namespace CodeThorn {
     size_t _prevStateSetSizeResource = 0;
 
     PState _startPState;
-    bool _optionStatusMessages;
 
     std::list<EState> elistify();
     std::list<EState> elistify(EState res);
@@ -349,9 +338,6 @@ namespace CodeThorn {
     ExplorationMode _explorationMode;
     bool _topifyModeActive;
     bool _explicitArrays;
-
-    // loop-aware mode
-    int _swapWorkListsCount; // currently only used for debugging purposes
 
     int _iterations;
     int _approximated_iterations;
@@ -430,14 +416,6 @@ namespace CodeThorn {
     //returns the shortest possible number of input states on the path leading to "target".
     int inputSequenceLength(const EState* target);
 
-    // begin of solver 10 functions (black-box pattern search)
-    bool containsPatternTwoRepetitions(std::list<int>& sequence, int startIndex, int endIndex);
-    bool computePStateAfterInputs(PState& pState, std::list<int>& inputs, int thread_id, std::list<int>* iOSequence=NULL);;
-    std::list<int> inputsFromPatternTwoRepetitions(std::list<int> pattern2r);
-    string convertToCeString(std::list<int>& ceAsIntegers, int maxInputVal);
-    int pStateDepthFirstSearch(PState* startPState, int maxDepth, int thread_id, std::list<int>* partialTrace, int maxInputVal, int patternLength, int PatternIterations);
-    // end of solver 10 functions (black-box pattern search)
-
     //less than comparisions on two states according to (#input transitions * #output transitions)
     bool indegreeTimesOutdegreeLessThan(const EState* a, const EState* b);
 
@@ -485,18 +463,8 @@ namespace CodeThorn {
     void setMaxSeconds(long int maxSeconds) { _maxSeconds=maxSeconds; }
     void setMaxSecondsForcedTop(long int maxSecondsForcedTop) { _maxSecondsForcedTop=maxSecondsForcedTop; }
     void setStartPState(PState startPState) { _startPState=startPState; }
-    void setPatternSearchMaxDepth(size_t iODepth) { _patternSearchMaxDepth=iODepth; }
-    void setPatternSearchRepetitions(size_t patternReps) { _patternSearchRepetitions=patternReps; }
-    void setPatternSearchMaxSuffixDepth(size_t suffixDepth) { _patternSearchMaxSuffixDepth=suffixDepth; }
-    void setPatternSearchAssertTable(PropertyValueTable* patternSearchAsserts) { _patternSearchAssertTable = patternSearchAsserts; };
-    void setPatternSearchExploration(ExplorationMode explorationMode) { _patternSearchExplorationMode = explorationMode; };
 
   private:
-    PropertyValueTable*  _patternSearchAssertTable;
-    int _patternSearchMaxDepth;
-    int _patternSearchRepetitions;
-    int _patternSearchMaxSuffixDepth;
-    ExplorationMode _patternSearchExplorationMode;
     std::list<FailedAssertion> _firstAssertionOccurences;
     const EState* _estateBeforeMissingInput;
     const EState* _latestOutputEState;

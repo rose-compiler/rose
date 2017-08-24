@@ -25,7 +25,7 @@ int Solver8::getId() {
 // solver 8 is used to analyze traces of consecutively added input sequences
 void Solver8::run() {
   int workers = 1; //only one thread
-  if(args.isSet("rers-binary")) {
+  if(args.getBool("rers-binary")) {
     //initialize the global variable arrays in the linked binary version of the RERS problem
     // logger[DEBUG]<< "init of globals with arrays for "<< workers << " threads. " << endl;
     RERS_Problem::rersGlobalVarsArrayInit(workers);

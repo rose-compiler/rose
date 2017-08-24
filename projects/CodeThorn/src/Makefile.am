@@ -124,6 +124,7 @@ codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
 endif
 
 codethorn_SOURCES = \
+  AnalysisParameters.h             \
   Analyzer.C                       \
   Analyzer.h                       \
   AstNodeInfo.h \

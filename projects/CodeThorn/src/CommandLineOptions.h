@@ -22,7 +22,12 @@ class CommandLineOptions
 #endif
   {
 public:
-  bool isSet(std::string option);
+  bool isDefined(std::string option);
+  bool isDefaulted(std::string option);
+  bool isUserProvided(std::string option);
+  bool getBool(std::string option);
+  int getInt(std::string option);
+  std::string getString(std::string option);
   template<typename T> void setOption(std::string option, T value);
 };
 

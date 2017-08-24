@@ -51,7 +51,7 @@ void Solver12::run() {
     ioReductionThreshold = args["io-reduction"].as<int>();
   }
 
-  if(args.isSet("rers-binary")) {
+  if(args.getBool("rers-binary")) {
     //initialize the global variable arrays in the linked binary version of the RERS problem
     logger[DEBUG]<< "init of globals with arrays for "<< workers << " threads. " << endl;
     RERS_Problem::rersGlobalVarsArrayInit(workers);
@@ -77,7 +77,6 @@ void Solver12::run() {
 	      terminatedWithIncompleteStg = true;
 	    } else {
 	      _analyzer->swapWorkLists();
-	      _analyzer->_swapWorkListsCount++;
 	    }
 	  }
 	  _analyzer->isActiveGlobalTopify();
@@ -85,7 +84,7 @@ void Solver12::run() {
       }
       unsigned long estateSetSize;
       // print status message if required
-      if (_analyzer->getOptionStatusMessages() && _analyzer->_displayDiff) {
+      if (args.getBool("status") && _analyzer->_displayDiff) {
 #pragma omp critical(HASHSET)
 	{
 	  estateSetSize = _analyzer->estateSet.size();
@@ -203,7 +202,7 @@ void Solver12::run() {
               } else if(_analyzer->isFailedAssertEState(&newEState)) {
                 // record failed assert
                 int assertCode;
-                if(args.isSet("rers-binary")) {
+                if(args.getBool("rers-binary")) {
                   assertCode=_analyzer->reachabilityAssertCode(newEStatePtr);
                 } else {
                   assertCode=_analyzer->reachabilityAssertCode(currentEStatePtr);
@@ -211,7 +210,7 @@ void Solver12::run() {
                 if(assertCode>=0) {
 #pragma omp critical
                   {
-                    if(args.isSet("with-counterexamples") || args.isSet("with-assert-counterexamples")) {
+                    if(args.getBool("with-counterexamples") || args.getBool("with-assert-counterexamples")) {
                       //if this particular assertion was never reached before, compute and update counterexample
                       if (_analyzer->reachabilityResults.getPropertyValue(assertCode) != PROPERTY_VALUE_YES) {
                         _analyzer->_firstAssertionOccurences.push_back(pair<int, const EState*>(assertCode, newEStatePtr));
@@ -221,7 +220,7 @@ void Solver12::run() {
                   }
                 } else {
                   // TODO: this is a workaround for isFailedAssert being true in case of rersmode for stderr (needs to be refined)
-                  if(!args.isSet("rersmode")) {
+                  if(!args.getBool("rersmode")) {
                     // assert without label
                   }
                 }

@@ -114,7 +114,7 @@ void Solver4::run() {
         } // just for proper auto-formatting in emacs
       } // conditional: test if work is available
     } // worklist-parallel for
-    if(args.isSet("semantic-fold")) {
+    if(args.getBool("semantic-fold")) {
       if(analyzedSemanticFoldingNode>_analyzer->_semanticFoldThreshold) {
         _analyzer->semanticFoldingOfTransitionGraph();
         analyzedSemanticFoldingNode=0;
@@ -127,7 +127,7 @@ void Solver4::run() {
     }
     if(_analyzer->isIncompleteSTGReady()) {
       // ensure that the STG is folded properly when finished
-      if(args.isSet("semantic-fold")) {
+      if(args.getBool("semantic-fold")) {
         _analyzer->semanticFoldingOfTransitionGraph();
       }
       // we report some information and finish the algorithm with an incomplete STG
@@ -138,7 +138,7 @@ void Solver4::run() {
     }
   } // while
   // ensure that the STG is folded properly when finished
-  if(args.isSet("semantic-fold")) {
+  if(args.getBool("semantic-fold")) {
     _analyzer->semanticFoldingOfTransitionGraph();
   }
   _analyzer->reachabilityResults.finished(); // sets all unknown entries to NO.
