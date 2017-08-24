@@ -200,16 +200,16 @@ string Visualizer::cfasToDotSubgraphs(vector<Flow*> cfas) {
 string Visualizer::pstateToString(const PState* pstate) {
   stringstream ss;
   bool pstateAddressSeparator=false;
-  if((tg1&&args.isSet("tg1-pstate-address"))||(tg2&&args.isSet("tg2-pstate-address"))) {
+  if((tg1&&args.getBool("tg1-pstate-address"))||(tg2&&args.getBool("tg2-pstate-address"))) {
     ss<<"@"<<pstate;
     pstateAddressSeparator=true;
   }    
-  if((tg1&&args.isSet("tg1-pstate-id"))||(tg2&&args.isSet("tg2-pstate-id"))) {
+  if((tg1&&args.getBool("tg1-pstate-id"))||(tg2&&args.getBool("tg2-pstate-id"))) {
     if(pstateAddressSeparator)
       ss<<":";
     ss<<"S"<<pstateSet->pstateId(pstate);
   }
-  if((tg1&&args.isSet("tg1-pstate-properties"))||(tg2&&args.isSet("tg2-pstate-properties"))) {
+  if((tg1&&args.getBool("tg1-pstate-properties"))||(tg2&&args.getBool("tg2-pstate-properties"))) {
     ss<<pstate->toString(variableIdMapping);
   } 
   return ss.str();
@@ -218,20 +218,20 @@ string Visualizer::pstateToString(const PState* pstate) {
 string Visualizer::estateToString(const EState* estate) {
   stringstream ss;
   bool pstateAddressSeparator=false;
-  if((tg1&&args.isSet("tg1-estate-address"))||(tg2&&args.isSet("tg2-estate-address"))) {
+  if((tg1&&args.getBool("tg1-estate-address"))||(tg2&&args.getBool("tg2-estate-address"))) {
     ss<<"@"<<estate;
     pstateAddressSeparator=true;
   }    
-  if((tg1&&args.isSet("tg1-estate-id"))||(tg2&&args.isSet("tg2-estate-id"))) {
+  if((tg1&&args.getBool("tg1-estate-id"))||(tg2&&args.getBool("tg2-estate-id"))) {
     if(pstateAddressSeparator) {
       ss<<":";
     }
     ss<<estateIdStringWithTemporaries(estate);
   }
-  if((tg1&&args.isSet("tg1-estate-properties"))||(tg2&&args.isSet("tg2-estate-properties"))) {
+  if((tg1&&args.getBool("tg1-estate-properties"))||(tg2&&args.getBool("tg2-estate-properties"))) {
     ss<<estate->toString(variableIdMapping);
   } 
-  if((tg1&&args.isSet("tg1-estate-predicate"))||(tg2&&args.isSet("tg2-estate-predicate"))) {
+  if((tg1&&args.getBool("tg1-estate-predicate"))||(tg2&&args.getBool("tg2-estate-predicate"))) {
     string s=estate->predicateToString(variableIdMapping);
     // replace ASCII with HTML characters
     s=SPRAY::replace_string(s,",","&and;");
@@ -357,7 +357,7 @@ string Visualizer::abstractTransitionGraphToDot() {
       concreteEStates.insert(*i);
     } 
   }
-  ss << transitionGraphWithIOToDot(concreteEStates, true, args.isSet("keep-error-states"), false);
+  ss << transitionGraphWithIOToDot(concreteEStates, true, args.getBool("keep-error-states"), false);
   ss << "subgraph cluster_abstractStates {" << endl;
   ss << transitionGraphWithIOToDot(abstractEStates, true, false, true);
   ss << "}" << endl;
@@ -397,7 +397,7 @@ string Visualizer::transitionGraphWithIOToDot(EStatePtrSet displayedEStates,
     if (displayCurrentState) {
       // generate number which is used in IO operation
       string name="\"";
-      if(args.isSet("rersmode") && !args.isSet("rers-numeric")) {
+      if(args.getBool("rersmode") && !args.getBool("rers-numeric")) {
         if(!number.isTop() && !number.isBot()) {
           // convert number to letter
           int num=number.getIntValue();
@@ -516,7 +516,7 @@ string Visualizer::transitionGraphWithIOToDot() {
 #endif
     // generate number which is used in IO operation
     AbstractValue number=(*i)->determineUniqueIOValue();
-    if(args.isSet("rersmode") && !args.isSet("rers-numeric")) {
+    if(args.getBool("rersmode") && !args.getBool("rers-numeric")) {
       if(!number.isTop() && !number.isBot()) {
         // convert number to letter
         int num=number.getIntValue();

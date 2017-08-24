@@ -203,7 +203,7 @@ int main(int argc, char* argv[]) {
     csvConstResultFileName=args["csv-const-result"].as<string>().c_str();
   }
 
-  if(args.isSet("verbose"))
+  if(args.getBool("verbose"))
     detailedOutput=1;
 
   mfacilities.control(args["log-level"].as<string>());
@@ -221,7 +221,7 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  global_option_multiconstanalysis=args.isSet("enable-multi-const-analysis");
+  global_option_multiconstanalysis=args.getBool("enable-multi-const-analysis");
 #if 0
   if(global_option_multiconstanalysis) {
     cout<<"INFO: Using flow-insensitive multi-const-analysis."<<endl;
@@ -254,7 +254,7 @@ int main(int argc, char* argv[]) {
   }
 
   SgFunctionDefinition* mainFunctionRoot=0;
-  if(args.isSet("inline")) {
+  if(args.getBool("inline")) {
     logger[TRACE] <<"STATUS: eliminating non-called trivial functions."<<endl;
     // inline functions
     TrivialInlining tin;
@@ -268,7 +268,7 @@ int main(int argc, char* argv[]) {
     logger[INFO] <<"Inlining: turned off."<<endl;
   }
 
-  if(args.isSet("eliminate-empty-if")) {
+  if(args.getBool("eliminate-empty-if")) {
     DeadCodeElimination dce;
     logger[TRACE] <<"STATUS: Eliminating empty if-statements."<<endl;
     size_t num=0;
@@ -281,7 +281,7 @@ int main(int argc, char* argv[]) {
     logger[TRACE] <<"STATUS: Total number of empty if-statements eliminated: "<<numTotal<<endl;
   }
 
-  if(args.isSet("normalize")) {
+  if(args.getBool("normalize")) {
     logger[TRACE] <<"STATUS: Normalization started."<<endl;
     RewriteSystem rewriteSystem;
     rewriteSystem.resetStatistics();
@@ -289,7 +289,7 @@ int main(int argc, char* argv[]) {
     logger[TRACE] <<"STATUS: Normalization finished."<<endl;
   }
 
-  if(args.isSet("normalize2")) {
+  if(args.getBool("normalize2")) {
     logger[TRACE] <<"STATUS: Normalization started."<<endl;
     SPRAY::Normalization::normalizeAst(root);
     logger[TRACE] <<"STATUS: Normalization finished."<<endl;
@@ -344,7 +344,7 @@ int main(int argc, char* argv[]) {
 
   VariableConstInfo vci=*(fiConstAnalysis.getVariableConstInfo());
   DeadCodeElimination dce;
-  if(args.isSet("eliminate-dead-code")) {
+  if(args.getBool("eliminate-dead-code")) {
     logger[TRACE]<<"STATUS: performing dead code elimination."<<endl;
     dce.setDetailedOutput(detailedOutput);
     dce.setVariablesOfInterest(variablesOfInterest);
@@ -376,7 +376,7 @@ int main(int argc, char* argv[]) {
   rdAnalyzer->run();
 #endif
   logger[INFO]<< "Remaining functions in program: "<<numberOfFunctions(root)<<endl;
-  if(args.isSet("generate-transformed-code")) {
+  if(args.getBool("generate-transformed-code")) {
     logger[TRACE]<< "STATUS: generating transformed source code."<<endl;
     root->unparse(0,0);
   }

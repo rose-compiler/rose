@@ -21,27 +21,27 @@ DataRaceDetection::Options::Options():active(false),
 
 void DataRaceDetection::handleCommandLineOptions(Analyzer& analyzer) {
   //cout<<"DEBUG: initializing data race detection"<<endl;
-  if(args.isSet("data-race-fail")) {
+  if(args.getBool("data-race-fail")) {
     args.setOption("data-race",true);
   }
   if(args.count("data-race-csv")) {
     options.dataRaceCsvFileName=args["data-race-csv"].as<string>();
     args.setOption("data-race",true);
   }
-  if(args.isSet("data-race")) {
+  if(args.getBool("data-race")) {
     options.active=true;
     //cout<<"INFO: ignoring lhs-array accesses"<<endl;
     analyzer.setSkipArrayAccesses(true);
-    options.useConstSubstitutionRule=args.isSet("rule-const-subst");
+    options.useConstSubstitutionRule=args.getBool("rule-const-subst");
     options.maxFloatingPointOperations=0; // not used yet
   }
-  if (args.isSet("visualize-read-write-sets")) {
+  if (args.getBool("visualize-read-write-sets")) {
     options.visualizeReadWriteSets=true;
   }
-  if(args.isSet("print-update-infos")) {
+  if(args.getBool("print-update-infos")) {
     options.printUpdateInfos=true;
   }
-  options.useConstSubstitutionRule=args.isSet("rule-const-subst");
+  options.useConstSubstitutionRule=args.getBool("rule-const-subst");
 }
 
 void DataRaceDetection::setCsvFileName(string fileName) {

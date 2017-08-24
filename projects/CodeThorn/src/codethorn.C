@@ -40,6 +40,13 @@
 #include "FIConstAnalysis.h"
 #include "ReachabilityAnalysis.h"
 #include "EquivalenceChecking.h"
+#include "Solver4.h"
+#include "Solver5.h"
+#include "Solver8.h"
+#include "Solver10.h"
+#include "Solver11.h"
+#include "Solver12.h"
+#include "AnalysisParameters.h"
 #include "SprayException.h"
 #include "CodeThornException.h"
 
@@ -301,7 +308,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("max-transitions-forced-top4",po::value< int >(),"Performs approximation after <arg> transitions (exact for all but inc-vars).")
     ("max-transitions-forced-top5",po::value< int >(),"Performs approximation after <arg> transitions (exact for input,output,df and vars with 0 to 2 assigned values)).")
     ("normalize", po::value< bool >()->default_value(true)->implicit_value(true),"Normalize AST before analysis .")
-    ("solver",po::value< int >(),"Set solver <arg> to use (one of 1,2,3,...).")
+    ("solver",po::value< int >()->default_value(5),"Set solver <arg> to use (one of 1,2,3,...).")
     ("relop-constraints", po::value< bool >()->default_value(false)->implicit_value(true),"Flag for the expression analyzer .")
     ;
 
@@ -421,7 +428,6 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("pattern-search-max-depth", po::value< int >()->default_value(10), "Maximum input depth that is searched for cyclic I/O patterns.")
     ("pattern-search-repetitions", po::value< int >()->default_value(100), "Number of unrolled iterations of cyclic I/O patterns.")
     ("pattern-search-max-suffix", po::value< int >()->default_value(5), "Maximum input depth of the suffix that is searched for failing assertions after following an I/O-pattern.")
-    ("pattern-search-asserts", po::value< string >(), "Reads a .csv-file <arg> (one line per assertion, e.g. \"1,yes\"). The pattern search terminates early if traces to all errors with \"yes\" entries have been found.")
     ("pattern-search-exploration", po::value< string >(), "Exploration mode for the pattern search. Note: all suffixes will always be checked using depth-first search. ([depth-first]|breadth-first)")
     ;
 
@@ -606,7 +612,7 @@ void automataDotInput(Sawyer::Message::Facility logger) {
     cout << "STATUS: done (LTLs not added yet)." << endl;
   }
 
-  if (args.isSet("viz")) {
+  if (args.getBool("viz")) {
     int counter = 0;
     for(list<Flow>::iterator i=cfgs.begin(); i!=cfgs.end(); i++) {
       Flow cfg = *i;
@@ -634,12 +640,12 @@ void automataDotInput(Sawyer::Message::Facility logger) {
       explorer.setUseLtsMin(true);
     }
   } 
-  if (args.isSet("keep-systems")) {
+  if (args.getBool("keep-systems")) {
     explorer.setStoreComputedSystems(true);
   } else {
     explorer.setStoreComputedSystems(false);
   }
-  if (args.isSet("parallel-composition-only")) {
+  if (args.getBool("parallel-composition-only")) {
     explorer.setParallelCompositionOnly(true);
   } else {
     explorer.setStoreComputedSystems(false);
@@ -731,17 +737,17 @@ void automataDotInput(Sawyer::Message::Facility logger) {
     }
   }
 
-  if (args.isSet("viz")) {
+  if (args.getBool("viz")) {
     explorer.setVisualize(true);
   }
 
-  if (!args.isSet("promela-output-only")) {
+  if (!args.getBool("promela-output-only")) {
     explorer.explore();
   }
   
   if (args.count("check-ltl")) {
     PropertyValueTable* ltlResults=nullptr;
-    if (args.isSet("promela-output-only")) { // just read the properties into a PropertyValueTable
+    if (args.getBool("promela-output-only")) { // just read the properties into a PropertyValueTable
       SpotConnection spotConnection(args["check-ltl"].as<string>());
       ltlResults = spotConnection.getLtlResults();
     } else {
@@ -754,11 +760,11 @@ void automataDotInput(Sawyer::Message::Facility logger) {
     cout << "=============================================================="<<endl;
   }
 
-  bool withResults = args.isSet("output-with-results");
-  bool withAnnotations = args.isSet("output-with-annotations");
+  bool withResults = args.getBool("output-with-results");
+  bool withAnnotations = args.getBool("output-with-annotations");
   if (args.count("promela-output")) {
     PropertyValueTable* ltlResults;
-    if (args.isSet("promela-output-only")) { // just read the properties into a PropertyValueTable
+    if (args.getBool("promela-output-only")) { // just read the properties into a PropertyValueTable
       SpotConnection spotConnection(args["check-ltl"].as<string>());
       ltlResults = spotConnection.getLtlResults();
     } else {
@@ -823,16 +829,16 @@ void generateAutomata() {
 }
 
 void analyzerSetup(Analyzer& analyzer, Sawyer::Message::Facility logger) {
-  if(args.isSet("explicit-arrays")==false) {
+  if(args.getBool("explicit-arrays")==false) {
     analyzer.setSkipArrayAccesses(true);
   }
   
   // this must be set early, as subsequent initialization depends on this flag
-  if (args.isSet("ltl-driven")) {
+  if (args.getBool("ltl-driven")) {
     analyzer.setModeLTLDriven(true);
   }
 
-  if (args.count("cegpra-ltl") || args.isSet("cegpra-ltl-all")) {
+  if (args.count("cegpra-ltl") || args.getBool("cegpra-ltl-all")) {
     analyzer.setMaxTransitionsForcedTop(1); //initial over-approximated model
     args.setOption("no-input-input",true);
     args.setOption("with-ltl-counterexamples",true);
@@ -841,7 +847,7 @@ void analyzerSetup(Analyzer& analyzer, Sawyer::Message::Facility logger) {
     cout << "STATUS: CEGPRA mode: will remove input state --> input state transitions in the approximated STG." << endl;
   }
 
-  if (args.isSet("counterexamples-with-output")) {
+  if (args.getBool("counterexamples-with-output")) {
     args.setOption("with-ltl-counterexamples",true);
   }
 
@@ -872,22 +878,22 @@ void analyzerSetup(Analyzer& analyzer, Sawyer::Message::Facility logger) {
   if(args.count("exploration-mode")) {
     string explorationMode=args["exploration-mode"].as<string>();
     if(explorationMode=="depth-first") {
-      analyzer.setExplorationMode(Analyzer::EXPL_DEPTH_FIRST);
+      analyzer.setExplorationMode(EXPL_DEPTH_FIRST);
     } else if(explorationMode=="breadth-first") {
-      analyzer.setExplorationMode(Analyzer::EXPL_BREADTH_FIRST);
+      analyzer.setExplorationMode(EXPL_BREADTH_FIRST);
     } else if(explorationMode=="loop-aware") {
-      analyzer.setExplorationMode(Analyzer::EXPL_LOOP_AWARE);
+      analyzer.setExplorationMode(EXPL_LOOP_AWARE);
     } else if(explorationMode=="loop-aware-sync") {
-      analyzer.setExplorationMode(Analyzer::EXPL_LOOP_AWARE_SYNC);
+      analyzer.setExplorationMode(EXPL_LOOP_AWARE_SYNC);
     } else if(explorationMode=="random-mode1") {
-      analyzer.setExplorationMode(Analyzer::EXPL_RANDOM_MODE1);
+      analyzer.setExplorationMode(EXPL_RANDOM_MODE1);
     } else {
       logger[ERROR] <<"unknown state space exploration mode specified with option --exploration-mode."<<endl;
       exit(1);
     }
   } else {
     // default value
-    analyzer.setExplorationMode(Analyzer::EXPL_BREADTH_FIRST);
+    analyzer.setExplorationMode(EXPL_BREADTH_FIRST);
   }
 
   if (args.count("max-iterations") || args.count("max-iterations-forced-top")) {
@@ -907,11 +913,11 @@ void analyzerSetup(Analyzer& analyzer, Sawyer::Message::Facility logger) {
   }
 
   if(args.count("max-transitions")) {
-    analyzer.setMaxTransitions(args["max-transitions"].as<int>());
+    analyzer.setMaxTransitions(args.getInt("max-transitions"));
   }
 
   if(args.count("max-iterations")) {
-    analyzer.setMaxIterations(args["max-iterations"].as<int>());
+    analyzer.setMaxIterations(args.getInt("max-iterations"));
   }
 
   if(args.count("max-iterations-forced-top")) {
@@ -939,60 +945,17 @@ void analyzerSetup(Analyzer& analyzer, Sawyer::Message::Facility logger) {
     analyzer.setGlobalTopifyMode(Analyzer::GTM_FLAGS);
   }
 
-  if (args.count("max-memory") || args.count("max-memory-forced-top") || args.count("max-time") || args.count("max-time-forced-top")) {
-#if 0
-    bool notSupported=false;
-    if (!args.count("ltl-driven")) {
-      if(args.count("solver")) {
-	int solver=args["solver"].as<int>();
-	if (solver != 12) {
-	  notSupported = true;
-	}
-      } else {
-	cout<<"ERROR: solver 12 is currently not the default solver."<<endl;
-	notSupported=true;
-      }
-    }
-    if(notSupported) {
-      cout << "ERROR: options \"--max-memory\", \"--max-time\", \"--max-memory-forced-top\", and \"--max-time-forced-top\" currently require \"--solver=12\"." << endl;
-      exit(1);
-    }
-#endif
-    if (args.count("max-memory")) {
-      analyzer.setMaxBytes(args["max-memory"].as<long int>());
-    }
-    if (args.count("max-time")) {
-      analyzer.setMaxSeconds(args["max-time"].as<long int>());
-    }
-    if (args.count("max-memory-forced-top")) {
-      analyzer.setMaxBytesForcedTop(args["max-memory-forced-top"].as<long int>());
-    }
-    if (args.count("max-time-forced-top")) {
-      analyzer.setMaxSecondsForcedTop(args["max-time-forced-top"].as<long int>());
-    }
+  if (args.count("max-memory")) {
+    analyzer.setMaxBytes(args["max-memory"].as<long int>());
   }
-
-  analyzer.setPatternSearchMaxDepth(args["pattern-search-max-depth"].as<int>());
-  analyzer.setPatternSearchRepetitions(args["pattern-search-repetitions"].as<int>());
-  analyzer.setPatternSearchMaxSuffixDepth(args["pattern-search-max-suffix"].as<int>());
-
-  // search for all 100 RERS counterexamples by default (paths to reachable failing assertions)
-  PropertyValueTable* patternSearchAsserts = new PropertyValueTable(100);
-  patternSearchAsserts->convertValue(PROPERTY_VALUE_UNKNOWN, PROPERTY_VALUE_YES);
-  analyzer.setPatternSearchAssertTable(patternSearchAsserts);
-
-  if(args.count("pattern-search-exploration")) {
-    string patternSearchExpMode=args["pattern-search-exploration"].as<string>();
-    if (patternSearchExpMode == "breadth-first") {
-      analyzer.setPatternSearchExploration(Analyzer::EXPL_BREADTH_FIRST);
-    } else if (patternSearchExpMode == "depth-first") {
-      analyzer.setPatternSearchExploration(Analyzer::EXPL_DEPTH_FIRST);
-    } else {
-      cout << "ERROR: pattern search exploration mode \"" << patternSearchExpMode << "\" currently not supported." << endl;
-      ROSE_ASSERT(0);
-    }
-  } else {
-    analyzer.setPatternSearchExploration(Analyzer::EXPL_DEPTH_FIRST);
+  if (args.count("max-time")) {
+    analyzer.setMaxSeconds(args["max-time"].as<long int>());
+  }
+  if (args.count("max-memory-forced-top")) {
+    analyzer.setMaxBytesForcedTop(args["max-memory-forced-top"].as<long int>());
+  }
+  if (args.count("max-time-forced-top")) {
+    analyzer.setMaxSecondsForcedTop(args["max-time-forced-top"].as<long int>());
   }
 
   if(args.count("semantic-fold-threshold")) {
@@ -1007,27 +970,51 @@ void analyzerSetup(Analyzer& analyzer, Sawyer::Message::Facility logger) {
     int resourceLimitDiff=args["resource-limit-diff"].as<int>();
     analyzer.setResourceLimitDiff(resourceLimitDiff);
   }
-  int ltlSolverNr=11;
-  int loopAwareSyncSolverNr=12;
-  if(args.count("solver")) {
-    int solver=args["solver"].as<int>();
-    if(analyzer.getModeLTLDriven()) {
-      if(solver!=ltlSolverNr) {
-        logger[ERROR] <<"ltl-driven mode requires solver "<<ltlSolverNr<<", but solver "<<solver<<" was selected."<<endl;
-        exit(1);
-      }
-    }
-    if(analyzer.getExplorationMode() == Analyzer::EXPL_LOOP_AWARE_SYNC) {
-      if(solver!=loopAwareSyncSolverNr) {
-        logger[ERROR] <<"exploration mode loop-aware-sync requires solver "<<loopAwareSyncSolverNr<<", but solver "<<solver<<" was selected."<<endl;
-        exit(1);
-      }
-    }
-    analyzer.setSolver(solver);
-  }
+
+  Solver* solver = nullptr;
+  // overwrite solver ID based on other options
   if(analyzer.getModeLTLDriven()) {
-    analyzer.setSolver(ltlSolverNr);
+    args.setOption("solver", 11);
   }
+  ROSE_ASSERT(args.count("solver")); // Options should contain a default solver
+  int solverId=args["solver"].as<int>();
+  // solverId sanity checks
+  if(analyzer.getExplorationMode() == EXPL_LOOP_AWARE_SYNC &&
+     solverId != 12) {
+    logger[ERROR] <<"Exploration mode loop-aware-sync requires solver 12, but solver "<<solverId<<" was selected."<<endl;
+    exit(1);
+  }
+  if(analyzer.getModeLTLDriven() &&
+     solverId != 11) {
+    logger[ERROR] <<"Ltl-driven mode requires solver 11, but solver "<<solverId<<" was selected."<<endl;
+    exit(1);
+  }
+  // solver "factory"
+  switch(solverId) {
+  case 4 :  {  
+    solver = new Solver4(); break;
+  }
+  case 5 :  {  
+    solver = new Solver5(); break;
+  }
+  case 8 :  {  
+    solver = new Solver8(); break;
+  }
+  case 10 :  {  
+    solver = new Solver10(); break;
+  }
+  case 11 :  {  
+    solver = new Solver11(); break;
+  }
+  case 12 :  {  
+    solver = new Solver12(); break;
+  }
+  default :  { 
+    logger[ERROR] <<"Unknown solver ID: "<<solverId<<endl;
+    exit(1);
+  }
+  }
+  analyzer.setSolver(solver);
 }
 
 int main( int argc, char * argv[] ) {
@@ -1169,53 +1156,12 @@ int main( int argc, char * argv[] ) {
       }
     }
 
-    // clean up string-options in argv
-    for (int i=1; i<argc; ++i) {
-      if (string(argv[i]).find("--automata-dot-input")==0
-          || string(argv[i]).find("--generate-automata")==0
-          || string(argv[i]).find("--num-syncs-range")==0
-          || string(argv[i]).find("--num-circles-range")==0
-          || string(argv[i]).find("--circle-length-range")==0
-          || string(argv[i]).find("--num-intersections-range")==0
-          || string(argv[i]).find("--csv-assert")==0
-          || string(argv[i]).find("--csv-stats")==0
-          || string(argv[i]).find("--csv-stats-cegpra")==0
-          || string(argv[i]).find("--csv-stats-size-and-ltl")==0
-          || string(argv[i]).find("--threads" )==0
-          || string(argv[i]).find("--display-diff")==0
-          || string(argv[i]).find("--input-values")==0
-          || string(argv[i]).find("--dump-sorted")==0
-          || string(argv[i]).find("--dump-non-sorted")==0
-          || string(argv[i]).find("--equivalence-check")==0
-          || string(argv[i]).find("--limit-to-fragment")==0
-          || string(argv[i]).find("--check-ltl")==0
-          || string(argv[i]).find("--csv-spot-ltl")==0
-          || string(argv[i]).find("--ltl-in-alphabet")==0
-          || string(argv[i]).find("--ltl-out-alphabet")==0
-          || string(argv[i]).find("--ltl-driven")==0
-          || string(argv[i]).find("--ltl-mode")==0
-          || string(argv[i]).find("--ltl-properties-output")==0
-          || string(argv[i]).find("--pattern-search-asserts")==0
-          || string(argv[i]).find("--pattern-search-exploration")==0
-          || string(argv[i]).find("--promela-output")==0
-          || string(argv[i]).find("--specialize-fun-name")==0
-          || string(argv[i]).find("--specialize-fun-param")==0
-          || string(argv[i]).find("--use-components")==0
-          || string(argv[i]).find("--verification-engine")==0
-          || string(argv[i]).find("--fixed-subsets")==0
-          || string(argv[i]).find("--specialize-fun-param")==0
-          ) {
-            // do not confuse ROSE frontend
-            argv[i] = strdup("");
-          }
-    }
-
-    if((args.isSet("print-update-infos")||args.isSet("verify-update-sequence-race-conditions")||args.count("equivalence-check"))&&(args.count("dump-sorted")==0 && args.count("dump-non-sorted")==0)) {
+    if((args.getBool("print-update-infos")||args.getBool("verify-update-sequence-race-conditions")||args.count("equivalence-check"))&&(args.count("dump-sorted")==0 && args.count("dump-non-sorted")==0)) {
       logger[ERROR] <<"option print-update-infos/verify-update-sequence-race-conditions/equivalence-check must be used together with option --dump-non-sorted or --dump-sorted."<<endl;
       exit(1);
     }
     RewriteSystem rewriteSystem;
-    if(args.isSet("print-rewrite-trace")) {
+    if(args.getBool("print-rewrite-trace")) {
       rewriteSystem.setTrace(true);
     }
     if(args.count("dump-sorted")>0 || args.count("dump-non-sorted")>0 || args.count("equivalence-check")>0) {
@@ -1232,12 +1178,12 @@ int main( int argc, char * argv[] ) {
     dataRaceDetection.handleCommandLineOptions(analyzer);
 
     // handle RERS mode: reconfigure options
-    if(args.isSet("rersmode")) {
+    if(args.getBool("rersmode")) {
       logger[TRACE] <<"RERS MODE activated [stderr output is treated like a failed assert]"<<endl;
       args.setOption("stderr-like-failed-assert",true);
     }
 
-    if(args.isSet("svcomp-mode")) {
+    if(args.getBool("svcomp-mode")) {
       analyzer.enableSVCompFunctionSemantics();
       string errorFunctionName="__VERIFIER_error";
       analyzer.setExternalErrorFunctionName(errorFunctionName);
@@ -1252,11 +1198,7 @@ int main( int argc, char * argv[] ) {
       analyzer.setExternalErrorFunctionName(errorFunctionName);
     }
 
-    if(args.isSet("status")) {
-      analyzer.setOptionStatusMessages(true);
-    }
-
-    analyzer.setTreatStdErrLikeFailedAssert(args.isSet("stderr-like-failed-assert"));
+    analyzer.setTreatStdErrLikeFailedAssert(args.getBool("stderr-like-failed-assert"));
 
     // Build the AST used by ROSE
     logger[TRACE] << "INIT: Parsing and creating AST: started."<<endl;
@@ -1264,7 +1206,7 @@ int main( int argc, char * argv[] ) {
     timer.start();
 
     vector<string> argvList(argv,argv+argc);
-    if(args.isSet("data-race")) {
+    if(args.getBool("data-race")) {
       //TODO: new openmp-ast support not finished yet - using existing implementation
       //argvList.push_back("-rose:OpenMP:ast_only");
     }
@@ -1386,7 +1328,7 @@ int main( int argc, char * argv[] ) {
     }
 #endif
 
-    if(args.isSet("normalize")) {
+    if(args.getBool("normalize")) {
       logger[TRACE]<<"STATUS: Normalization started."<<endl;
       rewriteSystem.resetStatistics();
       rewriteSystem.rewriteCompoundAssignmentsInAst(root,analyzer.getVariableIdMapping());
@@ -1433,7 +1375,7 @@ int main( int argc, char * argv[] ) {
     }
 #endif
 
-    if(args.isSet("eliminate-arrays")) {
+    if(args.getBool("eliminate-arrays")) {
       //analyzer.initializeVariableIdMapping(sageProject);
       Specialization speci;
       speci.transformArrayProgram(sageProject, &analyzer);
@@ -1441,7 +1383,7 @@ int main( int argc, char * argv[] ) {
       exit(0);
     }
 
-    logger[TRACE]<< "INIT: creating solver "<<analyzer.getSolver()<<"."<<endl;
+    logger[TRACE]<< "INIT: creating solver "<<analyzer.getSolver()->getId()<<"."<<endl;
 
     if(option_specialize_fun_name!="") {
       analyzer.initializeSolver1(option_specialize_fun_name,root,true);
@@ -1474,11 +1416,10 @@ int main( int argc, char * argv[] ) {
     }
     analyzer.initLabeledAssertNodes(sageProject);
 
-    if(!args["pattern-search-max-depth"].defaulted() || !args["pattern-search-max-suffix"].defaulted()
-       || !args["pattern-search-repetitions"].defaulted() || args.count("pattern-search-asserts") 
-       || args.count("pattern-search-exploration")) {
+    if(args.isUserProvided("pattern-search-max-depth") || args.isUserProvided("pattern-search-max-suffix")
+       || args.isUserProvided("pattern-search-repetitions") || args.isUserProvided("pattern-search-exploration")) {
       logger[INFO] << "at least one of the parameters of mode \"pattern search\" was set. Choosing solver 10." << endl;
-      analyzer.setSolver(10);
+      analyzer.setSolver(new Solver10());
       analyzer.setStartPState(*analyzer.popWorkList()->pstate());
     }
 
@@ -1486,14 +1427,14 @@ int main( int argc, char * argv[] ) {
 
     timer.start();
     analyzer.printStatusMessageLine("==============================================================");
-    if(args.isSet("semantic-fold")) {
-      analyzer.setSolver(4);
+    if(args.getBool("semantic-fold")) {
+      analyzer.setSolver(new Solver4());
     }
-    if(!analyzer.getModeLTLDriven() && args.count("z3") == 0 && !args.isSet("ssa")) {
+    if(!analyzer.getModeLTLDriven() && args.count("z3") == 0 && !args.getBool("ssa")) {
       analyzer.runSolver();
     }
 
-    if(args.isSet("post-semantic-fold")) {
+    if(args.getBool("post-semantic-fold")) {
       cout << "Performing post semantic folding (this may take some time):"<<endl;
       analyzer.semanticFoldingOfTransitionGraph();
     }
@@ -1502,7 +1443,7 @@ int main( int argc, char * argv[] ) {
     analyzer.printStatusMessageLine("==============================================================");
     double extractAssertionTracesTime= 0;
     int maxOfShortestAssertInput = -1;
-    if ( args.isSet("with-counterexamples") || args.isSet("with-assert-counterexamples")) {
+    if ( args.getBool("with-counterexamples") || args.getBool("with-assert-counterexamples")) {
       logger[TRACE] << "STATUS: extracting assertion traces (this may take some time)"<<endl;
       timer.start();
 
@@ -1519,29 +1460,29 @@ int main( int argc, char * argv[] ) {
     int inputSeqLengthCovered = -1;
     double totalInputTracesTime = extractAssertionTracesTime + determinePrefixDepthTime;
 
-    bool withCe = args.isSet("with-counterexamples") || args.isSet("with-assert-counterexamples");
-    if(analyzer.getOptionStatusMessages()) {
+    bool withCe = args.getBool("with-counterexamples") || args.getBool("with-assert-counterexamples");
+    if(args.getBool("status")) {
       analyzer.printStatusMessageLine("==============================================================");
       analyzer.reachabilityResults.printResults("YES (REACHABLE)", "NO (UNREACHABLE)", "error_", withCe);
     }
     if (args.count("csv-assert")) {
       string filename=args["csv-assert"].as<string>().c_str();
       analyzer.reachabilityResults.writeFile(filename.c_str(), false, 0, withCe);
-      if(analyzer.getOptionStatusMessages()) {
+      if(args.getBool("status")) {
         cout << "Reachability results written to file \""<<filename<<"\"." <<endl;
         cout << "=============================================================="<<endl;
       }
     }
-    if(args.isSet("tg-ltl-reduced")) {
+    if(args.getBool("tg-ltl-reduced")) {
       analyzer.stdIOFoldingOfTransitionGraph();
       logger[TRACE] << "Size of transition graph after reduction : "<<analyzer.getTransitionGraph()->size()<<endl;
     }
-    if(args.isSet("eliminate-stg-back-edges")) {
+    if(args.getBool("eliminate-stg-back-edges")) {
       int numElim=analyzer.getTransitionGraph()->eliminateBackEdges();
       logger[TRACE]<<"STATUS: eliminated "<<numElim<<" STG back edges."<<endl;
     }
 
-    if(analyzer.getOptionStatusMessages()) {
+    if(args.getBool("status")) {
       analyzer.reachabilityResults.printResultsStatistics();
       analyzer.printStatusMessageLine("==============================================================");
     }
@@ -1561,7 +1502,7 @@ int main( int argc, char * argv[] ) {
     }
 #endif	
 
-    if(args.isSet("ssa"))
+    if(args.getBool("ssa"))
     {
 	SSAGenerator* ssaGen = new SSAGenerator(&analyzer, &logger);
 	ssaGen->generateSSAForm();
@@ -1610,8 +1551,8 @@ int main( int argc, char * argv[] ) {
     double infPathsOnlyTime = 0;
     double stdIoOnlyTime = 0;
 
-  if(args.isSet("inf-paths-only")) {
-    assert (!args.isSet("keep-error-states"));
+  if(args.getBool("inf-paths-only")) {
+    assert (!args.getBool("keep-error-states"));
     cout << "recursively removing all leaves (1)."<<endl;
     timer.start();
     //analyzer.pruneLeavesRec();
@@ -1623,21 +1564,21 @@ int main( int argc, char * argv[] ) {
       eStateSetSizeStgInf = (analyzer.getTransitionGraph())->estateSet().size();
     }
 
-    if(args.isSet("std-in-only")) {
+    if(args.getBool("std-in-only")) {
       logger[TRACE] << "STATUS: reducing STG to Input-states."<<endl;
-      analyzer.reduceGraphInOutWorklistOnly(true,false,args.isSet("keep-error-states"));
+      analyzer.reduceGraphInOutWorklistOnly(true,false,args.getBool("keep-error-states"));
     }
 
-    if(args.isSet("std-out-only")) {
+    if(args.getBool("std-out-only")) {
       logger[TRACE] << "STATUS: reducing STG to output-states."<<endl;
-      analyzer.reduceGraphInOutWorklistOnly(false,true,args.isSet("keep-error-states"));
+      analyzer.reduceGraphInOutWorklistOnly(false,true,args.getBool("keep-error-states"));
     }
 
-    if(args.isSet("std-io-only")) {
+    if(args.getBool("std-io-only")) {
       logger[TRACE] << "STATUS: bypassing all non standard I/O states. (P2)"<<endl;
       timer.start();
       //analyzer.removeNonIOStates();  //old version, works correclty but has a long execution time
-      analyzer.reduceGraphInOutWorklistOnly(true,true,args.isSet("keep-error-states"));
+      analyzer.reduceGraphInOutWorklistOnly(true,true,args.getBool("keep-error-states"));
       stdIoOnlyTime = timer.getElapsedTimeInMilliSec();
     }
 
@@ -1651,8 +1592,8 @@ int main( int argc, char * argv[] ) {
     if (args.count("check-ltl")) {
       logger[INFO] <<"STG size: "<<analyzer.getTransitionGraph()->size()<<endl;
       string ltl_filename = args["check-ltl"].as<string>();
-      if(args.isSet("rersmode")) {  //reduce the graph accordingly, if not already done
-        if (!args.isSet("inf-paths-only") && !args.isSet("keep-error-states") &&!analyzer.getModeLTLDriven()) {
+      if(args.getBool("rersmode")) {  //reduce the graph accordingly, if not already done
+        if (!args.getBool("inf-paths-only") && !args.getBool("keep-error-states") &&!analyzer.getModeLTLDriven()) {
           logger[TRACE] << "STATUS: recursively removing all leaves (due to RERS-mode (2))."<<endl;
           timer.start();
           analyzer.pruneLeavesRec();
@@ -1663,20 +1604,20 @@ int main( int argc, char * argv[] ) {
           transitionGraphSizeInf = analyzer.getTransitionGraph()->size();
           eStateSetSizeStgInf = (analyzer.getTransitionGraph())->estateSet().size();
         }
-        if (!args.isSet("std-io-only") &&!analyzer.getModeLTLDriven()) {
+        if (!args.getBool("std-io-only") &&!analyzer.getModeLTLDriven()) {
           logger[TRACE] << "STATUS: bypassing all non standard I/O states (due to RERS-mode) (P1)."<<endl;
           timer.start();
-          analyzer.reduceGraphInOutWorklistOnly(true, true, args.isSet("keep-error-states"));
+          analyzer.reduceGraphInOutWorklistOnly(true, true, args.getBool("keep-error-states"));
           stdIoOnlyTime = timer.getElapsedTimeInMilliSec();
           printStgSize(analyzer.getTransitionGraph(), "after reducing non-I/O states");
         }
       }
-      if(args.isSet("no-input-input")) {  //delete transitions that indicate two input states without an output in between
+      if(args.getBool("no-input-input")) {  //delete transitions that indicate two input states without an output in between
         analyzer.removeInputInputTransitions();
         printStgSize(analyzer.getTransitionGraph(), "after reducing input->input transitions");
       }
       bool withCounterexample = false;
-      if(args.isSet("with-counterexamples") || args.isSet("with-ltl-counterexamples")) {  //output a counter-example input sequence for falsified formulae
+      if(args.getBool("with-counterexamples") || args.getBool("with-ltl-counterexamples")) {  //output a counter-example input sequence for falsified formulae
         withCounterexample = true;
       }
 
@@ -1716,7 +1657,7 @@ int main( int argc, char * argv[] ) {
       ltlResults = spotConnection.getLtlResults();
       logger[TRACE] << "LTL: results computed."<<endl;
 
-      if (args.count("cegpra-ltl") || args.isSet("cegpra-ltl-all")) {
+      if (args.count("cegpra-ltl") || args.getBool("cegpra-ltl-all")) {
         if (args.count("csv-stats-cegpra")) {
           statisticsCegpra << "init,";
           printStgSize(analyzer.getTransitionGraph(), "initial abstract model", &statisticsCegpra);
@@ -1729,7 +1670,7 @@ int main( int argc, char * argv[] ) {
         if (args.count("cegpra-max-iterations")) {
           ceAnalyzer.setMaxCounterexamples(args["cegpra-max-iterations"].as<int>());
         }
-        if (args.isSet("cegpra-ltl-all")) {
+        if (args.getBool("cegpra-ltl-all")) {
           ltlResults = ceAnalyzer.cegarPrefixAnalysisForLtl(spotConnection, ltlInAlphabet, ltlOutAlphabet);
         } else {  // cegpra for single LTL property
           int property = args["cegpra-ltl"].as<int>();
@@ -1737,7 +1678,7 @@ int main( int argc, char * argv[] ) {
         }
       }
 
-      if(analyzer.getOptionStatusMessages()) {
+      if(args.getBool("status")) {
         ltlResults-> printResults("YES (verified)", "NO (falsified)", "ltl_property_", withCounterexample);
         analyzer.printStatusMessageLine("==============================================================");
         ltlResults->printResultsStatistics();
@@ -1763,7 +1704,7 @@ int main( int argc, char * argv[] ) {
     double totalLtlRunTime =  infPathsOnlyTime + stdIoOnlyTime + spotLtlAnalysisTime;
 
     // TEST
-    if (args.isSet("generate-assertions")) {
+    if (args.getBool("generate-assertions")) {
       AssertionExtractor assertionExtractor(&analyzer);
       assertionExtractor.computeLabelVectorOfEStates();
       assertionExtractor.annotateAst();
@@ -1797,7 +1738,7 @@ int main( int argc, char * argv[] ) {
       speci.extractArrayUpdateOperations(&analyzer,
                                          arrayUpdates,
                                          rewriteSystem,
-                                         args.isSet("rule-const-subst")
+                                         args.getBool("rule-const-subst")
                                          );
       speci.createSsaNumbering(arrayUpdates, analyzer.getVariableIdMapping());
       arrayUpdateSsaNumberingRunTime=timer.getElapsedTimeInMilliSec();
@@ -1808,19 +1749,19 @@ int main( int argc, char * argv[] ) {
 
     if(args.count("dump-sorted")>0 || args.count("dump-non-sorted")>0) {
       SAR_MODE sarMode=SAR_SSA;
-      if(args.isSet("rewrite-ssa")) {
+      if(args.getBool("rewrite-ssa")) {
 	sarMode=SAR_SUBSTITUTE;
       }
       Specialization speci;
-      if (args.isSet("visualize-read-write-sets")) {
+      if (args.getBool("visualize-read-write-sets")) {
         speci.setVisualizeReadWriteAccesses(true);
       }
       ArrayUpdatesSequence arrayUpdates;
       logger[TRACE] <<"STATUS: performing array analysis on STG."<<endl;
       logger[TRACE] <<"STATUS: identifying array-update operations in STG and transforming them."<<endl;
 
-      bool useRuleConstSubstitution=args.isSet("rule-const-subst");
-      bool useRuleCommutativeSort=args.isSet("rule-commutative-sort");
+      bool useRuleConstSubstitution=args.getBool("rule-const-subst");
+      bool useRuleCommutativeSort=args.getBool("rule-commutative-sort");
       
       timer.start();
       speci.extractArrayUpdateOperations(&analyzer,
@@ -1834,7 +1775,7 @@ int main( int argc, char * argv[] ) {
       cout<<"DEBUG: Rewrite2:"<<rewriteSystem.getStatistics().toString()<<endl;
       arrayUpdateExtractionRunTime=timer.getElapsedTimeInMilliSec();
 
-      if(args.isSet("verify-update-sequence-race-conditions")) {
+      if(args.getBool("verify-update-sequence-race-conditions")) {
         SgNode* root=analyzer.startFunRoot;
         VariableId parallelIterationVar;
         LoopInfoSet loopInfoSet=EquivalenceChecking::determineLoopInfoSet(root,analyzer.getVariableIdMapping(), analyzer.getLabeler());
@@ -1846,7 +1787,7 @@ int main( int argc, char * argv[] ) {
         verifyUpdateSequenceRaceConditionRunTime=timer.getElapsedTimeInMilliSec();
       }
 
-      if(args.isSet("print-update-infos")) {
+      if(args.getBool("print-update-infos")) {
         speci.printUpdateInfos(arrayUpdates,analyzer.getVariableIdMapping());
       }
       logger[TRACE] <<"STATUS: establishing array-element SSA numbering."<<endl;
@@ -1887,7 +1828,7 @@ int main( int argc, char * argv[] ) {
     cout << "Number of estates              : "<<color("cyan")<<eStateSetSize<<color("white")<<" (memory: "<<color("cyan")<<eStateSetBytes<<color("white")<<" bytes)"<<" ("<<""<<eStateSetLoadFactor<<  "/"<<eStateSetMaxCollisions<<")"<<endl;
     cout << "Number of transitions          : "<<color("blue")<<transitionGraphSize<<color("white")<<" (memory: "<<color("blue")<<transitionGraphBytes<<color("white")<<" bytes)"<<endl;
     cout << "Number of constraint sets      : "<<color("yellow")<<numOfconstraintSets<<color("white")<<" (memory: "<<color("yellow")<<constraintSetsBytes<<color("white")<<" bytes)"<<" ("<<""<<constraintSetsLoadFactor<<  "/"<<constraintSetsMaxCollisions<<")"<<endl;
-    if(analyzer.getNumberOfThreadsToUse()==1 && analyzer.getSolver()==5 && analyzer.getExplorationMode()==Analyzer::EXPL_LOOP_AWARE) {
+    if(analyzer.getNumberOfThreadsToUse()==1 && analyzer.getSolver()->getId()==5 && analyzer.getExplorationMode()==EXPL_LOOP_AWARE) {
       cout << "Number of iterations           : "<<analyzer.getIterations()<<"-"<<analyzer.getApproximatedIterations()<<endl;
     }
     cout << "=============================================================="<<endl;
@@ -1963,7 +1904,7 @@ int main( int argc, char * argv[] ) {
 
       // iterations (currently only supported for sequential analysis)
       text<<"iterations,";
-      if(analyzer.getNumberOfThreadsToUse()==1 && analyzer.getSolver()==5 && analyzer.getExplorationMode()==Analyzer::EXPL_LOOP_AWARE)
+      if(analyzer.getNumberOfThreadsToUse()==1 && analyzer.getSolver()->getId()==5 && analyzer.getExplorationMode()==EXPL_LOOP_AWARE)
         text<<analyzer.getIterations()<<","<<analyzer.getApproximatedIterations();
       else
         text<<"-1,-1";
@@ -2023,7 +1964,7 @@ int main( int argc, char * argv[] ) {
     }
 
     Visualizer visualizer(analyzer.getLabeler(),analyzer.getVariableIdMapping(),analyzer.getFlow(),analyzer.getPStateSet(),analyzer.getEStateSet(),analyzer.getTransitionGraph());
-    if(args.isSet("viz")) {
+    if(args.getBool("viz")) {
       cout << "generating graphviz files:"<<endl;
       string dotFile="digraph G {\n";
       dotFile+=visualizer.transitionGraphToDot();
@@ -2115,7 +2056,7 @@ int main( int argc, char * argv[] ) {
     }
 #endif
 
-    if (args.isSet("annotate-terms")) {
+    if (args.getBool("annotate-terms")) {
       // TODO: it might be useful to be able to select certain analysis results to be only annotated
       logger[INFO] << "Annotating term representations."<<endl;
       attachTermRepresentation(sageProject);
@@ -2123,13 +2064,13 @@ int main( int argc, char * argv[] ) {
       ara.annotateAstAttributesAsCommentsBeforeStatements(sageProject,"codethorn-term-representation");
     }
 
-    if (args.isSet("annotate-terms")||args.isSet("generate-assertions")) {
+    if (args.getBool("annotate-terms")||args.getBool("generate-assertions")) {
       logger[INFO] << "Generating annotated program."<<endl;
       //backend(sageProject);
       sageProject->unparse(0,0);
     }
 
-    if(args.isSet("print-varid-mapping")) {
+    if(args.getBool("print-varid-mapping")) {
       analyzer.getVariableIdMapping()->toStream(cout);
     }
     // reset terminal
@@ -2224,7 +2165,7 @@ void CodeThorn::printAnalyzerStatistics(Analyzer& analyzer, double totalRunTime,
   ss << "Number of estates              : "<<color("cyan")<<eStateSetSize<<color("white")<<" (memory: "<<color("cyan")<<eStateSetBytes<<color("white")<<" bytes)"<<" ("<<""<<eStateSetLoadFactor<<  "/"<<eStateSetMaxCollisions<<")"<<endl;
   ss << "Number of transitions          : "<<color("blue")<<transitionGraphSize<<color("white")<<" (memory: "<<color("blue")<<transitionGraphBytes<<color("white")<<" bytes)"<<endl;
   ss << "Number of constraint sets      : "<<color("yellow")<<numOfconstraintSets<<color("white")<<" (memory: "<<color("yellow")<<constraintSetsBytes<<color("white")<<" bytes)"<<" ("<<""<<constraintSetsLoadFactor<<  "/"<<constraintSetsMaxCollisions<<")"<<endl;
-  if(analyzer.getNumberOfThreadsToUse()==1 && analyzer.getSolver()==5 && analyzer.getExplorationMode()==Analyzer::EXPL_LOOP_AWARE) {
+  if(analyzer.getNumberOfThreadsToUse()==1 && analyzer.getSolver()->getId()==5 && analyzer.getExplorationMode()==EXPL_LOOP_AWARE) {
     ss << "Number of iterations           : "<<analyzer.getIterations()<<"-"<<analyzer.getApproximatedIterations()<<endl;
   }
   ss << "=============================================================="<<endl;

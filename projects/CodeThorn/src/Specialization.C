@@ -841,9 +841,9 @@ int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet& loopInfoSet,
 	Visualizer visualizer;
 	string dotGraph = visualizer.visualizeReadWriteAccesses(indexToReadWriteDataMap, variableIdMapping, 
 								readWriteRaces, writeWriteRaces, 
-								!args.isSet("rw-data"), 
-								args.isSet("rw-clusters"),
-								args.isSet("rw-highlight-races"));
+								!args.getBool("rw-data"), 
+								args.getBool("rw-clusters"),
+								args.getBool("rw-highlight-races"));
 	write_file(filename, dotGraph);
 	cout << "STATUS: written graph that illustrates read and write accesses to file: " << filename << endl;
       }

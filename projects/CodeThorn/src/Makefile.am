@@ -124,9 +124,9 @@ codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspray
 endif
 
 codethorn_SOURCES = \
+  AnalysisParameters.h             \
   Analyzer.C                       \
   Analyzer.h                       \
-  AnalyzerSolvers.C                \
   AstNodeInfo.h \
   AstNodeInfo.C \
   CodeThornException.h \
@@ -189,6 +189,20 @@ codethorn_SOURCES = \
   RewriteSystem.C \
   RewriteSystem.h \
   SetAlgo.h \
+  Solver.h \
+  Solver.C \
+  Solver4.h \
+  Solver4.C \
+  Solver5.h \
+  Solver5.C \
+  Solver8.h \
+  Solver8.C \
+  Solver10.h \
+  Solver10.C \
+  Solver11.h \
+  Solver11.C \
+  Solver12.h \
+  Solver12.C \
   Specialization.h \
   Specialization.C \
   SpotConnection.C \

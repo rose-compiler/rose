@@ -1,3 +1,4 @@
+#include "sage3basic.h"
 #include "CommandLineOptions.h"
 #include "CodeThornException.h"
 
@@ -13,9 +14,22 @@ CommandLineOptions args;
 
 /////////////////////////////////////////////////
 
-bool CommandLineOptions::isSet(string option) {
-  if (count(option) < 1) {
-    throw CodeThorn::Exception("Boolean command line option \"" + option + "\" accessed that does not exist.");
+bool CommandLineOptions::isDefined(string option) {
+  return (find(option) != end());
+}
+
+bool CommandLineOptions::isDefaulted(string option) {
+  ROSE_ASSERT(isDefined(option));
+  return (*find(option)).second.defaulted();
+}
+
+bool CommandLineOptions::isUserProvided(string option) {
+  return (isDefined(option) && !isDefaulted(option));
+}
+
+bool CommandLineOptions::getBool(string option) {
+  if (!isDefined(option)) {
+    throw CodeThorn::Exception("Boolean command line option \"" + option + "\" accessed that is not defined.");
   }
   CommandLineOptions::iterator iter = find(option);
   try { 
@@ -25,10 +39,26 @@ bool CommandLineOptions::isSet(string option) {
   }
 }
 
-void CommandLineOptions::setOption(string option, bool value) {
-  if (count(option) < 1) {
-    throw CodeThorn::Exception("Trying to set Boolean command line option \"" + option + "\" that does not exist.");
+int CommandLineOptions::getInt(string option) {
+  if (!isDefined(option)) {
+    throw CodeThorn::Exception("Integer command line option \"" + option + "\" accessed that is not defined.");
   }
-  const_cast<boost::program_options::variable_value&>(operator[](option)) = 
-    boost::program_options::variable_value(boost::any(value), false);
+  CommandLineOptions::iterator iter = find(option);
+  try { 
+    return iter->second.as<int>();
+  } catch(...) {
+    throw CodeThorn::Exception("Command line option \"" + option + "\" accessed as integer value, but has different type.");
+  }
+}
+
+string CommandLineOptions::getString(string option) {
+  if (!isDefined(option)) {
+    throw CodeThorn::Exception("String command line option \"" + option + "\" accessed that is not defined.");
+  }
+  CommandLineOptions::iterator iter = find(option);
+  try { 
+    return iter->second.as<string>();
+  } catch(...) {
+    throw CodeThorn::Exception("Command line option \"" + option + "\" accessed as string value, but has different type.");
+  }
 }

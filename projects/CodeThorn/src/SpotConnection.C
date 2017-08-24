@@ -328,7 +328,7 @@ bool SpotConnection::checkFormula(spot::tgba* ct_tgba, std::string ltl_string, s
 	spot::print_tgba_run(runResult, &product, run);
 	//assign a string representation of the counterexample if the corresponding out parameter is set
 	std::string r = runResult.str();
-	r = filterCounterexample(r, args.isSet("counterexamples-with-output"));
+	r = filterCounterexample(r, args.getBool("counterexamples-with-output"));
 	*ce_ptr = new string(r);//formatRun(r);	
 	delete run;
       } else {

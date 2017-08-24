@@ -10,6 +10,7 @@
 #include "Miscellaneous.h"
 #include "Miscellaneous2.h"
 #include "AnalysisAbstractionLayer.h"
+#include "Solver8.h"
 #include "SpotConnection.h"
 #include "CodeThornException.h"
 
@@ -27,18 +28,10 @@ using namespace Sawyer::Message;
 
 Sawyer::Message::Facility Analyzer::logger;
 
-void Analyzer::setOptionStatusMessages(bool flag) {
-  _optionStatusMessages=flag;
-}
-
-bool Analyzer::getOptionStatusMessages() {
-  return _optionStatusMessages;
-}
-
 void Analyzer::printStatusMessage(string s, bool newLineFlag) {
 #pragma omp critical (STATUS_MESSAGES)
   {
-    if(getOptionStatusMessages()) {
+    if(args.getBool("status")) {
       cout<<s;
       if(newLineFlag) {
         cout<<endl;
@@ -119,7 +112,7 @@ Analyzer::Analyzer():
   _resourceLimitDiff(10000),
   _numberOfThreadsToUse(1),
   _semanticFoldThreshold(5000),
-  _solver(5),
+  _solver(nullptr),
   _analyzerMode(AM_ALL_STATES),
   _maxTransitions(-1),
   _maxIterations(-1),
@@ -129,13 +122,10 @@ Analyzer::Analyzer():
   _maxIterationsForcedTop(-1),
   _maxBytesForcedTop(-1),
   _maxSecondsForcedTop(-1),
-  _optionStatusMessages(false),
   _treatStdErrLikeFailedAssert(false),
   _skipSelectedFunctionCalls(false),
   _explorationMode(EXPL_BREADTH_FIRST),
   _topifyModeActive(false),
-  _swapWorkListsCount(0),
-
   _iterations(0),
   _approximated_iterations(0),
   _curr_iteration_cnt(0),
@@ -176,7 +166,7 @@ bool Analyzer::isPrecise() {
   if (isActiveGlobalTopify()) {
     return false;
   }
-  if (args.isSet("explicit-arrays")==false && !args.isSet("rers-binary")) {
+  if (args.getBool("explicit-arrays")==false && !args.getBool("rers-binary")) {
     return false;
   }
   return true;
@@ -201,25 +191,17 @@ ExprAnalyzer* Analyzer::getExprAnalyzer() {
   return &exprAnalyzer;
 }
 
-void Analyzer::setSolver(int solver) {
+void Analyzer::setSolver(Solver* solver) {
   _solver=solver;
+  _solver->setAnalyzer(this);
 }
 
-int Analyzer::getSolver() {
+Solver* Analyzer::getSolver() {
   return _solver;
 }
 
 void Analyzer::runSolver() {
-  switch(_solver) {
-  case 4: runSolver4();break;
-  case 5: runSolver5();break;
-  case 8: runSolver8();break;
-  case 10: runSolver10();break;
-  case 11: runSolver11();break;
-  case 12: runSolver12();break;
-  default: logger[ERROR]<<"solver "<<_solver<<" does not exist."<<endl;
-    exit(1);
-  }
+  _solver->run();
 }
 
 set<string> Analyzer::variableIdsToVariableNames(AbstractValueSet s) {
@@ -270,7 +252,7 @@ Analyzer::VariableDeclarationList Analyzer::computeUsedGlobalVariableDeclaration
 
 void Analyzer::recordTransition(const EState* sourceState, Edge e, const EState* targetState) {
   transitionGraph.add(Transition(sourceState,e,targetState));
-  if(args.isSet("semantic-fold")) {
+  if(args.getBool("semantic-fold")) {
     Label s=sourceState->label();
     Label t=targetState->label();
     Label stgsl=getTransitionGraph()->getStartLabel();
@@ -333,7 +315,7 @@ string Analyzer::analyzerStateToString() {
   ss<<" ";
   ss<<"TopMode:"<<_globalTopifyMode;
   ss<<" ";
-  ss<<"RBin:"<<args.isSet("rers-binary");
+  ss<<"RBin:"<<args.getBool("rers-binary");
   ss<<" ";
   ss<<"incSTGReady:"<<isIncompleteSTGReady();
   return ss.str();
@@ -344,6 +326,16 @@ bool Analyzer::isInWorkList(const EState* estate) {
     if(*i==estate) return true;
   }
   return false;
+}
+
+void Analyzer::incIterations() {
+  if(isPrecise()) {
+#pragma omp atomic
+    _iterations+=1;
+  } else {
+#pragma omp atomic
+    _approximated_iterations+=1;
+  }
 }
 
 bool Analyzer::isLoopCondLabel(Label lab) {
@@ -486,7 +478,7 @@ void Analyzer::eventGlobalTopifyTurnedOn() {
     nt++;
   }
 
-  if(getOptionStatusMessages()) {
+  if(args.getBool("status")) {
     cout << "switched to static analysis (approximating "<<n<<" of "<<nt<<" variables with top-conversion)."<<endl;
   }
   //switch to the counter for approximated loop iterations if currently in a mode that counts iterations
@@ -696,7 +688,7 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
         return createEState(targetLabel,newPState,cset);
       }
 
-      if(variableIdMapping.hasArrayType(initDeclVarId) && args.isSet("explicit-arrays")==false) {
+      if(variableIdMapping.hasArrayType(initDeclVarId) && args.getBool("explicit-arrays")==false) {
         // in case of a constant array the array (and its members) are not added to the state.
         // they are considered to be determined from the initializer without representing them
         // in the state
@@ -948,7 +940,7 @@ const EState* Analyzer::processNew(EState& s) {
 }
 
 const EState* Analyzer::processNewOrExisting(EState& estate) {
-  if(args.isSet("tg-ltl-reduced")) {
+  if(args.getBool("tg-ltl-reduced")) {
     // experimental: passing of params (we can avoid the copying)
     EStateSet::ProcessingResult res=process(estate.label(),*estate.pstate(),*estate.constraints(),estate.io);
     ROSE_ASSERT(res.second);
@@ -963,7 +955,7 @@ const ConstraintSet* Analyzer::processNewOrExisting(ConstraintSet& cset) {
 }
 
 EStateSet::ProcessingResult Analyzer::process(EState& estate) {
-  if(args.isSet("tg-ltl-reduced")) {
+  if(args.getBool("tg-ltl-reduced")) {
     // experimental passing of params (we can avoid the copying)
     return process(estate.label(),*estate.pstate(),*estate.constraints(),estate.io);
   } else {
@@ -973,7 +965,7 @@ EStateSet::ProcessingResult Analyzer::process(EState& estate) {
 
 EStateSet::ProcessingResult Analyzer::process(Label label, PState pstate, ConstraintSet cset, InputOutput io) {
   ROSE_ASSERT(0);
-  if(isLTLRelevantLabel(label) || io.op!=InputOutput::NONE || (!args.isSet("tg-ltl-reduced"))) {
+  if(isLTLRelevantLabel(label) || io.op!=InputOutput::NONE || (!args.getBool("tg-ltl-reduced"))) {
     const PState* newPStatePtr=processNewOrExisting(pstate);
     const ConstraintSet* newCSetPtr=processNewOrExisting(cset);
     EState newEState=EState(label,newPStatePtr,newCSetPtr,io);
@@ -1100,7 +1092,7 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root, boo
     flow=cfanalyzer->flow(root);
 
   logger[TRACE]<< "STATUS: Building CFGs finished."<<endl;
-  if(args.isSet("reduce-cfg")) {
+  if(args.getBool("reduce-cfg")) {
     int cnt=cfanalyzer->optimizeFlow(flow);
     logger[TRACE]<< "INIT: CFG reduction OK. (eliminated "<<cnt<<" nodes)"<<endl;
   }
@@ -1114,7 +1106,7 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root, boo
   logger[TRACE]<< "INIT: ICFG OK. (size: " << flow.size() << " edges)"<<endl;
 
 #if 0
-  if(args.isSet("reduce-cfg")) {
+  if(args.getBool("reduce-cfg")) {
     int cnt=cfanalyzer->inlineTrivialFunctions(flow);
     cout << "INIT: CFG reduction OK. (inlined "<<cnt<<" functions; eliminated "<<cnt*4<<" nodes)"<<endl;
   }
@@ -1246,7 +1238,7 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
     if(currentPState.varExists(rhsVarId)) {
       rhsIntVal=currentPState.readFromMemoryLocation(rhsVarId);
     } else {
-      if(variableIdMapping.hasArrayType(rhsVarId) && args.isSet("explicit-arrays")==false) {
+      if(variableIdMapping.hasArrayType(rhsVarId) && args.getBool("explicit-arrays")==false) {
         // in case of an array the id itself is the pointer value
         ROSE_ASSERT(rhsVarId.isValid());
         rhsIntVal=rhsVarId.getIdCode();
@@ -1408,10 +1400,10 @@ void Analyzer::semanticFoldingOfTransitionGraph() {
   {
     //cout << "STATUS: (Experimental) semantic folding of transition graph ..."<<endl;
     //assert(checkEStateSet());
-    if(args.isSet("post-semantic-fold")) {
+    if(args.getBool("post-semantic-fold")) {
       logger[TRACE]<< "STATUS: post-semantic folding: computing states to fold."<<endl;
     }
-    if(args.isSet("report-semantic-fold")) {
+    if(args.getBool("report-semantic-fold")) {
       logger[TRACE]<< "STATUS: semantic folding: phase 1: computing states to fold."<<endl;
     }
     if(_newNodesToFold.size()==0) {
@@ -1421,7 +1413,7 @@ void Analyzer::semanticFoldingOfTransitionGraph() {
     // filter for worklist
     // iterate over worklist and remove all elements that are in the worklist and not LTL-relevant
     int numFiltered=0;
-    if(args.isSet("report-semantic-fold")) {
+    if(args.getBool("report-semantic-fold")) {
       logger[TRACE]<<"STATUS: semantic folding: phase 2: filtering."<<endl;
     }
     for(EStateWorkList::iterator i=estateWorkListCurrent->begin();i!=estateWorkListCurrent->end();++i) {
@@ -1430,7 +1422,7 @@ void Analyzer::semanticFoldingOfTransitionGraph() {
         numFiltered++;
       }
     }
-    if(args.isSet("report-semantic-fold")) {
+    if(args.getBool("report-semantic-fold")) {
       logger[TRACE]<< "STATUS: semantic folding: phase 3: reducing "<<_newNodesToFold.size()<< " states (excluding WL-filtered: "<<numFiltered<<")"<<endl;
     }
     int tg_size_before_folding=getTransitionGraph()->size();
@@ -1445,13 +1437,13 @@ void Analyzer::semanticFoldingOfTransitionGraph() {
         exit(1);
       }
     }
-    if(args.isSet("report-semantic-fold")) {
+    if(args.getBool("report-semantic-fold")) {
       logger[TRACE]<< "STATUS: semantic folding: phase 4: clearing "<<_newNodesToFold.size()<< " states (excluding WL-filtered: "<<numFiltered<<")"<<endl;
     }
     _newNodesToFold.clear();
     //ROSE_ASSERT(checkEStateSet());
     //ROSE_ASSERT(checkTransitionGraph());
-    if(args.isSet("report-semantic-fold") && tg_size_before_folding!=tg_size_after_folding)
+    if(args.getBool("report-semantic-fold") && tg_size_before_folding!=tg_size_after_folding)
       logger[TRACE]<< "STATUS: semantic folding: finished: Folded transition graph from "<<tg_size_before_folding<<" to "<<tg_size_after_folding<<" transitions."<<endl;
 
   } // end of omp pragma
@@ -1625,7 +1617,7 @@ Analyzer::transitionsToInOutErrAndWorklist( const EState* currentState,
 }
 
 int Analyzer::reachabilityAssertCode(const EState* currentEStatePtr) {
-  if(args.isSet("rers-binary")) {
+  if(args.getBool("rers-binary")) {
     PState* pstate = const_cast<PState*>( (currentEStatePtr)->pstate() );
     int outputVal = pstate->readFromMemoryLocation(globalVarIdByName("output")).getIntValue();
     if (outputVal > -100) {  //either not a failing assertion or a stderr output treated as a failing assertion)
@@ -1685,7 +1677,7 @@ Analyzer::SubSolverResultType Analyzer::subSolver(const EState* currentEStatePtr
   bool earlyTermination = false;
   int threadNum = 0; //subSolver currently does not support multiple threads.
   // print status message if required
-  if (getOptionStatusMessages() && _displayDiff) {
+  if (args.getBool("status") && _displayDiff) {
 #pragma omp critical(HASHSET)
     {
       estateSetSize = estateSet.size();
@@ -1714,12 +1706,12 @@ Analyzer::SubSolverResultType Analyzer::subSolver(const EState* currentEStatePtr
     }
   } 
   if (earlyTermination) {
-    if(getOptionStatusMessages()) {
+    if(args.getBool("status")) {
       cout << "STATUS: Early termination within subSolver (resource limit reached)." << endl;
     }
     PropertyValueTable* ltlResults = _spotConnection->getLtlResults();
     bool withCounterexample = true;
-    if(getOptionStatusMessages()) {
+    if(args.getBool("status")) {
       ltlResults-> printResults("YES (verified)", "NO (falsified)", "ltl_property_", withCounterexample);
       printStatusMessageLine("==============================================================");
       ltlResults->printResultsStatistics();
@@ -1801,7 +1793,7 @@ Analyzer::SubSolverResultType Analyzer::subSolver(const EState* currentEStatePtr
           } else if(isFailedAssertEState(&newEState)) {
             // record failed assert
             int assertCode;
-            if(args.isSet("rers-binary")) {
+            if(args.getBool("rers-binary")) {
               assertCode=reachabilityAssertCode(newEStatePtr);
             } else {
               assertCode=reachabilityAssertCode(currentEStatePtr);
@@ -1812,7 +1804,7 @@ Analyzer::SubSolverResultType Analyzer::subSolver(const EState* currentEStatePtr
             */
             if(!getModeLTLDriven()) {
               if(assertCode>=0) {
-                if(args.isSet("with-counterexamples") || args.isSet("with-assert-counterexamples")) {
+                if(args.getBool("with-counterexamples") || args.getBool("with-assert-counterexamples")) {
                   //if this particular assertion was never reached before, compute and update counterexample
                   if (reachabilityResults.getPropertyValue(assertCode) != PROPERTY_VALUE_YES) {
                     _firstAssertionOccurences.push_back(pair<int, const EState*>(assertCode, newEStatePtr));
@@ -1829,457 +1821,6 @@ Analyzer::SubSolverResultType Analyzer::subSolver(const EState* currentEStatePtr
   return make_pair(deferedWorkList,existingEStateSet);
 }
 
-void Analyzer::runSolver11() {
-  if(svCompFunctionSemantics()) {
-    reachabilityResults.init(1); // in case of svcomp mode set single program property to unknown
-  } else {
-    reachabilityResults.init(getNumberOfErrorLabels()); // set all reachability results to unknown
-  }
-  logger[INFO]<<"number of error labels: "<<reachabilityResults.size()<<endl;
-  size_t prevStateSetSize=0; // force immediate report at start
-  logger[TRACE]<<"STATUS: Running sequential solver 11 with 1 thread."<<endl;
-  printStatusMessage(true);
-  while(!isEmptyWorkList()) {
-    if(_displayDiff && (estateSet.size()>(prevStateSetSize+_displayDiff))) {
-      printStatusMessage(true);
-      prevStateSetSize=estateSet.size();
-    }
-    const EState* currentEStatePtr=popWorkList();
-    ROSE_ASSERT(currentEStatePtr);
-
-    SubSolverResultType subSolverResult=subSolver(currentEStatePtr);
-    EStateWorkList deferedWorkList=subSolverResult.first;
-    for(EStateWorkList::iterator i=deferedWorkList.begin();i!=deferedWorkList.end();++i) {
-      addToWorkList(*i);
-    }
-  } // while loop
-  const bool isComplete=true;
-  if (!isPrecise()) {
-    _firstAssertionOccurences = list<FailedAssertion>(); //ignore found assertions if the STG is not precise
-  }
-  if(isIncompleteSTGReady()) {
-    printStatusMessage(true);
-    logger[TRACE]<< "STATUS: analysis finished (incomplete STG due to specified resource restriction)."<<endl;
-    reachabilityResults.finishedReachability(isPrecise(),!isComplete);
-    transitionGraph.setIsComplete(!isComplete);
-  } else {
-    bool tmpcomplete=true;
-    reachabilityResults.finishedReachability(isPrecise(),tmpcomplete);
-    printStatusMessage(true);
-    transitionGraph.setIsComplete(tmpcomplete);
-    logger[TRACE]<< "analysis finished (worklist is empty)."<<endl;
-  }
-  transitionGraph.setIsPrecise(isPrecise());
-  printStatusMessage(true);
-  logger[TRACE]<< "analysis with solver 11 finished (worklist is empty)."<<endl;
-}
-
-/*! 
-  * \author Marc Jasper
-  * \date 2016.
- */
-void Analyzer::runSolver12() {
-  _analysisTimer.start();
-  if(svCompFunctionSemantics()) {
-    reachabilityResults.init(1); // in case of svcomp mode set single program property to unknown
-  } else {
-    reachabilityResults.init(getNumberOfErrorLabels()); // set all reachability results to unknown
-  }
-  logger[INFO]<<"number of error labels: "<<reachabilityResults.size()<<endl;
-  size_t prevStateSetSizeDisplay=0; 
-  size_t prevStateSetSizeResource=0;
-  int threadNum;
-  int workers=_numberOfThreadsToUse;
-  vector<bool> workVector(_numberOfThreadsToUse);
-  set_finished(workVector,true);
-  bool terminate=false;
-  bool terminatedWithIncompleteStg = false;
-  bool terminateEarly=false;
-  //omp_set_dynamic(0);     // Explicitly disable dynamic teams
-  omp_set_num_threads(workers);
-
-  bool ioReductionActive = false;
-  unsigned int ioReductionThreshold = 0;
-  unsigned int estatesLastReduction = 0;
-  if(args.count("io-reduction")) {
-    ioReductionActive = true;
-    ioReductionThreshold = args["io-reduction"].as<int>();
-  }
-
-  if(args.isSet("rers-binary")) {
-    //initialize the global variable arrays in the linked binary version of the RERS problem
-    logger[DEBUG]<< "init of globals with arrays for "<< workers << " threads. " << endl;
-    RERS_Problem::rersGlobalVarsArrayInit(workers);
-    RERS_Problem::createGlobalVarAddressMaps(this);
-  }
-
-  logger[TRACE]<<"STATUS: Running parallel solver 12 with "<<workers<<" threads."<<endl;
-  printStatusMessage(true);
-# pragma omp parallel shared(workVector, terminate, terminatedWithIncompleteStg) private(threadNum)
-  {
-    threadNum=omp_get_thread_num();
-    while(!terminate) {
-#pragma omp critical(ESTATEWL)
-      {
-        if (threadNum == 0 && all_false(workVector)) {
-          if ( (estateWorkListCurrent->empty() && estateWorkListNext->empty())) {
-            terminate = true;
-	  }
-	  if ( estateWorkListCurrent->empty() && !(estateWorkListNext->empty()) ){
-	    // swap worklists iff the maximum number of iterations has not been fully computed yet
-	    if (getIterations() == _maxIterations) {
-	      terminate = true;
-	      terminatedWithIncompleteStg = true;
-	    } else {
-	      swapWorkLists();
-	      _swapWorkListsCount++;
-	    }
-	  }
-	  isActiveGlobalTopify();
-	}
-      }
-      unsigned long estateSetSize;
-      // print status message if required
-      if (getOptionStatusMessages() && _displayDiff) {
-#pragma omp critical(HASHSET)
-	{
-	  estateSetSize = estateSet.size();
-	}
-	if(threadNum==0 && (estateSetSize>(prevStateSetSizeDisplay+_displayDiff))) {
-	  printStatusMessage(true);
-	  prevStateSetSizeDisplay=estateSetSize;
-	}
-      }
-      // switch to topify mode or terminate analysis if resource limits are exceeded
-      if (_maxBytes != -1 || _maxBytesForcedTop != -1 || _maxSeconds != -1 || _maxSecondsForcedTop != -1
-	  || _maxTransitions != -1 || _maxTransitionsForcedTop != -1 || _maxIterations != -1 || _maxIterationsForcedTop != -1) {
-#pragma omp critical(HASHSET)
-	{
-	  estateSetSize = estateSet.size();
-	}
-	if(threadNum==0 && _resourceLimitDiff && (estateSetSize>(prevStateSetSizeResource+_resourceLimitDiff))) {
-	  if (isIncompleteSTGReady()) {
-#pragma omp critical(ESTATEWL)
-	    {
-	      terminate = true;
-	      terminatedWithIncompleteStg = true;
-	    }	  
-	  }
-	  isActiveGlobalTopify(); // Checks if a switch to topify is necessary. If yes, it changes the analyzer state.
-	  prevStateSetSizeResource=estateSetSize;
-	}
-      }
-      //perform reduction to I/O/worklist states only if specified threshold was reached
-      if (ioReductionActive) {
-#pragma omp critical
-        {
-          if (estateSet.size() > (estatesLastReduction + ioReductionThreshold)) {
-            //int beforeReduction = estateSet.size();
-            reduceGraphInOutWorklistOnly();
-            estatesLastReduction = estateSet.size();
-            logger[TRACE]<< "STATUS: transition system reduced to I/O/worklist states. remaining transitions: " << transitionGraph.size() << endl;
-          }
-        }
-      }
-      if(isEmptyWorkList()) {
-#pragma omp critical
-        {
-          workVector[threadNum]=false;
-        }
-        continue;
-      } else {
-#pragma omp critical
-        {
-          if(terminateEarly)
-            workVector[threadNum]=false;
-          else
-            workVector[threadNum]=true;
-        }
-      }
-      const EState* currentEStatePtr=popWorkList();
-      // if we want to terminate early, we ensure to stop all threads and empty the worklist (e.g. verification error found).
-      if(terminateEarly)
-        continue;
-      if(!currentEStatePtr) {
-        //cerr<<"Thread "<<threadNum<<" found empty worklist. Continue without work. "<<endl;
-        ROSE_ASSERT(threadNum>=0 && threadNum<=_numberOfThreadsToUse);
-      } else {
-        ROSE_ASSERT(currentEStatePtr);
-        Flow edgeSet=flow.outEdges(currentEStatePtr->label());
-        // logger[DEBUG]<< "out-edgeSet size:"<<edgeSet.size()<<endl;
-        for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
-          Edge e=*i;
-          list<EState> newEStateList;
-          newEStateList=transferEdgeEState(e,currentEStatePtr);
-          for(list<EState>::iterator nesListIter=newEStateList.begin();
-              nesListIter!=newEStateList.end();
-              ++nesListIter) {
-            // newEstate is passed by value (not created yet)
-            EState newEState=*nesListIter;
-            ROSE_ASSERT(newEState.label()!=Labeler::NO_LABEL);
-            if(_stg_trace_filename.size()>0 && !newEState.constraints()->disequalityExists()) {
-              std::ofstream fout;
-              // _csv_stg_trace_filename is the member-variable of analyzer
-#pragma omp critical
-              {
-                fout.open(_stg_trace_filename.c_str(),ios::app);    // open file for appending
-                assert (!fout.fail( ));
-                fout<<"PSTATE-IN:"<<currentEStatePtr->pstate()->toString(&variableIdMapping);
-                string sourceString=getCFAnalyzer()->getLabeler()->getNode(currentEStatePtr->label())->unparseToString().substr(0,20);
-                if(sourceString.size()==20) sourceString+="...";
-                fout<<" ==>"<<"TRANSFER:"<<sourceString;
-                fout<<"==> "<<"PSTATE-OUT:"<<newEState.pstate()->toString(&variableIdMapping);
-                fout<<endl;
-                fout.close();
-                // logger[DEBUG]<<"generate STG-edge:"<<"ICFG-EDGE:"<<e.toString()<<endl;
-              }
-            }
-            if((!newEState.constraints()->disequalityExists()) &&(!isFailedAssertEState(&newEState)&&!isVerificationErrorEState(&newEState))) {
-              HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=process(newEState);
-              const EState* newEStatePtr=pres.second;
-              if(pres.first==true)
-                addToWorkList(newEStatePtr);
-	      recordTransition(currentEStatePtr,e,newEStatePtr);
-            }
-            if((!newEState.constraints()->disequalityExists()) && ((isFailedAssertEState(&newEState))||isVerificationErrorEState(&newEState))) {
-              // failed-assert end-state: do not add to work list but do add it to the transition graph
-              const EState* newEStatePtr;
-              newEStatePtr=processNewOrExisting(newEState);
-	      recordTransition(currentEStatePtr,e,newEStatePtr);
-
-              if(isVerificationErrorEState(&newEState)) {
-#pragma omp critical
-                {
-                  logger[TRACE]<<"STATUS: detected verification error state ... terminating early"<<endl;
-                  // set flag for terminating early
-                  reachabilityResults.reachable(0);
-                  terminateEarly=true;
-                }
-              } else if(isFailedAssertEState(&newEState)) {
-                // record failed assert
-                int assertCode;
-                if(args.isSet("rers-binary")) {
-                  assertCode=reachabilityAssertCode(newEStatePtr);
-                } else {
-                  assertCode=reachabilityAssertCode(currentEStatePtr);
-                }
-                if(assertCode>=0) {
-#pragma omp critical
-                  {
-                    if(args.isSet("with-counterexamples") || args.isSet("with-assert-counterexamples")) {
-                      //if this particular assertion was never reached before, compute and update counterexample
-                      if (reachabilityResults.getPropertyValue(assertCode) != PROPERTY_VALUE_YES) {
-                        _firstAssertionOccurences.push_back(pair<int, const EState*>(assertCode, newEStatePtr));
-                      }
-                    }
-                    reachabilityResults.reachable(assertCode);
-                  }
-                } else {
-                  // TODO: this is a workaround for isFailedAssert being true in case of rersmode for stderr (needs to be refined)
-                  if(!args.isSet("rersmode")) {
-                    // assert without label
-                  }
-                }
-              } // end of failed assert handling
-            } // end of if (no disequality (= no infeasable path))
-          } // end of loop on transfer function return-estates
-        } // edge set iterator
-      } // conditional: test if work is available
-    } // while
-  } // omp parallel
-  _analysisTimer.stop();
-  const bool isComplete=true;
-  if (!isPrecise()) {
-    _firstAssertionOccurences = list<FailedAssertion>(); //ignore found assertions if the STG is not precise
-  }
-  if(terminatedWithIncompleteStg || isIncompleteSTGReady()) {
-    printStatusMessage(true);
-    logger[TRACE]<< "STATUS: analysis finished (incomplete STG due to specified resource restriction)."<<endl;
-    reachabilityResults.finishedReachability(isPrecise(),!isComplete);
-    transitionGraph.setIsComplete(!isComplete);
-  } else {
-    bool tmpcomplete=true;
-    reachabilityResults.finishedReachability(isPrecise(),tmpcomplete);
-    printStatusMessage(true);
-    transitionGraph.setIsComplete(tmpcomplete);
-    logger[TRACE]<< "analysis finished (worklist is empty)."<<endl;
-  }
-  transitionGraph.setIsPrecise(isPrecise());
-}
-
-/*! 
-  * \author Marc Jasper
-  * \date 2015.
- */
-int Analyzer::pStateDepthFirstSearch(PState* startPState, int maxDepth, int thread_id, list<int>* partialTrace, int maxInputVal, int patternLength, int patternIterations) {
-  // initialize worklist
-  PStatePlusIOHistory startState = PStatePlusIOHistory(*startPState, list<int>());
-  std::list<PStatePlusIOHistory> workList;
-  workList.push_back(startState);
-  // statistics and other variables
-  int processedStates = 0;
-  int previousProcessedStates = 0;
-  unsigned int currentMaxDepth = 0; //debugging
-  int displayDiff=1000;
-  while(!workList.empty()) {
-    if(displayDiff && (processedStates >= (previousProcessedStates+displayDiff))) {
-      if (getOptionStatusMessages()) {
-	logger[TRACE]<< "STATUS: #processed PStates suffix dfs (thread_id: " << thread_id << "): " << processedStates << "   wl size: " << workList.size() << endl;
-      }
-      previousProcessedStates=processedStates;
-    }
-    // pop worklist
-    PStatePlusIOHistory currentState;
-    processedStates++;
-    currentState=*workList.begin();
-    workList.pop_front();
-    // generate one new state for each input symbol and continue searching for patterns
-    for (set<int>::iterator inputVal=_inputVarValues.begin(); inputVal!=_inputVarValues.end(); inputVal++) {
-      // copy the state and initialize new input
-      PState newPState = currentState.first;
-      newPState.writeToMemoryLocation(globalVarIdByName("input"),CodeThorn::AbstractValue(*inputVal));
-      list<int> newHistory = currentState.second;
-      ROSE_ASSERT(newHistory.size() % 2 == 0);
-      newHistory.push_back(*inputVal);
-      // call the next-state function (a.k.a. "calculate_output")
-      RERS_Problem::rersGlobalVarsCallInit(this, newPState, thread_id);
-      (void) RERS_Problem::calculate_output( thread_id );
-      int rers_result=RERS_Problem::output[thread_id];
-      // handle assertions found to be reachable
-      if (rers_result==-2) {
-        //Stderr state, do not continue (rers mode)
-      } else if(rers_result<=-100) {
-        // we found a failing assert
-        int index=((rers_result+100)*(-1));
-        ROSE_ASSERT(index>=0 && index <=99);
-        if (_patternSearchAssertTable->getPropertyValue(index) == PROPERTY_VALUE_YES) {
-          // report the result and add it to the results table
-          #pragma omp critical(CSV_ASSERT_RESULTS)
-          {
-            if (reachabilityResults.getPropertyValue(index) == PROPERTY_VALUE_UNKNOWN) {
-              list<int> ceTrace = *partialTrace;
-              for (list<int>::iterator n = newHistory.begin(); n != newHistory.end(); n++) {
-                ceTrace.push_back(*n);
-              }
-              int prefixLength = (partialTrace->size() - (2 * patternIterations * patternLength)) / 2;
-	      if (getOptionStatusMessages()) {
-	        cout<< "STATUS: found a trace leading to failing assertion #" << index << " (input lengths: reused prefix: " << prefixLength;
-	        cout<< ", pattern: " <<patternLength << ", suffix: " << ((newHistory.size()+1) / 2) << ", total: " << ((ceTrace.size()+1) / 2) << ")." << endl;
-              }
-              string ce = convertToCeString(ceTrace, maxInputVal);
-              reachabilityResults.setPropertyValue(index, PROPERTY_VALUE_YES);
-              reachabilityResults.setCounterexample(index, ce);
-            }
-          }
-        }
-      } else {  // not a failed assertion, continue searching
-        RERS_Problem::rersGlobalVarsCallReturnInit(this, newPState, thread_id);
-        newHistory.push_back(rers_result);
-        ROSE_ASSERT(newHistory.size() % 2 == 0);
-        // continue only if the maximum depth of input symbols has not yet been reached
-        if ((newHistory.size() / 2) < (unsigned int) maxDepth) {
-          // add the new state to the worklist
-          PStatePlusIOHistory newState = PStatePlusIOHistory(newPState, newHistory);
-          currentMaxDepth = currentMaxDepth < newHistory.size() ? newHistory.size() : currentMaxDepth;
-          workList.push_front(newState);  // depth-first search
-        } else {
-          ROSE_ASSERT(newHistory.size() / 2 == (unsigned int) maxDepth);
-        }
-      } // end of else-case "no assertion, continue searching"
-    } //end of "for each input value"-loop
-  } // while
-  return processedStates;
-}
-
-/*! 
-  * \author Marc Jasper
-  * \date 2015.
- */
-list<int> Analyzer::inputsFromPatternTwoRepetitions(list<int> pattern2r) {
-  ROSE_ASSERT(pattern2r.size() % 4 == 0);
-  list<int> result;
-  list<int>::iterator iter = pattern2r.begin();
-  for (unsigned int i = 0; i < (pattern2r.size() / 4); i++) {
-    result.push_back(*iter);
-    iter++;
-    iter++;
-  }
-  return result;
-}
-
-/*! 
-  * \author Marc Jasper
-  * \date 2015.
- */
-bool Analyzer::computePStateAfterInputs(PState& pState, list<int>& inputs, int thread_id, list<int>* iOSequence) {
-  for (list<int>::iterator i = inputs.begin(); i !=inputs.end(); i++) {
-    //pState[globalVarIdByName("input")]=CodeThorn::AbstractValue(*i);
-    pState.writeToMemoryLocation(globalVarIdByName("input"),
-                              CodeThorn::AbstractValue(*i));
-    RERS_Problem::rersGlobalVarsCallInit(this, pState, thread_id);
-    (void) RERS_Problem::calculate_output(thread_id);
-    RERS_Problem::rersGlobalVarsCallReturnInit(this, pState, thread_id);
-    if (iOSequence) {
-      iOSequence->push_back(*i);
-      int outputVal=RERS_Problem::output[thread_id];
-      // a (std)err state could was encountered, this is not a valid RERS path anymore
-      if (outputVal <= 0) {
-        return false;
-      }
-      iOSequence->push_back(outputVal);
-    }
-  }
-  return true;
-}
-
-/*! 
-  * \author Marc Jasper
-  * \date 2015.
- */
-bool Analyzer::containsPatternTwoRepetitions(std::list<int>& sequence, int startIndex, int endIndex) {
-  // copy the sublist to an array
-  int patternLength = endIndex - startIndex + 1;
-  ROSE_ASSERT(patternLength % 2 == 0);
-  vector<int> ceSymbolsVec(patternLength);
-  list<int>::iterator it = sequence.begin();
-  for (int i = 0; i < startIndex; i++) {
-    it++;
-  }
-  for (int k = 0; k < patternLength; k++) {
-    ceSymbolsVec[k] = *it;
-    it++;
-  }
-  // check if the subsequence contains a pattern
-  bool mismatch = false;
-  for (int j = 0; j < (patternLength / 2); j++) {
-    if (ceSymbolsVec[j] != ceSymbolsVec[j + (patternLength / 2)]) {
-      mismatch = true;
-      break;
-    }
-  }
-  return !mismatch;
-}
-
-/*! 
-  * \author Marc Jasper
-  * \date 2014.
- */
-string Analyzer::convertToCeString(list<int>& ceAsIntegers, int maxInputVal) {
-  SpotConnection spotConnection;
-  stringstream ss;
-  ss << "[";
-  bool firstElem = true;
-  for (list<int>::iterator i=ceAsIntegers.begin(); i!=ceAsIntegers.end(); i++) {
-    if (!firstElem) {
-      ss << ";";
-    }
-    ss << spotConnection.int2PropName(*i, maxInputVal);
-    firstElem = false;
-  }
-  ss << "]";
-  return ss.str();
-}
-
 /*! 
   * \author Marc Jasper
   * \date 2014.
@@ -2291,7 +1832,7 @@ int Analyzer::extractAssertionTraces() {
     int ceLength = addCounterexample(i->first, i->second);
     if (ceLength > maxInputTraceLength) {maxInputTraceLength = ceLength;}
   }
-  if(args.isSet("rers-binary")) {
+  if(args.getBool("rers-binary")) {
     if ((getExplorationMode() == EXPL_BREADTH_FIRST) && transitionGraph.isPrecise()) {
       return maxInputTraceLength;
     }
@@ -2469,13 +2010,13 @@ string Analyzer::reversedInOutRunToString(list<const EState*>& run) {
 int Analyzer::addCounterexample(int assertCode, const EState* assertEState) {
   list<const EState*> counterexampleRun;
   // TODO: fix the reported minimum depth to reach an assertion for the first time
-  if(true) { //args.isSet("rers-binary") && (getExplorationMode() == EXPL_BREADTH_FIRST) ) {
+  if(true) { //args.getBool("rers-binary") && (getExplorationMode() == EXPL_BREADTH_FIRST) ) {
 
     counterexampleRun = reverseInOutSequenceBreadthFirst(assertEState, transitionGraph.getStartEState(),
-                                                         args.isSet("counterexamples-with-output"));
+                                                         args.getBool("counterexamples-with-output"));
   } else {
     counterexampleRun = reverseInOutSequenceDijkstra(assertEState, transitionGraph.getStartEState(),
-                                                     args.isSet("counterexamples-with-output"));
+                                                     args.getBool("counterexamples-with-output"));
   }
   int ceRunLength = counterexampleRun.size();
   string counterexample = reversedInOutRunToString(counterexampleRun);
@@ -2490,7 +2031,7 @@ int Analyzer::addCounterexample(int assertCode, const EState* assertEState) {
  */
 int Analyzer::inputSequenceLength(const EState* target) {
   list<const EState*> run;
-  if(args.isSet("rers-binary") && (getExplorationMode() == EXPL_BREADTH_FIRST) ) {
+  if(args.getBool("rers-binary") && (getExplorationMode() == EXPL_BREADTH_FIRST) ) {
     run = reverseInOutSequenceBreadthFirst(target, transitionGraph.getStartEState());
   } else {
     run = reverseInOutSequenceDijkstra(target, transitionGraph.getStartEState());
@@ -2584,7 +2125,7 @@ void Analyzer::setAnalyzerToSolver8(EState* startEState, bool resetAnalyzerData)
   ROSE_ASSERT(startEState);
   //set attributes specific to solver 8
   _numberOfThreadsToUse = 1;
-  _solver = 8;
+  setSolver(new Solver8());
   _maxTransitions = -1,
   _maxIterations = -1,
   _maxTransitionsForcedTop = -1;
@@ -2681,7 +2222,7 @@ std::list<EState> Analyzer::transferFunctionCall(Edge edge, const EState* estate
   string funName=SgNodeHelper::getFunctionName(funCall);
   // handling of error function (TODO: generate dedicated state (not failedAssert))
 
-  if(args.isSet("rers-binary")) {
+  if(args.getBool("rers-binary")) {
     // if rers-binary function call is selected then we skip the static analysis for this function (specific to rers)
     string funName=SgNodeHelper::getFunctionName(funCall);
     if(funName=="calculate_output") {
@@ -2741,7 +2282,7 @@ std::list<EState> Analyzer::transferFunctionCallLocalEdge(Edge edge, const EStat
   EState currentEState=*estate;
   PState currentPState=*currentEState.pstate();
   ConstraintSet cset=*currentEState.constraints();
-  if(args.isSet("rers-binary")) {
+  if(args.getBool("rers-binary")) {
     // logger[DEBUG]<<"ESTATE: "<<estate->toString(&variableIdMapping)<<endl;
     SgNode* nodeToAnalyze=getLabeler()->getNode(edge.source());
     if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nodeToAnalyze)) {
@@ -2857,7 +2398,7 @@ std::list<EState> Analyzer::transferFunctionCallReturn(Edge edge, const EState* 
     return elistify(newEState);
   } else if(SgNodeHelper::Pattern::matchExprStmtAssignOpVarRefExpFunctionCallExp(nextNodeToAnalyze1)) {
     // case 2: x=f(); bind variable x to value of $return
-    if(args.isSet("rers-binary")) {
+    if(args.getBool("rers-binary")) {
       if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1)) {
         string funName=SgNodeHelper::getFunctionName(funCall);
         if(funName=="calculate_output") {
@@ -3003,7 +2544,7 @@ std::list<EState> Analyzer::transferFunctionCallExternal(Edge edge, const EState
       } else {
         return resList; // return no state (this ends the analysis)
       }
-      if(args.isSet("input-values-as-constraints")) {
+      if(args.getBool("input-values-as-constraints")) {
         newCSet.removeAllConstraintsOfVar(varId);
         //newPState[varId]=CodeThorn::Top();
         newPState.writeTopToMemoryLocation(varId);
@@ -3028,7 +2569,7 @@ std::list<EState> Analyzer::transferFunctionCallExternal(Edge edge, const EState
         list<EState> resList;
         for(set<int>::iterator i=_inputVarValues.begin();i!=_inputVarValues.end();++i) {
           PState newPState=*currentEState.pstate();
-          if(args.isSet("input-values-as-constraints")) {
+          if(args.getBool("input-values-as-constraints")) {
             newCSet.removeAllConstraintsOfVar(varId);
             //newPState[varId]=CodeThorn::Top();
             newPState.writeTopToMemoryLocation(varId);
