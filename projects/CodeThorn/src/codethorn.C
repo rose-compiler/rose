@@ -1376,7 +1376,6 @@ int main( int argc, char * argv[] ) {
 #endif
 
     if(args.getBool("eliminate-arrays")) {
-      //analyzer.initializeVariableIdMapping(sageProject);
       Specialization speci;
       speci.transformArrayProgram(sageProject, &analyzer);
       sageProject->unparse(0,0);
@@ -1386,7 +1385,7 @@ int main( int argc, char * argv[] ) {
     logger[TRACE]<< "INIT: creating solver "<<analyzer.getSolver()->getId()<<"."<<endl;
 
     if(option_specialize_fun_name!="") {
-      analyzer.initializeSolver1(option_specialize_fun_name,root,true);
+      analyzer.initializeSolver(option_specialize_fun_name,root,true);
     } else {
       // if main function exists, start with main-function
       // if a single function exist, use this function
@@ -1412,7 +1411,7 @@ int main( int argc, char * argv[] ) {
         }
       }
       ROSE_ASSERT(startFunction!="");
-      analyzer.initializeSolver1(startFunction,root,false);
+      analyzer.initializeSolver(startFunction,root,false);
     }
     analyzer.initLabeledAssertNodes(sageProject);
 
@@ -1555,7 +1554,7 @@ int main( int argc, char * argv[] ) {
     assert (!args.getBool("keep-error-states"));
     cout << "recursively removing all leaves (1)."<<endl;
     timer.start();
-    //analyzer.pruneLeavesRec();
+    //analyzer.pruneLeaves();
     infPathsOnlyTime = timer.getElapsedTimeInMilliSec();
 
       pstateSetSizeInf=analyzer.getPStateSet()->size();
@@ -1596,7 +1595,7 @@ int main( int argc, char * argv[] ) {
         if (!args.getBool("inf-paths-only") && !args.getBool("keep-error-states") &&!analyzer.getModeLTLDriven()) {
           logger[TRACE] << "STATUS: recursively removing all leaves (due to RERS-mode (2))."<<endl;
           timer.start();
-          analyzer.pruneLeavesRec();
+          analyzer.pruneLeaves();
           infPathsOnlyTime = timer.getElapsedTimeInMilliSec();
 
           pstateSetSizeInf=analyzer.getPStateSet()->size();
@@ -1988,7 +1987,7 @@ int main( int argc, char * argv[] ) {
       write_file("ast.dot", dotFile);
       cout << "generated ast.dot."<<endl;
 
-      write_file("cfg.dot", analyzer.flow.toDot(analyzer.cfanalyzer->getLabeler()));
+      write_file("cfg.dot", analyzer.getFlow()->toDot(analyzer.getCFAnalyzer()->getLabeler()));
       cout << "generated cfg.dot."<<endl;
       cout << "=============================================================="<<endl;
     }

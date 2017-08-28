@@ -77,12 +77,25 @@ namespace CodeThorn {
 
   public:
     static void initDiagnostics();
-    static std::string nodeToString(SgNode* node);
     void initAstNodeInfo(SgNode* node);
-    bool isActiveGlobalTopify();
-    void initializeSolver1(std::string functionToStartAt,SgNode* root, bool oneFunctionOnly);
+    void initializeSolver(std::string functionToStartAt,SgNode* root, bool oneFunctionOnly);
     void initializeTraceSolver(std::string functionToStartAt,SgNode* root);
+    void initLabeledAssertNodes(SgProject* root);
+
     void continueAnalysisFrom(EState* newStartEState);
+
+    void setExplorationMode(ExplorationMode em) { _explorationMode=em; }
+    ExplorationMode getExplorationMode() { return _explorationMode; }
+
+    void setSolver(Solver* solver);
+    Solver* getSolver();
+
+    //! requires init
+    void runSolver();
+
+    long analysisRunTimeInSeconds(); 
+
+    const EState* popWorkList();
     
     // set the size of an element determined by this type
     void setElementSize(VariableId variableId, SgType* elementType);
@@ -93,25 +106,142 @@ namespace CodeThorn {
     // to be replaced by above function
     PState analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode* rhs,ConstraintSet& cset);
     
+    // thread save; only prints if option status messages is enabled.
+    void printStatusMessage(bool);
+    void printStatusMessage(string s);
+    void printStatusMessageLine(string s);
+
+    void generateAstNodeInfo(SgNode* node);
+
+    // consistency checks
+    bool checkEStateSet();
+    bool isConsistentEStatePtrSet(std::set<const EState*> estatePtrSet);
+    bool checkTransitionGraph();
+
+    //! The analyzer requires a CFAnalysis to obtain the ICFG.
+    void setCFAnalyzer(CFAnalysis* cf) { cfanalyzer=cf; }
+    CFAnalysis* getCFAnalyzer() const { return cfanalyzer; }
+
+    ExprAnalyzer* getExprAnalyzer();
+
+    // access  functions for computed information
+    VariableIdMapping* getVariableIdMapping() { return &variableIdMapping; }
+    CTIOLabeler* getLabeler() const;
+    Flow* getFlow() { return &flow; }
+    PStateSet* getPStateSet() { return &pstateSet; }
+    EStateSet* getEStateSet() { return &estateSet; }
+    TransitionGraph* getTransitionGraph() { return &transitionGraph; }
+    ConstraintSetMaintainer* getConstraintSetMaintainer() { return &constraintSetMaintainer; }
+    std::list<FailedAssertion> getFirstAssertionOccurences(){return _firstAssertionOccurences;}
+
+    void setSkipSelectedFunctionCalls(bool defer);
+    void setSkipArrayAccesses(bool skip) { exprAnalyzer.setSkipArrayAccesses(skip); }
+    bool getSkipArrayAccesses() { return exprAnalyzer.getSkipArrayAccesses(); }
+
+    // specific to the loop-aware exploration modes
+    int getIterations() { return _iterations; }
+    int getApproximatedIterations() { return _approximated_iterations; }
+
+    // used by the hybrid analyzer (state marshalling)
+    void mapGlobalVarInsert(std::string name, int* addr);
+
+    VariableId globalVarIdByName(std::string varName) { return globalVarName2VarIdMapping[varName]; }
+    
+    typedef std::list<SgVariableDeclaration*> VariableDeclarationList;
+    VariableDeclarationList computeUnusedGlobalVariableDeclarationList(SgProject* root);
+    VariableDeclarationList computeUsedGlobalVariableDeclarationList(SgProject* root);
+
+    void setStgTraceFileName(std::string filename);
+    void setAnalyzerMode(AnalyzerMode am) { _analyzerMode=am; }
+    void setMaxTransitions(size_t maxTransitions) { _maxTransitions=maxTransitions; }
+    void setMaxIterations(size_t maxIterations) { _maxIterations=maxIterations; }
+    void setMaxTransitionsForcedTop(size_t maxTransitions) { _maxTransitionsForcedTop=maxTransitions; }
+    void setMaxIterationsForcedTop(size_t maxIterations) { _maxIterationsForcedTop=maxIterations; }
+    void setMaxBytes(long int maxBytes) { _maxBytes=maxBytes; }
+    void setMaxBytesForcedTop(long int maxBytesForcedTop) { _maxBytesForcedTop=maxBytesForcedTop; }
+    void setMaxSeconds(long int maxSeconds) { _maxSeconds=maxSeconds; }
+    void setMaxSecondsForcedTop(long int maxSecondsForcedTop) { _maxSecondsForcedTop=maxSecondsForcedTop; }
+    void setResourceLimitDiff(int diff) { _resourceLimitDiff=diff; }
+    void setDisplayDiff(int diff) { _displayDiff=diff; }
+    void setSemanticFoldThreshold(int t) { _semanticFoldThreshold=t; }
+    void setNumberOfThreadsToUse(int n) { _numberOfThreadsToUse=n; }
+    int getNumberOfThreadsToUse() { return _numberOfThreadsToUse; }
+    void setTreatStdErrLikeFailedAssert(bool x) { _treatStdErrLikeFailedAssert=x; }
+    void setCompoundIncVarsSet(set<AbstractValue> ciVars);
+    void setSmallActivityVarsSet(set<AbstractValue> ciVars);
+    void setAssertCondVarsSet(set<AbstractValue> acVars);
+
+    enum GlobalTopifyMode {GTM_IO, GTM_IOCF, GTM_IOCFPTR, GTM_COMPOUNDASSIGN, GTM_FLAGS};
+    void setGlobalTopifyMode(GlobalTopifyMode mode);
+    void setExternalErrorFunctionName(std::string externalErrorFunctionName);
+    // enables external function semantics 
+    void enableSVCompFunctionSemantics();
+    void disableSVCompFunctionSemantics();
+    bool svCompFunctionSemantics() { return _svCompFunctionSemantics; }
+    bool stdFunctionSemantics() { return _stdFunctionSemantics; }
+    void setModeLTLDriven(bool ltlDriven) { transitionGraph.setModeLTLDriven(ltlDriven); }
+    bool getModeLTLDriven() { return transitionGraph.getModeLTLDriven(); }
+    // only used in LTL-driven mode
+    void setSpotConnection(SpotConnection* connection) { _spotConnection = connection; }
+    // only used to initialize solver 10
+    void setStartPState(PState startPState) { _startPState=startPState; }
+
+    void setTypeSizeMapping(SgTypeSizeMapping* typeSizeMapping);
+    SgTypeSizeMapping* getTypeSizeMapping();
+
+    ///////
+    // MJ: 08/24/2017: Currently not used
+    //! list of all asserts in a program
+    std::list<SgNode*> listOfAssertNodes(SgProject *root);
+    size_t memorySizeContentEStateWorkLists();
+    static std::string nodeToString(SgNode* node);
+    static string lineColSource(SgNode* node);
+    SgNode* getCond(SgNode* node);
+    set<const EState*> transitionSourceEStateSetOfLabel(Label lab);
+    ///////
+
+    // public member variables
+    SgNode* startFunRoot;
+    PropertyValueTable reachabilityResults;
+    boost::unordered_map <std::string,int*> mapGlobalVarAddress;
+    boost::unordered_map <int*,std::string> mapAddressGlobalVar;
+
+  private:
+    void printStatusMessage(string s, bool newLineFlag);
+
+    std::string analyzerStateToString();
+
     void addToWorkList(const EState* estate);
     const EState* addToWorkListIfNew(EState estate);
     const EState* takeFromWorkList();
     bool isInWorkList(const EState* estate);
     bool isEmptyWorkList();
     const EState* topWorkList();
-    const EState* popWorkList();
     void swapWorkLists();
-    size_t memorySizeContentEStateWorkLists();
+
+    /*! if state exists in stateSet, a pointer to the existing state is returned otherwise 
+      a new state is entered into stateSet and a pointer to it is returned.
+    */
+    const PState* processNew(PState& s);
+    const PState* processNewOrExisting(PState& s);
+    const EState* processNew(EState& s);
+    const EState* processNewOrExisting(EState& s);
+    const EState* processCompleteNewOrExisting(const EState* es);
+    void topifyVariable(PState& pstate, ConstraintSet& cset, AbstractValue varId);
+    bool isTopified(EState& s);
+    EStateSet::ProcessingResult process(EState& s);
+    EStateSet::ProcessingResult process(Label label, PState pstate, ConstraintSet cset, InputOutput io);
+    const ConstraintSet* processNewOrExisting(ConstraintSet& cset);
     
-    // thread save; only prints if option status messages is enabled.
-    void printStatusMessage(string s);
-    void printStatusMessageLine(string s);
-    void printStatusMessage(string s, bool newLineFlag);
-    std::string analyzerStateToString();
-    static string lineColSource(SgNode* node);
+    EState createEState(Label label, PState pstate, ConstraintSet cset);
+    EState createEState(Label label, PState pstate, ConstraintSet cset, InputOutput io);
+    // only used in LTL-driven mode
+    void setStartEState(const EState* estate);
+
     void recordTransition(const EState* sourceEState, Edge e, const EState* targetEState);
-    void printStatusMessage(bool);
-    bool isStartLabel(Label label);
+
+    void set_finished(std::vector<bool>& v, bool val);
+    bool all_false(std::vector<bool>& v);
 
     // determines whether lab is a function call label of a function
     // call of the form 'x=f(...)' and returns the varible-id of the
@@ -131,142 +261,41 @@ namespace CodeThorn {
     std::list<EState> transferAssignOp(SgAssignOp* assignOp, Edge edge, const EState* estate);
     std::list<EState> transferIncDecOp(SgNode* nextNodeToAnalyze2, Edge edge, const EState* estate);
     std::list<EState> transferTrueFalseEdge(SgNode* nextNodeToAnalyze2, Edge edge, const EState* estate);
+    std::list<EState> elistify();
+    std::list<EState> elistify(EState res);
 
-    SgNode* getCond(SgNode* node);
-    void generateAstNodeInfo(SgNode* node);
-    bool checkEStateSet();
-    bool isConsistentEStatePtrSet(std::set<const EState*> estatePtrSet);
-    bool checkTransitionGraph();
-
-    //! requires init
-    void runSolver();
-    //! The analyzer requires a CFAnalysis to obtain the ICFG.
-    void setCFAnalyzer(CFAnalysis* cf) { cfanalyzer=cf; }
-    CFAnalysis* getCFAnalyzer() const { return cfanalyzer; }
-    
-    //void initializeVariableIdMapping(SgProject* project) { variableIdMapping.computeVariableSymbolMapping(project); }
-
-    // access  functions for computed information
-    VariableIdMapping* getVariableIdMapping() { return &variableIdMapping; }
-    CTIOLabeler* getLabeler() const {
-      CTIOLabeler* ioLabeler=dynamic_cast<CTIOLabeler*>(cfanalyzer->getLabeler());
-      ROSE_ASSERT(ioLabeler);
-      return ioLabeler;
-    }
-    Flow* getFlow() { return &flow; }
-    PStateSet* getPStateSet() { return &pstateSet; }
-    EStateSet* getEStateSet() { return &estateSet; }
-    TransitionGraph* getTransitionGraph() { return &transitionGraph; }
-    ConstraintSetMaintainer* getConstraintSetMaintainer() { return &constraintSetMaintainer; }
-    
-    //private: TODO
-    Flow flow;
-    SgNode* startFunRoot;
-    CFAnalysis* cfanalyzer;
-
-    void eventGlobalTopifyTurnedOn();
-    bool isIncompleteSTGReady();
-    bool isPrecise();
-    PropertyValueTable reachabilityResults;
-    int reachabilityAssertCode(const EState* currentEStatePtr);
-    void setExplorationMode(ExplorationMode em) { _explorationMode=em; }
-    ExplorationMode getExplorationMode() { return _explorationMode; }
-    void setSkipSelectedFunctionCalls(bool defer) {
-      _skipSelectedFunctionCalls=true; 
-      exprAnalyzer.setSkipSelectedFunctionCalls(true);
-    }
-    void setSkipArrayAccesses(bool skip) {
-      exprAnalyzer.setSkipArrayAccesses(skip);
-    }
-    bool getSkipArrayAccesses() {
-      return exprAnalyzer.getSkipArrayAccesses();
-    }
-    ExprAnalyzer* getExprAnalyzer();
-    std::list<FailedAssertion> getFirstAssertionOccurences(){return _firstAssertionOccurences;}
-    void incIterations();
-    bool isLoopCondLabel(Label lab);
-    int getApproximatedIterations() { return _approximated_iterations; }
-    int getIterations() { return _iterations; }
-    string getVarNameByIdCode(int varIdCode) {return variableIdMapping.variableName(variableIdMapping.variableIdFromCode(varIdCode));};
-    void mapGlobalVarInsert(std::string name, int* addr);
-
-    //! compute the VariableIds of variable declarations
-    VariableIdMapping::VariableIdSet determineVariableIdsOfVariableDeclarations(set<SgVariableDeclaration*> decls);
-    //! compute the VariableIds of SgInitializedNamePtrList
-    VariableIdMapping::VariableIdSet determineVariableIdsOfSgInitializedNames(SgInitializedNamePtrList& namePtrList);
-    
-    std::set<std::string> variableIdsToVariableNames(CodeThorn::AbstractValueSet);
     std::set<std::string> variableIdsToVariableNames(SPRAY::VariableIdSet);
-    typedef std::list<SgVariableDeclaration*> VariableDeclarationList;
-    VariableDeclarationList computeUnusedGlobalVariableDeclarationList(SgProject* root);
-    VariableDeclarationList computeUsedGlobalVariableDeclarationList(SgProject* root);
-    
+
+    bool isStartLabel(Label label);
+    int reachabilityAssertCode(const EState* currentEStatePtr);
+
     bool isFailedAssertEState(const EState* estate);
     bool isVerificationErrorEState(const EState* estate);
     //! adds a specific code to the io-info of an estate which is checked by isFailedAsserEState and determines a failed-assert estate. Note that the actual assert (and its label) is associated with the previous estate (this information can therefore be obtained from a transition-edge in the transition graph).
     EState createFailedAssertEState(const EState estate, Label target);
     EState createVerificationErrorEState(const EState estate, Label target);
+
     //! list of all asserts in a program
-    std::list<SgNode*> listOfAssertNodes(SgProject *root);
     //! rers-specific error_x: assert(0) version 
     std::list<std::pair<SgLabelStatement*,SgNode*> > listOfLabeledAssertNodes(SgProject *root);
-    void initLabeledAssertNodes(SgProject* root) {
-      _assertNodes=listOfLabeledAssertNodes(root);
-    }
     size_t getNumberOfErrorLabels();
-    std::string labelNameOfAssertLabel(Label lab) {
-      std::string labelName;
-      for(std::list<std::pair<SgLabelStatement*,SgNode*> >::iterator i=_assertNodes.begin();i!=_assertNodes.end();++i)
-        if(lab==getLabeler()->getLabel((*i).second))
-          labelName=SgNodeHelper::getLabelName((*i).first);
-      //assert(labelName.size()>0);
-      return labelName;
-    }
-    bool isCppLabeledAssertLabel(Label lab) {
-      return labelNameOfAssertLabel(lab).size()>0;
-    }
-    
-    InputOutput::OpType ioOp(const EState* estate) const;
+    std::string labelNameOfAssertLabel(Label lab);
+    bool isCppLabeledAssertLabel(Label lab);
+    std::list<FailedAssertion> _firstAssertionOccurences;
 
-    void setDisplayDiff(int diff) { _displayDiff=diff; }
-    void setResourceLimitDiff(int diff) { _resourceLimitDiff=diff; }
+    // functions related to abstractions during the analysis
+    void eventGlobalTopifyTurnedOn();
+    bool isActiveGlobalTopify();
+    bool isIncompleteSTGReady();
+    bool isPrecise();
 
-    void setSolver(Solver* solver);
-    Solver* getSolver();
+    // specific to the loop-aware exploration modes
+    bool isLoopCondLabel(Label lab);
+    void incIterations();
 
-    void setSemanticFoldThreshold(int t) { _semanticFoldThreshold=t; }
-    void setNumberOfThreadsToUse(int n) { _numberOfThreadsToUse=n; }
-    int getNumberOfThreadsToUse() { return _numberOfThreadsToUse; }
+    Flow flow;
+    CFAnalysis* cfanalyzer;
     std::list<std::pair<SgLabelStatement*,SgNode*> > _assertNodes;
-    VariableId globalVarIdByName(std::string varName) { return globalVarName2VarIdMapping[varName]; }
-    void setTreatStdErrLikeFailedAssert(bool x) { _treatStdErrLikeFailedAssert=x; }
-
-    boost::unordered_map <std::string,int*> mapGlobalVarAddress;
-    boost::unordered_map <int*,std::string> mapAddressGlobalVar;
-    void setCompoundIncVarsSet(set<AbstractValue> ciVars);
-    void setSmallActivityVarsSet(set<AbstractValue> ciVars);
-    void setAssertCondVarsSet(set<AbstractValue> acVars);
-    enum GlobalTopifyMode {GTM_IO, GTM_IOCF, GTM_IOCFPTR, GTM_COMPOUNDASSIGN, GTM_FLAGS};
-    void setGlobalTopifyMode(GlobalTopifyMode mode);
-    void setExternalErrorFunctionName(std::string externalErrorFunctionName);
-    // enables external function semantics 
-    void enableSVCompFunctionSemantics();
-    void disableSVCompFunctionSemantics();
-    bool svCompFunctionSemantics() { return _svCompFunctionSemantics; }
-    bool stdFunctionSemantics() { return _stdFunctionSemantics; }
-    void setModeLTLDriven(bool ltlDriven) { transitionGraph.setModeLTLDriven(ltlDriven); }
-    bool getModeLTLDriven() { return transitionGraph.getModeLTLDriven(); }
-    // only used in LTL-driven mode
-    void setSpotConnection(SpotConnection* connection) { _spotConnection = connection; }
-
-    long analysisRunTimeInSeconds(); 
-
-    void set_finished(std::vector<bool>& v, bool val);
-    bool all_false(std::vector<bool>& v);
-
-    void setTypeSizeMapping(SgTypeSizeMapping* typeSizeMapping);
-    SgTypeSizeMapping* getTypeSizeMapping();
-  private:
     GlobalTopifyMode _globalTopifyMode;
     set<AbstractValue> _compoundIncVarsSet;
     set<AbstractValue> _smallActivityVarsSet;
@@ -285,7 +314,6 @@ namespace CodeThorn {
     ConstraintSetMaintainer constraintSetMaintainer;
     TransitionGraph transitionGraph;
     TransitionGraph backupTransitionGraph;
-    set<const EState*> transitionSourceEStateSetOfLabel(Label lab);
     int _displayDiff;
     int _resourceLimitDiff;
     int _numberOfThreadsToUse;
@@ -305,31 +333,7 @@ namespace CodeThorn {
     // only used in LTL-driven mode
     size_t _prevStateSetSizeDisplay = 0;
     size_t _prevStateSetSizeResource = 0;
-
     PState _startPState;
-
-    std::list<EState> elistify();
-    std::list<EState> elistify(EState res);
-
-    // only used in LTL-driven mode
-    void setStartEState(const EState* estate);
-
-    /*! if state exists in stateSet, a pointer to the existing state is returned otherwise 
-      a new state is entered into stateSet and a pointer to it is returned.
-    */
-    const PState* processNew(PState& s);
-    const PState* processNewOrExisting(PState& s);
-    const EState* processNew(EState& s);
-    const EState* processNewOrExisting(EState& s);
-    const EState* processCompleteNewOrExisting(const EState* es);
-    void topifyVariable(PState& pstate, ConstraintSet& cset, AbstractValue varId);
-    bool isTopified(EState& s);
-    EStateSet::ProcessingResult process(EState& s);
-    EStateSet::ProcessingResult process(Label label, PState pstate, ConstraintSet cset, InputOutput io);
-    const ConstraintSet* processNewOrExisting(ConstraintSet& cset);
-    
-    EState createEState(Label label, PState pstate, ConstraintSet cset);
-    EState createEState(Label label, PState pstate, ConstraintSet cset, InputOutput io);
     
     VariableValueMonitor variableValueMonitor;
 
@@ -351,6 +355,8 @@ namespace CodeThorn {
     string _externalNonDetIntFunctionName;
     string _externalNonDetLongFunctionName;
     string _externalExitFunctionName;
+
+    std::string _stg_trace_filename;
 
     Timer _analysisTimer;
     bool _timerRunning = false;
@@ -380,7 +386,7 @@ namespace CodeThorn {
     void removeInputInputTransitions();
     // cuts off all paths in the transition graph that lead to leaves 
     // (recursively until only paths of infinite length remain)
-    void pruneLeavesRec();
+    void pruneLeaves();
     // connects start, input, output and worklist states according to possible paths in the transition graph. 
     // removes all states and transitions that are not necessary for the graph that only consists of these new transitions. The two parameters allow to select input and/or output states to remain in the STG.
     void reduceGraphInOutWorklistOnly(bool includeIn=true, bool includeOut=true, bool includeErr=false);
@@ -439,33 +445,12 @@ namespace CodeThorn {
     const EState* getLatestErrorEState() {return _latestErrorEState;}
     int numberOfInputVarValues() { return _inputVarValues.size(); }
     std::set<int> getInputVarValues() { return _inputVarValues; }
-    void setStgTraceFileName(std::string filename) {
-      _stg_trace_filename=filename;
-      std::ofstream fout;
-      fout.open(_stg_trace_filename.c_str());    // create new file/overwrite existing file
-      fout<<"START"<<endl;
-      fout.close();    // close. Will be used with append.
-    }
-  private:
-    std::string _stg_trace_filename;
-
  public:
     // only used temporarily for binary-binding prototype
     std::map<std::string,VariableId> globalVarName2VarIdMapping;
     std::vector<bool> binaryBindingAssert;
-    void setAnalyzerMode(AnalyzerMode am) { _analyzerMode=am; }
-    void setMaxTransitions(size_t maxTransitions) { _maxTransitions=maxTransitions; }
-    void setMaxIterations(size_t maxIterations) { _maxIterations=maxIterations; }
-    void setMaxTransitionsForcedTop(size_t maxTransitions) { _maxTransitionsForcedTop=maxTransitions; }
-    void setMaxIterationsForcedTop(size_t maxIterations) { _maxIterationsForcedTop=maxIterations; }
-    void setMaxBytes(long int maxBytes) { _maxBytes=maxBytes; }
-    void setMaxBytesForcedTop(long int maxBytesForcedTop) { _maxBytesForcedTop=maxBytesForcedTop; }
-    void setMaxSeconds(long int maxSeconds) { _maxSeconds=maxSeconds; }
-    void setMaxSecondsForcedTop(long int maxSecondsForcedTop) { _maxSecondsForcedTop=maxSecondsForcedTop; }
-    void setStartPState(PState startPState) { _startPState=startPState; }
 
   private:
-    std::list<FailedAssertion> _firstAssertionOccurences;
     const EState* _estateBeforeMissingInput;
     const EState* _latestOutputEState;
     const EState* _latestErrorEState;

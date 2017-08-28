@@ -154,6 +154,20 @@ size_t Analyzer::getNumberOfErrorLabels() {
   return _assertNodes.size();
 }
 
+string Analyzer::labelNameOfAssertLabel(Label lab) {
+  string labelName;
+  for(list<pair<SgLabelStatement*,SgNode*> >::iterator i=_assertNodes.begin();i!=_assertNodes.end();++i)
+    if(lab==getLabeler()->getLabel((*i).second))
+      labelName=SgNodeHelper::getLabelName((*i).first);
+  //assert(labelName.size()>0);
+  return labelName;
+}
+
+bool Analyzer::isCppLabeledAssertLabel(Label lab) {
+  return labelNameOfAssertLabel(lab).size()>0;
+}
+    
+
 void Analyzer::setGlobalTopifyMode(GlobalTopifyMode mode) {
   _globalTopifyMode=mode;
 }
@@ -204,14 +218,6 @@ void Analyzer::runSolver() {
   _solver->run();
 }
 
-set<string> Analyzer::variableIdsToVariableNames(AbstractValueSet s) {
-  set<string> res;
-  for(AbstractValueSet::iterator i=s.begin();i!=s.end();++i) {
-    res.insert((*i).toString(getVariableIdMapping()));
-  }
-  return res;
-}
-
 set<string> Analyzer::variableIdsToVariableNames(SPRAY::VariableIdSet s) {
   set<string> res;
   for(SPRAY::VariableIdSet::iterator i=s.begin();i!=s.end();++i) {
@@ -248,6 +254,14 @@ Analyzer::VariableDeclarationList Analyzer::computeUsedGlobalVariableDeclaration
     logger[ERROR] << "no global scope.";
     exit(1);
   }
+}
+
+void Analyzer::setStgTraceFileName(string filename) {
+  _stg_trace_filename=filename;
+  ofstream fout;
+  fout.open(_stg_trace_filename.c_str());    // create new file/overwrite existing file
+  fout<<"START"<<endl;
+  fout.close();    // close. Will be used with append.
 }
 
 void Analyzer::recordTransition(const EState* sourceState, Edge e, const EState* targetState) {
@@ -811,31 +825,6 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
   ROSE_ASSERT(false); // non-reachable
 }
 
-// this function has been moved to VariableIdMapping: TODO eliminate this function here
- VariableIdMapping::VariableIdSet Analyzer::determineVariableIdsOfVariableDeclarations(set<SgVariableDeclaration*> varDecls) {
-  VariableIdMapping::VariableIdSet resultSet;
-  for(set<SgVariableDeclaration*>::iterator i=varDecls.begin();i!=varDecls.end();++i) {
-    SgSymbol* sym=SgNodeHelper::getSymbolOfVariableDeclaration(*i);
-    if(sym) {
-      resultSet.insert(variableIdMapping.variableId(sym));
-    }
-  }
-  return resultSet;
-}
-
-// this function has been moved to VariableIdMapping: TODO eliminate this function here
-VariableIdMapping::VariableIdSet Analyzer::determineVariableIdsOfSgInitializedNames(SgInitializedNamePtrList& namePtrList) {
-  VariableIdMapping::VariableIdSet resultSet;
-  for(SgInitializedNamePtrList::iterator i=namePtrList.begin();i!=namePtrList.end();++i) {
-    ROSE_ASSERT(*i);
-    SgSymbol* sym=SgNodeHelper::getSymbolOfInitializedName(*i);
-    if(sym) {
-      resultSet.insert(variableIdMapping.variableId(sym));
-    }
-  }
-  return resultSet;
-}
-
 bool Analyzer::isFailedAssertEState(const EState* estate) {
   if(estate->io.isFailedAssertIO())
     return true;
@@ -883,6 +872,10 @@ list<SgNode*> Analyzer::listOfAssertNodes(SgProject* root) {
   return assertNodes;
 }
 
+void Analyzer::initLabeledAssertNodes(SgProject* root) {
+  _assertNodes=listOfLabeledAssertNodes(root);
+}
+
 list<pair<SgLabelStatement*,SgNode*> > Analyzer::listOfLabeledAssertNodes(SgProject* root) {
   list<pair<SgLabelStatement*,SgNode*> > assertNodes;
   list<SgFunctionDefinition*> funDefs=SgNodeHelper::listOfFunctionDefinitions(root);
@@ -922,10 +915,6 @@ const EState* Analyzer::processCompleteNewOrExisting(const EState* es) {
     delete es2;
   }
   return es3;
-}
-
-InputOutput::OpType Analyzer::ioOp(const EState* estate) const {
-  return estate->ioOp();
 }
 
 const PState* Analyzer::processNew(PState& s) {
@@ -1059,7 +1048,7 @@ list<EState> Analyzer::transferIdentity(Edge edge, const EState* estate) {
   return elistify(newEState);
 }
 
-void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root, bool oneFunctionOnly) {
+void Analyzer::initializeSolver(std::string functionToStartAt,SgNode* root, bool oneFunctionOnly) {
   ROSE_ASSERT(root);
   resetInputSequenceIterator();
   std::string funtofind=functionToStartAt;
@@ -1380,6 +1369,12 @@ bool Analyzer::isConsistentEStatePtrSet(set<const EState*> estatePtrSet)  {
   return true;
 }
 
+CTIOLabeler* Analyzer::getLabeler() const {
+  CTIOLabeler* ioLabeler=dynamic_cast<CTIOLabeler*>(cfanalyzer->getLabeler());
+  ROSE_ASSERT(ioLabeler);
+  return ioLabeler;
+}
+
 void Analyzer::stdIOFoldingOfTransitionGraph() {
   logger[TRACE]<< "STATUS: stdio-folding: computing states to fold."<<endl;
   ROSE_ASSERT(estateWorkListCurrent->size()==0);
@@ -1453,7 +1448,7 @@ void Analyzer::semanticFoldingOfTransitionGraph() {
   * \author Marc Jasper
   * \date 2014.
  */
-void Analyzer::pruneLeavesRec() {
+void Analyzer::pruneLeaves() {
   EStatePtrSet states=transitionGraph.estateSet();
   std::set<EState*> workset;
   //insert all states into the workset
@@ -1637,6 +1632,11 @@ int Analyzer::reachabilityAssertCode(const EState* currentEStatePtr) {
   int num;
   ss>>num;
   return num;
+}
+
+void Analyzer::setSkipSelectedFunctionCalls(bool defer) {
+  _skipSelectedFunctionCalls=true; 
+  exprAnalyzer.setSkipSelectedFunctionCalls(true);
 }
 
 void Analyzer::set_finished(std::vector<bool>& v, bool val) {
@@ -2045,9 +2045,8 @@ int Analyzer::inputSequenceLength(const EState* target) {
  */
 void Analyzer::reduceToObservableBehavior() {
   EStatePtrSet states=transitionGraph.estateSet();
-  std::list<const EState*>* worklist = new list<const EState*>(states.begin(), states.end());
   // iterate over all states, reduce those that are neither the start state nor contain input/output/error behavior
-  for(std::list<const EState*>::iterator i=worklist->begin();i!=worklist->end();++i) {
+  for(EStatePtrSet::iterator i=states.begin();i!=states.end();++i) {
     if( (*i) != transitionGraph.getStartEState() ) {
       if(! ((*i)->io.isStdInIO() || (*i)->io.isStdOutIO() || (*i)->io.isStdErrIO() || (*i)->io.isFailedAssertIO()) ) {
 	transitionGraph.reduceEState2(*i);
@@ -2062,9 +2061,8 @@ void Analyzer::reduceToObservableBehavior() {
  */
 void Analyzer::removeOutputOutputTransitions() {
   EStatePtrSet states=transitionGraph.estateSet();
-  std::list<const EState*>* worklist = new list<const EState*>(states.begin(), states.end());
   // output cannot directly follow another output in RERS programs. Erase those transitions
-  for(std::list<const EState*>::iterator i=worklist->begin();i!=worklist->end();++i) {
+  for(EStatePtrSet::iterator i=states.begin(); i!=states.end(); ++i) {
     if ((*i)->io.isStdOutIO()) {
       TransitionPtrSet inEdges = transitionGraph.inEdges(*i);
       for(TransitionPtrSet::iterator k=inEdges.begin();k!=inEdges.end();++k) {
@@ -2092,7 +2090,7 @@ void Analyzer::removeInputInputTransitions() {
         const EState* succ = (*k)->target;
         if (succ->io.isStdInIO()) {
           transitionGraph.erase(**k);
-          // logger[DEBUG]<< "erased an input -> input transition." << endl;
+          logger[DEBUG]<< "erased an input -> input transition." << endl;
         }
       }
     }
@@ -2470,9 +2468,9 @@ std::list<EState> Analyzer::transferFunctionExit(Edge edge, const EState* estate
     // ad 2)
     ConstraintSet cset=*currentEState.constraints();
     PState newPState=*(currentEState.pstate());
-    VariableIdMapping::VariableIdSet localVars=determineVariableIdsOfVariableDeclarations(varDecls);
+    VariableIdMapping::VariableIdSet localVars=variableIdMapping.determineVariableIdsOfVariableDeclarations(varDecls);
     SgInitializedNamePtrList& formalParamInitNames=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
-    VariableIdMapping::VariableIdSet formalParams=determineVariableIdsOfSgInitializedNames(formalParamInitNames);
+    VariableIdMapping::VariableIdSet formalParams=variableIdMapping.determineVariableIdsOfSgInitializedNames(formalParamInitNames);
     VariableIdMapping::VariableIdSet vars=localVars+formalParams;
     set<string> names=variableIdsToVariableNames(vars);
 
