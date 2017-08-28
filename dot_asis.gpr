@@ -1,4 +1,5 @@
 with "asis";
+with "dot_asis_library/dot_asis_library";
 
 project DOT_ASIS is
 

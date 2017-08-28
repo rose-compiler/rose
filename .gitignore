@@ -13,6 +13,7 @@ obj
 # there is no project file present that specifies an obj directory):
 *.ali
 *.adt
+*.a
 
 # Temporary GPS files:
 .#*#
