@@ -1768,10 +1768,14 @@ int main( int argc, char * argv[] ) {
           rewriteSystem,
           useRuleConstSubstitution
           );
+
       //cout<<"DEBUG: Rewrite1:"<<rewriteSystem.getStatistics().toString()<<endl;
-      rewriteSystem.setRuleCommutativeSort(useRuleCommutativeSort); // commutative sort only used in substituteArrayRefs
       speci.substituteArrayRefs(arrayUpdates, analyzer.getVariableIdMapping(), sarMode, rewriteSystem);
       //cout<<"DEBUG: Rewrite2:"<<rewriteSystem.getStatistics().toString()<<endl;
+
+      rewriteSystem.setRuleCommutativeSort(useRuleCommutativeSort); // commutative sort only used in substituteArrayRefs
+      //cout<<"DEBUG: Rewrite3:"<<rewriteSystem.getStatistics().toString()<<endl;
+      speci.substituteArrayRefs(arrayUpdates, analyzer.getVariableIdMapping(), sarMode, rewriteSystem);
       arrayUpdateExtractionRunTime=timer.getElapsedTimeInMilliSec();
 
       if(args.getBool("verify-update-sequence-race-conditions")) {

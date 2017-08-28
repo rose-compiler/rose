@@ -3,6 +3,7 @@
 #include "Timer.h"
 #include "AstTerm.h"
 #include "RoseAst.h"
+#include "SgNodeHelper.h"
 #include <list>
 
 using namespace std;
@@ -233,12 +234,12 @@ void RewriteSystem::establishCommutativeOrder(SgNode*& root, VariableIdMapping* 
       SgExpression* lhs=op->get_lhs_operand();
       SgExpression* rhs=op->get_rhs_operand();
       if(requiresSwap(lhs,rhs,variableIdMapping)) {
-        //cout<<"DEBUG: swapping: "<<op->unparseToString()<<" ==> ";
+        _rewriteStatistics.numCommutativeSwap++;
+        //cout<<"DEBUG: commutative swap "<<_rewriteStatistics.numCommutativeSwap<<" "<<op->class_name()<<": @"<<op<<": "<<op->unparseToString()<<" ==> ";
         // swap lhs and rhs
         op->set_lhs_operand(rhs);
         op->set_rhs_operand(lhs);
         //cout<<op->unparseToString()<<endl;
-        _rewriteStatistics.numCommutativeSwap++;
       } else {
         //cout<<"DEBUG: NOT swapping: "<<op->unparseToString()<<endl;
       }

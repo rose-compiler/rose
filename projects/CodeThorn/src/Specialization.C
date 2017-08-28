@@ -297,7 +297,11 @@ void Specialization::extractArrayUpdateOperations(Analyzer* ana,
        rewriteSystem.rewriteCompoundAssignments(p_expCopy,variableIdMapping);
      } else {
        rewriteSystem.getRewriteStatisticsPtr()->numVariableElim+=substituteVariablesWithConst(variableIdMapping,p_pstate,p_expCopy);
+       // turn disable commutative sort when eliminating variables, but restore setting afterwards
+       bool comm=rewriteSystem.getRuleCommutativeSort();
+       rewriteSystem.setRuleCommutativeSort(false);
        rewriteSystem.rewriteAst(p_expCopy, variableIdMapping);
+       rewriteSystem.setRuleCommutativeSort(comm);
      }
 #endif
      SgExpression* p_expCopy2=isSgExpression(p_expCopy);
@@ -481,7 +485,6 @@ void Specialization::substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates, Var
           switch(sarMode) {
           case SAR_SUBSTITUTE: {
             SgNodeHelper::replaceExpression(useRef,SageInterface::copyExpression(defRhs),true); // must be true (otherwise internal error)
-            cout<<"DEBUG: adding SSA."<<endl;
             rewriteSystem.getRewriteStatisticsPtr()->numSSAVarReplace++;
             break;
           }
@@ -510,7 +513,6 @@ void Specialization::substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates, Var
           switch(sarMode) {
           case SAR_SUBSTITUTE: {
             SgNodeHelper::replaceExpression(useRef,SageInterface::copyExpression(defRhs),true); // must be true (otherwise internal error)
-            cout<<"DEBUG: adding SSA."<<endl;
             rewriteSystem.getRewriteStatisticsPtr()->numSSAVarReplace++;
             break;
           }
@@ -530,13 +532,17 @@ void Specialization::substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates, Var
   }
   // normalization phase
   //RewriteSystem rewriteSystem2;
+  //int updSequPos=1;
   for(ArrayUpdatesSequence::iterator i=arrayUpdates.begin();i!=arrayUpdates.end();++i) {
     SgExpression* exp=(*i).second;
     SgNode* node=exp;
     bool ruleAddReorder=false;
     bool ruleAlgebraic=true;
-    //cout<<"DEBUG: Rewrite phase 2 :"<<exp->unparseToString()<<endl;
-    rewriteSystem.rewriteAst(node,variableIdMapping,ruleAddReorder,false,ruleAlgebraic);
+    // only nodes that have not been replaced need to be rewritten
+    if(!(*i).mark) {
+      //cout<<"DEBUG: Rewrite phase 2 (not marked):"<<updSequPos++<<":"<<exp->unparseToString()<<endl;
+      rewriteSystem.rewriteAst(node,variableIdMapping,ruleAddReorder,false,ruleAlgebraic);
+    }
   }
 #if 0
   std::ofstream fout;
