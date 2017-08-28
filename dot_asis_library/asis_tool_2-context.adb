@@ -74,6 +74,10 @@ package body Asis_Tool_2.Context is
       Outputs : in     Output_Accesses_Record)
    is
       Directory : constant String := GNAT.Directory_Operations.Get_Current_Dir;
+      procedure Log (Message : in String) is
+      begin
+         Put_Line ("Asis_Tool_2.Context.Process:  " & message);
+      end;
       procedure Begin_Environment is begin
          -- This just names the Context.  It does not control what it processes:
          Asis.Ada_Environments.Associate
@@ -88,6 +92,7 @@ package body Asis_Tool_2.Context is
          Asis.Ada_Environments.Dissociate (This.Asis_Context);
       end;
    begin
+      Log ("BEGIN - Directory = """ & Directory & """");
       Begin_Environment;
       -- Call Begin_Environment first:
       Outputs.Graph.Set_ID
@@ -95,6 +100,7 @@ package body Asis_Tool_2.Context is
       Create_And_Push_New_A_Node (This.Asis_Context, Outputs.A_Nodes);
       Process_Units (This, Outputs);
       End_Environment;
+      Log ("END");
    end Process;
 
 end Asis_Tool_2.Context;

@@ -1,6 +1,3 @@
-with Ada.Wide_Text_IO;
-
-with Asis;
 with Asis.Compilation_Units;
 with Asis.Elements;
 with Asis.Iterator;
@@ -195,6 +192,11 @@ package body Asis_Tool_2.Unit is
       Unit_Full_Name : constant Wide_String       := Acu.Unit_Full_Name (Unit);
       Unit_Kind      : constant Asis.Unit_Kinds   := ACU.Unit_Kind (Unit);
 
+      procedure Log (Message : in String) is
+      begin
+         Put_Line ("Asis_Tool_2.Unit.Process_Application_Unit:  " & message);
+      end;
+
       -- These are in alphabetical order:
       procedure Add_Can_Be_Main_Program is
          Value : Boolean := ACU.Exists (Unit);
@@ -372,10 +374,6 @@ package body Asis_Tool_2.Unit is
          Default_Node  : Dot.Node_Stmt.Class; -- Initialized
          Default_Label : Dot.HTML_Like_Labels.Class; -- Initialized
       begin
-         Awti.New_Line;
-         Awti.Put_Line ("Processing " & Unit_Full_Name & " " &
-                          To_Wide_String (Unit_Class));
-
          This.Outputs.Text.Indent;
          This.Outputs.Text.End_Line;
          This.Dot_Node := Default_Node;
@@ -420,16 +418,13 @@ package body Asis_Tool_2.Unit is
 
          This.Outputs.Text.End_Line;
          This.Outputs.Text.Dedent;
-
-         Awti.Put_Line
-           ("DONE processing " & Unit_Full_Name & " " &
-              To_Wide_String (Unit_Class));
-         Awti.New_Line;
       end;
 
       use all type Asis.Unit_Kinds;
    begin -- Process_Application_Unit
       If Unit_Kind /= Not_A_Unit then
+         Log ("Processing " & To_String (Unit_Full_Name) & " " &
+                To_String (To_Wide_String (Unit_Class)));
          Start_Output;
       end if;
 
@@ -516,6 +511,8 @@ package body Asis_Tool_2.Unit is
 
       Finish_Output;
       Process_Element_Trees (This, Unit);
+      Log ("DONE Processing " & To_String (Unit_Full_Name) & " " &
+             To_String (To_Wide_String (Unit_Class)));
    end Process_Application_Unit;
 
    ------------

@@ -3,6 +3,7 @@ with Dot;
 with Indented_Text;
 
 private with Ada.Exceptions;
+private with Ada.Text_IO;
 private with Ada.Wide_Text_IO;
 private with Asis;
 private with Interfaces.C.Strings;
@@ -16,7 +17,8 @@ private with a_nodes_h.Support;
 -- Contains supporting declarations for child packages
 package Asis_Tool_2 is
 
-   -- Controls behavior of Trace_Put:
+   -- Controls behavior of Trace_ routines.  Renamed here so clients have to
+   -- with less:
    Trace_On : Boolean renames Indented_Text.Trace_On;
 
    type Output_Accesses_Record is record -- Initialized
@@ -27,8 +29,9 @@ package Asis_Tool_2 is
 
 private
 
-   package Aex renames Ada.Exceptions;
-   package Awti renames Ada.Wide_Text_IO;
+   package AEX renames Ada.Exceptions;
+   package ATI renames Ada.Text_IO;
+   package AWTI renames Ada.Wide_Text_IO;
    package ICS renames Interfaces.C.Strings;
    package anhS renames a_nodes_h.Support;
 
@@ -45,9 +48,11 @@ private
                           return Interfaces.C.Strings.chars_ptr
      renames Interfaces.C.Strings.New_String;
 
-   procedure Trace_Put (Message : in Wide_String) renames
-     Indented_Text.Trace_Put;
+   procedure Put      (Item : in String) renames ATI.Put;
+   procedure Put_Line (Item : in String) renames ATI.Put_Line;
 
+   procedure Trace_Put      (Message : in Wide_String) renames
+     Indented_Text.Trace_Put;
    procedure Trace_Put_Line (Message : in Wide_String) renames
      Indented_Text.Trace_Put_Line;
 

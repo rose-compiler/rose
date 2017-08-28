@@ -26,19 +26,11 @@ package body Indented_Text is
       end if;
    end Trace_Put_Line;
 
-
-   -- To control where output goes:
+   -- Used below to control which routines are used for output:
    procedure Put (Message : in Wide_String) renames
      Trace_Put;
-
    procedure Put_Line (Message : in Wide_String) renames
      Trace_Put_Line;
-
-   --        procedure Put (Message : in Wide_String) renames
-   --          Ada.Wide_Text_IO.Put;
-   --
-   --        procedure Put_Line (Message : in Wide_String) renames
-   --          Ada.Wide_Text_IO.Put_Line;
 
    ------------
    -- EXPORTED:

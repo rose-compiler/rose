@@ -1,15 +1,9 @@
 #!/bin/bash
-#
-# 
-# Builds ASIS templates executable, and runs it on some test code.
-# 
-# Parameters:
-# -d  Turns on debug
-#
+# Builds the dot_asis library
 
 # Prevents some informative error messages, so is usually commented out:
 #set -o errexit
-#trap "__exit_status=$?; echo Error - exiting do_templates.sh with status ${__exit_status}; exit ${__exit_status}" ERR
+#trap "__exit_status=$?; echo Error - exiting do_build_library.sh with status ${__exit_status}; exit ${__exit_status}" ERR
 
 # Defines log, log_and_run, etc.:
 source ../utility_functions.sh
@@ -35,10 +29,7 @@ build_library () {
 
 log_start
 log_invocation "$@"
-
 use_gnat
 log_and_run build_library || exit $?
-
 log_end
-
 

@@ -2,12 +2,18 @@
 -- current indent.  Emits Wide text:
 package Indented_Text is
 
-   -- Controls behavior of Trace_Put:
-   Trace_On : Boolean := False;
+   --------------------------------------------------------
+   -- Trace routines emit no output when Trace_On is False.  At the moment,
+   -- Indented_Text.Class output routines call these:
 
    procedure Trace_Put (Message : in Wide_String);
 
    procedure Trace_Put_Line (Message : in Wide_String);
+
+   -- Controls behavior of Trace_ routines::
+   Trace_On : Boolean := False;
+
+   --------------------------------------------------------
 
    type Class is tagged private;
    type Access_Class is access Class;

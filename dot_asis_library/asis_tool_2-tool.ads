@@ -11,7 +11,8 @@ package Asis_Tool_2.Tool is
 
    procedure Process
      (This      : in out Class;
-      File_Name : in     String);
+      File_Name : in     String;
+      Debug     : in     Boolean);
 
    -- Call Process first:
    function Get_Nodes

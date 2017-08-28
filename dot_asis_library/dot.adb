@@ -556,6 +556,10 @@ package body Dot is
          Overwrite : in     Boolean := False)
       is
          Output_File : ATI.File_Type;
+         procedure Log (Message : in String) is
+         begin
+            ATI.Put_Line ("Dot.Graphs.Write_File:  " & Message);
+         end;
          procedure Create is
             File_Name   : constant String := Name & ".dot";
          begin
@@ -574,7 +578,7 @@ package body Dot is
 --                 end;
 --              end if;
             begin
-               ATI.Put_Line ("Creating """ & File_Name & """");
+               Log ("Creating """ & File_Name & """");
                ATI.Create (File => Output_File,
                            Mode => ATI.Out_File,
                            Name => File_Name);

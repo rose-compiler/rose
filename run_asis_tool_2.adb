@@ -41,18 +41,19 @@ procedure Run_Asis_Tool_2 is
          raise;
    end Get_Options;
 
-   Compile_Args : GNAT.OS_Lib.Argument_List (1 .. 0);
+   Null_Compile_Args : GNAT.OS_Lib.Argument_List (1 .. 0);
 
    Compile_Succeeded : Boolean := False;
 begin
    Get_Options;
-   Asis_Tool_2.Trace_On := Options.Debug;
    Asis.Extensions.Compile
      (Source_File  => Options.File_Name,
-      Args         => Compile_Args,
+      Args         => Null_Compile_Args,
       Success      => Compile_Succeeded,
       Display_Call => True);
    if Compile_Succeeded then
-      Tool.Process (Options.File_Name.all);
+      Tool.Process
+        (File_Name => Options.File_Name.all,
+         Debug     => Options.Debug);
    end if;
 end Run_Asis_Tool_2;
