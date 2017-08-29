@@ -437,9 +437,10 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("data-race-fail", po::value< bool >()->default_value(false)->implicit_value(true), "Perform data race detection and fail on error (codethorn exit status 1). For use in regression verification. Implicitly enables data race detection.")
     ;
 
-  visibleOptions.add_options()
-    ("csv-stats",po::value< string >(),"Output statistics into a CSV file [arg].")
+  visibleOptions.add_options()            
+    ("config,c", po::value< string >(), "Use the configuration specified in file <arg>.")
     ("colors", po::value< bool >()->default_value(true)->implicit_value(true),"Use colors in output.")
+    ("csv-stats",po::value< string >(),"Output statistics into a CSV file <arg>.")
     ("display-diff",po::value< int >(),"Print statistics every <arg> computed estates.")
     ("exploration-mode",po::value< string >(), "Set mode in which state space is explored. ([breadth-first]|depth-first|loop-aware|loop-aware-sync)")
     ("help,h", "Produce this help message.")
@@ -497,8 +498,30 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     .add(infoOptions)
     ;
 
+  po::options_description configOptions("Configuration file options");
+  configOptions.add(visibleOptions)
+    .add(hiddenOptions)
+    .add(cegpraOptions)
+    .add(equivalenceCheckingOptions)
+    .add(parallelProgramOptions)
+    .add(experimentalOptions)
+    .add(ltlOptions)
+    .add(patternSearchOptions)
+    .add(rersOptions)
+    .add(svcompOptions)
+    .add(dataRaceOptions)
+    .add(visualizationOptions)
+    .add(infoOptions)
+    ;
+
   po::store(po::command_line_parser(argc, argv).options(all).run(), args);
   po::notify(args);
+
+  if (args.isDefined("config")) {
+    ifstream configStream(args.getString("config").c_str());
+    po::store(po::parse_config_file(configStream, configOptions), args);
+    po::notify(args);
+  } 
 
   if (args.count("help")) {
     cout << visibleOptions << "\n";
