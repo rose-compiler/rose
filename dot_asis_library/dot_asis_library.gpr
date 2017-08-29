@@ -25,7 +25,8 @@ library project DOT_ASIS_Library is
 --   for Library_Standalone use "encapsulated";  
    
    for Source_Dirs use
-     (".");
+     ("./source",
+      "./include");
      
    for Object_Dir use "./obj";
 
