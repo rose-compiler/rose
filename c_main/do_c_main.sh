@@ -16,7 +16,11 @@ script_dir=`(cd ${rel_script_dir}; pwd)`
 source_dir=`pwd`
 
 dot_asis_home=/usr/workspace/wsb/charles/code/ROSE/dot_asis/dot_asis_library
+dot_asis_lib_dir=${dot_asis_home}/lib
 gnat_home=/usr/workspace/wsb/charles/bin/adacore/gnat-gpl-2017-x86_64-linux
+asis_lib_dir=${gnat_home}/lib/asis/asislib
+gnat_lib_dir=${gnat_home}/lib/gcc/x86_64-pc-linux-gnu/6.3.1/adalib
+gcc_home=${gnat_home}
 target_dir=../test_units
 target_units="test_unit.adb"
 tool_name=call_asis_tool_2
@@ -28,21 +32,22 @@ build_asis_tool () {
   fi
   cd obj
   
-  ${gnat_home}/bin/gcc -c -x c -MMD -MF ${tool_name}.d \
+  ${gcc_home}/bin/gcc -c -x c -MMD -MF ${tool_name}.d \
   -I${dot_asis_home}/include \
   ${source_dir}/${tool_name}.c
 
-  ${gnat_home}/bin/gcc \
+  ${gcc_home}/bin/gcc \
   ${tool_name}.o \
-  ${dot_asis_home}/lib/libdot_asis.a \
-  ${gnat_home}/lib/asis/asislib/libasis.a \
-  ${gnat_home}/lib/gcc/x86_64-pc-linux-gnu/6.3.1/adalib/libgnarl.a \
-  ${gnat_home}/lib/gcc/x86_64-pc-linux-gnu/6.3.1/adalib/libgnat.a \
+  ${dot_asis_lib_dir}/libdot_asis.a \
+  ${asis_lib_dir}/libasis.a \
+  ${gnat_lib_dir}/libgnarl.a \
+  ${gnat_lib_dir}/libgnat.a \
   -static-libgcc \
   -lpthread \
   -lrt \
   -ldl \
   -o ${tool_name}
+  
   cd ${source_dir}
 }
 
