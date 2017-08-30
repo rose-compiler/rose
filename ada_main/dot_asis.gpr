@@ -1,5 +1,4 @@
-with "asis";
-with "dot_asis_library/dot_asis_library";
+with "../dot_asis_library/dot_asis_library";
 
 project DOT_ASIS is
 
@@ -8,13 +7,12 @@ project DOT_ASIS is
 
    for Object_Dir use "./obj";
 
-   for Languages use ("Ada", "C");
+   for Languages use ("Ada");
 
    for Main use
      ("demo_dot.adb",
       "run_asis_tool_2.adb",
-      "test_gnat_command_line.adb",
-      "call_asis_tool_2.c");
+      "test_gnat_command_line.adb");
 
    package Compiler is
       for Default_Switches ("ada") use ("-gnat12", "-gnata", "-g");
