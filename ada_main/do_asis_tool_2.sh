@@ -18,11 +18,10 @@ tool_name=run_asis_tool_2
 target_dir=../test_units
 target_units="unit_2.adb"
 
-use_gnat () {
-  # Make GNAT compiler and gprbuild available:
-  # Needed for use:
-  . /usr/local/tools/dotkit/init.sh
-  use -q gnat
+check_for_gnat () {
+  log_separator_1
+  log "Checking GNAT gprbuild version"
+  gprbuild --version || exit -1
 }
 
 build_asis_tool () {
@@ -54,7 +53,7 @@ process_units () {
 log_start
 log_invocation "$@"
 
-use_gnat
+check_for_gnat
 log_and_run build_asis_tool    || exit $?
 log_and_run process_units "$@" || exit $?
 

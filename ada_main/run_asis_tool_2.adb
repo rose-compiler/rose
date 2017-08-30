@@ -42,14 +42,17 @@ procedure Run_Asis_Tool_2 is
    end Get_Options;
 
    Null_Compile_Args : GNAT.OS_Lib.Argument_List (1 .. 0);
-
    Compile_Succeeded : Boolean := False;
+   GCC_String        : aliased String := "gprbuild";
 begin
    Get_Options;
+   -- Using gprbuild to avoid calling the wrong (non-GNAT) gcc below:
    Asis.Extensions.Compile
      (Source_File  => Options.File_Name,
       Args         => Null_Compile_Args,
       Success      => Compile_Succeeded,
+      GCC          => GCC_String'Unchecked_Access,
+      Use_GPRBUILD => True,
       Display_Call => True);
    if Compile_Succeeded then
       Tool.Process

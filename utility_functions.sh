@@ -60,13 +60,11 @@ log_invocation () {
 }
 
 log_end () {
-  log_separator_0
   log "end time:     `do_date_log`"
   log_separator_2
 }
 
 log_and_run () {
-  log_separator_0
   log_separator_1
   log "running:      \"$*\""
   log_blank_no_prefix

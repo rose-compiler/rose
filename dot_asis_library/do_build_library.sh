@@ -8,11 +8,10 @@
 # Defines log, log_and_run, etc.:
 source ../utility_functions.sh
 
-use_gnat () {
-  # Make GNAT compiler and gprbuild available:
-  # Needed for use:
-  . /usr/local/tools/dotkit/init.sh
-  use -q gnat
+check_for_gnat () {
+  log_separator_1
+  log "Checking GNAT gprbuild version"
+  gprbuild --version || exit -1
 }
 
 build_library () {
@@ -29,7 +28,7 @@ build_library () {
 
 log_start
 log_invocation "$@"
-use_gnat
+check_for_gnat
 log_and_run build_library || exit $?
 log_end
 
