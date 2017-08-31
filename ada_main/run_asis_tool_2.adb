@@ -1,6 +1,5 @@
 with Ada.Command_Line;
 with Ada.Text_IO;
-with Asis.Extensions;
 with GNAT.Command_Line;
 with GNAT.OS_Lib;
 with GNAT.Strings;
@@ -9,7 +8,6 @@ with Asis_Tool_2.Tool;
 
 procedure Run_Asis_Tool_2 is
    package ACL renames Ada.Command_Line;
-   package ATI renames Ada.Text_IO;
    package GCL renames GNAT.Command_Line;
 
    Usage_Error : Exception;
@@ -22,6 +20,11 @@ procedure Run_Asis_Tool_2 is
 
    Options : aliased Options_Record; -- Initialized
    Tool    : Asis_Tool_2.Tool.Class; -- Initialized
+
+   procedure Log (Message : in String) is
+   begin
+      Ada.Text_Io.Put_Line ("Run_Asis_Tool_2:  " & Message);
+   end;
 
    procedure Get_Options is
    begin
@@ -37,26 +40,18 @@ procedure Run_Asis_Tool_2 is
       end if;
    exception
       when X : GNAT.Command_Line.Exit_From_Command_Line =>
-         ATI.Put_Line ("GCL raised Exit_From_Command_Line.  Program will exit now.");
+         Log ("*** GCL raised Exit_From_Command_Line.  Program will exit now.");
          raise;
    end Get_Options;
 
-   Null_Compile_Args : GNAT.OS_Lib.Argument_List (1 .. 0);
-   Compile_Succeeded : Boolean := False;
-   GCC_String        : aliased String := "gprbuild";
+   GCC_String        : aliased String :=
+     "/usr/workspace/wsb/charles/bin/adacore/gnat-gpl-2017-x86_64-linux/bin/gprbuild";
 begin
    Get_Options;
-   -- Using gprbuild to avoid calling the wrong (non-GNAT) gcc below:
-   Asis.Extensions.Compile
-     (Source_File  => Options.File_Name,
-      Args         => Null_Compile_Args,
-      Success      => Compile_Succeeded,
-      GCC          => GCC_String'Unchecked_Access,
-      Use_GPRBUILD => True,
-      Display_Call => True);
-   if Compile_Succeeded then
-      Tool.Process
-        (File_Name => Options.File_Name.all,
-         Debug     => Options.Debug);
-   end if;
+   Log ("BEGIN - target_file_in => """ & Options.File_Name.all & """");
+   Tool.Process
+     (File_Name => Options.File_Name.all,
+      GNAT_Home => "/usr/workspace/wsb/charles/bin/adacore/gnat-gpl-2017-x86_64-linux",
+      Debug     => Options.Debug);
+   Log ("END.");
 end Run_Asis_Tool_2;

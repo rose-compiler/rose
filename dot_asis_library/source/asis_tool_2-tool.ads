@@ -9,9 +9,11 @@ package Asis_Tool_2.Tool is
 
    type Class is tagged limited private;
 
+   -- LEAKS (only intended to be called once per program execution):
    procedure Process
      (This      : in out Class;
       File_Name : in     String;
+      GNAT_Home : in     String;
       Debug     : in     Boolean);
 
    -- Call Process first:

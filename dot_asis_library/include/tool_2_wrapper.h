@@ -4,8 +4,8 @@
 #include "a_nodes.h"
 
 extern
-Node_List_Ptr
-  tool_2_wrapper
-  (char *target_file_in);
+Node_List_Ptr tool_2_wrapper
+  (char *target_file_in,
+   char *gnat_home);
 
 #endif // ifndef TOOL_2_WRAPPER_H

@@ -26,6 +26,9 @@ lib/
 # GNAT/gprbuild .ali and .o files:
 obj/
 
+# Produced when compiling code for the .adt files:
+*.stderr
+*.stdout
 
 # Specific files:
 

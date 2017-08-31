@@ -9,11 +9,12 @@ int main (int argc, char *argv[])
 {
   char *prefix = "call_asis_tool_2.main";
   char *target_file = "/g/g17/charles/code/ROSE/dot_asis/test_units/unit_2.adb";
+  char *gnat_home   = "/usr/workspace/wsb/charles/bin/adacore/gnat-gpl-2017-x86_64-linux";
   struct List_Node_Struct *head_node;
 
   printf ("%s:  BEGIN.\n", prefix);
   dot_asisinit();
-  head_node = tool_2_wrapper (target_file);
+  head_node = tool_2_wrapper (target_file, gnat_home);
 
   if (head_node == 0) {
     printf ("%s:  tool_2_wrapper returned NO elements.\n", prefix);
