@@ -77,7 +77,7 @@ $(nonsmoke_genericCoverage_c_output): genericCoverage
 	$(VALGRIND) ./genericCoverage $(TEST_CXXFLAGS) -c $(nonsmoke_specimens_Cxx_tests_path)/$(@:%.genericCoverage.output=%)
 
 $(nonsmoke_collectFunctionSideEffect_cpp_output): collectFunctionSideEffect
-	$(VALGRIND) ./collectFunctionSideEffect $(TEST_CXXFLAGS) -annot $(top_srcdir)/tests/nonsmoke/unit/SageInterface/vectorXY.annot -c $(nonsmoke_specimens_Cxx_tests_path)/$(@:%.collectFunctionSideEffect.output=%)
+	$(VALGRIND) ./collectFunctionSideEffect -sort $(TEST_CXXFLAGS) -annot $(top_srcdir)/tests/nonsmoke/unit/SageInterface/vectorXY.annot -c $(nonsmoke_specimens_Cxx_tests_path)/$(@:%.collectFunctionSideEffect.output=%)
 
 # the diff files .output.diff
 nonsmoke_getDataSharingAttribute_c_output_diff = $(addsuffix .diff, ${nonsmoke_getDataSharingAttribute_c_output_verify})
@@ -93,19 +93,19 @@ REFERENCE_PATH=$(top_srcdir)/tests/nonsmoke/unit/SageInterface/referenceOutput
 #$(nonsmoke_getDataSharingAttribute_c_output_diff): $(@:output.diff=.output) $(REFERENCE_PATH)/$(@:.output.diff=.output)
 $(nonsmoke_getDataSharingAttribute_c_output_diff): $(nonsmoke_getDataSharingAttribute_c_output)
 	echo "Verifying getDataSharingAttribute by diff ..."; \
-	if diff $(@:.output.diff=.output) $(REFERENCE_PATH)/$(@:.output.diff=.output) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; rm -rf $@; exit 1; fi
+	if diff $(@:.output.diff=.output) $(REFERENCE_PATH)/$(@:.output.diff=.output) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; cat $@; rm -rf $@; exit 1; fi
 
 $(nonsmoke_get_C_array_dimensions_c_output_diff): $(nonsmoke_get_C_array_dimensions_c_output)
 	echo "Verifying get_C_array_dimensions by diff ..."; \
-	if diff $(@:.get_C_array_dimensions.output.diff=.get_C_array_dimensions.output) $(REFERENCE_PATH)/$(@:.get_C_array_dimensions.output.diff=.get_C_array_dimensions.output) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; rm -rf $@; exit 1; fi
+	if diff $(@:.get_C_array_dimensions.output.diff=.get_C_array_dimensions.output) $(REFERENCE_PATH)/$(@:.get_C_array_dimensions.output.diff=.get_C_array_dimensions.output) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; cat $@; rm -rf $@; exit 1; fi
 
 $(nonsmoke_genericCoverage_c_output_diff): $(nonsmoke_genericCoverage_c_output)
 	echo "Verifying genericCoverage by diff ..."; \
-	if diff $(@:.genericCoverage.output.diff=.genericCoverage.output) $(REFERENCE_PATH)/$(@:.genericCoverage.output.diff=.genericCoverage.output) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; rm -rf $@; exit 1; fi
+	if diff $(@:.genericCoverage.output.diff=.genericCoverage.output) $(REFERENCE_PATH)/$(@:.genericCoverage.output.diff=.genericCoverage.output) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; cat $@; rm -rf $@; exit 1; fi
 
 $(nonsmoke_collectFunctionSideEffect_cpp_output_diff): $(nonsmoke_collectFunctionSideEffect_cpp_output)
 	echo "Verifying collectFunctionSideEffect by diff ..."; \
-	if diff $(@:.collectFunctionSideEffect.output.diff=.collectFunctionSideEffect.output) $(REFERENCE_PATH)/$(@:.collectFunctionSideEffect.output.diff=.collectFunctionSideEffect.output) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; rm -rf $@; exit 1; fi
+	if diff $(@:.collectFunctionSideEffect.output.diff=.collectFunctionSideEffect.output) $(REFERENCE_PATH)/$(@:.collectFunctionSideEffect.output.diff=.collectFunctionSideEffect.output) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; cat $@; rm -rf $@; exit 1; fi
 
 
 # shortcut to test generating outputs only, tested for avoid redundant running.
@@ -124,8 +124,9 @@ check-local: $(nonsmoke_getDataSharingAttribute_c_output) $(nonsmoke_getDataShar
 	     $(nonsmoke_collectFunctionSideEffect_cpp_output_diff)
 else
 # DQ (4/5/2017): GNU 6.1 includes language features that this test does not support.
-check-local: $(nonsmoke_getDataSharingAttribute_c_output) (nonsmoke_getDataSharingAttribute_c_output_diff) \
+check-local: $(nonsmoke_getDataSharingAttribute_c_output) $(nonsmoke_getDataSharingAttribute_c_output_diff) \
              $(nonsmoke_get_C_array_dimensions_c_output) $(nonsmoke_get_C_array_dimensions_c_output_diff)
+	     $(nonsmoke_collectFunctionSideEffect_cpp_output_diff)
 endif
 
 clean-local:

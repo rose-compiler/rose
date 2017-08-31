@@ -23,31 +23,37 @@ class UntypedConverter
       void  setSourcePositionFrom      ( SgLocatedNode* toNode, SgLocatedNode* fromNode );
       void  setSourcePositionIncluding ( SgLocatedNode* toNode, SgLocatedNode* startNode, SgLocatedNode* endNode );
 
-      static void              setSourcePositionUnknown( SgLocatedNode* locatedNode );
-      static SgScopeStatement* initialize_global_scope ( SgSourceFile* file );
+      void  setSourcePositionUnknown   ( SgLocatedNode* locatedNode );
 
-             void              buildProcedureSupport (SgUntypedFunctionDeclaration* ut_function,
-                                                      SgProcedureHeaderStatement* procedureDeclaration, SgScopeStatement* scope);
+      SgScopeStatement* initialize_global_scope ( SgSourceFile* file );
+
+      void buildProcedureSupport (SgUntypedFunctionDeclaration* ut_function,
+                                  SgProcedureHeaderStatement* procedureDeclaration, SgScopeStatement* scope);
+
+      void convertLabel(SgUntypedStatement* ut_stmt, SgStatement* sg_stmt,
+                        SgLabelSymbol::label_type_enum label_type = SgLabelSymbol::e_start_label_type, SgScopeStatement* label_scope=NULL);
+
+      SgInitializedName* convertSgUntypedInitializedName (SgUntypedInitializedName* ut_name, SgType* sg_type, SgInitializer* sg_init);
+
+      void convertFunctionPrefix (SgUntypedTokenList* prefix_list, SgFunctionDeclaration* function_decl);
+
+      void setDeclarationModifiers (SgDeclarationStatement* decl, SgUntypedTokenList* mod_list);
 
 
-      static void convertLabel(SgUntypedStatement* ut_stmt, SgStatement* sg_stmt,
-                               SgLabelSymbol::label_type_enum label_type = SgLabelSymbol::e_start_label_type, SgScopeStatement* label_scope = NULL);
+      SgType*   convertSgUntypedType        (SgUntypedType* ut_type,                SgScopeStatement* scope);
+      SgGlobal* convertSgUntypedGlobalScope (SgUntypedGlobalScope* ut_scope,        SgScopeStatement* scope);
 
-      SgInitializedName*     convertSgUntypedInitializedName    (SgUntypedInitializedName* ut_name, SgType* sg_type, SgInitializer* sg_init);
-
-             SgType*                convertSgUntypedType               (SgUntypedType* ut_type,                SgScopeStatement* scope);
-      static SgGlobal*              convertSgUntypedGlobalScope        (SgUntypedGlobalScope* ut_scope,        SgScopeStatement* scope);
-
-             SgModuleStatement*          convertSgUntypedModuleDeclaration        (SgUntypedModuleDeclaration*        ut_decl, SgScopeStatement* scope);
-             SgProgramHeaderStatement*   convertSgUntypedProgramHeaderDeclaration (SgUntypedProgramHeaderDeclaration* ut_decl, SgScopeStatement* scope);
-             SgProcedureHeaderStatement* convertSgUntypedSubroutineDeclaration    (SgUntypedSubroutineDeclaration*    ut_decl, SgScopeStatement* scope);
-      static SgProcedureHeaderStatement* convertSgUntypedFunctionDeclaration      (SgUntypedFunctionDeclaration*      ut_decl, SgScopeStatement* scope);
-      static void                        convertSgUntypedFunctionDeclarationList  (SgUntypedFunctionDeclarationList*  ut_list, SgScopeStatement* scope);
+      SgModuleStatement*          convertSgUntypedModuleDeclaration        (SgUntypedModuleDeclaration*        ut_decl, SgScopeStatement* scope);
+      SgProgramHeaderStatement*   convertSgUntypedProgramHeaderDeclaration (SgUntypedProgramHeaderDeclaration* ut_decl, SgScopeStatement* scope);
+      SgProcedureHeaderStatement* convertSgUntypedSubroutineDeclaration    (SgUntypedSubroutineDeclaration*    ut_decl, SgScopeStatement* scope);
+      SgProcedureHeaderStatement* convertSgUntypedFunctionDeclaration      (SgUntypedFunctionDeclaration*      ut_decl, SgScopeStatement* scope);
+      void                        convertSgUntypedFunctionDeclarationList  (SgUntypedFunctionDeclarationList*  ut_list, SgScopeStatement* scope);
 
    // Declaration statements
    //
-      SgImplicitStatement*   convertSgUntypedImplicitDeclaration (SgUntypedImplicitDeclaration* ut_decl, SgScopeStatement* scope);
-      SgVariableDeclaration* convertSgUntypedVariableDeclaration (SgUntypedVariableDeclaration* ut_decl, SgScopeStatement* scope);
+      SgDeclarationStatement* convertSgUntypedNameListDeclaration (SgUntypedNameListDeclaration* ut_decl, SgScopeStatement* scope);
+      SgImplicitStatement*    convertSgUntypedImplicitDeclaration (SgUntypedImplicitDeclaration* ut_decl, SgScopeStatement* scope);
+      SgVariableDeclaration*  convertSgUntypedVariableDeclaration (SgUntypedVariableDeclaration* ut_decl, SgScopeStatement* scope);
 
    // Executable statements
    //

@@ -107,16 +107,37 @@ BinaryLoaderElf::align_values(SgAsmGenericSection *_section, const MemoryMap::Pt
                               rose_addr_t *va_offset_p, bool *anon_lo_p, bool *anon_hi_p,
                               ConflictResolution *resolve_p)
 {
+    ASSERT_not_null(_section);
+    ASSERT_not_null(map);
+    ASSERT_not_null(malign_lo_p);
+    ASSERT_not_null(malign_hi_p);
+    ASSERT_not_null(va_p);
+    ASSERT_not_null(mem_size_p);
+    ASSERT_not_null(offset_p);
+    ASSERT_not_null(file_size_p);
+    ASSERT_not_null(map_private_p);
+    ASSERT_not_null(va_offset_p);
+    ASSERT_not_null(anon_lo_p);
+    ASSERT_not_null(anon_hi_p);
+    ASSERT_not_null(resolve_p);
+
     SgAsmElfSection *section = isSgAsmElfSection(_section);
     ASSERT_not_null(section); /* This method is only for ELF files. */
 
+    // Maximum alignment seems to be 4k regardless of what the ELF file says.  You can see this by running:
+    //   $ x86_64 -R /bin/cat /proc/self/maps
+    // and noticing that the /bin/cat segments are mapped at '4000, 'b000, and 'c000 even though the ELF file says the memory
+    // alignment constraint is 0x200000.
+    if (*malign_lo_p > 4096)
+        *malign_lo_p = 4096;
+    if (*malign_hi_p > 4096)
+        *malign_hi_p = 4096;
+
     /* ELF Segments are aligned using the superclass, but when the section has a low- or high-padding area we'll use file
      * contents for the low area and zeros for the high area. Due to our rebase() method, there should be no conflicts between
-     * this header's sections and sections previously mapped from other headers.  Therefore, any conflicts are within a single
-     * header and are resolved by over-mapping. */
+     * this header's sections and sections previously mapped from other headers.  Any conflicts are within a single header and
+     * are resolved by moving the segment to a free area. */
     if (section->get_segment_entry()) {
-
-
         MappingContribution retval = BinaryLoader::align_values(section, map, malign_lo_p, malign_hi_p, va_p,
                                                                 mem_size_p, offset_p, file_size_p, map_private_p, va_offset_p,
                                                                 anon_lo_p, anon_hi_p, resolve_p);

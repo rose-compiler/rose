@@ -18,10 +18,10 @@ Write var names:
 Function name:"::VectorXY::VectorXY"
 Write references:
 	SgArrowExp@0:0	"::VectorXY::x"
-	SgThisExp@0:0	NULL SgInitializedName
-	SgVarRefExp@26:17	"::VectorXY::x"
 	SgArrowExp@0:0	"::VectorXY::y"
 	SgThisExp@0:0	NULL SgInitializedName
+	SgThisExp@0:0	NULL SgInitializedName
+	SgVarRefExp@26:17	"::VectorXY::x"
 	SgVarRefExp@26:24	"::VectorXY::y"
 Write var names:
 	"::VectorXY::x"
@@ -33,10 +33,10 @@ Read references:
 	SgVarRefExp@27:45	"yy"
 Write references:
 	SgArrowExp@0:0	"::VectorXY::x"
-	SgThisExp@0:0	NULL SgInitializedName
-	SgVarRefExp@27:37	"::VectorXY::x"
 	SgArrowExp@0:0	"::VectorXY::y"
 	SgThisExp@0:0	NULL SgInitializedName
+	SgThisExp@0:0	NULL SgInitializedName
+	SgVarRefExp@27:37	"::VectorXY::x"
 	SgVarRefExp@27:43	"::VectorXY::y"
 Read var names:
 	"xx"
@@ -47,17 +47,37 @@ Write var names:
 --------------------------------------------------
 Function name:"::foo"
 Read references:
+	SgConstructorInitializer@39:21	NULL SgInitializedName
 	SgVarRefExp@38:19	"i"
 	SgVarRefExp@38:26	"i"
 	SgVarRefExp@39:16	"i"
-	SgConstructorInitializer@39:21	NULL SgInitializedName
 Write references:
 	SgInitializedName@37:3	"bcVelocity"
 	SgInitializedName@38:8	"i"
-	SgVarRefExp@38:26	"i"
+	SgPntrArrRefExp@39:15	"bcVelocity"
 	SgVarRefExp@0:0	"::VectorXY::x"
 	SgVarRefExp@0:0	"::VectorXY::y"
+	SgVarRefExp@38:26	"i"
+Read var names:
+	"i"
+Write var names:
+	"::VectorXY::x"
+	"::VectorXY::y"
+	"bcVelocity"
+	"i"
+--------------------------------------------------
+Loop line:38
+Read references:
+	SgConstructorInitializer@39:21	NULL SgInitializedName
+	SgVarRefExp@38:19	"i"
+	SgVarRefExp@38:26	"i"
+	SgVarRefExp@39:16	"i"
+Write references:
+	SgInitializedName@38:8	"i"
 	SgPntrArrRefExp@39:15	"bcVelocity"
+	SgVarRefExp@0:0	"::VectorXY::x"
+	SgVarRefExp@0:0	"::VectorXY::y"
+	SgVarRefExp@38:26	"i"
 Read var names:
 	"i"
 Write var names:

@@ -1,4 +1,3 @@
-// Author: Marc Jasper, 2016.
 
 #ifndef PAR_PRO_ANALYZER_H
 #define PAR_PRO_ANALYZER_H
@@ -31,6 +30,11 @@ namespace CodeThorn {
   typedef std::list<const ParProEState*> ParProWorklist;
   enum ComponentApproximation { COMPONENTS_OVER_APPROX, COMPONENTS_UNDER_APPROX, COMPONENTS_NO_APPROX };
 
+  /*!
+   * \brief Generates a ParProTransitionGraph based on synchronized process graphs (explores all interleavings).
+   * \author Marc Jasper
+   * \date 2016.
+   */
   // Analyzes the state space of a parallel program. 
   class ParProAnalyzer {
   public:

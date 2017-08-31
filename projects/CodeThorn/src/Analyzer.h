@@ -49,6 +49,8 @@ namespace CodeThorn {
   typedef std::pair<PState,  std::list<int> > PStatePlusIOHistory;
   enum AnalyzerMode { AM_ALL_STATES, AM_LTL_STATES };
 
+  class SpotConnection;
+
 /*! 
   * \author Markus Schordan
   * \date 2012.
@@ -133,7 +135,6 @@ namespace CodeThorn {
     void runSolver4();
     void runSolver5();
     void runSolver8();
-    void runSolver9();
     void runSolver10();
     void runSolver11();
     void runSolver12();
@@ -261,6 +262,9 @@ namespace CodeThorn {
     bool stdFunctionSemantics() { return _stdFunctionSemantics; }
     void setModeLTLDriven(bool ltlDriven) { transitionGraph.setModeLTLDriven(ltlDriven); }
     bool getModeLTLDriven() { return transitionGraph.getModeLTLDriven(); }
+    // only used in LTL-driven mode
+    void setSpotConnection(SpotConnection* connection) { _spotConnection = connection; }
+
     long analysisRunTimeInSeconds(); 
 
     void set_finished(std::vector<bool>& v, bool val);
@@ -304,6 +308,10 @@ namespace CodeThorn {
     long int _maxIterationsForcedTop;
     long int _maxBytesForcedTop;
     long int _maxSecondsForcedTop;
+    // only used in LTL-driven mode
+    size_t _prevStateSetSizeDisplay = 0;
+    size_t _prevStateSetSizeResource = 0;
+
     PState _startPState;
     bool _optionStatusMessages;
 
@@ -355,6 +363,7 @@ namespace CodeThorn {
     string _externalExitFunctionName;
 
     Timer _analysisTimer;
+    bool _timerRunning = false;
 
     // =======================================================================
     // ========================== LTLAnalyzer ================================
@@ -365,8 +374,6 @@ namespace CodeThorn {
     bool isLTLRelevantLabel(Label label);
     bool isStdIOLabel(Label label);
     std::set<const EState*> nonLTLRelevantEStates();
-
-    std::string generateSpotSTG();
 
     // reduces all states different to stdin and stdout.
     void stdIOFoldingOfTransitionGraph();
@@ -419,20 +426,15 @@ namespace CodeThorn {
     //returns the shortest possible number of input states on the path leading to "target".
     int inputSequenceLength(const EState* target);
 
-    // begin of solver 9 functions
-    bool searchForIOPatterns(PState* startPState, int assertion_id, std::list<int>& inputSuffix, std::list<int>* partialTrace = NULL, int* inputPatternLength=NULL);
-    bool containsPatternTwoRepetitions(std::list<int>& sequence);
+    // begin of solver 10 functions (black-box pattern search)
     bool containsPatternTwoRepetitions(std::list<int>& sequence, int startIndex, int endIndex);
-    bool computePStateAfterInputs(PState& pState, std::list<int>& inputs, int thread_id, std::list<int>* iOSequence=NULL);
-    bool computePStateAfterInputs(PState& pState, int input, int thread_id, std::list<int>* iOSequence=NULL);
-    bool searchPatternPath(int assertion_id, PState& pState, std::list<int>& inputPattern, std::list<int>& inputSuffix, int thread_id,std::list<int>* iOSequence=NULL);
+    bool computePStateAfterInputs(PState& pState, std::list<int>& inputs, int thread_id, std::list<int>* iOSequence=NULL);;
     std::list<int> inputsFromPatternTwoRepetitions(std::list<int> pattern2r);
     string convertToCeString(std::list<int>& ceAsIntegers, int maxInputVal);
     int pStateDepthFirstSearch(PState* startPState, int maxDepth, int thread_id, std::list<int>* partialTrace, int maxInputVal, int patternLength, int PatternIterations);
-    // end of solver 9 functions
+    // end of solver 10 functions (black-box pattern search)
 
-    void generateSpotTransition(std::stringstream& ss, const Transition& t);
-    //less than comarisions on two states according to (#input transitions * #output transitions)
+    //less than comparisions on two states according to (#input transitions * #output transitions)
     bool indegreeTimesOutdegreeLessThan(const EState* a, const EState* b);
 
   public:
@@ -447,7 +449,6 @@ namespace CodeThorn {
     typedef pair<EStateWorkList,std::set<const EState*> > SubSolverResultType;
     SubSolverResultType subSolver(const EState* currentEStatePtr);
 
-    PropertyValueTable* loadAssertionsToReconstruct(string filePath);
     void insertInputVarValue(int i) { _inputVarValues.insert(i); }
     void addInputSequenceValue(int i) { _inputSequence.push_back(i); }
     void resetToEmptyInputSequence() { _inputSequence.clear(); }
@@ -480,9 +481,6 @@ namespace CodeThorn {
     void setMaxSeconds(long int maxSeconds) { _maxSeconds=maxSeconds; }
     void setMaxSecondsForcedTop(long int maxSecondsForcedTop) { _maxSecondsForcedTop=maxSecondsForcedTop; }
     void setStartPState(PState startPState) { _startPState=startPState; }
-    void setReconstructMaxInputDepth(size_t inputDepth) { _reconstructMaxInputDepth=inputDepth; }
-    void setReconstructMaxRepetitions(size_t repetitions) { _reconstructMaxRepetitions=repetitions; }
-    void setReconstructPreviousResults(PropertyValueTable* previousResults) { _reconstructPreviousResults = previousResults; };
     void setPatternSearchMaxDepth(size_t iODepth) { _patternSearchMaxDepth=iODepth; }
     void setPatternSearchRepetitions(size_t patternReps) { _patternSearchRepetitions=patternReps; }
     void setPatternSearchMaxSuffixDepth(size_t suffixDepth) { _patternSearchMaxSuffixDepth=suffixDepth; }
@@ -490,9 +488,6 @@ namespace CodeThorn {
     void setPatternSearchExploration(ExplorationMode explorationMode) { _patternSearchExplorationMode = explorationMode; };
 
   private:
-    int _reconstructMaxInputDepth;
-    int _reconstructMaxRepetitions;
-    PropertyValueTable* _reconstructPreviousResults;
     PropertyValueTable*  _patternSearchAssertTable;
     int _patternSearchMaxDepth;
     int _patternSearchRepetitions;
@@ -502,6 +497,9 @@ namespace CodeThorn {
     const EState* _estateBeforeMissingInput;
     const EState* _latestOutputEState;
     const EState* _latestErrorEState;
+    // only used in LTL-driven mode
+    SpotConnection* _spotConnection = nullptr;
+
   }; // end of class Analyzer
 
 } // end of namespace CodeThorn

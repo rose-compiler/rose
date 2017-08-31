@@ -7,7 +7,8 @@
 #include "AstTerm.h"
 #include "AstMatching.h"
 #include "SgNodeHelper.h"
-
+#include <list>
+#include <vector>
 #include "Timer.h"
 
 using namespace std;
@@ -30,15 +31,10 @@ int main (int argc, char* argv[])
   Rose::global_options.set_frontend_warnings(false);
   Rose::global_options.set_backend_warnings(false);
 
-  int statementTransformations=0;
 
   vector<string> argvList(argv, argv+argc);
   argvList.push_back("-rose:skipfinalCompileStep");
-  // Build the AST used by ROSE
-  //SgProject* sageProject = frontend(argc,argv);
   SgProject* sageProject=frontend (argvList); 
-
-  
   // Run internal consistency tests on AST
   //AstTests::runAllTests(sageProject);
   //AstDOTGeneration dotGen;
@@ -46,23 +42,45 @@ int main (int argc, char* argv[])
   SgNode* root;
   root=sageProject;
   RoseAst ast(root);
-  std::string matchexpression="$Assign=SgAddOp|$C=SgBinaryOp(_,_)|$AddPlusAssign=SgPlusAssignOp(..)";
+
+  std::string matchexpression="$CastNode=SgCastExp($CastOpChild)";
   AstMatching m;
   MatchResult r=m.performMatching(matchexpression,root);
-  // print result in readable form for demo purposes
-  std::cout << "Number of matched patterns with bound variables: " << r.size() << std::endl;
-  for(MatchResult::iterator i=r.begin();i!=r.end();++i) {
+  //std::cout << "Number of matched patterns with bound variables: " << r.size() << std::endl;
+  list<string> report;
+  int statementTransformations=0;
+  for(MatchResult::reverse_iterator i=r.rbegin();i!=r.rend();++i) {
     statementTransformations++;
-    std::cout << "---------------------------------------------------------"<<endl;
-    std::cout << "MATCH-Assign: \n"; 
-    //SgNode* n=(*i)["X"];
-    for(SingleMatchVarBindings::iterator vars_iter=(*i).begin();vars_iter!=(*i).end();++vars_iter) {
-      SgNode* matchedTerm=(*vars_iter).second;
-      std::cout << "  Assign: " << (*vars_iter).first << "=" << AstTerm::astTermWithNullValuesToString(matchedTerm) << " @" << matchedTerm << std::endl;
+    SgCastExp* castExp=isSgCastExp((*i)["$CastNode"]);
+    ROSE_ASSERT(castExp);
+    SgExpression* childNode=isSgExpression((*i)["$CastOpChild"]);
+    ROSE_ASSERT(childNode);
+    if(castExp->isCompilerGenerated()) {
+      SgType* castType=castExp->get_type();
+      string castTypeString=castType->unparseToString();
+      SgType* castedType=childNode->get_type();
+      string castedTypeString=castedType->unparseToString();
+      string reportLine="compiler generated cast: "
+        +SgNodeHelper::sourceLineColumnToString(castExp->get_parent())
+        +": "+castTypeString+" <== "+castedTypeString;
+      if(castType==castedType) {
+        reportLine+=" [ no change in type. ]";
+      }
+      // line are created in reverse order
+      report.push_front(reportLine); 
+
+      string newSourceCode;
+      newSourceCode="/* CAST ("+castTypeString+") */";
+      newSourceCode+=castExp->unparseToString();
+      castExp->unsetCompilerGenerated(); // otherwise it is not replaced
+      SgNodeHelper::replaceAstWithString(castExp,newSourceCode);
     }
   }
-  m.printMarkedLocations();
-  m.printMatchOperationsSequence();
-  
+  for(list<string>::iterator i=report.begin();i!=report.end();++i) {
+    cout<<*i<<endl;
+  }
+  //m.printMarkedLocations();
+  //m.printMatchOperationsSequence();
+  cout<<"Number of compiler generated casts: "<<statementTransformations<<endl;
   backend(sageProject);
 }

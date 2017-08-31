@@ -2892,10 +2892,14 @@ FortranCodeGeneration_locatedNode::unparseStopOrPauseStmt(SgStatement* stmt, SgU
      if (kind == SgStopOrPauseStatement::e_stop)
         {
           curprint("STOP ");
-       // curprint(sp_stmt->get_code().str());
           unparseExpression(sp_stmt->get_code(), info);
         }
-       else
+     else if (kind == SgStopOrPauseStatement::e_error_stop)
+        {
+          curprint("ERROR STOP ");
+          unparseExpression(sp_stmt->get_code(), info);
+        }
+     else
         {
           ROSE_ASSERT(kind == SgStopOrPauseStatement::e_pause);
           curprint("PAUSE ");

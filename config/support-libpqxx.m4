@@ -56,7 +56,7 @@ AC_DEFUN([ROSE_SUPPORT_LIBPQXX],[
     fi
 
     dnl Sanity check: if the user told us to use it then we must find it
-    if test "$pqxx" != no -a -z "$ROSE_HAVE_LIBPQXX"; then
+    if test "$pqxx" != no -a "$pqxx" != default -a -z "$ROSE_HAVE_LIBPQXX"; then
         AC_MSG_ERROR([did not find pqxx library but --with-pqxx was specified])
     fi
 
