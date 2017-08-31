@@ -14,6 +14,7 @@
 #include "SpotConnection.h"
 #include "CodeThornException.h"
 
+#include <unordered_set>
 #include <boost/bind.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
@@ -108,6 +109,7 @@ Analyzer::Analyzer():
   startFunRoot(0),
   cfanalyzer(0),
   _globalTopifyMode(GTM_IO),
+  _stgReducer(&estateSet, &transitionGraph),
   _displayDiff(10000),
   _resourceLimitDiff(10000),
   _numberOfThreadsToUse(1),
@@ -1153,11 +1155,11 @@ void Analyzer::initializeSolver(std::string functionToStartAt,SgNode* root, bool
   }
 
   const EState* currentEState=processNew(estate);
+  ROSE_ASSERT(currentEState);
   if(getModeLTLDriven()) {
     setStartEState(currentEState);
     getTransitionGraph()->setAnalyzer(this);
   }
-  ROSE_ASSERT(currentEState);
   variableValueMonitor.init(currentEState);
   addToWorkList(currentEState);
   // cout << "INIT: start state: "<<currentEState->toString(&variableIdMapping)<<endl;
@@ -1450,16 +1452,15 @@ void Analyzer::semanticFoldingOfTransitionGraph() {
  */
 void Analyzer::pruneLeaves() {
   EStatePtrSet states=transitionGraph.estateSet();
-  std::set<EState*> workset;
+  unordered_set<EState*> workset;
   //insert all states into the workset
   for(EStatePtrSet::iterator i=states.begin();i!=states.end();++i) {
     workset.insert(const_cast<EState*> (*i));
   }
-  //process the workset. if state extracted is a leaf, remove it and add its predecessors to the workset
+  //process the workset. if extracted state is a leaf, remove it and add its predecessors to the workset
   while (workset.size() != 0) {
     EState* current = (*workset.begin());
-    if (/*transitionGraph.succ(current) == NULL
-          || */ transitionGraph.succ(current).size() == 0) {
+    if (transitionGraph.succ(current).size() == 0) {
       EStatePtrSet preds = transitionGraph.pred(current);
       for (EStatePtrSet::iterator iter = preds.begin(); iter != preds.end(); ++iter)  {
         workset.insert(const_cast<EState*> (*iter));
@@ -1471,144 +1472,68 @@ void Analyzer::pruneLeaves() {
 }
 
 /*! 
-  * \author Marc Jasper
-  * \date 2014.
+ * \author Marc Jasper
+ * \date 2017.
  */
-bool Analyzer::indegreeTimesOutdegreeLessThan(const EState* a, const EState* b) {
-  return ( (transitionGraph.inEdges(a).size() * transitionGraph.outEdges(a).size()) <
-             (transitionGraph.inEdges(b).size() * transitionGraph.outEdges(b).size()) );
+void Analyzer::reduceStgToInOutStates() {
+  function<bool(const EState*)> predicate = [](const EState* s) { 
+    return s->io.isStdInIO() || s->io.isStdOutIO();
+  };
+  _stgReducer.reduceStgToStatesSatisfying(predicate);
 }
 
 /*! 
-  * \author Marc Jasper
-  * \date 2014.
+ * \author Marc Jasper
+ * \date 2017.
  */
-void Analyzer::removeNonIOStates() {
+void Analyzer::reduceStgToInOutAssertStates() {
+  function<bool(const EState*)> predicate = [](const EState* s) { 
+    return s->io.isStdInIO() || s->io.isStdOutIO() 
+    || s->io.isFailedAssertIO();
+  };
+  _stgReducer.reduceStgToStatesSatisfying(predicate);
+}
+
+/*! 
+ * \author Marc Jasper
+ * \date 2017.
+ */
+void Analyzer::reduceStgToInOutAssertErrStates() {
+  function<bool(const EState*)> predicate = [](const EState* s) { 
+    return s->io.isStdInIO() || s->io.isStdOutIO() 
+    || s->io.isFailedAssertIO() || s->io.isStdErrIO();
+  };
+  _stgReducer.reduceStgToStatesSatisfying(predicate);
+}
+
+/*! 
+ * \author Marc Jasper
+ * \date 2017.
+ */
+void Analyzer::reduceStgToInOutAssertWorklistStates() {
+  // copy elements from worklist into hashset (faster access within the predicate)
+  unordered_set<const EState*> worklistSet(estateWorkListCurrent->begin(), estateWorkListCurrent->end());
+  function<bool(const EState*)> predicate = [&worklistSet](const EState* s) { 
+    return s->io.isStdInIO() || s->io.isStdOutIO() 
+    || s->io.isFailedAssertIO() || (worklistSet.find(s) != worklistSet.end());
+  };
+  _stgReducer.reduceStgToStatesSatisfying(predicate);
+}
+
+/*!
+ * \author Marc Jasper
+ * \date 2014.
+ */
+void Analyzer::reduceToObservableBehavior() {
   EStatePtrSet states=transitionGraph.estateSet();
-  if (states.size() == 0) {
-    logger[TRACE]<< "STATUS: the transition system used as a model is empty, could not reduce states to I/O. (P2)" << endl;
-    return;
-  }
-  // sort EStates so that those with minimal (indegree * outdegree) come first
-  std::list<const EState*> worklist = list<const EState*>(states.begin(), states.end());
-  worklist.sort(boost::bind(&CodeThorn::Analyzer::indegreeTimesOutdegreeLessThan,this,_1,_2));
-  int totalStates=states.size();
-  int statesVisited =0;
-  // iterate over all states, reduce those that are neither the start state nor standard input / output
-  for(std::list<const EState*>::iterator i=worklist.begin();i!=worklist.end();++i) {
-    if(! ((*i) == transitionGraph.getStartEState()) ) {
-      if(! ((*i)->io.isStdInIO() || (*i)->io.isStdOutIO()) ) {
-	transitionGraph.reduceEState2(*i);
+  // iterate over all states, reduce those that are neither the start state nor contain input/output/error behavior
+  for(EStatePtrSet::iterator i=states.begin();i!=states.end();++i) {
+    if( (*i) != transitionGraph.getStartEState() ) {
+      if(! ((*i)->io.isStdInIO() || (*i)->io.isStdOutIO() || (*i)->io.isStdErrIO() || (*i)->io.isFailedAssertIO()) ) {
+       transitionGraph.reduceEState2(*i);
       }
     }
-    statesVisited++;
-    //display current progress
-    if (statesVisited % 2500 == 0) {
-      double progress = ((double) statesVisited / (double) totalStates) * 100;
-      logger[TRACE]<< setiosflags(ios_base::fixed) << setiosflags(ios_base::showpoint);
-      logger[TRACE]<< "STATUS: "<<statesVisited<<" out of "<<totalStates<<" states visited for reduction to I/O. ("<<setprecision(2)<<progress<<setprecision(6)<<"%)"<<endl;
-      logger[TRACE]<< resetiosflags(ios_base::fixed) << resetiosflags(ios_base::showpoint);
-    }
   }
-}
-
-/*! 
-  * \author Marc Jasper
-  * \date 2014.
- */
-void Analyzer::reduceGraphInOutWorklistOnly(bool includeIn, bool includeOut, bool includeErr) {
-  // 1.) worklist_reduce <- list of startState and all input/output states
-  std::list<const EState*> worklist_reduce;
-  EStatePtrSet states=transitionGraph.estateSet();
-  if (states.size() == 0) {
-    logger[TRACE]<< "STATUS: the transition system used as a model is empty, could not reduce states to I/O. (P1)" << endl;
-    return;
-  }
-  worklist_reduce.push_back(transitionGraph.getStartEState());
-  for(EStatePtrSet::iterator i=states.begin();i!=states.end();++i) {
-    if ( (includeIn&&(*i)->io.isStdInIO()) || (includeOut&&(*i)->io.isStdOutIO()) || (includeErr&&(*i)->io.isFailedAssertIO())) {
-      worklist_reduce.push_back(*i);
-    }
-  }
-  // 2.) for each state in worklist_reduce: insert startState/I/O/worklist transitions into list of new transitions ("newTransitions").
-  std::list<Transition*> newTransitions;
-  for(std::list<const EState*>::iterator i=worklist_reduce.begin();i!=worklist_reduce.end();++i) {
-    boost::unordered_set<Transition*>* someNewTransitions = transitionsToInOutErrAndWorklist(*i, includeIn, includeOut, includeErr);
-    newTransitions.insert(newTransitions.begin(), someNewTransitions->begin(), someNewTransitions->end());
-  }
-  // 3.) remove all old transitions
-  for(EStatePtrSet::iterator i=states.begin();i!=states.end();++i) {
-    transitionGraph.eliminateEState(*i);
-  }
-  // 4.) add newTransitions
-  // logger[DEBUG]<< "number of new shortcut transitions to be added: " << newTransitions.size() << endl;
-  for(std::list<Transition*>::iterator i=newTransitions.begin();i!=newTransitions.end();++i) {
-    transitionGraph.add(**i);
-    // logger[DEBUG]<< "added " << (*i)->toString() << endl;
-  }
-}
-
-/*! 
-  * \author Marc Jasper
-  * \date 2014.
- */
-boost::unordered_set<Transition*>* Analyzer::transitionsToInOutErrAndWorklist( const EState* startState,
-    bool includeIn, bool includeOut, bool includeErr) {
-  // initialize result set and visited set (the latter for cycle checks)
-  boost::unordered_set<Transition*>* result = new boost::unordered_set<Transition*>();
-  boost::unordered_set<const EState*>* visited = new boost::unordered_set<const EState*>();
-  // start the recursive function from initState's successors, therefore with a minimum distance of one from initState.
-  // Simplifies the detection of allowed self-edges.
-  EStatePtrSet succOfInitState = transitionGraph.succ(startState);
-  if (startState->io.isFailedAssertIO()) {
-    assert (succOfInitState.size() == 0);
-  }
-  for(EStatePtrSet::iterator i=succOfInitState.begin();i!=succOfInitState.end();++i) {
-    boost::unordered_set<Transition*>* tempResult = new boost::unordered_set<Transition*>();
-    tempResult = transitionsToInOutErrAndWorklist((*i), startState, result, visited, includeIn, includeOut, includeErr);
-    result->insert(tempResult->begin(), tempResult->end());
-    tempResult = NULL;
-  }
-  delete visited;
-  visited = NULL;
-  return result;
-}
-
-/*! 
-  * \author Marc Jasper
-  * \date 2014.
- */
-boost::unordered_set<Transition*>*
-Analyzer::transitionsToInOutErrAndWorklist( const EState* currentState,
-                                            const EState* startState,
-                                            boost::unordered_set<Transition*>* results,
-                                            boost::unordered_set<const EState*>* visited,
-                                            bool includeIn, bool includeOut, bool includeErr) {
-  //cycle check
-  if (visited->count(currentState)) {
-    return results;  //currentState already visited, do nothing
-  }
-  visited->insert(currentState);
-  //base case
-  // add a new transition depending on what type of states are to be included in the reduced STG. Looks at input,
-  // output (as long as the start state is not output), failed assertion and worklist states.
-  if( (includeIn && currentState->io.isStdInIO())
-      || (!startState->io.isStdOutIO() &&  includeIn && currentState->io.isStdOutIO())
-      || (includeErr && currentState->io.isFailedAssertIO())
-      // currently disabled
-      //|| (transitionGraph.succ(currentState).size() == 0 && !currentState->io.isFailedAssertIO()) //defines a worklist state
-  ) {
-    Edge* newEdge = new Edge(startState->label(),EDGE_PATH,currentState->label());
-    Transition* newTransition = new Transition(startState, *newEdge, currentState);
-    results->insert(newTransition);
-  } else {
-    //recursively collect the resulting transitions
-    EStatePtrSet nextStates = transitionGraph.succ(currentState);
-    for(EStatePtrSet::iterator i=nextStates.begin();i!=nextStates.end();++i) {
-      transitionsToInOutErrAndWorklist((*i), startState, results, visited, includeIn, includeOut, includeErr);
-    }
-  }
-  return results;
 }
 
 int Analyzer::reachabilityAssertCode(const EState* currentEStatePtr) {
@@ -2037,22 +1962,6 @@ int Analyzer::inputSequenceLength(const EState* target) {
     run = reverseInOutSequenceDijkstra(target, transitionGraph.getStartEState());
   }
   return run.size();
-}
-
-/*! 
-  * \author Marc Jasper
-  * \date 2014.
- */
-void Analyzer::reduceToObservableBehavior() {
-  EStatePtrSet states=transitionGraph.estateSet();
-  // iterate over all states, reduce those that are neither the start state nor contain input/output/error behavior
-  for(EStatePtrSet::iterator i=states.begin();i!=states.end();++i) {
-    if( (*i) != transitionGraph.getStartEState() ) {
-      if(! ((*i)->io.isStdInIO() || (*i)->io.isStdOutIO() || (*i)->io.isStdErrIO() || (*i)->io.isFailedAssertIO()) ) {
-	transitionGraph.reduceEState2(*i);
-      }
-    }
-  }
 }
 
 /*! 

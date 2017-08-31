@@ -240,6 +240,8 @@ codethorn_SOURCES = \
   Timer.h                          \
   TransitionGraph.h                \
   TransitionGraph.C                \
+  TransitionGraphReducer.h	   \
+  TransitionGraphReducer.C	   \
   ParProTransitionGraph.h          \
   ParProTransitionGraph.C          \
   VariableValueMonitor.h \

@@ -70,8 +70,7 @@ void Solver5::run() {
 #pragma omp critical
         {
           if (_analyzer->estateSet.size() > (estatesLastReduction + ioReductionThreshold)) {
-            //int beforeReduction = estateSet.size();
-            _analyzer->reduceGraphInOutWorklistOnly();
+            _analyzer->reduceStgToInOutAssertWorklistStates();
             estatesLastReduction = _analyzer->estateSet.size();
             logger[TRACE]<< "STATUS: transition system reduced to I/O/worklist states. remaining transitions: " << _analyzer->transitionGraph.size() << endl;
           }

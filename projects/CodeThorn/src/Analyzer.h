@@ -29,6 +29,7 @@
 #include "ExprAnalyzer.h"
 #include "EState.h"
 #include "TransitionGraph.h"
+#include "TransitionGraphReducer.h"
 #include "PropertyValueTable.h"
 #include "CTIOLabeler.h"
 #include "VariableValueMonitor.h"
@@ -314,6 +315,7 @@ namespace CodeThorn {
     ConstraintSetMaintainer constraintSetMaintainer;
     TransitionGraph transitionGraph;
     TransitionGraph backupTransitionGraph;
+    TransitionGraphReducer _stgReducer;
     int _displayDiff;
     int _resourceLimitDiff;
     int _numberOfThreadsToUse;
@@ -365,7 +367,13 @@ namespace CodeThorn {
     // ========================== LTLAnalyzer ================================
     // =======================================================================
   public:
+
+    ///////
+    // MJ: 08/30/2017: Currently not used
     bool isTerminationRelevantLabel(Label label);
+    int numberOfInputVarValues() { return _inputVarValues.size(); }
+    ///////
+
     bool isLTLRelevantEState(const EState* estate);
     bool isLTLRelevantLabel(Label label);
     bool isStdIOLabel(Label label);
@@ -375,11 +383,6 @@ namespace CodeThorn {
     void stdIOFoldingOfTransitionGraph();
     void semanticFoldingOfTransitionGraph();
 
-    // bypasses and removes all states that are not standard I/O states
-    // (old version, works correctly, but has a long execution time)
-    void removeNonIOStates();
-    // bypasses and removes all states that are not stdIn/stdOut/stdErr/failedAssert states
-    void reduceToObservableBehavior();
     // erases transitions that lead directly from one output state to another output state
     void removeOutputOutputTransitions();
     // erases transitions that lead directly from one input state to another input state
@@ -387,9 +390,13 @@ namespace CodeThorn {
     // cuts off all paths in the transition graph that lead to leaves 
     // (recursively until only paths of infinite length remain)
     void pruneLeaves();
-    // connects start, input, output and worklist states according to possible paths in the transition graph. 
-    // removes all states and transitions that are not necessary for the graph that only consists of these new transitions. The two parameters allow to select input and/or output states to remain in the STG.
-    void reduceGraphInOutWorklistOnly(bool includeIn=true, bool includeOut=true, bool includeErr=false);
+    // reductions based on a nested BFS from the STG's start state
+    void reduceStgToInOutStates();
+    void reduceStgToInOutAssertStates();
+    void reduceStgToInOutAssertErrStates();
+    void reduceStgToInOutAssertWorklistStates();
+    // reduction based on all states, works also for disconnected STGs (used by CEGPRA)
+    void reduceToObservableBehavior();
     // extracts input sequences leading to each discovered failing assertion where discovered for the first time.
     // stores results in PropertyValueTable "reachabilityResults".
     // returns length of the longest of these sequences if it can be guaranteed that all processed traces are the
@@ -398,17 +405,7 @@ namespace CodeThorn {
 
     // LTLAnalyzer
   private:
-    //returns a list of transitions representing existing paths from "startState" to all possible input/output/error states (no output -> output)
-    // collection of transitions to worklist states currently disabled. the returned set has to be deleted by the calling function.
-    boost::unordered_set<Transition*>* transitionsToInOutErrAndWorklist( const EState* startState, 
-                                                                         bool includeIn, 
-                                                                         bool includeOut, 
-                                                                         bool includeErr);                                                          
-    boost::unordered_set<Transition*>* transitionsToInOutErrAndWorklist( const EState* currentState, 
-                                                                         const EState* startState, 
-                                                                         boost::unordered_set<Transition*>* results,
-                                                                         boost::unordered_set<const EState*>* visited,
-                                                                         bool includeIn, bool includeOut, bool includeErr);
+
     // adds a string representation of the shortest input path from start state to assertEState to reachabilityResults. returns the length of the 
     // counterexample input sequence.
     int addCounterexample(int assertCode, const EState* assertEState);
@@ -421,9 +418,6 @@ namespace CodeThorn {
     std::string reversedInOutRunToString(std::list<const EState*>& run);
     //returns the shortest possible number of input states on the path leading to "target".
     int inputSequenceLength(const EState* target);
-
-    //less than comparisions on two states according to (#input transitions * #output transitions)
-    bool indegreeTimesOutdegreeLessThan(const EState* a, const EState* b);
 
   public:
     //stores a backup of the created transitionGraph
@@ -443,7 +437,6 @@ namespace CodeThorn {
     void resetInputSequenceIterator() { _inputSequenceIterator=_inputSequence.begin(); }
     const EState* getEstateBeforeMissingInput() {return _estateBeforeMissingInput;}
     const EState* getLatestErrorEState() {return _latestErrorEState;}
-    int numberOfInputVarValues() { return _inputVarValues.size(); }
     std::set<int> getInputVarValues() { return _inputVarValues; }
  public:
     // only used temporarily for binary-binding prototype

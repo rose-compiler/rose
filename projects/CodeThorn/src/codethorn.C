@@ -293,8 +293,6 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("ltl-driven", po::value< bool >()->default_value(false)->implicit_value(true), "Select mode to verify LTLs driven by SPOT's access to the state transitions.")
     ("no-input-input",  po::value< bool >()->default_value(false)->implicit_value(true), "remove transitions where one input states follows another without any output in between. Removal occurs before the LTL check. [yes|=no]")
     ("std-io-only", po::value< bool >()->default_value(false)->implicit_value(true), "Bypass and remove all states that are not standard I/O.")
-    ("std-in-only", po::value< bool >()->default_value(false)->implicit_value(true), "Bypass and remove all states that are not input-states.")
-    ("std-out-only", po::value< bool >()->default_value(false)->implicit_value(true), "Bypass and remove all states that are not output-states.")
     ("tg-ltl-reduced", po::value< bool >()->default_value(false)->implicit_value(true),"(experimental) Compute LTL-reduced transition graph based on a subset of computed estates.")
     ("with-counterexamples", po::value< bool >()->default_value(false)->implicit_value(true), "Add counterexample I/O traces to the analysis results. Applies to reachable assertions and falsified LTL properties (uses RERS-specific alphabet).")
     ("with-assert-counterexamples", po::value< bool >()->default_value(false)->implicit_value(true), "Report counterexamples leading to failing assertion states.")
@@ -1573,34 +1571,25 @@ int main( int argc, char * argv[] ) {
     double infPathsOnlyTime = 0;
     double stdIoOnlyTime = 0;
 
-  if(args.getBool("inf-paths-only")) {
-    assert (!args.getBool("keep-error-states"));
-    cout << "recursively removing all leaves (1)."<<endl;
-    timer.start();
-    //analyzer.pruneLeaves();
-    infPathsOnlyTime = timer.getElapsedTimeInMilliSec();
-
+    if(args.getBool("inf-paths-only")) {
+      assert (!args.getBool("keep-error-states"));
+      cout << "recursively removing all leaves (1)."<<endl;
+      timer.start();
+      infPathsOnlyTime = timer.getElapsedTimeInMilliSec();
       pstateSetSizeInf=analyzer.getPStateSet()->size();
       eStateSetSizeInf = analyzer.getEStateSet()->size();
       transitionGraphSizeInf = analyzer.getTransitionGraph()->size();
       eStateSetSizeStgInf = (analyzer.getTransitionGraph())->estateSet().size();
     }
-
-    if(args.getBool("std-in-only")) {
-      logger[TRACE] << "STATUS: reducing STG to Input-states."<<endl;
-      analyzer.reduceGraphInOutWorklistOnly(true,false,args.getBool("keep-error-states"));
-    }
-
-    if(args.getBool("std-out-only")) {
-      logger[TRACE] << "STATUS: reducing STG to output-states."<<endl;
-      analyzer.reduceGraphInOutWorklistOnly(false,true,args.getBool("keep-error-states"));
-    }
-
+    
     if(args.getBool("std-io-only")) {
       logger[TRACE] << "STATUS: bypassing all non standard I/O states. (P2)"<<endl;
       timer.start();
-      //analyzer.removeNonIOStates();  //old version, works correclty but has a long execution time
-      analyzer.reduceGraphInOutWorklistOnly(true,true,args.getBool("keep-error-states"));
+      if (args.getBool("keep-error-states")) {
+	analyzer.reduceStgToInOutAssertStates();
+      } else {
+	analyzer.reduceStgToInOutStates();
+      }
       stdIoOnlyTime = timer.getElapsedTimeInMilliSec();
     }
 
@@ -1629,8 +1618,12 @@ int main( int argc, char * argv[] ) {
         if (!args.getBool("std-io-only") &&!analyzer.getModeLTLDriven()) {
           logger[TRACE] << "STATUS: bypassing all non standard I/O states (due to RERS-mode) (P1)."<<endl;
           timer.start();
-          analyzer.reduceGraphInOutWorklistOnly(true, true, args.getBool("keep-error-states"));
-          stdIoOnlyTime = timer.getElapsedTimeInMilliSec();
+	  if (args.getBool("keep-error-states")) {
+	    analyzer.reduceStgToInOutAssertStates();
+	  } else {
+	    analyzer.reduceStgToInOutStates();
+	  }
+	  stdIoOnlyTime = timer.getElapsedTimeInMilliSec();
           printStgSize(analyzer.getTransitionGraph(), "after reducing non-I/O states");
         }
       }
