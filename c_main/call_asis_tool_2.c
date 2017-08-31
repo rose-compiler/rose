@@ -8,7 +8,7 @@ extern void dot_asisfinal (void);
 int main (int argc, char *argv[])
 {
   char *prefix = "call_asis_tool_2.main";
-  char *target_file = "/g/g17/charles/code/ROSE/dot_asis/test_units/unit_2.adb";
+  char *target_file = "../test_units/unit_2.adb";
   char *gnat_home   = "/usr/workspace/wsb/charles/bin/adacore/gnat-gpl-2017-x86_64-linux";
   struct List_Node_Struct *head_node;
 
