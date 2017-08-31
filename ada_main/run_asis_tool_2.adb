@@ -44,14 +44,13 @@ procedure Run_Asis_Tool_2 is
          raise;
    end Get_Options;
 
-   GCC_String        : aliased String :=
-     "/usr/workspace/wsb/charles/bin/adacore/gnat-gpl-2017-x86_64-linux/bin/gprbuild";
 begin
    Get_Options;
    Log ("BEGIN - target_file_in => """ & Options.File_Name.all & """");
    Tool.Process
      (File_Name => Options.File_Name.all,
-      GNAT_Home => "/usr/workspace/wsb/charles/bin/adacore/gnat-gpl-2017-x86_64-linux",
+--    GNAT_Home => "/usr/workspace/wsb/charles/bin/adacore/gnat-gpl-2017-x86_64-linux",
+      GNAT_Home => "/home/quinlan1/ROSE/ADA/x86_64-linux/adagpl-2017/gnatgpl/gnat-gpl-2017-x86_64-linux-bin",
       Debug     => Options.Debug);
    Log ("END.");
 end Run_Asis_Tool_2;
