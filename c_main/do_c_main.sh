@@ -48,15 +48,16 @@ build_asis_tool () {
 
   ${gcc_home}/bin/gcc \
   ${tool_name}.o \
-  ${dot_asis_lib_dir}/libdot_asis.a \
-  ${asis_lib_dir}/libasis.a \
-  ${gnat_lib_dir}/libgnarl.a \
-  ${gnat_lib_dir}/libgnat.a \
-  -static-libgcc \
+  ${dot_asis_lib_dir}/libdot_asis.so \
   -lpthread \
   -lrt \
   -ldl \
   -o ${tool_name} || status=1
+
+#  ${asis_lib_dir}/libasis.a \
+#  ${gnat_lib_dir}/libgnarl.a \
+#  ${gnat_lib_dir}/libgnat.a \
+#  -static-libgcc \
   
   return ${status}
 }
