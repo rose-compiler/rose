@@ -42,6 +42,8 @@ This will download a file with a name like "AdaCore-Download-2017-08-24_1403.zip
   - In sources
     - Unzip asis-gpl-2017-src.tar.gz into dir asis-gpl-2017-src
   - In sources/asis-gpl-2017-src:
+    - Edit common.gpr
+      - In package Compiler, Add "-fPIC" to both occurrences of 'for Default_Switches ("ada") use' (this enables generation of a shared client library later).
     - Read README
     - Run "make all install prefix=<install_dir>"
 - Clone this dot_asis repo
