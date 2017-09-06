@@ -291,6 +291,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("ltl-in-alphabet",po::value< string >(),"Specify an input alphabet used by the LTL formulae. (e.g. \"{1,2,3}\")")
     ("ltl-out-alphabet",po::value< string >(),"Specify an output alphabet used by the LTL formulae. (e.g. \"{19,20,21,22,23,24,25,26}\")")
     ("ltl-driven", po::value< bool >()->default_value(false)->implicit_value(true), "Select mode to verify LTLs driven by SPOT's access to the state transitions.")
+    ("reset-analyzer", po::value< bool >()->default_value(true)->implicit_value(true), "Reset the analyzer and therefore the state transition graph before checking the next property. Only affects ltl-driven mode.")
     ("no-input-input",  po::value< bool >()->default_value(false)->implicit_value(true), "remove transitions where one input states follows another without any output in between. Removal occurs before the LTL check. [yes|=no]")
     ("std-io-only", po::value< bool >()->default_value(false)->implicit_value(true), "Bypass and remove all states that are not standard I/O.")
     ("tg-ltl-reduced", po::value< bool >()->default_value(false)->implicit_value(true),"(experimental) Compute LTL-reduced transition graph based on a subset of computed estates.")

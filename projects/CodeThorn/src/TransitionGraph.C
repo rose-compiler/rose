@@ -44,7 +44,13 @@ bool TransitionEqualToPred::operator()(Transition* t1, Transition* t2) const {
   * \author Markus Schordan
   * \date 2012.
  */
-TransitionGraph::TransitionGraph():_startLabel(Label()),_numberOfNodes(0),_preciseSTG(true), _completeSTG(true),_modeLTLDriven(false) {
+TransitionGraph::TransitionGraph():
+  _startLabel(Label()),
+  _numberOfNodes(0),
+  _preciseSTG(true), 
+  _completeSTG(true),
+  _modeLTLDriven(false),
+  _forceQuitExploration(false) {
 }
 
 LabelSet TransitionGraph::labelSetOfIoOperations(InputOutput::OpType op) {
@@ -131,6 +137,9 @@ TransitionGraph::TransitionPtrSet TransitionGraph::outEdges(const EState* estate
   ROSE_ASSERT(estate);
   if(getModeLTLDriven()) {
     ROSE_ASSERT(_analyzer);
+    if (_forceQuitExploration) {
+      return TransitionGraph::TransitionPtrSet();
+    }
     if(_outEdges[estate].size()==0) {
 
       ROSE_ASSERT(_analyzer);
@@ -488,6 +497,11 @@ bool TransitionGraph::isPrecise() {
 
 bool TransitionGraph::isComplete() {
   return _completeSTG;
+}
+
+void TransitionGraph::setForceQuitExploration(bool v) {
+  _forceQuitExploration=v;
+  setIsComplete(false);
 }
 
 size_t TransitionGraph::memorySize() const {

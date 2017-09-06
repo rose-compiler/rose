@@ -543,7 +543,7 @@ EState Analyzer::createEState(Label label, PState pstate, ConstraintSet cset, In
 
 bool Analyzer::isLTLRelevantLabel(Label label) {
   bool t;
-  t=(isStdIOLabel(label) && getLabeler()->isFunctionCallReturnLabel(label))
+  t=(isStdIOLabel(label))
     //|| (getLabeler()->isStdErrLabel(label) && getLabeler()->isFunctionCallReturnLabel(label))
     //|| isTerminationRelevantLabel(label)
      || isStartLabel(label) // we keep the start state
@@ -1475,6 +1475,55 @@ void Analyzer::pruneLeaves() {
  * \author Marc Jasper
  * \date 2017.
  */
+void Analyzer::resetAnalysis() {
+  // reset miscellaneous state variables
+  _topifyModeActive = false;
+  _iterations = 0;
+  _approximated_iterations = 0;
+  _curr_iteration_cnt = 0;
+  _next_iteration_cnt = 0;
+  _prevStateSetSizeDisplay = 0;
+  _prevStateSetSizeResource = 0;
+  // reset worklists
+  estateWorkListCurrent->clear();
+  estateWorkListNext->clear();
+  // reset state sets, but re-add STG start state (TODO: also reset constraint set)
+  EState startEState=*(transitionGraph.getStartEState());
+  PState startPState=*(startEState.pstate());
+  EStateSet newEStateSet;
+  estateSet = newEStateSet;
+  PStateSet newPStateSet;
+  pstateSet = newPStateSet;
+  estateSet.max_load_factor(0.7);
+  pstateSet.max_load_factor(0.7);
+  const PState* processedPState=processNew(startPState);
+  ROSE_ASSERT(processedPState);
+  startEState.setPState(processedPState);
+  const EState* processedEState=processNew(startEState);
+  ROSE_ASSERT(processedEState);
+  // reset STG //TODO: implement "void TransitionGraph::clear()"
+  TransitionGraph emptyStg;
+  emptyStg.setModeLTLDriven(transitionGraph.getModeLTLDriven());
+  if(transitionGraph.getModeLTLDriven()) {
+    emptyStg.setStartEState(processedEState);
+    emptyStg.setAnalyzer(this);
+  }
+  emptyStg.setStartLabel(processedEState->label());
+  emptyStg.setIsPrecise(transitionGraph.isPrecise());
+  emptyStg.setIsComplete(transitionGraph.isComplete());
+  transitionGraph = emptyStg;
+  // reset variableValueMonitor
+  VariableValueMonitor newVariableValueMonitor;
+  variableValueMonitor = newVariableValueMonitor;
+  variableValueMonitor.init(processedEState);
+  // re-init worklist with STG start state
+  addToWorkList(processedEState);
+}
+
+/*! 
+ * \author Marc Jasper
+ * \date 2017.
+ */
 void Analyzer::reduceStgToInOutStates() {
   function<bool(const EState*)> predicate = [](const EState* s) { 
     return s->io.isStdInIO() || s->io.isStdOutIO();
@@ -1630,118 +1679,106 @@ Analyzer::SubSolverResultType Analyzer::subSolver(const EState* currentEStatePtr
       _prevStateSetSizeResource=estateSetSize;
     }
   } 
+  EStateWorkList deferedWorkList;
+  std::set<const EState*> existingEStateSet;
   if (earlyTermination) {
     if(args.getBool("status")) {
       cout << "STATUS: Early termination within subSolver (resource limit reached)." << endl;
     }
-    PropertyValueTable* ltlResults = _spotConnection->getLtlResults();
-    bool withCounterexample = true;
-    if(args.getBool("status")) {
-      ltlResults-> printResults("YES (verified)", "NO (falsified)", "ltl_property_", withCounterexample);
-      printStatusMessageLine("==============================================================");
-      ltlResults->printResultsStatistics();
-      printStatusMessageLine("==============================================================");
-    }
-    if (args.count("csv-spot-ltl")) {  //write results to a file instead of displaying them directly
-      std::string csv_filename = args["csv-spot-ltl"].as<string>();
-      logger[TRACE] << "STATUS: writing ltl results to file: " << csv_filename << endl;
-      ltlResults->writeFile(csv_filename.c_str(), false, 0, withCounterexample);
-    }
-    exit(0);
-  }
-  // run the actual sub-solver
-  EStateWorkList localWorkList;
-  EStateWorkList deferedWorkList;
-  std::set<const EState*> existingEStateSet;
-  localWorkList.push_back(currentEStatePtr);
-  while(!localWorkList.empty()) {
-    // logger[DEBUG]<<"local work list size: "<<localWorkList.size()<<endl;
-    const EState* currentEStatePtr=*localWorkList.begin();
-    localWorkList.pop_front();
-    if(isFailedAssertEState(currentEStatePtr)) {
-      // ensure we do not compute any successors of a failed assert state
-      continue;
-    }
-    Flow edgeSet=flow.outEdges(currentEStatePtr->label());
-    for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
-      Edge e=*i;
-      list<EState> newEStateList;
-      newEStateList=transferEdgeEState(e,currentEStatePtr);
-      for(list<EState>::iterator nesListIter=newEStateList.begin();
-	  nesListIter!=newEStateList.end();
-	  ++nesListIter) {
-        // newEstate is passed by value (not created yet)
-        EState newEState=*nesListIter;
-        ROSE_ASSERT(newEState.label()!=Labeler::NO_LABEL);
+    transitionGraph.setForceQuitExploration(true);
+  } else {
+    // run the actual sub-solver
+    EStateWorkList localWorkList;
+    localWorkList.push_back(currentEStatePtr);
+    while(!localWorkList.empty()) {
+      // logger[DEBUG]<<"local work list size: "<<localWorkList.size()<<endl;
+      const EState* currentEStatePtr=*localWorkList.begin();
+      localWorkList.pop_front();
+      if(isFailedAssertEState(currentEStatePtr)) {
+	// ensure we do not compute any successors of a failed assert state
+	continue;
+      }
+      Flow edgeSet=flow.outEdges(currentEStatePtr->label());
+      for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
+	Edge e=*i;
+	list<EState> newEStateList;
+	newEStateList=transferEdgeEState(e,currentEStatePtr);
+	for(list<EState>::iterator nesListIter=newEStateList.begin();
+	    nesListIter!=newEStateList.end();
+	    ++nesListIter) {
+	  // newEstate is passed by value (not created yet)
+	  EState newEState=*nesListIter;
+	  ROSE_ASSERT(newEState.label()!=Labeler::NO_LABEL);
 
-        if((!newEState.constraints()->disequalityExists()) &&(!isFailedAssertEState(&newEState)&&!isVerificationErrorEState(&newEState))) {
-          HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=process(newEState);
-          const EState* newEStatePtr=pres.second;
-          ROSE_ASSERT(newEStatePtr);
-          if(pres.first==true) {
-            if(isLTLRelevantEState(newEStatePtr)) {
-              deferedWorkList.push_back(newEStatePtr);
-            } else {
-              localWorkList.push_back(newEStatePtr);
-            }
-          } else {
-            // we have found an existing state, but need to make also sure it's a relevent one
-            if(isLTLRelevantEState(newEStatePtr)) {
-              ROSE_ASSERT(newEStatePtr!=nullptr);
-              existingEStateSet.insert(const_cast<EState*>(newEStatePtr));
-            } else {
-              // TODO: use a unique list
-              localWorkList.push_back(newEStatePtr);
-            }
-          }
-          // TODO: create reduced transition set at end of this function
-          if(!getModeLTLDriven()) {
-            recordTransition(currentEStatePtr,e,newEStatePtr);
-          }
-        }
-        if((!newEState.constraints()->disequalityExists()) && ((isFailedAssertEState(&newEState))||isVerificationErrorEState(&newEState))) {
-          // failed-assert end-state: do not add to work list but do add it to the transition graph
-          const EState* newEStatePtr;
-          newEStatePtr=processNewOrExisting(newEState);
-          // TODO: create reduced transition set at end of this function
-          if(!getModeLTLDriven()) {
-            recordTransition(currentEStatePtr,e,newEStatePtr);
-          }
-          deferedWorkList.push_back(newEStatePtr);
-          if(isVerificationErrorEState(&newEState)) {
-            logger[TRACE]<<"STATUS: detected verification error state ... terminating early"<<endl;
-            // set flag for terminating early
-            reachabilityResults.reachable(0);
-            EStateWorkList emptyWorkList;
-            EStatePtrSet emptyExistingStateSet;
-            return make_pair(emptyWorkList,emptyExistingStateSet);
-          } else if(isFailedAssertEState(&newEState)) {
-            // record failed assert
-            int assertCode;
-            if(args.getBool("rers-binary")) {
-              assertCode=reachabilityAssertCode(newEStatePtr);
-            } else {
-              assertCode=reachabilityAssertCode(currentEStatePtr);
-            }
-            /* if a property table is created for reachability we can also
-               collect on the fly reachability results in LTL-driven mode
-               but for now, we don't
-            */
-            if(!getModeLTLDriven()) {
-              if(assertCode>=0) {
-                if(args.getBool("with-counterexamples") || args.getBool("with-assert-counterexamples")) {
-                  //if this particular assertion was never reached before, compute and update counterexample
-                  if (reachabilityResults.getPropertyValue(assertCode) != PROPERTY_VALUE_YES) {
-                    _firstAssertionOccurences.push_back(pair<int, const EState*>(assertCode, newEStatePtr));
-                  }
-                }
-                reachabilityResults.reachable(assertCode);
-              }	    // record failed assert
-            }
-          } // end of failed assert handling
-        } // end of if (no disequality (= no infeasable path))
-      } // end of loop on transfer function return-estates
-    } // edge set iterator
+	  if((!newEState.constraints()->disequalityExists()) &&(!isFailedAssertEState(&newEState)&&!isVerificationErrorEState(&newEState))) {
+	    HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=process(newEState);
+	    const EState* newEStatePtr=pres.second;
+	    ROSE_ASSERT(newEStatePtr);
+	    if(pres.first==true) {
+	      if(isLTLRelevantEState(newEStatePtr)) {
+		deferedWorkList.push_back(newEStatePtr);
+	      } else {
+		localWorkList.push_back(newEStatePtr);
+	      }
+	    } else {
+	      // we have found an existing state, but need to make also sure it's a relevent one
+	      if(isLTLRelevantEState(newEStatePtr)) {
+		ROSE_ASSERT(newEStatePtr!=nullptr);
+		existingEStateSet.insert(const_cast<EState*>(newEStatePtr));
+	      } else {
+		// TODO: use a unique list
+		localWorkList.push_back(newEStatePtr);
+	      }
+	    }
+	    // TODO: create reduced transition set at end of this function
+	    if(!getModeLTLDriven()) {
+	      recordTransition(currentEStatePtr,e,newEStatePtr);
+	    }
+	  }
+	  if((!newEState.constraints()->disequalityExists()) && ((isFailedAssertEState(&newEState))||isVerificationErrorEState(&newEState))) {
+	    // failed-assert end-state: do not add to work list but do add it to the transition graph
+	    const EState* newEStatePtr;
+	    newEStatePtr=processNewOrExisting(newEState);
+	    // TODO: create reduced transition set at end of this function
+	    if(!getModeLTLDriven()) {
+	      recordTransition(currentEStatePtr,e,newEStatePtr);
+	    }
+	    deferedWorkList.push_back(newEStatePtr);
+	    if(isVerificationErrorEState(&newEState)) {
+	      logger[TRACE]<<"STATUS: detected verification error state ... terminating early"<<endl;
+	      // set flag for terminating early
+	      reachabilityResults.reachable(0);
+	      EStateWorkList emptyWorkList;
+	      EStatePtrSet emptyExistingStateSet;
+	      return make_pair(emptyWorkList,emptyExistingStateSet);
+	    } else if(isFailedAssertEState(&newEState)) {
+	      // record failed assert
+	      int assertCode;
+	      if(args.getBool("rers-binary")) {
+		assertCode=reachabilityAssertCode(newEStatePtr);
+	      } else {
+		assertCode=reachabilityAssertCode(currentEStatePtr);
+	      }
+	      /* if a property table is created for reachability we can also
+		 collect on the fly reachability results in LTL-driven mode
+		 but for now, we don't
+	      */
+	      if(!getModeLTLDriven()) {
+		if(assertCode>=0) {
+		  if(args.getBool("with-counterexamples") || args.getBool("with-assert-counterexamples")) {
+		    //if this particular assertion was never reached before, compute and update counterexample
+		    if (reachabilityResults.getPropertyValue(assertCode) != PROPERTY_VALUE_YES) {
+		      _firstAssertionOccurences.push_back(pair<int, const EState*>(assertCode, newEStatePtr));
+		    }
+		  }
+		  reachabilityResults.reachable(assertCode);
+		}	    // record failed assert
+	      }
+	    } // end of failed assert handling
+	  } // end of if (no disequality (= no infeasable path))
+	} // end of loop on transfer function return-estates
+      } // edge set iterator
+    }
   }
   return make_pair(deferedWorkList,existingEStateSet);
 }

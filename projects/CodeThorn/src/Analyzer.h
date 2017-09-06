@@ -306,6 +306,7 @@ namespace CodeThorn {
     std::list<int>::iterator _inputSequenceIterator;
     ExprAnalyzer exprAnalyzer;
     VariableIdMapping variableIdMapping;
+    // EStateWorkLists: Current and Next should point to One and Two (or swapped)
     EStateWorkList* estateWorkListCurrent;
     EStateWorkList* estateWorkListNext;
     EStateWorkList estateWorkListOne;
@@ -420,6 +421,7 @@ namespace CodeThorn {
     int inputSequenceLength(const EState* target);
 
   public:
+    void resetAnalysis();
     //stores a backup of the created transitionGraph
     void storeStgBackup();
     //load previous backup of the transitionGraph, storing the current version as a backup instead
