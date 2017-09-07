@@ -415,11 +415,11 @@ AppendModLoc( AstInterface& fa, const AstNodePtr& mod,
   if (rhs == AST_NULL || !fa.IsVarRef(mod, &modtype, &modname, &modscope) || fa.IsScalarType(modtype))
     return;
   AstInterface::AstNodeList args;
-  if (fa.IsFunctionCall( rhs, 0, &args) ) {
+  if (fa.IsFunctionCall( rhs, 0, &args) ) {  // rhs is a function call, check if alias info. available for the function
     ModifyAliasMap collect(fa, aliasmap);
     if (funcanal != 0 && funcanal->may_alias( fa, rhs, mod, collect))
         return;
-    hasunknown = true;
+    hasunknown = true;   // no function alias analysis results, assuming the worst, aliasing all parameters
     if (DebugAliasAnal()) {
         std::cerr << "unknown alias info for function call : " << AstInterface::AstToString(rhs) << std::endl;
         std::cerr << "aliasing all parameters with " << AstInterface::AstToString(mod) << std::endl;;
