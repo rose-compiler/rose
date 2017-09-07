@@ -35,6 +35,7 @@
 #include "VariableValueMonitor.h"
 #include "Solver.h"
 #include "AnalysisParameters.h"
+#include "CounterexampleGenerator.h"
 
 // we use INT_MIN, INT_MAX
 #include "limits.h"
@@ -317,6 +318,7 @@ namespace CodeThorn {
     TransitionGraph transitionGraph;
     TransitionGraph backupTransitionGraph;
     TransitionGraphReducer _stgReducer;
+    CounterexampleGenerator _counterexampleGenerator;
     int _displayDiff;
     int _resourceLimitDiff;
     int _numberOfThreadsToUse;
@@ -398,27 +400,15 @@ namespace CodeThorn {
     void reduceStgToInOutAssertWorklistStates();
     // reduction based on all states, works also for disconnected STGs (used by CEGPRA)
     void reduceToObservableBehavior();
-    // extracts input sequences leading to each discovered failing assertion where discovered for the first time.
-    // stores results in PropertyValueTable "reachabilityResults".
-    // returns length of the longest of these sequences if it can be guaranteed that all processed traces are the
-    // shortest ones leading to the individual failing assertion (returns -1 otherwise).
-    int extractAssertionTraces();
+    void writeWitnessToFile(std::string filename);
+    // Extracts input sequences leading to each discovered failing assertion where discovered for the first time.
+    // Stores results in PropertyValueTable "reachabilityResults".
+    void extractRersIOAssertionTraces();
 
     // LTLAnalyzer
   private:
-
-    // adds a string representation of the shortest input path from start state to assertEState to reachabilityResults. returns the length of the 
-    // counterexample input sequence.
-    int addCounterexample(int assertCode, const EState* assertEState);
-    // returns a list of EStates from source to target. Target has to come before source in the STG (reversed trace). 
-    std::list<const EState*>reverseInOutSequenceBreadthFirst(const EState* source, const EState* target, bool counterexampleWithOutput = false);
-    // returns a list of EStates from source to target (shortest input path). 
-    // please note: target has to be a predecessor of source (reversed trace)
-    std::list<const EState*> reverseInOutSequenceDijkstra(const EState* source, const EState* target, bool counterexampleWithOutput = false);
-    std::list<const EState*> filterStdInOutOnly(std::list<const EState*>& states, bool counterexampleWithOutput = false) const;
-    std::string reversedInOutRunToString(std::list<const EState*>& run);
-    //returns the shortest possible number of input states on the path leading to "target".
-    int inputSequenceLength(const EState* target);
+    // adds a string representation of the input (/output) path from start state to assertEState to reachabilityResults.
+    void addCounterexample(int assertCode, const EState* assertEState);
 
   public:
     void resetAnalysis();

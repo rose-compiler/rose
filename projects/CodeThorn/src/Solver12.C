@@ -196,6 +196,7 @@ void Solver12::run() {
                   logger[TRACE]<<"STATUS: detected verification error state ... terminating early"<<endl;
                   // set flag for terminating early
                   _analyzer->reachabilityResults.reachable(0);
+		  _analyzer->_firstAssertionOccurences.push_back(pair<int, const EState*>(0, newEStatePtr));
                   terminateEarly=true;
                 }
               } else if(_analyzer->isFailedAssertEState(&newEState)) {

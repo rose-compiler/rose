@@ -96,11 +96,9 @@ namespace CodeThorn {
     void setForceQuitExploration(bool v);
     size_t memorySize() const;
     void setAnalyzer(Analyzer* analyzer) {
-      ROSE_ASSERT(getModeLTLDriven());
       _analyzer=analyzer;
     }
     Analyzer* getAnalyzer() {
-      ROSE_ASSERT(getModeLTLDriven());
       return _analyzer;
     }
  private:

@@ -90,6 +90,7 @@ void Solver4::run() {
 		newEStatePtr=_analyzer->processNewOrExisting(newEState);
 		_analyzer->recordTransition(currentEStatePtr,e,newEStatePtr);
 		_analyzer->reachabilityResults.reachable(0);
+		_analyzer->_firstAssertionOccurences.push_back(pair<int, const EState*>(0, newEStatePtr));
 	      }
 	    } else if((!newEState.constraints()->disequalityExists()) && _analyzer->isFailedAssertEState(&newEState)) {
               // failed-assert end-state: do not add to work list but do add it to the transition graph

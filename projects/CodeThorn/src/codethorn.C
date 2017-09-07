@@ -61,7 +61,6 @@
 #include "PromelaCodeGenerator.h"
 #include "ParProLtlMiner.h"
 #include "ParProExplorer.h"
-#include "AnalyzerTools.h"
 #include "ParallelAutomataGenerator.h"
 #if defined(__unix__) || defined(__unix) || defined(unix)
 #include <sys/resource.h>
@@ -405,6 +404,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("svcomp-mode", po::value< bool >()->default_value(false)->implicit_value(true), "Sets default options for all following SVCOMP-specific options.")
     //("external-function-semantics",  "assumes specific semantics for the external functions: __VERIFIER_error, __VERIFIER_nondet_int, exit, memcpy.")
     ("error-function", po::value< string >(), "Detect a verifier error function with name <arg> (terminates verification).")
+    ("witness-file", po::value< string >(), "Write an SV-COMP witness (counterexample) to file <arg>.")
     ;
 
   equivalenceCheckingOptions.add_options()
@@ -1462,19 +1462,17 @@ int main( int argc, char * argv[] ) {
 
     double analysisRunTime=timer.getElapsedTimeInMilliSec();
     analyzer.printStatusMessageLine("==============================================================");
+
+    if (args.getBool("svcomp-mode") && args.isDefined("witness-file")) {
+      analyzer.writeWitnessToFile(args.getString("witness-file"));
+    }
+
     double extractAssertionTracesTime= 0;
-    int maxOfShortestAssertInput = -1;
     if ( args.getBool("with-counterexamples") || args.getBool("with-assert-counterexamples")) {
       logger[TRACE] << "STATUS: extracting assertion traces (this may take some time)"<<endl;
       timer.start();
-
-      maxOfShortestAssertInput = analyzer.extractAssertionTraces();
+      analyzer.extractRersIOAssertionTraces();
       extractAssertionTracesTime = timer.getElapsedTimeInMilliSec();
-      if (maxOfShortestAssertInput > -1) {
-        logger[TRACE] << "STATUS: maximum input sequence length of first assert occurences: " << maxOfShortestAssertInput << endl;
-      } else {
-        logger[TRACE] << "STATUS: determining maximum of shortest assert counterexamples not possible." << endl;
-      }
     }
 
     double determinePrefixDepthTime= 0; // MJ: Determination of prefix depth currently deactivated.
@@ -1958,9 +1956,8 @@ int main( int argc, char * argv[] ) {
       text<<"states & transitions after only-I/O-reduction,"
         <<eStateSetSizeIoOnly<<", "
         <<transitionGraphSizeIoOnly<<endl;
-      text<<"input length coverage & longest minimal assert input,"
-        <<inputSeqLengthCovered<<", "
-        <<maxOfShortestAssertInput<<endl;
+      text<<"input length coverage"
+	<<inputSeqLengthCovered<<endl;
 
       write_file(filename,text.str());
       cout << "generated "<<filename<<endl;

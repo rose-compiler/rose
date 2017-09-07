@@ -1,5 +1,6 @@
 #include "sage3basic.h"
-#include "AnalyzerTools.h"
+#include "CounterexampleGenerator.h"
+#include "Analyzer.h"
 #include "Diagnostics.h"
 
 #include <unordered_map>
@@ -11,61 +12,106 @@ using namespace CodeThorn;
 using namespace std;
 using namespace Sawyer::Message;
 
+/*! 
+ * \author Marc Jasper
+ * \date 2017.
+ */
+ExecutionTrace ExecutionTrace::onlyIStates() const {
+  function<bool(const EState*)> predicate = [](const EState* s) { 
+    return s->io.isStdInIO();
+  };
+  return onlyStatesSatisfying(predicate);
+}
+
+/*! 
+ * \author Marc Jasper
+ * \date 2017.
+ */
 ExecutionTrace ExecutionTrace::onlyIOStates() const {
+  function<bool(const EState*)> predicate = [](const EState* s) { 
+    return s->io.isStdInIO() || s->io.isStdOutIO();
+  };
+  return onlyStatesSatisfying(predicate);
+}
+
+/*! 
+ * \author Marc Jasper
+ * \date 2017.
+ */
+ExecutionTrace ExecutionTrace::onlyStatesSatisfying(std::function<bool(const EState*)> predicate) const {
   ExecutionTrace newTrace;
   ExecutionTrace::const_iterator begin = this->begin();
   ExecutionTrace::const_iterator end = this->end();
   for (ExecutionTrace::const_iterator i = begin; i != end; i++ ) {
-    if ((*i)->io.isStdInIO() || (*i)->io.isStdOutIO()) {
+    if (predicate(*i)) {
       newTrace.push_back(*i);
     }
   }
   return newTrace;
 }
 
-string ExecutionTrace::toString() const {
-  string result = "[";
-  ExecutionTrace::const_iterator begin = this->begin();
-  ExecutionTrace::const_iterator end = this->end();
-  for (ExecutionTrace::const_iterator i = begin; i != end; i++ ) {
-    if (i != begin) {
-      result += ";";
-    }
-    if ((*i)->io.isStdInIO()) {
-      result += "i";
-    } else if ((*i)->io.isStdOutIO()) {
-      result += "o";
-    }
-    result += (*i)->toString();
-  }
-  result += "]";
-  return result;
+/*! 
+ * \author Marc Jasper
+ * \date 2017.
+ */
+string ExecutionTrace::toRersIString(Analyzer* analyzer) const {
+  return toRersIOString(analyzer, false);
 }
 
-string ExecutionTrace::toString(SPRAY::VariableIdMapping* variableIdMapping) const {
-  string result = "[";
-  ExecutionTrace::const_iterator begin = this->begin();
-  ExecutionTrace::const_iterator end = this->end();
-  for (ExecutionTrace::const_iterator i = begin; i != end; i++ ) {
-    if (i != begin) {
-      result += ";";
-    }
-    if ((*i)->io.isStdInIO()) {
-      result += "i";
-    } else if ((*i)->io.isStdOutIO()) {
-      result += "o";
-    }
-    result += (*i)->toString(variableIdMapping);
-  }
-  result += "]";
-  return result;
+/*! 
+ * \author Marc Jasper
+ * \date 2017.
+ */
+string ExecutionTrace::toRersIOString(Analyzer* analyzer) const {
+  return toRersIOString(analyzer, true);
 }
 
+/*! 
+ * \author Marc Jasper
+ * \date 2014, 2017.
+ */
+string ExecutionTrace::toRersIOString(Analyzer* analyzer, bool withOutput) const {
+  stringstream result; 
+  result << "[";
+  ExecutionTrace::const_iterator begin = this->begin();
+  ExecutionTrace::const_iterator end = this->end();
+  bool firstSymbol = true;
+  int counter = 0;
+  for (ExecutionTrace::const_iterator i = begin; i != end; i++ ) {
+    if ( (*i)->io.isStdInIO() || (withOutput && (*i)->io.isStdOutIO()) ) {
+      if (!firstSymbol) {
+	result << ";";
+      }
+      const PState* pstate = (*i)->pstate();
+      int inOutVal = pstate->readFromMemoryLocation((*i)->io.var).getIntValue();
+      if ((*i)->io.isStdInIO()) {
+	result << "i" << toRersChar(inOutVal);
+	firstSymbol = false;
+      } else if (withOutput && (*i)->io.isStdOutIO()) {
+	result << "o" << toRersChar(inOutVal);
+	firstSymbol = false;
+      } 
+    }
+  }
+  result << "]";
+  return result.str();
+}
+
+/*! 
+ * \author Marc Jasper
+ * \date 2017.
+ */
+char ExecutionTrace::toRersChar(int value) const {
+  return (char) (value + ((int) 'A') - 1);
+}
 
 
 //=============================================================================
 
 Sawyer::Message::Facility CounterexampleGenerator::logger;
+
+CounterexampleGenerator::CounterexampleGenerator(TransitionGraph* stg) : _stg(stg) {
+}
 
 void CounterexampleGenerator::initDiagnostics() {
   static bool initialized = false;
@@ -76,18 +122,22 @@ void CounterexampleGenerator::initDiagnostics() {
   }
 }
 
-list<ExecutionTrace> CounterexampleGenerator::createExecutionTraces(Analyzer* analyzer) {
-  TransitionGraph* graph = analyzer->getTransitionGraph();
+list<ExecutionTrace> CounterexampleGenerator::createExecutionTraces() {
+  Analyzer* analyzer = _stg->getAnalyzer();
   list<FailedAssertion> assertions = analyzer->getFirstAssertionOccurences();
   list<ExecutionTrace> traces;
   for (auto i : assertions) {
-    ExecutionTrace trace = this->traceBreadthFirst(graph,i.second, graph->getStartEState());
+    ExecutionTrace trace = reverseTraceBreadthFirst(i.second, _stg->getStartEState());
     traces.push_back(trace);
   }
   return traces;
 }
 
-ExecutionTrace CounterexampleGenerator::traceBreadthFirst(TransitionGraph* transitionGraph, const EState* source, const EState* target) {
+/*! 
+ * \author Marc Jasper
+ * \date 2014.
+ */
+ExecutionTrace CounterexampleGenerator::reverseTraceBreadthFirst(const EState* source, const EState* target) {
   // 1.) init: list wl , hashmap predecessor, hashset visited
   list<const EState*> worklist;
   worklist.push_back(source);
@@ -101,7 +151,7 @@ ExecutionTrace CounterexampleGenerator::traceBreadthFirst(TransitionGraph* trans
     worklist.pop_front();
     if (visited.find(vertex) == visited.end()) {  //avoid cycles
       visited.insert(vertex);
-      EStatePtrSet predsOfVertex = transitionGraph->pred(vertex);
+      EStatePtrSet predsOfVertex = _stg->pred(vertex);
       for(EStatePtrSet::iterator i=predsOfVertex.begin();i!=predsOfVertex.end();++i) {
         predecessor.insert(pair<const EState*, const EState*>((*i), vertex));
         if ((*i) == target) {
@@ -131,8 +181,7 @@ ExecutionTrace CounterexampleGenerator::traceBreadthFirst(TransitionGraph* trans
   return run;
 }
 
-
-ExecutionTrace CounterexampleGenerator::traceDijkstra(TransitionGraph* transitionGraph, const EState* source, const EState* target) {
+ExecutionTrace CounterexampleGenerator::reverseTraceDijkstra(const EState* source, const EState* target) {
   typedef std::pair<size_t, const EState*> entry;
 
   // 1.) init: list wl , hashmap predecessor, hashset visited
@@ -149,7 +198,7 @@ ExecutionTrace CounterexampleGenerator::traceDijkstra(TransitionGraph* transitio
     heap.pop();
     if (visited.count(current) == 0) {
       visited.insert(current);
-      EStatePtrSet predsOfVertex = transitionGraph->pred(current);
+      EStatePtrSet predsOfVertex = _stg->pred(current);
       for (auto pred : predsOfVertex) {
         predecessor.insert(make_pair(pred, current));
         if (pred == target) {

@@ -110,6 +110,7 @@ Analyzer::Analyzer():
   cfanalyzer(0),
   _globalTopifyMode(GTM_IO),
   _stgReducer(&estateSet, &transitionGraph),
+  _counterexampleGenerator(&transitionGraph),
   _displayDiff(10000),
   _resourceLimitDiff(10000),
   _numberOfThreadsToUse(1),
@@ -1124,6 +1125,7 @@ void Analyzer::initializeSolver(std::string functionToStartAt,SgNode* root, bool
   const ConstraintSet* emptycsetstored=constraintSetMaintainer.processNewOrExisting(cset);
   Label startLabel=cfanalyzer->getLabel(startFunRoot);
   transitionGraph.setStartLabel(startLabel);
+  transitionGraph.setAnalyzer(this);
 
   EState estate(startLabel,emptyPStateStored,emptycsetstored);
 
@@ -1158,7 +1160,6 @@ void Analyzer::initializeSolver(std::string functionToStartAt,SgNode* root, bool
   ROSE_ASSERT(currentEState);
   if(getModeLTLDriven()) {
     setStartEState(currentEState);
-    getTransitionGraph()->setAnalyzer(this);
   }
   variableValueMonitor.init(currentEState);
   addToWorkList(currentEState);
@@ -1748,6 +1749,7 @@ Analyzer::SubSolverResultType Analyzer::subSolver(const EState* currentEStatePtr
 	      logger[TRACE]<<"STATUS: detected verification error state ... terminating early"<<endl;
 	      // set flag for terminating early
 	      reachabilityResults.reachable(0);
+	      _firstAssertionOccurences.push_back(pair<int, const EState*>(0, newEStatePtr));
 	      EStateWorkList emptyWorkList;
 	      EStatePtrSet emptyExistingStateSet;
 	      return make_pair(emptyWorkList,emptyExistingStateSet);
@@ -1783,222 +1785,39 @@ Analyzer::SubSolverResultType Analyzer::subSolver(const EState* currentEStatePtr
   return make_pair(deferedWorkList,existingEStateSet);
 }
 
-/*! 
-  * \author Marc Jasper
-  * \date 2014.
- */
-int Analyzer::extractAssertionTraces() {
-  int maxInputTraceLength = -1;
-  for (list<pair<int, const EState*> >::iterator i = _firstAssertionOccurences.begin(); i != _firstAssertionOccurences.end(); ++i ) {
-    logger[TRACE]<< "STATUS: extracting trace leading to assertion: " << i->first << endl;
-    int ceLength = addCounterexample(i->first, i->second);
-    if (ceLength > maxInputTraceLength) {maxInputTraceLength = ceLength;}
-  }
-  if(args.getBool("rers-binary")) {
-    if ((getExplorationMode() == EXPL_BREADTH_FIRST) && transitionGraph.isPrecise()) {
-      return maxInputTraceLength;
-    }
-  }
-  return -1;
+void Analyzer::writeWitnessToFile(string filename) {
+  //TODO: Implement a function that returns an SV-COMP witness
+  //      and call it here. Then write the result to "filename".
 }
 
 /*! 
   * \author Marc Jasper
   * \date 2014.
  */
-list<const EState*> Analyzer::reverseInOutSequenceBreadthFirst(const EState* source, const EState* target, bool counterexampleWithOutput) {
-  // 1.) init: list wl , hashset predecessor, hashset visited
-  list<const EState*> worklist;
-  worklist.push_back(source);
-  boost::unordered_map <const EState*, const EState*> predecessor;
-  boost::unordered_set<const EState*> visited;
-  // 2.) while (elem in worklist) {s <-- pop wl; if (s not yet visited) {update predecessor map;
-  //                                check if s==target: yes --> break, no --> add all pred to wl }}
-  bool targetFound = false;
-  while (worklist.size() > 0 && !targetFound) {
-    const EState* vertex = worklist.front();
-    worklist.pop_front();
-    if (visited.find(vertex) == visited.end()) {  //avoid cycles
-      visited.insert(vertex);
-      EStatePtrSet predsOfVertex = transitionGraph.pred(vertex);
-      for(EStatePtrSet::iterator i=predsOfVertex.begin();i!=predsOfVertex.end();++i) {
-        predecessor.insert(pair<const EState*, const EState*>((*i), vertex));
-        if ((*i) == target) {
-          targetFound=true;
-          break;
-        } else {
-          worklist.push_back((*i));
-        }
-      }
-    }
+void Analyzer::extractRersIOAssertionTraces() {
+  for (list<pair<int, const EState*> >::iterator i = _firstAssertionOccurences.begin(); 
+       i != _firstAssertionOccurences.end(); 
+       ++i ) {
+    logger[TRACE]<< "STATUS: extracting trace leading to failing assertion: " << i->first << endl;
+    addCounterexample(i->first, i->second);
   }
-  if (!targetFound) {
-    logger[ERROR]<< "target state not connected to source while generating reversed trace source --> target." << endl;
-    ROSE_ASSERT(0);
-  }
-  // 3.) reconstruct trace. filter list of only input ( & output) states and return it
-  list<const EState*> run;
-  run.push_front(target);
-  boost::unordered_map <const EState*, const EState*>::iterator nextPred = predecessor.find(target);
-  while (nextPred != predecessor.end()) {
-    run.push_front(nextPred->second);
-    nextPred = predecessor.find(nextPred->second);
-  }
-  list<const EState*> result = filterStdInOutOnly(run, counterexampleWithOutput);
-  return result;
 }
 
 /*! 
   * \author Marc Jasper
   * \date 2014.
  */
-list<const EState*> Analyzer::reverseInOutSequenceDijkstra(const EState* source, const EState* target, bool counterexampleWithOutput) {
-  EStatePtrSet states = transitionGraph.estateSet();
-  boost::unordered_set<const EState*> worklist;
-  map <const EState*, int> distance;
-  map <const EState*, const EState*> predecessor;
-  //initialize distances and worklist
-  for(EStatePtrSet::iterator i=states.begin();i!=states.end();++i) {
-    worklist.insert(*i);
-    if ((*i) == source) {
-      distance.insert(pair<const EState*, int>((*i), 0));
-    } else {
-      distance.insert(pair<const EState*, int>((*i), (std::numeric_limits<int>::max() - 1)));
-    }
-  }
-  ROSE_ASSERT( distance.size() == worklist.size() );
-
-  //process worklist
-  while (worklist.size() > 0 ) {
-    //extract vertex with shortest distance to source
-    int minDist = std::numeric_limits<int>::max();
-    const EState* vertex = NULL;
-    for (map<const EState*, int>::iterator i=distance.begin(); i != distance.end(); ++i) {
-      if ( (worklist.find(i->first) != worklist.end()) ) {
-        if ( (i->second < minDist)) {
-          minDist = i->second;
-          vertex = i->first;
-        }
-      }
-    }
-    //check for all predecessors if a shorter path leading to them was found
-    EStatePtrSet predsOfVertex = transitionGraph.pred(vertex);
-    for(EStatePtrSet::iterator i=predsOfVertex.begin();i!=predsOfVertex.end();++i) {
-      int altDist;
-      if( (*i)->io.isStdInIO() ) {
-        altDist = distance[vertex] + 1;
-      } else {
-        altDist = distance[vertex]; //we only count the input sequence length
-      }
-      if (altDist < distance[*i]) {
-        distance[*i] = altDist;
-        //update predecessor
-        map <const EState*, const EState*>::iterator predListIndex = predecessor.find((*i));
-        if (predListIndex != predecessor.end()) {
-          predListIndex->second = vertex;
-        } else {
-          predecessor.insert(pair<const EState*, const EState*>((*i), vertex));
-        }
-        //optimization: stop if the target state was found
-        if ((*i) == target) {break;}
-      }
-    }
-    int worklistReducedBy = worklist.erase(vertex);
-    ROSE_ASSERT(worklistReducedBy == 1);
-  }
-
-  //extract and return input run from source to target (backwards in the STG)
-  list<const EState*> run;
-  run.push_front(target);
-  map <const EState*, const EState*>::iterator nextPred = predecessor.find(target);
-  while (nextPred != predecessor.end()) {
-    run.push_front(nextPred->second);
-    nextPred = predecessor.find(nextPred->second);
-  }
-  assert ((*run.begin()) == source);
-  list<const EState*> result = filterStdInOutOnly(run, counterexampleWithOutput);
-  return result;
-}
-
-/*! 
-  * \author Marc Jasper
-  * \date 2014.
- */
-list<const EState*> Analyzer::filterStdInOutOnly(list<const EState*>& states, bool counterexampleWithOutput) const {
-  list<const EState*> result;
-  for (list<const EState*>::iterator i = states.begin(); i != states.end(); i++ ) {
-    if( (*i)->io.isStdInIO() || (counterexampleWithOutput && (*i)->io.isStdOutIO())) {
-      result.push_back(*i);
-    }
-  }
-  return result;
-}
-
-/*! 
-  * \author Marc Jasper
-  * \date 2014.
- */
-string Analyzer::reversedInOutRunToString(list<const EState*>& run) {
-  string result = "[";
-  for (list<const EState*>::reverse_iterator i = run.rbegin(); i != run.rend(); i++ ) {
-    if (i != run.rbegin()) {
-      result += ";";
-    }
-    //get input or output value
-    PState* pstate = const_cast<PState*>( (*i)->pstate() );
-    int inOutVal;
-    if ((*i)->io.isStdInIO()) {
-      inOutVal = pstate->readFromMemoryLocation(globalVarIdByName("input")).getIntValue();
-      result += "i";
-    } else if ((*i)->io.isStdOutIO()) {
-      inOutVal = pstate->readFromMemoryLocation(globalVarIdByName("output")).getIntValue();
-      result += "o";
-    } else {
-      ROSE_ASSERT(0);  //function is supposed to handle list of stdIn and stdOut states only
-    }
-    //transform into string representation and add to result
-    char inOutValChar = (char) (inOutVal + ((int) 'A') - 1);
-    string ltlInOutVar = boost::lexical_cast<string>(inOutValChar);
-    result += ltlInOutVar;
-  }
-  result += "]";
-  return result;
-}
-
-/*! 
-  * \author Marc Jasper
-  * \date 2014.
- */
-int Analyzer::addCounterexample(int assertCode, const EState* assertEState) {
-  list<const EState*> counterexampleRun;
-  // TODO: fix the reported minimum depth to reach an assertion for the first time
-  if(true) { //args.getBool("rers-binary") && (getExplorationMode() == EXPL_BREADTH_FIRST) ) {
-
-    counterexampleRun = reverseInOutSequenceBreadthFirst(assertEState, transitionGraph.getStartEState(),
-                                                         args.getBool("counterexamples-with-output"));
+void Analyzer::addCounterexample(int assertCode, const EState* assertEState) {
+  ExecutionTrace counterexample = 
+    _counterexampleGenerator.reverseTraceBreadthFirst(assertEState, 
+						      transitionGraph.getStartEState());
+  string ceString;
+  if (args.getBool("counterexamples-with-output")) {
+    ceString = counterexample.toRersIOString(this);
   } else {
-    counterexampleRun = reverseInOutSequenceDijkstra(assertEState, transitionGraph.getStartEState(),
-                                                     args.getBool("counterexamples-with-output"));
+    ceString = counterexample.toRersIString(this);
   }
-  int ceRunLength = counterexampleRun.size();
-  string counterexample = reversedInOutRunToString(counterexampleRun);
-  // logger[DEBUG]<< "adding assert counterexample " << counterexample << endl;
-  reachabilityResults.strictUpdateCounterexample(assertCode, counterexample);
-  return ceRunLength;
-}
-
-/*! 
-  * \author Marc Jasper
-  * \date 2014.
- */
-int Analyzer::inputSequenceLength(const EState* target) {
-  list<const EState*> run;
-  if(args.getBool("rers-binary") && (getExplorationMode() == EXPL_BREADTH_FIRST) ) {
-    run = reverseInOutSequenceBreadthFirst(target, transitionGraph.getStartEState());
-  } else {
-    run = reverseInOutSequenceDijkstra(target, transitionGraph.getStartEState());
-  }
-  return run.size();
+  reachabilityResults.strictUpdateCounterexample(assertCode, ceString);
 }
 
 /*! 
