@@ -370,7 +370,10 @@ main (int argc, char *argv[])
         // alias info. function info etc.  
         ArrayAnnotation* annot = ArrayAnnotation::get_inst(); 
         ArrayInterface array_interface(*annot);
+        // alias Collect 
+        // value collect
         array_interface.initialize(fa_body, AstNodePtrImpl(defn));
+        // valueCollect
         array_interface.observe(fa_body);
 
         //FR(06/07/2011): aliasinfo was not set which caused segfault

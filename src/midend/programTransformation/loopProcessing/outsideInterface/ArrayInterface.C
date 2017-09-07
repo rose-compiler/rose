@@ -10,6 +10,12 @@ initialize( AstInterface& fa, const AstNodePtr& h)
    valueCollect.build( fa, h, *this, ArrayAnnotation::get_inst());
 }
 
+void ArrayInterface::
+AliasCollect( AstInterface& fa, const AstNodePtr& h)
+{
+    aliasCollect(fa, h);
+}
+
 void ArrayInterface::observe( AstInterface& fa) 
 {
   fa.AttachObserver( &valueCollect.get_value_map());
