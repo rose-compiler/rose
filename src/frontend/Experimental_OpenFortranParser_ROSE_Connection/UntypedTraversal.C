@@ -26,13 +26,13 @@ UntypedTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute curre
          SgSourceFile*  sg_file = p_source_file;
          ROSE_ASSERT(sg_file != NULL);
 
-         currentScope = UntypedConverter::initialize_global_scope(sg_file);
+         currentScope = pConverter->initialize_global_scope(sg_file);
       }
 
    else if (isSgUntypedGlobalScope(n) != NULL)
       {
          SgUntypedGlobalScope* ut_scope = dynamic_cast<SgUntypedGlobalScope*>(n);
-         SgGlobal*             sg_scope = UntypedConverter::convertSgUntypedGlobalScope(ut_scope, SageBuilder::getGlobalScopeFromScopeStack());
+         SgGlobal*             sg_scope = pConverter->convertSgUntypedGlobalScope(ut_scope, SageBuilder::getGlobalScopeFromScopeStack());
 
          currentScope = sg_scope;
       }
@@ -50,23 +50,29 @@ UntypedTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute curre
          SgUntypedProgramHeaderDeclaration* ut_program = dynamic_cast<SgUntypedProgramHeaderDeclaration*>(n);
          pConverter->convertSgUntypedProgramHeaderDeclaration(ut_program,currentScope);
 
+      // TODO - think about using SageBuild scope stack (currently used for programs)
          currentScope = SageBuilder::topScopeStack();
       }
 
    else if (isSgUntypedSubroutineDeclaration (n) != NULL)
       {
          SgUntypedSubroutineDeclaration* ut_function = dynamic_cast<SgUntypedSubroutineDeclaration*>(n);
-         pConverter->convertSgUntypedSubroutineDeclaration(ut_function, currentScope);
+         SgProcedureHeaderStatement* sg_function = pConverter->convertSgUntypedSubroutineDeclaration(ut_function, currentScope);
 
-         currentScope = SageBuilder::topScopeStack();
+         currentScope = sg_function->get_definition()->get_body();
+      }
+
+   else if (isSgUntypedInterfaceDeclaration (n) != NULL)
+      {
+         std::cout << "--- TODO: convert SgUntypedInterfaceDeclaration\n";
       }
 
    else if (isSgUntypedFunctionDeclaration (n) != NULL)
       {
-      // SgUntypedFunctionDeclaration* ut_function = dynamic_cast<SgUntypedFunctionDeclaration*>(n);
-      // SgProcedureHeaderStatement*   sg_function = UntypedConverter::convertSgUntypedFunctionDeclaration(ut_function, currentScope);
+         SgUntypedFunctionDeclaration* ut_function = dynamic_cast<SgUntypedFunctionDeclaration*>(n);
+         SgProcedureHeaderStatement* sg_function = pConverter->convertSgUntypedFunctionDeclaration(ut_function, currentScope);
 
-         currentScope = SageBuilder::topScopeStack();
+         currentScope = sg_function->get_definition()->get_body();
       }
 
    else if (isSgUntypedFunctionDeclarationList(n) != NULL)
@@ -74,7 +80,7 @@ UntypedTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute curre
          SgUntypedFunctionDeclarationList* ut_list = dynamic_cast<SgUntypedFunctionDeclarationList*>(n);
 
       // The list is not converted (note that nothing is returned) but the current scope may be modified
-         UntypedConverter::convertSgUntypedFunctionDeclarationList(ut_list, currentScope);
+         pConverter->convertSgUntypedFunctionDeclarationList(ut_list, currentScope);
       }
 
    else if (isSgUntypedVariableDeclaration(n) != NULL)
@@ -87,6 +93,13 @@ UntypedTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute curre
       {
          SgUntypedImplicitDeclaration* ut_decl = dynamic_cast<SgUntypedImplicitDeclaration*>(n);
          pConverter->convertSgUntypedImplicitDeclaration(ut_decl, currentScope);
+      }
+
+   else if (isSgUntypedNameListDeclaration(n) != NULL)
+      {
+         SgUntypedNameListDeclaration* ut_decl = dynamic_cast<SgUntypedNameListDeclaration*>(n);
+         std::cout << "NEED to convert name list decl\n";
+         pConverter->convertSgUntypedNameListDeclaration(ut_decl, currentScope);
       }
 
    else

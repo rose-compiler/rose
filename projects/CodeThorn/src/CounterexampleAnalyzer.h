@@ -1,4 +1,3 @@
-// Author: Marc Jasper, 2014, 2015.
 
 #ifndef CE_ANALYZER_H
 #define CE_ANALYZER_H
@@ -9,7 +8,8 @@
 #include "Analyzer.h"
 #include "PropertyValueTable.h"
 #include "EState.h"
-#include "SpotConnection.h" 
+#include "SpotConnection.h"
+#include "Visualizer.h"
 
 //BOOST includes
 #include "boost/lexical_cast.hpp"
@@ -26,11 +26,19 @@ namespace CodeThorn {
   typedef std::list<boost::unordered_set<const EState*> > StateSets;
   typedef boost::unordered_map<const EState*, list<int> > InputsAtEState;
 
+  /*! 
+   * \author Marc Jasper
+   * \date 2014, 2015.
+   */
   struct CEAnalysisResult {
     CounterexampleType analysisResult;
     Label spuriousTargetLabel;
   };
 
+  /*! 
+   * \author Marc Jasper
+   * \date 2014, 2015.
+   */
   struct CEAnalysisStep {
     CounterexampleType analysisResult;
     const EState* mostRecentStateRealTrace; 
@@ -41,7 +49,11 @@ namespace CodeThorn {
     Label failingAssertionInOriginal;
   };
 
-  // Responsible for analyzing counterexamples and an analysis using a CEGAR approach.
+  /*! 
+   * \brief CEGPRA analysis and check of individual counterexamples.
+   * \author Marc Jasper
+   * \date 2014, 2015.
+   */
   class CounterexampleAnalyzer {
   public:
     // initializing the CounterexampleAnalyzer, using "analyzer" to trace paths of the original program
@@ -53,10 +65,10 @@ namespace CodeThorn {
     // If "startState" != NULL it will be taken as the start state for tracing the original program's execution path.
     // "resetAnaylzerData" indicates whether or not previously discovered states should be deleted initially.
     CEAnalysisResult analyzeCounterexample(string counterexample, const EState* startState, bool returnSpuriousLabel, bool resetAnalyzerData);
-    // iterative verification attempts using the cegar prefix mode for LTL. Iterates over all LTL properties, respects the limit for 
+    // CEGPRA: Iterative verification attempts using the cegar prefix mode for LTL. Iterates over all LTL properties, respects the limit for 
     // analyzed counterexamples for each individual property.
     PropertyValueTable* cegarPrefixAnalysisForLtl(SpotConnection& spotConnection, set<int> ltlInAlphabet, set<int> ltlOutAlphabet);
-    // iterative verification attempts of a given ltl property. Prefix of the state space is explored using individual counterexample traces.
+    // CEGPRA: Iterative verification attempts of a given ltl property. Prefix of the state space is explored using individual counterexample traces.
     PropertyValueTable* cegarPrefixAnalysisForLtl(int property, SpotConnection& spotConnection, set<int> ltlInAlphabet, set<int> ltlOutAlphabet);
     void setMaxCounterexamples(int max) { _maxCounterexamples=max; };
     

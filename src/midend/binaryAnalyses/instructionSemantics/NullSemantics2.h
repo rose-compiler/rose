@@ -166,12 +166,12 @@ public:
     virtual void zero() ROSE_OVERRIDE {}
 
     virtual BaseSemantics::SValuePtr
-    readRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &dflt,
+    readRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &dflt,
                  BaseSemantics::RiscOperators *ops) ROSE_OVERRIDE {
         return protoval()->undefined_(reg.get_nbits());
     }
 
-    virtual void writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &value,
+    virtual void writeRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &value,
                                BaseSemantics::RiscOperators *ops) ROSE_OVERRIDE {}
 
     virtual void print(std::ostream&, BaseSemantics::Formatter&) const ROSE_OVERRIDE {}
@@ -374,12 +374,12 @@ public:
     virtual BaseSemantics::SValuePtr unsignedMultiply(const BaseSemantics::SValuePtr &a_,
                                                       const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
 
-    virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg,
+    virtual BaseSemantics::SValuePtr readMemory(RegisterDescriptor segreg,
                                                 const BaseSemantics::SValuePtr &addr,
                                                 const BaseSemantics::SValuePtr &dflt,
                                                 const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
 
-    virtual void writeMemory(const RegisterDescriptor &segreg,
+    virtual void writeMemory(RegisterDescriptor segreg,
                              const BaseSemantics::SValuePtr &addr,
                              const BaseSemantics::SValuePtr &data,
                              const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;

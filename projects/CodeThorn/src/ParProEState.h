@@ -7,13 +7,14 @@
 
 namespace CodeThorn {
 
-/*! 
-  * \author Marc Jasper
-  * \date 2016.
- */
-
 typedef std::vector<Label> ParProLabel;
 
+/*!
+ * \brief State which currently consists of a vector of 
+ control flow labels (used for parallel process graphs).
+ * \author Marc Jasper
+ * \date 2016.
+ */
 class ParProEState {
   public:
   ParProEState():_parProLabel(ParProLabel()){}
@@ -36,6 +37,10 @@ struct ParProEStateLessComp {
   }
 };
 
+/*!
+ * \author Marc Jasper
+ * \date 2016.
+ */
 class ParProEStateHashFun {
    public:
     ParProEStateHashFun() {}
@@ -50,6 +55,10 @@ class ParProEStateHashFun {
    private:
 };
 
+/*!
+ * \author Marc Jasper
+ * \date 2016.
+ */
 class ParProEStateEqualToPred {
    public:
     ParProEStateEqualToPred() {}
@@ -59,6 +68,10 @@ class ParProEStateEqualToPred {
    private:
 };
 
+/*!
+ * \author Marc Jasper
+ * \date 2016.
+ */
 class ParProEStateSet : public HSetMaintainer<ParProEState,ParProEStateHashFun,ParProEStateEqualToPred> {
   public:
   ParProEStateSet():HSetMaintainer<ParProEState,ParProEStateHashFun,ParProEStateEqualToPred>(),_constraintSetMaintainer(0){}

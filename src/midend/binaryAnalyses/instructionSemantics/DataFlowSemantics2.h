@@ -154,18 +154,18 @@ private:
     // behave differently.  When reading, they return the set of abstract locations that were read (either a register or the
     // address for the bytes of memory); when writing they add vertices and edges to the dataflow graph.
 public:
-    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg,
+    virtual BaseSemantics::SValuePtr readRegister(RegisterDescriptor reg,
                                                   const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr peekRegister(const RegisterDescriptor &reg,
+    virtual BaseSemantics::SValuePtr peekRegister(RegisterDescriptor reg,
                                                   const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
 
-    virtual void writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &a_) ROSE_OVERRIDE;
+    virtual void writeRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &a_) ROSE_OVERRIDE;
 
-    virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr_,
+    virtual BaseSemantics::SValuePtr readMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr_,
                                                 const BaseSemantics::SValuePtr &dflt_,
                                                 const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
 
-    virtual void writeMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr_,
+    virtual void writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr_,
                              const BaseSemantics::SValuePtr &data_, const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
 };
 

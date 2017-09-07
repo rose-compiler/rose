@@ -21,10 +21,22 @@ class HSetMaintainer
 public:
   typedef pair<bool,const KeyType*> ProcessingResult;
 
+  /*! 
+   * \author Marc Jasper
+   * \date 2016.
+   */
   HSetMaintainer() { _keepStatesDuringDeconstruction = false; }
 
+  /*! 
+   * \author Marc Jasper
+   * \date 2016.
+   */
   HSetMaintainer(bool keepStates) { _keepStatesDuringDeconstruction = keepStates; }
 
+  /*! 
+   * \author Marc Jasper
+   * \date 2016.
+   */
   virtual ~HSetMaintainer() {
     if (!_keepStatesDuringDeconstruction){
       typename HSetMaintainer::iterator i;

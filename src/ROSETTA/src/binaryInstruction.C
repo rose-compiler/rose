@@ -1756,8 +1756,8 @@ void Grammar::setUpBinaryInstructions() {
          *  This is the "stride" referred to in the documentation for this class.  This is not an actual register.
          *
          * @{ */
-        const RegisterDescriptor& get_stride() const;
-        void set_stride(const RegisterDescriptor&);
+        RegisterDescriptor get_stride() const;
+        void set_stride(RegisterDescriptor);
         /** @} */
 #else
         AsmIndirectRegisterExpression.setDataPrototype("RegisterDescriptor", "stride", "",
@@ -1770,8 +1770,8 @@ void Grammar::setUpBinaryInstructions() {
          *  This is the "offset" referred to in the documentation for this class.
          *
          * @{ */
-        const RegisterDescriptor& get_offset() const;
-        void set_offset(const RegisterDescriptor&);
+        RegisterDescriptor get_offset() const;
+        void set_offset(RegisterDescriptor);
         /** @} */
 #else
         AsmIndirectRegisterExpression.setDataPrototype("RegisterDescriptor", "offset", "",
@@ -1849,8 +1849,8 @@ void Grammar::setUpBinaryInstructions() {
         /** Property: Descriptor for accessed register.
          *
          *  @{ */
-        const RegisterDescriptor& get_descriptor() const;
-        void set_descriptor(const RegisterDescriptor&);
+        RegisterDescriptor get_descriptor() const;
+        void set_descriptor(RegisterDescriptor);
         /** @} */
 #else
         AsmRegisterReferenceExpression.setDataPrototype("RegisterDescriptor", "descriptor", "",

@@ -42,6 +42,7 @@ CEAnalysisResult CounterexampleAnalyzer::analyzeCounterexample(string counterexa
   } else {
     startEState = const_cast<EState*>((_analyzer->getTransitionGraph())->getStartEState());
   }
+  ROSE_ASSERT(startEState);
   _analyzer->setAnalyzerToSolver8(startEState, resetAnalyzerData);
   setInputSequence(cePrefix);
   _analyzer->runSolver();

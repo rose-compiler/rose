@@ -1,4 +1,7 @@
 #include "sage3basic.h"
+#include "rose_config.h"
+#ifdef HAVE_SPOT
+
 #include "ParProSpotSuccIter.h"
 
 using namespace CodeThorn;
@@ -128,3 +131,5 @@ string ParProSpotSuccIter::generateFormattedSpotTransition(const ParProTransitio
   }
   return ss.str();
 }
+
+#endif // end of "#ifdef HAVE_SPOT"

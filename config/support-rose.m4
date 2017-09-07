@@ -159,6 +159,7 @@ echo "GFORTRAN_PATH = $GFORTRAN_PATH"
   ROSE_SUPPORT_GMP
   ROSE_SUPPORT_ISL
   ROSE_SUPPORT_MPI
+  ROSE_SUPPORT_SPOT
 
 ##
 #########################################################################################
@@ -2442,6 +2443,7 @@ tests/smoke/specimens/c++/Makefile
 tests/smoke/specimens/c/Makefile
 tests/smoke/specimens/fortran/Makefile
 tests/smoke/specimens/java/Makefile
+tests/smoke/unit/BinaryAnalysis/Makefile
 tests/smoke/unit/Boost/Makefile
 tests/smoke/unit/Makefile
 tests/smoke/unit/Sawyer/Makefile
