@@ -45,7 +45,9 @@ collectFunctionSideEffect_SOURCES = collectFunctionSideEffect.C
 performAliasAnalysis_SOURCES = performAliasAnalysis.C
 
 
-alias_analysis_tests_cpp = alias-001.cpp
+alias_analysis_tests_cpp = alias-001.cpp \
+    alias-002.cpp \
+    alias-003.cpp
 
 
 # nonsmoke_getDataSharingAttribute_c defines the set of c files to test getDataSharingAttribute
@@ -121,7 +123,7 @@ $(nonsmoke_collectFunctionSideEffect_cpp_output_diff): $(nonsmoke_collectFunctio
 
 $(performAliasAnalysis_cpp_output_diff): $(performAliasAnalysis_cpp_output)
 	echo "Verifying alias analysis by diff ..."; \
-	if diff $(@:.performAliasAnalysis.output.diff=.performAliasAnalysis.output) $(REFERENCE_PATH)/$(@:.performAliasAnalysis.output.diff=.performAliasAnalysis.output) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; rm -rf $@; exit 1; fi
+	if diff $(@:.performAliasAnalysis.output.diff=.performAliasAnalysis.output) $(REFERENCE_PATH)/$(@:.performAliasAnalysis.output.diff=.performAliasAnalysis.output) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; cat $@; rm -rf $@; exit 1; fi
 
 
 # shortcut to test generating outputs only, tested for avoid redundant running.

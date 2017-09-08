@@ -318,7 +318,7 @@ public:
     if (cur.second == index) {
       aliasmap.get_alias_map(varname, scope)->union_with(repr);
       if (DebugAliasAnal())  {
-         std::cerr << "aliasing with: " << varname << std::endl;
+         std::cerr << "Generating aliasing with: " << varname << std::endl;
       }
     }
     else {
@@ -437,7 +437,11 @@ AppendModLoc( AstInterface& fa, const AstNodePtr& mod,
     AstNodePtr rhsscope;
     if (fa.IsVarRef(rhs, &rhstype, &rhsname, &rhsscope)) {
       if (!fa.IsScalarType(rhstype)) 
+      {
          aliasmap.get_alias_map(modname, modscope)->union_with(aliasmap.get_alias_map(rhsname, rhsscope));
+         if (DebugAliasAnal()) 
+             std::cerr << "Generating aliasing relation between " << AstInterface::AstToString(mod)<< " and " << AstInterface::AstToString(rhs) << std::endl;
+      }
     }
   }
 }

@@ -24,10 +24,22 @@ using namespace std;
 // using a log file to avoid new screen output from interfering with correctness checking
 ofstream ofile;
 
+// a helper function
+string toString (SgVarRefExp* ref)
+{
+  string ret; 
+  ret+= ref->unparseToString(); 
+  ret+="@";
+  ret+= boost::to_string(ref->get_file_info()->get_line()); 
+  ret+=":";
+  ret+= boost::to_string(ref->get_file_info()->get_col()); 
+  return ret; 
+}
+
 int main(int argc, char * argv[])
 {
   vector<string> remainingArgs (argv, argv+argc);
-
+   // Support -debugaliasanal
   //We must processing options first, before calling frontend!!
   // work with the parser of the ArrayAbstraction module
   //Read in annotation files after -annot 
@@ -108,10 +120,15 @@ int main(int argc, char * argv[])
         SgVarRefExp* ref1, * ref2; 
         ref1 = refs[i]; 
         ref2 = refs[j]; 
+        // skip references to the same variable
+        if (ref1->get_symbol() == ref2->get_symbol()) continue; 
+
         AstNodePtr node1 = AstNodePtrImpl(ref1);
         AstNodePtr node2 = AstNodePtrImpl(ref2);
         if (array_interface.may_alias (fa, node1, node2 ))
-          ofile<<ref1->unparseToString()<<" <--> "<< ref2->unparseToString() <<endl;
+          ofile<<toString(ref1)<<" <--> "<< toString(ref2) <<endl;
+        else
+          ofile<<toString(ref1)<<" No Aliasing  "<< toString(ref2)<<endl;
       }
   }
 
