@@ -6921,7 +6921,7 @@ SgNode * SageInterface::deepCopyNode (const SgNode* n)
 // by Jeremiah
 // Return bool for C++ code, and int for C code
 SgType* SageInterface::getBoolType(SgNode* n) {
-  bool isC = TransformationSupport::getSourceFile(n)->get_outputLanguage() == SgFile::e_C_output_language;
+  bool isC = TransformationSupport::getSourceFile(n)->get_outputLanguage() == SgFile::e_C_language;
   if (isC) {
     return SgTypeInt::createType();
   } else {

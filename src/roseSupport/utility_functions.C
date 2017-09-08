@@ -618,6 +618,17 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
 
      int finalCombinedExitStatus = 0;
 
+     if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL )
+        {
+          printf ("Inside of backend(SgProject*) \n");
+        }
+
+#if 1
+  // DQ (9/8/2017): Debugging ROSE_ASSERT.
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
      if (project->get_binary_only() == true)
         {
           ROSE_ASSERT(project != NULL);
@@ -628,9 +639,6 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
 
           project->skipfinalCompileStep(true);
         }
-
-     if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL )
-          printf ("Inside of backend(SgProject*) \n");
 
   // printf ("   project->get_useBackendOnly() = %s \n",project->get_useBackendOnly() ? "true" : "false");
      if (project->get_useBackendOnly() == false)
