@@ -1,5 +1,7 @@
 #include "sage3basic.h"
 #include "CounterexampleGenerator.h"
+#include "RersCounterexample.h"
+#include "SvcompWitness.h"
 #include "Analyzer.h"
 #include "Diagnostics.h"
 
@@ -12,105 +14,23 @@ using namespace CodeThorn;
 using namespace std;
 using namespace Sawyer::Message;
 
-/*! 
- * \author Marc Jasper
- * \date 2017.
- */
-ExecutionTrace ExecutionTrace::onlyIStates() const {
-  function<bool(const EState*)> predicate = [](const EState* s) { 
-    return s->io.isStdInIO();
-  };
-  return onlyStatesSatisfying(predicate);
-}
-
-/*! 
- * \author Marc Jasper
- * \date 2017.
- */
-ExecutionTrace ExecutionTrace::onlyIOStates() const {
-  function<bool(const EState*)> predicate = [](const EState* s) { 
-    return s->io.isStdInIO() || s->io.isStdOutIO();
-  };
-  return onlyStatesSatisfying(predicate);
-}
-
-/*! 
- * \author Marc Jasper
- * \date 2017.
- */
-ExecutionTrace ExecutionTrace::onlyStatesSatisfying(std::function<bool(const EState*)> predicate) const {
-  ExecutionTrace newTrace;
-  ExecutionTrace::const_iterator begin = this->begin();
-  ExecutionTrace::const_iterator end = this->end();
-  for (ExecutionTrace::const_iterator i = begin; i != end; i++ ) {
-    if (predicate(*i)) {
-      newTrace.push_back(*i);
-    }
-  }
-  return newTrace;
-}
-
-/*! 
- * \author Marc Jasper
- * \date 2017.
- */
-string ExecutionTrace::toRersIString(Analyzer* analyzer) const {
-  return toRersIOString(analyzer, false);
-}
-
-/*! 
- * \author Marc Jasper
- * \date 2017.
- */
-string ExecutionTrace::toRersIOString(Analyzer* analyzer) const {
-  return toRersIOString(analyzer, true);
-}
-
-/*! 
- * \author Marc Jasper
- * \date 2014, 2017.
- */
-string ExecutionTrace::toRersIOString(Analyzer* analyzer, bool withOutput) const {
-  stringstream result; 
-  result << "[";
-  ExecutionTrace::const_iterator begin = this->begin();
-  ExecutionTrace::const_iterator end = this->end();
-  bool firstSymbol = true;
-  int counter = 0;
-  for (ExecutionTrace::const_iterator i = begin; i != end; i++ ) {
-    if ( (*i)->io.isStdInIO() || (withOutput && (*i)->io.isStdOutIO()) ) {
-      if (!firstSymbol) {
-	result << ";";
-      }
-      const PState* pstate = (*i)->pstate();
-      int inOutVal = pstate->readFromMemoryLocation((*i)->io.var).getIntValue();
-      if ((*i)->io.isStdInIO()) {
-	result << "i" << toRersChar(inOutVal);
-	firstSymbol = false;
-      } else if (withOutput && (*i)->io.isStdOutIO()) {
-	result << "o" << toRersChar(inOutVal);
-	firstSymbol = false;
-      } 
-    }
-  }
-  result << "]";
-  return result.str();
-}
-
-/*! 
- * \author Marc Jasper
- * \date 2017.
- */
-char ExecutionTrace::toRersChar(int value) const {
-  return (char) (value + ((int) 'A') - 1);
-}
-
-
-//=============================================================================
-
 Sawyer::Message::Facility CounterexampleGenerator::logger;
 
-CounterexampleGenerator::CounterexampleGenerator(TransitionGraph* stg) : _stg(stg) {
+/*! 
+ * \author Marc Jasper
+ * \date 2017.
+ */
+CounterexampleGenerator::CounterexampleGenerator(TransitionGraph* stg) : 
+  _stg(stg) {
+}
+
+/*! 
+ * \author Marc Jasper
+ * \date 2017.
+ */
+CounterexampleGenerator::CounterexampleGenerator(TraceType type, TransitionGraph* stg) : 
+  _type(type),
+  _stg(stg) {
 }
 
 void CounterexampleGenerator::initDiagnostics() {
@@ -122,22 +42,36 @@ void CounterexampleGenerator::initDiagnostics() {
   }
 }
 
-list<ExecutionTrace> CounterexampleGenerator::createExecutionTraces() {
+list<ExecutionTrace*> CounterexampleGenerator::createExecutionTraces() {
   Analyzer* analyzer = _stg->getAnalyzer();
   list<FailedAssertion> assertions = analyzer->getFirstAssertionOccurences();
-  list<ExecutionTrace> traces;
+  list<ExecutionTrace*> traces;
   for (auto i : assertions) {
-    ExecutionTrace trace = reverseTraceBreadthFirst(i.second, _stg->getStartEState());
-    traces.push_back(trace);
+    traces.push_back(traceLeadingTo(i.second));
   }
   return traces;
 }
 
 /*! 
  * \author Marc Jasper
+ * \date 2017.
+ */
+ExecutionTrace* CounterexampleGenerator::traceLeadingTo(const EState* target) {
+  if (_type == TRACE_TYPE_RERS_CE) {
+    return reverseTraceBreadthFirst<RersCounterexample>(target, _stg->getStartEState());
+  } else if (_type == TRACE_TYPE_SVCOMP_WITNESS) {
+    return reverseTraceBreadthFirst<SvcompWitness>(target, _stg->getStartEState());
+  } else {
+    throw CodeThorn::Exception("Unsupported trace type when generating a trace leading to target EState.");
+  } 
+}
+
+/*! 
+ * \author Marc Jasper
  * \date 2014.
  */
-ExecutionTrace CounterexampleGenerator::reverseTraceBreadthFirst(const EState* source, const EState* target) {
+template <class T>
+T* CounterexampleGenerator::reverseTraceBreadthFirst(const EState* source, const EState* target) {
   // 1.) init: list wl , hashmap predecessor, hashset visited
   list<const EState*> worklist;
   worklist.push_back(source);
@@ -169,19 +103,20 @@ ExecutionTrace CounterexampleGenerator::reverseTraceBreadthFirst(const EState* s
   }
 
   // 3.) reconstruct trace.
-  ExecutionTrace run;
-  run.push_back(target);
+  T* run = new T;
+  run->push_back(target);
   boost::unordered_map <const EState*, const EState*>::iterator nextPred = predecessor.find(target);
 
   while (nextPred != predecessor.end()) {
-    run.push_back(nextPred->second);
+    run->push_back(nextPred->second);
     nextPred = predecessor.find(nextPred->second);
   }
 
   return run;
 }
 
-ExecutionTrace CounterexampleGenerator::reverseTraceDijkstra(const EState* source, const EState* target) {
+template<class T>
+T* CounterexampleGenerator::reverseTraceDijkstra(const EState* source, const EState* target) {
   typedef std::pair<size_t, const EState*> entry;
 
   // 1.) init: list wl , hashmap predecessor, hashset visited
@@ -216,12 +151,12 @@ ExecutionTrace CounterexampleGenerator::reverseTraceDijkstra(const EState* sourc
   }
 
   // 3.) reconstruct trace.
-  ExecutionTrace run;
-  run.push_back(target);
+  T* run = new T;
+  run->push_back(target);
   unordered_map <const EState*, const EState*>::iterator nextPred = predecessor.find(target);
 
   while (nextPred != predecessor.end()) {
-    run.push_back(nextPred->second);
+    run->push_back(nextPred->second);
     nextPred = predecessor.find(nextPred->second);
   }
 

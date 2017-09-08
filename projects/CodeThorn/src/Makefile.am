@@ -143,6 +143,11 @@ codethorn_SOURCES = \
   ConstraintRepresentation.h       \
   CounterexampleGenerator.h	   \
   CounterexampleGenerator.C	   \
+  ExecutionTrace.h		   \
+  RersCounterexample.h		   \
+  RersCounterexample.C		   \
+  SvcompWitness.h		   \
+  SvcompWitness.C		   \
   CounterexampleAnalyzer.C \
   CounterexampleAnalyzer.h \
   CPAstAttribute.h CPAstAttribute.C \
@@ -581,9 +586,9 @@ check-matcher:
 
 # check-flow-insenstive
 if ROSE_WITH_SPOT
-check-local: check-codethorn-internal check-domain check-equivalence-checking check-data-races check-ltl check-ltl-driven
+check-local: check-codethorn-internal check-domain check-equivalence-checking check-data-races check-svcomp-witness check-ltl check-ltl-driven
 else
-check-local: check-codethorn-internal check-domain check-equivalence-checking check-data-races
+check-local: check-codethorn-internal check-domain check-equivalence-checking check-data-races check-svcomp-witness
 endif
 
 check-svcomp:
@@ -650,6 +655,9 @@ check-array-bounds: ./codethorn
 
 check-ltl-driven:
 	./codethorn $(srcdir)/tests/rers/Problem1401_opt.c --rersmode=yes --with-counterexamples=yes --counterexamples-with-output=yes --input-values="{1,2,3,4,5}" --ltl-in-alphabet="{1,2,3,4,5}" --ltl-out-alphabet="{18,19,20,21,22,23,24,25,26}" --check-ltl=$(srcdir)/tests/rers/constraints-RERS14-5.txt  --display-diff=100000 --ltl-driven --reset-analyzer=no
+
+check-svcomp-witness:
+	codethorn $(srcdir)/tests/svcomp/eca-rers2012/Problem01_label15_false-unreach-call.c --svcomp-mode --input-values="{1,2,3,4,5,6}" --witness-file=toBeImplemented.witness --with-counterexamples
 
 check-equivalence-checking:
 @echo ================================================================

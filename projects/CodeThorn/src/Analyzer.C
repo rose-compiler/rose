@@ -12,6 +12,8 @@
 #include "AnalysisAbstractionLayer.h"
 #include "Solver8.h"
 #include "SpotConnection.h"
+#include "RersCounterexample.h"
+#include "SvcompWitness.h"
 #include "CodeThornException.h"
 
 #include <unordered_set>
@@ -1786,8 +1788,21 @@ Analyzer::SubSolverResultType Analyzer::subSolver(const EState* currentEStatePtr
 }
 
 void Analyzer::writeWitnessToFile(string filename) {
-  //TODO: Implement a function that returns an SV-COMP witness
-  //      and call it here. Then write the result to "filename".
+  _counterexampleGenerator.setType(CounterexampleGenerator::TRACE_TYPE_SVCOMP_WITNESS);
+  ROSE_ASSERT(_firstAssertionOccurences.size() == 1); //SV-COMP: Expecting exactly one reachability property
+  list<pair<int, const EState*> >::iterator iter = _firstAssertionOccurences.begin(); 
+  ExecutionTrace* trace = 
+    _counterexampleGenerator.traceLeadingTo((*iter).second);
+  if(SvcompWitness* witness = dynamic_cast<SvcompWitness*>(trace)) {
+    //TODO: Please implement a function in class SvcompWitness that returns 
+    //      an SV-COMP error-witness automaton and call it here. Then write 
+    //      the result to "filename".
+    delete witness;
+    witness = nullptr;
+    cerr << "Warning: Option \"--witness-file\" is not supported yet and will be ignored." << endl;
+  } else {
+    throw CodeThorn::Exception("Downcast to SvcompWitness unsuccessful.");
+  }
 }
 
 /*! 
@@ -1808,16 +1823,22 @@ void Analyzer::extractRersIOAssertionTraces() {
   * \date 2014.
  */
 void Analyzer::addCounterexample(int assertCode, const EState* assertEState) {
-  ExecutionTrace counterexample = 
-    _counterexampleGenerator.reverseTraceBreadthFirst(assertEState, 
-						      transitionGraph.getStartEState());
-  string ceString;
-  if (args.getBool("counterexamples-with-output")) {
-    ceString = counterexample.toRersIOString(this);
+  _counterexampleGenerator.setType(CounterexampleGenerator::TRACE_TYPE_RERS_CE);
+  ExecutionTrace* trace = 
+    _counterexampleGenerator.traceLeadingTo(assertEState);
+  if(RersCounterexample* rersCe = dynamic_cast<RersCounterexample*>(trace)) {
+    string ceString;
+    if (args.getBool("counterexamples-with-output")) {
+      ceString = rersCe->toRersIOString();
+    } else {
+      ceString = rersCe->toRersIString();
+    }
+    reachabilityResults.strictUpdateCounterexample(assertCode, ceString);    
+    delete rersCe;
+    rersCe = nullptr;
   } else {
-    ceString = counterexample.toRersIString(this);
+    throw CodeThorn::Exception("Downcast to RersCounterexample unsuccessful.");
   }
-  reachabilityResults.strictUpdateCounterexample(assertCode, ceString);
 }
 
 /*! 
