@@ -1794,12 +1794,9 @@ void Analyzer::writeWitnessToFile(string filename) {
   ExecutionTrace* trace = 
     _counterexampleGenerator.traceLeadingTo((*iter).second);
   if(SvcompWitness* witness = dynamic_cast<SvcompWitness*>(trace)) {
-    //TODO: Please implement a function in class SvcompWitness that returns 
-    //      an SV-COMP error-witness automaton and call it here. Then write 
-    //      the result to "filename".
+    witness->writeErrorAutomatonToFile(filename);
     delete witness;
     witness = nullptr;
-    cerr << "Warning: Option \"--witness-file\" is not supported yet and will be ignored." << endl;
   } else {
     throw CodeThorn::Exception("Downcast to SvcompWitness unsuccessful.");
   }

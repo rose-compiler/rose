@@ -2,6 +2,7 @@
 #define SVCOMP_WITNESS_H
 
 #include "ExecutionTrace.h"
+#include <string>
 
 namespace CodeThorn {
 
@@ -11,6 +12,7 @@ namespace CodeThorn {
 
   public:
     SvcompWitness onlyStatesSatisfying(std::function<bool(const EState*)> predicate) const;
+    void writeErrorAutomatonToFile(std::string filename);
   };
 }
 
