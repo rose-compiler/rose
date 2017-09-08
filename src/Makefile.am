@@ -71,6 +71,49 @@ else
    librosePythonlibraries =
 endif
 
+# DQ (28/8/2017): Adding more general language support.
+if ROSE_EXPERIMENTAL_CSHARP_ROSE_CONNECTION
+   libroseCsharplibraries = frontend/Experimental_Csharp_ROSE_Connection/libexperimentalRoseCsharp.la
+else
+   libroseCsharplibraries =
+endif
+
+# DQ (28/8/2017): Adding more general language support.
+if ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
+   libroseAdalibraries = frontend/Experimental_Ada_ROSE_Connection/libexperimentalRoseAda.la
+
+# DQ (31/8/2017): This library needs to be provided at configure time.
+   dot_asis_lib_dir = /home/quinlan1/ROSE/ADA/dot_asis/dot_asis_library/lib
+
+# DQ (31/8/2017): At least the Asis library needs to be provided built in to GNAT (atypical installation of GNAT).
+#  asis_lib_dir = @gnat_home@/lib/asis/asislib
+#  gnat_lib_dir = @gnat_home@/lib/gcc/x86_64-pc-linux-gnu/6.3.1/adalib
+
+# DQ (31/8/2017): Some of these need to be built in ROSE as libtool constructed libraries (maybe also as dynamic libraries).
+# Charles is working on this and it should be ready 4/9/2017.
+# libroseAdalibraries += ${dot_asis_lib_dir}/libdot_asis.a ${asis_lib_dir}/libasis.a ${gnat_lib_dir}/libgnarl.a ${gnat_lib_dir}/libgnat.a
+#  libroseAdalibraries += ${dot_asis_lib_dir}/libdot_asis.so
+#  libroseAdalibraries += -Wl,-rpath -Wl,${dot_asis_lib_dir}/libdot_asis.so
+   libroseAdalibraries += ${dot_asis_lib_dir}/libdot_asis.so
+else
+   libroseAdalibraries =
+endif
+
+# DQ (28/8/2017): Adding more general language support.
+if ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION
+   libroseJoviallibraries = frontend/Experimental_Jovial_ROSE_Connection/libexperimentalRoseJovial.la
+else
+   libroseJoviallibraries =
+endif
+
+# DQ (28/8/2017): Adding more general language support.
+if ROSE_EXPERIMENTAL_COBOL_ROSE_CONNECTION
+   libroseCobollibraries = frontend/Experimental_Cobol_ROSE_Connection/libexperimentalRoseCobol.la
+else
+   libroseCobollibraries =
+endif
+
+
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
    libroseBinaryLibraries =							\
 	$(top_builddir)/src/frontend/BinaryFormats/libroseBinaryFormats.la	\
@@ -144,6 +187,10 @@ libroseLibraries = \
    $(librosePythonlibraries) \
    $(libroseBinaryLibraries) \
    $(libroseX10Libraries) \
+   $(libroseCsharplibraries) \
+   $(libroseAdalibraries) \
+   $(libroseJoviallibraries) \
+   $(libroseCobollibraries) \
    $(top_builddir)/src/midend/programAnalysis/libprogramAnalysis.la \
    $(top_builddir)/src/midend/programTransformation/loopProcessing/libLoopProcessing.la \
    $(top_builddir)/src/midend/programTransformation/extractFunctionArgumentsNormalization/libExtractFunctionArgumentsNormalization.la \
