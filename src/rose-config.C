@@ -92,10 +92,34 @@ parseCommandLine(int argc, char *argv[], Settings &settings /*in,out*/) {
     tool.insert(Switch("config")
                 .argument("file", anyParser(settings.configFile))
                 .doc("Use the specified file instead of the " CONFIG_NAME " file installed as part of installing ROSE."));
+
+    std::string requiredVersion;
+    tool.insert(Switch("check-version")
+                .argument("vers", anyParser(requiredVersion))
+                .doc("Check that the ROSE library is the specified version or later. Exits with an error message and non-zero "
+                     "status if the ROSE version is older."));
+
     parser.with(tool);
                 
     std::vector<std::string> args = parser.parse(argc, argv).apply().unreachedArgs();
 
+    //  Check version number
+    if (!requiredVersion.empty()) {
+        if (!Rose::checkVersionNumber(requiredVersion)) {
+#if defined(ROSE_PACKAGE_VERSION)                       // automake
+            std::string haveVersion = ROSE_PACKAGE_VERSION;
+#elif defined(VERSION)                                  // cmake
+            std::string haveVersion = VERSION;
+#else
+            std::string haveVersion = "unknown";
+#endif
+            mlog[FATAL] <<"ROSE library version (" <<haveVersion <<") is too old; need " <<requiredVersion <<"\n";
+            exit(1);
+        }
+        if (args.empty())
+            exit(0);
+    }
+    
     if (args.size() != 1) {
         mlog[FATAL] <<"incorrect usage; see --help\n";
         exit(1);
