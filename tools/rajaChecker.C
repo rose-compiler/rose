@@ -56,6 +56,9 @@ namespace RAJA_Checker
   //! Check if a block of statement has the nodal accumulation pattern, with a known loop index variable 
   bool isNodalAccumulationBody(SgBasicBlock* bb, SgInitializedName* lvar, SgExprStatement*& fstmt);
 
+  //! Check if a statement is an accumulation statement 
+  bool isNodalAccumulationStmt (SgStatement* s, SgInitializedName* lvar); 
+
   //!  if there is a form like: int varRef1 = indexSet[loopIndex]; 
   bool connectedViaIndexSet (SgVarRefExp* varRef1, SgInitializedName* loopIndex);
 
@@ -385,6 +388,27 @@ bool isDoubleArrayAccess (SgExpression* exp, SgInitializedName * lvar)
     if (RAJA_Checker::enable_debug) cout<<"\t\t\t lhs of a[i] is NULL " <<endl;
     return false;
   }
+  // The lhs should be a form of simple double pointer used as array, not complex data member like obj->array[i]. 
+  SgVarRefExp* ref = isSgVarRefExp(lhs);
+  if (!ref)
+  {
+    bool isThis = false; 
+    SgArrowExp * arrow = isSgArrowExp (lhs);
+    if (arrow)
+    {
+      SgThisExp * thisexp = isSgThisExp(arrow->get_lhs_operand());
+      if (thisexp)
+        isThis = true; 
+    }
+
+    // we allow this->data[i], but not a->data[i] as lhs
+    if (!isThis)
+    {
+      if (RAJA_Checker::enable_debug) cout<<"\t\t\t array var is not a simple variable reference type, but " << lhs->class_name() <<endl;
+      return false;
+    }
+  }
+
   rhs = arr->get_rhs_operand();
   if (rhs == NULL) 
   {
@@ -453,7 +477,7 @@ bool isNodalAccumulationOp (SgExpression* op)
  *  accum-op:  +=, -=, *=, /=, MIN (), MAX, ..
  *
  * */
-bool isNodalAccumulationStmt (SgStatement* s, SgInitializedName* lvar)
+bool RAJA_Checker::isNodalAccumulationStmt (SgStatement* s, SgInitializedName* lvar)
 {
   if (RAJA_Checker::enable_debug)  // ofile is used for diffing,   cout is for checking traces
     cout<<"\t checking isNodalAccumulationStmt for stmt at line:"<<s->get_file_info()->get_line()<<endl;

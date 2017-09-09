@@ -26,7 +26,7 @@ rajaChecker_SOURCES                       = rajaChecker.C
 #  rose_inputrajaChecker.C 
 
 Checker_Test_Files =
-# C++ 11 features need GCC 4.9  and EDG 4.12and later
+# C++ 11 features need GCC 4.9  and EDG 4.12 and later
 # Liao 4/10/2017
 if USING_GNU_COMPILER
 if ROSE_USE_EDG_VERSION_4_12
@@ -38,7 +38,8 @@ Checker_Test_Files += \
    indirectArrayAccess.cpp \
    indirectLambdaCall.cpp \
    referenceType.cpp \
-   indirecArrayInLambda.cpp
+   indirecArrayInLambda.cpp \
+   dataMemberAccumulation.cpp
 endif
 endif
 endif
@@ -67,6 +68,7 @@ Checker_Output_Diff_Files=$(Checker_Test_Files:.cpp=.cpp.diff)
 $(Checker_Output_Diff_Files): $(generatedCodeExamples) 
 	if $(DIFF) $(@:.cpp.diff=.cpp.output) $(REFERENCE_PATH)/$(@:.cpp.diff=.cpp.output) > $@ ; then echo "Test Passed" ; else echo "Files differ; test failed"; cat $@; rm -rf $@; exit 1; fi
 
+rajaChecker_diff: $(Checker_Output_Diff_Files)
 
 check: $(generatedCodeExamples) $(Checker_Output_Diff_Files)
 
