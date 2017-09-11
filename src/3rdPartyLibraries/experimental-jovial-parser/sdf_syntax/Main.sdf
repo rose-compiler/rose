@@ -1269,7 +1269,7 @@ context-free syntax
   LoopStatement               -> SimpleStatement
   IfStatement                 -> SimpleStatement
   CaseStatement               -> SimpleStatement
-  ProcedureCallStatement      -> SimpleStatement
+%%ProcedureCallStatement      -> SimpleStatement  %%AMBIGUOUS with AssignmentStatement
   ReturnStatement             -> SimpleStatement
   GotoStatement               -> SimpleStatement
   ExitStatement               -> SimpleStatement
@@ -1285,7 +1285,7 @@ context-free syntax
 
   StatementName ':'           -> Label                 {cons("Label")}
 
-  LabelList                   -> LabelList             {cons("LabelList")}
+  Label*                      -> LabelList             {cons("LabelList")}
 
   Name                        -> StatementName         {cons("StatementName")}
 
