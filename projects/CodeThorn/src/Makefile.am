@@ -127,6 +127,8 @@ codethorn_SOURCES = \
   AnalysisParameters.h             \
   Analyzer.C                       \
   Analyzer.h                       \
+  IOAnalyzer.C                     \
+  IOAnalyzer.h 			   \
   AstNodeInfo.h \
   AstNodeInfo.C \
   CodeThornException.h \
@@ -198,8 +200,8 @@ codethorn_SOURCES = \
   SetAlgo.h \
   Solver.h \
   Solver.C \
-  Solver4.h \
-  Solver4.C \
+  IOSolver.h \
+  IOSolver.C \
   Solver5.h \
   Solver5.C \
   Solver8.h \

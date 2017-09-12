@@ -24,8 +24,8 @@ void DataRaceDetection::handleCommandLineOptions(Analyzer& analyzer) {
   if(args.getBool("data-race-fail")) {
     args.setOption("data-race",true);
   }
-  if(args.count("data-race-csv")) {
-    options.dataRaceCsvFileName=args["data-race-csv"].as<string>();
+  if(args.isDefined("data-race-csv")) {
+    options.dataRaceCsvFileName=args.getString("data-race-csv");
     args.setOption("data-race",true);
   }
   if(args.getBool("data-race")) {

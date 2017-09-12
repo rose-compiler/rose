@@ -1,6 +1,6 @@
 #include "sage3basic.h"
 #include "Solver10.h"
-#include "Analyzer.h"
+#include "IOAnalyzer.h"
 #include "SpotConnection.h"
 
 using namespace CodeThorn;
@@ -27,7 +27,6 @@ int Solver10::getId() {
  * \author Marc Jasper
  * \date 2015.
  */
-// solver 10 is the black-box pattern search solver (used for the Reachability Track of RERS)
 void Solver10::run() {
   if(args.getBool("rers-binary")) {
     //initialize the global variable arrays in the linked binary version of the RERS problem

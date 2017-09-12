@@ -5,10 +5,10 @@
 using namespace CodeThorn;
 using namespace std;
 
-CounterexampleAnalyzer::CounterexampleAnalyzer(Analyzer* analyzer) 
+CounterexampleAnalyzer::CounterexampleAnalyzer(IOAnalyzer* analyzer) 
 			: _analyzer(analyzer), _csvOutput(NULL), _maxCounterexamples(0) {}
 
-CounterexampleAnalyzer::CounterexampleAnalyzer(Analyzer* analyzer, stringstream* csvOutput) 
+CounterexampleAnalyzer::CounterexampleAnalyzer(IOAnalyzer* analyzer, stringstream* csvOutput) 
                         : _analyzer(analyzer), _csvOutput(csvOutput), _maxCounterexamples(-1) {}
 
 CEAnalysisResult CounterexampleAnalyzer::analyzeCounterexample(string counterexample, const EState* startState, 

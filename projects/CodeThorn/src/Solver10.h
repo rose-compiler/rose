@@ -3,7 +3,7 @@
 
 
 // CodeThorn includes
-#include "Solver.h"
+#include "IOSolver.h"
 #include "PropertyValueTable.h"
 #include "AnalysisParameters.h"
 
@@ -14,9 +14,9 @@ namespace CodeThorn {
 /*! 
   * \author Marc Jasper
   * \date 2017.
-  * \brief Solver 10
+  * \brief Black-box pattern search solver (used for the Reachability Track of RERS)
  */
-  class Solver10 : public Solver {
+  class Solver10 : public IOSolver {
   public:
     Solver10();
     void run();

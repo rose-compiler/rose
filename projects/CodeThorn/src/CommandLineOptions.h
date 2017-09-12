@@ -22,12 +22,20 @@ class CommandLineOptions
 #endif
   {
 public:
+  /// Returns true iff "option" is available.
   bool isDefined(std::string option);
+  /// Returns true iff "option" is available, but was not set explicitly.
+  /** Note that an exlicit selection of the default value will cause this function to return false. */
   bool isDefaulted(std::string option);
+  /// Returns true iff "option" was provided by the user.
   bool isUserProvided(std::string option);
+  /// Returns the value of the Boolean option with name "option".
   bool getBool(std::string option);
+  /// Returns the value of the integer option with name "option".
   int getInt(std::string option);
+  /// Returns the value of the string option with name "option".
   std::string getString(std::string option);
+  /// (Over-)writes the current entry for "option" with "value".
   template<typename T> void setOption(std::string option, T value);
 };
 

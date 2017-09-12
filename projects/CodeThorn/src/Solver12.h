@@ -10,7 +10,8 @@ namespace CodeThorn {
 /*! 
   * \author Marc Jasper
   * \date 2017.
-  * \brief Solver 12
+  * \brief Features two work lists ("loop-aware-sync" search mode)
+  * \details One work list for the current and one for the next iteration of the outer-most loop of the analyzed program (see ISoLA'16 paper)
  */
   class Solver12 : public Solver {
   public:

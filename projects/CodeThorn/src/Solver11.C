@@ -1,6 +1,6 @@
 #include "sage3basic.h"
 #include "Solver11.h"
-#include "Analyzer.h"
+#include "IOAnalyzer.h"
 
 using namespace CodeThorn;
 using namespace std;
@@ -40,7 +40,7 @@ void Solver11::run() {
     const EState* currentEStatePtr=_analyzer->popWorkList();
     ROSE_ASSERT(currentEStatePtr);
 
-    Analyzer::SubSolverResultType subSolverResult=_analyzer->subSolver(currentEStatePtr);
+    IOAnalyzer::SubSolverResultType subSolverResult = _analyzer->subSolver(currentEStatePtr);
     EStateWorkList deferedWorkList=subSolverResult.first;
     for(EStateWorkList::iterator i=deferedWorkList.begin();i!=deferedWorkList.end();++i) {
       _analyzer->addToWorkList(*i);

@@ -40,12 +40,12 @@
 #include "FIConstAnalysis.h"
 #include "ReachabilityAnalysis.h"
 #include "EquivalenceChecking.h"
-#include "Solver4.h"
 #include "Solver5.h"
 #include "Solver8.h"
 #include "Solver10.h"
 #include "Solver11.h"
 #include "Solver12.h"
+#include "IOAnalyzer.h"
 #include "AnalysisParameters.h"
 #include "SprayException.h"
 #include "CodeThornException.h"
@@ -109,6 +109,7 @@ void handler(int sig) {
 void CodeThorn::initDiagnostics() {
   Rose::Diagnostics::initialize();
   Analyzer::initDiagnostics();
+  IOAnalyzer::initDiagnostics();
   CounterexampleGenerator::initDiagnostics();
   RewriteSystem::initDiagnostics();
 }
@@ -201,7 +202,7 @@ void attachTermRepresentation(SgNode* node) {
   }
 }
 
-static Analyzer* global_analyzer=0;
+static IOAnalyzer* global_analyzer=0;
 
 set<AbstractValue> determineSetOfCompoundIncVars(VariableIdMapping* vim, SgNode* root) {
   ROSE_ASSERT(vim);
@@ -293,7 +294,6 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("reset-analyzer", po::value< bool >()->default_value(true)->implicit_value(true), "Reset the analyzer and therefore the state transition graph before checking the next property. Only affects ltl-driven mode.")
     ("no-input-input",  po::value< bool >()->default_value(false)->implicit_value(true), "remove transitions where one input states follows another without any output in between. Removal occurs before the LTL check. [yes|=no]")
     ("std-io-only", po::value< bool >()->default_value(false)->implicit_value(true), "Bypass and remove all states that are not standard I/O.")
-    ("tg-ltl-reduced", po::value< bool >()->default_value(false)->implicit_value(true),"(experimental) Compute LTL-reduced transition graph based on a subset of computed estates.")
     ("with-counterexamples", po::value< bool >()->default_value(false)->implicit_value(true), "Add counterexample I/O traces to the analysis results. Applies to reachable assertions and falsified LTL properties (uses RERS-specific alphabet).")
     ("with-assert-counterexamples", po::value< bool >()->default_value(false)->implicit_value(true), "Report counterexamples leading to failing assertion states.")
     ("with-ltl-counterexamples", po::value< bool >()->default_value(false)->implicit_value(true), "Report counterexamples that violate LTL properties.")
@@ -376,10 +376,6 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("eliminate-stg-back-edges", po::value< bool >()->default_value(false)->implicit_value(true), "Eliminate STG back-edges (STG becomes a tree).")
     ("generate-assertions", po::value< bool >()->default_value(false)->implicit_value(true),"Generate assertions (pre-conditions) in program and output program (using ROSE unparser).")
     ("precision-exact-constraints", po::value< bool >()->default_value(false)->implicit_value(true),"Use precise constraint extraction.")
-    ("report-semantic-fold", po::value< bool >()->default_value(false)->implicit_value(true),"Report each folding operation with the respective number of estates.")
-    ("semantic-fold", po::value< bool >()->default_value(false)->implicit_value(true),"Compute semantically folded state transition graph ")
-    ("semantic-fold-threshold",po::value< int >(),"Set threshold with <arg> for semantic fold operation.")
-    ("post-semantic-fold", po::value< bool >()->default_value(false)->implicit_value(true),"Compute semantically folded state transition graph only after the complete transition graph has been computed.")
     ("trace-file", po::value< string >(), "Generate STG computation trace and write to file <arg>.")
     ("explicit-arrays", po::value< bool >()->default_value(true)->implicit_value(true),"Represent all arrays explicitly in every state.")
     ("z3", "RERS specific reachability analysis using z3.")	
@@ -850,7 +846,7 @@ void generateAutomata() {
   cout << "generated " << outputFilename <<"."<<endl;
 }
 
-void analyzerSetup(Analyzer& analyzer, Sawyer::Message::Facility logger) {
+void analyzerSetup(IOAnalyzer& analyzer, Sawyer::Message::Facility logger) {
   if(args.getBool("explicit-arrays")==false) {
     analyzer.setSkipArrayAccesses(true);
   }
@@ -980,10 +976,6 @@ void analyzerSetup(Analyzer& analyzer, Sawyer::Message::Facility logger) {
     analyzer.setMaxSecondsForcedTop(args["max-time-forced-top"].as<long int>());
   }
 
-  if(args.count("semantic-fold-threshold")) {
-    int semanticFoldThreshold=args["semantic-fold-threshold"].as<int>();
-    analyzer.setSemanticFoldThreshold(semanticFoldThreshold);
-  }
   if(args.count("display-diff")) {
     int displayDiff=args["display-diff"].as<int>();
     analyzer.setDisplayDiff(displayDiff);
@@ -1013,9 +1005,6 @@ void analyzerSetup(Analyzer& analyzer, Sawyer::Message::Facility logger) {
   }
   // solver "factory"
   switch(solverId) {
-  case 4 :  {  
-    solver = new Solver4(); break;
-  }
   case 5 :  {  
     solver = new Solver5(); break;
   }
@@ -1072,7 +1061,6 @@ int main( int argc, char * argv[] ) {
 	args.count("ltl-in-alphabet") ||
 	args.count("ltl-out-alphabet") ||
 	args.count("ltl-driven") ||
-	args.count("tg-ltl-reduced") ||
 	args.count("with-ltl-counterexamples") ||
 	args.count("mine-num-verifiable") ||
 	args.count("mine-num-falsifiable") ||
@@ -1110,7 +1098,7 @@ int main( int argc, char * argv[] ) {
       exit(0);
     }
 
-    Analyzer analyzer;
+    IOAnalyzer analyzer;
     global_analyzer=&analyzer;
 
 #if 0
@@ -1448,18 +1436,9 @@ int main( int argc, char * argv[] ) {
 
     timer.start();
     analyzer.printStatusMessageLine("==============================================================");
-    if(args.getBool("semantic-fold")) {
-      analyzer.setSolver(new Solver4());
-    }
     if(!analyzer.getModeLTLDriven() && args.count("z3") == 0 && !args.getBool("ssa")) {
       analyzer.runSolver();
     }
-
-    if(args.getBool("post-semantic-fold")) {
-      cout << "Performing post semantic folding (this may take some time):"<<endl;
-      analyzer.semanticFoldingOfTransitionGraph();
-    }
-
     double analysisRunTime=timer.getElapsedTimeInMilliSec();
     analyzer.printStatusMessageLine("==============================================================");
 
@@ -1491,10 +1470,6 @@ int main( int argc, char * argv[] ) {
         cout << "Reachability results written to file \""<<filename<<"\"." <<endl;
         cout << "=============================================================="<<endl;
       }
-    }
-    if(args.getBool("tg-ltl-reduced")) {
-      analyzer.stdIOFoldingOfTransitionGraph();
-      logger[TRACE] << "Size of transition graph after reduction : "<<analyzer.getTransitionGraph()->size()<<endl;
     }
     if(args.getBool("eliminate-stg-back-edges")) {
       int numElim=analyzer.getTransitionGraph()->eliminateBackEdges();
@@ -1828,35 +1803,8 @@ int main( int argc, char * argv[] ) {
 
     double overallTime =totalRunTime + totalInputTracesTime + totalLtlRunTime;
 
-#if 0
-    // MS: all measurements are available here. We can print any information also on screen.
-    stringstream ss;
-    cout <<color("white");
-    cout << "=============================================================="<<endl;
-    cout <<color("normal")<<"STG generation and assertion analysis complete"<<color("white")<<endl;
-    cout << "=============================================================="<<endl;
-    cout << "Number of stdin-estates        : "<<color("cyan")<<numOfStdinEStates<<color("white")<<endl;
-    cout << "Number of stdoutvar-estates    : "<<color("cyan")<<numOfStdoutVarEStates<<color("white")<<endl;
-    cout << "Number of stdoutconst-estates  : "<<color("cyan")<<numOfStdoutConstEStates<<color("white")<<endl;
-    cout << "Number of stderr-estates       : "<<color("cyan")<<numOfStderrEStates<<color("white")<<endl;
-    cout << "Number of failed-assert-estates: "<<color("cyan")<<numOfFailedAssertEStates<<color("white")<<endl;
-    cout << "Number of const estates        : "<<color("cyan")<<numOfConstEStates<<color("white")<<endl;
-    cout << "=============================================================="<<endl;
-    cout << "Number of pstates              : "<<color("magenta")<<pstateSetSize<<color("white")<<" (memory: "<<color("magenta")<<pstateSetBytes<<color("white")<<" bytes)"<<" ("<<""<<pstateSetLoadFactor<<  "/"<<pstateSetMaxCollisions<<")"<<endl;
-    cout << "Number of estates              : "<<color("cyan")<<eStateSetSize<<color("white")<<" (memory: "<<color("cyan")<<eStateSetBytes<<color("white")<<" bytes)"<<" ("<<""<<eStateSetLoadFactor<<  "/"<<eStateSetMaxCollisions<<")"<<endl;
-    cout << "Number of transitions          : "<<color("blue")<<transitionGraphSize<<color("white")<<" (memory: "<<color("blue")<<transitionGraphBytes<<color("white")<<" bytes)"<<endl;
-    cout << "Number of constraint sets      : "<<color("yellow")<<numOfconstraintSets<<color("white")<<" (memory: "<<color("yellow")<<constraintSetsBytes<<color("white")<<" bytes)"<<" ("<<""<<constraintSetsLoadFactor<<  "/"<<constraintSetsMaxCollisions<<")"<<endl;
-    if(analyzer.getNumberOfThreadsToUse()==1 && analyzer.getSolver()->getId()==5 && analyzer.getExplorationMode()==EXPL_LOOP_AWARE) {
-      cout << "Number of iterations           : "<<analyzer.getIterations()<<"-"<<analyzer.getApproximatedIterations()<<endl;
-    }
-    cout << "=============================================================="<<endl;
-    cout << "Memory total         : "<<color("green")<<totalMemory<<" bytes"<<color("white")<<endl;
-    cout << "Time total           : "<<color("green")<<CodeThorn::readableruntime(totalRunTime)<<color("white")<<endl;
-    cout << "=============================================================="<<endl;
-    cout <<color("normal");
-#else
     printAnalyzerStatistics(analyzer, totalRunTime, "STG generation and assertion analysis complete");
-#endif
+
     if(args.count("csv-stats")) {
       string filename=args["csv-stats"].as<string>().c_str();
       stringstream text;
@@ -2139,8 +2087,7 @@ void CodeThorn::printStgSize(TransitionGraph* model, string optionalComment, str
   }
 }
 
-//currently not used. conceived due to different statistics after LTL evaluation that could be printed in the same way as above.
-void CodeThorn::printAnalyzerStatistics(Analyzer& analyzer, double totalRunTime, string title) {
+void CodeThorn::printAnalyzerStatistics(IOAnalyzer& analyzer, double totalRunTime, string title) {
   long pstateSetSize=analyzer.getPStateSet()->size();
   long pstateSetBytes=analyzer.getPStateSet()->memorySize();
   long pstateSetMaxCollisions=analyzer.getPStateSet()->maxCollisions();

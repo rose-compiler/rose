@@ -22,7 +22,6 @@ int Solver12::getId() {
   * \author Marc Jasper
   * \date 2016.
  */
-// solver 12 features two work lists ("loop-aware-sync" search mode)
 void Solver12::run() {
   _analyzer->_analysisTimer.start();
   if(_analyzer->svCompFunctionSemantics()) {

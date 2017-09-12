@@ -1,6 +1,6 @@
 #include "sage3basic.h"
 #include "Solver8.h"
-#include "Analyzer.h"
+#include "IOAnalyzer.h"
 
 using namespace CodeThorn;
 using namespace std;
@@ -22,7 +22,6 @@ int Solver8::getId() {
  * \author Marc Jasper
  * \date 2014, 2015.
  */
-// solver 8 is used to analyze traces of consecutively added input sequences
 void Solver8::run() {
   int workers = 1; //only one thread
   if(args.getBool("rers-binary")) {

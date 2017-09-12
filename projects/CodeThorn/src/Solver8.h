@@ -3,16 +3,16 @@
 
 
 // CodeThorn includes
-#include "Solver.h"
+#include "IOSolver.h"
 
 namespace CodeThorn {
 
 /*! 
   * \author Marc Jasper
   * \date 2017.
-  * \brief Solver 8
+  * \brief Analyzes a single trace according to a specific input sequence.
  */
-  class Solver8 : public Solver {
+  class Solver8 : public IOSolver {
   public:
     Solver8();
     void run();

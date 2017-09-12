@@ -61,7 +61,6 @@ namespace CodeThorn {
  */
   class Analyzer {
     friend class Solver;
-    friend class Solver4;
     friend class Solver5;
     friend class Solver8;
     friend class Solver10;
@@ -72,7 +71,7 @@ namespace CodeThorn {
 
   public:
     Analyzer();
-    ~Analyzer();
+    virtual ~Analyzer();
 
   protected:
     static Sawyer::Message::Facility logger;
@@ -84,8 +83,6 @@ namespace CodeThorn {
     void initializeTraceSolver(std::string functionToStartAt,SgNode* root);
     void initLabeledAssertNodes(SgProject* root);
 
-    void continueAnalysisFrom(EState* newStartEState);
-
     void setExplorationMode(ExplorationMode em) { _explorationMode=em; }
     ExplorationMode getExplorationMode() { return _explorationMode; }
 
@@ -95,7 +92,20 @@ namespace CodeThorn {
     //! requires init
     void runSolver();
 
+    // experimental: analysis reset and/or backup
+    void resetAnalysis();
+    //stores a backup of the created transitionGraph
+    void storeStgBackup();
+    //load previous backup of the transitionGraph, storing the current version as a backup instead
+    void swapStgWithBackup();
+
     long analysisRunTimeInSeconds(); 
+
+    // reductions based on a nested BFS from the STG's start state
+    void reduceStgToInOutStates();
+    void reduceStgToInOutAssertStates();
+    void reduceStgToInOutAssertErrStates();
+    void reduceStgToInOutAssertWorklistStates();
 
     const EState* popWorkList();
     
@@ -114,6 +124,8 @@ namespace CodeThorn {
     void printStatusMessageLine(string s);
 
     void generateAstNodeInfo(SgNode* node);
+
+    void writeWitnessToFile(std::string filename);
 
     // consistency checks
     bool checkEStateSet();
@@ -153,6 +165,11 @@ namespace CodeThorn {
     VariableDeclarationList computeUnusedGlobalVariableDeclarationList(SgProject* root);
     VariableDeclarationList computeUsedGlobalVariableDeclarationList(SgProject* root);
 
+    void insertInputVarValue(int i) { _inputVarValues.insert(i); }
+    void addInputSequenceValue(int i) { _inputSequence.push_back(i); }
+    void resetToEmptyInputSequence() { _inputSequence.clear(); }
+    void resetInputSequenceIterator() { _inputSequenceIterator=_inputSequence.begin(); }
+
     void setStgTraceFileName(std::string filename);
     void setAnalyzerMode(AnalyzerMode am) { _analyzerMode=am; }
     void setMaxTransitions(size_t maxTransitions) { _maxTransitions=maxTransitions; }
@@ -165,7 +182,6 @@ namespace CodeThorn {
     void setMaxSecondsForcedTop(long int maxSecondsForcedTop) { _maxSecondsForcedTop=maxSecondsForcedTop; }
     void setResourceLimitDiff(int diff) { _resourceLimitDiff=diff; }
     void setDisplayDiff(int diff) { _displayDiff=diff; }
-    void setSemanticFoldThreshold(int t) { _semanticFoldThreshold=t; }
     void setNumberOfThreadsToUse(int n) { _numberOfThreadsToUse=n; }
     int getNumberOfThreadsToUse() { return _numberOfThreadsToUse; }
     void setTreatStdErrLikeFailedAssert(bool x) { _treatStdErrLikeFailedAssert=x; }
@@ -181,12 +197,6 @@ namespace CodeThorn {
     void disableSVCompFunctionSemantics();
     bool svCompFunctionSemantics() { return _svCompFunctionSemantics; }
     bool stdFunctionSemantics() { return _stdFunctionSemantics; }
-    void setModeLTLDriven(bool ltlDriven) { transitionGraph.setModeLTLDriven(ltlDriven); }
-    bool getModeLTLDriven() { return transitionGraph.getModeLTLDriven(); }
-    // only used in LTL-driven mode
-    void setSpotConnection(SpotConnection* connection) { _spotConnection = connection; }
-    // only used to initialize solver 10
-    void setStartPState(PState startPState) { _startPState=startPState; }
 
     void setTypeSizeMapping(SgTypeSizeMapping* typeSizeMapping);
     SgTypeSizeMapping* getTypeSizeMapping();
@@ -207,8 +217,12 @@ namespace CodeThorn {
     PropertyValueTable reachabilityResults;
     boost::unordered_map <std::string,int*> mapGlobalVarAddress;
     boost::unordered_map <int*,std::string> mapAddressGlobalVar;
+    // only used temporarily for binary-binding prototype
+    std::map<std::string,VariableId> globalVarName2VarIdMapping;
+    std::vector<bool> binaryBindingAssert;
 
-  private:
+
+  protected:
     void printStatusMessage(string s, bool newLineFlag);
 
     std::string analyzerStateToString();
@@ -232,13 +246,10 @@ namespace CodeThorn {
     void topifyVariable(PState& pstate, ConstraintSet& cset, AbstractValue varId);
     bool isTopified(EState& s);
     EStateSet::ProcessingResult process(EState& s);
-    EStateSet::ProcessingResult process(Label label, PState pstate, ConstraintSet cset, InputOutput io);
     const ConstraintSet* processNewOrExisting(ConstraintSet& cset);
     
     EState createEState(Label label, PState pstate, ConstraintSet cset);
     EState createEState(Label label, PState pstate, ConstraintSet cset, InputOutput io);
-    // only used in LTL-driven mode
-    void setStartEState(const EState* estate);
 
     void recordTransition(const EState* sourceEState, Edge e, const EState* targetEState);
 
@@ -322,11 +333,9 @@ namespace CodeThorn {
     int _displayDiff;
     int _resourceLimitDiff;
     int _numberOfThreadsToUse;
-    int _semanticFoldThreshold;
     VariableIdMapping::VariableIdSet _variablesToIgnore;
     Solver* _solver;
     AnalyzerMode _analyzerMode;
-    set<const EState*> _newNodesToFold;
     long int _maxTransitions;
     long int _maxIterations;
     long int _maxBytes;
@@ -335,10 +344,6 @@ namespace CodeThorn {
     long int _maxIterationsForcedTop;
     long int _maxBytesForcedTop;
     long int _maxSecondsForcedTop;
-    // only used in LTL-driven mode
-    size_t _prevStateSetSizeDisplay = 0;
-    size_t _prevStateSetSizeResource = 0;
-    PState _startPState;
     
     VariableValueMonitor variableValueMonitor;
 
@@ -366,84 +371,7 @@ namespace CodeThorn {
     Timer _analysisTimer;
     bool _timerRunning = false;
 
-    // =======================================================================
-    // ========================== LTLAnalyzer ================================
-    // =======================================================================
-  public:
-
-    ///////
-    // MJ: 08/30/2017: Currently not used
-    bool isTerminationRelevantLabel(Label label);
-    int numberOfInputVarValues() { return _inputVarValues.size(); }
-    ///////
-
-    bool isLTLRelevantEState(const EState* estate);
-    bool isLTLRelevantLabel(Label label);
-    bool isStdIOLabel(Label label);
-    std::set<const EState*> nonLTLRelevantEStates();
-
-    // reduces all states different to stdin and stdout.
-    void stdIOFoldingOfTransitionGraph();
-    void semanticFoldingOfTransitionGraph();
-
-    // erases transitions that lead directly from one output state to another output state
-    void removeOutputOutputTransitions();
-    // erases transitions that lead directly from one input state to another input state
-    void removeInputInputTransitions();
-    // cuts off all paths in the transition graph that lead to leaves 
-    // (recursively until only paths of infinite length remain)
-    void pruneLeaves();
-    // reductions based on a nested BFS from the STG's start state
-    void reduceStgToInOutStates();
-    void reduceStgToInOutAssertStates();
-    void reduceStgToInOutAssertErrStates();
-    void reduceStgToInOutAssertWorklistStates();
-    // reduction based on all states, works also for disconnected STGs (used by CEGPRA)
-    void reduceToObservableBehavior();
-    void writeWitnessToFile(std::string filename);
-    // Extracts input sequences leading to each discovered failing assertion where discovered for the first time.
-    // Stores results in PropertyValueTable "reachabilityResults".
-    void extractRersIOAssertionTraces();
-
-    // LTLAnalyzer
-  private:
-    // adds a string representation of the input (/output) path from start state to assertEState to reachabilityResults.
-    void addCounterexample(int assertCode, const EState* assertEState);
-
-  public:
-    void resetAnalysis();
-    //stores a backup of the created transitionGraph
-    void storeStgBackup();
-    //load previous backup of the transitionGraph, storing the current version as a backup instead
-    void swapStgWithBackup();
-    //solver 8 becomes the active solver used by the analyzer. Deletion of previous data iff "resetAnalyzerData" is set to true.
-    void setAnalyzerToSolver8(EState* startEState, bool resetAnalyzerData);
-
-    // first: list of new states (worklist), second: set of found existing states
-    typedef pair<EStateWorkList,std::set<const EState*> > SubSolverResultType;
-    SubSolverResultType subSolver(const EState* currentEStatePtr);
-
-    void insertInputVarValue(int i) { _inputVarValues.insert(i); }
-    void addInputSequenceValue(int i) { _inputSequence.push_back(i); }
-    void resetToEmptyInputSequence() { _inputSequence.clear(); }
-    void resetInputSequenceIterator() { _inputSequenceIterator=_inputSequence.begin(); }
-    const EState* getEstateBeforeMissingInput() {return _estateBeforeMissingInput;}
-    const EState* getLatestErrorEState() {return _latestErrorEState;}
-    std::set<int> getInputVarValues() { return _inputVarValues; }
- public:
-    // only used temporarily for binary-binding prototype
-    std::map<std::string,VariableId> globalVarName2VarIdMapping;
-    std::vector<bool> binaryBindingAssert;
-
-  private:
-    const EState* _estateBeforeMissingInput;
-    const EState* _latestOutputEState;
-    const EState* _latestErrorEState;
-    // only used in LTL-driven mode
-    SpotConnection* _spotConnection = nullptr;
-
   }; // end of class Analyzer
-
 } // end of namespace CodeThorn
 
 #include "RersSpecialization.h"

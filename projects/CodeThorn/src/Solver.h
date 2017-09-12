@@ -21,10 +21,10 @@ namespace CodeThorn {
     virtual int getId() = 0;
 
   protected:
-    void setAnalyzer(Analyzer* analyzer);
+    virtual void setAnalyzer(Analyzer* analyzer);
     void initDiagnostics(Sawyer::Message::Facility& logger, int solverId);
 
-    Analyzer* _analyzer;
+    Analyzer* _analyzer = nullptr;
   };
 
 } // end of namespace CodeThorn
