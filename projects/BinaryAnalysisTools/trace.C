@@ -105,7 +105,7 @@ main(int argc, char *argv[]) {
     // Since we'll be tracing this program's execution, we might as well disassemble the process's memory directly. That way we
     // don't have to worry about ROSE mapping the specimen to the same virtual address as the kernel (which might be using
     // address randomization). We can stop short of generating the AST because we won't need it.
-    BinaryAnalysis::BinaryDebugger debugger(command, BinaryDebugger::CLOSE_FILES);
+    BinaryAnalysis::BinaryDebugger debugger(command, BinaryAnalysis::BinaryDebugger::CLOSE_FILES);
     std::string specimenResourceName = "proc:noattach:" + StringUtility::numberToString(debugger.isAttached());
     P2::Partitioner partitioner = engine.partition(specimenResourceName);
     partitioner.memoryMap()->dump(std::cerr);           // show the memory map as a debugging aid
