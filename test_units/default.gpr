@@ -1,15 +1,9 @@
 project default is
 
-   for Source_Dirs use
-     (".");
-     
-   for Source_Files use
-     ("unit_2.adb",
-      "minimal.adb");
-
-   for Object_Dir use "./obj";
-
    for Languages use ("Ada");
+   for Object_Dir use "./obj";
+   for Source_Dirs use ("./**");
+   for Excluded_Source_Dirs use (default'Object_Dir);     
 
 end default;
 
