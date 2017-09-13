@@ -92,6 +92,9 @@ private:
 class Specialization {
  public:
   Specialization();
+
+  static void initDiagnostics();
+ 
   void transformArrayProgram(SgProject* root, Analyzer* analyzer);
   void extractArrayUpdateOperations(Analyzer* ana,
                                     ArrayUpdatesSequence& arrayUpdates,
@@ -113,6 +116,7 @@ class Specialization {
   void setVisualizeReadWriteAccesses(bool val);
   void substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping, SAR_MODE sarMode, RewriteSystem& rewriteSystem);
  private:
+  static Sawyer::Message::Facility logger;
   string iterVarsToString(IterationVariables iterationVars, VariableIdMapping* variableIdMapping);
   int substituteConstArrayIndexExprsWithConst(VariableIdMapping* variableIdMapping, ExprAnalyzer* exprAnalyzer, const EState* estate, SgNode* root);
   VariableId determineVariableIdToSpecialize(SgFunctionDefinition* funDef, int param, VariableIdMapping* variableIdMapping);
@@ -133,6 +137,18 @@ class Specialization {
   //SgExpressionPtrList& getInitializerListOfArrayVariable(VariableId arrayVar, VariableIdMapping* variableIdMapping);
   string flattenArrayInitializer(SgVariableDeclaration* decl, VariableIdMapping* variableIdMapping);
   void transformArrayAccess(SgNode* node, VariableIdMapping* variableIdMapping);
+  
+  // data race detection
+  void populateReadWriteDataIndex(LoopInfo& li, IndexToReadWriteDataMap& indexToReadWriteDataMap, ArrayUpdatesSequence& arrayUpdates,
+				  VariableIdSet& allIterVars, VariableIdMapping* variableIdMapping);
+  IndexVector extractIndexVector(LoopInfo& li, const PState* pstate, VariableIdSet& allIterVars);
+  void addAccessesFromExpressionToIndex(SgExpression* exp, IndexVector& index, IndexToReadWriteDataMap& indexToReadWriteDataMap,
+					VariableIdMapping* variableIdMapping);
+  void displayReadWriteDataIndex(IndexToReadWriteDataMap& indexToReadWriteDataMap, VariableIdMapping* variableIdMapping);
+  typedef vector<IndexVector> ThreadVector;
+  typedef map<IndexVector,ThreadVector > CheckMapType;
+  int numberOfRacyThreadPairs(IndexToReadWriteDataMap& indexToReadWriteDataMap, VariableIdMapping* variableIdMapping);
+  void populateCheckMap(CheckMapType& checkMap, IndexToReadWriteDataMap& indexToReadWriteDataMap);
 
   SgFunctionDefinition* _specializedFunctionRootNode;
 

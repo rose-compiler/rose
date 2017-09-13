@@ -112,6 +112,7 @@ void CodeThorn::initDiagnostics() {
   IOAnalyzer::initDiagnostics();
   CounterexampleGenerator::initDiagnostics();
   RewriteSystem::initDiagnostics();
+  Specialization::initDiagnostics();
 }
 
 bool isExprRoot(SgNode* node) {

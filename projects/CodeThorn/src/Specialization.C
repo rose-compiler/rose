@@ -8,6 +8,9 @@
 
 using namespace std;
 using namespace SPRAY;
+using namespace Sawyer::Message;
+
+Sawyer::Message::Facility Specialization::logger;
 
 ConstReporter::~ConstReporter() {
 }
@@ -85,6 +88,15 @@ Specialization::Specialization():
   _checkAllLoops(false),
   _visualizeReadWriteAccesses(false),
   _maxNumberOfExtractedUpdates(-1) {
+}
+
+void Specialization::initDiagnostics() {
+  static bool initialized = false;
+  if (!initialized) {
+    initialized = true;
+    logger = Sawyer::Message::Facility("CodeThorn::Specialization", Rose::Diagnostics::destination);
+    Rose::Diagnostics::mfacilities.insertAndAdjust(logger);
+  }
 }
 
 int Specialization::specializeFunction(SgProject* project, string funNameToFind, int param, int constInt, VariableIdMapping* variableIdMapping) {
@@ -623,243 +635,38 @@ void Specialization::setVisualizeReadWriteAccesses(bool val) {
   _visualizeReadWriteAccesses=val;
 }
 
-// returns the number of race conditions detected (0 or 1 as of now)
-int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet& loopInfoSet, ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping) {
-  int cnt=0;
+// returns the number of detected data races
+int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet& loopInfoSet, 
+						       ArrayUpdatesSequence& arrayUpdates, 
+						       VariableIdMapping* variableIdMapping) {
   int errorCount=0;
-  stringstream ss;
-  cout<<"STATUS: checking race conditions."<<endl;
-  cout<<"INFO: number of parallel loops: "<<numParLoops(loopInfoSet,variableIdMapping)<<endl;
+  logger[TRACE]<<"STATUS: checking race conditions."<<endl;
+  logger[INFO]<<"number of parallel loops: "<<numParLoops(loopInfoSet,variableIdMapping)<<endl;
   
+  // only used when USE_ALL_ITER_VARS is defined. See also "_checkAllLoops".
   VariableIdSet allIterVars;
   for(LoopInfoSet::iterator lis=loopInfoSet.begin();lis!=loopInfoSet.end();++lis) {
     allIterVars.insert((*lis).iterationVarId);
   }
+  // check each parallel loop
   for(LoopInfoSet::iterator lis=loopInfoSet.begin();lis!=loopInfoSet.end();++lis) {
     if((*lis).iterationVarType==ITERVAR_PAR || _checkAllLoops) {
       VariableId parVariable;
       parVariable=(*lis).iterationVarId;
       if(_checkAllLoops) {
-        cout<<"INFO: checking loop: "<<variableIdMapping->variableName(parVariable)<<endl;
+        logger[INFO]<<"checking loop: "<<variableIdMapping->variableName(parVariable)<<endl;
       } else {
-        cout<<"INFO: checking parallel loop: "<<variableIdMapping->variableName(parVariable)<<endl;
+        logger[INFO]<<"checking parallel loop: "<<variableIdMapping->variableName(parVariable)<<endl;
       }
-
-      // race check
-      // intersect w-set_i = empty
-      // w-set_i intersect r-set_j = empty, i!=j.
-
       IndexToReadWriteDataMap indexToReadWriteDataMap;
-      for(ArrayUpdatesSequence::iterator i=arrayUpdates.begin();i!=arrayUpdates.end();++i) {
-        const EState* estate=(*i).first;
-        const PState* pstate=estate->pstate();
-        SgExpression* exp=(*i).second;
-        IndexVector index;
-        // use all vars for indexing or only outer+par loop variables
-#ifdef USE_ALL_ITER_VARS
-        for(VariableIdSet::iterator ol=allIterVars.begin();ol!=allIterVars.end();++ol) {
-          VariableId otherVarId=*ol;
-          ROSE_ASSERT(otherVarId.isValid());
-          if(!pstate->varValue(otherVarId).isTop()) {
-            int otherIntVal=pstate->varValue(otherVarId).getIntValue();
-            index.push_back(otherIntVal);
-          }
-        }
-#else
-        for(VariableIdSet::iterator ol=(*lis).outerLoopsVarIds.begin();ol!=(*lis).outerLoopsVarIds.end();++ol) {
-          VariableId otherVarId=*ol;
-          ROSE_ASSERT(otherVarId.isValid());
-          if(!pstate->varValue(otherVarId).isTop()&&pstate->varValue(otherVarId).isConstInt()) {
-            int otherIntVal=pstate->varValue(otherVarId).getIntValue();
-            index.push_back(otherIntVal);
-          }
-        }
-        if(!pstate->varValue(parVariable).isTop()&&pstate->varValue(parVariable).isConstInt()) {
-          int parIntVal=pstate->varValue(parVariable).getIntValue();
-          index.push_back(parIntVal);
-        }
-#endif
-        if((*lis).isInAssociatedLoop(estate)) {
-          SgExpression* lhs=isSgExpression(SgNodeHelper::getLhs(exp));
-          SgExpression* rhs=isSgExpression(SgNodeHelper::getRhs(exp));
-          ROSE_ASSERT(isSgPntrArrRefExp(lhs)||SgNodeHelper::isFloatingPointAssignment(exp));
-        
-          //cout<<"EXP: "<<exp->unparseToString()<<", lhs:"<<lhs->unparseToString()<<" :: "<<endl;
-          // read-set
-          RoseAst rhsast(rhs);
-          for(RoseAst::iterator j=rhsast.begin();j!=rhsast.end();++j) {
-            if(SgPntrArrRefExp* useRef=isSgPntrArrRefExp(*j)) {
-              j.skipChildrenOnForward();
-              ArrayElementAccessData access(useRef,variableIdMapping);
-              indexToReadWriteDataMap[index].readArrayAccessSet.insert(access);
-            } else if(SgVarRefExp* useRef=isSgVarRefExp(*j)) {
-              ROSE_ASSERT(useRef);
-              j.skipChildrenOnForward();
-              VariableId varId=variableIdMapping->variableId(useRef);
-              indexToReadWriteDataMap[index].readVarIdSet.insert(varId);
-            } else {
-              //cout<<"INFO: UpdateExtraction: ignored expression on rhs:"<<(*j)->unparseToString()<<endl;
-            }
-          }
-          if(SgPntrArrRefExp* arr=isSgPntrArrRefExp(lhs)) {
-            ArrayElementAccessData access(arr,variableIdMapping);
-            indexToReadWriteDataMap[index].writeArrayAccessSet.insert(access);
-          } else if(SgVarRefExp* var=isSgVarRefExp(lhs)) {
-            VariableId varId=variableIdMapping->variableId(var);
-            indexToReadWriteDataMap[index].writeVarIdSet.insert(varId);
-          } else {
-            cerr<<"Error: SSA Numbering: unknown LHS."<<endl;
-            exit(1);
-          }
-        
-          ss<<"UPD"<<cnt<<":"<<pstate->toString(variableIdMapping)<<" : "<<exp->unparseToString()<<endl;
-          ++cnt;
-        }
-      } // array sequence iter
-
-      // to be utilized later for more detailed output
-#if 0
-      cout<<"DEBUG: indexToReadWriteDataMap size: "<<indexToReadWriteDataMap.size()<<endl;
-      for(IndexToReadWriteDataMap::iterator imap=indexToReadWriteDataMap.begin();
-          imap!=indexToReadWriteDataMap.end();
-          ++imap) {
-        //        cout<<"DEBUG: INDEX: "<<(*imap).first<<" R-SET: ";
-        IndexVector index=(*imap).first;
-
-        cout<<"DEBUG: INDEX: ";
-        for(IndexVector::iterator iv=index.begin();iv!=index.end();++iv) {
-          if(iv!=index.begin())
-            cout<<",";
-          cout<<*iv;
-        }
-        cout<<" R-SET: ";
-        for(ArrayElementAccessDataSet::const_iterator i=indexToReadWriteDataMap[index].readArrayAccessSet.begin();i!=indexToReadWriteDataMap[index].readArrayAccessSet.end();++i) {
-          cout<<(*i).toString(variableIdMapping)<<" ";
-        }
-        cout<<endl;
-        cout<<"DEBUG: INDEX: ";
-        for(IndexVector::iterator iv=index.begin();iv!=index.end();++iv) {
-          if(iv!=index.begin())
-            cout<<",";
-          cout<<*iv;
-        }
-        cout<<" W-SET: ";
-        for(ArrayElementAccessDataSet::const_iterator i=indexToReadWriteDataMap[index].writeArrayAccessSet.begin();i!=indexToReadWriteDataMap[index].writeArrayAccessSet.end();++i) {
-          cout<<(*i).toString(variableIdMapping)<<" ";
-        }
-        cout<<endl;
-        cout<<"DEBUG: read-array-access:"<<indexToReadWriteDataMap[index].readArrayAccessSet.size()<<" read-var-access:"<<indexToReadWriteDataMap[index].readVarIdSet.size()<<endl;
-        cout<<"DEBUG: write-array-access:"<<indexToReadWriteDataMap[index].writeArrayAccessSet.size()<<" write-var-access:"<<indexToReadWriteDataMap[index].writeVarIdSet.size()<<endl;
-      } // imap
-#endif
-
-      // perform the check now
-      // 1) compute vector of index-vectors for each outer-var-vector
-      // 2) check each index-vector. For each iteration of each par-loop iteration then.
-      
-      //typedef set<int> ParVariableValueSet;
-      //ParVariableValueSet parVariableValueSet;
-      // MAP: par-variable-val -> vector of IndexVectors with this par-variable-val
-      typedef vector<IndexVector> ThreadVector;
-      typedef map<IndexVector,ThreadVector > CheckMapType;
-      CheckMapType checkMap;
-      for(IndexToReadWriteDataMap::iterator imap=indexToReadWriteDataMap.begin();
-          imap!=indexToReadWriteDataMap.end();
-          ++imap) {
-        IndexVector index=(*imap).first;
-        IndexVector outVarIndex;
-        // if index.size()==0, it will analyze the loop independet of outer loops
-        if(index.size()>0) {
-          ROSE_ASSERT(index.size()>0);
-          for(size_t iv1=0;iv1<index.size()-1;iv1++) {
-            outVarIndex.push_back(index[iv1]);
-          }
-          ROSE_ASSERT(outVarIndex.size()<index.size());
-        } else {
-          // nothing to check
-          continue;
-        }
-        // last index of index of par-variable
-        //int parVariableValue=index[index.size()-1];
-        checkMap[outVarIndex].push_back(index);
+      populateReadWriteDataIndex(*lis, indexToReadWriteDataMap, arrayUpdates, allIterVars, variableIdMapping);
+      displayReadWriteDataIndex(indexToReadWriteDataMap, variableIdMapping);  // requires log level "debug"
+      // perform data race check
+      errorCount += numberOfRacyThreadPairs(indexToReadWriteDataMap, variableIdMapping);
+      if (errorCount > 0 && !_checkAllLoops) {
+	break; // found at least one data race, skip the remaining loops
       }
-      //cout<<"INFO: race condition check-map size: "<<checkMap.size()<<endl;
-      // perform the check now
-      ArrayElementAccessDataSet readWriteRaces;
-      ArrayElementAccessDataSet writeWriteRaces;
-      bool drdebug=false;
-      if(drdebug) cout<<"DEBUG: checkMap size: "<<checkMap.size()<<endl;
-      int parallelLoopIdx = 0;
-      for(CheckMapType::iterator miter=checkMap.begin();miter!=checkMap.end();++miter) {
-        IndexVector outerVarIndexVector=(*miter).first;
-        if(drdebug) cout<<"DEBUG: outerVarIndexVector: "<<indexVectorToString(outerVarIndexVector)<<endl;
-        ThreadVector threadVectorToCheck=(*miter).second;
-        if(drdebug) cout<<"DEBUG: vector size to check: "<<threadVectorToCheck.size()<<endl;
-        for(ThreadVector::iterator tv1=threadVectorToCheck.begin();tv1!=threadVectorToCheck.end();++tv1) {
-          if(drdebug) cout<<"DEBUG: thread-vectors: tv1:"<<"["<<indexVectorToString(*tv1)<<"]"<<endl;
-          ArrayElementAccessDataSet wset=indexToReadWriteDataMap[*tv1].writeArrayAccessSet;
-          if(drdebug) cout<<"DEBUG: tv1-wset:"<<wset.size()<<": "<<arrayElementAccessDataSetToString(wset,variableIdMapping)<<endl;
-          //for(ThreadVector::iterator tv2=tv1;tv2!=threadVectorToCheck.end();++tv2) {
-          for(ThreadVector::iterator tv2=threadVectorToCheck.begin();tv2!=threadVectorToCheck.end();++tv2) {
-            if(tv2!=tv1) {
-            ThreadVector::iterator tv2b=tv2;
-            //++tv2b;
-            if(tv2b!=threadVectorToCheck.end()) {
-              if(drdebug) cout<<"thread-vectors: tv2b:"<<"["<<indexVectorToString(*tv2b)<<"]"<<endl;
-              ArrayElementAccessDataSet rset2=indexToReadWriteDataMap[*tv2b].readArrayAccessSet;
-              ArrayElementAccessDataSet wset2=indexToReadWriteDataMap[*tv2b].writeArrayAccessSet;
-              // check intersect(rset,wset)
-              if(drdebug) cout<<"DEBUG: rset2:"<<rset2.size()<<": "<<arrayElementAccessDataSetToString(rset2,variableIdMapping)<<endl;
-              if(drdebug) cout<<"DEBUG: wset2:"<<wset2.size()<<": "<<arrayElementAccessDataSetToString(wset2,variableIdMapping)<<endl;
-	      ArrayElementAccessDataSet intersect = intersection(wset, rset2);
-              if(!intersect.empty()) {
-                // verification failed
-		readWriteRaces.insert(intersect.begin(), intersect.end());
-                //cout<<"DATA RACE CHECK: FAIL (data race detected (wset1,rset2))."<<endl;
-                errorCount++;
-		if (!_checkAllDataRaces) {
-		  if(_checkAllLoops) {
-		    goto continueCheck;
-		  } else {
-		    return errorCount;
-		  }
-		}
-              }
-	      intersect = intersection(wset, wset2); 
-              if(!intersect.empty()) {
-                // verification failed
-		writeWriteRaces.insert(intersect.begin(), intersect.end());
-                //cout<<"DATA RACE CHECK: FAIL (data race detected (wset1,wset2))."<<endl;
-                errorCount++;
-		if (!_checkAllDataRaces) {
-		  if(_checkAllLoops) {
-                    goto continueCheck;
-                  } else {
-                    return errorCount;
-                  }
-	        }
-              }
-            }
-            } // same-iter check
-          }
-          if(drdebug) cout<<"DEBUG: ------------------------"<<endl;
-        }
-      }
-      // a dot graph for visualizing reads and writes (including data races)
-      if (_visualizeReadWriteAccesses) {
-	string filename = "readWriteSetGraph.dot";
-	Visualizer visualizer;
-	string dotGraph = visualizer.visualizeReadWriteAccesses(indexToReadWriteDataMap, variableIdMapping, 
-								readWriteRaces, writeWriteRaces, 
-								!args.getBool("rw-data"), 
-								args.getBool("rw-clusters"),
-								args.getBool("rw-highlight-races"));
-	write_file(filename, dotGraph);
-	cout << "STATUS: written graph that illustrates read and write accesses to file: " << filename << endl;
-      }
-      parallelLoopIdx++;
     } // if parallel loop
-  continueCheck:;
   } // foreach loop
   if (errorCount == 0) {
     cout<<"DATA RACE CHECK: PASS."<<endl;
@@ -867,6 +674,225 @@ int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet& loopInfoSet,
     cout<<"DATA RACE CHECK: FAIL."<<endl;
   }
   return errorCount;
+}
+
+void Specialization::populateReadWriteDataIndex(LoopInfo& li, IndexToReadWriteDataMap& indexToReadWriteDataMap, 
+                                                ArrayUpdatesSequence& arrayUpdates, VariableIdSet& allIterVars, 
+                                                VariableIdMapping* variableIdMapping) {
+  // The following two variables are currently not used. 
+  // They were previously initialized at the beginning of function "verifyUpdateSequenceRaceConditions".
+  stringstream ss;
+  int cnt = 0;
+  for(ArrayUpdatesSequence::iterator i=arrayUpdates.begin();i!=arrayUpdates.end();++i) {
+    const EState* estate=(*i).first;
+    if (li.isInAssociatedLoop(estate)) {
+      const PState* pstate=estate->pstate();
+      SgExpression* exp=(*i).second;
+      IndexVector index = extractIndexVector(li, pstate, allIterVars);
+      addAccessesFromExpressionToIndex(exp, index, indexToReadWriteDataMap, variableIdMapping);
+        
+      ss<<"UPD"<<cnt<<":"<<pstate->toString(variableIdMapping)<<" : "<<exp->unparseToString()<<endl;
+      ++cnt;
+    }
+  } // array sequence iter
+}
+
+
+IndexVector Specialization::extractIndexVector(LoopInfo& li, const PState* pstate, VariableIdSet& allIterVars) {
+  IndexVector index;
+  VariableId parVariable=li.iterationVarId;
+  // use all vars for indexing or only outer+par loop variables
+#ifdef USE_ALL_ITER_VARS
+  for(VariableIdSet::iterator ol=allIterVars.begin();ol!=allIterVars.end();++ol) {
+    VariableId otherVarId=*ol;
+    ROSE_ASSERT(otherVarId.isValid());
+    if(!pstate->varValue(otherVarId).isTop()) {
+      int otherIntVal=pstate->varValue(otherVarId).getIntValue();
+      index.push_back(otherIntVal);
+    }
+  }
+#else
+  for(VariableIdSet::iterator ol=li.outerLoopsVarIds.begin();ol!=li.outerLoopsVarIds.end();++ol) {
+    VariableId otherVarId=*ol;
+    ROSE_ASSERT(otherVarId.isValid());
+    if(!pstate->varValue(otherVarId).isTop()&&pstate->varValue(otherVarId).isConstInt()) {
+      int otherIntVal=pstate->varValue(otherVarId).getIntValue();
+      index.push_back(otherIntVal);
+    }
+  }
+  if(!pstate->varValue(parVariable).isTop()&&pstate->varValue(parVariable).isConstInt()) {
+    int parIntVal=pstate->varValue(parVariable).getIntValue();
+    index.push_back(parIntVal);
+  }
+#endif
+  return index;
+}
+
+void Specialization::addAccessesFromExpressionToIndex(SgExpression* exp, IndexVector& index,
+                                                      IndexToReadWriteDataMap& indexToReadWriteDataMap, 
+                                                      VariableIdMapping* variableIdMapping) {  
+  SgExpression* lhs=isSgExpression(SgNodeHelper::getLhs(exp));
+  SgExpression* rhs=isSgExpression(SgNodeHelper::getRhs(exp));
+  ROSE_ASSERT(isSgPntrArrRefExp(lhs)||SgNodeHelper::isFloatingPointAssignment(exp));
+        
+  //cout<<"EXP: "<<exp->unparseToString()<<", lhs:"<<lhs->unparseToString()<<" :: "<<endl;
+  // read-set
+  RoseAst rhsast(rhs);
+  for (RoseAst::iterator j=rhsast.begin(); j!=rhsast.end(); ++j) {
+    if(SgPntrArrRefExp* useRef=isSgPntrArrRefExp(*j)) {
+      j.skipChildrenOnForward();
+      ArrayElementAccessData access(useRef,variableIdMapping);
+      indexToReadWriteDataMap[index].readArrayAccessSet.insert(access);
+    } else if(SgVarRefExp* useRef=isSgVarRefExp(*j)) {
+      ROSE_ASSERT(useRef);
+      j.skipChildrenOnForward();
+      VariableId varId=variableIdMapping->variableId(useRef);
+      indexToReadWriteDataMap[index].readVarIdSet.insert(varId);
+    } else {
+      //cout<<"INFO: UpdateExtraction: ignored expression on rhs:"<<(*j)->unparseToString()<<endl;
+    }
+  }
+  if(SgPntrArrRefExp* arr=isSgPntrArrRefExp(lhs)) {
+    ArrayElementAccessData access(arr,variableIdMapping);
+    indexToReadWriteDataMap[index].writeArrayAccessSet.insert(access);
+  } else if(SgVarRefExp* var=isSgVarRefExp(lhs)) {
+    VariableId varId=variableIdMapping->variableId(var);
+    indexToReadWriteDataMap[index].writeVarIdSet.insert(varId);
+  } else {
+    cerr<<"Error: SSA Numbering: unknown LHS."<<endl;
+    exit(1);
+  }
+}
+
+void Specialization::displayReadWriteDataIndex(IndexToReadWriteDataMap& indexToReadWriteDataMap, 
+                                               VariableIdMapping* variableIdMapping) {
+  logger[DEBUG]<<"indexToReadWriteDataMap size: "<<indexToReadWriteDataMap.size()<<endl;
+  for(IndexToReadWriteDataMap::iterator imap=indexToReadWriteDataMap.begin();
+      imap!=indexToReadWriteDataMap.end();
+      ++imap) {
+    //        logger[DEBUG]<<"INDEX: "<<(*imap).first<<" R-SET: ";
+    IndexVector index=(*imap).first;
+
+    logger[DEBUG]<<"INDEX: ";
+    for(IndexVector::iterator iv=index.begin();iv!=index.end();++iv) {
+      if(iv!=index.begin())
+        logger[DEBUG]<<",";
+      logger[DEBUG]<<*iv;
+    }
+    logger[DEBUG]<<" R-SET: ";
+    for(ArrayElementAccessDataSet::const_iterator i=indexToReadWriteDataMap[index].readArrayAccessSet.begin();i!=indexToReadWriteDataMap[index].readArrayAccessSet.end();++i) {
+      logger[DEBUG]<<(*i).toString(variableIdMapping)<<" ";
+    }
+    logger[DEBUG]<<endl;
+    logger[DEBUG]<<"INDEX: ";
+    for(IndexVector::iterator iv=index.begin();iv!=index.end();++iv) {
+      if(iv!=index.begin())
+        logger[DEBUG]<<",";
+      logger[DEBUG]<<*iv;
+    }
+    logger[DEBUG]<<" W-SET: ";
+    for(ArrayElementAccessDataSet::const_iterator i=indexToReadWriteDataMap[index].writeArrayAccessSet.begin();i!=indexToReadWriteDataMap[index].writeArrayAccessSet.end();++i) {
+      logger[DEBUG]<<(*i).toString(variableIdMapping)<<" ";
+    }
+    logger[DEBUG]<<endl;
+    logger[DEBUG]<<"read-array-access:"<<indexToReadWriteDataMap[index].readArrayAccessSet.size()<<" read-var-access:"<<indexToReadWriteDataMap[index].readVarIdSet.size()<<endl;
+    logger[DEBUG]<<" write-array-access:"<<indexToReadWriteDataMap[index].writeArrayAccessSet.size()<<" write-var-access:"<<indexToReadWriteDataMap[index].writeVarIdSet.size()<<endl;
+  } // imap
+}
+
+int Specialization::numberOfRacyThreadPairs(IndexToReadWriteDataMap& indexToReadWriteDataMap, 
+					    VariableIdMapping* variableIdMapping) {
+  // perform the data race check
+  // 1) compute vector of index-vectors for each outer-var-vector
+  CheckMapType checkMap;
+  populateCheckMap(checkMap, indexToReadWriteDataMap);
+  // 2) check each index-vector. For each iteration of each par-loop iteration then.
+  int errorCount = 0;
+  ArrayElementAccessDataSet readWriteRaces;
+  ArrayElementAccessDataSet writeWriteRaces;
+  bool drdebug=false;
+  if(drdebug) cout<<"DEBUG: checkMap size: "<<checkMap.size()<<endl;
+  for(CheckMapType::iterator miter=checkMap.begin();miter!=checkMap.end();++miter) {
+    IndexVector outerVarIndexVector=(*miter).first;
+    if(drdebug) logger[DEBUG]<<"outerVarIndexVector: "<<indexVectorToString(outerVarIndexVector)<<endl;
+    ThreadVector threadVectorToCheck=(*miter).second;
+    if(drdebug) logger[DEBUG]<<"vector size to check: "<<threadVectorToCheck.size()<<endl;
+    for(ThreadVector::iterator tv1=threadVectorToCheck.begin();tv1!=threadVectorToCheck.end();++tv1) {
+      if(drdebug) logger[DEBUG]<<"thread-vectors: tv1:"<<"["<<indexVectorToString(*tv1)<<"]"<<endl;
+      ArrayElementAccessDataSet wset=indexToReadWriteDataMap[*tv1].writeArrayAccessSet;
+      if(drdebug) logger[DEBUG]<<"tv1-wset:"<<wset.size()<<": "<<arrayElementAccessDataSetToString(wset,variableIdMapping)<<endl;
+      //for(ThreadVector::iterator tv2=tv1;tv2!=threadVectorToCheck.end();++tv2) {
+      for(ThreadVector::iterator tv2=threadVectorToCheck.begin();tv2!=threadVectorToCheck.end();++tv2) {
+	if(tv2!=tv1) {
+	  ThreadVector::iterator tv2b=tv2;
+	  //++tv2b;
+	  if(tv2b!=threadVectorToCheck.end()) {
+	    if(drdebug) logger[DEBUG]<<"thread-vectors: tv2b:"<<"["<<indexVectorToString(*tv2b)<<"]"<<endl;
+	    ArrayElementAccessDataSet rset2=indexToReadWriteDataMap[*tv2b].readArrayAccessSet;
+	    ArrayElementAccessDataSet wset2=indexToReadWriteDataMap[*tv2b].writeArrayAccessSet;
+	    // check intersect(rset,wset)
+	    if(drdebug) logger[DEBUG]<<"rset2:"<<rset2.size()<<": "<<arrayElementAccessDataSetToString(rset2,variableIdMapping)<<endl;
+	    if(drdebug) logger[DEBUG]<<"wset2:"<<wset2.size()<<": "<<arrayElementAccessDataSetToString(wset2,variableIdMapping)<<endl;
+	    ArrayElementAccessDataSet intersect = intersection(wset, rset2);
+	    if(!intersect.empty()) {
+	      // verification failed
+	      readWriteRaces.insert(intersect.begin(), intersect.end());
+	      errorCount++;
+	      if (!_checkAllDataRaces && !_checkAllLoops) {
+		return errorCount;
+	      }
+	    }
+	    intersect = intersection(wset, wset2); 
+	    if(!intersect.empty()) {
+	      // verification failed
+	      writeWriteRaces.insert(intersect.begin(), intersect.end());
+	      errorCount++;
+	      if (!_checkAllDataRaces && !_checkAllLoops) {
+		return errorCount;
+	      }
+	    }
+	  }
+	} // same-iter check
+      }
+      if(drdebug) logger[DEBUG]<<"------------------------"<<endl;
+    }
+  }
+  // 3) optional: Generate a dot graph for visualizing reads and writes (including data races)
+  if (_visualizeReadWriteAccesses) {
+    string filename = "readWriteSetGraph.dot";
+    Visualizer visualizer;
+    string dotGraph = visualizer.visualizeReadWriteAccesses(indexToReadWriteDataMap, variableIdMapping, 
+							    readWriteRaces, writeWriteRaces, 
+							    !args.getBool("rw-data"), 
+							    args.getBool("rw-clusters"),
+							    args.getBool("rw-highlight-races"));
+    write_file(filename, dotGraph);
+    logger[TRACE] << "STATUS: written graph that illustrates read and write accesses to file: " << filename << endl;
+  }
+  return errorCount;
+}
+
+void Specialization::populateCheckMap(CheckMapType& checkMap, IndexToReadWriteDataMap& indexToReadWriteDataMap) {
+  for(IndexToReadWriteDataMap::iterator imap=indexToReadWriteDataMap.begin();
+      imap!=indexToReadWriteDataMap.end();
+      ++imap) {
+    IndexVector index=(*imap).first;
+    IndexVector outVarIndex;
+    // if index.size()==0, it will analyze the loop independet of outer loops
+    if(index.size()>0) {
+      ROSE_ASSERT(index.size()>0);
+      for(size_t iv1=0;iv1<index.size()-1;iv1++) {
+	outVarIndex.push_back(index[iv1]);
+      }
+      ROSE_ASSERT(outVarIndex.size()<index.size());
+    } else {
+      // nothing to check
+      continue;
+    }
+    // last index of index of par-variable
+    //int parVariableValue=index[index.size()-1];
+    checkMap[outVarIndex].push_back(index);
+  }
 }
 
 void Specialization::writeArrayUpdatesToFile(ArrayUpdatesSequence& arrayUpdates, string filename, SAR_MODE sarMode, bool performSorting) {
