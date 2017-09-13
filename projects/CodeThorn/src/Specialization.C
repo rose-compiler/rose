@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 #include "Specialization.h"
 #include "SgNodeHelper.h"
+#include "CollectionOperators.h"
 
 #include <map>
 #include <sstream>
@@ -595,15 +596,6 @@ string Specialization::iterVarsToString(IterationVariables iterationVars, Variab
   return ss.str();
 }
 
-ArrayElementAccessDataSet intersection(ArrayElementAccessDataSet& set1,ArrayElementAccessDataSet& set2) {
-  ArrayElementAccessDataSet result;
-  for(ArrayElementAccessDataSet::iterator i=set1.begin();i!=set1.end();++i) {
-    if(set2.find(*i)!=set2.end())
-      result.insert(*i);
-  }
-  return result;
-}
-
 std::string arrayElementAccessDataSetToString(ArrayElementAccessDataSet& ds, VariableIdMapping* vim) {
   std::stringstream ss;
   for(ArrayElementAccessDataSet::iterator i=ds.begin();i!=ds.end();++i) {
@@ -679,10 +671,6 @@ int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet& loopInfoSet,
 void Specialization::populateReadWriteDataIndex(LoopInfo& li, IndexToReadWriteDataMap& indexToReadWriteDataMap, 
                                                 ArrayUpdatesSequence& arrayUpdates, VariableIdSet& allIterVars, 
                                                 VariableIdMapping* variableIdMapping) {
-  // The following two variables are currently not used. 
-  // They were previously initialized at the beginning of function "verifyUpdateSequenceRaceConditions".
-  stringstream ss;
-  int cnt = 0;
   for(ArrayUpdatesSequence::iterator i=arrayUpdates.begin();i!=arrayUpdates.end();++i) {
     const EState* estate=(*i).first;
     if (li.isInAssociatedLoop(estate)) {
@@ -690,9 +678,6 @@ void Specialization::populateReadWriteDataIndex(LoopInfo& li, IndexToReadWriteDa
       SgExpression* exp=(*i).second;
       IndexVector index = extractIndexVector(li, pstate, allIterVars);
       addAccessesFromExpressionToIndex(exp, index, indexToReadWriteDataMap, variableIdMapping);
-        
-      ss<<"UPD"<<cnt<<":"<<pstate->toString(variableIdMapping)<<" : "<<exp->unparseToString()<<endl;
-      ++cnt;
     }
   } // array sequence iter
 }
@@ -808,8 +793,8 @@ int Specialization::numberOfRacyThreadPairs(IndexToReadWriteDataMap& indexToRead
   populateCheckMap(checkMap, indexToReadWriteDataMap);
   // 2) check each index-vector. For each iteration of each par-loop iteration then.
   int errorCount = 0;
-  ArrayElementAccessDataSet readWriteRaces;
-  ArrayElementAccessDataSet writeWriteRaces;
+  ArrayElementAccessDataSet arrayReadWriteRaces;
+  ArrayElementAccessDataSet arrayWriteWriteRaces;
   bool drdebug=false;
   if(drdebug) cout<<"DEBUG: checkMap size: "<<checkMap.size()<<endl;
   for(CheckMapType::iterator miter=checkMap.begin();miter!=checkMap.end();++miter) {
@@ -819,40 +804,47 @@ int Specialization::numberOfRacyThreadPairs(IndexToReadWriteDataMap& indexToRead
     if(drdebug) logger[DEBUG]<<"vector size to check: "<<threadVectorToCheck.size()<<endl;
     for(ThreadVector::iterator tv1=threadVectorToCheck.begin();tv1!=threadVectorToCheck.end();++tv1) {
       if(drdebug) logger[DEBUG]<<"thread-vectors: tv1:"<<"["<<indexVectorToString(*tv1)<<"]"<<endl;
-      ArrayElementAccessDataSet wset=indexToReadWriteDataMap[*tv1].writeArrayAccessSet;
-      if(drdebug) logger[DEBUG]<<"tv1-wset:"<<wset.size()<<": "<<arrayElementAccessDataSetToString(wset,variableIdMapping)<<endl;
-      //for(ThreadVector::iterator tv2=tv1;tv2!=threadVectorToCheck.end();++tv2) {
-      for(ThreadVector::iterator tv2=threadVectorToCheck.begin();tv2!=threadVectorToCheck.end();++tv2) {
-	if(tv2!=tv1) {
-	  ThreadVector::iterator tv2b=tv2;
-	  //++tv2b;
-	  if(tv2b!=threadVectorToCheck.end()) {
-	    if(drdebug) logger[DEBUG]<<"thread-vectors: tv2b:"<<"["<<indexVectorToString(*tv2b)<<"]"<<endl;
-	    ArrayElementAccessDataSet rset2=indexToReadWriteDataMap[*tv2b].readArrayAccessSet;
-	    ArrayElementAccessDataSet wset2=indexToReadWriteDataMap[*tv2b].writeArrayAccessSet;
-	    // check intersect(rset,wset)
-	    if(drdebug) logger[DEBUG]<<"rset2:"<<rset2.size()<<": "<<arrayElementAccessDataSetToString(rset2,variableIdMapping)<<endl;
-	    if(drdebug) logger[DEBUG]<<"wset2:"<<wset2.size()<<": "<<arrayElementAccessDataSetToString(wset2,variableIdMapping)<<endl;
-	    ArrayElementAccessDataSet intersect = intersection(wset, rset2);
-	    if(!intersect.empty()) {
-	      // verification failed
-	      readWriteRaces.insert(intersect.begin(), intersect.end());
-	      errorCount++;
-	      if (!_checkAllDataRaces && !_checkAllLoops) {
-		return errorCount;
-	      }
-	    }
-	    intersect = intersection(wset, wset2); 
-	    if(!intersect.empty()) {
-	      // verification failed
-	      writeWriteRaces.insert(intersect.begin(), intersect.end());
-	      errorCount++;
-	      if (!_checkAllDataRaces && !_checkAllLoops) {
-		return errorCount;
-	      }
-	    }
+      ArrayElementAccessDataSet wset1=indexToReadWriteDataMap[*tv1].writeArrayAccessSet;
+      if(drdebug) logger[DEBUG]<<"tv1-wset:"<<wset1.size()<<": "<<arrayElementAccessDataSetToString(wset1,variableIdMapping)<<endl;
+      ArrayElementAccessDataSet rset1=indexToReadWriteDataMap[*tv1].readArrayAccessSet;
+      // Compare each loop index pair only once
+      ThreadVector::iterator tv2=tv1;
+      ++tv2;
+      for(; tv2!=threadVectorToCheck.end(); ++tv2) {
+	if(drdebug) logger[DEBUG]<<"thread-vectors: tv2:"<<"["<<indexVectorToString(*tv2)<<"]"<<endl;
+	ArrayElementAccessDataSet rset2=indexToReadWriteDataMap[*tv2].readArrayAccessSet;
+	ArrayElementAccessDataSet wset2=indexToReadWriteDataMap[*tv2].writeArrayAccessSet;
+	if(drdebug) logger[DEBUG]<<"rset2:"<<rset2.size()<<": "<<arrayElementAccessDataSetToString(rset2,variableIdMapping)<<endl;
+	if(drdebug) logger[DEBUG]<<"wset2:"<<wset2.size()<<": "<<arrayElementAccessDataSetToString(wset2,variableIdMapping)<<endl;
+	// Data race definition: 
+	// Two accesses to the same shared memory location by two different threads (therefore loop indices), one of which is a write
+	ArrayElementAccessDataSet intersect = wset1 * wset2;
+	if(!intersect.empty()) {
+	  // verification failed
+	  arrayWriteWriteRaces.insert(intersect.begin(), intersect.end());
+	  errorCount++;
+	  if (!_checkAllDataRaces && !_checkAllLoops) {
+	    return errorCount;
 	  }
-	} // same-iter check
+	}
+	intersect = wset1 * rset2; 
+	if(!intersect.empty()) {
+	  // verification failed
+	  arrayReadWriteRaces.insert(intersect.begin(), intersect.end());
+	  errorCount++;
+	  if (!_checkAllDataRaces && !_checkAllLoops) {
+	    return errorCount;
+	  }
+	}
+	intersect = rset1 * wset2; 
+	if(!intersect.empty()) {
+	  // verification failed
+	  arrayReadWriteRaces.insert(intersect.begin(), intersect.end());
+	  errorCount++;
+	  if (!_checkAllDataRaces && !_checkAllLoops) {
+	    return errorCount;
+	  }
+	}
       }
       if(drdebug) logger[DEBUG]<<"------------------------"<<endl;
     }
@@ -862,7 +854,7 @@ int Specialization::numberOfRacyThreadPairs(IndexToReadWriteDataMap& indexToRead
     string filename = "readWriteSetGraph.dot";
     Visualizer visualizer;
     string dotGraph = visualizer.visualizeReadWriteAccesses(indexToReadWriteDataMap, variableIdMapping, 
-							    readWriteRaces, writeWriteRaces, 
+							    arrayReadWriteRaces, arrayWriteWriteRaces, 
 							    !args.getBool("rw-data"), 
 							    args.getBool("rw-clusters"),
 							    args.getBool("rw-highlight-races"));

@@ -14,10 +14,8 @@ template<typename T>
 std::set<T> operator*(std::set<T>& s1, std::set<T>& s2) {
   std::set<T> result;
   for(typename std::set<T>::iterator i1=s1.begin();i1!=s1.end();++i1) {
-    for(typename std::set<T>::iterator i2=s2.begin();i2!=s2.end();++i2) {
-      if(s2.find(*i1)!=s2.end()) {
-        result.insert(*i1);
-      }
+    if(s2.find(*i1)!=s2.end()) {
+      result.insert(*i1);
     }
   }
   return result;

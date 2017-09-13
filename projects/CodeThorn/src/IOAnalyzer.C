@@ -26,10 +26,6 @@ void IOAnalyzer::initDiagnostics() {
 
 IOAnalyzer::IOAnalyzer() {
   initDiagnostics();
-  variableIdMapping.setModeVariableIdForEachArrayElement(true);
-  for(int i=0;i<100;i++) {
-    binaryBindingAssert.push_back(false);
-  }
 }
 
 void IOAnalyzer::initializeSolver(std::string functionToStartAt,SgNode* root, bool oneFunctionOnly) {
