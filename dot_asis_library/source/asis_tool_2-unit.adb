@@ -210,6 +210,7 @@ package body Asis_Tool_2.Unit is
            Acu.Compilation_Command_Line_Options (Unit);
       begin
         This.Add_To_Dot_Label ("Compilation_Command_Line_Options", To_String (WS));
+         This.A_Unit.Compilation_Command_Line_Options := To_Chars_Ptr (WS);
       end;
 
       procedure Add_Corresponding_Body is
@@ -291,17 +292,17 @@ package body Asis_Tool_2.Unit is
       procedure Add_Object_Form is
          WS : constant Wide_String := ACU.Object_Form (Unit);
       begin
-         null; -- Empty:
---           This.Add_To_Dot_Label ("Object_Form", To_String (WS));
---           This.A_Unit.Object_Form := To_Chars_Ptr (WS);
+         -- Empty:
+         This.Add_To_Dot_Label ("Object_Form", To_String (WS));
+         This.A_Unit.Object_Form := To_Chars_Ptr (WS);
       end;
 
       procedure Add_Object_Name is
          WS : constant Wide_String := ACU.Object_Name (Unit);
       begin
-         null; -- Empty:
---           This.Add_To_Dot_Label ("Object_Name", To_String (WS));
---           This.A_Unit.Object_Name := To_Chars_Ptr (WS);
+         -- Empty:
+         This.Add_To_Dot_Label ("Object_Name", To_String (WS));
+         This.A_Unit.Object_Name := To_Chars_Ptr (WS);
       end;
 
       procedure Add_Subunits is
@@ -316,9 +317,9 @@ package body Asis_Tool_2.Unit is
       procedure Add_Text_Form is
          WS : constant Wide_String := ACU.Text_Form (Unit);
       begin
-         null; -- Empty:
---           This.Add_To_Dot_Label ("Text_Form", To_String (WS));
---           This.A_Unit.Text_Form := To_Chars_Ptr (WS);
+         -- Empty:
+         This.Add_To_Dot_Label ("Text_Form", To_String (WS));
+         This.A_Unit.Text_Form := To_Chars_Ptr (WS);
       end;
 
       procedure Add_Text_Name is
