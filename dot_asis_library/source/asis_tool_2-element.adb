@@ -2283,7 +2283,7 @@ package body Asis_Tool_2.Element is
    procedure Process_Element_Tree
      (This    : in out Class;
       Element : in     Asis.Element;
-      Outputs : in     Output_Accesses_Record)
+      Outputs : in     Outputs_Record)
    is
       Process_Control : Asis.Traverse_Control := Asis.Continue;
    begin

@@ -521,7 +521,7 @@ package body Asis_Tool_2.Unit is
    procedure Process
      (This    : in out Class;
       Unit    : in     Asis.Compilation_Unit;
-      Outputs : in     Output_Accesses_Record)
+      Outputs : in     Outputs_Record)
    is
       Unit_Full_Name : constant Wide_String       := Acu.Unit_Full_Name (Unit);
       Unit_Origin    : constant Asis.Unit_Origins := Acu.Unit_Origin (Unit);

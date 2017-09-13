@@ -1,3 +1,5 @@
+with Ada.Strings.Unbounded;
+
 with A_Nodes;
 with Dot;
 with Indented_Text;
@@ -18,18 +20,26 @@ private with a_nodes_h.Support;
 package Asis_Tool_2 is
 
    -- Controls behavior of Trace_ routines.  Renamed here so clients have to
-   -- with less:
+   -- with fewer packages:
    Trace_On : Boolean renames Indented_Text.Trace_On;
 
-   type Output_Accesses_Record is record -- Initialized
-      A_Nodes : Standard.A_Nodes.Access_Class; -- Initialized
-      Graph   : Dot.Graphs.Access_Class; -- Initialized
-      Text    : Indented_Text.Access_Class; -- Initialized
+   type Outputs_Record is record -- Initialized
+      Output_Dir : Ada.Strings.Unbounded.Unbounded_String; -- Initialized
+      A_Nodes    : Standard.A_Nodes.Access_Class; -- Initialized
+      Graph      : Dot.Graphs.Access_Class; -- Initialized
+      Text       : Indented_Text.Access_Class; -- Initialized
    end record;
+
+   -- Raised when a subprogram is called incorrectly:
+   Usage_Error : Exception;
+
+   -- Raised when an external routine fails and the subprogram cannot continue:
+   External_Error : Exception;
 
 private
 
    package AEX renames Ada.Exceptions;
+   package ASU renames Ada.Strings.Unbounded;
    package ATI renames Ada.Text_IO;
    package AWTI renames Ada.Wide_Text_IO;
    package ICS renames Interfaces.C.Strings;
