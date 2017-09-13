@@ -318,7 +318,7 @@ main (int argc, char *argv[])
       SgGlobal *root = sfile->get_globalScope();
 
       Rose_STL_Container<SgNode*> defList = NodeQuery::querySubTree(sfile, V_SgFunctionDefinition); 
-      bool hasOpenMP= false; // flag to indicate if omp.h is needed in this file
+      bool hasOpenMP= false; // flag to indicate if there is at least one loop is parallelized. also if omp.h is needed in this file
 
       //For each function body in the scope
       //for (SgDeclarationStatementPtrList::iterator p = declList.begin(); p != declList.end(); ++p) 

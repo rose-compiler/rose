@@ -2022,6 +2022,7 @@ projects/arrayOptimization/Makefile
 projects/arrayOptimization/test/Makefile
 projects/autoParallelization/Makefile
 projects/autoParallelization/tests/Makefile
+projects/autoParallelization/difftests/Makefile
 projects/autoTuning/Makefile
 projects/autoTuning/doc/Makefile
 projects/autoTuning/tests/Makefile
