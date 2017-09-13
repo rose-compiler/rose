@@ -209,7 +209,7 @@ package body Asis_Tool_2.Unit is
          WS : constant Wide_String :=
            Acu.Compilation_Command_Line_Options (Unit);
       begin
-        This.Add_To_Dot_Label ("Compilation_Command_Line_Options", To_String (WS));
+         This.Add_To_Dot_Label ("Compilation_Command_Line_Options", To_String (WS));
          This.A_Unit.Compilation_Command_Line_Options := To_Chars_Ptr (WS);
       end;
 

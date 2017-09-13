@@ -153,7 +153,7 @@ enum Unit_Origins {
 };
 
 
-// May take 8*4 bytes - 1 ID, 3 enum, 4 char*:
+// May take 21*4 (20*4 + 3) bytes - 5 ID, 3 enum, 2 Unit_List(2*4 ea), 8 char*, 3 bool:
 struct Unit_Struct {
   Unit_ID           ID;
   enum Unit_Kinds   Unit_Kind;
@@ -1337,14 +1337,23 @@ union Element_Union {
   struct Exception_Handler_Struct Exception_Handler;
 };
 
-// May take 44*4 bytes - a 37*4 union, 2 IDs, 1 char*, 2 enums, 1 ptr, 1 int:
+// May take 5*4 bytes - 1 char*, 4 int:
+struct Source_Location_Struct {
+  char *Unit_Name;
+  int   First_Line;
+  int   First_Column;
+  int   Last_Line;
+  int   Last_Column;
+};
+
+// May take 46*4 bytes - 2 IDs, 2 enums, 5*4 struct, 37*4 union:
 struct Element_Struct {
-  Element_ID            ID;
-  enum Element_Kinds    Element_Kind;
-  Node_ID               Enclosing_Element_ID;
-  enum Enclosing_Kinds  Enclosing_Kind;
-  char                 *Source_Location;
-  union Element_Union   The_Union;
+  Element_ID                    ID;
+  enum Element_Kinds            Element_Kind;
+  Node_ID                       Enclosing_Element_ID;
+  enum Enclosing_Kinds          Enclosing_Kind;
+  struct Source_Location_Struct Source_Location;
+  union Element_Union           The_Union;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
