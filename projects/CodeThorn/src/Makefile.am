@@ -662,12 +662,19 @@ check-svcomp-witness:
 	./codethorn $(srcdir)/tests/svcomp/eca-rers2012/Problem01_label15_false-unreach-call.c --svcomp-mode --input-values="{1,2,3,4,5,6}" --witness-file=toBeImplemented.witness --with-counterexamples
 
 check-equivalence-checking:
-@echo ================================================================
+	@echo ================================================================
 	@echo RUNNING UPDATE SEQUENCE VERIFICATION TESTS
 	@echo ================================================================
 	@./codethorn --edg:no_warnings $(srcdir)/tests/jacobi-1d-imper_mod.c --dump-non-sorted=tmp.nsdump --rule-commutative-sort=no
 #	@diff tmp.nsdump $(srcdir)/tests/jacobi-1d-imper_mod.c.nsdump
 	@rm -f tmp.nsdump
+
+check-commandline-option:
+	@echo ================================================================
+	@echo RUNNING COMMAND LINE OPTION TESTS
+	@echo ================================================================
+	@./codethorn --edg:no_warnings --cl-options="a b c" $(srcdir)/tests/commandlineoptions1.C
+
 
 
 # MS: 1-6 is reasonable for V1.2

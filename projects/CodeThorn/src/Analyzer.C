@@ -1024,7 +1024,7 @@ void Analyzer::initializeSolver(std::string functionToStartAt,SgNode* root, bool
 #endif
 
   // create empty state
-  PState emptyPState;
+  PState initialPState;
   // TODO1: add formal paramters of solo-function
   // SgFunctionDefinition* startFunRoot: node of function
   // estate=analyzeVariableDeclaration(SgVariableDeclaration*,estate,estate.label());
@@ -1033,12 +1033,24 @@ void Analyzer::initializeSolver(std::string functionToStartAt,SgNode* root, bool
     VariableId varId=variableIdMapping.variableId(*i);
     ROSE_ASSERT(varId.isValid());
     // initialize all formal parameters of function (of extremal label) with top
-    //emptyPState[varId]=AbstractValue(CodeThorn::Top());
-    emptyPState.writeTopToMemoryLocation(varId);
+    //initialPState[varId]=AbstractValue(CodeThorn::Top());
+    initialPState.writeTopToMemoryLocation(varId);
   }
-  const PState* emptyPStateStored=processNew(emptyPState);
-  ROSE_ASSERT(emptyPStateStored);
-  logger[TRACE]<< "INIT: Empty state(stored): "<<emptyPStateStored->toString()<<endl;
+  if(_commandLineOptions.size()>0) {
+    // create command line option array argv and argc in initial pstate
+    int argc=0;
+    for (auto argvElem:_commandLineOptions) {
+      cout<<"Initial state: argv["<<argc+1<<"]: "<<argvElem<<endl;
+      argc++;
+    }
+    cout<<"Initial state argc:"<<argc<<endl;
+    cout<<"Argv/argc initialization not implemented yet."<<endl;
+    // TODO: alloc mem for argv elements
+    // TODO: initialPState.writeToMemoryLocation(abstractMemLocArgc,abstractValueArgc);
+  }
+  const PState* initialPStateStored=processNew(initialPState);
+  ROSE_ASSERT(initialPStateStored);
+  logger[TRACE]<< "INIT: initial state(stored): "<<initialPStateStored->toString()<<endl;
   ROSE_ASSERT(cfanalyzer);
   ConstraintSet cset;
   const ConstraintSet* emptycsetstored=constraintSetMaintainer.processNewOrExisting(cset);
@@ -1046,7 +1058,7 @@ void Analyzer::initializeSolver(std::string functionToStartAt,SgNode* root, bool
   transitionGraph.setStartLabel(startLabel);
   transitionGraph.setAnalyzer(this);
 
-  EState estate(startLabel,emptyPStateStored,emptycsetstored);
+  EState estate(startLabel,initialPStateStored,emptycsetstored);
 
   if(SgProject* project=isSgProject(root)) {
     logger[TRACE]<< "STATUS: Number of global variables: ";
@@ -2188,4 +2200,8 @@ void Analyzer::setTypeSizeMapping(SgTypeSizeMapping* typeSizeMapping) {
 
 SgTypeSizeMapping* Analyzer::getTypeSizeMapping() {
   return AbstractValue::getTypeSizeMapping();
+}
+
+void Analyzer::setCommandLineOptions(vector<string> clOptions) {
+  _commandLineOptions=clOptions;
 }

@@ -201,6 +201,11 @@ namespace CodeThorn {
     void setTypeSizeMapping(SgTypeSizeMapping* typeSizeMapping);
     SgTypeSizeMapping* getTypeSizeMapping();
 
+    /* command line options provided to analyzed application
+       if set they are used to initialize the initial state with argv and argc domain abstractions
+    */
+    void setCommandLineOptions(vector<string> clOptions);
+
     ///////
     // MJ: 08/24/2017: Currently not used
     //! list of all asserts in a program
@@ -371,6 +376,7 @@ namespace CodeThorn {
     Timer _analysisTimer;
     bool _timerRunning = false;
 
+    std::vector<string> _commandLineOptions;
   }; // end of class Analyzer
 } // end of namespace CodeThorn
 

@@ -878,6 +878,7 @@ void analyzerSetup(IOAnalyzer& analyzer, Sawyer::Message::Facility logger) {
   if (args.isDefined("cl-options")) {
     string clOptions=args.getString("cl-options");
     vector<string> clOptionsVector=Parse::commandLineArgs(clOptions);
+    analyzer.setCommandLineOptions(clOptionsVector);
     // TODO set this result and create initial state
   }
 
