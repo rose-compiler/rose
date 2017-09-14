@@ -1028,9 +1028,23 @@ void Analyzer::initializeSolver(std::string functionToStartAt,SgNode* root, bool
   // TODO1: add formal paramters of solo-function
   // SgFunctionDefinition* startFunRoot: node of function
   // estate=analyzeVariableDeclaration(SgVariableDeclaration*,estate,estate.label());
+  string functionName=SgNodeHelper::getFunctionName(startFunRoot);
   SgInitializedNamePtrList& initNamePtrList=SgNodeHelper::getFunctionDefinitionFormalParameterList(startFunRoot);
+  VariableId argcVarId;
+  VariableId argvVarId;
+  size_t mainFunArgNr=0;
   for(SgInitializedNamePtrList::iterator i=initNamePtrList.begin();i!=initNamePtrList.end();++i) {
     VariableId varId=variableIdMapping.variableId(*i);
+    if(functionName=="main") {
+      //string varName=getVariableIdMapping()->variableName(varId)) {
+      switch(mainFunArgNr) {
+      case 0: argcVarId=varId;break;
+      case 1: argvVarId=varId;break;
+      default:
+        throw CodeThorn::Exception("Error: main function has more than 2 parameters.");
+      }
+      mainFunArgNr++;
+    }
     ROSE_ASSERT(varId.isValid());
     // initialize all formal parameters of function (of extremal label) with top
     //initialPState[varId]=AbstractValue(CodeThorn::Top());

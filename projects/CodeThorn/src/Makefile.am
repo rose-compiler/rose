@@ -669,7 +669,7 @@ check-equivalence-checking:
 #	@diff tmp.nsdump $(srcdir)/tests/jacobi-1d-imper_mod.c.nsdump
 	@rm -f tmp.nsdump
 
-check-commandline-option:
+check-commandline-options:
 	@echo ================================================================
 	@echo RUNNING COMMAND LINE OPTION TESTS
 	@echo ================================================================
