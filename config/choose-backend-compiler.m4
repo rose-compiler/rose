@@ -118,7 +118,7 @@ echo "Testing value of FC = $FC"
 
       IS_APPLE_GCC=`g++ --version | grep -ci "Apple LLVM"`
       echo "IS_APPLE_GCC = $IS_APPLE_GCC"
-      if test $IS_MACPORT_GCC -ne 0; then
+      if test $IS_APPLE_GCC -ne 0; then
         BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=`${srcdir}/config/getAppleClangMajorVersionNumber.sh`
         BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=`${srcdir}/config/getAppleClangMinorVersionNumber.sh`
 
