@@ -23,7 +23,7 @@ library project DOT_ASIS_Library is
       "indented_text.ads",
       "tool_2_wrapper_h.ads");
    for Library_Standalone use "encapsulated";
-   for Library_Auto_Init use "true";
+   for Library_Auto_Init use "false";
    
    for Source_Dirs use
      ("./source",

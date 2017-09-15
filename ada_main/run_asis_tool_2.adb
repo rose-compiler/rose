@@ -47,13 +47,21 @@ procedure Run_Asis_Tool_2 is
          raise;
    end Get_Options;
 
+   procedure dot_asisinit;
+   pragma Import (C, dot_asisinit);
+
+   procedure dot_asisfinal;
+   pragma Import (C, dot_asisfinal);
+
 begin
    Get_Options;
    Log ("BEGIN");
+   dot_asisinit;
    Tool.Process
      (File_Name  => Options.File_Name.all,
       Output_Dir => Options.Output_Dir.all,
       GNAT_Home  => Options.GNAT_Home.all,
       Debug      => Options.Debug);
+   dot_asisfinal;
    Log ("END.");
 end Run_Asis_Tool_2;
