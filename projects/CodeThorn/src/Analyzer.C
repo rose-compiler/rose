@@ -1053,12 +1053,21 @@ void Analyzer::initializeSolver(std::string functionToStartAt,SgNode* root, bool
   if(_commandLineOptions.size()>0) {
     // create command line option array argv and argc in initial pstate
     int argc=0;
+    VariableId argvArrayMemoryId=variableIdMapping.createAndRegisterNewMemoryRegion("$argv",(int)_commandLineOptions.size());
+    AbstractValue argvAddress=AbstractValue::createAddressOfArray(argvArrayMemoryId);
+    initialPState.writeToMemoryLocation(argvVarId,argvAddress);
     for (auto argvElem:_commandLineOptions) {
-      cout<<"Initial state: argv["<<argc+1<<"]: "<<argvElem<<endl;
+      cout<<"Initial state: "
+          <<variableIdMapping.variableName(argvVarId)<<"["<<argc+1<<"]: "
+          <<argvElem;
+      int regionSize=(int)string(argvElem).size();
+      cout<<" size: "<<regionSize<<endl;
       argc++;
     }
     cout<<"Initial state argc:"<<argc<<endl;
-    cout<<"Argv/argc initialization not implemented yet."<<endl;
+    AbstractValue abstractValueArgc(argc);
+    initialPState.writeToMemoryLocation(argcVarId,abstractValueArgc);
+    cout<<"Warning: Argv initialization not implemented yet."<<endl;
     // TODO: alloc mem for argv elements
     // TODO: initialPState.writeToMemoryLocation(abstractMemLocArgc,abstractValueArgc);
   }
