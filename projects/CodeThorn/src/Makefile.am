@@ -669,11 +669,11 @@ check-equivalence-checking:
 #	@diff tmp.nsdump $(srcdir)/tests/jacobi-1d-imper_mod.c.nsdump
 	@rm -f tmp.nsdump
 
-check-commandline-option:
+check-commandline-options:
 	@echo ================================================================
 	@echo RUNNING COMMAND LINE OPTION TESTS
 	@echo ================================================================
-	@./codethorn --edg:no_warnings --cl-options="a b c" $(srcdir)/tests/commandlineoptions1.C
+	@./codethorn --edg:no_warnings --cl-options="a bbb cc" $(srcdir)/tests/commandlineoptions1.C
 
 
 
