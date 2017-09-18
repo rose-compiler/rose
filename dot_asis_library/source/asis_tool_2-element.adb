@@ -838,6 +838,8 @@ package body Asis_Tool_2.Element is
                State.Add_Not_Implemented;
          end case;
 
+         State.A_Element.Element_Kind := a_nodes_h.A_Declaration ;
+         State.A_Element.The_Union.Declaration := A_Declaration;
       end Process_Declaration;
 
       -- TODO: Process_Formal_Type_Definition?
