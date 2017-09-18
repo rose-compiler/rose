@@ -2098,38 +2098,32 @@ package body Asis_Tool_2.Element is
               (Asis.Elements.Enclosing_Element (Element)));
       end Get_Enclosing_ID;
 
-      function Source_Location_Image
-        (Element : in Asis.Element)
+      function Spec_Or_Body_Image
+        (Unit_Class : in Asis.Unit_Classes)
          return String
       is
-         Unit : constant Asis.Compilation_Unit :=
-           Asis.Elements.Enclosing_Compilation_Unit (Element);
-         Unit_Name : constant String := To_String
-           (Asis.Compilation_Units.Unit_Full_Name (Unit));
-         Unit_Class : constant Asis.Unit_Classes := Asis.Compilation_Units.Unit_Class (Unit);
-         Span : constant Asis.Text.Span := Asis.Text.Element_Span (Element);
-
-         function Spec_Or_Body return String is
-            use all type Asis.Unit_Classes;
-         begin
-            case Unit_Class is
-               when Not_A_Class =>
-                  return "()";
-               when A_Public_Declaration |
-                    A_Private_Declaration =>
-                  return "(spec)";
-               when A_Public_Body |
-                    A_Private_Body =>
-                  return "(body)";
-               when A_Public_Declaration_And_Body =>
-                  return "(spec and body)";
-               when A_Separate_Body =>
-                  return "(separate body)";
-            end case;
-         end Spec_Or_Body;
-
+         use all type Asis.Unit_Classes;
       begin
-         return Unit_Name & Spec_Or_Body & " - " &
+         case Unit_Class is
+            when Not_A_Class =>
+               return "";
+            when A_Public_Declaration |
+                 A_Private_Declaration =>
+               return ".ads";
+            when A_Public_Body |
+                 A_Private_Body |
+                 A_Public_Declaration_And_Body |
+                 A_Separate_Body =>
+               return ".adb";
+         end case;
+      end Spec_Or_Body_Image;
+
+      function Source_Location_Image
+        (Unit_Name  : in String;
+         Span       : in Asis.Text.Span)
+         return String is
+      begin
+         return Unit_Name & " - " &
            NLB_Image (Span.First_Line) & ":" & NLB_Image (Span.First_Column) &
            " .. " &
            NLB_Image (Span.Last_Line) & ":" & NLB_Image (Span.Last_Column);
@@ -2159,11 +2153,26 @@ package body Asis_Tool_2.Element is
             State.A_Element.Element_Kind := anhS.To_Element_Kinds (Element_Kind);
          end;
 
-         procedure Add_Source_Location_Image is
-            Image : constant string := Source_Location_Image (Element);
+         procedure Add_Source_Location is
+            Unit : constant Asis.Compilation_Unit :=
+              Asis.Elements.Enclosing_Compilation_Unit (Element);
+            Unit_Class : constant Asis.Unit_Classes :=
+              Asis.Compilation_Units.Unit_Class (Unit);
+            Unit_Name : constant String := To_String
+              (Asis.Compilation_Units.Unit_Full_Name (Unit)) &
+              Spec_Or_Body_Image (Unit_Class);
+            Span : constant Asis.Text.Span := Asis.Text.Element_Span (Element);
+
+            Image : constant string := Source_Location_Image
+              (Unit_Name, Span);
          begin
             State.Add_To_Dot_Label ("Source", Image);
-            State.A_Element.source_location := To_Chars_Ptr (Image);
+            State.A_Element.Source_Location :=
+              (Unit_Name    => To_Chars_Ptr (Unit_Name),
+               First_Line   => Interfaces.C.int (Span.First_Line),
+               First_Column => Interfaces.C.int (Span.First_Column),
+               Last_Line    => Interfaces.C.int (Span.Last_Line),
+               Last_Column  => Interfaces.C.int (Span.Last_Column));
          end;
 
          procedure Start_Output is
@@ -2178,7 +2187,7 @@ package body Asis_Tool_2.Element is
 
             Add_Element_ID;
             Add_Element_Kind;
-            Add_Source_Location_Image;
+            Add_Source_Location;
          end;
 
          procedure Finish_Output is
@@ -2283,7 +2292,7 @@ package body Asis_Tool_2.Element is
    procedure Process_Element_Tree
      (This    : in out Class;
       Element : in     Asis.Element;
-      Outputs : in     Output_Accesses_Record)
+      Outputs : in     Outputs_Record)
    is
       Process_Control : Asis.Traverse_Control := Asis.Continue;
    begin

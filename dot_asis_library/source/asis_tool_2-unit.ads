@@ -10,7 +10,7 @@ package Asis_Tool_2.Unit is
    procedure Process
      (This    : in out Class;
       Unit    : in     Asis.Compilation_Unit;
-      Outputs : in     Output_Accesses_Record);
+      Outputs : in     Outputs_Record);
 
 private
 
@@ -25,7 +25,7 @@ private
          -- values between calls to Process_Element_Tree. Outputs has to go into
          -- Add_To_Dot_Label, though, so  we'll put it in the object and pass
          -- that:
-         Outputs   : Output_Accesses_Record; -- Initialized
+         Outputs   : Outputs_Record; -- Initialized
       end record;
 
 end Asis_Tool_2.Unit;

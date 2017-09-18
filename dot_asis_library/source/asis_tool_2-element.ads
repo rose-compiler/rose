@@ -11,7 +11,7 @@ package Asis_Tool_2.Element is
    procedure Process_Element_Tree
      (This    : in out Class;
       Element : in     Asis.Element;
-      Outputs : in     Output_Accesses_Record);
+      Outputs : in     Outputs_Record);
 
 private
 
@@ -32,7 +32,7 @@ private
       -- values between calls to Process_Element_Tree. Outputs has to go into
       -- State_Information in the Traverse_Element instatiation, though, so
       -- we'll put it in the object and pass that:
-         Outputs    : Output_Accesses_Record; -- Initialized
+         Outputs    : Outputs_Record; -- Initialized
       end record;
 
    -- Add <Name> => <Value> to the label, and print it if trace is on:

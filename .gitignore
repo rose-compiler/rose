@@ -30,6 +30,9 @@ obj/
 *.stderr
 *.stdout
 
+# directory containing temporarily undeletable .nfs files:
+trash/
+
 # Specific files:
 
 # GNAT C to Ada:

@@ -262,12 +262,19 @@ package a_nodes_h.Support is
      (Discr        => 0,
       Dummy_Member => 0);
 
+   Default_Source_Location_Struct : constant Source_Location_Struct :=
+     (Unit_Name    => ICS.Null_Ptr,
+      First_Line   => -1,
+      First_Column => -1,
+      Last_Line    => -1,
+      Last_Column  => -1);
+
    Default_Element_Struct : constant Element_Struct :=
      (ID                   => Default_Node_ID,
       Element_Kind         => Not_An_Element,
       Enclosing_Element_Id => Default_Node_ID,
       Enclosing_Kind       => Not_Enclosing,
-      Source_Location      => Default_chars_ptr,
+      Source_Location      => Default_Source_Location_Struct,
       The_Union            => Default_Element_Union);
 
    Default_Node_Union : constant Node_Union :=

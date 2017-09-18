@@ -8,8 +8,9 @@ package Asis_Tool_2.Context is
    type Class is tagged limited private;
 
    procedure Process
-     (This    : in out Class;
-      Outputs : in     Output_Accesses_Record);
+     (This          : in out Class;
+      Tree_File_Dir : in     String;
+      Outputs       : in     Outputs_Record);
 
 private
 

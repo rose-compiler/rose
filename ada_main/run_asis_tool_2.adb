@@ -10,12 +10,12 @@ procedure Run_Asis_Tool_2 is
    package ACL renames Ada.Command_Line;
    package GCL renames GNAT.Command_Line;
 
-   Usage_Error : Exception;
-
    type Options_Record is record -- Initialized
-      Config    : GCL.Command_Line_Configuration; -- Initialized
-      Debug     : aliased Boolean := False;
-      File_Name : aliased GNAT.Strings.String_Access; -- Initialized
+      Config     : GCL.Command_Line_Configuration; -- Initialized
+      Debug      : aliased Boolean := False;
+      File_Name  : aliased GNAT.Strings.String_Access; -- Initialized
+      GNAT_Home  : aliased GNAT.Strings.String_Access; -- Initialized
+      Output_Dir : aliased GNAT.Strings.String_Access; -- Initialized
    end record;
 
    Options : aliased Options_Record; -- Initialized
@@ -34,10 +34,13 @@ procedure Run_Asis_Tool_2 is
       GCL.Define_Switch (Options.Config, Options.File_Name'Access,
                          "-f:", Long_Switch => "--file=",
                          Help => "File to process");
+      GCL.Define_Switch (Options.Config, Options.Gnat_Home'Access,
+                         "-g:", Long_Switch => "--gnat_home=",
+                         Help => "GNAT home directory");
+      GCL.Define_Switch (Options.Config, Options.Output_Dir'Access,
+                         "-o:", Long_Switch => "--output_dir=",
+                         Help => "Output directory");
       GCL.Getopt (Options.Config);
-      if Options.File_Name.all = "" then
-         raise Usage_Error with "File name must be provided, was empty";
-      end if;
    exception
       when X : GNAT.Command_Line.Exit_From_Command_Line =>
          Log ("*** GCL raised Exit_From_Command_Line.  Program will exit now.");
@@ -46,11 +49,11 @@ procedure Run_Asis_Tool_2 is
 
 begin
    Get_Options;
-   Log ("BEGIN - target_file_in => """ & Options.File_Name.all & """");
+   Log ("BEGIN");
    Tool.Process
-     (File_Name => Options.File_Name.all,
---    GNAT_Home => "/usr/workspace/wsb/charles/bin/adacore/gnat-gpl-2017-x86_64-linux",
-      GNAT_Home => "/home/quinlan1/ROSE/ADA/x86_64-linux/adagpl-2017/gnatgpl/gnat-gpl-2017-x86_64-linux-bin",
-      Debug     => Options.Debug);
+     (File_Name  => Options.File_Name.all,
+      Output_Dir => Options.Output_Dir.all,
+      GNAT_Home  => Options.GNAT_Home.all,
+      Debug      => Options.Debug);
    Log ("END.");
 end Run_Asis_Tool_2;

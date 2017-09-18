@@ -29,22 +29,23 @@ dot_asis_home=${base_dir}/../dot_asis_library
 dot_asis_lib_dir=${dot_asis_home}/lib
 
 obj_dir=${base_dir}/obj
-target_dir=${base_dir}/../test_units
-target_units="test_unit.adb"
+
 tool_name=call_asis_tool_2
+target_dir=${base_dir}/../test_units
+target_units="unit_2.adb"
 
 build_asis_tool () {
-  status=0
-  log ""
+  log_separator_1
   log "Building ${tool_name}"
   if [ ! -d ${obj_dir} ]; then
-    mkdir ${obj_dir} || status=1
+    mkdir ${obj_dir} || exit $?
   fi
+  current_dir=`pwd`
   cd ${obj_dir}
   
   ${gcc_home}/bin/gcc -c -x c -MMD -MF ${tool_name}.d \
   -I${dot_asis_home}/include \
-  ${base_dir}/${tool_name}.c
+  ${base_dir}/${tool_name}.c || exit $?
 
   ${gcc_home}/bin/gcc \
   ${tool_name}.o \
@@ -52,25 +53,26 @@ build_asis_tool () {
   -lpthread \
   -lrt \
   -ldl \
-  -o ${tool_name} || status=1
-
-#  ${asis_lib_dir}/libasis.a \
-#  ${gnat_lib_dir}/libgnarl.a \
-#  ${gnat_lib_dir}/libgnat.a \
-#  -static-libgcc \
-  
-  return ${status}
+  -o ${tool_name} || exit $?
+  cd ${current_dir}
 }
 
 # Keeps going.  Returns 1 if any failed, 0 if all succeeded:
 process_units () {
   status=0  
+  log_separator_1
   log "Processing specified files in ${target_dir} with ${tool_name}"
-  cd ${target_dir}
   for target_unit in ${target_units}
   do
     log "Processing ${target_unit}" 
-    log_and_run ${obj_dir}/${tool_name} -f ${target_unit} "$@" || status=1
+    # -f - Input file name (required)
+    # -g - GNAT home directory (required)
+    # -o - Output directory (optional)
+    log_and_run ${obj_dir}/${tool_name} \
+       -f ${target_dir}/${target_unit} \
+       -g /usr/workspace/wsb/charles/bin/adacore/gnat-gpl-2017-x86_64-linux \
+       -o `pwd` \
+       "$@" || status=1
   done
   return ${status}
 }
@@ -78,7 +80,7 @@ process_units () {
 log_start
 log_invocation "$@"
 
-build_asis_tool    || exit $?
+build_asis_tool
 process_units "$@" || exit $?
 
 log_end
