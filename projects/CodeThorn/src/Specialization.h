@@ -10,6 +10,7 @@
 #include "ReadWriteData.h"
 #include "Visualizer.h"
 #include "LoopInfo.h"
+#include "CollectionOperators.h"
 
 // BOOST includes
 #include "boost/lexical_cast.hpp"
@@ -149,6 +150,8 @@ class Specialization {
   typedef map<IndexVector,ThreadVector > CheckMapType;
   int numberOfRacyThreadPairs(IndexToReadWriteDataMap& indexToReadWriteDataMap, VariableIdMapping* variableIdMapping);
   void populateCheckMap(CheckMapType& checkMap, IndexToReadWriteDataMap& indexToReadWriteDataMap);
+  template <typename T>
+    bool dataRaceExistsInvolving1And2(T& wset1, T& rset1, T& wset2, T& rset2, T& writeWriteRaces, T& readWriteRaces);
 
   SgFunctionDefinition* _specializedFunctionRootNode;
 
@@ -158,5 +161,29 @@ class Specialization {
   bool _visualizeReadWriteAccesses;
   long _maxNumberOfExtractedUpdates;
 };
+
+// ----- template implementation -----
+// Data race definition: 
+// Two accesses to the same shared memory location by two different threads, one of which is a write
+template <typename T>
+bool Specialization::dataRaceExistsInvolving1And2(T& wset1, T& rset1, T& wset2, T& rset2, 
+						  T& writeWriteRaces, T& readWriteRaces) {
+  T intersection = wset1 * wset2;
+  if(!intersection.empty()) {
+    writeWriteRaces.insert(intersection.begin(), intersection.end());
+    return true;
+  }
+  intersection = wset1 * rset2;
+  if(!intersection.empty()) {
+    readWriteRaces.insert(intersection.begin(), intersection.end());
+    return true;
+  }
+  intersection = rset1 * wset2;
+  if(!intersection.empty()) {
+    readWriteRaces.insert(intersection.begin(), intersection.end());
+    return true;
+  }
+  return false;
+}
 
 #endif
