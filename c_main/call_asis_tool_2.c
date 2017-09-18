@@ -2,9 +2,6 @@
 #include "a_nodes.h"
 #include "tool_2_wrapper.h"
 
-//extern void dot_asisinit (void);
-//extern void dot_asisfinal (void);
-
 int main (int argc, char *argv[])
 {
   char *prefix = "call_asis_tool_2.main";
@@ -17,8 +14,10 @@ int main (int argc, char *argv[])
   struct List_Node_Struct *head_node;
 
   printf ("%s:  BEGIN.\n", prefix);
-  //dot_asisinit();
+
+  dot_asisinit();
   head_node = tool_2_wrapper (target_file, gnat_home, output_dir);
+  dot_asisfinal();
 
   if (head_node == 0) {
     printf ("%s:  tool_2_wrapper returned NO elements.\n", prefix);
@@ -26,6 +25,5 @@ int main (int argc, char *argv[])
     printf ("%s:  tool_2_wrapper returned %i elements.\n" , prefix, head_node->Next_Count + 1);
   }
 
-  //dot_asisfinal();
   printf ("%s:  END.\n", prefix);
 }

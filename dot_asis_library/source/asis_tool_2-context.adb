@@ -1,4 +1,3 @@
-with Ada.Directories;
 with Asis.Ada_Environments;
 with Asis.Compilation_Units;
 with Asis.Exceptions;
@@ -71,22 +70,19 @@ package body Asis_Tool_2.Context is
    -- EXPORTED:
    ------------
    procedure Process
-     (This          : in out Class;
-      Tree_File_Dir : in     String;
-      Outputs       : in     Outputs_Record)
+     (This           : in out Class;
+      Tree_File_Name : in     String;
+      Outputs        : in     Outputs_Record)
    is
-      Current_Dir : constant String := Ada.Directories.Current_Directory;
-
       procedure Log (Message : in String) is
       begin
          Put_Line ("Asis_Tool_2.Context.Process:  " & message);
       end;
       procedure Begin_Environment is begin
-         Ada.Directories.Set_Directory (Tree_File_Dir);
-         -- This just names the Context.  It does not control what it processes:
          Asis.Ada_Environments.Associate
-           (This.Asis_Context,
-            To_Wide_String (Tree_File_Dir));
+           (The_Context => This.Asis_Context,
+            Name        => To_Wide_String (Tree_File_Name),
+            Parameters  => To_Wide_String ("-C1 " & Tree_File_Name));
          Asis.Ada_Environments.Open (This.Asis_Context);
          Trace_Put_Line ("Context info: " & Asis.Ada_Environments.Debug_Image
                          (This.Asis_Context));
@@ -94,11 +90,10 @@ package body Asis_Tool_2.Context is
       procedure End_Environment is begin
          Asis.Ada_Environments.Close (This.Asis_Context);
          Asis.Ada_Environments.Dissociate (This.Asis_Context);
-         Ada.Directories.Set_Directory (Current_Dir);
       end;
    begin
       Log ("BEGIN");
-      Log ("Tree_File_Dir => """ & Tree_File_Dir & """");
+      Log ("Tree_File_Name => """ & Tree_File_Name & """");
       Begin_Environment;
       -- Call Begin_Environment first:
       Outputs.Graph.Set_ID

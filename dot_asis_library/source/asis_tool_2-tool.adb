@@ -17,16 +17,18 @@ package body Asis_Tool_2.Tool is
       GNAT_Home  : in     String;
       Debug      : in     Boolean)
    is
-      Full_File_Name   : constant String := Ada.Directories.Full_Name (File_Name);
+      package AD renames Ada.Directories;
+      Full_File_Name   : constant String := AD.Full_Name (File_Name);
       Source_File_Dir  : constant String :=
         Ada.Directories.Containing_Directory (Full_File_Name);
-      Simple_File_Name : aliased String := Ada.Directories.Simple_Name (Full_File_Name);
-      Tree_File_Dir    : constant String := Source_File_Dir & "/obj";
+      Simple_File_Name : aliased String := AD.Simple_Name (Full_File_Name);
+      Base_File_Name   : constant String := AD.Base_Name (Simple_File_Name);
+
+      Tree_File_Dir    : constant String := AD.Compose (Source_File_Dir, "obj");
+      Tree_File_Name   : constant String :=
+        AD.Compose (Tree_File_Dir, Base_File_Name, "adt");
       Real_Output_Dir  : constant String :=
-        (if Output_Dir = "" then
-            Ada.Directories.Current_Directory
-         else
-            Output_Dir);
+        (if Output_Dir = "" then AD.Current_Directory else Output_Dir);
 
       procedure Log (Message : in String) is
       begin
@@ -43,8 +45,8 @@ package body Asis_Tool_2.Tool is
                                                   Is_Strict  => False);
          This.Outputs.A_Nodes := new A_Nodes.Class;
          -- TODO: use File_Name:
-         This.My_Context.Process (Tree_File_Dir => Tree_File_Dir,
-                                  Outputs       => This.Outputs);
+         This.My_Context.Process (Tree_File_Name => Tree_File_Name,
+                                  Outputs        => This.Outputs);
          This.Outputs.Graph.Write_File
            (ASU.To_String (This.Outputs.Output_Dir) & '/' & Simple_File_Name);
          Asis.Implementation.Finalize;
