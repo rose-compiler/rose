@@ -946,7 +946,7 @@ struct Pragma_Struct {
   enum Pragma_Kinds Pragma_Kind;
 };
 
-// May take 3*4 bytes - 2 enums, 1 char*:
+// May take :
 struct Defining_Name_Struct {
   enum Defining_Name_Kinds  Defining_Name_Kind;
   char                     *Defining_Name_Image;
@@ -965,7 +965,7 @@ struct Defining_Name_Struct {
   enum Operator_Kinds       Operator_Kind;
   };
 
-// May take 5*4 bytes - 5 enums:
+// May take :
 struct Declaration_Struct {
   enum Declaration_Kinds   Declaration_Kind;
   enum Declaration_Origins Declaration_Origin;
@@ -1092,7 +1092,7 @@ struct Definition_Struct {
   Declarative_Item_ID_List Visible_Part_Items;
   Declarative_Item_ID_List Private_Part_Items;
   bool                     Is_Private_Present;
-  // TODO: not done yet
+  // TODO: not done yet - abt 55 fields to go.  Introduce union and sub structs?
 };
 
 // May take 33*4 bytes - 19 IDs, 8 Lists, 1 bool, 3 enums, 2 char*:
@@ -1177,7 +1177,7 @@ struct Expression_Struct {
   Declaration_ID        Iterator_Specification;
 };
 
-// May take ??*4 bytes (unfinished):
+// May take 7*4 bytes - 3*List, 3*ID, 2*bool:
 struct Association_Struct {
   enum Association_Kinds Association_Kind;
   // These fields are only valid for the kinds above them:  
@@ -1292,7 +1292,7 @@ struct Statement_Struct {
   Expression_ID          Qualified_Expression;
 };
 
-// May take ??*4 bytes (unfinished):
+// May take 5*4 bytes - 1*enum, 2*List, 2*ID:
 struct Path_Struct {
   enum Path_Kinds Path_Kind;
   Statement_List Sequence_Of_Statements;
@@ -1301,7 +1301,7 @@ struct Path_Struct {
   Expression_ID  Guard;
 };
 
-// May take 3*4 bytes - 1 enum, 1 List:
+// May take ?? bytes - incomplete:
 struct Clause_Struct {
   enum Clause_Kinds Clause_Kind;
   // These fields are only valid for the kinds above them:
@@ -1312,17 +1312,17 @@ struct Clause_Struct {
   Name_List         Clause_Names;
   //   A_With_Clause
   enum Trait_Kinds  Trait_Kind;
-  // TODO: Incomplete
+  // TODO: Incomplete (at least 6 more fields)
 };
 
-// May take 5*4 bytes - 1 ID, 2 List:
+// May take 3*4 bytes - 1 ID, 2 List:
 struct Exception_Handler_Struct {
   Declaration_ID Choice_Parameter_Specification;
   Element_List   Exception_Choices;
   Statement_List Handler_Statements;
 };
 
-// May take 37*4 bytes (Statement_Struct, the largest component):
+// May take ?? bytes (??, the largest component):
 union Element_Union {
   int                             Dummy_Member; // For Ada default initialization
   struct Pragma_Struct            The_Pragma; // pragma is an Ada reserverd word
@@ -1337,7 +1337,7 @@ union Element_Union {
   struct Exception_Handler_Struct Exception_Handler;
 };
 
-// May take 5*4 bytes - 1 char*, 4 int:
+// May take 5*4 bytes - 1*char*, 4*int:
 struct Source_Location_Struct {
   char *Unit_Name;
   int   First_Line;
@@ -1346,7 +1346,7 @@ struct Source_Location_Struct {
   int   Last_Column;
 };
 
-// May take 46*4 bytes - 2 IDs, 2 enums, 5*4 struct, 37*4 union:
+// May take ?? bytes - 2*ID, 2*enum, 1*5*4 struct, 1*?? union:
 struct Element_Struct {
   Element_ID                    ID;
   enum Element_Kinds            Element_Kind;
