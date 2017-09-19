@@ -1720,10 +1720,9 @@ int main( int argc, char * argv[] ) {
     int verifyUpdateSequenceRaceConditionsTotalLoopNum=-1;
     int verifyUpdateSequenceRaceConditionsParLoopNum=-1;
 
-    /* Data race detection */ {
-      if(dataRaceDetection.run(analyzer)) {
-        exit(0);
-      }
+    /* Data race detection */
+    if(dataRaceDetection.run(analyzer)) {
+      exit(0);
     }
 
 #if 0

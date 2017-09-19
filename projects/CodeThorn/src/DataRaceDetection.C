@@ -87,24 +87,31 @@ bool DataRaceDetection::run(Analyzer& analyzer) {
     }
     speci.createSsaNumbering(arrayUpdates, analyzer.getVariableIdMapping());
 
-    cout << "Data Race Detection:"<<endl;
     stringstream text;
     if(verifyUpdateSequenceRaceConditionsResult==-1) {
       text<<"sequential";
+    } else 
+      // not supported yet
+      if(verifyUpdateSequenceRaceConditionsResult==-2) {
+      text<<"unknown";
     } else if(verifyUpdateSequenceRaceConditionsResult==0) {
-      text<<"pass";
+      text<<"no";
     } else {
-        text<<"fail";
+      text<<"yes";
     }
     text<<","<<verifyUpdateSequenceRaceConditionsResult;
     text<<","<<verifyUpdateSequenceRaceConditionsParLoopNum;
     text<<","<<verifyUpdateSequenceRaceConditionsTotalLoopNum;
     text<<endl;
-
-    cout << text.str();
+    
     if(options.dataRaceCsvFileName!="") {
       CodeThorn::write_file(options.dataRaceCsvFileName,text.str());
+    } else {
+      // if no output file is proved print on std out
+      cout << "Data Race Detection: ";
+      cout << text.str();
     }
+
     return true;
   } else {
     return false;
