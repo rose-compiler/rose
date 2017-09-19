@@ -963,6 +963,9 @@ struct Defining_Name_Struct {
   Declaration_ID            Corresponding_Constant_Declaration;
   // A_Defining_Operator_Symbol:
   enum Operator_Kinds       Operator_Kind;
+  // The defining name of an entity declared within the 
+  // implicit specification of a generic instantiation:
+  Defining_Name_ID      Corresponding_Generic_Element;
   };
 
 // May take :
@@ -992,55 +995,278 @@ struct Declaration_Struct {
   enum Trait_Kinds         Trait_Kind;
   
   // TODO: add remaining valid kinds comments:
-  Defining_Name_List             Names;
+  // (all kinds)
+  Defining_Name_List             Names;  
+  //  An_Ordinary_Type_Declaration,            // 3.2.1(3)
+  //  A_Task_Type_Declaration,                  // 9.1(2)
+  //  A_Protected_Type_Declaration,             // 9.4(2)
+  //  An_Incomplete_Type_Declaration,           // 3.2.1(2),3.10(2)
+  //  A_Tagged_Incomplete_Type_Declaration,     //  3.10.1(2)
+  //  A_Private_Type_Declaration,               // 3.2.1(2),7.3(2)
+  //  A_Private_Extension_Declaration,          // 3.2.1(2),7.3(3)
+  //  A_Formal_Type_Declaration,                // 12.5(2)
   Definition_ID                  Discriminant_Part;
+  //  An_Ordinary_Type_Declaration,            // 3.2.1(3)
+  //  A_Task_Type_Declaration,                  // 9.1(2)
+  //  A_Protected_Type_Declaration,             // 9.4(2)
+  //  A_Private_Type_Declaration,               // 3.2.1(2),7.3(2)
+  //  A_Private_Extension_Declaration,          // 3.2.1(2),7.3(3)
+  //  A_Formal_Type_Declaration,                // 12.5(2)
   Definition_ID                  Type_Declaration_View;
+  //  A_Variable_Declaration,                   // 3.3.1(2)
+  //  A_Constant_Declaration,                   // 3.3.1(4)
+  //  A_Deferred_Constant_Declaration,          // 3.3.1(6),7.4(2)
+  //  A_Single_Task_Declaration,                // 3.3.1(2),9.1(3)
+  //  A_Single_Protected_Declaration,           // 3.3.1(2),9.4(2)
+  //  A_Discriminant_Specification,             // 3.7(5)  
+  //  A_Component_Declaration,                  // 3.8(6)
+  //  A_Parameter_Specification,                // 6.1(15) 
+  //  A_Return_Variable_Specification,          // 6.5
+  //  An_Object_Renaming_Declaration,           // 8.5.1(2)
+  //  A_Formal_Object_Declaration,              // 12.4(2)
   Definition_ID                  Object_Declaration_View;
+  // (all kinds)
   Element_List                   Aspect_Specifications;
+  //  A_Variable_Declaration,                   // 3.3.1(2)
+  //  A_Constant_Declaration,                   // 3.3.1(4)
+  //  An_Integer_Number_Declaration,            // 3.3.2(2)
+  //  A_Real_Number_Declaration,                // 3.5.6(2)
+  //  A_Discriminant_Specification,             // 3.7(5)  
+  //  A_Component_Declaration,                  // 3.8(6)
+  //  A_Parameter_Specification,                // 6.1(15) 
+  //  A_Return_Variable_Specification,          // 6.5
+  //  A_Formal_Object_Declaration,              // 12.4(2)
   Expression_ID                  Initialization_Expression;
+  //  An_Ordinary_Type_Declaration,            // 3.2.1(3)
+  //  A_Task_Type_Declaration,                  // 9.1(2)
+  //  A_Protected_Type_Declaration,             // 9.4(2)
+  //  An_Incomplete_Type_Declaration,           // 3.2.1(2),3.10(2)
+  //  A_Tagged_Incomplete_Type_Declaration,     //  3.10.1(2)
+  //  A_Private_Type_Declaration,               // 3.2.1(2),7.3(2)
+  //  A_Private_Extension_Declaration,          // 3.2.1(2),7.3(3)
   Declaration_ID                 Corresponding_Type_Declaration;
+  //  An_Incomplete_Type_Declaration,           // 3.2.1(2),3.10(2)
+  //  A_Tagged_Incomplete_Type_Declaration,     //  3.10.1(2)
+  //  A_Private_Type_Declaration,               // 3.2.1(2),7.3(2)
+  //  A_Private_Extension_Declaration,          // 3.2.1(2),7.3(3)
   Declaration_ID                 Corresponding_Type_Completion;
+  //  An_Ordinary_Type_Declaration,            // 3.2.1(3)
+  //  A_Task_Type_Declaration,                  // 9.1(2)
+  //  A_Protected_Type_Declaration,             // 9.4(2)
+  //  A_Private_Type_Declaration,               // 3.2.1(2),7.3(2)
+  //  A_Private_Extension_Declaration,          // 3.2.1(2),7.3(3)
   Declaration_ID                 Corresponding_Type_Partial_View;
+  //  An_Ordinary_Type_Declaration,            // 3.2.1(3)
+  //  A_Task_Type_Declaration,                  // 9.1(2)
+  //  A_Protected_Type_Declaration,             // 9.4(2)
+  //  A_Private_Type_Declaration,               // 3.2.1(2),7.3(2)
+  //  A_Private_Extension_Declaration,          // 3.2.1(2),7.3(3)
+  //  A_Subtype_Declaration,                    // 3.2.2(2)
+  //  A_Formal_Type_Declaration,                // 12.5(2)
   Declaration_ID                 Corresponding_First_Subtype;
   Declaration_ID                 Corresponding_Last_Constraint;
   Declaration_ID                 Corresponding_Last_Subtype;
+  // (all)
   Representation_Clause_List     Corresponding_Representation_Clauses;
+  //  A_Loop_Parameter_Specification,           // 5.5(4)  
+  //  An_Entry_Index_Specification,             // 9.5.2(2)
   Discrete_Subtype_Definition_ID Specification_Subtype_Definition;
+  //  A_Generalized_Iterator_Specification,     // 5.5.2   
+  //  An_Element_Iterator_Specification,        // 5.5.2   
   Element_ID                     Iteration_Scheme_Name;
+  //  An_Element_Iterator_Specification,        // 5.5.2   
   Element_ID                     Subtype_Indication;
+  //  A_Procedure_Declaration,                  // 6.1(4)  
+  //  A_Function_Declaration,                   // 6.1(4)  
+  //  A_Procedure_Body_Declaration,             // 6.3(2)
+  //  A_Function_Body_Declaration,              // 6.3(2)
+  //  A_Null_Procedure_Declaration,             // 6.7
+  //  An_Expression_Function_Declaration,       // 6.8
+  //  A_Procedure_Renaming_Declaration,         // 8.5.4(2)
+  //  A_Function_Renaming_Declaration,          // 8.5.4(2)
+  //  An_Entry_Declaration,                     // 9.5.2(2)
+  //  An_Entry_Body_Declaration,                // 9.5.2(5)
+  //  A_Procedure_Body_Stub,                    // 10.1.3(3)
+  //  A_Function_Body_Stub,                     // 10.1.3(3)
+  //  A_Generic_Procedure_Declaration,          // 12.1(2)
+  //  A_Generic_Function_Declaration,           // 12.1(2)
+  //  A_Formal_Procedure_Declaration,           // 12.6(2)
+  //  A_Formal_Function_Declaration,            // 12.6(2)
   Parameter_Specification_List   Parameter_Profile;
+  //  A_Function_Declaration,                   // 6.1(4)  
+  //  A_Function_Body_Declaration,              // 6.3(2)
+  //  An_Expression_Function_Declaration,       // 6.8
+  //  A_Function_Renaming_Declaration,          // 8.5.4(2)
+  //  A_Function_Body_Stub,                     // 10.1.3(3)
+  //  A_Generic_Function_Declaration,           // 12.1(2)
+  //  A_Formal_Function_Declaration,            // 12.6(2)
   Element_ID                     Result_Profile;
+  //  An_Expression_Function_Declaration,       // 6.8
   Expression_ID                  Result_Expression;
+  //  A_Procedure_Declaration,                  // 6.1(4)  
+  //  A_Function_Declaration,                   // 6.1(4)  
+  //  A_Procedure_Body_Declaration,             // 6.3(2)
+  //  A_Function_Body_Declaration,              // 6.3(2)
+  //  A_Null_Procedure_Declaration,             // 6.7
+  //  An_Expression_Function_Declaration,       // 6.8
+  //  A_Procedure_Renaming_Declaration,         // 8.5.4(2)
+  //  A_Function_Renaming_Declaration,          // 8.5.4(2)
+  //  An_Entry_Declaration,                     // 9.5.2(2)
+  //  A_Procedure_Body_Stub,                    // 10.1.3(3)
+  //  A_Function_Body_Stub,                     // 10.1.3(3)
+  //  A_Generic_Procedure_Declaration,          // 12.1(2)
+  //  A_Generic_Function_Declaration,           // 12.1(2)
+  //  A_Formal_Procedure_Declaration,           // 12.6(2)
+  //  A_Formal_Function_Declaration,            // 12.6(2)
   bool                           Is_Overriding_Declaration;
   bool                           Is_Not_Overriding_Declaration;
+  //  A_Procedure_Body_Declaration,             // 6.3(2)
+  //  A_Function_Body_Declaration,              // 6.3(2)
+  //  A_Package_Body_Declaration,               // 7.2(2)
+  //  A_Task_Body_Declaration,                  // 9.1(6)
+  //  An_Entry_Body_Declaration,                // 9.5.2(5)
   Element_List                   Body_Declarative_Items;
   Statement_List                 Body_Statements;
   Exception_Handler_List         Body_Exception_Handlers;
   Declaration_ID                 Body_Block_Statement;
+  //  A_Task_Type_Declaration,                  // 9.1(2)
+  //  A_Protected_Type_Declaration,             // 9.4(2)
+  //  A_Single_Task_Declaration,                // 3.3.1(2),9.1(3)
+  //  A_Single_Protected_Declaration,           // 3.3.1(2),9.4(2)
+  //  A_Procedure_Body_Declaration,             // 6.3(2)
+  //  A_Function_Body_Declaration,              // 6.3(2)
+  //  A_Package_Declaration,                    // 7.1(2)
+  //  A_Package_Body_Declaration,               // 7.2(2)
+  //  A_Task_Body_Declaration,                  // 9.1(6)
+  //  A_Protected_Body_Declaration,             // 9.4(7)
+  //  An_Entry_Body_Declaration,                // 9.5.2(5)
+  //  A_Generic_Package_Declaration,            // 12.1(2)
   bool                           Is_Name_Repeated;
+  //  A_Task_Type_Declaration,                  // 9.1(2)
+  //  A_Protected_Type_Declaration,             // 9.4(2)
+  //  A_Single_Task_Declaration,                // 3.3.1(2),9.1(3)
+  //  A_Single_Protected_Declaration,           // 3.3.1(2),9.4(2)
+  //  A_Procedure_Declaration,                  // 6.1(4)  
+  //  A_Function_Declaration,                   // 6.1(4)  
+  //  A_Procedure_Body_Declaration,             // 6.3(2)
+  //  A_Function_Body_Declaration,              // 6.3(2)
+  //  A_Null_Procedure_Declaration,             // 6.7
+  //  An_Expression_Function_Declaration,       // 6.8
+  //  A_Package_Declaration,                    // 7.1(2)
+  //  A_Package_Body_Declaration,               // 7.2(2)
+  //  A_Package_Renaming_Declaration,           // 8.5.3(2)
+  //  A_Procedure_Renaming_Declaration,         // 8.5.4(2)
+  //  A_Function_Renaming_Declaration,          // 8.5.4(2)
+  //  A_Generic_Package_Renaming_Declaration,   // 8.5.5(2)
+  //  A_Generic_Procedure_Renaming_Declaration, // 8.5.5(2)
+  //  A_Generic_Function_Renaming_Declaration,  // 8.5.5(2)
+  //  A_Task_Body_Declaration,                  // 9.1(6)
+  //  A_Protected_Body_Declaration,             // 9.4(7)
+  //  An_Entry_Body_Declaration,                // 9.5.2(5)
+  //  An_Entry_Index_Specification,             // 9.5.2(2)
+  //  A_Procedure_Body_Stub,                    // 10.1.3(3)
+  //  A_Function_Body_Stub,                     // 10.1.3(3)
+  //  A_Package_Body_Stub,                      // 10.1.3(4)
+  //  A_Task_Body_Stub,                         // 10.1.3(5)
+  //  A_Protected_Body_Stub,                    // 10.1.3(6)
+  //  A_Generic_Procedure_Declaration,          // 12.1(2)
+  //  A_Generic_Function_Declaration,           // 12.1(2)
+  //  A_Generic_Package_Declaration,            // 12.1(2)
+  //  A_Package_Instantiation,                  // 12.3(2)
+  //  A_Procedure_Instantiation,                // 12.3(2)
+  //  A_Function_Instantiation,                 // 12.3(2)
+  //  A_Formal_Package_Declaration,             // 12.7(2)
+  //  A_Formal_Package_Declaration_With_Box     // 12.7(3)
   Declaration_ID                 Corresponding_Declaration;
+  //  A_Task_Type_Declaration,                  // 9.1(2)
+  //  A_Protected_Type_Declaration,             // 9.4(2)
+  //  A_Single_Task_Declaration,                // 3.3.1(2),9.1(3)
+  //  A_Single_Protected_Declaration,           // 3.3.1(2),9.4(2)
+  //  A_Procedure_Declaration,                  // 6.1(4)  
+  //  A_Function_Declaration,                   // 6.1(4)  
+  //  An_Entry_Declaration,                     // 9.5.2(2)
+  //  An_Entry_Index_Specification,             // 9.5.2(2)
+  //  A_Generic_Procedure_Declaration,          // 12.1(2)
+  //  A_Generic_Function_Declaration,           // 12.1(2)
+  //  A_Generic_Package_Declaration,            // 12.1(2)
+  //  A_Package_Instantiation,                  // 12.3(2)
+  //  A_Procedure_Instantiation,                // 12.3(2)
+  //  A_Function_Instantiation,                 // 12.3(2)
+  //  A_Formal_Package_Declaration,             // 12.7(2)
   Declaration_ID                 Corresponding_Body;
+  //  A_Procedure_Declaration,                  // 6.1(4)  
+  //  A_Function_Declaration,                   // 6.1(4)  
   Declaration_ID                 Corresponding_Subprogram_Derivation;
+  //  A_Procedure_Declaration,                  // 6.1(4)  
+  //  A_Function_Declaration,                   // 6.1(4)  
+  //  An_Expression_Function_Declaration,       // 6.8
   Type_Definition_ID             Corresponding_Type;
+  //  A_Function_Declaration,                   // 6.1(4)  
   Declaration_ID                 Corresponding_Equality_Operator;
+  //  A_Package_Declaration,                    // 7.1(2)
+  //  A_Generic_Package_Declaration,            // 12.1(2)
   Declarative_Item_List          Visible_Part_Declarative_Items;
   bool                           Is_Private_Present;
   Declarative_Item_List	         Private_Part_Declarative_Items;
+  //  A_Task_Type_Declaration,                  // 9.1(2)
+  //  A_Protected_Type_Declaration,             // 9.4(2)
+  //  A_Single_Task_Declaration,                // 3.3.1(2),9.1(3)
+  //  A_Single_Protected_Declaration,           // 3.3.1(2),9.4(2)
   Expression_List                Declaration_Interface_List;
+  //  An_Object_Renaming_Declaration,           // 8.5.1(2)
+  //  An_Exception_Renaming_Declaration,        // 8.5.2(2)
+  //  A_Package_Renaming_Declaration,           // 8.5.3(2)
+  //  A_Procedure_Renaming_Declaration,         // 8.5.4(2)
+  //  A_Function_Renaming_Declaration,          // 8.5.4(2)
+  //  A_Generic_Package_Renaming_Declaration,   // 8.5.5(2)
+  //  A_Generic_Procedure_Renaming_Declaration, // 8.5.5(2)
+  //  A_Generic_Function_Renaming_Declaration,  // 8.5.5(2)
   Expression_ID                  Renamed_Entity;
   Expression_ID                  Corresponding_Base_Entity;
+  //  A_Protected_Body_Declaration,             // 9.4(7)
   Declaration_List               Protected_Operation_Items;
+  //  An_Entry_Declaration,                     // 9.5.2(2)
   Discrete_Subtype_Definition_ID Entry_Family_Definition;
+  //  An_Entry_Body_Declaration,                // 9.5.2(5)
   Declaration_ID                 Entry_Index_Specification;
   Expression_ID                  Entry_Barrier;
+  //  A_Procedure_Body_Stub,                    // 10.1.3(3)
+  //  A_Function_Body_Stub,                     // 10.1.3(3)
+  //  A_Package_Body_Stub,                      // 10.1.3(4)
+  //  A_Task_Body_Stub,                         // 10.1.3(5)
+  //  A_Protected_Body_Stub,                    // 10.1.3(6)
   Declaration_ID                 Corresponding_Subunit;
+  //  A_Procedure_Body_Declaration,             // 6.3(2)
+  //  A_Function_Body_Declaration,              // 6.3(2)
+  //  A_Package_Body_Declaration,               // 7.2(2)
+  //  A_Task_Body_Declaration,                  // 9.1(6)
+  //  A_Protected_Body_Declaration,             // 9.4(7)
   bool                           Is_Subunit;
   Declaration_ID                 Corresponding_Body_Stub;
+  //  A_Generic_Procedure_Declaration,          // 12.1(2)
+  //  A_Generic_Function_Declaration,           // 12.1(2)
+  //  A_Generic_Package_Declaration,            // 12.1(2)
   Element_List                   Generic_Formal_Part;
+  //  A_Package_Instantiation,                  // 12.3(2)
+  //  A_Procedure_Instantiation,                // 12.3(2)
+  //  A_Function_Instantiation,                 // 12.3(2)
+  //  A_Formal_Package_Declaration,             // 12.7(2)
+  //  A_Formal_Package_Declaration_With_Box     // 12.7(3)
   Expression_ID                  Generic_Unit_Name;
   Association_List               Generic_Actual_Part;
+  //  A_Formal_Procedure_Declaration,           // 12.6(2)
+  //  A_Formal_Function_Declaration,            // 12.6(2)
   Expression_ID                  Formal_Subprogram_Default;
-  Defining_Name_ID               Corresponding_Generic_Element;
+  //  A_Procedure_Declaration,                  // 6.1(4)  
+  //  A_Function_Declaration,                   // 6.1(4)  
+  //  A_Procedure_Body_Declaration,             // 6.3(2)
+  //  A_Function_Body_Declaration,              // 6.3(2)
+  //  A_Null_Procedure_Declaration,             // 6.7
+  //  An_Expression_Function_Declaration,       // 6.8
+  //  A_Procedure_Renaming_Declaration,         // 8.5.4(2)
+  //  A_Function_Renaming_Declaration,          // 8.5.4(2)
+  //  A_Procedure_Body_Stub,                    // 10.1.3(3)
+  //  A_Function_Body_Stub,                     // 10.1.3(3)
   bool                           Is_Dispatching_Operation;
 };
 
@@ -1175,6 +1401,9 @@ struct Expression_Struct {
   // A_For_All_Quantified_Expression |            // Ada 2012
   // A_For_Some_Quantified_Expression =>          // Ada 2012
   Declaration_ID        Iterator_Specification;
+  // An expression that references an entity declared within the 
+  // implicit specification of a generic instantiation:
+  Defining_Name_ID      Corresponding_Generic_Element;
 };
 
 // May take 7*4 bytes - 3*List, 3*ID, 2*bool:
