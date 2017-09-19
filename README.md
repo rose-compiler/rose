@@ -47,9 +47,11 @@ This will download a file with a name like "AdaCore-Download-2017-08-24_1403.zip
     - Read README
     - Run "make all install prefix=<install_dir>"
 - Clone this dot_asis repo
-- In dot_asis, run the build and run script:
-  - Run "run_and_log do_asis_tool.sh" to run and capture the results in a log file
+- In dot_asis/ada_main, run the build and run script:
+  - Run "run_and_log do_ada_main.sh" to run and capture the results in a log file
     - Run "run_and_log" for help
-  - Run "do_asis_tool.sh" to run without logging to a file
+  - Run "do_ada_main.sh" to run without logging to a file
 - Success!
+- To run the C program, in dot_asis/c_main, run "do_c_main.sh"
+  - Run "do_ada_main.sh" first to build the library "do_c_main.sh" needs
   

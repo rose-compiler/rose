@@ -37,7 +37,6 @@ trash/
 
 # GNAT C to Ada:
 # g++ -c -fdump-ada-spec:
-a_nodes_h.ads
 research/animals_h.ads
 research/root_h.ads
 
