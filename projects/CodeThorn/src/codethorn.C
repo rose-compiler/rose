@@ -1327,25 +1327,6 @@ int main( int argc, char * argv[] ) {
       logger[TRACE]<<"STATUS: determined "<<varsInAssertConditions.size()<< " variables in (guarding) assert conditions."<<endl;
       analyzer.setAssertCondVarsSet(varsInAssertConditions);
     }
-    // problematic? TODO: debug
-#if 0
-    {
-      logger[TRACE]<<"STATUS: performing flow-insensitive const analysis."<<endl;
-      VarConstSetMap varConstSetMap;
-      VariableIdSet variablesOfInterest1,variablesOfInterest2;
-      FIConstAnalysis fiConstAnalysis(analyzer.getVariableIdMapping());
-      fiConstAnalysis.runAnalysis(sageProject);
-      VariableConstInfo* variableConstInfo=fiConstAnalysis.getVariableConstInfo();
-      variablesOfInterest1=fiConstAnalysis.determinedConstantVariables();
-      for(VariableIdSet::iterator i=variablesOfInterest1.begin();i!=variablesOfInterest1.end();++i) {
-        if(!variableConstInfo->isAny(*i) && variableConstInfo->width(*i)<=2) {
-          variablesOfInterest2.insert(*i);
-        }
-      }
-      analyzer.setSmallActivityVarsSet(variablesOfInterest2);
-      logger[INFO]<<"variables with number of values <=2:"<<variablesOfInterest2.size()<<endl;
-    }
-#endif
 
     if(args.getBool("normalize")) {
       logger[TRACE]<<"STATUS: Normalization started."<<endl;
@@ -1358,11 +1339,6 @@ int main( int argc, char * argv[] ) {
     //lr.checkProgram(root);
     timer.start();
 
-    //logger[TRACE]<< "INIT: Running variable<->symbol mapping check."<<endl;
-    //VariableIdMapping varIdMap;
-    //analyzer.getVariableIdMapping()->setModeVariableIdForEachArrayElement(true);
-    //analyzer.getVariableIdMapping()->computeVariableSymbolMapping(sageProject);
-    //logger[TRACE]<< "STATUS: Variable<->Symbol mapping created."<<endl;
 #if 0
     if(!analyzer.getVariableIdMapping()->isUniqueVariableSymbolMapping()) {
       logger[WARN] << "Variable<->Symbol mapping not bijective."<<endl;
@@ -1371,27 +1347,6 @@ int main( int argc, char * argv[] ) {
 #endif
 #if 0
     analyzer.getVariableIdMapping()->toStream(cout);
-#endif
-
-#if 0
-    // currently not used, but may be revived to properly handle new annotation
-    SgNode* fragmentStartNode=0;
-    if(option_pragma_name!="") {
-      list<SgPragmaDeclaration*> pragmaDeclList=EquivalenceChecking::findPragmaDeclarations(root, option_pragma_name);
-      if(pragmaDeclList.size()==0) {
-        logger[ERROR] << "pragma "<<option_pragma_name<<" marking the fragment not found."<<endl;
-        exit(1);
-      }
-      if(pragmaDeclList.size()>2) {
-        logger[ERROR] << "pragma "<<option_pragma_name<<" : too many markers found ("<<pragmaDeclList.size()<<")"<<endl;
-        exit(1);
-      }
-      logger[TRACE]<<"STATUS: Fragment marked by "<<option_pragma_name<<": correctly identified."<<endl;
-
-      ROSE_ASSERT(pragmaDeclList.size()==1);
-      list<SgPragmaDeclaration*>::iterator i=pragmaDeclList.begin();
-      fragmentStartNode=*i;
-    }
 #endif
 
     if(args.getBool("eliminate-arrays")) {
@@ -1724,25 +1679,6 @@ int main( int argc, char * argv[] ) {
     if(dataRaceDetection.run(analyzer)) {
       exit(0);
     }
-
-#if 0
-    if(args.count("equivalence-check")) {
-      // TODO: iterate over SgFile nodes, create vectors for each phase
-      // foreach file in SgFileList
-      // TODO: create analyzer for each SgFile program or specified function
-      Specialization speci;
-      ArrayUpdatesSequence arrayUpdates;
-      speci.extractArrayUpdateOperations(&analyzer,
-                                         arrayUpdates,
-                                         rewriteSystem,
-                                         args.getBool("rule-const-subst")
-                                         );
-      speci.createSsaNumbering(arrayUpdates, analyzer.getVariableIdMapping());
-      arrayUpdateSsaNumberingRunTime=timer.getElapsedTimeInMilliSec();
-      // TODO CHECK with first
-      // end foreach
-    }
-#endif
 
     if(args.count("dump-sorted")>0 || args.count("dump-non-sorted")>0) {
       SAR_MODE sarMode=SAR_SSA;
