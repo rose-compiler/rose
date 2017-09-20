@@ -631,7 +631,7 @@ int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet& loopInfoSet,
 						       ArrayUpdatesSequence& arrayUpdates, 
 						       VariableIdMapping* variableIdMapping) {
   int errorCount=0;
-  logger[TRACE]<<"STATUS: checking race conditions."<<endl;
+  logger[TRACE]<<"checking race conditions."<<endl;
   logger[INFO]<<"number of parallel loops: "<<numParLoops(loopInfoSet,variableIdMapping)<<endl;
   
   // only used when USE_ALL_ITER_VARS is defined. See also "_checkAllLoops".
@@ -659,11 +659,6 @@ int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet& loopInfoSet,
       }
     } // if parallel loop
   } // foreach loop
-  if (errorCount == 0) {
-    cout<<"DATA RACE CHECK: PASS."<<endl;
-  } else {
-    cout<<"DATA RACE CHECK: FAIL."<<endl;
-  }
   return errorCount;
 }
 
