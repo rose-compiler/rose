@@ -103,7 +103,7 @@ class Specialization {
                                     bool useConstExprSubstRule=true
                                     );
   // computes number of race conditions in update sequence (0:OK, >0:race conditions exist).
-  int verifyUpdateSequenceRaceConditions(LoopInfoSet& loopInfoSet, ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping);
+  int checkDataRaces(LoopInfoSet& loopInfoSet, ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping);
   void printUpdateInfos(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping);
   void writeArrayUpdatesToFile(ArrayUpdatesSequence& arrayUpdates, string filename, SAR_MODE sarMode, bool performSorting);
   void createSsaNumbering(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping);
@@ -141,8 +141,8 @@ class Specialization {
   
   // data race detection
   void populateReadWriteDataIndex(LoopInfo& li, IndexToReadWriteDataMap& indexToReadWriteDataMap, ArrayUpdatesSequence& arrayUpdates,
-				  VariableIdSet& allIterVars, VariableIdMapping* variableIdMapping);
-  IndexVector extractIndexVector(LoopInfo& li, const PState* pstate, VariableIdSet& allIterVars);
+				  VariableIdMapping* variableIdMapping);
+  IndexVector extractIndexVector(LoopInfo& li, const PState* pstate);
   void addAccessesFromExpressionToIndex(SgExpression* exp, IndexVector& index, IndexToReadWriteDataMap& indexToReadWriteDataMap,
 					VariableIdMapping* variableIdMapping);
   void displayReadWriteDataIndex(IndexToReadWriteDataMap& indexToReadWriteDataMap, VariableIdMapping* variableIdMapping);

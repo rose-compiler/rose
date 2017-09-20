@@ -627,9 +627,9 @@ void Specialization::setVisualizeReadWriteAccesses(bool val) {
 }
 
 // returns the number of detected data races
-int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet& loopInfoSet, 
-						       ArrayUpdatesSequence& arrayUpdates, 
-						       VariableIdMapping* variableIdMapping) {
+int Specialization::checkDataRaces(LoopInfoSet& loopInfoSet, 
+                                   ArrayUpdatesSequence& arrayUpdates, 
+                                   VariableIdMapping* variableIdMapping) {
   int errorCount=0;
   logger[TRACE]<<"checking race conditions."<<endl;
   logger[INFO]<<"number of parallel loops: "<<numParLoops(loopInfoSet,variableIdMapping)<<endl;
@@ -650,7 +650,7 @@ int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet& loopInfoSet,
         logger[INFO]<<"checking parallel loop: "<<variableIdMapping->variableName(parVariable)<<endl;
       }
       IndexToReadWriteDataMap indexToReadWriteDataMap;
-      populateReadWriteDataIndex(*lis, indexToReadWriteDataMap, arrayUpdates, allIterVars, variableIdMapping);
+      populateReadWriteDataIndex(*lis, indexToReadWriteDataMap, arrayUpdates, variableIdMapping);
       displayReadWriteDataIndex(indexToReadWriteDataMap, variableIdMapping);  // requires log level "debug"
       // perform data race check
       errorCount += numberOfRacyThreadPairs(indexToReadWriteDataMap, variableIdMapping);
@@ -663,34 +663,24 @@ int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet& loopInfoSet,
 }
 
 void Specialization::populateReadWriteDataIndex(LoopInfo& li, IndexToReadWriteDataMap& indexToReadWriteDataMap, 
-                                                ArrayUpdatesSequence& arrayUpdates, VariableIdSet& allIterVars, 
+                                                ArrayUpdatesSequence& arrayUpdates, 
                                                 VariableIdMapping* variableIdMapping) {
   for(ArrayUpdatesSequence::iterator i=arrayUpdates.begin();i!=arrayUpdates.end();++i) {
     const EState* estate=(*i).first;
     if (li.isInAssociatedLoop(estate)) {
       const PState* pstate=estate->pstate();
       SgExpression* exp=(*i).second;
-      IndexVector index = extractIndexVector(li, pstate, allIterVars);
+      IndexVector index = extractIndexVector(li, pstate);
       addAccessesFromExpressionToIndex(exp, index, indexToReadWriteDataMap, variableIdMapping);
     }
   } // array sequence iter
 }
 
 
-IndexVector Specialization::extractIndexVector(LoopInfo& li, const PState* pstate, VariableIdSet& allIterVars) {
+IndexVector Specialization::extractIndexVector(LoopInfo& li, const PState* pstate) {
   IndexVector index;
   VariableId parVariable=li.iterationVarId;
   // use all vars for indexing or only outer+par loop variables
-#ifdef USE_ALL_ITER_VARS
-  for(VariableIdSet::iterator ol=allIterVars.begin();ol!=allIterVars.end();++ol) {
-    VariableId otherVarId=*ol;
-    ROSE_ASSERT(otherVarId.isValid());
-    if(!pstate->varValue(otherVarId).isTop()) {
-      int otherIntVal=pstate->varValue(otherVarId).getIntValue();
-      index.push_back(otherIntVal);
-    }
-  }
-#else
   for(VariableIdSet::iterator ol=li.outerLoopsVarIds.begin();ol!=li.outerLoopsVarIds.end();++ol) {
     VariableId otherVarId=*ol;
     ROSE_ASSERT(otherVarId.isValid());
@@ -703,7 +693,6 @@ IndexVector Specialization::extractIndexVector(LoopInfo& li, const PState* pstat
     int parIntVal=pstate->varValue(parVariable).getIntValue();
     index.push_back(parIntVal);
   }
-#endif
   return index;
 }
 

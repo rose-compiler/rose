@@ -81,7 +81,7 @@ bool DataRaceDetection::run(Analyzer& analyzer) {
     cout<<"INFO: number of iteration vars: "<<loopInfoSet.size()<<endl;
     verifyUpdateSequenceRaceConditionsTotalLoopNum=loopInfoSet.size();
     verifyUpdateSequenceRaceConditionsParLoopNum=Specialization::numParLoops(loopInfoSet, analyzer.getVariableIdMapping());
-    verifyUpdateSequenceRaceConditionsResult=speci.verifyUpdateSequenceRaceConditions(loopInfoSet,arrayUpdates,analyzer.getVariableIdMapping());
+    verifyUpdateSequenceRaceConditionsResult=speci.checkDataRaces(loopInfoSet,arrayUpdates,analyzer.getVariableIdMapping());
     if(options.printUpdateInfos) {
       speci.printUpdateInfos(arrayUpdates,analyzer.getVariableIdMapping());
     }
