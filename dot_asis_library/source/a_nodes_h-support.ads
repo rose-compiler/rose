@@ -249,9 +249,15 @@ package a_nodes_h.Support is
       Guard                         => Invalid_Node_ID);
 
    Default_Clause_Struct : constant Clause_Struct :=
-     (Clause_Kind  => Not_A_Clause,
-      Trait_Kind   => Not_A_Trait,
-      Clause_Names => Empty_Name_List);
+     (Clause_Kind                      => Not_A_Clause,
+      Clause_Names                     => Empty_Name_List,
+      Representation_Clause_Name       => Invalid_Node_ID,
+      Representation_Clause_Expression => Invalid_Node_ID,
+      Mod_Clause_Expression            => Invalid_Node_ID,
+      Component_Clauses                => Empty_Element_List,
+      Component_Clause_Position        => Invalid_Node_ID,
+      Component_Clause_Range           => Invalid_Node_ID,
+      Trait_Kind                       => Not_A_Trait);
 
    Default_Exception_Handler_Struct : constant Exception_Handler_Struct :=
      (Choice_Parameter_Specification => Invalid_Node_ID,

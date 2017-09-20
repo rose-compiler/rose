@@ -155,16 +155,49 @@ enum Unit_Origins {
 
 // May take 21*4 (20*4 + 3) bytes - 5 ID, 3 enum, 2 Unit_List(2*4 ea), 8 char*, 3 bool:
 struct Unit_Struct {
+  // The fields below are only applicable to the kinds above them:
+  // (all)
   Unit_ID           ID;
   enum Unit_Kinds   Unit_Kind;
   enum Unit_Classes Unit_Class;
   enum Unit_Origins Unit_Origin;
-  // Enclosing_Context
-  // Enclosing_Container
+  //  A_Package,
+  //  A_Generic_Package,
+  //  A_Package_Instance,
   Unit_List         Corresponding_Children;
+  //  A_Procedure,
+  //  A_Function,
+  //  A_Package,
+  //  A_Generic_Procedure,
+  //  A_Generic_Function,
+  //  A_Generic_Package,
+  //  A_Procedure_Instance,
+  //  A_Function_Instance,
+  //  A_Package_Instance,
+  //  A_Procedure_Renaming,
+  //  A_Function_Renaming,
+  //  A_Package_Renaming,
+  //  A_Generic_Procedure_Renaming,
+  //  A_Generic_Function_Renaming,
+  //  A_Generic_Package_Renaming,
+  //  A_Procedure_Body,
+  //  A_Function_Body,
+  //  A_Package_Body,
   Unit_ID           Corresponding_Parent_Declaration;
+  //  A_Procedure_Body,
+  //  A_Function_Body,
+  //  A_Package_Body,
+  //  An_Unknown_Unit
   Unit_ID           Corresponding_Declaration;
+  //  A_Procedure,
+  //  A_Function,
+  //  A_Package,
+  //  A_Generic_Procedure,
+  //  A_Generic_Function,
+  //  A_Generic_Package,
+  //  An_Unknown_Unit
   Unit_ID           Corresponding_Body;
+  // (all)
   char             *Unit_Full_Name; // Ada name
   char             *Unique_Name; // file name etc.
   bool              Exists;
@@ -175,8 +208,22 @@ struct Unit_Struct {
   char             *Object_Name;
   char             *Object_Form;
   char             *Compilation_Command_Line_Options;
+  //  A_Procedure_Body,
+  //  A_Function_Body,
+  //  A_Package_Body,
+  //  A_Procedure_Body_Subunit,
+  //  A_Function_Body_Subunit,
+  //  A_Package_Body_Subunit,
+  //  A_Task_Body_Subunit,
+  //  A_Protected_Body_Subunit,
   Unit_List         Subunits;
+  //  A_Procedure_Body_Subunit,
+  //  A_Function_Body_Subunit,
+  //  A_Package_Body_Subunit,
+  //  A_Task_Body_Subunit,
+  //  A_Protected_Body_Subunit,
   Unit_ID           Corresponding_Subunit_Parent_Body;
+  // (all)
   char             *Debug_Image;
 };
 ///////////////////////////////////////////////////////////////////////////////
@@ -1406,7 +1453,7 @@ struct Expression_Struct {
   Defining_Name_ID      Corresponding_Generic_Element;
 };
 
-// May take 7*4 bytes - 3*List, 3*ID, 2*bool:
+// May take 10*4 bytes - 1*enum, 3*List, 4*ID, 2*bool:
 struct Association_Struct {
   enum Association_Kinds Association_Kind;
   // These fields are only valid for the kinds above them:  
@@ -1432,9 +1479,7 @@ struct Association_Struct {
   bool                   Is_Normalized;
   // A_Parameter_Association
   // A_Generic_Association
-  //  //|A2005 start
   // A_Record_Component_Association
-  //  //|A2005 end
   bool                   Is_Defaulted_Association;
 };
 
@@ -1482,6 +1527,13 @@ struct Statement_Struct {
   Expression_ID          Exit_Loop_Name;
   Expression_ID          Exit_Condition;
   Expression_ID          Corresponding_Loop_Exited;
+  //   A_Return_Statement,                  // 6.5
+  Expression_ID          Return_Expression;
+  //   //  //|A2005 start
+  //   An_Extended_Return_Statement,        // 6.5
+  Declaration_ID         Return_Object_Declaration;
+  Statement_List         Extended_Return_Statements;
+  Exception_Handler_List Extended_Return_Exception_Handlers;
   //   A_Goto_Statement,                    // 5.8
   Expression_ID          Goto_Label;
   Statement_ID           Corresponding_Destination_Statement;
@@ -1490,13 +1542,6 @@ struct Statement_Struct {
   Expression_ID          Called_Name;
   Declaration_ID         Corresponding_Called_Entity;
   Association_List       Call_Statement_Parameters;
-  //   A_Return_Statement,                  // 6.5
-  Expression_ID          Return_Expression;
-  //   //  //|A2005 start
-  //   An_Extended_Return_Statement,        // 6.5
-  Declaration_ID         Return_Object_Declaration;
-  Statement_List         Extended_Return_Statements;
-  Exception_Handler_List Extended_Return_Exception_Handlers;
   //   //  //|A2005 end
   //   An_Accept_Statement,                 // 9.5.2
   Expression_ID          Accept_Entry_Index;
@@ -1524,13 +1569,21 @@ struct Statement_Struct {
 // May take 5*4 bytes - 1*enum, 2*List, 2*ID:
 struct Path_Struct {
   enum Path_Kinds Path_Kind;
-  Statement_List Sequence_Of_Statements;
+  // These fields are only valid for the kinds above them:  
+  // An_If_Path,
+  // An_Elsif_Path,
   Expression_ID  Condition_Expression;
+  // (all)
+  Statement_List Sequence_Of_Statements;
+  // A_Case_Path,
+  // A_Case_Expression_Path,
   Element_List   Case_Path_Alternative_Choices;
+  // A_Select_Path,
+  // An_Or_Path,
   Expression_ID  Guard;
 };
 
-// May take ?? bytes - incomplete:
+// May take 9*4 bytes - 2*enum, 2*List, 5*ID:
 struct Clause_Struct {
   enum Clause_Kinds Clause_Kind;
   // These fields are only valid for the kinds above them:
@@ -1539,9 +1592,28 @@ struct Clause_Struct {
   //   A_Use_All_Type_Clause
   //   A_With_Clause
   Name_List         Clause_Names;
+  //   A_Representation_Clause
+  //   A_Component_Clause  
+  Name_ID           Representation_Clause_Name;
+  //   A_Representation_Clause
+  //   A_Component_Clause  
+  //   and in addition one of Representation_Clause_Kinds:
+  //   An_Attribute_Definition_Clause
+  //   An_Enumeration_Representation_Clause
+  //   An_At_Clause
+  Expression_ID     Representation_Clause_Expression;
+  //   A_Representation_Clause
+  //   A_Component_Clause  
+  //   and in addition one of Representation_Clause_Kinds:
+  //   A_Record_Representation_Clause
+  Expression_ID     Mod_Clause_Expression;
+  Element_List      Component_Clauses;
+  //   A_Component_Clause  
+  Expression_ID     Component_Clause_Position;
+  Element_ID        Component_Clause_Range;
   //   A_With_Clause
+  //   From Asis.Elements:
   enum Trait_Kinds  Trait_Kind;
-  // TODO: Incomplete (at least 6 more fields)
 };
 
 // May take 3*4 bytes - 1 ID, 2 List:
@@ -1577,6 +1649,7 @@ struct Source_Location_Struct {
 
 // May take ?? bytes - 2*ID, 2*enum, 1*5*4 struct, 1*?? union:
 struct Element_Struct {
+  // The fields below are applicable to all kinds:
   Element_ID                    ID;
   enum Element_Kinds            Element_Kind;
   Node_ID                       Enclosing_Element_ID;
