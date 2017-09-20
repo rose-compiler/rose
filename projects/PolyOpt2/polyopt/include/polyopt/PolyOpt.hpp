@@ -66,6 +66,13 @@ PolyOptRecognizeScopsSubTree(SgNode* root, PolyRoseOptions& polyoptions);
 PolyOptISLRepresentation
 PolyOptConvertScopToISL(scoplib_scop_p scop);
 
+/**
+ * Cleans the function (n, or the one enclosing n) from useless variable 
+ * declarations.
+ *
+ */
+void
+PolyOptCleanUselessVariableDeclarations(SgNode* n);
 
 
 
