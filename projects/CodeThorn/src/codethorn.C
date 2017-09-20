@@ -417,7 +417,6 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("specialize-fun-const", po::value< vector<int> >(), "Constant <arg>, the param is to be specialized to.")
     ("specialize-fun-varinit", po::value< vector<string> >(), "Variable name of which the initialization is to be specialized (overrides any initializer expression).")
     ("specialize-fun-varinit-const", po::value< vector<int> >(), "Constant <arg>, the variable initialization is to be specialized to.")
-    ("verify-update-sequence-race-conditions", po::value< bool >()->default_value(false)->implicit_value(true), "(experimental) Check race conditions of update sequence.")
     ;
 
   patternSearchOptions.add_options()
@@ -1175,8 +1174,8 @@ int main( int argc, char * argv[] ) {
       }
     }
 
-    if((args.getBool("print-update-infos")||args.getBool("verify-update-sequence-race-conditions")||args.count("equivalence-check"))&&(args.count("dump-sorted")==0 && args.count("dump-non-sorted")==0)) {
-      logger[ERROR] <<"option print-update-infos/verify-update-sequence-race-conditions/equivalence-check must be used together with option --dump-non-sorted or --dump-sorted."<<endl;
+    if((args.getBool("print-update-infos")||args.count("equivalence-check"))&&(args.count("dump-sorted")==0 && args.count("dump-non-sorted")==0)) {
+      logger[ERROR] <<"option print-update-infos/equivalence-check must be used together with option --dump-non-sorted or --dump-sorted."<<endl;
       exit(1);
     }
     RewriteSystem rewriteSystem;
@@ -1711,18 +1710,6 @@ int main( int argc, char * argv[] ) {
       //cout<<"DEBUG: Rewrite3:"<<rewriteSystem.getStatistics().toString()<<endl;
       speci.substituteArrayRefs(arrayUpdates, analyzer.getVariableIdMapping(), sarMode, rewriteSystem);
       arrayUpdateExtractionRunTime=timer.getElapsedTimeInMilliSec();
-
-      if(args.getBool("verify-update-sequence-race-conditions")) {
-        SgNode* root=analyzer.startFunRoot;
-        VariableId parallelIterationVar;
-        LoopInfoSet loopInfoSet=EquivalenceChecking::determineLoopInfoSet(root,analyzer.getVariableIdMapping(), analyzer.getLabeler());
-        logger[INFO] <<"number of iteration vars: "<<loopInfoSet.size()<<endl;
-        verifyUpdateSequenceRaceConditionsTotalLoopNum=loopInfoSet.size();
-        verifyUpdateSequenceRaceConditionsParLoopNum=Specialization::numParLoops(loopInfoSet, analyzer.getVariableIdMapping());
-        timer.start();
-        verifyUpdateSequenceRaceConditionsResult=speci.verifyUpdateSequenceRaceConditions(loopInfoSet,arrayUpdates,analyzer.getVariableIdMapping());
-        verifyUpdateSequenceRaceConditionRunTime=timer.getElapsedTimeInMilliSec();
-      }
 
       if(args.getBool("print-update-infos")) {
         speci.printUpdateInfos(arrayUpdates,analyzer.getVariableIdMapping());
