@@ -1115,6 +1115,14 @@ void Analyzer::initializeSolver(std::string functionToStartAt,SgNode* root, bool
   variableValueMonitor.init(currentEState);
   addToWorkList(currentEState);
   // cout << "INIT: start state: "<<currentEState->toString(&variableIdMapping)<<endl;
+
+  if(args.getBool("rers-binary")) {
+    //initialize the global variable arrays in the linked binary version of the RERS problem
+    logger[DEBUG]<< "init of globals with arrays for "<< _numberOfThreadsToUse << " threads. " << endl;
+    RERS_Problem::rersGlobalVarsArrayInit(_numberOfThreadsToUse);
+    RERS_Problem::createGlobalVarAddressMaps(this);
+  }
+
   logger[TRACE]<< "INIT: finished."<<endl;
 }
 
@@ -1368,6 +1376,12 @@ void Analyzer::resetAnalysis() {
   variableValueMonitor.init(processedEState);
   // re-init worklist with STG start state
   addToWorkList(processedEState);
+  // check if the reset yields the expected sizes of corresponding data structures
+  ROSE_ASSERT(estateSet.size() == 1);
+  ROSE_ASSERT(pstateSet.size() == 1);
+  ROSE_ASSERT(transitionGraph.size() == 0);
+  ROSE_ASSERT(estateWorkListCurrent->size() == 1);
+  ROSE_ASSERT(estateWorkListNext->size() == 0);
 }
 
 /*! 
