@@ -1078,6 +1078,45 @@ erasePlutoFiles()
 }
 
 /**
+ * Cleans the function (n, or the one enclosing n) from useless variable 
+ * declarations.
+ *
+ */
+void
+PolyOptCleanUselessVariableDeclarations(SgNode* n)
+{
+  if (! isSgFunctionDeclaration(n))
+    n = SageInterface::getEnclosingNode<SgFunctionDeclaration>(n);
+  ROSE_ASSERT(n);
+  std::vector<SgNode*> vardecls =
+    NodeQuery::querySubTree(n, V_SgVariableDeclaration);
+  std::vector<SgNode*> varrefs =
+    NodeQuery::querySubTree(n, V_SgVarRefExp);
+
+  std::set<SgName> allsymbs;
+  for (std::vector<SgNode*>::iterator i = varrefs.begin();
+       i != varrefs.end(); ++i)
+    {
+      SgVarRefExp* ref = isSgVarRefExp(*i);
+      allsymbs.insert(ref->get_symbol()->get_name());
+    }
+  
+  for (std::vector<SgNode*>::iterator i = vardecls.begin();
+       i != vardecls.end(); ++i)
+    {
+      SgVariableDeclaration* vd = isSgVariableDeclaration(*i);
+      SgName name = vd->get_definition()->get_vardefn()->get_qualified_name();
+      std::set<SgName>::iterator j;
+      for (j = allsymbs.begin(); j != allsymbs.end(); ++j)
+	if (! strcmp ((*j).str(), name.str()))
+	  break;
+      if (j == allsymbs.end())
+	SageInterface::removeStatement(isSgStatement(*i));
+    }
+}
+
+
+/**
  * Helper. Process a single scop with PoCC.
  *
  */
@@ -1192,6 +1231,7 @@ optimizeSingleScop(scoplib_scop_p scoplibScop,
 	{
 	  // Default mode, replace the original AST by the transformed one.
 	  SageInterface::replaceStatement(scopRoot, sageScop.getBasicBlock(), true);
+	  PolyOptCleanUselessVariableDeclarations(sageScop.getBasicBlock());
 	  past_deep_free (pastRoot);
 	}
 
