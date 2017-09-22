@@ -72,6 +72,7 @@ struct Element_ID_Array_Struct {
 typedef struct Element_ID_Array_Struct Element_List;
 typedef Element_List Association_List;
 typedef Element_List Component_Clause_List;
+typedef Element_List Context_Clause_List;
 typedef Element_List Declaration_List;
 typedef Element_List Declarative_Item_List;
 typedef Element_List Defining_Name_List;
@@ -81,6 +82,7 @@ typedef Element_List Expression_Path_List;
 typedef Element_List Name_List;
 typedef Element_List Path_List;
 typedef Element_List Parameter_Specification_List;
+typedef Element_List Pragma_Element_List;
 typedef Element_List Representation_Clause_List;
 typedef Element_List Statement_List;
 

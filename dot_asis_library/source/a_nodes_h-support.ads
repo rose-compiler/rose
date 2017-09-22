@@ -20,33 +20,6 @@ package a_nodes_h.Support is
       parameters  => Invalid_chars_ptr,
       debug_image => Invalid_chars_ptr);
 
-   Empty_Unit_List : constant Unit_List :=
-     (length => 0,
-      IDs => null);
-
-   Default_Unit_Struct : constant Unit_Struct :=
-     (ID                                => Invalid_Node_ID,
-      Unit_Kind                         => Not_A_Unit,
-      Unit_Class                        => Not_A_Class,
-      Unit_Origin                       => Not_An_Origin,
-      Corresponding_Children            => Empty_Unit_List,
-      Corresponding_Parent_Declaration  => Invalid_Node_ID,
-      Corresponding_Declaration         => Invalid_Node_ID,
-      Corresponding_Body                => Invalid_Node_ID,
-      Unit_Full_Name                    => Invalid_chars_ptr,
-      Unique_Name                       => Invalid_chars_ptr,
-      Exists                            => Invalid_bool,
-      Can_Be_Main_Program               => Invalid_bool,
-      Is_Body_Required                  => Invalid_bool,
-      Text_Name                         => Invalid_chars_ptr,
-      Text_Form                         => Invalid_chars_ptr,
-      Object_Name                       => Invalid_chars_ptr,
-      Object_Form                       => Invalid_chars_ptr,
-      Compilation_Command_Line_Options  => Invalid_chars_ptr,
-      Subunits                          => Empty_Unit_List,
-      Corresponding_Subunit_Parent_Body => Invalid_Node_ID,
-      Debug_Image                       => Invalid_chars_ptr);
-
    -- Element union component default structs go here
 
    Empty_Element_List    : constant Element_List :=
@@ -282,6 +255,36 @@ package a_nodes_h.Support is
       Enclosing_Kind       => Not_Enclosing,
       Source_Location      => Default_Source_Location_Struct,
       The_Union            => Default_Element_Union);
+
+   Empty_Unit_List : constant Unit_List :=
+     (length => 0,
+      IDs => null);
+
+   Default_Unit_Struct : constant Unit_Struct :=
+     (ID                                => Invalid_Node_ID,
+      Unit_Kind                         => Not_A_Unit,
+      Unit_Class                        => Not_A_Class,
+      Unit_Origin                       => Not_An_Origin,
+      Unit_Full_Name                    => Invalid_chars_ptr,
+      Unique_Name                       => Invalid_chars_ptr,
+      Exists                            => Invalid_bool,
+      Can_Be_Main_Program               => Invalid_bool,
+      Is_Body_Required                  => Invalid_bool,
+      Text_Name                         => Invalid_chars_ptr,
+      Text_Form                         => Invalid_chars_ptr,
+      Object_Name                       => Invalid_chars_ptr,
+      Object_Form                       => Invalid_chars_ptr,
+      Compilation_Command_Line_Options  => Invalid_chars_ptr,
+      Debug_Image                       => Invalid_chars_ptr,
+      Unit_Declaration                  => Invalid_Node_ID,
+      Context_Clause_Elements           => Empty_Element_List,
+      Compilation_Pragmas               => Empty_Element_List,
+      Corresponding_Children            => Empty_Unit_List,
+      Corresponding_Parent_Declaration  => Invalid_Node_ID,
+      Corresponding_Declaration         => Invalid_Node_ID,
+      Corresponding_Body                => Invalid_Node_ID,
+      Subunits                          => Empty_Unit_List,
+      Corresponding_Subunit_Parent_Body => Invalid_Node_ID);
 
    Default_Node_Union : constant Node_Union :=
      (Discr        => 0,

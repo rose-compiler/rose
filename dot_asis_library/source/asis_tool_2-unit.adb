@@ -82,7 +82,7 @@ package body Asis_Tool_2.Unit is
 
 
    procedure Add_Unit_List
-     (Dot_Label      : in out Dot.HTML_Like_Labels.Class;
+     (This           : in out class;
       Units_In       : in     Asis.Compilation_Unit_List;
       Dot_Label_Name : in     String;
       List_Out       :    out a_nodes_h.Unit_List)
@@ -95,10 +95,11 @@ package body Asis_Tool_2.Unit is
       for Unit of Units_In loop
          declare
             ID : constant A4G.A_Types.Unit_ID := Asis.Set_Get.Get_Unit_Id (Unit);
+            Label : constant String :=
+              Dot_Label_Name & " (" & IDs_Index'Image & ")";
          begin
             IDs (IDs_Index) := Interfaces.C.int (ID);
-            Dot_Label.Add_Eq_Row
-              (Dot_Label_Name & " (" & IDs_Index'Image & ")", To_String (ID));
+            Add_To_Dot_Label (This, Label, To_String (ID));
             IDs_Index := IDs_Index + 1;
          end;
       end loop;
@@ -106,6 +107,34 @@ package body Asis_Tool_2.Unit is
         (length => Interfaces.C.int(Count),
          IDs    => anhS.To_Unit_ID_Ptr (IDs));
    end Add_Unit_List;
+
+
+   procedure Add_Element_List
+     (This           : in out class;
+      Elements_In    : in     Asis.Element_List;
+      Dot_Label_Name : in     String;
+      List_Out       :    out a_nodes_h.Element_List)
+   is
+      Count : constant Natural := Elements_In'Length;
+      IDs : anhS.Element_ID_Array_Access := new
+        anhS.Element_ID_Array (1 .. Count);
+      IDs_Index : Positive := IDs'First;
+   begin
+      for Element of Elements_In loop
+         declare
+            ID : constant Types.Node_ID := Asis.Set_Get.Node_Value (Element);
+            Label : constant String :=
+              Dot_Label_Name & " (" & IDs_Index'Image & ")";
+         begin
+            IDs (IDs_Index) := Interfaces.C.int (ID);
+            Add_To_Dot_Label (This, Label, To_String (ID));
+            IDs_Index := IDs_Index + 1;
+         end;
+      end loop;
+      List_Out :=
+        (length => Interfaces.C.int(Count),
+         IDs    => anhS.To_Element_ID_Ptr (IDs));
+   end Add_Element_List;
 
    -----------
    -- PRIVATE:
@@ -213,6 +242,24 @@ package body Asis_Tool_2.Unit is
          This.A_Unit.Compilation_Command_Line_Options := To_Chars_Ptr (WS);
       end;
 
+      procedure Add_Compilation_Pragmas is
+      begin
+         Add_Element_List
+           (This           => This,
+            Elements_In    => Asis.Elements.Compilation_Pragmas (Unit),
+            Dot_Label_Name => "Compilation_Pragmas",
+            List_Out       => This.A_Unit.Compilation_Pragmas);
+      end;
+
+      procedure Add_Context_Clause_Elements is
+      begin
+         Add_Element_List
+           (This           => This,
+            Elements_In    => Asis.Elements.Context_Clause_Elements (Unit),
+            Dot_Label_Name => "Context_Clause_Elements",
+            List_Out       => This.A_Unit.Context_Clause_Elements);
+      end;
+
       procedure Add_Corresponding_Body is
          ID : constant A4G.A_Types.Unit_Id := Asis.Set_Get.Get_Unit_Id
            (ACU.Corresponding_Body (Unit));
@@ -224,7 +271,7 @@ package body Asis_Tool_2.Unit is
       procedure Add_Corresponding_Children is
       begin
          Add_Unit_List
-           (Dot_Label      => This.Dot_Label,
+           (This           => This,
             Units_In       => ACU.Corresponding_Children (Unit),
             Dot_Label_Name => "Corresponding_Children",
             List_Out       => This.A_Unit.Corresponding_Children);
@@ -308,7 +355,7 @@ package body Asis_Tool_2.Unit is
       procedure Add_Subunits is
       begin
          Add_Unit_List
-           (Dot_Label      => This.Dot_Label,
+           (This           => This,
             Units_In       => ACU.Subunits (Unit),
             Dot_Label_Name => "Subunits",
             List_Out       => This.A_Unit.Subunits);
@@ -340,6 +387,14 @@ package body Asis_Tool_2.Unit is
       begin
          This.Add_To_Dot_Label ("Unit_Class", Unit_Class'Image);
          This.A_Unit.Unit_Class := anhS.To_Unit_Classes (Unit_Class);
+      end;
+
+      procedure Add_Unit_Declaration is
+         ID : constant Types.Node_Id :=
+           Asis.Set_Get.Node (Asis.Elements.Unit_Declaration (Unit));
+      begin
+         This.Add_To_Dot_Label ("Unit_Declaration", To_String (ID));
+         This.A_Unit.Unit_Declaration := a_nodes_h.Node_ID (ID);
       end;
 
       procedure Add_Unit_Full_Name is
@@ -403,6 +458,9 @@ package body Asis_Tool_2.Unit is
          Add_Object_Form;
          Add_Compilation_Command_Line_Options;
          Add_Debug_Image;
+         Add_Unit_Declaration;
+         Add_Context_Clause_Elements;
+         Add_Compilation_Pragmas;
       end;
 
       procedure Finish_Output is
