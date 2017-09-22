@@ -102,8 +102,6 @@ class Specialization {
                                     RewriteSystem& rewriteSystem,
                                     bool useConstExprSubstRule=true
                                     );
-  // computes number of race conditions in update sequence (0:OK, >0:race conditions exist).
-  int checkDataRaces(LoopInfoSet& loopInfoSet, ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping);
   void printUpdateInfos(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping);
   void writeArrayUpdatesToFile(ArrayUpdatesSequence& arrayUpdates, string filename, SAR_MODE sarMode, bool performSorting);
   void createSsaNumbering(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping);
@@ -111,11 +109,8 @@ class Specialization {
   int specializeFunction(SgProject* project, string funNameToFind, int param, int constInt, VariableIdMapping* variableIdMapping);
   int specializeFunction(SgProject* project, string funNameToFind, int param, int constInt, string varInitName, int initConst, VariableIdMapping* variableIdMapping);
   SgFunctionDefinition* getSpecializedFunctionRootNode() { return _specializedFunctionRootNode; }
-  static int numParLoops(LoopInfoSet& loopInfoSet, VariableIdMapping* variableIdMapping);
-  void setCheckAllLoops(bool val);
-  void setCheckAllDataRaces(bool val);
-  void setVisualizeReadWriteAccesses(bool val);
   void substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping, SAR_MODE sarMode, RewriteSystem& rewriteSystem);
+
  private:
   static Sawyer::Message::Facility logger;
   string iterVarsToString(IterationVariables iterationVars, VariableIdMapping* variableIdMapping);
@@ -139,51 +134,9 @@ class Specialization {
   string flattenArrayInitializer(SgVariableDeclaration* decl, VariableIdMapping* variableIdMapping);
   void transformArrayAccess(SgNode* node, VariableIdMapping* variableIdMapping);
   
-  // data race detection
-  void populateReadWriteDataIndex(LoopInfo& li, IndexToReadWriteDataMap& indexToReadWriteDataMap, ArrayUpdatesSequence& arrayUpdates,
-				  VariableIdMapping* variableIdMapping);
-  IndexVector extractIndexVector(LoopInfo& li, const PState* pstate);
-  void addAccessesFromExpressionToIndex(SgExpression* exp, IndexVector& index, IndexToReadWriteDataMap& indexToReadWriteDataMap,
-					VariableIdMapping* variableIdMapping);
-  void displayReadWriteDataIndex(IndexToReadWriteDataMap& indexToReadWriteDataMap, VariableIdMapping* variableIdMapping);
-  typedef vector<IndexVector> ThreadVector;
-  typedef map<IndexVector,ThreadVector > CheckMapType;
-  int numberOfRacyThreadPairs(IndexToReadWriteDataMap& indexToReadWriteDataMap, VariableIdMapping* variableIdMapping);
-  void populateCheckMap(CheckMapType& checkMap, IndexToReadWriteDataMap& indexToReadWriteDataMap);
-  template <typename T>
-    bool dataRaceExistsInvolving1And2(T& wset1, T& rset1, T& wset2, T& rset2, T& writeWriteRaces, T& readWriteRaces);
-
-  SgFunctionDefinition* _specializedFunctionRootNode;
-
-  // for data race check of all loops independent on whether they are marked as parallel loops
-  bool _checkAllLoops;
-  bool _checkAllDataRaces;
-  bool _visualizeReadWriteAccesses;
-  long _maxNumberOfExtractedUpdates;
+  SgFunctionDefinition* _specializedFunctionRootNode=0;
+  long _maxNumberOfExtractedUpdates=-1;
 };
 
-// ----- template implementation -----
-// Data race definition: 
-// Two accesses to the same shared memory location by two different threads, one of which is a write
-template <typename T>
-bool Specialization::dataRaceExistsInvolving1And2(T& wset1, T& rset1, T& wset2, T& rset2, 
-						  T& writeWriteRaces, T& readWriteRaces) {
-  T intersection = wset1 * wset2;
-  if(!intersection.empty()) {
-    writeWriteRaces.insert(intersection.begin(), intersection.end());
-    return true;
-  }
-  intersection = wset1 * rset2;
-  if(!intersection.empty()) {
-    readWriteRaces.insert(intersection.begin(), intersection.end());
-    return true;
-  }
-  intersection = rset1 * wset2;
-  if(!intersection.empty()) {
-    readWriteRaces.insert(intersection.begin(), intersection.end());
-    return true;
-  }
-  return false;
-}
 
 #endif

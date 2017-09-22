@@ -1194,6 +1194,7 @@ int main( int argc, char * argv[] ) {
 
     DataRaceDetection dataRaceDetection;
     dataRaceDetection.handleCommandLineOptions(analyzer);
+    dataRaceDetection.setVisualizeReadWriteAccesses(args.getBool("visualize-read-write-sets"));
 
     // handle RERS mode: reconfigure options
     if(args.getBool("rersmode")) {
@@ -1685,9 +1686,6 @@ int main( int argc, char * argv[] ) {
 	sarMode=SAR_SUBSTITUTE;
       }
       Specialization speci;
-      if (args.getBool("visualize-read-write-sets")) {
-        speci.setVisualizeReadWriteAccesses(true);
-      }
       ArrayUpdatesSequence arrayUpdates;
       logger[TRACE] <<"STATUS: performing array analysis on STG."<<endl;
       logger[TRACE] <<"STATUS: identifying array-update operations in STG and transforming them."<<endl;
