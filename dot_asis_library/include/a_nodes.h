@@ -153,18 +153,32 @@ enum Unit_Origins {
 };
 
 
-// May take 21*4 (20*4 + 3) bytes - 5 ID, 3 enum, 2 Unit_List(2*4 ea), 8 char*, 3 bool:
+// May take 26*4 (20*4 + 3) bytes - 6*ID, 3*enum, 4*List(2*4 ea), 8*char*, 3*bool:
 struct Unit_Struct {
+  Unit_ID             ID;
+  enum Unit_Kinds     Unit_Kind;
+  enum Unit_Classes   Unit_Class;
+  enum Unit_Origins   Unit_Origin;
+  char               *Unit_Full_Name; // Ada name
+  char               *Unique_Name; // file name etc.
+  bool                Exists;
+  bool                Can_Be_Main_Program;
+  bool                Is_Body_Required;
+  char               *Text_Name;
+  char               *Text_Form;
+  char               *Object_Name;
+  char               *Object_Form;
+  char               *Compilation_Command_Line_Options;
+  char               *Debug_Image;
+  Declaration_ID      Unit_Declaration;
+  Context_Clause_List Context_Clause_Elements;
+  Pragma_Element_List Compilation_Pragmas;
+  
   // The fields below are only applicable to the kinds above them:
-  // (all)
-  Unit_ID           ID;
-  enum Unit_Kinds   Unit_Kind;
-  enum Unit_Classes Unit_Class;
-  enum Unit_Origins Unit_Origin;
   //  A_Package,
   //  A_Generic_Package,
   //  A_Package_Instance,
-  Unit_List         Corresponding_Children;
+  Unit_List           Corresponding_Children;
   //  A_Procedure,
   //  A_Function,
   //  A_Package,
@@ -183,12 +197,12 @@ struct Unit_Struct {
   //  A_Procedure_Body,
   //  A_Function_Body,
   //  A_Package_Body,
-  Unit_ID           Corresponding_Parent_Declaration;
+  Unit_ID             Corresponding_Parent_Declaration;
   //  A_Procedure_Body,
   //  A_Function_Body,
   //  A_Package_Body,
   //  An_Unknown_Unit
-  Unit_ID           Corresponding_Declaration;
+  Unit_ID             Corresponding_Declaration;
   //  A_Procedure,
   //  A_Function,
   //  A_Package,
@@ -196,18 +210,7 @@ struct Unit_Struct {
   //  A_Generic_Function,
   //  A_Generic_Package,
   //  An_Unknown_Unit
-  Unit_ID           Corresponding_Body;
-  // (all)
-  char             *Unit_Full_Name; // Ada name
-  char             *Unique_Name; // file name etc.
-  bool              Exists;
-  bool              Can_Be_Main_Program;
-  bool              Is_Body_Required;
-  char             *Text_Name;
-  char             *Text_Form;
-  char             *Object_Name;
-  char             *Object_Form;
-  char             *Compilation_Command_Line_Options;
+  Unit_ID             Corresponding_Body;
   //  A_Procedure_Body,
   //  A_Function_Body,
   //  A_Package_Body,
@@ -216,15 +219,13 @@ struct Unit_Struct {
   //  A_Package_Body_Subunit,
   //  A_Task_Body_Subunit,
   //  A_Protected_Body_Subunit,
-  Unit_List         Subunits;
+  Unit_List           Subunits;
   //  A_Procedure_Body_Subunit,
   //  A_Function_Body_Subunit,
   //  A_Package_Body_Subunit,
   //  A_Task_Body_Subunit,
   //  A_Protected_Body_Subunit,
-  Unit_ID           Corresponding_Subunit_Parent_Body;
-  // (all)
-  char             *Debug_Image;
+  Unit_ID             Corresponding_Subunit_Parent_Body;
 };
 ///////////////////////////////////////////////////////////////////////////////
 // END unit 
