@@ -19,8 +19,8 @@ obj_dir=${base_dir}/obj
 
 tool_name=run_asis_tool_2
 target_dir=${base_dir}/../test_units
-#target_units="minimal.adb"
-target_units="unit_2.adb"
+target_units="minimal.adb"
+#target_units="unit_2.adb"
 
 check_for_gnat () {
   log_separator_1

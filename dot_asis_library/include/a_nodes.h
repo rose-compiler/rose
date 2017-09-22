@@ -32,158 +32,6 @@ struct Context_Struct {
 ///////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////////
-// BEGIN unit
-///////////////////////////////////////////////////////////////////////////////
-typedef Node_ID Unit_ID;
-
-typedef Unit_ID *Unit_ID_Ptr;
-
-// May take 2*4 bytes - 1 int, 1 ptr:
-// _IDs_ points to the first of _length_ IDs:
-struct Unit_ID_Array_Struct {
-  int         Length;
-  Unit_ID_Ptr IDs;
-};
-typedef struct Unit_ID_Array_Struct Unit_List;
-
-enum Unit_Kinds {
-  Not_A_Unit,
-
-  A_Procedure,
-  A_Function,
-  A_Package,
-
-  A_Generic_Procedure,
-  A_Generic_Function,
-  A_Generic_Package,
-
-  A_Procedure_Instance,
-  A_Function_Instance,
-  A_Package_Instance,
-
-  A_Procedure_Renaming,
-  A_Function_Renaming,
-  A_Package_Renaming,
-
-  A_Generic_Procedure_Renaming,
-  A_Generic_Function_Renaming,
-  A_Generic_Package_Renaming,
-
-  A_Procedure_Body,
-  //  A unit interpreted only as the completion of a procedure, or a unit
-  //  interpreted as both the declaration and body of a library
-  //  procedure. Reference Manual 10.1.4(4)
-  A_Function_Body,
-  //  A unit interpreted only as the completion of a function, or a unit
-  //  interpreted as both the declaration and body of a library
-  //  function. Reference Manual 10.1.4(4)
-  A_Package_Body,
-
-  A_Procedure_Body_Subunit,
-  A_Function_Body_Subunit,
-  A_Package_Body_Subunit,
-  A_Task_Body_Subunit,
-  A_Protected_Body_Subunit,
-
-  A_Nonexistent_Declaration,
-  //  A unit that does not exist but is:
-  //    1) mentioned in a with clause of another unit or,
-  //    2) a required corresponding library_unit_declaration
-  A_Nonexistent_Body,
-  //  A unit that does not exist but is:
-  //     1) known to be a corresponding subunit or,
-  //     2) a required corresponding library_unit_body
-  A_Configuration_Compilation,
-  //  Corresponds to the whole content of a compilation with no
-  //  compilation_unit, but possibly containing comments, configuration
-  //  pragmas, or both. Any Context can have at most one unit of
-  //  A_Configuration_Compilation kind. A unit of
-  //  A_Configuration_Compilation does not have a name. This unit
-  //  represents configuration pragmas that are "in effect".
-  //
-  //  GNAT-specific note: In case of GNAT the requirement to have at most
-  //  one unit of A_Configuration_Compilation kind does not make sense: in
-  //  GNAT compilation model configuration pragmas are contained in
-  //  configuration files, and a compilation may use an arbitrary number
-  //  of configuration files. That is, (Elements representing) different
-  //  configuration pragmas may have different enclosing compilation units
-  //  with different text names. So in the ASIS implementation for GNAT a
-  //  Context may contain any number of units of
-  //  A_Configuration_Compilation kind
-  An_Unknown_Unit
-};
-
-enum Unit_Classes {
-  Not_A_Class,
-  //  A nil, nonexistent, unknown, or configuration compilation unit class.
-  A_Public_Declaration,
-  //  library_unit_declaration or library_unit_renaming_declaration.
-  A_Public_Body,
-  //  library_unit_body interpreted only as a completion. Its declaration
-  //  is public.
-  A_Public_Declaration_And_Body,
-  //  subprogram_body interpreted as both a declaration and body of a
-  //  library subprogram - Reference Manual 10.1.4(4).
-  A_Private_Declaration,
-  //  private library_unit_declaration or private
-  //  library_unit_renaming_declaration.
-  A_Private_Body,
-  //  library_unit_body interpreted only as a completion. Its declaration
-  //  is private.
-  A_Separate_Body
-  //  separate (parent_unit_name) proper_body.
-};
-  
-enum Unit_Origins {
-  Not_An_Origin,
-  //  A nil or nonexistent unit origin. An_Unknown_Unit can be any origin
-  A_Predefined_Unit,
-  //  Ada predefined language environment units listed in Annex A(2).
-  //  These include Standard and the three root library units: Ada,
-  //  Interfaces, and System, and their descendants.  i.e., Ada.Text_Io,
-  //  Ada.Calendar, Interfaces.C, etc.
-  An_Implementation_Unit,
-  //  Implementation specific library units, e.g., runtime support
-  //  packages, utility libraries, etc. It is not required that any
-  //  implementation supplied units have this origin. This is a suggestion.
-  //  Implementations might provide, for example, precompiled versions of
-  //  public domain software that could have An_Application_Unit origin.
-  An_Application_Unit
-  //  Neither A_Predefined_Unit or An_Implementation_Unit
-};
-
-
-// May take 21*4 (20*4 + 3) bytes - 5 ID, 3 enum, 2 Unit_List(2*4 ea), 8 char*, 3 bool:
-struct Unit_Struct {
-  Unit_ID           ID;
-  enum Unit_Kinds   Unit_Kind;
-  enum Unit_Classes Unit_Class;
-  enum Unit_Origins Unit_Origin;
-  // Enclosing_Context
-  // Enclosing_Container
-  Unit_List         Corresponding_Children;
-  Unit_ID           Corresponding_Parent_Declaration;
-  Unit_ID           Corresponding_Declaration;
-  Unit_ID           Corresponding_Body;
-  char             *Unit_Full_Name; // Ada name
-  char             *Unique_Name; // file name etc.
-  bool              Exists;
-  bool              Can_Be_Main_Program;
-  bool              Is_Body_Required;
-  char             *Text_Name;
-  char             *Text_Form;
-  char             *Object_Name;
-  char             *Object_Form;
-  char             *Compilation_Command_Line_Options;
-  Unit_List         Subunits;
-  Unit_ID           Corresponding_Subunit_Parent_Body;
-  char             *Debug_Image;
-};
-///////////////////////////////////////////////////////////////////////////////
-// END unit 
-///////////////////////////////////////////////////////////////////////////////
-
-///////////////////////////////////////////////////////////////////////////////
 // BEGIN element 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -224,6 +72,7 @@ struct Element_ID_Array_Struct {
 typedef struct Element_ID_Array_Struct Element_List;
 typedef Element_List Association_List;
 typedef Element_List Component_Clause_List;
+typedef Element_List Context_Clause_List;
 typedef Element_List Declaration_List;
 typedef Element_List Declarative_Item_List;
 typedef Element_List Defining_Name_List;
@@ -233,6 +82,7 @@ typedef Element_List Expression_Path_List;
 typedef Element_List Name_List;
 typedef Element_List Path_List;
 typedef Element_List Parameter_Specification_List;
+typedef Element_List Pragma_Element_List;
 typedef Element_List Representation_Clause_List;
 typedef Element_List Statement_List;
 
@@ -963,6 +813,9 @@ struct Defining_Name_Struct {
   Declaration_ID            Corresponding_Constant_Declaration;
   // A_Defining_Operator_Symbol:
   enum Operator_Kinds       Operator_Kind;
+  // The defining name of an entity declared within the 
+  // implicit specification of a generic instantiation:
+  Defining_Name_ID      Corresponding_Generic_Element;
   };
 
 // May take :
@@ -992,55 +845,278 @@ struct Declaration_Struct {
   enum Trait_Kinds         Trait_Kind;
   
   // TODO: add remaining valid kinds comments:
-  Defining_Name_List             Names;
+  // (all kinds)
+  Defining_Name_List             Names;  
+  //  An_Ordinary_Type_Declaration,            // 3.2.1(3)
+  //  A_Task_Type_Declaration,                  // 9.1(2)
+  //  A_Protected_Type_Declaration,             // 9.4(2)
+  //  An_Incomplete_Type_Declaration,           // 3.2.1(2),3.10(2)
+  //  A_Tagged_Incomplete_Type_Declaration,     //  3.10.1(2)
+  //  A_Private_Type_Declaration,               // 3.2.1(2),7.3(2)
+  //  A_Private_Extension_Declaration,          // 3.2.1(2),7.3(3)
+  //  A_Formal_Type_Declaration,                // 12.5(2)
   Definition_ID                  Discriminant_Part;
+  //  An_Ordinary_Type_Declaration,            // 3.2.1(3)
+  //  A_Task_Type_Declaration,                  // 9.1(2)
+  //  A_Protected_Type_Declaration,             // 9.4(2)
+  //  A_Private_Type_Declaration,               // 3.2.1(2),7.3(2)
+  //  A_Private_Extension_Declaration,          // 3.2.1(2),7.3(3)
+  //  A_Formal_Type_Declaration,                // 12.5(2)
   Definition_ID                  Type_Declaration_View;
+  //  A_Variable_Declaration,                   // 3.3.1(2)
+  //  A_Constant_Declaration,                   // 3.3.1(4)
+  //  A_Deferred_Constant_Declaration,          // 3.3.1(6),7.4(2)
+  //  A_Single_Task_Declaration,                // 3.3.1(2),9.1(3)
+  //  A_Single_Protected_Declaration,           // 3.3.1(2),9.4(2)
+  //  A_Discriminant_Specification,             // 3.7(5)  
+  //  A_Component_Declaration,                  // 3.8(6)
+  //  A_Parameter_Specification,                // 6.1(15) 
+  //  A_Return_Variable_Specification,          // 6.5
+  //  An_Object_Renaming_Declaration,           // 8.5.1(2)
+  //  A_Formal_Object_Declaration,              // 12.4(2)
   Definition_ID                  Object_Declaration_View;
+  // (all kinds)
   Element_List                   Aspect_Specifications;
+  //  A_Variable_Declaration,                   // 3.3.1(2)
+  //  A_Constant_Declaration,                   // 3.3.1(4)
+  //  An_Integer_Number_Declaration,            // 3.3.2(2)
+  //  A_Real_Number_Declaration,                // 3.5.6(2)
+  //  A_Discriminant_Specification,             // 3.7(5)  
+  //  A_Component_Declaration,                  // 3.8(6)
+  //  A_Parameter_Specification,                // 6.1(15) 
+  //  A_Return_Variable_Specification,          // 6.5
+  //  A_Formal_Object_Declaration,              // 12.4(2)
   Expression_ID                  Initialization_Expression;
+  //  An_Ordinary_Type_Declaration,            // 3.2.1(3)
+  //  A_Task_Type_Declaration,                  // 9.1(2)
+  //  A_Protected_Type_Declaration,             // 9.4(2)
+  //  An_Incomplete_Type_Declaration,           // 3.2.1(2),3.10(2)
+  //  A_Tagged_Incomplete_Type_Declaration,     //  3.10.1(2)
+  //  A_Private_Type_Declaration,               // 3.2.1(2),7.3(2)
+  //  A_Private_Extension_Declaration,          // 3.2.1(2),7.3(3)
   Declaration_ID                 Corresponding_Type_Declaration;
+  //  An_Incomplete_Type_Declaration,           // 3.2.1(2),3.10(2)
+  //  A_Tagged_Incomplete_Type_Declaration,     //  3.10.1(2)
+  //  A_Private_Type_Declaration,               // 3.2.1(2),7.3(2)
+  //  A_Private_Extension_Declaration,          // 3.2.1(2),7.3(3)
   Declaration_ID                 Corresponding_Type_Completion;
+  //  An_Ordinary_Type_Declaration,            // 3.2.1(3)
+  //  A_Task_Type_Declaration,                  // 9.1(2)
+  //  A_Protected_Type_Declaration,             // 9.4(2)
+  //  A_Private_Type_Declaration,               // 3.2.1(2),7.3(2)
+  //  A_Private_Extension_Declaration,          // 3.2.1(2),7.3(3)
   Declaration_ID                 Corresponding_Type_Partial_View;
+  //  An_Ordinary_Type_Declaration,            // 3.2.1(3)
+  //  A_Task_Type_Declaration,                  // 9.1(2)
+  //  A_Protected_Type_Declaration,             // 9.4(2)
+  //  A_Private_Type_Declaration,               // 3.2.1(2),7.3(2)
+  //  A_Private_Extension_Declaration,          // 3.2.1(2),7.3(3)
+  //  A_Subtype_Declaration,                    // 3.2.2(2)
+  //  A_Formal_Type_Declaration,                // 12.5(2)
   Declaration_ID                 Corresponding_First_Subtype;
   Declaration_ID                 Corresponding_Last_Constraint;
   Declaration_ID                 Corresponding_Last_Subtype;
+  // (all)
   Representation_Clause_List     Corresponding_Representation_Clauses;
+  //  A_Loop_Parameter_Specification,           // 5.5(4)  
+  //  An_Entry_Index_Specification,             // 9.5.2(2)
   Discrete_Subtype_Definition_ID Specification_Subtype_Definition;
+  //  A_Generalized_Iterator_Specification,     // 5.5.2   
+  //  An_Element_Iterator_Specification,        // 5.5.2   
   Element_ID                     Iteration_Scheme_Name;
+  //  An_Element_Iterator_Specification,        // 5.5.2   
   Element_ID                     Subtype_Indication;
+  //  A_Procedure_Declaration,                  // 6.1(4)  
+  //  A_Function_Declaration,                   // 6.1(4)  
+  //  A_Procedure_Body_Declaration,             // 6.3(2)
+  //  A_Function_Body_Declaration,              // 6.3(2)
+  //  A_Null_Procedure_Declaration,             // 6.7
+  //  An_Expression_Function_Declaration,       // 6.8
+  //  A_Procedure_Renaming_Declaration,         // 8.5.4(2)
+  //  A_Function_Renaming_Declaration,          // 8.5.4(2)
+  //  An_Entry_Declaration,                     // 9.5.2(2)
+  //  An_Entry_Body_Declaration,                // 9.5.2(5)
+  //  A_Procedure_Body_Stub,                    // 10.1.3(3)
+  //  A_Function_Body_Stub,                     // 10.1.3(3)
+  //  A_Generic_Procedure_Declaration,          // 12.1(2)
+  //  A_Generic_Function_Declaration,           // 12.1(2)
+  //  A_Formal_Procedure_Declaration,           // 12.6(2)
+  //  A_Formal_Function_Declaration,            // 12.6(2)
   Parameter_Specification_List   Parameter_Profile;
+  //  A_Function_Declaration,                   // 6.1(4)  
+  //  A_Function_Body_Declaration,              // 6.3(2)
+  //  An_Expression_Function_Declaration,       // 6.8
+  //  A_Function_Renaming_Declaration,          // 8.5.4(2)
+  //  A_Function_Body_Stub,                     // 10.1.3(3)
+  //  A_Generic_Function_Declaration,           // 12.1(2)
+  //  A_Formal_Function_Declaration,            // 12.6(2)
   Element_ID                     Result_Profile;
+  //  An_Expression_Function_Declaration,       // 6.8
   Expression_ID                  Result_Expression;
+  //  A_Procedure_Declaration,                  // 6.1(4)  
+  //  A_Function_Declaration,                   // 6.1(4)  
+  //  A_Procedure_Body_Declaration,             // 6.3(2)
+  //  A_Function_Body_Declaration,              // 6.3(2)
+  //  A_Null_Procedure_Declaration,             // 6.7
+  //  An_Expression_Function_Declaration,       // 6.8
+  //  A_Procedure_Renaming_Declaration,         // 8.5.4(2)
+  //  A_Function_Renaming_Declaration,          // 8.5.4(2)
+  //  An_Entry_Declaration,                     // 9.5.2(2)
+  //  A_Procedure_Body_Stub,                    // 10.1.3(3)
+  //  A_Function_Body_Stub,                     // 10.1.3(3)
+  //  A_Generic_Procedure_Declaration,          // 12.1(2)
+  //  A_Generic_Function_Declaration,           // 12.1(2)
+  //  A_Formal_Procedure_Declaration,           // 12.6(2)
+  //  A_Formal_Function_Declaration,            // 12.6(2)
   bool                           Is_Overriding_Declaration;
   bool                           Is_Not_Overriding_Declaration;
+  //  A_Procedure_Body_Declaration,             // 6.3(2)
+  //  A_Function_Body_Declaration,              // 6.3(2)
+  //  A_Package_Body_Declaration,               // 7.2(2)
+  //  A_Task_Body_Declaration,                  // 9.1(6)
+  //  An_Entry_Body_Declaration,                // 9.5.2(5)
   Element_List                   Body_Declarative_Items;
   Statement_List                 Body_Statements;
   Exception_Handler_List         Body_Exception_Handlers;
   Declaration_ID                 Body_Block_Statement;
+  //  A_Task_Type_Declaration,                  // 9.1(2)
+  //  A_Protected_Type_Declaration,             // 9.4(2)
+  //  A_Single_Task_Declaration,                // 3.3.1(2),9.1(3)
+  //  A_Single_Protected_Declaration,           // 3.3.1(2),9.4(2)
+  //  A_Procedure_Body_Declaration,             // 6.3(2)
+  //  A_Function_Body_Declaration,              // 6.3(2)
+  //  A_Package_Declaration,                    // 7.1(2)
+  //  A_Package_Body_Declaration,               // 7.2(2)
+  //  A_Task_Body_Declaration,                  // 9.1(6)
+  //  A_Protected_Body_Declaration,             // 9.4(7)
+  //  An_Entry_Body_Declaration,                // 9.5.2(5)
+  //  A_Generic_Package_Declaration,            // 12.1(2)
   bool                           Is_Name_Repeated;
+  //  A_Task_Type_Declaration,                  // 9.1(2)
+  //  A_Protected_Type_Declaration,             // 9.4(2)
+  //  A_Single_Task_Declaration,                // 3.3.1(2),9.1(3)
+  //  A_Single_Protected_Declaration,           // 3.3.1(2),9.4(2)
+  //  A_Procedure_Declaration,                  // 6.1(4)  
+  //  A_Function_Declaration,                   // 6.1(4)  
+  //  A_Procedure_Body_Declaration,             // 6.3(2)
+  //  A_Function_Body_Declaration,              // 6.3(2)
+  //  A_Null_Procedure_Declaration,             // 6.7
+  //  An_Expression_Function_Declaration,       // 6.8
+  //  A_Package_Declaration,                    // 7.1(2)
+  //  A_Package_Body_Declaration,               // 7.2(2)
+  //  A_Package_Renaming_Declaration,           // 8.5.3(2)
+  //  A_Procedure_Renaming_Declaration,         // 8.5.4(2)
+  //  A_Function_Renaming_Declaration,          // 8.5.4(2)
+  //  A_Generic_Package_Renaming_Declaration,   // 8.5.5(2)
+  //  A_Generic_Procedure_Renaming_Declaration, // 8.5.5(2)
+  //  A_Generic_Function_Renaming_Declaration,  // 8.5.5(2)
+  //  A_Task_Body_Declaration,                  // 9.1(6)
+  //  A_Protected_Body_Declaration,             // 9.4(7)
+  //  An_Entry_Body_Declaration,                // 9.5.2(5)
+  //  An_Entry_Index_Specification,             // 9.5.2(2)
+  //  A_Procedure_Body_Stub,                    // 10.1.3(3)
+  //  A_Function_Body_Stub,                     // 10.1.3(3)
+  //  A_Package_Body_Stub,                      // 10.1.3(4)
+  //  A_Task_Body_Stub,                         // 10.1.3(5)
+  //  A_Protected_Body_Stub,                    // 10.1.3(6)
+  //  A_Generic_Procedure_Declaration,          // 12.1(2)
+  //  A_Generic_Function_Declaration,           // 12.1(2)
+  //  A_Generic_Package_Declaration,            // 12.1(2)
+  //  A_Package_Instantiation,                  // 12.3(2)
+  //  A_Procedure_Instantiation,                // 12.3(2)
+  //  A_Function_Instantiation,                 // 12.3(2)
+  //  A_Formal_Package_Declaration,             // 12.7(2)
+  //  A_Formal_Package_Declaration_With_Box     // 12.7(3)
   Declaration_ID                 Corresponding_Declaration;
+  //  A_Task_Type_Declaration,                  // 9.1(2)
+  //  A_Protected_Type_Declaration,             // 9.4(2)
+  //  A_Single_Task_Declaration,                // 3.3.1(2),9.1(3)
+  //  A_Single_Protected_Declaration,           // 3.3.1(2),9.4(2)
+  //  A_Procedure_Declaration,                  // 6.1(4)  
+  //  A_Function_Declaration,                   // 6.1(4)  
+  //  An_Entry_Declaration,                     // 9.5.2(2)
+  //  An_Entry_Index_Specification,             // 9.5.2(2)
+  //  A_Generic_Procedure_Declaration,          // 12.1(2)
+  //  A_Generic_Function_Declaration,           // 12.1(2)
+  //  A_Generic_Package_Declaration,            // 12.1(2)
+  //  A_Package_Instantiation,                  // 12.3(2)
+  //  A_Procedure_Instantiation,                // 12.3(2)
+  //  A_Function_Instantiation,                 // 12.3(2)
+  //  A_Formal_Package_Declaration,             // 12.7(2)
   Declaration_ID                 Corresponding_Body;
+  //  A_Procedure_Declaration,                  // 6.1(4)  
+  //  A_Function_Declaration,                   // 6.1(4)  
   Declaration_ID                 Corresponding_Subprogram_Derivation;
+  //  A_Procedure_Declaration,                  // 6.1(4)  
+  //  A_Function_Declaration,                   // 6.1(4)  
+  //  An_Expression_Function_Declaration,       // 6.8
   Type_Definition_ID             Corresponding_Type;
+  //  A_Function_Declaration,                   // 6.1(4)  
   Declaration_ID                 Corresponding_Equality_Operator;
+  //  A_Package_Declaration,                    // 7.1(2)
+  //  A_Generic_Package_Declaration,            // 12.1(2)
   Declarative_Item_List          Visible_Part_Declarative_Items;
   bool                           Is_Private_Present;
   Declarative_Item_List	         Private_Part_Declarative_Items;
+  //  A_Task_Type_Declaration,                  // 9.1(2)
+  //  A_Protected_Type_Declaration,             // 9.4(2)
+  //  A_Single_Task_Declaration,                // 3.3.1(2),9.1(3)
+  //  A_Single_Protected_Declaration,           // 3.3.1(2),9.4(2)
   Expression_List                Declaration_Interface_List;
+  //  An_Object_Renaming_Declaration,           // 8.5.1(2)
+  //  An_Exception_Renaming_Declaration,        // 8.5.2(2)
+  //  A_Package_Renaming_Declaration,           // 8.5.3(2)
+  //  A_Procedure_Renaming_Declaration,         // 8.5.4(2)
+  //  A_Function_Renaming_Declaration,          // 8.5.4(2)
+  //  A_Generic_Package_Renaming_Declaration,   // 8.5.5(2)
+  //  A_Generic_Procedure_Renaming_Declaration, // 8.5.5(2)
+  //  A_Generic_Function_Renaming_Declaration,  // 8.5.5(2)
   Expression_ID                  Renamed_Entity;
   Expression_ID                  Corresponding_Base_Entity;
+  //  A_Protected_Body_Declaration,             // 9.4(7)
   Declaration_List               Protected_Operation_Items;
+  //  An_Entry_Declaration,                     // 9.5.2(2)
   Discrete_Subtype_Definition_ID Entry_Family_Definition;
+  //  An_Entry_Body_Declaration,                // 9.5.2(5)
   Declaration_ID                 Entry_Index_Specification;
   Expression_ID                  Entry_Barrier;
+  //  A_Procedure_Body_Stub,                    // 10.1.3(3)
+  //  A_Function_Body_Stub,                     // 10.1.3(3)
+  //  A_Package_Body_Stub,                      // 10.1.3(4)
+  //  A_Task_Body_Stub,                         // 10.1.3(5)
+  //  A_Protected_Body_Stub,                    // 10.1.3(6)
   Declaration_ID                 Corresponding_Subunit;
+  //  A_Procedure_Body_Declaration,             // 6.3(2)
+  //  A_Function_Body_Declaration,              // 6.3(2)
+  //  A_Package_Body_Declaration,               // 7.2(2)
+  //  A_Task_Body_Declaration,                  // 9.1(6)
+  //  A_Protected_Body_Declaration,             // 9.4(7)
   bool                           Is_Subunit;
   Declaration_ID                 Corresponding_Body_Stub;
+  //  A_Generic_Procedure_Declaration,          // 12.1(2)
+  //  A_Generic_Function_Declaration,           // 12.1(2)
+  //  A_Generic_Package_Declaration,            // 12.1(2)
   Element_List                   Generic_Formal_Part;
+  //  A_Package_Instantiation,                  // 12.3(2)
+  //  A_Procedure_Instantiation,                // 12.3(2)
+  //  A_Function_Instantiation,                 // 12.3(2)
+  //  A_Formal_Package_Declaration,             // 12.7(2)
+  //  A_Formal_Package_Declaration_With_Box     // 12.7(3)
   Expression_ID                  Generic_Unit_Name;
   Association_List               Generic_Actual_Part;
+  //  A_Formal_Procedure_Declaration,           // 12.6(2)
+  //  A_Formal_Function_Declaration,            // 12.6(2)
   Expression_ID                  Formal_Subprogram_Default;
-  Defining_Name_ID               Corresponding_Generic_Element;
+  //  A_Procedure_Declaration,                  // 6.1(4)  
+  //  A_Function_Declaration,                   // 6.1(4)  
+  //  A_Procedure_Body_Declaration,             // 6.3(2)
+  //  A_Function_Body_Declaration,              // 6.3(2)
+  //  A_Null_Procedure_Declaration,             // 6.7
+  //  An_Expression_Function_Declaration,       // 6.8
+  //  A_Procedure_Renaming_Declaration,         // 8.5.4(2)
+  //  A_Function_Renaming_Declaration,          // 8.5.4(2)
+  //  A_Procedure_Body_Stub,                    // 10.1.3(3)
+  //  A_Function_Body_Stub,                     // 10.1.3(3)
   bool                           Is_Dispatching_Operation;
 };
 
@@ -1175,9 +1251,12 @@ struct Expression_Struct {
   // A_For_All_Quantified_Expression |            // Ada 2012
   // A_For_Some_Quantified_Expression =>          // Ada 2012
   Declaration_ID        Iterator_Specification;
+  // An expression that references an entity declared within the 
+  // implicit specification of a generic instantiation:
+  Defining_Name_ID      Corresponding_Generic_Element;
 };
 
-// May take 7*4 bytes - 3*List, 3*ID, 2*bool:
+// May take 10*4 bytes - 1*enum, 3*List, 4*ID, 2*bool:
 struct Association_Struct {
   enum Association_Kinds Association_Kind;
   // These fields are only valid for the kinds above them:  
@@ -1203,9 +1282,7 @@ struct Association_Struct {
   bool                   Is_Normalized;
   // A_Parameter_Association
   // A_Generic_Association
-  //  //|A2005 start
   // A_Record_Component_Association
-  //  //|A2005 end
   bool                   Is_Defaulted_Association;
 };
 
@@ -1253,6 +1330,13 @@ struct Statement_Struct {
   Expression_ID          Exit_Loop_Name;
   Expression_ID          Exit_Condition;
   Expression_ID          Corresponding_Loop_Exited;
+  //   A_Return_Statement,                  // 6.5
+  Expression_ID          Return_Expression;
+  //   //  //|A2005 start
+  //   An_Extended_Return_Statement,        // 6.5
+  Declaration_ID         Return_Object_Declaration;
+  Statement_List         Extended_Return_Statements;
+  Exception_Handler_List Extended_Return_Exception_Handlers;
   //   A_Goto_Statement,                    // 5.8
   Expression_ID          Goto_Label;
   Statement_ID           Corresponding_Destination_Statement;
@@ -1261,13 +1345,6 @@ struct Statement_Struct {
   Expression_ID          Called_Name;
   Declaration_ID         Corresponding_Called_Entity;
   Association_List       Call_Statement_Parameters;
-  //   A_Return_Statement,                  // 6.5
-  Expression_ID          Return_Expression;
-  //   //  //|A2005 start
-  //   An_Extended_Return_Statement,        // 6.5
-  Declaration_ID         Return_Object_Declaration;
-  Statement_List         Extended_Return_Statements;
-  Exception_Handler_List Extended_Return_Exception_Handlers;
   //   //  //|A2005 end
   //   An_Accept_Statement,                 // 9.5.2
   Expression_ID          Accept_Entry_Index;
@@ -1295,13 +1372,21 @@ struct Statement_Struct {
 // May take 5*4 bytes - 1*enum, 2*List, 2*ID:
 struct Path_Struct {
   enum Path_Kinds Path_Kind;
-  Statement_List Sequence_Of_Statements;
+  // These fields are only valid for the kinds above them:  
+  // An_If_Path,
+  // An_Elsif_Path,
   Expression_ID  Condition_Expression;
+  // (all)
+  Statement_List Sequence_Of_Statements;
+  // A_Case_Path,
+  // A_Case_Expression_Path,
   Element_List   Case_Path_Alternative_Choices;
+  // A_Select_Path,
+  // An_Or_Path,
   Expression_ID  Guard;
 };
 
-// May take ?? bytes - incomplete:
+// May take 9*4 bytes - 2*enum, 2*List, 5*ID:
 struct Clause_Struct {
   enum Clause_Kinds Clause_Kind;
   // These fields are only valid for the kinds above them:
@@ -1310,9 +1395,28 @@ struct Clause_Struct {
   //   A_Use_All_Type_Clause
   //   A_With_Clause
   Name_List         Clause_Names;
+  //   A_Representation_Clause
+  //   A_Component_Clause  
+  Name_ID           Representation_Clause_Name;
+  //   A_Representation_Clause
+  //   A_Component_Clause  
+  //   and in addition one of Representation_Clause_Kinds:
+  //   An_Attribute_Definition_Clause
+  //   An_Enumeration_Representation_Clause
+  //   An_At_Clause
+  Expression_ID     Representation_Clause_Expression;
+  //   A_Representation_Clause
+  //   A_Component_Clause  
+  //   and in addition one of Representation_Clause_Kinds:
+  //   A_Record_Representation_Clause
+  Expression_ID     Mod_Clause_Expression;
+  Element_List      Component_Clauses;
+  //   A_Component_Clause  
+  Expression_ID     Component_Clause_Position;
+  Element_ID        Component_Clause_Range;
   //   A_With_Clause
+  //   From Asis.Elements:
   enum Trait_Kinds  Trait_Kind;
-  // TODO: Incomplete (at least 6 more fields)
 };
 
 // May take 3*4 bytes - 1 ID, 2 List:
@@ -1348,6 +1452,7 @@ struct Source_Location_Struct {
 
 // May take ?? bytes - 2*ID, 2*enum, 1*5*4 struct, 1*?? union:
 struct Element_Struct {
+  // The fields below are applicable to all kinds:
   Element_ID                    ID;
   enum Element_Kinds            Element_Kind;
   Node_ID                       Enclosing_Element_ID;
@@ -1358,6 +1463,205 @@ struct Element_Struct {
 
 ///////////////////////////////////////////////////////////////////////////////
 // END element 
+///////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////
+// BEGIN unit
+///////////////////////////////////////////////////////////////////////////////
+typedef Node_ID Unit_ID;
+
+typedef Unit_ID *Unit_ID_Ptr;
+
+// May take 2*4 bytes - 1 int, 1 ptr:
+// _IDs_ points to the first of _length_ IDs:
+struct Unit_ID_Array_Struct {
+  int         Length;
+  Unit_ID_Ptr IDs;
+};
+typedef struct Unit_ID_Array_Struct Unit_List;
+
+enum Unit_Kinds {
+  Not_A_Unit,
+
+  A_Procedure,
+  A_Function,
+  A_Package,
+
+  A_Generic_Procedure,
+  A_Generic_Function,
+  A_Generic_Package,
+
+  A_Procedure_Instance,
+  A_Function_Instance,
+  A_Package_Instance,
+
+  A_Procedure_Renaming,
+  A_Function_Renaming,
+  A_Package_Renaming,
+
+  A_Generic_Procedure_Renaming,
+  A_Generic_Function_Renaming,
+  A_Generic_Package_Renaming,
+
+  A_Procedure_Body,
+  //  A unit interpreted only as the completion of a procedure, or a unit
+  //  interpreted as both the declaration and body of a library
+  //  procedure. Reference Manual 10.1.4(4)
+  A_Function_Body,
+  //  A unit interpreted only as the completion of a function, or a unit
+  //  interpreted as both the declaration and body of a library
+  //  function. Reference Manual 10.1.4(4)
+  A_Package_Body,
+
+  A_Procedure_Body_Subunit,
+  A_Function_Body_Subunit,
+  A_Package_Body_Subunit,
+  A_Task_Body_Subunit,
+  A_Protected_Body_Subunit,
+
+  A_Nonexistent_Declaration,
+  //  A unit that does not exist but is:
+  //    1) mentioned in a with clause of another unit or,
+  //    2) a required corresponding library_unit_declaration
+  A_Nonexistent_Body,
+  //  A unit that does not exist but is:
+  //     1) known to be a corresponding subunit or,
+  //     2) a required corresponding library_unit_body
+  A_Configuration_Compilation,
+  //  Corresponds to the whole content of a compilation with no
+  //  compilation_unit, but possibly containing comments, configuration
+  //  pragmas, or both. Any Context can have at most one unit of
+  //  A_Configuration_Compilation kind. A unit of
+  //  A_Configuration_Compilation does not have a name. This unit
+  //  represents configuration pragmas that are "in effect".
+  //
+  //  GNAT-specific note: In case of GNAT the requirement to have at most
+  //  one unit of A_Configuration_Compilation kind does not make sense: in
+  //  GNAT compilation model configuration pragmas are contained in
+  //  configuration files, and a compilation may use an arbitrary number
+  //  of configuration files. That is, (Elements representing) different
+  //  configuration pragmas may have different enclosing compilation units
+  //  with different text names. So in the ASIS implementation for GNAT a
+  //  Context may contain any number of units of
+  //  A_Configuration_Compilation kind
+  An_Unknown_Unit
+};
+
+enum Unit_Classes {
+  Not_A_Class,
+  //  A nil, nonexistent, unknown, or configuration compilation unit class.
+  A_Public_Declaration,
+  //  library_unit_declaration or library_unit_renaming_declaration.
+  A_Public_Body,
+  //  library_unit_body interpreted only as a completion. Its declaration
+  //  is public.
+  A_Public_Declaration_And_Body,
+  //  subprogram_body interpreted as both a declaration and body of a
+  //  library subprogram - Reference Manual 10.1.4(4).
+  A_Private_Declaration,
+  //  private library_unit_declaration or private
+  //  library_unit_renaming_declaration.
+  A_Private_Body,
+  //  library_unit_body interpreted only as a completion. Its declaration
+  //  is private.
+  A_Separate_Body
+  //  separate (parent_unit_name) proper_body.
+};
+  
+enum Unit_Origins {
+  Not_An_Origin,
+  //  A nil or nonexistent unit origin. An_Unknown_Unit can be any origin
+  A_Predefined_Unit,
+  //  Ada predefined language environment units listed in Annex A(2).
+  //  These include Standard and the three root library units: Ada,
+  //  Interfaces, and System, and their descendants.  i.e., Ada.Text_Io,
+  //  Ada.Calendar, Interfaces.C, etc.
+  An_Implementation_Unit,
+  //  Implementation specific library units, e.g., runtime support
+  //  packages, utility libraries, etc. It is not required that any
+  //  implementation supplied units have this origin. This is a suggestion.
+  //  Implementations might provide, for example, precompiled versions of
+  //  public domain software that could have An_Application_Unit origin.
+  An_Application_Unit
+  //  Neither A_Predefined_Unit or An_Implementation_Unit
+};
+
+// May take 26*4 (20*4 + 3) bytes - 6*ID, 3*enum, 4*List(2*4 ea), 8*char*, 3*bool:
+struct Unit_Struct {
+  Unit_ID             ID;
+  enum Unit_Kinds     Unit_Kind;
+  enum Unit_Classes   Unit_Class;
+  enum Unit_Origins   Unit_Origin;
+  char               *Unit_Full_Name; // Ada name
+  char               *Unique_Name; // file name etc.
+  bool                Exists;
+  bool                Can_Be_Main_Program;
+  bool                Is_Body_Required;
+  char               *Text_Name;
+  char               *Text_Form;
+  char               *Object_Name;
+  char               *Object_Form;
+  char               *Compilation_Command_Line_Options;
+  char               *Debug_Image;
+  Declaration_ID      Unit_Declaration;
+  Context_Clause_List Context_Clause_Elements;
+  Pragma_Element_List Compilation_Pragmas;
+  
+  // The fields below are only applicable to the kinds above them:
+  //  A_Package,
+  //  A_Generic_Package,
+  //  A_Package_Instance,
+  Unit_List           Corresponding_Children;
+  //  A_Procedure,
+  //  A_Function,
+  //  A_Package,
+  //  A_Generic_Procedure,
+  //  A_Generic_Function,
+  //  A_Generic_Package,
+  //  A_Procedure_Instance,
+  //  A_Function_Instance,
+  //  A_Package_Instance,
+  //  A_Procedure_Renaming,
+  //  A_Function_Renaming,
+  //  A_Package_Renaming,
+  //  A_Generic_Procedure_Renaming,
+  //  A_Generic_Function_Renaming,
+  //  A_Generic_Package_Renaming,
+  //  A_Procedure_Body,
+  //  A_Function_Body,
+  //  A_Package_Body,
+  Unit_ID             Corresponding_Parent_Declaration;
+  //  A_Procedure_Body,
+  //  A_Function_Body,
+  //  A_Package_Body,
+  //  An_Unknown_Unit
+  Unit_ID             Corresponding_Declaration;
+  //  A_Procedure,
+  //  A_Function,
+  //  A_Package,
+  //  A_Generic_Procedure,
+  //  A_Generic_Function,
+  //  A_Generic_Package,
+  //  An_Unknown_Unit
+  Unit_ID             Corresponding_Body;
+  //  A_Procedure_Body,
+  //  A_Function_Body,
+  //  A_Package_Body,
+  //  A_Procedure_Body_Subunit,
+  //  A_Function_Body_Subunit,
+  //  A_Package_Body_Subunit,
+  //  A_Task_Body_Subunit,
+  //  A_Protected_Body_Subunit,
+  Unit_List           Subunits;
+  //  A_Procedure_Body_Subunit,
+  //  A_Function_Body_Subunit,
+  //  A_Package_Body_Subunit,
+  //  A_Task_Body_Subunit,
+  //  A_Protected_Body_Subunit,
+  Unit_ID             Corresponding_Subunit_Parent_Body;
+};
+///////////////////////////////////////////////////////////////////////////////
+// END unit 
 ///////////////////////////////////////////////////////////////////////////////
 
 // May take  44*4 bytes (Element_Struct, the largest component):
