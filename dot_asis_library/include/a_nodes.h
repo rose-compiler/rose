@@ -32,206 +32,6 @@ struct Context_Struct {
 ///////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////////
-// BEGIN unit
-///////////////////////////////////////////////////////////////////////////////
-typedef Node_ID Unit_ID;
-
-typedef Unit_ID *Unit_ID_Ptr;
-
-// May take 2*4 bytes - 1 int, 1 ptr:
-// _IDs_ points to the first of _length_ IDs:
-struct Unit_ID_Array_Struct {
-  int         Length;
-  Unit_ID_Ptr IDs;
-};
-typedef struct Unit_ID_Array_Struct Unit_List;
-
-enum Unit_Kinds {
-  Not_A_Unit,
-
-  A_Procedure,
-  A_Function,
-  A_Package,
-
-  A_Generic_Procedure,
-  A_Generic_Function,
-  A_Generic_Package,
-
-  A_Procedure_Instance,
-  A_Function_Instance,
-  A_Package_Instance,
-
-  A_Procedure_Renaming,
-  A_Function_Renaming,
-  A_Package_Renaming,
-
-  A_Generic_Procedure_Renaming,
-  A_Generic_Function_Renaming,
-  A_Generic_Package_Renaming,
-
-  A_Procedure_Body,
-  //  A unit interpreted only as the completion of a procedure, or a unit
-  //  interpreted as both the declaration and body of a library
-  //  procedure. Reference Manual 10.1.4(4)
-  A_Function_Body,
-  //  A unit interpreted only as the completion of a function, or a unit
-  //  interpreted as both the declaration and body of a library
-  //  function. Reference Manual 10.1.4(4)
-  A_Package_Body,
-
-  A_Procedure_Body_Subunit,
-  A_Function_Body_Subunit,
-  A_Package_Body_Subunit,
-  A_Task_Body_Subunit,
-  A_Protected_Body_Subunit,
-
-  A_Nonexistent_Declaration,
-  //  A unit that does not exist but is:
-  //    1) mentioned in a with clause of another unit or,
-  //    2) a required corresponding library_unit_declaration
-  A_Nonexistent_Body,
-  //  A unit that does not exist but is:
-  //     1) known to be a corresponding subunit or,
-  //     2) a required corresponding library_unit_body
-  A_Configuration_Compilation,
-  //  Corresponds to the whole content of a compilation with no
-  //  compilation_unit, but possibly containing comments, configuration
-  //  pragmas, or both. Any Context can have at most one unit of
-  //  A_Configuration_Compilation kind. A unit of
-  //  A_Configuration_Compilation does not have a name. This unit
-  //  represents configuration pragmas that are "in effect".
-  //
-  //  GNAT-specific note: In case of GNAT the requirement to have at most
-  //  one unit of A_Configuration_Compilation kind does not make sense: in
-  //  GNAT compilation model configuration pragmas are contained in
-  //  configuration files, and a compilation may use an arbitrary number
-  //  of configuration files. That is, (Elements representing) different
-  //  configuration pragmas may have different enclosing compilation units
-  //  with different text names. So in the ASIS implementation for GNAT a
-  //  Context may contain any number of units of
-  //  A_Configuration_Compilation kind
-  An_Unknown_Unit
-};
-
-enum Unit_Classes {
-  Not_A_Class,
-  //  A nil, nonexistent, unknown, or configuration compilation unit class.
-  A_Public_Declaration,
-  //  library_unit_declaration or library_unit_renaming_declaration.
-  A_Public_Body,
-  //  library_unit_body interpreted only as a completion. Its declaration
-  //  is public.
-  A_Public_Declaration_And_Body,
-  //  subprogram_body interpreted as both a declaration and body of a
-  //  library subprogram - Reference Manual 10.1.4(4).
-  A_Private_Declaration,
-  //  private library_unit_declaration or private
-  //  library_unit_renaming_declaration.
-  A_Private_Body,
-  //  library_unit_body interpreted only as a completion. Its declaration
-  //  is private.
-  A_Separate_Body
-  //  separate (parent_unit_name) proper_body.
-};
-  
-enum Unit_Origins {
-  Not_An_Origin,
-  //  A nil or nonexistent unit origin. An_Unknown_Unit can be any origin
-  A_Predefined_Unit,
-  //  Ada predefined language environment units listed in Annex A(2).
-  //  These include Standard and the three root library units: Ada,
-  //  Interfaces, and System, and their descendants.  i.e., Ada.Text_Io,
-  //  Ada.Calendar, Interfaces.C, etc.
-  An_Implementation_Unit,
-  //  Implementation specific library units, e.g., runtime support
-  //  packages, utility libraries, etc. It is not required that any
-  //  implementation supplied units have this origin. This is a suggestion.
-  //  Implementations might provide, for example, precompiled versions of
-  //  public domain software that could have An_Application_Unit origin.
-  An_Application_Unit
-  //  Neither A_Predefined_Unit or An_Implementation_Unit
-};
-
-
-// May take 26*4 (20*4 + 3) bytes - 6*ID, 3*enum, 4*List(2*4 ea), 8*char*, 3*bool:
-struct Unit_Struct {
-  Unit_ID             ID;
-  enum Unit_Kinds     Unit_Kind;
-  enum Unit_Classes   Unit_Class;
-  enum Unit_Origins   Unit_Origin;
-  char               *Unit_Full_Name; // Ada name
-  char               *Unique_Name; // file name etc.
-  bool                Exists;
-  bool                Can_Be_Main_Program;
-  bool                Is_Body_Required;
-  char               *Text_Name;
-  char               *Text_Form;
-  char               *Object_Name;
-  char               *Object_Form;
-  char               *Compilation_Command_Line_Options;
-  char               *Debug_Image;
-  Declaration_ID      Unit_Declaration;
-  Context_Clause_List Context_Clause_Elements;
-  Pragma_Element_List Compilation_Pragmas;
-  
-  // The fields below are only applicable to the kinds above them:
-  //  A_Package,
-  //  A_Generic_Package,
-  //  A_Package_Instance,
-  Unit_List           Corresponding_Children;
-  //  A_Procedure,
-  //  A_Function,
-  //  A_Package,
-  //  A_Generic_Procedure,
-  //  A_Generic_Function,
-  //  A_Generic_Package,
-  //  A_Procedure_Instance,
-  //  A_Function_Instance,
-  //  A_Package_Instance,
-  //  A_Procedure_Renaming,
-  //  A_Function_Renaming,
-  //  A_Package_Renaming,
-  //  A_Generic_Procedure_Renaming,
-  //  A_Generic_Function_Renaming,
-  //  A_Generic_Package_Renaming,
-  //  A_Procedure_Body,
-  //  A_Function_Body,
-  //  A_Package_Body,
-  Unit_ID             Corresponding_Parent_Declaration;
-  //  A_Procedure_Body,
-  //  A_Function_Body,
-  //  A_Package_Body,
-  //  An_Unknown_Unit
-  Unit_ID             Corresponding_Declaration;
-  //  A_Procedure,
-  //  A_Function,
-  //  A_Package,
-  //  A_Generic_Procedure,
-  //  A_Generic_Function,
-  //  A_Generic_Package,
-  //  An_Unknown_Unit
-  Unit_ID             Corresponding_Body;
-  //  A_Procedure_Body,
-  //  A_Function_Body,
-  //  A_Package_Body,
-  //  A_Procedure_Body_Subunit,
-  //  A_Function_Body_Subunit,
-  //  A_Package_Body_Subunit,
-  //  A_Task_Body_Subunit,
-  //  A_Protected_Body_Subunit,
-  Unit_List           Subunits;
-  //  A_Procedure_Body_Subunit,
-  //  A_Function_Body_Subunit,
-  //  A_Package_Body_Subunit,
-  //  A_Task_Body_Subunit,
-  //  A_Protected_Body_Subunit,
-  Unit_ID             Corresponding_Subunit_Parent_Body;
-};
-///////////////////////////////////////////////////////////////////////////////
-// END unit 
-///////////////////////////////////////////////////////////////////////////////
-
-///////////////////////////////////////////////////////////////////////////////
 // BEGIN element 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -1661,6 +1461,205 @@ struct Element_Struct {
 
 ///////////////////////////////////////////////////////////////////////////////
 // END element 
+///////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////
+// BEGIN unit
+///////////////////////////////////////////////////////////////////////////////
+typedef Node_ID Unit_ID;
+
+typedef Unit_ID *Unit_ID_Ptr;
+
+// May take 2*4 bytes - 1 int, 1 ptr:
+// _IDs_ points to the first of _length_ IDs:
+struct Unit_ID_Array_Struct {
+  int         Length;
+  Unit_ID_Ptr IDs;
+};
+typedef struct Unit_ID_Array_Struct Unit_List;
+
+enum Unit_Kinds {
+  Not_A_Unit,
+
+  A_Procedure,
+  A_Function,
+  A_Package,
+
+  A_Generic_Procedure,
+  A_Generic_Function,
+  A_Generic_Package,
+
+  A_Procedure_Instance,
+  A_Function_Instance,
+  A_Package_Instance,
+
+  A_Procedure_Renaming,
+  A_Function_Renaming,
+  A_Package_Renaming,
+
+  A_Generic_Procedure_Renaming,
+  A_Generic_Function_Renaming,
+  A_Generic_Package_Renaming,
+
+  A_Procedure_Body,
+  //  A unit interpreted only as the completion of a procedure, or a unit
+  //  interpreted as both the declaration and body of a library
+  //  procedure. Reference Manual 10.1.4(4)
+  A_Function_Body,
+  //  A unit interpreted only as the completion of a function, or a unit
+  //  interpreted as both the declaration and body of a library
+  //  function. Reference Manual 10.1.4(4)
+  A_Package_Body,
+
+  A_Procedure_Body_Subunit,
+  A_Function_Body_Subunit,
+  A_Package_Body_Subunit,
+  A_Task_Body_Subunit,
+  A_Protected_Body_Subunit,
+
+  A_Nonexistent_Declaration,
+  //  A unit that does not exist but is:
+  //    1) mentioned in a with clause of another unit or,
+  //    2) a required corresponding library_unit_declaration
+  A_Nonexistent_Body,
+  //  A unit that does not exist but is:
+  //     1) known to be a corresponding subunit or,
+  //     2) a required corresponding library_unit_body
+  A_Configuration_Compilation,
+  //  Corresponds to the whole content of a compilation with no
+  //  compilation_unit, but possibly containing comments, configuration
+  //  pragmas, or both. Any Context can have at most one unit of
+  //  A_Configuration_Compilation kind. A unit of
+  //  A_Configuration_Compilation does not have a name. This unit
+  //  represents configuration pragmas that are "in effect".
+  //
+  //  GNAT-specific note: In case of GNAT the requirement to have at most
+  //  one unit of A_Configuration_Compilation kind does not make sense: in
+  //  GNAT compilation model configuration pragmas are contained in
+  //  configuration files, and a compilation may use an arbitrary number
+  //  of configuration files. That is, (Elements representing) different
+  //  configuration pragmas may have different enclosing compilation units
+  //  with different text names. So in the ASIS implementation for GNAT a
+  //  Context may contain any number of units of
+  //  A_Configuration_Compilation kind
+  An_Unknown_Unit
+};
+
+enum Unit_Classes {
+  Not_A_Class,
+  //  A nil, nonexistent, unknown, or configuration compilation unit class.
+  A_Public_Declaration,
+  //  library_unit_declaration or library_unit_renaming_declaration.
+  A_Public_Body,
+  //  library_unit_body interpreted only as a completion. Its declaration
+  //  is public.
+  A_Public_Declaration_And_Body,
+  //  subprogram_body interpreted as both a declaration and body of a
+  //  library subprogram - Reference Manual 10.1.4(4).
+  A_Private_Declaration,
+  //  private library_unit_declaration or private
+  //  library_unit_renaming_declaration.
+  A_Private_Body,
+  //  library_unit_body interpreted only as a completion. Its declaration
+  //  is private.
+  A_Separate_Body
+  //  separate (parent_unit_name) proper_body.
+};
+  
+enum Unit_Origins {
+  Not_An_Origin,
+  //  A nil or nonexistent unit origin. An_Unknown_Unit can be any origin
+  A_Predefined_Unit,
+  //  Ada predefined language environment units listed in Annex A(2).
+  //  These include Standard and the three root library units: Ada,
+  //  Interfaces, and System, and their descendants.  i.e., Ada.Text_Io,
+  //  Ada.Calendar, Interfaces.C, etc.
+  An_Implementation_Unit,
+  //  Implementation specific library units, e.g., runtime support
+  //  packages, utility libraries, etc. It is not required that any
+  //  implementation supplied units have this origin. This is a suggestion.
+  //  Implementations might provide, for example, precompiled versions of
+  //  public domain software that could have An_Application_Unit origin.
+  An_Application_Unit
+  //  Neither A_Predefined_Unit or An_Implementation_Unit
+};
+
+// May take 26*4 (20*4 + 3) bytes - 6*ID, 3*enum, 4*List(2*4 ea), 8*char*, 3*bool:
+struct Unit_Struct {
+  Unit_ID             ID;
+  enum Unit_Kinds     Unit_Kind;
+  enum Unit_Classes   Unit_Class;
+  enum Unit_Origins   Unit_Origin;
+  char               *Unit_Full_Name; // Ada name
+  char               *Unique_Name; // file name etc.
+  bool                Exists;
+  bool                Can_Be_Main_Program;
+  bool                Is_Body_Required;
+  char               *Text_Name;
+  char               *Text_Form;
+  char               *Object_Name;
+  char               *Object_Form;
+  char               *Compilation_Command_Line_Options;
+  char               *Debug_Image;
+  Declaration_ID      Unit_Declaration;
+  Context_Clause_List Context_Clause_Elements;
+  Pragma_Element_List Compilation_Pragmas;
+  
+  // The fields below are only applicable to the kinds above them:
+  //  A_Package,
+  //  A_Generic_Package,
+  //  A_Package_Instance,
+  Unit_List           Corresponding_Children;
+  //  A_Procedure,
+  //  A_Function,
+  //  A_Package,
+  //  A_Generic_Procedure,
+  //  A_Generic_Function,
+  //  A_Generic_Package,
+  //  A_Procedure_Instance,
+  //  A_Function_Instance,
+  //  A_Package_Instance,
+  //  A_Procedure_Renaming,
+  //  A_Function_Renaming,
+  //  A_Package_Renaming,
+  //  A_Generic_Procedure_Renaming,
+  //  A_Generic_Function_Renaming,
+  //  A_Generic_Package_Renaming,
+  //  A_Procedure_Body,
+  //  A_Function_Body,
+  //  A_Package_Body,
+  Unit_ID             Corresponding_Parent_Declaration;
+  //  A_Procedure_Body,
+  //  A_Function_Body,
+  //  A_Package_Body,
+  //  An_Unknown_Unit
+  Unit_ID             Corresponding_Declaration;
+  //  A_Procedure,
+  //  A_Function,
+  //  A_Package,
+  //  A_Generic_Procedure,
+  //  A_Generic_Function,
+  //  A_Generic_Package,
+  //  An_Unknown_Unit
+  Unit_ID             Corresponding_Body;
+  //  A_Procedure_Body,
+  //  A_Function_Body,
+  //  A_Package_Body,
+  //  A_Procedure_Body_Subunit,
+  //  A_Function_Body_Subunit,
+  //  A_Package_Body_Subunit,
+  //  A_Task_Body_Subunit,
+  //  A_Protected_Body_Subunit,
+  Unit_List           Subunits;
+  //  A_Procedure_Body_Subunit,
+  //  A_Function_Body_Subunit,
+  //  A_Package_Body_Subunit,
+  //  A_Task_Body_Subunit,
+  //  A_Protected_Body_Subunit,
+  Unit_ID             Corresponding_Subunit_Parent_Body;
+};
+///////////////////////////////////////////////////////////////////////////////
+// END unit 
 ///////////////////////////////////////////////////////////////////////////////
 
 // May take  44*4 bytes (Element_Struct, the largest component):
