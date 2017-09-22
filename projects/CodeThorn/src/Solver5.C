@@ -47,13 +47,6 @@ void Solver5::run() {
     ioReductionThreshold = args["io-reduction"].as<int>();
   }
 
-  if(args.getBool("rers-binary")) {
-    //initialize the global variable arrays in the linked binary version of the RERS problem
-    logger[DEBUG]<< "init of globals with arrays for "<< workers << " threads. " << endl;
-    RERS_Problem::rersGlobalVarsArrayInit(workers);
-    RERS_Problem::createGlobalVarAddressMaps(_analyzer);
-  }
-
   logger[TRACE]<<"STATUS: Running parallel solver 5 with "<<workers<<" threads."<<endl;
   _analyzer->printStatusMessage(true);
 # pragma omp parallel shared(workVector) private(threadNum)

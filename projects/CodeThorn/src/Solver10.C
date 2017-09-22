@@ -28,11 +28,7 @@ int Solver10::getId() {
  * \date 2015.
  */
 void Solver10::run() {
-  if(args.getBool("rers-binary")) {
-    //initialize the global variable arrays in the linked binary version of the RERS problem
-    RERS_Problem::rersGlobalVarsArrayInit(_analyzer->_numberOfThreadsToUse);
-    RERS_Problem::createGlobalVarAddressMaps(_analyzer);
-  } else {
+  if(!args.getBool("rers-binary")) {
     logger[ERROR]<< "solver 10 is only compatible with the hybrid analyzer." << endl;
     exit(1);
   }

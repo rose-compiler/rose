@@ -93,7 +93,7 @@ namespace CodeThorn {
     void runSolver();
 
     // experimental: analysis reset and/or backup
-    void resetAnalysis();
+    virtual void resetAnalysis();
     //stores a backup of the created transitionGraph
     void storeStgBackup();
     //load previous backup of the transitionGraph, storing the current version as a backup instead
