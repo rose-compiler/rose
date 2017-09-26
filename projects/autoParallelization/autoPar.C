@@ -18,6 +18,7 @@
  * Nov 3, 2008
  */
 #include "rose.h"
+#include "rose_config.h" // obtain macros defining backend compiler names, etc.
 #include "keep_going.h" // enable logging files which cannot be processed by AutoPar due to various reasons
 // all kinds of analyses needed
 #include "autoParSupport.h" 
@@ -267,6 +268,30 @@ static std::vector<std::string> commandline_processing(std::vector< std::string 
   return remainingArgs;
 }
 
+
+// different OpenMP flags for backend compilers
+#if !defined(_MSC_VER) && \
+    defined(BACKEND_CXX_IS_GNU_COMPILER)
+     
+#endif
+
+// Detect which backend compiler is being used and return the corresponding OpenMP flag
+// Expecting GCC, Intel, and Clang compilers as backend
+string getOpenMPFlag()
+{
+  string retval ; 
+
+  if (strcmp(BACKEND_C_COMPILER_NAME_WITHOUT_PATH,"gcc")==0 || strcmp(BACKEND_C_COMPILER_NAME_WITHOUT_PATH,"clang")==0)
+    retval = "-fopenmp";
+  else if (strcmp(BACKEND_C_COMPILER_NAME_WITHOUT_PATH,"icc"))
+    retval = "-openmp"; 
+  else
+  {
+    cerr<<"Warning: getOpenMPFlag() encounters a unrecognized backend compiler name:"<< BACKEND_C_COMPILER_NAME_WITHOUT_PATH<<endl;
+  }
+  return retval; 
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -277,7 +302,10 @@ main (int argc, char *argv[])
   // enable parsing user-defined pragma if enable_diff is true
   // -rose:openmp:parse_only
   if (enable_diff)
+  {
     argvList.push_back("-rose:openmp:parse_only");
+    argvList.push_back(getOpenMPFlag());
+  }
   SgProject *project = frontend (argvList);
   ROSE_ASSERT (project != NULL);
 
