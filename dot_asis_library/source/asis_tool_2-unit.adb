@@ -492,80 +492,49 @@ package body Asis_Tool_2.Unit is
          when Not_A_Unit =>
                raise Program_Error with
                  "Unit.Add_Output called with: " & Unit_Kind'Image;
-         when A_Procedure =>
+         when A_Procedure |
+              A_Function |
+              A_Generic_Procedure |
+              A_Generic_Function =>
             Add_Corresponding_Parent_Declaration;
             Add_Corresponding_Body;
-         when A_Function =>
-            Add_Corresponding_Parent_Declaration;
-            Add_Corresponding_Body;
-         when A_Package =>
+         when A_Package |
+              A_Generic_Package =>
             Add_Corresponding_Children;
             Add_Corresponding_Parent_Declaration;
             Add_Corresponding_Body;
-         when A_Generic_Procedure =>
-            Add_Corresponding_Parent_Declaration;
-            Add_Corresponding_Body;
-         when A_Generic_Function =>
-            Add_Corresponding_Parent_Declaration;
-            Add_Corresponding_Body;
-         when A_Generic_Package =>
-            Add_Corresponding_Children;
-            Add_Corresponding_Parent_Declaration;
-            Add_Corresponding_Body;
-         when A_Procedure_Instance =>
-            Add_Corresponding_Parent_Declaration;
-         when A_Function_Instance =>
+         when A_Procedure_Instance |
+              A_Function_Instance |
+              A_Procedure_Renaming |
+              A_Function_Renaming |
+              A_Package_Renaming |
+              A_Generic_Procedure_Renaming |
+              A_Generic_Function_Renaming |
+              A_Generic_Package_Renaming =>
             Add_Corresponding_Parent_Declaration;
          when A_Package_Instance =>
             Add_Corresponding_Children;
             Add_Corresponding_Parent_Declaration;
-         when A_Procedure_Renaming =>
-            Add_Corresponding_Parent_Declaration;
-         when A_Function_Renaming =>
-            Add_Corresponding_Parent_Declaration;
-         when A_Package_Renaming =>
-            Add_Corresponding_Parent_Declaration;
-         when A_Generic_Procedure_Renaming =>
-            Add_Corresponding_Parent_Declaration;
-         when A_Generic_Function_Renaming =>
-            Add_Corresponding_Parent_Declaration;
-         when A_Generic_Package_Renaming =>
-            Add_Corresponding_Parent_Declaration;
-         when A_Procedure_Body =>
+         when A_Procedure_Body |
+              A_Function_Body |
+              A_Package_Body =>
             Add_Corresponding_Declaration;
             Add_Corresponding_Parent_Declaration;
             Add_Subunits;
-         when A_Function_Body =>
-            Add_Corresponding_Declaration;
-            Add_Corresponding_Parent_Declaration;
-            Add_Subunits;
-         when A_Package_Body =>
-            Add_Corresponding_Declaration;
-            Add_Corresponding_Parent_Declaration;
-            Add_Subunits;
-         when A_Procedure_Body_Subunit =>
+         when A_Procedure_Body_Subunit |
+              A_Function_Body_Subunit |
+              A_Package_Body_Subunit |
+              A_Task_Body_Subunit |
+              A_Protected_Body_Subunit =>
             Add_Subunits;
             Add_Corresponding_Subunit_Parent_Body;
-         when A_Function_Body_Subunit =>
-            Add_Subunits;
-            Add_Corresponding_Subunit_Parent_Body;
-         when A_Package_Body_Subunit =>
-            Add_Subunits;
-            Add_Corresponding_Subunit_Parent_Body;
-         when A_Task_Body_Subunit =>
-            Add_Subunits;
-            Add_Corresponding_Subunit_Parent_Body;
-         when A_Protected_Body_Subunit =>
-            Add_Subunits;
-            Add_Corresponding_Subunit_Parent_Body;
-         when A_Nonexistent_Declaration =>
-            null; -- No more info
-         when A_Nonexistent_Body =>
-            null; -- No more info
-         when A_Configuration_Compilation =>
+         when A_Nonexistent_Declaration |
+              A_Nonexistent_Body |
+              A_Configuration_Compilation =>
             null; -- No more info
          when An_Unknown_Unit=>
             Add_Corresponding_Declaration;
+            Add_Corresponding_Body;
       end case;
 
       Finish_Output;

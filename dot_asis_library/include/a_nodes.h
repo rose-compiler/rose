@@ -822,6 +822,9 @@ struct Defining_Name_Struct {
 struct Declaration_Struct {
   enum Declaration_Kinds   Declaration_Kind;
   enum Declaration_Origins Declaration_Origin;
+  Defining_Name_List             Names;  
+  Element_List                   Aspect_Specifications;
+  Representation_Clause_List     Corresponding_Representation_Clauses;
   
   // These fields are only valid for the kinds above them:
   // A_Parameter_Specification |
@@ -829,8 +832,7 @@ struct Declaration_Struct {
   enum Mode_Kinds          Mode_Kind;
   // A_Formal_Function_Declaration |
   // A_Formal_Procedure_Declaration:
-  enum Subprogram_Default_Kinds 
-                           Default_Kind;
+  enum Subprogram_Default_Kinds  Default_Kind;
   // A_Private_Type_Declaration |
   // A_Private_Extension_Declaration |
   // A_Variable_Declaration |
@@ -843,10 +845,6 @@ struct Declaration_Struct {
   // A_Procedure_Declaration |
   // A_Function_Declaration:
   enum Trait_Kinds         Trait_Kind;
-  
-  // TODO: add remaining valid kinds comments:
-  // (all kinds)
-  Defining_Name_List             Names;  
   //  An_Ordinary_Type_Declaration,            // 3.2.1(3)
   //  A_Task_Type_Declaration,                  // 9.1(2)
   //  A_Protected_Type_Declaration,             // 9.4(2)
@@ -875,8 +873,6 @@ struct Declaration_Struct {
   //  An_Object_Renaming_Declaration,           // 8.5.1(2)
   //  A_Formal_Object_Declaration,              // 12.4(2)
   Definition_ID                  Object_Declaration_View;
-  // (all kinds)
-  Element_List                   Aspect_Specifications;
   //  A_Variable_Declaration,                   // 3.3.1(2)
   //  A_Constant_Declaration,                   // 3.3.1(4)
   //  An_Integer_Number_Declaration,            // 3.3.2(2)
@@ -916,8 +912,6 @@ struct Declaration_Struct {
   Declaration_ID                 Corresponding_First_Subtype;
   Declaration_ID                 Corresponding_Last_Constraint;
   Declaration_ID                 Corresponding_Last_Subtype;
-  // (all)
-  Representation_Clause_List     Corresponding_Representation_Clauses;
   //  A_Loop_Parameter_Specification,           // 5.5(4)  
   //  An_Entry_Index_Specification,             // 9.5.2(2)
   Discrete_Subtype_Definition_ID Specification_Subtype_Definition;

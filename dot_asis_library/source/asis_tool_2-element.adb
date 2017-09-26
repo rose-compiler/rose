@@ -164,6 +164,7 @@ package body Asis_Tool_2.Element is
            (Name => "Defining_Name_Kind", Value => Defining_Name_Kind'Image);
          A_Defining_Name.Defining_Name_Kind :=
            anhS.To_Defining_Name_Kinds (Defining_Name_Kind);
+         Add_Defining_Name_Image;
 
          case Defining_Name_Kind is
             when Not_A_Defining_Name =>
@@ -172,25 +173,17 @@ package body Asis_Tool_2.Element is
                  Defining_Name_Kind'Image;
 
             when A_Defining_Identifier =>
-               Add_Defining_Name_Image;
                null; -- No more info
 
-            when A_Defining_Character_Literal =>
-               Add_Defining_Name_Image;
-               Add_Position_Number_Image;
-               Add_Representation_Value_Image;
-
-            when A_Defining_Enumeration_Literal =>
-               Add_Defining_Name_Image;
+            when A_Defining_Character_Literal |
+                 A_Defining_Enumeration_Literal =>
                Add_Position_Number_Image;
                Add_Representation_Value_Image;
 
             when A_Defining_Operator_Symbol =>
-               Add_Defining_Name_Image;
                A_Defining_Name.Operator_Kind := Add_Operator_Kind (State, Element);
 
             when A_Defining_Expanded_Name =>
-               Add_Defining_Name_Image;
                Add_Defining_Prefix;
                Add_Defining_Selector;
          end case;
@@ -565,7 +558,8 @@ package body Asis_Tool_2.Element is
                Add_Corresponding_Last_Constraint;
                Add_Corresponding_Last_Subtype;
 
-            when A_Task_Type_Declaration =>
+            when A_Task_Type_Declaration |
+                 A_Protected_Type_Declaration =>
                Add_Discriminant_Part;
                Add_Type_Declaration_View;
                Add_Corresponding_Type_Declaration;
@@ -577,9 +571,6 @@ package body Asis_Tool_2.Element is
                Add_Corresponding_Declaration;
                Add_Corresponding_Body;
                Add_Declaration_Interface_List;
-
-            when A_Protected_Type_Declaration =>
-               State.Add_Not_Implemented;
 
             when An_Incomplete_Type_Declaration =>
                State.Add_Not_Implemented;
