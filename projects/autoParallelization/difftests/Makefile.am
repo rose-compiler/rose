@@ -8,7 +8,8 @@ C_TESTCODES =
 if ROSE_USING_GCC_VERSION_LATER_4_8
 CXX_TESTCODES = \
      missingReduction.C \
-     omp_lib_call.C
+     omp_lib_call.C \
+     bt_test.C
 endif
 
 ALL_TESTCODES = \
@@ -33,8 +34,8 @@ ROSE_COMMON_FLAGS = -rose:autopar:enable_diff
 #-fopenmp, automatically add this option 
 
 ROSE_CFLAGS = $(ROSE_COMMON_FLAGS) -rose:C99 
-# for C++ input codes
-ROSE_CXXFLAGS = $(ROSE_COMMON_FLAGS)
+# for C++ input codes, 
+ROSE_CXXFLAGS = $(ROSE_COMMON_FLAGS) -I$(top_srcdir)/projects/autoParallelization/difftests
 
 # build the translator
 ../autoPar:

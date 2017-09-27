@@ -1794,7 +1794,12 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
         //Only output semantically different OMP attributes.
         if (!isEquivalentOmpAttribute(user_attr, compiler_attr))
          {
-             cout<<"User vs. AutoPar @"<<file_info->get_line()<<endl;
+             // the stmt may come from an included header. 
+             // In this case, we show the header file name
+             if (file_info->get_filename()!= sfile->getFileName())
+               cout<<"User vs. AutoPar @"<<Rose::StringUtility::stripPathFromFileName(file_info->get_filename())<<":"<<file_info->get_line()<<endl;
+             else 
+               cout<<"User vs. AutoPar @"<<file_info->get_line()<<endl;
              cout<<"< "<<user_pragma_str<<endl;
              cout<<"---"<<endl;
              cout<<"> "<<compiler_pragma_str<<endl;
