@@ -3,8 +3,6 @@ with Ada.Text_IO;
 -- For int."+":
 with Interfaces.C;
 
-with a_nodes_h.Support;
-
 package body A_Nodes is
 
    Package_Name : constant String := "A_Nodes";
@@ -53,12 +51,16 @@ package body A_Nodes is
    is
       Name : constant String := Package_Name & ".Check_Element_Node";
       ID   : constant a_nodes_h.Element_ID := Element.ID;
+      use type Interfaces.C.int;
    begin
       if This.Element_IDs.Contains (ID) then
          raise Usage_Error with Name &
            ": Tried to push second Element with ID => " & ID'Image;
       else
          This.Element_IDs.Insert (ID);
+         if ID > This.Highest_Element_ID then
+            This.Highest_Element_ID := ID;
+         end if;
       end if;
    end Check_Element_Node;
 
@@ -90,8 +92,7 @@ package body A_Nodes is
       X           : in AEX.Exception_Occurrence) is
    begin
       ATI.Put_Line ((1 .. 40 => '#'));
-      ATI.Put_Line (Module_Name & ": EXCEPTION: " & Aex.Exception_Name (X) &
-                  " (" & Aex.Exception_Information (X) & ")");
+      ATI.Put_Line (Module_Name & ": ***EXCEPTION*** " & Aex.Exception_Information (X));
       ATI.Put_Line ((1 .. 40 => '#'));
    end Print_Exception_Info;
 
@@ -147,5 +148,57 @@ package body A_Nodes is
    begin
       return This.Head = null;
    end Is_Empty;
+
+   ------------
+   -- EXPORTED:
+   ------------
+   procedure Print_Stats
+     (This : access Class)
+   is
+      Module_Name : constant String := Package_Name & ".Print_Stats";
+      use type a_nodes_h.Node_ID;
+      procedure Put_Line (Message : in String)is
+      begin
+         ATI.Put_Line (Module_Name & ": " & Message);
+      end Put_Line;
+
+      Previous_ID : a_nodes_h.Node_ID := -2;
+      In_Run      : Boolean := False;
+
+            -- Don't list all consecutive ones:
+      procedure Put_ID (ID : in a_nodes_h.Node_ID) is
+      begin
+         if In_Run then
+            if ID > Previous_ID + 1 or else ID = This.Highest_Element_ID then
+               In_Run := False;
+               ATI.Put_Line (Previous_ID'Image);
+               ATI.Put (Module_Name & ": " & ID'Image);
+            end if;
+         else
+            if ID > Previous_ID + 1 then
+               ATI.Put_Line ("");
+               ATI.Put (Module_Name & ": " & ID'Image);
+            else
+               In_Run := True;
+               ATI.Put (" ..");
+            end if;
+         end if;
+         Previous_ID := ID;
+      end Put_ID;
+
+   begin
+      Put_Line ("Highest Element ID:" & This.Highest_Element_ID'Image);
+      Put_Line ("Missing element IDs:");
+      for ID in a_nodes_h.Node_ID range 0 .. This.Highest_Element_ID loop
+         if not This.Element_IDs.Contains (ID) then
+            Put_ID (ID);
+         end if;
+      end loop;
+      -- Put out the last missing ID:
+      if In_Run then
+         ATI.Put_Line (Previous_ID'Image);
+      end if;
+   end Print_Stats;
+
 
 end A_Nodes;

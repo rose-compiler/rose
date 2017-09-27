@@ -1,4 +1,4 @@
-with a_nodes_h;
+with a_nodes_h.Support;
 
 private with Ada.Containers.Hashed_Sets;
 private with Interfaces.C;
@@ -28,6 +28,9 @@ package A_Nodes is
      (This : access Class)
       return Boolean;
 
+   procedure Print_Stats
+     (This : access Class);
+
    -- A client has used the package improperly:
    Usage_Error : exception;
 
@@ -48,10 +51,11 @@ private
    Type Node_ID_Set is new Node_ID_Sets.Set with null record;
 
    type Class is tagged record -- Initialized
-      Head        : a_nodes_h.Node_List_Ptr; -- Initialized
-      Has_Context : Boolean := False;
-      Unit_IDs    : Node_ID_Set; -- Initialized
-      Element_IDs : Node_ID_Set; -- Initialized
+      Head               : a_nodes_h.Node_List_Ptr; -- Initialized
+      Has_Context        : Boolean := False;
+      Unit_IDs           : Node_ID_Set; -- Initialized
+      Element_IDs        : Node_ID_Set; -- Initialized
+      Highest_Element_ID : a_nodes_h.Node_ID := a_nodes_h.Support.Invalid_Node_ID;
    end record;
 
 end A_Nodes;
