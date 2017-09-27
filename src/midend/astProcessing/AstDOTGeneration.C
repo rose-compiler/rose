@@ -37,7 +37,16 @@ AstDOTGeneration::generate(SgNode* node, string filename, traversalType tt, stri
      this->filenamePostfix=filenamePostfix;
      DOTInheritedAttribute ia;
      traverse(node,ia);
-     string filename2=string("./")+filename+"."+filenamePostfix+".dot";
+
+  // DQ (9/22/2017): Fixed this to allow for an empty filenamePostfix string (and avoid output of ".." in the filename.
+  // string filename2=string("./")+filename+"."+filenamePostfix+".dot";
+     string filename2=string("./")+filename;
+     if (filenamePostfix != "")
+        {
+          filename2 += "." + filenamePostfix + ".dot";
+        }
+     filename2 += ".dot";
+
      dotrep.writeToFileAsGraph(filename2);
    }
 

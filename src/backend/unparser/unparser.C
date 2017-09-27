@@ -324,7 +324,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
      currentFile = file;
      ROSE_ASSERT(currentFile != NULL);
 
-#if 0
+#if 1
      printf ("In Unparser::unparseFile(): SageInterface::is_Cxx_language()     = %s \n",SageInterface::is_Cxx_language() ? "true" : "false");
      printf ("In Unparser::unparseFile(): SageInterface::is_Fortran_language() = %s \n",SageInterface::is_Fortran_language() ? "true" : "false");
      printf ("In Unparser::unparseFile(): SageInterface::is_Java_language()    = %s \n",SageInterface::is_Java_language() ? "true" : "false");
@@ -720,8 +720,14 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
 
           case SgFile::e_Ada_language:
              {
-               printf ("Error: SgFile::e_Ada_language detected in unparser (unparser not implemented, unparsing ignored) \n");
+               printf ("NOTE: SgFile::e_Ada_language detected in unparser (initial start at unparser) \n");
+
+               Unparse_Ada unparser(this, file->getFileName());
+               unparser.unparseAdaFile(file, info);
+
+            // printf ("Error: SgFile::e_Ada_language detected in unparser (unparser not implemented, unparsing ignored) \n");
             // ROSE_ASSERT(false);
+
                break;
              }
 
@@ -2497,7 +2503,7 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
      printf ("Inside of unparseFile ( SgFile* file ) (using filename = %s) \n",file->get_unparse_output_filename().c_str());
 #endif
 
-#if 1
+#if 0
      printf ("Exiting as a test! \n");
      assert(false);
 #endif
@@ -2750,7 +2756,7 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
                   {
                     printf ("Error: SgFile::e_C_language or SgFile::e_Cxx_language detected in unparser (unparser not implemented, unparsing ignored) \n");
 
-                    string outputFilename = "rose_" + file->get_sourceFileNameWithoutPath();
+                    outputFilename = "rose_" + file->get_sourceFileNameWithoutPath();
 #if 1
                     printf ("In unparseFile(SgFile* file): outputFilename not set using default: outputFilename = %s \n",outputFilename.c_str());
 #endif
@@ -2782,7 +2788,7 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
                   {
                     printf ("Error: SgFile::e_Fortran_language detected in unparser (unparser not implemented, unparsing ignored) \n");
 
-                    string outputFilename = "rose_" + file->get_sourceFileNameWithoutPath();
+                    outputFilename = "rose_" + file->get_sourceFileNameWithoutPath();
 #if 1
                     printf ("In unparseFile(SgFile* file): outputFilename not set using default: outputFilename = %s \n",outputFilename.c_str());
 #endif
@@ -2900,7 +2906,14 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
 
                case SgFile::e_Ada_language:
                   {
+                 // GNAT Ada does not allow the flename to be changed, but we can put it into the build tree instead of the source tree (same as Java).
+                 // This detail is not a part of the language standard.
+                    outputFilename = file->get_sourceFileNameWithoutPath();
+
+                    printf ("Ada output language: outputFilename = %s \n",outputFilename.c_str());
+
                     printf ("Error: SgFile::e_Ada_language detected in unparser (unparser not implemented, unparsing ignored) \n");
+
                  // ROSE_ASSERT(false);
                     break;
                   }
@@ -2991,9 +3004,8 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
        // Set the output filename in the SgFile IR node.
           file->set_unparse_output_filename(outputFilename);
 
-       // ROSE_ASSERT (file->get_unparse_output_filename().empty() == false);
-          assert(file->get_unparse_output_filename().empty() == false);
-
+          ROSE_ASSERT (file->get_unparse_output_filename().empty() == false);
+       // assert(file->get_unparse_output_filename().empty() == false);
         }
 #endif
 
@@ -3013,7 +3025,9 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
           string outputFilename = get_output_filename(*file);
 
           if ( SgProject::get_verbose() > 0 )
+             {
                printf ("Calling the unparser: outputFilename = %s \n",outputFilename.c_str());
+             }
 
        // printf ("In unparseFile(SgFile*): open file for output of generated source code: outputFilename = %s \n",outputFilename.c_str());
 
@@ -3075,6 +3089,7 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
                             }
                        }
                   }
+
                file->set_unparse_output_filename(outputFilename);
              }
 
@@ -3168,6 +3183,10 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
        // roseUnparser.run_unparser();
        // roseUnparser.unparseFile(file,inheritedAttributeInfo);
 
+#if 1
+          printf ("In unparseFile(SgFile*): Calling the unparser for SgFile \n");
+#endif
+
        // DQ (9/2/2008): This one way to handle the variations in type
           switch (file->variantT())
              {
@@ -3202,6 +3221,9 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
                   }
              }          
 
+#if 1
+          printf ("In unparseFile(SgFile*): Closing the output file \n");
+#endif
        // And finally we need to close the file (to flush everything out!)
           ROSE_OutputFile.close();
 

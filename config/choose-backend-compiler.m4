@@ -106,7 +106,11 @@ echo "Testing value of FC = $FC"
     ] ,
     [ 
     # Alternatively use the specified GNAT Ada compiler
-	   BACKEND_ADA_COMPILER="gnat compile"
+
+    # DQ (9/12/2017): Note that the command needs to be "gnat" and the "compile" option 
+    # must be added into the generated command line for the backend compiler.
+    # BACKEND_ADA_COMPILER="gnat compile"
+      BACKEND_ADA_COMPILER="gnat"
       echo "default back-end ada compiler for generated translators to use: $BACKEND_ADA_COMPILER"
     ])
 
