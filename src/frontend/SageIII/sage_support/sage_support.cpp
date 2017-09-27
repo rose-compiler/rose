@@ -6084,6 +6084,8 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                printf ("SgFile::compileOutput(): get_skipfinalCompileStep() == false: compilerCmdLine = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerCmdLine,false,false).c_str());
              }
 
+          printf ("In SgFile::compileOutput(): get_compileOnly() = %s \n",get_compileOnly() ? "true" : "false");
+
        // DQ (4/18/2015): Adding support to add compile only mode to the processing of each file when multiple files are processed.
           if (get_compileOnly() == true)
              {
@@ -6099,6 +6101,9 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                if (get_Ada_only() == true)
                   {
                     addCompileOnlyFlag = false;
+#if 1
+                    printf ("In SgFile::compileOutput(): get_compileOnly() == true: addCompileOnlyFlag = %s \n",addCompileOnlyFlag ? "true" : "false");
+#endif
                   }
 
             // DQ (31/8/2017): If this is Jovial then don't use the "-c" flag (not clear what steps are required for linking within Jovial)
@@ -6128,9 +6133,11 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                  // We might want to check if "-c" is already present so we don't add it redundantly.
                     compilerCmdLine.push_back("-c");
                   }
-#if DEBUG_PROJECT_COMPILE_COMMAND_LINE_WITH_ARGS
-               printf ("SgFile::compileOutput(): get_skipfinalCompileStep() == false: get_compileOnly() == true: compilerCmdLine = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerCmdLine,false,false).c_str());
+
+#if DEBUG_PROJECT_COMPILE_COMMAND_LINE_WITH_ARGS || 1
+               printf ("In SgFile::compileOutput(): get_skipfinalCompileStep() == false: get_compileOnly() == true: compilerCmdLine = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerCmdLine,false,false).c_str());
 #endif
+
 #if 0
                printf ("Exiting as a test! \n");
                ROSE_ASSERT(false);
@@ -6155,9 +6162,15 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                   }
              }
 
+#if DEBUG_PROJECT_COMPILE_COMMAND_LINE_WITH_ARGS || 1
+          printf ("In SgFile::compileOutput(): Calling systemFromVector(): compilerCmdLine = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerCmdLine,false,false).c_str());
+#endif
+
        // DQ (2/20/2013): The timer used in TimingPerformance is now fixed to properly record elapsed wall clock time.
        // CAVE3 double check that is correct and shouldn't be compilerCmdLine
           returnValueForCompiler = systemFromVector (compilerCmdLine);
+
+          printf ("In SgFile::compileOutput(): Calling systemFromVector(): returnValueForCompiler = %d \n",returnValueForCompiler);
 
        // TOO1 (05/14/2013): Handling for -rose:keep_going
        //

@@ -35,9 +35,20 @@ int systemFromVector(const vector<string>& argv) {
     vector<const char*> argvC(argv.size() + 1);
     for (size_t i = 0; i < argv.size(); ++i) {
       argvC[i] = strdup(argv[i].c_str());
+#if 1
+      printf ("In systemFromVector(): loop: argvC[%zu] = %s \n",i,argvC[i]);
+#endif
     }
     argvC.back() = NULL;
     execvp(argv[0].c_str(), (char* const*)&argvC[0]);
+
+#if 0
+ // DQ (9/12/2017): This is one approach to debugging this (which was required for Ada because the Ada compiler is a call to gnat with the extra option "compile".
+ // execvp(argv[0].c_str(), (char* const*)&argvC[0]);
+ // execvp("/home/quinlan1/ROSE/ADA/x86_64-linux/adagpl-2017/gnatgpl/gnat-gpl-2017-x86_64-linux-bin/bin/gnat compile",(char* const*)&argvC[0]);
+    execvp("/home/quinlan1/ROSE/ADA/x86_64-linux/adagpl-2017/gnatgpl/gnat-gpl-2017-x86_64-linux-bin/bin/gnat",(char* const*)&argvC[0]);
+#endif
+
     perror(("execvp in systemFromVector: " + argv[0]).c_str());
     exit(1); // Should not get here normally
   } else { // Parent

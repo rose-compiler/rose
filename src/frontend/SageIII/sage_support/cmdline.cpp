@@ -7936,6 +7936,9 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
                compilerNameString[0] = BACKEND_ADA_COMPILER_NAME_WITH_PATH;
 
+            // DQ (9/12/2017): We need to add the "compile" option to the "gnat" command line ahead of the rest of the command line.
+               compilerNameString.push_back("compile");
+
                break;
              }
 
