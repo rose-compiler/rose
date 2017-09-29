@@ -305,6 +305,110 @@ if test "x$enable_debug_output_for_experimental_fortran_frontend" = "xyes"; then
   AC_DEFINE([ROSE_DEBUG_EXPERIMENTAL_OFP_ROSE_CONNECTION], [], [Controls large volumes of output spew useful for debugging new OFP/ROSE connection code])
 fi
 
+# DQ (8/23/2017): Added support for new csharp front-end development.  
+AC_ARG_ENABLE(experimental_csharp_frontend,
+    AS_HELP_STRING([--enable-experimental_csharp_frontend], [Enable experimental csharp frontend development]))
+AM_CONDITIONAL(ROSE_EXPERIMENTAL_CSHARP_ROSE_CONNECTION, [test "x$enable_experimental_csharp_frontend" = xyes])
+if test "x$enable_experimental_csharp_frontend" = "xyes"; then
+  AC_MSG_WARN([Using this mode enable experimental csharp front-end (internal development only)!])
+  AC_DEFINE([ROSE_EXPERIMENTAL_CSHARP_ROSE_CONNECTION], [], [Enables development of experimental csharp frontend])
+
+# DQ (8/23/2017): Need to review now to get the MONO_HOME and ROSLYN_HOME environment variables.
+# mono_home=$MONO_HOME
+# rosyln_home=$ROSYLN_HOME
+
+  mono_home=`roslyn-config mono-home`
+  roslyn_home=`roslyn-config csharp-home`
+
+  echo "Mono home   = $mono_home"
+  echo "Roslyn home = $rosyln_home"
+
+  AC_DEFINE_UNQUOTED([ROSE_EXPERIMENTAL_CSHARP_ROSE_CONNECTION_MONO_HOME], ["$mono_home"], [Path to Mono Csharp compiler used in development of experimental csharp frontend])
+  AC_DEFINE_UNQUOTED([ROSE_EXPERIMENTAL_CSHARP_ROSE_CONNECTION_ROSLYN_HOME], ["$roslyn_home"], [Path to Roslyn Csharp library used in development of experimental csharp frontend])
+
+  AC_SUBST(mono_home)
+  AC_SUBST(rosyln_home)
+
+# echo "Exiting as a test!"
+# exit 0
+fi
+
+# DQ (6/7/2013): Added support for debugging new csharp front-end development.  
+AC_ARG_ENABLE(debug_output_for_experimental_csharp_frontend,
+    AS_HELP_STRING([--enable-debug_output_for_experimental_csharp_frontend], [Enable debugging output (spew) of new CSHARP/ROSE connection]))
+AM_CONDITIONAL(ROSE_DEBUG_EXPERIMENTAL_CSHARP_ROSE_CONNECTION, [test "x$enable_debug_output_for_experimental_csharp_frontend" = xyes])
+if test "x$enable_debug_output_for_experimental_csharp_frontend" = "xyes"; then
+  AC_MSG_WARN([Using this mode causes large volumes of output spew (internal debugging only)!])
+  AC_DEFINE([ROSE_DEBUG_EXPERIMENTAL_CSHARP_ROSE_CONNECTION], [], [Controls large volumes of output spew useful for debugging new CSHARP/ROSE connection code])
+fi
+
+# DQ (8/23/2017): Added support for new Ada front-end development.  
+AC_ARG_ENABLE(experimental_ada_frontend,
+    AS_HELP_STRING([--enable-experimental_ada_frontend], [Enable experimental ada frontend development]))
+AM_CONDITIONAL(ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION, [test "x$enable_experimental_ada_frontend" = xyes])
+if test "x$enable_experimental_ada_frontend" = "xyes"; then
+  AC_MSG_WARN([Using this mode enable experimental ada front-end (internal development only)!])
+  AC_DEFINE([ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION], [], [Enables development of experimental ada frontend])
+fi
+
+# DQ (6/7/2013): Added support for debugging new ada front-end development.  
+AC_ARG_ENABLE(debug_output_for_experimental_ada_frontend,
+    AS_HELP_STRING([--enable-debug_output_for_experimental_ada_frontend], [Enable debugging output (spew) of new ADA/ROSE connection]))
+AM_CONDITIONAL(ROSE_DEBUG_EXPERIMENTAL_ADA_ROSE_CONNECTION, [test "x$enable_debug_output_for_experimental_ada_frontend" = xyes])
+if test "x$enable_debug_output_for_experimental_ada_frontend" = "xyes"; then
+  AC_MSG_WARN([Using this mode causes large volumes of output spew (internal debugging only)!])
+  AC_DEFINE([ROSE_DEBUG_EXPERIMENTAL_ADA_ROSE_CONNECTION], [], [Controls large volumes of output spew useful for debugging new ADA/ROSE connection code])
+fi
+
+# DQ (6/8/2017): Adding ADA support using GNAT ASIS tool chain.
+ROSE_SUPPORT_GNAT
+
+# Setup Automake conditional.
+AM_CONDITIONAL(ROSE_USE_GNAT,test ! "$with_gnat" = no)
+
+if test "x$enable_experimental_ada_frontend" = "xyes"; then
+  gnat_home=$with_gnat
+  echo "GNAT home = $gnat_home"
+  AC_DEFINE_UNQUOTED([ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION_GNAT_HOME], ["$with_gnat"], [Path to GNAT Ada compiler used in development of experimental ada frontend])
+  AC_SUBST(gnat_home)
+fi
+
+# DQ (8/23/2017): Added support for new Jovial front-end development.  
+AC_ARG_ENABLE(experimental_jovial_frontend,
+    AS_HELP_STRING([--enable-experimental_jovial_frontend], [Enable experimental jovial frontend development]))
+AM_CONDITIONAL(ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION, [test "x$enable_experimental_jovial_frontend" = xyes])
+if test "x$enable_experimental_jovial_frontend" = "xyes"; then
+  AC_MSG_WARN([Using this mode enable experimental jovial front-end (internal development only)!])
+  AC_DEFINE([ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION], [], [Enables development of experimental jovial frontend])
+fi
+
+# DQ (6/7/2013): Added support for debugging new jovial front-end development.  
+AC_ARG_ENABLE(debug_output_for_experimental_jovial_frontend,
+    AS_HELP_STRING([--enable-debug_output_for_experimental_jovial_frontend], [Enable debugging output (spew) of new JOVIAL/ROSE connection]))
+AM_CONDITIONAL(ROSE_DEBUG_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION, [test "x$enable_debug_output_for_experimental_jovial_frontend" = xyes])
+if test "x$enable_debug_output_for_experimental_jovial_frontend" = "xyes"; then
+  AC_MSG_WARN([Using this mode causes large volumes of output spew (internal debugging only)!])
+  AC_DEFINE([ROSE_DEBUG_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION], [], [Controls large volumes of output spew useful for debugging new JOVIAL/ROSE connection code])
+fi
+
+# DQ (8/23/2017): Added support for new Cobol front-end development.  
+AC_ARG_ENABLE(experimental_cobol_frontend,
+    AS_HELP_STRING([--enable-experimental_cobol_frontend], [Enable experimental cobol frontend development]))
+AM_CONDITIONAL(ROSE_EXPERIMENTAL_COBOL_ROSE_CONNECTION, [test "x$enable_experimental_cobol_frontend" = xyes])
+if test "x$enable_experimental_cobol_frontend" = "xyes"; then
+  AC_MSG_WARN([Using this mode enable experimental cobol front-end (internal development only)!])
+  AC_DEFINE([ROSE_EXPERIMENTAL_COBOL_ROSE_CONNECTION], [], [Enables development of experimental cobol frontend])
+fi
+
+# DQ (6/7/2013): Added support for debugging new cobol front-end development.  
+AC_ARG_ENABLE(debug_output_for_experimental_cobol_frontend,
+    AS_HELP_STRING([--enable-debug_output_for_experimental_cobol_frontend], [Enable debugging output (spew) of new COBOL/ROSE connection]))
+AM_CONDITIONAL(ROSE_DEBUG_EXPERIMENTAL_COBOL_ROSE_CONNECTION, [test "x$enable_debug_output_for_experimental_cobol_frontend" = xyes])
+if test "x$enable_debug_output_for_experimental_cobol_frontend" = "xyes"; then
+  AC_MSG_WARN([Using this mode causes large volumes of output spew (internal debugging only)!])
+  AC_DEFINE([ROSE_DEBUG_EXPERIMENTAL_COBOL_ROSE_CONNECTION], [], [Controls large volumes of output spew useful for debugging new COBOL/ROSE connection code])
+fi
+
 # DQ (8/18/2009): Removed this conditional macro.
 # DQ (4/23/2009): Added support for commandline specification of using new graph IR nodes.
 # AC_ARG_ENABLE(newGraphNodes, AS_HELP_STRING([--enable-newGraphNodes], [Enable new (experimental) graph IR nodes]))
@@ -797,8 +901,15 @@ ROSE_SUPPORT_MAPLE
 # Setup Automake conditional in Projects/programModeling/Makefile.am
 AM_CONDITIONAL(ROSE_USE_MAPLE,test ! "$with_maple" = no)
 
+# DQ (5/21/2017): I don't think we use this anymore.
+ROSE_SUPPORT_VXWORKS
+
+# Setup Automake conditional.
+AM_CONDITIONAL(ROSE_USE_VXWORKS,test ! "$with_vxworks" = no)
+
+# DQ (5/23/2017): I don't think we use this anymore.
 # DQ (4/10/2010): Added configure support for Backstroke project.
-ROSE_SUPPORT_BACKSTROKE
+# ROSE_SUPPORT_BACKSTROKE
 
 #Call supporting macro for IDA PRO
 ROSE_SUPPORT_IDA
@@ -2158,6 +2269,10 @@ src/frontend/DLX/lib/core/Makefile
 src/frontend/Disassemblers/Makefile
 src/frontend/ECJ_ROSE_Connection/Makefile
 src/frontend/Experimental_OpenFortranParser_ROSE_Connection/Makefile
+src/frontend/Experimental_Csharp_ROSE_Connection/Makefile
+src/frontend/Experimental_Ada_ROSE_Connection/Makefile
+src/frontend/Experimental_Jovial_ROSE_Connection/Makefile
+src/frontend/Experimental_Cobol_ROSE_Connection/Makefile
 src/frontend/Makefile
 src/frontend/MatlabFrontend/Makefile
 src/frontend/OpenFortranParser_SAGE_Connection/Makefile
@@ -2306,6 +2421,10 @@ tests/nonsmoke/functional/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.
 tests/nonsmoke/functional/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.fortran-torture/Makefile
 tests/nonsmoke/functional/CompileTests/Java_tests/Makefile
 tests/nonsmoke/functional/CompileTests/Java_tests/unit_tests/Makefile
+tests/nonsmoke/functional/CompileTests/experimental_csharp_tests/Makefile
+tests/nonsmoke/functional/CompileTests/experimental_ada_tests/Makefile
+tests/nonsmoke/functional/CompileTests/experimental_jovial_tests/Makefile
+tests/nonsmoke/functional/CompileTests/experimental_cobol_tests/Makefile
 tests/nonsmoke/functional/CompileTests/Makefile
 tests/nonsmoke/functional/CompileTests/Matlab_tests/Makefile
 tests/nonsmoke/functional/CompileTests/MicrosoftWindows_C_tests/Makefile
@@ -2336,6 +2455,8 @@ tests/nonsmoke/functional/CompileTests/sizeofOperation_tests/Makefile
 tests/nonsmoke/functional/CompileTests/sourcePosition_tests/Makefile
 tests/nonsmoke/functional/CompileTests/staticCFG_tests/Makefile
 tests/nonsmoke/functional/CompileTests/systemc_tests/Makefile
+tests/nonsmoke/functional/CompileTests/vxworks_tests/Makefile
+tests/nonsmoke/functional/CompileTests/gnat_tests/Makefile
 tests/nonsmoke/functional/CompileTests/uninitializedField_tests/Makefile
 tests/nonsmoke/functional/CompileTests/unparseToString_tests/Makefile
 tests/nonsmoke/functional/CompileTests/virtualCFG_tests/Makefile

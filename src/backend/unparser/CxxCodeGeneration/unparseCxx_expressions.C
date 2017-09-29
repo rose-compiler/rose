@@ -1225,6 +1225,12 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
   // (documented in the Unparse_ExprStmt::generateNameQualifier() member function.
   // newInfo.set_forceQualifiedNames();
 
+#if 0
+     printf ("In unparseTemplateArgument(): templateArgument->get_name_qualification_length()     = %d \n",templateArgument->get_name_qualification_length());
+     printf ("In unparseTemplateArgument(): templateArgument->get_global_qualification_required() = %s \n",(templateArgument->get_global_qualification_required() == true) ? "true" : "false");
+     printf ("In unparseTemplateArgument(): templateArgument->get_type_elaboration_required()     = %s \n",(templateArgument->get_type_elaboration_required() == true) ? "true" : "false");
+#endif
+
   // DQ (5/14/2011): Added support for newer name qualification implementation.
   // printf ("In unparseTemplateArgument(): templateArgument->get_name_qualification_length() = %d \n",templateArgument->get_name_qualification_length());
      newInfo.set_name_qualification_length(templateArgument->get_name_qualification_length());
@@ -1368,10 +1374,10 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
                     curprint(nameQualifier);
 #else
 #if 1
-            // newInfo.display("In unparseTemplateArgument(): newInfo.display()");
+                 // newInfo.display("In unparseTemplateArgument(): newInfo.display()");
 
-            // DQ (5/5/2013): Refactored code used here and in the unparseFunctionParameterDeclaration().
-               unp->u_type->outputType<SgTemplateArgument>(templateArgument,templateArgumentType,newInfo);
+                 // DQ (5/5/2013): Refactored code used here and in the unparseFunctionParameterDeclaration().
+                    unp->u_type->outputType<SgTemplateArgument>(templateArgument,templateArgumentType,newInfo);
 #else
             // DQ (5/4/2013): This code was copied from the function argument processing which does handle the types properly.
             // So this code needs to be refactored.
@@ -1514,6 +1520,8 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
                     unp->u_type->unparseType(templateArgumentType,newInfo);
 #if 0
                     printf ("DONE: In unparseTemplateArgument(): Calling unparseType(templateArgument->get_type(),newInfo); \n");
+#endif
+#if 0
                     curprint ( "\n /* end of type */ \n");
 #endif
                   }

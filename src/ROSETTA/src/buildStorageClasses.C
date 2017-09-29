@@ -843,7 +843,12 @@ AstNodeClass::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgAttributeSpecificationStatement::attribute_spec_enum" ) ||
                  ( varTypeString == "SgDataStatementValue::data_statement_value_enum" ) ||
                  ( varTypeString == "SgFile::outputFormatOption_enum" ) ||
-                 ( varTypeString == "SgFile::outputLanguageOption_enum" ) ||
+
+              // DQ (29/8/2017): Added generalization of language specifications so we can use 
+              // a single language enum for specification of both input and output languges.
+              // ( varTypeString == "SgFile::outputLanguageOption_enum" ) ||
+                 ( varTypeString == "SgFile::languageOption_enum" ) ||
+
                  ( varTypeString == "SgOmpClause::omp_default_option_enum" ) ||
                  ( varTypeString == "SgOmpClause::omp_proc_bind_policy_enum" ) ||
                  ( varTypeString == "SgOmpClause::omp_atomic_clause_enum" ) ||

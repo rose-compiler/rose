@@ -1,0 +1,83 @@
+V "GNAT Lib v2017"
+A -gnatc
+A -gnatt
+A -gnatws
+A -gnatyN
+A -mtune=generic
+A -march=x86-64
+P NO FX
+
+RN
+RV NO_EXCEPTION_HANDLERS
+RV NO_EXCEPTION_PROPAGATION
+RV NO_EXCEPTIONS
+RV NO_TASKING
+RV SPARK_05
+RV MAX_TASK_ENTRIES=1
+RV MAX_TASKS=1
+
+U unit_2%b		unit_2.adb		960af8fe NE OO PK
+W ada.exceptions%s	a-except.adb		a-except.ali
+
+U unit_2%s		unit_2.ads		63d35afd NE OO PK
+W ada%s			ada.ads			ada.ali
+W ada.strings%s		a-string.ads		a-string.ali
+W ada.strings.unbounded%s  a-strunb.adb		a-strunb.ali
+
+D ada.ads		20170516105951 76789da1 ada%s
+D a-charac.ads		20170516105954 2d3ec45b ada.characters%s
+D a-chlat1.ads		20170516105952 66457d31 ada.characters.latin_1%s
+D a-except.ads		20170516105953 291912d5 ada.exceptions%s
+D a-finali.ads		20170516105954 bf4f806b ada.finalization%s
+D a-string.ads		20170516105953 90ac6797 ada.strings%s
+D a-strmap.ads		20170516105953 e8bb714a ada.strings.maps%s
+D a-strunb.ads		20170516105950 ecdfa332 ada.strings.unbounded%s
+D a-unccon.ads		20170516105954 31484697 ada.unchecked_conversion%s
+D system.ads		20170516105953 6326c08a system%s
+D s-atocou.ads		20170516105956 b45c2d8d system.atomic_counters%s
+D s-finroo.ads		20170516105954 4ff27390 system.finalization_root%s
+D s-parame.ads		20170516105955 7e2a0d7f system.parameters%s
+D s-stalib.ads		20170516105955 09bd3940 system.standard_library%s
+D s-traent.ads		20170516105950 005bf670 system.traceback_entries%s
+D s-unstyp.ads		20170516105953 34867c83 system.unsigned_types%s
+D unit_2.ads		20170608212506 8f0cf9cf unit_2%s
+D unit_2.adb		20170608212506 19060131 unit_2%b
+X 1 ada.ads
+16K9*Ada 20e8 17|1r6
+X 6 a-string.ads
+16K13*Strings 35e16 17|1r10
+X 8 a-strunb.ads
+76K21*Unbounded 490e26 17|1w18
+X 17 unit_2.ads
+3K9*Unit_2 13E12 41l5 41e11 18|1b14 75l5 75t11
+5I9*Range_Type<integer> 7r31 18|4r41 8r16 12r42 20r36 30r31
+7U14*Do_It 7>21 18|30b14 36l8 36t13
+7i21 This{5I9} 18|30b21 32r27
+9X4*Dont_Like_5 18|23r16 34r16
+13K12 Parent_Class 22l8 22e20 26r26 18|39b17 48l8 48t20
+15H12*Object 17e17 19p17 20r24 26r39 18|43r24
+16i10*Component_1{integer} 18|45m15 45r35 57m15 57r35 68r25
+19U17*Method_1 20=10 18|42b17 46l11 46t19
+20r10 This{15R12} 18|43b10 45m10 45r30
+24K12 Child_Class 39l8 39e19 18|51b17 73l8 73t19
+26R12*Object<15R12> 28e17 31P17 32r24 34p16 35r27 18|55r24 62r27
+27i10*Component_2{integer} 18|68r44 69m15
+31U17*Method_1<19p17> 32=10 18|54b17 58l11 58t19
+32r10 This{26R12} 18|55b10 57m10 57r30
+34V16*Method_2{integer} 35=10 36>10 18|61b16 71l11 71t19
+35r10 This{26R12} 18|62b10 68r20 68r39 69m10
+36i10 Param_1{integer} 18|63b10 69r30
+X 18 unit_2.adb
+3T14 Boring_Task_Type 5l8 5e24 7b14 16l8 16t24 18r18
+4Y13 Drop_Off_Work 4>28 12b14 14l11 14t24 25s22
+4i28 Work_In{17|5I9} 13r18
+8i7 Work{17|5I9} 13m10 15r26
+9i7 Result{integer} 15m7
+10i7 Factor{positive} 15r34
+12i29 Work_In{17|5I9}
+18t4 Boring_Task{3T14} 25r10
+20U14 You_Do_It 20b14 20>25 27l8 27t17 32s7
+20i25 Using{17|5I9} 22r10 25r37 32r18
+34r12 X{4|63R9}
+66i10 Result{integer} 68m10 70r17
+

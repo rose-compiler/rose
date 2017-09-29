@@ -418,7 +418,64 @@ NEW_TESTCODES = \
    test2017_04.C \
    test2017_09.C \
    test2017_10.C \
-   test2017_11.C
+   test2017_11.C \
+   $(NEW_2017_TESTS)
+
+NEW_2017_TESTS = \
+   test2017_13.C \
+   test2017_14.C \
+   test2017_15.C \
+   test2017_16.C \
+   test2017_17.C \
+   test2017_18.C \
+   test2017_19.C \
+   test2017_21.C \
+   test2017_22.C \
+   test2017_23.C \
+   test2017_25.C \
+   test2017_26.C \
+   test2017_27.C \
+   test2017_28.C \
+   test2017_30.C \
+   test2017_31.C \
+   test2017_32.C \
+   test2017_35.C \
+   test2017_36.C \
+   test2017_37.C \
+   test2017_38.C \
+   test2017_39.C \
+   test2017_40.C \
+   test2017_41.C \
+   test2017_42.C \
+   test2017_43.C \
+   test2017_44.C \
+   test2017_45.C \
+   test2017_46.C \
+   test2017_47.C \
+   test2017_48.C \
+   test2017_49.C \
+   test2017_50.C \
+   test2017_51.C \
+   test2017_52.C \
+   test2017_53.C \
+   test2017_54.C \
+   test2017_55.C \
+   test2017_56.C \
+   test2017_57.C \
+   test2017_58.C 
+
+if !ROSE_USE_EDG_VERSION_4_9
+NEW_2017_TESTS = \
+   test2017_12.C \
+   test2017_33.C \
+   test2017_34.C 
+endif
+
+STILL_FAILING = \
+   test2017_20.C \
+   test2017_24.C \
+   test2017_29.C \
+   non_existing_test_to_close_automake_list.C 
 
 # DQ (1/29/2017): This appers to fail for Boost 1.57
 if !ROSE_USING_BOOST_VERSION_1_57

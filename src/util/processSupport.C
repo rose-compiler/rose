@@ -1,4 +1,9 @@
-#include "rosePublicConfig.h"
+
+// DQ (9/8/2017): Added header file suppport to allow for SgProject to be regerenced for debugging.
+// #include "rosePublicConfig.h"
+#include "rose_config.h"
+#include "sage3basic.h"
+
 #include "rose_msvc.h"
 
 #include "processSupport.h"
@@ -30,9 +35,20 @@ int systemFromVector(const vector<string>& argv) {
     vector<const char*> argvC(argv.size() + 1);
     for (size_t i = 0; i < argv.size(); ++i) {
       argvC[i] = strdup(argv[i].c_str());
+#if 1
+      printf ("In systemFromVector(): loop: argvC[%zu] = %s \n",i,argvC[i]);
+#endif
     }
     argvC.back() = NULL;
     execvp(argv[0].c_str(), (char* const*)&argvC[0]);
+
+#if 0
+ // DQ (9/12/2017): This is one approach to debugging this (which was required for Ada because the Ada compiler is a call to gnat with the extra option "compile".
+ // execvp(argv[0].c_str(), (char* const*)&argvC[0]);
+ // execvp("/home/quinlan1/ROSE/ADA/x86_64-linux/adagpl-2017/gnatgpl/gnat-gpl-2017-x86_64-linux-bin/bin/gnat compile",(char* const*)&argvC[0]);
+    execvp("/home/quinlan1/ROSE/ADA/x86_64-linux/adagpl-2017/gnatgpl/gnat-gpl-2017-x86_64-linux-bin/bin/gnat",(char* const*)&argvC[0]);
+#endif
+
     perror(("execvp in systemFromVector: " + argv[0]).c_str());
     exit(1); // Should not get here normally
   } else { // Parent
@@ -168,6 +184,12 @@ throwOnFailedAssertion(const char *mesg, const char *expr, const std::string &no
 
 ROSE_UTIL_API void
 failedAssertionBehavior(Sawyer::Assert::AssertFailureHandler handler) {
+
+     if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL )
+        {
+          printf ("Inside of failedAssertionBehavior() \n");
+        }
+
     if (handler) {
         Sawyer::Assert::assertFailureHandler = handler;
     } else {
@@ -183,6 +205,12 @@ failedAssertionBehavior(Sawyer::Assert::AssertFailureHandler handler) {
 #           error "ROSE_ASSERTION_BEHAVIOR has an invalid value"
 #endif
     }
+
+     if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL )
+        {
+          printf ("Leaving failedAssertionBehavior() \n");
+        }
+
 }
 
   Sawyer::Assert::AssertFailureHandler
