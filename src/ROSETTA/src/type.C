@@ -699,6 +699,10 @@ Grammar::setUpTypes ()
   // NamedType.setDataPrototype ( "SgQualifiedNamePtrList", "qualifiedNameList", "= p_defaultQualifiedNamePtrList",
   //           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (7/16/2017): We need to mark that a named type is associated with a template parameter.
+     NamedType.setDataPrototype     ("bool", "is_from_template_parameter","= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      ClassType.setFunctionPrototype ("HEADER_CLASS_TYPE", "../Grammar/Type.code" );
      ClassType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
 

@@ -190,6 +190,13 @@ PreviousAndNextAttribute::copy() const
    {
      return NULL;
    }
+
+// DQ (6/11/2017): Added virtual function now required to eliminate warning at runtime.
+AstAttribute::OwnershipPolicy
+PreviousAndNextAttribute::getOwnershipPolicy() const ROSE_OVERRIDE 
+   {
+     return CONTAINER_OWNERSHIP;
+   }
 #endif
 
 std::map<SgNode*,PreviousAndNextNodeData*>

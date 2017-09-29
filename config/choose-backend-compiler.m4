@@ -78,6 +78,74 @@ echo "Testing value of FC = $FC"
       echo "default back-end java compiler for generated translators to use: $BACKEND_JAVA_COMPILER"
     ])
 
+# DQ (29/8/2017): Added option to specify backend Csharp compiler
+  AC_ARG_WITH(alternate_backend_csharp_compiler,
+    [  --with-alternate_backend_csharp_compiler=<compiler name>
+                                Specify an alternative csharp back-end compiler],
+    [
+    # Use a different compiler for the backend than for the compilation of ROSE source code
+      BACKEND_CSHARP_COMPILER=$with_alternate_backend_csharp_compiler
+      AC_SUBST(BACKEND_CSHARP_COMPILER)
+      echo "alternative back-end csharp compiler specified for generated translators to use: $BACKEND_CSHARP_COMPILER"
+    ] ,
+    [ 
+    # Alternatively use the specified Mono csharp compiler
+	   BACKEND_CSHARP_COMPILER="mcs"
+      echo "default back-end csharp compiler for generated translators to use: $BACKEND_CSHARP_COMPILER"
+    ])
+
+# DQ (29/8/2017): Added option to specify backend Ada compiler
+  AC_ARG_WITH(alternate_backend_ada_compiler,
+    [  --with-alternate_backend_ada_compiler=<compiler name>
+                                Specify an alternative ada back-end compiler],
+    [
+    # Use a different compiler for the backend than for the compilation of ROSE source code
+      BACKEND_ADA_COMPILER=$with_alternate_backend_ada_compiler
+      AC_SUBST(BACKEND_ADA_COMPILER)
+      echo "alternative back-end ada compiler specified for generated translators to use: $BACKEND_ADA_COMPILER"
+    ] ,
+    [ 
+    # Alternatively use the specified GNAT Ada compiler
+
+    # DQ (9/12/2017): Note that the command needs to be "gnat" and the "compile" option 
+    # must be added into the generated command line for the backend compiler.
+    # BACKEND_ADA_COMPILER="gnat compile"
+      BACKEND_ADA_COMPILER="gnat"
+      echo "default back-end ada compiler for generated translators to use: $BACKEND_ADA_COMPILER"
+    ])
+
+# DQ (29/8/2017): Added option to specify backend Jovial compiler
+  AC_ARG_WITH(alternate_backend_jovial_compiler,
+    [  --with-alternate_backend_jovial_compiler=<compiler name>
+                                Specify an alternative jovial back-end compiler],
+    [
+    # Use a different compiler for the backend than for the compilation of ROSE source code
+      BACKEND_ADA_COMPILER=$with_alternate_backend_jovial_compiler
+      AC_SUBST(BACKEND_JOVIAL_COMPILER)
+      echo "alternative back-end jovial compiler specified for generated translators to use: $BACKEND_JOVIAL_COMPILER"
+    ] ,
+    [ 
+    # Alternatively use the specified Jovial compiler
+	   BACKEND_JOVIAL_COMPILER="default_jovial_compiler"
+      echo "default back-end jovial compiler for generated translators to use: $BACKEND_JOVIAL_COMPILER"
+    ])
+
+# DQ (29/8/2017): Added option to specify backend Cobol compiler
+  AC_ARG_WITH(alternate_backend_cobol_compiler,
+    [  --with-alternate_backend_cobol_compiler=<compiler name>
+                                Specify an alternative cobol back-end compiler],
+    [
+    # Use a different compiler for the backend than for the compilation of ROSE source code
+      BACKEND_COBOL_COMPILER=$with_alternate_backend_cobol_compiler
+      AC_SUBST(BACKEND_COBOL_COMPILER)
+      echo "alternative back-end cobol compiler specified for generated translators to use: $BACKEND_COBOL_COMPILER"
+    ] ,
+    [ 
+    # Alternatively use the specified GNU Cobol compiler
+	   BACKEND_COBOL_COMPILER="gnucobol"
+      echo "default back-end cobol compiler for generated translators to use: $BACKEND_COBOL_COMPILER"
+    ])
+
 # DQ (8/29/2005): Added support for version numbering of backend compiler
 # BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f1`
 # BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f2`
@@ -569,6 +637,33 @@ echo "Testing value of FC = $FC"
 # This will be called to execute the backend compiler (for Java)
   export BACKEND_JAVA_COMPILER
   AC_DEFINE_UNQUOTED([BACKEND_JAVA_COMPILER_NAME_WITH_PATH],"$BACKEND_JAVA_COMPILER",[Name of backend Java compiler including path (may or may not explicit include path; used to call backend).])
+
+# DQ (29/8/2017): Adding more general language support.
+  export BACKEND_CSHARP_COMPILER
+  AC_DEFINE_UNQUOTED([BACKEND_CSHARP_COMPILER_NAME_WITH_PATH],"$BACKEND_CSHARP_COMPILER",[Name of backend Csharp compiler including path (may or may not explicit include path; used to call backend).])
+
+# DQ (29/8/2017): Adding more general language support.
+  export BACKEND_ADA_COMPILER
+  AC_DEFINE_UNQUOTED([BACKEND_ADA_COMPILER_NAME_WITH_PATH],"$BACKEND_ADA_COMPILER",[Name of backend Ada compiler including path (may or may not explicit include path; used to call backend).])
+
+# DQ (29/8/2017): Adding more general language support.
+  export BACKEND_JOVIAL_COMPILER
+  AC_DEFINE_UNQUOTED([BACKEND_JOVIAL_COMPILER_NAME_WITH_PATH],"$BACKEND_JOVIAL_COMPILER",[Name of backend Jovial compiler including path (may or may not explicit include path; used to call backend).])
+
+# DQ (29/8/2017): Adding more general language support.
+  export BACKEND_COBOL_COMPILER
+  AC_DEFINE_UNQUOTED([BACKEND_COBOL_COMPILER_NAME_WITH_PATH],"$BACKEND_COBOL_COMPILER",[Name of backend Cobol compiler including path (may or may not explicit include path; used to call backend).])
+
+# DQ (30/8/2017): Testing the new language support.
+  echo "BACKEND_CXX_COMPILER     = $BACKEND_CXX_COMPILER"
+  echo "BACKEND_C_COMPILER       = $BACKEND_C_COMPILER"
+  echo "BACKEND_FORTRAN_COMPILER = $BACKEND_FORTRAN_COMPILER"
+  echo "BACKEND_JAVA_COMPILER    = $BACKEND_JAVA_COMPILER"
+  echo "BACKEND_CSHARP_COMPILER  = $BACKEND_CSHARP_COMPILER"
+  echo "BACKEND_ADA_COMPILER     = $BACKEND_ADA_COMPILER"
+  echo "BACKEND_JOVIAL_COMPILER  = $BACKEND_JOVIAL_COMPILER"
+  echo "BACKEND_COBOL_COMPILER   = $BACKEND_COBOL_COMPILER"
+# exit 1
 
 # These are useful in handling differences between different versions of the backend compiler
 # we assume that the C and C++ compiler version number match and only record version information 
