@@ -318,7 +318,7 @@ public:
     if (cur.second == index) {
       aliasmap.get_alias_map(varname, scope)->union_with(repr);
       if (DebugAliasAnal())  {
-         std::cerr << "aliasing with: " << varname << std::endl;
+         std::cerr << "Generating aliasing with: " << varname << std::endl;
       }
     }
     else {
@@ -415,11 +415,11 @@ AppendModLoc( AstInterface& fa, const AstNodePtr& mod,
   if (rhs == AST_NULL || !fa.IsVarRef(mod, &modtype, &modname, &modscope) || fa.IsScalarType(modtype))
     return;
   AstInterface::AstNodeList args;
-  if (fa.IsFunctionCall( rhs, 0, &args) ) {
+  if (fa.IsFunctionCall( rhs, 0, &args) ) {  // rhs is a function call, check if alias info. available for the function
     ModifyAliasMap collect(fa, aliasmap);
     if (funcanal != 0 && funcanal->may_alias( fa, rhs, mod, collect))
         return;
-    hasunknown = true;
+    hasunknown = true;   // no function alias analysis results, assuming the worst, aliasing all parameters
     if (DebugAliasAnal()) {
         std::cerr << "unknown alias info for function call : " << AstInterface::AstToString(rhs) << std::endl;
         std::cerr << "aliasing all parameters with " << AstInterface::AstToString(mod) << std::endl;;
@@ -437,7 +437,11 @@ AppendModLoc( AstInterface& fa, const AstNodePtr& mod,
     AstNodePtr rhsscope;
     if (fa.IsVarRef(rhs, &rhstype, &rhsname, &rhsscope)) {
       if (!fa.IsScalarType(rhstype)) 
+      {
          aliasmap.get_alias_map(modname, modscope)->union_with(aliasmap.get_alias_map(rhsname, rhsscope));
+         if (DebugAliasAnal()) 
+             std::cerr << "Generating aliasing relation between " << AstInterface::AstToString(mod)<< " and " << AstInterface::AstToString(rhs) << std::endl;
+      }
     }
   }
 }
