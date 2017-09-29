@@ -587,6 +587,7 @@ echo "Testing value of FC = $FC"
 # We use the name of the backend C++ compiler to generate a compiler name that will be used
 # elsewhere (CXX_ID might be a better name to use, instead we use basename to strip the path).
 # compilerName=`basename $BACKEND_CXX_COMPILER`
+  C_COMPILER_NAME=`basename $BACKEND_C_COMPILER`
   COMPILER_NAME=`basename $BACKEND_CXX_COMPILER`
 # echo "default back-end compiler for generated preprocessors will be: $BACKEND_CXX_COMPILER"
 # export BACKEND_CXX_COMPILER
@@ -620,6 +621,9 @@ echo "Testing value of FC = $FC"
 # we can't use the basename of the compiler to execute because it might be link using a non-standard name (e.g. mpig++-3.4.1)
   export COMPILER_NAME
   AC_DEFINE_UNQUOTED([BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH],"$COMPILER_NAME",[Name of backend C++ compiler excluding path (used to select code generation options).])
+
+  export C_COMPILER_NAME
+  AC_DEFINE_UNQUOTED([BACKEND_C_COMPILER_NAME_WITHOUT_PATH],"$C_COMPILER_NAME",[Name of backend C compiler excluding path (used to select code generation options).])
 
 # This will be called to execute the backend compiler (for C++)
   export BACKEND_CXX_COMPILER
