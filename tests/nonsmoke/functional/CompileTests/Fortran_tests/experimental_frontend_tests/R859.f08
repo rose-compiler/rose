@@ -1,4 +1,11 @@
-INTEGER :: i
-CHARACTER :: msg
-13 SYNC ALL (STAT=i, ERRMSG=msg)
-END PROGRAM
+!! R859 sync-stat
+!    is STAT = stat-variable
+!    or ERRMSG = errmsg-variable
+!
+integer :: i
+character :: msg
+
+13   sync all (stat=i, ERRMSG=msg)
+
+end
+

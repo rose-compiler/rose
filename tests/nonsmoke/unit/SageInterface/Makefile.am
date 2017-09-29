@@ -32,7 +32,8 @@ include $(nonsmoke_specimens_Cxx_tests_path)/Specimens.inc
 ###############################################################################
 # A checker to test OmpSupport::getDataSharingAttribute()
 
-noinst_PROGRAMS += getDataSharingAttribute get_C_array_dimensions genericCoverage collectFunctionSideEffect
+noinst_PROGRAMS += getDataSharingAttribute get_C_array_dimensions genericCoverage collectFunctionSideEffect performAliasAnalysis
+
 getDataSharingAttribute_SOURCES = getDataSharingAttribute.C
 
 get_C_array_dimensions_SOURCES = get_C_array_dimensions.C
@@ -40,6 +41,14 @@ get_C_array_dimensions_SOURCES = get_C_array_dimensions.C
 genericCoverage_SOURCES = genericCoverage.C
 
 collectFunctionSideEffect_SOURCES = collectFunctionSideEffect.C
+
+performAliasAnalysis_SOURCES = performAliasAnalysis.C
+
+
+alias_analysis_tests_cpp = alias-001.cpp \
+    alias-002.cpp \
+    alias-003.cpp
+
 
 # nonsmoke_getDataSharingAttribute_c defines the set of c files to test getDataSharingAttribute
 
@@ -54,6 +63,7 @@ nonsmoke_getDataSharingAttribute_c_output = $(addsuffix .output, ${nonsmoke_getD
 nonsmoke_get_C_array_dimensions_c_output = $(addsuffix .get_C_array_dimensions.output, ${nonsmoke_get_C_array_dimensions_c})
 nonsmoke_genericCoverage_c_output = $(addsuffix .genericCoverage.output, ${nonsmoke_genericCoverage_c})
 nonsmoke_collectFunctionSideEffect_cpp_output = $(addsuffix .collectFunctionSideEffect.output, ${nonsmoke_almost_all_cpp})
+performAliasAnalysis_cpp_output = $(addsuffix .performAliasAnalysis.output, ${alias_analysis_tests_cpp})
 
 # small set to be verified for now
 # It could be a subset of all the tests
@@ -77,13 +87,17 @@ $(nonsmoke_genericCoverage_c_output): genericCoverage
 	$(VALGRIND) ./genericCoverage $(TEST_CXXFLAGS) -c $(nonsmoke_specimens_Cxx_tests_path)/$(@:%.genericCoverage.output=%)
 
 $(nonsmoke_collectFunctionSideEffect_cpp_output): collectFunctionSideEffect
-	$(VALGRIND) ./collectFunctionSideEffect $(TEST_CXXFLAGS) -annot $(top_srcdir)/tests/nonsmoke/unit/SageInterface/vectorXY.annot -c $(nonsmoke_specimens_Cxx_tests_path)/$(@:%.collectFunctionSideEffect.output=%)
+	$(VALGRIND) ./collectFunctionSideEffect -sort $(TEST_CXXFLAGS) -annot $(top_srcdir)/tests/nonsmoke/unit/SageInterface/vectorXY.annot -c $(nonsmoke_specimens_Cxx_tests_path)/$(@:%.collectFunctionSideEffect.output=%)
+
+$(performAliasAnalysis_cpp_output): performAliasAnalysis 
+	$(VALGRIND) ./performAliasAnalysis$(TEST_CXXFLAGS) -c $(top_srcdir)/tests/nonsmoke/unit/SageInterface/tests/$(@:%.performAliasAnalysis.output=%)
 
 # the diff files .output.diff
 nonsmoke_getDataSharingAttribute_c_output_diff = $(addsuffix .diff, ${nonsmoke_getDataSharingAttribute_c_output_verify})
 nonsmoke_get_C_array_dimensions_c_output_diff = $(addsuffix .diff, ${nonsmoke_get_C_array_dimensions_c_output_verify})
 nonsmoke_genericCoverage_c_output_diff = $(addsuffix .diff, ${nonsmoke_genericCoverage_c_output_verify})
 nonsmoke_collectFunctionSideEffect_cpp_output_diff = $(addsuffix .diff, ${nonsmoke_collectFunctionSideEffect_cpp_output_verify})
+performAliasAnalysis_cpp_output_diff = $(addsuffix .diff, ${performAliasAnalysis_cpp_output})
 
 REFERENCE_PATH=$(top_srcdir)/tests/nonsmoke/unit/SageInterface/referenceOutput
 
@@ -107,6 +121,10 @@ $(nonsmoke_collectFunctionSideEffect_cpp_output_diff): $(nonsmoke_collectFunctio
 	echo "Verifying collectFunctionSideEffect by diff ..."; \
 	if diff $(@:.collectFunctionSideEffect.output.diff=.collectFunctionSideEffect.output) $(REFERENCE_PATH)/$(@:.collectFunctionSideEffect.output.diff=.collectFunctionSideEffect.output) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; cat $@; rm -rf $@; exit 1; fi
 
+$(performAliasAnalysis_cpp_output_diff): $(performAliasAnalysis_cpp_output)
+	echo "Verifying alias analysis by diff ..."; \
+	if diff $(@:.performAliasAnalysis.output.diff=.performAliasAnalysis.output) $(REFERENCE_PATH)/$(@:.performAliasAnalysis.output.diff=.performAliasAnalysis.output) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; cat $@; rm -rf $@; exit 1; fi
+
 
 # shortcut to test generating outputs only, tested for avoid redundant running.
 generateOutput: $(nonsmoke_getDataSharingAttribute_c_output) $(nonsmoke_get_C_array_dimensions_c_output) $(nonsmoke_genericCoverage_c_output) $(nonsmoke_collectFunctionSideEffect_cpp_output)
@@ -115,13 +133,15 @@ getDataSharingAttribute_diff_check: $(nonsmoke_getDataSharingAttribute_c_output_
 get_C_array_dimensions_diff_check: $(nonsmoke_get_C_array_dimensions_c_output_diff)
 genericCoverage_diff_check: $(nonsmoke_genericCoverage_c_output_diff)
 collectFunctionSideEffect_diff_check: $(nonsmoke_collectFunctionSideEffect_cpp_output_diff)
+performAliasAnalysis_diff_check: $(performAliasAnalysis_cpp_output_diff)
 
 #  generate the diff files
 if !ROSE_USING_GCC_VERSION_LATER_6_1
 check-local: $(nonsmoke_getDataSharingAttribute_c_output) $(nonsmoke_getDataSharingAttribute_c_output_diff) \
              $(nonsmoke_get_C_array_dimensions_c_output) $(nonsmoke_get_C_array_dimensions_c_output_diff) \
              $(nonsmoke_genericCoverage_c_output) $(nonsmoke_genericCoverage_c_output_diff) \
-	     $(nonsmoke_collectFunctionSideEffect_cpp_output_diff)
+	     $(nonsmoke_collectFunctionSideEffect_cpp_output_diff) \
+	     $(performAliasAnalysis_cpp_output_diff)
 else
 # DQ (4/5/2017): GNU 6.1 includes language features that this test does not support.
 check-local: $(nonsmoke_getDataSharingAttribute_c_output) $(nonsmoke_getDataSharingAttribute_c_output_diff) \
@@ -132,7 +152,7 @@ endif
 clean-local:
 	rm -rf $(rose_nonsmoke_getDataSharingAttribute_c) $(nonsmoke_getDataSharingAttribute_c_output) $(nonsmoke_getDataSharingAttribute_c_output_diff)
 	rm -rf $(rose_nonsmoke_get_C_array_dimensions_c) $(nonsmoke_get_C_array_dimensions_c_output) $(nonsmoke_get_C_array_dimensions_c_output_diff)
-	rm -rf $(rose_nonsmoke_genericCoverage_c) $(nonsmoke_genericCoverage_c_output) $(nonsmoke_genericCoverage_c_output_diff)
+	rm -rf $(rose_nonsmoke_genericCoverage_c) $(nonsmoke_genericCoverage_c_output) $(nonsmoke_genericCoverage_c_output_diff) $(performAliasAnalysis_cpp_output_diff)
 	rm -rf *.output *.diff rose_*.*
 
 endif

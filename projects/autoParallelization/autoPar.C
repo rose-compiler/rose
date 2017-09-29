@@ -18,6 +18,7 @@
  * Nov 3, 2008
  */
 #include "rose.h"
+#include "rose_config.h" // obtain macros defining backend compiler names, etc.
 #include "keep_going.h" // enable logging files which cannot be processed by AutoPar due to various reasons
 // all kinds of analyses needed
 #include "autoParSupport.h" 
@@ -267,6 +268,30 @@ static std::vector<std::string> commandline_processing(std::vector< std::string 
   return remainingArgs;
 }
 
+
+// different OpenMP flags for backend compilers
+#if !defined(_MSC_VER) && \
+    defined(BACKEND_CXX_IS_GNU_COMPILER)
+     
+#endif
+
+// Detect which backend compiler is being used and return the corresponding OpenMP flag
+// Expecting GCC, Intel, and Clang compilers as backend
+string getOpenMPFlag()
+{
+  string retval ; 
+
+  if (strcmp(BACKEND_C_COMPILER_NAME_WITHOUT_PATH,"gcc")==0 || strcmp(BACKEND_C_COMPILER_NAME_WITHOUT_PATH,"clang")==0)
+    retval = "-fopenmp";
+  else if (strcmp(BACKEND_C_COMPILER_NAME_WITHOUT_PATH,"icc"))
+    retval = "-openmp"; 
+  else
+  {
+    cerr<<"Warning: getOpenMPFlag() encounters a unrecognized backend compiler name:"<< BACKEND_C_COMPILER_NAME_WITHOUT_PATH<<endl;
+  }
+  return retval; 
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -277,7 +302,10 @@ main (int argc, char *argv[])
   // enable parsing user-defined pragma if enable_diff is true
   // -rose:openmp:parse_only
   if (enable_diff)
+  {
     argvList.push_back("-rose:openmp:parse_only");
+    argvList.push_back(getOpenMPFlag());
+  }
   SgProject *project = frontend (argvList);
   ROSE_ASSERT (project != NULL);
 
@@ -318,7 +346,7 @@ main (int argc, char *argv[])
       SgGlobal *root = sfile->get_globalScope();
 
       Rose_STL_Container<SgNode*> defList = NodeQuery::querySubTree(sfile, V_SgFunctionDefinition); 
-      bool hasOpenMP= false; // flag to indicate if omp.h is needed in this file
+      bool hasOpenMP= false; // flag to indicate if there is at least one loop is parallelized. also if omp.h is needed in this file
 
       //For each function body in the scope
       //for (SgDeclarationStatementPtrList::iterator p = declList.begin(); p != declList.end(); ++p) 
@@ -370,7 +398,10 @@ main (int argc, char *argv[])
         // alias info. function info etc.  
         ArrayAnnotation* annot = ArrayAnnotation::get_inst(); 
         ArrayInterface array_interface(*annot);
+        // alias Collect 
+        // value collect
         array_interface.initialize(fa_body, AstNodePtrImpl(defn));
+        // valueCollect
         array_interface.observe(fa_body);
 
         //FR(06/07/2011): aliasinfo was not set which caused segfault

@@ -1,0 +1,2318 @@
+module Main                           %% Jovial grammar
+
+imports JovialLex
+
+exports 
+
+context-free start-symbols 
+  Module
+
+sorts
+  
+%%CompleteProgram
+% 1.1    %  Module
+% 1.2.1  %  CompoolModule CompoolName
+% 1.2.2  %  ProcedureModule NonNestedSubroutine
+% 1.2.3  %  MainProgramModule ProgramName ProgramBody
+
+% 2.0    %  Declaration CompoolDeclaration
+            DeclarationList NonNestedSubroutineList
+% 2.1    %  DataDeclaration
+
+% 3.0    %  SubroutineDeclaration SubroutineDefinition
+
+% 4.0    %  Statement SimpleStatement NullStatement Label StatementName CompoundStatement
+            LabelList
+
+InterferenceControl
+TraceControl
+OptTraceControl
+OptLetter
+CompoolFileName
+CompoolDeclaredName
+OptCompoolFileName
+CompoolDirectiveList
+OrderDirective
+InitializeDirective
+RearrangeDirective
+LeftrightDirective
+DropDirective
+IsbaseDirective
+BaseDirective
+ListbothDirective
+ListexpDirective
+ListinvDirective
+EjectDirective
+ListDirective
+NolistDirective
+ReducibleDirective
+InterferenceDirective
+TraceDirective
+LinkageDirective
+EndDirective
+BeginDirective
+SkipDirective
+CopyDirective
+Directive
+CompoolDirective
+OptNumber
+OptExponent
+FractionalForm
+Exponent
+RealLiteral
+Number
+NumericLiteral
+LogicalOperator
+AssignmentOperator
+DereferenceOperator
+BitOperator
+ArithmeticOperator
+Comment
+Literal
+Operator
+Symbol
+BitTypeConversion
+NentArgument
+StatusInverseArgument
+NwdsenArgument
+DimensionNumber
+BoundsArgument
+WhichBound
+SizeArgument
+SizeType
+ShiftCount
+ShiftDirection
+Nbyte
+Fbyte
+IncrementAmount
+NextArgument
+LocArgument
+NentFunction
+StatusInverseFunction
+NwdsenFunction
+BoundsFunction
+SizeFunction
+SignFunction
+AbsFunction
+ShiftFunction
+ByteFunction
+BitFunction
+NextFunction
+MachineSpecificFunctionCall
+IntrinsicFunctionCall
+UserDefinedFunctionCall
+ConstantTableItemName
+RepConversion
+Nbit
+Fbit
+Index
+PointerItemName
+Dereference
+BlockDereference
+OptBlockDereference
+Subscript
+OptTableDereference
+OptSubscript
+TableDereference
+ItemDereference
+BlockTableEntry
+%%BlockTableItem  %% AMBIGUOUS with TableItem
+BlockTable
+%%BlockItem  %% AMBIGUOUS with BlockTable
+TableEntry
+TableItem
+Table
+Item
+RepFunctionVariable
+ByteFunctionVariable
+BitFunctionVariable
+NamedVariable
+TableConversion
+NamedTableConstant
+TableVariable
+PointerConversion
+PointerFunctionCall
+NamedPointerConstant
+PointerVariable
+PointerLiteral
+StatusConversion
+StatusFunctionCall
+NamedStatusConstant
+StatusVariable
+CharacterConversion
+CharacterFunctionCall
+NamedCharacterConstant
+CharacterVariable
+CharacterLiteral
+EqualOrNotEqualOperator
+RelationalOperator
+EqvContinuation
+XorContinuation
+OrContinuation
+LogicalContinuation
+AndContinuation
+BitConversion
+BitFunctionCall
+NamedBitConstant
+BitVariable
+BooleanLiteral
+BitLiteral
+RelationalExpression
+BitPrimary
+OptLogicalContinuation
+LogicalOperand
+FixedConversion
+FixedFunctionCall
+NamedFixedConstant
+FixedVariable
+FixedLiteral
+FixedFactor
+FixedTerm
+FloatingConversion
+FloatingFunctionCall
+NamedFloatingConstant
+FloatingVariable
+FloatingLiteral
+FloatingPrimary
+MultiplyOrDivide
+FloatingFactor
+FloatingTerm
+FunctionCall
+NamedConstant
+IntegerConversion
+IntegerFunctionCall
+NamedIntegerConstant
+IntegerVariable
+IntegerLiteral
+IntegerPrimary
+MultiplyDivideOrMod
+IntegerFactor
+Sign
+PlusOrMinus
+IntegerTerm
+OptSign
+FixedFormula
+FloatingFormula
+CompileTimePointerFormula
+CompileTimeNumericFormula
+TableFormula
+PointerFormula
+AbortPhrase
+BlockReference
+ActualOutputParameter
+ActualParameterList
+OptActualOutputParameters
+ActualInputParameter
+OptAbortPhrase
+OptActualParameterList
+MachineSpecificProcedureCall
+UserDefinedProcedureCall
+CompileTimeCharacterFormula
+CompileTimeBitFormula
+CaseIndex
+DefaultOption
+OptFALLTHRU
+CaseIndexGroup
+CaseAlternative
+StatusFormula
+CharacterFormula
+BitFormula
+IntegerFormula
+CaseBody
+CaseSelectorFormula
+ElseClause
+OptElseClause
+ConditionalStatement
+NumericFormula
+ByFormula
+ThenPhrase
+ByPhrase
+OptByOrThenPhrase
+WhilePhrase
+Continuation
+OptWhilePhrase
+ByOrThenPhrase
+OptContinuation
+InitialValue
+ControlLetter
+ControlVariable
+ControlClause
+ControlItem
+BooleanFormula
+ForClause
+WhileClause
+ControlledStatement
+LoopType
+Variable
+Formula
+VariableList
+AbortStatement
+StopStatement
+ExitStatement
+GotoStatement
+ReturnStatement
+ProcedureCallStatement
+CaseStatement
+IfStatement
+LoopStatement
+AssignmentStatement
+SubroutineName
+ParameterBinding
+OutputParameterName
+InputParameterName
+OptParameterBinding
+FormalOutputParameter
+FormalParameterList
+OptFormalOutputParameter
+FormalInputParameter
+FunctionName
+FunctionBody
+FunctionHeading
+SubroutineBody
+SubroutineAttribute
+OptFormalParameterList
+OptSubroutineAttribute
+ProcedureName
+ProcedureBody
+ProcedureHeading
+FunctionDefinition
+ProcedureDefinition
+FunctionDeclaration
+ProcedureDeclaration
+DataName
+Spacer
+OverlayElement
+OverlayString
+AbsoluteAddress
+OverlayAddress
+OverlayExpression
+OptAbsoluteAddress
+RefSpecificationChoice
+CompoundRef
+SimpleRef
+DefBlockInstantiation
+DefSpecificationChoice
+CompoundDef
+SimpleDef
+RefSpecification
+DefSpecification
+ActualDefineParameter
+NoList
+DefineCall
+ActualDefineParameterList
+Character
+FormalDefineParameterList
+FormalDefineParameter
+DefineString
+OptFormalDefineParameterList
+DefinitionPart
+DefineName
+LikeOption
+OptLikeOption
+TableTypeSpecifier
+BlockTypeDeclaration
+TableTypeDeclaration
+ItemTypeDeclaration
+OptBlockPresetList
+OptTablePresetList
+BlockPresetValuesOption
+BlockPreset
+BlockPresetList
+RepetitionCount
+ConstantIndex
+PresetIndexSpecifier
+PresetValuesOption
+SpecifiedPresetSublist
+OptDefaultPresetSublist
+DefaultPresetSublist
+TablePreset
+TablePresetList
+OptItemPresetValue
+LocFunction
+CompileTimeFormula
+ItemPresetValue
+AllocationSpecifier
+BlockBodyOptions
+OptBlockPreset
+BlockBodyPart
+BlockName
+ConstantTableName
+ItemPreset
+ConstantItemName
+SpecifiedTableOptions
+SpecifiedTableBody
+SpecifiedTableItemDeclaration
+StartingWord
+StartingBit
+LocationSpecifier
+EntrySize
+OptEntrySize
+SpecifiedItemDescription
+WordsPerEntry
+TableItemName
+OrdinaryTableOptions
+OrdinaryTableBody
+OrdinaryTableItemDeclaration
+PackingSpecifier
+OptPackingSpecifier
+BitsPerEntry
+OptBitsPerEntry
+StructureSpecifier
+CompileTimeStatusFormula
+LowerBoundOption
+LowerBound
+UpperBound
+OptLowerBoundOption
+DimensionList
+Dimension
+SpecifiedEntrySpecifier
+OrdinaryEntrySpecifier
+OptTablePreset
+EntrySpecifier
+OptStructureSpecifier
+TableDescription
+OptDimensionList
+TableName
+BlockTypeName
+TableTypeName
+TypeName
+OptTypeName
+PointerTypeName
+PointerItemDescription
+StatusSize
+Status
+StatusListIndex
+StatusConstant
+SpecifiedSublist
+OptDefaultSublist
+DefaultSublist
+StatusList
+OptStatusSize
+StatusTypeName
+StatusItemDescription
+CharacterSize
+OptCharacterSize
+CharacterTypeName
+CharacterItemDescription
+BitSize
+OptBitSize
+BitTypeName
+BitItemDescription
+CompileTimeFixedFormula
+OptFractionSpecifier
+FixedTypeName
+FixedItemDescription
+CompileTimeFloatingFormula
+RoundOrTruncate
+FloatingTypeName
+FloatingItemDescription
+ItemTypeName
+OptIntegerSize
+OptRoundOrTruncate
+IntegerTypeName
+IntegerItemDescription
+PointerTypeDescription
+StatusTypeDescription
+CharacterTypeDescription
+BitTypeDescription
+FixedTypeDescription
+FloatingTypeDescription
+IntegerTypeDescription
+OptItemPreset
+ItemTypeDescription
+OptAllocationSpecifier
+ItemName
+BlockDeclaration
+TableDeclaration
+ItemDeclaration
+ConstantDeclaration
+NullDeclaration
+InlineDeclaration
+OverlayDeclaration
+ExternalDeclaration
+DefineDeclaration
+StatementNameDeclaration
+TypeDeclaration
+FixedMachineParameter
+FloatingMachineParameter
+IntegerSize
+FractionSpecifier
+ScaleSpecifier
+Precision
+CompileTimeIntegerFormula
+IntegerMachineParameter
+
+context-free syntax
+
+
+%%%%%%%%%%
+%% 1.1 THE COMPLETE PROGRAM
+%%%%%%%%%%
+
+%%Module+                    -> CompleteProgram       {cons("CompleteProgram")}
+
+  CompoolModule              -> Module                {cons("Module")}
+  ProcedureModule            -> Module                {cons("Module")}
+  MainProgramModule          -> Module                {cons("Module")}
+
+
+%%%%%%%%%%
+%% 1.2 MODULES
+%%%%%%%%%%
+
+%% 1.2.1 COMPOOL MODULES
+%%
+  'START'
+    'COMPOOL' CompoolName
+     CompoolDeclaration*
+  'TERM'                     -> CompoolModule         {cons("CompoolModule")}
+
+  Name                       -> CompoolName
+
+%% 1.2.2 PROCEDURE MODULES
+%%
+  'START'
+    DeclarationList
+    NonNestedSubroutineList
+  'TERM'                     -> ProcedureModule       {cons("ProcedureModule")}
+  
+  'DEF' SubroutineDefinition -> NonNestedSubroutine   {cons("NonNestedSubroutine")}
+        SubroutineDefinition -> NonNestedSubroutine   {cons("NonNestedSubroutine")}
+
+  Declaration*               -> DeclarationList          {cons("DeclarationList")}
+  NonNestedSubroutine*       -> NonNestedSubroutineList  {cons("NonNestedSubroutineList")}
+
+%% 1.2.3 MAIN PROGRAM MODULES
+%%
+  'START'
+    DeclarationList
+    'PROGRAM'
+    ProgramName ';'
+    ProgramBody
+    NonNestedSubroutineList
+  'TERM'                     -> MainProgramModule     {cons("MainProgramModule")}
+
+  Name                       -> ProgramName           {cons("Name")}
+
+  Statement                  -> ProgramBody           {cons("ProgramBody")}
+
+  'BEGIN'
+    DeclarationList
+    Statement+
+    SubroutineDefinition*
+    LabelList
+  'END'                      -> ProgramBody           {cons("ProgramBody")}
+
+%% 1.4 IMPLEMENTATION PARAMETERS
+%%
+  'BITSINBYTE'               -> IntegerMachineParameter {cons("BitsInByte")}
+  'BITSINWORD'               -> IntegerMachineParameter {cons("BitsInWord")}
+  'LOCSINWORD'               -> IntegerMachineParameter {cons("LocsInWord")}
+  'BYTEPOS' '('
+    CompileTimeIntegerFormula
+            ')'              -> IntegerMachineParameter {cons("BitsInWord")}
+  'BYTESINWORD'              -> IntegerMachineParameter {cons("BytesInWord")}
+  'BITSINPOINTER'            -> IntegerMachineParameter {cons("BitsInPointer")}
+  'INTPRECISION'             -> IntegerMachineParameter {cons("IntPrecision")}
+  'FLOATPRECISION'           -> IntegerMachineParameter {cons("FloatPrecision")}
+  'FIXEDPRECISION'           -> IntegerMachineParameter {cons("FixedPrecision")}
+  'FLOATRADIX'               -> IntegerMachineParameter {cons("FloatRadix")}
+  'IMPLFLOATPRECISION'
+    '(' Precision ')'        -> IntegerMachineParameter {cons("ImplFloatPrecision")}
+  'IMPLLFIXEDPRECISION'
+    '(' ScaleSpecifier ','
+     FractionSpecifier ')'   -> IntegerMachineParameter {cons("ImplFixedPrecision")}
+  'IMPLINTSIZE'
+    '(' IntegerSize    ')'   -> IntegerMachineParameter {cons("ImplIntSize")}
+  'MAXFLOATPRECISION'        -> IntegerMachineParameter {cons("MaxFloatPrecision")}
+  'MAXFIXEDPRECISION'        -> IntegerMachineParameter {cons("MaxFixedPrecision")}
+  'MAXINTSIZE'               -> IntegerMachineParameter {cons("MaxIntSize")}
+  'MAXBYTES'                 -> IntegerMachineParameter {cons("MaxBytes")}
+  'MAXBITS'                  -> IntegerMachineParameter {cons("MaxBits")}
+  'MAXINT'
+    '(' IntegerSize    ')'   -> IntegerMachineParameter {cons("MaxInt")}
+  'MININT'
+    '(' IntegerSize    ')'   -> IntegerMachineParameter {cons("MinInt")}
+  'MAXTABLESIZE'             -> IntegerMachineParameter {cons("MaxTableSize")}
+  'MAXSTOP'                  -> IntegerMachineParameter {cons("MaxStop")}
+  'MINSTOP'                  -> IntegerMachineParameter {cons("MinStop")}
+  'MAXSIGNDIGITS'            -> IntegerMachineParameter {cons("MaxSignDigits")}
+  'MINSIZE'
+    '('
+        CompileTimeIntegerFormula
+    ')'                      -> IntegerMachineParameter {cons("MinSize")}
+  'MINFRACTION'
+    '('
+        CompileTimeIntegerFormula
+    ')'                      -> IntegerMachineParameter {cons("MinFraction")}
+  'MINSCALE'
+    '('
+        CompileTimeIntegerFormula
+     ')'                     -> IntegerMachineParameter {cons("MinScale")}
+  'MINRELPRECISION'
+     '('
+    CompileTimeIntegerFormula
+     ')'                     -> IntegerMachineParameter {cons("MinRelPrecision")}
+
+  'MAXFLOAT'
+     '(' Precision ')'       -> FloatingMachineParameter {cons("MaxFloat")}
+  'MINFLOAT'
+     '(' Precision ')'       -> FloatingMachineParameter {cons("MinFloat")}
+  'FLOATRELPRECISION'
+     '(' Precision ')'       -> FloatingMachineParameter {cons("FloatRelPrecision")}
+  'FLOATUNDERFLOW'
+     '(' Precision ')'       -> FloatingMachineParameter {cons("FloatUnderFlow")}
+
+  'MAXFIXED'
+     '('
+    ScaleSpecifier
+    FractionSpecifier
+     ')'                     -> FixedMachineParameter    {cons("MaxFixed")}
+
+  'MINFIXED'
+     '('
+    ScaleSpecifier
+    FractionSpecifier
+     ')'                     -> FixedMachineParameter    {cons("MinFixed")}
+
+
+%%%%%%%%%%
+%% 2.0 DECLARATIONS
+%%%%%%%%%%
+
+  DataDeclaration            -> Declaration
+  TypeDeclaration            -> Declaration
+  SubroutineDeclaration      -> Declaration
+  StatementNameDeclaration   -> Declaration
+  DefineDeclaration          -> Declaration
+  ExternalDeclaration        -> Declaration
+  OverlayDeclaration         -> Declaration
+  InlineDeclaration          -> Declaration
+  NullDeclaration            -> Declaration
+  'BEGIN'
+    Declaration+
+  'END'                      -> Declaration           {cons("Declaration")}
+
+  ExternalDeclaration        -> CompoolDeclaration
+  ConstantDeclaration        -> CompoolDeclaration
+  TypeDeclaration            -> CompoolDeclaration
+  DefineDeclaration          -> CompoolDeclaration
+  NullDeclaration            -> CompoolDeclaration
+  'BEGIN'
+    CompoolDeclaration+
+  'END'                      -> Declaration           {cons("CompoolDeclaration")}
+
+
+%% 2.1 DATA DECLARATIONS
+%%
+
+  ItemDeclaration             -> DataDeclaration
+  TableDeclaration            -> DataDeclaration
+  ConstantDeclaration         -> DataDeclaration
+  BlockDeclaration            -> DataDeclaration
+
+%% 2.1.1 ITEM DECLARATIONS
+%%
+
+  'ITEM' ItemName
+    OptAllocationSpecifier
+    ItemTypeDescription
+    OptItemPreset         ';' -> ItemDeclaration         {cons("ItemDeclaration")}
+
+  Name                        -> ItemName
+
+  IntegerTypeDescription      -> ItemTypeDescription
+  FloatingTypeDescription     -> ItemTypeDescription
+  FixedTypeDescription        -> ItemTypeDescription
+  BitTypeDescription          -> ItemTypeDescription
+  CharacterTypeDescription    -> ItemTypeDescription
+  StatusTypeDescription       -> ItemTypeDescription
+  PointerTypeDescription      -> ItemTypeDescription
+
+  ItemTypeName                -> ItemTypeDescription     {cons("ItemTypeName")}  %% Fixes ambiguity with type names  
+
+%% 2.1.1.1 INTEGER TYPE DESCRIPTIONS
+%%
+
+  IntegerItemDescription      -> IntegerTypeDescription
+%%IntegerTypeName             -> IntegerTypeDescription   %% AMBIGUOUS
+
+  '$' OptRoundOrTruncate
+      OptIntegerSize          -> IntegerItemDescription  {cons("IntegerItemDescription")}
+  'U' OptRoundOrTruncate
+      OptIntegerSize          -> IntegerItemDescription  {cons("IntegerItemDescriptionU")}
+
+  CompileTimeIntegerFormula   -> IntegerSize             {cons("IntegerSize")}
+
+  IntegerSize                 -> OptIntegerSize
+  % empty %                   -> OptIntegerSize          {cons("no-integer-size")}
+
+  ItemTypeName                -> IntegerTypeName         {cons("IntegerTypeName")}
+
+
+%% 2.1.1.2 FLOATING TYPE DESCRIPTIONS
+%%
+
+  FloatingItemDescription     -> FloatingTypeDescription
+%%FloatingTypeName            -> FloatingTypeDescription   %% AMBIGUOUS
+
+  'F' OptRoundOrTruncate
+      Precision               -> FloatingItemDescription {cons("FloatingItemDescription")}
+
+  ',' 'R'                     -> RoundOrTruncate         {cons("RoundOrTruncateR")}
+  ',' 'T'                     -> RoundOrTruncate         {cons("RoundOrTruncateT")}
+  ',' 'Z'                     -> RoundOrTruncate         {cons("RoundOrTruncateZ")}
+
+  RoundOrTruncate             -> OptRoundOrTruncate
+  % empty %                   -> OptRoundOrTruncate      {cons("no-round-or-truncate")}
+
+  CompileTimeFloatingFormula  -> Precision
+
+  ItemTypeName                -> FloatingTypeName
+
+
+%% 2.1.1.3 FIXED TYPE DESCRIPTIONS
+%%
+
+  FixedItemDescription        -> FixedTypeDescription
+%%FixedTypeName               -> FixedTypeDescription   %% AMBIGUOUS
+
+  'A' OptRoundOrTruncate
+      ScaleSpecifier
+      OptFractionSpecifier    -> FixedItemDescription    {cons("FixedItemDescription")}
+
+  CompileTimeIntegerFormula   -> ScaleSpecifier
+  CompileTimeFixedFormula     -> FractionSpecifier
+
+  FractionSpecifier           -> OptFractionSpecifier
+  % empty %                   -> OptFractionSpecifier    {cons("no-fraction-specifier")}
+
+  ItemTypeName                -> FixedTypeName
+
+
+%% 2.1.1.4 BIT TYPE DESCRIPTIONS
+%%
+
+  BitItemDescription          -> BitTypeDescription
+%%BitTypeName                 -> BitTypeDescription   %% AMBIGUOUS
+
+  'B' OptBitSize              -> BitItemDescription       {cons("BitItemDescription")}
+
+  CompileTimeIntegerFormula   -> BitSize
+
+  BitSize                     -> OptBitSize
+  % empty %                   -> OptBitSize               {cons("no-bit-size")}
+
+  ItemTypeName                -> BitTypeName
+
+
+%% 2.1.1.5 CHARACTER TYPE DESCRIPTIONS
+%%
+
+  CharacterItemDescription    -> CharacterTypeDescription
+%%CharacterTypeName           -> CharacterTypeDescription  %% AMBIGUOUS
+
+  'C' OptCharacterSize        -> CharacterItemDescription  {cons("CharacterItemDescription")}
+
+  CompileTimeIntegerFormula   -> CharacterSize             {cons("CharacterSize")}
+
+  CharacterSize               -> OptCharacterSize
+  % empty %                   -> OptCharacterSize          {cons("no-character-size")}
+
+  ItemTypeName                -> CharacterTypeName
+
+
+%% 2.1.1.6 STATUS TYPE DESCRIPTIONS
+%%
+
+  StatusItemDescription      -> StatusTypeDescription
+%%StatusTypeName             -> StatusTypeDescription  %% AMBIGUOUS
+
+  'STATUS' OptStatusSize
+     '(' StatusList ')'      -> StatusItemDescription  {cons("StatusItemDescription")}
+
+  DefaultSublist             -> StatusList
+  OptDefaultSublist
+    {SpecifiedSublist ','}+  -> StatusList             {cons("StatusList")}
+
+  {StatusConstant ','}+      -> DefaultSublist         {cons("DefaultSublist")}
+
+  DefaultSublist ','         -> OptDefaultSublist      {cons("OptDefaultSublist")}
+  % empty %                  -> OptDefaultSublist      {cons("no-default-sublist")}
+
+  StatusListIndex
+    {StatusConstant ','}+    -> SpecifiedSublist       {cons("SpecifiedSublist")}
+
+  CompileTimeIntegerFormula  -> StatusListIndex
+
+  'V' '(' Status ')'         -> StatusConstant         {cons("StatusConstant")}
+
+  Name                       -> Status
+  Letter                     -> Status
+  ReservedWord               -> Status
+
+  ItemTypeName               -> StatusTypeName
+
+  CompileTimeIntegerFormula  -> StatusSize
+
+  StatusSize                 -> OptStatusSize
+  % empty %                  -> OptStatusSize          {cons("no-status-size")}
+
+%% 2.1.1.7 POINTER TYPE DESCRIPTIONS
+%%
+
+  PointerItemDescription      -> PointerTypeDescription
+%%PointerTypeName             -> PointerTypeDescription   %% AMBIGUOUS
+
+  'P' OptTypeName             -> PointerItemDescription  {cons("PointerItemDescription")}
+
+  ItemTypeName                -> PointerTypeName         {cons("PointerTypeName")}
+
+  ItemTypeName                -> TypeName
+  TableTypeName               -> TypeName
+  BlockTypeName               -> TypeName
+
+  TypeName                    -> OptTypeName
+  % empty %                   -> OptTypeName             {cons("no-type-name")}
+
+%% 2.1.2 TABLE DECLARATIONS
+%%
+  'TABLE' TableName
+    OptAllocationSpecifier
+    OptDimensionList
+    TableDescription         -> TableDeclaration         {cons("TableDeclaration")}
+
+  OptStructureSpecifier
+    EntrySpecifier           -> TableDescription         {cons("TableDescription")}
+
+  TableTypeName
+    OptTablePreset ';'       -> TableDescription         {cons("TableDescription")}
+
+  OrdinaryEntrySpecifier     -> EntrySpecifier
+  SpecifiedEntrySpecifier    -> EntrySpecifier
+
+  Name                       -> TableName
+
+%% 2.1.2.1 TABLE DIMENSION LISTS
+%%
+  '(' {Dimension ','}+ ')'   -> DimensionList            {cons("DimensionList")}
+
+  DimensionList              -> OptDimensionList
+  % empty %                  -> OptDimensionList         {cons("no-dimension-list")}
+
+  OptLowerBoundOption
+    UpperBound               -> Dimension                {cons("Dimension")}
+  '*'                        -> Dimension                {cons("DimensionSTAR")}
+
+  LowerBound ':'             -> LowerBoundOption         {cons("LowerBoundOption")}
+
+  LowerBoundOption           -> OptLowerBoundOption
+  % empty %                  -> OptLowerBoundOption      {cons("no-lower-bound-option")}
+
+  CompileTimeIntegerFormula  -> LowerBound
+  CompileTimeStatusFormula   -> LowerBound
+
+  CompileTimeIntegerFormula  -> UpperBound
+  CompileTimeStatusFormula   -> UpperBound
+
+%% 2.1.2.2 TABLE STRUCTURE
+%%
+  'PARALLEL'                 -> StructureSpecifier       {cons("StructureSpecifier")}
+  'T' OptBitsPerEntry        -> StructureSpecifier       {cons("StructureSpecifierT")}
+
+  StructureSpecifier         -> OptStructureSpecifier
+  % empty %                  -> OptStructureSpecifier    {cons("no-structure-specifier")}
+
+  CompileTimeIntegerFormula  -> BitsPerEntry
+
+  BitsPerEntry               -> OptBitsPerEntry
+  % empty %                  -> OptBitsPerEntry          {cons("no-bits-per-entry")}
+
+%% 2.1.2.3 ORDINARY TABLE ENTRIES
+%%
+  OptPackingSpecifier
+    ItemTypeDescription
+    OptTablePreset ';'         -> OrdinaryEntrySpecifier {cons("OrdinaryEntrySpecifier")}
+
+  'N'                          -> PackingSpecifier       {cons("PackingSpecifierN")}
+  'M'                          -> PackingSpecifier       {cons("PackingSpecifierM")}
+  'D'                          -> PackingSpecifier       {cons("PackingSpecifierD")}
+
+  OrdinaryTableItemDeclaration -> OrdinaryTableBody
+  'BEGIN'
+    OrdinaryTableOptions+
+  'END'                        -> OrdinaryTableBody      {cons("OrdinaryTableBody")}
+
+  PackingSpecifier             -> OptPackingSpecifier
+  % empty %                    -> OptPackingSpecifier    {cons("no-packing-specifier")}
+
+  'ITEM' TableItemName
+    ItemTypeDescription
+    OptPackingSpecifier
+    OptTablePreset             -> OrdinaryTableItemDeclaration {cons("OrdinaryTableItemDeclaration")}
+
+  Name                         -> TableItemName
+
+  OrdinaryTableItemDeclaration -> OrdinaryTableOptions
+  NullDeclaration              -> OrdinaryTableOptions
+
+%% 2.1.2.4 SPECIFIED TABLE ENTRIES
+%%
+
+  WordsPerEntry
+    SpecifiedItemDescription
+    OptTablePreset               -> SpecifiedEntrySpecifier  {cons("SpecifiedEntrySpecifier")}
+
+  'W' OptEntrySize               -> WordsPerEntry            {cons("WordsPerEntryW")}
+  'V'                            -> WordsPerEntry            {cons("WordsPerEntryV")}
+
+  CompileTimeIntegerFormula      -> EntrySize
+
+  EntrySize                      -> OptEntrySize
+  % empty %                      -> OptEntrySize             {cons("no-entry-size")}
+
+  ItemTypeDescription 'POS'
+    '(' LocationSpecifier ')'    -> SpecifiedItemDescription {cons("SpecifiedItemDescription")}
+
+  StartingBit ',' StartingWord   -> LocationSpecifier        {cons("LocationSpecifier")}
+
+  CompileTimeIntegerFormula      -> StartingBit
+  '*'                            -> StartingBit              {cons("StartingBitSTAR")}
+
+  CompileTimeIntegerFormula      -> StartingWord
+
+  SpecifiedTableItemDeclaration  -> SpecifiedTableBody
+  'BEGIN'
+    SpecifiedTableOptions+
+  'END'                          -> SpecifiedTableBody       {cons("SpecifiedTableBody")}
+
+  'ITEM' TableItemName
+    SpecifiedItemDescription
+    OptTablePreset ';'           -> SpecifiedTableItemDeclaration
+                                                             {cons("SpecifiedTableItemDeclaration")}
+
+  SpecifiedTableItemDeclaration -> SpecifiedTableOptions
+  NullDeclaration               -> SpecifiedTableOptions
+
+%% 2.1.3 CONSTANT DECLARATIONS
+%%
+  'CONSTANT' 'ITEM'
+    ConstantItemName
+    ItemTypeDescription
+    ItemPreset ';'               -> ConstantDeclaration      {cons("ConstantDeclaration")}
+
+  'CONSTANT' 'TABLE'
+    ConstantTableName
+    OptDimensionList
+    TableDescription             -> ConstantDeclaration      {cons("ConstantDeclaration")}
+
+  Name                           -> ConstantItemName
+  Name                           -> ConstantTableName
+
+%% 2.1.4 BLOCK DECLARATIONS
+%%
+  'BLOCK' BlockName
+    OptAllocationSpecifier ';'
+    BlockBodyPart                -> BlockDeclaration         {cons("BlockDeclarationBodyPart")}
+  
+  'BLOCK' BlockName
+    OptAllocationSpecifier
+    BlockTypeName
+    OptBlockPreset ';'           -> BlockDeclaration         {cons("BlockDeclarationTypeName")}
+  
+  Name                           -> BlockName
+
+  NullDeclaration                -> BlockBodyPart
+  DataDeclaration                -> BlockBodyPart
+
+  'BEGIN'
+    BlockBodyOptions+
+  'END'                          -> BlockBodyPart            {cons("BlockBodyPart")}
+
+  DataDeclaration                -> BlockBodyOptions
+  OverlayDeclaration             -> BlockBodyOptions
+  NullDeclaration                -> BlockBodyOptions
+
+%% 2.1.5 ALLOCATION OF DATA OBJECTS
+%%
+  'STATIC'                       -> AllocationSpecifier      {cons("STATIC")}
+
+  AllocationSpecifier            -> OptAllocationSpecifier
+  % empty %                      -> OptAllocationSpecifier   {cons("no-allocation-specifier")}
+
+%% 2.1.6 INITIALIZATION OF DATA OBJECTS
+%%
+  '=' ItemPresetValue             -> ItemPreset              {cons("ItemPreset")}
+
+  ItemPreset                      -> OptItemPreset
+  % empty %                       -> OptItemPreset           {cons("no-item-preset")}
+
+  CompileTimeFormula              -> ItemPresetValue
+  LocFunction                     -> ItemPresetValue
+
+  ItemPresetValue                 -> OptItemPresetValue
+  % empty %                       -> ItemPresetValue         {cons("no-item-preset-value")}
+
+  '=' TablePresetList             -> TablePreset             {cons("TablePreset")}
+
+  TablePreset                     -> OptTablePreset
+  % empty %                       -> OptTablePreset          {cons("no-table-preset")}
+
+  DefaultPresetSublist            -> TablePresetList
+  OptDefaultPresetSublist
+    {SpecifiedPresetSublist ','}+ -> TablePresetList         {cons("TablePresetList")}
+
+  PresetValuesOption              -> DefaultPresetSublist
+
+  DefaultPresetSublist ','        -> OptDefaultPresetSublist {cons("OptDefaultPresetSublist")}
+  % empty %                       -> OptDefaultPresetSublist {cons("no-default-preset-sublist")}
+
+  PresetIndexSpecifier
+    PresetValuesOption            -> SpecifiedPresetSublist  {cons("SpecifiedPresetSublist")}
+
+  'POS'
+    '('
+       {ConstantIndex ','}+
+    ')' ':'                       -> PresetIndexSpecifier    {cons("PresetIndexSpecifier")}
+
+  CompileTimeIntegerFormula       -> ConstantIndex
+  CompileTimeStatusFormula        -> ConstantIndex
+  
+  OptItemPresetValue              -> PresetValuesOption
+  RepetitionCount
+    '('
+       {PresetValuesOption ','}+
+    ')'                           -> PresetValuesOption    {cons("PresetValuesOption")}
+
+  CompileTimeIntegerFormula       -> RepetitionCount
+
+  '=' BlockPresetList             -> BlockPreset           {cons("BlockPreset")}
+
+  BlockPreset                     -> OptBlockPreset
+  % empty %                       -> OptBlockPreset        {cons("no-block-preset")}
+
+  {BlockPresetValuesOption ','}+  -> BlockPresetList
+
+  PresetValuesOption              -> BlockPresetValuesOption
+  OptTablePresetList              -> BlockPresetValuesOption
+  OptBlockPresetList              -> BlockPresetValuesOption
+
+  '(' TablePresetList ')'         -> OptTablePresetList    {cons("OptTablePresetlist")}
+  % empty %                       -> OptTablePresetList    {cons("no-table-preset-list")}
+
+  '(' BlockPresetList ')'         -> OptBlockPresetList    {cons("OptBlockPresetlist")}
+  % empty %                       -> OptBlockPresetList    {cons("no-table-preset-list")}
+
+%% 2.2 TYPE DECLARATIONS
+%%
+  ItemTypeDeclaration             -> TypeDeclaration
+  TableTypeDeclaration            -> TypeDeclaration
+  BlockTypeDeclaration            -> TypeDeclaration
+
+  'TYPE' ItemTypeName
+    ItemTypeDescription           -> ItemTypeDeclaration   {cons("ItemTypeDeclaration")}
+
+  Name                            -> ItemTypeName
+
+  'TYPE'  TableTypeName
+  'TABLE' TableTypeSpecifier      -> TableTypeDeclaration  {cons("TableTypeDeclaration")}
+
+  OptDimensionList
+    OptStructureSpecifier
+    OptLikeOption
+    EntrySpecifier                -> TableTypeSpecifier    {cons("TableTypeSpecifier")}
+  
+  OptDimensionList
+    TableTypeName ';'             -> TableTypeSpecifier    {cons("TableTypeSpecifier")}
+
+  Name                            -> TableTypeName
+
+  'LIKE'  TableTypeName           -> LikeOption            {cons("LikeOption")}
+
+  LikeOption                      -> OptLikeOption
+  % empty %                       -> OptLikeOption         {cons("no-like-option")}
+
+  'TYPE'  BlockTypeName
+  'BLOCK' BlockBodyPart           -> BlockTypeDeclaration  {cons("BlockTypeDeclaration")}
+
+  Name                            -> BlockTypeName
+
+%% 2.3 STATEMENT NAME DECLARATIONS
+%%
+'LABEL' {StatementName ','}+ ':'  -> StatementNameDeclaration {cons("StatementNameDeclaration")}
+
+%% 2.4 DEFINE DECLARATIONS
+%%
+'DEFINE' DefineName
+  DefinitionPart                  -> DefineDeclaration         {cons("DefineDeclaration")}
+
+  Name                            -> DefineName
+
+  OptFormalDefineParameterList
+    DefineString ';'              -> DefinitionPart            {cons("DefinitionPart")}
+
+  '('
+     {FormalDefineParameter ','}+
+  ')'                             -> FormalDefineParameterList {cons("FormalDefineParameterList")}
+
+  FormalDefineParameterList       -> OptFormalDefineParameterList
+  % empty %                       -> OptFormalDefineParameterList {cons("no-formal-define-parameter-list")}
+
+  Letter                          -> FormalDefineParameter        {cons("FormalDefineParameter")}
+
+  '"'
+     {Character ','}*
+  '"'                             -> DefineString                 {cons("DefineString")}
+
+%% 2.4.1 DEFINE CALLS
+%%
+  DefineName
+   ActualDefineParameterList      -> DefineCall                {cons("DefineCall")}
+  DefineName
+   NoList                         -> DefineCall                {cons("DefineCall")}
+
+  '('
+     {ActualDefineParameter ','}+
+  ')'                             -> ActualDefineParameterList {cons("ActualDefineParameterList")}
+
+  % empty %                       -> NoList                    {cons("no-list")}
+
+      Character*                  -> ActualDefineParameter
+  '"' Character* '"'              -> ActualDefineParameter     {cons("quoted-string")}
+
+%% 2.5 EXTERNAL DECLARATIONS
+%%
+  DefSpecification                -> ExternalDeclaration
+  RefSpecification                -> ExternalDeclaration
+
+%% 2.5.1 DEF SPECIFICATIONS
+%%
+  SimpleDef                       -> DefSpecification
+  CompoundDef                     -> DefSpecification
+
+  'DEF'
+    DefSpecificationChoice        -> SimpleDef            {cons("SimpleDef")}
+
+  'DEF' 'BEGIN'
+    DefSpecificationChoice+
+  'END'                           -> CompoundDef          {cons("CompoundDef")}
+
+  NullDeclaration                 -> DefSpecificationChoice
+  DataDeclaration                 -> DefSpecificationChoice
+  DefBlockInstantiation           -> DefSpecificationChoice
+  StatementNameDeclaration        -> DefSpecificationChoice
+
+  'BLOCK' 'INSTANCE'
+    BlockName ';'                 -> DefBlockInstantiation   {cons("DefBlockInstantiation")}
+
+%% 2.5.2 REF SPECIFICATIONS
+%%
+  SimpleRef                       -> RefSpecification
+  CompoundRef                     -> RefSpecification
+
+  'REF'
+    RefSpecificationChoice        -> SimpleRef            {cons("SimpleRef")}
+
+  'REF' 'BEGIN'
+    RefSpecificationChoice+
+  'END'                           -> CompoundRef          {cons("CompoundRef")}
+
+  NullDeclaration                 -> RefSpecificationChoice
+  DataDeclaration                 -> RefSpecificationChoice
+  SubroutineDeclaration           -> RefSpecificationChoice
+  StatementNameDeclaration        -> RefSpecificationChoice
+
+%% 2.6 OVERLAY DECLARATIONS
+%%
+  'OVERLAY'
+    OptAbsoluteAddress
+    OverlayExpression ';'         -> OverlayDeclaration   {cons("OverlayDeclaration")}
+
+  'POS' '(' OverlayAddress ')'    -> AbsoluteAddress      {cons("AbsoluteAddress")}
+
+  AbsoluteAddress                 -> OptAbsoluteAddress
+  % empty %                       -> OptAbsoluteAddress   {cons("no-absolute-address")}
+
+  CompileTimeIntegerFormula       -> OverlayAddress
+
+  {OverlayString ':'}+            -> OverlayExpression
+
+  {OverlayElement ','}+           -> OverlayString
+
+  Spacer                          -> OverlayElement
+  DataName                        -> OverlayElement
+  '(' OverlayExpression ')'       -> OverlayElement       {cons("OverlayElement")}
+
+  'W' CompileTimeIntegerFormula   -> Spacer               {cons("Spacer")}
+
+  ItemName                        -> DataName
+  TableName                       -> DataName
+  BlockName                       -> DataName
+
+%% 2.7 NULL DECLARATIONS
+%%
+  ';'                             -> NullDeclaration      {cons("NullDeclaration")}
+  'BEGIN' 'END'                   -> NullDeclaration      {cons("NullDeclaration")}
+
+
+%%%%%%%%%%
+%% 3.0 PROCEDURES AND FUNCTIONS
+%%%%%%%%%%
+
+  ProcedureDeclaration            -> SubroutineDeclaration
+  FunctionDeclaration             -> SubroutineDeclaration
+
+  ProcedureDefinition             -> SubroutineDefinition
+  FunctionDefinition              -> SubroutineDefinition
+
+%% 3.1 PROCEDURES
+%%
+  ProcedureHeading ';'
+    Declaration                   -> ProcedureDeclaration   {cons("ProcedureDeclaration")}
+
+  ProcedureHeading ';'
+    ProcedureBody                 -> ProcedureDefinition    {cons("ProcedureDefinition")}
+
+  'PROC'
+    ProcedureName
+    OptSubroutineAttribute
+    OptFormalParameterList        -> ProcedureHeading       {cons("ProcedureHeading")}
+
+  'REC'                           -> SubroutineAttribute    {cons("REC")}
+  'RENT'                          -> SubroutineAttribute    {cons("RENT")}
+
+  % empty %                       -> OptSubroutineAttribute {cons("no-subroutine-attribute")}
+ 
+  Name                            -> ProcedureName
+
+  SubroutineBody                  -> ProcedureBody
+
+  Statement                       -> SubroutineBody
+
+  'BEGIN'
+    DeclarationList
+    Statement*
+    SubroutineDefinition*
+    LabelList
+  'END'                           -> SubroutineBody         {cons("SubroutineBody")}
+
+%% 3.2 FUNCTIONS
+%%
+  FunctionHeading ';'
+    Declaration                   -> FunctionDeclaration    {cons("FunctionDeclaration")}
+
+  FunctionHeading ';'
+    FunctionBody                 -> FunctionDefinition      {cons("FunctionDefinition")}
+
+  'PROC'
+    FunctionName
+    OptSubroutineAttribute
+    OptFormalParameterList
+    ItemTypeDescription           -> FunctionHeading      {cons("FunctionHeading")}
+
+  Name                            -> FunctionName
+
+  SubroutineBody                  -> FunctionBody
+
+%% 3.3 PARAMETERS OF PROCEDURES AND FUNCTIONS
+%%
+  '('
+     {FormalInputParameter ','}*
+     OptFormalOutputParameter
+  ')'                             -> FormalParameterList      {cons("FormalParameterList")}
+
+  FormalParameterList             -> OptFormalParameterList
+  % empty %                       -> OptFormalParameterList   {cons("no-formal-parameter-list")}
+
+  ':' {FormalOutputParameter','}+ -> OptFormalOutputParameter {cons("OptFormalOutputParameter")}
+  % empty %                       -> OptFormalOutputParameter {cons("no-formal-output-parameters")}
+
+  OptParameterBinding
+    InputParameterName            -> FormalInputParameter     {cons("FormalInputParameter")}
+
+  OptParameterBinding
+    OutputParameterName           -> FormalOutputParameter    {cons("FormalOutputParameter")}
+
+  'BYVAL'                         -> ParameterBinding         {cons("BYVAL")}
+  'BYREF'                         -> ParameterBinding         {cons("BYREF")}
+  'BYRES'                         -> ParameterBinding         {cons("BYRES")}
+
+  ParameterBinding                -> OptParameterBinding
+  % empty %                       -> OptParameterBinding      {cons("no-parameter-binding")}
+
+  DataName                        -> InputParameterName
+  StatementName                   -> InputParameterName
+  SubroutineName                  -> InputParameterName
+
+  DataName                        -> OutputParameterName
+
+  ProcedureName                   -> SubroutineName
+  FunctionName                    -> SubroutineName
+
+%% 3.4 INLINE PROCEDURES AND FUNCTIONS
+%%
+  'INLINE'
+    {SubroutineName ','}+ ';'     -> InlineDeclaration        {cons("InlineDeclaration")}
+
+%% 3.5 MACHINE-SPECIFIC PROCEDURES AND FUNCTIONS
+%%
+
+
+%%%%%%%%%%
+%% 4.0 STATEMENTS
+%%%%%%%%%%
+
+  LabelList SimpleStatement   -> Statement             {cons("SimpleStatement")}
+  LabelList CompoundStatement -> Statement             {cons("CompoundStatement")}
+
+  AssignmentStatement         -> SimpleStatement
+  LoopStatement               -> SimpleStatement
+  IfStatement                 -> SimpleStatement
+  CaseStatement               -> SimpleStatement
+%%ProcedureCallStatement      -> SimpleStatement  %%AMBIGUOUS with AssignmentStatement
+  ReturnStatement             -> SimpleStatement
+  GotoStatement               -> SimpleStatement
+  ExitStatement               -> SimpleStatement
+  StopStatement               -> SimpleStatement
+  AbortStatement              -> SimpleStatement
+  NullStatement               -> SimpleStatement
+
+  ';'                         -> NullStatement         {cons("NullStatement")}
+
+  'BEGIN'
+    LabelList
+  'END'                       -> NullStatement         {cons("NullBlockStatement")}
+
+  StatementName ':'           -> Label                 {cons("Label")}
+
+  Label*                      -> LabelList             {cons("LabelList")}
+
+  Name                        -> StatementName         {cons("StatementName")}
+
+  'BEGIN'
+    Statement+
+    LabelList
+  'END'                       -> CompoundStatement     {cons("CompoundStatement")}
+  
+%% 4.1 ASSIGNMENT STATEMENTS
+%%
+
+  VariableList
+    '=' Formula ';'          -> AssignmentStatement    {cons("AssignmentStatement")}
+
+  {Variable ','}+            -> VariableList           {cons("VariableList")}
+
+%% 4.2 LOOP STATEMEMTS
+%%
+
+  LoopType ControlledStatement -> LoopStatement        {cons("LoopStatement")}
+
+  WhileClause                  -> LoopType
+  ForClause                    -> LoopType
+
+  Statement                    -> ControlledStatement
+
+  'WHILE' BooleanFormula ';'   -> WhileClause          {cons("WhileClause")}
+
+  'FOR' ControlItem   ';'
+        ControlClause ';'      -> ForClause            {cons("ForClause")}
+
+  ControlVariable              -> ControlItem
+  ControlLetter                -> ControlItem
+
+  ItemName                     -> ControlVariable
+
+  Letter                       -> ControlLetter
+
+  InitialValue
+    OptContinuation            -> ControlClause        {cons("ControlClause")}
+
+  Formula                      -> InitialValue
+
+  ByOrThenPhrase
+    OptWhilePhrase             -> Continuation         {cons("Continuation")}
+  WhilePhrase
+    OptByOrThenPhrase          -> Continuation         {cons("Continuation")}
+
+  Continuation                 -> OptContinuation
+  % empty %                    -> OptContinuation      {cons("no-continuation")}
+
+  ByPhrase                     -> ByOrThenPhrase
+  ThenPhrase                   -> ByOrThenPhrase
+
+  ByOrThenPhrase               -> OptByOrThenPhrase
+  % empty %                    -> OptByOrThenPhrase    {cons("no-by-or-then-phrase")}
+
+  'BY' ByFormula               -> ByPhrase             {cons("ByPhrase")}
+
+  NumericFormula               -> ByFormula
+
+  'THEN' Formula               -> ThenPhrase           {cons("ThenPhrase")}
+
+  'WHILE' BooleanFormula       -> WhilePhrase          {cons("WhilePhrase")}
+
+  WhilePhrase                  -> OptWhilePhrase
+  % empty %                    -> OptWhilePhrase       {cons("no-while-phrase")}
+
+%% 4.3 IF STATEMEMTS
+%%
+
+  'IF' BooleanFormula ';'
+    ConditionalStatement
+    OptElseClause            -> IfStatement            {cons("IfStatement")}
+
+  Statement                  -> ConditionalStatement   {cons("ConditionalStatement")}
+
+  'ELSE' Statement           -> ElseClause             {cons("ElseClause")}
+
+  ElseClause                 -> OptElseClause
+  % empty %                  -> OptElseClause          {cons("no-else-clause")}
+
+%% 4.4 CASE STATEMEMTS
+%%
+
+  'CASE'
+    CaseSelectorFormula ';'
+  'BEGIN'
+    CaseBody
+  'END'                        -> CaseStatement        {cons("CaseStatement")}
+
+  IntegerFormula               -> CaseSelectorFormula
+  BitFormula                   -> CaseSelectorFormula
+  CharacterFormula             -> CaseSelectorFormula
+  StatusFormula                -> CaseSelectorFormula
+
+  CaseAlternative+             -> CaseBody
+
+  CaseIndexGroup
+    Statement
+    OptFALLTHRU                -> CaseAlternative      {cons("CaseAlternative")}
+
+  DefaultOption                -> CaseAlternative      {cons("CaseAlternative")}
+
+  '(' 'DEFAULT' ')' ':'
+    Statement
+    OptFALLTHRU                -> DefaultOption        {cons("DefaultOption")}
+
+  'FALLTHRU'                   -> OptFALLTHRU          {cons("FALLTHRU")}
+  % empty %                    -> OptFALLTHRU          {cons("no-fall-thru")}
+
+  '(' {CaseIndex ','}+ ')' ':' -> CaseIndexGroup       {cons("CaseIndexGroup")}
+
+  CompileTimeIntegerFormula    -> CaseIndex            {cons("CaseIndex")}
+  CompileTimeBitFormula        -> CaseIndex            {cons("CaseIndex")}
+  CompileTimeCharacterFormula  -> CaseIndex            {cons("CaseIndex")}
+  CompileTimeStatusFormula     -> CaseIndex            {cons("CaseIndex")}
+  LowerBound ':' UpperBound    -> CaseIndex            {cons("CaseIndex")}
+
+%% 4.5 PROCEDURE CALL STATEMEMTS
+%%
+
+  UserDefinedProcedureCall     -> ProcedureCallStatement   {cons("ProcedureCallStatement")}
+  MachineSpecificProcedureCall -> ProcedureCallStatement   {cons("ProcedureCallStatement")}
+
+  ProcedureName
+    OptActualParameterList
+    OptAbortPhrase ';'         -> UserDefinedProcedureCall {cons("UserDefinedProcedureCall")}
+
+  AbortPhrase                  -> OptAbortPhrase
+  % empty %                    -> OptAbortPhrase           {cons("no-abort-phrase")}
+
+  '('
+    {ActualInputParameter ','}*
+    OptActualOutputParameters
+  ')'                          -> ActualParameterList  {cons("ActualParameterList")}
+
+  ActualParameterList          -> OptActualParameterList
+  % empty %                    -> OptActualParameterList   {cons("no-actual-parameter-list")}
+
+  ':' {ActualOutputParameter ','}+ -> OptActualOutputParameters {cons("OptActualOutputParameters")}
+  % empty%                         -> OptActualOutputParameters {cons("no-actual-output-parameters")}
+
+  Formula                      -> ActualInputParameter     {cons("ActualInputParameter")}
+  StatementName                -> ActualInputParameter     {cons("ActualInputParameter")}
+  FunctionName                 -> ActualInputParameter     {cons("ActualInputParameter")}
+  ProcedureName                -> ActualInputParameter     {cons("ActualInputParameter")}
+  BlockReference               -> ActualInputParameter     {cons("ActualInputParameter")}
+
+  Variable                     -> ActualOutputParameter    {cons("ActualOutputParameter")}
+  BlockReference               -> ActualOutputParameter    {cons("ActualOutputParameter")}
+
+  'ABORT' StatementName        -> AbortPhrase              {cons("AbortPhrase")}
+
+  ProcedureName
+    OptActualParameterList     -> MachineSpecificProcedureCall {cons("MachineSpecificProcedureCall")}
+
+  Name                         -> ProcedureName
+  Name                         -> FunctionName
+
+%% 4.6 RETURN STATEMEMTS
+%%
+
+  'RETURN' ';'               -> ReturnStatement        {cons("ReturnStatement")}
+
+%% 4.7 GOTO STATEMEMTS
+%%
+
+  'GOTO' StatementName       -> GotoStatement          {cons("GotoStatement")}
+
+%% 4.8 Exit STATEMEMTS
+%%
+
+  'EXIT' ';'                 -> ExitStatement          {cons("ExitStatement")}
+
+%% 4.9 STOP STATEMEMTS
+%%
+
+  'EXIT' IntegerFormula      -> StopStatement          {cons("StopStatement")}
+
+%% 4.10 ABORT STATEMEMTS
+%%
+
+  'ABORT' ';'                -> AbortStatement         {cons("AbortStatement")}
+
+
+%%%%%%%%%%
+%% 5.0 FORMULAS
+%%%%%%%%%%
+
+  NumericFormula              -> Formula
+  BitFormula                  -> Formula
+  CharacterFormula            -> Formula
+  StatusFormula               -> Formula
+  PointerFormula              -> Formula
+  TableFormula                -> Formula
+
+  CompileTimeNumericFormula   -> CompileTimeFormula
+  CompileTimeBitFormula       -> CompileTimeFormula
+  CompileTimeCharacterFormula -> CompileTimeFormula
+  CompileTimeStatusFormula    -> CompileTimeFormula
+  CompileTimePointerFormula   -> CompileTimeFormula
+
+%% 5.1 NUMERIC FORMULAS
+%%
+  IntegerFormula              -> NumericFormula
+  FloatingFormula             -> NumericFormula
+  FixedFormula                -> NumericFormula
+
+  CompileTimeIntegerFormula   -> CompileTimeNumericFormula
+  CompileTimeFloatingFormula  -> CompileTimeNumericFormula
+  CompileTimeFixedFormula     -> CompileTimeNumericFormula
+
+%% 5.1.1 INTEGER FORMULAS
+%%
+  OptSign IntegerTerm         -> IntegerFormula         {cons("IntegerFormula")}
+  IntegerFormula
+    PlusOrMinus IntegerTerm   -> IntegerFormula         {cons("IntegerFormula")}
+
+  Sign                        -> OptSign
+  % empty %                   -> OptSign                {cons("no-sign")}
+
+  IntegerFactor               -> IntegerTerm
+  IntegerTerm
+    MultiplyDivideOrMod
+    IntegerFactor             -> IntegerTerm            {cons("IntegerTerm")}
+
+  IntegerPrimary              -> IntegerFactor
+  IntegerFactor '**'
+    IntegerPrimary            -> IntegerFactor          {cons("IntegerFactor")}
+
+  IntegerLiteral              -> IntegerPrimary
+  IntegerMachineParameter     -> IntegerPrimary
+  IntegerVariable             -> IntegerPrimary
+  NamedIntegerConstant        -> IntegerPrimary
+  IntegerFunctionCall         -> IntegerPrimary
+  '(' IntegerFormula ')'      -> IntegerPrimary         {cons("IntegerPrimary")}
+  IntegerConversion
+    '(' Formula ')'           -> IntegerPrimary         {cons("IntegerPrimary")}
+
+  Variable                    -> IntegerVariable
+
+  NamedConstant               -> NamedIntegerConstant
+
+  FunctionCall                -> IntegerFunctionCall
+
+  IntegerFormula              -> CompileTimeIntegerFormula
+
+%% 5.1.2 FLOATING FORMULAS
+%%
+  OptSign FloatingTerm        -> FloatingFormula        {cons("FloatingFormula")}
+  FloatingFormula
+    PlusOrMinus FloatingTerm  -> FloatingFormula        {cons("FloatingFormula")}
+
+  FloatingFactor              -> FloatingTerm
+  FloatingTerm
+    MultiplyOrDivide
+    FloatingFactor            -> FloatingTerm           {cons("FloatingTerm")}
+
+  FloatingPrimary             -> FloatingFactor
+  FloatingFactor '**'
+    FloatingPrimary           -> FloatingFactor         {cons("FloatingFactor")}
+  FloatingFactor '**'
+    IntegerPrimary            -> FloatingFactor         {cons("FloatingFactor")}
+
+  FloatingLiteral             -> FloatingPrimary
+  FloatingMachineParameter    -> FloatingPrimary
+  FloatingVariable            -> FloatingPrimary
+  NamedFloatingConstant       -> FloatingPrimary
+  FloatingFunctionCall        -> FloatingPrimary
+  '(' FloatingFormula ')'     -> FloatingPrimary        {cons("FloatingPrimary")}
+  FloatingConversion
+    '(' Formula ')'           -> FloatingPrimary        {cons("FloatingPrimary")}
+
+  Variable                    -> FloatingVariable
+
+  NamedConstant               -> NamedFloatingConstant
+
+  FunctionCall                -> FloatingFunctionCall
+
+  FloatingFormula             -> CompileTimeFloatingFormula
+
+%% 5.1.3 FIXED FORMULAS
+%%
+  OptSign FixedTerm           -> FixedFormula           {cons("FixedFormula")}
+  FixedFormula
+    PlusOrMinus FixedTerm     -> FixedFormula           {cons("FixedFormula")}
+
+  FixedFactor                 -> FixedTerm
+  FixedTerm   '*' FixedFactor -> FixedTerm              {cons("FixedTerm")}
+  IntegerTerm '*' FixedFactor -> FixedTerm              {cons("FixedTerm")}
+  FixedTerm
+    MultiplyOrDivide
+    IntegerFactor             -> FixedTerm              {cons("FixedTerm")}
+
+  FixedLiteral                -> FixedFactor
+  FixedMachineParameter       -> FixedFactor
+  FixedVariable               -> FixedFactor
+  NamedFixedConstant          -> FixedFactor
+  FixedFunctionCall           -> FixedFactor
+  '(' FixedFormula     ')'    -> FixedFactor            {cons("FixedFactor")}
+  FixedConversion
+    '(' FixedTerm '/'
+        FixedFactor    ')'    -> FixedFactor            {cons("FixedFactor")}
+  FixedConversion
+    '(' IntegerTerm '/'
+        FixedFactor    ')'    -> FixedFactor            {cons("FixedFactor")}
+  FixedConversion
+    '(' Formula        ')'    -> FixedFactor            {cons("FixedFactor")}
+
+  Variable                    -> FixedVariable
+
+  NamedConstant               -> NamedFixedConstant
+
+  FunctionCall                -> FixedFunctionCall
+
+  FixedFormula                -> CompileTimeFixedFormula
+
+%% 5.2 BIT FORMULAS
+%%
+  LogicalOperand
+    OptLogicalContinuation    -> BitFormula             {cons("BitFormula")}
+
+  'NOT' LogicalOperand        -> BitFormula             {cons("BitFormula")}
+
+  BitPrimary                  -> LogicalOperand
+  RelationalExpression        -> LogicalOperand
+
+  BitLiteral                  -> BitPrimary
+  BooleanLiteral              -> BitPrimary
+  BitVariable                 -> BitPrimary
+  NamedBitConstant            -> BitPrimary
+  BitFunctionCall             -> BitPrimary
+  '(' BitFormula  ')'         -> BitPrimary             {cons("BitPrimary")}
+  BitConversion
+  '('    Formula ')'          -> BitPrimary             {cons("BitPrimary")}
+
+  AndContinuation+            -> LogicalContinuation
+  OrContinuation+             -> LogicalContinuation
+  XorContinuation+            -> LogicalContinuation
+  EqvContinuation+            -> LogicalContinuation
+
+  LogicalContinuation         -> OptLogicalContinuation
+  % empty %                   -> OptLogicalContinuation {cons("no-logical-continuation")}
+
+  'AND' LogicalOperand        -> AndContinuation        {cons("AndContinuation")}
+  'OR'  LogicalOperand        ->  OrContinuation        {cons(" OrContinuation")}
+  'XOR' LogicalOperand        -> XorContinuation        {cons("XorContinuation")}
+  'EQV' LogicalOperand        -> EqvContinuation        {cons("EqvContinuation")}
+
+  Variable                    -> BitVariable
+
+  NamedConstant               -> NamedBitConstant
+
+  FunctionCall                -> BitFunctionCall
+
+  BitFormula                  -> CompileTimeBitFormula
+
+%% 5.2.1 RELATIONAL EXPRESSIONS
+%%
+  IntegerFormula
+    RelationalOperator
+    IntegerFormula            -> RelationalExpression   {cons("RelationalExpression")}
+
+  FloatingFormula
+    RelationalOperator
+    FloatingFormula           -> RelationalExpression   {cons("RelationalExpression")}
+
+  FixedFormula
+    RelationalOperator
+    FixedFormula              -> RelationalExpression   {cons("RelationalExpression")}
+
+  CharacterFormula
+    RelationalOperator
+    CharacterFormula          -> RelationalExpression   {cons("RelationalExpression")}
+
+  StatusFormula
+    RelationalOperator
+    StatusFormula             -> RelationalExpression   {cons("RelationalExpression")}
+
+  BitPrimary
+    EqualOrNotEqualOperator
+    BitPrimary                -> RelationalExpression   {cons("RelationalExpression")}
+
+  PointerFormula
+    RelationalOperator
+    PointerFormula            -> RelationalExpression   {cons("RelationalExpression")}
+
+%% 5.2.2 BOOLEAN FORMULAS
+%%
+  BitFormula                  -> BooleanFormula
+
+%% 5.3 CHARACTER FORMULAS
+%%
+  CharacterLiteral            -> CharacterFormula
+  CharacterVariable           -> CharacterFormula
+  NamedCharacterConstant      -> CharacterFormula
+  CharacterFunctionCall       -> CharacterFormula
+  '(' CharacterFormula ')'    -> CharacterFormula       {cons("CharacterFormula")}
+  CharacterConversion
+    '(' Formula ')'           -> CharacterFormula       {cons("CharacterFormula")}
+
+  Variable                    -> CharacterVariable
+
+  NamedConstant               -> NamedCharacterConstant
+
+  FunctionCall                -> CharacterFunctionCall
+
+  CharacterFormula            -> CompileTimeCharacterFormula
+
+%% 5.4 STATUS FORMULAS
+%%
+  StatusConstant              -> StatusFormula
+  StatusVariable              -> StatusFormula
+  NamedStatusConstant         -> StatusFormula
+  StatusFunctionCall          -> StatusFormula
+  '(' StatusFormula ')'       -> StatusFormula      {cons("StatusFormula")}
+  StatusConversion
+    '(' Formula ')'           -> StatusFormula      {cons("StatusFormula")}
+
+  Variable                    -> StatusVariable
+
+  NamedConstant               -> NamedStatusConstant
+
+  FunctionCall                -> StatusFunctionCall
+
+  StatusFormula               -> CompileTimeStatusFormula
+
+%% 5.5 POINTER FORMULAS
+%%
+  PointerLiteral              -> PointerFormula
+  PointerVariable             -> PointerFormula
+  NamedPointerConstant        -> PointerFormula
+  PointerFunctionCall         -> PointerFormula
+  '(' PointerFormula ')'      -> PointerFormula     {cons("PointerFormula")}
+  PointerConversion
+    '(' Formula ')'           -> PointerFormula     {cons("PointerFormula")}
+
+  Variable                    -> PointerVariable
+
+  NamedConstant               -> NamedPointerConstant
+
+  FunctionCall                -> PointerFunctionCall
+
+  PointerFormula              -> CompileTimePointerFormula
+
+%% 5.5 TABLE FORMULAS
+%%
+  TableVariable               -> TableFormula
+  NamedTableConstant          -> TableFormula
+  '(' TableFormula ')'        -> TableFormula       {cons("TableFormula")}
+  TableConversion
+    '(' Formula ')'           -> TableFormula       {cons("TableFormula")}
+
+  Variable                    -> TableVariable
+
+  NamedConstant               -> NamedTableConstant
+
+
+%%%%%%%%%%
+%% 6.0 DATA REFERENCES
+%%%%%%%%%%
+
+%% 6.1 VARIABLE AND BLOCK REFERENCES
+%%
+  NamedVariable               -> Variable
+  BitFunctionVariable         -> Variable           {cons("BitFunctionVariable")}
+  ByteFunctionVariable        -> Variable           {cons("ByteFunctionVariable")}
+  RepFunctionVariable         -> Variable           {cons("RepFunctionVariable")}
+%%FunctionName                -> Variable  %% AMBIGUOUS
+  
+  Item                        -> NamedVariable
+  Table                       -> NamedVariable
+  TableItem                   -> NamedVariable
+  TableEntry                  -> NamedVariable
+%%BlockItem                   -> NamedVariable  %% AMBIGUOUS with BlockTable
+  BlockTable                  -> NamedVariable
+%%BlockTableItem              -> NamedVariable  %% AMBIGUOUS with TableItem
+  BlockTableEntry             -> NamedVariable
+
+  ItemName                    -> Item
+  ItemDereference             -> Item
+
+%%TableName                   -> Table  %% AMBIGUOUS
+  TableDereference            -> Table
+
+  Name                        -> TableName
+
+  TableItemName
+       Subscript
+%%  OptSubscript                                                                 %% Optional makes AMBIGUOUS with Name
+    OptTableDereference       -> TableItem             {cons("TableItem")}
+
+  TableItemName
+    OptSubscript
+%%  OptTableDereference                                                          %% Optional makes AMBIGUOUS with Name
+       TableDereference       -> TableItem             {cons("TableItem")}
+
+  Subscript                   -> OptSubscript
+  % empty %                   -> OptSubscript          {cons("no-subscript")}
+
+  TableDereference            -> OptTableDereference
+  % empty %                   -> OptTableDereference   {cons("no-table-dereference")}
+
+  TableName
+    Subscript                 -> TableEntry            {cons("TableEntry")}
+
+  TableDereference
+    Subscript                 -> TableEntry            {cons("TableEntry")}
+
+%%ItemName
+%%  OptBlockDereference       -> BlockItem             {cons("BlockItem")}       %% AMBIGUOUS with BlockTable
+
+  TableName
+    BlockDereference          -> BlockTable            {cons("BlockTable")}
+%%  OptBlockDereference       -> BlockTable                                      %% Optional makes AMBIGUOUS with Name
+
+%%TableItemName
+%%  OptSubscript
+%%  OptBlockDereference       -> BlockTableItem        {cons("BlockTableItem")}  %% AMBIGUOUS with TableItem
+
+  TableName
+    Subscript
+    OptBlockDereference       -> BlockTableEntry       {cons("BlockTableEntry")}
+
+  BlockDereference            -> OptBlockDereference
+  % empty %                   -> OptBlockDereference   {cons("no-block-dereference")}
+
+  Dereference                 -> BlockDereference
+
+  Dereference                 -> ItemDereference
+
+  Dereference                 -> TableDereference
+
+  '@' PointerItemName         -> Dereference           {cons("Dereference")}
+  '@' '(' PointerFormula ')'  -> Dereference           {cons("Dereference")}
+
+  ItemName                    -> PointerItemName
+  TableItemName               -> PointerItemName
+  ConstantItemName            -> PointerItemName
+
+  '(' { Index ','}+ ')'       -> Subscript             {cons("Subscript")}
+
+  IntegerFormula              -> Index
+  StatusFormula               -> Index
+
+  'BIT' '(' BitVariable ','
+            Fbit ',' Nbit ')' -> BitFunctionVariable   {cons("BitFunctionVariable")}
+
+  'BYTE'
+    '(' CharacterVariable ','
+            Fbit ',' Nbit ')' -> ByteFunctionVariable  {cons("ByteFunctionVariable")}
+
+  RepConversion
+    '(' NamedVariable ')'     -> RepFunctionVariable   {cons("RepFunctionVariable")}
+
+  BlockName                   -> BlockReference
+  BlockDereference            -> BlockReference
+  BlockName
+    BlockDereference          -> BlockReference        {cons("BlockReference")}
+
+  Name                        -> ConstantItemName
+  Name                        -> BlockName
+
+%% 6.2 NAMED CONSTANTS
+%%
+  ConstantItemName            -> NamedConstant
+  ConstantTableName           -> NamedConstant
+  ConstantTableItemName
+    OptSubscript              -> NamedConstant         {cons("NamedConstant")}
+  ConstantTableName
+    Subscript                 -> NamedConstant         {cons("NamedConstant")}
+  ControlLetter               -> NamedConstant
+
+  TableItemName               -> ConstantTableItemName
+
+  Name                        -> ConstantTableName
+
+%% 6.3 FUNCTION CALLS
+%%
+  UserDefinedFunctionCall     -> FunctionCall
+  IntrinsicFunctionCall       -> FunctionCall
+  MachineSpecificFunctionCall -> FunctionCall
+
+  FunctionName
+    OptActualParameterList    -> UserDefinedFunctionCall      {cons("UserDefinedFunctionCall")}
+
+  LocFunction                 -> IntrinsicFunctionCall
+  NextFunction                -> IntrinsicFunctionCall
+  BitFunction                 -> IntrinsicFunctionCall
+  ByteFunction                -> IntrinsicFunctionCall
+  ShiftFunction               -> IntrinsicFunctionCall
+  AbsFunction                 -> IntrinsicFunctionCall
+  SignFunction                -> IntrinsicFunctionCall
+  SizeFunction                -> IntrinsicFunctionCall
+  BoundsFunction              -> IntrinsicFunctionCall
+  NwdsenFunction              -> IntrinsicFunctionCall
+  StatusInverseFunction       -> IntrinsicFunctionCall
+  NentFunction                -> IntrinsicFunctionCall
+
+  FunctionName
+    OptActualParameterList    -> MachineSpecificFunctionCall  {cons("MachineSpecificFunctionCall")}
+
+%% 6.3.1 LOC FUNCTION
+%%
+  'LOC' '(' LocArgument ')'   -> LocFunction          {cons("LocFunction")}
+
+  NamedVariable               -> LocArgument
+  StatementName               -> LocArgument
+  ProcedureName               -> LocArgument
+  FunctionName                -> LocArgument
+  BlockReference              -> LocArgument
+
+%% 6.3.2 NEXT FUNCTION
+%%
+  'NEXT' '('
+    NextArgument ','
+    IncrementAmount ')'       -> NextFunction         {cons("NextFunction")}
+
+  PointerFormula              -> NextArgument
+  StatusFormula               -> NextArgument
+
+  IntegerFormula              -> IncrementAmount
+
+%% 6.3.3 BIT FUNCTION
+%%
+  'BIT' '(' BitFormula ','
+    Fbit ',' Nbit ')'         -> BitFunction          {cons("BitFunction")}
+
+  IntegerFormula              -> Fbit
+  IntegerFormula              -> Nbit
+
+%% 6.3.4 BYTE FUNCTION
+%%
+  'BYTE' '(' CharacterFormula
+    ',' Fbyte ',' Nbyte ')'   -> ByteFunction         {cons("ByteFunction")}
+
+  IntegerFormula              -> Fbyte
+  IntegerFormula              -> Nbyte
+
+%% 6.3.5 SHIFT FUNCTIONS
+%%
+  ShiftDirection
+    '(' BitFormula ','
+    ShiftCount ')'            -> ShiftFunction        {cons("ShiftFunction")}
+
+  'SHIFTL'                    -> ShiftDirection       {cons("SHIFTL")}
+  'SHIFTR'                    -> ShiftDirection       {cons("SHIFTR")}
+
+  IntegerFormula              -> ShiftCount
+
+%% 6.3.6 ABS FUNCTION
+%%
+  'ABS' '(' NumericFormula ')' -> AbsFunction         {cons("AbsFunction")}
+
+%% 6.3.7 SIGN FUNCTION
+%%
+  'SGN' '(' NumericFormula ')' -> SignFunction        {cons("SignFunction")}
+
+%% 6.3.7 SIZE FUNCTIONS
+%%
+  SizeType
+    '(' SizeArgument ')'      -> SizeFunction         {cons("SizeFunction")}
+
+  'BITSIZE'                   -> SizeType             {cons("BITSIZE")}
+  'BYTESIZE'                  -> SizeType             {cons("BYTESIZE")}
+  'WORDSIZE'                  -> SizeType             {cons("WORDSIZE")}
+
+  Formula                     -> SizeArgument
+  BlockName                   -> SizeArgument
+  TypeName                    -> SizeArgument
+  
+%% 6.3.9 BOUNDS FUNCTIONS
+%%
+  WhichBound
+    '(' BoundsArgument ','
+    DimensionNumber ')'       -> BoundsFunction       {cons("BoundsFunction")}
+
+  'LBOUND'                    -> WhichBound           {cons("LBOUND")}
+  'UBOUND'                    -> WhichBound           {cons("UBOUND")}
+
+  TableName                   -> BoundsArgument
+  TableTypeName               -> BoundsArgument
+
+  CompileTimeIntegerFormula   -> DimensionNumber
+  
+%% 6.3.10 NWDSEN FUNCTION
+%%
+  'NWDSEN'
+    '(' NwdsenArgument ')'    -> NwdsenFunction       {cons("NwdsenFunction")}
+
+  TableName                   -> NwdsenArgument
+  TableTypeName               -> NwdsenArgument
+
+%% 6.3.11 STATUS INVERSE FUNCTIONS
+%%
+  'FIRST' '('
+    StatusInverseArgument ')' -> StatusInverseFunction {cons("StatusInverseFunctionFIRST")}
+
+  'LAST'  '('
+    StatusInverseArgument ')' -> StatusInverseFunction {cons("StatusInverseFunctionLAST")}
+
+  StatusFormula               -> StatusInverseArgument
+  StatusTypeName              -> StatusInverseArgument
+
+%% 6.3.12 NENT FUNCTION
+%%
+  'NENT' '(' NentArgument ')' -> NentFunction         {cons("NentFunction")}
+
+  TableName                   -> NentArgument
+  TableTypeName               -> NentArgument
+
+
+%%%%%%%%%%
+%% 7.0 TYPE MATCHING AND TYPE CONVERSIONS
+%%%%%%%%%%
+
+  BitTypeConversion           -> BitConversion
+  RepConversion               -> BitConversion
+
+  '(*'
+    BitTypeDescription
+                         '*)' -> BitTypeConversion    {cons("BitTypeConversion")}
+  BitTypeName                 -> BitTypeConversion
+  'B'                         -> BitTypeConversion    {cons("BitTypeConversionB")}
+
+  '(*'
+    IntegerTypeDescription
+                         '*)' -> IntegerConversion    {cons("IntegerConversion")}
+  IntegerTypeName             -> IntegerConversion
+  'S'                         -> IntegerConversion    {cons("IntegerConversionS")}
+  'U'                         -> IntegerConversion    {cons("IntegerConversionU")}
+
+  '(*'
+    FloatingTypeDescription
+                         '*)' -> FloatingConversion   {cons("FloatingConversion")}
+  FloatingTypeName            -> FloatingConversion
+  'F'                         -> FloatingConversion   {cons("FloatingConversionF")}
+
+  '(*'
+    FixedTypeDescription
+                         '*)' -> FixedConversion      {cons("FixedConversion")}
+  FixedTypeName               -> FixedConversion
+
+  '(*'
+    CharacterTypeDescription
+                         '*)' -> CharacterConversion  {cons("CharacterConversion")}
+  CharacterTypeName           -> CharacterConversion
+  'C'                         -> CharacterConversion  {cons("CharacterConversionC")}
+
+  '(*'
+    StatusTypeDescription
+                         '*)' -> StatusConversion     {cons("StatusConversion")}
+  StatusTypeName              -> StatusConversion
+
+  '(*'
+    PointerTypeDescription
+                         '*)' -> PointerConversion    {cons("PointerConversion")}
+  PointerTypeName             -> PointerConversion
+  'P'                         -> PointerConversion    {cons("PointerConversionP")}
+
+  '(*' TableTypeName     '*)' -> TableConversion     {cons("TableConversion")}
+  TableTypeName               -> TableConversion
+
+  'REP'                       -> RepConversion       {cons("RepConversion")}
+
+
+%%%%%%%%%%
+%% 8.0 BASIC ELEMENTS (see also, JovialLex.sdf)
+%%%%%%%%%%
+
+%% 8.1 CHARACTERS (see also, JovialLex.sdf)
+%%
+    Letter                  -> Character
+    Digit                   -> Character
+    Mark                    -> Character
+%%  OtherCharacter          -> Character
+
+%% 8.2 SYMBOLS
+%%
+    Name                     -> Symbol
+    ReservedWord             -> Symbol
+    Operator                 -> Symbol
+    Literal                  -> Symbol
+    StatusConstant           -> Symbol
+    Comment                  -> Symbol
+    DefineString             -> Symbol
+    DefineCall               -> Symbol
+    Letter                   -> Symbol
+%%  Separator                -> Symbol
+
+%% 8.2.1 NAMES (see JovialLex.sdf)
+%%
+
+%% 8.2.3 OPERATORS
+%%
+  ArithmeticOperator         -> Operator
+  BitOperator                -> Operator
+  RelationalOperator         -> Operator
+  DereferenceOperator        -> Operator
+  AssignmentOperator         -> Operator
+
+  PlusOrMinus                -> ArithmeticOperator
+  MultiplyDivideOrMod        -> ArithmeticOperator
+  MultiplyOrDivide           -> ArithmeticOperator
+  '**'                       -> ArithmeticOperator      {cons("PowerOp")}
+
+  '+'                        -> PlusOrMinus             {cons("PLUS")}
+  '-'                        -> PlusOrMinus             {cons("MINUS")}
+
+  '*'                        -> MultiplyDivideOrMod     {cons("TIMES")}
+  '/'                        -> MultiplyDivideOrMod     {cons("DIV")}
+  'MOD'                      -> MultiplyDivideOrMod     {cons("MOD")}
+
+  '*'                        -> MultiplyOrDivide        {cons("TIMES")}
+  '/'                        -> MultiplyOrDivide        {cons("DIV")}
+
+  LogicalOperator            -> BitOperator
+  'NOT'                      -> BitOperator             {cons("NOT")}
+
+  'AND'                      -> LogicalOperator         {cons("AND")}
+  'OR'                       -> LogicalOperator         {cons("OR")}
+  'XOR'                      -> LogicalOperator         {cons("XOR")}
+  'EQV'                      -> LogicalOperator         {cons("EQV")}
+
+  EqualOrNotEqualOperator    -> RelationalOperator
+  '<'                        -> RelationalOperator      {cons("LT")}
+  '>'                        -> RelationalOperator      {cons("GT")}
+  '<='                       -> RelationalOperator      {cons("LE")}
+  '>='                       -> RelationalOperator      {cons("GE")}
+
+  '='                        -> EqualOrNotEqualOperator {cons("EqOp")}
+  '<>'                       -> EqualOrNotEqualOperator {cons("NotEqOp")}
+
+  '@'                        -> DereferenceOperator     {cons("DerefOp")}
+
+  '='                        -> AssignmentOperator      {cons("AssignOp")}
+
+%% 8.2.4 SEPARATORS
+%%
+%% TODO - see if constructors are needed for these
+%%
+
+%% 8.3 LITERALS
+%%
+  NumericLiteral             -> Literal
+  BitLiteral                 -> Literal
+  BooleanLiteral             -> Literal
+  CharacterLiteral           -> Literal
+  PointerLiteral             -> Literal
+
+%% 8.3.1 NUMERIC LITERALS
+%%
+  IntegerLiteral             -> NumericLiteral
+  FloatingLiteral            -> NumericLiteral
+  FixedLiteral               -> NumericLiteral
+
+  Number                     -> IntegerLiteral
+  Icon                       -> Number
+
+  RealLiteral                -> FloatingLiteral
+  Icon Exponent              -> RealLiteral           {cons("RealLiteral")}
+  FractionalForm OptExponent -> RealLiteral           {cons("RealLiteral")}
+
+  'E' OptSign Number         -> Exponent              {cons("Exponent")}
+
+  '+'                        -> Sign                  {cons("PLUS")}
+  '-'                        -> Sign                  {cons("MINUS")}
+
+  OptNumber '.' OptNumber    -> FractionalForm        {cons("FractionalForm")}
+
+  RealLiteral                -> FixedLiteral
+
+  Exponent                   -> OptExponent
+  % empty %                  -> OptExponent           {cons("no-exponent")}
+  Number                     -> OptNumber
+  % empty %                  -> OptNumber             {cons("no-number")}
+
+%% 8.3.2 BIT LITERALS
+%%
+  BeadSize 'B' "'" Bead+   -> BitLiteral              {cons("BitLiteral")}
+
+  Digit                    -> Bead
+
+%% 8.3.3 BOOLEAN LITERALS
+%%
+  'TRUE'                   -> BooleanLiteral          {cons("True")}
+  'FALSE'                  -> BooleanLiteral          {cons("False")}
+
+%% 8.3.3 CHARACTER LITERALS
+%%
+  "'" Character+ "'"       -> CharacterLiteral        {cons("CharacterLiteral")}
+
+%% 8.3.4 POINTER LITERALS
+%%
+  'NULL'                   -> PointerLiteral          {cons("Null")}
+
+  '"' Character* '"'       -> Comment                 {cons("Comment")}
+  '%' Character* '%'       -> Comment                 {cons("Comment")}
+
+
+%%%%%%%%%%
+%% 9.0 DIRECTIVES
+%%%%%%%%%%
+
+  CompoolDirective         -> Directive
+  CopyDirective            -> Directive
+  SkipDirective            -> Directive
+  BeginDirective           -> Directive
+  EndDirective             -> Directive
+  LinkageDirective         -> Directive
+  TraceDirective           -> Directive
+  InterferenceDirective    -> Directive
+  ReducibleDirective       -> Directive
+  NolistDirective          -> Directive
+  ListDirective            -> Directive
+  EjectDirective           -> Directive
+  ListinvDirective         -> Directive
+  ListexpDirective         -> Directive
+  ListbothDirective        -> Directive
+  BaseDirective            -> Directive
+  IsbaseDirective          -> Directive
+  DropDirective            -> Directive
+  LeftrightDirective       -> Directive
+  RearrangeDirective       -> Directive
+  InitializeDirective      -> Directive
+  OrderDirective           -> Directive
+
+%% 9.1 COMPOOL DIRECTIVE
+%%
+  '!COMPOOL'
+     CompoolDirectiveList ';'   -> CompoolDirective         {cons("CompoolDirective")}
+
+  OptCompoolFileName
+     {CompoolDeclaredName ','}+ -> CompoolDirectiveList     {cons("CompoolDirectiveList")}
+
+  '(' OptCompoolFileName ')'    -> CompoolDirectiveList     {cons("CompoolDirectiveList")}
+
+      Name                      -> CompoolDeclaredName
+  '(' Name ')'                  -> CompoolDeclaredName      {cons("CompoolDeclaredName")}
+
+  CharacterLiteral              -> CompoolFileName
+
+  CompoolFileName               -> OptCompoolFileName
+  % empty %                     -> OptCompoolFileName       {cons("no-compool-file-name")}
+
+
+%% 9.2 TEXT DIRECTIVES
+%%
+
+%% 9.2.1 COPY DIRECTIVES
+%%
+  '!COPY' CharacterLiteral ';'  -> CopyDirective            {cons("CopyDirective")}
+
+%% 9.2.2 SKIP, BEGIN, AND END DIRECTIVES
+%%
+  '!SKIP'  OptLetter ';'        -> SkipDirective            {cons("SkipDirective")}
+
+  '!BEGIN' OptLetter ';'        -> BeginDirective           {cons("BeginDirective")}
+
+  '!END' ';'                    -> EndDirective             {cons("EndDirective")}
+
+  Letter                        -> OptLetter
+  % empty %                     -> OptLetter                {cons("no-letter")}
+
+%% 9.3 LINKAGES DIRECTIVES
+%%
+  '!LINKAGE' Symbol+ ';'        -> LinkageDirective         {cons("LinkageDirective")}
+
+%% 9.4 TRACE DIRECTIVES
+%%
+  '!TRACE' OptTraceControl
+    {Name ','}+ ';'             -> TraceDirective           {cons("TraceDirective")}
+
+  '(' BooleanFormula ')'        -> TraceControl             {cons("TraceControl")}
+  
+  TraceControl                  -> OptTraceControl
+  % empty %                     -> OptTraceControl          {cons("no-trace-control")}
+
+%% 9.5 INTERFERENCE DIRECTIVES
+%%
+  '!INTERFERENCE'
+    InterferenceControl ';'     -> InterferenceDirective    {cons("InterferenceDirective")}
+
+  DataName ':' {DataName ','}+  -> InterferenceControl      {cons("InterferenceControl")}
+
+  Name                          -> DataName
+
+%% 9.6 REDUCIBLE DIRECTIVES
+%%
+  '!REDUCIBLE' ';'              -> ReducibleDirective       {cons("ReducibleDirective")}
+
+
+%% 9.7 LISTING DIRECTIVES
+%%
+%% 9.7.1 SOURCE-LISTING DIRECTIVES
+%%
+  '!NOLIST' ';'                  -> NolistDirective         {cons("NolistDirective")}
+  '!LIST'   ';'                  ->   ListDirective         {cons("  ListDirective")}
+  '!EJECT'  ';'                  ->  EjectDirective         {cons(" EjectDirective")}
+
+%% 9.7.2 DEFINE-LISTING DIRECTIVES
+%%
+  '!LISTINV'  ';'                -> ListinvDirective        {cons("ListinvDirective")}
+  '!LISTEXP'  ';'                -> ListexpDirective        {cons("ListexpDirective")}
+  '!LISTBOTH' ';'                -> ListbothDirective       {cons("ListbothDirective")}
+
+%% 9.8 REGISTER DIRECTIVES
+%%
+  '!BASE'   DataName
+    IntegerLiteral   ';'         -> BaseDirective           {cons("BaseDirective")}
+
+  '!ISBASE' DataName
+    IntegerLiteral   ';'         -> IsbaseDirective         {cons("IsbaseDirective")}
+
+  '!DROP'
+    IntegerLiteral   ';'         -> DropDirective           {cons("DropDirective")}
+
+%% 9.9 EXPRESSION EVALUATION ORDER DIRECTIVES
+%%
+  '!LEFTRIGHT' ';'               -> LeftrightDirective      {cons("LeftrightDirective")}
+  '!REARRANGE' ';'               -> RearrangeDirective      {cons("RearrangeDirective")}
+
+%% 9.10 INITIALIZATION DIRECTIVES
+%%
+  '!INITIALIZE' ';'               -> InitializeDirective    {cons("InitializeDirective")}
+
+%% 9.11 ALLOCATION ORDER DIRECTIVES
+%%
+  '!ORDER' ';'                    -> OrderDirective         {cons("OrderDirective")}
