@@ -352,7 +352,7 @@ AC_ARG_ENABLE([python],
 		dnl  turn on "--enable-python" because then there's no way for users to specify the name of the python
 		dnl  interpreter (which might be needed by some ROSE projects) without also enabling the python parser
 		dnl  in ROSE's frontend (which has stricter version requirements and might not compile).
-                if test "x$with_python" != "x"; then
+                if test "$with_python" != "" -a "$with_python" != "no"; then
                     AC_MSG_WARN([--with-python specified without --enable-python. ROSE will not have a python frontend parser.])
                 fi
                )
