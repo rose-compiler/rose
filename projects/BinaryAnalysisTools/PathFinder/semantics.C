@@ -66,7 +66,7 @@ RiscOperators::varComment(const std::string &varName, const std::string &comment
 }
 
 std::string
-RiscOperators::commentForVariable(const RegisterDescriptor &reg, const std::string &accessMode) const {
+RiscOperators::commentForVariable(RegisterDescriptor reg, const std::string &accessMode) const {
     const RegisterDictionary *regs = currentState()->registerState()->get_register_dictionary();
     std::string varComment = RegisterNames(regs)(reg) + " first " + accessMode;
     if (pathInsnIndex_ == (size_t)(-1) && currentInstruction() == NULL) {
@@ -153,7 +153,7 @@ RiscOperators::finishInstruction(SgAsmInstruction *insn) {
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::readRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &dflt) {
+RiscOperators::readRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &dflt) {
     SValuePtr retval = SValue::promote(Super::readRegister(reg, dflt));
     SymbolicExpr::Ptr expr = retval->get_expression();
     if (expr->isLeafNode()) {
@@ -164,7 +164,7 @@ RiscOperators::readRegister(const RegisterDescriptor &reg, const BaseSemantics::
 }
     
 void
-RiscOperators::writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &value) {
+RiscOperators::writeRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &value) {
     SymbolicExpr::Ptr expr = SValue::promote(value)->get_expression();
     if (expr->isLeafNode()) {
         std::string comment = commentForVariable(reg, "write");
@@ -179,7 +179,7 @@ RiscOperators::writeRegister(const RegisterDescriptor &reg, const BaseSemantics:
  *  specified address; otherwise, actually read the value and return it.  In any case, record some information about the
  *  address that's being read if we've never seen it before. */
 BaseSemantics::SValuePtr
-RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr,
+RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr,
                           const BaseSemantics::SValuePtr &dflt_, const BaseSemantics::SValuePtr &cond) {
 
     BaseSemantics::SValuePtr dflt = dflt_;
@@ -228,7 +228,7 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics:
  *  otherwise update the memory directly.  In any case, record some information about the address that was written if we've
  *  never seen it before. */
 void
-RiscOperators::writeMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr,
+RiscOperators::writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr,
                            const BaseSemantics::SValuePtr &value, const BaseSemantics::SValuePtr &cond) {
     if (cond->is_number() && !cond->get_number())
         return;

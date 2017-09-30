@@ -28,16 +28,15 @@ namespace BinaryAnalysis {
 namespace Partitioner2 {
 
 Partitioner::Partitioner()
-    : solver_(NULL), progressTotal_(0), isReportingProgress_(true),
-      autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1),
-      semanticMemoryParadigm_(LIST_BASED_MEMORY) {
+    : solver_(NULL), autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1),
+      semanticMemoryParadigm_(LIST_BASED_MEMORY), progress_(Progress::instance()), cfgProgressTotal_(0) {
     init(NULL, memoryMap_);
 }
 
 Partitioner::Partitioner(Disassembler *disassembler, const MemoryMap::Ptr &map)
-    : memoryMap_(map), solver_(NULL), progressTotal_(0), isReportingProgress_(true),
-      autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1),
-      semanticMemoryParadigm_(LIST_BASED_MEMORY) {
+    : memoryMap_(map), solver_(NULL), autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true),
+      stackDeltaInterproceduralLimit_(1), semanticMemoryParadigm_(LIST_BASED_MEMORY),
+      progress_(Progress::instance()), cfgProgressTotal_(0) {
     init(disassembler, map);
 }
 
@@ -48,8 +47,8 @@ Partitioner::Partitioner(Disassembler *disassembler, const MemoryMap::Ptr &map)
 // FIXME[Robb P. Matzke 2014-12-27]: Not the most efficient implementation, but saves on cut-n-paste which would surely rot
 // after a while.
 Partitioner::Partitioner(const Partitioner &other)               // initialize just like default
-    : solver_(NULL), progressTotal_(0), isReportingProgress_(true), autoAddCallReturnEdges_(false),
-      assumeFunctionsReturn_(true), semanticMemoryParadigm_(LIST_BASED_MEMORY) {
+    : solver_(NULL), autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), semanticMemoryParadigm_(LIST_BASED_MEMORY),
+      progress_(Progress::instance()), cfgProgressTotal_(0) {
     init(NULL, memoryMap_);                             // initialize just like default
     *this = other;                                      // then delegate to the assignment operator
 }
@@ -65,8 +64,6 @@ Partitioner::operator=(const Partitioner &other) {
     vertexIndex_.clear();                               // initialized by init(other)
     aum_ = other.aum_;
     solver_ = other.solver_;
-    progressTotal_ = other.progressTotal_;
-    isReportingProgress_ = other.isReportingProgress_;
     functions_ = other.functions_;
     autoAddCallReturnEdges_ = other.autoAddCallReturnEdges_;
     assumeFunctionsReturn_ = other.assumeFunctionsReturn_;
@@ -79,6 +76,13 @@ Partitioner::operator=(const Partitioner &other) {
     functionPrologueMatchers_ = other.functionPrologueMatchers_;
     functionPaddingMatchers_ = other.functionPaddingMatchers_;
     semanticMemoryParadigm_ = other.semanticMemoryParadigm_;
+
+    {
+        SAWYER_THREAD_TRAITS::LockGuard2 lock(mutex_, other.mutex_);
+        cfgProgressTotal_ = other.cfgProgressTotal_;
+        progress_ = other.progress_;
+    }
+
     init(other);                                        // copies graph iterators, etc.
     return *this;
 }
@@ -219,28 +223,62 @@ operator<<(std::ostream &out, const ProgressBarSuffix &x) {
     return out;
 };
 
-void
-Partitioner::reportProgress() const {
-    // All partitioners share a single progress bar.
-    static Sawyer::ProgressBar<size_t, ProgressBarSuffix> *bar = NULL;
+Progress::Ptr
+Partitioner::progress() const {
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    return progress_;
+}
 
-    if (0==progressTotal_) {
-        BOOST_FOREACH (const MemoryMap::Node &node, memoryMap_->nodes()) {
-            if (0 != (node.value().accessibility() & MemoryMap::EXECUTABLE))
-                progressTotal_ += node.key().size();
-        }
+void
+Partitioner::progress(const Progress::Ptr &p) {
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    progress_ = p;
+}
+
+void
+Partitioner::updateProgress(const std::string &phase, double completion) const {
+    Progress::Ptr progress;
+    {
+        SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+        progress = progress_;
+    }
+    if (progress)
+        progress->update(Progress::Report(phase, completion));
+}
+
+// Updates progress information during the main partitioning phase. The progress is the ratio of the number of bytes
+// represented in the CFG to the number of executable bytes in the memory map.
+void
+Partitioner::updateCfgProgress() {
+    {
+        SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+        if (!progress_)
+            return;
     }
     
-    if (!bar)
-        bar = new Sawyer::ProgressBar<size_t, ProgressBarSuffix>(progressTotal_, mlog[MARCH], "cfg");
+    // How many bytes are mapped with execute permission
+    if (0 == cfgProgressTotal_) {
+        BOOST_FOREACH (const MemoryMap::Node &node, memoryMap_->nodes()) {
+            if (0 != (node.value().accessibility() & MemoryMap::EXECUTABLE))
+                cfgProgressTotal_ += node.key().size();
+        }
+    }
 
-    if (progressTotal_) {
-        // If multiple partitioners are sharing the progress bar then also make sure that the lower and upper limits are
-        // appropriate for THIS partitioner.  However, changing the limits is a configuration change, which also immediately
-        // updates the progress bar (we don't want that, so update only if necessary).
+    double completion = cfgProgressTotal_ > 0 ? (double)nBytes() / cfgProgressTotal_ : 0.0;
+    updateProgress("partition", completion);
+    
+    // All partitioners share a single progress bar for the CFG completion amount
+    static Sawyer::ProgressBar<size_t, ProgressBarSuffix> *bar = NULL;
+    if (!bar)
+        bar = new Sawyer::ProgressBar<size_t, ProgressBarSuffix>(cfgProgressTotal_, mlog[MARCH], "cfg");
+
+    // Update the progress bar. If multiple partitioners are sharing the progress bar then also make sure that the lower and
+    // upper limits are appropriate for THIS partitioner.  However, changing the limits is a configuration change, which also
+    // immediately updates the progress bar (we don't want that, so update only if necessary).
+    if (cfgProgressTotal_) {
         bar->suffix(ProgressBarSuffix(this));
-        if (bar->domain().first!=0 || bar->domain().second!=progressTotal_) {
-            bar->value(0, nBytes(), progressTotal_);
+        if (bar->domain().first!=0 || bar->domain().second!=cfgProgressTotal_) {
+            bar->value(0, nBytes(), cfgProgressTotal_);
         } else {
             bar->value(nBytes());
         }
@@ -1359,8 +1397,7 @@ void
 Partitioner::bblockAttached(const ControlFlowGraph::VertexIterator &newVertex) {
     ASSERT_require(newVertex!=cfg_.vertices().end());
     ASSERT_require(newVertex->value().type() == V_BASIC_BLOCK);
-    if (isReportingProgress_)
-        reportProgress();
+    updateCfgProgress();
     rose_addr_t startVa = newVertex->value().address();
     BasicBlock::Ptr bblock = newVertex->value().bblock();
 
@@ -2147,7 +2184,9 @@ struct CallingConventionWorker {
             trace <<"calling-convention for " <<function->printableName() <<" took " <<t <<" seconds\n";
         }
 
+        // Update progress reports
         ++progress;
+        partitioner.updateProgress("call-conv", progress.ratio());
     }
 };
 

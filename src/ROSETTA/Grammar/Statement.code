@@ -3419,6 +3419,7 @@ HEADER_STOP_OR_PAUSE_STATEMENT_START
              {
                e_unknown,
                e_stop,
+               e_error_stop,
                e_pause
              };
 

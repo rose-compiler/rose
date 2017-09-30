@@ -416,6 +416,7 @@ rose_config_installed_cppflags =		\
 	$(ROSE_ETHER_INCLUDE)			\
 	$(ROSE_ATERM_INCLUDE)			\
 	$(ROSE_DLIB_INCLUDES)			\
+	$(ROSE_GCRYPT_INCLUDES)			\
 	$(BOOST_CPPFLAGS)
 
 rose_config_installed_ldflags =			\
@@ -430,6 +431,7 @@ rose_config_installed_ldflags =			\
 	$(BOOST_SERIALIZATION_LIB)		\
 	$(BOOST_WAVE_LIB)			\
 	$(BOOST_IOSTREAMS_LIB)			\
+	$(BOOST_CHRONO_LIB)			\
 	$(JAVA_JVM_LINK)			\
 	$(SQLITE_DATABASE_LIBS)			\
 	$(RT_LIBS)				\
@@ -445,6 +447,7 @@ rose_config_installed_ldflags =			\
 	$(ROSE_YAML_LIBS_WITH_PATH)		\
 	$(ROSE_LIBMAGIC_LIBS_WITH_PATH)		\
 	$(ROSE_DLIB_LIBS_WITH_PATH)		\
+	$(ROSE_GCRYPT_LIBS_WITH_PATH)		\
 	-lm
 
 rose_config_cfgdir = $(libdir)

@@ -12,8 +12,13 @@
 #include "AstAnnotator.h"
 #include "AbstractValue.h"
 #include "Miscellaneous2.h"
+
+#include "rose_config.h"
+#ifdef HAVE_SPOT
+// SPOT includes
 #include "tgba/succiter.hh"
 #include "tgba/state.hh"
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // BEGIN OF VISUALIZER
@@ -147,6 +152,10 @@ void Visualizer::setPStateSet(PStateSet* x) { pstateSet=x; }
 void Visualizer::setEStateSet(EStateSet* x) { estateSet=x; }
 void Visualizer::setTransitionGraph(TransitionGraph* x) { transitionGraph=x; }
 
+/*! 
+ * \author Marc Jasper
+ * \date 2016.
+ */
 string Visualizer::cfasToDotSubgraphs(vector<Flow*> cfas) {
   // define a color scheme
   int numColors = 16;
@@ -289,6 +298,10 @@ string Visualizer::transitionGraphDotHtmlNode(Label lab) {
   return s;
 }
 
+/*! 
+ * \author Marc Jasper
+ * \date 2016.
+ */
 string Visualizer::parProTransitionGraphToDot(ParProTransitionGraph* parProTransitionGraph) {
   EStateTransitionMap* outEdgesMap = parProTransitionGraph->getOutEdgesMap();
   stringstream ss;
@@ -326,6 +339,10 @@ string Visualizer::transitionGraphToDot() {
   return ss.str();
 }
 
+/*! 
+ * \author Marc Jasper
+ * \date 2014, 2015.
+ */
 string Visualizer::abstractTransitionGraphToDot() {
   stringstream ss;
   string result;
@@ -565,6 +582,10 @@ string Visualizer::estateIdStringWithTemporaries(const EState* estate) {
   return ss.str();
 }
 
+/*! 
+ * \author Marc Jasper
+ * \date 2016.
+ */
 string Visualizer::visualizeReadWriteAccesses(IndexToReadWriteDataMap& indexToReadWriteDataMap, VariableIdMapping* variableIdMapping, 
 					      ArrayElementAccessDataSet& readWriteRaces, ArrayElementAccessDataSet& writeWriteRaces, 
 					      bool arrayElementsAsPoints, bool useClusters, bool prominentRaceWarnings) {
@@ -704,6 +725,7 @@ string Visualizer::foldedTransitionGraphToDot() {
   return ss.str();
 }
 
+#ifdef HAVE_SPOT
 struct spot_state_compare {
   bool operator() (spot::state* const& lhs, spot::state* const& rhs) const {
     if (lhs->compare(rhs) < 0) {
@@ -714,6 +736,10 @@ struct spot_state_compare {
   }
 };
 
+/*! 
+ * \author Marc Jasper
+ * \date 2016.
+ */
 string Visualizer::spotTgbaToDot(spot::tgba& tgba) {
   stringstream ss;
   ss << "digraph G {" << endl;
@@ -743,6 +769,7 @@ string Visualizer::spotTgbaToDot(spot::tgba& tgba) {
   ss << "}" << endl;
   return ss.str();
 }
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // END OF VISUALIZER

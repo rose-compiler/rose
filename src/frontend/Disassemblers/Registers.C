@@ -12,49 +12,13 @@ operator<<(std::ostream &o, const RegisterDictionary &dict)
     return o;
 }
 
-std::ostream&
-operator<<(std::ostream &o, const RegisterDescriptor &reg)
-{
-    reg.print(o);
-    return o;
-}
-
-
-/*******************************************************************************************************************************
- *                                      RegisterDescriptor
- *******************************************************************************************************************************/
-
-bool
-RegisterDescriptor::operator==(const RegisterDescriptor &other) const 
-{
-    return majr==other.majr && minr==other.minr && offset==other.offset && nbits==other.nbits;
-}
-
-bool
-RegisterDescriptor::operator!=(const RegisterDescriptor &other) const
-{
-    return !(*this==other);
-}
-
-bool
-RegisterDescriptor::operator<(const RegisterDescriptor &other) const
-{
-    if (majr!=other.majr)
-        return majr < other.majr;
-    if (minr!=other.minr)
-        return minr < other.minr;
-    if (offset!=other.offset)
-        return offset < other.offset;
-    return nbits < other.nbits;
-}
-
 
 /*******************************************************************************************************************************
  *                                      RegisterNames
  *******************************************************************************************************************************/
 
 std::string
-RegisterNames::operator()(const RegisterDescriptor &rdesc, const RegisterDictionary *dict_/*=NULL*/) const
+RegisterNames::operator()(RegisterDescriptor rdesc, const RegisterDictionary *dict_/*=NULL*/) const
 {
     if (!rdesc.is_valid())
         return prefix + (prefix==""?"":"_") + "NONE";
@@ -81,24 +45,12 @@ RegisterNames::operator()(const RegisterDescriptor &rdesc, const RegisterDiction
  *                                      RegisterDictionary
  *******************************************************************************************************************************/
 
-
-/* class method */
-uint64_t
-RegisterDictionary::hash(const RegisterDescriptor &d)
-{
-    uint64_t h = d.get_major() << 24;
-    h ^= d.get_minor() << 16;
-    h ^= d.get_offset() << 8;
-    h ^= d.get_nbits();
-    return h;
-}
-
 void
-RegisterDictionary::insert(const std::string &name, const RegisterDescriptor &rdesc) {
+RegisterDictionary::insert(const std::string &name, RegisterDescriptor rdesc) {
     /* Erase the name from the reverse lookup map, indexed by the old descriptor. */
     Entries::iterator fi = forward.find(name);
     if (fi!=forward.end()) {
-        Reverse::iterator ri = reverse.find(hash(fi->second));
+        Reverse::iterator ri = reverse.find(fi->second);
         ROSE_ASSERT(ri!=reverse.end());
         std::vector<std::string>::iterator vi=std::find(ri->second.begin(), ri->second.end(), name);
         ROSE_ASSERT(vi!=ri->second.end());
@@ -107,7 +59,7 @@ RegisterDictionary::insert(const std::string &name, const RegisterDescriptor &rd
 
     /* Insert or replace old descriptor with a new one and insert reverse lookup info. */
     forward[name] = rdesc;
-    reverse[hash(rdesc)].push_back(name);
+    reverse[rdesc].push_back(name);
 }
 
 void
@@ -137,8 +89,8 @@ RegisterDictionary::lookup(const std::string &name) const {
 }
 
 const std::string &
-RegisterDictionary::lookup(const RegisterDescriptor &rdesc) const {
-    Reverse::const_iterator ri = reverse.find(hash(rdesc));
+RegisterDictionary::lookup(RegisterDescriptor rdesc) const {
+    Reverse::const_iterator ri = reverse.find(rdesc);
     if (ri!=reverse.end()) {
         for (size_t i=ri->second.size(); i>0; --i) {
             const std::string &name = ri->second[i-1];
@@ -153,11 +105,19 @@ RegisterDictionary::lookup(const RegisterDescriptor &rdesc) const {
     return empty;
 }
 
+const RegisterDescriptor*
+RegisterDictionary::exists(RegisterDescriptor rdesc) const {
+    Reverse::const_iterator found = reverse.find(rdesc);
+    if (found == reverse.end())
+        return NULL;
+    return &found->first;
+}
+
 RegisterDescriptor
 RegisterDictionary::findLargestRegister(unsigned major, unsigned minor, size_t maxWidth) const {
     RegisterDescriptor retval;
     for (Entries::const_iterator iter=forward.begin(); iter!=forward.end(); ++iter) {
-        const RegisterDescriptor &reg = iter->second;
+        RegisterDescriptor reg = iter->second;
         if (major == reg.get_major() && minor == reg.get_minor()) {
             if (maxWidth > 0 && reg.get_nbits() > maxWidth) {
                 // ignore
@@ -263,10 +223,10 @@ void
 RegisterDictionary::print(std::ostream &o) const {
     o <<"RegisterDictionary \"" <<name <<"\" contains " <<forward.size() <<" " <<(1==forward.size()?"entry":"entries") <<"\n";
     for (Entries::const_iterator ri=forward.begin(); ri!=forward.end(); ++ri)
-        o <<"  \"" <<ri->first <<"\" " <<StringUtility::addrToString(hash(ri->second)) <<" " <<ri->second <<"\n";
+        o <<"  \"" <<ri->first <<"\" " <<ri->second <<"\n";
 
     for (Reverse::const_iterator ri=reverse.begin(); ri!=reverse.end(); ++ri) {
-        o <<"  " <<StringUtility::addrToString(ri->first);
+        o <<"  " <<ri->first;
         for (std::vector<std::string>::const_iterator vi=ri->second.begin(); vi!=ri->second.end(); ++vi) {
             o <<" " <<*vi;
         }

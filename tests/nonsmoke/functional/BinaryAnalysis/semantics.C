@@ -158,7 +158,7 @@ show_state(const BaseSemantics::RiscOperatorsPtr &ops)
             assert(desc);
             (*this)(*desc, abbr?abbr:name);
         }
-        void operator()(const RegisterDescriptor &desc, const char *abbr) {
+        void operator()(RegisterDescriptor desc, const char *abbr) {
             BaseSemantics::RegisterStatePtr regstate = ops->currentState()->registerState();
             FormatRestorer fmt(o);
             o <<prefix <<std::setw(8) <<std::left <<abbr <<"= { ";

@@ -310,16 +310,18 @@ typedef Sawyer::Container::Graph<ComparisonTask> ComparisonTasks;
 struct ComparisonFunctor {
     static const double dfltCompare;                    // distance between functions when either has no data
     const FunctionSimilarity *self;
-    Sawyer::ProgressBar<size_t> &progress;
+    Progress::Ptr progress;
+    Sawyer::ProgressBar<size_t> &progressBar;
 
-    ComparisonFunctor(const FunctionSimilarity *self, Sawyer::ProgressBar<size_t> &progress)
-        : self(self), progress(progress) {}
+    ComparisonFunctor(const FunctionSimilarity *self, const Progress::Ptr &progress, Sawyer::ProgressBar<size_t> &progressBar)
+        : self(self), progress(progress), progressBar(progressBar) {}
 
     void operator()(size_t taskId, const ComparisonTask &task) {
         ASSERT_require(task.b.size() == task.results.size());
         for (size_t i=0; i<task.b.size(); ++i)
             *task.results[i] = self->compare(task.a, task.b[i], dfltCompare);
-        ++progress;
+        ++progressBar;
+        progress->update(progressBar.ratio());
     }
 };
 
@@ -368,8 +370,8 @@ FunctionSimilarity::compareOneToMany(const P2::Function::Ptr &needle, const std:
 #endif
 
     // Do the work and store the results in retval
-    Sawyer::ProgressBar<size_t> progress(tasks.nVertices(), mlog[MARCH]);
-    Sawyer::workInParallel(tasks, nThreads, ComparisonFunctor(this, progress));
+    Sawyer::ProgressBar<size_t> progressBar(tasks.nVertices(), mlog[MARCH], "comparisons");
+    Sawyer::workInParallel(tasks, nThreads, ComparisonFunctor(this, progress_, progressBar));
     SAWYER_MESG(where) <<"; completed in " <<stopwatch <<" seconds\n";
     return retval;
 }
@@ -418,8 +420,8 @@ FunctionSimilarity::compareManyToMany(const std::vector<P2::Function::Ptr> &list
 #endif
 
     // Do the work and store the results in retval
-    Sawyer::ProgressBar<size_t> progress(tasks.nVertices(), mlog[MARCH]);
-    Sawyer::workInParallel(tasks, nThreads, ComparisonFunctor(this, progress));
+    Sawyer::ProgressBar<size_t> progressBar(tasks.nVertices(), mlog[MARCH], "comparisons");
+    Sawyer::workInParallel(tasks, nThreads, ComparisonFunctor(this, progress_, progressBar));
     SAWYER_MESG(where) <<"; completed in " <<stopwatch <<" seconds\n";
     return retval;
 }
@@ -483,8 +485,8 @@ FunctionSimilarity::compareManyToManyMatrix(const std::vector<P2::Function::Ptr>
 #endif
 
     // Initialize the distance matrix
-    Sawyer::ProgressBar<size_t> progress(tasks.nVertices(), mlog[MARCH]);
-    Sawyer::workInParallel(tasks, nThreads, ComparisonFunctor(this, progress));
+    Sawyer::ProgressBar<size_t> progressBar(tasks.nVertices(), mlog[MARCH], "comparisons");
+    Sawyer::workInParallel(tasks, nThreads, ComparisonFunctor(this, progress_, progressBar));
     return dm;
 }
 

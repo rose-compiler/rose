@@ -3,6 +3,7 @@
 
 #include <BinaryMatrix.h>
 #include <Partitioner2/Function.h>
+#include <Progress.h>
 #include <Sawyer/Graph.h>
 #include <Sawyer/Map.h>
 
@@ -132,13 +133,22 @@ private:
     // How to combine category distances to obtain a function distance
     Statistic categoryAccumulatorType_;
 
+    Progress::Ptr progress_;
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Constructors
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     FunctionSimilarity()
-        : categoryAccumulatorType_(AVERAGE) {}
+        : categoryAccumulatorType_(AVERAGE), progress_(Progress::instance()) {}
 
+    void clear() {
+        categories_.clear();
+        categoryNames_.clear();
+        functions_.clear();
+        categoryAccumulatorType_ = AVERAGE;
+    }
+    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -154,6 +164,8 @@ public:
     void categoryAccumulatorType(Statistic s) { categoryAccumulatorType_ = s; }
     /** @} */
 
+    /** Property: Object to which progress reports are made. */
+    Rose::Progress::Ptr progress() const { return progress_; }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Category declarations

@@ -73,10 +73,10 @@ private:
     void load(S &s, const unsigned /*version*/) {
         *this = Nothing();
         bool skip = false;
-        s >>boost::serialization::make_nvp("isEmpty_", skip);
+        s >>skip;
         if (!skip) {
             *this = T();
-            s >>boost::serialization::make_nvp("value", get());
+            s >>get();
         }
     }
 

@@ -716,14 +716,14 @@ RSIM_Thread::report_stack_frames(Sawyer::Message::Stream &mesg, const std::strin
 void
 RSIM_Thread::syscall_return(const BaseSemantics::SValuePtr &retval)
 {
-    const RegisterDescriptor& reg = get_process()->get_simulator()->syscallReturnRegister();
+    RegisterDescriptor reg = get_process()->get_simulator()->syscallReturnRegister();
     operators()->writeRegister(reg, retval);
 }
 
 void
 RSIM_Thread::syscall_return(uint64_t retval)
 {
-    const RegisterDescriptor& reg = get_process()->get_simulator()->syscallReturnRegister();
+    RegisterDescriptor reg = get_process()->get_simulator()->syscallReturnRegister();
     operators()->writeRegister(reg, operators()->number_(reg.get_nbits(), retval));
 }
 

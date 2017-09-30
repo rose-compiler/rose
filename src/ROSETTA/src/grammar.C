@@ -1177,6 +1177,8 @@ generate_override_keyword( AstNodeClass & node, GrammarString & data )
      printf ("In generate_override_keyword(): nodeName = %s variableNameString = %s \n",nodeName.c_str(),variableNameString.c_str());
 #endif
 
+  // Rasmussen (8/16/2017): Added UntypedSubmoduleDeclaration (a submodule extends an existing module)
+
   // Except in the root class for the virtual access function.
      if ( (nodeName == "XXXPragma"                  && variableNameString == "startOfConstruct")  ||
           (nodeName == "XXXPragma"                  && variableNameString == "endOfConstruct")    ||
@@ -1195,6 +1197,7 @@ generate_override_keyword( AstNodeClass & node, GrammarString & data )
           (nodeName == "InitializedName"            && variableNameString == "scope") ||
           (nodeName == "UntypedFunctionDeclaration" && variableNameString == "scope") ||
           (nodeName == "UntypedModuleDeclaration"   && variableNameString == "scope") ||
+          (nodeName == "UntypedSubmoduleDeclaration"&& variableNameString == "scope") ||
           (nodeName == "UntypedBlockStatement"      && variableNameString == "scope") ||
           (nodeName == "UntypedFile"                && variableNameString == "scope") ||
           (nodeName == "TemplateParameter"          && variableNameString == "type")  ||
@@ -1234,7 +1237,9 @@ generate_override_keyword( AstNodeClass & node, GrammarString & data )
           (nodeName == "UntypedReferenceExpression" && variableNameString == "name")  ||
           (nodeName == "UntypedFunctionDeclaration" && variableNameString == "name")  ||
           (nodeName == "UntypedModuleDeclaration"   && variableNameString == "name")  ||
+          (nodeName == "UntypedSubmoduleDeclaration"&& variableNameString == "name")  ||
           (nodeName == "UntypedInitializedName"     && variableNameString == "name")  ||
+          (nodeName == "UntypedName"                && variableNameString == "name")  ||
           (nodeName == "EnumDeclaration"            && variableNameString == "name")  ||
           (nodeName == "TemplateDeclaration"        && variableNameString == "name")  ||
           (nodeName == "UseStatement"               && variableNameString == "name")  ||
@@ -1287,6 +1292,8 @@ generate_override_keyword_for_set_functions( AstNodeClass & node, GrammarString 
      printf ("In generate_override_keyword(): nodeName = %s variableNameString = %s \n",nodeName.c_str(),variableNameString.c_str());
 #endif
 
+  // Rasmussen (8/16/2017): Added UntypedSubmoduleDeclaration (a submodule extends an existing module)
+
   // Except in the root class for the virtual access function.
      if ( (nodeName == "Pragma"                     && variableNameString == "startOfConstruct")   ||
           (nodeName == "Pragma"                     && variableNameString == "endOfConstruct")     ||
@@ -1298,6 +1305,7 @@ generate_override_keyword_for_set_functions( AstNodeClass & node, GrammarString 
           (nodeName == "InitializedName"            && variableNameString == "scope") ||
           (nodeName == "UntypedFunctionDeclaration" && variableNameString == "scope") ||
           (nodeName == "UntypedModuleDeclaration"   && variableNameString == "scope") ||
+          (nodeName == "UntypedSubmoduleDeclaration"&& variableNameString == "scope") ||
           (nodeName == "UntypedBlockStatement"      && variableNameString == "scope") ||
           (nodeName == "UntypedFile"                && variableNameString == "scope") ||
           (nodeName == "TemplateParameter"          && variableNameString == "type")  ||
@@ -1339,7 +1347,9 @@ generate_override_keyword_for_set_functions( AstNodeClass & node, GrammarString 
           (nodeName == "UntypedReferenceExpression" && variableNameString == "name")  ||
           (nodeName == "UntypedFunctionDeclaration" && variableNameString == "name")  ||
           (nodeName == "UntypedModuleDeclaration"   && variableNameString == "name")  ||
+          (nodeName == "UntypedSubmoduleDeclaration"&& variableNameString == "name")  ||
           (nodeName == "UntypedInitializedName"     && variableNameString == "name")  ||
+          (nodeName == "UntypedName"                && variableNameString == "name")  ||
           (nodeName == "EnumDeclaration"            && variableNameString == "name")  ||
           (nodeName == "TemplateDeclaration"        && variableNameString == "name")  ||
           (nodeName == "UseStatement"               && variableNameString == "name")  ||

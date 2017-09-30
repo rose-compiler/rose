@@ -73,7 +73,7 @@ bool DataRaceDetection::run(Analyzer& analyzer, BoolOptions& boolOptoins) {
                                        rewriteSystem,
                                        options.useConstSubstitutionRule
                                        );
-    speci.substituteArrayRefs(arrayUpdates, analyzer.getVariableIdMapping(), sarMode);
+    speci.substituteArrayRefs(arrayUpdates, analyzer.getVariableIdMapping(), sarMode, rewriteSystem);
 
     SgNode* root=analyzer.startFunRoot;
     VariableId parallelIterationVar;
