@@ -230,7 +230,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(List_Node_Struct *head_node, SgSou
 
                     if (globalUnit->Context_Clause_Elements.Length > 0)
                        {
-                         printf ("Skipping processing of Compilation_Pragmas \n");
+                         printf ("Skipping processing of Context_Clause_Elements \n");
                        }
 
                     int declaration_id = globalUnit->Unit_Declaration;
@@ -1532,6 +1532,9 @@ void
      Element_List & aspectSpecifications = declaration.Aspect_Specifications;
      processElementList(aspectSpecifications);
 
+     Representation_Clause_List & correspondingRepresentationClauses = declaration.Corresponding_Representation_Clauses;
+     processRepresentationClauseList(correspondingRepresentationClauses);
+
      switch (declarationKind)
         {
        // A_Parameter_Specification |
@@ -1551,16 +1554,46 @@ void
                break;
              }
 
+#if 0
        // A_Formal_Function_Declaration |
        // A_Formal_Procedure_Declaration:
-          case A_Formal_Function_Declaration:
-          case A_Formal_Procedure_Declaration:
+       // case A_Formal_Function_Declaration:
+       // case A_Formal_Procedure_Declaration:
              {
                Subprogram_Default_Kinds subprogramDefaultKind = declaration.Default_Kind;
                printf ("      subprogramDefaultKind (value) = %d \n",subprogramDefaultKind);
                printf ("      subprogramDefaultKind (name)  = %s \n",subprogramDefaultKindName(subprogramDefaultKind).c_str());
+
+               Parameter_Specification_List & parameterProfile = declaration.Parameter_Profile;
+               printf ("parameterProfile: \n");
+               processParameterSpecificationList(parameterProfile);
                break;
              }
+#endif
+
+          case A_Formal_Function_Declaration:
+             {
+               Subprogram_Default_Kinds subprogramDefaultKind = declaration.Default_Kind;
+               printf ("      subprogramDefaultKind (value) = %d \n",subprogramDefaultKind);
+               printf ("      subprogramDefaultKind (name)  = %s \n",subprogramDefaultKindName(subprogramDefaultKind).c_str());
+
+               Parameter_Specification_List & parameterProfile = declaration.Parameter_Profile;
+               printf ("parameterProfile: \n");
+               processParameterSpecificationList(parameterProfile);
+
+               Element_ID resultProfile = declaration.Result_Profile;
+               printf ("      resultProfile = %d \n",resultProfile);
+
+               bool isOverridingDeclaration     = declaration.Is_Overriding_Declaration;
+               bool isNotOverridingDeclaration = declaration.Is_Not_Overriding_Declaration;
+               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+
+               Expression_ID formalSubprogramDefault = declaration.Formal_Subprogram_Default;
+               printf ("formalSubprogramDefault = %d \n",formalSubprogramDefault);
+               break;
+             }
+
 
        // A_Private_Type_Declaration |
        // A_Private_Extension_Declaration |
@@ -1577,13 +1610,35 @@ void
        // case A_Constant_Declaration:
        // case A_Deferred_Constant_Declaration:
        // case A_Discriminant_Specification:
-          case A_Loop_Parameter_Specification:
-          case A_Generalized_Iterator_Specification:
+       // case A_Loop_Parameter_Specification:
+       // case A_Generalized_Iterator_Specification:
           case An_Element_Iterator_Specification:
              {
                Trait_Kinds traitKind = declaration.Trait_Kind;
                printf ("      traitKind (value) = %d \n",traitKind);
                printf ("      traitKind (name)  = %s \n",traitKindName(traitKind).c_str());
+
+               Discrete_Subtype_Definition_ID specificationSubtypeDefinition = declaration.Specification_Subtype_Definition;
+               printf ("specificationSubtypeDefinition  = %d \n",specificationSubtypeDefinition);
+
+               Element_ID iterationSchemeName = declaration.Iteration_Scheme_Name;
+               printf ("iterationSchemeName  = %d \n",iterationSchemeName);
+
+               Element_ID subtypeIndication = declaration.Subtype_Indication;
+               printf ("subtypeIndication  = %d \n",subtypeIndication);
+               break;
+             }
+
+          case A_Loop_Parameter_Specification:
+       // case A_Generalized_Iterator_Specification:
+       // case An_Element_Iterator_Specification:
+             {
+               Trait_Kinds traitKind = declaration.Trait_Kind;
+               printf ("      traitKind (value) = %d \n",traitKind);
+               printf ("      traitKind (name)  = %s \n",traitKindName(traitKind).c_str());
+
+               Discrete_Subtype_Definition_ID specificationSubtypeDefinition = declaration.Specification_Subtype_Definition;
+               printf ("specificationSubtypeDefinition  = %d \n",specificationSubtypeDefinition);
                break;
              }
 
@@ -1657,6 +1712,16 @@ void
 
                Declaration_ID correspondingTypeCompletion = declaration.Corresponding_Type_Completion;
                printf ("correspondingTypeDeclaration = %d \n",correspondingTypeDeclaration);
+
+               Declaration_ID correspondingTypePartialView = declaration.Corresponding_Type_Partial_View;
+               printf ("correspondingTypeDeclaration = %d \n",correspondingTypeDeclaration);
+
+               Declaration_ID correspondingFirstSubtype   = declaration.Corresponding_First_Subtype;
+               Declaration_ID correspondingLastConstraint = declaration.Corresponding_Last_Constraint;
+               Declaration_ID correspondingLastSubtype    = declaration.Corresponding_Last_Subtype;
+               printf ("correspondingFirstSubtype   = %d \n",correspondingFirstSubtype);
+               printf ("correspondingLastConstraint = %d \n",correspondingLastConstraint);
+               printf ("correspondingLastSubtype    = %d \n",correspondingLastSubtype);
                break;
              }
 
@@ -1692,6 +1757,30 @@ void
        // A_Task_Type_Declaration,                  // 9.1(2)
        // A_Protected_Type_Declaration,             // 9.4(2)
           case An_Ordinary_Type_Declaration:
+       // case A_Task_Type_Declaration:
+       // case A_Protected_Type_Declaration:
+             {
+               Definition_ID discriminantPart = declaration.Discriminant_Part;
+               printf ("discriminantPart = %d \n",discriminantPart);
+
+               Definition_ID typeDeclarationView = declaration.Type_Declaration_View;
+               printf ("typeDeclarationView = %d \n",typeDeclarationView);
+
+               Declaration_ID correspondingTypeDeclaration = declaration.Corresponding_Type_Declaration;
+               printf ("correspondingTypeDeclaration = %d \n",correspondingTypeDeclaration);
+
+               Declaration_ID correspondingTypePartialView = declaration.Corresponding_Type_Partial_View;
+               printf ("correspondingTypeDeclaration = %d \n",correspondingTypeDeclaration);
+
+               Declaration_ID correspondingFirstSubtype   = declaration.Corresponding_First_Subtype;
+               Declaration_ID correspondingLastConstraint = declaration.Corresponding_Last_Constraint;
+               Declaration_ID correspondingLastSubtype    = declaration.Corresponding_Last_Subtype;
+               printf ("correspondingFirstSubtype   = %d \n",correspondingFirstSubtype);
+               printf ("correspondingLastConstraint = %d \n",correspondingLastConstraint);
+               printf ("correspondingLastSubtype    = %d \n",correspondingLastSubtype);
+               break;
+             }
+
           case A_Task_Type_Declaration:
           case A_Protected_Type_Declaration:
              {
@@ -1703,6 +1792,29 @@ void
 
                Declaration_ID correspondingTypeDeclaration = declaration.Corresponding_Type_Declaration;
                printf ("correspondingTypeDeclaration = %d \n",correspondingTypeDeclaration);
+
+               Declaration_ID correspondingTypePartialView = declaration.Corresponding_Type_Partial_View;
+               printf ("correspondingTypeDeclaration = %d \n",correspondingTypeDeclaration);
+
+               Declaration_ID correspondingFirstSubtype   = declaration.Corresponding_First_Subtype;
+               Declaration_ID correspondingLastConstraint = declaration.Corresponding_Last_Constraint;
+               Declaration_ID correspondingLastSubtype    = declaration.Corresponding_Last_Subtype;
+               printf ("correspondingFirstSubtype   = %d \n",correspondingFirstSubtype);
+               printf ("correspondingLastConstraint = %d \n",correspondingLastConstraint);
+               printf ("correspondingLastSubtype    = %d \n",correspondingLastSubtype);
+
+               bool isNameRepeated = declaration.Is_Name_Repeated;
+               printf ("isNameRepeated = %s \n",isNameRepeated ? "true" : "false");
+
+               Declaration_ID correspondingDeclaration = declaration.Corresponding_Declaration;
+               printf ("      correspondingDeclaration = %d \n",correspondingDeclaration);
+
+               Declaration_ID correspondingBody = declaration.Corresponding_Body;
+               printf ("      correspondingBody = %d \n",correspondingBody);
+
+               Expression_List & declarationInterfaceList = declaration.Declaration_Interface_List;
+               printf ("declarationInterfaceList \n");
+               processExpressionList(declarationInterfaceList);
                break;
              }
 
@@ -1718,6 +1830,13 @@ void
 
                Definition_ID typeDeclarationView = declaration.Type_Declaration_View;
                printf ("typeDeclarationView = %d \n",typeDeclarationView);
+
+               Declaration_ID correspondingFirstSubtype   = declaration.Corresponding_First_Subtype;
+               Declaration_ID correspondingLastConstraint = declaration.Corresponding_Last_Constraint;
+               Declaration_ID correspondingLastSubtype    = declaration.Corresponding_Last_Subtype;
+               printf ("correspondingFirstSubtype   = %d \n",correspondingFirstSubtype);
+               printf ("correspondingLastConstraint = %d \n",correspondingLastConstraint);
+               printf ("correspondingLastSubtype    = %d \n",correspondingLastSubtype);
                break;
              }
 
@@ -1735,8 +1854,8 @@ void
        // case A_Variable_Declaration:
        // case A_Constant_Declaration:
        // case A_Deferred_Constant_Declaration:
-          case A_Single_Task_Declaration:
-          case A_Single_Protected_Declaration:
+       // case A_Single_Task_Declaration:
+       // case A_Single_Protected_Declaration:
        // case A_Discriminant_Specification:
        // case A_Component_Declaration:
        // case A_Parameter_Specification:
@@ -1746,8 +1865,35 @@ void
              {
                Definition_ID objectDeclarationView = declaration.Object_Declaration_View;
                printf ("objectDeclarationView = %d \n",objectDeclarationView);
+
+               Expression_ID renamedEntity           = declaration.Renamed_Entity;
+               printf ("      renamedEntity = %d \n",renamedEntity);
+               Expression_ID correspondingBaseEntity = declaration.Corresponding_Base_Entity;
+               printf ("      correspondingBaseEntity = %d \n",correspondingBaseEntity);
                break;
              }
+
+          case A_Single_Task_Declaration:
+          case A_Single_Protected_Declaration:
+             {
+               Definition_ID objectDeclarationView = declaration.Object_Declaration_View;
+               printf ("objectDeclarationView = %d \n",objectDeclarationView);
+
+               bool isNameRepeated = declaration.Is_Name_Repeated;
+               printf ("isNameRepeated = %s \n",isNameRepeated ? "true" : "false");
+
+               Declaration_ID correspondingDeclaration = declaration.Corresponding_Declaration;
+               printf ("      correspondingDeclaration = %d \n",correspondingDeclaration);
+
+               Declaration_ID correspondingBody = declaration.Corresponding_Body;
+               printf ("      correspondingBody = %d \n",correspondingBody);
+
+               Expression_List & declarationInterfaceList = declaration.Declaration_Interface_List;
+               printf ("declarationInterfaceList \n");
+               processExpressionList(declarationInterfaceList);
+               break;
+             }
+
 
        // case A_Single_Task_Declaration:
        // case A_Single_Protected_Declaration:
@@ -1803,8 +1949,8 @@ void
        // case A_Protected_Type_Declaration:
        // case An_Incomplete_Type_Declaration:
        // case A_Tagged_Incomplete_Type_Declaration:
-          case A_Private_Type_Declaration:
-          case A_Private_Extension_Declaration:
+       // case A_Private_Type_Declaration:
+       // case A_Private_Extension_Declaration:
              {
                Declaration_ID correspondingTypeDeclaration = declaration.Corresponding_Type_Declaration;
                printf ("correspondingTypeDeclaration = %d \n",correspondingTypeDeclaration);
@@ -1827,14 +1973,1137 @@ void
                break;
              }
 #endif
+#if 0
+       // An_Ordinary_Type_Declaration,            // 3.2.1(3)
+       // A_Task_Type_Declaration,                  // 9.1(2)
+       // A_Protected_Type_Declaration,             // 9.4(2)
+       // A_Private_Type_Declaration,               // 3.2.1(2),7.3(2)
+       // A_Private_Extension_Declaration,          // 3.2.1(2),7.3(3)
+       // case An_Ordinary_Type_Declaration:
+       // case A_Task_Type_Declaration:
+       // case A_Protected_Type_Declaration:
+       // case A_Private_Type_Declaration:
+       // case A_Private_Extension_Declaration:
+             {
+               Declaration_ID correspondingTypePartialView = declaration.Corresponding_Type_Partial_View;
+               printf ("correspondingTypeDeclaration = %d \n",correspondingTypeDeclaration);
+               break;
+             }
+#endif
+
+       // An_Ordinary_Type_Declaration,             // 3.2.1(3)
+       // A_Task_Type_Declaration,                  // 9.1(2)
+       // A_Protected_Type_Declaration,             // 9.4(2)
+       // A_Private_Type_Declaration,               // 3.2.1(2),7.3(2)
+       // A_Private_Extension_Declaration,          // 3.2.1(2),7.3(3)
+       // A_Subtype_Declaration,                    // 3.2.2(2)
+       // A_Formal_Type_Declaration,                // 12.5(2)
+       // case An_Ordinary_Type_Declaration:
+       // case A_Task_Type_Declaration:
+       // case A_Protected_Type_Declaration:
+       // case A_Private_Type_Declaration:
+       // case A_Private_Extension_Declaration:
+          case A_Subtype_Declaration:
+       // case A_Formal_Type_Declaration:
+             {
+            // Data members associated with this kind (from spreadsheet):
+            // Trait_Kind
+            // Has_Abstract
+            // Has_Limited
+            // Has_Private
+            // Discriminant_Part
+            // Type_Declaration_View
+            // Corresponding_Type_Declaration
+            // Corresponding_Type_Completion
+            // Corresponding_Type_Partial_View
+            // Corresponding_First_Subtype
+            // Corresponding_Last_Constraint
+            // Corresponding_Last_Subtype
+
+               Declaration_ID correspondingFirstSubtype   = declaration.Corresponding_First_Subtype;
+               Declaration_ID correspondingLastConstraint = declaration.Corresponding_Last_Constraint;
+               Declaration_ID correspondingLastSubtype    = declaration.Corresponding_Last_Subtype;
+               printf ("correspondingFirstSubtype   = %d \n",correspondingFirstSubtype);
+               printf ("correspondingLastConstraint = %d \n",correspondingLastConstraint);
+               printf ("correspondingLastSubtype    = %d \n",correspondingLastSubtype);
+               break;
+             }
+
+#if 0
+       // A_Loop_Parameter_Specification,           // 5.5(4)  
+       // An_Entry_Index_Specification,             // 9.5.2(2)
+       // case A_Loop_Parameter_Specification:
+       // case An_Entry_Index_Specification:
+             {
+               Discrete_Subtype_Definition_ID specificationSubtypeDefinition = declaration.Specification_Subtype_Definition;
+               printf ("specificationSubtypeDefinition  = %d \n",specificationSubtypeDefinition);
+               break;
+             }
+#endif
+
+       // A_Generalized_Iterator_Specification,     // 5.5.2   
+       // An_Element_Iterator_Specification,        // 5.5.2   
+          case A_Generalized_Iterator_Specification:
+       // case An_Element_Iterator_Specification:
+             {
+               Trait_Kinds traitKind = declaration.Trait_Kind;
+               printf ("      traitKind (value) = %d \n",traitKind);
+               printf ("      traitKind (name)  = %s \n",traitKindName(traitKind).c_str());
+
+               Element_ID iterationSchemeName = declaration.Iteration_Scheme_Name;
+               printf ("iterationSchemeName  = %d \n",iterationSchemeName);
+               break;
+             }
+
+#if 0
+       // An_Element_Iterator_Specification,        // 5.5.2   
+          case An_Element_Iterator_Specification:
+             {
+               Discrete_Subtype_Definition_ID specificationSubtypeDefinition = declaration.Specification_Subtype_Definition;
+               printf ("specificationSubtypeDefinition  = %d \n",specificationSubtypeDefinition);
+
+               Element_ID iterationSchemeName = declaration.Iteration_Scheme_Name;
+               printf ("iterationSchemeName  = %d \n",iterationSchemeName);
+
+               Element_ID subtypeIndication = declaration.Subtype_Indication;
+               printf ("subtypeIndication  = %d \n",subtypeIndication);
+               break;
+             }
+#endif
+
+#if 0
+       // A_Procedure_Declaration,                  // 6.1(4)  
+       // A_Function_Declaration,                   // 6.1(4)  
+       // A_Procedure_Body_Declaration,             // 6.3(2)
+       // A_Function_Body_Declaration,              // 6.3(2)
+       // A_Null_Procedure_Declaration,             // 6.7
+       // An_Expression_Function_Declaration,       // 6.8
+       // A_Procedure_Renaming_Declaration,         // 8.5.4(2)
+       // A_Function_Renaming_Declaration,          // 8.5.4(2)
+       // An_Entry_Declaration,                     // 9.5.2(2)
+       // An_Entry_Body_Declaration,                // 9.5.2(5)
+       // A_Procedure_Body_Stub,                    // 10.1.3(3)
+       // A_Function_Body_Stub,                     // 10.1.3(3)
+       // A_Generic_Procedure_Declaration,          // 12.1(2)
+       // A_Generic_Function_Declaration,           // 12.1(2)
+       // A_Formal_Procedure_Declaration,           // 12.6(2)
+       // A_Formal_Function_Declaration,            // 12.6(2)
+       // case A_Procedure_Declaration:
+       // case A_Function_Declaration:
+       // case A_Procedure_Body_Declaration:
+       // case A_Function_Body_Declaration:
+             // case A_Null_Procedure_Declaration:
+       // case An_Expression_Function_Declaration:
+             // case A_Procedure_Renaming_Declaration:
+       // case A_Function_Renaming_Declaration:
+             // case An_Entry_Declaration:
+             // case An_Entry_Body_Declaration:
+             // case A_Procedure_Body_Stub:
+       // case A_Function_Body_Stub:
+             // case A_Generic_Procedure_Declaration:
+       // case A_Generic_Function_Declaration:
+       // case A_Formal_Procedure_Declaration:
+       // case A_Formal_Function_Declaration:
+             {
+               Parameter_Specification_List & parameterProfile = declaration.Parameter_Profile;
+               printf ("parameterProfile: \n");
+               processParameterSpecificationList(parameterProfile);
+               break;
+             }
+#endif
+
+       // case A_Null_Procedure_Declaration:
+       // case A_Procedure_Renaming_Declaration:
+          case An_Entry_Declaration:
+       // case An_Entry_Body_Declaration:
+       // case A_Procedure_Body_Stub:
+       // case A_Generic_Procedure_Declaration:
+             {
+               Parameter_Specification_List & parameterProfile = declaration.Parameter_Profile;
+               printf ("parameterProfile: \n");
+               processParameterSpecificationList(parameterProfile);
+
+               bool isOverridingDeclaration     = declaration.Is_Overriding_Declaration;
+               bool isNotOverridingDeclaration = declaration.Is_Not_Overriding_Declaration;
+               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+
+               Declaration_ID correspondingBody = declaration.Corresponding_Body;
+               printf ("      correspondingBody = %d \n",correspondingBody);
+
+               Discrete_Subtype_Definition_ID entryFamilyDefinition = declaration.Entry_Family_Definition;
+               printf ("      entryFamilyDefinition = %d \n",entryFamilyDefinition);
+               break;
+             }
+
+          case A_Null_Procedure_Declaration:
+       // case A_Procedure_Renaming_Declaration:
+       // case An_Entry_Declaration:
+       // case An_Entry_Body_Declaration:
+       // case A_Procedure_Body_Stub:
+       // case A_Generic_Procedure_Declaration:
+             {
+               Parameter_Specification_List & parameterProfile = declaration.Parameter_Profile;
+               printf ("parameterProfile: \n");
+               processParameterSpecificationList(parameterProfile);
+
+               bool isOverridingDeclaration     = declaration.Is_Overriding_Declaration;
+               bool isNotOverridingDeclaration = declaration.Is_Not_Overriding_Declaration;
+               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+
+               Declaration_ID correspondingDeclaration = declaration.Corresponding_Declaration;
+               printf ("      correspondingDeclaration = %d \n",correspondingDeclaration);
+
+               bool isDispatchingOperation = declaration.Is_Dispatching_Operation;
+               printf ("isDispatchingOperation = %s \n",isDispatchingOperation ? "true" : "false");
+               break;
+             }
+
+          case A_Procedure_Body_Stub:
+             {
+               Parameter_Specification_List & parameterProfile = declaration.Parameter_Profile;
+               printf ("parameterProfile: \n");
+               processParameterSpecificationList(parameterProfile);
+
+               bool isOverridingDeclaration     = declaration.Is_Overriding_Declaration;
+               bool isNotOverridingDeclaration = declaration.Is_Not_Overriding_Declaration;
+               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+
+               Declaration_ID correspondingDeclaration = declaration.Corresponding_Declaration;
+               printf ("      correspondingDeclaration = %d \n",correspondingDeclaration);
+
+               Declaration_ID correspondingSubunit = declaration.Corresponding_Subunit;
+               printf ("      correspondingSubunit = %d \n",correspondingSubunit);
+
+               bool isDispatchingOperation = declaration.Is_Dispatching_Operation;
+               printf ("isDispatchingOperation = %s \n",isDispatchingOperation ? "true" : "false");
+               break;
+             }
+
+          case A_Procedure_Renaming_Declaration:
+             {
+               Parameter_Specification_List & parameterProfile = declaration.Parameter_Profile;
+               printf ("parameterProfile: \n");
+               processParameterSpecificationList(parameterProfile);
+
+               bool isOverridingDeclaration     = declaration.Is_Overriding_Declaration;
+               bool isNotOverridingDeclaration = declaration.Is_Not_Overriding_Declaration;
+               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+
+               Declaration_ID correspondingDeclaration = declaration.Corresponding_Declaration;
+               printf ("      correspondingDeclaration = %d \n",correspondingDeclaration);
+
+               Expression_ID renamedEntity           = declaration.Renamed_Entity;
+               printf ("      renamedEntity = %d \n",renamedEntity);
+               Expression_ID correspondingBaseEntity = declaration.Corresponding_Base_Entity;
+               printf ("      correspondingBaseEntity = %d \n",correspondingBaseEntity);
+
+               bool isDispatchingOperation = declaration.Is_Dispatching_Operation;
+               printf ("isDispatchingOperation = %s \n",isDispatchingOperation ? "true" : "false");
+               break;
+             }
+
+          case A_Generic_Procedure_Declaration:
+             {
+               Parameter_Specification_List & parameterProfile = declaration.Parameter_Profile;
+               printf ("parameterProfile: \n");
+               processParameterSpecificationList(parameterProfile);
+
+               bool isOverridingDeclaration     = declaration.Is_Overriding_Declaration;
+               bool isNotOverridingDeclaration = declaration.Is_Not_Overriding_Declaration;
+               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+
+               Declaration_ID correspondingDeclaration = declaration.Corresponding_Declaration;
+               printf ("      correspondingDeclaration = %d \n",correspondingDeclaration);
+
+               Declaration_ID correspondingBody = declaration.Corresponding_Body;
+               printf ("      correspondingBody = %d \n",correspondingBody);
+
+               Element_List & genericFormalPart = declaration.Generic_Formal_Part;
+               printf ("genericFormalPart: \n");
+               processElementList(genericFormalPart);
+               break;
+             }
+
+          case An_Entry_Body_Declaration:
+             {
+               Parameter_Specification_List & parameterProfile = declaration.Parameter_Profile;
+               printf ("parameterProfile: \n");
+               processParameterSpecificationList(parameterProfile);
+
+               bool isOverridingDeclaration     = declaration.Is_Overriding_Declaration;
+               bool isNotOverridingDeclaration = declaration.Is_Not_Overriding_Declaration;
+               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+
+               Element_List           & bodyDeclarativeItems  = declaration.Body_Declarative_Items;
+               printf ("bodyDeclarativeItems: \n");
+               processElementList(bodyDeclarativeItems);
+               Statement_List         & bodyStatements        = declaration.Body_Statements;
+               printf ("bodyStatements: \n");
+               processStatementList(bodyStatements);
+               Exception_Handler_List & bodyExceptionHandlers = declaration.Body_Exception_Handlers;
+               printf ("bodyExceptionHandlers: \n");
+               processExceptionHandlerList(bodyExceptionHandlers);
+               Declaration_ID           bodyBlockStatement    = declaration.Body_Block_Statement;
+               printf ("      bodyBlockStatement = %d \n",bodyBlockStatement);
+
+               bool isNameRepeated = declaration.Is_Name_Repeated;
+               printf ("isNameRepeated = %s \n",isNameRepeated ? "true" : "false");
+
+               Declaration_ID correspondingDeclaration = declaration.Corresponding_Declaration;
+               printf ("      correspondingDeclaration = %d \n",correspondingDeclaration);
+
+               Declaration_ID entryIndexSpecification = declaration.Entry_Index_Specification;
+               printf ("      entryIndexSpecification = %d \n",entryIndexSpecification);
+               Expression_ID entryBarrier = declaration.Entry_Barrier;
+               printf ("      entryBarrier = %d \n",entryBarrier);
+               break;
+             }
+
+          case A_Function_Body_Stub:
+       // case A_Generic_Function_Declaration:
+       // case A_Formal_Function_Declaration:
+             {
+               Parameter_Specification_List & parameterProfile = declaration.Parameter_Profile;
+               printf ("parameterProfile: \n");
+               processParameterSpecificationList(parameterProfile);
+
+               Element_ID resultProfile = declaration.Result_Profile;
+               printf ("      resultProfile = %d \n",resultProfile);
+
+               bool isOverridingDeclaration     = declaration.Is_Overriding_Declaration;
+               bool isNotOverridingDeclaration = declaration.Is_Not_Overriding_Declaration;
+               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+
+               Declaration_ID correspondingDeclaration = declaration.Corresponding_Declaration;
+               printf ("      correspondingDeclaration = %d \n",correspondingDeclaration);
+
+               Declaration_ID correspondingSubunit = declaration.Corresponding_Subunit;
+               printf ("      correspondingSubunit = %d \n",correspondingSubunit);
+
+               bool isDispatchingOperation = declaration.Is_Dispatching_Operation;
+               printf ("isDispatchingOperation = %s \n",isDispatchingOperation ? "true" : "false");
+               break;
+             }
+
+          case A_Generic_Function_Declaration:
+       // case A_Formal_Function_Declaration:
+             {
+               Parameter_Specification_List & parameterProfile = declaration.Parameter_Profile;
+               printf ("parameterProfile: \n");
+               processParameterSpecificationList(parameterProfile);
+
+               Element_ID resultProfile = declaration.Result_Profile;
+               printf ("      resultProfile = %d \n",resultProfile);
+
+               bool isOverridingDeclaration     = declaration.Is_Overriding_Declaration;
+               bool isNotOverridingDeclaration = declaration.Is_Not_Overriding_Declaration;
+               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+
+               Declaration_ID correspondingDeclaration = declaration.Corresponding_Declaration;
+               printf ("      correspondingDeclaration = %d \n",correspondingDeclaration);
+
+               Declaration_ID correspondingBody = declaration.Corresponding_Body;
+               printf ("      correspondingBody = %d \n",correspondingBody);
+
+               Element_List & genericFormalPart = declaration.Generic_Formal_Part;
+               printf ("genericFormalPart: \n");
+               processElementList(genericFormalPart);
+               break;
+             }
+
+       // case A_Function_Body_Declaration:
+       // case An_Expression_Function_Declaration:
+          case A_Function_Renaming_Declaration:
+             {
+               Parameter_Specification_List & parameterProfile = declaration.Parameter_Profile;
+               printf ("parameterProfile: \n");
+               processParameterSpecificationList(parameterProfile);
+
+               Element_ID resultProfile = declaration.Result_Profile;
+               printf ("      resultProfile = %d \n",resultProfile);
+
+               bool isOverridingDeclaration     = declaration.Is_Overriding_Declaration;
+               bool isNotOverridingDeclaration = declaration.Is_Not_Overriding_Declaration;
+               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+
+               Declaration_ID correspondingDeclaration = declaration.Corresponding_Declaration;
+               printf ("      correspondingDeclaration = %d \n",correspondingDeclaration);
+
+               Expression_ID renamedEntity           = declaration.Renamed_Entity;
+               printf ("      renamedEntity = %d \n",renamedEntity);
+               Expression_ID correspondingBaseEntity = declaration.Corresponding_Base_Entity;
+               printf ("      correspondingBaseEntity = %d \n",correspondingBaseEntity);
+
+               bool isDispatchingOperation = declaration.Is_Dispatching_Operation;
+               printf ("isDispatchingOperation = %s \n",isDispatchingOperation ? "true" : "false");
+               break;
+             }
 
 
-          case A_Procedure_Declaration:
+          case A_Function_Body_Declaration:
+             {
+               Parameter_Specification_List & parameterProfile = declaration.Parameter_Profile;
+               printf ("parameterProfile: \n");
+               processParameterSpecificationList(parameterProfile);
+
+               Element_ID resultProfile = declaration.Result_Profile;
+               printf ("      resultProfile = %d \n",resultProfile);
+
+               bool isOverridingDeclaration     = declaration.Is_Overriding_Declaration;
+               bool isNotOverridingDeclaration = declaration.Is_Not_Overriding_Declaration;
+               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+
+               Element_List           & bodyDeclarativeItems  = declaration.Body_Declarative_Items;
+               printf ("bodyDeclarativeItems: \n");
+               processElementList(bodyDeclarativeItems);
+               Statement_List         & bodyStatements        = declaration.Body_Statements;
+               printf ("bodyStatements: \n");
+               processStatementList(bodyStatements);
+               Exception_Handler_List & bodyExceptionHandlers = declaration.Body_Exception_Handlers;
+               printf ("bodyExceptionHandlers: \n");
+               processExceptionHandlerList(bodyExceptionHandlers);
+               Declaration_ID           bodyBlockStatement    = declaration.Body_Block_Statement;
+               printf ("      bodyBlockStatement = %d \n",bodyBlockStatement);
+
+               bool isNameRepeated = declaration.Is_Name_Repeated;
+               printf ("isNameRepeated = %s \n",isNameRepeated ? "true" : "false");
+
+               Declaration_ID correspondingDeclaration = declaration.Corresponding_Declaration;
+               printf ("      correspondingDeclaration = %d \n",correspondingDeclaration);
+
+               bool  isSubunit = declaration.Is_Subunit;
+               printf ("isSubunit = %s \n",isSubunit ? "true" : "false");
+               Declaration_ID correspondingBodyStub = declaration.Corresponding_Body_Stub;
+               printf ("correspondingBodyStub = %d \n",correspondingBodyStub);
+
+               bool isDispatchingOperation = declaration.Is_Dispatching_Operation;
+               printf ("isDispatchingOperation = %s \n",isDispatchingOperation ? "true" : "false");
+               break;
+             }
+
+#if 0
+       // A_Function_Declaration,                   // 6.1(4)  
+       // A_Function_Body_Declaration,              // 6.3(2)
+       // An_Expression_Function_Declaration,       // 6.8
+       // A_Function_Renaming_Declaration,          // 8.5.4(2)
+       // A_Function_Body_Stub,                     // 10.1.3(3)
+       // A_Generic_Function_Declaration,           // 12.1(2)
+       // A_Formal_Function_Declaration,            // 12.6(2)
+       // case A_Function_Declaration:
+       // case A_Function_Body_Declaration:
+       // case An_Expression_Function_Declaration:
+       // case A_Function_Renaming_Declaration:
+       // case A_Function_Body_Stub:
+       // case A_Generic_Function_Declaration:
+       // case A_Formal_Function_Declaration:
+             {
+               Element_ID resultProfile = declaration.Result_Profile;
+               printf ("      resultProfile = %d \n",resultProfile);
+               break;
+             }
+#endif
+
+
+       // A_Procedure_Body_Declaration,             // 6.3(2)
+       // A_Function_Body_Declaration,              // 6.3(2)
+       // A_Package_Body_Declaration,               // 7.2(2)
+       // A_Task_Body_Declaration,                  // 9.1(6)
+       // An_Entry_Body_Declaration,                // 9.5.2(5)
+       // case A_Procedure_Body_Declaration:
+       // case A_Function_Body_Declaration:
+          case A_Package_Body_Declaration:
+          case A_Task_Body_Declaration:
+       // case An_Entry_Body_Declaration:
+             {
+               Element_List           & bodyDeclarativeItems  = declaration.Body_Declarative_Items;
+               printf ("bodyDeclarativeItems: \n");
+               processElementList(bodyDeclarativeItems);
+               Statement_List         & bodyStatements        = declaration.Body_Statements;
+               printf ("bodyStatements: \n");
+               processStatementList(bodyStatements);
+               Exception_Handler_List & bodyExceptionHandlers = declaration.Body_Exception_Handlers;
+               printf ("bodyExceptionHandlers: \n");
+               processExceptionHandlerList(bodyExceptionHandlers);
+               Declaration_ID           bodyBlockStatement    = declaration.Body_Block_Statement;
+               printf ("      bodyBlockStatement = %d \n",bodyBlockStatement);
+
+               bool isNameRepeated = declaration.Is_Name_Repeated;
+               printf ("isNameRepeated = %s \n",isNameRepeated ? "true" : "false");
+
+               Declaration_ID correspondingDeclaration = declaration.Corresponding_Declaration;
+               printf ("      correspondingDeclaration = %d \n",correspondingDeclaration);
+
+               bool  isSubunit = declaration.Is_Subunit;
+               printf ("isSubunit = %s \n",isSubunit ? "true" : "false");
+               Declaration_ID correspondingBodyStub = declaration.Corresponding_Body_Stub;
+               printf ("correspondingBodyStub = %d \n",correspondingBodyStub);
+               break;
+             }
+
           case A_Function_Declaration:
              {
                Trait_Kinds traitKind = declaration.Trait_Kind;
                printf ("      traitKind (value) = %d \n",traitKind);
                printf ("      traitKind (name)  = %s \n",traitKindName(traitKind).c_str());
+
+               Parameter_Specification_List & parameterProfile = declaration.Parameter_Profile;
+               printf ("parameterProfile: \n");
+               processParameterSpecificationList(parameterProfile);
+
+               Element_ID resultProfile = declaration.Result_Profile;
+               printf ("      resultProfile = %d \n",resultProfile);
+
+               bool isOverridingDeclaration     = declaration.Is_Overriding_Declaration;
+               bool isNotOverridingDeclaration = declaration.Is_Not_Overriding_Declaration;
+               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+
+               Declaration_ID correspondingDeclaration = declaration.Corresponding_Declaration;
+               printf ("      correspondingDeclaration = %d \n",correspondingDeclaration);
+
+               Declaration_ID correspondingBody = declaration.Corresponding_Body;
+               printf ("      correspondingBody = %d \n",correspondingBody);
+
+               Declaration_ID correspondingSubprogramDerivation = declaration.Corresponding_Subprogram_Derivation;
+               printf ("      correspondingSubprogramDerivation = %d \n",correspondingSubprogramDerivation);
+
+               Type_Definition_ID correspondingType = declaration.Corresponding_Type;
+               printf ("      correspondingType = %d \n",correspondingType);
+
+               Declaration_ID correspondingEqualityOperator = declaration.Corresponding_Equality_Operator;
+               printf ("      correspondingEqualityOperator = %d \n",correspondingEqualityOperator);
+
+               bool isDispatchingOperation = declaration.Is_Dispatching_Operation;
+               printf ("isDispatchingOperation = %s \n",isDispatchingOperation ? "true" : "false");
+               break;
+             }
+
+       // An_Expression_Function_Declaration,       // 6.8
+          case An_Expression_Function_Declaration:
+             {
+               Parameter_Specification_List & parameterProfile = declaration.Parameter_Profile;
+               printf ("parameterProfile: \n");
+               processParameterSpecificationList(parameterProfile);
+
+               Element_ID resultProfile = declaration.Result_Profile;
+               printf ("      resultProfile = %d \n",resultProfile);
+
+               Expression_ID resultExpression = declaration.Result_Expression;
+               printf ("      resultExpression = %d \n",resultExpression);
+
+               bool isOverridingDeclaration     = declaration.Is_Overriding_Declaration;
+               bool isNotOverridingDeclaration = declaration.Is_Not_Overriding_Declaration;
+               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+
+               Declaration_ID correspondingDeclaration = declaration.Corresponding_Declaration;
+               printf ("      correspondingDeclaration = %d \n",correspondingDeclaration);
+
+               Type_Definition_ID correspondingType = declaration.Corresponding_Type;
+               printf ("      correspondingType = %d \n",correspondingType);
+
+               bool isDispatchingOperation = declaration.Is_Dispatching_Operation;
+               printf ("isDispatchingOperation = %s \n",isDispatchingOperation ? "true" : "false");
+               break;
+             }
+
+       // A_Procedure_Declaration,                  // 6.1(4)  
+       // A_Function_Declaration,                   // 6.1(4)  
+       // A_Procedure_Body_Declaration,             // 6.3(2)
+       // A_Function_Body_Declaration,              // 6.3(2)
+       // A_Null_Procedure_Declaration,             // 6.7
+       // An_Expression_Function_Declaration,       // 6.8
+       // A_Procedure_Renaming_Declaration,         // 8.5.4(2)
+       // A_Function_Renaming_Declaration,          // 8.5.4(2)
+       // An_Entry_Declaration,                     // 9.5.2(2)
+       // A_Procedure_Body_Stub,                    // 10.1.3(3)
+       // A_Function_Body_Stub,                     // 10.1.3(3)
+       // A_Generic_Procedure_Declaration,          // 12.1(2)
+       // A_Generic_Function_Declaration,           // 12.1(2)
+       // A_Formal_Procedure_Declaration,           // 12.6(2)
+       // A_Formal_Function_Declaration,            // 12.6(2)
+       // case A_Procedure_Declaration:
+       // case A_Function_Declaration:
+       // case A_Procedure_Body_Declaration:
+       // case A_Function_Body_Declaration:
+
+       // case A_Null_Procedure_Declaration:
+       // case An_Expression_Function_Declaration:
+       // case A_Procedure_Renaming_Declaration:
+       // case An_Entry_Declaration:
+       // case A_Procedure_Body_Stub:
+       // case A_Function_Body_Stub:
+       // case A_Generic_Procedure_Declaration:
+       // case A_Generic_Function_Declaration:
+          case A_Formal_Procedure_Declaration:
+       // case A_Formal_Function_Declaration:
+             {
+               bool isOverridingDeclaration     = declaration.Is_Overriding_Declaration;
+               bool isNotOverridingDeclaration = declaration.Is_Not_Overriding_Declaration;
+               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+
+               Expression_ID formalSubprogramDefault = declaration.Formal_Subprogram_Default;
+               printf ("formalSubprogramDefault = %d \n",formalSubprogramDefault);
+               break;
+             }
+
+       // A_Task_Type_Declaration,                  // 9.1(2)
+       // A_Protected_Type_Declaration,             // 9.4(2)
+       // A_Single_Task_Declaration,                // 3.3.1(2),9.1(3)
+       // A_Single_Protected_Declaration,           // 3.3.1(2),9.4(2)
+       // A_Procedure_Body_Declaration,             // 6.3(2)
+       // A_Function_Body_Declaration,              // 6.3(2)
+       // A_Package_Declaration,                    // 7.1(2)
+       // A_Package_Body_Declaration,               // 7.2(2)
+       // A_Task_Body_Declaration,                  // 9.1(6)
+       // A_Protected_Body_Declaration,             // 9.4(7)
+       // An_Entry_Body_Declaration,                // 9.5.2(5)
+       // A_Generic_Package_Declaration,            // 12.1(2)
+       // case A_Task_Type_Declaration:
+       // case A_Protected_Type_Declaration:
+       // case A_Single_Task_Declaration:
+       // case A_Single_Protected_Declaration:
+       // case A_Procedure_Body_Declaration:
+       // case A_Function_Body_Declaration:
+       // case A_Package_Declaration:
+       // case A_Package_Body_Declaration:
+       // case A_Task_Body_Declaration:
+          case A_Protected_Body_Declaration:
+       // case An_Entry_Body_Declaration:
+       // case A_Generic_Package_Declaration:
+             {
+               bool isNameRepeated = declaration.Is_Name_Repeated;
+               printf ("isNameRepeated = %s \n",isNameRepeated ? "true" : "false");
+
+               Declaration_ID correspondingDeclaration = declaration.Corresponding_Declaration;
+               printf ("      correspondingDeclaration = %d \n",correspondingDeclaration);
+
+               Declaration_List & protectedOperationItems = declaration.Protected_Operation_Items;
+               printf ("protectedOperationItems: \n");
+               processDeclarationList(protectedOperationItems);
+
+               bool  isSubunit = declaration.Is_Subunit;
+               printf ("isSubunit = %s \n",isSubunit ? "true" : "false");
+               Declaration_ID correspondingBodyStub = declaration.Corresponding_Body_Stub;
+               printf ("correspondingBodyStub = %d \n",correspondingBodyStub);
+               break;
+             }
+
+          case A_Package_Declaration:
+             {
+               bool isNameRepeated = declaration.Is_Name_Repeated;
+               printf ("isNameRepeated = %s \n",isNameRepeated ? "true" : "false");
+
+               Declaration_ID correspondingDeclaration = declaration.Corresponding_Declaration;
+               printf ("      correspondingDeclaration = %d \n",correspondingDeclaration);
+
+               Declarative_Item_List & visiblePartDeclarativeItems  = declaration.Visible_Part_Declarative_Items;
+               printf ("visiblePartDeclarativeItems: \n");
+               processDeclarativeItemList(visiblePartDeclarativeItems);
+
+               bool                    isPrivatePresent              = declaration.Is_Private_Present;
+               printf ("      isPrivatePresent = %s \n",isPrivatePresent ? "true" : "false");
+
+               Declarative_Item_List & privatePartDeclarativeItems  = declaration.Private_Part_Declarative_Items;
+               printf ("privatePartDeclarativeItems: \n");
+               processDeclarativeItemList(privatePartDeclarativeItems);
+
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+          case A_Generic_Package_Declaration:
+             {
+               bool isNameRepeated = declaration.Is_Name_Repeated;
+               printf ("isNameRepeated = %s \n",isNameRepeated ? "true" : "false");
+
+               Declaration_ID correspondingDeclaration = declaration.Corresponding_Declaration;
+               printf ("      correspondingDeclaration = %d \n",correspondingDeclaration);
+
+               Declaration_ID correspondingBody = declaration.Corresponding_Body;
+               printf ("      correspondingBody = %d \n",correspondingBody);
+
+               Declarative_Item_List & visiblePartDeclarativeItems  = declaration.Visible_Part_Declarative_Items;
+               printf ("visiblePartDeclarativeItems: \n");
+               processDeclarativeItemList(visiblePartDeclarativeItems);
+
+               bool                    isPrivatePresent              = declaration.Is_Private_Present;
+               printf ("      isPrivatePresent = %s \n",isPrivatePresent ? "true" : "false");
+
+               Declarative_Item_List & privatePartDeclarativeItems  = declaration.Private_Part_Declarative_Items;
+               printf ("privatePartDeclarativeItems: \n");
+               processDeclarativeItemList(privatePartDeclarativeItems);
+
+               Element_List & genericFormalPart = declaration.Generic_Formal_Part;
+               printf ("genericFormalPart: \n");
+               processElementList(genericFormalPart);
+               break;
+             }
+
+       // A_Task_Type_Declaration,                  // 9.1(2)
+       // A_Protected_Type_Declaration,             // 9.4(2)
+       // A_Single_Task_Declaration,                // 3.3.1(2),9.1(3)
+       // A_Single_Protected_Declaration,           // 3.3.1(2),9.4(2)
+       // A_Procedure_Declaration,                  // 6.1(4)  
+       // A_Function_Declaration,                   // 6.1(4)  
+       // A_Procedure_Body_Declaration,             // 6.3(2)
+       // A_Function_Body_Declaration,              // 6.3(2)
+       // A_Null_Procedure_Declaration,             // 6.7
+       // An_Expression_Function_Declaration,       // 6.8
+       // A_Package_Declaration,                    // 7.1(2)
+       // A_Package_Body_Declaration,               // 7.2(2)
+       // A_Package_Renaming_Declaration,           // 8.5.3(2)
+       // A_Procedure_Renaming_Declaration,         // 8.5.4(2)
+       // A_Function_Renaming_Declaration,          // 8.5.4(2)
+       // A_Generic_Package_Renaming_Declaration,   // 8.5.5(2)
+       // A_Generic_Procedure_Renaming_Declaration, // 8.5.5(2)
+       // A_Generic_Function_Renaming_Declaration,  // 8.5.5(2)
+       // A_Task_Body_Declaration,                  // 9.1(6)
+       // A_Protected_Body_Declaration,             // 9.4(7)
+       // An_Entry_Body_Declaration,                // 9.5.2(5)
+       // An_Entry_Index_Specification,             // 9.5.2(2)
+       // A_Procedure_Body_Stub,                    // 10.1.3(3)
+       // A_Function_Body_Stub,                     // 10.1.3(3)
+       // A_Package_Body_Stub,                      // 10.1.3(4)
+       // A_Task_Body_Stub,                         // 10.1.3(5)
+       // A_Protected_Body_Stub,                    // 10.1.3(6)
+       // A_Generic_Procedure_Declaration,          // 12.1(2)
+       // A_Generic_Function_Declaration,           // 12.1(2)
+       // A_Generic_Package_Declaration,            // 12.1(2)
+       // A_Package_Instantiation,                  // 12.3(2)
+       // A_Procedure_Instantiation,                // 12.3(2)
+       // A_Function_Instantiation,                 // 12.3(2)
+       // A_Formal_Package_Declaration,             // 12.7(2)
+       // A_Formal_Package_Declaration_With_Box     // 12.7(3)
+       // case A_Task_Type_Declaration:
+       // case A_Protected_Type_Declaration:
+       // case A_Single_Task_Declaration:
+       // case A_Single_Protected_Declaration:
+       // case A_Procedure_Declaration:
+       // case A_Function_Declaration:
+       // case A_Procedure_Body_Declaration:
+       // case A_Function_Body_Declaration:
+       // case A_Null_Procedure_Declaration:
+       // case An_Expression_Function_Declaration:
+       // case A_Package_Declaration:
+       // case A_Package_Body_Declaration:
+       // case A_Package_Renaming_Declaration:
+       // case A_Procedure_Renaming_Declaration:
+       // case A_Function_Renaming_Declaration:
+       // case A_Generic_Package_Renaming_Declaration:
+       // case A_Generic_Procedure_Renaming_Declaration:
+       // case A_Generic_Function_Renaming_Declaration:
+       // case A_Task_Body_Declaration:
+       // case A_Protected_Body_Declaration:
+       // case An_Entry_Body_Declaration:
+       // case An_Entry_Index_Specification:
+       // case A_Procedure_Body_Stub:
+       // case A_Function_Body_Stub:
+       // case A_Package_Body_Stub:
+       // case A_Task_Body_Stub:
+       // case A_Protected_Body_Stub:
+       // case A_Generic_Procedure_Declaration:
+       // case A_Generic_Function_Declaration:
+       // case A_Generic_Package_Declaration:
+       // case A_Package_Instantiation:
+       // case A_Procedure_Instantiation:
+       // case A_Function_Instantiation:
+       // case A_Formal_Package_Declaration:
+          case A_Formal_Package_Declaration_With_Box:
+             {
+               Declaration_ID correspondingDeclaration = declaration.Corresponding_Declaration;
+               printf ("      correspondingDeclaration = %d \n",correspondingDeclaration);
+
+               Expression_ID  genericUnitName = declaration.Generic_Unit_Name;
+               printf ("genericUnitName = %d \n",genericUnitName);
+               Association_List & genericActualPart = declaration.Generic_Actual_Part;
+               printf ("genericActualPart: \n");
+               processAssociationList(genericActualPart);
+               break;
+             }
+
+          case A_Package_Body_Stub:
+          case A_Task_Body_Stub:
+          case A_Protected_Body_Stub:
+             {
+               Declaration_ID correspondingDeclaration = declaration.Corresponding_Declaration;
+               printf ("      correspondingDeclaration = %d \n",correspondingDeclaration);
+
+               Declaration_ID correspondingSubunit = declaration.Corresponding_Subunit;
+               printf ("      correspondingSubunit = %d \n",correspondingSubunit);
+               break;
+             }
+
+          case A_Generic_Package_Renaming_Declaration:
+          case A_Generic_Procedure_Renaming_Declaration:
+          case A_Generic_Function_Renaming_Declaration:
+             {
+               Declaration_ID correspondingDeclaration = declaration.Corresponding_Declaration;
+               printf ("      correspondingDeclaration = %d \n",correspondingDeclaration);
+
+               Expression_ID renamedEntity           = declaration.Renamed_Entity;
+               printf ("      renamedEntity = %d \n",renamedEntity);
+               Expression_ID correspondingBaseEntity = declaration.Corresponding_Base_Entity;
+               printf ("      correspondingBaseEntity = %d \n",correspondingBaseEntity);
+               break;
+             }
+
+
+          case A_Package_Renaming_Declaration:
+             {
+               Declaration_ID correspondingDeclaration = declaration.Corresponding_Declaration;
+               printf ("      correspondingDeclaration = %d \n",correspondingDeclaration);
+
+               Expression_ID renamedEntity           = declaration.Renamed_Entity;
+               printf ("      renamedEntity = %d \n",renamedEntity);
+               Expression_ID correspondingBaseEntity = declaration.Corresponding_Base_Entity;
+               printf ("      correspondingBaseEntity = %d \n",correspondingBaseEntity);
+               break;
+             }
+
+          case A_Package_Instantiation:
+          case A_Procedure_Instantiation:
+          case A_Function_Instantiation:
+          case A_Formal_Package_Declaration:
+             {
+               Declaration_ID correspondingDeclaration = declaration.Corresponding_Declaration;
+               printf ("      correspondingDeclaration = %d \n",correspondingDeclaration);
+
+               Declaration_ID correspondingBody = declaration.Corresponding_Body;
+               printf ("      correspondingBody = %d \n",correspondingBody);
+
+               Expression_ID  genericUnitName = declaration.Generic_Unit_Name;
+               printf ("genericUnitName = %d \n",genericUnitName);
+               Association_List & genericActualPart = declaration.Generic_Actual_Part;
+               printf ("genericActualPart: \n");
+               processAssociationList(genericActualPart);
+               break;
+             }
+
+          case An_Entry_Index_Specification:
+             {
+               Declaration_ID correspondingDeclaration = declaration.Corresponding_Declaration;
+               printf ("      correspondingDeclaration = %d \n",correspondingDeclaration);
+
+               Declaration_ID correspondingBody = declaration.Corresponding_Body;
+               printf ("      correspondingBody = %d \n",correspondingBody);
+               break;
+             }
+
+#if 0
+       // A_Task_Type_Declaration,                  // 9.1(2)
+       // A_Protected_Type_Declaration,             // 9.4(2)
+       // A_Single_Task_Declaration,                // 3.3.1(2),9.1(3)
+       // A_Single_Protected_Declaration,           // 3.3.1(2),9.4(2)
+       // A_Procedure_Declaration,                  // 6.1(4)  
+       // A_Function_Declaration,                   // 6.1(4)  
+       // An_Entry_Declaration,                     // 9.5.2(2)
+       // An_Entry_Index_Specification,             // 9.5.2(2)
+       // A_Generic_Procedure_Declaration,          // 12.1(2)
+       // A_Generic_Function_Declaration,           // 12.1(2)
+       // A_Generic_Package_Declaration,            // 12.1(2)
+       // A_Package_Instantiation,                  // 12.3(2)
+       // A_Procedure_Instantiation,                // 12.3(2)
+       // A_Function_Instantiation,                 // 12.3(2)
+       // A_Formal_Package_Declaration,             // 12.7(2)
+       // case A_Task_Type_Declaration:
+       // case A_Protected_Type_Declaration:
+       // case A_Single_Task_Declaration:
+       // case A_Single_Protected_Declaration:
+       // case A_Procedure_Declaration:
+       // case A_Function_Declaration:
+       // case An_Entry_Declaration:
+       // case An_Entry_Index_Specification:
+       // case A_Generic_Procedure_Declaration:
+       // case A_Generic_Function_Declaration:
+       // case A_Generic_Package_Declaration:
+       // case A_Package_Instantiation:
+       // case A_Procedure_Instantiation:
+       // case A_Function_Instantiation:
+       // case A_Formal_Package_Declaration:
+             {
+               Declaration_ID correspondingBody = declaration.Corresponding_Body;
+               printf ("      correspondingBody = %d \n",correspondingBody);
+               break;
+             }
+#endif
+
+#if 0
+       // A_Procedure_Declaration,                  // 6.1(4)  
+       // A_Function_Declaration,                   // 6.1(4)  
+       // case A_Procedure_Declaration:
+       // case A_Function_Declaration:
+             {
+               Declaration_ID correspondingSubprogramDerivation = declaration.Corresponding_Subprogram_Derivation;
+               printf ("      correspondingSubprogramDerivation = %d \n",correspondingSubprogramDerivation);
+               break;
+             }
+#endif
+#if 0
+       // A_Procedure_Declaration,                  // 6.1(4)  
+       // A_Function_Declaration,                   // 6.1(4)  
+       // An_Expression_Function_Declaration,       // 6.8
+       // case A_Procedure_Declaration:
+       // case A_Function_Declaration:
+       // case An_Expression_Function_Declaration:
+             {
+               Type_Definition_ID correspondingType = declaration.Corresponding_Type;
+               printf ("      correspondingType = %d \n",correspondingType);
+               break;
+             }
+#endif
+#if 0
+       // A_Function_Declaration,                   // 6.1(4)  
+       // case A_Function_Declaration:
+             {
+               Declaration_ID correspondingEqualityOperator = declaration.Corresponding_Equality_Operator;
+               printf ("      correspondingEqualityOperator = %d \n",correspondingEqualityOperator);
+               break;
+             }
+#endif
+#if 0
+       // A_Package_Declaration,                    // 7.1(2)
+       // A_Generic_Package_Declaration,            // 12.1(2)
+       // case A_Package_Declaration:
+       // case A_Generic_Package_Declaration:
+             {
+               Declarative_Item_List & visiblePartDeclarativeItems  = declaration.Visible_Part_Declarative_Items;
+               printf ("visiblePartDeclarativeItems: \n");
+               processDeclarativeItemList(visiblePartDeclarativeItems);
+
+               bool                    isPrivatePresent              = declaration.Is_Private_Present;
+               printf ("      isPrivatePresent = %s \n",isPrivatePresent ? "true" : "false");
+
+               Declarative_Item_List & privatePartDeclarativeItems  = declaration.Private_Part_Declarative_Items;
+               printf ("privatePartDeclarativeItems: \n");
+               processDeclarativeItemList(privatePartDeclarativeItems);
+               break;
+             }
+#endif
+#if 0
+       // A_Task_Type_Declaration,                  // 9.1(2)
+       // A_Protected_Type_Declaration,             // 9.4(2)
+       // A_Single_Task_Declaration,                // 3.3.1(2),9.1(3)
+       // A_Single_Protected_Declaration,           // 3.3.1(2),9.4(2)
+       // case A_Task_Type_Declaration:
+       // case A_Protected_Type_Declaration:
+       // case A_Single_Task_Declaration:
+       // case A_Single_Protected_Declaration:
+             {
+               Expression_List & declarationInterfaceList = declaration.Declaration_Interface_List;
+               printf ("declarationInterfaceList \n");
+               processExpressionList(declarationInterfaceList);
+               break;
+             }
+#endif
+
+       // An_Object_Renaming_Declaration,           // 8.5.1(2)
+       // An_Exception_Renaming_Declaration,        // 8.5.2(2)
+       // A_Package_Renaming_Declaration,           // 8.5.3(2)
+       // A_Procedure_Renaming_Declaration,         // 8.5.4(2)
+       // A_Function_Renaming_Declaration,          // 8.5.4(2)
+       // A_Generic_Package_Renaming_Declaration,   // 8.5.5(2)
+       // A_Generic_Procedure_Renaming_Declaration, // 8.5.5(2)
+       // A_Generic_Function_Renaming_Declaration,  // 8.5.5(2)
+       // case An_Object_Renaming_Declaration:
+          case An_Exception_Renaming_Declaration:
+       // case A_Package_Renaming_Declaration:
+       // case A_Procedure_Renaming_Declaration:
+       // case A_Function_Renaming_Declaration:
+       // case A_Generic_Package_Renaming_Declaration:
+       // case A_Generic_Procedure_Renaming_Declaration:
+       // case A_Generic_Function_Renaming_Declaration:
+             {
+               Expression_ID renamedEntity           = declaration.Renamed_Entity;
+               printf ("      renamedEntity = %d \n",renamedEntity);
+               Expression_ID correspondingBaseEntity = declaration.Corresponding_Base_Entity;
+               printf ("      correspondingBaseEntity = %d \n",correspondingBaseEntity);
+               break;
+             }
+
+#if 0
+       // A_Protected_Body_Declaration,             // 9.4(7)
+       // case A_Protected_Body_Declaration:
+             {
+               Declaration_List & protectedOperationItems = declaration.Protected_Operation_Items;
+               printf ("protectedOperationItems: \n");
+               processDeclarationList(protectedOperationItems);
+               break;
+             }
+#endif
+#if 0
+       // An_Entry_Declaration,                     // 9.5.2(2)
+       // case An_Entry_Declaration:
+             {
+               Discrete_Subtype_Definition_ID entryFamilyDefinition = declaration.Entry_Family_Definition;
+               printf ("      entryFamilyDefinition = %d \n",entryFamilyDefinition);
+               break;
+             }
+#endif
+#if 0
+       // An_Entry_Body_Declaration,                // 9.5.2(5)
+       // case An_Entry_Body_Declaration:
+             {
+               Declaration_ID entryIndexSpecification = declaration.Entry_Index_Specification;
+               printf ("      entryIndexSpecification = %d \n",entryIndexSpecification);
+               Expression_ID entryBarrier = declaration.Entry_Barrier;
+               printf ("      entryBarrier = %d \n",entryBarrier);
+               break;
+             }
+#endif
+#if 0
+       // A_Procedure_Body_Stub,                    // 10.1.3(3)
+       // A_Function_Body_Stub,                     // 10.1.3(3)
+       // A_Package_Body_Stub,                      // 10.1.3(4)
+       // A_Task_Body_Stub,                         // 10.1.3(5)
+       // A_Protected_Body_Stub,                    // 10.1.3(6)
+       // case A_Procedure_Body_Stub:
+       // case A_Function_Body_Stub:
+       // case A_Package_Body_Stub:
+       // case A_Task_Body_Stub:
+       // case A_Protected_Body_Stub:
+             {
+               Declaration_ID correspondingSubunit = declaration.Corresponding_Subunit;
+               printf ("      correspondingSubunit = %d \n",correspondingSubunit);
+               break;
+             }
+#endif
+#if 0
+       // A_Procedure_Body_Declaration,             // 6.3(2)
+       // A_Function_Body_Declaration,              // 6.3(2)
+       // A_Package_Body_Declaration,               // 7.2(2)
+       // A_Task_Body_Declaration,                  // 9.1(6)
+       // A_Protected_Body_Declaration,             // 9.4(7)
+       // case A_Procedure_Body_Declaration:
+       // case A_Function_Body_Declaration:
+       // case A_Package_Body_Declaration:
+       // case A_Task_Body_Declaration:
+       // case A_Protected_Body_Declaration:
+             {
+               bool  isSubunit = declaration.Is_Subunit;
+               printf ("isSubunit = %s \n",isSubunit ? "true" : "false");
+               Declaration_ID correspondingBodyStub = declaration.Corresponding_Body_Stub;
+               printf ("correspondingBodyStub = %d \n",correspondingBodyStub);
+               break;
+             }
+#endif
+#if 0
+       // A_Generic_Procedure_Declaration,          // 12.1(2)
+       // A_Generic_Function_Declaration,           // 12.1(2)
+       // A_Generic_Package_Declaration,            // 12.1(2)
+       // case A_Generic_Procedure_Declaration:
+       // case A_Generic_Function_Declaration:
+       // case A_Generic_Package_Declaration:
+             {
+               Element_List & genericFormalPart = declaration.Generic_Formal_Part;
+               printf ("genericFormalPart: \n");
+               processElementList(genericFormalPart);
+               break;
+             }
+#endif
+#if 0
+       // A_Package_Instantiation,                  // 12.3(2)
+       // A_Procedure_Instantiation,                // 12.3(2)
+       // A_Function_Instantiation,                 // 12.3(2)
+       // A_Formal_Package_Declaration,             // 12.7(2)
+       // A_Formal_Package_Declaration_With_Box     // 12.7(3)
+       // case A_Package_Instantiation:
+       // case A_Procedure_Instantiation:
+       // case A_Function_Instantiation:
+       // case A_Formal_Package_Declaration:
+       // case A_Formal_Package_Declaration_With_Box:
+             {
+               Expression_ID  genericUnitName = declaration.Generic_Unit_Name;
+               printf ("genericUnitName = %d \n",genericUnitName);
+               Association_List & genericActualPart = declaration.Generic_Actual_Part;
+               printf ("genericActualPart: \n",);
+               processAssociationList(genericActualPart);
+               break;
+             }
+#endif
+#if 0
+       // A_Formal_Procedure_Declaration,           // 12.6(2)
+       // A_Formal_Function_Declaration,            // 12.6(2)
+       // case A_Formal_Procedure_Declaration:
+       // case A_Formal_Function_Declaration:
+             {
+               Expression_ID formalSubprogramDefault = declaration.Formal_Subprogram_Default;
+               printf ("formalSubprogramDefault = %d \n",formalSubprogramDefault);
+               break;
+             }
+#endif
+#if 0
+       // A_Procedure_Declaration,                  // 6.1(4)  
+       // A_Function_Declaration,                   // 6.1(4)  
+       // A_Procedure_Body_Declaration,             // 6.3(2)
+       // A_Function_Body_Declaration,              // 6.3(2)
+       // A_Null_Procedure_Declaration,             // 6.7
+       // An_Expression_Function_Declaration,       // 6.8
+       // A_Procedure_Renaming_Declaration,         // 8.5.4(2)
+       // A_Function_Renaming_Declaration,          // 8.5.4(2)
+       // A_Procedure_Body_Stub,                    // 10.1.3(3)
+       // A_Function_Body_Stub,                     // 10.1.3(3)
+       // case A_Procedure_Declaration:
+       // case A_Function_Declaration:
+       // case A_Procedure_Body_Declaration:
+       // case A_Function_Body_Declaration:
+       // case A_Null_Procedure_Declaration:
+       // case An_Expression_Function_Declaration:
+       // case A_Procedure_Renaming_Declaration:
+       // case A_Function_Renaming_Declaration:
+       // case A_Procedure_Body_Stub:
+       // case A_Function_Body_Stub:
+             {
+               bool isDispatchingOperation = declaration.Is_Dispatching_Operation;
+               printf ("isDispatchingOperation = %s \n",isDispatchingOperation ? "true" : "false");
+               break;
+             }
+#endif
+
+          case A_Procedure_Declaration:
+       // case A_Function_Declaration:
+             {
+               Trait_Kinds traitKind = declaration.Trait_Kind;
+               printf ("      traitKind (value) = %d \n",traitKind);
+               printf ("      traitKind (name)  = %s \n",traitKindName(traitKind).c_str());
+
+               Parameter_Specification_List & parameterProfile = declaration.Parameter_Profile;
+               printf ("parameterProfile: \n");
+               processParameterSpecificationList(parameterProfile);
+
+               bool isOverridingDeclaration     = declaration.Is_Overriding_Declaration;
+               bool isNotOverridingDeclaration = declaration.Is_Not_Overriding_Declaration;
+               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+
+               Declaration_ID correspondingDeclaration = declaration.Corresponding_Declaration;
+               printf ("      correspondingDeclaration = %d \n",correspondingDeclaration);
+
+               Declaration_ID correspondingBody = declaration.Corresponding_Body;
+               printf ("      correspondingBody = %d \n",correspondingBody);
+
+               Declaration_ID correspondingSubprogramDerivation = declaration.Corresponding_Subprogram_Derivation;
+               printf ("      correspondingSubprogramDerivation = %d \n",correspondingSubprogramDerivation);
+
+               Type_Definition_ID correspondingType = declaration.Corresponding_Type;
+               printf ("      correspondingType = %d \n",correspondingType);
+
+               bool isDispatchingOperation = declaration.Is_Dispatching_Operation;
+               printf ("isDispatchingOperation = %s \n",isDispatchingOperation ? "true" : "false");
 
             // An example of this can be a function prototype (see unit_3.ads).
 
@@ -1873,6 +3142,41 @@ void
 
           case A_Procedure_Body_Declaration:
              {
+               Parameter_Specification_List & parameterProfile = declaration.Parameter_Profile;
+               printf ("parameterProfile: \n");
+               processParameterSpecificationList(parameterProfile);
+
+               bool isOverridingDeclaration     = declaration.Is_Overriding_Declaration;
+               bool isNotOverridingDeclaration = declaration.Is_Not_Overriding_Declaration;
+               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+
+               Element_List           & bodyDeclarativeItems  = declaration.Body_Declarative_Items;
+               printf ("bodyDeclarativeItems: \n");
+               processElementList(bodyDeclarativeItems);
+               Statement_List         & bodyStatements        = declaration.Body_Statements;
+               printf ("bodyStatements: \n");
+               processStatementList(bodyStatements);
+               Exception_Handler_List & bodyExceptionHandlers = declaration.Body_Exception_Handlers;
+               printf ("bodyExceptionHandlers: \n");
+               processExceptionHandlerList(bodyExceptionHandlers);
+               Declaration_ID           bodyBlockStatement    = declaration.Body_Block_Statement;
+               printf ("      bodyBlockStatement = %d \n",bodyBlockStatement);
+
+               bool isNameRepeated = declaration.Is_Name_Repeated;
+               printf ("isNameRepeated = %s \n",isNameRepeated ? "true" : "false");
+
+               Declaration_ID correspondingDeclaration = declaration.Corresponding_Declaration;
+               printf ("      correspondingDeclaration = %d \n",correspondingDeclaration);
+
+               bool  isSubunit = declaration.Is_Subunit;
+               printf ("isSubunit = %s \n",isSubunit ? "true" : "false");
+               Declaration_ID correspondingBodyStub = declaration.Corresponding_Body_Stub;
+               printf ("correspondingBodyStub = %d \n",correspondingBodyStub);
+
+               bool isDispatchingOperation = declaration.Is_Dispatching_Operation;
+               printf ("isDispatchingOperation = %s \n",isDispatchingOperation ? "true" : "false");
+
             // This needs to force the declaration of a function (with function definition, and body).
                printf ("In processDeclaration(): case A_Procedure_Body_Declaration: (not implemented) \n");
 

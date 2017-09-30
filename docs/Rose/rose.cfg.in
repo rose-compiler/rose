@@ -741,6 +741,7 @@ INPUT                  = @top_srcdir@/docs/Rose/MainPage.dox \
                          @top_srcdir@/src/backend/unparser/languageIndependenceSupport/documentation.docs \
                          @top_srcdir@/src/backend/unparser/CxxCodeGeneration/documentation.docs \
                          @top_srcdir@/src/backend/unparser/FortranCodeGeneration/documentation.docs \
+			 @top_srcdir@/src/util \
                          @top_srcdir@/src/util/FormatRestorer.h \
                          @top_srcdir@/src/util/Sawyer \
                          @top_srcdir@/src/util/utilDocumentation.docs \

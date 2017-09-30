@@ -54,7 +54,7 @@ std::string AstTerm::astTermToMultiLineString(SgNode* node,int tab, int pos) {
   return s;
 }
 
-std::string AstTerm::astTermWithNullValuesToString(SgNode* node) {
+std::string AstTerm::astTermWithNullValuesToString(SgNode* node, bool withNumbers) {
   if(node==0)
     return "null";
   std::string s=nodeTypeName(node);
@@ -62,11 +62,17 @@ std::string AstTerm::astTermWithNullValuesToString(SgNode* node) {
   if(arity>0) {
     s+="(";
     for(int i=0; i<arity;i++) {
-      SgNode* child = node->get_traversalSuccessorByIndex(i);   
+      SgNode* child = node->get_traversalSuccessorByIndex(i);
       if(i!=0) s+=",";
       s+=astTermWithNullValuesToString(child);
     }
     s+=")";
+  }
+  // unparse number leaf nodes if requested
+  if(arity==0 && withNumbers) {
+    if(SgExpression* exp=isSgExpression(node)) {
+      s+=":"+exp->unparseToString();
+    }
   }
   return s;
 }

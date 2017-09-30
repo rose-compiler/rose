@@ -557,18 +557,24 @@ public:
 
     /** Find the last unmapped region.
      *
-     *  Returns an interval that describes the lowest unmapped interval that ends at or before the specified maximum address
-     *  and starts immediately after the next lower mapped address, or the least possible address is no lower mapped address is
+     *  Returns an interval that describes the highest unmapped interval that ends at or before the specified maximum address
+     *  and starts immediately after the next lower mapped address, or the least possible address if no lower mapped address is
      *  present. If @p maxAddr is before the first unmapped address then an empty interval is returned.  The returned interval
      *  will not include addresses greater than @p maxAddr. */
     Interval lastUnmapped(typename Interval::Value maxAddr) const {
         Interval all = Interval::whole();
-        for (ConstNodeIterator iter=findPrior(maxAddr); iter!=nodes().begin(); --iter) {
-            if (maxAddr > iter->key().greatest())        // maxAddr is not mapped
-                return Interval::hull(iter->key().greatest()+1, maxAddr);
-            if (iter->key().least() == all.least())
-                return Interval();                      // no unmapped address, prevent potential overflow in next statement
-            maxAddr = iter->key().least() - 1;
+        ConstNodeIterator iter = findPrior(maxAddr);
+        if (iter != nodes().end()) {
+            while (1) {
+                if (maxAddr > iter->key().greatest())   // maxAddr is not mapped
+                    return Interval::hull(iter->key().greatest()+1, maxAddr);
+                if (iter->key().least() == all.least())
+                    return Interval();                  // no unmapped address < maxAddr
+                if (iter == nodes().begin())
+                    return Interval::hull(all.least(), iter->key().least()-1);
+                maxAddr = iter->key().least() - 1;
+                --iter;
+            }
         }
         return Interval::hull(all.least(), maxAddr);
     }
