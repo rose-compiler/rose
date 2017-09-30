@@ -26,6 +26,7 @@ using namespace std;
 
 // using a log file to avoid new screen output from interfering with correctness checking
 ofstream ofile;
+bool b_sort = false; // sort variables for correctness checking using diff??
 
 #if 0
 //testing a new version with better conversion, obtain the current level granularity, not always converting to top level objects!!
@@ -105,27 +106,39 @@ SgInitializedName* convertRefToInitializedName2(SgNode* current)
 
 void dumpVectorNodes( vector<SgNode*>& Refs, const string & header, ofstream & ofile)
 {
-  vector<SgNode*>::iterator iter;
-  for (iter=Refs.begin();iter!=Refs.end();iter++)
-  {
-    if (iter== Refs.begin())
-      ofile<<header<<endl; 
-    //ofile<<"read references:"<<endl; 
+  // The side effect analysis internally uses a std::map with AST node's memory addresses as keys
+  // So the order of elements are not deterministic. 
+  // To ensure strict correctness checking using diff, we sort the variables first. 
 
+  vector<string> sorted_lines;  
+  for (vector<SgNode*>::iterator iter=Refs.begin();iter!=Refs.end();iter++)
+  {
+    stringstream ss; 
     if (*iter)
     {
       SgLocatedNode* lnode = isSgLocatedNode(*iter);
       ROSE_ASSERT (lnode);
-      ofile<<"\t"<<(*iter)->class_name()<<"@" << lnode->get_file_info()->get_line()<<":"<<lnode->get_file_info()->get_col() <<  "\t";
+      ss<<"\t"<<(*iter)->class_name()<<"@" << lnode->get_file_info()->get_line()<<":"<<lnode->get_file_info()->get_col() <<  "\t";
       if (SgInitializedName* iname= SageInterface::convertRefToInitializedName(*iter, false))
-        ofile<<iname->get_qualified_name()<<endl;
+        ss<<iname->get_qualified_name()<<endl;
       else
-        ofile<<"NULL SgInitializedName"<<endl;
+        ss<<"NULL SgInitializedName"<<endl;
 
     }
     else  
-      ofile<<"NULL ref"<<endl;
+      ss<<"NULL ref"<<endl;
+   sorted_lines.push_back(ss.str());
   }
+  if (b_sort)
+    sort (sorted_lines.begin(), sorted_lines.end());
+
+  for (vector<string>::iterator iter = sorted_lines.begin(); iter != sorted_lines.end(); iter++)
+   {
+    if (iter== sorted_lines.begin())
+      ofile<<header<<endl; 
+    //ofile<<"read references:"<<endl; 
+    ofile<< (*iter); 
+   }
 }
 
 void dumpSetNames(set<SgInitializedName*>& Names,  const string & header, ofstream & ofile)
@@ -143,6 +156,7 @@ int main(int argc, char * argv[])
 {
   vector<string> remainingArgs (argv, argv+argc);
 
+  b_sort = CommandlineProcessing::isOption(remainingArgs,"","-sort",true);
    //We must processing options first, before calling frontend!!
   // work with the parser of the ArrayAbstraction module
   //Read in annotation files after -annot 

@@ -4,7 +4,6 @@ int main()
   int a;
   int b;
   int n;
-  int i;
   
 #pragma scop
 {
