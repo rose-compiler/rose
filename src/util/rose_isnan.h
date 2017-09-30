@@ -1,6 +1,8 @@
 #ifndef ROSE_isnan_H
 #define ROSE_isnan_H
 
+
+#if (__GNUC__ < 6)
 #include <cmath>
 
 // MS 2016: isnan is available in C++11 std namespace, but not in C++98
@@ -16,5 +18,11 @@
     #define rose_isnan(x) isnan(x)
   #endif
 #endif
+
+#else
+#include <math.h>
+  #define rose_isnan(x) std::isnan(x)
+
+#endif 
 
 #endif
