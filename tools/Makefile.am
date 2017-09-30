@@ -39,7 +39,8 @@ Checker_Test_Files += \
    indirectLambdaCall.cpp \
    referenceType.cpp \
    indirecArrayInLambda.cpp \
-   dataMemberAccumulation.cpp
+   dataMemberAccumulation.cpp \
+   declaredAsFuncParameter.cpp
 endif
 endif
 endif
@@ -70,7 +71,8 @@ $(Checker_Output_Diff_Files): $(generatedCodeExamples)
 
 rajaChecker_diff: $(Checker_Output_Diff_Files)
 
-check: $(generatedCodeExamples) $(Checker_Output_Diff_Files)
+#check: $(generatedCodeExamples) $(Checker_Output_Diff_Files)
+check: $(Checker_Output_Diff_Files)
 
 clean-local:
 	rm -rf rose_*.C rose_*.cpp rose*.cxx *.diff *.output *.txt *.o *.log
