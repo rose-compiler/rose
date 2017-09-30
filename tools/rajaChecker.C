@@ -366,7 +366,7 @@ bool RAJA_Checker::connectedViaIndexSet (SgVarRefExp* varRef1, SgInitializedName
 }
 
 // Check if an operand is a form of x[index], x is a pointer to a double, index is a loop index
-bool isDoubleArrayAccess (SgExpression* exp, SgInitializedName * lvar)
+bool isDoubleArrayAccess (SgExpression* exp, SgInitializedName * lvar, SgVarRefExp** varRefOut)
 {
   ROSE_ASSERT (lvar != NULL);
   if (exp == NULL) 
@@ -390,7 +390,7 @@ bool isDoubleArrayAccess (SgExpression* exp, SgInitializedName * lvar)
   }
   // The lhs should be a form of simple double pointer used as array, not complex data member like obj->array[i]. 
   SgVarRefExp* ref = isSgVarRefExp(lhs);
-  if (!ref)
+ if (!ref)
   {
     bool isThis = false; 
     SgArrowExp * arrow = isSgArrowExp (lhs);
@@ -407,7 +407,20 @@ bool isDoubleArrayAccess (SgExpression* exp, SgInitializedName * lvar)
       if (RAJA_Checker::enable_debug) cout<<"\t\t\t array var is not a simple variable reference type, but " << lhs->class_name() <<endl;
       return false;
     }
+    else
+    {
+      // store rhs of this->rhs as the varRefOut
+      // would it always be SgVarRefExp ?
+      *varRefOut = isSgVarRefExp(arrow->get_rhs_operand());
+    }
   }
+  else
+  {
+    // store ref if not NULL
+    *varRefOut = ref; 
+  }
+ 
+  ROSE_ASSERT (*varRefOut != NULL);
 
   rhs = arr->get_rhs_operand();
   if (rhs == NULL) 
@@ -471,10 +484,15 @@ bool isNodalAccumulationOp (SgExpression* op)
 }
 
 
-/*
+/* lvar is the enclosing loop's loop index variable. 
  * xa4[i] += ax; within a for-loop, i is loop index
  *  lhs: array element access using loop index  xm[loop_index], xm is a pointer to a double type
  *  accum-op:  +=, -=, *=, /=, MIN (), MAX, ..
+ *
+ *  More conditions for the variable on the left side
+ *   1. Must declared within the enclosing function body, not as function parameter
+ *   2. must be assigned between the declaration and the entry of the enclosing loop body
+ *   3. the assignment must have a form of base + offset for the rhs // at least one of the statement!!
  *
  * */
 bool RAJA_Checker::isNodalAccumulationStmt (SgStatement* s, SgInitializedName* lvar)
@@ -511,10 +529,25 @@ bool RAJA_Checker::isNodalAccumulationStmt (SgStatement* s, SgInitializedName* l
   ROSE_ASSERT (bop != NULL);
 
   // lhs is x[i]
-  if (!isDoubleArrayAccess(bop->get_lhs_operand(), lvar))
+  SgVarRefExp* varRef=NULL; 
+  if (!isDoubleArrayAccess(bop->get_lhs_operand(), lvar, &varRef))
   {
     if (RAJA_Checker::enable_debug)
      cout<<"\t\t not DoubleArrayAccess like array[index] for lhs"<<endl;
+    return false;
+  }
+
+  // check lhs should be declared within the enclosing function's body
+  //
+  ROSE_ASSERT (varRef!=NULL); 
+  SgVariableSymbol* sym= varRef->get_symbol();
+  ROSE_ASSERT (sym !=NULL); 
+  SgInitializedName* iname= sym->get_declaration();
+  ROSE_ASSERT (iname!=NULL); 
+  if (isSgFunctionParameterList(iname->get_parent()))
+  {
+    if (RAJA_Checker::enable_debug)
+     cout<<"\t\t array variable is a function parameter for lhs"<<endl;
     return false;
   }
 
@@ -839,6 +872,22 @@ void RoseVisitor::visit ( SgNode* n)
 
           }
         }
+        else // we also report negative findings for loops, to calculate true/false negatives
+        {
+          ostringstream oss;
+          oss<<"Not a nodal accumulation loop at line:"<< forloop->get_file_info()->get_line()<<endl;
+
+          SgSourceFile* file = getEnclosingSourceFile(forloop);
+          string s(":");
+          string entry= forloop->get_file_info()->get_filename()+s+oss.str(); // add full filename to each log entries
+          Rose::KeepGoing::File2StringMap[file]+= entry;
+          if (RAJA_Checker::enable_debug)
+          {
+            ofile<<oss.str(); // don't use absolute file name for the output file, which is used for correctness checking
+            cout<<forloop->get_file_info()->get_filename()+s+oss.str(); // also output to std out
+
+          }
+        }
       }
     } // end if for loop
 
@@ -873,8 +922,21 @@ void RoseVisitor::visit ( SgNode* n)
               cout<<le->get_file_info()->get_filename()+s+oss.str(); // also output to std out
             }
           }
+          else // collect negative cases, calculating true/false negatives
+          {
+            ostringstream oss; 
+            oss<<"Not a nodal accumulation lambda function at line:"<< le->get_file_info()->get_line()<<endl;
+            SgSourceFile* file = getEnclosingSourceFile(le);
+            string s(":");
+            string entry= le->get_file_info()->get_filename()+s+oss.str(); // add full filename to each log entries.
+            Rose::KeepGoing::File2StringMap[file]+= entry;
+            if (RAJA_Checker::enable_debug)
+            {
+              ofile<<oss.str(); // don't use absolute file name for the output file, which is used for correctness checking
+              cout<<le->get_file_info()->get_filename()+s+oss.str(); // also output to std out
+            }
+          }
         }
-
 
 //----------- Check if the lambda expression is used as a parameter of RAJA function call
         SgFunctionDeclaration* raja_func = NULL; 
