@@ -8,7 +8,7 @@
 
 #include "jovial_support.h"
 
-// using namespace std;
+using namespace std;
 
 #ifdef BUILD_EXECUTABLE
 int main(int argc, char** argv)
@@ -28,6 +28,8 @@ int jovial_main(int argc, char** argv)
   //   4. Traverse filename.jov.aterm creating Sage untyped nodes
   //   5. Traverse the Sage untyped nodes to complete the Sage IR
 
+  // DQ (9/29/2017): Added ifdef to ignore this when ROSE is not configured to use STRATEGO.
+#ifdef USE_ROSE_STRATEGO_SUPPORT
      string stratego_bin_path = STRATEGO_BIN_PATH;
      ROSE_ASSERT(stratego_bin_path.empty() == false);
 
@@ -65,6 +67,7 @@ int jovial_main(int argc, char** argv)
      sg_traversal.traverse(ofp_traversal->get_file(),scope);
 
      if (ofp_traversal)  delete ofp_traversal;
+#endif
 
      assert (status == 0);
 
