@@ -62,6 +62,7 @@ pkginclude_HEADERS =				\
 	ParallelSort.h				\
 	processSupport.h			\
 	Progress.h				\
+	RecursionCounter.h			\
 	rose_isnan.h				\
 	rose_getline.h				\
 	rose_override.h				\
