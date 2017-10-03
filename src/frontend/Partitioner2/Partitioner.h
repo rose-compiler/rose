@@ -1243,6 +1243,8 @@ public:
      *  use instruction semantics to look at the stack, it may look at the kind of instructions in the block, it may look for
      *  patterns at the callee address if known, etc. The basic block caches the result of this analysis.
      *
+     *  If the analysis cannot prove that the block is a function call, then returns false.
+     *
      *  Thread safety: Not thread safe. */
     bool basicBlockIsFunctionCall(const BasicBlock::Ptr&) const /*final*/;
 
