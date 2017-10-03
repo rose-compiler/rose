@@ -7,5 +7,11 @@ int main(int argc, char* argv[]) {
       p2=argv[2];
     }
   }
+  char* p3;
+  p3=argv[1];
+  *(p3+1)=100;
+  p3[1]=p3[1]+1;
+  p3++;
+  p3[1]=500;
   return p1!=0 && p2!=0;
 }

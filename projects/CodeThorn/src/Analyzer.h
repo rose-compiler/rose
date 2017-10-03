@@ -109,6 +109,9 @@ namespace CodeThorn {
 
     const EState* popWorkList();
     
+    // initialize command line arguments provided by option "--cl-options" in PState
+    void initializeCommandLineArgumentsInState(PState& initialPState);
+
     // set the size of an element determined by this type
     void setElementSize(VariableId variableId, SgType* elementType);
 
