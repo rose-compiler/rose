@@ -1841,8 +1841,6 @@ AC_DEFUN([ROSE_SUPPORT_ROSE_PART_6],
 AC_CONFIG_FILES([
 Makefile
 config/Makefile
-demo/Makefile
-demo/qrose/Makefile
 docs/Makefile
 docs/Rose/Makefile
 docs/Rose/ROSE_DemoGuide.tex
