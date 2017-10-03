@@ -1,8 +1,9 @@
 
-// DQ (9/8/2017): Added header file suppport to allow for SgProject to be regerenced for debugging.
-// #include "rosePublicConfig.h"
-#include "rose_config.h"
-#include "sage3basic.h"
+// DQ (9/28/2017): Removed this to avoid dependence on ROSETTA generated code.
+// DQ (9/8/2017): Added header file suppport to allow for SgProject to be referenced for debugging.
+#include "rosePublicConfig.h"
+// #include "rose_config.h"
+// #include "sage3basic.h"
 
 #include "rose_msvc.h"
 
@@ -185,11 +186,6 @@ throwOnFailedAssertion(const char *mesg, const char *expr, const std::string &no
 ROSE_UTIL_API void
 failedAssertionBehavior(Sawyer::Assert::AssertFailureHandler handler) {
 
-     if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL )
-        {
-          printf ("Inside of failedAssertionBehavior() \n");
-        }
-
     if (handler) {
         Sawyer::Assert::assertFailureHandler = handler;
     } else {
@@ -205,11 +201,6 @@ failedAssertionBehavior(Sawyer::Assert::AssertFailureHandler handler) {
 #           error "ROSE_ASSERTION_BEHAVIOR has an invalid value"
 #endif
     }
-
-     if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL )
-        {
-          printf ("Leaving failedAssertionBehavior() \n");
-        }
 
 }
 

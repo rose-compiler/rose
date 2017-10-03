@@ -179,14 +179,23 @@ Grammar::setUpNodes ()
   // Rasmussen (8/16/2017): Added new IR node to represent a Fortran submodule (a submodule extends an existing module)
      NEW_TERMINAL_MACRO (UntypedSubmoduleDeclaration,     "UntypedSubmoduleDeclaration",     "TEMP_UntypedsubModuleDeclaration" );
 
+  // DQ (9/29/2017): Added new IR node for untyped representation of package declarations (Ada).
+     NEW_TERMINAL_MACRO (UntypedPackageDeclaration,          "UntypedPackageDeclaration",          "TEMP_UntypedPackageDeclaration" );
+     NEW_TERMINAL_MACRO (UntypedTaskDeclaration,             "UntypedTaskDeclaration",             "TEMP_UntypedTaskDeclaration" );
+     NEW_TERMINAL_MACRO (UntypedStructureDeclaration,        "UntypedStructureDeclaration",        "TEMP_UntypedStructureDeclaration" );
+     NEW_TERMINAL_MACRO (UntypedExceptionDeclaration,        "UntypedExceptionDeclaration",        "TEMP_UntypedExceptionDeclaration" );
+     NEW_TERMINAL_MACRO (UntypedExceptionHandlerDeclaration, "UntypedExceptionHandlerDeclaration", "TEMP_UntypedExceptionHandlerDeclaration" );
+
   // DQ (1/22/2016): Allow this IR node to be used explicitly in the AST.
   // NEW_NONTERMINAL_MACRO (UntypedDeclarationStatement, UntypedImplicitDeclaration | UntypedVariableDeclaration | 
   //     UntypedFunctionDeclaration | UntypedModuleDeclaration,
   //     "UntypedDeclarationStatement", "UntypedDeclarationStatementTag", false);
   // Rasmussen (8/16/2017): Added UntypedSubmoduleDeclaration
      NEW_NONTERMINAL_MACRO (UntypedDeclarationStatement, UntypedNameListDeclaration | UntypedUseStatement |
-         UntypedImplicitDeclaration | UntypedVariableDeclaration | UntypedFunctionDeclaration |
-         UntypedModuleDeclaration | UntypedSubmoduleDeclaration,
+         UntypedImplicitDeclaration  | UntypedVariableDeclaration  | UntypedFunctionDeclaration |
+         UntypedModuleDeclaration    | UntypedSubmoduleDeclaration | UntypedPackageDeclaration  | 
+         UntypedStructureDeclaration | UntypedExceptionDeclaration | UntypedExceptionHandlerDeclaration |
+         UntypedTaskDeclaration,
          "UntypedDeclarationStatement", "UntypedDeclarationStatementTag", true);
 
      NEW_TERMINAL_MACRO (UntypedAssignmentStatement,   "UntypedAssignmentStatement",   "TEMP_UntypedAssignmentStatement" );
@@ -548,7 +557,10 @@ Grammar::setUpNodes ()
      UntypedNode.setFunctionPrototype       ( "HEADER_UNTYPED_NODE", "../Grammar/LocatedNode.code");
 
      UntypedExpression.setFunctionPrototype ( "HEADER_UNTYPED_EXPRESSION", "../Grammar/LocatedNode.code");
-     UntypedExpression.setDataPrototype     ( "SgToken::ROSE_Fortran_Keywords", "statement_enum", "= SgToken::FORTRAN_UNKNOWN",
+  // DQ (10/3/2017): Generalizing untyped IR nodes to be less language specific (for use with different languages).
+  // UntypedExpression.setDataPrototype     ( "SgToken::ROSE_Fortran_Keywords", "statement_enum", "= SgToken::FORTRAN_UNKNOWN",
+  //              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     UntypedExpression.setDataPrototype     ( "int", "expression_enum", "= 0",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      UntypedUnaryOperator.setFunctionPrototype ( "HEADER_UNTYPED_UNARY_OPERATOR", "../Grammar/LocatedNode.code");
@@ -594,8 +606,11 @@ Grammar::setUpNodes ()
   // Save this as a string so that we catch details such as "0025" instead of just 25 as an integer.
      UntypedStatement.setDataPrototype     ( "std::string", "label_string", "= \"\"",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     UntypedStatement.setDataPrototype     ( "SgToken::ROSE_Fortran_Keywords", "statement_enum", "= SgToken::FORTRAN_UNKNOWN",
-                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // DQ (10/3/2017): Generalizing untyped IR nodes to be less language specific (for use with different languages).
+  // UntypedStatement.setDataPrototype     ( "SgToken::ROSE_Fortran_Keywords", "statement_enum", "= SgToken::FORTRAN_UNKNOWN",
+  //              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // UntypedStatement.setDataPrototype     ( "int", "statement_enum", "= SgToken::FORTRAN_UNKNOWN",
+  //              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      UntypedNamedStatement.setFunctionPrototype      ( "HEADER_UNTYPED_NAMED_STATEMENT", "../Grammar/LocatedNode.code");
      UntypedNamedStatement.setDataPrototype          ( "std::string", "statement_name", "= \"\"",
@@ -675,6 +690,27 @@ Grammar::setUpNodes ()
      UntypedModuleDeclaration.setDataPrototype          ( "SgUntypedNamedStatement*", "end_statement", "= NULL",
                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
+  // DQ (9/29/2017): Adding package support.
+     UntypedPackageDeclaration.setFunctionPrototype      ( "HEADER_UNTYPED_PACKAGE_DECLARATION", "../Grammar/LocatedNode.code");
+     UntypedPackageDeclaration.setDataPrototype          ( "std::string", "name", "= \"\"",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS,  NO_TRAVERSAL, NO_DELETE);
+     UntypedPackageDeclaration.setDataPrototype          ( "SgUntypedScope*", "scope", "= NULL",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // DQ (9/30/2017): Adding general language neutral structure support (e.g. class, struct, union, etc.).
+     UntypedStructureDeclaration.setFunctionPrototype      ( "HEADER_UNTYPED_STRUCTURE_DECLARATION", "../Grammar/LocatedNode.code");
+     UntypedStructureDeclaration.setDataPrototype          ( "std::string", "name", "= \"\"",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS,  NO_TRAVERSAL, NO_DELETE);
+     UntypedStructureDeclaration.setDataPrototype          ( "SgUntypedScope*", "scope", "= NULL",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // DQ (9/29/2017): Adding package support.
+     UntypedTaskDeclaration.setFunctionPrototype      ( "HEADER_UNTYPED_PACKAGE_DECLARATION", "../Grammar/LocatedNode.code");
+     UntypedTaskDeclaration.setDataPrototype          ( "std::string", "name", "= \"\"",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS,  NO_TRAVERSAL, NO_DELETE);
+     UntypedTaskDeclaration.setDataPrototype          ( "SgUntypedScope*", "scope", "= NULL",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
   // Rasmussen (8/16/2017): Added UntypedSubmoduleDeclaration (note submodule_ancestor and submodule_parent)
      UntypedSubmoduleDeclaration.setFunctionPrototype   ( "HEADER_UNTYPED_SUBMODULE_DECLARATION", "../Grammar/LocatedNode.code");
      UntypedSubmoduleDeclaration.setDataPrototype       ( "std::string", "name", "= \"\"",
@@ -686,6 +722,16 @@ Grammar::setUpNodes ()
      UntypedSubmoduleDeclaration.setDataPrototype       ( "SgUntypedModuleScope*", "scope", "= NULL",
                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      UntypedSubmoduleDeclaration.setDataPrototype       ( "SgUntypedNamedStatement*", "end_statement", "= NULL",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // DQ (10/2/2017): Adding general language neutral exception declaration support (e.g. for Ada).
+     UntypedExceptionDeclaration.setFunctionPrototype      ( "HEADER_UNTYPED_EXCEPTION_DECLARATION", "../Grammar/LocatedNode.code");
+     UntypedExceptionDeclaration.setDataPrototype          ( "SgUntypedStatement*", "statement", "= NULL",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // DQ (10/2/2017): Adding general language neutral exception handler declaration support (e.g. for Ada).
+     UntypedExceptionHandlerDeclaration.setFunctionPrototype      ( "HEADER_UNTYPED_EXCEPTION_HANDLER_DECLARATION", "../Grammar/LocatedNode.code");
+     UntypedExceptionHandlerDeclaration.setDataPrototype          ( "SgUntypedStatement*", "statement", "= NULL",
                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      UntypedScope.setFunctionPrototype         ( "HEADER_UNTYPED_SCOPE", "../Grammar/LocatedNode.code");
@@ -1223,6 +1269,12 @@ Grammar::setUpNodes ()
      UntypedSubroutineDeclaration.setFunctionSource    ( "SOURCE_UNTYPED_SUBROUTINE_DECLARATION", "../Grammar/LocatedNode.code");
      UntypedInterfaceDeclaration.setFunctionSource     ( "SOURCE_UNTYPED_INTERFACE_DECLARATION", "../Grammar/LocatedNode.code");
      UntypedModuleDeclaration.setFunctionSource        ( "SOURCE_UNTYPED_MODULE_DECLARATION", "../Grammar/LocatedNode.code");
+
+     UntypedPackageDeclaration.setFunctionSource          ( "SOURCE_UNTYPED_PACKAGE_DECLARATION", "../Grammar/LocatedNode.code");
+     UntypedStructureDeclaration.setFunctionSource        ( "SOURCE_UNTYPED_STRUCTURE_DECLARATION", "../Grammar/LocatedNode.code");
+     UntypedExceptionDeclaration.setFunctionSource        ( "SOURCE_UNTYPED_EXCEPTION_DECLARATION", "../Grammar/LocatedNode.code");
+     UntypedExceptionHandlerDeclaration.setFunctionSource ( "SOURCE_UNTYPED_EXCEPTION_HANDLER_DECLARATION", "../Grammar/LocatedNode.code");
+     UntypedTaskDeclaration.setFunctionSource             ( "SOURCE_UNTYPED_TASK_DECLARATION", "../Grammar/LocatedNode.code");
 
   // Rasmussen (8/16/2017): Added new IR node to represent a Fortran submodule (a submodule extends an existing module)
      UntypedSubmoduleDeclaration.setFunctionSource     ( "SOURCE_UNTYPED_SUBMODULE_DECLARATION", "../Grammar/LocatedNode.code");
