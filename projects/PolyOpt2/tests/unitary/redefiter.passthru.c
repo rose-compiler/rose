@@ -1,9 +1,6 @@
 
 int main()
 {
-  int t;
-  int i;
-  int j;
   int Ca;
   int b;
   int N;
