@@ -342,7 +342,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(List_Node_Struct *head_node, SgSou
                       // Statement_List & bodyStatementList = element_struct->Body_Statements;
                          Statement_List & bodyStatementList = declaration.Body_Statements;
 
-                         for (size_t i = 0; i < bodyStatementList.Length; i++)
+                         for (int i = 0; i < bodyStatementList.Length; i++)
                             {
                               int statement_id = bodyStatementList.IDs[i];
                               printf ("statement_id = %d \n",statement_id);
@@ -379,6 +379,84 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(List_Node_Struct *head_node, SgSou
                     printf ("Found a SgUntypedNamedStatement \n");
 #if 0
                     printf ("case of SgUntypedNamedStatement not supported yet! \n");
+                    ROSE_ASSERT(false);
+#endif
+                    break;
+                  }
+
+               case V_SgUntypedName:
+                  {
+                 // This is a child nodes and we only visit parents to connect up children, so nothing to do here.
+
+                 // Find the parent element and connect this into the list of children.
+                    printf ("Found a SgUntypedName \n");
+#if 0
+                    printf ("case of SgUntypedName not supported yet! \n");
+                    ROSE_ASSERT(false);
+#endif
+                    break;
+                  }
+
+             case V_SgUntypedStructureDeclaration:
+                  {
+                 // This is a child nodes and we only visit parents to connect up children, so nothing to do here.
+
+                 // Find the parent element and connect this into the list of children.
+                    printf ("Found a SgUntypedStructureDeclaration \n");
+#if 0
+                    printf ("case of SgUntypedStructureDeclaration not supported yet! \n");
+                    ROSE_ASSERT(false);
+#endif
+                    break;
+                  }
+
+             case V_SgUntypedVariableDeclaration:
+                  {
+                 // This is a child nodes and we only visit parents to connect up children, so nothing to do here.
+
+                 // Find the parent element and connect this into the list of children.
+                    printf ("Found a SgUntypedVariableDeclaration \n");
+#if 0
+                    printf ("case of SgUntypedVariableDeclaration not supported yet! \n");
+                    ROSE_ASSERT(false);
+#endif
+                    break;
+                  }
+
+               case V_SgUntypedPackageDeclaration:
+                  {
+                 // This is a child nodes and we only visit parents to connect up children, so nothing to do here.
+
+                 // Find the parent element and connect this into the list of children.
+                    printf ("Found a SgUntypedPackageDeclaration \n");
+#if 0
+                    printf ("case of SgUntypedPackageDeclaration not supported yet! \n");
+                    ROSE_ASSERT(false);
+#endif
+                    break;
+                  }
+
+             case V_SgUntypedScope:
+                  {
+                 // This is a child nodes and we only visit parents to connect up children, so nothing to do here.
+
+                 // Find the parent element and connect this into the list of children.
+                    printf ("Found a SgUntypedScope \n");
+#if 0
+                    printf ("case of SgUntypedScope not supported yet! \n");
+                    ROSE_ASSERT(false);
+#endif
+                    break;
+                  }
+
+             case V_SgUntypedTaskDeclaration:
+                  {
+                 // This is a child nodes and we only visit parents to connect up children, so nothing to do here.
+
+                 // Find the parent element and connect this into the list of children.
+                    printf ("Found a SgUntypedTaskDeclaration \n");
+#if 0
+                    printf ("case of SgUntypedTaskDeclaration not supported yet! \n");
                     ROSE_ASSERT(false);
 #endif
                     break;
@@ -693,10 +771,16 @@ Ada_ROSE_Translation::processElement (Node_Union & nodeUnion)
 
      Element_ID      element_id             = element.ID;
      Element_Kinds   element_kind           = element.Element_Kind;
+
+#if 0
+  // Limit the output to be more manageable.
      Node_ID         enclosing_element_id   = element.Enclosing_Element_ID;
      Enclosing_Kinds enclosing_element_kind = element.Enclosing_Kind;
+#endif
+
   // string          source_location        = element.Source_Location;
      Source_Location_Struct & source_location = element.Source_Location;
+
      Element_Union & element_union          = element.The_Union;
 
      printf ("In processElement(): \n");
@@ -813,7 +897,7 @@ Ada_ROSE_Translation::processElement (Node_Union & nodeUnion)
                printf ("   In Ada_ROSE_Translation::processElement(): case A_Path: not implemented \n");
 
                Path_Struct & path = element_union.Path;
-               processPath(path);
+               processPath(path,element_id);
 #if 0
                printf ("Exiting as a test! \n");
                ROSE_ASSERT(false);
@@ -1177,11 +1261,12 @@ struct Defining_Name_Struct {
   // We also might want a set of AST Build API functions to support this.
   // SgUntypedName (std::string name)
 
-  // DQ (9/18/2017): I want to use SgUntypedNmae, but this is only available in a later version of ROSE (modified by Craig).
+  // DQ (9/18/2017): I want to use SgUntypedName, but this is only available in a later version of ROSE (modified by Craig).
   // SgUntypedName* untypedName = new SgUntypedName(definingNameImage);
   // SgUntypedName* untypedName = NULL; // new SgUntypedName(definingNameImage);
-     SgUntypedType *type = NULL;
-     SgUntypedInitializedName* untypedName = new SgUntypedInitializedName(type,definingNameImage);
+  // SgUntypedType *type = NULL;
+  // SgUntypedInitializedName* untypedName = new SgUntypedInitializedName(type,definingNameImage);
+     SgUntypedName* untypedName = new SgUntypedName(definingNameImage);
 
   // Put into map using Ada Node ID's as the keys.
      ROSE_ASSERT(untypedNodeMap.find(element_id) == untypedNodeMap.end());
@@ -1507,6 +1592,8 @@ void
   bool                           Is_Dispatching_Operation;
 #endif
 
+#define DEBUG_UNTYPED_NODE_GENERATION 1
+
      Declaration_Kinds        declarationKind = declaration.Declaration_Kind;
      Subprogram_Default_Kinds defaultKind     = declaration.Default_Kind;
      Trait_Kinds              traitKind       = declaration.Trait_Kind;
@@ -1520,6 +1607,12 @@ void
      printf ("   In processDeclaration(): element_id = %d \n",element_id);
      printf ("      declarationKind (value) = %d \n",declarationKind);
      printf ("      declarationKind (name)  = %s \n",declarationKindName(declarationKind).c_str());
+
+     printf ("      defaultKind (value) = %d \n",defaultKind);
+     printf ("      defaultKind (name)  = %s \n",subprogramDefaultKindName(defaultKind).c_str());
+
+     printf ("      traitKind (value) = %d \n",traitKind);
+     printf ("      traitKind (name)  = %s \n",traitKindName(traitKind).c_str());
 
      printf ("      declarationOrigin (value) = %d \n",declarationOrigin);
      printf ("      declarationOrigin (name)  = %s \n",declarationOriginName(declarationOrigin).c_str());
@@ -1551,6 +1644,35 @@ void
 
                Expression_ID initializationExpression = declaration.Initialization_Expression;
                printf ("initializationExpression = %d \n",initializationExpression);
+
+               ROSE_ASSERT(names.Length > 0);
+               ROSE_ASSERT(names.Length == 1);
+               int name_id = names.IDs[0];
+
+               printf ("name_id = %d \n",name_id);
+
+            // string name = names[0];
+               string name = "__unknown__";
+
+            // Build the untyped node we will use to represent the structure of the AST.
+               SgUntypedType *type = NULL;
+               SgUntypedInitializedName* untypedName = new SgUntypedInitializedName(type,name);
+
+            // Put into map using Ada Node ID's as the keys.
+               ROSE_ASSERT(untypedNodeMap.find(element_id) == untypedNodeMap.end());
+               untypedNodeMap[element_id] = untypedName;
+               ROSE_ASSERT(untypedNodeMap.find(element_id) != untypedNodeMap.end());
+
+               printf ("untypedNodeMap.size() = %zu \n",untypedNodeMap.size());
+
+            // Build the attribute (element id onto the SgUntypedNode).
+               setAsisAttribute (untypedName,element_id);
+
+// #if DEBUG_UNTYPED_NODE_GENERATION
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -1587,10 +1709,15 @@ void
                bool isOverridingDeclaration     = declaration.Is_Overriding_Declaration;
                bool isNotOverridingDeclaration = declaration.Is_Not_Overriding_Declaration;
                printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
-               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+               printf ("isNotOverridingDeclaration = %s \n",isNotOverridingDeclaration ? "true" : "false");
 
                Expression_ID formalSubprogramDefault = declaration.Formal_Subprogram_Default;
                printf ("formalSubprogramDefault = %d \n",formalSubprogramDefault);
+
+#if DEBUG_UNTYPED_NODE_GENERATION
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -1626,6 +1753,11 @@ void
 
                Element_ID subtypeIndication = declaration.Subtype_Indication;
                printf ("subtypeIndication  = %d \n",subtypeIndication);
+
+#if DEBUG_UNTYPED_NODE_GENERATION
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -1639,6 +1771,11 @@ void
 
                Discrete_Subtype_Definition_ID specificationSubtypeDefinition = declaration.Specification_Subtype_Definition;
                printf ("specificationSubtypeDefinition  = %d \n",specificationSubtypeDefinition);
+
+#if DEBUG_UNTYPED_NODE_GENERATION
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -1654,6 +1791,10 @@ void
                Expression_ID initializationExpression = declaration.Initialization_Expression;
                printf ("initializationExpression = %d \n",initializationExpression);
 
+#if DEBUG_UNTYPED_NODE_GENERATION
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -1674,6 +1815,26 @@ void
 
                Expression_ID initializationExpression = declaration.Initialization_Expression;
                printf ("initializationExpression = %d \n",initializationExpression);
+
+               SgUntypedType* type = NULL;
+               SgUntypedVariableDeclaration* untypedVariableDeclaration = new SgUntypedVariableDeclaration(type);
+               ROSE_ASSERT(untypedVariableDeclaration != NULL);
+
+            // Put into map using Ada Node ID's as the keys.
+               ROSE_ASSERT(untypedNodeMap.find(element_id) == untypedNodeMap.end());
+               untypedNodeMap[element_id] = untypedVariableDeclaration;
+               ROSE_ASSERT(untypedNodeMap.find(element_id) != untypedNodeMap.end());
+
+               printf ("untypedNodeMap.size() = %zu \n",untypedNodeMap.size());
+
+            // Build the attribute (element id onto the SgUntypedNode).
+               setAsisAttribute (untypedVariableDeclaration,element_id);
+
+// #if DEBUG_UNTYPED_NODE_GENERATION
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -1691,6 +1852,11 @@ void
 
                Definition_ID objectDeclarationView = declaration.Object_Declaration_View;
                printf ("objectDeclarationView = %d \n",objectDeclarationView);
+
+#if DEBUG_UNTYPED_NODE_GENERATION
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -1698,30 +1864,35 @@ void
           case A_Private_Extension_Declaration:
              {
                Trait_Kinds traitKind = declaration.Trait_Kind;
-               printf ("      traitKind (value) = %d \n",traitKind);
-               printf ("      traitKind (name)  = %s \n",traitKindName(traitKind).c_str());
+               printf ("     traitKind (value) = %d \n",traitKind);
+               printf ("     traitKind (name)  = %s \n",traitKindName(traitKind).c_str());
 
                Definition_ID discriminantPart = declaration.Discriminant_Part;
-               printf ("discriminantPart = %d \n",discriminantPart);
+               printf ("     discriminantPart = %d \n",discriminantPart);
 
                Definition_ID typeDeclarationView = declaration.Type_Declaration_View;
-               printf ("typeDeclarationView = %d \n",typeDeclarationView);
+               printf ("     typeDeclarationView = %d \n",typeDeclarationView);
 
                Declaration_ID correspondingTypeDeclaration = declaration.Corresponding_Type_Declaration;
-               printf ("correspondingTypeDeclaration = %d \n",correspondingTypeDeclaration);
+               printf ("     correspondingTypeDeclaration = %d \n",correspondingTypeDeclaration);
 
                Declaration_ID correspondingTypeCompletion = declaration.Corresponding_Type_Completion;
-               printf ("correspondingTypeDeclaration = %d \n",correspondingTypeDeclaration);
+               printf ("     correspondingTypeCompletion = %d \n",correspondingTypeCompletion);
 
                Declaration_ID correspondingTypePartialView = declaration.Corresponding_Type_Partial_View;
-               printf ("correspondingTypeDeclaration = %d \n",correspondingTypeDeclaration);
+               printf ("     correspondingTypePartialView = %d \n",correspondingTypePartialView);
 
                Declaration_ID correspondingFirstSubtype   = declaration.Corresponding_First_Subtype;
                Declaration_ID correspondingLastConstraint = declaration.Corresponding_Last_Constraint;
                Declaration_ID correspondingLastSubtype    = declaration.Corresponding_Last_Subtype;
-               printf ("correspondingFirstSubtype   = %d \n",correspondingFirstSubtype);
-               printf ("correspondingLastConstraint = %d \n",correspondingLastConstraint);
-               printf ("correspondingLastSubtype    = %d \n",correspondingLastSubtype);
+               printf ("     correspondingFirstSubtype   = %d \n",correspondingFirstSubtype);
+               printf ("     correspondingLastConstraint = %d \n",correspondingLastConstraint);
+               printf ("     correspondingLastSubtype    = %d \n",correspondingLastSubtype);
+
+#if DEBUG_UNTYPED_NODE_GENERATION
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -1733,7 +1904,6 @@ void
        // A_Private_Type_Declaration,               // 3.2.1(2),7.3(2)
        // A_Private_Extension_Declaration,          // 3.2.1(2),7.3(3)
        // A_Formal_Type_Declaration,                // 12.5(2)
-#if 1
        // case An_Ordinary_Type_Declaration:
        // case A_Task_Type_Declaration:
        // case A_Protected_Type_Declaration:
@@ -1748,10 +1918,14 @@ void
                printf ("correspondingTypeDeclaration = %d \n",correspondingTypeDeclaration);
 
                Declaration_ID correspondingTypeCompletion = declaration.Corresponding_Type_Completion;
-               printf ("correspondingTypeDeclaration = %d \n",correspondingTypeDeclaration);
+               printf ("correspondingTypeCompletion = %d \n",correspondingTypeCompletion);
+
+#if DEBUG_UNTYPED_NODE_GENERATION
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
-#endif
 
        // An_Ordinary_Type_Declaration,            // 3.2.1(3)
        // A_Task_Type_Declaration,                  // 9.1(2)
@@ -1770,7 +1944,7 @@ void
                printf ("correspondingTypeDeclaration = %d \n",correspondingTypeDeclaration);
 
                Declaration_ID correspondingTypePartialView = declaration.Corresponding_Type_Partial_View;
-               printf ("correspondingTypeDeclaration = %d \n",correspondingTypeDeclaration);
+               printf ("correspondingTypePartialView = %d \n",correspondingTypePartialView);
 
                Declaration_ID correspondingFirstSubtype   = declaration.Corresponding_First_Subtype;
                Declaration_ID correspondingLastConstraint = declaration.Corresponding_Last_Constraint;
@@ -1778,6 +1952,41 @@ void
                printf ("correspondingFirstSubtype   = %d \n",correspondingFirstSubtype);
                printf ("correspondingLastConstraint = %d \n",correspondingLastConstraint);
                printf ("correspondingLastSubtype    = %d \n",correspondingLastSubtype);
+#if 0
+               SgUntypedType* type = NULL;
+               SgUntypedVariableDeclaration* untypedVariableDeclaration = new SgUntypedVariableDeclaration(type);
+               ROSE_ASSERT(untypedVariableDeclaration != NULL);
+
+            // Put into map using Ada Node ID's as the keys.
+               ROSE_ASSERT(untypedNodeMap.find(element_id) == untypedNodeMap.end());
+               untypedNodeMap[element_id] = untypedVariableDeclaration;
+               ROSE_ASSERT(untypedNodeMap.find(element_id) != untypedNodeMap.end());
+
+               printf ("untypedNodeMap.size() = %zu \n",untypedNodeMap.size());
+
+            // Build the attribute (element id onto the SgUntypedNode).
+               setAsisAttribute (untypedVariableDeclaration,element_id);
+#else
+            // We can't know the name at this point since it is or will be held as a SgUntypedName.
+               SgUntypedStructureDeclaration* untypedStructureDeclaration = new SgUntypedStructureDeclaration();
+               ROSE_ASSERT(untypedStructureDeclaration != NULL);
+
+            // Put into map using Ada Node ID's as the keys.
+               ROSE_ASSERT(untypedNodeMap.find(element_id) == untypedNodeMap.end());
+               untypedNodeMap[element_id] = untypedStructureDeclaration;
+               ROSE_ASSERT(untypedNodeMap.find(element_id) != untypedNodeMap.end());
+
+               printf ("untypedNodeMap.size() = %zu \n",untypedNodeMap.size());
+
+            // Build the attribute (element id onto the SgUntypedNode).
+               setAsisAttribute (untypedStructureDeclaration,element_id);
+#endif
+
+// #if DEBUG_UNTYPED_NODE_GENERATION
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -1794,7 +2003,7 @@ void
                printf ("correspondingTypeDeclaration = %d \n",correspondingTypeDeclaration);
 
                Declaration_ID correspondingTypePartialView = declaration.Corresponding_Type_Partial_View;
-               printf ("correspondingTypeDeclaration = %d \n",correspondingTypeDeclaration);
+               printf ("correspondingTypePartialView = %d \n",correspondingTypePartialView);
 
                Declaration_ID correspondingFirstSubtype   = declaration.Corresponding_First_Subtype;
                Declaration_ID correspondingLastConstraint = declaration.Corresponding_Last_Constraint;
@@ -1815,6 +2024,52 @@ void
                Expression_List & declarationInterfaceList = declaration.Declaration_Interface_List;
                printf ("declarationInterfaceList \n");
                processExpressionList(declarationInterfaceList);
+
+            // Get the name from the name list.
+               ROSE_ASSERT(names.Length == 1);
+               int taskName_id = names.IDs[0];
+
+               printf ("taskName_id = %d \n",taskName_id);
+
+               ROSE_ASSERT(untypedNodeMap.find(taskName_id) != untypedNodeMap.end());
+               SgUntypedNode* untypedNode = untypedNodeMap[taskName_id];
+               ROSE_ASSERT(untypedNode != NULL);
+            // SgUntypedInitializedName* untypedInitializedName = isSgUntypedInitializedName(untypedNode);
+            // ROSE_ASSERT(untypedInitializedName != NULL);
+            // string packageName = untypedInitializedName->get_name();
+               SgUntypedName* untypedName = isSgUntypedName(untypedNode);
+               ROSE_ASSERT(untypedName != NULL);
+               string taskName = untypedName->get_name();
+
+               printf ("taskName = %s \n",taskName.c_str());
+
+               SgUntypedTaskDeclaration* untypedTaskDeclaration = new SgUntypedTaskDeclaration(taskName);
+               ROSE_ASSERT(untypedTaskDeclaration != NULL);
+
+               SgUntypedScope* untypedScope = new SgUntypedScope();
+               ROSE_ASSERT(untypedScope != NULL);
+
+               untypedTaskDeclaration->set_scope(untypedScope);
+
+               SgUntypedStatementList* untypedStatementList = new SgUntypedStatementList();
+               ROSE_ASSERT(untypedStatementList != NULL);
+
+            // Connect IR nodes.
+               untypedScope->set_statement_list(untypedStatementList);
+
+            // Note that we can't connect the statements in the function body, until a second pass over the untyped AST.
+
+               ROSE_ASSERT(untypedNodeMap.find(element_id) == untypedNodeMap.end());
+               untypedNodeMap[element_id] = untypedTaskDeclaration;
+               ROSE_ASSERT(untypedNodeMap.find(element_id) != untypedNodeMap.end());
+
+               setAsisAttribute (untypedTaskDeclaration,element_id);
+
+// #if DEBUG_UNTYPED_NODE_GENERATION
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -1837,6 +2092,11 @@ void
                printf ("correspondingFirstSubtype   = %d \n",correspondingFirstSubtype);
                printf ("correspondingLastConstraint = %d \n",correspondingLastConstraint);
                printf ("correspondingLastSubtype    = %d \n",correspondingLastSubtype);
+
+#if DEBUG_UNTYPED_NODE_GENERATION
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -1870,6 +2130,11 @@ void
                printf ("      renamedEntity = %d \n",renamedEntity);
                Expression_ID correspondingBaseEntity = declaration.Corresponding_Base_Entity;
                printf ("      correspondingBaseEntity = %d \n",correspondingBaseEntity);
+
+#if DEBUG_UNTYPED_NODE_GENERATION
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -1891,6 +2156,11 @@ void
                Expression_List & declarationInterfaceList = declaration.Declaration_Interface_List;
                printf ("declarationInterfaceList \n");
                processExpressionList(declarationInterfaceList);
+
+#if DEBUG_UNTYPED_NODE_GENERATION
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -1909,6 +2179,35 @@ void
 
                Expression_ID initializationExpression = declaration.Initialization_Expression;
                printf ("initializationExpression = %d \n",initializationExpression);
+
+
+               if (declarationKind == A_Component_Declaration)
+                  {
+                    SgUntypedType* type = NULL;
+                    SgUntypedVariableDeclaration* untypedVariableDeclaration = new SgUntypedVariableDeclaration(type);
+                    ROSE_ASSERT(untypedVariableDeclaration != NULL);
+
+                 // Put into map using Ada Node ID's as the keys.
+                    ROSE_ASSERT(untypedNodeMap.find(element_id) == untypedNodeMap.end());
+                    untypedNodeMap[element_id] = untypedVariableDeclaration;
+                    ROSE_ASSERT(untypedNodeMap.find(element_id) != untypedNodeMap.end());
+
+                    printf ("untypedNodeMap.size() = %zu \n",untypedNodeMap.size());
+
+                 // Build the attribute (element id onto the SgUntypedNode).
+                    setAsisAttribute (untypedVariableDeclaration,element_id);
+                  }
+                 else
+                  {
+                    printf ("Case of A_Return_Variable_Specification not handled! \n");
+                    ROSE_ASSERT(false);
+                  }
+
+// #if DEBUG_UNTYPED_NODE_GENERATION
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -1933,6 +2232,11 @@ void
              {
                Expression_ID initializationExpression = declaration.Initialization_Expression;
                printf ("initializationExpression = %d \n",initializationExpression);
+
+#if DEBUG_UNTYPED_NODE_GENERATION
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -1969,7 +2273,7 @@ void
        // case A_Private_Extension_Declaration:
              {
                Declaration_ID correspondingTypeCompletion = declaration.Corresponding_Type_Completion;
-               printf ("correspondingTypeDeclaration = %d \n",correspondingTypeDeclaration);
+               printf ("correspondingTypeCompletion = %d \n",correspondingTypeCompletion);
                break;
              }
 #endif
@@ -1986,7 +2290,7 @@ void
        // case A_Private_Extension_Declaration:
              {
                Declaration_ID correspondingTypePartialView = declaration.Corresponding_Type_Partial_View;
-               printf ("correspondingTypeDeclaration = %d \n",correspondingTypeDeclaration);
+               printf ("correspondingTypePartialView = %d \n",correspondingTypePartialView);
                break;
              }
 #endif
@@ -2026,6 +2330,11 @@ void
                printf ("correspondingFirstSubtype   = %d \n",correspondingFirstSubtype);
                printf ("correspondingLastConstraint = %d \n",correspondingLastConstraint);
                printf ("correspondingLastSubtype    = %d \n",correspondingLastSubtype);
+
+#if DEBUG_UNTYPED_NODE_GENERATION
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -2052,6 +2361,11 @@ void
 
                Element_ID iterationSchemeName = declaration.Iteration_Scheme_Name;
                printf ("iterationSchemeName  = %d \n",iterationSchemeName);
+
+#if DEBUG_UNTYPED_NODE_GENERATION
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -2120,19 +2434,52 @@ void
        // case A_Generic_Procedure_Declaration:
              {
                Parameter_Specification_List & parameterProfile = declaration.Parameter_Profile;
-               printf ("parameterProfile: \n");
+               printf ("      parameterProfile: \n");
                processParameterSpecificationList(parameterProfile);
 
                bool isOverridingDeclaration     = declaration.Is_Overriding_Declaration;
                bool isNotOverridingDeclaration = declaration.Is_Not_Overriding_Declaration;
-               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
-               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+               printf ("      isOverridingDeclaration    = %s \n",isOverridingDeclaration ? "true" : "false");
+               printf ("      isNotOverridingDeclaration = %s \n",isNotOverridingDeclaration ? "true" : "false");
 
                Declaration_ID correspondingBody = declaration.Corresponding_Body;
                printf ("      correspondingBody = %d \n",correspondingBody);
 
                Discrete_Subtype_Definition_ID entryFamilyDefinition = declaration.Entry_Family_Definition;
                printf ("      entryFamilyDefinition = %d \n",entryFamilyDefinition);
+
+            // Get the name from the name list.
+               ROSE_ASSERT(names.Length == 1);
+               int functionName_id = names.IDs[0];
+
+               printf ("functionName_id = %d \n",functionName_id);
+
+               ROSE_ASSERT(untypedNodeMap.find(functionName_id) != untypedNodeMap.end());
+               SgUntypedNode* untypedNode = untypedNodeMap[functionName_id];
+               ROSE_ASSERT(untypedNode != NULL);
+            // SgUntypedInitializedName* untypedInitializedName = isSgUntypedInitializedName(untypedNode);
+            // ROSE_ASSERT(untypedInitializedName != NULL);
+            // string functionName = untypedInitializedName->get_name();
+               SgUntypedName* untypedName = isSgUntypedName(untypedNode);
+               ROSE_ASSERT(untypedName != NULL);
+               string functionName = untypedName->get_name();
+
+               printf ("functionName = %s \n",functionName.c_str());
+
+               SgUntypedFunctionDeclaration* untypedFunctionDeclaration = new SgUntypedFunctionDeclaration(functionName);
+               ROSE_ASSERT(untypedFunctionDeclaration != NULL);
+
+               ROSE_ASSERT(untypedNodeMap.find(element_id) == untypedNodeMap.end());
+               untypedNodeMap[element_id] = untypedFunctionDeclaration;
+               ROSE_ASSERT(untypedNodeMap.find(element_id) != untypedNodeMap.end());
+
+               setAsisAttribute (untypedFunctionDeclaration,element_id);
+
+// #if DEBUG_UNTYPED_NODE_GENERATION
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -2144,32 +2491,37 @@ void
        // case A_Generic_Procedure_Declaration:
              {
                Parameter_Specification_List & parameterProfile = declaration.Parameter_Profile;
-               printf ("parameterProfile: \n");
+               printf ("      parameterProfile: \n");
                processParameterSpecificationList(parameterProfile);
 
                bool isOverridingDeclaration     = declaration.Is_Overriding_Declaration;
                bool isNotOverridingDeclaration = declaration.Is_Not_Overriding_Declaration;
-               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
-               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+               printf ("      isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+               printf ("      isNotOverridingDeclaration = %s \n",isNotOverridingDeclaration ? "true" : "false");
 
                Declaration_ID correspondingDeclaration = declaration.Corresponding_Declaration;
                printf ("      correspondingDeclaration = %d \n",correspondingDeclaration);
 
                bool isDispatchingOperation = declaration.Is_Dispatching_Operation;
-               printf ("isDispatchingOperation = %s \n",isDispatchingOperation ? "true" : "false");
+               printf ("      isDispatchingOperation = %s \n",isDispatchingOperation ? "true" : "false");
+
+#if DEBUG_UNTYPED_NODE_GENERATION
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
           case A_Procedure_Body_Stub:
              {
                Parameter_Specification_List & parameterProfile = declaration.Parameter_Profile;
-               printf ("parameterProfile: \n");
+               printf ("      parameterProfile: \n");
                processParameterSpecificationList(parameterProfile);
 
                bool isOverridingDeclaration     = declaration.Is_Overriding_Declaration;
                bool isNotOverridingDeclaration = declaration.Is_Not_Overriding_Declaration;
-               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
-               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+               printf ("      isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+               printf ("      isNotOverridingDeclaration = %s \n",isNotOverridingDeclaration ? "true" : "false");
 
                Declaration_ID correspondingDeclaration = declaration.Corresponding_Declaration;
                printf ("      correspondingDeclaration = %d \n",correspondingDeclaration);
@@ -2178,20 +2530,25 @@ void
                printf ("      correspondingSubunit = %d \n",correspondingSubunit);
 
                bool isDispatchingOperation = declaration.Is_Dispatching_Operation;
-               printf ("isDispatchingOperation = %s \n",isDispatchingOperation ? "true" : "false");
+               printf ("      isDispatchingOperation = %s \n",isDispatchingOperation ? "true" : "false");
+
+#if DEBUG_UNTYPED_NODE_GENERATION
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
           case A_Procedure_Renaming_Declaration:
              {
                Parameter_Specification_List & parameterProfile = declaration.Parameter_Profile;
-               printf ("parameterProfile: \n");
+               printf ("      parameterProfile: \n");
                processParameterSpecificationList(parameterProfile);
 
                bool isOverridingDeclaration     = declaration.Is_Overriding_Declaration;
                bool isNotOverridingDeclaration = declaration.Is_Not_Overriding_Declaration;
-               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
-               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+               printf ("      isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+               printf ("      isNotOverridingDeclaration = %s \n",isNotOverridingDeclaration ? "true" : "false");
 
                Declaration_ID correspondingDeclaration = declaration.Corresponding_Declaration;
                printf ("      correspondingDeclaration = %d \n",correspondingDeclaration);
@@ -2202,20 +2559,25 @@ void
                printf ("      correspondingBaseEntity = %d \n",correspondingBaseEntity);
 
                bool isDispatchingOperation = declaration.Is_Dispatching_Operation;
-               printf ("isDispatchingOperation = %s \n",isDispatchingOperation ? "true" : "false");
+               printf ("      isDispatchingOperation = %s \n",isDispatchingOperation ? "true" : "false");
+
+#if DEBUG_UNTYPED_NODE_GENERATION
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
           case A_Generic_Procedure_Declaration:
              {
                Parameter_Specification_List & parameterProfile = declaration.Parameter_Profile;
-               printf ("parameterProfile: \n");
+               printf ("      parameterProfile: \n");
                processParameterSpecificationList(parameterProfile);
 
                bool isOverridingDeclaration     = declaration.Is_Overriding_Declaration;
                bool isNotOverridingDeclaration = declaration.Is_Not_Overriding_Declaration;
-               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
-               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+               printf ("      isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+               printf ("      isNotOverridingDeclaration = %s \n",isNotOverridingDeclaration ? "true" : "false");
 
                Declaration_ID correspondingDeclaration = declaration.Corresponding_Declaration;
                printf ("      correspondingDeclaration = %d \n",correspondingDeclaration);
@@ -2224,36 +2586,41 @@ void
                printf ("      correspondingBody = %d \n",correspondingBody);
 
                Element_List & genericFormalPart = declaration.Generic_Formal_Part;
-               printf ("genericFormalPart: \n");
+               printf ("      genericFormalPart: \n");
                processElementList(genericFormalPart);
+
+#if DEBUG_UNTYPED_NODE_GENERATION
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
           case An_Entry_Body_Declaration:
              {
                Parameter_Specification_List & parameterProfile = declaration.Parameter_Profile;
-               printf ("parameterProfile: \n");
+               printf ("      parameterProfile: \n");
                processParameterSpecificationList(parameterProfile);
 
                bool isOverridingDeclaration     = declaration.Is_Overriding_Declaration;
                bool isNotOverridingDeclaration = declaration.Is_Not_Overriding_Declaration;
-               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
-               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+               printf ("      isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+               printf ("      isNotOverridingDeclaration = %s \n",isNotOverridingDeclaration ? "true" : "false");
 
                Element_List           & bodyDeclarativeItems  = declaration.Body_Declarative_Items;
-               printf ("bodyDeclarativeItems: \n");
+               printf ("      bodyDeclarativeItems: \n");
                processElementList(bodyDeclarativeItems);
                Statement_List         & bodyStatements        = declaration.Body_Statements;
-               printf ("bodyStatements: \n");
+               printf ("      bodyStatements: \n");
                processStatementList(bodyStatements);
                Exception_Handler_List & bodyExceptionHandlers = declaration.Body_Exception_Handlers;
-               printf ("bodyExceptionHandlers: \n");
+               printf ("      bodyExceptionHandlers: \n");
                processExceptionHandlerList(bodyExceptionHandlers);
                Declaration_ID           bodyBlockStatement    = declaration.Body_Block_Statement;
                printf ("      bodyBlockStatement = %d \n",bodyBlockStatement);
 
                bool isNameRepeated = declaration.Is_Name_Repeated;
-               printf ("isNameRepeated = %s \n",isNameRepeated ? "true" : "false");
+               printf ("      isNameRepeated = %s \n",isNameRepeated ? "true" : "false");
 
                Declaration_ID correspondingDeclaration = declaration.Corresponding_Declaration;
                printf ("      correspondingDeclaration = %d \n",correspondingDeclaration);
@@ -2262,6 +2629,11 @@ void
                printf ("      entryIndexSpecification = %d \n",entryIndexSpecification);
                Expression_ID entryBarrier = declaration.Entry_Barrier;
                printf ("      entryBarrier = %d \n",entryBarrier);
+
+#if DEBUG_UNTYPED_NODE_GENERATION
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -2270,7 +2642,7 @@ void
        // case A_Formal_Function_Declaration:
              {
                Parameter_Specification_List & parameterProfile = declaration.Parameter_Profile;
-               printf ("parameterProfile: \n");
+               printf ("      parameterProfile: \n");
                processParameterSpecificationList(parameterProfile);
 
                Element_ID resultProfile = declaration.Result_Profile;
@@ -2278,8 +2650,8 @@ void
 
                bool isOverridingDeclaration     = declaration.Is_Overriding_Declaration;
                bool isNotOverridingDeclaration = declaration.Is_Not_Overriding_Declaration;
-               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
-               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+               printf ("      isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+               printf ("      isNotOverridingDeclaration = %s \n",isNotOverridingDeclaration ? "true" : "false");
 
                Declaration_ID correspondingDeclaration = declaration.Corresponding_Declaration;
                printf ("      correspondingDeclaration = %d \n",correspondingDeclaration);
@@ -2288,7 +2660,12 @@ void
                printf ("      correspondingSubunit = %d \n",correspondingSubunit);
 
                bool isDispatchingOperation = declaration.Is_Dispatching_Operation;
-               printf ("isDispatchingOperation = %s \n",isDispatchingOperation ? "true" : "false");
+               printf ("      isDispatchingOperation = %s \n",isDispatchingOperation ? "true" : "false");
+
+#if DEBUG_UNTYPED_NODE_GENERATION
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -2296,7 +2673,7 @@ void
        // case A_Formal_Function_Declaration:
              {
                Parameter_Specification_List & parameterProfile = declaration.Parameter_Profile;
-               printf ("parameterProfile: \n");
+               printf ("      parameterProfile: \n");
                processParameterSpecificationList(parameterProfile);
 
                Element_ID resultProfile = declaration.Result_Profile;
@@ -2304,8 +2681,8 @@ void
 
                bool isOverridingDeclaration     = declaration.Is_Overriding_Declaration;
                bool isNotOverridingDeclaration = declaration.Is_Not_Overriding_Declaration;
-               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
-               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+               printf ("      isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+               printf ("      isNotOverridingDeclaration = %s \n",isNotOverridingDeclaration ? "true" : "false");
 
                Declaration_ID correspondingDeclaration = declaration.Corresponding_Declaration;
                printf ("      correspondingDeclaration = %d \n",correspondingDeclaration);
@@ -2314,8 +2691,13 @@ void
                printf ("      correspondingBody = %d \n",correspondingBody);
 
                Element_List & genericFormalPart = declaration.Generic_Formal_Part;
-               printf ("genericFormalPart: \n");
+               printf ("      genericFormalPart: \n");
                processElementList(genericFormalPart);
+
+#if DEBUG_UNTYPED_NODE_GENERATION
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -2324,7 +2706,7 @@ void
           case A_Function_Renaming_Declaration:
              {
                Parameter_Specification_List & parameterProfile = declaration.Parameter_Profile;
-               printf ("parameterProfile: \n");
+               printf ("      parameterProfile: \n");
                processParameterSpecificationList(parameterProfile);
 
                Element_ID resultProfile = declaration.Result_Profile;
@@ -2332,8 +2714,8 @@ void
 
                bool isOverridingDeclaration     = declaration.Is_Overriding_Declaration;
                bool isNotOverridingDeclaration = declaration.Is_Not_Overriding_Declaration;
-               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
-               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+               printf ("      isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+               printf ("      isNotOverridingDeclaration = %s \n",isNotOverridingDeclaration ? "true" : "false");
 
                Declaration_ID correspondingDeclaration = declaration.Corresponding_Declaration;
                printf ("      correspondingDeclaration = %d \n",correspondingDeclaration);
@@ -2344,7 +2726,12 @@ void
                printf ("      correspondingBaseEntity = %d \n",correspondingBaseEntity);
 
                bool isDispatchingOperation = declaration.Is_Dispatching_Operation;
-               printf ("isDispatchingOperation = %s \n",isDispatchingOperation ? "true" : "false");
+               printf ("      isDispatchingOperation = %s \n",isDispatchingOperation ? "true" : "false");
+
+#if DEBUG_UNTYPED_NODE_GENERATION
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -2352,7 +2739,7 @@ void
           case A_Function_Body_Declaration:
              {
                Parameter_Specification_List & parameterProfile = declaration.Parameter_Profile;
-               printf ("parameterProfile: \n");
+               printf ("      parameterProfile: \n");
                processParameterSpecificationList(parameterProfile);
 
                Element_ID resultProfile = declaration.Result_Profile;
@@ -2360,34 +2747,58 @@ void
 
                bool isOverridingDeclaration     = declaration.Is_Overriding_Declaration;
                bool isNotOverridingDeclaration = declaration.Is_Not_Overriding_Declaration;
-               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
-               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+               printf ("      isOverridingDeclaration    = %s \n",isOverridingDeclaration ? "true" : "false");
+               printf ("      isNotOverridingDeclaration = %s \n",isNotOverridingDeclaration ? "true" : "false");
 
                Element_List           & bodyDeclarativeItems  = declaration.Body_Declarative_Items;
-               printf ("bodyDeclarativeItems: \n");
+               printf ("      bodyDeclarativeItems: \n");
                processElementList(bodyDeclarativeItems);
                Statement_List         & bodyStatements        = declaration.Body_Statements;
-               printf ("bodyStatements: \n");
+               printf ("      bodyStatements: \n");
                processStatementList(bodyStatements);
                Exception_Handler_List & bodyExceptionHandlers = declaration.Body_Exception_Handlers;
-               printf ("bodyExceptionHandlers: \n");
+               printf ("      bodyExceptionHandlers: \n");
                processExceptionHandlerList(bodyExceptionHandlers);
                Declaration_ID           bodyBlockStatement    = declaration.Body_Block_Statement;
                printf ("      bodyBlockStatement = %d \n",bodyBlockStatement);
 
                bool isNameRepeated = declaration.Is_Name_Repeated;
-               printf ("isNameRepeated = %s \n",isNameRepeated ? "true" : "false");
+               printf ("      isNameRepeated = %s \n",isNameRepeated ? "true" : "false");
 
                Declaration_ID correspondingDeclaration = declaration.Corresponding_Declaration;
                printf ("      correspondingDeclaration = %d \n",correspondingDeclaration);
 
                bool  isSubunit = declaration.Is_Subunit;
-               printf ("isSubunit = %s \n",isSubunit ? "true" : "false");
+               printf ("      isSubunit = %s \n",isSubunit ? "true" : "false");
                Declaration_ID correspondingBodyStub = declaration.Corresponding_Body_Stub;
-               printf ("correspondingBodyStub = %d \n",correspondingBodyStub);
+               printf ("      correspondingBodyStub = %d \n",correspondingBodyStub);
 
                bool isDispatchingOperation = declaration.Is_Dispatching_Operation;
-               printf ("isDispatchingOperation = %s \n",isDispatchingOperation ? "true" : "false");
+               printf ("      isDispatchingOperation = %s \n",isDispatchingOperation ? "true" : "false");
+
+            // SgUntypedScope* untypedScope = new SgUntypedScope();
+               SgUntypedScope* untypedFunctionScope = new SgUntypedFunctionScope();
+               ROSE_ASSERT(untypedFunctionScope != NULL);
+
+               SgUntypedStatementList* untypedStatementList = new SgUntypedStatementList();
+               ROSE_ASSERT(untypedStatementList != NULL);
+
+            // Connect IR nodes.
+               untypedFunctionScope->set_statement_list(untypedStatementList);
+
+            // Note that we can't connect the statements in the function body, until a second pass over the untyped AST.
+
+               ROSE_ASSERT(untypedNodeMap.find(element_id) == untypedNodeMap.end());
+               untypedNodeMap[element_id] = untypedFunctionScope;
+               ROSE_ASSERT(untypedNodeMap.find(element_id) != untypedNodeMap.end());
+
+               setAsisAttribute (untypedFunctionScope,element_id);
+
+// #if DEBUG_UNTYPED_NODE_GENERATION
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -2426,27 +2837,51 @@ void
        // case An_Entry_Body_Declaration:
              {
                Element_List           & bodyDeclarativeItems  = declaration.Body_Declarative_Items;
-               printf ("bodyDeclarativeItems: \n");
+               printf ("      bodyDeclarativeItems: \n");
                processElementList(bodyDeclarativeItems);
                Statement_List         & bodyStatements        = declaration.Body_Statements;
-               printf ("bodyStatements: \n");
+               printf ("      bodyStatements: \n");
                processStatementList(bodyStatements);
                Exception_Handler_List & bodyExceptionHandlers = declaration.Body_Exception_Handlers;
-               printf ("bodyExceptionHandlers: \n");
+               printf ("      bodyExceptionHandlers: \n");
                processExceptionHandlerList(bodyExceptionHandlers);
                Declaration_ID           bodyBlockStatement    = declaration.Body_Block_Statement;
                printf ("      bodyBlockStatement = %d \n",bodyBlockStatement);
 
                bool isNameRepeated = declaration.Is_Name_Repeated;
-               printf ("isNameRepeated = %s \n",isNameRepeated ? "true" : "false");
+               printf ("      isNameRepeated = %s \n",isNameRepeated ? "true" : "false");
 
                Declaration_ID correspondingDeclaration = declaration.Corresponding_Declaration;
                printf ("      correspondingDeclaration = %d \n",correspondingDeclaration);
 
                bool  isSubunit = declaration.Is_Subunit;
-               printf ("isSubunit = %s \n",isSubunit ? "true" : "false");
+               printf ("      isSubunit = %s \n",isSubunit ? "true" : "false");
                Declaration_ID correspondingBodyStub = declaration.Corresponding_Body_Stub;
-               printf ("correspondingBodyStub = %d \n",correspondingBodyStub);
+               printf ("      correspondingBodyStub = %d \n",correspondingBodyStub);
+
+            // SgUntypedScope* untypedScope = new SgUntypedScope();
+               SgUntypedScope* untypedScope = new SgUntypedScope();
+               ROSE_ASSERT(untypedScope != NULL);
+
+               SgUntypedStatementList* untypedStatementList = new SgUntypedStatementList();
+               ROSE_ASSERT(untypedStatementList != NULL);
+
+            // Connect IR nodes.
+               untypedScope->set_statement_list(untypedStatementList);
+
+            // Note that we can't connect the statements in the function body, until a second pass over the untyped AST.
+
+               ROSE_ASSERT(untypedNodeMap.find(element_id) == untypedNodeMap.end());
+               untypedNodeMap[element_id] = untypedScope;
+               ROSE_ASSERT(untypedNodeMap.find(element_id) != untypedNodeMap.end());
+
+               setAsisAttribute (untypedScope,element_id);
+
+// #if DEBUG_UNTYPED_NODE_GENERATION
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -2457,7 +2892,7 @@ void
                printf ("      traitKind (name)  = %s \n",traitKindName(traitKind).c_str());
 
                Parameter_Specification_List & parameterProfile = declaration.Parameter_Profile;
-               printf ("parameterProfile: \n");
+               printf ("      parameterProfile: \n");
                processParameterSpecificationList(parameterProfile);
 
                Element_ID resultProfile = declaration.Result_Profile;
@@ -2465,8 +2900,8 @@ void
 
                bool isOverridingDeclaration     = declaration.Is_Overriding_Declaration;
                bool isNotOverridingDeclaration = declaration.Is_Not_Overriding_Declaration;
-               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
-               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+               printf ("      isOverridingDeclaration    = %s \n",isOverridingDeclaration ? "true" : "false");
+               printf ("      isNotOverridingDeclaration = %s \n",isNotOverridingDeclaration ? "true" : "false");
 
                Declaration_ID correspondingDeclaration = declaration.Corresponding_Declaration;
                printf ("      correspondingDeclaration = %d \n",correspondingDeclaration);
@@ -2484,7 +2919,40 @@ void
                printf ("      correspondingEqualityOperator = %d \n",correspondingEqualityOperator);
 
                bool isDispatchingOperation = declaration.Is_Dispatching_Operation;
-               printf ("isDispatchingOperation = %s \n",isDispatchingOperation ? "true" : "false");
+               printf ("      isDispatchingOperation = %s \n",isDispatchingOperation ? "true" : "false");
+
+            // Get the name from the name list.
+               ROSE_ASSERT(names.Length == 1);
+               int functionName_id = names.IDs[0];
+
+               printf ("functionName_id = %d \n",functionName_id);
+
+               ROSE_ASSERT(untypedNodeMap.find(functionName_id) != untypedNodeMap.end());
+               SgUntypedNode* untypedNode = untypedNodeMap[functionName_id];
+               ROSE_ASSERT(untypedNode != NULL);
+            // SgUntypedInitializedName* untypedInitializedName = isSgUntypedInitializedName(untypedNode);
+            // ROSE_ASSERT(untypedInitializedName != NULL);
+            // string functionName = untypedInitializedName->get_name();
+               SgUntypedName* untypedName = isSgUntypedName(untypedNode);
+               ROSE_ASSERT(untypedName != NULL);
+               string functionName = untypedName->get_name();
+
+               printf ("functionName = %s \n",functionName.c_str());
+
+               SgUntypedFunctionDeclaration* untypedFunctionDeclaration = new SgUntypedFunctionDeclaration(functionName);
+               ROSE_ASSERT(untypedFunctionDeclaration != NULL);
+
+               ROSE_ASSERT(untypedNodeMap.find(element_id) == untypedNodeMap.end());
+               untypedNodeMap[element_id] = untypedFunctionDeclaration;
+               ROSE_ASSERT(untypedNodeMap.find(element_id) != untypedNodeMap.end());
+
+               setAsisAttribute (untypedFunctionDeclaration,element_id);
+
+// #if DEBUG_UNTYPED_NODE_GENERATION
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -2492,7 +2960,7 @@ void
           case An_Expression_Function_Declaration:
              {
                Parameter_Specification_List & parameterProfile = declaration.Parameter_Profile;
-               printf ("parameterProfile: \n");
+               printf ("      parameterProfile: \n");
                processParameterSpecificationList(parameterProfile);
 
                Element_ID resultProfile = declaration.Result_Profile;
@@ -2503,8 +2971,8 @@ void
 
                bool isOverridingDeclaration     = declaration.Is_Overriding_Declaration;
                bool isNotOverridingDeclaration = declaration.Is_Not_Overriding_Declaration;
-               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
-               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+               printf ("      isOverridingDeclaration    = %s \n",isOverridingDeclaration ? "true" : "false");
+               printf ("      isNotOverridingDeclaration = %s \n",isNotOverridingDeclaration ? "true" : "false");
 
                Declaration_ID correspondingDeclaration = declaration.Corresponding_Declaration;
                printf ("      correspondingDeclaration = %d \n",correspondingDeclaration);
@@ -2513,7 +2981,12 @@ void
                printf ("      correspondingType = %d \n",correspondingType);
 
                bool isDispatchingOperation = declaration.Is_Dispatching_Operation;
-               printf ("isDispatchingOperation = %s \n",isDispatchingOperation ? "true" : "false");
+               printf ("      isDispatchingOperation = %s \n",isDispatchingOperation ? "true" : "false");
+
+#if DEBUG_UNTYPED_NODE_GENERATION
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -2550,11 +3023,16 @@ void
              {
                bool isOverridingDeclaration     = declaration.Is_Overriding_Declaration;
                bool isNotOverridingDeclaration = declaration.Is_Not_Overriding_Declaration;
-               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
-               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+               printf ("      isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+               printf ("      isNotOverridingDeclaration = %s \n",isNotOverridingDeclaration ? "true" : "false");
 
                Expression_ID formalSubprogramDefault = declaration.Formal_Subprogram_Default;
-               printf ("formalSubprogramDefault = %d \n",formalSubprogramDefault);
+               printf ("      formalSubprogramDefault = %d \n",formalSubprogramDefault);
+
+#if DEBUG_UNTYPED_NODE_GENERATION
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -2597,6 +3075,11 @@ void
                printf ("isSubunit = %s \n",isSubunit ? "true" : "false");
                Declaration_ID correspondingBodyStub = declaration.Corresponding_Body_Stub;
                printf ("correspondingBodyStub = %d \n",correspondingBodyStub);
+
+#if DEBUG_UNTYPED_NODE_GENERATION
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -2619,7 +3102,53 @@ void
                printf ("privatePartDeclarativeItems: \n");
                processDeclarativeItemList(privatePartDeclarativeItems);
 
-#if 1
+            // ********************************
+            // This needs to force the declaration of a function (with function definition, and body).
+               printf ("In processDeclaration(): case A_Package_Declaration: (not implemented) \n");
+
+            // Get the name from the name list.
+               ROSE_ASSERT(names.Length == 1);
+               int packageName_id = names.IDs[0];
+
+               printf ("packageName_id = %d \n",packageName_id);
+
+               ROSE_ASSERT(untypedNodeMap.find(packageName_id) != untypedNodeMap.end());
+               SgUntypedNode* untypedNode = untypedNodeMap[packageName_id];
+               ROSE_ASSERT(untypedNode != NULL);
+            // SgUntypedInitializedName* untypedInitializedName = isSgUntypedInitializedName(untypedNode);
+            // ROSE_ASSERT(untypedInitializedName != NULL);
+            // string packageName = untypedInitializedName->get_name();
+               SgUntypedName* untypedName = isSgUntypedName(untypedNode);
+               ROSE_ASSERT(untypedName != NULL);
+               string packageName = untypedName->get_name();
+
+               printf ("packageName = %s \n",packageName.c_str());
+
+               SgUntypedPackageDeclaration* untypedPackageDeclaration = new SgUntypedPackageDeclaration(packageName);
+               ROSE_ASSERT(untypedPackageDeclaration != NULL);
+
+               SgUntypedScope* untypedScope = new SgUntypedScope();
+               ROSE_ASSERT(untypedScope != NULL);
+
+               untypedPackageDeclaration->set_scope(untypedScope);
+
+               SgUntypedStatementList* untypedStatementList = new SgUntypedStatementList();
+               ROSE_ASSERT(untypedStatementList != NULL);
+
+            // Connect IR nodes.
+               untypedScope->set_statement_list(untypedStatementList);
+
+            // Note that we can't connect the statements in the function body, until a second pass over the untyped AST.
+
+               ROSE_ASSERT(untypedNodeMap.find(element_id) == untypedNodeMap.end());
+               untypedNodeMap[element_id] = untypedPackageDeclaration;
+               ROSE_ASSERT(untypedNodeMap.find(element_id) != untypedNodeMap.end());
+
+               setAsisAttribute (untypedPackageDeclaration,element_id);
+            // ********************************
+
+// #if DEBUG_UNTYPED_NODE_GENERATION
+#if 0
                printf ("Exiting as a test! \n");
                ROSE_ASSERT(false);
 #endif
@@ -2651,6 +3180,11 @@ void
                Element_List & genericFormalPart = declaration.Generic_Formal_Part;
                printf ("genericFormalPart: \n");
                processElementList(genericFormalPart);
+
+#if DEBUG_UNTYPED_NODE_GENERATION
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -2733,6 +3267,11 @@ void
                Association_List & genericActualPart = declaration.Generic_Actual_Part;
                printf ("genericActualPart: \n");
                processAssociationList(genericActualPart);
+
+#if DEBUG_UNTYPED_NODE_GENERATION
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -2745,6 +3284,11 @@ void
 
                Declaration_ID correspondingSubunit = declaration.Corresponding_Subunit;
                printf ("      correspondingSubunit = %d \n",correspondingSubunit);
+
+#if DEBUG_UNTYPED_NODE_GENERATION
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -2759,6 +3303,11 @@ void
                printf ("      renamedEntity = %d \n",renamedEntity);
                Expression_ID correspondingBaseEntity = declaration.Corresponding_Base_Entity;
                printf ("      correspondingBaseEntity = %d \n",correspondingBaseEntity);
+
+#if DEBUG_UNTYPED_NODE_GENERATION
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -2772,6 +3321,11 @@ void
                printf ("      renamedEntity = %d \n",renamedEntity);
                Expression_ID correspondingBaseEntity = declaration.Corresponding_Base_Entity;
                printf ("      correspondingBaseEntity = %d \n",correspondingBaseEntity);
+
+#if DEBUG_UNTYPED_NODE_GENERATION
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -2791,6 +3345,11 @@ void
                Association_List & genericActualPart = declaration.Generic_Actual_Part;
                printf ("genericActualPart: \n");
                processAssociationList(genericActualPart);
+
+#if DEBUG_UNTYPED_NODE_GENERATION
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -2801,6 +3360,11 @@ void
 
                Declaration_ID correspondingBody = declaration.Corresponding_Body;
                printf ("      correspondingBody = %d \n",correspondingBody);
+
+#if DEBUG_UNTYPED_NODE_GENERATION
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -2932,6 +3496,11 @@ void
                printf ("      renamedEntity = %d \n",renamedEntity);
                Expression_ID correspondingBaseEntity = declaration.Corresponding_Base_Entity;
                printf ("      correspondingBaseEntity = %d \n",correspondingBaseEntity);
+
+#if DEBUG_UNTYPED_NODE_GENERATION
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -3082,13 +3651,13 @@ void
                printf ("      traitKind (name)  = %s \n",traitKindName(traitKind).c_str());
 
                Parameter_Specification_List & parameterProfile = declaration.Parameter_Profile;
-               printf ("parameterProfile: \n");
+               printf ("      parameterProfile: \n");
                processParameterSpecificationList(parameterProfile);
 
                bool isOverridingDeclaration     = declaration.Is_Overriding_Declaration;
                bool isNotOverridingDeclaration = declaration.Is_Not_Overriding_Declaration;
-               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
-               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+               printf ("      isOverridingDeclaration    = %s \n",isOverridingDeclaration ? "true" : "false");
+               printf ("      isNotOverridingDeclaration = %s \n",isNotOverridingDeclaration ? "true" : "false");
 
                Declaration_ID correspondingDeclaration = declaration.Corresponding_Declaration;
                printf ("      correspondingDeclaration = %d \n",correspondingDeclaration);
@@ -3103,7 +3672,7 @@ void
                printf ("      correspondingType = %d \n",correspondingType);
 
                bool isDispatchingOperation = declaration.Is_Dispatching_Operation;
-               printf ("isDispatchingOperation = %s \n",isDispatchingOperation ? "true" : "false");
+               printf ("      isDispatchingOperation = %s \n",isDispatchingOperation ? "true" : "false");
 
             // An example of this can be a function prototype (see unit_3.ads).
 
@@ -3119,9 +3688,12 @@ void
                ROSE_ASSERT(untypedNodeMap.find(functionName_id) != untypedNodeMap.end());
                SgUntypedNode* untypedNode = untypedNodeMap[functionName_id];
                ROSE_ASSERT(untypedNode != NULL);
-               SgUntypedInitializedName* untypedInitializedName = isSgUntypedInitializedName(untypedNode);
-               ROSE_ASSERT(untypedInitializedName != NULL);
-               string functionName = untypedInitializedName->get_name();
+            // SgUntypedInitializedName* untypedInitializedName = isSgUntypedInitializedName(untypedNode);
+            // ROSE_ASSERT(untypedInitializedName != NULL);
+            // string functionName = untypedInitializedName->get_name();
+               SgUntypedName* untypedName = isSgUntypedName(untypedNode);
+               ROSE_ASSERT(untypedName != NULL);
+               string functionName = untypedName->get_name();
 
                printf ("functionName = %s \n",functionName.c_str());
 
@@ -3143,39 +3715,39 @@ void
           case A_Procedure_Body_Declaration:
              {
                Parameter_Specification_List & parameterProfile = declaration.Parameter_Profile;
-               printf ("parameterProfile: \n");
+               printf ("      parameterProfile: \n");
                processParameterSpecificationList(parameterProfile);
 
                bool isOverridingDeclaration     = declaration.Is_Overriding_Declaration;
                bool isNotOverridingDeclaration = declaration.Is_Not_Overriding_Declaration;
-               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
-               printf ("isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
+               printf ("      isOverridingDeclaration    = %s \n",isOverridingDeclaration ? "true" : "false");
+               printf ("      isNotOverridingDeclaration = %s \n",isNotOverridingDeclaration ? "true" : "false");
 
                Element_List           & bodyDeclarativeItems  = declaration.Body_Declarative_Items;
-               printf ("bodyDeclarativeItems: \n");
+               printf ("      bodyDeclarativeItems: \n");
                processElementList(bodyDeclarativeItems);
                Statement_List         & bodyStatements        = declaration.Body_Statements;
-               printf ("bodyStatements: \n");
+               printf ("      bodyStatements: \n");
                processStatementList(bodyStatements);
                Exception_Handler_List & bodyExceptionHandlers = declaration.Body_Exception_Handlers;
-               printf ("bodyExceptionHandlers: \n");
+               printf ("      bodyExceptionHandlers: \n");
                processExceptionHandlerList(bodyExceptionHandlers);
                Declaration_ID           bodyBlockStatement    = declaration.Body_Block_Statement;
                printf ("      bodyBlockStatement = %d \n",bodyBlockStatement);
 
                bool isNameRepeated = declaration.Is_Name_Repeated;
-               printf ("isNameRepeated = %s \n",isNameRepeated ? "true" : "false");
+               printf ("      isNameRepeated = %s \n",isNameRepeated ? "true" : "false");
 
                Declaration_ID correspondingDeclaration = declaration.Corresponding_Declaration;
                printf ("      correspondingDeclaration = %d \n",correspondingDeclaration);
 
                bool  isSubunit = declaration.Is_Subunit;
-               printf ("isSubunit = %s \n",isSubunit ? "true" : "false");
+               printf ("      isSubunit = %s \n",isSubunit ? "true" : "false");
                Declaration_ID correspondingBodyStub = declaration.Corresponding_Body_Stub;
-               printf ("correspondingBodyStub = %d \n",correspondingBodyStub);
+               printf ("      correspondingBodyStub = %d \n",correspondingBodyStub);
 
                bool isDispatchingOperation = declaration.Is_Dispatching_Operation;
-               printf ("isDispatchingOperation = %s \n",isDispatchingOperation ? "true" : "false");
+               printf ("      isDispatchingOperation = %s \n",isDispatchingOperation ? "true" : "false");
 
             // This needs to force the declaration of a function (with function definition, and body).
                printf ("In processDeclaration(): case A_Procedure_Body_Declaration: (not implemented) \n");
@@ -3189,9 +3761,12 @@ void
                ROSE_ASSERT(untypedNodeMap.find(functionName_id) != untypedNodeMap.end());
                SgUntypedNode* untypedNode = untypedNodeMap[functionName_id];
                ROSE_ASSERT(untypedNode != NULL);
-               SgUntypedInitializedName* untypedInitializedName = isSgUntypedInitializedName(untypedNode);
-               ROSE_ASSERT(untypedInitializedName != NULL);
-               string functionName = untypedInitializedName->get_name();
+            // SgUntypedInitializedName* untypedInitializedName = isSgUntypedInitializedName(untypedNode);
+            // ROSE_ASSERT(untypedInitializedName != NULL);
+            // string functionName = untypedInitializedName->get_name();
+               SgUntypedName* untypedName = isSgUntypedName(untypedNode);
+               ROSE_ASSERT(untypedName != NULL);
+               string functionName = untypedName->get_name();
 
                printf ("functionName = %s \n",functionName.c_str());
 
@@ -3238,13 +3813,26 @@ void
                break;
              }
 
+          case  An_Exception_Declaration:
+             {
+            // No data members for this case.
+               break;
+             }
+
+          case A_Choice_Parameter_Specification:
+             {
+            // No data members for this case yet.
+               break;
+             }
+
           default:
              {
-               printf ("OK to handle via default in switch! \n");
+               printf ("Default reached in processDeclaration(): declarationKind = %d declarationKind = %s \n",declarationKind,declarationKindName(declarationKind).c_str());
+               ROSE_ASSERT(false);
              }
         }
 
-
+#if 0
      printf ("      Discriminant_Part = %d \n",declaration.Discriminant_Part);
      printf ("      Type_Declaration_View = %d \n",declaration.Type_Declaration_View);
      printf ("      Object_Declaration_View = %d \n",declaration.Object_Declaration_View);
@@ -3306,6 +3894,7 @@ void
      processAssociationList (declaration.Generic_Actual_Part);
      printf ("      Formal_Subprogram_Default = %d \n",declaration.Formal_Subprogram_Default);
      printf ("      Is_Dispatching_Operation = %s \n",declaration.Is_Dispatching_Operation  ? "true" : "false");
+#endif
 
 #if 0
      printf ("Exiting as a test! \n");
@@ -3400,6 +3989,9 @@ Ada_ROSE_Translation::processExpression( Expression_Struct & expression)
   // A_For_All_Quantified_Expression |            // Ada 2012
   // A_For_Some_Quantified_Expression =>          // Ada 2012
   Declaration_ID        Iterator_Specification;
+  // An expression that references an entity declared within the 
+  // implicit specification of a generic instantiation:
+  Defining_Name_ID      Corresponding_Generic_Element;
 #endif
 
      Expression_Kinds expressionKind = expression.Expression_Kind;
@@ -3409,8 +4001,316 @@ Ada_ROSE_Translation::processExpression( Expression_Struct & expression)
      printf ("      expressionKind (name)  = %s \n",expressionKindName(expressionKind).c_str());
 
   // Moved from Declaration_Struct
+  // An expression that references an entity declared within the implicit specification of a generic instantiation:
+  // Defining_Name_ID      Corresponding_Generic_Element;
      printf ("      Corresponding_Generic_Element = %d \n",expression.Corresponding_Generic_Element);
 
+     switch (expressionKind)
+        {
+
+       // An_Integer_Literal,                        // 2.4
+       // A_Real_Literal,                            // 2.4.1
+       // A_String_Literal,                          // 2.6
+          case An_Integer_Literal:
+          case A_Real_Literal:
+          case A_String_Literal:
+             {
+               char* valueImage = expression.Value_Image;
+               printf ("     valueImage = %s \n",valueImage);
+               break;
+             }
+
+       // An_Identifier |                              // 4.1
+       // An_Operator_Symbol |                         // 4.1
+       // A_Character_Literal |                        // 4.1
+       // An_Enumeration_Literal:
+          case An_Identifier:
+       // case An_Operator_Symbol:
+          case A_Character_Literal:
+          case An_Enumeration_Literal:
+             {
+               char* nameImage                                      = expression.Name_Image;
+               printf ("     nameImage = %s \n",nameImage);
+
+               Defining_Name_ID correspondingNameDefinition         = expression.Corresponding_Name_Definition;
+               printf ("     correspondingNameDefinition = %d \n",correspondingNameDefinition);
+
+            // Only >1 if the expression in a pragma is ambiguous
+               Defining_Name_List & correspondingNameDefinitionList = expression.Corresponding_Name_Definition_List;
+               printf ("     correspondingNameDefinitionList: \n");
+               processDefiningNameList(correspondingNameDefinitionList);
+
+               Element_ID correspondingNameDeclaration            = expression.Corresponding_Name_Declaration; // Decl or stmt
+               printf ("     correspondingNameDeclaration = %d \n",correspondingNameDeclaration);
+               break;
+             }
+
+       // An_Operator_Symbol:
+          case An_Operator_Symbol:
+             {
+               char* nameImage                                      = expression.Name_Image;
+               printf ("     nameImage = %s \n",nameImage);
+
+               Defining_Name_ID correspondingNameDefinition         = expression.Corresponding_Name_Definition;
+               printf ("     correspondingNameDefinition = %d \n",correspondingNameDefinition);
+
+            // Only >1 if the expression in a pragma is ambiguous
+               Defining_Name_List & correspondingNameDefinitionList = expression.Corresponding_Name_Definition_List;
+               printf ("     correspondingNameDefinitionList: \n");
+               processDefiningNameList(correspondingNameDefinitionList);
+
+               Element_ID correspondingNameDeclaration            = expression.Corresponding_Name_Declaration; // Decl or stmt
+               printf ("     correspondingNameDeclaration = %d \n",correspondingNameDeclaration);
+
+               Operator_Kinds operatorKind = expression.Operator_Kind;
+               printf ("     operatorKind (value) = %d \n",operatorKind);
+               printf ("     operatorKind (name)  = %s \n",operatorKindName(operatorKind).c_str());
+               break;
+             }
+
+       // An_Explicit_Dereference =>                   // 4.1
+       // A_Function_Call =>                           // 4.1
+       // An_Indexed_Component =>                      // 4.1.1
+       // A_Slice =>                                   // 4.1.2
+       // A_Selected_Component =>                      // 4.1.3
+       // An_Attribute_Reference =>                    // 4.1.4
+          case An_Explicit_Dereference:
+       // case A_Function_Call:
+       // case An_Indexed_Component:
+       // case A_Slice:
+       // case A_Selected_Component:
+       // case An_Attribute_Reference:
+             {
+               Expression_ID prefix = expression.Prefix;
+               printf ("     prefix = %d \n",prefix);
+               break;
+             }
+
+       // A_Selected_Component =>                      // 4.1.3
+          case A_Selected_Component:
+             {
+               Expression_ID prefix = expression.Prefix;
+               printf ("     prefix = %d \n",prefix);
+               Expression_ID selector = expression.Selector;
+               printf ("     selector = %d \n",selector);
+               break;
+             }
+
+       // A_Function_Call =>                           // 4.1 
+       // An_Indexed_Component (Is_Generalized_Indexing == true) //ASIS 2012 // 4.1.1
+       // case A_Function_Call:
+          case An_Indexed_Component:
+             {
+               Expression_ID prefix = expression.Prefix;
+               printf ("     prefix = %d \n",prefix);
+
+               Declaration_ID correspondingCalledFunction = expression.Corresponding_Called_Function;
+               printf ("     correspondingCalledFunction = %d \n",correspondingCalledFunction);
+
+               Expression_List & indexExpressions        = expression.Index_Expressions;
+               printf ("     indexExpressions: \n");
+               processElementList(indexExpressions);
+               bool              isGeneralizedIndexing = expression.Is_Generalized_Indexing;
+               printf ("     isGeneralizedIndexing = %s \n",isGeneralizedIndexing ? "true" : "false");
+
+               break;
+             }
+
+       // A_Function_Call =>                           // 4.1
+          case A_Function_Call:
+             {
+               Expression_ID prefix = expression.Prefix;
+               printf ("     prefix = %d \n",prefix);
+
+               Declaration_ID correspondingCalledFunction = expression.Corresponding_Called_Function;
+               printf ("     correspondingCalledFunction = %d \n",correspondingCalledFunction);
+
+               bool isPrefixCall = expression.Is_Prefix_Call;
+               printf ("     isPrefixCall = %s \n",isPrefixCall ? "true" : "false");
+               Element_List & functionCallParameters = expression.Function_Call_Parameters;
+               printf ("     functionCallParameters: \n");
+               processElementList(functionCallParameters);
+               break;
+             }
+
+       // A_Slice =>                                   // 4.1.2
+          case A_Slice:
+             {
+               Expression_ID prefix = expression.Prefix;
+               printf ("     prefix = %d \n",prefix);
+               Discrete_Range_ID sliceRange = expression.Slice_Range;
+               printf ("     sliceRange = %d \n",sliceRange);
+               break;
+             }
+
+       // An_Attribute_Reference :
+          case An_Attribute_Reference:
+             {
+               Expression_ID prefix = expression.Prefix;
+               printf ("     prefix = %d \n",prefix);
+
+               Attribute_Kinds atributeKind = expression.atribute_kind;
+               printf ("     atributeKind (value) = %d \n",atributeKind);
+               printf ("     atributeKind (name)  = %s \n",attributeKindName(atributeKind).c_str());
+               Expression_ID attributeDesignatorIdentifier = expression.Attribute_Designator_Identifier;
+               printf ("     attributeDesignatorIdentifier = %d \n",attributeDesignatorIdentifier);
+               Expression_List & attributeDesignatorExpressions = expression.Attribute_Designator_Expressions;
+               printf ("     attributeDesignatorExpressions: \n");
+               processExpressionList(attributeDesignatorExpressions);
+               break;
+             }
+
+       // A_Record_Aggregate =>                        // 4.3
+       // An_Extension_Aggregate =>                    // 4.3
+          case A_Record_Aggregate:
+       // case An_Extension_Aggregate:
+             {
+               Association_List & recordComponentAssociations = expression.Record_Component_Associations;
+               printf ("     recordComponentAssociations: \n");
+               processAssociationList(recordComponentAssociations);
+               break;
+             }
+
+       // An_Extension_Aggregate =>                    // 4.3
+          case An_Extension_Aggregate:
+             {
+               Association_List & recordComponentAssociations = expression.Record_Component_Associations;
+               printf ("     recordComponentAssociations: \n");
+               processAssociationList(recordComponentAssociations);
+
+               Expression_ID extensionAggregateExpression = expression.Extension_Aggregate_Expression;
+               printf ("     extensionAggregateExpression = %d \n",extensionAggregateExpression);
+               break;
+             }
+
+       // A_Positional_Array_Aggregate |               // 4.3
+       // A_Named_Array_Aggregate =>                   // 4.3  
+          case A_Positional_Array_Aggregate:
+          case A_Named_Array_Aggregate:
+             {
+               Association_List & arrayComponentAssociations = expression.Array_Component_Associations;
+               printf ("     arrayComponentAssociations: \n");
+               processAssociationList(arrayComponentAssociations);
+               break;
+             }
+
+       // An_And_Then_Short_Circuit |                  // 4.4
+       // An_Or_Else_Short_Circuit =>                  // 4.4
+          case An_And_Then_Short_Circuit:
+          case An_Or_Else_Short_Circuit:
+             {
+               Expression_ID shortCircuitOperationLeftExpression = expression.Short_Circuit_Operation_Left_Expression;
+               printf ("     shortCircuitOperationLeftExpression = %d \n",shortCircuitOperationLeftExpression);
+               Expression_ID shortCircuitOperationRightExpression = expression.Short_Circuit_Operation_Right_Expression;
+               printf ("     shortCircuitOperationRightExpression = %d \n",shortCircuitOperationRightExpression);
+               break;
+             }
+
+       // An_In_Membership_Test |                      // 4.4  Ada 2012
+       // A_Not_In_Membership_Test =>                  // 4.4  Ada 2012
+          case An_In_Membership_Test:
+          case A_Not_In_Membership_Test:
+             {
+               Expression_ID membershipTestExpression = expression.Membership_Test_Expression;
+               printf ("     membershipTestExpression = %d \n",membershipTestExpression);
+               Element_List & membershipTestChoices = expression.Membership_Test_Choices;
+               printf ("     membershipTestChoices: \n");
+               processExpressionList(membershipTestChoices);
+               break;
+             }
+
+
+       // A_Parenthesized_Expression =>                // 4.4
+          case A_Parenthesized_Expression:
+             {
+               Expression_ID expressionParenthesized = expression.Expression_Parenthesized;
+               printf ("     expressionParenthesized = %d \n",expressionParenthesized);
+               break;
+             }
+
+
+       // A_Type_Conversion =>                         // 4.6
+       // A_Qualified_Expression =>                    // 4.7
+          case A_Type_Conversion:
+          case A_Qualified_Expression:
+             {
+               Expression_ID convertedOrQualifiedSubtypeMark = expression.Converted_Or_Qualified_Subtype_Mark;
+               printf ("     convertedOrQualifiedSubtypeMark = %d \n",convertedOrQualifiedSubtypeMark);
+               Expression_ID convertedOrQualifiedExpression = expression.Converted_Or_Qualified_Expression;
+               printf ("     convertedOrQualifiedExpression = %d \n",convertedOrQualifiedExpression);
+               Expression_ID predicate = expression.Predicate;
+               printf ("     predicate = %d \n",predicate);
+               break;
+             }
+
+#if 0
+       // An_Allocation_From_Subtype =>                // 4.8
+       // An_Allocation_From_Qualified_Expression =>   // 4.8
+       // case An_Allocation_From_Subtype:
+       // case An_Allocation_From_Qualified_Expression:
+             {
+               Expression_ID subpoolName = expression.Subpool_Name;
+               printf ("     subpoolName = %d \n",subpoolName);
+               break;
+             }
+#endif
+
+       // An_Allocation_From_Subtype =>                // 4.8
+          case An_Allocation_From_Subtype:
+             {
+               Expression_ID subpoolName = expression.Subpool_Name;
+               printf ("     subpoolName = %d \n",subpoolName);
+
+               Subtype_Indication_ID allocatorSubtypeIndication = expression.Allocator_Subtype_Indication;
+               printf ("     allocatorSubtypeIndication = %d \n",allocatorSubtypeIndication);
+               break;
+             }
+
+       // An_Allocation_From_Qualified_Expression =>   // 4.8
+          case An_Allocation_From_Qualified_Expression:
+             {
+               Expression_ID subpoolName = expression.Subpool_Name;
+               printf ("     subpoolName = %d \n",subpoolName);
+
+               Expression_ID allocatorQualifiedExpression = expression.Allocator_Qualified_Expression;
+               printf ("     allocatorQualifiedExpression = %d \n",allocatorQualifiedExpression);
+               break;
+             }
+
+       // A_Case_Expression|                          // Ada 2012
+       // An_If_Expression =>                          // Ada 2012
+          case A_Case_Expression:
+          case An_If_Expression:
+             {
+               Expression_Path_List & expressionPaths = expression.Expression_Paths;
+               printf ("     expressionPaths: \n");
+               processPathList(expressionPaths);
+               break;
+             }
+
+       // A_For_All_Quantified_Expression |            // Ada 2012
+       // A_For_Some_Quantified_Expression =>          // Ada 2012
+          case A_For_All_Quantified_Expression:
+          case A_For_Some_Quantified_Expression:
+             {
+               Declaration_ID iteratorSpecification = expression.Iterator_Specification;
+               printf ("     iteratorSpecification = %d \n",iteratorSpecification);
+               break;
+             }
+
+#if 0
+          case x:
+             {
+               printf ("     x = %d \n",x);
+               break;
+             }
+#endif
+          default:
+             {
+               printf ("Default reached in processDeclaration(): declarationKind = %d declarationKind = %s \n",expressionKind,expressionKindName(expressionKind).c_str());
+               ROSE_ASSERT(false);
+             }
+        }
    }
 
 
@@ -3535,10 +4435,23 @@ Ada_ROSE_Translation::processExceptionHandler( Exception_Handler_Struct & except
 
 
 void
-Ada_ROSE_Translation::processPath( Path_Struct & path)
+Ada_ROSE_Translation::processPath( Path_Struct & path, int element_id)
    {
 #if 0
   // Documentation for Path_Struct.
+  enum Path_Kinds Path_Kind;
+  // These fields are only valid for the kinds above them:  
+  // An_If_Path,
+  // An_Elsif_Path,
+  Expression_ID  Condition_Expression;
+  // (all)
+  Statement_List Sequence_Of_Statements;
+  // A_Case_Path,
+  // A_Case_Expression_Path,
+  Element_List   Case_Path_Alternative_Choices;
+  // A_Select_Path,
+  // An_Or_Path,
+  Expression_ID  Guard;
 #endif
 
      Path_Kinds pathKind = path.Path_Kind;
@@ -3546,6 +4459,138 @@ Ada_ROSE_Translation::processPath( Path_Struct & path)
      printf ("   In processPath(): \n");
      printf ("      pathKind (value) = %d \n",pathKind);
      printf ("      pathKind (name)  = %s \n",pathKindName(pathKind).c_str());
+
+     Statement_List & sequenceOfStatements = path.Sequence_Of_Statements;
+     printf ("      sequenceOfStatements: \n");
+     processElementList(sequenceOfStatements);
+
+     switch(pathKind)
+        {
+       // An_If_Path,
+       // An_Elsif_Path,
+          case An_If_Path:
+          case An_Elsif_Path:
+             {
+#if 0
+               Expression_ID conditionExpression = path.Condition_Expression;
+               printf ("      conditionExpression = %d \n",conditionExpression);
+
+               SgUntypedScope* untypedIfStatement = new SgUntypedIfStatement();
+               ROSE_ASSERT(untypedScope != NULL);
+#endif
+               SgUntypedScope* untypedScope = new SgUntypedScope();
+               ROSE_ASSERT(untypedScope != NULL);
+
+               SgUntypedStatementList* untypedStatementList = new SgUntypedStatementList();
+               ROSE_ASSERT(untypedStatementList != NULL);
+
+            // Connect IR nodes.
+               untypedScope->set_statement_list(untypedStatementList);
+
+            // Note that we can't connect the statements in the function body, until a second pass over the untyped AST.
+
+               ROSE_ASSERT(untypedNodeMap.find(element_id) == untypedNodeMap.end());
+               untypedNodeMap[element_id] = untypedScope;
+               ROSE_ASSERT(untypedNodeMap.find(element_id) != untypedNodeMap.end());
+
+               setAsisAttribute (untypedScope,element_id);
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+       // A_Case_Path,
+       // A_Case_Expression_Path,
+          case A_Case_Path:
+          case A_Case_Expression_Path:
+             {
+               Element_List & casePathAlternativeChoices = path.Case_Path_Alternative_Choices;
+               printf ("      casePathAlternativeChoices: \n");
+               processElementList(casePathAlternativeChoices);
+
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+       // A_Select_Path,
+       // An_Or_Path,
+          case A_Select_Path:
+          case An_Or_Path:
+             {
+               Expression_ID guard = path.Guard;
+               printf ("      guard = %d \n",guard);
+
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+       // 5.3, 9.7.1, 9.7.3: else sequence_of_statements
+          case An_Else_Path:
+             {
+               printf ("case An_Else_Path in processPath(): \n");
+
+            // Find the associated SgUntypedIfStatement and fill in the else case.
+            // However, I think we have not seen the if statment yet, so we can't build it until then.
+
+               SgUntypedScope* untypedScope = new SgUntypedScope();
+               ROSE_ASSERT(untypedScope != NULL);
+
+               SgUntypedStatementList* untypedStatementList = new SgUntypedStatementList();
+               ROSE_ASSERT(untypedStatementList != NULL);
+
+            // Connect IR nodes.
+               untypedScope->set_statement_list(untypedStatementList);
+
+            // Note that we can't connect the statements in the function body, until a second pass over the untyped AST.
+
+               ROSE_ASSERT(untypedNodeMap.find(element_id) == untypedNodeMap.end());
+               untypedNodeMap[element_id] = untypedScope;
+               ROSE_ASSERT(untypedNodeMap.find(element_id) != untypedNodeMap.end());
+
+               setAsisAttribute (untypedScope,element_id);
+
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+       // 9.7.4: then abort sequence_of_statements
+          case A_Then_Abort_Path:
+
+       // ??? (RM 2012): if condition then expression
+          case An_If_Expression_Path:
+
+       // ??? (RM 2012): elsif condition then expression
+          case An_Elsif_Expression_Path:
+
+       // ??? (RM 2012): else expression
+          case An_Else_Expression_Path:
+             {
+               printf ("Simple case reached in processPath(): pathKind = %d pathKind = %s \n",pathKind,pathKindName(pathKind).c_str());
+
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+          default:
+             {
+               printf ("Default reached in processPath(): pathKind = %d pathKind = %s \n",pathKind,pathKindName(pathKind).c_str());
+               ROSE_ASSERT(false);
+             }
+        }
 
    }
 
@@ -4783,6 +5828,236 @@ Ada_ROSE_Translation::traitKindName (Trait_Kinds x)
           default:
              {
                printf ("Error: default called in switch for Ada_ROSE_Translation::traitKindName(): x = %d \n",x);
+               ROSE_ASSERT(false);
+             }
+        }
+
+     return s;
+   }
+
+
+string
+Ada_ROSE_Translation::attributeKindName (Attribute_Kinds x)
+   {
+#if 0
+  // Enum values
+  Not_An_Attribute,              // An unexpected element
+
+  An_Access_Attribute,           // 3.10.2(24), 3.10.2(32), K(2), K(4)
+  An_Address_Attribute,          // 13.3(11), J.7.1(5), K(6)
+  An_Adjacent_Attribute,         // A.5.3(48), K(8)
+  An_Aft_Attribute,              // 3.5.10(5), K(12)
+  An_Alignment_Attribute,        // 13.3(23), K(14)
+  A_Base_Attribute,              // 3.5(15), K(17)
+  A_Bit_Order_Attribute,         // 13.5.3(4), K(19)
+  A_Body_Version_Attribute,      // E.3(4), K(21)
+  A_Callable_Attribute,          // 9.9(2), K(23)
+  A_Caller_Attribute,            // C.7.1(14), K(25)
+  A_Ceiling_Attribute,           // A.5.3(33), K(27)
+  A_Class_Attribute,             // 3.9(14), 7.3.1(9), K(31), K(34)
+  A_Component_Size_Attribute,    // 13.3(69), K(36)
+  A_Compose_Attribute,           // A.5.3(24), K(38)
+  A_Constrained_Attribute,       // 3.7.2(3), J.4(2), K(42)
+  A_Copy_Sign_Attribute,         // A.5.3(51), K(44)
+  A_Count_Attribute,             // 9.9(5), K(48)
+  A_Definite_Attribute,          // 12.5.1(23), K(50)
+  A_Delta_Attribute,             // 3.5.10(3), K(52)
+  A_Denorm_Attribute,            // A.5.3(9), K(54)
+  A_Digits_Attribute,            // 3.5.8(2), 3.5.10(7), K(56), K(58)
+
+  An_Exponent_Attribute,         // A.5.3(18), K(60)
+  An_External_Tag_Attribute,     // 13.3(75), K(64)
+  A_First_Attribute,             // 3.5(12), 3.6.2(3), K(68), K(70)
+  A_First_Bit_Attribute,         // 13.5.2(3), K(72)
+  A_Floor_Attribute,             // A.5.3(30), K(74)
+  A_Fore_Attribute,              // 3.5.10(4), K(78)
+  A_Fraction_Attribute,          // A.5.3(21), K(80)
+  An_Identity_Attribute,         // 11.4.1(9), C.7.1(12), K(84), K(86)
+  An_Image_Attribute,            // 3.5(35), K(88)
+  An_Input_Attribute,            // 13.13.2(22), 13.13.2(32), K(92), K(96)
+  A_Last_Attribute,              // 3.5(13), 3.6.2(5), K(102), K(104)
+  A_Last_Bit_Attribute,          // 13.5.2(4), K(106)
+  A_Leading_Part_Attribute,      // A.5.3(54), K(108)
+  A_Length_Attribute,            // 3.6.2(9), K(117)
+  A_Machine_Attribute,           // A.5.3(60), K(119)
+  A_Machine_Emax_Attribute,      // A.5.3(8), K(123)
+  A_Machine_Emin_Attribute,      // A.5.3(7), K(125)
+  A_Machine_Mantissa_Attribute,  // A.5.3(6), K(127)
+  A_Machine_Overflows_Attribute, // A.5.3(12), A.5.4(4), K(129), K(131)
+  A_Machine_Radix_Attribute,     // A.5.3(2), A.5.4(2), K(133), K(135)
+  A_Machine_Rounds_Attribute,    // A.5.3(11), A.5.4(3), K(137), K(139)
+  A_Max_Attribute,               // 3.5(19), K(141)
+  A_Max_Size_In_Storage_Elements_Attribute, //   13.11.1(3), K(145)
+  A_Min_Attribute,               // 3.5(16), K(147)
+  A_Model_Attribute,             // A.5.3(68), G.2.2(7), K(151)
+  A_Model_Emin_Attribute,        // A.5.3(65), G.2.2(4), K(155)
+  A_Model_Epsilon_Attribute,     // A.5.3(66), K(157)
+  A_Model_Mantissa_Attribute,    // A.5.3(64), G.2.2(3), K(159)
+  A_Model_Small_Attribute,       // A.5.3(67), K(161)
+  A_Modulus_Attribute,           // 3.5.4(17), K(163)
+
+  An_Output_Attribute,           // 13.13.2(19), 13.13.2(29), K(165), K(169)
+  A_Partition_ID_Attribute,      // E.1(9), K(173)
+  A_Pos_Attribute,               // 3.5.5(2), K(175)
+  A_Position_Attribute,          // 13.5.2(2), K(179)
+  A_Pred_Attribute,              // 3.5(25), K(181)
+  A_Range_Attribute,             // 3.5(14), 3.6.2(7), K(187), ú(189)
+  A_Read_Attribute,              // 13.13.2(6), 13.13.2(14), K(191), K(195)
+  A_Remainder_Attribute,         // A.5.3(45), K(199)
+  A_Round_Attribute,             // 3.5.10(12), K(203)
+  A_Rounding_Attribute,          // A.5.3(36), K(207)
+  A_Safe_First_Attribute,        // A.5.3(71), G.2.2(5), K(211)
+  A_Safe_Last_Attribute,         // A.5.3(72), G.2.2(6), K(213)
+  A_Scale_Attribute,             // 3.5.10(11), K(215)
+  A_Scaling_Attribute,           // A.5.3(27), K(217)
+  A_Signed_Zeros_Attribute,      // A.5.3(13), K(221)
+  A_Size_Attribute,              // 13.3(40), 13.3(45), K(223), K(228)
+  A_Small_Attribute,             // 3.5.10(2), K(230)
+  A_Storage_Pool_Attribute,      // 13.11(13), K(232)
+  A_Storage_Size_Attribute,      // 13.3(60), 13.11(14), J.9(2), K(234),
+  //                                 K(236)
+  A_Succ_Attribute,              // 3.5(22), K(238)
+  A_Tag_Attribute,               // 3.9(16), 3.9(18), K(242), K(244)
+  A_Terminated_Attribute,        // 9.9(3), K(246)
+  A_Truncation_Attribute,        // A.5.3(42), K(248)
+  An_Unbiased_Rounding_Attribute, // A.5.3(39), K(252)
+  An_Unchecked_Access_Attribute,  // 13.10(3), H.4(18), K(256)
+  A_Val_Attribute,                // 3.5.5(5), K(258)
+  A_Valid_Attribute,              // 13.9.2(3), H(6), K(262)
+  A_Value_Attribute,              // 3.5(52), K(264)
+  A_Version_Attribute,            // E.3(3), K(268)
+  A_Wide_Image_Attribute,         // 3.5(28), K(270)
+  A_Wide_Value_Attribute,         // 3.5(40), K(274)
+  A_Wide_Width_Attribute,         // 3.5(38), K(278)
+  A_Width_Attribute,              // 3.5(39), K(280)
+  A_Write_Attribute,              // 13.13.2(3), 13.13.2(11), K(282), K(286)
+
+  //  |A2005 start
+  //  New Ada 2005 attributes. To be alphabetically ordered later
+  A_Machine_Rounding_Attribute,
+  A_Mod_Attribute,
+  A_Priority_Attribute,
+  A_Stream_Size_Attribute,
+  A_Wide_Wide_Image_Attribute,
+  A_Wide_Wide_Value_Attribute,
+  A_Wide_Wide_Width_Attribute,
+  //  |A2005 end
+
+  //  |A2012 start
+  //  New Ada 2012 attributes. To be alphabetically ordered later
+  A_Max_Alignment_For_Allocation_Attribute,
+  An_Overlaps_Storage_Attribute,
+  //  |A2012 end
+
+  An_Implementation_Defined_Attribute,  // Reference Manual, Annex M
+  An_Unknown_Attribute           // Unknown to ASIS
+#endif
+
+     string s;
+
+     switch (x)
+        {
+          case Not_An_Attribute:                         s = "Not_An_Attribute"; break;
+          case An_Access_Attribute:                      s = "An_Access_Attribute"; break;
+          case An_Address_Attribute:                     s = "An_Address_Attribute"; break;
+          case An_Adjacent_Attribute:                    s = "An_Adjacent_Attribute"; break;
+          case An_Aft_Attribute:                         s = "An_Aft_Attribute"; break;
+          case An_Alignment_Attribute:                   s = "An_Alignment_Attribute"; break;
+          case A_Base_Attribute:                         s = "A_Base_Attribute"; break;
+          case A_Bit_Order_Attribute:                    s = "A_Bit_Order_Attribute"; break;
+          case A_Body_Version_Attribute:                 s = "A_Body_Version_Attribute"; break;
+          case A_Callable_Attribute:                     s = "A_Callable_Attribute"; break;
+          case A_Caller_Attribute:                       s = "A_Caller_Attribute"; break;
+          case A_Ceiling_Attribute:                      s = "A_Ceiling_Attribute"; break;
+          case A_Class_Attribute:                        s = "A_Class_Attribute"; break;
+          case A_Component_Size_Attribute:               s = "A_Component_Size_Attribute"; break;
+          case A_Compose_Attribute:                      s = "A_Compose_Attribute"; break;
+          case A_Constrained_Attribute:                  s = "A_Constrained_Attribute"; break;
+          case A_Copy_Sign_Attribute:                    s = "A_Copy_Sign_Attribute"; break;
+          case A_Count_Attribute:                        s = "A_Count_Attribute"; break;
+          case A_Definite_Attribute:                     s = "A_Definite_Attribute"; break;
+          case A_Delta_Attribute:                        s = "A_Delta_Attribute"; break;
+          case A_Denorm_Attribute:                       s = "A_Denorm_Attribute"; break;
+          case A_Digits_Attribute:                       s = "A_Digits_Attribute"; break;
+          case An_Exponent_Attribute:                    s = "An_Exponent_Attribute"; break;
+          case An_External_Tag_Attribute:                s = "An_External_Tag_Attribute"; break;
+          case A_First_Attribute:                        s = "A_First_Attribute"; break;
+          case A_First_Bit_Attribute:                    s = "A_First_Bit_Attribute"; break;
+          case A_Floor_Attribute:                        s = "A_Floor_Attribute"; break;
+          case A_Fore_Attribute:                         s = "A_Fore_Attribute"; break;
+          case A_Fraction_Attribute:                     s = "A_Fraction_Attribute"; break;
+          case An_Identity_Attribute:                    s = "An_Identity_Attribute"; break;
+          case An_Image_Attribute:                       s = "An_Image_Attribute"; break;
+          case An_Input_Attribute:                       s = "An_Input_Attribute"; break;
+          case A_Last_Attribute:                         s = "A_Last_Attribute"; break;
+          case A_Last_Bit_Attribute:                     s = "A_Last_Bit_Attribute"; break;
+          case A_Leading_Part_Attribute:                 s = "A_Leading_Part_Attribute"; break;
+          case A_Length_Attribute:                       s = "A_Length_Attribute"; break;
+          case A_Machine_Attribute:                      s = "A_Machine_Attribute"; break;
+          case A_Machine_Emax_Attribute:                 s = "A_Machine_Emax_Attribute"; break;
+          case A_Machine_Emin_Attribute:                 s = "A_Machine_Emin_Attribute"; break;
+          case A_Machine_Mantissa_Attribute:             s = "A_Machine_Mantissa_Attribute"; break;
+          case A_Machine_Overflows_Attribute:            s = "A_Machine_Overflows_Attribute"; break;
+          case A_Machine_Radix_Attribute:                s = "A_Machine_Radix_Attribute"; break;
+          case A_Machine_Rounds_Attribute:               s = "A_Machine_Rounds_Attribute"; break;
+          case A_Max_Attribute:                          s = "A_Max_Attribute"; break;
+          case A_Max_Size_In_Storage_Elements_Attribute: s = "A_Max_Size_In_Storage_Elements_Attribute"; break;
+          case A_Min_Attribute:                          s = "A_Min_Attribute"; break;
+          case A_Model_Attribute:                        s = "A_Model_Attribute"; break;
+          case A_Model_Emin_Attribute:                   s = "A_Model_Emin_Attribute"; break;
+          case A_Model_Epsilon_Attribute:                s = "A_Model_Epsilon_Attribute"; break;
+          case A_Model_Mantissa_Attribute:               s = "A_Model_Mantissa_Attribute"; break;
+          case A_Model_Small_Attribute:                  s = "A_Model_Small_Attribute"; break;
+          case A_Modulus_Attribute:                      s = "A_Modulus_Attribute"; break;
+          case An_Output_Attribute:                      s = "An_Output_Attribute"; break;
+          case A_Partition_ID_Attribute:                 s = "A_Partition_ID_Attribute"; break;
+          case A_Pos_Attribute:                          s = "A_Pos_Attribute"; break;
+          case A_Position_Attribute:                     s = "A_Position_Attribute"; break;
+          case A_Pred_Attribute:                         s = "A_Pred_Attribute"; break;
+          case A_Range_Attribute:                        s = "A_Range_Attribute"; break;
+          case A_Read_Attribute:                         s = "A_Read_Attribute"; break;
+          case A_Remainder_Attribute:                    s = "A_Remainder_Attribute"; break;
+          case A_Round_Attribute:                        s = "A_Round_Attribute"; break;
+          case A_Rounding_Attribute:                     s = "A_Rounding_Attribute"; break;
+          case A_Safe_First_Attribute:                   s = "A_Safe_First_Attribute"; break;
+          case A_Safe_Last_Attribute:                    s = "A_Safe_Last_Attribute"; break;
+          case A_Scale_Attribute:                        s = "A_Scale_Attribute"; break;
+          case A_Scaling_Attribute:                      s = "A_Scaling_Attribute"; break;
+          case A_Signed_Zeros_Attribute:                 s = "A_Signed_Zeros_Attribute"; break;
+          case A_Size_Attribute:                         s = "A_Size_Attribute"; break;
+          case A_Small_Attribute:                        s = "A_Small_Attribute"; break;
+          case A_Storage_Pool_Attribute:                 s = "A_Storage_Pool_Attribute"; break;
+          case A_Storage_Size_Attribute:                 s = "A_Storage_Size_Attribute"; break;
+          case A_Succ_Attribute:                         s = "A_Succ_Attribute"; break;
+          case A_Tag_Attribute:                          s = "A_Tag_Attribute"; break;
+          case A_Terminated_Attribute:                   s = "A_Terminated_Attribute"; break;
+          case A_Truncation_Attribute:                   s = "A_Truncation_Attribute"; break;
+          case An_Unbiased_Rounding_Attribute:           s = "An_Unbiased_Rounding_Attribute"; break;
+          case An_Unchecked_Access_Attribute:            s = "An_Unchecked_Access_Attribute"; break;
+          case A_Val_Attribute:                          s = "A_Val_Attribute"; break;
+          case A_Valid_Attribute:                        s = "A_Valid_Attribute"; break;
+          case A_Value_Attribute:                        s = "A_Value_Attribute"; break;
+          case A_Version_Attribute:                      s = "A_Version_Attribute"; break;
+          case A_Wide_Image_Attribute:                   s = "A_Wide_Image_Attribute"; break;
+          case A_Wide_Value_Attribute:                   s = "A_Wide_Value_Attribute"; break;
+          case A_Wide_Width_Attribute:                   s = "A_Wide_Width_Attribute"; break;
+          case A_Width_Attribute:                        s = "A_Width_Attribute"; break;
+          case A_Write_Attribute:                        s = "A_Write_Attribute"; break;
+          case A_Machine_Rounding_Attribute:             s = "A_Machine_Rounding_Attribute"; break;
+          case A_Mod_Attribute:                          s = "A_Mod_Attribute"; break;
+          case A_Priority_Attribute:                     s = "A_Priority_Attribute"; break;
+          case A_Stream_Size_Attribute:                  s = "A_Stream_Size_Attribute"; break;
+          case A_Wide_Wide_Image_Attribute:              s = "A_Wide_Wide_Image_Attribute"; break;
+          case A_Wide_Wide_Value_Attribute:              s = "A_Wide_Wide_Value_Attribute"; break;
+          case A_Wide_Wide_Width_Attribute:              s = "A_Wide_Wide_Width_Attribute"; break;
+          case A_Max_Alignment_For_Allocation_Attribute: s = "A_Max_Alignment_For_Allocation_Attribute"; break;
+          case An_Overlaps_Storage_Attribute:            s = "An_Overlaps_Storage_Attribute"; break;
+          case An_Implementation_Defined_Attribute:      s = "An_Implementation_Defined_Attribute"; break;
+          case An_Unknown_Attribute:                     s = "An_Unknown_Attribute"; break;
+
+          default:
+             {
+               printf ("Error: default called in switch for Ada_ROSE_Translation::attributeKindName(): x = %d \n",x);
                ROSE_ASSERT(false);
              }
         }

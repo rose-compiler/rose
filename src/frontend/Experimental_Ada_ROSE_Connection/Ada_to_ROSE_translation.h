@@ -28,7 +28,7 @@ namespace Ada_ROSE_Translation
 
      void processExceptionHandler( Exception_Handler_Struct & exceptionHandler);
 
-     void processPath        ( Path_Struct   & path);
+     void processPath        ( Path_Struct   & path,  int element_id);
 
      void processDefiningNameList          ( Defining_Name_List & Label_Names);
      void processPathList                  ( Path_List & pathList);
@@ -66,6 +66,8 @@ namespace Ada_ROSE_Translation
      std::string subprogramDefaultKindName (Subprogram_Default_Kinds x);
      std::string modeKindName              (Mode_Kinds x);
      std::string declarationOriginName     (Declaration_Origins x);
+     std::string attributeKindName         (Attribute_Kinds x);
+
      std::string unitKindName              (Unit_Kinds x);
      std::string unitClassName             (Unit_Classes x);
      std::string unitOriginName            (Unit_Origins x);
