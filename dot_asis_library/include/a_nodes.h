@@ -8,6 +8,9 @@
 // the ASIS types exactly, because we do unchecked conversions between them.
 ///////////////////////////////////////////////////////////////////////////////
 
+typedef char* Program_Text;
+typedef int   ASIS_Integer;
+
 enum Node_Kinds { // Not an ASIS type
   Not_A_Node,
   A_Context_Node,
@@ -16,20 +19,6 @@ enum Node_Kinds { // Not an ASIS type
 };
 
 typedef int Node_ID;
-
-///////////////////////////////////////////////////////////////////////////////
-// BEGIN context
-///////////////////////////////////////////////////////////////////////////////
-
-struct Context_Struct {
-  char *name;
-  char *parameters;
-  char *debug_image;
-};
-
-///////////////////////////////////////////////////////////////////////////////
-// END context
-///////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////////
 // BEGIN element 
@@ -793,7 +782,10 @@ enum Enclosing_Kinds { // Not an ASIS type
 
 // May take ??*4 bytes (unfinished):
 struct Pragma_Struct {
-  enum Pragma_Kinds Pragma_Kind;
+  enum Pragma_Kinds   Pragma_Kind;
+  Pragma_Element_List Pragmas;
+  Program_Text        Pragma_Name_Image;
+  Association_List    Pragma_Argument_Associations;
 };
 
 // May take :
@@ -822,29 +814,99 @@ struct Defining_Name_Struct {
 struct Declaration_Struct {
   enum Declaration_Kinds   Declaration_Kind;
   enum Declaration_Origins Declaration_Origin;
+  Pragma_Element_List            Corresponding_Pragmas;
   Defining_Name_List             Names;  
   Element_List                   Aspect_Specifications;
   Representation_Clause_List     Corresponding_Representation_Clauses;
   
   // These fields are only valid for the kinds above them:
+  //     A_Formal_Procedure_Declaration
+  //     A_Formal_Function_Declaration
+  //     A_Function_Declaration
+  //     An_Ordinary_Type_Declaration
+  //     A_Private_Type_Declaration
+  //     A_Private_Extension_Declaration
+  //     A_Procedure_Declaration
+  bool                           Has_Abstract;
+  //     A_Constant_Declaration
+  //     A_Deferred_Constant_Declaration
+  //     A_Return_Object_Declaration
+  //     A_Variable_Declaration
+  //     A_Component_Declaration
+  //     A_Parameter_Specification  //  2012
+  bool                           Has_Aliased;
+  //     An_Ordinary_Type_Declaration
+  //     A_Private_Type_Declaration
+  //     A_Private_Extension_Declaration
+  bool                           Has_Limited;
+  //     A_Private_Extension_Declaration
+  //     A_Private_Type_Declaration
+  bool                           Has_Private;
+  //     A_Protected_Body_Declaration
+  //     A_Protected_Type_Declaration
+  //     A_Single_Protected_Declaration
+  //     A_Protected_Body_Stub
+  bool                           Has_Protected;
+  //     A_Loop_Parameter_Specification
+  //     A_Generalized_Iterator_Specification
+  //     An_Element_Iterator_Specification
+  bool                           Has_Reverse;
+  //     A_Task_Type_Declaration
+  //     A_Single_Task_Declaration
+  //     A_Task_Body_Declaration
+  //     A_Task_Body_Stub
+  bool                           Has_Task;
+  //     A_Type_Definition
+  //     An_Access_Definition
+  //     A_Subtype_Indication
+  bool                           Has_Null_Exclusion;
+  //       A_Function_Declaration
+  //       A_Function_Body_Declaration
+  //       An_Expression_Function_Declaration
+  //       A_Function_Renaming_Declaration
+  //       A_Function_Body_Stub
+  //       A_Generic_Function_Declaration
+  //       A_Formal_Function_Declaration
+  bool                           Is_Not_Null_Return;
   // A_Parameter_Specification |
   // A_Formal_Object_Declaration:
   enum Mode_Kinds          Mode_Kind;
   // A_Formal_Function_Declaration |
   // A_Formal_Procedure_Declaration:
   enum Subprogram_Default_Kinds  Default_Kind;
-  // A_Private_Type_Declaration |
-  // A_Private_Extension_Declaration |
-  // A_Variable_Declaration |
-  // A_Constant_Declaration |
-  // A_Deferred_Constant_Declaration |
-  // A_Discriminant_Specification |
-  // A_Loop_Parameter_Specification |
-  // A_Generalized_Iterator_Specification |
-  // An_Element_Iterator_Specification |
-  // A_Procedure_Declaration |
-  // A_Function_Declaration:
-  enum Trait_Kinds         Trait_Kind;
+  //        A_Procedure_Body_Declaration    (pragmas from declarative region +
+  //                                                      statements)
+  //        A_Function_Body_Declaration     (pragmas from declarative region +
+  //                                                      statements)
+  //        A_Package_Declaration           (pragmas from visible + private
+  //                                                      declarative regions)
+  //        A_Package_Body_Declaration      (pragmas from declarative region +
+  //                                                      statements)
+  //        A_Task_Body_Declaration         (pragmas from declarative region +
+  //                                                      statements)
+  //        A_Protected_Body_Declaration    (pragmas from declarative region)
+  //        An_Entry_Body_Declaration       (pragmas from declarative region +
+  //                                                      statements)
+  //        A_Generic_Procedure_Declaration (pragmas from formal declarative
+  //                                                      region)
+  //        A_Generic_Function_Declaration  (pragmas from formal declarative
+  //                                                      region)
+  //        A_Generic_Package_Declaration   (pragmas from formal + visible +
+  //                                           private declarative regions)
+  Pragma_Element_List            Pragmas;
+  //       A_Package_Declaration
+  //       A_Package_Body_Declaration
+  //       A_Procedure_Body_Declaration
+  //       A_Function_Body_Declaration
+  //       A_Generic_Package_Declaration
+  //       A_Task_Type_Declaration
+  //       A_Single_Task_Declaration
+  //       A_Task_Body_Declaration
+  //       A_Protected_Type_Declaration
+  //       A_Single_Protected_Declaration
+  //       A_Protected_Body_Declaration
+  //       An_Entry_Body_Declaration
+  Element_ID                     Corresponding_End_Name;
   //  An_Ordinary_Type_Declaration,            // 3.2.1(3)
   //  A_Task_Type_Declaration,                  // 9.1(2)
   //  A_Protected_Type_Declaration,             // 9.4(2)
@@ -1151,7 +1213,6 @@ struct Definition_Struct {
   Expression_ID         Subtype_Mark;
   Constraint_ID         Subtype_Constraint;
   // A_Component_Definition
-  Subtype_Indication_ID Component_Subtype_Indication;
   Definition_ID         Component_Definition_View;
   
   // A_Record_Definition
@@ -1448,7 +1509,12 @@ struct Source_Location_Struct {
 struct Element_Struct {
   // The fields below are applicable to all kinds:
   Element_ID                    ID;
+  Node_ID                       Enclosing_Compilation_Unit;
   enum Element_Kinds            Element_Kind;
+  bool                          Is_Part_Of_Implicit;
+  bool                          Is_Part_Of_Inherited;
+  bool                          Is_Part_Of_Instance;
+  ASIS_Integer                  Hash;
   Node_ID                       Enclosing_Element_ID;
   enum Enclosing_Kinds          Enclosing_Kind;
   struct Source_Location_Struct Source_Location;
@@ -1600,6 +1666,7 @@ struct Unit_Struct {
   Declaration_ID      Unit_Declaration;
   Context_Clause_List Context_Clause_Elements;
   Pragma_Element_List Compilation_Pragmas;
+  bool                Is_Standard;
   
   // The fields below are only applicable to the kinds above them:
   //  A_Package,
@@ -1658,12 +1725,26 @@ struct Unit_Struct {
 // END unit 
 ///////////////////////////////////////////////////////////////////////////////
 
+///////////////////////////////////////////////////////////////////////////////
+// BEGIN context
+///////////////////////////////////////////////////////////////////////////////
+
+struct Context_Struct {
+  char *name;
+  char *parameters;
+  char *debug_image;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// END context
+///////////////////////////////////////////////////////////////////////////////
+
 // May take  44*4 bytes (Element_Struct, the largest component):
 union Node_Union {
   int                   Dummy_Member; // For Ada default initialization
-  struct Context_Struct Context;
-  struct Unit_Struct    Unit;
   struct Element_Struct Element;
+  struct Unit_Struct    Unit;
+  struct Context_Struct Context;
 };
 
 // May take 45*4 bytes - a 44*4 Node_Union, 1 enum:
