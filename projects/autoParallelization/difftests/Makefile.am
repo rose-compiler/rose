@@ -7,7 +7,9 @@ C_TESTCODES =
 # name qualification of constructor is wrongly unparsed for 4.2 and 4.4 testing
 if ROSE_USING_GCC_VERSION_LATER_4_8
 CXX_TESTCODES = \
-     missingReduction.C
+     missingReduction.C \
+     omp_lib_call.C \
+     bt_test.C
 endif
 
 ALL_TESTCODES = \
@@ -28,11 +30,12 @@ TESTCODE_INCLUDES = -I$(top_srcdir)/src/frontend/SageIII
 # --edg:no_warnings
 # -rose:verbose 0
 #  We focus on testing the check for existing directives
-ROSE_COMMON_FLAGS = -rose:autopar:enable_diff
+ROSE_COMMON_FLAGS = -rose:autopar:enable_diff 
+#-fopenmp, automatically add this option 
 
 ROSE_CFLAGS = $(ROSE_COMMON_FLAGS) -rose:C99 
-# for C++ input codes
-ROSE_CXXFLAGS = $(ROSE_COMMON_FLAGS)
+# for C++ input codes, 
+ROSE_CXXFLAGS = $(ROSE_COMMON_FLAGS) -I$(top_srcdir)/projects/autoParallelization/difftests
 
 # build the translator
 ../autoPar:
@@ -49,12 +52,12 @@ REFERENCE_PATH=$(top_srcdir)/projects/autoParallelization/difftests
 C_TEST_DIFF_FILES=$(C_TESTCODES:.c=.c.diff)
 CXX_TEST_DIFF_FILES=$(CXX_TESTCODES:.C=.C.diff)
 
-
+# we remove -c to test linking , all test input files must have the main() entry now.
 $(C_TEST_OUTPUT):../autoPar $(srcdir)/$(@:%.output=%)
-	../autoPar $(ROSE_CFLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:%.output=%) > $@
+	../autoPar $(ROSE_CFLAGS) $(TESTCODE_INCLUDES) $(srcdir)/$(@:%.output=%) > $@
 
 $(CXX_TEST_OUTPUT):../autoPar  $(srcdir)/$(@:%.output=%)
-	../autoPar $(ROSE_CXXFLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:%.output=%) >$@
+	../autoPar $(ROSE_CXXFLAGS) $(TESTCODE_INCLUDES) $(srcdir)/$(@:%.output=%) >$@
 
 # diff files
 $(CXX_TEST_DIFF_FILES): $(CXX_TEST_OUTPUT) 

@@ -556,7 +556,7 @@ TESTCODES_REQUIRED_TO_PASS = \
 
 # DQ (1/16/2017): Clang C support appears to be missign the typeof operator (C11 mode).
 if !USING_CLANG_COMPILER
-TESTCODES_REQUIRED_TO_PASS = \
+TESTCODES_REQUIRED_TO_PASS += \
      test2010_12.c \
      test2012_14.c \
      test2012_25.c \

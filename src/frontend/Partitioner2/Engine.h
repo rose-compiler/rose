@@ -2,6 +2,7 @@
 #define ROSE_Partitioner2_Engine_H
 
 #include <BinaryLoader.h>
+#include <boost/noncopyable.hpp>
 #include <Disassembler.h>
 #include <FileSystem.h>
 #include <Partitioner2/Function.h>
@@ -97,7 +98,7 @@ namespace Partitioner2 {
  *      although many binary analysis capabilities are built directly on the more efficient partitioner data structures.
  *      Because of this, the partitioner also has a mechanism by which its data structures can be initialized from an AST.
  */
-class ROSE_DLL_API Engine {
+class ROSE_DLL_API Engine: private boost::noncopyable {
 public:
     /** Settings for the engine.
      *
@@ -211,7 +212,7 @@ public:
         basicBlockWorkList_(BasicBlockWorkList::instance(this)), progress_(Progress::instance()) {
         init();
     }
-
+    
     virtual ~Engine() {}
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

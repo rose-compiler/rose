@@ -1,8 +1,6 @@
 
 int main()
 {
-  int i;
-  int j;
   int N;
   int b[N][N];
   int a[N][N];

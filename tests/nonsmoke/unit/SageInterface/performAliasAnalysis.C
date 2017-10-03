@@ -29,10 +29,17 @@ string toString (SgVarRefExp* ref)
 {
   string ret; 
   ret+= ref->unparseToString(); 
+#if __cplusplus >= 201103L
   ret+="@";
-  ret+= boost::to_string(ref->get_file_info()->get_line()); 
+  ret+= std::to_string(ref->get_file_info()->get_line()); 
   ret+=":";
-  ret+= boost::to_string(ref->get_file_info()->get_col()); 
+  ret+= std::to_string(ref->get_file_info()->get_col()); 
+#else
+  ret+="@";
+  ret+= boost::lexical_cast<std::string>(ref->get_file_info()->get_line()); 
+  ret+=":";
+  ret+= boost::lexical_cast<std::string>(ref->get_file_info()->get_col()); 
+#endif
   return ret; 
 }
 
