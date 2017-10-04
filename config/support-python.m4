@@ -11,7 +11,7 @@ AC_DEFUN([ROSE_SUPPORT_PYTHON],
     #   PYTHON_SITE_PKG
     #   PYTHON_VERSION
     # Version interval is half-open, i.e., [x, y)         this ] needed for m4
-    AX_PYTHON_DEVEL([2.7.0], [4.0.0])
+    AX_PYTHON_DEVEL([2.6.6], [4.0.0])
 
     if test "$PYTHON" != ""; then
         AC_DEFINE([USE_ROSE_PYTHON_SUPPORT], 1, [Controls use of ROSE support for Python.])
