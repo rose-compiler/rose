@@ -18,7 +18,8 @@ namespace SPRAY {
     BITYPE_SLONG, BITYPE_ULONG,
     BITYPE_SLONG_LONG, BITYPE_ULONG_LONG,
     BITYPE_FLOAT, BITYPE_DOUBLE, BITYPE_LONG_DOUBLE,
-    BITYPE_POINTER
+    BITYPE_POINTER,
+    BITYPE_REFERENCE
   };
   
   class TypeSizeMapping {
@@ -36,16 +37,16 @@ namespace SPRAY {
     // C++11 version
     // default setting LP64 data model
     std::vector<SPRAY::TypeSize> _mapping={1,
-                                        1,1,2,2,4,4,
-                                        2,2,4,4,4,4,8,8,
-                                        4,8,16,
-                                        8
+                                           1,1,2,2,4,4,
+                                           2,2,4,4,4,4,8,8,
+                                           4,8,16,
+                                           8,
+                                           8,
     };
 #else
     std::vector<SPRAY::TypeSize> _mapping;
 #endif
   };
-
 }
 
 #endif

@@ -50,6 +50,7 @@ class VariableIdMapping {
    */
   VariableId createUniqueTemporaryVariableId(std::string name);
   bool isTemporaryVariableId(VariableId varId);
+  bool isHeapMemoryRegionId(VariableId varId);
 
   // delete a unique variable symbol (should be used together with createUniqueVariableSymbol)
   void deleteUniqueTemporaryVariableId(VariableId uniqueVarSym);

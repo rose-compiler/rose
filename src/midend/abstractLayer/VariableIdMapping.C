@@ -519,6 +519,14 @@ VariableId VariableIdMapping::idForArrayRef(SgPntrArrRefExp* ref)
 
 /*! 
   * \author Markus Schordan
+  * \date 2017.
+ */
+bool VariableIdMapping::isHeapMemoryRegionId(VariableId varId) {
+  return isTemporaryVariableId(varId);
+}
+
+/*! 
+  * \author Markus Schordan
   * \date 2012.
  */
 bool VariableIdMapping::isTemporaryVariableId(VariableId varId) {
