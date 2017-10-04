@@ -7,6 +7,7 @@ int main(int argc, char* argv[]) {
       p2=argv[2];
     }
   }
+  //argv[1][1]=500;
   char* p3;
   p3=argv[1];
   *(p3+1)=100;
