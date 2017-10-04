@@ -168,6 +168,35 @@ Grammar::setUpNodes ()
      NEW_TERMINAL_MACRO (UntypedInterfaceDeclaration,     "UntypedInterfaceDeclaration",     "TEMP_UntypedInterfaceDeclaration" );
      NEW_TERMINAL_MACRO (UntypedUseStatement,             "UntypedUseStatement",             "TEMP_UntypedUseStatement" );
 
+  // DQ (10/3/2017): New statements specific to general language support.  The philosophy is to add the union of all statements
+  // for all languages to the set of untyped IR nodes and provide an enum code to support the larger number of expressions.
+     NEW_TERMINAL_MACRO (UntypedNullStatement,                 "UntypedNullStatement",                 "TEMP_UntypedNullStatement" );
+     NEW_TERMINAL_MACRO (UntypedIfStatement,                   "UntypedIfStatement",                   "TEMP_UntypedIfStatement" );
+     NEW_TERMINAL_MACRO (UntypedCaseStatement,                 "UntypedCaseStatement",                 "TEMP_UntypedCaseStatement" );
+     NEW_TERMINAL_MACRO (UntypedLoopStatement,                 "UntypedLoopStatement",                 "TEMP_UntypedLoopStatement" );
+     NEW_TERMINAL_MACRO (UntypedWhileStatement,                "UntypedWhileStatement",                "TEMP_UntypedWhileStatement" );
+     NEW_TERMINAL_MACRO (UntypedForStatement,                  "UntypedForStatement",                  "TEMP_UntypedForStatement" );
+  // NEW_TERMINAL_MACRO (UntypedBlockStatement,                "UntypedBlockStatement",                "TEMP_UntypedBlockStatement" );
+     NEW_TERMINAL_MACRO (UntypedExitStatement,                 "UntypedExitStatement",                 "TEMP_UntypedExitStatement" );
+     NEW_TERMINAL_MACRO (UntypedGotoStatement,                 "UntypedGotoStatement",                 "TEMP_UntypedGotoStatement" );
+     NEW_TERMINAL_MACRO (UntypedProcedureCallStatement,        "UntypedProcedureCallStatement",        "TEMP_UntypedProcedureCallStatement" );
+     NEW_TERMINAL_MACRO (UntypedReturnStatement,               "UntypedReturnStatement",               "TEMP_UntypedReturnStatement" );
+     NEW_TERMINAL_MACRO (UntypedExtendedReturnStatement,       "UntypedExtendedReturnStatement",       "TEMP_UntypedExtendedReturnStatement" );
+     NEW_TERMINAL_MACRO (UntypedAcceptStatement,               "UntypedAcceptStatement",               "TEMP_UntypedAcceptStatement" );
+     NEW_TERMINAL_MACRO (UntypedEntryCallStatement,            "UntypedEntryCallStatement",            "TEMP_UntypedEntryCallStatement" );
+     NEW_TERMINAL_MACRO (UntypedRequeueStatement,              "UntypedRequeueStatement",              "TEMP_UntypedRequeueStatement" );
+     NEW_TERMINAL_MACRO (UntypedDelayUntilStatement,           "UntypedDelayUntilStatement",           "TEMP_UntypedDelayUntilStatement" );
+     NEW_TERMINAL_MACRO (UntypedDelayRelativeStatement,        "UntypedDelayRelativeStatement",        "TEMP_UntypedDelayRelativeStatement" );
+     NEW_TERMINAL_MACRO (UntypedTerminateAlternativeStatement, "UntypedTerminateAlternativeStatement", "TEMP_UntypedTerminateAlternativeStatement" );
+     NEW_TERMINAL_MACRO (UntypedSelectiveAcceptStatement,      "UntypedSelectiveAcceptStatement",      "TEMP_UntypedSelectiveAcceptStatement" );
+     NEW_TERMINAL_MACRO (UntypedTimedEntryCallStatement,       "UntypedTimedEntryCallStatement",       "TEMP_UntypedTimedEntryCallStatement" );
+     NEW_TERMINAL_MACRO (UntypedConditionalEntryCallStatement, "UntypedConditionalEntryCallStatement", "TEMP_UntypedConditionalEntryCallStatement" );
+     NEW_TERMINAL_MACRO (UntypedAsynchronousSelectStatement,   "UntypedAsynchronousSelectStatement",   "TEMP_UntypedAsynchronousSelectStatement" );
+     NEW_TERMINAL_MACRO (UntypedAbortStatement,                "UntypedAbortStatement",                "TEMP_UntypedAbortStatement" );
+     NEW_TERMINAL_MACRO (UntypedRaiseStatement,                "UntypedRaiseStatement",                "TEMP_UntypedRaiseStatement" );
+     NEW_TERMINAL_MACRO (UntypedCodeStatement,                 "UntypedCodeStatement",                 "TEMP_UntypedCodeStatement" );
+  // NEW_TERMINAL_MACRO (UntypedxStatement,                    "UntypedxStatement",                    "TEMP_UntypedxStatement" );
+
   // DQ (1/22/2016): Allow this IR node to be used explicitly in the AST.
   // NEW_TERMINAL_MACRO (UntypedFunctionDeclaration,      "UntypedFunctionDeclaration",      "TEMP_UntypedFunctionDeclaration" );
      NEW_NONTERMINAL_MACRO (UntypedFunctionDeclaration, UntypedProgramHeaderDeclaration | UntypedSubroutineDeclaration |
@@ -214,8 +243,14 @@ Grammar::setUpNodes ()
          "UntypedScope", "UntypedScopeTag", false);
 
      NEW_NONTERMINAL_MACRO (UntypedStatement, UntypedDeclarationStatement | UntypedAssignmentStatement | 
-         UntypedFunctionCallStatement | UntypedBlockStatement | UntypedNamedStatement | UntypedExpressionStatement |
-         UntypedOtherStatement | UntypedScope,
+         UntypedFunctionCallStatement    | UntypedBlockStatement          | UntypedNamedStatement                | UntypedExpressionStatement |
+         UntypedOtherStatement           | UntypedScope                   | UntypedNullStatement                 | UntypedIfStatement | 
+         UntypedCaseStatement            | UntypedLoopStatement           | UntypedWhileStatement                | UntypedForStatement | 
+         UntypedExitStatement            | UntypedGotoStatement           | UntypedProcedureCallStatement        | 
+         UntypedReturnStatement          | UntypedExtendedReturnStatement | UntypedAcceptStatement               | UntypedEntryCallStatement |
+         UntypedRequeueStatement         | UntypedDelayUntilStatement     | UntypedDelayRelativeStatement        | UntypedTerminateAlternativeStatement |
+         UntypedSelectiveAcceptStatement | UntypedTimedEntryCallStatement | UntypedConditionalEntryCallStatement | UntypedAsynchronousSelectStatement |
+         UntypedAbortStatement           | UntypedRaiseStatement          | UntypedCodeStatement,
          "UntypedStatement", "UntypedStatementTag", false);
 
      NEW_TERMINAL_MACRO (UntypedArrayType, "UntypedArrayType", "TEMP_UntypedArrayType" );
@@ -641,6 +676,33 @@ Grammar::setUpNodes ()
                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      UntypedUseStatement.setDataPrototype              ( "bool", "isOnlyList", "= false",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (10/3/2017): New statements specific to general language support.  The philosophy is to add the union of all statements
+  // for all languages to the set of untyped IR nodes and provide an enum code to support the larger number of expressions.
+     UntypedNullStatement.setFunctionPrototype                 ( "HEADER_UNTYPED_NULL_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedIfStatement.setFunctionPrototype                   ( "HEADER_UNTYPED_IF_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedCaseStatement.setFunctionPrototype                 ( "HEADER_UNTYPED_CASE_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedLoopStatement.setFunctionPrototype                 ( "HEADER_UNTYPED_LOOP_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedWhileStatement.setFunctionPrototype                ( "HEADER_UNTYPED_WHILE_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedForStatement.setFunctionPrototype                  ( "HEADER_UNTYPED_FOR_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedExitStatement.setFunctionPrototype                 ( "HEADER_UNTYPED_EXIT_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedGotoStatement.setFunctionPrototype                 ( "HEADER_UNTYPED_GOTO_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedProcedureCallStatement.setFunctionPrototype        ( "HEADER_UNTYPED_PROCEDURE_CALL_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedReturnStatement.setFunctionPrototype               ( "HEADER_UNTYPED_RETURN_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedExtendedReturnStatement.setFunctionPrototype       ( "HEADER_UNTYPED_EXTENDED_RETURN_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedAcceptStatement.setFunctionPrototype               ( "HEADER_UNTYPED_ACCEPT_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedEntryCallStatement.setFunctionPrototype            ( "HEADER_UNTYPED_ENTRY_CALL_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedRequeueStatement.setFunctionPrototype              ( "HEADER_UNTYPED_REQUEUE_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedDelayUntilStatement.setFunctionPrototype           ( "HEADER_UNTYPED_DELAY_UNTIL_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedDelayRelativeStatement.setFunctionPrototype        ( "HEADER_UNTYPED_DELAY_RELATIVE_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedTerminateAlternativeStatement.setFunctionPrototype ( "HEADER_UNTYPED_TERMINATE_ALTERNATIVE_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedSelectiveAcceptStatement.setFunctionPrototype      ( "HEADER_UNTYPED_SELECTIVE_ACCEPT_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedTimedEntryCallStatement.setFunctionPrototype       ( "HEADER_UNTYPED_TIMED_ENTRY_CALL_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedConditionalEntryCallStatement.setFunctionPrototype ( "HEADER_UNTYPED_CONDITIONAL_ENTRY_CALL_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedAsynchronousSelectStatement.setFunctionPrototype   ( "HEADER_UNTYPED_ASYNCHRONOUS_SELECT_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedAbortStatement.setFunctionPrototype                ( "HEADER_UNTYPED_ABORT_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedRaiseStatement.setFunctionPrototype                ( "HEADER_UNTYPED_RAISE_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedCodeStatement.setFunctionPrototype                 ( "HEADER_UNTYPED_CODE_STATEMENT", "../Grammar/LocatedNode.code");
 
      UntypedDeclarationStatement.setFunctionPrototype  ( "HEADER_UNTYPED_DECLARATION_STATEMENT", "../Grammar/LocatedNode.code");
      UntypedImplicitDeclaration.setFunctionPrototype   ( "HEADER_UNTYPED_IMPLICIT_DECLARATION", "../Grammar/LocatedNode.code");
@@ -1259,6 +1321,33 @@ Grammar::setUpNodes ()
      UntypedBlockStatement.setFunctionSource        ( "SOURCE_UNTYPED_BLOCK_STATEMENT", "../Grammar/LocatedNode.code");
      UntypedOtherStatement.setFunctionSource        ( "SOURCE_UNTYPED_OTHER_STATEMENT", "../Grammar/LocatedNode.code");
      UntypedUseStatement.setFunctionSource          ( "SOURCE_UNTYPED_USE_STATEMENT", "../Grammar/LocatedNode.code");
+
+  // DQ (10/3/2017): New statements specific to general language support.  The philosophy is to add the union of all statements
+  // for all languages to the set of untyped IR nodes and provide an enum code to support the larger number of expressions.
+     UntypedNullStatement.setFunctionSource                 ( "SOURCE_UNTYPED_NULL_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedIfStatement.setFunctionSource                   ( "SOURCE_UNTYPED_IF_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedCaseStatement.setFunctionSource                 ( "SOURCE_UNTYPED_CASE_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedLoopStatement.setFunctionSource                 ( "SOURCE_UNTYPED_LOOP_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedWhileStatement.setFunctionSource                ( "SOURCE_UNTYPED_WHILE_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedForStatement.setFunctionSource                  ( "SOURCE_UNTYPED_FOR_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedExitStatement.setFunctionSource                 ( "SOURCE_UNTYPED_EXIT_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedGotoStatement.setFunctionSource                 ( "SOURCE_UNTYPED_GOTO_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedProcedureCallStatement.setFunctionSource        ( "SOURCE_UNTYPED_PROCEDURE_CALL_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedReturnStatement.setFunctionSource               ( "SOURCE_UNTYPED_RETURN_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedExtendedReturnStatement.setFunctionSource       ( "SOURCE_UNTYPED_EXTENDED_RETURN_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedAcceptStatement.setFunctionSource               ( "SOURCE_UNTYPED_ACCEPT_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedEntryCallStatement.setFunctionSource            ( "SOURCE_UNTYPED_ENTRY_CALL_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedRequeueStatement.setFunctionSource              ( "SOURCE_UNTYPED_REQUEUE_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedDelayUntilStatement.setFunctionSource           ( "SOURCE_UNTYPED_DELAY_UNTIL_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedDelayRelativeStatement.setFunctionSource        ( "SOURCE_UNTYPED_DELAY_RELATIVE_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedTerminateAlternativeStatement.setFunctionSource ( "SOURCE_UNTYPED_TERMINATE_ALTERNATIVE_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedSelectiveAcceptStatement.setFunctionSource      ( "SOURCE_UNTYPED_SELECTIVE_ACCEPT_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedTimedEntryCallStatement.setFunctionSource       ( "SOURCE_UNTYPED_TIMED_ENTRY_CALL_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedConditionalEntryCallStatement.setFunctionSource ( "SOURCE_UNTYPED_CONDITIONAL_ENTRY_CALL_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedAsynchronousSelectStatement.setFunctionSource   ( "SOURCE_UNTYPED_ASYNCHRONOUS_SELECT_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedAbortStatement.setFunctionSource                ( "SOURCE_UNTYPED_ABORT_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedRaiseStatement.setFunctionSource                ( "SOURCE_UNTYPED_RAISE_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedCodeStatement.setFunctionSource                 ( "SOURCE_UNTYPED_CODE_STATEMENT", "../Grammar/LocatedNode.code");
 
      UntypedDeclarationStatement.setFunctionSource     ( "SOURCE_UNTYPED_DECLARATION_STATEMENT", "../Grammar/LocatedNode.code");
      UntypedNameListDeclaration.setFunctionSource      ( "SOURCE_UNTYPED_NAMELIST_DECLARATION", "../Grammar/LocatedNode.code");
