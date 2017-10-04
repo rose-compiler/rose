@@ -647,11 +647,17 @@ Grammar::setUpNodes ()
   // UntypedStatement.setDataPrototype     ( "int", "statement_enum", "= SgToken::FORTRAN_UNKNOWN",
   //              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // Rasmussen (10/3/2017): Added statement_enum (replacing it's removal from base class).
      UntypedNamedStatement.setFunctionPrototype      ( "HEADER_UNTYPED_NAMED_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedNamedStatement.setDataPrototype          ( "int", "statement_enum", "= 0",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      UntypedNamedStatement.setDataPrototype          ( "std::string", "statement_name", "= \"\"",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // Rasmussen (10/3/2017): Added statement_enum (replacing it's removal from base class).
      UntypedExpressionStatement.setFunctionPrototype ( "HEADER_UNTYPED_EXPRESSION_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedExpressionStatement.setDataPrototype     ( "int", "statement_enum", "= 0",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      UntypedExpressionStatement.setDataPrototype     ( "SgUntypedExpression*", "statement_expression", "= NULL",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
@@ -665,7 +671,11 @@ Grammar::setUpNodes ()
      UntypedBlockStatement.setFunctionPrototype        ( "HEADER_UNTYPED_BLOCK_STATEMENT", "../Grammar/LocatedNode.code");
      UntypedBlockStatement.setDataPrototype            ( "SgUntypedScope*", "scope", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // Rasmussen (10/3/2017): Added statement_enum (replacing it's removal from base class).
      UntypedOtherStatement.setFunctionPrototype        ( "HEADER_UNTYPED_OTHER_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedOtherStatement.setDataPrototype            ( "int", "statement_enum", "= 0",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      UntypedUseStatement.setFunctionPrototype          ( "HEADER_UNTYPED_USE_STATEMENT", "../Grammar/LocatedNode.code");
      UntypedUseStatement.setDataPrototype              ( "std::string", "module_name", "= \"\"",
@@ -707,7 +717,10 @@ Grammar::setUpNodes ()
      UntypedDeclarationStatement.setFunctionPrototype  ( "HEADER_UNTYPED_DECLARATION_STATEMENT", "../Grammar/LocatedNode.code");
      UntypedImplicitDeclaration.setFunctionPrototype   ( "HEADER_UNTYPED_IMPLICIT_DECLARATION", "../Grammar/LocatedNode.code");
 
+  // Rasmussen (10/3/2017): Added statement_enum (replacing it's removal from base class).
      UntypedNameListDeclaration.setFunctionPrototype   ( "HEADER_UNTYPED_NAMELIST_DECLARATION", "../Grammar/LocatedNode.code");
+     UntypedNameListDeclaration.setDataPrototype       ( "int", "statement_enum", "= 0",
+                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      UntypedNameListDeclaration.setDataPrototype       ( "SgUntypedNameList*", "names", "",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
@@ -742,7 +755,11 @@ Grammar::setUpNodes ()
   // UntypedProgramHeaderDeclaration.setDataPrototype     ( "SgUntypedNamedStatement*", "end_statement", "= NULL",
   //              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      UntypedSubroutineDeclaration.setFunctionPrototype    ( "HEADER_UNTYPED_SUBROUTINE_DECLARATION", "../Grammar/LocatedNode.code");
+
+  // Rasmussen (10/3/2017): Added statement_enum (replacing it's removal from base class).
      UntypedInterfaceDeclaration.setFunctionPrototype     ( "HEADER_UNTYPED_INTERFACE_DECLARATION",  "../Grammar/LocatedNode.code");
+     UntypedInterfaceDeclaration.setDataPrototype         ( "int", "statement_enum", "= 0",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      UntypedModuleDeclaration.setFunctionPrototype      ( "HEADER_UNTYPED_MODULE_DECLARATION", "../Grammar/LocatedNode.code");
      UntypedModuleDeclaration.setDataPrototype          ( "std::string", "name", "= \"\"",
