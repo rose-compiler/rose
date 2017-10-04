@@ -4,6 +4,7 @@
 
 AC_DEFUN([ROSE_SUPPORT_LLVM],
 [
+ROSE_CONFIGURE_SECTION([LLVM])
 
 AC_ARG_WITH(llvm,
 [  --with-llvm=PATH	Specify the prefix where LLVM (and opt) is installed],
