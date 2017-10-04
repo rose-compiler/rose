@@ -2877,11 +2877,11 @@ SgUntypedNode* SgUntypedNode::build_node_from_nonlist_children ( Sg_File_Info* s
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgUntypedExpression* SgUntypedExpression::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgToken::ROSE_Fortran_Keywords statement_enum )
+SgUntypedExpression* SgUntypedExpression::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, int expression_enum )
    {
 #if 0
   // debugging information!
-     printf ("In SgUntypedExpression::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgToken::ROSE_Fortran_Keywords statement_enum): this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In SgUntypedExpression::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, int expression_enum): this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
      SgUntypedExpression* returnNode = NULL;
@@ -2895,11 +2895,11 @@ SgUntypedExpression* SgUntypedExpression::build_node_from_nonlist_children ( Sg_
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgUntypedUnaryOperator* SgUntypedUnaryOperator::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgToken::ROSE_Fortran_Keywords statement_enum, SgToken::ROSE_Fortran_Operators operator_enum, std::string operator_name, SgUntypedExpression* operand )
+SgUntypedUnaryOperator* SgUntypedUnaryOperator::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, int expression_enum, SgToken::ROSE_Fortran_Operators operator_enum, std::string operator_name, SgUntypedExpression* operand )
    {
 #if 0
   // debugging information!
-     printf ("In SgUntypedUnaryOperator::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgToken::ROSE_Fortran_Keywords statement_enum, SgToken::ROSE_Fortran_Operators operator_enum, std::string operator_name, SgUntypedExpression* operand): this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In SgUntypedUnaryOperator::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, int expression_enum, SgToken::ROSE_Fortran_Operators operator_enum, std::string operator_name, SgUntypedExpression* operand): this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
      SgUntypedUnaryOperator* returnNode = NULL;
@@ -2913,11 +2913,11 @@ SgUntypedUnaryOperator* SgUntypedUnaryOperator::build_node_from_nonlist_children
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgUntypedBinaryOperator* SgUntypedBinaryOperator::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgToken::ROSE_Fortran_Keywords statement_enum, SgToken::ROSE_Fortran_Operators operator_enum, std::string operator_name, SgUntypedExpression* lhs_operand, SgUntypedExpression* rhs_operand )
+SgUntypedBinaryOperator* SgUntypedBinaryOperator::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, int expression_enum, SgToken::ROSE_Fortran_Operators operator_enum, std::string operator_name, SgUntypedExpression* lhs_operand, SgUntypedExpression* rhs_operand )
    {
 #if 0
   // debugging information!
-     printf ("In SgUntypedBinaryOperator::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgToken::ROSE_Fortran_Keywords statement_enum, SgToken::ROSE_Fortran_Operators operator_enum, std::string operator_name, SgUntypedExpression* lhs_operand, SgUntypedExpression* rhs_operand): this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In SgUntypedBinaryOperator::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, int expression_enum, SgToken::ROSE_Fortran_Operators operator_enum, std::string operator_name, SgUntypedExpression* lhs_operand, SgUntypedExpression* rhs_operand): this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
      SgUntypedBinaryOperator* returnNode = NULL;
@@ -2931,11 +2931,11 @@ SgUntypedBinaryOperator* SgUntypedBinaryOperator::build_node_from_nonlist_childr
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgUntypedValueExpression* SgUntypedValueExpression::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgToken::ROSE_Fortran_Keywords statement_enum, std::string value_string, SgUntypedType* type )
+SgUntypedValueExpression* SgUntypedValueExpression::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, int expression_enum, std::string value_string, SgUntypedType* type )
    {
 #if 0
   // debugging information!
-     printf ("In SgUntypedValueExpression::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgToken::ROSE_Fortran_Keywords statement_enum, std::string value_string, SgUntypedType* type): this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In SgUntypedValueExpression::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, int expression_enum, std::string value_string, SgUntypedType* type): this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
      SgUntypedValueExpression* returnNode = NULL;
@@ -2949,11 +2949,11 @@ SgUntypedValueExpression* SgUntypedValueExpression::build_node_from_nonlist_chil
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgUntypedArrayReferenceExpression* SgUntypedArrayReferenceExpression::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgToken::ROSE_Fortran_Keywords statement_enum )
+SgUntypedArrayReferenceExpression* SgUntypedArrayReferenceExpression::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, int expression_enum )
    {
 #if 0
   // debugging information!
-     printf ("In SgUntypedArrayReferenceExpression::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgToken::ROSE_Fortran_Keywords statement_enum): this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In SgUntypedArrayReferenceExpression::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, int expression_enum): this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
      SgUntypedArrayReferenceExpression* returnNode = NULL;
@@ -2967,11 +2967,11 @@ SgUntypedArrayReferenceExpression* SgUntypedArrayReferenceExpression::build_node
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgUntypedOtherExpression* SgUntypedOtherExpression::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgToken::ROSE_Fortran_Keywords statement_enum )
+SgUntypedOtherExpression* SgUntypedOtherExpression::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, int expression_enum )
    {
 #if 0
   // debugging information!
-     printf ("In SgUntypedOtherExpression::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgToken::ROSE_Fortran_Keywords statement_enum): this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In SgUntypedOtherExpression::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, int expression_enum): this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
      SgUntypedOtherExpression* returnNode = NULL;
@@ -2985,11 +2985,11 @@ SgUntypedOtherExpression* SgUntypedOtherExpression::build_node_from_nonlist_chil
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgUntypedFunctionCallOrArrayReferenceExpression* SgUntypedFunctionCallOrArrayReferenceExpression::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgToken::ROSE_Fortran_Keywords statement_enum )
+SgUntypedFunctionCallOrArrayReferenceExpression* SgUntypedFunctionCallOrArrayReferenceExpression::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, int expression_enum )
    {
 #if 0
   // debugging information!
-     printf ("In SgUntypedFunctionCallOrArrayReferenceExpression::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgToken::ROSE_Fortran_Keywords statement_enum): this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In SgUntypedFunctionCallOrArrayReferenceExpression::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, int expression_enum): this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
      SgUntypedFunctionCallOrArrayReferenceExpression* returnNode = NULL;
@@ -3003,11 +3003,11 @@ SgUntypedFunctionCallOrArrayReferenceExpression* SgUntypedFunctionCallOrArrayRef
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgUntypedReferenceExpression* SgUntypedReferenceExpression::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgToken::ROSE_Fortran_Keywords statement_enum, std::string name )
+SgUntypedReferenceExpression* SgUntypedReferenceExpression::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, int expression_enum, std::string name )
    {
 #if 0
   // debugging information!
-     printf ("In SgUntypedReferenceExpression::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgToken::ROSE_Fortran_Keywords statement_enum, std::string name): this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In SgUntypedReferenceExpression::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, int expression_enum, std::string name): this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
      SgUntypedReferenceExpression* returnNode = NULL;
