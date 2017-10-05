@@ -33,8 +33,8 @@ if ROSE_EXPERIMENTAL_COBOL_ROSE_CONNECTION
 	$(VALGRIND) ../../../testTranslator $(ROSE_FLAGS) -rose:cobol -c $(srcdir)/$(@:.o=.cobol)
 endif
 
-test: $(srcdir)/test.cobol
-	../../testTranslator -rose:verbose 0 -rose:cobol $(srcdir)/test.cobol
+test: $(srcdir)/display_reals.cob
+	../../testTranslator -rose:verbose 0 -rose:cobol $(srcdir)/display_reals.cob
 
 clean-local:
 	rm -f rose_*.* *.mod *.o *.exe
