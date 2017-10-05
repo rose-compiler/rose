@@ -462,6 +462,149 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(List_Node_Struct *head_node, SgSou
                     break;
                   }
 
+             case V_SgUntypedLoopStatement:
+                  {
+                 // This is a child nodes and we only visit parents to connect up children, so nothing to do here.
+
+                 // Find the parent element and connect this into the list of children.
+                    printf ("Found a SgUntypedLoopStatement \n");
+#if 0
+                    printf ("case of SgUntypedLoopStatement not supported yet! \n");
+                    ROSE_ASSERT(false);
+#endif
+                    break;
+                  }
+
+             case V_SgUntypedAcceptStatement:
+                  {
+                 // This is a child nodes and we only visit parents to connect up children, so nothing to do here.
+
+                 // Find the parent element and connect this into the list of children.
+                    printf ("Found a SgUntypedAcceptStatement \n");
+#if 0
+                    printf ("case of SgUntypedAcceptStatement not supported yet! \n");
+                    ROSE_ASSERT(false);
+#endif
+                    break;
+                  }
+
+             case V_SgUntypedAssignmentStatement:
+                  {
+                 // This is a child nodes and we only visit parents to connect up children, so nothing to do here.
+
+                 // Find the parent element and connect this into the list of children.
+                    printf ("Found a SgUntypedAssignmentStatement \n");
+#if 0
+                    printf ("case of SgUntypedAssignmentStatement not supported yet! \n");
+                    ROSE_ASSERT(false);
+#endif
+                    break;
+                  }
+
+             case V_SgUntypedRaiseStatement:
+                  {
+                 // This is a child nodes and we only visit parents to connect up children, so nothing to do here.
+
+                 // Find the parent element and connect this into the list of children.
+                    printf ("Found a SgUntypedRaiseStatement \n");
+#if 0
+                    printf ("case of SgUntypedRaiseStatement not supported yet! \n");
+                    ROSE_ASSERT(false);
+#endif
+                    break;
+                  }
+
+             case V_SgUntypedEntryCallStatement:
+                  {
+                 // This is a child nodes and we only visit parents to connect up children, so nothing to do here.
+
+                 // Find the parent element and connect this into the list of children.
+                    printf ("Found a SgUntypedEntryCallStatement \n");
+#if 0
+                    printf ("case of SgUntypedEntryCallStatement not supported yet! \n");
+                    ROSE_ASSERT(false);
+#endif
+                    break;
+                  }
+
+             case V_SgUntypedProcedureCallStatement:
+                  {
+                 // This is a child nodes and we only visit parents to connect up children, so nothing to do here.
+
+                 // Find the parent element and connect this into the list of children.
+                    printf ("Found a SgUntypedProcedureCallStatement \n");
+#if 0
+                    printf ("case of SgUntypedProcedureCallStatement not supported yet! \n");
+                    ROSE_ASSERT(false);
+#endif
+                    break;
+                  }
+
+             case V_SgUntypedNullStatement:
+                  {
+                 // This is a child nodes and we only visit parents to connect up children, so nothing to do here.
+
+                 // Find the parent element and connect this into the list of children.
+                    printf ("Found a SgUntypedNullStatement \n");
+#if 0
+                    printf ("case of SgUntypedNullStatement not supported yet! \n");
+                    ROSE_ASSERT(false);
+#endif
+                    break;
+                  }
+
+             case V_SgUntypedFunctionScope:
+                  {
+                 // This is a child nodes and we only visit parents to connect up children, so nothing to do here.
+
+                 // Find the parent element and connect this into the list of children.
+                    printf ("Found a SgUntypedFunctionScope \n");
+#if 0
+                    printf ("case of SgUntypedFunctionScope not supported yet! \n");
+                    ROSE_ASSERT(false);
+#endif
+                    break;
+                  }
+
+             case V_SgUntypedReturnStatement:
+                  {
+                 // This is a child nodes and we only visit parents to connect up children, so nothing to do here.
+
+                 // Find the parent element and connect this into the list of children.
+                    printf ("Found a SgUntypedReturnStatement \n");
+#if 0
+                    printf ("case of SgUntypedReturnStatement not supported yet! \n");
+                    ROSE_ASSERT(false);
+#endif
+                    break;
+                  }
+
+             case V_SgUntypedExpression:
+                  {
+                 // This is a child nodes and we only visit parents to connect up children, so nothing to do here.
+
+                 // Find the parent element and connect this into the list of children.
+                    printf ("Found a SgUntypedExpression \n");
+#if 0
+                    printf ("case of SgUntypedExpression not supported yet! \n");
+                    ROSE_ASSERT(false);
+#endif
+                    break;
+                  }
+
+             case V_SgUntypedExceptionHandlerDeclaration:
+                  {
+                 // This is a child nodes and we only visit parents to connect up children, so nothing to do here.
+
+                 // Find the parent element and connect this into the list of children.
+                    printf ("Found a SgUntypedExceptionHandlerDeclaration \n");
+#if 0
+                    printf ("case of SgUntypedExceptionHandlerDeclaration not supported yet! \n");
+                    ROSE_ASSERT(false);
+#endif
+                    break;
+                  }
+
             // Trap all other cases.
                default:
                   {
@@ -858,7 +1001,7 @@ Ada_ROSE_Translation::processElement (Node_Union & nodeUnion)
                printf ("   In Ada_ROSE_Translation::processElement(): case An_Expression: not implemented \n");
 
                Expression_Struct & expression = element_union.Expression;
-               processExpression( expression);
+               processExpression( expression, element_id);
 #if 0
                printf ("Exiting as a test! \n");
                ROSE_ASSERT(false);
@@ -871,7 +1014,7 @@ Ada_ROSE_Translation::processElement (Node_Union & nodeUnion)
                printf ("   In Ada_ROSE_Translation::processElement(): case An_Association: not implemented \n");
 
                Association_Struct & association = element_union.Association;
-               processAssociation( association);
+               processAssociation( association, element_id);
 #if 0
                printf ("Exiting as a test! \n");
                ROSE_ASSERT(false);
@@ -896,8 +1039,24 @@ Ada_ROSE_Translation::processElement (Node_Union & nodeUnion)
              {
                printf ("   In Ada_ROSE_Translation::processElement(): case A_Path: not implemented \n");
 
-               Path_Struct & path = element_union.Path;
-               processPath(path,element_id);
+               bool skipProcessing = false;
+               if (untypedNodeMap.find(element_id) != untypedNodeMap.end())
+                  {
+                    printf ("ERROR: Element id = %d is has already been processed (skipping call to processPath()) \n",element_id);
+                 // ROSE_ASSERT(false);
+
+                    skipProcessing = true;
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+
+               if (skipProcessing == false)
+                  {
+                    Path_Struct & path = element_union.Path;
+                    processPath(path,element_id);
+                  }
 #if 0
                printf ("Exiting as a test! \n");
                ROSE_ASSERT(false);
@@ -923,7 +1082,7 @@ Ada_ROSE_Translation::processElement (Node_Union & nodeUnion)
                printf ("   In Ada_ROSE_Translation::processElement(): case An_Exception_Handler: not implemented \n");
 
                Exception_Handler_Struct & exceptionHandler = element_union.Exception_Handler;
-               processExceptionHandler(exceptionHandler);
+               processExceptionHandler(exceptionHandler, element_id);
 #if 0
                printf ("Exiting as a test! \n");
                ROSE_ASSERT(false);
@@ -938,6 +1097,23 @@ Ada_ROSE_Translation::processElement (Node_Union & nodeUnion)
              }
         }
 
+   }
+
+
+               SgUntypedReturnStatement* untypedStatement = new SgUntypedReturnStatement();
+
+void
+Ada_ROSE_Translation::processUntypedNode (SgUntypedNode* untypedNode, int element_id)
+   {
+  // Put into map using Ada Node ID's as the keys.
+     ROSE_ASSERT(untypedNodeMap.find(element_id) == untypedNodeMap.end());
+     untypedNodeMap[element_id] = untypedNode;
+     ROSE_ASSERT(untypedNodeMap.find(element_id) != untypedNodeMap.end());
+
+     printf ("untypedNodeMap.size() = %zu \n",untypedNodeMap.size());
+
+  // Build the attribute (element id onto the SgUntypedNode).
+     setAsisAttribute (untypedNode,element_id);
    }
 
 
@@ -1051,6 +1227,23 @@ Ada_ROSE_Translation::processStatement( Statement_Struct & statement, int elemen
             // Expression_ID          Assignment_Expression;
                printf ("Assignment_Variable_Name = %d \n",statement.Assignment_Variable_Name);
                printf ("Assignment_Expression = %d \n",statement.Assignment_Expression);
+
+               SgUntypedAssignmentStatement* untypedStatement = new SgUntypedAssignmentStatement();
+
+            // Put into map using Ada Node ID's as the keys.
+               ROSE_ASSERT(untypedNodeMap.find(element_id) == untypedNodeMap.end());
+               untypedNodeMap[element_id] = untypedStatement;
+               ROSE_ASSERT(untypedNodeMap.find(element_id) != untypedNodeMap.end());
+
+               printf ("untypedNodeMap.size() = %zu \n",untypedNodeMap.size());
+
+            // Build the attribute (element id onto the SgUntypedNode).
+               setAsisAttribute (untypedStatement,element_id);
+
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -1067,14 +1260,71 @@ Ada_ROSE_Translation::processStatement( Statement_Struct & statement, int elemen
           case A_Conditional_Entry_Call_Statement:
           case An_Asynchronous_Select_Statement:
              {
+               SgUntypedStatement* untypedStatement = NULL;
+
             // Path_List              Statement_Paths;
                processPathList(statement.Statement_Paths);
 
-               if (statementKind == A_Case_Statement)
+               switch (statementKind)
                   {
-                 // Expression_ID          Case_Expression;
-                    printf ("Case_Expression = %d \n",statement.Case_Expression);
+                    case An_If_Statement:
+                       {
+                         untypedStatement = new SgUntypedIfStatement();
+                         break;
+                       }
+
+                    case A_Selective_Accept_Statement:
+                       {
+                         untypedStatement = new SgUntypedSelectiveAcceptStatement();
+                         break;
+                       }
+
+                    case A_Timed_Entry_Call_Statement:
+                       {
+                         untypedStatement = new SgUntypedTimedEntryCallStatement();
+                         break;
+                       }
+
+                    case A_Conditional_Entry_Call_Statement:
+                       {
+                         untypedStatement = new SgUntypedConditionalEntryCallStatement();
+                         break;
+                       }
+
+                    case An_Asynchronous_Select_Statement:
+                       {
+                         untypedStatement = new SgUntypedAsynchronousSelectStatement();
+                         break;
+                       }
+
+                    default:
+                       {
+                         printf ("default reached in processStatement(): collected cases: \n");
+                         ROSE_ASSERT(false);
+                       }
                   }
+
+               ROSE_ASSERT(untypedStatement != NULL);
+
+            // ROSE_ASSERT(untypedNodeMap.find(element_id) == untypedNodeMap.end());
+               if (untypedNodeMap.find(element_id) == untypedNodeMap.end())
+                  {
+                    processUntypedNode(untypedStatement,element_id);
+                  }
+                 else
+                  {
+                    printf ("Skipping redundent processing of element_id = %d \n",element_id);
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+
+
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -1085,6 +1335,10 @@ Ada_ROSE_Translation::processStatement( Statement_Struct & statement, int elemen
             // Expression_ID          Case_Expression;
                processPathList(statement.Statement_Paths);
                printf ("Case_Expression = %d \n",statement.Case_Expression);
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -1099,6 +1353,61 @@ Ada_ROSE_Translation::processStatement( Statement_Struct & statement, int elemen
              {
             // Defining_Name_ID Statement_Identifier;
                printf ("Statement_Identifier = %d \n",statement.Statement_Identifier);
+
+               SgUntypedStatement* untypedStatement = NULL;
+
+               switch (statementKind)
+                  {
+                    case A_Loop_Statement:
+                       {
+                         untypedStatement = new SgUntypedLoopStatement();
+                         break;
+                       }
+
+                    case A_While_Loop_Statement:
+                       {
+                         untypedStatement = new SgUntypedWhileStatement();
+                         break;
+                       }
+
+                    case A_For_Loop_Statement:
+                       {
+                         untypedStatement = new SgUntypedForStatement();
+                         break;
+                       }
+
+                    case A_Block_Statement:
+                       {
+                         untypedStatement = new SgUntypedBlockStatement();
+                         break;
+                       }
+
+                    default:
+                       {
+                         printf ("default reached in processStatement(): collected cases: \n");
+                         ROSE_ASSERT(false);
+                       }
+                  }
+
+               ROSE_ASSERT(untypedStatement != NULL);
+
+               ROSE_ASSERT(untypedNodeMap.find(element_id) == untypedNodeMap.end());
+               if (untypedNodeMap.find(element_id) == untypedNodeMap.end())
+                  {
+                    processUntypedNode(untypedStatement,element_id);
+                  }
+                 else
+                  {
+                    printf ("Skipping redundent processing of element_id = %d \n",element_id);
+#if 1
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -1114,7 +1423,7 @@ Ada_ROSE_Translation::processStatement( Statement_Struct & statement, int elemen
 
             // Note clear how we want to support different language constructs.
             // We also might want a set of AST Build API functions to support this.
-               SgUntypedStatement* untypedStatement = new SgUntypedNamedStatement("A_Null_Statement");
+               SgUntypedNullStatement* untypedStatement = new SgUntypedNullStatement();
 
             // Put into map using Ada Node ID's as the keys.
                ROSE_ASSERT(untypedNodeMap.find(element_id) == untypedNodeMap.end());
@@ -1126,6 +1435,10 @@ Ada_ROSE_Translation::processStatement( Statement_Struct & statement, int elemen
             // Build the attribute (element id onto the SgUntypedNode).
                setAsisAttribute (untypedStatement,element_id);
 
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -1133,6 +1446,23 @@ Ada_ROSE_Translation::processStatement( Statement_Struct & statement, int elemen
           case A_Return_Statement:
              {
                printf ("Return_Expression = %d \n",statement.Return_Expression);
+
+               SgUntypedReturnStatement* untypedStatement = new SgUntypedReturnStatement();
+
+            // Put into map using Ada Node ID's as the keys.
+               ROSE_ASSERT(untypedNodeMap.find(element_id) == untypedNodeMap.end());
+               untypedNodeMap[element_id] = untypedStatement;
+               ROSE_ASSERT(untypedNodeMap.find(element_id) != untypedNodeMap.end());
+
+               printf ("untypedNodeMap.size() = %zu \n",untypedNodeMap.size());
+
+            // Build the attribute (element id onto the SgUntypedNode).
+               setAsisAttribute (untypedStatement,element_id);
+
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -1148,6 +1478,32 @@ Ada_ROSE_Translation::processStatement( Statement_Struct & statement, int elemen
                printf ("Corresponding_Called_Entity = %d \n",statement.Corresponding_Called_Entity);
                printf ("Call_Statement_Parameters: \n");
                processAssociationList(statement.Call_Statement_Parameters);
+
+               SgUntypedStatement* untypedStatement = NULL;
+               if (statementKind == A_Procedure_Call_Statement)
+                  {
+                    untypedStatement = new SgUntypedProcedureCallStatement();
+                  }
+                 else
+                  {
+                    ROSE_ASSERT(statementKind == An_Entry_Call_Statement);
+                    untypedStatement = new SgUntypedEntryCallStatement();
+                  }
+
+            // Put into map using Ada Node ID's as the keys.
+               ROSE_ASSERT(untypedNodeMap.find(element_id) == untypedNodeMap.end());
+               untypedNodeMap[element_id] = untypedStatement;
+               ROSE_ASSERT(untypedNodeMap.find(element_id) != untypedNodeMap.end());
+
+               printf ("untypedNodeMap.size() = %zu \n",untypedNodeMap.size());
+
+            // Build the attribute (element id onto the SgUntypedNode).
+               setAsisAttribute (untypedStatement,element_id);
+
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -1158,6 +1514,14 @@ Ada_ROSE_Translation::processStatement( Statement_Struct & statement, int elemen
             // Expression_ID          Associated_Message;
                printf ("Raised_Exception   = %d \n",statement.Raised_Exception);
                printf ("Associated_Message = %d \n",statement.Associated_Message);
+
+               SgUntypedRaiseStatement* raiseStatement = new SgUntypedRaiseStatement();
+               processUntypedNode (raiseStatement,element_id);
+
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -1183,6 +1547,14 @@ Ada_ROSE_Translation::processStatement( Statement_Struct & statement, int elemen
                printf ("Accept_Body_Exception_Handlers: \n");
                processStatementList(statement.Accept_Body_Exception_Handlers);
                printf ("Corresponding_Entry = %d \n",statement.Corresponding_Entry);
+
+               SgUntypedAcceptStatement* acceptStatement = new SgUntypedAcceptStatement();
+               processUntypedNode (acceptStatement,element_id);
+
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -3907,7 +4279,7 @@ void
 
 
 void
-Ada_ROSE_Translation::processExpression( Expression_Struct & expression)
+  Ada_ROSE_Translation::processExpression( Expression_Struct & expression, int element_id)
    {
 #if 0
   // Documentation for Expression_Struct.
@@ -4017,6 +4389,48 @@ Ada_ROSE_Translation::processExpression( Expression_Struct & expression)
              {
                char* valueImage = expression.Value_Image;
                printf ("     valueImage = %s \n",valueImage);
+
+               SgUntypedExpression* untypedExpression = NULL;
+
+               switch (expressionKind)
+                  {
+                    case An_Integer_Literal:
+                       {
+                      // This is a reference to an enum
+                         untypedExpression = new SgUntypedExpression(e_integerLiteral);
+                         break;
+                       }
+
+                    case A_Real_Literal:
+                       {
+                      // This is a reference to an enum
+                         untypedExpression = new SgUntypedExpression(e_realLiteral);
+                         break;
+                       }
+
+                    case A_String_Literal:
+                       {
+                      // This is a reference to an enum
+                         untypedExpression = new SgUntypedExpression(e_stringLiteral);
+                         break;
+                       }
+
+                    default:
+                       {
+                         printf ("default reached in processStatement(): collected cases: \n");
+                         ROSE_ASSERT(false);
+                       }
+                  }
+
+               ROSE_ASSERT(untypedExpression != NULL);
+
+               ROSE_ASSERT(untypedNodeMap.find(element_id) == untypedNodeMap.end());
+               processUntypedNode(untypedExpression,element_id);
+
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -4042,6 +4456,59 @@ Ada_ROSE_Translation::processExpression( Expression_Struct & expression)
 
                Element_ID correspondingNameDeclaration            = expression.Corresponding_Name_Declaration; // Decl or stmt
                printf ("     correspondingNameDeclaration = %d \n",correspondingNameDeclaration);
+
+               SgUntypedExpression* untypedExpression = NULL;
+
+               switch (expressionKind)
+                  {
+                    case An_Identifier:
+                       {
+                      // This is a reference to an enum
+                         untypedExpression = new SgUntypedExpression(e_identifier);
+                         break;
+                       }
+
+                    case A_Character_Literal:
+                       {
+                      // This is a reference to an enum
+                         untypedExpression = new SgUntypedExpression(e_characterLiteral);
+                         break;
+                       }
+
+                    case An_Enumeration_Literal:
+                       {
+                      // This is a reference to an enum
+                         untypedExpression = new SgUntypedExpression(e_enumerationLiteral);
+                         break;
+                       }
+
+                    default:
+                       {
+                         printf ("default reached in processStatement(): collected cases: \n");
+                         ROSE_ASSERT(false);
+                       }
+                  }
+
+               ROSE_ASSERT(untypedExpression != NULL);
+
+               ROSE_ASSERT(untypedNodeMap.find(element_id) == untypedNodeMap.end());
+               if (untypedNodeMap.find(element_id) == untypedNodeMap.end())
+                  {
+                    processUntypedNode(untypedExpression,element_id);
+                  }
+                 else
+                  {
+                    printf ("Skipping redundent processing of element_id = %d \n",element_id);
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -4065,6 +4532,50 @@ Ada_ROSE_Translation::processExpression( Expression_Struct & expression)
                Operator_Kinds operatorKind = expression.Operator_Kind;
                printf ("     operatorKind (value) = %d \n",operatorKind);
                printf ("     operatorKind (name)  = %s \n",operatorKindName(operatorKind).c_str());
+
+               ExpressionKind operatorEnum = e_unknown;
+               switch (operatorKind)
+                  {
+                    case Not_An_Operator:                  operatorEnum = e_notAnOperator;              break;
+                    case An_And_Operator:                  operatorEnum = e_andOperator;                break;
+                    case An_Or_Operator:                   operatorEnum = e_orOperator;                 break;
+                    case An_Xor_Operator:                  operatorEnum = e_xorOperator;                break;
+                    case An_Equal_Operator:                operatorEnum = e_equalOperator;              break;
+                    case A_Not_Equal_Operator:             operatorEnum = e_notEqualOperator;           break;
+                    case A_Less_Than_Operator:             operatorEnum = e_lessThanOperator;           break;
+                    case A_Less_Than_Or_Equal_Operator:    operatorEnum = e_lessThanOrEqualOperator;    break;
+                    case A_Greater_Than_Operator:          operatorEnum = e_greaterThanOperator;        break;
+                    case A_Greater_Than_Or_Equal_Operator: operatorEnum = e_greaterThanOrEqualOperator; break;
+                    case A_Plus_Operator:                  operatorEnum = e_plusOperator;               break;
+                    case A_Minus_Operator:                 operatorEnum = e_minusOperator;              break;
+                    case A_Concatenate_Operator:           operatorEnum = e_concatenateOperator;        break;
+                    case A_Unary_Plus_Operator:            operatorEnum = e_unaryPlusOperator;          break;
+                    case A_Unary_Minus_Operator:           operatorEnum = e_unaryMinusOperator;         break;
+                    case A_Multiply_Operator:              operatorEnum = e_multiplyOperator;           break;
+                    case A_Divide_Operator:                operatorEnum = e_divideOperator;             break;
+                    case A_Mod_Operator:                   operatorEnum = e_modOperator;                break;
+                    case A_Rem_Operator:                   operatorEnum = e_remOperator;                break;
+                    case An_Exponentiate_Operator:         operatorEnum = e_exponentiateOperator;       break;
+                    case An_Abs_Operator:                  operatorEnum = e_absOperator;                break;
+                    case A_Not_Operator:                   operatorEnum = e_notOperator;                break;
+
+                    default:
+                       {
+                         printf ("Error: default called in switch for Ada_ROSE_Translation::processExpression(): operatorKind = %d = %s \n",operatorKind,operatorKindName(operatorKind).c_str());
+                         ROSE_ASSERT(false);
+                       }
+                  }
+
+               SgUntypedExpression* untypedExpression = new SgUntypedExpression(operatorEnum);
+               ROSE_ASSERT(untypedExpression != NULL);
+
+               ROSE_ASSERT(untypedNodeMap.find(element_id) == untypedNodeMap.end());
+               processUntypedNode(untypedExpression,element_id);
+
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -4083,6 +4594,10 @@ Ada_ROSE_Translation::processExpression( Expression_Struct & expression)
              {
                Expression_ID prefix = expression.Prefix;
                printf ("     prefix = %d \n",prefix);
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -4093,6 +4608,17 @@ Ada_ROSE_Translation::processExpression( Expression_Struct & expression)
                printf ("     prefix = %d \n",prefix);
                Expression_ID selector = expression.Selector;
                printf ("     selector = %d \n",selector);
+
+               SgUntypedExpression* untypedExpression = new SgUntypedExpression(e_selectedComponent);
+               ROSE_ASSERT(untypedExpression != NULL);
+
+               ROSE_ASSERT(untypedNodeMap.find(element_id) == untypedNodeMap.end());
+               processUntypedNode(untypedExpression,element_id);
+
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -4113,6 +4639,10 @@ Ada_ROSE_Translation::processExpression( Expression_Struct & expression)
                bool              isGeneralizedIndexing = expression.Is_Generalized_Indexing;
                printf ("     isGeneralizedIndexing = %s \n",isGeneralizedIndexing ? "true" : "false");
 
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -4130,6 +4660,28 @@ Ada_ROSE_Translation::processExpression( Expression_Struct & expression)
                Element_List & functionCallParameters = expression.Function_Call_Parameters;
                printf ("     functionCallParameters: \n");
                processElementList(functionCallParameters);
+
+               SgUntypedExpression* untypedExpression = new SgUntypedExpression(e_functionCall);
+               ROSE_ASSERT(untypedExpression != NULL);
+
+            // ROSE_ASSERT(untypedNodeMap.find(element_id) == untypedNodeMap.end());
+               if (untypedNodeMap.find(element_id) == untypedNodeMap.end())
+                  {
+                    processUntypedNode(untypedExpression,element_id);
+                  }
+                 else
+                  {
+                    printf ("Skipping redundent processing (case A_Function_Call) of element_id = %d \n",element_id);
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -4140,6 +4692,10 @@ Ada_ROSE_Translation::processExpression( Expression_Struct & expression)
                printf ("     prefix = %d \n",prefix);
                Discrete_Range_ID sliceRange = expression.Slice_Range;
                printf ("     sliceRange = %d \n",sliceRange);
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -4157,6 +4713,10 @@ Ada_ROSE_Translation::processExpression( Expression_Struct & expression)
                Expression_List & attributeDesignatorExpressions = expression.Attribute_Designator_Expressions;
                printf ("     attributeDesignatorExpressions: \n");
                processExpressionList(attributeDesignatorExpressions);
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -4168,6 +4728,10 @@ Ada_ROSE_Translation::processExpression( Expression_Struct & expression)
                Association_List & recordComponentAssociations = expression.Record_Component_Associations;
                printf ("     recordComponentAssociations: \n");
                processAssociationList(recordComponentAssociations);
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -4180,6 +4744,10 @@ Ada_ROSE_Translation::processExpression( Expression_Struct & expression)
 
                Expression_ID extensionAggregateExpression = expression.Extension_Aggregate_Expression;
                printf ("     extensionAggregateExpression = %d \n",extensionAggregateExpression);
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -4191,6 +4759,10 @@ Ada_ROSE_Translation::processExpression( Expression_Struct & expression)
                Association_List & arrayComponentAssociations = expression.Array_Component_Associations;
                printf ("     arrayComponentAssociations: \n");
                processAssociationList(arrayComponentAssociations);
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -4203,6 +4775,10 @@ Ada_ROSE_Translation::processExpression( Expression_Struct & expression)
                printf ("     shortCircuitOperationLeftExpression = %d \n",shortCircuitOperationLeftExpression);
                Expression_ID shortCircuitOperationRightExpression = expression.Short_Circuit_Operation_Right_Expression;
                printf ("     shortCircuitOperationRightExpression = %d \n",shortCircuitOperationRightExpression);
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -4216,6 +4792,10 @@ Ada_ROSE_Translation::processExpression( Expression_Struct & expression)
                Element_List & membershipTestChoices = expression.Membership_Test_Choices;
                printf ("     membershipTestChoices: \n");
                processExpressionList(membershipTestChoices);
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -4225,6 +4805,10 @@ Ada_ROSE_Translation::processExpression( Expression_Struct & expression)
              {
                Expression_ID expressionParenthesized = expression.Expression_Parenthesized;
                printf ("     expressionParenthesized = %d \n",expressionParenthesized);
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -4240,6 +4824,25 @@ Ada_ROSE_Translation::processExpression( Expression_Struct & expression)
                printf ("     convertedOrQualifiedExpression = %d \n",convertedOrQualifiedExpression);
                Expression_ID predicate = expression.Predicate;
                printf ("     predicate = %d \n",predicate);
+
+               SgUntypedExpression* untypedExpression = NULL;
+               if (expressionKind == A_Type_Conversion)
+                  {
+                    untypedExpression = new SgUntypedExpression(e_typeConversion);
+                  }
+                 else
+                  {
+                    untypedExpression = new SgUntypedExpression(e_qualifiedExpression);
+                  }
+
+               ROSE_ASSERT(untypedExpression != NULL);
+
+               ROSE_ASSERT(untypedNodeMap.find(element_id) == untypedNodeMap.end());
+               processUntypedNode(untypedExpression,element_id);
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -4263,6 +4866,10 @@ Ada_ROSE_Translation::processExpression( Expression_Struct & expression)
 
                Subtype_Indication_ID allocatorSubtypeIndication = expression.Allocator_Subtype_Indication;
                printf ("     allocatorSubtypeIndication = %d \n",allocatorSubtypeIndication);
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -4274,6 +4881,10 @@ Ada_ROSE_Translation::processExpression( Expression_Struct & expression)
 
                Expression_ID allocatorQualifiedExpression = expression.Allocator_Qualified_Expression;
                printf ("     allocatorQualifiedExpression = %d \n",allocatorQualifiedExpression);
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -4285,6 +4896,10 @@ Ada_ROSE_Translation::processExpression( Expression_Struct & expression)
                Expression_Path_List & expressionPaths = expression.Expression_Paths;
                printf ("     expressionPaths: \n");
                processPathList(expressionPaths);
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -4295,16 +4910,13 @@ Ada_ROSE_Translation::processExpression( Expression_Struct & expression)
              {
                Declaration_ID iteratorSpecification = expression.Iterator_Specification;
                printf ("     iteratorSpecification = %d \n",iteratorSpecification);
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
-#if 0
-          case x:
-             {
-               printf ("     x = %d \n",x);
-               break;
-             }
-#endif
           default:
              {
                printf ("Default reached in processDeclaration(): declarationKind = %d declarationKind = %s \n",expressionKind,expressionKindName(expressionKind).c_str());
@@ -4401,10 +5013,34 @@ Ada_ROSE_Translation::processClause( Clause_Struct & clause)
    }
 
 void
-Ada_ROSE_Translation::processAssociation( Association_Struct & association)
+Ada_ROSE_Translation::processAssociation( Association_Struct & association, int element_id)
    {
 #if 0
   // Documentation for Association_Struct.
+  // An_Array_Component_Association,        // 4.3.3
+  Expression_List        Array_Component_Choices;
+  // A_Record_Component_Association,        // 4.3.1
+  Expression_List        Record_Component_Choices;
+  // An_Array_Component_Association,        // 4.3.3
+  // A_Record_Component_Association,        // 4.3.1
+  Expression_ID          Component_Expression;
+  // A_Pragma_Argument_Association,         // 2.8
+  // A_Parameter_Association,               // 6.4
+  // A_Generic_Association                  // 12.3
+  Expression_ID          Formal_Parameter;
+  Expression_ID          Actual_Parameter;
+  // A_Discriminant_Association,            // 3.7.1  
+  Expression_List        Discriminant_Selector_Names;
+  Expression_ID          Discriminant_Expression;
+  // A_Discriminant_Association,            // 3.7.1
+  // A_Record_Component_Association,        // 4.3.1
+  // A_Parameter_Association,               // 6.4
+  // A_Generic_Association                  // 12.3
+  bool                   Is_Normalized;
+  // A_Parameter_Association
+  // A_Generic_Association
+  // A_Record_Component_Association
+  bool                   Is_Defaulted_Association;
 #endif
 
      Association_Kinds associationKind = association.Association_Kind;
@@ -4413,14 +5049,197 @@ Ada_ROSE_Translation::processAssociation( Association_Struct & association)
      printf ("      associationKind (value) = %d \n",associationKind);
      printf ("      associationKind (name)  = %s \n",associationKindName(associationKind).c_str());
 
+     switch (associationKind)
+        {
+
+       // An_Array_Component_Association,        // 4.3.3
+          case An_Array_Component_Association:
+             {
+               Expression_List & arrayComponentChoices = association.Array_Component_Choices;
+               printf ("     arrayComponentChoices: \n");
+               processExpressionList(arrayComponentChoices);
+
+               Expression_ID componentExpression = association.Component_Expression;
+               printf ("     componentExpression = %d \n",componentExpression);
+
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+       // A_Record_Component_Association,        // 4.3.1
+          case A_Record_Component_Association:
+             {
+               Expression_List & recordComponentChoices = association.Record_Component_Choices;
+               printf ("     recordComponentChoices: \n");
+               processExpressionList(recordComponentChoices);
+
+               Expression_ID componentExpression = association.Component_Expression;
+               printf ("     componentExpression = %d \n",componentExpression);
+
+               bool isNormalized = association.Is_Normalized;
+               printf ("     isNormalized = %s \n",isNormalized ? "true" : "false");
+
+               bool isDefaultedAssociation = association.Is_Defaulted_Association;
+               printf ("     isDefaultedAssociation = %s \n",isDefaultedAssociation ? "true" : "false");
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+#if 0
+       // An_Array_Component_Association,        // 4.3.3
+       // A_Record_Component_Association,        // 4.3.1
+       // case An_Array_Component_Association:
+       // case A_Record_Component_Association:
+             {
+               Expression_ID componentExpression = association.Component_Expression;
+               printf ("     componentExpression = %d \n",componentExpression);
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+#endif
+       // A_Pragma_Argument_Association,         // 2.8
+       // A_Parameter_Association,               // 6.4
+       // A_Generic_Association                  // 12.3
+          case A_Pragma_Argument_Association:
+       // case A_Parameter_Association:
+       // case A_Generic_Association:
+             {
+               Expression_ID formalParameter = association.Formal_Parameter;
+               printf ("     formalParameter = %d \n",formalParameter);
+               Expression_ID actualParameter = association.Actual_Parameter;
+               printf ("     actualParameter = %d \n",actualParameter);
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+          case A_Parameter_Association:
+          case A_Generic_Association:
+             {
+               Expression_ID formalParameter = association.Formal_Parameter;
+               printf ("     formalParameter = %d \n",formalParameter);
+               Expression_ID actualParameter = association.Actual_Parameter;
+               printf ("     actualParameter = %d \n",actualParameter);
+
+               bool isNormalized = association.Is_Normalized;
+               printf ("     isNormalized = %s \n",isNormalized ? "true" : "false");
+
+               bool isDefaultedAssociation = association.Is_Defaulted_Association;
+               printf ("     isDefaultedAssociation = %s \n",isDefaultedAssociation ? "true" : "false");
+
+               SgUntypedExpression* untypedExpression = NULL;
+               if (associationKind == A_Parameter_Association)
+                  {
+                    untypedExpression = new SgUntypedExpression(e_parameterAssociation);
+                  }
+                 else
+                  {
+                    untypedExpression = new SgUntypedExpression(e_genericAssociation);
+                  }
+
+               ROSE_ASSERT(untypedExpression != NULL);
+
+            // ROSE_ASSERT(untypedNodeMap.find(element_id) == untypedNodeMap.end());
+               if (untypedNodeMap.find(element_id) == untypedNodeMap.end())
+                  {
+                    processUntypedNode(untypedExpression,element_id);
+                  }
+                 else
+                  {
+                    printf ("ERROR: redundant use of element_id = %d \n",element_id);
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+       // A_Discriminant_Association,            // 3.7.1  
+          case A_Discriminant_Association:
+             {
+               Expression_List & discriminantSelectorNames = association.Discriminant_Selector_Names;
+               printf ("     discriminantSelectorNames: \n");
+               processExpressionList(discriminantSelectorNames);
+               Expression_ID discriminantExpression = association.Discriminant_Expression;
+               printf ("     discriminantExpression = %d \n",discriminantExpression);
+
+               bool isNormalized = association.Is_Normalized;
+               printf ("     isNormalized = %s \n",isNormalized ? "true" : "false");
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+#if 0
+       // A_Discriminant_Association,            // 3.7.1
+       // A_Record_Component_Association,        // 4.3.1
+       // A_Parameter_Association,               // 6.4
+       // A_Generic_Association                  // 12.3
+       // case A_Discriminant_Association:
+       // case A_Record_Component_Association:
+       // case A_Parameter_Association:
+       // case A_Generic_Association:
+             {
+               bool isNormalized = association.Is_Normalized;
+               printf ("     isNormalized = %s \n",isNormalized ? "true" : "false");
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+#endif
+#if 0
+       // A_Parameter_Association
+       // A_Generic_Association
+       // A_Record_Component_Association
+       // case A_Parameter_Association:
+       // case A_Generic_Association:
+       // case A_Record_Component_Association:
+             {
+               bool isDefaultedAssociation = association.Is_Defaulted_Association;
+               printf ("     isDefaultedAssociation = %s \n",isDefaultedAssociation ? "true" : "false");
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+#endif
+          default:
+             {
+               printf ("Default reached in processAssociation(): associationKind = %d associationKind = %s \n",associationKind,associationKindName(associationKind).c_str());
+               ROSE_ASSERT(false);
+             }
+        }
+
    }
 
 
 void
-Ada_ROSE_Translation::processExceptionHandler( Exception_Handler_Struct & exceptionHandler)
+Ada_ROSE_Translation::processExceptionHandler( Exception_Handler_Struct & exceptionHandler, int element_id)
    {
 #if 0
-  // Documentation for Association_Struct.
+  // Documentation for Exception_Handler_Struct.
      Declaration_ID Choice_Parameter_Specification;
      Element_List   Exception_Choices;
      Statement_List Handler_Statements;
@@ -4431,6 +5250,19 @@ Ada_ROSE_Translation::processExceptionHandler( Exception_Handler_Struct & except
      printf ("   In processAssociation(): \n");
      printf ("      declarationId = %d \n",declarationId);
 
+     Element_List & exceptionChoices = exceptionHandler.Exception_Choices;
+     printf ("     exceptionChoices: \n");
+     processExpressionList(exceptionChoices);
+     Statement_List & handlerStatements = exceptionHandler.Handler_Statements;
+     printf ("     handlerStatements: \n");
+     processExpressionList(handlerStatements);
+
+     SgUntypedExceptionHandlerDeclaration* untypedExceptionHandlerDeclaration = new SgUntypedExceptionHandlerDeclaration();
+     ROSE_ASSERT(untypedExceptionHandlerDeclaration != NULL);
+
+     ROSE_ASSERT(untypedNodeMap.find(element_id) == untypedNodeMap.end());
+     processUntypedNode(untypedExceptionHandlerDeclaration,element_id);
+     ROSE_ASSERT(untypedNodeMap.find(element_id) != untypedNodeMap.end());
    }
 
 
@@ -4471,15 +5303,18 @@ Ada_ROSE_Translation::processPath( Path_Struct & path, int element_id)
           case An_If_Path:
           case An_Elsif_Path:
              {
-#if 0
+#if 1
                Expression_ID conditionExpression = path.Condition_Expression;
                printf ("      conditionExpression = %d \n",conditionExpression);
 
-               SgUntypedScope* untypedIfStatement = new SgUntypedIfStatement();
-               ROSE_ASSERT(untypedScope != NULL);
+               SgUntypedIfStatement* untypedIfStatement = new SgUntypedIfStatement();
+               ROSE_ASSERT(untypedIfStatement != NULL);
 #endif
                SgUntypedScope* untypedScope = new SgUntypedScope();
                ROSE_ASSERT(untypedScope != NULL);
+
+            // This should be handled for the true case only.
+            // untypedIfStatement->set_statement(untypedScope);
 
                SgUntypedStatementList* untypedStatementList = new SgUntypedStatementList();
                ROSE_ASSERT(untypedStatementList != NULL);
@@ -4489,11 +5324,13 @@ Ada_ROSE_Translation::processPath( Path_Struct & path, int element_id)
 
             // Note that we can't connect the statements in the function body, until a second pass over the untyped AST.
 
+               printf ("element_id = %d \n",element_id);
+
                ROSE_ASSERT(untypedNodeMap.find(element_id) == untypedNodeMap.end());
-               untypedNodeMap[element_id] = untypedScope;
+               untypedNodeMap[element_id] = untypedIfStatement;
                ROSE_ASSERT(untypedNodeMap.find(element_id) != untypedNodeMap.end());
 
-               setAsisAttribute (untypedScope,element_id);
+               setAsisAttribute (untypedIfStatement,element_id);
 #if 1
                printf ("Exiting as a test! \n");
                ROSE_ASSERT(false);
