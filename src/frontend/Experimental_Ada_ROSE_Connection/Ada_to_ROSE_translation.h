@@ -12,6 +12,50 @@ namespace Ada_ROSE_Translation
                ASIS_Attribute (int element_id) : element_id(element_id) {}
         };
 
+
+  // Enum for different types of expressions.  These are used with the SgUntypedExpression IR nodes.
+     enum ExpressionKind
+        {
+          e_unknown,
+          e_error,
+          e_identifier,
+          e_characterLiteral,
+          e_enumerationLiteral,
+          e_integerLiteral,
+          e_realLiteral,
+          e_stringLiteral,
+          e_selectedComponent,
+       // e_operator,
+          e_notAnOperator,
+          e_andOperator,
+          e_orOperator,
+          e_xorOperator,
+          e_equalOperator,
+          e_notEqualOperator,
+          e_lessThanOperator,
+          e_lessThanOrEqualOperator,
+          e_greaterThanOperator,
+          e_greaterThanOrEqualOperator,
+          e_plusOperator,
+          e_minusOperator,
+          e_concatenateOperator,
+          e_unaryPlusOperator,
+          e_unaryMinusOperator,
+          e_multiplyOperator,
+          e_divideOperator,
+          e_modOperator,
+          e_remOperator,
+          e_exponentiateOperator,
+          e_absOperator,
+          e_notOperator,
+          e_functionCall,
+          e_typeConversion,
+          e_qualifiedExpression,
+          e_parameterAssociation,
+          e_genericAssociation,
+          e_last
+        };
+
      void ada_to_ROSE_translation(List_Node_Struct *head_node, SgSourceFile* file);
 
      void processContext (Node_Union & nodeUnion);
@@ -21,12 +65,12 @@ namespace Ada_ROSE_Translation
      void processStatement   ( Statement_Struct     & statement,    int element_id);
      void processDefiningName( Defining_Name_Struct & definingName, int element_id);
      void processDeclaration ( Declaration_Struct   & declaration,  int element_id);
-     void processExpression  ( Expression_Struct    & expression);
+     void processExpression  ( Expression_Struct    & expression,   int element_id);
      void processDefinition  ( Definition_Struct    & definition);
      void processClause      ( Clause_Struct        & clause);
-     void processAssociation ( Association_Struct   & association);
+     void processAssociation ( Association_Struct   & association,  int element_id);
 
-     void processExceptionHandler( Exception_Handler_Struct & exceptionHandler);
+     void processExceptionHandler( Exception_Handler_Struct & exceptionHandler, int element_id);
 
      void processPath        ( Path_Struct   & path,  int element_id);
 
@@ -71,6 +115,9 @@ namespace Ada_ROSE_Translation
      std::string unitKindName              (Unit_Kinds x);
      std::string unitClassName             (Unit_Classes x);
      std::string unitOriginName            (Unit_Origins x);
+
+  // Abstract processing of SgUntypedNode to include into maps, and attach attribute.
+     void processUntypedNode (SgUntypedNode* node, int element_id);
 
   // Support for adding attributes (to the SgUntypedNodes).
      void setAsisAttribute ( SgUntypedNode* untypedNode, int element_id);
