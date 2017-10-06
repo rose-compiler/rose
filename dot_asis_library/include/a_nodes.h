@@ -25,15 +25,7 @@ typedef int Node_ID;
 ///////////////////////////////////////////////////////////////////////////////
 
 typedef Node_ID    Element_ID;
-typedef Element_ID Declaration_ID;
-typedef Element_ID Defining_Name_ID;
-typedef Element_ID Discrete_Range_ID;
-typedef Element_ID Discrete_Subtype_Definition_ID;
-typedef Element_ID Expression_ID;
-typedef Element_ID Name_ID;
-typedef Element_ID Statement_ID;
-typedef Element_ID Subtype_Indication_ID;
-typedef Element_ID Type_Definition_ID;
+typedef Element_ID Element;
 
 // For this:
 //   typedef Element_ID Element_ID_Array[];
@@ -59,21 +51,6 @@ struct Element_ID_Array_Struct {
   Element_ID_Ptr IDs;
 };
 typedef struct Element_ID_Array_Struct Element_List;
-typedef Element_List Association_List;
-typedef Element_List Component_Clause_List;
-typedef Element_List Context_Clause_List;
-typedef Element_List Declaration_List;
-typedef Element_List Declarative_Item_List;
-typedef Element_List Defining_Name_List;
-typedef Element_List Exception_Handler_List;
-typedef Element_List Expression_List;
-typedef Element_List Expression_Path_List;
-typedef Element_List Name_List;
-typedef Element_List Path_List;
-typedef Element_List Parameter_Specification_List;
-typedef Element_List Pragma_Element_List;
-typedef Element_List Representation_Clause_List;
-typedef Element_List Statement_List;
 
 enum Element_Kinds {
   Not_An_Element,            // Nil_Element
@@ -90,7 +67,132 @@ enum Element_Kinds {
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-// BEGIN element kind kinds
+// BEGIN supporting kinds
+///////////////////////////////////////////////////////////////////////////////
+
+// These are needed in multiple structs below, so they are all 
+// defined here:
+
+typedef Element_ID Declaration_ID;
+typedef Element_ID Declaration;
+typedef Element_ID Defining_Name_ID;
+typedef Element_ID Definition_ID;
+typedef Element_ID Definition;
+typedef Element_ID Discrete_Range_ID;
+typedef Element_ID Discrete_Subtype_Definition_ID;
+typedef Element_ID Expression_ID;
+typedef Element_ID Expression;
+typedef Element_ID Name_ID;
+typedef Element_ID Statement_ID;
+typedef Element_ID Subtype_Indication_ID;
+typedef Element_ID Subtype_Indication;
+typedef Element_ID Type_Definition_ID;
+
+typedef Element_List Association_List;
+typedef Element_List Component_Clause_List;
+typedef Element_List Context_Clause_List;
+typedef Element_List Declaration_List;
+typedef Element_List Declarative_Item_List;
+typedef Element_List Defining_Name_List;
+typedef Element_List Exception_Handler_List;
+typedef Element_List Expression_List;
+typedef Element_List Expression_Path_List;
+typedef Element_List Name_List;
+typedef Element_List Path_List;
+typedef Element_List Parameter_Specification_List;
+typedef Element_List Pragma_Element_List;
+typedef Element_List Representation_Clause_List;
+typedef Element_List Statement_List;
+
+typedef Element      Access_Type_Definition;      
+typedef Element      Association;
+typedef Element_List Association_List;
+typedef Element      Case_Statement_Alternative;
+typedef Element      Clause;
+typedef Element      Component_Clause;
+typedef Element_List Component_Clause_List;
+typedef Element      Component_Declaration;
+typedef Element      Component_Definition;
+typedef Element      Constraint;
+typedef Element      Context_Clause;
+typedef Element_List Context_Clause_List;
+typedef Element      Declaration;
+typedef Element_List Declaration_List;
+typedef Element_List Declarative_Item_List;
+typedef Element      Definition;
+typedef Element_List Definition_List;
+typedef Element      Discrete_Range;
+typedef Element_List Discrete_Range_List;
+typedef Element      Discrete_Subtype_Definition;
+typedef Element      Discriminant_Association;
+typedef Element_List Discriminant_Association_List;
+typedef Element_List Discriminant_Specification_List;
+typedef Element      Defining_Name;
+typedef Element_List Defining_Name_List;
+typedef Element      Exception_Handler;
+typedef Element_List Exception_Handler_List;
+typedef Element      Expression;
+typedef Element_List Expression_List;
+typedef Element      Formal_Type_Definition;
+typedef Element      Generic_Formal_Parameter;
+typedef Element_List Generic_Formal_Parameter_List;
+typedef Element      Identifier;
+typedef Element_List Identifier_List;
+typedef Element      Name;
+typedef Element_List Name_List;
+typedef Element      Parameter_Specification;
+typedef Element_List Parameter_Specification_List;
+typedef Element      Path;
+typedef Element_List Path_List;
+typedef Element      Pragma_Element;
+typedef Element_List Pragma_Element_List;
+typedef Element      Range_Constraint;
+typedef Element      Record_Component;
+typedef Element_List Record_Component_List;
+typedef Element      Record_Definition;
+typedef Element      Representation_Clause;
+typedef Element_List Representation_Clause_List;
+typedef Element      Root_Type_Definition;
+typedef Element      Select_Alternative;
+typedef Element      Statement;
+typedef Element_List Statement_List;
+typedef Element      Subtype_Indication;
+typedef Element      Subtype_Mark;
+typedef Element      Type_Definition;
+typedef Element      Variant;
+typedef Element_List Variant_Component_List;
+typedef Element_List Variant_List;
+
+// For Defining_Operator_Symbol:
+// For Expression:
+  enum Operator_Kinds {
+    Not_An_Operator,                   // An unexpected element
+
+    An_And_Operator,                   // and
+    An_Or_Operator,                    // or
+    An_Xor_Operator,                   // xor
+    An_Equal_Operator,                 // =
+    A_Not_Equal_Operator,              // /=
+    A_Less_Than_Operator,              // <
+    A_Less_Than_Or_Equal_Operator,     // <=
+    A_Greater_Than_Operator,           // >
+    A_Greater_Than_Or_Equal_Operator,  // >=
+    A_Plus_Operator,                   // +
+    A_Minus_Operator,                  // -
+    A_Concatenate_Operator,            // &
+    A_Unary_Plus_Operator,             // +
+    A_Unary_Minus_Operator,            // -
+    A_Multiply_Operator,               // *
+    A_Divide_Operator,                 // /
+    A_Mod_Operator,                    // mod
+    A_Rem_Operator,                    // rem
+    An_Exponentiate_Operator,          // **
+    An_Abs_Operator,                   // abs
+    A_Not_Operator                     // not
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// BEGIN Pragma
 ///////////////////////////////////////////////////////////////////////////////
 
 enum Pragma_Kinds {
@@ -149,9 +251,24 @@ enum Pragma_Kinds {
   An_Unsuppress_Pragma,                   // 11.5, Ada 2005
   A_Volatile_Pragma,                      // C.6(4)
   A_Volatile_Components_Pragma,           // C.6(6)
-
-  An_Implementation_Defined_Pragma  // 2.8(14)
+  An_Implementation_Defined_Pragma        // 2.8(14)
 };
+
+// May take ??*4 bytes:
+struct Pragma_Struct {
+  enum Pragma_Kinds   Pragma_Kind;
+  Pragma_Element_List Pragmas;
+  Program_Text        Pragma_Name_Image;
+  Association_List    Pragma_Argument_Associations;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// END Pragma
+///////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////
+// BEGIN Defining_Name
+///////////////////////////////////////////////////////////////////////////////
 
 enum Defining_Name_Kinds {
   Not_A_Defining_Name,                       // An unexpected element
@@ -161,6 +278,36 @@ enum Defining_Name_Kinds {
   A_Defining_Operator_Symbol,                // 6.1(9)
   A_Defining_Expanded_Name                   // 6.1(7)
 };
+
+// May take :
+struct Defining_Name_Struct {
+  enum Defining_Name_Kinds  Defining_Name_Kind;
+  char                     *Defining_Name_Image;
+  
+  // These fields are only valid for the kinds above them:
+  // A_Defining_Operator_Symbol:
+  enum Operator_Kinds       Operator_Kind;
+  // A_Defining_Character_Literal
+  // A_Defining_Enumeration_Literal
+  char                     *Position_Number_Image;
+  char                     *Representation_Value_Image;
+  // A_Defining_Expanded_Name 
+  Name_ID                   Defining_Prefix;
+  Defining_Name_ID          Defining_Selector;
+  // When this is the name of a constant or a deferred constant:
+  Declaration_ID            Corresponding_Constant_Declaration;
+  // The defining name of an entity declared within the 
+  // implicit specification of a generic instantiation:
+  Defining_Name_ID          Corresponding_Generic_Element;
+  };
+
+///////////////////////////////////////////////////////////////////////////////
+// END Defining_Name
+///////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////
+// BEGIN Declaration
+///////////////////////////////////////////////////////////////////////////////
 
 enum Declaration_Kinds {
   Not_A_Declaration,                       // An unexpected element
@@ -266,315 +413,6 @@ enum Declaration_Kinds {
   A_Formal_Package_Declaration_With_Box     // 12.7(3)
 };
 
-enum Definition_Kinds {
-  Not_A_Definition,                 // An unexpected element
-
-  A_Type_Definition,                // 3.2.1(4)    -> Type_Kinds
-
-  A_Subtype_Indication,             // 3.2.2(3)
-  A_Constraint,                     // 3.2.2(5)    -> Constraint_Kinds
-
-  A_Component_Definition,           // 3.6(7)      -> Trait_Kinds
-
-  A_Discrete_Subtype_Definition,    // 3.6(6)      -> Discrete_Range_Kinds
-  A_Discrete_Range,                 // 3.6.1(3)    -> Discrete_Range_Kinds
-
-  An_Unknown_Discriminant_Part,     // 3.7(3)
-  A_Known_Discriminant_Part,        // 3.7(2)
-
-  A_Record_Definition,              // 3.8(3)
-  A_Null_Record_Definition,         // 3.8(3)
-
-  A_Null_Component,                 // 3.8(4)
-  A_Variant_Part,                   // 3.8.1(2)
-  A_Variant,                        // 3.8.1(3)
-
-  An_Others_Choice,                 // 3.8.1(5), 4.3.1(5), 4.3.3(5), 11.2(5)
-
-  //  //|A2005 start
-  An_Access_Definition,             // 3.10(6/2)   -> Access_Definition_Kinds
-  //  //|A2005 end
-
-  A_Private_Type_Definition,        // 7.3(2)      -> Trait_Kinds
-  A_Tagged_Private_Type_Definition, // 7.3(2)      -> Trait_Kinds
-  A_Private_Extension_Definition,   // 7.3(3)      -> Trait_Kinds
-
-  A_Task_Definition,                // 9.1(4)
-  A_Protected_Definition,           // 9.4(4)
-
-  A_Formal_Type_Definition,         // 12.5(3)     -> Formal_Type_Kinds
-
-  //  //|A2012 start
-  An_Aspect_Specification           // 13.3.1
-  //  //|A2012 end  
-};
-
-///////////////////////////////////////////////////////////////////////////////
-// BEGIN Definition types
-///////////////////////////////////////////////////////////////////////////////
-typedef Element_ID   Constraint_ID;
-typedef Element_ID   Definition_ID;
-typedef Element_List Definition_ID_List;
-typedef Element_List Declarative_Item_ID_List;
-typedef Element_List Record_Component_List;
-
-enum Type_Kinds {
-  Not_A_Type_Definition,                 // An unexpected element
-
-  A_Derived_Type_Definition,             // 3.4(2)     -> Trait_Kinds
-  A_Derived_Record_Extension_Definition, // 3.4(2)     -> Trait_Kinds
-
-  An_Enumeration_Type_Definition,        // 3.5.1(2)
-
-  A_Signed_Integer_Type_Definition,      // 3.5.4(3)
-  A_Modular_Type_Definition,             // 3.5.4(4)
-
-  A_Root_Type_Definition,                // 3.5.4(14), 3.5.6(3)
-  //                                               -> Root_Type_Kinds
-  A_Floating_Point_Definition,           // 3.5.7(2)
-
-  An_Ordinary_Fixed_Point_Definition,    // 3.5.9(3)
-  A_Decimal_Fixed_Point_Definition,      // 3.5.9(6)
-
-  An_Unconstrained_Array_Definition,     // 3.6(2)
-  A_Constrained_Array_Definition,        // 3.6(2)
-
-  A_Record_Type_Definition,              // 3.8(2)     -> Trait_Kinds
-  A_Tagged_Record_Type_Definition,       // 3.8(2)     -> Trait_Kinds
-
-  //  //|A2005 start
-  An_Interface_Type_Definition,          // 3.9.4      -> Interface_Kinds
-  //  //|A2005 end
-  An_Access_Type_Definition            // 3.10(2)    -> Access_Type_Kinds
-};
-
-enum Constraint_Kinds {
-  Not_A_Constraint,                      // An unexpected element
-  A_Range_Attribute_Reference,           // 3.5(2)
-  A_Simple_Expression_Range,             // 3.2.2, 3.5(3)
-  A_Digits_Constraint,                   // 3.2.2, 3.5.9
-  A_Delta_Constraint,                    // 3.2.2, J.3
-  An_Index_Constraint,                   // 3.2.2, 3.6.1
-  A_Discriminant_Constraint              // 3.2.2
-};
-///////////////////////////////////////////////////////////////////////////////
-// END Definition types
-///////////////////////////////////////////////////////////////////////////////
-
-enum Expression_Kinds {
-  Not_An_Expression,                         // An unexpected element
-
-  A_Box_Expression,                          //  Ada 2005
-  //  4.3.1(4), 4.3.3(3,6)
-
-  An_Integer_Literal,                        // 2.4
-  A_Real_Literal,                            // 2.4.1
-  A_String_Literal,                          // 2.6
-
-  An_Identifier,                             // 4.1
-  An_Operator_Symbol,                        // 4.1
-  A_Character_Literal,                       // 4.1
-  An_Enumeration_Literal,                    // 4.1
-  An_Explicit_Dereference,                   // 4.1
-  A_Function_Call,                           // 4.1
-
-  An_Indexed_Component,                      // 4.1.1
-  A_Slice,                                   // 4.1.2
-  A_Selected_Component,                      // 4.1.3
-  An_Attribute_Reference,                    // 4.1.4  -> Attribute_Kinds
-
-  A_Record_Aggregate,                        // 4.3
-  An_Extension_Aggregate,                    // 4.3
-  A_Positional_Array_Aggregate,              // 4.3
-  A_Named_Array_Aggregate,                   // 4.3
-
-  An_And_Then_Short_Circuit,                 // 4.4
-  An_Or_Else_Short_Circuit,                  // 4.4
-
-  An_In_Membership_Test,                     // 4.4  Ada 2012
-  A_Not_In_Membership_Test,                  // 4.4  Ada 2012
-
-  A_Null_Literal,                            // 4.4
-  A_Parenthesized_Expression,                // 4.4
-  A_Raise_Expression,                        // 4.4 Ada 2012 (AI12-0022-1)
-
-  A_Type_Conversion,                         // 4.6
-  A_Qualified_Expression,                    // 4.7
-
-  An_Allocation_From_Subtype,                // 4.8
-  An_Allocation_From_Qualified_Expression,   // 4.8
-  A_Case_Expression,                         // Ada 2012
-  An_If_Expression,                          // Ada 2012
-  A_For_All_Quantified_Expression,           // Ada 2012
-  A_For_Some_Quantified_Expression           // Ada 2012
-};
-
-enum Association_Kinds {
-  Not_An_Association,                    // An unexpected element
-
-  A_Pragma_Argument_Association,         // 2.8
-  A_Discriminant_Association,            // 3.7.1
-  A_Record_Component_Association,        // 4.3.1
-  An_Array_Component_Association,        // 4.3.3
-  A_Parameter_Association,               // 6.4
-  A_Generic_Association                  // 12.3
-};
-
-enum Statement_Kinds {
-  Not_A_Statement,                     // An unexpected element
-
-  A_Null_Statement,                    // 5.1
-  An_Assignment_Statement,             // 5.2
-  An_If_Statement,                     // 5.3
-  A_Case_Statement,                    // 5.4
-
-  A_Loop_Statement,                    // 5.5
-  A_While_Loop_Statement,              // 5.5
-  A_For_Loop_Statement,                // 5.5
-  A_Block_Statement,                   // 5.6
-  An_Exit_Statement,                   // 5.7
-  A_Goto_Statement,                    // 5.8
-
-  A_Procedure_Call_Statement,          // 6.4
-  A_Return_Statement,                  // 6.5
-  //  //|A2005 start
-  An_Extended_Return_Statement,        // 6.5
-  //  //|A2005 end
-
-  An_Accept_Statement,                 // 9.5.2
-  An_Entry_Call_Statement,             // 9.5.3
-
-  A_Requeue_Statement,                 // 9.5.4
-  A_Requeue_Statement_With_Abort,      // 9.5.4
-
-  A_Delay_Until_Statement,             // 9.6
-  A_Delay_Relative_Statement,          // 9.6
-
-  A_Terminate_Alternative_Statement,   // 9.7.1
-  A_Selective_Accept_Statement,        // 9.7.1
-  A_Timed_Entry_Call_Statement,        // 9.7.2
-  A_Conditional_Entry_Call_Statement,  // 9.7.3
-  An_Asynchronous_Select_Statement,    // 9.7.4
-
-  An_Abort_Statement,                  // 9.8
-  A_Raise_Statement,                   // 11.3
-  A_Code_Statement                     // 13.8
-};
-
-enum Path_Kinds {
-  Not_A_Path,
-  //  An unexpected element
-
-  //  Statement paths:
-  An_If_Path,
-  //  5.3:
-  //  if condition then
-  //    sequence_of_statements
-
-  An_Elsif_Path,
-  //  5.3:
-  //  elsif condition then
-  //    sequence_of_statements
-
-  An_Else_Path,
-  //  5.3, 9.7.1, 9.7.3:
-  //  else sequence_of_statements
-
-  A_Case_Path,
-  //  5.4:
-  //  when discrete_choice_list =>
-  //    sequence_of_statements
-
-  A_Select_Path,
-  //  9.7.1:
-  //     select [guard] select_alternative
-  //  9.7.2, 9.7.3:
-  //     select entry_call_alternative
-  //  9.7.4:
-  //     select triggering_alternative
-
-  An_Or_Path,
-  //  9.7.1:
-  //     or [guard] select_alternative
-  //  9.7.2:
-  //     or delay_alternative
-
-  A_Then_Abort_Path,
-  //  9.7.4
-  //     then abort sequence_of_statements
-
-  //  //|A2012 start
-  //  Expression paths:
-  A_Case_Expression_Path,
-  //  ??? (RM 2012)
-  //  when expression => expression
-
-  An_If_Expression_Path,
-  //  ??? (RM 2012)
-  //  if condition then expression
-
-  An_Elsif_Expression_Path,
-  //  ??? (RM 2012)
-  //  elsif condition then expression
-
-  An_Else_Expression_Path
-  //  ??? (RM 2012)
-  //  else expression
-};
-
-enum Clause_Kinds {
-  Not_A_Clause,                 // An unexpected element
-
-  A_Use_Package_Clause,         // 8.4
-  A_Use_Type_Clause,            // 8.4
-  A_Use_All_Type_Clause,        // 8.4, Ada 2012
-
-  A_With_Clause,                // 10.1.2
-
-  A_Representation_Clause,      // 13.1     -> Representation_Clause_Kinds
-  A_Component_Clause            // 13.5.1
-};
-
-// There is no enum Exception_Handler_Kinds because there is only one kind of 
-// exception handler.
-
-///////////////////////////////////////////////////////////////////////////////
-// END element kind kinds
-///////////////////////////////////////////////////////////////////////////////
-
-///////////////////////////////////////////////////////////////////////////////
-// BEGIN supporting kinds
-///////////////////////////////////////////////////////////////////////////////
-
-// For Defining_Operator_Symbol:
-// For Expression:
-  enum Operator_Kinds {
-    Not_An_Operator,                   // An unexpected element
-
-    An_And_Operator,                   // and
-    An_Or_Operator,                    // or
-    An_Xor_Operator,                   // xor
-    An_Equal_Operator,                 // =
-    A_Not_Equal_Operator,              // /=
-    A_Less_Than_Operator,              // <
-    A_Less_Than_Or_Equal_Operator,     // <=
-    A_Greater_Than_Operator,           // >
-    A_Greater_Than_Or_Equal_Operator,  // >=
-    A_Plus_Operator,                   // +
-    A_Minus_Operator,                  // -
-    A_Concatenate_Operator,            // &
-    A_Unary_Plus_Operator,             // +
-    A_Unary_Minus_Operator,            // -
-    A_Multiply_Operator,               // *
-    A_Divide_Operator,                 // /
-    A_Mod_Operator,                    // mod
-    A_Rem_Operator,                    // rem
-    An_Exponentiate_Operator,          // **
-    An_Abs_Operator,                   // abs
-    A_Not_Operator                     // not
-};
-
-// For Declaration:
 enum Declaration_Origins {
   Not_A_Declaration_Origin,
   //  An unexpected element
@@ -611,204 +449,6 @@ enum Subprogram_Default_Kinds {
 //  //|A2005 end
       A_Nil_Default          // with subprogram_specification;
 };
-
-// For Declaration, Definition, Clause:
-enum Trait_Kinds {
-  Not_A_Trait,                         // An unexpected element
-
-  An_Ordinary_Trait,
-  //  The declaration or definition does not contain the reserved words
-  //  "aliased", "reverse", "private", "limited", "abstract", or "access"
-  //  in an access_definition
-
-  An_Aliased_Trait,
-  //  "aliased" is present
-
-  An_Access_Definition_Trait,
-  //  "access" in an access_definition is present
-  //  //|A2005 start
-  A_Null_Exclusion_Trait,
-  //  "not null" is present
-  //  //|A2005 end
-  A_Reverse_Trait,
-  //  "reverse" is present
-  A_Private_Trait,
-  //  Only "private" is present
-  A_Limited_Trait,
-  //  Only "limited" is present
-  A_Limited_Private_Trait,
-  //  "limited" and "private" are present
-  An_Abstract_Trait,
-  //  Only "abstract" is present
-  An_Abstract_Private_Trait,
-  //  "abstract" and "private" are present
-  An_Abstract_Limited_Trait,
-  //  "abstract" and "limited" are present
-  An_Abstract_Limited_Private_Trait
-  //  "abstract", "limited", and "private" are present
-
-  //  //|D2005 start
-  //  We need a note saying that An_Access_Definition_Trait is an obsolescent
-  //  value kept only because of upward compatibility reasons. Now an
-  //  access_definition that defines an anonymous access kind is represented as
-  //  a first-class citizen in the ASIS Element classification hierarchy
-  //  (An_Access_Definition value in Definition_Kinds and the subordinate
-  //  Access_Definition_Kinds type).
-  //  //|D2005 end
-};
-
-// For Expression:
-enum Attribute_Kinds {
-  Not_An_Attribute,              // An unexpected element
-
-  An_Access_Attribute,           // 3.10.2(24), 3.10.2(32), K(2), K(4)
-  An_Address_Attribute,          // 13.3(11), J.7.1(5), K(6)
-  An_Adjacent_Attribute,         // A.5.3(48), K(8)
-  An_Aft_Attribute,              // 3.5.10(5), K(12)
-  An_Alignment_Attribute,        // 13.3(23), K(14)
-  A_Base_Attribute,              // 3.5(15), K(17)
-  A_Bit_Order_Attribute,         // 13.5.3(4), K(19)
-  A_Body_Version_Attribute,      // E.3(4), K(21)
-  A_Callable_Attribute,          // 9.9(2), K(23)
-  A_Caller_Attribute,            // C.7.1(14), K(25)
-  A_Ceiling_Attribute,           // A.5.3(33), K(27)
-  A_Class_Attribute,             // 3.9(14), 7.3.1(9), K(31), K(34)
-  A_Component_Size_Attribute,    // 13.3(69), K(36)
-  A_Compose_Attribute,           // A.5.3(24), K(38)
-  A_Constrained_Attribute,       // 3.7.2(3), J.4(2), K(42)
-  A_Copy_Sign_Attribute,         // A.5.3(51), K(44)
-  A_Count_Attribute,             // 9.9(5), K(48)
-  A_Definite_Attribute,          // 12.5.1(23), K(50)
-  A_Delta_Attribute,             // 3.5.10(3), K(52)
-  A_Denorm_Attribute,            // A.5.3(9), K(54)
-  A_Digits_Attribute,            // 3.5.8(2), 3.5.10(7), K(56), K(58)
-  An_Exponent_Attribute,         // A.5.3(18), K(60)
-  An_External_Tag_Attribute,     // 13.3(75), K(64)
-  A_First_Attribute,             // 3.5(12), 3.6.2(3), K(68), K(70)
-  A_First_Bit_Attribute,         // 13.5.2(3), K(72)
-  A_Floor_Attribute,             // A.5.3(30), K(74)
-  A_Fore_Attribute,              // 3.5.10(4), K(78)
-  A_Fraction_Attribute,          // A.5.3(21), K(80)
-  An_Identity_Attribute,         // 11.4.1(9), C.7.1(12), K(84), K(86)
-  An_Image_Attribute,            // 3.5(35), K(88)
-  An_Input_Attribute,            // 13.13.2(22), 13.13.2(32), K(92), K(96)
-  A_Last_Attribute,              // 3.5(13), 3.6.2(5), K(102), K(104)
-  A_Last_Bit_Attribute,          // 13.5.2(4), K(106)
-  A_Leading_Part_Attribute,      // A.5.3(54), K(108)
-  A_Length_Attribute,            // 3.6.2(9), K(117)
-  A_Machine_Attribute,           // A.5.3(60), K(119)
-  A_Machine_Emax_Attribute,      // A.5.3(8), K(123)
-  A_Machine_Emin_Attribute,      // A.5.3(7), K(125)
-  A_Machine_Mantissa_Attribute,  // A.5.3(6), K(127)
-  A_Machine_Overflows_Attribute, // A.5.3(12), A.5.4(4), K(129), K(131)
-  A_Machine_Radix_Attribute,     // A.5.3(2), A.5.4(2), K(133), K(135)
-  A_Machine_Rounds_Attribute,    // A.5.3(11), A.5.4(3), K(137), K(139)
-  A_Max_Attribute,               // 3.5(19), K(141)
-  A_Max_Size_In_Storage_Elements_Attribute, //   13.11.1(3), K(145)
-  A_Min_Attribute,               // 3.5(16), K(147)
-  A_Model_Attribute,             // A.5.3(68), G.2.2(7), K(151)
-  A_Model_Emin_Attribute,        // A.5.3(65), G.2.2(4), K(155)
-  A_Model_Epsilon_Attribute,     // A.5.3(66), K(157)
-  A_Model_Mantissa_Attribute,    // A.5.3(64), G.2.2(3), K(159)
-  A_Model_Small_Attribute,       // A.5.3(67), K(161)
-  A_Modulus_Attribute,           // 3.5.4(17), K(163)
-  An_Output_Attribute,           // 13.13.2(19), 13.13.2(29), K(165), K(169)
-  A_Partition_ID_Attribute,      // E.1(9), K(173)
-  A_Pos_Attribute,               // 3.5.5(2), K(175)
-  A_Position_Attribute,          // 13.5.2(2), K(179)
-  A_Pred_Attribute,              // 3.5(25), K(181)
-  A_Range_Attribute,             // 3.5(14), 3.6.2(7), K(187), ú(189)
-  A_Read_Attribute,              // 13.13.2(6), 13.13.2(14), K(191), K(195)
-  A_Remainder_Attribute,         // A.5.3(45), K(199)
-  A_Round_Attribute,             // 3.5.10(12), K(203)
-  A_Rounding_Attribute,          // A.5.3(36), K(207)
-  A_Safe_First_Attribute,        // A.5.3(71), G.2.2(5), K(211)
-  A_Safe_Last_Attribute,         // A.5.3(72), G.2.2(6), K(213)
-  A_Scale_Attribute,             // 3.5.10(11), K(215)
-  A_Scaling_Attribute,           // A.5.3(27), K(217)
-  A_Signed_Zeros_Attribute,      // A.5.3(13), K(221)
-  A_Size_Attribute,              // 13.3(40), 13.3(45), K(223), K(228)
-  A_Small_Attribute,             // 3.5.10(2), K(230)
-  A_Storage_Pool_Attribute,      // 13.11(13), K(232)
-  A_Storage_Size_Attribute,      // 13.3(60), 13.11(14), J.9(2), K(234),
-  //                                 K(236)
-  A_Succ_Attribute,              // 3.5(22), K(238)
-  A_Tag_Attribute,               // 3.9(16), 3.9(18), K(242), K(244)
-  A_Terminated_Attribute,        // 9.9(3), K(246)
-  A_Truncation_Attribute,        // A.5.3(42), K(248)
-  An_Unbiased_Rounding_Attribute, // A.5.3(39), K(252)
-  An_Unchecked_Access_Attribute,  // 13.10(3), H.4(18), K(256)
-  A_Val_Attribute,                // 3.5.5(5), K(258)
-  A_Valid_Attribute,              // 13.9.2(3), H(6), K(262)
-  A_Value_Attribute,              // 3.5(52), K(264)
-  A_Version_Attribute,            // E.3(3), K(268)
-  A_Wide_Image_Attribute,         // 3.5(28), K(270)
-  A_Wide_Value_Attribute,         // 3.5(40), K(274)
-  A_Wide_Width_Attribute,         // 3.5(38), K(278)
-  A_Width_Attribute,              // 3.5(39), K(280)
-  A_Write_Attribute,              // 13.13.2(3), 13.13.2(11), K(282), K(286)
-
-  //  |A2005 start
-  //  New Ada 2005 attributes. To be alphabetically ordered later
-  A_Machine_Rounding_Attribute,
-  A_Mod_Attribute,
-  A_Priority_Attribute,
-  A_Stream_Size_Attribute,
-  A_Wide_Wide_Image_Attribute,
-  A_Wide_Wide_Value_Attribute,
-  A_Wide_Wide_Width_Attribute,
-  //  |A2005 end
-
-  //  |A2012 start
-  //  New Ada 2012 attributes. To be alphabetically ordered later
-  A_Max_Alignment_For_Allocation_Attribute,
-  An_Overlaps_Storage_Attribute,
-  //  |A2012 end
-
-  An_Implementation_Defined_Attribute,  // Reference Manual, Annex M
-  An_Unknown_Attribute           // Unknown to ASIS
-};
-
-// For Element_Struct:
-enum Enclosing_Kinds { // Not an ASIS type
-  Not_Enclosing,
-  Enclosing_Element,
-  Enclosing_Unit 
-};
-
-///////////////////////////////////////////////////////////////////////////////
-// END supporting kinds
-///////////////////////////////////////////////////////////////////////////////
-
-// May take ??*4 bytes (unfinished):
-struct Pragma_Struct {
-  enum Pragma_Kinds   Pragma_Kind;
-  Pragma_Element_List Pragmas;
-  Program_Text        Pragma_Name_Image;
-  Association_List    Pragma_Argument_Associations;
-};
-
-// May take :
-struct Defining_Name_Struct {
-  enum Defining_Name_Kinds  Defining_Name_Kind;
-  char                     *Defining_Name_Image;
-  
-  // These fields are only valid for the kinds above them:
-  // A_Defining_Character_Literal
-  // A_Defining_Enumeration_Literal
-  char                     *Position_Number_Image;
-  char                     *Representation_Value_Image;
-  // A_Defining_Expanded_Name 
-  Name_ID                   Defining_Prefix;
-  Defining_Name_ID          Defining_Selector;
-  // When this is the name of a constant or a deferred constant:
-  Declaration_ID            Corresponding_Constant_Declaration;
-  // A_Defining_Operator_Symbol:
-  enum Operator_Kinds       Operator_Kind;
-  // The defining name of an entity declared within the 
-  // implicit specification of a generic instantiation:
-  Defining_Name_ID      Corresponding_Generic_Element;
-  };
 
 // May take :
 struct Declaration_Struct {
@@ -1113,7 +753,7 @@ struct Declaration_Struct {
   //  A_Generic_Package_Declaration,            // 12.1(2)
   Declarative_Item_List          Visible_Part_Declarative_Items;
   bool                           Is_Private_Present;
-  Declarative_Item_List	         Private_Part_Declarative_Items;
+  Declarative_Item_List          Private_Part_Declarative_Items;
   //  A_Task_Type_Declaration,                  // 9.1(2)
   //  A_Protected_Type_Declaration,             // 9.4(2)
   //  A_Single_Task_Declaration,                // 3.3.1(2),9.1(3)
@@ -1176,54 +816,617 @@ struct Declaration_Struct {
   bool                           Is_Dispatching_Operation;
 };
 
-// May take ??*4 bytes (unfinished):
-struct Definition_Struct {
-  enum Definition_Kinds Definition_Kind;
-  
+///////////////////////////////////////////////////////////////////////////////
+// END Declaration
+///////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////
+// BEGIN Definition
+///////////////////////////////////////////////////////////////////////////////
+
+typedef Element_ID   Constraint_ID;
+typedef Element_ID   Definition_ID;
+typedef Element_List Definition_ID_List;
+typedef Element_List Declarative_Item_ID_List;
+typedef Element_List Record_Component_List;
+
+enum Definition_Kinds {
+  Not_A_Definition,                 // An unexpected element
+  A_Type_Definition,                // 3.2.1(4)    -> Type_Kinds
+  A_Subtype_Indication,             // 3.2.2(3)
+  A_Constraint,                     // 3.2.2(5)    -> Constraint_Kinds
+  A_Component_Definition,           // 3.6(7)      -> Trait_Kinds
+  A_Discrete_Subtype_Definition,    // 3.6(6)      -> Discrete_Range_Kinds
+  A_Discrete_Range,                 // 3.6.1(3)    -> Discrete_Range_Kinds
+  An_Unknown_Discriminant_Part,     // 3.7(3)
+  A_Known_Discriminant_Part,        // 3.7(2)
+  A_Record_Definition,              // 3.8(3)
+  A_Null_Record_Definition,         // 3.8(3)
+  A_Null_Component,                 // 3.8(4)
+  A_Variant_Part,                   // 3.8.1(2)
+  A_Variant,                        // 3.8.1(3)
+  An_Others_Choice,                 // 3.8.1(5), 4.3.1(5), 4.3.3(5), 11.2(5)
+
+  //  //|A2005 start
+  An_Access_Definition,             // 3.10(6/2)   -> Access_Definition_Kinds
+  //  //|A2005 end
+
+  A_Private_Type_Definition,        // 7.3(2)      -> Trait_Kinds
+  A_Tagged_Private_Type_Definition, // 7.3(2)      -> Trait_Kinds
+  A_Private_Extension_Definition,   // 7.3(3)      -> Trait_Kinds
+  A_Task_Definition,                // 9.1(4)
+  A_Protected_Definition,           // 9.4(4)
+  A_Formal_Type_Definition,         // 12.5(3)     -> Formal_Type_Kinds
+
+  //  //|A2012 start
+  An_Aspect_Specification           // 13.3.1
+  //  //|A2012 end  
+};
+
+typedef enum _Type_Kinds {
+  Not_A_Type_Definition,                 // An unexpected element
+  A_Derived_Type_Definition,             // 3.4(2)     -> Trait_Kinds
+  A_Derived_Record_Extension_Definition, // 3.4(2)     -> Trait_Kinds
+  An_Enumeration_Type_Definition,        // 3.5.1(2)
+  A_Signed_Integer_Type_Definition,      // 3.5.4(3)
+  A_Modular_Type_Definition,             // 3.5.4(4)
+  A_Root_Type_Definition,                // 3.5.4(14), 3.5.6(3)
+  //                                               -> Root_Type_Kinds
+  A_Floating_Point_Definition,           // 3.5.7(2)
+  An_Ordinary_Fixed_Point_Definition,    // 3.5.9(3)
+  A_Decimal_Fixed_Point_Definition,      // 3.5.9(6)
+  An_Unconstrained_Array_Definition,     // 3.6(2)
+  A_Constrained_Array_Definition,        // 3.6(2)
+  A_Record_Type_Definition,              // 3.8(2)     -> Trait_Kinds
+  A_Tagged_Record_Type_Definition,       // 3.8(2)     -> Trait_Kinds
+
+  //  //|A2005 start
+  An_Interface_Type_Definition,          // 3.9.4      -> Interface_Kinds
+  //  //|A2005 end
+
+  An_Access_Type_Definition            // 3.10(2)    -> Access_Type_Kinds
+} Type_Kinds;
+
+typedef enum _Constraint_Kinds {
+  Not_A_Constraint,                      // An unexpected element
+  A_Range_Attribute_Reference,           // 3.5(2)
+  A_Simple_Expression_Range,             // 3.2.2, 3.5(3)
+  A_Digits_Constraint,                   // 3.2.2, 3.5.9
+  A_Delta_Constraint,                    // 3.2.2, J.3
+  An_Index_Constraint,                   // 3.2.2, 3.6.1
+  A_Discriminant_Constraint              // 3.2.2
+} Constraint_Kinds;
+
+typedef enum _Interface_Kinds {  // 3.9.4
+  Not_An_Interface,                 // An unexpected element
+  An_Ordinary_Interface,            // interface ...
+  A_Limited_Interface,              // limited interface ...
+  A_Task_Interface,                 // task interface ...
+  A_Protected_Interface,            // protected interface ...
+  A_Synchronized_Interface        // synchronized interface ...
+} Interface_Kinds; 
+
+typedef enum _Root_Type_Kinds {
+  Not_A_Root_Type_Definition,            // An unexpected element
+  A_Root_Integer_Definition,             // 3.4.1(8)
+  A_Root_Real_Definition,                // 3.4.1(8)
+  A_Universal_Integer_Definition,        // 3.4.1(6)
+  A_Universal_Real_Definition,           // 3.4.1(6)
+  A_Universal_Fixed_Definition         // 3.4.1(6)
+ } Root_Type_Kinds;
+
+typedef enum _Discrete_Range_Kinds {
+  Not_A_Discrete_Range,                  // An unexpected element
+  A_Discrete_Subtype_Indication,         // 3.6.1(6), 3.2.2
+  A_Discrete_Range_Attribute_Reference,  // 3.6.1, 3.5
+  A_Discrete_Simple_Expression_Range   // 3.6.1, 3.5
+} Discrete_Range_Kinds;
+
+typedef enum _Formal_Type_Kinds {
+      Not_A_Formal_Type_Definition,             // An unexpected element
+      A_Formal_Private_Type_Definition,         // 12.5.1(2)   -> Trait_Kinds
+      A_Formal_Tagged_Private_Type_Definition,  // 12.5.1(2)   -> Trait_Kinds
+      A_Formal_Derived_Type_Definition,         // 12.5.1(3)   -> Trait_Kinds
+      A_Formal_Discrete_Type_Definition,        // 12.5.2(2)
+      A_Formal_Signed_Integer_Type_Definition,  // 12.5.2(3)
+      A_Formal_Modular_Type_Definition,         // 12.5.2(4)
+      A_Formal_Floating_Point_Definition,       // 12.5.2(5)
+      A_Formal_Ordinary_Fixed_Point_Definition, // 12.5.2(6)
+      A_Formal_Decimal_Fixed_Point_Definition,  // 12.5.2(7)
+
+//  //|A2005 start
+      A_Formal_Interface_Type_Definition,       // 12.5.5(2) -> Interface_Kinds
+//  //|A2005 end
+
+      A_Formal_Unconstrained_Array_Definition,  // 3.6(3)
+      A_Formal_Constrained_Array_Definition,    // 3.6(5)
+      A_Formal_Access_Type_Definition         // 3.10(3),3.10(5)
+      //                                                 -> Access_Type_Kinds
+} Formal_Type_Kinds;
+
+typedef enum _Access_Type_Kinds {
+  Not_An_Access_Type_Definition,       // An unexpected element
+  A_Pool_Specific_Access_To_Variable,  // access subtype_indication
+  An_Access_To_Variable,               // access all subtype_indication
+  An_Access_To_Constant,               // access constant subtype_indication
+  An_Access_To_Procedure,              // access procedure
+  An_Access_To_Protected_Procedure,    // access protected procedure
+  An_Access_To_Function,               // access function
+  An_Access_To_Protected_Function      // access protected function
+} Access_Type_Kinds;
+
+typedef enum _Access_Definition_Kinds {
+  Not_An_Access_Definition,       // An unexpected element
+  An_Anonymous_Access_To_Variable,  // [...] access subtype_mark
+  An_Anonymous_Access_To_Constant,  // [...] access constant subtype_mark
+  An_Anonymous_Access_To_Procedure,           // access procedure
+  An_Anonymous_Access_To_Protected_Procedure, // access protected procedure
+  An_Anonymous_Access_To_Function,            // access function
+  An_Anonymous_Access_To_Protected_Function   // access protected function
+} Access_Definition_Kinds;
+
+typedef struct _Access_Type_Struct {
+  bool                         Has_Null_Exclusion;
+  Access_Type_Kinds            Access_Type_Kind;  
   // These fields are only valid for the kinds above them:
-  // A_Component_Definition
-  // A_Private_Type_Definition
-  // A_Tagged_Private_Type_Definition
-  // A_Private_Extension_Definition
-  // A_Subtype_Indication
-  // An_Access_Definition
-  enum Trait_Kinds      Trait_Kind;
-  // A_Type_Definition
-  enum Type_Kinds       Type_Kind;
+  // An_Access_To_Function
+  // An__Access_To_Protected_Function
+  bool                         Is_Not_Null_Return;
+  // A_Pool_Specific_Access_To_Variable
+  // An_Access_To_Variable
+  // An_Access_To_Constant
+  Subtype_Indication           Access_To_Object_Definition;
+  // An_Access_To_Procedure
+  // An_Access_To_Protected_Procedure
+  // An_Access_To_Function
+  // An_Access_To_Protected_Function
+  Parameter_Specification_List Access_To_Subprogram_Parameter_Profile; 
+  // An_Access_To_Function
+  // An_Access_To_Protected_Function
+  Element                      Access_To_Function_Result_Profile;
+} Access_Type_Struct;
+
+typedef struct _Type_Definition_Struct {
+  bool                 Has_Abstract;
+  bool                 Has_Limited;
+  bool                 Has_Private;
+  Type_Kinds           Type_Kind;  
+  // These fields are only valid for the kinds above them:
+  //  An_Interface_Type_Definition
+  bool                 Has_Protected;
+  bool                 Has_Synchronized;
+  // A_Tagged_Record_Type_Definition
+  bool                 Has_Tagged;
+  // A_Task_Definition
+  bool                 Has_Task;
+  // A_Discriminant_Specification
+  // A_Parameter_Specification
+  // A_Formal_Object_Declaration
+  // An_Object_Renaming_Declaration
+  bool                 Has_Null_Exclusion;
+  // An_Interface_Type_Definition
+  Interface_Kinds      Interface_Kind;
+  // A_Root_Type_Definition
+  Root_Type_Kinds      Root_Type_Kind;
   // A_Derived_Type_Definition
   // A_Derived_Record_Extension_Definition
-  Subtype_Indication_ID Parent_Subtype_Indication;
+  Subtype_Indication   Parent_Subtype_Indication;  
   // A_Derived_Record_Extension_Definition
-  Definition_ID         Record_Definition;
+  // A_Record_Type_Definition
+  // A_Tagged_Record_Type_Definition
+  Definition           Record_Definition;
   // A_Derived_Type_Definition
   // A_Derived_Record_Extension_Definition
-  Definition_ID_List    Implicit_Inherited_Declarations;
-  Definition_ID_List    Implicit_Inherited_Subprograms;
-  Definition_ID         Corresponding_Parent_Subtype;
-  Definition_ID         Corresponding_Root_Type;
-  Definition_ID         Corresponding_Type_Structure;
-  // A_Constraint
-  enum Constraint_Kinds Constraint_Kind;
+  Declaration_List     Implicit_Inherited_Declarations;
+  Declaration_List     Implicit_Inherited_Subprograms;
+  Declaration          Corresponding_Parent_Subtype;
+  Declaration          Corresponding_Root_Type;
+  Declaration          Corresponding_Type_Structure;
+  // An_Enumeration_Type_Definition
+  Declaration_List     Enumeration_Literal_Declarations;
+  // A_Signed_Integer_Type_Definition
+  Range_Constraint     Integer_Constraint;
+  // A_Modular_Type_Definition
+  Expression           Mod_Static_Expression;
+  // A_Floating_Point_Definition
+  // A_Decimal_Fixed_Point_Definition
+  Expression           Digits_Expression;
+  // An_Ordinary_Fixed_Point_Definition
+  // A_Decimal_Fixed_Point_Definition
+  Expression           Delta_Expression;
+  // A_Floating_Point_Definition
+  // An_Ordinary_Fixed_Point_Definition
+  // A_Decimal_Fixed_Point_Definition
+  Range_Constraint     Real_Range_Constraint;
+  // An_Unconstrained_Array_Definition
+  Expression_List      Index_Subtype_Definitions;
+  // A_Constrained_Array_Definition
+  Expression_List      Discrete_Subtype_Definitions;
+  // An_Unconstrained_Array_Definition
+  // A_Constrained_Array_Definition
+  Component_Definition Array_Component_Definition;
+  // A_Derived_Record_Extension_Definition
+  // An_Interface_Type_Definition
+  Expression_List      Definition_Interface_List;
+  // An_Access_Type_Definition
+  Access_Type_Struct   Access_Type;
+} Type_Definition_Struct;
+
+// Constraint_Struct appears here (in a different order than in 
+// Definition_Union) beause it is used in Subtype_Indication_Struct.
+
+typedef struct _Constraint_Struct {
+  Constraint_Kinds              Constraint_Kind;
+  // These fields are only valid for the kinds above them:
+  // A_Digits_Constraint
+  Expression                    Digits_Expression;
+  // A_Delta_Constraint
+  Expression                    Delta_Expression;
+  // A_Digits_Constraint
+  // A_Delta_Constraint
+  Range_Constraint              Real_Range_Constraint;
   // A_Simple_Expression_Range
-  Expression_ID         Lower_Bound;
-  Expression_ID         Upper_Bound;
-  // A_Subtype_Indication
-  // A_Discrete_Subtype_Definition (See Discrete_Range_Kinds)
-  // A_Discrete_Range (See Discrete_Range_Kinds)
-  Expression_ID         Subtype_Mark;
-  Constraint_ID         Subtype_Constraint;
-  // A_Component_Definition
-  Definition_ID         Component_Definition_View;
-  
-  // A_Record_Definition
-  // A_Variant
+  Expression                    Lower_Bound;
+  Expression                    Upper_Bound;
+  // A_Range_Attribute_Reference
+  Expression                    Range_Attribute;
+  // An_Index_Constraint
+  Discrete_Range_List           Discrete_Ranges;
+  // A_Discriminant_Constraint
+  Discriminant_Association_List Discriminant_Associations;
+} Constraint_Struct;
+
+typedef struct _Subtype_Indication_Struct {
+  bool              Has_Null_Exclusion;
+  Expression        Subtype_Mark;
+  Constraint_Struct Subtype_Constraint;
+} Subtype_Indication_Struct;
+
+typedef struct _Component_Definition_Struct {
+  Definition Component_Definition_View;
+} Component_Definition_Struct;
+
+typedef struct _Discrete_Subtype_Definition_Struct {
+  Discrete_Range_Kinds Discrete_Range_Kind;
+  // These fields are only valid for the kinds above them:
+  // A_Discrete_Subtype_Indication
+  Expression           Subtype_Mark;
+  Constraint           Subtype_Constraint;
+} Discrete_Subtype_Definition_Struct;
+
+typedef struct _Discrete_Range_Struct {
+  Discrete_Range_Kinds Discrete_Range_Kind;
+  // These fields are only valid for the kinds above them:
+  // A_Discrete_Subtype_Indication
+  Expression           Subtype_Mark;
+  Constraint           Subtype_Constraint;
+  // A_Discrete_Simple_Expression_Range
+  Expression           Lower_Bound;
+  Expression           Upper_Bound;
+  // A_Discrete_Range_Attribute_Reference
+  Expression           Range_Attribute;
+} Discrete_Range_Struct;
+
+typedef struct _Known_Discriminant_Part_Struct {
+  Discriminant_Specification_List Discriminants;
+} Known_Discriminant_Part_Struct;
+
+typedef struct _Record_Definition_Struct {
   Record_Component_List Record_Components;
   Record_Component_List Implicit_Components;
+} Record_Definition_Struct;
+
+typedef struct _Variant_Part_Struct {
+  Name         Discriminant_Direct_Name;
+  Variant_List Variants;
+} Variant_Part_Struct;
+
+typedef struct _Variant_Struct {
+  Record_Component_List Record_Components;
+  Record_Component_List Implicit_Components;
+  Element_List          Variant_Choices;
+} Variant_Struct;
+
+typedef struct _Access_Definition_Struct {
+  bool                         Has_Null_Exclusion;
+  Access_Definition_Kinds      Access_Definition_Kind;
+  // These fields are only valid for the kinds above them:
+  // An_Anonymous_Access_To_Function
+  // An_Anonymous_Access_To_Protected_Function
+  bool                         Is_Not_Null_Return;
+  // An_Anonymous_Access_To_Variable
+  // An_Anonymous_Access_To_Constant
+  Expression                   Anonymous_Access_To_Object_Subtype_Mark;
+  // An_Anonymous_Access_To_Procedure
+  // An_Anonymous_Access_To_Protected_Procedure
+  // An_Anonymous_Access_To_Function
+  // An_Anonymous_Access_To_Protected_Function
+  Parameter_Specification_List Access_To_Subprogram_Parameter_Profile; 
+  // An_Anonymous_Access_To_Function
+  // An_Anonymous_Access_To_Protected_Function
+  Element                      Access_To_Function_Result_Profile;
+} Access_Definition_Struct;
+
+typedef struct _Private_Type_Definition_Struct {
+  bool             Has_Abstract;
+  bool             Has_Limited;
+  bool             Has_Private;
+} Private_Type_Definition_Struct;
+
+typedef struct _Tagged_Private_Type_Definition_Struct {
+  bool             Has_Abstract;
+  bool             Has_Limited;
+  bool             Has_Private;
+  bool             Has_Tagged;
+} Tagged_Private_Type_Definition_Struct;
+
+typedef struct _Private_Extension_Definition_Struct {
+  bool               Has_Abstract;
+  bool               Has_Limited;
+  bool               Has_Private;
+  bool               Has_Synchronized;
+  Declaration_List   Implicit_Inherited_Declarations;
+  Declaration_List   Implicit_Inherited_Subprograms;
+  Expression_List    Definition_Interface_List;
+  Subtype_Indication Ancestor_Subtype_Indication;
+} Private_Extension_Definition_Struct;
+
+typedef struct _Task_Definition_Struct {
+  bool                  Has_Task;
+  Declarative_Item_List Visible_Part_Items;
+  Declarative_Item_List Private_Part_Items;
+  bool                  Is_Private_Present;
+} Task_Definition_Struct;
+
+typedef struct _Protected_Definition_Struct {
+  bool                  Has_Protected;
+  Declarative_Item_List Visible_Part_Items;
+  Declarative_Item_List Private_Part_Items;
+  bool                  Is_Private_Present;
+} Protected_Definition_Struct;
+
+typedef struct _Formal_Type_Definition_Struct {
+  Formal_Type_Kinds    Formal_Type_Kind;
+  Declaration_List     Corresponding_Type_Operators;
+  // These fields are only valid for the kinds above them:
+  // A_Formal_Private_Type_Definition
+  // A_Formal_Tagged_Private_Type_Definition
+  // A_Formal_Derived_Type_Definition
+  bool                 Has_Abstract;
+  bool                 Has_Limited;
+  // A_Formal_Private_Type_Definition
+  // A_Formal_Tagged_Private_Type_Definition
+  bool                 Has_Private;
+  // A_Formal_Derived_Type_Definition
+  bool                 Has_Synchronized;
+  // A_Formal_Tagged_Private_Type_Definition
+  bool                 Has_Tagged;
+  // A_Formal_Interface_Type_Definition
+  Interface_Kinds      Interface_Kind;
+  // A_Formal_Derived_Type_Definition
+  Declaration_List     Implicit_Inherited_Declarations;
+  Declaration_List     Implicit_Inherited_Subprograms;
+  // A_Formal_Unconstrained_Array_Definition
+  Expression_List      Index_Subtype_Definitions;
+  // A_Formal_Constrained_Array_Definition
+  Expression_List      Discrete_Subtype_Definitions;
+  // A_Formal_Unconstrained_Array_Definition
+  // A_Formal_Constrained_Array_Definition
+  Component_Definition Array_Component_Definition;
+  // A_Formal_Derived_Type_Definition
+  Expression           Subtype_Mark;
+  // A_Formal_Derived_Type_Definition
+  // A_Formal_Interface_Type_Definition
+  Expression_List      Definition_Interface_List;
+  // A_Formal_Access_Type_Definition
+  Access_Type_Struct   Access_Type;
+} Formal_Type_Definition_Struct;
+
+typedef struct _Aspect_Specification_Struct {
+  Element Aspect_Mark;
+  Element Aspect_Definition;
+} Aspect_Specification_Struct;
+
+typedef int       No_Struct;
+typedef No_Struct Unknown_Discriminant_Part_Struct;
+typedef No_Struct Null_Record_Definition_Struct;
+typedef No_Struct Null_Component_Struct;
+typedef No_Struct Others_Choice_Struct;
+
+typedef union _Definition_Union {
+  int                                   Dummy_Member; // For Ada default initialization
+  Type_Definition_Struct                The_Type_Definition;
+  Subtype_Indication_Struct             The_Subtype_Indication;
+  Constraint_Struct                     The_Constraint;
+  Component_Definition_Struct           The_Component_Definition;
+  Discrete_Subtype_Definition_Struct    The_Discrete_Subtype_Definition;
+  Discrete_Range_Struct                 The_Discrete_Range;
+  Unknown_Discriminant_Part_Struct      The_Unknown_Discriminant_Part;
+  Known_Discriminant_Part_Struct        The_Known_Discriminant_Part;
+  Record_Definition_Struct              The_Record_Definition;
+  Null_Record_Definition_Struct         The_Null_Record_Definition;
+  Null_Component_Struct                 The_Null_Component;
+  Variant_Part_Struct                   The_Variant_Part;
+  Variant_Struct                        The_Variant;
+  Others_Choice_Struct                  The_Others_Choice;
+  Access_Definition_Struct              The_Access_Definition;
+  Private_Type_Definition_Struct        The_Private_Type_Definition;
+  Tagged_Private_Type_Definition_Struct The_Tagged_Private_Type_Definition;
+  Private_Extension_Definition_Struct   The_Private_Extension_Definition;
+  Task_Definition_Struct                The_Task_Definition;
+  Protected_Definition_Struct           The_Protected_Definition;
+  Formal_Type_Definition_Struct         The_Formal_Type_Definition;
+  Aspect_Specification_Struct           The_Aspect_Specification;
+} Definition_Union;  
+
+// May take ??*4 bytes:
+struct Definition_Struct {
+  enum Definition_Kinds Definition_Kind;
+  Definition_Union      The_Union;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// END Definition
+///////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////
+// BEGIN Expression
+///////////////////////////////////////////////////////////////////////////////
+
+enum Expression_Kinds {
+  Not_An_Expression,                         // An unexpected element
+
+  A_Box_Expression,                          //  Ada 2005
+  //  4.3.1(4), 4.3.3(3,6)
+
+  An_Integer_Literal,                        // 2.4
+  A_Real_Literal,                            // 2.4.1
+  A_String_Literal,                          // 2.6
+  An_Identifier,                             // 4.1
+  An_Operator_Symbol,                        // 4.1
+  A_Character_Literal,                       // 4.1
+  An_Enumeration_Literal,                    // 4.1
+  An_Explicit_Dereference,                   // 4.1
+  A_Function_Call,                           // 4.1
+  An_Indexed_Component,                      // 4.1.1
+  A_Slice,                                   // 4.1.2
+  A_Selected_Component,                      // 4.1.3
+  An_Attribute_Reference,                    // 4.1.4  -> Attribute_Kinds
+  A_Record_Aggregate,                        // 4.3
+  An_Extension_Aggregate,                    // 4.3
+  A_Positional_Array_Aggregate,              // 4.3
+  A_Named_Array_Aggregate,                   // 4.3
+  An_And_Then_Short_Circuit,                 // 4.4
+  An_Or_Else_Short_Circuit,                  // 4.4
+
+  An_In_Membership_Test,                     // 4.4  Ada 2012
+  A_Not_In_Membership_Test,                  // 4.4  Ada 2012
+
+  A_Null_Literal,                            // 4.4
+  A_Parenthesized_Expression,                // 4.4
   
-  Declarative_Item_ID_List Visible_Part_Items;
-  Declarative_Item_ID_List Private_Part_Items;
-  bool                     Is_Private_Present;
-  // TODO: not done yet - abt 55 fields to go.  Introduce union and sub structs?
+  A_Raise_Expression,                        // 4.4 Ada 2012 (AI12-0022-1)
+
+  A_Type_Conversion,                         // 4.6
+  A_Qualified_Expression,                    // 4.7
+  An_Allocation_From_Subtype,                // 4.8
+  An_Allocation_From_Qualified_Expression,   // 4.8
+
+  A_Case_Expression,                         // Ada 2012
+  An_If_Expression,                          // Ada 2012
+  A_For_All_Quantified_Expression,           // Ada 2012
+  A_For_Some_Quantified_Expression           // Ada 2012
+};
+
+enum Attribute_Kinds {
+  Not_An_Attribute,              // An unexpected element
+
+  An_Access_Attribute,           // 3.10.2(24), 3.10.2(32), K(2), K(4)
+  An_Address_Attribute,          // 13.3(11), J.7.1(5), K(6)
+  An_Adjacent_Attribute,         // A.5.3(48), K(8)
+  An_Aft_Attribute,              // 3.5.10(5), K(12)
+  An_Alignment_Attribute,        // 13.3(23), K(14)
+  A_Base_Attribute,              // 3.5(15), K(17)
+  A_Bit_Order_Attribute,         // 13.5.3(4), K(19)
+  A_Body_Version_Attribute,      // E.3(4), K(21)
+  A_Callable_Attribute,          // 9.9(2), K(23)
+  A_Caller_Attribute,            // C.7.1(14), K(25)
+  A_Ceiling_Attribute,           // A.5.3(33), K(27)
+  A_Class_Attribute,             // 3.9(14), 7.3.1(9), K(31), K(34)
+  A_Component_Size_Attribute,    // 13.3(69), K(36)
+  A_Compose_Attribute,           // A.5.3(24), K(38)
+  A_Constrained_Attribute,       // 3.7.2(3), J.4(2), K(42)
+  A_Copy_Sign_Attribute,         // A.5.3(51), K(44)
+  A_Count_Attribute,             // 9.9(5), K(48)
+  A_Definite_Attribute,          // 12.5.1(23), K(50)
+  A_Delta_Attribute,             // 3.5.10(3), K(52)
+  A_Denorm_Attribute,            // A.5.3(9), K(54)
+  A_Digits_Attribute,            // 3.5.8(2), 3.5.10(7), K(56), K(58)
+  An_Exponent_Attribute,         // A.5.3(18), K(60)
+  An_External_Tag_Attribute,     // 13.3(75), K(64)
+  A_First_Attribute,             // 3.5(12), 3.6.2(3), K(68), K(70)
+  A_First_Bit_Attribute,         // 13.5.2(3), K(72)
+  A_Floor_Attribute,             // A.5.3(30), K(74)
+  A_Fore_Attribute,              // 3.5.10(4), K(78)
+  A_Fraction_Attribute,          // A.5.3(21), K(80)
+  An_Identity_Attribute,         // 11.4.1(9), C.7.1(12), K(84), K(86)
+  An_Image_Attribute,            // 3.5(35), K(88)
+  An_Input_Attribute,            // 13.13.2(22), 13.13.2(32), K(92), K(96)
+  A_Last_Attribute,              // 3.5(13), 3.6.2(5), K(102), K(104)
+  A_Last_Bit_Attribute,          // 13.5.2(4), K(106)
+  A_Leading_Part_Attribute,      // A.5.3(54), K(108)
+  A_Length_Attribute,            // 3.6.2(9), K(117)
+  A_Machine_Attribute,           // A.5.3(60), K(119)
+  A_Machine_Emax_Attribute,      // A.5.3(8), K(123)
+  A_Machine_Emin_Attribute,      // A.5.3(7), K(125)
+  A_Machine_Mantissa_Attribute,  // A.5.3(6), K(127)
+  A_Machine_Overflows_Attribute, // A.5.3(12), A.5.4(4), K(129), K(131)
+  A_Machine_Radix_Attribute,     // A.5.3(2), A.5.4(2), K(133), K(135)
+  A_Machine_Rounds_Attribute,    // A.5.3(11), A.5.4(3), K(137), K(139)
+  A_Max_Attribute,               // 3.5(19), K(141)
+  A_Max_Size_In_Storage_Elements_Attribute, //   13.11.1(3), K(145)
+  A_Min_Attribute,               // 3.5(16), K(147)
+  A_Model_Attribute,             // A.5.3(68), G.2.2(7), K(151)
+  A_Model_Emin_Attribute,        // A.5.3(65), G.2.2(4), K(155)
+  A_Model_Epsilon_Attribute,     // A.5.3(66), K(157)
+  A_Model_Mantissa_Attribute,    // A.5.3(64), G.2.2(3), K(159)
+  A_Model_Small_Attribute,       // A.5.3(67), K(161)
+  A_Modulus_Attribute,           // 3.5.4(17), K(163)
+  An_Output_Attribute,           // 13.13.2(19), 13.13.2(29), K(165), K(169)
+  A_Partition_ID_Attribute,      // E.1(9), K(173)
+  A_Pos_Attribute,               // 3.5.5(2), K(175)
+  A_Position_Attribute,          // 13.5.2(2), K(179)
+  A_Pred_Attribute,              // 3.5(25), K(181)
+  A_Range_Attribute,             // 3.5(14), 3.6.2(7), K(187), ú(189)
+  A_Read_Attribute,              // 13.13.2(6), 13.13.2(14), K(191), K(195)
+  A_Remainder_Attribute,         // A.5.3(45), K(199)
+  A_Round_Attribute,             // 3.5.10(12), K(203)
+  A_Rounding_Attribute,          // A.5.3(36), K(207)
+  A_Safe_First_Attribute,        // A.5.3(71), G.2.2(5), K(211)
+  A_Safe_Last_Attribute,         // A.5.3(72), G.2.2(6), K(213)
+  A_Scale_Attribute,             // 3.5.10(11), K(215)
+  A_Scaling_Attribute,           // A.5.3(27), K(217)
+  A_Signed_Zeros_Attribute,      // A.5.3(13), K(221)
+  A_Size_Attribute,              // 13.3(40), 13.3(45), K(223), K(228)
+  A_Small_Attribute,             // 3.5.10(2), K(230)
+  A_Storage_Pool_Attribute,      // 13.11(13), K(232)
+  A_Storage_Size_Attribute,      // 13.3(60), 13.11(14), J.9(2), K(234),
+  //                                 K(236)
+  A_Succ_Attribute,              // 3.5(22), K(238)
+  A_Tag_Attribute,               // 3.9(16), 3.9(18), K(242), K(244)
+  A_Terminated_Attribute,        // 9.9(3), K(246)
+  A_Truncation_Attribute,        // A.5.3(42), K(248)
+  An_Unbiased_Rounding_Attribute, // A.5.3(39), K(252)
+  An_Unchecked_Access_Attribute,  // 13.10(3), H.4(18), K(256)
+  A_Val_Attribute,                // 3.5.5(5), K(258)
+  A_Valid_Attribute,              // 13.9.2(3), H(6), K(262)
+  A_Value_Attribute,              // 3.5(52), K(264)
+  A_Version_Attribute,            // E.3(3), K(268)
+  A_Wide_Image_Attribute,         // 3.5(28), K(270)
+  A_Wide_Value_Attribute,         // 3.5(40), K(274)
+  A_Wide_Width_Attribute,         // 3.5(38), K(278)
+  A_Width_Attribute,              // 3.5(39), K(280)
+  A_Write_Attribute,              // 13.13.2(3), 13.13.2(11), K(282), K(286)
+
+  //  |A2005 start
+  //  New Ada 2005 attributes. To be alphabetically ordered later
+  A_Machine_Rounding_Attribute,
+  A_Mod_Attribute,
+  A_Priority_Attribute,
+  A_Stream_Size_Attribute,
+  A_Wide_Wide_Image_Attribute,
+  A_Wide_Wide_Value_Attribute,
+  A_Wide_Wide_Width_Attribute,
+  //  |A2005 end
+
+  //  |A2012 start
+  //  New Ada 2012 attributes. To be alphabetically ordered later
+  A_Max_Alignment_For_Allocation_Attribute,
+  An_Overlaps_Storage_Attribute,
+  //  |A2012 end
+
+  An_Implementation_Defined_Attribute,  // Reference Manual, Annex M
+  An_Unknown_Attribute           // Unknown to ASIS
 };
 
 // May take 33*4 bytes - 19 IDs, 8 Lists, 1 bool, 3 enums, 2 char*:
@@ -1311,6 +1514,25 @@ struct Expression_Struct {
   Defining_Name_ID      Corresponding_Generic_Element;
 };
 
+///////////////////////////////////////////////////////////////////////////////
+// END Expression
+///////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////
+// BEGIN Association
+///////////////////////////////////////////////////////////////////////////////
+
+enum Association_Kinds {
+  Not_An_Association,                    // An unexpected element
+
+  A_Pragma_Argument_Association,         // 2.8
+  A_Discriminant_Association,            // 3.7.1
+  A_Record_Component_Association,        // 4.3.1
+  An_Array_Component_Association,        // 4.3.3
+  A_Parameter_Association,               // 6.4
+  A_Generic_Association                  // 12.3
+};
+
 // May take 10*4 bytes - 1*enum, 3*List, 4*ID, 2*bool:
 struct Association_Struct {
   enum Association_Kinds Association_Kind;
@@ -1339,6 +1561,49 @@ struct Association_Struct {
   // A_Generic_Association
   // A_Record_Component_Association
   bool                   Is_Defaulted_Association;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// END Association
+///////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////
+// BEGIN Statement
+///////////////////////////////////////////////////////////////////////////////
+
+enum Statement_Kinds {
+  Not_A_Statement,                     // An unexpected element
+  A_Null_Statement,                    // 5.1
+  An_Assignment_Statement,             // 5.2
+  An_If_Statement,                     // 5.3
+  A_Case_Statement,                    // 5.4
+  A_Loop_Statement,                    // 5.5
+  A_While_Loop_Statement,              // 5.5
+  A_For_Loop_Statement,                // 5.5
+  A_Block_Statement,                   // 5.6
+  An_Exit_Statement,                   // 5.7
+  A_Goto_Statement,                    // 5.8
+  A_Procedure_Call_Statement,          // 6.4
+  A_Return_Statement,                  // 6.5
+
+  //  //|A2005 start
+  An_Extended_Return_Statement,        // 6.5
+  //  //|A2005 end
+
+  An_Accept_Statement,                 // 9.5.2
+  An_Entry_Call_Statement,             // 9.5.3
+  A_Requeue_Statement,                 // 9.5.4
+  A_Requeue_Statement_With_Abort,      // 9.5.4
+  A_Delay_Until_Statement,             // 9.6
+  A_Delay_Relative_Statement,          // 9.6
+  A_Terminate_Alternative_Statement,   // 9.7.1
+  A_Selective_Accept_Statement,        // 9.7.1
+  A_Timed_Entry_Call_Statement,        // 9.7.2
+  A_Conditional_Entry_Call_Statement,  // 9.7.3
+  An_Asynchronous_Select_Statement,    // 9.7.4
+  An_Abort_Statement,                  // 9.8
+  A_Raise_Statement,                   // 11.3
+  A_Code_Statement                     // 13.8
 };
 
 // May take 37*4 bytes - 22 IDs, 12 Lists, 2 bools, and 1 enum:
@@ -1424,21 +1689,103 @@ struct Statement_Struct {
   Expression_ID          Qualified_Expression;
 };
 
+///////////////////////////////////////////////////////////////////////////////
+// END Statement
+///////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////
+// BEGIN Path
+///////////////////////////////////////////////////////////////////////////////
+
+enum Path_Kinds {
+  Not_A_Path,
+  //  An unexpected element
+
+  //  Statement paths:
+  
+  An_If_Path,
+  //  5.3:
+  //  if condition then
+  //    sequence_of_statements
+  An_Elsif_Path,
+  //  5.3:
+  //  elsif condition then
+  //    sequence_of_statements
+  An_Else_Path,
+  //  5.3, 9.7.1, 9.7.3:
+  //  else sequence_of_statements
+  A_Case_Path,
+  //  5.4:
+  //  when discrete_choice_list =>
+  //    sequence_of_statements
+  A_Select_Path,
+  //  9.7.1:
+  //     select [guard] select_alternative
+  //  9.7.2, 9.7.3:
+  //     select entry_call_alternative
+  //  9.7.4:
+  //     select triggering_alternative
+  An_Or_Path,
+  //  9.7.1:
+  //     or [guard] select_alternative
+  //  9.7.2:
+  //     or delay_alternative
+  A_Then_Abort_Path,
+  //  9.7.4
+  //     then abort sequence_of_statements
+
+  //  //|A2012 start
+  //  Expression paths:
+  
+  A_Case_Expression_Path,
+  //  ??? (RM 2012)
+  //  when expression => expression
+  An_If_Expression_Path,
+  //  ??? (RM 2012)
+  //  if condition then expression
+  An_Elsif_Expression_Path,
+  //  ??? (RM 2012)
+  //  elsif condition then expression
+  An_Else_Expression_Path
+  //  ??? (RM 2012)
+  //  else expression
+};
+
 // May take 5*4 bytes - 1*enum, 2*List, 2*ID:
 struct Path_Struct {
   enum Path_Kinds Path_Kind;
+  Statement_List Sequence_Of_Statements;
+
   // These fields are only valid for the kinds above them:  
   // An_If_Path,
   // An_Elsif_Path,
   Expression_ID  Condition_Expression;
-  // (all)
-  Statement_List Sequence_Of_Statements;
   // A_Case_Path,
   // A_Case_Expression_Path,
   Element_List   Case_Path_Alternative_Choices;
   // A_Select_Path,
   // An_Or_Path,
   Expression_ID  Guard;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// END Path
+///////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////
+// BEGIN Clause
+///////////////////////////////////////////////////////////////////////////////
+
+enum Clause_Kinds {
+  Not_A_Clause,                 // An unexpected element
+  A_Use_Package_Clause,         // 8.4
+  A_Use_Type_Clause,            // 8.4
+  
+  A_Use_All_Type_Clause,        // 8.4, Ada 2012
+
+  A_With_Clause,                // 10.1.2
+  A_Representation_Clause,      // 13.1     -> Representation_Clause_Kinds
+  A_Component_Clause            // 13.5.1
 };
 
 // May take 9*4 bytes - 2*enum, 2*List, 5*ID:
@@ -1469,10 +1816,18 @@ struct Clause_Struct {
   //   A_Component_Clause  
   Expression_ID     Component_Clause_Position;
   Element_ID        Component_Clause_Range;
-  //   A_With_Clause
-  //   From Asis.Elements:
-  enum Trait_Kinds  Trait_Kind;
 };
+
+///////////////////////////////////////////////////////////////////////////////
+// END Clause
+///////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////
+// BEGIN Exception_Handler
+///////////////////////////////////////////////////////////////////////////////
+
+// There is no enum Exception_Handler_Kinds because there is only one kind of 
+// exception handler.
 
 // May take 3*4 bytes - 1 ID, 2 List:
 struct Exception_Handler_Struct {
@@ -1480,6 +1835,14 @@ struct Exception_Handler_Struct {
   Element_List   Exception_Choices;
   Statement_List Handler_Statements;
 };
+
+///////////////////////////////////////////////////////////////////////////////
+// END Exception_Handler
+///////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////
+// END supporting kinds
+///////////////////////////////////////////////////////////////////////////////
 
 // May take ?? bytes (??, the largest component):
 union Element_Union {
@@ -1494,6 +1857,12 @@ union Element_Union {
   struct Path_Struct              Path;
   struct Clause_Struct            Clause;
   struct Exception_Handler_Struct Exception_Handler;
+};
+
+enum Enclosing_Kinds { // Not an ASIS type
+  Not_Enclosing,
+  Enclosing_Element,
+  Enclosing_Unit 
 };
 
 // May take 5*4 bytes - 1*char*, 4*int:
