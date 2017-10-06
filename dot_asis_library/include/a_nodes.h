@@ -1431,13 +1431,19 @@ enum Attribute_Kinds {
 
 // May take 33*4 bytes - 19 IDs, 8 Lists, 1 bool, 3 enums, 2 char*:
 struct Expression_Struct {
+  bool                  Is_Prefix_Notation;
   enum Expression_Kinds Expression_Kind;
   Declaration_ID        Corresponding_Expression_Type;
+  Element               Corresponding_Expression_Type_Definition;
   
   // These fields are only valid for the kinds above them:  
+  // An_Operator_Symbol:
+  enum Operator_Kinds   Operator_Kind;
   // An_Integer_Literal,                        // 2.4
   // A_Real_Literal,                            // 2.4.1
   // A_String_Literal,                          // 2.6
+  // An_Attribute_Reference :
+  enum Attribute_Kinds  Attribute_Kind;
   char                 *Value_Image;  
   // An_Identifier |                              // 4.1
   // An_Operator_Symbol |                         // 4.1
@@ -1447,8 +1453,6 @@ struct Expression_Struct {
   Defining_Name_ID      Corresponding_Name_Definition;
   Defining_Name_List    Corresponding_Name_Definition_List; // Only >1 if the expression in a pragma is ambiguous
   Element_ID            Corresponding_Name_Declaration; // Decl or stmt
-  // An_Operator_Symbol:
-  enum Operator_Kinds   Operator_Kind;
   // An_Explicit_Dereference =>                   // 4.1
   // A_Function_Call =>                           // 4.1
   // An_Indexed_Component =>                      // 4.1.1
@@ -1456,22 +1460,22 @@ struct Expression_Struct {
   // A_Selected_Component =>                      // 4.1.3
   // An_Attribute_Reference =>                    // 4.1.4
   Expression_ID         Prefix;
-  // A_Function_Call =>                           // 4.1 
-  // An_Indexed_Component (Is_Generalized_Indexing == true) //ASIS 2012 // 4.1.1
-  Declaration_ID        Corresponding_Called_Function;
-  // A_Function_Call =>                           // 4.1
-  bool                  Is_Prefix_Call;
-  Element_List          Function_Call_Parameters;
   // An_Indexed_Component =>                      // 4.1.1
   Expression_List       Index_Expressions;
-  bool                  Is_Generalized_Indexing;
   // A_Slice =>                                   // 4.1.2
   Discrete_Range_ID     Slice_Range;
   // A_Selected_Component =>                      // 4.1.3
   Expression_ID         Selector;
   // An_Attribute_Reference :
-  enum Attribute_Kinds  atribute_kind;
   Expression_ID         Attribute_Designator_Identifier;
+  //       An_Attribute_Reference
+  //           Appropriate Attribute_Kinds:
+  //                A_First_Attribute
+  //                A_Last_Attribute
+  //                A_Length_Attribute
+  //                A_Range_Attribute
+  //                An_Implementation_Defined_Attribute
+  //                An_Unknown_Attribute
   Expression_List       Attribute_Designator_Expressions;
   // A_Record_Aggregate =>                        // 4.3
   // An_Extension_Aggregate =>                    // 4.3
@@ -1481,6 +1485,15 @@ struct Expression_Struct {
   // A_Positional_Array_Aggregate |               // 4.3
   // A_Named_Array_Aggregate =>                   // 4.3  
   Association_List      Array_Component_Associations;
+  // A_Parenthesized_Expression =>                // 4.4
+  Expression_ID         Expression_Parenthesized;
+  // A_Function_Call =>                           // 4.1
+  bool                  Is_Prefix_Call;
+  // A_Function_Call =>                           // 4.1 
+  // An_Indexed_Component (Is_Generalized_Indexing == true) //ASIS 2012 // 4.1.1
+  Declaration_ID        Corresponding_Called_Function;
+  // A_Function_Call =>                           // 4.1
+  Element_List          Function_Call_Parameters;
   // An_And_Then_Short_Circuit |                  // 4.4
   // An_Or_Else_Short_Circuit =>                  // 4.4
   Expression_ID         Short_Circuit_Operation_Left_Expression;
@@ -1489,16 +1502,10 @@ struct Expression_Struct {
   // A_Not_In_Membership_Test =>                  // 4.4  Ada 2012
   Expression_ID         Membership_Test_Expression;
   Element_List          Membership_Test_Choices;
-  // A_Parenthesized_Expression =>                // 4.4
-  Expression_ID         Expression_Parenthesized;
   // A_Type_Conversion =>                         // 4.6
   // A_Qualified_Expression =>                    // 4.7
   Expression_ID         Converted_Or_Qualified_Subtype_Mark;
   Expression_ID         Converted_Or_Qualified_Expression;
-  Expression_ID         Predicate;
-  // An_Allocation_From_Subtype =>                // 4.8
-  // An_Allocation_From_Qualified_Expression =>   // 4.8
-  Expression_ID         Subpool_Name;
   // An_Allocation_From_Subtype =>                // 4.8
   Subtype_Indication_ID Allocator_Subtype_Indication;
   // An_Allocation_From_Qualified_Expression =>   // 4.8
@@ -1506,12 +1513,27 @@ struct Expression_Struct {
   // A_Case_Expression |                          // Ada 2012
   // An_If_Expression =>                          // Ada 2012
   Expression_Path_List  Expression_Paths;
+  // An_Indexed_Component =>                      // 4.1.1
+  bool                  Is_Generalized_Indexing;
+  // A_Function_Call
+  bool                  Is_Generalized_Reference;
   // A_For_All_Quantified_Expression |            // Ada 2012
   // A_For_Some_Quantified_Expression =>          // Ada 2012
   Declaration_ID        Iterator_Specification;
-  // An expression that references an entity declared within the 
-  // implicit specification of a generic instantiation:
+  // A_Type_Conversion =>                         // 4.6
+  // A_Qualified_Expression =>                    // 4.7
+  Expression_ID         Predicate;
+  // An_Allocation_From_Subtype =>                // 4.8
+  // An_Allocation_From_Qualified_Expression =>   // 4.8
+  Expression_ID         Subpool_Name;
+  // An_Identifier
+  // An_Operator_Symbol
+  // A_Character_Literal
+  // An_Enumeration_Literal
   Defining_Name_ID      Corresponding_Generic_Element;
+  // A_Function_Call
+  bool                  Is_Dispatching_Call;
+  bool                  Is_Call_On_Dispatching_Operation;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1609,10 +1631,26 @@ enum Statement_Kinds {
 // May take 37*4 bytes - 22 IDs, 12 Lists, 2 bools, and 1 enum:
 struct Statement_Struct {
   enum Statement_Kinds   Statement_Kind;
+  Pragma_Element_List    Corresponding_Pragmas;
   Defining_Name_List     Label_Names;
   
   // These fields are only valid for the kinds above them:  
-  //   An_Assignment_Statement,             // 5.2
+  //   A_Procedure_Call_Statement
+  bool                   Is_Prefix_Notation;
+  //   A_Loop_Statement                (pragmas from statement list)
+  //   A_While_Loop_Statement          (pragmas from statement list)
+  //   A_For_Loop_Statement            (pragmas from statement list)
+  //   A_Block_Statement               (pragmas from declarative region +
+  //                                                 statements)
+  //   An_Accept_Statement             (pragmas from statement list +
+  Pragma_Element_List    Pragmas;
+  //   A_Loop_Statement
+  //   A_While_Loop_Statement
+  //   A_For_Loop_Statement
+  //   A_Block_Statement
+  //   An_Accept_Statement
+  Element                Corresponding_End_Name;
+  //   An_Assignment_Statement,             // 5.2  
   Expression_ID          Assignment_Variable_Name;
   Expression_ID          Assignment_Expression;
   //   An_If_Statement,                     // 5.3
@@ -1687,6 +1725,12 @@ struct Statement_Struct {
   Expression_ID          Associated_Message;
   //   A_Code_Statement                     // 13.8
   Expression_ID          Qualified_Expression;
+  //   A_Procedure_Call_Statement
+  bool                   Is_Dispatching_Call;
+  bool                   Is_Call_On_Dispatching_Operation;
+  //   A_Procedure_Call_Statement
+  //   An_Entry_Call_Statement
+  Declaration            Corresponding_Called_Entity_Unwound;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1755,6 +1799,7 @@ enum Path_Kinds {
 struct Path_Struct {
   enum Path_Kinds Path_Kind;
   Statement_List Sequence_Of_Statements;
+  Expression     Dependent_Expression;
 
   // These fields are only valid for the kinds above them:  
   // An_If_Path,
@@ -1788,34 +1833,51 @@ enum Clause_Kinds {
   A_Component_Clause            // 13.5.1
 };
 
+typedef enum _Representation_Clause_Kinds {
+      Not_A_Representation_Clause,              // An unexpected element
+      An_Attribute_Definition_Clause,           // 13.3
+      An_Enumeration_Representation_Clause,     // 13.4
+      A_Record_Representation_Clause,           // 13.5.1
+      An_At_Clause                              // J.7
+  } Representation_Clause_Kinds;
+
+typedef struct _Representation_Clause_Struct {
+  Representation_Clause_Kinds Representation_Clause_Kind;
+  Name                        Representation_Clause_Name;
+
+  // These fields are only valid for the kinds above them:
+  // A_Record_Representation_Clause
+  Pragma_Element_List         Pragmas;
+  // An_Attribute_Definition_Clause
+  // An_Enumeration_Representation_Clause
+  // An_At_Clause
+  Expression                  Representation_Clause_Expression;
+  // A_Record_Representation_Clause
+  Expression                  Mod_Clause_Expression;  
+  Component_Clause_List       Component_Clauses; 
+} Representation_Clause_Struct;
+
 // May take 9*4 bytes - 2*enum, 2*List, 5*ID:
 struct Clause_Struct {
   enum Clause_Kinds Clause_Kind;
   // These fields are only valid for the kinds above them:
+  //   A_With_Clause
+  bool              Has_Limited;
   //   A_Use_Package_Clause
   //   A_Use_Type_Clause
   //   A_Use_All_Type_Clause
   //   A_With_Clause
   Name_List         Clause_Names;
-  //   A_Representation_Clause
   //   A_Component_Clause  
   Name_ID           Representation_Clause_Name;
-  //   A_Representation_Clause
-  //   A_Component_Clause  
-  //   and in addition one of Representation_Clause_Kinds:
-  //   An_Attribute_Definition_Clause
-  //   An_Enumeration_Representation_Clause
-  //   An_At_Clause
   Expression_ID     Representation_Clause_Expression;
-  //   A_Representation_Clause
-  //   A_Component_Clause  
-  //   and in addition one of Representation_Clause_Kinds:
-  //   A_Record_Representation_Clause
   Expression_ID     Mod_Clause_Expression;
   Element_List      Component_Clauses;
-  //   A_Component_Clause  
   Expression_ID     Component_Clause_Position;
   Element_ID        Component_Clause_Range;
+  //   A_Representation_Clause
+  Representation_Clause_Struct  
+                    Representation_Clause;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1831,9 +1893,10 @@ struct Clause_Struct {
 
 // May take 3*4 bytes - 1 ID, 2 List:
 struct Exception_Handler_Struct {
-  Declaration_ID Choice_Parameter_Specification;
-  Element_List   Exception_Choices;
-  Statement_List Handler_Statements;
+  Pragma_Element_List Pragmas;
+  Declaration_ID      Choice_Parameter_Specification;
+  Element_List        Exception_Choices;
+  Statement_List      Handler_Statements;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
