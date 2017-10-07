@@ -46,11 +46,11 @@ typedef Element_ID *Element_ID_Ptr;
 
 // May take 2*4 bytes - 1 int, 1 ptr:
 // _IDs_ points to the first of _length_ IDs:
-struct Element_ID_Array_Struct {
+typedef struct _Element_ID_Array_Struct {
   int            Length;
   Element_ID_Ptr IDs;
-};
-typedef struct Element_ID_Array_Struct Element_List;
+} Element_ID_Array_Struct;
+typedef Element_ID_Array_Struct Element_List;
 
 enum Element_Kinds {
   Not_An_Element,            // Nil_Element
@@ -73,36 +73,19 @@ enum Element_Kinds {
 // These are needed in multiple structs below, so they are all 
 // defined here:
 
+typedef Element_ID Constraint_ID;
 typedef Element_ID Declaration_ID;
-typedef Element_ID Declaration;
 typedef Element_ID Defining_Name_ID;
 typedef Element_ID Definition_ID;
-typedef Element_ID Definition;
 typedef Element_ID Discrete_Range_ID;
 typedef Element_ID Discrete_Subtype_Definition_ID;
 typedef Element_ID Expression_ID;
-typedef Element_ID Expression;
 typedef Element_ID Name_ID;
 typedef Element_ID Statement_ID;
 typedef Element_ID Subtype_Indication_ID;
-typedef Element_ID Subtype_Indication;
 typedef Element_ID Type_Definition_ID;
 
-typedef Element_List Association_List;
-typedef Element_List Component_Clause_List;
-typedef Element_List Context_Clause_List;
-typedef Element_List Declaration_List;
-typedef Element_List Declarative_Item_List;
-typedef Element_List Defining_Name_List;
-typedef Element_List Exception_Handler_List;
-typedef Element_List Expression_List;
 typedef Element_List Expression_Path_List;
-typedef Element_List Name_List;
-typedef Element_List Path_List;
-typedef Element_List Parameter_Specification_List;
-typedef Element_List Pragma_Element_List;
-typedef Element_List Representation_Clause_List;
-typedef Element_List Statement_List;
 
 typedef Element      Access_Type_Definition;      
 typedef Element      Association;
@@ -283,6 +266,8 @@ enum Defining_Name_Kinds {
 struct Defining_Name_Struct {
   enum Defining_Name_Kinds  Defining_Name_Kind;
   char                     *Defining_Name_Image;
+  Name_List                 References;
+  bool                      Is_Referenced;
   
   // These fields are only valid for the kinds above them:
   // A_Defining_Operator_Symbol:
@@ -452,8 +437,8 @@ enum Subprogram_Default_Kinds {
 
 // May take :
 struct Declaration_Struct {
-  enum Declaration_Kinds   Declaration_Kind;
-  enum Declaration_Origins Declaration_Origin;
+  enum Declaration_Kinds         Declaration_Kind;
+  enum Declaration_Origins       Declaration_Origin;
   Pragma_Element_List            Corresponding_Pragmas;
   Defining_Name_List             Names;  
   Element_List                   Aspect_Specifications;
@@ -824,12 +809,6 @@ struct Declaration_Struct {
 // BEGIN Definition
 ///////////////////////////////////////////////////////////////////////////////
 
-typedef Element_ID   Constraint_ID;
-typedef Element_ID   Definition_ID;
-typedef Element_List Definition_ID_List;
-typedef Element_List Declarative_Item_ID_List;
-typedef Element_List Record_Component_List;
-
 enum Definition_Kinds {
   Not_A_Definition,                 // An unexpected element
   A_Type_Definition,                // 3.2.1(4)    -> Type_Kinds
@@ -923,25 +902,25 @@ typedef enum _Discrete_Range_Kinds {
 } Discrete_Range_Kinds;
 
 typedef enum _Formal_Type_Kinds {
-      Not_A_Formal_Type_Definition,             // An unexpected element
-      A_Formal_Private_Type_Definition,         // 12.5.1(2)   -> Trait_Kinds
-      A_Formal_Tagged_Private_Type_Definition,  // 12.5.1(2)   -> Trait_Kinds
-      A_Formal_Derived_Type_Definition,         // 12.5.1(3)   -> Trait_Kinds
-      A_Formal_Discrete_Type_Definition,        // 12.5.2(2)
-      A_Formal_Signed_Integer_Type_Definition,  // 12.5.2(3)
-      A_Formal_Modular_Type_Definition,         // 12.5.2(4)
-      A_Formal_Floating_Point_Definition,       // 12.5.2(5)
-      A_Formal_Ordinary_Fixed_Point_Definition, // 12.5.2(6)
-      A_Formal_Decimal_Fixed_Point_Definition,  // 12.5.2(7)
+  Not_A_Formal_Type_Definition,             // An unexpected element
+  A_Formal_Private_Type_Definition,         // 12.5.1(2)   -> Trait_Kinds
+  A_Formal_Tagged_Private_Type_Definition,  // 12.5.1(2)   -> Trait_Kinds
+  A_Formal_Derived_Type_Definition,         // 12.5.1(3)   -> Trait_Kinds
+  A_Formal_Discrete_Type_Definition,        // 12.5.2(2)
+  A_Formal_Signed_Integer_Type_Definition,  // 12.5.2(3)
+  A_Formal_Modular_Type_Definition,         // 12.5.2(4)
+  A_Formal_Floating_Point_Definition,       // 12.5.2(5)
+  A_Formal_Ordinary_Fixed_Point_Definition, // 12.5.2(6)
+  A_Formal_Decimal_Fixed_Point_Definition,  // 12.5.2(7)
 
-//  //|A2005 start
-      A_Formal_Interface_Type_Definition,       // 12.5.5(2) -> Interface_Kinds
-//  //|A2005 end
+  //|A2005 start
+  A_Formal_Interface_Type_Definition,       // 12.5.5(2) -> Interface_Kinds
+  //|A2005 end
 
-      A_Formal_Unconstrained_Array_Definition,  // 3.6(3)
-      A_Formal_Constrained_Array_Definition,    // 3.6(5)
-      A_Formal_Access_Type_Definition         // 3.10(3),3.10(5)
-      //                                                 -> Access_Type_Kinds
+  A_Formal_Unconstrained_Array_Definition,  // 3.6(3)
+  A_Formal_Constrained_Array_Definition,    // 3.6(5)
+  A_Formal_Access_Type_Definition           // 3.10(3),3.10(5)
+  //                                                 -> Access_Type_Kinds
 } Formal_Type_Kinds;
 
 typedef enum _Access_Type_Kinds {
@@ -966,8 +945,8 @@ typedef enum _Access_Definition_Kinds {
 } Access_Definition_Kinds;
 
 typedef struct _Access_Type_Struct {
-  bool                         Has_Null_Exclusion;
   Access_Type_Kinds            Access_Type_Kind;  
+  bool                         Has_Null_Exclusion;
   // These fields are only valid for the kinds above them:
   // An_Access_To_Function
   // An__Access_To_Protected_Function
@@ -987,10 +966,11 @@ typedef struct _Access_Type_Struct {
 } Access_Type_Struct;
 
 typedef struct _Type_Definition_Struct {
+  Type_Kinds           Type_Kind;
   bool                 Has_Abstract;
   bool                 Has_Limited;
   bool                 Has_Private;
-  Type_Kinds           Type_Kind;  
+  Declaration_List     Corresponding_Type_Operators;
   // These fields are only valid for the kinds above them:
   //  An_Interface_Type_Definition
   bool                 Has_Protected;
@@ -1053,7 +1033,7 @@ typedef struct _Type_Definition_Struct {
 } Type_Definition_Struct;
 
 // Constraint_Struct appears here (in a different order than in 
-// Definition_Union) beause it is used in Subtype_Indication_Struct.
+// Definition_Union) beause it is used in Subtype_Indication_Struct, below.
 
 typedef struct _Constraint_Struct {
   Constraint_Kinds              Constraint_Kind;
@@ -1128,8 +1108,8 @@ typedef struct _Variant_Struct {
 } Variant_Struct;
 
 typedef struct _Access_Definition_Struct {
-  bool                         Has_Null_Exclusion;
   Access_Definition_Kinds      Access_Definition_Kind;
+  bool                         Has_Null_Exclusion;
   // These fields are only valid for the kinds above them:
   // An_Anonymous_Access_To_Function
   // An_Anonymous_Access_To_Protected_Function
@@ -1431,8 +1411,8 @@ enum Attribute_Kinds {
 
 // May take 33*4 bytes - 19 IDs, 8 Lists, 1 bool, 3 enums, 2 char*:
 struct Expression_Struct {
-  bool                  Is_Prefix_Notation;
   enum Expression_Kinds Expression_Kind;
+  bool                  Is_Prefix_Notation;
   Declaration_ID        Corresponding_Expression_Type;
   Element               Corresponding_Expression_Type_Definition;
   
@@ -1891,7 +1871,7 @@ struct Clause_Struct {
 // There is no enum Exception_Handler_Kinds because there is only one kind of 
 // exception handler.
 
-// May take 3*4 bytes - 1 ID, 2 List:
+// May take 7*4 bytes - 1 ID, 3 List:
 struct Exception_Handler_Struct {
   Pragma_Element_List Pragmas;
   Declaration_ID      Choice_Parameter_Specification;
@@ -1939,10 +1919,9 @@ struct Source_Location_Struct {
 
 // May take ?? bytes - 2*ID, 2*enum, 1*5*4 struct, 1*?? union:
 struct Element_Struct {
-  // The fields below are applicable to all kinds:
   Element_ID                    ID;
-  Node_ID                       Enclosing_Compilation_Unit;
   enum Element_Kinds            Element_Kind;
+  Node_ID                       Enclosing_Compilation_Unit;
   bool                          Is_Part_Of_Implicit;
   bool                          Is_Part_Of_Inherited;
   bool                          Is_Part_Of_Instance;
