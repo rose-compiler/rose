@@ -1,5 +1,7 @@
 // C++ code calling an Cobol frontend function.
 
+#include <iostream>
+
 #include <rose_paths.h>
 
 #include <assert.h>
@@ -42,6 +44,8 @@ int cobol_main(int argc, char** argv)
   // DQ (9/29/2017): We need a way to know when ROSE has been configured with the location of the GNUCobol compiler. 
      status = rose_convert_cb_program(const struct cb_program* prog, struct rose_base_list* local_cache);
 #endif
+
+     std::cout << "\ncobol_main: IN DEVELOPMENT...................................\n\n";
 
      assert (status != 0);
 
