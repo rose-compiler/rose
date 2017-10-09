@@ -909,13 +909,14 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalValueExp(SgValueExp* node, ESta
 }
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp* funCall, EState estate, bool useConstraints) {
+    cout<<"DEBUG: FOUND function call inside expression (external): "<<funCall->unparseToString()<<endl;
   SingleEvalResultConstInt res;
   res.init(estate,*estate.constraints(),AbstractValue(CodeThorn::Top()));
   if(getSkipSelectedFunctionCalls()) {
     // return default value
     return listify(res);
   } else if(stdFunctionSemantics()) {
-    //cout<<"DEBUG: FOUND function call inside expression (external): "<<funCall->unparseToString()<<endl;
+    cout<<"DEBUG: FOUND function call inside expression (external) with std functions semantics: "<<funCall->unparseToString()<<endl;
     string funName=SgNodeHelper::getFunctionName(funCall);
     if(funName=="malloc") {
       return evalFunctionCallMalloc(funCall,estate,useConstraints);

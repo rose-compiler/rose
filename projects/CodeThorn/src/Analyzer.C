@@ -1602,8 +1602,7 @@ std::list<EState> Analyzer::transferFunctionCall(Edge edge, const EState* estate
       logger[ERROR] <<"multi-state generating operators in function call parameters not supported."<<endl;
       exit(1);
     }
-    // above evalConstInt does not use constraints (par3==false). Therefore top vars remain top vars (which is what we want here)
-    //newPState[formalParameterVarId]=evalResult.value();
+    // above evalConstInt does not use constraints (par3==false). Therefore top vars remain top vars
     newPState.writeToMemoryLocation(formalParameterVarId,evalResult.value());
     ++i;++j;
   }
