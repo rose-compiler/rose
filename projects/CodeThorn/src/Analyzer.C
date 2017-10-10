@@ -1967,7 +1967,7 @@ std::list<EState> Analyzer::transferFunctionCallExternal(Edge edge, const EState
           return transferAssignOp(assignOp,edge,estate);
         } else {
           // special case: void function call f(...);
-          list<SingleEvalResultConstInt> res=exprAnalyzer.evalFunctionCall(funCall,currentEState,true);
+          list<SingleEvalResultConstInt> res=exprAnalyzer.evalFunctionCall(funCall,currentEState,false);
           // build new estate(s) from single eval result list
           list<EState> estateList;
           for(list<SingleEvalResultConstInt>::iterator i=res.begin();i!=res.end();++i) {
@@ -1979,6 +1979,20 @@ std::list<EState> Analyzer::transferFunctionCallExternal(Edge edge, const EState
           return estateList;
         }
       }
+    }
+    if(isFunctionCallWithAssignmentFlag) {
+      // here only the specific format x=f(...) can exist
+      SgAssignOp* assignOp=isSgAssignOp(findExprNodeInAstUpwards(V_SgAssignOp,funCall));
+      ROSE_ASSERT(assignOp);
+      return transferAssignOp(assignOp,edge,estate);
+    } else {
+      // all other cases, evaluate function call as expression
+      list<SingleEvalResultConstInt> res2=exprAnalyzer.evaluateExpression(funCall,currentEState,false);
+      ROSE_ASSERT(res2.size()==1);
+      SingleEvalResultConstInt evalResult2=*res2.begin();
+      EState estate2=evalResult2.estate;
+      estate2.setLabel(edge.target());
+      return elistify(estate2);
     }
   }
 

@@ -272,8 +272,10 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,ESt
   switch(node->variantT()) {
   case V_SgVarRefExp:
     return evalRValueVarExp(isSgVarRefExp(node),estate,useConstraints);
-  case V_SgFunctionCallExp:
+  case V_SgFunctionCallExp: {
+    //cout<<"DEBUG: SgFunctionCall detected in subexpression."<<endl;
     return evalFunctionCall(isSgFunctionCallExp(node),estate,useConstraints);
+  }
   default:
     throw CodeThorn::Exception("Error: evaluateExpression::unknown node in expression ("+string(node->sage_class_name())+")");
   } // end of switch
@@ -909,14 +911,12 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalValueExp(SgValueExp* node, ESta
 }
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp* funCall, EState estate, bool useConstraints) {
-    cout<<"DEBUG: FOUND function call inside expression (external): "<<funCall->unparseToString()<<endl;
   SingleEvalResultConstInt res;
   res.init(estate,*estate.constraints(),AbstractValue(CodeThorn::Top()));
   if(getSkipSelectedFunctionCalls()) {
     // return default value
     return listify(res);
   } else if(stdFunctionSemantics()) {
-    cout<<"DEBUG: FOUND function call inside expression (external) with std functions semantics: "<<funCall->unparseToString()<<endl;
     string funName=SgNodeHelper::getFunctionName(funCall);
     if(funName=="malloc") {
       return evalFunctionCallMalloc(funCall,estate,useConstraints);
