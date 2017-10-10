@@ -237,7 +237,7 @@ const string LLVMAstAttributes::getGlobalStringConstantName(int index) {
 const string LLVMAstAttributes::getGlobalStringReference(int index) {
     const char *data = getString(index);
     stringstream out;
-    out << "getelementptr ([" << getStringLength(index) << " x i8]* @\"\\01LC" << index << "\", i32 0, i32 0)";
+    out << "getelementptr inbounds ([" << getStringLength(index) << " x i8], [" << getStringLength(index) << " x i8]* @\"\\01LC" << index << "\", i32 0, i32 0)";
     return out.str();
 }
 
@@ -806,6 +806,12 @@ std::string LLVMAstAttributes::addBundleMetadata(SgNode *node) {
     std::ostringstream bundle_str;
     bundle_str << ", !bun !";
     bundle_str << addMetadata(bundle);
+/*
+cout << "Returning bundle: "
+     << bundle_str.str()
+     << endl;
+cout.flush();
+*/
     return bundle_str.str();
   }
 #endif
@@ -854,6 +860,12 @@ std::string LLVMAstAttributes::addIsParallelMetadata(SgNode *node) {
     llvm::MDNode *noivdep_md = llvm::MDNode::get(context, vals, 1);
     std::ostringstream noivdep;
     noivdep << ", !noivdep !" << addMetadata(noivdep_md);
+/*
+cout << "Returning Parallel metadata: "
+     << noivdep.str()
+     << endl;
+cout.flush();
+*/
     return noivdep.str();
   }
 #endif
@@ -1029,7 +1041,12 @@ std::string LLVMAstAttributes::addDebugMetadata(SgNode const *node, FunctionAstA
       strm << ", !dbg !";
     }
     strm << addMetadata(position_node);
-
+/*
+cout << "Returning Debug metadata: "
+     << strm.str()
+     << endl;
+cout.flush();
+*/
     return strm.str();
 }
 
@@ -1073,18 +1090,38 @@ void LLVMAstAttributes::generateMetadataNodes() {
             llvm::raw_string_ostream strm(str);
             strm << *mdNodes[i];
         }
+/*
+cout << "Original Debug String is: "
+     << str
+     << endl;
+cout.flush();
+*/
+        int k = str.find("= ");
+        str = str.substr(k + 2);
+/*
+cout << "After clean up, k = " << k
+     << "; Debug String is: "
+     << str
+     << endl;
+cout.flush();
+*/
+	
         // Hopefully, "MD_REF:" will not be the start of any legitimate
         // metadata string before the switch to IRBuilder.
         size_t md_ref;
-        while (
-            string::npos != (md_ref = str.find("metadata !\"MD_REF:"))
-        ) {
+        while (string::npos != (md_ref = str.find("metadata !\"MD_REF:"))) {
             md_ref += 10; // skip to open quote
             str.replace(md_ref, 8, ""); // remove string before index
             md_ref = str.find('"', md_ref); // skip to close quote
             ROSE2LLVM_ASSERT(md_ref != string::npos);
             str.replace(md_ref, 1, ""); // remove close quote
         }
+/*
+cout << "Emitting Debug String: "
+     << str
+     << endl;
+cout.flush();
+*/
         codeOut << "!" << i << " = " << str << endl;
     }
 }

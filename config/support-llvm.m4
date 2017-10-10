@@ -30,15 +30,15 @@ AC_SUBST(LLVM_CONFIG)
 LLVM_COMPILER_MAJOR_VERSION_NUMBER=`echo|$LLVM_CONFIG --version | head -1 | cut -f2 -d\) | tr -d \  | cut -d\. -f1`
 LLVM_COMPILER_MINOR_VERSION_NUMBER=`echo|$LLVM_CONFIG --version | head -1 | cut -f2 -d\) | tr -d \  | cut -d\. -f2`
 
-# Pei-Hung (02/15/2017): LLVM version 3.6 for RoseToLLVM tool 
-llvm_version_3_6=no
-if test x$LLVM_COMPILER_MAJOR_VERSION_NUMBER == x3; then
-   if test x$LLVM_COMPILER_MINOR_VERSION_NUMBER == x6; then
-      echo "Note: we have identified version 3.6 of LLVM!"
-      llvm_version_3_6=yes
+# Pei-Hung (02/15/2017): LLVM version 4.0.1 for RoseToLLVM tool 
+llvm_version_4_0_1=no
+if test x$LLVM_COMPILER_MAJOR_VERSION_NUMBER == x4; then
+   if test x$LLVM_COMPILER_MINOR_VERSION_NUMBER == x0; then
+      echo "Note: we have identified version 4.0.1 of LLVM!"
+      llvm_version_4_0_1=yes
    fi
 fi
-AM_CONDITIONAL(ROSE_USING_LLVM_3_6, [test "x$llvm_version_3_6" = "xyes"])
+AM_CONDITIONAL(ROSE_USING_LLVM_4_0_1, [test "x$llvm_version_4_0_1" = "xyes"])
 
 LLVM_LIB_DIR="`${LLVM_CONFIG} --libdir`"
 LLVM_CPPFLAGS="`${LLVM_CONFIG} --cppflags | sed s/-I/-isystem\ /`"
