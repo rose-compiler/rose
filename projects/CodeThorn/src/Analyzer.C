@@ -720,7 +720,7 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
           
           // build lhs-value dependent on type of declared variable
           AbstractValue lhsAbstractAddress=AbstractValue(initDeclVarId); // creates a pointer to initDeclVar
-          list<SingleEvalResultConstInt> res=exprAnalyzer.evalConstInt(rhs,currentEState,true);
+          list<SingleEvalResultConstInt> res=exprAnalyzer.evaluateExpression(rhs,currentEState,true);
 
           ROSE_ASSERT(res.size()==1);
           SingleEvalResultConstInt evalResult=*res.begin();
@@ -1161,7 +1161,7 @@ PState Analyzer::analyzeAssignRhsExpr(PState currentPState,VariableId lhsVar, Sg
   ROSE_ASSERT(false);
 }
 
-// TODO: this function should be implemented with a call of ExprAnalyzer::evalConstInt
+// TODO: this function should be implemented with a call of ExprAnalyzer::evaluateExpression
 PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode* rhs, ConstraintSet& cset) {
   ROSE_ASSERT(isSgExpression(rhs));
   AbstractValue rhsIntVal=CodeThorn::Top();
@@ -1594,7 +1594,7 @@ std::list<EState> Analyzer::transferFunctionCall(Edge edge, const EState* estate
     // we use for the third parameter "false": do not use constraints when extracting values.
     // Consequently, formalparam=actualparam remains top, even if constraints are available, which
     // would allow to extract a constant value (or a range (when relational constraints are added)).
-    list<SingleEvalResultConstInt> evalResultList=exprAnalyzer.evalConstInt(actualParameterExpr,currentEState,false);
+    list<SingleEvalResultConstInt> evalResultList=exprAnalyzer.evaluateExpression(actualParameterExpr,currentEState,false);
     ROSE_ASSERT(evalResultList.size()>0);
     list<SingleEvalResultConstInt>::iterator resultListIter=evalResultList.begin();
     SingleEvalResultConstInt evalResult=*resultListIter;
@@ -1602,8 +1602,7 @@ std::list<EState> Analyzer::transferFunctionCall(Edge edge, const EState* estate
       logger[ERROR] <<"multi-state generating operators in function call parameters not supported."<<endl;
       exit(1);
     }
-    // above evalConstInt does not use constraints (par3==false). Therefore top vars remain top vars (which is what we want here)
-    //newPState[formalParameterVarId]=evalResult.value();
+    // above evaluateExpression does not use constraints (par3==false). Therefore top vars remain top vars
     newPState.writeToMemoryLocation(formalParameterVarId,evalResult.value());
     ++i;++j;
   }
@@ -1935,15 +1934,19 @@ std::list<EState> Analyzer::transferFunctionCallExternal(Edge edge, const EState
       }
     }
   }
+
   int constvalue=0;
   if(getLabeler()->isStdOutVarLabel(lab,&varId)) {
     newio.recordVariable(InputOutput::STDOUT_VAR,varId);
     ROSE_ASSERT(newio.var==varId);
+    return elistify(createEState(edge.target(),*currentEState.pstate(),*currentEState.constraints(),newio));
   } else if(getLabeler()->isStdOutConstLabel(lab,&constvalue)) {
     newio.recordConst(InputOutput::STDOUT_CONST,constvalue);
+    return elistify(createEState(edge.target(),*currentEState.pstate(),*currentEState.constraints(),newio));
   } else if(getLabeler()->isStdErrLabel(lab,&varId)) {
     newio.recordVariable(InputOutput::STDERR_VAR,varId);
     ROSE_ASSERT(newio.var==varId);
+    return elistify(createEState(edge.target(),*currentEState.pstate(),*currentEState.constraints(),newio));
   }
 
   /* handling of specific semantics for external function */
@@ -1968,7 +1971,7 @@ std::list<EState> Analyzer::transferFunctionCallExternal(Edge edge, const EState
           return transferAssignOp(assignOp,edge,estate);
         } else {
           // special case: void function call f(...);
-          list<SingleEvalResultConstInt> res=exprAnalyzer.evalFunctionCall(funCall,currentEState,true);
+          list<SingleEvalResultConstInt> res=exprAnalyzer.evalFunctionCall(funCall,currentEState,false);
           // build new estate(s) from single eval result list
           list<EState> estateList;
           for(list<SingleEvalResultConstInt>::iterator i=res.begin();i!=res.end();++i) {
@@ -1981,8 +1984,22 @@ std::list<EState> Analyzer::transferFunctionCallExternal(Edge edge, const EState
         }
       }
     }
+    if(isFunctionCallWithAssignmentFlag) {
+      // here only the specific format x=f(...) can exist
+      SgAssignOp* assignOp=isSgAssignOp(findExprNodeInAstUpwards(V_SgAssignOp,funCall));
+      ROSE_ASSERT(assignOp);
+      return transferAssignOp(assignOp,edge,estate);
+    } else {
+      // all other cases, evaluate function call as expression
+      list<SingleEvalResultConstInt> res2=exprAnalyzer.evaluateExpression(funCall,currentEState,false);
+      ROSE_ASSERT(res2.size()==1);
+      SingleEvalResultConstInt evalResult2=*res2.begin();
+      EState estate2=evalResult2.estate;
+      estate2.setLabel(edge.target());
+      return elistify(estate2);
+    }
   }
-
+  //cout<<"DEBUG: identity: "<<funCall->unparseToString()<<endl; // fflush is an example in the test cases
   // for all other external functions we use identity as transfer function
   EState newEState=currentEState;
   newEState.io=newio;
@@ -2030,7 +2047,7 @@ list<EState> Analyzer::transferIncDecOp(SgNode* nextNodeToAnalyze2, Edge edge, c
   SgNode* nextNodeToAnalyze3=SgNodeHelper::getUnaryOpChild(nextNodeToAnalyze2);
   VariableId var;
   if(exprAnalyzer.variable(nextNodeToAnalyze3,var)) {
-    list<SingleEvalResultConstInt> res=exprAnalyzer.evalConstInt(nextNodeToAnalyze3,currentEState,true);
+    list<SingleEvalResultConstInt> res=exprAnalyzer.evaluateExpression(nextNodeToAnalyze3,currentEState,true);
     ROSE_ASSERT(res.size()==1); // must hold for currently supported limited form of ++,--
     list<SingleEvalResultConstInt>::iterator i=res.begin();
     EState estate=(*i).estate;
@@ -2071,7 +2088,7 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
   EState currentEState=*estate;
   SgNode* lhs=SgNodeHelper::getLhs(nextNodeToAnalyze2);
   SgNode* rhs=SgNodeHelper::getRhs(nextNodeToAnalyze2);
-  list<SingleEvalResultConstInt> res=exprAnalyzer.evalConstInt(rhs,currentEState,true);
+  list<SingleEvalResultConstInt> res=exprAnalyzer.evaluateExpression(rhs,currentEState,true);
   list<EState> estateList;
   for(list<SingleEvalResultConstInt>::iterator i=res.begin();i!=res.end();++i) {
     VariableId lhsVar;
@@ -2138,7 +2155,7 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
           }
           AbstractValue arrayElementId;
           //AbstractValue aValue=(*i).value();
-          list<SingleEvalResultConstInt> res=exprAnalyzer.evalConstInt(indexExp,currentEState,true);
+          list<SingleEvalResultConstInt> res=exprAnalyzer.evaluateExpression(indexExp,currentEState,true);
           ROSE_ASSERT(res.size()==1); // TODO: temporary restriction
           AbstractValue indexValue=(*(res.begin())).value();
           AbstractValue arrayPtrPlusIndexValue=AbstractValue::operatorAdd(arrayPtrValue,indexValue);
@@ -2178,7 +2195,7 @@ std::list<EState> Analyzer::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edg
       }
     } else if(SgPointerDerefExp* lhsDerefExp=isSgPointerDerefExp(lhs)) {
       SgExpression* lhsOperand=lhsDerefExp->get_operand();
-      list<SingleEvalResultConstInt> resLhs=exprAnalyzer.evalConstInt(lhsOperand,currentEState,true);
+      list<SingleEvalResultConstInt> resLhs=exprAnalyzer.evaluateExpression(lhsOperand,currentEState,true);
       if(resLhs.size()>1) {
         throw CodeThorn::Exception("more than 1 execution path (probably due to abstraction) in operand's expression of pointer dereference operator on lhs of "+nextNodeToAnalyze2->unparseToString());
       }
@@ -2218,7 +2235,7 @@ list<EState> Analyzer::transferTrueFalseEdge(SgNode* nextNodeToAnalyze2, Edge ed
   Label newLabel;
   PState newPState;
   ConstraintSet newCSet;
-  list<SingleEvalResultConstInt> evalResultList=exprAnalyzer.evalConstInt(nextNodeToAnalyze2,currentEState,true);
+  list<SingleEvalResultConstInt> evalResultList=exprAnalyzer.evaluateExpression(nextNodeToAnalyze2,currentEState,true);
   list<EState> newEStateList;
   for(list<SingleEvalResultConstInt>::iterator i=evalResultList.begin();
       i!=evalResultList.end();
