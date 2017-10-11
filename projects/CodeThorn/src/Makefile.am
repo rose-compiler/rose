@@ -614,7 +614,7 @@ check-domain:
 	@./codethorn --edg:no_warnings $(srcdir)/tests/typetest1.C 
 	@./codethorn --edg:no_warnings $(srcdir)/tests/domaintest1.C 
 	@./codethorn --edg:no_warnings $(srcdir)/tests/domaintest2.C 
-	@./codethorn tests/arraytest7.C --viz && dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
+#	@./codethorn tests/arraytest7.C --viz && dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
 
 check-data-races:
 	@echo ================================================================
