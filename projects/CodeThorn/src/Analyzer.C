@@ -1934,15 +1934,19 @@ std::list<EState> Analyzer::transferFunctionCallExternal(Edge edge, const EState
       }
     }
   }
+
   int constvalue=0;
   if(getLabeler()->isStdOutVarLabel(lab,&varId)) {
     newio.recordVariable(InputOutput::STDOUT_VAR,varId);
     ROSE_ASSERT(newio.var==varId);
+    return elistify(createEState(edge.target(),*currentEState.pstate(),*currentEState.constraints(),newio));
   } else if(getLabeler()->isStdOutConstLabel(lab,&constvalue)) {
     newio.recordConst(InputOutput::STDOUT_CONST,constvalue);
+    return elistify(createEState(edge.target(),*currentEState.pstate(),*currentEState.constraints(),newio));
   } else if(getLabeler()->isStdErrLabel(lab,&varId)) {
     newio.recordVariable(InputOutput::STDERR_VAR,varId);
     ROSE_ASSERT(newio.var==varId);
+    return elistify(createEState(edge.target(),*currentEState.pstate(),*currentEState.constraints(),newio));
   }
 
   /* handling of specific semantics for external function */
@@ -1995,7 +1999,7 @@ std::list<EState> Analyzer::transferFunctionCallExternal(Edge edge, const EState
       return elistify(estate2);
     }
   }
-
+  //cout<<"DEBUG: identity: "<<funCall->unparseToString()<<endl; // fflush is an example in the test cases
   // for all other external functions we use identity as transfer function
   EState newEState=currentEState;
   newEState.io=newio;

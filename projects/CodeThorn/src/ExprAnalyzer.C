@@ -924,6 +924,10 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp*
       return evalFunctionCallMemCpy(funCall,estate,useConstraints);
     } else if(funName=="free") {
       return evalFunctionCallFree(funCall,estate,useConstraints);
+    } else if(funName=="fflush") {
+      // ignoring fflush
+      SingleEvalResultConstInt res;
+      return listify(res);
     } else {
       cout<<"WARNING: unknown std function ("<<funName<<") inside expression detected. Assuming it is side-effect free."<<endl;
       return listify(res);
