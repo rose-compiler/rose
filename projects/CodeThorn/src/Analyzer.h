@@ -79,8 +79,7 @@ namespace CodeThorn {
   public:
     static void initDiagnostics();
     void initAstNodeInfo(SgNode* node);
-    void initializeSolver(std::string functionToStartAt,SgNode* root, bool oneFunctionOnly);
-    void initializeTraceSolver(std::string functionToStartAt,SgNode* root);
+    virtual void initializeSolver(std::string functionToStartAt,SgNode* root, bool oneFunctionOnly);
     void initLabeledAssertNodes(SgProject* root);
 
     void setExplorationMode(ExplorationMode em) { _explorationMode=em; }
@@ -90,7 +89,7 @@ namespace CodeThorn {
     Solver* getSolver();
 
     //! requires init
-    void runSolver();
+    virtual void runSolver();
 
     // experimental: analysis reset and/or backup
     virtual void resetAnalysis();

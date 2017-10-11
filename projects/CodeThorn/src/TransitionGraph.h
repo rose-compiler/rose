@@ -59,7 +59,7 @@ namespace CodeThorn {
     EStatePtrSet transitionSourceEStateSetOfLabel(Label lab);
     EStatePtrSet estateSetOfLabel(Label lab);
     EStatePtrSet estateSet();
-    long numberOfObservableStates(bool inlcudeIn=true, bool includeOut=true, bool includeErr=true);
+    long numberOfObservableStates(bool includeIn=true, bool includeOut=true, bool includeErr=true);
     void add(Transition trans);
     string toString() const;
     LabelSet labelSetOfIoOperations(InputOutput::OpType op);

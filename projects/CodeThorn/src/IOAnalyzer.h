@@ -24,7 +24,7 @@ namespace CodeThorn {
     static void initDiagnostics();
 
     // overwritten or extended analyzer functions
-    void initializeSolver(std::string functionToStartAt,SgNode* root, bool oneFunctionOnly);
+    virtual void initializeSolver(std::string functionToStartAt,SgNode* root, bool oneFunctionOnly);
     void resetAnalysis();
 
     void setModeLTLDriven(bool ltlDriven) { transitionGraph.setModeLTLDriven(ltlDriven); }

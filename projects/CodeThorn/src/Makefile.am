@@ -192,11 +192,17 @@ codethorn_SOURCES = \
   ReachabilityAnalysis.h ReachabilityAnalysis.C \
   ReachabilityAnalyzerZ3.h \
   ReachabilityAnalyzerZ3.C \
+  ReadWriteAnalyzer.h \
+  ReadWriteAnalyzer.C \
+  ReadWriteHistory.h \
+  ReadWriteHistory.C \
   RERS_empty_specialization.C      \
   RewriteStatistics.C \
   RewriteStatistics.h \
   RewriteSystem.C \
   RewriteSystem.h \
+  RWState.h \
+  RWState.C \
   SetAlgo.h \
   Solver.h \
   Solver.C \

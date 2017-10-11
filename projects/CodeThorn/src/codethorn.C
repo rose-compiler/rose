@@ -45,7 +45,7 @@
 #include "Solver10.h"
 #include "Solver11.h"
 #include "Solver12.h"
-#include "IOAnalyzer.h"
+#include "ReadWriteAnalyzer.h"
 #include "AnalysisParameters.h"
 #include "SprayException.h"
 #include "CodeThornException.h"
@@ -110,6 +110,7 @@ void CodeThorn::initDiagnostics() {
   Rose::Diagnostics::initialize();
   Analyzer::initDiagnostics();
   IOAnalyzer::initDiagnostics();
+  ReadWriteAnalyzer::initDiagnostics();
   CounterexampleGenerator::initDiagnostics();
   RewriteSystem::initDiagnostics();
   Specialization::initDiagnostics();
@@ -428,6 +429,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
 
   dataRaceOptions.add_options()
     ("data-race", po::value< bool >()->default_value(false)->implicit_value(true), "Perform data race detection.")
+    ("data-race-check-shuffle", po::value< bool >()->default_value(false)->implicit_value(true), "(work in progress) Perform data race detection using the new \"shuffle\" algorithm.")
     ("data-race-csv",po::value<string >(),"Write data race detection results in specified csv file <arg>. Implicitly enables data race detection.")
     ("data-race-fail", po::value< bool >()->default_value(false)->implicit_value(true), "Perform data race detection and fail on error (codethorn exit status 1). For use in regression verification. Implicitly enables data race detection.")
     ;
@@ -847,18 +849,18 @@ void generateAutomata() {
   cout << "generated " << outputFilename <<"."<<endl;
 }
 
-void analyzerSetup(IOAnalyzer& analyzer, Sawyer::Message::Facility logger) {
+void analyzerSetup(IOAnalyzer* analyzer, Sawyer::Message::Facility logger) {
   if(args.getBool("explicit-arrays")==false) {
-    analyzer.setSkipArrayAccesses(true);
+    analyzer->setSkipArrayAccesses(true);
   }
   
   // this must be set early, as subsequent initialization depends on this flag
   if (args.getBool("ltl-driven")) {
-    analyzer.setModeLTLDriven(true);
+    analyzer->setModeLTLDriven(true);
   }
 
   if (args.count("cegpra-ltl") || args.getBool("cegpra-ltl-all")) {
-    analyzer.setMaxTransitionsForcedTop(1); //initial over-approximated model
+    analyzer->setMaxTransitionsForcedTop(1); //initial over-approximated model
     args.setOption("no-input-input",true);
     args.setOption("with-ltl-counterexamples",true);
     args.setOption("counterexamples-with-output",true);
@@ -871,13 +873,13 @@ void analyzerSetup(IOAnalyzer& analyzer, Sawyer::Message::Facility logger) {
   }
 
   if(args.count("trace-file")) {
-    analyzer.setStgTraceFileName(args["trace-file"].as<string>());
+    analyzer->setStgTraceFileName(args["trace-file"].as<string>());
   }
 
   if (args.isDefined("cl-options")) {
     string clOptions=args.getString("cl-options");
     vector<string> clOptionsVector=Parse::commandLineArgs(clOptions);
-    analyzer.setCommandLineOptions(clOptionsVector);
+    analyzer->setCommandLineOptions(clOptionsVector);
     // TODO set this result and create initial state
   }
 
@@ -887,7 +889,7 @@ void analyzerSetup(IOAnalyzer& analyzer, Sawyer::Message::Facility logger) {
 
     set<int> intSet=Parse::integerSet(setstring);
     for(set<int>::iterator i=intSet.begin();i!=intSet.end();++i) {
-      analyzer.insertInputVarValue(*i);
+      analyzer->insertInputVarValue(*i);
     }
   }
 
@@ -897,29 +899,29 @@ void analyzerSetup(IOAnalyzer& analyzer, Sawyer::Message::Facility logger) {
 
     list<int> intList=Parse::integerList(liststring);
     for(list<int>::iterator i=intList.begin();i!=intList.end();++i) {
-      analyzer.addInputSequenceValue(*i);
+      analyzer->addInputSequenceValue(*i);
     }
   }
 
   if(args.count("exploration-mode")) {
     string explorationMode=args["exploration-mode"].as<string>();
     if(explorationMode=="depth-first") {
-      analyzer.setExplorationMode(EXPL_DEPTH_FIRST);
+      analyzer->setExplorationMode(EXPL_DEPTH_FIRST);
     } else if(explorationMode=="breadth-first") {
-      analyzer.setExplorationMode(EXPL_BREADTH_FIRST);
+      analyzer->setExplorationMode(EXPL_BREADTH_FIRST);
     } else if(explorationMode=="loop-aware") {
-      analyzer.setExplorationMode(EXPL_LOOP_AWARE);
+      analyzer->setExplorationMode(EXPL_LOOP_AWARE);
     } else if(explorationMode=="loop-aware-sync") {
-      analyzer.setExplorationMode(EXPL_LOOP_AWARE_SYNC);
+      analyzer->setExplorationMode(EXPL_LOOP_AWARE_SYNC);
     } else if(explorationMode=="random-mode1") {
-      analyzer.setExplorationMode(EXPL_RANDOM_MODE1);
+      analyzer->setExplorationMode(EXPL_RANDOM_MODE1);
     } else {
       logger[ERROR] <<"unknown state space exploration mode specified with option --exploration-mode."<<endl;
       exit(1);
     }
   } else {
     // default value
-    analyzer.setExplorationMode(EXPL_BREADTH_FIRST);
+    analyzer->setExplorationMode(EXPL_BREADTH_FIRST);
   }
 
   if (args.count("max-iterations") || args.count("max-iterations-forced-top")) {
@@ -939,74 +941,74 @@ void analyzerSetup(IOAnalyzer& analyzer, Sawyer::Message::Facility logger) {
   }
 
   if(args.count("max-transitions")) {
-    analyzer.setMaxTransitions(args.getInt("max-transitions"));
+    analyzer->setMaxTransitions(args.getInt("max-transitions"));
   }
 
   if(args.count("max-iterations")) {
-    analyzer.setMaxIterations(args.getInt("max-iterations"));
+    analyzer->setMaxIterations(args.getInt("max-iterations"));
   }
 
   if(args.count("max-iterations-forced-top")) {
-    analyzer.setMaxIterationsForcedTop(args["max-iterations-forced-top"].as<int>());
-    analyzer.setGlobalTopifyMode(Analyzer::GTM_IO);
+    analyzer->setMaxIterationsForcedTop(args["max-iterations-forced-top"].as<int>());
+    analyzer->setGlobalTopifyMode(Analyzer::GTM_IO);
   }
 
   if(args.count("max-transitions-forced-top")) {
-    analyzer.setMaxTransitionsForcedTop(args["max-transitions-forced-top"].as<int>());
-    analyzer.setGlobalTopifyMode(Analyzer::GTM_IO);
+    analyzer->setMaxTransitionsForcedTop(args["max-transitions-forced-top"].as<int>());
+    analyzer->setGlobalTopifyMode(Analyzer::GTM_IO);
   } else if(args.count("max-transitions-forced-top1")) {
-    analyzer.setMaxTransitionsForcedTop(args["max-transitions-forced-top1"].as<int>());
-    analyzer.setGlobalTopifyMode(Analyzer::GTM_IO);
+    analyzer->setMaxTransitionsForcedTop(args["max-transitions-forced-top1"].as<int>());
+    analyzer->setGlobalTopifyMode(Analyzer::GTM_IO);
   } else if(args.count("max-transitions-forced-top2")) {
-    analyzer.setMaxTransitionsForcedTop(args["max-transitions-forced-top2"].as<int>());
-    analyzer.setGlobalTopifyMode(Analyzer::GTM_IOCF);
+    analyzer->setMaxTransitionsForcedTop(args["max-transitions-forced-top2"].as<int>());
+    analyzer->setGlobalTopifyMode(Analyzer::GTM_IOCF);
   } else if(args.count("max-transitions-forced-top3")) {
-    analyzer.setMaxTransitionsForcedTop(args["max-transitions-forced-top3"].as<int>());
-    analyzer.setGlobalTopifyMode(Analyzer::GTM_IOCFPTR);
+    analyzer->setMaxTransitionsForcedTop(args["max-transitions-forced-top3"].as<int>());
+    analyzer->setGlobalTopifyMode(Analyzer::GTM_IOCFPTR);
   } else if(args.count("max-transitions-forced-top4")) {
-    analyzer.setMaxTransitionsForcedTop(args["max-transitions-forced-top4"].as<int>());
-    analyzer.setGlobalTopifyMode(Analyzer::GTM_COMPOUNDASSIGN);
+    analyzer->setMaxTransitionsForcedTop(args["max-transitions-forced-top4"].as<int>());
+    analyzer->setGlobalTopifyMode(Analyzer::GTM_COMPOUNDASSIGN);
   } else if(args.count("max-transitions-forced-top5")) {
-    analyzer.setMaxTransitionsForcedTop(args["max-transitions-forced-top5"].as<int>());
-    analyzer.setGlobalTopifyMode(Analyzer::GTM_FLAGS);
+    analyzer->setMaxTransitionsForcedTop(args["max-transitions-forced-top5"].as<int>());
+    analyzer->setGlobalTopifyMode(Analyzer::GTM_FLAGS);
   }
 
   if (args.count("max-memory")) {
-    analyzer.setMaxBytes(args["max-memory"].as<long int>());
+    analyzer->setMaxBytes(args["max-memory"].as<long int>());
   }
   if (args.count("max-time")) {
-    analyzer.setMaxSeconds(args["max-time"].as<long int>());
+    analyzer->setMaxSeconds(args["max-time"].as<long int>());
   }
   if (args.count("max-memory-forced-top")) {
-    analyzer.setMaxBytesForcedTop(args["max-memory-forced-top"].as<long int>());
+    analyzer->setMaxBytesForcedTop(args["max-memory-forced-top"].as<long int>());
   }
   if (args.count("max-time-forced-top")) {
-    analyzer.setMaxSecondsForcedTop(args["max-time-forced-top"].as<long int>());
+    analyzer->setMaxSecondsForcedTop(args["max-time-forced-top"].as<long int>());
   }
 
   if(args.count("display-diff")) {
     int displayDiff=args["display-diff"].as<int>();
-    analyzer.setDisplayDiff(displayDiff);
+    analyzer->setDisplayDiff(displayDiff);
   }
   if(args.count("resource-limit-diff")) {
     int resourceLimitDiff=args["resource-limit-diff"].as<int>();
-    analyzer.setResourceLimitDiff(resourceLimitDiff);
+    analyzer->setResourceLimitDiff(resourceLimitDiff);
   }
 
   Solver* solver = nullptr;
   // overwrite solver ID based on other options
-  if(analyzer.getModeLTLDriven()) {
+  if(analyzer->getModeLTLDriven()) {
     args.setOption("solver", 11);
   }
   ROSE_ASSERT(args.count("solver")); // Options should contain a default solver
   int solverId=args["solver"].as<int>();
   // solverId sanity checks
-  if(analyzer.getExplorationMode() == EXPL_LOOP_AWARE_SYNC &&
+  if(analyzer->getExplorationMode() == EXPL_LOOP_AWARE_SYNC &&
      solverId != 12) {
     logger[ERROR] <<"Exploration mode loop-aware-sync requires solver 12, but solver "<<solverId<<" was selected."<<endl;
     exit(1);
   }
-  if(analyzer.getModeLTLDriven() &&
+  if(analyzer->getModeLTLDriven() &&
      solverId != 11) {
     logger[ERROR] <<"Ltl-driven mode requires solver 11, but solver "<<solverId<<" was selected."<<endl;
     exit(1);
@@ -1033,7 +1035,7 @@ void analyzerSetup(IOAnalyzer& analyzer, Sawyer::Message::Facility logger) {
     exit(1);
   }
   }
-  analyzer.setSolver(solver);
+  analyzer->setSolver(solver);
 }
 
 int main( int argc, char * argv[] ) {
@@ -1106,8 +1108,13 @@ int main( int argc, char * argv[] ) {
       exit(0);
     }
 
-    IOAnalyzer analyzer;
-    global_analyzer=&analyzer;
+    IOAnalyzer* analyzer;
+    if(args.getBool("data-race-check-shuffle")) {
+      analyzer = new ReadWriteAnalyzer();
+    } else {
+      analyzer = new IOAnalyzer();
+    }
+    global_analyzer=analyzer;
 
 #if 0
     string option_pragma_name;
@@ -1132,9 +1139,9 @@ int main( int argc, char * argv[] ) {
         cerr<<"Error: number of threads must be greater or equal 1."<<endl;
         exit(1);
       }
-      analyzer.setNumberOfThreadsToUse(numThreads);
+      analyzer->setNumberOfThreadsToUse(numThreads);
     } else {
-      analyzer.setNumberOfThreadsToUse(1);
+      analyzer->setNumberOfThreadsToUse(1);
     }
 
     string option_specialize_fun_name="";
@@ -1183,17 +1190,17 @@ int main( int argc, char * argv[] ) {
       rewriteSystem.setTrace(true);
     }
     if(args.count("dump-sorted")>0 || args.count("dump-non-sorted")>0 || args.count("equivalence-check")>0) {
-      analyzer.setSkipSelectedFunctionCalls(true);
-      analyzer.setSkipArrayAccesses(true);
+      analyzer->setSkipSelectedFunctionCalls(true);
+      analyzer->setSkipArrayAccesses(true);
       args.setOption("explicit-arrays",false);
-      if(analyzer.getNumberOfThreadsToUse()>1) {
+      if(analyzer->getNumberOfThreadsToUse()>1) {
         logger[ERROR] << "multi threaded rewrite not supported yet."<<endl;
         exit(1);
       }
     }
 
     DataRaceDetection dataRaceDetection;
-    dataRaceDetection.handleCommandLineOptions(analyzer);
+    dataRaceDetection.handleCommandLineOptions(*analyzer);
     dataRaceDetection.setVisualizeReadWriteAccesses(args.getBool("visualize-read-write-sets"));
 
     // handle RERS mode: reconfigure options
@@ -1203,9 +1210,9 @@ int main( int argc, char * argv[] ) {
     }
 
     if(args.getBool("svcomp-mode")) {
-      analyzer.enableSVCompFunctionSemantics();
+      analyzer->enableSVCompFunctionSemantics();
       string errorFunctionName="__VERIFIER_error";
-      analyzer.setExternalErrorFunctionName(errorFunctionName);
+      analyzer->setExternalErrorFunctionName(errorFunctionName);
     }
 
     if(args.count("external-function-semantics")) {
@@ -1214,10 +1221,10 @@ int main( int argc, char * argv[] ) {
 
     if(args.count("error-function")) {
       string errorFunctionName=args["error-function"].as<string>();
-      analyzer.setExternalErrorFunctionName(errorFunctionName);
+      analyzer->setExternalErrorFunctionName(errorFunctionName);
     }
 
-    analyzer.setTreatStdErrLikeFailedAssert(args.getBool("stderr-like-failed-assert"));
+    analyzer->setTreatStdErrLikeFailedAssert(args.getBool("stderr-like-failed-assert"));
 
     // Build the AST used by ROSE
     logger[TRACE] << "INIT: Parsing and creating AST: started."<<endl;
@@ -1234,7 +1241,7 @@ int main( int argc, char * argv[] ) {
 
     logger[TRACE] << "INIT: Parsing and creating AST: finished."<<endl;
 
-    analyzer.getVariableIdMapping()->computeVariableSymbolMapping(sageProject);
+    analyzer->getVariableIdMapping()->computeVariableSymbolMapping(sageProject);
 
     if(args.count("run-rose-tests")) {
       logger[TRACE] << "INIT: Running ROSE AST tests."<<endl;
@@ -1266,7 +1273,7 @@ int main( int argc, char * argv[] ) {
     if(option_specialize_fun_name=="") {
       logger[TRACE]<<"STATUS: handling pragmas started."<<endl;
       PragmaHandler pragmaHandler;
-      pragmaHandler.handlePragmas(sageProject,&analyzer);
+      pragmaHandler.handlePragmas(sageProject,analyzer);
       // TODO: requires more refactoring
       option_specialize_fun_name=pragmaHandler.option_specialize_fun_name;
       // unparse specialized code
@@ -1274,8 +1281,8 @@ int main( int argc, char * argv[] ) {
       logger[TRACE]<<"STATUS: handling pragmas finished."<<endl;
     } else {
       // do specialization and setup data structures
-      analyzer.setSkipSelectedFunctionCalls(true);
-      analyzer.setSkipArrayAccesses(true);
+      analyzer->setSkipSelectedFunctionCalls(true);
+      analyzer->setSkipArrayAccesses(true);
       args.setOption("explicit-arrays",false);
 
       //TODO1: refactor into separate function
@@ -1289,7 +1296,7 @@ int main( int argc, char * argv[] ) {
         for(size_t i=0;i<option_specialize_fun_param_list.size();i++) {
           int param=option_specialize_fun_param_list[i];
           int constInt=option_specialize_fun_const_list[i];
-          numSubst+=speci.specializeFunction(sageProject,funNameToFind, param, constInt, analyzer.getVariableIdMapping());
+          numSubst+=speci.specializeFunction(sageProject,funNameToFind, param, constInt, analyzer->getVariableIdMapping());
         }
         logger[TRACE]<<"STATUS: specialization: number of variable-uses replaced with constant: "<<numSubst<<endl;
         int numInit=0;
@@ -1298,7 +1305,7 @@ int main( int argc, char * argv[] ) {
           string varInit=option_specialize_fun_varinit_list[i];
           int varInitConstInt=option_specialize_fun_varinit_const_list[i];
           //logger[DEBUG]<<"checking for varInitName nr "<<i<<" var:"<<varInit<<" Const:"<<varInitConstInt<<endl;
-          numInit+=speci.specializeFunction(sageProject,funNameToFind, -1, 0, varInit, varInitConstInt,analyzer.getVariableIdMapping());
+          numInit+=speci.specializeFunction(sageProject,funNameToFind, -1, 0, varInit, varInitConstInt,analyzer->getVariableIdMapping());
         }
         logger[TRACE]<<"STATUS: specialization: number of variable-inits replaced with constant: "<<numInit<<endl;
       }
@@ -1308,7 +1315,7 @@ int main( int argc, char * argv[] ) {
       logger[TRACE]<<"STATUS: rewrite started."<<endl;
       rewriteSystem.resetStatistics();
       rewriteSystem.setRewriteCondStmt(false); // experimental: supposed to normalize conditions
-      rewriteSystem.rewriteAst(root,analyzer.getVariableIdMapping(), false, true/*eliminate compound assignments*/);
+      rewriteSystem.rewriteAst(root,analyzer->getVariableIdMapping(), false, true/*eliminate compound assignments*/);
       // TODO: Outputs statistics
       cout <<"Rewrite statistics:"<<endl<<rewriteSystem.getStatistics().toString()<<endl;
       sageProject->unparse(0,0);
@@ -1317,21 +1324,21 @@ int main( int argc, char * argv[] ) {
     }
 
     {
-      // TODO: refactor this into class Analyzer after normalization has been moved to class Analyzer.
-      set<AbstractValue> compoundIncVarsSet=determineSetOfCompoundIncVars(analyzer.getVariableIdMapping(),root);
-      analyzer.setCompoundIncVarsSet(compoundIncVarsSet);
+      // TODO: refactor this into class Analyzer after normalization has been moved to class Analyzer->
+      set<AbstractValue> compoundIncVarsSet=determineSetOfCompoundIncVars(analyzer->getVariableIdMapping(),root);
+      analyzer->setCompoundIncVarsSet(compoundIncVarsSet);
       logger[TRACE]<<"STATUS: determined "<<compoundIncVarsSet.size()<<" compound inc/dec variables before normalization."<<endl;
     }
     {
-      AbstractValueSet varsInAssertConditions=determineVarsInAssertConditions(root,analyzer.getVariableIdMapping());
+      AbstractValueSet varsInAssertConditions=determineVarsInAssertConditions(root,analyzer->getVariableIdMapping());
       logger[TRACE]<<"STATUS: determined "<<varsInAssertConditions.size()<< " variables in (guarding) assert conditions."<<endl;
-      analyzer.setAssertCondVarsSet(varsInAssertConditions);
+      analyzer->setAssertCondVarsSet(varsInAssertConditions);
     }
 
     if(args.getBool("normalize")) {
       logger[TRACE]<<"STATUS: Normalization started."<<endl;
       rewriteSystem.resetStatistics();
-      rewriteSystem.rewriteCompoundAssignmentsInAst(root,analyzer.getVariableIdMapping());
+      rewriteSystem.rewriteCompoundAssignmentsInAst(root,analyzer->getVariableIdMapping());
       logger[TRACE]<<"STATUS: Normalization finished."<<endl;
     }
     logger[TRACE]<< "INIT: Checking input program."<<endl;
@@ -1340,26 +1347,26 @@ int main( int argc, char * argv[] ) {
     timer.start();
 
 #if 0
-    if(!analyzer.getVariableIdMapping()->isUniqueVariableSymbolMapping()) {
+    if(!analyzer->getVariableIdMapping()->isUniqueVariableSymbolMapping()) {
       logger[WARN] << "Variable<->Symbol mapping not bijective."<<endl;
       //varIdMap.reportUniqueVariableSymbolMappingViolations();
     }
 #endif
 #if 0
-    analyzer.getVariableIdMapping()->toStream(cout);
+    analyzer->getVariableIdMapping()->toStream(cout);
 #endif
 
     if(args.getBool("eliminate-arrays")) {
       Specialization speci;
-      speci.transformArrayProgram(sageProject, &analyzer);
+      speci.transformArrayProgram(sageProject, analyzer);
       sageProject->unparse(0,0);
       exit(0);
     }
 
-    logger[TRACE]<< "INIT: creating solver "<<analyzer.getSolver()->getId()<<"."<<endl;
+    logger[TRACE]<< "INIT: creating solver "<<analyzer->getSolver()->getId()<<"."<<endl;
 
     if(option_specialize_fun_name!="") {
-      analyzer.initializeSolver(option_specialize_fun_name,root,true);
+      analyzer->initializeSolver(option_specialize_fun_name,root,true);
     } else {
       // if main function exists, start with main-function
       // if a single function exist, use this function
@@ -1385,36 +1392,36 @@ int main( int argc, char * argv[] ) {
         }
       }
       ROSE_ASSERT(startFunction!="");
-      analyzer.initializeSolver(startFunction,root,false);
+      analyzer->initializeSolver(startFunction,root,false);
     }
-    analyzer.initLabeledAssertNodes(sageProject);
+    analyzer->initLabeledAssertNodes(sageProject);
 
     if(args.isUserProvided("pattern-search-max-depth") || args.isUserProvided("pattern-search-max-suffix")
        || args.isUserProvided("pattern-search-repetitions") || args.isUserProvided("pattern-search-exploration")) {
       logger[INFO] << "at least one of the parameters of mode \"pattern search\" was set. Choosing solver 10." << endl;
-      analyzer.setSolver(new Solver10());
-      analyzer.setStartPState(*analyzer.popWorkList()->pstate());
+      analyzer->setSolver(new Solver10());
+      analyzer->setStartPState(*analyzer->popWorkList()->pstate());
     }
 
     double initRunTime=timer.getElapsedTimeInMilliSec();
 
     timer.start();
-    analyzer.printStatusMessageLine("==============================================================");
-    if(!analyzer.getModeLTLDriven() && args.count("z3") == 0 && !args.getBool("ssa")) {
-      analyzer.runSolver();
+    analyzer->printStatusMessageLine("==============================================================");
+    if(!analyzer->getModeLTLDriven() && args.count("z3") == 0 && !args.getBool("ssa")) {
+      analyzer->runSolver();
     }
     double analysisRunTime=timer.getElapsedTimeInMilliSec();
-    analyzer.printStatusMessageLine("==============================================================");
+    analyzer->printStatusMessageLine("==============================================================");
 
     if (args.getBool("svcomp-mode") && args.isDefined("witness-file")) {
-      analyzer.writeWitnessToFile(args.getString("witness-file"));
+      analyzer->writeWitnessToFile(args.getString("witness-file"));
     }
 
     double extractAssertionTracesTime= 0;
     if ( args.getBool("with-counterexamples") || args.getBool("with-assert-counterexamples")) {
       logger[TRACE] << "STATUS: extracting assertion traces (this may take some time)"<<endl;
       timer.start();
-      analyzer.extractRersIOAssertionTraces();
+      analyzer->extractRersIOAssertionTraces();
       extractAssertionTracesTime = timer.getElapsedTimeInMilliSec();
     }
 
@@ -1424,25 +1431,25 @@ int main( int argc, char * argv[] ) {
 
     bool withCe = args.getBool("with-counterexamples") || args.getBool("with-assert-counterexamples");
     if(args.getBool("status")) {
-      analyzer.printStatusMessageLine("==============================================================");
-      analyzer.reachabilityResults.printResults("YES (REACHABLE)", "NO (UNREACHABLE)", "error_", withCe);
+      analyzer->printStatusMessageLine("==============================================================");
+      analyzer->reachabilityResults.printResults("YES (REACHABLE)", "NO (UNREACHABLE)", "error_", withCe);
     }
     if (args.count("csv-assert")) {
       string filename=args["csv-assert"].as<string>().c_str();
-      analyzer.reachabilityResults.writeFile(filename.c_str(), false, 0, withCe);
+      analyzer->reachabilityResults.writeFile(filename.c_str(), false, 0, withCe);
       if(args.getBool("status")) {
         cout << "Reachability results written to file \""<<filename<<"\"." <<endl;
         cout << "=============================================================="<<endl;
       }
     }
     if(args.getBool("eliminate-stg-back-edges")) {
-      int numElim=analyzer.getTransitionGraph()->eliminateBackEdges();
+      int numElim=analyzer->getTransitionGraph()->eliminateBackEdges();
       logger[TRACE]<<"STATUS: eliminated "<<numElim<<" STG back edges."<<endl;
     }
 
     if(args.getBool("status")) {
-      analyzer.reachabilityResults.printResultsStatistics();
-      analyzer.printStatusMessageLine("==============================================================");
+      analyzer->reachabilityResults.printResultsStatistics();
+      analyzer->printStatusMessageLine("==============================================================");
     }
 
 #ifdef HAVE_Z3
@@ -1452,7 +1459,7 @@ int main( int argc, char * argv[] ) {
 	int RERSUpperBoundForInput = args["rers-upper-input-bound"].as<int>();
 	int RERSVerifierErrorNumber = args["rers-verifier-error-number"].as<int>();
 	cout << "generateSSAForm()" << endl;
-	ReachabilityAnalyzerZ3* reachAnalyzer = new ReachabilityAnalyzerZ3(RERSUpperBoundForInput, RERSVerifierErrorNumber, &analyzer, &logger);	
+	ReachabilityAnalyzerZ3* reachAnalyzer = new ReachabilityAnalyzerZ3(RERSUpperBoundForInput, RERSVerifierErrorNumber, analyzer, &logger);	
 	cout << "checkReachability()" << endl;
 	reachAnalyzer->checkReachability();
 
@@ -1462,32 +1469,32 @@ int main( int argc, char * argv[] ) {
 
     if(args.getBool("ssa"))
     {
-	SSAGenerator* ssaGen = new SSAGenerator(&analyzer, &logger);
+	SSAGenerator* ssaGen = new SSAGenerator(analyzer, &logger);
 	ssaGen->generateSSAForm();
 
 	exit(0);
     }
 
-    long pstateSetSize=analyzer.getPStateSet()->size();
-    long pstateSetBytes=analyzer.getPStateSet()->memorySize();
-    long pstateSetMaxCollisions=analyzer.getPStateSet()->maxCollisions();
-    long pstateSetLoadFactor=analyzer.getPStateSet()->loadFactor();
-    long eStateSetSize=analyzer.getEStateSet()->size();
-    long eStateSetBytes=analyzer.getEStateSet()->memorySize();
-    long eStateSetMaxCollisions=analyzer.getEStateSet()->maxCollisions();
-    double eStateSetLoadFactor=analyzer.getEStateSet()->loadFactor();
-    long transitionGraphSize=analyzer.getTransitionGraph()->size();
+    long pstateSetSize=analyzer->getPStateSet()->size();
+    long pstateSetBytes=analyzer->getPStateSet()->memorySize();
+    long pstateSetMaxCollisions=analyzer->getPStateSet()->maxCollisions();
+    long pstateSetLoadFactor=analyzer->getPStateSet()->loadFactor();
+    long eStateSetSize=analyzer->getEStateSet()->size();
+    long eStateSetBytes=analyzer->getEStateSet()->memorySize();
+    long eStateSetMaxCollisions=analyzer->getEStateSet()->maxCollisions();
+    double eStateSetLoadFactor=analyzer->getEStateSet()->loadFactor();
+    long transitionGraphSize=analyzer->getTransitionGraph()->size();
     long transitionGraphBytes=transitionGraphSize*sizeof(Transition);
-    long numOfconstraintSets=analyzer.getConstraintSetMaintainer()->numberOf();
-    long constraintSetsBytes=analyzer.getConstraintSetMaintainer()->memorySize();
-    long constraintSetsMaxCollisions=analyzer.getConstraintSetMaintainer()->maxCollisions();
-    double constraintSetsLoadFactor=analyzer.getConstraintSetMaintainer()->loadFactor();
-    long numOfStdinEStates=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDIN_VAR));
-    long numOfStdoutVarEStates=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_VAR));
-    long numOfStdoutConstEStates=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_CONST));
-    long numOfStderrEStates=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDERR_VAR));
-    long numOfFailedAssertEStates=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::FAILED_ASSERT));
-    long numOfConstEStates=0;//(analyzer.getEStateSet()->numberOfConstEStates(analyzer.getVariableIdMapping()));
+    long numOfconstraintSets=analyzer->getConstraintSetMaintainer()->numberOf();
+    long constraintSetsBytes=analyzer->getConstraintSetMaintainer()->memorySize();
+    long constraintSetsMaxCollisions=analyzer->getConstraintSetMaintainer()->maxCollisions();
+    double constraintSetsLoadFactor=analyzer->getConstraintSetMaintainer()->loadFactor();
+    long numOfStdinEStates=(analyzer->getEStateSet()->numberOfIoTypeEStates(InputOutput::STDIN_VAR));
+    long numOfStdoutVarEStates=(analyzer->getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_VAR));
+    long numOfStdoutConstEStates=(analyzer->getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_CONST));
+    long numOfStderrEStates=(analyzer->getEStateSet()->numberOfIoTypeEStates(InputOutput::STDERR_VAR));
+    long numOfFailedAssertEStates=(analyzer->getEStateSet()->numberOfIoTypeEStates(InputOutput::FAILED_ASSERT));
+    long numOfConstEStates=0;//(analyzer->getEStateSet()->numberOfConstEStates(analyzer->getVariableIdMapping()));
     long numOfStdoutEStates=numOfStdoutVarEStates+numOfStdoutConstEStates;
 
 #if defined(__unix__) || defined(__unix) || defined(unix)
@@ -1514,19 +1521,19 @@ int main( int argc, char * argv[] ) {
       cout << "recursively removing all leaves (1)."<<endl;
       timer.start();
       infPathsOnlyTime = timer.getElapsedTimeInMilliSec();
-      pstateSetSizeInf=analyzer.getPStateSet()->size();
-      eStateSetSizeInf = analyzer.getEStateSet()->size();
-      transitionGraphSizeInf = analyzer.getTransitionGraph()->size();
-      eStateSetSizeStgInf = (analyzer.getTransitionGraph())->estateSet().size();
+      pstateSetSizeInf=analyzer->getPStateSet()->size();
+      eStateSetSizeInf = analyzer->getEStateSet()->size();
+      transitionGraphSizeInf = analyzer->getTransitionGraph()->size();
+      eStateSetSizeStgInf = (analyzer->getTransitionGraph())->estateSet().size();
     }
     
     if(args.getBool("std-io-only")) {
       logger[TRACE] << "STATUS: bypassing all non standard I/O states. (P2)"<<endl;
       timer.start();
       if (args.getBool("keep-error-states")) {
-	analyzer.reduceStgToInOutAssertStates();
+	analyzer->reduceStgToInOutAssertStates();
       } else {
-	analyzer.reduceStgToInOutStates();
+	analyzer->reduceStgToInOutStates();
       }
       stdIoOnlyTime = timer.getElapsedTimeInMilliSec();
     }
@@ -1539,35 +1546,35 @@ int main( int argc, char * argv[] ) {
     stringstream statisticsCegpra;
 
     if (args.count("check-ltl")) {
-      logger[INFO] <<"STG size: "<<analyzer.getTransitionGraph()->size()<<endl;
+      logger[INFO] <<"STG size: "<<analyzer->getTransitionGraph()->size()<<endl;
       string ltl_filename = args["check-ltl"].as<string>();
       if(args.getBool("rersmode")) {  //reduce the graph accordingly, if not already done
-        if (!args.getBool("inf-paths-only") && !args.getBool("keep-error-states") &&!analyzer.getModeLTLDriven()) {
+        if (!args.getBool("inf-paths-only") && !args.getBool("keep-error-states") &&!analyzer->getModeLTLDriven()) {
           logger[TRACE] << "STATUS: recursively removing all leaves (due to RERS-mode (2))."<<endl;
           timer.start();
-          analyzer.pruneLeaves();
+          analyzer->pruneLeaves();
           infPathsOnlyTime = timer.getElapsedTimeInMilliSec();
 
-          pstateSetSizeInf=analyzer.getPStateSet()->size();
-          eStateSetSizeInf = analyzer.getEStateSet()->size();
-          transitionGraphSizeInf = analyzer.getTransitionGraph()->size();
-          eStateSetSizeStgInf = (analyzer.getTransitionGraph())->estateSet().size();
+          pstateSetSizeInf=analyzer->getPStateSet()->size();
+          eStateSetSizeInf = analyzer->getEStateSet()->size();
+          transitionGraphSizeInf = analyzer->getTransitionGraph()->size();
+          eStateSetSizeStgInf = (analyzer->getTransitionGraph())->estateSet().size();
         }
-        if (!args.getBool("std-io-only") &&!analyzer.getModeLTLDriven()) {
+        if (!args.getBool("std-io-only") &&!analyzer->getModeLTLDriven()) {
           logger[TRACE] << "STATUS: bypassing all non standard I/O states (due to RERS-mode) (P1)."<<endl;
           timer.start();
 	  if (args.getBool("keep-error-states")) {
-	    analyzer.reduceStgToInOutAssertStates();
+	    analyzer->reduceStgToInOutAssertStates();
 	  } else {
-	    analyzer.reduceStgToInOutStates();
+	    analyzer->reduceStgToInOutStates();
 	  }
 	  stdIoOnlyTime = timer.getElapsedTimeInMilliSec();
-          printStgSize(analyzer.getTransitionGraph(), "after reducing non-I/O states");
+          printStgSize(analyzer->getTransitionGraph(), "after reducing non-I/O states");
         }
       }
       if(args.getBool("no-input-input")) {  //delete transitions that indicate two input states without an output in between
-        analyzer.removeInputInputTransitions();
-        printStgSize(analyzer.getTransitionGraph(), "after reducing input->input transitions");
+        analyzer->removeInputInputTransitions();
+        printStgSize(analyzer->getTransitionGraph(), "after reducing input->input transitions");
       }
       bool withCounterexample = false;
       if(args.getBool("with-counterexamples") || args.getBool("with-ltl-counterexamples")) {  //output a counter-example input sequence for falsified formulae
@@ -1575,7 +1582,7 @@ int main( int argc, char * argv[] ) {
       }
 
       timer.start();
-      std::set<int> ltlInAlphabet = analyzer.getInputVarValues();
+      std::set<int> ltlInAlphabet = analyzer->getInputVarValues();
       //take fixed ltl input alphabet if specified, instead of the input values used for stg computation
       if (args.count("ltl-in-alphabet")) {
         string setstring=args["ltl-in-alphabet"].as<string>();
@@ -1591,9 +1598,9 @@ int main( int argc, char * argv[] ) {
       }
       PropertyValueTable* ltlResults=nullptr;
       SpotConnection spotConnection(ltl_filename);
-      spotConnection.setModeLTLDriven(analyzer.getModeLTLDriven());
-      if (analyzer.getModeLTLDriven()) {
-	analyzer.setSpotConnection(&spotConnection);
+      spotConnection.setModeLTLDriven(analyzer->getModeLTLDriven());
+      if (analyzer->getModeLTLDriven()) {
+	analyzer->setSpotConnection(&spotConnection);
       }
 
       logger[TRACE] << "STATUS: generating LTL results"<<endl;
@@ -1601,9 +1608,9 @@ int main( int argc, char * argv[] ) {
       logger[TRACE] << "LTL: check properties."<<endl;
       if (args.count("single-property")) {
 	int propertyNum = args["single-property"].as<int>();
-	spotConnection.checkSingleProperty(propertyNum, *(analyzer.getTransitionGraph()), ltlInAlphabet, ltlOutAlphabet, withCounterexample, spuriousNoAnswers);
+	spotConnection.checkSingleProperty(propertyNum, *(analyzer->getTransitionGraph()), ltlInAlphabet, ltlOutAlphabet, withCounterexample, spuriousNoAnswers);
       } else {
-	spotConnection.checkLtlProperties( *(analyzer.getTransitionGraph()), ltlInAlphabet, ltlOutAlphabet, withCounterexample, spuriousNoAnswers);
+	spotConnection.checkLtlProperties( *(analyzer->getTransitionGraph()), ltlInAlphabet, ltlOutAlphabet, withCounterexample, spuriousNoAnswers);
       }
       spotLtlAnalysisTime=timer.getElapsedTimeInMilliSec();
       logger[TRACE] << "LTL: get results from spot connection."<<endl;
@@ -1613,13 +1620,13 @@ int main( int argc, char * argv[] ) {
       if (args.count("cegpra-ltl") || args.getBool("cegpra-ltl-all")) {
         if (args.count("csv-stats-cegpra")) {
           statisticsCegpra << "init,";
-          printStgSize(analyzer.getTransitionGraph(), "initial abstract model", &statisticsCegpra);
+          printStgSize(analyzer->getTransitionGraph(), "initial abstract model", &statisticsCegpra);
           statisticsCegpra << ",na,na";
           statisticsCegpra << "," << ltlResults->entriesWithValue(PROPERTY_VALUE_YES);
           statisticsCegpra << "," << ltlResults->entriesWithValue(PROPERTY_VALUE_NO);
           statisticsCegpra << "," << ltlResults->entriesWithValue(PROPERTY_VALUE_UNKNOWN);
         }
-        CounterexampleAnalyzer ceAnalyzer(&analyzer, &statisticsCegpra);
+        CounterexampleAnalyzer ceAnalyzer(analyzer, &statisticsCegpra);
         if (args.count("cegpra-max-iterations")) {
           ceAnalyzer.setMaxCounterexamples(args["cegpra-max-iterations"].as<int>());
         }
@@ -1633,9 +1640,9 @@ int main( int argc, char * argv[] ) {
 
       if(args.getBool("status")) {
         ltlResults-> printResults("YES (verified)", "NO (falsified)", "ltl_property_", withCounterexample);
-        analyzer.printStatusMessageLine("==============================================================");
+        analyzer->printStatusMessageLine("==============================================================");
         ltlResults->printResultsStatistics();
-        analyzer.printStatusMessageLine("==============================================================");
+        analyzer->printStatusMessageLine("==============================================================");
       }
       if (args.count("csv-spot-ltl")) {  //write results to a file instead of displaying them directly
         std::string csv_filename = args["csv-spot-ltl"].as<string>();
@@ -1643,7 +1650,7 @@ int main( int argc, char * argv[] ) {
         ltlResults->writeFile(csv_filename.c_str(), false, 0, withCounterexample);
       }
       if (args.count("csv-stats-size-and-ltl")) {
-        printStgSize(analyzer.getTransitionGraph(), "final model", &statisticsSizeAndLtl);
+        printStgSize(analyzer->getTransitionGraph(), "final model", &statisticsSizeAndLtl);
         statisticsSizeAndLtl <<","<< ltlResults->entriesWithValue(PROPERTY_VALUE_YES);
         statisticsSizeAndLtl <<","<< ltlResults->entriesWithValue(PROPERTY_VALUE_NO);
         statisticsSizeAndLtl <<","<< ltlResults->entriesWithValue(PROPERTY_VALUE_UNKNOWN);
@@ -1658,10 +1665,10 @@ int main( int argc, char * argv[] ) {
 
     // TEST
     if (args.getBool("generate-assertions")) {
-      AssertionExtractor assertionExtractor(&analyzer);
+      AssertionExtractor assertionExtractor(analyzer);
       assertionExtractor.computeLabelVectorOfEStates();
       assertionExtractor.annotateAst();
-      AstAnnotator ara(analyzer.getLabeler());
+      AstAnnotator ara(analyzer->getLabeler());
       ara.annotateAstAttributesAsCommentsBeforeStatements(sageProject,"ctgen-pre-condition");
       logger[TRACE] << "STATUS: Generated assertions."<<endl;
     }
@@ -1676,7 +1683,7 @@ int main( int argc, char * argv[] ) {
     int verifyUpdateSequenceRaceConditionsParLoopNum=-1;
 
     /* Data race detection */
-    if(dataRaceDetection.run(analyzer)) {
+    if(dataRaceDetection.run(*analyzer)) {
       exit(0);
     }
 
@@ -1694,27 +1701,27 @@ int main( int argc, char * argv[] ) {
       bool useRuleCommutativeSort=args.getBool("rule-commutative-sort");
       
       timer.start();
-      speci.extractArrayUpdateOperations(&analyzer,
+      speci.extractArrayUpdateOperations(analyzer,
           arrayUpdates,
           rewriteSystem,
           useRuleConstSubstitution
           );
 
       //cout<<"DEBUG: Rewrite1:"<<rewriteSystem.getStatistics().toString()<<endl;
-      speci.substituteArrayRefs(arrayUpdates, analyzer.getVariableIdMapping(), sarMode, rewriteSystem);
+      speci.substituteArrayRefs(arrayUpdates, analyzer->getVariableIdMapping(), sarMode, rewriteSystem);
       //cout<<"DEBUG: Rewrite2:"<<rewriteSystem.getStatistics().toString()<<endl;
 
       rewriteSystem.setRuleCommutativeSort(useRuleCommutativeSort); // commutative sort only used in substituteArrayRefs
       //cout<<"DEBUG: Rewrite3:"<<rewriteSystem.getStatistics().toString()<<endl;
-      speci.substituteArrayRefs(arrayUpdates, analyzer.getVariableIdMapping(), sarMode, rewriteSystem);
+      speci.substituteArrayRefs(arrayUpdates, analyzer->getVariableIdMapping(), sarMode, rewriteSystem);
       arrayUpdateExtractionRunTime=timer.getElapsedTimeInMilliSec();
 
       if(args.getBool("print-update-infos")) {
-        speci.printUpdateInfos(arrayUpdates,analyzer.getVariableIdMapping());
+        speci.printUpdateInfos(arrayUpdates,analyzer->getVariableIdMapping());
       }
       logger[TRACE] <<"STATUS: establishing array-element SSA numbering."<<endl;
       timer.start();
-      speci.createSsaNumbering(arrayUpdates, analyzer.getVariableIdMapping());
+      speci.createSsaNumbering(arrayUpdates, analyzer->getVariableIdMapping());
       arrayUpdateSsaNumberingRunTime=timer.getElapsedTimeInMilliSec();
 
       if(args.count("dump-non-sorted")) {
@@ -1793,14 +1800,14 @@ int main( int argc, char * argv[] ) {
         <<pstateSetLoadFactor<<", "
         <<eStateSetLoadFactor<<", "
         <<constraintSetsLoadFactor<<endl;
-      text<<"threads,"<<analyzer.getNumberOfThreadsToUse()<<endl;
+      text<<"threads,"<<analyzer->getNumberOfThreadsToUse()<<endl;
       //    text<<"abstract-and-const-states,"
       //    <<"";
 
       // iterations (currently only supported for sequential analysis)
       text<<"iterations,";
-      if(analyzer.getNumberOfThreadsToUse()==1 && analyzer.getSolver()->getId()==5 && analyzer.getExplorationMode()==EXPL_LOOP_AWARE)
-        text<<analyzer.getIterations()<<","<<analyzer.getApproximatedIterations();
+      if(analyzer->getNumberOfThreadsToUse()==1 && analyzer->getSolver()->getId()==5 && analyzer->getExplorationMode()==EXPL_LOOP_AWARE)
+        text<<analyzer->getIterations()<<","<<analyzer->getApproximatedIterations();
       else
         text<<"-1,-1";
       text<<endl;
@@ -1857,7 +1864,7 @@ int main( int argc, char * argv[] ) {
       cout << "generated "<<filename<<endl;
     }
 
-    Visualizer visualizer(analyzer.getLabeler(),analyzer.getVariableIdMapping(),analyzer.getFlow(),analyzer.getPStateSet(),analyzer.getEStateSet(),analyzer.getTransitionGraph());
+    Visualizer visualizer(analyzer->getLabeler(),analyzer->getVariableIdMapping(),analyzer->getFlow(),analyzer->getPStateSet(),analyzer->getEStateSet(),analyzer->getTransitionGraph());
     if(args.getBool("viz")) {
       cout << "generating graphviz files:"<<endl;
       string dotFile="digraph G {\n";
@@ -1869,20 +1876,20 @@ int main( int argc, char * argv[] ) {
       write_file("transitiongraph2.dot", dotFile3);
       cout << "generated transitiongraph2.dot."<<endl;
 
-      string datFile1=(analyzer.getTransitionGraph())->toString();
+      string datFile1=(analyzer->getTransitionGraph())->toString();
       write_file("transitiongraph1.dat", datFile1);
       cout << "generated transitiongraph1.dat."<<endl;
 
-      assert(analyzer.startFunRoot);
-      //analyzer.generateAstNodeInfo(analyzer.startFunRoot);
-      //dotFile=astTermWithNullValuesToDot(analyzer.startFunRoot);
-      analyzer.generateAstNodeInfo(sageProject);
+      assert(analyzer->startFunRoot);
+      //analyzer->generateAstNodeInfo(analyzer->startFunRoot);
+      //dotFile=astTermWithNullValuesToDot(analyzer->startFunRoot);
+      analyzer->generateAstNodeInfo(sageProject);
       cout << "generated node info."<<endl;
       dotFile=AstTerm::functionAstTermsWithNullValuesToDot(sageProject);
       write_file("ast.dot", dotFile);
       cout << "generated ast.dot."<<endl;
 
-      write_file("cfg.dot", analyzer.getFlow()->toDot(analyzer.getCFAnalyzer()->getLabeler()));
+      write_file("cfg.dot", analyzer->getFlow()->toDot(analyzer->getCFAnalyzer()->getLabeler()));
       cout << "generated cfg.dot."<<endl;
       cout << "=============================================================="<<endl;
     }
@@ -1924,9 +1931,9 @@ int main( int argc, char * argv[] ) {
         if(args.count("iseq-random-num")) {
           int randomNum=args["iseq-random-num"].as<int>();
           logger[TRACE] <<"STATUS: reducing input sequence set to "<<randomNum<<" random elements."<<endl;
-          iosgen.computeRandomInputPathSet(iseqLen,*analyzer.getTransitionGraph(),randomNum);
+          iosgen.computeRandomInputPathSet(iseqLen,*analyzer->getTransitionGraph(),randomNum);
         } else {
-          iosgen.computeInputPathSet(iseqLen,*analyzer.getTransitionGraph());
+          iosgen.computeInputPathSet(iseqLen,*analyzer->getTransitionGraph());
         }
         logger[TRACE] <<"STATUS: generating input sequence file "<<fileName<<endl;
         iosgen.generateFile(fileName);
@@ -1941,12 +1948,12 @@ int main( int argc, char * argv[] ) {
 
 #if 0
     {
-      cout << "EStateSet:\n"<<analyzer.getEStateSet()->toString(analyzer.getVariableIdMapping())<<endl;
-      cout << "ConstraintSet:\n"<<analyzer.getConstraintSetMaintainer()->toString()<<endl;
-      if(analyzer.variableValueMonitor.isActive())
-        cout << "VariableValueMonitor:\n"<<analyzer.variableValueMonitor.toString(analyzer.getVariableIdMapping())<<endl;
+      cout << "EStateSet:\n"<<analyzer->getEStateSet()->toString(analyzer->getVariableIdMapping())<<endl;
+      cout << "ConstraintSet:\n"<<analyzer->getConstraintSetMaintainer()->toString()<<endl;
+      if(analyzer->variableValueMonitor.isActive())
+        cout << "VariableValueMonitor:\n"<<analyzer->variableValueMonitor.toString(analyzer->getVariableIdMapping())<<endl;
       cout << "MAP:"<<endl;
-      cout << analyzer.getLabeler()->toString();
+      cout << analyzer->getLabeler()->toString();
     }
 #endif
 
@@ -1954,7 +1961,7 @@ int main( int argc, char * argv[] ) {
       // TODO: it might be useful to be able to select certain analysis results to be only annotated
       logger[INFO] << "Annotating term representations."<<endl;
       attachTermRepresentation(sageProject);
-      AstAnnotator ara(analyzer.getLabeler());
+      AstAnnotator ara(analyzer->getLabeler());
       ara.annotateAstAttributesAsCommentsBeforeStatements(sageProject,"codethorn-term-representation");
     }
 
@@ -1965,7 +1972,7 @@ int main( int argc, char * argv[] ) {
     }
 
     if(args.getBool("print-varid-mapping")) {
-      analyzer.getVariableIdMapping()->toStream(cout);
+      analyzer->getVariableIdMapping()->toStream(cout);
     }
     // reset terminal
     cout<<color("normal")<<"done."<<endl;
@@ -2016,28 +2023,28 @@ void CodeThorn::printStgSize(TransitionGraph* model, string optionalComment, str
   }
 }
 
-void CodeThorn::printAnalyzerStatistics(IOAnalyzer& analyzer, double totalRunTime, string title) {
-  long pstateSetSize=analyzer.getPStateSet()->size();
-  long pstateSetBytes=analyzer.getPStateSet()->memorySize();
-  long pstateSetMaxCollisions=analyzer.getPStateSet()->maxCollisions();
-  long pstateSetLoadFactor=analyzer.getPStateSet()->loadFactor();
-  long eStateSetSize=analyzer.getEStateSet()->size();
-  long eStateSetBytes=analyzer.getEStateSet()->memorySize();
-  long eStateSetMaxCollisions=analyzer.getEStateSet()->maxCollisions();
-  double eStateSetLoadFactor=analyzer.getEStateSet()->loadFactor();
-  long transitionGraphSize=analyzer.getTransitionGraph()->size();
+void CodeThorn::printAnalyzerStatistics(IOAnalyzer* analyzer, double totalRunTime, string title) {
+  long pstateSetSize=analyzer->getPStateSet()->size();
+  long pstateSetBytes=analyzer->getPStateSet()->memorySize();
+  long pstateSetMaxCollisions=analyzer->getPStateSet()->maxCollisions();
+  long pstateSetLoadFactor=analyzer->getPStateSet()->loadFactor();
+  long eStateSetSize=analyzer->getEStateSet()->size();
+  long eStateSetBytes=analyzer->getEStateSet()->memorySize();
+  long eStateSetMaxCollisions=analyzer->getEStateSet()->maxCollisions();
+  double eStateSetLoadFactor=analyzer->getEStateSet()->loadFactor();
+  long transitionGraphSize=analyzer->getTransitionGraph()->size();
   long transitionGraphBytes=transitionGraphSize*sizeof(Transition);
-  long numOfconstraintSets=analyzer.getConstraintSetMaintainer()->numberOf();
-  long constraintSetsBytes=analyzer.getConstraintSetMaintainer()->memorySize();
-  long constraintSetsMaxCollisions=analyzer.getConstraintSetMaintainer()->maxCollisions();
-  double constraintSetsLoadFactor=analyzer.getConstraintSetMaintainer()->loadFactor();
+  long numOfconstraintSets=analyzer->getConstraintSetMaintainer()->numberOf();
+  long constraintSetsBytes=analyzer->getConstraintSetMaintainer()->memorySize();
+  long constraintSetsMaxCollisions=analyzer->getConstraintSetMaintainer()->maxCollisions();
+  double constraintSetsLoadFactor=analyzer->getConstraintSetMaintainer()->loadFactor();
 
-  long numOfStdinEStates=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDIN_VAR));
-  long numOfStdoutVarEStates=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_VAR));
-  long numOfStdoutConstEStates=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_CONST));
-  long numOfStderrEStates=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::STDERR_VAR));
-  long numOfFailedAssertEStates=(analyzer.getEStateSet()->numberOfIoTypeEStates(InputOutput::FAILED_ASSERT));
-  long numOfConstEStates=(analyzer.getEStateSet()->numberOfConstEStates(analyzer.getVariableIdMapping()));
+  long numOfStdinEStates=(analyzer->getEStateSet()->numberOfIoTypeEStates(InputOutput::STDIN_VAR));
+  long numOfStdoutVarEStates=(analyzer->getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_VAR));
+  long numOfStdoutConstEStates=(analyzer->getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_CONST));
+  long numOfStderrEStates=(analyzer->getEStateSet()->numberOfIoTypeEStates(InputOutput::STDERR_VAR));
+  long numOfFailedAssertEStates=(analyzer->getEStateSet()->numberOfIoTypeEStates(InputOutput::FAILED_ASSERT));
+  long numOfConstEStates=(analyzer->getEStateSet()->numberOfConstEStates(analyzer->getVariableIdMapping()));
   //long numOfStdoutEStates=numOfStdoutVarEStates+numOfStdoutConstEStates;
 
   long totalMemory=pstateSetBytes+eStateSetBytes+transitionGraphBytes+constraintSetsBytes;
@@ -2058,13 +2065,13 @@ void CodeThorn::printAnalyzerStatistics(IOAnalyzer& analyzer, double totalRunTim
   ss << "Number of estates              : "<<color("cyan")<<eStateSetSize<<color("white")<<" (memory: "<<color("cyan")<<eStateSetBytes<<color("white")<<" bytes)"<<" ("<<""<<eStateSetLoadFactor<<  "/"<<eStateSetMaxCollisions<<")"<<endl;
   ss << "Number of transitions          : "<<color("blue")<<transitionGraphSize<<color("white")<<" (memory: "<<color("blue")<<transitionGraphBytes<<color("white")<<" bytes)"<<endl;
   ss << "Number of constraint sets      : "<<color("yellow")<<numOfconstraintSets<<color("white")<<" (memory: "<<color("yellow")<<constraintSetsBytes<<color("white")<<" bytes)"<<" ("<<""<<constraintSetsLoadFactor<<  "/"<<constraintSetsMaxCollisions<<")"<<endl;
-  if(analyzer.getNumberOfThreadsToUse()==1 && analyzer.getSolver()->getId()==5 && analyzer.getExplorationMode()==EXPL_LOOP_AWARE) {
-    ss << "Number of iterations           : "<<analyzer.getIterations()<<"-"<<analyzer.getApproximatedIterations()<<endl;
+  if(analyzer->getNumberOfThreadsToUse()==1 && analyzer->getSolver()->getId()==5 && analyzer->getExplorationMode()==EXPL_LOOP_AWARE) {
+    ss << "Number of iterations           : "<<analyzer->getIterations()<<"-"<<analyzer->getApproximatedIterations()<<endl;
   }
   ss << "=============================================================="<<endl;
   ss << "Memory total         : "<<color("green")<<totalMemory<<" bytes"<<color("white")<<endl;
   ss << "Time total           : "<<color("green")<<CodeThorn::readableruntime(totalRunTime)<<color("white")<<endl;
   ss << "=============================================================="<<endl;
   ss <<color("normal");
-  analyzer.printStatusMessage(ss.str());
+  analyzer->printStatusMessage(ss.str());
 }
