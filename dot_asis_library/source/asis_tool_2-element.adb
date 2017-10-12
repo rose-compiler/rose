@@ -15,24 +15,24 @@ package body Asis_Tool_2.Element is
 
    Module_Name : constant String := "Asis_Tool_2.Element";
 
-   procedure Add_Element_List
+   -- Leaks:
+   function Element_List
      (This           : in out Class;
       Elements_In    : in     Asis.Element_List;
       Dot_Label_Name : in     String;
-      List_Out       :    out a_nodes_h.Element_List;
       Add_Edges      : in     Boolean := False)
+     return  a_nodes_h.Element_List
    is
-      Element_Count : constant Natural :=
-        Elements_In'Length;
-      IDs : anhS.Element_ID_Array_Access := new
+      Element_Count : constant Natural := Elements_In'Length;
+      IDs           : anhS.Element_ID_Array_Access := new
         anhS.Element_ID_Array (1 .. Element_Count);
-      IDs_Index : Positive := IDs'First;
+      IDs_Index     : Positive := IDs'First;
    begin
       for Element of Elements_In loop
          declare
             Element_ID : constant Types.Node_ID :=
               Asis.Set_Get.Node_Value (Element);
-            Label : constant String :=
+            Label      : constant String :=
               Dot_Label_Name & " (" & IDs_Index'Image & ")";
          begin
             IDs (IDs_Index) := Interfaces.C.int (Element_ID);
@@ -45,9 +45,22 @@ package body Asis_Tool_2.Element is
             IDs_Index := IDs_Index + 1;
          end;
       end loop;
-      List_Out :=
+      return
         (length => Interfaces.C.int(Element_Count),
          IDs    => anhS.To_Element_ID_Ptr (IDs));
+   end Element_List;
+
+   procedure Add_Element_List
+     (This           : in out Class;
+      Elements_In    : in     Asis.Element_List;
+      Dot_Label_Name : in     String;
+      List_Out       :    out a_nodes_h.Element_List;
+      Add_Edges      : in     Boolean := False) is
+   begin
+      List_Out := Element_List (This           => This,
+                                Elements_In    => Elements_In,
+                                Dot_Label_Name => Dot_Label_Name,
+                                Add_Edges      => Add_Edges);
    end Add_Element_List;
 
    function Add_Operator_Kind
@@ -173,11 +186,7 @@ package body Asis_Tool_2.Element is
 
          use all type Asis.Defining_Name_Kinds;
       begin
-         If Defining_Name_Kind = Not_A_Defining_Name then
-            -- Redundant with the case below, but lets this if be clearer:
-            raise Program_Error with
-            Module_Name & " called with: " & Defining_Name_Kind'Image;
-         else
+         If Defining_Name_Kind /= Not_A_Defining_Name then
             Add_Common_Items;
          end if;
 
@@ -645,11 +654,7 @@ package body Asis_Tool_2.Element is
 
          use all type Asis.Declaration_Kinds;
       begin -- Process_Declaration
-         If Declaration_Kind = Not_A_Declaration then
-            -- Redundant with the case below, but lets this if be clearer:
-            raise Program_Error with
-            Module_Name & " called with: " & Declaration_Kind'Image;
-         else
+         If Declaration_Kind /= Not_A_Declaration then
             Add_Common_Items;
          end if;
 
@@ -984,104 +989,267 @@ package body Asis_Tool_2.Element is
          Parent_Name : constant String := Module_Name;
          Module_Name : constant String := Parent_Name & ".Process_Definition";
 
-         Result          : a_nodes_h.Definition_Struct :=
-           a_nodes_h.Support.Default_Definition_Struct;
-         Definition_Kind : constant Asis.Definition_Kinds :=
-           Asis.Elements.Definition_Kind (Element);
+         -----------------------------------------------------------------------
+         -- BEGIN field support (Alphabetical order):
 
-         procedure hide_me is
-
-            procedure Add_Component_Definition_View is
-               ID : constant Types.Node_Id :=
-                 Asis.Set_Get.Node (Asis.Definitions.Component_Definition_View (Element));
-            begin
-               State.Add_To_Dot_Label_And_Edge ("Component_Definition_View", ID);
-               Result.Component_Definition_View := a_nodes_h.Node_ID (ID);
-            end;
-
-            procedure Add_Implicit_Components is
-               -- Not implemented in ASIS for GNAT GPL 2017 (20170515-63)GNAT GPL 2017 (20170515-63):
-               Implemented_In_Asis : constant Boolean := False;
-            begin
-               if Implemented_In_Asis then
-                  Add_Element_List
-                    (This           => State,
-                     Elements_In    => Asis.Definitions.Implicit_Components (Element),
-                     Dot_Label_Name => "Implicit_Components",
-                     List_Out       => Result.Implicit_Components);
-               end if;
-            end;
-
-            procedure Add_Is_Private_Present is
-               Value : constant Boolean := Asis.Definitions.Is_Private_Present (Element);
-            begin
-               State.Add_To_Dot_Label ("Is_Private_Present", Value'Image);
-               Result.Is_Private_Present := a_nodes_h.Support.To_bool (Value);
-            end;
-
-            procedure Add_Private_Part_Items is
-            begin
-               Add_Element_List
-                 (This           => State,
-                  Elements_In    => Asis.Definitions.Private_Part_Items (Element),
-                  Dot_Label_Name => "Private_Part_Items",
-                  List_Out       => Result.Private_Part_Items,
-                  Add_Edges      => True);
-            end;
-
-            procedure Add_Subtype_Constraint is
-               ID : constant Types.Node_Id :=
-                 Asis.Set_Get.Node (Asis.Definitions.Subtype_Constraint (Element));
-            begin
-               State.Add_To_Dot_Label_And_Edge ("Subtype_Constraint", ID);
-               Result.Subtype_Constraint := a_nodes_h.Node_ID (ID);
-            end;
-
-            procedure Add_Record_Components is
-            begin
-               Add_Element_List
-                 (This           => State,
-                  Elements_In    => Asis.Definitions.Record_Components (Element),
-                  Dot_Label_Name => "Record_Components",
-                  List_Out       => Result.Record_Components,
-                  Add_Edges      => True);
-            end;
-
-            procedure Add_Visible_Part_Items is
-            begin
-               Add_Element_List
-                 (This           => State,
-                  Elements_In    => Asis.Definitions.Visible_Part_Items (Element),
-                  Dot_Label_Name => "Visible_Part_Items",
-                  List_Out       => Result.Visible_Part_Items,
-                  Add_Edges      => True);
-            end;
-
+         function Component_Definition_View return a_nodes_h.Node_ID is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Definitions.Component_Definition_View (Element));
          begin
-            null;
-         end hide_me;
+            State.Add_To_Dot_Label_And_Edge ("Component_Definition_View", ID);
+            return a_nodes_h.Node_ID (ID);
+         end;
 
-         -- Has side-effects:
-         function Get_Has_Null_Exclusion return ICE.bool is
+         function Corresponding_Parent_Subtype return a_nodes_h.Node_ID is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Definitions.Corresponding_Parent_Subtype
+                                 (Element));
+         begin
+            State.Add_To_Dot_Label ("Corresponding_Parent_Subtype", To_String (ID));
+            return a_nodes_h.Node_ID (ID);
+         end;
+
+         function Corresponding_Root_Type return a_nodes_h.Node_ID is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Definitions.Corresponding_Root_Type
+                                 (Element));
+         begin
+            State.Add_To_Dot_Label ("Corresponding_Root_Type", To_String (ID));
+            return a_nodes_h.Node_ID (ID);
+         end;
+
+         function Corresponding_Type_Operators return a_nodes_h.Element_List is
+         begin
+            return Element_List
+              (This           => State,
+               Elements_In    => Asis.Definitions.Corresponding_Type_Operators (Element),
+               Dot_Label_Name => "Corresponding_Type_Operators");
+         end;
+
+         function Corresponding_Type_Structure return a_nodes_h.Node_ID is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Definitions.Corresponding_Type_Structure
+                                 (Element));
+         begin
+            State.Add_To_Dot_Label ("Corresponding_Type_Structure", To_String (ID));
+            return a_nodes_h.Node_ID (ID);
+         end;
+
+         function Definition_Interface_List return a_nodes_h.Element_List is
+         begin
+            return Element_List
+              (This           => State,
+               Elements_In    => Asis.Definitions.Definition_Interface_List (Element),
+               Dot_Label_Name => "Definition_Interface_List");
+         end;
+
+         function Delta_Expression return a_nodes_h.Node_ID is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Definitions.Delta_Expression (Element));
+         begin
+            State.Add_To_Dot_Label ("Delta_Expression", To_String (ID));
+            return a_nodes_h.Node_ID (ID);
+         end;
+
+         function Digits_Expression return a_nodes_h.Node_ID is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Definitions.Digits_Expression (Element));
+         begin
+            State.Add_To_Dot_Label ("Digits_Expression", To_String (ID));
+            return a_nodes_h.Node_ID (ID);
+         end;
+
+         function Discrete_Ranges return a_nodes_h.Element_List is
+         begin
+            return Element_List
+              (This           => State,
+               Elements_In    => Asis.Definitions.Discrete_Ranges (Element),
+               Dot_Label_Name => "Discrete_Ranges");
+         end;
+
+         function Discriminant_Associations return a_nodes_h.Element_List is
+         begin
+            return Element_List
+              (This           => State,
+               Elements_In    => Asis.Definitions.Discriminant_Associations (Element),
+               Dot_Label_Name => "Discriminant_Associations");
+         end;
+
+         function Has_Abstract return ICE.bool is
+            Value : constant Boolean := Asis.Elements.Has_Abstract (Element);
+         begin
+            State.Add_To_Dot_Label ("Has_Abstract", Value'Image);
+            return a_nodes_h.Support.To_bool (Value);
+         end;
+
+         function Has_Limited return ICE.bool is
+            Value : constant Boolean := Asis.Elements.Has_Limited (Element);
+         begin
+            State.Add_To_Dot_Label ("Has_Limited", Value'Image);
+            return a_nodes_h.Support.To_bool (Value);
+         end;
+
+         function Has_Null_Exclusion return ICE.bool is
             Value : constant Boolean := Asis.Elements.Has_Null_Exclusion (Element);
          begin
             State.Add_To_Dot_Label ("Has_Null_Exclusion", Value'Image);
             return a_nodes_h.Support.To_bool (Value);
-         end Get_Has_Null_Exclusion;
+         end;
 
-         -- Has side-effects:
-         function Get_Subtype_Mark return a_nodes_h.Node_ID is
+         function Has_Private return ICE.bool is
+            Value : constant Boolean := Asis.Elements.Has_Private (Element);
+         begin
+            State.Add_To_Dot_Label ("Has_Private", Value'Image);
+            return a_nodes_h.Support.To_bool (Value);
+         end;
+
+         function Has_Tagged return ICE.bool is
+            Value : constant Boolean := Asis.Elements.Has_Tagged (Element);
+         begin
+            State.Add_To_Dot_Label ("Has_Tagged", Value'Image);
+            return a_nodes_h.Support.To_bool (Value);
+         end;
+
+         function Has_Task return ICE.bool is
+            Value : constant Boolean := Asis.Elements.Has_Task (Element);
+         begin
+            State.Add_To_Dot_Label ("Has_Task", Value'Image);
+            return a_nodes_h.Support.To_bool (Value);
+         end;
+
+         function Implicit_Components return a_nodes_h.Element_List is
+            -- Not implemented in ASIS for GNAT GPL 2017 (20170515-63)GNAT GPL 2017 (20170515-63):
+            Implemented_In_Asis : constant Boolean := False;
+         begin
+            if Implemented_In_Asis then
+               return Element_List
+                 (This           => State,
+                  Elements_In    => Asis.Definitions.Implicit_Components (Element),
+                  Dot_Label_Name => "Implicit_Components");
+            else
+               return a_nodes_h.Support.Empty_Element_List;
+            end if;
+         end;
+
+         function Implicit_Inherited_Declarations return a_nodes_h.Element_List is
+         begin
+            return Element_List
+              (This           => State,
+               Elements_In    => Asis.Definitions.Implicit_Inherited_Declarations (Element),
+               Dot_Label_Name => "Implicit_Inherited_Declarations");
+         end;
+
+         function Implicit_Inherited_Subprograms return a_nodes_h.Element_List is
+         begin
+            return Element_List
+              (This           => State,
+               Elements_In    => Asis.Definitions.Implicit_Inherited_Subprograms (Element),
+               Dot_Label_Name => "Implicit_Inherited_Subprograms");
+         end;
+
+         function Is_Private_Present return ICE.bool is
+            Value : constant Boolean := Asis.Definitions.Is_Private_Present (Element);
+         begin
+            State.Add_To_Dot_Label ("Is_Private_Present", Value'Image);
+            return a_nodes_h.Support.To_bool (Value);
+         end;
+
+         function Lower_Bound return a_nodes_h.Node_ID is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Definitions.Lower_Bound (Element));
+         begin
+            State.Add_To_Dot_Label_And_Edge ("Lower_Bound", ID);
+            return a_nodes_h.Node_ID (ID);
+         end;
+
+         function Parent_Subtype_Indication return a_nodes_h.Node_ID is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Definitions.Parent_Subtype_Indication
+                                 (Element));
+         begin
+            State.Add_To_Dot_Label_And_Edge ("Parent_Subtype_Indication", ID);
+            return a_nodes_h.Node_ID (ID);
+         end;
+
+         function Private_Part_Items return a_nodes_h.Element_List is
+         begin
+            return Element_List
+              (This           => State,
+               Elements_In    => Asis.Definitions.Private_Part_Items (Element),
+               Dot_Label_Name => "Private_Part_Items");
+         end;
+
+         function Range_Attribute return a_nodes_h.Node_ID is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Definitions.Range_Attribute (Element));
+         begin
+            State.Add_To_Dot_Label ("Range_Attribute", To_String (ID));
+            return a_nodes_h.Node_ID (ID);
+         end;
+
+         function Real_Range_Constraint return a_nodes_h.Node_ID is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Definitions.Real_Range_Constraint (Element));
+         begin
+            State.Add_To_Dot_Label ("Real_Range_Constraint", To_String (ID));
+            return a_nodes_h.Node_ID (ID);
+         end;
+
+         function Record_Components return a_nodes_h.Element_List is
+         begin
+            return Element_List
+              (This           => State,
+               Elements_In    => Asis.Definitions.Record_Components (Element),
+               Dot_Label_Name => "Record_Components");
+         end;
+
+         function Record_Definition return a_nodes_h.Node_ID is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Definitions.Record_Definition (Element));
+         begin
+            State.Add_To_Dot_Label_And_Edge ("Record_Definition", ID);
+            return a_nodes_h.Node_ID (ID);
+         end;
+
+         function Subtype_Constraint return a_nodes_h.Node_ID is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Definitions.Subtype_Constraint (Element));
+         begin
+            State.Add_To_Dot_Label_And_Edge ("Subtype_Constraint", ID);
+            return a_nodes_h.Node_ID (ID);
+         end;
+
+         function Subtype_Mark return a_nodes_h.Node_ID is
             ID : constant Types.Node_Id :=
               Asis.Set_Get.Node (Asis.Definitions.Subtype_Mark (Element));
          begin
             State.Add_To_Dot_Label_And_Edge ("Subtype_Mark", ID);
             return a_nodes_h.Node_ID (ID);
-         end Get_Subtype_Mark;
+         end;
 
-         -- Has side-effects:
-         function Get_Subtype_Constraint return a_nodes_h.Constraint_Struct is
+         function Upper_Bound return a_nodes_h.Node_ID is
+            ID : constant Types.Node_Id :=
+              Asis.Set_Get.Node (Asis.Definitions.Upper_Bound (Element));
+         begin
+            State.Add_To_Dot_Label_And_Edge ("Upper_Bound", ID);
+            return a_nodes_h.Node_ID (ID);
+         end;
+
+         function Visible_Part_Items return a_nodes_h.Element_List is
+         begin
+            return Element_List
+              (This           => State,
+               Elements_In    => Asis.Definitions.Visible_Part_Items (Element),
+               Dot_Label_Name => "Visible_Part_Items");
+         end;
+
+         -- END Field support
+         -----------------------------------------------------------------------
+         -- BEGIN record support:
+
+         function Subtype_Constraint return a_nodes_h.Constraint_Struct is
             Parent_Name : constant String := Module_Name;
-            Module_Name : constant String := Parent_Name & ".Get_Subtype_Constraint";
+            Module_Name : constant String := Parent_Name & ".Subtype_Constraint";
 
             Result          : a_nodes_h.Constraint_Struct :=
               a_nodes_h.Support.Default_Constraint_Struct;
@@ -1090,16 +1258,13 @@ package body Asis_Tool_2.Element is
 
             procedure Add_Common_Items is
             begin
-               Add_Constraint_Kind;
+               State.Add_To_Dot_Label ("Constraint_Kind", Constraint_Kind'Image);
+               Result.Constraint_Kind := anhS.To_Constraint_Kinds (Constraint_Kind);
             end Add_Common_Items;
 
             use all type Asis.Constraint_Kinds;
          begin
-            If Constraint_Kind = Not_A_Constraint then
-               -- Redundant with the case below, but lets this if be clearer:
-               raise Program_Error with
-               Module_Name & " called with: " & Constraint_Kind'Image;
-            else
+            If Constraint_Kind /= Not_A_Constraint then
                Add_Common_Items;
             end if;
 
@@ -1108,118 +1273,49 @@ package body Asis_Tool_2.Element is
                   raise Program_Error with
                   Module_Name &   " called with: " & Constraint_Kind'Image;
                when A_Range_Attribute_Reference =>
-                  Add_Range_Attribute;
+                  Result.Range_Attribute := Range_Attribute;
                when A_Simple_Expression_Range =>
-                  Add_Lower_Bound;
-                  Add_Upper_Bound;
+                  Result.Lower_Bound := Lower_Bound;
+                  Result.Upper_Bound := Upper_Bound;
                when A_Digits_Constraint =>
-                  Add_Digits_Expression;
-                  Add_Real_Range_Constraint;
+                  Result.Digits_Expression := Digits_Expression;
+                  Result.Real_Range_Constraint := Real_Range_Constraint;
                when A_Delta_Constraint =>
-                  Add_Delta_Expresssion;
-                  Add_Real_Range_Constraint;
+                  Result.Delta_Expression := Delta_Expression;
+                  Result.Real_Range_Constraint := Real_Range_Constraint;
                when An_Index_Constraint =>
-                  Add_Discrete_Ranges;
+                  Result.Discrete_Ranges := Discrete_Ranges;
                when A_Discriminant_Constraint =>
-                  Add_Discriminant_Associations;
+                  Result.Discriminant_Associations := Discriminant_Associations;
             end case;
 
             return Result;
-         end Get_Subtype_Constraint;
+         end Subtype_Constraint;
 
-         -----------------------------------------------------------------------
-
-         -- Has side effects:
-         function Get_Type_Definition
+         function Type_Definition
            return a_nodes_h.Type_Definition_Struct
          is
             Parent_Name : constant String := Module_Name;
             Module_Name : constant String := Parent_Name & ".Process_Type_Definition";
-
             Result    : a_nodes_h.Type_Definition_Struct :=
               a_nodes_h.Support.Default_Type_Definition_Struct;
+
             Type_Kind : constant Asis.Type_Kinds :=
               Asis.Elements.Type_Kind (Element);
 
-            procedure Add_Parent_Subtype_Indication is
-               ID : constant Types.Node_Id :=
-                 Asis.Set_Get.Node (Asis.Definitions.Parent_Subtype_Indication
-                                    (Element));
-            begin
-               State.Add_To_Dot_Label_And_Edge ("Parent_Subtype_Indication", ID);
-               Result.Parent_Subtype_Indication := a_nodes_h.Node_ID (ID);
-            end;
-
-            procedure Add_Record_Definition is
-               ID : constant Types.Node_Id :=
-                 Asis.Set_Get.Node (Asis.Definitions.Record_Definition (Element));
-            begin
-               State.Add_To_Dot_Label_And_Edge ("Record_Definition", ID);
-               Result.Record_Definition := a_nodes_h.Node_ID (ID);
-            end;
-
-            procedure Add_Implicit_Inherited_Declarations is
-            begin
-               Add_Element_List
-                 (This           => State,
-                  Elements_In    => Asis.Definitions.Implicit_Inherited_Declarations (Element),
-                  Dot_Label_Name => "Implicit_Inherited_Declarations",
-                  List_Out       => Result.Implicit_Inherited_Declarations);
-            end;
-
-            procedure Add_Implicit_Inherited_Subprograms is
-            begin
-               Add_Element_List
-                 (This           => State,
-                  Elements_In    => Asis.Definitions.Implicit_Inherited_Subprograms (Element),
-                  Dot_Label_Name => "Implicit_Inherited_Subprograms",
-                  List_Out       => Result.Implicit_Inherited_Subprograms);
-            end;
-
-            procedure Add_Corresponding_Parent_Subtype is
-               ID : constant Types.Node_Id :=
-                 Asis.Set_Get.Node (Asis.Definitions.Corresponding_Parent_Subtype
-                                    (Element));
-            begin
-               State.Add_To_Dot_Label ("Corresponding_Parent_Subtype", To_String (ID));
-               Result.Corresponding_Parent_Subtype := a_nodes_h.Node_ID (ID);
-            end;
-
-            procedure Add_Corresponding_Root_Type is
-               ID : constant Types.Node_Id :=
-                 Asis.Set_Get.Node (Asis.Definitions.Corresponding_Root_Type
-                                    (Element));
-            begin
-               State.Add_To_Dot_Label ("Corresponding_Root_Type", To_String (ID));
-               Result.Corresponding_Root_Type := a_nodes_h.Node_ID (ID);
-            end;
-
-            procedure Add_Corresponding_Type_Structure is
-               ID : constant Types.Node_Id :=
-                 Asis.Set_Get.Node (Asis.Definitions.Corresponding_Type_Structure
-                                    (Element));
-            begin
-               State.Add_To_Dot_Label ("Corresponding_Type_Structure", To_String (ID));
-               Result.Corresponding_Type_Structure := a_nodes_h.Node_ID (ID);
-            end;
-
             procedure Add_Common_Items is
-            begin
+            begin -- Add_Common_Items
                State.Add_To_Dot_Label ("Type_Kind", Type_Kind'Image);
                Result.Type_Kind := anhS.To_Type_Kinds (Type_Kind);
-               Add_Has_Abstract;
-               Add_Has_Limited;
-               Add_Has_Private;
-               Add_Corresponding_Type_Operators;
+               Result.Has_Abstract := Has_Abstract;
+               Result.Has_Limited := Has_Limited;
+               Result.Has_Private := Has_Private;
+               Result.Corresponding_Type_Operators := Corresponding_Type_Operators;
             end Add_Common_Items;
 
             use all type Asis.Type_Kinds;
          begin -- Process_Type_Definition
-            If Type_Kind = Not_A_Type_Definition then
-               -- Redundant with the case below, but lets this if be clearer:
-               raise Program_Error with
-               Module_Name & " called with: " & Type_Kind'Image;
-            else
+            If Type_Kind /= Not_A_Type_Definition then
                Add_Common_Items;
             end if;
 
@@ -1228,21 +1324,21 @@ package body Asis_Tool_2.Element is
                   raise Program_Error with
                   Module_Name & " called with: " & Type_Kind'Image;
                when A_Derived_Type_Definition =>
-                  Add_Parent_Subtype_Indication;
-                  Add_Implicit_Inherited_Declarations;
-                  Add_Implicit_Inherited_Subprograms;
-                  Add_Corresponding_Parent_Subtype;
-                  Add_Corresponding_Root_Type;
-                  Add_Corresponding_Type_Structure;
+                  Result.Parent_Subtype_Indication := Parent_Subtype_Indication;
+                  Result.Implicit_Inherited_Declarations := Implicit_Inherited_Declarations;
+                  Result.Implicit_Inherited_Subprograms := Implicit_Inherited_Subprograms;
+                  Result.Corresponding_Parent_Subtype := Corresponding_Parent_Subtype;
+                  Result.Corresponding_Root_Type := Corresponding_Root_Type;
+                  Result.Corresponding_Type_Structure := Corresponding_Type_Structure;
                when A_Derived_Record_Extension_Definition =>
-                  Add_Parent_Subtype_Indication;
-                  Add_Record_Definition;
-                  Add_Implicit_Inherited_Declarations;
-                  Add_Implicit_Inherited_Subprograms;
-                  Add_Corresponding_Parent_Subtype;
-                  Add_Corresponding_Root_Type;
-                  Add_Corresponding_Type_Structure;
-                  Add_Definition_Interface_List;
+                  Result.Parent_Subtype_Indication := Parent_Subtype_Indication;
+                  Result.Record_Definition := Record_Definition;
+                  Result.Implicit_Inherited_Declarations := Implicit_Inherited_Declarations;
+                  Result.Implicit_Inherited_Subprograms := Implicit_Inherited_Subprograms;
+                  Result.Corresponding_Parent_Subtype := Corresponding_Parent_Subtype;
+                  Result.Corresponding_Root_Type := Corresponding_Root_Type;
+                  Result.Corresponding_Type_Structure := Corresponding_Type_Structure;
+                  Result.Definition_Interface_List := Definition_Interface_List;
                when An_Enumeration_Type_Definition |
                     A_Signed_Integer_Type_Definition |
                     A_Modular_Type_Definition |
@@ -1254,39 +1350,33 @@ package body Asis_Tool_2.Element is
                     A_Constrained_Array_Definition =>
                   State.Add_Not_Implemented;
                when A_Record_Type_Definition =>
-                  Add_Has_Tagged; -- Small x in spreadsheet?
-                  Add_Record_Definition;
+                  Result.Record_Definition := Record_Definition;
+                  Result.Has_Tagged := Has_Tagged; -- Small x in spreadsheet?               := Has_Tagged; -- Small x in spreadsheet?
                when A_Tagged_Record_Type_Definition =>
-                  Add_Record_Definition;
+                  Result.Record_Definition := Record_Definition;
                when An_Interface_Type_Definition =>
                   State.Add_Not_Implemented;
                when An_Access_Type_Definition =>
-                  Result.Has_Null_Exclusion := Get_Has_Null_Exclusion;
+                  Result.Has_Null_Exclusion := Has_Null_Exclusion;
                   State.Add_Not_Implemented;
             end case;
 
             return Result;
-         end Get_Type_Definition;
+         end Type_Definition;
 
-         -----------------------------------------------------------------------
-
-         -- Has side effects:
-         function Get_Subtype_Indication
+         function Subtype_Indication
            return a_nodes_h.Subtype_Indication_Struct
          is
             Result : a_nodes_h.Subtype_Indication_Struct :=
               a_nodes_h.Support.Default_Subtype_Indication_Struct;
          begin -- Process_Subtype_Indication
-            Result.Has_Null_Exclusion := Get_Has_Null_Exclusion;
-            Result.Subtype_Mark       := Get_Subtype_Mark;
-            Result.Subtype_Constraint := Get_Subtype_Constraint;
+            Result.Has_Null_Exclusion := Has_Null_Exclusion;
+            Result.Subtype_Mark       := Subtype_Mark;
+            Result.Subtype_Constraint := Subtype_Constraint;
             return Result;
-         end Get_Subtype_Indication;
+         end Subtype_Indication;
 
-         -----------------------------------------------------------------------
-
-         -- Has side effects:
-         function Get_Constraint
+         function Constraint
            return a_nodes_h.Constraint_Struct
          is
             Parent_Name : constant String := Module_Name;
@@ -1312,22 +1402,6 @@ package body Asis_Tool_2.Element is
                State.Add_Not_Implemented;
             end;
 
-            procedure Add_Lower_Bound is
-               ID : constant Types.Node_Id :=
-                 Asis.Set_Get.Node (Asis.Definitions.Lower_Bound (Element));
-            begin
-               State.Add_To_Dot_Label_And_Edge ("Lower_Bound", ID);
-               Result.Lower_Bound := a_nodes_h.Node_ID (ID);
-            end;
-
-            procedure Add_Upper_Bound is
-               ID : constant Types.Node_Id :=
-                 Asis.Set_Get.Node (Asis.Definitions.Upper_Bound (Element));
-            begin
-               State.Add_To_Dot_Label_And_Edge ("Upper_Bound", ID);
-               Result.Upper_Bound := a_nodes_h.Node_ID (ID);
-            end;
-
             procedure Add_Range_Attribute is
             begin
                State.Add_Not_Implemented;
@@ -1351,11 +1425,7 @@ package body Asis_Tool_2.Element is
 
             use all type Asis.Constraint_Kinds;
          begin -- Process_Constraint
-            if Constraint_Kind = Not_A_Constraint then
-               -- Redundant with the case below, but lets this if be clearer:
-               raise Program_Error with
-               Module_Name & " called with: " & Constraint_Kind'Image;
-            else
+            if Constraint_Kind /= Not_A_Constraint then
                Add_Common_Items;
             end if;
 
@@ -1365,109 +1435,63 @@ package body Asis_Tool_2.Element is
                     "Element.Pre_Children.Process_Definition.Process_Constraint called with: " &
                     Constraint_Kind'Image;
                when A_Range_Attribute_Reference =>
-                  Add_Range_Attribute;
+                  Result.Range_Attribute := Range_Attribute;
                when A_Simple_Expression_Range =>
-                  Add_Lower_Bound;
-                  Add_Upper_Bound;
+                  Result.Lower_Bound := Lower_Bound;
+                  Result.Upper_Bound := Upper_Bound;
                when A_Digits_Constraint =>
-                  Add_Digits_Expression;
-                  Add_Real_Range_Constraint;
+                  Result.Digits_Expression := Digits_Expression;
+                  Result.Real_Range_Constraint := Real_Range_Constraint;
                when A_Delta_Constraint =>
-                  Add_Delta_Expression;
-                  Add_Real_Range_Constraint;
+                  Result.Delta_Expression := Delta_Expression;
+                  Result.Real_Range_Constraint := Real_Range_Constraint;
                when An_Index_Constraint =>
-                  Add_Discrete_Ranges;
+                  Result.Discrete_Ranges := Discrete_Ranges;
                when A_Discriminant_Constraint =>
-                  Add_Discriminant_Associations;
+                  Result.Discriminant_Associations := Discriminant_Associations;
             end case;
 
             return Result;
-         end Get_Constraint;
+         end Constraint;
 
          -----------------------------------------------------------------------
 
          -- Has side effects:
-         function Get_Record_Definition
+         function Record_Definition
            return a_nodes_h.Record_Definition_Struct
          is
             Result : a_nodes_h.Record_Definition_Struct :=
               a_nodes_h.Support.Default_Record_Definition_Struct;
-
-            procedure Add_Record_Components is begin
-               Add_Element_List
-                 (This           => State,
-                  Elements_In    => Asis.Definitions.Record_Components (Element),
-                  Dot_Label_Name => "Record_Components",
-                  List_Out       => Result.Record_Components,
-                  Add_Edges      => True);
-            end;
-
-            procedure Add_Implicit_Components is begin
-               Add_Element_List
-                 (This           => State,
-                  Elements_In    => Asis.Definitions.Implicit_Components (Element),
-                  Dot_Label_Name => "Implicit_Components",
-                  List_Out       => Result.Implicit_Components,
-                  Add_Edges      => True);
-            end;
-
          begin
-            Add_Record_Components;
-            Add_Implicit_Components;
+            Result.Record_Components := Record_Components;
+            Result.Implicit_Components := Implicit_Components;
             return Result;
-         end Get_Record_Definition;
+         end Record_Definition;
 
          -----------------------------------------------------------------------
 
          -- Has side effects:
-         function Get_Task_Definition
+         function Task_Definition
            return a_nodes_h.Task_Definition_Struct
          is
             Result : a_nodes_h.Task_Definition_Struct :=
               a_nodes_h.Support.Default_Task_Definition_Struct;
-
-            procedure Add_Has_Task is
-               Value : constant Boolean := Asis.Elements.Has_Task (Element);
-            begin
-               State.Add_To_Dot_Label ("Has_Task", Value'Image);
-               Result.Has_Task := a_nodes_h.Support.To_bool (Value);
-            end;
-
-            procedure Add_Visible_Part_Items is begin
-               Add_Element_List
-                 (This           => State,
-                  Elements_In    => Asis.Definitions.Visible_Part_Items (Element),
-                  Dot_Label_Name => "Visible_Part_Items",
-                  List_Out       => Result.Visible_Part_Items,
-                  Add_Edges      => True);
-            end;
-
-            procedure Add_Private_Part_Items is begin
-               Add_Element_List
-                 (This           => State,
-                  Elements_In    => Asis.Definitions.Private_Part_Items (Element),
-                  Dot_Label_Name => "Private_Part_Items",
-                  List_Out       => Result.Private_Part_Items,
-                  Add_Edges      => True);
-            end;
-
-            procedure Add_Is_Private_Present is
-               Value : constant Boolean :=
-                 Asis.Definitions.Is_Private_Present (Element);
-            begin
-               State.Add_To_Dot_Label ("Is_Private_Present", Value'Image);
-               Result.Is_Private_Present := a_nodes_h.Support.To_bool (Value);
-            end;
-
          begin
-            Add_Has_Task;
-            Add_Visible_Part_Items;
-            Add_Private_Part_Items;
-            Add_Is_Private_Present;
+            Result.Has_Task := Has_Task;
+            Result.Visible_Part_Items := Visible_Part_Items;
+            Result.Private_Part_Items := Private_Part_Items;
+            Result.Is_Private_Present := Is_Private_Present;
             return Result;
-         end Get_Task_Definition;
+         end Task_Definition;
 
+          -- END record support
          -----------------------------------------------------------------------
+
+         Result          : a_nodes_h.Definition_Struct :=
+           a_nodes_h.Support.Default_Definition_Struct;
+
+         Definition_Kind : constant Asis.Definition_Kinds :=
+           Asis.Elements.Definition_Kind (Element);
 
          procedure Add_Common_Items is
          begin
@@ -1475,15 +1499,9 @@ package body Asis_Tool_2.Element is
             Result.Definition_Kind := anhS.To_Definition_Kinds (Definition_Kind);
          end Add_Common_Items;
 
-         -----------------------------------------------------------------------
-
          use all type Asis.Definition_Kinds;
       begin -- Process_Definition
-         If Definition_Kind = Not_A_Definition then
-            -- Redundant with the case below, but lets this if be clearer:
-            raise Program_Error with
-            Module_Name & " called with: " & Definition_Kind'Image;
-         else
+         If Definition_Kind /= Not_A_Definition then
             Add_Common_Items;
          end if;
 
@@ -1493,13 +1511,12 @@ package body Asis_Tool_2.Element is
                  "Element.Pre_Children.Process_Definition called with: " &
                  Definition_Kind'Image;
             when A_Type_Definition =>
-               Result.The_Union.The_Type_Definition := Get_Type_Definition;
+               Result.The_Union.The_Type_Definition := Type_Definition;
             when A_Subtype_Indication =>
-               Result.The_Union.The_Subtype_Indication := Get_Subtype_Indication;
+               Result.The_Union.The_Subtype_Indication := Subtype_Indication;
             when A_Constraint =>
-               Result.The_Union.The_Constraint := Get_Constraint;
+               Result.The_Union.The_Constraint := Constraint;
             when A_Component_Definition =>
-
                State.Add_Not_Implemented;
             when A_Discrete_Subtype_Definition =>
                State.Add_Not_Implemented;
@@ -1511,7 +1528,7 @@ package body Asis_Tool_2.Element is
             when A_Known_Discriminant_Part =>
                State.Add_Not_Implemented;
             when A_Record_Definition =>
-               Result.The_Union.The_Record_Definition := Get_Record_Definition;
+               Result.The_Union.The_Record_Definition := Record_Definition;
             when A_Null_Record_Definition =>
                null; -- No more components
             when A_Null_Component =>
@@ -1532,7 +1549,7 @@ package body Asis_Tool_2.Element is
             when A_Private_Extension_Definition =>
                State.Add_Not_Implemented;
             when A_Task_Definition =>
-               Result.The_Union.The_Task_Definition := Get_Task_Definition;
+               Result.The_Union.The_Task_Definition := Task_Definition;
             when A_Protected_Definition =>
                State.Add_Not_Implemented;
             when A_Formal_Type_Definition =>
@@ -1695,11 +1712,7 @@ package body Asis_Tool_2.Element is
 
          use all type Asis.Expression_Kinds;
       begin
-         If Expression_Kind = Not_An_Expression then
-            -- Redundant with the case below, but lets this if be clearer:
-            raise Program_Error with
-            Module_Name & " called with: " & Expression_Kind'Image;
-         else
+         If Expression_Kind /= Not_An_Expression then
             Add_Common_Items;
          end if;
 
@@ -1860,11 +1873,7 @@ package body Asis_Tool_2.Element is
 
          use all type Asis.Association_Kinds;
       begin
-         If Association_Kind = Not_An_Association then
-            -- Redundant with the case below, but lets this if be clearer:
-            raise Program_Error with
-            Module_Name & " called with: " & Association_Kind'Image;
-         else
+         If Association_Kind /= Not_An_Association then
             Add_Common_Items;
          end if;
 
@@ -2093,11 +2102,7 @@ package body Asis_Tool_2.Element is
 
          use all type Asis.Statement_Kinds;
       begin
-         If Statement_Kind = Not_A_Statement then
-            -- Redundant with the case below, but lets this if be clearer:
-            raise Program_Error with
-            Module_Name & " called with: " & Statement_Kind'Image;
-         else
+         If Statement_Kind /= Not_A_Statement then
             Add_Common_Items;
          end if;
 
@@ -2287,11 +2292,7 @@ package body Asis_Tool_2.Element is
 
          use all type Asis.Path_Kinds;
       begin
-         If Path_Kind = Not_A_Path then
-            -- Redundant with the case below, but lets this if be clearer:
-            raise Program_Error with
-            Module_Name & " called with: " & Path_Kind'Image;
-         else
+         If Path_Kind /= Not_A_Path then
             Add_Common_Items;
          end if;
 
@@ -2352,6 +2353,13 @@ package body Asis_Tool_2.Element is
                Add_Edges      => True);
          end;
 
+         procedure Add_Has_Limited is
+            Value : constant Boolean := Asis.Elements.Has_Limited (Element);
+         begin
+            State.Add_To_Dot_Label ("Has_Limited", Value'Image);
+            Result.Has_Limited := a_nodes_h.Support.To_bool (Value);
+         end;
+
          procedure Add_Common_Items is
          begin
             State.Add_To_Dot_Label ("Clause_Kind", Clause_Kind'Image);
@@ -2360,11 +2368,7 @@ package body Asis_Tool_2.Element is
 
          use all type Asis.Clause_Kinds;
       begin
-         If Clause_Kind = Not_A_Clause then
-            -- Redundant with the case below, but lets this if be clearer:
-            raise Program_Error with
-            Module_Name & " called with: " & Clause_Kind'Image;
-         else
+         If Clause_Kind /= Not_A_Clause then
             Add_Common_Items;
          end if;
 
@@ -2447,7 +2451,7 @@ package body Asis_Tool_2.Element is
       --------------------------------------------------------------------------
       --------------------------------------------------------------------------
 
-      function Get_Enclosing_ID
+      function Enclosing_ID
         (Element : in Asis.Element)
          return Dot.ID_Type
       is
@@ -2465,16 +2469,16 @@ package body Asis_Tool_2.Element is
             Result := To_Dot_ID_Type (Enclosing_Unit_Id);
          end if;
          return Result;
-      end Get_Enclosing_ID;
+      end Enclosing_ID;
 
-      function Get_Enclosing_ID
+      function Enclosing_ID
         (Element : in Asis.Element)
          return a_nodes_h.Node_ID is
       begin
          return a_nodes_h.Node_ID
            (Asis.Set_Get.Node_Value
               (Asis.Elements.Enclosing_Element (Element)));
-      end Get_Enclosing_ID;
+      end Enclosing_ID;
 
       function Spec_Or_Body_Image
         (Unit_Class : in Asis.Unit_Classes)
@@ -2560,6 +2564,8 @@ package body Asis_Tool_2.Element is
                Last_Column  => Interfaces.C.int (Span.Last_Column));
          end;
 
+         -- Alphabetical order:
+
          procedure Add_Is_Part_Of_Implicit is
             Value : constant Boolean := Asis.Elements.Is_Part_Of_Implicit (Element);
          begin
@@ -2639,11 +2645,7 @@ package body Asis_Tool_2.Element is
 
          use all type Asis.Element_Kinds;
       begin
-         If Element_Kind = Not_An_Element then
-            -- Redundant with the case below, but lets this if be clearer:
-            raise Program_Error with
-            Module_Name & " called with: " & Element_Kind'Image;
-         else
+         If Element_Kind /= Not_An_Element then
             Start_Output;
          end if;
 
@@ -2792,7 +2794,6 @@ package body Asis_Tool_2.Element is
       This.Add_To_Dot_Label ("ASIS_PROCESSING", String'("NOT_IMPLEMENTED_COMPLETELY"));
    end Add_Not_Implemented;
 
-
    -----------
    -- PRIVATE:
    -----------
@@ -2812,7 +2813,7 @@ package body Asis_Tool_2.Element is
             Value => Label);
          This.Outputs.Graph.Append_Stmt (new Dot.Edges.Stmts.Class'(Edge_Stmt));
       end if;
-   end;
+   end Add_Dot_Edge;
 
    -----------
    -- PRIVATE:
@@ -2826,7 +2827,7 @@ package body Asis_Tool_2.Element is
       This.Add_Dot_Edge (From  => This.Element_ID,
                          To    => To,
                          Label => Label);
-   end;
+   end Add_To_Dot_Label_And_Edge;
 
 end Asis_Tool_2.Element;
 
