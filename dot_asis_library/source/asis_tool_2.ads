@@ -8,6 +8,7 @@ private with Ada.Exceptions;
 private with Ada.Text_IO;
 private with Ada.Wide_Text_IO;
 private with Asis;
+private with Interfaces.C.Extensions;
 private with Interfaces.C.Strings;
 
 -- GNAT-specific:
@@ -42,6 +43,7 @@ private
    package ASU renames Ada.Strings.Unbounded;
    package ATI renames Ada.Text_IO;
    package AWTI renames Ada.Wide_Text_IO;
+   package ICE renames Interfaces.C.Extensions;
    package ICS renames Interfaces.C.Strings;
    package anhS renames a_nodes_h.Support;
 

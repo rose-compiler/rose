@@ -7,7 +7,11 @@ project DOT_ASIS is
 
    for Object_Dir use "./obj";
 
-   for Languages use ("Ada", "C");
+   -- There are no C or C++ sources in this project.  Those languages appear
+   -- below so that the GPS IDE may easily be used for incidental language-
+   -- aware viewing of C and C++ files when it has this project open.
+   --
+   for Languages use ("Ada", "C", "C++");
 
    for Main use
      ("demo_dot.adb",

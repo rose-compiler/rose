@@ -11,6 +11,8 @@ with Dot;
 
 package body Asis_Tool_2.Unit is
 
+   Package_Name : constant String := "Asis_Tool_2.Unit";
+
    package ACU renames Asis.Compilation_Units;
 
    -- Add <Name> = <Value> to the label, and print it if trace is on.
@@ -146,7 +148,7 @@ package body Asis_Tool_2.Unit is
       Tool_Element : Element.Class; -- Initialized
    begin
       This.Add_To_Dot_Label_And_Edge
-        (Label => "Element",
+        (Label => "Unit_Declaration",
          To    =>  Asis.Set_Get.Node (Asis_Element));
       Tool_Element.Process_Element_Tree
         (Element => Asis_Element,
@@ -216,6 +218,9 @@ package body Asis_Tool_2.Unit is
      (This    : in out Class;
       Unit    : in Asis.Compilation_Unit)
    is
+      Module_Name    : constant String := Package_Name &
+        ".Process_Application_Unit";
+
       A_Node         : a_nodes_h.Node_Struct      := anhS.Default_Node_Struct;
       Unit_Class     : constant Asis.Unit_Classes := ACU.Unit_Class (Unit);
       Unit_Full_Name : constant Wide_String       := Acu.Unit_Full_Name (Unit);
@@ -223,7 +228,7 @@ package body Asis_Tool_2.Unit is
 
       procedure Log (Message : in String) is
       begin
-         Put_Line ("Asis_Tool_2.Unit.Process_Application_Unit:  " & message);
+         Put_Line (Module_Name & ":  " & message);
       end;
 
       -- These are in alphabetical order:
@@ -336,6 +341,13 @@ package body Asis_Tool_2.Unit is
          This.A_Unit.Is_Body_Required := a_nodes_h.Support.To_bool (Value);
       end;
 
+      procedure Add_Is_Standard is
+         Value : Boolean := Asis.Set_Get.Is_Standard (Unit);
+      begin
+         This.Add_To_Dot_Label ("Is_Standard", Value'Image);
+         This.A_Unit.Is_Standard := a_nodes_h.Support.To_bool (Value);
+      end;
+
       procedure Add_Object_Form is
          WS : constant Wide_String := ACU.Object_Form (Unit);
       begin
@@ -430,6 +442,8 @@ package body Asis_Tool_2.Unit is
          Default_Node  : Dot.Node_Stmt.Class; -- Initialized
          Default_Label : Dot.HTML_Like_Labels.Class; -- Initialized
       begin
+         Log ("Processing " & To_String (Unit_Full_Name) & " " &
+                To_String (To_Wide_String (Unit_Class)));
          This.Outputs.Text.Indent;
          This.Outputs.Text.End_Line;
          This.Dot_Node := Default_Node;
@@ -461,6 +475,7 @@ package body Asis_Tool_2.Unit is
          Add_Unit_Declaration;
          Add_Context_Clause_Elements;
          Add_Compilation_Pragmas;
+         Add_Is_Standard;
       end;
 
       procedure Finish_Output is
@@ -481,17 +496,19 @@ package body Asis_Tool_2.Unit is
 
       use all type Asis.Unit_Kinds;
    begin -- Process_Application_Unit
-      If Unit_Kind /= Not_A_Unit then
-         Log ("Processing " & To_String (Unit_Full_Name) & " " &
-                To_String (To_Wide_String (Unit_Class)));
+      If Unit_Kind = Not_A_Unit then
+         -- Redundant with the case below, but lets this if be clearer:
+         raise Program_Error with
+           Module_Name & " called with: " & Unit_Kind'Image;
+      else
          Start_Output;
       end if;
 
       -- Not common items, in Asis order:
       case Unit_Kind is
          when Not_A_Unit =>
-               raise Program_Error with
-                 "Unit.Add_Output called with: " & Unit_Kind'Image;
+            raise Program_Error with
+            Module_Name & " called with: " & Unit_Kind'Image;
          when A_Procedure |
               A_Function |
               A_Generic_Procedure |
