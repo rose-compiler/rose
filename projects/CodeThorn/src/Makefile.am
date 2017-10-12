@@ -614,7 +614,7 @@ check-domain:
 	@./codethorn --edg:no_warnings $(srcdir)/tests/typetest1.C 
 	@./codethorn --edg:no_warnings $(srcdir)/tests/domaintest1.C 
 	@./codethorn --edg:no_warnings $(srcdir)/tests/domaintest2.C 
-	@./codethorn tests/arraytest7.C --viz && dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
+	@./codethorn $(srcdir)/tests/arraytest7.C --viz && dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
 
 check-data-races:
 	@echo ================================================================
@@ -708,6 +708,8 @@ clean-local:
 	rm -f tmp.nsdump
 	rm -f rose_Problem1401_opt.pp.c
 	rm -f Problem1401_assert_results_forcedtop_1000_n_bf.csv 
+	rm -f transitiongraph1.pdf
+	rm -f transitiongraph2.pdf
 
 distclean-local: clean
 	rm -f *.tgz
