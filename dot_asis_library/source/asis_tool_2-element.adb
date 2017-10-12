@@ -2530,8 +2530,6 @@ package body Asis_Tool_2.Element is
            Asis.Elements.Element_Kind (Element);
 
          procedure Add_Element_ID is begin
-            State.Element_ID := Asis.Set_Get.Node (Element);
-            State.Dot_Node.Node_ID.ID := To_Dot_ID_Type (State.Element_ID);
             State.Add_To_Dot_Label (To_String (State.Element_ID));
             -- ID is in the Dot node twice, but not in the a_node twice.
             Result.id := a_nodes_h.Node_ID (State.Element_ID);
@@ -2590,7 +2588,7 @@ package body Asis_Tool_2.Element is
          procedure Add_Hash is
             Value : constant Asis.ASIS_Integer := Asis.Elements.Hash (Element);
          begin
-            State.Add_To_Dot_Label ("Add_Hash", Value'Image);
+            State.Add_To_Dot_Label ("Hash", Value'Image);
             Result.Hash := a_nodes_h.ASIS_Integer (Value);
          end;
 
@@ -2610,12 +2608,16 @@ package body Asis_Tool_2.Element is
             Default_Node  : Dot.Node_Stmt.Class; -- Initialized
             Default_Label : Dot.HTML_Like_Labels.Class; -- Initialized
          begin
-            State.Outputs.Text.Indent;
+            Result := a_nodes_h.Support.Default_Element_Struct;
+            State.Element_ID := Asis.Set_Get.Node (Element);
+
             State.Outputs.Text.End_Line;
-            State.Outputs.Text.Put_Indented_Line (String'("BEGIN ELEMENT"));
+            -- Element ID comes out on next line via Add_Element_ID:
+            State.Outputs.Text.Put_Indented_Line (String'("BEGIN "));
+            State.Outputs.Text.Indent;
             State.Dot_Node := Default_Node;
             State.Dot_Label := Default_Label;
-            Result := a_nodes_h.Support.Default_Element_Struct;
+            State.Dot_Node.Node_ID.ID := To_Dot_ID_Type (State.Element_ID);
 
             Add_Element_ID;
             Add_Element_Kind;
@@ -2638,9 +2640,6 @@ package body Asis_Tool_2.Element is
             A_Node.Node_Kind := a_nodes_h.An_Element_Node;
             A_Node.The_Union.element := Result;
             State.Outputs.A_Nodes.Push (A_Node);
-
-            State.Outputs.Text.End_Line;
-            State.Outputs.Text.Dedent;
          end;
 
          use all type Asis.Element_Kinds;
@@ -2700,7 +2699,10 @@ package body Asis_Tool_2.Element is
          Control : in out Asis.Traverse_Control;
          State   : in out Class) is
       begin
-         State.Outputs.Text.Put_Indented_Line (String'("END ELEMENT"));
+         State.Outputs.Text.End_Line;
+         State.Outputs.Text.Dedent;
+         State.Outputs.Text.Put_Indented_Line
+           (String'("END " & To_String (Asis.Set_Get.Node (Element))));
       end Process_Element;
 
    end Post_Children;
@@ -2789,7 +2791,7 @@ package body Asis_Tool_2.Element is
    -- PRIVATE:
    -----------
    procedure Add_Not_Implemented
-     (This  : in out Class) is
+     (This : in out Class) is
    begin
       This.Add_To_Dot_Label ("ASIS_PROCESSING", String'("NOT_IMPLEMENTED_COMPLETELY"));
    end Add_Not_Implemented;
