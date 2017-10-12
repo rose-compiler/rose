@@ -113,6 +113,7 @@ package body Indented_Text is
    begin
       This.Put_Indent_If_Needed;
       Put_Line (Message);
+      This.Line_In_Progress := False;
    end Put_Indented_Line;
 
    ------------

@@ -67,7 +67,7 @@ private
       Label : in     String;
       To    : in     Types.Node_Id);
 
-   -- Add attribute: Traversal="***NOT_IMPLEMENTED"
+   -- Add to dot label: ASIS_PROCESSING => "NOT_IMPLEMENTED_COMPLETELY"
    procedure Add_Not_Implemented
      (This  : in out Class);
 

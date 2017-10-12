@@ -9,11 +9,19 @@ package a_nodes_h.Support is
    package ICE renames Interfaces.C.Extensions;
    package ICS renames Interfaces.C.Strings;
 
-   Invalid_bool      : constant ICE.bool := 0;
-   Invalid_chars_ptr : constant ICS.chars_ptr := ICS.Null_Ptr;
-   Invalid_Node_ID   : constant Node_ID := -1;
+   Invalid_bool         : constant ICE.bool := 0;
+   Invalid_chars_ptr    : constant ICS.chars_ptr := ICS.Null_Ptr;
 
    -- Order below is same as in a_nodes.h:
+
+   Invalid_Program_Text : constant Program_Text := Program_Text(ICS.Null_Ptr);
+   Invalid_Node_ID      : constant Node_ID := -1;
+
+   Empty_Element_List   : constant Element_List :=
+     (length => 0,
+      IDs => null);
+   Empty_Name_List      : constant Name_List :=
+     Name_List (Empty_Element_List);
 
    Default_Context_Struct : constant Context_Struct :=
      (name        => Invalid_chars_ptr,
@@ -22,18 +30,19 @@ package a_nodes_h.Support is
 
    -- Element union component default structs go here
 
-   Empty_Element_List    : constant Element_List :=
-     (length => 0,
-      IDs => null);
-   Empty_Name_List       : constant Name_List :=
-     Name_List (Empty_Element_List);
 
    Default_Pragma_Struct : constant Pragma_Struct :=
-     (Pragma_Kind => Not_A_Pragma);
+     (Pragma_Kind                  => Not_A_Pragma,
+      Pragmas                      => Empty_Element_List,
+      Pragma_Name_Image            => Invalid_Program_Text,
+      Pragma_Argument_Associations => Empty_Element_List
+     );
 
    Default_Defining_Name_Struct : constant Defining_Name_Struct :=
      (Defining_Name_Kind                 => Not_A_Defining_Name,
       Defining_Name_Image                => Invalid_chars_ptr,
+      References                         => Empty_Name_List,
+      Is_Referenced                      => Invalid_bool,
       Position_Number_Image              => Invalid_chars_ptr,
       Representation_Value_Image         => Invalid_chars_ptr,
       Defining_Prefix                    => Invalid_Node_ID,
@@ -45,14 +54,26 @@ package a_nodes_h.Support is
    Default_Declaration_Struct : constant Declaration_Struct :=
      (Declaration_Kind                     => Not_A_Declaration,
       Declaration_Origin                   => Not_A_Declaration_Origin,
+      Corresponding_Pragmas                => Empty_Element_List,
+      Names                                => Empty_Name_List,
+      Aspect_Specifications                => Empty_Element_List,
+      Corresponding_Representation_Clauses => Empty_Element_List,
+      Has_Abstract                         => Invalid_bool,
+      Has_Aliased                          => Invalid_bool,
+      Has_Limited                          => Invalid_bool,
+      Has_Private                          => Invalid_bool,
+      Has_Protected                        => Invalid_bool,
+      Has_Reverse                          => Invalid_bool,
+      Has_Task                             => Invalid_bool,
+      Has_Null_Exclusion                   => Invalid_bool,
+      Is_Not_Null_Return                   => Invalid_bool,
       Mode_Kind                            => Not_A_Mode,
       Default_Kind                         => Not_A_Default,
-      Trait_Kind                           => Not_A_Trait,
-      Names                                => Empty_Element_List,
+      Pragmas                              => Empty_Element_List,
+      Corresponding_End_Name               => Invalid_Node_ID,
       Discriminant_Part                    => Invalid_Node_ID,
       Type_Declaration_View                => Invalid_Node_ID,
       Object_Declaration_View              => Invalid_Node_ID,
-      Aspect_Specifications                => Empty_Element_List,
       Initialization_Expression            => Invalid_Node_ID,
       Corresponding_Type_Declaration       => Invalid_Node_ID,
       Corresponding_Type_Completion        => Invalid_Node_ID,
@@ -60,7 +81,6 @@ package a_nodes_h.Support is
       Corresponding_First_Subtype          => Invalid_Node_ID,
       Corresponding_Last_Constraint        => Invalid_Node_ID,
       Corresponding_Last_Subtype           => Invalid_Node_ID,
-      Corresponding_Representation_Clauses => Empty_Element_List,
       Specification_Subtype_Definition     => Invalid_Node_ID,
       Iteration_Scheme_Name                => Invalid_Node_ID,
       Subtype_Indication                   => Invalid_Node_ID,
@@ -98,68 +118,216 @@ package a_nodes_h.Support is
       Formal_Subprogram_Default            => Invalid_Node_ID,
       Is_Dispatching_Operation             => Invalid_bool);
 
-   Default_Definition_Struct : constant Definition_Struct :=
-     (Definition_Kind                 => Not_A_Definition,
-      Trait_Kind                      => Not_A_Trait,
-      Type_Kind                       => Not_A_Type_Definition,
-      Parent_Subtype_Indication       => Invalid_Node_ID,
-      Record_Definition               => Invalid_Node_ID,
+   Default_Access_Type_Struct : constant Access_Type_Struct :=
+     (Access_Type_Kind                       => Not_An_Access_Type_Definition,
+      Has_Null_Exclusion                     => Invalid_bool,
+      Is_Not_Null_Return                     => Invalid_bool,
+      Access_To_Object_Definition            => Invalid_Node_ID,
+      Access_To_Subprogram_Parameter_Profile => Empty_Element_List,
+      Access_To_Function_Result_Profile      => Invalid_Node_ID);
+
+   Default_Type_Definition_Struct : constant Type_Definition_Struct :=
+     (Type_Kind                        => Not_A_Type_Definition,
+      Has_Abstract                     => Invalid_bool,
+      Has_Limited                      => Invalid_bool,
+      Has_Private                      => Invalid_bool,
+      Corresponding_Type_Operators     => Empty_Element_List,
+      Has_Protected                    => Invalid_bool,
+      Has_Synchronized                 => Invalid_bool,
+      Has_Tagged                       => Invalid_bool,
+      Has_Task                         => Invalid_bool,
+      Has_Null_Exclusion               => Invalid_bool,
+      Interface_Kind                   => Not_An_Interface,
+      Root_Type_Kind                   => Not_A_Root_Type_Definition,
+      Parent_Subtype_Indication        => Invalid_Node_ID,
+      Record_Definition                => Invalid_Node_ID,
+      Implicit_Inherited_Declarations  => Empty_Element_List,
+      Implicit_Inherited_Subprograms   => Empty_Element_List,
+      Corresponding_Parent_Subtype     => Invalid_Node_ID,
+      Corresponding_Root_Type          => Invalid_Node_ID,
+      Corresponding_Type_Structure     => Invalid_Node_ID,
+      Enumeration_Literal_Declarations => Empty_Element_List,
+      Integer_Constraint               => Invalid_Node_ID,
+      Mod_Static_Expression            => Invalid_Node_ID,
+      Digits_Expression                => Invalid_Node_ID,
+      Delta_Expression                 => Invalid_Node_ID,
+      Real_Range_Constraint            => Invalid_Node_ID,
+      Index_Subtype_Definitions        => Empty_Element_List,
+      Discrete_Subtype_Definitions     => Empty_Element_List,
+      Array_Component_Definition       => Invalid_Node_ID,
+      Definition_Interface_List        => Empty_Element_List,
+      Access_Type                      => Default_Access_Type_Struct);
+
+   Default_Constraint_Struct : constant Constraint_Struct :=
+     (Constraint_Kind           => Not_A_Constraint,
+      Digits_Expression         => Invalid_Node_ID,
+      Delta_Expression          => Invalid_Node_ID,
+      Real_Range_Constraint     => Invalid_Node_ID,
+      Lower_Bound               => Invalid_Node_ID,
+      Upper_Bound               => Invalid_Node_ID,
+      Range_Attribute           => Invalid_Node_ID,
+      Discrete_Ranges           => Empty_Element_List,
+      Discriminant_Associations => Empty_Element_List);
+
+   Default_Subtype_Indication_Struct : constant Subtype_Indication_Struct :=
+     (Has_Null_Exclusion => Invalid_bool,
+      Subtype_Mark       => Invalid_Node_ID,
+      Subtype_Constraint => Invalid_Node_ID);
+
+   Default_Component_Definition_Struct : constant Component_Definition_Struct :=
+     (Component_Definition_View => Invalid_Node_ID);
+
+   Default_Discrete_Subtype_Definition_Struct :
+   constant Discrete_Subtype_Definition_Struct :=
+     (Discrete_Range_Kind => Not_A_Discrete_Range,
+      Subtype_Mark        => Invalid_Node_ID,
+      Subtype_Constraint  => Invalid_Node_ID);
+
+   Default_Discrete_Range_Struct : constant Discrete_Range_Struct :=
+     (Discrete_Range_Kind => Not_A_Discrete_Range,
+      Subtype_Mark        => Invalid_Node_ID,
+      Subtype_Constraint  => Invalid_Node_ID,
+      Lower_Bound         => Invalid_Node_ID,
+      Upper_Bound         => Invalid_Node_ID,
+      Range_Attribute     => Invalid_Node_ID);
+
+   Default_Known_Discriminant_Part_Struct :
+   constant Known_Discriminant_Part_Struct :=
+     (Discriminants => Empty_Element_List);
+
+   Default_Record_Definition_Struct : constant Record_Definition_Struct :=
+     (Record_Components   => Empty_Element_List,
+      Implicit_Components => Empty_Element_List);
+
+   Default_Variant_Part_Struct : constant Variant_Part_Struct :=
+     (Discriminant_Direct_Name => Invalid_Node_ID,
+      Variants                 => Empty_Element_List);
+
+   Default_Variant_Struct : constant Variant_Struct :=
+     (Record_Components   => Empty_Element_List,
+      Implicit_Components => Empty_Element_List,
+      Variant_Choices     => Empty_Element_List);
+
+   Default_Access_Definition_Struct : constant Access_Definition_Struct :=
+     (Access_Definition_Kind                  => Not_An_Access_Definition,
+      Has_Null_Exclusion                      => Invalid_bool,
+      Is_Not_Null_Return                      => Invalid_bool,
+      Anonymous_Access_To_Object_Subtype_Mark => Invalid_Node_ID,
+      Access_To_Subprogram_Parameter_Profile  => Empty_Element_List,
+      Access_To_Function_Result_Profile       => Invalid_Node_ID);
+
+   Default_Private_Type_Definition_Struct :
+   constant Private_Type_Definition_Struct :=
+     (Has_Abstract => Invalid_bool,
+      Has_Limited  => Invalid_bool,
+      Has_Private  => Invalid_bool);
+
+   Default_Tagged_Private_Type_Definition_Struct :
+   constant Tagged_Private_Type_Definition_Struct :=
+     (Has_Abstract => Invalid_bool,
+      Has_Limited  => Invalid_bool,
+      Has_Private  => Invalid_bool,
+      Has_Tagged   => Invalid_bool);
+
+   Default_Private_Extension_Definition_Struct :
+   constant Private_Extension_Definition_Struct :=
+     (Has_Abstract                    => Invalid_bool,
+      Has_Limited                     => Invalid_bool,
+      Has_Private                     => Invalid_bool,
+      Has_Synchronized                => Invalid_bool,
       Implicit_Inherited_Declarations => Empty_Element_List,
       Implicit_Inherited_Subprograms  => Empty_Element_List,
-      Corresponding_Parent_Subtype    => Invalid_Node_ID,
-      Corresponding_Root_Type         => Invalid_Node_ID,
-      Corresponding_Type_Structure    => Invalid_Node_ID,
-      Constraint_Kind                 => Not_A_Constraint,
-      Lower_Bound                     => Invalid_Node_ID,
-      Upper_Bound                     => Invalid_Node_ID,
+      Definition_Interface_List       => Empty_Element_List,
+      Ancestor_Subtype_Indication     => Invalid_Node_ID);
+
+   Default_Task_Definition_Struct : constant Task_Definition_Struct :=
+     (Has_Task           => Invalid_bool,
+      Visible_Part_Items => Empty_Element_List,
+      Private_Part_Items => Empty_Element_List,
+      Is_Private_Present => Invalid_bool);
+
+   Default_Protected_Definition_Struct : constant Protected_Definition_Struct :=
+     (Has_Protected      => Invalid_bool,
+      Visible_Part_Items => Empty_Element_List,
+      Private_Part_Items => Empty_Element_List,
+      Is_Private_Present => Invalid_bool);
+
+   Defult_Formal_Type_Definition_Struct :
+   constant Formal_Type_Definition_Struct :=
+     (Formal_Type_Kind                => Not_A_Formal_Type_Definition,
+      Corresponding_Type_Operators    => Empty_Element_List,
+      Has_Abstract                    => Invalid_bool,
+      Has_Limited                     => Invalid_bool,
+      Has_Private                     => Invalid_bool,
+      Has_Synchronized                => Invalid_bool,
+      Has_Tagged                      => Invalid_bool,
+      Interface_Kind                  => Not_An_Interface,
+      Implicit_Inherited_Declarations => Empty_Element_List,
+      Implicit_Inherited_Subprograms  => Empty_Element_List,
+      Index_Subtype_Definitions       => Empty_Element_List,
+      Discrete_Subtype_Definitions    => Empty_Element_List,
+      Array_Component_Definition      => Invalid_Node_ID,
       Subtype_Mark                    => Invalid_Node_ID,
-      Subtype_Constraint              => Invalid_Node_ID,
-      Component_Subtype_Indication    => Invalid_Node_ID,
-      Component_Definition_View       => Invalid_Node_ID,
-      Record_Components               => Empty_Element_List,
-      Implicit_Components             => Empty_Element_List,
-      Visible_Part_Items              => Empty_Element_List,
-      Private_Part_Items              => Empty_Element_List,
-      Is_Private_Present              => Invalid_bool
-     );
+      Definition_Interface_List       => Empty_Element_List,
+      Access_Type                     => Default_Access_Type_Struct);
+
+   Default_Aspect_Specification_Struct : constant Aspect_Specification_Struct :=
+     (Aspect_Mark       => Invalid_Node_ID,
+      Aspect_Definition => Invalid_Node_ID);
+
+   Default_No_Struct : constant No_Struct := -1;
+
+   Default_Definition_Union : constant Definition_Union :=
+     (discr        => 0,
+      Dummy_Member => -1);
+
+   Default_Definition_Struct : constant Definition_Struct :=
+     (Definition_Kind                 => Not_A_Definition,
+      The_Union => Default_Definition_Union);
+
 
    Default_Expression_Struct : constant Expression_Struct :=
      (Expression_Kind                          => Not_An_Expression,
+      Is_Prefix_Notation                       => Invalid_bool,
       Corresponding_Expression_Type            => Invalid_Node_ID,
+      Corresponding_Expression_Type_Definition => Invalid_Node_ID,
+      Operator_Kind                            => Not_An_Operator,
+      Attribute_Kind                            => Not_An_Attribute,
       Value_Image                              => Invalid_chars_ptr,
       Name_Image                               => Invalid_chars_ptr,
       Corresponding_Name_Definition            => Invalid_Node_ID,
       Corresponding_Name_Definition_List       => Empty_Element_List,
       Corresponding_Name_Declaration           => Invalid_Node_ID,
-      Operator_Kind                            => Not_An_Operator,
       Prefix                                   => Invalid_Node_ID,
-      Corresponding_Called_Function            => Invalid_Node_ID,
-      Is_Prefix_Call                           => Invalid_bool,
-      Function_Call_Parameters                 => Empty_Element_List,
       Index_Expressions                        => Empty_Element_List,
-      Is_Generalized_Indexing                  => Invalid_bool,
       Slice_Range                              => Invalid_Node_ID,
       Selector                                 => Invalid_Node_ID,
-      Atribute_Kind                            => Not_An_Attribute,
       Attribute_Designator_Identifier          => Invalid_Node_ID,
       Attribute_Designator_Expressions         => Empty_Element_List,
       Record_Component_Associations            => Empty_Element_List,
       Extension_Aggregate_Expression           => Invalid_Node_ID,
       Array_Component_Associations             => Empty_Element_List,
+      Expression_Parenthesized                 => Invalid_Node_ID,
+      Is_Prefix_Call                           => Invalid_bool,
+      Corresponding_Called_Function            => Invalid_Node_ID,
+      Function_Call_Parameters                 => Empty_Element_List,
       Short_Circuit_Operation_Left_Expression  => Invalid_Node_ID,
       Short_Circuit_Operation_Right_Expression => Invalid_Node_ID,
       Membership_Test_Expression               => Invalid_Node_ID,
       Membership_Test_Choices                  => Empty_Element_List,
-      Expression_Parenthesized                 => Invalid_Node_ID,
       Converted_Or_Qualified_Subtype_Mark      => Invalid_Node_ID,
       Converted_Or_Qualified_Expression        => Invalid_Node_ID,
-      Predicate                                => Invalid_Node_ID,
-      Subpool_Name                             => Invalid_Node_ID,
       Allocator_Subtype_Indication             => Invalid_Node_ID,
       Allocator_Qualified_Expression           => Invalid_Node_ID,
       Expression_Paths                         => Empty_Element_List,
+      Is_Generalized_Indexing                  => Invalid_bool,
+      Is_Generalized_Reference                 => Invalid_bool,
       Iterator_Specification                   => Invalid_Node_ID,
-      Corresponding_Generic_Element            => Invalid_Node_ID);
+      Predicate                                => Invalid_Node_ID,
+      Subpool_Name                             => Invalid_Node_ID,
+      Corresponding_Generic_Element            => Invalid_Node_ID,
+      Is_Dispatching_Call                      => Invalid_bool,
+      Is_Call_On_Dispatching_Operation         => Invalid_bool);
 
    Default_Association_Struct : constant Association_Struct :=
      (Association_Kind            => Not_An_Association,
@@ -175,7 +343,11 @@ package a_nodes_h.Support is
 
    Default_Statement_Struct : constant Statement_Struct :=
      (Statement_Kind                      => Not_A_Statement,
+      Corresponding_Pragmas               => Empty_Element_List,
       Label_Names                         => Empty_Element_List,
+      Is_Prefix_Notation                  => Invalid_bool,
+      Pragmas                             => Empty_Element_List,
+      Corresponding_End_Name              => Invalid_Node_ID,
       Assignment_Variable_Name            => Invalid_Node_ID,
       Assignment_Expression               => Invalid_Node_ID,
       Statement_Paths                     => Empty_Element_List,
@@ -192,15 +364,15 @@ package a_nodes_h.Support is
       Exit_Loop_Name                      => Invalid_Node_ID,
       Exit_Condition                      => Invalid_Node_ID,
       Corresponding_Loop_Exited           => Invalid_Node_ID,
+      Return_Expression                   => Invalid_Node_ID,
+      Return_Object_Declaration           => Invalid_Node_ID,
+      Extended_Return_Statements          => Empty_Element_List,
+      Extended_Return_Exception_Handlers  => Empty_Element_List,
       Goto_Label                          => Invalid_Node_ID,
       Corresponding_Destination_Statement => Invalid_Node_ID,
       Called_Name                         => Invalid_Node_ID,
       Corresponding_Called_Entity         => Invalid_Node_ID,
       Call_Statement_Parameters           => Empty_Element_List,
-      Return_Expression                   => Invalid_Node_ID,
-      Return_Object_Declaration           => Invalid_Node_ID,
-      Extended_Return_Statements          => Empty_Element_List,
-      Extended_Return_Exception_Handlers  => Empty_Element_List,
       Accept_Entry_Index                  => Invalid_Node_ID,
       Accept_Entry_Direct_Name            => Invalid_Node_ID,
       Accept_Parameters                   => Empty_Element_List,
@@ -212,17 +384,31 @@ package a_nodes_h.Support is
       Aborted_Tasks                       => Empty_Element_List,
       Raised_Exception                    => Invalid_Node_ID,
       Associated_Message                  => Invalid_Node_ID,
-      Qualified_Expression                => Invalid_Node_ID);
+      Qualified_Expression                => Invalid_Node_ID,
+      Is_Dispatching_Call                 => Invalid_bool,
+      Is_Call_On_Dispatching_Operation    => Invalid_bool,
+      Corresponding_Called_Entity_Unwound => Invalid_Node_ID);
 
    Default_Path_Struct : constant Path_Struct :=
      (Path_Kind                     => Not_A_Path,
       Sequence_Of_Statements        => Empty_Element_List,
+      Dependent_Expression          => Invalid_Node_ID,
       Condition_Expression          => Invalid_Node_ID,
       Case_Path_Alternative_Choices => Empty_Element_List,
       Guard                         => Invalid_Node_ID);
 
+   Default_Representation_Clause_Struct :
+   constant Representation_Clause_Struct :=
+     (Representation_Clause_Kind       => Not_A_Representation_Clause,
+      Representation_Clause_Name       => Invalid_Node_ID,
+      Pragmas                          => Empty_Element_List,
+      Representation_Clause_Expression => Invalid_Node_ID,
+      Mod_Clause_Expression            => Invalid_Node_ID,
+      Component_Clauses                => Empty_Element_List);
+
    Default_Clause_Struct : constant Clause_Struct :=
      (Clause_Kind                      => Not_A_Clause,
+      Has_Limited                      => Invalid_bool,
       Clause_Names                     => Empty_Name_List,
       Representation_Clause_Name       => Invalid_Node_ID,
       Representation_Clause_Expression => Invalid_Node_ID,
@@ -230,10 +416,11 @@ package a_nodes_h.Support is
       Component_Clauses                => Empty_Element_List,
       Component_Clause_Position        => Invalid_Node_ID,
       Component_Clause_Range           => Invalid_Node_ID,
-      Trait_Kind                       => Not_A_Trait);
+      Representation_Clause            => Default_Representation_Clause_Struct);
 
    Default_Exception_Handler_Struct : constant Exception_Handler_Struct :=
-     (Choice_Parameter_Specification => Invalid_Node_ID,
+     (Pragmas                        => Empty_Element_List,
+      Choice_Parameter_Specification => Invalid_Node_ID,
       Exception_Choices              => Empty_Element_List,
       Handler_Statements             => Empty_Element_List);
 
@@ -249,12 +436,17 @@ package a_nodes_h.Support is
       Last_Column  => -1);
 
    Default_Element_Struct : constant Element_Struct :=
-     (ID                   => Invalid_Node_ID,
-      Element_Kind         => Not_An_Element,
-      Enclosing_Element_Id => Invalid_Node_ID,
-      Enclosing_Kind       => Not_Enclosing,
-      Source_Location      => Default_Source_Location_Struct,
-      The_Union            => Default_Element_Union);
+     (ID                         => Invalid_Node_ID,
+      Element_Kind               => Not_An_Element,
+      Enclosing_Compilation_Unit => Invalid_Node_ID,
+      Is_Part_Of_Implicit        => Invalid_bool,
+      Is_Part_Of_Inherited       => Invalid_bool,
+      Is_Part_Of_Instance        => Invalid_bool,
+      Hash                       => -1,
+      Enclosing_Element_Id       => Invalid_Node_ID,
+      Enclosing_Kind             => Not_Enclosing,
+      Source_Location            => Default_Source_Location_Struct,
+      The_Union                  => Default_Element_Union);
 
    Empty_Unit_List : constant Unit_List :=
      (length => 0,
@@ -279,6 +471,7 @@ package a_nodes_h.Support is
       Unit_Declaration                  => Invalid_Node_ID,
       Context_Clause_Elements           => Empty_Element_List,
       Compilation_Pragmas               => Empty_Element_List,
+      Is_Standard                       => Invalid_bool,
       Corresponding_Children            => Empty_Unit_List,
       Corresponding_Parent_Declaration  => Invalid_Node_ID,
       Corresponding_Declaration         => Invalid_Node_ID,
@@ -364,10 +557,6 @@ package a_nodes_h.Support is
    function To_Subprogram_Default_Kinds is new Unchecked_Conversion
      (Source => Asis.Subprogram_Default_Kinds,
       Target => a_nodes_h.Subprogram_Default_Kinds);
-
-   function To_Trait_Kinds is new Unchecked_Conversion
-     (Source => Asis.Trait_Kinds,
-      Target => a_nodes_h.Trait_Kinds);
 
    function To_Type_Kinds is new Unchecked_Conversion
      (Source => Asis.Type_Kinds,

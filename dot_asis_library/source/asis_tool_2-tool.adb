@@ -49,6 +49,7 @@ package body Asis_Tool_2.Tool is
                                   Outputs        => This.Outputs);
          This.Outputs.Graph.Write_File
            (ASU.To_String (This.Outputs.Output_Dir) & '/' & Simple_File_Name);
+         This.Outputs.A_Nodes.Print_Stats;
          Asis.Implementation.Finalize;
       end Init_And_Process_Context;
 
