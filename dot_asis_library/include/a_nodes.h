@@ -1032,8 +1032,11 @@ typedef struct _Type_Definition_Struct {
   Access_Type_Struct   Access_Type;
 } Type_Definition_Struct;
 
-// Constraint_Struct appears here (in a different order than in 
-// Definition_Union) beause it is used in Subtype_Indication_Struct, below.
+typedef struct _Subtype_Indication_Struct {
+  bool       Has_Null_Exclusion;
+  Expression Subtype_Mark;
+  Constraint Subtype_Constraint;
+} Subtype_Indication_Struct;
 
 typedef struct _Constraint_Struct {
   Constraint_Kinds              Constraint_Kind;
@@ -1055,12 +1058,6 @@ typedef struct _Constraint_Struct {
   // A_Discriminant_Constraint
   Discriminant_Association_List Discriminant_Associations;
 } Constraint_Struct;
-
-typedef struct _Subtype_Indication_Struct {
-  bool              Has_Null_Exclusion;
-  Expression        Subtype_Mark;
-  Constraint_Struct Subtype_Constraint;
-} Subtype_Indication_Struct;
 
 typedef struct _Component_Definition_Struct {
   Definition Component_Definition_View;

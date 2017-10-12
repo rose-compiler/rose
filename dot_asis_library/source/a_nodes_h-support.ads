@@ -172,7 +172,7 @@ package a_nodes_h.Support is
    Default_Subtype_Indication_Struct : constant Subtype_Indication_Struct :=
      (Has_Null_Exclusion => Invalid_bool,
       Subtype_Mark       => Invalid_Node_ID,
-      Subtype_Constraint => Default_Constraint_Struct);
+      Subtype_Constraint => Invalid_Node_ID);
 
    Default_Component_Definition_Struct : constant Component_Definition_Struct :=
      (Component_Definition_View => Invalid_Node_ID);
