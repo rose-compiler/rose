@@ -365,7 +365,7 @@ bool DefUseAnalysis::searchMap(const tabletype* ltable, SgNode* node) {
 
 /******************************************
  * return vector to user
- * for any given node and initName, return all definitions 
+ * for any given node and initName, return all reaching definitions
  *****************************************/
 std::vector < SgNode* > DefUseAnalysis::getDefFor(SgNode* node, SgInitializedName* initName) {
   multitype multi = getDefMultiMapFor(node);
