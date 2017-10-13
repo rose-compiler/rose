@@ -65,11 +65,11 @@ bool DefUseAnalysisAbstract::searchMulti(const multitype* multi, SgInitializedNa
 
 
 /**********************************************************
- *  check if two multimaps are equal
+ *  check if two multimaps are equal , not equal? changed or not. true if changed.
  *********************************************************/
-bool DefUseAnalysisAbstract::checkElementsForEquality(const multitype* t1, const multitype* t2) {
+bool DefUseAnalysisAbstract::checkElementsForChange(const multitype* t1, const multitype* t2) {
   // if every element of t2 is contained in t1, then no change
-  // occured in the map
+  // occurred in the map
   
   typedef set<pair<SgInitializedName*, SgNode*> > st;
   st s1(t1->begin(), t1->end());
