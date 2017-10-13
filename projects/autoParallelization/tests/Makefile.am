@@ -14,6 +14,7 @@ vectorize_1.c \
 vector_1.C \
 vector_2.C
 
+# bitRightShift.c # << operator is not supported, skipping the entire loop.
 
 # This list is now copied to C_TESTCODES_REQUIRED_TO_VERIFY, Liao 3/9/2016
 # the code which can be parallelized or confirmed as not parallelizable now
@@ -67,7 +68,8 @@ plusPlusOp.c \
 true_dep.c \
 true_dep_2.c \
 true_dep_scalar.c \
-true_l2.c
+true_l2.c \
+bitRightShift.c
 
 # These are different depending upon use of EDG 4.7 and EDG 4.8 vs. EDG 4.9.
 # This is because translation of floating poitn is more precise using EDG 4.9

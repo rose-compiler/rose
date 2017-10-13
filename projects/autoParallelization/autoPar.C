@@ -420,6 +420,16 @@ main (int argc, char *argv[])
           //X. Parallelize loop one by one
           // getLoopInvariant() will actually check if the loop has canonical forms 
           // which can be handled by dependence analysis
+ 
+          // skip loops with unsupported language features 
+          VariantT blackConstruct; 
+          if (useUnsupportedLanguageFeatures(current_loop, &blackConstruct))
+          {
+            if (enable_debug)
+              cout<<"Skipping a loop at line:"<<current_loop->get_file_info()->get_line()<<" due to unsupported language construct"<< blackConstruct << "..."<<endl;
+            continue;   
+          }
+
           SgInitializedName* invarname = getLoopInvariant(current_loop);
           if (invarname != NULL)
           {
