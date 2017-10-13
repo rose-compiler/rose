@@ -3,25 +3,25 @@ using namespace std;
 
 int main() {
   int* a[3];
-  int* p;
-  int** pp;
-  void* vp;
+  int* intp;
+  int** pa;
+  void* mpvoid;
 
-  vp=std::malloc(12);
-  p=(int*)vp;
+  mpvoid=std::malloc(12);
+  intp=(int*)mpvoid;
   //pp=&p; // error
   //**pp=3000;
-  (*p)=100;
-  *(p+1)=101;
+  (*intp)=100;
+  *(intp+1)=101;
   a[0]=(int*)std::malloc(4);
-  a[1]=p;
+  a[1]=intp;
   *a[1]=4000;
-  pp=a; 
+  pa=a; 
   // @pp:(a,0), @(a,0):($mem2,0)
-  p=*pp; 
+  intp=*pa; 
   // bug: p->(a,0) instead of p->($mem2,0)
-  *p=5000;
-  **pp=6000;
+  *intp=5000;
+  **pa=6000;
   //(*p)++;
   //pp=&a[1];
   return 0;

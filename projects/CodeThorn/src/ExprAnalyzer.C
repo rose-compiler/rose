@@ -858,8 +858,8 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalDereferenceOp(SgPointerDerefExp
   AbstractValue derefOperandValue=operandResult.result;
   //cout<<"DEBUG: derefOperandValue: "<<derefOperandValue.toRhsString(_variableIdMapping);
   // (varid,idx) => varid'; return estate.pstate()[varid'] || pstate(AbstractValue)
-  //res.result=readFromMemoryLocation(estate.pstate(), derefOperandValue);
-  res.result=derefOperandValue;
+  res.result=estate.pstate()->readFromMemoryLocation(derefOperandValue);
+  //res.result=derefOperandValue;
   res.exprConstraints=operandResult.exprConstraints;
   return listify(res);
 }
