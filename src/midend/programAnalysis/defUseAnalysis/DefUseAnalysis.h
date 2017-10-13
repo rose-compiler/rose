@@ -131,6 +131,7 @@ class ROSE_DLL_API DefUseAnalysis : public DFAnalysis, Support {
   multitype getDefMultiMapFor(SgNode* node);
   multitype  getUseMultiMapFor(SgNode* node);
   std::vector < SgNode* > getAnyFor(const multitype* mul, SgInitializedName* initName);
+  // for any given node, return all definitions of initName
   std::vector < SgNode* > getDefFor(SgNode* node, SgInitializedName* initName);
   std::vector < SgNode* > getUseFor(SgNode* node, SgInitializedName* initName);
   bool isNodeGlobalVariable(SgInitializedName* node);
