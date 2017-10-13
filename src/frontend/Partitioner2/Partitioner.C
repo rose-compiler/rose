@@ -10,6 +10,7 @@
 #include "BinaryUnparserBase.h"
 #include "SymbolicSemantics2.h"
 #include "Diagnostics.h"
+#include "RecursionCounter.h"
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/foreach.hpp>
@@ -255,7 +256,7 @@ Partitioner::updateCfgProgress() {
         if (!progress_)
             return;
     }
-    
+
     // How many bytes are mapped with execute permission
     if (0 == cfgProgressTotal_) {
         BOOST_FOREACH (const MemoryMap::Node &node, memoryMap_->nodes()) {
@@ -266,7 +267,7 @@ Partitioner::updateCfgProgress() {
 
     double completion = cfgProgressTotal_ > 0 ? (double)nBytes() / cfgProgressTotal_ : 0.0;
     updateProgress("partition", completion);
-    
+
     // All partitioners share a single progress bar for the CFG completion amount
     static Sawyer::ProgressBar<size_t, ProgressBarSuffix> *bar = NULL;
     if (!bar)
@@ -566,7 +567,7 @@ done:
                 retval->insertSuccessor(successorVa, nBits);
         }
     }
-    
+
     retval->freeze();
     return retval;
 }
@@ -678,7 +679,7 @@ Partitioner::attachBasicBlock(const ControlFlowGraph::ConstVertexIterator &const
                 edgeType = E_FUNCTION_RETURN;
             }
         }
-        
+
         CfgEdge edge(edgeType, successor.confidence());
         if (successor.expr()->is_number()) {
             successors.push_back(VertexEdgePair(insertPlaceholder(successor.expr()->get_number()), edge));
@@ -833,25 +834,30 @@ Partitioner::basicBlockGhostSuccessors(const BasicBlock::Ptr &bb) const {
 
     if (bb->isEmpty() || bb->ghostSuccessors().getOptional().assignTo(ghosts))
         return ghosts;
-    
-    std::set<rose_addr_t> insnVas;
+
+    // Addresses of all instructions in this basic block
+    Sawyer::Container::Set<rose_addr_t> insnVas;
     BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions())
         insnVas.insert(insn->get_address());
-    
-    const BasicBlock::Successors &successors = basicBlockSuccessors(bb);
+
+    // Find naive per-instruction successors that are not pointing to another instruction and which aren't in the set of basic
+    // block successors.  "Naive" successors are obtained by considering each insn in isolation (e.g., conditional branches
+    // have two naive successors even if the predicate is opaque.
+    const BasicBlock::Successors &bblockSuccessors = basicBlockSuccessors(bb);
     BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions()) {
         bool complete = true;
-        BOOST_FOREACH (rose_addr_t naiveVa, insn->getSuccessors(&complete)) {
-            if (insnVas.find(naiveVa)==insnVas.end()) {
+        BOOST_FOREACH (rose_addr_t naiveSuccessor, insn->getSuccessors(&complete)) {
+            if (!insnVas.exists(naiveSuccessor)) {
+                // Is naiveSuccessor also a basic block successor?
                 bool found = false;
-                BOOST_FOREACH (const BasicBlock::Successor &successor, successors) {
-                    if (successor.expr()->is_number() && successor.expr()->get_number()==naiveVa) {
+                BOOST_FOREACH (const BasicBlock::Successor &bblockSuccessor, bblockSuccessors) {
+                    if (bblockSuccessor.expr()->is_number() && bblockSuccessor.expr()->get_number()==naiveSuccessor) {
                         found = true;
                         break;
                     }
                 }
                 if (!found)
-                    ghosts.insert(naiveVa);
+                    ghosts.insert(naiveSuccessor);
             }
         }
     }
@@ -883,6 +889,12 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb) const {
     if (bb->isEmpty() || bb->isFunctionCall().getOptional().assignTo(retval))
         return retval;                                  // already cached
 
+    // Avoid infinite recursion
+    static size_t recursionDepth = 0;
+    RecursionCounter recursion(recursionDepth);
+    if (recursionDepth > 2 /*arbitrary*/)
+        return false;      // if we can't prove it, assume false
+
     SgAsmInstruction *lastInsn = bb->instructions().back();
 
     // Use our own semantics if we have them.
@@ -905,7 +917,7 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb) const {
             bb->isFunctionCall() = false;
             return false;
         }
-        
+
         // If the only successor is also the fall-through address then this isn't a function call.  This case handles code that
         // obtains the code address in position independent code. For example, x86 "A: CALL B; B: POP EAX" where A and B are
         // consecutive instruction addresses.
@@ -926,16 +938,8 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb) const {
                 }
                 rose_addr_t calleeVa = successor.expr()->get_number();
                 BasicBlock::Ptr calleeBb = basicBlockExists(calleeVa);
-                if (!calleeBb) {
-                    // Avoid never-ending recursive calls to discoverBasicBlock.
-                    // FIXME[Robb P Matzke 2017-02-03]: This only fixes direct recursion to the same block, but the infinite
-                    // recursion can also be triggered by mutually recursive functions. I'm not fixing that at the moment.
-                    if (calleeVa == bb->address()) {
-                        allCalleesPopWithoutReturning = false;
-                        break;
-                    }
-                    calleeBb = discoverBasicBlock(calleeVa);
-                }
+                if (!calleeBb)
+                    calleeBb = discoverBasicBlock(calleeVa); //  could cause recursion
                 if (!calleeBb) {
                     allCalleesPopWithoutReturning = false;
                     break;
@@ -989,7 +993,7 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb) const {
                 return false;
             }
         }
-        
+
         // This appears to be a function call
         bb->isFunctionCall() = true;
         return true;
@@ -1012,7 +1016,7 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb) const {
             }
         }
     }
-    
+
     // We don't have semantics, so delegate to the SgAsmInstruction subclass.
     retval = lastInsn->isFunctionCallFast(bb->instructions(), NULL, NULL);
     bb->isFunctionCall() = retval;
@@ -1785,7 +1789,7 @@ Partitioner::dumpCfg(std::ostream &out, const std::string &prefix, bool showBloc
                 }
             }
         }
-        
+
         // Show instructions in execution order
         if (showBlocks) {
             if (BasicBlock::Ptr bb = vertex->value().bblock()) {
@@ -1849,7 +1853,7 @@ Partitioner::dumpCfg(std::ostream &out, const std::string &prefix, bool showBloc
                 out <<"unknown\n";
             }
         }
-        
+
         // Sort outgoing edges according to destination (makes comparisons easier)
         std::vector<ControlFlowGraph::ConstEdgeIterator> sortedOutEdges;
         for (ControlFlowGraph::ConstEdgeIterator ei=vertex->outEdges().begin(); ei!=vertex->outEdges().end(); ++ei)
@@ -2032,7 +2036,7 @@ Partitioner::attachOrMergeFunction(const Function::Ptr &newFunction) {
         attachFunction(newFunction);
         return newFunction;
     }
-    
+
     // Perhapse use this new function's name.  If the names are the same except for the "@plt" part then use the version with
     // the "@plt".
     if (existingFunction->name().empty()) {
@@ -2081,10 +2085,10 @@ Partitioner::attachOrMergeFunction(const Function::Ptr &newFunction) {
 
         attachFunction(existingFunction);
     }
-    
+
     return existingFunction;
 }
-    
+
 size_t
 Partitioner::attachFunctionBasicBlocks(const Functions &functions) {
     size_t nNewBlocks = 0;

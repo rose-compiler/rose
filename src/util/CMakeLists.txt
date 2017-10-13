@@ -81,5 +81,5 @@ install(FILES
  	      setup.h processSupport.h rose_paths.h
 	      compilationFileDatabase.h LinearCongruentialGenerator.h
 	      Map.h Progress.h timing.h rose_getline.h rose_override.h rose_strtoull.h
-              roseTraceLib.c ParallelSort.h GraphUtility.h
+              roseTraceLib.c ParallelSort.h GraphUtility.h RecursionCounter.h
         DESTINATION ${INCLUDE_INSTALL_DIR})

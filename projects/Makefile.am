@@ -21,7 +21,6 @@ SUBDIRS = \
 	ArithmeticMeasureTool \
 	AstEquivalence \
 	BabelPreprocessor \
-	BinQ \
 	BinaryCloneDetection \
 	C_to_Promela \
 	CertSecureCodeProject \

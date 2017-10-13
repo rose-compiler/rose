@@ -1160,7 +1160,6 @@ set(CMAKE_INSTALL_RPATH "${origin}/../lib:${origin}/")
 
 add_subdirectory(config)
 add_subdirectory(src)
-add_subdirectory(demo)
 add_subdirectory(exampleTranslators)
 add_subdirectory(scripts)
 add_subdirectory(tools)

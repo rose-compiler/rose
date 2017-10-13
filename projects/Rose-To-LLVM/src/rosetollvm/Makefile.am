@@ -50,7 +50,7 @@ librosetollvm_la_SOURCES = \
 
 librosetollvm_la_CPPFLAGS	= \
 	-I$(srcdir)/include \
-	$(LLVM_CPPFLAGS) 
+	$(LLVM_CPPFLAGS) -std=c++11
 
 librosetollvm_la_LDFLAGS = $(ROSE_LIBS) $(LLVM_LDFLAGS)
 

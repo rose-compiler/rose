@@ -145,7 +145,7 @@ check-local: $(nonsmoke_getDataSharingAttribute_c_output) $(nonsmoke_getDataShar
 else
 # DQ (4/5/2017): GNU 6.1 includes language features that this test does not support.
 check-local: $(nonsmoke_getDataSharingAttribute_c_output) $(nonsmoke_getDataSharingAttribute_c_output_diff) \
-             $(nonsmoke_get_C_array_dimensions_c_output) $(nonsmoke_get_C_array_dimensions_c_output_diff)
+             $(nonsmoke_get_C_array_dimensions_c_output) $(nonsmoke_get_C_array_dimensions_c_output_diff) \
 	     $(nonsmoke_collectFunctionSideEffect_cpp_output_diff)
 endif
 
