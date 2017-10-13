@@ -29,7 +29,7 @@ class DefUseAnalysisAbstract : public Support {
 
   //  typedef std::multimap < SgInitializedName* , SgNode* > multitype;
   typedef std::vector < std::pair < SgInitializedName* , SgNode* > > multitype;
-  typedef std::map< SgNode* , multitype > tabletype;
+  typedef std::map< SgNode* , multitype > tabletype; 
   typedef FilteredCFGEdge < IsDFAFilter > filteredCFGEdgeType;
   typedef FilteredCFGNode < IsDFAFilter > filteredCFGNodeType;
 
@@ -47,12 +47,12 @@ class DefUseAnalysisAbstract : public Support {
   SgExpression* resolveCast(SgExpression* expr);
   bool isDoubleExactEntry(const multitype* multi, 
                           SgInitializedName* name, SgNode* sgNode);
-
-  bool checkElementsForEquality(const multitype* t1, const multitype* t2);
+  // check two sets, if any changes, return true 
+  bool checkElementsForChange(const multitype* t1, const multitype* t2);
 
   /**********************************************************
    *  For a CFG Node, follow the two incoming edges and get 
-   *  the other node (than theNodeBefore)
+   *  the other node (than theNodeBefore) ??? Why only two edges?
    *********************************************************/
   template <typename T>
     SgNode* getOtherInNode(T cfgNode, SgNode* oneNode){
@@ -71,7 +71,7 @@ class DefUseAnalysisAbstract : public Support {
   }
 
   /**********************************************************
-   *  get the incoming node of a cfg edge
+   *  get the incoming node of a cfg edge: only get the last one?
    *********************************************************/
   template <typename T>
     SgNode* getCFGPredNode(T cfgNode){
@@ -93,7 +93,7 @@ class DefUseAnalysisAbstract : public Support {
     std::cout << "\n!! Worklist : " ;
     for (typename std::vector<T >::iterator i = worklist.begin(); i != worklist.end(); ++i, pos++) {  
       T node = *i;
-      std::cout << " - " << node.toStringForDebugging();
+      std::cout << "\t\n - " << node.toStringForDebugging();
     }
     std::cout << std::endl;
   }
