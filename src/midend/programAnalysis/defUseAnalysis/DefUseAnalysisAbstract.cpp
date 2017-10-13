@@ -109,7 +109,7 @@ bool DefUseAnalysisAbstract::checkElementsForChange(const multitype* t1, const m
  * return the initializedName
  * we need this if we have a VarRefExp on the left hand
  * side of an assignment. We want to know which variable it is.
- * The variable may be hiding down the hirarchy in e.g. an array
+ * The variable may be hiding down the hierarchy in e.g. an array
  *********************************************************/
 SgInitializedName* DefUseAnalysisAbstract::getInitName(SgNode* l_expr) {
   SgInitializedName* retName = NULL;
@@ -135,7 +135,7 @@ SgInitializedName* DefUseAnalysisAbstract::getInitName(SgNode* l_expr) {
     } 
   } else {
     if (DEBUG_MODE)
-      cout << " GETINITNAME:: could not resolve initName " << l_expr->class_name() << endl;
+      cout << " DefUseAnalysisAbstract::getInitName() could not resolve initName from " << l_expr->class_name() << endl;
   }
   return retName;
 }
