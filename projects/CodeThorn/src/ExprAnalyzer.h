@@ -202,6 +202,9 @@ class ExprAnalyzer {
   list<SingleEvalResultConstInt> evalDereferenceOp(SgPointerDerefExp* node, 
                                                    SingleEvalResultConstInt operandResult, 
                                                    EState estate, bool useConstraints);
+  list<SingleEvalResultConstInt> evalAddressOfOp(SgAddressOfOp* node, 
+                                                   SingleEvalResultConstInt operandResult, 
+                                                   EState estate, bool useConstraints);
   list<SingleEvalResultConstInt> evalBitwiseComplementOp(SgBitComplementOp* node, 
                                               SingleEvalResultConstInt operandResult, 
                                               EState estate, bool useConstraints);

@@ -251,6 +251,12 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,ESt
         CASE_EXPR_ANALYZER_EVAL_UNARY_OP(SgBitComplementOp,evalBitwiseComplementOp);
         CASE_EXPR_ANALYZER_EVAL_UNARY_OP(SgMinusOp,evalUnaryMinusOp);
         CASE_EXPR_ANALYZER_EVAL_UNARY_OP(SgPointerDerefExp,evalDereferenceOp);
+      case V_SgAddressOfOp: {
+        cerr << "Error: Operator addressOfOp not implemented for this domain."<<endl;
+        string exceptionInfo=string("Error: Operator addressOfOp not implemented for this domain.");
+        throw exceptionInfo; 
+        //CASE_EXPR_ANALYZER_EVAL_UNARY_OP(SgAddressOfOp,evalAddressOfOp); // TODO
+      }
       default:
         cerr << "@NODE:"<<node->sage_class_name()<<endl;
         string exceptionInfo=string("Error: evaluateExpression::unknown unary operation @")+string(node->sage_class_name());
@@ -705,7 +711,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
   SingleEvalResultConstInt res;
   res.estate=estate;
   SgNode* arrayExpr=SgNodeHelper::getLhs(node);
-  
+ 
   if(indexExprResult.value().isTop()||getSkipArrayAccesses()==true) {
     // set result to top when index is top [imprecision]
     // assume top for array elements if skipped
@@ -857,13 +863,23 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalDereferenceOp(SgPointerDerefExp
   res.estate=estate;
   AbstractValue derefOperandValue=operandResult.result;
   //cout<<"DEBUG: derefOperandValue: "<<derefOperandValue.toRhsString(_variableIdMapping);
-  // (varid,idx) => varid'; return estate.pstate()[varid'] || pstate(AbstractValue)
   res.result=estate.pstate()->readFromMemoryLocation(derefOperandValue);
-  //res.result=derefOperandValue;
   res.exprConstraints=operandResult.exprConstraints;
   return listify(res);
 }
 
+list<SingleEvalResultConstInt> ExprAnalyzer::evalAddressOfOp(SgAddressOfOp* node, 
+                                                             SingleEvalResultConstInt operandResult, 
+                                                             EState estate, bool useConstraints) {
+  SingleEvalResultConstInt res;
+  res.estate=estate;
+  AbstractValue addressOfOperandValue=operandResult.result;
+  //cout<<"DEBUG: derefOperandValue: "<<derefOperandValue.toRhsString(_variableIdMapping);
+  // AbstractValue of a VariableId is a pointer to this variable.
+  res.result=AbstractValue(addressOfOperandValue.getVariableId());
+  res.exprConstraints=operandResult.exprConstraints;
+  return listify(res);
+}
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarExp(SgVarRefExp* node, EState estate, bool useConstraints) {
   //cout<<"DEBUG: evalRValueVarExp: "<<node->unparseToString()<<endl;
