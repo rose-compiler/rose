@@ -75,8 +75,8 @@ private
    function NLB_Image (Item : in Natural) return String renames Spaceless_Image;
 
    function To_String (Unit_Id : in A4G.A_Types.Unit_Id) return String;
-   function To_String (Element_Id : in Types.Node_Id) return String;
+   function To_String (Element_Id : in a_nodes_h.Element_ID) return String;
    function To_Dot_ID_Type (Unit_Id : in A4G.A_Types.Unit_Id) return Dot.ID_Type;
-   function To_Dot_ID_Type (Element_Id : in Types.Node_Id) return Dot.ID_Type;
+   function To_Dot_ID_Type (Element_Id : in a_nodes_h.Element_ID) return Dot.ID_Type;
 
 end Asis_Tool_2;

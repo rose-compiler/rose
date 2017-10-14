@@ -2,6 +2,7 @@ with Ada.Characters.Handling;
 
 --GNAT-specific:
 with Asis.Set_Get;
+with GNAT.Traceback.Symbolic;
 
 package body Asis_Tool_2 is
 
@@ -37,7 +38,9 @@ package body Asis_Tool_2 is
    procedure Print_Exception_Info (X : in Ada.Exceptions.Exception_Occurrence) is
    begin
       Awti.Put_Line ("EXCEPTION: " & To_Wide_String (Aex.Exception_Name (X)) &
-                  " (" & To_Wide_String (Aex.Exception_Information (X)) & ")");
+                       " (" & To_Wide_String (Aex.Exception_Information (X)) & ")");
+      Awti.Put_Line ("TRACEBACK: ");
+      Awti.Put_Line (To_Wide_String (GNAT.Traceback.Symbolic.Symbolic_Traceback (X)));
       Awti.New_Line;
    end Print_Exception_Info;
 

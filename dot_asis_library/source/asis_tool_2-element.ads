@@ -26,7 +26,7 @@ private
          Dot_Label  : Dot.HTML_Like_Labels.Class; -- Initialized
          A_Element  : a_nodes_h.Element_Struct := anhS.Default_Element_Struct;
          -- Used when making dot edges to child nodes:
-         Element_ID : Types.Node_Id := Types.Error;
+         Element_ID : a_nodes_h.Element_ID := anhS.Invalid_Element_ID;
       -- I would like to just pass Outputs through and not store it in the
       -- object, since it is all pointers and we doesn't need to store their
       -- values between calls to Process_Element_Tree. Outputs has to go into
@@ -47,7 +47,7 @@ private
    procedure Add_To_Dot_Label
      (This  : in out Class;
       Name  : in     String;
-      ID    : in     Types.Node_Id);
+      ID    : in     a_nodes_h.Element_ID);
 
    -- Add <Value> to the label, and print it if trace is on:
    procedure Add_To_Dot_Label
@@ -57,15 +57,15 @@ private
    -- Add an edge node the the dot graph:
    procedure Add_Dot_Edge
      (This  : in out Class;
-      From  : in     Types.Node_Id;
-      To    : in     Types.Node_Id;
+      From  : in     a_nodes_h.Element_ID;
+      To    : in     a_nodes_h.Element_ID;
       Label : in     String);
 
    -- Add an edge and a dot label:
    procedure Add_To_Dot_Label_And_Edge
      (This  : in out Class;
       Label : in     String;
-      To    : in     Types.Node_Id);
+      To    : in     a_nodes_h.Element_ID);
 
    -- Add to dot label: ASIS_PROCESSING => "NOT_IMPLEMENTED_COMPLETELY"
    procedure Add_Not_Implemented

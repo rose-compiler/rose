@@ -24,13 +24,21 @@ typedef int Node_ID;
 // BEGIN element 
 ///////////////////////////////////////////////////////////////////////////////
 
-typedef Node_ID    Element_ID;
-typedef Element_ID Element;
+// Different Elements may share the same Node_ID in GNAT ASIS!  They can be 
+// disambiguated by Internal_Kind.  We use Internal_Kind'Pos below, currently 
+// (GNAT GPL 2017 ASIS) between 1 and about 800:
+// 
+typedef struct _Element_ID_Struct {
+  Node_ID Node;
+  int     Kind;
+} Element_ID_Struct;
+
+typedef Element_ID_Struct Element_ID;
 
 // For this:
 //   typedef Element_ID Element_ID_Array[];
 //   typedef Element_ID_Array *Element_ID_Array_Ptr2;
-// GNAT C-to-Ada translator produces (array is consrtained!):
+// GNAT C-to-Ada translator produces (array is constrained!):
 //   type Element_ID_Array is array (size_t) of aliased Element_ID;
 //   type Element_ID_Array_Ptr2 is access all Element_ID_Array;
 //
@@ -50,7 +58,8 @@ typedef struct _Element_ID_Array_Struct {
   int            Length;
   Element_ID_Ptr IDs;
 } Element_ID_Array_Struct;
-typedef Element_ID_Array_Struct Element_List;
+
+typedef Element_ID_Array_Struct Element_ID_List;
 
 enum Element_Kinds {
   Not_An_Element,            // Nil_Element
@@ -73,78 +82,77 @@ enum Element_Kinds {
 // These are needed in multiple structs below, so they are all 
 // defined here:
 
-typedef Element_ID Constraint_ID;
-typedef Element_ID Declaration_ID;
-typedef Element_ID Defining_Name_ID;
-typedef Element_ID Definition_ID;
-typedef Element_ID Discrete_Range_ID;
-typedef Element_ID Discrete_Subtype_Definition_ID;
-typedef Element_ID Expression_ID;
-typedef Element_ID Name_ID;
-typedef Element_ID Statement_ID;
-typedef Element_ID Subtype_Indication_ID;
-typedef Element_ID Type_Definition_ID;
 
-typedef Element_List Expression_Path_List;
-
-typedef Element      Access_Type_Definition;      
-typedef Element      Association;
-typedef Element_List Association_List;
-typedef Element      Case_Statement_Alternative;
-typedef Element      Clause;
-typedef Element      Component_Clause;
-typedef Element_List Component_Clause_List;
-typedef Element      Component_Declaration;
-typedef Element      Component_Definition;
-typedef Element      Constraint;
-typedef Element      Context_Clause;
-typedef Element_List Context_Clause_List;
-typedef Element      Declaration;
-typedef Element_List Declaration_List;
-typedef Element_List Declarative_Item_List;
-typedef Element      Definition;
-typedef Element_List Definition_List;
-typedef Element      Discrete_Range;
-typedef Element_List Discrete_Range_List;
-typedef Element      Discrete_Subtype_Definition;
-typedef Element      Discriminant_Association;
-typedef Element_List Discriminant_Association_List;
-typedef Element_List Discriminant_Specification_List;
-typedef Element      Defining_Name;
-typedef Element_List Defining_Name_List;
-typedef Element      Exception_Handler;
-typedef Element_List Exception_Handler_List;
-typedef Element      Expression;
-typedef Element_List Expression_List;
-typedef Element      Formal_Type_Definition;
-typedef Element      Generic_Formal_Parameter;
-typedef Element_List Generic_Formal_Parameter_List;
-typedef Element      Identifier;
-typedef Element_List Identifier_List;
-typedef Element      Name;
-typedef Element_List Name_List;
-typedef Element      Parameter_Specification;
-typedef Element_List Parameter_Specification_List;
-typedef Element      Path;
-typedef Element_List Path_List;
-typedef Element      Pragma_Element;
-typedef Element_List Pragma_Element_List;
-typedef Element      Range_Constraint;
-typedef Element      Record_Component;
-typedef Element_List Record_Component_List;
-typedef Element      Record_Definition;
-typedef Element      Representation_Clause;
-typedef Element_List Representation_Clause_List;
-typedef Element      Root_Type_Definition;
-typedef Element      Select_Alternative;
-typedef Element      Statement;
-typedef Element_List Statement_List;
-typedef Element      Subtype_Indication;
-typedef Element      Subtype_Mark;
-typedef Element      Type_Definition;
-typedef Element      Variant;
-typedef Element_List Variant_Component_List;
-typedef Element_List Variant_List;
+typedef Element_ID      Access_Type_Definition;      
+typedef Element_ID      Association;
+typedef Element_ID_List Association_List;
+typedef Element_ID      Case_Statement_Alternative;
+typedef Element_ID      Clause;
+typedef Element_ID      Component_Clause;
+typedef Element_ID_List Component_Clause_List;
+typedef Element_ID      Component_Declaration;
+typedef Element_ID      Component_Definition;
+typedef Element_ID      Constraint_ID;
+typedef Element_ID      Constraint;
+typedef Element_ID      Context_Clause;
+typedef Element_ID_List Context_Clause_List;
+typedef Element_ID      Declaration;
+typedef Element_ID      Declaration_ID;
+typedef Element_ID_List Declaration_List;
+typedef Element_ID_List Declarative_Item_List;
+typedef Element_ID      Defining_Name_ID;
+typedef Element_ID      Definition;
+typedef Element_ID      Definition_ID;
+typedef Element_ID_List Definition_List;
+typedef Element_ID      Discrete_Range;
+typedef Element_ID      Discrete_Range_ID;
+typedef Element_ID_List Discrete_Range_List;
+typedef Element_ID      Discrete_Subtype_Definition;
+typedef Element_ID      Discrete_Subtype_Definition_ID;
+typedef Element_ID      Discriminant_Association;
+typedef Element_ID_List Discriminant_Association_List;
+typedef Element_ID_List Discriminant_Specification_List;
+typedef Element_ID      Defining_Name;
+typedef Element_ID_List Defining_Name_List;
+typedef Element_ID      Exception_Handler;
+typedef Element_ID_List Exception_Handler_List;
+typedef Element_ID      Expression;
+typedef Element_ID      Expression_ID;
+typedef Element_ID_List Expression_List;
+typedef Element_ID_List Expression_Path_List;
+typedef Element_ID      Formal_Type_Definition;
+typedef Element_ID      Generic_Formal_Parameter;
+typedef Element_ID_List Generic_Formal_Parameter_List;
+typedef Element_ID      Identifier;
+typedef Element_ID_List Identifier_List;
+typedef Element_ID      Name;
+typedef Element_ID      Name_ID;
+typedef Element_ID_List Name_List;
+typedef Element_ID      Parameter_Specification;
+typedef Element_ID_List Parameter_Specification_List;
+typedef Element_ID      Path;
+typedef Element_ID_List Path_List;
+typedef Element_ID      Pragma_Element;
+typedef Element_ID_List Pragma_Element_ID_List;
+typedef Element_ID      Range_Constraint;
+typedef Element_ID      Record_Component;
+typedef Element_ID_List Record_Component_List;
+typedef Element_ID      Record_Definition;
+typedef Element_ID      Representation_Clause;
+typedef Element_ID_List Representation_Clause_List;
+typedef Element_ID      Root_Type_Definition;
+typedef Element_ID      Select_Alternative;
+typedef Element_ID      Statement;
+typedef Element_ID      Statement_ID;
+typedef Element_ID_List Statement_List;
+typedef Element_ID      Subtype_Indication;
+typedef Element_ID      Subtype_Indication_ID;
+typedef Element_ID      Subtype_Mark;
+typedef Element_ID      Type_Definition;
+typedef Element_ID      Type_Definition_ID;
+typedef Element_ID      Variant;
+typedef Element_ID_List Variant_Component_List;
+typedef Element_ID_List Variant_List;
 
 // For Defining_Operator_Symbol:
 // For Expression:
@@ -240,7 +248,7 @@ enum Pragma_Kinds {
 // May take ??*4 bytes:
 struct Pragma_Struct {
   enum Pragma_Kinds   Pragma_Kind;
-  Pragma_Element_List Pragmas;
+  Pragma_Element_ID_List Pragmas;
   Program_Text        Pragma_Name_Image;
   Association_List    Pragma_Argument_Associations;
 };
@@ -439,9 +447,9 @@ enum Subprogram_Default_Kinds {
 struct Declaration_Struct {
   enum Declaration_Kinds         Declaration_Kind;
   enum Declaration_Origins       Declaration_Origin;
-  Pragma_Element_List            Corresponding_Pragmas;
+  Pragma_Element_ID_List            Corresponding_Pragmas;
   Defining_Name_List             Names;  
-  Element_List                   Aspect_Specifications;
+  Element_ID_List                   Aspect_Specifications;
   Representation_Clause_List     Corresponding_Representation_Clauses;
   
   // These fields are only valid for the kinds above them:
@@ -518,7 +526,7 @@ struct Declaration_Struct {
   //                                                      region)
   //        A_Generic_Package_Declaration   (pragmas from formal + visible +
   //                                           private declarative regions)
-  Pragma_Element_List            Pragmas;
+  Pragma_Element_ID_List            Pragmas;
   //       A_Package_Declaration
   //       A_Package_Body_Declaration
   //       A_Procedure_Body_Declaration
@@ -656,7 +664,7 @@ struct Declaration_Struct {
   //  A_Package_Body_Declaration,               // 7.2(2)
   //  A_Task_Body_Declaration,                  // 9.1(6)
   //  An_Entry_Body_Declaration,                // 9.5.2(5)
-  Element_List                   Body_Declarative_Items;
+  Element_ID_List                   Body_Declarative_Items;
   Statement_List                 Body_Statements;
   Exception_Handler_List         Body_Exception_Handlers;
   Declaration_ID                 Body_Block_Statement;
@@ -777,7 +785,7 @@ struct Declaration_Struct {
   //  A_Generic_Procedure_Declaration,          // 12.1(2)
   //  A_Generic_Function_Declaration,           // 12.1(2)
   //  A_Generic_Package_Declaration,            // 12.1(2)
-  Element_List                   Generic_Formal_Part;
+  Element_ID_List                   Generic_Formal_Part;
   //  A_Package_Instantiation,                  // 12.3(2)
   //  A_Procedure_Instantiation,                // 12.3(2)
   //  A_Function_Instantiation,                 // 12.3(2)
@@ -962,7 +970,7 @@ typedef struct _Access_Type_Struct {
   Parameter_Specification_List Access_To_Subprogram_Parameter_Profile; 
   // An_Access_To_Function
   // An_Access_To_Protected_Function
-  Element                      Access_To_Function_Result_Profile;
+  Element_ID                   Access_To_Function_Result_Profile;
 } Access_Type_Struct;
 
 typedef struct _Type_Definition_Struct {
@@ -1101,7 +1109,7 @@ typedef struct _Variant_Part_Struct {
 typedef struct _Variant_Struct {
   Record_Component_List Record_Components;
   Record_Component_List Implicit_Components;
-  Element_List          Variant_Choices;
+  Element_ID_List          Variant_Choices;
 } Variant_Struct;
 
 typedef struct _Access_Definition_Struct {
@@ -1121,7 +1129,7 @@ typedef struct _Access_Definition_Struct {
   Parameter_Specification_List Access_To_Subprogram_Parameter_Profile; 
   // An_Anonymous_Access_To_Function
   // An_Anonymous_Access_To_Protected_Function
-  Element                      Access_To_Function_Result_Profile;
+  Element_ID                   Access_To_Function_Result_Profile;
 } Access_Definition_Struct;
 
 typedef struct _Private_Type_Definition_Struct {
@@ -1200,8 +1208,8 @@ typedef struct _Formal_Type_Definition_Struct {
 } Formal_Type_Definition_Struct;
 
 typedef struct _Aspect_Specification_Struct {
-  Element Aspect_Mark;
-  Element Aspect_Definition;
+  Element_ID Aspect_Mark;
+  Element_ID Aspect_Definition;
 } Aspect_Specification_Struct;
 
 typedef int       No_Struct;
@@ -1411,7 +1419,7 @@ struct Expression_Struct {
   enum Expression_Kinds Expression_Kind;
   bool                  Is_Prefix_Notation;
   Declaration_ID        Corresponding_Expression_Type;
-  Element               Corresponding_Expression_Type_Definition;
+  Element_ID            Corresponding_Expression_Type_Definition;
   
   // These fields are only valid for the kinds above them:  
   // An_Operator_Symbol:
@@ -1470,7 +1478,7 @@ struct Expression_Struct {
   // An_Indexed_Component (Is_Generalized_Indexing == true) //ASIS 2012 // 4.1.1
   Declaration_ID        Corresponding_Called_Function;
   // A_Function_Call =>                           // 4.1
-  Element_List          Function_Call_Parameters;
+  Element_ID_List          Function_Call_Parameters;
   // An_And_Then_Short_Circuit |                  // 4.4
   // An_Or_Else_Short_Circuit =>                  // 4.4
   Expression_ID         Short_Circuit_Operation_Left_Expression;
@@ -1478,7 +1486,7 @@ struct Expression_Struct {
   // An_In_Membership_Test |                      // 4.4  Ada 2012
   // A_Not_In_Membership_Test =>                  // 4.4  Ada 2012
   Expression_ID         Membership_Test_Expression;
-  Element_List          Membership_Test_Choices;
+  Element_ID_List          Membership_Test_Choices;
   // A_Type_Conversion =>                         // 4.6
   // A_Qualified_Expression =>                    // 4.7
   Expression_ID         Converted_Or_Qualified_Subtype_Mark;
@@ -1608,7 +1616,7 @@ enum Statement_Kinds {
 // May take 37*4 bytes - 22 IDs, 12 Lists, 2 bools, and 1 enum:
 struct Statement_Struct {
   enum Statement_Kinds   Statement_Kind;
-  Pragma_Element_List    Corresponding_Pragmas;
+  Pragma_Element_ID_List    Corresponding_Pragmas;
   Defining_Name_List     Label_Names;
   
   // These fields are only valid for the kinds above them:  
@@ -1620,13 +1628,13 @@ struct Statement_Struct {
   //   A_Block_Statement               (pragmas from declarative region +
   //                                                 statements)
   //   An_Accept_Statement             (pragmas from statement list +
-  Pragma_Element_List    Pragmas;
+  Pragma_Element_ID_List    Pragmas;
   //   A_Loop_Statement
   //   A_While_Loop_Statement
   //   A_For_Loop_Statement
   //   A_Block_Statement
   //   An_Accept_Statement
-  Element                Corresponding_End_Name;
+  Element_ID             Corresponding_End_Name;
   //   An_Assignment_Statement,             // 5.2  
   Expression_ID          Assignment_Variable_Name;
   Expression_ID          Assignment_Expression;
@@ -1784,7 +1792,7 @@ struct Path_Struct {
   Expression_ID  Condition_Expression;
   // A_Case_Path,
   // A_Case_Expression_Path,
-  Element_List   Case_Path_Alternative_Choices;
+  Element_ID_List   Case_Path_Alternative_Choices;
   // A_Select_Path,
   // An_Or_Path,
   Expression_ID  Guard;
@@ -1824,7 +1832,7 @@ typedef struct _Representation_Clause_Struct {
 
   // These fields are only valid for the kinds above them:
   // A_Record_Representation_Clause
-  Pragma_Element_List         Pragmas;
+  Pragma_Element_ID_List         Pragmas;
   // An_Attribute_Definition_Clause
   // An_Enumeration_Representation_Clause
   // An_At_Clause
@@ -1849,7 +1857,7 @@ struct Clause_Struct {
   Name_ID           Representation_Clause_Name;
   Expression_ID     Representation_Clause_Expression;
   Expression_ID     Mod_Clause_Expression;
-  Element_List      Component_Clauses;
+  Element_ID_List      Component_Clauses;
   Expression_ID     Component_Clause_Position;
   Element_ID        Component_Clause_Range;
   //   A_Representation_Clause
@@ -1870,9 +1878,9 @@ struct Clause_Struct {
 
 // May take 7*4 bytes - 1 ID, 3 List:
 struct Exception_Handler_Struct {
-  Pragma_Element_List Pragmas;
+  Pragma_Element_ID_List Pragmas;
   Declaration_ID      Choice_Parameter_Specification;
-  Element_List        Exception_Choices;
+  Element_ID_List        Exception_Choices;
   Statement_List      Handler_Statements;
 };
 
@@ -1914,20 +1922,24 @@ struct Source_Location_Struct {
   int   Last_Column;
 };
 
+// Declared here because used in Element_Struct:
+typedef Node_ID Unit_ID;
+
 // May take ?? bytes - 2*ID, 2*enum, 1*5*4 struct, 1*?? union:
-struct Element_Struct {
+typedef struct _Element_Struct {
   Element_ID                    ID;
   enum Element_Kinds            Element_Kind;
-  Node_ID                       Enclosing_Compilation_Unit;
+  Unit_ID                       Enclosing_Compilation_Unit;
   bool                          Is_Part_Of_Implicit;
   bool                          Is_Part_Of_Inherited;
   bool                          Is_Part_Of_Instance;
   ASIS_Integer                  Hash;
-  Node_ID                       Enclosing_Element_ID;
+  Element_ID                    Enclosing_Element_ID;
   enum Enclosing_Kinds          Enclosing_Kind;
   struct Source_Location_Struct Source_Location;
+  char*                         Debug_Image;
   union Element_Union           The_Union;
-};
+} Element_Struct;
 
 ///////////////////////////////////////////////////////////////////////////////
 // END element 
@@ -1936,7 +1948,6 @@ struct Element_Struct {
 ///////////////////////////////////////////////////////////////////////////////
 // BEGIN unit
 ///////////////////////////////////////////////////////////////////////////////
-typedef Node_ID Unit_ID;
 
 typedef Unit_ID *Unit_ID_Ptr;
 
@@ -2055,7 +2066,7 @@ enum Unit_Origins {
 };
 
 // May take 26*4 (20*4 + 3) bytes - 6*ID, 3*enum, 4*List(2*4 ea), 8*char*, 3*bool:
-struct Unit_Struct {
+typedef struct _Unit_Struct {
   Unit_ID             ID;
   enum Unit_Kinds     Unit_Kind;
   enum Unit_Classes   Unit_Class;
@@ -2073,7 +2084,7 @@ struct Unit_Struct {
   char               *Debug_Image;
   Declaration_ID      Unit_Declaration;
   Context_Clause_List Context_Clause_Elements;
-  Pragma_Element_List Compilation_Pragmas;
+  Pragma_Element_ID_List Compilation_Pragmas;
   bool                Is_Standard;
   
   // The fields below are only applicable to the kinds above them:
@@ -2128,7 +2139,7 @@ struct Unit_Struct {
   //  A_Task_Body_Subunit,
   //  A_Protected_Body_Subunit,
   Unit_ID             Corresponding_Subunit_Parent_Body;
-};
+} Unit_Struct;
 ///////////////////////////////////////////////////////////////////////////////
 // END unit 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2137,39 +2148,39 @@ struct Unit_Struct {
 // BEGIN context
 ///////////////////////////////////////////////////////////////////////////////
 
-struct Context_Struct {
+typedef struct _Context_Struct {
   char *name;
   char *parameters;
   char *debug_image;
-};
+} Context_Struct;
 
 ///////////////////////////////////////////////////////////////////////////////
 // END context
 ///////////////////////////////////////////////////////////////////////////////
 
-// May take  44*4 bytes (Element_Struct, the largest component):
-union Node_Union {
-  int                   Dummy_Member; // For Ada default initialization
-  struct Element_Struct Element;
-  struct Unit_Struct    Unit;
-  struct Context_Struct Context;
-};
+typedef struct _Unit_Struct_List_Struct {
+  Unit_Struct                      Unit;
+  struct _Unit_Struct_List_Struct *Next;
+  int                              Next_Count;
+} Unit_Struct_List_Struct;
 
-// May take 45*4 bytes - a 44*4 Node_Union, 1 enum:
-struct Node_Struct {
-  enum Node_Kinds  Node_Kind;
-  union Node_Union The_Union;
-};
+typedef Unit_Struct_List_Struct *Unit_Structs_Ptr;
 
-// May take 47*4 bytes - 45*4 Node_Struct, 1 ptr, 1 int:
-struct List_Node_Struct {
-  struct Node_Struct       Node;
-  struct List_Node_Struct *Next;
-  // Number of nodes in next :
-  int                      Next_Count;
-};
+typedef struct _Element_Struct_List_Struct {
+  Element_Struct                      Element;
+  struct _Element_Struct_List_Struct *Next;
+  int                                 Next_Count;
+} Element_Struct_List_Struct;
 
-typedef struct List_Node_Struct *Node_List_Ptr;
+typedef Element_Struct_List_Struct *Element_Structs_Ptr;
+
+typedef struct _Nodes_Struct {
+  Context_Struct      Context;
+  Unit_Structs_Ptr    Units;
+  Element_Structs_Ptr Elements;
+} Nodes_Struct;
+
+typedef Nodes_Struct *Nodes_Ptr;
 
 #endif //ifndef A_NODES_H
 

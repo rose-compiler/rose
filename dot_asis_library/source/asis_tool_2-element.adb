@@ -7,6 +7,7 @@ with Asis.Expressions;
 with Asis.Iterator;
 with Asis.Statements;
 -- GNAT-specific:
+with A4G.Int_Knds;
 with Asis.Set_Get;
 with Asis.Text;
 with Types;
@@ -15,13 +16,25 @@ package body Asis_Tool_2.Element is
 
    Module_Name : constant String := "Asis_Tool_2.Element";
 
-   -- Leaks:
-   function Element_List
+   function Get_Element_ID (Element : in Asis.Element)
+                            return a_nodes_h.Element_ID
+   is
+      subtype IEK is A4G.Int_Knds.Internal_Element_Kinds;
+      Node : constant Types.Node_Id := Asis.Set_Get.Node_Value (Element);
+      Kind : constant IEK := Asis.Set_Get.Int_Kind (Element);
+   begin
+      return
+        (Node => a_nodes_h.Node_ID (Node),
+         Kind => Interfaces.C.int (IEK'Pos (Kind)));
+   end Get_Element_ID;
+
+   -- LEAKS:
+   function To_Element_ID_List
      (This           : in out Class;
       Elements_In    : in     Asis.Element_List;
       Dot_Label_Name : in     String;
       Add_Edges      : in     Boolean := False)
-     return  a_nodes_h.Element_List
+     return  a_nodes_h.Element_ID_List
    is
       Element_Count : constant Natural := Elements_In'Length;
       IDs           : anhS.Element_ID_Array_Access := new
@@ -30,12 +43,12 @@ package body Asis_Tool_2.Element is
    begin
       for Element of Elements_In loop
          declare
-            Element_ID : constant Types.Node_ID :=
-              Asis.Set_Get.Node_Value (Element);
+            Element_ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Element);
             Label      : constant String :=
               Dot_Label_Name & " (" & IDs_Index'Image & ")";
          begin
-            IDs (IDs_Index) := Interfaces.C.int (Element_ID);
+            IDs (IDs_Index) := Element_ID;
             This.Add_To_Dot_Label (Label, To_String (Element_ID));
             if Add_Edges then
                This.Add_Dot_Edge (From  => This.Element_ID,
@@ -48,19 +61,19 @@ package body Asis_Tool_2.Element is
       return
         (length => Interfaces.C.int(Element_Count),
          IDs    => anhS.To_Element_ID_Ptr (IDs));
-   end Element_List;
+   end To_Element_ID_List;
 
    procedure Add_Element_List
      (This           : in out Class;
       Elements_In    : in     Asis.Element_List;
       Dot_Label_Name : in     String;
-      List_Out       :    out a_nodes_h.Element_List;
+      List_Out       :    out a_nodes_h.Element_ID_List;
       Add_Edges      : in     Boolean := False) is
    begin
-      List_Out := Element_List (This           => This,
-                                Elements_In    => Elements_In,
-                                Dot_Label_Name => Dot_Label_Name,
-                                Add_Edges      => Add_Edges);
+      List_Out := To_Element_ID_List (This           => This,
+                                      Elements_In    => Elements_In,
+                                      Dot_Label_Name => Dot_Label_Name,
+                                      Add_Edges      => Add_Edges);
    end Add_Element_List;
 
    function Add_Operator_Kind
@@ -132,19 +145,19 @@ package body Asis_Tool_2.Element is
          end;
 
          procedure Add_Defining_Prefix is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Declarations.Defining_Prefix (Element));
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Declarations.Defining_Prefix (Element));
          begin
             State.Add_To_Dot_Label_And_Edge ("Defining_Prefix", ID);
-            Result.Defining_Prefix := a_nodes_h.Node_ID (ID);
+            Result.Defining_Prefix := ID;
          end;
 
          procedure Add_Defining_Selector is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Declarations.Defining_Selector (Element));
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Declarations.Defining_Selector (Element));
          begin
             State.Add_To_Dot_Label_And_Edge ("Defining_Selector", ID);
-            Result.Defining_Selector := a_nodes_h.Node_ID (ID);
+            Result.Defining_Selector := ID;
          end;
 
          procedure Add_Position_Number_Image is
@@ -167,12 +180,12 @@ package body Asis_Tool_2.Element is
            (False);
 
          procedure Add_Corresponding_Constant_Declaration is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID
                 (Asis.Declarations.Corresponding_Constant_Declaration (Element));
          begin
             State.Add_To_Dot_Label ("Corresponding_Constant_Declaration", To_String(ID));
-            Result.Corresponding_Constant_Declaration := a_nodes_h.Node_ID (ID);
+            Result.Corresponding_Constant_Declaration := ID;
          end;
 
          procedure Add_Common_Items is
@@ -245,11 +258,11 @@ package body Asis_Tool_2.Element is
          end;
 
          procedure Add_Body_Block_Statement is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Declarations.Body_Block_Statement (Element));
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Declarations.Body_Block_Statement (Element));
          begin
             State.Add_To_Dot_Label_And_Edge ("Body_Block_Statement", ID);
-            Result.Body_Block_Statement := a_nodes_h.Node_ID (ID);
+            Result.Body_Block_Statement := ID;
          end;
 
          procedure Add_Body_Declarative_Items is begin
@@ -280,71 +293,71 @@ package body Asis_Tool_2.Element is
          end;
 
          procedure Add_Corresponding_Body is
---              ID : constant Types.Node_Id :=
---                Asis.Set_Get.Node (Asis.Declarations.Corresponding_Body (Element));
+--              ID : constant a_nodes_h.Element_ID :=
+--                Get_Element_ID (Asis.Declarations.Corresponding_Body (Element));
          begin
             -- Todo: Finish
             null;
 --              State.Add_To_Dot_Label ("Corresponding_Body", ID);
---              Result.Corresponding_Body := a_nodes_h.Node_ID (ID);
+--              Result.Corresponding_Body := ID;
          end;
 
          procedure Add_Corresponding_Body_Stub is
---              ID : constant Types.Node_Id :=
---                Asis.Set_Get.Node (Asis.Declarations.Corresponding_Body_Stub (Element));
+--              ID : constant a_nodes_h.Element_ID :=
+--                Get_Element_ID (Asis.Declarations.Corresponding_Body_Stub (Element));
          begin
             -- Todo: Finish
             null;
 --              State.Add_To_Dot_Label ("Corresponding_Body_Stub", ID);
---              Result.Corresponding_Body_Stub := a_nodes_h.Node_ID (ID);
+--              Result.Corresponding_Body_Stub := ID;
          end;
 
          procedure Add_Corresponding_Declaration is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Declarations.Corresponding_Declaration (Element));
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Declarations.Corresponding_Declaration (Element));
          begin
             State.Add_To_Dot_Label ("Corresponding_Declaration", ID);
-            Result.Corresponding_Declaration := a_nodes_h.Node_ID (ID);
+            Result.Corresponding_Declaration := ID;
          end;
 
          procedure Add_Corresponding_End_Name is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Elements.Corresponding_End_Name (Element));
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Elements.Corresponding_End_Name (Element));
          begin
             State.Add_To_Dot_Label ("Corresponding_End_Name", ID);
-            Result.Corresponding_End_Name := a_nodes_h.Node_ID (ID);
+            Result.Corresponding_End_Name := ID;
          end;
 
          procedure Add_Corresponding_Equality_Operator is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Declarations.Corresponding_Equality_Operator (Element));
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Declarations.Corresponding_Equality_Operator (Element));
          begin
             State.Add_To_Dot_Label ("Corresponding_Equality_Operator", ID);
-            Result.Corresponding_Equality_Operator := a_nodes_h.Node_ID (ID);
+            Result.Corresponding_Equality_Operator := ID;
          end;
 
          procedure Add_Corresponding_First_Subtype is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Declarations.Corresponding_First_Subtype (Element));
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Declarations.Corresponding_First_Subtype (Element));
          begin
             State.Add_To_Dot_Label ("Corresponding_First_Subtype", ID);
-            Result.Corresponding_First_Subtype := a_nodes_h.Node_ID (ID);
+            Result.Corresponding_First_Subtype := ID;
          end;
 
          procedure Add_Corresponding_Last_Constraint is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Declarations.Corresponding_Last_Constraint (Element));
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Declarations.Corresponding_Last_Constraint (Element));
          begin
             State.Add_To_Dot_Label ("Corresponding_Last_Constraint", ID);
-            Result.Corresponding_Last_Constraint := a_nodes_h.Node_ID (ID);
+            Result.Corresponding_Last_Constraint := ID;
          end;
 
          procedure Add_Corresponding_Last_Subtype is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Declarations.Corresponding_Last_Subtype (Element));
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Declarations.Corresponding_Last_Subtype (Element));
          begin
             State.Add_To_Dot_Label ("Corresponding_Last_Subtype", ID);
-            Result.Corresponding_Last_Subtype := a_nodes_h.Node_ID (ID);
+            Result.Corresponding_Last_Subtype := ID;
          end;
 
          procedure Add_Corresponding_Pragmas is begin
@@ -365,39 +378,39 @@ package body Asis_Tool_2.Element is
          end;
 
          procedure Add_Corresponding_Subprogram_Derivation is
---              ID : constant Types.Node_Id :=
---                Asis.Set_Get.Node (Asis.Declarations.Corresponding_Subprogram_Derivation (Element));
+--              ID : constant a_nodes_h.Element_ID :=
+--                Get_Element_ID (Asis.Declarations.Corresponding_Subprogram_Derivation (Element));
          begin
             -- TODO: Finish
             null;
 --              State.Add_To_Dot_Label ("Corresponding_Subprogram_Derivation", ID);
---              Result.Corresponding_Subprogram_Derivation := a_nodes_h.Node_ID (ID);
+--              Result.Corresponding_Subprogram_Derivation := ID;
          end;
 
          procedure Add_Corresponding_Type is
---              ID : constant Types.Node_Id :=
---                Asis.Set_Get.Node (Asis.Declarations.Corresponding_Type (Element));
+--              ID : constant a_nodes_h.Element_ID :=
+--                Get_Element_ID (Asis.Declarations.Corresponding_Type (Element));
          begin
             -- TODO: Finish
             null;
 --              State.Add_To_Dot_Label ("Corresponding_Type", ID);
---              Result.Corresponding_Type := a_nodes_h.Node_ID (ID);
+--              Result.Corresponding_Type := ID;
          end;
 
          procedure Add_Corresponding_Type_Declaration is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Declarations.Corresponding_Type_Declaration (Element));
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Declarations.Corresponding_Type_Declaration (Element));
          begin
             State.Add_To_Dot_Label ("Corresponding_Type_Declaration", ID);
-            Result.Corresponding_Type_Declaration := a_nodes_h.Node_ID (ID);
+            Result.Corresponding_Type_Declaration := ID;
          end;
 
          procedure Add_Corresponding_Type_Partial_View is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Declarations.Corresponding_Type_Partial_View (Element));
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Declarations.Corresponding_Type_Partial_View (Element));
          begin
             State.Add_To_Dot_Label ("Corresponding_Type_Partial_View", ID);
-            Result.Corresponding_Type_Partial_View := a_nodes_h.Node_ID (ID);
+            Result.Corresponding_Type_Partial_View := ID;
          end;
 
          procedure Add_Declaration_Interface_List is begin
@@ -427,29 +440,29 @@ package body Asis_Tool_2.Element is
          end;
 
          procedure Add_Discriminant_Part is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Declarations.Discriminant_Part (Element));
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Declarations.Discriminant_Part (Element));
          begin
             State.Add_To_Dot_Label_And_Edge ("Discriminant_Part", ID);
-            Result.Discriminant_Part := a_nodes_h.Node_ID (ID);
+            Result.Discriminant_Part := ID;
          end;
 
          procedure Add_Entry_Family_Definition is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Declarations.Entry_Family_Definition (Element));
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Declarations.Entry_Family_Definition (Element));
          begin
             State.Add_To_Dot_Label_And_Edge ("Entry_Family_Definition", ID);
-            Result.Entry_Family_Definition := a_nodes_h.Node_ID (ID);
+            Result.Entry_Family_Definition := ID;
          end;
 
          procedure Add_Entry_Index_Specification is
---              ID : constant Types.Node_Id :=
---                Asis.Set_Get.Node (Asis.Declarations.Entry_Index_Specification (Element));
+--              ID : constant a_nodes_h.Element_ID :=
+--                Get_Element_ID (Asis.Declarations.Entry_Index_Specification (Element));
          begin
             -- TODO: Finish
             null;
 --              State.Add_To_Dot_Label_And_Edge ("Entry_Index_Specification", ID);
---              Result.Entry_Index_Specification := a_nodes_h.Node_ID (ID);
+--              Result.Entry_Index_Specification := ID;
          end;
 
          procedure Add_Has_Abstract is
@@ -509,11 +522,11 @@ package body Asis_Tool_2.Element is
          end;
 
          procedure Add_Initialization_Expression is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Declarations.Initialization_Expression (Element));
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Declarations.Initialization_Expression (Element));
          begin
             State.Add_To_Dot_Label_And_Edge ("Initialization_Expression", ID);
-            Result.Initialization_Expression := a_nodes_h.Node_ID (ID);
+            Result.Initialization_Expression := ID;
          end;
 
          procedure Add_Is_Dispatching_Operation is
@@ -582,11 +595,11 @@ package body Asis_Tool_2.Element is
          end;
 
          procedure Add_Object_Declaration_View is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Declarations.Object_Declaration_View (Element));
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Declarations.Object_Declaration_View (Element));
          begin
             State.Add_To_Dot_Label_And_Edge ("Object_Declaration_View", ID);
-            Result.Object_Declaration_View := a_nodes_h.Node_ID (ID);
+            Result.Object_Declaration_View := ID;
          end;
 
          procedure Add_Parameter_Profile is begin
@@ -617,19 +630,19 @@ package body Asis_Tool_2.Element is
          end;
 
          procedure Add_Result_Profile is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Declarations.Result_Profile (Element));
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Declarations.Result_Profile (Element));
          begin
             State.Add_To_Dot_Label_And_Edge ("Result_Profile", ID);
-            Result.Result_Profile := a_nodes_h.Node_ID (ID);
+            Result.Result_Profile := ID;
          end;
 
          procedure Add_Type_Declaration_View is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Declarations.Type_Declaration_View (Element));
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Declarations.Type_Declaration_View (Element));
          begin
             State.Add_To_Dot_Label_And_Edge ("Type_Declaration_View", ID);
-            Result.Type_Declaration_View := a_nodes_h.Node_ID (ID);
+            Result.Type_Declaration_View := ID;
          end;
 
          procedure Add_Visible_Part_Declarative_Items is
@@ -992,84 +1005,84 @@ package body Asis_Tool_2.Element is
          -----------------------------------------------------------------------
          -- BEGIN field support (Alphabetical order):
 
-         function Component_Definition_View return a_nodes_h.Node_ID is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Definitions.Component_Definition_View (Element));
+         function Component_Definition_View return a_nodes_h.Element_ID is
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Definitions.Component_Definition_View (Element));
          begin
             State.Add_To_Dot_Label_And_Edge ("Component_Definition_View", ID);
-            return a_nodes_h.Node_ID (ID);
+            return ID;
          end;
 
-         function Corresponding_Parent_Subtype return a_nodes_h.Node_ID is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Definitions.Corresponding_Parent_Subtype
+         function Corresponding_Parent_Subtype return a_nodes_h.Element_ID is
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Definitions.Corresponding_Parent_Subtype
                                  (Element));
          begin
             State.Add_To_Dot_Label ("Corresponding_Parent_Subtype", To_String (ID));
-            return a_nodes_h.Node_ID (ID);
+            return ID;
          end;
 
-         function Corresponding_Root_Type return a_nodes_h.Node_ID is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Definitions.Corresponding_Root_Type
+         function Corresponding_Root_Type return a_nodes_h.Element_ID is
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Definitions.Corresponding_Root_Type
                                  (Element));
          begin
             State.Add_To_Dot_Label ("Corresponding_Root_Type", To_String (ID));
-            return a_nodes_h.Node_ID (ID);
+            return ID;
          end;
 
-         function Corresponding_Type_Operators return a_nodes_h.Element_List is
+         function Corresponding_Type_Operators return a_nodes_h.Element_ID_List is
          begin
-            return Element_List
+            return To_Element_ID_List
               (This           => State,
                Elements_In    => Asis.Definitions.Corresponding_Type_Operators (Element),
                Dot_Label_Name => "Corresponding_Type_Operators");
          end;
 
-         function Corresponding_Type_Structure return a_nodes_h.Node_ID is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Definitions.Corresponding_Type_Structure
+         function Corresponding_Type_Structure return a_nodes_h.Element_ID is
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Definitions.Corresponding_Type_Structure
                                  (Element));
          begin
             State.Add_To_Dot_Label ("Corresponding_Type_Structure", To_String (ID));
-            return a_nodes_h.Node_ID (ID);
+            return ID;
          end;
 
-         function Definition_Interface_List return a_nodes_h.Element_List is
+         function Definition_Interface_List return a_nodes_h.Element_ID_List is
          begin
-            return Element_List
+            return To_Element_ID_List
               (This           => State,
                Elements_In    => Asis.Definitions.Definition_Interface_List (Element),
                Dot_Label_Name => "Definition_Interface_List");
          end;
 
-         function Delta_Expression return a_nodes_h.Node_ID is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Definitions.Delta_Expression (Element));
+         function Delta_Expression return a_nodes_h.Element_ID is
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Definitions.Delta_Expression (Element));
          begin
             State.Add_To_Dot_Label ("Delta_Expression", To_String (ID));
-            return a_nodes_h.Node_ID (ID);
+            return ID;
          end;
 
-         function Digits_Expression return a_nodes_h.Node_ID is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Definitions.Digits_Expression (Element));
+         function Digits_Expression return a_nodes_h.Element_ID is
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Definitions.Digits_Expression (Element));
          begin
             State.Add_To_Dot_Label ("Digits_Expression", To_String (ID));
-            return a_nodes_h.Node_ID (ID);
+            return ID;
          end;
 
-         function Discrete_Ranges return a_nodes_h.Element_List is
+         function Discrete_Ranges return a_nodes_h.Element_ID_List is
          begin
-            return Element_List
+            return To_Element_ID_List
               (This           => State,
                Elements_In    => Asis.Definitions.Discrete_Ranges (Element),
                Dot_Label_Name => "Discrete_Ranges");
          end;
 
-         function Discriminant_Associations return a_nodes_h.Element_List is
+         function Discriminant_Associations return a_nodes_h.Element_ID_List is
          begin
-            return Element_List
+            return To_Element_ID_List
               (This           => State,
                Elements_In    => Asis.Definitions.Discriminant_Associations (Element),
                Dot_Label_Name => "Discriminant_Associations");
@@ -1117,31 +1130,31 @@ package body Asis_Tool_2.Element is
             return a_nodes_h.Support.To_bool (Value);
          end;
 
-         function Implicit_Components return a_nodes_h.Element_List is
+         function Implicit_Components return a_nodes_h.Element_ID_List is
             -- Not implemented in ASIS for GNAT GPL 2017 (20170515-63)GNAT GPL 2017 (20170515-63):
             Implemented_In_Asis : constant Boolean := False;
          begin
             if Implemented_In_Asis then
-               return Element_List
+               return To_Element_ID_List
                  (This           => State,
                   Elements_In    => Asis.Definitions.Implicit_Components (Element),
                   Dot_Label_Name => "Implicit_Components");
             else
-               return a_nodes_h.Support.Empty_Element_List;
+               return a_nodes_h.Support.Empty_Element_ID_List;
             end if;
          end;
 
-         function Implicit_Inherited_Declarations return a_nodes_h.Element_List is
+         function Implicit_Inherited_Declarations return a_nodes_h.Element_ID_List is
          begin
-            return Element_List
+            return To_Element_ID_List
               (This           => State,
                Elements_In    => Asis.Definitions.Implicit_Inherited_Declarations (Element),
                Dot_Label_Name => "Implicit_Inherited_Declarations");
          end;
 
-         function Implicit_Inherited_Subprograms return a_nodes_h.Element_List is
+         function Implicit_Inherited_Subprograms return a_nodes_h.Element_ID_List is
          begin
-            return Element_List
+            return To_Element_ID_List
               (This           => State,
                Elements_In    => Asis.Definitions.Implicit_Inherited_Subprograms (Element),
                Dot_Label_Name => "Implicit_Inherited_Subprograms");
@@ -1154,90 +1167,90 @@ package body Asis_Tool_2.Element is
             return a_nodes_h.Support.To_bool (Value);
          end;
 
-         function Lower_Bound return a_nodes_h.Node_ID is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Definitions.Lower_Bound (Element));
+         function Lower_Bound return a_nodes_h.Element_ID is
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Definitions.Lower_Bound (Element));
          begin
             State.Add_To_Dot_Label_And_Edge ("Lower_Bound", ID);
-            return a_nodes_h.Node_ID (ID);
+            return ID;
          end;
 
-         function Parent_Subtype_Indication return a_nodes_h.Node_ID is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Definitions.Parent_Subtype_Indication
+         function Parent_Subtype_Indication return a_nodes_h.Element_ID is
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Definitions.Parent_Subtype_Indication
                                  (Element));
          begin
             State.Add_To_Dot_Label_And_Edge ("Parent_Subtype_Indication", ID);
-            return a_nodes_h.Node_ID (ID);
+            return ID;
          end;
 
-         function Private_Part_Items return a_nodes_h.Element_List is
+         function Private_Part_Items return a_nodes_h.Element_ID_List is
          begin
-            return Element_List
+            return To_Element_ID_List
               (This           => State,
                Elements_In    => Asis.Definitions.Private_Part_Items (Element),
                Dot_Label_Name => "Private_Part_Items");
          end;
 
-         function Range_Attribute return a_nodes_h.Node_ID is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Definitions.Range_Attribute (Element));
+         function Range_Attribute return a_nodes_h.Element_ID is
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Definitions.Range_Attribute (Element));
          begin
             State.Add_To_Dot_Label ("Range_Attribute", To_String (ID));
-            return a_nodes_h.Node_ID (ID);
+            return ID;
          end;
 
-         function Real_Range_Constraint return a_nodes_h.Node_ID is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Definitions.Real_Range_Constraint (Element));
+         function Real_Range_Constraint return a_nodes_h.Element_ID is
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Definitions.Real_Range_Constraint (Element));
          begin
             State.Add_To_Dot_Label ("Real_Range_Constraint", To_String (ID));
-            return a_nodes_h.Node_ID (ID);
+            return ID;
          end;
 
-         function Record_Components return a_nodes_h.Element_List is
+         function Record_Components return a_nodes_h.Element_ID_List is
          begin
-            return Element_List
+            return To_Element_ID_List
               (This           => State,
                Elements_In    => Asis.Definitions.Record_Components (Element),
                Dot_Label_Name => "Record_Components");
          end;
 
-         function Record_Definition return a_nodes_h.Node_ID is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Definitions.Record_Definition (Element));
+         function Record_Definition return a_nodes_h.Element_ID is
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Definitions.Record_Definition (Element));
          begin
             State.Add_To_Dot_Label_And_Edge ("Record_Definition", ID);
-            return a_nodes_h.Node_ID (ID);
+            return ID;
          end;
 
-         function Subtype_Constraint return a_nodes_h.Node_ID is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Definitions.Subtype_Constraint (Element));
+         function Subtype_Constraint return a_nodes_h.Element_ID is
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Definitions.Subtype_Constraint (Element));
          begin
             State.Add_To_Dot_Label_And_Edge ("Subtype_Constraint", ID);
-            return a_nodes_h.Node_ID (ID);
+            return ID;
          end;
 
-         function Subtype_Mark return a_nodes_h.Node_ID is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Definitions.Subtype_Mark (Element));
+         function Subtype_Mark return a_nodes_h.Element_ID is
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Definitions.Subtype_Mark (Element));
          begin
             State.Add_To_Dot_Label_And_Edge ("Subtype_Mark", ID);
-            return a_nodes_h.Node_ID (ID);
+            return ID;
          end;
 
-         function Upper_Bound return a_nodes_h.Node_ID is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Definitions.Upper_Bound (Element));
+         function Upper_Bound return a_nodes_h.Element_ID is
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Definitions.Upper_Bound (Element));
          begin
             State.Add_To_Dot_Label_And_Edge ("Upper_Bound", ID);
-            return a_nodes_h.Node_ID (ID);
+            return ID;
          end;
 
-         function Visible_Part_Items return a_nodes_h.Element_List is
+         function Visible_Part_Items return a_nodes_h.Element_ID_List is
          begin
-            return Element_List
+            return To_Element_ID_List
               (This           => State,
                Elements_In    => Asis.Definitions.Visible_Part_Items (Element),
                Dot_Label_Name => "Visible_Part_Items");
@@ -1579,63 +1592,63 @@ package body Asis_Tool_2.Element is
 
          -- Supporting procedures are in alphabetical order:
          procedure Add_Converted_Or_Qualified_Expression is
-            ID : constant Types.Node_Id := Asis.Set_Get.Node
+            ID : constant a_nodes_h.Element_ID := Get_Element_ID
               (Asis.Expressions.Converted_Or_Qualified_Expression (Element));
          begin
             State.Add_To_Dot_Label_And_Edge
               ("Converted_Or_Qualified_Expression", ID);
             Result.Converted_Or_Qualified_Expression :=
-              a_nodes_h.Node_ID (ID);
+              ID;
          end;
 
          procedure Add_Converted_Or_Qualified_Subtype_Mark is
-            ID : constant Types.Node_Id := Asis.Set_Get.Node
+            ID : constant a_nodes_h.Element_ID := Get_Element_ID
               (Asis.Expressions.Converted_Or_Qualified_Subtype_Mark (Element));
          begin
             State.Add_To_Dot_Label_And_Edge
               ("Converted_Or_Qualified_Subtype_Mark", ID);
             Result.Converted_Or_Qualified_Subtype_Mark :=
-              a_nodes_h.Node_ID (ID);
+              ID;
          end;
 
          procedure Add_Corresponding_Called_Function is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Expressions.Corresponding_Called_Function
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Expressions.Corresponding_Called_Function
                                  (Element));
          begin
             State.Add_To_Dot_Label
               ("Corresponding_Called_Function", To_String (ID));
-            Result.Corresponding_Called_Function := a_nodes_h.Node_ID (ID);
+            Result.Corresponding_Called_Function := ID;
          end;
 
          procedure Add_Corresponding_Expression_Type is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Expressions.Corresponding_Expression_Type
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Expressions.Corresponding_Expression_Type
                                  (Element));
          begin
             State.Add_To_Dot_Label
               ("Corresponding_Expression_Type", To_String (ID));
-            Result.Corresponding_Expression_Type := a_nodes_h.Node_ID (ID);
+            Result.Corresponding_Expression_Type := ID;
          end;
 
          procedure Add_Corresponding_Name_Declaration is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Expressions.Corresponding_Name_Declaration
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Expressions.Corresponding_Name_Declaration
                                  (Element));
          begin
             State.Add_To_Dot_Label
               ("Corresponding_Name_Declaration", To_String (ID));
-            Result.Corresponding_Name_Declaration := a_nodes_h.Node_ID (ID);
+            Result.Corresponding_Name_Declaration := ID;
          end;
 
          procedure Add_Corresponding_Name_Definition is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Expressions.Corresponding_Name_Definition
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Expressions.Corresponding_Name_Definition
                                  (Element));
          begin
             State.Add_To_Dot_Label
               ("Corresponding_Name_Definition", To_String (ID));
-            Result.Corresponding_Name_Definition := a_nodes_h.Node_ID (ID);
+            Result.Corresponding_Name_Definition := ID;
          end;
 
          procedure Add_Corresponding_Name_Definition_List is
@@ -1667,27 +1680,27 @@ package body Asis_Tool_2.Element is
          end;
 
          procedure Add_Prefix is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Expressions.Prefix (Element));
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Expressions.Prefix (Element));
          begin
             State.Add_To_Dot_Label_And_Edge ("Prefix", ID);
-            Result.Prefix := a_nodes_h.Node_ID (ID);
+            Result.Prefix := ID;
          end;
 
          procedure Add_Selector is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Expressions.Selector (Element));
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Expressions.Selector (Element));
          begin
             State.Add_To_Dot_Label_And_Edge ("Selector", ID);
-            Result.Selector := a_nodes_h.Node_ID (ID);
+            Result.Selector := ID;
          end;
 
          procedure Add_Subpool_Name is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Expressions.Subpool_Name (Element));
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Expressions.Subpool_Name (Element));
          begin
             State.Add_To_Dot_Label_And_Edge ("Subpool_Name", ID);
-            Result.Subpool_Name := a_nodes_h.Node_ID (ID);
+            Result.Subpool_Name := ID;
          end;
 
          procedure Add_Value_Image is
@@ -1835,19 +1848,19 @@ package body Asis_Tool_2.Element is
            Asis.Elements.Association_Kind (Element);
 
          procedure Add_Formal_Parameter is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Expressions.Formal_Parameter (Element));
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Expressions.Formal_Parameter (Element));
          begin
             State.Add_To_Dot_Label_And_Edge ("Formal_Parameter", ID);
-            Result.Formal_Parameter := a_nodes_h.Node_ID (ID);
+            Result.Formal_Parameter := ID;
          end;
 
          procedure Add_Actual_Parameter is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Expressions.Actual_Parameter (Element));
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Expressions.Actual_Parameter (Element));
          begin
             State.Add_To_Dot_Label_And_Edge ("Actual_Parameter", ID);
-            Result.Actual_Parameter := a_nodes_h.Node_ID (ID);
+            Result.Actual_Parameter := ID;
          end;
 
          procedure Add_Is_Defaulted_Association is
@@ -1949,19 +1962,19 @@ package body Asis_Tool_2.Element is
          end;
 
          procedure Add_Accept_Entry_Direct_Name is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Statements.Accept_Entry_Direct_Name (Element));
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Statements.Accept_Entry_Direct_Name (Element));
          begin
             State.Add_To_Dot_Label_And_Edge ("Accept_Entry_Direct_Name", ID);
-            Result.Accept_Entry_Direct_Name := a_nodes_h.Node_ID (ID);
+            Result.Accept_Entry_Direct_Name := ID;
          end;
 
          procedure Add_Accept_Entry_Index is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Statements.Accept_Entry_Index (Element));
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Statements.Accept_Entry_Index (Element));
          begin
             State.Add_To_Dot_Label_And_Edge ("Accept_Entry_Index", ID);
-            Result.Accept_Entry_Index := a_nodes_h.Node_ID (ID);
+            Result.Accept_Entry_Index := ID;
          end;
 
          procedure Add_Accept_Parameters is
@@ -1975,27 +1988,27 @@ package body Asis_Tool_2.Element is
          end;
 
          procedure Add_Assignment_Expression is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Statements.Assignment_Expression (Element));
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Statements.Assignment_Expression (Element));
          begin
             State.Add_To_Dot_Label_And_Edge ("Assignment_Expression", ID);
-            Result.Assignment_Expression := a_nodes_h.Node_ID (ID);
+            Result.Assignment_Expression := ID;
          end;
 
          procedure Add_Assignment_Variable_Name is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Statements.Assignment_Variable_Name (Element));
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Statements.Assignment_Variable_Name (Element));
          begin
             State.Add_To_Dot_Label_And_Edge ("Assignment_Variable_Name", ID);
-            Result.Assignment_Variable_Name := a_nodes_h.Node_ID (ID);
+            Result.Assignment_Variable_Name := ID;
          end;
 
          procedure Add_Associated_Message is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Statements.Associated_Message (Element));
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Statements.Associated_Message (Element));
          begin
             State.Add_To_Dot_Label_And_Edge ("Associated_Message", ID);
-            Result.Associated_Message := a_nodes_h.Node_ID (ID);
+            Result.Associated_Message := ID;
          end;
 
          procedure Add_Call_Statement_Parameters is
@@ -2009,27 +2022,27 @@ package body Asis_Tool_2.Element is
          end;
 
          procedure Add_Called_Name is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Statements.Called_Name (Element));
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Statements.Called_Name (Element));
          begin
             State.Add_To_Dot_Label_And_Edge ("Called_Name", ID);
-            Result.Called_Name := a_nodes_h.Node_ID (ID);
+            Result.Called_Name := ID;
          end;
 
          procedure Add_Corresponding_Called_Entity is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Statements.Corresponding_Called_Entity (Element));
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Statements.Corresponding_Called_Entity (Element));
          begin
             State.Add_To_Dot_Label ("Corresponding_Called_Entity", To_String (ID));
-            Result.Corresponding_Called_Entity := a_nodes_h.Node_ID (ID);
+            Result.Corresponding_Called_Entity := ID;
          end;
 
          procedure Add_Corresponding_Entry is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Statements.Corresponding_Entry (Element));
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Statements.Corresponding_Entry (Element));
          begin
             State.Add_To_Dot_Label ("Corresponding_Entry", To_String (ID));
-            Result.Corresponding_Entry := a_nodes_h.Node_ID (ID);
+            Result.Corresponding_Entry := ID;
          end;
 
          procedure Add_Is_Name_Repeated is
@@ -2060,27 +2073,27 @@ package body Asis_Tool_2.Element is
          end;
 
          procedure Add_Raised_Exception is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Statements.Raised_Exception (Element));
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Statements.Raised_Exception (Element));
          begin
             State.Add_To_Dot_Label_And_Edge ("Raised_Exception", ID);
-            Result.Raised_Exception := a_nodes_h.Node_ID (ID);
+            Result.Raised_Exception := ID;
          end;
 
          procedure Add_Return_Expression is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Statements.Return_Expression (Element));
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Statements.Return_Expression (Element));
          begin
             State.Add_To_Dot_Label_And_Edge ("Return_Expression", ID);
-            Result.Return_Expression := a_nodes_h.Node_ID (ID);
+            Result.Return_Expression := ID;
          end;
 
          procedure Add_Statement_Identifier is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Statements.Statement_Identifier (Element));
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Statements.Statement_Identifier (Element));
          begin
             State.Add_To_Dot_Label ("Statement_Identifier", To_String (ID));
-            Result.Statement_Identifier := a_nodes_h.Node_ID (ID);
+            Result.Statement_Identifier := ID;
          end;
 
          procedure Add_Statement_Paths is
@@ -2258,19 +2271,19 @@ package body Asis_Tool_2.Element is
          end;
 
          procedure Add_Condition_Expression is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Statements.Condition_Expression (Element));
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Statements.Condition_Expression (Element));
          begin
             State.Add_To_Dot_Label_And_Edge ("Condition_Expression", ID);
-            Result.Condition_Expression := a_nodes_h.Node_ID (ID);
+            Result.Condition_Expression := ID;
          end;
 
          procedure Add_Guard is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Statements.Guard (Element));
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Statements.Guard (Element));
          begin
             State.Add_To_Dot_Label_And_Edge ("Guard", ID);
-            Result.Guard := a_nodes_h.Node_ID (ID);
+            Result.Guard := ID;
          end;
 
          procedure Add_Sequence_Of_Statements is
@@ -2410,13 +2423,13 @@ package body Asis_Tool_2.Element is
            a_nodes_h.Support.Default_Exception_Handler_Struct;
 
          procedure Add_Choice_Parameter_Specification is
-            ID : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Statements.Choice_Parameter_Specification
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Statements.Choice_Parameter_Specification
                                  (Element));
          begin
             State.Add_To_Dot_Label_And_Edge ("Choice_Parameter_Specification", ID);
             Result.Choice_Parameter_Specification :=
-              a_nodes_h.Node_ID (ID);
+              ID;
          end;
 
          procedure Add_Exception_Choices is
@@ -2451,33 +2464,32 @@ package body Asis_Tool_2.Element is
       --------------------------------------------------------------------------
       --------------------------------------------------------------------------
 
-      function Enclosing_ID
-        (Element : in Asis.Element)
-         return Dot.ID_Type
-      is
-         Result : Dot.ID_Type; -- Initilaized
-         Enclosing_Element_Id : constant Types.Node_Id :=
-           Asis.Set_Get.Node_Value (Asis.Elements.Enclosing_Element (Element));
-         Enclosing_Unit_Id : constant A4G.A_Types.Unit_Id :=
-           Asis.Set_Get.Encl_Unit_Id (Element);
-         function Enclosing_Is_Element return boolean
-           is (Types."/=" (Enclosing_Element_Id, Types.Empty));
-      begin
-         if Enclosing_Is_Element then
-            Result := To_Dot_ID_Type (Enclosing_Element_Id);
-         else
-            Result := To_Dot_ID_Type (Enclosing_Unit_Id);
-         end if;
-         return Result;
-      end Enclosing_ID;
+--        function Enclosing_ID
+--          (Element : in Asis.Element)
+--           return Dot.ID_Type
+--        is
+--           Result : Dot.ID_Type; -- Initilaized
+--           Enclosing_Element_Id : constant a_nodes_h.Element_ID :=
+--             Get_Element_ID (Asis.Elements.Enclosing_Element (Element));
+--           Enclosing_Unit_Id : constant A4G.A_Types.Unit_Id :=
+--             Asis.Set_Get.Encl_Unit_Id (Element);
+--           function Enclosing_Is_Element return boolean
+--             is (Types."/=" (Enclosing_Element_Id, Types.Empty));
+--        begin
+--           if Enclosing_Is_Element then
+--              Result := To_Dot_ID_Type (Enclosing_Element_Id);
+--           else
+--              Result := To_Dot_ID_Type (Enclosing_Unit_Id);
+--           end if;
+--           return Result;
+--        end Enclosing_ID;
 
       function Enclosing_ID
         (Element : in Asis.Element)
-         return a_nodes_h.Node_ID is
+         return a_nodes_h.Element_ID is
       begin
-         return a_nodes_h.Node_ID
-           (Asis.Set_Get.Node_Value
-              (Asis.Elements.Enclosing_Element (Element)));
+         return Get_Element_ID
+              (Asis.Elements.Enclosing_Element (Element));
       end Enclosing_ID;
 
       function Spec_Or_Body_Image
@@ -2532,7 +2544,7 @@ package body Asis_Tool_2.Element is
          procedure Add_Element_ID is begin
             State.Add_To_Dot_Label (To_String (State.Element_ID));
             -- ID is in the Dot node twice, but not in the a_node twice.
-            Result.id := a_nodes_h.Node_ID (State.Element_ID);
+            Result.id := State.Element_ID;
          end;
 
          procedure Add_Element_Kind is begin
@@ -2593,15 +2605,61 @@ package body Asis_Tool_2.Element is
          end;
 
          procedure Add_Enclosing_Element is
-             Value : constant Types.Node_Id :=
-              Asis.Set_Get.Node (Asis.Elements.Enclosing_Element (Element));
+             Value : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Elements.Enclosing_Element (Element));
          begin
 --              State.Add_Dot_Edge (From  => Enclosing_Element_Id,
 --                              To    => State.Element_Id,
 --                              Label => "Child");
-            State.Add_To_Dot_Label ("Enclosing_Element", Value'Image);
-            Result.Enclosing_Element_Id :=
-              a_nodes_h.Node_ID (Value);
+            State.Add_To_Dot_Label ("Enclosing_Element", Value);
+            Result.Enclosing_Element_Id := Value;
+         end;
+
+         function Debug_Image return ICS.chars_ptr is
+            WS : constant Wide_String := Asis.Elements.Debug_Image (Element);
+         begin
+            State.Add_To_Dot_Label ("Debug_Image", To_Quoted_String (WS));
+            return To_Chars_Ptr(WS);
+         end;
+
+         procedure Put_Debug is
+            procedure Put_Line (Name  : in String;
+                                Value : in String) is
+            begin
+               State.Outputs.Text.Put_Indented_Line ("* " & Name & " => " & Value);
+            end;
+            procedure Put_Separator is
+            begin
+               State.Outputs.Text.Put_Indented_Line (String'(1 .. 40 => '*'));
+            end;
+            use Asis.Set_Get;
+         begin
+            Put_Separator;
+            Put_Line ("Node              ", Node (Element)'Image);
+            Put_Line ("R_Node            ", R_Node (Element)'Image);
+            Put_Line ("Node_Field_1      ", Node_Field_1 (Element)'Image);
+            Put_Line ("Node_Field_2      ", Node_Field_2 (Element)'Image);
+            Put_Line ("Node_Value        ", Node_Value (Element)'Image);
+            Put_Line ("R_Node_Value      ", R_Node_Value (Element)'Image);
+            Put_Line ("Node_Field_1_Value", Node_Field_1_Value (Element)'Image);
+            Put_Line ("Node_Field_2_Value", Node_Field_2_Value (Element)'Image);
+--              Put_Line ("Encl_Unit         ", Encl_Unit (Element)'Image);
+            Put_Line ("Encl_Unit_Id      ", Encl_Unit_Id (Element)'Image);
+--              Put_Line ("Encl_Cont         ", Encl_Cont (Element)'Image);
+            Put_Line ("Encl_Cont_Id      ", Encl_Cont_Id (Element)'Image);
+            Put_Line ("Kind              ", Kind (Element)'Image);
+            Put_Line ("Int_Kind          ", Int_Kind (Element)'Image);
+            Put_Line ("Is_From_Implicit  ", Is_From_Implicit (Element)'Image);
+            Put_Line ("Is_From_Inherited ", Is_From_Inherited (Element)'Image);
+            Put_Line ("Is_From_Instance  ", Is_From_Instance (Element)'Image);
+            Put_Line ("Special_Case      ", Special_Case (Element)'Image);
+            Put_Line ("Normalization_Case", Normalization_Case (Element)'Image);
+            Put_Line ("Parenth_Count     ", Parenth_Count (Element)'Image);
+            Put_Line ("Encl_Tree         ", Encl_Tree (Element)'Image);
+            Put_Line ("Rel_Sloc          ", Rel_Sloc (Element)'Image);
+            Put_Line ("Character_Code    ", Character_Code (Element)'Image);
+--              Put_Line ("Obtained          ", Obtained (Element)'Image);
+            Put_Separator;
          end;
 
          procedure Start_Output is
@@ -2609,7 +2667,7 @@ package body Asis_Tool_2.Element is
             Default_Label : Dot.HTML_Like_Labels.Class; -- Initialized
          begin
             Result := a_nodes_h.Support.Default_Element_Struct;
-            State.Element_ID := Asis.Set_Get.Node (Element);
+            State.Element_ID := Get_Element_ID (Element);
 
             State.Outputs.Text.End_Line;
             -- Element ID comes out on next line via Add_Element_ID:
@@ -2619,27 +2677,24 @@ package body Asis_Tool_2.Element is
             State.Dot_Label := Default_Label;
             State.Dot_Node.Node_ID.ID := To_Dot_ID_Type (State.Element_ID);
 
+            -- Result.Debug_Image := Debug_Image;
+            Put_Debug;
             Add_Element_ID;
             Add_Element_Kind;
-            Add_Source_Location;
             Add_Is_Part_Of_Implicit;
             Add_Is_Part_Of_Inherited;
             Add_Is_Part_Of_Instance;
-            Add_Enclosing_Element;
             Add_Hash;
+            Add_Enclosing_Element;
+            Add_Source_Location;
          end;
 
          procedure Finish_Output is
-            A_Node : a_nodes_h.Node_Struct := anhS.Default_Node_Struct;
          begin
             State.Dot_Node.Add_Label (State.Dot_Label);
-
             State.Outputs.Graph.Append_Stmt
               (new Dot.Node_Stmt.Class'(State.Dot_Node));
-
-            A_Node.Node_Kind := a_nodes_h.An_Element_Node;
-            A_Node.The_Union.element := Result;
-            State.Outputs.A_Nodes.Push (A_Node);
+            State.Outputs.A_Nodes.Push (Result);
          end;
 
          use all type Asis.Element_Kinds;
@@ -2702,7 +2757,7 @@ package body Asis_Tool_2.Element is
          State.Outputs.Text.End_Line;
          State.Outputs.Text.Dedent;
          State.Outputs.Text.Put_Indented_Line
-           (String'("END " & To_String (Asis.Set_Get.Node (Element))));
+           (String'("END " & To_String (Get_Element_ID (Element))));
       end Process_Element;
 
    end Post_Children;
@@ -2771,7 +2826,7 @@ package body Asis_Tool_2.Element is
    procedure Add_To_Dot_Label
      (This  : in out Class;
       Name  : in     String;
-      ID    : in     Types.Node_Id) is
+      ID    : in     a_nodes_h.Element_ID) is
    begin
       This.Add_To_Dot_Label (Name, To_String (ID));
    end;
@@ -2801,13 +2856,13 @@ package body Asis_Tool_2.Element is
    -----------
    procedure Add_Dot_Edge
      (This  : in out Class;
-      From  : in     Types.Node_Id;
-      To    : in     Types.Node_Id;
+      From  : in     a_nodes_h.Element_ID;
+      To    : in     a_nodes_h.Element_ID;
       Label : in     String)
    is
       Edge_Stmt : Dot.Edges.Stmts.Class; -- Initialized
    begin
-      if not Types."=" (To, Types.Empty) then
+      if not a_nodes_h."=" (To, anhS.Invalid_Element_ID) then
          Edge_Stmt.LHS.Node_Id.ID := To_Dot_ID_Type (From);
          Edge_Stmt.RHS.Node_Id.ID := To_Dot_ID_Type (To);
          Edge_Stmt.Attr_List.Add_Assign_To_First_Attr
@@ -2823,7 +2878,7 @@ package body Asis_Tool_2.Element is
    procedure Add_To_Dot_Label_And_Edge
      (This  : in out Class;
       Label : in     String;
-      To    : in     Types.Node_Id) is
+      To    : in     a_nodes_h.Element_ID) is
    begin
       This.Add_To_Dot_Label (Label, To_String (To));
       This.Add_Dot_Edge (From  => This.Element_ID,

@@ -38,6 +38,8 @@ package body Asis_Tool_2.Tool is
       -- LEAKS (only intended to be called once per program execution):
       procedure Init_And_Process_Context is
       begin
+         -- -dall - All the ASIS-for-GNAT debug flags are set ON
+         -- Asis.Implementation.Initialize (Parameters => "-dall");
          Asis.Implementation.Initialize;
          This.Outputs.Output_Dir := ASU.To_Unbounded_String (Real_Output_Dir);
          This.Outputs.Text := new Indented_Text.Class;

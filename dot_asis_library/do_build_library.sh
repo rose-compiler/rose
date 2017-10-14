@@ -23,7 +23,7 @@ build_library () {
   # -vh      Verbose output (high verbosity)
   # -vPx     Specify verbosity when parsing Project Files (x = 0/1/2)
   # -Xnm=val Specify an external reference for Project Files
-  gprbuild -p -Pdot_asis_library.gpr -v -XLIBRARY_TYPE=static -XASIS_BUILD=default
+  gprbuild -p -Pdot_asis_library.gpr -v
 }
 
 log_start

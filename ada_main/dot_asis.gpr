@@ -30,5 +30,9 @@ project DOT_ASIS is
       for Vcs_Kind use "Git";
    end Ide;
 
+   package Binder is
+      for Switches ("ada") use ("-E");
+   end Binder;
+
 end DOT_ASIS;
 
