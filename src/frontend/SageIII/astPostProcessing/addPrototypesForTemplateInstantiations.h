@@ -28,22 +28,29 @@ class AddPrototypesForTemplateInstantiationsInheritedAttribute
           AddPrototypesForTemplateInstantiationsInheritedAttribute() : insideTransformationToOutput(false) {}
    };
 
-// DQ (6/21/2005): This class controls the output of template declarations in the generated code (by the unparser).
 class CollectTemplateInstantiationsMarkedForOutput
 : public SgSimpleProcessing
    {
      public:
+       // Data structure to accumulate list of defining template instatiations marked to be output in source code.
+          std::set<SgDeclarationStatement*> definingTemplateInstantiationSet;
+
       //! Required traversal function
           void visit ( SgNode* node );
    };
 
 
 
-// DQ (6/21/2005): This class controls the output of template declarations in the generated code (by the unparser).
 class AddPrototypesForTemplateInstantiations
    : public SgTopDownProcessing<AddPrototypesForTemplateInstantiationsInheritedAttribute>
    {
      public:
+          std::set<SgDeclarationStatement*> & definingTemplateInstantiationSet;
+          std::set<SgFunctionRefExp*>         usedTemplateInstantiationSet;
+          std::set<SgDeclarationStatement*>   prototypeTemplateInstantiationSet;
+
+          AddPrototypesForTemplateInstantiations(std::set<SgDeclarationStatement*> & definingTemplateInstantiationSet);
+
       //! Required traversal function
           AddPrototypesForTemplateInstantiationsInheritedAttribute
                evaluateInheritedAttribute ( SgNode* node, AddPrototypesForTemplateInstantiationsInheritedAttribute inheritedAttribute );

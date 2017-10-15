@@ -327,7 +327,7 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
             // statementfilename = stmt->get_file_info()->get_filenameString();
                statementfilename = stmt->get_file_info()->get_physical_filename();
 
-               if (info.get_language() == SgFile::e_Fortran_output_language)
+               if (info.get_language() == SgFile::e_Fortran_language)
                   {
                  // DQ (9/24/2013): In the case of Fortran we need to generate the preprocessor name (at least for file requireing CPP).
                  // This was handled properly under the previous implementation using the logical source position, so for Fortran we 
@@ -5154,12 +5154,12 @@ UnparseLanguageIndependentConstructs::unparseBoolVal(SgExpression* expr, SgUnpar
         {
        // DQ (9/15/2012): We have added a mechanism for the language to be specified directly.
        // C_language_support = true;
-          if (info.get_language() != SgFile::e_default_output_language)
+          if (info.get_language() != SgFile::e_default_language)
              {
 #if 0
                printf ("In unparseBoolVal(): The output language has been specified directly info.get_language() = %d \n");
 #endif
-               C_language_support = (info.get_language() == SgFile::e_C_output_language);
+               C_language_support = (info.get_language() == SgFile::e_C_language);
              }
             else
              {

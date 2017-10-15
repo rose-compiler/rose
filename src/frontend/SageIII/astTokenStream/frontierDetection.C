@@ -1375,6 +1375,14 @@ FrontierDetectionForTokenStreamMappingAttribute::copy() const
 #endif
    }
 
+// DQ (6/11/2017): Added virtual function now required to eliminate warning at runtime.
+AstAttribute::OwnershipPolicy
+FrontierDetectionForTokenStreamMappingAttribute::getOwnershipPolicy() const ROSE_OVERRIDE 
+   {
+     return CONTAINER_OWNERSHIP;
+   }
+
+
 #if 0
 void
 FrontierDetectionForTokenStreamMappingAttribute::set_unparseUsingTokenStream( bool flag )
