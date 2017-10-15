@@ -1627,6 +1627,9 @@ SageInterface::get_name ( const SgScopeStatement* scope )
                name = (isSgJavaLabelStatement(scope)->get_label()).getString();
                break;
 
+       // DQ (7/18/2017): Added support for the new declaration scope.
+          case V_SgDeclarationScope:
+
        // DQ (11/30/2007): Added more fortran support.
           case V_SgAssociateStatement:
           case V_SgJavaForEachStatement:
@@ -6918,7 +6921,7 @@ SgNode * SageInterface::deepCopyNode (const SgNode* n)
 // by Jeremiah
 // Return bool for C++ code, and int for C code
 SgType* SageInterface::getBoolType(SgNode* n) {
-  bool isC = TransformationSupport::getSourceFile(n)->get_outputLanguage() == SgFile::e_C_output_language;
+  bool isC = TransformationSupport::getSourceFile(n)->get_outputLanguage() == SgFile::e_C_language;
   if (isC) {
     return SgTypeInt::createType();
   } else {
