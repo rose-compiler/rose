@@ -649,6 +649,71 @@ ATbool ATtoUntypedJovialTraversal::traverse_OptSign(ATerm term /*TODO - enum var
    return ATtrue;
 }
 
+ATbool ATtoUntypedJovialTraversal::traverse_IntegerTerm(ATerm term, SgUntypedExpression** expr)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_IntegerTerm: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_lhs, t_op, t_rhs;
+   SgUntypedExpression * lhs, * rhs;
+   OperatorEnum op;
+
+   if (ATmatch(term, "IntegerTerm(<term>,<term>,<term>)", &t_lhs,&t_op,&t_rhs)) {
+      if (traverse_IntegerTerm(t_lhs, &lhs)) {
+         // MATCHED IntegerTerm
+      } else return ATfalse;
+
+      if (traverse_MultiplyDivideOrMod(t_op, op)) {
+         // MATCHED MultiplyDivideOrMod
+      } else return ATfalse;
+
+      if (traverse_IntegerFactor(t_rhs, &rhs)) {
+         // MATCHED IntegerTerm
+      } else return ATfalse;
+
+      // TODO - create the expression
+      // expr = new SgUntypedExpression()
+   }
+   else if (traverse_IntegerFactor(term, expr)) {
+         // MATCHED IntegerFactor
+   }
+   else return ATfalse;
+
+   return ATtrue;
+}
+
+ATbool ATtoUntypedJovialTraversal::traverse_IntegerFactor(ATerm term, SgUntypedExpression** expr)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_IntegerFactor: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_lhs, t_rhs;
+   SgUntypedExpression * lhs, * rhs;
+
+   if (ATmatch(term, "IntegerFactor(<term>,<term>)", &t_lhs,&t_rhs)) {
+      if (traverse_IntegerFactor(t_lhs, &lhs)) {
+         // MATCHED IntegerFactor
+      } else return ATfalse;
+
+      if (traverse_IntegerPrimary(t_rhs, &rhs)) {
+         // MATCHED IntegerPrimary
+      } else return ATfalse;
+
+      // TODO - create the expression
+      // expr = new SgUntypedExpression()
+   }
+
+   else if (traverse_IntegerPrimary(term, expr)) {
+      // MATCHED IntegerPrimary
+   }
+
+   else return ATfalse;
+
+   return ATtrue;
+}
+
 //========================================================================================
 // 6.1 VARIABLE AND BLOCK REFERENCES
 //----------------------------------------------------------------------------------------
@@ -692,6 +757,32 @@ ATbool ATtoUntypedJovialTraversal::traverse_VariableList(ATerm term, std::vector
          } else return ATfalse;
       }
    } else return ATfalse;
+
+   return ATtrue;
+}
+
+//========================================================================================
+// 8.2.3 OPERATORS
+//----------------------------------------------------------------------------------------
+
+ATbool ATtoUntypedJovialTraversal::traverse_MultiplyDivideOrMod(ATerm term, OperatorEnum & op)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_MultiplyDivideOrMod: %s\n", ATwriteToString(term));
+#endif
+
+   op = e_unknown;
+
+   if (ATmatch(term, "TIMES()")) {
+      op = e_times;
+   }
+   else if (ATmatch(term, "DIV()")) {
+      op = e_divide;
+   }
+   else if (ATmatch(term, "MOD()")) {
+      op = e_mod;
+   }
+   else return ATfalse;
 
    return ATtrue;
 }

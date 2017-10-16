@@ -40,6 +40,15 @@ class ATtoUntypedJovialTraversal
 #endif
 
  public:
+   enum OperatorEnum
+     {
+        e_unknown = 0,
+        e_times,
+        e_divide,
+        e_mod
+     };
+
+ public:
 
 // 1.1
 ATbool traverse_Module(ATerm term);
@@ -92,13 +101,18 @@ ATbool traverse_Formula(ATerm term, SgUntypedExpression** expr);
 ATbool traverse_NumericFormula(ATerm term, SgUntypedExpression** expr);
 
 // 5.1.1 INTEGER FORMULAS
-ATbool traverse_IntegerFormula(ATerm term, SgUntypedExpression** expr);
-ATbool traverse_IntegerPrimary(ATerm term, SgUntypedExpression** expr);
-ATbool traverse_OptSign(ATerm term /*TODO - enum variable for sign */);
+ATbool traverse_IntegerFormula (ATerm term, SgUntypedExpression** expr);
+ATbool traverse_IntegerPrimary (ATerm term, SgUntypedExpression** expr);
+ATbool traverse_OptSign        (ATerm term /*TODO - enum variable for sign */);
+ATbool traverse_IntegerTerm    (ATerm term, SgUntypedExpression** expr);
+ATbool traverse_IntegerFactor  (ATerm term, SgUntypedExpression** expr);
 
 // 6.1 VARIABLE AND BLOCK REFERENCES
 ATbool traverse_Variable(ATerm term, SgUntypedExpression** var);
 ATbool traverse_VariableList(ATerm term, std::vector<SgUntypedExpression*> & vars);
+
+// 8.2.3 OPERATORS
+ATbool traverse_MultiplyDivideOrMod (ATerm term, OperatorEnum & op);
 
 }; // class ATtoUntypedJovialTraversal
 }  // namespace Jovial

@@ -33,8 +33,8 @@ if ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION
 	$(VALGRIND) ../../../testTranslator $(ROSE_FLAGS) -rose:jovial -c $(srcdir)/$(@:.o=.jovial)
 endif
 
-test: $(srcdir)/test.jovial
-	../../testTranslator -rose:verbose 0 -rose:jovial $(srcdir)/test.jovial
+test: $(srcdir)/tiny.jovial
+	../../testTranslator -rose:verbose 0 -rose:jovial $(srcdir)/tiny.jovial
 
 clean-local:
 	rm -f rose_*.* *.mod *.o *.exe

@@ -486,7 +486,7 @@ context-free syntax
 %%
   'START'
     DeclarationList
-    'PROGRAM'
+  'PROGRAM'
     ProgramName ';'
     ProgramBody
     NonNestedSubroutineList
@@ -494,14 +494,14 @@ context-free syntax
 
   Name                       -> ProgramName           {cons("Name")}
 
-  Statement                  -> ProgramBody           {cons("ProgramBody")}
+  Statement                  -> ProgramBody           {cons("ProgramSimpleBody")}
 
   'BEGIN'
     DeclarationList
     Statement+
     SubroutineDefinition*
     LabelList
-  'END'                      -> ProgramBody           {cons("ProgramBody")}
+  'END'                      -> ProgramBody           {cons("ProgramBody"), prefer}
 
 %% 1.4 IMPLEMENTATION PARAMETERS
 %%
@@ -637,7 +637,7 @@ context-free syntax
   IntegerItemDescription      -> IntegerTypeDescription
 %%IntegerTypeName             -> IntegerTypeDescription   %% AMBIGUOUS
 
-  '$' OptRoundOrTruncate
+  'S' OptRoundOrTruncate
       OptIntegerSize          -> IntegerItemDescription  {cons("IntegerItemDescription")}
   'U' OptRoundOrTruncate
       OptIntegerSize          -> IntegerItemDescription  {cons("IntegerItemDescriptionU")}
@@ -674,7 +674,7 @@ context-free syntax
 %% 2.1.1.3 FIXED TYPE DESCRIPTIONS
 %%
 
-  FixedItemDescription        -> FixedTypeDescription
+%%FixedItemDescription        -> FixedTypeDescription   %% AMBIGUOUS
 %%FixedTypeName               -> FixedTypeDescription   %% AMBIGUOUS
 
   'A' OptRoundOrTruncate
@@ -1202,7 +1202,7 @@ context-free syntax
     Declaration                   -> FunctionDeclaration    {cons("FunctionDeclaration")}
 
   FunctionHeading ';'
-    FunctionBody                 -> FunctionDefinition      {cons("FunctionDefinition")}
+    FunctionBody                  -> FunctionDefinition      {cons("FunctionDefinition")}
 
   'PROC'
     FunctionName
