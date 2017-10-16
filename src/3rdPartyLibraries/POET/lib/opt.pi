@@ -1,5 +1,5 @@
 include Loops.incl
-include omp.incl
+include omp.incl 
 
 <*
    POET : Parameterized Optimizations for Empirical Tuning
@@ -34,12 +34,11 @@ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISE
 <* tracing support: skipped if not redefined  *>
 <define TRACE_INCL "" />  <<* trace new include files being added
 <define TRACE_EXP "" />   <<* trace modifications to expressions
-<define TRACE_DECL "" /> <<* trace new variable declarations
-<define TRACE_VARS ""/> <<* trace new local variables being created
 
 <* architecture-specific parameters*>
 <define REG_NO 16/>   <*# of SSE registers *>
 <define REG_LEN 16/>  <*# of bytes that can be held by each SSE register*>
+<define FMA 0/>
 
 <* language-specific parameters *>
 <** whether to use pointer arithmetics when possible; affect array copying **>
@@ -51,18 +50,19 @@ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISE
   code template interfaces for building non-loop nests 
 *****************************************************************>
 <code If pars=(condition) />
-<code Else ifNest=INHERIT/>
+<code Else pars=(curIf, prevIf)/>
 <******************************************************************
   code template interfaces for assembly-level optimization, e.g., 
     SSE vectorization, prefetching, alignment 
 *****************************************************************>
-<code AddrOf pars=(var)/>
-<code VALUE pars=(ptr)/>
-<code VarDeclStmt pars=(type, var) />
 <code ExpStmt pars=(exp)/>
 <code PostIncrement pars=(ivar)/>
-<code AllocateStore pars=(ptr, type,size)/>
+<code AllocateStore pars=(ptr, type,size) init0=0/>
+<code AllocateStoreWithAlign pars=(ptr, type, size, aloc, align)/>
 <code DeleteStore pars=(ptr,size)/>
+<code GccPrefetch pars=(addr,rw,locality)/>
+<code IccPrefetch pars=(addr,hint)/>
+<code IccPrefetchInclude />
 <code PtrType pars=(base)/>
 <code IntegerType />
 <code Assign pars=(lhs,rhs)/>
@@ -83,11 +83,24 @@ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISE
 <code VecRegMul pars=(reg1,reg2)/>
 <code VecRegAdd pars=(reg1,reg2)/>
 <code VecRegMinus pars=(reg1,reg2)/>
-<code SSEincl pars=(pre)/>
+<code VecRegDiv pars=(reg1,reg2)/>
+<code SSEincl pars=(pre,reg_len)/>
+<*************************************************
+* Adding 3 operands sse code template definition
+*************************************************>
+<code VecRegFma3 pars=(reg1,reg2,reg3)/>
+<code VecRegFms3 pars=(reg1,reg2,reg3)/>
+<code VecRegMul3 pars=(reg1,reg2,reg3)/>
+<code VecRegAdd3 pars=(reg1,reg2,reg3)/>
+<code VecRegMinus3 pars=(reg1,reg2,reg3)/>
+<code VecRegDiv3 pars=(reg1,reg2,reg3)/>
+<code VecRegRed pars=(reg1,reg2)/>
+<code VecMovRtoM pars=(reg, ptr)/>
+<code VecZeroUpper pars=(null)/>
+
 
 <* blocking dimension specification*>
-<code BlockDim pars=(ivar, bvar, blocksize)  />
-<code BlockFactor pars=(content:LIST(INT|BlockDim,"-"))> @content@ </code>
+<code BlockDim pars=(ivar, bvar, blocksize) next=NULL />
 
 <code BlockSplit pars=(orig, split)/>
 <code BlockCleanup pars=(orig, cleanup)/>
@@ -117,6 +130,11 @@ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISE
 <code OMPReductionNameList/>
 
 <************************************************************
+Interface for assembly optimization
+************************************************************>
+<xform peephole_optimization pars=(input)/>
+
+<************************************************************
   interface of parameterized loop optimization routines
  ********
  configuration parameters common to different optimizations
@@ -136,15 +154,15 @@ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISE
  Unroll the loops outside of $inner$ and inside $input$ 
      :  factor (a list of integers): unroll factor; 
 *********************************************************************>
-<xform UnrollLoop pars=(input) factor=8 cleanup=0 trace=GLOBAL.TRACE_TARGET/> 
-<xform UnrollLoops pars=(inner,input) factor=8  cleanup=0 trace=GLOBAL.TRACE_TARGET/>
+<xform UnrollLoop pars=(input) factor=8 cleanup=1 trace=GLOBAL.TRACE_TARGET/> 
+<xform UnrollLoops pars=(inner,input) factor=8  cleanup=1 trace=GLOBAL.TRACE_TARGET/>
 
 <*******************************************************************
   Unroll the loops within $input$ and outside $jnest$, then
  jam the unrolled code inside $jnest$. 
      :  factor (a list of integers): unroll factor; 
 *********************************************************************>
-<xform UnrollJam pars=(jnest,input) factor=4 cleanup=0 trace=GLOBAL.TRACE_TARGET />
+<xform UnrollJam pars=(jnest,input) factor=4 cleanup=1 trace=GLOBAL.TRACE_TARGET />
 
 <*******************************************************************
 Permute the loops inside $input$ and outside $inner$.
@@ -158,13 +176,49 @@ Fuse multiple loop nests into a single one, which is then used to replace
 $pivot$ in the original $input$ 
     : trace_fusion: a single trace handle to save the fused loop nest
 ********************************************************************>
-<xform FuseLoops pars=(nestsToFuse, pivot) trace_fusion="" trace=GLOBAL.TRACE_TARGET />
+<xform FuseLoops pars=(nestsToFuse, pivot) index_start="" reserve_target=0 trace_fusion="" trace=GLOBAL.TRACE_TARGET />
 
 <***********************************************************************
  Distribute input at break points in $dis_bodies$ 
     : trace_dist: a list of trace handles to trace the distributed loop nests
 ********************************************************************>
-<xform DistributeLoops pars=(bodiesToDist, input) trace_dist="" trace=GLOBAL.TRACE_TARGET/>
+<xform DistributeLoops_internal pars=(bodiesToDist, input) trace_dist="" trace=GLOBAL.TRACE_TARGET/>
+
+<**********************************************************************
+ Inline a function called at input.
+ The $input$ indicates the function call to inline.
+ The $function_definition$ denotes the definition of the function.
+********************************************************************>
+<xform InlineFunction pars=(function_definition, input) parameters_to_replace="" trace=GLOBAL.TRACE_TARGET/>
+
+<***********************************************************************
+ Strength Reduction optimizations
+ The $input$ indicates target statement.
+ The $type$ defines the type of strength reduction.
+********************************************************************>
+<xform StrengthReduction pars=(type, input) fp_division="" appendix="" subexpression="" constant="" data_type="" shift_statement="" minus_result="" trace=GLOBAL.TRACE_TARGET/>
+
+<***********************************************************************
+ Redundancy Elimination optimizations
+ The $input$ indicates target statement.
+ The $type$ defines the type of redundancy elimination.
+********************************************************************>
+<xform RedundancyElimination pars=(type, input) redundant_branch_flag="" else_branch="" function_definition="" ret_statement="" used_place="" erase_flag="" index_start="" branch_statement="" expression="" data_type="" trace=GLOBAL.TRACE_TARGET/>
+
+<***********************************************************************
+ Software Prefetch
+ The $input$ indicates target place where to put prefetch statement
+ The $address$ denotes which address to prefetch
+********************************************************************>
+<xform SoftwarePrefetch pars=(address, input) rw="" locality="" hint="" compiler="" trace=GLOBAL.TRACE_TARGET/>
+
+<***********************************************************************
+ Distribute the loop $input$ at the $statement$ into two loops.
+ The $statement$ is placed in the second loop.
+ private: scalar variables that need to be saved in arrays because of distribution.
+ data_type: the type of the private variables to be stored in arrays.
+********************************************************************>
+<xform DistributeLoop pars=(statement, input) trace_dist="" trace=GLOBAL.TRACE_TARGET outer_nest="" statement_to_split="" private=NULL private_size="" data_type=GLOBAL.ARRAY_ELEM_TYPE/>
 
 <**********************************************************************
  Block the loops outside of $inner$ and inside $input$.
@@ -173,8 +227,9 @@ $pivot$ in the original $input$
  trace_newVars: tracing handle for the new auxiliary induction variables created;
 **************************************************************************>
 <xform BlockLoops pars=(inner,input) 
-     nonPerfect="" trace_innerNest=""  trace_ivars=""
-     factor=1 cleanup=0 trace=GLOBAL.TRACE_TARGET trace_mod=GLOBAL.TRACE_EXP trace_decl=GLOBAL.TRACE_DECL trace_cleanup="" />
+     nonPerfect="" factor=1 cleanup=0 tri_loop=""
+     trace_innerNest=""  trace_ivars="" trace=GLOBAL.TRACE_TARGET 
+     trace_mod=GLOBAL.TRACE_EXP trace_decl=GLOBAL.TRACE_DECL trace_cleanup="" />
 
 <* specification of pivoting in a list of non-perfect loops*>
 <code NonPerfectLoops pars=(pivot,loops)/>
@@ -183,10 +238,15 @@ $pivot$ in the original $input$
 Parallelize the outermost loop in input via OpenMP 
 Supported OpenMP schedule: "static","dynamic",or "guided"
 *********************************************************************>
-<xform ParallelizeLoop pars=(input)
-                       shared="" private="" reduction="" reduction_op=""
-                       schedule=GLOBAL.OMP_SCHEDULE threads=0 
-                trace_include=GLOBAL.TRACE_INCL  trace =GLOBAL.TRACE_TARGET />
+<xform ParallelizeLoop pars=(input) scope=""
+      shared="" private="" reduction="" reduction_op=""
+      schedule=GLOBAL.OMP_SCHEDULE threads=""  model="OMP"
+      trace_decl=GLOBAL.TRACE_DECL trace_mod=GLOBAL.TRACE_EXP 
+      trace_vars=GLOBAL.TRACE_VARS   factor=1
+      trace_include=GLOBAL.TRACE_INCL  trace=GLOBAL.TRACE_TARGET />
+
+<xform PipelineLoop pars=(inner,input)  dep="" shared="" private=""
+      trace_include=GLOBAL.TRACE_INCL  trace=GLOBAL.TRACE_TARGET />
 
 <*******************************************************************
  Copy a collection of data into a new buffer and replace
@@ -200,10 +260,13 @@ Supported OpenMP schedule: "static","dynamic",or "guided"
   trace_decl: tracing handle for variable declarations;
   trace_mod: tracing handles that need to be modified accordingly after the transformation
   trace: the tracing handle surrounding $input$; 
+   if triangular=1: triangular matrix, fill in zeros to elements below the diagonal
 *********************************************************************>
 <xform CopyRepl pars=(aref, dim, input) 
-         prefix="" data_type=GLOBAL.ARRAY_ELEM_TYPE  init_loc="" save_loc="" delete_loc=""
-         permute="" cpBlock=""
+         prefix="" data_type=GLOBAL.ARRAY_ELEM_TYPE  
+         buf_init="" <* how to initialize new buffer allocated *>
+         init_loc="" save_loc="" delete_loc="" align_loc=0
+         permute="" cpBlock="" outside="" extra_dims=""
          trace_decl=GLOBAL.TRACE_DECL trace_mod=GLOBAL.TRACE_EXP trace_vars="" trace=GLOBAL.TRACE_TARGET/>
 
 <*** CopyRepl::cpBlock --- a list of CopyBlock objects
@@ -211,20 +274,23 @@ Supported OpenMP schedule: "static","dynamic",or "guided"
    ivar_copy: index variable of copy dimension;
    ivar_block: index variable of the outer blocking loop
    bsize: blocking factor to partition the copy dimension
-***> <code CopyBlock pars=(ivar_copy, ivar_block, bsize)/>
+***> 
+<code CopyBlock pars=(ivar_copy, ivar_block, bsize) triangular=0 />
 
 <*** CopyRepl::dims --- a list of loop nests or CopyDim objects, each
  describing a single-dimensional region of data accessed by an array reference 
   e.g., ArrayDim#("i","j",5,"lda") defines data referenced when setting
   i with values from "j", j+lda, j+2*lda, j+3*lda, and j+4*lda (5 items)
   Loop#(i,lb, ub,step) defines data referenced by aref at all iterations of the loop
-***> <code CopyDim pars=(ivar, start, size, distance) />
+***> 
+<code CopyDim pars=(ivar, start, stop, distance) />
+
 <*******************************************************************
  replace the memory referenced through $aref$ with
   scalar variables. Internally invokes CopyRepl as implementation. 
 *********************************************************************>
 <xform ScalarRepl pars=(aref, dim, input)  
-      prefix="" data_type=GLOBAL.ARRAY_ELEM_TYPE  init_loc="" save_loc=""  
+      prefix="" data_type=GLOBAL.ARRAY_ELEM_TYPE  init_loc="" save_loc=""  init=0 save=0
       trace_decl=GLOBAL.TRACE_DECL trace_mod=GLOBAL.TRACE_EXP trace_vars=GLOBAL.TRACE_VARS  trace=GLOBAL.TRACE_TARGET />
  
 <*******************************************************************
@@ -253,9 +319,21 @@ Supported OpenMP schedule: "static","dynamic",or "guided"
         trace_decl=GLOBAL.TRACE_DECL  trace_include=GLOBAL.TRACE_INCL trace=GLOBAL.TRACE_TARGET />
 
 <********************************************************************
-Transform input statement into multiple three address code statements
+Transform a single expression statement into multiple three address code instructions
 *********************************************************************>
 <xform TransformThreeAddress pars=(input) counter=0 nvars="" trace=GLOBAL.TRACE_TARGET/>
+
+<*******************************************************************
+ Split all operations on variables in $vars$ into separate statements
+   in $input$.
+   iReuse: whether the variables $vars$ should be reused in storing the 
+           results of broken statements;
+   var_type:  the value type of variables in $vars$;
+   trace_newVars: tracing handle for new variables;
+   trace_decl: tracing handle for variable declarations; 
+********************************************************************>
+<xform SplitStmt pars=(vars,input) iReuse=0 var_type=""
+                 trace_newVars=GLOBAL.TRACE_VARS trace_decl=GLOBAL.TRACE_DECL trace=GLOBAL.TRACE_TARGET new=""/> 
 
 <***********************************************************************
  Convert each array reference in arrays to a pointer reference 
@@ -304,10 +382,11 @@ pre-condition: input must be a three address code statement
 <* QY: apply trength reduction (finite differencing) to expressions in the form
        of  base+dim contained in input. use "pv" as hint for aux. ivar names.
   permute: permutation of dimensions so that they are sorted in decreasing size;
+  prefetch_arr: whether to prefetch the input array ahead of iterations, and if yes, what is the desired prefetching distance.
 *>
-<xform FiniteDiff pars=(base,dim,input) 
-            exp_type="" addi_vars=""  prefix="" scalar=1 permute=""
-         trace_decl=GLOBAL.TRACE_DECL trace_newVars=GLOBAL.TRACE_VARS trace_mod=GLOBAL.TRACE_EXP trace=GLOBAL.TRACE_TARGET />
+<xform FiniteDiff pars=(base,dim,input)  outside_loops=""
+      exp_type="" addi_vars=""  prefix="" scalar=1 copied_array=0 permute="" prefetch_arr=(0,0)
+      trace_decl=GLOBAL.TRACE_DECL trace_newVars=GLOBAL.TRACE_VARS trace_mod=GLOBAL.TRACE_EXP trace=GLOBAL.TRACE_TARGET />
 
 <*******************************************************************
 Insert prefetching operations for memory starting at $addr$ at locations $nests$
@@ -347,18 +426,6 @@ the blocked loops.
 **QY: The following functions are not part of the interface**
 ********************************************************************>
 
-<*******************************************************************
- Split all operations on variables in $vars$ into separate statements
-   in $input$.
-   iReuse: whether the variables $vars$ should be reused in storing the 
-           results of broken statements;
-   var_type:  the value type of variables in $vars$;
-   trace_newVars: tracing handle for new variables;
-   trace_decl: tracing handle for variable declarations; 
-<xform SplitStmt pars=(vars,input) iReuse=1 var_type=""
-                 trace_newVars=GLOBAL.TRACE_VARS trace_decl=GLOBAL.TRACE_DECL trace=GLOBAL.TRACE_TARGET new=""/> 
-********************************************************************>
-
 <**********************************************************************
  peel the first $numOfItersToPeel$ of iterations off the input $loopNestToPeel$ 
 <xform PeelLoop pars=(numOfItersToPeel, loopNestToPeel) 
@@ -375,7 +442,7 @@ the blocked loops.
 Replace the memory referenced by $exp$ with references from a new $buf$
 in $input$.
 Parameter values: see CopyRepl.
-<xform ReplExp pars=(buf, exp, sub, dim, input) 
+<xform ReplExp pars=(buf, exp, sub, dim, input)  buf_size="inf"
                prefix="" scalar=0 block="" permute="" addi_vars="" trace=GLOBAL.TRACE_TARGET />
 *********************************************************************>
 

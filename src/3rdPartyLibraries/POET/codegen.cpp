@@ -215,7 +215,11 @@ class CodeGenVisitor : public CollectInfoVisitor
      }
   virtual void visitUnknown(POETCode_ext* e)
     {
+<<<<<<< HEAD
       POETAstInterface::unparse(e->get_content(), out, start_pos);
+=======
+      POETAstInterface::unparse(e, out, start_pos);
+>>>>>>> 21644f3277badc2c97102315e9b3e454283ff430
     }
   virtual void visitString(POETString* s) 
      {  output(s); }

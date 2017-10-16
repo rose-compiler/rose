@@ -1,0 +1,41 @@
+include Loops.incl
+
+<define VAR_DECL CODE.VarDecl/>
+<define stencil_index 0/>
+
+<define STENCIL_DIM 0/>
+<define STENCIL_REF CODE.FunctionCall|CODE.ArrayAccess/>
+<define STENCIL_old_array ""/>
+<define STENCIL_array ""/>
+<define STENCIL_DIM_SPEC NULL/>
+<define STENCIL_DIM 0/>
+<define STENCIL_TYPE ""/>
+<define STENCIL_HALLO ""/>
+
+<*** the driver functions ****>
+<xform gen_manycore_stencil pars=(type, body, extra, params) /> 
+
+<code manycore_stencil_size pars=(dim_index,loc) dim=GLOBAL.STENCIL_DIM match=CODE.Name /> 
+
+<code VariableNameList pars=(names) /> 
+<code is_boundary_core pars=(dim_idx,side)/>
+<code stencil_manycore_main pars=(dimsizes, local, boundary, params) T="T" />
+<code stencil_kernel_call pars=(localrepl, dimsizes, params)/> 
+<code stencil_manycore_kernel pars=(dimsizes, body, params) T="T" />
+
+<code StencilDim pars=(i,lo,hi,dist,par) 
+  match=((par=="S")?CODE.Loop#(i,lo,hi,dist):CODE.LoopBound#(i,lo,hi)) /> 
+<code LocalStencil pars=(dim_spec,dim_index, body) />
+<code LocalIndexInit pars=(var, index) />
+
+<xform OuterName pars=(array)> 
+(array : VariableNameList#(first second))? first : array
+</xform>
+
+<xform InnerName pars=(array)> 
+(array : VariableNameList#(first second))? second : array
+</xform>
+
+<xform gen_manycore_stencil_local pars=(type,dimsizes, body) /> 
+<xform gen_manycore_stencil_boundary pars=(loclist, dim,dim_idx,local) />
+

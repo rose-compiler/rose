@@ -142,7 +142,11 @@ void EvaluatePOET::
 compute_lookaheadInfo(POETCode* cur, std::vector<POETCode*>& res, unsigned need, POETCode* next)
 {
  try {
+<<<<<<< HEAD
     assert (cur != 0);
+=======
+    assert(cur != 0);
+>>>>>>> 21644f3277badc2c97102315e9b3e454283ff430
     int size = 0;
     if (debug_lookahead()) {
        std::cerr << "try compute lookahead for: " << cur->toString() << "; need " << need << "\n";
@@ -225,7 +229,11 @@ compute_lookaheadInfo(POETCode* cur, std::vector<POETCode*>& res, unsigned need,
      if (size < need) {
          need = need - size;
          if (next == 0) { LOOKAHEAD_AMBIGUOUS(EMPTY); }
+<<<<<<< HEAD
          else if (res.size() == 0) {
+=======
+         if (res.size() == 0) {
+>>>>>>> 21644f3277badc2c97102315e9b3e454283ff430
             compute_lookaheadInfo(next, res, need, 0);
          }
          else {

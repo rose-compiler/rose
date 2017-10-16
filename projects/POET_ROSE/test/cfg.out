@@ -1,0 +1,10 @@
+digraph CFG
+{
+  "5[C[j * ldc + i] = C[j * ldc + i] + alpha * A[l * lda + i] * B[j * ldb + l];]"->"0[for (j = 0;j<=(-1+N);j+=1)j = 0;]"
+  "5[C[j * ldc + i] = C[j * ldc + i] + alpha * A[l * lda + i] * B[j * ldb + l];]"->"1[for (i = 0;i<=(-1+M);i+=1)i = 0;]"
+  "5[C[j * ldc + i] = C[j * ldc + i] + alpha * A[l * lda + i] * B[j * ldb + l];]"->"3[for (l = 0;l<=(-1+K);l+=1)l = 0;]"
+  "3[for (l = 0;l<=(-1+K);l+=1)l = 0;]"->"5[C[j * ldc + i] = C[j * ldc + i] + alpha * A[l * lda + i] * B[j * ldb + l];]"
+  "2[C[j * ldc + i] = beta * C[j * ldc + i];]"->"3[for (l = 0;l<=(-1+K);l+=1)l = 0;]"
+  "1[for (i = 0;i<=(-1+M);i+=1)i = 0;]"->"2[C[j * ldc + i] = beta * C[j * ldc + i];]"
+  "0[for (j = 0;j<=(-1+N);j+=1)j = 0;]"->"1[for (i = 0;i<=(-1+M);i+=1)i = 0;]"
+}

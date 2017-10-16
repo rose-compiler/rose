@@ -28,7 +28,7 @@ class DataFlowAnalysis  : public CFGImplTemplate<Node, CFGEdgeImpl>
 
   DataFlowAnalysis();
   void operator()( AstInterface& fa, const AstNodePtr& head);
-  using CFGImplTemplate<Node, CFGEdgeImpl>::GetNodeIterator;
+  CFGImplTemplate<Node, CFGEdgeImpl>::GetNodeIterator;
 };
 
 #endif

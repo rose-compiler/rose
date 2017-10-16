@@ -18,7 +18,11 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # "make" commands.  To disable your project, just rename its rose.config file and rerun "build" and "configure".
 
 SUBDIRS = \
+<<<<<<< HEAD
 	ArithmeticMeasureTool \
+=======
+        POET_ROSE \
+>>>>>>> 21644f3277badc2c97102315e9b3e454283ff430
 	AstEquivalence \
 	BabelPreprocessor \
 	BinQ \

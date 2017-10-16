@@ -1,9 +1,14 @@
 
-#include "sage3.h"
 #include <string>
 #include <AstInterface_ROSE.h>
 #include <StmtInfoCollect.h>
 #include <CommandOptions.h>
+//do not include the following files from rose.h
+#define CFG_ROSE_H
+#define CONTROLFLOWGRAPH_H
+#define PRE_H
+#define ASTDOTGENERATION_TEMPLATES_C
+#include "sage3.h"
 
 // DQ (1/1/2006): This is OK if not declared in a header file
 using namespace std;
@@ -61,27 +66,21 @@ main ( int argc,  char * argv[] )
          return -1;
      }
 
-     // pmp 09JUN05
-     //   gcc 3.4 does not allow cast from int to unsigned& anymore
-     //   a surrugoate variable is introduced and used instead of argc.
-     //   was: SgProject sageProject ( argc,argv);
-     //        CmdOptions::GetInstance()->SetOptions((unsigned)argc, argv);
-      
-     SgProject sageProject ( argc,argv);
-     SageInterface::changeAllBodiesToBlocks(&sageProject);
+     SgProject *sageProject = new SgProject( argc,argv);
+     SageInterface::changeAllLoopBodiesToBlocks(sageProject);
     CmdOptions::GetInstance()->SetOptions(argc, argv);
 
 
-   int filenum = sageProject.numberOfFiles();
+   int filenum = sageProject->numberOfFiles();
    for (int i = 0; i < filenum; ++i) {
-     SgSourceFile* sageFile = isSgSourceFile(sageProject.get_fileList()[i]);
+     SgSourceFile* sageFile = isSgSourceFile(sageProject->get_fileList()[i]);
      ROSE_ASSERT(sageFile != NULL);
 
      SgGlobal *root = sageFile->get_globalScope();
      TestStmtModRef op;
      AstInterfaceImpl scope(root);
      AstInterface fa(&scope);
-     op( fa, AstNodePtrImpl(&sageProject));
+     op( fa, AstNodePtrImpl(sageProject));
    }
 
   return 0;

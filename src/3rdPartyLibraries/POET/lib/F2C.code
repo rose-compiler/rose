@@ -32,7 +32,7 @@ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISE
 <*****************************************************
 Support for using macros to represent linearization of array dimensions
 ******************************************************>
-<parameter arrref default="" 
+<parameter arrref default=NULL 
        parse=LIST(ID," ") message="arrays to translate using macro refs"/>
 <trace arrref_macro=MAP{}/>
 
@@ -44,23 +44,28 @@ Support for using macros to represent linearization of array dimensions
 
 </code>
 
+<code FunctionCall pars=(function, args : CODE.ExpList)>
+@function@(@args@)
+</code> 
+
+
 <code F2CInclude >
-@res="";
-for (p=GLOBAL.arrref; p != ""; p=cdr(p)) 
+@res=NULL; if (GLOBAL.arrref=="") GLOBAL.arrref=NULL;
+for (p=GLOBAL.arrref; p != NULL; p=cdr(p)) 
 {
   array=car(p);
   TAG#(_,ArrayType#(_,dim))|ArrayType#(_,dim)=GLOBAL.SymTable[array];
   GLOBAL.arrref_macro[array]=1;
   res= MacroDef#(array,dim) :: res;
 }
-res@
+((res==NULL)? "" : res)@
 </code>
 
 <*****************************************************
  syntax descriptions for the Fortran language
 ******************************************************>
 
-<code D0FLOAT pars=(val:CODE.FLOAT,pre:"D0"|"")> @val@ </code>
+<code D0FLOAT pars=(val:FLOAT,pre:"D0"|"")> @val@ </code>
 
 <code EndIf parse=("end" " " "if") rebuild="endif"/> 
 <code EndDo parse=("end" " " "do") rebuild="enddo" />
@@ -188,14 +193,11 @@ else @rest@
 
 <*********************************** Types ************************************>
 
-<code Type pars=(content: CODE.IntegerType
-                        | CODE.DoubleType
-                        | CODE.Name)>
-@content@
-</code>
+<code Type pars=(content)> @content@ </code>
 
 <code IntegerType>int</code>
 <code DoubleType>double</code>
+<code RealType pars=(name,prec)> double </code>
 <code ArrayType pars=(base,dim)> @base@* </code>
 
 <******************************* Identifiers **********************************>
@@ -221,7 +223,7 @@ default: (m " "  name arrDim ";\n")
 
 <******************************* Declarations *********************************>
 
-<code DeclStmt pars=(content:CODE.ImplicitDeclStmt
+<code DeclStmt pars=(decl:CODE.ImplicitDeclStmt
                            | CODE.ParamDeclStmt
                            | CODE.VarDeclStmt)>
 @content@
@@ -256,3 +258,6 @@ default: (m " "  name arrDim ";\n")
 inputCode
 </xform>      
 <define UNPARSE RenameFunctions/>
+<code Label pars=(val)> @""@ </code>
+
+<code ReturnStmt pars=(val)> return @val@; </code>

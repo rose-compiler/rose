@@ -88,6 +88,12 @@ class CollectInfoVisitor : public POETCodeVisitor, public EvaluatePOET
     }
   virtual void visitTupleAccess(TupleAccess* v) 
     {  if (v->get_tuple() != 0) v->get_tuple()->visit(next_op); }
+<<<<<<< HEAD
+=======
+  virtual void visitUnknown(POETCode_ext* ext)
+    {  POETCode* c = ext->get_children();
+       if (c != 0) c->visit(next_op); }
+>>>>>>> 21644f3277badc2c97102315e9b3e454283ff430
  public:
   CollectInfoVisitor(POETCodeVisitor* _op=0) : next_op(_op) 
        { if (next_op==0) next_op = this;}
@@ -117,7 +123,11 @@ class ReplInfoVisitor : public EvaluatePOET, public POETCodeVisitor
   POETCode* res;
   std::set<LocalVar*> modvars;
  public:
+<<<<<<< HEAD
   ReplInfoVisitor() { res = 0; }
+=======
+  ReplInfoVisitor() : inList(false) { res = 0; }
+>>>>>>> 21644f3277badc2c97102315e9b3e454283ff430
   virtual void defaultVisit(POETCode* c)  = 0;
   virtual void visitLocalVar(LocalVar* v); 
   virtual void visitAssign(POETAssign* assign)  {
@@ -138,8 +148,17 @@ class ReplInfoVisitor : public EvaluatePOET, public POETCodeVisitor
           else apply(rest);
        }
        else if (rest != 0) {
+<<<<<<< HEAD
 	   apply(rest);
 
+=======
+	   bool inList_save = inList;
+
+	   inList = true;
+	   apply(rest);
+	   inList=inList_save;
+
+>>>>>>> 21644f3277badc2c97102315e9b3e454283ff430
 	   POETCode* r2 = res;
 	   res = MakeXformList(r1,r2,false); 
 	   if (res == 0) res = fac->new_list(r1,r2); 
@@ -168,20 +187,39 @@ class ReplInfoVisitor : public EvaluatePOET, public POETCodeVisitor
   virtual void visitCodeVar( CodeVar* v) 
      { 
        POETCode *nargs = (v->get_args() == 0)? 0 : apply(v->get_args());
+<<<<<<< HEAD
 /*
        POETCode* nattr = (v->get_attr() == 0)? (POETCode*)0 : apply(v->get_attr());
 */
        if (nargs != v->get_args()) // || nattr != v->get_attr()) 
            res = ASTFactory::inst()->build_codeRef(v->get_entry(), nargs, v->get_attr());
+=======
+       POETCode* nattr = (v->get_attr() == 0)? (POETCode*)0 : apply(v->get_attr());
+       if (nargs != v->get_args() || nattr != v->get_attr()) 
+           res = ASTFactory::inst()->build_codeRef(v->get_entry(), nargs, nattr);
+>>>>>>> 21644f3277badc2c97102315e9b3e454283ff430
        else res = v;
      }
   virtual void visitUnknown(POETCode_ext* ext)
     { 
+<<<<<<< HEAD
        POETCode* res1 = POETAstInterface::visitAstChildren(ext->get_content(),this);
        if (res1 != 0) res = res1;
        else res = ext;
     }
   virtual POETCode* apply(POETCode* code) 
+=======
+      POETCode* children = ext->get_children();
+      if (children != 0) {
+           POETCode* new_children = apply(children);
+           if (new_children != children)
+              res = POETAstInterface::ReplaceChildren(ext, new_children);
+           else res = ext;
+      }
+      else res = ext;
+    }
+  POETCode* apply(POETCode* code) 
+>>>>>>> 21644f3277badc2c97102315e9b3e454283ff430
      { res = code; code->visit(this); return res; }
 };
 

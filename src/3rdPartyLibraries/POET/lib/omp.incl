@@ -34,13 +34,11 @@ include ExpStmt.incl
 omp_set_num_threads(@num@);
 </code>
 
-<code OMPAttrList parse=LIST(OMP_ATTR, " ") />
-
-<code OMPParallelSection pars=(attr:OMPAttrList|"")>
+<code OMPParallelSection pars=(attr:LIST(OMP_ATTR," "))>
 parallel @attr@ 
 </code>
 
-<code OMPParallelLoop pars=(attr:OMPAttrList|"")>
+<code OMPParallelLoop pars=(attr:LIST(OMP_ATTR," "))>
  for @attr@
 </code>
 
@@ -55,9 +53,9 @@ parallel @attr@
 <code OMPVarDeclList parse=LIST( CODE.PrivateNameList
                                | CODE.SharedNameList
                                | CODE.ReducionNameList
-                               , "" )/>
+                               , " " )/>
 
-<code OMPPrivateNameList pars=(vars:NameList)>
+<code OMPPrivateNameList pars=(vars:LIST(Name,","))>
 private(@vars@)
 </code>
 
