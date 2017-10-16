@@ -12,22 +12,6 @@ package body A_Nodes is
 
    -- Checks to be sure no node with this ID has already been pushed.  Raises
    -- Usage_Error if so.
-   procedure Check_Context_Node
-     (This : access Class;
-      Node : in a_nodes_h.Context_Struct)
-   is
-      Name : constant String := Package_Name & ".Check_Context_Node";
-   begin
-      If This.Has_Context then
-         raise Usage_Error with Name &
-           ": Tried to push second Context";
-      else
-         This.Has_Context := True;
-      end if;
-   end Check_Context_Node;
-
-   -- Checks to be sure no node with this ID has already been pushed.  Raises
-   -- Usage_Error if so.
    procedure Check_Unit_Node
      (This : access Class;
       Unit : in a_nodes_h.Unit_Struct)
@@ -100,6 +84,16 @@ package body A_Nodes is
    ------------
    -- EXPORTED:
    ------------
+   procedure Set
+     (This    : access Class;
+      Context : in     a_nodes_h.Context_Struct) is
+   begin
+      This.Nodes.Context := Context;
+   end Set;
+
+   ------------
+   -- EXPORTED:
+   ------------
    procedure Push
      (This : access Class;
       Node : in     a_nodes_h.Node_Struct)
@@ -130,24 +124,12 @@ package body A_Nodes is
    ------------
    -- EXPORTED:
    ------------
-   function Get_Head
+   function Get_Nodes
      (This : access Class)
-      return a_nodes_h.Node_List_Ptr is
+      return a_nodes_h.Nodes_Struct is
    begin
-      return This.Head;
-   end Get_Head;
-
-   ------------
-   -- EXPORTED:
-   ------------
-   function Is_Empty
-     (This : access Class)
-      return Boolean
-   is
-      use type a_nodes_h.Node_List_Ptr;
-   begin
-      return This.Head = null;
-   end Is_Empty;
+      return This.Nodes;
+   end Get_Nodes;
 
    ------------
    -- EXPORTED:

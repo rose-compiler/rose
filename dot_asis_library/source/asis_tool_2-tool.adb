@@ -118,9 +118,9 @@ package body Asis_Tool_2.Tool is
    ------------
    function Get_Nodes
      (This      : in out Class)
-      return a_nodes_h.Node_List_Ptr is
+      return a_nodes_h.Nodes_Struct is
    begin
-      return This.Outputs.A_Nodes.Get_Head;
+      return This.Outputs.A_Nodes.Get_Nodes;
    end Get_Nodes;
 
 end Asis_Tool_2.Tool;

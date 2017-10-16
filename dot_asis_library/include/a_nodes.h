@@ -10,15 +10,7 @@
 
 typedef char* Program_Text;
 typedef int   ASIS_Integer;
-
-enum Node_Kinds { // Not an ASIS type
-  Not_A_Node,
-  A_Context_Node,
-  A_Unit_Node,
-  An_Element_Node
-};
-
-typedef int Node_ID;
+typedef int   Node_ID;
 
 ///////////////////////////////////////////////////////////////////////////////
 // BEGIN element 
@@ -2179,8 +2171,6 @@ typedef struct _Nodes_Struct {
   Unit_Structs_Ptr    Units;
   Element_Structs_Ptr Elements;
 } Nodes_Struct;
-
-typedef Nodes_Struct *Nodes_Ptr;
 
 #endif //ifndef A_NODES_H
 

@@ -11,18 +11,25 @@ int main (int argc, char *argv[])
   char *gnat_home   = argv[4];
   // argv[o] should be "-o":
   char *output_dir  = argv[6];
-  struct List_Node_Struct *head_node;
+  Nodes_Struct nodes;
 
   printf ("%s:  BEGIN.\n", prefix);
 
   dot_asisinit();
-  head_node = tool_2_wrapper (target_file, gnat_home, output_dir);
+  nodes = tool_2_wrapper (target_file, gnat_home, output_dir);
   dot_asisfinal();
 
-  if (head_node == 0) {
-    printf ("%s:  tool_2_wrapper returned NO elements.\n", prefix);
+  if (nodes.Units == 0) {
+    printf ("%s:  tool_2_wrapper returned NO Units.\n", prefix);
   } else {
-    printf ("%s:  tool_2_wrapper returned %i elements.\n" , prefix, head_node->Next_Count + 1);
+    printf ("%s:  tool_2_wrapper returned %i Units.\n" , prefix,
+	    nodes.Units->Next_Count + 1);
+  }
+  if (nodes.Elements == 0) {
+    printf ("%s:  tool_2_wrapper returned NO Elements.\n", prefix);
+  } else {
+    printf ("%s:  tool_2_wrapper returned %i Elements.\n" , prefix,
+	    nodes.Units->Next_Count + 1);
   }
 
   printf ("%s:  END.\n", prefix);
