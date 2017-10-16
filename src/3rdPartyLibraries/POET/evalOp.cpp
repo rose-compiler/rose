@@ -56,12 +56,22 @@ class CodeReplVisitor : public ReplInfoVisitor
 {
  protected:
   CodeReplOperator& Repl;
+<<<<<<< HEAD
   virtual void defaultVisit(POETCode* s) { std::cerr << "unhandled case:" << s->toString() << "\n"; assert(0); }
+=======
+  virtual void defaultVisit(POETCode* s) { 
+      if (s->get_enum() == SRC_ANY) { res = s; }
+      else { std::cerr << "unhandled case:" << s->toString() << "\n"; assert(0); }
+      }
+>>>>>>> 21644f3277badc2c97102315e9b3e454283ff430
   virtual void visitNULL(POETNull* n) { res = n; }
   virtual void visitMap(POETMap* m) { res = m; }
   virtual void visitIconst(POETIconst* l) { res=Repl.apply(l); }
   virtual void visitString(POETString* l) { res=Repl.apply(l); }
+<<<<<<< HEAD
   virtual void visitType( POETType* t) { res = Repl.apply(t); }
+=======
+>>>>>>> 21644f3277badc2c97102315e9b3e454283ff430
   virtual void visitLocalVar(LocalVar* v) {
     res = Repl.apply(v);
     if (res == v) ReplInfoVisitor::visitLocalVar(v);
@@ -384,7 +394,11 @@ class FOREACH_Collect : public CollectInfoVisitor
        POETCode* r = match_AST(ff,cond, MATCH_AST_PATTERN);
        int res = 0;
        if (r) { 
+<<<<<<< HEAD
          res = match_eval(ff); 
+=======
+         return match_eval(ff); 
+>>>>>>> 21644f3277badc2c97102315e9b3e454283ff430
        }
        mask.UnmaskLocalVars();
        return res;
@@ -899,6 +913,21 @@ class MatchASTVisitor :  public ReplInfoVisitor
      if (u1 != 0 && POETAstInterface::MatchAstTypeName(u1->get_content(), "STRING",v)) 
         res = r1; 
   }
+<<<<<<< HEAD
+=======
+  bool match_unknown(POETCode* input, CodeVar* ct, POETCode* args)
+  {
+     POETCode_ext* v2 = dynamic_cast<POETCode_ext*>(input);
+     if (v2 != 0 && POETAstInterface::MatchAstTypeName(v2->get_content(), ct->get_entry().get_name()->toString(OUTPUT_NO_DEBUG))) {
+         POETCode* children = v2->get_children();
+         if (args == 0) { res = v2; return true; }
+         else if (children==0) { return false; }
+         if (apply(children, args)) {
+             res = input; return true; }
+     }
+     return false;
+  }
+>>>>>>> 21644f3277badc2c97102315e9b3e454283ff430
   bool matchCodeVar(POETCode *_r1, CodeVar* v2, POETCode* args)  {
      CodeVar* v1 = dynamic_cast<CodeVar*>(_r1);
      if (v1 != 0 && v1->get_entry() == v2->get_entry()) {
@@ -906,11 +935,18 @@ class MatchASTVisitor :  public ReplInfoVisitor
        apply(v1->get_args(),args);
        return (res != 0);
      }
+<<<<<<< HEAD
      POETCode_ext* u1 = dynamic_cast<POETCode_ext*>(_r1);
      if (u1 != 0 && POETAstInterface::MatchAstTypeName(u1->get_content(), v2->get_entry().get_name()->toString(OUTPUT_NO_DEBUG),args)) {
        res = _r1; 
        if (debug_pattern()) 
          std::cerr << "Matched unknown: " << _r1->toString() << " with code template " << v2->toString() << "\n";
+=======
+     if (match_unknown(_r1, v2, args)) {
+       if (debug_pattern()) {
+         std::cerr << "Matched unknown: " << _r1->toString() << " with code template " << v2->toString() << "\n";
+       }
+>>>>>>> 21644f3277badc2c97102315e9b3e454283ff430
        return true;
      }
      if (v1 == 0) { 
@@ -925,6 +961,7 @@ class MatchASTVisitor :  public ReplInfoVisitor
             std::cerr << "invoking matching attr of code template: " << v1->toString() << "\n";
           return matchCodeVar(v1match, v2, args);
         }  
+<<<<<<< HEAD
       res = 0;
       return false;
   }
@@ -932,6 +969,13 @@ class MatchASTVisitor :  public ReplInfoVisitor
      POETCode_ext* e1 = dynamic_cast<POETCode_ext*>(r1);
      if (e1 != 0 && e1->get_content() == e->get_content()) res = r1; 
     else res = 0;
+=======
+      return false;
+  }
+  virtual void visitUnknown (POETCode_ext* e) {
+     if (r1 == e) res = r1; 
+     else res = 0;
+>>>>>>> 21644f3277badc2c97102315e9b3e454283ff430
   }
   virtual void visitCodeVar(CodeVar* v2)  {
      if (matchCodeVar(r1, v2, v2->get_args())) res = r1;
@@ -1091,8 +1135,13 @@ class MatchASTVisitor :  public ReplInfoVisitor
      case POET_OP_EXP: {
            POETCode_ext* p = dynamic_cast<POETCode_ext*>(r1);
            if (p != 0) { 
+<<<<<<< HEAD
               if (POETAstInterface::MatchAstTypeName(p->get_content(), "EXP",0))
                  res = r1; 
+=======
+              if (POETAstInterface::MatchAstTypeName(p->get_content(), "EXP"))
+                 res=r1; 
+>>>>>>> 21644f3277badc2c97102315e9b3e454283ff430
               return; } 
            if (arrref->get_entry().get_code() != 0)
               { arrref->get_entry().get_code()->visit(this); if (res != 0) return; }

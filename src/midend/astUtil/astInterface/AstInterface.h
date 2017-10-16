@@ -74,10 +74,13 @@ class CopyAstRecord : public ObserveInfo< AstObserver>
 };
  
 
+<<<<<<< HEAD
 // AstInterface
 /**
  *  @brief  provides an abstract interface to access/modify AST nodes.
  */
+=======
+>>>>>>> 21644f3277badc2c97102315e9b3e454283ff430
 class AstInterface 
 {
 protected:
@@ -139,7 +142,11 @@ public:
   bool IsVariableDecl( const AstNodePtr& exp, AstList* vars = 0,
                                  AstList* inits = 0);
   bool IsExecutableStmt( const AstNodePtr& s) ;
+<<<<<<< HEAD
   static bool IsStatement( const AstNodePtr& s);
+=======
+  bool IsStatement( const AstNodePtr& s);
+>>>>>>> 21644f3277badc2c97102315e9b3e454283ff430
   static bool IsExprStmt(const AstNodePtr& n, AstNodePtr* exp = 0);
 
   static bool IsBlock( const AstNodePtr& exp);

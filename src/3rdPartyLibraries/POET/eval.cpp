@@ -87,14 +87,22 @@ class GetLenVisitor : public POETCodeVisitor
   virtual void visitString(POETString* s) 
      { res = s->get_content().size(); }
   virtual void visitList(POETList* l) 
+<<<<<<< HEAD
      {  res = 1 + compute(l->get_rest()); }
+=======
+     {  res = 1 + apply(l->get_rest()); }
+>>>>>>> 21644f3277badc2c97102315e9b3e454283ff430
   virtual void visitTuple( POETTuple* v) 
      { res = v->size(); } 
   virtual void visitMap( POETMap *m)
      { res = m->size(); }
   virtual void visitUnknown(POETCode_ext* e) { res = 1; }
  public:
+<<<<<<< HEAD
   unsigned compute(POETCode* code) { if (code == 0) return 0; 
+=======
+  unsigned apply(POETCode* code) { if (code == 0) return 0; 
+>>>>>>> 21644f3277badc2c97102315e9b3e454283ff430
                                    res = 1; code->visit(this);  return res; }
 };
 
@@ -237,7 +245,12 @@ public:
      LvarSymbolTable::Entry e = vec[i]->get_entry();
      e.set_entry_type(LVAR_TRACE_OUTDATE);
    }
+<<<<<<< HEAD
    ret->visit(this); ret = res;
+=======
+   visit(ret);
+   ret = res;
+>>>>>>> 21644f3277badc2c97102315e9b3e454283ff430
    for (int i = size-1; i >= 0; --i) {
      LvarSymbolTable::Entry e = vec[i]->get_entry();
      e.set_entry_type(LVAR_TRACE);

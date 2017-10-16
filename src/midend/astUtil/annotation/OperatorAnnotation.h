@@ -14,7 +14,7 @@ class OperatorAnnotCollection
   public TypeCollection<Descriptor>
 {
  protected:
-  using TypeCollection<Descriptor>::typemap;
+  TypeCollection<Descriptor>::typemap;
  public:
   void read_descriptor( const OperatorDeclaration& target,
                         const std::string& annot, std::istream& in)

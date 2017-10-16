@@ -95,9 +95,13 @@ POETCode* POETProgram:: make_atomType(POETTypeEnum t)
 { return ASTFactory::inst()->new_type(t);  }
 
 std::string POETCode_ext :: toString(ASTOutputEnum config)
+<<<<<<< HEAD
 {  
    return POETAstInterface::Ast2String(content); 
 }
+=======
+       {  return POETAstInterface::Ast2String(content) + ((children==0 || children == EMPTY)? "" : ("{"+children->toString()+"}")); }
+>>>>>>> 21644f3277badc2c97102315e9b3e454283ff430
 
 POETCode* POETProgram:: make_pair(POETCode* r1, POETCode* r2)
           { return ASTFactory::inst()->new_pair(r1,r2); }

@@ -46,20 +46,32 @@ eval_readInput_nosyntax(POETCode* inputFiles, POETCode* codeType, POETCode* inpu
   return eval_readInput(inputFiles, codeType,inputInline); 
 }
 
+<<<<<<< HEAD
 POETAstInterface::Ast POETAstInterface::MatchAstTypeName(const Ast& n, const std::string& name, POETCode* args)
+=======
+bool POETAstInterface::MatchAstTypeName(const Ast& n, const std::string& name)
+>>>>>>> 21644f3277badc2c97102315e9b3e454283ff430
 { std::cerr << "Need to be implemented by external compilers!"; assert(0); }
 
 std::string POETAstInterface::Ast2String(const Ast & n)
 { std::cerr << "Need to be implemented by external compilers!"; assert(0); }
 
+<<<<<<< HEAD
 std::string POETAstInterface::AstTypeName(const Ast & n)
 { std::cerr << "Need to be implemented by external compilers!"; assert(0); }
 
 void POETAstInterface::unparse(const Ast& e, std::ostream& out, int align)
+=======
+void POETAstInterface::unparse(POETCode_ext *e, std::ostream& out, int align)
+>>>>>>> 21644f3277badc2c97102315e9b3e454283ff430
 { std::cerr << "Need to be implemented by external compilers!"; assert(0); }
 
 POETCode* POETAstInterface::Ast2POET(const Ast& n) 
 { std::cerr << "Need to be implemented by external compilers!"; assert(0); }
 
+<<<<<<< HEAD
 POETCode* POETAstInterface::visitAstChildren(const Ast& n, POETCodeVisitor* visitor)
+=======
+POETCode* POETAstInterface::ReplaceChildren(POETCode_ext* ext, POETCode* new_children)
+>>>>>>> 21644f3277badc2c97102315e9b3e454283ff430
 { std::cerr << "Need to be implemented by external compilers!"; assert(0); }

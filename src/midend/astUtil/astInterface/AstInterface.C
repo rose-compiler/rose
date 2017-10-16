@@ -366,7 +366,10 @@ std::string unparseToString( SgNode* s)
   if (s == 0) return "";
   string r = "";
   switch(s->variantT()) {
+<<<<<<< HEAD
   case V_SgName: return isSgName(s)->str();
+=======
+>>>>>>> 21644f3277badc2c97102315e9b3e454283ff430
   case V_SgVarRefExp:
     {
       SgVarRefExp *var = isSgVarRefExp( s );
@@ -1211,6 +1214,7 @@ IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
         l = decl->get_parameterList();
       break;
     }
+<<<<<<< HEAD
     // Liao 2/6/2015, try to extend to support Fortran
     case V_SgProgramHeaderStatement:
     {
@@ -1234,6 +1238,8 @@ IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
          l = decl->get_parameterList();
        break;
    } 
+=======
+>>>>>>> 21644f3277badc2c97102315e9b3e454283ff430
   case V_SgMemberFunctionDeclaration:
     {
       SgMemberFunctionDeclaration* decl = isSgMemberFunctionDeclaration(d);
@@ -1755,6 +1761,10 @@ AstInterfaceImpl:: CreateFieldRef(std::string name1, std::string name2)
 SgMemberFunctionRefExp* AstInterfaceImpl::
 CreateMethodRef(std::string classname, std::string fieldname, bool createIfNotFound)
 { 
+<<<<<<< HEAD
+=======
+      char* start = 0;
+>>>>>>> 21644f3277badc2c97102315e9b3e454283ff430
       SgClassSymbol *c = GetClass(classname);
       if (c == 0) {
          cerr << "Error: cannot find class declaration for " << classname << endl;
@@ -1775,6 +1785,7 @@ CreateMethodRef(std::string classname, std::string fieldname, bool createIfNotFo
       return fr;
 }
 
+<<<<<<< HEAD
 
 SgDotExp* AstInterfaceImpl::
 CreateVarMemberRef(std::string name1, std::string name2, SgNode* loc)
@@ -1784,6 +1795,17 @@ CreateVarMemberRef(std::string name1, std::string name2, SgNode* loc)
    string tname;
    GetTypeInfo(vartype, 0, &tname);
 
+=======
+
+SgDotExp* AstInterfaceImpl::
+CreateVarMemberRef(std::string name1, std::string name2, SgNode* loc)
+{
+   SgVarRefExp* obj = CreateVarRef(name1, loc);
+   SgType* vartype = obj->get_type();
+   string tname;
+   GetTypeInfo(vartype, 0, &tname);
+
+>>>>>>> 21644f3277badc2c97102315e9b3e454283ff430
    SgVarRefExp *field = CreateFieldRef(tname, name2);
    SgDotExp* NEW_BIN_OP(r, SgDotExp, obj, field);
    return r;
@@ -2522,6 +2544,7 @@ bool AstInterfaceImpl::IsFortranLoop( const SgNode* s, SgNode** ivar , SgNode** 
       const SgStatementPtrList &init = fs->get_init_stmt();
       if (init.size() != 1) return false;
       
+<<<<<<< HEAD
       SgNode* init1= init.front();
       SgNode *ivarast, *lbast, *ubast, *stepast;
  
@@ -2540,6 +2563,12 @@ bool AstInterfaceImpl::IsFortranLoop( const SgNode* s, SgNode** ivar , SgNode** 
          }
          else return false;
       }
+=======
+      SgNode* ivarast, *lbast, *ubast, *stepast;
+      if (!IsAssignment( init.front(), &ivarast, &lbast))
+        return false;
+        
+>>>>>>> 21644f3277badc2c97102315e9b3e454283ff430
       string varname;
       if (!IsVarRef(ivarast, 0, &varname))
         return false; 

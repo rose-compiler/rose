@@ -114,7 +114,11 @@ class OptSpec {
   /*QY: insert parameter decl; modify lineNo with new line number; 
         return constrains on parameter values */
   virtual POETCode* insert_paramDecl(AutoTuningInterface& tune,
+<<<<<<< HEAD
             POETProgram& poet, OptLevel optLevel, int& lineNo) { return 0; }
+=======
+            POETProgram& poet, OptLevel optLevel, int& lineNo) {}
+>>>>>>> 21644f3277badc2c97102315e9b3e454283ff430
 friend class AutoTuningInterface;
 
   protected:

@@ -37,6 +37,8 @@ POETCode* EvaluatePOET:: apply_tokens(POETCode* tokens, POETList* input)
 {
    if (tokens != 0)
    {
+     if (debug_lex()) 
+         std::cerr << "apply token filter: " << ((input==0)? "" : input->toString()) << "\n";
       POETList* p_tokens=dynamic_cast<POETList*>(tokens); 
       POETCode* input1 = 0;
       POETCode* first_token=0;
@@ -50,8 +52,11 @@ POETCode* EvaluatePOET:: apply_tokens(POETCode* tokens, POETList* input)
       if (first_token==0) return input;
       if (first_token != EMPTY)
       {
+<<<<<<< HEAD
          if (debug_lex()) 
             std::cerr << "recognized token: " << first_token->toString() << "\n";
+=======
+>>>>>>> 21644f3277badc2c97102315e9b3e454283ff430
          POETCode* res = make_inputlist(first_token,input1);
          return res;
       }
@@ -67,15 +72,22 @@ apply_tokenFilter(POETCode* pattern, POETCode* input,
                   POETCode*& leftOver, bool make_string)
 {
      if (pattern == EMPTY) { leftOver=input; return pattern; }
+<<<<<<< HEAD
      if (debug_lex()) 
          std::cerr << "apply token filter: " << pattern->toString() << " to " << ((input==0)? "" : input->toString()) << "\n";
 
+=======
+>>>>>>> 21644f3277badc2c97102315e9b3e454283ff430
      leftOver = input;
      switch (pattern->get_enum())
         {
         case SRC_STRING: {
             if (input == 0)   return 0;
+<<<<<<< HEAD
             POETCode* cur_input = get_head(input);
+=======
+            POETCode* cur_input = input->get_first();
+>>>>>>> 21644f3277badc2c97102315e9b3e454283ff430
             if (cur_input->get_enum() != SRC_STRING) return 0;
             std::string str_pat = static_cast<POETString*>(pattern)->get_content();
             std::string str_input = static_cast<POETString*>(cur_input)->get_content();
@@ -120,7 +132,11 @@ apply_tokenFilter(POETCode* pattern, POETCode* input,
           return cur_token;
           }
         case SRC_LIST: {
+<<<<<<< HEAD
             POETCode* p_input = input;
+=======
+            POETList* p_input = input;
+>>>>>>> 21644f3277badc2c97102315e9b3e454283ff430
             POETList* p_content = static_cast<POETList*>(pattern);
             std::string token_content;
             std::vector<POETCode*> match_res;
@@ -138,10 +154,17 @@ apply_tokenFilter(POETCode* pattern, POETCode* input,
             return Vector2List(match_res);
          }
          case SRC_CVAR: {  
+<<<<<<< HEAD
              POETCode* first = get_head(input);
               CodeVar* cvar = static_cast<CodeVar*>(pattern);
              if (first != 0 && first->get_enum() == SRC_CVAR && static_cast<CodeVar*>(first)->get_entry() == cvar->get_entry()) { 
                  leftOver=get_tail(input);
+=======
+             POETCode* first = (input==0)? 0 : input->get_first();
+              CodeVar* cvar = static_cast<CodeVar*>(pattern);
+             if (first != 0 && first->get_enum() == SRC_CVAR && static_cast<CodeVar*>(first)->get_entry() == cvar->get_entry()) { 
+                 leftOver=input->get_rest();
+>>>>>>> 21644f3277badc2c97102315e9b3e454283ff430
                  return first;
              }
               POETCode* pars=cvar->get_entry().get_param();
@@ -153,7 +176,11 @@ apply_tokenFilter(POETCode* pattern, POETCode* input,
                    POETCode* cur_token = apply_tokenFilter(code, input, leftOver, false); 
                    if (cur_token != 0) {
                        if (debug_lex()) 
+<<<<<<< HEAD
 std::cerr << "found code template: " << cur_token->toString(DEBUG_OUTPUT) << "\n";
+=======
+std::cerr << "found code template: " << cur_token->toString() << "\n";
+>>>>>>> 21644f3277badc2c97102315e9b3e454283ff430
                       if (pars != 0) { pars=eval_AST(pars); }
                        cur_token= cvar->invoke_rebuild(pars);
                        if (cur_token == 0) { cur_token = fac->build_codeRef(cvar->get_entry(),pars); }

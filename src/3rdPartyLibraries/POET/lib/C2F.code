@@ -31,6 +31,9 @@ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISE
 
 <define UNPARSE UnparseLine/>
 
+<code DeclarationBlock parse=LIST(CODE.Stmt,"\n") />
+<code DeclStmt pars=(decl)> @decl@ </code>
+
 <code VoidType> subroutine </code>
 <code IntType pars=(name:"char"|"int"|"unsigned"|"long")> 
 @(switch(name)
@@ -49,28 +52,15 @@ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISE
  })
 @
 </code>
-<code DeclarationList/>
-
-<code TypeDecl pars=(type) > @type@; </code>
-<code TypeDef pars=(name, type)> typedef @type@ @name@; </code>
-
-<code DeclarationList pars=(content)  rebuild=content parse=LIST(GLOBAL.DECLARATION,"\n")> 
-@content@ 
-</code>
 
 <*********** top-level declarations  ********************>
 
-<code FunctionDecl pars=(name:Name, params : CODE.ParamDeclList, returnType:Type, body:LIST(Stmt,"\n")) >
-@returnType@ @name@(@NameList#(XFORM.GetNamesFromVarDecl(params))@) 
+<code FunctionDecl pars=(name:Name, params : CODE.ParamDeclList, ret:Type, body:LIST(Stmt,"\n")) >
+@ret@ @name@(@NameList#(XFORM.GetNamesFromVarDecl(params))@) 
   @params@
   @body@
 end
 </code>
-
-<code VarDeclStmt pars=(type, var:NameList) >
-@type@ @var@
-</code>
-
 
 <********************************Types ***************>
 <code Type pars=(content)> @content@ </code>
@@ -79,7 +69,7 @@ end
 <code PtrType pars=(base) > @base@ </code>
 <code RefType pars=(base) > @base@ </code>
 
-<code CompoundType pars=(base: BaseType, annot : TypeAnnot) >
+<code CompoundType pars=(base: GLOBAL.TYPE_BASE, annot : TypeAnnot) >
 @base@ @annot@
 </code>
 
@@ -88,42 +78,33 @@ end
 @dim@
 </code>
 
-<code ArrayType pars=(base:BaseType, dim:ArrayAnnot) > 
+<code ArrayType pars=(base:GLOBAL.TYPE_BASE, dim:ArrayAnnot) > 
 @base@@dim@
 </code>
 
 <********************** Variables **************************>
 
-<code FunctionParameter pars=(content,extraDecls)>
+<code FunctionParameter pars=(content : CODE.ParamDeclList,extraDecls)>
 @content@
 @extraDecls@
 </code>
 
-<code VarDecl pars=(type, var) >
-@type@ @var@ @((type : PtrType|ConstType#(PtrType#_))?@
-dimension @var@(*) @ : "")@
+<code TypeInfo pars=(type, name,init) >
+@type@ @name@ @((type : PtrType|ConstType#(PtrType#_))?@
+dimension @name@(*) @ : "")@
 </code>
 <code ParamDeclList parse=LIST(VarDecl,"\n") />
 
 <xform GetNamesFromVarDecl pars=(input)>
 switch (input)
 {
-case VarDecl#(type,name) : name
+case CODE.TypeInfo#(t,n,_): n
 case (first second) : BuildList(GetNamesFromVarDecl(first),GetNamesFromVarDecl(second))
 case ParamDeclList#content: GetNamesFromVarDecl(content)
 case VoidType|"": ""
-case FunctionParameter#(params,extra): BuildList(GetNamesFromVarDecl(params),GetNamesFromVarDecl(extra)) 
 default: ERROR("expecting variable decl but get: " input);
 }
 </xform>
-
-<code VariableWithAnnot pars=(name, annot1, annot2) >
-@annot1 name annot2@
-</code>
-
-<code VariableList pars=(content) parse=LIST(VariableWithAnnot,",") rebuild=content> 
-@content@
-</code>
 
 
 <***********  statements  ********************>
@@ -202,18 +183,6 @@ default: @stmt@
 
 <code StructRef pars=(structName:Name,var:Name) >
 @structName@.@var@
-</code>
-
-<code PtrDeref pars=(ptr,var:Name)>
-@ptr@->@var@
-</code>
-
-<code PtrRef pars=(ptr ) >
-*(@ptr@)
-</code>
-
-<code AddrOf pars=(var)>
-&@var@
 </code>
 
 <code Min pars=(s1,s2) > 

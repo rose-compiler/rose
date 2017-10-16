@@ -684,13 +684,15 @@ class POETCode_ext : public POETCode
 {
   protected:
     void* content;
+    POETCode* children;
   public:
-    POETCode_ext(void* _content) : content(_content) {assert(content!=0);};
+    POETCode_ext(void* _content, POETCode* c) : content(_content),children(c) {assert(content!=0);};
     virtual POETEnum get_enum() const { return SRC_UNKNOWN; }
     virtual std:: string get_className() const { return "POETCode_ext"; }
     virtual void visit(POETCodeVisitor* op)  { op->visitUnknown(this); }
     virtual std:: string toString(ASTOutputEnum config=DEBUG_OUTPUT_SHORT) ;
     void* get_content() { return content; }
+    POETCode* get_children() { return children; }
   friend class POETAstInterface;
 };
 

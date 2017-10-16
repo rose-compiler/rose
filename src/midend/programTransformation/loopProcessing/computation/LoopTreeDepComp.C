@@ -258,8 +258,13 @@ class BuildLoopDepGraphCreate : public BuildLoopDepGraphEdges
     LoopTreeNode *cur = iter.Current();
     for ( ; (cur != NULL && !cur->IncreaseLoopLevel() && cur->GetOrigStmt()==0);
          iter.Advance(), cur = iter.Current());
+<<<<<<< HEAD
     if (cur == NULL || !( cur->GetOrigStmt() == 0 || cur->GetOrigStmt() == start))
        { std::cerr << "problem stmt: " << ((cur == NULL)? "NULL" : cur->toString()) << "\n"; 
+=======
+    if (!( cur->GetOrigStmt() == 0 || cur->GetOrigStmt() == start))
+       { std::cerr << "problem stmt: " << cur->toString() << "\n"; 
+>>>>>>> 21644f3277badc2c97102315e9b3e454283ff430
          std::cerr << "start : " << AstInterface::AstToString(start) << "\n";
          assert(0);}
     iter.Advance();

@@ -92,7 +92,7 @@ Transform( LoopTreeDepComp& c, const CompSlice *_slice, LoopTreeNode *root)
     LoopTreeTransform().InsertLoop( nr, root, -1);
 
     AstInterface::AstNodeList args;
-    char buf[11];
+    char buf[10];
     for (int i = 1; i <= num; ++i) {
        sprintf(buf, "%1d", i);
        std::string name = groupVar + buf;
