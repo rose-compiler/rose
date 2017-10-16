@@ -32,7 +32,7 @@ SgAsmPEExportDirectory::ctor(SgAsmPEExportSection *section)
         }
         memset(&disk, 0, sizeof disk);
     }
-    
+
     /* Convert disk-format data members to native format */
     p_res1         = ByteOrder::le_to_host(disk.res1);
     p_timestamp    = ByteOrder::le_to_host(disk.timestamp);
@@ -77,7 +77,7 @@ SgAsmPEExportDirectory::dump(FILE *f, const char *prefix, ssize_t idx) const
         sprintf(p, "%sPEExportDirectory.", prefix);
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-    
+
     fprintf(f, "%s%-*s = \"%s\"\n",                    p, w, "name", p_name->get_string(true).c_str());
     fprintf(f, "%s%-*s = 0x%08x (%u)\n",               p, w, "res1", p_res1, p_res1);
     fprintf(f, "%s%-*s = %lu %s",                      p, w, "timestamp", (unsigned long)p_timestamp, ctime(&p_timestamp));
@@ -141,7 +141,7 @@ SgAsmPEExportEntry::set_forwarder(SgAsmGenericString *forwarder)
     p_forwarder = forwarder;
     if (p_forwarder) p_forwarder->set_parent(this);
 }
-    
+
 /* Constructor */
 void
 SgAsmPEExportSection::ctor()
@@ -161,11 +161,25 @@ SgAsmPEExportSection::parse()
 
     p_export_dir = new SgAsmPEExportDirectory(this);
 
+    // Check that the p_export_dir.p_nameptr_n is not out of range.
+    rose_addr_t availBytes = fhdr->get_loader_map()->at(p_export_dir->get_nameptr_rva().get_va()).available().size();
+    rose_addr_t availElmts = availBytes / sizeof(ExportNamePtr_disk);
+    if (p_export_dir->get_nameptr_n() > availElmts) {
+        mlog[ERROR] <<"SgAsmPEExportSection::parse: number of entries indicated (" <<p_export_dir->get_nameptr_n() <<")"
+                    <<" exceeds available mapped memory (room for " <<StringUtility::plural(availElmts, "entries") <<")\n";
+    }
+    static const size_t maxNamePtrN = 10000;
+    if (p_export_dir->get_nameptr_n() > maxNamePtrN) {
+        availElmts = std::min(availElmts, maxNamePtrN);
+        mlog[WARN] <<"SgAsmPEExportSection::parse: number of entries indicated (" <<p_export_dir->get_nameptr_n() <<")"
+                   <<" is large; resetting to " <<availElmts <<"\n";
+    }
+
     /* The export directory points to three parallel arrays:
      *   1. An array of RVAs that point to NUL-terminated names.
      *   2. An array of "ordinals" which serve as indices into the Export Address Table.
      *   3. An array of export addresses (see note below). */
-    for (size_t i=0; i<p_export_dir->get_nameptr_n(); i++) {
+    for (size_t i=0; i<std::min(p_export_dir->get_nameptr_n(), availElmts); i++) {
         /* Function name RVA (nameptr)*/
         ExportNamePtr_disk nameptr_disk = 0;
         rose_addr_t nameptr_va = p_export_dir->get_nameptr_rva().get_va() + i*sizeof(nameptr_disk);
@@ -307,7 +321,7 @@ SgAsmPEExportSection::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         sprintf(p, "%sPEExportSection.", prefix);
     }
-    
+
     SgAsmPESection::dump(f, p, -1);
 
     if (p_export_dir)
