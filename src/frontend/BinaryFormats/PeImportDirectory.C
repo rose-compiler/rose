@@ -61,7 +61,7 @@ SgAsmPEImportDirectory::hintname_table_extent(AddressIntervalSet &extent/*in,out
 }
 
 SgAsmPEImportDirectory *
-SgAsmPEImportDirectory::parse(rose_addr_t idir_va)
+SgAsmPEImportDirectory::parse(rose_addr_t idir_va, bool isLastEntry)
 {
     SgAsmPEFileHeader *fhdr = SageInterface::getEnclosingNode<SgAsmPEFileHeader>(this);
     ROSE_ASSERT(fhdr!=NULL);
@@ -82,6 +82,13 @@ SgAsmPEImportDirectory::parse(rose_addr_t idir_va)
     /* An all-zero entry marks the end of the list. In this case return null. */
     if (!memcmp(&disk, &zero, sizeof zero))
         return NULL;
+#if 0 // [Robb Matzke 2017-10-16]: this mechanism to find end-of-list is not documented by Microsoft and might be wrong.
+    if (isLastEntry) {
+        mlog[WARN] <<"SgAsmPEImportDirectory::parse: import directory at va " <<StringUtility::addrToString(idir_va)
+                   <<" is last in section but has a non-zero value (pretending it's zero)\n";
+        return NULL;
+    }
+#endif
 
     p_ilt_rva         = ByteOrder::le_to_host(disk.ilt_rva);
     p_time            = ByteOrder::le_to_host(disk.time);
@@ -149,7 +156,7 @@ SgAsmPEImportDirectory::parse_ilt_iat(const rose_rva_t &table_start, bool assume
     assert(get_imports()!=NULL);
     SgAsmPEImportItemPtrList &imports = get_imports()->get_vector();
     bool processing_iat = !imports.empty(); // we always process the ILT first (but it might be empty)
-    
+
     if (0==table_start.get_rva())
         return;                 // no ILT/IAT present
 
@@ -482,7 +489,7 @@ SgAsmPEImportDirectory::unparse_ilt_iat(std::ostream &f, const rose_rva_t &table
         entry_rva.get_section()->write(f, entry_rva.get_rel(), entry_size, &disk);
     }
 }
-    
+
 void *
 SgAsmPEImportDirectory::encode(PEImportDirectory_disk *disk) const
 {
@@ -572,7 +579,7 @@ SgAsmPEImportDirectory::unparse(std::ostream &f, const SgAsmPEImportSection *sec
         unparse_ilt_iat(f, p_ilt_rva, false, p_ilt_nalloc);
     if (p_iat_rva>0)
         unparse_ilt_iat(f, p_iat_rva, false, p_iat_nalloc);
-    
+
     PEImportDirectory_disk disk;
     encode(&disk);
     section->write(f, idx*sizeof disk, sizeof disk, &disk);
