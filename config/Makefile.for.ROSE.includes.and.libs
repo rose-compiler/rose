@@ -64,7 +64,7 @@ if ROSE_HAVE_LIBZ3
   # makefile. I don't want to break code that uses the wrong names, so I'll just add the correct ones. [Matzke 2017-10-17]
   ROSE_Z3_INCLUDES = -I@ROSE_Z3_PREFIX@/include
   ROSE_Z3_LIBS = -lz3
-  ROSE_Z3_LIBS_WITH_PATH = @ROSE_Z3_PREFIX@/lib -lz3
+  ROSE_Z3_LIBS_WITH_PATH = -L@ROSE_Z3_PREFIX@/lib -lz3
 endif
 
 # This is properly handled by automake even when specified in an include file
