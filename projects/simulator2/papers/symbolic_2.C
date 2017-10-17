@@ -150,7 +150,7 @@ public:
                     TreeNodePtr c = InternalNode::create(32, OP_EQ, policy.readRegister<32>("eip").get_expression(),
                                                          LeafNode::create_integer(32, target));
                     constraints.push_back(c); // shouldn't really have to do this again if we could save some state
-                    if (Rose::BinaryAnalysis::SMTSolver::SAT_YES == smt_solver.satisfiable(constraints)) {
+                    if (Rose::BinaryAnalysis::SmtSolver::SAT_YES == smt_solver.satisfiable(constraints)) {
                         policy.writeRegister("eip", SymbolicSemantics::ValueType<32>(target));
                     } else {
                         trace->mesg("%s: chosen control flow path is not feasible (or unknown).", name);
@@ -190,7 +190,7 @@ public:
                     expr = InternalNode::create(32, OP_EQ, *vi, LeafNode::create_integer(32, (int)'x'));
                     exprs.push_back(expr);
                 }
-                if (Rose::BinaryAnalysis::SMTSolver::SAT_YES == smt_solver.satisfiable(exprs)) {
+                if (Rose::BinaryAnalysis::SmtSolver::SAT_YES == smt_solver.satisfiable(exprs)) {
                     LeafNodePtr result_value = smt_solver.evidence_for_variable(result_var)->isLeafNode();
                     if (!result_value) {
                         trace->mesg("%s: evaluation result could not be determined. ERROR!", name);
@@ -212,7 +212,7 @@ public:
                 TreeNodePtr expr = InternalNode::create(32, OP_EQ, result.get_expression(),
                                                         LeafNode::create_integer(32, 0xff015e7c));
                 exprs.push_back(expr);
-                if (Rose::BinaryAnalysis::SMTSolver::SAT_YES == smt_solver.satisfiable(exprs)) {
+                if (Rose::BinaryAnalysis::SmtSolver::SAT_YES == smt_solver.satisfiable(exprs)) {
                     for (std::set<LeafNodePtr>::iterator vi=vars.begin(); vi!=vars.end(); ++vi) {
                         LeafNodePtr var_val = smt_solver.evidence_for_variable(*vi)->isLeafNode();
                         if (var_val && var_val->is_known())

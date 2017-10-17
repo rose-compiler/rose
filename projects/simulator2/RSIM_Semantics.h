@@ -82,17 +82,17 @@ private:
 protected:
     RiscOperators(Architecture arch, RSIM_Thread *thread,
                   const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &protoval,
-                  Rose::BinaryAnalysis::SMTSolver *solver)
+                  Rose::BinaryAnalysis::SmtSolver *solver)
         : Super(protoval, solver), architecture_(arch), allocateOnDemand_(false), thread_(thread) {}
 
     RiscOperators(Architecture arch, RSIM_Thread *thread,
                   const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::StatePtr &state,
-                  Rose::BinaryAnalysis::SMTSolver *solver)
+                  Rose::BinaryAnalysis::SmtSolver *solver)
         : Super(state, solver), architecture_(arch), allocateOnDemand_(false), thread_(thread) {}
 
 public:
     static RiscOperatorsPtr instance(Architecture arch, RSIM_Thread *thread, const RegisterDictionary *regdict,
-                                     Rose::BinaryAnalysis::SMTSolver *solver=NULL) {
+                                     Rose::BinaryAnalysis::SmtSolver *solver=NULL) {
         using namespace Rose::BinaryAnalysis::InstructionSemantics2;
         BaseSemantics::SValuePtr protoval = SValue::instance();
         BaseSemantics::RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
@@ -103,40 +103,40 @@ public:
 
     static RiscOperatorsPtr instance(Architecture arch, RSIM_Thread *thread,
                                      const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &protoval,
-                                     Rose::BinaryAnalysis::SMTSolver *solver=NULL) {
+                                     Rose::BinaryAnalysis::SmtSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(arch, thread, protoval, solver));
     }
 
     static RiscOperatorsPtr instance(Architecture arch, RSIM_Thread *thread,
                                      const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::StatePtr &state,
-                                     Rose::BinaryAnalysis::SMTSolver *solver=NULL) {
+                                     Rose::BinaryAnalysis::SmtSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(arch, thread, state, solver));
     }
 
 public:
     virtual Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RiscOperatorsPtr
     create(const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &protoval,
-           Rose::BinaryAnalysis::SMTSolver *solver=NULL) const ROSE_OVERRIDE {
+           Rose::BinaryAnalysis::SmtSolver *solver=NULL) const ROSE_OVERRIDE {
         ASSERT_not_reachable("no architecture or thread available");
     }
 
     virtual Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RiscOperatorsPtr
     create(Architecture arch, RSIM_Thread *thread,
            const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &protoval,
-           Rose::BinaryAnalysis::SMTSolver *solver=NULL) const {
+           Rose::BinaryAnalysis::SmtSolver *solver=NULL) const {
         return instance(arch, thread, protoval, solver);
     }
 
     virtual Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RiscOperatorsPtr
     create(const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::StatePtr &state,
-           Rose::BinaryAnalysis::SMTSolver *solver=NULL) const ROSE_OVERRIDE {
+           Rose::BinaryAnalysis::SmtSolver *solver=NULL) const ROSE_OVERRIDE {
         ASSERT_not_reachable("no architecture or thread available");
     }
 
     virtual Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RiscOperatorsPtr
     create(Architecture arch, RSIM_Thread *thread,
            const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::StatePtr &state,
-           Rose::BinaryAnalysis::SMTSolver *solver=NULL) const {
+           Rose::BinaryAnalysis::SmtSolver *solver=NULL) const {
         return instance(arch, thread, state, solver);
     }
 

@@ -96,9 +96,9 @@ public:
     // Compile-time checks for RiscOperators
     class RiscOperatorsSubclass: public RiscOperators {
     public:
-        explicit RiscOperatorsSubclass(const SValuePtr &protoval, SMTSolver *solver=NULL)
+        explicit RiscOperatorsSubclass(const SValuePtr &protoval, SmtSolver *solver=NULL)
             : RiscOperators(protoval, solver) {}
-        explicit RiscOperatorsSubclass(const StatePtr &state, SMTSolver *solver=NULL)
+        explicit RiscOperatorsSubclass(const StatePtr &state, SmtSolver *solver=NULL)
             : RiscOperators(state, solver) {}
     };
 
@@ -123,7 +123,7 @@ public:
         const RegisterDescriptor *segreg_ = regdict->lookup("ss");
         require(segreg_!=NULL, "segreg lookup");
         const RegisterDescriptor segreg = *segreg_;
-        SMTSolver *solver = NULL;
+        SmtSolver *solver = NULL;
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // SValue

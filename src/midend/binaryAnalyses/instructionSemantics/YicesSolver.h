@@ -2,7 +2,7 @@
 #define Rose_YicesSolver_H
 
 #include "rosePublicConfig.h"
-#include "SMTSolver.h"
+#include "BinarySmtSolver.h"
 #include <Sawyer/Map.h>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
@@ -23,7 +23,7 @@ namespace BinaryAnalysis {
  *  Yices provides two interfaces: an executable named "yices", and a library. The choice of which linkage to use to answer
  *  satisfiability questions is made at runtime (see set_linkage()).
  */
-class YicesSolver: public SMTSolver {
+class YicesSolver: public SmtSolver {
 public:
     /** Bit flags to indicate what style of calls are made to Yices. */
     enum LinkMode {
@@ -55,7 +55,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SMTSolver);
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SmtSolver);
         s & BOOST_SERIALIZATION_NVP(linkage);
         s & BOOST_SERIALIZATION_NVP(termNames);
         s & BOOST_SERIALIZATION_NVP(evidence);

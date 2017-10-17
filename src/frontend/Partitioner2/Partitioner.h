@@ -311,7 +311,7 @@ private:
     ControlFlowGraph cfg_;                              // basic blocks that will become part of the ROSE AST
     CfgVertexIndex vertexIndex_;                        // Vertex-by-address index for the CFG
     AddressUsageMap aum_;                               // How addresses are used for each address represented by the CFG
-    SMTSolver *solver_;                                 // Satisfiable modulo theory solver used by semantic expressions
+    SmtSolver *solver_;                                 // Satisfiable modulo theory solver used by semantic expressions
     Functions functions_;                               // List of all attached functions by entry address
     bool autoAddCallReturnEdges_;                       // Add E_CALL_RETURN edges when blocks are attached to CFG?
     bool assumeFunctionsReturn_;                        // Assume that unproven functions return to caller?
@@ -2356,7 +2356,7 @@ public:
      *  delete it.  Some configurations will not use a solver, in which case the null pointer is returned.
      *
      *  Thread safety: Not thread safe. */
-    SMTSolver *smtSolver() const /*final*/ { return solver_; }
+    SmtSolver *smtSolver() const /*final*/ { return solver_; }
 
     /** Obtain new RiscOperators.
      *

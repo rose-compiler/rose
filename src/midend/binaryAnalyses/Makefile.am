@@ -24,6 +24,7 @@ libbinaryMidend_la_SOURCES =					\
     BinaryPointerDetection.C					\
     BinaryReachability.C					\
     BinaryReturnValueUsed.C					\
+    BinarySmtSolver.C						\
     BinaryStackDelta.C						\
     BinaryString.C						\
     BinarySymbolicExpr.C					\
@@ -47,7 +48,6 @@ libbinaryMidend_la_SOURCES =					\
     instructionSemantics/NullSemantics2.C			\
     instructionSemantics/PartialSymbolicSemantics2.C		\
     instructionSemantics/RegisterStateGeneric.C			\
-    instructionSemantics/SMTSolver.C				\
     instructionSemantics/SourceAstSemantics2.C			\
     instructionSemantics/StaticSemantics2.C			\
     instructionSemantics/SymbolicMemory2.C			\
@@ -83,6 +83,7 @@ pkginclude_HEADERS =					\
     BinaryPointerDetection.h				\
     BinaryReachability.h				\
     BinaryReturnValueUsed.h				\
+    BinarySmtSolver.h					\
     BinaryStackDelta.h					\
     BinaryStackVariable.h				\
     BinaryString.h					\
@@ -108,7 +109,6 @@ pkginclude_HEADERS =					\
     instructionSemantics/NullSemantics2.h		\
     instructionSemantics/PartialSymbolicSemantics2.h	\
     instructionSemantics/RegisterStateGeneric.h		\
-    instructionSemantics/SMTSolver.h			\
     instructionSemantics/SourceAstSemantics2.h		\
     instructionSemantics/StaticSemantics2.h		\
     instructionSemantics/SymbolicMemory2.h		\

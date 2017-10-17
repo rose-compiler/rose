@@ -52,7 +52,7 @@ YicesSolver::available_linkage()
 }
 
 /* See YicesSolver.h */
-SMTSolver::Satisfiable
+SmtSolver::Satisfiable
 YicesSolver::satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs)
 {
     clear_evidence();
@@ -96,11 +96,11 @@ YicesSolver::satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs)
 #endif
 
     ASSERT_require(get_linkage() & LM_EXECUTABLE);
-    return SMTSolver::satisfiable(exprs);
+    return SmtSolver::satisfiable(exprs);
 }
 
 
-/* See SMTSolver::get_command() */
+/* See SmtSolver::get_command() */
 std::string
 YicesSolver::get_command(const std::string &config_name)
 {
@@ -112,7 +112,7 @@ YicesSolver::get_command(const std::string &config_name)
 #endif
 }
 
-/* See SMTSolver::generate_file() */
+/* See SmtSolver::generate_file() */
 void
 YicesSolver::generate_file(std::ostream &o, const std::vector<SymbolicExpr::Ptr> &exprs, Definitions *defns)
 {
@@ -176,7 +176,7 @@ YicesSolver::parse_variable(const char *nptr, char **endptr, char first_char)
     return retval;
 }
 
-/* See SMTSolver::parse_evidence() */
+/* See SmtSolver::parse_evidence() */
 void
 YicesSolver::parse_evidence()
 {

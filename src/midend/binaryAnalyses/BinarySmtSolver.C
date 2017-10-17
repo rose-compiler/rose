@@ -1,7 +1,7 @@
 #include "sage3basic.h"
 
 #include "rose_getline.h"
-#include "SMTSolver.h"
+#include "BinarySmtSolver.h"
 #include "YicesSolver.h"
 
 #include <boost/thread/locks.hpp>
@@ -15,21 +15,21 @@ namespace BinaryAnalysis {
 
 
 std::ostream&
-operator<<(std::ostream &o, const SMTSolver::Exception &e)
+operator<<(std::ostream &o, const SmtSolver::Exception &e)
 {
     return o <<"SMT solver: " <<e.mesg;
 }
 
-SMTSolver::Stats SMTSolver::class_stats;
-boost::mutex SMTSolver::class_stats_mutex;
+SmtSolver::Stats SmtSolver::class_stats;
+boost::mutex SmtSolver::class_stats_mutex;
 
 void
-SMTSolver::init()
+SmtSolver::init()
 {}
 
 // class method
-SMTSolver*
-SMTSolver::instance(const std::string &name) {
+SmtSolver*
+SmtSolver::instance(const std::string &name) {
     if (name == "yices") {
         return new YicesSolver;
     } else {
@@ -38,8 +38,8 @@ SMTSolver::instance(const std::string &name) {
 }
 
 // class method
-SMTSolver::Stats
-SMTSolver::get_class_stats() 
+SmtSolver::Stats
+SmtSolver::get_class_stats() 
 {
     boost::lock_guard<boost::mutex> lock(class_stats_mutex);
     return class_stats;
@@ -47,20 +47,20 @@ SMTSolver::get_class_stats()
 
 // class method
 void
-SMTSolver::reset_class_stats()
+SmtSolver::reset_class_stats()
 {
     boost::lock_guard<boost::mutex> lock(class_stats_mutex);
     class_stats = Stats();
 }
 
 SymbolicExpr::Ptr
-SMTSolver::evidence_for_address(uint64_t addr)
+SmtSolver::evidence_for_address(uint64_t addr)
 {
     return evidence_for_name(StringUtility::addrToString(addr));
 }
 
-SMTSolver::Satisfiable
-SMTSolver::trivially_satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs_)
+SmtSolver::Satisfiable
+SmtSolver::trivially_satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs_)
 {
     std::vector<SymbolicExpr::Ptr> exprs(exprs_.begin(), exprs_.end());
     for (size_t i=0; i<exprs.size(); ++i) {
@@ -75,8 +75,8 @@ SMTSolver::trivially_satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs_)
     return exprs.empty() ? SAT_YES : SAT_UNKNOWN;
 }
 
-SMTSolver::Satisfiable
-SMTSolver::satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs)
+SmtSolver::Satisfiable
+SmtSolver::satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs)
 {
     bool got_satunsat_line = false;
 
@@ -175,16 +175,16 @@ SMTSolver::satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs)
 }
     
 
-SMTSolver::Satisfiable
-SMTSolver::satisfiable(const SymbolicExpr::Ptr &tn)
+SmtSolver::Satisfiable
+SmtSolver::satisfiable(const SymbolicExpr::Ptr &tn)
 {
     std::vector<SymbolicExpr::Ptr> exprs;
     exprs.push_back(tn);
     return satisfiable(exprs);
 }
 
-SMTSolver::Satisfiable
-SMTSolver::satisfiable(std::vector<SymbolicExpr::Ptr> exprs, const SymbolicExpr::Ptr &expr)
+SmtSolver::Satisfiable
+SmtSolver::satisfiable(std::vector<SymbolicExpr::Ptr> exprs, const SymbolicExpr::Ptr &expr)
 {
     if (expr!=NULL)
         exprs.push_back(expr);
