@@ -5,6 +5,7 @@
 
 #include <AsmUnparser_compat.h>
 #include <BinarySymbolicExprParser.h>
+#include <BinaryYicesSolver.h>
 #include <boost/thread/condition_variable.hpp>
 #include <boost/thread/locks.hpp>
 #include <boost/thread/mutex.hpp>
@@ -21,7 +22,6 @@
 #include <Sawyer/Stopwatch.h>
 #include <SymbolicMemory2.h>
 #include <SymbolicSemantics2.h>
-#include <YicesSolver.h>
 
 using namespace Rose;
 using namespace Rose::BinaryAnalysis;

@@ -33,9 +33,9 @@
 #include <vector>
 
 // Derived classes needed for serialization
+#include <BinaryYicesSolver.h>
 #include <DispatcherM68k.h>
 #include <DispatcherX86.h>
-#include <YicesSolver.h>
 
 namespace Rose {
 namespace BinaryAnalysis {

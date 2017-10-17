@@ -2,11 +2,11 @@
 #include <AsmUnparser_compat.h>
 #include <BaseSemantics2.h>
 #include <BinaryFeasiblePath.h>
+#include <BinaryYicesSolver.h>
 #include <Partitioner2/GraphViz.h>
 #include <Partitioner2/Partitioner.h>
 #include <Sawyer/GraphAlgorithm.h>
 #include <SymbolicMemory2.h>
-#include <YicesSolver.h>
 
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/logic/tribool.hpp>

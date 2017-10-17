@@ -28,8 +28,8 @@
 #ifdef ROSE_ENABLE_SIMULATOR /* protects this whole file */
 
 #include "RSIM_Linux32.h"
+#include "BinaryYicesSolver.h"
 #include "SymbolicSemantics.h"
-#include "YicesSolver.h"
 
 // Monitors the CPU instruction pointer.  When it reaches a specified value analyze the function at the specified location.
 class Analysis: public RSIM_Callbacks::InsnCallback {

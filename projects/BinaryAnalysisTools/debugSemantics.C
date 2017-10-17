@@ -3,6 +3,7 @@
 #include <rose.h>
 
 #include <BinaryNoOperation.h>
+#include <BinaryYicesSolver.h>
 #include <ConcreteSemantics2.h>
 #include <Diagnostics.h>
 #include <Disassembler.h>
@@ -15,7 +16,6 @@
 #include <SymbolicSemantics2.h>
 #include <TestSemantics2.h>
 #include <TraceSemantics2.h>
-#include <YicesSolver.h>
 
 //=============================================================================================================================
 //                                      User-contributed semantics

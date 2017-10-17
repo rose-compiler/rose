@@ -22,6 +22,7 @@ add_library(midend_binary OBJECT
   BinarySymbolicExprParser.C
   BinaryTaintedFlow.C
   BinaryToSource.C
+  BinaryYicesSolver.C
   DwarfLineMapper.C
   instructionSemantics/BaseSemantics2.C
   instructionSemantics/ConcreteSemantics2.C
@@ -43,8 +44,7 @@ add_library(midend_binary OBJECT
   instructionSemantics/StaticSemantics2.C
   instructionSemantics/SymbolicMemory2.C
   instructionSemantics/SymbolicSemantics2.C
-  instructionSemantics/TraceSemantics2.C
-  instructionSemantics/YicesSolver.C)
+  instructionSemantics/TraceSemantics2.C)
 else()
 add_library(midend_binary OBJECT
   dummyBinaryMidend.C
@@ -81,6 +81,7 @@ install(
     BinarySymbolicExprParser.h
     BinaryTaintedFlow.h
     BinaryToSource.h
+    BinaryYicesSolver.h
     DwarfLineMapper.h
     ether.h
     instructionSemantics/BaseSemantics2.h
@@ -104,7 +105,6 @@ install(
     instructionSemantics/SymbolicSemantics2.h
     instructionSemantics/TestSemantics2.h
     instructionSemantics/TraceSemantics2.h
-    instructionSemantics/YicesSolver.h
     libraryIdentification/functionIdentification.h
     libraryIdentification/libraryIdentification.h
   DESTINATION include)

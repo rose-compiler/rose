@@ -2,7 +2,7 @@
 
 #include "rose_getline.h"
 #include "BinarySmtSolver.h"
-#include "YicesSolver.h"
+#include "BinaryYicesSolver.h"
 
 #include <boost/format.hpp>
 #include <boost/thread/locks.hpp>
