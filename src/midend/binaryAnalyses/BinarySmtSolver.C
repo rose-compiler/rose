@@ -20,8 +20,8 @@ operator<<(std::ostream &o, const SmtSolver::Exception &e)
     return o <<"SMT solver: " <<e.mesg;
 }
 
-SmtSolver::Stats SmtSolver::class_stats;
-boost::mutex SmtSolver::class_stats_mutex;
+SmtSolver::Stats SmtSolver::classStats;
+boost::mutex SmtSolver::classStatsMutex;
 
 void
 SmtSolver::init()
@@ -39,28 +39,47 @@ SmtSolver::instance(const std::string &name) {
 
 // class method
 SmtSolver::Stats
-SmtSolver::get_class_stats() 
+SmtSolver::classStatistics() 
 {
-    boost::lock_guard<boost::mutex> lock(class_stats_mutex);
-    return class_stats;
+    boost::lock_guard<boost::mutex> lock(classStatsMutex);
+    return classStats;
+}
+
+// FIXME[Robb Matzke 2017-10-17]: deprecated
+SmtSolver::Stats
+SmtSolver::get_class_stats() {
+    return classStatistics();
 }
 
 // class method
 void
+SmtSolver::resetClassStatistics()
+{
+    boost::lock_guard<boost::mutex> lock(classStatsMutex);
+    classStats = Stats();
+}
+
+// FIXME[Robb Matzke 2017-10-17]: deprecated
+void
 SmtSolver::reset_class_stats()
 {
-    boost::lock_guard<boost::mutex> lock(class_stats_mutex);
-    class_stats = Stats();
+    resetClassStatistics();
 }
 
 SymbolicExpr::Ptr
-SmtSolver::evidence_for_address(uint64_t addr)
+SmtSolver::evidenceForAddress(uint64_t addr)
 {
-    return evidence_for_name(StringUtility::addrToString(addr));
+    return evidenceForName(StringUtility::addrToString(addr));
+}
+
+// FIXME[Robb Matzke 2017-10-17]: deprecated
+SymbolicExpr::Ptr
+SmtSolver::evidence_for_address(uint64_t addr) {
+    return evidenceForAddress(addr);
 }
 
 SmtSolver::Satisfiable
-SmtSolver::trivially_satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs_)
+SmtSolver::triviallySatisfiable(const std::vector<SymbolicExpr::Ptr> &exprs_)
 {
     std::vector<SymbolicExpr::Ptr> exprs(exprs_.begin(), exprs_.end());
     for (size_t i=0; i<exprs.size(); ++i) {
@@ -75,6 +94,12 @@ SmtSolver::trivially_satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs_)
     return exprs.empty() ? SAT_YES : SAT_UNKNOWN;
 }
 
+// FIXME[Robb Matzke 2017-10-17]: deprecated
+SmtSolver::Satisfiable
+SmtSolver::trivially_satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs) {
+    return triviallySatisfiable(exprs);
+}
+
 SmtSolver::Satisfiable
 SmtSolver::satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs)
 {
@@ -87,32 +112,32 @@ SmtSolver::satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs)
     return retval;
 #else
 
-    clear_evidence();
+    clearEvidence();
 
-    Satisfiable retval = trivially_satisfiable(exprs);
+    Satisfiable retval = triviallySatisfiable(exprs);
     if (retval!=SAT_UNKNOWN)
         return retval;
 
     // Keep track of how often we call the SMT solver.
     ++stats.ncalls;
     {
-        boost::lock_guard<boost::mutex> lock(class_stats_mutex);
-        ++class_stats.ncalls;
+        boost::lock_guard<boost::mutex> lock(classStatsMutex);
+        ++classStats.ncalls;
     }
-    output_text = "";
+    outputText = "";
 
     /* Generate the input file for the solver. */
     Sawyer::FileSystem::TemporaryFile tmpfile;
     Definitions defns;
-    generate_file(tmpfile.stream(), exprs, &defns);
+    generateFile(tmpfile.stream(), exprs, &defns);
     tmpfile.stream().close();
     struct stat sb;
     int status __attribute__((unused)) = stat(tmpfile.name().string().c_str(), &sb);
     ASSERT_require(status>=0);
     stats.input_size += sb.st_size;
     {
-        boost::lock_guard<boost::mutex> lock(class_stats_mutex);
-        class_stats.input_size += sb.st_size;
+        boost::lock_guard<boost::mutex> lock(classStatsMutex);
+        classStats.input_size += sb.st_size;
     }
 
     /* Show solver input */
@@ -130,7 +155,7 @@ SmtSolver::satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs)
     /* Run the solver and read its output. The first line should be the word "sat" or "unsat" */
     {
         Sawyer::Stopwatch stopwatch;
-        std::string cmd = get_command(tmpfile.name().string());
+        std::string cmd = getCommand(tmpfile.name().string());
         FILE *output = popen(cmd.c_str(), "r");
         ASSERT_not_null(output);
         char *line = NULL;
@@ -139,8 +164,8 @@ SmtSolver::satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs)
         while ((nread=rose_getline(&line, &line_alloc, output))>0) {
             stats.output_size += nread;
             {
-                boost::lock_guard<boost::mutex> lock(class_stats_mutex);
-                class_stats.output_size += nread;
+                boost::lock_guard<boost::mutex> lock(classStatsMutex);
+                classStats.output_size += nread;
             }
             if (!got_satunsat_line) {
                 if (0==strncmp(line, "sat", 3) && isspace(line[3])) {
@@ -154,7 +179,7 @@ SmtSolver::satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs)
                     abort();
                 }
             } else {
-                output_text += std::string(line);
+                outputText += std::string(line);
             }
         }
         if (line) free(line);
@@ -164,12 +189,12 @@ SmtSolver::satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs)
             fprintf(debug, "Running SMT solver=\"%s\"; exit status=%d\n", cmd.c_str(), status);
             fprintf(debug, "SMT Solver ran for %g seconds\n", stopwatch.report());
             fprintf(debug, "SMT Solver reported: %s\n", (SAT_YES==retval ? "sat" : SAT_NO==retval ? "unsat" : "unknown"));
-            fprintf(debug, "SMT Solver output:\n%s", StringUtility::prefixLines(output_text, "     ").c_str());
+            fprintf(debug, "SMT Solver output:\n%s", StringUtility::prefixLines(outputText, "     ").c_str());
         }
     }
 
     if (SAT_YES==retval)
-        parse_evidence();
+        parseEvidence();
 #endif
     return retval;
 }
@@ -189,6 +214,64 @@ SmtSolver::satisfiable(std::vector<SymbolicExpr::Ptr> exprs, const SymbolicExpr:
     if (expr!=NULL)
         exprs.push_back(expr);
     return satisfiable(exprs);
+}
+
+// FIXME[Robb Matzke 2017-10-17]: deprecated
+SymbolicExpr::Ptr
+SmtSolver::evidence_for_variable(uint64_t varno) {
+    return evidenceForVariable(varno);
+}
+
+// FIXME[Robb Matzke 2017-10-17]: deprecated
+SymbolicExpr::Ptr
+SmtSolver::evidence_for_variable(const SymbolicExpr::Ptr &var) {
+    return evidenceForVariable(var);
+}
+
+// FIXME[Robb Matzke 2017-10-17]: deprecated
+SymbolicExpr::Ptr
+SmtSolver::evidence_for_name(const std::string &s) {
+    return evidenceForName(s);
+}
+
+// FIXME[Robb Matzke 2017-10-17]: deprecated
+std::vector<std::string>
+SmtSolver::evidence_names() {
+    return evidenceNames();
+}
+
+// FIXME[Robb Matzke 2017-10-17]: deprecated
+void
+SmtSolver::clear_evidence() {}
+
+// FIXME[Robb Matzke 2017-10-17]: deprecated
+void
+SmtSolver::set_debug(FILE *f) {
+    setDebug(f);
+}
+
+// FIXME[Robb Matzke 2017-10-17]: deprecated
+FILE *
+SmtSolver::get_debug() const {
+    return getDebug();
+}
+
+// FIXME[Robb Matzke 2017-10-17]: deprecated
+const SmtSolver::Stats&
+SmtSolver::get_stats() const {
+    return statistics();
+}
+
+// FIXME[Robb Matzke 2017-10-17]: deprecated
+void
+SmtSolver::reset_stats() {
+    resetStatistics();
+}
+
+// FIXME[Robb Matzke 2017-10-17]: deprecated
+void
+SmtSolver::parse_evidence() {
+    parseEvidence();
 }
 
 } // namespace

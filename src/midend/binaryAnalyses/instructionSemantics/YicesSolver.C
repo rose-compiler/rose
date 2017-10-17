@@ -55,8 +55,8 @@ YicesSolver::available_linkage()
 SmtSolver::Satisfiable
 YicesSolver::satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs)
 {
-    clear_evidence();
-    Satisfiable retval = trivially_satisfiable(exprs);
+    clearEvidence();
+    Satisfiable retval = triviallySatisfiable(exprs);
     if (retval!=SAT_UNKNOWN)
         return retval;
 
@@ -65,7 +65,7 @@ YicesSolver::satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs)
 
         ++stats.ncalls;
         {
-            boost::lock_guard<boost::mutex> lock(class_stats_mutex);
+            boost::lock_guard<boost::mutex> lock(classStatsMutex);
             ++class_stats.ncalls;
         }
 
@@ -102,7 +102,7 @@ YicesSolver::satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs)
 
 /* See SmtSolver::get_command() */
 std::string
-YicesSolver::get_command(const std::string &config_name)
+YicesSolver::getCommand(const std::string &config_name)
 {
 #ifdef ROSE_YICES
     ASSERT_require(get_linkage() & LM_EXECUTABLE);
@@ -112,9 +112,15 @@ YicesSolver::get_command(const std::string &config_name)
 #endif
 }
 
+// FIXME[Robb Matzke 2017-10-17]: deprecated
+std::string
+YicesSolver::get_command(const std::string &config_name) {
+    return getCommand(config_name);
+}
+
 /* See SmtSolver::generate_file() */
 void
-YicesSolver::generate_file(std::ostream &o, const std::vector<SymbolicExpr::Ptr> &exprs, Definitions *defns)
+YicesSolver::generateFile(std::ostream &o, const std::vector<SymbolicExpr::Ptr> &exprs, Definitions *defns)
 {
     ASSERT_require(get_linkage() & LM_EXECUTABLE);
     Definitions *allocated = NULL;
@@ -154,6 +160,12 @@ YicesSolver::generate_file(std::ostream &o, const std::vector<SymbolicExpr::Ptr>
     delete allocated;
 }
 
+// FIXME[Robb Matzke 2017-10-17]: deprecated
+void
+YicesSolver::generate_file(std::ostream &o, const std::vector<SymbolicExpr::Ptr> &exprs, Definitions *defns) {
+    return generateFile(o, exprs, defns);
+}
+
 uint64_t
 YicesSolver::parse_variable(const char *nptr, char **endptr, char first_char)
 {
@@ -176,15 +188,14 @@ YicesSolver::parse_variable(const char *nptr, char **endptr, char first_char)
     return retval;
 }
 
-/* See SmtSolver::parse_evidence() */
 void
-YicesSolver::parse_evidence()
+YicesSolver::parseEvidence()
 {
     /* Look for text like "(= v36 0b01101111111111111101011110110100)" or
      * "(= (m95 0b01000000000000011100111111110100) 0b00000000000000000100111100000100)".  The text is free-form, with any
      * white space appearing in place of the SPC characters shown. */
     evidence.clear();
-    const char *s = output_text.c_str();
+    const char *s = outputText.c_str();
     char *rest = NULL;
 
     struct Error {
@@ -276,15 +287,21 @@ YicesSolver::parse_evidence()
         }
         
     } catch (const Error &err) {
-        std::cerr <<"YicesSolver::parse_evidence: " <<err.mesg <<" at char position " <<(err.at-output_text.c_str()) <<"\n"
+        std::cerr <<"YicesSolver::parse_evidence: " <<err.mesg <<" at char position " <<(err.at-outputText.c_str()) <<"\n"
                   <<"YicesSolver::parse_evidence: before \"" <<std::string(err.at).substr(0, 20) <<"\"...\n"
                   <<"YicesSolver::parse_evidence: entire evidence string follows...\n"
-                  <<output_text.c_str();
+                  <<outputText.c_str();
     }
 }
 
+// FIXME[Robb Matzke 2017-10-17]: deprecated
+void
+YicesSolver::parse_evidence() {
+    parseEvidence();
+}
+
 std::vector<std::string>
-YicesSolver::evidence_names()
+YicesSolver::evidenceNames()
 {
     std::vector<std::string> retval;
     for (Evidence::const_iterator ei=evidence.begin(); ei!=evidence.end(); ++ei)
@@ -292,8 +309,14 @@ YicesSolver::evidence_names()
     return retval;
 }
 
+// FIXME[Robb Matzke 2017-10-17]: deprecated
+std::vector<std::string>
+YicesSolver::evidence_names() {
+    return evidenceNames();
+}
+
 SymbolicExpr::Ptr
-YicesSolver::evidence_for_name(const std::string &name)
+YicesSolver::evidenceForName(const std::string &name)
 {
     Evidence::const_iterator found = evidence.find(name);
     if (found==evidence.end())
@@ -301,10 +324,24 @@ YicesSolver::evidence_for_name(const std::string &name)
     return SymbolicExpr::makeInteger(found->second.first/*nbits*/, found->second.second/*value*/);
 }
 
+// FIXME[Robb Matzke 2017-10-17]: deprecate
+SymbolicExpr::Ptr
+YicesSolver::evidence_for_name(const std::string &name)
+{
+    return evidenceForName(name);
+}
+
+
 void
-YicesSolver::clear_evidence()
+YicesSolver::clearEvidence()
 {
     evidence.clear();
+}
+
+// FIXME[Robb Matzke 2017-10-17]: deprecated
+void
+YicesSolver::clear_evidence() {
+    clearEvidence();
 }
 
 /* Emit type name for term. */

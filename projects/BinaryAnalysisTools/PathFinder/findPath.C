@@ -710,15 +710,15 @@ processVertex(const BaseSemantics::DispatcherPtr &cpu, const P2::ControlFlowGrap
 static void
 showPathEvidence(SmtSolver &solver, const RiscOperatorsPtr &ops) {
     std::cout <<"  Inputs sufficient to cause path to be taken:\n";
-    std::vector<std::string> enames = solver.evidence_names();
+    std::vector<std::string> enames = solver.evidenceNames();
     if (enames.empty()) {
         std::cout <<"    not available (or none necessary)\n";
     } else {
         BOOST_FOREACH (const std::string &ename, enames) {
             if (ename.substr(0, 2) == "0x") {
-                std::cout <<"    memory[" <<ename <<"] == " <<*solver.evidence_for_name(ename) <<"\n";
+                std::cout <<"    memory[" <<ename <<"] == " <<*solver.evidenceForName(ename) <<"\n";
             } else {
-                std::cout <<"    " <<ename <<" == " <<*solver.evidence_for_name(ename) <<"\n";
+                std::cout <<"    " <<ename <<" == " <<*solver.evidenceForName(ename) <<"\n";
             }
             std::string varComment = ops->varComment(ename);
             if (!varComment.empty())
@@ -971,7 +971,7 @@ singlePathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowG
     }
 
     YicesSolver solver;
-    solver.set_debug(settings.debugSmtSolver ? stderr : NULL);
+    solver.setDebug(settings.debugSmtSolver ? stderr : NULL);
     BaseSemantics::DispatcherPtr cpu = buildVirtualCpu(partitioner);
     RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
     setInitialState(cpu, path.frontVertex());
@@ -1297,7 +1297,7 @@ struct BfsContext {
 static void
 singleThreadBfsWorker(BfsContext *ctx) {
     YicesSolver solver;
-    solver.set_debug(settings.debugSmtSolver ? stderr : NULL);
+    solver.setDebug(settings.debugSmtSolver ? stderr : NULL);
     size_t lastTestedPathLength = 0;
     BaseSemantics::DispatcherPtr cpu = buildVirtualCpu(ctx->partitioner);
     RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
@@ -1705,7 +1705,7 @@ multiPathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowGr
 
     // Build the semantics framework and initialize the path constraints.
     YicesSolver solver;
-    solver.set_debug(settings.debugSmtSolver ? stderr : NULL);
+    solver.setDebug(settings.debugSmtSolver ? stderr : NULL);
     BaseSemantics::DispatcherPtr cpu = buildVirtualCpu(partitioner);
     RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
     ops->writeRegister(REG_PATH, ops->boolean_(true)); // start of path is always feasible

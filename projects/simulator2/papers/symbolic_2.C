@@ -191,7 +191,7 @@ public:
                     exprs.push_back(expr);
                 }
                 if (Rose::BinaryAnalysis::SmtSolver::SAT_YES == smt_solver.satisfiable(exprs)) {
-                    LeafNodePtr result_value = smt_solver.evidence_for_variable(result_var)->isLeafNode();
+                    LeafNodePtr result_value = smt_solver.evidenceForVariable(result_var)->isLeafNode();
                     if (!result_value) {
                         trace->mesg("%s: evaluation result could not be determined. ERROR!", name);
                     } else if (!result_value->is_known()) {
@@ -214,7 +214,7 @@ public:
                 exprs.push_back(expr);
                 if (Rose::BinaryAnalysis::SmtSolver::SAT_YES == smt_solver.satisfiable(exprs)) {
                     for (std::set<LeafNodePtr>::iterator vi=vars.begin(); vi!=vars.end(); ++vi) {
-                        LeafNodePtr var_val = smt_solver.evidence_for_variable(*vi)->isLeafNode();
+                        LeafNodePtr var_val = smt_solver.evidenceForVariable(*vi)->isLeafNode();
                         if (var_val && var_val->is_known())
                             trace->mesg("%s:   v%"PRIu64" = %"PRIu64" %c",
                                         name, (*vi)->get_name(), var_val->get_value(),

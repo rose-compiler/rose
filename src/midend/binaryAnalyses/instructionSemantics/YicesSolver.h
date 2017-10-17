@@ -70,8 +70,16 @@ public:
     }
     virtual ~YicesSolver();
 
-    virtual void generate_file(std::ostream&, const std::vector<SymbolicExpr::Ptr> &exprs, Definitions*);
-    virtual std::string get_command(const std::string &config_name);
+    virtual void generateFile(std::ostream&, const std::vector<SymbolicExpr::Ptr> &exprs, Definitions*);
+
+    // FIXME[Robb Matzke 2017-10-17]: deprecated
+    virtual void generate_file(std::ostream&, const std::vector<SymbolicExpr::Ptr> &exprs, Definitions*)
+        ROSE_DEPRECATED("use generateFile");
+
+    virtual std::string getCommand(const std::string &config_name);
+
+    // FIXME[Robb Matzke 2017-10-17]: deprecated
+    virtual std::string get_command(const std::string &config_name) ROSE_DEPRECATED("use getCommand");
 
     /** Returns a bit vector indicating what calling modes are available.  The bits are defined by the LinkMode enum. */
     static unsigned available_linkage();
@@ -100,13 +108,28 @@ public:
     }
     /** @} */
 
-    virtual SymbolicExpr::Ptr evidence_for_name(const std::string&) /*overrides*/;
-    virtual std::vector<std::string> evidence_names() /*overrides*/;
-    virtual void clear_evidence() /*overrides*/;
+    virtual SymbolicExpr::Ptr evidenceForName(const std::string&) /*overrides*/;
+
+    // FIXME[Robb Matzke 2017-10-17]: deprecated
+    virtual SymbolicExpr::Ptr evidence_for_name(const std::string&) /*overrides*/ ROSE_DEPRECATED("use evidenceForName");
+
+    virtual std::vector<std::string> evidenceNames() /*overrides*/;
+
+    // FIXME[Robb Matzke 2017-10-17]: deprecated
+    virtual std::vector<std::string> evidence_names() /*overrides*/ ROSE_DEPRECATED("use evidenceNames");
+
+    virtual void clearEvidence() /*overrides*/;
+
+    // FIXME[Robb Matzke 2017-10-17]: deprecated
+    virtual void clear_evidence() /*overrides*/ ROSE_DEPRECATED("use clearEvidence");
 
 protected:
     virtual uint64_t parse_variable(const char *nptr, char **endptr, char first_char);
-    virtual void parse_evidence();
+
+    virtual void parseEvidence();
+
+    // FIXME[Robb Matzke 2017-10-17]: deprecated
+    virtual void parse_evidence() ROSE_DEPRECATED("use parseEvidence");
 
 private:
     void init();
