@@ -412,7 +412,7 @@ detect_pointers(SgAsmFunction *func, const FunctionIdMap &function_ids)
     // much faster) without an SMT solver.
     SmtSolver *solver = NULL;
 #if 0   // optional code
-    if (YicesSolver::available_linkage())
+    if (YicesSolver::availableLinkage())
         solver = new YicesSolver;
 #endif
     InstructionProvidor insn_providor(func);

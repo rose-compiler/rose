@@ -262,7 +262,7 @@ makeSolver(const Settings &settings) {
         return NULL;                                    // solvers are optional
     } else if (settings.solverName == "yices") {
         YicesSolver *solver = new YicesSolver;
-        solver->set_linkage(YicesSolver::LM_LIBRARY);
+        solver->linkage(YicesSolver::LM_LIBRARY);
         return solver;
     } else {
         throw std::runtime_error("unrecognized SMT solver name \"" + settings.solverName + "\"; see --solver=list\n");

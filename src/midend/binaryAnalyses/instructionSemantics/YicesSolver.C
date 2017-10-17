@@ -18,12 +18,12 @@ void
 YicesSolver::init()
 {
     name("yices");
-    if (available_linkage() & LM_EXECUTABLE) {
-        linkage = LM_EXECUTABLE;
-    } else if (available_linkage() & LM_LIBRARY) {
-        linkage = LM_LIBRARY;
+    if (availableLinkage() & LM_EXECUTABLE) {
+        linkage_ = LM_EXECUTABLE;
+    } else if (availableLinkage() & LM_LIBRARY) {
+        linkage_ = LM_LIBRARY;
     } else {
-        linkage = LM_NONE;
+        linkage_ = LM_NONE;
         ASSERT_not_reachable("no available Yices linkage");
     }
 }
@@ -39,7 +39,7 @@ YicesSolver::~YicesSolver()
 }
 
 unsigned
-YicesSolver::available_linkage()
+YicesSolver::availableLinkage()
 {
     unsigned retval = 0;
 #ifdef ROSE_HAVE_LIBYICES
@@ -49,6 +49,24 @@ YicesSolver::available_linkage()
     retval |= LM_EXECUTABLE;
 #endif
     return retval;
+}
+
+// FIXME[Robb Matzke 2017-10-17]: deprecated
+unsigned
+YicesSolver::available_linkage() {
+    return availableLinkage();
+}
+
+// FIXME[Robb Matzke 2017-10-17]: deprecated
+YicesSolver::LinkMode
+YicesSolver::get_linkage() const {
+    return linkage();
+}
+
+// FIXME[Robb Matzke 2017-10-17]: deprecated
+void
+YicesSolver::set_linkage(LinkMode lm) {
+    linkage(lm);
 }
 
 /* See YicesSolver.h */
@@ -61,7 +79,7 @@ YicesSolver::satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs)
         return retval;
 
 #ifdef ROSE_HAVE_LIBYICES
-    if (get_linkage() & LM_LIBRARY) {
+    if (linkage() & LM_LIBRARY) {
 
         ++stats.ncalls;
         {
@@ -95,7 +113,7 @@ YicesSolver::satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs)
     }
 #endif
 
-    ASSERT_require(get_linkage() & LM_EXECUTABLE);
+    ASSERT_require(linkage() & LM_EXECUTABLE);
     return SmtSolver::satisfiable(exprs);
 }
 
@@ -105,7 +123,7 @@ std::string
 YicesSolver::getCommand(const std::string &config_name)
 {
 #ifdef ROSE_YICES
-    ASSERT_require(get_linkage() & LM_EXECUTABLE);
+    ASSERT_require(linkage() & LM_EXECUTABLE);
     return std::string(ROSE_YICES) + " --evidence --type-check " + config_name;
 #else
     return "false no yices command";
@@ -122,7 +140,7 @@ YicesSolver::get_command(const std::string &config_name) {
 void
 YicesSolver::generateFile(std::ostream &o, const std::vector<SymbolicExpr::Ptr> &exprs, Definitions *defns)
 {
-    ASSERT_require(get_linkage() & LM_EXECUTABLE);
+    ASSERT_require(linkage() & LM_EXECUTABLE);
     Definitions *allocated = NULL;
     if (!defns)
         defns = allocated = new Definitions;

@@ -36,14 +36,14 @@ using namespace Rose::BinaryAnalysis::InstructionSemantics2;
 #   include "YicesSolver.h"
     Rose::BinaryAnalysis::SmtSolver *make_solver() {
         Rose::BinaryAnalysis::YicesSolver *solver = new Rose::BinaryAnalysis::YicesSolver;
-        solver->set_linkage(Rose::BinaryAnalysis::YicesSolver::LM_LIBRARY);
+        solver->linkage(Rose::BinaryAnalysis::YicesSolver::LM_LIBRARY);
         return solver;
     }
 #elif SMT_SOLVER == YICES_EXE
 #   include "YicesSolver.h"
     Rose::BinaryAnalysis::SmtSolver *make_solver() {
         Rose::BinaryAnalysis::YicesSolver *solver = new Rose::BinaryAnalysis::YicesSolver;
-        solver->set_linkage(Rose::BinaryAnalysis::YicesSolver::LM_EXECUTABLE);
+        solver->linkage(Rose::BinaryAnalysis::YicesSolver::LM_EXECUTABLE);
         return solver;
     }
 #else

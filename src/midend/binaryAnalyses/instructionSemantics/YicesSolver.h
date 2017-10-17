@@ -39,7 +39,7 @@ protected:
     typedef std::map<std::string/*name or hex-addr*/, std::pair<size_t/*nbits*/, uint64_t/*value*/> > Evidence;
 
 private:
-    LinkMode linkage;
+    LinkMode linkage_;
     TermNames termNames;                                // only used by Yices executable translator; library uses termExprs
 #ifdef ROSE_HAVE_LIBYICES
     yices_context context;
@@ -56,7 +56,7 @@ private:
     template<class S>
     void serialize(S &s, const unsigned version) {
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SmtSolver);
-        s & BOOST_SERIALIZATION_NVP(linkage);
+        s & BOOST_SERIALIZATION_NVP(linkage_);
         s & BOOST_SERIALIZATION_NVP(termNames);
         s & BOOST_SERIALIZATION_NVP(evidence);
         //s & context; -- not saved
@@ -64,8 +64,8 @@ private:
 #endif
 
 public:
-    /** Constructor prefers to use the Yices executable interface. See set_linkage(). */
-    YicesSolver(): linkage(LM_NONE), context(NULL) {
+    /** Constructor prefers to use the Yices executable interface. See @ref linkage. */
+    YicesSolver(): linkage_(LM_NONE), context(NULL) {
         init();
     }
     virtual ~YicesSolver();
@@ -81,19 +81,29 @@ public:
     // FIXME[Robb Matzke 2017-10-17]: deprecated
     virtual std::string get_command(const std::string &config_name) ROSE_DEPRECATED("use getCommand");
 
-    /** Returns a bit vector indicating what calling modes are available.  The bits are defined by the LinkMode enum. */
-    static unsigned available_linkage();
+    /** Returns a bit vector indicating what calling modes are available.  The bits are defined by the @ref LinkMode enum. */
+    static unsigned availableLinkage();
 
-    /** Returns the style of linkage currently enabled. */
-    LinkMode get_linkage() const {
-        return linkage;
-    }
+    // FIXME[Robb Matzke 2017-10-17]: deprecated
+    static unsigned available_linkage() ROSE_DEPRECATED("use availableLinkage");
 
-    /** Sets the linkage style. */
-    void set_linkage(LinkMode lm) {
-        ROSE_ASSERT(lm & available_linkage());
-        linkage = lm;
+    /** Property: The style of linkage currently enabled.
+     *
+     * @{ */
+    LinkMode linkage() const {
+        return linkage_;
     }
+    void linkage(LinkMode lm) {
+        ROSE_ASSERT(lm & availableLinkage());
+        linkage_ = lm;
+    }
+    /** @} */
+
+    // FIXME[Robb Matzke 2017-10-17]: deprecated
+    LinkMode get_linkage() const ROSE_DEPRECATED("use linkage property");
+
+    // FIXME[Robb Matzke 2017-10-17]: deprecated
+    void set_linkage(LinkMode lm) ROSE_DEPRECATED("use linkage property");
 
     /** Determines if the specified expression is satisfiable.  Most solvers use the implementation in the base class, which
      *  creates a text file (usually in SMT-LIB format) and then invokes an executable with that input, looking for a line of
