@@ -4,15 +4,29 @@
 #include "BinarySmtSolver.h"
 #include "YicesSolver.h"
 
+#include <boost/format.hpp>
 #include <boost/thread/locks.hpp>
 #include <boost/thread/mutex.hpp>
 #include <fcntl.h> /*for O_RDWR, etc.*/
 #include <Sawyer/FileSystem.h>
 #include <Sawyer/Stopwatch.h>
 
+using namespace Rose::Diagnostics;
+
 namespace Rose {
 namespace BinaryAnalysis {
 
+Sawyer::Message::Facility SmtSolver::mlog;
+
+// class method
+void
+SmtSolver::initDiagnostics() {
+    static bool initialized = false;
+    if (!initialized) {
+        initialized = true;
+        Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::SmtSolver");
+    }
+}
 
 std::ostream&
 operator<<(std::ostream &o, const SmtSolver::Exception &e)
@@ -141,14 +155,14 @@ SmtSolver::satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs)
     }
 
     /* Show solver input */
-    if (debug) {
-        fprintf(debug, "SMT Solver input in %s:\n", tmpfile.name().string().c_str());
+    if (mlog[DEBUG]) {
+        mlog[DEBUG] <<"SMT solver input in " <<tmpfile.name() <<"\n";
         size_t n=0;
         std::ifstream f(tmpfile.name().string().c_str());
         while (!f.eof()) {
             std::string line;
             std::getline(f, line);
-            fprintf(debug, "    %5zu: %s\n", ++n, line.c_str());
+            mlog[DEBUG] <<(boost::format("%5zu") % ++n).str() <<": " <<line <<"\n";
         }
     }
 
@@ -185,11 +199,11 @@ SmtSolver::satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs)
         if (line) free(line);
         int status = pclose(output);
         stopwatch.stop();
-        if (debug) {
-            fprintf(debug, "Running SMT solver=\"%s\"; exit status=%d\n", cmd.c_str(), status);
-            fprintf(debug, "SMT Solver ran for %g seconds\n", stopwatch.report());
-            fprintf(debug, "SMT Solver reported: %s\n", (SAT_YES==retval ? "sat" : SAT_NO==retval ? "unsat" : "unknown"));
-            fprintf(debug, "SMT Solver output:\n%s", StringUtility::prefixLines(outputText, "     ").c_str());
+        if (mlog[DEBUG]) {
+            mlog[DEBUG] <<"Running SMT solver=\"" <<cmd <<"; exit status="<<status <<"\n";
+            mlog[DEBUG] <<"SMT Solver ran for " <<stopwatch <<" seconds\n";
+            mlog[DEBUG] <<"SMT Solver reported: " <<(SAT_YES==retval ? "sat" : SAT_NO==retval ? "unsat" : "unknown") <<"\n";
+            mlog[DEBUG] <<"SMT Solver output:\n" <<StringUtility::prefixLines(outputText, "     ");
         }
     }
 
@@ -243,18 +257,6 @@ SmtSolver::evidence_names() {
 // FIXME[Robb Matzke 2017-10-17]: deprecated
 void
 SmtSolver::clear_evidence() {}
-
-// FIXME[Robb Matzke 2017-10-17]: deprecated
-void
-SmtSolver::set_debug(FILE *f) {
-    setDebug(f);
-}
-
-// FIXME[Robb Matzke 2017-10-17]: deprecated
-FILE *
-SmtSolver::get_debug() const {
-    return getDebug();
-}
 
 // FIXME[Robb Matzke 2017-10-17]: deprecated
 const SmtSolver::Stats&

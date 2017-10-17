@@ -42,7 +42,6 @@ public:
 
 private:
     std::string name_;
-    FILE *debug;
     void init();
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -56,7 +55,7 @@ private:
 #endif
 
 public:
-    SmtSolver(): debug(NULL) { init(); }
+    SmtSolver() { init(); }
 
     virtual ~SmtSolver() {}
 
@@ -141,18 +140,6 @@ public:
     // FIXME[Robb Matzke 2017-10-17]: deprecated
     virtual void clear_evidence() ROSE_DEPRECATED("use clearEvidence");
 
-    /** Turns debugging on or off. */
-    void setDebug(FILE *f) { debug = f; }
-
-    // FIXME[Robb Matzke 2017-10-17]: deprecated
-    void set_debug(FILE *f) ROSE_DEPRECATED("use setDebug");
-
-    /** Obtain current debugging setting. */
-    FILE *getDebug() const { return debug; }
-
-    // FIXME[Robb Matzke 2017-10-17]: deprecated
-    FILE *get_debug() const ROSE_DEPRECATED("use getDebug");
-
     /** Returns statistics for this solver. The statistics are not reset by this call, but continue to accumulate. */
     const Stats& statistics() const { return stats; }
 
@@ -177,7 +164,12 @@ public:
 
     // FIXME[Robb Matzke 2017-10-17]: deprecated
     void reset_class_stats() ROSE_DEPRECATED("use resetClassStatistics");
-    
+
+    /** Initialize diagnostic output facilities.
+     *
+     *  Called when the ROSE library is initialized. */
+    static void initDiagnostics();
+
 protected:
     /** Generates an input file for for the solver. Usually the input file will be SMT-LIB format, but subclasses might
      *  override this to generate some other kind of input. Throws Excecption if the solver does not support an operation that
@@ -209,6 +201,9 @@ protected:
     static boost::mutex classStatsMutex;
     static Stats classStats;                            // all access must be protected by classStatsMutex
     Stats stats;
+
+    // Debugging
+    static Sawyer::Message::Facility mlog;
 };
 
 // FIXME[Robb Matzke 2017-10-17]: This typedef is deprecated. Use SmtSolver instead.
