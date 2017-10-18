@@ -163,7 +163,7 @@ SgAsmPEExportSection::parse()
 
     // Check that the p_export_dir.p_nameptr_n is not out of range.
     rose_addr_t availBytes = fhdr->get_loader_map()->at(p_export_dir->get_nameptr_rva().get_va()).available().size();
-    rose_addr_t availElmts = availBytes / sizeof(ExportNamePtr_disk);
+    size_t availElmts = availBytes / sizeof(ExportNamePtr_disk);
     if (p_export_dir->get_nameptr_n() > availElmts) {
         mlog[ERROR] <<"SgAsmPEExportSection::parse: number of entries indicated (" <<p_export_dir->get_nameptr_n() <<")"
                     <<" exceeds available mapped memory (room for " <<StringUtility::plural(availElmts, "entries") <<")\n";
