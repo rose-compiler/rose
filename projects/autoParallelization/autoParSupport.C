@@ -6,6 +6,7 @@
 #include <fstream>
 #include <iostream>
 #include <map>
+#include "RoseAst.h"
 
 using namespace std;
 using namespace Rose;
@@ -1619,6 +1620,25 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
       delete omp_attribute;
     }
     return isParallelizable;
+  }
+
+  // We maintain a blacklist of language features, put them into a set
+  bool useUnsupportedLanguageFeatures(SgNode* loop, VariantT* blackConstruct)
+  {
+    std::set<VariantT> blackListDict; 
+    blackListDict.insert(V_SgRshiftOp);
+    blackListDict.insert(V_SgLshiftOp);
+
+    // build a dictionary of language constructs shown up in the loop, then query it
+    RoseAst ast (loop);
+    for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+         if (blackListDict.find( (*i)->variantT()) != blackListDict.end())
+         {
+           *blackConstruct = (*i)->variantT(); 
+           return true; 
+         }
+    }
+    return false;
   }
 
   // Generate a normal patch file representing the addition of OpenMP pragmas

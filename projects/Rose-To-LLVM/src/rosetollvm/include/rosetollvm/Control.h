@@ -18,7 +18,10 @@
 #include "llvm/Support/raw_ostream.h" // contains raw_fd
 #include "llvm/Support/FileSystem.h" // contains raw_fd
 
-#include "llvm/Bitcode/ReaderWriter.h"
+// #include "llvm/Bitcode/ReaderWriter.h"
+#include "llvm/Bitcode/BitcodeReader.h"
+#include "llvm/Bitcode/BitcodeWriter.h"
+
 #include <llvm/ADT/APFloat.h>
 
 extern void __rose2llvm_fail (const char *__assertion, const char *__file, unsigned int __line);
@@ -27,13 +30,15 @@ extern void __rose2llvm_fail (const char *__assertion, const char *__file, unsig
 
 class Control {
 public: 
-    Control(Option &option_) : option(option_),
-                               context(llvm::getGlobalContext())
+    Control(Option &option_) : option(option_)
     {}
 
     ~Control();
 
     int numLLVMFiles() { return llvm_file_prefixes.size(); }
+
+    llvm::LLVMContext &getGlobalContext() { return context; }
+
 
     std::ostream *addLLVMFile(std::string);
 
@@ -180,7 +185,7 @@ public:
 private:
 
     Option &option;
-    llvm::LLVMContext &context;
+    llvm::LLVMContext context;
     llvm::SMDiagnostic error;
 
     std::vector<ManagerAstAttribute *> manager_attributes;

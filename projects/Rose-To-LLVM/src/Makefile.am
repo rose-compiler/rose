@@ -20,7 +20,7 @@ rose2llvm_SOURCES  = translator.cpp
 rose2llvm_CXXFLAGS = -Wno-deprecated 
 rose2llvm_CPPFLAGS = \
   -I$(srcdir)/rosetollvm/include \
-  $(LLVM_CPPFLAGS)
+  $(LLVM_CPPFLAGS) -std=c++11
 rose2llvm_LDFLAGS  = \
   $(ROSE_LIBS) $(LLVM_LDFLAGS)
 rose2llvm_LDADD = \
@@ -31,9 +31,9 @@ fold_SOURCES  = fold.cpp
 fold_CXXFLAGS = -Wno-deprecated
 fold_CPPFLAGS = \
   -I$(srcdir)/rosetollvm/include \
-  $(LLVM_CPPFLAGS)
+  $(LLVM_CPPFLAGS) -std=c++11
 fold_LDFLAGS  = \
-  $(LLVM_LDFLAGS)
+  $(ROSE_LIBS) $(LLVM_LDFLAGS)
 fold_LDADD = \
   $(builddir)/rosetollvm/librosetollvm.la \
   $(LLVM_LIBS)

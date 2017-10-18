@@ -12,7 +12,7 @@ void foo(double* e, double* p, double* dedt, double * dpdt,
   }
 }
 
-// a positive case: all things are declared locally
+// still a negative case: all things are declared locally, but no pattern like var = base + offset;
 void foo()
 {
   double* e; 
