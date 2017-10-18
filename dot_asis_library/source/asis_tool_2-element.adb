@@ -162,7 +162,8 @@ package body Asis_Tool_2.Element is
       This_Element_ID : in     a_nodes_h.Element_ID;
       Elements_In     : in     Asis.Element_List;
       Dot_Label_Name  : in     String;
-      Add_Edges       : in     Boolean := False)
+      Add_Edges       : in     Boolean := False;
+      This_Is_Unit    : in     Boolean := False)
      return  a_nodes_h.Element_ID_List
    is
       Element_Count : constant Natural := Elements_In'Length;
@@ -185,7 +186,9 @@ package body Asis_Tool_2.Element is
             if Add_Edges then
                Add_Dot_Edge (Outputs   => Outputs,
                              From      => This_Element_ID,
-                             From_Kind => Element_ID_Kind,
+                             From_Kind => (if This_Is_Unit
+                                           then Unit_Id_Kind
+                                           else Element_ID_Kind),
                              To        => Element_ID,
                              To_Kind   => Element_ID_Kind,
                              Label     => Label);
@@ -407,12 +410,10 @@ package body Asis_Tool_2.Element is
                Add_Edges      => True);
          end;
 
+         -- This is obsolete a/o Ada95, and should be removed:
          procedure Add_Body_Block_Statement is
-            ID : constant a_nodes_h.Element_ID :=
-              Get_Element_ID (Asis.Declarations.Body_Block_Statement (Element));
          begin
-            State.Add_To_Dot_Label_And_Edge ("Body_Block_Statement", ID);
-            Result.Body_Block_Statement := ID;
+            Result.Body_Block_Statement := anhS.Empty_ID;
          end;
 
          procedure Add_Body_Declarative_Items is begin
@@ -1363,7 +1364,8 @@ package body Asis_Tool_2.Element is
             return To_Element_ID_List
               (This           => State,
                Elements_In    => Asis.Definitions.Record_Components (Element),
-               Dot_Label_Name => "Record_Components");
+               Dot_Label_Name => "Record_Components",
+               Add_Edges      => True);
          end;
 
          function Record_Definition return a_nodes_h.Element_ID is
@@ -1403,7 +1405,8 @@ package body Asis_Tool_2.Element is
             return To_Element_ID_List
               (This           => State,
                Elements_In    => Asis.Definitions.Visible_Part_Items (Element),
-               Dot_Label_Name => "Visible_Part_Items");
+               Dot_Label_Name => "Visible_Part_Items",
+               Add_Edges      => True);
          end;
 
          -- END Field support
@@ -2693,8 +2696,9 @@ package body Asis_Tool_2.Element is
            Asis.Elements.Element_Kind (Element);
 
          procedure Add_Element_ID is begin
+            -- ID is in the Dot node twice (once in the Label and once in
+            -- Node_ID), but not in the a_node twice.
             State.Add_To_Dot_Label (To_String (State.Element_ID));
-            -- ID is in the Dot node twice, but not in the a_node twice.
             Result.id := State.Element_ID;
          end;
 
@@ -2817,15 +2821,17 @@ package body Asis_Tool_2.Element is
             Default_Node  : Dot.Node_Stmt.Class; -- Initialized
             Default_Label : Dot.HTML_Like_Labels.Class; -- Initialized
          begin
+            -- Set defaults:
             Result := a_nodes_h.Support.Default_Element_Struct;
-            State.Element_ID := Get_Element_ID (Element);
-
             State.Outputs.Text.End_Line;
             -- Element ID comes out on next line via Add_Element_ID:
             State.Outputs.Text.Put_Indented_Line (String'("BEGIN "));
             State.Outputs.Text.Indent;
             State.Dot_Node := Default_Node;
             State.Dot_Label := Default_Label;
+
+            -- Get ID:
+            State.Element_ID := Get_Element_ID (Element);
             State.Dot_Node.Node_ID.ID :=
               To_Dot_ID_Type (State.Element_ID, Element_ID_Kind);
 

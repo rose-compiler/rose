@@ -270,7 +270,7 @@ package body Dot is
       end Add_Eq_Row;
 
       ------------
-      -- EXPORTED:
+      -- EXPORTED:c
       ------------
       procedure Add_3_Col_Cell
         (This : in out Class;
@@ -282,14 +282,12 @@ package body Dot is
              2 => To_Unbounded_String (Text)));
       end Add_3_Col_Cell;
 
-
       function To_Left_TD
         (LR : in Unbounded_String)
          return Unbounded_String is
       begin
          return "<TD ALIGN=""LEFT"">" & LR & "</TD>";
       end To_Left_TD;
-
 
       function To_Center_TD
         (LR : in String)
@@ -316,13 +314,20 @@ package body Dot is
 
 
       function To_TR (This : in LR_Pair) return Unbounded_String is
+         -- In some dot file viewers, e.g. zgrviewer, the longest content
+         -- in a left cell overlaps the center cell. The extra spaces below
+         -- attempt to address this:
+         function Pad (Item : in Unbounded_String) return Unbounded_String is
+         begin
+            return Item & (1 .. (Length (Item) / 4) + 1=> ' ');
+         end Pad;
       begin
          if This (1) = "" then
             return "          <TR>" &
               To_Center_3_TD (This (2)) & "</TR>" & NL;
          else
             return "          <TR>" &
-              To_Left_TD (This (1)) & To_Center_TD (" = ") &
+              To_Left_TD (Pad (This (1))) & To_Center_TD (" = ") &
               To_Left_TD (This (2)) & "</TR>" & NL;
             end if;
       end To_TR;

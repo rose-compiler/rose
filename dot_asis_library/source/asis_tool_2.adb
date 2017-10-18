@@ -61,14 +61,28 @@ package body Asis_Tool_2 is
       Kind : in ID_Kind)
       return String
    is
-      Id_Image : constant String := Spaceless_Image (Natural (Id));
+      function Add_Prefix_To (Item : in String) return String is
+      begin
+         case Kind is
+            when Unit_ID_Kind =>
+               return "Unit_" & Item;
+            when Element_ID_Kind =>
+               return "Element_" & Item;
+         end case;
+      end Add_Prefix_To;
+
+      use type IC.int;
    begin
-      case Kind is
-         when Unit_ID_Kind =>
-            return "Unit_" & Id_Image;
-         when Element_ID_Kind =>
-            return "Element_" & Id_Image;
-      end case;
+      if anhS.Is_Empty (ID) then
+         return "(none)";
+      elsif not anhS.Is_Valid (ID) then
+         return "***Invalid ID***";
+      else
+         return Add_Prefix_To (Spaceless_Image (Natural (Id)));
+      end if;
+   exception
+      when Constraint_Error =>
+         raise Program_Error with "Id =>" & Id'Image & ", Kind => " & Kind'Image;
    end To_String;
 
    -----------
@@ -137,7 +151,7 @@ package body Asis_Tool_2 is
    is
       Edge_Stmt : Dot.Edges.Stmts.Class; -- Initialized
    begin
-      if anhS.Is_Valid (To) then
+      if not anhS.Is_Empty (To) then
          Edge_Stmt.LHS.Node_Id.ID := To_Dot_ID_Type (From, From_Kind);
          Edge_Stmt.RHS.Node_Id.ID := To_Dot_ID_Type (To, To_Kind);
          Edge_Stmt.Attr_List.Add_Assign_To_First_Attr

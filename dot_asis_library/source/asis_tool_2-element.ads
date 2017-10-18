@@ -70,7 +70,8 @@ package Asis_Tool_2.Element is
       This_Element_ID : in     a_nodes_h.Element_ID;
       Elements_In     : in     Asis.Element_List;
       Dot_Label_Name  : in     String;
-      Add_Edges       : in     Boolean := False)
+      Add_Edges       : in     Boolean := False;
+      This_Is_Unit    : in     Boolean := False)
      return  a_nodes_h.Element_ID_List;
 
 private

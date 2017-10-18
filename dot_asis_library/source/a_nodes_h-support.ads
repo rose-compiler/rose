@@ -11,15 +11,20 @@ package a_nodes_h.Support is
 
    Invalid_bool         : constant ICE.bool := 0;
    Invalid_chars_ptr    : constant ICS.chars_ptr := ICS.Null_Ptr;
+   Invalid_ID           : constant := -1;
+   Empty_ID             : constant := 0;
+
+   function Is_Valid (This : in int) return Boolean is
+      (This /= Invalid_ID);
+
+   function Is_Empty (This : in int) return Boolean is
+      (This = Empty_ID);
 
    -- Order below is same as in a_nodes.h:
 
    Invalid_Program_Text : constant Program_Text := Program_Text(ICS.Null_Ptr);
 
-   Invalid_Element_ID   : constant Element_ID := -1;
-
-   function Is_Valid (This : in Element_ID) return boolean is
-      (This /= Invalid_Element_ID);
+   Invalid_Element_ID   : constant Element_ID := Invalid_ID;
 
    Empty_Element_ID_List   : constant Element_ID_List :=
      (length => 0,
@@ -439,7 +444,7 @@ package a_nodes_h.Support is
       Last_Line    => -1,
       Last_Column  => -1);
 
-   Invalid_Unit_ID : constant Unit_ID := -1;
+   Invalid_Unit_ID : constant Unit_ID := Invalid_ID;
 
    Default_Element_Struct : constant Element_Struct :=
      (ID                         => Invalid_Element_ID,
