@@ -214,6 +214,19 @@ package body Asis_Tool_2.Unit is
    end Process_Context_Clauses;
 
 
+   procedure Process_Compilation_Pragmas
+     (This            : in out Class;
+      Asis_Unit       : in Asis.Compilation_Unit)
+   is
+      Compilation_Pragmas : constant Asis.Element_List :=
+        Asis.Elements.Compilation_Pragmas (Asis_Unit);
+   begin
+      for Compilation_Pragma of Compilation_Pragmas loop
+         This.Process_Element_Tree (Compilation_Pragma);
+      end loop;
+   end Process_Compilation_Pragmas;
+
+
    -- Process all the elements in the compilation unit:
    procedure Process_Element_Trees
      (This               : in out Class;
@@ -227,6 +240,8 @@ package body Asis_Tool_2.Unit is
          Process_Context_Clauses (This, Asis_Unit, Include_Pragmas);
       end if;
       Process_Element_Tree (This, Top_Element_Asis);
+      -- TODO: later
+      -- Process_Compilation_Pragmas (This, Asis_Unit);
    exception
       when X : others =>
          Print_Exception_Info (X);
@@ -529,7 +544,8 @@ package body Asis_Tool_2.Unit is
          Add_Debug_Image;
          Add_Unit_Declaration;
          Add_Context_Clause_Elements;
-         Add_Compilation_Pragmas;
+         -- TODO: later
+--           Add_Compilation_Pragmas;
          Add_Is_Standard;
       end;
 
