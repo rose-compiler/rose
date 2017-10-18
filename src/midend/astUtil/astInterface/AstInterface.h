@@ -94,7 +94,8 @@ public:
            BOP_AND, BOP_OR,
            BOP_BIT_AND,BOP_BIT_OR, BOP_BIT_RSHIFT, BOP_BIT_LSHIFT,
            OP_ARRAY_ACCESS, OP_ASSIGN, OP_UNKNOWN} OperatorEnum;
-
+  // convert the enum type to a string
+  static std::string toString (OperatorEnum op);
   typedef void* Ast;
   typedef std::vector<Ast>  AstList;
   typedef std::vector<Ast>  AstNodeList;
