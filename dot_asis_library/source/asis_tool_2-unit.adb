@@ -11,77 +11,100 @@ with Dot;
 
 package body Asis_Tool_2.Unit is
 
-   Package_Name : constant String := "Asis_Tool_2.Unit";
+   Module_Name : constant String := "Asis_Tool_2.Unit";
 
    package ACU renames Asis.Compilation_Units;
 
+   function To_Unit_ID (This : in A4G.A_Types.Unit_Id) return a_nodes_h.Unit_ID is
+      (a_nodes_h.Unit_ID (This));
+
+   function To_String
+     (ID : in A4G.A_Types.Unit_Id)
+      return String
+   is
+     (To_String (IC.int (ID), Unit_ID_Kind));
+
+   -- String
    -- Add <Name> = <Value> to the label, and print it if trace is on.
    procedure Add_To_Dot_Label
      (This  : in out Class;
       Name  : in     String;
       Value : in     String) is
    begin
--- Instead of this, put the "attribute" in the label:
---        This.Node.Attr_List.Add_Assign_To_First_Attr
---          (Name  => Name,
---           Value => Value);
-      This.Dot_Label.Add_Eq_Row(L => Name, R => Value);
-      This.Outputs.Text.Put_Indented_Line (Name & " => " & Value);
+      Add_To_Dot_Label (Dot_Label => This.Dot_Label,
+                        Outputs   => This.Outputs,
+                        Name      => Name,
+                        Value     => Value);
    end;
 
-
+   -- Wide_String
    -- Add <Name> = <Value> to the label, and print it if trace is on.
    procedure Add_To_Dot_Label
      (This  : in out Class;
       Name  : in     String;
       Value : in     Wide_String) is
    begin
-      This.Add_To_Dot_Label (Name, To_String (Value));
+      Add_To_Dot_Label (Dot_Label => This.Dot_Label,
+                        Outputs   => This.Outputs,
+                        Name      => Name,
+                        Value     => To_String (Value));
    end;
 
+   -- Unit_ID
+   -- Add <Name> = <Value> to the label, and print it if trace is on.
+   procedure Add_To_Dot_Label
+     (This  : in out Class;
+      Name  : in     String;
+      Value : in     A4G.A_Types.Unit_Id) is
+   begin
+      Add_To_Dot_Label (Dot_Label => This.Dot_Label,
+                        Outputs   => This.Outputs,
+                        Name      => Name,
+                        Value     => To_String (Value));
+   end;
+
+   -- Unit_ID
+   -- Add <Name> = <Value> to the label, and print it if trace is on.
+   procedure Add_To_Dot_Label
+     (This  : in out Class;
+      Name  : in     String;
+      Value : in     Boolean) is
+   begin
+      Add_To_Dot_Label (Dot_Label => This.Dot_Label,
+                        Outputs   => This.Outputs,
+                        Name      => Name,
+                        Value     => Value);
+   end;
 
    -- Add <Value> to the label in one wide cell, and print it if trace is on.
    procedure Add_To_Dot_Label
      (This  : in out Class;
       Value : in     String) is
    begin
-      This.Dot_Label.Add_3_Col_Cell(Value);
-      This.Outputs.Text.Put_Indented_Line (Value);
+      Add_To_Dot_Label
+        (Dot_Label => This.Dot_Label,
+         Outputs   => This.Outputs,
+         Value     => Value);
    end;
-
-
-   procedure Add_Dot_Edge
-     (Graph : not null access Dot.Graphs.Class;
-      From  : in     A4G.A_Types.Unit_Id;
-      To    : in     Types.Node_Id;
-      Label : in     String)
-   is
-      Edge_Stmt : Dot.Edges.Stmts.Class; -- Initialized
-   begin
-      if not Types."=" (To, Types.Empty) then
-         Edge_Stmt.LHS.Node_Id.ID := To_Dot_ID_Type (From);
-         Edge_Stmt.RHS.Node_Id.ID := To_Dot_ID_Type (To);
-         Edge_Stmt.Attr_List.Add_Assign_To_First_Attr
-           (Name  => "label",
-            Value => Label);
-         Graph.Append_Stmt (new Dot.Edges.Stmts.Class'(Edge_Stmt));
-      end if;
-   end;
-
 
    -- Add an edge and a dot label for a child element:
    procedure Add_To_Dot_Label_And_Edge
-     (This  : in out Class;
-      Label : in     String;
-      To    : in     Types.Node_Id) is
+     (This    : in out Class;
+      Label   : in     String;
+      To      : in     Types.Node_Id) is
    begin
-      This.Add_To_Dot_Label (Label, To_String (To));
-      Add_Dot_Edge (Graph => This.Outputs.Graph,
-                    From  => This.Unit_ID,
-                    To    => To,
-                    Label => Label);
-   end;
-
+      -- Element, not Unit:
+      This.Add_To_Dot_Label
+        (Name  => Label,
+         Value => To_String (IC.Int (To), Element_ID_Kind));
+      Add_Dot_Edge
+        (Outputs   => This.Outputs,
+         From      => IC.int (This.Unit_ID),
+         From_Kind => Unit_ID_Kind,
+         To        => IC.Int (To),
+         To_Kind   => Element_ID_Kind,
+         Label     => Label);
+   end Add_To_Dot_Label_And_Edge;
 
    procedure Add_Unit_List
      (This           : in out class;
@@ -101,7 +124,7 @@ package body Asis_Tool_2.Unit is
               Dot_Label_Name & " (" & IDs_Index'Image & ")";
          begin
             IDs (IDs_Index) := Interfaces.C.int (ID);
-            Add_To_Dot_Label (This, Label, To_String (ID));
+            Add_To_Dot_Label (This, Label, ID);
             IDs_Index := IDs_Index + 1;
          end;
       end loop;
@@ -115,27 +138,18 @@ package body Asis_Tool_2.Unit is
      (This           : in out class;
       Elements_In    : in     Asis.Element_List;
       Dot_Label_Name : in     String;
-      List_Out       :    out a_nodes_h.Element_List)
+      List_Out       :    out a_nodes_h.Element_ID_List)
    is
-      Count : constant Natural := Elements_In'Length;
-      IDs : anhS.Element_ID_Array_Access := new
-        anhS.Element_ID_Array (1 .. Count);
-      IDs_Index : Positive := IDs'First;
+      -- For "-"
+      use type IC.int;
    begin
-      for Element of Elements_In loop
-         declare
-            ID : constant Types.Node_ID := Asis.Set_Get.Node_Value (Element);
-            Label : constant String :=
-              Dot_Label_Name & " (" & IDs_Index'Image & ")";
-         begin
-            IDs (IDs_Index) := Interfaces.C.int (ID);
-            Add_To_Dot_Label (This, Label, To_String (ID));
-            IDs_Index := IDs_Index + 1;
-         end;
-      end loop;
-      List_Out :=
-        (length => Interfaces.C.int(Count),
-         IDs    => anhS.To_Element_ID_Ptr (IDs));
+      List_Out := Element.To_Element_ID_List
+        (Dot_Label       => This.Dot_Label,
+         Outputs         => This.Outputs,
+         This_Element_ID => -2,
+         Elements_In     => Elements_In,
+         Dot_Label_Name  => Dot_Label_Name,
+         Add_Edges       => False);
    end Add_Element_List;
 
    -----------
@@ -147,9 +161,6 @@ package body Asis_Tool_2.Unit is
    is
       Tool_Element : Element.Class; -- Initialized
    begin
-      This.Add_To_Dot_Label_And_Edge
-        (Label => "Unit_Declaration",
-         To    =>  Asis.Set_Get.Node (Asis_Element));
       Tool_Element.Process_Element_Tree
         (Element => Asis_Element,
          Outputs => This.Outputs);
@@ -213,15 +224,15 @@ package body Asis_Tool_2.Unit is
 
 
    -- Create a Dot node for this unit, add all the attributes, and append it to the
-   -- graph.  Do the A_Unit and the A_Node at the same time:
+   -- graph.
    procedure Process_Application_Unit
      (This    : in out Class;
       Unit    : in Asis.Compilation_Unit)
    is
-      Module_Name    : constant String := Package_Name &
+      Parent_Name : constant String := Module_Name;
+      Module_Name : constant String := Parent_Name &
         ".Process_Application_Unit";
 
-      A_Node         : a_nodes_h.Node_Struct      := anhS.Default_Node_Struct;
       Unit_Class     : constant Asis.Unit_Classes := ACU.Unit_Class (Unit);
       Unit_Full_Name : constant Wide_String       := Acu.Unit_Full_Name (Unit);
       Unit_Kind      : constant Asis.Unit_Kinds   := ACU.Unit_Kind (Unit);
@@ -235,7 +246,7 @@ package body Asis_Tool_2.Unit is
       procedure Add_Can_Be_Main_Program is
          Value : Boolean := ACU.Exists (Unit);
       begin
-         This.Add_To_Dot_Label ("Can_Be_Main_Program", Value'Image);
+         This.Add_To_Dot_Label ("Can_Be_Main_Program", Value);
          This.A_Unit.Can_Be_Main_Program := a_nodes_h.Support.To_bool (Value);
       end;
 
@@ -243,7 +254,7 @@ package body Asis_Tool_2.Unit is
          WS : constant Wide_String :=
            Acu.Compilation_Command_Line_Options (Unit);
       begin
-         This.Add_To_Dot_Label ("Compilation_Command_Line_Options", To_String (WS));
+         This.Add_To_Dot_Label ("Compilation_Command_Line_Options", WS);
          This.A_Unit.Compilation_Command_Line_Options := To_Chars_Ptr (WS);
       end;
 
@@ -269,8 +280,8 @@ package body Asis_Tool_2.Unit is
          ID : constant A4G.A_Types.Unit_Id := Asis.Set_Get.Get_Unit_Id
            (ACU.Corresponding_Body (Unit));
       begin
-         This.Add_To_Dot_Label ("Corresponding_Body", To_String (ID));
-         This.A_Unit.Corresponding_Body := a_nodes_h.Node_ID (ID);
+         This.Add_To_Dot_Label ("Corresponding_Body", ID);
+         This.A_Unit.Corresponding_Body := a_nodes_h.Unit_ID (ID);
       end;
 
       procedure Add_Corresponding_Children is
@@ -286,24 +297,24 @@ package body Asis_Tool_2.Unit is
          ID : constant A4G.A_Types.Unit_Id := Asis.Set_Get.Get_Unit_Id
            (ACU.Corresponding_Declaration (Unit));
       begin
-         This.Add_To_Dot_Label ("Corresponding_Declaration", To_String (ID));
-         This.A_Unit.Corresponding_Declaration := a_nodes_h.Node_ID (ID);
+         This.Add_To_Dot_Label ("Corresponding_Declaration", ID);
+         This.A_Unit.Corresponding_Declaration := To_Unit_ID (ID);
       end;
 
       procedure Add_Corresponding_Parent_Declaration is
          ID : constant A4G.A_Types.Unit_Id := Asis.Set_Get.Get_Unit_Id
            (ACU.Corresponding_Parent_Declaration (Unit));
       begin
-         This.Add_To_Dot_Label ("Corresponding_Parent_Declaration", To_String (ID));
-         This.A_Unit.Corresponding_Parent_Declaration := a_nodes_h.Node_ID (ID);
+         This.Add_To_Dot_Label ("Corresponding_Parent_Declaration", ID);
+         This.A_Unit.Corresponding_Parent_Declaration := To_Unit_ID (ID);
       end;
 
       procedure Add_Corresponding_Subunit_Parent_Body is
          ID : constant A4G.A_Types.Unit_Id := Asis.Set_Get.Get_Unit_Id
            (ACU.Corresponding_Subunit_Parent_Body (Unit));
       begin
-         This.Add_To_Dot_Label ("Corresponding_Subunit_Parent_Body", To_String (ID));
-         This.A_Unit.Corresponding_Subunit_Parent_Body := a_nodes_h.Node_ID (ID);
+         This.Add_To_Dot_Label ("Corresponding_Subunit_Parent_Body", ID);
+         This.A_Unit.Corresponding_Subunit_Parent_Body := To_Unit_ID (ID);
       end;
 
       procedure Add_Debug_Image is
@@ -330,21 +341,21 @@ package body Asis_Tool_2.Unit is
       procedure Add_Exists is
          Value : Boolean := ACU.Exists (Unit);
       begin
-         This.Add_To_Dot_Label ("Exists", Value'Image);
+         This.Add_To_Dot_Label ("Exists", Value);
          This.A_Unit.Exists := a_nodes_h.Support.To_bool (Value);
       end;
 
       procedure Add_Is_Body_Required is
          Value : Boolean := ACU.Exists (Unit);
       begin
-         This.Add_To_Dot_Label ("Is_Body_Required", Value'Image);
+         This.Add_To_Dot_Label ("Is_Body_Required", Value);
          This.A_Unit.Is_Body_Required := a_nodes_h.Support.To_bool (Value);
       end;
 
       procedure Add_Is_Standard is
          Value : Boolean := Asis.Set_Get.Is_Standard (Unit);
       begin
-         This.Add_To_Dot_Label ("Is_Standard", Value'Image);
+         This.Add_To_Dot_Label ("Is_Standard", Value);
          This.A_Unit.Is_Standard := a_nodes_h.Support.To_bool (Value);
       end;
 
@@ -352,7 +363,7 @@ package body Asis_Tool_2.Unit is
          WS : constant Wide_String := ACU.Object_Form (Unit);
       begin
          -- Empty:
-         This.Add_To_Dot_Label ("Object_Form", To_String (WS));
+         This.Add_To_Dot_Label ("Object_Form", WS);
          This.A_Unit.Object_Form := To_Chars_Ptr (WS);
       end;
 
@@ -360,7 +371,7 @@ package body Asis_Tool_2.Unit is
          WS : constant Wide_String := ACU.Object_Name (Unit);
       begin
          -- Empty:
-         This.Add_To_Dot_Label ("Object_Name", To_String (WS));
+         This.Add_To_Dot_Label ("Object_Name", WS);
          This.A_Unit.Object_Name := To_Chars_Ptr (WS);
       end;
 
@@ -377,21 +388,21 @@ package body Asis_Tool_2.Unit is
          WS : constant Wide_String := ACU.Text_Form (Unit);
       begin
          -- Empty:
-         This.Add_To_Dot_Label ("Text_Form", To_String (WS));
+         This.Add_To_Dot_Label ("Text_Form", WS);
          This.A_Unit.Text_Form := To_Chars_Ptr (WS);
       end;
 
       procedure Add_Text_Name is
          WS : constant Wide_String := ACU.Text_Name (Unit);
       begin
-         This.Add_To_Dot_Label ("Text_Name", To_String (WS));
+         This.Add_To_Dot_Label ("Text_Name", WS);
          This.A_Unit.Text_Name := To_Chars_Ptr (WS);
       end;
 
       procedure Add_Unique_Name is
          WS : constant Wide_String := ACU.Unique_Name (Unit);
       begin
-         This.Add_To_Dot_Label ("Unique_Name", To_String (WS));
+         This.Add_To_Dot_Label ("Unique_Name", WS);
          This.A_Unit.Unique_Name := To_Chars_Ptr (WS);
       end;
 
@@ -402,17 +413,21 @@ package body Asis_Tool_2.Unit is
       end;
 
       procedure Add_Unit_Declaration is
-         ID : constant Types.Node_Id :=
-           Asis.Set_Get.Node (Asis.Elements.Unit_Declaration (Unit));
+         Asis_Element : constant Asis.Element :=
+           Asis.Elements.Unit_Declaration (Unit);
+         anhS_Element_ID : constant a_nodes_h.Element_ID :=
+           Element.Get_Element_ID (Asis_Element);
       begin
-         This.Add_To_Dot_Label ("Unit_Declaration", To_String (ID));
-         This.A_Unit.Unit_Declaration := a_nodes_h.Node_ID (ID);
+         This.Add_To_Dot_Label
+           (Name  => "Unit_Declaration",
+            Value => Element.To_String (anhS_Element_ID));
+         This.A_Unit.Unit_Declaration := anhS_Element_ID;
       end;
 
       procedure Add_Unit_Full_Name is
          WS : constant Wide_String := ACU.Unit_Full_Name (Unit);
       begin
-         This.Add_To_Dot_Label ("Unit_Full_Name", To_String (WS));
+         This.Add_To_Dot_Label ("Unit_Full_Name", WS);
          This.A_Unit.Unit_Full_Name := To_Chars_Ptr (WS);
       end;
 
@@ -420,7 +435,7 @@ package body Asis_Tool_2.Unit is
          ID : constant A4G.A_Types.Unit_Id := Asis.Set_Get.Get_Unit_Id (Unit);
       begin
          This.Unit_ID := ID;
-         This.Dot_Node.Node_ID.ID := To_Dot_ID_Type (ID);
+         This.Dot_Node.Node_ID.ID := To_Dot_ID_Type (IC.int (ID), Unit_ID_Kind);
          This.A_Unit.id := Interfaces.C.int(ID);
          This.Add_To_Dot_Label(To_String (ID));
       end;
@@ -444,8 +459,10 @@ package body Asis_Tool_2.Unit is
       begin
          Log ("Processing " & To_String (Unit_Full_Name) & " " &
                 To_String (To_Wide_String (Unit_Class)));
-         This.Outputs.Text.Indent;
          This.Outputs.Text.End_Line;
+         -- Unit ID comes out on next line via Add_Unit_ID:
+         This.Outputs.Text.Put_Indented_Line (String'("BEGIN "));
+         This.Outputs.Text.Indent;
          This.Dot_Node := Default_Node;
          This.Dot_Label := Default_Label;
          This.A_Unit := a_nodes_h.Support.Default_Unit_Struct;
@@ -479,28 +496,23 @@ package body Asis_Tool_2.Unit is
       end;
 
       procedure Finish_Output is
-         A_Node : a_nodes_h.Node_Struct := anhS.Default_Node_Struct;
       begin
          This.Dot_Node.Add_Label (This.Dot_Label);
 
          This.Outputs.Graph.Append_Stmt
            (new Dot.Node_Stmt.Class'(This.Dot_Node));
 
-         A_Node.Node_Kind := a_nodes_h.A_Unit_Node;
-         A_Node.The_Union.Unit := This.A_Unit;
-         This.Outputs.A_Nodes.Push (A_Node);
+         This.Outputs.A_Nodes.Push (This.A_Unit);
 
          This.Outputs.Text.End_Line;
          This.Outputs.Text.Dedent;
+         This.Outputs.Text.Put_Indented_Line
+           (String'("END " & To_String (This.Unit_ID)));
       end;
 
       use all type Asis.Unit_Kinds;
    begin -- Process_Application_Unit
-      If Unit_Kind = Not_A_Unit then
-         -- Redundant with the case below, but lets this if be clearer:
-         raise Program_Error with
-           Module_Name & " called with: " & Unit_Kind'Image;
-      else
+      If Unit_Kind /= Not_A_Unit then
          Start_Output;
       end if;
 
@@ -568,8 +580,17 @@ package body Asis_Tool_2.Unit is
       Unit    : in     Asis.Compilation_Unit;
       Outputs : in     Outputs_Record)
    is
+      Parent_Name : constant String := Module_Name;
+      Module_Name : constant String := Parent_Name & ".Process";
+
       Unit_Full_Name : constant Wide_String       := Acu.Unit_Full_Name (Unit);
       Unit_Origin    : constant Asis.Unit_Origins := Acu.Unit_Origin (Unit);
+
+      procedure Log (Message : in Wide_String) is
+      begin
+         Put_Line (Module_Name & ":  " & To_String (Message));
+      end;
+
    begin
       -- I would like to just pass Outputs through and not store it in the
       -- object, since it is all pointers and we doesn't need to store their
@@ -582,11 +603,11 @@ package body Asis_Tool_2.Unit is
          when Asis.An_Application_Unit =>
             Process_Application_Unit (This, Unit);
          when Asis.A_Predefined_Unit =>
-            Trace_Put_Line ("Skipped " & Unit_Full_Name & " (predefined unit)");
+            Log ("Skipped " & Unit_Full_Name & " (predefined unit)");
          when Asis.An_Implementation_Unit =>
-            Trace_Put_Line ("Skipped " & Unit_Full_Name & " (implementation-defined unit)");
+            Log ("Skipped " & Unit_Full_Name & " (implementation-defined unit)");
          when Asis.Not_An_Origin =>
-            Trace_Put_Line ("Skipped " & Unit_Full_Name & " (non-existent unit)");
+            Log ("Skipped " & Unit_Full_Name & " (non-existent unit)");
       end case;
 
    end Process;

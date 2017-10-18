@@ -15,11 +15,11 @@ package a_nodes_h.Support is
    -- Order below is same as in a_nodes.h:
 
    Invalid_Program_Text : constant Program_Text := Program_Text(ICS.Null_Ptr);
-   Invalid_Node_ID      : constant Node_ID := -1;
 
-   Invalid_Element_ID   : constant Element_ID :=
-     (Node => Invalid_Node_ID,
-      Kind => -1);
+   Invalid_Element_ID   : constant Element_ID := -1;
+
+   function Is_Valid (This : in Element_ID) return boolean is
+      (This /= Invalid_Element_ID);
 
    Empty_Element_ID_List   : constant Element_ID_List :=
      (length => 0,
@@ -439,7 +439,7 @@ package a_nodes_h.Support is
       Last_Line    => -1,
       Last_Column  => -1);
 
-   Invalid_Unit_ID : constant Unit_ID := Invalid_Node_ID;
+   Invalid_Unit_ID : constant Unit_ID := -1;
 
    Default_Element_Struct : constant Element_Struct :=
      (ID                         => Invalid_Element_ID,
@@ -584,12 +584,6 @@ package a_nodes_h.Support is
 
    -- End alphabetical order
 
-   function To_Element_ID
-     (Item : in Asis.Element)
-      return a_nodes_h.Node_ID
-   is
-     (a_nodes_h.Node_ID (Asis.Set_Get.Node_Value (Item)));
-
    -- Not in a_nodes.h:
 
    function To_bool
@@ -600,7 +594,7 @@ package a_nodes_h.Support is
 
    type Unit_ID_Array is array (Positive range <>) of aliased Unit_ID;
    -- Not called _Ptr so we don't forget a pointer to this is not the same as a
-   -- pointer to a C array.  We just need this to create the array on the hea:
+   -- pointer to a C array.  We just need this to create the array on the heap:
    type Unit_ID_Array_Access is access Unit_ID_Array;
 
    function To_Unit_ID_Ptr
@@ -613,7 +607,7 @@ package a_nodes_h.Support is
 
    type Element_ID_Array is array (Positive range <>) of aliased Element_ID;
    -- Not called _Ptr so we don't forget a pointer to this is not the same as a
-   -- pointer to a C array.  We just need this to create the array on the hea:
+   -- pointer to a C array.  We just need this to create the array on the heap:
    type Element_ID_Array_Access is access Element_ID_Array;
 
    function To_Element_ID_Ptr

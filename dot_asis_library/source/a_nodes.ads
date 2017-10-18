@@ -31,7 +31,11 @@ package A_Nodes is
      (This    : access Class;
       Element : in     a_nodes_h.Element_Struct);
 
-   -- Returns a pointers to the nodes at the top of the lists:
+   -- Adds one to the count of not-implemented nodes encountered:
+   procedure Add_Not_Implemented
+     (This : access Class);
+
+   -- Returns pointers to the nodes at the top of the lists:
    function Get_Nodes
      (This : access Class)
       return a_nodes_h.Nodes_Struct;
@@ -47,19 +51,16 @@ private
    package AC renames Ada.Containers;
    package IC renames Interfaces.C;
 
-   function Hash (Element : a_nodes_h.Element_ID) return AC.Hash_Type is
-      (AC.Hash_Type (Element.Node));
+   function Hash (Item : IC.int) return AC.Hash_Type is
+      (AC.Hash_Type (Item));
 
    package Element_ID_Sets is new AC.Hashed_Sets
      (Element_Type        => a_nodes_h.Element_ID,
       Hash                => Hash,
-      Equivalent_Elements => a_nodes_h."=",
-      "="                 => a_nodes_h."=");
+      Equivalent_Elements => IC."=",
+      "="                 => IC."=");
    -- Make primitive operations directly visible:
    Type Element_ID_Set is new Element_ID_Sets.Set with null record;
-
-   function Hash (Unit : a_nodes_h.Unit_ID) return AC.Hash_Type is
-      (AC.Hash_Type (Unit));
 
    package Unit_ID_Sets is new AC.Hashed_Sets
      (Element_Type        => a_nodes_h.Unit_ID,
@@ -76,6 +77,7 @@ private
       Element_IDs        : Element_ID_Set; -- Initialized
       Highest_Unit_ID    : a_nodes_h.Unit_ID := a_nodes_h.Support.Invalid_Unit_ID;
       Highest_Element_ID : a_nodes_h.Element_ID := a_nodes_h.Support.Invalid_Element_ID;
+      Not_Implemented    : Natural := 0;
    end record;
 
 end A_Nodes;

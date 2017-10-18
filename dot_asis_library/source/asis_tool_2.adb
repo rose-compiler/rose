@@ -56,25 +56,95 @@ package body Asis_Tool_2 is
    -----------
    -- PRIVATE:
    -----------
-   function To_String (Unit_Id : in A4G.A_Types.Unit_Id) return String is
-     ("Unit_" & Spaceless_Image (Natural (Unit_Id)));
+   function To_String
+     (Id   : in IC.int;
+      Kind : in ID_Kind)
+      return String
+   is
+      Id_Image : constant String := Spaceless_Image (Natural (Id));
+   begin
+      case Kind is
+         when Unit_ID_Kind =>
+            return "Unit_" & Id_Image;
+         when Element_ID_Kind =>
+            return "Element_" & Id_Image;
+      end case;
+   end To_String;
 
    -----------
    -- PRIVATE:
    -----------
-   function To_String (Element_Id : in Types.Node_Id) return String is
-     ("Element_" & Spaceless_Image (Natural (Element_Id)));
+   function To_Dot_ID_Type
+     (Id   : in IC.int;
+      Kind : in ID_Kind)
+      return Dot.ID_Type is
+     (Dot.To_ID_Type (To_String (Id, Kind)));
 
-   -----------
-   -- PRIVATE:
-   -----------
-   function To_Dot_ID_Type (Unit_Id : in A4G.A_Types.Unit_Id) return Dot.ID_Type is
-     (Dot.To_ID_Type (To_String (Unit_Id)));
+   ------------
+   -- EXPORTED:
+   ------------
+   procedure Add_To_Dot_Label
+     (Dot_Label : in out Dot.HTML_Like_Labels.Class;
+      Outputs   : in out Outputs_Record;
+      Name      : in     String;
+      Value     : in     String) is
+   begin
+      Dot_Label.Add_Eq_Row (L => Name, R => Value);
+      Outputs.Text.Put_Indented_Line (Name & " => " & Value);
+   end;
 
-   -----------
-   -- PRIVATE:
-   -----------
-   function To_Dot_ID_Type (Element_Id : in Types.Node_Id) return Dot.ID_Type is
-     (Dot.To_ID_Type (To_String (Element_Id)));
+   ------------
+   -- EXPORTED:
+   ------------
+   procedure Add_To_Dot_Label
+     (Dot_Label : in out Dot.HTML_Like_Labels.Class;
+      Outputs   : in out Outputs_Record;
+      Name      : in     String;
+      Value     : in     Boolean) is
+   begin
+      if Value then
+         declare
+            Value_String : constant String := Value'Image;
+         begin
+            Dot_Label.Add_Eq_Row (L => Name, R => Value_String);
+            Outputs.Text.Put_Indented_Line (Name & " => " & Value_String);
+         end;
+      end if;
+   end;
+
+   ------------
+   -- EXPORTED:
+   ------------
+   procedure Add_To_Dot_Label
+     (Dot_Label : in out Dot.HTML_Like_Labels.Class;
+      Outputs   : in out Outputs_Record;
+      Value     : in     String) is
+   begin
+      Dot_Label.Add_3_Col_Cell(Value);
+      Outputs.Text.Put_Indented_Line (Value);
+   end;
+
+   ------------
+   -- EXPORTED:
+   ------------
+   procedure Add_Dot_Edge
+     (Outputs   : in out Outputs_Record;
+      From      : in     IC.int;
+      From_Kind : in     ID_Kind;
+      To        : in     IC.int;
+      To_Kind   : in     ID_Kind;
+      Label     : in     String)
+   is
+      Edge_Stmt : Dot.Edges.Stmts.Class; -- Initialized
+   begin
+      if anhS.Is_Valid (To) then
+         Edge_Stmt.LHS.Node_Id.ID := To_Dot_ID_Type (From, From_Kind);
+         Edge_Stmt.RHS.Node_Id.ID := To_Dot_ID_Type (To, To_Kind);
+         Edge_Stmt.Attr_List.Add_Assign_To_First_Attr
+           (Name  => "label",
+            Value => Label);
+         Outputs.Graph.Append_Stmt (new Dot.Edges.Stmts.Class'(Edge_Stmt));
+      end if;
+   end Add_Dot_Edge;
 
 end Asis_Tool_2;

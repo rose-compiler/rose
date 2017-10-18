@@ -16,6 +16,7 @@ private
 
    type Class (Trace : Boolean := False) is tagged limited
       record
+         -- Current, in-progress intermediate output products:
          Unit_ID   : A4G.A_Types.Unit_Id := A4G.A_Types.No_Unit_Id;
          Dot_Node  : Dot.Node_Stmt.Class; -- Initialized
          Dot_Label : Dot.HTML_Like_Labels.Class; -- Initialized

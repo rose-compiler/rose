@@ -10,22 +10,13 @@
 
 typedef char* Program_Text;
 typedef int   ASIS_Integer;
-typedef int   Node_ID;
 
 ///////////////////////////////////////////////////////////////////////////////
 // BEGIN element 
 ///////////////////////////////////////////////////////////////////////////////
 
-// Different Elements may share the same Node_ID in GNAT ASIS!  They can be 
-// disambiguated by Internal_Kind.  We use Internal_Kind'Pos below, currently 
-// (GNAT GPL 2017 ASIS) between 1 and about 800:
-// 
-typedef struct _Element_ID_Struct {
-  Node_ID Node;
-  int     Kind;
-} Element_ID_Struct;
-
-typedef Element_ID_Struct Element_ID;
+// This is NOT a subset of Node_ID:
+typedef int Element_ID;
 
 // For this:
 //   typedef Element_ID Element_ID_Array[];
@@ -1915,7 +1906,7 @@ struct Source_Location_Struct {
 };
 
 // Declared here because used in Element_Struct:
-typedef Node_ID Unit_ID;
+typedef int Unit_ID;
 
 // May take ?? bytes - 2*ID, 2*enum, 1*5*4 struct, 1*?? union:
 typedef struct _Element_Struct {

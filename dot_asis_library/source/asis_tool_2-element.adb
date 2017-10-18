@@ -7,33 +7,162 @@ with Asis.Expressions;
 with Asis.Iterator;
 with Asis.Statements;
 -- GNAT-specific:
-with A4G.Int_Knds;
 with Asis.Set_Get;
 with Asis.Text;
-with Types;
 
 package body Asis_Tool_2.Element is
 
    Module_Name : constant String := "Asis_Tool_2.Element";
 
-   function Get_Element_ID (Element : in Asis.Element)
-                            return a_nodes_h.Element_ID
-   is
-      subtype IEK is A4G.Int_Knds.Internal_Element_Kinds;
-      Node : constant Types.Node_Id := Asis.Set_Get.Node_Value (Element);
-      Kind : constant IEK := Asis.Set_Get.Int_Kind (Element);
+   -- String
+   procedure Add_To_Dot_Label
+     (This  : in out Class;
+      Name  : in     String;
+      Value : in     String) is
    begin
-      return
-        (Node => a_nodes_h.Node_ID (Node),
-         Kind => Interfaces.C.int (IEK'Pos (Kind)));
-   end Get_Element_ID;
+      Add_To_Dot_Label (Dot_Label => This.Dot_Label,
+                        Outputs   => This.Outputs,
+                        Name      => Name,
+                        Value     => Value);
+   end;
 
-   -- LEAKS:
+   -- Wide_String
+   -- Add <Name> => <Value> to the label, and print it if trace is on:
+   procedure Add_To_Dot_Label
+     (This  : in out Class;
+      Name  : in     String;
+      Value : in     Wide_String) is
+   begin
+      This.Add_To_Dot_Label (Name, To_String (Value));
+   end;
+
+   -- Element_ID
+   -- Add <Name> => <Value> to the label, and print it if trace is on:
+   procedure Add_To_Dot_Label
+     (This  : in out Class;
+      Name  : in     String;
+      Value : in     a_nodes_h.Element_ID) is
+   begin
+      This.Add_To_Dot_Label (Name, To_String (Value));
+   end;
+
+   -- Boolean
+   -- Add <Name> => <Value> to the label, and print it if trace is on:
+   procedure Add_To_Dot_Label
+     (This  : in out Class;
+      Name  : in     String;
+      Value : in     Boolean) is
+   begin
+      Add_To_Dot_Label (Dot_Label => This.Dot_Label,
+                        Outputs   => This.Outputs,
+                        Name      => Name,
+                        Value     => Value);
+   end;
+
+   -- String:
+   -- Add <Value> to the label, and print it if trace is on:
+   procedure Add_To_Dot_Label
+     (This  : in out Class;
+      Value : in     String) is
+   begin
+      Add_To_Dot_Label (Dot_Label => This.Dot_Label,
+                        Outputs   => This.Outputs,
+                        Value     => Value);
+   end;
+
+   -- Add to dot label: ASIS_PROCESSING => "NOT_IMPLEMENTED_COMPLETELY"
+   procedure Add_Not_Implemented
+     (This : in out Class) is
+   begin
+      This.Add_To_Dot_Label ("ASIS_PROCESSING", String'("NOT_IMPLEMENTED_COMPLETELY"));
+      This.Outputs.A_Nodes.Add_Not_Implemented;
+   end Add_Not_Implemented;
+
+   procedure Add_Dot_Edge
+     (This  : in out Class;
+      From  : in     a_nodes_h.Element_ID;
+      To    : in     a_nodes_h.Element_ID;
+      Label : in     String)
+   is
+   begin
+      Add_Dot_Edge (Outputs   => This.Outputs,
+                    From      => From,
+                    From_Kind => Element_ID_Kind,
+                    To        => To,
+                    To_Kind   => Element_ID_Kind,
+                    Label     => Label);
+   end Add_Dot_Edge;
+
+   -- Add an edge and a dot label:
+   procedure Add_To_Dot_Label_And_Edge
+     (This  : in out Class;
+      Label : in     String;
+      To    : in     a_nodes_h.Element_ID) is
+   begin
+      This.Add_To_Dot_Label (Label, To_String (To));
+      This.Add_Dot_Edge (From  => This.Element_ID,
+                         To    => To,
+                         Label => Label);
+   end Add_To_Dot_Label_And_Edge;
+
+   -----------------------------------------------------------------------------
+   -- Element_ID support
+
+   ------------
+   -- EXPORTED:
+   ------------
+   function Get_Element_ID
+     (Element : in Asis.Element)
+      return Element_ID
+   is
+     ((Node_ID => Asis.Set_Get.Node_Value (Element),
+       Kind    => Asis.Set_Get.Int_Kind (Element)));
+
+   ------------
+   -- EXPORTED:
+   ------------
+   function To_Element_ID
+     (This : in Element_ID)
+      return a_nodes_h.Element_ID
+   is
+      Result : Integer;
+   begin
+      Result := Integer (This.Node_ID) * 1000 +
+        A4G.Int_Knds.Internal_Element_Kinds'Pos(This.Kind);
+      return a_nodes_h.Element_ID (Result);
+   end To_Element_ID;
+
+   ------------
+   -- EXPORTED:
+   ------------
+   function Get_Element_ID
+     (Element : in Asis.Element)
+      return a_nodes_h.Element_ID
+   is
+      (To_Element_ID (Get_Element_ID (Element)));
+
+   ------------
+   -- EXPORTED:
+   ------------
+   function To_String
+     (This : in a_nodes_h.Element_ID)
+      return String
+   is
+     (To_String (This, Element_ID_Kind));
+
+   -- END Element_ID support
+   -----------------------------------------------------------------------------
+
+   ------------
+   -- EXPORTED:
+   ------------
    function To_Element_ID_List
-     (This           : in out Class;
-      Elements_In    : in     Asis.Element_List;
-      Dot_Label_Name : in     String;
-      Add_Edges      : in     Boolean := False)
+     (Dot_Label       : in out Dot.HTML_Like_Labels.Class;
+      Outputs         : in out Outputs_Record;
+      This_Element_ID : in     a_nodes_h.Element_ID;
+      Elements_In     : in     Asis.Element_List;
+      Dot_Label_Name  : in     String;
+      Add_Edges       : in     Boolean := False)
      return  a_nodes_h.Element_ID_List
    is
       Element_Count : constant Natural := Elements_In'Length;
@@ -49,11 +178,17 @@ package body Asis_Tool_2.Element is
               Dot_Label_Name & " (" & IDs_Index'Image & ")";
          begin
             IDs (IDs_Index) := Element_ID;
-            This.Add_To_Dot_Label (Label, To_String (Element_ID));
+            Add_To_Dot_Label (Dot_Label => Dot_Label,
+                              Outputs   => Outputs,
+                              Name      => Label,
+                              Value     => To_String (Element_ID));
             if Add_Edges then
-               This.Add_Dot_Edge (From  => This.Element_ID,
-                                  To    => Element_ID,
-                                  Label => Label);
+               Add_Dot_Edge (Outputs   => Outputs,
+                             From      => This_Element_ID,
+                             From_Kind => Element_ID_Kind,
+                             To        => Element_ID,
+                             To_Kind   => Element_ID_Kind,
+                             Label     => Label);
             end if;
             IDs_Index := IDs_Index + 1;
          end;
@@ -61,6 +196,21 @@ package body Asis_Tool_2.Element is
       return
         (length => Interfaces.C.int(Element_Count),
          IDs    => anhS.To_Element_ID_Ptr (IDs));
+   end To_Element_ID_List;
+
+   function To_Element_ID_List
+     (This           : in out Class;
+      Elements_In    : in     Asis.Element_List;
+      Dot_Label_Name : in     String;
+      Add_Edges      : in     Boolean := False)
+     return  a_nodes_h.Element_ID_List is
+   begin
+      return To_Element_ID_List (Dot_Label       => This.Dot_Label,
+                                 Outputs         => This.Outputs,
+                                 This_Element_ID => This.Element_ID,
+                                 Elements_In     => Elements_In,
+                                 Dot_Label_Name  => Dot_Label_Name,
+                                 Add_Edges       => Add_Edges);
    end To_Element_ID_List;
 
    procedure Add_Element_List
@@ -468,56 +618,56 @@ package body Asis_Tool_2.Element is
          procedure Add_Has_Abstract is
             Value : constant Boolean := Asis.Elements.Has_Abstract (Element);
          begin
-            State.Add_To_Dot_Label ("Has_Abstract", Value'Image);
+            State.Add_To_Dot_Label ("Has_Abstract", Value);
             Result.Has_Abstract := a_nodes_h.Support.To_bool (Value);
          end;
 
          procedure Add_Has_Aliased is
             Value : constant Boolean := Asis.Elements.Has_Aliased (Element);
          begin
-            State.Add_To_Dot_Label ("Has_Aliased", Value'Image);
+            State.Add_To_Dot_Label ("Has_Aliased", Value);
             Result.Has_Aliased := a_nodes_h.Support.To_bool (Value);
          end;
 
          procedure Add_Has_Limited is
             Value : constant Boolean := Asis.Elements.Has_Limited (Element);
          begin
-            State.Add_To_Dot_Label ("Has_Limited", Value'Image);
+            State.Add_To_Dot_Label ("Has_Limited", Value);
             Result.Has_Limited := a_nodes_h.Support.To_bool (Value);
          end;
 
          procedure Add_Has_Null_Exclusion is
             Value : constant Boolean := Asis.Elements.Has_Null_Exclusion (Element);
          begin
-            State.Add_To_Dot_Label ("Has_Null_Exclusion", Value'Image);
+            State.Add_To_Dot_Label ("Has_Null_Exclusion", Value);
             Result.Has_Null_Exclusion := a_nodes_h.Support.To_bool (Value);
          end;
 
          procedure Add_Has_Private is
             Value : constant Boolean := Asis.Elements.Has_Private (Element);
          begin
-            State.Add_To_Dot_Label ("Has_Private", Value'Image);
+            State.Add_To_Dot_Label ("Has_Private", Value);
             Result.Has_Private := a_nodes_h.Support.To_bool (Value);
          end;
 
          procedure Add_Has_Protected is
             Value : constant Boolean := Asis.Elements.Has_Protected (Element);
          begin
-            State.Add_To_Dot_Label ("Has_Protected", Value'Image);
+            State.Add_To_Dot_Label ("Has_Protected", Value);
             Result.Has_Protected := a_nodes_h.Support.To_bool (Value);
          end;
 
          procedure Add_Has_Reverse is
             Value : constant Boolean := Asis.Elements.Has_Reverse (Element);
          begin
-            State.Add_To_Dot_Label ("Has_Reverse", Value'Image);
+            State.Add_To_Dot_Label ("Has_Reverse", Value);
             Result.Has_Reverse := a_nodes_h.Support.To_bool (Value);
          end;
 
          procedure Add_Has_Task is
             Value : constant Boolean := Asis.Elements.Has_Task (Element);
          begin
-            State.Add_To_Dot_Label ("Has_Task", Value'Image);
+            State.Add_To_Dot_Label ("Has_Task", Value);
             Result.Has_Task := a_nodes_h.Support.To_bool (Value);
          end;
 
@@ -532,49 +682,49 @@ package body Asis_Tool_2.Element is
          procedure Add_Is_Dispatching_Operation is
             Value : constant Boolean := Asis.Declarations.Is_Dispatching_Operation (Element);
          begin
-            State.Add_To_Dot_Label ("Is_Dispatching_Operation", Value'Image);
+            State.Add_To_Dot_Label ("Is_Dispatching_Operation", Value);
             Result.Is_Dispatching_Operation := a_nodes_h.Support.To_bool (Value);
          end;
 
          procedure Add_Is_Name_Repeated is
             Value : constant Boolean := Asis.Declarations.Is_Name_Repeated (Element);
          begin
-            State.Add_To_Dot_Label ("Is_Name_Repeated", Value'Image);
+            State.Add_To_Dot_Label ("Is_Name_Repeated", Value);
             Result.Is_Name_Repeated := a_nodes_h.Support.To_bool (Value);
          end;
 
          procedure Add_Is_Not_Null_Return is
             Value : constant Boolean := Asis.Elements.Is_Not_Null_Return (Element);
          begin
-            State.Add_To_Dot_Label ("Is_Not_Null_Return", Value'Image);
+            State.Add_To_Dot_Label ("Is_Not_Null_Return", Value);
             Result.Is_Not_Null_Return := a_nodes_h.Support.To_bool (Value);
          end;
 
          procedure Add_Is_Not_Overriding_Declaration is
             Value : constant Boolean := Asis.Declarations.Is_Not_Overriding_Declaration (Element);
          begin
-            State.Add_To_Dot_Label ("Is_Not_Overriding_Declaration", Value'Image);
+            State.Add_To_Dot_Label ("Is_Not_Overriding_Declaration", Value);
             Result.Is_Not_Overriding_Declaration := a_nodes_h.Support.To_bool (Value);
          end;
 
          procedure Add_Is_Overriding_Declaration is
             Value : constant Boolean := Asis.Declarations.Is_Overriding_Declaration (Element);
          begin
-            State.Add_To_Dot_Label ("Is_Overriding_Declaration", Value'Image);
+            State.Add_To_Dot_Label ("Is_Overriding_Declaration", Value);
             Result.Is_Overriding_Declaration := a_nodes_h.Support.To_bool (Value);
          end;
 
          procedure Add_Is_Private_Present is
             Value : constant Boolean := Asis.Declarations.Is_Private_Present (Element);
          begin
-            State.Add_To_Dot_Label ("Is_Private_Present", Value'Image);
+            State.Add_To_Dot_Label ("Is_Private_Present", Value);
             Result.Is_Private_Present := a_nodes_h.Support.To_bool (Value);
          end;
 
          procedure Add_Is_Subunit is
             Value : constant Boolean := Asis.Declarations.Is_Subunit (Element);
          begin
-            State.Add_To_Dot_Label ("Is_Subunit", Value'Image);
+            State.Add_To_Dot_Label ("Is_Subunit", Value);
             Result.Is_Subunit := a_nodes_h.Support.To_bool (Value);
          end;
 
@@ -1091,42 +1241,42 @@ package body Asis_Tool_2.Element is
          function Has_Abstract return ICE.bool is
             Value : constant Boolean := Asis.Elements.Has_Abstract (Element);
          begin
-            State.Add_To_Dot_Label ("Has_Abstract", Value'Image);
+            State.Add_To_Dot_Label ("Has_Abstract", Value);
             return a_nodes_h.Support.To_bool (Value);
          end;
 
          function Has_Limited return ICE.bool is
             Value : constant Boolean := Asis.Elements.Has_Limited (Element);
          begin
-            State.Add_To_Dot_Label ("Has_Limited", Value'Image);
+            State.Add_To_Dot_Label ("Has_Limited", Value);
             return a_nodes_h.Support.To_bool (Value);
          end;
 
          function Has_Null_Exclusion return ICE.bool is
             Value : constant Boolean := Asis.Elements.Has_Null_Exclusion (Element);
          begin
-            State.Add_To_Dot_Label ("Has_Null_Exclusion", Value'Image);
+            State.Add_To_Dot_Label ("Has_Null_Exclusion", Value);
             return a_nodes_h.Support.To_bool (Value);
          end;
 
          function Has_Private return ICE.bool is
             Value : constant Boolean := Asis.Elements.Has_Private (Element);
          begin
-            State.Add_To_Dot_Label ("Has_Private", Value'Image);
+            State.Add_To_Dot_Label ("Has_Private", Value);
             return a_nodes_h.Support.To_bool (Value);
          end;
 
          function Has_Tagged return ICE.bool is
             Value : constant Boolean := Asis.Elements.Has_Tagged (Element);
          begin
-            State.Add_To_Dot_Label ("Has_Tagged", Value'Image);
+            State.Add_To_Dot_Label ("Has_Tagged", Value);
             return a_nodes_h.Support.To_bool (Value);
          end;
 
          function Has_Task return ICE.bool is
             Value : constant Boolean := Asis.Elements.Has_Task (Element);
          begin
-            State.Add_To_Dot_Label ("Has_Task", Value'Image);
+            State.Add_To_Dot_Label ("Has_Task", Value);
             return a_nodes_h.Support.To_bool (Value);
          end;
 
@@ -1163,7 +1313,7 @@ package body Asis_Tool_2.Element is
          function Is_Private_Present return ICE.bool is
             Value : constant Boolean := Asis.Definitions.Is_Private_Present (Element);
          begin
-            State.Add_To_Dot_Label ("Is_Private_Present", Value'Image);
+            State.Add_To_Dot_Label ("Is_Private_Present", Value);
             return a_nodes_h.Support.To_bool (Value);
          end;
 
@@ -1530,7 +1680,8 @@ package body Asis_Tool_2.Element is
             when A_Constraint =>
                Result.The_Union.The_Constraint := Constraint;
             when A_Component_Definition =>
-               State.Add_Not_Implemented;
+               Result.The_Union.The_Component_Definition.
+                 Component_Definition_View := Component_Definition_View;
             when A_Discrete_Subtype_Definition =>
                State.Add_Not_Implemented;
             when A_Discrete_Range =>
@@ -1866,7 +2017,7 @@ package body Asis_Tool_2.Element is
          procedure Add_Is_Defaulted_Association is
             Value : constant Boolean := Asis.Expressions.Is_Defaulted_Association (Element);
          begin
-            State.Add_To_Dot_Label ("Is_Defaulted_Association", Value'Image);
+            State.Add_To_Dot_Label ("Is_Defaulted_Association", Value);
             Result.Is_Defaulted_Association :=
               a_nodes_h.Support.To_bool (Value);
          end;
@@ -1874,7 +2025,7 @@ package body Asis_Tool_2.Element is
          procedure Add_Is_Normalized is
             Value : constant Boolean := Asis.Expressions.Is_Normalized (Element);
          begin
-            State.Add_To_Dot_Label ("Is_Normalized", Value'Image);
+            State.Add_To_Dot_Label ("Is_Normalized", Value);
             Result.Is_Normalized := a_nodes_h.Support.To_bool (Value);
          end;
 
@@ -2048,7 +2199,7 @@ package body Asis_Tool_2.Element is
          procedure Add_Is_Name_Repeated is
             Value : constant Boolean := Asis.Statements.Is_Name_Repeated (Element);
          begin
-            State.Add_To_Dot_Label ("Is_Name_Repeated", Value'Image);
+            State.Add_To_Dot_Label ("Is_Name_Repeated", Value);
             Result.Is_Name_Repeated := a_nodes_h.Support.To_bool (Value);
          end;
 
@@ -2369,7 +2520,7 @@ package body Asis_Tool_2.Element is
          procedure Add_Has_Limited is
             Value : constant Boolean := Asis.Elements.Has_Limited (Element);
          begin
-            State.Add_To_Dot_Label ("Has_Limited", Value'Image);
+            State.Add_To_Dot_Label ("Has_Limited", Value);
             Result.Has_Limited := a_nodes_h.Support.To_bool (Value);
          end;
 
@@ -2579,21 +2730,21 @@ package body Asis_Tool_2.Element is
          procedure Add_Is_Part_Of_Implicit is
             Value : constant Boolean := Asis.Elements.Is_Part_Of_Implicit (Element);
          begin
-            State.Add_To_Dot_Label ("Is_Part_Of_Implicit", Value'Image);
+            State.Add_To_Dot_Label ("Is_Part_Of_Implicit", Value);
             Result.Is_Part_Of_Implicit := a_nodes_h.Support.To_bool (Value);
          end;
 
          procedure Add_Is_Part_Of_Inherited is
             Value : constant Boolean := Asis.Elements.Is_Part_Of_Inherited (Element);
          begin
-            State.Add_To_Dot_Label ("Is_Part_Of_Inherited", Value'Image);
+            State.Add_To_Dot_Label ("Is_Part_Of_Inherited", Value);
             Result.Is_Part_Of_Inherited := a_nodes_h.Support.To_bool (Value);
          end;
 
          procedure Add_Is_Part_Of_Instance is
             Value : constant Boolean := Asis.Elements.Is_Part_Of_Instance (Element);
          begin
-            State.Add_To_Dot_Label ("Is_Part_Of_Instance", Value'Image);
+            State.Add_To_Dot_Label ("Is_Part_Of_Instance", Value);
             Result.Is_Part_Of_Instance := a_nodes_h.Support.To_bool (Value);
          end;
 
@@ -2675,10 +2826,11 @@ package body Asis_Tool_2.Element is
             State.Outputs.Text.Indent;
             State.Dot_Node := Default_Node;
             State.Dot_Label := Default_Label;
-            State.Dot_Node.Node_ID.ID := To_Dot_ID_Type (State.Element_ID);
+            State.Dot_Node.Node_ID.ID :=
+              To_Dot_ID_Type (State.Element_ID, Element_ID_Kind);
 
             -- Result.Debug_Image := Debug_Image;
-            Put_Debug;
+            -- Put_Debug;
             Add_Element_ID;
             Add_Element_Kind;
             Add_Is_Part_Of_Implicit;
@@ -2757,7 +2909,7 @@ package body Asis_Tool_2.Element is
          State.Outputs.Text.End_Line;
          State.Outputs.Text.Dedent;
          State.Outputs.Text.Put_Indented_Line
-           (String'("END " & To_String (Get_Element_ID (Element))));
+           (String'("END " & To_String (State.Element_ID)));
       end Process_Element;
 
    end Post_Children;
@@ -2792,99 +2944,6 @@ package body Asis_Tool_2.Element is
          Control => Process_Control,
          State   => This);
    end Process_Element_Tree;
-
-   -----------
-   -- PRIVATE:
-   -----------
-   procedure Add_To_Dot_Label
-     (This  : in out Class;
-      Name  : in     String;
-      Value : in     String) is
-   begin
--- Instead of this, put the "attribute" in the label:
---        This.Node.Attr_List.Add_Assign_To_First_Attr
---          (Name  => Name,
---           Value => Value);
-      This.Dot_Label.Add_Eq_Row(L => Name, R => Value);
-      This.Outputs.Text.Put_Indented_Line (Name & " => " & Value);
-   end;
-
-   -----------
-   -- PRIVATE:
-   -----------
-   procedure Add_To_Dot_Label
-     (This  : in out Class;
-      Name  : in     String;
-      Value : in     Wide_String) is
-   begin
-      This.Add_To_Dot_Label (Name, To_String (Value));
-   end;
-
-   -----------
-   -- PRIVATE:
-   -----------
-   procedure Add_To_Dot_Label
-     (This  : in out Class;
-      Name  : in     String;
-      ID    : in     a_nodes_h.Element_ID) is
-   begin
-      This.Add_To_Dot_Label (Name, To_String (ID));
-   end;
-
-   -----------
-   -- PRIVATE:
-   -----------
-   procedure Add_To_Dot_Label
-     (This  : in out Class;
-      Value : in     String) is
-   begin
-      This.Dot_Label.Add_3_Col_Cell(Value);
-      This.Outputs.Text.Put_Indented_Line (Value);
-   end;
-
-   -----------
-   -- PRIVATE:
-   -----------
-   procedure Add_Not_Implemented
-     (This : in out Class) is
-   begin
-      This.Add_To_Dot_Label ("ASIS_PROCESSING", String'("NOT_IMPLEMENTED_COMPLETELY"));
-   end Add_Not_Implemented;
-
-   -----------
-   -- PRIVATE:
-   -----------
-   procedure Add_Dot_Edge
-     (This  : in out Class;
-      From  : in     a_nodes_h.Element_ID;
-      To    : in     a_nodes_h.Element_ID;
-      Label : in     String)
-   is
-      Edge_Stmt : Dot.Edges.Stmts.Class; -- Initialized
-   begin
-      if not a_nodes_h."=" (To, anhS.Invalid_Element_ID) then
-         Edge_Stmt.LHS.Node_Id.ID := To_Dot_ID_Type (From);
-         Edge_Stmt.RHS.Node_Id.ID := To_Dot_ID_Type (To);
-         Edge_Stmt.Attr_List.Add_Assign_To_First_Attr
-           (Name  => "label",
-            Value => Label);
-         This.Outputs.Graph.Append_Stmt (new Dot.Edges.Stmts.Class'(Edge_Stmt));
-      end if;
-   end Add_Dot_Edge;
-
-   -----------
-   -- PRIVATE:
-   -----------
-   procedure Add_To_Dot_Label_And_Edge
-     (This  : in out Class;
-      Label : in     String;
-      To    : in     a_nodes_h.Element_ID) is
-   begin
-      This.Add_To_Dot_Label (Label, To_String (To));
-      This.Add_Dot_Edge (From  => This.Element_ID,
-                         To    => To,
-                         Label => Label);
-   end Add_To_Dot_Label_And_Edge;
 
 end Asis_Tool_2.Element;
 

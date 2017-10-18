@@ -43,6 +43,7 @@ private
    package ASU renames Ada.Strings.Unbounded;
    package ATI renames Ada.Text_IO;
    package AWTI renames Ada.Wide_Text_IO;
+   package IC renames Interfaces.C;
    package ICE renames Interfaces.C.Extensions;
    package ICS renames Interfaces.C.Strings;
    package anhS renames a_nodes_h.Support;
@@ -74,9 +75,50 @@ private
    function Spaceless_Image (Item : in Natural) return String;
    function NLB_Image (Item : in Natural) return String renames Spaceless_Image;
 
-   function To_String (Unit_Id : in A4G.A_Types.Unit_Id) return String;
-   function To_String (Element_Id : in a_nodes_h.Element_ID) return String;
-   function To_Dot_ID_Type (Unit_Id : in A4G.A_Types.Unit_Id) return Dot.ID_Type;
-   function To_Dot_ID_Type (Element_Id : in a_nodes_h.Element_ID) return Dot.ID_Type;
+   type ID_Kind is (Unit_ID_Kind, Element_ID_Kind);
+
+   function To_String
+     (Id   : in IC.int;
+      Kind : in ID_Kind) return String;
+
+   function To_Dot_ID_Type
+     (Id   : in IC.int;
+      Kind : in ID_Kind)
+      return Dot.ID_Type;
+
+   -- String:
+   -- Add <Name> => <Value> to the label, and print it if trace is on:
+   procedure Add_To_Dot_Label
+     (Dot_Label : in out Dot.HTML_Like_Labels.Class;
+      Outputs   : in out Outputs_Record;
+      Name      : in     String;
+      Value     : in     String);
+
+   -- Boolean:
+   -- Add <Name> => <Value> to the label, and print it if trace is on:
+   -- ONLY acts if Value = True:
+   procedure Add_To_Dot_Label
+     (Dot_Label : in out Dot.HTML_Like_Labels.Class;
+      Outputs   : in out Outputs_Record;
+      Name      : in     String;
+      Value     : in     Boolean);
+
+   -- String:
+   -- Add <Value> to the label, and print it if trace is on:
+   procedure Add_To_Dot_Label
+     (Dot_Label : in out Dot.HTML_Like_Labels.Class;
+      Outputs   : in out Outputs_Record;
+      Value     : in     String);
+
+   -- Unit_ID or Element_ID:
+   -- Add an edge node to the the dot graph:
+   -- Use for both Unit_ID and Element_ID:
+   procedure Add_Dot_Edge
+     (Outputs   : in out Outputs_Record;
+      From      : in     IC.int;
+      From_Kind : in     ID_Kind;
+      To        : in     IC.int;
+      To_Kind   : in     ID_Kind;
+      Label     : in     String);
 
 end Asis_Tool_2;

@@ -63,5 +63,5 @@ begin
       GNAT_Home  => Options.GNAT_Home.all,
       Debug      => Options.Debug);
    dot_asisfinal;
-   Log ("END.");
+   Log ("END");
 end Run_Asis_Tool_2;
