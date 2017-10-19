@@ -25,7 +25,7 @@ package Asis_Tool_2.Tool is
    -- Call Process first:
    function Get_Nodes
      (This      : in out Class)
-      return a_nodes_h.Node_List_Ptr;
+      return a_nodes_h.Nodes_Struct;
 
 private
 

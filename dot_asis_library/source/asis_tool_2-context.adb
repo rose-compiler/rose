@@ -10,24 +10,18 @@ with a_nodes_h.Support;
 
 package body Asis_Tool_2.Context is
 
-   procedure Create_And_Push_New_A_Node
+   procedure Set_Context
      (Asis_Context : in Asis.Context;
       A_Nodes      : in Standard.A_Nodes.Access_Class)
    is
-      Context : a_nodes_h.Context_Struct :=
-        a_nodes_h.Support.Default_Context_Struct;
-      Node    : a_nodes_h.Node_Struct :=
-        a_nodes_h.Support.Default_Node_Struct;
       use Asis.Ada_Environments;
    begin
-      Context.Name := To_Chars_Ptr (Name (Asis_Context));
-      Context.Parameters := To_Chars_Ptr (Parameters (Asis_Context));
-      Context.Debug_Image := To_Chars_Ptr (Debug_Image (Asis_Context));
-
-      Node.Node_Kind := a_nodes_h.A_Context_Node;
-      Node.the_union.context := Context;
-      A_Nodes.Push (Node);
-   end;
+      A_Nodes.Set
+        (Context =>
+           (Name => To_Chars_Ptr (Name (Asis_Context)),
+            Parameters => To_Chars_Ptr (Parameters (Asis_Context)),
+            Debug_Image => To_Chars_Ptr (Debug_Image (Asis_Context))));
+   end Set_Context;
 
    procedure Process_Units
      (This    : in out Class;
@@ -98,7 +92,7 @@ package body Asis_Tool_2.Context is
       -- Call Begin_Environment first:
       Outputs.Graph.Set_ID
         ("""" & To_String (Asis.Ada_Environments.Name (This.Asis_Context)) & """");
-      Create_And_Push_New_A_Node (This.Asis_Context, Outputs.A_Nodes);
+      Set_Context (This.Asis_Context, Outputs.A_Nodes);
       Process_Units (This, Outputs);
       End_Environment;
       Log ("END");

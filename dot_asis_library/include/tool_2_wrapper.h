@@ -8,7 +8,7 @@ extern "C" void dot_asisinit (void);
 extern "C" void dot_asisfinal (void);
 
 extern "C"
-Node_List_Ptr tool_2_wrapper
+Nodes_Struct tool_2_wrapper
   (char *target_file_in,
    char *gnat_home,
    char *output_dir);

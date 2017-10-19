@@ -20,7 +20,12 @@ obj_dir=${base_dir}/obj
 tool_name=run_asis_tool_2
 target_dir=${base_dir}/../test_units
 #target_units="minimal.adb"
-target_units="unit_2.ads"
+#target_units="unit_2.ads"
+target_units="unit_2.adb"
+#target_units="variable_declaration.ads"
+#target_units="if_statement.adb"
+#target_units="ordinary_type_declaration.ads"
+#target_units=`(cd ${target_dir}; ls *.ad[bs])`
 
 check_for_gnat () {
   log_separator_1

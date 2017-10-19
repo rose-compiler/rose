@@ -38,6 +38,8 @@ package body Asis_Tool_2.Tool is
       -- LEAKS (only intended to be called once per program execution):
       procedure Init_And_Process_Context is
       begin
+         -- -dall - All the ASIS-for-GNAT debug flags are set ON
+         -- Asis.Implementation.Initialize (Parameters => "-dall");
          Asis.Implementation.Initialize;
          This.Outputs.Output_Dir := ASU.To_Unbounded_String (Real_Output_Dir);
          This.Outputs.Text := new Indented_Text.Class;
@@ -116,9 +118,9 @@ package body Asis_Tool_2.Tool is
    ------------
    function Get_Nodes
      (This      : in out Class)
-      return a_nodes_h.Node_List_Ptr is
+      return a_nodes_h.Nodes_Struct is
    begin
-      return This.Outputs.A_Nodes.Get_Head;
+      return This.Outputs.A_Nodes.Get_Nodes;
    end Get_Nodes;
 
 end Asis_Tool_2.Tool;
