@@ -41,7 +41,6 @@ package body Asis_Tool_2 is
                        " (" & To_Wide_String (Aex.Exception_Information (X)) & ")");
       Awti.Put_Line ("TRACEBACK: ");
       Awti.Put_Line (To_Wide_String (GNAT.Traceback.Symbolic.Symbolic_Traceback (X)));
-      Awti.New_Line;
    end Print_Exception_Info;
 
    -----------

@@ -4,6 +4,7 @@ with Asis.Declarations;
 with Asis.Definitions;
 with Asis.Elements;
 with Asis.Expressions;
+with Asis.Exceptions;
 with Asis.Iterator;
 with Asis.Statements;
 -- GNAT-specific:
@@ -100,7 +101,7 @@ package body Asis_Tool_2.Element is
       To    : in     a_nodes_h.Element_ID) is
    begin
       This.Add_To_Dot_Label (Label, To_String (To));
-      This.Add_Dot_Edge (From  => This.Element_ID,
+      This.Add_Dot_Edge (From  => This.Element_IDs.First_Element,
                          To    => To,
                          Label => Label);
    end Add_To_Dot_Label_And_Edge;
@@ -210,7 +211,7 @@ package body Asis_Tool_2.Element is
    begin
       return To_Element_ID_List (Dot_Label       => This.Dot_Label,
                                  Outputs         => This.Outputs,
-                                 This_Element_ID => This.Element_ID,
+                                 This_Element_ID => This.Element_IDs.First_Element,
                                  Elements_In     => Elements_In,
                                  Dot_Label_Name  => Dot_Label_Name,
                                  Add_Edges       => Add_Edges);
@@ -1786,33 +1787,74 @@ package body Asis_Tool_2.Element is
          end;
 
          procedure Add_Corresponding_Name_Declaration is
-            ID : constant a_nodes_h.Element_ID :=
-              Get_Element_ID (Asis.Expressions.Corresponding_Name_Declaration
-                                 (Element));
+            Parent_Name : constant String := Module_Name;
+            Module_Name : constant String := Parent_Name &
+              ".Add_Corresponding_Name_Declaration";
+            procedure Log (Message : in Wide_String) is
+            begin
+               Put_Line (Module_Name & ":  " & To_String (Message));
+            end;
+
+            ID : a_nodes_h.Element_ID := anhS.Invalid_Element_ID;
          begin
+            begin
+               ID := Get_Element_ID
+                 (Asis.Expressions.Corresponding_Name_Declaration (Element));
+            exception
+               when X : Asis.Exceptions.Asis_Inappropriate_Element =>
+                  Log_Exception (X);
+                  Log ("Continuing...");
+            end;
             State.Add_To_Dot_Label
               ("Corresponding_Name_Declaration", To_String (ID));
             Result.Corresponding_Name_Declaration := ID;
          end;
 
          procedure Add_Corresponding_Name_Definition is
-            ID : constant a_nodes_h.Element_ID :=
-              Get_Element_ID (Asis.Expressions.Corresponding_Name_Definition
-                                 (Element));
+            Parent_Name : constant String := Module_Name;
+            Module_Name : constant String := Parent_Name &
+              ".Add_Corresponding_Name_Definition";
+            procedure Log (Message : in Wide_String) is
+            begin
+               Put_Line (Module_Name & ":  " & To_String (Message));
+            end;
+
+            ID : a_nodes_h.Element_ID := anhS.Invalid_Element_ID;
          begin
+            begin
+               ID := Get_Element_ID
+                 (Asis.Expressions.Corresponding_Name_Definition (Element));
+            exception
+               when X : Asis.Exceptions.Asis_Inappropriate_Element =>
+                  Log_Exception (X);
+                  Log ("Continuing...");
+            end;
             State.Add_To_Dot_Label
               ("Corresponding_Name_Definition", To_String (ID));
             Result.Corresponding_Name_Definition := ID;
          end;
 
          procedure Add_Corresponding_Name_Definition_List is
+            Parent_Name : constant String := Module_Name;
+            Module_Name : constant String := Parent_Name &
+              ".Add_Corresponding_Name_Definition_List";
+            procedure Log (Message : in Wide_String) is
+            begin
+               Put_Line (Module_Name & ":  " & To_String (Message));
+            end;
          begin
-            Add_Element_List
-              (This           => State,
-               Elements_In    => Asis.Expressions.
-                 Corresponding_Name_Definition_List (Element),
-               Dot_Label_Name => "Corresponding_Name_Definition_List",
-               List_Out       => Result.Corresponding_Name_Definition_List);
+            begin
+               Add_Element_List
+                 (This           => State,
+                  Elements_In    => Asis.Expressions.
+                    Corresponding_Name_Definition_List (Element),
+                  Dot_Label_Name => "Corresponding_Name_Definition_List",
+                  List_Out       => Result.Corresponding_Name_Definition_List);
+            exception
+               when X : Asis.Exceptions.Asis_Inappropriate_Element =>
+                  Log_Exception (X);
+                  Log ("Continuing...");
+            end;
          end;
 
          procedure Add_Function_Call_Parameters is
@@ -2698,8 +2740,8 @@ package body Asis_Tool_2.Element is
          procedure Add_Element_ID is begin
             -- ID is in the Dot node twice (once in the Label and once in
             -- Node_ID), but not in the a_node twice.
-            State.Add_To_Dot_Label (To_String (State.Element_ID));
-            Result.id := State.Element_ID;
+            State.Add_To_Dot_Label (To_String (State.Element_IDs.First_Element));
+            Result.id := State.Element_IDs.First_Element;
          end;
 
          procedure Add_Element_Kind is begin
@@ -2831,9 +2873,9 @@ package body Asis_Tool_2.Element is
             State.Dot_Label := Default_Label;
 
             -- Get ID:
-            State.Element_ID := Get_Element_ID (Element);
+            State.Element_IDs.Prepend (Get_Element_ID (Element));
             State.Dot_Node.Node_ID.ID :=
-              To_Dot_ID_Type (State.Element_ID, Element_ID_Kind);
+              To_Dot_ID_Type (State.Element_IDs.First_Element, Element_ID_Kind);
 
             -- Result.Debug_Image := Debug_Image;
             -- Put_Debug;
@@ -2915,7 +2957,8 @@ package body Asis_Tool_2.Element is
          State.Outputs.Text.End_Line;
          State.Outputs.Text.Dedent;
          State.Outputs.Text.Put_Indented_Line
-           (String'("END " & To_String (State.Element_ID)));
+           (String'("END " & To_String (State.Element_IDs.First_Element)));
+         State.Element_IDs.Delete_First;
       end Process_Element;
 
    end Post_Children;

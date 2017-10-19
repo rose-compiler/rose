@@ -6,6 +6,7 @@ with Types;
 with a_nodes_h;
 with Dot;
 
+private with Ada.Containers.Doubly_Linked_Lists;
 
 package Asis_Tool_2.Element is
 
@@ -76,6 +77,13 @@ package Asis_Tool_2.Element is
 
 private
 
+   package Element_ID_Lists is new
+     Ada.Containers.Doubly_Linked_Lists
+       (Element_Type => a_nodes_h.Element_ID,
+        "="          => IC."=");
+   -- Make type and operations directly visible:
+   type Element_ID_List is new Element_ID_Lists.List with null record;
+
    -- Can't be limited because generic Asis.Iterator.Traverse_Element doesn't
    -- want limited state information:
    type Class is tagged -- Initialized
@@ -86,8 +94,9 @@ private
          Dot_Node   : Dot.Node_Stmt.Class; -- Initialized
          Dot_Label  : Dot.HTML_Like_Labels.Class; -- Initialized
          A_Element  : a_nodes_h.Element_Struct := anhS.Default_Element_Struct;
-         -- Used when making dot edges to child nodes:
-         Element_ID : a_nodes_h.Element_ID := anhS.Invalid_Element_ID;
+         -- Used when making dot edges to child nodes.  Treated s a stack:
+         Element_IDs : Element_ID_List;
+--           Element_ID : a_nodes_h.Element_ID := anhS.Invalid_Element_ID;
       -- I would like to just pass Outputs through and not store it in the
       -- object, since it is all pointers and we doesn't need to store their
       -- values between calls to Process_Element_Tree. Outputs has to go into

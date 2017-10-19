@@ -70,6 +70,8 @@ private
      Indented_Text.Trace_Put_Line;
 
    procedure Print_Exception_Info (X : in Aex.Exception_Occurrence);
+   procedure Log_Exception (X : in Aex.Exception_Occurrence)
+     renames Print_Exception_Info;
 
    -- Returns the image minus the leading space:
    function Spaceless_Image (Item : in Natural) return String;
