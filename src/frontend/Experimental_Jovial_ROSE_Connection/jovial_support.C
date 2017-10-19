@@ -11,12 +11,15 @@
 #include "jovial_support.h"
 #include "ATtoUntypedJovialTraversal.h"
 
-//TODO: int jovial_main(int argc, char** argv, SgSourceFile* sg_source_file)
-int jovial_main(int argc, char** argv)
+int jovial_main(int argc, char** argv, SgSourceFile* sg_source_file)
    {
-     int status = 0;
+     int i;
+     int status = 1;
+     std::string parse_table;
 
-     printf ("\n WARNING: Call to Jovial frontend not yet implemented! \n\n");
+     printf ("\n WARNING: Call to Jovial frontend not yet fully implemented! \n\n");
+
+     assert(sg_source_file != NULL);
 
   // Rasmussen (9/28/2017): A start at implementing (see fortran_support.C).
   // Need to:
@@ -39,20 +42,65 @@ int jovial_main(int argc, char** argv)
      std::string commandString = stratego_bin_path + "/sglri";
      std::cout << "COMMAND: " << commandString << "\n";
 
-
   // DQ (9/29/2017): Added ifdef to ignore this when ROSE is not configured to use STRATEGO.
   // #ifdef USE_ROSE_STRATEGO_SUPPORT
 
   // Step 1
   // ------
 
-  // Parse each filename (args not associated with "--parseTable", "--" or "-I")
+  // Filename can be obtained from the source-file object
+     std::string filenameWithPath = sg_source_file->getFileName();
+     std::string filenameWithoutPath = Rose::StringUtility::stripPathFromFileName(filenameWithPath);
 
-  // TODO
-     std::string filenameWithPath = "tiny.jovial";
-  // TODO
-  // std::string filenameWithoutPath = StringUtility::stripPathFromFileName(filenameWithPath);
-     std::string filenameWithoutPath = filenameWithPath;
+  // Parse each filename (args not associated with "--parseTable", "--" or "-I")
+     for (i = 1; i < argc; i++)
+        {
+          std::cout << "ARG " << i << " is " << argv[i] << "\n";
+          if (strncmp(argv[i], "--parseTable", 12) == 0)
+             {
+            // TODO
+            // commandString += " -p ";
+            // commandString += argv[i+1];
+            // commandString += " ";
+
+               parse_table = std::string(argv[i+1]);
+               std::cout << "FOUND --parseTable argument: " + parse_table;
+               i += 1;
+             }
+          else
+             {
+            // This skips over commands line arguments that begin with "--" (this does not appears to be meaningful).
+               if (strncmp(argv[i], "--", 2) == 0) 
+                  {
+                 // skip args that are not files
+                    i += 1;
+                    continue;
+                  }
+               else
+                  {
+                 // This only skips over the options that begin with "-I" but not "-I <path>" (where the "-I" and the path are seperated by a space).
+                    if (strncmp(argv[i], "-I", 2) == 0)
+                       {
+                      // Skip the include dir stuff; it's handled by the lexer.
+                      // TODO - not currently true, so skip arg for now? 
+                         i += 1;
+                         continue;
+                       }
+                    else
+                       {
+                      // All other options are ignored.
+                       }
+                  }
+             }
+        }
+
+  // Finished processing command line arguments, make sure there is a parse table
+     if (parse_table.empty() == true)
+        {
+          fprintf(stderr, "fortran_parser: no parse table provided, use option --parseTable\n");
+       // TODO
+       // return status;
+        }
 
   // Step 2
   // ------
@@ -91,7 +139,7 @@ int jovial_main(int argc, char** argv)
      if (file == NULL)
         {
            fprintf(stderr, "\nFAILED: in jovial_main(), unable to open file %s\n\n", filenameWithoutPath.c_str());
-           return 1;
+           return status;
         }
 
      ATerm module_term = ATreadFromTextFile(file);
@@ -102,15 +150,12 @@ int jovial_main(int argc, char** argv)
   // Step 4
   // ------
 
-     Jovial::ATtoUntypedJovialTraversal* aterm_traversal = NULL;
+     ATermSupport::ATtoUntypedJovialTraversal* aterm_traversal = NULL;
 
-  // TODO
-  // aterm_traversal = new Jovial::ATtoUntypedJovialTraversal(sg_source_file);
-     aterm_traversal = new Jovial::ATtoUntypedJovialTraversal(NULL);
+     aterm_traversal = new ATermSupport::ATtoUntypedJovialTraversal(sg_source_file);
 
      if (aterm_traversal->traverse_Module(module_term) != ATtrue)
         {
-           status = 1;
            return status;
         }
 
