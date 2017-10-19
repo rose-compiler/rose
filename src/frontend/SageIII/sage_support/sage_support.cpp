@@ -5447,9 +5447,13 @@ SgSourceFile::build_Jovial_AST( vector<string> argv, vector<string> inputCommand
      CommandlineProcessing::generateArgcArgvFromList(inputCommandLine, jovial_argc, jovial_argv);
 
   // Prototype declaration.
-     int jovial_main(int argc, char** argv);
+  // Rasmussen (10/16/2017): Added SgSourceFile parameter
+     int jovial_main(int argc, char** argv, SgSourceFile* file);
 
-     int frontendErrorLevel = jovial_main (jovial_argc, jovial_argv);
+     SgSourceFile* nonconst_file = const_cast<SgSourceFile*>(this);
+     ROSE_ASSERT(nonconst_file != NULL);
+
+     int frontendErrorLevel = jovial_main (jovial_argc, jovial_argv, nonconst_file);
 
      if ( get_verbose() > 1 )
         {

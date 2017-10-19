@@ -1,40 +1,21 @@
-#ifdef ROSE
 #include "sage3basic.h"
-#endif
+#include "untypedBuilder.h"
 
 #include "ATtoUntypedJovialTraversal.h"
 #include <iostream>
 
-#define PRINT_ATERM_TRAVERSAL 1
+#define PRINT_ATERM_TRAVERSAL 0
 #define PRINT_SOURCE_POSITION 0
 
-using namespace Jovial;
+using namespace ATermSupport;
 
-ATtoUntypedJovialTraversal::ATtoUntypedJovialTraversal(SgSourceFile* source)
+ATtoUntypedJovialTraversal::ATtoUntypedJovialTraversal(SgSourceFile* source) : ATtoUntypedTraversal(source)
 {
-#ifdef ROSE
-   SgUntypedDeclarationStatementList* sg_decls = new SgUntypedDeclarationStatementList();
-   SgUntypedStatementList*            sg_stmts = new SgUntypedStatementList();
-   SgUntypedFunctionDeclarationList*  sg_funcs = new SgUntypedFunctionDeclarationList();
-   SgUntypedGlobalScope*          global_scope = new SgUntypedGlobalScope("",SgToken::FORTRAN_UNKNOWN,sg_decls,sg_stmts,sg_funcs);
-
-   pSourceFile = source;
-   ROSE_ASSERT(pSourceFile != NULL);
-
-   pUntypedFile = new SgUntypedFile(global_scope);
-   ROSE_ASSERT(pUntypedFile != NULL);
-
-// DQ (2/25/2013): Set the default for source position generation to be consistent with other languages (e.g. C/C++).
-   SageBuilder::setSourcePositionClassificationMode(SageBuilder::e_sourcePositionFrontendConstruction);
-//TODO     SageBuilder::setSourcePositionClassificationMode(SageBuilder::e_sourcePositionCompilerGenerated);
-#endif
+   UntypedBuilder::set_language(SgFile::e_Jovial_language);
 }
 
 ATtoUntypedJovialTraversal::~ATtoUntypedJovialTraversal()
 {
-#ifdef ROSE
-   delete pUntypedFile;
-#endif
 }
 
 //========================================================================================
@@ -47,11 +28,7 @@ ATbool ATtoUntypedJovialTraversal::traverse_Module(ATerm term)
 #endif
 
    ATerm module;
-#ifdef ROSE
    SgUntypedGlobalScope* global_scope = get_scope();
-#else
-   SgUntypedScope* global_scope = NULL;
-#endif
 
    if (ATmatch(term, "Module(<term>)", &module)) {
       if (traverse_CompoolModule(module, global_scope)) {
@@ -117,7 +94,7 @@ ATbool ATtoUntypedJovialTraversal::traverse_DeclarationList(ATerm term, SgUntype
 //========================================================================================
 // 1.2.3 MAIN PROGRAM MODULES
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedJovialTraversal::traverse_MainProgramModule(ATerm term, SgUntypedScope* scope)
+ATbool ATtoUntypedJovialTraversal::traverse_MainProgramModule(ATerm term, SgUntypedGlobalScope* global_scope)
 { 
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_MainProgramModule: %s\n", ATwriteToString(term));
@@ -126,14 +103,12 @@ ATbool ATtoUntypedJovialTraversal::traverse_MainProgramModule(ATerm term, SgUnty
    ATerm t_decls, t_name, t_body, t_funcs;
    std::string name;
 
-#ifdef ROSE
-   SgUntypedDeclarationStatementList* sg_decls = new SgUntypedDeclarationStatementList();
-#else
-   SgUntypedDeclarationStatementList* sg_decls = NULL;
-#endif
+   SgUntypedFunctionScope* function_scope = NULL;
+   SgUntypedProgramHeaderDeclaration* main_program = NULL;
+   SgUntypedDeclarationStatementList* global_decls = global_scope->get_declaration_list();
 
    if (ATmatch(term, "MainProgramModule(<term>,<term>,<term>,<term>)", &t_decls,&t_name,&t_body,&t_funcs)) {
-      if (traverse_DeclarationList(t_decls, sg_decls)) {
+      if (traverse_DeclarationList(t_decls, global_decls)) {
          // MATCHED DeclarationList
       } else return ATfalse;
 
@@ -141,11 +116,32 @@ ATbool ATtoUntypedJovialTraversal::traverse_MainProgramModule(ATerm term, SgUnty
          // MATCHED Name
       } else return ATfalse;
 
-      if (traverse_ProgramBody(t_body, scope)) {
+      if (traverse_ProgramBody(t_body, &function_scope)) {
          // MATCHED ProgramBody
+         assert(function_scope != NULL);
       } else return ATfalse;
 
-      if (traverse_NonNestedSubroutineList(t_funcs, scope)) {
+      std::cout << "MAIN_PROGRAM_MODULE:\n";
+
+      std::string label = "";
+
+      SgUntypedInitializedNameList* param_list  = new SgUntypedInitializedNameList();
+      SgUntypedTokenList*           prefix_list = new SgUntypedTokenList();
+
+      SgUntypedType* type = UntypedBuilder::buildType(SgUntypedType::e_void);
+      SgUntypedNamedStatement* end_program_stmt = new SgUntypedNamedStatement("",0,"");
+
+   // create the program
+      main_program   = new SgUntypedProgramHeaderDeclaration(label, name, param_list, type,
+                                                             function_scope, prefix_list, end_program_stmt);
+
+   // This could probably be improved to as it includes decls and funcs in global scope
+      setSourcePosition(main_program, term);
+
+   // add program to the global scope
+      global_scope->get_function_list()->get_func_list().push_back(main_program);
+
+      if (traverse_NonNestedSubroutineList(t_funcs, global_scope)) {
          // MATCHED NonNestedSubroutineList
       } else return ATfalse;
 
@@ -168,7 +164,7 @@ ATbool ATtoUntypedJovialTraversal::traverse_Name(ATerm term, std::string & name)
    return ATtrue;
 }
 
-ATbool ATtoUntypedJovialTraversal::traverse_ProgramBody(ATerm term, SgUntypedScope* scope)
+ATbool ATtoUntypedJovialTraversal::traverse_ProgramBody(ATerm term, SgUntypedFunctionScope** function_scope)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_ProgramBody: %s\n", ATwriteToString(term));
@@ -177,22 +173,23 @@ ATbool ATtoUntypedJovialTraversal::traverse_ProgramBody(ATerm term, SgUntypedSco
    ATerm t_stmt;
    ATerm t_decls, t_stmts, t_funcs, t_labels;
    std::vector<std::string> labels;
+   std::string temp_label = "";
 
-#ifdef ROSE
    SgUntypedDeclarationStatementList* decl_list = new SgUntypedDeclarationStatementList();
    SgUntypedStatementList*            stmt_list = new SgUntypedStatementList();
    SgUntypedFunctionDeclarationList*  func_list = new SgUntypedFunctionDeclarationList();
 
-#else
-   SgUntypedDeclarationStatementList* decl_list = NULL;
-   SgUntypedStatementList*            stmt_list = NULL;
-   SgUntypedFunctionDeclarationList*  func_list = NULL;
-#endif
+   *function_scope = NULL;
 
    if (ATmatch(term, "ProgramSimpleBody(<term>)", &t_stmt)) {
       if (traverse_Statement(t_stmt, stmt_list)) {
          // MATCHED Statement
       } else return ATfalse;
+
+      std::cout << "PROGRAM SIMPLE BODY\n";
+      std::cout << "  # stmts = " << stmt_list->get_stmt_list().size() << "\n";
+
+      *function_scope = new SgUntypedFunctionScope(temp_label,decl_list,stmt_list,func_list);
    }
 
    else if (ATmatch(term, "ProgramBody(<term>,<term>,<term>,<term>)", &t_decls,&t_stmts,&t_funcs,&t_labels)) {
@@ -211,6 +208,18 @@ ATbool ATtoUntypedJovialTraversal::traverse_ProgramBody(ATerm term, SgUntypedSco
       if (traverse_LabelList(t_labels, labels)) {
          // MATCHED LabelList
       } else return ATfalse;
+
+      std::cout << "PROGRAM BODY\n";
+      std::cout << "  # decls = " << decl_list->get_decl_list().size() << "\n";
+      std::cout << "  # stmts = " << stmt_list->get_stmt_list().size() << "\n";
+      std::cout << "  # funcs = " << func_list->get_func_list().size() << "\n";
+      std::cout << "  #labels = " <<     labels.size() << "\n\n";
+
+   // TODO - need list for labels in untyped IR
+      assert(labels.size() <= 1);
+      if (labels.size() == 1) temp_label = labels[0];
+
+      *function_scope = new SgUntypedFunctionScope(temp_label,decl_list,stmt_list,func_list);
    }
 
    else return ATfalse;
@@ -276,6 +285,12 @@ ATbool ATtoUntypedJovialTraversal::traverse_ItemDeclaration(ATerm term, SgUntype
    bool  has_spec;
    std::string spec_string;
 
+   SgUntypedType* declared_type;
+
+   SgUntypedVariableDeclaration* variable_decl = NULL;
+   SgUntypedInitializedNameList* var_name_list = new SgUntypedInitializedNameList();
+   SgUntypedTokenList*               attr_list = new SgUntypedTokenList();
+
    if (ATmatch(term, "ItemDeclaration(<term>,<term>,<term>,<term>)", &t_name,&t_alloc,&t_type,&t_preset)) {
       if (ATmatch(t_name, "<str>", &name)) {
          // MATCHED ItemName
@@ -285,7 +300,7 @@ ATbool ATtoUntypedJovialTraversal::traverse_ItemDeclaration(ATerm term, SgUntype
          // MATCHED OptAllocationSpecifier
       } else return ATfalse;
 
-      if (traverse_ItemTypeDescription(t_type)) {
+      if (traverse_ItemTypeDescription(t_type, &declared_type)) {
          // MATCHED ItemTypeDescription
       } else return ATfalse;
 
@@ -299,19 +314,31 @@ ATbool ATtoUntypedJovialTraversal::traverse_ItemDeclaration(ATerm term, SgUntype
 
    } else return ATfalse;
 
-   // TODO - construct ItemDeclration and add to decl_list
-   // decl_list->get_decl_list().push_back(item_decl);
+   std::cout << "ITEM DECLARATION " << name << "\n";
+
+   std::string label = "";
+
+   SgUntypedInitializedName* initialized_name = new SgUntypedInitializedName(declared_type, name);
+   setSourcePosition(initialized_name, t_name);
+
+// There will be only one variable declared in Jovial
+   var_name_list->get_name_list().push_back(initialized_name);
+
+   variable_decl = new SgUntypedVariableDeclaration(label, declared_type, attr_list, var_name_list);
+   setSourcePosition(variable_decl, term);
+
+   decl_list->get_decl_list().push_back(variable_decl);
 
    return ATtrue;
 }
 
-ATbool ATtoUntypedJovialTraversal::traverse_ItemTypeDescription(ATerm term /* TODO - return type */)
+ATbool ATtoUntypedJovialTraversal::traverse_ItemTypeDescription(ATerm term, SgUntypedType** type)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_ItemTypeDescription: %s\n", ATwriteToString(term));
 #endif
 
-   if (traverse_IntegerItemDescription(term)) {
+   if (traverse_IntegerItemDescription(term, type)) {
       // MATCHED IntegerItemDescription
    } else return ATfalse;
 
@@ -321,7 +348,7 @@ ATbool ATtoUntypedJovialTraversal::traverse_ItemTypeDescription(ATerm term /* TO
 //========================================================================================
 // 2.1.1.1 INTEGER TYPE DESCRIPTIONS
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedJovialTraversal::traverse_IntegerItemDescription(ATerm term /*TODO - return type */)
+ATbool ATtoUntypedJovialTraversal::traverse_IntegerItemDescription(ATerm term, SgUntypedType** type)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_IntegerItemDescription: %s\n", ATwriteToString(term));
@@ -330,11 +357,11 @@ ATbool ATtoUntypedJovialTraversal::traverse_IntegerItemDescription(ATerm term /*
    ATerm t_round_or_truncate, t_size;
    bool has_round_or_truncate, has_size;
 
-   if      (ATmatch(term, "IntegerItemDescription (<term>,<term>)", &t_round_or_truncate,&t_size)) {
-             // MATCHED   signed IntegerItemDescription
+   if (ATmatch(term, "IntegerItemDescription (<term>,<term>)", &t_round_or_truncate,&t_size)) {
+      *type = UntypedBuilder::buildType(SgUntypedType::e_int);
    }
    else if (ATmatch(term, "IntegerItemDescriptionU(<term>,<term>)", &t_round_or_truncate,&t_size)) {
-             // MATCHED unsigned IntegerItemDescription
+      *type = UntypedBuilder::buildType(SgUntypedType::e_uint);
    }
    else return ATfalse;
 
@@ -453,7 +480,7 @@ ATbool ATtoUntypedJovialTraversal::traverse_SimpleStatement(ATerm term, SgUntype
          // MATCHED LabelList
       } else return ATfalse;
 
-      if (traverse_AssignmentStatement(t_stmt, stmt_list)) {
+      if (traverse_AssignmentStatement(t_stmt, labels, stmt_list)) {
          // MATCHED AssignmentStatement
       } else return ATfalse;
 
@@ -495,15 +522,16 @@ ATbool ATtoUntypedJovialTraversal::traverse_LabelList(ATerm term, std::vector<st
 //========================================================================================
 // 4.1 ASSIGNMENT STATEMENTS
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedJovialTraversal::traverse_AssignmentStatement(ATerm term, SgUntypedStatementList* stmt_list)
+ATbool ATtoUntypedJovialTraversal::traverse_AssignmentStatement(ATerm term, std::vector<std::string> & labels, SgUntypedStatementList* stmt_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_AssignmentStatement: %s\n", ATwriteToString(term));
 #endif
 
    ATerm t_vars, t_expr;
+   std::string temp_label = "";
    std::vector<SgUntypedExpression*> vars;
-   SgUntypedExpression * expr;
+   SgUntypedExpression * expr = NULL;
 
    if (ATmatch(term, "AssignmentStatement(<term>,<term>)", &t_vars,&t_expr)) {
 
@@ -514,6 +542,21 @@ ATbool ATtoUntypedJovialTraversal::traverse_AssignmentStatement(ATerm term, SgUn
       if (traverse_Formula(t_expr, &expr)) {
          // MATCHED Formula
       } else return ATfalse;
+
+      std::cout << "ASSIGNMENT STMT\n";
+
+      assert(labels.size() <= 1);
+      assert(  vars.size() == 1);
+      assert(expr);
+
+   // TODO - need list for labels in untyped IR
+      if (labels.size() == 1) temp_label = labels[0];
+
+      SgUntypedAssignmentStatement* assign_stmt = new SgUntypedAssignmentStatement(temp_label,vars[0],expr);
+      setSourcePosition(assign_stmt, term);
+
+      stmt_list->get_stmt_list().push_back(assign_stmt);
+
 
    } else return ATfalse;
 
@@ -565,10 +608,11 @@ ATbool ATtoUntypedJovialTraversal::traverse_IntegerFormula(ATerm term, SgUntyped
    ATerm t_sign, t_expr, t_lhs, t_op, t_rhs;
 
    if (ATmatch(term, "IntegerFormula(<term>,<term>)", &t_sign,&t_expr)) {
+      Jovial_ROSE_Translation::ExpressionKind op_enum;
 
       // OptSign IntegerTerm -> IntegerFormula
 
-      if (traverse_OptSign(t_sign)) {
+      if (traverse_OptSign(t_sign, op_enum)) {
          // MATCHED OptSign
       } else return ATfalse;
 
@@ -576,7 +620,8 @@ ATbool ATtoUntypedJovialTraversal::traverse_IntegerFormula(ATerm term, SgUntyped
          // MATCHED IntegerTerm
       } else return ATfalse;
 
-      // TODO - create the expression
+      std::cout << "INTEGER FORMULA: TODO: add optional unary operator for sign\n";
+      // TODO - check op_enum to see if we need to add unary operator to the expression
       // expr = new SgUntypedExpression()
 
    }
@@ -613,9 +658,14 @@ ATbool ATtoUntypedJovialTraversal::traverse_IntegerPrimary(ATerm term, SgUntyped
 #endif
 
    char* literal;
+   SgUntypedType* type;
+   SgToken::ROSE_Fortran_Keywords keyword = SgToken::FORTRAN_TYPE;
 
    if (ATmatch(term, "<str>", &literal)) {
-      *expr = NULL;  // TODO - create an integer literal expression
+      type = UntypedBuilder::buildType(SgUntypedType::e_int);
+      *expr = new SgUntypedValueExpression(keyword,literal,type);
+      std::cout << "INTEGER LITERAL is " << literal << "\n";
+      setSourcePosition(*expr, term);
    } else return ATfalse;
 
    //  IntegerMachineParameter     -> IntegerPrimary
@@ -629,20 +679,20 @@ ATbool ATtoUntypedJovialTraversal::traverse_IntegerPrimary(ATerm term, SgUntyped
    return ATtrue;
 }
 
-ATbool ATtoUntypedJovialTraversal::traverse_OptSign(ATerm term /*TODO - enum variable for sign */)
+ATbool ATtoUntypedJovialTraversal::traverse_OptSign(ATerm term, Jovial_ROSE_Translation::ExpressionKind & op_enum)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_OptSign: %s\n", ATwriteToString(term));
 #endif
 
    if (ATmatch(term, "no-sign()")) {
-      // sign_enum = NO_SIGN;
+      op_enum = Jovial_ROSE_Translation::e_notAnOperator;
    }
    else if (ATmatch(term, "+")) {
-      // sign_enum = PLUS;
+      op_enum = Jovial_ROSE_Translation::e_unaryPlusOperator;
    }
-   else if (ATmatch(term, "+")) {
-      // sign_enum = MINUS;
+   else if (ATmatch(term, "-")) {
+      op_enum = Jovial_ROSE_Translation::e_unaryMinusOperator;
    }
    else return ATfalse;
 
@@ -656,15 +706,16 @@ ATbool ATtoUntypedJovialTraversal::traverse_IntegerTerm(ATerm term, SgUntypedExp
 #endif
 
    ATerm t_lhs, t_op, t_rhs;
+   std::string op_name;
+   Jovial_ROSE_Translation::ExpressionKind op_enum;
    SgUntypedExpression * lhs, * rhs;
-   OperatorEnum op;
 
    if (ATmatch(term, "IntegerTerm(<term>,<term>,<term>)", &t_lhs,&t_op,&t_rhs)) {
       if (traverse_IntegerTerm(t_lhs, &lhs)) {
          // MATCHED IntegerTerm
       } else return ATfalse;
 
-      if (traverse_MultiplyDivideOrMod(t_op, op)) {
+      if (traverse_MultiplyDivideOrMod(t_op, op_enum, op_name)) {
          // MATCHED MultiplyDivideOrMod
       } else return ATfalse;
 
@@ -672,8 +723,9 @@ ATbool ATtoUntypedJovialTraversal::traverse_IntegerTerm(ATerm term, SgUntypedExp
          // MATCHED IntegerTerm
       } else return ATfalse;
 
-      // TODO - create the expression
-      // expr = new SgUntypedExpression()
+      *expr = new SgUntypedBinaryOperator(op_enum,op_name,lhs,rhs);
+      std::cout << "BINARY OPERATOR " << op_name << "\n";
+      setSourcePosition(*expr, term);
    }
    else if (traverse_IntegerFactor(term, expr)) {
          // MATCHED IntegerFactor
@@ -724,10 +776,14 @@ ATbool ATtoUntypedJovialTraversal::traverse_Variable(ATerm term, SgUntypedExpres
 #endif
 
    char* name;
+   Jovial_ROSE_Translation::ExpressionKind expr_enum = Jovial_ROSE_Translation::e_referenceExpression;
 
    if (ATmatch(term, "<str>" , &name)) {
       // MATCHED NamedVariable
-      *var = NULL;  // TODO - create a variable reference expression
+      std::cout << "VARIABLE " << name << "\n";
+      *var = new SgUntypedReferenceExpression(expr_enum, name);
+      setSourcePosition(*var, term);
+
    } else return ATfalse;
 
    //  BitFunctionVariable         -> Variable           {cons("BitFunctionVariable")}
@@ -765,24 +821,30 @@ ATbool ATtoUntypedJovialTraversal::traverse_VariableList(ATerm term, std::vector
 // 8.2.3 OPERATORS
 //----------------------------------------------------------------------------------------
 
-ATbool ATtoUntypedJovialTraversal::traverse_MultiplyDivideOrMod(ATerm term, OperatorEnum & op)
+ATbool
+ATtoUntypedJovialTraversal::traverse_MultiplyDivideOrMod(ATerm term, Jovial_ROSE_Translation::ExpressionKind & op_enum, std::string & op_name)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_MultiplyDivideOrMod: %s\n", ATwriteToString(term));
 #endif
 
-   op = e_unknown;
-
    if (ATmatch(term, "TIMES()")) {
-      op = e_times;
+      op_enum = Jovial_ROSE_Translation::e_multiplyOperator;
+      op_name = "*";
    }
    else if (ATmatch(term, "DIV()")) {
-      op = e_divide;
+      op_enum = Jovial_ROSE_Translation::e_divideOperator;
+      op_name = "/";
    }
    else if (ATmatch(term, "MOD()")) {
-      op = e_mod;
+      op_enum = Jovial_ROSE_Translation::e_modOperator;
+      op_name = "MOD";
    }
-   else return ATfalse;
+   else {
+      op_enum = Jovial_ROSE_Translation::e_unknown;
+      op_name = "Jovial_operator_unknown";
+      return ATfalse;
+   }
 
    return ATtrue;
 }
