@@ -29,7 +29,7 @@ int main (int argc, char *argv[])
     printf ("%s:  tool_2_wrapper returned NO Elements.\n", prefix);
   } else {
     printf ("%s:  tool_2_wrapper returned %i Elements.\n" , prefix,
-	    nodes.Units->Next_Count + 1);
+	    nodes.Elements->Next_Count + 1);
   }
 
   printf ("%s:  END.\n", prefix);

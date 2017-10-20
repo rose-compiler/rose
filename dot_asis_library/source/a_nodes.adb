@@ -99,7 +99,7 @@ package body A_Nodes is
          List_Node.Next := null;
          List_Node.Next_Count := 0;
       else
-         List_Node.Next := This.Nodes.Units.Next;
+         List_Node.Next := This.Nodes.Units;
          List_Node.Next_Count := This.Nodes.Units.Next_Count + 1;
       end if;
       This.Nodes.Units := new a_nodes_h.Unit_Struct_List_Struct'(List_Node);
@@ -109,7 +109,7 @@ package body A_Nodes is
    -- EXPORTED:
    ------------
    procedure Push
-     (This : access Class;
+     (This    : access Class;
       Element : in     a_nodes_h.Element_Struct)
    is
       Parent_Name : constant String := Module_Name;
@@ -131,7 +131,7 @@ package body A_Nodes is
          List_Node.Next := null;
          List_Node.Next_Count := 0;
       else
-         List_Node.Next := This.Nodes.Elements.Next;
+         List_Node.Next := This.Nodes.Elements;
          List_Node.Next_Count := This.Nodes.Elements.Next_Count + 1;
       end if;
       This.Nodes.Elements := new a_nodes_h.Element_Struct_List_Struct'(List_Node);
