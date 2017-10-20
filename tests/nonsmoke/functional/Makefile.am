@@ -176,8 +176,13 @@ endif
 # Use names set in ROSE/config/Makefile.for.ROSE.includes.and.libs
 # AM_CPPFLAGS = $(ROSE_INCLUDES) $(ATERM_INCLUDE)
 AM_CPPFLAGS = $(ROSE_INCLUDES)
-AM_LDFLAGS  = $(ROSE_RPATHS)
+# AM_CPPFLAGS = $(ROSE_INCLUDES) --Wl,--no-undefined
+# AM_LDFLAGS  = $(ROSE_RPATHS)
+# AM_LDFLAGS  = $(ROSE_RPATHS) --Wl,--no-undefined
+AM_LDFLAGS  = $(ROSE_RPATHS) -Wl,--no-undefined
 LDADD       = $(ROSE_LIBS)
+# LDADD       = $(ROSE_LIBS) --Wl,--no-undefined
+# LDADD       = $(ROSE_LIBS) --no-undefined
 
 testAtermGraphGeneration_LDADD = $(ROSE_LIBS)
 

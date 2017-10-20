@@ -1,0 +1,5 @@
+Notes:
+   1) What does it mean to specify include directories?
+   2) What is the syntax for the command line that we want to reproduce?
+
+
