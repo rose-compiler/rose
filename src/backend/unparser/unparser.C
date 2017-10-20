@@ -324,14 +324,14 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
      currentFile = file;
      ROSE_ASSERT(currentFile != NULL);
 
-#if 0
+#if 1
      printf ("In Unparser::unparseFile(): SageInterface::is_Cxx_language()     = %s \n",SageInterface::is_Cxx_language() ? "true" : "false");
      printf ("In Unparser::unparseFile(): SageInterface::is_Fortran_language() = %s \n",SageInterface::is_Fortran_language() ? "true" : "false");
      printf ("In Unparser::unparseFile(): SageInterface::is_Java_language()    = %s \n",SageInterface::is_Java_language() ? "true" : "false");
      printf ("In Unparser::unparseFile(): SageInterface::is_X10_language()    = %s \n",SageInterface::is_X10_language() ? "true" : "false");
-     printf ("In Unparser::unparseFile(): file->get_outputLanguage()           = %s \n",file->get_outputLanguage() == SgFile::e_C_output_language ? "C" : 
-                                  file->get_outputLanguage() == SgFile::e_Fortran_output_language ? "Fortran" : 
-                                  file->get_outputLanguage() == SgFile::e_Java_output_language ? "Java" : "unknown");
+     printf ("In Unparser::unparseFile(): file->get_outputLanguage()           = %s \n",file->get_outputLanguage() == SgFile::e_C_language ? "C" : 
+                                  file->get_outputLanguage() == SgFile::e_Fortran_language ? "Fortran" : 
+                                  file->get_outputLanguage() == SgFile::e_Java_language ? "Java" : "unknown");
 #endif
 #if 0
      file->display("file: Unparser::unparseFile");
@@ -343,24 +343,24 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
      bool isFortranFile = false;
      if ( ( (file->get_Fortran_only() == true) &&
             (file->get_outputLanguage() ==
-             SgFile::e_default_output_language) ) ||
-          (file->get_outputLanguage() == SgFile::e_Fortran_output_language) )
+             SgFile::e_default_language) ) ||
+          (file->get_outputLanguage() == SgFile::e_Fortran_language) )
        {
          isFortranFile = true;
        }
      bool isCfile = false;
      if ( ( (file->get_C_only() == true) &&
             (file->get_outputLanguage() ==
-             SgFile::e_default_output_language) ) ||
-          (file->get_outputLanguage() == SgFile::e_C_output_language) )
+             SgFile::e_default_language) ) ||
+          (file->get_outputLanguage() == SgFile::e_C_language) )
        {
          isCfile = true;
        }
      bool isCxxFile = false;
      if ( ( (file->get_Cxx_only() == true) &&
             (file->get_outputLanguage() ==
-             SgFile::e_default_output_language) ) ||
-          (file->get_outputLanguage() == SgFile::e_Cxx_output_language) )
+             SgFile::e_default_language) ) ||
+          (file->get_outputLanguage() == SgFile::e_Cxx_language) )
        {
          isCxxFile = true;
        }
@@ -509,7 +509,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
         }
 #endif
 
-  // DQ (12/6/2014): this is the part of the token stream support that is required after transformations have been done in the AST.
+  // DQ (12/6/2014): This is the part of the token stream support that is required after transformations have been done in the AST.
      if ( (isCfile || isCxxFile) && file->get_unparse_tokens() == true)
         {
        // This is only currently being tested and evaluated for C language (should also work for C++, but not yet for Fortran).
@@ -525,7 +525,15 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
           printf ("DONE: Building token stream mapping frontier! \n");
 #endif
         }
-     
+       else
+        {
+       // DQ (29/8/2017): Add a warning clarifying the limitations of this feature to a few specific languages.
+          if (file->get_unparse_tokens() == true)
+             {
+               printf ("Warning: unparse_tokens support is only available for C and C++ languages at present \n");
+             }
+        }
+
 #if 0
   // DQ (6/11/2015): Added to support debugging the difference between C and C++ support for token-based unparsing.
      std::set<SgStatement*> transformedStatementSet_3 = SageInterface::collectTransformedStatements(file);
@@ -569,11 +577,193 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
      ROSE_ASSERT(u_exprStmt != NULL);
      ROSE_ASSERT(u_fortran_locatedNode != NULL);
 
-     ROSE_ASSERT(file->get_outputLanguage() != SgFile::e_error_output_language);
-     ROSE_ASSERT(file->get_outputLanguage() != SgFile::e_Promela_output_language);
+     ROSE_ASSERT(file->get_outputLanguage() != SgFile::e_error_language);
+     ROSE_ASSERT(file->get_outputLanguage() != SgFile::e_Promela_language);
+
+#if 1
+  // DQ (29/8/2017): Adding more general handling for language support.
+
+  // Not clear if we want this, translators might not want to have this constraint.
+  // But use this for debugging initially.  I would like to see the default setting 
+  // for the output language set to be the same as the input language and then a 
+  // translator could change this setting.  If their is a different between the input 
+  // language and the output language then a collection of tests should be generated 
+  // that verify compliance of the AST with the output language specified.
+
+     ROSE_ASSERT(file->get_inputLanguage() == file->get_outputLanguage());
+
+  // switch (file->get_outputLanguage())
+  // switch (file->get_inputlanguage())
+     switch (file->get_outputLanguage())
+        {
+          case SgFile::e_error_language:
+             {
+               printf ("Error: SgFile::e_error_language detected in unparser \n");
+               ROSE_ASSERT(false);
+             }
+
+          case SgFile::e_default_language:
+             {
+               printf ("Error: SgFile::e_default_language detected in unparser \n");
+               ROSE_ASSERT(false);
+             }
+
+          case SgFile::e_C_language:
+          case SgFile::e_Cxx_language:
+             {
+               printf ("Error: SgFile::e_C_language or SgFile::e_Cxx_language detected in unparser (unparser not implemented, unparsing ignored) \n");
+
+#if 0
+               printf ("Unparse using C/C++ unparser by default: unparseScope = %p \n",unparseScope);
+#endif
+            // negara1 (06/29/2011): If unparseScope is provided, unparse it. Otherwise, unparse the global scope (the default behavior).
+               if (unparseScope != NULL) 
+                  {
+                    if (isSgGlobal(unparseScope) != NULL || isSgClassDefinition(unparseScope) != NULL)
+                       {
+                         info.set_current_scope(unparseScope);
+                         const SgDeclarationStatementPtrList& declarations = unparseScope -> getDeclarationList();
+                         for (SgDeclarationStatementPtrList::const_iterator declaration = declarations.begin(); declaration != declarations.end(); declaration++) 
+                            {
+                              u_exprStmt -> unparseStatement(*declaration, info);
+                            }
+                       }
+                      else
+                       {
+                      // Simulate that the unparsed scope is global in order to unparse an included file.
+                         SgGlobal* fakeGlobal = new SgGlobal();
+                         fakeGlobal -> set_file_info(unparseScope -> get_file_info());
+                         info.set_current_scope(fakeGlobal);
+
+                         const SgStatementPtrList& statements = unparseScope -> getStatementList();
+                         for (SgStatementPtrList::const_iterator statement = statements.begin(); statement != statements.end(); statement++)
+                            {
+                              u_exprStmt -> unparseStatement(*statement, info);
+                            }
+                       }
+                    info.set_current_scope(NULL);
+                  }
+                 else
+                  {
+                    u_exprStmt->unparseStatement(globalScope, info);
+                  }
+               break;
+             }
+
+          case SgFile::e_Fortran_language:
+             {
+            // printf ("Error: SgFile::e_Fortran_language detected in unparser (unparser not implemented, unparsing ignored) \n");
+
+            // DQ (6/30/2013): Added support to time the unparsing of the file.
+               TimingPerformance timer ("Source code generation from AST (Fortran):");
+
+            // Unparse using the new Fortran unparser!
+               u_fortran_locatedNode->unparseStatement(globalScope, info);
+               break;
+             }
+
+          case SgFile::e_Java_language:
+             {
+               printf ("Error: SgFile::e_Java_language detected in unparser (unparser not implemented, unparsing ignored) \n");
+
+               Unparse_Java unparser(this, file->getFileName());
+               unparser.unparseJavaFile(file, info);
+               break;
+             }
+
+          case SgFile::e_X10_language:
+             {
+               printf ("Error: SgFile::e_X10_language detected in unparser (unparser not implemented, unparsing ignored) \n");
+               Unparse_X10 unparser(this, file->getFileName());
+
+            // MH (7/2/2014) : disabled unparseStatement() and instead invoke unparseX10File()
+#if 0
+               unparser.unparseStatement(globalScope, info);
+#else
+               unparser.unparseX10File(file, info);
+#endif
+               break;
+             }
+
+          case SgFile::e_Promela_language:
+             {
+               printf ("Error: SgFile::e_Promela_language detected in unparser (unparser not implemented, unparsing ignored) \n");
+               break;
+             }
+
+          case SgFile::e_PHP_language:
+             {
+               printf ("Error: SgFile::e_PHP_language detected in unparser (unparser not implemented, unparsing ignored) \n");
+                    Unparse_PHP unparser(this,file->get_unparse_output_filename());
+                    unparser.unparseStatement(globalScope, info);
+               break;
+             }
+
+          case SgFile::e_Python_language:
+             {
+               printf ("Error: SgFile::e_Python_language detected in unparser (unparser not implemented, unparsing ignored) \n");
+
+#ifdef ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
+               Unparse_Python unparser(this,file->get_unparse_output_filename());
+               unparser.unparseGlobalStmt(globalScope, info);
+#else
+               ROSE_ABORT("unparsing Python requires ROSE_USE_PYTHON be set");
+#endif
+               break;
+             }
+
+          case SgFile::e_Csharp_language:
+             {
+               printf ("Error: SgFile::e_Csharp_language detected in unparser (unparser not implemented, unparsing ignored) \n");
+               break;
+             }
+
+          case SgFile::e_Ada_language:
+             {
+               printf ("NOTE: SgFile::e_Ada_language detected in unparser (initial start at unparser) \n");
+
+               Unparse_Ada unparser(this, file->getFileName());
+               unparser.unparseAdaFile(file, info);
+
+            // printf ("Error: SgFile::e_Ada_language detected in unparser (unparser not implemented, unparsing ignored) \n");
+            // ROSE_ASSERT(false);
+
+               break;
+             }
+
+          case SgFile::e_Jovial_language:
+             {
+               printf ("Error: SgFile::e_Jovial_language detected in unparser (unparser not implemented, unparsing ignored) \n");
+            // ROSE_ASSERT(false);
+               break;
+             }
+
+          case SgFile::e_Cobol_language:
+             {
+               printf ("Error: SgFile::e_Cobol_language detected in unparser (unparser not implemented, unparsing ignored) \n");
+            // ROSE_ASSERT(false);
+               break;
+             }
+
+          case SgFile::e_last_language:
+             {
+               printf ("Error: SgFile::e_last_language detected in unparser \n");
+               ROSE_ASSERT(false);
+               break;
+             }
+
+          default:
+             {
+               printf ("Error: default reached in unparser (unknown output language specified) \n");
+               ROSE_ASSERT(false);
+               break;
+             }
+        }
+
+#else
 
   // Use the information in the SgFile object to control which unparser is called.
-     if ( ( (file->get_Fortran_only() == true) && (file->get_outputLanguage() == SgFile::e_default_output_language) ) || (file->get_outputLanguage() == SgFile::e_Fortran_output_language) )
+     if ( ( (file->get_Fortran_only() == true) && (file->get_outputLanguage() == SgFile::e_default_language) ) || (file->get_outputLanguage() == SgFile::e_Fortran_language) )
         {
        // DQ (6/30/2013): Added support to time the unparsing of the file.
           TimingPerformance timer ("Source code generation from AST (Fortran):");
@@ -588,8 +778,8 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
 #if 0
           printf ("This is not a Fortran file! \n");
 #endif
-          if ( ( ( (file->get_C_only() == true) || (file->get_Cxx_only() == true) || (file->get_Cuda_only() == true) || (file->get_OpenCL_only() == true) ) && (file->get_outputLanguage() == SgFile::e_default_output_language) ) || 
-               ( (file->get_outputLanguage() == SgFile::e_C_output_language) || (file->get_outputLanguage() == SgFile::e_Cxx_output_language) ) )
+          if ( ( ( (file->get_C_only() == true) || (file->get_Cxx_only() == true) || (file->get_Cuda_only() == true) || (file->get_OpenCL_only() == true) ) && (file->get_outputLanguage() == SgFile::e_default_language) ) || 
+               ( (file->get_outputLanguage() == SgFile::e_C_language) || (file->get_outputLanguage() == SgFile::e_Cxx_language) ) )
              {
             // Unparse using C/C++ unparser by default
 #if 0
@@ -679,6 +869,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
                   }
              }
         }
+#endif
 
   // DQ (7/19/2004): Added newline at end of file
   // (some compilers (e.g. g++) complain if no newline is present)
@@ -1716,7 +1907,9 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, const SgTemplateArgume
      bool _forced_transformation_format = false;
      bool _unparse_includes             = false;
 
-  // printf ("In globalUnparseToString(): astNode->sage_class_name() = %s \n",astNode->sage_class_name());
+#if 0
+     printf ("In globalUnparseToString(): astNode->class_name() = %s \n",astNode->class_name().c_str());
+#endif
 
      Unparser_Opt roseOptions( _auto,
                                linefile,
@@ -2122,17 +2315,18 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, const SgTemplateArgume
                          const SgTemplateArgument* templateArgument = isSgTemplateArgument(astNode);
 #if 0
                       // printf ("In globalUnparseToString_OpenMPSafe(): case V_SgTemplateArgument (before): returnString = %s outputString = %s \n",returnString.c_str(),outputString.str());
-                         printf ("In globalUnparseToString_OpenMPSafe(): case V_SgTemplateArgument (before): returnString = %s outputString = %s \n",returnString.c_str(),outputString.str());
+                         printf ("In globalUnparseToString_OpenMPSafe(): case V_SgTemplateArgument (before): returnString = %s outputString = %s \n",returnString.c_str(),outputString.str().c_str());
                       // printf ("In globalUnparseToString_OpenMPSafe(): case V_SgTemplateArgument (before): returnString = %s \n",returnString.c_str());
 #endif
                       // DQ (2/2/2007): Note that we should modify the unparser to take the IR nodes as const pointers, but this is a bigger job than I want to do now!
                          ROSE_ASSERT(roseUnparser.u_exprStmt != NULL);
                          roseUnparser.u_exprStmt->unparseTemplateArgument(const_cast<SgTemplateArgument*>(templateArgument),inheritedAttributeInfo);
-#if 0
+
                       // printf ("In globalUnparseToString_OpenMPSafe(): case V_SgTemplateArgument (after): returnString = %s outputString = %s \n",returnString.c_str(),outputString.str());
                       // printf ("In globalUnparseToString_OpenMPSafe(): case V_SgTemplateArgument (after): returnString = %s outputString = %s \n",returnString.c_str(),outputString.str());
                       // printf ("In globalUnparseToString_OpenMPSafe(): case V_SgTemplateArgument (after): returnString = %s \n",returnString.c_str());
 
+#if 0
                          string local_returnString = outputString.str();
                          printf ("In globalUnparseToString_OpenMPSafe(): case V_SgTemplateArgument (after): local_returnString = %s \n",local_returnString.c_str());
 #endif
@@ -2305,8 +2499,13 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
 
   // Call the unparser mechanism
 
-#if 0
+#if 1
      printf ("Inside of unparseFile ( SgFile* file ) (using filename = %s) \n",file->get_unparse_output_filename().c_str());
+#endif
+
+#if 0
+     printf ("Exiting as a test! \n");
+     assert(false);
 #endif
 
 #if 0
@@ -2343,11 +2542,15 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
   // DQ (4/22/2006): This can be true when the "-E" option is used, but then we should not have called unparse()!
      ROSE_ASSERT(file->get_skip_unparse() == false);
 
+#if 0
+     // OLD CODE: before adding more general support for more lnaguages.
   // If we did unparse an intermediate file then we want to compile that file instead of the original source file.
      if (file->get_unparse_output_filename().empty() == true)
         {
           string outputFilename = "rose_" + file->get_sourceFileNameWithoutPath();
-
+#if 1
+          printf ("In unparseFile(SgFile* file): outputFilename not set using default: outputFilename = %s \n",outputFilename.c_str());
+#endif
        // DQ (9/15/2013): Added support for generated file to be placed into the same directory as the source file.
           SgProject* project = TransformationSupport::getProject(file);
        // ROSE_ASSERT(project != NULL);
@@ -2522,7 +2725,291 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
         ROSE_ASSERT (file->get_unparse_output_filename().empty() == false);
      }
 
+#else
+  // DQ (9/7/2017): This is new code to introduce more general language handling to ROSE.
+
+  // Output prefix (typically "rose_").
+     string output_filename_prefix;
+
+  // Name of output filename (with prefix).
+     string outputFilename;
+
+  // If we did unparse an intermediate file then we want to compile that file instead of the original source file.
+     if (file->get_unparse_output_filename().empty() == true)
+        {
+          switch (file->get_outputLanguage())
+             {
+               case SgFile::e_error_language:
+                  {
+                    printf ("Error: SgFile::e_error_language detected in unparser \n");
+                    ROSE_ASSERT(false);
+                  }
+
+               case SgFile::e_default_language:
+                  {
+                    printf ("Error: SgFile::e_default_language detected in unparser \n");
+                    ROSE_ASSERT(false);
+                  }
+
+               case SgFile::e_C_language:
+               case SgFile::e_Cxx_language:
+                  {
+                    printf ("Error: SgFile::e_C_language or SgFile::e_Cxx_language detected in unparser (unparser not implemented, unparsing ignored) \n");
+
+                    outputFilename = "rose_" + file->get_sourceFileNameWithoutPath();
+#if 1
+                    printf ("In unparseFile(SgFile* file): outputFilename not set using default: outputFilename = %s \n",outputFilename.c_str());
+#endif
+
+                 // Liao 12/29/2010, generate cuda source files
+                    if (file->get_Cuda_only() == true)
+                       {
+                         outputFilename = StringUtility::stripFileSuffixFromFileName (outputFilename);
+                         outputFilename += ".cu";
+                       }
+
+                    break;
+                  }
+
+            // DQ (9/7/2017): Newly added enum value to support binaries (added to general langauge handling).
+               case SgFile::e_Binary_language:
+                  {
+                    printf ("Error: SgFile::e_Binary_language detected in unparser (unparser not implemented, unparsing ignored) \n");
+
+                    ROSE_ASSERT(file->get_binary_only() == true);
+
+                 // outputFilename = file->get_sourceFileNameWithoutPath();
+                    outputFilename += ".s";
+                    break;
+                  }
+
+
+               case SgFile::e_Fortran_language:
+                  {
+                    printf ("Error: SgFile::e_Fortran_language detected in unparser (unparser not implemented, unparsing ignored) \n");
+
+                    outputFilename = "rose_" + file->get_sourceFileNameWithoutPath();
+#if 1
+                    printf ("In unparseFile(SgFile* file): outputFilename not set using default: outputFilename = %s \n",outputFilename.c_str());
+#endif
+                    break;
+                  }
+
+               case SgFile::e_Java_language:
+                  {
+                    printf ("Error: SgFile::e_Java_language detected in unparser (unparser not implemented, unparsing ignored) \n");
+
+                    ROSE_ASSERT(file->get_Java_only() == true);
+
+                 // We try to get the package information back to output the translated source file in the correct folder structure.
+                    SgSourceFile *sourcefile = isSgSourceFile(file);
+                    ROSE_ASSERT(sourcefile && "Try to unparse an SgFile not being an SgSourceFile using the java unparser");
+
+                    SgProject *project = sourcefile -> get_project();
+                    ROSE_ASSERT(project != NULL);
+
+                    SgJavaPackageStatement *package_statement = sourcefile -> get_package();
+                    string package_name = (package_statement ? package_statement -> get_name().getString() : "");
+
+                 // NOTE: Default package equals the empty string ""
+                 // ROSE_ASSERT((packageDecl != NULL) && "Couldn't find the package definition of the java source file");
+                    string outFolder = "";
+                    string ds = project -> get_Java_source_destdir();
+                    if (ds != "") 
+                       {
+                         outFolder = ds;
+                         outFolder += "/";
+                       }
+
+                    outFolder += "rose-output/";
+                    boost::replace_all(package_name, ".", "/");
+                    outFolder += package_name;
+                    outFolder += (package_name.size() > 0 ? "/" : "");
+
+                 // Create package folder structure
+                    boost::filesystem::create_directories(outFolder);
+                    ROSE_ASSERT(boost::filesystem::exists(outFolder));
+                    outputFilename = outFolder + file -> get_sourceFileNameWithoutPath();
+
+                 // Convert Windows-style paths to POSIX-style.
+#ifdef _MSC_VER
+                    boost::replace_all(outputFilename, "\\", "/");
+#endif
 #if 0
+                    printf ("In unparseFile(): generated Java outputFilename = %s \n",outputFilename.c_str());
+#endif
+                    break;
+                  }
+
+               case SgFile::e_X10_language:
+                  {
+                    printf ("Error: SgFile::e_X10_language detected in unparser (unparser not implemented, unparsing ignored) \n");
+
+                    ROSE_ASSERT(file->get_X10_only() == true);
+
+                 // X10 is Java source code; see Java file/class naming conventions.
+                 // Filenames are based on the Java Class name contained in the file.
+                    SgSourceFile *sourcefile = isSgSourceFile(file);
+                    ROSE_ASSERT(sourcefile && "Try to unparse an SgFile not being an SgSourceFile using the x10 unparser");
+
+                    SgProject *project = sourcefile -> get_project();
+                    ROSE_ASSERT(project != NULL);
+
+                    SgJavaPackageStatement *package_statement = sourcefile -> get_package();
+                    string package_name = (package_statement ? package_statement -> get_name().getString() : "");
+                 // NOTE: Default package equals the empty string ""
+                 // ROSE_ASSERT((packageDecl != NULL) && "Couldn't find the package definition of the java source file");
+                    string outFolder = "";
+                    string ds = project -> get_Java_source_destdir();
+                    if (ds != "")
+                       {
+                         outFolder = ds;
+                         outFolder += "/";
+                       }
+                    outFolder += "rose-output/";
+                    boost::replace_all(package_name, ".", "/");
+                    outFolder += package_name;
+                    outFolder += (package_name.size() > 0 ? "/" : "");
+                 // Create package folder structure
+                    string mkdirCommand = string("mkdir -p ") + outFolder;
+                    int status = system (mkdirCommand.c_str());
+                    ROSE_ASSERT(status == 0);
+                    outputFilename = outFolder + file -> get_sourceFileNameWithoutPath();
+
+                    break;
+                  }
+
+               case SgFile::e_Promela_language:
+                  {
+                    printf ("Error: SgFile::e_Promela_language detected in unparser (unparser not implemented, unparsing ignored) \n");
+                    break;
+                  }
+
+               case SgFile::e_PHP_language:
+                  {
+                    printf ("Error: SgFile::e_PHP_language detected in unparser (unparser not implemented, unparsing ignored) \n");
+                    break;
+                  }
+
+               case SgFile::e_Python_language:
+                  {
+                    printf ("Error: SgFile::e_Python_language detected in unparser (unparser not implemented, unparsing ignored) \n");
+
+                    break;
+                  }
+
+               case SgFile::e_Csharp_language:
+                  {
+                    printf ("Error: SgFile::e_Csharp_language detected in unparser (unparser not implemented, unparsing ignored) \n");
+                    break;
+                  }
+
+               case SgFile::e_Ada_language:
+                  {
+                 // GNAT Ada does not allow the flename to be changed, but we can put it into the build tree instead of the source tree (same as Java).
+                 // This detail is not a part of the language standard.
+                    outputFilename = file->get_sourceFileNameWithoutPath();
+
+                    printf ("Ada output language: outputFilename = %s \n",outputFilename.c_str());
+
+                    printf ("Error: SgFile::e_Ada_language detected in unparser (unparser not implemented, unparsing ignored) \n");
+
+                 // ROSE_ASSERT(false);
+                    break;
+                  }
+
+               case SgFile::e_Jovial_language:
+                  {
+                    printf ("Error: SgFile::e_Jovial_language detected in unparser (unparser not implemented, unparsing ignored) \n");
+                 // ROSE_ASSERT(false);
+                    break;
+                  }
+
+               case SgFile::e_Cobol_language:
+                  {
+                    printf ("Error: SgFile::e_Cobol_language detected in unparser (unparser not implemented, unparsing ignored) \n");
+                 // ROSE_ASSERT(false);
+                    break;
+                  }
+
+               case SgFile::e_last_language:
+                  {
+                    printf ("Error: SgFile::e_last_language detected in unparser \n");
+                    ROSE_ASSERT(false);
+                    break;
+                  }
+
+               default:
+                  {
+                    printf ("Error: default reached in unparser (unknown output language specified) \n");
+                    ROSE_ASSERT(false);
+                    break;
+                  }
+             }
+
+
+       // DQ (9/7/2017): Make sure that binaries are processed through the new general language support.
+          ROSE_ASSERT(file->get_binary_only() == false);
+
+       // DQ (9/7/2017): Added support for generated file to be placed into the same directory as the source file.
+          SgProject* project = TransformationSupport::getProject(file);
+
+          if (project != NULL)
+             {
+#if 1
+               printf ("project->get_unparse_in_same_directory_as_input_file() = %s \n",project->get_unparse_in_same_directory_as_input_file() ? "true" : "false");
+#endif
+               if (project->get_unparse_in_same_directory_as_input_file() == true)
+                  {
+                 // outputFilename = Rose::getPathFromFileName(file->get_sourceFileNameWithPath()) + "/rose_" + file->get_sourceFileNameWithoutPath();
+                    outputFilename = Rose::getPathFromFileName(file->get_sourceFileNameWithPath()) + "/" + output_filename_prefix + file->get_sourceFileNameWithoutPath();
+#if 1
+                    printf ("Using filename for unparsed file into same directory as input file: outputFilename = %s \n",outputFilename.c_str());
+#endif
+#if 0
+                    printf("Exiting as test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+             }
+            else
+             {
+               printf ("WARNING: In unparseFile(): file = %p has no associated project \n",file);
+             }
+
+
+       // DQ (9/15/2013): Added assertion.
+          ROSE_ASSERT (file->get_unparse_output_filename().empty() == true);
+
+          SgSourceFile* source_file = isSgSourceFile(file);
+          if (source_file != NULL)
+             {
+               if (project->get_unparser__clobber_input_file())
+                  {
+                 // TOO1 (3/20/2014): Clobber the original input source file X_X
+                 //
+                 //            **CAUTION**RED*ALERT**CAUTION**
+                 //
+
+                    outputFilename = source_file->get_sourceFileNameWithPath();
+                    std::cout << "[WARN] [Unparser] Clobbering the original input file: " << outputFilename << std::endl;
+                  }
+             }
+
+       // string outputFilename = "rose_" + file->get_sourceFileNameWithoutPath();
+#if 1
+          printf ("In unparseFile(SgFile* file): outputFilename not set using default: outputFilename = %s \n",outputFilename.c_str());
+#endif
+
+       // Set the output filename in the SgFile IR node.
+          file->set_unparse_output_filename(outputFilename);
+
+          ROSE_ASSERT (file->get_unparse_output_filename().empty() == false);
+       // assert(file->get_unparse_output_filename().empty() == false);
+        }
+#endif
+
+#if 1
      printf ("Inside of unparseFile ( SgFile* file ) file->get_skip_unparse() = %s \n",file->get_skip_unparse() ? "true" : "false");
 #endif
 
@@ -2538,7 +3025,9 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
           string outputFilename = get_output_filename(*file);
 
           if ( SgProject::get_verbose() > 0 )
+             {
                printf ("Calling the unparser: outputFilename = %s \n",outputFilename.c_str());
+             }
 
        // printf ("In unparseFile(SgFile*): open file for output of generated source code: outputFilename = %s \n",outputFilename.c_str());
 
@@ -2600,6 +3089,7 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
                             }
                        }
                   }
+
                file->set_unparse_output_filename(outputFilename);
              }
 
@@ -2693,6 +3183,10 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
        // roseUnparser.run_unparser();
        // roseUnparser.unparseFile(file,inheritedAttributeInfo);
 
+#if 1
+          printf ("In unparseFile(SgFile*): Calling the unparser for SgFile \n");
+#endif
+
        // DQ (9/2/2008): This one way to handle the variations in type
           switch (file->variantT())
              {
@@ -2727,6 +3221,9 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
                   }
              }          
 
+#if 1
+          printf ("In unparseFile(SgFile*): Closing the output file \n");
+#endif
        // And finally we need to close the file (to flush everything out!)
           ROSE_OutputFile.close();
 

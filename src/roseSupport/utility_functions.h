@@ -87,6 +87,11 @@ ROSE_DLL_API int copy_backend( SgProject* project, UnparseFormatHelp *unparseFor
 ROSE_DLL_API void generatePDF ( const SgProject & project );
 ROSE_DLL_API void generateDOT ( const SgProject & project, std::string filenamePostfix = "" );
 
+// DQ (9/22/2017): Adding support that is can work with any IR node, so that we can generated DOT files on untyped ASTs.
+// I prefer the API that takes a SgNode pointer.
+// ROSE_DLL_API void generateDOT ( SgNode* node, std::string baseFilename, std::string filenamePostfix = "" );
+ROSE_DLL_API void generateDOT ( SgNode* node, std::string filename );
+
 // DQ (9/1/2008): Added function to generate the compete AST when specificed with multiple files 
 // on the command line.  This is the older default behavior of generateDOT (from last year, or so).
 ROSE_DLL_API void generateDOT_withIncludes   ( const SgProject & project, std::string filenamePostfix = "" );
