@@ -91,8 +91,13 @@ void DefUseAnalysis::addAnyElement(tabletype* tabl, SgNode* sgNode,
 #pragma omp critical (DefUseAnalysisaddUseE) 
 #endif
   //  (*tabl)[sgNode].insert(make_pair(initName, defNode));
-  (*tabl)[sgNode].push_back(make_pair(initName, defNode));
-   addID(sgNode);
+  std::pair<SgInitializedName*, SgNode*> el = make_pair(initName, defNode); 
+  multitype currentList = (*tabl)[sgNode];
+  if (find ( currentList.begin(), currentList.end(), el) == currentList.end())
+  {
+    (*tabl)[sgNode].push_back(el);
+    addID(sgNode);
+  }
 }
 
 bool DefUseAnalysismycond(std::pair<SgInitializedName*,SgNode* > n1, SgInitializedName* init) {

@@ -23,7 +23,7 @@ class DefUseAnalysisAbstract : public Support {
   // debugging -------------------------
   bool DEBUG_MODE;
   bool DEBUG_MODE_EXTRA;
-
+  
   // reference to DFA ------------------
   DefUseAnalysis* dfa;
 
