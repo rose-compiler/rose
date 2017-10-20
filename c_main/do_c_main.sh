@@ -22,7 +22,8 @@ gcc=`which gcc` || exit -1
 gcc_bin=`dirname ${gcc}`
 gcc_home=`dirname ${gcc_bin}`
 # Override the default gcc if needed:
-gcc_home=/usr/apps/gnu/4.9.3
+# gcc_home=/usr/apps/gnu/4.9.3
+gcc_home=/nfs/casc/overture/ROSE/opt/rhel7/x86_64/gcc/4.8.4/mpc/1.0/mpfr/3.1.2/gmp/5.1.2
 
 dot_asis_home=${base_dir}/../dot_asis_library
 dot_asis_lib_dir=${dot_asis_home}/lib
