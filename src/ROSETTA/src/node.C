@@ -214,6 +214,7 @@ Grammar::setUpNodes ()
      NEW_TERMINAL_MACRO (UntypedStructureDeclaration,        "UntypedStructureDeclaration",        "TEMP_UntypedStructureDeclaration" );
      NEW_TERMINAL_MACRO (UntypedExceptionDeclaration,        "UntypedExceptionDeclaration",        "TEMP_UntypedExceptionDeclaration" );
      NEW_TERMINAL_MACRO (UntypedExceptionHandlerDeclaration, "UntypedExceptionHandlerDeclaration", "TEMP_UntypedExceptionHandlerDeclaration" );
+     NEW_TERMINAL_MACRO (UntypedUnitDeclaration,             "UntypedUnitDeclaration",             "TEMP_UntypedUnitDeclaration" );
 
   // DQ (1/22/2016): Allow this IR node to be used explicitly in the AST.
   // NEW_NONTERMINAL_MACRO (UntypedDeclarationStatement, UntypedImplicitDeclaration | UntypedVariableDeclaration | 
@@ -224,7 +225,7 @@ Grammar::setUpNodes ()
          UntypedImplicitDeclaration  | UntypedVariableDeclaration  | UntypedFunctionDeclaration |
          UntypedModuleDeclaration    | UntypedSubmoduleDeclaration | UntypedPackageDeclaration  | 
          UntypedStructureDeclaration | UntypedExceptionDeclaration | UntypedExceptionHandlerDeclaration |
-         UntypedTaskDeclaration,
+         UntypedTaskDeclaration      | UntypedUnitDeclaration,
          "UntypedDeclarationStatement", "UntypedDeclarationStatementTag", true);
 
      NEW_TERMINAL_MACRO (UntypedAssignmentStatement,   "UntypedAssignmentStatement",   "TEMP_UntypedAssignmentStatement" );
@@ -239,8 +240,12 @@ Grammar::setUpNodes ()
      NEW_TERMINAL_MACRO (UntypedModuleScope,   "UntypedModuleScope",     "TEMP_UntypedModuleScope" );
      NEW_TERMINAL_MACRO (UntypedGlobalScope,   "UntypedGlobalScope",     "TEMP_UntypedGlobalScope" );
 
+  // DQ (10/15/2017): Allow the SgUntypedScope node to stand on it's own (need not be one of the derived classes in the AST).
+  // Note that we might want to change this in the future, but for now it allows for greater flexability in constructing the untyped AST.
+  // NEW_NONTERMINAL_MACRO (UntypedScope, UntypedFunctionScope | UntypedModuleScope | UntypedGlobalScope,
+  //     "UntypedScope", "UntypedScopeTag", false);
      NEW_NONTERMINAL_MACRO (UntypedScope, UntypedFunctionScope | UntypedModuleScope | UntypedGlobalScope,
-         "UntypedScope", "UntypedScopeTag", false);
+         "UntypedScope", "UntypedScopeTag", true);
 
      NEW_NONTERMINAL_MACRO (UntypedStatement, UntypedDeclarationStatement | UntypedAssignmentStatement | 
          UntypedFunctionCallStatement    | UntypedBlockStatement          | UntypedNamedStatement                | UntypedExpressionStatement |
@@ -690,7 +695,13 @@ Grammar::setUpNodes ()
   // DQ (10/3/2017): New statements specific to general language support.  The philosophy is to add the union of all statements
   // for all languages to the set of untyped IR nodes and provide an enum code to support the larger number of expressions.
      UntypedNullStatement.setFunctionPrototype                 ( "HEADER_UNTYPED_NULL_STATEMENT", "../Grammar/LocatedNode.code");
-     UntypedIfStatement.setFunctionPrototype                   ( "HEADER_UNTYPED_IF_STATEMENT", "../Grammar/LocatedNode.code");
+
+     UntypedIfStatement.setFunctionPrototype           ( "HEADER_UNTYPED_IF_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedIfStatement.setDataPrototype               ( "SgUntypedScope*", "true_body", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     UntypedIfStatement.setDataPrototype               ( "SgUntypedScope*", "false_body", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
      UntypedCaseStatement.setFunctionPrototype                 ( "HEADER_UNTYPED_CASE_STATEMENT", "../Grammar/LocatedNode.code");
      UntypedLoopStatement.setFunctionPrototype                 ( "HEADER_UNTYPED_LOOP_STATEMENT", "../Grammar/LocatedNode.code");
      UntypedWhileStatement.setFunctionPrototype                ( "HEADER_UNTYPED_WHILE_STATEMENT", "../Grammar/LocatedNode.code");
@@ -783,11 +794,18 @@ Grammar::setUpNodes ()
      UntypedStructureDeclaration.setDataPrototype          ( "SgUntypedScope*", "scope", "= NULL",
                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
-  // DQ (9/29/2017): Adding package support.
-     UntypedTaskDeclaration.setFunctionPrototype      ( "HEADER_UNTYPED_PACKAGE_DECLARATION", "../Grammar/LocatedNode.code");
+  // DQ (9/29/2017): Adding task support.
+     UntypedTaskDeclaration.setFunctionPrototype      ( "HEADER_UNTYPED_TASK_DECLARATION", "../Grammar/LocatedNode.code");
      UntypedTaskDeclaration.setDataPrototype          ( "std::string", "name", "= \"\"",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS,  NO_TRAVERSAL, NO_DELETE);
      UntypedTaskDeclaration.setDataPrototype          ( "SgUntypedScope*", "scope", "= NULL",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // DQ (10/15/2017): Adding unit support.
+     UntypedUnitDeclaration.setFunctionPrototype      ( "HEADER_UNTYPED_UNIT_DECLARATION", "../Grammar/LocatedNode.code");
+     UntypedUnitDeclaration.setDataPrototype          ( "std::string", "name", "= \"\"",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS,  NO_TRAVERSAL, NO_DELETE);
+     UntypedUnitDeclaration.setDataPrototype          ( "SgUntypedScope*", "scope", "= NULL",
                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // Rasmussen (8/16/2017): Added UntypedSubmoduleDeclaration (note submodule_ancestor and submodule_parent)
@@ -1381,6 +1399,7 @@ Grammar::setUpNodes ()
      UntypedExceptionDeclaration.setFunctionSource        ( "SOURCE_UNTYPED_EXCEPTION_DECLARATION", "../Grammar/LocatedNode.code");
      UntypedExceptionHandlerDeclaration.setFunctionSource ( "SOURCE_UNTYPED_EXCEPTION_HANDLER_DECLARATION", "../Grammar/LocatedNode.code");
      UntypedTaskDeclaration.setFunctionSource             ( "SOURCE_UNTYPED_TASK_DECLARATION", "../Grammar/LocatedNode.code");
+     UntypedUnitDeclaration.setFunctionSource             ( "SOURCE_UNTYPED_UNIT_DECLARATION", "../Grammar/LocatedNode.code");
 
   // Rasmussen (8/16/2017): Added new IR node to represent a Fortran submodule (a submodule extends an existing module)
      UntypedSubmoduleDeclaration.setFunctionSource     ( "SOURCE_UNTYPED_SUBMODULE_DECLARATION", "../Grammar/LocatedNode.code");

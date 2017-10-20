@@ -4,12 +4,20 @@
 
 #include "csharp_support.h"
 #include <mono/jit/jit.h>
+
+// DQ (10/18/2017): I think these are required for mono_string_new().
+#include <mono/metadata/object.h>
+#include <mono/metadata/environment.h>
+
 #include <mono/metadata/assembly.h>
 #include <assert.h>
 #include <mono/metadata/debug-helpers.h>
 
-static void processThroughMono(std::string& dll)
-   {    
+#include <string.h>
+
+// static void processThroughMono(std::string& dll)
+static void processThroughMono(std::string& dll, std::string sourceFileNameWithPath)
+   {
      printf ("In C++ processThroughMono(): dll = %s \n",dll.c_str());
 
   // Initialize mono runtime
@@ -55,17 +63,32 @@ static void processThroughMono(std::string& dll)
   // Create our container
      Container* c = new Container();
 
+     printf ("In C++ processThroughMono(): sourceFileNameWithPath = %s \n",sourceFileNameWithPath.c_str());
+
+     char buffer[2000];
+  // char* s = const_cast<char*>(sourceFileNameWithPath.c_str());
+     char* s = strncpy(buffer,sourceFileNameWithPath.c_str(),1000);
+     s[1001] = '\0';
+
+  // StringBuilder sss;
+
+     printf ("In C++ processThroughMono(): s = %s \n",s);
+
+
      printf ("In C++ processThroughMono(): Cast to uint64: c = %p \n",c);
 
   // Cast to uint64
-     uint64_t ptr = reinterpret_cast<uint64_t>(c);
+  // uint64_t ptr = reinterpret_cast<uint64_t>(c);
 
   // Fill it as an argument before the mono method invokation
      void* args[1];
+  // void* args[2];
 
      printf ("In C++ processThroughMono(): Fill it as an argument before the mono method invokation \n");
 
-     args[0] = &ptr;
+  // args[0] = &ptr;
+  // args[1] = (void*)s;
+     args[0] = mono_string_new(domain, s);
 
      printf ("In C++ processThroughMono(): Invoke C# code \n");
 
@@ -85,7 +108,12 @@ static void processThroughMono(std::string& dll)
      printf ("Leaving C++ processThroughMono() \n");
    }
 
+#if 0
 void process()
+#else
+// void process( std::string sourceFileNameWithPath)
+void process( char* sourceFileNameWithPath_char)
+#endif
    {
      std::cout << "process()!!" << std::endl;
 
@@ -99,16 +127,27 @@ void process()
   // std::string dll = ROSE_AUTOMAKE_TOP_BUILDDIR + "/src/frontend/Experimental_Csharp_ROSE_Connection/csharp_main.dll";
      std::string dll = "/data1/ROSE_CompileTree/git-LINUX-64bit-4.8.4-EDG49-BOOST_1_60-dq-language-development-rc/src/frontend/Experimental_Csharp_ROSE_Connection/csharp_main.dll";
 
-     printf ("In C++ process(): calling processThroughMono(): dll = %s \n",dll.c_str());
+#if 0
+     std::string sourceFileNameWithPath = "unknown";
+     printf ("In C++ process(std::string): sourceFileNameWithPath = %s \n",sourceFileNameWithPath.c_str());
+#else
+     printf ("In C++ process(std::string): sourceFileNameWithPath = %s \n",sourceFileNameWithPath_char);
+#endif
 
-     processThroughMono(dll);
+     std::string sourceFileNameWithPath = sourceFileNameWithPath_char;
 
-     printf ("In C++ process(): DONE: calling processThroughMono(): dll = %s \n",dll.c_str());
+     printf ("In C++ process(std::string): calling processThroughMono(): dll = %s \n",dll.c_str());
+
+  // processThroughMono(dll);
+     processThroughMono(dll,sourceFileNameWithPath);
+
+     printf ("In C++ process(std::string): DONE: calling processThroughMono(): dll = %s \n",dll.c_str());
    }
 
 void storeResults(uint64_t container,int value)
    {
      Container* c = reinterpret_cast<Container*>(container);
      c->storeValue(value);
+
    }
 

@@ -5350,14 +5350,19 @@ SgSourceFile::build_Csharp_AST( vector<string> argv, vector<string> inputCommand
      char **csharp_argv = NULL;
      CommandlineProcessing::generateArgcArgvFromList(inputCommandLine, csharp_argc, csharp_argv);
 
+     string sourceFileNameWithPath = this->get_sourceFileNameWithPath();
+     printf ("In SgSourceFile::build_Csharp_AST(): sourceFileNameWithPath = %s \n",sourceFileNameWithPath.c_str());
+
   // Prototype declaration.
-     int csharp_main(int argc, char** argv);
+     int csharp_main(int argc, char** argv, string sourceFileNameWithPath);
 
   // int frontendErrorLevel = csharp_main (c_cxx_argc, c_cxx_argv, *this);
-     int frontendErrorLevel = csharp_main (csharp_argc, csharp_argv);
+     int frontendErrorLevel = csharp_main (csharp_argc, csharp_argv, sourceFileNameWithPath);
 
-  // printf ("Exiting after parsing Csharp input... \n");
-  // exit(0);
+#if 1
+     printf ("Exiting after parsing Csharp input... \n");
+     exit(0);
+#endif
 
 #if 0
   // If this was selected as an option then we can stop here (rather than call OFP again).
