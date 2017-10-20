@@ -19,9 +19,25 @@ namespace Ada_ROSE_Translation
 Ada_ROSE_Translation::ASIS_element_id_to_ROSE_MapType Ada_ROSE_Translation::untypedNodeMap;
 Ada_ROSE_Translation::ASIS_element_id_to_ASIS_MapType Ada_ROSE_Translation::asisMap;
 
-Unit_Struct*   Ada_ROSE_Translation::globalUnit        = NULL;
+// DQ (10/15/2017): Remove global unit, since a file's translation unit can have several (and they are traversed within ASIS).
+// Unit_Struct*   Ada_ROSE_Translation::globalUnit        = NULL;
 SgUntypedFile* Ada_ROSE_Translation::globalUntypedFile = NULL;
 #endif
+
+// Attribute constructor.
+Ada_ROSE_Translation::ASIS_Attribute::ASIS_Attribute (int element_id) 
+   : element_id(element_id) 
+   {
+   }
+
+// Attribute toString function (used by Dot file generator).
+string
+Ada_ROSE_Translation::ASIS_Attribute::toString() 
+   { 
+     string s = "element_id = ";
+     s += Rose::StringUtility::numberToString(element_id);
+     return s; 
+   }
 
 
 void
@@ -55,28 +71,56 @@ Ada_ROSE_Translation::getAsisAttribute ( SgUntypedNode* untypedNode)
 
 
 void
-Ada_ROSE_Translation::ada_to_ROSE_translation(List_Node_Struct *head_node, SgSourceFile* file)
+Ada_ROSE_Translation::processUntypedNode (SgUntypedNode* untypedNode, int element_id)
+   {
+     printf ("In processUntypedNode: untypedNode = %p = %s element_id = %d \n",untypedNode,untypedNode->class_name().c_str(),element_id);
+
+  // Put into map using Ada Node ID's as the keys.
+     ROSE_ASSERT(untypedNodeMap.find(element_id) == untypedNodeMap.end());
+     untypedNodeMap[element_id] = untypedNode;
+     ROSE_ASSERT(untypedNodeMap.find(element_id) != untypedNodeMap.end());
+
+     printf ("untypedNodeMap.size() = %zu \n",untypedNodeMap.size());
+
+  // Build the attribute (element id onto the SgUntypedNode).
+     setAsisAttribute (untypedNode,element_id);
+   }
+
+
+// void Ada_ROSE_Translation::ada_to_ROSE_translation(List_Node_Struct *head_node, SgSourceFile* file)
+void
+Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourceFile* file)
    {
 #if 0
      printf ("Start of initial traversal of Ada IR node data structure \n");
 #endif
 
   // Traverse the C data structure representing the IR nodes in the Ada AST (building the asisMap).
-     struct List_Node_Struct *current_node = NULL;
-     current_node = head_node;
-     while (current_node != NULL)
+  // struct List_Node_Struct *current_node = NULL;
+     Element_Struct_List_Struct *current_element = NULL;
+
+     current_element = head_nodes.Elements;
+
+#if 0
+     printf ("current_element = %p \n",current_element);
+#endif
+
+     while (current_element != NULL)
         {
 #if 0
-          printf ("Initial traversal: current_node: Next_Count = %d \n",current_node->Next_Count);
+          printf ("Initial traversal: current_element: Next_Count = %d \n",current_element->Next_Count);
 #endif
        // Build the asisMap of Element ids to Element_Struct pointers. 
-          if (current_node->Node.Node_Kind == An_Element_Node)
+       // if (current_node->Node.Node_Kind == An_Element_Node)
+       // if (current_element->Node.Node_Kind == An_Element_Node)
              {
-               Element_Struct & element    = current_node->Node.The_Union.Element;
+            // Element_Struct & element    = current_node->Node.The_Union.Element;
+               Element_Struct & element    = current_element->Element;
                Element_ID       element_id = element.ID;
-#if 1
+#if 0
                printf ("Initialize the asisMap with each Element_Struct: element_id = %d \n",element_id);
 #endif
+               ROSE_ASSERT(element_id > MAX_NUMBER_OF_UNITS);
 #if 1
             // This code treats duplicate entries as a warning and skips the redundant entry.
                if (asisMap.find(element_id) == asisMap.end())
@@ -95,16 +139,55 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(List_Node_Struct *head_node, SgSou
                ROSE_ASSERT(asisMap.find(element_id) != asisMap.end());
 #endif
              }
+#if 0
+          printf ("current_element->Next = %p \n",current_element->Next);
+#endif
+          current_element = current_element->Next;
+        }
 
-          if (current_node->Node.Node_Kind == A_Unit_Node)
+     Unit_Struct_List_Struct *current_unit = NULL;
+
+     current_unit = head_nodes.Units;
+
+#if 0
+     printf ("current_unit = %p \n",current_unit);
+#endif
+
+     while (current_unit != NULL)
+        {
+#if 0
+          printf ("Initial traversal: current_unit: Next_Count = %d \n",current_unit->Next_Count);
+#endif
+       // if (current_node->Node.Node_Kind == A_Unit_Node)
              {
-               Unit_Struct & unit = current_node->Node.The_Union.Unit;
-               globalUnit = &unit;
+               Unit_Struct & unit = current_unit->Unit;
+            // globalUnit = &unit;
+#if 0
+               printf ("Initialize Unit: filename = %s \n",unit.Text_Name);
+               printf ("Initialize Unit: Declaration_ID = %d \n",unit.Unit_Declaration);
+#endif
+            // This code treats duplicate entries as a warning and skips the redundant entry.
+               int unit_id = unit.ID;
 
-               printf ("Initialize globalUnit: filename = %s \n",unit.Text_Name);
+            // We are using the unit id for the key into the element list (messy).
+               ROSE_ASSERT(unit_id > 0);
+               ROSE_ASSERT(unit_id <= MAX_NUMBER_OF_UNITS);
+
+               if (asisMap.find(unit_id) == asisMap.end())
+                  {
+                    asisMap[unit_id] = (Element_Struct*) (&unit);
+                  }
+                 else
+                  {
+                    printf ("ERROR: element_id = %d already processed (skipping additional instance) \n",unit_id);
+                  }
+
+               ROSE_ASSERT(asisMap.find(unit_id) != asisMap.end());
              }
-
-          current_node = current_node->Next;
+#if 0
+          printf ("current_unit->Next = %p \n",current_unit->Next);
+#endif
+          current_unit = current_unit->Next;
         }
 
 #if 1
@@ -118,68 +201,45 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(List_Node_Struct *head_node, SgSou
 
      printf ("Start of translation traversal of Ada IR node data structure \n");
 
-     current_node = head_node;
-     while (current_node != NULL)
+     current_element = head_nodes.Elements;
+     while (current_element != NULL)
         {
 #if 0
-          printf ("current_node: Next_Count = %d \n",current_node->Next_Count);
+          printf ("current_element: Next_Count = %d \n",current_element->Next_Count);
 #endif
-       // Node_Struct Node;
-       // Node_Kinds  Node_Kind
-          Node_Kinds kind = current_node->Node.Node_Kind;
+          processElement(current_element);
 #if 0
-          printf ("ada_to_ROSE_translation(): kind = %d \n",kind);
+          printf ("current_element->Next = %p \n",current_element->Next);
 #endif
-          Node_Union & nodeUnion = current_node->Node.The_Union;
-#if 0
-          printf ("DONE: ada_to_ROSE_translation(): kind = %d \n",kind);
-#endif
-          switch (kind)
-             {
-               case Not_A_Node:
-                  {
-                 // Does anything get processed for this case?
-                 // processNotANode(nodeUnion);
-                    printf ("Error: there should be no node of this enum value. \n");
-                    ROSE_ASSERT(false);
-                    break;
-                  }
-
-               case A_Context_Node:
-                  {
-                    processContext(nodeUnion);
-                    break;
-                  }
-
-               case A_Unit_Node:
-                  {
-                    processUnit(nodeUnion);
-                    break;
-                  }
-
-               case An_Element_Node:
-                  {
-                    processElement(nodeUnion);
-                    break;
-                  }
-
-               default:
-                  {
-                 // Error
-                    printf ("Error: default case in switch. \n");
-                    ROSE_ASSERT(false);
-                  }
-             }
-
-          current_node = current_node->Next;
+          current_element = current_element->Next;
         }
 
+     current_unit = head_nodes.Units;
+     while (current_unit != NULL)
+        {
+#if 0
+          printf ("current_unit: Next_Count = %d \n",current_unit->Next_Count);
+#endif
+          processUnit(current_unit);
+#if 0
+          printf ("current_unit->Next = %p \n",current_unit->Next);
+#endif
+          current_unit = current_unit->Next;
+        }
+
+     processContext(head_nodes.Context);
+
   // Check that these have been set.
-     ROSE_ASSERT(globalUnit != NULL);
+  // ROSE_ASSERT(globalUnit != NULL);
      ROSE_ASSERT(globalUntypedFile != NULL);
 
-#if 0
+#if 1
      printf ("End of translation traversal of Ada IR node data structure \n");
+#endif
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
 #endif
 
 #if 1
@@ -193,15 +253,19 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(List_Node_Struct *head_node, SgSou
      untypedNodeMap[file_id] = globalUntypedFile;
      ROSE_ASSERT(untypedNodeMap.find(file_id) != untypedNodeMap.end());
 
+#if 0
+     printf ("Need to divide up map into seperate maps for units and elements \n");
+     ROSE_ASSERT(false);
+#endif
 
   // Connect up the SgUntypedNodes for form an AST.
      for (ASIS_element_id_to_ROSE_MapType::iterator i = untypedNodeMap.begin(); i != untypedNodeMap.end(); i++)
         {
        // Iterate over the SgUntypedNodes
           SgUntypedNode* untypedNode = i->second;
-
+#if 0
           printf ("untypedNode = %p = %s \n",untypedNode,untypedNode->class_name().c_str());
-
+#endif
        // We need to connect children to parents from the parent perspective.
 
        // untypedNode = 0x7facf6247010 = SgUntypedInitializedName 
@@ -222,7 +286,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(List_Node_Struct *head_node, SgSou
                  //    1) Compilation_Pragmas
                  //    2) Context_Clause_Elements
                  //    3) Unit_Declaration
-
+#if 0
                     if (globalUnit->Compilation_Pragmas.Length > 0)
                        {
                          printf ("Skipping processing of Compilation_Pragmas \n");
@@ -236,15 +300,76 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(List_Node_Struct *head_node, SgSou
                     int declaration_id = globalUnit->Unit_Declaration;
 
                     printf ("declaration_id = %d \n",declaration_id);
-
+#endif
+#if 0
                     SgUntypedNode* untypedNode = untypedNodeMap[declaration_id];
                     ROSE_ASSERT(untypedNode != NULL);
 
                     printf ("untypedNode = %p = %s \n",untypedNode,untypedNode->class_name().c_str());
+#endif
+                    SgUntypedGlobalScope* globalScope = file->get_scope();
+                    ROSE_ASSERT(globalScope != NULL);
+                    ROSE_ASSERT(globalScope->get_statement_list() != NULL);
+                    SgUntypedStatementPtrList & untypedStatementPtrList = globalScope->get_statement_list()->get_stmt_list();
+                 // untypedStatementPtrList.insert(untypedStatementPtrList.end(),functionDeclaration);
+#if 1
+                    printf ("untypedStatementPtrList.size() = %zu \n",untypedStatementPtrList.size());
+#endif
 
+                 // Find the attribute associated with the SgUntypedGlobalScope.
+                    ASIS_Attribute* attribute = dynamic_cast<ASIS_Attribute*>(untypedNode->getAttribute("ASIS"));
+                    if (attribute != NULL)
+                       {
+                         int globalScopeId = getAsisAttribute(globalScope);
+
+                         printf ("globalScopeId = %d \n",globalScopeId);
+                       }
+#if 0
+                 // Find the ASIS IR nodes that coresponds to our SgUntypedFile node
+                    ROSE_ASSERT(globalUnit != NULL);
+
+                 // Declaration_ID           bodyBlockStatement    = globalUnit->Body_Block_Statement;
+                 // printf ("      bodyBlockStatement = %d \n",bodyBlockStatement);
+
+                 // Unit_List         Corresponding_Children;
+
+                    printf ("globalUnit->Corresponding_Children.Length = %d \n",globalUnit->Corresponding_Children.Length);
+                    for (int i = 0; i < globalUnit->Corresponding_Children.Length; i++)
+                       {
+                         printf ("      child = %d \n",i);
+                       }
+#endif
+                 // Note that zero is reserved for the SgUntypedFile IR node in out map.
+                    for (int i = 1; i < MAX_NUMBER_OF_UNITS; i++)
+                       {
+                         printf ("Processing SgUntypedFile: testing unit_id = %d \n",i);
+                         if (untypedNodeMap.find(i) != untypedNodeMap.end())
+                            {
+                              SgUntypedNode* untypedNode = untypedNodeMap[i];
+                              ROSE_ASSERT(untypedNode != NULL);
+
+                              printf ("Processing SgUntypedFile: identify units: untypedNode = %p = %s \n",untypedNode,untypedNode->class_name().c_str());
+
+                              SgUntypedUnitDeclaration* untypedUnitDeclaration = isSgUntypedUnitDeclaration(untypedNode);
+                              ROSE_ASSERT(untypedUnitDeclaration != NULL);
+
+                              printf ("untypedUnitDeclaration->get_name() = %s \n",untypedUnitDeclaration->get_name().c_str());
+
+                              untypedStatementPtrList.push_back(untypedUnitDeclaration);
+
+                              untypedUnitDeclaration->set_parent(globalScope);
+                            }
+
+                       }
+
+#if 0
+                    printf ("case of SgUntypedFile not supported yet! \n");
+                    ROSE_ASSERT(false);
+#endif
                     SgUntypedFunctionDeclaration* functionDeclaration = isSgUntypedFunctionDeclaration(untypedNode);
                     if (functionDeclaration != NULL)
                        {
+#if 0
                       // Add this function declaration as a declaration in global scope.
                          SgUntypedGlobalScope* globalScope = file->get_scope();
                          ROSE_ASSERT(globalScope != NULL);
@@ -254,6 +379,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(List_Node_Struct *head_node, SgSou
                       // ROSE_ASSERT(globalScope->get_statement_list()->get_stmt_list() != NULL);
                       // globalScope->get_statement_list()->get_stmt_list().insert(functionDeclaration);
                          SgUntypedStatementPtrList & untypedStatementPtrList = globalScope->get_statement_list()->get_stmt_list();
+#endif
                          untypedStatementPtrList.insert(untypedStatementPtrList.end(),functionDeclaration);
 #if 1
                          printf ("untypedStatementPtrList.size() = %zu \n",untypedStatementPtrList.size());
@@ -279,7 +405,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(List_Node_Struct *head_node, SgSou
                            // globalScope->get_statement_list()->get_stmt_list().insert(functionDeclaration);
                               SgUntypedStatementPtrList & untypedStatementPtrList = globalScope->get_statement_list()->get_stmt_list();
                               untypedStatementPtrList.insert(untypedStatementPtrList.end(),functionDeclaration);
-#if 1
+#if 0
                               printf ("untypedStatementPtrList.size() = %zu \n",untypedStatementPtrList.size());
 #endif
                             }
@@ -295,7 +421,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(List_Node_Struct *head_node, SgSou
 
                case V_SgUntypedInitializedName:
                   {
-                 // This is a child nodes and we only visit parents to connect up children, so nothing to do here.
+                 // This is a child node and we only visit parents to connect up children, so nothing to do here.
 
                     printf ("Found a SgUntypedInitializedName \n");
 #if 0
@@ -371,19 +497,6 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(List_Node_Struct *head_node, SgSou
                     break;
                   }
 
-               case V_SgUntypedNamedStatement:
-                  {
-                 // This is a child nodes and we only visit parents to connect up children, so nothing to do here.
-
-                 // Find the parent element and connect this into the list of children.
-                    printf ("Found a SgUntypedNamedStatement \n");
-#if 0
-                    printf ("case of SgUntypedNamedStatement not supported yet! \n");
-                    ROSE_ASSERT(false);
-#endif
-                    break;
-                  }
-
                case V_SgUntypedName:
                   {
                  // This is a child nodes and we only visit parents to connect up children, so nothing to do here.
@@ -403,6 +516,8 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(List_Node_Struct *head_node, SgSou
 
                  // Find the parent element and connect this into the list of children.
                     printf ("Found a SgUntypedStructureDeclaration \n");
+
+                    printf ("ERROR: The data members are not yet in the AST, should be fixed in the upstream Ada support shortly \n");
 #if 0
                     printf ("case of SgUntypedStructureDeclaration not supported yet! \n");
                     ROSE_ASSERT(false);
@@ -429,6 +544,81 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(List_Node_Struct *head_node, SgSou
 
                  // Find the parent element and connect this into the list of children.
                     printf ("Found a SgUntypedPackageDeclaration \n");
+
+
+                    SgUntypedPackageDeclaration* untypedPackageDeclaration = isSgUntypedPackageDeclaration(untypedNode);
+                    ROSE_ASSERT(untypedPackageDeclaration != NULL);
+
+                    SgUntypedScope* untypedScope = untypedPackageDeclaration->get_scope();
+
+                    SgUntypedStatementList* untypedStatementList = untypedScope->get_statement_list();
+                    ROSE_ASSERT(untypedStatementList != NULL);
+
+                 // Get the reference to the ASIS data strucuture.
+                    int declaration_id = getAsisAttribute(untypedNode);
+
+                    printf ("declaration_id = %d \n",declaration_id);
+
+                    ROSE_ASSERT(asisMap.find(declaration_id) != asisMap.end());
+
+                    Element_Struct* element_struct = asisMap[declaration_id];
+                    ROSE_ASSERT(element_struct != NULL);
+
+                    Element_Union & element_union = element_struct->The_Union;
+
+                    Declaration_Struct & declaration = element_union.Declaration;
+
+                 // Now get the children of the Element_Struct.
+                    Declarative_Item_List & visiblePartDeclarativeItems = declaration.Visible_Part_Declarative_Items;
+
+                    for (int i = 0; i < visiblePartDeclarativeItems.Length; i++)
+                       {
+                         int statement_id = visiblePartDeclarativeItems.IDs[i];
+                         printf ("i = %d statement_id = %d \n",i,statement_id);
+#if 1
+                         ROSE_ASSERT(untypedNodeMap.find(statement_id) != untypedNodeMap.end());
+
+                         SgUntypedNode* visiblePart_untypedNode = untypedNodeMap[statement_id];
+                         ROSE_ASSERT(visiblePart_untypedNode != NULL);
+
+                         printf ("visiblePart_untypedNode = %p = %s \n",visiblePart_untypedNode,visiblePart_untypedNode->class_name().c_str());
+
+                         SgUntypedStatement* untypedStatement = isSgUntypedStatement(visiblePart_untypedNode);
+                         ROSE_ASSERT(untypedStatement != NULL);
+
+                         SgUntypedStatementPtrList & stmtList = untypedStatementList->get_stmt_list();
+
+                      // untypedStatementList->get_stmt_list().insert(untypedStatementList->get_stmt_list().end(),untypedStatement);
+                         stmtList.insert(stmtList.end(),untypedStatement);
+#endif
+                         printf ("untypedStatementList->get_stmt_list().size() = %zu \n",untypedStatementList->get_stmt_list().size());
+                       }
+
+                 // Now get the children of the Element_Struct.
+                    Declarative_Item_List & privatePartDeclarativeItems = declaration.Private_Part_Declarative_Items;
+
+                    for (int i = 0; i < privatePartDeclarativeItems.Length; i++)
+                       {
+                         int statement_id = privatePartDeclarativeItems.IDs[i];
+                         printf ("i = %d statement_id = %d \n",i,statement_id);
+
+                         ROSE_ASSERT(untypedNodeMap.find(statement_id) != untypedNodeMap.end());
+
+                         SgUntypedNode* private_untypedNode = untypedNodeMap[statement_id];
+                         ROSE_ASSERT(private_untypedNode != NULL);
+
+                         printf ("private_untypedNode = %p = %s \n",private_untypedNode,private_untypedNode->class_name().c_str());
+
+                         SgUntypedStatement* untypedStatement = isSgUntypedStatement(private_untypedNode);
+                         ROSE_ASSERT(untypedStatement != NULL);
+
+                         SgUntypedStatementPtrList & stmtList = untypedStatementList->get_stmt_list();
+
+                      // untypedStatementList->get_stmt_list().insert(untypedStatementList->get_stmt_list().end(),untypedStatement);
+                         stmtList.insert(stmtList.end(),untypedStatement);
+
+                         printf ("untypedStatementList->get_stmt_list().size() = %zu \n",untypedStatementList->get_stmt_list().size());
+                       }
 #if 0
                     printf ("case of SgUntypedPackageDeclaration not supported yet! \n");
                     ROSE_ASSERT(false);
@@ -442,6 +632,35 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(List_Node_Struct *head_node, SgSou
 
                  // Find the parent element and connect this into the list of children.
                     printf ("Found a SgUntypedScope \n");
+
+                    SgUntypedScope* untypedScope = isSgUntypedScope(untypedNode);
+                    ROSE_ASSERT(untypedScope != NULL);
+
+                    int element_id = getAsisAttribute(untypedScope);
+
+                    printf ("element_id = %d \n",element_id);
+
+                    ROSE_ASSERT(asisMap.find(element_id) != asisMap.end());
+                    Element_Struct* elementStruct = asisMap[element_id];
+
+                    ROSE_ASSERT(elementStruct != NULL);
+
+                    printf ("elementStruct->Element_Kind = %d = %s \n",elementStruct->Element_Kind,elementKindName(elementStruct->Element_Kind).c_str());
+
+                    SgUntypedStatementList* statementList = untypedScope->get_statement_list();
+                    ROSE_ASSERT(statementList != NULL);
+
+                 // ROSE_ASSERT(elementStruct->Element_Kind == A_Declaration);
+
+                    if (elementStruct->Element_Kind == A_Declaration)
+                       {
+                         populateChildrenFromDeclaration(statementList,elementStruct->The_Union.Declaration);
+                       }
+                      else
+                       {
+                         populateChildrenFromDefinition(statementList,elementStruct->The_Union.Definition);
+                       }
+
 #if 0
                     printf ("case of SgUntypedScope not supported yet! \n");
                     ROSE_ASSERT(false);
@@ -559,8 +778,162 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(List_Node_Struct *head_node, SgSou
 
                  // Find the parent element and connect this into the list of children.
                     printf ("Found a SgUntypedFunctionScope \n");
+
+                    SgUntypedFunctionScope* untypedFunctionScope = isSgUntypedFunctionScope(untypedNode);
+                    ROSE_ASSERT(untypedFunctionScope != NULL);
+                    int element_id = getAsisAttribute(untypedFunctionScope);
+
+                    printf ("element_id = %d \n",element_id);
+
+                 // Declaration_Struct* declarationStruct = asisMap[element_id];
+                    Element_Struct* elementStruct = asisMap[element_id];
+                    ROSE_ASSERT(elementStruct != NULL);
+
+                    Element_Kinds   element_kind           = elementStruct->Element_Kind;
+
+                    ROSE_ASSERT(element_kind == A_Declaration);
+
+                 // Declaration_Struct* declarationStruct = asisMap[element_id];
+                    Element_Union & element_union          = elementStruct->The_Union;
+                    Declaration_Struct & declarationStruct = element_union.Declaration;
+                 // ROSE_ASSERT(declarationStruct != NULL);
+
+                    Statement_List & bodyStatements = declarationStruct.Body_Statements;
+                    printf ("      bodyStatements: \n");
+                    processStatementList(bodyStatements);
+
+                    for (int i=0; i < bodyStatements.Length; i++)
+                       {
+                         int id = bodyStatements.IDs[i];
+
+                         printf ("   --- id = %d \n",id);
+
+                         Element_Struct* statement_elementStruct = asisMap[element_id];
+                         ROSE_ASSERT(statement_elementStruct != NULL);
+
+                         Element_Kinds   statement_element_kind           = statement_elementStruct->Element_Kind;
+
+                         printf ("   --- --- statement_element_kind (value) = %d \n",statement_element_kind);
+                         printf ("   --- --- statement_element_kind (name)  = %s \n",elementKindName(statement_element_kind).c_str());
+
+                         ROSE_ASSERT(statement_element_kind == A_Declaration);
+
+                      // Element_Union & statement_element_union          = statement_elementStruct->The_Union;
+                      // Declaration_Struct & statement_declarationStruct = statement_element_union.Declaration;
+
+                         SgUntypedNode* tmp_untypedNode = untypedNodeMap[id];
+                         ROSE_ASSERT(tmp_untypedNode != NULL);
+
+                         SgUntypedStatement* statement_untypedNode = isSgUntypedStatement(tmp_untypedNode);
+                         ROSE_ASSERT(statement_untypedNode != NULL);
+
+                         printf ("   --- --- statement_untypedNode = %p = %s \n",statement_untypedNode,statement_untypedNode->class_name().c_str());
+
+                         untypedFunctionScope->get_statement_list()->get_stmt_list().push_back(statement_untypedNode);
+                       }
+
 #if 0
                     printf ("case of SgUntypedFunctionScope not supported yet! \n");
+                    ROSE_ASSERT(false);
+#endif
+                    break;
+                  }
+
+             case V_SgUntypedUnitDeclaration:
+                  {
+                 // Find the parent element and connect this into the list of children.
+                    printf ("Found a SgUntypedUnitDeclaration \n");
+
+                    SgUntypedUnitDeclaration* untypedUnitDeclaration = isSgUntypedUnitDeclaration(untypedNode);
+                    ROSE_ASSERT(untypedUnitDeclaration != NULL);
+                    int element_id = getAsisAttribute(untypedUnitDeclaration);
+
+                    printf ("element_id = %d \n",element_id);
+
+                 // Declaration_Struct* declarationStruct = asisMap[element_id];
+                    Element_Struct* elementStruct = asisMap[element_id];
+                    ROSE_ASSERT(elementStruct != NULL);
+
+                 // I don't like doing this!
+                    Unit_Struct* unitStruct = (Unit_Struct*) elementStruct;
+
+                    Unit_Kinds   unit_kind           = unitStruct->Unit_Kind;
+
+                    printf ("unit_kind = %d = %s \n",unit_kind,unitKindName(unit_kind).c_str());
+
+                 // Not clear if we need to be restrictive on the kind.
+                 // ROSE_ASSERT(unit_kind == A_Package_Body);
+
+                 // This child is the Unit_Declaration.
+                    int unit_declaration_id = unitStruct->Unit_Declaration;
+
+                    printf ("unit_declaration_id = %d \n",unit_declaration_id);
+
+                    ROSE_ASSERT(untypedNodeMap.find(unit_declaration_id) != untypedNodeMap.end());
+                    SgUntypedNode* tmp_untypedNode = untypedNodeMap[unit_declaration_id];
+                    ROSE_ASSERT(tmp_untypedNode != NULL);
+#if 1
+                    SgUntypedStatement* statement_untypedNode = isSgUntypedStatement(tmp_untypedNode);
+                    ROSE_ASSERT(statement_untypedNode != NULL);
+
+                    printf ("   --- --- statement_untypedNode = %p = %s \n",statement_untypedNode,statement_untypedNode->class_name().c_str());
+
+                    SgUntypedScope* untypedScope = untypedUnitDeclaration->get_scope();
+                    ROSE_ASSERT(untypedScope != NULL);
+
+                    untypedScope->get_statement_list()->get_stmt_list().push_back(statement_untypedNode);
+#else
+                    printf ("   --- --- tmp_untypedNode = %p = %s \n",tmp_untypedNode,tmp_untypedNode->class_name().c_str());
+
+                    SgUntypedScope* scope_untypedNode = isSgUntypedScope(tmp_untypedNode);
+                    ROSE_ASSERT(scope_untypedNode != NULL);
+
+                    untypedUnitDeclaration->set_scope(scope_untypedNode);
+                    ROSE_ASSERT(untypedUnitDeclaration->get_scope() != NULL);
+#endif
+
+#if 0
+                 // Declaration_Struct* declarationStruct = asisMap[element_id];
+                    Element_Union & element_union          = elementStruct->The_Union;
+                    Declaration_Struct & declarationStruct = element_union.Declaration;
+                 // ROSE_ASSERT(declarationStruct != NULL);
+
+                    Statement_List & bodyStatements = declarationStruct.Body_Statements;
+                    printf ("      bodyStatements: \n");
+                    processStatementList(bodyStatements);
+
+                    for (int i=0; i < bodyStatements.Length; i++)
+                       {
+                         int id = bodyStatements.IDs[i];
+
+                         printf ("   --- id = %d \n",id);
+
+                         Element_Struct* statement_elementStruct = asisMap[element_id];
+                         ROSE_ASSERT(statement_elementStruct != NULL);
+
+                         Element_Kinds   statement_element_kind           = statement_elementStruct->Element_Kind;
+
+                         printf ("   --- --- statement_element_kind (value) = %d \n",statement_element_kind);
+                         printf ("   --- --- statement_element_kind (name)  = %s \n",elementKindName(statement_element_kind).c_str());
+
+                         ROSE_ASSERT(statement_element_kind == A_Declaration);
+
+                      // Element_Union & statement_element_union          = statement_elementStruct->The_Union;
+                      // Declaration_Struct & statement_declarationStruct = statement_element_union.Declaration;
+
+                         SgUntypedNode* tmp_untypedNode = untypedNodeMap[id];
+                         ROSE_ASSERT(tmp_untypedNode != NULL);
+
+                         SgUntypedStatement* statement_untypedNode = isSgUntypedStatement(tmp_untypedNode);
+                         ROSE_ASSERT(statement_untypedNode != NULL);
+
+                         printf ("   --- --- statement_untypedNode = %p = %s \n",statement_untypedNode,statement_untypedNode->class_name().c_str());
+
+                         untypedFunctionScope->get_statement_list()->get_stmt_list().push_back(statement_untypedNode);
+                       }
+#endif
+#if 0
+                    printf ("case of SgUntypedUnitDeclaration not supported yet! \n");
                     ROSE_ASSERT(false);
 #endif
                     break;
@@ -600,6 +973,126 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(List_Node_Struct *head_node, SgSou
                     printf ("Found a SgUntypedExceptionHandlerDeclaration \n");
 #if 0
                     printf ("case of SgUntypedExceptionHandlerDeclaration not supported yet! \n");
+                    ROSE_ASSERT(false);
+#endif
+                    break;
+                  }
+
+             case V_SgUntypedExceptionDeclaration:
+                  {
+                 // This is a child nodes and we only visit parents to connect up children, so nothing to do here.
+
+                 // Find the parent element and connect this into the list of children.
+                    printf ("Found a SgUntypedExceptionDeclaration \n");
+#if 0
+                    printf ("case of SgUntypedExceptionDeclaration not supported yet! \n");
+                    ROSE_ASSERT(false);
+#endif
+                    break;
+                  }
+
+             case V_SgUntypedIfStatement:
+                  {
+                 // This is a child nodes and we only visit parents to connect up children, so nothing to do here.
+
+                 // Find the parent element and connect this into the list of children.
+                    printf ("Found a SgUntypedIfStatement \n");
+
+                 // Statement_List & sequenceOfStatements = path.Sequence_Of_Statements;
+                 // printf ("      sequenceOfStatements: \n");
+                 // processElementList(sequenceOfStatements);
+
+                    SgUntypedIfStatement* untypedIfStatement = isSgUntypedIfStatement(untypedNode);
+                    ROSE_ASSERT(untypedIfStatement != NULL);
+                    int element_id = getAsisAttribute(untypedIfStatement);
+
+                    printf ("element_id = %d \n",element_id);
+
+                 // Declaration_Struct* declarationStruct = asisMap[element_id];
+                    Element_Struct* elementStruct = asisMap[element_id];
+                    ROSE_ASSERT(elementStruct != NULL);
+
+                    Element_Kinds   element_kind           = elementStruct->Element_Kind;
+
+                    ROSE_ASSERT(element_kind == A_Statement);
+
+                 // Declaration_Struct* declarationStruct = asisMap[element_id];
+                    Element_Union    & element_union   = elementStruct->The_Union;
+                    Statement_Struct & statementStruct = element_union.Statement;
+
+                    Statement_Kinds statementKind = statementStruct.Statement_Kind;
+                    ROSE_ASSERT(statementKind == An_If_Statement);
+
+                    Path_List & pathList = statementStruct.Statement_Paths;
+                    ROSE_ASSERT(pathList.Length >= 1);
+                    ROSE_ASSERT(pathList.Length <= 2);
+
+                    int true_path_element_id = pathList.IDs[0];
+
+                    printf ("true_path_element_id = %d \n",true_path_element_id);
+
+                    ROSE_ASSERT(untypedNodeMap.find(true_path_element_id) != untypedNodeMap.end());
+                    SgUntypedNode* true_body_untypedNode = untypedNodeMap[true_path_element_id];
+                    ROSE_ASSERT(true_body_untypedNode != NULL);
+
+                    SgUntypedScope* true_body_untypedScope = isSgUntypedScope(true_body_untypedNode);
+                    ROSE_ASSERT(true_body_untypedScope != NULL);
+
+                    untypedIfStatement->set_true_body(true_body_untypedScope);
+
+                    if (pathList.Length > 1)
+                       {
+                         ROSE_ASSERT(pathList.Length == 2);
+                         int false_path_element_id = pathList.IDs[1];
+                         printf ("false_path_element_id = %d \n",false_path_element_id);
+
+                         ROSE_ASSERT(untypedNodeMap.find(false_path_element_id) != untypedNodeMap.end());
+                         SgUntypedNode* false_body_untypedNode = untypedNodeMap[false_path_element_id];
+                         ROSE_ASSERT(false_body_untypedNode != NULL);
+
+                         SgUntypedScope* false_body_untypedScope = isSgUntypedScope(false_body_untypedNode);
+                         ROSE_ASSERT(false_body_untypedScope != NULL);
+
+                         untypedIfStatement->set_false_body(false_body_untypedScope);
+                       }
+#if 0
+                    Statement_List & bodyStatements = statementStruct.Statement_Paths.IDs[0];
+                    printf ("      bodyStatements: \n");
+                    processStatementList(bodyStatements);
+
+                    for (int i=0; i < bodyStatements.Length; i++)
+                       {
+                         int id = bodyStatements.IDs[i];
+
+                         printf ("   --- id = %d \n",id);
+
+                         Element_Struct* statement_elementStruct = asisMap[element_id];
+                         ROSE_ASSERT(statement_elementStruct != NULL);
+
+                         Element_Kinds   statement_element_kind           = statement_elementStruct->Element_Kind;
+
+                         printf ("   --- --- statement_element_kind (value) = %d \n",statement_element_kind);
+                         printf ("   --- --- statement_element_kind (name)  = %s \n",elementKindName(statement_element_kind).c_str());
+
+                         ROSE_ASSERT(statement_element_kind == A_Declaration);
+
+                      // Element_Union & statement_element_union          = statement_elementStruct->The_Union;
+                      // Declaration_Struct & statement_declarationStruct = statement_element_union.Declaration;
+
+                         SgUntypedNode* tmp_untypedNode = untypedNodeMap[id];
+                         ROSE_ASSERT(tmp_untypedNode != NULL);
+
+                         SgUntypedStatement* statement_untypedNode = isSgUntypedStatement(tmp_untypedNode);
+                         ROSE_ASSERT(statement_untypedNode != NULL);
+
+                         printf ("   --- --- statement_untypedNode = %p = %s \n",statement_untypedNode,statement_untypedNode->class_name().c_str());
+
+                      // untypedIfStatement->get_statement_list()->get_stmt_list().push_back(statement_untypedNode);
+                       }
+#endif
+
+#if 0
+                    printf ("case of SgUntypedIfStatement not supported yet! \n");
                     ROSE_ASSERT(false);
 #endif
                     break;
@@ -662,6 +1155,423 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(List_Node_Struct *head_node, SgSou
    }
 
 
+
+void
+Ada_ROSE_Translation::populateChildrenFromDeclaration(SgUntypedStatementList* statementList, Declaration_Struct & declaration)
+   {
+
+     Declaration_Kinds declarationKind = declaration.Declaration_Kind;
+
+     ROSE_ASSERT(statementList != NULL);
+
+     switch (declarationKind)
+        {
+          case A_Package_Body_Declaration:
+          case A_Task_Body_Declaration:
+       // case An_Entry_Body_Declaration:
+             {
+               Element_ID_List        & bodyDeclarativeItems  = declaration.Body_Declarative_Items;
+               printf ("      bodyDeclarativeItems: \n");
+               processElementList(bodyDeclarativeItems);
+               Statement_List         & bodyStatements        = declaration.Body_Statements;
+               printf ("      bodyStatements: \n");
+               processStatementList(bodyStatements);
+               Exception_Handler_List & bodyExceptionHandlers = declaration.Body_Exception_Handlers;
+               printf ("      bodyExceptionHandlers: \n");
+               processExceptionHandlerList(bodyExceptionHandlers);
+               Declaration_ID           bodyBlockStatement    = declaration.Body_Block_Statement;
+               printf ("      bodyBlockStatement = %d \n",bodyBlockStatement);
+
+               bool isNameRepeated = declaration.Is_Name_Repeated;
+               printf ("      isNameRepeated = %s \n",isNameRepeated ? "true" : "false");
+
+               Declaration_ID correspondingDeclaration = declaration.Corresponding_Declaration;
+               printf ("      correspondingDeclaration = %d \n",correspondingDeclaration);
+
+               bool  isSubunit = declaration.Is_Subunit;
+               printf ("      isSubunit = %s \n",isSubunit ? "true" : "false");
+               Declaration_ID correspondingBodyStub = declaration.Corresponding_Body_Stub;
+               printf ("      correspondingBodyStub = %d \n",correspondingBodyStub);
+
+            // Process the bodyDeclarativeItems as children.
+               for (int i = 0; i < bodyDeclarativeItems.Length; i++)
+                  {
+                    int id = bodyDeclarativeItems.IDs[i];
+                    printf ("   --- i = %d \n",i);
+
+                    ROSE_ASSERT(untypedNodeMap.find(id) != untypedNodeMap.end());
+
+                    SgUntypedNode* untypedNode = untypedNodeMap[id];
+                    ROSE_ASSERT(untypedNode != NULL);
+
+                    printf ("   --- untypedNode = %p = %s \n",untypedNode,untypedNode->class_name().c_str());
+
+                    SgUntypedStatement* untypedStatement = isSgUntypedStatement(untypedNode);
+                    ROSE_ASSERT(untypedStatement != NULL);
+
+                    statementList->get_stmt_list().push_back(untypedStatement);
+                  }
+
+
+// #if DEBUG_UNTYPED_NODE_GENERATION
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+          case A_Package_Declaration:
+             {
+               bool isNameRepeated = declaration.Is_Name_Repeated;
+               printf ("isNameRepeated = %s \n",isNameRepeated ? "true" : "false");
+
+               Declaration_ID correspondingDeclaration = declaration.Corresponding_Declaration;
+               printf ("      correspondingDeclaration = %d \n",correspondingDeclaration);
+
+               Declarative_Item_List & visiblePartDeclarativeItems  = declaration.Visible_Part_Declarative_Items;
+               printf ("visiblePartDeclarativeItems: \n");
+               processDeclarativeItemList(visiblePartDeclarativeItems);
+
+               bool                    isPrivatePresent              = declaration.Is_Private_Present;
+               printf ("      isPrivatePresent = %s \n",isPrivatePresent ? "true" : "false");
+
+               Declarative_Item_List & privatePartDeclarativeItems  = declaration.Private_Part_Declarative_Items;
+               printf ("privatePartDeclarativeItems: \n");
+               processDeclarativeItemList(privatePartDeclarativeItems);
+
+            // ********************************
+            // This needs to force the declaration of a function (with function definition, and body).
+               printf ("In processDeclaration(): case A_Package_Declaration: (not implemented) \n");
+
+               Defining_Name_List & names = declaration.Names;
+
+            // Get the name from the name list.
+               ROSE_ASSERT(names.Length == 1);
+               int packageName_id = names.IDs[0];
+
+               printf ("packageName_id = %d \n",packageName_id);
+
+               ROSE_ASSERT(untypedNodeMap.find(packageName_id) != untypedNodeMap.end());
+               SgUntypedNode* untypedNode = untypedNodeMap[packageName_id];
+               ROSE_ASSERT(untypedNode != NULL);
+            // SgUntypedInitializedName* untypedInitializedName = isSgUntypedInitializedName(untypedNode);
+            // ROSE_ASSERT(untypedInitializedName != NULL);
+            // string packageName = untypedInitializedName->get_name();
+               SgUntypedName* untypedName = isSgUntypedName(untypedNode);
+               ROSE_ASSERT(untypedName != NULL);
+               string packageName = untypedName->get_name();
+
+               printf ("packageName = %s \n",packageName.c_str());
+
+// #if DEBUG_UNTYPED_NODE_GENERATION
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+          default:
+             {
+               printf ("Default reached in populateChildrenFromDeclaration(): declarationKind = %d declarationKind = %s \n",declarationKind,declarationKindName(declarationKind).c_str());
+               ROSE_ASSERT(false);
+             }
+        }
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
+
+void
+Ada_ROSE_Translation::populateChildrenFromDefinition( SgUntypedStatementList* statementList, Definition_Struct & definition)
+   {
+     ROSE_ASSERT(statementList != NULL);
+
+     Definition_Kinds definitionKind = definition.Definition_Kind;
+
+     printf ("   In populateChildrenFromDefinition(): \n");
+     printf ("      definitionKind (value) = %d \n",definitionKind);
+     printf ("      definitionKind (name)  = %s \n",definitionKindName(definitionKind).c_str());
+
+     switch (definitionKind)
+        {
+          case Not_A_Definition:
+             {
+               printf ("Error: switch has case Not_A_Definition \n");
+               ROSE_ASSERT(false);
+               break;
+             }
+
+          case A_Type_Definition:
+             {
+            // Ignoring type related child nodes (focus first on statements and then expressions).
+
+            // processTypeDefinition(definition.The_Union.The_Type_Definition);
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+          case A_Subtype_Indication:
+             {
+            // Ignoring type related child nodes (focus first on statements and then expressions).
+
+            // processSubtypeIndication(definition.The_Union.The_Subtype_Indication);
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+          case A_Constraint:
+             {
+            // processConstraint(definition.The_Union.The_Constraint);
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+          case A_Component_Definition:
+             {
+            // Ignoring type related child nodes (focus first on statements and then expressions).
+
+            // processComponentDefinition(definition.The_Union.The_Component_Definition);
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+          case A_Discrete_Subtype_Definition:
+             {
+            // processDiscreteSubtypeDefinition(definition.The_Union.The_Discrete_Subtype_Definition);
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+          case A_Discrete_Range:
+             {
+            // processDiscreteRange(definition.The_Union.The_Discrete_Range);
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+          case An_Unknown_Discriminant_Part:
+             {
+            // processUnknownDiscriminantPart(definition.The_Union.The_Unknown_Discriminant_Part);
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+          case A_Known_Discriminant_Part:
+             {
+            // processKnownDiscriminantPart(definition.The_Union.The_Known_Discriminant_Part);
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+          case A_Record_Definition:
+             {
+            // Ignoring type related child nodes (focus first on statements and then expressions).
+
+            // processRecordDefinition(definition.The_Union.The_Record_Definition);
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+          case A_Null_Record_Definition:
+             {
+            // processNullRecordDefinition(definition.The_Union.The_Null_Record_Definition);
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+          case A_Null_Component:
+             {
+            // processNullComponent(definition.The_Union.The_Null_Component);
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+          case A_Variant_Part:
+             {
+            // processVariantPart(definition.The_Union.The_Variant_Part);
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+          case A_Variant:
+             {
+            // processVariant(definition.The_Union.The_Variant);
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+          case An_Others_Choice:
+             {
+            // processOthersChoice(definition.The_Union.The_Others_Choice);
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+          case An_Access_Definition:
+             {
+            // The information in this node is captured when the SgUntypedName is constructed.
+
+            // processAccessDefinition(definition.The_Union.The_Access_Definition);
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+          case A_Private_Type_Definition:
+             {
+            // processPrivateTypeDefinition(definition.The_Union.The_Private_Type_Definition);
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+          case A_Tagged_Private_Type_Definition:
+             {
+            // processTaggedPrivateTypeDefinition(definition.The_Union.The_Tagged_Private_Type_Definition);
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+          case A_Private_Extension_Definition:
+             {
+            // processPrivateExtensionDefinition(definition.The_Union.The_Private_Extension_Definition);
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+          case A_Task_Definition:
+             {
+            // This is not a node that has children (as I presently understand it).
+
+            // processTaskDefinition(definition.The_Union.The_Task_Definition);
+#if 0
+            // Process the bodyBlockStatements as children.
+               for (int i = 0; i < bodyBlockStatements.Length; i++)
+                  {
+                    int id = bodyBlockStatements.IDs[i];
+                    printf ("   --- i = %d \n",i);
+
+                    ROSE_ASSERT(untypedNodeMap.find(id) != untypedNodeMap.end());
+
+                    SgUntypedNode* untypedNode = untypedNodeMap[id];
+                    ROSE_ASSERT(untypedNode != NULL);
+
+                    printf ("   --- untypedNode = %p = %s \n",untypedNode,untypedNode->class_name().c_str());
+
+                    SgUntypedStatement* untypedStatement = isSgUntypedStatement(untypedNode);
+                    ROSE_ASSERT(untypedStatement != NULL);
+
+                    statementList->get_stmt_list().push_back(untypedStatement);
+                  }
+#endif
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+          case A_Protected_Definition:
+             {
+            // processProtectedDefinition(definition.The_Union.The_Protected_Definition);
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+          case A_Formal_Type_Definition:
+             {
+            // processFormalTypeDefinition(definition.The_Union.The_Formal_Type_Definition);
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+          case An_Aspect_Specification:
+             {
+            // processAspectSpecification(definition.The_Union.The_Aspect_Specification);
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+          default:
+             {
+               printf ("Default reached in populateChildrenFromDefinition(): definitionKind = %d definitionKind = %s \n",definitionKind,definitionKindName(definitionKind).c_str());
+               ROSE_ASSERT(false);
+             }
+        }
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
+
 void
 Ada_ROSE_Translation::testTraversal()
    {
@@ -671,7 +1581,14 @@ Ada_ROSE_Translation::testTraversal()
           public:
                void visit(SgNode* n)
                   {
-                    printf ("In traversal: n = %p = %s \n",n,n->class_name().c_str());
+                    if (n != NULL)
+                       {
+                         printf ("In traversal: n = %p = %s \n",n,n->class_name().c_str());
+                       }
+                      else
+                       {
+                         printf ("In traversal: n = %p \n",n);
+                       }
                   }
         };
 
@@ -687,16 +1604,16 @@ Ada_ROSE_Translation::testTraversal()
 #endif
    }
 
+// void Ada_ROSE_Translation::processContext (Node_Union & nodeUnion)
 void
-Ada_ROSE_Translation::processContext (Node_Union & nodeUnion)
+Ada_ROSE_Translation::processContext (Context_Struct & context)
    {
-
   // For Ada default initialization (ignored).
   // int & dummyMember = nodeUnion.Dummy_Member;
 
      printf ("In Ada_ROSE_Translation::processContext() \n");
 
-     Context_Struct & context = nodeUnion.Context;
+  // Context_Struct & context = nodeUnion.Context;
   // Unit_Struct    & unit    = nodeUnion.Unit;
   // Element_Struct & element = nodeUnion.Element;
 
@@ -717,7 +1634,7 @@ Ada_ROSE_Translation::processContext (Node_Union & nodeUnion)
    }
 
 void
-Ada_ROSE_Translation::processUnit (Node_Union & nodeUnion)
+Ada_ROSE_Translation::processUnit (Unit_Structs_Ptr unitList)
    {
 
   // For Ada default initialization (ignored).
@@ -726,7 +1643,8 @@ Ada_ROSE_Translation::processUnit (Node_Union & nodeUnion)
      printf ("In Ada_ROSE_Translation::processUnit() \n");
 
   // Context_Struct & context = nodeUnion.Context;
-     Unit_Struct    & unit    = nodeUnion.Unit;
+  // Unit_Struct    & unit    = nodeUnion.Unit;
+     Unit_Struct    & unit    = unitList->Unit;
   // Element_Struct & element = nodeUnion.Element;
 #if 0
      printf ("In Ada_ROSE_Translation::processUnit(): after reference to Unit_Struct \n");
@@ -874,32 +1792,102 @@ Ada_ROSE_Translation::processUnit (Node_Union & nodeUnion)
      printf ("   Compilation_Pragmas: \n");
      processPragmaElementList ( unit.Compilation_Pragmas);
 
-     SgUntypedGlobalScope* untypedGlobalScope = new SgUntypedGlobalScope();
-     ROSE_ASSERT(untypedGlobalScope != NULL);
+     if (globalUntypedFile == NULL)
+        {
+          SgUntypedGlobalScope* untypedGlobalScope = new SgUntypedGlobalScope();
+          ROSE_ASSERT(untypedGlobalScope != NULL);
+
+       // Add the statement list to the global scope (the constructor preinitialization 
+       // should do this (so this should be fixed in the general untyped node support).
+          SgUntypedStatementList* untypedStatementList = new SgUntypedStatementList();
+          ROSE_ASSERT(untypedStatementList != NULL);
+          untypedGlobalScope->set_statement_list(untypedStatementList);
+
+          ROSE_ASSERT(untypedGlobalScope->get_statement_list() != NULL);
+
+          SgUntypedFile* untypedFile = new SgUntypedFile(untypedGlobalScope);
+          ROSE_ASSERT(untypedFile != NULL);
+
+          globalUntypedFile = untypedFile;
+        }
+       else
+        {
+          printf ("SgUntypedFile node has previously been built! \n");
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
+#if 1
+  // This will build a scope in the unit declaration.
 
   // Add the statement list to the global scope (the constructor preinitialization 
   // should do this (so this should be fixed in the general untyped node support).
      SgUntypedStatementList* untypedStatementList = new SgUntypedStatementList();
      ROSE_ASSERT(untypedStatementList != NULL);
-     untypedGlobalScope->set_statement_list(untypedStatementList);
 
-     ROSE_ASSERT(untypedGlobalScope->get_statement_list() != NULL);
+     SgUntypedScope* untypedScope = new SgUntypedScope();
+     ROSE_ASSERT(untypedScope != NULL);
 
-     SgUntypedFile* untypedFile = new SgUntypedFile(untypedGlobalScope);
-     ROSE_ASSERT(untypedFile != NULL);
+     untypedScope->set_statement_list(untypedStatementList);
+     ROSE_ASSERT(untypedScope->get_statement_list() != NULL);
 
-     globalUntypedFile = untypedFile;
+#if 0
+     SgUntypedFunctionDeclarationList* untypedFunctionDeclarationList = new SgUntypedFunctionDeclarationList();
+     ROSE_ASSERT(untypedFunctionDeclarationList != NULL);
+
+     untypedScope->set_function_list(untypedFunctionDeclarationList);
+     ROSE_ASSERT(untypedScope->get_function_list() != NULL);
+#endif
+
+     printf ("untypedScope in SgUntypedUnitDeclaration = %p = %s \n",untypedScope,untypedScope->class_name().c_str());
+     printf ("untypedScope->get_statement_list() = %p \n",untypedScope->get_statement_list());
+     printf ("untypedScope->get_function_list()  = %p \n",untypedScope->get_function_list());
+
+     printf ("untypedStatementList->get_stmt_list().size() = %zu \n",untypedStatementList->get_stmt_list().size());
+
+     SgUntypedUnitDeclaration* untypedUnitDeclaration = new SgUntypedUnitDeclaration();
+     ROSE_ASSERT(untypedUnitDeclaration != NULL);
+
+     untypedUnitDeclaration->set_scope(untypedScope);
+     ROSE_ASSERT(untypedUnitDeclaration->get_scope() != NULL);
+#else
+  // We want to also build the scope in the unit declaration (so we want the code above).
+  // We want to use the scoep build in another rule to avoid redundent scope handling.
+     SgUntypedUnitDeclaration* untypedUnitDeclaration = new SgUntypedUnitDeclaration();
+     ROSE_ASSERT(untypedUnitDeclaration != NULL);
+#endif
+
+  // Not clear if this or the unique name is best to use here (this is more representative of the structure).
+     untypedUnitDeclaration->set_name(unitFullName);
+
+  // DQ (10/15/2017): We need a concept of element_id to put the unit into the maps.
+  // int id = unit_id;
+     printf ("Using unit_id for element_id in maps: unit_id = %d \n",unit_id);
+
+  // Note that zero is reserved for the SgUntypedFile IR node in out map (units start at unit_id == 1)
+     ROSE_ASSERT(unit_id > 0);
+
+     printf ("Processing untypedUnitDeclaration = %p = %s unit_id = %d \n",untypedUnitDeclaration,untypedUnitDeclaration->get_name().c_str(),unit_id);
+
+     processUntypedNode(untypedUnitDeclaration,unit_id);
 
   // We don't need an attribute for this SgUntypedFile.
   // Note that the value (zero) is not significant because we don't use the value to look up the unit.
   // addAsisAttribute (globalUntypedFile,0);
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
    }
 
 
+// void Ada_ROSE_Translation::processElement (Node_Union & nodeUnion)
 void
-Ada_ROSE_Translation::processElement (Node_Union & nodeUnion)
+Ada_ROSE_Translation::processElement (Element_Structs_Ptr elementList)
    {
-
   // For Ada default initialization (ignored).
   // int & dummyMember = nodeUnion.Dummy_Member;
 
@@ -910,7 +1898,8 @@ Ada_ROSE_Translation::processElement (Node_Union & nodeUnion)
      printf ("In Ada_ROSE_Translation::processElement() \n");
 #endif
 
-     Element_Struct & element = nodeUnion.Element;
+  // Element_Struct & element = nodeUnion.Element;
+     Element_Struct & element = elementList->Element;
 
      Element_ID      element_id             = element.ID;
      Element_Kinds   element_kind           = element.Element_Kind;
@@ -926,7 +1915,7 @@ Ada_ROSE_Translation::processElement (Node_Union & nodeUnion)
 
      Element_Union & element_union          = element.The_Union;
 
-     printf ("In processElement(): \n");
+     printf ("\n\nIn processElement(): \n");
      printf ("   element_id                     = %d \n",element_id);
      printf ("   element_kind (vale)            = %d \n",element_kind);
      printf ("   element_kind (name)            = %s \n",elementKindName(element_kind).c_str());
@@ -988,7 +1977,7 @@ Ada_ROSE_Translation::processElement (Node_Union & nodeUnion)
                printf ("   In Ada_ROSE_Translation::processElement(): case A_Definition: not implemented \n");
 
                Definition_Struct & definition = element_union.Definition;
-               processDefinition(definition);
+               processDefinition(definition,element_id);
 #if 0
                printf ("Exiting as a test! \n");
                ROSE_ASSERT(false);
@@ -1097,23 +2086,15 @@ Ada_ROSE_Translation::processElement (Node_Union & nodeUnion)
              }
         }
 
-   }
+#if 0
+     if (element_id == 2457)
+        {
+          printf ("Found target element_id = %d \n",element_id);
 
-
-               SgUntypedReturnStatement* untypedStatement = new SgUntypedReturnStatement();
-
-void
-Ada_ROSE_Translation::processUntypedNode (SgUntypedNode* untypedNode, int element_id)
-   {
-  // Put into map using Ada Node ID's as the keys.
-     ROSE_ASSERT(untypedNodeMap.find(element_id) == untypedNodeMap.end());
-     untypedNodeMap[element_id] = untypedNode;
-     ROSE_ASSERT(untypedNodeMap.find(element_id) != untypedNodeMap.end());
-
-     printf ("untypedNodeMap.size() = %zu \n",untypedNodeMap.size());
-
-  // Build the attribute (element id onto the SgUntypedNode).
-     setAsisAttribute (untypedNode,element_id);
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+        }
+#endif
    }
 
 
@@ -1830,7 +2811,7 @@ void
   //  A_Procedure_Body_Declaration,             // 6.3(2)
   //  A_Function_Body_Declaration,              // 6.3(2)
   //  A_Package_Declaration,                    // 7.1(2)
-  //  A_Package_Body_Declaration,               // 7.2(2)
+  //  A_Package_Body_Declaration               // 7.2(2)
   //  A_Task_Body_Declaration,                  // 9.1(6)
   //  A_Protected_Body_Declaration,             // 9.4(7)
   //  An_Entry_Body_Declaration,                // 9.5.2(5)
@@ -1968,7 +2949,7 @@ void
 
      Declaration_Kinds        declarationKind = declaration.Declaration_Kind;
      Subprogram_Default_Kinds defaultKind     = declaration.Default_Kind;
-     Trait_Kinds              traitKind       = declaration.Trait_Kind;
+  // Trait_Kinds              traitKind       = declaration.Trait_Kind;
      Defining_Name_List &     names           = declaration.Names;
 
      Declaration_Origins declarationOrigin    = declaration.Declaration_Origin;
@@ -1983,8 +2964,8 @@ void
      printf ("      defaultKind (value) = %d \n",defaultKind);
      printf ("      defaultKind (name)  = %s \n",subprogramDefaultKindName(defaultKind).c_str());
 
-     printf ("      traitKind (value) = %d \n",traitKind);
-     printf ("      traitKind (name)  = %s \n",traitKindName(traitKind).c_str());
+  // printf ("      traitKind (value) = %d \n",traitKind);
+  // printf ("      traitKind (name)  = %s \n",traitKindName(traitKind).c_str());
 
      printf ("      declarationOrigin (value) = %d \n",declarationOrigin);
      printf ("      declarationOrigin (name)  = %s \n",declarationOriginName(declarationOrigin).c_str());
@@ -1994,7 +2975,8 @@ void
      processDefiningNameList(names);
 
   // Element_List                   Aspect_Specifications;
-     Element_List & aspectSpecifications = declaration.Aspect_Specifications;
+  // Element_List & aspectSpecifications = declaration.Aspect_Specifications;
+     Element_ID_List & aspectSpecifications = declaration.Aspect_Specifications;
      processElementList(aspectSpecifications);
 
      Representation_Clause_List & correspondingRepresentationClauses = declaration.Corresponding_Representation_Clauses;
@@ -2026,9 +3008,59 @@ void
             // string name = names[0];
                string name = "__unknown__";
 
+            // Lookup the name in the ASIS node given by the name_id.
+               ROSE_ASSERT(asisMap.find(name_id) != asisMap.end());
+               Element_Struct* element_struct = asisMap[name_id];
+               ROSE_ASSERT(element_struct != NULL);
+
+               Element_Union & element_union = element_struct->The_Union;
+
+               ROSE_ASSERT(element_struct->Element_Kind == A_Defining_Name);
+
+               Defining_Name_Struct & definingName = element_union.Defining_Name;
+
+               name = definingName.Defining_Name_Image;
+
+               printf ("name = %s \n",name.c_str());
+
             // Build the untyped node we will use to represent the structure of the AST.
                SgUntypedType *type = NULL;
                SgUntypedInitializedName* untypedName = new SgUntypedInitializedName(type,name);
+#if 0
+            // Process the objectDeclarationView.
+               int objectDeclarationView_id = objectDeclarationView;
+
+               ROSE_ASSERT(asisMap.find(objectDeclarationView) != asisMap.end());
+
+               Element_Struct* elementStruct = asisMap[objectDeclarationView_id];
+
+            // int mode_id = 
+#endif
+#if 0
+               switch (modeKind)
+                  {
+                    case Not_A_Mode:
+                       {
+                         s = "Not_A_Mode";
+                         break;
+                       }
+
+                    case A_Default_In_Mode: s = "A_Default_In_Mode"; break;
+                    case An_In_Mode:        s = "An_In_Mode";        break;
+                    case An_Out_Mode:       s = "An_Out_Mode";       break;
+                    case An_In_Out_Mode:    s = "An_In_Out_Mode";    break;
+
+                    default:
+                       {
+                         printf ("Error: default called in switch for Ada_ROSE_Translation::modeKindName(): x = %d \n",x);
+                         ROSE_ASSERT(false);
+                       }
+                  }
+#endif
+
+               printf ("Skipping setting the modeKind in the untyped node \n");
+
+            // untypedName->set_mode(modeKind);
 
             // Put into map using Ada Node ID's as the keys.
                ROSE_ASSERT(untypedNodeMap.find(element_id) == untypedNodeMap.end());
@@ -2113,9 +3145,9 @@ void
        // case A_Generalized_Iterator_Specification:
           case An_Element_Iterator_Specification:
              {
-               Trait_Kinds traitKind = declaration.Trait_Kind;
-               printf ("      traitKind (value) = %d \n",traitKind);
-               printf ("      traitKind (name)  = %s \n",traitKindName(traitKind).c_str());
+            // Trait_Kinds traitKind = declaration.Trait_Kind;
+            // printf ("      traitKind (value) = %d \n",traitKind);
+            // printf ("      traitKind (name)  = %s \n",traitKindName(traitKind).c_str());
 
                Discrete_Subtype_Definition_ID specificationSubtypeDefinition = declaration.Specification_Subtype_Definition;
                printf ("specificationSubtypeDefinition  = %d \n",specificationSubtypeDefinition);
@@ -2137,9 +3169,9 @@ void
        // case A_Generalized_Iterator_Specification:
        // case An_Element_Iterator_Specification:
              {
-               Trait_Kinds traitKind = declaration.Trait_Kind;
-               printf ("      traitKind (value) = %d \n",traitKind);
-               printf ("      traitKind (name)  = %s \n",traitKindName(traitKind).c_str());
+            // Trait_Kinds traitKind = declaration.Trait_Kind;
+            // printf ("      traitKind (value) = %d \n",traitKind);
+            // printf ("      traitKind (name)  = %s \n",traitKindName(traitKind).c_str());
 
                Discrete_Subtype_Definition_ID specificationSubtypeDefinition = declaration.Specification_Subtype_Definition;
                printf ("specificationSubtypeDefinition  = %d \n",specificationSubtypeDefinition);
@@ -2153,9 +3185,9 @@ void
 
           case A_Discriminant_Specification:
              {
-               Trait_Kinds traitKind = declaration.Trait_Kind;
-               printf ("      traitKind (value) = %d \n",traitKind);
-               printf ("      traitKind (name)  = %s \n",traitKindName(traitKind).c_str());
+            // Trait_Kinds traitKind = declaration.Trait_Kind;
+            // printf ("      traitKind (value) = %d \n",traitKind);
+            // printf ("      traitKind (name)  = %s \n",traitKindName(traitKind).c_str());
 
                Definition_ID objectDeclarationView = declaration.Object_Declaration_View;
                printf ("objectDeclarationView = %d \n",objectDeclarationView);
@@ -2178,9 +3210,9 @@ void
        // case A_Generalized_Iterator_Specification:
        // case An_Element_Iterator_Specification:
              {
-               Trait_Kinds traitKind = declaration.Trait_Kind;
-               printf ("      traitKind (value) = %d \n",traitKind);
-               printf ("      traitKind (name)  = %s \n",traitKindName(traitKind).c_str());
+            // Trait_Kinds traitKind = declaration.Trait_Kind;
+            // printf ("      traitKind (value) = %d \n",traitKind);
+            // printf ("      traitKind (name)  = %s \n",traitKindName(traitKind).c_str());
 
                Definition_ID objectDeclarationView = declaration.Object_Declaration_View;
                printf ("objectDeclarationView = %d \n",objectDeclarationView);
@@ -2218,9 +3250,9 @@ void
        // case A_Generalized_Iterator_Specification:
        // case An_Element_Iterator_Specification:
              {
-               Trait_Kinds traitKind = declaration.Trait_Kind;
-               printf ("      traitKind (value) = %d \n",traitKind);
-               printf ("      traitKind (name)  = %s \n",traitKindName(traitKind).c_str());
+            // Trait_Kinds traitKind = declaration.Trait_Kind;
+            // printf ("      traitKind (value) = %d \n",traitKind);
+            // printf ("      traitKind (name)  = %s \n",traitKindName(traitKind).c_str());
 
                Definition_ID objectDeclarationView = declaration.Object_Declaration_View;
                printf ("objectDeclarationView = %d \n",objectDeclarationView);
@@ -2235,9 +3267,9 @@ void
           case A_Private_Type_Declaration:
           case A_Private_Extension_Declaration:
              {
-               Trait_Kinds traitKind = declaration.Trait_Kind;
-               printf ("     traitKind (value) = %d \n",traitKind);
-               printf ("     traitKind (name)  = %s \n",traitKindName(traitKind).c_str());
+            // Trait_Kinds traitKind = declaration.Trait_Kind;
+            // printf ("     traitKind (value) = %d \n",traitKind);
+            // printf ("     traitKind (name)  = %s \n",traitKindName(traitKind).c_str());
 
                Definition_ID discriminantPart = declaration.Discriminant_Part;
                printf ("     discriminantPart = %d \n",discriminantPart);
@@ -2727,9 +3759,9 @@ void
           case A_Generalized_Iterator_Specification:
        // case An_Element_Iterator_Specification:
              {
-               Trait_Kinds traitKind = declaration.Trait_Kind;
-               printf ("      traitKind (value) = %d \n",traitKind);
-               printf ("      traitKind (name)  = %s \n",traitKindName(traitKind).c_str());
+            // Trait_Kinds traitKind = declaration.Trait_Kind;
+            // printf ("      traitKind (value) = %d \n",traitKind);
+            // printf ("      traitKind (name)  = %s \n",traitKindName(traitKind).c_str());
 
                Element_ID iterationSchemeName = declaration.Iteration_Scheme_Name;
                printf ("iterationSchemeName  = %d \n",iterationSchemeName);
@@ -2957,7 +3989,7 @@ void
                Declaration_ID correspondingBody = declaration.Corresponding_Body;
                printf ("      correspondingBody = %d \n",correspondingBody);
 
-               Element_List & genericFormalPart = declaration.Generic_Formal_Part;
+               Element_ID_List & genericFormalPart = declaration.Generic_Formal_Part;
                printf ("      genericFormalPart: \n");
                processElementList(genericFormalPart);
 
@@ -2979,7 +4011,7 @@ void
                printf ("      isOverridingDeclaration = %s \n",isOverridingDeclaration ? "true" : "false");
                printf ("      isNotOverridingDeclaration = %s \n",isNotOverridingDeclaration ? "true" : "false");
 
-               Element_List           & bodyDeclarativeItems  = declaration.Body_Declarative_Items;
+               Element_ID_List        & bodyDeclarativeItems  = declaration.Body_Declarative_Items;
                printf ("      bodyDeclarativeItems: \n");
                processElementList(bodyDeclarativeItems);
                Statement_List         & bodyStatements        = declaration.Body_Statements;
@@ -3062,7 +4094,7 @@ void
                Declaration_ID correspondingBody = declaration.Corresponding_Body;
                printf ("      correspondingBody = %d \n",correspondingBody);
 
-               Element_List & genericFormalPart = declaration.Generic_Formal_Part;
+               Element_ID_List & genericFormalPart = declaration.Generic_Formal_Part;
                printf ("      genericFormalPart: \n");
                processElementList(genericFormalPart);
 
@@ -3122,7 +4154,7 @@ void
                printf ("      isOverridingDeclaration    = %s \n",isOverridingDeclaration ? "true" : "false");
                printf ("      isNotOverridingDeclaration = %s \n",isNotOverridingDeclaration ? "true" : "false");
 
-               Element_List           & bodyDeclarativeItems  = declaration.Body_Declarative_Items;
+               Element_ID_List        & bodyDeclarativeItems  = declaration.Body_Declarative_Items;
                printf ("      bodyDeclarativeItems: \n");
                processElementList(bodyDeclarativeItems);
                Statement_List         & bodyStatements        = declaration.Body_Statements;
@@ -3208,7 +4240,7 @@ void
           case A_Task_Body_Declaration:
        // case An_Entry_Body_Declaration:
              {
-               Element_List           & bodyDeclarativeItems  = declaration.Body_Declarative_Items;
+               Element_ID_List        & bodyDeclarativeItems  = declaration.Body_Declarative_Items;
                printf ("      bodyDeclarativeItems: \n");
                processElementList(bodyDeclarativeItems);
                Statement_List         & bodyStatements        = declaration.Body_Statements;
@@ -3231,9 +4263,22 @@ void
                Declaration_ID correspondingBodyStub = declaration.Corresponding_Body_Stub;
                printf ("      correspondingBodyStub = %d \n",correspondingBodyStub);
 
-            // SgUntypedScope* untypedScope = new SgUntypedScope();
+#if 1
                SgUntypedScope* untypedScope = new SgUntypedScope();
                ROSE_ASSERT(untypedScope != NULL);
+#else
+               SgUntypedScope* untypedScope = NULL;
+               if (declarationKind == A_Package_Body_Declaration)
+                  {
+                    printf ("Building a global scope \n");
+                    untypedScope = new SgUntypedGlobalScope();
+                  }
+                 else
+                  {
+                    untypedScope = new SgUntypedScope();
+                  }
+               ROSE_ASSERT(untypedScope != NULL);
+#endif
 
                SgUntypedStatementList* untypedStatementList = new SgUntypedStatementList();
                ROSE_ASSERT(untypedStatementList != NULL);
@@ -3259,9 +4304,9 @@ void
 
           case A_Function_Declaration:
              {
-               Trait_Kinds traitKind = declaration.Trait_Kind;
-               printf ("      traitKind (value) = %d \n",traitKind);
-               printf ("      traitKind (name)  = %s \n",traitKindName(traitKind).c_str());
+            // Trait_Kinds traitKind = declaration.Trait_Kind;
+            // printf ("      traitKind (value) = %d \n",traitKind);
+            // printf ("      traitKind (name)  = %s \n",traitKindName(traitKind).c_str());
 
                Parameter_Specification_List & parameterProfile = declaration.Parameter_Profile;
                printf ("      parameterProfile: \n");
@@ -3549,7 +4594,7 @@ void
                printf ("privatePartDeclarativeItems: \n");
                processDeclarativeItemList(privatePartDeclarativeItems);
 
-               Element_List & genericFormalPart = declaration.Generic_Formal_Part;
+               Element_ID_List & genericFormalPart = declaration.Generic_Formal_Part;
                printf ("genericFormalPart: \n");
                processElementList(genericFormalPart);
 
@@ -4018,9 +5063,9 @@ void
           case A_Procedure_Declaration:
        // case A_Function_Declaration:
              {
-               Trait_Kinds traitKind = declaration.Trait_Kind;
-               printf ("      traitKind (value) = %d \n",traitKind);
-               printf ("      traitKind (name)  = %s \n",traitKindName(traitKind).c_str());
+            // Trait_Kinds traitKind = declaration.Trait_Kind;
+            // printf ("      traitKind (value) = %d \n",traitKind);
+            // printf ("      traitKind (name)  = %s \n",traitKindName(traitKind).c_str());
 
                Parameter_Specification_List & parameterProfile = declaration.Parameter_Profile;
                printf ("      parameterProfile: \n");
@@ -4095,7 +5140,7 @@ void
                printf ("      isOverridingDeclaration    = %s \n",isOverridingDeclaration ? "true" : "false");
                printf ("      isNotOverridingDeclaration = %s \n",isNotOverridingDeclaration ? "true" : "false");
 
-               Element_List           & bodyDeclarativeItems  = declaration.Body_Declarative_Items;
+               Element_ID_List           & bodyDeclarativeItems  = declaration.Body_Declarative_Items;
                printf ("      bodyDeclarativeItems: \n");
                processElementList(bodyDeclarativeItems);
                Statement_List         & bodyStatements        = declaration.Body_Statements;
@@ -4188,6 +5233,17 @@ void
           case  An_Exception_Declaration:
              {
             // No data members for this case.
+
+            // However, we still need to build a exception untyped IR node.
+               SgUntypedExceptionDeclaration* untypedExceptionDeclaration = new SgUntypedExceptionDeclaration();
+               ROSE_ASSERT(untypedExceptionDeclaration != NULL);
+
+               processUntypedNode(untypedExceptionDeclaration,element_id);
+
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -4657,7 +5713,7 @@ void
 
                bool isPrefixCall = expression.Is_Prefix_Call;
                printf ("     isPrefixCall = %s \n",isPrefixCall ? "true" : "false");
-               Element_List & functionCallParameters = expression.Function_Call_Parameters;
+               Element_ID_List & functionCallParameters = expression.Function_Call_Parameters;
                printf ("     functionCallParameters: \n");
                processElementList(functionCallParameters);
 
@@ -4705,9 +5761,10 @@ void
                Expression_ID prefix = expression.Prefix;
                printf ("     prefix = %d \n",prefix);
 
-               Attribute_Kinds atributeKind = expression.atribute_kind;
-               printf ("     atributeKind (value) = %d \n",atributeKind);
-               printf ("     atributeKind (name)  = %s \n",attributeKindName(atributeKind).c_str());
+            // Attribute_Kinds atributeKind = expression.atribute_kind;
+               Attribute_Kinds attributeKind = expression.Attribute_Kind;
+               printf ("     attributeKind (value) = %d \n",attributeKind);
+               printf ("     attributeKind (name)  = %s \n",attributeKindName(attributeKind).c_str());
                Expression_ID attributeDesignatorIdentifier = expression.Attribute_Designator_Identifier;
                printf ("     attributeDesignatorIdentifier = %d \n",attributeDesignatorIdentifier);
                Expression_List & attributeDesignatorExpressions = expression.Attribute_Designator_Expressions;
@@ -4789,7 +5846,7 @@ void
              {
                Expression_ID membershipTestExpression = expression.Membership_Test_Expression;
                printf ("     membershipTestExpression = %d \n",membershipTestExpression);
-               Element_List & membershipTestChoices = expression.Membership_Test_Choices;
+               Element_ID_List & membershipTestChoices = expression.Membership_Test_Choices;
                printf ("     membershipTestChoices: \n");
                processExpressionList(membershipTestChoices);
 #if 1
@@ -4927,11 +5984,1187 @@ void
 
 
 void
-Ada_ROSE_Translation::processDefinition( Definition_Struct & definition)
+  Ada_ROSE_Translation::processDefinition( Definition_Struct & definition, int element_id)
+   {
+#if 0
+  // Documentation for Definition_Struct.
+     enum Definition_Kinds Definition_Kind;
+     Definition_Union      The_Union;
+
+  // Documentation for Definition_Kinds
+     Not_A_Definition,                 // An unexpected element
+     A_Type_Definition,                // 3.2.1(4)    -> Type_Kinds
+     A_Subtype_Indication,             // 3.2.2(3)
+     A_Constraint,                     // 3.2.2(5)    -> Constraint_Kinds
+     A_Component_Definition,           // 3.6(7)      -> Trait_Kinds
+     A_Discrete_Subtype_Definition,    // 3.6(6)      -> Discrete_Range_Kinds
+     A_Discrete_Range,                 // 3.6.1(3)    -> Discrete_Range_Kinds
+     An_Unknown_Discriminant_Part,     // 3.7(3)
+     A_Known_Discriminant_Part,        // 3.7(2)
+     A_Record_Definition,              // 3.8(3)
+     A_Null_Record_Definition,         // 3.8(3)
+     A_Null_Component,                 // 3.8(4)
+     A_Variant_Part,                   // 3.8.1(2)
+     A_Variant,                        // 3.8.1(3)
+     An_Others_Choice,                 // 3.8.1(5), 4.3.1(5), 4.3.3(5), 11.2(5)
+
+  //  //|A2005 start
+     An_Access_Definition,             // 3.10(6/2)   -> Access_Definition_Kinds
+  //  //|A2005 end
+
+     A_Private_Type_Definition,        // 7.3(2)      -> Trait_Kinds
+     A_Tagged_Private_Type_Definition, // 7.3(2)      -> Trait_Kinds
+     A_Private_Extension_Definition,   // 7.3(3)      -> Trait_Kinds
+     A_Task_Definition,                // 9.1(4)
+     A_Protected_Definition,           // 9.4(4)
+     A_Formal_Type_Definition,         // 12.5(3)     -> Formal_Type_Kinds
+
+  //  //|A2012 start
+     An_Aspect_Specification           // 13.3.1
+  //  //|A2012 end  
+
+
+  // Documentation for Definition_Union
+typedef union _Definition_Union {
+  int                                   Dummy_Member; // For Ada default initialization
+  Type_Definition_Struct                The_Type_Definition;
+  Subtype_Indication_Struct             The_Subtype_Indication;
+  Constraint_Struct                     The_Constraint;
+  Component_Definition_Struct           The_Component_Definition;
+  Discrete_Subtype_Definition_Struct    The_Discrete_Subtype_Definition;
+  Discrete_Range_Struct                 The_Discrete_Range;
+  Unknown_Discriminant_Part_Struct      The_Unknown_Discriminant_Part;
+  Known_Discriminant_Part_Struct        The_Known_Discriminant_Part;
+  Record_Definition_Struct              The_Record_Definition;
+  Null_Record_Definition_Struct         The_Null_Record_Definition;
+  Null_Component_Struct                 The_Null_Component;
+  Variant_Part_Struct                   The_Variant_Part;
+  Variant_Struct                        The_Variant;
+  Others_Choice_Struct                  The_Others_Choice;
+  Access_Definition_Struct              The_Access_Definition;
+  Private_Type_Definition_Struct        The_Private_Type_Definition;
+  Tagged_Private_Type_Definition_Struct The_Tagged_Private_Type_Definition;
+  Private_Extension_Definition_Struct   The_Private_Extension_Definition;
+  Task_Definition_Struct                The_Task_Definition;
+  Protected_Definition_Struct           The_Protected_Definition;
+  Formal_Type_Definition_Struct         The_Formal_Type_Definition;
+  Aspect_Specification_Struct           The_Aspect_Specification;
+} Definition_Union;  
+
+
+#endif
+
+     Definition_Kinds definitionKind = definition.Definition_Kind;
+
+     printf ("   In processDefinition(): \n");
+     printf ("      definitionKind (value) = %d \n",definitionKind);
+     printf ("      definitionKind (name)  = %s \n",definitionKindName(definitionKind).c_str());
+
+  // By default we always build a SgUntypeScope, until we get what we build to be more finely tailored to what we need.
+     bool buildDefaultUntypedNode = true;
+
+     switch (definitionKind)
+        {
+          case Not_A_Definition:
+             {
+               printf ("Error: switch has case Not_A_Definition \n");
+               ROSE_ASSERT(false);
+               break;
+             }
+
+          case A_Type_Definition:
+             {
+               processTypeDefinition(definition.The_Union.The_Type_Definition,element_id,buildDefaultUntypedNode);
+               break;
+             }
+
+          case A_Subtype_Indication:
+             {
+               processSubtypeIndication(definition.The_Union.The_Subtype_Indication,element_id);
+               break;
+             }
+
+          case A_Constraint:
+             {
+               processConstraint(definition.The_Union.The_Constraint,element_id);
+               break;
+             }
+
+          case A_Component_Definition:
+             {
+               processComponentDefinition(definition.The_Union.The_Component_Definition,element_id);
+               break;
+             }
+
+          case A_Discrete_Subtype_Definition:
+             {
+               processDiscreteSubtypeDefinition(definition.The_Union.The_Discrete_Subtype_Definition,element_id);
+               break;
+             }
+
+          case A_Discrete_Range:
+             {
+               processDiscreteRange(definition.The_Union.The_Discrete_Range,element_id);
+               break;
+             }
+
+          case An_Unknown_Discriminant_Part:
+             {
+               processUnknownDiscriminantPart(definition.The_Union.The_Unknown_Discriminant_Part,element_id);
+               break;
+             }
+
+          case A_Known_Discriminant_Part:
+             {
+               processKnownDiscriminantPart(definition.The_Union.The_Known_Discriminant_Part,element_id);
+               break;
+             }
+
+          case A_Record_Definition:
+             {
+               processRecordDefinition(definition.The_Union.The_Record_Definition,element_id);
+
+               buildDefaultUntypedNode = false;
+
+               break;
+             }
+
+          case A_Null_Record_Definition:
+             {
+               processNullRecordDefinition(definition.The_Union.The_Null_Record_Definition,element_id);
+               break;
+             }
+
+          case A_Null_Component:
+             {
+               processNullComponent(definition.The_Union.The_Null_Component,element_id);
+               break;
+             }
+
+          case A_Variant_Part:
+             {
+               processVariantPart(definition.The_Union.The_Variant_Part,element_id);
+               break;
+             }
+
+          case A_Variant:
+             {
+               processVariant(definition.The_Union.The_Variant,element_id);
+               break;
+             }
+
+          case An_Others_Choice:
+             {
+               processOthersChoice(definition.The_Union.The_Others_Choice,element_id);
+               break;
+             }
+
+          case An_Access_Definition:
+             {
+               processAccessDefinition(definition.The_Union.The_Access_Definition,element_id);
+               break;
+             }
+
+          case A_Private_Type_Definition:
+             {
+               processPrivateTypeDefinition(definition.The_Union.The_Private_Type_Definition,element_id);
+               break;
+             }
+
+          case A_Tagged_Private_Type_Definition:
+             {
+               processTaggedPrivateTypeDefinition(definition.The_Union.The_Tagged_Private_Type_Definition,element_id);
+               break;
+             }
+
+          case A_Private_Extension_Definition:
+             {
+               processPrivateExtensionDefinition(definition.The_Union.The_Private_Extension_Definition,element_id);
+               break;
+             }
+
+          case A_Task_Definition:
+             {
+               processTaskDefinition(definition.The_Union.The_Task_Definition,element_id);
+               break;
+             }
+
+          case A_Protected_Definition:
+             {
+               processProtectedDefinition(definition.The_Union.The_Protected_Definition,element_id);
+               break;
+             }
+
+          case A_Formal_Type_Definition:
+             {
+               processFormalTypeDefinition(definition.The_Union.The_Formal_Type_Definition,element_id);
+               break;
+             }
+
+          case An_Aspect_Specification:
+             {
+               processAspectSpecification(definition.The_Union.The_Aspect_Specification,element_id);
+               break;
+             }
+
+          default:
+             {
+               printf ("Default reached in processDefinition(): definitionKind = %d definitionKind = %s element_id = %d \n",definitionKind,definitionKindName(definitionKind).c_str(),element_id);
+               ROSE_ASSERT(false);
+             }
+        }
+
+
+     if (buildDefaultUntypedNode == true)
+        {
+       // DQ (10/5/2017): This is general code to handled definitions, we likely new additional 
+       // untyped IR nodes to support the concept fo a SgUntypedDefinition, plus whatever 
+       // variations of untyped definition IR nodes that we require (for the cases above).
+          SgUntypedScope* untypedScope = new SgUntypedScope();
+          ROSE_ASSERT(untypedScope != NULL);
+
+          SgUntypedStatementList* untypedStatementList = new SgUntypedStatementList();
+          ROSE_ASSERT(untypedStatementList != NULL);
+
+       // Connect IR nodes.
+          untypedScope->set_statement_list(untypedStatementList);
+
+          printf ("In processDefinition(): element_id = %d \n",element_id);
+
+       // ROSE_ASSERT(untypedNodeMap.find(element_id) == untypedNodeMap.end());
+          if (untypedNodeMap.find(element_id) == untypedNodeMap.end())
+             {
+               untypedNodeMap[element_id] = untypedScope;
+             }
+            else
+             {
+               printf ("ERROR: ignoring redundent processing of definition: definitionKind = %d definitionKind = %s \n",definitionKind,definitionKindName(definitionKind).c_str());
+             }
+          ROSE_ASSERT(untypedNodeMap.find(element_id) != untypedNodeMap.end());
+
+          setAsisAttribute (untypedScope,element_id);
+        }
+
+   }
+
+
+void 
+Ada_ROSE_Translation::processTypeDefinition ( Type_Definition_Struct & x, int element_id, bool & buildDefaultUntypedNode )
+   {
+#if 0
+  // Documentation for Type_Definition_Struct
+     Type_Kinds           Type_Kind;
+     bool                 Has_Abstract;
+     bool                 Has_Limited;
+     bool                 Has_Private;
+     Declaration_List     Corresponding_Type_Operators;
+  // These fields are only valid for the kinds above them:
+  // An_Interface_Type_Definition
+     bool                 Has_Protected;
+     bool                 Has_Synchronized;
+  // A_Tagged_Record_Type_Definition
+     bool                 Has_Tagged;
+  // A_Task_Definition
+     bool                 Has_Task;
+  // A_Discriminant_Specification
+  // A_Parameter_Specification
+  // A_Formal_Object_Declaration
+  // An_Object_Renaming_Declaration
+     bool                 Has_Null_Exclusion;
+  // An_Interface_Type_Definition
+     Interface_Kinds      Interface_Kind;
+  // A_Root_Type_Definition
+     Root_Type_Kinds      Root_Type_Kind;
+  // A_Derived_Type_Definition
+  // A_Derived_Record_Extension_Definition
+     Subtype_Indication   Parent_Subtype_Indication;  
+
+  // A_Derived_Record_Extension_Definition
+  // A_Record_Type_Definition
+  // A_Tagged_Record_Type_Definition
+     Definition           Record_Definition;
+  // A_Derived_Type_Definition
+  // A_Derived_Record_Extension_Definition
+     Declaration_List     Implicit_Inherited_Declarations;
+     Declaration_List     Implicit_Inherited_Subprograms;
+     Declaration          Corresponding_Parent_Subtype;
+     Declaration          Corresponding_Root_Type;
+     Declaration          Corresponding_Type_Structure;
+  // An_Enumeration_Type_Definition
+     Declaration_List     Enumeration_Literal_Declarations;
+  // A_Signed_Integer_Type_Definition
+     Range_Constraint     Integer_Constraint;
+
+  // A_Modular_Type_Definition
+     Expression           Mod_Static_Expression;
+  // A_Floating_Point_Definition
+  // A_Decimal_Fixed_Point_Definition
+     Expression           Digits_Expression;
+  // An_Ordinary_Fixed_Point_Definition
+  // A_Decimal_Fixed_Point_Definition
+     Expression           Delta_Expression;
+  // A_Floating_Point_Definition
+  // An_Ordinary_Fixed_Point_Definition
+  // A_Decimal_Fixed_Point_Definition
+     Range_Constraint     Real_Range_Constraint;
+  // An_Unconstrained_Array_Definition
+     Expression_List      Index_Subtype_Definitions;
+  // A_Constrained_Array_Definition
+     Expression_List      Discrete_Subtype_Definitions;
+  // An_Unconstrained_Array_Definition
+  // A_Constrained_Array_Definition
+     Component_Definition Array_Component_Definition;
+  // A_Derived_Record_Extension_Definition
+  // An_Interface_Type_Definition
+     Expression_List      Definition_Interface_List;
+  // An_Access_Type_Definition
+     Access_Type_Struct   Access_Type;
+
+  // Documentation ofr Type_Kinds
+     Not_A_Type_Definition,                 // An unexpected element
+     A_Derived_Type_Definition,             // 3.4(2)     -> Trait_Kinds
+     A_Derived_Record_Extension_Definition, // 3.4(2)     -> Trait_Kinds
+     An_Enumeration_Type_Definition,        // 3.5.1(2)
+     A_Signed_Integer_Type_Definition,      // 3.5.4(3)
+     A_Modular_Type_Definition,             // 3.5.4(4)
+     A_Root_Type_Definition,                // 3.5.4(14), 3.5.6(3) -> Root_Type_Kinds
+     A_Floating_Point_Definition,           // 3.5.7(2)
+     An_Ordinary_Fixed_Point_Definition,    // 3.5.9(3)
+     A_Decimal_Fixed_Point_Definition,      // 3.5.9(6)
+     An_Unconstrained_Array_Definition,     // 3.6(2)
+     A_Constrained_Array_Definition,        // 3.6(2)
+     A_Record_Type_Definition,              // 3.8(2)     -> Trait_Kinds
+     A_Tagged_Record_Type_Definition,       // 3.8(2)     -> Trait_Kinds
+     An_Interface_Type_Definition,          // 3.9.4      -> Interface_Kinds
+     An_Access_Type_Definition              // 3.10(2)    -> Access_Type_Kinds
+#endif
+
+     Type_Kinds typeKind = x.Type_Kind;
+
+     printf ("   In processTypeDefinition(): \n");
+     printf ("      typeKind (value) = %d \n",typeKind);
+     printf ("      typeKind (name)  = %s \n",typeKindName(typeKind).c_str());
+
+     bool hasAbstract = x.Has_Abstract;
+     printf ("      hasAbstract = %s \n",hasAbstract ? "true" : "false");
+
+     bool hasLimited = x.Has_Limited;
+     printf ("      hasLimited = %s \n",hasLimited ? "true" : "false");
+
+     bool hasPrivate = x.Has_Private;
+     printf ("      hasPrivate = %s \n",hasPrivate ? "true" : "false");
+
+     Declaration_List & correspondingTypeOperators = x.Corresponding_Type_Operators;
+     printf ("   correspondingTypeOperators:  \n");
+     processDeclarationList(correspondingTypeOperators);
+
+     switch (typeKind)
+        {
+          case Not_A_Type_Definition:
+             {
+               printf ("ERROR: case Not_A_Type_Definition \n");
+               ROSE_ASSERT(false);
+               break;
+             }
+#if 0
+       // DQ (10/12/2017): I think this is not a valid enum value.
+          case A_Task_Definition:
+             {
+               bool hasTask = x.Has_Task;
+               printf ("   hasTask = %s \n",hasTask ? "true" : "false");
+#if 1
+               printf ("Not implemented! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+#endif
+#if 0
+       // DQ (10/12/2017): I think these are not valid enum values.
+       // A_Discriminant_Specification
+       // A_Parameter_Specification
+       // A_Formal_Object_Declaration
+       // An_Object_Renaming_Declaration
+          case A_Discriminant_Specification:
+          case A_Parameter_Specification:
+          case A_Formal_Object_Declaration:
+          case An_Object_Renaming_Declaration:
+             {
+               bool hasNullExclusion = x.Has_Null_Exclusion;
+               printf ("   hasNullExclusion = %s \n",hasNullExclusion ? "true" : "false");
+#if 1
+               printf ("Not implemented! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+#endif
+
+          case A_Derived_Type_Definition:
+             {
+            // Subtype_Indication & parentSubtypeIndication = x.Parent_Subtype_Indication;
+            // processElement(parentSubtypeIndication);
+               Subtype_Indication parentSubtypeIndication = x.Parent_Subtype_Indication;
+               printf ("   parentSubtypeIndication = %d \n",parentSubtypeIndication);
+
+               Declaration_List & implicitInheritedDeclarations = x.Implicit_Inherited_Declarations;
+               processDeclarationList(implicitInheritedDeclarations);
+               Declaration_List & implicitInheritedSubprograms = x.Implicit_Inherited_Subprograms;
+               processDeclarationList(implicitInheritedSubprograms);
+               Declaration correspondingParentSubtype = x.Corresponding_Parent_Subtype;
+               printf ("   correspondingParentSubtype = %d \n",correspondingParentSubtype);
+               Declaration correspondingRootType = x.Corresponding_Root_Type;
+               printf ("   correspondingRootType = %d \n",correspondingRootType);
+               Declaration correspondingTypeStructure = x.Corresponding_Type_Structure;
+               printf ("   correspondingTypeStructure = %d \n",correspondingTypeStructure);
+
+#if 0
+               printf ("Not implemented! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+          case A_Derived_Record_Extension_Definition:
+             {
+               Subtype_Indication parentSubtypeIndication = x.Parent_Subtype_Indication;
+               printf ("   parentSubtypeIndication = %d \n",parentSubtypeIndication);
+
+               Definition recordDefinition = x.Record_Definition;
+               printf ("   recordDefinition = %d \n",recordDefinition);
+
+               Declaration_List & implicitInheritedDeclarations = x.Implicit_Inherited_Declarations;
+               processDeclarationList(implicitInheritedDeclarations);
+               Declaration_List & implicitInheritedSubprograms = x.Implicit_Inherited_Subprograms;
+               processDeclarationList(implicitInheritedSubprograms);
+               Declaration correspondingParentSubtype = x.Corresponding_Parent_Subtype;
+               printf ("   correspondingParentSubtype = %d \n",correspondingParentSubtype);
+               Declaration correspondingRootType = x.Corresponding_Root_Type;
+               printf ("   correspondingRootType = %d \n",correspondingRootType);
+               Declaration correspondingTypeStructure = x.Corresponding_Type_Structure;
+               printf ("   correspondingTypeStructure = %d \n",correspondingTypeStructure);
+
+               Expression_List & definitionInterfaceList = x.Definition_Interface_List;
+               processExpressionList(definitionInterfaceList);
+#if 0
+               printf ("Not implemented! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+          case An_Enumeration_Type_Definition:
+             {
+               Declaration_List & enumerationLiteralDeclarations = x.Enumeration_Literal_Declarations;
+               processDeclarationList(enumerationLiteralDeclarations);
+#if 1
+               printf ("Not implemented! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+          case A_Signed_Integer_Type_Definition:
+             {
+               Range_Constraint integerConstraint = x.Integer_Constraint;
+               printf ("   integerConstraint = %d \n",integerConstraint);
+#if 1
+               printf ("Not implemented! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+          case A_Modular_Type_Definition:
+             {
+#if 1
+               printf ("Not implemented! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+          case A_Root_Type_Definition:
+             {
+               Root_Type_Kinds rootTypeKind = x.Root_Type_Kind;
+               printf ("rootTypeKind (value) = %d \n",rootTypeKind);
+               printf ("rootTypeKind (name)  = %s \n",rootTypeKindName(rootTypeKind).c_str());
+#if 1
+               printf ("Not implemented! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+          case A_Floating_Point_Definition:
+             {
+               Expression digitsExpression = x.Digits_Expression;
+               printf ("   digitsExpression = %d \n",digitsExpression);
+
+               Range_Constraint realRangeConstraint = x.Real_Range_Constraint;
+               printf ("   realRangeConstraint = %d \n",realRangeConstraint);
+#if 1
+               printf ("Not implemented! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+          case An_Ordinary_Fixed_Point_Definition:
+             {
+               Expression deltaExpression = x.Delta_Expression;
+               printf ("   deltaExpression = %d \n",deltaExpression);
+
+               Range_Constraint realRangeConstraint = x.Real_Range_Constraint;
+               printf ("   realRangeConstraint = %d \n",realRangeConstraint);
+#if 1
+               printf ("Not implemented! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+          case A_Decimal_Fixed_Point_Definition:
+             {
+               Expression digitsExpression = x.Digits_Expression;
+               printf ("   digitsExpression = %d \n",digitsExpression);
+
+               Expression deltaExpression = x.Delta_Expression;
+               printf ("   deltaExpression = %d \n",deltaExpression);
+
+               Range_Constraint realRangeConstraint = x.Real_Range_Constraint;
+               printf ("   realRangeConstraint = %d \n",realRangeConstraint);
+#if 1
+               printf ("Not implemented! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+          case An_Unconstrained_Array_Definition:
+             {
+               Expression_List & indexSubtypeDefinitions = x.Index_Subtype_Definitions;
+               processExpressionList(indexSubtypeDefinitions);
+
+               Component_Definition arrayComponentDefinition = x.Array_Component_Definition;
+               printf ("   arrayComponentDefinition = %d \n",arrayComponentDefinition);
+#if 1
+               printf ("Not implemented! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+          case A_Constrained_Array_Definition:
+             {
+               Expression_List & discreteSubtypeDefinitions = x.Discrete_Subtype_Definitions;
+               processExpressionList(discreteSubtypeDefinitions);
+
+               Component_Definition arrayComponentDefinition = x.Array_Component_Definition;
+               printf ("   arrayComponentDefinition = %d \n",arrayComponentDefinition);
+#if 1
+               printf ("Not implemented! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+          case A_Record_Type_Definition:
+             {
+               Definition recordDefinition = x.Record_Definition;
+               printf ("   recordDefinition = %d \n",recordDefinition);
+
+               SgUntypedStructureDeclaration* untypedStructureDeclaration = new SgUntypedStructureDeclaration();
+               ROSE_ASSERT(untypedStructureDeclaration != NULL);
+
+               processUntypedNode(untypedStructureDeclaration,element_id);
+
+               buildDefaultUntypedNode = false;
+#if 0
+               printf ("Not implemented! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+          case A_Tagged_Record_Type_Definition:
+             {
+               Definition recordDefinition = x.Record_Definition;
+               printf ("   recordDefinition = %d \n",recordDefinition);
+
+               bool hasTagged = x.Has_Tagged;
+               printf ("hasTagged = %s \n",hasTagged ? "true" : "false");
+#if 0
+               printf ("Not implemented! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+          case An_Interface_Type_Definition:
+             {
+               Interface_Kinds interfaceKind = x.Interface_Kind;
+               printf ("   interfaceKind (value) = %d \n",interfaceKind);
+               printf ("   interfaceKind (name)  = %s \n",interfaceKindName(interfaceKind).c_str());
+
+               bool hasProtected = x.Has_Protected;
+               printf ("   hasProtected = %s \n",hasProtected ? "true" : "false");
+               bool hasSynchronized = x.Has_Synchronized;
+               printf ("   hasSynchronized = %s \n",hasSynchronized ? "true" : "false");
+
+               Expression_List & definitionInterfaceList = x.Definition_Interface_List;
+               processExpressionList(definitionInterfaceList);
+#if 1
+               printf ("Not implemented! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+          case An_Access_Type_Definition:
+             {
+               Access_Type_Struct & accessType = x.Access_Type;
+               processAccessType(accessType);
+#if 1
+               printf ("Not implemented! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+          default:
+             {
+               printf ("Default reached in processTypeDefinition(): typeKind = %d typeKind = %s \n",typeKind,typeKindName(typeKind).c_str());
+               ROSE_ASSERT(false);
+             }
+          }
+
+#if 0
+     printf ("ERROR: not implemented! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
+
+// void Ada_ROSE_Translation::processAccessType ( Access_Type_Struct & x, int element_id)
+void
+Ada_ROSE_Translation::processAccessType ( Access_Type_Struct & x )
+   {
+#if 0
+  // Documentation for x
+  Access_Type_Kinds            Access_Type_Kind;  
+  bool                         Has_Null_Exclusion;
+  // These fields are only valid for the kinds above them:
+  // An_Access_To_Function
+  // An_Access_To_Protected_Function
+  bool                         Is_Not_Null_Return;
+  // A_Pool_Specific_Access_To_Variable
+  // An_Access_To_Variable
+  // An_Access_To_Constant
+  Subtype_Indication           Access_To_Object_Definition;
+  // An_Access_To_Procedure
+  // An_Access_To_Protected_Procedure
+  // An_Access_To_Function
+  // An_Access_To_Protected_Function
+  Parameter_Specification_List Access_To_Subprogram_Parameter_Profile; 
+  // An_Access_To_Function
+  // An_Access_To_Protected_Function
+  Element                      Access_To_Function_Result_Profile;
+#endif
+
+     Access_Type_Kinds accessTypeKind = x.Access_Type_Kind;
+
+     printf ("   In processAccessType(): \n");
+     printf ("      accessTypeKind (value) = %d \n",accessTypeKind);
+     printf ("      accessTypeKind (name)  = %s \n",accessTypeKindName(accessTypeKind).c_str());
+
+
+     bool hasNullExclusion = x.Has_Null_Exclusion;
+     printf ("   hasNullExclusion = %s \n",hasNullExclusion ? "true" : "false");
+
+     switch (accessTypeKind)
+        {
+          case Not_An_Access_Type_Definition:
+             {
+               printf ("ERROR: case Not_An_Access_Type_Definition \n");
+               ROSE_ASSERT(false);
+               break;
+             }
+
+       // An_Access_To_Function
+       // An_Access_To_Protected_Function
+          case An_Access_To_Function:
+          case An_Access_To_Protected_Function:
+             {
+               bool isNotNullReturn = x.Is_Not_Null_Return;
+               printf ("   isNotNullReturn = %s \n",isNotNullReturn ? "true" : "false");
+
+               Element_ID accessToFunctionResultProfile = x.Access_To_Function_Result_Profile;
+               printf ("   accessToFunctionResultProfile = %d \n",accessToFunctionResultProfile);
+
+               Parameter_Specification_List & accessToSubprogramParameterProfile = x.Access_To_Subprogram_Parameter_Profile; 
+               printf ("   accessToSubprogramParameterProfile: \n");
+               processParameterSpecificationList(accessToSubprogramParameterProfile);
+               break;
+             }
+
+       // A_Pool_Specific_Access_To_Variable
+       // An_Access_To_Variable
+       // An_Access_To_Constant
+          case A_Pool_Specific_Access_To_Variable:
+          case An_Access_To_Variable:
+          case An_Access_To_Constant:
+             {
+               Subtype_Indication accessToObjectDefinition = x.Access_To_Object_Definition;
+               printf ("   accessToObjectDefinition = %d \n",accessToObjectDefinition);
+               break;
+             }
+
+       // An_Access_To_Procedure
+       // An_Access_To_Protected_Procedure
+       // An_Access_To_Function
+       // An_Access_To_Protected_Function
+          case An_Access_To_Procedure:
+          case An_Access_To_Protected_Procedure:
+             {
+               Parameter_Specification_List & accessToSubprogramParameterProfile = x.Access_To_Subprogram_Parameter_Profile; 
+               printf ("   accessToSubprogramParameterProfile: \n");
+               processParameterSpecificationList(accessToSubprogramParameterProfile);
+               break;
+             }
+
+          default:
+             {
+               printf ("Default reached in processAccessType(): accessTypeKind = %d accessTypeKind = %s \n",accessTypeKind,accessTypeKindName(accessTypeKind).c_str());
+               ROSE_ASSERT(false);
+             }
+          }
+
+#if 1
+     printf ("ERROR: not implemented! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
+
+void 
+Ada_ROSE_Translation::processSubtypeIndication ( Subtype_Indication_Struct & x, int element_id)
+   {
+#if 0
+  // Documentation for x
+     bool       Has_Null_Exclusion;
+     Expression Subtype_Mark;
+     Constraint Subtype_Constraint;
+#endif
+
+     bool hasNullExclusion = x.Has_Null_Exclusion;
+     printf ("   hasNullExclusion = %s \n",hasNullExclusion ? "true" : "false");
+
+     Expression subtypeMark = x.Subtype_Mark;
+     printf ("   subtypeMark = %d \n",subtypeMark);
+     Constraint subtypeConstraint = x.Subtype_Constraint;
+     printf ("   subtypeConstraint = %d \n",subtypeConstraint);
+
+#if 0
+     printf ("ERROR: not implemented! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
+void 
+Ada_ROSE_Translation::processConstraint ( Constraint_Struct & x, int element_id)
+   {
+#if 0
+  // Documentation for x
+  Constraint_Kinds              Constraint_Kind;
+  // These fields are only valid for the kinds above them:
+  // A_Digits_Constraint
+  Expression                    Digits_Expression;
+  // A_Delta_Constraint
+  Expression                    Delta_Expression;
+  // A_Digits_Constraint
+  // A_Delta_Constraint
+  Range_Constraint              Real_Range_Constraint;
+  // A_Simple_Expression_Range
+  Expression                    Lower_Bound;
+  Expression                    Upper_Bound;
+  // A_Range_Attribute_Reference
+  Expression                    Range_Attribute;
+  // An_Index_Constraint
+  Discrete_Range_List           Discrete_Ranges;
+  // A_Discriminant_Constraint
+  Discriminant_Association_List Discriminant_Associations;
+#endif
+
+     Constraint_Kinds constraintKind = x.Constraint_Kind;
+     printf ("   constraintKind (value) = %d \n",constraintKind);
+     printf ("   constraintKind (name)  = %s \n",constraintKindName(constraintKind).c_str());
+
+     switch (constraintKind)
+        {
+          case A_Digits_Constraint:
+             {
+               Expression digitsExpression = x.Digits_Expression;
+               printf ("   digitsExpression = %d \n",digitsExpression);
+
+               Range_Constraint realRangeConstraint = x.Real_Range_Constraint;
+               printf ("   realRangeConstraint = %d \n",realRangeConstraint);
+               break;
+             }
+
+          case A_Delta_Constraint:
+             {
+               Expression deltaExpression = x.Delta_Expression;
+               printf ("   deltaExpression = %d \n",deltaExpression);
+
+               Range_Constraint realRangeConstraint = x.Real_Range_Constraint;
+               printf ("   realRangeConstraint = %d \n",realRangeConstraint);
+               break;
+             }
+
+       // A_Simple_Expression_Range
+          case A_Simple_Expression_Range:
+             {
+               Expression lowerBound = x.Lower_Bound;
+               printf ("   lowerBound = %d \n",lowerBound);
+               Expression upperBound = x.Upper_Bound;
+               printf ("   upperBound = %d \n",upperBound);
+               break;
+             }
+
+       // A_Range_Attribute_Reference
+          case A_Range_Attribute_Reference:
+             {
+               Expression rangeAttribute = x.Range_Attribute;
+               printf ("   rangeAttribute = %d \n",rangeAttribute);
+               break;
+             }
+
+       // An_Index_Constraint
+          case An_Index_Constraint:
+             {
+               Discrete_Range_List & discreteRanges = x.Discrete_Ranges;
+               printf ("   discreteRanges: \n");
+               processDiscreteRangeList(discreteRanges);
+               break;
+             }
+
+       // A_Discriminant_Constraint
+          case A_Discriminant_Constraint:
+             {
+               Discriminant_Association_List & discriminantAssociations = x.Discriminant_Associations;
+               printf ("   discriminantAssociations: \n");
+               processDiscriminantAssociationList(discriminantAssociations);
+               break;
+             }
+
+          default:
+             {
+               printf ("Default reached in processConstraint(): constraintKind = %d constraintKind = %s \n",constraintKind,constraintKindName(constraintKind).c_str());
+               ROSE_ASSERT(false);
+             }
+        }
+
+#if 0
+     printf ("ERROR: not implemented! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
+void 
+Ada_ROSE_Translation::processComponentDefinition ( Component_Definition_Struct & x, int element_id)
+   {
+#if 0
+  // Documentation for x
+     Definition Component_Definition_View;
+#endif
+
+     Definition componentDefinitionView = x.Component_Definition_View;
+     printf ("   componentDefinitionView = %d \n",componentDefinitionView);
+
+#if 0
+     printf ("ERROR: not implemented! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
+void 
+Ada_ROSE_Translation::processDiscreteSubtypeDefinition ( Discrete_Subtype_Definition_Struct & x, int element_id)
+   {
+#if 0
+  // Documentation for x
+#endif
+
+#if 1
+     printf ("ERROR: not implemented! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
+void 
+Ada_ROSE_Translation::processDiscreteRange ( Discrete_Range_Struct & x, int element_id)
+   {
+#if 0
+  // Documentation for x
+#endif
+
+#if 1
+     printf ("ERROR: not implemented! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
+void 
+Ada_ROSE_Translation::processUnknownDiscriminantPart ( Unknown_Discriminant_Part_Struct & x, int element_id)
+   {
+#if 0
+  // Documentation for x
+#endif
+
+#if 1
+     printf ("ERROR: not implemented! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
+void 
+Ada_ROSE_Translation::processKnownDiscriminantPart ( Known_Discriminant_Part_Struct & x, int element_id)
+   {
+#if 0
+  // Documentation for x
+#endif
+
+#if 1
+     printf ("ERROR: not implemented! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
+void 
+Ada_ROSE_Translation::processRecordDefinition ( Record_Definition_Struct & x, int element_id)
+   {
+#if 0
+  // Documentation for x
+     Record_Component_List Record_Components;
+     Record_Component_List Implicit_Components;
+#endif
+
+     Record_Component_List & recordComponents    = x.Record_Components;
+     printf ("   recordComponents: \n");
+     processRecordComponentList(recordComponents);
+
+     Record_Component_List & implicitComponents = x.Implicit_Components;
+     printf ("   implicitComponents: \n");
+     processRecordComponentList(implicitComponents);
+
+#if 0
+     printf ("ERROR: not implemented! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
+void 
+Ada_ROSE_Translation::processNullRecordDefinition ( Null_Record_Definition_Struct & x, int element_id)
+   {
+#if 0
+  // Documentation for x
+#endif
+
+#if 1
+     printf ("ERROR: not implemented! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
+void 
+Ada_ROSE_Translation::processNullComponent ( Null_Component_Struct & x, int element_id)
+   {
+#if 0
+  // Documentation for x
+#endif
+
+#if 1
+     printf ("ERROR: not implemented! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
+void 
+Ada_ROSE_Translation::processVariantPart ( Variant_Part_Struct & x, int element_id)
+   {
+#if 0
+  // Documentation for x
+#endif
+
+#if 1
+     printf ("ERROR: not implemented! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
+void 
+Ada_ROSE_Translation::processVariant ( Variant_Struct & x, int element_id)
+   {
+#if 0
+  // Documentation for x
+#endif
+
+#if 1
+     printf ("ERROR: not implemented! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
+void 
+Ada_ROSE_Translation::processOthersChoice ( Others_Choice_Struct & x, int element_id)
+   {
+#if 0
+  // Documentation for x
+#endif
+
+#if 1
+     printf ("ERROR: not implemented! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
+void 
+Ada_ROSE_Translation::processAccessDefinition ( Access_Definition_Struct & x, int element_id)
+   {
+#if 0
+  // Documentation for x
+#endif
+
+#if 0
+     printf ("ERROR: not implemented! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
+void 
+Ada_ROSE_Translation::processPrivateTypeDefinition ( Private_Type_Definition_Struct & x, int element_id)
+   {
+#if 0
+  // Documentation for x
+#endif
+
+#if 1
+     printf ("ERROR: not implemented! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
+void 
+Ada_ROSE_Translation::processTaggedPrivateTypeDefinition ( Tagged_Private_Type_Definition_Struct & x, int element_id)
+   {
+#if 0
+  // Documentation for x
+#endif
+
+#if 1
+     printf ("ERROR: not implemented! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
+void 
+Ada_ROSE_Translation::processPrivateExtensionDefinition ( Private_Extension_Definition_Struct & x, int element_id)
+   {
+#if 0
+  // Documentation for x
+#endif
+
+#if 1
+     printf ("ERROR: not implemented! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
+void 
+Ada_ROSE_Translation::processTaskDefinition ( Task_Definition_Struct & x, int element_id)
+   {
+#if 0
+  // Documentation for x
+     bool                  Has_Task;
+     Declarative_Item_List Visible_Part_Items;
+     Declarative_Item_List Private_Part_Items;
+     bool                  Is_Private_Present;
+#endif
+
+     bool hasTask = x.Has_Task;
+     printf ("   hasTask = %s \n",hasTask ? "true" : "false");
+
+     Declarative_Item_List & visiblePartItems = x.Visible_Part_Items;
+     printf ("   visiblePartItems: \n");
+     processDeclarativeItemList(visiblePartItems);
+
+     Declarative_Item_List & privatePartItems = x.Private_Part_Items;
+     printf ("   privatePartItems: \n");
+     processDeclarativeItemList(privatePartItems);
+
+     bool isPrivatePresent = x.Is_Private_Present;
+     printf ("   isPrivatePresent = %s \n",isPrivatePresent ? "true" : "false");
+
+#if 0
+     printf ("ERROR: not implemented! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
+void 
+Ada_ROSE_Translation::processProtectedDefinition ( Protected_Definition_Struct & x, int element_id)
+   {
+#if 0
+  // Documentation for x
+#endif
+
+#if 1
+     printf ("ERROR: not implemented! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
+void 
+Ada_ROSE_Translation::processFormalTypeDefinition ( Formal_Type_Definition_Struct & x, int element_id)
+   {
+#if 0
+  // Documentation for x
+#endif
+
+#if 1
+     printf ("ERROR: not implemented! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
+void 
+Ada_ROSE_Translation::processAspectSpecification ( Aspect_Specification_Struct & x, int element_id)
+   {
+#if 0
+  // Documentation for x
+#endif
+
+#if 1
+     printf ("ERROR: not implemented! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
+
+
+
+#if 0
+
+// OLD CODE! 
+
+void
+  Ada_ROSE_Translation::processDefinition( Definition_Struct & definition, int element_id)
    {
 #if 0
   // Documentation for Definition_Struct.
   enum Definition_Kinds Definition_Kind;
+
+#error "DEAD CODE!"
   
   // These fields are only valid for the kinds above them:
   // A_Component_Definition
@@ -4977,15 +7210,348 @@ Ada_ROSE_Translation::processDefinition( Definition_Struct & definition)
   Declarative_Item_ID_List Visible_Part_Items;
   Declarative_Item_ID_List Private_Part_Items;
   bool                     Is_Private_Present;
+  // TODO: not done yet - abt 55 fields to go.  Introduce union and sub structs?
+
+#error "DEAD CODE!"
+  
+  // Thse are the Definition_Kinds:
+enum Definition_Kinds {
+  Not_A_Definition,                 // An unexpected element
+
+  A_Type_Definition,                // 3.2.1(4)    -> Type_Kinds
+
+  A_Subtype_Indication,             // 3.2.2(3)
+  A_Constraint,                     // 3.2.2(5)    -> Constraint_Kinds
+
+  A_Component_Definition,           // 3.6(7)      -> Trait_Kinds
+
+  A_Discrete_Subtype_Definition,    // 3.6(6)      -> Discrete_Range_Kinds
+  A_Discrete_Range,                 // 3.6.1(3)    -> Discrete_Range_Kinds
+
+  An_Unknown_Discriminant_Part,     // 3.7(3)
+  A_Known_Discriminant_Part,        // 3.7(2)
+
+  A_Record_Definition,              // 3.8(3)
+  A_Null_Record_Definition,         // 3.8(3)
+
+  A_Null_Component,                 // 3.8(4)
+  A_Variant_Part,                   // 3.8.1(2)
+  A_Variant,                        // 3.8.1(3)
+
+  An_Others_Choice,                 // 3.8.1(5), 4.3.1(5), 4.3.3(5), 11.2(5)
+
+  //  //|A2005 start
+  An_Access_Definition,             // 3.10(6/2)   -> Access_Definition_Kinds
+  //  //|A2005 end
+
+  A_Private_Type_Definition,        // 7.3(2)      -> Trait_Kinds
+  A_Tagged_Private_Type_Definition, // 7.3(2)      -> Trait_Kinds
+  A_Private_Extension_Definition,   // 7.3(3)      -> Trait_Kinds
+
+  A_Task_Definition,                // 9.1(4)
+  A_Protected_Definition,           // 9.4(4)
+
+  A_Formal_Type_Definition,         // 12.5(3)     -> Formal_Type_Kinds
+
+  //  //|A2012 start
+  An_Aspect_Specification           // 13.3.1
+  //  //|A2012 end  
+};
+
+#error "DEAD CODE!"
+  
 #endif
 
      Definition_Kinds definitionKind = definition.Definition_Kind;
 
+#error "DEAD CODE!"
+  
      printf ("   In processDefinition(): \n");
      printf ("      definitionKind (value) = %d \n",definitionKind);
      printf ("      definitionKind (name)  = %s \n",definitionKindName(definitionKind).c_str());
 
+#error "DEAD CODE!"
+  
+     switch (definitionKind)
+        {
+       // A_Component_Definition
+       // A_Private_Type_Definition
+       // A_Tagged_Private_Type_Definition
+       // A_Private_Extension_Definition
+       // A_Subtype_Indication
+       // An_Access_Definition
+       // case A_Component_Definition:
+          case A_Private_Type_Definition:
+          case A_Tagged_Private_Type_Definition:
+          case A_Private_Extension_Definition:
+       // case A_Subtype_Indication:
+          case An_Access_Definition:
+             {
+            // Trait_Kinds traitKind = definition.Trait_Kind;
+            // printf ("     traitKind (value) = %d \n",traitKind);
+            // printf ("     traitKind (name)  = %s \n",traitKindName(traitKind).c_str());
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+#error "DEAD CODE!"
+  
+       // A_Type_Definition
+          case A_Type_Definition:
+             {
+               Type_Kinds typeKind = definition.Type_Kind;
+               printf ("     typeKind (value) = %d \n",typeKind);
+            // printf ("     typeKind (name)  = %s \n",typeKindName(typeKind).c_str());
+
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+#error "DEAD CODE!"
+  
+#if 0
+       // A_Derived_Type_Definition
+       // A_Derived_Record_Extension_Definition
+          case A_Derived_Type_Definition:
+       // case A_Derived_Record_Extension_Definition:
+             {
+               Subtype_Indication_ID parentSubtypeIndication = definition.Parent_Subtype_Indication;
+               printf ("     parentSubtypeIndication = %d \n",parentSubtypeIndication);
+
+            // A_Derived_Type_Definition
+            // A_Derived_Record_Extension_Definition
+               Definition_ID_List & implicitInheritedDeclarations = definition.Implicit_Inherited_Declarations;
+               printf ("     implicitInheritedDeclarations: \n");
+               processPathList(implicitInheritedDeclarations);
+               Definition_ID_List & implicitInheritedSubprograms = definition.Implicit_Inherited_Subprograms;
+               printf ("     implicitInheritedSubprograms: \n");
+               processPathList(implicitInheritedSubprograms);
+               Definition_ID correspondingParentSubtype = definition.Corresponding_Parent_Subtype;
+               printf ("     correspondingParentSubtype = %d \n",correspondingParentSubtype);
+               Definition_ID correspondingRootType = definition.Corresponding_Root_Type;
+               printf ("     correspondingRootType = %d \n",correspondingRootType);
+               Definition_ID correspondingTypeStructure = definition.Corresponding_Type_Structure;
+               printf ("     correspondingTypeStructure = %d \n",correspondingTypeStructure);
+               break;
+             }
+#endif
+
+#error "DEAD CODE!"
+  
+#if 0
+       // A_Derived_Type_Definition
+       // A_Derived_Record_Extension_Definition
+       // case A_Derived_Type_Definition:
+          case A_Derived_Record_Extension_Definition:
+             {
+               Subtype_Indication_ID parentSubtypeIndication = definition.Parent_Subtype_Indication;
+               printf ("     parentSubtypeIndication = %d \n",parentSubtypeIndication);
+
+            // A_Derived_Record_Extension_Definition
+               Definition_ID recordDefinition = definition.Record_Definition;
+               printf ("     recordDefinition = %d \n",recordDefinition);
+
+            // A_Derived_Type_Definition
+            // A_Derived_Record_Extension_Definition
+               Definition_ID_List & implicitInheritedDeclarations = definition.Implicit_Inherited_Declarations;
+               printf ("     implicitInheritedDeclarations: \n");
+               processDefinitionIdList(implicitInheritedDeclarations);
+               Definition_ID_List & implicitInheritedSubprograms = definition.Implicit_Inherited_Subprograms;
+               printf ("     implicitInheritedSubprograms: \n");
+               processDefinitionIdList(implicitInheritedSubprograms);
+               Definition_ID correspondingParentSubtype = definition.Corresponding_Parent_Subtype;
+               printf ("     correspondingParentSubtype = %d \n",correspondingParentSubtype);
+               Definition_ID correspondingRootType = definition.Corresponding_Root_Type;
+               printf ("     correspondingRootType = %d \n",correspondingRootType);
+               Definition_ID correspondingTypeStructure = definition.Corresponding_Type_Structure;
+               printf ("     correspondingTypeStructure = %d \n",correspondingTypeStructure);
+               break;
+             }
+#endif
+
+#error "DEAD CODE!"
+  
+       // A_Constraint
+          case A_Constraint:
+             {
+               Constraint_Kinds constraintKind = definition.Constraint_Kind;
+               printf ("     constraintKind (value) = %d \n",constraintKind);
+            // printf ("     constraintKind (name)  = %s \n",constraintKindName(constraintKind).c_str());
+
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+#error "DEAD CODE!"
+  
+#if 0
+       // A_Simple_Expression_Range
+          case A_Simple_Expression_Range:
+             {
+               Expression_ID lowerBound = definition.Lower_Bound;
+               printf ("     lowerBound = %d \n",lowerBound);
+               Expression_ID upperBound = definition.Upper_Bound;
+               printf ("     upperBound = %d \n",upperBound);
+               break;
+             }
+#endif
+       // A_Subtype_Indication
+       // A_Discrete_Subtype_Definition (See Discrete_Range_Kinds)
+       // A_Discrete_Range (See Discrete_Range_Kinds)
+       // case A_Subtype_Indication:
+          case A_Discrete_Subtype_Definition:
+          case A_Discrete_Range:
+             {
+               Expression_ID subtypeMark = definition.Subtype_Mark;
+               printf ("     subtypeMark = %d \n",subtypeMark);
+               Constraint_ID subtypeConstraint = definition.Subtype_Constraint;
+               printf ("     subtypeConstraint = %d \n",subtypeConstraint);
+
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+#error "DEAD CODE!"
+  
+          case A_Subtype_Indication:
+             {
+               Expression_ID subtypeMark = definition.Subtype_Mark;
+               printf ("     subtypeMark = %d \n",subtypeMark);
+               Constraint_ID subtypeConstraint = definition.Subtype_Constraint;
+               printf ("     subtypeConstraint = %d \n",subtypeConstraint);
+
+            // Trait_Kinds traitKind = definition.Trait_Kind;
+            // printf ("     traitKind (value) = %d \n",traitKind);
+            // printf ("     traitKind (name)  = %s \n",traitKindName(traitKind).c_str());
+
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+#error "DEAD CODE!"
+  
+       // A_Component_Definition
+          case A_Component_Definition:
+             {
+            // Trait_Kinds traitKind = definition.Trait_Kind;
+            // printf ("     traitKind (value) = %d \n",traitKind);
+            // printf ("     traitKind (name)  = %s \n",traitKindName(traitKind).c_str());
+
+               Subtype_Indication_ID componentSubtypeIndication = definition.Component_Subtype_Indication;
+               printf ("     componentSubtypeIndication = %d \n",componentSubtypeIndication);
+               Definition_ID componentDefinitionView            = definition.Component_Definition_View;
+               printf ("     componentDefinitionView = %d \n",componentDefinitionView);
+
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+#error "DEAD CODE!"
+  
+       // A_Record_Definition
+       // A_Variant
+          case A_Record_Definition:
+          case A_Variant:
+             {
+               Record_Component_List & recordComponents = definition.Record_Components;
+               printf ("     recordComponents: \n");
+               processRecordComponentList(recordComponents);
+               Record_Component_List & implicitComponents = definition.Implicit_Components;
+               printf ("     implicitComponents: \n");
+               processRecordComponentList(implicitComponents);
+               Declarative_Item_ID_List & visiblePartItems = definition.Visible_Part_Items;
+               printf ("     visiblePartItems: \n");
+               processDeclarativeItemIdList(visiblePartItems);
+               Declarative_Item_ID_List & privatePartItems = definition.Private_Part_Items;
+               printf ("     privatePartItems: \n");
+               processDeclarativeItemIdList(privatePartItems);
+               bool isPrivatePresent = definition.Is_Private_Present;
+               printf ("     isPrivatePresent = %s \n",isPrivatePresent ? "true" : "false");
+
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+#error "DEAD CODE!"
+  
+          case A_Task_Definition:
+             {
+            // Nothing to output here, so far!
+
+               printf ("Need to build a task definition! \n");
+
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+               break;
+             }
+
+#error "DEAD CODE!"
+  
+          default:
+             {
+               printf ("Default reached in processDefinition(): definitionKind = %d definitionKind = %s \n",definitionKind,definitionKindName(definitionKind).c_str());
+               ROSE_ASSERT(false);
+             }
+        }
+
+#error "DEAD CODE!"
+  
+  // DQ (10/5/2017): This is general code to handled definitions, we likely new additional 
+  // untyped IR nodes to support the concept fo a SgUntypedDefinition, plus whatever 
+  // variations of untyped definition IR nodes that we require (for the cases above).
+     SgUntypedScope* untypedScope = new SgUntypedScope();
+     ROSE_ASSERT(untypedScope != NULL);
+
+     SgUntypedStatementList* untypedStatementList = new SgUntypedStatementList();
+     ROSE_ASSERT(untypedStatementList != NULL);
+
+  // Connect IR nodes.
+     untypedScope->set_statement_list(untypedStatementList);
+
+     printf ("In processDefinition(): element_id = %d \n",element_id);
+
+#error "DEAD CODE!"
+  
+  // ROSE_ASSERT(untypedNodeMap.find(element_id) == untypedNodeMap.end());
+     if (untypedNodeMap.find(element_id) == untypedNodeMap.end())
+        {
+          untypedNodeMap[element_id] = untypedScope;
+        }
+       else
+        {
+          printf ("ERROR: ignoring redundent processing of definition: definitionKind = %d definitionKind = %s \n",definitionKind,definitionKindName(definitionKind).c_str());
+        }
+     ROSE_ASSERT(untypedNodeMap.find(element_id) != untypedNodeMap.end());
+
+     setAsisAttribute (untypedScope,element_id);
    }
+
+#error "DEAD CODE!"
+  
+#endif
 
 
 void
@@ -5250,7 +7816,7 @@ Ada_ROSE_Translation::processExceptionHandler( Exception_Handler_Struct & except
      printf ("   In processAssociation(): \n");
      printf ("      declarationId = %d \n",declarationId);
 
-     Element_List & exceptionChoices = exceptionHandler.Exception_Choices;
+     Element_ID_List & exceptionChoices = exceptionHandler.Exception_Choices;
      printf ("     exceptionChoices: \n");
      processExpressionList(exceptionChoices);
      Statement_List & handlerStatements = exceptionHandler.Handler_Statements;
@@ -5284,6 +7850,61 @@ Ada_ROSE_Translation::processPath( Path_Struct & path, int element_id)
   // A_Select_Path,
   // An_Or_Path,
   Expression_ID  Guard;
+
+
+enum Path_Kinds {
+  Not_A_Path,
+  //  An unexpected element
+
+  //  Statement paths:
+  
+  An_If_Path,
+  //  5.3:
+  //  if condition then
+  //    sequence_of_statements
+  An_Elsif_Path,
+  //  5.3:
+  //  elsif condition then
+  //    sequence_of_statements
+  An_Else_Path,
+  //  5.3, 9.7.1, 9.7.3:
+  //  else sequence_of_statements
+  A_Case_Path,
+  //  5.4:
+  //  when discrete_choice_list =>
+  //    sequence_of_statements
+  A_Select_Path,
+  //  9.7.1:
+  //     select [guard] select_alternative
+  //  9.7.2, 9.7.3:
+  //     select entry_call_alternative
+  //  9.7.4:
+  //     select triggering_alternative
+  An_Or_Path,
+  //  9.7.1:
+  //     or [guard] select_alternative
+  //  9.7.2:
+  //     or delay_alternative
+  A_Then_Abort_Path,
+  //  9.7.4
+  //     then abort sequence_of_statements
+
+  //  //|A2012 start
+  //  Expression paths:
+  
+  A_Case_Expression_Path,
+  //  ??? (RM 2012)
+  //  when expression => expression
+  An_If_Expression_Path,
+  //  ??? (RM 2012)
+  //  if condition then expression
+  An_Elsif_Expression_Path,
+  //  ??? (RM 2012)
+  //  elsif condition then expression
+  An_Else_Expression_Path
+  //  ??? (RM 2012)
+  //  else expression
+};
 #endif
 
      Path_Kinds pathKind = path.Path_Kind;
@@ -5303,7 +7924,7 @@ Ada_ROSE_Translation::processPath( Path_Struct & path, int element_id)
           case An_If_Path:
           case An_Elsif_Path:
              {
-#if 1
+#if 0
                Expression_ID conditionExpression = path.Condition_Expression;
                printf ("      conditionExpression = %d \n",conditionExpression);
 
@@ -5327,11 +7948,13 @@ Ada_ROSE_Translation::processPath( Path_Struct & path, int element_id)
                printf ("element_id = %d \n",element_id);
 
                ROSE_ASSERT(untypedNodeMap.find(element_id) == untypedNodeMap.end());
-               untypedNodeMap[element_id] = untypedIfStatement;
+            // untypedNodeMap[element_id] = untypedIfStatement;
+               untypedNodeMap[element_id] = untypedScope;
                ROSE_ASSERT(untypedNodeMap.find(element_id) != untypedNodeMap.end());
 
-               setAsisAttribute (untypedIfStatement,element_id);
-#if 1
+            // setAsisAttribute (untypedIfStatement,element_id);
+               setAsisAttribute (untypedScope,element_id);
+#if 0
                printf ("Exiting as a test! \n");
                ROSE_ASSERT(false);
 #endif
@@ -5343,7 +7966,7 @@ Ada_ROSE_Translation::processPath( Path_Struct & path, int element_id)
           case A_Case_Path:
           case A_Case_Expression_Path:
              {
-               Element_List & casePathAlternativeChoices = path.Case_Path_Alternative_Choices;
+               Element_ID_List & casePathAlternativeChoices = path.Case_Path_Alternative_Choices;
                printf ("      casePathAlternativeChoices: \n");
                processElementList(casePathAlternativeChoices);
 
@@ -5513,7 +8136,7 @@ Ada_ROSE_Translation::processParameterSpecificationList( Parameter_Specification
 
 
 void
-Ada_ROSE_Translation::processElementList( Element_List & elementList)
+Ada_ROSE_Translation::processElementList( Element_ID_List & elementList)
    {
 #if 1
      printf ("In processElementList(): length = %d \n",elementList.Length);
@@ -5594,6 +8217,36 @@ Ada_ROSE_Translation::processExpressionList( Expression_List & expressionList)
 
 
 void
+Ada_ROSE_Translation::processDiscreteRangeList( Discrete_Range_List & discreteRangesList)
+   {
+#if 1
+     printf ("In processDiscreteRangeList(): length = %d \n",discreteRangesList.Length);
+#endif
+
+     processElementIdList(discreteRangesList);
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
+void
+Ada_ROSE_Translation::processDiscriminantAssociationList ( Discriminant_Association_List & discriminantAssociationList)
+   {
+#if 1
+     printf ("In processDiscriminantAssociationList(): length = %d \n",discriminantAssociationList.Length);
+#endif
+
+     processElementIdList(discriminantAssociationList);
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
+void
 Ada_ROSE_Translation::processDeclarationList           ( Declaration_List & declarationList)
    {
 #if 1
@@ -5641,7 +8294,7 @@ Ada_ROSE_Translation::processContentClauseList ( Context_Clause_List & contentCl
    }
 
 void
-Ada_ROSE_Translation::processPragmaElementList ( Pragma_Element_List & pragmaElementList)
+Ada_ROSE_Translation::processPragmaElementList ( Pragma_Element_ID_List & pragmaElementList)
    {
 #if 1
      printf ("In processPragmaElementList(): length = %d \n",pragmaElementList.Length);
@@ -5655,7 +8308,37 @@ Ada_ROSE_Translation::processPragmaElementList ( Pragma_Element_List & pragmaEle
 #endif
    }
 
+void
+Ada_ROSE_Translation::processRecordComponentList       ( Record_Component_List & recordComponentList)
+   {
+#if 1
+     printf ("In processRecordComponenList(): length = %d \n",recordComponentList.Length);
+#endif
 
+     processElementIdList(recordComponentList);
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
+#if 0
+void
+Ada_ROSE_Translation::processDeclarativeItemIdList     ( Declarative_Item_ID_List & declarativeItemIdList)
+   {
+#if 1
+     printf ("In processDeclarativeItemIdList(): length = %d \n",declarativeItemIdList.Length);
+#endif
+
+     processElementIdList(declarativeItemIdList);
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+#endif
 
 void
 Ada_ROSE_Translation::processElementIdList( Element_ID_Array_Struct & elementIdList)
@@ -6497,6 +9180,64 @@ Ada_ROSE_Translation::operatorKindName (Operator_Kinds x)
    }
 
 
+  // DQ (10/12/2017): Required for new update from Charles.
+string
+Ada_ROSE_Translation::typeKindName (Type_Kinds x)
+   {
+#if 0
+  Not_A_Type_Definition,                 // An unexpected element
+  A_Derived_Type_Definition,             // 3.4(2)     -> Trait_Kinds
+  A_Derived_Record_Extension_Definition, // 3.4(2)     -> Trait_Kinds
+  An_Enumeration_Type_Definition,        // 3.5.1(2)
+  A_Signed_Integer_Type_Definition,      // 3.5.4(3)
+  A_Modular_Type_Definition,             // 3.5.4(4)
+  A_Root_Type_Definition,                // 3.5.4(14), 3.5.6(3)
+  //                                               -> Root_Type_Kinds
+  A_Floating_Point_Definition,           // 3.5.7(2)
+  An_Ordinary_Fixed_Point_Definition,    // 3.5.9(3)
+  A_Decimal_Fixed_Point_Definition,      // 3.5.9(6)
+  An_Unconstrained_Array_Definition,     // 3.6(2)
+  A_Constrained_Array_Definition,        // 3.6(2)
+  A_Record_Type_Definition,              // 3.8(2)     -> Trait_Kinds
+  A_Tagged_Record_Type_Definition,       // 3.8(2)     -> Trait_Kinds
+
+  //  //|A2005 start
+  An_Interface_Type_Definition,          // 3.9.4      -> Interface_Kinds
+  //  //|A2005 end
+
+  An_Access_Type_Definition            // 3.10(2)    -> Access_Type_Kinds
+#endif
+
+     string s;
+
+     switch (x)
+        {
+          case Not_A_Type_Definition:                 s = "Not_A_Type_Definition";                 break;
+          case A_Derived_Type_Definition:             s = "A_Derived_Type_Definition";             break;
+          case A_Derived_Record_Extension_Definition: s = "A_Derived_Record_Extension_Definition"; break;
+          case An_Enumeration_Type_Definition:        s = "An_Enumeration_Type_Definition";        break;
+          case A_Signed_Integer_Type_Definition:      s = "A_Signed_Integer_Type_Definition";      break;
+          case A_Modular_Type_Definition:             s = "A_Modular_Type_Definition";             break;
+          case A_Root_Type_Definition:                s = "A_Root_Type_Definition";                break;
+          case A_Floating_Point_Definition:           s = "A_Floating_Point_Definition";           break;
+          case An_Ordinary_Fixed_Point_Definition:    s = "An_Ordinary_Fixed_Point_Definition";    break;
+          case A_Decimal_Fixed_Point_Definition:      s = "A_Decimal_Fixed_Point_Definition";      break;
+          case An_Unconstrained_Array_Definition:     s = "An_Unconstrained_Array_Definition";     break;
+          case A_Constrained_Array_Definition:        s = "A_Constrained_Array_Definition";        break;
+          case A_Record_Type_Definition:              s = "A_Record_Type_Definition";              break;
+          case A_Tagged_Record_Type_Definition:       s = "A_Tagged_Record_Type_Definition";       break;
+          case An_Interface_Type_Definition:          s = "An_Interface_Type_Definition";          break;
+
+          default:
+             {
+               printf ("Error: default called in switch for Ada_ROSE_Translation::typeKindName(): x = %d \n",x);
+               ROSE_ASSERT(false);
+             }
+        }
+
+     return s;
+   }
+
 string
 Ada_ROSE_Translation::declarationOriginName (Declaration_Origins x)
    {
@@ -6596,6 +9337,7 @@ Ada_ROSE_Translation::subprogramDefaultKindName (Subprogram_Default_Kinds x)
    }
 
 
+#if 0
 string
 Ada_ROSE_Translation::traitKindName (Trait_Kinds x)
    {
@@ -6671,6 +9413,7 @@ Ada_ROSE_Translation::traitKindName (Trait_Kinds x)
 
      return s;
    }
+#endif
 
 
 string
@@ -7106,5 +9849,329 @@ Ada_ROSE_Translation::unitOriginName (Unit_Origins x)
    }
 
 
+string
+Ada_ROSE_Translation::rootTypeKindName (Root_Type_Kinds x)
+   {
+     string s;
 
+     switch (x)
+        {
+          case Not_A_Root_Type_Definition:     s = "Not_A_Root_Type_Definition";     break;
+          case A_Root_Integer_Definition:      s = "A_Root_Integer_Definition";      break;
+          case A_Root_Real_Definition:         s = "A_Root_Real_Definition";         break;
+          case A_Universal_Integer_Definition: s = "A_Universal_Integer_Definition"; break;
+          case A_Universal_Real_Definition:    s = "A_Universal_Real_Definition";    break;
+          case A_Universal_Fixed_Definition:   s = "A_Universal_Fixed_Definition";   break;
+
+          default:
+             {
+               printf ("Error: default called in switch for Ada_ROSE_Translation::rootTypeKindName(): x = %d \n",x);
+               ROSE_ASSERT(false);
+             }
+        }
+
+     return s;
+   }
+
+string
+Ada_ROSE_Translation::interfaceKindName (Interface_Kinds x)
+   {
+#if 0
+  Not_An_Interface,                 // An unexpected element
+  An_Ordinary_Interface,            // interface ...
+  A_Limited_Interface,              // limited interface ...
+  A_Task_Interface,                 // task interface ...
+  A_Protected_Interface,            // protected interface ...
+  A_Synchronized_Interface        // synchronized interface ...
+#endif
+
+     string s;
+
+     switch (x)
+        {
+          case Not_An_Interface:         s = "Not_An_Interface";         break;
+          case An_Ordinary_Interface:    s = "An_Ordinary_Interface";    break;
+          case A_Limited_Interface:      s = "A_Limited_Interface";      break;
+          case A_Task_Interface:         s = "A_Task_Interface";         break;
+          case A_Protected_Interface:    s = "A_Protected_Interface";    break;
+          case A_Synchronized_Interface: s = "A_Synchronized_Interface"; break;
+
+          default:
+             {
+               printf ("Error: default called in switch for Ada_ROSE_Translation::interfaceKindName(): x = %d \n",x);
+               ROSE_ASSERT(false);
+             }
+        }
+
+     return s;
+   }
+
+string
+Ada_ROSE_Translation::accessTypeKindName (Access_Type_Kinds x)
+   {
+#if 0
+  Not_An_Access_Type_Definition,       // An unexpected element
+  A_Pool_Specific_Access_To_Variable,  // access subtype_indication
+  An_Access_To_Variable,               // access all subtype_indication
+  An_Access_To_Constant,               // access constant subtype_indication
+  An_Access_To_Procedure,              // access procedure
+  An_Access_To_Protected_Procedure,    // access protected procedure
+  An_Access_To_Function,               // access function
+  An_Access_To_Protected_Function      // access protected function
+#endif
+
+     string s;
+
+     switch (x)
+        {
+          case Not_An_Access_Type_Definition:      s = "Not_An_Access_Type_Definition"; break;
+          case A_Pool_Specific_Access_To_Variable: s = "A_Pool_Specific_Access_To_Variable"; break;
+          case An_Access_To_Variable:              s = "An_Access_To_Variable"; break;
+          case An_Access_To_Constant:              s = "An_Access_To_Constant"; break;
+          case An_Access_To_Procedure:             s = "An_Access_To_Procedure"; break;
+          case An_Access_To_Protected_Procedure:   s = "An_Access_To_Protected_Procedure"; break;
+          case An_Access_To_Function:              s = "An_Access_To_Function"; break;
+          case An_Access_To_Protected_Function:    s = "An_Access_To_Protected_Function"; break;
+
+          default:
+             {
+               printf ("Error: default called in switch for Ada_ROSE_Translation::accessTypeKindName(): x = %d \n",x);
+               ROSE_ASSERT(false);
+             }
+        }
+
+     return s;
+   }
+
+string
+Ada_ROSE_Translation::accessDefinitionKindName (Access_Definition_Kinds x)
+   {
+#if 0
+typedef enum _Access_Definition_Kinds {
+  Not_An_Access_Definition,       // An unexpected element
+  An_Anonymous_Access_To_Variable,  // [...] access subtype_mark
+  An_Anonymous_Access_To_Constant,  // [...] access constant subtype_mark
+  An_Anonymous_Access_To_Procedure,           // access procedure
+  An_Anonymous_Access_To_Protected_Procedure, // access protected procedure
+  An_Anonymous_Access_To_Function,            // access function
+  An_Anonymous_Access_To_Protected_Function   // access protected function
+} Access_Definition_Kinds;
+#endif
+
+     string s;
+
+     switch (x)
+        {
+          case Not_An_Access_Definition:                   s = "Not_An_Access_Definition";                   break;
+          case An_Anonymous_Access_To_Variable:            s = "An_Anonymous_Access_To_Variable";            break;
+          case An_Anonymous_Access_To_Constant:            s = "An_Anonymous_Access_To_Constant";            break;
+          case An_Anonymous_Access_To_Procedure:           s = "An_Anonymous_Access_To_Procedure";           break;
+          case An_Anonymous_Access_To_Protected_Procedure: s = "An_Anonymous_Access_To_Protected_Procedure"; break;
+          case An_Anonymous_Access_To_Function:            s = "An_Anonymous_Access_To_Function";            break;
+          case An_Anonymous_Access_To_Protected_Function:  s = "An_Anonymous_Access_To_Protected_Function";  break;
+
+          default:
+             {
+               printf ("Error: default called in switch for Ada_ROSE_Translation::accessDefinitionKindName(): x = %d \n",x);
+               ROSE_ASSERT(false);
+             }
+        }
+
+     return s;
+   }
+
+
+string
+Ada_ROSE_Translation::formalTypeKindName (Formal_Type_Kinds x)
+   {
+#if 0
+typedef enum _Formal_Type_Kinds {
+  Not_A_Formal_Type_Definition,             // An unexpected element
+  A_Formal_Private_Type_Definition,         // 12.5.1(2)   -> Trait_Kinds
+  A_Formal_Tagged_Private_Type_Definition,  // 12.5.1(2)   -> Trait_Kinds
+  A_Formal_Derived_Type_Definition,         // 12.5.1(3)   -> Trait_Kinds
+  A_Formal_Discrete_Type_Definition,        // 12.5.2(2)
+  A_Formal_Signed_Integer_Type_Definition,  // 12.5.2(3)
+  A_Formal_Modular_Type_Definition,         // 12.5.2(4)
+  A_Formal_Floating_Point_Definition,       // 12.5.2(5)
+  A_Formal_Ordinary_Fixed_Point_Definition, // 12.5.2(6)
+  A_Formal_Decimal_Fixed_Point_Definition,  // 12.5.2(7)
+
+  //|A2005 start
+  A_Formal_Interface_Type_Definition,       // 12.5.5(2) -> Interface_Kinds
+  //|A2005 end
+
+  A_Formal_Unconstrained_Array_Definition,  // 3.6(3)
+  A_Formal_Constrained_Array_Definition,    // 3.6(5)
+  A_Formal_Access_Type_Definition           // 3.10(3),3.10(5)
+  //                                                 -> Access_Type_Kinds
+} Formal_Type_Kinds;
+#endif
+
+     string s;
+
+     switch (x)
+        {
+          case Not_A_Formal_Type_Definition:             s = "Not_A_Formal_Type_Definition";             break;
+          case A_Formal_Private_Type_Definition:         s = "A_Formal_Private_Type_Definition";         break;
+          case A_Formal_Tagged_Private_Type_Definition:  s = "A_Formal_Tagged_Private_Type_Definition";  break;
+          case A_Formal_Derived_Type_Definition:         s = "A_Formal_Derived_Type_Definition";         break;
+          case A_Formal_Discrete_Type_Definition:        s = "A_Formal_Discrete_Type_Definition";        break;
+          case A_Formal_Signed_Integer_Type_Definition:  s = "A_Formal_Signed_Integer_Type_Definition";  break;
+          case A_Formal_Modular_Type_Definition:         s = "A_Formal_Modular_Type_Definition";         break;
+          case A_Formal_Floating_Point_Definition:       s = "A_Formal_Floating_Point_Definition";       break;
+          case A_Formal_Ordinary_Fixed_Point_Definition: s = "A_Formal_Ordinary_Fixed_Point_Definition"; break;
+          case A_Formal_Decimal_Fixed_Point_Definition:  s = "A_Formal_Decimal_Fixed_Point_Definition";  break;
+          case A_Formal_Interface_Type_Definition:       s = "A_Formal_Interface_Type_Definition";       break;
+          case A_Formal_Unconstrained_Array_Definition:  s = "A_Formal_Unconstrained_Array_Definition";  break;
+          case A_Formal_Constrained_Array_Definition:    s = "A_Formal_Constrained_Array_Definition";    break;
+          case A_Formal_Access_Type_Definition:          s = "A_Formal_Access_Type_Definition";          break;
+
+          default:
+             {
+               printf ("Error: default called in switch for Ada_ROSE_Translation::formalTypeKindName(): x = %d \n",x);
+               ROSE_ASSERT(false);
+             }
+        }
+
+     return s;
+   }
+
+string
+Ada_ROSE_Translation::discreteRangeKindName (Discrete_Range_Kinds x)
+   {
+#if 0
+typedef enum _Discrete_Range_Kinds {
+  Not_A_Discrete_Range,                  // An unexpected element
+  A_Discrete_Subtype_Indication,         // 3.6.1(6), 3.2.2
+  A_Discrete_Range_Attribute_Reference,  // 3.6.1, 3.5
+  A_Discrete_Simple_Expression_Range   // 3.6.1, 3.5
+} Discrete_Range_Kinds;
+#endif
+
+     string s;
+
+     switch (x)
+        {
+          case Not_A_Discrete_Range:                 s = "Not_A_Discrete_Range";                 break;
+          case A_Discrete_Subtype_Indication:        s = "A_Discrete_Subtype_Indication";        break;
+          case A_Discrete_Range_Attribute_Reference: s = "A_Discrete_Range_Attribute_Reference"; break;
+          case A_Discrete_Simple_Expression_Range:   s = "A_Discrete_Simple_Expression_Range";   break;
+
+          default:
+             {
+               printf ("Error: default called in switch for Ada_ROSE_Translation::discreteRangeKindName(): x = %d \n",x);
+               ROSE_ASSERT(false);
+             }
+        }
+
+     return s;
+   }
+
+string
+Ada_ROSE_Translation::constraintKindName (Constraint_Kinds x)
+   {
+#if 0
+typedef enum _Constraint_Kinds {
+  Not_A_Constraint,                      // An unexpected element
+  A_Range_Attribute_Reference,           // 3.5(2)
+  A_Simple_Expression_Range,             // 3.2.2, 3.5(3)
+  A_Digits_Constraint,                   // 3.2.2, 3.5.9
+  A_Delta_Constraint,                    // 3.2.2, J.3
+  An_Index_Constraint,                   // 3.2.2, 3.6.1
+  A_Discriminant_Constraint              // 3.2.2
+} Constraint_Kinds;
+#endif
+
+     string s;
+
+     switch (x)
+        {
+          case Not_A_Constraint:            s = "Not_A_Constraint";            break;
+          case A_Range_Attribute_Reference: s = "A_Range_Attribute_Reference"; break;
+          case A_Simple_Expression_Range:   s = "A_Simple_Expression_Range";   break;
+          case A_Digits_Constraint:         s = "A_Digits_Constraint";         break;
+          case A_Delta_Constraint:          s = "A_Delta_Constraint";          break;
+          case An_Index_Constraint:         s = "An_Index_Constraint";         break;
+          case A_Discriminant_Constraint:   s = "A_Discriminant_Constraint";   break;
+
+          default:
+             {
+               printf ("Error: default called in switch for Ada_ROSE_Translation::constraintKindName(): x = %d \n",x);
+               ROSE_ASSERT(false);
+             }
+        }
+
+     return s;
+   }
+
+string
+Ada_ROSE_Translation::representationClauseKindName (Representation_Clause_Kinds x)
+   {
+#if 0
+typedef enum _Representation_Clause_Kinds {
+      Not_A_Representation_Clause,              // An unexpected element
+      An_Attribute_Definition_Clause,           // 13.3
+      An_Enumeration_Representation_Clause,     // 13.4
+      A_Record_Representation_Clause,           // 13.5.1
+      An_At_Clause                              // J.7
+  } Representation_Clause_Kinds;
+#endif
+
+     string s;
+
+     switch (x)
+        {
+          case Not_A_Representation_Clause:          s = "Not_A_Representation_Clause";          break;
+          case An_Attribute_Definition_Clause:       s = "An_Attribute_Definition_Clause";       break;
+          case An_Enumeration_Representation_Clause: s = "An_Enumeration_Representation_Clause"; break;
+          case A_Record_Representation_Clause:       s = "A_Record_Representation_Clause";       break;
+          case An_At_Clause:                         s = "An_At_Clause";                         break;
+
+          default:
+             {
+               printf ("Error: default called in switch for Ada_ROSE_Translation::representationClauseKindName(): x = %d \n",x);
+               ROSE_ASSERT(false);
+             }
+        }
+
+     return s;
+   }
+
+
+
+#if 0
+string
+Ada_ROSE_Translation::xKindName (X_Kinds x)
+   {
+#if 0
+#endif
+
+     string s;
+
+     switch (x)
+        {
+          case x: s = "x"; break;
+          case x: s = "x"; break;
+          case x: s = "x"; break;
+          case x: s = "x"; break;
+          case x: s = "x"; break;
+          case x: s = "x"; break;
+          case x: s = "x"; break;
+          case x: s = "x"; break;
+          case x: s = "x"; break;
+          case x: s = "x"; break;
+          case x: s = "x"; break;
+          case x: s = "x"; break;
+
+          default:
+             {
+               printf ("Error: default called in switch for Ada_ROSE_Translation::xKindName(): x = %d \n",x);
+               ROSE_ASSERT(false);
+             }
+        }
+
+     return s;
+   }
+#endif
 

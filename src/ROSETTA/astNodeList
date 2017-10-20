@@ -792,6 +792,7 @@ SgUntypedPackageDeclaration
 SgUntypedExceptionDeclaration
 SgUntypedExceptionHandlerDeclaration
 SgUntypedTaskDeclaration
+SgUntypedUnitDeclaration
 SgUntypedStatementList
 SgUntypedDeclarationStatementList
 SgUntypedFunctionDeclarationList

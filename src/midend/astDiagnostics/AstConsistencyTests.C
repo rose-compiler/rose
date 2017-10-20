@@ -4779,6 +4779,13 @@ TestParentPointersInMemoryPool::visit(SgNode* node)
           ROSE_ASSERT(symbol->get_parent() != NULL);
         }
 
+  // DQ (10/16/2017): Skip parent pointer checking for the untyped IR nodes.
+     if (isSgUntypedNode(locatedNode) != NULL)
+        {
+          printf ("TestParentPointersInMemoryPool::visit(): Skipping SgUntypedNode IR Node \n");
+          return;
+        }
+
 #if 0
      if (isSgExpression(locatedNode) != NULL)
         {

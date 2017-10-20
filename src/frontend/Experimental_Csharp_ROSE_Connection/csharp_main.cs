@@ -1,6 +1,8 @@
 // This is the Csharp program that will call the Roslyn library specific to CodeAnalysis.
 
 // #define IGNORE_OLD_CODE
+#define OUTPUT_PARSE_TREE
+#define OUTPUT_ABSTRACT_SYNTAX_TREE
 
 using System;
 using System.Collections.Generic;
@@ -9,6 +11,10 @@ using System.Runtime.InteropServices;
 
 // New code to make this more specific to supporting Roslyn library for code analysis.
 using System.Linq;
+
+// DQ (10/18/2017): Adding file I/O support.
+using System.IO;
+
 using System.Text;
 using System.Threading.Tasks;
 
@@ -18,6 +24,7 @@ using UsingCollectorCS;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+
 
 namespace TestDLL
    {
@@ -45,12 +52,42 @@ namespace TestDLL
 #endif
         
           [DllExport("process", CallingConvention = CallingConvention.Cdecl)]
-          public static void process(System.UInt64 container)
        // public static void process(UInt64 container)
+       // public static void process(System.UInt64 container)
+          public static void process(string filename)
              {
+            // Test if this type is allowed.
+            // StringBuilder sss;
+            // StringBuilder sss = filename;
+
+               String filetext = "";
+
                Console.WriteLine ("In C# process(System.UInt64) called from ROSE C++: Hello! \n");
 
-            SyntaxTree tree = CSharpSyntaxTree.ParseText("using System;");
+               Console.WriteLine (filename);
+
+               using (FileStream fs = File.Open(filename, FileMode.Open)) 
+                  {
+                    byte[] b = new byte[1024];
+                    UTF8Encoding temp = new UTF8Encoding(true);
+
+                    while (fs.Read(b,0,b.Length) > 0) 
+                       {
+                      // Console.WriteLine ("In C# process(string) reading file! \n");
+                      // Console.WriteLine(temp.GetString(b));
+
+                      // filetext += b;
+                         filetext += temp.GetString(b);
+                       }
+                  }
+
+               Console.WriteLine ("In C# process(string) after reading file! \n");
+
+            // Output the file as text on the console (debugging).
+            // Console.WriteLine (filetext);
+
+            // SyntaxTree tree = CSharpSyntaxTree.ParseText("using System;");
+               SyntaxTree tree = CSharpSyntaxTree.ParseText(filetext);
 
 #if IGNORE_NEW_CODE
             SyntaxTree tree = CSharpSyntaxTree.ParseText(
@@ -84,7 +121,9 @@ namespace TopLevel
 }");
 #endif
 
-#if IGNORE_NEW_CODE
+               Console.WriteLine ("In C# process(System.UInt64) after parsing C# string! \n");
+
+// #if IGNORE_NEW_CODE
             var root = (CompilationUnitSyntax)tree.GetRoot();
 
             var collector = new UsingCollector();
@@ -94,7 +133,21 @@ namespace TopLevel
             {
                 Console.WriteLine(directive.Name);
             }
+// #endif
+
+               Console.WriteLine ("In C# process(System.UInt64) after outputing the using directives! \n");
+
+#if OUTPUT_ABSTRACT_SYNTAX_TREE
+               var abstractSyntaxTreeTraversal_object = new AbstractSyntaxTreeTraversal();
+               abstractSyntaxTreeTraversal_object.Visit(root);
 #endif
+
+#if OUTPUT_PARSE_TREE
+               var parseTreeTraversal_object = new ParseTreeTraversal();
+               parseTreeTraversal_object.Visit(root);
+#endif
+
+               Console.WriteLine ("In C# process(System.UInt64) after output of parse tree! \n");
 
 #if IGNORE_OLD_CODE
                List<int> results = superCalculation();
@@ -103,6 +156,7 @@ namespace TopLevel
                  // storeResults(container, results[i]);
                   }
 #endif
+               Console.WriteLine ("Leaving C# process(System.UInt64)! \n");
              }
         }
    }

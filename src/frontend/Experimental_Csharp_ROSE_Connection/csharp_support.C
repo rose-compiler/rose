@@ -6,12 +6,19 @@
 #include <assert.h>
 #include <dlfcn.h>
 
+#include <string.h>
+
 // using namespace std;
 
-bool process(std::string &lib, std::string &function)
+bool process(std::string &lib, std::string &function, std::string sourceFileNameWithPath)
    {
      void *handle          = NULL;
+#if 0
      void (*process)(void) = NULL;
+#else
+  // void (*process)(std::string s) = NULL;
+     void (*process)(char*) = NULL;
+#endif
      char *error           = NULL;
 
      printf ("In C++ process(): calling dlopen() lib = %s \n",lib.c_str());
@@ -31,7 +38,12 @@ bool process(std::string &lib, std::string &function)
 
      printf ("In C++ process(): calling dlsym() function = %s \n",function.c_str());
 
+#if 0
      process = (void (*)(void)) dlsym(handle, function.c_str());
+#else
+  // process = (void (*)(std::string)) dlsym(handle, function.c_str());
+     process = (void (*)(char*)) dlsym(handle, function.c_str());
+#endif
 
      printf ("In C++ process(): after call to dlsym(): process = %p \n",process);
 
@@ -44,10 +56,24 @@ bool process(std::string &lib, std::string &function)
           return false;
         }
 
+     printf ("In C++ process(): sourceFileNameWithPath = %s \n",sourceFileNameWithPath.c_str());
+
      printf ("In C++ process(): calling process() \n");
 
+#if 0
      process();
-    
+#else
+  // process(sourceFileNameWithPath);
+     char buffer[2000];
+  // char* s = const_cast<char*>(sourceFileNameWithPath.c_str());
+     char* s = strncpy(buffer,sourceFileNameWithPath.c_str(),1000);
+     s[1001] = '\0';
+
+     printf ("In C++ process(): s = %s \n",s);
+
+     process(s);
+#endif
+
      printf ("In C++ process(): calling dlclose() \n");
 
      dlclose(handle);
@@ -67,7 +93,8 @@ int main(int argc, char** argv)
 
 // #error "Should not be reached!"
 
-int csharp_main(int argc, char** argv)
+// int csharp_main(int argc, char** argv)
+int csharp_main(int argc, char** argv, std::string sourceFileNameWithPath)
 #endif
    {
   // std::string lib("./Kazelib.so");
@@ -82,8 +109,11 @@ int csharp_main(int argc, char** argv)
 
      printf ("In csharp_main(): calling process(lib,function): lib = %s function = %s \n",lib.c_str(),function.c_str());
 
+     printf ("In csharp_main(): sourceFileNameWithPath = %s \n",sourceFileNameWithPath.c_str());
+
   // assert ( process(lib, function) );
-     int status = process(lib, function);
+  // int status = process(lib, function);
+     int status = process(lib, function, sourceFileNameWithPath);
      assert (status != 0);
 
      printf ("Leaving csharp_main() \n");

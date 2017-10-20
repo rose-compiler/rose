@@ -32,7 +32,7 @@ int main(int argc, char** argv)
      printf ("In ada_support.C: In ada_main(): calling ada support for file = %s \n",file->getFileName().c_str());
 #endif
 
-     char *prefix = "call_asis_tool_2.main";
+     const char *prefix = "call_asis_tool_2.main";
   // char *target_file = "../test_units/unit_2.adb";
   // const char *target_file = file->getFileName().c_str();
      char target_file[1024];
@@ -49,7 +49,8 @@ int main(int argc, char** argv)
   // char *gnat_home   = "/usr/workspace/wsb/charles/bin/adacore/gnat-gpl-2017-x86_64-linux";
      char *gnat_home   = "/home/quinlan1/ROSE/ADA/x86_64-linux/adagpl-2017/gnatgpl/gnat-gpl-2017-x86_64-linux-bin";
   // struct List_Node_Struct *head_node = NULL;
-     List_Node_Struct *head_node = NULL;
+  // List_Node_Struct *head_node = NULL;
+     Nodes_Struct head_nodes;
 
      printf ("%s:  BEGIN.\n", prefix);
 
@@ -59,12 +60,12 @@ int main(int argc, char** argv)
 
   // DQ (31/8/2017): Definitions of these functions still need to be provided to via libraries to be able to link ROSE.
      dot_asisinit();
-     head_node = tool_2_wrapper (target_file, gnat_home,outputDirectory);
+     head_nodes = tool_2_wrapper (target_file, gnat_home,outputDirectory);
 
-     if (head_node == 0) {
+     if (head_nodes.Elements == NULL) {
         printf ("%s:  tool_2_wrapper returned NO elements.\n", prefix);
      } else {
-        printf ("%s:  tool_2_wrapper returned %i elements.\n" , prefix, head_node->Next_Count + 1);
+        printf ("%s:  tool_2_wrapper returned %i elements.\n" , prefix, head_nodes.Elements->Next_Count + 1);
      }
 #endif
 
@@ -72,7 +73,7 @@ int main(int argc, char** argv)
 
      ROSE_ASSERT (status == 0);
 
-     Ada_ROSE_Translation::ada_to_ROSE_translation(head_node,file);
+     Ada_ROSE_Translation::ada_to_ROSE_translation(head_nodes,file);
 
      dot_asisfinal();
 
