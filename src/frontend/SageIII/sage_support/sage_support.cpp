@@ -5447,6 +5447,7 @@ SgSourceFile::build_Jovial_AST( vector<string> argv, vector<string> inputCommand
           printf ("In build_Jovial_AST(): Before calling jovial_main(): frontEndCommandLineString = %s \n",frontEndCommandLineString.c_str());
         }
 
+     int frontendErrorLevel;
      int jovial_argc = 0;
      char **jovial_argv = NULL;
      CommandlineProcessing::generateArgcArgvFromList(inputCommandLine, jovial_argc, jovial_argv);
@@ -5458,14 +5459,20 @@ SgSourceFile::build_Jovial_AST( vector<string> argv, vector<string> inputCommand
      SgSourceFile* nonconst_file = const_cast<SgSourceFile*>(this);
      ROSE_ASSERT(nonconst_file != NULL);
 
-     int frontendErrorLevel = jovial_main (jovial_argc, jovial_argv, nonconst_file);
+  // Rasmussen (10/21/2017) Added compile time check to build if not configured for Ada
+#ifdef ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION
+     frontendErrorLevel = jovial_main (jovial_argc, jovial_argv, nonconst_file);
+#else
+     printf ("ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION is not defined \n");
+     return frontendErrorLevel;
+#endif
 
      if ( get_verbose() > 1 )
         {
           printf ("In build_Jovial_AST(): After calling jovial_main(): frontEndCommandLineString = %s \n",frontEndCommandLineString.c_str());
         }
 
-#if 0
+#if 1
      printf ("Exiting after parsing Jovial input... \n");
      exit(0);
 #endif
@@ -5509,7 +5516,7 @@ SgSourceFile::build_Cobol_AST( vector<string> argv, vector<string> inputCommandL
           printf ("In build_Cobol_AST(): After calling cobol_main(): frontEndCommandLineString = %s \n",frontEndCommandLineString.c_str());
         }
 
-#if 0
+#if 1
      printf ("Exiting after parsing Cobol input... \n");
      exit(0);
 #endif
