@@ -603,17 +603,15 @@ Grammar::setUpNodes ()
      UntypedExpression.setDataPrototype     ( "int", "expression_enum", "= 0",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // Rasmussen (10/17/2017): Removed SgToken::ROSE_Fortran_Operators operator_enum from UntypedUnaryOperator
      UntypedUnaryOperator.setFunctionPrototype ( "HEADER_UNTYPED_UNARY_OPERATOR", "../Grammar/LocatedNode.code");
-     UntypedUnaryOperator.setDataPrototype     ( "SgToken::ROSE_Fortran_Operators", "operator_enum", "= SgToken::FORTRAN_INTRINSIC_PLUS",
-                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      UntypedUnaryOperator.setDataPrototype     ( "std::string", "operator_name", "= \"\"",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      UntypedUnaryOperator.setDataPrototype     ( "SgUntypedExpression*", "operand", "= NULL",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
+  // Rasmussen (10/17/2017): Removed SgToken::ROSE_Fortran_Operators operator_enum from UntypedBinaryOperator
      UntypedBinaryOperator.setFunctionPrototype ( "HEADER_UNTYPED_BINARY_OPERATOR", "../Grammar/LocatedNode.code");
-     UntypedBinaryOperator.setDataPrototype     ( "SgToken::ROSE_Fortran_Operators", "operator_enum", "= SgToken::FORTRAN_INTRINSIC_PLUS",
-                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      UntypedBinaryOperator.setDataPrototype     ( "std::string", "operator_name", "= \"\"",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      UntypedBinaryOperator.setDataPrototype     ( "SgUntypedExpression*", "lhs_operand", "= NULL",

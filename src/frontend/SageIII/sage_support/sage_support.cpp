@@ -5346,6 +5346,7 @@ SgSourceFile::build_Csharp_AST( vector<string> argv, vector<string> inputCommand
           printf ("In build_Csharp_AST(): Before calling csharp_main(): frontEndCommandLineString = %s \n",frontEndCommandLineString.c_str());
         }
 
+     int frontendErrorLevel = 0;
      int csharp_argc = 0;
      char **csharp_argv = NULL;
      CommandlineProcessing::generateArgcArgvFromList(inputCommandLine, csharp_argc, csharp_argv);
@@ -5356,8 +5357,14 @@ SgSourceFile::build_Csharp_AST( vector<string> argv, vector<string> inputCommand
   // Prototype declaration.
      int csharp_main(int argc, char** argv, string sourceFileNameWithPath);
 
+  // Rasmussen (10/9/2017) Added compile time check to build if not configured for C#
+#ifdef ROSE_EXPERIMENTAL_CSHARP_ROSE_CONNECTION
   // int frontendErrorLevel = csharp_main (c_cxx_argc, c_cxx_argv, *this);
-     int frontendErrorLevel = csharp_main (csharp_argc, csharp_argv, sourceFileNameWithPath);
+     frontendErrorLevel = csharp_main (csharp_argc, csharp_argv, sourceFileNameWithPath);
+#else
+     printf ("ROSE_EXPERIMENTAL_CSHARP_ROSE_CONNECTION is not defined \n");
+     return frontendErrorLevel;
+#endif
 
 #if 1
      printf ("Exiting after parsing Csharp input... \n");
@@ -5394,6 +5401,7 @@ SgSourceFile::build_Ada_AST( vector<string> argv, vector<string> inputCommandLin
           printf ("In build_Ada_AST(): Before calling ada_main(): frontEndCommandLineString = %s \n",frontEndCommandLineString.c_str());
         }
 
+     int frontendErrorLevel = 0;
      int ada_argc = 0;
      char **ada_argv = NULL;
      CommandlineProcessing::generateArgcArgvFromList(inputCommandLine, ada_argc, ada_argv);
@@ -5404,7 +5412,14 @@ SgSourceFile::build_Ada_AST( vector<string> argv, vector<string> inputCommandLin
   // int frontendErrorLevel = ada_main (ada_argc, ada_argv);
      SgSourceFile* nonconst_file = const_cast<SgSourceFile*>(this);
      ROSE_ASSERT(nonconst_file != NULL);
-     int frontendErrorLevel = ada_main (ada_argc, ada_argv, nonconst_file);
+
+  // Rasmussen (10/9/2017) Added compile time check to build if not configured for Ada
+#ifdef ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
+     frontendErrorLevel = ada_main (ada_argc, ada_argv, nonconst_file);
+#else
+     printf ("ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION is not defined \n");
+     return frontendErrorLevel;
+#endif
 
   // printf ("Exiting after parsing Ada input... \n");
   // exit(0);
@@ -5437,9 +5452,13 @@ SgSourceFile::build_Jovial_AST( vector<string> argv, vector<string> inputCommand
      CommandlineProcessing::generateArgcArgvFromList(inputCommandLine, jovial_argc, jovial_argv);
 
   // Prototype declaration.
-     int jovial_main(int argc, char** argv);
+  // Rasmussen (10/16/2017): Added SgSourceFile parameter
+     int jovial_main(int argc, char** argv, SgSourceFile* file);
 
-     int frontendErrorLevel = jovial_main (jovial_argc, jovial_argv);
+     SgSourceFile* nonconst_file = const_cast<SgSourceFile*>(this);
+     ROSE_ASSERT(nonconst_file != NULL);
+
+     int frontendErrorLevel = jovial_main (jovial_argc, jovial_argv, nonconst_file);
 
      if ( get_verbose() > 1 )
         {
@@ -5469,6 +5488,7 @@ SgSourceFile::build_Cobol_AST( vector<string> argv, vector<string> inputCommandL
           printf ("In build_Cobol_AST(): Before calling cobol_main(): frontEndCommandLineString = %s \n",frontEndCommandLineString.c_str());
         }
 
+     int frontendErrorLevel = 0;
      int cobol_argc = 0;
      char **cobol_argv = NULL;
      CommandlineProcessing::generateArgcArgvFromList(inputCommandLine, cobol_argc, cobol_argv);
@@ -5476,7 +5496,13 @@ SgSourceFile::build_Cobol_AST( vector<string> argv, vector<string> inputCommandL
   // Prototype declaration.
      int cobol_main(int argc, char** argv);
 
-     int frontendErrorLevel = cobol_main (cobol_argc, cobol_argv);
+  // Rasmussen (10/9/2017) Added compile time check to build if not configured for Cobol
+#ifdef ROSE_EXPERIMENTAL_COBOL_ROSE_CONNECTION
+     frontendErrorLevel = cobol_main (cobol_argc, cobol_argv);
+#else
+     printf ("ROSE_EXPERIMENTAL_COBOL_ROSE_CONNECTION is not defined \n");
+     return frontendErrorLevel;
+#endif
 
      if ( get_verbose() > 1 )
         {

@@ -1205,7 +1205,7 @@ UntypedConverter::convertSgUntypedUnaryOperator(SgUntypedUnaryOperator* untyped_
  {
     SgUnaryOp* op = NULL;
 
-    switch(untyped_operator->get_operator_enum())
+    switch(untyped_operator->get_expression_enum())
        {
          case SgToken::FORTRAN_INTRINSIC_NOT:
             {
@@ -1228,7 +1228,7 @@ UntypedConverter::convertSgUntypedBinaryOperator(SgUntypedBinaryOperator* untype
  {
     SgBinaryOp* op = NULL;
 
-    switch(untyped_operator->get_operator_enum())
+    switch(untyped_operator->get_expression_enum())
        {
          case SgToken::FORTRAN_INTRINSIC_PLUS:
             {

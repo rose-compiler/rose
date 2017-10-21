@@ -2895,11 +2895,11 @@ SgUntypedExpression* SgUntypedExpression::build_node_from_nonlist_children ( Sg_
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgUntypedUnaryOperator* SgUntypedUnaryOperator::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, int expression_enum, SgToken::ROSE_Fortran_Operators operator_enum, std::string operator_name, SgUntypedExpression* operand )
+SgUntypedUnaryOperator* SgUntypedUnaryOperator::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, int expression_enum, std::string operator_name, SgUntypedExpression* operand )
    {
 #if 0
   // debugging information!
-     printf ("In SgUntypedUnaryOperator::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, int expression_enum, SgToken::ROSE_Fortran_Operators operator_enum, std::string operator_name, SgUntypedExpression* operand): this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In SgUntypedUnaryOperator::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, int expression_enum, std::string operator_name, SgUntypedExpression* operand): this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
      SgUntypedUnaryOperator* returnNode = NULL;
@@ -2913,11 +2913,11 @@ SgUntypedUnaryOperator* SgUntypedUnaryOperator::build_node_from_nonlist_children
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgUntypedBinaryOperator* SgUntypedBinaryOperator::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, int expression_enum, SgToken::ROSE_Fortran_Operators operator_enum, std::string operator_name, SgUntypedExpression* lhs_operand, SgUntypedExpression* rhs_operand )
+SgUntypedBinaryOperator* SgUntypedBinaryOperator::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, int expression_enum, std::string operator_name, SgUntypedExpression* lhs_operand, SgUntypedExpression* rhs_operand )
    {
 #if 0
   // debugging information!
-     printf ("In SgUntypedBinaryOperator::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, int expression_enum, SgToken::ROSE_Fortran_Operators operator_enum, std::string operator_name, SgUntypedExpression* lhs_operand, SgUntypedExpression* rhs_operand): this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In SgUntypedBinaryOperator::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, int expression_enum, std::string operator_name, SgUntypedExpression* lhs_operand, SgUntypedExpression* rhs_operand): this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
      SgUntypedBinaryOperator* returnNode = NULL;
@@ -3379,6 +3379,19 @@ SgUntypedTaskDeclaration* SgUntypedTaskDeclaration::build_node_from_nonlist_chil
 #endif
 
      SgUntypedTaskDeclaration* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+SgUntypedUnitDeclaration* SgUntypedUnitDeclaration::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct, std::string name)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedUnitDeclaration::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, std::string name): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedUnitDeclaration* returnNode = NULL;
 
      return returnNode;
    }
