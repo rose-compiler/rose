@@ -78,7 +78,14 @@ bool DefUseAnalysisAbstract::checkElementsForChange(const multitype* t1, const m
 
   //  if (s2.size() != t2->size())
   //    printMultiMap(t2);
-  assert (s2.size() == t2->size());
+  if (s2.size() != t2->size())
+  {
+    cerr<<"s2.size()="<< s2.size() <<endl;
+    cerr<<"t2.size()="<< t2->size() <<endl;
+    dfa->printMultiMap (t2);
+    assert(s2.size() == t2->size());
+  }
+
   return s1 != s2;
   /*
 

@@ -41,7 +41,9 @@ Checker_Test_Files += \
    indirecArrayInLambda.cpp \
    dataMemberAccumulation.cpp \
    declaredAsFuncParameter.cpp \
-   withoutSharedBase.cpp
+   withoutSharedBase.cpp \
+   nodalAccPattern3.cpp \
+   nodalAccPattern4.cpp
 endif
 endif
 endif
