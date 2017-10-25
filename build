@@ -171,7 +171,16 @@ LIBTOOL_VERSION="$VERSION"
 if [[ -z "$LIBTOOL_VERSION" ]]; then
     echo "$0: warning: cannot determine libtool version; skipping libtoolize" 2>&1
 elif version_ok "$LIBTOOL_VERSION" "$LIBTOOL_VERSION_PREREQ"; then
-    (set -x; $libtoolize_name --force --copy --ltdl --automake)
+# Pei-Hung 10/25/2017
+# libltdl copied through libtoolize would require a specific version of aclocal and automake depending on the libtool version.
+# rerun aclocal in libltdl source directory will regenerate aclocal.m4 and eliminate that software dependence.
+    (set -ex 
+        $libtoolize_name --force --copy --ltdl --automake
+        cd libltdl
+        aclocal
+        autoheader
+        autoconf
+    )
 else
     echo "$0: warning: libtool $LIBTOOL_VERSION is too old (require >= $LIBTOOL_VERSION_PREREQ); skipping libtoolize" 2>&1
 fi
