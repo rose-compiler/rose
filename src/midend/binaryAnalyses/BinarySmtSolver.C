@@ -1,7 +1,9 @@
 #include "sage3basic.h"
+#include "rosePublicConfig.h"
 
 #include "rose_getline.h"
 #include "BinarySmtSolver.h"
+#include "BinarySmtlibSolver.h"
 #include "BinaryYicesSolver.h"
 
 #include <boost/format.hpp>
@@ -31,24 +33,48 @@ SmtSolver::initDiagnostics() {
 std::ostream&
 operator<<(std::ostream &o, const SmtSolver::Exception &e)
 {
-    return o <<"SMT solver: " <<e.mesg;
+    return o <<"SMT solver: " <<e.what();
 }
 
 SmtSolver::Stats SmtSolver::classStats;
 boost::mutex SmtSolver::classStatsMutex;
 
-void
-SmtSolver::init()
-{}
-
-// class method
-SmtSolver*
-SmtSolver::instance(const std::string &name) {
-    if (name == "yices") {
-        return new YicesSolver;
-    } else {
-        ASSERT_not_reachable("invalid SMT solver name: \"" + StringUtility::cEscape(name) + "\"");
+SmtSolver::LinkMode
+SmtSolver::bestLinkage(unsigned linkages) {
+    for (size_t i=0; i<8*sizeof(linkages); ++i) {
+        unsigned bit = (1u << i);
+        if ((linkages & bit) != 0)
+            return (LinkMode)bit;
     }
+    return LM_NONE;
+}
+
+void
+SmtSolver::requireLinkage(LinkMode need) {
+    if ((linkage_ & need) == 0) {
+        std::string mesg = name();
+        if (mesg.empty())
+            mesg = "unnamed";
+        mesg += " solver";
+        switch (need) {
+            case LM_EXECUTABLE:
+                mesg += " (executable mode)";
+                break;
+            case LM_LIBRARY:
+                mesg += " (library mode)";
+                break;
+            default:
+                mesg += " (unknown mode)";
+                break;
+        }
+        mesg += " is not available";
+        throw Exception(mesg);
+    }
+}
+
+void
+SmtSolver::init(unsigned linkages) {
+    linkage_ = bestLinkage(linkages);
 }
 
 // class method
@@ -57,6 +83,91 @@ SmtSolver::classStatistics()
 {
     boost::lock_guard<boost::mutex> lock(classStatsMutex);
     return classStats;
+}
+
+// class method
+void
+SmtSolver::selfTest() {
+    using namespace SymbolicExpr;
+    typedef SymbolicExpr::Ptr E;
+    std::vector<E> exprs;
+
+    E a1 = makeVariable(1, "1-bit variable");
+    E a8 = makeVariable(8, "eight-bit variable");
+    E a32 = makeVariable(32, "32-bit variable");
+    E a256 = makeVariable(256, "256-bit variable");
+
+    E z8 = makeInteger(8, 0, "8-bit zero");
+    E b4 = makeInteger(4, 10, "4-bit 10");
+    E b8 = makeInteger(8, 0xf0, "8-bit 0xf0");
+    E c8 = makeVariable(8, "8-bit variable");
+    E z256 = makeInteger(256, 0xdeadbeef, "256-bit 0xDeadBeef");
+
+    E bfalse = makeBoolean(false, "Boolean false");
+    E btrue = makeBoolean(true, "Boolean true");
+
+    //---- Comparisons ----
+    exprs.push_back(makeZerop(a8, "zerop"));
+    exprs.push_back(makeEq(a8, z8, "equal"));
+    exprs.push_back(makeNe(a8, z8, "not equal"));
+    exprs.push_back(makeLt(a8, z8, "unsigned less than"));
+    exprs.push_back(makeLe(a8, z8, "unsigned less than or equal"));
+    exprs.push_back(makeGt(a8, z8, "unsigned greater than"));
+    exprs.push_back(makeGe(a8, z8, "unsigned greater than or equal"));
+    exprs.push_back(makeSignedLt(a8, z8, "signed less than"));
+    exprs.push_back(makeSignedLe(a8, z8, "signed less than or equal"));
+    exprs.push_back(makeSignedGt(a8, z8, "signed greater than"));
+    exprs.push_back(makeSignedGe(a8, z8, "signed greather than or equal"));
+
+    //----- Boolean operations -----
+    exprs.push_back(makeBooleanAnd(makeZerop(a8), makeZerop(c8), "Boolean conjunction"));
+    exprs.push_back(makeEq(makeIte(makeZerop(a8), z8, b8), b8, "if-then-else"));
+    exprs.push_back(makeBooleanOr(makeZerop(a8), makeZerop(c8), "Boolean disjunction"));
+
+    //----- Bit operations -----
+    exprs.push_back(makeZerop(makeAnd(a8, b8), "bit-wise conjunction"));
+    exprs.push_back(makeZerop(makeAsr(makeInteger(2, 3), a8), "arithmetic shift right 3 bits"));
+    exprs.push_back(makeZerop(makeOr(a8, b8), "bit-wise disjunction"));
+    exprs.push_back(makeZerop(makeXor(a8, b8), "bit-wise exclusive disjunction"));
+    exprs.push_back(makeZerop(makeConcat(a8, b8), "concatenation"));
+    exprs.push_back(makeZerop(makeExtract(makeInteger(2, 3), makeInteger(4, 8), a8), "extract bits [3..7]"));
+    exprs.push_back(makeZerop(makeInvert(a8), "bit-wise not"));
+#if 0 // FIXME[Robb Matzke 2017-10-24]: not implemented yet
+    exprs.push_back(makeZerop(makeLssb(a8), "least significant set bit"));
+    exprs.push_back(makeZerop(makeMssb(a8), "most significant set bit"));
+#endif
+    exprs.push_back(makeZerop(makeRol(makeInteger(2, 3), a8), "rotate left three bits"));
+    exprs.push_back(makeZerop(makeRor(makeInteger(2, 3), a8), "rotate right three bits"));
+    exprs.push_back(makeZerop(makeSignExtend(makeInteger(6, 32), a8), "sign extend to 32 bits"));
+    exprs.push_back(makeZerop(makeShl0(makeInteger(2, 3), a8), "shift left inserting three zeros"));
+    exprs.push_back(makeZerop(makeShl1(makeInteger(2, 3), a8), "shift left inserting three ones"));
+    exprs.push_back(makeZerop(makeShr0(makeInteger(2, 3), a8), "shift right inserting three zeros"));
+    exprs.push_back(makeZerop(makeShr1(makeInteger(2, 3), a8), "shift right inserting three ones"));
+    exprs.push_back(makeZerop(makeExtend(makeInteger(2, 3), a8), "truncate to three bits"));
+    exprs.push_back(makeZerop(makeExtend(makeInteger(6, 32), a8), "extend to 32 bits"));
+    
+    //----- Arithmetic operations -----
+    exprs.push_back(makeZerop(makeAdd(a8, b8), "addition"));
+    exprs.push_back(makeZerop(makeNegate(a8), "negation"));
+#if 0 // FIXME[Robb Matzke 2017-10-24]: not implemented yet
+    exprs.push_back(makeZerop(makeSignedDiv(a8, b4), "signed ratio"));
+    exprs.push_back(makeZerop(makeSignedMod(a8, b4), "signed remainder"));
+#endif
+    exprs.push_back(makeZerop(makeSignedMul(a8, b4), "signed multiply"));
+    exprs.push_back(makeZerop(makeDiv(a8, b4), "unsigned ratio"));
+    exprs.push_back(makeZerop(makeMod(a8, b4), "unsigned remainder"));
+    exprs.push_back(makeZerop(makeMul(a8, b4), "unsigned multiply"));
+
+    //----- Memory operations -----
+    E mem = makeMemory(32, 8, "memory");
+    E addr = makeInteger(32, 12345, "address");
+    exprs.push_back(makeZerop(makeRead(mem, addr), "read from memory"));
+    exprs.push_back(makeEq(makeRead(makeWrite(mem, addr, a8), addr), a8, "write to memory"));
+
+    //----- Miscellaneous operations -----
+    exprs.push_back(makeEq(makeSet(a8, b8, c8), b8, "set"));
+
+    generateFile(std::cout, exprs, NULL);
 }
 
 // FIXME[Robb Matzke 2017-10-17]: deprecated
@@ -126,6 +237,7 @@ SmtSolver::satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs)
     return retval;
 #else
 
+    requireLinkage(LM_EXECUTABLE);
     clearEvidence();
 
     Satisfiable retval = triviallySatisfiable(exprs);
@@ -254,9 +366,11 @@ SmtSolver::evidence_names() {
     return evidenceNames();
 }
 
-// FIXME[Robb Matzke 2017-10-17]: deprecated
+// FIXME[Robb Matzke 2017-10-20]: deprecated
 void
-SmtSolver::clear_evidence() {}
+SmtSolver::clear_evidence() {
+    return clearEvidence();
+}
 
 // FIXME[Robb Matzke 2017-10-17]: deprecated
 const SmtSolver::Stats&
@@ -274,6 +388,18 @@ SmtSolver::reset_stats() {
 void
 SmtSolver::parse_evidence() {
     parseEvidence();
+}
+
+// FIXME[Robb Matzke 2017-10-20]: deprecated
+void
+SmtSolver::generate_file(std::ostream &o, const std::vector<SymbolicExpr::Ptr> &exprs, Definitions *defns) {
+    generateFile(o, exprs, defns);
+}
+
+// FIXME[Robb Matzke 2017-10-20]: deprecated
+std::string
+SmtSolver::get_command(const std::string &config_name) {
+    return getCommand(config_name);
 }
 
 } // namespace

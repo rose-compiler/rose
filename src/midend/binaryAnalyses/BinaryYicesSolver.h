@@ -24,23 +24,10 @@ namespace BinaryAnalysis {
  *  satisfiability questions is made at runtime (see set_linkage()).
  */
 class YicesSolver: public SmtSolver {
-public:
-    /** Bit flags to indicate what style of calls are made to Yices. */
-    enum LinkMode {
-        LM_NONE=0x0000,                         /**< No available linkage. */
-        LM_LIBRARY=0x0001,                      /**< The Yices runtime library is available. */
-        LM_EXECUTABLE=0x0002                    /**< The "yices" executable is available. */
-    };
-
-    /** Maps expression nodes to term names.  This map is populated for common subexpressions. */
-    typedef Sawyer::Container::Map<SymbolicExpr::Ptr, std::string> TermNames;
-
 protected:
     typedef std::map<std::string/*name or hex-addr*/, std::pair<size_t/*nbits*/, uint64_t/*value*/> > Evidence;
 
 private:
-    LinkMode linkage_;
-    TermNames termNames;                                // only used by Yices executable translator; library uses termExprs
 #ifdef ROSE_HAVE_LIBYICES
     yices_context context;
 #else
@@ -56,94 +43,53 @@ private:
     template<class S>
     void serialize(S &s, const unsigned version) {
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SmtSolver);
-        s & BOOST_SERIALIZATION_NVP(linkage_);
-        s & BOOST_SERIALIZATION_NVP(termNames);
-        s & BOOST_SERIALIZATION_NVP(evidence);
-        //s & context; -- not saved
+        // evidence     -- not saved
+        // context      -- not saved
     }
 #endif
 
 public:
-    /** Constructor prefers to use the Yices executable interface. See @ref linkage. */
-    YicesSolver(): linkage_(LM_NONE), context(NULL) {
-        init();
-    }
-    virtual ~YicesSolver();
-
-    virtual void generateFile(std::ostream&, const std::vector<SymbolicExpr::Ptr> &exprs, Definitions*);
-
-    // FIXME[Robb Matzke 2017-10-17]: deprecated
-    virtual void generate_file(std::ostream&, const std::vector<SymbolicExpr::Ptr> &exprs, Definitions*)
-        ROSE_DEPRECATED("use generateFile");
-
-    virtual std::string getCommand(const std::string &config_name);
-
-    // FIXME[Robb Matzke 2017-10-17]: deprecated
-    virtual std::string get_command(const std::string &config_name) ROSE_DEPRECATED("use getCommand");
-
-    /** Returns a bit vector indicating what calling modes are available.  The bits are defined by the @ref LinkMode enum. */
-    static unsigned availableLinkage();
-
-    // FIXME[Robb Matzke 2017-10-17]: deprecated
-    static unsigned available_linkage() ROSE_DEPRECATED("use availableLinkage");
-
-    /** Property: The style of linkage currently enabled.
+    /** Constructs object to communicate with Yices solver.
      *
-     * @{ */
-    LinkMode linkage() const {
-        return linkage_;
-    }
-    void linkage(LinkMode lm) {
-        ROSE_ASSERT(lm & availableLinkage());
-        linkage_ = lm;
-    }
-    /** @} */
+     *  The solver will be named "Yices" (see @ref name property) and will use the library linkage if the Yices library
+     *  is present, otherwise the executable linkage. If neither is available then an @c SmtSolver::Exception is thrown. */
+    explicit YicesSolver(unsigned linkages = LM_ANY)
+        : SmtSolver("Yices", (LinkMode)(linkages & availableLinkages())), context(NULL) {}
 
-    // FIXME[Robb Matzke 2017-10-17]: deprecated
-    LinkMode get_linkage() const ROSE_DEPRECATED("use linkage property");
+    /** Returns a bit vector of linkage capabilities.
+     *
+     *  Returns a vector of @ref LinkMode bits that say what possible modes of communicating with the Yices SMT solver are
+     *  available. A return value of zero means the Yices solver is not supported in this configuration of ROSE. */
+    static unsigned availableLinkages();
 
-    // FIXME[Robb Matzke 2017-10-17]: deprecated
-    void set_linkage(LinkMode lm) ROSE_DEPRECATED("use linkage property");
+    virtual ~YicesSolver();
+    virtual void generateFile(std::ostream&, const std::vector<SymbolicExpr::Ptr> &exprs, Definitions*) ROSE_OVERRIDE;
+    virtual std::string getCommand(const std::string &config_name) ROSE_OVERRIDE;
 
-    /** Determines if the specified expression is satisfiable.  Most solvers use the implementation in the base class, which
-     *  creates a text file (usually in SMT-LIB format) and then invokes an executable with that input, looking for a line of
-     *  output containing "sat" or "unsat". However, Yices provides a library that can optionally be linked into ROSE, and
-     *  uses this library if the link mode is LM_LIBRARY.
-     *  @{ */
+    // Determines if the specified expression is satisfiable.  Most solvers use the implementation in the base class, which
+    // creates a text file (usually in SMT-LIB format) and then invokes an executable with that input, looking for a line of
+    // output containing "sat" or "unsat". However, Yices provides a library that can optionally be linked into ROSE, and uses
+    // this library if the link mode is LM_LIBRARY.
     virtual Satisfiable satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs);
     virtual Satisfiable satisfiable(const SymbolicExpr::Ptr &tn) {
         std::vector<SymbolicExpr::Ptr> exprs;
         exprs.push_back(tn);
         return satisfiable(exprs);
     }
-    /** @} */
-
-    virtual SymbolicExpr::Ptr evidenceForName(const std::string&) /*overrides*/;
-
-    // FIXME[Robb Matzke 2017-10-17]: deprecated
-    virtual SymbolicExpr::Ptr evidence_for_name(const std::string&) /*overrides*/ ROSE_DEPRECATED("use evidenceForName");
-
-    virtual std::vector<std::string> evidenceNames() /*overrides*/;
-
-    // FIXME[Robb Matzke 2017-10-17]: deprecated
-    virtual std::vector<std::string> evidence_names() /*overrides*/ ROSE_DEPRECATED("use evidenceNames");
 
     virtual void clearEvidence() /*overrides*/;
+    virtual std::vector<std::string> evidenceNames() /*overrides*/;
+    virtual SymbolicExpr::Ptr evidenceForName(const std::string&) /*overrides*/;
 
-    // FIXME[Robb Matzke 2017-10-17]: deprecated
-    virtual void clear_evidence() /*overrides*/ ROSE_DEPRECATED("use clearEvidence");
+    // FIXME[Robb Matzke 2017-10-17]: these are all deprecated
+    static unsigned available_linkage() ROSE_DEPRECATED("use availableLinkages");
 
 protected:
     virtual uint64_t parse_variable(const char *nptr, char **endptr, char first_char);
 
     virtual void parseEvidence();
 
-    // FIXME[Robb Matzke 2017-10-17]: deprecated
-    virtual void parse_evidence() ROSE_DEPRECATED("use parseEvidence");
-
 private:
-    void init();
-
     static std::string get_typename(const SymbolicExpr::Ptr&);
 
     /* These out_*() functions convert a SymbolicExpr expression into text which is suitable as input to "yices"

@@ -20,6 +20,19 @@ registerDescriptor.passed: $(top_srcdir)/scripts/test_exit_status registerDescri
 		CMD="./registerDescriptor"		\
 		$< $@
 
+########################################################################################################################
+
+noinst_PROGRAMS += smtSolver
+smtSolver_SOURCES = smtSolver.C
+
+TEST_TARGETS += smtSolver.passed
+smtSolver.passed: $(top_srcdir)/scripts/test_exit_status smtSolver
+	@$(RTH_RUN)					\
+		TITLE="SMT solver classes [$@]"	\
+		CMD="./smtSolver"			\
+		$< $@
+
+
 ###############################################################################################################################
 # Boilerplate
 ###############################################################################################################################
