@@ -177,9 +177,7 @@ elif version_ok "$LIBTOOL_VERSION" "$LIBTOOL_VERSION_PREREQ"; then
     (set -ex 
         $libtoolize_name --force --copy --ltdl --automake
         cd libltdl
-        aclocal
-        autoheader
-        autoconf
+        autoreconf
     )
 else
     echo "$0: warning: libtool $LIBTOOL_VERSION is too old (require >= $LIBTOOL_VERSION_PREREQ); skipping libtoolize" 2>&1
