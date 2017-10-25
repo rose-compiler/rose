@@ -582,7 +582,7 @@ show-rpaths:
 	@echo "ROSE_LIBS = $(ROSE_LIBS)"
 	@echo "ROSE_RPATHS = $(ROSE_RPATHS)"
 
-INTEL_COMPILER_RPATHS = $(shell $(top_srcdir)/scripts/intel-compiler-rpaths.sh))
+INTEL_COMPILER_RPATHS = $(shell $(top_srcdir)/scripts/intel-compiler-rpaths.sh)
 
 # DQ (3/8/2009): This fails when I try to include it (fails in rose/src/testSharedRoseLib).
 #  $(INTEL_PIN_LIB_PATHS) $(INTEL_PIN_LIBS)
