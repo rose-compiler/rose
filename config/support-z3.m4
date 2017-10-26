@@ -27,6 +27,7 @@ AC_DEFUN([ROSE_SUPPORT_Z3],[
             if test -d "$ac_cv_use_z3"; then
                 Z3_PREFIX="$ac_cv_use_z3"
                 Z3BIN="$Z3_PREFIX/bin"
+		Z3="$Z3BIN/z3"
                 Z3_INCLUDE_PATH="$Z3_PREFIX/include"
                 Z3_LIBRARY_PATH="$Z3_PREFIX/lib"
                 AC_DEFINE([HAVE_Z3], [1], [Define to 1 if you have Z3 libs and headers.])
@@ -45,7 +46,7 @@ AC_DEFUN([ROSE_SUPPORT_Z3],[
         AC_MSG_RESULT([$Z3BIN])
     fi
 
-    AC_DEFINE_UNQUOTED(ROSE_Z3, ["$Z3BIN"], [Absolute name of z3 executable, or the empty string.])
+    AC_DEFINE_UNQUOTED(ROSE_Z3, ["$Z3"], [Absolute name of z3 executable, or the empty string.])
     AC_SUBST(Z3BIN)
     AC_SUBST(Z3_INCLUDE_PATH)
     AC_SUBST(Z3_LIBRARY_PATH)
