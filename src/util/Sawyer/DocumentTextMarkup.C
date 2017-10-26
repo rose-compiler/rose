@@ -15,6 +15,7 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/foreach.hpp>
 #include <boost/regex.hpp>
+#include <iostream>
 
 namespace Sawyer {
 namespace Document {
