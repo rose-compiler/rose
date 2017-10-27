@@ -569,7 +569,7 @@ list<SgClassDeclaration*> SgNodeHelper::classDeclarationNestingSequence(SgDeclar
 // MS: TODO: this implementation is complicated and needs to be structured better
 string SgNodeHelper::uniqueLongVariableName(SgNode* node) {
   if(!(isSgVarRefExp(node)||isSgVariableDeclaration(node)||isSgVariableSymbol(node))) {
-    string s="Error: uniqueLongVariableName: unsupported node type: "+node->class_name();
+    string s="Error: uniqueVariableName: unsupported node type: "+node->class_name();
     throw SPRAY::Exception(s);
   }
   SgSymbol* sym=0;
@@ -637,7 +637,7 @@ string SgNodeHelper::uniqueLongVariableName(SgNode* node) {
   } // end of FunctionParameter-check
   if(found) {
     if(sym==0) {
-      throw SPRAY::Exception("SgNodeHelper::uniqueLongVariableName: sym==0.");
+      throw SPRAY::Exception("SgNodeHelper::uniqueVariableName: sym==0.");
     }
 
     // NOTE: in case of a function parameter varDecl is represented by the function declaration
@@ -655,7 +655,7 @@ string SgNodeHelper::uniqueLongVariableName(SgNode* node) {
     string longName=string("$")+filename+string("$")+funName+"$"+scopeLevel+"/"+scopesequencenumber+"$"+classnestingname+"$"+name;
     return longName;
   } else {
-    throw SPRAY::Exception("SgNodeHelper::uniqueLongVariableName: improper node operation ("+node->class_name());
+    throw SPRAY::Exception("SgNodeHelper::uniqueVariableName: improper node operation ("+node->class_name());
   }
 }
 
