@@ -1205,7 +1205,7 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
         ROSE_ASSERT(rhsVarId.isValid());
         rhsIntVal=rhsVarId.getIdCode();
       } else {
-        logger[WARN]<< "access to variable "<<variableIdMapping.uniqueLongVariableName(rhsVarId)<< " id:"<<rhsVarId.toString()<<" on rhs of assignment, but variable does not exist in state. Initializing with top."<<endl;
+        logger[WARN]<< "access to variable "<<variableIdMapping.uniqueVariableName(rhsVarId)<< " id:"<<rhsVarId.toString()<<" on rhs of assignment, but variable does not exist in state. Initializing with top."<<endl;
         rhsIntVal=CodeThorn::Top();
         isRhsIntVal=true; 
       }

@@ -388,7 +388,7 @@ void Specialization::createSsaNumbering(ArrayUpdatesSequence& arrayUpdates, Vari
         ROSE_ASSERT(useRef);
         j.skipChildrenOnForward();
         VariableId varId=variableIdMapping->variableId(useRef);
-        string useName=variableIdMapping->uniqueShortVariableName(varId);
+        string useName=variableIdMapping->uniqueVariableName(varId);
         AstAttribute* attr=new NumberAstAttribute(defVarNumbers[useName]); // default creates 0 int (which is exactly what we need)
         if(attr) {
           useRef->setAttribute("Number",attr);
@@ -407,7 +407,7 @@ void Specialization::createSsaNumbering(ArrayUpdatesSequence& arrayUpdates, Vari
       toAnnotate=arr;
     } else if(SgVarRefExp* var=isSgVarRefExp(lhs)) {
       VariableId varId=variableIdMapping->variableId(var);
-      name=variableIdMapping->uniqueShortVariableName(varId);
+      name=variableIdMapping->uniqueVariableName(varId);
       toAnnotate=var;
     } else {
       cerr<<"Error: SSA Numbering: unknown LHS."<<endl;
@@ -439,7 +439,7 @@ void Specialization::attachSsaNumberingtoDefs(ArrayUpdatesSequence& arrayUpdates
       toAnnotate=arr;
     } else if(SgVarRefExp* var=isSgVarRefExp(lhs)) {
       VariableId varId=variableIdMapping->variableId(var);
-      name=variableIdMapping->uniqueShortVariableName(varId);
+      name=variableIdMapping->uniqueVariableName(varId);
       toAnnotate=var;
     } else {
       cerr<<"Error: SSA Numbering: unknown LHS."<<endl;

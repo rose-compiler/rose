@@ -71,7 +71,7 @@ void printResult(VariableIdMapping& variableIdMapping, VarConstSetMap& map) {
   VariableConstInfo vci(&variableIdMapping, &map);
   for(VarConstSetMap::iterator i=map.begin();i!=map.end();++i) {
     VariableId varId=(*i).first;
-    //string variableName=variableIdMapping.uniqueShortVariableName(varId);
+    //string variableName=variableIdMapping.uniqueVariableName(varId);
     string variableName=variableIdMapping.variableName(varId);
     set<AbstractValue> valueSet=(*i).second;
     stringstream setstr;

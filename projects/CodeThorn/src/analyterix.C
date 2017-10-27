@@ -411,7 +411,7 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
         }
       }
       else {
-        cout << "ERROR: No declaration for " << variableIdMapping.uniqueShortVariableName(*idIter) << " available." << endl;
+        cout << "ERROR: No declaration for " << variableIdMapping.uniqueVariableName(*idIter) << " available." << endl;
         ROSE_ASSERT(false);
       }
     }

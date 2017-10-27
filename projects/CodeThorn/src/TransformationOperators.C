@@ -49,7 +49,7 @@ void SPRAY::TransformationOperators::substituteUsesWithAvailableExpRhsOfDef(stri
             SgNode* defRootNode=labeler->getNode(def);
             // only substitute variables
             if(variableIdMapping->hasIntegerType(*i)||variableIdMapping->hasFloatingPointType(*i)) {
-              //cout<<"Found UD Attribute with one def. variable:"<<variableIdMapping->uniqueShortVariableName(*i)<<" ";
+              //cout<<"Found UD Attribute with one def. variable:"<<variableIdMapping->uniqueVariableName(*i)<<" ";
               //cout<<"DEF:"<<defRootNode->unparseToString()<<endl;
               // somewhat combersome to determime the rhs of the def
               // 1) declaration initializer
