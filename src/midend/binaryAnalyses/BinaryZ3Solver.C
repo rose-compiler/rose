@@ -1,4 +1,4 @@
-#include <rose.h>
+#include <sage3basic.h>
 #include <BinaryZ3Solver.h>
 
 namespace Rose {
@@ -120,16 +120,6 @@ Z3Solver::evidenceForName(const std::string&) {
 
 std::vector<std::string>
 Z3Solver::evidenceNames() {
-    TODO("[Robb Matzke 2017-10-23]");
-}
-
-void
-Z3Solver::clearEvidence() {
-    TODO("[Robb Matzke 2017-10-23]");
-}
-
-void
-Z3Solver::parseEvidence() {
     TODO("[Robb Matzke 2017-10-23]");
 }
 

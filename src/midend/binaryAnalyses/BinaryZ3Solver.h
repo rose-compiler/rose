@@ -15,12 +15,28 @@ namespace BinaryAnalysis {
  *  selected at runtime with the @ref linkage property. */
 class Z3Solver: public SmtlibSolver {
 public:
-    /**  Construct Z3 solver preferring library linkage. */
+    /**  Construct Z3 solver preferring library linkage.
+     *
+     *   If executable (@c LM_EXECUTABLE) linkage is specified then the executable is that which was detected by the ROSE
+     *   configuration script. */
     explicit Z3Solver(unsigned linkages = LM_ANY)
-        : SmtlibSolver(ROSE_Z3) {
+        :
+#ifdef ROSE_Z3
+        SmtlibSolver(ROSE_Z3)
+#else
+        SmtlibSolver("/bin/false")
+#endif
+        {
         name("Z3");
         linkage_ = bestLinkage(linkages & availableLinkages());
     }
+
+    /** Construct Z3 solver using a specified executable.
+     *
+     *  The @p exe should be only the name of the Z3 executable. The @p shellArgs are the rest of the command-line, all of
+     *  which will be passed through a shell. The caller is responsible for appropriately escaping shell meta characters. */
+    explicit Z3Solver(const boost::filesystem::path &exe, const std::string &shellArgs = "")
+        : SmtlibSolver(exe, shellArgs) {}
     
     /** Returns a bit vector of linkage capabilities.
      *
@@ -30,10 +46,8 @@ public:
 
     virtual SymbolicExpr::Ptr evidenceForName(const std::string&) ROSE_OVERRIDE;
     virtual std::vector<std::string> evidenceNames() ROSE_OVERRIDE;
-    virtual void clearEvidence() ROSE_OVERRIDE;
 
 protected:
-    virtual void parseEvidence() ROSE_OVERRIDE;
     virtual void outputBvxorFunctions(std::ostream&, const std::vector<SymbolicExpr::Ptr>&) ROSE_OVERRIDE;
     virtual void outputComparisonFunctions(std::ostream&, const std::vector<SymbolicExpr::Ptr>&) ROSE_OVERRIDE;
 

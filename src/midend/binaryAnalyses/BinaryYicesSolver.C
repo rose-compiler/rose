@@ -59,7 +59,7 @@ YicesSolver::satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs)
         ++stats.ncalls;
         {
             boost::lock_guard<boost::mutex> lock(classStatsMutex);
-            ++class_stats.ncalls;
+            ++classStats.ncalls;
         }
 
         if (!context) {
@@ -175,7 +175,7 @@ YicesSolver::parseEvidence()
      * "(= (m95 0b01000000000000011100111111110100) 0b00000000000000000100111100000100)".  The text is free-form, with any
      * white space appearing in place of the SPC characters shown. */
     evidence.clear();
-    const char *s = outputText.c_str();
+    const char *s = outputText_.c_str();
     char *rest = NULL;
 
     struct Error {
@@ -267,10 +267,10 @@ YicesSolver::parseEvidence()
         }
         
     } catch (const Error &err) {
-        std::cerr <<"YicesSolver::parseEvidence: " <<err.mesg <<" at char position " <<(err.at-outputText.c_str()) <<"\n"
+        std::cerr <<"YicesSolver::parseEvidence: " <<err.mesg <<" at char position " <<(err.at-outputText_.c_str()) <<"\n"
                   <<"YicesSolver::parseEvidence: before \"" <<std::string(err.at).substr(0, 20) <<"\"...\n"
                   <<"YicesSolver::parseEvidence: entire evidence string follows...\n"
-                  <<outputText.c_str();
+                  <<outputText_.c_str();
     }
 }
 

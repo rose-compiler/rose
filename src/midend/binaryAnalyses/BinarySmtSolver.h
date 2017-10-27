@@ -6,6 +6,7 @@
 #endif
 
 #include <BinarySymbolicExpr.h>
+#include <boost/lexical_cast.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/thread/mutex.hpp>
 #include <inttypes.h>
@@ -29,11 +30,20 @@ public:
     /** Maps expression nodes to term names.  This map is populated for common subexpressions. */
     typedef Sawyer::Container::Map<SymbolicExpr::Ptr, std::string> TermNames;
 
+    /** Exceptions for all things SMT related. */
     struct Exception: std::runtime_error {
         Exception(const std::string &mesg): std::runtime_error(mesg) {}
         ~Exception() throw () {}
     };
 
+    /** Exception for parse errors when reading SMT solver output. */
+    struct ParseError: Exception {
+        ParseError(const std::pair<size_t /*line*/, size_t /*col*/> &loc, const std::string &mesg)
+            : Exception("input line " + boost::lexical_cast<std::string>(loc.first+1) +
+                        " column " + boost::lexical_cast<std::string>(loc.second+1) + ": " + mesg) {}
+        ~ParseError() throw () {}
+    };
+    
     /** Satisfiability constants. */
     enum Satisfiable { SAT_NO=0,                        /**< Provably unsatisfiable. */
                        SAT_YES,                         /**< Satisfiable and evidence of satisfiability may be available. */
@@ -53,12 +63,29 @@ public:
 
     typedef std::set<uint64_t> Definitions;             /**< Free variables that have been defined. */
 
+    /** S-Expr parsed from SMT solver text output. */
+    class SExpr: public Sawyer::SmallObject, public Sawyer::SharedObject {
+    public:
+        typedef Sawyer::SharedPointer<SExpr> Ptr;
+    private:
+        explicit SExpr(const std::string &content): content_(content) {}
+        std::string content_;
+        std::vector<Ptr> children_;
+    public:
+        static Ptr instance();                          // interior node
+        static Ptr instance(const std::string &content); //  leaf node
+        const std::string name() const { return content_; }
+        const std::vector<Ptr>& children() const { return children_; }
+        std::vector<Ptr>& children() { return children_; }
+    };
+
 private:
     std::string name_;
 
 protected:
     LinkMode linkage_;
-    std::string outputText;                             /**< Additional output obtained by satisfiable(). */
+    std::string outputText_;                            /**< Additional output obtained by satisfiable(). */
+    std::vector<SExpr::Ptr> parsedOutput_;              // the evidence output
     TermNames termNames_;
 
 
@@ -70,7 +97,6 @@ protected:
     // Debugging
     static Sawyer::Message::Facility mlog;
 
-
 private:
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     friend class boost::serialization::access;
@@ -80,7 +106,8 @@ private:
         s & BOOST_SERIALIZATION_NVP(name_);
         // linkage_             -- not serialized
         // termNames_           -- not serialized
-        // outputText           -- not serialized
+        // outputText_          -- not serialized
+        // parsedOutput_        -- not serialized
         // classStatsMutex      -- not serialized
         // classStats           -- not serialized
         // stats                -- not serialized
@@ -200,6 +227,12 @@ public:
     /** Unit tests. */
     void selfTest();
 
+    /** Print an S-Expr for debugging.
+     *
+     *  A null pointer is printed as "nil" and an empty list is printed as "()" in order to distinguish the two cases. There
+     *  should be no null pointers though in well-formed S-Exprs. */
+    void printSExpression(std::ostream&, const SExpr::Ptr&);
+
 protected:
     /** Given a bit vector of linkages, return the best one.
      *
@@ -214,6 +247,9 @@ protected:
     /** Given the name of a configuration file, return the command that is needed to run the solver. The first line
      *  of stdout emitted by the solver should be the word "sat" or "unsat". */
     virtual std::string getCommand(const std::string &config_name) = 0;
+
+    /** Parse all SExprs from the specified string. */
+    std::vector<SExpr::Ptr> parseSExpressions(const std::string&);
 
     /** Parses evidence of satisfiability.  Some solvers can emit information about what variable bindings satisfy the
      *  expression.  This information is parsed by this function and added to a mapping of variable to value. */

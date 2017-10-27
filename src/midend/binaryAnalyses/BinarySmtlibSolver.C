@@ -8,7 +8,7 @@ namespace BinaryAnalysis {
 
 std::string
 SmtlibSolver::getCommand(const std::string &configName) {
-    return executable_.string() + " " + configName;
+    return executable_.string() + " " + shellArgs_ + " " + configName;
 }
 
 void
@@ -873,6 +873,15 @@ SmtlibSolver::outputWrite(std::ostream &o, const SymbolicExpr::InteriorPtr &inod
     o <<")";
 }
 
+void
+SmtlibSolver::clearEvidence() {
+    parsedOutput_.clear();
+}
+
+void
+SmtlibSolver::parseEvidence() {
+}
+
 SymbolicExpr::Ptr
 SmtlibSolver::evidenceForName(const std::string&) {
     TODO("[Robb Matzke 2017-10-19]");
@@ -880,16 +889,6 @@ SmtlibSolver::evidenceForName(const std::string&) {
 
 std::vector<std::string>
 SmtlibSolver::evidenceNames() {
-    TODO("[Robb Matzke 2017-10-19]");
-}
-
-void
-SmtlibSolver::clearEvidence() {
-    TODO("[Robb Matzke 2017-10-19]");
-}
-
-void
-SmtlibSolver::parseEvidence() {
     TODO("[Robb Matzke 2017-10-19]");
 }
 

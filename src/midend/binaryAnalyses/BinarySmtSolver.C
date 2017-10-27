@@ -11,6 +11,7 @@
 #include <boost/thread/mutex.hpp>
 #include <fcntl.h> /*for O_RDWR, etc.*/
 #include <Sawyer/FileSystem.h>
+#include <Sawyer/LineVector.h>
 #include <Sawyer/Stopwatch.h>
 
 using namespace Rose::Diagnostics;
@@ -88,6 +89,7 @@ SmtSolver::classStatistics()
 // class method
 void
 SmtSolver::selfTest() {
+    mlog[WHERE] <<"running self-tests\n";
     using namespace SymbolicExpr;
     typedef SymbolicExpr::Ptr E;
     std::vector<E> exprs;
@@ -106,7 +108,7 @@ SmtSolver::selfTest() {
     E bfalse = makeBoolean(false, "Boolean false");
     E btrue = makeBoolean(true, "Boolean true");
 
-    //---- Comparisons ----
+    // Comparisons
     exprs.push_back(makeZerop(a8, "zerop"));
     exprs.push_back(makeEq(a8, z8, "equal"));
     exprs.push_back(makeNe(a8, z8, "not equal"));
@@ -119,12 +121,12 @@ SmtSolver::selfTest() {
     exprs.push_back(makeSignedGt(a8, z8, "signed greater than"));
     exprs.push_back(makeSignedGe(a8, z8, "signed greather than or equal"));
 
-    //----- Boolean operations -----
+    // Boolean operations
     exprs.push_back(makeBooleanAnd(makeZerop(a8), makeZerop(c8), "Boolean conjunction"));
     exprs.push_back(makeEq(makeIte(makeZerop(a8), z8, b8), b8, "if-then-else"));
     exprs.push_back(makeBooleanOr(makeZerop(a8), makeZerop(c8), "Boolean disjunction"));
 
-    //----- Bit operations -----
+    // Bit operations
     exprs.push_back(makeZerop(makeAnd(a8, b8), "bit-wise conjunction"));
     exprs.push_back(makeZerop(makeAsr(makeInteger(2, 3), a8), "arithmetic shift right 3 bits"));
     exprs.push_back(makeZerop(makeOr(a8, b8), "bit-wise disjunction"));
@@ -146,7 +148,7 @@ SmtSolver::selfTest() {
     exprs.push_back(makeZerop(makeExtend(makeInteger(2, 3), a8), "truncate to three bits"));
     exprs.push_back(makeZerop(makeExtend(makeInteger(6, 32), a8), "extend to 32 bits"));
     
-    //----- Arithmetic operations -----
+    // Arithmetic operations
     exprs.push_back(makeZerop(makeAdd(a8, b8), "addition"));
     exprs.push_back(makeZerop(makeNegate(a8), "negation"));
 #if 0 // FIXME[Robb Matzke 2017-10-24]: not implemented yet
@@ -158,16 +160,24 @@ SmtSolver::selfTest() {
     exprs.push_back(makeZerop(makeMod(a8, b4), "unsigned remainder"));
     exprs.push_back(makeZerop(makeMul(a8, b4), "unsigned multiply"));
 
-    //----- Memory operations -----
+    // Memory operations
     E mem = makeMemory(32, 8, "memory");
     E addr = makeInteger(32, 12345, "address");
     exprs.push_back(makeZerop(makeRead(mem, addr), "read from memory"));
     exprs.push_back(makeEq(makeRead(makeWrite(mem, addr, a8), addr), a8, "write to memory"));
 
-    //----- Miscellaneous operations -----
+    // Miscellaneous operations
     exprs.push_back(makeEq(makeSet(a8, b8, c8), b8, "set"));
 
+    // Run the solver
+#if 1 // DEBUGGING [Robb Matzke 2017-10-26]
     generateFile(std::cout, exprs, NULL);
+#else
+    BOOST_FOREACH (const E &expr, exprs) {
+        mlog[TRACE] <<"test " <<*expr <<"\n";
+        /*SmtSolver::Satisfiable sat =*/ satisfiable(expr);
+    }
+#endif
 }
 
 // FIXME[Robb Matzke 2017-10-17]: deprecated
@@ -228,7 +238,18 @@ SmtSolver::trivially_satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs) {
 SmtSolver::Satisfiable
 SmtSolver::satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs)
 {
-    bool got_satunsat_line = false;
+    struct Resources {
+        FILE *output;
+        char *line;
+        Resources()
+            :output(NULL), line(NULL) {}
+        ~Resources() {
+            if (output != NULL)
+                pclose(output);
+            if (line)
+                free(line);
+        }
+    } r;
 
 #ifdef _MSC_VER
     // tps (06/23/2010) : Does not work under Windows
@@ -238,10 +259,11 @@ SmtSolver::satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs)
 #else
 
     requireLinkage(LM_EXECUTABLE);
+    termNames_.clear();
     clearEvidence();
 
     Satisfiable retval = triviallySatisfiable(exprs);
-    if (retval!=SAT_UNKNOWN)
+    if (retval != SAT_UNKNOWN)
         return retval;
 
     // Keep track of how often we call the SMT solver.
@@ -250,7 +272,7 @@ SmtSolver::satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs)
         boost::lock_guard<boost::mutex> lock(classStatsMutex);
         ++classStats.ncalls;
     }
-    outputText = "";
+    outputText_ = "";
 
     /* Generate the input file for the solver. */
     Sawyer::FileSystem::TemporaryFile tmpfile;
@@ -268,54 +290,54 @@ SmtSolver::satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs)
 
     /* Show solver input */
     if (mlog[DEBUG]) {
-        mlog[DEBUG] <<"SMT solver input in " <<tmpfile.name() <<"\n";
-        size_t n=0;
+        mlog[DEBUG] <<"solver input in " <<tmpfile.name() <<":\n";
+        unsigned n = 0;
         std::ifstream f(tmpfile.name().string().c_str());
         while (!f.eof()) {
             std::string line;
             std::getline(f, line);
-            mlog[DEBUG] <<(boost::format("%5zu") % ++n).str() <<": " <<line <<"\n";
+            mlog[DEBUG] <<(boost::format("%5u") % ++n).str() <<": " <<line <<"\n";
         }
     }
 
-    /* Run the solver and read its output. The first line should be the word "sat" or "unsat" */
-    {
-        Sawyer::Stopwatch stopwatch;
-        std::string cmd = getCommand(tmpfile.name().string());
-        FILE *output = popen(cmd.c_str(), "r");
-        ASSERT_not_null(output);
-        char *line = NULL;
-        size_t line_alloc = 0;
-        ssize_t nread;
-        while ((nread=rose_getline(&line, &line_alloc, output))>0) {
-            stats.output_size += nread;
-            {
-                boost::lock_guard<boost::mutex> lock(classStatsMutex);
-                classStats.output_size += nread;
-            }
-            if (!got_satunsat_line) {
-                if (0==strncmp(line, "sat", 3) && isspace(line[3])) {
-                    retval = SAT_YES;
-                    got_satunsat_line = true;
-                } else if (0==strncmp(line, "unsat", 5) && isspace(line[5])) {
-                    retval = SAT_NO;
-                    got_satunsat_line = true;
-                } else {
-                    std::cerr <<"SMT solver failed to say \"sat\" or \"unsat\"\n";
-                    abort();
-                }
-            } else {
-                outputText += std::string(line);
-            }
+    // Run the solver and slurp up all its standard output
+    Sawyer::Stopwatch timer;
+    std::string cmd = getCommand(tmpfile.name().string());
+    SAWYER_MESG(mlog[DEBUG]) <<"command: \"" <<StringUtility::cEscape(cmd) <<"\"\n";
+    r.output = popen(cmd.c_str(), "r");
+    if (!r.output)
+        throw Exception("failed to run \"" + StringUtility::cEscape(cmd) + "\"");
+    size_t lineAlloc = 0, lineNum = 0;
+    ssize_t nread;
+    mlog[DEBUG] <<"solver standard output:\n";
+    while ((nread = rose_getline(&r.line, &lineAlloc, r.output)) >0 ) {
+        mlog[DEBUG] <<(boost::format("%5u") % ++lineNum).str() <<": " <<r.line <<"\n";
+        stats.output_size += nread;
+        {
+            boost::lock_guard<boost::mutex> lock(classStatsMutex);
+            classStats.output_size += nread;
         }
-        if (line) free(line);
-        int status = pclose(output);
-        stopwatch.stop();
-        if (mlog[DEBUG]) {
-            mlog[DEBUG] <<"Running SMT solver=\"" <<cmd <<"; exit status="<<status <<"\n";
-            mlog[DEBUG] <<"SMT Solver ran for " <<stopwatch <<" seconds\n";
-            mlog[DEBUG] <<"SMT Solver reported: " <<(SAT_YES==retval ? "sat" : SAT_NO==retval ? "unsat" : "unknown") <<"\n";
-            mlog[DEBUG] <<"SMT Solver output:\n" <<StringUtility::prefixLines(outputText, "     ");
+        outputText_ += std::string(r.line);
+    }
+    status = pclose(r.output); r.output = NULL;
+    mlog[DEBUG] <<"solver took " <<timer <<" seconds\n";
+    mlog[DEBUG] <<"solver exit status = " <<status <<"\n";
+    if (status != 0)
+        throw Exception("SMT solver command failed: \"" + StringUtility::cEscape(cmd) + "\"");
+
+    // Parse the solver standard output
+    parsedOutput_ = parseSExpressions(outputText_);
+
+    // Look for an expression that's just "sat" or "unsat"
+    BOOST_FOREACH (const SExpr::Ptr &expr, parsedOutput_) {
+        if (expr->name() == "sat") {
+            mlog[DEBUG] <<"satisfied\n";
+            retval = SAT_YES;
+            break;
+        } else if (expr->name() == "unsat") {
+            mlog[DEBUG] <<"not satisfied\n";
+            retval = SAT_NO;
+            break;
         }
     }
 
@@ -340,6 +362,129 @@ SmtSolver::satisfiable(std::vector<SymbolicExpr::Ptr> exprs, const SymbolicExpr:
     if (expr!=NULL)
         exprs.push_back(expr);
     return satisfiable(exprs);
+}
+
+// class method
+SmtSolver::SExpr::Ptr
+SmtSolver::SExpr::instance() {
+    return Ptr(new SExpr(""));
+}
+
+// class method
+SmtSolver::SExpr::Ptr
+SmtSolver::SExpr::instance(const std::string &content) {
+    return Ptr(new SExpr(content));
+}
+
+// The input stream of characters reinterpretted as a stream of tokens.  No look-ahead is necessary during parser, which makes
+// this class even simpler than usual. And since S-Exprs are so simple, we don't even bother with a formal token type, instead
+// returning std::string with the following values: "" means EOF; "(" and ")"; or anything else is a symbol.
+class TokenStream {
+private:
+    Sawyer::Container::LineVector &input_;
+    std::string current_;
+    size_t nextTokenOffset_;
+
+public:
+    explicit TokenStream(Sawyer::Container::LineVector &input)
+        : input_(input), nextTokenOffset_(0) {}
+
+    std::string current() {
+        if (current_.empty()) {
+            current_ = scanTokenAt(nextTokenOffset_);
+            nextTokenOffset_ += current_.size();
+        }
+        return current_;
+    }
+
+    void shift() {
+        current_ = "";
+    }
+
+    std::pair<size_t /*line*/, size_t /*col*/> location() {
+        return input_.location(nextTokenOffset_);
+    }
+    
+private:
+    // Get token starting at specified position, after skipping white space, comments, etc.
+    std::string scanTokenAt(size_t startOffset) {
+        while (true) {
+            // Skip white space
+            int ch = input_.character(startOffset);
+            while (isspace(ch))
+                ch = input_.character(++startOffset);
+            if (EOF == ch)
+                return "";
+
+            if ('(' == ch) {
+                return "(";
+            } else if (')' == ch) {
+                return ")";
+            } else if (';' == ch) {
+                // comment extending to end of line
+                while (EOF != (ch = input_.character(++startOffset)) && '\n' != ch) /*void*/;
+                ++startOffset;
+            } else {
+                // everthing else is assumed to be a symbol continuing until the next whitespace, paren, or comment
+                size_t end = startOffset + 1;
+                while (EOF != (ch = input_.character(end)) && !isspace(ch) && !strchr("();", ch))
+                    ++end;
+                return std::string(input_.characters(startOffset), end - startOffset);
+            }
+        }
+    }
+};
+
+static SmtSolver::SExpr::Ptr
+parseSExpression(TokenStream &tokens) {
+    ASSERT_require(tokens.current() != "");
+    if (tokens.current() == "(") {
+        tokens.shift();
+        SmtSolver::SExpr::Ptr sexpr = SmtSolver::SExpr::instance(tokens.current());
+        while (tokens.current() != ")") {
+            if (tokens.current() == "")
+                throw SmtSolver::ParseError(tokens.location(), "EOF before end of S-Expr");
+            sexpr->children().push_back(parseSExpression(tokens));
+        }
+        ASSERT_require(tokens.current() == ")");
+        tokens.shift();
+        return sexpr;
+    } else if (tokens.current() == ")") {
+        throw SmtSolver::ParseError(tokens.location(), "an S-Expr cannot begin with ')'");
+    } else {
+        SmtSolver::SExpr::Ptr sexpr = SmtSolver::SExpr::instance(tokens.current());
+        tokens.shift();
+        return sexpr;
+    }
+}
+
+std::vector<SmtSolver::SExpr::Ptr>
+SmtSolver::parseSExpressions(const std::string &s) {
+    std::vector<SExpr::Ptr> retval;
+    Sawyer::Container::LineVector input(s.size(), s.c_str());
+    TokenStream tokens(input);
+
+    while (tokens.current() != "")
+        retval.push_back(parseSExpression(tokens));
+    return retval;
+}
+
+void
+SmtSolver::printSExpression(std::ostream &o, const SExpr::Ptr &sexpr) {
+    if (sexpr == NULL) {
+        o <<"nil";
+    } else if (!sexpr->name().empty()) {
+        ASSERT_require(sexpr->children().size() == 0);
+        o <<sexpr->name();
+    } else {
+        o <<"(";
+        for (size_t i = 0; i < sexpr->children().size(); ++i) {
+            if (i > 0)
+                o <<" ";
+            printSExpression(o, sexpr->children()[i]);
+        }
+        o <<")";
+    }
 }
 
 // FIXME[Robb Matzke 2017-10-17]: deprecated

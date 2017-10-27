@@ -11,6 +11,7 @@ namespace BinaryAnalysis {
 class SmtlibSolver: public SmtSolver {
 private:
     boost::filesystem::path executable_;                // solver program
+    std::string shellArgs_;                             // extra arguments for command (passed through shell)
     typedef Sawyer::Container::Map<SymbolicExpr::Ptr, SymbolicExpr::Ptr> ExprExprMap;
     ExprExprMap varsForSets_;                           // variables to use for sets
 
@@ -23,11 +24,11 @@ public:
      *
      *  The @p executable should be the name of the solver executable, either to be found in $PATH or an absolute file
      *  name. Beware that some tools might change directories as they run, so absolute names are usually best.  The optional @p
-     *  args array are the list of extra arguments to pass to the solver. These arguments are generally not passed through a
-     *  shell first, so shell variables must be expanded by the caller. */
-    explicit SmtlibSolver(const boost::filesystem::path &executable,
-                          const std::vector<std::string> &args = std::vector<std::string>())
-        : SmtSolver(executable.filename().string(), LM_EXECUTABLE), executable_(executable) {}
+     *  shellArgs are the list of extra arguments to pass to the solver. WARNING: the entire command is pass to @c popen, which
+     *  will invoke a shell to process the executable name and arguments; appropriate escaping of shell meta characters is the
+     *  responsibility of the caller. */
+    explicit SmtlibSolver(const boost::filesystem::path &executable, const std::string &shellArgs = "")
+        : SmtSolver(executable.filename().string(), LM_EXECUTABLE), executable_(executable), shellArgs_(shellArgs) {}
 
 public:
     virtual void generateFile(std::ostream&, const std::vector<SymbolicExpr::Ptr> &exprs, Definitions*) ROSE_OVERRIDE;
