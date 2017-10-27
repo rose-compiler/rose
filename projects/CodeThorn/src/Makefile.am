@@ -66,6 +66,8 @@ libspray_la_SOURCES=\
  RDTransferFunctions.h \
  SprayException.h \
  WorkListSeq.h \
+ TypeSizeMapping.h \
+ SgTypeSizeMapping.h \
  AnalysisAstAnnotator.C \
  AliasAnalysis.C \
  AbstractValue.C \
@@ -107,6 +109,8 @@ libspray_la_SOURCES=\
  ProgramAbstractionLayer.C \
  addressTakenAnalysis.C \
  defUseQuery.C \
+ TypeSizeMapping.C \
+ SgTypeSizeMapping.C \
  Timer.h \
  Timer.cpp
 
@@ -651,7 +655,7 @@ check-ltl:
 	@$(srcdir)/scripts/runRersArithmeticProblemTest $(srcdir) $(top_builddir)/projects/CodeThorn/src #test the parallel analysis of RERS Problem1402 (4 threads, problem features arithmetic)
 	@$(srcdir)/scripts/runRersArrayProblemTest $(srcdir) $(top_builddir)/projects/CodeThorn/src #test the analysis of RERS Problem1403 (which features arrays)
 	@$(srcdir)/scripts/runRersTopifyTest $(srcdir) $(top_builddir)/projects/CodeThorn/src #test the analysis of RERS Problem1403, abstracting from global variables after 10,000 transitions
-	@$(srcdir)/scripts/runRersMemoryBoundTest $(srcdir) $(top_builddir)/projects/CodeThorn/src #test the analysis of RERS Problem1603 while using up to 1GB of RAM up to and including the STG computation (4 threads)
+#	@$(srcdir)/scripts/runRersMemoryBoundTest $(srcdir) $(top_builddir)/projects/CodeThorn/src #test the analysis of RERS Problem1603 while using up to 1GB of RAM up to and including the STG computation (4 threads)
 	@$(srcdir)/scripts/runRersTimeoutTest $(srcdir) $(top_builddir)/projects/CodeThorn/src #test the analysis of RERS Problem1402 and terminate after 5 seconds (4 threads)
 	@$(srcdir)/scripts/runRersLoopAwareSyncTest $(srcdir) $(top_builddir)/projects/CodeThorn/src #one test for the loop-aware-sync analysis (solver 12, ISoLA'16 paper)
 	@$(srcdir)/scripts/run_tests_cegpra $(srcdir) $(top_builddir)/projects/CodeThorn/src #run CEGPRA tests

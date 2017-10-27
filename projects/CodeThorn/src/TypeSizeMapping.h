@@ -24,7 +24,6 @@ namespace SPRAY {
   
   class TypeSizeMapping {
   public:
-    TypeSizeMapping();
     // sets sizes of all types (same as reported by sizeof on respective architecture)
     void setMapping(std::vector<SPRAY::TypeSize> mapping);
     // sets size of one type (same as reported by sizeof on respective architecture)
@@ -33,8 +32,6 @@ namespace SPRAY {
     std::size_t sizeOfOp(BuiltInType bitype);
     bool isCpp11StandardCompliant();
   private:
-#if 0
-    // C++11 version
     // default setting LP64 data model
     std::vector<SPRAY::TypeSize> _mapping={1,
                                            1,1,2,2,4,4,
@@ -43,9 +40,6 @@ namespace SPRAY {
                                            8,
                                            8,
     };
-#else
-    std::vector<SPRAY::TypeSize> _mapping;
-#endif
   };
 }
 
