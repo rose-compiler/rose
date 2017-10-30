@@ -103,6 +103,19 @@ AC_DEFUN([GET_CXX_VERSION_INFO],[
                             exit 1;
                             ;;
                     esac
+                elif test $XCODE_VERSION_MAJOR -eq 9; then
+                    CXX_VERSION_MAJOR=3
+                  # Rasmussen (10/27//2017): Added results for clang --version 9.0.0
+                  # See https://opensource.apple.com/source/clang/clang-800.0.42.1/src/CMakeLists.txt
+                    case "$XCODE_VERSION_MINOR" in
+                        0)
+                            CXX_VERSION_MINOR=9
+                            ;;
+                        *)
+                            echo "Unknown or unsupported version of XCode: XCODE_VERSION_MINOR = $XCODE_VERSION_MINOR.";
+                            exit 1;
+                            ;;
+                    esac
                 else
                     echo "Unknown or unsupported version of XCode: XCODE_VERSION_MAJOR = $XCODE_VERSION_MAJOR."
                     exit 1
