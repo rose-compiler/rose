@@ -169,6 +169,19 @@ echo "Testing value of FC = $FC"
                       exit 1;
                       ;;
               esac
+          elif test $XCODE_VERSION_MAJOR -eq 9; then
+              BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=3
+            # Rasmussen (10/27//2017): Added results for clang --version 9.0.0
+            # See https://opensource.apple.com/source/clang/clang-800.0.42.1/src/CMakeLists.txt
+              case "$XCODE_VERSION_MINOR" in
+                  0)
+                      BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=9
+                      ;;
+                  *)
+                      echo "Unknown or unsupported version of XCode: XCODE_VERSION_MINOR = $XCODE_VERSION_MINOR.";
+                      exit 1;
+                      ;;
+              esac
           else
               echo "Unknown or unsupported version of XCode: XCODE_VERSION_MAJOR = $XCODE_VERSION_MAJOR."
               exit 1
