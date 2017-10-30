@@ -474,7 +474,7 @@ SmtlibSolver::outputExtract(std::ostream &o, const SymbolicExpr::InteriorPtr &in
     ASSERT_require(inode->child(0)->isNumber());
     ASSERT_require(inode->child(1)->isNumber());
     size_t begin = inode->child(0)->toInt();            // low, inclusive
-    size_t end = inode->child(1)->toInt();              // hight, exclusive
+    size_t end = inode->child(1)->toInt();              // high, exclusive
     ASSERT_require(end > begin);
     ASSERT_require(end <= inode->child(2)->nBits());
     o <<"((_ extract " <<(end-1) <<" " <<begin <<") ";
@@ -650,7 +650,7 @@ SmtlibSolver::outputLogicalShiftRight(std::ostream &o, const SymbolicExpr::Inter
 
 // For left shifts:
 // ROSE (rose-left-shift-op amount expr) =>
-// SMT-LIB ((_ extract [expr.size-1] 0) (bvshl (concat expr zeros_or_ones) extended_amount))
+// SMT-LIB ((_ extract [2*expr.size-1] expr.size) (bvshl (concat expr zeros_or_ones) extended_amount))
 // 
 // Where extended_amount is the ROSE "amount" widened (or truncated) to the same width as "expr",
 // and where "zeros_or_ones" is a constant with all bits set or clear and the same width as "expr"
@@ -666,7 +666,7 @@ SmtlibSolver::outputShiftLeft(std::ostream &o, const SymbolicExpr::InteriorPtr &
     bool newBits = inode->getOperator() == SymbolicExpr::OP_SHL1;
     SymbolicExpr::Ptr zerosOrOnes = SymbolicExpr::makeConstant(Sawyer::Container::BitVector(expr->nBits(), newBits));
 
-    o <<"((_ extract " <<(expr->nBits()-1) <<" 0) (bvshl (concat ";
+    o <<"((_ extract " <<(2*expr->nBits()-1) <<" " <<expr->nBits() <<") (bvshl (concat ";
     outputExpression(o, expr);
     o <<" ";
     outputExpression(o, zerosOrOnes);

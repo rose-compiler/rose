@@ -5,6 +5,7 @@
 #include "BinarySmtSolver.h"
 #include "BinarySmtlibSolver.h"
 #include "BinaryYicesSolver.h"
+#include "BinaryZ3Solver.h"
 
 #include <boost/format.hpp>
 #include <boost/thread/locks.hpp>
@@ -39,6 +40,25 @@ operator<<(std::ostream &o, const SmtSolver::Exception &e)
 
 SmtSolver::Stats SmtSolver::classStats;
 boost::mutex SmtSolver::classStatsMutex;
+
+// class method
+SmtSolver*
+SmtSolver::bestAvailable() {
+
+    // Binary APIs are faster, so prefer them
+    if ((Z3Solver::availableLinkages() & LM_LIBRARY) != 0)
+        return new Z3Solver(LM_LIBRARY);
+    if ((YicesSolver::availableLinkages() & LM_LIBRARY) != 0)
+        return new YicesSolver(LM_LIBRARY);
+
+    // Next try text-based APIs
+    if ((Z3Solver::availableLinkages() & LM_EXECUTABLE) != 0)
+        return new Z3Solver(LM_EXECUTABLE);
+    if ((YicesSolver::availableLinkages() & LM_EXECUTABLE) != 0)
+        return new YicesSolver(LM_EXECUTABLE);
+
+    return NULL;
+}
 
 SmtSolver::LinkMode
 SmtSolver::bestLinkage(unsigned linkages) {
@@ -170,7 +190,7 @@ SmtSolver::selfTest() {
     exprs.push_back(makeEq(makeSet(a8, b8, c8), b8, "set"));
 
     // Run the solver
-#if 1 // DEBUGGING [Robb Matzke 2017-10-26]
+#if 0 // DEBUGGING [Robb Matzke 2017-10-26]
     generateFile(std::cout, exprs, NULL);
 #else
     BOOST_FOREACH (const E &expr, exprs) {

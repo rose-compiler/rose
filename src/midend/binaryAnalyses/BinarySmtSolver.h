@@ -130,6 +130,11 @@ protected:
     }
 
 public:
+    /** Best available solver.
+     *
+     *  Returns a new solver, an instance of the best available solver. If no solver is possible then returns null. */
+    static SmtSolver* bestAvailable();
+
     virtual ~SmtSolver() {}
 
     /** Property: Name of solver for debugging.

@@ -35,15 +35,15 @@ using namespace Rose::BinaryAnalysis::InstructionSemantics2;
 #elif SMT_SOLVER == YICES_LIB
 #   include "BinaryYicesSolver.h"
     Rose::BinaryAnalysis::SmtSolver *make_solver() {
-        Rose::BinaryAnalysis::YicesSolver *solver = new Rose::BinaryAnalysis::YicesSolver;
-        solver->linkage(Rose::BinaryAnalysis::YicesSolver::LM_LIBRARY);
+        Rose::BinaryAnalysis::YicesSolver *solver =
+            new Rose::BinaryAnalysis::YicesSolver(Rose::BinaryAnalysis::YicesSolver::LM_LIBRARY);
         return solver;
     }
 #elif SMT_SOLVER == YICES_EXE
 #   include "BinaryYicesSolver.h"
     Rose::BinaryAnalysis::SmtSolver *make_solver() {
-        Rose::BinaryAnalysis::YicesSolver *solver = new Rose::BinaryAnalysis::YicesSolver;
-        solver->linkage(Rose::BinaryAnalysis::YicesSolver::LM_EXECUTABLE);
+        Rose::BinaryAnalysis::YicesSolver *solver =
+            new Rose::BinaryAnalysis::YicesSolver(Rose::BinaryAnalysis::YicesSolver::LM_EXECUTABLE);
         return solver;
     }
 #else

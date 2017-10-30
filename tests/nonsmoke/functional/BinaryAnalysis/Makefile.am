@@ -933,18 +933,15 @@ check-testDominance: $(testDominance_test_targets)
 # Convenience target to run all these semantics tests. This target is not run automatically by "make check" (which instead
 # depends on each of the targets individually rather than just this one).
 PHONIES += check-semantics
-#       API1 (the old stuff)            API2 (the newer stuff)               Extra tests
-check-semantics:												\
-        nullSemantics.passed            nullSemantics2-x86.passed						\
-        partialSymbolicSemantics.passed partialSymbolicSemantics2-x86.passed					\
-        intervalSemantics.passed        intervalSemantics2-x86.passed						\
-        symbolicSemantics.passed        symbolicSemantics2-x86.passed        traceSymbolicSemantics2-x86.passed	\
-        yicesSemanticsExe.passed        yicesSemanticsExe2-x86.passed						\
-        yicesSemanticsLib.passed        yicesSemanticsLib2-x86.passed						\
-        multiSemantics.passed											\
-        findConstants.passed											\
-        findConstantsABI.passed											\
-                                        semanticsSubclassing.passed
+#       API2 (the newer stuff)               Extra tests
+check-semantics:								\
+        nullSemantics2-x86.passed						\
+        partialSymbolicSemantics2-x86.passed					\
+        intervalSemantics2-x86.passed						\
+        symbolicSemantics2-x86.passed        traceSymbolicSemantics2-x86.passed	\
+        yicesSemanticsExe2-x86.passed						\
+        yicesSemanticsLib2-x86.passed						\
+        semanticsSubclassing.passed
 
 # TOO1 (3/24/2015): Failing jenkins-release GCC 4.2.4; removing temporarily until fixed
 #multiSemantics2.passed

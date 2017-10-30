@@ -14,8 +14,8 @@ using namespace Sawyer::Message::Common;
 
 Sawyer::Message::Facility mlog;
 
-enum SolverType { SOLVER_GENERIC_SMTLIB2, SOLVER_Z3_TEXT, SOLVER_Z3_API, SOLVER_YICES_TEXT, SOLVER_YICES_API };
-SolverType solverType = SOLVER_GENERIC_SMTLIB2;
+enum SolverType { SOLVER_ANY, SOLVER_GENERIC_SMTLIB2, SOLVER_Z3_TEXT, SOLVER_Z3_API, SOLVER_YICES_TEXT, SOLVER_YICES_API };
+SolverType solverType = SOLVER_ANY;
 
 void
 parseCommandLine(int argc, char *argv[]) {
@@ -28,12 +28,14 @@ parseCommandLine(int argc, char *argv[]) {
     switches.name("");
     switches.insert(Switch("solver", 'S')
                     .argument("type", enumParser(solverType)
+                              ->with("any", SOLVER_ANY)
                               ->with("smt-lib2", SOLVER_GENERIC_SMTLIB2)
                               ->with("z3-exe", SOLVER_Z3_TEXT)
                               ->with("z3-lib", SOLVER_Z3_API)
                               ->with("yices-exe", SOLVER_YICES_TEXT)
                               ->with("yices-lib", SOLVER_YICES_API))
                     .doc("Type of solver interaction. The choices are:"
+                         "@named{any}{Any available solver.}"
                          "@named{smt-lib2}{Generic SMT-LIB2 text.}"
                          "@named{z3-exe}{The Z3 executable using its text interface.}"
                          "@named{z3-api}{The Z3 library using its API.}"
@@ -53,6 +55,9 @@ main(int argc, char *argv[]) {
 
     SmtSolver *solver = NULL;
     switch (solverType) {
+        case SOLVER_ANY:
+            solver = SmtSolver::bestAvailable();
+            break;
         case SOLVER_GENERIC_SMTLIB2:
             solver = new SmtlibSolver("/bin/cat");
             break;
@@ -70,6 +75,11 @@ main(int argc, char *argv[]) {
             break;
     }
 
+    if (!solver) {
+        mlog[WARN] <<"test skip due to lack of SMT solvers\n";
+        exit(0);
+    }
+    
     std::cout <<"testing " <<solver->name() <<"\n";
     solver->selfTest();
 }
