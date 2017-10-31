@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-AM_LDFLAGS = $(ROSE_LIBS) $(LIBS_WITH_RPATH) 
+AM_LDFLAGS = $(ROSE_LIBS) $(LLVM_LDFLAGS) $(ROSE_RPATHS) 
 AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(srcdir)/include -Wno-deprecated -Wall -Wextra -g -O0 
 
 pkginclude_HEADERS 	= \
@@ -52,7 +52,7 @@ librosetollvm_la_CPPFLAGS	= \
 	-I$(srcdir)/include \
 	$(LLVM_CPPFLAGS) -std=c++11
 
-librosetollvm_la_LDFLAGS = $(ROSE_LIBS) $(LLVM_LDFLAGS)
+#librosetollvm_la_LDFLAGS = $(ROSE_LIBS) $(LLVM_LDFLAGS)
 
 librosetollvm_la_CXXFLAGS = -Wno-deprecated 
 
