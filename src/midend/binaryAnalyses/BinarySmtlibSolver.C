@@ -2,6 +2,10 @@
 
 #include <rosePublicConfig.h>
 #include <BinarySmtlibSolver.h>
+#include <boost/algorithm/string/predicate.hpp>
+#include <Diagnostics.h>
+
+using namespace Sawyer::Message::Common;
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -51,6 +55,31 @@ SmtlibSolver::generateFile(std::ostream &o, const std::vector<SymbolicExpr::Ptr>
     }
 
     o <<"\n(check-sat)\n";
+    o <<"(get-model)\n";
+}
+
+std::string
+SmtlibSolver::getErrorMessage(int exitStatus) {
+    BOOST_FOREACH (const SExpr::Ptr &sexpr, parsedOutput_) {
+        if (sexpr->children().size() == 2 && sexpr->children()[0]->name() == "error") {
+            if (sexpr->children()[1]->name().empty()) {
+                std::ostringstream ss;
+                printSExpression(ss, sexpr);
+                return ss.str();
+            } else {
+                std::string s = sexpr->children()[1]->name();
+                if (s.find("model is not available") != std::string::npos) {
+                    // This is a non-error.  It is generally illegal to invoke "(get-model)" for an unsatisfiable state, but
+                    // since we have to generate the input script before we know whether it's satisfiable or not, we have to
+                    // unconditionally include the "(get-model)" call.
+                    exitStatus = 0;
+                } else {
+                    return s;
+                }
+            }
+        }
+    }
+    return SmtSolver::getErrorMessage(exitStatus);
 }
 
 std::string
@@ -875,22 +904,90 @@ SmtlibSolver::outputWrite(std::ostream &o, const SymbolicExpr::InteriorPtr &inod
 
 void
 SmtlibSolver::clearEvidence() {
+    varsForSets_.clear();
     parsedOutput_.clear();
+    evidence_.clear();
 }
 
 void
 SmtlibSolver::parseEvidence() {
+    boost::regex varNameRe("v\\d+");
+
+    BOOST_FOREACH (const SExpr::Ptr &sexpr, parsedOutput_) {
+        if (sexpr->children().size() > 0 && sexpr->children()[0]->name() == "model") {
+            for (size_t i = 1; i < sexpr->children().size(); ++i) {
+                const SExpr::Ptr &elmt = sexpr->children()[i];
+
+                // e.g., (define-fun v7 () (_ BitVec 32) #xdeadbeef)
+                if (elmt->children().size() == 5 &&
+                    elmt->children()[0]->name() == "define-fun" &&
+                    elmt->children()[1]->name() != "" &&
+                    elmt->children()[2]->name() == "" && elmt->children()[2]->children().size() == 0 &&
+                    elmt->children()[3]->children().size() == 3 &&
+                    elmt->children()[3]->children()[0]->name() == "_" &&
+                    elmt->children()[3]->children()[1]->name() == "BitVec" &&
+                    elmt->children()[4]->name().substr(0, 1) == "#") {
+                    size_t nBits = boost::lexical_cast<size_t>(elmt->children()[3]->children()[2]->name());
+
+                    // Variable
+                    std::string varName = elmt->children()[1]->name();
+                    if (!boost::regex_match(varName, varNameRe)) {
+                        mlog[ERROR] <<"malformed variable name \"" <<StringUtility::cEscape(varName) <<"\" in evidence: ";
+                        printSExpression(mlog[ERROR], elmt);
+                        continue;
+                    }
+                    size_t varId = boost::lexical_cast<size_t>(varName.substr(1));
+                    SymbolicExpr::Ptr var = SymbolicExpr::makeExistingVariable(nBits, varId);
+
+                    // Value
+                    std::string valStr = elmt->children()[4]->name();
+                    ASSERT_require(nBits > 0);
+                    Sawyer::Container::BitVector bits(nBits);
+                    if (boost::starts_with(valStr, "#x")) {
+                        bits.fromHex(valStr.substr(2));
+                    } else if (boost::starts_with(valStr, "#b")) {
+                        bits.fromBinary(valStr.substr(2));
+                    } else {
+                        ASSERT_not_reachable("unknown bit vector literal \"" + StringUtility::cEscape(valStr) + "\"");
+                    }
+                    SymbolicExpr::Ptr val = SymbolicExpr::makeConstant(bits);
+
+                    SAWYER_MESG(mlog[DEBUG]) <<"evidence: " <<*var <<" == " <<*val <<"\n";
+                    evidence_.insert(var, val);
+
+                } else if (mlog[ERROR]) {
+                    mlog[ERROR] <<"malformed model element: ";
+                    printSExpression(mlog[ERROR], elmt);
+                    mlog[ERROR] <<"\n";
+                }
+            }
+        }
+    }
 }
 
 SymbolicExpr::Ptr
-SmtlibSolver::evidenceForName(const std::string&) {
-    TODO("[Robb Matzke 2017-10-19]");
+SmtlibSolver::evidenceForName(const std::string &varName) {
+    BOOST_FOREACH (const ExprExprMap::Node &node, evidence_.nodes()) {
+        ASSERT_not_null(node.key()->isLeafNode());
+        ASSERT_require(node.key()->isLeafNode()->isVariable());
+        if (node.key()->isLeafNode()->toString() == varName)
+            return node.value();
+    }
+    return SymbolicExpr::Ptr();
 }
 
 std::vector<std::string>
 SmtlibSolver::evidenceNames() {
-    TODO("[Robb Matzke 2017-10-19]");
+    std::vector<std::string> retval;
+    BOOST_FOREACH (const SymbolicExpr::Ptr &varExpr, evidence_.keys()) {
+        SymbolicExpr::LeafPtr leaf = varExpr->isLeafNode();
+        ASSERT_not_null(leaf);
+        ASSERT_require(leaf->isVariable());
+        retval.push_back(leaf->toString());
+    }
+    return retval;
 }
+
 
 } // namespace
 } // namespace

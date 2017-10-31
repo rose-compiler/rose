@@ -10,6 +10,7 @@
 #include <boost/format.hpp>
 #include <boost/thread/locks.hpp>
 #include <boost/thread/mutex.hpp>
+#include <boost/tuple/tuple.hpp>
 #include <fcntl.h> /*for O_RDWR, etc.*/
 #include <Sawyer/FileSystem.h>
 #include <Sawyer/LineVector.h>
@@ -112,8 +113,33 @@ SmtSolver::selfTest() {
     mlog[WHERE] <<"running self-tests\n";
     using namespace SymbolicExpr;
     typedef SymbolicExpr::Ptr E;
-    std::vector<E> exprs;
 
+    // Make sure we can parse the S-Expr output from solvers
+    std::vector<SExpr::Ptr> sexprs = parseSExpressions("x () (x) (x y) ((x) (y))");
+    ASSERT_require(sexprs.size() == 5);
+
+    ASSERT_require(sexprs[0]->children().size() == 0);
+    ASSERT_require(sexprs[0]->name() == "x");
+
+    ASSERT_require(sexprs[1]->children().size() == 0);
+    ASSERT_require(sexprs[1]->name() == "");
+
+    ASSERT_require(sexprs[2]->children().size() == 1);
+    ASSERT_require(sexprs[2]->children()[0]->name() == "x");
+
+    ASSERT_require(sexprs[3]->children().size() == 2);
+    ASSERT_require(sexprs[3]->children()[0]->name() == "x");
+    ASSERT_require(sexprs[3]->children()[1]->name() == "y");
+
+    ASSERT_require(sexprs[4]->children().size() == 2);
+    ASSERT_require(sexprs[4]->children()[0]->name() == "");
+    ASSERT_require(sexprs[4]->children()[0]->children().size() == 1);
+    ASSERT_require(sexprs[4]->children()[0]->children()[0]->name() == "x");
+    ASSERT_require(sexprs[4]->children()[1]->name() == "");
+    ASSERT_require(sexprs[4]->children()[1]->children().size() == 1);
+    ASSERT_require(sexprs[4]->children()[1]->children()[0]->name() == "y");
+    
+    // Create some variables and constants
     E a1 = makeVariable(1, "a1");
     E a8 = makeVariable(8, "a8");
     E a32 = makeVariable(32, "a32");
@@ -129,6 +155,7 @@ SmtSolver::selfTest() {
     E btrue = makeBoolean(true);
 
     // Comparisons
+    std::vector<E> exprs;
     exprs.push_back(makeZerop(a8, "zerop"));
     exprs.push_back(makeEq(a8, z8, "equal"));
     exprs.push_back(makeNe(a8, z8, "not equal"));
@@ -348,11 +375,12 @@ SmtSolver::satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs)
     status = pclose(r.output); r.output = NULL;
     mlog[DEBUG] <<"solver took " <<timer <<" seconds\n";
     mlog[DEBUG] <<"solver exit status = " <<status <<"\n";
-    if (status != 0)
-        throw Exception("SMT solver command failed: \"" + StringUtility::cEscape(cmd) + "\"");
-
-    // Parse the solver standard output
     parsedOutput_ = parseSExpressions(outputText_);
+
+    std::string errorMesg = getErrorMessage(status);
+    if (!errorMesg.empty())
+        throw Exception("solver command (\"" + StringUtility::cEscape(cmd) + "\") failed: \"" +
+                        StringUtility::cEscape(errorMesg) + "\"");
 
     // Look for an expression that's just "sat" or "unsat"
     BOOST_FOREACH (const SExpr::Ptr &expr, parsedOutput_) {
@@ -372,8 +400,12 @@ SmtSolver::satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs)
 #endif
     return retval;
 }
-    
 
+std::string
+SmtSolver::getErrorMessage(int exitStatus) {
+    return 0 == exitStatus ? "" : "solver command had non-zero exit status";
+}
+        
 SmtSolver::Satisfiable
 SmtSolver::satisfiable(const SymbolicExpr::Ptr &tn)
 {
@@ -416,10 +448,8 @@ public:
         : input_(input), nextTokenOffset_(0) {}
 
     std::string current() {
-        if (current_.empty()) {
-            current_ = scanTokenAt(nextTokenOffset_);
-            nextTokenOffset_ += current_.size();
-        }
+        if (current_.empty())
+            boost::tie(current_, nextTokenOffset_) = scanTokenAt(nextTokenOffset_);
         return current_;
     }
 
@@ -432,30 +462,40 @@ public:
     }
     
 private:
-    // Get token starting at specified position, after skipping white space, comments, etc.
-    std::string scanTokenAt(size_t startOffset) {
+    // Get token starting at specified position, after skipping white space, comments, etc. Returns token lexeme and offset to
+    // first character after end of the token.
+    std::pair<std::string, size_t> scanTokenAt(size_t offset) {
         while (true) {
             // Skip white space
-            int ch = input_.character(startOffset);
+            int ch = input_.character(offset);
             while (isspace(ch))
-                ch = input_.character(++startOffset);
+                ch = input_.character(++offset);
             if (EOF == ch)
-                return "";
-
+                return std::make_pair(std::string(), offset);
+                                      
             if ('(' == ch) {
-                return "(";
+                return std::make_pair(std::string("("), offset + 1);
             } else if (')' == ch) {
-                return ")";
+                return std::make_pair(std::string(")"), offset + 1);
             } else if (';' == ch) {
                 // comment extending to end of line
-                while (EOF != (ch = input_.character(++startOffset)) && '\n' != ch) /*void*/;
-                ++startOffset;
+                while (EOF != (ch = input_.character(++offset)) && '\n' != ch) /*void*/;
+                ++offset;
+            } else if ('"' == ch) {
+                // string literal
+                size_t end = offset + 1;
+                while (EOF != (ch = input_.character(end)) && '"' != ch)
+                    ++end; // FIXME[Robb Matzke 2017-10-31]: what escaping is legal?
+                ASSERT_require('"'==ch);                // closing quote
+                std::string s = std::string(input_.characters(offset)+1, (end-offset)-1); // w/out enclosing quotes
+                ++end;                                  // advance past closing quote
+                return std::make_pair(s, end);
             } else {
                 // everthing else is assumed to be a symbol continuing until the next whitespace, paren, or comment
-                size_t end = startOffset + 1;
+                size_t end = offset + 1;
                 while (EOF != (ch = input_.character(end)) && !isspace(ch) && !strchr("();", ch))
                     ++end;
-                return std::string(input_.characters(startOffset), end - startOffset);
+                return std::make_pair(std::string(input_.characters(offset), end - offset), end);
             }
         }
     }
@@ -466,7 +506,7 @@ parseSExpression(TokenStream &tokens) {
     ASSERT_require(tokens.current() != "");
     if (tokens.current() == "(") {
         tokens.shift();
-        SmtSolver::SExpr::Ptr sexpr = SmtSolver::SExpr::instance(tokens.current());
+        SmtSolver::SExpr::Ptr sexpr = SmtSolver::SExpr::instance();
         while (tokens.current() != ")") {
             if (tokens.current() == "")
                 throw SmtSolver::ParseError(tokens.location(), "EOF before end of S-Expr");

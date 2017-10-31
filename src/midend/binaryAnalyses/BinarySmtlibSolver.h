@@ -14,6 +14,7 @@ private:
     std::string shellArgs_;                             // extra arguments for command (passed through shell)
     typedef Sawyer::Container::Map<SymbolicExpr::Ptr, SymbolicExpr::Ptr> ExprExprMap;
     ExprExprMap varsForSets_;                           // variables to use for sets
+    ExprExprMap evidence_;
 
 public:
     /** Construct a solver using the specified program.
@@ -33,6 +34,7 @@ public:
 public:
     virtual void generateFile(std::ostream&, const std::vector<SymbolicExpr::Ptr> &exprs, Definitions*) ROSE_OVERRIDE;
     virtual std::string getCommand(const std::string &configName) ROSE_OVERRIDE;
+    virtual std::string getErrorMessage(int exitStatus) ROSE_OVERRIDE;
     virtual VariableSet findVariables(const std::vector<SymbolicExpr::Ptr>&) ROSE_OVERRIDE;
     virtual SymbolicExpr::Ptr evidenceForName(const std::string&) ROSE_OVERRIDE;
     virtual std::vector<std::string> evidenceNames() ROSE_OVERRIDE;

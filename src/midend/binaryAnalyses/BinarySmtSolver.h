@@ -169,6 +169,13 @@ public:
     virtual Satisfiable satisfiable(std::vector<SymbolicExpr::Ptr>, const SymbolicExpr::Ptr&);
     /** @} */
 
+    /** Error message from running the solver.
+     *
+     *  Given the solver exit status and (implicitly) the output of the solver, either return an error message or the empty
+     *  string. This can be overridden by subclasses because some solvers exit with non-zero status if you try to get the model
+     *  when (check-sat) returns not-satisfiable. */
+    virtual std::string getErrorMessage(int exitStatus);
+
     /** Return all variables that need declarations. */
     virtual VariableSet findVariables(const std::vector<SymbolicExpr::Ptr>&) { return VariableSet(); }
     
@@ -179,12 +186,12 @@ public:
     virtual SymbolicExpr::Ptr evidenceForVariable(uint64_t varno) {
         char buf[64];
         snprintf(buf, sizeof buf, "v%" PRIu64, varno);
-        return evidence_for_name(buf);
+        return evidenceForName(buf);
     }
     virtual SymbolicExpr::Ptr evidenceForVariable(const SymbolicExpr::Ptr &var) {
         SymbolicExpr::LeafPtr ln = var->isLeafNode();
         ASSERT_require(ln && !ln->isNumber());
-        return evidence_for_variable(ln->nameId());
+        return evidenceForVariable(ln->nameId());
     }
     /** @} */
 
