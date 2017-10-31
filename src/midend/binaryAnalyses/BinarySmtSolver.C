@@ -114,19 +114,19 @@ SmtSolver::selfTest() {
     typedef SymbolicExpr::Ptr E;
     std::vector<E> exprs;
 
-    E a1 = makeVariable(1, "1-bit variable");
-    E a8 = makeVariable(8, "eight-bit variable");
-    E a32 = makeVariable(32, "32-bit variable");
-    E a256 = makeVariable(256, "256-bit variable");
+    E a1 = makeVariable(1, "a1");
+    E a8 = makeVariable(8, "a8");
+    E a32 = makeVariable(32, "a32");
+    E a256 = makeVariable(256, "a256");
 
-    E z8 = makeInteger(8, 0, "8-bit zero");
-    E b4 = makeInteger(4, 10, "4-bit 10");
-    E b8 = makeInteger(8, 0xf0, "8-bit 0xf0");
-    E c8 = makeVariable(8, "8-bit variable");
-    E z256 = makeInteger(256, 0xdeadbeef, "256-bit 0xDeadBeef");
+    E z8 = makeInteger(8, 0);
+    E b4 = makeInteger(4, 10);
+    E b8 = makeInteger(8, 0xf0);
+    E c8 = makeVariable(8);
+    E z256 = makeInteger(256, 0xdeadbeef);
 
-    E bfalse = makeBoolean(false, "Boolean false");
-    E btrue = makeBoolean(true, "Boolean true");
+    E bfalse = makeBoolean(false);
+    E btrue = makeBoolean(true);
 
     // Comparisons
     exprs.push_back(makeZerop(a8, "zerop"));
@@ -190,14 +190,20 @@ SmtSolver::selfTest() {
     exprs.push_back(makeEq(makeSet(a8, b8, c8), b8, "set"));
 
     // Run the solver
-#if 0 // DEBUGGING [Robb Matzke 2017-10-26]
-    generateFile(std::cout, exprs, NULL);
-#else
     BOOST_FOREACH (const E &expr, exprs) {
         mlog[TRACE] <<"test " <<*expr <<"\n";
-        /*SmtSolver::Satisfiable sat =*/ satisfiable(expr);
+        switch (satisfiable(expr)) {
+            case SAT_NO:
+                mlog[TRACE] <<"not satisfiable\n";
+                break;
+            case SAT_YES:
+                mlog[TRACE] <<"satisfiable\n";
+                break;
+            case SAT_UNKNOWN:
+                mlog[TRACE] <<"unknown\n";
+                break;
+        }
     }
-#endif
 }
 
 // FIXME[Robb Matzke 2017-10-17]: deprecated

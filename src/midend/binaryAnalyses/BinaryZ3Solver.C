@@ -18,6 +18,15 @@ Z3Solver::availableLinkages() {
     return retval;
 }
 
+void
+Z3Solver::clearEvidence() {
+    ctxCses_.clear();
+    ctxVarDecls_.clear();
+    delete ctx_;
+    ctx_ = NULL;
+    SmtlibSolver::clearEvidence();
+}
+
 SmtSolver::Satisfiable
 Z3Solver::satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs) {
     clearEvidence();
@@ -40,13 +49,25 @@ Z3Solver::satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs) {
 
     delete ctx_;
     ctx_ = new z3::context;
+    z3::solver solver(*ctx_);
+
     VariableSet vars = findVariables(exprs);
+    ctxVarDecls_ = ctxVariableDeclarations(vars);
+    ctxCses_ = ctxCommonSubexpressions(exprs);
     
     BOOST_FOREACH (const SymbolicExpr::Ptr &expr, exprs)
-        ctxExpression(expr);
-    
+        solver.add(ctxExpression(expr));
+
+    switch (solver.check()) {
+        case z3::unsat:
+            return SAT_NO;
+        case z3::sat:
+            return SAT_YES;
+        case z3::unknown:
+            return SAT_UNKNOWN;
+    }
 #endif
-    TODO("Z3 library is not supported yet, but the library is available");
+    ASSERT_not_reachable("library linkage accepted but ROSE_HAVE_Z3 not defined");
 }
 
 // No need to emit anything since Z3 already has a "bvxor" function.
@@ -128,6 +149,37 @@ Z3Solver::outputExpression(std::ostream &o, const SymbolicExpr::Ptr &expr) {
 }
 
 #ifdef ROSE_HAVE_Z3
+Z3Solver::VariableDeclarations
+Z3Solver::ctxVariableDeclarations(const VariableSet &vars) {
+    VariableDeclarations retval;
+    ASSERT_not_null(ctx_);
+    BOOST_FOREACH (const SymbolicExpr::LeafPtr &leaf, vars.values()) {
+        ASSERT_require(leaf->isVariable() || leaf->isMemory());
+        if (leaf->isScalar()) {
+            z3::sort range = ctx_->bv_sort(leaf->nBits());
+            z3::func_decl decl = z3::function(leaf->toString().c_str(), 0, NULL, range);
+            retval.insert(leaf, decl);
+        } else {
+            ASSERT_require(leaf->domainWidth() > 0);
+            z3::sort addr = ctx_->bv_sort(leaf->domainWidth());
+            z3::sort value = ctx_->bv_sort(leaf->nBits());
+            z3::sort range = ctx_->array_sort(addr, value);
+            z3::func_decl decl = z3::function(leaf->toString().c_str(), 0, NULL, range);
+            retval.insert(leaf, decl);
+        }
+    }
+    return retval;
+}
+
+Z3Solver::CommonSubexpressions
+Z3Solver::ctxCommonSubexpressions(const std::vector<SymbolicExpr::Ptr> &exprs) {
+    CommonSubexpressions retval;
+    std::vector<SymbolicExpr::Ptr> cses = findCommonSubexpressions(exprs);
+    BOOST_FOREACH (const SymbolicExpr::Ptr &cse, cses)
+        retval.insert(cse, ctxExpression(cse));
+    return retval;
+}
+
 z3::expr
 Z3Solver::ctxExpression(const SymbolicExpr::Ptr &expr) {
     ASSERT_not_null(expr);
@@ -147,7 +199,8 @@ Z3Solver::ctxExpression(const SymbolicExpr::Ptr &expr) {
             }
         } else {
             ASSERT_require(leaf->isVariable() || leaf->isMemory());
-            return ctx_->bv_const(leaf->toString().c_str(), leaf->nBits());
+            z3::func_decl decl = ctxVarDecls_.get(leaf);
+            return decl();
         }
     } else {
         ASSERT_not_null(inode);
@@ -218,7 +271,7 @@ Z3Solver::ctxExpression(const SymbolicExpr::Ptr &expr) {
                 break;
             case SymbolicExpr::OP_NEGATE:
                 ASSERT_require(inode->nChildren() == 1);
-                retval = -ctxExpression(inode->child(1));
+                retval = -ctxExpression(inode->child(0));
                 break;
             case SymbolicExpr::OP_NOOP:
                 retval = ctx_->bv_val(1, 1);

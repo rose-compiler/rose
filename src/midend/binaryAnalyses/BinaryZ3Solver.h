@@ -20,7 +20,10 @@ class Z3Solver: public SmtlibSolver {
 private:
 #ifdef ROSE_HAVE_Z3
     z3::context *ctx_;
-    Sawyer::Container::Map<SymbolicExpr::Ptr, z3::expr> ctxCses_; // common subexpressions
+    typedef Sawyer::Container::Map<SymbolicExpr::Ptr, z3::expr> CommonSubexpressions;
+    CommonSubexpressions ctxCses_; // common subexpressions
+    typedef Sawyer::Container::Map<SymbolicExpr::LeafPtr, z3::func_decl> VariableDeclarations;
+    VariableDeclarations ctxVarDecls_;
 #endif
 
 public:
@@ -63,6 +66,7 @@ public:
         return satisfiable(exprs);
     }
 
+    virtual void clearEvidence() ROSE_OVERRIDE;
     virtual SymbolicExpr::Ptr evidenceForName(const std::string&) ROSE_OVERRIDE;
     virtual std::vector<std::string> evidenceNames() ROSE_OVERRIDE;
 
@@ -75,6 +79,8 @@ private:
     virtual void outputArithmeticShiftRight(std::ostream&, const SymbolicExpr::InteriorPtr&) ROSE_OVERRIDE;
 
 #ifdef ROSE_HAVE_Z3
+    VariableDeclarations ctxVariableDeclarations(const VariableSet&);
+    CommonSubexpressions ctxCommonSubexpressions(const std::vector<SymbolicExpr::Ptr>&);
     z3::expr ctxExpression(const SymbolicExpr::Ptr&);
     z3::expr ctxArithmeticShiftRight(const SymbolicExpr::InteriorPtr&);
     z3::expr ctxExtract(const SymbolicExpr::InteriorPtr&);
