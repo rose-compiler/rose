@@ -20,10 +20,12 @@ Z3Solver::availableLinkages() {
 
 void
 Z3Solver::clearEvidence() {
+#ifdef ROSE_HAVE_Z3
     ctxCses_.clear();
     ctxVarDecls_.clear();
     delete ctx_;
     ctx_ = NULL;
+#endif
     SmtlibSolver::clearEvidence();
 }
 
