@@ -27,6 +27,13 @@ public:
         LM_ANY        = 0x0003,                         /**< Any available mode. */
     };
 
+    /** Type (sort) of expression.
+     *
+     *  ROSE uses bit constants "#b1" and "#b0" (in SMT-LIB syntax) to represent Boolean true and false, but most solvers
+     *  distinguish between bit vector and Boolean types and don't allow them to be mixed (e.g., "(and #b1 true)" is an
+     *  error). */
+    enum Type { BOOLEAN, BIT_VECTOR, MEM_STATE };
+
     /** Maps expression nodes to term names.  This map is populated for common subexpressions. */
     typedef Sawyer::Container::Map<SymbolicExpr::Ptr, std::string> TermNames;
 

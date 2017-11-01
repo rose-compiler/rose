@@ -81,71 +81,184 @@ void
 Z3Solver::outputComparisonFunctions(std::ostream&, const std::vector<SymbolicExpr::Ptr>&) {}
 
 void
-Z3Solver::outputExpression(std::ostream &o, const SymbolicExpr::Ptr &expr) {
+Z3Solver::outputExpression(std::ostream &o, const SymbolicExpr::Ptr &expr, Type needType) {
     ASSERT_not_null(expr);
     SymbolicExpr::LeafPtr leaf = expr->isLeafNode();
-    SymbolicExpr::InteriorPtr operation = expr->isInteriorNode();
+    SymbolicExpr::InteriorPtr inode = expr->isInteriorNode();
 
     std::string subExprName;
     if (termNames_.getOptional(expr).assignTo(subExprName)) {
-        o <<subExprName;
-    } else if (leaf) {
-        if (leaf->isNumber()) {
-            if (leaf->nBits() % 4 == 0) {
-                o <<"#x" <<leaf->bits().toHex();
-            } else {
-                o <<"#b" <<leaf->bits().toBinary();
-            }
+        if (BOOLEAN == needType) {
+            o <<"(= " <<subExprName <<" #b1)";
         } else {
-            ASSERT_require(leaf->isVariable() || leaf->isMemory());
-            o <<leaf->toString();
+            o <<subExprName;                            // bit vector or memory state
         }
+    } else if (leaf) {
+        outputLeaf(o, leaf, needType);
     } else {
-        ASSERT_not_null(operation);
-        switch (operation->getOperator()) {
-            case SymbolicExpr::OP_ADD:     outputList(o, "bvadd", operation);        break;
-            case SymbolicExpr::OP_AND:     outputList(o, "and", operation);          break;
-            case SymbolicExpr::OP_ASR:     outputArithmeticShiftRight(o, operation); break;
-            case SymbolicExpr::OP_BV_AND:  outputList(o, "bvand", operation);        break;
-            case SymbolicExpr::OP_BV_OR:   outputList(o, "bvor",  operation);        break;
-            case SymbolicExpr::OP_BV_XOR:  outputList(o, "bvxor", operation);        break;
-            case SymbolicExpr::OP_EQ:      outputBinary(o, "=", operation);          break;
-            case SymbolicExpr::OP_CONCAT:  outputList(o, "concat", operation);       break;
-            case SymbolicExpr::OP_EXTRACT: outputExtract(o, operation);              break;
-            case SymbolicExpr::OP_INVERT:  outputUnary(o, "bvnot", operation);       break;
-            case SymbolicExpr::OP_ITE:     outputIte(o, operation);                  break;
-            case SymbolicExpr::OP_LSSB:    throw Exception("OP_LSSB not implemented");
-            case SymbolicExpr::OP_MSSB:    throw Exception("OP_MSSB not implemented");
-            case SymbolicExpr::OP_NE:      outputNotEqual(o, operation);             break;
-            case SymbolicExpr::OP_NEGATE:  outputUnary(o, "bvneg", operation);       break;
-            case SymbolicExpr::OP_NOOP:    o <<"#b1";                                break;
-            case SymbolicExpr::OP_OR:      outputList(o, "or", operation);           break;
-            case SymbolicExpr::OP_READ:    outputRead(o, operation);                 break;
-            case SymbolicExpr::OP_ROL:     outputRotateLeft(o, operation);           break;
-            case SymbolicExpr::OP_ROR:     outputRotateRight(o, operation);          break;
-            case SymbolicExpr::OP_SDIV:    throw Exception("OP_SDIV not implemented");
-            case SymbolicExpr::OP_SET:     outputSet(o, operation);                  break;
-            case SymbolicExpr::OP_SEXTEND: outputSignExtend(o, operation);           break;
-            case SymbolicExpr::OP_SLT:     outputBinary(o, "bvslt", operation);      break;
-            case SymbolicExpr::OP_SLE:     outputBinary(o, "bvsle", operation);      break;
-            case SymbolicExpr::OP_SHL0:    outputShiftLeft(o, operation);            break;
-            case SymbolicExpr::OP_SHL1:    outputShiftLeft(o, operation);            break;
-            case SymbolicExpr::OP_SHR0:    outputLogicalShiftRight(o, operation);    break;
-            case SymbolicExpr::OP_SHR1:    outputLogicalShiftRight(o, operation);    break;
-            case SymbolicExpr::OP_SGE:     outputBinary(o, "bvsge", operation);      break;
-            case SymbolicExpr::OP_SGT:     outputBinary(o, "bvsgt", operation);      break;
-            case SymbolicExpr::OP_SMOD:    throw Exception("OP_SMOD not implemented");
-            case SymbolicExpr::OP_SMUL:    outputMultiply(o, operation);             break;
-            case SymbolicExpr::OP_UDIV:    outputUnsignedDivide(o, operation);       break;
-            case SymbolicExpr::OP_UEXTEND: outputUnsignedExtend(o, operation);       break;
-            case SymbolicExpr::OP_UGE:     outputBinary(o, "bvuge", operation);      break;
-            case SymbolicExpr::OP_UGT:     outputBinary(o, "bvugt", operation);      break;
-            case SymbolicExpr::OP_ULE:     outputBinary(o, "bvule", operation);      break;
-            case SymbolicExpr::OP_ULT:     outputBinary(o, "bvult", operation);      break;
-            case SymbolicExpr::OP_UMOD:    outputUnsignedModulo(o, operation);       break;
-            case SymbolicExpr::OP_UMUL:    outputMultiply(o, operation);             break;
-            case SymbolicExpr::OP_WRITE:   outputWrite(o, operation);                break;
-            case SymbolicExpr::OP_ZEROP:   outputZerop(o, operation);                break;
+        ASSERT_not_null(inode);
+        switch (inode->getOperator()) {
+            case SymbolicExpr::OP_ADD:
+                ASSERT_require(BIT_VECTOR == needType);
+                outputList(o, "bvadd", inode, BIT_VECTOR);
+                break;
+            case SymbolicExpr::OP_AND:
+                ASSERT_require(BOOLEAN == needType);
+                outputList(o, "and", inode, BOOLEAN);
+                break;
+            case SymbolicExpr::OP_ASR:
+                ASSERT_require(BIT_VECTOR == needType);
+                outputArithmeticShiftRight(o, inode);
+                break;
+            case SymbolicExpr::OP_BV_AND:
+                ASSERT_require(BIT_VECTOR == needType);
+                outputList(o, "bvand", inode, BIT_VECTOR);
+                break;
+            case SymbolicExpr::OP_BV_OR:
+                ASSERT_require(BIT_VECTOR == needType);
+                outputList(o, "bvor",  inode, BIT_VECTOR);
+                break;
+            case SymbolicExpr::OP_BV_XOR:
+                ASSERT_require(BIT_VECTOR == needType);
+                outputList(o, "bvxor", inode, BIT_VECTOR);
+                break;
+            case SymbolicExpr::OP_EQ:
+                ASSERT_require(BOOLEAN == needType);
+                outputBinary(o, "=", inode, BIT_VECTOR);
+                break;
+            case SymbolicExpr::OP_CONCAT:
+                ASSERT_require(BIT_VECTOR == needType);
+                outputList(o, "concat", inode, BIT_VECTOR);
+                break;
+            case SymbolicExpr::OP_EXTRACT:
+                ASSERT_require(BIT_VECTOR == needType);
+                outputExtract(o, inode);
+                break;
+            case SymbolicExpr::OP_INVERT:
+                outputUnary(o, (BOOLEAN==needType?"not":"bvnot"), inode, needType);
+                break;
+            case SymbolicExpr::OP_ITE:
+                outputIte(o, inode, needType);
+                break;
+            case SymbolicExpr::OP_LSSB:
+                throw Exception("OP_LSSB not implemented");
+            case SymbolicExpr::OP_MSSB:
+                throw Exception("OP_MSSB not implemented");
+            case SymbolicExpr::OP_NE:
+                ASSERT_require(BOOLEAN == needType);
+                outputNotEqual(o, inode);
+                break;
+            case SymbolicExpr::OP_NEGATE:
+                ASSERT_require(BIT_VECTOR == needType);
+                outputUnary(o, "bvneg", inode, BIT_VECTOR);
+                break;
+            case SymbolicExpr::OP_NOOP:
+                outputExpression(o, SymbolicExpr::makeInteger(inode->nBits(), 0), needType);
+                break;
+            case SymbolicExpr::OP_OR:
+                ASSERT_require(BOOLEAN == needType);
+                outputList(o, "or", inode, BOOLEAN);
+                break;
+            case SymbolicExpr::OP_READ:
+                ASSERT_require(BIT_VECTOR == needType);
+                outputRead(o, inode);
+                break;
+            case SymbolicExpr::OP_ROL:
+                ASSERT_require(BIT_VECTOR == needType);
+                outputRotateLeft(o, inode);
+                break;
+            case SymbolicExpr::OP_ROR:
+                ASSERT_require(BIT_VECTOR == needType);
+                outputRotateRight(o, inode);
+                break;
+            case SymbolicExpr::OP_SDIV:
+                throw Exception("OP_SDIV not implemented");
+            case SymbolicExpr::OP_SET:
+                ASSERT_require(BIT_VECTOR == needType);
+                outputSet(o, inode);
+                break;
+            case SymbolicExpr::OP_SEXTEND:
+                ASSERT_require(BIT_VECTOR == needType);
+                outputSignExtend(o, inode);
+                break;
+            case SymbolicExpr::OP_SLT:
+                ASSERT_require(BOOLEAN == needType);
+                outputBinary(o, "bvslt", inode, BIT_VECTOR);
+                break;
+            case SymbolicExpr::OP_SLE:
+                ASSERT_require(BOOLEAN == needType);
+                outputBinary(o, "bvsle", inode, BIT_VECTOR);
+                break;
+            case SymbolicExpr::OP_SHL0:
+                ASSERT_require(BIT_VECTOR == needType);
+                outputShiftLeft(o, inode);
+                break;
+            case SymbolicExpr::OP_SHL1:
+                ASSERT_require(BIT_VECTOR == needType);
+                outputShiftLeft(o, inode);
+                break;
+            case SymbolicExpr::OP_SHR0:
+                ASSERT_require(BIT_VECTOR == needType);
+                outputLogicalShiftRight(o, inode);
+                break;
+            case SymbolicExpr::OP_SHR1:
+                ASSERT_require(BIT_VECTOR == needType);
+                outputLogicalShiftRight(o, inode);
+                break;
+            case SymbolicExpr::OP_SGE:
+                ASSERT_require(BOOLEAN == needType);
+                outputBinary(o, "bvsge", inode, BIT_VECTOR);
+                break;
+            case SymbolicExpr::OP_SGT:
+                ASSERT_require(BOOLEAN == needType);
+                outputBinary(o, "bvsgt", inode, BOOLEAN);
+                break;
+            case SymbolicExpr::OP_SMOD:
+                throw Exception("OP_SMOD not implemented");
+            case SymbolicExpr::OP_SMUL:
+                ASSERT_require(BIT_VECTOR == needType);
+                outputMultiply(o, inode);
+                break;
+            case SymbolicExpr::OP_UDIV:
+                ASSERT_require(BIT_VECTOR == needType);
+                outputUnsignedDivide(o, inode);
+                break;
+            case SymbolicExpr::OP_UEXTEND:
+                ASSERT_require(BIT_VECTOR == needType);
+                outputUnsignedExtend(o, inode);
+                break;
+            case SymbolicExpr::OP_UGE:
+                ASSERT_require(BOOLEAN == needType);
+                outputBinary(o, "bvuge", inode, BIT_VECTOR);
+                break;
+            case SymbolicExpr::OP_UGT:
+                ASSERT_require(BOOLEAN == needType);
+                outputBinary(o, "bvugt", inode, BIT_VECTOR);
+                break;
+            case SymbolicExpr::OP_ULE:
+                ASSERT_require(BOOLEAN == needType);
+                outputBinary(o, "bvule", inode, BIT_VECTOR);
+                break;
+            case SymbolicExpr::OP_ULT:
+                ASSERT_require(BOOLEAN == needType);
+                outputBinary(o, "bvult", inode, BIT_VECTOR);
+                break;
+            case SymbolicExpr::OP_UMOD:
+                ASSERT_require(BIT_VECTOR == needType);
+                outputUnsignedModulo(o, inode);
+                break;
+            case SymbolicExpr::OP_UMUL:
+                ASSERT_require(BIT_VECTOR == needType);
+                outputMultiply(o, inode);
+                break;
+            case SymbolicExpr::OP_WRITE:
+                ASSERT_require(BIT_VECTOR == needType);
+                outputWrite(o, inode);
+                break;
+            case SymbolicExpr::OP_ZEROP:
+                ASSERT_require(BOOLEAN == needType);
+                outputZerop(o, inode);
+                break;
         }
     }
 }
@@ -387,9 +500,9 @@ Z3Solver::outputArithmeticShiftRight(std::ostream &o, const SymbolicExpr::Interi
 
     sa = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, expr->nBits()), sa);
     o <<"(bvashr" <<" ";
-    outputExpression(o, expr);
+    outputExpression(o, expr, BIT_VECTOR);
     o <<" ";
-    outputExpression(o, sa);
+    outputExpression(o, sa, BIT_VECTOR);
     o <<")";
 }
 

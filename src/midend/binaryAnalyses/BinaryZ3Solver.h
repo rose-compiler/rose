@@ -75,7 +75,7 @@ protected:
     virtual void outputComparisonFunctions(std::ostream&, const std::vector<SymbolicExpr::Ptr>&) ROSE_OVERRIDE;
 
 private:
-    virtual void outputExpression(std::ostream&, const SymbolicExpr::Ptr&) ROSE_OVERRIDE;
+    virtual void outputExpression(std::ostream&, const SymbolicExpr::Ptr&, Type need) ROSE_OVERRIDE;
     virtual void outputArithmeticShiftRight(std::ostream&, const SymbolicExpr::InteriorPtr&) ROSE_OVERRIDE;
 
 #ifdef ROSE_HAVE_Z3
