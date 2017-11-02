@@ -206,7 +206,7 @@ Grammar::setUpNodes ()
      NEW_TERMINAL_MACRO (UntypedModuleDeclaration,        "UntypedModuleDeclaration",        "TEMP_UntypedModuleDeclaration" );
 
   // Rasmussen (8/16/2017): Added new IR node to represent a Fortran submodule (a submodule extends an existing module)
-     NEW_TERMINAL_MACRO (UntypedSubmoduleDeclaration,     "UntypedSubmoduleDeclaration",     "TEMP_UntypedsubModuleDeclaration" );
+     NEW_TERMINAL_MACRO (UntypedSubmoduleDeclaration,     "UntypedSubmoduleDeclaration",     "TEMP_UntypedSubmoduleDeclaration" );
 
   // DQ (9/29/2017): Added new IR node for untyped representation of package declarations (Ada).
      NEW_TERMINAL_MACRO (UntypedPackageDeclaration,          "UntypedPackageDeclaration",          "TEMP_UntypedPackageDeclaration" );
