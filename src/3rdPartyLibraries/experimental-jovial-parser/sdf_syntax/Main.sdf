@@ -127,6 +127,8 @@ RepFunctionVariable
 ByteFunctionVariable
 BitFunctionVariable
 NamedVariable
+  %% UntypedNamedVariable  %% Added to grammar to resolve ambiguity with untyped variable names
+                           %% does not seem to be needed after all (remove)
 TableConversion
 NamedTableConstant
 TableVariable
@@ -224,6 +226,7 @@ ElseClause
 OptElseClause
 ConditionalStatement
 NumericFormula
+FixedOrFloatingFormula  %% added to fix ambiguity
 ByFormula
 ThenPhrase
 ByPhrase
@@ -1476,12 +1479,18 @@ context-free syntax
 %% 5.0 FORMULAS
 %%%%%%%%%%
 
-  NumericFormula              -> Formula
+%%UntypedNamedVariable        -> Formula               {cons("VariableFormula")}  %% BEWARE NON_STANDARD_TRIAL
+  NumericFormula              -> Formula               {prefer}
   BitFormula                  -> Formula
-  CharacterFormula            -> Formula
-  StatusFormula               -> Formula
-  PointerFormula              -> Formula
-  TableFormula                -> Formula
+  CharacterFormula            -> Formula               {cons("CharacterFormula")}
+  StatusFormula               -> Formula               {cons("StatusFormula")}
+  PointerFormula              -> Formula               {cons("PointerFormula")}
+  TableFormula                -> Formula               {cons("TableFormula")}
+
+%% Additions to resolve ambiguities with variables (variables are mostly untyped)
+%%
+%%NamedVariable               -> UntypedNamedVariable   {cons("UntypedNamedVariable")}
+%%Sign NamedVariable          -> UntypedNamedVariable   {cons("NumericNamedVariable")}
 
   CompileTimeNumericFormula   -> CompileTimeFormula
   CompileTimeBitFormula       -> CompileTimeFormula
@@ -1492,8 +1501,12 @@ context-free syntax
 %% 5.1 NUMERIC FORMULAS
 %%
   IntegerFormula              -> NumericFormula         {prefer}
-  FloatingFormula             -> NumericFormula
-  FixedFormula                -> NumericFormula
+  FixedOrFloatingFormula      -> NumericFormula
+
+%% Added syntax to fix ambiguity
+%%
+  FloatingFormula             -> FixedOrFloatingFormula
+  FixedFormula                -> FixedOrFloatingFormula {prefer}
 
   CompileTimeIntegerFormula   -> CompileTimeNumericFormula
   CompileTimeFloatingFormula  -> CompileTimeNumericFormula
@@ -1519,7 +1532,7 @@ context-free syntax
 
   IntegerLiteral              -> IntegerPrimary
   IntegerMachineParameter     -> IntegerPrimary
-  IntegerVariable             -> IntegerPrimary         {prefer}
+  IntegerVariable             -> IntegerPrimary         {cons("IntegerVariable")}
   NamedIntegerConstant        -> IntegerPrimary
   IntegerFunctionCall         -> IntegerPrimary
   '(' IntegerFormula ')'      -> IntegerPrimary         {cons("IntegerPrimary")}
@@ -1553,8 +1566,8 @@ context-free syntax
 
   FloatingLiteral             -> FloatingPrimary
   FloatingMachineParameter    -> FloatingPrimary
-  FloatingVariable            -> FloatingPrimary
-  NamedFloatingConstant       -> FloatingPrimary
+  FloatingVariable            -> FloatingPrimary        {cons("FloatingVariable")}
+  NamedFloatingConstant       -> FloatingPrimary        {cons("NamedFloatingConstant")}
   FloatingFunctionCall        -> FloatingPrimary
   '(' FloatingFormula ')'     -> FloatingPrimary        {cons("FloatingPrimary")}
   FloatingConversion
@@ -1583,8 +1596,8 @@ context-free syntax
 
   FixedLiteral                -> FixedFactor
   FixedMachineParameter       -> FixedFactor
-  FixedVariable               -> FixedFactor
-  NamedFixedConstant          -> FixedFactor
+  FixedVariable               -> FixedFactor            {cons("FixedVariable")}
+  NamedFixedConstant          -> FixedFactor            {cons("NamedFixedConstant")}
   FixedFunctionCall           -> FixedFactor
   '(' FixedFormula     ')'    -> FixedFactor            {cons("FixedFactor")}
   FixedConversion
@@ -1616,8 +1629,12 @@ context-free syntax
 
   BitLiteral                  -> BitPrimary
   BooleanLiteral              -> BitPrimary
-  BitVariable                 -> BitPrimary
-  NamedBitConstant            -> BitPrimary
+  BitVariable                 -> BitPrimary             {cons("BitVariable")}
+
+  %% Rejected to fix ambiguity with NamedIntegerConstant
+  %% WARNING - may need to be fixed
+  NamedBitConstant            -> BitPrimary             {cons("NamedBitConstant"), reject}
+
   BitFunctionCall             -> BitPrimary
   '(' BitFormula  ')'         -> BitPrimary             {cons("BitPrimary")}
   BitConversion
@@ -1681,8 +1698,8 @@ context-free syntax
 %% 5.3 CHARACTER FORMULAS
 %%
   CharacterLiteral            -> CharacterFormula
-  CharacterVariable           -> CharacterFormula
-  NamedCharacterConstant      -> CharacterFormula
+  CharacterVariable           -> CharacterFormula       {cons("CharacterVariable")}
+  NamedCharacterConstant      -> CharacterFormula       {cons("NamedCharacterConstant")}
   CharacterFunctionCall       -> CharacterFormula
   '(' CharacterFormula ')'    -> CharacterFormula       {cons("CharacterFormula")}
   CharacterConversion
@@ -1699,8 +1716,8 @@ context-free syntax
 %% 5.4 STATUS FORMULAS
 %%
   StatusConstant              -> StatusFormula
-  StatusVariable              -> StatusFormula
-  NamedStatusConstant         -> StatusFormula
+  StatusVariable              -> StatusFormula      {cons("StatusVariable")}
+  NamedStatusConstant         -> StatusFormula      {cons("NamedStatusConstant")}
   StatusFunctionCall          -> StatusFormula
   '(' StatusFormula ')'       -> StatusFormula      {cons("StatusFormula")}
   StatusConversion
@@ -1717,8 +1734,8 @@ context-free syntax
 %% 5.5 POINTER FORMULAS
 %%
   PointerLiteral              -> PointerFormula
-  PointerVariable             -> PointerFormula
-  NamedPointerConstant        -> PointerFormula
+  PointerVariable             -> PointerFormula     {cons("PointerVariable")}
+  NamedPointerConstant        -> PointerFormula     {cons("NamedPointerConstant")}
   PointerFunctionCall         -> PointerFormula
   '(' PointerFormula ')'      -> PointerFormula     {cons("PointerFormula")}
   PointerConversion
@@ -1734,8 +1751,8 @@ context-free syntax
 
 %% 5.5 TABLE FORMULAS
 %%
-  TableVariable               -> TableFormula
-  NamedTableConstant          -> TableFormula
+  TableVariable               -> TableFormula       {cons("TableVariable")}
+  NamedTableConstant          -> TableFormula       {cons("NamedTableConstant")}
   '(' TableFormula ')'        -> TableFormula       {cons("TableFormula")}
   TableConversion
     '(' Formula ')'           -> TableFormula       {cons("TableFormula")}
@@ -1755,7 +1772,7 @@ context-free syntax
   BitFunctionVariable         -> Variable           {cons("BitFunctionVariable")}
   ByteFunctionVariable        -> Variable           {cons("ByteFunctionVariable")}
   RepFunctionVariable         -> Variable           {cons("RepFunctionVariable")}
-%%FunctionName                -> Variable           %% AMBIGUOUS
+%%FunctionName                -> Variable           {reject} %% AMBIGUOUS with NamedVariable
   
   Item                        -> NamedVariable
   Table                       -> NamedVariable
@@ -1852,13 +1869,13 @@ context-free syntax
 
 %% 6.2 NAMED CONSTANTS
 %%
-  ConstantItemName            -> NamedConstant
-  ConstantTableName           -> NamedConstant
+  ConstantItemName            -> NamedConstant         {prefer}  %% ambiguous with ConstantTableName
+  ConstantTableName           -> NamedConstant         {cons("ConstantTableName")}
   ConstantTableItemName
     OptSubscript              -> NamedConstant         {cons("NamedConstant"), reject} %% AMBIGUOUS with IntegerTerm
   ConstantTableName
     Subscript                 -> NamedConstant         {cons("NamedConstant")}
-  ControlLetter               -> NamedConstant
+  ControlLetter               -> NamedConstant         {cons("ControlLetter")}
 
   TableItemName               -> ConstantTableItemName
 
