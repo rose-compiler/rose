@@ -5459,7 +5459,7 @@ SgSourceFile::build_Jovial_AST( vector<string> argv, vector<string> inputCommand
      SgSourceFile* nonconst_file = const_cast<SgSourceFile*>(this);
      ROSE_ASSERT(nonconst_file != NULL);
 
-  // Rasmussen (10/21/2017) Added compile time check to build if not configured for Ada
+  // Rasmussen (10/21/2017) Added compile time check to build if not configured for Jovial
 #ifdef ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION
      frontendErrorLevel = jovial_main (jovial_argc, jovial_argv, nonconst_file);
 #else
@@ -5501,11 +5501,15 @@ SgSourceFile::build_Cobol_AST( vector<string> argv, vector<string> inputCommandL
      CommandlineProcessing::generateArgcArgvFromList(inputCommandLine, cobol_argc, cobol_argv);
 
   // Prototype declaration.
-     int cobol_main(int argc, char** argv);
+  // Rasmussen (10/31/2017): Added SgSourceFile parameter
+     int cobol_main(int argc, char** argv, SgSourceFile* file);
+
+     SgSourceFile* nonconst_file = const_cast<SgSourceFile*>(this);
+     ROSE_ASSERT(nonconst_file != NULL);
 
   // Rasmussen (10/9/2017) Added compile time check to build if not configured for Cobol
 #ifdef ROSE_EXPERIMENTAL_COBOL_ROSE_CONNECTION
-     frontendErrorLevel = cobol_main (cobol_argc, cobol_argv);
+     frontendErrorLevel = cobol_main (cobol_argc, cobol_argv, nonconst_file);
 #else
      printf ("ROSE_EXPERIMENTAL_COBOL_ROSE_CONNECTION is not defined \n");
      return frontendErrorLevel;

@@ -142,7 +142,8 @@ echo "Testing value of FC = $FC"
     ] ,
     [ 
     # Alternatively use the specified GNU Cobol compiler
-	   BACKEND_COBOL_COMPILER="gnucobol"
+    # Rasmussen (10/30/2017): Changed name of GNU Cobol compiler to cobc
+           BACKEND_COBOL_COMPILER="cobc"
       echo "default back-end cobol compiler for generated translators to use: $BACKEND_COBOL_COMPILER"
     ])
 
