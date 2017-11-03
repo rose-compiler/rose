@@ -635,7 +635,8 @@ bool uniqueAssignOp (SgAssignOp* assign_op, SgInitializedName* iname)
 
   DFAnalysis* dfa = obtainDFAnalysis();
   if (dfa)
-  { // OUT_def_set (prevStmt): only one def node, which must not be assignInitializer (with assign initializer), but a naked variable decl
+  { 
+    // OUT_def_set (prevStmt): only one def node, which can be either assignInitializer (with assign initializer) or but a naked variable decl
     // which is SgInitializedName
     vector <SgNode*> defs = dfa->getDefFor(prevStmt, iname);
     if (defs.size() ==0) //no previous definition. This may be caused by wrong def-use analysis results. It should have at least one def (declared)
@@ -648,19 +649,23 @@ bool uniqueAssignOp (SgAssignOp* assign_op, SgInitializedName* iname)
     else
       if (defs.size() ==1)
       {
-        if (isSgInitializedName(defs[0]))
+        if (isSgInitializedName(defs[0]) || isSgAssignInitializer (defs[0]) )
+        {
+          if (RAJA_Checker::enable_debug)
+            cout<<"cond 1 is met: no previous definition within OUT set of prev statement "<<endl;
           return true;
+        }
         else
         {
           if (RAJA_Checker::enable_debug)
-            cout<<"the DEF OUT set of prevstmt is size 1, but not initialized name. It is "<< toString(defs[0])<<endl;
+            cout<<"in uniqueAssignOp(): the DEF OUT set of prevstmt is size 1, but the DEF node is not initialized name or assign initializer. It is "<< toString(defs[0])<<endl;
         }
       }
       else
       {
         if (RAJA_Checker::enable_debug)
         {
-          cout<<" OUT DEF of prev statement is not size 1, but "<<defs.size() <<endl;
+          cout<<"Not uniquely assigned before reaching the loop!  OUT DEF of prev statement is not size 1, but "<<defs.size() <<endl;
           for (size_t i =0; i< defs.size(); i++)
           {
             cout<<toString(defs[i])<<endl;
@@ -914,7 +919,8 @@ bool RAJA_Checker::isNodalAccumulationStmt (SgStatement* s, SgInitializedName* l
 
   // new version using def-use analysis , tighten the screw further for supported for-loops 
   if ( loopStatement) //TODO handle lambda body!!
-  { // obtain two conditions: 1. has at least one reaching def as base + offset
+  { // obtain two conditions: 
+    // Condition 1. has at least one reaching def as base + offset
     // condition 2: all reaching definitions are unique
    if( initializedOnceWithBasePlusOffset (iname, loopStatement, lhsUniqueDef))
    {
