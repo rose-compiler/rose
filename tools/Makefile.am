@@ -44,7 +44,8 @@ Checker_Test_Files += \
    withoutSharedBase.cpp \
    nodalAccPattern3.cpp \
    nodalAccPattern4.cpp \
-   definedTwice.cpp
+   definedTwice.cpp \
+   insideForLoop.cpp
 endif
 endif
 endif
