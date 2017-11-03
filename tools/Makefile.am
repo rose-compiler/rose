@@ -43,7 +43,8 @@ Checker_Test_Files += \
    declaredAsFuncParameter.cpp \
    withoutSharedBase.cpp \
    nodalAccPattern3.cpp \
-   nodalAccPattern4.cpp
+   nodalAccPattern4.cpp \
+   definedTwice.cpp
 endif
 endif
 endif
