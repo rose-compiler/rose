@@ -1,3 +1,9 @@
+template <typename loop_type>
+void for_all (loop_type)
+{
+  static_assert (true, "no match");   
+}
+
 void foo(int nslide, int min1, int max1, int* ndx, int offn, int offt1,
          int start, int len, int type, int ISLIDE, int JSLIDE,
         double * ax31, double * ay31, double* ax42, double* ay42,
