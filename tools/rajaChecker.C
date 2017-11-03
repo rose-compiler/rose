@@ -308,6 +308,27 @@ std::vector<std::string> RAJA_Checker::commandline_processing(std::vector< std::
 using namespace RAJA_Checker;
 using namespace SageInterface;
 
+
+//! We avoid calling def-use analysis for input codes with unsupported constructs
+// TODO: refine the granularity to be function level later
+bool hasUnsupportedLanguageFeatures( VariantT* unsupportedConstruct)
+{
+  std::set<VariantT> blackListDict; 
+  blackListDict.insert(V_SgLambdaExp);
+
+  // build a dictionary of language constructs shown up in the loop, then query it
+  RoseAst ast ( getProject());
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+    if (blackListDict.find( (*i)->variantT()) != blackListDict.end())
+    {
+      *unsupportedConstruct= (*i)->variantT(); 
+      return true; 
+    }
+  }
+  return false;
+}
+
+
 //! Retrieve def use info. for a node's enclosing function definition
 // Three possible cases: 
 // 1. first time calling of the analysis
@@ -324,16 +345,27 @@ DFAnalysis* RAJA_Checker::obtainDFAnalysis ()
   static int called =0; 
   // must be static to persist across calls
   static DFAnalysis* defuse = NULL; 
+  
   if (called ==0)
   {
     called = 1; 
-    defuse = new DefUseAnalysis(getProject());
-    int val = defuse->run(false); // debug is false
-    if (val == 1)  // failed analysis? reset defuse to be NULL
+    VariantT badConstruct; 
+    if (hasUnsupportedLanguageFeatures (&badConstruct))
     {
-      if (enable_debug)
-        cout<<"Warning, dfuse analysis fails..."<<endl;
-      defuse = NULL;
+     if (enable_debug)
+          cout<<"Warning, defuse analysis skipped due to unsupported construct ..."<< badConstruct <<endl;
+       return NULL; 
+    }
+    else
+    {
+      defuse = new DefUseAnalysis(getProject());
+      int val = defuse->run(false); // debug is false
+      if (val == 1)  // failed analysis? reset defuse to be NULL
+      {
+        if (enable_debug)
+          cout<<"Warning, dfuse analysis fails..."<<endl;
+        defuse = NULL;
+      }
     }
   }
   
@@ -1407,9 +1439,9 @@ main ( int argc, char* argv[])
   if (KEEP_GOING_CAUGHT_MIDEND_SIGNAL)                                                                                
   {                                                                                                                   
     std::cout                                                                                                         
-      << "[WARN] "                                                                                                    
-      << "Configured to keep going after catching a "                                                                 
-      << "signal in AutoPar"                                                                                          
+      << "[WARN] "
+      << "Configured to keep going after catching a "
+      << "signal in rajaChecker"
       << std::endl;                                                                                                   
     Rose::KeepGoing::setMidendErrorCode (project, 100);                                                               
     goto label_end;                                                                                                   
