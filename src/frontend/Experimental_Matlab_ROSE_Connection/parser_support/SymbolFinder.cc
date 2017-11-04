@@ -1,4 +1,4 @@
-#include "sage3basic.h" 
+#include "rose.h"
 #include "SymbolFinder.h"
 
 bool SymbolFinder::symbol_exists(std::string symbolName, SgScopeStatement* scope)
@@ -21,8 +21,5 @@ bool SymbolFinder::symbol_exists(std::string symbolName, SgScopeStatement* scope
 
     SgVariableSymbol *symbol = SageInterface::lookupVariableSymbolInParentScopes(symbolName, scope);
 
-    if(symbol != NULL)
-      return true;
-    else
-      return false;
+    return symbol != NULL;
   }

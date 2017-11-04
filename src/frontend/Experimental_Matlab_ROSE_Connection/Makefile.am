@@ -4,6 +4,19 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 ## files, in order to avoid collisions when non-recursive make is used.
 AUTOMAKE_OPTIONS = subdir-objects
 
+BUILT_SOURCES = \
+  parser_support/comment-list.cc \
+  parser_support/error.cc \
+  parser_support/input.cc \
+  parser_support/ourtoken.cc \
+  parser_support/base-list.h \
+  parser_support/comment-list.h \
+  parser_support/input.h \
+  parser_support/lex.h \
+  parser_support/octave.gperf.h \
+  parser_support/ourtoken.h
+
+
 #include $(srcdir)/sage_support/Makefile_variables
 
 ROSE_OPTIMIZATION_LEVEL =
@@ -15,7 +28,7 @@ AM_YFLAGS = -d -v
 # Flex flags
 AM_LFLAGS =
 
-CXXFLAGS += $(ROSE_OPTIMIZATION_LEVEL) $(ROSE_VERBOSE) -I$(srcdir)/parser_support -I$(srcdir)
+CXXFLAGS += $(ROSE_OPTIMIZATION_LEVEL) $(ROSE_VERBOSE) -I$(srcdir)/parser_support -I$(srcdir) -I. -I./parser_support
 
 lib_LTLIBRARIES = libroseMatlabFrontend.la
 
@@ -35,6 +48,23 @@ libroseMatlabFrontend_la_SOURCES = \
 
 pkginclude_HEADERS = MatlabParser.h
 
+octavebits.tar.gz:
+	wget http://iprogress.cs.uab.edu/media/2017/10/octavebits.tar.gz
+	tar zxf $@
+
+matlab_parse.yy: octavebits.tar.gz
+matlab_lex.ll: octavebits.tar.gz
+parser_support/comment-list.cc: octavebits.tar.gz
+parser_support/error.cc: octavebits.tar.gz
+parser_support/input.cc: octavebits.tar.gz
+parser_support/ourtoken.cc: octavebits.tar.gz
+parser_support/base-list.h: octavebits.tar.gz
+parser_support/comment-list.h: octavebits.tar.gz
+parser_support/input.h: octavebits.tar.gz
+parser_support/lex.h: octavebits.tar.gz
+parser_support/octave.gperf.h: octavebits.tar.gz
+parser_support/ourtoken.h: octavebits.tar.gz
+
 noinst_HEADERS = \
   parser_support/MatlabFunctionBuilder.h \
   parser_support/StatementList.h \
@@ -49,14 +79,3 @@ noinst_HEADERS = \
 
 clean-local:
 	rm -f *.la matlab_*
-
-
-
-
-
-
-
-
-
-
-

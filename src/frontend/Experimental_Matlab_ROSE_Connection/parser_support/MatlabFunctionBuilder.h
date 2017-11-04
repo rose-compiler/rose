@@ -3,19 +3,23 @@
 
 #include <string>
 
+#include "rose.h"
+
+class StatementList;
+
 class MatlabFunctionBuilder
 {
  private:
   SgFunctionParameterList* parameterList;
-  SgStatement* statementList;
+  StatementList*           statementList;
   SgScopeStatement* scope;
   std::string functionName;
   SgExprListExp* returnList;
 
  public:
-  MatlabFunctionBuilder(SgFunctionParameterList* parameterList, SgStatement* statementList, SgScopeStatement* scope);
+  MatlabFunctionBuilder(SgFunctionParameterList* parameterList, StatementList* statementList, SgScopeStatement* scope);
 
-  MatlabFunctionBuilder(SgStatement* statementList, SgScopeStatement* scope);
+  MatlabFunctionBuilder(StatementList* statementList, SgScopeStatement* scope);
 
   void set_function_name(std::string name);
 

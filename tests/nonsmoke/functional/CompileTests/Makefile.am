@@ -155,10 +155,6 @@ if ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
    SUBDIRS += Python_tests
 endif
 
-# if ROSE_BUILD_MATLAB_LANGUAGE_SUPPORT
-#    SUBDIRS += Matlab_tests
-# endif
-
 # DQ (1/15/2017): Added conditional support to avoid these tests when ROSE is configured for binary only support, failing in ROSE matrix testing).
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 SUBDIRS += CudaTests
@@ -195,6 +191,11 @@ endif
 # DQ (8/23/2017): Adding support for testing experimental Cobol support.
 if ROSE_EXPERIMENTAL_COBOL_ROSE_CONNECTION
 SUBDIRS += experimental_cobol_tests
+endif
+
+# Rasmussen (11/4/2017): Adding support for testing experimental Matlab support.
+if ROSE_EXPERIMENTAL_MATLAB_ROSE_CONNECTION
+SUBDIRS += experimental_matlab_tests
 endif
 
 if ROSE_USE_GNAT
