@@ -126,7 +126,7 @@ rose-installer-rmc2: install-rose-library
 		--os="$(RMC_OS_NAME)"							\
 		--prjnam=ROSE								\
 		--prjver=$(PACKAGE_VERSION)						\
-		--postinstall-sh=$(top_srcdir)/scripts/mkinstaller-postinstall.sh	\
+		--postinstall-perl=$(top_srcdir)/scripts/rose-post-install		\
 		$(prefix)/*								\
 		$(addsuffix /*, $(filter-out / /usr /usr/local,				\
 		    $(BOOST_ROOT)							\
