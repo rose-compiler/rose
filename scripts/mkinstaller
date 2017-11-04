@@ -1,5 +1,5 @@
-#!/opt/local/bin/perl5.24
-$Interpreter ||= "/opt/local/bin/perl5.24";
+#!/usr/bin/perl
+$Interpreter ||= "/usr/bin/perl";
 #-------------------------------------------------------------------------------
 #
 #   Copyright 1985-99,2000-17 James Frederick Reus
@@ -22,11 +22,11 @@ $Interpreter ||= "/opt/local/bin/perl5.24";
 
 $mkinstaller_ver_major = "1";
 $mkinstaller_ver_minor = "0";
-$mkinstaller_ver_build = "2";
+$mkinstaller_ver_build = "3";
 $mkinstaller_ver_patch = "";
-$mkinstaller_ver_name  = "1.0.2";
-$mkinstaller_ver_time  = "26Oct2017 13:14:58z";
-$mkinstaller_ver_id    = "@(#)mkinstaller 1.0.2 - 26Oct2017 13:14:58z";
+$mkinstaller_ver_name  = "1.0.3";
+$mkinstaller_ver_time  = " 3Nov2017 18:27:59z";
+$mkinstaller_ver_id    = "@(#)mkinstaller 1.0.3 -  3Nov2017 18:27:59z";
 
 @defaultCopyrightOwners
   = ( "Copyright 1985-99,2000-17 James Frederick Reus\n"
@@ -51,6 +51,7 @@ $rawCommand   = $0;
 $theCommand   = $rawCommand;
 $theCommand   =~ tr/\\/\//;
 $foundInDir   = "";
+$Tstart       = time();
 
 $debugging    = 0;
 if ( exists $ENV{"DEBUG_mkinstaller"}) {
@@ -3605,7 +3606,19 @@ EOF29
    #
    #----------------------------------------------------------------------------
 
-   print STDERR "mkinstaller: all done\n" if (1 <= $verbosityLevel);
+   my $Tend = time();
+   my $dT   = $Tend - $Tstart;
+   print STDERR "mkinstaller: all done" if (1 <= $verbosityLevel);
+   if (0 < $dT) {
+      print STDERR " in $dT" if (1 <= $verbosityLevel);
+      if ($dT == 1) {
+         print STDERR " second" if (1 <= $verbosityLevel);
+      }
+      else {
+         print STDERR " seconds" if (1 <= $verbosityLevel);
+      }
+   }
+   print STDERR "\n" if (1 <= $verbosityLevel);
    exit 0;
 
 ##============================================================================##
@@ -3628,22 +3641,26 @@ EOF29
       my $verbosityLevel = shift;
       my $debugging      = shift;
 
+      print "mkinstaller.cleanupTemps[ myTmpDirT=\"$myTmpDirT\", keep=$keep, verbosityLevel=$verbosityLevel...\n" if $debugging;
       if ( ! $keep) {
-         print "mkinstaller:    not keeping\n" if $debugging;
+         print "mkinstaller.cleanupTemps: ...not keeping\n" if $debugging;
          print STDERR "mkinstaller: ...cleanup\n" if (1 <= $verbosityLevel);
-         if ( -d "$TmpDirT") {
-            print "mkinstaller:    ...have \"$TmpDirT\" directory\n" if $debugging;
-            if ( ! deleteDirectoryOrFile($TmpDirT)) {
-               print STDERR "mkinstaller: can't delete \"$TmpDirT\"\n";
+         if ( -d "$myTmpDirT") {
+            print "mkinstaller.cleanupTemps:    have \"$myTmpDirT\" directory\n" if $debugging;
+            if ( ! deleteDirectoryOrFile($myTmpDirT,"mkinstaller",$debugging)) {
+               print STDERR "mkinstaller: can't delete \"$myTmpDirT\"\n";
                exit 1;
             }
+         }
+         else {
+            print "mkinstaller.cleanupTemps:    don't have \"$myTmpDirT\" directory\n" if $debugging;
          }
          print STDERR "mkinstaller:    done\n" if (2 <= $verbosityLevel);
       }
       else {
-         print "mkinstaller:    keeping \"$TmpDirT\"\n" if $debugging;
+         print "mkinstaller:    keeping \"$myTmpDirT\"\n" if $debugging;
       }
-
+      print "mkinstaller.cleanupTemps] ...done\n" if $debugging;
    }
 
    #----------------------------------------------------------------------------
@@ -3702,7 +3719,7 @@ sub absname {
    return $result;
 }
 
-# MyUniqueFileId: 4252a0d4-028d-4514-e81a-57cc1210072b
+# MyUniqueFileId: c16cf2c9-02f4-48a7-bf6f-6d74697af801
 #-------------------------------------------------------------------------------
 #
 #  Basename from pathname.
