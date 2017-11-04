@@ -147,6 +147,22 @@ echo "Testing value of FC = $FC"
       echo "default back-end cobol compiler for generated translators to use: $BACKEND_COBOL_COMPILER"
     ])
 
+# Rasmussen (10/30/2017): Added option to specify backend MATLAB compiler
+  AC_ARG_WITH(alternate_backend_matlab_compiler,
+    [  --with-alternate_backend_matlab_compiler=<compiler name>
+                                Specify an alternative MATLAB back-end compiler],
+    [
+    # Use a different compiler for the backend than for the compilation of ROSE source code
+      BACKEND_MATLAB_COMPILER=$with_alternate_backend_matlab_compiler
+      AC_SUBST(BACKEND_MATLAB_COMPILER)
+      echo "alternative back-end MATLAB compiler specified for generated translators to use: $BACKEND_MATLAB_COMPILER"
+    ] ,
+    [
+    # Alternatively use the specified GNU MATLAB compiler
+	   BACKEND_MATLAB_COMPILER="octave"
+      echo "default back-end MATLAB compiler for generated translators to use: $BACKEND_MATLAB_COMPILER"
+    ])
+
 # DQ (8/29/2005): Added support for version numbering of backend compiler
 # BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f1`
 # BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f2`

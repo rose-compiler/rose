@@ -415,6 +415,24 @@ if test "x$enable_debug_output_for_experimental_cobol_frontend" = "xyes"; then
   AC_DEFINE([ROSE_DEBUG_EXPERIMENTAL_COBOL_ROSE_CONNECTION], [], [Controls large volumes of output spew useful for debugging new COBOL/ROSE connection code])
 fi
 
+# Rasmussen (10/30/2017): Added support for new MATLAB front-end development.
+AC_ARG_ENABLE([experimental_matlab_frontend],
+    AS_HELP_STRING([--enable-experimental_matlab_frontend], [Enable experimental MATLAB frontend development (default=no)]))
+AM_CONDITIONAL(ROSE_EXPERIMENTAL_MATLAB_ROSE_CONNECTION, [test "x$enable_experimental_matlab_frontend" = xyes])
+if test "x$enable_experimental_matlab_frontend" = "xyes"; then
+  AC_MSG_WARN([Using this mode enables experimental MATLAB front-end (internal development only)!])
+  AC_DEFINE([ROSE_EXPERIMENTAL_MATLAB_ROSE_CONNECTION], [], [Enables development of experimental MATLAB frontend])
+fi
+
+# Rasmussen (10/30/2017): Added support for debugging new MATLAB front-end development.
+AC_ARG_ENABLE(debug_output_for_experimental_matlab_frontend,
+    AS_HELP_STRING([--enable-debug_output_for_experimental_matlab_frontend], [Enable debugging output (spew) of new MATLAB/ROSE connection]))
+AM_CONDITIONAL(ROSE_DEBUG_EXPERIMENTAL_MATLAB_ROSE_CONNECTION, [test "x$enable_debug_output_for_experimental_matlab_frontend" = xyes])
+if test "x$enable_debug_output_for_experimental_matlab_frontend" = "xyes"; then
+  AC_MSG_WARN([Using this mode causes large volumes of output spew (internal debugging only)!])
+  AC_DEFINE([ROSE_DEBUG_EXPERIMENTAL_MATLAB_ROSE_CONNECTION], [], [Controls large volumes of output spew useful for debugging new MATLAB/ROSE connection code])
+fi
+
 # DQ (8/18/2009): Removed this conditional macro.
 # DQ (4/23/2009): Added support for commandline specification of using new graph IR nodes.
 # AC_ARG_ENABLE(newGraphNodes, AS_HELP_STRING([--enable-newGraphNodes], [Enable new (experimental) graph IR nodes]))
@@ -2275,6 +2293,7 @@ src/frontend/Experimental_Csharp_ROSE_Connection/Makefile
 src/frontend/Experimental_Ada_ROSE_Connection/Makefile
 src/frontend/Experimental_Jovial_ROSE_Connection/Makefile
 src/frontend/Experimental_Cobol_ROSE_Connection/Makefile
+src/frontend/Experimental_Matlab_ROSE_Connection/Makefile
 src/frontend/Makefile
 src/frontend/OpenFortranParser_SAGE_Connection/Makefile
 src/frontend/PHPFrontend/Makefile
@@ -2426,6 +2445,7 @@ tests/nonsmoke/functional/CompileTests/experimental_csharp_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_ada_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_jovial_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_cobol_tests/Makefile
+tests/nonsmoke/functional/CompileTests/experimental_matlab_tests/Makefile
 tests/nonsmoke/functional/CompileTests/Makefile
 tests/nonsmoke/functional/CompileTests/MicrosoftWindows_C_tests/Makefile
 tests/nonsmoke/functional/CompileTests/MicrosoftWindows_Cxx_tests/Makefile
