@@ -7,6 +7,8 @@
 #include <z3++.h>
 #endif
 
+#include <boost/serialization/access.hpp>
+
 namespace Rose {
 namespace BinaryAnalysis {
 
@@ -24,6 +26,18 @@ private:
     CommonSubexpressions ctxCses_; // common subexpressions
     typedef Sawyer::Container::Map<SymbolicExpr::LeafPtr, z3::func_decl> VariableDeclarations;
     VariableDeclarations ctxVarDecls_;
+#endif
+
+private:
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned version) {
+        // ctx_         -- not serialized
+        // ctxCses_     -- not serialized
+        // ctxVarDecls_ -- not serialized
+    }
 #endif
 
 public:
@@ -81,7 +95,7 @@ private:
 #ifdef ROSE_HAVE_Z3
     VariableDeclarations ctxVariableDeclarations(const VariableSet&);
     CommonSubexpressions ctxCommonSubexpressions(const std::vector<SymbolicExpr::Ptr>&);
-    z3::expr ctxExpression(const SymbolicExpr::Ptr&);
+    z3::expr ctxExpression(const SymbolicExpr::Ptr&, Type need);
     z3::expr ctxArithmeticShiftRight(const SymbolicExpr::InteriorPtr&);
     z3::expr ctxExtract(const SymbolicExpr::InteriorPtr&);
     z3::expr ctxRead(const SymbolicExpr::InteriorPtr&);

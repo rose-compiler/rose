@@ -76,7 +76,7 @@ main(int argc, char *argv[]) {
     }
 
     if (!solver) {
-        mlog[WARN] <<"test skip due to lack of SMT solvers\n";
+        mlog[WARN] <<"test skipped due to lack of SMT solvers\n";
         exit(0);
     }
     

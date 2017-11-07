@@ -34,6 +34,7 @@
 
 // Derived classes needed for serialization
 #include <BinaryYicesSolver.h>
+#include <BinaryZ3Solver.h>
 #include <DispatcherM68k.h>
 #include <DispatcherX86.h>
 
@@ -359,6 +360,7 @@ private:
         s.template register_type<SymbolicExpr::Interior>();
         s.template register_type<SymbolicExpr::Leaf>();
         s.template register_type<YicesSolver>();
+        s.template register_type<Z3Solver>();
         s.template register_type<Semantics::SValue>();
         s.template register_type<Semantics::MemoryListState>();
         s.template register_type<Semantics::MemoryMapState>();

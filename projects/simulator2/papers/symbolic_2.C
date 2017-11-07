@@ -64,9 +64,7 @@ public:
             // An SMT solver is necessary for this example to work correctly. ROSE should have been configured with
             // "--with-yices=/full/path/to/yices/installation".  If not, you'll get a failed assertion when ROSE tries to use
             // the solver.
-            Rose::BinaryAnalysis::YicesSolver smt_solver;
-            smt_solver.set_linkage(Rose::BinaryAnalysis::YicesSolver::LM_EXECUTABLE);
-            //smt_solver.set_debug(stdout);
+            Rose::BinaryAnalysis::YicesSolver smt_solver(Rose::BinaryAnalysis::YicesSolver::LM_EXECUTABLE);
 
             // We deactive the simulator while we're doing this analysis.  If the simulator remains activated, then the SIGCHLD
             // that are generated from running the Yices executable will be sent to the specimen.  That probably wouldn't cause
