@@ -1145,6 +1145,9 @@ bool SgNodeHelper::isLoopStmt(SgNode* node) {
  */
 bool SgNodeHelper::isCond(SgNode* node) {
   SgNode* parent=node->get_parent();
+  if(isSgExprStatement(parent)) {
+    parent=parent->get_parent();
+  }
   if(isCondStmtOrExpr(parent))
     return SgNodeHelper::getCond(parent)==node && node!=0;
   else
