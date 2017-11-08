@@ -241,6 +241,14 @@ int main(int argc, char* argv[]) {
     exit(0);
   }
 
+  if(args.getBool("normalize2")) {
+    logger[TRACE] <<"STATUS: Normalization started."<<endl;
+    SPRAY::Normalization::normalizeAst(root);
+    logger[TRACE] <<"STATUS: Normalization finished."<<endl;
+    root->unparse(0,0);
+    exit(0);
+  }
+
   VariableIdMapping variableIdMapping;
   variableIdMapping.computeVariableSymbolMapping(root);
 
@@ -286,12 +294,6 @@ int main(int argc, char* argv[]) {
     RewriteSystem rewriteSystem;
     rewriteSystem.resetStatistics();
     rewriteSystem.rewriteCompoundAssignmentsInAst(root,&variableIdMapping);
-    logger[TRACE] <<"STATUS: Normalization finished."<<endl;
-  }
-
-  if(args.getBool("normalize2")) {
-    logger[TRACE] <<"STATUS: Normalization started."<<endl;
-    SPRAY::Normalization::normalizeAst(root);
     logger[TRACE] <<"STATUS: Normalization finished."<<endl;
   }
 
