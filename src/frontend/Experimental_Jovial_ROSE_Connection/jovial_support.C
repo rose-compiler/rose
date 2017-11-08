@@ -1,24 +1,25 @@
 // C++ code calling an Jovial frontend function.
 
-#include <rose_paths.h>
+#include "rose_config.h"
 
-#include "rose.h"
+#include "sage3basic.h"
 
 #include <assert.h>
+#include <iostream>
+#include <string>
 
 #include "jovial_support.h"
+#include "ATtoUntypedJovialTraversal.h"
 
-using namespace std;
-
-#ifdef BUILD_EXECUTABLE
-int main(int argc, char** argv)
-#else
-int jovial_main(int argc, char** argv)
-#endif
+int jovial_main(int argc, char** argv, SgSourceFile* sg_source_file)
    {
-     int status = 0;
+     int i;
+     int status = 1;
+     std::string parse_table;
 
-     printf ("Call to Jovial frontend not implemented! \n");
+     printf ("\n WARNING: Call to Jovial frontend not yet fully implemented! \n\n");
+
+     assert(sg_source_file != NULL);
 
   // Rasmussen (9/28/2017): A start at implementing (see fortran_support.C).
   // Need to:
@@ -28,36 +29,145 @@ int jovial_main(int argc, char** argv)
   //   4. Traverse filename.jov.aterm creating Sage untyped nodes
   //   5. Traverse the Sage untyped nodes to complete the Sage IR
 
-  // DQ (9/29/2017): Added ifdef to ignore this when ROSE is not configured to use STRATEGO.
-#ifdef USE_ROSE_STRATEGO_SUPPORT
-     string stratego_bin_path = STRATEGO_BIN_PATH;
-     ROSE_ASSERT(stratego_bin_path.empty() == false);
+  // TODO
+  // std::string stratego_bin_path = STRATEGO_BIN_PATH;
+     std::string stratego_bin_path = "/nfs/casc/overture/ROSE/opt/rhel7/x86_64/stratego/strategoxt-0.17.1/bin";
+     assert (stratego_bin_path.empty() == false);
 
-     string commandString = stratego_bin_path + "/sglri ";
+  // TODO - could be from ROSE build tree
+  // std::string jovial_bin_path = JOVIAL_BIN_PATH;
+     std::string jovial_bin_path = "/nfs/casc/overture/ROSE/opt/rhel7/x86_64/stratego/jovial-sdf-0.5/bin";
+     assert (jovial_bin_path.empty() == false);
+
+     std::string commandString = stratego_bin_path + "/sglri";
+     std::cout << "COMMAND: " << commandString << "\n";
+
+  // DQ (9/29/2017): Added ifdef to ignore this when ROSE is not configured to use STRATEGO.
+  // #ifdef USE_ROSE_STRATEGO_SUPPORT
 
   // Step 1
-  // Parse each filename (args not associated with "--parseTable", "--" or "-I")
+  // ------
 
+  // Filename can be obtained from the source-file object
+     std::string filenameWithPath = sg_source_file->getFileName();
+     std::string filenameWithoutPath = Rose::StringUtility::stripPathFromFileName(filenameWithPath);
+
+  // Parse each filename (args not associated with "--parseTable", "--" or "-I")
+     for (i = 1; i < argc; i++)
+        {
+          std::cout << "ARG " << i << " is " << argv[i] << "\n";
+          if (strncmp(argv[i], "--parseTable", 12) == 0)
+             {
+            // TODO
+            // commandString += " -p ";
+            // commandString += argv[i+1];
+            // commandString += " ";
+
+               parse_table = std::string(argv[i+1]);
+               std::cout << "FOUND --parseTable argument: " + parse_table;
+               i += 1;
+             }
+          else
+             {
+            // This skips over commands line arguments that begin with "--" (this does not appears to be meaningful).
+               if (strncmp(argv[i], "--", 2) == 0) 
+                  {
+                 // skip args that are not files
+                    i += 1;
+                    continue;
+                  }
+               else
+                  {
+                 // This only skips over the options that begin with "-I" but not "-I <path>" (where the "-I" and the path are seperated by a space).
+                    if (strncmp(argv[i], "-I", 2) == 0)
+                       {
+                      // Skip the include dir stuff; it's handled by the lexer.
+                      // TODO - not currently true, so skip arg for now? 
+                         i += 1;
+                         continue;
+                       }
+                    else
+                       {
+                      // All other options are ignored.
+                       }
+                  }
+             }
+        }
+
+  // Finished processing command line arguments, make sure there is a parse table
+     if (parse_table.empty() == true)
+        {
+          fprintf(stderr, "fortran_parser: no parse table provided, use option --parseTable\n");
+       // TODO
+       // return status;
+        }
 
   // Step 2
-     err = system(commandString.c_str());
+  // ------
+
+  // Add path to the parse table
+     commandString += " -p " + jovial_bin_path + "/Jovial.tbl";
+     std::cout << "COMMAND: " << commandString << "\n";
+
+  // Add source code location information to output
+     commandString += " --preserve-locations";
+     std::cout << "COMMAND: " << commandString << "\n";
+
+     commandString += " -i " + filenameWithPath;
+     std::cout << "COMMAND: " << commandString << "\n";
+
+  // Output the transformed aterm file
+     commandString += " -o " + filenameWithoutPath + ".aterm";
+     std::cout << "COMMAND: " << commandString << "\n";
+
+  // Make system call to run parser and output ATerm parse-tree file
+     status = system(commandString.c_str());
+     std::cout << "COMMAND status = " << status << "\n";
 
   // Step 3
-     ATerm program_term = ATreadFromTextFile(file);
-     fclose(file);
+  // ------
 
-  // Step 4
-     if (ofp_traversal->traverse_Program(program_term) != ATtrue)
+  // Initialize the ATerm library
+     ATinitialize(argc, argv);
+
+     filenameWithoutPath += ".aterm";
+
+     std::cout << "OPENING ATerm parse-tree file " << filenameWithoutPath << "\n";
+
+  // Read the ATerm file that was created by the parser
+     FILE * file = fopen(filenameWithoutPath.c_str(), "r");
+     if (file == NULL)
         {
-           status = 1;
+           fprintf(stderr, "\nFAILED: in jovial_main(), unable to open file %s\n\n", filenameWithoutPath.c_str());
            return status;
         }
+
+     ATerm module_term = ATreadFromTextFile(file);
+     fclose(file);
+
+     std::cout << "SUCCESSFULLY read ATerm parse-tree file " << "\n";
+
+  // Step 4
+  // ------
+
+     ATermSupport::ATtoUntypedJovialTraversal* aterm_traversal = NULL;
+
+     aterm_traversal = new ATermSupport::ATtoUntypedJovialTraversal(sg_source_file);
+
+     if (aterm_traversal->traverse_Module(module_term) != ATtrue)
+        {
+           return status;
+        }
+
+     std::cout << "\nSUCCESSFULLY traversed Jovial parse-tree" << "\n\n";
 
 //----------------------------------------------------------------------
 //  Traverse the SgUntypedFile object and convert to regular sage nodes
 //----------------------------------------------------------------------
 
+#if 0
   // Step 5
+  // ------
 
   // Build the traversal object
      Jovial::Untyped::UntypedTraversal sg_traversal(globalFilePointer);

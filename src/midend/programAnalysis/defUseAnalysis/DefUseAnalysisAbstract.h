@@ -17,7 +17,7 @@
 #include "DefUseAnalysis.h"
 #include "dfaToDot.h"
 #include <string>
-
+// The abstract interface for Data Flow analysis
 class DefUseAnalysisAbstract : public Support {
  protected:
   // debugging -------------------------
@@ -27,32 +27,33 @@ class DefUseAnalysisAbstract : public Support {
   // reference to DFA ------------------
   DefUseAnalysis* dfa;
 
-  //  typedef std::multimap < SgInitializedName* , SgNode* > multitype;
+  // at any point in CFG, the variable in question and a relevant node impacting it: def vs. use for example
+  // a single CFG location may have info. about multiple variables. So it is a vector of pairs. 
   typedef std::vector < std::pair < SgInitializedName* , SgNode* > > multitype;
-  typedef std::map< SgNode* , multitype > tabletype;
+  typedef std::map< SgNode* , multitype > tabletype;   // store all nodes' analysis results
   typedef FilteredCFGEdge < IsDFAFilter > filteredCFGEdgeType;
   typedef FilteredCFGNode < IsDFAFilter > filteredCFGNodeType;
 
   std::set <SgNode*> doNotVisitMap;
   std::map <SgNode*, bool> nodeChangedMap;
 
-  // searching -------------------------
+  // search the vector see if there is an entry about initName 
   bool searchMulti(const multitype* multi, SgInitializedName* initName);
-  //  bool searchMulti(const multitype* multi, SgInitializedName* initName, SgNode* node);
+  //  search the vector for a cfgNode
   bool searchVector(std::vector <filteredCFGNodeType> done, 
                     filteredCFGNodeType cfgNode);
-
+  // obtain SgInitializedName from an input expression, such as array ref or pointer dereference
   SgInitializedName* getInitName(SgNode* l_expr);  
 
   SgExpression* resolveCast(SgExpression* expr);
   bool isDoubleExactEntry(const multitype* multi, 
                           SgInitializedName* name, SgNode* sgNode);
-
-  bool checkElementsForEquality(const multitype* t1, const multitype* t2);
+  // check two sets, if any changes, return true 
+  bool checkElementsForChange(const multitype* t1, const multitype* t2);
 
   /**********************************************************
    *  For a CFG Node, follow the two incoming edges and get 
-   *  the other node (than theNodeBefore)
+   *  the other node (than theNodeBefore) ??? Why only two edges?
    *********************************************************/
   template <typename T>
     SgNode* getOtherInNode(T cfgNode, SgNode* oneNode){
@@ -71,7 +72,7 @@ class DefUseAnalysisAbstract : public Support {
   }
 
   /**********************************************************
-   *  get the incoming node of a cfg edge
+   *  get the incoming node of a cfg edge: only get the last one?
    *********************************************************/
   template <typename T>
     SgNode* getCFGPredNode(T cfgNode){
@@ -93,7 +94,7 @@ class DefUseAnalysisAbstract : public Support {
     std::cout << "\n!! Worklist : " ;
     for (typename std::vector<T >::iterator i = worklist.begin(); i != worklist.end(); ++i, pos++) {  
       T node = *i;
-      std::cout << " - " << node.toStringForDebugging();
+      std::cout << "\t\n - " << node.toStringForDebugging();
     }
     std::cout << std::endl;
   }

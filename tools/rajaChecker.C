@@ -56,6 +56,9 @@ namespace RAJA_Checker
   //! Check if a block of statement has the nodal accumulation pattern, with a known loop index variable 
   bool isNodalAccumulationBody(SgBasicBlock* bb, SgInitializedName* lvar, SgExprStatement*& fstmt);
 
+  //! Check if a statement is an accumulation statement , lhsInitPatternMatch is set to true if the lhs is declared/initialized using a form of base+offset
+  bool isNodalAccumulationStmt (SgStatement* s, SgInitializedName* lvar, bool * lhsInitPatternMatch); 
+
   //!  if there is a form like: int varRef1 = indexSet[loopIndex]; 
   bool connectedViaIndexSet (SgVarRefExp* varRef1, SgInitializedName* loopIndex);
 
@@ -363,7 +366,7 @@ bool RAJA_Checker::connectedViaIndexSet (SgVarRefExp* varRef1, SgInitializedName
 }
 
 // Check if an operand is a form of x[index], x is a pointer to a double, index is a loop index
-bool isDoubleArrayAccess (SgExpression* exp, SgInitializedName * lvar)
+bool isDoubleArrayAccess (SgExpression* exp, SgInitializedName * lvar, SgVarRefExp** varRefOut)
 {
   ROSE_ASSERT (lvar != NULL);
   if (exp == NULL) 
@@ -385,6 +388,40 @@ bool isDoubleArrayAccess (SgExpression* exp, SgInitializedName * lvar)
     if (RAJA_Checker::enable_debug) cout<<"\t\t\t lhs of a[i] is NULL " <<endl;
     return false;
   }
+  // The lhs should be a form of simple double pointer used as array, not complex data member like obj->array[i]. 
+  SgVarRefExp* ref = isSgVarRefExp(lhs);
+ if (!ref)
+  {
+    bool isThis = false; 
+    SgArrowExp * arrow = isSgArrowExp (lhs);
+    if (arrow)
+    {
+      SgThisExp * thisexp = isSgThisExp(arrow->get_lhs_operand());
+      if (thisexp)
+        isThis = true; 
+    }
+
+    // we allow this->data[i], but not a->data[i] as lhs
+    if (!isThis)
+    {
+      if (RAJA_Checker::enable_debug) cout<<"\t\t\t array var is not a simple variable reference type, but " << lhs->class_name() <<endl;
+      return false;
+    }
+    else
+    {
+      // store rhs of this->rhs as the varRefOut
+      // would it always be SgVarRefExp ?
+      *varRefOut = isSgVarRefExp(arrow->get_rhs_operand());
+    }
+  }
+  else
+  {
+    // store ref if not NULL
+    *varRefOut = ref; 
+  }
+ 
+  ROSE_ASSERT (*varRefOut != NULL);
+
   rhs = arr->get_rhs_operand();
   if (rhs == NULL) 
   {
@@ -446,14 +483,115 @@ bool isNodalAccumulationOp (SgExpression* op)
   return false;
 }
 
+// For a variable declaration without initialization, find its followed unique assignment
+// within the same scope right after the declaration, if there is a unique assignment 
+// with a format like: var = base +offset; 
+bool findUniqueNextAssignment (SgVariableDeclaration* decl)
+{
+  ROSE_ASSERT (decl);
 
-/*
+  int counter = 0; 
+  SgStatement* current = decl;
+  SgExpression* lhs=NULL, *rhs=NULL; 
+  while ((current = getNextStatement(current)))
+  {
+    if (RAJA_Checker::enable_debug)
+      cout <<"\t\t\t\t\t checking next stmt at line "<< current->get_file_info()->get_line() <<endl;
+    if (isAssignmentStatement (current, &lhs, &rhs))
+    {
+      if (SgVarRefExp* var = isSgVarRefExp (lhs))
+      {
+        // match left hand side
+        if (var->get_symbol() == getFirstVarSym(decl))
+        {
+          SgAddOp * addop = isSgAddOp(rhs); 
+          if (addop)
+            counter ++; 
+          else
+          {
+            if (RAJA_Checker::enable_debug)
+              cout <<"\t\t\t\t\t rhs is not an add op, but "<< rhs->class_name()<< endl;
+          }
+        }
+        else
+        {
+          if (RAJA_Checker::enable_debug)
+            cout <<"\t\t\t\t\t lhs symbol does not match decl's symbol"<< endl;
+        }
+      }
+      else
+      {
+        if (RAJA_Checker::enable_debug)
+          cout <<"\t\t\t\t\t lhs is not VarRefExp, but "<< lhs->class_name() <<endl;
+      }
+    } // end if assignment
+    else
+    {
+      if (RAJA_Checker::enable_debug)
+        cout <<"\t\t\t\t\t Not an assignment stmt"<< current->get_file_info()->get_line() <<endl;
+    }
+  } // end while
+
+  return (counter == 1); 
+}
+
+// Check if a variable is declared within a declaration with a form of 
+// 1. double var = base + offset;  Or
+// 2. double var; ...; var = base + offset;  
+// TODO: all variables should be consistent about the choice of two ???
+bool initializedWithBasePlusOffset (SgInitializedName* iname)
+{
+  ROSE_ASSERT (iname != NULL);
+  if (RAJA_Checker::enable_debug)
+    cout<<"\t\t\t Checking if initName is previously initialized with base+offset: "<< iname->get_name() <<endl;
+  
+//  SgVariableSymbol* sym = isSgVariableSymbol(iname->get_symbol_from_symbol_table()); 
+//  ROSE_ASSERT (sym != NULL);
+  SgVariableDeclaration* decl = isSgVariableDeclaration(iname->get_declaration()); 
+
+  if (decl==NULL) 
+  {
+    if (RAJA_Checker::enable_debug)
+      cout<<"\t\t left side iname variable's declaration is not a SgVariableDeclaration, but a "<< iname->get_declaration()->class_name()<<endl;
+    return false;
+  }
+
+  // form 1: initialized as part of declaration
+  bool form1=false, form2=false;
+  SgAssignInitializer * assign_init = isSgAssignInitializer (iname->get_initptr());
+  if (assign_init)
+  {
+    SgAddOp * addop = isSgAddOp(assign_init->get_operand_i());
+    if (addop)
+      form1 = true; 
+  }
+  else // the variable is initialized later, search and find it! TODO
+  {
+    if (findUniqueNextAssignment (decl))
+      form2 = true; 
+    else
+    {
+      if (RAJA_Checker::enable_debug)
+        cout <<"No unique next assignment stmt of a format of: var = base + offset;"<<endl;
+    } 
+  }
+
+  return (form1 || form2); 
+}
+
+/* lvar is the enclosing loop's loop index variable. 
  * xa4[i] += ax; within a for-loop, i is loop index
  *  lhs: array element access using loop index  xm[loop_index], xm is a pointer to a double type
  *  accum-op:  +=, -=, *=, /=, MIN (), MAX, ..
  *
+ *  More conditions for the variable on the left side
+ *   1. Must declared within the enclosing function body, not as function parameter
+ *   2. must be assigned between the declaration and the entry of the enclosing loop body
+ *   3. the assignment must have a form of base + offset for the rhs // at least one of the statement!!
+ *   4. must be declared/initialized in a straight line code block. 
+ *
  * */
-bool isNodalAccumulationStmt (SgStatement* s, SgInitializedName* lvar)
+bool RAJA_Checker::isNodalAccumulationStmt (SgStatement* s, SgInitializedName* lvar, bool * lhsInitPatternMatch)
 {
   if (RAJA_Checker::enable_debug)  // ofile is used for diffing,   cout is for checking traces
     cout<<"\t checking isNodalAccumulationStmt for stmt at line:"<<s->get_file_info()->get_line()<<endl;
@@ -487,12 +625,47 @@ bool isNodalAccumulationStmt (SgStatement* s, SgInitializedName* lvar)
   ROSE_ASSERT (bop != NULL);
 
   // lhs is x[i]
-  if (!isDoubleArrayAccess(bop->get_lhs_operand(), lvar))
+  SgVarRefExp* varRef=NULL; 
+  if (!isDoubleArrayAccess(bop->get_lhs_operand(), lvar, &varRef))
   {
     if (RAJA_Checker::enable_debug)
      cout<<"\t\t not DoubleArrayAccess like array[index] for lhs"<<endl;
     return false;
   }
+
+  // check lhs should be declared within the enclosing function's body
+  //
+  ROSE_ASSERT (varRef!=NULL); 
+  SgVariableSymbol* sym= varRef->get_symbol();
+  ROSE_ASSERT (sym !=NULL); 
+  SgInitializedName* iname= sym->get_declaration();
+  ROSE_ASSERT (iname!=NULL); 
+  if (isSgFunctionParameterList(iname->get_parent()))
+  {
+    if (RAJA_Checker::enable_debug)
+     cout<<"\t\t array variable is a function parameter for lhs"<<endl;
+    return false;
+  }
+
+  // lhs should be initialized in advance using a form of  lhs = base+offset; 
+
+  // for variables captured within a labmda expression,a new variable is created.
+  // We have to find the original variable SgInitializedName. 
+  SgLambdaExp* le = NULL; 
+  le = getEnclosingNode<SgLambdaExp> (s);
+
+  if (le)
+  {
+    SgStatement* call_stmt = getEnclosingStatement (le);
+    SgVariableSymbol* orig_sym =  lookupVariableSymbolInParentScopes (iname->get_name(), call_stmt->get_scope());
+    ROSE_ASSERT (orig_sym);
+    iname = orig_sym->get_declaration();
+  }
+
+  if (initializedWithBasePlusOffset (iname) )
+    *lhsInitPatternMatch = true;
+  else
+    *lhsInitPatternMatch = false;
 
   // rhs is a scalar type
   SgType* rhs_type = bop->get_rhs_operand()->get_type();
@@ -558,21 +731,36 @@ bool RAJA_Checker::isNodalAccumulationBody(SgBasicBlock* bb, SgInitializedName* 
   Rose_STL_Container<SgNode*> stmtList = NodeQuery::querySubTree(bb, V_SgExprStatement);
   for (Rose_STL_Container<SgNode*>::iterator iter = stmtList.begin(); iter != stmtList.end(); iter++)
   {
+    bool init1=false, init2=false, init3=false, init4=false;
     SgExprStatement* s = isSgExprStatement(*iter);
-    if (isNodalAccumulationStmt (s, lvar))
+    if (isNodalAccumulationStmt (s, lvar, &init1))
     {
       SgStatement* s2, *s3, *s4; 
       s2= getNextNonNullStatement(s);
-      if (s2!=NULL && isNodalAccumulationStmt (s2, lvar))
+      if (enable_debug && !init1)
+        cout<<"\t\t stmt at line@ "<<s->get_file_info()->get_line()<<" does not have lhs previously initialized with base + offset "<<endl;
+      if (s2!=NULL && isNodalAccumulationStmt (s2, lvar, &init2))
       {
+        if (enable_debug && !init2)
+          cout<<"\t\t stmt at line@ "<<s2->get_file_info()->get_line()<<" does not have lhs previously initialized with base + offset "<<endl;
         s3 = getNextNonNullStatement (s2);
-        if (s3!=NULL && isNodalAccumulationStmt (s3, lvar))
+        if (s3!=NULL && isNodalAccumulationStmt (s3, lvar, &init3))
         {
+          if (enable_debug && !init3)
+            cout<<"\t\t stmt at line@ "<<s3->get_file_info()->get_line()<<" does not have lhs previously initialized with base + offset "<<endl;
            s4 = getNextNonNullStatement (s3);
-           if (s4 != NULL && isNodalAccumulationStmt (s4, lvar))
+           if (s4 != NULL && isNodalAccumulationStmt (s4, lvar, &init4))
            { 
+              if (enable_debug && !init4)
+                 cout<<"\t\t stmt at line@ "<<s4->get_file_info()->get_line()<<" does not have lhs previously initialized with base + offset "<<endl;
              fstmt = s; 
-             return true;
+             if (init1 || init2 || init3 ||init4)
+               return true;
+             else
+             {
+               if (enable_debug)
+                 cout<<"\t\t none of the accumulation statements have lhs initialized with base + offset "<<endl;
+             }
            } // end s4
         } //end s3
       } // end s2
@@ -815,6 +1003,22 @@ void RoseVisitor::visit ( SgNode* n)
 
           }
         }
+        else // we also report negative findings for loops, to calculate true/false negatives
+        {
+          ostringstream oss;
+          oss<<"Not a nodal accumulation loop at line:"<< forloop->get_file_info()->get_line()<<endl;
+
+          SgSourceFile* file = getEnclosingSourceFile(forloop);
+          string s(":");
+          string entry= forloop->get_file_info()->get_filename()+s+oss.str(); // add full filename to each log entries
+          Rose::KeepGoing::File2StringMap[file]+= entry;
+          if (RAJA_Checker::enable_debug)
+          {
+            ofile<<oss.str(); // don't use absolute file name for the output file, which is used for correctness checking
+            cout<<forloop->get_file_info()->get_filename()+s+oss.str(); // also output to std out
+
+          }
+        }
       }
     } // end if for loop
 
@@ -849,8 +1053,21 @@ void RoseVisitor::visit ( SgNode* n)
               cout<<le->get_file_info()->get_filename()+s+oss.str(); // also output to std out
             }
           }
+          else // collect negative cases, calculating true/false negatives
+          {
+            ostringstream oss; 
+            oss<<"Not a nodal accumulation lambda function at line:"<< le->get_file_info()->get_line()<<endl;
+            SgSourceFile* file = getEnclosingSourceFile(le);
+            string s(":");
+            string entry= le->get_file_info()->get_filename()+s+oss.str(); // add full filename to each log entries.
+            Rose::KeepGoing::File2StringMap[file]+= entry;
+            if (RAJA_Checker::enable_debug)
+            {
+              ofile<<oss.str(); // don't use absolute file name for the output file, which is used for correctness checking
+              cout<<le->get_file_info()->get_filename()+s+oss.str(); // also output to std out
+            }
+          }
         }
-
 
 //----------- Check if the lambda expression is used as a parameter of RAJA function call
         SgFunctionDeclaration* raja_func = NULL; 

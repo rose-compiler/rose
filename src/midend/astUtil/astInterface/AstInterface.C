@@ -934,6 +934,22 @@ bool AstInterface::IsExprStmt(const AstNodePtr& n, AstNodePtr* exp)
   return true;
 }
 
+std::string AstInterface::toString (OperatorEnum op)
+{
+    const char* nameList[] = { 
+        "OP_NONE", 
+        "UOP_MINUS", "UOP_ADDR", "UOP_DEREF", 
+        "UOP_ALLOCATE", 
+        "UOP_NOT",
+        "UOP_CAST", "UOP_INCR1", "UOP_DECR1", "UOP_BIT_COMPLEMENT",
+        "BOP_DOT_ACCESS", "BOP_ARROW_ACCESS", 
+        "BOP_TIMES", "BOP_DIVIDE", "BOP_MOD", "BOP_PLUS", "BOP_MINUS", 
+        "BOP_EQ", "BOP_LE", "BOP_LT", "BOP_NE", "BOP_GT", "BOP_GE", 
+        "BOP_AND", "BOP_OR", "BOP_BIT_AND", "BOP_BIT_OR", "BOP_BIT_RSHIFT", 
+        "BOP_BIT_LSHIFT", "OP_ARRAY_ACCESS", "OP_ASSIGN", "OP_UNKNOWN"}; 
+   return std::string(nameList[op]);
+}
+
 std::string AstInterface::unparseToString( const AstNodePtr& n)
 { 
   SgNode* s = (SgNode*)n.get_ptr();

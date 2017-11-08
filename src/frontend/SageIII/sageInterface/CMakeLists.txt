@@ -18,6 +18,7 @@ add_library(sageInterface OBJECT
   sageBuilder.C
   sageBuilder_fortran.C
   sageBuilder_untypedNodes.C
+  untypedBuilder.C
   abiStuff.C)
 endif()
 
@@ -25,7 +26,7 @@ add_dependencies(sageInterface rosetta_generated)
 
 install(
   FILES  sageInterface.h sageBuilder.h sageBuilderAsm.h integerOps.h abiStuff.h
-         sageFunctors.h sageGeneric.h sageInterfaceAsm.h
+         sageFunctors.h sageGeneric.h sageInterfaceAsm.h untypedBuilder.h
   DESTINATION ${INCLUDE_INSTALL_DIR}
   )
 ########### install files ###############

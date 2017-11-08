@@ -83,7 +83,7 @@ std::string stringifyBinaryAnalysisPartitioner2ReferenceGranularity(long int n, 
 std::string stringifyBinaryAnalysisPartitioner2SemanticMemoryParadigm(long int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyBinaryAnalysisPartitioner2VertexType(long int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyBinaryAnalysisPartitionerRegionStatsAnalysisEnum(long int n, const char *strip=NULL, bool canonic=false);
-std::string stringifyBinaryAnalysisSMTSolverSatisfiable(long int n, const char *strip=NULL, bool canonic=false);
+std::string stringifyBinaryAnalysisSmtSolverSatisfiable(long int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyBinaryAnalysisSRecordType(long int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyBinaryAnalysisStringsState(long int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyBinaryAnalysisSymbolicExprFormatterShowComments(long int n, const char *strip=NULL, bool canonic=false);

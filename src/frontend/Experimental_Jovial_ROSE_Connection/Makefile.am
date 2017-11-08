@@ -7,7 +7,7 @@ noinst_LTLIBRARIES = libexperimentalRoseJovial.la
 # DQ (8/23/2017): I'm not clear if we need makefile conditionals, since the directory is already conditionally processed in the parent directory.
 
 if ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION
-  libexperimentalRoseJovial_la_SOURCES = jovial_support.C 
+  libexperimentalRoseJovial_la_SOURCES = jovial_support.C ATtoUntypedTraversal.C ATtoUntypedJovialTraversal.C
 else
 # Compile using a function that represents the API of the Jovial support.
   libexperimentalRoseJovial_la_SOURCES = dummy_jovial_main.C
