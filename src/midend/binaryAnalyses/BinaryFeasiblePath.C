@@ -2,11 +2,11 @@
 #include <AsmUnparser_compat.h>
 #include <BaseSemantics2.h>
 #include <BinaryFeasiblePath.h>
+#include <BinaryYicesSolver.h>
 #include <Partitioner2/GraphViz.h>
 #include <Partitioner2/Partitioner.h>
 #include <Sawyer/GraphAlgorithm.h>
 #include <SymbolicMemory2.h>
-#include <YicesSolver.h>
 
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/logic/tribool.hpp>
@@ -126,20 +126,20 @@ public:
 
 protected:
     RiscOperators(const P2::Partitioner *partitioner, const BaseSemantics::SValuePtr &protoval,
-                  Rose::BinaryAnalysis::SMTSolver *solver)
+                  Rose::BinaryAnalysis::SmtSolver *solver)
         : Super(protoval, solver), pathInsnIndex_(-1), partitioner_(partitioner) {
         name("FindPath");
     }
 
     RiscOperators(const P2::Partitioner *partitioner, const BaseSemantics::StatePtr &state,
-                  Rose::BinaryAnalysis::SMTSolver *solver)
+                  Rose::BinaryAnalysis::SmtSolver *solver)
         : Super(state, solver), pathInsnIndex_(-1), partitioner_(partitioner) {
         name("FindPath");
     }
 
 public:
     static RiscOperatorsPtr instance(const P2::Partitioner *partitioner, const RegisterDictionary *regdict,
-                                     FeasiblePath::SearchMode searchMode, Rose::BinaryAnalysis::SMTSolver *solver=NULL) {
+                                     FeasiblePath::SearchMode searchMode, Rose::BinaryAnalysis::SmtSolver *solver=NULL) {
         BaseSemantics::SValuePtr protoval = SValue::instance();
         BaseSemantics::RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
         BaseSemantics::MemoryStatePtr memory;
@@ -162,23 +162,23 @@ public:
     }
 
     static RiscOperatorsPtr instance(const P2::Partitioner *partitioner, const BaseSemantics::SValuePtr &protoval,
-                                     Rose::BinaryAnalysis::SMTSolver *solver=NULL) {
+                                     Rose::BinaryAnalysis::SmtSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(partitioner, protoval, solver));
     }
 
     static RiscOperatorsPtr instance(const P2::Partitioner *partitioner, const BaseSemantics::StatePtr &state,
-                                     Rose::BinaryAnalysis::SMTSolver *solver=NULL) {
+                                     Rose::BinaryAnalysis::SmtSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(partitioner, state, solver));
     }
 
 public:
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
-                                                   Rose::BinaryAnalysis::SMTSolver *solver=NULL) const ROSE_OVERRIDE {
+                                                   Rose::BinaryAnalysis::SmtSolver *solver=NULL) const ROSE_OVERRIDE {
         return instance(NULL, protoval, solver);
     }
 
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr &state,
-                                                   Rose::BinaryAnalysis::SMTSolver *solver=NULL) const ROSE_OVERRIDE {
+                                                   Rose::BinaryAnalysis::SmtSolver *solver=NULL) const ROSE_OVERRIDE {
         return instance(NULL, state, solver);
     }
 
@@ -438,7 +438,7 @@ FeasiblePath::buildVirtualCpu(const P2::Partitioner &partitioner) {
 
     // Create the RiscOperators and Dispatcher. We could use an SMT solver here also, but it seems to slow things down more
     // than speed them up.
-    SMTSolver *solver = NULL;
+    SmtSolver *solver = NULL;
     RiscOperatorsPtr ops = RiscOperators::instance(&partitioner, registers_, settings_.searchMode, solver);
     ASSERT_not_null(partitioner.instructionProvider().dispatcher());
     BaseSemantics::DispatcherPtr cpu = partitioner.instructionProvider().dispatcher()->create(ops);
@@ -626,7 +626,7 @@ FeasiblePath::printPath(std::ostream &out, const P2::CfgPath &path) const {
 }
 
 boost::logic::tribool
-FeasiblePath::isPathFeasible(const P2::CfgPath &path, SMTSolver &solver, const std::vector<SymbolicExpr::Ptr> &endConstraints,
+FeasiblePath::isPathFeasible(const P2::CfgPath &path, SmtSolver &solver, const std::vector<SymbolicExpr::Ptr> &endConstraints,
                              std::vector<SymbolicExpr::Ptr> &pathConstraints /*in,out*/,
                              BaseSemantics::DispatcherPtr &cpu /*out*/) {
     static const char *prefix = "      ";
@@ -673,8 +673,8 @@ FeasiblePath::isPathFeasible(const P2::CfgPath &path, SMTSolver &solver, const s
     // Are the constraints satisfiable.  Empty constraints are tivially satisfiable.
     pathConstraints.insert(pathConstraints.end(), endConstraints.begin(), endConstraints.end());
     switch (solver.satisfiable(pathConstraints)) {
-        case SMTSolver::SAT_YES: return true;
-        case SMTSolver::SAT_NO: return false;
+        case SmtSolver::SAT_YES: return true;
+        case SmtSolver::SAT_NO: return false;
         default: return boost::logic::indeterminate;
     }
 }

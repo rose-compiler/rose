@@ -1,0 +1,9 @@
+START
+PROGRAM testbody ;
+BEGIN
+  ITEM ivar S ;
+  ivar = 13 ;
+  PROC sub1 ;
+    ;
+END
+TERM

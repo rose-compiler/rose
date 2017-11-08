@@ -71,11 +71,11 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #include "AsmUnparser.h"
 #include "BinaryTaintedFlow.h"
 #include "BinaryFunctionCall.h"
+#include "BinaryYicesSolver.h"
 #include "Diagnostics.h"
 #include "DispatcherX86.h"
 #include "SymbolicSemantics2.h"
 #include "WorkLists.h"
-#include "YicesSolver.h"
 
 #include <boost/algorithm/string/regex.hpp>
 #include <boost/foreach.hpp>

@@ -427,7 +427,7 @@ enum ROSE_C_CXX_keywords
       C_CXX_WHILE = 63 + 500
    };
 
-// Langauge specific token enums for Fortran intrinsic operators
+// Language specific token enums for Fortran intrinsic operators
 enum ROSE_Fortran_Operators
    {
       FORTRAN_INTRINSIC_PLUS = 0 + 10000,
@@ -767,6 +767,8 @@ HEADER_UNTYPED_TYPE_START
                e_unknown,        //! default unspecified type as identified by parser.
                e_void,           //! void type as identified by parser.
                e_int,            //! int type as identified by parser.
+            // Rasmussen (10/17/2017): Added e_uint for Jovial
+               e_uint,           //! unsigned int type as identified by parser.
                e_float,          //! float type as identified by parser.
                e_double,         //! double type as identified by parser.
                e_complex,        //! complex type as identified by parser.

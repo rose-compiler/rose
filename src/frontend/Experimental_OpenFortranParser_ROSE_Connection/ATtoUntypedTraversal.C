@@ -1136,7 +1136,6 @@ ATbool ATtoUntypedTraversal::traverse_Operator(ATerm term, SgUntypedExpression**
 
    ATerm term1, term2;
 
-   SgToken::ROSE_Fortran_Keywords stmt_enum = SgToken::FORTRAN_UNKNOWN;
    SgToken::ROSE_Fortran_Operators  op_enum;
    std::string op_name;
    SgUntypedExpression* lhs;
@@ -1197,7 +1196,7 @@ ATbool ATtoUntypedTraversal::traverse_Operator(ATerm term, SgUntypedExpression**
       // MATCHED Expression
    } else return ATfalse;
 
-   *var_expr = new SgUntypedBinaryOperator(stmt_enum,op_enum,op_name,lhs,rhs);
+   *var_expr = new SgUntypedBinaryOperator(op_enum,op_name,lhs,rhs);
    setSourcePosition(*var_expr, term);
 
   return ATtrue;

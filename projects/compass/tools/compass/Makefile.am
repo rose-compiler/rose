@@ -126,20 +126,10 @@ testCompass:
 demo_small: test
 	env COMPASS_PARAMETERS=./compass_parameters $(VALGRIND) ./compassMain .libs/compassMain
 
-# Linux binary selected from Linux
-demo_linux: test
-	env COMPASS_PARAMETERS=./compass_parameters $(VALGRIND) ./compassMain $(top_srcdir)/projects/BinQ/linux-ls
-
-#demo_bufferOverflow:
-#	./compassMain $(top_srcdir)/projects/BinQ/buffer2.bin
-
 # Note that gzip.c appears to take over ten minutes in the Defuse Analysis (something is wrong here).
 demo_compassGUI_source:
 #	./gui/compassMainGui $(top_srcdir)/developersScratchSpace/Dan/C_tests/gzip.c
 	$(VALGRIND) ./gui/compassMainGui $(compass_test_dir)/exampleTest_1.C
-
-demo_compassGUI_binary:
-	$(VALGRIND) ./gui/compassMainGui $(top_srcdir)/projects/BinQ/buffer2.bin
 
 demo_compassGUI_compass_binary:
 	$(VALGRIND) ./gui/compassMainGui .libs/compassMain

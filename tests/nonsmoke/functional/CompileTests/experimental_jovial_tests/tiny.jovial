@@ -1,0 +1,7 @@
+START
+PROGRAM progname ;
+BEGIN
+  ITEM ivar S ;
+  ivar = 3 * 13 ;
+END
+TERM

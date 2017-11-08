@@ -18,7 +18,7 @@ RiscOperators::instance(const RegisterDictionary *regdict)
     BaseSemantics::RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
     BaseSemantics::MemoryStatePtr memory = MemoryState::instance(protoval, protoval);
     BaseSemantics::StatePtr state = State::instance(registers, memory);
-    SMTSolver *solver = NULL;
+    SmtSolver *solver = NULL;
     return RiscOperatorsPtr(new RiscOperators(state, solver));
 }
 

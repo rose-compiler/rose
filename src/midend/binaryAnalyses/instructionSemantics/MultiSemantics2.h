@@ -141,19 +141,19 @@ public:
     }
     
     virtual Sawyer::Optional<BaseSemantics::SValuePtr>
-    createOptionalMerge(const BaseSemantics::SValuePtr &other, const BaseSemantics::MergerPtr&, SMTSolver*) const ROSE_OVERRIDE;
+    createOptionalMerge(const BaseSemantics::SValuePtr &other, const BaseSemantics::MergerPtr&, SmtSolver*) const ROSE_OVERRIDE;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Override virtual methods
 public:
     /** Determines if two multidomain values might be equal.  Two multidomain values are equal if, for any subdomain for which
      *  both values are valid, they are equal in the subdomain. */
-    virtual bool may_equal(const BaseSemantics::SValuePtr &other, SMTSolver *solver=NULL) const ROSE_OVERRIDE;
+    virtual bool may_equal(const BaseSemantics::SValuePtr &other, SmtSolver *solver=NULL) const ROSE_OVERRIDE;
 
     /** Determines if two multidomain values must be equal.  Two multidomain values are equal if and only if there is at least
      *  one subdomain where both values are valid, and for all subdomains where both values are valid, their must_equal()
      *  relationship is satisfied. */
-    virtual bool must_equal(const BaseSemantics::SValuePtr &other, SMTSolver *solver=NULL) const ROSE_OVERRIDE;
+    virtual bool must_equal(const BaseSemantics::SValuePtr &other, SmtSolver *solver=NULL) const ROSE_OVERRIDE;
 
     virtual void set_width(size_t nbits) ROSE_OVERRIDE;
 
@@ -247,13 +247,13 @@ protected:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
-    explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
+    explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SmtSolver *solver=NULL)
         : BaseSemantics::RiscOperators(protoval, solver) {
         name("Multi");
         (void) SValue::promote(protoval); // check that its dynamic type is a MultiSemantics::SValue
     }
 
-    explicit RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
+    explicit RiscOperators(const BaseSemantics::StatePtr &state, SmtSolver *solver=NULL)
         : BaseSemantics::RiscOperators(state, solver) {
         name("Multi");
         (void) SValue::promote(state->protoval());      // dynamic type must be a MultiSemantics::SValue
@@ -270,11 +270,11 @@ public:
         return RiscOperatorsPtr(new RiscOperators(protoval));
     }
 
-    static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL) {
+    static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, SmtSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(protoval, solver));
     }
 
-    static RiscOperatorsPtr instance(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL) {
+    static RiscOperatorsPtr instance(const BaseSemantics::StatePtr &state, SmtSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(state, solver));
     }
 
@@ -282,12 +282,12 @@ public:
     // Virtual constructors
 public:
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
-                                                   SMTSolver *solver=NULL) const ROSE_OVERRIDE {
+                                                   SmtSolver *solver=NULL) const ROSE_OVERRIDE {
         return instance(protoval, solver);
     }
 
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr &state,
-                                                   SMTSolver *solver=NULL) const ROSE_OVERRIDE {
+                                                   SmtSolver *solver=NULL) const ROSE_OVERRIDE {
         return instance(state, solver);
     }
 

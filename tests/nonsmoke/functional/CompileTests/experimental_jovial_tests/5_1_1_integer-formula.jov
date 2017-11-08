@@ -1,0 +1,9 @@
+START
+PROGRAM integerformula ;
+  BEGIN
+    ivar = 13 ;
+    ivar = -ivar ;
+    ivar = ia + ib ;
+    ivar = - 2 ** 3 / 13 -ia + ib MOD 11 ;
+  END
+TERM

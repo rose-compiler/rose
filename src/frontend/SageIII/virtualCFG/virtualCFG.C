@@ -77,7 +77,7 @@ namespace VirtualCFG {
         nodeText += nt.str();
       }
       if (nodeText.length() > 20) {nodeText.resize(20); nodeText += "...";}
-      s << "<" << node->class_name() << "> " << nodeText << " :idx=" << index;
+      s <<node<< "<" << node->class_name() << "> " << nodeText << " :idx=" << index;
       // s << node->class_name() << " @" << hex << uintptr_t(node) << " " << dec << index;
     }
     return s.str();

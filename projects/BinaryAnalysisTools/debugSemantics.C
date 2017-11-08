@@ -3,6 +3,7 @@
 #include <rose.h>
 
 #include <BinaryNoOperation.h>
+#include <BinaryYicesSolver.h>
 #include <ConcreteSemantics2.h>
 #include <Diagnostics.h>
 #include <Disassembler.h>
@@ -15,7 +16,6 @@
 #include <SymbolicSemantics2.h>
 #include <TestSemantics2.h>
 #include <TraceSemantics2.h>
-#include <YicesSolver.h>
 
 //=============================================================================================================================
 //                                      User-contributed semantics
@@ -252,7 +252,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
     return parser.with(sem).with(ctl).with(out).parse(argc, argv).apply().unreachedArgs();
 }
 
-static SMTSolver *
+static SmtSolver *
 makeSolver(const Settings &settings) {
     if (settings.solverName == "list") {
         std::cout <<"SMT solver names:\n"
@@ -262,7 +262,7 @@ makeSolver(const Settings &settings) {
         return NULL;                                    // solvers are optional
     } else if (settings.solverName == "yices") {
         YicesSolver *solver = new YicesSolver;
-        solver->set_linkage(YicesSolver::LM_LIBRARY);
+        solver->linkage(YicesSolver::LM_LIBRARY);
         return solver;
     } else {
         throw std::runtime_error("unrecognized SMT solver name \"" + settings.solverName + "\"; see --solver=list\n");
@@ -415,7 +415,7 @@ makeRiscOperators(const Settings &settings, const P2::Engine &engine, const P2::
     if (className.empty())
         throw std::runtime_error("--semantics switch is required");
     
-    SMTSolver *solver = makeSolver(settings);
+    SmtSolver *solver = makeSolver(settings);
     const RegisterDictionary *regdict = partitioner.instructionProvider().registerDictionary();
     BaseSemantics::SValuePtr protoval = makeProtoVal(settings);
     BaseSemantics::RegisterStatePtr rstate = makeRegisterState(settings, protoval, regdict);

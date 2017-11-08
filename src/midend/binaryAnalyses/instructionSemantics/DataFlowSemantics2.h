@@ -90,7 +90,7 @@ public:
     // dataflow semantics framework only through the "instance" method. (But we still must override them.)
 private:
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
-                                                   SMTSolver *solver=NULL) const ROSE_OVERRIDE {
+                                                   SmtSolver *solver=NULL) const ROSE_OVERRIDE {
         ASSERT_not_reachable("should not be called by user code");
 #ifdef _MSC_VER
         return BaseSemantics::RiscOperatorsPtr();
@@ -98,7 +98,7 @@ private:
     }
 
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr &state,
-                                                   SMTSolver *solver=NULL) const ROSE_OVERRIDE {
+                                                   SmtSolver *solver=NULL) const ROSE_OVERRIDE {
         ASSERT_not_reachable("should not be called by user code");
 #ifdef _MSC_VER
         return BaseSemantics::RiscOperatorsPtr();

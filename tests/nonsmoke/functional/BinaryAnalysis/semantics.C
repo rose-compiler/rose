@@ -30,20 +30,20 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 using namespace Rose::BinaryAnalysis::InstructionSemantics2;
 
 #if !defined(SMT_SOLVER) || SMT_SOLVER == NO_SOLVER
-#   include "SMTSolver.h"
-    Rose::BinaryAnalysis::SMTSolver *make_solver() { return NULL; }
+#   include "BinarySmtSolver.h"
+    Rose::BinaryAnalysis::SmtSolver *make_solver() { return NULL; }
 #elif SMT_SOLVER == YICES_LIB
-#   include "YicesSolver.h"
-    Rose::BinaryAnalysis::SMTSolver *make_solver() {
+#   include "BinaryYicesSolver.h"
+    Rose::BinaryAnalysis::SmtSolver *make_solver() {
         Rose::BinaryAnalysis::YicesSolver *solver = new Rose::BinaryAnalysis::YicesSolver;
-        solver->set_linkage(Rose::BinaryAnalysis::YicesSolver::LM_LIBRARY);
+        solver->linkage(Rose::BinaryAnalysis::YicesSolver::LM_LIBRARY);
         return solver;
     }
 #elif SMT_SOLVER == YICES_EXE
-#   include "YicesSolver.h"
-    Rose::BinaryAnalysis::SMTSolver *make_solver() {
+#   include "BinaryYicesSolver.h"
+    Rose::BinaryAnalysis::SmtSolver *make_solver() {
         Rose::BinaryAnalysis::YicesSolver *solver = new Rose::BinaryAnalysis::YicesSolver;
-        solver->set_linkage(Rose::BinaryAnalysis::YicesSolver::LM_EXECUTABLE);
+        solver->linkage(Rose::BinaryAnalysis::YicesSolver::LM_EXECUTABLE);
         return solver;
     }
 #else

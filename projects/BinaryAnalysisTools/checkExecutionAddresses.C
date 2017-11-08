@@ -194,7 +194,7 @@ main(int argc, char *argv[]) {
 
     // Load specimen natively and attach debugger
     std::vector<std::string> specimen_cmd(args.begin()+1, args.end());
-    BinaryDebugger debugger(specimen_cmd);
+    BinaryDebugger debugger(specimen_cmd, BinaryDebugger::CLOSE_FILES);
     debugger.setBreakpoint(AddressInterval::whole());
     ASSERT_always_require(debugger.isAttached());
     ASSERT_always_forbid(debugger.isTerminated());

@@ -59,7 +59,7 @@ main(int argc, char *argv[]) {
     ASSERT_require2(REG_IP.is_valid(), "simulation must know what register serves as the instruction pointer");
 
     // Single-step the specimen natively in a debugger and show each instruction.
-    BinaryDebugger debugger(specimen);
+    BinaryDebugger debugger(specimen, BinaryDebugger::CLOSE_FILES);
     while (!debugger.isTerminated()) {
         uint64_t ip = debugger.readRegister(REG_IP).toInteger();
         uint8_t buf[16];                                // 16 should be large enough for any instruction

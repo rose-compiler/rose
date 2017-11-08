@@ -142,7 +142,6 @@ echo "GFORTRAN_PATH = $GFORTRAN_PATH"
 
 # Call supporting macro for X10 language compiler path
 
-
 #########################################################################################
 ##
 
@@ -163,6 +162,13 @@ echo "GFORTRAN_PATH = $GFORTRAN_PATH"
 
 ##
 #########################################################################################
+
+
+## Rasmussen (10/24/2017): Support for linking with the GnuCOBOL parse-tree library.
+#
+ROSE_SUPPORT_COBOL
+#########################################################################################
+
 
 # *******************************************************
 # ROSE/projects directory compilation & testing
@@ -287,16 +293,16 @@ if test "x$enable_debug_output_for_new_edg_interface" = "xyes"; then
   AC_DEFINE([ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION], [], [Controls large volumes of output spew useful for debugging new EDG/ROSE connection code])
 fi
 
-# DQ (6/7/2013): Added support for new Fortran front-end development.  
+# DQ (6/7/2013): Added support for new Fortran front-end development.
 AC_ARG_ENABLE(experimental_fortran_frontend,
     AS_HELP_STRING([--enable-experimental_fortran_frontend], [Enable experimental fortran frontend development]))
 AM_CONDITIONAL(ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION, [test "x$enable_experimental_fortran_frontend" = xyes])
 if test "x$enable_experimental_fortran_frontend" = "xyes"; then
-  AC_MSG_WARN([Using this mode enable experimental fortran front-end (internal development only)!])
+  AC_MSG_WARN([Using this mode enables experimental fortran front-end (internal development only)!])
   AC_DEFINE([ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION], [], [Enables development of experimental fortran frontend])
 fi
 
-# DQ (6/7/2013): Added support for debugging new Fortran front-end development.  
+# DQ (6/7/2013): Added support for debugging new Fortran front-end development.
 AC_ARG_ENABLE(debug_output_for_experimental_fortran_frontend,
     AS_HELP_STRING([--enable-debug_output_for_experimental_fortran_frontend], [Enable debugging output (spew) of new OFP/ROSE connection]))
 AM_CONDITIONAL(ROSE_DEBUG_EXPERIMENTAL_OFP_ROSE_CONNECTION, [test "x$enable_debug_output_for_experimental_fortran_frontend" = xyes])
@@ -305,12 +311,12 @@ if test "x$enable_debug_output_for_experimental_fortran_frontend" = "xyes"; then
   AC_DEFINE([ROSE_DEBUG_EXPERIMENTAL_OFP_ROSE_CONNECTION], [], [Controls large volumes of output spew useful for debugging new OFP/ROSE connection code])
 fi
 
-# DQ (8/23/2017): Added support for new csharp front-end development.  
+# DQ (8/23/2017): Added support for new csharp front-end development.
 AC_ARG_ENABLE(experimental_csharp_frontend,
     AS_HELP_STRING([--enable-experimental_csharp_frontend], [Enable experimental csharp frontend development]))
 AM_CONDITIONAL(ROSE_EXPERIMENTAL_CSHARP_ROSE_CONNECTION, [test "x$enable_experimental_csharp_frontend" = xyes])
 if test "x$enable_experimental_csharp_frontend" = "xyes"; then
-  AC_MSG_WARN([Using this mode enable experimental csharp front-end (internal development only)!])
+  AC_MSG_WARN([Using this mode enables experimental csharp front-end (internal development only)!])
   AC_DEFINE([ROSE_EXPERIMENTAL_CSHARP_ROSE_CONNECTION], [], [Enables development of experimental csharp frontend])
 
 # DQ (8/23/2017): Need to review now to get the MONO_HOME and ROSLYN_HOME environment variables.
@@ -333,7 +339,7 @@ if test "x$enable_experimental_csharp_frontend" = "xyes"; then
 # exit 0
 fi
 
-# DQ (6/7/2013): Added support for debugging new csharp front-end development.  
+# DQ (6/7/2013): Added support for debugging new csharp front-end development.
 AC_ARG_ENABLE(debug_output_for_experimental_csharp_frontend,
     AS_HELP_STRING([--enable-debug_output_for_experimental_csharp_frontend], [Enable debugging output (spew) of new CSHARP/ROSE connection]))
 AM_CONDITIONAL(ROSE_DEBUG_EXPERIMENTAL_CSHARP_ROSE_CONNECTION, [test "x$enable_debug_output_for_experimental_csharp_frontend" = xyes])
@@ -342,16 +348,16 @@ if test "x$enable_debug_output_for_experimental_csharp_frontend" = "xyes"; then
   AC_DEFINE([ROSE_DEBUG_EXPERIMENTAL_CSHARP_ROSE_CONNECTION], [], [Controls large volumes of output spew useful for debugging new CSHARP/ROSE connection code])
 fi
 
-# DQ (8/23/2017): Added support for new Ada front-end development.  
+# DQ (8/23/2017): Added support for new Ada front-end development.
 AC_ARG_ENABLE(experimental_ada_frontend,
     AS_HELP_STRING([--enable-experimental_ada_frontend], [Enable experimental ada frontend development]))
 AM_CONDITIONAL(ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION, [test "x$enable_experimental_ada_frontend" = xyes])
 if test "x$enable_experimental_ada_frontend" = "xyes"; then
-  AC_MSG_WARN([Using this mode enable experimental ada front-end (internal development only)!])
+  AC_MSG_WARN([Using this mode enables experimental ada front-end (internal development only)!])
   AC_DEFINE([ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION], [], [Enables development of experimental ada frontend])
 fi
 
-# DQ (6/7/2013): Added support for debugging new ada front-end development.  
+# DQ (6/7/2013): Added support for debugging new ada front-end development.
 AC_ARG_ENABLE(debug_output_for_experimental_ada_frontend,
     AS_HELP_STRING([--enable-debug_output_for_experimental_ada_frontend], [Enable debugging output (spew) of new ADA/ROSE connection]))
 AM_CONDITIONAL(ROSE_DEBUG_EXPERIMENTAL_ADA_ROSE_CONNECTION, [test "x$enable_debug_output_for_experimental_ada_frontend" = xyes])
@@ -373,16 +379,16 @@ if test "x$enable_experimental_ada_frontend" = "xyes"; then
   AC_SUBST(gnat_home)
 fi
 
-# DQ (8/23/2017): Added support for new Jovial front-end development.  
+# DQ (8/23/2017): Added support for new Jovial front-end development.
 AC_ARG_ENABLE(experimental_jovial_frontend,
     AS_HELP_STRING([--enable-experimental_jovial_frontend], [Enable experimental jovial frontend development]))
 AM_CONDITIONAL(ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION, [test "x$enable_experimental_jovial_frontend" = xyes])
 if test "x$enable_experimental_jovial_frontend" = "xyes"; then
-  AC_MSG_WARN([Using this mode enable experimental jovial front-end (internal development only)!])
+  AC_MSG_WARN([Using this mode enables experimental jovial front-end (internal development only)!])
   AC_DEFINE([ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION], [], [Enables development of experimental jovial frontend])
 fi
 
-# DQ (6/7/2013): Added support for debugging new jovial front-end development.  
+# DQ (8/23/2017): Added support for debugging new jovial front-end development.
 AC_ARG_ENABLE(debug_output_for_experimental_jovial_frontend,
     AS_HELP_STRING([--enable-debug_output_for_experimental_jovial_frontend], [Enable debugging output (spew) of new JOVIAL/ROSE connection]))
 AM_CONDITIONAL(ROSE_DEBUG_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION, [test "x$enable_debug_output_for_experimental_jovial_frontend" = xyes])
@@ -391,22 +397,40 @@ if test "x$enable_debug_output_for_experimental_jovial_frontend" = "xyes"; then
   AC_DEFINE([ROSE_DEBUG_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION], [], [Controls large volumes of output spew useful for debugging new JOVIAL/ROSE connection code])
 fi
 
-# DQ (8/23/2017): Added support for new Cobol front-end development.  
+# DQ (8/23/2017): Added support for new Cobol front-end development.
 AC_ARG_ENABLE(experimental_cobol_frontend,
     AS_HELP_STRING([--enable-experimental_cobol_frontend], [Enable experimental cobol frontend development]))
 AM_CONDITIONAL(ROSE_EXPERIMENTAL_COBOL_ROSE_CONNECTION, [test "x$enable_experimental_cobol_frontend" = xyes])
 if test "x$enable_experimental_cobol_frontend" = "xyes"; then
-  AC_MSG_WARN([Using this mode enable experimental cobol front-end (internal development only)!])
+  AC_MSG_WARN([Using this mode enables experimental cobol front-end (internal development only)!])
   AC_DEFINE([ROSE_EXPERIMENTAL_COBOL_ROSE_CONNECTION], [], [Enables development of experimental cobol frontend])
 fi
 
-# DQ (6/7/2013): Added support for debugging new cobol front-end development.  
+# DQ (8/23/2017): Added support for debugging new Cobol front-end development.
 AC_ARG_ENABLE(debug_output_for_experimental_cobol_frontend,
     AS_HELP_STRING([--enable-debug_output_for_experimental_cobol_frontend], [Enable debugging output (spew) of new COBOL/ROSE connection]))
 AM_CONDITIONAL(ROSE_DEBUG_EXPERIMENTAL_COBOL_ROSE_CONNECTION, [test "x$enable_debug_output_for_experimental_cobol_frontend" = xyes])
 if test "x$enable_debug_output_for_experimental_cobol_frontend" = "xyes"; then
   AC_MSG_WARN([Using this mode causes large volumes of output spew (internal debugging only)!])
   AC_DEFINE([ROSE_DEBUG_EXPERIMENTAL_COBOL_ROSE_CONNECTION], [], [Controls large volumes of output spew useful for debugging new COBOL/ROSE connection code])
+fi
+
+# Rasmussen (10/30/2017): Added support for new MATLAB front-end development.
+AC_ARG_ENABLE([experimental_matlab_frontend],
+    AS_HELP_STRING([--enable-experimental_matlab_frontend], [Enable experimental MATLAB frontend development (default=no)]))
+AM_CONDITIONAL(ROSE_EXPERIMENTAL_MATLAB_ROSE_CONNECTION, [test "x$enable_experimental_matlab_frontend" = xyes])
+if test "x$enable_experimental_matlab_frontend" = "xyes"; then
+  AC_MSG_WARN([Using this mode enables experimental MATLAB front-end (internal development only)!])
+  AC_DEFINE([ROSE_EXPERIMENTAL_MATLAB_ROSE_CONNECTION], [], [Enables development of experimental MATLAB frontend])
+fi
+
+# Rasmussen (10/30/2017): Added support for debugging new MATLAB front-end development.
+AC_ARG_ENABLE(debug_output_for_experimental_matlab_frontend,
+    AS_HELP_STRING([--enable-debug_output_for_experimental_matlab_frontend], [Enable debugging output (spew) of new MATLAB/ROSE connection]))
+AM_CONDITIONAL(ROSE_DEBUG_EXPERIMENTAL_MATLAB_ROSE_CONNECTION, [test "x$enable_debug_output_for_experimental_matlab_frontend" = xyes])
+if test "x$enable_debug_output_for_experimental_matlab_frontend" = "xyes"; then
+  AC_MSG_WARN([Using this mode causes large volumes of output spew (internal debugging only)!])
+  AC_DEFINE([ROSE_DEBUG_EXPERIMENTAL_MATLAB_ROSE_CONNECTION], [], [Controls large volumes of output spew useful for debugging new MATLAB/ROSE connection code])
 fi
 
 # DQ (8/18/2009): Removed this conditional macro.
@@ -941,7 +965,7 @@ ROSE_SUPPORT_ATERM
 # DQ (1/22/2016): Added support for stratego (need to know the path to sglri executable for Experimental Fortran support).
 ROSE_SUPPORT_STRATEGO
 
-# RASMUSSEN (2/22/2017): Added support for OFP Stratego tools binary installation (Experimental Fortran support).
+# Rasmussen (2/22/2017): Added support for OFP Stratego tools binary installation (Experimental Fortran support).
 # This assumes that OFP is installed from an OFP release and not imported and buiit with ROSE directly.
 ROSE_SUPPORT_OFP_STRATEGO
 
@@ -954,6 +978,23 @@ if test "x$enable_experimental_fortran_frontend" = "xyes"; then
    fi
    if test "x$OFP_BIN_PATH" = "x"; then
       AC_MSG_ERROR([Support for experimental_fortran_frontend requires OFP binary installation, --with-ofp-bin=<path> must be specified!])
+   fi
+fi
+
+# Rasmussen (10/24/2017): ATerm and Stratego/XT tools binary installation required for Jovial support.
+if test "x$enable_experimental_jovial_frontend" = "xyes"; then
+   if test "x$ATERM_LIBRARY_PATH" = "x"; then
+      AC_MSG_ERROR([Support for experimental_jovial_frontend requires Aterm library support, --with-aterm=<path> must be specified!])
+   fi
+   if test "x$STRATEGO_LIBRARY_PATH" = "x"; then
+      AC_MSG_ERROR([Support for experimental_jovial_frontend requires Stratego library support, --with-stratego=<path> must be specified!])
+   fi
+fi
+
+# Rasmussen (10/24/2017): GnuCobol parse-tree library installation required for Cobol support.
+if test "x$enable_experimental_cobol_frontend" = "xyes"; then
+   if test "x$COBPT_LIBRARY_PATH" = "x"; then
+      AC_MSG_ERROR([Support for experimental_cobol_frontend requires GnuCobol parse-tree library support, --with-cobpt=<path> must be specified!])
    fi
 fi
 
@@ -970,24 +1011,6 @@ ROSE_SUPPORT_PHP
 AM_CONDITIONAL(ROSE_USE_PHP,test ! "$with_php" = no)
 
 ROSE_SUPPORT_PYTHON
-
-AM_CONDITIONAL(ROSE_USE_PYTHON,test ! "$with_python" = no)
-
-AX_PYTHON_DEVEL([0.0.0], [4.0.0])
-PYTHON_VERSION_MAJOR_VERSION="`echo $ac_python_version | cut -d\. -f1`"
-PYTHON_VERSION_MINOR_VERSION="`echo $ac_python_version | cut -d\. -f2`"
-PYTHON_VERSION_PATCH_VERSION="`echo $ac_python_version | cut -d\. -f3`"
-
-
-if test "$PYTHON_VERSION_MAJOR_VERSION" -ge "2" && test "$PYTHON_VERSION_MINOR_VERSION" -ge "7"; then
-  approved_python_version=true
-elif  test "$PYTHON_VERSION_MAJOR_VERSION" -ge "3"; then
-  approved_python_version=true
-else
-  approved_python_version=false
-fi
-
-AM_CONDITIONAL(ROSE_APPROVED_PYTHON_VERSION, [$approved_python_version])
 
 #ASR
 ROSE_SUPPORT_LLVM
@@ -1952,8 +1975,6 @@ AC_DEFUN([ROSE_SUPPORT_ROSE_PART_6],
 AC_CONFIG_FILES([
 Makefile
 config/Makefile
-demo/Makefile
-demo/qrose/Makefile
 docs/Makefile
 docs/Rose/Makefile
 docs/Rose/ROSE_DemoGuide.tex
@@ -1991,7 +2012,6 @@ projects/AtermTranslation/Makefile
 projects/AtermTranslation/roseAtermAPI/Makefile
 projects/BabelPreprocessor/Makefile
 projects/BinFuncDetect/Makefile
-projects/BinQ/Makefile
 projects/BinaryCloneDetection/Makefile
 projects/BinaryCloneDetection/compression/Makefile
 projects/BinaryCloneDetection/semantic/Makefile
@@ -2273,8 +2293,8 @@ src/frontend/Experimental_Csharp_ROSE_Connection/Makefile
 src/frontend/Experimental_Ada_ROSE_Connection/Makefile
 src/frontend/Experimental_Jovial_ROSE_Connection/Makefile
 src/frontend/Experimental_Cobol_ROSE_Connection/Makefile
+src/frontend/Experimental_Matlab_ROSE_Connection/Makefile
 src/frontend/Makefile
-src/frontend/MatlabFrontend/Makefile
 src/frontend/OpenFortranParser_SAGE_Connection/Makefile
 src/frontend/PHPFrontend/Makefile
 src/frontend/Partitioner2/Makefile
@@ -2425,8 +2445,8 @@ tests/nonsmoke/functional/CompileTests/experimental_csharp_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_ada_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_jovial_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_cobol_tests/Makefile
+tests/nonsmoke/functional/CompileTests/experimental_matlab_tests/Makefile
 tests/nonsmoke/functional/CompileTests/Makefile
-tests/nonsmoke/functional/CompileTests/Matlab_tests/Makefile
 tests/nonsmoke/functional/CompileTests/MicrosoftWindows_C_tests/Makefile
 tests/nonsmoke/functional/CompileTests/MicrosoftWindows_Cxx_tests/Makefile
 tests/nonsmoke/functional/CompileTests/MicrosoftWindows_Java_tests/Makefile

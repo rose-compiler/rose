@@ -1,10 +1,10 @@
 #ifndef ROSE_BinaryAnalysis_InstructionSemantics2_BaseSemantics_H 
 #define ROSE_BinaryAnalysis_InstructionSemantics2_BaseSemantics_H
 
+#include "BinarySmtSolver.h"
 #include "Diagnostics.h"
 #include "Registers.h"
 #include "FormatRestorer.h"
-#include "SMTSolver.h"
 
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
@@ -644,7 +644,7 @@ public:
      *  If you always want a copy regardless of whether the merge is necessary, then use the @ref createMerged convenience
      *  function instead. */
     virtual Sawyer::Optional<SValuePtr>
-    createOptionalMerge(const SValuePtr &other, const MergerPtr &merger, SMTSolver *solver) const = 0;
+    createOptionalMerge(const SValuePtr &other, const MergerPtr &merger, SmtSolver *solver) const = 0;
 
     /** Create a new value by merging two existing values.
      *
@@ -652,7 +652,7 @@ public:
      *  regardless of whether a merge was necessary.  In order to determine if a merge was necessary one can compare the
      *  return value to @p this using @ref must_equal, although doing so is more expensive than calling @ref
      *  createOptionalMerge. */
-    SValuePtr createMerged(const SValuePtr &other, const MergerPtr &merger, SMTSolver *solver) const /*final*/ {
+    SValuePtr createMerged(const SValuePtr &other, const MergerPtr &merger, SmtSolver *solver) const /*final*/ {
         return createOptionalMerge(other, merger, solver).orElse(copy());
     }
 
@@ -689,10 +689,10 @@ public:
     /** @} */
 
     /** Returns true if two values could be equal. The SMT solver is optional for many subclasses. */
-    virtual bool may_equal(const SValuePtr &other, SMTSolver *solver=NULL) const = 0;
+    virtual bool may_equal(const SValuePtr &other, SmtSolver *solver=NULL) const = 0;
 
     /** Returns true if two values must be equal.  The SMT solver is optional for many subclasses. */
-    virtual bool must_equal(const SValuePtr &other, SMTSolver *solver=NULL) const = 0;
+    virtual bool must_equal(const SValuePtr &other, SmtSolver *solver=NULL) const = 0;
 
     /** Returns true if concrete non-zero. This is not virtual since it can be implemented in terms of @ref is_number and @ref
      *  get_number. */
@@ -1532,7 +1532,7 @@ class RiscOperators: public boost::enable_shared_from_this<RiscOperators> {
     SValuePtr protoval_;                                // Prototypical value used for its virtual constructors
     StatePtr currentState_;                             // State upon which RISC operators operate
     StatePtr initialState_;                             // Lazily updated initial state; see readMemory
-    SMTSolver *solver_;                                 // Optional SMT solver
+    SmtSolver *solver_;                                 // Optional SMT solver
     SgAsmInstruction *currentInsn_;                     // Current instruction, as set by latest startInstruction call
     size_t nInsns_;                                     // Number of instructions processed
     std::string name_;                                  // Name to use for debugging
@@ -1562,12 +1562,12 @@ protected:
     RiscOperators()
         : solver_(NULL), currentInsn_(NULL), nInsns_(0) {}
 
-    explicit RiscOperators(const SValuePtr &protoval, SMTSolver *solver=NULL)
+    explicit RiscOperators(const SValuePtr &protoval, SmtSolver *solver=NULL)
         : protoval_(protoval), solver_(solver), currentInsn_(NULL), nInsns_(0) {
         ASSERT_not_null(protoval_);
     }
 
-    explicit RiscOperators(const StatePtr &state, SMTSolver *solver=NULL)
+    explicit RiscOperators(const StatePtr &state, SmtSolver *solver=NULL)
         : currentState_(state), solver_(solver), currentInsn_(NULL), nInsns_(0) {
         ASSERT_not_null(state);
         protoval_ = state->protoval();
@@ -1590,13 +1590,13 @@ public:
     /** Virtual allocating constructor.  The @p protoval is a prototypical semantic value that is used as a factory to create
      *  additional values as necessary via its virtual constructors.  The state upon which the RISC operations operate must be
      *  set by modifying the  @ref currentState property. An optional SMT solver may be specified (see @ref solver). */
-    virtual RiscOperatorsPtr create(const SValuePtr &protoval, SMTSolver *solver=NULL) const = 0;
+    virtual RiscOperatorsPtr create(const SValuePtr &protoval, SmtSolver *solver=NULL) const = 0;
 
     /** Virtual allocating constructor.  The supplied @p state is that upon which the RISC operations operate and is also used
      *  to define the prototypical semantic value. Other states can be supplied by setting @ref currentState. The prototypical
      *  semantic value is used as a factory to create additional values as necessary via its virtual constructors. An optional
      *  SMT solver may be specified (see @ref solver). */
-    virtual RiscOperatorsPtr create(const StatePtr &state, SMTSolver *solver=NULL) const = 0;
+    virtual RiscOperatorsPtr create(const StatePtr &state, SmtSolver *solver=NULL) const = 0;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Dynamic pointer casts.  No-op since this is the base class.
@@ -1627,13 +1627,13 @@ public:
      *  at whether the values are identical).
      *
      * @{ */
-    virtual SMTSolver* solver() const { return solver_; }
-    virtual void solver(SMTSolver *s) { solver_ = s; }
+    virtual SmtSolver* solver() const { return solver_; }
+    virtual void solver(SmtSolver *s) { solver_ = s; }
     /** @} */
 
     // [Robb Matzke 2016-01-22]: deprecated
-    virtual void set_solver(SMTSolver *s) ROSE_DEPRECATED("use solver instead") { solver(s); }
-    virtual SMTSolver *get_solver() const ROSE_DEPRECATED("use solver instead") { return solver(); }
+    virtual void set_solver(SmtSolver *s) ROSE_DEPRECATED("use solver instead") { solver(s); }
+    virtual SmtSolver *get_solver() const ROSE_DEPRECATED("use solver instead") { return solver(); }
 
     /** Property: Current semantic state.
      *

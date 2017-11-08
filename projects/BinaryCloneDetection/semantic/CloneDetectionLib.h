@@ -1,6 +1,7 @@
 #ifndef RSIM_CloneDetection_H
 #define RSIM_CloneDetection_H
 
+#include "BinarySmtSolver.h"
 #include "Disassembler.h"
 #include "PartialSymbolicSemantics.h"
 #include "x86InstructionSemantics.h"
@@ -9,7 +10,6 @@
 #include "Combinatorics.h"
 #include "Map.h"
 #include "SymbolicSemantics.h"
-#include "SMTSolver.h"
 
 #include "compute_signature_vector.h"
 
@@ -947,7 +947,7 @@ public:
 
     State state_;
 
-    PointerDetector(const InstructionProvidor*, Rose::BinaryAnalysis::SMTSolver*) {}
+    PointerDetector(const InstructionProvidor*, Rose::BinaryAnalysis::SmtSolver*) {}
 
     bool is_pointer(const SymbolicSemantics::ValueType<32>& addr) const {
         return false;

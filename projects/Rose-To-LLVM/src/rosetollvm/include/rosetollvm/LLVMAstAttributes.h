@@ -73,7 +73,7 @@ public:
                                                                                    needs_memcopy(false),
                                                                                    tmp_count(0),
                                                                                    tmp_int_count(0),
-                                                                                   context(llvm::getGlobalContext()),
+                                                                                   context(control.getGlobalContext()),
                                                                                    builder(context)
     {
         int byte_size = sizeof(void *);

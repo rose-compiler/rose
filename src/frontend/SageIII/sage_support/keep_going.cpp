@@ -598,7 +598,8 @@ void Rose::KeepGoing::generate_reports(SgProject* project,
   //Sometimes even for files failed on backend stage, some analysis results are generated. 
   //we still want to output such results.
   // If exists, output the analysis results associated with each file
-  if (files_with_errors.size()>0 && report_filename__pass.size()>0)
+  // Only merge the results into the pass log file if the fail log file is not specified!!
+  if (files_with_errors.size()>0 && report_filename__pass.size()>0 && report_filename__fail.empty())
   {
     bool runonce = false; 
     // add time stamp in the beginning

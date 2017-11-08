@@ -175,14 +175,13 @@ void DefUseAnalysis::mapAnyUnion(tabletype* tabl, SgNode* before, SgNode* other,
 #endif
   if (!beforeFound) {
     if (!otherFound)
-      (*tabl)[sgNode].clear();
-    else 
+      (*tabl)[sgNode].clear(); // both before and other nodes have empty sets
+    else   // only other node has a set
       (*tabl)[sgNode]=(*tabl)[other];
   } else {
-    if (!otherFound) 
+    if (!otherFound)   // only before node has a set
       (*tabl)[sgNode]=(*tabl)[before];
-    else {
-
+    else {  // both has a set, perform the actual union operation : insert two sets into a single set
       const multitype& multiA  = (*tabl)[before];
       const multitype& multiB  = (*tabl)[other];
       std::set<std::pair<SgInitializedName*, SgNode*> > s_before(multiA.begin(), multiA.end());
@@ -191,7 +190,6 @@ void DefUseAnalysis::mapAnyUnion(tabletype* tabl, SgNode* before, SgNode* other,
       s_before.insert(multiB.begin(), multiB.end());
       multitype multiC(s_before.begin(), s_before.end());
       (*tabl)[sgNode].swap(multiC);
-      
     }
   }
 }
@@ -231,16 +229,27 @@ std::string DefUseAnalysis::getInitName(SgNode* sgNode){
 /**********************************************************
  *  print out the multimap
  *********************************************************/
+
+void DefUseAnalysis::printMultiMap(const multitype& m) {
+  const multitype* multi = &m; 
+  printMultiMap(multi);
+}
 void DefUseAnalysis::printMultiMap(const multitype* multi) {
+  cout<<"\tmultitype element count:" << multi->size() <<endl;
   for (multitype::const_iterator j = multi->begin(); j != multi->end(); ++j) {  
     SgInitializedName* sgInitMM = (*j).first;
     SgNode* sgNodeMM = (*j).second;
     ROSE_ASSERT(sgInitMM);
     ROSE_ASSERT(sgNodeMM);
-    //cout << "  ..  initName:" << sgInitMM->get_qualified_name().str() << " ( " <<
-    //  ToString(getIntForSgNode(sgInitMM)) << " ) - SgNode " << 
-    //  ToString(getIntForSgNode(sgNodeMM)) << endl;
-  }      
+    cout <<"\t"
+         <<sgInitMM->class_name()<<" "<<sgInitMM << " " << sgInitMM->get_qualified_name().str() << 
+            " id ( " << ToString(getIntForSgNode(sgInitMM)) <<" ) - ";
+    if (sgInitMM!=sgNodeMM)
+     cout <<sgNodeMM->class_name()<<" "<<sgNodeMM << 
+            " id ( " << ToString(getIntForSgNode(sgNodeMM)) <<" ) "<< endl;
+    else
+     cout << "same self node" <<endl;
+  }
 }
 
 /**********************************************************
@@ -270,7 +279,8 @@ void DefUseAnalysis::printAnyMap(tabletype* tabl) {
     multitype multi = (*i).second;
     string name = getInitName(sgNode);
     int theNode = getIntForSgNode(sgNode);
-    cout << pos << ": " << ToString(theNode) << " var: " << name << endl;
+    cout<<"........................."<<endl;
+    cout << pos << ": " << ToString(theNode) << " var: " << name <<" " <<sgNode <<endl;
     printMultiMap(&multi);
   }
 }
@@ -355,7 +365,7 @@ bool DefUseAnalysis::searchMap(const tabletype* ltable, SgNode* node) {
 
 /******************************************
  * return vector to user
- * for any given node and initName, return all definitions 
+ * for any given node and initName, return all reaching definitions
  *****************************************/
 std::vector < SgNode* > DefUseAnalysis::getDefFor(SgNode* node, SgInitializedName* initName) {
   multitype multi = getDefMultiMapFor(node);
@@ -473,6 +483,8 @@ bool  DefUseAnalysis::start_traversal_of_functions() {
   bool abortme=false;
   for (Rose_STL_Container<SgNode*>::const_iterator i = functions.begin(); i != functions.end(); ++i) {
     SgFunctionDefinition* proc = isSgFunctionDefinition(*i);
+    if (DEBUG_MODE) 
+      cout << "\t function Def@"<< proc->get_file_info()->get_filename() <<":" << proc->get_file_info()->get_line() << endl;
     FilteredCFGNode <IsDFAFilter> rem_source = defuse_perfunc->run(proc,abortme);
     nrOfNodesVisited += defuse_perfunc->getNumberOfNodesVisited();
     //cout << nrOfNodesVisited << " ......... function " << proc->get_declaration()->get_name().str() << endl; 

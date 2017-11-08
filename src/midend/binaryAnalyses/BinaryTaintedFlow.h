@@ -119,10 +119,10 @@ protected:
     class TransferFunction {
         const DataFlow::VertexFlowGraphs &index_; // maps CFG vertex to data flow graph
         Approximation approximation_;
-        SMTSolver *smtSolver_;
+        SmtSolver *smtSolver_;
         Sawyer::Message::Facility &mlog;
     public:
-        TransferFunction(const DataFlow::VertexFlowGraphs &index, Approximation approx, SMTSolver *solver,
+        TransferFunction(const DataFlow::VertexFlowGraphs &index, Approximation approx, SmtSolver *solver,
                          Sawyer::Message::Facility &mlog)
             : index_(index), approximation_(approx), smtSolver_(solver), mlog(mlog) {}
 
@@ -163,7 +163,7 @@ private:
     DataFlow::VariableList variableList_;
     bool vlistInitialized_;
     std::vector<StatePtr> results_;
-    SMTSolver *smtSolver_;
+    SmtSolver *smtSolver_;
 
 public:
     /** Constructs a tainted flow analysis.
@@ -198,8 +198,8 @@ public:
      *  which case under and over approximations both degenerate to equality using only structural equivalence.
      *
      *  @{ */
-    SMTSolver *smtSolver() const { return smtSolver_; }
-    void smtSolver(SMTSolver *solver) { smtSolver_ = solver; }
+    SmtSolver *smtSolver() const { return smtSolver_; }
+    void smtSolver(SmtSolver *solver) { smtSolver_ = solver; }
     /** @} */
 
     /** Compute data flow graphs.
