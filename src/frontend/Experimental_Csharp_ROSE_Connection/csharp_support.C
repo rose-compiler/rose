@@ -17,7 +17,8 @@ bool process(std::string &lib, std::string &function, std::string sourceFileName
      void (*process)(void) = NULL;
 #else
   // void (*process)(std::string s) = NULL;
-     void (*process)(char*) = NULL;
+  // void (*process)(char*) = NULL;
+     void (*process)(char*,char*) = NULL;
 #endif
      char *error           = NULL;
 
@@ -42,7 +43,8 @@ bool process(std::string &lib, std::string &function, std::string sourceFileName
      process = (void (*)(void)) dlsym(handle, function.c_str());
 #else
   // process = (void (*)(std::string)) dlsym(handle, function.c_str());
-     process = (void (*)(char*)) dlsym(handle, function.c_str());
+  // process = (void (*)(char*)) dlsym(handle, function.c_str());
+     process = (void (*)(char*,char*)) dlsym(handle, function.c_str());
 #endif
 
      printf ("In C++ process(): after call to dlsym(): process = %p \n",process);
@@ -69,9 +71,13 @@ bool process(std::string &lib, std::string &function, std::string sourceFileName
      char* s = strncpy(buffer,sourceFileNameWithPath.c_str(),1000);
      s[1001] = '\0';
 
-     printf ("In C++ process(): s = %s \n",s);
+     char buffer_2[2000];
+     char* top_builddir = strncpy(buffer_2,ROSE_AUTOMAKE_TOP_BUILDDIR.c_str(),1000);
+     top_builddir[1001] = '\0';
 
-     process(s);
+     printf ("In C++ process(): top_builddir = %s s = %s \n",top_builddir,s);
+
+     process(top_builddir,s);
 #endif
 
      printf ("In C++ process(): calling dlclose() \n");
@@ -86,9 +92,8 @@ bool process(std::string &lib, std::string &function, std::string sourceFileName
 #ifdef BUILD_EXECUTABLE
 
 // We need to define this when we build the executable (though it will not run).
-const std::string ROSE_AUTOMAKE_TOP_BUILDDIR = "";
-
-int main(int argc, char** argv)
+// const std::string ROSE_AUTOMAKE_TOP_BUILDDIR = "";
+// int main(int argc, char** argv)
 #else
 
 // #error "Should not be reached!"

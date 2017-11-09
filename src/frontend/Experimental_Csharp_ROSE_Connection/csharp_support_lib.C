@@ -112,7 +112,8 @@ static void processThroughMono(std::string& dll, std::string sourceFileNameWithP
 void process()
 #else
 // void process( std::string sourceFileNameWithPath)
-void process( char* sourceFileNameWithPath_char)
+// void process( char* sourceFileNameWithPath_char)
+void process( char* top_builddir_char, char* sourceFileNameWithPath_char)
 #endif
    {
      std::cout << "process()!!" << std::endl;
@@ -125,7 +126,19 @@ void process( char* sourceFileNameWithPath_char)
   //                   ROSE_AUTOMAKE_TOP_SRCDIR
   // std::string dll = ROSE_AUTOMAKE_TOP_SRCDIR + "/src/frontend/Experimental_Csharp_ROSE_Connection/csharp_main.dll";
   // std::string dll = ROSE_AUTOMAKE_TOP_BUILDDIR + "/src/frontend/Experimental_Csharp_ROSE_Connection/csharp_main.dll";
-     std::string dll = "/data1/ROSE_CompileTree/git-LINUX-64bit-4.8.4-EDG49-BOOST_1_60-dq-language-development-rc/src/frontend/Experimental_Csharp_ROSE_Connection/csharp_main.dll";
+  // std::string dll = "/data1/ROSE_CompileTree/git-LINUX-64bit-4.8.4-EDG49-BOOST_1_60-dq-language-development-rc/src/frontend/Experimental_Csharp_ROSE_Connection/csharp_main.dll";
+  // std::string dll = ROSE_AUTOMAKE_TOP_BUILDDIR + "/src/frontend/Experimental_Csharp_ROSE_Connection/csharp_main.dll";
+
+     printf ("In C++ process(std::string): top_builddir_char = %s \n",top_builddir_char);
+
+     std::string top_builddir_string = top_builddir_char;
+
+     printf ("In C++ process(std::string): top_builddir_string = %s \n",top_builddir_string.c_str());
+
+  // Note: since we can't reference ROSE_AUTOMAKE_TOP_BUILDDIR becausing including it in this DLL would 
+  // cause the same symbol to be included in ROSE and this DLL we have to pass the location of the build
+  // tree in as a parameter.
+     std::string dll = top_builddir_string + "/src/frontend/Experimental_Csharp_ROSE_Connection/csharp_main.dll";
 
 #if 0
      std::string sourceFileNameWithPath = "unknown";
