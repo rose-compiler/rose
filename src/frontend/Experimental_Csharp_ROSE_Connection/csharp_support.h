@@ -27,7 +27,7 @@ class Container {
 
 //Entry point for C++
 // extern "C" void process(void);
-extern "C" void process(char* sourceFileNameWithPath);
+extern "C" void process(char* top_builddir, char* sourceFileNameWithPath);
 
 //Used by C# to store the results
 extern "C" void storeResults(uint64_t container,int value);

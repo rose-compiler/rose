@@ -147,7 +147,7 @@ public class BuildDotGraph : CSharpSyntaxWalker
                Console.WriteLine(indents + "Parent was null: node = " + node.Kind() + " label = " + label);
              }
 
-          Console.WriteLine("Write to DOT file");
+          Console.WriteLine("Write to DOT file XXX XXX XXX");
 
           using (file = new System.IO.StreamWriter("csharpAST.dot",true) )
              {
@@ -158,7 +158,7 @@ public class BuildDotGraph : CSharpSyntaxWalker
             // file << "\"" << StringUtility::numberToString(scope) << "\"[" << "label=\"" << scope_name << "\\n" << StringUtility::numberToString(scope) << "\" color=\"blue\",fillcolor=cyan4,fontname=\"7x13bold\",fontcolor=black,style=filled];" << endl;
                string dotGraphNode = "\"" + label + "\"[" + "label=\"" + node.Kind() + "\\n" + label + "\" color=\"blue\",fillcolor=cyan4,fontname=\"7x13bold\",fontcolor=black,style=filled];";
                file.WriteLine(dotGraphNode);
-
+#if OLD_CODE
                if (Parent != null)
                   {
                     if (labelMap.TryGetValue(Parent, out parentLabel))
@@ -167,10 +167,10 @@ public class BuildDotGraph : CSharpSyntaxWalker
                       // file << "\"" << StringUtility::numberToString(scope) << "\" -> \"" << StringUtility::numberToString(ctor_init)
                       //      << "\"[label=\"" << "ctor preinit member : " + StringUtility::numberToString(counter) << ":" 
                       //      << StringUtility::numberToString(ctor_init) << "\" color=\"blue\" labelfontcolor=\"blue4\" weight=1 len=2];" << endl;
-                         string dotGraphEdge = "\"" + parentLabel + "\" -> \"" + label +
-                                               "\"[label=\"" + "edge_label : " + counter + ":" +
-                                               label + "\" color=\"blue\" labelfontcolor=\"blue4\" weight=1 len=2];";
-                         file.WriteLine(dotGraphEdge);
+                      // string dotGraphEdge = "\"" + parentLabel + "\" -> \"" + label +
+                      //                       "\"[label=\"" + "edge_label : " + counter + ":" +
+                      //                       label + "\" color=\"blue\" labelfontcolor=\"blue4\" weight=1 len=2];";
+                      // file.WriteLine(dotGraphEdge);
                        }
                       else
                        {
@@ -181,12 +181,29 @@ public class BuildDotGraph : CSharpSyntaxWalker
                   {
                     Console.WriteLine(indents + "Parent was null: node = " + node.Kind() + " label = " + label);
                   }
+#endif
              }
 
           Console.WriteLine("Process Switch Statement");
 
        // Check for the syntax kind (only on what would be more abstract syntax tree nodes).
-          switch (node.Kind())
+       // Use the switch on the parent node to determine the edge label for the edge between the
+       // parent node and the current node (child node).
+
+          if (Parent != null)
+             {
+               if (node != null)
+                  {
+                    Console.WriteLine("Error: node == null");
+                  }
+
+            // string edgeLabelName = "edge: " + node.Kind();
+               string edgeLabelName = "" + node.Kind();
+
+               Console.WriteLine("default edge label = " + edgeLabelName);
+
+       // switch (node.Kind())
+          switch (Parent.Kind())
              {
             // names & type-names
                case SyntaxKind.IdentifierName: // = 8616,
@@ -195,7 +212,7 @@ public class BuildDotGraph : CSharpSyntaxWalker
                case SyntaxKind.QualifiedName: // = 8617,
                     Console.WriteLine("Sorry, not implemented! node.Kind = " + node.Kind());
 
-                    QualifiedNameSyntax qualifiedNameNode = node as QualifiedNameSyntax;
+                    QualifiedNameSyntax qualifiedNameNode = Parent as QualifiedNameSyntax;
 
                     Console.WriteLine("   --- qualifiedNameNode.Kind      = " + qualifiedNameNode.Kind());
                  // Console.WriteLine("   --- qualifiedNameNode.Qualifier = " + qualifiedNameNode.Qualifier());
@@ -205,6 +222,15 @@ public class BuildDotGraph : CSharpSyntaxWalker
                  // Console.WriteLine("   --- qualifiedNameNode.Name      = " + qualifiedNameNode.GetUnqualifiedName);
                     Console.WriteLine("   --- qualifiedNameNode.Left  = " + qualifiedNameNode.Left);
                     Console.WriteLine("   --- qualifiedNameNode.Right = " + qualifiedNameNode.Right);
+
+                    if (qualifiedNameNode.Left == node)
+                       {
+                         edgeLabelName = "left";
+                       }
+                      else
+                       {
+                         edgeLabelName = "right";
+                       }
 
                     break;
 
@@ -417,12 +443,17 @@ public class BuildDotGraph : CSharpSyntaxWalker
                     break;
 
                case SyntaxKind.UsingDirective: // = 8843,
-                    Console.WriteLine("Sorry, not implemented! node.Kind = " + node.Kind());
+                    Console.WriteLine("Sorry, not implemented! case SyntaxKind.UsingDirective: node.Kind = " + node.Kind());
 
-                    UsingDirectiveSyntax usingDirectiveNode = node as UsingDirectiveSyntax;
+                    UsingDirectiveSyntax usingDirectiveNode = Parent as UsingDirectiveSyntax;
 
                     Console.WriteLine("   --- usingDirectiveNode.Kind = " + usingDirectiveNode.Kind());
                     Console.WriteLine("   --- usingDirectiveNode.Name = " + usingDirectiveNode.Name);
+
+                    if (usingDirectiveNode.Name == node)
+                       {
+                         edgeLabelName = "name";
+                       }
 
                     break;
 
@@ -487,6 +518,30 @@ public class BuildDotGraph : CSharpSyntaxWalker
                default:
                     Console.WriteLine("Error: default reached in switch over node.Kind = " + node.Kind());
                     break;
+             }
+
+               using (file = new System.IO.StreamWriter("csharpAST.dot",true) )
+                  {
+                 // using file scope.
+                    if (labelMap.TryGetValue(Parent, out parentLabel))
+                       {
+                      // Console.WriteLine(indents + "For Parent in map: Parent = " + Parent.Kind() + " parentLabel = " + parentLabel);
+                      // file << "\"" << StringUtility::numberToString(scope) << "\" -> \"" << StringUtility::numberToString(ctor_init)
+                      //      << "\"[label=\"" << "ctor preinit member : " + StringUtility::numberToString(counter) << ":" 
+                      //      << StringUtility::numberToString(ctor_init) << "\" color=\"blue\" labelfontcolor=\"blue4\" weight=1 len=2];" << endl;
+                         string dotGraphEdge = "\"" + parentLabel + "\" -> \"" + label + "\"[label=\"" + edgeLabelName + 
+                                            // " : " + counter + ":" + label + 
+                                               "\" color=\"blue\" labelfontcolor=\"blue4\" weight=1 len=2];";
+                         file.WriteLine(dotGraphEdge);
+                       }
+                      else
+                       {
+                         Console.WriteLine(indents + "Parent not available in map: node = " + node.Kind() + " label = " + label);
+                       }
+
+                  }
+
+          // conditional test for null parent node.
              }
 
        // Console.WriteLine("Tabs = " + Tabs);

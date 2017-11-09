@@ -1,8 +1,9 @@
 // This is the Csharp program that will call the Roslyn library specific to CodeAnalysis.
 
 // #define IGNORE_OLD_CODE
-#define OUTPUT_PARSE_TREE
-#define OUTPUT_ABSTRACT_SYNTAX_TREE
+// #define OUTPUT_PARSE_TREE
+// #define OUTPUT_ABSTRACT_SYNTAX_TREE
+#define OUTPUT_DOT_GRAPH_OF_ABSTRACT_SYNTAX_TREE
 
 using System;
 using System.Collections.Generic;
@@ -30,27 +31,6 @@ namespace TestDLL
    {
      class Program
         {
-#if IGNORE_OLD_CODE
-          public static List<int> superCalculation()
-             {
-            // Actual name of the function should be: "dateNowToIntegerList"
-
-               List<int> result = new List<int>();
-               string dateString = DateTime.Now.ToString();
-               for(int i = 0;i<dateString.Length;i++)
-                  {
-                    if (Char.IsNumber(dateString[i]) == false) 
-                         continue;
-                    result.Add(Int32.Parse( dateString[i].ToString() ));
-                  }
-
-               return result;
-             }
-
-       // [DllImport("./Kazelib.so", EntryPoint = "storeResults")]
-       // public extern static void storeResults(System.UInt64 container, int value);
-#endif
-        
           [DllExport("process", CallingConvention = CallingConvention.Cdecl)]
        // public static void process(UInt64 container)
        // public static void process(System.UInt64 container)
@@ -62,7 +42,7 @@ namespace TestDLL
 
                String filetext = "";
 
-               Console.WriteLine ("In C# process(System.UInt64) called from ROSE C++: Hello! \n");
+            // Console.WriteLine ("In C# process(System.UInt64) called from ROSE C++: Hello!");
 
                Console.WriteLine (filename);
 
@@ -81,7 +61,7 @@ namespace TestDLL
                        }
                   }
 
-               Console.WriteLine ("In C# process(string) after reading file! \n");
+               Console.WriteLine ("In C# process(string) after reading file");
 
             // Output the file as text on the console (debugging).
             // Console.WriteLine (filetext);
@@ -89,43 +69,11 @@ namespace TestDLL
             // SyntaxTree tree = CSharpSyntaxTree.ParseText("using System;");
                SyntaxTree tree = CSharpSyntaxTree.ParseText(filetext);
 
-#if IGNORE_NEW_CODE
-            SyntaxTree tree = CSharpSyntaxTree.ParseText(
-@"using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
+               Console.WriteLine ("In C# process(System.UInt64) after parsing C# file");
 
-namespace TopLevel
-{
-    using Microsoft;
-    using System.ComponentModel;
-
-    namespace Child1
-    {
-        using Microsoft.Win32;
-        using System.Runtime.InteropServices;
-
-        class Foo { }
-    }
-
-    namespace Child2
-    {
-        using System.CodeDom;
-        using Microsoft.CSharp;
-
-        class Bar { }
-    }
-}");
-#endif
-
-               Console.WriteLine ("In C# process(System.UInt64) after parsing C# string! \n");
-
-// #if IGNORE_NEW_CODE
             var root = (CompilationUnitSyntax)tree.GetRoot();
 
+#if IGNORE_NEW_CODE
             var collector = new UsingCollector();
             collector.Visit(root);
 
@@ -133,30 +81,38 @@ namespace TopLevel
             {
                 Console.WriteLine(directive.Name);
             }
-// #endif
+#endif
 
-               Console.WriteLine ("In C# process(System.UInt64) after outputing the using directives! \n");
+               Console.WriteLine ("In C# process(System.UInt64) after outputing the using directives!");
+
+               Console.WriteLine ("In C# process(System.UInt64) generate DOT file of Roslyn AST!");
+
+#if OUTPUT_DOT_GRAPH_OF_ABSTRACT_SYNTAX_TREE
+               var buildDotGraph_object = new BuildDotGraph(filename);
+               buildDotGraph_object.Visit(root);
+
+            // Call the destructor.
+            // buildDotGraph_object.Finalize();
+               buildDotGraph_object.CloseOffDotSyntax();
+#endif
+
+               Console.WriteLine ("DONE: C# process(System.UInt64) generate DOT file of Roslyn AST!");
 
 #if OUTPUT_ABSTRACT_SYNTAX_TREE
                var abstractSyntaxTreeTraversal_object = new AbstractSyntaxTreeTraversal();
                abstractSyntaxTreeTraversal_object.Visit(root);
 #endif
 
+               Console.WriteLine ("In C# process(System.UInt64) output Roslyn AST!");
+
 #if OUTPUT_PARSE_TREE
                var parseTreeTraversal_object = new ParseTreeTraversal();
                parseTreeTraversal_object.Visit(root);
 #endif
 
-               Console.WriteLine ("In C# process(System.UInt64) after output of parse tree! \n");
+               Console.WriteLine ("In C# process(System.UInt64) after output of Roslyn AST!");
 
-#if IGNORE_OLD_CODE
-               List<int> results = superCalculation();
-               for (int i = 0; i < results.Count; i++)
-                  {
-                 // storeResults(container, results[i]);
-                  }
-#endif
-               Console.WriteLine ("Leaving C# process(System.UInt64)! \n");
+               Console.WriteLine ("Leaving C# process(System.UInt64)");
              }
         }
    }
