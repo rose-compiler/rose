@@ -149,6 +149,7 @@ public class BuildDotGraph : CSharpSyntaxWalker
 
           Console.WriteLine("Write to DOT file XXX XXX XXX");
 
+#if OLD_CODE
           using (file = new System.IO.StreamWriter("csharpAST.dot",true) )
              {
             // We need to generate unique names as lables in the DOT graph.
@@ -158,7 +159,7 @@ public class BuildDotGraph : CSharpSyntaxWalker
             // file << "\"" << StringUtility::numberToString(scope) << "\"[" << "label=\"" << scope_name << "\\n" << StringUtility::numberToString(scope) << "\" color=\"blue\",fillcolor=cyan4,fontname=\"7x13bold\",fontcolor=black,style=filled];" << endl;
                string dotGraphNode = "\"" + label + "\"[" + "label=\"" + node.Kind() + "\\n" + label + "\" color=\"blue\",fillcolor=cyan4,fontname=\"7x13bold\",fontcolor=black,style=filled];";
                file.WriteLine(dotGraphNode);
-#if OLD_CODE
+
                if (Parent != null)
                   {
                     if (labelMap.TryGetValue(Parent, out parentLabel))
@@ -181,8 +182,8 @@ public class BuildDotGraph : CSharpSyntaxWalker
                   {
                     Console.WriteLine(indents + "Parent was null: node = " + node.Kind() + " label = " + label);
                   }
-#endif
              }
+#endif
 
           Console.WriteLine("Process Switch Statement");
 
@@ -199,6 +200,7 @@ public class BuildDotGraph : CSharpSyntaxWalker
 
             // string edgeLabelName = "edge: " + node.Kind();
                string edgeLabelName = "" + node.Kind();
+               string nodeLabelName = "" + node.Kind();
 
                Console.WriteLine("default edge label = " + edgeLabelName);
 
@@ -488,7 +490,21 @@ public class BuildDotGraph : CSharpSyntaxWalker
                case SyntaxKind.EnumMemberDeclaration: // = 8872,
                case SyntaxKind.FieldDeclaration: // = 8873,
                case SyntaxKind.EventFieldDeclaration: // = 8874,
+                    break;
+
                case SyntaxKind.MethodDeclaration: // = 8875,
+                  {
+                    Console.WriteLine("case SyntaxKind.MethodDeclaration: node.Kind = " + node.Kind());
+
+                    MethodDeclarationSyntax methodDeclarationNode = Parent as MethodDeclarationSyntax;
+
+                    Console.WriteLine("   Identifier = methodDeclarationNode.Identifier = " + methodDeclarationNode.Identifier);
+
+                    nodeLabelName += "\n" + methodDeclarationNode.Identifier;
+
+                    break;
+                  }
+
                case SyntaxKind.OperatorDeclaration: // = 8876,
                case SyntaxKind.ConversionOperatorDeclaration: // = 8877,
                case SyntaxKind.ConstructorDeclaration: // = 8878,
@@ -525,6 +541,11 @@ public class BuildDotGraph : CSharpSyntaxWalker
                  // using file scope.
                     if (labelMap.TryGetValue(Parent, out parentLabel))
                        {
+                      // string dotGraphNode = "\"" + label + "\"[" + "label=\"" + nodeLabelName + "\\n" + label + "\" color=\"blue\",fillcolor=cyan4,fontname=\"7x13bold\",fontcolor=black,style=filled];";
+                         string dotGraphNode = "\"" + parentLabel + "\"[" + "label=\"" + nodeLabelName + "\\n" + parentLabel + "\" color=\"blue\",fillcolor=cyan4,fontname=\"7x13bold\",fontcolor=black,style=filled];";
+
+                         file.WriteLine(dotGraphNode);
+
                       // Console.WriteLine(indents + "For Parent in map: Parent = " + Parent.Kind() + " parentLabel = " + parentLabel);
                       // file << "\"" << StringUtility::numberToString(scope) << "\" -> \"" << StringUtility::numberToString(ctor_init)
                       //      << "\"[label=\"" << "ctor preinit member : " + StringUtility::numberToString(counter) << ":" 
@@ -543,8 +564,23 @@ public class BuildDotGraph : CSharpSyntaxWalker
 
           // conditional test for null parent node.
              }
+            else
+             {
+               Console.WriteLine("Handle case of Parent == null");
 
-       // Console.WriteLine("Tabs = " + Tabs);
+               using (file = new System.IO.StreamWriter("csharpAST.dot",true) )
+                  {
+                    string dotGraphNode = "\"" + label + "\"[" + "label=\"" + node.Kind() + "\\n" + label + "\" color=\"blue\",fillcolor=cyan4,fontname=\"7x13bold\",fontcolor=black,style=filled];";
+
+                    Console.WriteLine("dotGraphNode = " + dotGraphNode);
+
+                    file.WriteLine(dotGraphNode);
+
+                    Console.WriteLine("After output to file: dotGraphNode = " + dotGraphNode);
+                  }
+             }
+
+          Console.WriteLine("Tabs = " + Tabs);
 
        // Use an array of Nodes to represent the parents.
        // Parent = node;
