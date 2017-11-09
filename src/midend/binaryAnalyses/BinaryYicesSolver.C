@@ -870,6 +870,18 @@ YicesSolver::ctx_define(const std::vector<SymbolicExpr::Ptr> &exprs, Definitions
                         ASSERT_not_null(vdecl);
                     }
                 }
+            } else if (SymbolicExpr::InteriorPtr inode = node->isInteriorNode()) {
+                if (inode->getOperator() == SymbolicExpr::OP_SET) {
+                    // Sets are ultimately converted to ITEs and therefore each set needs a free variable.
+                    SymbolicExpr::LeafPtr var = SymbolicExpr::makeVariable(32, "set")->isLeafNode();
+                    defns->insert(var->nameId());
+                    yices_type bvtype = yices_mk_bitvector_type(self->context, var->nBits());
+                    ASSERT_not_null(bvtype);
+                    std::string name = var->toString();
+                    yices_var_decl vdecl __attribute__((unused)) = yices_mk_var_decl(self->context, name.c_str(), bvtype);
+                    ASSERT_not_null(vdecl);
+                    self->varForSet(inode, var);
+                }
             }
             return SymbolicExpr::CONTINUE;
         }
@@ -889,7 +901,7 @@ void
 YicesSolver::ctx_common_subexpressions(const std::vector<SymbolicExpr::Ptr> &exprs) {
     std::vector<SymbolicExpr::Ptr> cses = findCommonSubexpressions(exprs);
     BOOST_FOREACH (const SymbolicExpr::Ptr &cse, cses) {
-        yices_expr cseExpr = ctx_expr(cse);
+        yices_expr cseExpr = ctx_expr(cse, BIT_VECTOR);
         termExprs.insert(cse, cseExpr);
     }
 }
@@ -903,7 +915,7 @@ YicesSolver::ctx_assert(const SymbolicExpr::Ptr &tn)
     if (tn->isNumber() && tn->nBits()==1) {
         ASSERT_not_implemented("[Robb Matzke 2015-10-15]"); // see out_assert for similar code
     } else {
-        yices_expr e = ctx_expr(tn);
+        yices_expr e = ctx_expr(tn, BOOLEAN);
         ASSERT_not_null(e);
         yices_assert(context, e);
     }
@@ -913,76 +925,213 @@ YicesSolver::ctx_assert(const SymbolicExpr::Ptr &tn)
 #ifdef ROSE_HAVE_LIBYICES
 /* Builds a Yices expression from a ROSE expression. */
 yices_expr
-YicesSolver::ctx_expr(const SymbolicExpr::Ptr &tn)
+YicesSolver::ctx_expr(const SymbolicExpr::Ptr &tn, Type needType)
 {
     yices_expr retval = 0;
     SymbolicExpr::LeafPtr ln = tn->isLeafNode();
     SymbolicExpr::InteriorPtr in = tn->isInteriorNode();
     if (termExprs.getOptional(tn).assignTo(retval)) {
-        return retval;
+        if (BOOLEAN == needType) {
+            TODO("[Robb Matzke 2017-11-09]");
+        } else {
+            return retval;
+        }
     } else if (ln) {
         if (ln->isNumber()) {
-            if (ln->nBits() <= 64) {
+            if (BOOLEAN == needType) {
+                ASSERT_require(ln->nBits() == 1);
+                TODO("[Robb Matzke 2017-11-09]");
+            } else if (ln->nBits() <= 64) {
+                ASSERT_require(BIT_VECTOR == needType);
                 retval = yices_mk_bv_constant(context, ln->nBits(), ln->toInt());
             } else {
+                ASSERT_require(BIT_VECTOR == needType);
                 int tmp[ln->nBits()];
                 for (size_t i=0; i<ln->nBits(); ++i)
                     tmp[i] = ln->bits().get(i) ? 1 : 0;
                 retval = yices_mk_bv_constant_from_array(context, ln->nBits(), tmp);
             }
+        } else if (ln->isVariable()) {
+            if (BOOLEAN == needType) {
+                TODO("[Robb Matzke 2017-11-09]");
+            } else {
+                yices_var_decl vdecl = yices_get_var_decl_from_name(context, ln->toString().c_str());
+                ASSERT_not_null(vdecl);
+                retval = yices_mk_var_from_decl(context, vdecl);
+            }
         } else {
-            ASSERT_require(ln->isMemory() || ln->isVariable());
-            std::string name = (ln->isMemory()?"m":"v") + StringUtility::numberToString(ln->nameId());
-            yices_var_decl vdecl = yices_get_var_decl_from_name(context, name.c_str());
+            ASSERT_require(ln->isMemory());
+            yices_var_decl vdecl = yices_get_var_decl_from_name(context, ln->toString().c_str());
             ASSERT_not_null(vdecl);
             retval = yices_mk_var_from_decl(context, vdecl);
         }
     } else {
         ASSERT_not_null(in);
         switch (in->getOperator()) {
-            case SymbolicExpr::OP_ADD:        retval = ctx_la(yices_mk_bv_add, in, false);            break;
-            case SymbolicExpr::OP_AND:        retval = ctx_la(yices_mk_and, in, true);                break;
-            case SymbolicExpr::OP_ASR:        retval = ctx_asr(in);                                   break;
-            case SymbolicExpr::OP_BV_AND:     retval = ctx_la(yices_mk_bv_and, in, true);             break;
-            case SymbolicExpr::OP_BV_OR:      retval = ctx_la(yices_mk_bv_or, in, false);             break;
-            case SymbolicExpr::OP_BV_XOR:     retval = ctx_la(yices_mk_bv_xor, in, false);            break;
-            case SymbolicExpr::OP_EQ:         retval = ctx_binary(yices_mk_eq, in);                   break;
-            case SymbolicExpr::OP_CONCAT:     retval = ctx_la(yices_mk_bv_concat, in);                break;
-            case SymbolicExpr::OP_EXTRACT:    retval = ctx_extract(in);                               break;
-            case SymbolicExpr::OP_INVERT:     retval = ctx_unary(yices_mk_bv_not, in);                break;
-            case SymbolicExpr::OP_ITE:        retval = ctx_ite(in);                                   break;
-            case SymbolicExpr::OP_LSSB:       throw Exception("OP_LSSB not implemented");
-            case SymbolicExpr::OP_MSSB:       throw Exception("OP_MSSB not implemented");
-            case SymbolicExpr::OP_NE:         retval = ctx_binary(yices_mk_diseq, in);                break;
-            case SymbolicExpr::OP_NEGATE:     retval = ctx_unary(yices_mk_bv_minus, in);              break;
-            case SymbolicExpr::OP_NOOP:       throw Exception("OP_NOOP not implemented");
-            case SymbolicExpr::OP_OR:         retval = ctx_la(yices_mk_or, in, false);                break;
-            case SymbolicExpr::OP_READ:       retval = ctx_read(in);                                  break;
-            case SymbolicExpr::OP_ROL:        throw Exception("OP_ROL not implemented");
-            case SymbolicExpr::OP_ROR:        throw Exception("OP_ROR not implemented");
-            case SymbolicExpr::OP_SET:        retval = ctx_set(in);                                   break;
-            case SymbolicExpr::OP_SDIV:       throw Exception("OP_SDIV not implemented");
-            case SymbolicExpr::OP_SEXTEND:    retval = ctx_sext(in);                                  break;
-            case SymbolicExpr::OP_SLT:        retval = ctx_binary(yices_mk_bv_slt, in);               break;
-            case SymbolicExpr::OP_SLE:        retval = ctx_binary(yices_mk_bv_sle, in);               break;
-            case SymbolicExpr::OP_SHL0:       retval = ctx_shift(yices_mk_bv_shift_left0, in);        break;
-            case SymbolicExpr::OP_SHL1:       retval = ctx_shift(yices_mk_bv_shift_left1, in);        break;
-            case SymbolicExpr::OP_SHR0:       retval = ctx_shift(yices_mk_bv_shift_right0, in);       break;
-            case SymbolicExpr::OP_SHR1:       retval = ctx_shift(yices_mk_bv_shift_right1, in);       break;
-            case SymbolicExpr::OP_SGE:        retval = ctx_binary(yices_mk_bv_sge, in);               break;
-            case SymbolicExpr::OP_SGT:        retval = ctx_binary(yices_mk_bv_sgt, in);               break;
-            case SymbolicExpr::OP_SMOD:       throw Exception("OP_SMOD not implemented");
-            case SymbolicExpr::OP_SMUL:       retval = ctx_mult(in);                                  break;
-            case SymbolicExpr::OP_UDIV:       throw Exception("OP_UDIV not implemented");
-            case SymbolicExpr::OP_UEXTEND:    retval = ctx_uext(in);                                  break;
-            case SymbolicExpr::OP_UGE:        retval = ctx_binary(yices_mk_bv_ge, in);                break;
-            case SymbolicExpr::OP_UGT:        retval = ctx_binary(yices_mk_bv_gt, in);                break;
-            case SymbolicExpr::OP_ULE:        retval = ctx_binary(yices_mk_bv_le, in);                break;
-            case SymbolicExpr::OP_ULT:        retval = ctx_binary(yices_mk_bv_lt, in);                break;
-            case SymbolicExpr::OP_UMOD:       throw Exception("OP_UMOD not implemented");
-            case SymbolicExpr::OP_UMUL:       retval = ctx_mult(in);                                  break;
-            case SymbolicExpr::OP_WRITE:      retval = ctx_write(in);                                 break;
-            case SymbolicExpr::OP_ZEROP:      retval = ctx_zerop(in);                                 break;
+            case SymbolicExpr::OP_ADD:
+                ASSERT_require(BIT_VECTOR == needType);
+                retval = ctx_la(yices_mk_bv_add, in, false, BIT_VECTOR);
+                break;
+            case SymbolicExpr::OP_AND:
+                ASSERT_require(BOOLEAN == needType);
+                retval = ctx_la(yices_mk_and, in, true, BOOLEAN);
+                break;
+            case SymbolicExpr::OP_ASR:
+                ASSERT_require(BIT_VECTOR == needType);
+                retval = ctx_asr(in);
+                break;
+            case SymbolicExpr::OP_BV_AND:
+                ASSERT_require(BIT_VECTOR == needType);
+                retval = ctx_la(yices_mk_bv_and, in, true, BIT_VECTOR);
+                break;
+            case SymbolicExpr::OP_BV_OR:
+                ASSERT_require(BIT_VECTOR == needType);
+                retval = ctx_la(yices_mk_bv_or, in, false, BIT_VECTOR);
+                break;
+            case SymbolicExpr::OP_BV_XOR:
+                ASSERT_require(BIT_VECTOR == needType);
+                retval = ctx_la(yices_mk_bv_xor, in, false, BIT_VECTOR);
+                break;
+            case SymbolicExpr::OP_EQ:
+                ASSERT_require(BOOLEAN == needType);
+                retval = ctx_binary(yices_mk_eq, in, BIT_VECTOR);
+                break;
+            case SymbolicExpr::OP_CONCAT:
+                ASSERT_require(BIT_VECTOR == needType);
+                retval = ctx_la(yices_mk_bv_concat, in, BIT_VECTOR);
+                break;
+            case SymbolicExpr::OP_EXTRACT:
+                ASSERT_require(BIT_VECTOR == needType);
+                retval = ctx_extract(in);
+                break;
+            case SymbolicExpr::OP_INVERT:
+                if (BOOLEAN == needType) {
+                    retval = ctx_unary(yices_mk_not, in, BOOLEAN);
+                } else {
+                    retval = ctx_unary(yices_mk_bv_not, in, BIT_VECTOR);
+                }
+                break;
+            case SymbolicExpr::OP_ITE:
+                retval = ctx_ite(in, needType);
+                break;
+            case SymbolicExpr::OP_LSSB:
+                ASSERT_require(BIT_VECTOR == needType);
+                throw Exception("OP_LSSB not implemented");
+            case SymbolicExpr::OP_MSSB:
+                ASSERT_require(BIT_VECTOR == needType);
+                throw Exception("OP_MSSB not implemented");
+            case SymbolicExpr::OP_NE:
+                ASSERT_require(BOOLEAN == needType);
+                retval = ctx_binary(yices_mk_diseq, in, BIT_VECTOR);
+                break;
+            case SymbolicExpr::OP_NEGATE:
+                ASSERT_require(BIT_VECTOR == needType);
+                retval = ctx_unary(yices_mk_bv_minus, in, BIT_VECTOR);
+                break;
+            case SymbolicExpr::OP_NOOP:
+                throw Exception("OP_NOOP not implemented");
+            case SymbolicExpr::OP_OR:
+                ASSERT_require(BOOLEAN == needType);
+                retval = ctx_la(yices_mk_or, in, false, BOOLEAN);
+                break;
+            case SymbolicExpr::OP_READ:
+                ASSERT_require(BIT_VECTOR == needType);
+                retval = ctx_read(in);
+                break;
+            case SymbolicExpr::OP_ROL:
+                ASSERT_require(BIT_VECTOR == needType);
+                throw Exception("OP_ROL not implemented");
+            case SymbolicExpr::OP_ROR:
+                ASSERT_require(BIT_VECTOR == needType);
+                throw Exception("OP_ROR not implemented");
+            case SymbolicExpr::OP_SET:
+                ASSERT_require(BIT_VECTOR == needType);
+                retval = ctx_set(in);
+                break;
+            case SymbolicExpr::OP_SDIV:
+                ASSERT_require(BIT_VECTOR == needType);
+                throw Exception("OP_SDIV not implemented");
+            case SymbolicExpr::OP_SEXTEND:
+                ASSERT_require(BIT_VECTOR == needType);
+                retval = ctx_sext(in);
+                break;
+            case SymbolicExpr::OP_SLT:
+                ASSERT_require(BOOLEAN == needType);
+                retval = ctx_binary(yices_mk_bv_slt, in, BIT_VECTOR);
+                break;
+            case SymbolicExpr::OP_SLE:
+                ASSERT_require(BOOLEAN == needType);
+                retval = ctx_binary(yices_mk_bv_sle, in, BIT_VECTOR);
+                break;
+            case SymbolicExpr::OP_SHL0:
+                ASSERT_require(BIT_VECTOR == needType);
+                retval = ctx_shift(yices_mk_bv_shift_left0, in);
+                break;
+            case SymbolicExpr::OP_SHL1:
+                ASSERT_require(BIT_VECTOR == needType);
+                retval = ctx_shift(yices_mk_bv_shift_left1, in);
+                break;
+            case SymbolicExpr::OP_SHR0:
+                ASSERT_require(BIT_VECTOR == needType);
+                retval = ctx_shift(yices_mk_bv_shift_right0, in);
+                break;
+            case SymbolicExpr::OP_SHR1:
+                ASSERT_require(BIT_VECTOR == needType);
+                retval = ctx_shift(yices_mk_bv_shift_right1, in);
+                break;
+            case SymbolicExpr::OP_SGE:
+                ASSERT_require(BOOLEAN == needType);
+                retval = ctx_binary(yices_mk_bv_sge, in, BIT_VECTOR);
+                break;
+            case SymbolicExpr::OP_SGT:
+                ASSERT_require(BOOLEAN == needType);
+                retval = ctx_binary(yices_mk_bv_sgt, in, BIT_VECTOR);
+                break;
+            case SymbolicExpr::OP_SMOD:
+                ASSERT_require(BIT_VECTOR == needType);
+                throw Exception("OP_SMOD not implemented");
+            case SymbolicExpr::OP_SMUL:
+                ASSERT_require(BIT_VECTOR == needType);
+                retval = ctx_mult(in);
+                break;
+            case SymbolicExpr::OP_UDIV:
+                ASSERT_require(BIT_VECTOR == needType);
+                throw Exception("OP_UDIV not implemented");
+            case SymbolicExpr::OP_UEXTEND:
+                ASSERT_require(BIT_VECTOR == needType);
+                retval = ctx_uext(in);
+                break;
+            case SymbolicExpr::OP_UGE:
+                ASSERT_require(BOOLEAN == needType);
+                retval = ctx_binary(yices_mk_bv_ge, in, BIT_VECTOR);
+                break;
+            case SymbolicExpr::OP_UGT:
+                ASSERT_require(BOOLEAN == needType);
+                retval = ctx_binary(yices_mk_bv_gt, in, BIT_VECTOR);
+                break;
+            case SymbolicExpr::OP_ULE:
+                ASSERT_require(BOOLEAN == needType);
+                retval = ctx_binary(yices_mk_bv_le, in, BIT_VECTOR);
+                break;
+            case SymbolicExpr::OP_ULT:
+                ASSERT_require(BOOLEAN == needType);
+                retval = ctx_binary(yices_mk_bv_lt, in, BIT_VECTOR);
+                break;
+            case SymbolicExpr::OP_UMOD:
+                ASSERT_require(BIT_VECTOR == needType);
+                throw Exception("OP_UMOD not implemented");
+            case SymbolicExpr::OP_UMUL:
+                ASSERT_require(BIT_VECTOR == needType);
+                retval = ctx_mult(in);
+                break;
+            case SymbolicExpr::OP_WRITE:
+                ASSERT_require(MEM_STATE == needType);
+                retval = ctx_write(in);
+                break;
+            case SymbolicExpr::OP_ZEROP:
+                ASSERT_require(BOOLEAN == needType);
+                retval = ctx_zerop(in);
+                break;
         }
     }
     ASSERT_not_null(retval);
@@ -993,11 +1142,10 @@ YicesSolver::ctx_expr(const SymbolicExpr::Ptr &tn)
 #ifdef ROSE_HAVE_LIBYICES
 /* Create Yices expression from unary ROSE expression. */
 yices_expr
-YicesSolver::ctx_unary(UnaryAPI f, const SymbolicExpr::InteriorPtr &in)
-{
+YicesSolver::ctx_unary(UnaryAPI f, const SymbolicExpr::InteriorPtr &in, Type needType) {
     ASSERT_not_null(f);
     ASSERT_require(in && 1==in->nChildren());
-    yices_expr retval = (f)(context, ctx_expr(in->child(0)));
+    yices_expr retval = (f)(context, ctx_expr(in->child(0), needType));
     ASSERT_not_null(retval);
     return retval;
 }
@@ -1006,11 +1154,10 @@ YicesSolver::ctx_unary(UnaryAPI f, const SymbolicExpr::InteriorPtr &in)
 #ifdef ROSE_HAVE_LIBYICES
 /* Create Yices epxression from binary ROSE expression. */
 yices_expr
-YicesSolver::ctx_binary(BinaryAPI f, const SymbolicExpr::InteriorPtr &in)
-{
+YicesSolver::ctx_binary(BinaryAPI f, const SymbolicExpr::InteriorPtr &in, Type needType) {
     ASSERT_not_null(f);
     ASSERT_require(in && 2==in->nChildren());
-    yices_expr retval = (f)(context, ctx_expr(in->child(0)), ctx_expr(in->child(1)));
+    yices_expr retval = (f)(context, ctx_expr(in->child(0), needType), ctx_expr(in->child(1), needType));
     ASSERT_not_null(retval);
     return retval;
 }
@@ -1019,12 +1166,11 @@ YicesSolver::ctx_binary(BinaryAPI f, const SymbolicExpr::InteriorPtr &in)
 #ifdef ROSE_HAVE_LIBYICES
 /* Create Yices expression for if-then-else operator. */
 yices_expr
-YicesSolver::ctx_ite(const SymbolicExpr::InteriorPtr &in)
-{
+YicesSolver::ctx_ite(const SymbolicExpr::InteriorPtr &in, Type needType) {
     ASSERT_require(in && 3==in->nChildren());
     ASSERT_require(in->child(0)->nBits()==1);
-    yices_expr cond = yices_mk_eq(context, ctx_expr(in->child(0)), yices_mk_bv_constant(context, 1, 1));
-    yices_expr retval = yices_mk_ite(context, cond, ctx_expr(in->child(1)), ctx_expr(in->child(2)));
+    yices_expr cond = ctx_expr(in->child(0), BOOLEAN);
+    yices_expr retval = yices_mk_ite(context, cond, ctx_expr(in->child(1), needType), ctx_expr(in->child(2), needType));
     ASSERT_not_null(retval);
     return retval;
 }
@@ -1037,8 +1183,10 @@ YicesSolver::ctx_set(const SymbolicExpr::InteriorPtr &in) {
     ASSERT_not_null(in);
     ASSERT_require(in->getOperator() == SymbolicExpr::OP_SET);
     ASSERT_require(in->nChildren() >= 2);
-    SymbolicExpr::Ptr ite = SymbolicExpr::setToIte(in);
-    return ctx_expr(ite);
+    SymbolicExpr::LeafPtr var = varForSet(in);
+    ASSERT_not_null(var);
+    SymbolicExpr::Ptr ite = SymbolicExpr::setToIte(in, var);
+    return ctx_expr(ite, BIT_VECTOR);
 }
 #endif
 
@@ -1046,15 +1194,15 @@ YicesSolver::ctx_set(const SymbolicExpr::InteriorPtr &in) {
 /* Create Yices expression for left-associative, binary operators. The @p identity is sign-extended and used as the
  * second operand if only one operand is supplied. */
 yices_expr
-YicesSolver::ctx_la(BinaryAPI f, const SymbolicExpr::InteriorPtr &in, bool identity)
+YicesSolver::ctx_la(BinaryAPI f, const SymbolicExpr::InteriorPtr &in, bool identity, Type needType)
 {
     ASSERT_not_null(f);
     ASSERT_require(in && in->nChildren()>=1);
 
-    yices_expr retval = ctx_expr(in->child(0));
+    yices_expr retval = ctx_expr(in->child(0), needType);
 
     for (size_t i=1; i<in->nChildren(); i++) {
-        retval = (f)(context, retval, ctx_expr(in->child(i)));
+        retval = (f)(context, retval, ctx_expr(in->child(i), needType));
         ASSERT_not_null(retval);
     }
     
@@ -1070,13 +1218,13 @@ YicesSolver::ctx_la(BinaryAPI f, const SymbolicExpr::InteriorPtr &in, bool ident
 
 #ifdef ROSE_HAVE_LIBYICES
 yices_expr
-YicesSolver::ctx_la(NaryAPI f, const SymbolicExpr::InteriorPtr &in, bool identity)
+YicesSolver::ctx_la(NaryAPI f, const SymbolicExpr::InteriorPtr &in, bool identity, Type needType)
 {
     ASSERT_not_null(f);
     ASSERT_require(in && in->nChildren()>=1);
     yices_expr *operands = new yices_expr[in->nChildren()];
     for (size_t i=0; i<in->nChildren(); i++) {
-        operands[i] = ctx_expr(in->child(i));
+        operands[i] = ctx_expr(in->child(i), needType);
         ASSERT_not_null(operands[i]);
     }
     yices_expr retval = (f)(context, operands, in->nChildren());
@@ -1088,10 +1236,10 @@ YicesSolver::ctx_la(NaryAPI f, const SymbolicExpr::InteriorPtr &in, bool identit
 
 #ifdef ROSE_HAVE_LIBYICES
 yices_expr
-YicesSolver::ctx_la(BinaryAPI f, const SymbolicExpr::InteriorPtr &in)
+YicesSolver::ctx_la(BinaryAPI f, const SymbolicExpr::InteriorPtr &in, Type needType)
 {
     ASSERT_require(in->nChildren()>1);
-    return ctx_la(f, in, false);
+    return ctx_la(f, in, false, needType);
 }
 #endif
 
@@ -1106,7 +1254,7 @@ YicesSolver::ctx_extract(const SymbolicExpr::InteriorPtr &in)
     ASSERT_require(in->child(0)->toInt() < in->child(1)->toInt());
     size_t lo = in->child(0)->toInt();
     size_t hi = in->child(1)->toInt() - 1; /*inclusive*/
-    yices_expr retval = yices_mk_bv_extract(context, hi, lo, ctx_expr(in->child(2)));
+    yices_expr retval = yices_mk_bv_extract(context, hi, lo, ctx_expr(in->child(2), BIT_VECTOR));
     ASSERT_not_null(retval);
     return retval;
 }
@@ -1123,7 +1271,7 @@ YicesSolver::ctx_sext(const SymbolicExpr::InteriorPtr &in)
     ASSERT_require(in->child(0)->isNumber());
     ASSERT_require(in->child(0)->toInt() > in->child(1)->nBits());
     unsigned extend_by = in->child(0)->toInt() - in->child(1)->nBits();
-    yices_expr retval = yices_mk_bv_sign_extend(context, ctx_expr(in->child(1)), extend_by);
+    yices_expr retval = yices_mk_bv_sign_extend(context, ctx_expr(in->child(1), BIT_VECTOR), extend_by);
     ASSERT_not_null(retval);
     return retval;
 }
@@ -1143,7 +1291,7 @@ YicesSolver::ctx_uext(const SymbolicExpr::InteriorPtr &in)
     size_t extend_by = in->child(0)->toInt() - in->child(1)->nBits();
     yices_expr retval = yices_mk_bv_concat(context,
                                            yices_mk_bv_constant(context, extend_by, 0),
-                                           ctx_expr(in->child(1)));
+                                           ctx_expr(in->child(1), BIT_VECTOR));
     ASSERT_not_null(retval);
     return retval;
 }
@@ -1157,7 +1305,7 @@ YicesSolver::ctx_shift(ShiftAPI f, const SymbolicExpr::InteriorPtr &in)
     ASSERT_require(in && 2==in->nChildren());
     ASSERT_require(in->child(0)->isNumber()); /*Yices' bv-shift-* operators need a constant for the shift amount*/
     unsigned shift_amount = in->child(0)->toInt();
-    yices_expr retval = (f)(context, ctx_expr(in->child(1)), shift_amount);
+    yices_expr retval = (f)(context, ctx_expr(in->child(1), BIT_VECTOR), shift_amount);
     ASSERT_not_null(retval);
     return retval;
 }
@@ -1184,9 +1332,10 @@ YicesSolver::ctx_asr(const SymbolicExpr::InteriorPtr &in)
     yices_expr retval = yices_mk_ite(context, 
                                      yices_mk_eq(context, 
                                                  yices_mk_bv_constant(context, 1, 1), 
-                                                 yices_mk_bv_extract(context, vector_size-1, vector_size-1, ctx_expr(vector))),
-                                     yices_mk_bv_shift_right1(context, ctx_expr(vector), shift_amount), 
-                                     yices_mk_bv_shift_right0(context, ctx_expr(vector), shift_amount));
+                                                 yices_mk_bv_extract(context, vector_size-1, vector_size-1,
+                                                                     ctx_expr(vector, BIT_VECTOR))),
+                                     yices_mk_bv_shift_right1(context, ctx_expr(vector, BIT_VECTOR), shift_amount), 
+                                     yices_mk_bv_shift_right0(context, ctx_expr(vector, BIT_VECTOR), shift_amount));
     ASSERT_not_null(retval);
     return retval;
 }
@@ -1203,12 +1352,8 @@ yices_expr
 YicesSolver::ctx_zerop(const SymbolicExpr::InteriorPtr &in)
 {
     ASSERT_require(in && 1==in->nChildren());
-    yices_expr retval = yices_mk_ite(context,
-                                     yices_mk_eq(context, 
-                                                 yices_mk_bv_constant(context, in->child(0)->nBits(), 0), 
-                                                 ctx_expr(in->child(0))), 
-                                     yices_mk_bv_constant(context, 1, 1), 
-                                     yices_mk_bv_constant(context, 1, 0));
+    yices_expr retval = yices_mk_eq(context, yices_mk_bv_constant(context, in->child(0)->nBits(), 0), 
+                                    ctx_expr(in->child(0), BIT_VECTOR)); 
     ASSERT_not_null(retval);
     return retval;
 }
@@ -1228,8 +1373,8 @@ YicesSolver::ctx_mult(const SymbolicExpr::InteriorPtr &in)
     size_t extend1 = in->child(0)->nBits(); // amount by which to extend arg1
 
     yices_expr retval = yices_mk_bv_mul(context, 
-                                        yices_mk_bv_sign_extend(context, ctx_expr(in->child(0)), extend0), 
-                                        yices_mk_bv_sign_extend(context, ctx_expr(in->child(1)), extend1));
+                                        yices_mk_bv_sign_extend(context, ctx_expr(in->child(0), BIT_VECTOR), extend0), 
+                                        yices_mk_bv_sign_extend(context, ctx_expr(in->child(1), BIT_VECTOR), extend1));
     ASSERT_not_null(retval);
     return retval;
 }
@@ -1240,9 +1385,9 @@ YicesSolver::ctx_mult(const SymbolicExpr::InteriorPtr &in)
 yices_expr
 YicesSolver::ctx_write(const SymbolicExpr::InteriorPtr &in)
 {
-    yices_expr func = ctx_expr(in->child(0));
-    yices_expr arg  = ctx_expr(in->child(1));
-    yices_expr val  = ctx_expr(in->child(2));
+    yices_expr func = ctx_expr(in->child(0), MEM_STATE);
+    yices_expr arg  = ctx_expr(in->child(1), BIT_VECTOR);
+    yices_expr val  = ctx_expr(in->child(2), BIT_VECTOR);
     ASSERT_require(func && arg && val);
     yices_expr retval = yices_mk_function_update(context, func, &arg, 1, val);
     ASSERT_not_null(retval);
@@ -1255,8 +1400,8 @@ YicesSolver::ctx_write(const SymbolicExpr::InteriorPtr &in)
 yices_expr
 YicesSolver::ctx_read(const SymbolicExpr::InteriorPtr &in)
 {
-    yices_expr func = ctx_expr(in->child(0));
-    yices_expr arg  = ctx_expr(in->child(1));
+    yices_expr func = ctx_expr(in->child(0), MEM_STATE);
+    yices_expr arg  = ctx_expr(in->child(1), BIT_VECTOR);
     ASSERT_require(func && arg);
     yices_expr retval = yices_mk_app(context, func, &arg, 1);
     ASSERT_not_null(retval);
