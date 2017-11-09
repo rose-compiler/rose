@@ -48,6 +48,9 @@ private:
     }
 #endif
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Construction-related things
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     /** Constructs object to communicate with Yices solver.
      *
@@ -63,37 +66,25 @@ public:
     static unsigned availableLinkages();
 
     virtual ~YicesSolver();
-    virtual void generateFile(std::ostream&, const std::vector<SymbolicExpr::Ptr> &exprs, Definitions*) ROSE_OVERRIDE;
-    virtual std::string getCommand(const std::string &config_name) ROSE_OVERRIDE;
 
-    // Determines if the specified expression is satisfiable.  Most solvers use the implementation in the base class, which
-    // creates a text file (usually in SMT-LIB format) and then invokes an executable with that input, looking for a line of
-    // output containing "sat" or "unsat". However, Yices provides a library that can optionally be linked into ROSE, and uses
-    // this library if the link mode is LM_LIBRARY.
-    virtual Satisfiable satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs);
-    virtual Satisfiable satisfiable(const SymbolicExpr::Ptr &tn) {
-        std::vector<SymbolicExpr::Ptr> exprs;
-        exprs.push_back(tn);
-        return satisfiable(exprs);
-    }
-
-    virtual void clearEvidence() /*overrides*/;
-    virtual std::vector<std::string> evidenceNames() /*overrides*/;
-    virtual SymbolicExpr::Ptr evidenceForName(const std::string&) /*overrides*/;
-
-    // FIXME[Robb Matzke 2017-10-17]: these are all deprecated
-    static unsigned available_linkage() ROSE_DEPRECATED("use availableLinkages");
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Overrides of the parent class
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    virtual void clearEvidence() ROSE_OVERRIDE;
+    virtual std::vector<std::string> evidenceNames() ROSE_OVERRIDE;
+    virtual SymbolicExpr::Ptr evidenceForName(const std::string&) ROSE_OVERRIDE;
 
 protected:
-    virtual uint64_t parse_variable(const char *nptr, char **endptr, char first_char);
+    virtual Satisfiable checkLib() ROSE_OVERRIDE;
+    virtual void generateFile(std::ostream&, const std::vector<SymbolicExpr::Ptr> &exprs, Definitions*) ROSE_OVERRIDE;
+    virtual std::string getCommand(const std::string &config_name) ROSE_OVERRIDE;
+    virtual void parseEvidence() ROSE_OVERRIDE;
 
-    virtual void parseEvidence();
-
-private:
-    static std::string get_typename(const SymbolicExpr::Ptr&);
-
-    /* These out_*() functions convert a SymbolicExpr expression into text which is suitable as input to "yices"
-     * executable. */
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Convert a SymbolicExpr into Yices text input
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+protected:
     void out_comments(std::ostream&, const std::vector<SymbolicExpr::Ptr>&);
     void out_common_subexpressions(std::ostream&, const std::vector<SymbolicExpr::Ptr>&);
     void out_define(std::ostream&, const std::vector<SymbolicExpr::Ptr>&, Definitions*);
@@ -116,6 +107,9 @@ private:
     void out_read(std::ostream &o, const SymbolicExpr::InteriorPtr&);
     void out_write(std::ostream &o, const SymbolicExpr::InteriorPtr&);
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Convert a SymbolicExpr to Yices IR using the Yices API
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #ifdef ROSE_HAVE_LIBYICES
     typedef Sawyer::Container::Map<SymbolicExpr::Ptr, yices_expr> TermExprs;
     TermExprs termExprs;                                // for common subexpressions
@@ -148,6 +142,15 @@ private:
     yices_expr ctx_write(const SymbolicExpr::InteriorPtr&);
 #endif
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // FIXME[Robb Matzke 2017-10-17]: these are all deprecated
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    static unsigned available_linkage() ROSE_DEPRECATED("use availableLinkages");
+protected:
+    virtual uint64_t parse_variable(const char *nptr, char **endptr, char first_char);
+private:
+    static std::string get_typename(const SymbolicExpr::Ptr&);
 };
 
 } // namespace

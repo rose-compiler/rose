@@ -46,52 +46,42 @@ YicesSolver::available_linkage() {
 
 /* See YicesSolver.h */
 SmtSolver::Satisfiable
-YicesSolver::satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs)
-{
-    clearEvidence();
-    Satisfiable retval = triviallySatisfiable(exprs);
-    if (retval!=SAT_UNKNOWN)
-        return retval;
+YicesSolver::checkLib() {
+    requireLinkage(LM_LIBRARY);
 
 #ifdef ROSE_HAVE_LIBYICES
-    if (linkage() & LM_LIBRARY) {
+    ++stats.ncalls;
+    {
+        boost::lock_guard<boost::mutex> lock(classStatsMutex);
+        ++classStats.ncalls;
+    }
 
-        ++stats.ncalls;
-        {
-            boost::lock_guard<boost::mutex> lock(classStatsMutex);
-            ++classStats.ncalls;
-        }
-
-        if (!context) {
-            context = yices_mk_context();
-            ASSERT_not_null(context);
-        } else {
-            yices_reset(context);
-        }
+    if (!context) {
+        context = yices_mk_context();
+        ASSERT_not_null(context);
+    } else {
+        yices_reset(context);
+    }
 
 #ifndef NDEBUG
-        yices_enable_type_checker(true);
+    yices_enable_type_checker(true);
 #endif
 
-        Definitions defns;
-        termExprs.clear();
-        ctx_define(exprs, &defns);
-        ctx_common_subexpressions(exprs);
-        for (std::vector<SymbolicExpr::Ptr>::const_iterator ei=exprs.begin(); ei!=exprs.end(); ++ei)
-            ctx_assert(*ei);
-        switch (yices_check(context)) {
-            case l_false: return SAT_NO;
-            case l_true:  return SAT_YES;
-            case l_undef: return SAT_UNKNOWN;
-        }
-        ASSERT_not_reachable("switch statement is incomplete");
+    std::vector<SymbolicExpr::Ptr> exprs = assertions();
+    Definitions defns;
+    termExprs.clear();
+    ctx_define(exprs, &defns);
+    ctx_common_subexpressions(exprs);
+    for (std::vector<SymbolicExpr::Ptr>::const_iterator ei=exprs.begin(); ei!=exprs.end(); ++ei)
+        ctx_assert(*ei);
+    switch (yices_check(context)) {
+        case l_false: return SAT_NO;
+        case l_true:  return SAT_YES;
+        case l_undef: return SAT_UNKNOWN;
     }
+    ASSERT_not_reachable("switch statement is incomplete");
 #endif
-
-    requireLinkage(LM_EXECUTABLE);
-    return SmtSolver::satisfiable(exprs);
 }
-
 
 /* See SmtSolver::get_command() */
 std::string

@@ -19,29 +19,122 @@ Z3Solver::availableLinkages() {
 }
 
 void
-Z3Solver::clearEvidence() {
+Z3Solver::reset() {
+    SmtlibSolver::reset();
 #ifdef ROSE_HAVE_Z3
-    ctxCses_.clear();
-    ctxVarDecls_.clear();
-    delete ctx_;
-    ctx_ = NULL;
+    if (linkage() == LM_LIBRARY) {
+        z3Stack_.clear();
+        z3Stack_.push_back(std::vector<z3::expr>());
+        delete solver_;
+        delete ctx_;
+        ctx_ = new z3::context;
+        solver_ = new z3::solver(*ctx_);
+    }
 #endif
-    SmtlibSolver::clearEvidence();
 }
 
+void
+Z3Solver::clearEvidence() {
+    SmtlibSolver::clearEvidence();
+#ifdef ROSE_HAVE_Z3
+    if (linkage() == LM_LIBRARY) {
+        ctxCses_.clear();
+        ctxVarDecls_.clear();
+    }
+#endif
+}
+
+void
+Z3Solver::push() {
+    SmtlibSolver::push();
+#ifdef ROSE_HAVE_Z3
+    if (linkage() == LM_LIBRARY) {
+        ASSERT_not_null(ctx_);
+        ASSERT_not_null(solver_);
+        solver_->push();
+        z3Stack_.push_back(std::vector<z3::expr>());
+    }
+#endif
+}
+
+void
+Z3Solver::pop() {
+    SmtlibSolver::pop();
+#ifdef ROSE_HAVE_Z3
+    if (linkage() == LM_LIBRARY) {
+        ASSERT_not_null(ctx_);
+        ASSERT_not_null(solver_);
+        solver_->pop();
+        z3Stack_.pop_back();
+        if (z3Stack_.empty())
+            z3Stack_.push_back(std::vector<z3::expr>());
+    }
+#endif
+}
+
+void
+Z3Solver::insert(const SymbolicExpr::Ptr &expr) {
+    SmtlibSolver::insert(expr);
+#ifdef ROSE_HAVE_Z3
+    if (linkage() == LM_LIBRARY) {
+        ASSERT_not_null(ctx_);
+        ASSERT_not_null(solver_);
+
+        VariableSet vars = findVariables(expr);
+        ctxVariableDeclarations(vars);
+        ctxCommonSubexpressions(expr);
+        z3::expr z3Expr = ctxExpression(expr, BOOLEAN);
+        solver_->add(z3Expr);
+        z3Stack_.back().push_back(z3Expr);
+    }
+#endif
+}
+
+void
+Z3Solver::ctxVariableDeclarations(const VariableSet &vars) {
+#ifdef ROSE_HAVE_Z3
+    BOOST_FOREACH (const SymbolicExpr::LeafPtr &var, vars.values()) {
+        ASSERT_not_null(var);
+        ASSERT_require(var->isVariable() || var->isMemory());
+        if (ctxVarDecls_.exists(var)) {
+            // already emitted a declaration for this variable
+        } else if (var->isScalar()) {
+            z3::sort range = ctx_->bv_sort(var->nBits());
+            z3::func_decl decl = z3::function(var->toString().c_str(), 0, NULL, range);
+            ctxVarDecls_.insert(var, decl);
+        } else {
+            ASSERT_require(var->domainWidth() > 0);
+            z3::sort addr = ctx_->bv_sort(var->domainWidth());
+            z3::sort value = ctx_->bv_sort(var->nBits());
+            z3::sort range = ctx_->array_sort(addr, value);
+            z3::func_decl decl = z3::function(var->toString().c_str(), 0, NULL, range);
+            ctxVarDecls_.insert(var, decl);
+        }
+    }
+#endif
+}
+
+void
+Z3Solver::ctxCommonSubexpressions(const SymbolicExpr::Ptr &expr) {
+#ifdef ROSE_HAVE_Z3
+    std::vector<SymbolicExpr::Ptr> cses = expr->findCommonSubexpressions();
+    BOOST_FOREACH (const SymbolicExpr::Ptr &cse, cses) {
+        if (!ctxCses_.exists(cse))
+            ctxCses_.insert(cse, ctxExpression(cse, BIT_VECTOR));
+    }
+#endif
+}
+
+
+
 SmtSolver::Satisfiable
-Z3Solver::satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs) {
-    clearEvidence();
-    Satisfiable retval = triviallySatisfiable(exprs);
-    if (retval != SAT_UNKNOWN)
-        return retval;
-
-    if ((linkage() & LM_EXECUTABLE) != 0)
-        return SmtSolver::satisfiable(exprs);
-
+Z3Solver::checkLib() {
     requireLinkage(LM_LIBRARY);
     
 #ifdef ROSE_HAVE_Z3
+    ASSERT_not_null(ctx_);
+    ASSERT_not_null(solver_);
+
     // Keep track of how often we call the SMT solver.
     ++stats.ncalls;
     {
@@ -49,18 +142,24 @@ Z3Solver::satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs) {
         ++classStats.ncalls;
     }
 
-    delete ctx_;
-    ctx_ = new z3::context;
-    z3::solver solver(*ctx_);
-
-    VariableSet vars = findVariables(exprs);
-    ctxVarDecls_ = ctxVariableDeclarations(vars);
-    ctxCses_ = ctxCommonSubexpressions(exprs);
+    std::vector<SymbolicExpr::Ptr> allExprs = assertions();
+    ctxVarDecls_.clear();
+    ctxCses_.clear();
     
-    BOOST_FOREACH (const SymbolicExpr::Ptr &expr, exprs)
-        solver.add(ctxExpression(expr, BOOLEAN));
+    for (size_t level = 0; level < nLevels(); ++level) {
+        if (level > 0)
+            solver_->push();
 
-    switch (solver.check()) {
+        std::vector<SymbolicExpr::Ptr> exprs = assertions(level);
+        BOOST_FOREACH (const SymbolicExpr::Ptr &expr, exprs) {
+            VariableSet vars = findVariables(expr);
+            ctxVariableDeclarations(vars);
+            ctxCommonSubexpressions(expr);
+            solver_->add(ctxExpression(expr, BOOLEAN));
+        }
+    }
+
+    switch (solver_->check()) {
         case z3::unsat:
             return SAT_NO;
         case z3::sat:
@@ -211,7 +310,7 @@ Z3Solver::outputExpression(std::ostream &o, const SymbolicExpr::Ptr &expr, Type 
                 break;
             case SymbolicExpr::OP_SGT:
                 ASSERT_require(BOOLEAN == needType);
-                outputBinary(o, "bvsgt", inode, BOOLEAN);
+                outputBinary(o, "bvsgt", inode, BIT_VECTOR);
                 break;
             case SymbolicExpr::OP_SMOD:
                 throw Exception("OP_SMOD not implemented");
@@ -264,34 +363,31 @@ Z3Solver::outputExpression(std::ostream &o, const SymbolicExpr::Ptr &expr, Type 
 }
 
 #ifdef ROSE_HAVE_Z3
-Z3Solver::VariableDeclarations
-Z3Solver::ctxVariableDeclarations(const VariableSet &vars) {
-    VariableDeclarations retval;
+z3::context*
+Z3Solver::z3Context() const {
+    requireLinkage(LM_LIBRARY);
     ASSERT_not_null(ctx_);
-    BOOST_FOREACH (const SymbolicExpr::LeafPtr &leaf, vars.values()) {
-        ASSERT_require(leaf->isVariable() || leaf->isMemory());
-        if (leaf->isScalar()) {
-            z3::sort range = ctx_->bv_sort(leaf->nBits());
-            z3::func_decl decl = z3::function(leaf->toString().c_str(), 0, NULL, range);
-            retval.insert(leaf, decl);
-        } else {
-            ASSERT_require(leaf->domainWidth() > 0);
-            z3::sort addr = ctx_->bv_sort(leaf->domainWidth());
-            z3::sort value = ctx_->bv_sort(leaf->nBits());
-            z3::sort range = ctx_->array_sort(addr, value);
-            z3::func_decl decl = z3::function(leaf->toString().c_str(), 0, NULL, range);
-            retval.insert(leaf, decl);
-        }
-    }
-    return retval;
+    return ctx_;
 }
 
-Z3Solver::CommonSubexpressions
-Z3Solver::ctxCommonSubexpressions(const std::vector<SymbolicExpr::Ptr> &exprs) {
-    CommonSubexpressions retval;
-    std::vector<SymbolicExpr::Ptr> cses = findCommonSubexpressions(exprs);
-    BOOST_FOREACH (const SymbolicExpr::Ptr &cse, cses)
-        retval.insert(cse, ctxExpression(cse, BIT_VECTOR));
+z3::solver*
+Z3Solver::z3Solver() const {
+    requireLinkage(LM_LIBRARY);
+    ASSERT_not_null(solver_);
+    return solver_;
+}
+
+std::vector<z3::expr>
+Z3Solver::z3Assertions(size_t level) const {
+    ASSERT_require(level < z3Stack_.size());
+    return z3Stack_[level];
+}
+
+std::vector<z3::expr>
+Z3Solver::z3Assertions() const {
+    std::vector<z3::expr> retval;
+    BOOST_FOREACH (const std::vector<z3::expr> &level, z3Stack_)
+        retval.insert(retval.end(), level.begin(), level.end());
     return retval;
 }
 

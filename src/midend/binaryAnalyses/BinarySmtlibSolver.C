@@ -10,6 +10,18 @@ using namespace Sawyer::Message::Common;
 namespace Rose {
 namespace BinaryAnalysis {
 
+void
+SmtlibSolver::reset() {
+    SmtSolver::reset();
+    varsForSets_.clear();
+}
+
+void
+SmtlibSolver::clearEvidence() {
+    SmtSolver::clearEvidence();
+    evidence_.clear();
+}
+
 std::string
 SmtlibSolver::getCommand(const std::string &configName) {
     return executable_.string() + " " + shellArgs_ + " " + configName;
@@ -18,13 +30,21 @@ SmtlibSolver::getCommand(const std::string &configName) {
 void
 SmtlibSolver::generateFile(std::ostream &o, const std::vector<SymbolicExpr::Ptr> &exprs, Definitions*) {
     requireLinkage(LM_EXECUTABLE);
+    
 
-    o <<";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n"
-      <<"; Uninterpreted variables\n"
-      <<";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n";
-    VariableSet vars = findVariables(exprs);
-    outputDefinitions(o, vars);
-
+    VariableSet vars;
+    BOOST_FOREACH (const SymbolicExpr::Ptr &expr, exprs) {
+        VariableSet tmp = findVariables(expr);
+        BOOST_FOREACH (const SymbolicExpr::LeafPtr &var, tmp.values())
+            vars.insert(var);
+    }
+    if (!vars.isEmpty()) {
+        o <<";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n"
+          <<"; Uninterpreted variables\n"
+          <<";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n";
+        outputVariableDeclarations(o, vars);
+    }
+    
     o <<"\n"
       <<";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n"
       <<"; Common subexpressions\n"
@@ -44,6 +64,7 @@ SmtlibSolver::generateFile(std::ostream &o, const std::vector<SymbolicExpr::Ptr>
       <<";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n"
       <<"; Assertions\n"
       <<";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n";
+
     BOOST_FOREACH (const SymbolicExpr::Ptr &expr, exprs) {
         o <<"\n";
         const std::string &comment = expr->comment();
@@ -119,7 +140,6 @@ void
 SmtlibSolver::varForSet(const SymbolicExpr::InteriorPtr &set, const SymbolicExpr::LeafPtr &var) {
     ASSERT_not_null(set);
     ASSERT_not_null(var);
-    ASSERT_forbid(varsForSets_.exists(set));
     varsForSets_.insert(set, var);
 }
 
@@ -135,7 +155,7 @@ SmtlibSolver::varForSet(const SymbolicExpr::InteriorPtr &set) {
 
 // A side effect is that the varsForSets_ map is updated.
 SmtlibSolver::VariableSet
-SmtlibSolver::findVariables(const std::vector<SymbolicExpr::Ptr> &exprs) {
+SmtlibSolver::findVariables(const SymbolicExpr::Ptr &expr) {
     struct T1: SymbolicExpr::Visitor {
         SmtlibSolver *self;
         VariableSet variables;
@@ -165,19 +185,18 @@ SmtlibSolver::findVariables(const std::vector<SymbolicExpr::Ptr> &exprs) {
         }
     } t1(this);
 
-    BOOST_FOREACH (const SymbolicExpr::Ptr &expr, exprs)
-        expr->depthFirstTraversal(t1);
+    expr->depthFirstTraversal(t1);
     return t1.variables;
 }
 
 void
-SmtlibSolver::outputDefinitions(std::ostream &o, const VariableSet &variables) {
-    BOOST_FOREACH (const SymbolicExpr::LeafPtr &leaf, variables.values()) {
-        ASSERT_require(leaf->isVariable() || leaf->isMemory());
+SmtlibSolver::outputVariableDeclarations(std::ostream &o, const VariableSet &variables) {
+    BOOST_FOREACH (const SymbolicExpr::LeafPtr &var, variables.values()) {
+        ASSERT_require(var->isVariable() || var->isMemory());
         o <<"\n";
-        if (!leaf->comment().empty())
-            o <<StringUtility::prefixLines(leaf->comment(), "; ") <<"\n";
-        o <<"(declare-fun " <<leaf->toString() <<" " <<typeName(leaf) <<")\n";
+        if (!var->comment().empty())
+            o <<StringUtility::prefixLines(var->comment(), "; ") <<"\n";
+        o <<"(declare-fun " <<var->toString() <<" " <<typeName(var) <<")\n";
     }
 }
 
@@ -1044,13 +1063,6 @@ SmtlibSolver::outputWrite(std::ostream &o, const SymbolicExpr::InteriorPtr &inod
     o <<" ";
     outputExpression(o, inode->child(2), BIT_VECTOR);
     o <<")";
-}
-
-void
-SmtlibSolver::clearEvidence() {
-    varsForSets_.clear();
-    parsedOutput_.clear();
-    evidence_.clear();
 }
 
 void

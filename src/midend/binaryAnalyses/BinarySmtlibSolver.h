@@ -32,10 +32,11 @@ public:
         : SmtSolver(executable.filename().string(), LM_EXECUTABLE), executable_(executable), shellArgs_(shellArgs) {}
 
 public:
+    virtual void reset() ROSE_OVERRIDE;
     virtual void generateFile(std::ostream&, const std::vector<SymbolicExpr::Ptr> &exprs, Definitions*) ROSE_OVERRIDE;
     virtual std::string getCommand(const std::string &configName) ROSE_OVERRIDE;
     virtual std::string getErrorMessage(int exitStatus) ROSE_OVERRIDE;
-    virtual VariableSet findVariables(const std::vector<SymbolicExpr::Ptr>&) ROSE_OVERRIDE;
+    virtual VariableSet findVariables(const SymbolicExpr::Ptr&) ROSE_OVERRIDE;
     virtual SymbolicExpr::Ptr evidenceForName(const std::string&) ROSE_OVERRIDE;
     virtual std::vector<std::string> evidenceNames() ROSE_OVERRIDE;
     virtual void clearEvidence() ROSE_OVERRIDE;
@@ -67,7 +68,7 @@ protected:
     virtual std::string typeName(const SymbolicExpr::Ptr&);
 
     // Functions that generate SMT-LIB output to a stream when given a Rose::BinaryAnalysis::SymbolicExpr
-    virtual void outputDefinitions(std::ostream&, const VariableSet&);
+    virtual void outputVariableDeclarations(std::ostream&, const VariableSet&);
     virtual void outputComments(std::ostream&, const std::vector<SymbolicExpr::Ptr>&);
     virtual void outputCommonSubexpressions(std::ostream&, const std::vector<SymbolicExpr::Ptr>&);
     virtual void outputAssertion(std::ostream&, const SymbolicExpr::Ptr&);
