@@ -12,7 +12,6 @@ class SmtlibSolver: public SmtSolver {
 private:
     boost::filesystem::path executable_;                // solver program
     std::string shellArgs_;                             // extra arguments for command (passed through shell)
-    typedef Sawyer::Container::Map<SymbolicExpr::Ptr, SymbolicExpr::Ptr> ExprExprMap;
     ExprExprMap varsForSets_;                           // variables to use for sets
     ExprExprMap evidence_;
 

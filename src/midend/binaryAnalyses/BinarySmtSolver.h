@@ -37,6 +37,9 @@ public:
     /** Maps expression nodes to term names.  This map is populated for common subexpressions. */
     typedef Sawyer::Container::Map<SymbolicExpr::Ptr, std::string> TermNames;
 
+    /** Maps one symbolic expression to another. */
+    typedef Sawyer::Container::Map<SymbolicExpr::Ptr, SymbolicExpr::Ptr> ExprExprMap;
+
     /** Exceptions for all things SMT related. */
     struct Exception: std::runtime_error {
         Exception(const std::string &mesg): std::runtime_error(mesg) {}
@@ -414,13 +417,14 @@ public:
     /** Unit tests. */
     void selfTest();
 
-private:
-    void init(unsigned linkages);                       // Called during construction
-
     /** Initialize diagnostic output facilities.
      *
      *  Called when the ROSE library is initialized. */
     static void initDiagnostics();
+
+private:
+    void init(unsigned linkages);                       // Called during construction
+
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

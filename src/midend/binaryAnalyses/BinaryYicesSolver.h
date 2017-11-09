@@ -33,6 +33,7 @@ private:
 #else
     void *context; /*unused for now*/
 #endif
+    ExprExprMap varsForSets_;                           // variables to use for sets
 protected:
     Evidence evidence;
 
@@ -43,6 +44,7 @@ private:
     template<class S>
     void serialize(S &s, const unsigned version) {
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SmtSolver);
+        // varsForSets_ -- not saved
         // evidence     -- not saved
         // context      -- not saved
     }
@@ -71,6 +73,7 @@ public:
     // Overrides of the parent class
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+    virtual void reset() ROSE_OVERRIDE;
     virtual void clearEvidence() ROSE_OVERRIDE;
     virtual std::vector<std::string> evidenceNames() ROSE_OVERRIDE;
     virtual SymbolicExpr::Ptr evidenceForName(const std::string&) ROSE_OVERRIDE;
@@ -82,6 +85,13 @@ protected:
     virtual void parseEvidence() ROSE_OVERRIDE;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Miscellaneous
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    void varForSet(const SymbolicExpr::InteriorPtr &set, const SymbolicExpr::LeafPtr &var);
+    SymbolicExpr::LeafPtr varForSet(const SymbolicExpr::InteriorPtr &set);
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Convert a SymbolicExpr into Yices text input
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 protected:
@@ -90,13 +100,13 @@ protected:
     void out_define(std::ostream&, const std::vector<SymbolicExpr::Ptr>&, Definitions*);
     void out_assert(std::ostream&, const SymbolicExpr::Ptr&);
     void out_number(std::ostream&, const SymbolicExpr::Ptr&);
-    void out_expr(std::ostream&, const SymbolicExpr::Ptr&);
-    void out_unary(std::ostream&, const char *opname, const SymbolicExpr::InteriorPtr&);
-    void out_binary(std::ostream&, const char *opname, const SymbolicExpr::InteriorPtr&);
-    void out_ite(std::ostream&, const SymbolicExpr::InteriorPtr&);
+    void out_expr(std::ostream&, const SymbolicExpr::Ptr&, Type needType);
+    void out_unary(std::ostream&, const char *opname, const SymbolicExpr::InteriorPtr&, Type needType);
+    void out_binary(std::ostream&, const char *opname, const SymbolicExpr::InteriorPtr&, Type needType);
+    void out_ite(std::ostream&, const SymbolicExpr::InteriorPtr&, Type needType);
     void out_set(std::ostream&, const SymbolicExpr::InteriorPtr&);
-    void out_la(std::ostream&, const char *opname, const SymbolicExpr::InteriorPtr&, bool identity_elmt);
-    void out_la(std::ostream&, const char *opname, const SymbolicExpr::InteriorPtr&);
+    void out_la(std::ostream&, const char *opname, const SymbolicExpr::InteriorPtr&, bool identity_elmt, Type needType);
+    void out_la(std::ostream&, const char *opname, const SymbolicExpr::InteriorPtr&, Type needType);
     void out_extract(std::ostream&, const SymbolicExpr::InteriorPtr&);
     void out_sext(std::ostream&, const SymbolicExpr::InteriorPtr&);
     void out_uext(std::ostream&, const SymbolicExpr::InteriorPtr&);
@@ -147,8 +157,6 @@ protected:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     static unsigned available_linkage() ROSE_DEPRECATED("use availableLinkages");
-protected:
-    virtual uint64_t parse_variable(const char *nptr, char **endptr, char first_char);
 private:
     static std::string get_typename(const SymbolicExpr::Ptr&);
 };

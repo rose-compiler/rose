@@ -49,12 +49,7 @@ public:
      *   If executable (@c LM_EXECUTABLE) linkage is specified then the executable is that which was detected by the ROSE
      *   configuration script. */
     explicit Z3Solver(unsigned linkages = LM_ANY)
-        :
-#ifdef ROSE_Z3
-        SmtlibSolver(ROSE_Z3)
-#else
-        SmtlibSolver("z3")
-#endif
+        : SmtlibSolver(ROSE_Z3)
 #ifdef ROSE_HAVE_Z3
         , ctx_(NULL), solver_(NULL)
 #endif

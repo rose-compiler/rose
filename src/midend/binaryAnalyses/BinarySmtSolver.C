@@ -600,16 +600,24 @@ SmtSolver::selfTest() {
     // Run the solver
     BOOST_FOREACH (const E &expr, exprs) {
         mlog[TRACE] <<"test " <<*expr <<"\n";
-        switch (satisfiable(expr)) {
-            case SAT_NO:
-                mlog[TRACE] <<"not satisfiable\n";
-                break;
-            case SAT_YES:
-                mlog[TRACE] <<"satisfiable\n";
-                break;
-            case SAT_UNKNOWN:
-                mlog[TRACE] <<"unknown\n";
-                break;
+        try {
+            switch (satisfiable(expr)) {
+                case SAT_NO:
+                    mlog[TRACE] <<"not satisfiable\n";
+                    break;
+                case SAT_YES:
+                    mlog[TRACE] <<"satisfiable\n";
+                    break;
+                case SAT_UNKNOWN:
+                    mlog[TRACE] <<"unknown\n";
+                    break;
+            }
+        } catch (const Exception &e) {
+            if (boost::contains(e.what(), "not implemented")) {
+                mlog[ERROR] <<e.what() <<"\n";
+            } else {
+                throw;                                  // an error we don't expect
+            }
         }
     }
 }

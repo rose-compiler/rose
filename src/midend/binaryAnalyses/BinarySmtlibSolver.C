@@ -24,7 +24,8 @@ SmtlibSolver::clearEvidence() {
 
 std::string
 SmtlibSolver::getCommand(const std::string &configName) {
-    return executable_.string() + " " + shellArgs_ + " " + configName;
+    std::string exe = executable_.empty() ? std::string("/bin/false") : executable_.string();
+    return exe + " " + shellArgs_ + " " + configName;
 }
 
 void

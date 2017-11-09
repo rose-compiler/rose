@@ -90,43 +90,6 @@ Z3Solver::insert(const SymbolicExpr::Ptr &expr) {
 #endif
 }
 
-void
-Z3Solver::ctxVariableDeclarations(const VariableSet &vars) {
-#ifdef ROSE_HAVE_Z3
-    BOOST_FOREACH (const SymbolicExpr::LeafPtr &var, vars.values()) {
-        ASSERT_not_null(var);
-        ASSERT_require(var->isVariable() || var->isMemory());
-        if (ctxVarDecls_.exists(var)) {
-            // already emitted a declaration for this variable
-        } else if (var->isScalar()) {
-            z3::sort range = ctx_->bv_sort(var->nBits());
-            z3::func_decl decl = z3::function(var->toString().c_str(), 0, NULL, range);
-            ctxVarDecls_.insert(var, decl);
-        } else {
-            ASSERT_require(var->domainWidth() > 0);
-            z3::sort addr = ctx_->bv_sort(var->domainWidth());
-            z3::sort value = ctx_->bv_sort(var->nBits());
-            z3::sort range = ctx_->array_sort(addr, value);
-            z3::func_decl decl = z3::function(var->toString().c_str(), 0, NULL, range);
-            ctxVarDecls_.insert(var, decl);
-        }
-    }
-#endif
-}
-
-void
-Z3Solver::ctxCommonSubexpressions(const SymbolicExpr::Ptr &expr) {
-#ifdef ROSE_HAVE_Z3
-    std::vector<SymbolicExpr::Ptr> cses = expr->findCommonSubexpressions();
-    BOOST_FOREACH (const SymbolicExpr::Ptr &cse, cses) {
-        if (!ctxCses_.exists(cse))
-            ctxCses_.insert(cse, ctxExpression(cse, BIT_VECTOR));
-    }
-#endif
-}
-
-
-
 SmtSolver::Satisfiable
 Z3Solver::checkLib() {
     requireLinkage(LM_LIBRARY);
@@ -271,6 +234,7 @@ Z3Solver::outputExpression(std::ostream &o, const SymbolicExpr::Ptr &expr, Type 
                 outputRotateRight(o, inode);
                 break;
             case SymbolicExpr::OP_SDIV:
+                ASSERT_require(BIT_VECTOR == needType);
                 throw Exception("OP_SDIV not implemented");
             case SymbolicExpr::OP_SET:
                 ASSERT_require(BIT_VECTOR == needType);
@@ -313,6 +277,7 @@ Z3Solver::outputExpression(std::ostream &o, const SymbolicExpr::Ptr &expr, Type 
                 outputBinary(o, "bvsgt", inode, BIT_VECTOR);
                 break;
             case SymbolicExpr::OP_SMOD:
+                ASSERT_require(BIT_VECTOR == needType);
                 throw Exception("OP_SMOD not implemented");
             case SymbolicExpr::OP_SMUL:
                 ASSERT_require(BIT_VECTOR == needType);
@@ -667,6 +632,37 @@ Z3Solver::outputArithmeticShiftRight(std::ostream &o, const SymbolicExpr::Interi
 }
 
 #ifdef ROSE_HAVE_Z3
+void
+Z3Solver::ctxVariableDeclarations(const VariableSet &vars) {
+    BOOST_FOREACH (const SymbolicExpr::LeafPtr &var, vars.values()) {
+        ASSERT_not_null(var);
+        ASSERT_require(var->isVariable() || var->isMemory());
+        if (ctxVarDecls_.exists(var)) {
+            // already emitted a declaration for this variable
+        } else if (var->isScalar()) {
+            z3::sort range = ctx_->bv_sort(var->nBits());
+            z3::func_decl decl = z3::function(var->toString().c_str(), 0, NULL, range);
+            ctxVarDecls_.insert(var, decl);
+        } else {
+            ASSERT_require(var->domainWidth() > 0);
+            z3::sort addr = ctx_->bv_sort(var->domainWidth());
+            z3::sort value = ctx_->bv_sort(var->nBits());
+            z3::sort range = ctx_->array_sort(addr, value);
+            z3::func_decl decl = z3::function(var->toString().c_str(), 0, NULL, range);
+            ctxVarDecls_.insert(var, decl);
+        }
+    }
+}
+
+void
+Z3Solver::ctxCommonSubexpressions(const SymbolicExpr::Ptr &expr) {
+    std::vector<SymbolicExpr::Ptr> cses = expr->findCommonSubexpressions();
+    BOOST_FOREACH (const SymbolicExpr::Ptr &cse, cses) {
+        if (!ctxCses_.exists(cse))
+            ctxCses_.insert(cse, ctxExpression(cse, BIT_VECTOR));
+    }
+}
+
 z3::expr
 Z3Solver::ctxArithmeticShiftRight(const SymbolicExpr::InteriorPtr &inode) {
     ASSERT_not_null(inode);
