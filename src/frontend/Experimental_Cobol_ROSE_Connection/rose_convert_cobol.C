@@ -3,11 +3,25 @@
 #include "gnucobpt.h"
 #include "rose_convert_cobol.h"
 
+#define DUMP_PARSE_TREE 0
+
 FILE* rose_fd;
+
+const struct cb_program* cobpt_program;
+struct cobpt_base_list* cobpt_local_cache;
 
 int cobpt_convert_cb_program(const struct cb_program* prog, struct cobpt_base_list* local_cache)
 {
-   return rose_convert_cb_program(prog, local_cache);
+   int status = 0;
+
+   cobpt_program = prog;
+   cobpt_local_cache = local_cache;
+
+#if DUMP_PARSE_TREE
+   status = rose_convert_cb_program(prog, local_cache);
+#endif
+
+   return status;
 }
 
 int rose_convert_cb_program(const struct cb_program* prog, struct cobpt_base_list* local_cache)
@@ -78,30 +92,27 @@ int rose_convert_cb_program(const struct cb_program* prog, struct cobpt_base_lis
    }
 
    for (tree = prog->exec_list; tree; tree = CB_CHAIN (tree)) {
-      struct cb_statement *p;
+   // struct cb_statement *p;
       cb_tree tt = CB_VALUE (tree);
       printf("\nEXEC: tag = %d", tt->tag);
 
     //    const char * entry_name = CB_LABEL (CB_PURPOSE (tree))->name;
     //    printf("    entry name = %s\n", entry_name);
 
-    switch (tt->tag) {
-    case CB_TAG_LABEL: /* 18 */
-       rose_convert_cb_label(fd, CB_LABEL (tt));
-       break;
-    case CB_TAG_PERFORM: /* 25 */
-     {
-       rose_convert_cb_perform(fd, CB_PERFORM (tt));
-       break;
-     }
-    case CB_TAG_STATEMENT: /* 26 */
-       p = CB_STATEMENT (tt);
-       rose_convert_cb_statement(fd, CB_STATEMENT (tt));
-       break;
-    default:
-       break;
-    }
- }
+      switch (tt->tag) {
+      case CB_TAG_LABEL: /* 18 */
+         rose_convert_cb_label(fd, CB_LABEL (tt));
+         break;
+      case CB_TAG_PERFORM: /* 25 */
+         rose_convert_cb_perform(fd, CB_PERFORM (tt));
+         break;
+      case CB_TAG_STATEMENT: /* 26 */
+         rose_convert_cb_statement(fd, CB_STATEMENT (tt));
+         break;
+      default:
+         break;
+      }
+   }
 
    return 0;
 }
