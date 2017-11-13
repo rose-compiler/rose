@@ -41,7 +41,7 @@ std::string
 MemoryMap::Exception::leader(std::string dflt) const
 {
     const char *s = what();
-    return s && *s ? dflt : std::string(s);
+    return s && *s ? std::string(s) : dflt;
 }
 
 std::string
