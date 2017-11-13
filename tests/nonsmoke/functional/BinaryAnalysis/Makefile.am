@@ -941,6 +941,8 @@ check-semantics:								\
         symbolicSemantics2-x86.passed        traceSymbolicSemantics2-x86.passed	\
         yicesSemanticsExe2-x86.passed						\
         yicesSemanticsLib2-x86.passed						\
+	z3SemanticsExe2-x86.passed						\
+	z3SemanticsLib2-x86.passed						\
         semanticsSubclassing.passed
 
 # TOO1 (3/24/2015): Failing jenkins-release GCC 4.2.4; removing temporarily until fixed
@@ -1057,6 +1059,42 @@ yicesSemanticsLib2-x86.passed: semantics.conf yicesSemanticsLib2 conditionalDisa
 	@$(RTH_RUN)					\
 		DISABLED="$$(./conditionalDisable)"	\
 		CMD=yicesSemanticsLib2			\
+		INPUT=i686-test1.O3.bin			\
+		SPECIMEN_DIR="$(SPECIMEN_DIR)"		\
+		ANSWER=$(srcdir)/$(@:.passed=.ans)	\
+		$< $@
+endif
+
+# Symbolic semantics, Z3 executable
+noinst_PROGRAMS += z3SemanticsExe2
+z3SemanticsExe2_SOURCES = semantics.C
+z3SemanticsExe2_CPPFLAGS = -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSMT_SOLVER=Z3_EXE
+z3SemanticsExe2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+EXTRA_DIST += semantics.conf z3SemanticsExe2-x86.ans
+if ROSE_HAVE_Z3
+TEST_TARGETS += z3SemanticsExe2-x86.passed
+z3SemanticsExe2-x86.passed: semantics.conf z3SemanticsExe2 conditionalDisable
+	@$(RTH_RUN)					\
+		DISABLED="$$(./conditionalDisable)"	\
+		CMD=z3SemanticsExe2			\
+		INPUT=i686-test1.O3.bin			\
+		SPECIMEN_DIR="$(SPECIMEN_DIR)"		\
+		ANSWER=$(srcdir)/$(@:.passed=.ans)	\
+		$< $@
+endif
+
+# Symbolic semantics, Z3 library
+noinst_PROGRAMS += z3SemanticsLib2
+z3SemanticsLib2_SOURCES = semantics.C
+z3SemanticsLib2_CPPFLAGS = -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSMT_SOLVER=Z3_LIB
+z3SemanticsLib2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+EXTRA_DIST += semantics.conf z3SemanticsLib2-x86.ans
+if ROSE_HAVE_LIBZ3
+TEST_TARGETS += z3SemanticsLib2-x86.passed
+z3SemanticsLib2-x86.passed: semantics.conf z3SemanticsLib2 conditionalDisable
+	@$(RTH_RUN)					\
+		DISABLED="$$(./conditionalDisable)"	\
+		CMD=z3SemanticsLib2			\
 		INPUT=i686-test1.O3.bin			\
 		SPECIMEN_DIR="$(SPECIMEN_DIR)"		\
 		ANSWER=$(srcdir)/$(@:.passed=.ans)	\

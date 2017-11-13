@@ -27,8 +27,9 @@ public:
      *  shellArgs are the list of extra arguments to pass to the solver. WARNING: the entire command is pass to @c popen, which
      *  will invoke a shell to process the executable name and arguments; appropriate escaping of shell meta characters is the
      *  responsibility of the caller. */
-    explicit SmtlibSolver(const boost::filesystem::path &executable, const std::string &shellArgs = "")
-        : SmtSolver(executable.filename().string(), LM_EXECUTABLE), executable_(executable), shellArgs_(shellArgs) {}
+    explicit SmtlibSolver(const std::string &name, const boost::filesystem::path &executable, const std::string &shellArgs = "",
+                          unsigned linkages = LM_EXECUTABLE)
+        : SmtSolver(name, linkages), executable_(executable), shellArgs_(shellArgs) {}
 
 public:
     virtual void reset() ROSE_OVERRIDE;

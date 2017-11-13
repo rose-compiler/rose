@@ -415,7 +415,7 @@ protected:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     /** Unit tests. */
-    void selfTest();
+    virtual void selfTest();
 
     /** Initialize diagnostic output facilities.
      *

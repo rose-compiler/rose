@@ -42,7 +42,8 @@ YicesSolver::availableLinkages()
     retval |= LM_LIBRARY;
 #endif
 #ifdef ROSE_YICES
-    retval |= LM_EXECUTABLE;
+    if (ROSE_YICES && ROSE_YICES[0] != '\0')
+        retval |= LM_EXECUTABLE;
 #endif
     return retval;
 }

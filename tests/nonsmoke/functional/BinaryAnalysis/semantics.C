@@ -40,17 +40,17 @@ using namespace Rose::BinaryAnalysis::InstructionSemantics2;
 #elif SMT_SOLVER == YICES_EXE
     #include "BinaryYicesSolver.h"
     Rose::BinaryAnalysis::SmtSolver *make_solver() {
-        return Rose::BinaryAnalysis::YicesSolver(Rose::BinaryAnalysis::SmtSolver::LM_EXECUTABLE);
+        return new Rose::BinaryAnalysis::YicesSolver(Rose::BinaryAnalysis::SmtSolver::LM_EXECUTABLE);
     }
 #elif SMT_SOLVER == Z3_LIB
     #include "BinaryZ3Solver.h"
     Rose::BinaryAnalysis::SmtSolver *make_solver() {
-        return Rose::BinaryAnalysis::Z3Solver(Rose::BinaryAnalysis::SmtSolver::LM_LIBRARY);
+        return new Rose::BinaryAnalysis::Z3Solver(Rose::BinaryAnalysis::SmtSolver::LM_LIBRARY);
     }
 #elif SMT_SOLVER == Z3_EXE
     #include "BinaryZ3Solver.h"
     Rose::BinaryAnalysis::SmtSolver *make_solver() {
-        return Rose::BinaryAnalysis::Z3Solver(Rose::BinaryAnalysis::SmtSolver::LM_EXECUTABLE);
+        return new Rose::BinaryAnalysis::Z3Solver(Rose::BinaryAnalysis::SmtSolver::LM_EXECUTABLE);
     }
 #else
 #   error "invalid value for SMT_SOLVER"

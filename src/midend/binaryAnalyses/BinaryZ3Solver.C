@@ -13,7 +13,8 @@ Z3Solver::availableLinkages() {
     retval |= LM_LIBRARY;
 #endif
 #ifdef ROSE_Z3
-    retval |= LM_EXECUTABLE;
+    if (ROSE_Z3 && ROSE_Z3[0] != '\0')
+        retval |= LM_EXECUTABLE;
 #endif
     return retval;
 }

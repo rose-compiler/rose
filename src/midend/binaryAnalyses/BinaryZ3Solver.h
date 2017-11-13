@@ -49,13 +49,11 @@ public:
      *   If executable (@c LM_EXECUTABLE) linkage is specified then the executable is that which was detected by the ROSE
      *   configuration script. */
     explicit Z3Solver(unsigned linkages = LM_ANY)
-        : SmtlibSolver(ROSE_Z3)
+        : SmtlibSolver("Z3", ROSE_Z3, "", linkages & availableLinkages())
 #ifdef ROSE_HAVE_Z3
         , ctx_(NULL), solver_(NULL)
 #endif
     {
-        name("Z3");
-        linkage_ = bestLinkage(linkages & availableLinkages());
 #ifdef ROSE_HAVE_Z3
         ctx_ = new z3::context;
         solver_ = new z3::solver(*ctx_);
@@ -68,7 +66,7 @@ public:
      *  The @p exe should be only the name of the Z3 executable. The @p shellArgs are the rest of the command-line, all of
      *  which will be passed through a shell. The caller is responsible for appropriately escaping shell meta characters. */
     explicit Z3Solver(const boost::filesystem::path &exe, const std::string &shellArgs = "")
-        : SmtlibSolver(exe, shellArgs) {}
+        : SmtlibSolver("Z3", exe, shellArgs) {}
     
     /** Returns a bit vector of linkage capabilities.
      *

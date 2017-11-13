@@ -46,6 +46,12 @@ void
 SmtSolver::init(unsigned linkages) {
     linkage_ = bestLinkage(linkages);
     stack_.push_back(std::vector<SymbolicExpr::Ptr>());
+
+    if (linkage_ == LM_LIBRARY) {
+        name_ = name_ + std::string(name_.empty() ? "" : " ") + "library";
+    } else if (linkage_ == LM_EXECUTABLE) {
+        name_ = name_ + std::string(name_.empty() ? "" : " ") + "executable";
+    }
 }
 
 void
@@ -488,7 +494,6 @@ SmtSolver::printSExpression(std::ostream &o, const SExpr::Ptr &sexpr) {
 // Unit tests
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// class method
 void
 SmtSolver::selfTest() {
     mlog[WHERE] <<"running self-tests\n";
@@ -614,7 +619,7 @@ SmtSolver::selfTest() {
             }
         } catch (const Exception &e) {
             if (boost::contains(e.what(), "not implemented")) {
-                mlog[ERROR] <<e.what() <<"\n";
+                mlog[WARN] <<e.what() <<"\n";
             } else {
                 throw;                                  // an error we don't expect
             }
