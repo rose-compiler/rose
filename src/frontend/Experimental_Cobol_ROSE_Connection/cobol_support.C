@@ -1,11 +1,18 @@
 // cobol_main function to initiate parsing
 // ---------------------------------------
 
+// DQ (11/13/2017): This is a policy violation, sage3basic.h must be the first file included.
+// #include <iostream>
+// #include <assert.h>
+
+// DQ (11/13/2017): This is a policy violation, sage3basic.h must be the first file included.
+// #include "rose_config.h"
+#include "sage3basic.h"
+
 #include <iostream>
 #include <assert.h>
 
 #include "rose_config.h"
-#include "sage3basic.h"
 
 #include "cobol_support.h"
 #include "gnucobpt.h"

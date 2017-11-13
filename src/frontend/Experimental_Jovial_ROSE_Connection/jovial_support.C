@@ -1,8 +1,11 @@
 // C++ code calling an Jovial frontend function.
 
-#include "rose_config.h"
+// DQ (11/13/2017): This is a policy violation, sage3basic.h must be the first file included.
+// #include "rose_config.h"
 
 #include "sage3basic.h"
+
+#include "rose_config.h"
 
 #include <assert.h>
 #include <iostream>

@@ -5,17 +5,17 @@ extern FILE* rose_fd;
 
 /* This struct is copied from codgen.c */
 struct rose_field_list {
-	struct rose_field_list	*next;
-	struct cb_field		*f;
-	cb_tree			x;
-	const char		*curr_prog;
+        struct rose_field_list  *next;
+        struct cb_field         *f;
+        cb_tree                 x;
+        const char              *curr_prog;
 };
 
 /* This struct is copied from codgen.c */
 struct rose_base_list {
-	struct rose_base_list	*next;
-	struct cb_field		*f;
-	const char		*curr_prog;
+        struct rose_base_list   *next;
+        struct cb_field         *f;
+        const char              *curr_prog;
 };
 
 

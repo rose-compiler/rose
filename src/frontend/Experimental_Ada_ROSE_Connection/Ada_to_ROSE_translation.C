@@ -1,8 +1,12 @@
 
 // #include "rose.h"
-#include "rose_config.h"
+
+// DQ (11/13/2017): This is a violation, sage3basic.h must be the first file included.
+// #include "rose_config.h"
 
 #include "sage3basic.h"
+
+#include "rose_config.h"
 
 #include "Ada_to_ROSE_translation.h"
 
@@ -2882,7 +2886,7 @@ void
   //  A_Generic_Package_Declaration,            // 12.1(2)
   Declarative_Item_List          Visible_Part_Declarative_Items;
   bool                           Is_Private_Present;
-  Declarative_Item_List	         Private_Part_Declarative_Items;
+  Declarative_Item_List          Private_Part_Declarative_Items;
   //  A_Task_Type_Declaration,                  // 9.1(2)
   //  A_Protected_Type_Declaration,             // 9.4(2)
   //  A_Single_Task_Declaration,                // 3.3.1(2),9.1(3)
