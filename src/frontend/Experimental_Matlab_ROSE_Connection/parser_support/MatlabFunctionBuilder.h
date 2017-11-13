@@ -3,7 +3,10 @@
 
 #include <string>
 
-#include "rose.h"
+// DQ (11/13/2017): The direct use of rose.h within ROSE infrastructure is a violation of policy.
+// #include "rose.h"
+#include <rosePublicConfig.h>
+// #include <sage3basic.h>
 
 class StatementList;
 
