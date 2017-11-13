@@ -4,6 +4,9 @@
 //  testing if rajaChecker can ensure two conditions 
 //   1. if at least one reaching definitions for a variable (x1) has a form of base+offset
 //   2. all reaching definitions are the only one in a control flow path (previous DEF node of the reaching definition is a declaration or none)
+// 
+//  Update 11/3/2017. User codes do have a pattern like x1=x, x1=x. So I relaxed the analysis to allow this exception 
+//
 void foo2(double* x, int jp, int kp, int begin, int end, double rh1, bool cond)
 {
    //Condition 1: pointer declaration, 4 or 8 pointers
