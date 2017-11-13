@@ -2,6 +2,8 @@
 #define ROSE_CONVERT_COBOL_H
 
 extern FILE* rose_fd;
+extern const struct cb_program* cobpt_program;
+extern struct cobpt_base_list* cobpt_local_cache;
 
 int rose_convert_cb_program(const struct cb_program* prog, struct cobpt_base_list* local_cache);
 int rose_convert_cb_field(FILE* fd, struct cb_field* field);

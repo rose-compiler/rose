@@ -29,12 +29,12 @@ int jovial_main(int argc, char** argv, SgSourceFile* sg_source_file)
   //   4. Traverse filename.jov.aterm creating Sage untyped nodes
   //   5. Traverse the Sage untyped nodes to complete the Sage IR
 
-  // TODO
+  // TODO!!!
   // std::string stratego_bin_path = STRATEGO_BIN_PATH;
      std::string stratego_bin_path = "/nfs/casc/overture/ROSE/opt/rhel7/x86_64/stratego/strategoxt-0.17.1/bin";
      assert (stratego_bin_path.empty() == false);
 
-  // TODO - could be from ROSE build tree
+  // TODO!!! - could be from ROSE build tree
   // std::string jovial_bin_path = JOVIAL_BIN_PATH;
      std::string jovial_bin_path = "/nfs/casc/overture/ROSE/opt/rhel7/x86_64/stratego/jovial-sdf-0.5/bin";
      assert (jovial_bin_path.empty() == false);
@@ -130,15 +130,15 @@ int jovial_main(int argc, char** argv, SgSourceFile* sg_source_file)
   // Initialize the ATerm library
      ATinitialize(argc, argv);
 
-     filenameWithoutPath += ".aterm";
+     std::string aterm_filename = filenameWithoutPath + ".aterm";
 
-     std::cout << "OPENING ATerm parse-tree file " << filenameWithoutPath << "\n";
+     std::cout << "OPENING ATerm parse-tree file " << aterm_filename << "\n";
 
   // Read the ATerm file that was created by the parser
-     FILE * file = fopen(filenameWithoutPath.c_str(), "r");
+     FILE * file = fopen(aterm_filename.c_str(), "r");
      if (file == NULL)
         {
-           fprintf(stderr, "\nFAILED: in jovial_main(), unable to open file %s\n\n", filenameWithoutPath.c_str());
+           fprintf(stderr, "\nFAILED: in jovial_main(), unable to open file %s\n\n", aterm_filename.c_str());
            return status;
         }
 
@@ -161,11 +161,15 @@ int jovial_main(int argc, char** argv, SgSourceFile* sg_source_file)
 
      std::cout << "\nSUCCESSFULLY traversed Jovial parse-tree" << "\n\n";
 
+  // Rasmussen (11/9/17): Create a dot file.  This is temporary or should
+  // at least be an rose option.
+     SgUntypedGlobalScope* global_scope = aterm_traversal->get_scope();
+     generateDOT(global_scope, filenameWithoutPath);
+
 //----------------------------------------------------------------------
 //  Traverse the SgUntypedFile object and convert to regular sage nodes
 //----------------------------------------------------------------------
 
-#if 0
   // Step 5
   // ------
 
@@ -177,7 +181,6 @@ int jovial_main(int argc, char** argv, SgSourceFile* sg_source_file)
      sg_traversal.traverse(ofp_traversal->get_file(),scope);
 
      if (ofp_traversal)  delete ofp_traversal;
-#endif
 
      assert (status == 0);
 

@@ -1,4 +1,5 @@
-// C++ code calling an Cobol frontend function.
+// cobol_main function to initiate parsing
+// ---------------------------------------
 
 #include <iostream>
 #include <assert.h>
@@ -8,26 +9,41 @@
 
 #include "cobol_support.h"
 #include "gnucobpt.h"
+#include "rose_convert_cobol.h"
+#include "CobolGraph.h"
 
 int cobol_main(int argc, char** argv, SgSourceFile* sg_source_file)
    {
-     int status = 0;
+     char* cobol_argv[2];
+     int cobol_argc;
+     int status = 1;
 
-  // Rasmussen (10/13/2017):
-  // TODO
-  //   - make sure argc and argv are correct
-  //   - may have to create local variables from SgSourceFile information
-  //   - how will the converter class get access to this?
-  //      - perhaps create class and set member variable before calling parser
-  //
+     assert(sg_source_file != NULL);
+
+     std::string filenameWithPath = sg_source_file->getFileName();
+     std::string filename = Rose::StringUtility::stripPathFromFileName(filenameWithPath);
+
+  // Initialize argc and argv variables for call to Cobol parser
+     cobol_argc = 2;
+     cobol_argv[0] = strdup("ROSE::cobol_main");
+     cobol_argv[1] = strdup(filename.c_str());
 
   // Call the main entry function for access to GnuCOBOL parse-tree information
   //   - this function subsequently calls cobpt_convert_cb_program() for each file parsed
-     status = gnucobol_parsetree_main (argc, argv);
 
-     std::cout << "\ncobol_main: IN DEVELOPMENT...................................\n\n";
+     status = gnucobol_parsetree_main (cobol_argc, cobol_argv);
 
-     assert (status != 0);
+     std::cout << "\ncobol_main: IN DEVELOPMENT (called gnucobol_parsetree_main) ........................\n\n";
+
+     assert (status == 0);
+
+     free(cobol_argv[0]);
+     free(cobol_argv[1]);
+
+  // Output digraph file
+     CobolSupport::CobolGraph cobol_graph(filename);
+
+     cobol_graph.graph(cobpt_program, cobpt_local_cache, NULL);
 
      return status;
    }
