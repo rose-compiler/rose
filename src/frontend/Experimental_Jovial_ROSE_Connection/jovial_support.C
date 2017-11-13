@@ -173,6 +173,7 @@ int jovial_main(int argc, char** argv, SgSourceFile* sg_source_file)
   // Step 5
   // ------
 
+#if 0
   // Build the traversal object
      Jovial::Untyped::UntypedTraversal sg_traversal(globalFilePointer);
      Jovial::Untyped::InheritedAttribute scope = NULL;
@@ -181,6 +182,7 @@ int jovial_main(int argc, char** argv, SgSourceFile* sg_source_file)
      sg_traversal.traverse(ofp_traversal->get_file(),scope);
 
      if (ofp_traversal)  delete ofp_traversal;
+#endif
 
      assert (status == 0);
 
