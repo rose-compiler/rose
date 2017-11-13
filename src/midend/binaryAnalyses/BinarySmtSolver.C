@@ -603,8 +603,9 @@ SmtSolver::selfTest() {
     exprs.push_back(makeEq(makeSet(a8, b8, c8), b8, "set"));
 
     // Run the solver
-    BOOST_FOREACH (const E &expr, exprs) {
-        mlog[TRACE] <<"test " <<*expr <<"\n";
+    for (size_t i=0; i<exprs.size(); ++i) {
+        const E &expr = exprs[i];
+        mlog[TRACE] <<"expr [" <<i <<"] = " <<*expr <<"\n";
         try {
             switch (satisfiable(expr)) {
                 case SAT_NO:
@@ -612,6 +613,12 @@ SmtSolver::selfTest() {
                     break;
                 case SAT_YES:
                     mlog[TRACE] <<"satisfiable\n";
+
+                    BOOST_FOREACH (const std::string &evidenceName, evidenceNames()) {
+                        E evidence = evidenceForName(evidenceName);
+                        ASSERT_always_not_null(evidence);
+                        mlog[DEBUG] <<"  evidence: " <<evidenceName <<" = " <<*evidence <<"\n";
+                    }
                     break;
                 case SAT_UNKNOWN:
                     mlog[TRACE] <<"unknown\n";

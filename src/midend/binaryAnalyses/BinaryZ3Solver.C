@@ -1,6 +1,7 @@
 #include <sage3basic.h>
 #include <BinaryZ3Solver.h>
 
+using namespace Sawyer::Message::Common;
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -862,14 +863,132 @@ Z3Solver::ctxZerop(const SymbolicExpr::InteriorPtr &inode) {
 }
 #endif
 
-SymbolicExpr::Ptr
-Z3Solver::evidenceForName(const std::string&) {
-    TODO("[Robb Matzke 2017-10-23]");
+void
+Z3Solver::parseEvidence() {
+    if (linkage() != LM_LIBRARY)
+        return SmtlibSolver::parseEvidence();
+
+#ifdef ROSE_HAVE_Z3
+    ASSERT_not_null(solver_);
+    z3::model model = solver_->get_model();
+    for (size_t i=0; i<model.size(); ++i) {
+        z3::func_decl fdecl = model[i];
+        if (fdecl.arity() != 0)
+            continue;
+
+        // There's got to be a better way to get information about a z3::expr, but I haven't found it yet.  For bit vectors, we
+        // need to know the number of bits and the value, even if the value is wider than 64 bits.
+
+        // Get the number of bits for the variable by searching the assertions. This is not a fast way to do it!
+        SymbolicExpr::LeafPtr var;
+        BOOST_FOREACH (const SymbolicExpr::LeafPtr &v, ctxVarDecls_.keys()) {
+            if (v->toString() == fdecl.name().str()) {
+                var = v;
+                break;
+            }
+        }
+        if (NULL == var) {
+            mlog[WARN] <<"cannot find evidence variable " <<fdecl.name() <<"\n";
+            continue;
+        }
+        
+        // Get the value
+        SymbolicExpr::Ptr val;
+        z3::expr interp = model.get_const_interp(fdecl);
+        if (interp.is_bv()) {
+            val = SymbolicExpr::makeInteger(var->nBits(), interp.get_numeral_uint64());
+        } else if (interp.is_bool()) {
+            val = SymbolicExpr::makeBoolean(interp.get_numeral_uint() != 0);
+        } else {
+            mlog[WARN] <<"cannot parse evidence expression for " <<*var <<"\n";
+            continue;
+        }
+        
+        ASSERT_not_null(var);
+        ASSERT_not_null(val);
+        evidence.insert(var, val);
+    }
+
+#else
+    ASSERT_not_reachable("z3 not enabled");
+#endif
 }
 
-std::vector<std::string>
-Z3Solver::evidenceNames() {
-    TODO("[Robb Matzke 2017-10-23]");
+void
+Z3Solver::selfTest() {
+    SmtlibSolver::selfTest();
+
+    using namespace SymbolicExpr;
+    typedef SymbolicExpr::Ptr Expr;
+
+    reset();
+    ASSERT_always_require(nLevels() == 1);
+    ASSERT_always_require(assertions().empty());
+    ASSERT_always_require(assertions(0).empty());
+
+    //-----
+    // This unit test answers the following question:
+    //   * Given a 32-bit variable, what values when rotate left three bits are equal to the same value
+    //     rotated right three bits?
+    //-----
+
+    // Create the expression
+    Expr a = makeVariable(32, "a");
+    Expr rol = makeRol(makeInteger(32, 3), a);
+    Expr ror = makeRor(makeInteger(32, 3), a);
+    Expr expr1 = makeEq(rol, ror);
+
+    // Insert the expression into the solver
+    mlog[DEBUG] <<"insert " <<*expr1 <<"\n";
+    insert(expr1);
+    ASSERT_always_require(nLevels() == 1);
+    ASSERT_always_require(assertions().size() == 1);
+    ASSERT_always_require(assertions(0).size() == 1);
+    ASSERT_always_require(assertions()[0] == assertions(0)[0]);
+
+    // Check that it's satisfiable
+    mlog[DEBUG] <<"checking\n";
+    Satisfiable sat = check();
+    ASSERT_always_require(SAT_YES == sat);
+
+    // Get an answer
+    mlog[DEBUG] <<"parsing evidence\n";
+    parseEvidence();
+    std::vector<std::string> enames = evidenceNames();
+    BOOST_FOREACH (const std::string &name, enames) {
+        mlog[DEBUG] <<"evidence name = " <<name <<"\n";
+        Expr expr = evidenceForName(name);
+        ASSERT_always_not_null(expr);
+        mlog[DEBUG] <<"  " <<name <<" = " <<*expr <<"\n";
+    }
+    
+    ASSERT_always_require(enames.size() == 1);
+    ASSERT_always_require(enames[0] == a->isLeafNode()->toString());
+    Expr aEvidence = evidenceForName(a->isLeafNode()->toString());
+    ASSERT_always_not_null(aEvidence);
+    ASSERT_always_require(aEvidence->nBits() == a->nBits());
+    ASSERT_always_require(aEvidence->isLeafNode());
+    ASSERT_always_require(aEvidence->isLeafNode()->isNumber());
+    uint32_t aVal = aEvidence->isLeafNode()->toInt();
+    ASSERT_always_require2(aVal == 0x00000000 || aVal == 0x11111111 || aVal == 0xaaaaaaaa || aVal == 0x55555555,
+                           StringUtility::addrToString(aVal));
+
+    // Augment by requiring that the answer is not certain values
+    push();
+    insert(makeNe(a, makeInteger(32, 0x00000000)));
+    insert(makeNe(a, makeInteger(32, 0xffffffff)));
+    insert(makeNe(a, makeInteger(32, 0xaaaaaaaa)));
+
+    // Check again and get an answer
+    sat = check();
+    ASSERT_always_require(SAT_YES == sat);
+    parseEvidence();
+    aEvidence = evidenceForName(a->isLeafNode()->toString());
+    ASSERT_always_not_null(aEvidence);
+    ASSERT_always_require(aEvidence->isLeafNode());
+    ASSERT_always_require(aEvidence->isLeafNode()->isNumber());
+    aVal = aEvidence->isLeafNode()->toInt();
+    ASSERT_always_require2(aVal == 0x55555555, StringUtility::addrToString(aVal));
 }
 
 } // namespace

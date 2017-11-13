@@ -7,6 +7,10 @@
 #include <z3++.h>
 #endif
 
+#ifndef ROSE_Z3
+#define ROSE_Z3 ""
+#endif
+
 #include <boost/serialization/access.hpp>
 
 namespace Rose {
@@ -105,12 +109,12 @@ public:
     virtual Satisfiable checkLib() ROSE_OVERRIDE;
     virtual void reset() ROSE_OVERRIDE;
     virtual void clearEvidence() ROSE_OVERRIDE;
-    virtual SymbolicExpr::Ptr evidenceForName(const std::string&) ROSE_OVERRIDE;
-    virtual std::vector<std::string> evidenceNames() ROSE_OVERRIDE;
+    virtual void parseEvidence() ROSE_OVERRIDE;
     virtual void push() ROSE_OVERRIDE;
     virtual void pop() ROSE_OVERRIDE;
     void insert(const SymbolicExpr::Ptr &expr) ROSE_OVERRIDE;
     using SmtlibSolver::insert;
+    virtual void selfTest() ROSE_OVERRIDE;
 protected:
     virtual void outputBvxorFunctions(std::ostream&, const std::vector<SymbolicExpr::Ptr>&) ROSE_OVERRIDE;
     virtual void outputComparisonFunctions(std::ostream&, const std::vector<SymbolicExpr::Ptr>&) ROSE_OVERRIDE;

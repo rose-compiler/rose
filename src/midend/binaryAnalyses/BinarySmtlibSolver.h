@@ -13,7 +13,9 @@ private:
     boost::filesystem::path executable_;                // solver program
     std::string shellArgs_;                             // extra arguments for command (passed through shell)
     ExprExprMap varsForSets_;                           // variables to use for sets
-    ExprExprMap evidence_;
+
+protected:
+    ExprExprMap evidence;
 
 public:
     /** Construct a solver using the specified program.

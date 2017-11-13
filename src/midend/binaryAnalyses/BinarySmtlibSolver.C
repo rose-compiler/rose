@@ -19,7 +19,7 @@ SmtlibSolver::reset() {
 void
 SmtlibSolver::clearEvidence() {
     SmtSolver::clearEvidence();
-    evidence_.clear();
+    evidence.clear();
 }
 
 std::string
@@ -1068,6 +1068,7 @@ SmtlibSolver::outputWrite(std::ostream &o, const SymbolicExpr::InteriorPtr &inod
 
 void
 SmtlibSolver::parseEvidence() {
+    requireLinkage(LM_EXECUTABLE);
     boost::regex varNameRe("v\\d+");
 
     BOOST_FOREACH (const SExpr::Ptr &sexpr, parsedOutput_) {
@@ -1084,6 +1085,7 @@ SmtlibSolver::parseEvidence() {
                     elmt->children()[3]->children()[0]->name() == "_" &&
                     elmt->children()[3]->children()[1]->name() == "BitVec" &&
                     elmt->children()[4]->name().substr(0, 1) == "#") {
+
                     size_t nBits = boost::lexical_cast<size_t>(elmt->children()[3]->children()[2]->name());
 
                     // Variable
@@ -1110,7 +1112,7 @@ SmtlibSolver::parseEvidence() {
                     SymbolicExpr::Ptr val = SymbolicExpr::makeConstant(bits);
 
                     SAWYER_MESG(mlog[DEBUG]) <<"evidence: " <<*var <<" == " <<*val <<"\n";
-                    evidence_.insert(var, val);
+                    evidence.insert(var, val);
 
                 } else if (mlog[ERROR]) {
                     mlog[ERROR] <<"malformed model element: ";
@@ -1124,7 +1126,7 @@ SmtlibSolver::parseEvidence() {
 
 SymbolicExpr::Ptr
 SmtlibSolver::evidenceForName(const std::string &varName) {
-    BOOST_FOREACH (const ExprExprMap::Node &node, evidence_.nodes()) {
+    BOOST_FOREACH (const ExprExprMap::Node &node, evidence.nodes()) {
         ASSERT_not_null(node.key()->isLeafNode());
         ASSERT_require(node.key()->isLeafNode()->isVariable());
         if (node.key()->isLeafNode()->toString() == varName)
@@ -1136,7 +1138,7 @@ SmtlibSolver::evidenceForName(const std::string &varName) {
 std::vector<std::string>
 SmtlibSolver::evidenceNames() {
     std::vector<std::string> retval;
-    BOOST_FOREACH (const SymbolicExpr::Ptr &varExpr, evidence_.keys()) {
+    BOOST_FOREACH (const SymbolicExpr::Ptr &varExpr, evidence.keys()) {
         SymbolicExpr::LeafPtr leaf = varExpr->isLeafNode();
         ASSERT_not_null(leaf);
         ASSERT_require(leaf->isVariable());
