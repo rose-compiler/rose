@@ -1,1 +1,2 @@
-Not a nodal accumulation loop at line:33
+Found a nodal accumulation loop at line:36
+	 The first accumulation statement is at line:42

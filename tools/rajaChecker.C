@@ -308,6 +308,27 @@ std::vector<std::string> RAJA_Checker::commandline_processing(std::vector< std::
 using namespace RAJA_Checker;
 using namespace SageInterface;
 
+
+//! We avoid calling def-use analysis for input codes with unsupported constructs
+// TODO: refine the granularity to be function level later
+bool hasUnsupportedLanguageFeatures( VariantT* unsupportedConstruct)
+{
+  std::set<VariantT> blackListDict; 
+  blackListDict.insert(V_SgLambdaExp);
+
+  // build a dictionary of language constructs shown up in the loop, then query it
+  RoseAst ast ( getProject());
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+    if (blackListDict.find( (*i)->variantT()) != blackListDict.end())
+    {
+      *unsupportedConstruct= (*i)->variantT(); 
+      return true; 
+    }
+  }
+  return false;
+}
+
+
 //! Retrieve def use info. for a node's enclosing function definition
 // Three possible cases: 
 // 1. first time calling of the analysis
@@ -324,16 +345,27 @@ DFAnalysis* RAJA_Checker::obtainDFAnalysis ()
   static int called =0; 
   // must be static to persist across calls
   static DFAnalysis* defuse = NULL; 
+  
   if (called ==0)
   {
     called = 1; 
-    defuse = new DefUseAnalysis(getProject());
-    int val = defuse->run(false); // debug is false
-    if (val == 1)  // failed analysis? reset defuse to be NULL
+    VariantT badConstruct; 
+    if (hasUnsupportedLanguageFeatures (&badConstruct))
     {
-      if (enable_debug)
-        cout<<"Warning, dfuse analysis fails..."<<endl;
-      defuse = NULL;
+     if (enable_debug)
+          cout<<"Warning, defuse analysis skipped due to unsupported construct ..."<< badConstruct <<endl;
+       return NULL; 
+    }
+    else
+    {
+      defuse = new DefUseAnalysis(getProject());
+      int val = defuse->run(false); // debug is false
+      if (val == 1)  // failed analysis? reset defuse to be NULL
+      {
+        if (enable_debug)
+          cout<<"Warning, dfuse analysis fails..."<<endl;
+        defuse = NULL;
+      }
     }
   }
   
@@ -635,7 +667,8 @@ bool uniqueAssignOp (SgAssignOp* assign_op, SgInitializedName* iname)
 
   DFAnalysis* dfa = obtainDFAnalysis();
   if (dfa)
-  { // OUT_def_set (prevStmt): only one def node, which must not be assignInitializer (with assign initializer), but a naked variable decl
+  { 
+    // OUT_def_set (prevStmt): only one def node, which can be either assignInitializer (with assign initializer) or but a naked variable decl
     // which is SgInitializedName
     vector <SgNode*> defs = dfa->getDefFor(prevStmt, iname);
     if (defs.size() ==0) //no previous definition. This may be caused by wrong def-use analysis results. It should have at least one def (declared)
@@ -648,19 +681,23 @@ bool uniqueAssignOp (SgAssignOp* assign_op, SgInitializedName* iname)
     else
       if (defs.size() ==1)
       {
-        if (isSgInitializedName(defs[0]))
+        if (isSgInitializedName(defs[0]) || isSgAssignInitializer (defs[0]) )
+        {
+          if (RAJA_Checker::enable_debug)
+            cout<<"cond 1 is met: no previous definition within OUT set of prev statement "<<endl;
           return true;
+        }
         else
         {
           if (RAJA_Checker::enable_debug)
-            cout<<"the DEF OUT set of prevstmt is size 1, but not initialized name. It is "<< toString(defs[0])<<endl;
+            cout<<"in uniqueAssignOp(): the DEF OUT set of prevstmt is size 1, but the DEF node is not initialized name or assign initializer. It is "<< toString(defs[0])<<endl;
         }
       }
       else
       {
         if (RAJA_Checker::enable_debug)
         {
-          cout<<" OUT DEF of prev statement is not size 1, but "<<defs.size() <<endl;
+          cout<<"Not uniquely assigned before reaching the loop!  OUT DEF of prev statement is not size 1, but "<<defs.size() <<endl;
           for (size_t i =0; i< defs.size(); i++)
           {
             cout<<toString(defs[i])<<endl;
@@ -914,7 +951,8 @@ bool RAJA_Checker::isNodalAccumulationStmt (SgStatement* s, SgInitializedName* l
 
   // new version using def-use analysis , tighten the screw further for supported for-loops 
   if ( loopStatement) //TODO handle lambda body!!
-  { // obtain two conditions: 1. has at least one reaching def as base + offset
+  { // obtain two conditions: 
+    // Condition 1. has at least one reaching def as base + offset
     // condition 2: all reaching definitions are unique
    if( initializedOnceWithBasePlusOffset (iname, loopStatement, lhsUniqueDef))
    {
@@ -1401,9 +1439,9 @@ main ( int argc, char* argv[])
   if (KEEP_GOING_CAUGHT_MIDEND_SIGNAL)                                                                                
   {                                                                                                                   
     std::cout                                                                                                         
-      << "[WARN] "                                                                                                    
-      << "Configured to keep going after catching a "                                                                 
-      << "signal in AutoPar"                                                                                          
+      << "[WARN] "
+      << "Configured to keep going after catching a "
+      << "signal in rajaChecker"
       << std::endl;                                                                                                   
     Rose::KeepGoing::setMidendErrorCode (project, 100);                                                               
     goto label_end;                                                                                                   
