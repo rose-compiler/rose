@@ -1177,10 +1177,11 @@ CommandlineProcessing::isJovialFileNameSuffix ( const std::string & suffix )
 
   // For now define CASE_SENSITIVE_SYSTEM to be true, as we are currently a UNIXish project.
 
+  // Rasmussen (11/08/2017): Changed Jovial file extension to reflect usage found on web
 #if(CASE_SENSITIVE_SYSTEM == 1)
-     if ( suffix == "jovial" )
+     if ( suffix == "jov" || suffix == "j73" || suffix == "jovial" )
 #else //It is a case insensitive system
-     if ( suffix == "jovial" )
+     if ( suffix == "jov" || suffix == "j73" || suffix == "jovial" )
 #endif
         {
           returnValue = true;
@@ -1197,10 +1198,11 @@ CommandlineProcessing::isCobolFileNameSuffix ( const std::string & suffix )
 
   // For now define CASE_SENSITIVE_SYSTEM to be true, as we are currently a UNIXish project.
 
+  // Rasmussen (11/08/2017): Changed Cobol file extension to reflect usage found on web
 #if(CASE_SENSITIVE_SYSTEM == 1)
-     if ( suffix == "cobol" )
+     if ( suffix == "cob"  || suffix == "cbl" || suffix == "cobol")
 #else //It is a case insensitive system
-     if ( suffix == "cobol" )
+     if ( suffix == "cob"  || suffix == "cbl" || suffix == "cobol")
 #endif
         {
           returnValue = true;
