@@ -675,7 +675,7 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
                cout << "source file(s) generated. (from AST)" << endl;
         }
 
-#if 1
+#if 0
      printf ("Inside of backend(SgProject*): SgProject::get_verbose()       = %d \n",SgProject::get_verbose());
      printf ("Inside of backend(SgProject*): project->numberOfFiles()       = %d \n",project->numberOfFiles());
      printf ("Inside of backend(SgProject*): project->numberOfDirectories() = %d \n",project->numberOfDirectories());

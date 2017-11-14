@@ -6125,9 +6125,9 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
             // I need the exact command line used to compile the generate code with the backendcompiler (so that I can reuse it to test the generated code).
                printf ("SgFile::compileOutput(): get_skipfinalCompileStep() == false: compilerCmdLine = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerCmdLine,false,false).c_str());
              }
-
+#if 0
           printf ("In SgFile::compileOutput(): get_compileOnly() = %s \n",get_compileOnly() ? "true" : "false");
-
+#endif
        // DQ (4/18/2015): Adding support to add compile only mode to the processing of each file when multiple files are processed.
           if (get_compileOnly() == true)
              {
@@ -6143,7 +6143,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                if (get_Ada_only() == true)
                   {
                     addCompileOnlyFlag = false;
-#if 1
+#if 0
                     printf ("In SgFile::compileOutput(): get_compileOnly() == true: addCompileOnlyFlag = %s \n",addCompileOnlyFlag ? "true" : "false");
 #endif
                   }
@@ -6176,7 +6176,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                     compilerCmdLine.push_back("-c");
                   }
 
-#if DEBUG_PROJECT_COMPILE_COMMAND_LINE_WITH_ARGS || 1
+#if DEBUG_PROJECT_COMPILE_COMMAND_LINE_WITH_ARGS || 0
                printf ("In SgFile::compileOutput(): get_skipfinalCompileStep() == false: get_compileOnly() == true: compilerCmdLine = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerCmdLine,false,false).c_str());
 #endif
 
@@ -6204,7 +6204,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                   }
              }
 
-#if DEBUG_PROJECT_COMPILE_COMMAND_LINE_WITH_ARGS || 1
+#if DEBUG_PROJECT_COMPILE_COMMAND_LINE_WITH_ARGS || 0
           printf ("In SgFile::compileOutput(): Calling systemFromVector(): compilerCmdLine = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerCmdLine,false,false).c_str());
 #endif
 
@@ -6212,7 +6212,9 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
        // CAVE3 double check that is correct and shouldn't be compilerCmdLine
           returnValueForCompiler = systemFromVector (compilerCmdLine);
 
+#if 0
           printf ("In SgFile::compileOutput(): Calling systemFromVector(): returnValueForCompiler = %d \n",returnValueForCompiler);
+#endif
 
        // TOO1 (05/14/2013): Handling for -rose:keep_going
        //
@@ -6494,7 +6496,7 @@ SgProject::compileOutput()
 
 #define DEBUG_PROJECT_COMPILE_COMMAND_LINE 0
 
-#if 1
+#if 0
      vector<string> tmp_argv = get_originalCommandLineArgumentList();
      printf ("In SgProject::compileOutput(): listToString(originalCommandLine) = %s \n",StringUtility::listToString(tmp_argv).c_str());
 #endif
@@ -6556,9 +6558,10 @@ SgProject::compileOutput()
         }
 
   // NOTE: that get_C_PreprocessorOnly() is true only if using the "-E" option and not for the "-edg:E" option.
-#if 1
+#if 0
      printf ("In SgProject::compileOutput(): get_C_PreprocessorOnly() = %s \n",get_C_PreprocessorOnly() ? "true" : "false");
 #endif
+
   // case 1: preprocessing only
      if (get_C_PreprocessorOnly() == true)
         {
@@ -6777,7 +6780,7 @@ SgProject::compileOutput()
           printf ("In SgProject::compileOutput(): get_compileOnly() = %s \n",get_compileOnly() ? "true" : "false");
 #endif
 
-#if 1
+#if 0
           printf ("In SgProject::compileOutput(): errorCode = %d \n",errorCode);
 #endif
        // case 3: linking at the project level

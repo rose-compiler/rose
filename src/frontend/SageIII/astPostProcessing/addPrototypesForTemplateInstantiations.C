@@ -67,8 +67,9 @@ CollectTemplateInstantiationsMarkedForOutput::visit ( SgNode* node )
           if (functionDeclaration == definingFunctionDeclaration)
              {
             // Add function declaration for defining template instantitation.
+#if 0
                printf ("Found defining function declaration for template instantiation: definingFunctionDeclaration = %p = %s \n",definingFunctionDeclaration,definingFunctionDeclaration->get_name().str());
-
+#endif
                ROSE_ASSERT(definingTemplateInstantiationSet.find(definingFunctionDeclaration) == definingTemplateInstantiationSet.end());
 
                definingTemplateInstantiationSet.insert(definingFunctionDeclaration);
@@ -130,10 +131,14 @@ AddPrototypesForTemplateInstantiations::evaluateInheritedAttribute (
              {
                if (definingTemplateInstantiationSet.find(definingFunctionDeclaration) != definingTemplateInstantiationSet.end())
                   {
+#if 0
                     printf ("AddPrototypesForTemplateInstantiations: Found a function call to a template instantiation defined in the AST \n");
+#endif
                     if (usedTemplateInstantiationSet.find(functionRefExp) == usedTemplateInstantiationSet.end())
                        {
+#if 0
                          printf ("AddPrototypesForTemplateInstantiations: insert definingDeclaration into usedTemplateInstantiationSet \n");
+#endif
                          usedTemplateInstantiationSet.insert(functionRefExp);
 
                          SgFunctionDeclaration* firstNondefiningFunctionDeclaration = isSgFunctionDeclaration(functionDeclaration->get_firstNondefiningDeclaration());
@@ -141,11 +146,15 @@ AddPrototypesForTemplateInstantiations::evaluateInheritedAttribute (
 
                          if (prototypeTemplateInstantiationSet.find(firstNondefiningFunctionDeclaration) != prototypeTemplateInstantiationSet.end())
                             {
+#if 0
                               printf ("Prototype HAS been seen previously (nothing to do) \n");
+#endif
                             }
                            else
                             {
+#if 0
                               printf ("Prototype has NOT been seen previously (need to add template instantiation prototype) \n");
+#endif
                             }
                        }
                   }

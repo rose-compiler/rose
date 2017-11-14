@@ -5220,7 +5220,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           set_outputLanguage(SgFile::e_PHP_language);
         }
 
-#if 1
+#if 0
   // DQ (29/8/2017): Add a note to fix this.
      printf ("In cmdline.cpp: Need to add support for other languages here! \n");
 #endif
@@ -7789,8 +7789,9 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
           case SgFile::e_Cxx_language:
              {
+#if 0
                printf ("Error: SgFile::e_C_language or SgFile::e_Cxx_language detected in SgFile::buildCompilerCommandLineOptions() (unparser not implemented, unparsing ignored) \n");
-
+#endif
                compilerNameString[0] = BACKEND_CXX_COMPILER_NAME_WITH_PATH;
 
             // DQ (7/26/2014): Adding support for C11 (option to backend compiler).
@@ -8387,7 +8388,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
        else
         {
        // Turn off all warnings.
-#if 1
+#if 0
           printf ("Build -w option for some backend language compilers \n");
 #endif
        // DQ (9/7/2017): Avoid use of "-w" on other language compilers as well.
@@ -8404,7 +8405,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
              }
         }
 
-#if 1
+#if 0
      printf ("In buildCompilerCommandLineOptions(): After adding options from Rose::global_options: argcArgvList.size() = %" PRIuPTR " argcArgvList = %s \n",
           argcArgvList.size(),StringUtility::listToString(argcArgvList).c_str());
 #endif
@@ -8521,7 +8522,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 #endif             
         }
 
-#if DEBUG_COMPILER_COMMAND_LINE || 1
+#if DEBUG_COMPILER_COMMAND_LINE || 0
      printf ("In buildCompilerCommandLineOptions: After processing executable specification: argcArgvList.size() = %" PRIuPTR " argcArgvList = %s \n",argcArgvList.size(),StringUtility::listToString(argcArgvList).c_str());
   // ROSE_ASSERT(false);
 #endif
@@ -8920,7 +8921,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
              }
         }
 
-#if DEBUG_COMPILER_COMMAND_LINE || 1
+#if DEBUG_COMPILER_COMMAND_LINE || 0
      printf ("At base of buildCompilerCommandLineOptions: test 6: compilerNameString = \n\n%s\n\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
 #endif
 #if 0

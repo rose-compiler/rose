@@ -36,7 +36,7 @@ int systemFromVector(const vector<string>& argv) {
     vector<const char*> argvC(argv.size() + 1);
     for (size_t i = 0; i < argv.size(); ++i) {
       argvC[i] = strdup(argv[i].c_str());
-#if 1
+#if 0
       printf ("In systemFromVector(): loop: argvC[%zu] = %s \n",i,argvC[i]);
 #endif
     }

@@ -324,7 +324,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
      currentFile = file;
      ROSE_ASSERT(currentFile != NULL);
 
-#if 1
+#if 0
      printf ("In Unparser::unparseFile(): SageInterface::is_Cxx_language()     = %s \n",SageInterface::is_Cxx_language() ? "true" : "false");
      printf ("In Unparser::unparseFile(): SageInterface::is_Fortran_language() = %s \n",SageInterface::is_Fortran_language() ? "true" : "false");
      printf ("In Unparser::unparseFile(): SageInterface::is_Java_language()    = %s \n",SageInterface::is_Java_language() ? "true" : "false");
@@ -611,7 +611,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
           case SgFile::e_C_language:
           case SgFile::e_Cxx_language:
              {
-               printf ("Error: SgFile::e_C_language or SgFile::e_Cxx_language detected in unparser (unparser not implemented, unparsing ignored) \n");
+            // printf ("Error: SgFile::e_C_language or SgFile::e_Cxx_language detected in unparser (unparser not implemented, unparsing ignored) \n");
 
 #if 0
                printf ("Unparse using C/C++ unparser by default: unparseScope = %p \n",unparseScope);
@@ -664,7 +664,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
 
           case SgFile::e_Java_language:
              {
-               printf ("Error: SgFile::e_Java_language detected in unparser (unparser not implemented, unparsing ignored) \n");
+            // printf ("Error: SgFile::e_Java_language detected in unparser (unparser not implemented, unparsing ignored) \n");
 
                Unparse_Java unparser(this, file->getFileName());
                unparser.unparseJavaFile(file, info);
@@ -673,7 +673,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
 
           case SgFile::e_X10_language:
              {
-               printf ("Error: SgFile::e_X10_language detected in unparser (unparser not implemented, unparsing ignored) \n");
+            // printf ("Error: SgFile::e_X10_language detected in unparser (unparser not implemented, unparsing ignored) \n");
                Unparse_X10 unparser(this, file->getFileName());
 
             // MH (7/2/2014) : disabled unparseStatement() and instead invoke unparseX10File()
@@ -693,15 +693,16 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
 
           case SgFile::e_PHP_language:
              {
-               printf ("Error: SgFile::e_PHP_language detected in unparser (unparser not implemented, unparsing ignored) \n");
-                    Unparse_PHP unparser(this,file->get_unparse_output_filename());
-                    unparser.unparseStatement(globalScope, info);
+            // printf ("Error: SgFile::e_PHP_language detected in unparser (unparser not implemented, unparsing ignored) \n");
+
+               Unparse_PHP unparser(this,file->get_unparse_output_filename());
+               unparser.unparseStatement(globalScope, info);
                break;
              }
 
           case SgFile::e_Python_language:
              {
-               printf ("Error: SgFile::e_Python_language detected in unparser (unparser not implemented, unparsing ignored) \n");
+            // printf ("Error: SgFile::e_Python_language detected in unparser (unparser not implemented, unparsing ignored) \n");
 
 #ifdef ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
                Unparse_Python unparser(this,file->get_unparse_output_filename());
@@ -2499,7 +2500,7 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
 
   // Call the unparser mechanism
 
-#if 1
+#if 0
      printf ("Inside of unparseFile ( SgFile* file ) (using filename = %s) \n",file->get_unparse_output_filename().c_str());
 #endif
 
@@ -2754,10 +2755,10 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
                case SgFile::e_C_language:
                case SgFile::e_Cxx_language:
                   {
-                    printf ("Error: SgFile::e_C_language or SgFile::e_Cxx_language detected in unparser (unparser not implemented, unparsing ignored) \n");
+                 // printf ("Error: SgFile::e_C_language or SgFile::e_Cxx_language detected in unparser (unparser not implemented, unparsing ignored) \n");
 
                     outputFilename = "rose_" + file->get_sourceFileNameWithoutPath();
-#if 1
+#if 0
                     printf ("In unparseFile(SgFile* file): outputFilename not set using default: outputFilename = %s \n",outputFilename.c_str());
 #endif
 
@@ -2774,7 +2775,7 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
             // DQ (9/7/2017): Newly added enum value to support binaries (added to general langauge handling).
                case SgFile::e_Binary_language:
                   {
-                    printf ("Error: SgFile::e_Binary_language detected in unparser (unparser not implemented, unparsing ignored) \n");
+                 // printf ("Error: SgFile::e_Binary_language detected in unparser (unparser not implemented, unparsing ignored) \n");
 
                     ROSE_ASSERT(file->get_binary_only() == true);
 
@@ -2786,10 +2787,10 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
 
                case SgFile::e_Fortran_language:
                   {
-                    printf ("Error: SgFile::e_Fortran_language detected in unparser (unparser not implemented, unparsing ignored) \n");
+                 // printf ("Error: SgFile::e_Fortran_language detected in unparser (unparser not implemented, unparsing ignored) \n");
 
                     outputFilename = "rose_" + file->get_sourceFileNameWithoutPath();
-#if 1
+#if 0
                     printf ("In unparseFile(SgFile* file): outputFilename not set using default: outputFilename = %s \n",outputFilename.c_str());
 #endif
                     break;
@@ -2797,7 +2798,7 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
 
                case SgFile::e_Java_language:
                   {
-                    printf ("Error: SgFile::e_Java_language detected in unparser (unparser not implemented, unparsing ignored) \n");
+                 // printf ("Error: SgFile::e_Java_language detected in unparser (unparser not implemented, unparsing ignored) \n");
 
                     ROSE_ASSERT(file->get_Java_only() == true);
 
@@ -2843,7 +2844,7 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
 
                case SgFile::e_X10_language:
                   {
-                    printf ("Error: SgFile::e_X10_language detected in unparser (unparser not implemented, unparsing ignored) \n");
+                 // printf ("Error: SgFile::e_X10_language detected in unparser (unparser not implemented, unparsing ignored) \n");
 
                     ROSE_ASSERT(file->get_X10_only() == true);
 
@@ -2956,14 +2957,14 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
 
           if (project != NULL)
              {
-#if 1
+#if 0
                printf ("project->get_unparse_in_same_directory_as_input_file() = %s \n",project->get_unparse_in_same_directory_as_input_file() ? "true" : "false");
 #endif
                if (project->get_unparse_in_same_directory_as_input_file() == true)
                   {
                  // outputFilename = Rose::getPathFromFileName(file->get_sourceFileNameWithPath()) + "/rose_" + file->get_sourceFileNameWithoutPath();
                     outputFilename = Rose::getPathFromFileName(file->get_sourceFileNameWithPath()) + "/" + output_filename_prefix + file->get_sourceFileNameWithoutPath();
-#if 1
+#if 0
                     printf ("Using filename for unparsed file into same directory as input file: outputFilename = %s \n",outputFilename.c_str());
 #endif
 #if 0
@@ -2997,7 +2998,7 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
              }
 
        // string outputFilename = "rose_" + file->get_sourceFileNameWithoutPath();
-#if 1
+#if 0
           printf ("In unparseFile(SgFile* file): outputFilename not set using default: outputFilename = %s \n",outputFilename.c_str());
 #endif
 
@@ -3009,7 +3010,7 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
         }
 #endif
 
-#if 1
+#if 0
      printf ("Inside of unparseFile ( SgFile* file ) file->get_skip_unparse() = %s \n",file->get_skip_unparse() ? "true" : "false");
 #endif
 
@@ -3183,7 +3184,7 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
        // roseUnparser.run_unparser();
        // roseUnparser.unparseFile(file,inheritedAttributeInfo);
 
-#if 1
+#if 0
           printf ("In unparseFile(SgFile*): Calling the unparser for SgFile \n");
 #endif
 
@@ -3221,7 +3222,7 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
                   }
              }          
 
-#if 1
+#if 0
           printf ("In unparseFile(SgFile*): Closing the output file \n");
 #endif
        // And finally we need to close the file (to flush everything out!)
