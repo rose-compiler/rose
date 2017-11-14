@@ -604,8 +604,11 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
 
           case SgFile::e_default_language:
              {
-               printf ("Error: SgFile::e_default_language detected in unparser \n");
-               ROSE_ASSERT(false);
+            // printf ("Error: SgFile::e_default_language detected in unparser \n");
+            // ROSE_ASSERT(false);
+#if 0
+               printf ("Warning: SgFile::e_default_language detected in unparser \n");
+#endif
              }
 
           case SgFile::e_C_language:
@@ -2748,8 +2751,11 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
 
                case SgFile::e_default_language:
                   {
-                    printf ("Error: SgFile::e_default_language detected in unparser \n");
-                    ROSE_ASSERT(false);
+                 // printf ("Error: SgFile::e_default_language detected in unparser \n");
+                 // ROSE_ASSERT(false);
+#if 0
+                    printf ("Warning: SgFile::e_default_language detected in unparser \n");
+#endif
                   }
 
                case SgFile::e_C_language:
@@ -2948,9 +2954,10 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
                   }
              }
 
-
+#if 0
        // DQ (9/7/2017): Make sure that binaries are processed through the new general language support.
           ROSE_ASSERT(file->get_binary_only() == false);
+#endif
 
        // DQ (9/7/2017): Added support for generated file to be placed into the same directory as the source file.
           SgProject* project = TransformationSupport::getProject(file);
