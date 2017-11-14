@@ -257,7 +257,7 @@ CommandlineProcessing::isValidFileWithExecutableFileSuffixes ( string name )
                bool returnValue = false;
 
             // printf ("passed test (length > jlength) && (name.compare(length - jlength, jlength, *j) == 0): opening file to double check \n");
-#if 1
+#if 0
                printf ("In CommandlineProcessing::isValidFileWithExecutableFileSuffixes(): name = %s \n",name.c_str());
 #endif
             // Open file for reading
@@ -7714,8 +7714,11 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
           case SgFile::e_default_language:
              {
+#if 0
+            // DQ (11/13/2017): This fails for the case of binaries.
                printf ("Error: SgFile::e_default_language detected in SgFile::buildCompilerCommandLineOptions() \n");
                ROSE_ASSERT(false);
+#endif
              }
 
           case SgFile::e_C_language:

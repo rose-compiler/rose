@@ -6893,7 +6893,7 @@ SgFile::isPrelinkPhase() const
 // int SgProject::link ()
 int SgProject::link ( std::string linkerName )
    {
-#if 1
+#if 0
      printf ("In SgProject::link(): linkerName = %s \n",linkerName.c_str());
 #endif
 
