@@ -80,7 +80,7 @@ EXTRA_DIST = $(TESTCODES) input_hello_world.cpp
 check-local:
 	@echo "Tests of VX Works C examples."
 	@$(MAKE) $(PASSING_TEST_Sources)
-	@$(MAKE) test_vxworks
+#	@$(MAKE) test_vxworks
 	@echo "***********************************************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/vxworks_tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************************************"
