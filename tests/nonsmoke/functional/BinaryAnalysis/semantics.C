@@ -30,21 +30,27 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 using namespace Rose::BinaryAnalysis::InstructionSemantics2;
 
 #if !defined(SMT_SOLVER) || SMT_SOLVER == NO_SOLVER
-#   include "BinarySmtSolver.h"
+    #include "BinarySmtSolver.h"
     Rose::BinaryAnalysis::SmtSolver *make_solver() { return NULL; }
 #elif SMT_SOLVER == YICES_LIB
-#   include "BinaryYicesSolver.h"
+    #include "BinaryYicesSolver.h"
     Rose::BinaryAnalysis::SmtSolver *make_solver() {
-        Rose::BinaryAnalysis::YicesSolver *solver =
-            new Rose::BinaryAnalysis::YicesSolver(Rose::BinaryAnalysis::YicesSolver::LM_LIBRARY);
-        return solver;
+        return new Rose::BinaryAnalysis::YicesSolver(Rose::BinaryAnalysis::SmtSolver::LM_LIBRARY);
     }
 #elif SMT_SOLVER == YICES_EXE
-#   include "BinaryYicesSolver.h"
+    #include "BinaryYicesSolver.h"
     Rose::BinaryAnalysis::SmtSolver *make_solver() {
-        Rose::BinaryAnalysis::YicesSolver *solver =
-            new Rose::BinaryAnalysis::YicesSolver(Rose::BinaryAnalysis::YicesSolver::LM_EXECUTABLE);
-        return solver;
+        return new Rose::BinaryAnalysis::YicesSolver(Rose::BinaryAnalysis::SmtSolver::LM_EXECUTABLE);
+    }
+#elif SMT_SOLVER == Z3_LIB
+    #include "BinaryZ3Solver.h"
+    Rose::BinaryAnalysis::SmtSolver *make_solver() {
+        return new Rose::BinaryAnalysis::Z3Solver(Rose::BinaryAnalysis::SmtSolver::LM_LIBRARY);
+    }
+#elif SMT_SOLVER == Z3_EXE
+    #include "BinaryZ3Solver.h"
+    Rose::BinaryAnalysis::SmtSolver *make_solver() {
+        return new Rose::BinaryAnalysis::Z3Solver(Rose::BinaryAnalysis::SmtSolver::LM_EXECUTABLE);
     }
 #else
 #   error "invalid value for SMT_SOLVER"

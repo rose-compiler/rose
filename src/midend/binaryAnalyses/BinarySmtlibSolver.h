@@ -12,9 +12,10 @@ class SmtlibSolver: public SmtSolver {
 private:
     boost::filesystem::path executable_;                // solver program
     std::string shellArgs_;                             // extra arguments for command (passed through shell)
-    typedef Sawyer::Container::Map<SymbolicExpr::Ptr, SymbolicExpr::Ptr> ExprExprMap;
     ExprExprMap varsForSets_;                           // variables to use for sets
-    ExprExprMap evidence_;
+
+protected:
+    ExprExprMap evidence;
 
 public:
     /** Construct a solver using the specified program.
@@ -28,14 +29,16 @@ public:
      *  shellArgs are the list of extra arguments to pass to the solver. WARNING: the entire command is pass to @c popen, which
      *  will invoke a shell to process the executable name and arguments; appropriate escaping of shell meta characters is the
      *  responsibility of the caller. */
-    explicit SmtlibSolver(const boost::filesystem::path &executable, const std::string &shellArgs = "")
-        : SmtSolver(executable.filename().string(), LM_EXECUTABLE), executable_(executable), shellArgs_(shellArgs) {}
+    explicit SmtlibSolver(const std::string &name, const boost::filesystem::path &executable, const std::string &shellArgs = "",
+                          unsigned linkages = LM_EXECUTABLE)
+        : SmtSolver(name, linkages), executable_(executable), shellArgs_(shellArgs) {}
 
 public:
+    virtual void reset() ROSE_OVERRIDE;
     virtual void generateFile(std::ostream&, const std::vector<SymbolicExpr::Ptr> &exprs, Definitions*) ROSE_OVERRIDE;
     virtual std::string getCommand(const std::string &configName) ROSE_OVERRIDE;
     virtual std::string getErrorMessage(int exitStatus) ROSE_OVERRIDE;
-    virtual VariableSet findVariables(const std::vector<SymbolicExpr::Ptr>&) ROSE_OVERRIDE;
+    virtual VariableSet findVariables(const SymbolicExpr::Ptr&) ROSE_OVERRIDE;
     virtual SymbolicExpr::Ptr evidenceForName(const std::string&) ROSE_OVERRIDE;
     virtual std::vector<std::string> evidenceNames() ROSE_OVERRIDE;
     virtual void clearEvidence() ROSE_OVERRIDE;
@@ -67,18 +70,19 @@ protected:
     virtual std::string typeName(const SymbolicExpr::Ptr&);
 
     // Functions that generate SMT-LIB output to a stream when given a Rose::BinaryAnalysis::SymbolicExpr
-    virtual void outputDefinitions(std::ostream&, const VariableSet&);
+    virtual void outputVariableDeclarations(std::ostream&, const VariableSet&);
     virtual void outputComments(std::ostream&, const std::vector<SymbolicExpr::Ptr>&);
     virtual void outputCommonSubexpressions(std::ostream&, const std::vector<SymbolicExpr::Ptr>&);
     virtual void outputAssertion(std::ostream&, const SymbolicExpr::Ptr&);
-    virtual void outputExpression(std::ostream&, const SymbolicExpr::Ptr&);
-    virtual void outputList(std::ostream&, const std::string &funcName, const SymbolicExpr::InteriorPtr&);
-    virtual void outputUnary(std::ostream&, const std::string &funcName, const SymbolicExpr::InteriorPtr&);
-    virtual void outputBinary(std::ostream&, const std::string &funcName, const SymbolicExpr::InteriorPtr&);
-    virtual void outputLeftAssoc(std::ostream&, const std::string &funcName, const SymbolicExpr::InteriorPtr&);
+    virtual void outputExpression(std::ostream&, const SymbolicExpr::Ptr&, Type need);
+    virtual void outputLeaf(std::ostream&, const SymbolicExpr::LeafPtr&, Type need);
+    virtual void outputList(std::ostream&, const std::string &funcName, const SymbolicExpr::InteriorPtr&, Type need);
+    virtual void outputUnary(std::ostream&, const std::string &funcName, const SymbolicExpr::InteriorPtr&, Type need);
+    virtual void outputBinary(std::ostream&, const std::string &funcName, const SymbolicExpr::InteriorPtr&, Type need);
+    virtual void outputLeftAssoc(std::ostream&, const std::string &funcName, const SymbolicExpr::InteriorPtr&, Type need);
     virtual void outputXor(std::ostream&, const SymbolicExpr::InteriorPtr&);
     virtual void outputExtract(std::ostream&, const SymbolicExpr::InteriorPtr&);
-    virtual void outputIte(std::ostream&, const SymbolicExpr::InteriorPtr&);
+    virtual void outputIte(std::ostream&, const SymbolicExpr::InteriorPtr&, Type need);
     virtual void outputNotEqual(std::ostream&, const SymbolicExpr::InteriorPtr&);
     virtual void outputUnsignedExtend(std::ostream&, const SymbolicExpr::InteriorPtr&);
     virtual void outputSignExtend(std::ostream&, const SymbolicExpr::InteriorPtr&);

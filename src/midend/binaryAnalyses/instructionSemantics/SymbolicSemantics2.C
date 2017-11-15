@@ -556,8 +556,8 @@ RiscOperators::ite(const BaseSemantics::SValuePtr &sel_,
     }
     if (solver()) {
         // If the selection expression cannot be true, then return b
-        ExprPtr assertion = SymbolicExpr::makeEq(sel->get_expression(), SymbolicExpr::makeInteger(1, 1));
-        bool can_be_true = SmtSolver::SAT_NO != solver()->satisfiable(assertion);
+        ExprPtr condition = sel->get_expression();
+        bool can_be_true = SmtSolver::SAT_NO != solver()->satisfiable(condition);
         if (!can_be_true) {
             retval = SValue::promote(b->copy());
             switch (computingDefiners_) {
@@ -576,8 +576,8 @@ RiscOperators::ite(const BaseSemantics::SValuePtr &sel_,
         }
 
         // If the selection expression cannot be false, then return a
-        assertion = SymbolicExpr::makeEq(sel->get_expression(), SymbolicExpr::makeInteger(1, 0));
-        bool can_be_false = SmtSolver::SAT_NO != solver()->satisfiable(assertion);
+        ExprPtr inverseCondition = SymbolicExpr::makeInvert(sel->get_expression());
+        bool can_be_false = SmtSolver::SAT_NO != solver()->satisfiable(inverseCondition);
         if (!can_be_false) {
             retval = SValue::promote(a->copy());
             switch (computingDefiners_) {

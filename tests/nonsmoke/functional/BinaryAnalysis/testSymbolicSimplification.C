@@ -7,12 +7,13 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #include <rose.h>
 #include <BinarySymbolicExpr.h>
 #include <BinaryYicesSolver.h>
+#include <BinaryZ3Solver.h>
 #include <SymbolicSemantics2.h>
 
 using namespace Rose;
 using namespace Rose::BinaryAnalysis;
 
-#if 0 // [Robb P. Matzke 2015-06-25]: cannot be tested automatically since Jenkins might not have Yices
+#if 0 // [Robb P. Matzke 2015-06-25]: cannot be tested automatically since Jenkins might not have an SMT solver
 static void
 test_yices_linkage() {
     if (unsigned avail = YicesSolver::availableLinkage()) {
