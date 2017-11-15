@@ -7949,41 +7949,54 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
              {
                printf ("Error: SgFile::e_Csharp_language detected in SgFile::buildCompilerCommandLineOptions() \n");
 
+            // Rasmussen (11/14/2017): Added check to ensure that C# is configured
+#ifdef ROSE_EXPERIMENTAL_CSHARP_ROSE_CONNECTION
                compilerNameString[0] = BACKEND_CSHARP_COMPILER_NAME_WITH_PATH;
-            // ROSE_ASSERT(false);
+#else
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
           case SgFile::e_Ada_language:
              {
                printf ("Error: SgFile::e_Ada_language detected in SgFile::buildCompilerCommandLineOptions() \n");
-            // ROSE_ASSERT(false);
 
+            // Rasmussen (11/14/2017): Added check to ensure that Ada is configured
+#ifdef ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
                compilerNameString[0] = BACKEND_ADA_COMPILER_NAME_WITH_PATH;
 
             // DQ (9/12/2017): We need to add the "compile" option to the "gnat" command line ahead of the rest of the command line.
                compilerNameString.push_back("compile");
-
+#else
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
           case SgFile::e_Jovial_language:
              {
                printf ("Error: SgFile::e_Jovial_language detected in SgFile::buildCompilerCommandLineOptions() \n");
-            // ROSE_ASSERT(false);
 
+            // Rasmussen (11/14/2017): Added check to ensure that JOVIAL is configured
+#ifdef ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION
                compilerNameString[0] = BACKEND_JOVIAL_COMPILER_NAME_WITH_PATH;
-
+#else
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
           case SgFile::e_Cobol_language:
              {
                printf ("Error: SgFile::e_Cobol_language detected in SgFile::buildCompilerCommandLineOptions() \n");
-            // ROSE_ASSERT(false);
 
+            // Rasmussen (11/14/2017): Added check to ensure that COBOL is configured
+#ifdef ROSE_EXPERIMENTAL_COBOL_ROSE_CONNECTION
                compilerNameString[0] = BACKEND_COBOL_COMPILER_NAME_WITH_PATH;
-
+#else
+               ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -8964,4 +8977,3 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
      return compilerNameString;
    } // end of SgFile::buildCompilerCommandLineOptions()
-
