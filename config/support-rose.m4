@@ -2476,7 +2476,6 @@ tests/nonsmoke/functional/CompileTests/sourcePosition_tests/Makefile
 tests/nonsmoke/functional/CompileTests/staticCFG_tests/Makefile
 tests/nonsmoke/functional/CompileTests/systemc_tests/Makefile
 tests/nonsmoke/functional/CompileTests/vxworks_tests/Makefile
-tests/nonsmoke/functional/CompileTests/gnat_tests/Makefile
 tests/nonsmoke/functional/CompileTests/uninitializedField_tests/Makefile
 tests/nonsmoke/functional/CompileTests/unparseToString_tests/Makefile
 tests/nonsmoke/functional/CompileTests/virtualCFG_tests/Makefile
@@ -2604,6 +2603,9 @@ tutorial/roseHPCT/Makefile
 # tests/CompileTests/Makefile
 # tests/CompileTests/OpenMP_tests/Makefile
 # tests/CompileTests/x10_tests/Makefile
+
+# DQ (11/14/2017): Removed GNAT test directory since it is redundant with the ADA test directory.
+# tests/nonsmoke/functional/CompileTests/gnat_tests/Makefile
 
 # Liao, 1/16/2014, comment out a few directories which are turned off for EDG 4.x upgrade
 #projects/BinaryDataStructureRecognition/Makefile
