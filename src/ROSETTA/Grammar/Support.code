@@ -14904,6 +14904,7 @@ SgFile::get_outputLanguageOptionName ( SgFile::languageOption_enum lang )
           case SgFile::e_default_language: s = "default"; break;
           case SgFile::e_C_language:       s = "C";       break;
           case SgFile::e_Cxx_language:     s = "C++";     break;
+          case SgFile::e_Binary_language:  s = "Binary";  break;
           case SgFile::e_Fortran_language: s = "Fortran"; break;
           case SgFile::e_Java_language:    s = "Java";    break;
           case SgFile::e_X10_language:     s = "X10";     break;

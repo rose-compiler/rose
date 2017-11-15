@@ -7702,7 +7702,17 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
   // DQ (29/8/2017): Newer version of code to support multiple languges.
 
   // For now let's enforce this, for internal testing, but translators will fail for this assertion in the future.
+     if (get_inputLanguage() != get_outputLanguage())
+        {
+          printf ("Error: In buildCompilerCommandLineOptions(): get_inputLanguage() = %d get_outputLanguage() = %d \n",get_inputLanguage(),get_outputLanguage());
+          printf ("Error: In buildCompilerCommandLineOptions(): get_inputLanguage() = %s get_outputLanguage() = %s \n",
+               get_outputLanguageOptionName(get_inputLanguage()).c_str(),get_outputLanguageOptionName(get_outputLanguage()).c_str());
+        }
      ROSE_ASSERT(get_inputLanguage() == get_outputLanguage());
+
+#if 0
+     printf ("In buildCompilerCommandLineOptions(): before switch: get_outputLanguage() = %s \n",get_outputLanguageOptionName(get_outputLanguage()).c_str());
+#endif
 
      switch (get_outputLanguage())
         {
@@ -7839,10 +7849,21 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                break;
              }
 
+       // DQ (11/15/2017): Added case to support binary handling, but there is no tool that we run the output code through for a binary that is disassembled (I think).
+          case SgFile::e_Binary_language:
+             {
+            // DQ (11/15/2017): Perhaps we should run the output through the gnu assembler?
+#if 0
+               printf ("SgFile::e_Binary_language detected in SgFile::buildCompilerCommandLineOptions(): nothing to do here! \n");
+#endif
+               break;
+             }
+
           case SgFile::e_Fortran_language:
              {
+#if 0
                printf ("Error: SgFile::e_Fortran_language detected in SgFile::buildCompilerCommandLineOptions() \n");
-
+#endif
                compilerNameString[0] = ROSE_GFORTRAN_PATH;
 
                if (get_backendCompileFormat() == e_fixed_form_output_format)

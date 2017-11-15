@@ -1075,7 +1075,7 @@ cout.flush();
                            // Use the filename suffix as a default means to set this value
                               file->set_outputLanguage(SgFile::e_C_language);
 
-                           // DQ (29/8/2017): Set the input language as well.
+                           // DQ (8/29/2017): Set the input language as well.
                               file->set_inputLanguage(SgFile::e_C_language);
 
                               file->set_C_only(true);
@@ -1322,6 +1322,14 @@ cout.flush();
                                      // file->initializeSourcePosition();
 
                                         file->set_sourceFileUsesBinaryFileExtension(true);
+
+                                     // DQ (11/15/2017): This this convention of setting the output file type.
+                                     // file->set_sourceFileUsesCobolFileExtension(true);
+                                     // file->set_outputLanguage(SgFile::e_Cobol_language);
+                                        file->set_outputLanguage(SgFile::e_Binary_language);
+
+                                     // DQ (11/15/2017): Set the input language as well.
+                                        file->set_inputLanguage(SgFile::e_Binary_language);
 
                                      // If this is an object file being processed for binary analysis then mark it as an object
                                      // file so that we can trigger analysis to mar the sections that will be disassembled.
