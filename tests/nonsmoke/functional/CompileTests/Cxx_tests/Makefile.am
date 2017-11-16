@@ -437,8 +437,6 @@ NEW_2017_TESTS = \
    test2017_27.C \
    test2017_28.C \
    test2017_30.C \
-   test2017_31.C \
-   test2017_32.C \
    test2017_35.C \
    test2017_36.C \
    test2017_37.C \
@@ -465,10 +463,19 @@ NEW_2017_TESTS = \
    test2017_58.C 
 
 if !ROSE_USE_EDG_VERSION_4_9
-NEW_2017_TESTS = \
+# DQ (11/15/2017): I think this should be "+=" instead of "=".
+# NEW_2017_TESTS = 
+NEW_2017_TESTS += \
    test2017_12.C \
    test2017_33.C \
    test2017_34.C 
+endif
+
+if ROSE_USING_GCC_VERSION_LATER_4_4
+# DQ (11/15/2017): These tests fail for GNU 4.2 compiler.
+NEW_2017_TESTS += \
+   test2017_31.C \
+   test2017_32.C \
 endif
 
 STILL_FAILING = \
