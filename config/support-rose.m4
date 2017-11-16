@@ -830,9 +830,12 @@ ROSE_SUPPORT_ATERM
 # DQ (1/22/2016): Added support for stratego (need to know the path to sglri executable for Experimental Fortran support).
 ROSE_SUPPORT_STRATEGO
 
+# RASMUSSEN (11/16/2017): Removed check for OFP Stratego tools binary installation (Experimental Fortran support).
+# Now assumes that the OFP Fortran parse table (Fortran.tbl) is stored in the source directory.
 # RASMUSSEN (2/22/2017): Added support for OFP Stratego tools binary installation (Experimental Fortran support).
-# This assumes that OFP is installed from an OFP release and not imported and buiit with ROSE directly.
-ROSE_SUPPORT_OFP_STRATEGO
+# This assumes that OFP is installed from an OFP release and not imported and built with ROSE directly.
+
+#ROSE_SUPPORT_OFP_STRATEGO
 
 if test "x$enable_experimental_fortran_frontend" = "xyes"; then
    if test "x$ATERM_LIBRARY_PATH" = "x"; then
@@ -840,9 +843,6 @@ if test "x$enable_experimental_fortran_frontend" = "xyes"; then
    fi
    if test "x$STRATEGO_LIBRARY_PATH" = "x"; then
       AC_MSG_ERROR([Support for experimental_fortran_frontend requires Stratego library support, --with-stratego=<path> must be specified!])
-   fi
-   if test "x$OFP_BIN_PATH" = "x"; then
-      AC_MSG_ERROR([Support for experimental_fortran_frontend requires OFP binary installation, --with-ofp-bin=<path> must be specified!])
    fi
 fi
 
