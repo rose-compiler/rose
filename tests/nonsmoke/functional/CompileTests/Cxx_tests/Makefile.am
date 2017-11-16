@@ -475,7 +475,7 @@ if ROSE_USING_GCC_VERSION_LATER_4_4
 # DQ (11/15/2017): These tests fail for GNU 4.2 compiler.
 NEW_2017_TESTS += \
    test2017_31.C \
-   test2017_32.C \
+   test2017_32.C 
 endif
 
 STILL_FAILING = \

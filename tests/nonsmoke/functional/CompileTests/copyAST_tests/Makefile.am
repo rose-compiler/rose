@@ -67,7 +67,7 @@ LONG_LIST_TESTCODES_REQUIRED_TO_PASS = \
 
 if !USING_INTEL_COMPILER
 # DQ (11/15/2017): These appear to fail for the Intel compiler (versions v14 through v17).
-LONG_LIST_EXTRA_TESTCODES_REQUIRED_TO_PASS += \
+LONG_LIST_TESTCODES_REQUIRED_TO_PASS += \
    copytest2014_01.C \
    copytest2014_02.C
 endif
