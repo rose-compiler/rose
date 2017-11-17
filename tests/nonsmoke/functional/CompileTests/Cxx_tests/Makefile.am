@@ -440,7 +440,6 @@ NEW_2017_TESTS = \
    test2017_42.C \
    test2017_43.C \
    test2017_45.C \
-   test2017_46.C \
    test2017_47.C \
    test2017_48.C \
    test2017_49.C \
@@ -470,7 +469,8 @@ if ROSE_USING_GCC_VERSION_LATER_4_4
 NEW_2017_TESTS += \
    test2017_31.C \
    test2017_32.C \
-   test2017_44.C 
+   test2017_44.C \
+   test2017_46.C 
 endif
 
 STILL_FAILING = \
