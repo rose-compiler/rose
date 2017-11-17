@@ -39,7 +39,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2013_279.C \
    test2013_280.C \
    test2013_281.C \
-   test2013_282.C \
    test2013_283.C \
    test2013_284.C \
    test2013_285.C \
@@ -132,7 +131,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_96.C \
    test2014_97.C \
    test2014_98.C \
-   test2014_99.C \
    test2014_100.C \
    test2014_101.C \
    test2014_102.C \
@@ -144,9 +142,7 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_115.C \
    test2014_116.C \
    test2014_117.C \
-   test2014_118.C \
    test2014_119.C \
-   test2014_120.C \
    test2014_121.C \
    test2014_122.C \
    test2014_123.C \
@@ -182,7 +178,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_154.C \
    test2014_155.C \
    test2014_156.C \
-   test2014_157.C \
    test2014_160.C \
    test2014_161.C \
    test2014_162.C \
@@ -292,8 +287,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2015_79.C \
    test2015_80.C \
    test2015_97.C \
-   lulesh.C \
-   luleshTALC.C \
    Area-01.C \
    $(NEW_TESTCODES)
 
@@ -446,7 +439,6 @@ NEW_2017_TESTS = \
    test2017_41.C \
    test2017_42.C \
    test2017_43.C \
-   test2017_44.C \
    test2017_45.C \
    test2017_46.C \
    test2017_47.C \
@@ -466,16 +458,19 @@ if !ROSE_USE_EDG_VERSION_4_9
 # DQ (11/15/2017): I think this should be "+=" instead of "=".
 # NEW_2017_TESTS = 
 NEW_2017_TESTS += \
-   test2017_12.C \
-   test2017_33.C \
-   test2017_34.C 
+   test2017_12.C 
+
+# DQ (11/16/2017): These are not portabile to the Intel v16 compiler).
+#   test2017_33.C 
+#   test2017_34.C 
 endif
 
 if ROSE_USING_GCC_VERSION_LATER_4_4
 # DQ (11/15/2017): These tests fail for GNU 4.2 compiler.
 NEW_2017_TESTS += \
    test2017_31.C \
-   test2017_32.C 
+   test2017_32.C \
+   test2017_44.C 
 endif
 
 STILL_FAILING = \
@@ -495,23 +490,12 @@ endif
 if !USING_CLANG_COMPILER
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_71.C \
-   test2014_76.C \
-   test2014_110.C \
    test2014_111.C \
    test2015_70.C \
    test2015_81.C 
 
 NEW_TESTCODES += \
-   test2015_115.C \
-   test2015_116.C \
-   test2015_148.C \
-   test2015_30.C \
-   test2016_16.C \
-   test2016_17.C \
-   test2016_18.C \
-   test2016_15.C \
-   test2016_82.C \
-   test2016_89.C 
+   test2016_82.C 
 endif
 
 # DQ (11/21/2016): This test code does not work on older versions of GNU g++.
@@ -684,17 +668,43 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_159.C \
    test2014_211.C 
 
+# DQ (11/16/2017): Tests test2014_76, test2014_110.C, test2015_30.C, test2015_115.C, test2015_116.C, 
+# test2015_148.C, test2016_16.C, test2016_17.C, test2016_18.C, test2016_15.C, and test2016_89.C; all
+# were previously not passing for CLANG, but now also fail for the Intel compiler, at least V16).
 # DQ (2/21/2017): CLANG compiler requires more builtin functions to be defined.
 # DQ (1/16/2017): These test codes include not portable macros and references to header files that are a problem for Clang.
 if !USING_CLANG_COMPILER
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2013_304.C \
-   test2014_81.C \
+   test2014_81.C  \
    test2014_236.C \
    test2014_238.C \
-   test2015_55.C \
-   test2016_20.C 
+   test2015_55.C  \
+   test2016_20.C  \
+   test2014_76.C  \
+   test2014_110.C \
+   test2015_30.C  \
+   test2015_115.C \
+   test2015_116.C \
+   test2015_148.C \
+   test2016_16.C \
+   test2016_17.C \
+   test2016_18.C \
+   test2016_15.C \
+   test2016_89.C 
 endif
+endif
+
+# DQ (11/16/2017): Removing tests that are failing specifically for the Intel compiler (at least Intel V16).
+if !USING_INTEL_COMPILER
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+   lulesh.C \
+   luleshTALC.C \
+   test2013_282.C \
+   test2014_99.C \
+   test2014_118.C \
+   test2014_120.C \
+   test2014_157.C 
 endif
 
 # These should not be tested with the EDG 4.7 frontend (pass only in ROSE with the EDG 4.9 frontend).
@@ -1770,7 +1780,12 @@ else  # NOT ROSE_USE_EDG_VERSION_4_9
 	@echo "Using EDG 4.12"
 	@echo "Using EDG version later than 4.9 (ROSE supports running all C++ tests across all compilers)"
 	@$(MAKE) $(PASSING_TEST_Sources) $(FAILING_TEST_targets)
+if USING_INTEL_COMPILER
+# DQ (11/16/2017): This is another test failing with the Intel compiler.
+	@echo "Using EDG 4.12 and INTEL compiler (skipping pdf generation tests)"
+else  # NOT USING_INTEL_COMPILER
 	@$(MAKE) test_pdf_generation
+endif # USING_INTEL_COMPILER
 endif # ROSE_USE_EDG_VERSION_4_9
 #	I'm not sure why these are coded to run in serial [RPM 2014-08-29]
 	@$(MAKE) test_unparse_includes_option.passed
