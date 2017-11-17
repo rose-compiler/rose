@@ -440,7 +440,6 @@ NEW_2017_TESTS = \
    test2017_42.C \
    test2017_43.C \
    test2017_45.C \
-   test2017_47.C \
    test2017_48.C \
    test2017_49.C \
    test2017_50.C \
@@ -470,7 +469,8 @@ NEW_2017_TESTS += \
    test2017_31.C \
    test2017_32.C \
    test2017_44.C \
-   test2017_46.C 
+   test2017_46.C \
+   test2017_47.C 
 endif
 
 STILL_FAILING = \
@@ -680,7 +680,11 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_236.C \
    test2014_238.C \
    test2015_55.C  \
-   test2016_20.C  \
+   test2016_20.C  
+endif
+endif
+
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_76.C  \
    test2014_110.C \
    test2015_30.C  \
@@ -692,8 +696,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2016_18.C \
    test2016_15.C \
    test2016_89.C 
-endif
-endif
 
 # DQ (11/16/2017): Removing tests that are failing specifically for the Intel compiler (at least Intel V16).
 if !USING_INTEL_COMPILER
