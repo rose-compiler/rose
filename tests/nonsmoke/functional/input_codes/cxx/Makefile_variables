@@ -1399,11 +1399,8 @@ else
 ROSE__CXX_TESTS =
 endif
 
-# DQ (11/16/2017): This test is not portable to the Intel compiler (at least version 16).
-# if !USING_INTEL_COMPILER
 ROSE__CXX_TESTS__BOOST += \
 	test2013_235.C 
-# endif
 
 else
 # DQ (1/16/2017): We need to include this to get the larger list of older test codes as well.

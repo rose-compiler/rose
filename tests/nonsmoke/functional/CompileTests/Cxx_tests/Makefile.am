@@ -1782,12 +1782,7 @@ else  # NOT ROSE_USE_EDG_VERSION_4_9
 	@echo "Using EDG 4.12"
 	@echo "Using EDG version later than 4.9 (ROSE supports running all C++ tests across all compilers)"
 	@$(MAKE) $(PASSING_TEST_Sources) $(FAILING_TEST_targets)
-if USING_INTEL_COMPILER
-# DQ (11/16/2017): This is another test failing with the Intel compiler.
-	@echo "Using EDG 4.12 and INTEL compiler (skipping pdf generation tests)"
-else  # NOT USING_INTEL_COMPILER
 	@$(MAKE) test_pdf_generation
-endif # USING_INTEL_COMPILER
 endif # ROSE_USE_EDG_VERSION_4_9
 #	I'm not sure why these are coded to run in serial [RPM 2014-08-29]
 	@$(MAKE) test_unparse_includes_option.passed

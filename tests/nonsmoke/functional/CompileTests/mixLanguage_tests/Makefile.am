@@ -16,9 +16,9 @@ test1_f.f \
 test2_f.f
 
 # DQ (11/16/2017): These tests fail for the Intel compiler (need to work with Pei-Hung on this).
-if !USING_INTEL_COMPILER
+# if !USING_INTEL_COMPILER
 TESTCODES_Objects = ${LIST}
-endif
+# endif
 
 $(TESTCODES_Objects): ../../testTranslator
 	../../testTranslator -lstdc++ $(srcdir)/$@_c.cpp $(srcdir)/$@_f.f -o $@
