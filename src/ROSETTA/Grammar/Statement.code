@@ -1427,6 +1427,13 @@ HEADER_CATCH_STATEMENT_SEQ_END
 
 HEADER_STATIC_ASSERTION_DECLARATION_START
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual bool cfgIsIndexInteresting(unsigned int) const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
+#endif
+
        // We need this to be defined to avoid calling the base class version (which is an error).
           SgName get_mangled_name() const $ROSE_OVERRIDE;
 
