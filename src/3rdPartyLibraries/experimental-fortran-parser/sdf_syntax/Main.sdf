@@ -536,6 +536,8 @@ sorts
 
   OptStopCode
 
+  FailImageStmt                       %% R511-F2015-N2007
+
 %% 8.5 Image execution control
 
   SyncAllStmt                         %% R858
@@ -1346,8 +1348,8 @@ context-free syntax
 
 %%R505
   '='   ConstantExpr       -> Initialization  {cons("Init")}
-  '=>'  NullInit           -> Initialization  {cons("PointerInit")}
-%%'=>'  InitialDataTarget  -> Initialization  {cons("PointerInit")} %%AMBIGUOUS with FunctionReference in NullInit
+  '=>'  NullInit           -> Initialization  {cons("PointerInit"), prefer}
+  '=>'  InitialDataTarget  -> Initialization  {cons("PointerInit")} %%AMBIGUOUS with FunctionReference in NullInit
 
 %%R506
   FunctionReference                                     -> NullInit
@@ -2733,6 +2735,10 @@ context-free syntax
   StopCode                                              -> OptStopCode
   % empty %                                             -> OptStopCode          {cons("no-stop-code")}
 
+%%R511-F2015-N2007
+%%
+  OptLabel 'FAIL' 'IMAGE' OptStopCode               EOS -> FailImageStmt        {cons("FailImageStmt")}
+
 %% 8.5 Image execution control
 %%
 
@@ -3359,6 +3365,7 @@ context-free syntax
   EndSubroutineStmt                      -> ActionStmt  {reject}  %% creates ambiguity for "end" statement with no "SUBROUTINE"
   EndfileStmt                            -> ActionStmt
   ErrorStopStmt                          -> ActionStmt
+  FailImageStmt                          -> ActionStmt  %%R511-F2015-N2007
   ExitStmt                               -> ActionStmt
   FlushStmt                              -> ActionStmt
   ForallStmt                             -> ActionStmt

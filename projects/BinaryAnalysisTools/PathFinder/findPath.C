@@ -288,15 +288,6 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine)
                .intrinsicValue(false, settings.showExprWidth)
                .hidden(true));
 
-    out.insert(Switch("debug-smt")
-               .intrinsicValue(true, settings.debugSmtSolver)
-               .doc("Turns on debugging of the SMT solver.  The @s{no-debug-smt} switch disables debugging. The default "
-                    "is to " + std::string(settings.debugSmtSolver ? "" : "not ") + "debug the solver."));
-    out.insert(Switch("no-debug-smt")
-               .key("debug-smt")
-               .intrinsicValue(false, settings.debugSmtSolver)
-               .hidden(true));
-
     ParserResult cmdline = parser.with(cfg).with(pcond).with(out).parse(argc, argv).apply();
 
     // These switches from the rose library have no Settings struct yet, so we need to query the parser results to get them.
@@ -971,7 +962,6 @@ singlePathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowG
     }
 
     YicesSolver solver;
-    solver.setDebug(settings.debugSmtSolver ? stderr : NULL);
     BaseSemantics::DispatcherPtr cpu = buildVirtualCpu(partitioner);
     RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
     setInitialState(cpu, path.frontVertex());
@@ -1297,7 +1287,6 @@ struct BfsContext {
 static void
 singleThreadBfsWorker(BfsContext *ctx) {
     YicesSolver solver;
-    solver.setDebug(settings.debugSmtSolver ? stderr : NULL);
     size_t lastTestedPathLength = 0;
     BaseSemantics::DispatcherPtr cpu = buildVirtualCpu(ctx->partitioner);
     RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
@@ -1705,7 +1694,6 @@ multiPathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowGr
 
     // Build the semantics framework and initialize the path constraints.
     YicesSolver solver;
-    solver.setDebug(settings.debugSmtSolver ? stderr : NULL);
     BaseSemantics::DispatcherPtr cpu = buildVirtualCpu(partitioner);
     RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
     ops->writeRegister(REG_PATH, ops->boolean_(true)); // start of path is always feasible

@@ -24,28 +24,16 @@ namespace BinaryAnalysis {
  *  satisfiability questions is made at runtime (see set_linkage()).
  */
 class YicesSolver: public SmtSolver {
-public:
-    /** Bit flags to indicate what style of calls are made to Yices. */
-    enum LinkMode {
-        LM_NONE=0x0000,                         /**< No available linkage. */
-        LM_LIBRARY=0x0001,                      /**< The Yices runtime library is available. */
-        LM_EXECUTABLE=0x0002                    /**< The "yices" executable is available. */
-    };
-
-    /** Maps expression nodes to term names.  This map is populated for common subexpressions. */
-    typedef Sawyer::Container::Map<SymbolicExpr::Ptr, std::string> TermNames;
-
 protected:
     typedef std::map<std::string/*name or hex-addr*/, std::pair<size_t/*nbits*/, uint64_t/*value*/> > Evidence;
 
 private:
-    LinkMode linkage_;
-    TermNames termNames;                                // only used by Yices executable translator; library uses termExprs
 #ifdef ROSE_HAVE_LIBYICES
     yices_context context;
 #else
     void *context; /*unused for now*/
 #endif
+    ExprExprMap varsForSets_;                           // variables to use for sets
 protected:
     Evidence evidence;
 
@@ -56,110 +44,69 @@ private:
     template<class S>
     void serialize(S &s, const unsigned version) {
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SmtSolver);
-        s & BOOST_SERIALIZATION_NVP(linkage_);
-        s & BOOST_SERIALIZATION_NVP(termNames);
-        s & BOOST_SERIALIZATION_NVP(evidence);
-        //s & context; -- not saved
+        // varsForSets_ -- not saved
+        // evidence     -- not saved
+        // context      -- not saved
     }
 #endif
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Construction-related things
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Constructor prefers to use the Yices executable interface. See @ref linkage. */
-    YicesSolver(): linkage_(LM_NONE), context(NULL) {
-        init();
-    }
+    /** Constructs object to communicate with Yices solver.
+     *
+     *  The solver will be named "Yices" (see @ref name property) and will use the library linkage if the Yices library
+     *  is present, otherwise the executable linkage. If neither is available then an @c SmtSolver::Exception is thrown. */
+    explicit YicesSolver(unsigned linkages = LM_ANY)
+        : SmtSolver("Yices", (LinkMode)(linkages & availableLinkages())), context(NULL) {}
+
+    /** Returns a bit vector of linkage capabilities.
+     *
+     *  Returns a vector of @ref LinkMode bits that say what possible modes of communicating with the Yices SMT solver are
+     *  available. A return value of zero means the Yices solver is not supported in this configuration of ROSE. */
+    static unsigned availableLinkages();
+
     virtual ~YicesSolver();
 
-    virtual void generateFile(std::ostream&, const std::vector<SymbolicExpr::Ptr> &exprs, Definitions*);
-
-    // FIXME[Robb Matzke 2017-10-17]: deprecated
-    virtual void generate_file(std::ostream&, const std::vector<SymbolicExpr::Ptr> &exprs, Definitions*)
-        ROSE_DEPRECATED("use generateFile");
-
-    virtual std::string getCommand(const std::string &config_name);
-
-    // FIXME[Robb Matzke 2017-10-17]: deprecated
-    virtual std::string get_command(const std::string &config_name) ROSE_DEPRECATED("use getCommand");
-
-    /** Returns a bit vector indicating what calling modes are available.  The bits are defined by the @ref LinkMode enum. */
-    static unsigned availableLinkage();
-
-    // FIXME[Robb Matzke 2017-10-17]: deprecated
-    static unsigned available_linkage() ROSE_DEPRECATED("use availableLinkage");
-
-    /** Property: The style of linkage currently enabled.
-     *
-     * @{ */
-    LinkMode linkage() const {
-        return linkage_;
-    }
-    void linkage(LinkMode lm) {
-        ROSE_ASSERT(lm & availableLinkage());
-        linkage_ = lm;
-    }
-    /** @} */
-
-    // FIXME[Robb Matzke 2017-10-17]: deprecated
-    LinkMode get_linkage() const ROSE_DEPRECATED("use linkage property");
-
-    // FIXME[Robb Matzke 2017-10-17]: deprecated
-    void set_linkage(LinkMode lm) ROSE_DEPRECATED("use linkage property");
-
-    /** Determines if the specified expression is satisfiable.  Most solvers use the implementation in the base class, which
-     *  creates a text file (usually in SMT-LIB format) and then invokes an executable with that input, looking for a line of
-     *  output containing "sat" or "unsat". However, Yices provides a library that can optionally be linked into ROSE, and
-     *  uses this library if the link mode is LM_LIBRARY.
-     *  @{ */
-    virtual Satisfiable satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs);
-    virtual Satisfiable satisfiable(const SymbolicExpr::Ptr &tn) {
-        std::vector<SymbolicExpr::Ptr> exprs;
-        exprs.push_back(tn);
-        return satisfiable(exprs);
-    }
-    /** @} */
-
-    virtual SymbolicExpr::Ptr evidenceForName(const std::string&) /*overrides*/;
-
-    // FIXME[Robb Matzke 2017-10-17]: deprecated
-    virtual SymbolicExpr::Ptr evidence_for_name(const std::string&) /*overrides*/ ROSE_DEPRECATED("use evidenceForName");
-
-    virtual std::vector<std::string> evidenceNames() /*overrides*/;
-
-    // FIXME[Robb Matzke 2017-10-17]: deprecated
-    virtual std::vector<std::string> evidence_names() /*overrides*/ ROSE_DEPRECATED("use evidenceNames");
-
-    virtual void clearEvidence() /*overrides*/;
-
-    // FIXME[Robb Matzke 2017-10-17]: deprecated
-    virtual void clear_evidence() /*overrides*/ ROSE_DEPRECATED("use clearEvidence");
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Overrides of the parent class
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    virtual void reset() ROSE_OVERRIDE;
+    virtual void clearEvidence() ROSE_OVERRIDE;
+    virtual std::vector<std::string> evidenceNames() ROSE_OVERRIDE;
+    virtual SymbolicExpr::Ptr evidenceForName(const std::string&) ROSE_OVERRIDE;
 
 protected:
-    virtual uint64_t parse_variable(const char *nptr, char **endptr, char first_char);
+    virtual Satisfiable checkLib() ROSE_OVERRIDE;
+    virtual void generateFile(std::ostream&, const std::vector<SymbolicExpr::Ptr> &exprs, Definitions*) ROSE_OVERRIDE;
+    virtual std::string getCommand(const std::string &config_name) ROSE_OVERRIDE;
+    virtual void parseEvidence() ROSE_OVERRIDE;
 
-    virtual void parseEvidence();
-
-    // FIXME[Robb Matzke 2017-10-17]: deprecated
-    virtual void parse_evidence() ROSE_DEPRECATED("use parseEvidence");
-
-private:
-    void init();
-
-    static std::string get_typename(const SymbolicExpr::Ptr&);
-
-    /* These out_*() functions convert a SymbolicExpr expression into text which is suitable as input to "yices"
-     * executable. */
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Miscellaneous
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    void varForSet(const SymbolicExpr::InteriorPtr &set, const SymbolicExpr::LeafPtr &var);
+    SymbolicExpr::LeafPtr varForSet(const SymbolicExpr::InteriorPtr &set);
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Convert a SymbolicExpr into Yices text input
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+protected:
     void out_comments(std::ostream&, const std::vector<SymbolicExpr::Ptr>&);
     void out_common_subexpressions(std::ostream&, const std::vector<SymbolicExpr::Ptr>&);
     void out_define(std::ostream&, const std::vector<SymbolicExpr::Ptr>&, Definitions*);
     void out_assert(std::ostream&, const SymbolicExpr::Ptr&);
     void out_number(std::ostream&, const SymbolicExpr::Ptr&);
-    void out_expr(std::ostream&, const SymbolicExpr::Ptr&);
-    void out_unary(std::ostream&, const char *opname, const SymbolicExpr::InteriorPtr&);
-    void out_binary(std::ostream&, const char *opname, const SymbolicExpr::InteriorPtr&);
-    void out_ite(std::ostream&, const SymbolicExpr::InteriorPtr&);
+    void out_expr(std::ostream&, const SymbolicExpr::Ptr&, Type needType);
+    void out_unary(std::ostream&, const char *opname, const SymbolicExpr::InteriorPtr&, Type needType);
+    void out_binary(std::ostream&, const char *opname, const SymbolicExpr::InteriorPtr&, Type needType);
+    void out_ite(std::ostream&, const SymbolicExpr::InteriorPtr&, Type needType);
     void out_set(std::ostream&, const SymbolicExpr::InteriorPtr&);
-    void out_la(std::ostream&, const char *opname, const SymbolicExpr::InteriorPtr&, bool identity_elmt);
-    void out_la(std::ostream&, const char *opname, const SymbolicExpr::InteriorPtr&);
+    void out_la(std::ostream&, const char *opname, const SymbolicExpr::InteriorPtr&, bool identity_elmt, Type needType);
+    void out_la(std::ostream&, const char *opname, const SymbolicExpr::InteriorPtr&, Type needType);
     void out_extract(std::ostream&, const SymbolicExpr::InteriorPtr&);
     void out_sext(std::ostream&, const SymbolicExpr::InteriorPtr&);
     void out_uext(std::ostream&, const SymbolicExpr::InteriorPtr&);
@@ -170,6 +117,9 @@ private:
     void out_read(std::ostream &o, const SymbolicExpr::InteriorPtr&);
     void out_write(std::ostream &o, const SymbolicExpr::InteriorPtr&);
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Convert a SymbolicExpr to Yices IR using the Yices API
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #ifdef ROSE_HAVE_LIBYICES
     typedef Sawyer::Container::Map<SymbolicExpr::Ptr, yices_expr> TermExprs;
     TermExprs termExprs;                                // for common subexpressions
@@ -183,14 +133,14 @@ private:
     void ctx_common_subexpressions(const std::vector<SymbolicExpr::Ptr>&);
     void ctx_define(const std::vector<SymbolicExpr::Ptr>&, Definitions*);
     void ctx_assert(const SymbolicExpr::Ptr&);
-    yices_expr ctx_expr(const SymbolicExpr::Ptr&);
-    yices_expr ctx_unary(UnaryAPI, const SymbolicExpr::InteriorPtr&);
-    yices_expr ctx_binary(BinaryAPI, const SymbolicExpr::InteriorPtr&);
-    yices_expr ctx_ite(const SymbolicExpr::InteriorPtr&);
+    yices_expr ctx_expr(const SymbolicExpr::Ptr&, Type needType);
+    yices_expr ctx_unary(UnaryAPI, const SymbolicExpr::InteriorPtr&, Type needType);
+    yices_expr ctx_binary(BinaryAPI, const SymbolicExpr::InteriorPtr&, Type needType);
+    yices_expr ctx_ite(const SymbolicExpr::InteriorPtr&, Type needType);
     yices_expr ctx_set(const SymbolicExpr::InteriorPtr&);
-    yices_expr ctx_la(BinaryAPI, const SymbolicExpr::InteriorPtr&, bool identity_elmt);
-    yices_expr ctx_la(NaryAPI, const SymbolicExpr::InteriorPtr&, bool identity_elmt);
-    yices_expr ctx_la(BinaryAPI, const SymbolicExpr::InteriorPtr&);
+    yices_expr ctx_la(BinaryAPI, const SymbolicExpr::InteriorPtr&, bool identity_elmt, Type needType);
+    yices_expr ctx_la(NaryAPI, const SymbolicExpr::InteriorPtr&, bool identity_elmt, Type needType);
+    yices_expr ctx_la(BinaryAPI, const SymbolicExpr::InteriorPtr&, Type needType);
     yices_expr ctx_extract(const SymbolicExpr::InteriorPtr&);
     yices_expr ctx_sext(const SymbolicExpr::InteriorPtr&);
     yices_expr ctx_uext(const SymbolicExpr::InteriorPtr&);
@@ -202,6 +152,13 @@ private:
     yices_expr ctx_write(const SymbolicExpr::InteriorPtr&);
 #endif
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // FIXME[Robb Matzke 2017-10-17]: these are all deprecated
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    static unsigned available_linkage() ROSE_DEPRECATED("use availableLinkages");
+private:
+    static std::string get_typename(const SymbolicExpr::Ptr&);
 };
 
 } // namespace

@@ -4,6 +4,7 @@
 
 #include <BinaryNoOperation.h>
 #include <BinaryYicesSolver.h>
+#include <BinaryZ3Solver.h>
 #include <ConcreteSemantics2.h>
 #include <Diagnostics.h>
 #include <Disassembler.h>
@@ -256,14 +257,21 @@ static SmtSolver *
 makeSolver(const Settings &settings) {
     if (settings.solverName == "list") {
         std::cout <<"SMT solver names:\n"
-                  <<"  yices            Rose::BinaryAnalysis::YicesSolver\n";
+                  <<"  yices-exe        Rose::BinaryAnalysis::YicesSolver Yices text interface\n"
+                  <<"  yices-lib        Rose::BinaryAnalysis::YicesSolver yices_* library interface\n"
+                  <<"  z3-exe           Rose::BinaryAnalysis::Z3Solver SMT-LIB2 interface\n"
+                  <<"  z3-lib           Rose::BinaryAnalysis::Z3Solver z3::* library interface\n";
         return NULL;
     } else if (settings.solverName == "") {
         return NULL;                                    // solvers are optional
-    } else if (settings.solverName == "yices") {
-        YicesSolver *solver = new YicesSolver;
-        solver->linkage(YicesSolver::LM_LIBRARY);
-        return solver;
+    } else if (settings.solverName == "yices-lib" || settings.solverName == "yices" /*backward compat*/) {
+        return new YicesSolver(SmtSolver::LM_LIBRARY);
+    } else if (settings.solverName == "yices-exe") {
+        return new YicesSolver(SmtSolver::LM_EXECUTABLE);
+    } else if (settings.solverName == "z3-lib") {
+        return new Z3Solver(SmtSolver::LM_LIBRARY);
+    } else if (settings.solverName == "z3-exe") {
+        return new Z3Solver(SmtSolver::LM_EXECUTABLE);
     } else {
         throw std::runtime_error("unrecognized SMT solver name \"" + settings.solverName + "\"; see --solver=list\n");
     }

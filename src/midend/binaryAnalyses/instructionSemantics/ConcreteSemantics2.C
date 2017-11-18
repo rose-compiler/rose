@@ -80,7 +80,7 @@ MemoryState::allocatePage(rose_addr_t va) {
         map_ = MemoryMap::instance();
     rose_addr_t pageVa = alignDown(va, pageSize_);
     unsigned acc = MemoryMap::READABLE | MemoryMap::WRITABLE;
-    map_->insert(AddressInterval::baseSize(pageVa, pageSize_),
+    map_->insert(AddressInterval::hull(pageVa, pageVa+pageSize_-1),
                  MemoryMap::Segment(MemoryMap::AllocatingBuffer::instance(pageSize_),
                                     0, acc, "ConcreteSemantics demand allocated"));
 }

@@ -136,13 +136,13 @@ ExpressionLessp::operator()(const Ptr &a, const Ptr &b) {
 }
 
 Ptr
-setToIte(const Ptr &set) {
+setToIte(const Ptr &set, const LeafPtr &var) {
     ASSERT_not_null(set);
     InteriorPtr iset = set->isInteriorNode();
     if (!iset || iset->getOperator() != OP_SET)
         return set;
     ASSERT_require(iset->nChildren() >= 1);
-    Ptr condVar = makeVariable(32);
+    LeafPtr condVar = var==NULL ? makeVariable(32)->isLeafNode() : var;
     Ptr retval;
     for (size_t i=iset->nChildren(); i>0; --i) {
         Ptr member = iset->child(i-1);
@@ -2139,6 +2139,8 @@ Interior::simplifyTop() {
                 newnode = inode->rewrite(AddSimplifier());
                 if (newnode==node)
                     newnode = inode->associative()->commutative()->identity(0);
+                if (newnode==node)
+                    newnode = inode->unaryNoOp();
                 if (newnode==node)
                     newnode = inode->foldConstants(AddSimplifier());
                 break;

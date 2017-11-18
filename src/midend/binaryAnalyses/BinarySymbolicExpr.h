@@ -1151,7 +1151,7 @@ std::ostream& operator<<(std::ostream &o, Node&);
 std::ostream& operator<<(std::ostream &o, const Node::WithFormatter&);
 
 /** Convert a set to an ite expression. */
-Ptr setToIte(const Ptr&);
+Ptr setToIte(const Ptr&, const LeafPtr &var = LeafPtr());
 
 /** Counts the number of nodes.
  *

@@ -16,6 +16,7 @@ add_library(midend_binary OBJECT
   BinaryReachability.C
   BinaryReturnValueUsed.C
   BinarySmtSolver.C
+  BinarySmtlibSolver.C
   BinaryStackDelta.C
   BinaryString.C
   BinarySymbolicExpr.C
@@ -23,6 +24,7 @@ add_library(midend_binary OBJECT
   BinaryTaintedFlow.C
   BinaryToSource.C
   BinaryYicesSolver.C
+  BinaryZ3Solver.C
   DwarfLineMapper.C
   instructionSemantics/BaseSemantics2.C
   instructionSemantics/ConcreteSemantics2.C
@@ -74,6 +76,7 @@ install(
     BinaryReachability.h
     BinaryReturnValueUsed.h
     BinarySmtSolver.h
+    BinarySmtlibSolver.h
     BinaryStackDelta.h
     BinaryStackVariable.h
     BinaryString.h
@@ -82,6 +85,7 @@ install(
     BinaryTaintedFlow.h
     BinaryToSource.h
     BinaryYicesSolver.h
+    BinaryZ3Solver.h
     DwarfLineMapper.h
     ether.h
     instructionSemantics/BaseSemantics2.h

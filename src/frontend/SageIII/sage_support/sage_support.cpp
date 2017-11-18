@@ -4194,8 +4194,9 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
        // as coming from an command shell command line (where the calling program is always argument zero).
           experimentalFrontEndCommandLine.push_back("dummyArg_0");
 
-          string parseTableOption = "--parseTable";
-          experimentalFrontEndCommandLine.push_back(parseTableOption);
+       // Rasmussen (11/13/2017): Removed usage of --parseTable command-line option (from next few lines below). This information is better known by the individual language support files.
+       // string parseTableOption = "--parseTable";
+       // experimentalFrontEndCommandLine.push_back(parseTableOption);
 
        // DQ (1/26/2017): We want to put the Fortran.tbl into /nfs/casc/overture/ROSE/aterm_for_rose_bin so that Craig and I can work togehter.
        // string path_to_table = findRoseSupportPathFromSource("src/3rdPartyLibraries/experimental-fortran-parser/Fortran.tbl", "bin/Fortran.tbl");
@@ -4206,17 +4207,14 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
        // Rasmussen (2/22/2017): OFP_BIN_PATH is the path to the Fortran parse table and other
        // binaries used in transforming an OFP parse tree to an SgUntypedNode ATerm representation.
 #ifndef USE_CMAKE
-          std::string path_to_table = OFP_BIN_PATH;
+       // std::string path_to_table = OFP_BIN_PATH;
 #else
-          std::string path_to_table = "";
+       // std::string path_to_table = "";
 #endif
-          path_to_table += "/Fortran.tbl";
-
-          experimentalFrontEndCommandLine.push_back(path_to_table);
+       // path_to_table += "/Fortran.tbl";
+       // experimentalFrontEndCommandLine.push_back(path_to_table);
 
           experimentalFrontEndCommandLine.push_back(get_sourceFileNameWithPath());
-
-       // experimentalFrontEndCommandLine.push_back(get_sourceFileNameWithoutPath());
 
           int experimental_openFortranParser_argc    = 0;
           char** experimental_openFortranParser_argv = NULL;

@@ -25,6 +25,7 @@ libbinaryMidend_la_SOURCES =					\
     BinaryReachability.C					\
     BinaryReturnValueUsed.C					\
     BinarySmtSolver.C						\
+    BinarySmtlibSolver.C					\
     BinaryStackDelta.C						\
     BinaryString.C						\
     BinarySymbolicExpr.C					\
@@ -32,6 +33,7 @@ libbinaryMidend_la_SOURCES =					\
     BinaryTaintedFlow.C						\
     BinaryToSource.C						\
     BinaryYicesSolver.C						\
+    BinaryZ3Solver.C						\
     DwarfLineMapper.C						\
     instructionSemantics/BaseSemantics2.C			\
     instructionSemantics/ConcreteSemantics2.C			\
@@ -84,6 +86,7 @@ pkginclude_HEADERS =					\
     BinaryReachability.h				\
     BinaryReturnValueUsed.h				\
     BinarySmtSolver.h					\
+    BinarySmtlibSolver.h				\
     BinaryStackDelta.h					\
     BinaryStackVariable.h				\
     BinaryString.h					\
@@ -92,6 +95,7 @@ pkginclude_HEADERS =					\
     BinaryTaintedFlow.h					\
     BinaryToSource.h					\
     BinaryYicesSolver.h					\
+    BinaryZ3Solver.h					\
     DwarfLineMapper.h					\
     ether.h						\
     instructionSemantics/BaseSemantics2.h		\
