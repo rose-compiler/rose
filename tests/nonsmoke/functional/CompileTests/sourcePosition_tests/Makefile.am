@@ -423,7 +423,6 @@ test2006_04.C \
 test2006_05.C \
 test2006_06.C \
 test2006_07.C \
-test2006_08.C \
 test2006_10.C \
 test2006_12.C \
 test2006_13.C \
@@ -438,7 +437,6 @@ test2006_25.C \
 test2006_26.C \
 test2006_28.C \
 test2006_34.C \
-test2006_37.C \
 test2006_38.C \
 test2006_39.C \
 test2006_40.C \
@@ -552,7 +550,12 @@ lexPhase2003_01.C \
 math.C \
 inputForLoopLocator.C
 
-
+# DQ (11/17/2017): Added test2006_08.C to be excluded from Intel testing (look into this later).
+if !USING_INTEL_COMPILER
+TESTCODES_REQUIRED_TO_PASS += \
+   test2006_08.C \
+   test2006_37.C 
+endif
 
 # DQ (2/19/2017): NEW VERSION OF LOGIC
 # DQ (2/18/2017): More specific logic required for portability.

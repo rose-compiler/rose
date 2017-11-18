@@ -417,7 +417,6 @@ ROSE__CXX_TESTS_WITHOUT_2013_241 = \
 	test2006_05.C \
 	test2006_06.C \
 	test2006_07.C \
-	test2006_08.C \
 	test2006_10.C \
 	test2006_12.C \
 	test2006_13.C \
@@ -432,7 +431,6 @@ ROSE__CXX_TESTS_WITHOUT_2013_241 = \
 	test2006_26.C \
 	test2006_28.C \
 	test2006_34.C \
-	test2006_37.C \
 	test2006_38.C \
 	test2006_39.C \
 	test2006_40.C \
@@ -1347,6 +1345,12 @@ ROSE__CXX_TESTS_WITHOUT_2013_241 = \
 # test2012_188.C 
 # test2013_243.C 
 
+# DQ (11/17/2017): These were not previously being tested by the Intel and were part of a large number that were missed from Intel (and GNU 6.1) testing.
+if !USING_INTEL_COMPILER
+ROSE__CXX_TESTS_WITHOUT_2013_241 += \
+	test2006_08.C \
+        test2006_37.C
+endif
 
 # ROSE__CXX_TESTS_WITHOUT_2013_241 = $(ROSE__CXX_TESTS)
 
@@ -1396,7 +1400,9 @@ ROSE__CXX_TESTS_WITHOUT_2013_241 += \
 	test2013_234.C \
 	test2013_240.C 
 else
-ROSE__CXX_TESTS =
+# DQ (11/17/2017): We want to include the test codes test2001_xx.C through test2013_xx.C and there were being droped by mistake (I think).
+# ROSE__CXX_TESTS =
+ROSE__CXX_TESTS = $(ROSE__CXX_TESTS_WITHOUT_2013_241)
 endif
 
 ROSE__CXX_TESTS__BOOST += \

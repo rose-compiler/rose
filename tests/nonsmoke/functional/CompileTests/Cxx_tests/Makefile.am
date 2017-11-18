@@ -1573,6 +1573,7 @@ test2013_09.C.passed: $(TEST_TRANSLATOR)
 	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(top_builddir) $(APP_INCLUDES) -c $(srcdir)/$(@:.C.passed=.C)" $(top_srcdir)/scripts/test_exit_status $@
 else
 test2013_09.C.passed: $(TEST_TRANSLATOR)
+	echo "Skip this test code on Intel compiler because it includes something that Intel considers a C++11 feature!"
 endif
 
 cpp_test2010_07: $(TEST_TRANSLATOR)
