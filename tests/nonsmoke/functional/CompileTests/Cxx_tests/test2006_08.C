@@ -131,4 +131,9 @@ using namespace Geometry;
 
 // This is permitted (i.e. without the template argument explicitly
 // specified as in getCoreMesh<Geometry::PolyMesh>
+
+// DQ (11/18/2017): The GNU compiler permits name qualification of the getCoreMesh<>() function to be
+// omitted, but both Intel (and EDG) require the name qualification (as I agree it should be required).
+// So the error is in the unparser not outputing the name qualification in the genereated code.
+// template void getCoreMesh<>(Geometry::MeshBase<Geometry::PolyMesh >&);
 template void Geometry::getCoreMesh<>(Geometry::MeshBase<Geometry::PolyMesh >&);

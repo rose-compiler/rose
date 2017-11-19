@@ -65,12 +65,12 @@ LONG_LIST_TESTCODES_REQUIRED_TO_PASS = \
    copytest2007_50.C \
    copyExampleInput.C
 
-if !USING_INTEL_COMPILER
+# if !USING_INTEL_COMPILER
 # DQ (11/15/2017): These appear to fail for the Intel compiler (versions v14 through v17).
 LONG_LIST_TESTCODES_REQUIRED_TO_PASS += \
    copytest2014_01.C \
    copytest2014_02.C
-endif
+# endif
 
 if !USING_CLANG_COMPILER
 LONG_LIST_TESTCODES_REQUIRED_TO_PASS += \

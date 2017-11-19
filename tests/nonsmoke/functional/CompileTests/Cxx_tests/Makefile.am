@@ -697,8 +697,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2016_15.C \
    test2016_89.C 
 
-# DQ (11/16/2017): Removing tests that are failing specifically for the Intel compiler (at least Intel V16).
-if !USING_INTEL_COMPILER
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    lulesh.C \
    luleshTALC.C \
@@ -707,7 +705,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_118.C \
    test2014_120.C \
    test2014_157.C 
-endif
 
 # These should not be tested with the EDG 4.7 frontend (pass only in ROSE with the EDG 4.9 frontend).
 # I thnk this has much less to do with Intel compiler being used.

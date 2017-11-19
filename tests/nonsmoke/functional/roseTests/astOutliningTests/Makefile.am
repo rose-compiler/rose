@@ -84,6 +84,7 @@ CXX_TESTCODES_REQUIRED_TO_PASS =		\
 	reference.cpp
 
 # DQ (11/14/2017): This is failing and I need to learn the depth of what is the problem for the outlining tests.
+# I think I need to work with Liao on this when he is back from vacation.
 #	moreTest2.cpp				
 #	moreTest3.cpp				
 #	moreTest4.cpp				
