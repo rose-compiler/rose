@@ -1430,7 +1430,9 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                          if (templateInstantiationDirectiveStatement != NULL)
                             {
                               printf ("******** Found a function template instantiation that is a part of a SgTemplateInstantiationDirectiveStatement \n");
-#if 1
+
+                           // DQ (11/18/2017): Commented out the trap to force an exit here!
+#if 0
                               printf ("Exiting as a test! \n");
                               ROSE_ASSERT(false);
 #endif
@@ -4620,6 +4622,24 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #if 0
           printf ("Case of (functionDeclaration != NULL && isSgMemberFunctionDeclaration(n) == NULL): currentScope = %p \n",currentScope);
 #endif
+
+       // DQ (11/18/2017): When the parent is not a scope, it could be a SgTemplateInstantiationDirectiveStatement, in which
+       // case we want the parent of that. See test2017_66.C (and previously test2006_08.C) for an example of this case.
+          if (currentScope == NULL)
+             {
+               SgTemplateInstantiationDirectiveStatement* templateInstantiationDirectiveStatement = isSgTemplateInstantiationDirectiveStatement(functionDeclaration->get_parent());
+               if (templateInstantiationDirectiveStatement != NULL)
+                  {
+                    currentScope = isSgScopeStatement(templateInstantiationDirectiveStatement->get_parent());
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                    printf ("Case of (functionDeclaration != NULL && isSgMemberFunctionDeclaration(n) == NULL): reset using SgTemplateInstantiationDirectiveStatement: currentScope = %p \n",currentScope);
+#endif
+                 // Now we should have a valid currentScope.
+                    ROSE_ASSERT(currentScope != NULL);
+                  }
+             }
+
        // ROSE_ASSERT(currentScope != NULL);
           if (currentScope != NULL)
              {
