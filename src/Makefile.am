@@ -113,6 +113,12 @@ else
    libroseCobollibraries =
 endif
 
+# Rasmussen (11/19/2017): Adding language support for Matlab
+if ROSE_EXPERIMENTAL_MATLAB_ROSE_CONNECTION
+   libroseMatlablibraries = frontend/Experimental_Matlab_ROSE_Connection/libexperimentalRoseMatlab.la
+else
+   libroseMatlablibraries =
+endif
 
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
    libroseBinaryLibraries =							\

@@ -30,11 +30,11 @@ AM_LFLAGS =
 
 CXXFLAGS += $(ROSE_OPTIMIZATION_LEVEL) $(ROSE_VERBOSE) -I$(srcdir)/parser_support -I$(srcdir) -I. -I./parser_support
 
-lib_LTLIBRARIES = libroseMatlabFrontend.la
+lib_LTLIBRARIES = libexperimentalRoseMatlab.la
 
 AM_CPPFLAGS = $(ROSE_INCLUDES)
-libroseMatlabFrontend_la_DEPENDENCIES =
-libroseMatlabFrontend_la_SOURCES = \
+libexperimentalRoseMatlab_la_DEPENDENCIES =
+libexperimentalRoseMatlab_la_SOURCES = \
 	MatlabParser.cc \
 	matlab_parse.yy \
 	matlab_lex.ll \
@@ -48,22 +48,22 @@ libroseMatlabFrontend_la_SOURCES = \
 
 pkginclude_HEADERS = MatlabParser.h
 
-octavebits.tar.gz:
-	wget http://iprogress.cs.uab.edu/media/2017/10/octavebits.tar.gz
-	tar zxf $@
+modified_octave_parser_files.lo:
+	tar zxf $(OCTAVE_PARSER_INSTALL_TARFILE)
+	touch modified_octave_parser_files.lo
 
-matlab_parse.yy: octavebits.tar.gz
-matlab_lex.ll: octavebits.tar.gz
-parser_support/comment-list.cc: octavebits.tar.gz
-parser_support/error.cc: octavebits.tar.gz
-parser_support/input.cc: octavebits.tar.gz
-parser_support/ourtoken.cc: octavebits.tar.gz
-parser_support/base-list.h: octavebits.tar.gz
-parser_support/comment-list.h: octavebits.tar.gz
-parser_support/input.h: octavebits.tar.gz
-parser_support/lex.h: octavebits.tar.gz
-parser_support/octave.gperf.h: octavebits.tar.gz
-parser_support/ourtoken.h: octavebits.tar.gz
+matlab_parse.yy: modified_octave_parser_files.lo
+matlab_lex.ll: modified_octave_parser_files.lo
+parser_support/comment-list.cc: modified_octave_parser_files.lo
+parser_support/error.cc: modified_octave_parser_files.lo
+parser_support/input.cc: modified_octave_parser_files.lo
+parser_support/ourtoken.cc: modified_octave_parser_files.lo
+parser_support/base-list.h: modified_octave_parser_files.lo
+parser_support/comment-list.h: modified_octave_parser_files.lo
+parser_support/input.h: modified_octave_parser_files.lo
+parser_support/lex.h: modified_octave_parser_files.lo
+parser_support/octave.gperf.h: modified_octave_parser_files.lo
+parser_support/ourtoken.h: modified_octave_parser_files.lo
 
 noinst_HEADERS = \
   parser_support/MatlabFunctionBuilder.h \
@@ -78,4 +78,5 @@ noinst_HEADERS = \
 
 
 clean-local:
-	rm -f *.la matlab_*
+	rm -f *.la matlab_* version
+	rm -rf parser_support
