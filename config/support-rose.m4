@@ -169,6 +169,11 @@ echo "GFORTRAN_PATH = $GFORTRAN_PATH"
 ROSE_SUPPORT_COBOL
 #########################################################################################
 
+## Rasmussen (11/19/2017): Support for using the modified GNU Octave parser.
+#
+ROSE_SUPPORT_OCTAVE
+#########################################################################################
+
 
 # *******************************************************
 # ROSE/projects directory compilation & testing
@@ -415,22 +420,22 @@ if test "x$enable_debug_output_for_experimental_cobol_frontend" = "xyes"; then
   AC_DEFINE([ROSE_DEBUG_EXPERIMENTAL_COBOL_ROSE_CONNECTION], [], [Controls large volumes of output spew useful for debugging new COBOL/ROSE connection code])
 fi
 
-# Rasmussen (10/30/2017): Added support for new MATLAB front-end development.
+# Rasmussen (10/30/2017): Added support for new Octave/Matlab front-end development.
 AC_ARG_ENABLE([experimental_matlab_frontend],
-    AS_HELP_STRING([--enable-experimental_matlab_frontend], [Enable experimental MATLAB frontend development (default=no)]))
+    AS_HELP_STRING([--enable-experimental_matlab_frontend], [Enable experimental Octave/Matlab frontend development (default=no)]))
 AM_CONDITIONAL(ROSE_EXPERIMENTAL_MATLAB_ROSE_CONNECTION, [test "x$enable_experimental_matlab_frontend" = xyes])
 if test "x$enable_experimental_matlab_frontend" = "xyes"; then
-  AC_MSG_WARN([Using this mode enables experimental MATLAB front-end (internal development only)!])
-  AC_DEFINE([ROSE_EXPERIMENTAL_MATLAB_ROSE_CONNECTION], [], [Enables development of experimental MATLAB frontend])
+  AC_MSG_WARN([Using this mode enables experimental Octave/Matlab front-end (internal development only)!])
+  AC_DEFINE([ROSE_EXPERIMENTAL_MATLAB_ROSE_CONNECTION], [], [Enables development of experimental Octave/Matlab frontend])
 fi
 
-# Rasmussen (10/30/2017): Added support for debugging new MATLAB front-end development.
+# Rasmussen (10/30/2017): Added support for debugging new Octave/Matlab front-end development.
 AC_ARG_ENABLE(debug_output_for_experimental_matlab_frontend,
-    AS_HELP_STRING([--enable-debug_output_for_experimental_matlab_frontend], [Enable debugging output (spew) of new MATLAB/ROSE connection]))
+    AS_HELP_STRING([--enable-debug_output_for_experimental_matlab_frontend], [Enable debugging output (spew) of new Octave/Matlab ROSE connection]))
 AM_CONDITIONAL(ROSE_DEBUG_EXPERIMENTAL_MATLAB_ROSE_CONNECTION, [test "x$enable_debug_output_for_experimental_matlab_frontend" = xyes])
 if test "x$enable_debug_output_for_experimental_matlab_frontend" = "xyes"; then
   AC_MSG_WARN([Using this mode causes large volumes of output spew (internal debugging only)!])
-  AC_DEFINE([ROSE_DEBUG_EXPERIMENTAL_MATLAB_ROSE_CONNECTION], [], [Controls large volumes of output spew useful for debugging new MATLAB/ROSE connection code])
+  AC_DEFINE([ROSE_DEBUG_EXPERIMENTAL_MATLAB_ROSE_CONNECTION], [], [Controls large volumes of output spew useful for debugging new Octave/Matlab ROSE connection code])
 fi
 
 # DQ (8/18/2009): Removed this conditional macro.
@@ -995,6 +1000,13 @@ fi
 if test "x$enable_experimental_cobol_frontend" = "xyes"; then
    if test "x$COBPT_LIBRARY_PATH" = "x"; then
       AC_MSG_ERROR([Support for experimental_cobol_frontend requires GnuCobol parse-tree library support, --with-cobpt=<path> must be specified!])
+   fi
+fi
+
+# Rasmussen (11/19/2017): Octave/Matlab parser installation required for Matlab support.
+if test "x$enable_experimental_matlab_frontend" = "xyes"; then
+   if test "x$OCTAVE_PARSER_INSTALL_TARFILE" = "x"; then
+      AC_MSG_ERROR([Support for experimental_matlab_frontend requires the modified GNU Octave parser, --with-octave-parser=<path> must be specified!])
    fi
 fi
 
