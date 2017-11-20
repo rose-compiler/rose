@@ -90,6 +90,8 @@ YicesSolver::checkLib() {
         case l_undef: return SAT_UNKNOWN;
     }
     ASSERT_not_reachable("switch statement is incomplete");
+#else
+    ASSERT_not_reachable("yices library not enabled");
 #endif
 }
 
@@ -433,24 +435,24 @@ YicesSolver::out_expr(std::ostream &o, const SymbolicExpr::Ptr &tn, Type needTyp
                 out_la(o, "bv-add", in, false, BIT_VECTOR);
                 break;
             case SymbolicExpr::OP_AND:
-                ASSERT_require(BOOLEAN == needType);
-                out_la(o, "and", in, true, BOOLEAN);
+                if (BOOLEAN == needType) {
+                    out_la(o, "and", in, true, BOOLEAN);
+                } else {
+                    ASSERT_require(BIT_VECTOR == needType);
+                    out_la(o, "bv-and", in, true, BIT_VECTOR);
+                }
                 break;
             case SymbolicExpr::OP_ASR:
                 ASSERT_require(BIT_VECTOR == needType);
                 out_asr(o, in);
                 break;
-            case SymbolicExpr::OP_BV_AND:
-                ASSERT_require(BIT_VECTOR == needType);
-                out_la(o, "bv-and", in, true, BIT_VECTOR);
-                break;
-            case SymbolicExpr::OP_BV_OR:
-                ASSERT_require(BIT_VECTOR == needType);
-                out_la(o, "bv-or", in, false, BIT_VECTOR);
-                break;
-            case SymbolicExpr::OP_BV_XOR:
-                ASSERT_require(BIT_VECTOR == needType);
-                out_la(o, "bv-xor", in, false, BIT_VECTOR);
+            case SymbolicExpr::OP_XOR:
+                if (BOOLEAN == needType) {
+                    out_la(o, "xor", in, false, BOOLEAN);
+                } else {
+                    ASSERT_require(BIT_VECTOR == needType);
+                    out_la(o, "bv-xor", in, false, BIT_VECTOR);
+                }
                 break;
             case SymbolicExpr::OP_EQ:
                 ASSERT_require(BOOLEAN == needType);
@@ -486,8 +488,12 @@ YicesSolver::out_expr(std::ostream &o, const SymbolicExpr::Ptr &tn, Type needTyp
                 out_expr(o, SymbolicExpr::makeInteger(in->nBits(), 0), needType);
                 break;
             case SymbolicExpr::OP_OR:
-                ASSERT_require(BOOLEAN == needType);
-                out_la(o, "or", in, false, BOOLEAN);
+                if (BOOLEAN == needType) {
+                    out_la(o, "or", in, false, BOOLEAN);
+                } else {
+                    ASSERT_require(BIT_VECTOR == needType);
+                    out_la(o, "bv-or", in, false, BIT_VECTOR);
+                }
                 break;
             case SymbolicExpr::OP_READ:
                 ASSERT_require(BIT_VECTOR == needType);
@@ -974,24 +980,24 @@ YicesSolver::ctx_expr(const SymbolicExpr::Ptr &tn, Type needType)
                 retval = ctx_la(yices_mk_bv_add, in, false, BIT_VECTOR);
                 break;
             case SymbolicExpr::OP_AND:
-                ASSERT_require(BOOLEAN == needType);
-                retval = ctx_la(yices_mk_and, in, true, BOOLEAN);
+                if (BOOLEAN == needType) {
+                    retval = ctx_la(yices_mk_and, in, true, BOOLEAN);
+                } else {
+                    ASSERT_require(BIT_VECTOR == needType);
+                    retval = ctx_la(yices_mk_bv_and, in, true, BIT_VECTOR);
+                }
                 break;
             case SymbolicExpr::OP_ASR:
                 ASSERT_require(BIT_VECTOR == needType);
                 retval = ctx_asr(in);
                 break;
-            case SymbolicExpr::OP_BV_AND:
-                ASSERT_require(BIT_VECTOR == needType);
-                retval = ctx_la(yices_mk_bv_and, in, true, BIT_VECTOR);
-                break;
-            case SymbolicExpr::OP_BV_OR:
-                ASSERT_require(BIT_VECTOR == needType);
-                retval = ctx_la(yices_mk_bv_or, in, false, BIT_VECTOR);
-                break;
-            case SymbolicExpr::OP_BV_XOR:
-                ASSERT_require(BIT_VECTOR == needType);
-                retval = ctx_la(yices_mk_bv_xor, in, false, BIT_VECTOR);
+            case SymbolicExpr::OP_XOR:
+                if (BOOLEAN == needType) {
+                    retval = ctx_la(yices_mk_xor, in, false, BOOLEAN);
+                } else {
+                    ASSERT_require(BIT_VECTOR == needType);
+                    retval = ctx_la(yices_mk_bv_xor, in, false, BIT_VECTOR);
+                }
                 break;
             case SymbolicExpr::OP_EQ:
                 ASSERT_require(BOOLEAN == needType);
@@ -1032,8 +1038,12 @@ YicesSolver::ctx_expr(const SymbolicExpr::Ptr &tn, Type needType)
             case SymbolicExpr::OP_NOOP:
                 throw Exception("OP_NOOP not implemented");
             case SymbolicExpr::OP_OR:
-                ASSERT_require(BOOLEAN == needType);
-                retval = ctx_la(yices_mk_or, in, false, BOOLEAN);
+                if (BOOLEAN == needType) {
+                    retval = ctx_la(yices_mk_or, in, false, BOOLEAN);
+                } else {
+                    ASSERT_require(BIT_VECTOR == needType);
+                    retval = ctx_la(yices_mk_bv_or, in, false, BIT_VECTOR);
+                }
                 break;
             case SymbolicExpr::OP_READ:
                 ASSERT_require(BIT_VECTOR == needType);

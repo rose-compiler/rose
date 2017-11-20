@@ -80,7 +80,7 @@ protected:
     virtual void outputUnary(std::ostream&, const std::string &funcName, const SymbolicExpr::InteriorPtr&, Type need);
     virtual void outputBinary(std::ostream&, const std::string &funcName, const SymbolicExpr::InteriorPtr&, Type need);
     virtual void outputLeftAssoc(std::ostream&, const std::string &funcName, const SymbolicExpr::InteriorPtr&, Type need);
-    virtual void outputXor(std::ostream&, const SymbolicExpr::InteriorPtr&);
+    virtual void outputXor(std::ostream&, const SymbolicExpr::InteriorPtr&, Type need);
     virtual void outputExtract(std::ostream&, const SymbolicExpr::InteriorPtr&);
     virtual void outputIte(std::ostream&, const SymbolicExpr::InteriorPtr&, Type need);
     virtual void outputNotEqual(std::ostream&, const SymbolicExpr::InteriorPtr&);

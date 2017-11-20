@@ -52,22 +52,19 @@ public:
  *  operand is often a constant). */
 enum Operator {
     OP_ADD,                 /**< Addition. One or more operands, all the same width. */
-    OP_AND,                 /**< Boolean AND. Operands are all Boolean (1-bit) values. See also OP_BV_AND. */
+    OP_AND,                 /**< Bitwise conjunction. One or more operands all the same width. */
     OP_ASR,                 /**< Arithmetic shift right. Operand B shifted by A bits; 0 <= A < width(B). A is unsigned. */
-    OP_BV_AND,              /**< Bitwise AND. One or more operands, all the same width. */
-    OP_BV_OR,               /**< Bitwise OR. One or more operands, all the same width. */
-    OP_BV_XOR,              /**< Bitwise exclusive OR. One or more operands, all the same width. */
     OP_CONCAT,              /**< Concatenation. Operand A becomes high-order bits. Any number of operands. */
     OP_EQ,                  /**< Equality. Two operands, both the same width. */
     OP_EXTRACT,             /**< Extract subsequence of bits. Extract bits [A..B) of C. 0 <= A < B <= width(C). */
-    OP_INVERT,              /**< Boolean inversion. One operand. */
+    OP_INVERT,              /**< Bitwise inversion. One operand. */
     OP_ITE,                 /**< If-then-else. A must be one bit. Returns B if A is set, C otherwise. */
     OP_LSSB,                /**< Least significant set bit or zero. One operand. */
     OP_MSSB,                /**< Most significant set bit or zero. One operand. */
     OP_NE,                  /**< Inequality. Two operands, both the same width. */
-    OP_NEGATE,              /**< Arithmetic negation. One operand. */
+    OP_NEGATE,              /**< Arithmetic negation. One operand. For Booleans, use OP_INVERT (2's complement is a no-op). */
     OP_NOOP,                /**< No operation. Used only by the default constructor. */
-    OP_OR,                  /**< Boolean OR. Operands are all Boolean (1-bit) values. See also OP_BV_OR. */
+    OP_OR,                  /**< Bitwise disjunction. One or more operands all the same width. */
     OP_READ,                /**< Read a value from memory.  Arguments are the memory state and the address expression. */
     OP_ROL,                 /**< Rotate left. Rotate bits of B left by A bits.  0 <= A < width(B). A is unsigned. */
     OP_ROR,                 /**< Rotate right. Rotate bits of B right by A bits. 0 <= B < width(B). A is unsigned.  */
@@ -93,7 +90,12 @@ enum Operator {
     OP_UMOD,                /**< Unsigned modulus. Two operands, A%B. Result width is width(B). */
     OP_UMUL,                /**< Unsigned multiplication. Two operands, A*B. Result width is width(A)+width(B). */
     OP_WRITE,               /**< Write (update) memory with a new value. Arguments are memory, address and value. */
-    OP_ZEROP                /**< Equal to zero. One operand. Result is a single bit, set iff A is equal to zero. */
+    OP_XOR,                 /**< Bitwise exclusive disjunction. One or more operands, all the same width. */
+    OP_ZEROP,               /**< Equal to zero. One operand. Result is a single bit, set iff A is equal to zero. */
+
+    OP_BV_AND = OP_AND,                                 // [Robb Matzke 2017-11-14]: deprecated
+    OP_BV_OR = OP_OR,                                   // [Robb Matzke 2017-11-14]: deprecated
+    OP_BV_XOR = OP_XOR                                  // [Robb Matzke 2017-11-14]: deprecated
 };
 
 std::string toStr(Operator);

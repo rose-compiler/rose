@@ -167,24 +167,24 @@ Z3Solver::outputExpression(std::ostream &o, const SymbolicExpr::Ptr &expr, Type 
                 outputList(o, "bvadd", inode, BIT_VECTOR);
                 break;
             case SymbolicExpr::OP_AND:
-                ASSERT_require(BOOLEAN == needType);
-                outputList(o, "and", inode, BOOLEAN);
+                if (BOOLEAN == needType) {
+                    outputList(o, "and", inode, BOOLEAN);
+                } else {
+                    ASSERT_require(BIT_VECTOR == needType);
+                    outputList(o, "bvand", inode, BIT_VECTOR);
+                }
                 break;
             case SymbolicExpr::OP_ASR:
                 ASSERT_require(BIT_VECTOR == needType);
                 outputArithmeticShiftRight(o, inode);
                 break;
-            case SymbolicExpr::OP_BV_AND:
-                ASSERT_require(BIT_VECTOR == needType);
-                outputList(o, "bvand", inode, BIT_VECTOR);
-                break;
-            case SymbolicExpr::OP_BV_OR:
-                ASSERT_require(BIT_VECTOR == needType);
-                outputList(o, "bvor",  inode, BIT_VECTOR);
-                break;
-            case SymbolicExpr::OP_BV_XOR:
-                ASSERT_require(BIT_VECTOR == needType);
-                outputList(o, "bvxor", inode, BIT_VECTOR);
+            case SymbolicExpr::OP_XOR:
+                if (BOOLEAN == needType) {
+                    outputList(o, "xor", inode, BOOLEAN);
+                } else {
+                    ASSERT_require(BIT_VECTOR == needType);
+                    outputList(o, "bvxor", inode, BIT_VECTOR);
+                }
                 break;
             case SymbolicExpr::OP_EQ:
                 ASSERT_require(BOOLEAN == needType);
@@ -220,8 +220,12 @@ Z3Solver::outputExpression(std::ostream &o, const SymbolicExpr::Ptr &expr, Type 
                 outputExpression(o, SymbolicExpr::makeInteger(inode->nBits(), 0), needType);
                 break;
             case SymbolicExpr::OP_OR:
-                ASSERT_require(BOOLEAN == needType);
-                outputList(o, "or", inode, BOOLEAN);
+                if (BOOLEAN == needType) {
+                    outputList(o, "or", inode, BOOLEAN);
+                } else {
+                    ASSERT_require(BIT_VECTOR == needType);
+                    outputList(o, "bvor",  inode, BIT_VECTOR);
+                }
                 break;
             case SymbolicExpr::OP_READ:
                 ASSERT_require(BIT_VECTOR == needType);
@@ -407,36 +411,34 @@ Z3Solver::ctxExpression(const SymbolicExpr::Ptr &expr, Type needType) {
                     retval = retval + ctxExpression(inode->child(i), BIT_VECTOR);
                 break;
             case SymbolicExpr::OP_AND:
-                ASSERT_require(BOOLEAN == needType);
                 ASSERT_require(inode->nChildren() >= 2);
-                retval = ctxExpression(inode->child(0), BOOLEAN);
-                for (size_t i = 1; i < inode->nChildren(); ++i)
-                    retval = retval && ctxExpression(inode->child(i), BOOLEAN);
+                if (BOOLEAN == needType) {
+                    retval = ctxExpression(inode->child(0), BOOLEAN);
+                    for (size_t i = 1; i < inode->nChildren(); ++i)
+                        retval = retval && ctxExpression(inode->child(i), BOOLEAN);
+                } else {
+                    ASSERT_require(BIT_VECTOR == needType);
+                    retval = ctxExpression(inode->child(0), BIT_VECTOR);
+                    for (size_t i = 1; i < inode->nChildren(); ++i)
+                        retval = retval & ctxExpression(inode->child(i), BIT_VECTOR);
+                }
                 break;
             case SymbolicExpr::OP_ASR:
                 ASSERT_require(BIT_VECTOR == needType);
                 retval = ctxArithmeticShiftRight(inode);
                 break;
-            case SymbolicExpr::OP_BV_AND:
-                ASSERT_require(BIT_VECTOR == needType);
+            case SymbolicExpr::OP_XOR:
                 ASSERT_require(inode->nChildren() >= 2);
-                retval = ctxExpression(inode->child(0), BIT_VECTOR);
-                for (size_t i = 1; i < inode->nChildren(); ++i)
-                    retval = retval & ctxExpression(inode->child(i), BIT_VECTOR);
-                break;
-            case SymbolicExpr::OP_BV_OR:
-                ASSERT_require(BIT_VECTOR == needType);
-                ASSERT_require(inode->nChildren() >= 2);
-                retval = ctxExpression(inode->child(0), BIT_VECTOR);
-                for (size_t i = 1; i < inode->nChildren(); ++i)
-                    retval = retval | ctxExpression(inode->child(i), BIT_VECTOR);
-                break;
-            case SymbolicExpr::OP_BV_XOR:
-                ASSERT_require(BIT_VECTOR == needType);
-                ASSERT_require(inode->nChildren() >= 2);
-                retval = ctxExpression(inode->child(0), BIT_VECTOR);
-                for (size_t i = 1; i < inode->nChildren(); ++i)
-                    retval = retval ^ ctxExpression(inode->child(i), BIT_VECTOR);
+                if (BOOLEAN == needType) {
+                    retval = ctxExpression(inode->child(0), BOOLEAN);
+                    for (size_t i = 1; i < inode->nChildren(); ++i)
+                        retval = retval ^ ctxExpression(inode->child(i), BOOLEAN);
+                } else {
+                    ASSERT_require(BIT_VECTOR == needType);
+                    retval = ctxExpression(inode->child(0), BIT_VECTOR);
+                    for (size_t i = 1; i < inode->nChildren(); ++i)
+                        retval = retval ^ ctxExpression(inode->child(i), BIT_VECTOR);
+                }
                 break;
             case SymbolicExpr::OP_EQ:
                 ASSERT_require(BOOLEAN == needType);
@@ -488,15 +490,22 @@ Z3Solver::ctxExpression(const SymbolicExpr::Ptr &expr, Type needType) {
                 if (BOOLEAN == needType) {
                     retval = ctx_->bool_val(false);
                 } else {
+                    ASSERT_require(BIT_VECTOR == needType);
                     retval = ctx_->bv_val(0, inode->nBits());
                 }
                 break;
             case SymbolicExpr::OP_OR:
-                ASSERT_require(BOOLEAN == needType);
                 ASSERT_require(inode->nChildren() >= 2);
-                retval = ctxExpression(inode->child(0), BOOLEAN);
-                for (size_t i = 1; i < inode->nChildren(); ++i)
-                    retval = retval || ctxExpression(inode->child(i), BOOLEAN);
+                if (BOOLEAN == needType) {
+                    retval = ctxExpression(inode->child(0), BOOLEAN);
+                    for (size_t i = 1; i < inode->nChildren(); ++i)
+                        retval = retval || ctxExpression(inode->child(i), BOOLEAN);
+                } else {
+                    ASSERT_require(BIT_VECTOR == needType);
+                    retval = ctxExpression(inode->child(0), BIT_VECTOR);
+                    for (size_t i = 1; i < inode->nChildren(); ++i)
+                        retval = retval | ctxExpression(inode->child(i), BIT_VECTOR);
+                }
                 break;
             case SymbolicExpr::OP_READ:
                 ASSERT_require(BIT_VECTOR == needType);
@@ -921,6 +930,8 @@ Z3Solver::selfTest() {
     using namespace SymbolicExpr;
     typedef SymbolicExpr::Ptr Expr;
 
+    Stream trace(mlog[TRACE] <<"Z3-specific unit tests");
+
     reset();
     ASSERT_always_require(nLevels() == 1);
     ASSERT_always_require(assertions().empty());
@@ -989,6 +1000,8 @@ Z3Solver::selfTest() {
     ASSERT_always_require(aEvidence->isLeafNode()->isNumber());
     aVal = aEvidence->isLeafNode()->toInt();
     ASSERT_always_require2(aVal == 0x55555555, StringUtility::addrToString(aVal));
+
+    trace <<"; pass\n";
 }
 
 } // namespace

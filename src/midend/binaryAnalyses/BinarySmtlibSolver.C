@@ -251,7 +251,7 @@ SmtlibSolver::outputBvxorFunctions(std::ostream &o, const std::vector<SymbolicEx
 
         SymbolicExpr::VisitAction preVisit(const SymbolicExpr::Ptr &node) {
             if (SymbolicExpr::InteriorPtr inode = node->isInteriorNode()) {
-                if (inode->getOperator() == SymbolicExpr::OP_BV_XOR && widths.insert(inode->nBits()).second) {
+                if (inode->getOperator() == SymbolicExpr::OP_XOR && widths.insert(inode->nBits()).second) {
                     size_t w = inode->nBits();
                     o <<"(define-fun bvxor" <<w
                       <<" ((a (_ BitVec " <<w <<")) (b (_ BitVec " <<w <<")))"
@@ -386,6 +386,25 @@ SmtlibSolver::outputCommonSubexpressions(std::ostream &o, const std::vector<Symb
 }
 
 void
+SmtlibSolver::outputCast(std::ostream &o, const SymbolicExpr::Ptr &expr, Type fromType, Type toType) {
+    ASSERT_not_null(expr);
+    if (fromType == toType) {
+        outputExpression(o, fromType);
+    } else if (BOOLEAN == fromType && BIT_VECTOR == toType) {
+        o <<"(ite ";
+        outputExpression(o, expr, BOOLEAN);
+        o <<" #b1 #b0)";
+    } else if (BIT_VECTOR == fromType && BOOLEAN == toType) {
+        ASSERT_require(expr->nBits() == 1);
+        o <<"(eq ";
+        outputExpression(o, expr, BIT_VECTOR);
+        o <<" #b1)";
+    } else {
+        ASSERT_not_reachable("invalid symbolic cast");
+    }
+}
+
+void
 SmtlibSolver::outputExpression(std::ostream &o, const SymbolicExpr::Ptr &expr, Type needType) {
     SymbolicExpr::LeafPtr leaf = expr->isLeafNode();
     SymbolicExpr::InteriorPtr inode = expr->isInteriorNode();
@@ -407,24 +426,19 @@ SmtlibSolver::outputExpression(std::ostream &o, const SymbolicExpr::Ptr &expr, T
                 outputLeftAssoc(o, "bvadd", inode, BIT_VECTOR);
                 break;
             case SymbolicExpr::OP_AND:
-                ASSERT_require(BOOLEAN == needType);
-                outputLeftAssoc(o, "and", inode, BOOLEAN);
+                if (BOOLEAN == needType) {
+                    outputLeftAssoc(o, "and", inode, BOOLEAN);
+                } else {
+                    ASSERT_require(BIT_VECTOR == needType);
+                    outputLeftAssoc(o, "bvand", inode, BIT_VECTOR);
+                }
                 break;
             case SymbolicExpr::OP_ASR:
                 ASSERT_require(BIT_VECTOR == needType);
                 outputArithmeticShiftRight(o, inode);
                 break;
-            case SymbolicExpr::OP_BV_AND:
-                ASSERT_require(BIT_VECTOR == needType);
-                outputLeftAssoc(o, "bvand", inode, BIT_VECTOR);
-                break;
-            case SymbolicExpr::OP_BV_OR:
-                ASSERT_require(BIT_VECTOR == needType);
-                outputLeftAssoc(o, "bvor",  inode, BIT_VECTOR);
-                break;
-            case SymbolicExpr::OP_BV_XOR:
-                ASSERT_require(BIT_VECTOR == needType);
-                outputXor(o, inode);
+            case SymbolicExpr::OP_XOR:
+                outputXor(o, inode, needType);
                 break;
             case SymbolicExpr::OP_EQ:
                 ASSERT_require(BOOLEAN == needType);
@@ -460,8 +474,12 @@ SmtlibSolver::outputExpression(std::ostream &o, const SymbolicExpr::Ptr &expr, T
                 outputExpression(o, SymbolicExpr::makeInteger(inode->nBits(), 0), needType);
                 break;
             case SymbolicExpr::OP_OR:
-                ASSERT_require(BOOLEAN == needType);
-                outputLeftAssoc(o, "or", inode, BOOLEAN);
+                if (BOOLEAN == needType) {
+                    outputLeftAssoc(o, "or", inode, BOOLEAN);
+                } else {
+                    ASSERT_require(BIT_VECTOR == needType);
+                    outputLeftAssoc(o, "bvor",  inode, BIT_VECTOR);
+                }
                 break;
             case SymbolicExpr::OP_READ:
                 ASSERT_require(BIT_VECTOR == needType);
@@ -651,12 +669,16 @@ SmtlibSolver::outputLeftAssoc(std::ostream &o, const std::string &name, const Sy
 // SMT-LIB doesn't have a bit-wise XOR function, but we should have by now generated our own "bvxorN" functions where N is the
 // width of the operands.
 void
-SmtlibSolver::outputXor(std::ostream &o, const SymbolicExpr::InteriorPtr &inode) {
+SmtlibSolver::outputXor(std::ostream &o, const SymbolicExpr::InteriorPtr &inode, Type type) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() > 1);
 
-    std::string name = "bvxor" + boost::lexical_cast<std::string>(inode->nBits());
-    outputLeftAssoc(o, name, inode, BIT_VECTOR);
+    if (BOOLEAN == type) {
+        outputLeftAssoc(o, "xor", inode, BOOLEAN);
+    } else {
+        std::string name = "bvxor" + boost::lexical_cast<std::string>(inode->nBits());
+        outputLeftAssoc(o, name, inode, BIT_VECTOR);
+    }
 }
 
 // ROSE (extract lo hi expr) => SMT-LIB ((_ extract hi lo) expr); lo and hi are inclusive

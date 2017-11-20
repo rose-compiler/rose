@@ -532,6 +532,7 @@ SmtSolver::selfTest() {
     E a256 = makeVariable(256, "a256");
 
     E z8 = makeInteger(8, 0);
+    E b1 = makeVariable(1, "b1");
     E b4 = makeInteger(4, 10);
     E b8 = makeInteger(8, 0xf0);
     E c8 = makeVariable(8);
@@ -601,6 +602,20 @@ SmtSolver::selfTest() {
 
     // Miscellaneous operations
     exprs.push_back(makeEq(makeSet(a8, b8, c8), b8, "set"));
+
+    // Mixing 1-bit values used as bit vectors and Booleans should be allowed.
+#if 0 // [Robb Matzke 2017-11-14]
+    exprs.push_back(makeAnd(makeAdd(a1, b1) /*bit-vector*/, makeZerop(b1) /*Boolean*/));
+#else
+    exprs.push_back(makeAnd(makeBoolean(makeAdd(a1, b1)), makeZerop(b1)));
+#endif
+
+    // Some operations should work on bit vectors (tested above) or Booleans.  In ROSE, a Boolean is just a 1-bit vector, but
+    // SMT solvers usually distinguish between 1-bit vector type and Boolean type and don't allow them to be mixed.
+    exprs.push_back(makeEq(makeZerop(a1), b1));
+    exprs.push_back(makeXor(makeZerop(a1), b1));
+    exprs.push_back(makeIte(a1, makeZerop(a1), b1));
+    exprs.push_back(makeNe(a1, makeZerop(b1)));
 
     // Run the solver
     for (size_t i=0; i<exprs.size(); ++i) {
