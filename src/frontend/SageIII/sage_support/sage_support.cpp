@@ -5478,7 +5478,7 @@ SgSourceFile::build_Jovial_AST( vector<string> argv, vector<string> inputCommand
           printf ("In build_Jovial_AST(): After calling jovial_main(): frontEndCommandLineString = %s \n",frontEndCommandLineString.c_str());
         }
 
-#if 1
+#if 0
      printf ("Exiting after parsing Jovial input... \n");
      exit(0);
 #endif
@@ -5812,6 +5812,8 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
                                            {
                                              frontendErrorLevel = build_Jovial_AST(argv,inputCommandLine);
                                              frontend_failed = (frontendErrorLevel > 0);
+                                          // Rasmussen (11/21/2017): No Jovial compiler for now
+                                             set_skipfinalCompileStep(true);
                                            }
                                           else
                                            {

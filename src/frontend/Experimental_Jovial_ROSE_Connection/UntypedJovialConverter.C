@@ -1,9 +1,9 @@
 #include "sage3basic.h"
-#include "UntypedConverter.h"
+#include "UntypedJovialConverter.h"
 
 #define DEBUG_UNTYPED_CONVERTER 0
 
-using namespace Fortran::Untyped;
+using namespace Jovial::Untyped;
 
 
 void
@@ -461,6 +461,10 @@ UntypedConverter::convertSgUntypedGlobalScope (SgUntypedGlobalScope* ut_scope, S
    SgGlobal* sg_scope = isSgGlobal(scope);
    ROSE_ASSERT(sg_scope == SageBuilder::getGlobalScopeFromScopeStack());
 
+#if DEBUG_UNTYPED_CONVERTER
+   printf("--- finished converting SgUntypedGlobalScope %p\n", sg_scope);
+#endif
+
    return sg_scope;
 }
 
@@ -501,8 +505,7 @@ UntypedConverter::convertSgUntypedModuleDeclaration (SgUntypedModuleDeclaration*
 
      setSourcePositionFrom(classDefinition, ut_module);
 
-  // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
-     classDefinition->setCaseInsensitive(true);
+     classDefinition->setCaseInsensitive(false);
 
   // This is the defining declaration for the class (with a reference to the class definition)
      SgModuleStatement* classDeclaration = new SgModuleStatement(name.c_str(),SgClassDeclaration::e_struct,NULL,classDefinition);
@@ -623,8 +626,8 @@ UntypedConverter::convertSgUntypedProgramHeaderDeclaration (SgUntypedProgramHead
    SgBasicBlock* programBody = new SgBasicBlock();
    SgFunctionDefinition* programDefinition = new SgFunctionDefinition(programDeclaration, programBody);
 
-   programBody->setCaseInsensitive(true);
-   programDefinition->setCaseInsensitive(true);
+   programBody->setCaseInsensitive(false);
+   programDefinition->setCaseInsensitive(false);
 
    SageBuilder::pushScopeStack(programDefinition);
    SageBuilder::pushScopeStack(programBody);
@@ -758,7 +761,6 @@ printf ("...TODO... convert untyped function: scope type ... %s\n", scope->class
 SgVariableDeclaration*
 UntypedConverter::convertSgUntypedVariableDeclaration (SgUntypedVariableDeclaration* ut_decl, SgScopeStatement* scope)
 {
-   std::cerr << "convertSgUntypedVariableDeclaration: scope is " << scope->class_name() << std::endl;
    ROSE_ASSERT(scope->variantT() == V_SgBasicBlock || scope->variantT() == V_SgClassDefinition);
 
    SgUntypedType* ut_base_type = ut_decl->get_type();
@@ -1401,8 +1403,7 @@ UntypedConverter::initialize_global_scope(SgSourceFile* file)
     ROSE_ASSERT(globalScope != NULL);
     ROSE_ASSERT(globalScope->get_parent() != NULL);
 
- // Fortran is case insensitive
-    globalScope->setCaseInsensitive(true);
+    globalScope->setCaseInsensitive(false);
 
  // DQ (8/21/2008): endOfConstruct is not set to be consistent with startOfConstruct.
     ROSE_ASSERT(globalScope->get_endOfConstruct()   != NULL);
@@ -1524,8 +1525,8 @@ UntypedConverter::buildProcedureSupport (SgUntypedFunctionDeclaration* ut_functi
      ROSE_ASSERT(procedureDeclaration->get_definition() != NULL);
 
   // Specify case insensitivity for Fortran.
-     procedureBody->setCaseInsensitive(true);
-     procedureDefinition->setCaseInsensitive(true);
+     procedureBody->setCaseInsensitive(false);
+     procedureDefinition->setCaseInsensitive(false);
      procedureDeclaration->set_scope (currentScopeOfFunctionDeclaration);
      procedureDeclaration->set_parent(currentScopeOfFunctionDeclaration);
 

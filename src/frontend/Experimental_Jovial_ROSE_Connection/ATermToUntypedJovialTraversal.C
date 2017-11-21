@@ -1,7 +1,7 @@
 #include "sage3basic.h"
 #include "untypedBuilder.h"
 
-#include "ATtoUntypedJovialTraversal.h"
+#include "ATermToUntypedJovialTraversal.h"
 #include <iostream>
 
 #define PRINT_ATERM_TRAVERSAL 0
@@ -9,19 +9,19 @@
 
 using namespace ATermSupport;
 
-ATtoUntypedJovialTraversal::ATtoUntypedJovialTraversal(SgSourceFile* source) : ATtoUntypedTraversal(source)
+ATermToUntypedJovialTraversal::ATermToUntypedJovialTraversal(SgSourceFile* source) : ATermToUntypedTraversal(source)
 {
    UntypedBuilder::set_language(SgFile::e_Jovial_language);
 }
 
-ATtoUntypedJovialTraversal::~ATtoUntypedJovialTraversal()
+ATermToUntypedJovialTraversal::~ATermToUntypedJovialTraversal()
 {
 }
 
 //========================================================================================
 // 1.1 Module
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedJovialTraversal::traverse_Module(ATerm term)
+ATbool ATermToUntypedJovialTraversal::traverse_Module(ATerm term)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_Module: %s\n", ATwriteToString(term));
@@ -49,7 +49,7 @@ ATbool ATtoUntypedJovialTraversal::traverse_Module(ATerm term)
 //========================================================================================
 // 1.2.1 COMPOOL MODULES
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedJovialTraversal::traverse_CompoolModule(ATerm term, SgUntypedScope* scope)
+ATbool ATermToUntypedJovialTraversal::traverse_CompoolModule(ATerm term, SgUntypedScope* scope)
 { 
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_CompoolModule: %s\n", ATwriteToString(term));
@@ -61,7 +61,7 @@ ATbool ATtoUntypedJovialTraversal::traverse_CompoolModule(ATerm term, SgUntypedS
 //========================================================================================
 // 1.2.2 PROCEDURE MODULES
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedJovialTraversal::traverse_ProcedureModule(ATerm term, SgUntypedScope* scope)
+ATbool ATermToUntypedJovialTraversal::traverse_ProcedureModule(ATerm term, SgUntypedScope* scope)
 { 
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_ProcedureModule: %s\n", ATwriteToString(term));
@@ -70,7 +70,7 @@ ATbool ATtoUntypedJovialTraversal::traverse_ProcedureModule(ATerm term, SgUntype
    return ATfalse;
 }
 
-ATbool ATtoUntypedJovialTraversal::traverse_DeclarationList(ATerm term, SgUntypedDeclarationStatementList* decl_list)
+ATbool ATermToUntypedJovialTraversal::traverse_DeclarationList(ATerm term, SgUntypedDeclarationStatementList* decl_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_DeclarationList: %s\n", ATwriteToString(term));
@@ -94,7 +94,7 @@ ATbool ATtoUntypedJovialTraversal::traverse_DeclarationList(ATerm term, SgUntype
 //========================================================================================
 // 1.2.3 MAIN PROGRAM MODULES
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedJovialTraversal::traverse_MainProgramModule(ATerm term, SgUntypedGlobalScope* global_scope)
+ATbool ATermToUntypedJovialTraversal::traverse_MainProgramModule(ATerm term, SgUntypedGlobalScope* global_scope)
 { 
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_MainProgramModule: %s\n", ATwriteToString(term));
@@ -137,6 +137,8 @@ ATbool ATtoUntypedJovialTraversal::traverse_MainProgramModule(ATerm term, SgUnty
 
    // This could probably be improved to as it includes decls and funcs in global scope
       setSourcePosition(main_program, term);
+   // No end statement so this will mimic Fortran usage
+      setSourcePositionFromEndOnly(end_program_stmt, main_program);
 
    // add program to the global scope
       global_scope->get_function_list()->get_func_list().push_back(main_program);
@@ -150,7 +152,7 @@ ATbool ATtoUntypedJovialTraversal::traverse_MainProgramModule(ATerm term, SgUnty
    return ATtrue;
 }
 
-ATbool ATtoUntypedJovialTraversal::traverse_Name(ATerm term, std::string & name)
+ATbool ATermToUntypedJovialTraversal::traverse_Name(ATerm term, std::string & name)
 { 
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_Name: %s\n", ATwriteToString(term));
@@ -164,7 +166,7 @@ ATbool ATtoUntypedJovialTraversal::traverse_Name(ATerm term, std::string & name)
    return ATtrue;
 }
 
-ATbool ATtoUntypedJovialTraversal::traverse_ProgramBody(ATerm term, SgUntypedFunctionScope** function_scope)
+ATbool ATermToUntypedJovialTraversal::traverse_ProgramBody(ATerm term, SgUntypedFunctionScope** function_scope)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_ProgramBody: %s\n", ATwriteToString(term));
@@ -227,7 +229,7 @@ ATbool ATtoUntypedJovialTraversal::traverse_ProgramBody(ATerm term, SgUntypedFun
    return ATtrue;
 }
 
-ATbool ATtoUntypedJovialTraversal::traverse_NonNestedSubroutineList(ATerm term, SgUntypedScope* scope)
+ATbool ATermToUntypedJovialTraversal::traverse_NonNestedSubroutineList(ATerm term, SgUntypedScope* scope)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_NonNestedSubroutineList: %s\n", ATwriteToString(term));
@@ -239,7 +241,7 @@ ATbool ATtoUntypedJovialTraversal::traverse_NonNestedSubroutineList(ATerm term, 
    return ATtrue;
 }
 
-ATbool ATtoUntypedJovialTraversal::traverse_SubroutineDefinitionList(ATerm term, SgUntypedFunctionDeclarationList*)
+ATbool ATermToUntypedJovialTraversal::traverse_SubroutineDefinitionList(ATerm term, SgUntypedFunctionDeclarationList*)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_SubroutineDefinitionList: %s\n", ATwriteToString(term));
@@ -254,7 +256,7 @@ ATbool ATtoUntypedJovialTraversal::traverse_SubroutineDefinitionList(ATerm term,
 //========================================================================================
 // 2.1 DATA DECLARATIONS
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedJovialTraversal::traverse_DataDeclaration(ATerm term, SgUntypedDeclarationStatementList* decl_list)
+ATbool ATermToUntypedJovialTraversal::traverse_DataDeclaration(ATerm term, SgUntypedDeclarationStatementList* decl_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_DataDeclaration: %s\n", ATwriteToString(term));
@@ -274,7 +276,7 @@ ATbool ATtoUntypedJovialTraversal::traverse_DataDeclaration(ATerm term, SgUntype
 //========================================================================================
 // 2.1.1 ITEM DECLARATION
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedJovialTraversal::traverse_ItemDeclaration(ATerm term, SgUntypedDeclarationStatementList* decl_list)
+ATbool ATermToUntypedJovialTraversal::traverse_ItemDeclaration(ATerm term, SgUntypedDeclarationStatementList* decl_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_ItemDeclaration: %s\n", ATwriteToString(term));
@@ -332,7 +334,7 @@ ATbool ATtoUntypedJovialTraversal::traverse_ItemDeclaration(ATerm term, SgUntype
    return ATtrue;
 }
 
-ATbool ATtoUntypedJovialTraversal::traverse_ItemTypeDescription(ATerm term, SgUntypedType** type)
+ATbool ATermToUntypedJovialTraversal::traverse_ItemTypeDescription(ATerm term, SgUntypedType** type)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_ItemTypeDescription: %s\n", ATwriteToString(term));
@@ -348,7 +350,7 @@ ATbool ATtoUntypedJovialTraversal::traverse_ItemTypeDescription(ATerm term, SgUn
 //========================================================================================
 // 2.1.1.1 INTEGER TYPE DESCRIPTIONS
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedJovialTraversal::traverse_IntegerItemDescription(ATerm term, SgUntypedType** type)
+ATbool ATermToUntypedJovialTraversal::traverse_IntegerItemDescription(ATerm term, SgUntypedType** type)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_IntegerItemDescription: %s\n", ATwriteToString(term));
@@ -376,7 +378,7 @@ ATbool ATtoUntypedJovialTraversal::traverse_IntegerItemDescription(ATerm term, S
    return ATtrue;
 }
 
- ATbool ATtoUntypedJovialTraversal::traverse_OptIntegerSize(ATerm term, bool* has_size /*TODO - return type */)
+ ATbool ATermToUntypedJovialTraversal::traverse_OptIntegerSize(ATerm term, bool* has_size /*TODO - return type */)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_OptIntegerSize: %s\n", ATwriteToString(term));
@@ -395,7 +397,7 @@ ATbool ATtoUntypedJovialTraversal::traverse_IntegerItemDescription(ATerm term, S
 //----------------------------------------------------------------------------------------
 
 
-ATbool ATtoUntypedJovialTraversal::traverse_OptRoundOrTruncate(ATerm term, bool* has_round_or_truncate /*TODO - return type */)
+ATbool ATermToUntypedJovialTraversal::traverse_OptRoundOrTruncate(ATerm term, bool* has_round_or_truncate /*TODO - return type */)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_OptRoundOrTruncate: %s\n", ATwriteToString(term));
@@ -412,7 +414,7 @@ ATbool ATtoUntypedJovialTraversal::traverse_OptRoundOrTruncate(ATerm term, bool*
 //========================================================================================
 // 2.1.5 ALLOCATION OF DATA OBJECTS
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedJovialTraversal::traverse_OptAllocationSpecifier(ATerm term, bool* has_spec, std::string & spec_string)
+ATbool ATermToUntypedJovialTraversal::traverse_OptAllocationSpecifier(ATerm term, bool* has_spec, std::string & spec_string)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_OptAllocationSpecifier: %s\n", ATwriteToString(term));
@@ -433,7 +435,7 @@ ATbool ATtoUntypedJovialTraversal::traverse_OptAllocationSpecifier(ATerm term, b
 //========================================================================================
 // 4.0 STATEMENTS
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedJovialTraversal::traverse_Statement(ATerm term, SgUntypedStatementList* stmt_list)
+ATbool ATermToUntypedJovialTraversal::traverse_Statement(ATerm term, SgUntypedStatementList* stmt_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_Statement: %s\n", ATwriteToString(term));
@@ -448,7 +450,7 @@ ATbool ATtoUntypedJovialTraversal::traverse_Statement(ATerm term, SgUntypedState
    return ATtrue;
 }
 
-ATbool ATtoUntypedJovialTraversal::traverse_StatementList(ATerm term, SgUntypedStatementList* stmt_list)
+ATbool ATermToUntypedJovialTraversal::traverse_StatementList(ATerm term, SgUntypedStatementList* stmt_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_StatementList: %s\n", ATwriteToString(term));
@@ -466,7 +468,7 @@ ATbool ATtoUntypedJovialTraversal::traverse_StatementList(ATerm term, SgUntypedS
    return ATtrue;
 }
 
-ATbool ATtoUntypedJovialTraversal::traverse_SimpleStatement(ATerm term, SgUntypedStatementList* stmt_list)
+ATbool ATermToUntypedJovialTraversal::traverse_SimpleStatement(ATerm term, SgUntypedStatementList* stmt_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_SimpleStatement: %s\n", ATwriteToString(term));
@@ -499,7 +501,7 @@ ATbool ATtoUntypedJovialTraversal::traverse_SimpleStatement(ATerm term, SgUntype
    return ATtrue;
 }
 
-ATbool ATtoUntypedJovialTraversal::traverse_LabelList(ATerm term, std::vector<std::string> & labels)
+ATbool ATermToUntypedJovialTraversal::traverse_LabelList(ATerm term, std::vector<std::string> & labels)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_LabelList: %s\n", ATwriteToString(term));
@@ -522,7 +524,7 @@ ATbool ATtoUntypedJovialTraversal::traverse_LabelList(ATerm term, std::vector<st
 //========================================================================================
 // 4.1 ASSIGNMENT STATEMENTS
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedJovialTraversal::traverse_AssignmentStatement(ATerm term, std::vector<std::string> & labels, SgUntypedStatementList* stmt_list)
+ATbool ATermToUntypedJovialTraversal::traverse_AssignmentStatement(ATerm term, std::vector<std::string> & labels, SgUntypedStatementList* stmt_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_AssignmentStatement: %s\n", ATwriteToString(term));
@@ -566,7 +568,7 @@ ATbool ATtoUntypedJovialTraversal::traverse_AssignmentStatement(ATerm term, std:
 //========================================================================================
 // 5.0 FORMULAS
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedJovialTraversal::traverse_Formula(ATerm term, SgUntypedExpression** expr)
+ATbool ATermToUntypedJovialTraversal::traverse_Formula(ATerm term, SgUntypedExpression** expr)
 {
    if (traverse_NumericFormula(term, expr)) {
       // MATCHED NumericFormula
@@ -584,7 +586,7 @@ ATbool ATtoUntypedJovialTraversal::traverse_Formula(ATerm term, SgUntypedExpress
 //========================================================================================
 // 5.1 NUMERIC FORMULAS
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedJovialTraversal::traverse_NumericFormula(ATerm term, SgUntypedExpression** expr)
+ATbool ATermToUntypedJovialTraversal::traverse_NumericFormula(ATerm term, SgUntypedExpression** expr)
 {
    if (traverse_IntegerFormula(term, expr)) {
       // MATCHED IntegerFormula
@@ -599,7 +601,7 @@ ATbool ATtoUntypedJovialTraversal::traverse_NumericFormula(ATerm term, SgUntyped
 //========================================================================================
 // 5.1.1 INTEGER FORMULAS
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedJovialTraversal::traverse_IntegerFormula(ATerm term, SgUntypedExpression** expr)
+ATbool ATermToUntypedJovialTraversal::traverse_IntegerFormula(ATerm term, SgUntypedExpression** expr)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_IntegerFormula: %s\n", ATwriteToString(term));
@@ -651,7 +653,7 @@ ATbool ATtoUntypedJovialTraversal::traverse_IntegerFormula(ATerm term, SgUntyped
    return ATtrue;
 }
 
-ATbool ATtoUntypedJovialTraversal::traverse_IntegerPrimary(ATerm term, SgUntypedExpression** expr)
+ATbool ATermToUntypedJovialTraversal::traverse_IntegerPrimary(ATerm term, SgUntypedExpression** expr)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_IntegerPrimary: %s\n", ATwriteToString(term));
@@ -679,7 +681,7 @@ ATbool ATtoUntypedJovialTraversal::traverse_IntegerPrimary(ATerm term, SgUntyped
    return ATtrue;
 }
 
-ATbool ATtoUntypedJovialTraversal::traverse_OptSign(ATerm term, Jovial_ROSE_Translation::ExpressionKind & op_enum)
+ATbool ATermToUntypedJovialTraversal::traverse_OptSign(ATerm term, Jovial_ROSE_Translation::ExpressionKind & op_enum)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_OptSign: %s\n", ATwriteToString(term));
@@ -699,7 +701,7 @@ ATbool ATtoUntypedJovialTraversal::traverse_OptSign(ATerm term, Jovial_ROSE_Tran
    return ATtrue;
 }
 
-ATbool ATtoUntypedJovialTraversal::traverse_IntegerTerm(ATerm term, SgUntypedExpression** expr)
+ATbool ATermToUntypedJovialTraversal::traverse_IntegerTerm(ATerm term, SgUntypedExpression** expr)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_IntegerTerm: %s\n", ATwriteToString(term));
@@ -735,7 +737,7 @@ ATbool ATtoUntypedJovialTraversal::traverse_IntegerTerm(ATerm term, SgUntypedExp
    return ATtrue;
 }
 
-ATbool ATtoUntypedJovialTraversal::traverse_IntegerFactor(ATerm term, SgUntypedExpression** expr)
+ATbool ATermToUntypedJovialTraversal::traverse_IntegerFactor(ATerm term, SgUntypedExpression** expr)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_IntegerFactor: %s\n", ATwriteToString(term));
@@ -769,7 +771,7 @@ ATbool ATtoUntypedJovialTraversal::traverse_IntegerFactor(ATerm term, SgUntypedE
 //========================================================================================
 // 6.1 VARIABLE AND BLOCK REFERENCES
 //----------------------------------------------------------------------------------------
-ATbool ATtoUntypedJovialTraversal::traverse_Variable(ATerm term, SgUntypedExpression** var)
+ATbool ATermToUntypedJovialTraversal::traverse_Variable(ATerm term, SgUntypedExpression** var)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_Variable: %s\n", ATwriteToString(term));
@@ -793,7 +795,7 @@ ATbool ATtoUntypedJovialTraversal::traverse_Variable(ATerm term, SgUntypedExpres
    return ATtrue;
 }
 
-ATbool ATtoUntypedJovialTraversal::traverse_VariableList(ATerm term, std::vector<SgUntypedExpression*> & vars)
+ATbool ATermToUntypedJovialTraversal::traverse_VariableList(ATerm term, std::vector<SgUntypedExpression*> & vars)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_VariableList: %s\n", ATwriteToString(term));
@@ -822,7 +824,7 @@ ATbool ATtoUntypedJovialTraversal::traverse_VariableList(ATerm term, std::vector
 //----------------------------------------------------------------------------------------
 
 ATbool
-ATtoUntypedJovialTraversal::traverse_MultiplyDivideOrMod(ATerm term, Jovial_ROSE_Translation::ExpressionKind & op_enum, std::string & op_name)
+ATermToUntypedJovialTraversal::traverse_MultiplyDivideOrMod(ATerm term, Jovial_ROSE_Translation::ExpressionKind & op_enum, std::string & op_name)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_MultiplyDivideOrMod: %s\n", ATwriteToString(term));
