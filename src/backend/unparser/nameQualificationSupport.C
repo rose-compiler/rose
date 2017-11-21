@@ -1531,8 +1531,10 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                               if (symbolHiddingTemplateInstantiationSymbol != NULL && symbolHiddingTemplateInstantiationSymbol != symbol)
                                  {
                                 // There is reason to think this template instantiation should have some name qualification.
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                                    printf ("WARNING: There is reason to think this template instantiation should have some name qualification because it may be hidden by another template instantiation \n");
                                    printf ("   --- templateInstantiationFunctionName = %s \n",templateInstantiationFunctionName.str());
+#endif
 #if 0
                                 // DQ (6/3/2017): Commented out to explore behavior.
                                    printf ("There is reason to think this template instantiation should have some name qualification \n");

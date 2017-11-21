@@ -12620,7 +12620,8 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
 #endif
 
           ROSE_ASSERT (nondefdecl->get_firstNondefiningDeclaration() != NULL);
-
+#if 0
+       // DQ (11/20/2017): Commented out output spew.
        // DQ (2/28/2015): This test is failing in the new application support for templates within the testRoseHeaders_01.C.
           if (nondefdecl->get_type()->get_declaration() != isSgDeclarationStatement(nondefdecl->get_firstNondefiningDeclaration()))
              {
@@ -12631,6 +12632,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
              }
        // DQ (7/22/2017): Uncomment this test to better understand why this is a new issue (after two years).
        // ROSE_ASSERT (nondefdecl->get_type()->get_declaration() == isSgDeclarationStatement(nondefdecl->get_firstNondefiningDeclaration()));
+#endif
 #if 0
           ROSE_ASSERT (nondefdecl->get_type()->get_declaration() == isSgDeclarationStatement(nondefdecl->get_firstNondefiningDeclaration()));
 #endif
@@ -12642,6 +12644,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
   // patch up the SgClassType for the defining class declaration
      ROSE_ASSERT (nondefdecl->get_type() != NULL);
   // ROSE_ASSERT (nondefdecl->get_type()->get_declaration() == isSgDeclarationStatement(nondefdecl));
+#if 0
      if (nondefdecl->get_type()->get_declaration() != isSgDeclarationStatement(nondefdecl))
         {
           printf ("nondefdecl                                    = %p = %s \n",nondefdecl,nondefdecl->class_name().c_str());
@@ -12649,6 +12652,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
           printf ("nondefdecl->get_type()->get_declaration()     = %p = %s \n",nondefdecl->get_type()->get_declaration(),nondefdecl->get_type()->get_declaration()->class_name().c_str());
           printf ("nondefdecl->get_firstNondefiningDeclaration() = %p = %s \n",nondefdecl->get_firstNondefiningDeclaration(),nondefdecl->get_firstNondefiningDeclaration()->class_name().c_str());
         }
+#endif
   // ROSE_ASSERT (defdecl->get_type()->get_declaration() == isSgDeclarationStatement(defdecl));
      ROSE_ASSERT (defdecl->get_type() != NULL);
      ROSE_ASSERT (defdecl->get_type()->get_declaration() != NULL);
@@ -12658,6 +12662,9 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
 #if 0
      ROSE_ASSERT (nondefdecl->get_type()->get_declaration() == isSgDeclarationStatement(nondefdecl->get_firstNondefiningDeclaration()));
 #else
+
+#if 0
+  // DQ (11/20/2017): Commented out output spew.
   // DQ (2/28/2015): This test is failing in the new application support for templates within the testRoseHeaders_01.C.
      if (nondefdecl->get_type()->get_declaration() != isSgDeclarationStatement(nondefdecl->get_firstNondefiningDeclaration()))
         {
@@ -12675,6 +12682,8 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
           printf ("   --- nondefdecl->get_firstNondefiningDeclaration() = %p = %s \n",nondefdecl,nondefdecl->class_name().c_str());
         }
   // ROSE_ASSERT (nondefdecl->get_type()->get_declaration() == isSgDeclarationStatement(nondefdecl));
+#endif
+
 #endif
 
   // DQ (9/4/2012): Added assertion.
