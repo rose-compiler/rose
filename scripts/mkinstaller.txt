@@ -1,0 +1,532 @@
+
+mkinstaller(1x)                                                  mkinstaller(1x)
+
+NAME
+    mkinstaller -- Generate self-extracting installer.
+
+USAGE
+    mkinstaller --copyright
+    mkinstaller --help
+    mkinstaller --html <pathname>
+    mkinstaller --vernum
+    mkinstaller --version
+
+    mkinstaller [<options> ...] <pathname> ...
+
+DESCRIPTION
+    This script is used to generate an "installer" script implemented as
+    a Bourne-shell script on UNIX-like systems (such as Linux or OSX) or
+    as a binary executable on Windows-like systems. This generated installer
+    supports a number of options for specifying the where the various
+    directories are to be installed (prefix directory pathnames).
+
+    UNIX-like host
+
+       On a UNIX-like host (such as Linux or OSX) the generated installer
+       script is implemented as a self-extracting Bourne-shell script
+       carrying a tarball as a payload. mkinstaller requires tar on UNIX-like
+       hosts.
+
+       The installer script construction process:
+
+          1) Determination of a suitable temp directory. Much of the work
+             done by the mkinstaller script is done in a temp directory.
+          2) Creation of a top level temporary directory under which all
+             other temporaries will be created. Creation of an "accumulator",
+             an "intermediate" and a "wrapper" directory in the top level
+             temp directory. A tarup/untar process will use both the
+             "intermediate" and "accumulator" directories to merge given
+             directories with the same basename. The "wrapper" directory
+             will be used to carry the individual directory tarballs.
+          3) From each of the specified directories to be installed such
+             as .../bin, .../lib, specified on the mkinstaller command line
+             tarup the individual directory forming tarballs in the wrapper
+             directory in the temp directory.
+          4) Tarup the temporary wrapper directory for eventual inclusion
+             in the generated installer.
+          5) Generate the text of the "installer" script in the temporary
+             directory customizing it with with options for specifying an
+             overall prefix directory and individual prefixes for each of
+             the directories specified on the mkinstaller command line.
+          6) Add the tarball built in (4) to the end of the script generated
+             in (5) forming the distribution self-extracting installation
+             script in the directory where mkinstaller was run.
+          7) Cleanup.
+
+          In the end the only product is the desired distribution self-
+          extracting installation script in the directory where the
+          mkinstaller command was run. Everything else produced along the
+          way (directories and files) is considered temporary and is
+          destroyed.
+
+          Note that the name of the installer is specified using the -c <name>
+          or --create=<name> option to mkinstaller. However if the -c <name>
+          or --create=<name> option is not used then mkinstaller will try
+          to come-up with a reasonable name:
+
+             1) If the --project-name=<name> and --project-version=<version>
+                was used then the name of the generated installer will be:
+
+                   <name>-<version>-installer
+
+             2) If the --project-name=<name> was used but not the
+                --project-version option the name of the generated
+                installer will be:
+
+                   <name>-installer
+
+             3) If neither the --project-name nor the --project-version
+                option the name of the generated installer will be:
+
+                   installer
+
+          As is typical for a UNIX-like environment, the generated script
+          has no extension.
+
+       How the generated installer script works on a UNIX-like target:
+
+          1) The installer script locates itself. This may seem to be an
+             obvious and or silly question but the actual location of the
+             script file is necessary for the actual extraction (the script
+             file must be read by the standard "tail" utility).
+          2) Determination of a suitable temp directory. Much of the work
+             done by the generated installer script is done in a temp
+             directory. Creation of a top level temporary directory under
+             which all other temporaries will be created. This temp
+             directory is created under the standard temp directory
+             determined at the start of this step (see NOTES).
+          3) PREFIX and PREFIX_xxx values are established from command
+             line options. If appropriate options aren't supplied to
+             install all directories then the installer script will propmpt
+             for the necessary pathname(s). The installer script will
+             create the directories if necessary.
+          4) The tarball embedded in the installer script is extracted from
+             the installer script into the temp directory created in (2).
+          5) The tarball in (4) is unwrapped revealing one or more tarballs
+             (one for each installation directory such as bin.tar.gz/
+             include.tar.gz/ lib.tar.gz/ ...). If a pre-install script was
+             supplied to mkinstaller when the generated installer script
+             was produced then it will be revealed at this time. Similarly
+             if a post-install script was supplied to mkinstaller when the
+             generated installer script was produced then it will also be
+             revealed at this time. Note that neither of these scripts if
+             supplied and revealed are actually executed in this step. See
+             steps (6) and (8).
+          6) If (5) revealed a pre-install script then it will be executed
+             by the approptiate interpreter. Note that each of the PREFIX
+             directories will be supplied as an option to this pre-install
+             script (such as --prefix_bin=<pathname>). Also note at this time
+             the individual tarballs representing the directories to install
+             have NOT be unwrapped.
+          7) Each individual tarball revealed in (5) is unwrapped into the
+             approperiate PREFIX directory overlying anything already
+             there.
+          8) If (5) revealed a post-install script then it will be executed
+             by the approptiate interpreter. Note that each of the PREFIX
+             directories will be supplied as an option to this post-install
+             script (such as --prefix_bin=<pathname>).
+          9) Cleanup.
+
+    Windows-like host
+
+       On a Windows-like host (such as Windows 7) the generated installer
+       is implemented as a binary execurable which is actually generated
+       under the covers by NSIS (Nullsoft Scripted Install System).
+
+       The installer construction process:
+
+          1) Determination of a suitable temp directory. Much of the work
+             done by the mkinstaller script is done in a temp directory.
+          2) Generation of a .nsi script file.
+          3) MakeNSIS is used to "compile" the .nsi script forming a
+             .exe binary executable.
+
+          The .exe binary executable formed in step (3) is the product of the
+          mkinstaller script and may be shipped to customers to perform the
+          desired installation on their Windows system.
+
+          Note that the name of the installer is specified using the -c <name>
+          or --create=<name> option to mkinstaller. However if the -c <name>
+          or --create=<name> option is not used then mkinstaller will try
+          to come-up with a reasonable name:
+
+             1) If the --project-name=<name> and --project-version=<version>
+                was used then the name of the generated installer will be:
+
+                   <name>-<version>-installer.exe
+
+             2) If the --project-name=<name> was used but not the
+                --project-version option the name of the generated
+                installer will be:
+
+                   <name>-installer.exe
+
+             3) If neither the --project-name nor the --project-version
+                option the name of the generated installer will be:
+
+                   installer.exe
+
+          If the name is specified using the -c <name> or --create=<name>
+          option then the name should NOT included a .exe extension. The
+          makensis tool which actually produces the binary executable
+          will add the necessary extension.
+
+       Running the generated installer:
+
+          -- The default use of the generated installer will produce a
+             new directory on the user's desktop.
+
+                prompt> installer.exe
+
+          -- A different prefix may be specified using the /D option:
+
+                prompt> installer.exe /D=E:ozoeposit
+
+             Note that the prefix directory will be creates as necessary
+             however the uninstaller will only (recursively delete) the
+             final directory component. In the above example only
+             E:ozoeposit will be (recursivly deleted, but the
+             directory E:ozo will be left intact.
+
+       Note that the generated installer will pop-up a progress bar dialog
+       box to indicate the installation progress.
+
+OPTIONS
+    "mkinstaller" supports the following options:
+
+        --copyright
+
+            Output copyright and license info to <stdout> and quit.
+
+        --help
+
+            Output this man page to <stdout> and quit.
+
+        --html <pathname>
+
+            Output this man page as HTML to the given file pathname and quit.
+
+        --vernum
+
+            Output version number to <stdout> and quit.
+
+        --version
+
+            Output version number and revision date to <stdout> and quit.
+
+        -c <name>
+        --create=<name>
+
+            The name of the script to generate. It is generally not advisable
+            to include a suffix (aka. extension) as part of the script name.
+            Also note that this is not a pathname, is is the simple name of
+            the script file which is to be created in the current directory.
+            By default the script will be named "installer".
+
+        --cc=<string>
+
+            The C compiler name and version number that had been used in
+            building the software being installed. Note that the string
+            is expected to a blank separated pair: the name and version
+            number. The default is the string "- -" (meaning "unknown"
+            or "don't care").
+
+            Example:
+
+            --cc="gcc 4.5.1"
+
+        --cxx=<string>
+
+            The C++ compiler name and version number that had been used
+            in building the software being installed. Note that the string
+            is expected to a blank separated pair: the name and version
+            number. The default is the string "- -" (meaning "unknown"
+            or "don't care").
+
+            Example:
+
+            --cxx="g++ 4.5.1"
+
+        --contact=<address>
+
+            A contact email address. There is no default contact address.
+
+        -d
+        --debug
+
+            Produce extra output useful when debugging the "mkinstaller"
+            script itself.
+
+        --follow
+
+            Follow symbolic links for directory pathnames to will be
+            embedded as tarballs within the generated installer script.
+            By default such symbolic links are not permitted.
+
+            Note that Windows-like systems do not support symbolic-links.
+
+        --fortran=<string>
+
+            The FORTRAN compiler name and version number that had been
+            used in building the software being installed. Note that the
+            string is expected to a blank separated pair: the name and
+            version number. The default is the string "- -" (meaning
+            "unknown" or "don't care").
+
+            Example:
+
+            --fortran="gfortran 4.5.1"
+
+        --nofollow
+
+            Don't follow symbolic links for directory pathnames to will be
+            embedded as tarballs within the generated installer script.
+            When such symbolic-links are detected and error message will
+            be produced and the script will terminate (after cleaning-up).
+            This is the default behavior.
+
+            Note that Windows-like systems do not support symbolic-links.
+
+        --nonstd
+
+            Don't bother with any search for standard directory names such
+            as bin, lib, or include, (see the --std option). Instead just
+            simply use the directory pathname as given. Note that such a
+            search would only done when the given directory pathnames don't
+            include those with standard base names as bin, lib, or include.
+
+        --os=<string>
+
+            The OS on the system on which the installer is being generated.
+            This string is encoded in the installer script as an aid in
+            determining if the generated script is applicable to the
+            system where it is run. The default is to use uname -s and
+            uname -r to determine this string.
+
+        --postinstall-binary=<pathname>
+
+            The pathname of a binary executable which is to be included
+            with the installer's payload. It will be run by the generated
+            installer after all of the payload directories have been
+            extracted and installed.
+
+        --postinstall-perl=<pathname>
+
+            The pathname of a Perl script which is to be included with
+            the installer's payload. It will be run by the generated
+            installer after all of the payload directories have been
+            extracted and installed.
+
+            Such post-install Perl scripts are not generally supported
+            on Windows systems as Perl is not generally found on Windows
+            systems.
+
+        --postinstall-python=<pathname>
+
+            The pathname of a Python script which is to be included with
+            the installer's payload. It will be run by the generated
+            installer after all of the payload directories have been
+            extracted and installed.
+
+            Such post-install Python scripts are not generally supported
+            on Windows systems as Perl is not generally found on Windows
+            systems.
+
+        --postinstall-sh=<pathname>
+
+            The pathname of a Bourne-shell script which is to be included
+            with the installer's payload. It will be run by the generated
+            installer after all of the payload directories have been
+            extracted and installed.
+
+            Such post-install Bourne-shell scripts are not generally
+            supported on Windows systems as the Bourne-shell is not
+            generally found on Windows systems.
+
+        --preinstall-binary=<pathname>
+
+            The pathname of a binary executable which is to be included
+            with the installer's payload. It will be run by the generated
+            installer before all of the payload directories have been
+            extracted and installed.
+
+        --preinstall-perl=<pathname>
+
+            The pathname of a Perl script which is to be included with
+            the installer's payload. It will be run by the generated
+            installer before all of the payload directories have been
+            extracted and installed.
+
+            Such pre-install Perl scripts are not generally supported
+            on Windows systems as Perl is not generally found on Windows
+            systems.
+
+        --preinstall-python=<pathname>
+
+            The pathname of a Python script which is to be included with
+            the installer's payload. It will be run by the generated
+            installer before all of the payload directories have been
+            extracted and installed.
+
+            Such pre-install Python scripts are not generally supported
+            on Windows systems as Perl is not generally found on Windows
+            systems.
+
+        --preinstall-sh=<pathname>
+
+            The pathname of a Bourne-shell script which is to be included
+            with the installer's payload. It will be run by the generated
+            installer before all of the payload directories have been
+            extracted and installed.
+
+            Such pre-install Bourne-shell scripts are not generally
+            supported on Windows systems as the Bourne-shell is not
+            generally found on Windows systems.
+
+        --prjnam=<name>
+        --project-name=<name>
+
+            The name of the project to be installed by the generated
+            installer script. There is no default project name.
+
+        --prjver=<A>.<B>[.<C>[.<D>]][<suffix>]
+        --project-version=<A>.<B>[.<C>[.<D>]][<suffix>]
+
+            The version number of the project to be installed by the
+            generated installer script. Note that the given version number
+            is expected to have 2, 3, or 4 dot-separated numeric components
+            and an optional suffix. If the --project-version option is used
+            then the --project-version option must also be used. There is
+            no default project version number.
+
+        --std
+
+            If none of the given directory pathnames have basenames such
+            as bin, lib, or include then look for immediate subdirectories
+            of the given directory pathnames with such basenames. If any
+            have such standard base names then replace the given directory
+            pathname with all of the immediate subdirectory pathnames. See
+            the --nonstd option.
+
+        -v[<digit>]
+        --verbose[<digit>]
+
+            Operate in a verbose mode.
+
+            Repeating this option increases the amount of output produced.
+            Note that the option may end with an optional digit which
+            indicates a repetition count. Thus the option:
+
+               -v3
+
+            is equavalent to:
+
+               -v -v -v
+
+        -w <pathname>
+        --with-notice=<pathname>
+
+            The pathname of a textfile which contains the copyright
+            notice that is to be output by the generated installer script
+            when the installer's --copyright option is used. By default
+            the generated installer doesn't support a --copyright option.
+
+        <pathname>
+
+            The pathnames of one or more directories which will be
+            embedded as tarballs within the generated installer script.
+            Typical directory basenames are: bin, include, lib, ... Note
+            that at least one such directory pathname is required.
+
+            The basename of this pathname may not contain any spaces or
+            tabs however the directory component (if any) may.
+
+RETURNS
+    "mkinstaller" returns the standard exit codes:
+
+       0 -- success
+       1 -- failure
+
+ENVIRONMENT
+    "mkinstaller" refers to the following environment variables:
+
+        DEBUG_mkinstaller
+
+            Generate extra output which is only usefull when debugging the
+            "mkinstaller" script itself.
+
+        INEFFECTIVE_mkinstaller
+
+            If this environment variable has been set then the generated
+            script will lack a payload and may not even be runable. Note
+            that this feature is almost never used except when debugging
+            the script generation process.
+
+        MKINSTALLER_TMPDIR
+
+            Consider this pathname before considering TMPDIR (see
+            step (0) in the NOTES section below).
+
+INPLEMENTATION
+    "mkinstaller" is implemented as a Perl script.
+
+SEE ALSO
+    makensis(1), NSIS, sh(1), tar(1)
+
+NOTES
+    The directory where temporary files are to be placed is determined
+    as follows:
+
+        0) If MKINSTALLER_TMPDIR is defined and is not empty then
+           consider its value as a directory pathname. If this pathname
+           exists and is a directory and is writable then temporary
+           files will be placed in this directory. Otherwise...
+        1) If TMPDIR is defined and is not empty then consider its
+           value as a directory pathname. If this pathname exists
+           and is a directory and is writable then temporary files
+           will be placed in this directory. Otherwise...
+        2) If TMP is defined and is not empty then consider its
+           value as a directory pathname. If this pathname exists
+           and is a directory and is writable then temporary files
+           will be placed in this directory. Otherwise...
+        3) If TEMP is defined and is not empty then consider its
+           value as a directory pathname. If this pathname exists
+           and is a directory and is writable then temporary files
+           will be placed in this directory. Otherwise...
+        4) If the user's home directory can be determined and if
+           this home directory contains a subdirectory named tmp
+           that is itself writable then temporary files will be
+           placed in this directory. Otherwise...
+        5) If "C:<userProfile>\AppData\Local\temp" exists and
+           is a writable directory then temporary files will be
+           placed in this directory. Otherwise...
+        6) If "/tmp" exists and is writable then temporary files
+           will be placed in this directory. Otherwise...
+        7) If "/var/tmp" exists and is writable then temporary files
+           will be placed in this directory. Otherwise...
+        8) If "C:\Temp" exists and is writable then temporary files
+           will be placed in this directory. Otherwise...
+        9) If "C:\Windows\Temp" exists and is writable then temporary
+           files will be placed in this directory. Otherwise...
+       10) If the current directory is writable then temporary files
+           will be placed in the current directory. Otherwise...
+       11) A fatal error message will be sent to <stderr> and
+           the program will exit with a non-zero exit code.
+
+    Note that 5, 8, and 9 are only applicable on Windows-like hosts.
+
+AUTHOR
+    Jim Reus (jim.reus@gmail.com)
+
+CONTACT
+    Please contact:
+
+        totebag.help (totebag.help@gmail.com) with questions.
+
+        totebag.bugs (totebag.bugs@gmail.com) to report problems.
+
+        totebag.more (totebag.more@gmail.com) to request enhancements.
+
+
+    Be sure to provide as much information as possible.
+
