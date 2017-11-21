@@ -17,6 +17,26 @@ if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
    SUBDIRS += Experimental_OpenFortranParser_ROSE_Connection
 endif
 
+if ROSE_EXPERIMENTAL_CSHARP_ROSE_CONNECTION
+   SUBDIRS += Experimental_Csharp_ROSE_Connection
+endif
+
+if ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
+   SUBDIRS += Experimental_Ada_ROSE_Connection
+endif
+
+if ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION
+   SUBDIRS += Experimental_Jovial_ROSE_Connection
+endif
+
+if ROSE_EXPERIMENTAL_COBOL_ROSE_CONNECTION
+   SUBDIRS += Experimental_Cobol_ROSE_Connection
+endif
+
+if ROSE_EXPERIMENTAL_MATLAB_ROSE_CONNECTION
+   SUBDIRS += Experimental_Matlab_ROSE_Connection
+endif
+
 
 SUBDIRS += ECJ_ROSE_Connection
 
@@ -29,10 +49,6 @@ endif
 if ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
    SUBDIRS += PythonFrontend
 endif
-
-# if ROSE_BUILD_MATLAB_LANGUAGE_SUPPORT
-#    SUBDIRS += MatlabFrontend
-# endif
 
 SUBDIRS += DLX
 

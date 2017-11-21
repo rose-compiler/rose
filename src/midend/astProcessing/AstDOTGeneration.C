@@ -37,7 +37,16 @@ AstDOTGeneration::generate(SgNode* node, string filename, traversalType tt, stri
      this->filenamePostfix=filenamePostfix;
      DOTInheritedAttribute ia;
      traverse(node,ia);
-     string filename2=string("./")+filename+"."+filenamePostfix+".dot";
+
+  // DQ (9/22/2017): Fixed this to allow for an empty filenamePostfix string (and avoid output of ".." in the filename.
+  // string filename2=string("./")+filename+"."+filenamePostfix+".dot";
+     string filename2=string("./")+filename;
+     if (filenamePostfix != "")
+        {
+          filename2 += "." + filenamePostfix + ".dot";
+        }
+     filename2 += ".dot";
+
      dotrep.writeToFileAsGraph(filename2);
    }
 
@@ -336,7 +345,9 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
      SubTreeSynthesizedAttributes::iterator iter;
      ROSE_ASSERT(node);
 
-  // printf ("AstDOTGeneration::evaluateSynthesizedAttribute(): node = %s \n",node->class_name().c_str());
+#if 0
+     printf ("AstDOTGeneration::evaluateSynthesizedAttribute(): node = %s \n",node->class_name().c_str());
+#endif
 
   // DQ (5/3/2006): Skip this IR node if it is specified as such in the inherited attribute
      if (ia.skipSubTree == true)
