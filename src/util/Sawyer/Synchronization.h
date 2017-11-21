@@ -9,6 +9,7 @@
 #define Sawyer_Synchronization_H
 
 #include <Sawyer/Sawyer.h>
+#include <Sawyer/Map.h>
 
 #if SAWYER_MULTI_THREADED
     // It appears as though a certain version of GNU libc interacts badly with C++03 GCC and LLVM compilers. Some system header
@@ -161,6 +162,105 @@ SAWYER_EXPORT SAWYER_THREAD_TRAITS::RecursiveMutex& bigMutex();
  *  where @p n must be greater than zero.  This function uses the fastest available method for returning random numbers in a
  *  multi-threaded environment.  This function is thread-safe. */
 SAWYER_EXPORT size_t fastRandomIndex(size_t n);
+
+/** Thread local data per object instance.
+ *
+ *  This is useful when you have a class non-static data member that needs to be thread-local.
+ *
+ *  @code
+ *  struct MyClass {
+ *      static SAWYER_THREAD_LOCAL int foo;
+ *      MultiInstanceTls<int> bar;
+ *  };
+ *
+ *  MyClass a, b;
+ *
+ *  a.bar = 5;
+ *  b.bar = 6;
+ *  assert(a.bar + 1 == b.bar);
+ *  @endcode
+ *
+ *  where @c SAWYER_THREAD_LOCAL is a macro expanding to, perhaps, "__thread". C++ only allows thread-local global variables
+ *  or static member data, as with @c foo above. That means that @c a.foo and @c b.foo alias one another. But if you need
+ *  some member data to be thread-local per object, you can declare it as @c MultiInstanceTls<T>. For instance, @c a.bar and @c
+ *  b.bar are different storage locations, and are also thread-local. */
+template<typename T>
+class MultiInstanceTls {
+    // pointer to avoid lack of thread-local dynamic initialization prior to C++11, and to avoid lack of well defined order
+    // when initializing and destroying global variables in C++.
+    typedef Container::Map<uintptr_t, T> Repo;
+    static SAWYER_THREAD_LOCAL Repo *repo_;
+
+    void initRepo() {
+        if (NULL == repo_)
+            repo_ = new Repo;
+    }
+
+public:
+    /** Default-constructed value. */
+    MultiInstanceTls() {
+        initRepo();
+        repo_->insert(reinterpret_cast<uintptr_t>(this), T());
+    }
+
+    /** Initialize value. */
+    /*implicit*/ MultiInstanceTls(const T& value) {
+        initRepo();
+        repo_->insert(reinterpret_cast<uintptr_t>(this), value);
+    }
+
+    /** Assignment operator. */
+    MultiInstanceTls& operator=(const T &value) {
+        initRepo();
+        repo_->insert(reinterpret_cast<uintptr_t>(this), value);
+        return *this;
+    }
+
+    /** Get interior object.
+     *
+     * @{ */
+    T& get() {
+        initRepo();
+        return repo_->insertMaybeDefault(reinterpret_cast<uintptr_t>(this));
+    }
+    const T& get() const {
+        initRepo();
+        return repo_->insertMaybeDefault(reinterpret_cast<uintptr_t>(this));
+    }
+    /** @} */
+
+    T& operator*() {
+        return get();
+    }
+
+    const T& operator*() const {
+        return get();
+    }
+
+    T* operator->() {
+        return &get();
+    }
+
+    const T* operator->() const {
+        return &get();
+    }
+
+    ~MultiInstanceTls() {
+        if (repo_)
+            repo_->erase(reinterpret_cast<uintptr_t>(this));
+    }
+
+    /** Implicit conversion to enclosed type.
+     *
+     *  This is so that the data member can be used as if it were type @c T rather than a MultiInstanceTls object. */
+    operator T() {
+        initRepo();
+        return repo_->insertMaybeDefault(reinterpret_cast<uintptr_t>(this));
+    }
+};
+
+template<typename T>
+SAWYER_THREAD_LOCAL Container::Map<uintptr_t, T>* MultiInstanceTls<T>::repo_;
 
 } // namespace
 #endif
