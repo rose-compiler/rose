@@ -8,6 +8,7 @@
 #include "BinaryZ3Solver.h"
 
 #include <boost/format.hpp>
+#include <boost/lexical_cast.hpp>
 #include <boost/thread/locks.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/tuple/tuple.hpp>
@@ -34,9 +35,14 @@ SmtSolver::initDiagnostics() {
 }
 
 std::ostream&
-operator<<(std::ostream &o, const SmtSolver::Exception &e)
-{
+operator<<(std::ostream &o, const SmtSolver::Exception &e) {
     return o <<"SMT solver: " <<e.what();
+}
+
+std::ostream&
+operator<<(std::ostream &o, const SmtSolver::SExpr &e) {
+    e.print(o);
+    return o;
 }
 
 SmtSolver::Stats SmtSolver::classStats;
@@ -361,14 +367,65 @@ SmtSolver::getErrorMessage(int exitStatus) {
 
 // class method
 SmtSolver::SExpr::Ptr
-SmtSolver::SExpr::instance() {
-    return Ptr(new SExpr(""));
+SmtSolver::SExpr::instance(const Ptr &a, const Ptr &b, const Ptr &c, const Ptr &d) {
+    SExpr *retval = new SExpr("");
+    if (a) {
+        retval->children_.push_back(a);
+        if (b) {
+            retval->children_.push_back(b);
+            if (c) {
+                retval->children_.push_back(c);
+                if (d)
+                    retval->children_.push_back(d);
+            } else {
+                ASSERT_require(NULL == d);
+            }
+        } else {
+            ASSERT_require(NULL == c);
+            ASSERT_require(NULL == d);
+        }
+    } else {
+        ASSERT_require(NULL == b);
+        ASSERT_require(NULL == c);
+        ASSERT_require(NULL == d);
+    }
+    return Ptr(retval);
 }
 
 // class method
 SmtSolver::SExpr::Ptr
 SmtSolver::SExpr::instance(const std::string &content) {
     return Ptr(new SExpr(content));
+}
+
+// class method
+SmtSolver::SExpr::Ptr
+SmtSolver::SExpr::instance(size_t n) {
+    return instance(boost::lexical_cast<std::string>(n));
+}
+
+void
+SmtSolver::SExpr::append(const std::vector<Ptr> &exprs) {
+    ASSERT_require(content_.empty());
+    children_.insert(children_.end(), exprs.begin(), exprs.end());
+}
+
+void
+SmtSolver::SExpr::print(std::ostream &o) const {
+    if (!name().empty()) {
+        ASSERT_require(children().size() == 0);
+        o <<name();
+    } else {
+        o <<"(";
+        for (size_t i = 0; i < children().size(); ++i) {
+            if (i > 0)
+                o <<" ";
+            const SExpr::Ptr &child = children()[i];
+            ASSERT_not_null(child);
+            child->print(o);
+        }
+        o <<")";
+    }
 }
 
 // The input stream of characters reinterpretted as a stream of tokens.  No look-ahead is necessary during parser, which makes
@@ -476,17 +533,8 @@ void
 SmtSolver::printSExpression(std::ostream &o, const SExpr::Ptr &sexpr) {
     if (sexpr == NULL) {
         o <<"nil";
-    } else if (!sexpr->name().empty()) {
-        ASSERT_require(sexpr->children().size() == 0);
-        o <<sexpr->name();
     } else {
-        o <<"(";
-        for (size_t i = 0; i < sexpr->children().size(); ++i) {
-            if (i > 0)
-                o <<" ";
-            printSExpression(o, sexpr->children()[i]);
-        }
-        o <<")";
+        o <<*sexpr;
     }
 }
 

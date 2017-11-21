@@ -319,7 +319,7 @@ YicesSolver::out_common_subexpressions(std::ostream &o, const std::vector<Symbol
             out_expr(o, cses[i], BIT_VECTOR);
         }
         o <<")\n";
-        termNames_.insert(cses[i], termName);
+        termNames_.insert(cses[i], StringTypePair(termName, BIT_VECTOR)); // Yices doesn't use the type for anything
     }
 }
 
@@ -395,8 +395,9 @@ YicesSolver::out_expr(std::ostream &o, const SymbolicExpr::Ptr &tn, Type needTyp
 {
     SymbolicExpr::LeafPtr ln = tn->isLeafNode();
     SymbolicExpr::InteriorPtr in = tn->isInteriorNode();
-    std::string subExprName;
-    if (termNames_.getOptional(tn).assignTo(subExprName)) {
+    StringTypePair nameType;
+    if (termNames_.getOptional(tn).assignTo(nameType)) {
+        std::string subExprName = nameType.first;
         if (BOOLEAN == needType) {
             o <<"(= " <<subExprName <<" 0b1)";
         } else {
