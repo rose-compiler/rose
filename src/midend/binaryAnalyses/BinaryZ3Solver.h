@@ -126,11 +126,11 @@ protected:
     virtual void outputComparisonFunctions(std::ostream&, const std::vector<SymbolicExpr::Ptr>&) ROSE_OVERRIDE;
     virtual SExprTypePair outputExpression(const SymbolicExpr::Ptr&) ROSE_OVERRIDE;
     virtual SExprTypePair outputArithmeticShiftRight(const SymbolicExpr::InteriorPtr&) ROSE_OVERRIDE;
-    virtual Type mostType(const std::vector<Z3ExprTypePair>&);
-    using SmtlibSolver::mostType;
 
 #ifdef ROSE_HAVE_Z3
 protected:
+    virtual Type mostType(const std::vector<Z3ExprTypePair>&);
+    using SmtlibSolver::mostType;
     Z3ExprTypePair ctxCast(const Z3ExprTypePair&, Type toType);
     std::vector<Z3Solver::Z3ExprTypePair> ctxCast(const std::vector<Z3ExprTypePair>&, Type toType);
     Z3ExprTypePair ctxLeaf(const SymbolicExpr::LeafPtr&);

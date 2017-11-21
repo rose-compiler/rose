@@ -994,7 +994,8 @@ YicesSolver::ctx_expr(const SymbolicExpr::Ptr &tn, Type needType)
                 break;
             case SymbolicExpr::OP_XOR:
                 if (BOOLEAN == needType) {
-                    retval = ctx_la(yices_mk_xor, in, false, BOOLEAN);
+                    // Yices doesn't have a Boolean XOR operator
+                    throw Exception("Boolean XOR not implemented");
                 } else {
                     ASSERT_require(BIT_VECTOR == needType);
                     retval = ctx_la(yices_mk_bv_xor, in, false, BIT_VECTOR);
