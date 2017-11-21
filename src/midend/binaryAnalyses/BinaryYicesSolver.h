@@ -100,13 +100,13 @@ protected:
     void out_define(std::ostream&, const std::vector<SymbolicExpr::Ptr>&, Definitions*);
     void out_assert(std::ostream&, const SymbolicExpr::Ptr&);
     void out_number(std::ostream&, const SymbolicExpr::Ptr&);
-    void out_expr(std::ostream&, const SymbolicExpr::Ptr&, Type needType);
-    void out_unary(std::ostream&, const char *opname, const SymbolicExpr::InteriorPtr&, Type needType);
-    void out_binary(std::ostream&, const char *opname, const SymbolicExpr::InteriorPtr&, Type needType);
-    void out_ite(std::ostream&, const SymbolicExpr::InteriorPtr&, Type needType);
+    void out_expr(std::ostream&, const SymbolicExpr::Ptr&);
+    void out_unary(std::ostream&, const char *opname, const SymbolicExpr::InteriorPtr&);
+    void out_binary(std::ostream&, const char *opname, const SymbolicExpr::InteriorPtr&);
+    void out_ite(std::ostream&, const SymbolicExpr::InteriorPtr&);
     void out_set(std::ostream&, const SymbolicExpr::InteriorPtr&);
-    void out_la(std::ostream&, const char *opname, const SymbolicExpr::InteriorPtr&, bool identity_elmt, Type needType);
-    void out_la(std::ostream&, const char *opname, const SymbolicExpr::InteriorPtr&, Type needType);
+    void out_la(std::ostream&, const char *opname, const SymbolicExpr::InteriorPtr&, bool identity_elmt);
+    void out_la(std::ostream&, const char *opname, const SymbolicExpr::InteriorPtr&);
     void out_extract(std::ostream&, const SymbolicExpr::InteriorPtr&);
     void out_sext(std::ostream&, const SymbolicExpr::InteriorPtr&);
     void out_uext(std::ostream&, const SymbolicExpr::InteriorPtr&);
@@ -133,14 +133,14 @@ protected:
     void ctx_common_subexpressions(const std::vector<SymbolicExpr::Ptr>&);
     void ctx_define(const std::vector<SymbolicExpr::Ptr>&, Definitions*);
     void ctx_assert(const SymbolicExpr::Ptr&);
-    yices_expr ctx_expr(const SymbolicExpr::Ptr&, Type needType);
-    yices_expr ctx_unary(UnaryAPI, const SymbolicExpr::InteriorPtr&, Type needType);
-    yices_expr ctx_binary(BinaryAPI, const SymbolicExpr::InteriorPtr&, Type needType);
-    yices_expr ctx_ite(const SymbolicExpr::InteriorPtr&, Type needType);
+    yices_expr ctx_expr(const SymbolicExpr::Ptr&);
+    yices_expr ctx_unary(UnaryAPI, const SymbolicExpr::InteriorPtr&);
+    yices_expr ctx_binary(BinaryAPI, const SymbolicExpr::InteriorPtr&);
+    yices_expr ctx_ite(const SymbolicExpr::InteriorPtr&);
     yices_expr ctx_set(const SymbolicExpr::InteriorPtr&);
-    yices_expr ctx_la(BinaryAPI, const SymbolicExpr::InteriorPtr&, bool identity_elmt, Type needType);
-    yices_expr ctx_la(NaryAPI, const SymbolicExpr::InteriorPtr&, bool identity_elmt, Type needType);
-    yices_expr ctx_la(BinaryAPI, const SymbolicExpr::InteriorPtr&, Type needType);
+    yices_expr ctx_la(BinaryAPI, const SymbolicExpr::InteriorPtr&, bool identity_elmt);
+    yices_expr ctx_la(NaryAPI, const SymbolicExpr::InteriorPtr&, bool identity_elmt);
+    yices_expr ctx_la(BinaryAPI, const SymbolicExpr::InteriorPtr&);
     yices_expr ctx_extract(const SymbolicExpr::InteriorPtr&);
     yices_expr ctx_sext(const SymbolicExpr::InteriorPtr&);
     yices_expr ctx_uext(const SymbolicExpr::InteriorPtr&);
@@ -157,6 +157,8 @@ protected:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     static unsigned available_linkage() ROSE_DEPRECATED("use availableLinkages");
+protected:
+    virtual uint64_t parse_variable(const char *nptr, char **endptr, char first_char);
 private:
     static std::string get_typename(const SymbolicExpr::Ptr&);
 };
