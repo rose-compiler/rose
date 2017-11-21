@@ -25,8 +25,8 @@ $mkinstaller_ver_minor = "1";
 $mkinstaller_ver_build = "1";
 $mkinstaller_ver_patch = "";
 $mkinstaller_ver_name  = "1.1.1";
-$mkinstaller_ver_time  = "19Nov2017 14:42:13z";
-$mkinstaller_ver_id    = "@(#)mkinstaller 1.1.1 - 19Nov2017 14:42:13z";
+$mkinstaller_ver_time  = "21Nov2017 18:00:55z";
+$mkinstaller_ver_id    = "@(#)mkinstaller 1.1.1 - 21Nov2017 18:00:55z";
 
 @defaultCopyrightOwners
   = ( "Copyright 1985-99,2000-17 James Frederick Reus\n"
@@ -913,36 +913,39 @@ sub getOSclass {
 #-------------------------------------------------------------------------------
 
 sub getWorkingDirectory {
-   my $sponsor  = shift;
+   my $callerIs = shift;
+   print STDERR "getWorkingDirectory[ starting...\n" if $debugging;
    my $exitCode;
    my $gives;
    my $tmpdir   = findTempDir("");
    my $osClass  = getOSclass();
    if ($osClass eq "UNIX-like") {
-      my $pathname = "$tmpdir/pwd-$$.tmp";;
-      $gives       = `pwd 2>$pathname`;
-      $exitCode    = $? + 0;
+      print STDERR "getWorkingDirectory: ...UNIX-like\n" if $debugging;
+      my $tmpFile = "$tmpdir/pwd-$$.tmp";;
+      print STDERR "getWorkingDirectory: ...run: [pwd 2>$tmpFile]\n" if $debugging;
+      $gives      = `pwd 2>$tmpFile`;
+      $exitCode   = $? + 0;
       chomp $gives;
-      unlink $pathname if -f $pathname;
+      unlink $tmpFile if -f $tmpFile;
    }
    elsif ($osClass eq "Windows-like") {
-      my $pathname = "$tmpdir\\pwd-$$.tmp";
-      $gives       = `cd 2>$pathname`;
-      $exitCode    = $? + 0;
+      print STDERR "getWorkingDirectory: ...Windows-like\n" if $debugging;
+      my $tmpFile = "$tmpdir\\pwd-$$.tmp";
+      $gives      = `cd 2>$tmpFile`;
+      print STDERR "getWorkingDirectory: ...run: [cd 2>$tmpFile]\n" if $debugging;
+      $exitCode   = $? + 0;
       chomp $gives;
-      unlink $pathname if -f $pathname;
+      unlink $tmpFile if -f $tmpFile;
    }
    else {
       $gives    = "";
       $exitCode = 1;
    }
    if ($exitCode != 0) {
-      if ($sponsor ne "") {
-         print STDERR "$sponsor: can't determine current working directory\n";
-         exit 1;
-      }
+      print STDERR "$callerIscan't determine current working directory\n";
       $gives = "";
    }
+   print STDERR "getWorkingDirectory] ...done(=\"".$gives."\")\n" if $debugging;
    return $gives;
 }
 
