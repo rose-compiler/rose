@@ -641,6 +641,11 @@ testWorkList.passed: $(TEST_EXIT_STATUS) testWorkList conditionalDisable
 ###############################################################################################################################
 # Test ROSE's Map<T> class
 ###############################################################################################################################
+
+if !USING_INTEL_COMPILER
+
+# DQ (11/17/2017): The testMap.C code causes an internal compiler error for the Intel v16 compiler.
+
 noinst_PROGRAMS += testMap
 testMap_SOURCES = testMap.C
 testMap_LDADD = $(ROSE_SEPARATE_LIBS)
@@ -653,7 +658,7 @@ testMap.passed: $(TEST_EXIT_STATUS) testMap conditionalDisable
 		DISABLED="$$(./conditionalDisable)"			\
 		CMD=./testMap						\
 		$< $@
-
+endif
 
 ###############################################################################################################################
 # Test pointer detection

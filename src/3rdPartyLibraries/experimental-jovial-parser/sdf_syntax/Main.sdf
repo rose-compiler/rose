@@ -116,9 +116,9 @@ OptSubscript
 TableDereference
 ItemDereference
 BlockTableEntry
-%%BlockTableItem  %% AMBIGUOUS with TableItem
+BlockTableItem
 BlockTable
-%%BlockItem  %% AMBIGUOUS with BlockTable
+BlockItem
 TableEntry
 TableItem
 Table
@@ -127,6 +127,8 @@ RepFunctionVariable
 ByteFunctionVariable
 BitFunctionVariable
 NamedVariable
+  %% UntypedNamedVariable  %% Added to grammar to resolve ambiguity with untyped variable names
+                           %% does not seem to be needed after all (remove)
 TableConversion
 NamedTableConstant
 TableVariable
@@ -224,6 +226,7 @@ ElseClause
 OptElseClause
 ConditionalStatement
 NumericFormula
+FixedOrFloatingFormula  %% added to fix ambiguity
 ByFormula
 ThenPhrase
 ByPhrase
@@ -486,7 +489,7 @@ context-free syntax
 %%
   'START'
     DeclarationList
-    'PROGRAM'
+  'PROGRAM'
     ProgramName ';'
     ProgramBody
     NonNestedSubroutineList
@@ -494,14 +497,14 @@ context-free syntax
 
   Name                       -> ProgramName           {cons("Name")}
 
-  Statement                  -> ProgramBody           {cons("ProgramBody")}
+  Statement                  -> ProgramBody           {cons("ProgramSimpleBody")}
 
   'BEGIN'
     DeclarationList
     Statement+
     SubroutineDefinition*
     LabelList
-  'END'                      -> ProgramBody           {cons("ProgramBody")}
+  'END'                      -> ProgramBody           {cons("ProgramBody"), prefer}
 
 %% 1.4 IMPLEMENTATION PARAMETERS
 %%
@@ -582,7 +585,7 @@ context-free syntax
 
   DataDeclaration            -> Declaration
   TypeDeclaration            -> Declaration
-  SubroutineDeclaration      -> Declaration
+  SubroutineDeclaration      -> Declaration           {reject} %% AMBIGUOUS with NonNestedSubroutine
   StatementNameDeclaration   -> Declaration
   DefineDeclaration          -> Declaration
   ExternalDeclaration        -> Declaration
@@ -634,10 +637,10 @@ context-free syntax
 %% 2.1.1.1 INTEGER TYPE DESCRIPTIONS
 %%
 
-  IntegerItemDescription      -> IntegerTypeDescription
-%%IntegerTypeName             -> IntegerTypeDescription   %% AMBIGUOUS
+  IntegerItemDescription      -> IntegerTypeDescription  {prefer}
+  IntegerTypeName             -> IntegerTypeDescription
 
-  '$' OptRoundOrTruncate
+  'S' OptRoundOrTruncate
       OptIntegerSize          -> IntegerItemDescription  {cons("IntegerItemDescription")}
   'U' OptRoundOrTruncate
       OptIntegerSize          -> IntegerItemDescription  {cons("IntegerItemDescriptionU")}
@@ -653,8 +656,8 @@ context-free syntax
 %% 2.1.1.2 FLOATING TYPE DESCRIPTIONS
 %%
 
-  FloatingItemDescription     -> FloatingTypeDescription
-%%FloatingTypeName            -> FloatingTypeDescription   %% AMBIGUOUS
+  FloatingItemDescription     -> FloatingTypeDescription {prefer}
+  FloatingTypeName            -> FloatingTypeDescription
 
   'F' OptRoundOrTruncate
       Precision               -> FloatingItemDescription {cons("FloatingItemDescription")}
@@ -674,8 +677,8 @@ context-free syntax
 %% 2.1.1.3 FIXED TYPE DESCRIPTIONS
 %%
 
-  FixedItemDescription        -> FixedTypeDescription
-%%FixedTypeName               -> FixedTypeDescription   %% AMBIGUOUS
+  FixedItemDescription        -> FixedTypeDescription    {reject}  %% AMBIGUOUS
+  FixedTypeName               -> FixedTypeDescription    {reject}  %% AMBIGUOUS
 
   'A' OptRoundOrTruncate
       ScaleSpecifier
@@ -693,8 +696,8 @@ context-free syntax
 %% 2.1.1.4 BIT TYPE DESCRIPTIONS
 %%
 
-  BitItemDescription          -> BitTypeDescription
-%%BitTypeName                 -> BitTypeDescription   %% AMBIGUOUS
+  BitItemDescription          -> BitTypeDescription       {prefer}
+  BitTypeName                 -> BitTypeDescription
 
   'B' OptBitSize              -> BitItemDescription       {cons("BitItemDescription")}
 
@@ -709,8 +712,8 @@ context-free syntax
 %% 2.1.1.5 CHARACTER TYPE DESCRIPTIONS
 %%
 
-  CharacterItemDescription    -> CharacterTypeDescription
-%%CharacterTypeName           -> CharacterTypeDescription  %% AMBIGUOUS
+  CharacterItemDescription    -> CharacterTypeDescription  {prefer}
+  CharacterTypeName           -> CharacterTypeDescription
 
   'C' OptCharacterSize        -> CharacterItemDescription  {cons("CharacterItemDescription")}
 
@@ -725,8 +728,8 @@ context-free syntax
 %% 2.1.1.6 STATUS TYPE DESCRIPTIONS
 %%
 
-  StatusItemDescription      -> StatusTypeDescription
-%%StatusTypeName             -> StatusTypeDescription  %% AMBIGUOUS
+  StatusItemDescription      -> StatusTypeDescription  {prefer}
+  StatusTypeName             -> StatusTypeDescription
 
   'STATUS' OptStatusSize
      '(' StatusList ')'      -> StatusItemDescription  {cons("StatusItemDescription")}
@@ -761,8 +764,8 @@ context-free syntax
 %% 2.1.1.7 POINTER TYPE DESCRIPTIONS
 %%
 
-  PointerItemDescription      -> PointerTypeDescription
-%%PointerTypeName             -> PointerTypeDescription   %% AMBIGUOUS
+  PointerItemDescription      -> PointerTypeDescription  {prefer}
+  PointerTypeName             -> PointerTypeDescription
 
   'P' OptTypeName             -> PointerItemDescription  {cons("PointerItemDescription")}
 
@@ -1159,11 +1162,11 @@ context-free syntax
 %% 3.0 PROCEDURES AND FUNCTIONS
 %%%%%%%%%%
 
-  ProcedureDeclaration            -> SubroutineDeclaration
-  FunctionDeclaration             -> SubroutineDeclaration
+  ProcedureDeclaration            -> SubroutineDeclaration  {prefer}
+  FunctionDeclaration             -> SubroutineDeclaration  %% AMBIBUOUS with ProcedureDeclaration
 
-  ProcedureDefinition             -> SubroutineDefinition
-  FunctionDefinition              -> SubroutineDefinition
+  ProcedureDefinition             -> SubroutineDefinition   {prefer}
+  FunctionDefinition              -> SubroutineDefinition   %% AMBIBUOUS with ProcedureDefinition
 
 %% 3.1 PROCEDURES
 %%
@@ -1202,7 +1205,7 @@ context-free syntax
     Declaration                   -> FunctionDeclaration    {cons("FunctionDeclaration")}
 
   FunctionHeading ';'
-    FunctionBody                 -> FunctionDefinition      {cons("FunctionDefinition")}
+    FunctionBody                  -> FunctionDefinition      {cons("FunctionDefinition")}
 
   'PROC'
     FunctionName
@@ -1269,7 +1272,7 @@ context-free syntax
   LoopStatement               -> SimpleStatement
   IfStatement                 -> SimpleStatement
   CaseStatement               -> SimpleStatement
-%%ProcedureCallStatement      -> SimpleStatement  %%AMBIGUOUS with AssignmentStatement
+  ProcedureCallStatement      -> SimpleStatement       {reject} %%AMBIGUOUS with AssignmentStatement
   ReturnStatement             -> SimpleStatement
   GotoStatement               -> SimpleStatement
   ExitStatement               -> SimpleStatement
@@ -1476,12 +1479,18 @@ context-free syntax
 %% 5.0 FORMULAS
 %%%%%%%%%%
 
-  NumericFormula              -> Formula
+%%UntypedNamedVariable        -> Formula               {cons("VariableFormula")}  %% BEWARE NON_STANDARD_TRIAL
+  NumericFormula              -> Formula               {prefer}
   BitFormula                  -> Formula
-  CharacterFormula            -> Formula
-  StatusFormula               -> Formula
-  PointerFormula              -> Formula
-  TableFormula                -> Formula
+  CharacterFormula            -> Formula               {cons("CharacterFormula")}
+  StatusFormula               -> Formula               {cons("StatusFormula")}
+  PointerFormula              -> Formula               {cons("PointerFormula")}
+  TableFormula                -> Formula               {cons("TableFormula")}
+
+%% Additions to resolve ambiguities with variables (variables are mostly untyped)
+%%
+%%NamedVariable               -> UntypedNamedVariable   {cons("UntypedNamedVariable")}
+%%Sign NamedVariable          -> UntypedNamedVariable   {cons("NumericNamedVariable")}
 
   CompileTimeNumericFormula   -> CompileTimeFormula
   CompileTimeBitFormula       -> CompileTimeFormula
@@ -1491,9 +1500,13 @@ context-free syntax
 
 %% 5.1 NUMERIC FORMULAS
 %%
-  IntegerFormula              -> NumericFormula
-  FloatingFormula             -> NumericFormula
-  FixedFormula                -> NumericFormula
+  IntegerFormula              -> NumericFormula         {prefer}
+  FixedOrFloatingFormula      -> NumericFormula
+
+%% Added syntax to fix ambiguity
+%%
+  FloatingFormula             -> FixedOrFloatingFormula
+  FixedFormula                -> FixedOrFloatingFormula {prefer}
 
   CompileTimeIntegerFormula   -> CompileTimeNumericFormula
   CompileTimeFloatingFormula  -> CompileTimeNumericFormula
@@ -1519,7 +1532,7 @@ context-free syntax
 
   IntegerLiteral              -> IntegerPrimary
   IntegerMachineParameter     -> IntegerPrimary
-  IntegerVariable             -> IntegerPrimary
+  IntegerVariable             -> IntegerPrimary         {cons("IntegerVariable")}
   NamedIntegerConstant        -> IntegerPrimary
   IntegerFunctionCall         -> IntegerPrimary
   '(' IntegerFormula ')'      -> IntegerPrimary         {cons("IntegerPrimary")}
@@ -1553,8 +1566,8 @@ context-free syntax
 
   FloatingLiteral             -> FloatingPrimary
   FloatingMachineParameter    -> FloatingPrimary
-  FloatingVariable            -> FloatingPrimary
-  NamedFloatingConstant       -> FloatingPrimary
+  FloatingVariable            -> FloatingPrimary        {cons("FloatingVariable")}
+  NamedFloatingConstant       -> FloatingPrimary        {cons("NamedFloatingConstant")}
   FloatingFunctionCall        -> FloatingPrimary
   '(' FloatingFormula ')'     -> FloatingPrimary        {cons("FloatingPrimary")}
   FloatingConversion
@@ -1583,8 +1596,8 @@ context-free syntax
 
   FixedLiteral                -> FixedFactor
   FixedMachineParameter       -> FixedFactor
-  FixedVariable               -> FixedFactor
-  NamedFixedConstant          -> FixedFactor
+  FixedVariable               -> FixedFactor            {cons("FixedVariable")}
+  NamedFixedConstant          -> FixedFactor            {cons("NamedFixedConstant")}
   FixedFunctionCall           -> FixedFactor
   '(' FixedFormula     ')'    -> FixedFactor            {cons("FixedFactor")}
   FixedConversion
@@ -1616,8 +1629,12 @@ context-free syntax
 
   BitLiteral                  -> BitPrimary
   BooleanLiteral              -> BitPrimary
-  BitVariable                 -> BitPrimary
-  NamedBitConstant            -> BitPrimary
+  BitVariable                 -> BitPrimary             {cons("BitVariable")}
+
+  %% Rejected to fix ambiguity with NamedIntegerConstant
+  %% WARNING - may need to be fixed
+  NamedBitConstant            -> BitPrimary             {cons("NamedBitConstant"), reject}
+
   BitFunctionCall             -> BitPrimary
   '(' BitFormula  ')'         -> BitPrimary             {cons("BitPrimary")}
   BitConversion
@@ -1681,8 +1698,8 @@ context-free syntax
 %% 5.3 CHARACTER FORMULAS
 %%
   CharacterLiteral            -> CharacterFormula
-  CharacterVariable           -> CharacterFormula
-  NamedCharacterConstant      -> CharacterFormula
+  CharacterVariable           -> CharacterFormula       {cons("CharacterVariable")}
+  NamedCharacterConstant      -> CharacterFormula       {cons("NamedCharacterConstant")}
   CharacterFunctionCall       -> CharacterFormula
   '(' CharacterFormula ')'    -> CharacterFormula       {cons("CharacterFormula")}
   CharacterConversion
@@ -1699,8 +1716,8 @@ context-free syntax
 %% 5.4 STATUS FORMULAS
 %%
   StatusConstant              -> StatusFormula
-  StatusVariable              -> StatusFormula
-  NamedStatusConstant         -> StatusFormula
+  StatusVariable              -> StatusFormula      {cons("StatusVariable")}
+  NamedStatusConstant         -> StatusFormula      {cons("NamedStatusConstant")}
   StatusFunctionCall          -> StatusFormula
   '(' StatusFormula ')'       -> StatusFormula      {cons("StatusFormula")}
   StatusConversion
@@ -1717,8 +1734,8 @@ context-free syntax
 %% 5.5 POINTER FORMULAS
 %%
   PointerLiteral              -> PointerFormula
-  PointerVariable             -> PointerFormula
-  NamedPointerConstant        -> PointerFormula
+  PointerVariable             -> PointerFormula     {cons("PointerVariable")}
+  NamedPointerConstant        -> PointerFormula     {cons("NamedPointerConstant")}
   PointerFunctionCall         -> PointerFormula
   '(' PointerFormula ')'      -> PointerFormula     {cons("PointerFormula")}
   PointerConversion
@@ -1734,8 +1751,8 @@ context-free syntax
 
 %% 5.5 TABLE FORMULAS
 %%
-  TableVariable               -> TableFormula
-  NamedTableConstant          -> TableFormula
+  TableVariable               -> TableFormula       {cons("TableVariable")}
+  NamedTableConstant          -> TableFormula       {cons("NamedTableConstant")}
   '(' TableFormula ')'        -> TableFormula       {cons("TableFormula")}
   TableConversion
     '(' Formula ')'           -> TableFormula       {cons("TableFormula")}
@@ -1755,15 +1772,15 @@ context-free syntax
   BitFunctionVariable         -> Variable           {cons("BitFunctionVariable")}
   ByteFunctionVariable        -> Variable           {cons("ByteFunctionVariable")}
   RepFunctionVariable         -> Variable           {cons("RepFunctionVariable")}
-%%FunctionName                -> Variable  %% AMBIGUOUS
+%%FunctionName                -> Variable           {reject} %% AMBIGUOUS with NamedVariable
   
   Item                        -> NamedVariable
   Table                       -> NamedVariable
   TableItem                   -> NamedVariable
   TableEntry                  -> NamedVariable
-%%BlockItem                   -> NamedVariable  %% AMBIGUOUS with BlockTable
+  BlockItem                   -> NamedVariable      {reject} %% AMBIGUOUS with BlockTable
   BlockTable                  -> NamedVariable
-%%BlockTableItem              -> NamedVariable  %% AMBIGUOUS with TableItem
+  BlockTableItem              -> NamedVariable      {reject} %% AMBIGUOUS with TableItem
   BlockTableEntry             -> NamedVariable
 
   ItemName                    -> Item
@@ -1776,7 +1793,7 @@ context-free syntax
 
   TableItemName
        Subscript
-%%  OptSubscript                                                                 %% Optional makes AMBIGUOUS with Name
+%%  OptSubscript                                                      %% Optional makes AMBIGUOUS with Name
     OptTableDereference       -> TableItem             {cons("TableItem")}
 
   TableItemName
@@ -1796,16 +1813,16 @@ context-free syntax
   TableDereference
     Subscript                 -> TableEntry            {cons("TableEntry")}
 
-%%ItemName
-%%  OptBlockDereference       -> BlockItem             {cons("BlockItem")}       %% AMBIGUOUS with BlockTable
+  ItemName
+    OptBlockDereference       -> BlockItem             {cons("BlockItem"), reject} %% AMBIGUOUS with BlockTable
 
   TableName
     BlockDereference          -> BlockTable            {cons("BlockTable")}
-%%  OptBlockDereference       -> BlockTable                                      %% Optional makes AMBIGUOUS with Name
+%%  OptBlockDereference       -> BlockTable                                        %% Optional makes AMBIGUOUS with Name
 
-%%TableItemName
-%%  OptSubscript
-%%  OptBlockDereference       -> BlockTableItem        {cons("BlockTableItem")}  %% AMBIGUOUS with TableItem
+  TableItemName
+    OptSubscript
+    OptBlockDereference       -> BlockTableItem        {cons("BlockTableItem"), reject} %% AMBIGUOUS with TableItem
 
   TableName
     Subscript
@@ -1852,13 +1869,13 @@ context-free syntax
 
 %% 6.2 NAMED CONSTANTS
 %%
-  ConstantItemName            -> NamedConstant
-  ConstantTableName           -> NamedConstant
+  ConstantItemName            -> NamedConstant         {prefer}  %% ambiguous with ConstantTableName
+  ConstantTableName           -> NamedConstant         {cons("ConstantTableName")}
   ConstantTableItemName
-    OptSubscript              -> NamedConstant         {cons("NamedConstant")}
+    OptSubscript              -> NamedConstant         {cons("NamedConstant"), reject} %% AMBIGUOUS with IntegerTerm
   ConstantTableName
     Subscript                 -> NamedConstant         {cons("NamedConstant")}
-  ControlLetter               -> NamedConstant
+  ControlLetter               -> NamedConstant         {cons("ControlLetter")}
 
   TableItemName               -> ConstantTableItemName
 
@@ -1870,8 +1887,8 @@ context-free syntax
   IntrinsicFunctionCall       -> FunctionCall
   MachineSpecificFunctionCall -> FunctionCall
 
-  FunctionName
-    OptActualParameterList    -> UserDefinedFunctionCall      {cons("UserDefinedFunctionCall")}
+  FunctionName                                                %% AMBIGUOUS with NamedConstant
+    OptActualParameterList    -> UserDefinedFunctionCall      {cons("UserDefinedFunctionCall"), reject}
 
   LocFunction                 -> IntrinsicFunctionCall
   NextFunction                -> IntrinsicFunctionCall
@@ -1886,8 +1903,8 @@ context-free syntax
   StatusInverseFunction       -> IntrinsicFunctionCall
   NentFunction                -> IntrinsicFunctionCall
 
-  FunctionName
-    OptActualParameterList    -> MachineSpecificFunctionCall  {cons("MachineSpecificFunctionCall")}
+  FunctionName                                                %% AMBIGUOUS with NamedConstant
+    OptActualParameterList    -> MachineSpecificFunctionCall  {cons("MachineSpecificFunctionCall"), reject}
 
 %% 6.3.1 LOC FUNCTION
 %%

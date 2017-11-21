@@ -39,7 +39,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2013_279.C \
    test2013_280.C \
    test2013_281.C \
-   test2013_282.C \
    test2013_283.C \
    test2013_284.C \
    test2013_285.C \
@@ -132,7 +131,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_96.C \
    test2014_97.C \
    test2014_98.C \
-   test2014_99.C \
    test2014_100.C \
    test2014_101.C \
    test2014_102.C \
@@ -144,9 +142,7 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_115.C \
    test2014_116.C \
    test2014_117.C \
-   test2014_118.C \
    test2014_119.C \
-   test2014_120.C \
    test2014_121.C \
    test2014_122.C \
    test2014_123.C \
@@ -182,7 +178,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_154.C \
    test2014_155.C \
    test2014_156.C \
-   test2014_157.C \
    test2014_160.C \
    test2014_161.C \
    test2014_162.C \
@@ -292,8 +287,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2015_79.C \
    test2015_80.C \
    test2015_97.C \
-   lulesh.C \
-   luleshTALC.C \
    Area-01.C \
    $(NEW_TESTCODES)
 
@@ -418,7 +411,73 @@ NEW_TESTCODES = \
    test2017_04.C \
    test2017_09.C \
    test2017_10.C \
-   test2017_11.C
+   test2017_11.C \
+   $(NEW_2017_TESTS)
+
+NEW_2017_TESTS = \
+   test2017_13.C \
+   test2017_14.C \
+   test2017_15.C \
+   test2017_16.C \
+   test2017_17.C \
+   test2017_18.C \
+   test2017_19.C \
+   test2017_21.C \
+   test2017_22.C \
+   test2017_23.C \
+   test2017_25.C \
+   test2017_26.C \
+   test2017_27.C \
+   test2017_28.C \
+   test2017_30.C \
+   test2017_35.C \
+   test2017_36.C \
+   test2017_37.C \
+   test2017_38.C \
+   test2017_39.C \
+   test2017_40.C \
+   test2017_41.C \
+   test2017_42.C \
+   test2017_43.C \
+   test2017_45.C \
+   test2017_48.C \
+   test2017_49.C \
+   test2017_50.C \
+   test2017_51.C \
+   test2017_52.C \
+   test2017_53.C \
+   test2017_54.C \
+   test2017_55.C \
+   test2017_56.C \
+   test2017_57.C \
+   test2017_58.C 
+
+if !ROSE_USE_EDG_VERSION_4_9
+# DQ (11/15/2017): I think this should be "+=" instead of "=".
+# NEW_2017_TESTS = 
+NEW_2017_TESTS += \
+   test2017_12.C 
+
+# DQ (11/16/2017): These are not portabile to the Intel v16 compiler).
+#   test2017_33.C 
+#   test2017_34.C 
+endif
+
+if ROSE_USING_GCC_VERSION_LATER_4_4
+# DQ (11/15/2017): These tests fail for GNU 4.2 compiler.
+NEW_2017_TESTS += \
+   test2017_31.C \
+   test2017_32.C \
+   test2017_44.C \
+   test2017_46.C \
+   test2017_47.C 
+endif
+
+STILL_FAILING = \
+   test2017_20.C \
+   test2017_24.C \
+   test2017_29.C \
+   non_existing_test_to_close_automake_list.C 
 
 # DQ (1/29/2017): This appers to fail for Boost 1.57
 if !ROSE_USING_BOOST_VERSION_1_57
@@ -431,23 +490,12 @@ endif
 if !USING_CLANG_COMPILER
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_71.C \
-   test2014_76.C \
-   test2014_110.C \
    test2014_111.C \
    test2015_70.C \
    test2015_81.C 
 
 NEW_TESTCODES += \
-   test2015_115.C \
-   test2015_116.C \
-   test2015_148.C \
-   test2015_30.C \
-   test2016_16.C \
-   test2016_17.C \
-   test2016_18.C \
-   test2016_15.C \
-   test2016_82.C \
-   test2016_89.C 
+   test2016_82.C 
 endif
 
 # DQ (11/21/2016): This test code does not work on older versions of GNU g++.
@@ -620,18 +668,43 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_159.C \
    test2014_211.C 
 
+# DQ (11/16/2017): Tests test2014_76, test2014_110.C, test2015_30.C, test2015_115.C, test2015_116.C, 
+# test2015_148.C, test2016_16.C, test2016_17.C, test2016_18.C, test2016_15.C, and test2016_89.C; all
+# were previously not passing for CLANG, but now also fail for the Intel compiler, at least V16).
 # DQ (2/21/2017): CLANG compiler requires more builtin functions to be defined.
 # DQ (1/16/2017): These test codes include not portable macros and references to header files that are a problem for Clang.
 if !USING_CLANG_COMPILER
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2013_304.C \
-   test2014_81.C \
+   test2014_81.C  \
    test2014_236.C \
    test2014_238.C \
-   test2015_55.C \
-   test2016_20.C 
+   test2015_55.C  \
+   test2016_20.C  
 endif
 endif
+
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+   test2014_76.C  \
+   test2014_110.C \
+   test2015_30.C  \
+   test2015_115.C \
+   test2015_116.C \
+   test2015_148.C \
+   test2016_16.C \
+   test2016_17.C \
+   test2016_18.C \
+   test2016_15.C \
+   test2016_89.C 
+
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+   lulesh.C \
+   luleshTALC.C \
+   test2013_282.C \
+   test2014_99.C \
+   test2014_118.C \
+   test2014_120.C \
+   test2014_157.C 
 
 # These should not be tested with the EDG 4.7 frontend (pass only in ROSE with the EDG 4.9 frontend).
 # I thnk this has much less to do with Intel compiler being used.
@@ -1497,6 +1570,7 @@ test2013_09.C.passed: $(TEST_TRANSLATOR)
 	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(top_builddir) $(APP_INCLUDES) -c $(srcdir)/$(@:.C.passed=.C)" $(top_srcdir)/scripts/test_exit_status $@
 else
 test2013_09.C.passed: $(TEST_TRANSLATOR)
+	echo "Skip this test code on Intel compiler because it includes something that Intel considers a C++11 feature!"
 endif
 
 cpp_test2010_07: $(TEST_TRANSLATOR)

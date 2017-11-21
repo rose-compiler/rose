@@ -256,10 +256,25 @@ if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
 #   ROSE_EXPERIMENTAL_OFP_LIBS    = 
 endif
 
+# DQ (5/9/2017): Adding Ada library support.
+if ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
+# ROSE_ADA_INCLUDES = -I$(ada_path)/include_xxx
+  ROSE_ADA_INCLUDES = -I$(ada_path)/include_xxx
+  ROSE_ADA_LIBS = -ldot_asis
+  ROSE_ADA_LIBS_WITH_PATH = /home/quinlan1/ROSE/ADA/dot_asis/dot_asis_library/lib/libdot_asis.so
+endif
+
+# RASMUSSEN (10/24/2017): Adding the GnuCOBOL parse-tree library support.
+if ROSE_EXPERIMENTAL_COBOL_ROSE_CONNECTION
+  ROSE_COBOL_PT_LIBS_WITH_PATH = -L$(COBPT_LIBRARY_PATH) -lcob -lcobpt
+endif
+
 # DQ (1/9/2010): Added use of libimf with libm (the two go together when using Intel icc and icpc)
 if USING_INTEL_COMPILER
 #  ROSE_INTEL_COMPILER_MATH_LIBS = -limf -lm
-ROSE_INTEL_COMPILER_MATH_LIBS =
+# DQ (11/16/2017): We need to link in these Intel specific required libraries to avoid: error hidden symbol `__intel_cpu_features_init_x'
+# ROSE_INTEL_COMPILER_MATH_LIBS =
+ROSE_INTEL_COMPILER_MATH_LIBS = -limf -lirng -lintlc -lsvml
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 #    ROSE_INTEL_COMPILER_MATH_LIBS += -limf
 endif
@@ -307,6 +322,7 @@ ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      -I$(top_srcdir)/src/backend/unparser/PHPCodeGeneration \
      -I$(top_srcdir)/src/backend/unparser/PythonCodeGeneration \
      -I$(top_srcdir)/src/backend/unparser/X10CodeGeneration \
+     -I$(top_srcdir)/src/backend/unparser/AdaCodeGeneration \
      -I$(top_srcdir)/src/backend/asmUnparser \
      -I$(top_srcdir)/src/util \
      -I$(top_srcdir)/src/util/support \
@@ -366,6 +382,7 @@ ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      -I$(top_srcdir)/src/backend/unparser/PHPCodeGeneration \
      -I$(top_srcdir)/src/backend/unparser/PythonCodeGeneration \
      -I$(top_srcdir)/src/backend/unparser/X10CodeGeneration \
+     -I$(top_srcdir)/src/backend/unparser/AdaCodeGeneration \
      -I$(top_srcdir)/src/backend/asmUnparser \
      -I$(top_srcdir)/src/util \
      -I$(top_srcdir)/src/util/support \
@@ -459,6 +476,10 @@ ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      $(INTEL_PIN_INCLUDE_PATHS) \
      $(ROSE_ETHER_INCLUDE) \
      $(ROSE_ATERM_INCLUDE) \
+     $(ROSE_CSHARP_INCLUDES) \
+     $(ROSE_ADA_INCLUDES) \
+     $(ROSE_JOVIAL_INCLUDES) \
+     $(ROSE_COBOL_INCLUDES) \
      $(BOOST_CPPFLAGS)
 endif
 
@@ -521,7 +542,8 @@ ROSE_LIBS = $(abspath $(top_builddir)/src/librose.la) -lm  $(JAVA_JVM_LINK) \
   $(ROSE_GUI_LIBS_WITH_PATH) $(ROSE_QT_LIBS_WITH_PATH) $(ROSE_SSL_LIBS) $(ROSE_ETHER_LIBS) \
   $(ROSE_INTEL_COMPILER_MATH_LIBS) $(ROSE_ATERM_LIBS) $(ROSE_EXPERIMENTAL_OFP_LIBS) \
   $(ROSE_YAML_LIBS_WITH_PATH) $(ROSE_LIBMAGIC_LIBS_WITH_PATH) $(ROSE_READLINE_LIBS_WITH_PATH) \
-  $(ROSE_DLIB_LIBS_WITH_PATH) $(ROSE_GCRYPT_LIBS_WITH_PATH) $(ROSE_LIBPQXX_LIBS_WITH_PATH)
+  $(ROSE_DLIB_LIBS_WITH_PATH) $(ROSE_GCRYPT_LIBS_WITH_PATH) $(ROSE_LIBPQXX_LIBS_WITH_PATH) \
+  $(ROSE_ADA_LIBS_WITH_PATH) $(ROSE_COBOL_PT_LIBS_WITH_PATH)
 
 #========================================================================================================================
 # These are the "-R directory" switches that need to be passed to libtool running in link mode to make sure that ROSE

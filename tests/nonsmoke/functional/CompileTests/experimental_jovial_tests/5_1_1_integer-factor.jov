@@ -1,0 +1,8 @@
+START
+PROGRAM integerfactor ;
+  BEGIN
+    ivar = 13 ;
+    ivar = 2 ** 2 ;
+    ivar = 1 ** 2 ** 3 ;
+  END
+TERM

@@ -192,7 +192,7 @@ ATtoUntypedTraversal::ATtoUntypedTraversal(SgSourceFile* source)
    SgUntypedDeclarationStatementList* sg_decls = new SgUntypedDeclarationStatementList();
    SgUntypedStatementList*            sg_stmts = new SgUntypedStatementList();
    SgUntypedFunctionDeclarationList*  sg_funcs = new SgUntypedFunctionDeclarationList();
-   SgUntypedGlobalScope*          global_scope = new SgUntypedGlobalScope("",SgToken::FORTRAN_UNKNOWN,sg_decls,sg_stmts,sg_funcs);
+   SgUntypedGlobalScope*          global_scope = new SgUntypedGlobalScope("",sg_decls,sg_stmts,sg_funcs);
 
    pSourceFile = source;
    ROSE_ASSERT(pSourceFile != NULL);
@@ -1136,7 +1136,6 @@ ATbool ATtoUntypedTraversal::traverse_Operator(ATerm term, SgUntypedExpression**
 
    ATerm term1, term2;
 
-   SgToken::ROSE_Fortran_Keywords stmt_enum = SgToken::FORTRAN_UNKNOWN;
    SgToken::ROSE_Fortran_Operators  op_enum;
    std::string op_name;
    SgUntypedExpression* lhs;
@@ -1197,7 +1196,7 @@ ATbool ATtoUntypedTraversal::traverse_Operator(ATerm term, SgUntypedExpression**
       // MATCHED Expression
    } else return ATfalse;
 
-   *var_expr = new SgUntypedBinaryOperator(stmt_enum,op_enum,op_name,lhs,rhs);
+   *var_expr = new SgUntypedBinaryOperator(op_enum,op_name,lhs,rhs);
    setSourcePosition(*var_expr, term);
 
   return ATtrue;
@@ -1269,7 +1268,7 @@ ATbool ATtoUntypedTraversal::traverse_TypeDeclarationStmt(ATerm term, SgUntypedD
 
    std::cerr << "...TODO... fully implement AttrSpecList in TypeDeclarationStmt" << std::endl;
 
-   variable_decl = new SgUntypedVariableDeclaration(label, SgToken::FORTRAN_TYPE, declared_type, attr_list, var_name_list);
+   variable_decl = new SgUntypedVariableDeclaration(label, declared_type, attr_list, var_name_list);
    setSourcePositionExcludingTerm(variable_decl, term, term_eos);
 
    decl_list->get_decl_list().push_back(variable_decl);
@@ -1539,7 +1538,7 @@ ATbool ATtoUntypedTraversal::traverse_ImplicitStmt(ATerm term, SgUntypedDeclarat
          // MATCHED eos string
       } else return ATfalse;
 
-      implicit_decl = new SgUntypedImplicitDeclaration(label, SgToken::FORTRAN_IMPLICIT_NONE);
+      implicit_decl = new SgUntypedImplicitDeclaration(label);
       setSourcePosition(implicit_decl, term);
    }
 
@@ -1738,8 +1737,6 @@ ATbool ATtoUntypedTraversal::traverse_AssignmentStmt(ATerm term, SgUntypedStatem
    SgUntypedExpression* variable;
    SgUntypedExpression* expr;
 
-   SgToken::ROSE_Fortran_Keywords keyword = SgToken::FORTRAN_ASSIGN;
-
    if (ATmatch(term, "AssignmentStmt(<term>,<term>,<term>,<term>)", &term1,&term2,&term3,&term_eos)) {
       if (traverse_OptLabel(term1, label)) {
          // MATCHED OptLabel
@@ -1756,7 +1753,7 @@ ATbool ATtoUntypedTraversal::traverse_AssignmentStmt(ATerm term, SgUntypedStatem
    }
    else return ATfalse;
 
-   SgUntypedAssignmentStatement* assign_stmt = new SgUntypedAssignmentStatement(label,keyword,variable,expr);
+   SgUntypedAssignmentStatement* assign_stmt = new SgUntypedAssignmentStatement(label,variable,expr);
    setSourcePosition(assign_stmt, term);
 
    stmt_list->get_stmt_list().push_back(assign_stmt);
@@ -1908,8 +1905,6 @@ ATbool ATtoUntypedTraversal::traverse_MainProgram(ATerm term, SgUntypedScope* sc
    SgUntypedNamedStatement* end_program_stmt;
    SgUntypedFunctionScope * function_scope;
 
-   SgToken::ROSE_Fortran_Keywords keyword = SgToken::FORTRAN_PROGRAM;
-
 // scope and parameter lists
    SgUntypedDeclarationStatementList* decl_list;
    SgUntypedStatementList*            stmt_list;
@@ -1941,7 +1936,7 @@ ATbool ATtoUntypedTraversal::traverse_MainProgram(ATerm term, SgUntypedScope* sc
 
       label = program_stmt->get_label_string();
       name  = program_stmt->get_statement_name();
-      function_scope = new SgUntypedFunctionScope(label,keyword,decl_list,stmt_list,func_list);
+      function_scope = new SgUntypedFunctionScope(label,decl_list,stmt_list,func_list);
 
       if (traverse_OptInternalSubprogramPart(term4, &contains_stmt, function_scope)) {
          // OptInternalSubprogramPart
@@ -1965,7 +1960,7 @@ ATbool ATtoUntypedTraversal::traverse_MainProgram(ATerm term, SgUntypedScope* sc
 #endif
 
 // create the program
-   main_program   = new SgUntypedProgramHeaderDeclaration(label, keyword, name, param_list,type,
+   main_program   = new SgUntypedProgramHeaderDeclaration(label, name, param_list,type,
                                                           function_scope, prefix_list, end_program_stmt);
 
    setSourcePositionIncludingNode(main_program, term, end_program_stmt);
@@ -2079,8 +2074,6 @@ ATbool ATtoUntypedTraversal::traverse_Module(ATerm term, SgUntypedScope* scope)
    SgUntypedStatementList*            stmt_list;
    SgUntypedFunctionDeclarationList*  func_list;
 
-   SgToken::ROSE_Fortran_Keywords keyword = SgToken::FORTRAN_MODULE;
-
    if (ATmatch(term, "Module(<term>,<term>,<term>,<term>)", &term1,&term2,&term3,&term4))
    {
       if (traverse_ModuleStmt(term1, &module_stmt)) {
@@ -2093,7 +2086,7 @@ ATbool ATtoUntypedTraversal::traverse_Module(ATerm term, SgUntypedScope* scope)
 
       label = module_stmt->get_label_string();
       name  = module_stmt->get_statement_name();
-      module_scope = new SgUntypedModuleScope(label,keyword,decl_list,stmt_list,func_list);
+      module_scope = new SgUntypedModuleScope(label,decl_list,stmt_list,func_list);
 
       if (traverse_SpecificationPart(term2, decl_list)) {
          // MATCHED SpecificationPart
@@ -2109,7 +2102,7 @@ ATbool ATtoUntypedTraversal::traverse_Module(ATerm term, SgUntypedScope* scope)
       } else return ATfalse;
    } else return ATfalse;
 
-   module = new SgUntypedModuleDeclaration(label,keyword,name,module_scope,end_module_stmt);
+   module = new SgUntypedModuleDeclaration(label,name,module_scope,end_module_stmt);
 
    setSourcePositionIncludingNode(module, term, end_module_stmt);
    setSourcePositionIncludingNode(module->get_scope(), term2, end_module_stmt);
@@ -2260,7 +2253,6 @@ ATbool ATtoUntypedTraversal::traverse_UseStmt(ATerm term, SgUntypedDeclarationSt
    std::string label, name, eos;
    SgUntypedTokenPairList* rename_or_only_list;
    SgToken::ROSE_Fortran_Keywords module_nature;
-   SgToken::ROSE_Fortran_Keywords keyword = SgToken::FORTRAN_USE;
 
    bool isOnlyList;
 
@@ -2298,7 +2290,7 @@ ATbool ATtoUntypedTraversal::traverse_UseStmt(ATerm term, SgUntypedDeclarationSt
 
   std::cout << "--- rename_or_only_list length is " <<  rename_or_only_list->get_token_pair_list().size() << std::endl;
 
-  SgUntypedUseStatement* use_stmt = new SgUntypedUseStatement(label,keyword,name,module_nature,rename_or_only_list,isOnlyList);
+  SgUntypedUseStatement* use_stmt = new SgUntypedUseStatement(label,name,module_nature,rename_or_only_list,isOnlyList);
   setSourcePositionExcludingTerm(use_stmt, term, eos_term);
 
   decl_list->get_decl_list().push_back(use_stmt);
@@ -2477,8 +2469,6 @@ ATbool ATtoUntypedTraversal::traverse_Submodule(ATerm term, SgUntypedScope* scop
    SgUntypedStatementList*            stmt_list;
    SgUntypedFunctionDeclarationList*  func_list;
 
-   SgToken::ROSE_Fortran_Keywords keyword = SgToken::FORTRAN_SUBMODULE;
-
    if (ATmatch(term, "Submodule(<term>,<term>,<term>,<term>)", &term1,&term2,&term3,&term4))
    {
       if (traverse_SubmoduleStmt(term1, &submodule_stmt, ancestor, parent)) {
@@ -2491,7 +2481,7 @@ ATbool ATtoUntypedTraversal::traverse_Submodule(ATerm term, SgUntypedScope* scop
 
       label = submodule_stmt->get_label_string();
       name  = submodule_stmt->get_statement_name();
-      submodule_scope = new SgUntypedModuleScope(label,keyword,decl_list,stmt_list,func_list);
+      submodule_scope = new SgUntypedModuleScope(label,decl_list,stmt_list,func_list);
 
       if (traverse_SpecificationPart(term2, decl_list)) {
          // MATCHED SpecificationPart
@@ -2507,7 +2497,7 @@ ATbool ATtoUntypedTraversal::traverse_Submodule(ATerm term, SgUntypedScope* scop
       } else return ATfalse;
    } else return ATfalse;
 
-   submodule = new SgUntypedSubmoduleDeclaration(label,keyword,name,ancestor,parent,
+   submodule = new SgUntypedSubmoduleDeclaration(label,name,ancestor,parent,
                                                  submodule_scope,end_submodule_stmt);
 
    setSourcePositionIncludingNode(submodule, term, end_submodule_stmt);
@@ -2644,8 +2634,6 @@ ATbool ATtoUntypedTraversal::traverse_BlockData(ATerm term, SgUntypedScope* scop
    SgUntypedStatementList*            stmt_list;
    SgUntypedFunctionDeclarationList*  func_list;
 
-   SgToken::ROSE_Fortran_Keywords keyword = SgToken::FORTRAN_BLOCK_DATA;
-
    if (ATmatch(term, "BlockData(<term>,<term>,<term>)", &term1,&term2,&term3))
    {
       if (traverse_BlockDataStmt(term1, &block_data_stmt)) {
@@ -2662,7 +2650,7 @@ ATbool ATtoUntypedTraversal::traverse_BlockData(ATerm term, SgUntypedScope* scop
 
       label = block_data_stmt->get_label_string();
       name  = block_data_stmt->get_statement_name();
-      block_data_scope = new SgUntypedModuleScope(label,keyword,decl_list,stmt_list,func_list);
+      block_data_scope = new SgUntypedModuleScope(label,decl_list,stmt_list,func_list);
 
       if (traverse_SpecificationPart(term2, decl_list)) {
          // MATCHED SpecificationPart
@@ -2673,7 +2661,7 @@ ATbool ATtoUntypedTraversal::traverse_BlockData(ATerm term, SgUntypedScope* scop
       } else return ATfalse;
    } else return ATfalse;
 
-   block_data = new SgUntypedModuleDeclaration(label,keyword,name,block_data_scope,end_block_data_stmt);
+   block_data = new SgUntypedModuleDeclaration(label,name,block_data_scope,end_block_data_stmt);
 
    setSourcePositionIncludingNode(block_data, term, end_block_data_stmt);
    setSourcePositionIncludingNode(block_data->get_scope(), term2, end_block_data_stmt);
@@ -2850,12 +2838,12 @@ ATbool ATtoUntypedTraversal::traverse_InterfaceStmt(ATerm term, SgUntypedInterfa
    ATerm term1, term2, eos_term;
    std::string label, name, eos;
 
-   SgToken::ROSE_Fortran_Keywords keyword;
+   SgToken::ROSE_Fortran_Keywords interface_type;
    SgUntypedToken* generic_spec = NULL;
 
    if (ATmatch(term, "InterfaceStmt(<term>,<term>)", &term1, &term2, &eos_term))
    {
-      keyword = SgToken::FORTRAN_INTERFACE;
+      interface_type = SgToken::FORTRAN_INTERFACE;
 
       if (traverse_OptLabel(term1, label)) {
          //MATCHED OptLabel
@@ -2869,7 +2857,7 @@ ATbool ATtoUntypedTraversal::traverse_InterfaceStmt(ATerm term, SgUntypedInterfa
    }
    else if (ATmatch(term, "AbstractInterfaceStmt(<term>,<term>)", &term1, &eos_term))
    {
-      keyword = SgToken::FORTRAN_ABSTRACT_INTERFACE;
+      interface_type = SgToken::FORTRAN_ABSTRACT_INTERFACE;
 
       if (traverse_OptLabel(term1, label)) {
          //MATCHED OptLabel
@@ -2891,10 +2879,10 @@ ATbool ATtoUntypedTraversal::traverse_InterfaceStmt(ATerm term, SgUntypedInterfa
    SgUntypedInitializedNameList*     param_list = new SgUntypedInitializedNameList();
    SgUntypedTokenList*              prefix_list = new SgUntypedTokenList();
 
-   SgUntypedFunctionScope* interface_scope = new SgUntypedFunctionScope(label,keyword,decl_list,stmt_list,func_list);
+   SgUntypedFunctionScope* interface_scope = new SgUntypedFunctionScope(label,decl_list,stmt_list,func_list);
 
-   *interface_decl = new SgUntypedInterfaceDeclaration(label, keyword, name, param_list, buildType(SgUntypedType::e_unknown),
-                                                       interface_scope, prefix_list, NULL);
+   *interface_decl = new SgUntypedInterfaceDeclaration(label, name, param_list, buildType(SgUntypedType::e_unknown),
+                                                       interface_scope, prefix_list, NULL, interface_type);
 
 // Source positions can only be set once end-interface-stmt is matched
 
@@ -3208,8 +3196,6 @@ ATbool ATtoUntypedTraversal::traverse_FunctionSubprogram(ATerm term, SgUntypedSc
    SgUntypedInitializedNameList*     param_list;
    SgUntypedTokenList*              prefix_list;
 
-   SgToken::ROSE_Fortran_Keywords keyword = SgToken::FORTRAN_FUNCTION;
-
    if (ATmatch(term, "FunctionSubprogram(<term>,<term>,<term>,<term>,<term>)", &term1,&term2,&term3,&term4,&term5,&term6))
    {
       ATerm label_term, prefix_term, name_term, arglist_term, suffix_term, eos_term;
@@ -3263,7 +3249,7 @@ ATbool ATtoUntypedTraversal::traverse_FunctionSubprogram(ATerm term, SgUntypedSc
          setSourcePosition(stmt_list, term3);
       } else return ATfalse;
 
-      function_scope = new SgUntypedFunctionScope(label,keyword,decl_list,stmt_list,func_list);
+      function_scope = new SgUntypedFunctionScope(label,decl_list,stmt_list,func_list);
 
       if (traverse_OptInternalSubprogramPart(term4, &contains_stmt, function_scope)) {
          // OptInternalSubprogramPart
@@ -3283,7 +3269,7 @@ ATbool ATtoUntypedTraversal::traverse_FunctionSubprogram(ATerm term, SgUntypedSc
    }
 
 // create the function
-   function = new SgUntypedFunctionDeclaration(label, keyword, name, param_list, function_type,
+   function = new SgUntypedFunctionDeclaration(label, name, param_list, function_type,
                                                function_scope, prefix_list, end_function_stmt);
    setSourcePositionIncludingNode(function, term, end_function_stmt);
    setSourcePositionIncludingNode(function_scope, term2, end_function_stmt);
@@ -3392,8 +3378,6 @@ ATbool ATtoUntypedTraversal::traverse_SubroutineSubprogram(ATerm term, SgUntyped
    SgUntypedInitializedNameList*     param_list;
    SgUntypedTokenList*              prefix_list;
 
-   SgToken::ROSE_Fortran_Keywords keyword = SgToken::FORTRAN_SUBROUTINE;
-
    if (ATmatch(term, "SubroutineSubprogram(<term>,<term>,<term>,<term>,<term>)", &term1,&term2,&term3,&term4,&term5))
    {
       ATerm label_term, prefix_term, name_term, arglist_term, binding_term, eos_term;
@@ -3446,7 +3430,7 @@ ATbool ATtoUntypedTraversal::traverse_SubroutineSubprogram(ATerm term, SgUntyped
          setSourcePosition(stmt_list, term3);
       } else return ATfalse;
 
-      function_scope = new SgUntypedFunctionScope(label,keyword,decl_list,stmt_list,func_list);
+      function_scope = new SgUntypedFunctionScope(label,decl_list,stmt_list,func_list);
 
       if (traverse_OptInternalSubprogramPart(term4, &contains_stmt, function_scope)) {
          // OptInternalSubprogramPart
@@ -3462,7 +3446,7 @@ ATbool ATtoUntypedTraversal::traverse_SubroutineSubprogram(ATerm term, SgUntyped
    SgUntypedType* type = buildType(SgUntypedType::e_void);
 
 // create the subroutine
-   subroutine = new SgUntypedSubroutineDeclaration(label, keyword, name, param_list, type,
+   subroutine = new SgUntypedSubroutineDeclaration(label, name, param_list, type,
                                                    function_scope, prefix_list, end_subroutine_stmt);
    setSourcePositionIncludingNode(subroutine, term, end_subroutine_stmt);
    setSourcePositionIncludingNode(function_scope, term2, end_subroutine_stmt);
@@ -3563,8 +3547,6 @@ ATbool ATtoUntypedTraversal::traverse_SeparateModuleSubprogram(ATerm term, SgUnt
    SgUntypedInitializedNameList*     param_list;
    SgUntypedTokenList*              prefix_list;
 
-   SgToken::ROSE_Fortran_Keywords keyword = SgToken::FORTRAN_MODULE_PROC;
-
    if (ATmatch(term, "SeparateModuleSubprogram(<term>,<term>,<term>,<term>,<term>)", &term1,&term2,&term3,&term4,&term5))
    {
       if (traverse_MpSubprogramStmt(term1, &mp_subprogram_stmt)) {
@@ -3589,7 +3571,7 @@ ATbool ATtoUntypedTraversal::traverse_SeparateModuleSubprogram(ATerm term, SgUnt
 
       label = mp_subprogram_stmt->get_label_string();
       name  = mp_subprogram_stmt->get_statement_name();
-      function_scope = new SgUntypedFunctionScope(label,keyword,decl_list,stmt_list,func_list);
+      function_scope = new SgUntypedFunctionScope(label,decl_list,stmt_list,func_list);
 
       if (traverse_OptInternalSubprogramPart(term4, &contains_stmt, function_scope)) {
          // OptInternalSubprogramPart
@@ -3607,7 +3589,7 @@ ATbool ATtoUntypedTraversal::traverse_SeparateModuleSubprogram(ATerm term, SgUnt
    SgUntypedType* type = buildType(SgUntypedType::e_void);
 
 // create the subroutine
-   mp_subprogram = new SgUntypedSubroutineDeclaration(label, keyword, name, param_list, type,
+   mp_subprogram = new SgUntypedSubroutineDeclaration(label, name, param_list, type,
                                                       function_scope, prefix_list, end_mp_subprogram_stmt);
    setSourcePositionIncludingNode(mp_subprogram, term, end_mp_subprogram_stmt);
 

@@ -199,6 +199,12 @@ namespace CommandlineProcessing
 
           ROSE_UTIL_API bool isPythonFileNameSuffix ( const std::string & suffix );
 
+       // DQ (28/8/2017): Adding language support.
+          ROSE_UTIL_API bool isCsharpFileNameSuffix ( const std::string & suffix );
+          ROSE_UTIL_API bool isAdaFileNameSuffix    ( const std::string & suffix );
+          ROSE_UTIL_API bool isJovialFileNameSuffix ( const std::string & suffix );
+          ROSE_UTIL_API bool isCobolFileNameSuffix  ( const std::string & suffix );
+
        // TV (05/17/2010) Support for CUDA
           ROSE_UTIL_API bool isCudaFileNameSuffix ( const std::string & suffix );
        // TV (05/17/2010) Support for OpenCL

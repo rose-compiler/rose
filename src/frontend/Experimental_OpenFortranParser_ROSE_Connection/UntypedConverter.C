@@ -1138,7 +1138,7 @@ UntypedConverter::convertSgUntypedExpression(SgUntypedExpression* ut_expr, SgExp
       else if ( isSgUntypedOtherExpression(ut_expr) != NULL )
          {
             SgUntypedOtherExpression* expr = dynamic_cast<SgUntypedOtherExpression*>(ut_expr);
-            if (expr->get_statement_enum() == SgToken::FORTRAN_NULL)
+            if (expr->get_expression_enum() == SgToken::FORTRAN_NULL)
                {
                   sg_expr = new SgNullExpression();
                   setSourcePositionFrom(sg_expr, ut_expr);
@@ -1205,7 +1205,7 @@ UntypedConverter::convertSgUntypedUnaryOperator(SgUntypedUnaryOperator* untyped_
  {
     SgUnaryOp* op = NULL;
 
-    switch(untyped_operator->get_operator_enum())
+    switch(untyped_operator->get_expression_enum())
        {
          case SgToken::FORTRAN_INTRINSIC_NOT:
             {
@@ -1228,7 +1228,7 @@ UntypedConverter::convertSgUntypedBinaryOperator(SgUntypedBinaryOperator* untype
  {
     SgBinaryOp* op = NULL;
 
-    switch(untyped_operator->get_operator_enum())
+    switch(untyped_operator->get_expression_enum())
        {
          case SgToken::FORTRAN_INTRINSIC_PLUS:
             {
