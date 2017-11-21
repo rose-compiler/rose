@@ -4152,22 +4152,57 @@ UnparseLanguageIndependentConstructs::isImplicitArrowExpWithinLambdaFunction(SgE
    {
      bool suppressOutputOfImplicitArrowExp = false;
 
+#if 0
+     printf ("In isImplicitArrowExpWithinLambdaFunction(): expr = %p = %s info.supressImplicitThisOperator = %s \n",expr,expr->class_name().c_str(),info.supressImplicitThisOperator() ? "true" : "false");
+#endif
+
      if (info.supressImplicitThisOperator() == true)
         {
           SgArrowExp* arrowExp = isSgArrowExp(expr);
           if (arrowExp != NULL)
              {
+               SgExpression* lhs = arrowExp->get_lhs_operand();
+               ROSE_ASSERT(lhs != NULL);
 
-                SgExpression* lhs = arrowExp->get_lhs_operand();
-                ROSE_ASSERT(lhs != NULL);
-                SgThisExp* thisExp = isSgThisExp(lhs);
-                if (thisExp != NULL)
-                   {
-                     if (thisExp->get_file_info()->isCompilerGenerated() == true)
-                        {
-                          suppressOutputOfImplicitArrowExp = true;
-                        }
-                   }
+               SgThisExp* thisExp = isSgThisExp(lhs);
+               if (thisExp != NULL)
+                  {
+                    if (thisExp->get_file_info()->isCompilerGenerated() == true)
+                       {
+                         suppressOutputOfImplicitArrowExp = true;
+                       }
+                  }
+
+            // DQ (11/20/2017): Added recursive step for chains of arrow operators (see C++11 test2017_29.C).
+               SgArrowExp* nested_arrowExp = isSgArrowExp(lhs);
+               if (nested_arrowExp != NULL)
+                  {
+#if 0
+                    printf ("In isImplicitArrowExpWithinLambdaFunction(): detected nested arrow expression: nested_arrowExp = %p = %s \n",nested_arrowExp,nested_arrowExp->class_name().c_str());
+#endif
+                    suppressOutputOfImplicitArrowExp = isImplicitArrowExpWithinLambdaFunction(nested_arrowExp,info);
+                  }
+
+            // DQ (11/20/2017): Added recursive step for chains of arrow operators (see C++11 test2017_29.C).
+               SgCastExp* nested_cast = isSgCastExp(lhs);
+               if (nested_cast != NULL)
+                  {
+#if 0
+                    printf ("In isImplicitArrowExpWithinLambdaFunction(): detected nested cast expression: nested_cast = %p = %s \n",nested_cast,nested_cast->class_name().c_str());
+#endif
+                    if (nested_cast->get_file_info()->isCompilerGenerated() == true)
+                       {
+                         ROSE_ASSERT(nested_cast->get_operand() != NULL);
+                         SgArrowExp* nested_arrowExp = isSgArrowExp(nested_cast->get_operand());
+                         if (nested_arrowExp != NULL)
+                            {
+#if 0
+                              printf ("In isImplicitArrowExpWithinLambdaFunction(): detected nested arrow expression behind cast: nested_arrowExp = %p = %s \n",nested_arrowExp,nested_arrowExp->class_name().c_str());
+#endif
+                              suppressOutputOfImplicitArrowExp = isImplicitArrowExpWithinLambdaFunction(nested_arrowExp,info);
+                            }
+                       }
+                  }
              }
         }
 
