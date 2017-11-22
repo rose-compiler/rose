@@ -254,7 +254,9 @@ public:
      *
      *  This is so that the data member can be used as if it were type @c T rather than a MultiInstanceTls object. */
     operator T() {
+#ifdef USE_ROSE // FIXME[Robb Matzke 2017-11-22]: ROSE fails to compile here
         initRepo();
+#endif
         return repo_->insertMaybeDefault(reinterpret_cast<uintptr_t>(this));
     }
 };
