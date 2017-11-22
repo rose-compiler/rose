@@ -1,13 +1,13 @@
 #include "sage3basic.h"
 
-#include "ATtoUntypedTraversal.h"
+#include "ATermToUntypedTraversal.h"
 
-#define PRINT_ATERM_TRAVERSAL 1
+#define PRINT_ATERM_TRAVERSAL 0
 
 
 using namespace ATermSupport;
 
-ATtoUntypedTraversal::ATtoUntypedTraversal(SgSourceFile* source)
+ATermToUntypedTraversal::ATermToUntypedTraversal(SgSourceFile* source)
 {
    SgUntypedDeclarationStatementList* sg_decls = new SgUntypedDeclarationStatementList();
    SgUntypedStatementList*            sg_stmts = new SgUntypedStatementList();
@@ -25,14 +25,14 @@ ATtoUntypedTraversal::ATtoUntypedTraversal(SgSourceFile* source)
 //TODO     SageBuilder::setSourcePositionClassificationMode(SageBuilder::e_sourcePositionCompilerGenerated);
 }
 
-ATtoUntypedTraversal::~ATtoUntypedTraversal()
+ATermToUntypedTraversal::~ATermToUntypedTraversal()
 {
    delete pUntypedFile;
 }
 
 
 void
-ATtoUntypedTraversal::fixupLocation(PosInfo & loc)
+ATermToUntypedTraversal::fixupLocation(PosInfo & loc)
 {
    int end_col = loc.getEndCol();
 
@@ -50,7 +50,7 @@ ATtoUntypedTraversal::fixupLocation(PosInfo & loc)
 }
 
 PosInfo
-ATtoUntypedTraversal::getLocation(ATerm term)
+ATermToUntypedTraversal::getLocation(ATerm term)
 {
    PosInfo pinfo;
 
@@ -71,14 +71,14 @@ ATtoUntypedTraversal::getLocation(ATerm term)
 }
 
 void
-ATtoUntypedTraversal::setSourcePosition( SgLocatedNode* locatedNode, ATerm term )
+ATermToUntypedTraversal::setSourcePosition( SgLocatedNode* locatedNode, ATerm term )
 {
    PosInfo pos = getLocation(term);
    return setSourcePosition(locatedNode, pos);
 }
 
 void
-ATtoUntypedTraversal::setSourcePosition( SgLocatedNode* locatedNode, PosInfo & pos )
+ATermToUntypedTraversal::setSourcePosition( SgLocatedNode* locatedNode, PosInfo & pos )
 {
    ROSE_ASSERT(locatedNode != NULL);
    ROSE_ASSERT(locatedNode->get_startOfConstruct() == NULL);
@@ -101,7 +101,7 @@ ATtoUntypedTraversal::setSourcePosition( SgLocatedNode* locatedNode, PosInfo & p
 }
 
 void
-ATtoUntypedTraversal::setSourcePositionFrom( SgLocatedNode* locatedNode, SgLocatedNode* fromNode )
+ATermToUntypedTraversal::setSourcePositionFrom( SgLocatedNode* locatedNode, SgLocatedNode* fromNode )
 {
    PosInfo pos;
 
@@ -109,6 +109,19 @@ ATtoUntypedTraversal::setSourcePositionFrom( SgLocatedNode* locatedNode, SgLocat
    pos.setStartCol  (fromNode->get_startOfConstruct()-> get_col() );
    pos.setEndLine   (fromNode->get_endOfConstruct()  -> get_line());
    pos.setEndCol    (fromNode->get_endOfConstruct()  -> get_col() );
+
+   return setSourcePosition(locatedNode, pos);
+}
+
+void
+ATermToUntypedTraversal::setSourcePositionFromEndOnly( SgLocatedNode* locatedNode, SgLocatedNode* fromNode )
+{
+   PosInfo pos;
+
+   pos.setStartLine (fromNode->get_endOfConstruct()-> get_line());
+   pos.setStartCol  (fromNode->get_endOfConstruct()-> get_col() );
+   pos.setEndLine   (fromNode->get_endOfConstruct()-> get_line());
+   pos.setEndCol    (fromNode->get_endOfConstruct()-> get_col() );
 
    return setSourcePosition(locatedNode, pos);
 }

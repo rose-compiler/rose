@@ -1,5 +1,5 @@
-#ifndef AT_TO_UNTYPED_TRAVERSAL_H
-#define AT_TO_UNTYPED_TRAVERSAL_H
+#ifndef ATERM_TO_UNTYPED_TRAVERSAL_H
+#define ATERM_TO_UNTYPED_TRAVERSAL_H
 
 #include <aterm2.h>
 
@@ -35,11 +35,11 @@ class PosInfo
    int pEndLine,   pEndCol;    // location (line,col) of last  character (+1 col)
 };
 
-class ATtoUntypedTraversal
+class ATermToUntypedTraversal
 {
  public:
-   ATtoUntypedTraversal(SgSourceFile* source);
-   virtual ~ATtoUntypedTraversal();
+   ATermToUntypedTraversal(SgSourceFile* source);
+   virtual ~ATermToUntypedTraversal();
 
    SgUntypedFile*        get_file()  { return pUntypedFile; }
    SgUntypedGlobalScope* get_scope() { return pUntypedFile->get_scope(); }
@@ -61,8 +61,9 @@ class ATtoUntypedTraversal
    void setSourcePosition              ( SgLocatedNode* locatedNode, ATerm term );
    void setSourcePosition              ( SgLocatedNode* locatedNode, PosInfo & pos );
    void setSourcePositionFrom          ( SgLocatedNode* locatedNode, SgLocatedNode* fromNode );
+   void setSourcePositionFromEndOnly   ( SgLocatedNode* locatedNode, SgLocatedNode* fromNode );
 
-}; // class ATtoUntypedTraversal
+}; // class ATermToUntypedTraversal
 }  // namespace ATermSupport
 
 #endif
