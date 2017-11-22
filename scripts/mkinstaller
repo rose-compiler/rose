@@ -25,8 +25,8 @@ $mkinstaller_ver_minor = "1";
 $mkinstaller_ver_build = "1";
 $mkinstaller_ver_patch = "";
 $mkinstaller_ver_name  = "1.1.1";
-$mkinstaller_ver_time  = "19Nov2017 14:42:13z";
-$mkinstaller_ver_id    = "@(#)mkinstaller 1.1.1 - 19Nov2017 14:42:13z";
+$mkinstaller_ver_time  = "21Nov2017 18:00:55z";
+$mkinstaller_ver_id    = "@(#)mkinstaller 1.1.1 - 21Nov2017 18:00:55z";
 
 @defaultCopyrightOwners
   = ( "Copyright 1985-99,2000-17 James Frederick Reus\n"
@@ -4237,6 +4237,8 @@ EOF40
    #
    #  Cleanup any temporaries.
    #
+   #  Note that it will issue warnings if content isn't all being deleted.
+   #
    #----------------------------------------------------------------------------
 
    sub cleanupTemps {
@@ -4363,291 +4365,350 @@ sub basename {
 # MyUniqueFileId: c74b22fd-6ce7-417f-95b3-89ed86a69cbe
 #-------------------------------------------------------------------------------
 #
-#  This subroutine deletes one or more directories and all of the content. Note
-#  that it is assumed that a directory tree only contains files and/or
-#  directories. An array of pathnames that could not be deleted is returned.
+#  This subroutine deletes one or more directories and all of the content.
+#  Note that it is assumed that a directory tree only contains directories,
+#  files, and/or symbolic-links. An array of pathnames that could not be
+#  deleted is returned.
 #
 #  see: totebag/src/perl-lib/deletePathnames.psub
+#
+#  Note: This function appears to be a lot more complex than neccessary. It
+#        not only requests that given pathnames (and recursive contents) be
+#        removed, it also checks to see that it's all gone (returning any
+#        remaining pathnames). The real problem here is that NFS can get in
+#        the way by inserting temporary .nfsXXX..XXX files. This can prevent
+#        a what should be empty directory from being removed (it doesn't look
+#        empty).
 #
 #-------------------------------------------------------------------------------
 
 sub deletePathnames {
    print STDERR "deletePathnames[ starting...\n" if $debugging;
-   my @failures = ( );
-   my $pathname;
-   foreach $pathname (@_) {
-      print STDERR "deletePathnames: ...working \"".$pathname."\"\n" if $debugging;
-      if ($pathname ne "") {
-         my $ok = 0;
-         if ( -l $pathname) {
-            $ok = 1;
+   my @failures  = ( );
+   my $Nfailures = 0;
+   my $rootPathname;
+   foreach $rootPathname (@_) {
+      print STDERR "deletePathnames: ...working \"".$rootPathname."\"\n" if $debugging;
+      my $oldCount = -1;
+      my $newCount = 0;
+      if ($rootPathname ne "") {
+         #---------------------------------------
+         #
+         #  We first recursivly crawl the directory
+         #  tree forming a list of pathnames that
+         #  appear to exist. The size of this list
+         #  also serves as the initial pathname
+         #  count; we'll be watching the pathname
+         #  count -- looping while it continues
+         #  to shrink or becomes empty
+         #
+         #---------------------------------------
+         print STDERR "deletePathnames{    build initial pathname list\n" if $debugging;
+         my @pathnames  = ();
+         my $rootExists = 0;
+         if ( -l $rootPathname) {
+            $rootExists = 1;
          }
-         elsif ( -e $pathname) {
-            $ok = 1;
+         elsif ( -e $rootPathname) {
+            $rootExists = 1;
          }
-         if ($ok) {
-            print STDERR "deletePathnames{    start accumulating\n" if $debugging;
-            my @nameList    = ();
-            my @typeList    = ();
-            my $i           = 0;
-            my $idx         = $#nameList + 1;
-            $nameList[$idx] = $pathname;
-            $typeList[$idx] = "unknown";
-            print STDERR "deletePathnames:    \"".$nameList[$idx]."\"\n" if $debugging;
-            for ($i=0; $i<=$#nameList; ++$i) {
-               my $theName = $nameList[$i];
-               if ( -l $theName) {
-                  $typeList[$i] = "symbolic-link";
-               }
-               elsif ( -f $theName) {
-                  $typeList[$i] = "file";
-               }
-               elsif ( -d $theName ) {
-                  $typeList[$i] = "directory";
-                  if (opendir(DIR,$theName)) {
-                     while (defined($tmp = readdir(DIR))) {
-                        if (($tmp ne "" ) && ($tmp ne ".") && ($tmp ne "..")) {
-                           my $idx         = $#nameList + 1;
-                           $nameList[$idx] = $theName."/"."$tmp";
-                           $typeList[$idx] = "unknown";
-                           print STDERR "deletePathnames:    \"".$nameList[$idx]."\"\n" if $debugging;
-                        }
-                     }
-                     closedir(DIR);
-                  }
-                  else {
-                     print STDERR $sponsor."can't read directory \"$theName\"\n" if $sponsor;
-                     $result = 0;
-                  }
-               }
-               else {
-                  $typeList[$i] = "other";
-               }
-            }
-            print STDERR "deletePathnames}    done\n" if $debugging;
-            print STDERR "deletePathnames{ ...start removing\n" if $debugging;
-            for ($i=$#nameList; 0<=$i; $i--) {
-               my $pathname = $nameList[$i];
+         if ($rootExists) {
+            my $idx          = $#pathnames + 1;
+            $pathnames[$idx] = $rootPathname;
+            my $i;
+            for ($i=0; $i<=$#pathnames; ++$i) {
+               my $pathname = $pathnames[$i];
                if ( -l $pathname) {
                   print STDERR "deletePathnames:    l \"".$pathname."\"\n" if $debugging;
-                  if ( ! unlink($pathname)) {
-                     print STDERR "deletePathnames:      ...unlink(\"".$pathname."\") failed\n" if $debugging;
-                     print STDERR "deletePathnames:         \"".$!."\"\n" if $debugging;
-                     $failures[$#failures+1] = $pathname;
-                  }
                }
                elsif ( -f $pathname) {
                   print STDERR "deletePathnames:    f \"".$pathname."\"\n" if $debugging;
-                  if ( ! unlink($pathname)) {
-                     print STDERR "deletePathnames:      ...unlink(\"".$pathname."\") failed\n" if $debugging;
-                     print STDERR "deletePathnames:         \"".$!."\"\n" if $debugging;
-                     $failures[$#failures+1] = $pathname;
-                  }
                }
-               elsif ( -d $pathname) {
+               elsif ( -d $pathname ) {
                   print STDERR "deletePathnames:    d \"".$pathname."\"\n" if $debugging;
-                  if (opendir(DIR,$pathname)) {
-                     print STDERR "deletePathnames:      ...scan it\n" if $debugging;
-                     my $kount = 0;
+                  if (! opendir(DIR,$pathname)) {
+                     print STDERR $sponsor."can't read directory \"$pathname\"\n" if $sponsor;
+                     $result = 0;
+                  }
+                  else {
                      while (defined($tmp = readdir(DIR))) {
                         if (($tmp ne "" ) && ($tmp ne ".") && ($tmp ne "..")) {
-                           my $joinPathname = $pathname."/"."$tmp";
-                           if ( -l $joinPathname) {
-                              print STDERR "deletePathnames:          l \"".$joinPathname."\"\n" if $debugging;
-                              $kount += 1;
-                           }
-                           elsif ( -f $joinPathname) {
-                              print STDERR "deletePathnames:          f \"".$joinPathname."\"\n" if $debugging;
-                              $kount += 1;
-                           }
-                           elsif ( -d $joinPathname) {
-                              print STDERR "deletePathnames:          d \"".$joinPathname."\"\n" if $debugging;
-                              $kount += 1;
-                           }
-                           elsif ( -e $joinPathname) {
-                              print STDERR "deletePathnames:          ? \"".$joinPathname."\"\n" if $debugging;
-                              $kount += 1;
-                           }
-                           else {
-                              print STDERR "deletePathnames:          - \"".$joinPathname."\"\n" if $debugging;
-                              $kount += 1;
-                           }
+                           my $idx          = $#pathnames + 1;
+                           $pathnames[$idx] = $pathnames[$i]."/"."$tmp";
+                           print STDERR "deletePathnames:    \"".$pathnames[$idx]."\"\n" if $debugging;
                         }
                      }
                      closedir(DIR);
-                     if ($kount <= 0) {
-                        print STDERR "deletePathnames:      ...looks empty\n" if $debugging;
-                     }
-                     else {
-                        print STDERR "deletePathnames:      ...has content\n" if $debugging;
-                     }
-                  }
-                  if ( ! rmdir($pathname)) {
-                     print STDERR "deletePathnames:      ...rmdir(\"".$pathname."\") failed\n" if $debugging;
-                     print STDERR "deletePathnames:         \"".$!."\"\n" if $debugging;
-                     $failures[$#failures+1] = $pathname;
-                  }
-               }
-               elsif ( -e $pathname) {
-                  print STDERR "deletePathnames:    ? \"".$pathname."\"\n" if $debugging;
-                  if ( ! unlink($pathname)) {
-                     print STDERR "deletePathnames:      ...unlink(\"".$pathname."\") failed\n" if $debugging;
-                     print STDERR "deletePathnames:         \"".$!."\"\n" if $debugging;
-                     $failures[$#failures+1] = $pathname;
                   }
                }
                else {
-                  print STDERR "deletePathnames:    - \"".$pathname."\"\n" if $debugging;
-                  if ( ! unlink($pathname)) {
-                     print STDERR "deletePathnames:      ...unlink(\"".$pathname."\") failed\n" if $debugging;
-                     print STDERR "deletePathnames:         \"".$!."\"\n" if $debugging;
-                     $failures[$#failures+1] = $pathname;
+                  print STDERR "deletePathnames:    ? \"".$pathname."\"\n" if $debugging;
+               }
+            }
+         }
+         print STDERR "deletePathnames}    done\n" if $debugging;
+         $oldCount = $#pathnames + 1;
+         if ($oldCount == 1) {
+            print STDERR "deletePathnames: ...have $oldCount pathname at/under \"".$rootPathname."\"\n" if $debugging;
+         }
+         else {
+            print STDERR "deletePathnames: ...have $oldCount pathnames at/under \"".$rootPathname."\"\n" if $debugging;
+         }
+         if (1 <= $oldCount) {
+            my $cycle = 0;
+            my $done  = 0;
+            while ( ! $done) {
+               my $haveNFS  = 0;
+               $cycle      += 1;
+               #---------------------------------------
+               #
+               #  Use the pathnames list to remove things.
+               #  Once we've gone through the list, we'll
+               #  rebuild the list and check for a change
+               #  in the list size. We'll loop so long as
+               #  the list shrinks or until it becomes
+               #  empty.
+               #
+               #---------------------------------------
+               if (getOSclass() eq "UNIX-like") {
+                  #---------------------------------------
+                  #
+                  #  If this is a UNIX-like" system, try
+                  #  using rm to delete each in the list.
+                  #  Note that this is done in a bottom-up
+                  #  fashion so that directory content is
+                  #  removed before the directory.
+                  #
+                  #---------------------------------------
+                  print STDERR "deletePathnames{ ...a UNIX-like host, try using rm ...\n" if $debugging;
+                  for ($i=$#pathnames; 0<=$i; $i--) {
+                     my $pathname   = $pathnames[$i];
+                     my $stillThere = 0;
+                     if ( -l $pathname) {
+                        $stillThere = 1;
+                     }
+                     elsif ( -e $pathname) {
+                        $stillThere = 1;
+                     }
+                     else {
+                        $stillThere = 0;
+                     }
+                     if ($stillThere) {
+                        my $bn = basename($pathname);
+                        if ($bn =~ /^\.nfs[^\/]*$/) {
+                           $haveNFS = 1;
+                           print STDERR "deletePathnames:    \"".$pathname."\" looks like a .nfs file\n" if $debugging;
+                        }
+                        my $cmd      = "rm -rf \"$pathname\"";
+                        print STDERR "deletePathnames:    run: [$cmd]\n" if $debugging;
+                        my $status   = system "$cmd >/dev/null 2>&1";
+                        if ($status != 0) {
+                           my $code = $status >> 8;
+                           print STDERR "deletePathnames:    ...[$cmd] failed, code $code" if $debugging;
+                           if ($status & 127) {
+                              my $signum = $status & 127;
+                              print STDERR ", signal $signum" if $debugging;
+                           }
+                           if ($status & 127) {
+                              print STDERR ", core dumped" if $debugging;
+                           }
+                           print STDERR "\n" if $debugging;
+                        }
+                     }
                   }
+                  print STDERR "deletePathnames}    done\n" if $debugging;
+               }
+               #---------------------------------------
+               #
+               #  Now we go through the list and use
+               #  Perl rmdir() and/or unlink() functions
+               #  to delete things. Note that this is
+               #  done in a bottom-up fashion so that
+               #  directory content is removed before
+               #  the directory.
+               #
+               #---------------------------------------
+               print STDERR "deletePathnames{ ...removing the Perl way\n" if $debugging;
+               for ($i=$#pathnames; 0<=$i; $i--) {
+                  my $pathname = $pathnames[$i];
+                  my $bn       = basename($pathname);
+                  if ($bn =~ /^\.nfs[^\/]*$/) {
+                     $haveNFS = 1;
+                     print STDERR "deletePathnames:    \"".$pathname."\" looks like a .nfs file\n" if $debugging;
+                  }
+                  if ( -l $pathname) {
+                     print STDERR "deletePathnames:    l \"".$pathname."\"\n" if $debugging;
+                     if ( ! unlink($pathname)) {
+                        print STDERR "deletePathnames:      ...unlink(\"".$pathname."\") failed\n" if $debugging;
+                        print STDERR "deletePathnames:         ".$!."\n" if $debugging;
+                     }
+                  }
+                  elsif ( -d $pathname) {
+                     print STDERR "deletePathnames:    d \"".$pathname."\"\n" if $debugging;
+                     if ( ! rmdir($pathname)) {
+                        print STDERR "deletePathnames:      ...rmdir(\"".$pathname."\") failed\n" if $debugging;
+                        print STDERR "deletePathnames:         ".$!."\n" if $debugging;
+                     }
+                  }
+                  elsif ( -f $pathname) {
+                     print STDERR "deletePathnames:    f \"".$pathname."\"\n" if $debugging;
+                     if ( ! unlink($pathname)) {
+                        print STDERR "deletePathnames:      ...unlink(\"".$pathname."\") failed\n" if $debugging;
+                        print STDERR "deletePathnames:         ".$!."\n" if $debugging;
+                     }
+                  }
+                  elsif ( -e $pathname) {
+                     print STDERR "deletePathnames:    ? \"".$pathname."\"\n" if $debugging;
+                     if ( ! unlink($pathname)) {
+                        print STDERR "deletePathnames:      ...unlink(\"".$pathname."\") failed\n" if $debugging;
+                        print STDERR "deletePathnames:         ".$!."\n" if $debugging;
+                     }
+                  }
+                  else {
+                     print STDERR "deletePathnames:    ! \"".$pathname."\" is gone\n" if $debugging;
+                  }
+               }
+               print STDERR "deletePathnames}    done\n" if $debugging;
+               if (2 <= $cycle) {
+                  if ($haveNFS) {
+                     my $moved = 0;
+                     my $here  = getWorkingDirectory();
+                     if ($here ne "") {
+                        print STDERR "deletePathnames:    cd to \"/\"\n" if $debugging;
+                        if (chdir("/")) {
+                           $moved = 1;
+                        }
+                        else {
+                           print STDERR "deletePathnames:    ...failed\n" if $debugging;
+                        }
+                     }
+                     print STDERR "deletePathnames:    pause for NFS cache\n" if $debugging;
+                     sleep 61;
+                     if ($moved) {
+                        print STDERR "deletePathnames:    cd back to \"$here\"\n" if $debugging;
+                        if ( ! chdir($here)) {
+                           print STDERR "deletePathnames:    ...failed\n" if $debugging;
+                        }
+                     }
+                  }
+               }
+               #---------------------------------------
+               #
+               #  We again recursivly crawl the directory
+               #  tree to rebuild the list of pathnames
+               #  that still appear to exist. We keep
+               #  looping while it continues to shrink.
+               #
+               #---------------------------------------
+               print STDERR "deletePathnames{    rebuild pathname list\n" if $debugging;
+               @pathnames     = ();
+               my $rootExists = 0;
+               if ( -l $rootPathname) {
+                  $rootExists = 1;
+               }
+               elsif ( -e $rootPathname) {
+                  $rootExists = 1;
+               }
+               if ($rootExists) {
+                  my $idx          = $#pathnames + 1;
+                  $pathnames[$idx] = $rootPathname;
+                  my $i;
+                  for ($i=0; $i<=$#pathnames; ++$i) {
+                     my $pathname = $pathnames[$i];
+                     if ( -l $pathname) {
+                        print STDERR "deletePathnames:    l \"".$pathname."\"\n" if $debugging;
+                     }
+                     elsif ( -f $pathname) {
+                        print STDERR "deletePathnames:    f \"".$pathname."\"\n" if $debugging;
+                     }
+                     elsif ( -d $pathname ) {
+                        print STDERR "deletePathnames:    d \"".$pathname."\"\n" if $debugging;
+                        if (! opendir(DIR,$pathname)) {
+                           print STDERR $sponsor."can't read directory \"$pathname\"\n" if $sponsor;
+                           $result = 0;
+                        }
+                        else {
+                           while (defined($tmp = readdir(DIR))) {
+                              if (($tmp ne "" ) && ($tmp ne ".") && ($tmp ne "..")) {
+                                 my $idx          = $#pathnames + 1;
+                                 $pathnames[$idx] = $pathnames[$i]."/"."$tmp";
+                                 print STDERR "deletePathnames:    \"".$pathnames[$idx]."\"\n" if $debugging;
+                              }
+                           }
+                           closedir(DIR);
+                        }
+                     }
+                     else {
+                        print STDERR "deletePathnames:    ? \"".$pathname."\"\n" if $debugging;
+                     }
+                  }
+               }
+               print STDERR "deletePathnames}    done\n" if $debugging;
+               $newCount = $#pathnames + 1;
+               if ($newCount == 1) {
+                  print STDERR "deletePathnames: ...now have $newCount pathname at/under \"".$rootPathname."\"\n" if $debugging;
+               }
+               else {
+                  print STDERR "deletePathnames: ...now have $newCount pathnames at/under \"".$rootPathname."\"\n" if $debugging;
+               }
+               if (($newCount <= 0) || ($oldCount <= $newCount)) {
+                  if ($newCount <= 0) {
+                     print STDERR "deletePathnames:    nothing left to do\n" if $debugging;
+                  }
+                  elsif ($oldCount <= $newCount) {
+                     print STDERR "deletePathnames:    no change\n" if $debugging;
+                  }
+                  $done     = 1;
+               }
+               else {
+                  $oldCount = $newCount;
+                  $newCount = 0;
+                  $done     = 0;
+               }
+            }
+            #---------------------------------------
+            #
+            #  Add any leftovers to the failure list.
+            #  This is the last chance to see if
+            #  something has disappeared.
+            #
+            #---------------------------------------
+            print STDERR "deletePathnames{    form the failure list\n" if $debugging;
+            for ($i=0; $i<=$#pathnames; ++$i) {
+               my $pathname    = $pathnames[$i];
+               my $stillExists = 0;
+               if ( -l $pathname) {
+                  $stillExists = 1;
+                  print STDERR "deletePathnames:    l \"".$pathname."\"\n" if $debugging;
+               }
+               elsif ( -d $pathname) {
+                  $stillExists = 1;
+                  print STDERR "deletePathnames:    d \"".$pathname."\"\n" if $debugging;
+               }
+               elsif ( -f $pathname) {
+                  $stillExists = 1;
+                  print STDERR "deletePathnames:    f \"".$pathname."\"\n" if $debugging;
+               }
+               elsif ( -e $pathname) {
+                  $stillExists = 1;
+                  print STDERR "deletePathnames:    ? \"".$pathname."\"\n" if $debugging;
+               }
+               else {
+                  $stillExists = 0;
+               }
+               if ($stillExists) {
+                  my $idx         = $#failures + 1;
+                  $failures[$idx] = $pathname;
+                  $Nfailures     += 1;
                }
             }
             print STDERR "deletePathnames}    done\n" if $debugging;
          }
-      }
-   }
-   print STDERR "deletePathnames{ ...rechecking\n" if $debugging;
-   my $changed = 1;
-   while ($changed) {
-      $changed = 0;
-      my $i;
-      for ($i=0; $i<=$#failures; $i+=1) {
-         my $pathname = $failures[$i];
-         if ( -l $pathname) {
-            print STDERR "deletePathnames:    l \"".$pathname."\"\n" if $debugging;
-            if ( ! unlink($pathname)) {
-               print STDERR "deletePathnames:      ...unlink(\"".$pathname."\") failed\n" if $debugging;
-               print STDERR "deletePathnames:         \"".$!."\"\n" if $debugging;
-            }
-            else {
-               $changed = 1;
-            }
-         }
-         elsif ( -d $pathname) {
-            print STDERR "deletePathnames:    d \"".$pathname."\"\n" if $debugging;
-            print STDERR "deletePathnames:      ...scan it\n" if $debugging;
-            if (opendir(DIR,$pathname)) {
-               my $kount  = 0;
-               my $hasNFS = 0;
-               while (defined($tmp = readdir(DIR))) {
-                  if (($tmp ne "" ) && ($tmp ne ".") && ($tmp ne "..")) {
-                     my $joinPathname = $pathname."/"."$tmp";
-                     if ($tmp =~ /^\.nfs/) {
-                        $hasNFS = 1;
-                     }
-                     if ( -l $joinPathname) {
-                        print STDERR "deletePathnames:          l \"".$joinPathname."\"\n" if $debugging;
-                        $kount += 1;
-                     }
-                     elsif ( -f $joinPathname) {
-                        print STDERR "deletePathnames:          f \"".$joinPathname."\"\n" if $debugging;
-                        $kount += 1;
-                     }
-                     elsif ( -d $joinPathname) {
-                        print STDERR "deletePathnames:          d \"".$joinPathname."\"\n" if $debugging;
-                        $kount += 1;
-                     }
-                     elsif ( -e $joinPathname) {
-                        print STDERR "deletePathnames:          ? \"".$joinPathname."\"\n" if $debugging;
-                        $kount += 1;
-                     }
-                     else {
-                        print STDERR "deletePathnames:          - \"".$joinPathname."\"\n" if $debugging;
-                        $kount += 1;
-                     }
-                  }
-               }
-               closedir(DIR);
-               if ($kount <= 0) {
-                  print STDERR "deletePathnames:      ...looks empty\n" if $debugging;
-               }
-               else {
-                  print STDERR "deletePathnames:      ...has content\n" if $debugging;
-                  if ($hasNFS) {
-                     print STDERR "deletePathnames:      ...wait for cache to expire\n" if $debugging;
-                     sleep 61;
-                     print STDERR "deletePathnames:      ...rescan it\n" if $debugging;
-                     if (opendir(DIR,$pathname)) {
-                        my $recount  = 0;
-                        my $hasNFS = 0;
-                        while (defined($tmp = readdir(DIR))) {
-                           if (($tmp ne "" ) && ($tmp ne ".") && ($tmp ne "..")) {
-                              my $joinPathname = $pathname."/"."$tmp";
-                              if ($tmp =~ /^\.nfs/) {
-                                 $hasNFS = 1;
-                              }
-                              if ( -l $joinPathname) {
-                                 print STDERR "deletePathnames:          l \"".$joinPathname."\"\n" if $debugging;
-                                 $recount += 1;
-                              }
-                              elsif ( -f $joinPathname) {
-                                 print STDERR "deletePathnames:          f \"".$joinPathname."\"\n" if $debugging;
-                                 $recount += 1;
-                              }
-                              elsif ( -d $joinPathname) {
-                                 print STDERR "deletePathnames:          d \"".$joinPathname."\"\n" if $debugging;
-                                 $recount += 1;
-                              }
-                              elsif ( -e $joinPathname) {
-                                 print STDERR "deletePathnames:          ? \"".$joinPathname."\"\n" if $debugging;
-                                 $recount += 1;
-                              }
-                              else {
-                                 print STDERR "deletePathnames:          - \"".$joinPathname."\"\n" if $debugging;
-                                 $recount += 1;
-                              }
-                           }
-                        }
-                        closedir(DIR);
-                        if ($recount <= 0) {
-                           print STDERR "deletePathnames:      ...looks empty\n" if $debugging;
-                        }
-                        else {
-                           print STDERR "deletePathnames:      ...still has content\n" if $debugging;
-                        }
-                     }
-                  }
-               }
-            }
-            if ( ! rmdir($pathname)) {
-               print STDERR "deletePathnames:      ...rmdir(\"".$pathname."\") failed\n" if $debugging;
-               print STDERR "deletePathnames:         \"".$!."\"\n" if $debugging;
-            }
-            else {
-               $changed = 1;
-            }
-         }
-         elsif ( -f $pathname) {
-            print STDERR "deletePathnames:    f \"".$pathname."\"\n" if $debugging;
-            if ( ! unlink($pathname)) {
-               print STDERR "deletePathnames:      ...unlink(\"".$pathname."\") failed\n" if $debugging;
-               print STDERR "deletePathnames:         \"".$!."\"\n" if $debugging;
-            }
-            else {
-               $changed = 1;
-            }
-         }
-         elsif ( -e $pathname) {
-            print STDERR "deletePathnames:    ? \"".$pathname."\"\n" if $debugging;
-            if ( ! unlink($pathname)) {
-               print STDERR "deletePathnames:      ...unlink(\"".$pathname."\") failed\n" if $debugging;
-            }
-            else {
-               $changed = 1;
-            }
-         }
          else {
-            print STDERR "deletePathnames: ...\"".$pathname."\" is gone\n" if $debugging;
-            splice(@failures,$i,1);
-            $changed = 1;
-            last;
+            print STDERR "deletePathnames:    nothing to do\n" if $debugging;
          }
       }
    }
-   print STDERR "deletePathnames}    done\n" if $debugging;
    print STDERR "deletePathnames] ...done(={" if $debugging;
    my $N = $#failures + 1;
    if (1 <= $N) {
@@ -5224,36 +5285,39 @@ sub getOSclass {
 #-------------------------------------------------------------------------------
 
 sub getWorkingDirectory {
-   my $sponsor  = shift;
+   my $callerIs = shift;
+   print STDERR "getWorkingDirectory[ starting...\n" if $debugging;
    my $exitCode;
    my $gives;
    my $tmpdir   = findTempDir("");
    my $osClass  = getOSclass();
    if ($osClass eq "UNIX-like") {
-      my $pathname = "$tmpdir/pwd-$$.tmp";;
-      $gives       = `pwd 2>$pathname`;
-      $exitCode    = $? + 0;
+      print STDERR "getWorkingDirectory: ...UNIX-like\n" if $debugging;
+      my $tmpFile = "$tmpdir/pwd-$$.tmp";;
+      print STDERR "getWorkingDirectory: ...run: [pwd 2>$tmpFile]\n" if $debugging;
+      $gives      = `pwd 2>$tmpFile`;
+      $exitCode   = $? + 0;
       chomp $gives;
-      unlink $pathname if -f $pathname;
+      unlink $tmpFile if -f $tmpFile;
    }
    elsif ($osClass eq "Windows-like") {
-      my $pathname = "$tmpdir\\pwd-$$.tmp";
-      $gives       = `cd 2>$pathname`;
-      $exitCode    = $? + 0;
+      print STDERR "getWorkingDirectory: ...Windows-like\n" if $debugging;
+      my $tmpFile = "$tmpdir\\pwd-$$.tmp";
+      $gives      = `cd 2>$tmpFile`;
+      print STDERR "getWorkingDirectory: ...run: [cd 2>$tmpFile]\n" if $debugging;
+      $exitCode   = $? + 0;
       chomp $gives;
-      unlink $pathname if -f $pathname;
+      unlink $tmpFile if -f $tmpFile;
    }
    else {
       $gives    = "";
       $exitCode = 1;
    }
    if ($exitCode != 0) {
-      if ($sponsor ne "") {
-         print STDERR "$sponsor: can't determine current working directory\n";
-         exit 1;
-      }
+      print STDERR "$callerIscan't determine current working directory\n";
       $gives = "";
    }
+   print STDERR "getWorkingDirectory] ...done(=\"".$gives."\")\n" if $debugging;
    return $gives;
 }
 
@@ -5509,6 +5573,48 @@ sub mkDirectory {
       }
    }
    return result;
+}
+
+# MyUniqueFileId: 6af5ed70-509a-46e3-c366-c864743c9ac3
+#-------------------------------------------------------------------------------
+#
+#  This subroutine deletes a single pathname (directory, file, or symbolic-link)
+#  If it can't be properly deleted then it will fail with an error message.
+#
+#  see: totebag/src/perl-lib/mustDeletePathname.psub
+#
+#-------------------------------------------------------------------------------
+
+sub mustDeletePathname {
+   my $callerIs  = shift;
+   my $pathname  = shift;
+   print STDERR "mustDeletePathname[ callerIs=\"".$callerIs."\", pathname=\"".$pathname."\"...\n" if $debugging;
+   my $result    = 1;
+   if ($pathname ne "") {
+      my @failures  = deletePathnames($pathname);
+      my $Nfailures = $#failures + 1;
+      if (1 <= $Nfailures) {
+         $result = 0;
+         my $count;
+         my $failedOn;
+         foreach $failedOn (@failures) {
+            $count += 1;
+            print STDERR $callerIs."error -- can't delete \"$failedOn\"\n";
+            if (10 <= $count) {
+               print STDERR $callerIs."  :        :     :\n";
+               my $lastOne = $failures[$#failures];
+               print STDERR $callerIs."error -- can't delete \"$lastOne\"\n";
+               last;
+            }
+         }
+         exit 1;
+      }
+   }
+   else {
+      $result = 0;
+   }
+   print STDERR "mustDeletePathname] ...done(=$result)\n" if $debugging;
+   return $result;
 }
 
 # MyUniqueFileId: 5ff433a4-57d8-46b9-fd0c-b4cdb3cc330d

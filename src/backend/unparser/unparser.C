@@ -739,7 +739,10 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
 
           case SgFile::e_Jovial_language:
              {
-               printf ("Error: SgFile::e_Jovial_language detected in unparser (unparser not implemented, unparsing ignored) \n");
+            // Rasmussen (11/21/2017): Temporarily test using the new Fortran unparser!
+               printf ("Error: SgFile::e_Jovial_language detected in unparser (unparser not implemented, unparsing temporarily using the Fortran unparser) \n");
+               u_fortran_locatedNode->unparseStatement(globalScope, info);
+
             // ROSE_ASSERT(false);
                break;
              }
@@ -2978,7 +2981,11 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
 
                case SgFile::e_Jovial_language:
                   {
-                    printf ("Error: SgFile::e_Jovial_language detected in unparser (unparser not implemented, unparsing ignored) \n");
+                 // Rasmussen (11/21/2017): Temporarily test using the new Fortran unparser!
+                    printf ("Error: SgFile::e_Jovial_language detected in unparser (unparser not implemented, unparsing temporarily using the Fortran unparser) \n");
+
+                    outputFilename = "rose_" + file->get_sourceFileNameWithoutPath();
+
                  // ROSE_ASSERT(false);
                     break;
                   }
