@@ -1099,7 +1099,8 @@ Ptr makeExistingMemory(size_t addressWidth, size_t valueWidth, uint64_t id, cons
  *
  * @{ */
 Ptr makeAdd(const Ptr&a, const Ptr &b, const std::string &comment="", unsigned flags=0);
-Ptr makeBooleanAnd(const Ptr &a, const Ptr &b, const std::string &comment="", unsigned flags=0);
+Ptr makeBooleanAnd(const Ptr &a, const Ptr &b, const std::string &comment="", unsigned flags=0)
+    ROSE_DEPRECATED("use makeAnd instead");             // [Robb Matzke 2017-11-21]: deprecated
 Ptr makeAsr(const Ptr &sa, const Ptr &a, const std::string &comment="", unsigned flags=0);
 Ptr makeAnd(const Ptr &a, const Ptr &b, const std::string &comment="", unsigned flags=0);
 Ptr makeOr(const Ptr &a, const Ptr &b, const std::string &comment="", unsigned flags=0);
@@ -1113,7 +1114,8 @@ Ptr makeLssb(const Ptr &a, const std::string &comment="", unsigned flags=0);
 Ptr makeMssb(const Ptr &a, const std::string &comment="", unsigned flags=0);
 Ptr makeNe(const Ptr &a, const Ptr &b, const std::string &comment="", unsigned flags=0);
 Ptr makeNegate(const Ptr &a, const std::string &comment="", unsigned flags=0);
-Ptr makeBooleanOr(const Ptr &a, const Ptr &b, const std::string &comment="", unsigned flags=0);
+Ptr makeBooleanOr(const Ptr &a, const Ptr &b, const std::string &comment="", unsigned flags=0)
+    ROSE_DEPRECATED("use makeOr instead");              // [Robb Matzke 2017-11-21]: deprecated
 Ptr makeRead(const Ptr &mem, const Ptr &addr, const std::string &comment="", unsigned flags=0);
 Ptr makeRol(const Ptr &sa, const Ptr &a, const std::string &comment="", unsigned flags=0);
 Ptr makeRor(const Ptr &sa, const Ptr &a, const std::string &comment="", unsigned flags=0);

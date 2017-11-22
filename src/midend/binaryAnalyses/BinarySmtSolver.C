@@ -455,7 +455,7 @@ public:
     std::pair<size_t /*line*/, size_t /*col*/> location() {
         return input_.location(nextTokenOffset_);
     }
-    
+
 private:
     // Get token starting at specified position, after skipping white space, comments, etc. Returns token lexeme and offset to
     // first character after end of the token.
@@ -467,7 +467,7 @@ private:
                 ch = input_.character(++offset);
             if (EOF == ch)
                 return std::make_pair(std::string(), offset);
-                                      
+
             if ('(' == ch) {
                 return std::make_pair(std::string("("), offset + 1);
             } else if (')' == ch) {
@@ -573,7 +573,7 @@ SmtSolver::selfTest() {
     ASSERT_require(sexprs[4]->children()[1]->name() == "");
     ASSERT_require(sexprs[4]->children()[1]->children().size() == 1);
     ASSERT_require(sexprs[4]->children()[1]->children()[0]->name() == "y");
-    
+
     // Create some variables and constants
     E a1 = makeVariable(1, "a1");
     E a8 = makeVariable(8, "a8");
@@ -605,9 +605,10 @@ SmtSolver::selfTest() {
     exprs.push_back(makeSignedGe(a8, z8, "signed greather than or equal"));
 
     // Boolean operations
-    exprs.push_back(makeBooleanAnd(makeZerop(a8), makeZerop(c8), "Boolean conjunction"));
     exprs.push_back(makeEq(makeIte(makeZerop(a8), z8, b8), b8, "if-then-else"));
-    exprs.push_back(makeBooleanOr(makeZerop(a8), makeZerop(c8), "Boolean disjunction"));
+    exprs.push_back(makeAnd(makeZerop(a8), makeZerop(c8), "Boolean conjunction"));
+    exprs.push_back(makeOr(makeZerop(a8), makeZerop(c8), "Boolean disjunction"));
+    exprs.push_back(makeXor(makeZerop(a8), makeZerop(c8), "Boolean exclusive disjunction"));
 
     // Bit operations
     exprs.push_back(makeZerop(makeAnd(a8, b8), "bit-wise conjunction"));
@@ -630,7 +631,7 @@ SmtSolver::selfTest() {
     exprs.push_back(makeZerop(makeShr1(makeInteger(2, 3), a8), "shift right inserting three ones"));
     exprs.push_back(makeZerop(makeExtend(makeInteger(2, 3), a8), "truncate to three bits"));
     exprs.push_back(makeZerop(makeExtend(makeInteger(6, 32), a8), "extend to 32 bits"));
-    
+
     // Arithmetic operations
     exprs.push_back(makeZerop(makeAdd(a8, b8), "addition"));
     exprs.push_back(makeZerop(makeNegate(a8), "negation"));
@@ -653,20 +654,14 @@ SmtSolver::selfTest() {
     exprs.push_back(makeEq(makeSet(a8, b8, c8), b8, "set"));
 
     // Mixing 1-bit values used as bit vectors and Booleans should be allowed.
-#if 0 // [Robb Matzke 2017-11-14]
     exprs.push_back(makeAnd(makeAdd(a1, b1) /*bit-vector*/, makeZerop(b1) /*Boolean*/));
-#else
-    exprs.push_back(makeAnd(makeBoolean(makeAdd(a1, b1)), makeZerop(b1)));
-#endif
 
     // Some operations should work on bit vectors (tested above) or Booleans.  In ROSE, a Boolean is just a 1-bit vector, but
     // SMT solvers usually distinguish between 1-bit vector type and Boolean type and don't allow them to be mixed.
-    if (!boost::contains(name(), "Yices")) {            // Our Yices layer is partly broken, and about to be deprecated
-        exprs.push_back(makeEq(makeZerop(a1), b1));
-        exprs.push_back(makeXor(makeZerop(a1), b1));
-        exprs.push_back(makeNe(a1, makeZerop(b1)));
-        exprs.push_back(makeIte(a1, makeZerop(a1), b1));
-    }
+    exprs.push_back(makeEq(makeZerop(a1), b1));
+    exprs.push_back(makeXor(makeZerop(a1), b1));
+    exprs.push_back(makeNe(a1, makeZerop(b1)));
+    exprs.push_back(makeIte(a1, makeZerop(a1), b1));
 
     // Run the solver
     for (size_t i=0; i<exprs.size(); ++i) {

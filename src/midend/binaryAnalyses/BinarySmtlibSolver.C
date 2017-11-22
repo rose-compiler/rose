@@ -665,19 +665,12 @@ SmtlibSolver::outputLeftAssoc(const std::string &name, const SymbolicExpr::Inter
 
 SmtSolver::SExprTypePair
 SmtlibSolver::outputLeftAssoc(const std::string &name, const std::vector<SExprTypePair> &children, Type rettype) {
-    SExpr::Ptr retval;
     Type childType = mostType(children);
-
-    BOOST_REVERSE_FOREACH (const SExprTypePair et, children) {
-        SExpr::Ptr child = outputCast(et, childType).first;
-        if (retval) {
-            retval = SExpr::instance(SExpr::instance(name), child, retval);
-        } else {
-            retval = child;
-        }
+    SExpr::Ptr retval = outputCast(children[0], childType).first;
+    for (size_t i=1; i<children.size(); ++i) {
+        SExpr::Ptr child = outputCast(children[i], childType).first;
+        retval = SExpr::instance(SExpr::instance(name), retval, child);
     }
-    ASSERT_not_null(retval);
-
     if (NO_TYPE == rettype)
         rettype = childType;
     return SExprTypePair(retval, rettype);
