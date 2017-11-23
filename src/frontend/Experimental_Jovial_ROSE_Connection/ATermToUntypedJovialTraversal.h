@@ -1,16 +1,16 @@
-#ifndef AT_TO_UNTYPED_JOVIAL_TRAVERSAL_H
-#define AT_TO_UNTYPED_JOVIAL_TRAVERSAL_H
+#ifndef ATERM_TO_UNTYPED_JOVIAL_TRAVERSAL_H
+#define ATERM_TO_UNTYPED_JOVIAL_TRAVERSAL_H
 
-#include "ATtoUntypedTraversal.h"
+#include "ATermToUntypedTraversal.h"
 #include "Jovial_to_ROSE_translation.h"
 
 namespace ATermSupport {
 
-class ATtoUntypedJovialTraversal : public ATtoUntypedTraversal
+class ATermToUntypedJovialTraversal : public ATermToUntypedTraversal
 {
  public:
-   ATtoUntypedJovialTraversal(SgSourceFile* source);
-   virtual ~ATtoUntypedJovialTraversal();
+   ATermToUntypedJovialTraversal(SgSourceFile* source);
+   virtual ~ATermToUntypedJovialTraversal();
 
  public:
 // 1.1
@@ -77,7 +77,7 @@ ATbool traverse_VariableList(ATerm term, std::vector<SgUntypedExpression*> & var
 // 8.2.3 OPERATORS
 ATbool traverse_MultiplyDivideOrMod(ATerm term, Jovial_ROSE_Translation::ExpressionKind & op_enum, std::string & op_name);
 
-}; // class ATtoUntypedJovialTraversal
+}; // class ATermToUntypedJovialTraversal
 }  // namespace Jovial
 
 #endif
