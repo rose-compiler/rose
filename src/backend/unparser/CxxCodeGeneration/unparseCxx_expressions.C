@@ -209,6 +209,10 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
 
           case LAMBDA_EXP:              { unparseLambdaExpression(expr, info); break; }
 
+       // DQ (11/21/2017): Adding support for GNU C/C++ extension for computed goto 
+       // (and using what was previously only a Fortran IR node to support this).
+          case LABEL_REF:              { unparseLabelRefExpression(expr, info); break; }
+
           default:
              {
             // printf ("Default reached in switch statement for unparsing expressions! expr = %p = %s \n",expr,expr->class_name().c_str());
@@ -226,6 +230,25 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
   // DQ (9/9/2016): These should have been setup to be the same.
      ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
 
+   }
+
+
+void
+Unparse_ExprStmt::unparseLabelRefExpression(SgExpression* expr, SgUnparse_Info& info)
+   {
+  // DQ (11/21/2017): Adding support for GNU C extension for computed goto.
+
+     SgLabelRefExp* labelRefExp = isSgLabelRefExp(expr);
+     ROSE_ASSERT(labelRefExp != NULL);
+
+     ROSE_ASSERT(labelRefExp->get_symbol() != NULL);
+
+     SgName name = labelRefExp->get_symbol()->get_name();
+
+  // curprint("/* Output label reference expression */ ");
+
+     curprint("&&");
+     curprint(name);
    }
 
 

@@ -197,6 +197,10 @@ Grammar::setUpExpressions ()
   // DQ (8/27/2006): Added support for complex values (We will use a ComplexVal to stand for a imaginary number as well).
      NEW_TERMINAL_MACRO (ComplexVal,             "ComplexVal",             "COMPLEX_VAL" );
 
+  // DQ (11/21/2017): This was removed in favor of using the SgLabelRefExp.
+  // DQ (11/21/2017): Added support for label address value (see test2017_73.C).
+  // NEW_TERMINAL_MACRO (LabelAddressVal,        "LabelAddressVal",             "LABEL_ADDRESS_VAL" );
+
   // DQ (12/13/2005): Added support for empty expression (and empty statement).
      NEW_TERMINAL_MACRO (NullExpression,         "NullExpression",             "NULL_EXPR" );
 
@@ -382,12 +386,14 @@ Grammar::setUpExpressions ()
           NaryBooleanOp  | NaryComparisonOp,
           "NaryOp","NARY_EXPRESSION", false);
 
+  // DQ (11/21/2017): This was removed in favor of using the SgLabelRefExp.
+  // DQ (11/21/2017): Added support for label address value (see test2017_73.C).
      NEW_NONTERMINAL_MACRO (ValueExp,
           BoolValExp           | StringVal        | ShortVal               | CharVal         | UnsignedCharVal |
           WcharVal             | UnsignedShortVal | IntVal                 | EnumVal         | UnsignedIntVal  | 
           LongIntVal           | LongLongIntVal   | UnsignedLongLongIntVal | UnsignedLongVal | FloatVal        | 
           DoubleVal            | LongDoubleVal    | ComplexVal             |  UpcThreads     | UpcMythread     |
-          TemplateParameterVal | NullptrValExp,
+          TemplateParameterVal | NullptrValExp /* | LabelAddressVal */,
           "ValueExp","ValueExpTag", false);
 
 
@@ -806,6 +812,11 @@ Grammar::setUpExpressions ()
      LambdaExp.setFunctionSource( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
 
      ComplexVal.setFunctionSource       ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+
+  // DQ (11/21/2017): This was removed in favor of using the SgLabelRefExp.
+  // DQ (11/21/2017): Added support for label address value (see test2017_73.C).
+  // LabelAddressVal.setFunctionSource  ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+
      ThisExp.setFunctionSource          ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      SuperExp.setFunctionSource         ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      ClassExp.setFunctionSource         ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
@@ -1702,6 +1713,12 @@ Grammar::setUpExpressions ()
   // DQ (11/9/2005): Added string to hold source code constant precisely (part of work with Andreas)
      ComplexVal.setDataPrototype ( "std::string", "valueString", "= \"\"",
                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (11/21/2017): This was removed in favor of using the SgLabelRefExp.
+  // DQ (11/21/2017): Added support for label address value (see test2017_73.C).
+  // LabelAddressVal.setFunctionPrototype ("HEADER_LABEL_ADDRESS_VALUE_EXPRESSION", "../Grammar/Expression.code" );
+  // LabelAddressVal.setDataPrototype ( "SgLabelStatement*", "label_statement", "= NULL",
+  //                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // Liao 6/18/2008, UPC THREADS, MYTHREAD 
      UpcThreads.setFunctionPrototype ( "HEADER_UPC_THREADS_EXPRESSION", "../Grammar/Expression.code" );
@@ -2763,6 +2780,11 @@ Grammar::setUpExpressions ()
      LambdaExp.setFunctionSource ( "SOURCE_LAMBDA_EXPRESSION", "../Grammar/Expression.code" );
 
      ComplexVal.setFunctionSource ( "SOURCE_COMPLEX_VALUE_EXPRESSION","../Grammar/Expression.code" );
+
+  // DQ (11/21/2017): This was removed in favor of using the SgLabelRefExp.
+  // DQ (11/21/2017): Added support for label address value (see test2017_73.C).
+  // LabelAddressVal.setFunctionSource ( "SOURCE_LABEL_ADDRESS_VALUE_EXPRESSION","../Grammar/Expression.code" );
+
      CallExpression.setFunctionSource ( "SOURCE_CALL_EXPRESSION","../Grammar/Expression.code" );
 
      FunctionCallExp.setFunctionSource ( "SOURCE_FUNCTION_CALL_EXPRESSION","../Grammar/Expression.code" );
@@ -3009,6 +3031,10 @@ Grammar::setUpExpressions ()
      LongDoubleVal.setFunctionSource          ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
      ComplexVal.setFunctionSource             ( "SOURCE_GET_TYPE_COMPLEX","../Grammar/Expression.code" );
 
+  // DQ (11/21/2017): This was removed in favor of using the SgLabelRefExp.
+  // DQ (11/21/2017): Added support for label address value (see test2017_73.C).
+  // LabelAddressVal.setFunctionSource        ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
+
   // DQ (8/6/2013): We need to store the type explicitly and implement this function explicitly to return 
   // the explicitly stored type.  This is important to resolving functions overloaded on template parameters,
   // see test2013_303.C for an example.
@@ -3044,6 +3070,10 @@ Grammar::setUpExpressions ()
      DoubleVal.editSubstitute              ( "GENERIC_TYPE", "SgTypeDouble" );
      LongDoubleVal.editSubstitute          ( "GENERIC_TYPE", "SgTypeLongDouble" );
      ComplexVal.editSubstitute             ( "GENERIC_TYPE", "SgTypeComplex" );
+
+  // DQ (11/21/2017): This was removed in favor of using the SgLabelRefExp.
+  // DQ (11/21/2017): Unclear what the type of a label address value expression should be (though in the test2017_73.C it is "void*").
+  // LabelAddressVal.editSubstitute        ( "GENERIC_TYPE", "void*" );
 
   // DQ (8/6/2013): We need to store the type explicitly and implement this function explicitly to return 
   // the explicitly stored type.  This is important to resolving functions overloaded on template parameters,
