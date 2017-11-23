@@ -21,12 +21,12 @@ $Interpreter ||= "/usr/bin/perl";
 # MyUniqueFileId: 05bfd522-45a2-4dfa-ca27-420e6c630546
 
 $mkinstaller_ver_major = "1";
-$mkinstaller_ver_minor = "0";
-$mkinstaller_ver_build = "3";
+$mkinstaller_ver_minor = "1";
+$mkinstaller_ver_build = "1";
 $mkinstaller_ver_patch = "";
-$mkinstaller_ver_name  = "1.0.3";
-$mkinstaller_ver_time  = " 3Nov2017 18:27:59z";
-$mkinstaller_ver_id    = "@(#)mkinstaller 1.0.3 -  3Nov2017 18:27:59z";
+$mkinstaller_ver_name  = "1.1.1";
+$mkinstaller_ver_time  = "21Nov2017 18:00:55z";
+$mkinstaller_ver_id    = "@(#)mkinstaller 1.1.1 - 21Nov2017 18:00:55z";
 
 @defaultCopyrightOwners
   = ( "Copyright 1985-99,2000-17 James Frederick Reus\n"
@@ -47,11 +47,11 @@ $mkinstaller_ver_id    = "@(#)mkinstaller 1.0.3 -  3Nov2017 18:27:59z";
     );
 
 # MyUniqueFileId: 8428f7ce-97e8-4d57-c29f-84c52fae80f1
-$rawCommand   = $0;
-$theCommand   = $rawCommand;
-$theCommand   =~ tr/\\/\//;
-$foundInDir   = "";
-$Tstart       = time();
+$rawCommand    = $0;
+$theCommand    = $rawCommand;
+$theCommand    =~ tr/\\/\//;
+$foundInDir    = "";
+$TstartOverall = time();
 
 $debugging    = 0;
 if ( exists $ENV{"DEBUG_mkinstaller"}) {
@@ -65,7 +65,7 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
    #
    #----------------------------------------------------------------------------
 
-   print "mkinstaller: initialization...\n" if $debugging;
+   print STDERR "mkinstaller: initialization...\n" if $debugging;
    my $Contact             = "";
    my $CCname              = "";
    my $CXXname             = "";
@@ -89,6 +89,9 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
    my $postInstallBasename = "";
    my $postInstallPathname = "";
    my $postInstallStyle    = "";
+   my $preInstallBasename  = "";
+   my $preInstallPathname  = "";
+   my $preInstallStyle     = "";
    my $ProjectName         = "";
    my $ProjectVer          = "";
    my $ProjectVerMajor     = "";
@@ -114,7 +117,12 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
    my $use_tar             = "";
    my $verbosityLevel      = 0;
    my $withNotice          = "";
-   print "mkinstaller: ...done\n" if $debugging;
+   my $withPayload         = 1;
+   print STDERR "mkinstaller: ...done\n" if $debugging;
+
+   if ( exists $ENV{"INEFFECTIVE_mkinstaller"}) {
+      $withPayload         = 0;
+   }
 
    #---------------------------------------
    #
@@ -126,7 +134,7 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
    #---------------------------------------
 
    if (suffix($theCommand) ne ".perl") {
-      print "mkinstaller: locate [$theCommand]...\n" if $debugging;
+      print STDERR "mkinstaller: locate [$theCommand]...\n" if $debugging;
       if (basename($theCommand) ne $theCommand) {
          $foundInDir = dirname($theCommand);
          if ($foundInDir eq "") {
@@ -222,7 +230,7 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
             exit 1;
          }
       }
-      print "mkinstaller: ...found in [$foundInDir]...\n" if $debugging;
+      print STDERR "mkinstaller: ...found in [$foundInDir]...\n" if $debugging;
    }
 
    #----------------------------------------------------------------------------
@@ -236,7 +244,7 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
    #----------------------------------------------------------------------------
 
    if ( exists $ENV{'OPTS_mkinstaller'} ) {
-      print "mkinstaller: deal with OPTS_mkinstaller...\n" if $debugging;
+      print STDERR "mkinstaller: deal with OPTS_mkinstaller...\n" if $debugging;
       my $tmp = $ENV{'OPTS_mkinstaller'};
       if ($tmp ne "") {
          my @tmp = split /\s/, $tmp;
@@ -245,7 +253,7 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
             unshift @ARGV, $tmp[$i];
          }
       }
-      print "mkinstaller: ...done\n" if $debugging;
+      print STDERR "mkinstaller: ...done\n" if $debugging;
    }
 
    #---------------------------------------
@@ -254,12 +262,12 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
    #
    #---------------------------------------
 
-   print "mkinstaller: process command line...\n" if $debugging;
+   print STDERR "mkinstaller: process command line...\n" if $debugging;
    {
       my $i;
       for ($i=0; $i<=$#ARGV; $i+=1) {
          my $opt = $ARGV[$i];
-         print "mkinstaller: ...found \"$opt\"\n" if $debugging;
+         print STDERR "mkinstaller: ...found \"$opt\"\n" if $debugging;
          $_      = $opt;
          parseArgs: {
                        #---------------------------------------
@@ -271,7 +279,7 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                        /^--help$/
 
                           && do {
-                             print "mkinstaller:    is $opt\n" if $debugging;
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
                              $theCommandLine = $theCommandLine." ".$opt;
                              help();
                              exit 0;
@@ -280,14 +288,14 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                        /^--html$/
 
                           && do {
-                             print "mkinstaller:    is $opt\n" if $debugging;
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
                              $i += 1;
                              if ($#ARGV < $i) {
                                 print STDERR "mkinstaller: missing argument to $opt option\n";
                                 exit 1;
                              }
                              my $given       = $ARGV[$i];
-                             print "mkinstaller:    ...with \"$given\"\n" if $debugging;
+                             print STDERR "mkinstaller:    ...with \"$given\"\n" if $debugging;
                              $theCommandLine = $theCommandLine." ".$opt." ".quoteIfReqd($given);
                              $given    =~ tr/\\/\//;
                              if ($given eq "") {
@@ -301,7 +309,7 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                        /^--vernum$/
 
                           && do {
-                             print "mkinstaller:    is $opt\n" if $debugging;
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
                              $theCommandLine = $theCommandLine." ".$opt;
                              print "$mkinstaller_ver_name\n";
                              exit 0;
@@ -310,7 +318,7 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                        /^--version$/
 
                           && do {
-                             print "mkinstaller:    is $opt\n" if $debugging;
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
                              $theCommandLine = $theCommandLine." ".$opt;
                              print "mkinstaller: version $mkinstaller_ver_name rev. $mkinstaller_ver_time\n";
                              exit 0;
@@ -319,7 +327,7 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                        /^--copyright$/
 
                           && do {
-                             print "mkinstaller:    is $opt\n" if $debugging;
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
                              $theCommandLine = $theCommandLine." ".$opt;
                              copyright();
                              exit 0;
@@ -334,14 +342,14 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                        /^-c$/
 
                           && do {
-                             print "mkinstaller:    is $opt\n" if $debugging;
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
                              $i += 1;
                              if ($#ARGV < $i) {
                                 print STDERR "mkinstaller: missing argument to $opt option\n";
                                 exit 1;
                              }
                              my $given       = $ARGV[$i];
-                             print "mkinstaller:    ...with \"$given\"\n" if $debugging;
+                             print STDERR "mkinstaller:    ...with \"$given\"\n" if $debugging;
                              $theCommandLine = $theCommandLine." ".$opt." ".quoteIfReqd($given);
                              my $bn          = basename($given);
                              if ($given ne $bn) {
@@ -363,14 +371,14 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                                 }
                              }
                              $scriptName = $given;
-                             print "mkinstaller:       script name is \"$scriptName\"\n" if $debugging;
+                             print STDERR "mkinstaller:       script name is \"$scriptName\"\n" if $debugging;
                              last parseArgs;
                           };
 
                        /^--cc$/
 
                           && do {
-                             print "mkinstaller:    is $opt\n" if $debugging;
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
                              $theCommandLine = $theCommandLine." ".$opt;
                              print STDERR "mkinstaller: missing or zero-length argument to $opt option\n";
                              exit 1;
@@ -381,7 +389,7 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                           && do {
                              my $optName     = $1;
                              my $given       = unquote($2);
-                             print "mkinstaller:    is $opt\n" if $debugging;
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
                              $theCommandLine = $theCommandLine." ".$optName."=".quoteIfReqd($given);
                              if ($given eq "") {
                                 print STDERR "mkinstaller: missing or zero-length argument to $optName option\n";
@@ -392,14 +400,14 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                                 exit 1;
                              }
                              $CCname = $given;
-                             print "mkinstaller:    ...C name [$CCname]\n" if $debugging;
+                             print STDERR "mkinstaller:    ...C name [$CCname]\n" if $debugging;
                              last parseArgs;
                           };
 
                        /^--contact$/
 
                           && do {
-                             print "mkinstaller:    is $opt\n" if $debugging;
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
                              $theCommandLine = $theCommandLine." ".$opt;
                              print STDERR "mkinstaller: missing or zero-length argument to $opt option\n";
                              exit 1;
@@ -410,7 +418,7 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                           && do {
                              my $optName     = $1;
                              my $given       = unquote($2);
-                             print "mkinstaller:    is $opt\n" if $debugging;
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
                              $theCommandLine = $theCommandLine." ".$optName."=".quoteIfReqd($given);
                              if ($given eq "") {
                                 print STDERR "mkinstaller: missing or zero-length argument to $optName option\n";
@@ -421,14 +429,14 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                                 exit 1;
                              }
                              $Contact = $given;
-                             print "mkinstaller:    ...contact [$Contact]\n" if $debugging;
+                             print STDERR "mkinstaller:    ...contact [$Contact]\n" if $debugging;
                              last parseArgs;
                           };
 
                        /^--create$/
 
                           && do {
-                             print "mkinstaller:    is $opt\n" if $debugging;
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
                              $theCommandLine = $theCommandLine." ".$opt;
                              print STDERR "mkinstaller: missing or zero-length argument to $opt option\n";
                              exit 1;
@@ -439,8 +447,8 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                           && do {
                              my $optName     = $1;
                              my $given       = unquote($2);
-                             print "mkinstaller:    is $opt\n" if $debugging;
-                             print "mkinstaller:    ...with \"$given\"\n" if $debugging;
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
+                             print STDERR "mkinstaller:    ...with \"$given\"\n" if $debugging;
                              $theCommandLine = $theCommandLine." ".$optName."=".quoteIfReqd($given);
                              if ($given eq "") {
                                 print STDERR "mkinstaller: missing or zero-length argument to $optName option\n";
@@ -465,14 +473,14 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                                 }
                              }
                              $scriptName = $given;
-                             print "mkinstaller:       script name is \"$scriptName\"\n" if $debugging;
+                             print STDERR "mkinstaller:       script name is \"$scriptName\"\n" if $debugging;
                              last parseArgs;
                           };
 
                        /^--cxx$/
 
                           && do {
-                             print "mkinstaller:    is $opt\n" if $debugging;
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
                              $theCommandLine = $theCommandLine." ".$opt;
                              print STDERR "mkinstaller: missing or zero-length argument to $opt option\n";
                              exit 1;
@@ -483,7 +491,7 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                           && do {
                              my $optName     = $1;
                              my $given       = unquote($2);
-                             print "mkinstaller:    is $opt\n" if $debugging;
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
                              $theCommandLine = $theCommandLine." ".$optName."=".quoteIfReqd($given);
                              if ($given eq "") {
                                 print STDERR "mkinstaller: missing or zero-length argument to $optName option\n";
@@ -494,14 +502,14 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                                 exit 1;
                              }
                              $CXXname = $given;
-                             print "mkinstaller:    ...C++ name [$CXXname]\n" if $debugging;
+                             print STDERR "mkinstaller:    ...C++ name [$CXXname]\n" if $debugging;
                              last parseArgs;
                           };
 
                        /^((-d)|(--debug))$/
 
                           && do {
-                             print "mkinstaller:    is $opt\n" if $debugging;
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
                              $theCommandLine = $theCommandLine." ".$opt;
                              $debugging      = 1;
                              last parseArgs;
@@ -510,7 +518,7 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                        /^--follow$/
 
                           && do {
-                             print "mkinstaller:    is $opt\n" if $debugging;
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
                              $theCommandLine = $theCommandLine." ".$opt;
                              $followSymlinks = 1;
                              last parseArgs;
@@ -519,7 +527,7 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                        /^--fortran$/
 
                           && do {
-                             print "mkinstaller:    is $opt\n" if $debugging;
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
                              $theCommandLine = $theCommandLine." ".$opt;
                              print STDERR "mkinstaller: missing or zero-length argument to $opt option\n";
                              exit 1;
@@ -530,7 +538,7 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                           && do {
                              my $optName     = $1;
                              my $given       = unquote($2);
-                             print "mkinstaller:    is $opt\n" if $debugging;
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
                              $theCommandLine = $theCommandLine." ".$optName."=".quoteIfReqd($given);
                              if ($given eq "") {
                                 print STDERR "mkinstaller: missing or zero-length argument to $optName option\n";
@@ -541,14 +549,14 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                                 exit 1;
                              }
                              $FORTRANname = $given;
-                             print "mkinstaller:    ...FORTRAN name [$FORTRANname]\n" if $debugging;
+                             print STDERR "mkinstaller:    ...FORTRAN name [$FORTRANname]\n" if $debugging;
                              last parseArgs;
                           };
 
                        /^((-k)|(--keep))$/
 
                           && do {
-                             print "mkinstaller:    is $opt\n" if $debugging;
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
                              $theCommandLine = $theCommandLine." ".$opt;
                              $keep           = 1;
                              last parseArgs;
@@ -557,7 +565,7 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                        /^--nofollow$/
 
                           && do {
-                             print "mkinstaller:    is $opt\n" if $debugging;
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
                              $theCommandLine = $theCommandLine." ".$opt;
                              $followSymlinks = 0;
                              last parseArgs;
@@ -566,7 +574,7 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                        /^--nonstd$/
 
                           && do {
-                             print "mkinstaller:    is $opt\n" if $debugging;
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
                              $theCommandLine = $theCommandLine." ".$opt;
                              $stdMode        = 0;
                              last parseArgs;
@@ -575,7 +583,7 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                        /^--os$/
 
                           && do {
-                             print "mkinstaller:    is $opt\n" if $debugging;
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
                              $theCommandLine = $theCommandLine." ".$opt;
                              print STDERR "mkinstaller: missing or zero-length argument to $opt option\n";
                              exit 1;
@@ -586,7 +594,7 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                           && do {
                              my $optName     = $1;
                              my $given       = unquote($2);
-                             print "mkinstaller:    is $opt\n" if $debugging;
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
                              $theCommandLine = $theCommandLine." ".$optName."=".quoteIfReqd($given);
                              if ($given eq "") {
                                 print STDERR "mkinstaller: missing or zero-length argument to $optName option\n";
@@ -597,14 +605,14 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                                 exit 1;
                              }
                              $OSname = $given;
-                             print "mkinstaller:    ...OS name [$OSname]\n" if $debugging;
+                             print STDERR "mkinstaller:    ...OS name [$OSname]\n" if $debugging;
                              last parseArgs;
                           };
 
                        /^--postinstall-bin$/
 
                           && do {
-                             print "mkinstaller:    is $opt\n" if $debugging;
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
                              $theCommandLine = $theCommandLine." ".$opt;
                              print STDERR "mkinstaller: missing or zero-length argument to $opt option\n";
                              exit 1;
@@ -615,7 +623,7 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                           && do {
                              my $optName     = $1;
                              my $given       = unquote($2);
-                             print "mkinstaller:    is $opt\n" if $debugging;
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
                              $theCommandLine = $theCommandLine." ".$optName."=".quoteIfReqd($given);
                              if ($given eq "") {
                                 print STDERR "mkinstaller: missing or zero-length argument to $optName option\n";
@@ -632,17 +640,17 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                                 print STDERR "mkinstaller: can't extract basename of \"$postInstallPathname\"\n";
                                 exit 1;
                              }
-                             print "mkinstaller:    ...binary post-install script\n" if $debugging;
-                             print "mkinstaller:       pathname [$postInstallPathname]\n" if $debugging;
-                             print "mkinstaller:       basename [$postInstallBasename]\n" if $debugging;
-                             print "mkinstaller:          style [$postInstallStyle]\n" if $debugging;
+                             print STDERR "mkinstaller:    ...binary post-install script\n" if $debugging;
+                             print STDERR "mkinstaller:       pathname [$postInstallPathname]\n" if $debugging;
+                             print STDERR "mkinstaller:       basename [$postInstallBasename]\n" if $debugging;
+                             print STDERR "mkinstaller:          style [$postInstallStyle]\n" if $debugging;
                              last parseArgs;
                           };
 
                        /^--postinstall-perl$/
 
                           && do {
-                             print "mkinstaller:    is $opt\n" if $debugging;
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
                              $theCommandLine = $theCommandLine." ".$opt;
                              print STDERR "mkinstaller: missing or zero-length argument to $opt option\n";
                              exit 1;
@@ -653,7 +661,7 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                           && do {
                              my $optName     = $1;
                              my $given       = unquote($2);
-                             print "mkinstaller:    is $opt\n" if $debugging;
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
                              $theCommandLine = $theCommandLine." ".$optName."=".quoteIfReqd($given);
                              if ($given eq "") {
                                 print STDERR "mkinstaller: missing or zero-length argument to $optName option\n";
@@ -670,17 +678,17 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                                 print STDERR "mkinstaller: can't extract basename of \"$postInstallPathname\"\n";
                                 exit 1;
                              }
-                             print "mkinstaller:    ...perl post-install script\n" if $debugging;
-                             print "mkinstaller:       pathname [$postInstallPathname]\n" if $debugging;
-                             print "mkinstaller:       basename [$postInstallBasename]\n" if $debugging;
-                             print "mkinstaller:          style [$postInstallStyle]\n" if $debugging;
+                             print STDERR "mkinstaller:    ...perl post-install script\n" if $debugging;
+                             print STDERR "mkinstaller:       pathname [$postInstallPathname]\n" if $debugging;
+                             print STDERR "mkinstaller:       basename [$postInstallBasename]\n" if $debugging;
+                             print STDERR "mkinstaller:          style [$postInstallStyle]\n" if $debugging;
                              last parseArgs;
                           };
 
                        /^--postinstall-python$/
 
                           && do {
-                             print "mkinstaller:    is $opt\n" if $debugging;
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
                              $theCommandLine = $theCommandLine." ".$opt;
                              print STDERR "mkinstaller: missing or zero-length argument to $opt option\n";
                              exit 1;
@@ -691,7 +699,7 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                           && do {
                              my $optName     = $1;
                              my $given       = unquote($2);
-                             print "mkinstaller:    is $opt\n" if $debugging;
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
                              $theCommandLine = $theCommandLine." ".$optName."=".quoteIfReqd($given);
                              if ($given eq "") {
                                 print STDERR "mkinstaller: missing or zero-length argument to $optName option\n";
@@ -708,17 +716,17 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                                 print STDERR "mkinstaller: can't extract basename of \"$postInstallPathname\"\n";
                                 exit 1;
                              }
-                             print "mkinstaller:    ...python post-install script\n" if $debugging;
-                             print "mkinstaller:       pathname [$postInstallPathname]\n" if $debugging;
-                             print "mkinstaller:       basename [$postInstallBasename]\n" if $debugging;
-                             print "mkinstaller:          style [$postInstallStyle]\n" if $debugging;
+                             print STDERR "mkinstaller:    ...python post-install script\n" if $debugging;
+                             print STDERR "mkinstaller:       pathname [$postInstallPathname]\n" if $debugging;
+                             print STDERR "mkinstaller:       basename [$postInstallBasename]\n" if $debugging;
+                             print STDERR "mkinstaller:          style [$postInstallStyle]\n" if $debugging;
                              last parseArgs;
                           };
 
                        /^--postinstall-sh$/
 
                           && do {
-                             print "mkinstaller:    is $opt\n" if $debugging;
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
                              $theCommandLine = $theCommandLine." ".$opt;
                              print STDERR "mkinstaller: missing or zero-length argument to $opt option\n";
                              exit 1;
@@ -729,7 +737,7 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                           && do {
                              my $optName     = $1;
                              my $given       = unquote($2);
-                             print "mkinstaller:    is $opt\n" if $debugging;
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
                              $theCommandLine = $theCommandLine." ".$optName."=".quoteIfReqd($given);
                              if ($given eq "") {
                                 print STDERR "mkinstaller: missing or zero-length argument to $optName option\n";
@@ -746,17 +754,169 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                                 print STDERR "mkinstaller: can't extract basename of \"$postInstallPathname\"\n";
                                 exit 1;
                              }
-                             print "mkinstaller:    ...shell post-install script\n" if $debugging;
-                             print "mkinstaller:       pathname [$postInstallPathname]\n" if $debugging;
-                             print "mkinstaller:       basename [$postInstallBasename]\n" if $debugging;
-                             print "mkinstaller:          style [$postInstallStyle]\n" if $debugging;
+                             print STDERR "mkinstaller:    ...shell post-install script\n" if $debugging;
+                             print STDERR "mkinstaller:       pathname [$postInstallPathname]\n" if $debugging;
+                             print STDERR "mkinstaller:       basename [$postInstallBasename]\n" if $debugging;
+                             print STDERR "mkinstaller:          style [$postInstallStyle]\n" if $debugging;
+                             last parseArgs;
+                          };
+
+                       /^--preinstall-bin$/
+
+                          && do {
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
+                             $theCommandLine = $theCommandLine." ".$opt;
+                             print STDERR "mkinstaller: missing or zero-length argument to $opt option\n";
+                             exit 1;
+                          };
+
+                       /^(--preinstall-bin)=(.*)$/
+
+                          && do {
+                             my $optName     = $1;
+                             my $given       = unquote($2);
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
+                             $theCommandLine = $theCommandLine." ".$optName."=".quoteIfReqd($given);
+                             if ($given eq "") {
+                                print STDERR "mkinstaller: missing or zero-length argument to $optName option\n";
+                                exit 1;
+                             }
+                             if ($preInstallPathname ne "") {
+                                print STDERR "mkinstaller: unexpected $optName=\"$given\"\n";
+                                exit 1;
+                             }
+                             $preInstallPathname = $given;
+                             $preInstallBasename = basename($preInstallPathname);
+                             $preInstallStyle    = "binary";
+                             if ($preInstallBasename eq "") {
+                                print STDERR "mkinstaller: can't extract basename of \"$preInstallPathname\"\n";
+                                exit 1;
+                             }
+                             print STDERR "mkinstaller:    ...binary pre-install script\n" if $debugging;
+                             print STDERR "mkinstaller:       pathname [$preInstallPathname]\n" if $debugging;
+                             print STDERR "mkinstaller:       basename [$preInstallBasename]\n" if $debugging;
+                             print STDERR "mkinstaller:          style [$preInstallStyle]\n" if $debugging;
+                             last parseArgs;
+                          };
+
+                       /^--preinstall-perl$/
+
+                          && do {
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
+                             $theCommandLine = $theCommandLine." ".$opt;
+                             print STDERR "mkinstaller: missing or zero-length argument to $opt option\n";
+                             exit 1;
+                          };
+
+                       /^(--preinstall-perl)=(.*)$/
+
+                          && do {
+                             my $optName     = $1;
+                             my $given       = unquote($2);
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
+                             $theCommandLine = $theCommandLine." ".$optName."=".quoteIfReqd($given);
+                             if ($given eq "") {
+                                print STDERR "mkinstaller: missing or zero-length argument to $optName option\n";
+                                exit 1;
+                             }
+                             if ($preInstallPathname ne "") {
+                                print STDERR "mkinstaller: unexpected $optName=\"$given\"\n";
+                                exit 1;
+                             }
+                             $preInstallPathname = $given;
+                             $preInstallBasename = basename($preInstallPathname);
+                             $preInstallStyle    = "perl";
+                             if ($preInstallBasename eq "") {
+                                print STDERR "mkinstaller: can't extract basename of \"$preInstallPathname\"\n";
+                                exit 1;
+                             }
+                             print STDERR "mkinstaller:    ...perl pre-install script\n" if $debugging;
+                             print STDERR "mkinstaller:       pathname [$preInstallPathname]\n" if $debugging;
+                             print STDERR "mkinstaller:       basename [$preInstallBasename]\n" if $debugging;
+                             print STDERR "mkinstaller:          style [$preInstallStyle]\n" if $debugging;
+                             last parseArgs;
+                          };
+
+                       /^--preinstall-python$/
+
+                          && do {
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
+                             $theCommandLine = $theCommandLine." ".$opt;
+                             print STDERR "mkinstaller: missing or zero-length argument to $opt option\n";
+                             exit 1;
+                          };
+
+                       /^(--preinstall-python)=(.*)$/
+
+                          && do {
+                             my $optName     = $1;
+                             my $given       = unquote($2);
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
+                             $theCommandLine = $theCommandLine." ".$optName."=".quoteIfReqd($given);
+                             if ($given eq "") {
+                                print STDERR "mkinstaller: missing or zero-length argument to $optName option\n";
+                                exit 1;
+                             }
+                             if ($preInstallPathname ne "") {
+                                print STDERR "mkinstaller: unexpected $optName=\"$given\"\n";
+                                exit 1;
+                             }
+                             $preInstallPathname = $given;
+                             $preInstallBasename = basename($preInstallPathname);
+                             $preInstallStyle    = "python";
+                             if ($preInstallBasename eq "") {
+                                print STDERR "mkinstaller: can't extract basename of \"$preInstallPathname\"\n";
+                                exit 1;
+                             }
+                             print STDERR "mkinstaller:    ...python pre-install script\n" if $debugging;
+                             print STDERR "mkinstaller:       pathname [$preInstallPathname]\n" if $debugging;
+                             print STDERR "mkinstaller:       basename [$preInstallBasename]\n" if $debugging;
+                             print STDERR "mkinstaller:          style [$preInstallStyle]\n" if $debugging;
+                             last parseArgs;
+                          };
+
+                       /^--preinstall-sh$/
+
+                          && do {
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
+                             $theCommandLine = $theCommandLine." ".$opt;
+                             print STDERR "mkinstaller: missing or zero-length argument to $opt option\n";
+                             exit 1;
+                          };
+
+                       /^(--preinstall-sh)=(.*)$/
+
+                          && do {
+                             my $optName     = $1;
+                             my $given       = unquote($2);
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
+                             $theCommandLine = $theCommandLine." ".$optName."=".quoteIfReqd($given);
+                             if ($given eq "") {
+                                print STDERR "mkinstaller: missing or zero-length argument to $optName option\n";
+                                exit 1;
+                             }
+                             if ($preInstallPathname ne "") {
+                                print STDERR "mkinstaller: unexpected $optName=\"$given\"\n";
+                                exit 1;
+                             }
+                             $preInstallPathname = $given;
+                             $preInstallBasename = basename($preInstallPathname);
+                             $preInstallStyle    = "sh";
+                             if ($preInstallBasename eq "") {
+                                print STDERR "mkinstaller: can't extract basename of \"$preInstallPathname\"\n";
+                                exit 1;
+                             }
+                             print STDERR "mkinstaller:    ...shell pre-install script\n" if $debugging;
+                             print STDERR "mkinstaller:       pathname [$preInstallPathname]\n" if $debugging;
+                             print STDERR "mkinstaller:       basename [$preInstallBasename]\n" if $debugging;
+                             print STDERR "mkinstaller:          style [$preInstallStyle]\n" if $debugging;
                              last parseArgs;
                           };
 
                        /^--(prjnam|project-name)$/
 
                           && do {
-                             print "mkinstaller:    is $opt\n" if $debugging;
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
                              $theCommandLine = $theCommandLine." ".$opt;
                              print STDERR "mkinstaller: missing or zero-length argument to $opt option\n";
                              exit 1;
@@ -767,7 +927,7 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                           && do {
                              my $optName     = $1;
                              my $given       = unquote($3);
-                             print "mkinstaller:    is $opt\n" if $debugging;
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
                              $theCommandLine = $theCommandLine." ".$optName."=".quoteIfReqd($given);
                              if ($given eq "") {
                                 print STDERR "mkinstaller: missing or zero-length argument to $optName option\n";
@@ -778,14 +938,14 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                                 exit 1;
                              }
                              $ProjectName = $given;
-                             print "mkinstaller:    ...project name [$ProjectName]\n" if $debugging;
+                             print STDERR "mkinstaller:    ...project name [$ProjectName]\n" if $debugging;
                              last parseArgs;
                           };
 
                        /^--(prjver|project-version)$/
 
                           && do {
-                             print "mkinstaller:    is $opt\n" if $debugging;
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
                              $theCommandLine = $theCommandLine." ".$opt;
                              print STDERR "mkinstaller: missing or zero-length argument to $opt option\n";
                              exit 1;
@@ -796,7 +956,7 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                           && do {
                              my $optName     = $1;
                              my $given       = unquote($3);
-                             print "mkinstaller:    is $opt\n" if $debugging;
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
                              $theCommandLine = $theCommandLine." ".$optName."=".quoteIfReqd($given);
                              if ($given eq "") {
                                 print STDERR "mkinstaller: missing or zero-length argument to $optName option\n";
@@ -824,19 +984,19 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                              $ProjectVerPatch  = $given; $ProjectVerPatch  =~ s/^(\d+)\.(\d+)\.(\d+)(\.(\d+))?(\D\S*)?$/$5/;
                              $ProjectVerSuffix = $given; $ProjectVerSuffix =~ s/^(\d+)\.(\d+)\.(\d+)(\.(\d+))?(\D\S*)?$/$6/;
                              $ProjectVer       = $given;
-                             print "mkinstaller:    ...project version [$ProjectVer]\n" if $debugging;
-                             print "mkinstaller:              major is [$ProjectVerMajor]\n" if $debugging;
-                             print "mkinstaller:              minor is [$ProjectVerMinor]\n" if $debugging;
-                             print "mkinstaller:              build is [$ProjectVerBuild]\n" if $debugging;
-                             print "mkinstaller:              patch is [$ProjectVerPatch]\n" if $debugging;
-                             print "mkinstaller:             suffix is [$ProjectVerPatch]\n" if $debugging;
+                             print STDERR "mkinstaller:    ...project version [$ProjectVer]\n" if $debugging;
+                             print STDERR "mkinstaller:              major is [$ProjectVerMajor]\n" if $debugging;
+                             print STDERR "mkinstaller:              minor is [$ProjectVerMinor]\n" if $debugging;
+                             print STDERR "mkinstaller:              build is [$ProjectVerBuild]\n" if $debugging;
+                             print STDERR "mkinstaller:              patch is [$ProjectVerPatch]\n" if $debugging;
+                             print STDERR "mkinstaller:             suffix is [$ProjectVerPatch]\n" if $debugging;
                              last parseArgs;
                           };
 
                        /^--std$/
 
                           && do {
-                             print "mkinstaller:    is $opt\n" if $debugging;
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
                              $theCommandLine = $theCommandLine." ".$opt;
                              $stdMode        = 1;
                              last parseArgs;
@@ -845,7 +1005,7 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                        /^-w$/
 
                           && do {
-                             print "mkinstaller:    is $opt\n" if $debugging;
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
                              $i += 1;
                              if ($#ARGV < $i) {
                                 print STDERR "mkinstaller: missing argument to $opt option\n";
@@ -887,7 +1047,7 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                           && do {
                              my $optName     = $1;
                              my $given       = unquote($2);
-                             print "mkinstaller:    is $opt\n" if $debugging;
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
                              $theCommandLine = $theCommandLine." ".$optName."=".quoteIfReqd($given);
                              if ($given eq "") {
                                 print STDERR "mkinstaller: zero-length argument to $optName option\n";
@@ -927,60 +1087,60 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                        /^-v$/
 
                           && do {
-                             print "mkinstaller:    is $opt\n" if $debugging;
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
                              $theCommandLine  = $theCommandLine." ".$opt;
                              $verbosityLevel += 1;
-                             print "mkinstaller:    ...level is now $verbosityLevel\n" if $debugging;
+                             print STDERR "mkinstaller:    ...level is now $verbosityLevel\n" if $debugging;
                              last parseArgs;
                           };
 
                        /^-v0$/
 
                           && do {
-                             print "mkinstaller:    is $opt\n" if $debugging;
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
                              $theCommandLine  = $theCommandLine." ".$opt;
                              $verbosityLevel  = 0;
-                             print "mkinstaller:    ...level is now $verbosityLevel\n" if $debugging;
+                             print STDERR "mkinstaller:    ...level is now $verbosityLevel\n" if $debugging;
                              last parseArgs;
                           };
 
                        /^-v([1-9][0-9]*)$/
 
                           && do {
-                             print "mkinstaller:    is $opt\n" if $debugging;
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
                              $theCommandLine  = $theCommandLine." ".$opt;
                              $verbosityLevel += $1;
-                             print "mkinstaller:    ...level is now $verbosityLevel\n" if $debugging;
+                             print STDERR "mkinstaller:    ...level is now $verbosityLevel\n" if $debugging;
                              last parseArgs;
                           };
 
                        /^--verbose$/
 
                           && do {
-                             print "mkinstaller:    is $opt\n" if $debugging;
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
                              $theCommandLine  = $theCommandLine." ".$opt;
                              $verbosityLevel += 1;
-                             print "mkinstaller:    ...level is now $verbosityLevel\n" if $debugging;
+                             print STDERR "mkinstaller:    ...level is now $verbosityLevel\n" if $debugging;
                              last parseArgs;
                           };
 
                        /^--verbose0$/
 
                           && do {
-                             print "mkinstaller:    is $opt\n" if $debugging;
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
                              $theCommandLine  = $theCommandLine." ".$opt;
                              $verbosityLevel  = 0;
-                             print "mkinstaller:    ...level is now $verbosityLevel\n" if $debugging;
+                             print STDERR "mkinstaller:    ...level is now $verbosityLevel\n" if $debugging;
                              last parseArgs;
                           };
 
                        /^--verbose([1-9][0-9]*)$/
 
                           && do {
-                             print "mkinstaller:    is $opt\n" if $debugging;
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
                              $theCommandLine  = $theCommandLine." ".$opt;
                              $verbosityLevel += $1;
-                             print "mkinstaller:    ...level is now $verbosityLevel\n" if $debugging;
+                             print STDERR "mkinstaller:    ...level is now $verbosityLevel\n" if $debugging;
                              last parseArgs;
                           };
 
@@ -1027,7 +1187,7 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                        /^.+$/
 
                           && do {
-                             print "mkinstaller:    is $opt\n" if $debugging;
+                             print STDERR "mkinstaller:    is $opt\n" if $debugging;
                              my $given       = unquote($opt);
                              $theCommandLine = $theCommandLine." ".quoteIfReqd($given);
                              if ( ! $followSymlinks) {
@@ -1046,7 +1206,7 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                                    print STDERR "mkinstaller: unexpected \"$given\"\n";
                                    exit 1;
                                 }
-                                print "mkinstaller:    ...a directory\n" if $debugging;
+                                print STDERR "mkinstaller:    ...a directory\n" if $debugging;
                                 my $bn                = basename($given);
                                 if ($bn =~ /\s/) {
                                    if ($bn eq $given) {
@@ -1058,16 +1218,16 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                                    exit 1;
                                 }
                                 if (($bn =~ /^bin$/i) or ($bn =~ /^lib$/i) or ($bn =~ /^include$/i)) {
-                                   print "mkinstaller:       has a standard basename(=$bn)\n" if $debugging;
+                                   print STDERR "mkinstaller:       has a standard basename(=$bn)\n" if $debugging;
                                    $givenStdNames    = 1;
                                 }
                                 else {
-                                   print "mkinstaller:       has a non-standard basename(=$bn)\n" if $debugging;
+                                   print STDERR "mkinstaller:       has a non-standard basename(=$bn)\n" if $debugging;
                                    $givenNonStdNames = 1;
                                 }
                                 $dirPathnames{$given} = $bn;
                                 if ( ! exists $dirBasenames{$bn}) {
-                                   print "mkinstaller:       new basename \"$bn\"\n" if $debugging;
+                                   print STDERR "mkinstaller:       new basename \"$bn\"\n" if $debugging;
                                    my $jdx                         = $#dirBasenames + 1;
                                    $dirBasenames[$jdx]             = $bn;
                                    $dirBasenames{$bn}{"pathnames"} = [ ];
@@ -1076,7 +1236,7 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                                    $dirBasenames{$bn}{"count"}     = 0;
                                 }
                                 else {
-                                   print "mkinstaller:       known basename \"$bn\"\n" if $debugging;
+                                   print STDERR "mkinstaller:       known basename \"$bn\"\n" if $debugging;
                                 }
                                 my $idx             = $#dirPathnames + 1;
                                 $dirPathnames[$idx] = $given;
@@ -1106,7 +1266,7 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                     }
       }
    }
-   print "mkinstaller: ...done\n" if $debugging;
+   print STDERR "mkinstaller: ...done\n" if $debugging;
 
    #----------------------------------------------------------------------------
    #
@@ -1114,7 +1274,7 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
    #
    #----------------------------------------------------------------------------
 
-   print "mkinstaller: deal with defaults...\n" if $debugging;
+   print STDERR "mkinstaller: deal with defaults...\n" if $debugging;
    {
       if ($dirPathnamesCount <= 0) {
          print STDERR "mkinstaller: expected at least 1 directory pathname\n";
@@ -1127,52 +1287,52 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
          }
       }
       if ($OSname eq "") {
-         print "mkinstaller: ...identify host OS\n" if $debugging;
+         print STDERR "mkinstaller: ...identify host OS\n" if $debugging;
          if ($OSclass eq "UNIX-like") {
-            print "mkinstaller:    is \"UNIX-like\"\n" if $debugging;
+            print STDERR "mkinstaller:    is \"UNIX-like\"\n" if $debugging;
             my $Sreturn = "";
             my $Rreturn = "";
             my $cmd     = "uname -s";
-            print "mkinstaller:    run [$cmd]\n" if $debugging;
+            print STDERR "mkinstaller:    run [$cmd]\n" if $debugging;
             my $gives   = `$cmd`;
             my $status  = $? >> 8; chomp $gives;
             chomp $gives;
             if ($status != 0) {
-               print "mkinstaller:    ...failed, exit code $status\n" if $debugging;
+               print STDERR "mkinstaller:    ...failed, exit code $status\n" if $debugging;
                $Sreturn = "";
             }
             else {
-               print "mkinstaller:    ...suceeded, giving \"$Sreturn\"\n" if $debugging;
+               print STDERR "mkinstaller:    ...suceeded, giving \"$Sreturn\"\n" if $debugging;
                $Sreturn = $gives;
             }
             $cmd        = "uname -r";
-            print "mkinstaller:    run [$cmd]\n" if $debugging;
+            print STDERR "mkinstaller:    run [$cmd]\n" if $debugging;
             $gives      = `$cmd`;
             my $status  = $? >> 8; chomp $gives;
             chomp $gives;
             if ($status != 0) {
-               print "mkinstaller:    ...failed, exit code $status\n" if $debugging;
+               print STDERR "mkinstaller:    ...failed, exit code $status\n" if $debugging;
                $Rreturn = "";
             }
             else {
-               print "mkinstaller:    ...suceeded, giving \"$Sreturn\"\n" if $debugging;
+               print STDERR "mkinstaller:    ...suceeded, giving \"$Sreturn\"\n" if $debugging;
                $Rreturn = $gives;
             }
             if ($Sreturn ne "") {
                if ($Rreturn ne "") {
                   $OSname = "$Sreturn $Rreturn";
-                  print "mkinstaller:    host OS = \"$OSname\"\n" if $debugging;
+                  print STDERR "mkinstaller:    host OS = \"$OSname\"\n" if $debugging;
                }
             }
          }
          elsif ($OSclass eq "Windows-like") {
-            print "mkinstaller:    is \"Windows-like\"\n" if $debugging;
+            print STDERR "mkinstaller:    is \"Windows-like\"\n" if $debugging;
             $OSname = "Windows";
          }
          else {
-            print "mkinstaller:    is neither \"UNIX\" nor \"Windows\" like\n" if $debugging;
+            print STDERR "mkinstaller:    is neither \"UNIX\" nor \"Windows\" like\n" if $debugging;
             print STDERR "mkinstaller: can't identify the class of host\n";
-            cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
+            cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
             exit 1;
          }
       }
@@ -1189,21 +1349,21 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
             $scriptName = "installer";
          }
       }
-      print "mkinstaller: ...done\n" if $debugging;
-      print "mkinstaller:    scriptName        = \"$scriptName\"\n" if $debugging;
+      print STDERR "mkinstaller: ...done\n" if $debugging;
+      print STDERR "mkinstaller:    scriptName        = \"$scriptName\"\n" if $debugging;
 
       $scriptNameU       = $scriptName;
       $scriptNameU       =~ tr/\x20-\x7f//cd;
       $scriptNameU       =~ tr/a-zA-Z0-9_/_/c;
-      print "mkinstaller:    scriptNameU       = \"$scriptNameU\"\n" if $debugging;
+      print STDERR "mkinstaller:    scriptNameU       = \"$scriptNameU\"\n" if $debugging;
 
       $SCRIPTNAME        = $scriptNameU;
       $SCRIPTNAME        =~ tr/a-z/A-Z/;
-      print "mkinstaller:    SCRIPTNAME        = \"$SCRIPTNAME\"\n" if $debugging;
+      print STDERR "mkinstaller:    SCRIPTNAME        = \"$SCRIPTNAME\"\n" if $debugging;
       $SCRIPTNAME_TMPDIR = $SCRIPTNAME."_TMPDIR";
-      print "mkinstaller:    SCRIPTNAME_TMPDIR = \"$SCRIPTNAME_TMPDIR\"\n" if $debugging;
+      print STDERR "mkinstaller:    SCRIPTNAME_TMPDIR = \"$SCRIPTNAME_TMPDIR\"\n" if $debugging;
    }
-   print "mkinstaller: ...done\n" if $debugging;
+   print STDERR "mkinstaller: ...done\n" if $debugging;
 
    #----------------------------------------------------------------------------
    #
@@ -1232,13 +1392,13 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
    #
    #----------------------------------------------------------------------------
 
-   print "mkinstaller: deal with (non)standard pathnames...\n" if $debugging;
+   print STDERR "mkinstaller: deal with (non)standard pathnames...\n" if $debugging;
    {
       if ($stdMode) {
          my $rebuilt = 0;
-         print "mkinstaller: ...operating in standard mode\n" if $debugging;
+         print STDERR "mkinstaller: ...operating in standard mode\n" if $debugging;
          if ( ! $givenStdNames) {
-            print "mkinstaller:    but given no pathnames with standard basenames\n" if $debugging;
+            print STDERR "mkinstaller:    but given no pathnames with standard basenames\n" if $debugging;
             if (1 <= $verbosityLevel) {
                print STDERR "mkinstaller: operating in \"standard\" mode but no \"standard basenames\"\n";
                if (2 <= $verbosityLevel) {
@@ -1254,17 +1414,17 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                for ($i=0; $i<=$#dirs; $i+=1) {
                   my $pathname = $dirs[$i];
                   if ($first) {
-                     print "mkinstaller:    ...\"$pathname\"\n" if $debugging;
+                     print STDERR "mkinstaller:    ...\"$pathname\"\n" if $debugging;
                      $first = 0;
                   }
                   else {
-                     print "mkinstaller:       \"$pathname\"\n" if $debugging;
+                     print STDERR "mkinstaller:       \"$pathname\"\n" if $debugging;
                   }
                   my $idx             = $#allPathnames + 1;
                   $allPathnames[$idx] = $pathname;
                }
             }
-            print "mkinstaller:    check each given directory pathname for subdirectories with standard basenames\n" if $debugging;
+            print STDERR "mkinstaller:    check each given directory pathname for subdirectories with standard basenames\n" if $debugging;
             my $changed       = 0;
             my $haveStdSubdir = 0;
             my @usePathnames  = ( );
@@ -1273,10 +1433,10 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                my $foundOne = 0;
                my $pathname = $allPathnames[$i];
                if ($i == 0) {
-                  print "mkinstaller:    ...\"$pathname\"\n" if $debugging;
+                  print STDERR "mkinstaller:    ...\"$pathname\"\n" if $debugging;
                }
                else {
-                  print "mkinstaller:       \"$pathname\"\n" if $debugging;
+                  print STDERR "mkinstaller:       \"$pathname\"\n" if $debugging;
                }
                if (opendir(DIR,"$pathname")) {
                   while (defined($tmpName1 = readdir(DIR))) {
@@ -1290,7 +1450,7 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                   closedir(DIR);
                }
                if ($foundOne) {
-                  print "mkinstaller:          has a subdir with a standard basename\n" if $debugging;
+                  print STDERR "mkinstaller:          has a subdir with a standard basename\n" if $debugging;
                   if (opendir(DIR,"$pathname")) {
                      while (defined($tmpName2 = readdir(DIR))) {
                         if (($tmpName2 ne "" ) && ($tmpName2 ne ".") && ($tmpName2 ne "..")) {
@@ -1317,7 +1477,7 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                   }
                }
                else {
-                  print "mkinstaller:          has no subdirs with a standard basename\n" if $debugging;
+                  print STDERR "mkinstaller:          has no subdirs with a standard basename\n" if $debugging;
                   my $idx             = $#usePathnames + 1;
                   $usePathnames[$idx] = $pathname;
                }
@@ -1326,18 +1486,18 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                if (1 <= $verbosityLevel) {
                   print STDERR "mkinstaller: ...rebuilding pathname list\n";
                }
-               print "mkinstaller:    changed directory pathname list\n" if $debugging;
+               print STDERR "mkinstaller:    changed directory pathname list\n" if $debugging;
                my $i;
                for ($i=0; $i<=$#usePathnames; $i+=1) {
                   my $pathname = $usePathnames[$i];
                   if ($i == 0) {
-                     print "mkinstaller:    ...\"$pathname\"\n" if $debugging;
+                     print STDERR "mkinstaller:    ...\"$pathname\"\n" if $debugging;
                   }
                   else {
-                     print "mkinstaller:       \"$pathname\"\n" if $debugging;
+                     print STDERR "mkinstaller:       \"$pathname\"\n" if $debugging;
                   }
                }
-               print "mkinstaller:    rebuild directory pathname hash and list\n" if $debugging;
+               print STDERR "mkinstaller:    rebuild directory pathname hash and list\n" if $debugging;
                $rebuilt           = 1;
                %dirBasenames      = ( );
                @dirBasenames      = ( );
@@ -1348,10 +1508,10 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                for ($i=0; $i<=$#usePathnames; $i+=1) {
                   my $pathname = $usePathnames[$i];
                   if ($i == 0) {
-                     print "mkinstaller:    ...\"$pathname\"\n" if $debugging;
+                     print STDERR "mkinstaller:    ...\"$pathname\"\n" if $debugging;
                   }
                   else {
-                     print "mkinstaller:       \"$pathname\"\n" if $debugging;
+                     print STDERR "mkinstaller:       \"$pathname\"\n" if $debugging;
                   }
                   my $bn       = basename($pathname);
                   if ($bn =~ /\s/) {
@@ -1364,16 +1524,16 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                      exit 1;
                   }
                   if (($bn =~ /^bin$/i) or ($bn =~ /^lib$/i) or ($bn =~ /^include$/i)) {
-                     print "mkinstaller:       has a standard basename(=$bn)\n" if $debugging;
+                     print STDERR "mkinstaller:       has a standard basename(=$bn)\n" if $debugging;
                      $givenStdNames    = 1;
                   }
                   else {
-                     print "mkinstaller:       has a non-standard basename(=$bn)\n" if $debugging;
+                     print STDERR "mkinstaller:       has a non-standard basename(=$bn)\n" if $debugging;
                      $givenNonStdNames = 1;
                   }
                   $dirPathnames{$pathname} = $bn;
                   if ( ! exists $dirBasenames{$bn}) {
-                     print "mkinstaller:       new basename \"$bn\"\n" if $debugging;
+                     print STDERR "mkinstaller:       new basename \"$bn\"\n" if $debugging;
                      my $jdx                         = $#dirBasenames + 1;
                      $dirBasenames[$jdx]             = $bn;
                      $dirBasenames{$bn}{"pathnames"} = [ ];
@@ -1382,7 +1542,7 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                      $dirBasenames{$bn}{"count"}     = 0;
                   }
                   else {
-                     print "mkinstaller:       known basename \"$bn\"\n" if $debugging;
+                     print STDERR "mkinstaller:       known basename \"$bn\"\n" if $debugging;
                   }
                   my $idx             = $#dirPathnames + 1;
                   $dirPathnames[$idx] = $pathname;
@@ -1429,82 +1589,131 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
             }
          }
          else {
-            print "mkinstaller:    given pathnames with standard basenames\n" if $debugging;
+            print STDERR "mkinstaller:    given pathnames with standard basenames\n" if $debugging;
             if ($givenNonStdNames) {
-               print "mkinstaller:    ...and given pathnames with non-standard basenames\n" if $debugging;
+               print STDERR "mkinstaller:    ...and given pathnames with non-standard basenames\n" if $debugging;
             }
          }
       }
       else {
-         print "mkinstaller: ...operating in nonstandard mode\n" if $debugging;
+         print STDERR "mkinstaller: ...operating in nonstandard mode\n" if $debugging;
       }
    }
-   print "mkinstaller: ...done\n" if $debugging;
+   print STDERR "mkinstaller: ...done\n" if $debugging;
 
    #----------------------------------------------------------------------------
    #
-   #  Read to go to work...
+   #  Ready to go to work...
    #
    #----------------------------------------------------------------------------
 
-   if (1 <= $verbosityLevel) {
-      print STDERR "mkinstaller: on to the real work\n";
+   #------------------------------------
+   #
+   #  Deal with pre-install script...
+   #
+   #------------------------------------
+
+   if ($preInstallPathname ne "") {
+      print STDERR "mkinstaller: check the pre-install script\n" if $debugging;
+      if ( ! -f $preInstallPathname) {
+         print STDERR "mkinstaller: can't find pre-install script \"$preInstallPathname\"\n";
+         exit 1;
+      }
+      my $ok = 0;
+      if ($preInstallStyle eq "binary") {
+         $ok = 1;
+      }
+      elsif ($preInstallStyle eq "perl") {
+         $ok = 1;
+      }
+      elsif ($preInstallStyle eq "python") {
+         $ok = 1;
+      }
+      elsif ($preInstallStyle eq "sh") {
+         $ok = 1;
+      }
+      if ( ! $ok) {
+         print STDERR "mkinstaller: invalid pre-install style(=\"$preInstallStyle\")\n";
+         exit 1;
+      }
+      my $sbn = basename($preInstallPathname);
+      foreach $bn (sort keys %dirBasenames) {
+         if ($bn eq $sbn) {
+            print STDERR "mkinstaller: name of pre-install script \"$preInstallPathname\" collides with basename of:\n";
+            my @dirs = @{ $dirBasenames{$bn}{"pathnames"} };
+            my $i;
+            for ($i=0; $i<=$#dirs; $i+=1) {
+               my $pathname = $dirs[$i];
+               if ($i == 0) {
+                  print STDERR "mkinstaller: ...\"$pathname\"\n";
+               }
+               else {
+                  print STDERR "mkinstaller:    \"$pathname\"\n";
+               }
+            }
+            exit 1;
+         }
+      }
+      print STDERR "mkinstaller: ...done\n" if $debugging;
+   }
+   else {
+      print STDERR "mkinstaller: no pre-install script\n" if $debugging;
+      $preInstallStyle = "";
    }
 
-   #----------------------------------------------------------------------------
+   #------------------------------------
    #
    #  Deal with post-install script...
    #
-   #----------------------------------------------------------------------------
+   #------------------------------------
 
-   print "mkinstaller: check the post-install script (if any)\n" if $debugging;
-   {
-      if ($postInstallPathname ne "") {
-         if ( ! -f $postInstallPathname) {
-            print STDERR "mkinstaller: can't find post-install script \"$postInstallPathname\"\n";
-            exit 1;
-         }
-         my $ok = 0;
-         if ($postInstallStyle eq "binary") {
-            $ok = 1;
-         }
-         elsif ($postInstallStyle eq "perl") {
-            $ok = 1;
-         }
-         elsif ($postInstallStyle eq "python") {
-            $ok = 1;
-         }
-         elsif ($postInstallStyle eq "sh") {
-            $ok = 1;
-         }
-         if ( ! $ok) {
-            print STDERR "mkinstaller: invalid post-install style(=\"$postInstallStyle\")\n";
-            exit 1;
-         }
-         my $sbn = basename($postInstallPathname);
-         foreach $bn (sort keys %dirBasenames) {
-            if ($bn eq $sbn) {
-               print STDERR "mkinstaller: name of post-install script \"$postInstallPathname\" collides with basename of:\n";
-               my @dirs = @{ $dirBasenames{$bn}{"pathnames"} };
-               my $i;
-               for ($i=0; $i<=$#dirs; $i+=1) {
-                  my $pathname = $dirs[$i];
-                  if ($i == 0) {
-                     print STDERR "mkinstaller: ...\"$pathname\"\n";
-                  }
-                  else {
-                     print STDERR "mkinstaller:    \"$pathname\"\n";
-                  }
+   if ($postInstallPathname ne "") {
+      print STDERR "mkinstaller: check the post-install script\n" if $debugging;
+      if ( ! -f $postInstallPathname) {
+         print STDERR "mkinstaller: can't find post-install script \"$postInstallPathname\"\n";
+         exit 1;
+      }
+      my $ok = 0;
+      if ($postInstallStyle eq "binary") {
+         $ok = 1;
+      }
+      elsif ($postInstallStyle eq "perl") {
+         $ok = 1;
+      }
+      elsif ($postInstallStyle eq "python") {
+         $ok = 1;
+      }
+      elsif ($postInstallStyle eq "sh") {
+         $ok = 1;
+      }
+      if ( ! $ok) {
+         print STDERR "mkinstaller: invalid post-install style(=\"$postInstallStyle\")\n";
+         exit 1;
+      }
+      my $sbn = basename($postInstallPathname);
+      foreach $bn (sort keys %dirBasenames) {
+         if ($bn eq $sbn) {
+            print STDERR "mkinstaller: name of post-install script \"$postInstallPathname\" collides with basename of:\n";
+            my @dirs = @{ $dirBasenames{$bn}{"pathnames"} };
+            my $i;
+            for ($i=0; $i<=$#dirs; $i+=1) {
+               my $pathname = $dirs[$i];
+               if ($i == 0) {
+                  print STDERR "mkinstaller: ...\"$pathname\"\n";
                }
-               exit 1;
+               else {
+                  print STDERR "mkinstaller:    \"$pathname\"\n";
+               }
             }
+            exit 1;
          }
       }
-      else {
-         $postInstallStyle = "";
-      }
+      print STDERR "mkinstaller: ...done\n" if $debugging;
    }
-   print "mkinstaller: ...done\n" if $debugging;
+   else {
+      print STDERR "mkinstaller: no post-install script\n" if $debugging;
+      $postInstallStyle = "";
+   }
 
    #---------------------------------------
    #
@@ -1513,7 +1722,7 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
    #
    #---------------------------------------
 
-   print "mkinstaller: prepare help title...\n" if $debugging;
+   print STDERR "mkinstaller: prepare help title...\n" if $debugging;
    {
       my $gapString  = "   ";
       $titleLine     = $scriptName."(1x)".$gapString.$scriptName."(1x)";
@@ -1523,10 +1732,10 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
          $titleLine  = $scriptName."(1x)".$gapString.$scriptName."(1x)";
          $LtitleLine = length $titleLine;
       }
-      print "mkinstaller:    [--------------------------------------------------------------------------------]\n" if $debugging;
-      print "mkinstaller:    [".$titleLine."]\n" if $debugging;
+      print STDERR "mkinstaller:    [--------------------------------------------------------------------------------]\n" if $debugging;
+      print STDERR "mkinstaller:    [".$titleLine."]\n" if $debugging;
    }
-   print "mkinstaller: ...done\n" if $debugging;
+   print STDERR "mkinstaller: ...done\n" if $debugging;
 
    #---------------------------------------
    #
@@ -1536,58 +1745,69 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
    #
    #---------------------------------------
 
-   print "mkinstaller: prepare project name version string for help...\n" if $debugging;
+   print STDERR "mkinstaller: prepare project name version string for help...\n" if $debugging;
    {
       if ($ProjectName ne "") {
-         print "mkinstaller: ...project name    = [$ProjectName]\n" if $debugging;
+         print STDERR "mkinstaller: ...project name    = [$ProjectName]\n" if $debugging;
          if ($ProjectVer ne "") {
-            print "mkinstaller: ...project version = [$ProjectVer]\n" if $debugging;
+            print STDERR "mkinstaller: ...project version = [$ProjectVer]\n" if $debugging;
             $ForProject = " for ".$ProjectName." ver. ".$ProjectVer;
          }
          else {
             $ForProject = " for ".$ProjectName;
-            print "mkinstaller: ...no project version\n" if $debugging;
+            print STDERR "mkinstaller: ...no project version\n" if $debugging;
          }
       }
       else {
-         print "mkinstaller: ...no project name\n" if $debugging;
+         print STDERR "mkinstaller: ...no project name\n" if $debugging;
          $ForProject = "";
       }
-      print "mkinstaller:    [".$ForProject."]\n" if $debugging;
+      print STDERR "mkinstaller:    [".$ForProject."]\n" if $debugging;
    }
-   print "mkinstaller: ...done\n" if $debugging;
+   print STDERR "mkinstaller: ...done\n" if $debugging;
 
    #----------------------------------------------------------------------------
    #
    #  Locate a directory for temporaries...
    #
-   #  Intents: TmpDirI -- Individual directories (such as bin/) are tar'd-up
-   #                      from their given site into TmpDirI.
+   #  Intents: TmpDir  -- The top-level temp directory as supplied by the
+   #                      environment. This directory will not be deleted.
+   #
+   #           TmpDirT -- The top-level directory specific to this run of
+   #                      the mkinstaller script. It will be deleted when
+   #                      this run is completed (unless the --keep option is
+   #                      specified).
+   #
+   #           TmpDirI -- Individual directories (such as bin/) are tar'd-up
+   #                      from their given site into TmpDirI. Are sub-
+   #                      directories of $TmpDirT
    #           TmpDirA -- The tarball (bin.tar.gz) is then expanded from the
    #                      into the accumulator directory TmpDirA (overlaying
    #                      what may be there). The tarball in TmpDirI may then
-   #                      be deleted.
+   #                      be deleted. Is a sub-directory of $TmpDirT
    #
    #           TmpDirW -- The directories (such as bin/) in the accumulator
    #                      directory TmpDirA are then tar'd up in to the wrapper
    #                      directory TmpDirW which is eventually tar'd up as the
-   #                      collective payload (wrapper.tar).
+   #                      collective payload (wrapper.tar). Is a sub-directory
+   #                      of $TmpDirT
+   #
    #           TmpFile -- The partially built installer script. To be joined
    #                      with the collective payload to form the installer
    #                      script.
    #
    #----------------------------------------------------------------------------
 
-   print "mkinstaller: identify temp directory...\n" if $debugging;
+   print STDERR "mkinstaller: identify temp directory...\n" if $debugging;
    if ($TmpDir eq "") {
       if ( exists $ENV{'MKINSTALLER_TMPDIR'} ) {
          my $TryTmp = $ENV{'MKINSTALLER_TMPDIR'};
-         print "mkinstaller: ...MKINSTALLER_TMPDIR gave \"$TmpDir\"\n" if $debugging;
+         print STDERR "mkinstaller: ...MKINSTALLER_TMPDIR gave \"$TmpDir\"\n" if $debugging;
          if ( -d $TryTmp) {
             $TmpDir = $TryTmp;
          }
          else {
-            print "mkinstaller:    which is not a valid directory\n" if $debugging;
+            print STDERR "mkinstaller:    which is not a valid directory\n" if $debugging;
          }
       }
    }
@@ -1598,19 +1818,19 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
          exit 1;
       }
    }
-   print "mkinstaller: ...done\n" if $debugging;
+   print STDERR "mkinstaller: ...done\n" if $debugging;
    $TmpDir  = absname($TmpDir);
-   print "mkinstaller:    use: \"$TmpDir\"\n" if $debugging;
+   print STDERR "mkinstaller:    use: \"$TmpDir\"\n" if $debugging;
    $TmpDirT = "$TmpDir/mki.$$";
-   print "mkinstaller:         \"$TmpDirT\"\n" if $debugging;
+   print STDERR "mkinstaller:         \"$TmpDirT\"\n" if $debugging;
    $TmpDirA = "$TmpDirT/accumulator";
-   print "mkinstaller:         \"$TmpDirA\"\n" if $debugging;
+   print STDERR "mkinstaller:         \"$TmpDirA\"\n" if $debugging;
    $TmpDirI = "$TmpDirT/initial";
-   print "mkinstaller:         \"$TmpDirI\"\n" if $debugging;
+   print STDERR "mkinstaller:         \"$TmpDirI\"\n" if $debugging;
    $TmpDirW = "$TmpDirT/wrapper";
-   print "mkinstaller:         \"$TmpDirW\"\n" if $debugging;
+   print STDERR "mkinstaller:         \"$TmpDirW\"\n" if $debugging;
    $TmpFile = "$TmpDirT/script.tmp";
-   print "mkinstaller:         \"$TmpFile\"\n" if $debugging;
+   print STDERR "mkinstaller:         \"$TmpFile\"\n" if $debugging;
 
    #---------------------------------------
    #
@@ -1618,9 +1838,9 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
    #
    #---------------------------------------
 
-   print "mkinstaller: prepare temporary directories...\n" if $debugging;
+   print STDERR "mkinstaller: prepare temporary directories...\n" if $debugging;
    {
-      print "mkinstaller: ...check for \"$TmpDirT\"\n" if $debugging;
+      print STDERR "mkinstaller: ...check for \"$TmpDirT\"\n" if $debugging;
       if ( -l $TmpDirT) {
          print STDERR "mkinstaller: \"$TmpDirT\" already exists\n";
          if ( -e $TmpDirT) {
@@ -1629,7 +1849,7 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
          else {
             print STDERR "mkinstaller: ...as a broken symbolic-link\n";
          }
-         cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
+         cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
          exit 1;
       }
       if ( -e $TmpDirT) {
@@ -1640,35 +1860,39 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
          elsif ( -f $TmpDirT) {
             print STDERR "mkinstaller: ...as a file\n";
          }
-         cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
+         cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
          exit 1;
       }
-      print "mkinstaller: ...create \"$TmpDirT\"\n" if $debugging;
+      print STDERR "mkinstaller: ...create \"$TmpDirT\"\n" if $debugging;
       if ( ! mkDirectory($TmpDirT,1)) {
          print STDERR "mkinstaller: can't create new \"$TmpDirT\" directory\n";
-         cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
+         cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
          exit 1;
       }
-      print "mkinstaller: ...create \"$TmpDirA\"\n" if $debugging;
+      print STDERR "mkinstaller: ...create \"$TmpDirA\"\n" if $debugging;
       if ( ! mkDirectory($TmpDirA,1)) {
          print STDERR "mkinstaller: can't create new \"$TmpDirA\" directory\n";
-         cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
+         cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
          exit 1;
       }
-      print "mkinstaller: ...create \"$TmpDirI\"\n" if $debugging;
+      print STDERR "mkinstaller: ...create \"$TmpDirI\"\n" if $debugging;
       if ( ! mkDirectory($TmpDirI,1)) {
          print STDERR "mkinstaller: can't create new \"$TmpDirI\" directory\n";
-         cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
+         cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
          exit 1;
       }
-      print "mkinstaller: ...create \"$TmpDirW\"\n" if $debugging;
+      print STDERR "mkinstaller: ...create \"$TmpDirW\"\n" if $debugging;
       if ( ! mkDirectory($TmpDirW,1)) {
          print STDERR "mkinstaller: can't create new \"$TmpDirW\" directory\n";
-         cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
+         cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
          exit 1;
       }
+      if (1 <= $verbosityLevel) {
+         print STDERR "mkinstaller: ...location for temporaries is \"".$TmpDir."\"\n";
+         print STDERR "mkinstaller:       my top temp directory is \"".$TmpDirT."\"\n";
+      }
    }
-   print "mkinstaller: ...done\n" if $debugging;
+   print STDERR "mkinstaller: ...done\n" if $debugging;
 
    #============================================================================
 
@@ -1680,14 +1904,14 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
       #
       #  The installer script to be generated will be a self-extracting Bourne-
       #  shell script. The payload is a tar file containing one or more tarballs
-      #  (compressed tar files) and an optional post-install script.
+      #  (compressed tar files) and an optional pre- and/or post-install scripts.
       #
       #  This section of the mkinstaller script is devoted to forming the
       #  tarballs and building the script (plus adding the tarball).
       #
       #=========================================================================
 
-      print "mkinstaller: working on a \"$OSclass\" host\n" if $debugging;
+      print STDERR "mkinstaller: working on a \"$OSclass\" host\n" if $debugging;
 
       #---------------------------------------
       #
@@ -1695,14 +1919,14 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
       #
       #---------------------------------------
 
-      print "mkinstaller: locate required \"tar\" utility...\n" if $debugging;
+      print STDERR "mkinstaller: locate required \"tar\" utility...\n" if $debugging;
       $use_tar = lookForExecutable("tar",\@myPath,$OSclass);
       if ($use_tar eq "") {
          print STDERR "mkinstaller: can't locate required \"tar\" utility\n";
-         cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
+         cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
          exit 1;
       }
-      print "mkinstaller: ...\"$use_tar\"\n" if $debugging;
+      print STDERR "mkinstaller: ...\"$use_tar\"\n" if $debugging;
       print STDERR "mkinstaller: ...using \"$use_tar\"\n" if (1 <= $verbosityLevel);
 
       #---------------------------------------
@@ -1711,9 +1935,10 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
       #
       #---------------------------------------
 
-      print "mkinstaller: cleanup existing script...\n" if $debugging;
+      print STDERR "mkinstaller: cleanup existing script...\n" if $debugging;
       {
-         print STDERR "mkinstaller: ...initial cleanup\n" if (1 <= $verbosityLevel);
+         my $Tstart = time();
+         print STDERR "mkinstaller: initial cleanup\n" if (1 <= $verbosityLevel);
          if ( -l "$here/$scriptName") {
             if ( -e "$here/$scriptName") {
                print STDERR "mkinstaller: \"$here/$scriptName\" is a symbolic-link not a file\n";
@@ -1721,32 +1946,47 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
             else {
                print STDERR "mkinstaller: \"$here/$scriptName\" is a broken symbolic-link not a file\n";
             }
-            cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
+            cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
             exit 1;
          }
          elsif ( -f "$here/$scriptName") {
-            print STDERR "mkinstaller:    destroy existing \"$here/$scriptName\" script\n" if (1 <= $verbosityLevel);
+            print STDERR "mkinstaller: ...destroy existing \"$here/$scriptName\" script\n" if (2 <= $verbosityLevel);
             my $Ndeleted = unlink "$here/$scriptName";
             if ($Ndeleted < 1) {
                print STDERR "mkinstaller: can't destroy existing \"$here/$scriptName\" file\n";
-               cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
+               cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                exit 1;
             }
             if ( -f "$here/$scriptName") {
                print STDERR "mkinstaller: didn't destroy existing \"$here/$scriptName\" file\n";
-               cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
+               cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                exit 1;
             }
-            print STDERR "mkinstaller:    ...done\n" if (2 <= $verbosityLevel);
+            print STDERR "mkinstaller:    done\n" if (3 <= $verbosityLevel);
          }
          elsif ( -e "$here/$scriptName") {
             print STDERR "mkinstaller: existing \"$here/$scriptName\" is not a file\n";
-            cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
+            cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
             exit 1;
          }
-         print STDERR "mkinstaller:    done\n" if (2 <= $verbosityLevel);
+         my $Tend = time();
+         my $dT   = $Tend - $Tstart;
+         if (0 <= $dT) {
+            if ($dT == 0) {
+               print STDERR "mkinstaller: ...done (in <1 second)\n" if (2 <= $verbosityLevel);
+            }
+            elsif ($dT == 0) {
+               print STDERR "mkinstaller: ...done (in $dT second)\n" if (2 <= $verbosityLevel);
+            }
+            else {
+               print STDERR "mkinstaller: ...done (in $dT seconds)\n" if (2 <= $verbosityLevel);
+            }
+         }
+         else {
+            print STDERR "mkinstaller: ...done\n" if (2 <= $verbosityLevel);
+         }
       }
-      print "mkinstaller: ...done\n" if $debugging;
+      print STDERR "mkinstaller: ...done\n" if $debugging;
 
       #---------------------------------------
       #
@@ -1760,60 +2000,66 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
       #
       #---------------------------------------
 
-      print "mkinstaller: process given directories...\n" if $debugging;
-      print "mkinstaller: ...first tarup to $TmpDirI directory...\n" if $debugging;
-      print "mkinstaller:    then untar to $TmpDirA directory (to merge)\n" if $debugging;
+      print STDERR "mkinstaller: process given directories...\n" if $debugging;
+      print STDERR "mkinstaller: ...first tarup to $TmpDirI directory...\n" if $debugging;
+      print STDERR "mkinstaller:    then untar to $TmpDirA directory (to merge)\n" if $debugging;
       {
          my $bn;
          foreach $bn (sort keys %dirBasenames) {
+            my $Tstart = time();
             print STDERR "mkinstaller: working \"$bn\"\n" if (1 <= $verbosityLevel);
             my @dirs = @{ $dirBasenames{$bn}{"pathnames"} };
             my $i;
             for ($i=0; $i<=$#dirs; $i+=1) {
                my $pathname = $dirs[$i];
-               print "mkinstaller: ...\"$pathname\"\n" if $debugging;
-               print STDERR "mkinstaller: ...\"$pathname\"\n" if (1 <= $verbosityLevel);
+               print STDERR "mkinstaller: ...\"$pathname\"\n" if $debugging;
+               if ($i == 0) {
+                  print STDERR "mkinstaller: ...\"$pathname\"\n" if (2 <= $verbosityLevel);
+               }
+               else {
+                  print STDERR "mkinstaller:    \"$pathname\"\n" if (2 <= $verbosityLevel);
+               }
                my $dn       = dirname($pathname);
                my $bn       = basename($pathname);
                if ( ! chdir($dn)) {
                   print STDERR "mkinstaller: can't cd into \"$dn\"\n";
-                  cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
+                  cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                   exit 1;
                }
                {
                   #
                   #  First tar it up in to the individual tarball directory TmpDirI
                   #
-                  print "mkinstaller:    tarup \"$dn/$bn\" to form \"$TmpDirI/$bn.tar.gz\"\n" if $debugging;
+                  print STDERR "mkinstaller:    tarup \"$dn/$bn\" to form \"$TmpDirI/$bn.tar.gz\"\n" if $debugging;
                   my $cmd    = "\"$use_tar\" -czf \"$TmpDirI/$bn.tar.gz\" \"$bn\"";
-                  print "mkinstaller:    ...run [$cmd]\n" if $debugging;
+                  print STDERR "mkinstaller:    ...run [$cmd]\n" if $debugging;
                   my $status = system "$cmd >$devNull 2>&1";
                   if ($status != 0) {
-                     print "mkinstaller:       failed, exit code $status\n" if $debugging;
+                     print STDERR "mkinstaller:       failed, exit code $status\n" if $debugging;
                      print STDERR "mkinstaller: can't tarup \"$bn\"\n";
                      print STDERR "mkinstaller: ...[$cmd] failed, returning exit code $status\n";
                      print STDERR "mkinstaller:    was done from in \"$dn\"\n";
-                     cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
+                     cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                      exit 1;
                   }
-                  print "mkinstaller:       succeeded\n" if $debugging;
+                  print STDERR "mkinstaller:       succeeded\n" if $debugging;
                   if ( ! -f "$TmpDirI/$bn.tar.gz") {
                      print STDERR "mkinstaller: didn't tarup \"$bn\"\n";
                      print STDERR "mkinstaller: ...[$cmd] failed\n";
                      print STDERR "mkinstaller:    was done from in \"$dn\"\n";
                      print STDERR "mkinstaller: ...can't find \"$TmpDirI/$bn.tar.gz\"\n";
-                     cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
+                     cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                      exit 1;
                   }
                }
                if ( ! chdir($here)) {
                   print STDERR "mkinstaller: can't cd back to \"$here\"\n";
-                  cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
+                  cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                   exit 1;
                }
                if ( ! chdir($TmpDirA)) {
                   print STDERR "mkinstaller: can't cd into \"$TmpDirA\"\n";
-                  cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
+                  cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                   exit 1;
                }
                {
@@ -1822,96 +2068,171 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
                   #  directory in to the accumulator directory TmpDirA
                   #
                   my $cmd    = "\"$use_tar\" -xzf \"$TmpDirI/$bn.tar.gz\"";
-                  print "mkinstaller:    run [$cmd]\n" if $debugging;
+                  print STDERR "mkinstaller:    run [$cmd]\n" if $debugging;
                   my $status = system "$cmd >$devNull 2>&1";
                   if ($status != 0) {
-                     print "mkinstaller:    ...failed, exit code $status\n" if $debugging;
+                     print STDERR "mkinstaller:    ...failed, exit code $status\n" if $debugging;
                      print STDERR "mkinstaller: can't tarup \"$bn\"\n";
                      print STDERR "mkinstaller: ...[$cmd] failed, returning exit code $status\n";
                      print STDERR "mkinstaller:    was done from in \"$TmpDirA\"\n";
-                     cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
+                     cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                      exit 1;
                   }
-                  print "mkinstaller:    ...succeeded\n" if $debugging;
+                  print STDERR "mkinstaller:    ...succeeded\n" if $debugging;
                   if ( ! -d "$TmpDirA/$bn") {
                      print STDERR "mkinstaller: didn't untar \"$bn\"\n";
                      print STDERR "mkinstaller: ...[$cmd] failed\n";
                      print STDERR "mkinstaller: ...can't find \"$TmpDirA/$bn\"\n";
                      print STDERR "mkinstaller:    was done from in \"$TmpDirA\"\n";
-                     cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
+                     cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                      exit 1;
                   }
                   if ( -f "$TmpDirI/$bn.tar.gz") {
                      if ( ! unlink("$TmpDirI/$bn.tar.gz")) {
                         print STDERR "mkinstaller: can't delete \"$TmpDirI/$bn.tar.gz\"\n";
-                        cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
+                        cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                         exit 1;
                      }
                      if ( -f "$TmpDirI/$bn.tar.gz") {
                         print STDERR "mkinstaller: didn't delete \"$TmpDirI/$bn.tar.gz\"\n";
-                        cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
+                        cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                         exit 1;
                      }
                   }
                }
                if ( ! chdir($here)) {
                   print STDERR "mkinstaller: can't cd back to \"$here\"\n";
-                  cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
+                  cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                   exit 1;
                }
-               print STDERR "mkinstaller:    done\n" if (2 <= $verbosityLevel);
             }
-            print STDERR "mkinstaller: ...done\n" if (2 <= $verbosityLevel);
+            my $Tend = time();
+            my $dT   = $Tend - $Tstart;
+            if (0 <= $dT) {
+               if ($dT == 0) {
+                  print STDERR "mkinstaller: ...done (in <1 second)\n" if (3 <= $verbosityLevel);
+               }
+               elsif ($dT == 1) {
+                  print STDERR "mkinstaller: ...done (in $dT second)\n" if (3 <= $verbosityLevel);
+               }
+               else {
+                  print STDERR "mkinstaller: ...done (in $dT seconds)\n" if (3 <= $verbosityLevel);
+               }
+            }
+            else {
+               print STDERR "mkinstaller: ...done\n" if (3 <= $verbosityLevel);
+            }
          }
          #
          #  The merging process is done, now tarup the merged individual
          #  directories from the accumulator directory in to the wrapper
          #  directory TmpDirW
          #
-         print "mkinstaller: ...tarup the individual directories into the wrapper directory\n" if $debugging;
+         print STDERR "mkinstaller: ...tarup the individual directories into the wrapper directory\n" if $debugging;
          if ( ! chdir($TmpDirA)) {
             print STDERR "mkinstaller: can't cd into \"$TmpDirA\"\n";
-            cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
+            cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
             exit 1;
          }
          {
             my $bn;
             foreach $bn (sort keys %dirBasenames) {
-               print "mkinstaller:    \"$bn\"\n" if $debugging;
+               print STDERR "mkinstaller:    \"$bn\"\n" if $debugging;
                if ( ! -d $bn) {
                   print STDERR "mkinstaller: can't find \"$TmpDirA/$bn\"\n";
-                  cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
+                  cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                   exit 1;
                }
                my $cmd    = "\"$use_tar\" -czf \"$TmpDirW/$bn.tar.gz\" \"$bn\"";
-               print "mkinstaller:    ...run [$cmd]\n" if $debugging;
+               print STDERR "mkinstaller:    ...run [$cmd]\n" if $debugging;
                my $status = system "$cmd >$devNull 2>&1";
                if ($status != 0) {
-                  print "mkinstaller:       failed, exit code $status\n" if $debugging;
+                  print STDERR "mkinstaller:       failed, exit code $status\n" if $debugging;
                   print STDERR "mkinstaller: can't tarup \"$bn\"\n";
                   print STDERR "mkinstaller: ...[$cmd] failed, returning exit code $status\n";
                   print STDERR "mkinstaller:    was done from in \"$TmpDirA\"\n";
-                  cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
+                  cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                   exit 1;
                }
-               print "mkinstaller:       succeeded\n" if $debugging;
+               print STDERR "mkinstaller:       succeeded\n" if $debugging;
                if ( ! -f "$TmpDirW/$bn.tar.gz") {
                   print STDERR "mkinstaller: didn't tarup \"$bn\"\n";
                   print STDERR "mkinstaller: ...[$cmd] failed\n";
                   print STDERR "mkinstaller: ...can't find \"$TmpDirW/$bn.tar.gz\"\n";
                   print STDERR "mkinstaller:    was done from in \"$TmpDirA\"\n";
-                  cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
+                  cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                   exit 1;
                }
             }
          }
          if ( ! chdir($here)) {
             print STDERR "mkinstaller: can't cd back to \"$here\"\n";
-            cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
+            cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
             exit 1;
          }
       }
-      print "mkinstaller: ...done\n" if $debugging;
+      print STDERR "mkinstaller: ...done\n" if $debugging;
+
+      #---------------------------------------
+      #
+      #  Add the given pre-install script (if
+      #  any) to the wrapper directory.
+      #
+      #---------------------------------------
+
+      if ($preInstallPathname ne "") {
+         if ( -f $preInstallPathname) {
+            my $Tstart = time();
+            print "mkinstaller: working \"$preInstallPathname\" (a $preInstallStyle pre-install script)\n" if (1 <= $verbosityLevel);
+            print STDERR "mkinstaller: add \"$preInstallPathname \" wrapper directory...\n" if $debugging;
+            my $bn     = basename($preInstallPathname);
+            my $cmd    = "cp -p \"$preInstallPathname\" \"$TmpDirW/$bn\"";
+            print STDERR "mkinstaller: ...run [$cmd]\n" if $debugging;
+            my $status = system "$cmd >$devNull 2>&1";
+            if ($status != 0) {
+               print STDERR "mkinstaller:    failed, exit code $status\n" if $debugging;
+               print STDERR "mkinstaller: can't add pre-install script to wrapper directory\n";
+               print STDERR "mkinstaller: ...[$cmd] failed, returning exit code $status\n";
+               print STDERR "mkinstaller:    was done from in \"$here\"\n";
+               cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
+               exit 1;
+            }
+            else {
+               print STDERR "mkinstaller:    succeeded\n" if $debugging;
+               if ( ! -f "$TmpDirW/$bn") {
+                  print STDERR "mkinstaller: didn't add pre-install script to wrapper directory\n";
+                  print STDERR "mkinstaller: ...[$cmd] failed\n";
+                  print STDERR "mkinstaller: ...can't find \"$TmpDirW/$bn\"\n";
+                  print STDERR "mkinstaller:    was done from in \"$here\"\n";
+                  cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
+                  exit 1;
+               }
+            }
+            print STDERR "mkinstaller: ...done\n" if $debugging;
+            my $Tend = time();
+            my $dT   = $Tend - $Tstart;
+            if (0 <= $dT) {
+               if ($dT == 0) {
+                  print "mkinstaller: ...done (in <1 second)\n" if (3 <= $verbosityLevel);
+               }
+               elsif ($dT == 1) {
+                  print "mkinstaller: ...done (in $dT second)\n" if (3 <= $verbosityLevel);
+               }
+               else {
+                  print "mkinstaller: ...done (in $dT seconds)\n" if (3 <= $verbosityLevel);
+               }
+            }
+            else {
+               print "mkinstaller: ...done\n" if (3 <= $verbosityLevel);
+            }
+         }
+         else {
+            print "mkinstaller: can't find \"$preInstallPathname\"\n" if (1 <= $verbosityLevel);
+         }
+      }
+      else {
+         print "mkinstaller: no pre-install script\n" if (1 <= $verbosityLevel);
+      }
 
       #---------------------------------------
       #
@@ -1921,31 +2242,57 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
       #---------------------------------------
 
       if ($postInstallPathname ne "") {
-         print "mkinstaller: add \"$postInstallPathname \" wrapper directory...\n" if $debugging;
-         my $bn     = basename($postInstallPathname);
-         my $cmd    = "cp -p \"$postInstallPathname\" \"$TmpDirW/$bn\"";
-         print "mkinstaller: ...run [$cmd]\n" if $debugging;
-         my $status = system "$cmd >$devNull 2>&1";
-         if ($status != 0) {
-            print "mkinstaller:    failed, exit code $status\n" if $debugging;
-            print STDERR "mkinstaller: can't add post-install script to wrapper directory\n";
-            print STDERR "mkinstaller: ...[$cmd] failed, returning exit code $status\n";
-            print STDERR "mkinstaller:    was done from in \"$here\"\n";
-            cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
-            exit 1;
-         }
-         else {
-            print "mkinstaller:    succeeded\n" if $debugging;
-            if ( ! -f "$TmpDirW/$bn") {
-               print STDERR "mkinstaller: didn't add post-install script to wrapper directory\n";
-               print STDERR "mkinstaller: ...[$cmd] failed\n";
-               print STDERR "mkinstaller: ...can't find \"$TmpDirW/$bn\"\n";
+         if ( -f $postInstallPathname) {
+            my $Tstart = time();
+            print "mkinstaller: working \"$postInstallPathname\" (a $postInstallStyle post-install script)\n" if (1 <= $verbosityLevel);
+            print STDERR "mkinstaller: add \"$postInstallPathname \" wrapper directory...\n" if $debugging;
+            my $bn     = basename($postInstallPathname);
+            my $cmd    = "cp -p \"$postInstallPathname\" \"$TmpDirW/$bn\"";
+            print STDERR "mkinstaller: ...run [$cmd]\n" if $debugging;
+            my $status = system "$cmd >$devNull 2>&1";
+            if ($status != 0) {
+               print STDERR "mkinstaller:    failed, exit code $status\n" if $debugging;
+               print STDERR "mkinstaller: can't add post-install script to wrapper directory\n";
+               print STDERR "mkinstaller: ...[$cmd] failed, returning exit code $status\n";
                print STDERR "mkinstaller:    was done from in \"$here\"\n";
-               cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
+               cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                exit 1;
             }
+            else {
+               print STDERR "mkinstaller:    succeeded\n" if $debugging;
+               if ( ! -f "$TmpDirW/$bn") {
+                  print STDERR "mkinstaller: didn't add post-install script to wrapper directory\n";
+                  print STDERR "mkinstaller: ...[$cmd] failed\n";
+                  print STDERR "mkinstaller: ...can't find \"$TmpDirW/$bn\"\n";
+                  print STDERR "mkinstaller:    was done from in \"$here\"\n";
+                  cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
+                  exit 1;
+               }
+            }
+            print STDERR "mkinstaller: ...done\n" if $debugging;
+            my $Tend = time();
+            my $dT   = $Tend - $Tstart;
+            if (0 <= $dT) {
+               if ($dT == 0) {
+                  print "mkinstaller: ...done (in <1 second)\n" if (3 <= $verbosityLevel);
+               }
+               elsif ($dT == 1) {
+                  print "mkinstaller: ...done (in $dT second)\n" if (3 <= $verbosityLevel);
+               }
+               else {
+                  print "mkinstaller: ...done (in $dT seconds)\n" if (3 <= $verbosityLevel);
+               }
+            }
+            else {
+               print "mkinstaller: ...done\n" if (3 <= $verbosityLevel);
+            }
          }
-         print "mkinstaller: ...done\n" if $debugging;
+         else {
+            print "mkinstaller: can't find \"$postInstallPathname\"\n" if (1 <= $verbosityLevel);
+         }
+      }
+      else {
+         print "mkinstaller: no post-install script\n" if (1 <= $verbosityLevel);
       }
 
       #---------------------------------------
@@ -1959,81 +2306,100 @@ if ( exists $ENV{"DEBUG_mkinstaller"}) {
       #
       #---------------------------------------
 
-      print "mkinstaller: tarup wrapper directory \"$TmpDirW\"...\n" if $debugging;
+      print STDERR "mkinstaller: tarup wrapper directory \"$TmpDirW\"...\n" if $debugging;
       {
          my $wasIn   = getWorkingDirectory(); # Should be same as $here
          my $under   = dirname($TmpDirW);
          my $wrapper = basename($TmpDirW);
-         print "mkinstaller: ...under = \"$under\"\n" if $debugging;
-         print "mkinstaller:     name = \"$wrapper\"\n" if $debugging;
+         print STDERR "mkinstaller: ...under = \"$under\"\n" if $debugging;
+         print STDERR "mkinstaller:     name = \"$wrapper\"\n" if $debugging;
          if ( ! chdir($under)) {
             print STDERR "mkinstaller: can't cd into \"$under\"\n";
-            cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
+            cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
             exit 1;
          }
          {
             print STDERR "mkinstaller: tarup wrapper directory \"$under/$wrapper\"\n" if (1 <= $verbosityLevel);
+            my $Tstart = time();
             my $cmd    = "\"$use_tar\" -cf \"$wrapper.tar\" \"$wrapper\"";
-            print "mkinstaller: ...run [$cmd]\n" if $debugging;
+            print STDERR "mkinstaller: ...run [$cmd]\n" if $debugging;
             my $status = system "$cmd >$devNull 2>&1";
             if ($status != 0) {
-               print "mkinstaller:    failed, exit code $status\n" if $debugging;
+               print STDERR "mkinstaller:    failed, exit code $status\n" if $debugging;
                print STDERR "mkinstaller: can't tarup \"$under/$wrapper\"\n";
                print STDERR "mkinstaller: ...[$cmd], failed returning exit code $status\n";
                print STDERR "mkinstaller:    was done from in \"$under\"\n";
-               cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
+               cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                exit 1;
             }
-            print "mkinstaller:    suceeded\n" if $debugging;
+            print STDERR "mkinstaller:    suceeded\n" if $debugging;
             if ( ! -f "$wrapper.tar") {
                print STDERR "mkinstaller: didn't tarup \"$under/$wrapper\"\n";
                print STDERR "mkinstaller: ...[$cmd], failed\n";
                print STDERR "mkinstaller:    was done from in \"$under\"\n";
                print STDERR "mkinstaller: ...can't find \"$under/$wrapper.tar\"\n";
-               cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
+               cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                exit 1;
             }
-            print STDERR "mkinstaller: ...done\n" if (2 <= $verbosityLevel);
+            my $Tend   = time();
+            my $dT     = $Tend - $Tstart;
+            if (0 <= $dT) {
+               if ($dT == 0) {
+                  print STDERR "mkinstaller: ...done (in <1 second)\n" if (2 <= $verbosityLevel);
+               }
+               elsif ($dT == 1) {
+                  print STDERR "mkinstaller: ...done (in $dT second)\n" if (2 <= $verbosityLevel);
+               }
+               else {
+                  print STDERR "mkinstaller: ...done (in $dT seconds)\n" if (2 <= $verbosityLevel);
+               }
+            }
+            else {
+               print STDERR "mkinstaller: ...done\n" if (2 <= $verbosityLevel);
+            }
          }
          if ( ! chdir($wasIn)) {
             print STDERR "mkinstaller: can't cd back to \"$wasIn\"\n";
-            cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
+            cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
             exit 1;
          }
       }
-      print "mkinstaller: ...done\n" if $debugging;
+      print STDERR "mkinstaller: ...done\n" if $debugging;
 
       #----------------------------------------------------------------------------
       #
       #  At this point the tarball (aka. the payload) is ready. It is now time to
       #  generate the installer script. Note that the generated installer script
       #  is a Bourne-Shell script. This is done using a "here document" technique
-      #  the output being sent to a temporary textfile. After this is completed
-      #  this temporary textfile and the tarball will be joined (using cat) to
-      #  form the actual self-extracting installer script.
+      #  the output being sent to a temporary textfile. While generation using a
+      #  "here" document is typically simple, in this case the process is made
+      #  complex due to the conditional generation involved. After the script
+      #  generation is completed this temporary textfile and the tarball will be
+      #  joined (using cat) to form the actual self-extracting installer script.
       #
       #----------------------------------------------------------------------------
 
-      print "mkinstaller: form the Bourne-shell script...\n" if $debugging;
+      print STDERR "mkinstaller: form the Bourne-shell script...\n" if $debugging;
       {
          print STDERR "mkinstaller: forming \"$scriptName\" Bourne-shell script\n" if (1 <= $verbosityLevel);
          if ( -f $TmpFile) {
             print STDERR "mkinstaller: ...delete old \"$scriptName\"\n" if (1 <= $verbosityLevel);
             if ( ! unlink $TmpFile) {
                print STDERR "mkinstaller: can't delete existing \"$scriptName\"\n";
-               cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
+               cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                exit 1;
             }
             if ( -f $TmpFile) {
                print STDERR "mkinstaller: didn't delete existing \"$scriptName\"\n";
-               cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
+               cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                exit 1;
             }
          }
-         print STDERR "mkinstaller: ...create new \"$scriptName\"\n" if (1 <= $verbosityLevel);
+         my $Tstart = time();
+         print STDERR "mkinstaller: ...create new \"$scriptName\" script\n" if (1 <= $verbosityLevel);
          if ( ! open(SCRIPT,"> $TmpFile")) {
             print STDERR "mkinstaller: can't create/write \"$scriptName\"\n";
-            cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
+            cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
             exit 1;
          }
          print SCRIPT "#!/bin/bash\n";
@@ -2079,18 +2445,30 @@ EOF01
             $vn    =~ tr/a-zA-Z0-9_/_/c;
             print SCRIPT "PREFIX_$vn=\"\"\n";
          }
+
+         if ($preInstallBasename ne "") {
+            print STDERR "mkinstaller: ...has a $preInstallStyle pre-install script (\"$preInstallBasename\")\n" if $debugging;
+            print SCRIPT "PreInstallScriptName=\"$preInstallBasename\"\n";
+            print SCRIPT "PreInstallScriptStyle=\"$preInstallStyle\"\n";
+         }
+         else {
+            print STDERR "mkinstaller: ...has NO pre-install script\n" if $debugging;
+            print SCRIPT "PreInstallScriptName=\"\"\n";
+            print SCRIPT "PreInstallScriptStyle=\"\"\n";
+         }
+
          if ($postInstallBasename ne "") {
-            print "mkinstaller: ...has a post-install script\n" if $debugging;
+            print STDERR "mkinstaller: ...has a $postInstallStyle post-install script (\"$postInstallBasename\")\n" if $debugging;
             print SCRIPT "PostInstallScriptName=\"$postInstallBasename\"\n";
             print SCRIPT "PostInstallScriptStyle=\"$postInstallStyle\"\n";
          }
          else {
-            print "mkinstaller: ...has NO post-install script\n" if $debugging;
+            print STDERR "mkinstaller: ...has NO post-install script\n" if $debugging;
             print SCRIPT "PostInstallScriptName=\"\"\n";
             print SCRIPT "PostInstallScriptStyle=\"\"\n";
          }
 
-         print SCRIPT fixIndentStuff(<<"EOF02a");
+         print SCRIPT fixIndentStuff(<<"EOF02");
          |
          |BuiltOn="$OSname"
          |CCname="$CCname"
@@ -2476,12 +2854,12 @@ EOF01
          |         #
          |         #---------------------------------------
          |
-EOF02a
+EOF02
          if ($withNotice ne "") {
-            print SCRIPT fixIndentStuff(<<"EOF02b");
+            print SCRIPT fixIndentStuff(<<"EOF03");
          |         -copyright|--copyright)
          |                            echo
-EOF02b
+EOF03
             my $i;
             for ($i=0; $i<=$#theNotice; $i+=1) {
                my $lineOfText = $theNotice[$i];
@@ -2491,13 +2869,13 @@ EOF02b
 #              $lineOfText    =~ s/@/\\@/g;
                print SCRIPT "                            echo \"$lineOfText\"\n";
             }
-            print SCRIPT fixIndentStuff(<<"EOF02c");
+            print SCRIPT fixIndentStuff(<<"EOF04");
          |                            echo
          |                            exit 0
          |                            ;;
-EOF02c
+EOF04
          }
-         print SCRIPT fixIndentStuff(<<"EOF02d");
+         print SCRIPT fixIndentStuff(<<"EOF05");
          |         -help|--help)
          |                            echo
          |                            echo "$titleLine"
@@ -2506,23 +2884,25 @@ EOF02c
          |                            echo "    $scriptName -- Self-extracting installer script$ForProject."
          |                            echo
          |                            echo "USAGE"
-EOF02d
+EOF05
          if ($withNotice ne "") {
             print SCRIPT "                            echo \"    $scriptName --copyright\"\n";
          }
-         print SCRIPT fixIndentStuff(<<"EOF02e");
+         print SCRIPT fixIndentStuff(<<"EOF06");
          |                            echo "    $scriptName --help"
          |                            echo "    $scriptName --vernum"
          |                            echo "    $scriptName --version"
          |                            echo
-EOF02e
+EOF06
          my $exampleLine = $scriptName." [--keep] [--prefix=<pathname>]";
-         my $bn;
-         foreach $bn (sort keys %dirBasenames) {
-            $exampleLine = $exampleLine." [--prefix_$bn=<pathname>]";
+         {
+            my $bn;
+            foreach $bn (sort keys %dirBasenames) {
+               $exampleLine = $exampleLine." [--prefix-$bn=<pathname>]";
+            }
          }
          $exampleLine    = $exampleLine." [-v[erbose][<digit>]]";
-         print SCRIPT fixIndentStuff(<<"EOF03");
+         print SCRIPT fixIndentStuff(<<"EOF07");
          |                            echo "    $exampleLine"
          |                            echo
          |                            echo "DESCRIPTION"
@@ -2559,27 +2939,27 @@ EOF02e
          |                            echo "        --help"
          |                            echo
          |                            echo "            Output this man page to <stdout> and quit."
-EOF03
+EOF07
          if ($ProjectVer ne "") {
-            print SCRIPT fixIndentStuff(<<"EOF04");
+            print SCRIPT fixIndentStuff(<<"EOF08");
          |                            echo
          |                            echo "        --vernum"
          |                            echo
          |                            echo "            Output version number of the payload to <stdout> and quit."
-EOF04
+EOF08
          }
          if ($ProjectName ne "") {
             if ($ProjectVer ne "") {
-               print SCRIPT fixIndentStuff(<<"EOF05");
+               print SCRIPT fixIndentStuff(<<"EOF09");
          |                            echo
          |                            echo "        --version"
          |                            echo
          |                            echo "            Output project name and version number of the payload to <stdout>"
          |                            echo "            and quit."
-EOF05
+EOF09
             }
          }
-         print SCRIPT fixIndentStuff(<<"EOF06");
+         print SCRIPT fixIndentStuff(<<"EOF10");
          |                            echo
          |                            echo "        -k"
          |                            echo "        --keep"
@@ -2591,19 +2971,21 @@ EOF05
          |                            echo
          |                            echo "            The pathname of the single directory where all of the payload"
          |                            echo "            directories are to be placed."
-EOF06
-         my $bn;
-         foreach $bn (sort keys %dirBasenames) {
-            print SCRIPT fixIndentStuff(<<"EOF07");
+EOF10
+         {
+            my $bn;
+            foreach $bn (sort keys %dirBasenames) {
+               print SCRIPT fixIndentStuff(<<"EOF11");
          |                            echo
-         |                            echo "        --prefix_$bn=<pathname>"
+         |                            echo "        --prefix-$bn=<pathname>"
          |                            echo
          |                            echo "            The pathname of the directory where the \\"$bn\\" payload directory"
          |                            echo "            is to be placed. Note that if this option is not specified then the"
          |                            echo "            overall --prefix=<pathname> should be used."
-EOF07
+EOF11
+            }
          }
-         print SCRIPT fixIndentStuff(<<"EOF08");
+         print SCRIPT fixIndentStuff(<<"EOF12");
          |                            echo
          |                            echo "        -v[erbose][<digit>]"
          |                            echo
@@ -2648,24 +3030,24 @@ EOF07
          |                            echo "    mkinstaller(1x), sh(1), tar(1)"
          |                            echo
          |                            echo "NOTES"
-EOF08
+EOF12
          if ($OSname ne "") {
-         print SCRIPT "                            echo \"    This installer script was built on \\\"$OSname\\\" \"\n";
-         print SCRIPT "                            echo\n";
+            print SCRIPT "                            echo \"    This installer script was built on \\\"$OSname\\\" \"\n";
+            print SCRIPT "                            echo\n";
          }
          if ($CCname ne "") {
-         print SCRIPT "                            echo \"    The C compiler \\\"$CCname\\\" was used to build the payload.\"\n";
-         print SCRIPT "                            echo\n";
+            print SCRIPT "                            echo \"    The C compiler \\\"$CCname\\\" was used to build the payload.\"\n";
+            print SCRIPT "                            echo\n";
          }
          if ($CXXname ne "") {
-         print SCRIPT "                            echo \"    The C++ compiler \\\"$CXXname\\\" was used to build the payload.\"\n";
-         print SCRIPT "                            echo\n";
+            print SCRIPT "                            echo \"    The C++ compiler \\\"$CXXname\\\" was used to build the payload.\"\n";
+            print SCRIPT "                            echo\n";
          }
          if ($FORTRANname ne "") {
-         print SCRIPT "                            echo \"    The FORTRAN compiler \\\"$FORTRANname\\\" was used to build the payload.\"\n";
-         print SCRIPT "                            echo\n";
+            print SCRIPT "                            echo \"    The FORTRAN compiler \\\"$FORTRANname\\\" was used to build the payload.\"\n";
+            print SCRIPT "                            echo\n";
          }
-         print SCRIPT fixIndentStuff(<<"EOF09");
+         print SCRIPT fixIndentStuff(<<"EOF13");
          |                            echo "    The directory where temporary files are to be placed is determined"
          |                            echo "    as follows:"
          |                            echo
@@ -2709,7 +3091,7 @@ EOF08
          |                            echo
          |                            echo "AUTHOR"
          |                            echo "    mkinstaller version $mkinstaller_ver_name rev. $mkinstaller_ver_time"
-EOF09
+EOF13
          if ($Contact ne "") {
             print SCRIPT "                            echo\n";
             print SCRIPT "                            echo \"CONTACT\"\n";
@@ -2722,11 +3104,11 @@ EOF09
             print SCRIPT "                            echo\n";
             print SCRIPT "                            echo \"        $Contact\"\n";
          }
-         print SCRIPT fixIndentStuff(<<"EOF10");
+         print SCRIPT fixIndentStuff(<<"EOF14");
          |                            echo
          |                            exit 0
          |                            ;;
-EOF10
+EOF14
          if ($ProjectVer ne "") {
             print SCRIPT "\n";
             print SCRIPT "         --vernum)          echo $ProjectVer\n";
@@ -2737,7 +3119,7 @@ EOF10
                print SCRIPT "                            ;;\n";
             }
          }
-         print SCRIPT fixIndentStuff(<<"EOF11");
+         print SCRIPT fixIndentStuff(<<"EOF15");
          |
          |         #---------------------------------------
          |         #
@@ -2758,27 +3140,29 @@ EOF10
          |                            fi
          |                            PREFIX="\${given}"
          |                            ;;
-EOF11
-         my $bn;
-         foreach $bn (sort keys %dirBasenames) {
-            my $vn = $bn;
-            $vn    =~ tr/a-zA-Z0-9_/_/c;
-            print SCRIPT fixIndentStuff(<<"EOF12");
+EOF15
+         {
+            my $bn;
+            foreach $bn (sort keys %dirBasenames) {
+               my $vn = $bn;
+               $vn    =~ tr/a-zA-Z0-9_/_/c;
+               print SCRIPT fixIndentStuff(<<"EOF16");
          |
-         |         --prefix_$bn=*)
+         |         --prefix-$bn=*)
          |                            given="\$1"
-         |                            stmp=\`echo \${given} | sed -e 's/^--prefix_$bn=\\(.*\\)\$/\\1/'\`
+         |                            stmp=\`echo \${given} | sed -e 's/^--prefix-$bn=\\(.*\\)\$/\\1/'\`
          |                            given="\${stmp}"
          |                            if [ "X\${given}" = "X" ]
          |                            then
-         |                               echo "$scriptName: missing or zero-length argument to --prefix_$bn option" >&2
+         |                               echo "$scriptName: missing or zero-length argument to --prefix-$bn option" >&2
          |                               exit 1
          |                            fi
          |                            PREFIX_$vn="\${given}"
          |                            ;;
-EOF12
+EOF16
+            }
          }
-         print SCRIPT fixIndentStuff(<<"EOF13");
+         print SCRIPT fixIndentStuff(<<"EOF17");
          |
          |         #---------------------------------------
          |         #
@@ -2839,6 +3223,24 @@ EOF12
          |
          |#-------------------------------------------------------------------------------
          |#
+         |#  We'll be passing the verbosity level to pre- and post-install scripts...
+         |#
+         |#-------------------------------------------------------------------------------
+         |
+         |if [ 1 -le \${verbosityLevel} ]
+         |then
+         |   if [ 1 -lt \${verbosityLevel} ]
+         |   then
+         |      Vflag=" -v\${verbosityLevel}"
+         |   else
+         |      Vflag=" -v"
+         |   fi
+         |else
+         |   Vflag=
+         |fi
+         |
+         |#-------------------------------------------------------------------------------
+         |#
          |#  A reminder that we're doing this all from a temporary directory.
          |#
          |#-------------------------------------------------------------------------------
@@ -2870,19 +3272,21 @@ EOF12
          |#-------------------------------------------------------------------------------
          |
          |haveAll=true
-EOF13
-         my $bn;
-         foreach $bn (sort keys %dirBasenames) {
-            my $vn = $bn;
-            $vn    =~ tr/a-zA-Z0-9_/_/c;
-            print SCRIPT fixIndentStuff(<<"EOF14");
+EOF17
+         {
+            my $bn;
+            foreach $bn (sort keys %dirBasenames) {
+               my $vn = $bn;
+               $vn    =~ tr/a-zA-Z0-9_/_/c;
+               print SCRIPT fixIndentStuff(<<"EOF18");
          |if [ "X\${PREFIX_$vn}" = "X" ]
          |then
          |   haveAll=false
          |fi
-EOF14
+EOF18
+            }
          }
-         print SCRIPT fixIndentStuff(<<"EOF15");
+         print SCRIPT fixIndentStuff(<<"EOF19");
          |
          |if [ "X\${haveAll}" != Xtrue ]
          |then
@@ -2914,12 +3318,13 @@ EOF14
          |          PREFIX=\"\${here}/\${PREFIX}\"
          |          ;;
          |   esac
-EOF15
-         my $bn;
-         foreach $bn (sort keys %dirBasenames) {
-            my $vn = $bn;
-            $vn    =~ tr/a-zA-Z0-9_/_/c;
-            print SCRIPT fixIndentStuff(<<"EOF16");
+EOF19
+         {
+            my $bn;
+            foreach $bn (sort keys %dirBasenames) {
+               my $vn = $bn;
+               $vn    =~ tr/a-zA-Z0-9_/_/c;
+               print SCRIPT fixIndentStuff(<<"EOF20");
          |
          |   #---------------------------------------
          |   #
@@ -2931,25 +3336,31 @@ EOF15
          |   then
          |      PREFIX_$vn="\${PREFIX}"
          |   fi
-EOF16
+EOF20
+            }
          }
-         print SCRIPT fixIndentStuff(<<"EOF17");
+         print SCRIPT fixIndentStuff(<<"EOF21");
          |fi
          |
          |if [ 1 -le \${verbosityLevel} ]
          |then
          |   echo "$scriptName: install under:"
          |   echo "$scriptName: ...PREFIX=\\"\${PREFIX}\\" "
-EOF17
-         my $bn;
-         foreach $bn (sort keys %dirBasenames) {
-            my $vn = $bn;
-            $vn    =~ tr/a-zA-Z0-9_/_/c;
-            print SCRIPT fixIndentStuff(<<"EOF18");
-         |   echo "$scriptName: ...PREFIX_$vn=\\"\${PREFIX_$vn}\\" "
-EOF18
+EOF21
+         {
+            my $bn;
+            foreach $bn (sort keys %dirBasenames) {
+               my $vn = $bn;
+               $vn    =~ tr/a-zA-Z0-9_/_/c;
+               print SCRIPT fixIndentStuff(<<"EOF22");
+         |   if [ "X\${PREFIX_$vn}" != "X\${PREFIX}" ]
+         |   then
+         |      echo "$scriptName: ...PREFIX_$vn=\\"\${PREFIX_$vn}\\" "
+         |   fi
+EOF22
+            }
          }
-         print SCRIPT fixIndentStuff(<<"EOF19");
+         print SCRIPT fixIndentStuff(<<"EOF23");
          |fi
          |
          |#---------------------------------------
@@ -2982,12 +3393,13 @@ EOF18
          |      fi
          |   fi
          |fi
-EOF19
-         my $bn;
-         foreach $bn (sort keys %dirBasenames) {
-            my $vn = $bn;
-            $vn    =~ tr/a-zA-Z0-9_/_/c;
-            print SCRIPT fixIndentStuff(<<"EOF20");
+EOF23
+         {
+            my $bn;
+            foreach $bn (sort keys %dirBasenames) {
+               my $vn = $bn;
+               $vn    =~ tr/a-zA-Z0-9_/_/c;
+               print SCRIPT fixIndentStuff(<<"EOF24");
          |
          |if [ "X\${PREFIX_$vn}" != "X" ]
          |then
@@ -3012,17 +3424,19 @@ EOF19
          |      fi
          |   fi
          |fi
-EOF20
+EOF24
+            }
          }
-         {
-            print SCRIPT fixIndentStuff(<<"EOF21");
+         print SCRIPT fixIndentStuff(<<"EOF27");
          |
          |if [ "X\${debugging}" != "Xfalse" ]
          |then
          |   amNowIn="\`pwd\`"
-         |   echo "$scriptName: \"\${amNowIn}\" before extraction"
+         |   echo "$scriptName: \"\${amNowIn}\" before extraction (of wrapper)"
          |   /bin/ls -alF
          |fi
+EOF27
+         print SCRIPT fixIndentStuff(<<"EOF28");
          |
          |#-------------------------------------------------------------------------------
          |#
@@ -3031,14 +3445,16 @@ EOF20
          |#  FIX: The untar process reports:
          |#
          |#          wrapper/
-EOF21
+EOF28
+         {
             my $bn;
             foreach $bn (sort keys %dirBasenames) {
-               print SCRIPT fixIndentStuff(<<"EOF22");
+               print SCRIPT fixIndentStuff(<<"EOF29");
          |#          wrapper/$bn.tar.gz
-EOF22
+EOF29
             }
-            print SCRIPT fixIndentStuff(<<"EOF23");
+         }
+         print SCRIPT fixIndentStuff(<<"EOF30");
          |#
          |#          gzip: stdin: unexpected end of file
          |#          tar: Child returned status 1
@@ -3137,8 +3553,11 @@ EOF22
          |#-------------------------------------------------------------------------------
          |#
          |#  The wrapper directory should now be in place. Remember that we're in the
-         |#  temporary directory. We now step into the wrapper directory and unwrap
-         |#  each individual tarball in to its proper place.
+         |#  temporary directory. Before further unwrapping we'll step in to the wrapper
+         |#  directory check for pre- and post-install scripts (if they'd been supplied)
+         |#  and each of the expected individual tarballs. If we find all of what is
+         |#  expected we can then unwrap each individual tarball putting each its proper
+         |#  place.
          |#
          |#-------------------------------------------------------------------------------
          |
@@ -3152,36 +3571,158 @@ EOF22
          |fi
          |
          |allThere=true
-EOF23
+EOF30
+         if ($preInstallPathname ne "") {
+            my $bn = basename($preInstallPathname);
+            print SCRIPT fixIndentStuff(<<"EOF31");
+         |
+         |#---------------------------------------
+         |#
+         |#  Check for \"$bn\" (the pre-install
+         |#  script)...
+         |#
+         |#---------------------------------------
+         |
+         |if [ ! -f "$bn" ]
+         |then
+         |   echo "$scriptName: seem to be missing \\"$bn\\" "
+         |   allThere=false
+         |else
+         |   if [ 2 -le \${verbosityLevel} ]
+         |   then
+         |      echo "$scriptName: ...have \\"$bn\\" in \\"wrapper\\" "
+         |   fi
+         |fi
+EOF31
+         }
+         if ($postInstallPathname ne "") {
+            my $bn = basename($postInstallPathname);
+            print SCRIPT fixIndentStuff(<<"EOF32");
+         |
+         |#---------------------------------------
+         |#
+         |#  Check for \"$bn\" (the post-install
+         |#  script)...
+         |#
+         |#---------------------------------------
+         |
+         |if [ ! -f "$bn" ]
+         |then
+         |   echo "$scriptName: seem to be missing \\"$bn\\" "
+         |   allThere=false
+         |else
+         |   if [ 2 -le \${verbosityLevel} ]
+         |   then
+         |      echo "$scriptName: ...have \\"$bn\\" in \\"wrapper\\" "
+         |   fi
+         |fi
+EOF32
+         }
+         {
             my $bn;
             foreach $bn (sort keys %dirBasenames) {
                my $vn = $bn;
                $vn    =~ tr/a-zA-Z0-9_/_/c;
-               print SCRIPT fixIndentStuff(<<"EOF24");
+               print SCRIPT fixIndentStuff(<<"EOF33");
+         |
+         |#---------------------------------------
+         |#
+         |#  Check for the \"$bn\" tarball...
+         |#
+         |#---------------------------------------
          |
          |if [ ! -f "$bn.tar.gz" ]
          |then
          |   echo "$scriptName: seem to be missing \\"$bn.tar.gz\\" "
          |   allThere=false
          |else
-         |   if [ 1 -le \${verbosityLevel} ]
+         |   if [ 3 -le \${verbosityLevel} ]
          |   then
          |      echo "$scriptName: ...have \\"$bn.tar.gz\\" in \\"wrapper\\" "
          |   fi
          |fi
-EOF24
+EOF33
             }
-            print SCRIPT fixIndentStuff(<<"EOF25");
+         }
+         print SCRIPT fixIndentStuff(<<"EOF34");
          |if [ "X\${allThere}" != "Xtrue" ]
          |then
          |   exit 1
          |fi
-EOF25
+EOF34
+         if ($preInstallBasename ne "") {
+            print SCRIPT fixIndentStuff(<<"EOF35");
+            |
+            |#-------------------------------------------------------------------------------
+            |#
+            |#  Run the pre-install script...
+            |#
+            |#  Note that this is done from the temporary wrapper directory and that the
+            |#  prefix directories are passed as options on the command line (so that the
+            |#  script knows where to find things.
+            |#
+            |#-------------------------------------------------------------------------------
+            |
+            |if [ -f "$preInstallBasename" ]
+            |then
+            |   amIn=\`pwd\`
+            |   if [ 1 -le \${verbosityLevel} ]
+            |   then
+            |      echo "$scriptName: running pre-install script \\"\${PostInstallScriptName}\\" "
+            |   fi
+EOF35
+            my $theCmd = "\"./$preInstallBasename\"\${Vflag}";
+            {
+               my $bn;
+               foreach $bn (sort keys %dirBasenames) {
+                  my $vn  = $bn;
+                  $vn     =~ tr/a-zA-Z0-9_/_/c;
+                  $theCmd = $theCmd." --prefix-$bn=\"\${PREFIX_$vn}\"";
+               }
+            }
+            if ($preInstallStyle ne "binary") {
+               $theCmd = $preInstallStyle." ".$theCmd;
+            }
+            print SCRIPT fixIndentStuff(<<"EOF36");
+            |   if [ "X\${debugging}" != "Xfalse" ]
+            |   then
+            |      echo "$scriptName: ...from \\"\${amIn}\\" " >&2
+            |      echo "$scriptName:    run [$theCmd]" >&2
+            |   fi
+            |   $theCmd >&2
+            |   status=\$?
+            |   if [ "X\${status}" != "X0" ]
+            |   then
+            |      if [ "X\${debugging}" != "Xfalse" ]
+            |      then
+            |         echo "$scriptName:    ...failed, exit code \${status}" >&2
+            |      fi
+            |      echo "$scriptName: pre-install script(=\\"$preInstallBasename\\") failed" >&2
+            |      echo "$scriptName: ...[$theCmd] returned exit code \${status}" >&2
+            |      exit 1
+            |   else
+            |      if [ "X\${debugging}" != "Xfalse" ]
+            |      then
+            |         echo "$scriptName:    ...succeeded" >&2
+            |      fi
+            |   fi
+            |   if [ 2 -le \${verbosityLevel} ]
+            |   then
+            |      echo "$scriptName: ...done"
+            |   fi
+            |else
+            |   echo "$scriptName: ...didn't find pre-install script \\"$preInstallBasename\\" " >&2
+            |   exit 1
+            |fi
+EOF36
+         }
+         {
             my $bn;
             foreach $bn (sort keys %dirBasenames) {
                my $vn = $bn;
                $vn    =~ tr/a-zA-Z0-9_/_/c;
-               print SCRIPT fixIndentStuff(<<"EOF26");
+               print SCRIPT fixIndentStuff(<<"EOF37");
+         |
          |#---------------------------------------
          |#
          |#   Unwrap the individual $bn.tar.gz
@@ -3225,11 +3766,11 @@ EOF25
          |      fi
          |   fi
          |cd "\${wasIn}"
-EOF26
+EOF37
             }
          }
-         if ($postInstallBasename) {
-            print SCRIPT fixIndentStuff(<<"EOF27");
+         if ($postInstallBasename ne "") {
+            print SCRIPT fixIndentStuff(<<"EOF38");
             |
             |#-------------------------------------------------------------------------------
             |#
@@ -3246,29 +3787,23 @@ EOF26
             |   amIn=\`pwd\`
             |   if [ 1 -le \${verbosityLevel} ]
             |   then
-            |      echo "$scriptName: running post-install script \\"\${PostInstallScriptName}\\" "
+            |      echo "$scriptName: running post-install script \\"$postInstallBasename\\" "
             |   fi
-EOF27
-            my $theCmd = "\"./$postInstallBasename\"";
-            if (0 < $verbosityLevel) {
-               if ($verbosityLevel == 1) {
-                  $theCmd = $theCmd." -v";
+EOF38
+            my $theCmd = "\"./$postInstallBasename\"\${Vflag}";
+            {
+               my $bn;
+               foreach $bn (sort keys %dirBasenames) {
+                  my $vn  = $bn;
+                  $vn     =~ tr/a-zA-Z0-9_/_/c;
+                  $theCmd = $theCmd." --prefix-$bn=\"\${PREFIX_$vn}\"";
                }
-               else {
-                  $theCmd = $theCmd." -v$verbosityLevel";
-               }
-            }
-            my $bn;
-            foreach $bn (sort keys %dirBasenames) {
-               my $vn  = $bn;
-               $vn     =~ tr/a-zA-Z0-9_/_/c;
-               $theCmd = $theCmd." --prefix_$bn=\"\${PREFIX_$vn}\"";
             }
             if ($postInstallStyle ne "binary") {
                $theCmd = $postInstallStyle." ".$theCmd;
             }
-            print SCRIPT fixIndentStuff(<<"EOF28");
-            |   if [ 3 -le \${verbosityLevel} ]
+            print SCRIPT fixIndentStuff(<<"EOF39");
+            |   if [ "X\${debugging}" != "Xfalse" ]
             |   then
             |      echo "$scriptName: ...from \\"\${amIn}\\" " >&2
             |      echo "$scriptName:    run [$theCmd]" >&2
@@ -3277,9 +3812,18 @@ EOF27
             |   status=\$?
             |   if [ "X\${status}" != "X0" ]
             |   then
+            |      if [ "X\${debugging}" != "Xfalse" ]
+            |      then
+            |         echo "$scriptName:    ...failed, exit code \${status}" >&2
+            |      fi
             |      echo "$scriptName: post-install script(=\\"$postInstallBasename\\") failed" >&2
             |      echo "$scriptName: ...[$theCmd] returned exit code \${status}" >&2
             |      exit 1
+            |   else
+            |      if [ "X\${debugging}" != "Xfalse" ]
+            |      then
+            |         echo "$scriptName:    ...succeeded" >&2
+            |      fi
             |   fi
             |   if [ 2 -le \${verbosityLevel} ]
             |   then
@@ -3289,9 +3833,9 @@ EOF27
             |   echo "$scriptName: ...didn't find post-install script \\"$postInstallBasename\\" " >&2
             |   exit 1
             |fi
-EOF28
+EOF39
          }
-         print SCRIPT fixIndentStuff(<<"EOF29");
+         print SCRIPT fixIndentStuff(<<"EOF40");
          |
          |#-------------------------------------------------------------------------------
          |#
@@ -3344,9 +3888,24 @@ EOF28
          |
          |exit 0
          |__PAYLOAD_BELOW__
-EOF29
+EOF40
 
-         print STDERR "mkinstaller:    done\n" if (2 <= $verbosityLevel);
+         my $Tend = time();
+         my $dT   = $Tend - $Tstart;
+         if (0 <= $dT) {
+            if ($dT == 0) {
+               print STDERR "mkinstaller:    done (in <1 second)\n" if (2 <= $verbosityLevel);
+            }
+            elsif ($dT == 1) {
+               print STDERR "mkinstaller:    done (in $dT second)\n" if (2 <= $verbosityLevel);
+            }
+            else {
+               print STDERR "mkinstaller:    done (in $dT seconds)\n" if (2 <= $verbosityLevel);
+            }
+         }
+         else {
+            print STDERR "mkinstaller:    done\n" if (2 <= $verbosityLevel);
+         }
 
          #-------------------------------------------------------------------------
          #
@@ -3356,36 +3915,78 @@ EOF29
          #-------------------------------------------------------------------------
 
          {
-            print STDERR "mkinstaller: ...adding the payload(\"$TmpDirT/wrapper.tar\") to \"$scriptName\" script\n" if (1 <= $verbosityLevel);
-            my $cmd    = "cat \"$TmpFile\" \"$TmpDirT/wrapper.tar\" > \"$scriptName\"";
-            my $status = system "$cmd 2>/dev/null";
+            my $Tstart = time();
+            my $cmd;
+            my $status;
+            if ($withPayload) {
+               print STDERR "mkinstaller: ...adding the payload (\"$TmpDirT/wrapper.tar\") to \"$scriptName\" script\n" if (1 <= $verbosityLevel);
+               $cmd = "cat \"$TmpFile\" \"$TmpDirT/wrapper.tar\" > \"$scriptName\"";
+            }
+            else {
+               print STDERR "mkinstaller: ...without payload!\n" if (1 <= $verbosityLevel);
+               $cmd = "cat \"$TmpFile\" > \"$scriptName\"";
+            }
+            $status = system "$cmd 2>/dev/null";
             if ($status != 0) {
                print STDERR "mkinstaller: can't form \"$scriptName\"\n";
                print STDERR "mkinstaller: ...[$cmd] failed, returning exit code $status\n";
-               cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
+               cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                exit 1;
             }
             if ( ! -f $scriptName) {
                print STDERR "mkinstaller: didn't form \"$scriptName\"\n";
                print STDERR "mkinstaller: ...[$cmd] failed\n";
                print STDERR "mkinstaller: ...can't find \"$scriptName\"\n";
-               cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
+               cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                exit 1;
             }
-            print STDERR "mkinstaller:    done\n" if (2 <= $verbosityLevel);
-            print STDERR "mkinstaller: ...make \"$scriptName\" executable\n" if (1 <= $verbosityLevel);
-            my $cmd    = "chmod +x \"$scriptName\"";
-            my $status = system "$cmd >/dev/null 2>&1";
-            if ($status != 0) {
-               print STDERR "mkinstaller: can't make \"$scriptName\" executable\n";
-               print STDERR "mkinstaller: ...[$cmd] failed, returning exit code $status\n";
-               cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
-               exit 1;
+            my $Tend = time();
+            my $dT   = $Tend - $Tstart;
+            if (0 <= $dT) {
+               if ($dT == 0) {
+                  print STDERR "mkinstaller:    done (in <1 second)\n" if (2 <= $verbosityLevel);
+               }
+               elsif ($dT == 1) {
+                  print STDERR "mkinstaller:    done (in $dT second)\n" if (2 <= $verbosityLevel);
+               }
+               else {
+                  print STDERR "mkinstaller:    done (in $dT seconds)\n" if (2 <= $verbosityLevel);
+               }
+            }
+            else {
+               print STDERR "mkinstaller:    done\n" if (2 <= $verbosityLevel);
+            }
+            if ($withPayload) {
+               my $Tstart = time();
+               print STDERR "mkinstaller: ...mark \"$scriptName\" as executable\n" if (1 <= $verbosityLevel);
+               $cmd    = "chmod +x \"$scriptName\"";
+               $status = system "$cmd >/dev/null 2>&1";
+               if ($status != 0) {
+                  print STDERR "mkinstaller: can't make \"$scriptName\" executable\n";
+                  print STDERR "mkinstaller: ...[$cmd] failed, returning exit code $status\n";
+                  cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
+                  exit 1;
+               }
+               my $Tend = time();
+               my $dT   = $Tend - $Tstart;
+               if (0 <= $dT) {
+                  if ($dT == 0) {
+                     print STDERR "mkinstaller:    done (in <1 second)\n" if (2 <= $verbosityLevel);
+                  }
+                  elsif ($dT == 1) {
+                     print STDERR "mkinstaller:    done (in $dT second)\n" if (2 <= $verbosityLevel);
+                  }
+                  else {
+                     print STDERR "mkinstaller:    done (in $dT seconds)\n" if (2 <= $verbosityLevel);
+                  }
+               }
+               else {
+                  print STDERR "mkinstaller:    done\n" if (2 <= $verbosityLevel);
+               }
             }
          }
-         print STDERR "mkinstaller:    done\n" if (2 <= $verbosityLevel);
       }
-      print "mkinstaller: ...done\n" if $debugging;
+      print STDERR "mkinstaller: ...done\n" if $debugging;
    }
    elsif ($OSclass eq "Windows-like") {
 
@@ -3400,7 +4001,7 @@ EOF29
       #
       #=========================================================================
 
-      print "mkinstaller: working on a \"$OSclass\" host\n" if $debugging;
+      print STDERR "mkinstaller: working on a \"$OSclass\" host\n" if $debugging;
 
       #---------------------------------------
       #
@@ -3408,14 +4009,14 @@ EOF29
       #
       #---------------------------------------
 
-      print "mkinstaller: locate required \"makensis\" utility...\n" if $debugging;
+      print STDERR "mkinstaller: locate required \"makensis\" utility...\n" if $debugging;
       $use_makensis = lookForExecutable("makensis",\@myPath,$OSclass);
       if ($use_makensis eq "") {
          print STDERR "mkinstaller: can't locate required \"makensis\" utility\n";
-         cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
+         cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
          exit 1;
       }
-      print "mkinstaller: ...\"$use_makensis\"\n" if $debugging;
+      print STDERR "mkinstaller: ...\"$use_makensis\"\n" if $debugging;
       print STDERR "mkinstaller: ...using \"$use_makensis\"\n" if (1 <= $verbosityLevel);
 
       #---------------------------------------
@@ -3433,7 +4034,7 @@ EOF29
       #
       #---------------------------------------
 
-      print "mkinstaller: cleanup existing NSIS script...\n" if $debugging;
+      print STDERR "mkinstaller: cleanup existing NSIS script...\n" if $debugging;
       {
          print STDERR "mkinstaller: ...initial cleanup\n" if (1 <= $verbosityLevel);
          if ( -l $NSISscriptName) {
@@ -3443,7 +4044,7 @@ EOF29
             else {
                print STDERR "mkinstaller: \"$NSISscriptName\" is a broken symbolic-link not a file\n";
             }
-            cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
+            cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
             exit 1;
          }
          elsif ( -f $NSISscriptName) {
@@ -3451,12 +4052,12 @@ EOF29
             my $Ndeleted = unlink "$NSISscriptName";
             if ($Ndeleted < 1) {
                print STDERR "mkinstaller: can't destroy existing \"$NSISscriptName\" file\n";
-               cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
+               cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                exit 1;
             }
             if ( -f $NSISscriptName) {
                print STDERR "mkinstaller: didn't destroy existing \"$NSISscriptName\" file\n";
-               cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
+               cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                exit 1;
             }
             print STDERR "mkinstaller:    ...done\n" if (2 <= $verbosityLevel);
@@ -3464,12 +4065,12 @@ EOF29
          }
          elsif ( -e $NSISscriptName) {
             print STDERR "mkinstaller: existing \"$NSISscriptName\" is not a file\n";
-            cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
+            cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
             exit 1;
          }
          print STDERR "mkinstaller:    done\n" if (2 <= $verbosityLevel);
       }
-      print "mkinstaller: ...done\n" if $debugging;
+      print STDERR "mkinstaller: ...done\n" if $debugging;
 
       #---------------------------------------
       #
@@ -3477,7 +4078,7 @@ EOF29
       #
       #---------------------------------------
 
-      print "mkinstaller: create NSIS script...\n" if $debugging;
+      print STDERR "mkinstaller: create NSIS script...\n" if $debugging;
       {
          my $UninstallerName = "uninstaller.exe";
          if (1 <= $verbosityLevel) {
@@ -3491,7 +4092,7 @@ EOF29
          }
          if ( ! open(SCRIPT,"> $NSISscriptName")) {
             print STDERR "mkinstaller: can't create/write \"$NSISscriptName\"\n";
-            cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
+            cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
             exit 1;
          }
          print SCRIPT "#-------------------------------------------------------------------------------\n";
@@ -3559,32 +4160,32 @@ EOF29
          close(SCRIPT);
          print STDERR "mkinstaller:    done\n" if (2 <= $verbosityLevel);
       }
-      print "mkinstaller: ...done\n" if $debugging;
-      print "mkinstaller: compile NSIS script...\n" if $debugging;
+      print STDERR "mkinstaller: ...done\n" if $debugging;
+      print STDERR "mkinstaller: compile NSIS script...\n" if $debugging;
       {
          print STDERR "mkinstaller: ...\"compiling\" ".nativePathname($NSISscriptName)."\n" if (1 <= $verbosityLevel);
          print STDERR "mkinstaller:    using \"".nativePathname($use_makensis)."\"\n" if (2 <= $verbosityLevel);
          my $cmd    = "\"$use_makensis\" ".quoteIfReqd(nativePathname($NSISscriptName));
-         print "mkinstaller: ...run [$cmd]\n" if $debugging;
+         print STDERR "mkinstaller: ...run [$cmd]\n" if $debugging;
          my $status = system "$cmd >$devNull 2>&1";
-         print "mkinstaller:    gives exit code $status\n" if $debugging;
+         print STDERR "mkinstaller:    gives exit code $status\n" if $debugging;
          if ($status != 0) {
-            print "mkinstaller:    ...failed, exit code $status\n" if $debugging;
+            print STDERR "mkinstaller:    ...failed, exit code $status\n" if $debugging;
             print STDERR "mkinstaller: can't compile \"".nativePathname($NSISscriptName).\" executable\n";
             print STDERR "mkinstaller: ...[$cmd] failed, returning exit code $status\n";
-            cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
+            cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
             exit 1;
          }
          else {
-            print "mkinstaller:    ...succeeded\n" if $debugging;
+            print STDERR "mkinstaller:    ...succeeded\n" if $debugging;
          }
          print STDERR "mkinstaller:    done\n" if (2 <= $verbosityLevel);
       }
-      print "mkinstaller: ...done\n" if $debugging;
+      print STDERR "mkinstaller: ...done\n" if $debugging;
    }
    else {
       print STDERR "mkinstaller: can't identify the class of host\n";
-      cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
+      cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
       exit 1;
    }
 
@@ -3594,11 +4195,11 @@ EOF29
    #
    #---------------------------------------
 
-   print "mkinstaller: cleanup...\n" if $debugging;
+   print STDERR "mkinstaller: cleanup...\n" if $debugging;
    {
-      cleanupTemps($myTmpDirT,$keep,$verbosityLevel,$debugging);
+      cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
    }
-   print "mkinstaller: ...done\n" if $debugging;
+   print STDERR "mkinstaller: ...done\n" if $debugging;
 
    #----------------------------------------------------------------------------
    #
@@ -3606,19 +4207,22 @@ EOF29
    #
    #----------------------------------------------------------------------------
 
-   my $Tend = time();
-   my $dT   = $Tend - $Tstart;
-   print STDERR "mkinstaller: all done" if (1 <= $verbosityLevel);
-   if (0 < $dT) {
-      print STDERR " in $dT" if (1 <= $verbosityLevel);
-      if ($dT == 1) {
-         print STDERR " second" if (1 <= $verbosityLevel);
+   my $TendOverall = time();
+   my $dToverall   = $TendOverall - $TstartOverall;
+   if (0 <= $dToverall) {
+      if ($dToverall == 0) {
+         print STDERR "mkinstaller: all done (in <1 second)\n" if (1 <= $verbosityLevel);
+      }
+      elsif ($dToverall == 1) {
+         print STDERR "mkinstaller: all done (in $dToverall second)\n" if (1 <= $verbosityLevel);
       }
       else {
-         print STDERR " seconds" if (1 <= $verbosityLevel);
+         print STDERR "mkinstaller: all done (in $dToverall seconds)\n" if (1 <= $verbosityLevel);
       }
    }
-   print STDERR "\n" if (1 <= $verbosityLevel);
+   else {
+      print STDERR "mkinstaller: all done\n" if (1 <= $verbosityLevel);
+   }
    exit 0;
 
 ##============================================================================##
@@ -3633,6 +4237,8 @@ EOF29
    #
    #  Cleanup any temporaries.
    #
+   #  Note that it will issue warnings if content isn't all being deleted.
+   #
    #----------------------------------------------------------------------------
 
    sub cleanupTemps {
@@ -3641,26 +4247,23 @@ EOF29
       my $verbosityLevel = shift;
       my $debugging      = shift;
 
-      print "mkinstaller.cleanupTemps[ myTmpDirT=\"$myTmpDirT\", keep=$keep, verbosityLevel=$verbosityLevel...\n" if $debugging;
+      print STDERR "mkinstaller.cleanupTemps[ myTmpDirT=\"$myTmpDirT\", keep=$keep, verbosityLevel=$verbosityLevel...\n" if $debugging;
       if ( ! $keep) {
-         print "mkinstaller.cleanupTemps: ...not keeping\n" if $debugging;
+         print STDERR "mkinstaller.cleanupTemps: ...not keeping\n" if $debugging;
          print STDERR "mkinstaller: ...cleanup\n" if (1 <= $verbosityLevel);
          if ( -d "$myTmpDirT") {
-            print "mkinstaller.cleanupTemps:    have \"$myTmpDirT\" directory\n" if $debugging;
-            if ( ! deleteDirectoryOrFile($myTmpDirT,"mkinstaller",$debugging)) {
-               print STDERR "mkinstaller: can't delete \"$myTmpDirT\"\n";
-               exit 1;
-            }
+            print STDERR "mkinstaller.cleanupTemps:    have \"$myTmpDirT\" directory\n" if $debugging;
+            shouldDeletePathname("mkinstaller: ",$myTmpDirT);
          }
          else {
-            print "mkinstaller.cleanupTemps:    don't have \"$myTmpDirT\" directory\n" if $debugging;
+            print STDERR "mkinstaller.cleanupTemps:    don't have \"$myTmpDirT\" directory\n" if $debugging;
          }
          print STDERR "mkinstaller:    done\n" if (2 <= $verbosityLevel);
       }
       else {
-         print "mkinstaller:    keeping \"$myTmpDirT\"\n" if $debugging;
+         print STDERR "mkinstaller:    keeping \"$myTmpDirT\"\n" if $debugging;
       }
-      print "mkinstaller.cleanupTemps] ...done\n" if $debugging;
+      print STDERR "mkinstaller.cleanupTemps] ...done\n" if $debugging;
    }
 
    #----------------------------------------------------------------------------
@@ -3759,125 +4362,368 @@ sub basename {
           }
 }
 
-# MyUniqueFileId: efcba8f6-5d35-47f7-833b-664f20eca9af
+# MyUniqueFileId: c74b22fd-6ce7-417f-95b3-89ed86a69cbe
 #-------------------------------------------------------------------------------
 #
-#  This subroutine deletes a directory and all of its contents. Note that it
-#  is assumed that the directory tree only contains files and/or directories.
+#  This subroutine deletes one or more directories and all of the content.
+#  Note that it is assumed that a directory tree only contains directories,
+#  files, and/or symbolic-links. An array of pathnames that could not be
+#  deleted is returned.
 #
-#  see: totebag/src/perl-lib/deleteDirectoryOrFile.psub
+#  see: totebag/src/perl-lib/deletePathnames.psub
+#
+#  Note: This function appears to be a lot more complex than neccessary. It
+#        not only requests that given pathnames (and recursive contents) be
+#        removed, it also checks to see that it's all gone (returning any
+#        remaining pathnames). The real problem here is that NFS can get in
+#        the way by inserting temporary .nfsXXX..XXX files. This can prevent
+#        a what should be empty directory from being removed (it doesn't look
+#        empty).
 #
 #-------------------------------------------------------------------------------
 
-sub deleteDirectoryOrFile {
-   my $name        = shift;
-   my $sponsor     = shift;
-   my $debugging   = 0;
-
-   print STDERR "deleteDirectoryOrFile[ name=\"$name\", sponsor=\"$sponsor\"...\n" if $debugging;
-   my $result      = 1;
-   my @nameList    = ();
-   my @typeList    = ();
-   print STDERR "deleteDirectoryOrFile: ...start accumulating\n" if $debugging;
-   my $i           = 0;
-   my $idx         = $#nameList + 1;
-   $nameList[$idx] = $name;
-   $typeList[$idx] = "unknown";
-   print STDERR "deleteDirectoryOrFile:    \"".$nameList[$idx]."\"\n" if $debugging;
-   for ($i=0; $i<=$#nameList; ++$i) {
-      my $theName = $nameList[$i];
-      my $theType = $typeList[$i];
-      if ( -l $theName) {
-         $typeList[$i] = "symbolic-link";
-      }
-      elsif ( -f $theName) {
-         $typeList[$i] = "file";
-      }
-      elsif ( -d $theName ) {
-         $typeList[$i] = "directory";
-         if (! opendir(DIR,$theName)) {
-            print STDERR $sponsor."can't read directory \"$theName\"\n" if $sponsor;
-            $result = 0;
+sub deletePathnames {
+   print STDERR "deletePathnames[ starting...\n" if $debugging;
+   my @failures  = ( );
+   my $Nfailures = 0;
+   my $rootPathname;
+   foreach $rootPathname (@_) {
+      print STDERR "deletePathnames: ...working \"".$rootPathname."\"\n" if $debugging;
+      my $oldCount = -1;
+      my $newCount = 0;
+      if ($rootPathname ne "") {
+         #---------------------------------------
+         #
+         #  We first recursivly crawl the directory
+         #  tree forming a list of pathnames that
+         #  appear to exist. The size of this list
+         #  also serves as the initial pathname
+         #  count; we'll be watching the pathname
+         #  count -- looping while it continues
+         #  to shrink or becomes empty
+         #
+         #---------------------------------------
+         print STDERR "deletePathnames{    build initial pathname list\n" if $debugging;
+         my @pathnames  = ();
+         my $rootExists = 0;
+         if ( -l $rootPathname) {
+            $rootExists = 1;
          }
-         else {
-            while (defined($tmp = readdir(DIR))) {
-               if (($tmp ne "" ) && ($tmp ne ".") && ($tmp ne "..")) {
-                  my $idx         = $#nameList + 1;
-                  $nameList[$idx] = "$nameList[$i]"."/"."$tmp";
-                  $typeList[$idx] = "unknown";
-                  print STDERR "deleteDirectoryOrFile:    \"".$nameList[$idx]."\"\n" if $debugging;
+         elsif ( -e $rootPathname) {
+            $rootExists = 1;
+         }
+         if ($rootExists) {
+            my $idx          = $#pathnames + 1;
+            $pathnames[$idx] = $rootPathname;
+            my $i;
+            for ($i=0; $i<=$#pathnames; ++$i) {
+               my $pathname = $pathnames[$i];
+               if ( -l $pathname) {
+                  print STDERR "deletePathnames:    l \"".$pathname."\"\n" if $debugging;
+               }
+               elsif ( -f $pathname) {
+                  print STDERR "deletePathnames:    f \"".$pathname."\"\n" if $debugging;
+               }
+               elsif ( -d $pathname ) {
+                  print STDERR "deletePathnames:    d \"".$pathname."\"\n" if $debugging;
+                  if (! opendir(DIR,$pathname)) {
+                     print STDERR $sponsor."can't read directory \"$pathname\"\n" if $sponsor;
+                     $result = 0;
+                  }
+                  else {
+                     while (defined($tmp = readdir(DIR))) {
+                        if (($tmp ne "" ) && ($tmp ne ".") && ($tmp ne "..")) {
+                           my $idx          = $#pathnames + 1;
+                           $pathnames[$idx] = $pathnames[$i]."/"."$tmp";
+                           print STDERR "deletePathnames:    \"".$pathnames[$idx]."\"\n" if $debugging;
+                        }
+                     }
+                     closedir(DIR);
+                  }
+               }
+               else {
+                  print STDERR "deletePathnames:    ? \"".$pathname."\"\n" if $debugging;
                }
             }
-            closedir(DIR);
          }
-      }
-      else {
-         $typeList[$i] = "other";
+         print STDERR "deletePathnames}    done\n" if $debugging;
+         $oldCount = $#pathnames + 1;
+         if ($oldCount == 1) {
+            print STDERR "deletePathnames: ...have $oldCount pathname at/under \"".$rootPathname."\"\n" if $debugging;
+         }
+         else {
+            print STDERR "deletePathnames: ...have $oldCount pathnames at/under \"".$rootPathname."\"\n" if $debugging;
+         }
+         if (1 <= $oldCount) {
+            my $cycle = 0;
+            my $done  = 0;
+            while ( ! $done) {
+               my $haveNFS  = 0;
+               $cycle      += 1;
+               #---------------------------------------
+               #
+               #  Use the pathnames list to remove things.
+               #  Once we've gone through the list, we'll
+               #  rebuild the list and check for a change
+               #  in the list size. We'll loop so long as
+               #  the list shrinks or until it becomes
+               #  empty.
+               #
+               #---------------------------------------
+               if (getOSclass() eq "UNIX-like") {
+                  #---------------------------------------
+                  #
+                  #  If this is a UNIX-like" system, try
+                  #  using rm to delete each in the list.
+                  #  Note that this is done in a bottom-up
+                  #  fashion so that directory content is
+                  #  removed before the directory.
+                  #
+                  #---------------------------------------
+                  print STDERR "deletePathnames{ ...a UNIX-like host, try using rm ...\n" if $debugging;
+                  for ($i=$#pathnames; 0<=$i; $i--) {
+                     my $pathname   = $pathnames[$i];
+                     my $stillThere = 0;
+                     if ( -l $pathname) {
+                        $stillThere = 1;
+                     }
+                     elsif ( -e $pathname) {
+                        $stillThere = 1;
+                     }
+                     else {
+                        $stillThere = 0;
+                     }
+                     if ($stillThere) {
+                        my $bn = basename($pathname);
+                        if ($bn =~ /^\.nfs[^\/]*$/) {
+                           $haveNFS = 1;
+                           print STDERR "deletePathnames:    \"".$pathname."\" looks like a .nfs file\n" if $debugging;
+                        }
+                        my $cmd      = "rm -rf \"$pathname\"";
+                        print STDERR "deletePathnames:    run: [$cmd]\n" if $debugging;
+                        my $status   = system "$cmd >/dev/null 2>&1";
+                        if ($status != 0) {
+                           my $code = $status >> 8;
+                           print STDERR "deletePathnames:    ...[$cmd] failed, code $code" if $debugging;
+                           if ($status & 127) {
+                              my $signum = $status & 127;
+                              print STDERR ", signal $signum" if $debugging;
+                           }
+                           if ($status & 127) {
+                              print STDERR ", core dumped" if $debugging;
+                           }
+                           print STDERR "\n" if $debugging;
+                        }
+                     }
+                  }
+                  print STDERR "deletePathnames}    done\n" if $debugging;
+               }
+               #---------------------------------------
+               #
+               #  Now we go through the list and use
+               #  Perl rmdir() and/or unlink() functions
+               #  to delete things. Note that this is
+               #  done in a bottom-up fashion so that
+               #  directory content is removed before
+               #  the directory.
+               #
+               #---------------------------------------
+               print STDERR "deletePathnames{ ...removing the Perl way\n" if $debugging;
+               for ($i=$#pathnames; 0<=$i; $i--) {
+                  my $pathname = $pathnames[$i];
+                  my $bn       = basename($pathname);
+                  if ($bn =~ /^\.nfs[^\/]*$/) {
+                     $haveNFS = 1;
+                     print STDERR "deletePathnames:    \"".$pathname."\" looks like a .nfs file\n" if $debugging;
+                  }
+                  if ( -l $pathname) {
+                     print STDERR "deletePathnames:    l \"".$pathname."\"\n" if $debugging;
+                     if ( ! unlink($pathname)) {
+                        print STDERR "deletePathnames:      ...unlink(\"".$pathname."\") failed\n" if $debugging;
+                        print STDERR "deletePathnames:         ".$!."\n" if $debugging;
+                     }
+                  }
+                  elsif ( -d $pathname) {
+                     print STDERR "deletePathnames:    d \"".$pathname."\"\n" if $debugging;
+                     if ( ! rmdir($pathname)) {
+                        print STDERR "deletePathnames:      ...rmdir(\"".$pathname."\") failed\n" if $debugging;
+                        print STDERR "deletePathnames:         ".$!."\n" if $debugging;
+                     }
+                  }
+                  elsif ( -f $pathname) {
+                     print STDERR "deletePathnames:    f \"".$pathname."\"\n" if $debugging;
+                     if ( ! unlink($pathname)) {
+                        print STDERR "deletePathnames:      ...unlink(\"".$pathname."\") failed\n" if $debugging;
+                        print STDERR "deletePathnames:         ".$!."\n" if $debugging;
+                     }
+                  }
+                  elsif ( -e $pathname) {
+                     print STDERR "deletePathnames:    ? \"".$pathname."\"\n" if $debugging;
+                     if ( ! unlink($pathname)) {
+                        print STDERR "deletePathnames:      ...unlink(\"".$pathname."\") failed\n" if $debugging;
+                        print STDERR "deletePathnames:         ".$!."\n" if $debugging;
+                     }
+                  }
+                  else {
+                     print STDERR "deletePathnames:    ! \"".$pathname."\" is gone\n" if $debugging;
+                  }
+               }
+               print STDERR "deletePathnames}    done\n" if $debugging;
+               if (2 <= $cycle) {
+                  if ($haveNFS) {
+                     my $moved = 0;
+                     my $here  = getWorkingDirectory();
+                     if ($here ne "") {
+                        print STDERR "deletePathnames:    cd to \"/\"\n" if $debugging;
+                        if (chdir("/")) {
+                           $moved = 1;
+                        }
+                        else {
+                           print STDERR "deletePathnames:    ...failed\n" if $debugging;
+                        }
+                     }
+                     print STDERR "deletePathnames:    pause for NFS cache\n" if $debugging;
+                     sleep 61;
+                     if ($moved) {
+                        print STDERR "deletePathnames:    cd back to \"$here\"\n" if $debugging;
+                        if ( ! chdir($here)) {
+                           print STDERR "deletePathnames:    ...failed\n" if $debugging;
+                        }
+                     }
+                  }
+               }
+               #---------------------------------------
+               #
+               #  We again recursivly crawl the directory
+               #  tree to rebuild the list of pathnames
+               #  that still appear to exist. We keep
+               #  looping while it continues to shrink.
+               #
+               #---------------------------------------
+               print STDERR "deletePathnames{    rebuild pathname list\n" if $debugging;
+               @pathnames     = ();
+               my $rootExists = 0;
+               if ( -l $rootPathname) {
+                  $rootExists = 1;
+               }
+               elsif ( -e $rootPathname) {
+                  $rootExists = 1;
+               }
+               if ($rootExists) {
+                  my $idx          = $#pathnames + 1;
+                  $pathnames[$idx] = $rootPathname;
+                  my $i;
+                  for ($i=0; $i<=$#pathnames; ++$i) {
+                     my $pathname = $pathnames[$i];
+                     if ( -l $pathname) {
+                        print STDERR "deletePathnames:    l \"".$pathname."\"\n" if $debugging;
+                     }
+                     elsif ( -f $pathname) {
+                        print STDERR "deletePathnames:    f \"".$pathname."\"\n" if $debugging;
+                     }
+                     elsif ( -d $pathname ) {
+                        print STDERR "deletePathnames:    d \"".$pathname."\"\n" if $debugging;
+                        if (! opendir(DIR,$pathname)) {
+                           print STDERR $sponsor."can't read directory \"$pathname\"\n" if $sponsor;
+                           $result = 0;
+                        }
+                        else {
+                           while (defined($tmp = readdir(DIR))) {
+                              if (($tmp ne "" ) && ($tmp ne ".") && ($tmp ne "..")) {
+                                 my $idx          = $#pathnames + 1;
+                                 $pathnames[$idx] = $pathnames[$i]."/"."$tmp";
+                                 print STDERR "deletePathnames:    \"".$pathnames[$idx]."\"\n" if $debugging;
+                              }
+                           }
+                           closedir(DIR);
+                        }
+                     }
+                     else {
+                        print STDERR "deletePathnames:    ? \"".$pathname."\"\n" if $debugging;
+                     }
+                  }
+               }
+               print STDERR "deletePathnames}    done\n" if $debugging;
+               $newCount = $#pathnames + 1;
+               if ($newCount == 1) {
+                  print STDERR "deletePathnames: ...now have $newCount pathname at/under \"".$rootPathname."\"\n" if $debugging;
+               }
+               else {
+                  print STDERR "deletePathnames: ...now have $newCount pathnames at/under \"".$rootPathname."\"\n" if $debugging;
+               }
+               if (($newCount <= 0) || ($oldCount <= $newCount)) {
+                  if ($newCount <= 0) {
+                     print STDERR "deletePathnames:    nothing left to do\n" if $debugging;
+                  }
+                  elsif ($oldCount <= $newCount) {
+                     print STDERR "deletePathnames:    no change\n" if $debugging;
+                  }
+                  $done     = 1;
+               }
+               else {
+                  $oldCount = $newCount;
+                  $newCount = 0;
+                  $done     = 0;
+               }
+            }
+            #---------------------------------------
+            #
+            #  Add any leftovers to the failure list.
+            #  This is the last chance to see if
+            #  something has disappeared.
+            #
+            #---------------------------------------
+            print STDERR "deletePathnames{    form the failure list\n" if $debugging;
+            for ($i=0; $i<=$#pathnames; ++$i) {
+               my $pathname    = $pathnames[$i];
+               my $stillExists = 0;
+               if ( -l $pathname) {
+                  $stillExists = 1;
+                  print STDERR "deletePathnames:    l \"".$pathname."\"\n" if $debugging;
+               }
+               elsif ( -d $pathname) {
+                  $stillExists = 1;
+                  print STDERR "deletePathnames:    d \"".$pathname."\"\n" if $debugging;
+               }
+               elsif ( -f $pathname) {
+                  $stillExists = 1;
+                  print STDERR "deletePathnames:    f \"".$pathname."\"\n" if $debugging;
+               }
+               elsif ( -e $pathname) {
+                  $stillExists = 1;
+                  print STDERR "deletePathnames:    ? \"".$pathname."\"\n" if $debugging;
+               }
+               else {
+                  $stillExists = 0;
+               }
+               if ($stillExists) {
+                  my $idx         = $#failures + 1;
+                  $failures[$idx] = $pathname;
+                  $Nfailures     += 1;
+               }
+            }
+            print STDERR "deletePathnames}    done\n" if $debugging;
+         }
+         else {
+            print STDERR "deletePathnames:    nothing to do\n" if $debugging;
+         }
       }
    }
-   print STDERR "deleteDirectoryOrFile:    done\n" if $debugging;
-   print STDERR "deleteDirectoryOrFile: ...start removing\n" if $debugging;
-   for ($i=$#nameList; 0<=$i; $i--) {
-      my $theName = $nameList[$i];
-      my $theType = $typeList[$i];
-      if ($theType eq "directory") {
-         print STDERR "deleteDirectoryOrFile:    d \"".$theName."\"\n" if $debugging;
-         if ( ! rmdir($theName)) {
-            print STDERR $sponsor."can't delete \"".$theName."\"\n" if $sponsor;
-            print STDERR $sponsor."...rmdir(\"".$theName."\") failed\n" if $sponsor;
-            $result = 0;
+   print STDERR "deletePathnames] ...done(={" if $debugging;
+   my $N = $#failures + 1;
+   if (1 <= $N) {
+      my $pathname = $failures[0];
+      print STDERR "\"".$pathname."\"" if $debugging;
+      if (2 <= $N) {
+         if (3 <= $N) {
+            print STDERR ", ... " if $debugging;
          }
-         else {
-            if ( -d $theName) {
-               print STDERR $sponsor."can't delete \"".$theName."\"\n" if $sponsor;
-               print STDERR $sponsor."...directory \"".$theName."\" is still there\n" if $sponsor;
-               $result = 0;
-            }
-         }
-      }
-      elsif ($theType eq "file") {
-         print STDERR "deleteDirectoryOrFile:    f \"".$theName."\"\n" if $debugging;
-         if ( ! unlink($theName)) {
-            print STDERR $sponsor."can't delete directory \"".$theName."\"\n" if $sponsor;
-            print STDERR $sponsor."...unlink(\"".$theName."\") failed\n" if $sponsor;
-            $result = 0;
-         }
-         else {
-            if ( -f $theName) {
-               print STDERR $sponsor."can't delete file \"".$theName."\"\n" if $sponsor;
-               print STDERR $sponsor."...file \"".$theName."\" is still there\n" if $sponsor;
-               $result = 0;
-            }
-         }
-      }
-      elsif ($theType eq "symbolic-link") {
-         print STDERR "deleteDirectoryOrFile:    l \"".$theName."\"\n" if $debugging;
-         if ( ! unlink($theName)) {
-            print STDERR $sponsor."can't delete symbolic-link \"".$theName."\"\n" if $sponsor;
-            print STDERR $sponsor."...unlink(\"".$theName."\") failed\n" if $sponsor;
-            $result = 0;
-         }
-         else {
-            if ( -l $theName) {
-               print STDERR $sponsor."can't delete symbolic-link \"".$theName."\"\n" if $sponsor;
-               print STDERR $sponsor."...symbolic-link \"".$theName."\" is still there\n" if $sponsor;
-               $result = 0;
-            }
-         }
-      }
-      else {
-         print STDERR "deleteDirectoryOrFile:    ? \"".$theName."\"\n" if $debugging;
-         print STDERR $sponsor."can't delete \"".$theName."\"\n" if $sponsor;
-         print STDERR $sponsor."...\"".$theName."\" isn't file, directory, or symbolic-link\"\n" if $sponsor;
-      }
-      if (-e $nameList[$i]) {
-         print STDERR $sponsor."can't delete \"".$theName."\"\n" if $sponsor;
-         $result = 0;
+         $pathname = $failures[$#failures];
+         print STDERR ", \"".$pathname."\"" if $debugging;
       }
    }
-   print STDERR "deleteDirectoryOrFile:    done\n" if $debugging;
-   print STDERR "deleteDirectoryOrFile] ...done(=$result)\n" if $debugging;
-   return $result;
+   print STDERR "})\n" if $debugging;
+   return @failures;
 }
 
 # MyUniqueFileId: 8beb72f4-0e19-46e2-effb-336240c9fb42
@@ -4439,36 +5285,39 @@ sub getOSclass {
 #-------------------------------------------------------------------------------
 
 sub getWorkingDirectory {
-   my $sponsor  = shift;
+   my $callerIs = shift;
+   print STDERR "getWorkingDirectory[ starting...\n" if $debugging;
    my $exitCode;
    my $gives;
    my $tmpdir   = findTempDir("");
    my $osClass  = getOSclass();
    if ($osClass eq "UNIX-like") {
-      my $pathname = "$tmpdir/pwd-$$.tmp";;
-      $gives       = `pwd 2>$pathname`;
-      $exitCode    = $? + 0;
+      print STDERR "getWorkingDirectory: ...UNIX-like\n" if $debugging;
+      my $tmpFile = "$tmpdir/pwd-$$.tmp";;
+      print STDERR "getWorkingDirectory: ...run: [pwd 2>$tmpFile]\n" if $debugging;
+      $gives      = `pwd 2>$tmpFile`;
+      $exitCode   = $? + 0;
       chomp $gives;
-      unlink $pathname if -f $pathname;
+      unlink $tmpFile if -f $tmpFile;
    }
    elsif ($osClass eq "Windows-like") {
-      my $pathname = "$tmpdir\\pwd-$$.tmp";
-      $gives       = `cd 2>$pathname`;
-      $exitCode    = $? + 0;
+      print STDERR "getWorkingDirectory: ...Windows-like\n" if $debugging;
+      my $tmpFile = "$tmpdir\\pwd-$$.tmp";
+      $gives      = `cd 2>$tmpFile`;
+      print STDERR "getWorkingDirectory: ...run: [cd 2>$tmpFile]\n" if $debugging;
+      $exitCode   = $? + 0;
       chomp $gives;
-      unlink $pathname if -f $pathname;
+      unlink $tmpFile if -f $tmpFile;
    }
    else {
       $gives    = "";
       $exitCode = 1;
    }
    if ($exitCode != 0) {
-      if ($sponsor ne "") {
-         print STDERR "$sponsor: can't determine current working directory\n";
-         exit 1;
-      }
+      print STDERR "$callerIscan't determine current working directory\n";
       $gives = "";
    }
+   print STDERR "getWorkingDirectory] ...done(=\"".$gives."\")\n" if $debugging;
    return $gives;
 }
 
@@ -4726,6 +5575,48 @@ sub mkDirectory {
    return result;
 }
 
+# MyUniqueFileId: 6af5ed70-509a-46e3-c366-c864743c9ac3
+#-------------------------------------------------------------------------------
+#
+#  This subroutine deletes a single pathname (directory, file, or symbolic-link)
+#  If it can't be properly deleted then it will fail with an error message.
+#
+#  see: totebag/src/perl-lib/mustDeletePathname.psub
+#
+#-------------------------------------------------------------------------------
+
+sub mustDeletePathname {
+   my $callerIs  = shift;
+   my $pathname  = shift;
+   print STDERR "mustDeletePathname[ callerIs=\"".$callerIs."\", pathname=\"".$pathname."\"...\n" if $debugging;
+   my $result    = 1;
+   if ($pathname ne "") {
+      my @failures  = deletePathnames($pathname);
+      my $Nfailures = $#failures + 1;
+      if (1 <= $Nfailures) {
+         $result = 0;
+         my $count;
+         my $failedOn;
+         foreach $failedOn (@failures) {
+            $count += 1;
+            print STDERR $callerIs."error -- can't delete \"$failedOn\"\n";
+            if (10 <= $count) {
+               print STDERR $callerIs."  :        :     :\n";
+               my $lastOne = $failures[$#failures];
+               print STDERR $callerIs."error -- can't delete \"$lastOne\"\n";
+               last;
+            }
+         }
+         exit 1;
+      }
+   }
+   else {
+      $result = 0;
+   }
+   print STDERR "mustDeletePathname] ...done(=$result)\n" if $debugging;
+   return $result;
+}
+
 # MyUniqueFileId: 5ff433a4-57d8-46b9-fd0c-b4cdb3cc330d
 #-------------------------------------------------------------------------------
 #
@@ -4823,6 +5714,47 @@ sub quoteIfReqd {
          $result = $_;
       }
    }
+   return $result;
+}
+
+# MyUniqueFileId: cc8ac2e4-bd0d-4c17-c64a-e852bed0d90f
+#-------------------------------------------------------------------------------
+#
+#  This subroutine deletes a single pathname (directory, file, or symbolic-link)
+#  If it can't be properly deleted then it will produce a warning message.
+#
+#  see: totebag/src/perl-lib/shouldDeletePathname.psub
+#
+#-------------------------------------------------------------------------------
+
+sub shouldDeletePathname {
+   my $callerIs  = shift;
+   my $pathname  = shift;
+   print STDERR "shouldDeletePathname[ callerIs=\"".$callerIs."\", pathname=\"".$pathname."\"...\n" if $debugging;
+   my $result    = 1;
+   if ($pathname ne "") {
+      my @failures  = deletePathnames($pathname);
+      my $Nfailures = $#failures + 1;
+      if (1 <= $Nfailures) {
+         $result = 0;
+         my $count;
+         my $failedOn;
+         foreach $failedOn (@failures) {
+            $count += 1;
+            print STDERR $callerIs."warning -- can't delete \"$failedOn\"\n";
+            if (10 <= $count) {
+               print STDERR $callerIs."   :         :     :\n";
+               my $lastOne = $failures[$#failures];
+               print STDERR $callerIs."warning -- can't delete \"$lastOne\"\n";
+               last;
+            }
+         }
+      }
+   }
+   else {
+      $result = 0;
+   }
+   print STDERR "shouldDeletePathname] ...done(=$result)\n" if $debugging;
    return $result;
 }
 
@@ -4993,7 +5925,7 @@ sub help {
    |          As is typical for a UNIX-like environment, the generated script
    |          has no extension.
    |
-   |       How the generated installer script works:
+   |       How the generated installer script works on a UNIX-like target:
    |
    |          1) The installer script locates itself. This may seem to be an
    |             obvious and or silly question but the actual location of the
@@ -5014,17 +5946,28 @@ sub help {
    |             the installer script into the temp directory created in (2).
    |          5) The tarball in (4) is unwrapped revealing one or more tarballs
    |             (one for each installation directory such as bin.tar.gz/
-   |             include.tar.gz/ lib.tar.gz/ ...). If a post-install script was
+   |             include.tar.gz/ lib.tar.gz/ ...). If a pre-install script was
    |             supplied to mkinstaller when the generated installer script
-   |             was produced then it will be revealed at this time.
-   |          6) Each individual tarball revealed (5) is unwrapped into the
+   |             was produced then it will be revealed at this time. Similarly
+   |             if a post-install script was supplied to mkinstaller when the
+   |             generated installer script was produced then it will also be
+   |             revealed at this time. Note that neither of these scripts if
+   |             supplied and revealed are actually executed in this step. See
+   |             steps (6) and (8).
+   |          6) If (5) revealed a pre-install script then it will be executed
+   |             by the approptiate interpreter. Note that each of the PREFIX
+   |             directories will be supplied as an option to this pre-install
+   |             script (such as --prefix_bin=<pathname>). Also note at this time
+   |             the individual tarballs representing the directories to install
+   |             have NOT be unwrapped.
+   |          7) Each individual tarball revealed in (5) is unwrapped into the
    |             approperiate PREFIX directory overlying anything already
    |             there.
-   |          7) If (5) revealed a post-install script then it will be executed
+   |          8) If (5) revealed a post-install script then it will be executed
    |             by the approptiate interpreter. Note that each of the PREFIX
    |             directories will be supplied as an option to this post-install
    |             script (such as --prefix_bin=<pathname>).
-   |          8) Cleanup.
+   |          9) Cleanup.
    |
    |    Windows-like host
    |
@@ -5113,6 +6056,15 @@ sub help {
    |
    |            Output version number and revision date to <stdout> and quit.
    |
+   |        -c <name>
+   |        --create=<name>
+   |
+   |            The name of the script to generate. It is generally not advisable
+   |            to include a suffix (aka. extension) as part of the script name.
+   |            Also note that this is not a pathname, is is the simple name of
+   |            the script file which is to be created in the current directory.
+   |            By default the script will be named "installer".
+   |
    |        --cc=<string>
    |
    |            The C compiler name and version number that had been used in
@@ -5125,17 +6077,6 @@ sub help {
    |
    |            --cc="gcc 4.5.1"
    |
-   |        --contact=<address>
-   |
-   |            A contact email address. There is no default contact address.
-   |
-   |        -c <name>
-   |        --create=<name>
-   |
-   |            The name of the script to generate. It is generally not advisable
-   |            to include a suffix (aka. extension) as part of the script name.
-   |            By default the script will be named "installer".
-   |
    |        --cxx=<string>
    |
    |            The C++ compiler name and version number that had been used
@@ -5147,6 +6088,10 @@ sub help {
    |            Example:
    |
    |            --cxx="g++ 4.5.1"
+   |
+   |        --contact=<address>
+   |
+   |            A contact email address. There is no default contact address.
    |
    |        -d
    |        --debug
@@ -5240,6 +6185,46 @@ sub help {
    |            supported on Windows systems as the Bourne-shell is not
    |            generally found on Windows systems.
    |
+   |        --preinstall-binary=<pathname>
+   |
+   |            The pathname of a binary executable which is to be included
+   |            with the installer's payload. It will be run by the generated
+   |            installer before all of the payload directories have been
+   |            extracted and installed.
+   |
+   |        --preinstall-perl=<pathname>
+   |
+   |            The pathname of a Perl script which is to be included with
+   |            the installer's payload. It will be run by the generated
+   |            installer before all of the payload directories have been
+   |            extracted and installed.
+   |
+   |            Such pre-install Perl scripts are not generally supported
+   |            on Windows systems as Perl is not generally found on Windows
+   |            systems.
+   |
+   |        --preinstall-python=<pathname>
+   |
+   |            The pathname of a Python script which is to be included with
+   |            the installer's payload. It will be run by the generated
+   |            installer before all of the payload directories have been
+   |            extracted and installed.
+   |
+   |            Such pre-install Python scripts are not generally supported
+   |            on Windows systems as Perl is not generally found on Windows
+   |            systems.
+   |
+   |        --preinstall-sh=<pathname>
+   |
+   |            The pathname of a Bourne-shell script which is to be included
+   |            with the installer's payload. It will be run by the generated
+   |            installer before all of the payload directories have been
+   |            extracted and installed.
+   |
+   |            Such pre-install Bourne-shell scripts are not generally
+   |            supported on Windows systems as the Bourne-shell is not
+   |            generally found on Windows systems.
+   |
    |        --prjnam=<name>
    |        --project-name=<name>
    |
@@ -5311,6 +6296,13 @@ sub help {
    |
    |            Generate extra output which is only usefull when debugging the
    |            "mkinstaller" script itself.
+   |
+   |        INEFFECTIVE_mkinstaller
+   |
+   |            If this environment variable has been set then the generated
+   |            script will lack a payload and may not even be runable. Note
+   |            that this feature is almost never used except when debugging
+   |            the script generation process.
    |
    |        MKINSTALLER_TMPDIR
    |
@@ -5550,7 +6542,7 @@ sub html {
    |               As is typical for a UNIX-like environment, the generated script
    |               has no extension.
    |            </blockquote>
-   |            How the generated installer script works:
+   |            How the generated installer script works on a UNIX-like target:
    |            <blockquote>
    |               <ol>
    |                  <li>The installer script locates itself. This may seem to be an
@@ -5576,9 +6568,21 @@ sub html {
    |                  </li>
    |                  <li>The tarball in (4) is unwrapped revealing one or more tarballs
    |                      (one for each installation directory such as <b><big><code>bin.tar.gz</code></big></b>
-   |                      <b><big><code>include.tar.gz</code></big></b> <b><big><code>lib.tar.gz</code></big></b> ...). If a post-install script was
+   |                      <b><big><code>include.tar.gz</code></big></b> <b><big><code>lib.tar.gz</code></big></b> ...). If a pre-install script was
    |                      supplied to <i>mkinstaller</i> when the generated installer script
-   |                      was produced then it will be revealed at this time.
+   |                      was produced then it will be revealed at this time. Similarly
+   |                      if a post-install script was supplied to mkinstaller when the
+   |                      generated installer script was produced then it will also be
+   |                      revealed at this time. Note that neither of these scripts if
+   |                      supplied and revealed are actually executed in this step. See
+   |                      steps (6) and (8).
+   |                  </li>
+   |                  <li>If (5) revealed a pre-install script then it will be executed
+   |                      by the approptiate interpreter. Note that each of the PREFIX
+   |                      directories will be supplied as an option to this pre-install
+   |                      script (such as <b><big><code>--prefix_bin=</code></big></b><i>pathname</i>). Also note at this time
+   |                      the individual tarballs representing the directories to install
+   |                      have NOT be unwrapped.
    |                  </li>
    |                  <li>Each individual tarball revealed (5) is unwrapped into the
    |                      approperiate PREFIX directory overlying anything already
@@ -5711,6 +6715,16 @@ sub html {
    |               Output version number and revision date to <i>stdout</i> and quit.
    |            </blockquote>
    |
+   |            <b>-c</b> <i>name</i> <br>
+   |            <b>--create=</b><i>name</i>
+   |            <blockquote>
+   |               The name of the script to generate. It is generally not advisable
+   |               to include a suffix (aka. extension) as part of the script name.
+   |               Also note that this is <i>not</i> a pathname, is is the simple name of
+   |               the script file which is to be created in the current directory.
+   |               By default the script will be named "installer".
+   |            </blockquote>
+   |
    |            <b>--cc=</b><i>string</i>
    |            <blockquote>
    |               The C compiler name and version number that had been used in
@@ -5727,19 +6741,6 @@ sub html {
    |               </blockquote>
    |            </blockquote>
    |
-   |            <b>--contact=</b><i>address</i>
-   |            <blockquote>
-   |               A contact email address. There is no default contact address.
-   |            </blockquote>
-   |
-   |            <b>-c</b> <i>name</i> <br>
-   |            <b>--create=</b><i>name</i>
-   |            <blockquote>
-   |               The name of the script to generate. It is generally not advisable
-   |               to include a suffix (aka. extension) as part of the script name.
-   |               By default the script will be named "installer".
-   |            </blockquote>
-   |
    |            <b>--cxx=</b><i>string</i>
    |            <blockquote>
    |               The C++ compiler name and version number that had been used
@@ -5754,6 +6755,11 @@ sub html {
    |               <blockquote>
    |                  --cxx="g++ 4.5.1"
    |               </blockquote>
+   |            </blockquote>
+   |
+   |            <b>--contact=</b><i>address</i>
+   |            <blockquote>
+   |               A contact email address. There is no default contact address.
    |            </blockquote>
    |
    |            <b>-d</b> <br>
@@ -5817,6 +6823,53 @@ sub html {
    |               determining if the generated script is applicable to the
    |               system where it is run. The default is to use <b><big><code>uname -s</code></big></b> and
    |               <b><big><code>uname -r</code></big></b> to determine this string.
+   |            </blockquote>
+   |
+   |            <b>--preinstall-binary=</b><i>pathname</i>
+   |            <blockquote>
+   |               The pathname of a binary executable which is to be included
+   |               with the installer's payload. It will be run by the generated
+   |               installer before all of the payload directories have been
+   |               extracted and installed.
+   |            </blockquote>
+   |
+   |            <b>--preinstall-perl=</b><i>pathname</i>
+   |            <blockquote>
+   |               The pathname of a Perl script which is to be included with
+   |               the installer's payload. It will be run by the generated
+   |               installer before all of the payload directories have been
+   |               extracted and installed.
+   |            </blockquote>
+   |            <blockquote>
+   |               Such pre-install Perl scripts are not generally supported
+   |               on Windows systems as Perl is not generally found on Windows
+   |               systems.
+   |            </blockquote>
+   |
+   |            <b>--preinstall-python=</b><i>pathname</i>
+   |            <blockquote>
+   |               The pathname of a Python script which is to be included with
+   |               the installer's payload. It will be run by the generated
+   |               installer before all of the payload directories have been
+   |               extracted and installed.
+   |            </blockquote>
+   |            <blockquote>
+   |               Such pre-install Python scripts are not generally supported
+   |               on Windows systems as Python is not generally found on Windows
+   |               systems.
+   |            </blockquote>
+   |
+   |            <b>--preinstall-sh=</b><i>pathname</i>
+   |            <blockquote>
+   |               The pathname of a Bourne-shell script which is to be included
+   |               with the installer's payload. It will be run by the generated
+   |               installer before all of the payload directories have been
+   |               extracted and installed.
+   |            </blockquote>
+   |            <blockquote>
+   |               Such pre-install Bourne-shell scripts are not generally
+   |               supported on Windows systems as the Bourne-shell is not
+   |               generally found on Windows systems.
    |            </blockquote>
    |
    |            <b>--postinstall-binary=</b><i>pathname</i>
@@ -5974,6 +7027,14 @@ sub html {
    |            <blockquote>
    |               Generate extra output which is only usefull when debugging the
    |               <i>mkinstaller</i> script itself.
+   |            </blockquote>
+   |
+   |            INEFFECTIVE_mkinstaller
+   |            <blockquote>
+   |               If this environment variable has been set then the generated
+   |               script will lack a payload and may not even be runable. Note
+   |               that this feature is almost never used except when debugging
+   |               the script generation process.
    |            </blockquote>
    |
    |            MKINSTALLER_TMPDIR
