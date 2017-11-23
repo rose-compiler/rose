@@ -9007,11 +9007,11 @@ Unparse_ExprStmt::unparseGotoStmt(SgStatement* stmt, SgUnparse_Info& info)
         {
        // DQ (11/22/2017): Added suport for GNU extension for computed goto.
           curprint ("goto *");
-          SgExpression* label_expression = goto_stmt->get_label_expression();
-          ROSE_ASSERT(label_expression != NULL);
+          SgExpression* selector_expression = goto_stmt->get_selector_expression();
+          ROSE_ASSERT(selector_expression != NULL);
 
           SgUnparse_Info ninfo(info);
-          unparseExpression(label_expression,ninfo);
+          unparseExpression(selector_expression,ninfo);
         }
 
      if (!info.SkipSemiColon())

@@ -9083,7 +9083,7 @@ SageBuilder::buildGotoStatement_nfi(SgExpression*  label_expression)
    {
      SgLabelStatement* label = NULL;
      SgGotoStatement* result = new SgGotoStatement(label);
-     result->set_label_expression(label_expression);
+     result->set_selector_expression(label_expression);
      ROSE_ASSERT(result);
      setOneSourcePositionNull(result);
      return result;
