@@ -14,10 +14,10 @@
 #include <sys/ipc.h>
 #include <sys/sem.h>
 
-using namespace rose;
-using namespace rose::Diagnostics;
-using namespace rose::BinaryAnalysis;
-using namespace rose::BinaryAnalysis::InstructionSemantics2;
+using namespace Rose;
+using namespace Rose::Diagnostics;
+using namespace Rose::BinaryAnalysis;
+using namespace Rose::BinaryAnalysis::InstructionSemantics2;
 
 size_t RSIM_Thread::next_sequence_number = 1;
 
@@ -716,14 +716,14 @@ RSIM_Thread::report_stack_frames(Sawyer::Message::Stream &mesg, const std::strin
 void
 RSIM_Thread::syscall_return(const BaseSemantics::SValuePtr &retval)
 {
-    const RegisterDescriptor& reg = get_process()->get_simulator()->syscallReturnRegister();
+    RegisterDescriptor reg = get_process()->get_simulator()->syscallReturnRegister();
     operators()->writeRegister(reg, retval);
 }
 
 void
 RSIM_Thread::syscall_return(uint64_t retval)
 {
-    const RegisterDescriptor& reg = get_process()->get_simulator()->syscallReturnRegister();
+    RegisterDescriptor reg = get_process()->get_simulator()->syscallReturnRegister();
     operators()->writeRegister(reg, operators()->number_(reg.get_nbits(), retval));
 }
 

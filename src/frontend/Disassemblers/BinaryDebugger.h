@@ -1,17 +1,29 @@
 #ifndef ROSE_BinaryAnalysis_BinaryDebugger_H
 #define ROSE_BinaryAnalysis_BinaryDebugger_H
 
+#include <boost/noncopyable.hpp>
 #include <Sawyer/BitVector.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /** Simple debugger.
  *
  *  This class implements a very simple debugger. */
-class BinaryDebugger {
+class BinaryDebugger: private boost::noncopyable {
 public:
     enum DetachMode { KILL, DETACH, CONTINUE, NOTHING };
+
+    /** Flags controlling operation. */
+    enum Flag {
+        ATTACH          = 0x00000001,                   /**< Attach to existing process. */
+        REDIRECT_INPUT  = 0x00000002,                   /**< Redirect input from /dev/null. */
+        REDIRECT_OUTPUT = 0x00000004,                   /**< Redirect output to /dev/null. */
+        REDIRECT_ERROR  = 0x00000008,                   /**< Redirect standard error to /dev/null. */
+        CLOSE_FILES     = 0x00000010,                   /**< Close all file descriptors > 2. */
+        DEFAULT_FLAGS   = 0x00000013                    /**< Default flags. */
+    };
+
 private:
     typedef Sawyer::Container::Map<RegisterDescriptor, size_t> UserRegDefs;
     enum RegPageStatus { REGPAGE_NONE, REGPAGE_REGS, REGPAGE_FPREGS };
@@ -26,53 +38,55 @@ private:
     size_t kernelWordSize_;                             // cached width in bits of kernel's words
     uint8_t regsPage_[512];                             // latest register information read from subordinate
     RegPageStatus regsPageStatus_;                      // what are the contents of regPage_?
+    unsigned flags_;                                    // operational flags; Flag bit vector
 
 public:
     BinaryDebugger()
-        : child_(0), howDetach_(KILL), wstat_(-1), sendSignal_(0), kernelWordSize_(0), regsPageStatus_(REGPAGE_NONE) {
+        : child_(0), howDetach_(KILL), wstat_(-1), sendSignal_(0), kernelWordSize_(0), regsPageStatus_(REGPAGE_NONE),
+          flags_(DEFAULT_FLAGS) {
         init();
     }
 
-    BinaryDebugger(int pid)
-        : child_(0), howDetach_(KILL), wstat_(-1), sendSignal_(0), kernelWordSize_(0), regsPageStatus_(REGPAGE_NONE) {
+    BinaryDebugger(int pid, unsigned flags = DEFAULT_FLAGS)
+        : child_(0), howDetach_(KILL), wstat_(-1), sendSignal_(0), kernelWordSize_(0), regsPageStatus_(REGPAGE_NONE),
+          flags_(flags) {
         init();
-        attach(pid);
+        attach(pid, flags);
     }
 
-    BinaryDebugger(const std::string &exeName)
-        : child_(0), howDetach_(KILL), wstat_(-1), sendSignal_(0), kernelWordSize_(0), regsPageStatus_(REGPAGE_NONE) {
+    BinaryDebugger(const std::string &exeName, unsigned flags = DEFAULT_FLAGS)
+        : child_(0), howDetach_(KILL), wstat_(-1), sendSignal_(0), kernelWordSize_(0), regsPageStatus_(REGPAGE_NONE),
+          flags_(flags) {
         init();
-        attach(exeName);
+        attach(exeName, flags);
     }
 
-    BinaryDebugger(const std::vector<std::string> &exeNameAndArgs)
-        : child_(0), howDetach_(KILL), wstat_(-1), sendSignal_(0), kernelWordSize_(0), regsPageStatus_(REGPAGE_NONE) {
+    BinaryDebugger(const std::vector<std::string> &exeNameAndArgs, unsigned flags = DEFAULT_FLAGS)
+        : child_(0), howDetach_(KILL), wstat_(-1), sendSignal_(0), kernelWordSize_(0), regsPageStatus_(REGPAGE_NONE),
+          flags_(flags) {
         init();
-        attach(exeNameAndArgs);
+        attach(exeNameAndArgs, flags);
     }
-    
+
     ~BinaryDebugger() {
         detach();
     }
 
-private:
-    BinaryDebugger(const BinaryDebugger&);              // not copyable
-    BinaryDebugger& operator=(const BinaryDebugger&);   // not copyable
-
 public:
     /** Attach to an existing process.
      *
-     *  Arranges for an existing process to be debugged.  If @p attach is true then the debugger attempts to attach to that
-     *  process and gain control, otherwise it assumes that the calling process has already done that. */
-    void attach(int pid, bool attach=true);
+     *  Arranges for an existing process to be debugged.  If the @p ATTACH @ref Flag "flag" is set (the default) then the
+     *  debugger attempts to attach to that process and gain control, otherwise it assumes that the calling process has already
+     *  done that. */
+    void attach(int pid, unsigned flags = DEFAULT_FLAGS);
 
     /** Program to debug.
      *
      *  The program can be specified as a single name or as a name and arguments.
      *
      * @{ */
-    void attach(const std::string &fileName);
-    void attach(const std::vector<std::string> &fileNameAndArgs);
+    void attach(const std::string &fileName, unsigned flags = DEFAULT_FLAGS);
+    void attach(const std::vector<std::string> &fileNameAndArgs, unsigned flags = DEFAULT_FLAGS);
     /** @} */
 
     /** Returns true if attached to a subordinate.  Return value is the subordinate process ID. */
@@ -122,7 +136,7 @@ public:
      * @code
      *  uint64_t value = debugger.readRegister(RIP).toInteger();
      * @endcode */
-    Sawyer::Container::BitVector readRegister(const RegisterDescriptor&);
+    Sawyer::Container::BitVector readRegister(RegisterDescriptor);
 
     /** Read subordinate memory.
      *
@@ -142,6 +156,10 @@ private:
 
     // Wait for subordinate or throw on error
     void waitForChild();
+
+    // Open /dev/null with the specified flags as the indicated file descriptor, closing what was previously on that
+    // descriptor. If an error occurs, the targetFd is closed anyway.
+    void devNullTo(int targetFd, int openFlags);
 
 };
 

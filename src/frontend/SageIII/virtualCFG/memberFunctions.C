@@ -1638,6 +1638,34 @@ std::vector<CFGEdge> SgNullStatement::cfgInEdges(unsigned int idx) {
   return result;
 }
 
+unsigned int   // straight line statement, start==end
+SgStaticAssertionDeclaration::cfgIndexForEnd() const
+   {
+     return 0;
+   }
+
+bool SgStaticAssertionDeclaration::cfgIsIndexInteresting(unsigned int idx) const {
+  return idx == 1;
+}
+
+std::vector<CFGEdge> SgStaticAssertionDeclaration::cfgOutEdges(unsigned int idx) {
+  ROSE_ASSERT (idx == 0);
+  std::vector<CFGEdge> result;
+  makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result);
+  return result;
+}
+
+std::vector<CFGEdge>
+SgStaticAssertionDeclaration::cfgInEdges(unsigned int idx)
+   {
+     ROSE_ASSERT (idx == 0);
+     std::vector<CFGEdge> result;
+     addIncomingFortranGotos(this, idx, result);
+     makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result);
+     return result;
+   }
+
+
 unsigned int
 SgTypedefDeclaration::cfgIndexForEnd() const
    {

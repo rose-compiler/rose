@@ -155,10 +155,6 @@ if ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
    SUBDIRS += Python_tests
 endif
 
-# if ROSE_BUILD_MATLAB_LANGUAGE_SUPPORT
-#    SUBDIRS += Matlab_tests
-# endif
-
 # DQ (1/15/2017): Added conditional support to avoid these tests when ROSE is configured for binary only support, failing in ROSE matrix testing).
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 SUBDIRS += CudaTests
@@ -170,7 +166,51 @@ endif
 # DQ (2/15/2014): Adding systemc tests (part of general C++ robustness tests)
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 SUBDIRS += systemc_tests
+
+if ROSE_USE_VXWORKS
+# DQ (5/21/2017): Adding VX Works support.
+SUBDIRS += vxworks_tests
+endif
+endif
+
+# DQ (8/23/2017): Adding support for testing experimental Charp support.
+if ROSE_EXPERIMENTAL_CSHARP_ROSE_CONNECTION
+SUBDIRS += experimental_csharp_tests
+endif
+
+# DQ (8/23/2017): Adding support for testing experimental Ada support.
+if ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
+SUBDIRS += experimental_ada_tests
+endif
+
+# DQ (8/23/2017): Adding support for testing experimental Jovial support.
+if ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION
+SUBDIRS += experimental_jovial_tests
+endif
+
+# DQ (8/23/2017): Adding support for testing experimental Cobol support.
+if ROSE_EXPERIMENTAL_COBOL_ROSE_CONNECTION
+SUBDIRS += experimental_cobol_tests
+endif
+
+# Rasmussen (11/4/2017): Adding support for testing experimental Matlab support.
+if ROSE_EXPERIMENTAL_MATLAB_ROSE_CONNECTION
+SUBDIRS += experimental_matlab_tests
+endif
+
+if ROSE_USE_GNAT
+# DQ (11/14/2017): Removed GNAT test directory since it is redundant with the ADA test directory.
+# DQ (6/8/2017): Adding GNAT support.
+# SUBDIRS += gnat_tests
 endif
 
 # end of ROSE_USE_CLANG_FRONTEND
 endif
+
+# DQ (31/8/2017): Add test specific to just the newer experimental language support.
+test_new_languages:
+#	cd experimental_csharp_tests; $(MAKE) test
+	cd experimental_ada_tests;    $(MAKE) test
+	cd experimental_jovial_tests; $(MAKE) test
+	cd experimental_cobol_tests;  $(MAKE) test
+

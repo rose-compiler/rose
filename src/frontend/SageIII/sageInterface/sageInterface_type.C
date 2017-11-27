@@ -56,9 +56,11 @@ namespace SageInterface
   bool isScalarType( SgType* t)
   {
     ROSE_ASSERT(t);
+    // We want to strip off typedef chain, and const modifiers etc.
+    t = t->stripTypedefsAndModifiers();
     switch(t->variantT()) {
-      case V_SgTypedefType:
-         return isScalarType(isSgTypedefType(t)->get_base_type());
+//      case V_SgTypedefType:
+//         return isScalarType(isSgTypedefType(t)->get_base_type());
       case V_SgTypeChar :
       case V_SgTypeSignedChar :
       case V_SgTypeUnsignedChar :

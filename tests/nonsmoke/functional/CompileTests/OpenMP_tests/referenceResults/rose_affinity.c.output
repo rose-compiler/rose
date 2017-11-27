@@ -1,0 +1,3 @@
+#pragma omp parallel  proc_bind(spread)
+#pragma omp parallel  proc_bind(master)
+#pragma omp parallel  proc_bind(close)

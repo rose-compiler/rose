@@ -1,11 +1,13 @@
 #include "sage3basic.h"
+
+#include "sageBuilderAsm.h"
 #include "InstructionEnumsX86.h"
 #include "BinaryLoader.h"
 
 #include <boost/foreach.hpp>
 #include <Sawyer/CommandLine.h>                         // needed for CommandLine::Parser.programName(), i.e., argv[0]
 
-namespace rose {
+namespace Rose {
 namespace SageBuilderAsm {
 
 SgBinaryComposite *
@@ -37,25 +39,25 @@ buildBinaryComposite(const std::string &fileName) {
 
 // FIXME[Robb P. Matzke 2014-07-21]: deprecated
 SgAsmDirectRegisterExpression *
-buildSgAsmx86RegisterReferenceExpression(const RegisterDescriptor &desc) {
+buildSgAsmx86RegisterReferenceExpression(RegisterDescriptor desc) {
     return new SgAsmDirectRegisterExpression(desc);
 }
 
 // FIXME[Robb P. Matzke 2014-07-21]: deprecated
 SgAsmDirectRegisterExpression *
-buildSgAsmArmRegisterReferenceExpression(const RegisterDescriptor &desc) {
+buildSgAsmArmRegisterReferenceExpression(RegisterDescriptor desc) {
     return new SgAsmDirectRegisterExpression(desc);
 }
 
 // FIXME[Robb P. Matzke 2014-07-21]: deprecated
 SgAsmDirectRegisterExpression *
-buildSgAsmMipsRegisterReferenceExpression(const RegisterDescriptor &desc) {
+buildSgAsmMipsRegisterReferenceExpression(RegisterDescriptor desc) {
     return new SgAsmDirectRegisterExpression(desc);
 }
 
 // FIXME[Robb P. Matzke 2014-07-21]: deprecated
 SgAsmDirectRegisterExpression *
-buildSgAsmPowerpcRegisterReferenceExpression(const RegisterDescriptor &desc)
+buildSgAsmPowerpcRegisterReferenceExpression(RegisterDescriptor desc)
 {
     return new SgAsmDirectRegisterExpression(desc);
 }

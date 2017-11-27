@@ -40,6 +40,8 @@
 \newcommand{\redarrow}{{\color{DarkRed} \Pisymbol{pzd}{217}}}
 \newcommand{\minibox}[2]{\begin{minipage}{#1}\raggedright #2\end{minipage}}
 
+\newcommand{\enquote}[1]{``#1''}
+
 %\newcommand{\fixme}[1]{\begin{tikzpicture}
 %\node[bottom color=red!80!white, top color=red!70!black, rounded corners,
 %      font=\bf\color{white}\footnotesize] {
@@ -69,24 +71,24 @@
 \begin{document}
 \title{CodeThorn}
 
-\author{\small Markus Schordan, Marc Jasper, Joshua Asplund, Adrian Prantl}
+\author{\small Markus Schordan, Marc Jasper, Joshua Asplund, Maximilian Fecke, Adrian Prantl}
 %\end{tabular}
-\date{\today}
+\date{August 11, 2017}
 
 \maketitle
 
 \begin{abstract}
-
-CodeThorn is a tool for analyzing C/C++ programs, combining approaches
+\noindent CodeThorn is a tool for analyzing C/C++ programs by combining approaches
 from data flow analysis, constraint-based analysis, and model
-checking. The main focus in the development of CodeThorn is the
-exploration of program analysis algorithms in combining above
-approaches and to explore methods for combining static analsyis with
-methods for verification of software.
+checking. The main focus in the development of CodeThorn is to explore program analysis algorithms while combining above
+approaches and to investigate methods for combining static analysis with
+methods for software verification.
 
 The input language is currently restricted to a subset of C.
 
 \end{abstract}
+
+\tableofcontents
 
 %-------------------------------------------------------------------------
 
@@ -94,241 +96,193 @@ The input language is currently restricted to a subset of C.
 \label{sec:intro}
 
 CodeThorn was initially developed as a tool for exploring approaches
-for reachbility analysis and verification of linear temporal logic
-formulae based for finite state systems. This was later extended to
-also perform specialisation of programs and program equivalence
-checking. CodeThorn is based on ROSE \cite{roseWWW} and uses the ROSE abstract syntax
-tree as basis for its input. A number of components have been moved
+for reachbility analysis and verification of linear temporal logic (LTL)
+formulae based on finite state systems~\cite{schordan2014combining}. 
+This was later extended to
+also perform specialization of programs and program equivalence
+checking~\cite{schordan2014verification}. CodeThorn is based on the 
+ROSE compiler infrastructure\footnote{\url{http://www.rosecompiler.org/}} 
+and uses the ROSE abstract syntax tree as basis for its input. 
+A number of components have been moved
 from CodeThorn to ROSE over time. What remains are command line
-options that allow to access those features conveniently or also to
+options that allow to access those features conveniently and also to
 reproduce some published results.
+
+\nocite{roseWWW}
+
+\subsection{Use in Competitions}
+
+Since 2012, CodeThorn has been successfully used to participate in the
+international RERS Challenge\footnote{\url{http://www.rers-challenge.org}} 
+on program analysis and verification~\cite{schordan2014combining}.
+Among other accomplishments, the use of CodeThorn helped to become overall winner and obtain the method
+combination award in RERS 2014 as well as to win the 1st place in the Sequential LTL track of the 
+recent 2017 iteration of RERS\footnote{See \url{http://www.rers-challenge.org} for detailed competition results}.
+Participating in the challenge led to many improvements in the tool such as an efficient
+parallelization of the analysis~\cite{jasper2016multi} and to the development of new model checking 
+approaches~\cite{jasper2014counterexample}.
+
+Starting in 2016, the LTL model checking infrastructure of CodeThorn has been successfully
+applied to generate parallel verification benchmarks. These benchmarks were used for 
+a new parallel track of the RERS Challenges 2016 and 2017~\cite{jasper2017rers}.
+
 
 \subsection{Benchmarks}
 
-We have found the RERS-challenge
-problems \footnote{http://www.rers-challenge.org} being an excellent
-guidence in crafting this early version of the tool and investigating
+We have found that benchmarks of the RERS Challenge
+serve as an excellent guidance in crafting this tool and investigating
 the impact and performance of each of the approaches on the overall
-results. For the RERS programs linear temporal logic formulae are
+results. For the RERS programs, LTL formulae are
 provided. This allows to verify behavioral properties of these
 programs. Reachability properties can be verified by checking the
 reachability of failing assertions.
 
 For program equivalence checking and data race detection the
 Polybench/C 3.2 suite has provided a good basis for evaluation. By
-generating various polyhedral variants of the 30+ benchmarks CodeThorn
+generating various polyhedral variants of the 30+ benchmarks, CodeThorn
 can be used to check the equivalence of two given programs and verify
-whether the optimizations are semantics preserving. Furthermore
+whether the optimizations are semantics preserving. 
+Furthermore,
 parallel OpenMP for loops are recognized and can be checked not to
 introduce data races. Currently these approaches are extended to
 address other large scale applications.
 
 \section{Installation}
 
-CodeThorn requires the SPOT library version 1.2.6 to be installed. The
-environment variable \verb+SPOT_PREFIX+ must be set to the
-installation path of SPOT. No configuration is required because
-CodeThorn is configured as part of ROSE.
+No additional configuration is required because
+CodeThorn is configured as part of ROSE. In order to use all features of CodeThorn however,
+the SPOT LTL model checking library version 1.2.6\footnote{This version of SPOT can be downloaded here: 
+\url{https://www.lrde.epita.fr/dload/spot/spot-1.2.6.tar.gz}} is required. In addition, some
+experimental features require the Z3 SMT 
+solver\footnote{\url{https://github.com/Z3Prover/z3}}. Please provide the options
+\verb+--with-spot=<spot-install-dir>+ and \verb+--with-z3=<z3-install-dir>+ to ROSE's configure command.
 
 Run 'make', 'make install', and optionally 'make check' in the
-\verb+projects/CodeThorn+ directory to install CodeThorn. CodeThorn is
+\verb+projects/+ \verb+CodeThorn+ directory to install CodeThorn. CodeThorn is
 installed as 'codethorn' (at the same location as other ROSE tools, in
 the 'bin' directory of the ROSE installation).
 
 \section{Command Line Options}
+The following list of command line options is accessible by running \verb+codethorn --help+.
+The main options below comprise general analysis parameters such as the exploration mode or resource constraints.
+More detailed options belonging to individual aspects of CodeThorn are listed in the following sections and can be
+seen by running \verb+codethorn --help-<name-of-detailed-options>+. 
 \begin{verbatim}
- -h [ --help ]                         produce this help message
-  --rose-help                           show help for compiler frontend options
-  -v [ --version ]                      display the version
-  --internal-checks                     run internal consistency checks 
-                                        (without input program)
-  --verify arg                          verify all LTL formulae in the file 
-                                        [arg]
-  --ltl-verifier arg                    specify which ltl-verifier to use 
-                                        [=1|2]
-  --csv-ltl arg                         output LTL verification results into a 
-                                        CSV file [arg]
-  --debug-mode arg                      set debug mode [arg]
-  --csv-spot-ltl arg                    output SPOT's LTL verification results 
-                                        into a CSV file [arg]
-  --csv-assert arg                      output assert reachability results into
-                                        a CSV file [arg]
-  --csv-assert-live arg                 output assert reachability results 
-                                        during analysis into a CSV file [arg]
-  --csv-stats arg                       output statistics into a CSV file [arg]
-  --csv-stats-size-and-ltl arg          output statistics regarding the final 
-                                        model size and results for LTL 
-                                        properties into a CSV file [arg]
-  --csv-stats-cegpra arg                output statistics regarding the 
-                                        counterexample-guided prefix refinement
-                                        analysis (cegpra) into a CSV file [arg]
-  --tg1-estate-address arg              transition graph 1: visualize address 
-                                        [=yes|no]
-  --tg1-estate-id arg                   transition graph 1: visualize estate-id
-                                        [=yes|no]
-  --tg1-estate-properties arg           transition graph 1: visualize all 
-                                        estate-properties [=yes|no]
-  --tg1-estate-predicate arg            transition graph 1: show estate as 
-                                        predicate [=yes|no]
-  --tg2-estate-address arg              transition graph 2: visualize address 
-                                        [=yes|no]
-  --tg2-estate-id arg                   transition graph 2: visualize estate-id
-                                        [=yes|no]
-  --tg2-estate-properties arg           transition graph 2: visualize all 
-                                        estate-properties [=yes|no]
-  --tg2-estate-predicate arg            transition graph 2: show estate as 
-                                        predicate [=yes|no]
-  --tg-trace arg                        generate STG computation trace 
-                                        [=filename]
-  --colors arg                          use colors in output [=yes|no]
-  --report-stdout arg                   report stdout estates during analysis 
-                                        [=yes|no]
-  --report-stderr arg                   report stderr estates during analysis 
-                                        [=yes|no]
-  --report-failed-assert arg            report failed assert estates during 
-                                        analysis [=yes|no]
-  --precision-exact-constraints arg     (experimental) use precise constraint 
-                                        extraction [=yes|no]
-  --tg-ltl-reduced arg                  (experimental) compute LTL-reduced 
-                                        transition graph based on a subset of 
-                                        computed estates [=yes|no]
-  --semantic-fold arg                   compute semantically folded state 
-                                        transition graph [=yes|no]
-  --semantic-elimination arg            eliminate input-input transitions in 
-                                        STG [=yes|no]
-  --semantic-explosion arg              semantic explosion of input states 
-                                        (requires folding and elimination) 
-                                        [=yes|no]
-  --post-semantic-fold arg              compute semantically folded state 
-                                        transition graph only after the 
-                                        complete transition graph has been 
-                                        computed. [=yes|no]
-  --report-semantic-fold arg            report each folding operation with the 
-                                        respective number of estates. [=yes|no]
-  --semantic-fold-threshold arg         Set threshold with <arg> for semantic 
-                                        fold operation (experimental)
-  --post-collapse-stg arg               compute collapsed state transition 
-                                        graph after the complete transition 
-                                        graph has been computed. [=yes|no]
-  --viz arg                             generate visualizations (dot) outputs 
-                                        [=yes|no]
-  --viz-cegpra-detailed arg             generate visualization (dot) output 
-                                        files with prefix <arg> for different 
-                                        stages within each loop of cegpra.
-  --update-input-var arg                For testing purposes only. Default is 
-                                        Yes. [=yes|no]
-  --run-rose-tests arg                  Run ROSE AST tests. [=yes|no]
-  --reduce-cfg arg                      Reduce CFG nodes which are not relevant
-                                        for the analysis. [=yes|no]
-  --threads arg                         Run analyzer in parallel using <arg> 
-                                        threads (experimental)
-  --display-diff arg                    Print statistics every <arg> computed 
-                                        estates.
-  --solver arg                          Set solver <arg> to use (one of 1,2,3).
-  --ltl-verbose arg                     LTL verifier: print log of all 
-                                        derivations.
-  --ltl-output-dot arg                  LTL visualization: generate dot output.
-  --ltl-show-derivation arg             LTL visualization: show derivation in 
-                                        dot output.
-  --ltl-show-node-detail arg            LTL visualization: show node detail in 
-                                        dot output.
-  --ltl-collapsed-graph arg             LTL visualization: show collapsed graph
-                                        in dot output.
-  --input-values arg                    specify a set of input values (e.g. 
-                                        "{1,2,3}")
-  --input-values-as-constraints arg     represent input var values as 
-                                        constraints (otherwise as constants in 
-                                        PState)
-  --input-sequence arg                  specify a sequence of input values 
-                                        (e.g. "[1,2,3]")
-  --arith-top arg                       Arithmetic operations +,-,*,/,% always 
-                                        evaluate to top [=yes|no]
-  --abstract-interpreter arg            Run analyzer in abstract interpreter 
-                                        mode. Use [=yes|no]
-  --rers-binary arg                     Call rers binary functions in analysis.
-                                        Use [=yes|no]
-  --print-all-options arg               print all yes/no command line options.
-  --eliminate-arrays arg                transform all arrays into single 
-                                        variables.
-  --annotate-results arg                annotate results in program and output 
-                                        program (using ROSE unparser).
-  --generate-assertions arg             generate assertions (pre-conditions) in
-                                        program and output program (using ROSE 
-                                        unparser).
-  --rersformat arg                      Set year of rers format (2012, 2013).
-  --max-transitions arg                 Passes (possibly) incomplete STG to 
-                                        verifier after max transitions 
-                                        (default: no limit).
-  --max-iterations arg                  Passes (possibly) incomplete STG to 
-                                        verifier after max loop iterations 
-                                        (default: no limit). Currently requires
-                                        --exploration-mode=loop-aware.
-  --max-transitions-forced-top arg      same as max-transitions-forced-top1 
-                                        (default).
-  --max-transitions-forced-top1 arg     Performs approximation after <arg> 
-                                        transitions (only exact for 
-                                        input,output) (default: no limit).
-  --max-transitions-forced-top2 arg     Performs approximation after <arg> 
-                                        transitions (only exact for 
-                                        input,output,df) (default: no limit).
-  --max-transitions-forced-top3 arg     Performs approximation after <arg> 
-                                        transitions (only exact for 
-                                        input,output,df,ptr-vars) (default: no 
-                                        limit).
-  --max-transitions-forced-top4 arg     Performs approximation after <arg> 
-                                        transitions (exact for all but 
-                                        inc-vars) (default: no limit).
-  --max-transitions-forced-top5 arg     Performs approximation after <arg> 
-                                        transitions (exact for input,output,df 
-                                        and vars with 0 to 2 assigned values)) 
-                                        (default: no limit).
-  --max-iterations-forced-top arg       Performs approximation after <arg> loop
-                                        iterations (default: no limit). 
-                                        Currently requires --exploration-mode=l
-                                        oop-aware.
-  --variable-value-threshold arg        sets a threshold for the maximum number
-                                        of different values are stored for each
-                                        variable.
-  --dot-io-stg arg                      output STG with explicit I/O node 
-                                        information in dot file [arg]
-  --dot-io-stg-forced-top arg           output STG with explicit I/O node 
-                                        information in dot file. Groups 
-                                        abstract states together. [arg]
-  --stderr-like-failed-assert arg       treat output on stderr similar to a 
-                                        failed assert [arg] (default:no)
-  --rersmode arg                        sets several options such that 
-                                        RERS-specifics are utilized and 
-                                        observed.
-  --rers-numeric arg                    print rers I/O values as raw numeric 
-                                        numbers.
-  --exploration-mode arg                 set mode in which state space is 
-                                        explored ([breadth-first], depth-first,
-                                        loop-aware)
-  --eliminate-stg-back-edges arg         eliminate STG back-edges (STG becomes 
-                                        a tree).
-  --spot-stg arg                         generate STG in SPOT-format in file 
-                                        [arg]
+  --csv-stats arg                   output statistics into a CSV file [arg]
+  --colors arg                      use colors in output [=yes|no]
+  --display-diff arg                Print statistics every <arg> computed 
+                                    estates.
+  --exploration-mode arg             set mode in which state space is explored 
+                                    ([breadth-first], depth-first, loop-aware, 
+                                    loop-aware-sync)
+  -h [ --help ]                     produce this help message
+  --help-cegpra                     show options for CEGRPA
+  --help-eq                         show options for program equivalence 
+                                    checking
+  --help-exp                        show options for experimental features
+  --help-pat                        show options for pattern search mode
+  --help-svcomp                     show options for SV-Comp specific features
+  --help-rers                       show options for RERS specific features
+  --help-ltl                        show options for LTL verification
+  --help-par                        show options for analyzing parallel 
+                                    programs
+  --help-vis                        show options for visualization output files
+  --help-data-race                  show options for data race detection
+  --help-info                       show options for program info
+  --status                          show status messages
+  --no-reduce-cfg                   Do not reduce CFG nodes that are irrelevant
+                                    for the analysis.
+  --internal-checks                 run internal consistency checks (without 
+                                    input program)
+  --input-values arg                specify a set of input values (e.g. 
+                                    "{1,2,3}")
+  --input-values-as-constraints arg represent input var values as constraints 
+                                    (otherwise as constants in PState)
+  --input-sequence arg              specify a sequence of input values (e.g. 
+                                    "[1,2,3]")
+  --log-level arg (=none,>=warn)    Set the log level (none|info|warn|trace|deb
+                                    ug)
+  --max-transitions arg             Passes (possibly) incomplete STG to 
+                                    verifier after <arg> transitions have been 
+                                    computed (default: no limit).
+  --max-iterations arg              Passes (possibly) incomplete STG to 
+                                    verifier after <arg> loop iterations have 
+                                    been explored (default: no limit). 
+                                    Currently requires --exploration-mode=loop-
+                                    aware[-sync].
+  --max-memory arg                  Stop computing the STG after a total 
+                                    physical memory consumption of 
+                                    approximately <arg> Bytes has been reached.
+                                    (default: no limit).
+  --max-time arg                    Stop computing the STG after an analysis 
+                                    time of approximately <arg> seconds has 
+                                    been reached. (default: no limit).
+  --max-transitions-forced-top arg  Performs approximation after <arg> 
+                                    transitions (default: no limit).
+  --max-iterations-forced-top arg   Performs approximation after <arg> loop 
+                                    iterations (default: no limit). Currently 
+                                    requires --exploration-mode=loop-aware[-syn
+                                    c].
+  --max-memory-forced-top arg       Performs approximation after <arg> bytes of
+                                    physical memory have been used (default: no
+                                    limit).
+  --max-time-forced-top arg         Performs approximation after an analysis 
+                                    time of approximately <arg> seconds has 
+                                    been reached. (default: no limit).
+  --resource-limit-diff arg         Check if the resource limit is reached 
+                                    every <arg> computed estates.
+  --print-all-options arg           print the default values for all yes/no 
+                                    command line options.
+  --rewrite                         rewrite AST applying all rewrite system 
+                                    rules.
+  --run-rose-tests arg              Run ROSE AST tests. [=yes|no]
+  --threads arg                     Run analyzer in parallel using <arg> 
+                                    threads (experimental)
+  -v [ --version ]                  display the version
+\end{verbatim}
+
+
+\subsection{Counterexample-Guided Prefix Refinement Analysis}
+The Counterexample-guided prefix refinement analysis (CEGPRA)~\cite{jasper2014counterexample} is a special instance 
+of CEGAR for reactive, PLC-like systems.
+Based on an over-approximating initial model of the analyzed program's behavior, model checking is performed. In an iterative process, spurious counterexamples are removed by guided unrolling of the actual program's reachable state space. 
+\begin{verbatim}
+  --csv-stats-cegpra arg      output statistics regarding the 
+                              counterexample-guided prefix refinement analysis 
+                              (cegpra) into a CSV file [arg]
+  --cegpra-ltl arg            Select the ID of an LTL property that should be 
+                              checked using cegpra (between 0 and 99).
+  --cegpra-ltl-all arg        Check all specified LTL properties using cegpra 
+                              [=yes|no]
+  --cegpra-max-iterations arg Select a maximum number of counterexamples 
+                              anaylzed by cegpra (default: no limit).
+  --viz-cegpra-detailed arg   generate visualization (.dot) output files with 
+                              prefix <arg> for different stages within each 
+                              loop of cegpra.
+\end{verbatim}
+
+
+\subsection{Program Equivalence Checking}
+The following list of options is relevant to the program equivalence checking capabilities of CodeThorn.
+\begin{verbatim}
   --dump-sorted arg                      [experimental] generates sorted array 
                                         updates in file <file>
   --dump-non-sorted arg                  [experimental] generates non-sorted 
                                         array updates in file <file>
-  --print-update-infos arg              [experimental] print information about 
-                                        array updates on stdout
-  --verify-update-sequence-race-conditions arg
-                                        [experimental] check race conditions of
-                                        update sequence
-  --rule-const-subst arg                 [experimental] use const-expr 
-                                        substitution rule <arg>
-  --limit-to-fragment arg               the argument is used to find fragments 
-                                        marked by two prgagmas of that '<name>'
-                                        and 'end<name>'
-  --rewrite                             rewrite AST applying all rewrite system
-                                        rules.
-  --normalize arg                       normalize AST before analysis.
+  --rewrite-ssa                         rewrite SSA form: replace use of SSA 
+                                        variable by rhs of its assignment (only
+                                        applied outside loops or unrolled 
+                                        loops).
+  --print-rewrite-trace                 print trace of rewrite rules.
+  --print-update-infos arg              print information about array updates 
+                                        on stdout
+  --rule-const-subst arg                use const-expr substitution rule <arg>
+  --rule-commutative-sort arg           apply rewrite rule for commutative sort
+                                        of expression trees.
   --specialize-fun-name arg             function of name [arg] to be 
                                         specialized
   --specialize-fun-param arg            function parameter number to be 
-                                        specialized (starting at 1)
+                                        specialized (starting at 0)
   --specialize-fun-const arg            constant [arg], the param is to be 
                                         specialized to.
   --specialize-fun-varinit arg          variable name of which the 
@@ -336,137 +290,337 @@ the 'bin' directory of the ROSE installation).
                                         (overrides any initializer expression)
   --specialize-fun-varinit-const arg    constant [arg], the variable 
                                         initialization is to be specialized to.
-  --iseq-file arg                       compute input sequence and generate 
-                                        file [arg]
-  --iseq-length arg                     set length [arg] of input sequence to 
-                                        be computed.
-  --iseq-random-num arg                 select random search and number of 
-                                        paths.
-  --error-function arg                  detect a verifier error function with 
-                                        name [arg] (terminates verification)
-  --inf-paths-only arg                  recursively prune the graph so that no 
-                                        leaves exist [=yes|no]
-  --std-io-only arg                     bypass and remove all states that are 
-                                        not standard I/O [=yes|no]
-  --std-in-only arg                     bypass and remove all states that are 
-                                        not input-states [=yes|no]
-  --std-out-only arg                    bypass and remove all states that are 
-                                        not output-states [=yes|no]
-  --check-ltl arg                       take a text file of LTL I/O formulae 
-                                        [arg] and check whether or not the 
-                                        analyzed program satisfies these 
-                                        formulae. Formulae should start with 
-                                        '('. Use "csv-spot-ltl" option to 
-                                        specify an output csv file for the 
-                                        results.
-  --check-ltl-sol arg                   take a source code file and an LTL 
-                                        formulae+solutions file ([arg], see 
-                                        RERS downloads for examples). Display 
-                                        if the formulae are satisfied and if 
-                                        the expected solutions are correct.
-  --ltl-in-alphabet arg                 specify an input alphabet used by the 
-                                        LTL formulae (e.g. "{1,2,3}")
-  --ltl-out-alphabet arg                specify an output alphabet used by the 
-                                        LTL formulae (e.g. "{19,20,21,22,23,24,
-                                        25,26}")
-  --io-reduction arg                    (work in progress) reduce the 
-                                        transition system to only 
-                                        input/output/worklist states after 
-                                        every <arg> computed EStates.
-  --keep-error-states arg               Do not reduce error states for the LTL 
-                                        analysis. [=yes|no]
-  --no-input-input arg                  remove transitions where one input 
-                                        states follows another without any 
-                                        output in between. Removal occurs 
-                                        before the LTL check. [=yes|no]
-  --with-counterexamples arg            adds counterexample traces to the 
-                                        analysis results. Applies to reachable 
-                                        assertions (work in progress) and 
-                                        falsified LTL properties. [=yes|no]
-  --with-assert-counterexamples arg     report counterexamples leading to 
-                                        failing assertion states (work in 
-                                        progress) [=yes|no]
-  --with-ltl-counterexamples arg        report counterexamples that violate LTL
-                                        properties [=yes|no]
-  --counterexamples-with-output arg     reported counterexamples for LTL or 
-                                        reachability properties also include 
-                                        output values [=yes|no]
-  --check-ltl-counterexamples arg       report ltl counterexamples if and only 
-                                        if they are not spurious [=yes|no]
-  --reconstruct-assert-paths arg        takes a result file containing paths to
-                                        reachable assertions and tries to 
-                                        reproduce them on the analyzed program.
-                                        [=file-path]
-  --reconstruct-max-length arg          parameter of option "reconstruct-input-
-                                        paths". Sets the maximum length of 
-                                        cyclic I/O patterns found by the 
-                                        analysis. [=pattern_length]
-  --reconstruct-max-repetitions arg     parameter of option "reconstruct-input-
-                                        paths". Sets the maximum number of 
-                                        pattern repetitions that the search is 
-                                        following. [=#pattern_repetitions]
-  --pattern-search-max-depth arg        parameter of the pattern search mode. 
-                                        Sets the maximum input depth that is 
-                                        searched for cyclic I/O patterns 
-                                        (default: 10).
-  --pattern-search-repetitions arg      parameter of the pattern search mode. 
-                                        Sets the number of unrolled iterations 
-                                        of cyclic I/O patterns (default: 100).
-  --pattern-search-max-suffix arg       parameter of the pattern search mode. 
-                                        Sets the maximum input depth of the 
-                                        suffix that is searched for failing 
-                                        assertions after following an 
-                                        I/O-pattern (default: 5).
-  --pattern-search-asserts arg          reads a .csv-file (one line per 
-                                        assertion, e.g. "1,yes"). The pattern 
-                                        search terminates early if traces to 
-                                        all errors with "yes" entries have been
-                                        found. [=file-path]
-  --pattern-search-exploration arg      exploration mode for the pattern 
-                                        search. Note: all suffixes will always 
-                                        be checked using depth-first search. 
-                                        [=depth-first|breadth-first]
-  --refinement-constraints-demo arg     display constraints that are collected 
-                                        in order to later on help a refined 
-                                        analysis avoid spurious 
-                                        counterexamples. [=yes|no]
-  --cegpra-ltl arg                      Select the ID of an LTL property that 
-                                        should be checked using cegpra (between
-                                        0 and 99).
-  --cegpra-ltl-all arg                  Check all specified LTL properties 
-                                        using cegpra [=yes|no]
-  --cegpra-max-iterations arg           Select a maximum number of 
-                                        counterexamples anaylzed by cegpra 
-                                        (default: no limit).
-  --set-stg-incomplete arg              set to true if the generated STG will 
-                                        not contain all possible execution 
-                                        paths (e.g. if only a subset of the 
-                                        input values is used). [=yes|no]
-  --determine-prefix-depth arg          if possible, display a guarantee about 
-                                        the length of the discovered prefix of 
-                                        possible program traces. [=yes|no]
-  --minimize-states arg                 does not store single successor states 
-                                        (minimizes number of states).
+  --verify-update-sequence-race-conditions arg
+                                        [experimental] check race conditions of
+                                        update sequence
+
 \end{verbatim}
+
+
+
+\subsection{Experimental}
+Experimental features that are not (yet) fully integrated.
+\begin{verbatim}
+  --annotate-terms arg              annotate term representation of expressions
+                                    in unparsed program.
+  --eliminate-stg-back-edges arg     eliminate STG back-edges (STG becomes a 
+                                    tree).
+  --generate-assertions arg         generate assertions (pre-conditions) in 
+                                    program and output program (using ROSE 
+                                    unparser).
+  --precision-exact-constraints arg (experimental) use precise constraint 
+                                    extraction [=yes|no]
+  --report-semantic-fold arg        report each folding operation with the 
+                                    respective number of estates. [=yes|no]
+  --semantic-fold arg               compute semantically folded state 
+                                    transition graph [=yes|no]
+  --semantic-fold-threshold arg     Set threshold with <arg> for semantic fold 
+                                    operation (experimental)
+  --post-semantic-fold arg          compute semantically folded state 
+                                    transition graph only after the complete 
+                                    transition graph has been computed. 
+                                    [=yes|no]
+  --trace-file arg                  generate STG computation trace [=filename]
+  --explicit-arrays arg             represent all arrays ecplicitly in every 
+                                    state.
+  --z3                              RERS specific reachability analysis using 
+                                    z3
+  --rers-upper-input-bound arg      RERS specific parameter for z3
+  --rers-verifier-error-number arg  RERS specific parameter for z3
+  --ssa                             Generate SSA form (only works for programs 
+                                    without function calls, loops, jumps, 
+                                    pointers and returns)
+\end{verbatim}
+
+
+\subsection{Pattern Search}
+These options correspond to the pattern search exploration mode. During state-space exploration, it systematically 
+unrolls repeating input/output patterns in order to reach deep areas of the state space of reactive systems. It was 
+used as a black-box analysis during participation in the RERS Challenge.
+\begin{verbatim}
+  --pattern-search-max-depth arg   parameter of the pattern search mode. Sets 
+                                   the maximum input depth that is searched for
+                                   cyclic I/O patterns (default: 10).
+  --pattern-search-repetitions arg parameter of the pattern search mode. Sets 
+                                   the number of unrolled iterations of cyclic 
+                                   I/O patterns (default: 100).
+  --pattern-search-max-suffix arg  parameter of the pattern search mode. Sets 
+                                   the maximum input depth of the suffix that 
+                                   is searched for failing assertions after 
+                                   following an I/O-pattern (default: 5).
+  --pattern-search-asserts arg     reads a .csv-file (one line per assertion, 
+                                   e.g. "1,yes"). The pattern search terminates
+                                   early if traces to all errors with "yes" 
+                                   entries have been found. [=file-path]
+  --pattern-search-exploration arg exploration mode for the pattern search. 
+                                   Note: all suffixes will always be checked 
+                                   using depth-first search. 
+                                   [=depth-first|breadth-first]
+\end{verbatim}
+
+
+\subsection{SV-COMP}
+Options specific to analyzing programs of the SV-COMP competition (work in progress).
+\begin{verbatim}
+  --svcomp-mode         sets default options for all following SVCOMP-specific 
+                        options.
+  --error-function arg  detect a verifier error function with name [arg] 
+                        (terminates verification)
+\end{verbatim}
+
+
+\subsection{RERS Challenge}
+The following list contains options that are relevant when analyzing programs of the RERS Challenge.
+\begin{verbatim}
+  --csv-assert arg                output assert reachability results into a CSV
+                                  file [arg]
+  --eliminate-arrays arg          transform all arrays into single variables.
+  --iseq-file arg                 compute input sequence and generate file 
+                                  [arg]
+  --iseq-length arg               set length [arg] of input sequence to be 
+                                  computed.
+  --iseq-random-num arg           select random search and number of paths.
+  --rers-binary arg               Call rers binary functions in analysis. Use 
+                                  [=yes|no]
+  --rers-numeric arg              print rers I/O values as raw numeric numbers.
+  --rersmode arg                  sets several options such that RERS-specifics
+                                  are utilized and observed.
+  --stderr-like-failed-assert arg treat output on stderr similar to a failed 
+                                  assert [arg] (default:no)
+\end{verbatim}
+
+
+\subsection{Linear Temporal Logic (LTL)}
+Options below allow to check whether an analyzed program satisfies Linear Temporal Logic (LTL) properties 
+(currently restrcited to input/ouput traces). Option \enquote{--check-ltl} is used to specify an input LTL file
+in the format of the RERS Challenge\footnote{The following link leads to an exemplary input file: 
+\url{http://www.rers-challenge.org/2014Isola/problems/constraints-RERS14-5.txt}}.
+\begin{verbatim}
+  --csv-spot-ltl arg                output SPOT's LTL verification results into
+                                    a CSV file [arg]
+  --csv-stats-size-and-ltl arg      output statistics regarding the final model
+                                    size and results for LTL properties into a 
+                                    CSV file [arg]
+  --check-ltl arg                   take a text file of LTL I/O formulae [arg] 
+                                    and check whether or not the analyzed 
+                                    program satisfies these formulae. Formulae 
+                                    should start with '('. Use "csv-spot-ltl" 
+                                    option to specify an output csv file for 
+                                    the results.
+  --single-property arg             number (ID) of the property that is 
+                                    supposed to be analyzed. All other LTL 
+                                    properties will be ignored. ( Use 
+                                    "check-ltl" option to specify an input 
+                                    property file).
+  --counterexamples-with-output arg reported counterexamples for LTL or 
+                                    reachability properties also include output
+                                    values [=yes|no]
+  --inf-paths-only arg              recursively prune the transition graph so 
+                                    that only infinite paths remain when 
+                                    checking LTL properties [=yes|no]
+  --io-reduction arg                (work in progress) reduce the transition 
+                                    system to only input/output/worklist states
+                                    after every <arg> computed EStates.
+  --keep-error-states arg           Do not reduce error states for the LTL 
+                                    analysis. [=yes|no]
+  --ltl-in-alphabet arg             specify an input alphabet used by the LTL 
+                                    formulae (e.g. "{1,2,3}")
+  --ltl-out-alphabet arg            specify an output alphabet used by the LTL 
+                                    formulae (e.g. "{19,20,21,22,23,24,25,26}")
+  --ltl-driven                      select mode to verify LTLs driven by SPOT's
+                                    access to the state transitions
+  --no-input-input arg              remove transitions where one input states 
+                                    follows another without any output in 
+                                    between. Removal occurs before the LTL 
+                                    check. [=yes|no]
+  --std-io-only arg                 bypass and remove all states that are not 
+                                    standard I/O [=yes|no]
+  --std-in-only arg                 bypass and remove all states that are not 
+                                    input-states [=yes|no]
+  --std-out-only arg                bypass and remove all states that are not 
+                                    output-states [=yes|no]
+  --tg-ltl-reduced arg              (experimental) compute LTL-reduced 
+                                    transition graph based on a subset of 
+                                    computed estates [=yes|no]
+  --with-counterexamples arg        adds counterexample I/O traces to the 
+                                    analysis results. Applies to reachable 
+                                    assertions and falsified LTL properties 
+                                    (uses RERS-specific alphabet). [=yes|no]
+  --with-assert-counterexamples arg report counterexamples leading to failing 
+                                    assertion states [=yes|no]
+  --with-ltl-counterexamples arg    report counterexamples that violate LTL 
+                                    properties [=yes|no]
+\end{verbatim}
+
+
+\subsection{Parallel Process Graphs}
+These options allow to generate random parallel process graphs in the form of synchronized labeled transition systems.
+In addition, CodeThorn can be used to explore the state space of parallel interleavings of such process graphs. 
+When selecting \enquote{--ltl=mode=mine}, random LTL properties are mined based on subsets of the analyzed process graphs. 
+These features have been used to generate benchmarks for the Parallel LTL track of the RERS Challenge~\cite{jasper2017rers}.
+\begin{verbatim}
+  --seed arg                        seed value for randomly selected integers 
+                                    (concurrency-related non-determinism might 
+                                    still affect results).
+  --generate-automata arg           generate random control flow automata that 
+                                    can be interpreted and analyzed as a 
+                                    parallel program.
+  --num-automata arg                select the number of parallel automata to 
+                                    generate.
+  --num-syncs-range arg             select a range for the number of random 
+                                    synchronizations between the generated 
+                                    automata (csv pair of integers).
+  --num-circles-range arg           select a range for the number of circles 
+                                    that a randomly generated automaton 
+                                    consists of (csv pair of integers).
+  --circle-length-range arg         select a range for the length of circles 
+                                    that are used to construct an automaton 
+                                    (csv pair of integers).
+  --num-intersections-range arg     select a range for the number of 
+                                    intersections of a newly added circle with 
+                                    existing circles in the automaton (csv pair
+                                    of integers).
+  --automata-dot-input arg          reads in parallel automata with 
+                                    synchronized transitions from a given .dot 
+                                    file.
+  --keep-systems arg                store computed parallel systems (over- and 
+                                    under-approximated STGs) during exploration
+                                      so that they do not need to be recomputed
+                                    ([yes]|no).
+  --use-components arg              Selects which parallel components are 
+                                    chosen for analyzing the (approximated) 
+                                    state space ([all] | subsets-fixed | 
+                                    subsets-random).
+  --fixed-subsets arg               A list of sets of parallel component IDs 
+                                    used for analysis (e.g. "{1,2},{4,7}"). Use
+                                    only with "--use-components=subsets-fixed".
+  --num-random-components arg       Number of different random components used 
+                                    for the analysis. Use only with 
+                                    "--use-components=subsets-random". Default:
+                                    min(3, <num-parallel-components>)
+  --parallel-composition-only arg   If set to "yes", then no approximation will
+                                    take place. Instead, the parallel 
+                                    compositions of the respective sub-systems 
+                                    will be expanded (sequentialized). Skips 
+                                    any LTL analysis. (Default: "no")
+  --num-components-ltl arg          Number of different random components used 
+                                    to generate a random LTL property. Default:
+                                    value of option --num-random-components 
+                                    (a.k.a. all analyzed components)
+  --minimum-components arg          Number of different parallel components 
+                                    that need to be explored together in order 
+                                    to be able to analyze the mined properties.
+                                    (default: 3).
+  --different-component-subsets arg Number of random component subsets. The 
+                                    solver will be run for each of the random 
+                                    subsets. Use only with 
+                                    "--use-components=subsets-random" (default:
+                                    no termination).
+  --ltl-mode arg                    "check" checks the properties passed to 
+                                    option "--check-ltl=<filename>". "mine" 
+                                    searches for automatically generated 
+                                    properties that adhere to certain criteria.
+                                    "none" means no LTL analysis (default).
+  --mine-num-verifiable arg         Number of verifiable properties satisfying 
+                                    given requirements that should be collected
+                                    (default: 10).
+  --mine-num-falsifiable arg        Number of falsifiable properties satisfying
+                                    given requirements that should be collected
+                                    (default: 10).
+  --minings-per-subsets arg         Number of randomly generated properties 
+                                    that are evaluated based on one subset of 
+                                    parallel components (default: 50).
+  --ltl-properties-output arg       Writes the analyzed LTL properties to file 
+                                    <arg>.
+  --promela-output arg              Writes a promela program reflecting the 
+                                    synchronized automata of option 
+                                    "--automata-dot-input" to file <arg>. 
+                                    Includes LTL properties if analyzed.
+  --promela-output-only arg         Only generate Promela code, skip analysis 
+                                    of the input .dot graphs (yes|[no]).
+  --output-with-results arg         include results for the LTL properties in 
+                                    generated promela code and LTL property 
+                                    files (yes|[no]).
+  --output-with-annotations arg     include annotations for the LTL properties 
+                                    in generated promela code and LTL property 
+                                    files (yes|[no]).
+  --verification-engine arg         Choose which backend verification engine is
+                                    used (ltsmin|[spot]).
+\end{verbatim}
+
+
+\subsection{Visualization}
+Transition graphs and other data structures can be visualized using the follwing command line options.
+The main option that activates most of the visualization features is \verb+--viz=yes+.
+\begin{verbatim}
+ --dot-io-stg arg                output STG with explicit I/O node information
+                                  in dot file [arg]
+  --dot-io-stg-forced-top arg     output STG with explicit I/O node information
+                                  in dot file. Groups abstract states together.
+                                  [arg]
+  --tg1-estate-address arg        transition graph 1: visualize address 
+                                  [=yes|no]
+  --tg1-estate-id arg             transition graph 1: visualize estate-id 
+                                  [=yes|no]
+  --tg1-estate-properties arg     transition graph 1: visualize all 
+                                  estate-properties [=yes|no]
+  --tg1-estate-predicate arg      transition graph 1: show estate as predicate 
+                                  [=yes|no]
+  --tg2-estate-address arg        transition graph 2: visualize address 
+                                  [=yes|no]
+  --tg2-estate-id arg             transition graph 2: visualize estate-id 
+                                  [=yes|no]
+  --tg2-estate-properties arg     transition graph 2: visualize all 
+                                  estate-properties [=yes|no]
+  --tg2-estate-predicate arg      transition graph 2: show estate as predicate 
+                                  [=yes|no]
+  --visualize-read-write-sets arg generate one graph for each parallel loop 
+                                  that illustrates the read and write accesses 
+                                  of the involved threads.
+  --viz arg                       generate visualizations (.dot) outputs 
+                                  [=yes|no]
+\end{verbatim}
+
+
+\subsection{Data Race Detection}
+Options for data race detection.
+\begin{verbatim}
+  --data-race           perform data race detection
+  --data-race-csv arg   write data race detection results in specified csv 
+                        file. Implicitly enables data race detection.
+  --data-race-fail      perform data race detection and fail on error 
+                        (codethorn exit status 1). For use in regression 
+                        verification. Implicitly enables data race detection.
+\end{verbatim}
+
+
+\subsection{Information}
+The following option allows to display additional information about the analysis.
+\begin{verbatim}
+  --print-varid-mapping  Print all information stored in var-id mapping after 
+                         analysis.
+\end{verbatim}
+
 
 \section{Analysis Overview}
 
-The analysis is performed in five phases
+The analysis is performed in five phases:
 
 \begin{enumerate}
-\item Syntactic and semantic analysis of the input program (ROSE). The program is analyzed and represented in memory as annotated abstract syntax tree (AST).
-\item Control flow analysis. We compute a control flow graph (CFG) for the AST. Transitions, as computed for the state transition graph in the next phase, correspond to edges in the CFG.
+\item Syntactic and semantic analysis of the input program (ROSE). The program is analyzed and represented in memory as an annotated abstract syntax tree (AST).
+\item Control flow analysis. We compute a control flow graph (CFG) for the AST. Transitions, as computed for the state transition system in the next phase, correspond to edges in the CFG.
 \item Computation of the state transition system.
-\item LTL-Checking. Input to the LTL-Checking phase is the state transition system and the LTL-formulae.
-\item Reporting of analysis results. Assert reachability is computed based on the transition system. Results for LTL-formulae are computed solely by the LTL-checker.
+\item LTL checking. Input to the LTL checking phase are the state transition system and the LTL formulae.
+\item Reporting of analysis results. Reachability of failing assertions or verification errors is computed based 
+on the transition system. Results for LTL formulae are computed solely by the LTL checker.
 \end{enumerate}
 
-Important properties of the perfomed analysis are
+\noindent States of the analyzed program are represented as follows:
 
 \subsection{Program State}
 
 A program state consists of a label (lab), a property state (pstate),
-a constraint set (cset), an IO property (io). $PState = Var
+a constraint set (cset), and an IO property (io). $PState = Var
 \rightarrow Val$ where $Val$ is either a constant or $top$. $Val$ is a
 lifted integer set. An execution state is defined as $EState = Lab \times
 PState \times Constraints \times IO$ where $Constraints$ is a set of
@@ -476,38 +630,7 @@ read from stdin, or printed to stdout or stderr. Furthermore it
 determines whether the state produces an output which is caused by a
 failed assert.
 
-\ignore{
-Hence, the analysis information is represented as:
-
-\begin{itemize}
-\item Label: num
-\item PState: VarId $\rightarrow$ Val
-\item SState: Label $\times$ PStateId $\times$ ConstraintId $\times$ IOId
-\end{itemize}
-}
-
-\subsection{IO Property - Input/Output and Exit Information}
-
-This property represents the information that the operation is either
-an input, an output, or a failed-assert operation. From the label and
-the associated statement, details as relevant to reporting the
-analysis results can be extracted. For example, in the RERS-problems
-we find the information for a failed-assert by a) using the label to
-find the corresponding statement and b) the associated C error label
-is then found in a look-up operation on the ROSE AST.
-
-\subsection{The State Transition System}
-
-\newcommand{\deqop}[0]{\#\#}
-\newcommand{\eq}[0]{=}
-
-The State Transition System is represented as a graph where nodes
-represent system states and edges represent the transition between two
-states as computed by the evaluations of the respective transfer
-function. They are therefore annotated with the respective statement
-which has been analyzed by the transfer function.
-
-\bibliographystyle{unsrtnat}
+\bibliographystyle{plain}
 \bibliography{codethorn}
 
 \end{document}

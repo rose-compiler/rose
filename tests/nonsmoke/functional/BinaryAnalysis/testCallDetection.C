@@ -6,7 +6,7 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 
 #include "rose.h"
 
-using namespace rose;
+using namespace Rose;
 
 struct AnalyzeBlocks: AstSimpleProcessing {
     void visit(SgNode *node) {

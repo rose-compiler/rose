@@ -7,13 +7,14 @@
 
 namespace CodeThorn {
 
-/*! 
-  * \author Marc Jasper
-  * \date 2016.
- */
-
 typedef std::vector<Label> ParProLabel;
 
+/*!
+ * \brief State which currently consists of a vector of 
+ control flow labels (used for parallel process graphs).
+ * \author Marc Jasper
+ * \date 2016.
+ */
 class ParProEState {
   public:
   ParProEState():_parProLabel(ParProLabel()){}
@@ -36,23 +37,10 @@ struct ParProEStateLessComp {
   }
 };
 
-#ifdef USE_CUSTOM_HSET
-class ParProEStateHashFun {
-   public:
-    ParProEStateHashFun(long prime=9999991) : tabSize(prime) {}
-    long operator()(ParProEState s) const {
-      unsigned int hash=1;
-      ParProLabel label=s->getLabel();
-      for (ParProLabel::iterator i=label.begin(); i!=label.end(); i++) {
-	hash*=(1 + *i.getId());
-      }
-      return long(hash) % tabSize;
-    }
-    long tableSize() const { return tabSize;}
-   private:
-    long tabSize;
-};
-#else
+/*!
+ * \author Marc Jasper
+ * \date 2016.
+ */
 class ParProEStateHashFun {
    public:
     ParProEStateHashFun() {}
@@ -66,7 +54,11 @@ class ParProEStateHashFun {
     }
    private:
 };
-#endif
+
+/*!
+ * \author Marc Jasper
+ * \date 2016.
+ */
 class ParProEStateEqualToPred {
    public:
     ParProEStateEqualToPred() {}
@@ -76,6 +68,10 @@ class ParProEStateEqualToPred {
    private:
 };
 
+/*!
+ * \author Marc Jasper
+ * \date 2016.
+ */
 class ParProEStateSet : public HSetMaintainer<ParProEState,ParProEStateHashFun,ParProEStateEqualToPred> {
   public:
   ParProEStateSet():HSetMaintainer<ParProEState,ParProEStateHashFun,ParProEStateEqualToPred>(),_constraintSetMaintainer(0){}

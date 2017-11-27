@@ -1,13 +1,14 @@
 // Disassembles all bytes from a buffer and tries to find function entry addresses
 
 #include "rose.h"
+#include "DisassemblerX86.h"
 
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
 
-using namespace rose;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 
 int
 main(int argc, char *argv[])

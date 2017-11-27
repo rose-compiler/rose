@@ -1,4 +1,3 @@
-// Author: Marc Jasper, 2016.
 
 #ifndef PARALLEL_AUTOMATA_GENERATOR_H
 #define PARALLEL_AUTOMATA_GENERATOR_H
@@ -23,15 +22,24 @@
 
 namespace SPRAY {
 
+  /*! 
+   * \brief Generates consecutive integer values (simple counter).
+   * \author Marc Jasper
+   * \date 2016.
+   */
   class NumberGenerator {
   public:
     NumberGenerator(int start);
     int next();
   private:
-    int _start;
     int _current;
   };
 
+  /*! 
+   * \brief Generates default transition annotations.
+   * \author Marc Jasper
+   * \date 2016.
+   */
   class CfaAnnotationGenerator {
   public:
     CfaAnnotationGenerator(int cfaId);
@@ -41,6 +49,11 @@ namespace SPRAY {
     int _currentId;
   };
 
+  /*! 
+   * \brief Generates random synchronized process graphs based on intersecting loops.
+   * \author Marc Jasper
+   * \date 2016.
+   */
   class ParallelAutomataGenerator {
   public:
     std::vector<Flow*> randomlySyncedCircleAutomata(int numAutomata, std::pair<int,int> numSyncsBounds, 

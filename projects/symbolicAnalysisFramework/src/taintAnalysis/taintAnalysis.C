@@ -1,6 +1,6 @@
 #include "taintAnalysis.h"
 
-using namespace rose;
+using namespace Rose;
 
 int taintanalysis_debug_level = 2;
 

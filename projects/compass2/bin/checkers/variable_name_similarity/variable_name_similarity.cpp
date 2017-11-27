@@ -14,7 +14,7 @@
 
 using std::string;
 using std::vector;
-using namespace rose::StringUtility;
+using namespace Rose::StringUtility;
 
 extern const Compass::Checker* const variableNameSimilarityChecker;
 

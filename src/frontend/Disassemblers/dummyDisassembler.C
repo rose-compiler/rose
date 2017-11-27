@@ -4,9 +4,8 @@
 #include "sage3basic.h"
 #include "Diagnostics.h"
 #include "Disassembler.h"
-#include "Partitioner.h"
 
-using namespace rose::BinaryAnalysis;
+using namespace Rose::BinaryAnalysis;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmExecutableFileFormat
@@ -175,21 +174,11 @@ SgAsmType* SgAsmVectorType::get_elmtType() const { return 0; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Disassembler
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis{
 void Disassembler::initDiagnostics() {}
 } // namespace
 } // namespace
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Partitioner
-
-namespace rose {
-namespace BinaryAnalysis{
-void Partitioner::initDiagnostics() {}
-} // namespace
-} // namespace
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmBlock
@@ -204,3 +193,12 @@ SgAsmBlock::has_instructions() const
     }
     return false;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// RegisterDescriptor
+void RegisterDescriptor::majorNumber(unsigned) { abort(); }
+void RegisterDescriptor::minorNumber(unsigned) { abort(); }
+void RegisterDescriptor::offset(size_t) { abort(); }
+void RegisterDescriptor::nBits(size_t) { abort(); }
+void RegisterDescriptor::setOffsetWidth(size_t, size_t) { abort(); }
+std::iostream& operator<<(std::ostream, RegisterDescriptor) { abort(); }

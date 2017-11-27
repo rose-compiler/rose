@@ -25,7 +25,7 @@ ctrl: 11->12 always
 ctrl: 12->13 always
 
  Mapping 
-SgBasicBlock:{char *p;char *q;char *r;char **pp;char m;q = &m;r = q;pp = &p;*pp = r;char *p1 =( *pp + 2);return input;}:2->12
+SgBasicBlock:{char *p;char *q;char *r;char **pp;char m;q = &m;r = q;pp = &p;*pp = r;char *p1 = *pp + 2;return input;}:2->12
 SgExprStatement:q = &m;:2->3
 SgAssignOp:q = &m:3v:foo-1-q
 SgVarRefExp:q:3v:foo-1-q
@@ -45,9 +45,9 @@ SgAssignOp:*pp = r:7v:foo-1-r
 SgPointerDerefExp:*pp:7v:foo-1-r
 SgVarRefExp:pp:7v:foo-1-pp
 SgVarRefExp:r:7v:foo-1-r
-SgVariableDeclaration:char *p1 =( *pp + 2);:8->10
+SgVariableDeclaration:char *p1 = *pp + 2;:8->10
 SgInitializedName:p1:10v:foo-1-p1
-SgAddOp:( *pp + 2):10v:foo-1-p1
+SgAddOp:*pp + 2:10v:foo-1-p1
 SgPointerDerefExp:*pp:10v:foo-1-5
 SgVarRefExp:pp:8v:foo-1-pp
 SgIntVal:2:10c:2
@@ -76,15 +76,15 @@ ctrl: 21->22 always
 ctrl: 22->23 always
 
  Mapping 
-SgBasicBlock:{char *content = "dklafj";( *f)(content);char *content2 = new char [4UL];char *output = ::foo(content);::goo(::foo);}:15->23
+SgBasicBlock:{char *content = "dklafj";f(content);char *content2 = new char [4];char *output = foo(content);goo(foo);}:15->23
 SgVariableDeclaration:char *content = "dklafj";:15->17
 SgInitializedName:content:17v:goo-6-content
 SgCastExp:"dklafj":17v:goo-6-content
 SgStringVal:"dklafj":17v:goo-6-8
-SgExprStatement:( *f)(content);:18->18
+SgExprStatement:f(content);:18->18
 SgVarRefExp:f:18v:goo-6-f
 SgVarRefExp:content:18v:goo-6-content
-SgVariableDeclaration:char *content2 = new char [4UL];:19->20
+SgVariableDeclaration:char *content2 = new char [4];:19->20
 SgInitializedName:content2:20v:goo-6-content2
 SgVariableDeclaration:char *output = foo(content);:21->22
 SgInitializedName:output:22v:goo-6-output
@@ -96,90 +96,89 @@ SgFunctionRefExp:foo:23v:foo
 END Mapping 
 
 24:func v:test() => (v:test-0);
-25:(v:test-12-13) =v:malloc(c:(((sizeof(int )) *(10))));
-26:v:test-12-11=op(v:test-12-13 );
-27:v:test-12-intArray2=op(v:test-12-13 );
-28:v:test-12-intArray2=c:1;
-29:v:test-12-intArray=c:1;
+25:v:test-12-15=op(c:10 );
+26:v:test-12-14=op(c:sizeof(int ) v:test-12-15 );
+27:(v:test-12-13) =v:malloc(v:test-12-14);
+28:v:test-12-11=op(v:test-12-13 );
+29:v:test-12-intArray2=op(v:test-12-13 );
+30:v:test-12-intArray2=c:1;
+31:v:test-12-intArray=c:1;
 ctrl: 24->25 always
 ctrl: 25->26 always
 ctrl: 26->27 always
 ctrl: 27->28 always
 ctrl: 28->29 always
+ctrl: 29->30 always
+ctrl: 30->31 always
 
  Mapping 
-SgBasicBlock:{int intArray[10UL];int *intArray2 =(int *)(::malloc((((sizeof(int )) *(10)))));intArray2[1] = 1;intArray[1] = 1;}:25->29
-SgVariableDeclaration:int *intArray2 =(int *)(malloc((((sizeof(int )) *(10)))));:25->27
-SgInitializedName:intArray2:27v:test-12-intArray2
-SgCastExp:(int *)(malloc((((sizeof(int )) *(10))))):27v:test-12-intArray2
-SgFunctionCallExp:(malloc((((sizeof(int )) *(10))))):27v:test-12-13
-SgFunctionRefExp:malloc:25v:malloc
-SgUnsignedLongVal:(((sizeof(int )) *(10))):25c:(((sizeof(int )) *(10)))
-SgExprStatement:intArray2[1] = 1;:28->28
-SgAssignOp:intArray2[1] = 1:28v:test-12-intArray2
-SgPntrArrRefExp:intArray2[1]:28v:test-12-intArray2
-SgIntVal:1:28c:1
-SgExprStatement:intArray[1] = 1;:29->29
-SgAssignOp:intArray[1] = 1:29v:test-12-intArray
-SgPntrArrRefExp:intArray[1]:29v:test-12-intArray
-SgIntVal:1:29c:1
+SgBasicBlock:{int intArray[10];int *intArray2 =(int *)(malloc(sizeof(int ) * 10));intArray2[1] = 1;intArray[1] = 1;}:25->31
+SgVariableDeclaration:int *intArray2 =(int *)(malloc(sizeof(int ) * 10));:25->29
+SgInitializedName:intArray2:29v:test-12-intArray2
+SgCastExp:(int *)(malloc(sizeof(int ) * 10)):29v:test-12-intArray2
+SgFunctionCallExp:(malloc(sizeof(int ) * 10)):29v:test-12-13
+SgFunctionRefExp:malloc:27v:malloc
+SgMultiplyOp:sizeof(int ) * 10:27v:test-12-14
+SgSizeOfOp:sizeof(int ):26c:sizeof(int )
+SgCastExp:10:26v:test-12-15
+SgIntVal:10:25c:10
+SgExprStatement:intArray2[1] = 1;:30->30
+SgAssignOp:intArray2[1] = 1:30v:test-12-intArray2
+SgPntrArrRefExp:intArray2[1]:30v:test-12-intArray2
+SgIntVal:1:30c:1
+SgExprStatement:intArray[1] = 1;:31->31
+SgAssignOp:intArray[1] = 1:31v:test-12-intArray
+SgPntrArrRefExp:intArray[1]:31v:test-12-intArray
+SgIntVal:1:31c:1
 END Mapping 
 
-30:func v:main(v:main-14-argc,v:main-14-argv) => (v:main-0);
-31:v:main-14-a=c:0;
-32:v:main-14-b=c:0;
-33:v:main-14-i=c:0;
-34:v:main-14-15=op(v:main-14-i c:10 );
-35:v:main-14-b=op(v:main-14-b c:5 );
-36:v:main-14-16=op(v:main-14-i );
-37:allocate v:main-14-17;
-38:() =v:printf(v:main-14-17,v:main-14-a,v:main-14-b);
-39:v:main-0=c:0;
-40:return-v:main;
-ctrl: 30->31 always
-ctrl: 31->32 always
+32:func v:main(v:main-16-argc,v:main-16-argv) => (v:main-0);
+33:v:main-16-a=c:0;
+34:v:main-16-b=c:0;
+35:v:main-16-i=c:0;
+36:v:main-16-17=op(v:main-16-i c:10 );
+37:v:main-16-b=op(v:main-16-b c:5 );
+38:v:main-16-18=op(v:main-16-i );
+39:allocate v:main-16-19;
+40:() =v:printf(v:main-16-19,v:main-16-a,v:main-16-b);
 ctrl: 32->33 always
 ctrl: 33->34 always
-ctrl: 34->35 true
+ctrl: 34->35 always
 ctrl: 35->36 always
-ctrl: 36->34 always
+ctrl: 36->37 true
 ctrl: 37->38 always
-ctrl: 34->37 false
-ctrl: 38->39 always
+ctrl: 38->36 always
 ctrl: 39->40 always
-41:return-v:main;
-ctrl: 40->41 always
+ctrl: 36->39 false
 
  Mapping 
-SgBasicBlock:{int i;int a = 0;int b = 0;i = 0;while(i < 10){b -= 5;i++;}::printf("%d %d\n",a,b);return 0;}:31->40
-SgVariableDeclaration:int a = 0;:31->31
-SgInitializedName:a:31v:main-14-a
-SgIntVal:0:31c:0
-SgVariableDeclaration:int b = 0;:32->32
-SgInitializedName:b:32v:main-14-b
-SgIntVal:0:32c:0
-SgExprStatement:i = 0;:33->33
-SgAssignOp:i = 0:33v:main-14-i
-SgVarRefExp:i:33v:main-14-i
+SgBasicBlock:{int i;int a = 0;int b = 0;i = 0;while(i < 10){b -= 5;i++;}printf("%d %d\n",a,b);}:33->40
+SgVariableDeclaration:int a = 0;:33->33
+SgInitializedName:a:33v:main-16-a
 SgIntVal:0:33c:0
-SgWhileStmt:while(i < 10){b -= 5;i++;}:34->36
-SgExprStatement:i < 10;:34->34
-SgLessThanOp:i < 10:34v:main-14-15
-SgVarRefExp:i:34v:main-14-i
-SgIntVal:10:34c:10
-SgBasicBlock:{b -= 5;i++;}:35->36
-SgExprStatement:b -= 5;:35->35
-SgMinusAssignOp:b -= 5:35v:main-14-b
-SgVarRefExp:b:35v:main-14-b
-SgExprStatement:i++;:36->36
-SgPlusPlusOp:i++:36v:main-14-16
-SgVarRefExp:i:36v:main-14-i
-SgExprStatement:printf("%d %d\n",a,b);:37->38
-SgFunctionRefExp:printf:38v:printf
-SgStringVal:"%d %d\n":38v:main-14-17
-SgVarRefExp:a:38v:main-14-a
-SgVarRefExp:b:38v:main-14-b
-SgReturnStmt:return 0;:39->40
-SgIntVal:0:39c:0
+SgVariableDeclaration:int b = 0;:34->34
+SgInitializedName:b:34v:main-16-b
+SgIntVal:0:34c:0
+SgExprStatement:i = 0;:35->35
+SgAssignOp:i = 0:35v:main-16-i
+SgVarRefExp:i:35v:main-16-i
+SgIntVal:0:35c:0
+SgWhileStmt:while(i < 10){b -= 5;i++;}:36->38
+SgExprStatement:i < 10;:36->36
+SgLessThanOp:i < 10:36v:main-16-17
+SgVarRefExp:i:36v:main-16-i
+SgIntVal:10:36c:10
+SgBasicBlock:{b -= 5;i++;}:37->38
+SgExprStatement:b -= 5;:37->37
+SgMinusAssignOp:b -= 5:37v:main-16-b
+SgVarRefExp:b:37v:main-16-b
+SgExprStatement:i++;:38->38
+SgPlusPlusOp:i++:38v:main-16-18
+SgVarRefExp:i:38v:main-16-i
+SgExprStatement:printf("%d %d\n",a,b);:39->40
+SgFunctionRefExp:printf:40v:printf
+SgStringVal:"%d %d\n":40v:main-16-19
+SgVarRefExp:a:40v:main-16-a
+SgVarRefExp:b:40v:main-16-b
 END Mapping 
 

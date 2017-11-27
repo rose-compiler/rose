@@ -1,6 +1,6 @@
 #include "smtPragmaPathLib.h"
 
-using namespace rose;
+using namespace Rose;
 
 int initializeScopeInformation(SgProject*);
 std::vector<std::string> pragma_suffix; 

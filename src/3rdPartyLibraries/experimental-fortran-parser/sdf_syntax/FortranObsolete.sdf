@@ -1,0 +1,54 @@
+%%%%%%%%%%
+%% Fortran obsolete syntax
+%%%%%%%%%%
+
+module FortranObsolete
+
+imports Main
+
+exports
+
+sorts
+
+  ParensUnaryMinus ParensUnaryPlus         %% OR702
+  AssignStmt
+
+context-free syntax
+
+%% OR702
+
+  '+' Primary                              -> ParensUnaryPlus   {cons("ParensUnaryPlus")}
+  '-' Primary                              -> ParensUnaryMinus  {cons("ParensUnaryMinus")} 
+
+  ParensUnaryPlus                          -> Level1Expr
+  ParensUnaryMinus                         -> Level1Expr
+
+%% OR851
+  OptLabel 'GO' 'TO' IntVariable            EOS -> GotoStmt     {cons("GotoStmt")}
+
+
+%% Deleted Features
+%%
+
+%% DR442
+  '/' Expr '/'                                  -> ComponentInitialization   {cons("Init")}
+
+%% DR505
+  '/' ConstantExpr '/'                          -> Initialization  {cons("Init")}
+
+  PauseStmt                                     -> ActionStmt
+  OptLabel 'PAUSE' OptStopCode              EOS -> PauseStmt    {cons("PauseStmt")}
+
+  AssignStmt                                    -> ActionStmt
+  OptLabel 'ASSIGN' Label 'TO' IntVariable  EOS -> AssignStmt   {cons("AssignStmt")}
+
+%% SENSE LIGHT STATEMENT
+%%
+%% First IBM Fortran version had 32 statements
+%%  - one was the SENSE LIGHT "statement"
+%%     http://computer-programming-forum.com/49-fortran/868f0c3d821b8563.htm
+%%
+%% IF (SENSE LIGHT i) n1, n2
+%%
+%% - looks like an expression to me
+%%

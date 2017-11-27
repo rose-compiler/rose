@@ -27,24 +27,30 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 
 #include "DispatcherX86.h"
 #include "TestSemantics2.h"
-using namespace rose::BinaryAnalysis::InstructionSemantics2;
+using namespace Rose::BinaryAnalysis::InstructionSemantics2;
 
 #if !defined(SMT_SOLVER) || SMT_SOLVER == NO_SOLVER
-#   include "SMTSolver.h"
-    rose::BinaryAnalysis::SMTSolver *make_solver() { return NULL; }
+    #include "BinarySmtSolver.h"
+    Rose::BinaryAnalysis::SmtSolver *make_solver() { return NULL; }
 #elif SMT_SOLVER == YICES_LIB
-#   include "YicesSolver.h"
-    rose::BinaryAnalysis::SMTSolver *make_solver() {
-        rose::BinaryAnalysis::YicesSolver *solver = new rose::BinaryAnalysis::YicesSolver;
-        solver->set_linkage(rose::BinaryAnalysis::YicesSolver::LM_LIBRARY);
-        return solver;
+    #include "BinaryYicesSolver.h"
+    Rose::BinaryAnalysis::SmtSolver *make_solver() {
+        return new Rose::BinaryAnalysis::YicesSolver(Rose::BinaryAnalysis::SmtSolver::LM_LIBRARY);
     }
 #elif SMT_SOLVER == YICES_EXE
-#   include "YicesSolver.h"
-    rose::BinaryAnalysis::SMTSolver *make_solver() {
-        rose::BinaryAnalysis::YicesSolver *solver = new rose::BinaryAnalysis::YicesSolver;
-        solver->set_linkage(rose::BinaryAnalysis::YicesSolver::LM_EXECUTABLE);
-        return solver;
+    #include "BinaryYicesSolver.h"
+    Rose::BinaryAnalysis::SmtSolver *make_solver() {
+        return new Rose::BinaryAnalysis::YicesSolver(Rose::BinaryAnalysis::SmtSolver::LM_EXECUTABLE);
+    }
+#elif SMT_SOLVER == Z3_LIB
+    #include "BinaryZ3Solver.h"
+    Rose::BinaryAnalysis::SmtSolver *make_solver() {
+        return new Rose::BinaryAnalysis::Z3Solver(Rose::BinaryAnalysis::SmtSolver::LM_LIBRARY);
+    }
+#elif SMT_SOLVER == Z3_EXE
+    #include "BinaryZ3Solver.h"
+    Rose::BinaryAnalysis::SmtSolver *make_solver() {
+        return new Rose::BinaryAnalysis::Z3Solver(Rose::BinaryAnalysis::SmtSolver::LM_EXECUTABLE);
     }
 #else
 #   error "invalid value for SMT_SOLVER"
@@ -158,7 +164,7 @@ show_state(const BaseSemantics::RiscOperatorsPtr &ops)
             assert(desc);
             (*this)(*desc, abbr?abbr:name);
         }
-        void operator()(const RegisterDescriptor &desc, const char *abbr) {
+        void operator()(RegisterDescriptor desc, const char *abbr) {
             BaseSemantics::RegisterStatePtr regstate = ops->currentState()->registerState();
             FormatRestorer fmt(o);
             o <<prefix <<std::setw(8) <<std::left <<abbr <<"= { ";

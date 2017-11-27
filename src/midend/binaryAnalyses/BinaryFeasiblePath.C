@@ -2,20 +2,20 @@
 #include <AsmUnparser_compat.h>
 #include <BaseSemantics2.h>
 #include <BinaryFeasiblePath.h>
+#include <BinaryYicesSolver.h>
 #include <Partitioner2/GraphViz.h>
 #include <Partitioner2/Partitioner.h>
 #include <Sawyer/GraphAlgorithm.h>
 #include <SymbolicMemory2.h>
-#include <YicesSolver.h>
 
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/logic/tribool.hpp>
 
-using namespace rose::BinaryAnalysis::InstructionSemantics2;
+using namespace Rose::BinaryAnalysis::InstructionSemantics2;
 using namespace Sawyer::Message::Common;
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 namespace {
@@ -126,20 +126,20 @@ public:
 
 protected:
     RiscOperators(const P2::Partitioner *partitioner, const BaseSemantics::SValuePtr &protoval,
-                  rose::BinaryAnalysis::SMTSolver *solver)
+                  Rose::BinaryAnalysis::SmtSolver *solver)
         : Super(protoval, solver), pathInsnIndex_(-1), partitioner_(partitioner) {
         name("FindPath");
     }
 
     RiscOperators(const P2::Partitioner *partitioner, const BaseSemantics::StatePtr &state,
-                  rose::BinaryAnalysis::SMTSolver *solver)
+                  Rose::BinaryAnalysis::SmtSolver *solver)
         : Super(state, solver), pathInsnIndex_(-1), partitioner_(partitioner) {
         name("FindPath");
     }
 
 public:
     static RiscOperatorsPtr instance(const P2::Partitioner *partitioner, const RegisterDictionary *regdict,
-                                     FeasiblePath::SearchMode searchMode, rose::BinaryAnalysis::SMTSolver *solver=NULL) {
+                                     FeasiblePath::SearchMode searchMode, Rose::BinaryAnalysis::SmtSolver *solver=NULL) {
         BaseSemantics::SValuePtr protoval = SValue::instance();
         BaseSemantics::RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
         BaseSemantics::MemoryStatePtr memory;
@@ -162,23 +162,23 @@ public:
     }
 
     static RiscOperatorsPtr instance(const P2::Partitioner *partitioner, const BaseSemantics::SValuePtr &protoval,
-                                     rose::BinaryAnalysis::SMTSolver *solver=NULL) {
+                                     Rose::BinaryAnalysis::SmtSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(partitioner, protoval, solver));
     }
 
     static RiscOperatorsPtr instance(const P2::Partitioner *partitioner, const BaseSemantics::StatePtr &state,
-                                     rose::BinaryAnalysis::SMTSolver *solver=NULL) {
+                                     Rose::BinaryAnalysis::SmtSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(partitioner, state, solver));
     }
 
 public:
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
-                                                   rose::BinaryAnalysis::SMTSolver *solver=NULL) const ROSE_OVERRIDE {
+                                                   Rose::BinaryAnalysis::SmtSolver *solver=NULL) const ROSE_OVERRIDE {
         return instance(NULL, protoval, solver);
     }
 
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr &state,
-                                                   rose::BinaryAnalysis::SMTSolver *solver=NULL) const ROSE_OVERRIDE {
+                                                   Rose::BinaryAnalysis::SmtSolver *solver=NULL) const ROSE_OVERRIDE {
         return instance(NULL, state, solver);
     }
 
@@ -212,7 +212,7 @@ public:
 
 private:
     /** Description a variable stored in a register. */
-    FeasiblePath::VarDetail detailForVariable(const RegisterDescriptor &reg, const std::string &accessMode) const {
+    FeasiblePath::VarDetail detailForVariable(RegisterDescriptor reg, const std::string &accessMode) const {
         const RegisterDictionary *regs = currentState()->registerState()->get_register_dictionary();
         FeasiblePath::VarDetail retval;
         retval.registerName = RegisterNames(regs)(reg);
@@ -283,7 +283,7 @@ public:
         Super::finishInstruction(insn);
     }
 
-    virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg,
+    virtual BaseSemantics::SValuePtr readRegister(RegisterDescriptor reg,
                  const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE {
         SValuePtr retval = SValue::promote(Super::readRegister(reg, dflt));
         SymbolicExpr::Ptr expr = retval->get_expression();
@@ -292,7 +292,7 @@ public:
         return retval;
     }
 
-    virtual void writeRegister(const RegisterDescriptor &reg,
+    virtual void writeRegister(RegisterDescriptor reg,
                   const BaseSemantics::SValuePtr &value) ROSE_OVERRIDE {
         SymbolicExpr::Ptr expr = SValue::promote(value)->get_expression();
         if (expr->isLeafNode())
@@ -303,7 +303,7 @@ public:
     // If multi-path is enabled, then return a new memory expression that describes the process of reading a value from the
     // specified address; otherwise, actually read the value and return it.  In any case, record some information about the
     // address that's being read if we've never seen it before.
-    virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr,
+    virtual BaseSemantics::SValuePtr readMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr,
                                                 const BaseSemantics::SValuePtr &dflt_,
                                                 const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE {
         BaseSemantics::SValuePtr dflt = dflt_;
@@ -347,7 +347,7 @@ public:
     // If multi-path is enabled, then return a new memory expression that updates memory with a new address/value pair;
     // otherwise update the memory directly.  In any case, record some information about the address that was written if we've
     // never seen it before.
-    virtual void writeMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr,
+    virtual void writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr,
                              const BaseSemantics::SValuePtr &value, const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE {
         if (cond->is_number() && !cond->get_number())
             return;
@@ -400,7 +400,7 @@ FeasiblePath::initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        Diagnostics::initAndRegister(&mlog, "rose::BinaryAnalysis::FeasiblePath");
+        Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::FeasiblePath");
     }
 }
 
@@ -417,7 +417,7 @@ FeasiblePath::buildVirtualCpu(const P2::Partitioner &partitioner) {
     // Augment the register dictionary with a "path" register that holds the expression describing how the location is
     // reachable along some path.
     if (NULL == registers_) {
-        registers_ = new RegisterDictionary("rose::BinaryAnalysis::FeasiblePath");
+        registers_ = new RegisterDictionary("Rose::BinaryAnalysis::FeasiblePath");
         registers_->insert(partitioner.instructionProvider().registerDictionary());
         ASSERT_forbid(REG_PATH.is_valid());
         REG_PATH = RegisterDescriptor(registers_->firstUnusedMajor(), 0, 0, 1);
@@ -438,7 +438,7 @@ FeasiblePath::buildVirtualCpu(const P2::Partitioner &partitioner) {
 
     // Create the RiscOperators and Dispatcher. We could use an SMT solver here also, but it seems to slow things down more
     // than speed them up.
-    SMTSolver *solver = NULL;
+    SmtSolver *solver = NULL;
     RiscOperatorsPtr ops = RiscOperators::instance(&partitioner, registers_, settings_.searchMode, solver);
     ASSERT_not_null(partitioner.instructionProvider().dispatcher());
     BaseSemantics::DispatcherPtr cpu = partitioner.instructionProvider().dispatcher()->create(ops);
@@ -626,7 +626,7 @@ FeasiblePath::printPath(std::ostream &out, const P2::CfgPath &path) const {
 }
 
 boost::logic::tribool
-FeasiblePath::isPathFeasible(const P2::CfgPath &path, SMTSolver &solver, const std::vector<SymbolicExpr::Ptr> &endConstraints,
+FeasiblePath::isPathFeasible(const P2::CfgPath &path, SmtSolver &solver, const std::vector<SymbolicExpr::Ptr> &endConstraints,
                              std::vector<SymbolicExpr::Ptr> &pathConstraints /*in,out*/,
                              BaseSemantics::DispatcherPtr &cpu /*out*/) {
     static const char *prefix = "      ";
@@ -673,8 +673,8 @@ FeasiblePath::isPathFeasible(const P2::CfgPath &path, SMTSolver &solver, const s
     // Are the constraints satisfiable.  Empty constraints are tivially satisfiable.
     pathConstraints.insert(pathConstraints.end(), endConstraints.begin(), endConstraints.end());
     switch (solver.satisfiable(pathConstraints)) {
-        case SMTSolver::SAT_YES: return true;
-        case SMTSolver::SAT_NO: return false;
+        case SmtSolver::SAT_YES: return true;
+        case SmtSolver::SAT_NO: return false;
         default: return boost::logic::indeterminate;
     }
 }

@@ -16,6 +16,7 @@ set(astProcessing_SRC
 if (NOT WIN32)
   list(APPEND astProcessing_SRC
     AstSharedMemoryParallelSimpleProcessing.C
+    plugin.C
     AstRestructure.C)
 endif ()
 
@@ -38,7 +39,7 @@ set(files_to_install
 
 if (NOT WIN32)
   #tps commented out AstSharedMemoryParallelProcessing.h for Windows
-  list(APPEND files_to_install AstSharedMemoryParallelProcessing.h)
+  list(APPEND files_to_install AstSharedMemoryParallelProcessing.h plugin.h)
 endif()
 
 install(FILES ${files_to_install} DESTINATION include)

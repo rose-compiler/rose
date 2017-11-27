@@ -71,11 +71,11 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #include "AsmUnparser.h"
 #include "BinaryTaintedFlow.h"
 #include "BinaryFunctionCall.h"
+#include "BinarySmtSolver.h"
 #include "Diagnostics.h"
 #include "DispatcherX86.h"
 #include "SymbolicSemantics2.h"
 #include "WorkLists.h"
-#include "YicesSolver.h"
 
 #include <boost/algorithm/string/regex.hpp>
 #include <boost/foreach.hpp>
@@ -84,8 +84,8 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #include <Sawyer/Map.h>
 #include <Sawyer/Message.h>
 
-using namespace rose;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 using namespace Sawyer::Message::Common;
 
 // Diagnostic output for this tool; initialized in main()
@@ -146,7 +146,7 @@ static void analyze(SgAsmFunction *specimen, TaintedFlow::Approximation approxim
     // location -- symbolic values are instantiated as variables when needed.
     //
     // So we create a symbolic domain and link it into an instruction dispatcher that knows about Intel x86 instructions.  The
-    // rose::BinaryAnalysis::DataFlow object provides the API for discovering intra-function or intra-block data flows.
+    // Rose::BinaryAnalysis::DataFlow object provides the API for discovering intra-function or intra-block data flows.
     BaseSemantics::RiscOperatorsPtr symbolicOps = SymbolicSemantics::RiscOperators::instance(regdict);
     DispatcherX86Ptr cpu = DispatcherX86::instance(symbolicOps, 32); // assuming the specimen is x86-based
 #if 0
@@ -155,15 +155,14 @@ static void analyze(SgAsmFunction *specimen, TaintedFlow::Approximation approxim
 #endif
     BaseSemantics::SValuePtr esp_0 = symbolicOps->readRegister(cpu->REG_ESP); // initial value of stack pointer
 
-    // The rose::BinaryAnalysis::TaintedFlow class encapsulates all the methods we need to perform tainted flow analysis.
+    // The Rose::BinaryAnalysis::TaintedFlow class encapsulates all the methods we need to perform tainted flow analysis.
     TaintedFlow taintAnalysis(cpu);
     taintAnalysis.approximation(approximation);
-#if defined(ROSE_HAVE_LIBYICES) || defined(ROSE_YICES)
-    YicesSolver solver;
-    taintAnalysis.smtSolver(&solver);
-#else
-    ::mlog[WARN] <<"not using an SMT solver (none available)\n";
-#endif
+    if (SmtSolver *solver = SmtSolver::bestAvailable()) {
+        taintAnalysis.smtSolver(solver);
+    } else {
+        ::mlog[WARN] <<"not using an SMT solver (none available)\n";
+    }
 
     // Analyze the specimen in order to discover what variables are referenced and the control flow between those variables for
     // each basic block.
@@ -224,13 +223,13 @@ static void analyze(SgAsmFunction *specimen, TaintedFlow::Approximation approxim
     }
     std::cout <<"\n\n";
 }
-    
+
 int main(int argc, char *argv[])
 {
     // Configure diagnostic output
     ROSE_INITIALIZE;
-    rose::Diagnostics::initAndRegister(&::mlog, "taintedFlow");
-    rose::Diagnostics::mfacilities.control("taintedFlow(>=where)"); // the default
+    Rose::Diagnostics::initAndRegister(&::mlog, "taintedFlow");
+    Rose::Diagnostics::mfacilities.control("taintedFlow(>=where)"); // the default
 
     // Describe the command-line
     using namespace Sawyer::CommandLine;
@@ -293,7 +292,7 @@ int main(int argc, char *argv[])
 
     // Parse the command line.
     ParserResult cmdline = cmdline_parser.with(generic).with(switches).parse(argc, argv).apply();
-    
+
     // Parse the binary container (ELF, PE, etc) and disassemble instructions using the default disassembler.  Organize
     // (partition) the instructions into basic blocks and functions using the default partitioner.  The disassembler and
     // partitioner can be controled to some extent with ROSE command-line switches.  Since librose doesn't describe its

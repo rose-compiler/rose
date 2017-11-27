@@ -7,7 +7,7 @@
 
 #include <boost/serialization/access.hpp>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 // Forwards

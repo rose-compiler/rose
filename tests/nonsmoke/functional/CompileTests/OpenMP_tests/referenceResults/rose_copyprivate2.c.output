@@ -1,0 +1,2 @@
+#pragma omp parallel  private(x,y)
+#pragma omp single  copyprivate(x,y)

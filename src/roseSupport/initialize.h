@@ -2,7 +2,7 @@
 #define ROSE_initialize_H
 
 /** Main namespace for the ROSE library. */
-namespace rose {
+namespace Rose {
 
 /** Initialize the library.
  *
@@ -33,7 +33,7 @@ namespace rose {
  *   #include <rose.h>
  *
  *   int main(int argc, char *argv[]) {
- *       ROSE_INITIALIZE; // or rose::initialize(ROSE_CONFIG_TOKEN);
+ *       ROSE_INITIALIZE; // or Rose::initialize(ROSE_CONFIG_TOKEN);
  *  @endcode
  *
  *  <b>ROSE developers:</b> If you want to have @ref initialize (specifically, @ref checkConfigToken) check for consistency in
@@ -44,7 +44,7 @@ namespace rose {
  *  consistency.
  *
  *  See also, @ref isInitialized and @ref checkConfigToken. The @c ROSE_INITIALIZE C preprocessor-defined symbol expands to
- *  <code>rose::initialize(ROSE_CONFIG_TOKEN)</code> but might be easier to remember. */
+ *  <code>Rose::initialize(ROSE_CONFIG_TOKEN)</code> but might be easier to remember. */
 ROSE_DLL_API void initialize(const char *configToken);
 
 /** Checks whether the library has been initialized.
@@ -62,23 +62,23 @@ ROSE_DLL_API bool isInitialized();
  *  match and false if they don't.  See @ref initialize. */
 ROSE_DLL_API bool checkConfigToken(const char *configTokenToken);
 
-} // namespace
-
 /** Check ROSE version number.
  *
  *  Checks that the ROSE library version number is equal to or greater than the specified version string.  Both version numbers
  *  are split at the "." characters and each part of the library version number is compared with the corresponding part of the
  *  @p need version number from left to right until an inequality is found. If the unequal library part is greater than the
- *  corresponding @p need part, then this function fails (returns false), otherwise it succeeds. Comparisons are lexicographic,
- *  not numeric. If no inequality is found among the corresponding pairs, then this function returns true even if the version
- *  numbers have different numbers of parts.
+ *  corresponding @p need part, then this function fails (returns false), otherwise it succeeds. Comparisons are numeric.  If
+ *  no inequality is found among the corresponding pairs, then this function returns true even if the version numbers have
+ *  different numbers of parts.
  *
  *  For example, if the library version number is "1.2.3", this function returns true when @p need is "", "1", "1.0", "1.1",
  *  "1.2.0", "1.2.1", "1.2.2", "1.2.3", "1.2.3.0", "1.2.3.1", etc., and it returns false when @p need is "2", "1.3", "1.2.4",
  *  "1.2.4.0", etc. */
 bool checkVersionNumber(const std::string &need);
 
+} // namespace
+
 // A slightly more memorable way to initialize ROSE
-#define ROSE_INITIALIZE rose::initialize(ROSE_CONFIG_TOKEN)
+#define ROSE_INITIALIZE Rose::initialize(ROSE_CONFIG_TOKEN)
 
 #endif

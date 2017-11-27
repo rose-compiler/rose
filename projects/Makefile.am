@@ -21,7 +21,6 @@ SUBDIRS = \
 	ArithmeticMeasureTool \
 	AstEquivalence \
 	BabelPreprocessor \
-	BinQ \
 	BinaryCloneDetection \
 	C_to_Promela \
 	CertSecureCodeProject \
@@ -222,7 +221,7 @@ SUBDIRS += TileK
 # subdirectories that might not be present or might not be configured.
 
 PROJECTS_ROBB    = BinaryAnalysisTools
-PROJECTS_JUSTIN  = compass2 compass binCompass
+PROJECTS_JUSTIN  = compass2
 PROJECTS_DAN     =
 PROJECTS_MARKUS  =
 PROJECTS_PEIHUNG =

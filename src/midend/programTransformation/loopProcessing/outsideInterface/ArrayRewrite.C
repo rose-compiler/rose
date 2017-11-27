@@ -11,15 +11,15 @@ bool RecognizeArrayOp( CPPAstInterface& fa, ArrayInterface& anal,
       return false;
   }
   if (anal.is_array_mod_op( fa, orig)) {
-    std::cerr << "recognized array mod op: " << AstToString(orig) << "\n";
+    std::cerr << "recognized array mod op: " << AstInterface::AstToString(orig) << "\n";
     return true;
   }
   else if ( anal.is_array_construct_op( fa, orig)) {
-    std::cerr << "recognized array construct op: " << AstToString(orig) << "\n";
+    std::cerr << "recognized array construct op: " << AstInterface::AstToString(orig) << "\n";
     return true;
   }
   else  {
-    std::cerr << "not recognize array op: " << AstToString(orig) << "\n";
+    std::cerr << "not recognize array op: " << AstInterface::AstToString(orig) << "\n";
   }
   return false;
 }
@@ -46,13 +46,16 @@ public:
   RewriteModArrayAccess( CPPAstInterface& _ai, ArrayInterface& a, 
                          const AstNodePtr& _stmt, const AstNodePtr& _lhs,
                          std::map<std::string, AstNodePtr>& _varmap,
-                         std::list<AstNodePtr>& _newstmts)
-    : CreateTmpArray(_varmap, _newstmts),
+                         std::list<AstNodePtr>& _newstmts, const AstNodePtr& declloc)
+    : CreateTmpArray(_varmap, _newstmts,declloc),
       stmt(_stmt), lhs(_lhs), size(0), ai(_ai), depAnal(_ai), anal(a)
      { 
         AstInterface::AstNodeList subs;
         if (!ArrayAnnotation::get_inst()->is_access_array_elem(ai,lhs, &modarray, &subs))
+        {
+          std::cerr << "unrecognized array reference: " << AstInterface::AstToString(lhs) << "\n";
            assert(false);
+        }
         size = subs.size();
       }
   bool operator() (AstInterface& _fa, const AstNodePtr& orig, AstNodePtr& result)
@@ -76,7 +79,7 @@ public:
       AstInterface::AstNodeList subscopy;
       for (AstInterface::AstNodeList::iterator p = subs.begin(); 
            p != subs.end(); ++p) {
-         subscopy.push_back( ai.CopyAstTree(*p));
+         subscopy.push_back( ai.CopyAstTree(*p).get_ptr());
       }   
       result = ArrayAnnotation::get_inst()->create_access_array_elem(ai, result, subscopy);
       return true;
@@ -109,12 +112,12 @@ create_tmp_array( AstInterface& fa, const AstNodePtr& arrayExp, const std::strin
      AstNodeType t =  fa.GetExpressionType(arrayExp);
      std::string tname;
      fa.GetTypeInfo( t, 0, &tname);
-     std::string splitname = fa.NewVar( fa.GetType(tname), name, true );
+     std::string splitname = fa.NewVar( fa.GetType(tname), name, true, false, get_decl_scope() );
      if (model == 0) {
-        split = fa.CreateVarRef(splitname);
+        split = fa.CreateVarRef(splitname, get_decl_scope());
      }
      else {
-        split = fa.CreateVarRef(splitname);
+        split = fa.CreateVarRef(splitname, get_decl_scope());
      }
      AstNodePtr splitStmt = fa.CreateAssignment( split, fa.CopyAstTree( arrayExp));
      newStmts.push_back(splitStmt); 
@@ -137,8 +140,7 @@ operator()( const SymbolicVal& orig)
     anal.set_array_dimension( arrayExp, args.size());
     SymbolicFunctionDeclarationGroup elem;
     if (anal.is_array_construct_op( fa, arrayExp, 0, 0, 0, &elem)) {
-      if (! elem.get_val( args, result))
-        assert(false);
+      if (! elem.get_val( args, result)) assert(false);
       result = ReplaceVal( result, *this);
     }
     else if (!fa.IsVarRef(arrayExp)) {
@@ -151,8 +153,7 @@ operator()( const SymbolicVal& orig)
     if (anal.is_array_construct_op(fa, arrayExp, 0, 0, &len)) {
       args.clear();
       args.push_back(dim);
-      if (! len.get_val( args, result))
-        assert(false);
+      if (! len.get_val( args, result)) assert(false);
       result = ReplaceVal( result, *this);
     }
     else if (!fa.IsVarRef(arrayExp)) {
@@ -167,7 +168,7 @@ bool CollectArrayRef( CPPAstInterface& fa, ArrayInterface& anal,
                       const AstNodePtr& array, AstInterface::AstNodeList& col)
 {
     if (fa.IsVarRef(array)) {
-       col.push_back(array);
+       col.push_back(array.get_ptr());
        return true;
     }
     AstInterface::AstNodeList cur;
@@ -196,20 +197,22 @@ operator () ( AstInterface& _fa, const AstNodePtr& orig, AstNodePtr& result)
   if (!anal.is_array_mod_op( fa, orig, &modArray, &dimension, &len, &elem, &reshape)) 
     return false;
 
+  result = fa.CreateBlock();
   SymbolicFunction::Arguments ivarList;
   for (int i = 0; i < dimension; ++i ) {
       AstNodeType t= fa.GetType("int");
-      std:: string ivarname = fa.NewVar( t);
-      AstNodePtr ivar = fa.CreateVarRef( ivarname);
+      std:: string ivarname = fa.NewVar( t, "", true, false, result);
+      AstNodePtr ivar = fa.CreateVarRef( ivarname, result);
       ivarList.push_back( SymbolicAstWrap(ivar));
   }
   SymbolicVal rhs;
   if (!elem.get_val( ivarList, rhs))
     assert(false);
 
+
   std::map<std::string,AstNodePtr> varmap;
   std::list<AstNodePtr> newStmts;
-  RewriteConstructArrayAccess constructArrayRewrite(fa, anal, varmap, newStmts);
+  RewriteConstructArrayAccess constructArrayRewrite(fa, anal, varmap, newStmts, result);
   if (!constructArrayRewrite.rewritable( rhs ))
        return false;
 
@@ -239,42 +242,35 @@ operator () ( AstInterface& _fa, const AstNodePtr& orig, AstNodePtr& result)
     body = fa.CreateLoop( ivarAst, lb, ub, step, body, false);
   }
 
-  RewriteModArrayAccess modArrayRewrite( fa, anal, stmt, lhsast, varmap, newStmts);
+  RewriteModArrayAccess modArrayRewrite( fa, anal, stmt, lhsast, varmap, newStmts, result);
   TransformAstTraverse( fa, rhsast, modArrayRewrite);
 
-  if (!reshape && newStmts.size() == 0) 
-      result = body;
-  else {
-      result = fa.CreateBlock();
       for (std::list<AstNodePtr>::iterator p = newStmts.begin(); p != newStmts.end();
            ++p) {
          AstNodePtr cur = (*p);
          AstNodePtr ncur = cur;
-         if (operator()(fa, cur, ncur))
-             fa.BlockAppendStmt( result, ncur);
-         else
-             fa.BlockAppendStmt( result, cur);
+         if (operator()(fa, cur, ncur)) fa.BlockAppendStmt( result, ncur);
+         else fa.BlockAppendStmt( result, cur);
       }
       if (reshape) {
          AstInterface::AstNodeList argList;
          for (int i = 0; i < dimension; ++i) {
            AstNodePtr curlen = lenlist[i].CodeGen(fa);
-           argList.push_back( curlen);
+           argList.push_back( curlen.get_ptr());
          }
          AstNodePtr reshapeStmt = ArrayAnnotation::get_inst()->create_reshape_array(fa,modArray, argList);
          fa.BlockAppendStmt(result, reshapeStmt);
       }
       fa.BlockAppendStmt(result, body);
-  }
-   //std::cerr << "modarray rewrite: result = " << AstToString(result) << "\n";
+   std::cerr << "modarray rewrite: result = " << AstInterface::AstToString(result) << "\n";
    return true;
 }
 
 bool RewriteToArrayAst::
 operator() ( AstInterface& fa, const AstNodePtr& orig, AstNodePtr& result)
 {
-  RewriteArrayModOp op1(anal);
-  if (op1(fa, orig, result))
+     RewriteArrayModOp op1(anal);
+     if (op1(fa, orig, result))
        return true;
  
   return false;  
@@ -286,27 +282,25 @@ operator() ( AstInterface& _fa, const AstNodePtr& orig, AstNodePtr& result)
   AstNodePtr array;
   AstNodePtr decl, body;
   int  dim;
+  //std::cerr << "rewrite from array ast: " << AstInterface::AstToString(orig) << "\n";
   CPPAstInterface& fa = static_cast<CPPAstInterface&>(_fa);
   AstInterface::AstNodeList args, vars;
-  if (fa.IsVariableDecl( orig, &vars)) {
+  if (fa.IsVariableDecl( orig, &vars) ||
+      (fa.IsFunctionDefinition( orig, 0, &vars,0, &body) && body !=0)) {
+     result = body;
+     if (result == 0) result = orig; 
      for (AstInterface::AstNodeList::iterator pv = vars.begin();
            pv!= vars.end(); ++pv) {
         AstNodePtr cur = *pv;
         if (! ArrayAnnotation::get_inst()->known_array( fa, cur))
            break; 
-        AstNodePtr initdefs = anal.impl_array_opt_init(fa, cur);
-        fa.InsertStmt( orig, initdefs, false, true);
+        anal.impl_array_opt_init(fa, cur, result);
      }
+     if (body != 0) { /*This is function definition*/
+         return false; /* traversal should continue within orig */
+     } 
+     return true;
    }
-   else  if (fa.IsFunctionDefinition( orig, 0, &vars,0, &body) && body !=0) {
-      for (AstInterface::AstNodeList::iterator pv = vars.begin();
-           pv!=vars.end(); ++pv) {
-        AstNodePtr cur = *pv;
-        if (! ArrayAnnotation::get_inst()->known_array( fa, cur))
-           break; 
-        anal.impl_array_opt_init(fa, cur, true);
-      }
-  }
   else if (ArrayAnnotation::get_inst()->is_access_array_elem( fa, orig, &array, &args )) {
      result = anal.impl_access_array_elem( fa, array, args);
      return true;
@@ -317,8 +311,8 @@ operator() ( AstInterface& _fa, const AstNodePtr& orig, AstNodePtr& result)
     reshape = TransformAstTraverse( fa, reshape, *this);
     result = fa.CreateBlock();
     fa.BlockAppendStmt( result, reshape);
-    AstNodePtr initdefs = anal.impl_array_opt_init(fa, array);
-    fa.BlockAppendStmt( result, initdefs);
+    AstNodePtr initdefs = anal.impl_array_opt_init(fa, array, result);
+    fa.BlockAppendStmt( result, initdefs, false);
     return true;
   }
   else if (ArrayAnnotation::get_inst()->is_access_array_length( fa, orig, &array, 0, &dim)) {

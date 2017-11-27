@@ -810,7 +810,6 @@ ROSE_DLL_API SgLambdaCapture* buildLambdaCapture_nfi(SgExpression* capture_varia
 ROSE_DLL_API SgLambdaCaptureList* buildLambdaCaptureList    ();
 ROSE_DLL_API SgLambdaCaptureList* buildLambdaCaptureList_nfi();
 
-
 //@}
 
 //@{
@@ -1062,6 +1061,10 @@ SgGotoStatement * buildGotoStatement_nfi(SgLabelStatement *  label);
 
 //! Build a goto statement from a label symbol, supporting both C/C++ and Fortran cases
 ROSE_DLL_API SgGotoStatement * buildGotoStatement(SgLabelSymbol*  symbol);
+
+// DQ (11/22/2017): Added support for computed code goto as defined by GNU C/C++ extension.
+//! Build a goto statement from a label expression, supporting only C/C++ and not Fortran cases
+SgGotoStatement * buildGotoStatement_nfi(SgExpression*  expr);
 
 //! Build a case option statement
 ROSE_DLL_API SgCaseOptionStmt * buildCaseOptionStmt( SgExpression * key = NULL,SgStatement *body = NULL);
@@ -1609,9 +1612,9 @@ namespace Rose {
             extern ROSE_DLL_API SgClassType *ClassClassType;
             extern ROSE_DLL_API SgVariableSymbol *lengthSymbol;
 
-        }// ::rose::frontend::java
-    }// ::rose::frontend
-}// ::rose
+        }// ::Rose::frontend::java
+    }// ::Rose::frontend
+}// ::Rose
 //-----------------------------------------------------------------------------
 //#endif // ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 //-----------------------------------------------------------------------------

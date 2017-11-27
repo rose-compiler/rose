@@ -14,7 +14,8 @@ LoopProcessor_CPPFLAGS =				 \
 	-I$(top_srcdir)/src/midend/loopProcessing/driver \
 	-I$(top_srcdir)/src/midend/astUtil/astInterface	 \
 	-I$(top_srcdir)/src/midend/astUtil/astSupport
-LoopProcessor_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+LoopProcessor_LDFLAGS = $(ROSE_RPATHS)
+LoopProcessor_LDADD = $(ROSE_SEPARATE_LIBS)
 
 ########################################################################################################################
 # Tests.  Just comment out the "TEST_NAMES+=" line to disable a test.  Each test, FOO, will produce either a FOO.passed

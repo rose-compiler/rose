@@ -8,6 +8,8 @@ add_library(abstractLayer OBJECT
   RDAstAttributeInterface.C
   SgNodeHelper.C
   VariableIdMapping.C
+  TypeSizeMapping.C
+  SgTypeSizeMapping.C
   )
 
 add_dependencies(abstractLayer rosetta_generated)
@@ -20,4 +22,6 @@ install(FILES
   RDAstAttributeInterface.h
   SgNodeHelper.h
   VariableIdMapping.h
+  TypeSizeMapping.h
+  SgTypeSizeMapping.h
   DESTINATION ${INCLUDE_INSTALL_DIR})

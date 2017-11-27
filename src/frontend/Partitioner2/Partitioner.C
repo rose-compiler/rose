@@ -10,6 +10,7 @@
 #include "BinaryUnparserBase.h"
 #include "SymbolicSemantics2.h"
 #include "Diagnostics.h"
+#include "RecursionCounter.h"
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/foreach.hpp>
@@ -20,24 +21,23 @@
 #include <Sawyer/Stopwatch.h>
 #include <Sawyer/ThreadWorkers.h>
 
-using namespace rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
-using namespace rose::Diagnostics;
+using namespace Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
+using namespace Rose::Diagnostics;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
 Partitioner::Partitioner()
-    : solver_(NULL), progressTotal_(0), isReportingProgress_(true),
-      autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1),
-      semanticMemoryParadigm_(LIST_BASED_MEMORY) {
+    : solver_(NULL), autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1),
+      semanticMemoryParadigm_(LIST_BASED_MEMORY), progress_(Progress::instance()), cfgProgressTotal_(0) {
     init(NULL, memoryMap_);
 }
 
 Partitioner::Partitioner(Disassembler *disassembler, const MemoryMap::Ptr &map)
-    : memoryMap_(map), solver_(NULL), progressTotal_(0), isReportingProgress_(true),
-      autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1),
-      semanticMemoryParadigm_(LIST_BASED_MEMORY) {
+    : memoryMap_(map), solver_(NULL), autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true),
+      stackDeltaInterproceduralLimit_(1), semanticMemoryParadigm_(LIST_BASED_MEMORY),
+      progress_(Progress::instance()), cfgProgressTotal_(0) {
     init(disassembler, map);
 }
 
@@ -48,8 +48,8 @@ Partitioner::Partitioner(Disassembler *disassembler, const MemoryMap::Ptr &map)
 // FIXME[Robb P. Matzke 2014-12-27]: Not the most efficient implementation, but saves on cut-n-paste which would surely rot
 // after a while.
 Partitioner::Partitioner(const Partitioner &other)               // initialize just like default
-    : solver_(NULL), progressTotal_(0), isReportingProgress_(true), autoAddCallReturnEdges_(false),
-      assumeFunctionsReturn_(true), semanticMemoryParadigm_(LIST_BASED_MEMORY) {
+    : solver_(NULL), autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), semanticMemoryParadigm_(LIST_BASED_MEMORY),
+      progress_(Progress::instance()), cfgProgressTotal_(0) {
     init(NULL, memoryMap_);                             // initialize just like default
     *this = other;                                      // then delegate to the assignment operator
 }
@@ -65,8 +65,6 @@ Partitioner::operator=(const Partitioner &other) {
     vertexIndex_.clear();                               // initialized by init(other)
     aum_ = other.aum_;
     solver_ = other.solver_;
-    progressTotal_ = other.progressTotal_;
-    isReportingProgress_ = other.isReportingProgress_;
     functions_ = other.functions_;
     autoAddCallReturnEdges_ = other.autoAddCallReturnEdges_;
     assumeFunctionsReturn_ = other.assumeFunctionsReturn_;
@@ -79,6 +77,13 @@ Partitioner::operator=(const Partitioner &other) {
     functionPrologueMatchers_ = other.functionPrologueMatchers_;
     functionPaddingMatchers_ = other.functionPaddingMatchers_;
     semanticMemoryParadigm_ = other.semanticMemoryParadigm_;
+
+    {
+        SAWYER_THREAD_TRAITS::LockGuard2 lock(mutex_, other.mutex_);
+        cfgProgressTotal_ = other.cfgProgressTotal_;
+        progress_ = other.progress_;
+    }
+
     init(other);                                        // copies graph iterators, etc.
     return *this;
 }
@@ -219,28 +224,62 @@ operator<<(std::ostream &out, const ProgressBarSuffix &x) {
     return out;
 };
 
-void
-Partitioner::reportProgress() const {
-    // All partitioners share a single progress bar.
-    static Sawyer::ProgressBar<size_t, ProgressBarSuffix> *bar = NULL;
+Progress::Ptr
+Partitioner::progress() const {
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    return progress_;
+}
 
-    if (0==progressTotal_) {
+void
+Partitioner::progress(const Progress::Ptr &p) {
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    progress_ = p;
+}
+
+void
+Partitioner::updateProgress(const std::string &phase, double completion) const {
+    Progress::Ptr progress;
+    {
+        SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+        progress = progress_;
+    }
+    if (progress)
+        progress->update(Progress::Report(phase, completion));
+}
+
+// Updates progress information during the main partitioning phase. The progress is the ratio of the number of bytes
+// represented in the CFG to the number of executable bytes in the memory map.
+void
+Partitioner::updateCfgProgress() {
+    {
+        SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+        if (!progress_)
+            return;
+    }
+
+    // How many bytes are mapped with execute permission
+    if (0 == cfgProgressTotal_) {
         BOOST_FOREACH (const MemoryMap::Node &node, memoryMap_->nodes()) {
             if (0 != (node.value().accessibility() & MemoryMap::EXECUTABLE))
-                progressTotal_ += node.key().size();
+                cfgProgressTotal_ += node.key().size();
         }
     }
-    
-    if (!bar)
-        bar = new Sawyer::ProgressBar<size_t, ProgressBarSuffix>(progressTotal_, mlog[MARCH], "cfg");
 
-    if (progressTotal_) {
-        // If multiple partitioners are sharing the progress bar then also make sure that the lower and upper limits are
-        // appropriate for THIS partitioner.  However, changing the limits is a configuration change, which also immediately
-        // updates the progress bar (we don't want that, so update only if necessary).
+    double completion = cfgProgressTotal_ > 0 ? (double)nBytes() / cfgProgressTotal_ : 0.0;
+    updateProgress("partition", completion);
+
+    // All partitioners share a single progress bar for the CFG completion amount
+    static Sawyer::ProgressBar<size_t, ProgressBarSuffix> *bar = NULL;
+    if (!bar)
+        bar = new Sawyer::ProgressBar<size_t, ProgressBarSuffix>(cfgProgressTotal_, mlog[MARCH], "cfg");
+
+    // Update the progress bar. If multiple partitioners are sharing the progress bar then also make sure that the lower and
+    // upper limits are appropriate for THIS partitioner.  However, changing the limits is a configuration change, which also
+    // immediately updates the progress bar (we don't want that, so update only if necessary).
+    if (cfgProgressTotal_) {
         bar->suffix(ProgressBarSuffix(this));
-        if (bar->domain().first!=0 || bar->domain().second!=progressTotal_) {
-            bar->value(0, nBytes(), progressTotal_);
+        if (bar->domain().first!=0 || bar->domain().second!=cfgProgressTotal_) {
+            bar->value(0, nBytes(), cfgProgressTotal_);
         } else {
             bar->value(nBytes());
         }
@@ -528,7 +567,7 @@ done:
                 retval->insertSuccessor(successorVa, nBits);
         }
     }
-    
+
     retval->freeze();
     return retval;
 }
@@ -640,7 +679,7 @@ Partitioner::attachBasicBlock(const ControlFlowGraph::ConstVertexIterator &const
                 edgeType = E_FUNCTION_RETURN;
             }
         }
-        
+
         CfgEdge edge(edgeType, successor.confidence());
         if (successor.expr()->is_number()) {
             successors.push_back(VertexEdgePair(insertPlaceholder(successor.expr()->get_number()), edge));
@@ -795,25 +834,30 @@ Partitioner::basicBlockGhostSuccessors(const BasicBlock::Ptr &bb) const {
 
     if (bb->isEmpty() || bb->ghostSuccessors().getOptional().assignTo(ghosts))
         return ghosts;
-    
-    std::set<rose_addr_t> insnVas;
+
+    // Addresses of all instructions in this basic block
+    Sawyer::Container::Set<rose_addr_t> insnVas;
     BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions())
         insnVas.insert(insn->get_address());
-    
-    const BasicBlock::Successors &successors = basicBlockSuccessors(bb);
+
+    // Find naive per-instruction successors that are not pointing to another instruction and which aren't in the set of basic
+    // block successors.  "Naive" successors are obtained by considering each insn in isolation (e.g., conditional branches
+    // have two naive successors even if the predicate is opaque.
+    const BasicBlock::Successors &bblockSuccessors = basicBlockSuccessors(bb);
     BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions()) {
         bool complete = true;
-        BOOST_FOREACH (rose_addr_t naiveVa, insn->getSuccessors(&complete)) {
-            if (insnVas.find(naiveVa)==insnVas.end()) {
+        BOOST_FOREACH (rose_addr_t naiveSuccessor, insn->getSuccessors(&complete)) {
+            if (!insnVas.exists(naiveSuccessor)) {
+                // Is naiveSuccessor also a basic block successor?
                 bool found = false;
-                BOOST_FOREACH (const BasicBlock::Successor &successor, successors) {
-                    if (successor.expr()->is_number() && successor.expr()->get_number()==naiveVa) {
+                BOOST_FOREACH (const BasicBlock::Successor &bblockSuccessor, bblockSuccessors) {
+                    if (bblockSuccessor.expr()->is_number() && bblockSuccessor.expr()->get_number()==naiveSuccessor) {
                         found = true;
                         break;
                     }
                 }
                 if (!found)
-                    ghosts.insert(naiveVa);
+                    ghosts.insert(naiveSuccessor);
             }
         }
     }
@@ -845,6 +889,12 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb) const {
     if (bb->isEmpty() || bb->isFunctionCall().getOptional().assignTo(retval))
         return retval;                                  // already cached
 
+    // Avoid infinite recursion
+    static size_t recursionDepth = 0;
+    RecursionCounter recursion(recursionDepth);
+    if (recursionDepth > 2 /*arbitrary*/)
+        return false;      // if we can't prove it, assume false
+
     SgAsmInstruction *lastInsn = bb->instructions().back();
 
     // Use our own semantics if we have them.
@@ -867,7 +917,7 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb) const {
             bb->isFunctionCall() = false;
             return false;
         }
-        
+
         // If the only successor is also the fall-through address then this isn't a function call.  This case handles code that
         // obtains the code address in position independent code. For example, x86 "A: CALL B; B: POP EAX" where A and B are
         // consecutive instruction addresses.
@@ -888,16 +938,8 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb) const {
                 }
                 rose_addr_t calleeVa = successor.expr()->get_number();
                 BasicBlock::Ptr calleeBb = basicBlockExists(calleeVa);
-                if (!calleeBb) {
-                    // Avoid never-ending recursive calls to discoverBasicBlock.
-                    // FIXME[Robb P Matzke 2017-02-03]: This only fixes direct recursion to the same block, but the infinite
-                    // recursion can also be triggered by mutually recursive functions. I'm not fixing that at the moment.
-                    if (calleeVa == bb->address()) {
-                        allCalleesPopWithoutReturning = false;
-                        break;
-                    }
-                    calleeBb = discoverBasicBlock(calleeVa);
-                }
+                if (!calleeBb)
+                    calleeBb = discoverBasicBlock(calleeVa); //  could cause recursion
                 if (!calleeBb) {
                     allCalleesPopWithoutReturning = false;
                     break;
@@ -951,7 +993,7 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb) const {
                 return false;
             }
         }
-        
+
         // This appears to be a function call
         bb->isFunctionCall() = true;
         return true;
@@ -974,7 +1016,7 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb) const {
             }
         }
     }
-    
+
     // We don't have semantics, so delegate to the SgAsmInstruction subclass.
     retval = lastInsn->isFunctionCallFast(bb->instructions(), NULL, NULL);
     bb->isFunctionCall() = retval;
@@ -1359,8 +1401,7 @@ void
 Partitioner::bblockAttached(const ControlFlowGraph::VertexIterator &newVertex) {
     ASSERT_require(newVertex!=cfg_.vertices().end());
     ASSERT_require(newVertex->value().type() == V_BASIC_BLOCK);
-    if (isReportingProgress_)
-        reportProgress();
+    updateCfgProgress();
     rose_addr_t startVa = newVertex->value().address();
     BasicBlock::Ptr bblock = newVertex->value().bblock();
 
@@ -1748,7 +1789,7 @@ Partitioner::dumpCfg(std::ostream &out, const std::string &prefix, bool showBloc
                 }
             }
         }
-        
+
         // Show instructions in execution order
         if (showBlocks) {
             if (BasicBlock::Ptr bb = vertex->value().bblock()) {
@@ -1812,7 +1853,7 @@ Partitioner::dumpCfg(std::ostream &out, const std::string &prefix, bool showBloc
                 out <<"unknown\n";
             }
         }
-        
+
         // Sort outgoing edges according to destination (makes comparisons easier)
         std::vector<ControlFlowGraph::ConstEdgeIterator> sortedOutEdges;
         for (ControlFlowGraph::ConstEdgeIterator ei=vertex->outEdges().begin(); ei!=vertex->outEdges().end(); ++ei)
@@ -1995,7 +2036,7 @@ Partitioner::attachOrMergeFunction(const Function::Ptr &newFunction) {
         attachFunction(newFunction);
         return newFunction;
     }
-    
+
     // Perhapse use this new function's name.  If the names are the same except for the "@plt" part then use the version with
     // the "@plt".
     if (existingFunction->name().empty()) {
@@ -2044,10 +2085,10 @@ Partitioner::attachOrMergeFunction(const Function::Ptr &newFunction) {
 
         attachFunction(existingFunction);
     }
-    
+
     return existingFunction;
 }
-    
+
 size_t
 Partitioner::attachFunctionBasicBlocks(const Functions &functions) {
     size_t nNewBlocks = 0;
@@ -2136,7 +2177,7 @@ struct CallingConventionWorker {
         Sawyer::Stopwatch t;
         partitioner.functionCallingConvention(function, dfltCc);
 
-        // Show some results. We're using rose::BinaryAnalysis::CallingConvention::mlog[TRACE] for the messages, so the mutex
+        // Show some results. We're using Rose::BinaryAnalysis::CallingConvention::mlog[TRACE] for the messages, so the mutex
         // here doesn't really protect it. However, since that analysis doesn't produce much output on that stream, this mutex
         // helps keep the output lines separated from one another where there's lots of worker threads, especially when they're
         // all first starting up.
@@ -2147,7 +2188,9 @@ struct CallingConventionWorker {
             trace <<"calling-convention for " <<function->printableName() <<" took " <<t <<" seconds\n";
         }
 
+        // Update progress reports
         ++progress;
+        partitioner.updateProgress("call-conv", progress.ratio());
     }
 };
 
@@ -2159,7 +2202,7 @@ Partitioner::allFunctionCallingConvention(const CallingConvention::Definition::P
     Sawyer::ProgressBar<size_t> progress(cg.nVertices(), mlog[MARCH], "call-conv analysis");
     Sawyer::Message::FacilitiesGuard guard;
     if (nThreads != 1)                                  // lots of threads doing progress reports won't look too good!
-        rose::BinaryAnalysis::CallingConvention::mlog[MARCH].disable();
+        Rose::BinaryAnalysis::CallingConvention::mlog[MARCH].disable();
     Sawyer::workInParallel(cg, nThreads, CallingConventionWorker(*this, progress, dfltCc));
 }
 

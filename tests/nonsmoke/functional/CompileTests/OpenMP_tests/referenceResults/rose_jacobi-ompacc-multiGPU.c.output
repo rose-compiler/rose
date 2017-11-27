@@ -1,0 +1,20 @@
+#pragma omp parallel 
+#pragma omp for  private(xx,yy,j,i)
+//#pragma omp parallel
+//#pragma omp target device (tid) map(tofrom: u[offset*m:m*n]) map(to: uold[offset*m:m*n],f[offset*m:m*n],m,n, offset,ax,ay,b,omega) 
+#pragma omp parallel  shared(uold,u,f,offset,ax,ay,b,omega,n)
+#pragma omp for  private(resid,j,i) reduction(+ : err_tmp)
+#pragma omp parallel 
+#pragma omp for  private(resid,j,i) reduction(+ : error) nowait
+#pragma omp parallel 
+#pragma omp master 
+#pragma omp parallel  shared(GPU_N,u,uold,f,m,n,error,error_sum) private(idev)
+#pragma omp barrier 
+#pragma omp master 
+#pragma omp barrier 
+#pragma omp master 
+#pragma omp critical 
+#pragma omp barrier 
+#pragma omp master 
+#pragma omp critical 
+#pragma omp master 

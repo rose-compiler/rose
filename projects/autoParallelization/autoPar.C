@@ -18,6 +18,7 @@
  * Nov 3, 2008
  */
 #include "rose.h"
+#include "rose_config.h" // obtain macros defining backend compiler names, etc.
 #include "keep_going.h" // enable logging files which cannot be processed by AutoPar due to various reasons
 // all kinds of analyses needed
 #include "autoParSupport.h" 
@@ -28,7 +29,7 @@ static const char* description =
      "This tool is an implementation of automatic parallelization using OpenMP. "
      "It can automatically insert OpenMP directives into input serial C/C++ codes. "
      "For input programs with existing OpenMP directives, the tool will double check "
-     "the correctness when requested.";
+     "the correctness when requested with an option --enable_diff ";
 
 using namespace std;
 using namespace AutoParallelization;
@@ -149,8 +150,8 @@ Sawyer::CommandLine::SwitchGroup commandLineSwitches() {
 
 
   // Default log files for keep_going option
-  Rose::KeepGoing::report_filename__fail = "autoPar-failed-files.txt";
-  Rose::KeepGoing::report_filename__pass = "autoPar-passed-files.txt";
+  Rose::KeepGoing::report_filename__fail = boost::filesystem::path(getenv("HOME")).native()+"/autoPar-failed-files.txt";
+  Rose::KeepGoing::report_filename__pass = boost::filesystem::path(getenv("HOME")).native()+"/autoPar-passed-files.txt";
 
 
   SwitchGroup switches("autoPar's switches");
@@ -159,24 +160,24 @@ Sawyer::CommandLine::SwitchGroup commandLineSwitches() {
 
   switches.insert(Switch("enable_debug")
       .intrinsicValue(true, AutoParallelization::enable_debug)
-      .doc("Enable the debugging mode."));
+      .doc("Enable the debugging mode to print out information of internal processing."));
 
-  // Keep going option of autoPar, set to true by default
+  // Keep going option of autoPar
   switches.insert(Switch("keep_going")
       .intrinsicValue(true, AutoParallelization::keep_going)
-      .doc("Allow auto parallelization to keep going if errors happen"));
+      .doc("Allow auto parallelization to keep going if errors happen. \n Errors are stored in a failure report file. See the option failsure_report for details. "));
 
   switches.insert(Switch("failure_report")
       .argument("string", anyParser(Rose::KeepGoing::report_filename__fail))
-      .doc("Specify the report file for logging files autoPar cannot process"));
+      .doc("Specify the report file for logging files autoPar cannot fully process when keep_going option is turned on. \n Default file is $HOME/autoPar-failed-files.txt"));
 
   switches.insert(Switch("success_report")
       .argument("string", anyParser(Rose::KeepGoing::report_filename__pass))
-      .doc("Specify the report file for logging files autoPar can process"));
+      .doc("Specify the report file for logging files autoPar can fully process when keep_going option is turned on. \n Default file is $HOME/autoPar-passed-files.txt"));
 
   switches.insert(Switch("enable_patch")
       .intrinsicValue(true, AutoParallelization::enable_patch)
-      .doc("Enable generating patch files for auto parallelization"));
+      .doc("Enable generating patch files to represent auto parallelization, instead of directly changing input files"));
 
   switches.insert(Switch("no_aliasing")
       .intrinsicValue(true, AutoParallelization::no_aliasing)
@@ -192,13 +193,13 @@ Sawyer::CommandLine::SwitchGroup commandLineSwitches() {
 
   switches.insert(Switch("enable_distance")
       .intrinsicValue(true, AutoParallelization::enable_distance)
-      .doc("Report the absolute dependence distance of a dependence relation preventing parallelization."));
+      .doc("Report the absolute dependence distance of each dependence relation preventing parallelization."));
 
   switches.insert(Switch("annot")
       .argument("string", anyParser(AutoParallelization::annot_filenames))
 //      .shortPrefix("-") // this option allows short prefix
       .whichValue(SAVE_ALL)               // if switch appears more than once, save all values not just last
-      .doc("Specify annotation file for semantics of abstractions"));
+      .doc("Specify semantics annotation file for standard or user-defined abstractions"));
 
   switches.insert(Switch("dumpannot")
       .intrinsicValue(true, AutoParallelization::dump_annot_file)
@@ -267,6 +268,30 @@ static std::vector<std::string> commandline_processing(std::vector< std::string 
   return remainingArgs;
 }
 
+
+// different OpenMP flags for backend compilers
+#if !defined(_MSC_VER) && \
+    defined(BACKEND_CXX_IS_GNU_COMPILER)
+     
+#endif
+
+// Detect which backend compiler is being used and return the corresponding OpenMP flag
+// Expecting GCC, Intel, and Clang compilers as backend
+string getOpenMPFlag()
+{
+  string retval ; 
+
+  if (strcmp(BACKEND_C_COMPILER_NAME_WITHOUT_PATH,"gcc")==0 || strcmp(BACKEND_C_COMPILER_NAME_WITHOUT_PATH,"clang")==0)
+    retval = "-fopenmp";
+  else if (strcmp(BACKEND_C_COMPILER_NAME_WITHOUT_PATH,"icc"))
+    retval = "-openmp"; 
+  else
+  {
+    cerr<<"Warning: getOpenMPFlag() encounters a unrecognized backend compiler name:"<< BACKEND_C_COMPILER_NAME_WITHOUT_PATH<<endl;
+  }
+  return retval; 
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -277,7 +302,10 @@ main (int argc, char *argv[])
   // enable parsing user-defined pragma if enable_diff is true
   // -rose:openmp:parse_only
   if (enable_diff)
+  {
     argvList.push_back("-rose:openmp:parse_only");
+    argvList.push_back(getOpenMPFlag());
+  }
   SgProject *project = frontend (argvList);
   ROSE_ASSERT (project != NULL);
 
@@ -318,7 +346,7 @@ main (int argc, char *argv[])
       SgGlobal *root = sfile->get_globalScope();
 
       Rose_STL_Container<SgNode*> defList = NodeQuery::querySubTree(sfile, V_SgFunctionDefinition); 
-      bool hasOpenMP= false; // flag to indicate if omp.h is needed in this file
+      bool hasOpenMP= false; // flag to indicate if there is at least one loop is parallelized. also if omp.h is needed in this file
 
       //For each function body in the scope
       //for (SgDeclarationStatementPtrList::iterator p = declList.begin(); p != declList.end(); ++p) 
@@ -370,7 +398,10 @@ main (int argc, char *argv[])
         // alias info. function info etc.  
         ArrayAnnotation* annot = ArrayAnnotation::get_inst(); 
         ArrayInterface array_interface(*annot);
+        // alias Collect 
+        // value collect
         array_interface.initialize(fa_body, AstNodePtrImpl(defn));
+        // valueCollect
         array_interface.observe(fa_body);
 
         //FR(06/07/2011): aliasinfo was not set which caused segfault
@@ -389,6 +420,16 @@ main (int argc, char *argv[])
           //X. Parallelize loop one by one
           // getLoopInvariant() will actually check if the loop has canonical forms 
           // which can be handled by dependence analysis
+ 
+          // skip loops with unsupported language features 
+          VariantT blackConstruct; 
+          if (useUnsupportedLanguageFeatures(current_loop, &blackConstruct))
+          {
+            if (enable_debug)
+              cout<<"Skipping a loop at line:"<<current_loop->get_file_info()->get_line()<<" due to unsupported language construct"<< blackConstruct << "..."<<endl;
+            continue;   
+          }
+
           SgInitializedName* invarname = getLoopInvariant(current_loop);
           if (invarname != NULL)
           {
@@ -437,6 +478,7 @@ main (int argc, char *argv[])
 
 label_end: 
   // Report errors
+  int status = backend (project);
   if (keep_going)
   {
     std::vector<std::string> orig_rose_cmdline(argv, argv+argc);
@@ -444,5 +486,7 @@ label_end:
   }
 
   //project->unparse();
-  return backend (project);
+  //return backend (project);
+  return status; 
+
 }

@@ -41,7 +41,7 @@ endif
 SUBDIRS += Utility
 
 ########################################################################################################################
-# rose::BinaryAnalysis
+# Rose::BinaryAnalysis
 
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 if !ROSE_USE_INSURE
@@ -176,10 +176,19 @@ endif
 # Use names set in ROSE/config/Makefile.for.ROSE.includes.and.libs
 # AM_CPPFLAGS = $(ROSE_INCLUDES) $(ATERM_INCLUDE)
 AM_CPPFLAGS = $(ROSE_INCLUDES)
-LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+# AM_CPPFLAGS = $(ROSE_INCLUDES) --Wl,--no-undefined
+# AM_LDFLAGS  = $(ROSE_RPATHS)
+# AM_LDFLAGS  = $(ROSE_RPATHS) --Wl,--no-undefined
 
-# testAtermGraphGeneration_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(ATERM_LIB_DIR)/libATerm.a 
-testAtermGraphGeneration_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+# DQ (11/15/2017): Mac OSX can't take the -Wl,--no-undefined as a linker option.
+# AM_LDFLAGS  = $(ROSE_RPATHS) -Wl,--no-undefined
+AM_LDFLAGS  = $(ROSE_RPATHS)
+
+LDADD       = $(ROSE_LIBS)
+# LDADD       = $(ROSE_LIBS) --Wl,--no-undefined
+# LDADD       = $(ROSE_LIBS) --no-undefined
+
+testAtermGraphGeneration_LDADD = $(ROSE_LIBS)
 
 EXTRA_DIST = CMakeLists.txt input_codes inputFile.C tests.tex
 

@@ -12,7 +12,7 @@
 #include <algorithm>
 #include <ostream>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
@@ -67,7 +67,6 @@ equalUnique(const Value &a, const Value &b, Comparator cmp) {
 template<class Container, class Value, class Comparator>
 bool
 insertUnique(Container &container, const Value &item, Comparator cmp) {
-    ASSERT_not_null(item);
     ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || isSorted(container, cmp, true)); // unique, sorted items
     typename Container::iterator lb = lowerBound(container, item, cmp);
     if (lb==container.end() || !equalUnique(*lb, item, cmp)) {
@@ -82,7 +81,6 @@ insertUnique(Container &container, const Value &item, Comparator cmp) {
 template<class Container, class Value, class Comparator>
 bool
 eraseUnique(Container &container, const Value &item, Comparator cmp) {
-    ASSERT_not_null(item);
     ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || isSorted(container, cmp, true)); // unique, sorted items
     typename Container::iterator lb = lowerBound(container, item, cmp);
     if (lb!=container.end() && equalUnique(*lb, item, cmp)) {

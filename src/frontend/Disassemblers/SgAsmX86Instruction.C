@@ -2,16 +2,18 @@
  * because then they won't get indexed/formatted/etc. by C-aware tools. */
 
 #include "sage3basic.h"
-#include "SymbolicSemantics.h"
+
+#include "AsmUnparser_compat.h"
 #include "SymbolicSemantics2.h"
 #include "PartialSymbolicSemantics2.h"
 #include "DispatcherX86.h"
 #include "Disassembler.h"
 #include "Diagnostics.h"
+#include "x86InstructionProperties.h"
 
-using namespace rose;                                   // temporary until this lives in "rose"
-using namespace rose::Diagnostics;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;                                   // temporary until this lives in "rose"
+using namespace Rose::Diagnostics;
+using namespace Rose::BinaryAnalysis;
 
 unsigned
 SgAsmX86Instruction::get_anyKind() const {
@@ -107,12 +109,12 @@ SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& in
     // function and the top of the stack holds an address of an instruction within the current function, then this must be a
     // function call.
     if (interp && insns.size()<=EXECUTION_LIMIT) {
-        using namespace rose::BinaryAnalysis;
-        using namespace rose::BinaryAnalysis::InstructionSemantics2;
-        using namespace rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
+        using namespace Rose::BinaryAnalysis;
+        using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+        using namespace Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
         const InstructionMap &imap = interp->get_instruction_map();
         const RegisterDictionary *regdict = RegisterDictionary::dictionary_for_isa(interp);
-        SMTSolver *solver = NULL; // using a solver would be more accurate, but slower
+        SmtSolver *solver = NULL; // using a solver would be more accurate, but slower
         BaseSemantics::RiscOperatorsPtr ops = RiscOperators::instance(regdict, solver);
         const RegisterDescriptor SP = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp);
         DispatcherX86Ptr dispatcher = DispatcherX86::instance(ops, SP.get_nbits());
@@ -168,10 +170,10 @@ SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& in
     // the Partitioner).  Returns true if, after executing the basic block, the top of the stack contains the fall-through
     // address of the basic block. We depend on our caller to figure out if EIP is reasonably a function entry address.
     if (!interp && insns.size()<=EXECUTION_LIMIT) {
-        using namespace rose::BinaryAnalysis;
-        using namespace rose::BinaryAnalysis::InstructionSemantics2;
-        using namespace rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
-        SMTSolver *solver = NULL; // using a solver would be more accurate, but slower
+        using namespace Rose::BinaryAnalysis;
+        using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+        using namespace Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
+        SmtSolver *solver = NULL; // using a solver would be more accurate, but slower
         SgAsmX86Instruction *x86insn = isSgAsmX86Instruction(insns.front());
         ASSERT_not_null(x86insn);
 #if 1 // [Robb P. Matzke 2015-03-03]: FIXME[Robb P. Matzke 2015-03-03]: not ready yet; x86-64 semantics still under construction
@@ -370,7 +372,7 @@ SgAsmX86Instruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns, 
                                    const MemoryMap::Ptr &initial_memory)
 {
     Stream debug(mlog[DEBUG]);
-    using namespace rose::BinaryAnalysis::InstructionSemantics2;
+    using namespace Rose::BinaryAnalysis::InstructionSemantics2;
 
     if (debug) {
         debug <<"SgAsmX86Instruction::getSuccessors(" <<StringUtility::addrToString(insns.front()->get_address())

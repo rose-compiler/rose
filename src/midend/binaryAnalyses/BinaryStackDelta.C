@@ -9,13 +9,13 @@
 #include <Sawyer/ProgressBar.h>
 #include <integerOps.h>
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace StackDelta {
 
-using namespace rose::Diagnostics;
-using namespace rose::BinaryAnalysis::InstructionSemantics2;
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
+using namespace Rose::Diagnostics;
+using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 
 Sawyer::Message::Facility mlog;
@@ -25,18 +25,18 @@ initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        Diagnostics::initAndRegister(&mlog, "rose::BinaryAnalysis::StackDelta");
+        Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::StackDelta");
     }
 }
 
 void
 Analysis::init(Disassembler *disassembler) {
     if (disassembler) {
-        const RegisterDictionary *regdict = disassembler->get_registers();
+        const RegisterDictionary *regdict = disassembler->registerDictionary();
         ASSERT_not_null(regdict);
         size_t addrWidth = disassembler->instructionPointerRegister().get_nbits();
 
-        SMTSolver *solver = NULL;
+        SmtSolver *solver = NULL;
         BaseSemantics::SValuePtr protoval = SymbolicSemantics::SValue::instance();
         BaseSemantics::RegisterStatePtr registers = SymbolicSemantics::RegisterState::instance(protoval, regdict);
         BaseSemantics::MemoryStatePtr memory = NullSemantics::MemoryState::instance(protoval, protoval);

@@ -14,6 +14,7 @@ vectorize_1.c \
 vector_1.C \
 vector_2.C
 
+# bitRightShift.c # << operator is not supported, skipping the entire loop.
 
 # This list is now copied to C_TESTCODES_REQUIRED_TO_VERIFY, Liao 3/9/2016
 # the code which can be parallelized or confirmed as not parallelizable now
@@ -50,6 +51,7 @@ output_dep2.c \
 output_dep3.c \
 plusAssign.c \
 plusplus.c \
+pointers.c \
 private.c \
 reduction.c \
 reduction_2.c \
@@ -66,7 +68,8 @@ plusPlusOp.c \
 true_dep.c \
 true_dep_2.c \
 true_dep_scalar.c \
-true_l2.c 
+true_l2.c \
+bitRightShift.c
 
 # These are different depending upon use of EDG 4.7 and EDG 4.8 vs. EDG 4.9.
 # This is because translation of floating poitn is more precise using EDG 4.9
@@ -152,31 +155,6 @@ C_TESTCODES_REQUIRED_TO_VERIFY = $(C_TESTCODES_REQUIRED_TO_PASS)
 CXX_TESTCODES_REQUIRED_TO_VERIFY = $(CXX_TESTCODES_REQUIRED_TO_PASS)
 
 # Old list, not in use
-C_TESTCODES_REQUIRED_TO_VERIFY0 = \
-accumulateForce.c \
-anti_dep.c \
-array_scalar.c \
-c99loop.c \
-complexCondition.c \
-dep_distance.c \
-doall.c \
-firstprivate.c \
-firstprivate2.c \
-firstprivate3.c \
-foo.c \
-functionCall.c \
-ifAndFor.c \
-indirectIndex.c \
-jacobi_seq.c \
-livenessTest.c \
-matrixmultiply.c \
-matrixmultiply2.c \
-matrixVectormultiply.c \
-outer_only.c \
-output_dep3.c \
-plusAssign.c \
-plusplus.c \
-lastprivate.c
 
 # TODO discard this list once all files are verified
 

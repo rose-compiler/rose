@@ -51,7 +51,7 @@ findSwitchWithoutDefault(SgProject* project)
 int
 main ( int argc, char* argv[] )
    {
-  // Initialize and check compatibility. See rose::initialize
+  // Initialize and check compatibility. See Rose::initialize
      ROSE_INITIALIZE;
 
   // DQ (7/7/2005): Introduce tracking of performance of ROSE.

@@ -7,10 +7,11 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 if ROSE_USE_SQLITE_DATABASE
 
 AM_CPPFLAGS = $(ROSE_INCLUDES)
+AM_LDFLAGS = $(ROSE_RPATHS)
 
 bin_PROGRAMS = testSideEffect
 testSideEffect_SOURCES = testSideEffect.C
-testSideEffect_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+testSideEffect_LDADD = $(ROSE_LIBS)
 
 # NOTE: testPtr2.C was not tested for some undocumented reason in the original makefile, so it not in this list either.
 TEST_SPECIMENS = testGlobal1.C testGlobal2.C testRef.C testPtr1.C testClasses1.C testClasses2.C testClasses3.C testLoop.C

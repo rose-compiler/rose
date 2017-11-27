@@ -4,6 +4,7 @@ EXTRA_DIST =
 TEST_TARGETS =
 
 AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(srcdir)
+AM_LDFLAGS = $(ROSE_RPATHS)
 TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 
 #------------------------------------------------------------------------------------------------------------------------
@@ -11,7 +12,7 @@ TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 
 noinst_PROGRAMS += memObjectGenerator
 memObjectGenerator_SOURCES = memObjectGenerator.C
-memObjectGenerator_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+memObjectGenerator_LDADD = $(ROSE_LIBS)
 
 memObjectGenerator_specimens =			\
 	struct_simplest.c 			\
@@ -40,7 +41,7 @@ $(memObjectGenerator_test_targets): memObjectGenerator_%.passed: % memObjectGene
 
 noinst_PROGRAMS += indexSetTest
 indexSetTest_SOURCES = indexSetTest.C
-indexSetTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+indexSetTest_LDADD = $(ROSE_LIBS)
 
 TEST_TARGETS += indexSetTest.passed
 indexSetTest.passed: indexSetTest
@@ -54,7 +55,7 @@ indexSetTest.passed: indexSetTest
 
 noinst_PROGRAMS += ObjSetTest
 ObjSetTest_SOURCES = ObjSetTest.C ObjSetPtr.h
-ObjSetTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+ObjSetTest_LDADD = $(ROSE_LIBS)
 
 EXTRA_DIST += array2.c
 TEST_TARGETS += ObjSetTest.passed

@@ -1,0 +1,9 @@
+#pragma omp parallel  private(my_first,my_id,my_last,my_md,my_mv,my_step) shared(connected,md,mind,mv,nth,ohd)
+#pragma omp single 
+#pragma omp single 
+#pragma omp critical 
+#pragma omp barrier 
+#pragma omp single 
+#pragma omp barrier 
+#pragma omp barrier 
+#pragma omp single 

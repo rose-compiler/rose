@@ -6,10 +6,10 @@
 #include <Sawyer/ProgressBar.h>
 #include <Sawyer/ThreadWorkers.h>
 
-using namespace rose::Diagnostics;
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
+using namespace Rose::Diagnostics;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 Sawyer::Message::Facility BestMapAddress::mlog;
@@ -20,7 +20,7 @@ BestMapAddress::initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        mlog = Sawyer::Message::Facility("rose::BinaryAnalysis::BestMapAddress", Diagnostics::destination);
+        mlog = Sawyer::Message::Facility("Rose::BinaryAnalysis::BestMapAddress", Diagnostics::destination);
         Diagnostics::mfacilities.insertAndAdjust(mlog);
     }
 }
@@ -46,7 +46,7 @@ BestMapAddress::gatherAddresses(P2::Engine &engine) {
         if (!dis)
             throw Exception("no disassembler");
         nBits_ = dis->instructionPointerRegister().get_nbits();
-    } else if (dis->get_wordsize() != nBits_) {
+    } else if (dis->wordSizeBytes()*8 != nBits_) {
         throw Exception("mismatched address sizes");
     }
 
@@ -87,10 +87,11 @@ struct Task {
 // Describes *how* the worker does its job
 struct Worker {
     BestMapAddress *self;
-    Sawyer::ProgressBar<size_t> &progress;
+    Progress::Ptr progress;
+    Sawyer::ProgressBar<size_t> &progressBar;
 
-    Worker(BestMapAddress *self, Sawyer::ProgressBar<size_t> &progress)
-        : self(self), progress(progress) {}
+    Worker(BestMapAddress *self, const Progress::Ptr &progress, Sawyer::ProgressBar<size_t> &progressBar)
+        : self(self), progress(progress), progressBar(progressBar) {}
 
     void operator()(size_t taskId, const Task &task) {
         const rose_addr_t mask = IntegerOps::genMask<rose_addr_t>(self->nBits());
@@ -100,7 +101,9 @@ struct Worker {
                 ++nMatches;
         }
         task.result = nMatches;
-        ++progress;
+        ++progressBar;
+        if (progress)
+            progress->update(progressBar.ratio());
     }
 };
 
@@ -127,8 +130,8 @@ BestMapAddress::analyze(const AddressInterval &restrictEntryAddresses, const Add
     Sawyer::Container::Graph<Task> tasks;
     for (size_t i=0; i<deltas.size(); ++i)
         tasks.insertVertex(Task(deltas[i], nMatches[i]));
-    Sawyer::ProgressBar<size_t> progress(tasks.nVertices(), mlog[MARCH]);
-    Sawyer::workInParallel(tasks, CommandlineProcessing::genericSwitchArgs.threads, Worker(this, progress));
+    Sawyer::ProgressBar<size_t> progressBar(tasks.nVertices(), mlog[MARCH]);
+    Sawyer::workInParallel(tasks, CommandlineProcessing::genericSwitchArgs.threads, Worker(this, progress_, progressBar));
 
     // Sort and cache the results by number of matches.
     upToDate_ = false;

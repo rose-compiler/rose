@@ -4,6 +4,7 @@
 
 #include <map>
 #include <sstream>
+#include "AstTerm.h"
 
 using namespace std;
 using namespace SPRAY;
@@ -62,7 +63,7 @@ SgVarRefExp* PStateConstReporter::getVarRefExp() {
 }
 int PStateConstReporter::getConstInt() {
   VariableId varRefId=_variableIdMapping->variableId(_varRefExp);
-  AValue varVal=_pstate->varValue(varRefId);
+  AbstractValue varVal=_pstate->varValue(varRefId);
   ROSE_ASSERT(varVal.isConstInt());
   int varIntValue=varVal.getIntValue();
   return varIntValue;
@@ -167,7 +168,7 @@ int Specialization::substituteConstArrayIndexExprsWithConst(VariableIdMapping* v
            if(evalResultList.size()==1) {
              list<SingleEvalResultConstInt>::iterator i=evalResultList.begin();
              ROSE_ASSERT(evalResultList.size()==1);
-             AValue varVal=(*i).value();
+             AbstractValue varVal=(*i).value();
              if(varVal.isConstInt()) {
                int varIntValue=varVal.getIntValue();
                //cout<<"INFO: const: "<<varIntValue<<" substituting: "<<arrayIndexExpr->unparseToString()<<endl;
@@ -218,12 +219,6 @@ int Specialization::substituteVariablesWithConst(SgNode* node, ConstReporter* co
      SgNodeHelper::replaceExpression((*i).first,SageBuilder::buildIntVal((*i).second),false);
    }
    return (int)substitutionList.size();
- }
-
-
- bool Specialization::isAtMarker(Label lab, const EState* estate) {
-   Label elab=estate->label();
-   return elab==lab;
  }
 
 void Specialization::extractArrayUpdateOperations(Analyzer* ana,
@@ -460,7 +455,7 @@ void Specialization::attachSsaNumberingtoDefs(ArrayUpdatesSequence& arrayUpdates
 }
 
 // this function has become superfluous for SSA numbering (but for substituting uses with rhs of defs it is still necessary (2/2)
-void Specialization::substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping, SAR_MODE sarMode) {
+void Specialization::substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping, SAR_MODE sarMode, RewriteSystem& rewriteSystem) {
   if(arrayUpdates.size()==0)
     return;
   ArrayUpdatesSequence::iterator i=arrayUpdates.begin();
@@ -529,6 +524,29 @@ void Specialization::substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates, Var
       }
     }
   }
+  // normalization phase
+  //RewriteSystem rewriteSystem2;
+  for(ArrayUpdatesSequence::iterator i=arrayUpdates.begin();i!=arrayUpdates.end();++i) {
+    SgExpression* exp=(*i).second;
+    SgNode* node=exp;
+    bool ruleAddReorder=false;
+    bool ruleAlgebraic=true;
+    //cout<<"DEBUG: Rewrite phase 2 :"<<exp->unparseToString()<<endl;
+    rewriteSystem.rewriteAst(node,variableIdMapping,ruleAddReorder,false,ruleAlgebraic);
+  }
+#if 0
+  std::ofstream fout;
+  fout.open("rewrite.dot");    // create new file/overwrite existing file
+  fout<<"digraph Rewrite {\n"<<endl;
+  for(ArrayUpdatesSequence::iterator i=arrayUpdates.begin();i!=arrayUpdates.end();++i) {
+    SgExpression* exp=(*i).second;
+    fout<<"//"<<exp->unparseToString()<<endl;
+    fout<<AstTerm::astTermWithNullValuesToDot(exp)<<endl;
+    //fout<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
+  }
+  fout<<"}\n";
+  fout.close();    // close. Will be used with append.
+#endif
 }
 
 void Specialization::printUpdateInfos(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping) {

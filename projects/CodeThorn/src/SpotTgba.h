@@ -1,3 +1,6 @@
+#include "rose_config.h"
+#ifdef HAVE_SPOT
+
 #ifndef SPOT_TGBA_HH
 #define SPOT_TGBA_HH
 
@@ -22,7 +25,12 @@
 using namespace std;
 
 namespace CodeThorn {
-  // An adapter which takes a CodeThorn TransitionGraph and adheres to SPOT's TGBA interface
+  /*! 
+   * \brief An adapter which takes a CodeThorn TransitionGraph and adheres 
+   to SPOT's TGBA interface (see SpotConnection).
+   * \author Marc Jasper
+   * \date 2014, 2015, 2016, 2017.
+   */
   class SpotTgba : public spot::tgba {
   public:
     SpotTgba(TransitionGraph& ctstg, const spot::ltl::atomic_prop_set& sap, 
@@ -67,3 +75,5 @@ namespace CodeThorn {
 }  //end of namespace CodeThorn
 
 #endif
+
+#endif // end of "#ifdef HAVE_SPOT"

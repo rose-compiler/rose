@@ -7,8 +7,9 @@ endif
 
 # Default header file search path
 AM_CPPFLAGS = $(ROSE_INCLUDES)
-roseomp_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-roseompacc_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+AM_LDFLAGS = $(ROSE_RPATHS)
+roseomp_LDADD = $(ROSE_LIBS)
+roseompacc_LDADD = $(ROSE_LIBS)
 
 GOMP_PATH = @gomp_omp_runtime_library_path@
 OMNI_PATH = @omni_omp_runtime_support_path@
@@ -20,6 +21,7 @@ TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 
 # Put test codes without main() entry here
 # They will be compiled only, not executed.
+#	ompfor8.c  , a case not yet supported: ordered schedule(static) , no chunk size is specified. 
 C_TESTCODES_REQUIRED_TO_COMPILE = \
 	alignment.c \
 	collapse.c \
@@ -37,6 +39,7 @@ C_TESTCODES_REQUIRED_TO_COMPILE = \
 	nowait.c \
 	ompfor5.c \
 	ompfor6.c \
+	parallel_pragma.c \
 	private-duplicate.c \
 	single2.c \
 	sizeof.c \

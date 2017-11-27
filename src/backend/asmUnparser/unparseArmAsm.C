@@ -4,12 +4,12 @@
 #include "Registers.h"
 #include "Diagnostics.h"
 
-using namespace rose;
+using namespace Rose;
 using namespace Diagnostics;
 using namespace BinaryAnalysis;
 
 static std::string unparseArmRegister(SgAsmRegisterReferenceExpression *reg, const RegisterDictionary *registers) {
-    const RegisterDescriptor &rdesc = reg->get_descriptor();
+    RegisterDescriptor rdesc = reg->get_descriptor();
     if (!registers)
         registers = RegisterDictionary::dictionary_arm7();
     
@@ -226,7 +226,6 @@ static std::string unparseArmExpression(SgAsmExpression* expr, const AsmUnparser
     if (suffix)
         *suffix = extra;
 
-    result = StringUtility::appendAsmComment(result, expr->get_replacement());
     result = StringUtility::appendAsmComment(result, expr->get_comment());
     return result;
 }

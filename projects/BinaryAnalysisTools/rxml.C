@@ -15,10 +15,10 @@ static const char *description =
 #include <Partitioner2/Engine.h>
 #include <Sawyer/Stopwatch.h>
 
-using namespace rose;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 using namespace Sawyer::Message::Common;
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 enum SerializableEntity {
     SERIALIZE_PARTITIONER,                              // serialize the entire partitioner
@@ -55,7 +55,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine) {
                      "@named{mmap}{Prints information about the memory map. The memory map describes how the specimen "
                      "is mapped into virtual memory.}"
 
-                     "@named{partitioner}{All information from rose::BinaryAnalysis::Partitioner2. This is the "
+                     "@named{partitioner}{All information from Rose::BinaryAnalysis::Partitioner2. This is the "
                      "data structure used by most binary analysis and includes things such as the address map, "
                      "control flow graph, functions, basic blocks, instructions, static data blocks, memory map "
                      "and possibly stack delta analysis, may-return analysis, calling convention analysis, etc. "

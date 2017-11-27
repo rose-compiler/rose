@@ -6,7 +6,7 @@
 #define DISPLAY_INTERNAL_DATA 0
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 // Global variable that functions can use to make sure that there IR nodes were not deleted!
 // This is used for debugging only (tests in assertions).

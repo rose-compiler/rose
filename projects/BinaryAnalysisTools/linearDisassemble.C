@@ -13,11 +13,11 @@
 #include <Sawyer/Message.h>
 #include <string>
 
-using namespace rose;
-using namespace rose::BinaryAnalysis::InstructionSemantics2;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+using namespace Rose::BinaryAnalysis;
 using namespace Sawyer::Message::Common;
-namespace P2 = rose::BinaryAnalysis::Partitioner2;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 Sawyer::Message::Facility mlog;
 
@@ -104,14 +104,14 @@ int main(int argc, char *argv[])
 
     // Obtain an unparser suitable for this disassembler
     AsmUnparser unparser;
-    unparser.set_registers(disassembler->get_registers());
+    unparser.set_registers(disassembler->registerDictionary());
 
     // Build semantics framework; only used when settings.runSemantics is set
     BaseSemantics::DispatcherPtr dispatcher;
     if (settings.runSemantics) {
-        BaseSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(disassembler->get_registers());
+        BaseSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(disassembler->registerDictionary());
         ops = TraceSemantics::RiscOperators::instance(ops);
-        dispatcher = DispatcherM68k::instance(ops, disassembler->get_wordsize()*8);
+        dispatcher = DispatcherM68k::instance(ops, disassembler->wordSizeBytes()*8);
         dispatcher->currentState()->memoryState()->set_byteOrder(ByteOrder::ORDER_MSB);
     }
 

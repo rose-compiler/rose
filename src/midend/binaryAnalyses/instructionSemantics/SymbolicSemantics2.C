@@ -3,7 +3,7 @@
 #include "SymbolicSemantics2.h"
 #include "integerOps.h"
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace SymbolicSemantics {
@@ -35,7 +35,7 @@ SValue::isBottom() const {
 
 Sawyer::Optional<BaseSemantics::SValuePtr>
 SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, const BaseSemantics::MergerPtr &merger_,
-                            SMTSolver *solver) const {
+                            SmtSolver *solver) const {
     SValuePtr other = SValue::promote(other_);
     ASSERT_require(get_width() == other->get_width());
     MergerPtr merger = merger_.dynamicCast<Merger>();
@@ -132,7 +132,7 @@ SValue::set_defining_instructions(SgAsmInstruction *insn)
 }
 
 bool
-SValue::may_equal(const BaseSemantics::SValuePtr &other_, SMTSolver *solver) const 
+SValue::may_equal(const BaseSemantics::SValuePtr &other_, SmtSolver *solver) const 
 {
     SValuePtr other = SValue::promote(other_);
     ASSERT_require(get_width()==other->get_width());
@@ -142,7 +142,7 @@ SValue::may_equal(const BaseSemantics::SValuePtr &other_, SMTSolver *solver) con
 }
 
 bool
-SValue::must_equal(const BaseSemantics::SValuePtr &other_, SMTSolver *solver) const
+SValue::must_equal(const BaseSemantics::SValuePtr &other_, SmtSolver *solver) const
 {
     SValuePtr other = SValue::promote(other_);
     ASSERT_require(get_width()==other->get_width());
@@ -305,7 +305,7 @@ RiscOperators::substitute(const SValuePtr &from, const SValuePtr &to)
     struct RegSubst: RegisterState::Visitor {
         SValuePtr from, to;
         RegSubst(const SValuePtr &from, const SValuePtr &to): from(from), to(to) {}
-        virtual BaseSemantics::SValuePtr operator()(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &val_) {
+        virtual BaseSemantics::SValuePtr operator()(RegisterDescriptor reg, const BaseSemantics::SValuePtr &val_) {
             SValuePtr val = SValue::promote(val_);
             return val->substitute(from, to);
         }
@@ -556,8 +556,8 @@ RiscOperators::ite(const BaseSemantics::SValuePtr &sel_,
     }
     if (solver()) {
         // If the selection expression cannot be true, then return b
-        ExprPtr assertion = SymbolicExpr::makeEq(sel->get_expression(), SymbolicExpr::makeInteger(1, 1));
-        bool can_be_true = SMTSolver::SAT_NO != solver()->satisfiable(assertion);
+        ExprPtr condition = sel->get_expression();
+        bool can_be_true = SmtSolver::SAT_NO != solver()->satisfiable(condition);
         if (!can_be_true) {
             retval = SValue::promote(b->copy());
             switch (computingDefiners_) {
@@ -576,8 +576,8 @@ RiscOperators::ite(const BaseSemantics::SValuePtr &sel_,
         }
 
         // If the selection expression cannot be false, then return a
-        assertion = SymbolicExpr::makeEq(sel->get_expression(), SymbolicExpr::makeInteger(1, 0));
-        bool can_be_false = SMTSolver::SAT_NO != solver()->satisfiable(assertion);
+        ExprPtr inverseCondition = SymbolicExpr::makeInvert(sel->get_expression());
+        bool can_be_false = SmtSolver::SAT_NO != solver()->satisfiable(inverseCondition);
         if (!can_be_false) {
             retval = SValue::promote(a->copy());
             switch (computingDefiners_) {
@@ -998,7 +998,7 @@ RiscOperators::signExtend(const BaseSemantics::SValuePtr &a_, size_t new_width)
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::readRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &dflt) 
+RiscOperators::readRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &dflt) 
 {
     PartialDisableUsedef du(this);
     SValuePtr result = SValue::promote(BaseSemantics::RiscOperators::readRegister(reg, dflt));
@@ -1021,7 +1021,7 @@ RiscOperators::readRegister(const RegisterDescriptor &reg, const BaseSemantics::
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::peekRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &dflt) {
+RiscOperators::peekRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &dflt) {
     PartialDisableUsedef du(this);
     BaseSemantics::SValuePtr result = BaseSemantics::RiscOperators::peekRegister(reg, dflt);
     ASSERT_require(result!=NULL && result->get_width() == reg.get_nbits());
@@ -1029,7 +1029,7 @@ RiscOperators::peekRegister(const RegisterDescriptor &reg, const BaseSemantics::
 }
 
 void
-RiscOperators::writeRegister(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &a_)
+RiscOperators::writeRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &a_)
 {
     SValuePtr a = SValue::promote(a_->copy());
     PartialDisableUsedef du(this);
@@ -1054,7 +1054,7 @@ RiscOperators::writeRegister(const RegisterDescriptor &reg, const BaseSemantics:
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::readMemory(const RegisterDescriptor &segreg,
+RiscOperators::readMemory(RegisterDescriptor segreg,
                           const BaseSemantics::SValuePtr &address,
                           const BaseSemantics::SValuePtr &dflt,
                           const BaseSemantics::SValuePtr &condition) {
@@ -1122,7 +1122,7 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg,
 }
 
 void
-RiscOperators::writeMemory(const RegisterDescriptor &segreg,
+RiscOperators::writeMemory(RegisterDescriptor segreg,
                            const BaseSemantics::SValuePtr &address_,
                            const BaseSemantics::SValuePtr &value_,
                            const BaseSemantics::SValuePtr &condition) {
@@ -1200,8 +1200,8 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg,
 } // namespace
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-BOOST_CLASS_EXPORT_IMPLEMENT(rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::SValue);
-BOOST_CLASS_EXPORT_IMPLEMENT(rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::MemoryListState);
-BOOST_CLASS_EXPORT_IMPLEMENT(rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::MemoryMapState);
-BOOST_CLASS_EXPORT_IMPLEMENT(rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::RiscOperators);
+BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::SValue);
+BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::MemoryListState);
+BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::MemoryMapState);
+BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::RiscOperators);
 #endif

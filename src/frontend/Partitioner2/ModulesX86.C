@@ -6,9 +6,9 @@
 #include <Partitioner2/Partitioner.h>
 #include <Partitioner2/Utility.h>
 
-using namespace rose::Diagnostics;
+using namespace Rose::Diagnostics;
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 namespace ModulesX86 {

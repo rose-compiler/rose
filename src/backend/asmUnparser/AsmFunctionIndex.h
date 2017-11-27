@@ -8,7 +8,7 @@
 #include "callbacks.h"
 #include "Diagnostics.h"
 
-namespace rose {
+namespace Rose {
 namespace BinaryAnalysis {
 
 /** Functions indexed by entry address.

@@ -69,6 +69,7 @@ parallel        { return cond_return ( PARALLEL); }
 task            { return cond_return ( TASK ); }
 taskwait        { return cond_return ( TASKWAIT ); }
 untied          { return cond_return ( UNTIED );}
+mergeable       { return cond_return ( MERGEABLE );}
 if              { return ( IF); } /*if is a keyword in C/C++, no change to be a variable*/
 num_threads     { /*Can be either a clause name or a variable name */ 
                   return cond_return (NUM_THREADS);
@@ -113,6 +114,22 @@ none            { return cond_return ( NONE ); }
 reduction       { return cond_return ( REDUCTION ); }
 copyin          { return cond_return ( COPYIN ); }
 
+inbranch        { return cond_return ( INBRANCH ); }
+notinbranch     { return cond_return ( NOTINBRANCH ); }
+
+proc_bind       { return cond_return ( PROC_BIND); }
+close           { return cond_return ( CLOSE ); }
+spread          { return cond_return ( SPREAD ); } /* master should already be recognized */
+
+depend          { return cond_return ( DEPEND ); } 
+in              { return cond_return ( IN ); } 
+out             { return cond_return ( OUT ); } 
+inout           { return cond_return ( INOUT ); } 
+
+read            { return cond_return ( READ ); }
+write           { return cond_return ( WRITE ); }
+capture         { return cond_return ( CAPTURE ); }
+
 target          {return cond_return ( TARGET ); }
 mpi             {return cond_return ( MPI ); } /*Experimental keywords to support scaling up to MPI processes */
 mpi:all         {return cond_return ( MPI_ALL ); }
@@ -130,11 +147,14 @@ from            {return cond_return ( FROM ); }
 tofrom          {return cond_return ( TOFROM ); }
 simd            {return cond_return ( SIMD ); }
 safelen         {return cond_return ( SAFELEN ); }
+simdlen         {return cond_return ( SIMDLEN ); }
 aligned         {return cond_return ( ALIGNED ); }
 linear          {return cond_return ( LINEAR ); }
 uniform         {return cond_return ( UNIFORM ); }
 inbranch        {return cond_return ( INBRANCH ); }
 notinbranch     {return cond_return ( NOTINBRANCH ); }
+final           {return cond_return ( FINAL ); }
+priority        {return cond_return ( PRIORITY); }
 
 dist_data       {return ( DIST_DATA); } /*Extensions for data distribution clause
 It is tricky to support mixed variable vs. keyword parsing for dist_data() since it is part of variable list parsing 

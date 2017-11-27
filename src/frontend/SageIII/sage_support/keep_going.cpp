@@ -23,6 +23,10 @@
 #include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
 #include <boost/interprocess/sync/file_lock.hpp>
+#include <boost/interprocess/sync/scoped_lock.hpp>
+
+using namespace std; 
+using namespace boost::interprocess; 
 
 namespace Rose {
 namespace KeepGoing {
@@ -36,6 +40,8 @@ namespace KeepGoing {
  std::string expectations_filename__fail;
  std::string expectations_filename__pass;
  std::string path_prefix;
+
+ std::map <SgFile* , std::string> File2StringMap; 
 
 #ifndef _MSC_VER
 struct sigaction SignalAction;
@@ -475,6 +481,7 @@ void Rose::KeepGoing::setMidendErrorCode (SgProject* project, int errorCode)
     file->set_midendErrorCode(errorCode);
   }
 }
+
 void Rose::KeepGoing::generate_reports(SgProject* project, 
                      std::vector< std::string> orig_rose_cmdline
                        )
@@ -495,6 +502,12 @@ void Rose::KeepGoing::generate_reports(SgProject* project,
   // add original command line into the log file so users can easily reproduce the errors. 
   if (files_with_errors.size()>0 && report_filename__fail.size()>0)
   {
+    AppendToFile (report_filename__fail, "------------------------\n");
+    // add time stamp in the beginning
+    std::ostringstream ostamp;
+    ostamp << GetTimestamp()  << " " << getpid() << std::endl;
+    AppendToFile (report_filename__fail, ostamp.str());
+
     AppendToFile (report_filename__fail, orig_command_str);
 
     BOOST_FOREACH(SgFile* file, files_with_errors)
@@ -502,6 +515,8 @@ void Rose::KeepGoing::generate_reports(SgProject* project,
       std::string filename = file->getFileName();
       filename = StripPrefix(path_prefix, filename);
 
+      std::stringstream ss;
+      ss <<"Processed File: With Errors " <<  filename << endl; // Help diagnosis , output full file name, even command lines may have partial file paths
       if (verbose)
       {
         std::cout
@@ -510,10 +525,8 @@ void Rose::KeepGoing::generate_reports(SgProject* project,
           << "'" << path_prefix << filename << "'"
           << std::endl;
       }
-     
+
       // <file> <frontend> <unparser> <backend>
-      std::stringstream ss;
-      // ss << filename << " "; // no need to output filename again, part of command line already.
       // Keep all info. of one file into one line. Users can easily count the total failures. 
       if (file->get_frontendErrorCode())
         ss << "\t Frontend Error Code:" << file->get_frontendErrorCode() ;
@@ -529,20 +542,39 @@ void Rose::KeepGoing::generate_reports(SgProject* project,
         ss << "\t Unparsed File Failed Compilation Code: "<< file->get_unparsedFileFailedCompilation();
       ss<<"\n";  
       AppendToFile(report_filename__fail, ss.str());
-    }
 
+      //Sometimes even for files failed on backend stage, some analysis results are generated. 
+      //we still want to output such results.
+      // If exists, output the analysis results associated with each file
+      std::ostringstream oss;
+      oss <<  File2StringMap[file]; // not copyable, not assignable
+      if (oss.str().size()>0)
+      {
+        AppendToFile(report_filename__fail, oss.str());
+      }
+    }
   }
   // Report successes
   SgFilePtrList files_without_errors = project->get_files_without_errors();
   if (files_without_errors.size()>0 && report_filename__pass.size()>0)
   {
-    AppendToFile (report_filename__pass, orig_command_str);
+   // full command line , it may has multiple files 
+   
+    AppendToFile (report_filename__pass, "------------------------\n");
+    //AppendToFile (report_filename__pass, orig_command_str);
+
+    // add time stamp in the beginning
+    std::ostringstream ostamp ;
+    ostamp << GetTimestamp()  << " " << getpid() << std::endl;
+    AppendToFile (report_filename__pass, ostamp.str());
 
     BOOST_FOREACH(SgFile* file, files_without_errors)
     {
-      std::string filename = file->getFileName();
-      filename = StripPrefix(path_prefix, filename);
+      std::string full_filename = file->getFileName();
+      std::string filename = StripPrefix(path_prefix, full_filename);
 
+      // output file full path first
+      AppendToFile(report_filename__pass, "Processed File: Without Errors:"+full_filename+"\n");
       if (verbose)
       {
         std::cout
@@ -552,15 +584,52 @@ void Rose::KeepGoing::generate_reports(SgProject* project,
           << std::endl;
       }
 
-#if 0  // no need to output file name again, part of command line already
-      std::stringstream ss;
-      ss << filename;
+      // If exists, output the analysis results associated with each file
+      std::ostringstream oss;
+      oss <<  File2StringMap[file]; // not copyable, not assignable
+      if (oss.str().size()>0)
+      {
 
-      AppendToFile(report_filename__pass, ss.str());
-#endif       
+        AppendToFile(report_filename__pass, oss.str());
+      }
     }
   }
 
+  //Sometimes even for files failed on backend stage, some analysis results are generated. 
+  //we still want to output such results.
+  // If exists, output the analysis results associated with each file
+  // Only merge the results into the pass log file if the fail log file is not specified!!
+  if (files_with_errors.size()>0 && report_filename__pass.size()>0 && report_filename__fail.empty())
+  {
+    bool runonce = false; 
+    // add time stamp in the beginning
+    std::ostringstream ostamp;
+    ostamp << GetTimestamp()  << " " << getpid() << std::endl;
+
+    BOOST_FOREACH(SgFile* file, files_with_errors)
+    {
+      std::string filename = file->getFileName();
+
+      //Sometimes even for files failed on backend stage, some analysis results are generated. 
+      //we still want to output such results.
+      // If exists, output the analysis results associated with each file
+      std::ostringstream oss;
+      oss <<  File2StringMap[file]; // not copyable, not assignable
+      if (oss.str().size()>0)
+      {
+        if (!runonce)
+        {
+          AppendToFile (report_filename__pass, "------Analysis results for files with backend errors----------------------\n");
+          AppendToFile (report_filename__pass, ostamp.str());
+          runonce = true; 
+        }
+
+        AppendToFile(report_filename__pass, "Processed File: With Backend Errors:"+filename+"\n");
+        AppendToFile(report_filename__pass, oss.str());
+      }
+    }
+  }
+ 
   if (!expectations_filename__fail.empty())
   {
       std::map<std::string, std::string> expected_failures =
@@ -756,54 +825,39 @@ Rose::KeepGoing::AppendToFile(const std::string& filename, const std::string& ms
   // if filename is NULL, no action is needed. 
   if (filename.size()==0)
     return; 
-
+ // use a separated file for the file lock
+  string lock_file_name = filename+".lock"; 
   touch(filename);
+  touch(lock_file_name); //this lock file must exist. Or later flock() will fail.
 
-  boost::interprocess::file_lock flock;
-  try
+  boost::interprocess::file_lock flock (lock_file_name.c_str());
+  // introduce a scope to use the scoped lock, which automatically unlock when existing the scope
   {
-      boost::interprocess::file_lock* flock_tmp =
-          new boost::interprocess::file_lock(filename.c_str());
-      flock.swap(*flock_tmp);
-      delete flock_tmp;
-      flock.lock();
-  }
-  catch (boost::interprocess::interprocess_exception &ex)
-  {
-      std::cout << ex.what() << std::endl;
-
+    scoped_lock<file_lock> e_lock(flock);
+    std::ofstream fout(filename.c_str(), std::ios::app);
+    if(!fout.is_open())
+    {
       std::cerr
-          << "[FATAL] "
-          << "Couldn't lock "
-          << "'" << filename << "'"
-          << std::endl;
-
-      exit(1);
-  }
-
-  std::ofstream fout(filename.c_str(), std::ios::app);
-
-  if(!fout.is_open())
-  {
-      std::cerr
-          << "[FATAL] "
-          << "Couldn't open "
-          << "'" << filename << "'"
-          << std::endl;
-      flock.unlock();
-      exit(1);
-  }
-
+        << "[FATAL] "
+        << "Couldn't open "
+        << "'" << filename << "'"
+        << std::endl;
+    }
+    else
+    {  
 #if 0
-  fout
-      << GetTimestamp()  << " "
-      << getpid() << " "
-      << msg
-      << std::endl;
+      fout
+        << GetTimestamp()  << " "
+        << getpid() << " "
+        << msg
+        << std::endl;
 #endif
-  fout<<msg; 
-  fout.close();
-  flock.unlock();
+      fout<<msg; 
+      fout.flush();
+      fout.close();
+    }
+  } // end scope for the scoped lock
+  boost::filesystem::remove (lock_file_name);
 }
 
 std::map<std::string, std::string>

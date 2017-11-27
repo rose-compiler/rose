@@ -3,8 +3,9 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 TEST_TRANSLATOR = $(top_builddir)/tests/nonsmoke/functional/testTranslator 
 
 AM_CPPFLAGS = $(ROSE_INCLUDES)
+AM_LDFLAGS = $(ROSE_RPATHS)
 
-LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+LDADD = $(ROSE_SEPARATE_LIBS)
 
 TESTCODES_REQUIRED_TO_PASS = test_include.c
 

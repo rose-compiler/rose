@@ -4,7 +4,8 @@ TEST_TARGETS =
 EXTRA_DIST =
 
 AM_CPPFLAGS = $(ROSE_INCLUDES)
-LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+AM_LDFLAGS = $(ROSE_RPATHS)
+LDADD = $(ROSE_SEPARATE_LIBS)
 TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0
 

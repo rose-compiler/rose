@@ -4,7 +4,7 @@
 #define TARGET_FILE_NAME "copyFile-target"
 #define FILE_CONTENT "Contents of the file"             // No line feed
 
-using namespace rose;
+using namespace Rose;
 
 static void
 createSourceFile() {
@@ -15,7 +15,7 @@ createSourceFile() {
 
 static void
 copySourceToTarget() {
-    rose::FileSystem::copyFile(SOURCE_FILE_NAME, TARGET_FILE_NAME);
+    Rose::FileSystem::copyFile(SOURCE_FILE_NAME, TARGET_FILE_NAME);
 }
 
 static void

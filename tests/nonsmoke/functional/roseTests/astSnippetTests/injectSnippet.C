@@ -5,7 +5,7 @@
 #include <boost/foreach.hpp>
 #include <boost/optional.hpp>
 
-using namespace rose;
+using namespace Rose;
 
 static void
 usage(const std::string &arg0)

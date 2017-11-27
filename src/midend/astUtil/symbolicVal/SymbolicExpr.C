@@ -125,10 +125,21 @@ std::string SymbolicTerm :: toString() const
 
 std::string SymbolicExpr :: toString() const
 {
+  std::string r = "(";
+  bool begin = true;
+  for (OpdIterator iter = GetOpdIterator(); 
+       !iter.ReachEnd(); iter.Advance())  
+  {
+    if (!begin) { r = r + GetOPName(); }
+    else begin = false;
+    r = r + iter.Current().toString();
+  }
+/*QY: prefix output
   std::string r = GetOPName() + "(";
   for (OpdIterator iter = GetOpdIterator(); 
        !iter.ReachEnd(); iter.Advance())  
     r = r + iter.Current().toString();
+*/
   r = r + ")";
   return r;
 }
@@ -144,7 +155,6 @@ void SymbolicOperands :: AddOpd( const SymbolicTerm& v, OPApplicator *op)
 
 SymbolicVal GetExprVal( SymbolicExpr *r)
    {
-     assert ( r!= NULL);
       int num = r->NumOfOpds();
       if (num == 1) {
          SymbolicVal result = r->Term2Val(r->FirstOpd());
@@ -240,7 +250,7 @@ class IntVisitor : public OPHelpVisitor
   SymbolicVal ApplyOP( const SymbolicVal& v)
     { v2 = v; return OPHelpVisitor::ApplyOP(v); }
 
-};      
+};
 
 class TermVisitor : public OPHelpVisitor
 {

@@ -3,8 +3,8 @@
 #include "AsmUnparser.h"
 #include <boost/foreach.hpp>
 
-using namespace rose;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 
 /** Returns a string containing everything before the first operand in a typical m68k statement. */
 std::string
@@ -75,7 +75,6 @@ unparseM68kExpression(SgAsmExpression *expr, const AsmUnparser::LabelMap *labels
         result = "<UNHANDLED_EXPRESSION type=" + expr->class_name() + ">";
     }
 
-    result = StringUtility::appendAsmComment(result, expr->get_replacement());
     result = StringUtility::appendAsmComment(result, expr->get_comment());
     return result;
 }

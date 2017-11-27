@@ -11,8 +11,8 @@
 #include <sys/user.h>
 #include <sys/types.h>
 
-using namespace rose;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 
 void
 RSIM_Linux::init() {}
@@ -437,7 +437,7 @@ RSIM_Linux::initializeStackArch(RSIM_Thread *thread, SgAsmGenericHeader *_fhdr) 
 #endif
 
     // Initialize the stack pointer register
-    const RegisterDescriptor &REG_SP = thread->dispatcher()->stackPointerRegister();
+    RegisterDescriptor REG_SP = thread->dispatcher()->stackPointerRegister();
     thread->operators()->writeRegister(REG_SP, thread->operators()->number_(REG_SP.get_nbits(), sp));
 }
 

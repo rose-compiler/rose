@@ -235,10 +235,7 @@ ScopParser::isBasicBlockNodeScopCompatible(SgBasicBlock* node,
 
 /**
  * Ensure a symbol written in the scop-to-be is not used in any affine
- * expression of the node to test, and conversely.
- * algo:
- *  if writtensymb(siblings U node) /\ affinesymb(siblings U node) != empty,
- *  then not a scop.
+ * expression of the node to test.
  *
  *
  */
@@ -250,13 +247,11 @@ bool ScopParser::checkAffineExpressionsReadOnlySymbols(std::vector<SgNode*>&
   if (siblings.size() == 0 || node == NULL)
     return true;
 
-  // Collect all write references in the sibling list + node.
+  // Collect all write references in the sibling list.
   std::vector<SgNode*>::const_iterator i;
   std::vector<SgNode*> readRefsDummy;
   std::vector<SgNode*> writeRefsNode;
   std::vector<SgNode*> writeRefsSiblings;
-  std::vector<SgNode*> affineRefsNode;
-  std::vector<SgNode*> affineRefsSiblings;
   for (i = siblings.begin(); i != siblings.end(); ++i)
     {
       if (! collectReadWriteRefs(isSgStatement(*i),
@@ -266,17 +261,14 @@ bool ScopParser::checkAffineExpressionsReadOnlySymbols(std::vector<SgNode*>&
 			       writeRefsNode.begin(), writeRefsNode.end());
       writeRefsNode.empty();
       readRefsDummy.empty();
-      std::vector<SgNode*> affineRef;
-      collectAffineRefs(*i, affineRef);
-      affineRefsSiblings.insert (affineRefsSiblings.end(), affineRef.begin(),
-				 affineRef.end());
     }
+
   std::set<SgVariableSymbol*> writeRefsSymb =
     convertToSymbolSet(writeRefsSiblings);
-  std::set<SgVariableSymbol*> affineRefsSiblingsSymb =
-    convertToSymbolSet(affineRefsSiblings);
 
-
+  // For node 'node', we have:
+  // wrefs = writerefs(bb) - writerefs(c)
+  // if wrefs inter affineref(c) not empty, then not a scop.
   // Collect the r/w refs for the node.
   std::vector<SgNode*> writeRefsChild;
   if (! collectReadWriteRefs(isSgStatement(node),
@@ -286,47 +278,25 @@ bool ScopParser::checkAffineExpressionsReadOnlySymbols(std::vector<SgNode*>&
 
   std::set<SgVariableSymbol*> writeRefsChildSymb =
     convertToSymbolSet(writeRefsChild);
+
   // Collect the refs in affine expr for the node.
   std::vector<SgNode*> affineRefsChild;
   collectAffineRefs(node, affineRefsChild);
+
   std::set<SgVariableSymbol*> affineRefsChildSymb =
     convertToSymbolSet(affineRefsChild);
 
-
-  // Prepare the union sets.
-  std::set<SgVariableSymbol*> writtenSymbols = writeRefsSymb;
-  writtenSymbols.insert (writeRefsChildSymb.begin(),
-  			 writeRefsChildSymb.end());
-
-  // Remove the loop iterators.
-  std::vector<SgForStatement*> forloops =
-    querySubTree<SgForStatement>(node, V_SgForStatement);
-  for (i = siblings.begin(); i != siblings.end(); ++i)
-    {
-      std::vector<SgForStatement*> forloopss =
-	querySubTree<SgForStatement>(*i, V_SgForStatement);
-      forloops.insert(forloops.end(), forloopss.begin(), forloopss.end());
-    }
-  for (std::vector<SgForStatement*>::iterator i = forloops.begin();
-       i != forloops.end(); ++i)
-    {
-      SgForStatement* fornode = isSgForStatement(*i);
-      ROSE_ASSERT(fornode);
-      ScopForAnnotation* annot =
-	(ScopForAnnotation*)(fornode->getAttribute("ScopFor"));
-      ROSE_ASSERT(annot);
-      writtenSymbols.erase(annot->iterator);
-    }
-  std::set<SgVariableSymbol*> affinerefSymbols = affineRefsSiblingsSymb;
-  affinerefSymbols.insert (affineRefsChildSymb.begin(),
-			   affineRefsChildSymb.end());
-
   // Compute wrefs.
-  // Compute wrefs /\ affineRef.
+  std::set<SgVariableSymbol*> wrefs;
+  set_difference(writeRefsSymb.begin(), writeRefsSymb.end(),
+		 writeRefsChildSymb.begin(), writeRefsChildSymb.end(),
+		 std::inserter(wrefs, wrefs.begin()));
+
+  // Compute wrefs intersection with affineRef.
   std::set<SgVariableSymbol*> inter;
-  set_intersection(writtenSymbols.begin(), writtenSymbols.end(),
-		   affinerefSymbols.begin(),
-		   affinerefSymbols.end(),
+  set_intersection(wrefs.begin(), wrefs.end(),
+		   affineRefsChildSymb.begin(),
+		   affineRefsChildSymb.end(),
 		   std::inserter(inter, inter.begin()));
 
   if (inter.size())
@@ -729,34 +699,15 @@ ScopParser::parseBoundExpression(SgExpression* expr,
 				 min_ok, max_ok, conj_ok, cmp_ok, fc_ok);
 	  return exp_val;
 	}
+
     }
 
   // deal with expr cmpOp expr
   if (cmp_ok)
     if (SageTools::isCompareOp(expr))
       {
-	// Disallow > and >= in the loop test.
-	SgNode* parent = expr->get_parent();
-	bool is_loop_bound = false;
-	while (parent && !isSgForStatement(parent))
-	  parent = parent->get_parent();
-	if (parent)
-	  {
-	    SgForStatement* f = isSgForStatement(parent);
-	    SgNode* ub = f->get_test();
-	    parent = expr->get_parent();
-	    while (parent && parent != ub && parent != f)
-	      parent = parent->get_parent();
-	    if (parent == ub)
-	      is_loop_bound = true;
-	  }
-
-	if (is_loop_bound &&
-	    (isSgGreaterThanOp(expr) ||isSgGreaterOrEqualOp(expr)))
-	  return false;
-
 	SgExpression* lhs = binop->get_lhs_operand();
-	SgExpression* rhs = binop->get_rhs_operand();
+	SgExpression* rhs = binop->get_rhs_operand();;
 	// Nested comparisons are rejected (eg, 'a <= b <= c').
 	// Conjunctions as value producer not at the outer level are rejected
 	// (eg, 'a <= (b && c)')
@@ -775,42 +726,18 @@ ScopParser::parseBoundExpression(SgExpression* expr,
 	SgExpression* lhs = binop->get_lhs_operand();
 	SgExpression* rhs = binop->get_rhs_operand();;
 
-	// Prevent linear combinations of min/max
 	bool lhs_val =
-	  // parseBoundExpression(lhs, symbols,
-	  // 		       min_ok, max_ok, conj_ok, cmp_ok, fc_ok);
 	  parseBoundExpression(lhs, symbols,
-			       false, false, false, cmp_ok, fc_ok);
+			       min_ok, max_ok, conj_ok, cmp_ok, fc_ok);
 	bool rhs_val =
-	  // parseBoundExpression(rhs, symbols,
-	  // 		       min_ok, max_ok, conj_ok, cmp_ok, fc_ok);
 	  parseBoundExpression(rhs, symbols,
-			       false, false, false, cmp_ok, fc_ok);
+			       min_ok, max_ok, conj_ok, cmp_ok, fc_ok);
 	return lhs_val && rhs_val;
     }
 
   // Deal with min/max
   if (min_ok)
     {
-
-      if (_allowMathFunc)
-	{
-	  SgFunctionCallExp* fe = isSgFunctionCallExp(expr);
-	  if (fe && fe->getAssociatedFunctionSymbol()->get_name() == "min")
-	    {
-	      SgExprListExp* args = fe->get_args();
-	      SgExpressionPtrList l = args->get_expressions();
-	      if (l.size() != 2)
-		return false;
-	      bool a1_val =
-		parseBoundExpression(l[0], symbols,
-				     min_ok, max_ok, false, true, fc_ok);
-	      bool a2_val =
-		parseBoundExpression(l[1], symbols,
-				     min_ok, max_ok, false, true, fc_ok);
-	      return a1_val && a2_val;
-	    }
-	}
       if (SageTools::isMinFuncCall(expr))
 	{
 	  /// FIXME: Only arg2 and arg3 should be necessary to check.
@@ -824,7 +751,6 @@ ScopParser::parseBoundExpression(SgExpression* expr,
 	  bool a2_val =
 	    parseBoundExpression(arg2, symbols,
 				 min_ok, max_ok, false, true, fc_ok);
-
 	  bool a3_val =
 	    parseBoundExpression(arg3, symbols,
 				 min_ok, max_ok, false, true, fc_ok);
@@ -833,24 +759,6 @@ ScopParser::parseBoundExpression(SgExpression* expr,
     }
   if (max_ok)
     {
-      if (_allowMathFunc)
-	{
-	  SgFunctionCallExp* fe = isSgFunctionCallExp(expr);
-	  if (fe && fe->getAssociatedFunctionSymbol()->get_name() == "max")
-	    {
-	      SgExprListExp* args = fe->get_args();
-	      SgExpressionPtrList l = args->get_expressions();
-	      if (l.size() != 2)
-		return false;
-	      bool a1_val =
-		parseBoundExpression(l[0], symbols,
-				     min_ok, max_ok, false, true, fc_ok);
-	      bool a2_val =
-		parseBoundExpression(l[1], symbols,
-				     min_ok, max_ok, false, true, fc_ok);
-	      return a1_val && a2_val;
-	    }
-	}
       if (SageTools::isMaxFuncCall(expr))
 	{
 	  /// FIXME: Only arg2 and arg3 should be necessary to check.
@@ -904,8 +812,6 @@ ScopParser::isAffineExpr(SgExpression* expr,
 	       isSgVarRefExp(node) ||
 	       isSgDotExp(node) ||
 	       isSgCastExp(node) ||
-	       isSgMinusOp(node) ||
-	       isSgUnaryAddOp(node) ||
 	       SageTools::isIntegerTypeValue(isSgValueExp(node))))
 	  hasMathBinopOnly = false;
 	if (isSgDotExp(node))
@@ -986,16 +892,12 @@ ScopParser::parseAffineExpression(SgExpression* expr, bool var_ok)
 	  return lhs_val && rhs_val;
 	}
     }
-  SgUnaryOp* unop = isSgUnaryOp(expr);
-  if (isSgMinusOp(expr) || isSgUnaryOp(expr))
-    return parseAffineExpression(unop->get_operand(), var_ok);
 
   /// FIXME: isIntegerDivideOp is not handled yet.
   if (SageTools::isIntegerTypeValue(isSgValueExp(expr)))
     return true;
   if (var_ok && getSymbolFromReference(expr))
     return true;
-
   return false;
 }
 

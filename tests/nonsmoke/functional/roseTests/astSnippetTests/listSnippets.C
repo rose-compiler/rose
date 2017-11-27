@@ -9,7 +9,7 @@
 #include <cstdio>
 #include <cstdlib>
 
-using namespace rose;
+using namespace Rose;
 
 // We must create a temporary file whose name ends with the specified suffix (".c" or ".java"). I'm not aware of any
 // portable way to do this.  The tmpnam and mkstemp C functions can't do it for us, and I don't think the STL library

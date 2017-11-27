@@ -82,7 +82,7 @@ Q2. If I create a new checker, where should I put it?
     Finally, decide what namespace, class, analysis, etc. the checker
     is validating and put it in a subdirectory that reflects its scope
     in the library. E.g., functional non-smoke checkers that validate the
-    host of things in rose::BinaryAnalysis might go in
+    host of things in Rose::BinaryAnalysis might go in
     tests/nonsmoke/functional/BinaryAnalysis. Use the same
     capitalization as the source code, but beware that some
     filesystems are case insensitive.
@@ -128,17 +128,7 @@ Q5. I added a new specimen (no new checkers yet) and make
     specimen for that checker.
 
 
-Q6. In my non-smoke directory, why do "make check" and "make
-    check-smoke" build the non-smoke checkers?
-
-    This is a limitation of automake: automake assumes that "make
-    check" depends on all programs that the makefile could generate. A
-    more precise approach would be to have each test target depend on
-    its checker (which is already true in a correctly written
-    makefile).
-
-
-Q7. What if I have a project that uses non-smoke specimens?
+Q6. What if I have a project that uses non-smoke specimens?
 
     If a project depends on non-smoke tests, then the project's
     configuration step should verify that the depencency is present,

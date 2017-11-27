@@ -5,14 +5,14 @@
 #include <Partitioner2/Engine.h>
 #include <BinaryString.h>
 
-using namespace rose;
-using namespace rose::BinaryAnalysis;
+using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 //! [headers]
 
 int
 main(int argc, char *argv[]) {
     //! [commandline]
-    ROSE_INITIALIZE;                                    // see rose::initialize
+    ROSE_INITIALIZE;                                    // see Rose::initialize
     std::string purpose = "finds static strings in a binary specimen";
     std::string description =
         "This tool disassembles a binary specimen and then scans the "
@@ -28,7 +28,7 @@ main(int argc, char *argv[]) {
 
     //! [load]
     MemoryMap::Ptr map = engine.loadSpecimens(specimen);
-    ByteOrder::Endianness sex = engine.obtainDisassembler()->get_sex();
+    ByteOrder::Endianness sex = engine.obtainDisassembler()->byteOrder();
     //! [load]
 
     //! [analysis]

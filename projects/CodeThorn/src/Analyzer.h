@@ -36,6 +36,7 @@
 // we use INT_MIN, INT_MAX
 #include "limits.h"
 #include "AstNodeInfo.h"
+#include "SgTypeSizeMapping.h"
 
 namespace CodeThorn {
 
@@ -47,6 +48,8 @@ namespace CodeThorn {
   typedef std::pair<int, const EState*> FailedAssertion;
   typedef std::pair<PState,  std::list<int> > PStatePlusIOHistory;
   enum AnalyzerMode { AM_ALL_STATES, AM_LTL_STATES };
+
+  class SpotConnection;
 
 /*! 
   * \author Markus Schordan
@@ -67,14 +70,19 @@ namespace CodeThorn {
     static void initDiagnostics();
     static std::string nodeToString(SgNode* node);
     void initAstNodeInfo(SgNode* node);
-    bool isInExplicitStateMode();
     bool isActiveGlobalTopify();
     void initializeSolver1(std::string functionToStartAt,SgNode* root, bool oneFunctionOnly);
     void initializeTraceSolver(std::string functionToStartAt,SgNode* root);
     void continueAnalysisFrom(EState* newStartEState);
     
-    PState analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode* rhs,ConstraintSet& cset);
+    // set the size of an element determined by this type
+    void setElementSize(VariableId variableId, SgType* elementType);
+
     EState analyzeVariableDeclaration(SgVariableDeclaration* nextNodeToAnalyze1,EState currentEState, Label targetLabel);
+
+    PState analyzeAssignRhsExpr(PState currentPState,VariableId lhsVar, SgNode* rhs,ConstraintSet& cset);
+    // to be replaced by above function
+    PState analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode* rhs,ConstraintSet& cset);
     
     void addToWorkList(const EState* estate);
     const EState* addToWorkListIfNew(EState estate);
@@ -86,6 +94,14 @@ namespace CodeThorn {
     void swapWorkLists();
     size_t memorySizeContentEStateWorkLists();
     
+    void setOptionStatusMessages(bool flag);
+    bool getOptionStatusMessages();
+    // thread save; only prints if option status messages is enabled.
+    void printStatusMessage(string s);
+    void printStatusMessageLine(string s);
+    void printStatusMessage(string s, bool newLineFlag);
+    std::string analyzerStateToString();
+    static string lineColSource(SgNode* node);
     void recordTransition(const EState* sourceEState, Edge e, const EState* targetEState);
     void printStatusMessage(bool);
     bool isStartLabel(Label label);
@@ -119,7 +135,6 @@ namespace CodeThorn {
     void runSolver4();
     void runSolver5();
     void runSolver8();
-    void runSolver9();
     void runSolver10();
     void runSolver11();
     void runSolver12();
@@ -223,8 +238,8 @@ namespace CodeThorn {
 
     void setDisplayDiff(int diff) { _displayDiff=diff; }
     void setResourceLimitDiff(int diff) { _resourceLimitDiff=diff; }
-    void setSolver(int solver) { _solver=solver; }
-    int getSolver() { return _solver;}
+    void setSolver(int solver);
+    int getSolver();
     void setSemanticFoldThreshold(int t) { _semanticFoldThreshold=t; }
     void setNumberOfThreadsToUse(int n) { _numberOfThreadsToUse=n; }
     int getNumberOfThreadsToUse() { return _numberOfThreadsToUse; }
@@ -241,16 +256,22 @@ namespace CodeThorn {
     void setGlobalTopifyMode(GlobalTopifyMode mode);
     void setExternalErrorFunctionName(std::string externalErrorFunctionName);
     // enables external function semantics 
-    void enableExternalFunctionSemantics();
-    void disableExternalFunctionSemantics();
-    bool isUsingExternalFunctionSemantics() { return _externalFunctionSemantics; }
+    void enableSVCompFunctionSemantics();
+    void disableSVCompFunctionSemantics();
+    bool svCompFunctionSemantics() { return _svCompFunctionSemantics; }
+    bool stdFunctionSemantics() { return _stdFunctionSemantics; }
     void setModeLTLDriven(bool ltlDriven) { transitionGraph.setModeLTLDriven(ltlDriven); }
     bool getModeLTLDriven() { return transitionGraph.getModeLTLDriven(); }
+    // only used in LTL-driven mode
+    void setSpotConnection(SpotConnection* connection) { _spotConnection = connection; }
+
     long analysisRunTimeInSeconds(); 
 
     void set_finished(std::vector<bool>& v, bool val);
     bool all_false(std::vector<bool>& v);
 
+    void setTypeSizeMapping(SgTypeSizeMapping* typeSizeMapping);
+    SgTypeSizeMapping* getTypeSizeMapping();
   private:
     GlobalTopifyMode _globalTopifyMode;
     set<AbstractValue> _compoundIncVarsSet;
@@ -287,7 +308,12 @@ namespace CodeThorn {
     long int _maxIterationsForcedTop;
     long int _maxBytesForcedTop;
     long int _maxSecondsForcedTop;
+    // only used in LTL-driven mode
+    size_t _prevStateSetSizeDisplay = 0;
+    size_t _prevStateSetSizeResource = 0;
+
     PState _startPState;
+    bool _optionStatusMessages;
 
     std::list<EState> elistify();
     std::list<EState> elistify(EState res);
@@ -311,7 +337,7 @@ namespace CodeThorn {
     
     EState createEState(Label label, PState pstate, ConstraintSet cset);
     EState createEState(Label label, PState pstate, ConstraintSet cset, InputOutput io);
-
+    
     VariableValueMonitor variableValueMonitor;
 
     bool _treatStdErrLikeFailedAssert;
@@ -327,12 +353,17 @@ namespace CodeThorn {
     int _approximated_iterations;
     int _curr_iteration_cnt;
     int _next_iteration_cnt;
-    bool _externalFunctionSemantics;
+
+    bool _stdFunctionSemantics=true;
+
+    bool _svCompFunctionSemantics;
     string _externalErrorFunctionName; // the call of this function causes termination of analysis
     string _externalNonDetIntFunctionName;
     string _externalNonDetLongFunctionName;
     string _externalExitFunctionName;
+
     Timer _analysisTimer;
+    bool _timerRunning = false;
 
     // =======================================================================
     // ========================== LTLAnalyzer ================================
@@ -343,8 +374,6 @@ namespace CodeThorn {
     bool isLTLRelevantLabel(Label label);
     bool isStdIOLabel(Label label);
     std::set<const EState*> nonLTLRelevantEStates();
-
-    std::string generateSpotSTG();
 
     // reduces all states different to stdin and stdout.
     void stdIOFoldingOfTransitionGraph();
@@ -397,20 +426,15 @@ namespace CodeThorn {
     //returns the shortest possible number of input states on the path leading to "target".
     int inputSequenceLength(const EState* target);
 
-    // begin of solver 9 functions
-    bool searchForIOPatterns(PState* startPState, int assertion_id, std::list<int>& inputSuffix, std::list<int>* partialTrace = NULL, int* inputPatternLength=NULL);
-    bool containsPatternTwoRepetitions(std::list<int>& sequence);
+    // begin of solver 10 functions (black-box pattern search)
     bool containsPatternTwoRepetitions(std::list<int>& sequence, int startIndex, int endIndex);
-    bool computePStateAfterInputs(PState& pState, std::list<int>& inputs, int thread_id, std::list<int>* iOSequence=NULL);
-    bool computePStateAfterInputs(PState& pState, int input, int thread_id, std::list<int>* iOSequence=NULL);
-    bool searchPatternPath(int assertion_id, PState& pState, std::list<int>& inputPattern, std::list<int>& inputSuffix, int thread_id,std::list<int>* iOSequence=NULL);
+    bool computePStateAfterInputs(PState& pState, std::list<int>& inputs, int thread_id, std::list<int>* iOSequence=NULL);;
     std::list<int> inputsFromPatternTwoRepetitions(std::list<int> pattern2r);
     string convertToCeString(std::list<int>& ceAsIntegers, int maxInputVal);
     int pStateDepthFirstSearch(PState* startPState, int maxDepth, int thread_id, std::list<int>* partialTrace, int maxInputVal, int patternLength, int PatternIterations);
-    // end of solver 9 functions
+    // end of solver 10 functions (black-box pattern search)
 
-    void generateSpotTransition(std::stringstream& ss, const Transition& t);
-    //less than comarisions on two states according to (#input transitions * #output transitions)
+    //less than comparisions on two states according to (#input transitions * #output transitions)
     bool indegreeTimesOutdegreeLessThan(const EState* a, const EState* b);
 
   public:
@@ -422,10 +446,9 @@ namespace CodeThorn {
     void setAnalyzerToSolver8(EState* startEState, bool resetAnalyzerData);
 
     // first: list of new states (worklist), second: set of found existing states
-    typedef pair<EStateWorkList,EStateSet> SubSolverResultType;
+    typedef pair<EStateWorkList,std::set<const EState*> > SubSolverResultType;
     SubSolverResultType subSolver(const EState* currentEStatePtr);
 
-    PropertyValueTable* loadAssertionsToReconstruct(string filePath);
     void insertInputVarValue(int i) { _inputVarValues.insert(i); }
     void addInputSequenceValue(int i) { _inputSequence.push_back(i); }
     void resetToEmptyInputSequence() { _inputSequence.clear(); }
@@ -458,9 +481,6 @@ namespace CodeThorn {
     void setMaxSeconds(long int maxSeconds) { _maxSeconds=maxSeconds; }
     void setMaxSecondsForcedTop(long int maxSecondsForcedTop) { _maxSecondsForcedTop=maxSecondsForcedTop; }
     void setStartPState(PState startPState) { _startPState=startPState; }
-    void setReconstructMaxInputDepth(size_t inputDepth) { _reconstructMaxInputDepth=inputDepth; }
-    void setReconstructMaxRepetitions(size_t repetitions) { _reconstructMaxRepetitions=repetitions; }
-    void setReconstructPreviousResults(PropertyValueTable* previousResults) { _reconstructPreviousResults = previousResults; };
     void setPatternSearchMaxDepth(size_t iODepth) { _patternSearchMaxDepth=iODepth; }
     void setPatternSearchRepetitions(size_t patternReps) { _patternSearchRepetitions=patternReps; }
     void setPatternSearchMaxSuffixDepth(size_t suffixDepth) { _patternSearchMaxSuffixDepth=suffixDepth; }
@@ -468,9 +488,6 @@ namespace CodeThorn {
     void setPatternSearchExploration(ExplorationMode explorationMode) { _patternSearchExplorationMode = explorationMode; };
 
   private:
-    int _reconstructMaxInputDepth;
-    int _reconstructMaxRepetitions;
-    PropertyValueTable* _reconstructPreviousResults;
     PropertyValueTable*  _patternSearchAssertTable;
     int _patternSearchMaxDepth;
     int _patternSearchRepetitions;
@@ -480,8 +497,8 @@ namespace CodeThorn {
     const EState* _estateBeforeMissingInput;
     const EState* _latestOutputEState;
     const EState* _latestErrorEState;
-
-
+    // only used in LTL-driven mode
+    SpotConnection* _spotConnection = nullptr;
 
   }; // end of class Analyzer
 

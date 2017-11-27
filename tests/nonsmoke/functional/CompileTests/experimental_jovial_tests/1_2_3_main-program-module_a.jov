@@ -1,0 +1,4 @@
+START
+PROGRAM main ;
+  ivar = 13 ;
+TERM

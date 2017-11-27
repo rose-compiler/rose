@@ -8,8 +8,8 @@
 
 #include <sys/wait.h>
 
-using namespace rose;
-using namespace rose::Diagnostics;
+using namespace Rose;
+using namespace Rose::Diagnostics;
 
 SAWYER_THREAD_TRAITS::RecursiveMutex RSIM_Simulator::class_rwlock;
 RSIM_Simulator *RSIM_Simulator::active_sim = NULL;
@@ -187,7 +187,7 @@ RSIM_Simulator::ctor()
     static bool classInitialized = false;
     if (!classInitialized) {
         ROSE_INITIALIZE;
-        rose::Diagnostics::initAndRegister(&mlog, "RSIM");
+        Rose::Diagnostics::initAndRegister(&mlog, "RSIM");
         classInitialized = true;
     }
     

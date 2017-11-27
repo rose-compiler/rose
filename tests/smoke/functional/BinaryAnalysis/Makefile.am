@@ -9,10 +9,11 @@ EXTRA_DIST =
 PHONIES =
 
 AM_CPPFLAGS = $(ROSE_INCLUDES)
-AM_LDFLAGS = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+AM_LDFLAGS = $(ROSE_RPATHS)
+LDADD = $(ROSE_LIBS)
 
 ###############################################################################################################################
-# Disassembly tests using rose::BinaryAnalysis::Partitioner2
+# Disassembly tests using Rose::BinaryAnalysis::Partitioner2
 ###############################################################################################################################
 
 noinst_PROGRAMS += testPartitioner2
@@ -45,6 +46,6 @@ check-testPartitioner2: $(testPartitioner2_targets)
 
 endif
 
-check-smoke-local: $(TEST_TARGETS)
+check-local: $(TEST_TARGETS)
 
 .PHONY: $(PHONIES)

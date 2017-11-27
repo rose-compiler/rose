@@ -3,6 +3,8 @@
 #include "integerOps.h"
 
 #include <boost/algorithm/string/case_conv.hpp>
+#include <boost/filesystem.hpp>
+#include <dirent.h>
 
 #include <boost/config.hpp>
 #ifdef BOOST_WINDOWS                                    // FIXME[Robb P. Matzke 2014-10-11]: not implemented on Windows
@@ -80,7 +82,9 @@ static int WSTOPSIG(int) { return 0; }                  // Windows dud
 
 #endif
 
-namespace rose {
+namespace bfs = boost::filesystem;
+
+namespace Rose {
 namespace BinaryAnalysis {
 
 static long
@@ -224,7 +228,7 @@ BinaryDebugger::init() {
     userRegDefs_.insert(RegisterDescriptor(x86_regclass_flags,   x86_flags_status, 0, 32), 0x0038); // 4
     userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_sp,       0, 32), 0x003c); // 4
     userRegDefs_.insert(RegisterDescriptor(x86_regclass_segment, x86_segreg_ss,    0, 32), 0x0040); // 4
-    
+
     //--------------------------------------                                               struct   struct
     // Entries for 32-bit user_fpregs_struct                                               offset   size
     //--------------------------------------                                               (byte)   (bytes)
@@ -235,7 +239,7 @@ BinaryDebugger::init() {
     // fcs: unused                                                                         0x0010   // 4
     // foo: unused                                                                         0x0014   // 4
     // fos: unused                                                                         0x0018   // 4
-    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_st,      x86_st_0,         0, 32),   28); // 10 
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_st,      x86_st_0,         0, 32),   28); // 10
     userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_st,      x86_st_1,         0, 32),   38); // 10
     userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_st,      x86_st_2,         0, 32),   48); // 10
     userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_st,      x86_st_3,         0, 32),   58); // 10
@@ -271,7 +275,7 @@ BinaryDebugger::howTerminated() {
     if (WIFEXITED(wstat_)) {
         return "exited with status " + StringUtility::numberToString(WEXITSTATUS(wstat_));
     } else if (WIFSIGNALED(wstat_)) {
-        return "died with " + boost::to_lower_copy(std::string(strsignal(WTERMSIG(wstat_))));
+        return "terminated by signal (" + boost::to_lower_copy(std::string(strsignal(WTERMSIG(wstat_)))) + ")";
     } else {
         return "";                                      // not terminated yet
     }
@@ -306,12 +310,13 @@ BinaryDebugger::terminate() {
 }
 
 void
-BinaryDebugger::attach(int child, bool attach) {
+BinaryDebugger::attach(int child, unsigned flags) {
     if (-1 == child) {
         detach();
     } else if (child == child_) {
         // do nothing
-    } else if (attach) {
+    } else if ((flags & ATTACH) != 0) {
+        flags_ = flags;
         child_ = child;
         howDetach_ = NOTHING;
         sendCommand(PTRACE_ATTACH, child_);
@@ -320,37 +325,97 @@ BinaryDebugger::attach(int child, bool attach) {
         if (SIGSTOP==sendSignal_)
             sendSignal_ = 0;
     } else {
+        flags_ = flags;
         child_ = child;
         howDetach_ = NOTHING;
     }
 }
 
 void
-BinaryDebugger::attach(const std::string &exeName) {
+BinaryDebugger::attach(const std::string &exeName, unsigned flags) {
     std::vector<std::string> exeNameAndArgs(1, exeName);
-    attach(exeNameAndArgs);
+    attach(exeNameAndArgs, flags);
+}
+
+// Must be async signal safe!
+void
+BinaryDebugger::devNullTo(int targetFd, int openFlags) {
+    int fd = open("/dev/null", openFlags, 0666);
+    if (-1 == fd) {
+        close(targetFd);
+    } else {
+        dup2(fd, targetFd);
+        close(fd);
+    }
 }
 
 void
-BinaryDebugger::attach(const std::vector<std::string> &exeNameAndArgs) {
+BinaryDebugger::attach(const std::vector<std::string> &exeNameAndArgs, unsigned flags) {
     ASSERT_forbid(exeNameAndArgs.empty());
     detach();
+    flags_ = flags;
+
+    // Create the child exec arguments before the fork because heap allocation is not async-signal-safe.
+    char **argv = new char*[exeNameAndArgs.size()+1];
+    for (size_t i=0; i<exeNameAndArgs.size(); ++i)
+        argv[i] = strdup(exeNameAndArgs[i].c_str());
+    argv[exeNameAndArgs.size()] = NULL;
+
+#ifndef BOOST_WINDOWS
+    // Prepare to close files when forking.  This is a race because some other thread might open a file without the O_CLOEXEC
+    // flag after we've checked but before we reach the fork. And we can't fix that entirely within ROSE since we have no
+    // control over the user program or other libraries. Furthermore, we must do it here in the parent rather than after the
+    // fork because opendir, readdir, and strtol are not async-signal-safe and Linux does't have a closefrom syscall.
+    if ((flags & CLOSE_FILES) != 0) {
+        static const int minFd = 3;
+        if (DIR *dir = opendir("/proc/self/fd")) {
+            while (const struct dirent *entry = readdir(dir)) {
+                char *rest = NULL;
+                errno = 0;
+                int fd = strtol(entry->d_name, &rest, 10);
+                if (0 == errno && '\0' == *rest && rest != entry->d_name && fd >= minFd)
+                    fcntl(fd, F_SETFD, FD_CLOEXEC);
+            }
+            closedir(dir);
+        }
+    }
+#endif
 
     child_ = fork();
     if (0==child_) {
-        char **argv = new char*[exeNameAndArgs.size()+1];
-        for (size_t i=0; i<exeNameAndArgs.size(); ++i)
-            argv[i] = strdup(exeNameAndArgs[i].c_str());
-        argv[exeNameAndArgs.size()] = NULL;
+        // Since the parent process may have been multi-threaded, we are now in an async-signal-safe context.
+        if ((flags & REDIRECT_INPUT) != 0)
+            devNullTo(0, O_RDONLY);                     // async-signal-safe
 
+        if ((flags & REDIRECT_OUTPUT) != 0)
+            devNullTo(1, O_WRONLY);                     // async-signal-safe
+
+        if ((flags & REDIRECT_ERROR) != 0)
+            devNullTo(2, O_WRONLY);                     // async-signal-safe
+
+        // FIXME[Robb Matzke 2017-08-04]: We should be using a direct system call here instead of the C library wrapper because
+        // the C library is adjusting errno, which is not async-signal-safe.
         if (-1 == ptrace(PTRACE_TRACEME, 0, 0, 0)) {
-            std::cerr <<"BinaryDebugger::attach: ptrace_traceme failed: " <<strerror(errno) <<"\n";
-            exit(1);
+            // errno is set, but no way to access it in an async-signal-safe way
+            const char *mesg= "Rose::BinaryDebugger::attach: ptrace_traceme failed\n";
+            write(2, mesg, strlen(mesg));
+            _Exit(1);                                   // avoid calling C++ destructors from child
         }
+
         execv(argv[0], argv);
-        std::cerr <<"BinaryDebugger::attach: exec \"" <<StringUtility::cEscape(argv[0]) <<"\" failed: " <<strerror(errno) <<"\n";
-        exit(1);
+
+        // If failure, we must still call only async signal-safe functions.
+        const char *mesg = "Rose::BinaryDebugger::attach: exec failed: ";
+        write(2, mesg, strlen(mesg));
+        mesg = strerror(errno);
+        write(2, mesg, strlen(mesg));
+        write(2, "\n", 1);
+        _Exit(1);
     }
+
+    for (size_t i=0; argv[i]; ++i)
+        free(argv[i]);
+    delete[] argv;
 
     howDetach_ = DETACH;
     waitForChild();
@@ -413,7 +478,7 @@ BinaryDebugger::kernelWordSize() {
 }
 
 Sawyer::Container::BitVector
-BinaryDebugger::readRegister(const RegisterDescriptor &desc) {
+BinaryDebugger::readRegister(RegisterDescriptor desc) {
     using namespace Sawyer::Container;
 
     // Lookup register according to kernel word size rather than the actual size of the register.
@@ -465,7 +530,7 @@ BinaryDebugger::readMemory(rose_addr_t va, size_t nBytes, uint8_t *buffer) {
     if (-1 == (mem.fd = open(memName.c_str(), O_RDONLY)))
         throw std::runtime_error("cannot open \"" + memName + "\": " + strerror(errno));
     if (-1 == lseek(mem.fd, va, SEEK_SET))
-        throw std::runtime_error(memName + " seek failed: " + strerror(errno));
+        return 0;                                       // bad address
     size_t totalRead = 0;
     while (nBytes > 0) {
         ssize_t nread = read(mem.fd, buffer, nBytes);

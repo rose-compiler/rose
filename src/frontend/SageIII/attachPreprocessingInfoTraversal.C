@@ -69,7 +69,7 @@ found in the directory ROSE/TESTS/KnownBugs/AttachPreprocessingInfo.
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 // Debug flag
 #define DEBUG_ATTACH_PREPROCESSING_INFO 0
@@ -679,7 +679,7 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
           //AS(4/3/09): FIXME: We are doing this quick fix because the fileNameForDirectivesAndComments is
           //incorrect for Fortran
           //PC(08/17/2009): Now conditional on the output language, otherwise breaks -rose:collectAllCommentsAndDirectives
-          if (sourceFile->get_outputLanguage() == SgFile::e_Fortran_output_language)
+          if (sourceFile->get_outputLanguage() == SgFile::e_Fortran_language)
              {
                fileNameForDirectivesAndComments = sourceFile->get_sourceFileNameWithPath();
                fileNameForTokenStream           = fileNameForDirectivesAndComments;

@@ -66,16 +66,12 @@ bool LoopUnrolling::operator() ( AstInterface& fa, const AstNodePtr& s, AstNodeP
       return false; 
     
    if (opt & POET_TUNING) {
-
-// DQ (1/14/2017): make dependence on POET optional.
-#ifdef ROSE_USE_POET
      AutoTuningInterface* tune = LoopTransformInterface::getAutoTuningInterface();
      if (tune == 0) {
         std::cerr << "ERROR: AutoTuning Interface not defined!\n";
         assert(0);
      }
      tune->UnrollLoop(fa,s, unrollsize);
-#endif
    }
    else {
           AstNodePtr r = s;
@@ -119,13 +115,10 @@ bool LoopUnrolling::operator() ( AstInterface& fa, const AstNodePtr& s, AstNodeP
           std::string nvarname = "";
           SymbolicVal nvar;
           if (opt & USE_NEWVAR) {
-               nvarname = fa.NewVar(fa.GetType("int"),"",true,body, ivar.CodeGen(fa)); 
+               nvarname = fa.NewVar(fa.GetType("int"),"",true,false,body, ivar.CodeGen(fa)); 
                nvar = SymbolicVar(nvarname,body);
           }
           bodylist.push_back(body);
-
-       // DQ (12/6/2016): Fixed to eliminate warning we want to be an error: -Wsign-compare.
-       // for (int i = 1; i < unrollsize; ++i) {
           for (unsigned i = 1; i < unrollsize; ++i) {
               AstNodePtr bodycopy = fa.CopyAstTree(origbody);
               if (opt & USE_NEWVAR) {

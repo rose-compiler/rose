@@ -266,6 +266,76 @@ namespace OmpSupport
     return result;
   }
     
+   //! Build SgOmpProcBindClause from OmpAttribute, if any
+  SgOmpProcBindClause * buildOmpProcBindClause(OmpAttribute* att)
+  {
+    ROSE_ASSERT(att != NULL);
+    if (!att->hasClause(e_proc_bind))
+      return NULL;
+
+    //grab policy
+    omp_construct_enum dv = att->getProcBindPolicy();
+    SgOmpClause::omp_proc_bind_policy_enum sg_dv;
+    switch (dv)
+    {
+      case e_proc_bind_close:
+        sg_dv = SgOmpClause::e_omp_proc_bind_policy_close;
+        break;
+      case e_proc_bind_master:
+        sg_dv = SgOmpClause::e_omp_proc_bind_policy_master;
+        break;
+      case e_proc_bind_spread:
+        sg_dv = SgOmpClause::e_omp_proc_bind_policy_spread;
+        break;
+      default:
+        {
+          cerr<<"error: buildOmpProcBindClause () Unacceptable default option from OmpAttribute:"
+            <<OmpSupport::toString(dv)<<endl;
+          ROSE_ASSERT(false) ;  
+        }
+    }//end switch
+    SgOmpProcBindClause* result = new SgOmpProcBindClause(sg_dv);
+    setOneSourcePositionForTransformation(result);
+    ROSE_ASSERT(result);
+    return result;
+  }
+
+   SgOmpAtomicClause * buildOmpAtomicClause(OmpAttribute* att)
+  {
+    ROSE_ASSERT(att != NULL);
+    if (!att->hasClause(e_atomic_clause))
+      return NULL;
+
+    //grab value
+    omp_construct_enum dv = att->getAtomicAtomicity();
+    SgOmpClause::omp_atomic_clause_enum sg_dv;
+    switch (dv)
+    {
+      case e_atomic_read:
+        sg_dv = SgOmpClause::e_omp_atomic_clause_read;
+        break;
+      case e_atomic_write:
+        sg_dv = SgOmpClause::e_omp_atomic_clause_write;
+        break;
+      case e_atomic_update:
+        sg_dv = SgOmpClause::e_omp_atomic_clause_update;
+        break;
+      case e_atomic_capture:
+        sg_dv = SgOmpClause::e_omp_atomic_clause_capture;
+        break;
+     default:
+        {
+          cerr<<"error: "<<__FUNCTION__ << " Unacceptable default option from OmpAttribute:"
+            <<OmpSupport::toString(dv)<<endl;
+          ROSE_ASSERT(false) ;  
+        }
+    }//end switch
+
+    SgOmpAtomicClause* result = new SgOmpAtomicClause(sg_dv);
+    setOneSourcePositionForTransformation(result);
+    ROSE_ASSERT(result);
+    return result;
+  }
   
   // Sara Royuela ( Nov 2, 2012 ): Check for clause parameters that can be defined in macros
   // This adds support for the use of macro definitions in OpenMP clauses
@@ -421,7 +491,7 @@ namespace OmpSupport
       return (returnNewExpression ? newExp : clause_expression);
   }
 
-  //Build if clause
+  //Build expression clauses
   SgOmpExpressionClause* buildOmpExpressionClause(OmpAttribute* att, omp_construct_enum clause_type)
   {
     ROSE_ASSERT(att != NULL);
@@ -459,7 +529,25 @@ namespace OmpSupport
       case e_safelen:
         {
           SgExpression* param = checkOmpExpressionClause( att->getExpression(e_safelen).second, global, e_safelen );
-          result = new SgOmpDeviceClause(param);
+          result = new SgOmpSafelenClause(param);
+          break;
+        }
+       case e_simdlen:
+        {
+          SgExpression* param = checkOmpExpressionClause( att->getExpression(e_simdlen).second, global, e_simdlen );
+          result = new SgOmpSimdlenClause(param);
+          break;
+        }
+       case e_final:
+        {
+          SgExpression* Param = checkOmpExpressionClause( att->getExpression(e_final).second, global, e_final );
+          result = new SgOmpFinalClause(Param);
+          break;
+        }
+       case e_priority:
+        {
+          SgExpression* Param = checkOmpExpressionClause( att->getExpression(e_priority).second, global, e_priority );
+          result = new SgOmpPriorityClause(Param);
           break;
         }
  
@@ -528,6 +616,40 @@ namespace OmpSupport
     if (!att->hasClause(e_untied))
       return NULL;
     SgOmpUntiedClause* result = new SgOmpUntiedClause();
+    ROSE_ASSERT(result);
+    setOneSourcePositionForTransformation(result);
+    return result;
+  }
+
+  SgOmpMergeableClause * buildOmpMergeableClause(OmpAttribute* att)
+  {
+    ROSE_ASSERT(att != NULL);
+    if (!att->hasClause(e_mergeable))
+      return NULL;
+    SgOmpMergeableClause* result = new SgOmpMergeableClause();
+    ROSE_ASSERT(result);
+    setOneSourcePositionForTransformation(result);
+    return result;
+  }
+
+
+  SgOmpInbranchClause * buildOmpInbranchClause(OmpAttribute* att)
+  {
+    ROSE_ASSERT(att != NULL);
+    if (!att->hasClause(e_inbranch))
+      return NULL;
+    SgOmpInbranchClause* result = new SgOmpInbranchClause();
+    ROSE_ASSERT(result);
+    setOneSourcePositionForTransformation(result);
+    return result;
+  }
+
+  SgOmpNotinbranchClause * buildOmpNotinbranchClause(OmpAttribute* att)
+  {
+    ROSE_ASSERT(att != NULL);
+    if (!att->hasClause(e_notinbranch))
+      return NULL;
+    SgOmpNotinbranchClause* result = new SgOmpNotinbranchClause();
     ROSE_ASSERT(result);
     setOneSourcePositionForTransformation(result);
     return result;
@@ -732,13 +854,31 @@ namespace OmpSupport
     std::vector<std::pair<std::string,SgNode* > >::iterator iter;
     for (iter = varlist.begin(); iter!= varlist.end(); iter ++)
     {
-      SgInitializedName* iname = isSgInitializedName((*iter).second);
-      ROSE_ASSERT(iname !=NULL);
-      //target->get_variables().push_back(iname);
-      // Liao 1/27/2010, fix the empty parent pointer of the SgVarRefExp here
-      SgVarRefExp * var_ref = buildVarRefExp(iname);
-      target->get_variables().push_back(var_ref);
-      var_ref->set_parent(target);
+//      cout<<"debug setClauseVariableList: " << target <<":"<<(*iter).second->class_name()  <<endl;
+      // We now start to use SgExpression* to store variables showing up in a varlist
+      if (SgInitializedName* iname = isSgInitializedName((*iter).second))
+      {
+        //target->get_variables().push_back(iname);
+        // Liao 1/27/2010, fix the empty parent pointer of the SgVarRefExp here
+        SgVarRefExp * var_ref = buildVarRefExp(iname);
+        target->get_variables()->get_expressions().push_back(var_ref);
+        var_ref->set_parent(target);
+      }
+      else if (SgPntrArrRefExp* aref= isSgPntrArrRefExp((*iter).second))
+      {
+        target->get_variables()->get_expressions().push_back(aref);
+        aref->set_parent(target);
+      }
+      else if (SgVarRefExp* vref = isSgVarRefExp((*iter).second))
+      {
+        target->get_variables()->get_expressions().push_back(vref);
+        vref->set_parent(target);
+      }
+      else
+      {
+          cerr<<"error: unhandled type of variable within a list:"<< ((*iter).second)->class_name();
+          ROSE_ASSERT(false);
+      }
     }
   }
 
@@ -749,12 +889,69 @@ namespace OmpSupport
     if (!att->hasReductionOperator(reduction_op))
       return NULL;
     SgOmpClause::omp_reduction_operator_enum  sg_op = toSgOmpClauseReductionOperator(reduction_op); 
-    SgOmpReductionClause* result = new SgOmpReductionClause(sg_op);
-    setOneSourcePositionForTransformation(result);
+    SgExprListExp* explist=buildExprListExp();
+    SgOmpReductionClause* result = new SgOmpReductionClause(explist, sg_op);
     ROSE_ASSERT(result != NULL);
-
+    explist->set_parent(result);
+    setOneSourcePositionForTransformation(result);
+    
     // build variable list
     setClauseVariableList(result, att, reduction_op); 
+    return result;
+  }
+  //! A helper function to convert OmpAttribute depend type operator to SgClause's one 
+  //TODO move to sageInterface?
+  static   SgOmpClause::omp_dependence_type_enum toSgOmpClauseDependenceType(omp_construct_enum at_op)
+  {
+    SgOmpClause::omp_dependence_type_enum result = SgOmpClause::e_omp_depend_unknown;
+    switch (at_op)
+    {
+      case e_depend_in: 
+        {
+          result = SgOmpClause::e_omp_depend_in;
+          break;
+        }
+      case e_depend_out: 
+        {
+          result = SgOmpClause::e_omp_depend_out;
+          break;
+        }
+      case e_depend_inout:
+        {
+          result = SgOmpClause::e_omp_depend_inout;
+          break;
+        }
+     default:
+        {
+          printf("error: unacceptable omp construct enum for dependence type conversion:%s\n", OmpSupport::toString(at_op).c_str());
+          ROSE_ASSERT(false);
+          break;
+        }
+    }
+    ROSE_ASSERT(result != SgOmpClause::e_omp_depend_unknown);
+    return result;
+  }
+  //! Try to build a depend clause with a given operation type from OmpAttribute
+  SgOmpDependClause* buildOmpDependClause(OmpAttribute* att, omp_construct_enum dep_type)
+  {
+    ROSE_ASSERT(att !=NULL);
+    if (!att->hasDependenceType(dep_type))
+      return NULL;
+    SgOmpClause::omp_dependence_type_enum  sg_op = toSgOmpClauseDependenceType(dep_type); 
+    SgExprListExp* explist=buildExprListExp();
+    SgOmpDependClause* result = new SgOmpDependClause(explist, sg_op);
+    ROSE_ASSERT(result != NULL);
+    explist->set_parent(result);
+    setOneSourcePositionForTransformation(result);
+    
+    // build variable list
+    setClauseVariableList(result, att, dep_type); 
+
+    //this is somewhat inefficient. 
+    // since the attribute has dimension info for all map clauses
+    //But we don't want to move the dimension info to directive level 
+    result->set_array_dimensions(att->array_dimensions);
+
     return result;
   }
 
@@ -768,9 +965,11 @@ namespace OmpSupport
     if (!att->hasMapVariant(map_op))
       return NULL;
     SgOmpClause::omp_map_operator_enum  sg_op = toSgOmpClauseMapOperator(map_op); 
-    SgOmpMapClause* result = new SgOmpMapClause(sg_op);
-    setOneSourcePositionForTransformation(result);
+    SgExprListExp* explist=buildExprListExp();
+    SgOmpMapClause* result = new SgOmpMapClause(explist, sg_op);
     ROSE_ASSERT(result != NULL);
+    setOneSourcePositionForTransformation(result);
+    explist->set_parent(result);
 
     // build variable list
     setClauseVariableList(result, att, map_op); 
@@ -818,7 +1017,6 @@ namespace OmpSupport
     return result;
   }
 
-
   //Build one of the clauses with a variable list
   SgOmpVariablesClause * buildOmpVariableClause(OmpAttribute* att, omp_construct_enum clause_type)
   {
@@ -826,39 +1024,58 @@ namespace OmpSupport
     if (!att->hasClause(clause_type))
       return NULL;
     SgOmpVariablesClause* result = NULL;  
+    SgExprListExp * explist = buildExprListExp(); 
+    ROSE_ASSERT(explist != NULL);
     switch (clause_type) 
     {
       case e_copyin:
         {
-          result = new SgOmpCopyinClause();
+          result = new SgOmpCopyinClause(explist);
           break;
         }
       case e_copyprivate:
         {
-          result = new SgOmpCopyprivateClause();
+          result = new SgOmpCopyprivateClause(explist);
           break;
         }
       case e_firstprivate:
         {
-          result = new SgOmpFirstprivateClause();
+          result = new SgOmpFirstprivateClause(explist);
           break;
         }
       case e_lastprivate:
         {
-          result = new SgOmpLastprivateClause();
+          result = new SgOmpLastprivateClause(explist);
           break;
         }
       case e_private:
         {
-          result = new SgOmpPrivateClause();
+          result = new SgOmpPrivateClause(explist);
           break;
         }
       case e_shared:
         {
-          result = new SgOmpSharedClause();
+          result = new SgOmpSharedClause(explist);
           break;
         }
-      case e_reduction:
+     case e_linear: // TODO: need better solution for clauses with both variable list and expression. 
+        { // TODO checkOmpExpressionClause() to handle macro
+          SgExpression* stepExp= att->getExpression(e_linear).second;
+          result = new SgOmpLinearClause(explist, stepExp);
+          break;
+        }
+     case e_aligned:
+        {
+          SgExpression* alignExp= att->getExpression(e_aligned).second;
+          result = new SgOmpAlignedClause(explist, alignExp);
+          break;
+        }
+     case e_uniform:
+        {
+          result = new SgOmpUniformClause(explist);
+          break;
+        }
+     case e_reduction:
         {
           printf("error: buildOmpVariableClause() does not handle reduction\n");
           ROSE_ASSERT(false);
@@ -871,8 +1088,9 @@ namespace OmpSupport
         }
     } //end switch
 
-    //build varlist
     ROSE_ASSERT(result != NULL);
+    explist->set_parent(result);
+    //build varlist
     setClauseVariableList(result, att, clause_type);
     return result;
   }
@@ -890,6 +1108,16 @@ namespace OmpSupport
       case e_default:
         {
           result = buildOmpDefaultClause(att); 
+          break;
+        }
+      case e_proc_bind:
+        {
+          result = buildOmpProcBindClause(att); 
+          break;
+        }
+       case e_atomic_clause:
+        {
+          result = buildOmpAtomicClause(att); 
           break;
         }
       case e_nowait:
@@ -912,11 +1140,29 @@ namespace OmpSupport
           result = buildOmpUntiedClause(att); 
           break;
         }
+      case e_mergeable:
+        {
+          result = buildOmpMergeableClause(att); 
+          break;
+        }
+      case e_inbranch:
+        {
+          result = buildOmpInbranchClause(att); 
+          break;
+        }
+       case e_notinbranch:
+        {
+          result = buildOmpNotinbranchClause(att); 
+          break;
+        }
       case e_if:
+      case e_final:
+      case e_priority:
       case e_collapse:
       case e_num_threads:
       case e_device:
       case e_safelen:
+      case e_simdlen:
         {
           result = buildOmpExpressionClause(att, c_clause_type);
           break;
@@ -927,11 +1173,13 @@ namespace OmpSupport
       case e_lastprivate:
       case e_private:
       case e_shared:
+      case e_linear:
+      case e_aligned:
         {
           result = buildOmpVariableClause(att, c_clause_type);
           break;
         }
-      case e_reduction:
+     case e_reduction:
         {
           printf("error: buildOmpNonReductionClause() does not handle reduction. Please use buildOmpReductionClause().\n");
           ROSE_ASSERT(false);
@@ -1004,6 +1252,7 @@ namespace OmpSupport
         c_clause_type == e_master||
         c_clause_type == e_critical||
         c_clause_type == e_parallel_for||
+        c_clause_type == e_parallel_for_simd||
         c_clause_type == e_parallel_do||
         c_clause_type == e_simd||
         c_clause_type == e_atomic
@@ -1013,6 +1262,78 @@ namespace OmpSupport
     }
     return result;
   }
+
+  // a bit hack since declare simd is an outlier statement with clauses. 
+  /*
+     clause:
+      simdlen(length)
+      linear(linear-list[ : linear-step])
+      aligned(argument-list[ : alignment])
+      uniform(argument-list)
+      inbranch
+      notinbranch 
+   * */
+  static void appendOmpClauses(SgOmpDeclareSimdStatement* target, OmpAttribute* att)
+  {
+    ROSE_ASSERT(target && att);
+    // must copy those clauses here, since they will be deallocated later on
+    vector<omp_construct_enum> clause_vector = att->getClauses();
+    std::vector<omp_construct_enum>::iterator citer;
+    for (citer = clause_vector.begin(); citer != clause_vector.end(); citer++)
+    {
+      omp_construct_enum c_clause = *citer;
+      if (!isClause(c_clause))
+      {
+        //      printf ("Found a construct which is not a clause:%s\n within attr:%p\n", OmpSupport::toString(c_clause).c_str(), att);
+        ROSE_ASSERT(isClause(c_clause));
+        continue;
+      }
+
+      SgOmpClause* result = NULL; 
+      //------------------ 
+
+      if (!att->hasClause(c_clause))
+        continue; 
+      switch (c_clause) 
+      {
+        case e_inbranch:
+          {
+            result = buildOmpInbranchClause(att); 
+            break;
+          }
+        case e_notinbranch:
+          {
+            result = buildOmpNotinbranchClause(att); 
+            break;
+          }
+        case e_simdlen:
+          {
+            result = buildOmpExpressionClause(att, c_clause);
+            break;
+          }
+        case e_linear:
+        case e_aligned:
+        case e_uniform: 
+          {
+            result = buildOmpVariableClause(att, c_clause);
+            break;
+          }
+        default:
+          {
+            printf("Warning: buildOmpNoReductionClause(): unhandled clause type: %s\n", OmpSupport::toString(c_clause).c_str());
+            ROSE_ASSERT(false);
+            break;
+          }
+      }
+      ROSE_ASSERT(result != NULL);
+      setOneSourcePositionForTransformation(result);
+
+      //cout<<"push a clause "<< result->class_name() <<endl;
+      target->get_clauses().push_back(result);
+      result->set_parent(target); // is This right?
+    }
+  }
+
 
   //add clauses to target based on OmpAttribute
   static void appendOmpClauses(SgOmpClauseBodyStatement* target, OmpAttribute* att)
@@ -1045,6 +1366,20 @@ namespace OmpSupport
         {
           omp_construct_enum rop = *iter;
           SgOmpClause* sgclause = buildOmpReductionClause(att, rop);
+          target->get_clauses().push_back(sgclause);
+          sgclause->set_parent(target);
+        }
+      }
+      // special handling for depend(type:varlist)
+      else if (c_clause == e_depend) 
+      {
+        std::vector<omp_construct_enum> rops  = att->getDependenceTypes();
+        ROSE_ASSERT(rops.size()!=0);
+        std::vector<omp_construct_enum>::iterator iter;
+        for (iter=rops.begin(); iter!=rops.end();iter++)
+        {
+          omp_construct_enum rop = *iter;
+          SgOmpClause* sgclause = buildOmpDependClause(att, rop);
           target->get_clauses().push_back(sgclause);
           sgclause->set_parent(target);
         }
@@ -1113,6 +1448,9 @@ namespace OmpSupport
       case e_for:  
         result = new SgOmpForStatement(NULL, body); 
         break;
+      case e_for_simd:  
+        result = new SgOmpForSimdStatement(NULL, body); 
+        break;
       case e_single:
         result = new SgOmpSingleStatement(NULL, body); 
         break;
@@ -1158,7 +1496,7 @@ namespace OmpSupport
     // add clauses for those SgOmpClauseBodyStatement
     if (isSgOmpClauseBodyStatement(result))
       appendOmpClauses(isSgOmpClauseBodyStatement(result), att);
-   
+      
    // Liao 1/9/2013, ensure the body is a basic block for some OpenMP constructs
    if (isSgOmpSingleStatement(result)) 
     ensureBasicBlockAsBodyOfOmpBodyStmt (result); 
@@ -1180,10 +1518,25 @@ namespace OmpSupport
     {
       SgInitializedName* iname = isSgInitializedName((*iter).second);
       ROSE_ASSERT(iname !=NULL);
-      result->get_variables().push_back(buildVarRefExp(iname));
+      SgVarRefExp* varref = buildVarRefExp(iname);
+      result->get_variables().push_back(varref);
+      varref->set_parent(result);
     }
     return result;
   }
+
+  SgOmpDeclareSimdStatement* buildOmpDeclareSimdStatement(OmpAttribute* att)
+  {
+    ROSE_ASSERT(att != NULL);
+    SgOmpDeclareSimdStatement* result = new SgOmpDeclareSimdStatement();
+    result->set_firstNondefiningDeclaration(result);
+    ROSE_ASSERT(result !=NULL);
+    setOneSourcePositionForTransformation(result);
+
+    appendOmpClauses(isSgOmpDeclareSimdStatement(result), att);
+    return result;
+  }
+
 
   SgOmpThreadprivateStatement* buildOmpThreadprivateStatement(OmpAttribute* att)
   {
@@ -1199,7 +1552,9 @@ namespace OmpSupport
     {
       SgInitializedName* iname = isSgInitializedName((*iter).second);
       ROSE_ASSERT(iname !=NULL);
-      result->get_variables().push_back(buildVarRefExp(iname));
+      SgVarRefExp* varref = buildVarRefExp(iname);
+      result->get_variables().push_back(varref);
+      varref->set_parent(result);
     }
     result->set_definingDeclaration(result);
     return result;
@@ -1229,6 +1584,13 @@ namespace OmpSupport
           setOneSourcePositionForTransformation(second_stmt);
           break;
         }
+      case e_parallel_for_simd:
+        {
+          second_stmt = new SgOmpForSimdStatement(NULL, body);
+          setOneSourcePositionForTransformation(second_stmt);
+          break;
+        }
+ 
       case e_parallel_sections:
         {
           second_stmt = new SgOmpSectionsStatement(NULL, body);
@@ -1300,14 +1662,19 @@ namespace OmpSupport
             sgclause->set_parent(first_stmt);
             break;
           }
-          // unique clauses allocated to omp for
+          // unique clauses allocated to omp for  or omp for simd
         case e_schedule:
         case e_collapse:
         case e_ordered_clause:
+        case e_safelen:
+        case e_simdlen:
+        case e_uniform:
+        case e_aligned:
+        case e_linear:
           {
-            if (!isSgOmpForStatement(second_stmt) && !isSgOmpDoStatement(second_stmt))
+            if (!isSgOmpForStatement(second_stmt) && !isSgOmpForSimdStatement(second_stmt) && !isSgOmpDoStatement(second_stmt))
             {
-              printf("Error: buildOmpParallelStatementFromCombinedDirectives(): unacceptable clauses for parallel for/do\n");
+              printf("Error: buildOmpParallelStatementFromCombinedDirectives(): unacceptable clauses for parallel for/do [simd]\n");
               att->print();
               ROSE_ASSERT(false);
             }
@@ -1516,6 +1883,11 @@ This is no perfect solution until we handle preprocessing information as structu
               omp_stmt = buildOmpFlushStatement(oa);
               break;
             }
+          case e_declare_simd:
+            {
+              omp_stmt = buildOmpDeclareSimdStatement(oa);
+              break;
+            }
             // with a structured block/statement followed
           case e_atomic:
           case e_master:
@@ -1524,6 +1896,7 @@ This is no perfect solution until we handle preprocessing information as structu
           case e_ordered_directive:
           case e_parallel:
           case e_for:
+          case e_for_simd:
           case e_single:
           case e_task:
           case e_sections: 
@@ -1538,6 +1911,7 @@ This is no perfect solution until we handle preprocessing information as structu
               break;
             }
           case e_parallel_for:
+          case e_parallel_for_simd:
           case e_parallel_sections:
           case e_parallel_workshare://fortran
           case e_parallel_do:
