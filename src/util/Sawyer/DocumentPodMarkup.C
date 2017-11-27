@@ -168,7 +168,7 @@ PodMarkup::emit(const std::string &doc) {
                       " -w 'section:" + escapeSingleQuoted(chapterNumberOrDefault()) + "'"
                       " '" + escapeSingleQuoted(tmpFile.name().string()) + "'";
 
-    system(cmd.c_str());
+    (void) system(cmd.c_str());
 };
 
 SAWYER_EXPORT std::string

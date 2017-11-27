@@ -2,7 +2,7 @@
 #include "sage3basic.h"
 #include "stringify.h"
 
-using namespace rose;
+using namespace Rose;
 
 SgAsmElfSegmentTableEntry::SgAsmElfSegmentTableEntry(ByteOrder::Endianness sex,
                                                      const SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk *disk) {

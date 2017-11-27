@@ -13,7 +13,7 @@
 #include <iostream>
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 // MS: temporary (TODO: move to processing class)
 static string RTIContainerName = "rtiContainer";  // put this into the respective processing class as private member
@@ -1177,6 +1177,9 @@ generate_override_keyword( AstNodeClass & node, GrammarString & data )
      printf ("In generate_override_keyword(): nodeName = %s variableNameString = %s \n",nodeName.c_str(),variableNameString.c_str());
 #endif
 
+  // Rasmussen (8/16/2017): Added UntypedSubmoduleDeclaration (a submodule extends an existing module)
+  // Rasmussen (10/01/2017): Added SgUntypedPackageDeclaration,SgUntypedStructureDeclaration,SgUntypedTaskDeclaration,SgUntypedUnitDeclaration
+
   // Except in the root class for the virtual access function.
      if ( (nodeName == "XXXPragma"                  && variableNameString == "startOfConstruct")  ||
           (nodeName == "XXXPragma"                  && variableNameString == "endOfConstruct")    ||
@@ -1195,6 +1198,11 @@ generate_override_keyword( AstNodeClass & node, GrammarString & data )
           (nodeName == "InitializedName"            && variableNameString == "scope") ||
           (nodeName == "UntypedFunctionDeclaration" && variableNameString == "scope") ||
           (nodeName == "UntypedModuleDeclaration"   && variableNameString == "scope") ||
+          (nodeName == "UntypedSubmoduleDeclaration"&& variableNameString == "scope") ||
+          (nodeName == "UntypedPackageDeclaration"  && variableNameString == "scope") ||
+          (nodeName == "UntypedStructureDeclaration"&& variableNameString == "scope") ||
+          (nodeName == "UntypedTaskDeclaration"     && variableNameString == "scope") ||
+          (nodeName == "UntypedUnitDeclaration"     && variableNameString == "scope") ||
           (nodeName == "UntypedBlockStatement"      && variableNameString == "scope") ||
           (nodeName == "UntypedFile"                && variableNameString == "scope") ||
           (nodeName == "TemplateParameter"          && variableNameString == "type")  ||
@@ -1233,7 +1241,14 @@ generate_override_keyword( AstNodeClass & node, GrammarString & data )
           (nodeName == "JavaMemberValuePair"        && variableNameString == "name")  ||
           (nodeName == "UntypedReferenceExpression" && variableNameString == "name")  ||
           (nodeName == "UntypedFunctionDeclaration" && variableNameString == "name")  ||
+          (nodeName == "UntypedModuleDeclaration"   && variableNameString == "name")  ||
+          (nodeName == "UntypedSubmoduleDeclaration"&& variableNameString == "name")  ||
+          (nodeName == "UntypedPackageDeclaration"  && variableNameString == "name")  ||
+          (nodeName == "UntypedStructureDeclaration"&& variableNameString == "name")  ||
+          (nodeName == "UntypedTaskDeclaration"     && variableNameString == "name")  ||
+          (nodeName == "UntypedUnitDeclaration"     && variableNameString == "name")  ||
           (nodeName == "UntypedInitializedName"     && variableNameString == "name")  ||
+          (nodeName == "UntypedName"                && variableNameString == "name")  ||
           (nodeName == "EnumDeclaration"            && variableNameString == "name")  ||
           (nodeName == "TemplateDeclaration"        && variableNameString == "name")  ||
           (nodeName == "UseStatement"               && variableNameString == "name")  ||
@@ -1286,6 +1301,9 @@ generate_override_keyword_for_set_functions( AstNodeClass & node, GrammarString 
      printf ("In generate_override_keyword(): nodeName = %s variableNameString = %s \n",nodeName.c_str(),variableNameString.c_str());
 #endif
 
+  // Rasmussen (8/16/2017): Added UntypedSubmoduleDeclaration (a submodule extends an existing module)
+  // Rasmussen (9/01/2017): Added SgUntypedPackageDeclaration,SgUntypedStructureDeclaration,SgUntypedTaskDeclaration,SgUntypedUnitDeclaration
+
   // Except in the root class for the virtual access function.
      if ( (nodeName == "Pragma"                     && variableNameString == "startOfConstruct")   ||
           (nodeName == "Pragma"                     && variableNameString == "endOfConstruct")     ||
@@ -1297,6 +1315,11 @@ generate_override_keyword_for_set_functions( AstNodeClass & node, GrammarString 
           (nodeName == "InitializedName"            && variableNameString == "scope") ||
           (nodeName == "UntypedFunctionDeclaration" && variableNameString == "scope") ||
           (nodeName == "UntypedModuleDeclaration"   && variableNameString == "scope") ||
+          (nodeName == "UntypedSubmoduleDeclaration"&& variableNameString == "scope") ||
+          (nodeName == "UntypedPackageDeclaration"  && variableNameString == "scope") ||
+          (nodeName == "UntypedStructureDeclaration"&& variableNameString == "scope") ||
+          (nodeName == "UntypedTaskDeclaration"     && variableNameString == "scope") ||
+          (nodeName == "UntypedUnitDeclaration"     && variableNameString == "scope") ||
           (nodeName == "UntypedBlockStatement"      && variableNameString == "scope") ||
           (nodeName == "UntypedFile"                && variableNameString == "scope") ||
           (nodeName == "TemplateParameter"          && variableNameString == "type")  ||
@@ -1337,7 +1360,14 @@ generate_override_keyword_for_set_functions( AstNodeClass & node, GrammarString 
           (nodeName == "JavaMemberValuePair"        && variableNameString == "name")  ||
           (nodeName == "UntypedReferenceExpression" && variableNameString == "name")  ||
           (nodeName == "UntypedFunctionDeclaration" && variableNameString == "name")  ||
+          (nodeName == "UntypedModuleDeclaration"   && variableNameString == "name")  ||
+          (nodeName == "UntypedSubmoduleDeclaration"&& variableNameString == "name")  ||
+          (nodeName == "UntypedPackageDeclaration"  && variableNameString == "name")  ||
+          (nodeName == "UntypedStructureDeclaration"&& variableNameString == "name")  ||
+          (nodeName == "UntypedTaskDeclaration"     && variableNameString == "name")  ||
+          (nodeName == "UntypedUnitDeclaration"     && variableNameString == "name")  ||
           (nodeName == "UntypedInitializedName"     && variableNameString == "name")  ||
+          (nodeName == "UntypedName"                && variableNameString == "name")  ||
           (nodeName == "EnumDeclaration"            && variableNameString == "name")  ||
           (nodeName == "TemplateDeclaration"        && variableNameString == "name")  ||
           (nodeName == "UseStatement"               && variableNameString == "name")  ||
@@ -3463,11 +3493,11 @@ Grammar::buildCode ()
   // the more sophisticated Saywer support for diagnostic messages.
   // Insert:
   //    #undef mprintf
-  //    #define mprintf rose::Diagnostics::mfprintf(rose::mlog[rose::Diagnostics::DEBUG])
+  //    #define mprintf Rose::Diagnostics::mfprintf(Rose::mlog[Rose::Diagnostics::DEBUG])
 
      string defines4 = "#undef mprintf\n";
      includeHeaderString += defines4;
-     string defines5 = "#define mprintf rose::Diagnostics::mfprintf(rose::ir_node_mlog[rose::Diagnostics::DEBUG])\n\n";
+     string defines5 = "#define mprintf Rose::Diagnostics::mfprintf(Rose::ir_node_mlog[Rose::Diagnostics::DEBUG])\n\n";
      includeHeaderString += defines5;
 
 
@@ -4002,7 +4032,10 @@ Grammar::GrammarNodeInfo Grammar::getGrammarNodeInfo(AstNodeClass* grammarnode) 
         ||nodeName == "SgOmpSimdStatement"
         ||nodeName == "SgOmpTaskStatement"
         ||nodeName == "SgOmpForStatement"
+        ||nodeName == "SgOmpForSimdStatement"
+        ||nodeName == "SgOmpForSimdStatement"
         ||nodeName == "SgOmpDoStatement"
+        ||nodeName == "SgOmpAtomicStatement"
         ||nodeName == "SgExprListExp");
   }
   return info;
@@ -4300,7 +4333,10 @@ Grammar::buildTreeTraversalFunctions(AstNodeClass& node, StringUtility::FileWith
                  ||string(node.getName()) == "SgOmpTargetStatement"
                  ||string(node.getName()) == "SgOmpTargetDataStatement"
                  ||string(node.getName()) == "SgOmpForStatement"
+                 ||string(node.getName()) == "SgOmpForSimdStatement"
+                 ||string(node.getName()) == "SgOmpForSimdStatement"
                  ||string(node.getName()) == "SgOmpDoStatement"
+                 ||string(node.getName()) == "SgOmpAtomicStatement"
                  )
                   {
                     outputFile << "if (idx == 0) return p_body;\n"
@@ -4406,7 +4442,9 @@ Grammar::buildTreeTraversalFunctions(AstNodeClass& node, StringUtility::FileWith
                  ||string(node.getName()) == "SgOmpTargetStatement"
                  ||string(node.getName()) == "SgOmpTargetDataStatement"
                  ||string(node.getName()) == "SgOmpForStatement"
+                 ||string(node.getName()) == "SgOmpForSimdStatement"
                  ||string(node.getName()) == "SgOmpDoStatement"
+                 ||string(node.getName()) == "SgOmpAtomicStatement"
                  )
                   {
                      outputFile << "if (child == p_body) return 0;\n"

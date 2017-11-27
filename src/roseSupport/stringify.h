@@ -5,7 +5,7 @@
 
 #include <string>
 
-namespace rose {
+namespace Rose {
 
 /** Shortens names of long stringifiers.
  *
@@ -83,7 +83,7 @@ std::string stringifyBinaryAnalysisPartitioner2ReferenceGranularity(long int n, 
 std::string stringifyBinaryAnalysisPartitioner2SemanticMemoryParadigm(long int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyBinaryAnalysisPartitioner2VertexType(long int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyBinaryAnalysisPartitionerRegionStatsAnalysisEnum(long int n, const char *strip=NULL, bool canonic=false);
-std::string stringifyBinaryAnalysisSMTSolverSatisfiable(long int n, const char *strip=NULL, bool canonic=false);
+std::string stringifyBinaryAnalysisSmtSolverSatisfiable(long int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyBinaryAnalysisSRecordType(long int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyBinaryAnalysisStringsState(long int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyBinaryAnalysisSymbolicExprFormatterShowComments(long int n, const char *strip=NULL, bool canonic=false);
@@ -722,12 +722,6 @@ std::string stringifyROSE_token_idsROSE_C_CXX_keywords(long int n, const char *s
 std::string stringifyROSE_token_ids_whitespace(long int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyReachingDefType(long int n, const char *strip=NULL, bool canonic=false);
 std::string stringifyRegisterDictionarySortBySizeDirection(long int n, const char *strip=NULL, bool canonic=false);
-std::string stringifyRoseBin_ArchArchitecture(long int n, const char *strip=NULL, bool canonic=false);
-std::string stringifyRoseBin_DataTypesDataTypes(long int n, const char *strip=NULL, bool canonic=false);
-std::string stringifyRoseBin_DefRoseLanguage(long int n, const char *strip=NULL, bool canonic=false);
-std::string stringifyRoseBin_OS_OSSYSTEM(long int n, const char *strip=NULL, bool canonic=false);
-std::string stringifyRoseBin_OS_VER_OS_VERSION(long int n, const char *strip=NULL, bool canonic=false);
-std::string stringifyRoseBin_supportX86PositionInRegister(long int n, const char *strip=NULL, bool canonic=false);
 std::string stringifySDG_PDGEdgeEdgeType(long int n, const char *strip=NULL, bool canonic=false);
 std::string stringifySDG_SDGEdgeControlDependenceType(long int n, const char *strip=NULL, bool canonic=false);
 std::string stringifySDG_SDGEdgeEdgeType(long int n, const char *strip=NULL, bool canonic=false);

@@ -9,7 +9,7 @@
 #include "PartialSymbolicSemantics2.h"
 #include "SymbolicSemantics2.h"
 
-using namespace rose;                                   // temporary until this lives in "rose"
+using namespace Rose;                                   // temporary until this lives in "rose"
 using namespace Sawyer::Message::Common;
 
 unsigned
@@ -162,12 +162,12 @@ SgAsmM68kInstruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& i
     // outside the current function and the top of the stack holds an address of an instruction within the current function,
     // then this must be a function call.
     if (interp && insns.size()<=EXECUTION_LIMIT) {
-        using namespace rose::BinaryAnalysis;
-        using namespace rose::BinaryAnalysis::InstructionSemantics2;
-        using namespace rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
+        using namespace Rose::BinaryAnalysis;
+        using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+        using namespace Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
         const InstructionMap &imap = interp->get_instruction_map();
         const RegisterDictionary *regdict = RegisterDictionary::dictionary_for_isa(interp);
-        SMTSolver *solver = NULL; // using a solver would be more accurate, but slower
+        SmtSolver *solver = NULL; // using a solver would be more accurate, but slower
         BaseSemantics::RiscOperatorsPtr ops = RiscOperators::instance(regdict, solver);
         DispatcherM68kPtr dispatcher = DispatcherM68k::instance(ops, 32);
         SValuePtr orig_sp = SValue::promote(ops->readRegister(dispatcher->REG_A[7]));
@@ -221,11 +221,11 @@ SgAsmM68kInstruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& i
     // address of the basic block. We depend on our caller to figure out if the instruction pointer is reasonably a function
     // entry address.
     if (!interp && insns.size()<=EXECUTION_LIMIT) {
-        using namespace rose::BinaryAnalysis;
-        using namespace rose::BinaryAnalysis::InstructionSemantics2;
-        using namespace rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
+        using namespace Rose::BinaryAnalysis;
+        using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+        using namespace Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
         const RegisterDictionary *regdict = RegisterDictionary::dictionary_coldfire_emac();
-        SMTSolver *solver = NULL; // using a solver would be more accurate, but slower
+        SmtSolver *solver = NULL; // using a solver would be more accurate, but slower
         BaseSemantics::RiscOperatorsPtr ops = RiscOperators::instance(regdict, solver);
         DispatcherM68kPtr dispatcher = DispatcherM68k::instance(ops, 32);
         try {
@@ -429,7 +429,7 @@ BinaryAnalysis::Disassembler::AddressSet
 SgAsmM68kInstruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns, bool *complete,
                                     const BinaryAnalysis::MemoryMap::Ptr &initial_memory)
 {
-    using namespace rose::BinaryAnalysis::InstructionSemantics2;
+    using namespace Rose::BinaryAnalysis::InstructionSemantics2;
     Stream debug(mlog[DEBUG]);
 
     if (debug) {
@@ -444,7 +444,7 @@ SgAsmM68kInstruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns,
     // successors, a thorough analysis might be able to narrow it down to a single successor. We should not make special
     // assumptions about function call instructions -- their only successor is the specified address operand. */
     if (!*complete || successors.size()>1) {
-        using namespace rose::BinaryAnalysis::InstructionSemantics2::PartialSymbolicSemantics;
+        using namespace Rose::BinaryAnalysis::InstructionSemantics2::PartialSymbolicSemantics;
 
         const RegisterDictionary *regdict = RegisterDictionary::dictionary_coldfire_emac();
         RiscOperatorsPtr ops = RiscOperators::instance(regdict);

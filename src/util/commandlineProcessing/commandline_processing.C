@@ -28,7 +28,7 @@
 // DQ (12/31/2005): This is allowed in C files where it can not 
 // effect the users application (just not in header files).
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 Rose_STL_Container<std::string> CommandlineProcessing::extraCppSourceFileSuffixes;
 
@@ -80,7 +80,14 @@ CommandlineProcessing::createEmptyParser(const std::string &purpose, const std::
     if (!description.empty())
         parser.doc("Description", description);
     parser.chapter(1, "ROSE Command-line Tools");
-    parser.version(std::string(ROSE_SCM_VERSION_ID).substr(0, 8), ROSE_CONFIGURE_DATE);
+#if defined(ROSE_PACKAGE_VERSION)
+    std::string v = ROSE_PACKAGE_VERSION;
+#elif defined(PACKAGE_VERSION)
+    std::string v = PACKAGE_VERSION;
+#else
+    std::string v = std::string(ROSE_SCM_VERSION_ID).substr(0, 8);
+#endif
+    parser.version(v, ROSE_CONFIGURE_DATE);
     parser.groupNameSeparator(":");                     // ROSE's style is "--rose:help" rather than "--rose-help"
     return parser;
 }
@@ -129,7 +136,7 @@ CommandlineProcessing::genericSwitches() {
                .doc("Shows the dotted quad ROSE version and then exits.  See also @s{version-long}, which prints much more "
                     "information."));
 
-    // Control how a failing assertion acts. It could abort, exit with non-zero, or throw rose::Diagnostics::FailedAssertion.
+    // Control how a failing assertion acts. It could abort, exit with non-zero, or throw Rose::Diagnostics::FailedAssertion.
     gen.insert(Switch("assert")
                .action(FailedAssertionBehaviorAdjuster::instance())
                .argument("how", enumParser<FailedAssertionBehaviorAdjuster::Behavior>()
@@ -137,7 +144,7 @@ CommandlineProcessing::genericSwitches() {
                          ->with("abort", FailedAssertionBehaviorAdjuster::ABORT_ON_FAILURE)
                          ->with("throw", FailedAssertionBehaviorAdjuster::THROW_ON_FAILURE))
                .doc("Determines how a failed assertion behaves.  The choices are \"abort\", \"exit\" with a non-zero value, "
-                    "or \"throw\" a rose::Diagnostics::FailedAssertion exception. The default behavior depends on how ROSE "
+                    "or \"throw\" a Rose::Diagnostics::FailedAssertion exception. The default behavior depends on how ROSE "
                     "was configured."));
 
     // Number of threads to use for algorithms that support multi-threading.  NOTE: we should really have a Settings struct for
@@ -1111,6 +1118,91 @@ CommandlineProcessing::isPythonFileNameSuffix ( const std::string & suffix )
      if ( suffix == "py" )
 #else//It is a case insensitive system
      if ( suffix == "py" )
+#endif
+        {
+          returnValue = true;
+        }
+
+     return returnValue;
+   }
+   
+// DQ (28/8/2017): Adding language support.
+bool
+CommandlineProcessing::isCsharpFileNameSuffix ( const std::string & suffix )
+   {
+     bool returnValue = false;
+
+  // For now define CASE_SENSITIVE_SYSTEM to be true, as we are currently a UNIXish project.
+
+#if(CASE_SENSITIVE_SYSTEM == 1)
+     if ( suffix == "cs" )
+#else //It is a case insensitive system
+     if ( suffix == "cs" )
+#endif
+        {
+          returnValue = true;
+        }
+
+     return returnValue;
+   }
+   
+// DQ (28/8/2017): Adding language support.
+bool
+CommandlineProcessing::isAdaFileNameSuffix ( const std::string & suffix )
+   {
+     bool returnValue = false;
+
+  // For now define CASE_SENSITIVE_SYSTEM to be true, as we are currently a UNIXish project.
+
+  // Note that the filename extension is not defined as part of the Ada standard,
+  // but GNAT (Gnu Ada) is using "ads" (for the spec) and "adb" (for the body).
+
+#if(CASE_SENSITIVE_SYSTEM == 1)
+     if ( suffix == "ads" || suffix == "adb")
+#else //It is a case insensitive system
+     if ( suffix == "ads" || suffix == "adb")
+#endif
+        {
+          returnValue = true;
+        }
+
+     return returnValue;
+   }
+   
+// DQ (28/8/2017): Adding language support.
+bool
+CommandlineProcessing::isJovialFileNameSuffix ( const std::string & suffix )
+   {
+     bool returnValue = false;
+
+  // For now define CASE_SENSITIVE_SYSTEM to be true, as we are currently a UNIXish project.
+
+  // Rasmussen (11/08/2017): Changed Jovial file extension to reflect usage found on web
+#if(CASE_SENSITIVE_SYSTEM == 1)
+     if ( suffix == "jov" || suffix == "j73" || suffix == "jovial" )
+#else //It is a case insensitive system
+     if ( suffix == "jov" || suffix == "j73" || suffix == "jovial" )
+#endif
+        {
+          returnValue = true;
+        }
+
+     return returnValue;
+   }
+   
+// DQ (28/8/2017): Adding language support.
+bool
+CommandlineProcessing::isCobolFileNameSuffix ( const std::string & suffix )
+   {
+     bool returnValue = false;
+
+  // For now define CASE_SENSITIVE_SYSTEM to be true, as we are currently a UNIXish project.
+
+  // Rasmussen (11/08/2017): Changed Cobol file extension to reflect usage found on web
+#if(CASE_SENSITIVE_SYSTEM == 1)
+     if ( suffix == "cob"  || suffix == "cbl" || suffix == "cobol")
+#else //It is a case insensitive system
+     if ( suffix == "cob"  || suffix == "cbl" || suffix == "cobol")
 #endif
         {
           returnValue = true;

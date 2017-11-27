@@ -48,6 +48,7 @@ Grammar::setUpNodes ()
            * SgOmpEndClause
              // with some value
            * SgOmpDefaultClause
+           * SgOmpProcBindClause
              // with kind, chunksize
            * SgOmpScheduleClause
               //with expression
@@ -71,16 +72,24 @@ Grammar::setUpNodes ()
      NEW_TERMINAL_MACRO (OmpBeginClause, "OmpBeginClause", "OmpBeginClauseTag" );
      NEW_TERMINAL_MACRO (OmpEndClause, "OmpEndClause", "OmpEndClauseTag" );
      NEW_TERMINAL_MACRO (OmpUntiedClause, "OmpUntiedClause", "OmpUntiedClauseTag" );
+     NEW_TERMINAL_MACRO (OmpMergeableClause, "OmpMergeableClause", "OmpMergeableClauseTag" );
      NEW_TERMINAL_MACRO (OmpDefaultClause, "OmpDefaultClause", "OmpDefaultClauseTag" );
+     NEW_TERMINAL_MACRO (OmpAtomicClause, "OmpAtomicClause", "OmpAtomicClauseTag" );
+     NEW_TERMINAL_MACRO (OmpProcBindClause, "OmpProcBindClause", "OmpProcBindClauseTag" );
+     NEW_TERMINAL_MACRO (OmpInbranchClause, "OmpInbranchClause", "OmpInbranchClauseTag" );
+     NEW_TERMINAL_MACRO (OmpNotinbranchClause, "OmpNotinbranchClause", "OmpNotinbranchClauseTag" );
 
      NEW_TERMINAL_MACRO (OmpCollapseClause, "OmpCollapseClause", "OmpCollapseClauseTag" );
      NEW_TERMINAL_MACRO (OmpIfClause, "OmpIfClause", "OmpIfClauseTag" );
+     NEW_TERMINAL_MACRO (OmpFinalClause, "OmpFinalClause", "OmpFinalClauseTag" );
+     NEW_TERMINAL_MACRO (OmpPriorityClause, "OmpPriorityClause", "OmpPriorityClauseTag" );
      NEW_TERMINAL_MACRO (OmpNumThreadsClause, "OmpNumThreadsClause", "OmpNumThreadsClauseTag" );
      NEW_TERMINAL_MACRO (OmpDeviceClause, "OmpDeviceClause", "OmpIfDeviceTag" );
      NEW_TERMINAL_MACRO (OmpSafelenClause, "OmpSafelenClause", "OmpSafelenTag" );
+     NEW_TERMINAL_MACRO (OmpSimdlenClause, "OmpSimdlenClause", "OmpSimdlenTag" );
 
      NEW_NONTERMINAL_MACRO (OmpExpressionClause, OmpCollapseClause | OmpIfClause | OmpNumThreadsClause | OmpDeviceClause |
-                            OmpSafelenClause
+                            OmpSafelenClause | OmpSimdlenClause | OmpFinalClause | OmpPriorityClause
          ,"OmpExpressionClause", "OmpExpressionClauseTag",false );
 
 
@@ -91,6 +100,7 @@ Grammar::setUpNodes ()
      NEW_TERMINAL_MACRO (OmpCopyinClause, "OmpCopyinClause", "OmpCopyinClauseTag" );
      NEW_TERMINAL_MACRO (OmpLastprivateClause, "OmpLastprivateClause", "OmpLastprivateClauseTag" );
      NEW_TERMINAL_MACRO (OmpReductionClause, "OmpReductionClause", "OmpReductionClauseTag" );
+     NEW_TERMINAL_MACRO (OmpDependClause,    "OmpDependClause", "OmpDependClauseTag" );
 
      NEW_TERMINAL_MACRO (OmpMapClause, "OmpMapClause", "OmpMapClauseTag" );
      NEW_TERMINAL_MACRO (OmpLinearClause, "OmpLinearClause", "OmpLinearClauseTag" );
@@ -98,14 +108,15 @@ Grammar::setUpNodes ()
      NEW_TERMINAL_MACRO (OmpAlignedClause, "OmpAlignedClause", "OmpAlignedClauseTag" );
 
      NEW_NONTERMINAL_MACRO (OmpVariablesClause, OmpCopyprivateClause| OmpPrivateClause |OmpFirstprivateClause|
-         OmpSharedClause |OmpCopyinClause| OmpLastprivateClause| OmpReductionClause | OmpMapClause | OmpLinearClause |
-         OmpUniformClause | OmpAlignedClause,
+         OmpSharedClause |OmpCopyinClause| OmpLastprivateClause| OmpReductionClause | OmpMapClause | 
+         OmpUniformClause | OmpAlignedClause | OmpLinearClause | OmpDependClause ,
          "OmpVariablesClause", "OmpVariablesClauseTag", false);
 
      NEW_TERMINAL_MACRO (OmpScheduleClause, "OmpScheduleClause", "OmpScheduleClauseTag" );
 
      NEW_NONTERMINAL_MACRO (OmpClause, OmpOrderedClause | OmpNowaitClause | OmpBeginClause |OmpEndClause | OmpUntiedClause |
-         OmpDefaultClause | OmpExpressionClause | OmpVariablesClause | OmpScheduleClause ,
+         OmpDefaultClause | OmpAtomicClause | OmpProcBindClause | OmpExpressionClause | OmpInbranchClause | OmpNotinbranchClause |
+         OmpVariablesClause | OmpScheduleClause | OmpMergeableClause ,
          "OmpClause", "OmpClauseTag", false);
 #endif
      
@@ -149,33 +160,79 @@ Grammar::setUpNodes ()
          UntypedArrayReferenceExpression | UntypedOtherExpression | UntypedFunctionCallOrArrayReferenceExpression | 
          UntypedReferenceExpression, "UntypedExpression", "UntypedExpressionTag", true);
 
+     NEW_TERMINAL_MACRO (UntypedNameListDeclaration,      "UntypedNameListDeclaration",      "TEMP_UntypedNameListDeclaration" );
      NEW_TERMINAL_MACRO (UntypedImplicitDeclaration,      "UntypedImplicitDeclaration",      "TEMP_UntypedImplicitDeclaration" );
      NEW_TERMINAL_MACRO (UntypedVariableDeclaration,      "UntypedVariableDeclaration",      "TEMP_UntypedVariableDeclaration" );
      NEW_TERMINAL_MACRO (UntypedProgramHeaderDeclaration, "UntypedProgramHeaderDeclaration", "TEMP_UntypedProgramHeaderDeclaration" );
      NEW_TERMINAL_MACRO (UntypedSubroutineDeclaration,    "UntypedSubroutineDeclaration",    "TEMP_UntypedSubroutineDeclaration" );
+     NEW_TERMINAL_MACRO (UntypedInterfaceDeclaration,     "UntypedInterfaceDeclaration",     "TEMP_UntypedInterfaceDeclaration" );
+     NEW_TERMINAL_MACRO (UntypedUseStatement,             "UntypedUseStatement",             "TEMP_UntypedUseStatement" );
+
+  // DQ (10/3/2017): New statements specific to general language support.  The philosophy is to add the union of all statements
+  // for all languages to the set of untyped IR nodes and provide an enum code to support the larger number of expressions.
+     NEW_TERMINAL_MACRO (UntypedNullStatement,                 "UntypedNullStatement",                 "TEMP_UntypedNullStatement" );
+     NEW_TERMINAL_MACRO (UntypedIfStatement,                   "UntypedIfStatement",                   "TEMP_UntypedIfStatement" );
+     NEW_TERMINAL_MACRO (UntypedCaseStatement,                 "UntypedCaseStatement",                 "TEMP_UntypedCaseStatement" );
+     NEW_TERMINAL_MACRO (UntypedLoopStatement,                 "UntypedLoopStatement",                 "TEMP_UntypedLoopStatement" );
+     NEW_TERMINAL_MACRO (UntypedWhileStatement,                "UntypedWhileStatement",                "TEMP_UntypedWhileStatement" );
+     NEW_TERMINAL_MACRO (UntypedForStatement,                  "UntypedForStatement",                  "TEMP_UntypedForStatement" );
+  // NEW_TERMINAL_MACRO (UntypedBlockStatement,                "UntypedBlockStatement",                "TEMP_UntypedBlockStatement" );
+     NEW_TERMINAL_MACRO (UntypedExitStatement,                 "UntypedExitStatement",                 "TEMP_UntypedExitStatement" );
+     NEW_TERMINAL_MACRO (UntypedGotoStatement,                 "UntypedGotoStatement",                 "TEMP_UntypedGotoStatement" );
+     NEW_TERMINAL_MACRO (UntypedProcedureCallStatement,        "UntypedProcedureCallStatement",        "TEMP_UntypedProcedureCallStatement" );
+     NEW_TERMINAL_MACRO (UntypedReturnStatement,               "UntypedReturnStatement",               "TEMP_UntypedReturnStatement" );
+     NEW_TERMINAL_MACRO (UntypedExtendedReturnStatement,       "UntypedExtendedReturnStatement",       "TEMP_UntypedExtendedReturnStatement" );
+     NEW_TERMINAL_MACRO (UntypedAcceptStatement,               "UntypedAcceptStatement",               "TEMP_UntypedAcceptStatement" );
+     NEW_TERMINAL_MACRO (UntypedEntryCallStatement,            "UntypedEntryCallStatement",            "TEMP_UntypedEntryCallStatement" );
+     NEW_TERMINAL_MACRO (UntypedRequeueStatement,              "UntypedRequeueStatement",              "TEMP_UntypedRequeueStatement" );
+     NEW_TERMINAL_MACRO (UntypedDelayUntilStatement,           "UntypedDelayUntilStatement",           "TEMP_UntypedDelayUntilStatement" );
+     NEW_TERMINAL_MACRO (UntypedDelayRelativeStatement,        "UntypedDelayRelativeStatement",        "TEMP_UntypedDelayRelativeStatement" );
+     NEW_TERMINAL_MACRO (UntypedTerminateAlternativeStatement, "UntypedTerminateAlternativeStatement", "TEMP_UntypedTerminateAlternativeStatement" );
+     NEW_TERMINAL_MACRO (UntypedSelectiveAcceptStatement,      "UntypedSelectiveAcceptStatement",      "TEMP_UntypedSelectiveAcceptStatement" );
+     NEW_TERMINAL_MACRO (UntypedTimedEntryCallStatement,       "UntypedTimedEntryCallStatement",       "TEMP_UntypedTimedEntryCallStatement" );
+     NEW_TERMINAL_MACRO (UntypedConditionalEntryCallStatement, "UntypedConditionalEntryCallStatement", "TEMP_UntypedConditionalEntryCallStatement" );
+     NEW_TERMINAL_MACRO (UntypedAsynchronousSelectStatement,   "UntypedAsynchronousSelectStatement",   "TEMP_UntypedAsynchronousSelectStatement" );
+     NEW_TERMINAL_MACRO (UntypedAbortStatement,                "UntypedAbortStatement",                "TEMP_UntypedAbortStatement" );
+     NEW_TERMINAL_MACRO (UntypedRaiseStatement,                "UntypedRaiseStatement",                "TEMP_UntypedRaiseStatement" );
+     NEW_TERMINAL_MACRO (UntypedCodeStatement,                 "UntypedCodeStatement",                 "TEMP_UntypedCodeStatement" );
+  // NEW_TERMINAL_MACRO (UntypedxStatement,                    "UntypedxStatement",                    "TEMP_UntypedxStatement" );
 
   // DQ (1/22/2016): Allow this IR node to be used explicitly in the AST.
   // NEW_TERMINAL_MACRO (UntypedFunctionDeclaration,      "UntypedFunctionDeclaration",      "TEMP_UntypedFunctionDeclaration" );
-  // NEW_NONTERMINAL_MACRO (UntypedFunctionDeclaration, UntypedProgramHeaderDeclaration | UntypedSubroutineDeclaration,
-  //     "UntypedFunctionDeclaration", "UntypedFunctionDeclarationTag", false);
-     NEW_NONTERMINAL_MACRO (UntypedFunctionDeclaration, UntypedProgramHeaderDeclaration | UntypedSubroutineDeclaration,
-         "UntypedFunctionDeclaration", "UntypedFunctionDeclarationTag", true);
+     NEW_NONTERMINAL_MACRO (UntypedFunctionDeclaration, UntypedProgramHeaderDeclaration | UntypedSubroutineDeclaration |
+         UntypedInterfaceDeclaration, "UntypedFunctionDeclaration", "UntypedFunctionDeclarationTag", true);
 
   // DQ (3/6/2014): Added new IR node for untyped representation of module declarations.
      NEW_TERMINAL_MACRO (UntypedModuleDeclaration,        "UntypedModuleDeclaration",        "TEMP_UntypedModuleDeclaration" );
+
+  // Rasmussen (8/16/2017): Added new IR node to represent a Fortran submodule (a submodule extends an existing module)
+     NEW_TERMINAL_MACRO (UntypedSubmoduleDeclaration,     "UntypedSubmoduleDeclaration",     "TEMP_UntypedSubmoduleDeclaration" );
+
+  // DQ (9/29/2017): Added new IR node for untyped representation of package declarations (Ada).
+     NEW_TERMINAL_MACRO (UntypedPackageDeclaration,          "UntypedPackageDeclaration",          "TEMP_UntypedPackageDeclaration" );
+     NEW_TERMINAL_MACRO (UntypedTaskDeclaration,             "UntypedTaskDeclaration",             "TEMP_UntypedTaskDeclaration" );
+     NEW_TERMINAL_MACRO (UntypedStructureDeclaration,        "UntypedStructureDeclaration",        "TEMP_UntypedStructureDeclaration" );
+     NEW_TERMINAL_MACRO (UntypedExceptionDeclaration,        "UntypedExceptionDeclaration",        "TEMP_UntypedExceptionDeclaration" );
+     NEW_TERMINAL_MACRO (UntypedExceptionHandlerDeclaration, "UntypedExceptionHandlerDeclaration", "TEMP_UntypedExceptionHandlerDeclaration" );
+     NEW_TERMINAL_MACRO (UntypedUnitDeclaration,             "UntypedUnitDeclaration",             "TEMP_UntypedUnitDeclaration" );
 
   // DQ (1/22/2016): Allow this IR node to be used explicitly in the AST.
   // NEW_NONTERMINAL_MACRO (UntypedDeclarationStatement, UntypedImplicitDeclaration | UntypedVariableDeclaration | 
   //     UntypedFunctionDeclaration | UntypedModuleDeclaration,
   //     "UntypedDeclarationStatement", "UntypedDeclarationStatementTag", false);
-     NEW_NONTERMINAL_MACRO (UntypedDeclarationStatement, UntypedImplicitDeclaration | UntypedVariableDeclaration | 
-         UntypedFunctionDeclaration | UntypedModuleDeclaration,
+  // Rasmussen (8/16/2017): Added UntypedSubmoduleDeclaration
+     NEW_NONTERMINAL_MACRO (UntypedDeclarationStatement, UntypedNameListDeclaration | UntypedUseStatement |
+         UntypedImplicitDeclaration  | UntypedVariableDeclaration  | UntypedFunctionDeclaration |
+         UntypedModuleDeclaration    | UntypedSubmoduleDeclaration | UntypedPackageDeclaration  | 
+         UntypedStructureDeclaration | UntypedExceptionDeclaration | UntypedExceptionHandlerDeclaration |
+         UntypedTaskDeclaration      | UntypedUnitDeclaration,
          "UntypedDeclarationStatement", "UntypedDeclarationStatementTag", true);
 
      NEW_TERMINAL_MACRO (UntypedAssignmentStatement,   "UntypedAssignmentStatement",   "TEMP_UntypedAssignmentStatement" );
      NEW_TERMINAL_MACRO (UntypedFunctionCallStatement, "UntypedFunctionCallStatement", "TEMP_UntypedFunctionCallStatement" );
      NEW_TERMINAL_MACRO (UntypedBlockStatement,        "UntypedBlockStatement",        "TEMP_UntypedBlockStatement" );
      NEW_TERMINAL_MACRO (UntypedNamedStatement,        "UntypedNamedStatement",        "TEMP_UntypedNamedStatement" );
+     NEW_TERMINAL_MACRO (UntypedExpressionStatement,   "UntypedExpressionStatement",   "TEMP_UntypedExpressionStatement" );
      NEW_TERMINAL_MACRO (UntypedOtherStatement,        "UntypedOtherStatement",        "TEMP_UntypedOtherStatement" );
 
   // DQ (3/6/2014): Added new IR node for untyped representation of scopes.
@@ -183,23 +240,42 @@ Grammar::setUpNodes ()
      NEW_TERMINAL_MACRO (UntypedModuleScope,   "UntypedModuleScope",     "TEMP_UntypedModuleScope" );
      NEW_TERMINAL_MACRO (UntypedGlobalScope,   "UntypedGlobalScope",     "TEMP_UntypedGlobalScope" );
 
+  // DQ (10/15/2017): Allow the SgUntypedScope node to stand on it's own (need not be one of the derived classes in the AST).
+  // Note that we might want to change this in the future, but for now it allows for greater flexability in constructing the untyped AST.
+  // NEW_NONTERMINAL_MACRO (UntypedScope, UntypedFunctionScope | UntypedModuleScope | UntypedGlobalScope,
+  //     "UntypedScope", "UntypedScopeTag", false);
      NEW_NONTERMINAL_MACRO (UntypedScope, UntypedFunctionScope | UntypedModuleScope | UntypedGlobalScope,
-         "UntypedScope", "UntypedScopeTag", false);
+         "UntypedScope", "UntypedScopeTag", true);
 
      NEW_NONTERMINAL_MACRO (UntypedStatement, UntypedDeclarationStatement | UntypedAssignmentStatement | 
-         UntypedFunctionCallStatement | UntypedBlockStatement | UntypedNamedStatement | UntypedOtherStatement | UntypedScope,
+         UntypedFunctionCallStatement    | UntypedBlockStatement          | UntypedNamedStatement                | UntypedExpressionStatement |
+         UntypedOtherStatement           | UntypedScope                   | UntypedNullStatement                 | UntypedIfStatement | 
+         UntypedCaseStatement            | UntypedLoopStatement           | UntypedWhileStatement                | UntypedForStatement | 
+         UntypedExitStatement            | UntypedGotoStatement           | UntypedProcedureCallStatement        | 
+         UntypedReturnStatement          | UntypedExtendedReturnStatement | UntypedAcceptStatement               | UntypedEntryCallStatement |
+         UntypedRequeueStatement         | UntypedDelayUntilStatement     | UntypedDelayRelativeStatement        | UntypedTerminateAlternativeStatement |
+         UntypedSelectiveAcceptStatement | UntypedTimedEntryCallStatement | UntypedConditionalEntryCallStatement | UntypedAsynchronousSelectStatement |
+         UntypedAbortStatement           | UntypedRaiseStatement          | UntypedCodeStatement,
          "UntypedStatement", "UntypedStatementTag", false);
 
      NEW_TERMINAL_MACRO (UntypedArrayType, "UntypedArrayType", "TEMP_UntypedArrayType" );
      NEW_NONTERMINAL_MACRO (UntypedType, UntypedArrayType, "UntypedType", "UntypedTypeTag", false);
 
+     NEW_TERMINAL_MACRO (UntypedName,             "UntypedName",             "TEMP_UntypedName" );
+     NEW_TERMINAL_MACRO (UntypedNameList,         "UntypedNameList",         "TEMP_UntypedNameList" );
+
+     NEW_TERMINAL_MACRO (UntypedToken,            "UntypedToken",            "TEMP_UntypedToken" );
+     NEW_TERMINAL_MACRO (UntypedTokenPair,        "UntypedTokenPair",        "TEMP_UntypedTokenPair" );
+     NEW_TERMINAL_MACRO (UntypedTokenList,        "UntypedTokenList",        "TEMP_UntypedTokenList" );
+     NEW_TERMINAL_MACRO (UntypedTokenPairList,    "UntypedTokenPairList",    "TEMP_UntypedTokenPairList" );
+
      NEW_TERMINAL_MACRO (UntypedAttribute,        "UntypedAttribute",        "TEMP_UntypedAttribute" );
-     NEW_TERMINAL_MACRO (UntypedInitializedName,        "UntypedInitializedName",        "TEMP_UntypedInitializedName" );
+     NEW_TERMINAL_MACRO (UntypedInitializedName,  "UntypedInitializedName",  "TEMP_UntypedInitializedName" );
 
   // DQ (3/6/2014): Added new IR node for untyped fortran file.
      NEW_TERMINAL_MACRO (UntypedFile,        "UntypedFile",        "TEMP_UntypedFile" );
 
-  // We need seperate IR nodes for these list so that (ROSETTA constraint).
+  // We need separate IR nodes for these list so that (ROSETTA constraint).
      NEW_TERMINAL_MACRO (UntypedStatementList,           "UntypedStatementList",           "TEMP_UntypedStatementList" );
 
   // DQ (1/20/2016): Change the name to make this IR node more consistant with our naming policy for IR node.
@@ -208,9 +284,10 @@ Grammar::setUpNodes ()
      NEW_TERMINAL_MACRO (UntypedFunctionDeclarationList, "UntypedFunctionDeclarationList", "TEMP_UntypedFunctionDeclarationList" );
      NEW_TERMINAL_MACRO (UntypedInitializedNameList,     "UntypedInitializedNameList",     "TEMP_UntypedInitializedNameList" );
 
-     NEW_NONTERMINAL_MACRO (UntypedNode, UntypedExpression | UntypedStatement | UntypedType | UntypedAttribute | 
-          UntypedInitializedName | UntypedFile | UntypedStatementList | UntypedDeclarationStatementList | 
-          UntypedFunctionDeclarationList | UntypedInitializedNameList,
+     NEW_NONTERMINAL_MACRO (UntypedNode, UntypedExpression | UntypedStatement | UntypedName | UntypedToken | UntypedTokenPair |
+          UntypedType | UntypedAttribute | UntypedInitializedName | UntypedFile | UntypedStatementList |
+          UntypedDeclarationStatementList | UntypedFunctionDeclarationList | UntypedInitializedNameList |
+          UntypedNameList | UntypedTokenList | UntypedTokenPairList,
          "UntypedNode", "UntypedNodeTag", false);
 
   // ***************************************************************************************
@@ -520,20 +597,21 @@ Grammar::setUpNodes ()
      UntypedNode.setFunctionPrototype       ( "HEADER_UNTYPED_NODE", "../Grammar/LocatedNode.code");
 
      UntypedExpression.setFunctionPrototype ( "HEADER_UNTYPED_EXPRESSION", "../Grammar/LocatedNode.code");
-     UntypedExpression.setDataPrototype     ( "SgToken::ROSE_Fortran_Keywords", "statement_enum", "= SgToken::FORTRAN_UNKNOWN",
+  // DQ (10/3/2017): Generalizing untyped IR nodes to be less language specific (for use with different languages).
+  // UntypedExpression.setDataPrototype     ( "SgToken::ROSE_Fortran_Keywords", "statement_enum", "= SgToken::FORTRAN_UNKNOWN",
+  //              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     UntypedExpression.setDataPrototype     ( "int", "expression_enum", "= 0",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // Rasmussen (10/17/2017): Removed SgToken::ROSE_Fortran_Operators operator_enum from UntypedUnaryOperator
      UntypedUnaryOperator.setFunctionPrototype ( "HEADER_UNTYPED_UNARY_OPERATOR", "../Grammar/LocatedNode.code");
-     UntypedUnaryOperator.setDataPrototype     ( "SgToken::ROSE_Fortran_Operators", "operator_enum", "= SgToken::FORTRAN_INTRINSIC_PLUS",
-                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      UntypedUnaryOperator.setDataPrototype     ( "std::string", "operator_name", "= \"\"",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      UntypedUnaryOperator.setDataPrototype     ( "SgUntypedExpression*", "operand", "= NULL",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
+  // Rasmussen (10/17/2017): Removed SgToken::ROSE_Fortran_Operators operator_enum from UntypedBinaryOperator
      UntypedBinaryOperator.setFunctionPrototype ( "HEADER_UNTYPED_BINARY_OPERATOR", "../Grammar/LocatedNode.code");
-     UntypedBinaryOperator.setDataPrototype     ( "SgToken::ROSE_Fortran_Operators", "operator_enum", "= SgToken::FORTRAN_INTRINSIC_PLUS",
-                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      UntypedBinaryOperator.setDataPrototype     ( "std::string", "operator_name", "= \"\"",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      UntypedBinaryOperator.setDataPrototype     ( "SgUntypedExpression*", "lhs_operand", "= NULL",
@@ -566,14 +644,27 @@ Grammar::setUpNodes ()
   // Save this as a string so that we catch details such as "0025" instead of just 25 as an integer.
      UntypedStatement.setDataPrototype     ( "std::string", "label_string", "= \"\"",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     UntypedStatement.setDataPrototype     ( "SgToken::ROSE_Fortran_Keywords", "statement_enum", "= SgToken::FORTRAN_UNKNOWN",
-                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // DQ (10/3/2017): Generalizing untyped IR nodes to be less language specific (for use with different languages).
+  // UntypedStatement.setDataPrototype     ( "SgToken::ROSE_Fortran_Keywords", "statement_enum", "= SgToken::FORTRAN_UNKNOWN",
+  //              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // UntypedStatement.setDataPrototype     ( "int", "statement_enum", "= SgToken::FORTRAN_UNKNOWN",
+  //              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-     UntypedNamedStatement.setFunctionPrototype             ( "HEADER_UNTYPED_NAMED_STATEMENT", "../Grammar/LocatedNode.code");
-     UntypedNamedStatement.setDataPrototype     ( "std::string", "statement_name", "= \"\"",
+  // Rasmussen (10/3/2017): Added statement_enum (replacing it's removal from base class).
+     UntypedNamedStatement.setFunctionPrototype      ( "HEADER_UNTYPED_NAMED_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedNamedStatement.setDataPrototype          ( "int", "statement_enum", "= 0",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     UntypedNamedStatement.setDataPrototype          ( "std::string", "statement_name", "= \"\"",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-     UntypedAssignmentStatement.setFunctionPrototype   ( "HEADER_UNTYPED_ASSIGNMENT_STATEMENT", "../Grammar/LocatedNode.code");
+  // Rasmussen (10/3/2017): Added statement_enum (replacing it's removal from base class).
+     UntypedExpressionStatement.setFunctionPrototype ( "HEADER_UNTYPED_EXPRESSION_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedExpressionStatement.setDataPrototype     ( "int", "statement_enum", "= 0",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     UntypedExpressionStatement.setDataPrototype     ( "SgUntypedExpression*", "statement_expression", "= NULL",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+     UntypedAssignmentStatement.setFunctionPrototype ( "HEADER_UNTYPED_ASSIGNMENT_STATEMENT", "../Grammar/LocatedNode.code");
      UntypedAssignmentStatement.setDataPrototype     ( "SgUntypedExpression*", "lhs_operand", "= NULL",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      UntypedAssignmentStatement.setDataPrototype     ( "SgUntypedExpression*", "rhs_operand", "= NULL",
@@ -581,33 +672,85 @@ Grammar::setUpNodes ()
 
      UntypedFunctionCallStatement.setFunctionPrototype ( "HEADER_UNTYPED_FUNCTION_CALL_STATEMENT", "../Grammar/LocatedNode.code");
      UntypedBlockStatement.setFunctionPrototype        ( "HEADER_UNTYPED_BLOCK_STATEMENT", "../Grammar/LocatedNode.code");
-  // UntypedBlockStatement.setDataPrototype            ( "SgUntypedStatementPtrList", "statement_list", "",
-  //              NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      UntypedBlockStatement.setDataPrototype            ( "SgUntypedScope*", "scope", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     UntypedOtherStatement.setFunctionPrototype        ( "HEADER_UNTYPED_OTHER_STATEMENT", "../Grammar/LocatedNode.code");
 
-     UntypedDeclarationStatement.setFunctionPrototype     ( "HEADER_UNTYPED_DECLARATION_STATEMENT", "../Grammar/LocatedNode.code");
-     UntypedImplicitDeclaration.setFunctionPrototype      ( "HEADER_UNTYPED_IMPLICIT_DECLARATION", "../Grammar/LocatedNode.code");
-     UntypedVariableDeclaration.setFunctionPrototype      ( "HEADER_UNTYPED_VARIABLE_DECLARATION", "../Grammar/LocatedNode.code");
-     UntypedVariableDeclaration.setDataPrototype     ( "SgUntypedType*", "type", "= NULL",
+  // Rasmussen (10/3/2017): Added statement_enum (replacing it's removal from base class).
+     UntypedOtherStatement.setFunctionPrototype        ( "HEADER_UNTYPED_OTHER_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedOtherStatement.setDataPrototype            ( "int", "statement_enum", "= 0",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (3/25/2014): It would be better to name this "variables" instead of "parameters".
-  // std::vector<SgUntypedInitializedName*> 
-  // UntypedVariableDeclaration.setDataPrototype     ( "SgUntypedInitializedNamePtrList", "variables", "",
-  //              NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     UntypedVariableDeclaration.setDataPrototype     ( "SgUntypedInitializedNameList*", "parameters", "",
+     UntypedUseStatement.setFunctionPrototype          ( "HEADER_UNTYPED_USE_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedUseStatement.setDataPrototype              ( "std::string", "module_name", "= \"\"",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     UntypedUseStatement.setDataPrototype              ( "SgToken::ROSE_Fortran_Keywords", "module_nature", "= SgToken::FORTRAN_UNKNOWN",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     UntypedUseStatement.setDataPrototype              ( "SgUntypedTokenPairList*", "rename_list", "",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     UntypedUseStatement.setDataPrototype              ( "bool", "isOnlyList", "= false",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (10/3/2017): New statements specific to general language support.  The philosophy is to add the union of all statements
+  // for all languages to the set of untyped IR nodes and provide an enum code to support the larger number of expressions.
+     UntypedNullStatement.setFunctionPrototype                 ( "HEADER_UNTYPED_NULL_STATEMENT", "../Grammar/LocatedNode.code");
+
+     UntypedIfStatement.setFunctionPrototype           ( "HEADER_UNTYPED_IF_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedIfStatement.setDataPrototype               ( "SgUntypedScope*", "true_body", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     UntypedIfStatement.setDataPrototype               ( "SgUntypedScope*", "false_body", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+     UntypedCaseStatement.setFunctionPrototype                 ( "HEADER_UNTYPED_CASE_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedLoopStatement.setFunctionPrototype                 ( "HEADER_UNTYPED_LOOP_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedWhileStatement.setFunctionPrototype                ( "HEADER_UNTYPED_WHILE_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedForStatement.setFunctionPrototype                  ( "HEADER_UNTYPED_FOR_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedExitStatement.setFunctionPrototype                 ( "HEADER_UNTYPED_EXIT_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedGotoStatement.setFunctionPrototype                 ( "HEADER_UNTYPED_GOTO_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedProcedureCallStatement.setFunctionPrototype        ( "HEADER_UNTYPED_PROCEDURE_CALL_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedReturnStatement.setFunctionPrototype               ( "HEADER_UNTYPED_RETURN_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedExtendedReturnStatement.setFunctionPrototype       ( "HEADER_UNTYPED_EXTENDED_RETURN_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedAcceptStatement.setFunctionPrototype               ( "HEADER_UNTYPED_ACCEPT_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedEntryCallStatement.setFunctionPrototype            ( "HEADER_UNTYPED_ENTRY_CALL_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedRequeueStatement.setFunctionPrototype              ( "HEADER_UNTYPED_REQUEUE_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedDelayUntilStatement.setFunctionPrototype           ( "HEADER_UNTYPED_DELAY_UNTIL_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedDelayRelativeStatement.setFunctionPrototype        ( "HEADER_UNTYPED_DELAY_RELATIVE_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedTerminateAlternativeStatement.setFunctionPrototype ( "HEADER_UNTYPED_TERMINATE_ALTERNATIVE_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedSelectiveAcceptStatement.setFunctionPrototype      ( "HEADER_UNTYPED_SELECTIVE_ACCEPT_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedTimedEntryCallStatement.setFunctionPrototype       ( "HEADER_UNTYPED_TIMED_ENTRY_CALL_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedConditionalEntryCallStatement.setFunctionPrototype ( "HEADER_UNTYPED_CONDITIONAL_ENTRY_CALL_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedAsynchronousSelectStatement.setFunctionPrototype   ( "HEADER_UNTYPED_ASYNCHRONOUS_SELECT_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedAbortStatement.setFunctionPrototype                ( "HEADER_UNTYPED_ABORT_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedRaiseStatement.setFunctionPrototype                ( "HEADER_UNTYPED_RAISE_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedCodeStatement.setFunctionPrototype                 ( "HEADER_UNTYPED_CODE_STATEMENT", "../Grammar/LocatedNode.code");
+
+     UntypedDeclarationStatement.setFunctionPrototype  ( "HEADER_UNTYPED_DECLARATION_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedImplicitDeclaration.setFunctionPrototype   ( "HEADER_UNTYPED_IMPLICIT_DECLARATION", "../Grammar/LocatedNode.code");
+
+  // Rasmussen (10/3/2017): Added statement_enum (replacing it's removal from base class).
+     UntypedNameListDeclaration.setFunctionPrototype   ( "HEADER_UNTYPED_NAMELIST_DECLARATION", "../Grammar/LocatedNode.code");
+     UntypedNameListDeclaration.setDataPrototype       ( "int", "statement_enum", "= 0",
+                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     UntypedNameListDeclaration.setDataPrototype       ( "SgUntypedNameList*", "names", "",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+     UntypedVariableDeclaration.setFunctionPrototype ( "HEADER_UNTYPED_VARIABLE_DECLARATION", "../Grammar/LocatedNode.code");
+     UntypedVariableDeclaration.setDataPrototype     ( "SgUntypedType*", "type", "= NULL",
+                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS,  NO_TRAVERSAL, NO_DELETE);
+     UntypedVariableDeclaration.setDataPrototype     ( "SgUntypedTokenList*", "modifiers", "",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     UntypedVariableDeclaration.setDataPrototype     ( "SgUntypedInitializedNameList*", "variables", "",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      UntypedFunctionDeclaration.setFunctionPrototype ( "HEADER_UNTYPED_FUNCTION_DECLARATION", "../Grammar/LocatedNode.code");
      UntypedFunctionDeclaration.setDataPrototype     ( "std::string", "name", "= \"\"",
-                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS,  NO_TRAVERSAL, NO_DELETE);
      UntypedFunctionDeclaration.setDataPrototype     ( "SgUntypedInitializedNameList*", "parameters", "",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      UntypedFunctionDeclaration.setDataPrototype     ( "SgUntypedType*", "type", "= NULL",
-                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS,  NO_TRAVERSAL, NO_DELETE);
      UntypedFunctionDeclaration.setDataPrototype     ( "SgUntypedFunctionScope*", "scope", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     UntypedFunctionDeclaration.setDataPrototype     ( "SgUntypedTokenList*", "modifiers", "",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      UntypedFunctionDeclaration.setDataPrototype     ( "SgUntypedNamedStatement*", "end_statement", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -622,11 +765,69 @@ Grammar::setUpNodes ()
   //              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      UntypedSubroutineDeclaration.setFunctionPrototype    ( "HEADER_UNTYPED_SUBROUTINE_DECLARATION", "../Grammar/LocatedNode.code");
 
+  // Rasmussen (10/3/2017): Added statement_enum (replacing it's removal from base class).
+     UntypedInterfaceDeclaration.setFunctionPrototype     ( "HEADER_UNTYPED_INTERFACE_DECLARATION",  "../Grammar/LocatedNode.code");
+     UntypedInterfaceDeclaration.setDataPrototype         ( "int", "statement_enum", "= 0",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      UntypedModuleDeclaration.setFunctionPrototype      ( "HEADER_UNTYPED_MODULE_DECLARATION", "../Grammar/LocatedNode.code");
+     UntypedModuleDeclaration.setDataPrototype          ( "std::string", "name", "= \"\"",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS,  NO_TRAVERSAL, NO_DELETE);
      UntypedModuleDeclaration.setDataPrototype          ( "SgUntypedModuleScope*", "scope", "= NULL",
-                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     UntypedModuleDeclaration.setDataPrototype     ( "SgUntypedNamedStatement*", "end_statement", "= NULL",
-                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     UntypedModuleDeclaration.setDataPrototype          ( "SgUntypedNamedStatement*", "end_statement", "= NULL",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // DQ (9/29/2017): Adding package support.
+     UntypedPackageDeclaration.setFunctionPrototype      ( "HEADER_UNTYPED_PACKAGE_DECLARATION", "../Grammar/LocatedNode.code");
+     UntypedPackageDeclaration.setDataPrototype          ( "std::string", "name", "= \"\"",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS,  NO_TRAVERSAL, NO_DELETE);
+     UntypedPackageDeclaration.setDataPrototype          ( "SgUntypedScope*", "scope", "= NULL",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // DQ (9/30/2017): Adding general language neutral structure support (e.g. class, struct, union, etc.).
+     UntypedStructureDeclaration.setFunctionPrototype      ( "HEADER_UNTYPED_STRUCTURE_DECLARATION", "../Grammar/LocatedNode.code");
+     UntypedStructureDeclaration.setDataPrototype          ( "std::string", "name", "= \"\"",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS,  NO_TRAVERSAL, NO_DELETE);
+     UntypedStructureDeclaration.setDataPrototype          ( "SgUntypedScope*", "scope", "= NULL",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // DQ (9/29/2017): Adding task support.
+     UntypedTaskDeclaration.setFunctionPrototype      ( "HEADER_UNTYPED_TASK_DECLARATION", "../Grammar/LocatedNode.code");
+     UntypedTaskDeclaration.setDataPrototype          ( "std::string", "name", "= \"\"",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS,  NO_TRAVERSAL, NO_DELETE);
+     UntypedTaskDeclaration.setDataPrototype          ( "SgUntypedScope*", "scope", "= NULL",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // DQ (10/15/2017): Adding unit support.
+     UntypedUnitDeclaration.setFunctionPrototype      ( "HEADER_UNTYPED_UNIT_DECLARATION", "../Grammar/LocatedNode.code");
+     UntypedUnitDeclaration.setDataPrototype          ( "std::string", "name", "= \"\"",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS,  NO_TRAVERSAL, NO_DELETE);
+     UntypedUnitDeclaration.setDataPrototype          ( "SgUntypedScope*", "scope", "= NULL",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // Rasmussen (8/16/2017): Added UntypedSubmoduleDeclaration (note submodule_ancestor and submodule_parent)
+     UntypedSubmoduleDeclaration.setFunctionPrototype   ( "HEADER_UNTYPED_SUBMODULE_DECLARATION", "../Grammar/LocatedNode.code");
+     UntypedSubmoduleDeclaration.setDataPrototype       ( "std::string", "name", "= \"\"",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS,  NO_TRAVERSAL, NO_DELETE);
+     UntypedSubmoduleDeclaration.setDataPrototype       ( "std::string", "submodule_ancestor", "= \"\"",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS,  NO_TRAVERSAL, NO_DELETE);
+     UntypedSubmoduleDeclaration.setDataPrototype       ( "std::string", "submodule_parent", "= \"\"",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS,  NO_TRAVERSAL, NO_DELETE);
+     UntypedSubmoduleDeclaration.setDataPrototype       ( "SgUntypedModuleScope*", "scope", "= NULL",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     UntypedSubmoduleDeclaration.setDataPrototype       ( "SgUntypedNamedStatement*", "end_statement", "= NULL",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // DQ (10/2/2017): Adding general language neutral exception declaration support (e.g. for Ada).
+     UntypedExceptionDeclaration.setFunctionPrototype      ( "HEADER_UNTYPED_EXCEPTION_DECLARATION", "../Grammar/LocatedNode.code");
+     UntypedExceptionDeclaration.setDataPrototype          ( "SgUntypedStatement*", "statement", "= NULL",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // DQ (10/2/2017): Adding general language neutral exception handler declaration support (e.g. for Ada).
+     UntypedExceptionHandlerDeclaration.setFunctionPrototype      ( "HEADER_UNTYPED_EXCEPTION_HANDLER_DECLARATION", "../Grammar/LocatedNode.code");
+     UntypedExceptionHandlerDeclaration.setDataPrototype          ( "SgUntypedStatement*", "statement", "= NULL",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      UntypedScope.setFunctionPrototype         ( "HEADER_UNTYPED_SCOPE", "../Grammar/LocatedNode.code");
   // Three sorts of list that can be in any scope.
@@ -670,6 +871,37 @@ Grammar::setUpNodes ()
      UntypedInitializedNameList.setDataPrototype         ( "SgUntypedInitializedNamePtrList", "name_list", "",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
+     UntypedNameList.setFunctionPrototype                ( "HEADER_UNTYPED_NAME_LIST", "../Grammar/LocatedNode.code");
+     UntypedNameList.setDataPrototype                    ( "SgUntypedNamePtrList", "name_list", "",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+     UntypedTokenList.setFunctionPrototype               ( "HEADER_UNTYPED_TOKEN_LIST", "../Grammar/LocatedNode.code");
+     UntypedTokenList.setDataPrototype                   ( "SgUntypedTokenPtrList", "token_list", "",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     UntypedTokenPairList.setFunctionPrototype           ( "HEADER_UNTYPED_TOKEN_PAIR_LIST", "../Grammar/LocatedNode.code");
+     UntypedTokenPairList.setDataPrototype               ( "SgUntypedTokenPairPtrList", "token_pair_list", "",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+     UntypedName.setFunctionPrototype  ( "HEADER_UNTYPED_NAME", "../Grammar/LocatedNode.code");
+     UntypedName.setDataPrototype      ( "std::string", "name", "= \"\"",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     UntypedToken.setFunctionPrototype ( "HEADER_UNTYPED_TOKEN", "../Grammar/LocatedNode.code");
+     UntypedToken.setDataPrototype     ( "std::string", "lexeme_string", "= \"\"",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     UntypedToken.setDataPrototype     ( "unsigned int", "classification_code", "= 0",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
+     UntypedTokenPair.setFunctionPrototype ( "HEADER_UNTYPED_TOKEN_PAIR", "../Grammar/LocatedNode.code");
+     UntypedTokenPair.setDataPrototype     ( "std::string", "lexeme_string_1", "= \"\"",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     UntypedTokenPair.setDataPrototype     ( "unsigned int", "classification_code_1", "= 0",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     UntypedTokenPair.setDataPrototype     ( "std::string", "lexeme_string_2", "= \"\"",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     UntypedTokenPair.setDataPrototype     ( "unsigned int", "classification_code_2", "= 0",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
      UntypedType.setFunctionPrototype ( "HEADER_UNTYPED_TYPE", "../Grammar/LocatedNode.code");
      UntypedType.setDataPrototype     ( "std::string", "type_name", "= \"\"",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -697,7 +929,6 @@ Grammar::setUpNodes ()
   // DQ (12/9/2015): enum type for different types indentifable in the parsing.
      UntypedType.setDataPrototype     ( "SgUntypedType::type_enum", "type_enum_id", "= SgUntypedType::e_unknown",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
 
   // UntypedAttribute.setFunctionPrototype ( "HEADER_UNTYPED_ATTRIBUTE", "../Grammar/LocatedNode.code");
   // UntypedAttribute.setDataPrototype     ( "SgToken::ROSE_Fortran_Keywords", "type_name", "= SgToken::FORTRAN_UNKNOWN",
@@ -1122,14 +1353,54 @@ Grammar::setUpNodes ()
      UntypedFunctionCallStatement.setFunctionSource ( "SOURCE_UNTYPED_FUNCTION_CALL_STATEMENT", "../Grammar/LocatedNode.code");
      UntypedBlockStatement.setFunctionSource        ( "SOURCE_UNTYPED_BLOCK_STATEMENT", "../Grammar/LocatedNode.code");
      UntypedOtherStatement.setFunctionSource        ( "SOURCE_UNTYPED_OTHER_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedUseStatement.setFunctionSource          ( "SOURCE_UNTYPED_USE_STATEMENT", "../Grammar/LocatedNode.code");
+
+  // DQ (10/3/2017): New statements specific to general language support.  The philosophy is to add the union of all statements
+  // for all languages to the set of untyped IR nodes and provide an enum code to support the larger number of expressions.
+     UntypedNullStatement.setFunctionSource                 ( "SOURCE_UNTYPED_NULL_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedIfStatement.setFunctionSource                   ( "SOURCE_UNTYPED_IF_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedCaseStatement.setFunctionSource                 ( "SOURCE_UNTYPED_CASE_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedLoopStatement.setFunctionSource                 ( "SOURCE_UNTYPED_LOOP_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedWhileStatement.setFunctionSource                ( "SOURCE_UNTYPED_WHILE_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedForStatement.setFunctionSource                  ( "SOURCE_UNTYPED_FOR_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedExitStatement.setFunctionSource                 ( "SOURCE_UNTYPED_EXIT_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedGotoStatement.setFunctionSource                 ( "SOURCE_UNTYPED_GOTO_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedProcedureCallStatement.setFunctionSource        ( "SOURCE_UNTYPED_PROCEDURE_CALL_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedReturnStatement.setFunctionSource               ( "SOURCE_UNTYPED_RETURN_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedExtendedReturnStatement.setFunctionSource       ( "SOURCE_UNTYPED_EXTENDED_RETURN_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedAcceptStatement.setFunctionSource               ( "SOURCE_UNTYPED_ACCEPT_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedEntryCallStatement.setFunctionSource            ( "SOURCE_UNTYPED_ENTRY_CALL_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedRequeueStatement.setFunctionSource              ( "SOURCE_UNTYPED_REQUEUE_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedDelayUntilStatement.setFunctionSource           ( "SOURCE_UNTYPED_DELAY_UNTIL_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedDelayRelativeStatement.setFunctionSource        ( "SOURCE_UNTYPED_DELAY_RELATIVE_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedTerminateAlternativeStatement.setFunctionSource ( "SOURCE_UNTYPED_TERMINATE_ALTERNATIVE_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedSelectiveAcceptStatement.setFunctionSource      ( "SOURCE_UNTYPED_SELECTIVE_ACCEPT_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedTimedEntryCallStatement.setFunctionSource       ( "SOURCE_UNTYPED_TIMED_ENTRY_CALL_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedConditionalEntryCallStatement.setFunctionSource ( "SOURCE_UNTYPED_CONDITIONAL_ENTRY_CALL_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedAsynchronousSelectStatement.setFunctionSource   ( "SOURCE_UNTYPED_ASYNCHRONOUS_SELECT_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedAbortStatement.setFunctionSource                ( "SOURCE_UNTYPED_ABORT_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedRaiseStatement.setFunctionSource                ( "SOURCE_UNTYPED_RAISE_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedCodeStatement.setFunctionSource                 ( "SOURCE_UNTYPED_CODE_STATEMENT", "../Grammar/LocatedNode.code");
 
      UntypedDeclarationStatement.setFunctionSource     ( "SOURCE_UNTYPED_DECLARATION_STATEMENT", "../Grammar/LocatedNode.code");
+     UntypedNameListDeclaration.setFunctionSource      ( "SOURCE_UNTYPED_NAMELIST_DECLARATION", "../Grammar/LocatedNode.code");
      UntypedImplicitDeclaration.setFunctionSource      ( "SOURCE_UNTYPED_IMPLICIT_DECLARATION", "../Grammar/LocatedNode.code");
      UntypedVariableDeclaration.setFunctionSource      ( "SOURCE_UNTYPED_VARIABLE_DECLARATION", "../Grammar/LocatedNode.code");
      UntypedProgramHeaderDeclaration.setFunctionSource ( "SOURCE_UNTYPED_PROGRAM_HEADER_DECLARATION", "../Grammar/LocatedNode.code");
      UntypedFunctionDeclaration.setFunctionSource      ( "SOURCE_UNTYPED_FUNCTION_DECLARATION", "../Grammar/LocatedNode.code");
      UntypedSubroutineDeclaration.setFunctionSource    ( "SOURCE_UNTYPED_SUBROUTINE_DECLARATION", "../Grammar/LocatedNode.code");
+     UntypedInterfaceDeclaration.setFunctionSource     ( "SOURCE_UNTYPED_INTERFACE_DECLARATION", "../Grammar/LocatedNode.code");
      UntypedModuleDeclaration.setFunctionSource        ( "SOURCE_UNTYPED_MODULE_DECLARATION", "../Grammar/LocatedNode.code");
+
+     UntypedPackageDeclaration.setFunctionSource          ( "SOURCE_UNTYPED_PACKAGE_DECLARATION", "../Grammar/LocatedNode.code");
+     UntypedStructureDeclaration.setFunctionSource        ( "SOURCE_UNTYPED_STRUCTURE_DECLARATION", "../Grammar/LocatedNode.code");
+     UntypedExceptionDeclaration.setFunctionSource        ( "SOURCE_UNTYPED_EXCEPTION_DECLARATION", "../Grammar/LocatedNode.code");
+     UntypedExceptionHandlerDeclaration.setFunctionSource ( "SOURCE_UNTYPED_EXCEPTION_HANDLER_DECLARATION", "../Grammar/LocatedNode.code");
+     UntypedTaskDeclaration.setFunctionSource             ( "SOURCE_UNTYPED_TASK_DECLARATION", "../Grammar/LocatedNode.code");
+     UntypedUnitDeclaration.setFunctionSource             ( "SOURCE_UNTYPED_UNIT_DECLARATION", "../Grammar/LocatedNode.code");
+
+  // Rasmussen (8/16/2017): Added new IR node to represent a Fortran submodule (a submodule extends an existing module)
+     UntypedSubmoduleDeclaration.setFunctionSource     ( "SOURCE_UNTYPED_SUBMODULE_DECLARATION", "../Grammar/LocatedNode.code");
 
      UntypedScope.setFunctionSource         ( "SOURCE_UNTYPED_SCOPE", "../Grammar/LocatedNode.code");
      UntypedFunctionScope.setFunctionSource ( "SOURCE_UNTYPED_FUNCTION_SCOPE", "../Grammar/LocatedNode.code");
@@ -1142,9 +1413,17 @@ Grammar::setUpNodes ()
      UntypedFile.setFunctionSource            ( "SOURCE_UNTYPED_FILE", "../Grammar/LocatedNode.code");
 
      UntypedStatementList.setFunctionSource           ( "SOURCE_UNTYPED_STATEMENT_LIST", "../Grammar/LocatedNode.code");
-     UntypedDeclarationStatementList.setFunctionSource         ( "SOURCE_UNTYPED_DECLARATION_STATEMENT_LIST", "../Grammar/LocatedNode.code");
+     UntypedDeclarationStatementList.setFunctionSource( "SOURCE_UNTYPED_DECLARATION_STATEMENT_LIST", "../Grammar/LocatedNode.code");
      UntypedFunctionDeclarationList.setFunctionSource ( "SOURCE_UNTYPED_FUNCTION_DECLARATION_LIST", "../Grammar/LocatedNode.code");
      UntypedInitializedNameList.setFunctionSource     ( "SOURCE_UNTYPED_INITIALIZED_NAME_LIST", "../Grammar/LocatedNode.code");
+
+     UntypedName.setFunctionSource                    ( "SOURCE_UNTYPED_NAME", "../Grammar/LocatedNode.code");
+     UntypedNameList.setFunctionSource                ( "SOURCE_UNTYPED_NAME_LIST", "../Grammar/LocatedNode.code");
+
+     UntypedToken.setFunctionSource                   ( "SOURCE_UNTYPED_TOKEN", "../Grammar/LocatedNode.code");
+     UntypedTokenPair.setFunctionSource               ( "SOURCE_UNTYPED_TOKEN_PAIR", "../Grammar/LocatedNode.code");
+     UntypedTokenList.setFunctionSource               ( "SOURCE_UNTYPED_TOKEN_LIST", "../Grammar/LocatedNode.code");
+     UntypedTokenPairList.setFunctionSource           ( "SOURCE_UNTYPED_TOKEN_PAIR_LIST", "../Grammar/LocatedNode.code");
 
      UntypedType.setFunctionSource      ( "SOURCE_UNTYPED_TYPE", "../Grammar/LocatedNode.code");
      UntypedArrayType.setFunctionSource ( "SOURCE_UNTYPED_ARRAY_TYPE", "../Grammar/LocatedNode.code");
@@ -1212,16 +1491,40 @@ Grammar::setUpNodes ()
      // clauses with variable lists 
      // Liao 9/27/2010, per user's report, modeling the variable reference use SgVarRefExp
      //OmpVariablesClause.setDataPrototype ( "SgInitializedNamePtrList", "variables", "",
-     OmpVariablesClause.setDataPrototype ( "SgVarRefExpPtrList", "variables", "",
-                         NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     //OmpVariablesClause.setDataPrototype ( "SgVarRefExpPtrList", "variables", "",
+     //                    NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     // Using a SgNode for variable list, avoiding mixed container + simple member
+     OmpVariablesClause.setDataPrototype ( "SgExprListExp*", "variables", "= NULL",
+                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
+     // linear (varlist[:step])
+     OmpLinearClause.setDataPrototype ( "SgExpression*", "step", "= NULL",
+                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
+     
+     // aligned (varlist[:alignment])
+     OmpAlignedClause.setDataPrototype ( "SgExpression*", "alignment", "= NULL",
+                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
 
       // default (private | firstprivate | shared | none)
      OmpDefaultClause.setDataPrototype("SgOmpClause::omp_default_option_enum", "data_sharing", "=e_omp_default_unknown",
                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+      // atomic clause is one of : read, write, update, or capture
+     OmpAtomicClause.setDataPrototype("SgOmpClause::omp_atomic_clause_enum", "atomicity", "=e_omp_atomic_clause_unknown",
+                          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+ 
+     // proc_bind(master | close | spread) 
+     OmpProcBindClause.setDataPrototype("SgOmpClause::omp_proc_bind_policy_enum", "policy", "=e_omp_proc_bind_policy_unknown",
+                          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      // reduction(op:variables) 
      OmpReductionClause.setDataPrototype("SgOmpClause::omp_reduction_operator_enum", "operation", "=e_omp_reduction_unknown",
                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     
+     // depend(type:variables) 
+     OmpDependClause.setDataPrototype("SgOmpClause::omp_dependence_type_enum", "dependence_type", "=e_omp_depend_unknown",
+                          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     OmpDependClause.setDataPrototype("std::map<SgSymbol*,  std::vector < std::pair <SgExpression*, SgExpression*> > >", "array_dimensions", "",
+                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      // map (inout|alloc|in|out:variable_list) , a variable could be array type with additional dimension info, such as a[0:n][0:m]
      OmpMapClause.setDataPrototype("SgOmpClause::omp_map_operator_enum", "operation", "=e_omp_map_unknown",

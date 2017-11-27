@@ -3,8 +3,8 @@
 #include "Diagnostics.h"
 #include "stringify.h"
 
-using namespace rose;
-using namespace rose::Diagnostics;
+using namespace Rose;
+using namespace Rose::Diagnostics;
 
 void
 SgAsmElfSectionTableEntry::ctor(ByteOrder::Endianness sex, const Elf32SectionTableEntry_disk *disk) 
@@ -515,7 +515,7 @@ SgAsmElfSectionTableEntry::to_string(SectionFlags val)
         case SHF_WRITE:     str += "WRITE";break;
         case SHF_ALLOC:     str += "ALLOC";break;
         case SHF_EXECINSTR: str +=  "CODE";break;
-        case SHF_MERGE:     str += "MERGE";break;/** Might be merged */
+        case SHF_MERGE:     str += "MERGE";break;/* Might be merged */
         case SHF_STRINGS:   str += "STRINGS";break;
         case SHF_INFO_LINK: str += "INFO_LINK";break;
         case SHF_LINK_ORDER:str += "LINK_ORDER";break;

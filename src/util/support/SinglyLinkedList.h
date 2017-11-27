@@ -112,15 +112,11 @@ class SinglyLinkedListWrap
     public:
       Iterator(const SinglyLinkedListWrap<T> &l) : list(&l) { cur = l.First(); }
       Iterator(const Iterator& that) : list(that.list), cur(that.cur) {}
-
       Iterator& operator = (const Iterator& that)
          { 
            list = that.list; cur = that.cur;
-
-        // DQ (11/3/2011): Added return (caught by new EDG compiling ROSE).
            return *this;
          }
-
       Iterator() : list(0), cur(0) {}
       T& Current() const { return cur->GetEntry(); }
       T& operator *() const { return Current(); }

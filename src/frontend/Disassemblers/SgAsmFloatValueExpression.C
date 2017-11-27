@@ -1,7 +1,7 @@
 #include "sage3basic.h"
 #include "Diagnostics.h"
 
-using namespace rose::Diagnostics;
+using namespace Rose::Diagnostics;
 
 SgAsmFloatValueExpression::SgAsmFloatValueExpression(double value, SgAsmType *type) {
     ASSERT_not_null(type);

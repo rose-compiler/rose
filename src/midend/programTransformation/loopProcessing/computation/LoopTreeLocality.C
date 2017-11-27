@@ -153,7 +153,7 @@ std::string DepCompAstRef::ToHandle() const
 std::string DepCompAstRef::toString() const 
 {
   std::stringstream out;
-  out << AstToString(orig) << " : " << stmt << ":" << stmt->toString(); 
+  out << AstInterface::AstToString(orig) << " : " << stmt << ":" << stmt->toString(); 
   return out.str();
 }
 

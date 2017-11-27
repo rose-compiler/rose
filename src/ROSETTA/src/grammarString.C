@@ -10,7 +10,7 @@
 #include <sstream>
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 // ################################################################
 // #            GrammarString Member Functions                    #
@@ -1432,6 +1432,24 @@ GrammarString::containerElementTypeString(AstNodeClass & node) const
                goto done;
              }
 
+          if (typenameString == "SgUntypedNamePtrList")
+             {
+               returnString = "SgUntypedName";
+               goto done;
+             }
+
+          if (typenameString == "SgUntypedTokenPtrList")
+             {
+               returnString = "SgUntypedToken";
+               goto done;
+             }
+
+          if (typenameString == "SgUntypedTokenPairPtrList")
+             {
+               returnString = "SgUntypedTokenPair";
+               goto done;
+             }
+
           if (typenameString == "SgExpressionPtrList")
              {
                returnString = "SgExpression";
@@ -1803,6 +1821,24 @@ GrammarString::containerAppendFunctionNameString(AstNodeClass & node) const
           if (typenameString == "SgUntypedInitializedNamePtrList")
              {
                // returnString = "SgUntypedInitializedName";
+               goto done;
+             }
+
+          if (typenameString == "SgUntypedNamePtrList")
+             {
+               // returnString = "SgUntypedName";
+               goto done;
+             }
+
+          if (typenameString == "SgUntypedTokenPtrList")
+             {
+               // returnString = "SgUntypedToken";
+               goto done;
+             }
+
+          if (typenameString == "SgUntypedTokenPairPtrList")
+             {
+               // returnString = "SgUntypedTokenPair";
                goto done;
              }
 

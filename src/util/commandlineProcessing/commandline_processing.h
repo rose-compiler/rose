@@ -55,6 +55,12 @@ namespace CommandlineProcessing
            *  }
            * @endcode
            *
+           *  If you encounter strange errors near this call, make sure you're using -pthread consistently in your compile and
+           *  link commands. Its presence or absence should be the same as however the ROSE library itself was compiled and
+           *  linked. Mixing up the -pthread switch creates ABI incompatibilities that manifest themselves in various ways that
+           *  usually look like a problem with a function that's called from a program that uses librose: often a segmentation
+           *  fault, but can also be hangs, incorrect results, etc.  Note that -pthread is both a compile and a link switch.
+           *
            *  See any recent tool for more examples. */
           ROSE_UTIL_API Sawyer::CommandLine::SwitchGroup genericSwitches();
 
@@ -192,6 +198,12 @@ namespace CommandlineProcessing
           ROSE_UTIL_API bool isPHPFileNameSuffix ( const std::string & suffix );
 
           ROSE_UTIL_API bool isPythonFileNameSuffix ( const std::string & suffix );
+
+       // DQ (28/8/2017): Adding language support.
+          ROSE_UTIL_API bool isCsharpFileNameSuffix ( const std::string & suffix );
+          ROSE_UTIL_API bool isAdaFileNameSuffix    ( const std::string & suffix );
+          ROSE_UTIL_API bool isJovialFileNameSuffix ( const std::string & suffix );
+          ROSE_UTIL_API bool isCobolFileNameSuffix  ( const std::string & suffix );
 
        // TV (05/17/2010) Support for CUDA
           ROSE_UTIL_API bool isCudaFileNameSuffix ( const std::string & suffix );

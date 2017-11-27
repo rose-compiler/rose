@@ -9,7 +9,7 @@
 #include <sstream>
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 // JJW helper macros
 #define DO_ON_CHILDREN(NODE, FUNCTION) \
@@ -802,7 +802,7 @@ AstNodeClass::evaluateType(std::string& varTypeString)
           returnType = ASTATTRIBUTEMECHANISM;
        }
      else  if ( varTypeString == "hash_iterator" ||
-                varTypeString == "const rose::BinaryAnalysis::CallingConvention::Definition*")
+                varTypeString == "const Rose::BinaryAnalysis::CallingConvention::Definition*")
        {
           returnType = SKIP_TYPE;
        }
@@ -843,10 +843,18 @@ AstNodeClass::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgAttributeSpecificationStatement::attribute_spec_enum" ) ||
                  ( varTypeString == "SgDataStatementValue::data_statement_value_enum" ) ||
                  ( varTypeString == "SgFile::outputFormatOption_enum" ) ||
-                 ( varTypeString == "SgFile::outputLanguageOption_enum" ) ||
+
+              // DQ (29/8/2017): Added generalization of language specifications so we can use 
+              // a single language enum for specification of both input and output languges.
+              // ( varTypeString == "SgFile::outputLanguageOption_enum" ) ||
+                 ( varTypeString == "SgFile::languageOption_enum" ) ||
+
                  ( varTypeString == "SgOmpClause::omp_default_option_enum" ) ||
+                 ( varTypeString == "SgOmpClause::omp_proc_bind_policy_enum" ) ||
+                 ( varTypeString == "SgOmpClause::omp_atomic_clause_enum" ) ||
                  ( varTypeString == "SgOmpClause::omp_schedule_kind_enum" ) ||
                  ( varTypeString == "SgOmpClause::omp_reduction_operator_enum" ) ||
+                 ( varTypeString == "SgOmpClause::omp_dependence_type_enum" ) ||
                  ( varTypeString == "SgOmpClause::omp_map_operator_enum" ) ||
                  ( varTypeString == "SgOmpClause::omp_map_dist_data_enum" ) ||
                  ( varTypeString == "SgProcedureHeaderStatement::subprogram_kind_enum" ) ||
@@ -1670,7 +1678,7 @@ string AstNodeClass::buildStorageClassArrangeStaticDataInOneBlockSource ()
 //#########################################################################################################
 
 /* JH (10/28/2005) : This method creates the source code for the IR node constructor, that has as 
-   its corresponding StorageClass as parameter! Since we call the the initalization for the parents, 
+   its corresponding StorageClass as parameter! Since we call the initialization for the parents, 
    we only need to handle the data members of the IR node itself!
 */
 string AstNodeClass::buildSourceForIRNodeStorageClassConstructor ()

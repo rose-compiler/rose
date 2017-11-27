@@ -15,6 +15,9 @@ else (WIN32)
   if(enable-x10)
     add_subdirectory(X10CodeGeneration)
   endif()
+  if(enable-ada)
+    add_subdirectory(AdaCodeGeneration)
+  endif()
   if(enable-php)
     add_subdirectory(PHPCodeGeneration)
   endif()
@@ -53,7 +56,10 @@ add_library (unparser OBJECT
   languageIndependenceSupport/unparseLanguageIndependentConstructs.C
   X10CodeGeneration/unparseX10_expressions.C
   X10CodeGeneration/unparseX10_statements.C
-  X10CodeGeneration/unparseX10_types.C)
+  X10CodeGeneration/unparseX10_types.C
+  AdaCodeGeneration/unparseAda_expressions.C
+  AdaCodeGeneration/unparseAda_statements.C
+  AdaCodeGeneration/unparseAda_types.C)
 add_dependencies(unparser rosetta_generated)
 
 ########### install files ###############

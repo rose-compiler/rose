@@ -17,7 +17,7 @@
 #define reverse_foreach BOOST_REVERSE_FOREACH
 
 using namespace std;
-using namespace rose;
+using namespace Rose;
 
 //Initializations of the static attribute tags
 std::string VariableRenaming::varKeyTag = "rename_KeyTag";

@@ -4,7 +4,7 @@
 #include "Diagnostics.h"
 #include <Sawyer/BitVector.h>
 
-using namespace rose;
+using namespace Rose;
 
 
 

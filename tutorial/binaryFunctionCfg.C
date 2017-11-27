@@ -12,14 +12,14 @@ static const char* description =
     "graph to standard output for each function. It is intended as a demo of how to "
     "obtain a function CFG; there are better ways to print graphs.";
 
-using namespace rose::Diagnostics;
-using namespace rose::BinaryAnalysis;
+using namespace Rose::Diagnostics;
+using namespace Rose::BinaryAnalysis;
 //! [prologue]
 
 int
 main(int argc, char *argv[]) {
     //! [setup]
-    ROSE_INITIALIZE;                                    // see rose::initialize
+    ROSE_INITIALIZE;                                    // see Rose::initialize
     Partitioner2::Engine engine;
     std::vector<std::string> specimen = engine.parseCommandLine(argc, argv, purpose, description).unreachedArgs();
     if (specimen.empty()) {
