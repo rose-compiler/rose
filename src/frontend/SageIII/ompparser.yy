@@ -3,7 +3,7 @@
 /* Modified by Christian Biesinger 2006 for OpenMP 2.0 */
 /* Modified by Chunhua Liao for OpenMP 3.0 and connect to OmpAttribute, 2008 */
 
-%name-prefix="omp_"
+%name-prefix "omp_"
 %defines
 %error-verbose
 
@@ -117,7 +117,7 @@ corresponding C type is union name defaults to YYSTYPE.
 %token <itype> ICONSTANT   
 %token <stype> EXPRESSION ID_EXPRESSION 
 
-/* nonterminals names, types for semantic values
+/* nonterminals names, types for semantic values, only for nonterminals representing expressions!! not for clauses with expressions.
  */
 %type <ptype> expression assignment_expr conditional_expr 
               logical_or_expr logical_and_expr
@@ -125,9 +125,6 @@ corresponding C type is union name defaults to YYSTYPE.
               equality_expr relational_expr 
               shift_expr additive_expr multiplicative_expr 
               primary_expr unary_expr postfix_expr variable_exp_list
-              device_clause if_clause num_threads_clause
-              simd_clause proc_bind_clause
-
 %type <itype> schedule_kind
 
 /* start point for the parsing */
@@ -181,6 +178,20 @@ parallel_clause_seq : parallel_clause
                     | parallel_clause_seq ',' parallel_clause
                     ;
 
+proc_bind_clause : PROC_BIND '(' MASTER ')' { 
+                        ompattribute->addClause(e_proc_bind);
+                        ompattribute->setProcBindPolicy (e_proc_bind_master); 
+                      }
+                    | PROC_BIND '(' CLOSE ')' {
+                        ompattribute->addClause(e_proc_bind);
+                        ompattribute->setProcBindPolicy (e_proc_bind_close); 
+                      }
+                    | PROC_BIND '(' SPREAD ')' {
+                        ompattribute->addClause(e_proc_bind);
+                        ompattribute->setProcBindPolicy (e_proc_bind_spread); 
+                      }
+                    ;
+ 
 parallel_clause : unique_parallel_clause 
                 | data_default_clause
                 | private_clause
@@ -191,6 +202,7 @@ parallel_clause : unique_parallel_clause
                 | num_threads_clause
                 | proc_bind_clause
                 ;
+
 
 unique_parallel_clause : IF { 
                            ompattribute->addClause(e_if);
@@ -204,18 +216,6 @@ unique_parallel_clause : IF {
                          } '(' expression ')' { 
                            addExpression("");
                          }
-                       |PROC_BIND '(' MASTER ')' {
-                           ompattribute->addClause(e_proc_bind);
-                           ompattribute->setProcBindPolicy (e_proc_bind_master);
-                         }
-                       | PROC_BIND '(' CLOSE ')' {
-                           ompattribute->addClause(e_proc_bind);
-                           ompattribute->setProcBindPolicy (e_proc_bind_close);
-                         }
-                       | PROC_BIND '(' SPREAD ')' {
-                           ompattribute->addClause(e_proc_bind);
-                           ompattribute->setProcBindPolicy (e_proc_bind_spread);
-                         }  
                        | COPYIN { 
                            ompattribute->addClause(e_copyin);
                            omptype = e_copyin;
@@ -595,20 +595,7 @@ data_default_clause : DEFAULT '(' SHARED ')' {
                       }
                     ;
 
-proc_bind_clause : PROC_BIND '(' MASTER ')' { 
-                        ompattribute->addClause(e_proc_bind);
-                        ompattribute->setProcBindPolicy (e_proc_bind_master); 
-                      }
-                    | PROC_BIND '(' CLOSE ')' {
-                        ompattribute->addClause(e_proc_bind);
-                        ompattribute->setProcBindPolicy (e_proc_bind_close); 
-                      }
-                    | PROC_BIND '(' SPREAD ')' {
-                        ompattribute->addClause(e_proc_bind);
-                        ompattribute->setProcBindPolicy (e_proc_bind_spread); 
-                      }
-                    ;
-                    
+                   
 private_clause : PRIVATE {
                               ompattribute->addClause(e_private); omptype = e_private;
                             } '(' {b_within_variable_list = true;} variable_list ')' {b_within_variable_list = false;}
@@ -720,12 +707,13 @@ device_clause : DEVICE {
                          }
                 ;
 */
+
+/* Experimental extensions to support multiple devices and MPI */
 device_clause : DEVICE {
                            ompattribute->addClause(e_device);
                            omptype = e_device;
                          } '(' expression_or_star_or_mpi 
                 ;
-/* Experimental extensions to support multiple devices and MPI */
 expression_or_star_or_mpi: 
                   MPI ')' { // special mpi device for supporting MPI code generation
                             current_exp= SageBuilder::buildStringVal("mpi");
@@ -745,6 +733,8 @@ expression_or_star_or_mpi:
                   | '*' ')' { // our extension device (*) 
                             current_exp= SageBuilder::buildCharVal('*'); 
                             addExpression("*");  }; 
+
+
 begin_clause: TARGET_BEGIN {
                            ompattribute->addClause(e_begin);
                            omptype = e_begin;
@@ -1202,9 +1192,8 @@ unary_expr : postfix_expr {
             }
 
            ;
-                
-postfix_expr:
-            |primary_expr {
+/* Follow ANSI-C yacc grammar */                
+postfix_expr:primary_expr {
                arraySection= false; 
                  current_exp = (SgExpression*)($1);
                  $$ = current_exp;
