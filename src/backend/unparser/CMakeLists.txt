@@ -62,7 +62,7 @@ add_library (unparser OBJECT
   X10CodeGeneration/unparseX10_types.C
   AdaCodeGeneration/unparseAda_expressions.C
   AdaCodeGeneration/unparseAda_statements.C
-  AdaCodeGeneration/unparseAda_types.C)
+  AdaCodeGeneration/unparseAda_types.C
   JovialCodeGeneration/unparseJovial_expressions.C
   JovialCodeGeneration/unparseJovial_statements.C
   JovialCodeGeneration/unparseJovial_types.C)
