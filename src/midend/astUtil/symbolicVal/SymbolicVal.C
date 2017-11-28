@@ -7,7 +7,7 @@
 #include <list>
 #include <stdio.h>
 #include <sstream>
-
+using namespace std; 
 void SymbolicValImpl :: Dump() const
 { std::cerr << toString(); }
 
@@ -305,9 +305,12 @@ GetSymbolicVal( AstInterface &fa, const AstNodePtr& exp)
   else if (fa.IsBinaryOp(exp, &opr, &s1, &s2)) {
      SymbolicVal v1 = GetSymbolicVal( fa, s1 ), v2 = GetSymbolicVal(fa, s2);
      switch (opr) {
-     case AstInterface::BOP_TIMES: return v1 * v2;
-     case AstInterface::BOP_PLUS: return v1 + v2;
-     case AstInterface::BOP_MINUS: return v1 - v2;
+     case AstInterface::BOP_TIMES: 
+         return v1 * v2;
+     case AstInterface::BOP_PLUS: 
+         return v1 + v2;
+     case AstInterface::BOP_MINUS: 
+         return v1 - v2;
      case AstInterface::BOP_DOT_ACCESS:
      case AstInterface::BOP_ARROW_ACCESS: 
      case AstInterface::BOP_DIVIDE:
@@ -329,7 +332,10 @@ GetSymbolicVal( AstInterface &fa, const AstNodePtr& exp)
      case AstInterface::BOP_OR:
         return new SymbolicFunction( opr, "||", v1,v2);
      default:
+     {
+         cerr<<"Error in SymbolicValGenerator::GetSymbolicVal(): unhandled type of binary operator "<< AstInterface::toString(opr) <<endl;
         assert(false);
+     }
      }
   }
   else if (fa.IsUnaryOp(exp, &opr, &s1)) {

@@ -8992,13 +8992,34 @@ Unparse_ExprStmt::unparseReturnStmt(SgStatement* stmt, SgUnparse_Info& info)
    }
 
 void
-Unparse_ExprStmt::unparseGotoStmt(SgStatement* stmt, SgUnparse_Info& info) {
-  SgGotoStatement* goto_stmt = isSgGotoStatement(stmt);
-  ROSE_ASSERT(goto_stmt != NULL);
+Unparse_ExprStmt::unparseGotoStmt(SgStatement* stmt, SgUnparse_Info& info) 
+   {
+     SgGotoStatement* goto_stmt = isSgGotoStatement(stmt);
+     ROSE_ASSERT(goto_stmt != NULL);
 
-  curprint ( string("goto " ) + goto_stmt->get_label()->get_label().str());
-  if (!info.SkipSemiColon()) { curprint ( string(";")); }
-}
+     if (goto_stmt->get_label() != NULL)
+        {
+       // DQ (11/22/2017): Original code.
+          curprint ( string("goto " ) + goto_stmt->get_label()->get_label().str());
+
+        }
+       else
+        {
+       // DQ (11/22/2017): Added suport for GNU extension for computed goto.
+          curprint ("goto *");
+          SgExpression* selector_expression = goto_stmt->get_selector_expression();
+          ROSE_ASSERT(selector_expression != NULL);
+
+          SgUnparse_Info ninfo(info);
+          unparseExpression(selector_expression,ninfo);
+        }
+
+     if (!info.SkipSemiColon())
+        {
+          curprint ( string(";")); 
+        }
+   }
+
 
 static bool
 isOutputAsmOperand(SgAsmOp* asmOp)

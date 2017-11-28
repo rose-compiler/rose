@@ -501,6 +501,12 @@ if (enable-x10)
   set(ROSE_BUILD_X10_LANGUAGE_SUPPORT 1)
 endif()
 
+option(enable-ada "Enable Ada language support in ROSE." OFF)
+if (enable-ada)
+  # TODO:
+  set(ROSE_BUILD_ADA_LANGUAGE_SUPPORT 1)
+endif()
+
 # Other configuration options
 
 option(disable-binary-analysis-tests
@@ -1016,6 +1022,7 @@ endif (HAVE_DLFCN_H)
      ${ROSE_TOP_SRC_DIR}/src/backend/unparser/PHPCodeGeneration 
      ${ROSE_TOP_SRC_DIR}/src/backend/unparser/PythonCodeGeneration 
      ${ROSE_TOP_SRC_DIR}/src/backend/unparser/X10CodeGeneration
+     ${ROSE_TOP_SRC_DIR}/src/backend/unparser/AdaCodeGeneration
      ${ROSE_TOP_SRC_DIR}/src/backend/asmUnparser 
      ${ROSE_TOP_SRC_DIR}/src/util 
      ${ROSE_TOP_SRC_DIR}/src/util/support 
@@ -1160,7 +1167,6 @@ set(CMAKE_INSTALL_RPATH "${origin}/../lib:${origin}/")
 
 add_subdirectory(config)
 add_subdirectory(src)
-add_subdirectory(demo)
 add_subdirectory(exampleTranslators)
 add_subdirectory(scripts)
 add_subdirectory(tools)

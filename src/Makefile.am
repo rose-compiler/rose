@@ -71,6 +71,55 @@ else
    librosePythonlibraries =
 endif
 
+# DQ (28/8/2017): Adding more general language support.
+if ROSE_EXPERIMENTAL_CSHARP_ROSE_CONNECTION
+   libroseCsharplibraries = frontend/Experimental_Csharp_ROSE_Connection/libexperimentalRoseCsharp.la
+else
+   libroseCsharplibraries =
+endif
+
+# DQ (28/8/2017): Adding more general language support.
+if ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
+   libroseAdalibraries = frontend/Experimental_Ada_ROSE_Connection/libexperimentalRoseAda.la
+
+# DQ (31/8/2017): This library needs to be provided at configure time.
+   dot_asis_lib_dir = /home/quinlan1/ROSE/ADA/dot_asis/dot_asis_library/lib
+
+# DQ (31/8/2017): At least the Asis library needs to be provided built in to GNAT (atypical installation of GNAT).
+#  asis_lib_dir = @gnat_home@/lib/asis/asislib
+#  gnat_lib_dir = @gnat_home@/lib/gcc/x86_64-pc-linux-gnu/6.3.1/adalib
+
+# DQ (31/8/2017): Some of these need to be built in ROSE as libtool constructed libraries (maybe also as dynamic libraries).
+# Charles is working on this and it should be ready 4/9/2017.
+# libroseAdalibraries += ${dot_asis_lib_dir}/libdot_asis.a ${asis_lib_dir}/libasis.a ${gnat_lib_dir}/libgnarl.a ${gnat_lib_dir}/libgnat.a
+#  libroseAdalibraries += ${dot_asis_lib_dir}/libdot_asis.so
+#  libroseAdalibraries += -Wl,-rpath -Wl,${dot_asis_lib_dir}/libdot_asis.so
+   libroseAdalibraries += ${dot_asis_lib_dir}/libdot_asis.so
+else
+   libroseAdalibraries =
+endif
+
+# DQ (28/8/2017): Adding more general language support.
+if ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION
+   libroseJoviallibraries = frontend/Experimental_Jovial_ROSE_Connection/libexperimentalRoseJovial.la
+else
+   libroseJoviallibraries =
+endif
+
+# DQ (28/8/2017): Adding more general language support.
+if ROSE_EXPERIMENTAL_COBOL_ROSE_CONNECTION
+   libroseCobollibraries = frontend/Experimental_Cobol_ROSE_Connection/libexperimentalRoseCobol.la
+else
+   libroseCobollibraries =
+endif
+
+# Rasmussen (11/19/2017): Adding language support for Matlab
+if ROSE_EXPERIMENTAL_MATLAB_ROSE_CONNECTION
+   libroseMatlablibraries = frontend/Experimental_Matlab_ROSE_Connection/libexperimentalRoseMatlab.la
+else
+   libroseMatlablibraries =
+endif
+
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
    libroseBinaryLibraries =							\
 	$(top_builddir)/src/frontend/BinaryFormats/libroseBinaryFormats.la	\
@@ -133,6 +182,7 @@ libroseLibraries = \
 else
 libroseLibraries = \
    $(top_builddir)/src/3rdPartyLibraries/MSTL/libmstl.la \
+   $(top_builddir)/src/3rdPartyLibraries/libharu-2.1.0/src/libhpdf.la \
    $(top_builddir)/src/backend/libbackend.la \
    $(top_builddir)/src/frontend/SageIII/libsage3.la \
    $(libroseCxxlibraries) \
@@ -143,6 +193,10 @@ libroseLibraries = \
    $(librosePythonlibraries) \
    $(libroseBinaryLibraries) \
    $(libroseX10Libraries) \
+   $(libroseCsharplibraries) \
+   $(libroseAdalibraries) \
+   $(libroseJoviallibraries) \
+   $(libroseCobollibraries) \
    $(top_builddir)/src/midend/programAnalysis/libprogramAnalysis.la \
    $(top_builddir)/src/midend/programTransformation/loopProcessing/libLoopProcessing.la \
    $(top_builddir)/src/midend/programTransformation/extractFunctionArgumentsNormalization/libExtractFunctionArgumentsNormalization.la \
@@ -156,6 +210,10 @@ libroseLibraries = \
    $(top_builddir)/src/roseExtensions/failSafe/libfailsafe.la \
    $(libroseSqlite3xConnection) \
    $(libroseQtExtension)
+
+# DQ (6/10/2017): Added libhpdf.la library and removed it from LIBADD rule.
+# This is being done to fix the "make install" rule (which failes for me).
+# Added: $(top_builddir)/src/3rdPartyLibraries/libharu-2.1.0/src/libhpdf.la above.
 
 # DQ (12/18/2016): Moved below to make POET optional.
 #  $(top_builddir)/src/3rdPartyLibraries/POET/libpoet.la
@@ -267,10 +325,15 @@ librose_la_LIBADD = $(BOOST_LDFLAGS) $(libroseLibraries) $(JAVA_JVM_FLAGS) $(LIB
           $(BOOST_THREAD_LIB) $(BOOST_FILESYSTEM_LIB) \
           $(BOOST_PROGRAM_OPTIONS_LIB) $(BOOST_REGEX_LIB) \
           $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB) \
-          $(BOOST_WAVE_LIB) $(BOOST_IOSTREAMS_LIB)\
-          -L$(top_builddir)/src/3rdPartyLibraries/libharu-2.1.0/src -lhpdf \
+          $(BOOST_WAVE_LIB) $(BOOST_IOSTREAMS_LIB) \
           $(OPT_SQLITE3_LDFLAGS) \
-          $(OPT_MYSQL_LDFLAGS) $(ROSE_ATERM_LIBS)
+          $(OPT_MYSQL_LDFLAGS) $(ROSE_ATERM_LIBS) \
+          $(ROSE_COBOL_PT_LIBS_WITH_PATH)
+
+# DQ (6/9/2017): Removed because it failes for "make install" rule on my machine.
+# This was located after the BOOST_WAVE_LIB line in the librose_la_LIBADD rule above.
+#          -L$(top_builddir)/src/3rdPartyLibraries/libharu-2.1.0/src -lhpdf 
+# Added this library to the libroseLibraries rule farther above in this file.
 endif
 
 # libelf is a prerequisite for using libdwarf
@@ -288,7 +351,7 @@ if ROSE_USE_GCC_OMP
 endif
 
 # librose_la_LDFLAGS = -no-undefined --rpath $(INTEL_PIN_PATH)/intel64/lib-ext
-librose_la_LDFLAGS = -no-undefined
+librose_la_LDFLAGS = -no-undefined $(ROSE_RPATHS)
 
 #librose_la_LDFLAGS = $(ROSE_DWARF_LIBS_WITH_PATH)
 
@@ -350,6 +413,7 @@ rose_config_installed_cppflags =		\
 	$(ROSE_SQLITE_DATABASE_INCLUDE)		\
 	$(ROSE_PHP_INCLUDES)			\
 	$(ROSE_YICES_INCLUDES)			\
+	$(ROSE_Z3_INCLUDES)			\
 	$(ROSE_YAML_INCLUDES)			\
 	$(ROSE_LIBMAGIC_INCLUDES)		\
 	$(ROSE_ELF_INCLUDES)			\
@@ -380,6 +444,7 @@ rose_config_installed_ldflags =			\
 	$(SQLITE_DATABASE_LIBS)			\
 	$(RT_LIBS)				\
 	$(ROSE_YICES_LIBS_WITH_PATH)		\
+	$(ROSE_Z3_LIBS_WITH_PATH)		\
 	$(ROSE_PHP_LIBS_WITH_PATH)		\
 	$(ROSE_ELF_LIBS_WITH_PATH)		\
 	$(ROSE_DWARF_LIBS_WITH_PATH)		\
@@ -388,6 +453,7 @@ rose_config_installed_ldflags =			\
 	$(ROSE_ETHER_LIBS)			\
 	$(ROSE_INTEL_COMPILER_MATH_LIBS)	\
 	$(ROSE_ATERM_LIBS)			\
+	$(ROSE_COBOL_PT_LIBS_WITH_PATH)         \
 	$(ROSE_YAML_LIBS_WITH_PATH)		\
 	$(ROSE_LIBMAGIC_LIBS_WITH_PATH)		\
 	$(ROSE_DLIB_LIBS_WITH_PATH)		\
