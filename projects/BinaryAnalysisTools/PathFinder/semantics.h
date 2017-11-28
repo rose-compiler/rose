@@ -109,14 +109,14 @@ public:
 protected:
     RiscOperators(const Rose::BinaryAnalysis::Partitioner2::Partitioner *partitioner,
                   const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &protoval,
-                  Rose::BinaryAnalysis::SMTSolver *solver)
+                  Rose::BinaryAnalysis::SmtSolver *solver)
         : Super(protoval, solver), pathInsnIndex_(-1), partitioner_(partitioner) {
         name("FindPath");
     }
 
     RiscOperators(const Rose::BinaryAnalysis::Partitioner2::Partitioner *partitioner,
                   const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::StatePtr &state,
-                  Rose::BinaryAnalysis::SMTSolver *solver)
+                  Rose::BinaryAnalysis::SmtSolver *solver)
         : Super(state, solver), pathInsnIndex_(-1), partitioner_(partitioner) {
         name("FindPath");
     }
@@ -125,32 +125,32 @@ public:
     static RiscOperatorsPtr
     instance(const Rose::BinaryAnalysis::Partitioner2::Partitioner *partitioner,
              const RegisterDictionary *regdict,
-             Rose::BinaryAnalysis::SMTSolver *solver=NULL);
+             Rose::BinaryAnalysis::SmtSolver *solver=NULL);
 
     static RiscOperatorsPtr
     instance(const Rose::BinaryAnalysis::Partitioner2::Partitioner *partitioner,
              const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &protoval,
-             Rose::BinaryAnalysis::SMTSolver *solver=NULL) {
+             Rose::BinaryAnalysis::SmtSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(partitioner, protoval, solver));
     }
 
     static RiscOperatorsPtr
     instance(const Rose::BinaryAnalysis::Partitioner2::Partitioner *partitioner,
              const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::StatePtr &state,
-             Rose::BinaryAnalysis::SMTSolver *solver=NULL) {
+             Rose::BinaryAnalysis::SmtSolver *solver=NULL) {
         return RiscOperatorsPtr(new RiscOperators(partitioner, state, solver));
     }
 
 public:
     virtual Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RiscOperatorsPtr
     create(const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &protoval,
-           Rose::BinaryAnalysis::SMTSolver *solver=NULL) const ROSE_OVERRIDE {
+           Rose::BinaryAnalysis::SmtSolver *solver=NULL) const ROSE_OVERRIDE {
         return instance(NULL, protoval, solver);
     }
 
     virtual Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RiscOperatorsPtr
     create(const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::StatePtr &state,
-           Rose::BinaryAnalysis::SMTSolver *solver=NULL) const ROSE_OVERRIDE {
+           Rose::BinaryAnalysis::SmtSolver *solver=NULL) const ROSE_OVERRIDE {
         return instance(NULL, state, solver);
     }
 

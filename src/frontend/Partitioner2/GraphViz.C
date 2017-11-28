@@ -180,7 +180,7 @@ CfgEmitter::init() {
 
     // Instance initialization
     if (BaseSemantics::DispatcherPtr cpu = partitioner_.instructionProvider().dispatcher()) {
-        SMTSolver *solver = NULL;
+        SmtSolver *solver = NULL;
         const RegisterDictionary *regdict = partitioner_.instructionProvider().registerDictionary();
         size_t addrWidth = partitioner_.instructionProvider().instructionPointerRegister().get_nbits();
         BaseSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(regdict, solver);

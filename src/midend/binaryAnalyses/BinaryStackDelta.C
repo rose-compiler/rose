@@ -36,7 +36,7 @@ Analysis::init(Disassembler *disassembler) {
         ASSERT_not_null(regdict);
         size_t addrWidth = disassembler->instructionPointerRegister().get_nbits();
 
-        SMTSolver *solver = NULL;
+        SmtSolver *solver = NULL;
         BaseSemantics::SValuePtr protoval = SymbolicSemantics::SValue::instance();
         BaseSemantics::RegisterStatePtr registers = SymbolicSemantics::RegisterState::instance(protoval, regdict);
         BaseSemantics::MemoryStatePtr memory = NullSemantics::MemoryState::instance(protoval, protoval);

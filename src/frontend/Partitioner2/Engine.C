@@ -875,8 +875,12 @@ Engine::loadNonContainers(const std::vector<std::string> &fileNames) {
                     }
                 }
             }
-                
-            BinaryDebugger debugger(exeName);
+
+            unsigned flags = BinaryDebugger::CLOSE_FILES |
+                             BinaryDebugger::REDIRECT_INPUT |
+                             BinaryDebugger::REDIRECT_OUTPUT |
+                             BinaryDebugger::REDIRECT_ERROR;
+            BinaryDebugger debugger(exeName, flags);
 
             // Set breakpoints for all executable addresses in the memory map created by the Linux kernel. Since we're doing
             // this before the first instruction executes, no shared libraries have been loaded yet. However, the dynamic

@@ -1,0 +1,16 @@
+START
+PROGRAM testbody ;
+BEGIN
+  ITEM ivar S ;
+  ITEM uvar U ;
+label1:  ivar = -13 ;
+label2:  uvar =  13 ;
+  PROC sub1 ;
+label3 : label4 :;
+  PROC sub2 ;
+label5:  ;
+
+label6 : label7 :
+
+END
+TERM

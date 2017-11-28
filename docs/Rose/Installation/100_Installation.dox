@@ -2,7 +2,10 @@
 
 /** @page installation Installing ROSE
  *  How to install ROSE from source code.
- *
+ *  
+ *  If you don't want to install ROSE from scratch, you can try to use the virtual machine image with ROSE installed. 
+ *  See more at https://en.wikibooks.org/wiki/ROSE_Compiler_Framework/Virtual_Machine_Image 
+ * 
  *  @todo Watch out!  This installation guide is our first revision and almost certainly contains errors and omissions. We are
  *        working to combine all of our installation instructions into this single document, at which time those other
  *        documents will be removed. [Robb P. Matzke 2015-09-25]
@@ -154,15 +157,6 @@
  *    </tr>
  *    
  *    <tr>
- *      <td><a href="https://www.python.org">Python</a></td>
- *      <td>Required</td>
- *      <td>3</td>
- *      <td>3.1.3</td>
- *      <td>ATerm support in ROSE when using autoconf regardless of whether such support is enabled. See @ref
- *      installing_python.</td>
- *    </tr>
- *
- *    <tr>
  *      <td><a href="http://www.boost.org">Boost</a></td>
  *      <td>Required</td>
  *      <td>1.51 through 1.61, except 1.54</td>
@@ -170,6 +164,27 @@
  *      <td>C++ portable runtime features. ROSE and/or software used by ROSE requires the following Boost libraries: chrono,
  *      date_time, filesystem, iostreams, program_options, random, regex, signals, system, thread, and wave. See @ref
  *      installing_boost. More info [here](http://theboostcpplibraries.com/).</td>
+ *    </tr>
+ *
+ *  </table>
+ * 
+ * The following table lists optional packages for advanced users. 
+ *
+ *  <table>
+ *    <tr>
+ *      <td><b>Software component</b></td>
+ *      <td><b>Necessity</b></td>
+ *      <td><b>Supported Versions</b></td>
+ *      <td><b>Regularly tested</b></td>
+ *      <td><b>Purpose</b></td>
+ *    </tr>
+ *
+ *    <tr>
+ *      <td><a href="https://www.python.org">Python</a></td>
+ *      <td>Required</td>
+ *      <td>3</td>
+ *      <td>3.1.3</td>
+ *      <td>Needed for the ROSE Python frontend. See @ref installing_python.</td>
  *    </tr>
  *
  *    <tr>

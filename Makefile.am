@@ -2,18 +2,14 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
 
 
-# DQ (1/18/2009): Added demo directory to support showoffs :-).
 # DQ "config" and "src" must preceed any other directories, and 
 # "tutorial" and "exampleTranslators" must preceed "docs" since 
 # they generate data that is subsequently used in the generated 
 # ROSE documentation (examples, input codes, and generated output).
-# SUBDIRS = config src projects tests tutorial exampleTranslators docs developersScratchSpace tools proposals scripts
-# SUBDIRS = libltdl config src projects tests tutorial exampleTranslators docs tools scripts demo binaries
 
 # DQ (2/6/2010): changed the order of tests, the projects directory now follows the tests directory.
 # This was something that was discussed in email previously with the group.  Thei point is to have the
 # first tests run by make check be the most relevant tests (e.g. can we compile C++ code).
-# SUBDIRS = libltdl config src tests projects tutorial exampleTranslators docs tools scripts demo binaries
 
 # DQ (4/17/2010): Support for minimal configuration of ROSE (e.g. "--enable-only-fortran").
 
@@ -47,7 +43,7 @@ endif
 # all:
 #	@echo "**********************************************************************************************"
 #	@echo "**********************************************************************************************"
-#	@echo "Skipping tests in tutorial, exampleTranslators, docs, tools, scripts, and demo directories for"
+#	@echo "Skipping tests in tutorial, exampleTranslators, docs, tools, scripts, and directories for"
 #	@echo "GNU 4.8.x using C++11 mode (GNU 4.8 compiler has internal errors when using the C++11 mode)."
 #	@echo "**********************************************************************************************"
 #	@echo "**********************************************************************************************"
@@ -58,10 +54,6 @@ if ROSE_BUILD_TUTORIAL_DIRECTORY_SUPPORT
    SUBDIRS += tutorial exampleTranslators docs 
 endif
 SUBDIRS += tools scripts 
-if ROSE_BUILD_TUTORIAL_DIRECTORY_SUPPORT
- # If we can't process the tutorial directory then we can't run demos
-   SUBDIRS += demo
-endif
 
 # endif for excluding tests using GNU 4.8 and C++11 mode together.
 endif
@@ -134,7 +126,7 @@ rose-installer-rmc2: install-rose-library
 		--os="$(RMC_OS_NAME)"							\
 		--prjnam=ROSE								\
 		--prjver=$(PACKAGE_VERSION)						\
-		--postinstall-sh=$(top_srcdir)/scripts/mkinstaller-postinstall.sh	\
+		--postinstall-perl=$(top_srcdir)/scripts/rose-post-install		\
 		$(prefix)/*								\
 		$(addsuffix /*, $(filter-out / /usr /usr/local,				\
 		    $(BOOST_ROOT)							\
@@ -508,8 +500,6 @@ NumberOfMakefiles:
 	@du -a $(srcdir)/tutorial | $(FILTER_MAKEFILES)| wc -l
 	@echo "Number of Makefile.am files in docs directory: "
 	@du -a $(srcdir)/docs | $(FILTER_MAKEFILES) | wc -l
-	@echo "Number of Makefile.am files in demo directory: "
-	@du -a $(srcdir)/demo | $(FILTER_MAKEFILES) | wc -l
 	@echo "Number of Makefile.am files in tools directory: "
 	@du -a $(srcdir)/tools | $(FILTER_MAKEFILES) | wc -l
 	@echo "Number of Makefile.am files in config directory: "

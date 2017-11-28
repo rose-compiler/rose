@@ -178,7 +178,7 @@ runNatively(const Settings &settings, const std::string &specimenName, Sawyer::O
             const P2::Partitioner &partitioner, rose_addr_t randomAddress) {
     Stream debug(mlog[DEBUG]);
 
-    BinaryDebugger debugger(specimenName);
+    BinaryDebugger debugger(specimenName, BinaryDebugger::CLOSE_FILES);
     if (debugger.isTerminated()) {
         mlog[FATAL] <<"child " <<debugger.isAttached() <<" " <<debugger.howTerminated() <<" before we could gain control\n";
         exit(1);

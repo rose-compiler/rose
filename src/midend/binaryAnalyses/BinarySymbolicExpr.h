@@ -26,7 +26,7 @@
 namespace Rose {
 namespace BinaryAnalysis {
 
-class SMTSolver;
+class SmtSolver;
 
 /** Namespace supplying types and functions for symbolic expressions.
  *
@@ -264,18 +264,18 @@ public:
      *  If an SMT solver is specified then that solver is used to answer this question, otherwise equality is established by
      *  looking only at the structure of the two expressions. Two expressions can be equal without being the same width (e.g.,
      *  a 32-bit constant zero is equal to a 16-bit constant zero). */
-    virtual bool mustEqual(const Ptr &other, SMTSolver*) = 0;
+    virtual bool mustEqual(const Ptr &other, SmtSolver*) = 0;
 
     // [Robb P. Matzke 2015-10-08]: deprecated
-    bool must_equal(const Ptr& other, SMTSolver *solver) ROSE_DEPRECATED("use mustEqual instead") {
+    bool must_equal(const Ptr& other, SmtSolver *solver) ROSE_DEPRECATED("use mustEqual instead") {
         return mustEqual(other, solver);
     }
 
     /** Returns true if two expressions might be equal, but not necessarily be equal. */
-    virtual bool mayEqual(const Ptr &other, SMTSolver*) = 0;
+    virtual bool mayEqual(const Ptr &other, SmtSolver*) = 0;
 
     // [Robb P. Matzke 2015-10-08]: deprecated
-    bool may_equal(const Ptr &other, SMTSolver *solver) ROSE_DEPRECATED("use mayEqual instead") {
+    bool may_equal(const Ptr &other, SmtSolver *solver) ROSE_DEPRECATED("use mayEqual instead") {
         return mayEqual(other, solver);
     }
     
@@ -770,8 +770,8 @@ public:
     /** @} */
 
     /* see superclass, where these are pure virtual */
-    virtual bool mustEqual(const Ptr &other, SMTSolver*) ROSE_OVERRIDE;
-    virtual bool mayEqual(const Ptr &other, SMTSolver*) ROSE_OVERRIDE;
+    virtual bool mustEqual(const Ptr &other, SmtSolver*) ROSE_OVERRIDE;
+    virtual bool mayEqual(const Ptr &other, SmtSolver*) ROSE_OVERRIDE;
     virtual bool isEquivalentTo(const Ptr &other) ROSE_OVERRIDE;
     virtual int compareStructure(const Ptr& other) ROSE_OVERRIDE;
     virtual Ptr substitute(const Ptr &from, const Ptr &to) ROSE_OVERRIDE;
@@ -996,8 +996,8 @@ public:
     // from base class
     virtual bool isNumber() ROSE_OVERRIDE;
     virtual uint64_t toInt() ROSE_OVERRIDE;
-    virtual bool mustEqual(const Ptr &other, SMTSolver*) ROSE_OVERRIDE;
-    virtual bool mayEqual(const Ptr &other, SMTSolver*) ROSE_OVERRIDE;
+    virtual bool mustEqual(const Ptr &other, SmtSolver*) ROSE_OVERRIDE;
+    virtual bool mayEqual(const Ptr &other, SmtSolver*) ROSE_OVERRIDE;
     virtual bool isEquivalentTo(const Ptr &other) ROSE_OVERRIDE;
     virtual int compareStructure(const Ptr& other) ROSE_OVERRIDE;
     virtual Ptr substitute(const Ptr &from, const Ptr &to) ROSE_OVERRIDE;
@@ -1151,7 +1151,7 @@ std::ostream& operator<<(std::ostream &o, Node&);
 std::ostream& operator<<(std::ostream &o, const Node::WithFormatter&);
 
 /** Convert a set to an ite expression. */
-Ptr setToIte(const Ptr&);
+Ptr setToIte(const Ptr&, const LeafPtr &var = LeafPtr());
 
 /** Counts the number of nodes.
  *

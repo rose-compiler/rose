@@ -35,7 +35,7 @@ SValue::isBottom() const {
 
 Sawyer::Optional<BaseSemantics::SValuePtr>
 SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, const BaseSemantics::MergerPtr &merger_,
-                            SMTSolver *solver) const {
+                            SmtSolver *solver) const {
     SValuePtr other = SValue::promote(other_);
     ASSERT_require(get_width() == other->get_width());
     MergerPtr merger = merger_.dynamicCast<Merger>();
@@ -132,7 +132,7 @@ SValue::set_defining_instructions(SgAsmInstruction *insn)
 }
 
 bool
-SValue::may_equal(const BaseSemantics::SValuePtr &other_, SMTSolver *solver) const 
+SValue::may_equal(const BaseSemantics::SValuePtr &other_, SmtSolver *solver) const 
 {
     SValuePtr other = SValue::promote(other_);
     ASSERT_require(get_width()==other->get_width());
@@ -142,7 +142,7 @@ SValue::may_equal(const BaseSemantics::SValuePtr &other_, SMTSolver *solver) con
 }
 
 bool
-SValue::must_equal(const BaseSemantics::SValuePtr &other_, SMTSolver *solver) const
+SValue::must_equal(const BaseSemantics::SValuePtr &other_, SmtSolver *solver) const
 {
     SValuePtr other = SValue::promote(other_);
     ASSERT_require(get_width()==other->get_width());
@@ -556,8 +556,8 @@ RiscOperators::ite(const BaseSemantics::SValuePtr &sel_,
     }
     if (solver()) {
         // If the selection expression cannot be true, then return b
-        ExprPtr assertion = SymbolicExpr::makeEq(sel->get_expression(), SymbolicExpr::makeInteger(1, 1));
-        bool can_be_true = SMTSolver::SAT_NO != solver()->satisfiable(assertion);
+        ExprPtr condition = sel->get_expression();
+        bool can_be_true = SmtSolver::SAT_NO != solver()->satisfiable(condition);
         if (!can_be_true) {
             retval = SValue::promote(b->copy());
             switch (computingDefiners_) {
@@ -576,8 +576,8 @@ RiscOperators::ite(const BaseSemantics::SValuePtr &sel_,
         }
 
         // If the selection expression cannot be false, then return a
-        assertion = SymbolicExpr::makeEq(sel->get_expression(), SymbolicExpr::makeInteger(1, 0));
-        bool can_be_false = SMTSolver::SAT_NO != solver()->satisfiable(assertion);
+        ExprPtr inverseCondition = SymbolicExpr::makeInvert(sel->get_expression());
+        bool can_be_false = SmtSolver::SAT_NO != solver()->satisfiable(inverseCondition);
         if (!can_be_false) {
             retval = SValue::promote(a->copy());
             switch (computingDefiners_) {

@@ -107,7 +107,7 @@ public:
      *
      *  Since memory addresses may be symbolic, this function uses an SMT solver to return true if and only if equality of two
      *  addresses is satisfiable. */
-    bool mayAlias(const AbstractLocation &other, SMTSolver *solver=NULL) const;
+    bool mayAlias(const AbstractLocation &other, SmtSolver *solver=NULL) const;
 
     /** True if two abstract locations are certainly aliases.
      *
@@ -118,7 +118,7 @@ public:
      *
      *  Since memory addresses may be symbolic, this function uses an SMT solver to return true if and only if the inequality
      *  of two addresses is unsatisfiable. */
-    bool mustAlias(const AbstractLocation &other, SMTSolver *solver=NULL) const;
+    bool mustAlias(const AbstractLocation &other, SmtSolver *solver=NULL) const;
 
     /** Print an abstract location.
      *

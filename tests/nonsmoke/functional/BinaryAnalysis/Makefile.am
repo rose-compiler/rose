@@ -641,6 +641,11 @@ testWorkList.passed: $(TEST_EXIT_STATUS) testWorkList conditionalDisable
 ###############################################################################################################################
 # Test ROSE's Map<T> class
 ###############################################################################################################################
+
+if !USING_INTEL_COMPILER
+
+# DQ (11/17/2017): The testMap.C code causes an internal compiler error for the Intel v16 compiler.
+
 noinst_PROGRAMS += testMap
 testMap_SOURCES = testMap.C
 testMap_LDADD = $(ROSE_SEPARATE_LIBS)
@@ -653,7 +658,7 @@ testMap.passed: $(TEST_EXIT_STATUS) testMap conditionalDisable
 		DISABLED="$$(./conditionalDisable)"			\
 		CMD=./testMap						\
 		$< $@
-
+endif
 
 ###############################################################################################################################
 # Test pointer detection
@@ -933,18 +938,17 @@ check-testDominance: $(testDominance_test_targets)
 # Convenience target to run all these semantics tests. This target is not run automatically by "make check" (which instead
 # depends on each of the targets individually rather than just this one).
 PHONIES += check-semantics
-#       API1 (the old stuff)            API2 (the newer stuff)               Extra tests
-check-semantics:												\
-        nullSemantics.passed            nullSemantics2-x86.passed						\
-        partialSymbolicSemantics.passed partialSymbolicSemantics2-x86.passed					\
-        intervalSemantics.passed        intervalSemantics2-x86.passed						\
-        symbolicSemantics.passed        symbolicSemantics2-x86.passed        traceSymbolicSemantics2-x86.passed	\
-        yicesSemanticsExe.passed        yicesSemanticsExe2-x86.passed						\
-        yicesSemanticsLib.passed        yicesSemanticsLib2-x86.passed						\
-        multiSemantics.passed											\
-        findConstants.passed											\
-        findConstantsABI.passed											\
-                                        semanticsSubclassing.passed
+#       API2 (the newer stuff)               Extra tests
+check-semantics:								\
+        nullSemantics2-x86.passed						\
+        partialSymbolicSemantics2-x86.passed					\
+        intervalSemantics2-x86.passed						\
+        symbolicSemantics2-x86.passed        traceSymbolicSemantics2-x86.passed	\
+        yicesSemanticsExe2-x86.passed						\
+        yicesSemanticsLib2-x86.passed						\
+	z3SemanticsExe2-x86.passed						\
+	z3SemanticsLib2-x86.passed						\
+        semanticsSubclassing.passed
 
 # TOO1 (3/24/2015): Failing jenkins-release GCC 4.2.4; removing temporarily until fixed
 #multiSemantics2.passed
@@ -1060,6 +1064,42 @@ yicesSemanticsLib2-x86.passed: semantics.conf yicesSemanticsLib2 conditionalDisa
 	@$(RTH_RUN)					\
 		DISABLED="$$(./conditionalDisable)"	\
 		CMD=yicesSemanticsLib2			\
+		INPUT=i686-test1.O3.bin			\
+		SPECIMEN_DIR="$(SPECIMEN_DIR)"		\
+		ANSWER=$(srcdir)/$(@:.passed=.ans)	\
+		$< $@
+endif
+
+# Symbolic semantics, Z3 executable
+noinst_PROGRAMS += z3SemanticsExe2
+z3SemanticsExe2_SOURCES = semantics.C
+z3SemanticsExe2_CPPFLAGS = -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSMT_SOLVER=Z3_EXE
+z3SemanticsExe2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+EXTRA_DIST += semantics.conf z3SemanticsExe2-x86.ans
+if ROSE_HAVE_Z3
+TEST_TARGETS += z3SemanticsExe2-x86.passed
+z3SemanticsExe2-x86.passed: semantics.conf z3SemanticsExe2 conditionalDisable
+	@$(RTH_RUN)					\
+		DISABLED="$$(./conditionalDisable)"	\
+		CMD=z3SemanticsExe2			\
+		INPUT=i686-test1.O3.bin			\
+		SPECIMEN_DIR="$(SPECIMEN_DIR)"		\
+		ANSWER=$(srcdir)/$(@:.passed=.ans)	\
+		$< $@
+endif
+
+# Symbolic semantics, Z3 library
+noinst_PROGRAMS += z3SemanticsLib2
+z3SemanticsLib2_SOURCES = semantics.C
+z3SemanticsLib2_CPPFLAGS = -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSMT_SOLVER=Z3_LIB
+z3SemanticsLib2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+EXTRA_DIST += semantics.conf z3SemanticsLib2-x86.ans
+if ROSE_HAVE_LIBZ3
+TEST_TARGETS += z3SemanticsLib2-x86.passed
+z3SemanticsLib2-x86.passed: semantics.conf z3SemanticsLib2 conditionalDisable
+	@$(RTH_RUN)					\
+		DISABLED="$$(./conditionalDisable)"	\
+		CMD=z3SemanticsLib2			\
 		INPUT=i686-test1.O3.bin			\
 		SPECIMEN_DIR="$(SPECIMEN_DIR)"		\
 		ANSWER=$(srcdir)/$(@:.passed=.ans)	\

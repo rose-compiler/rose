@@ -2,7 +2,9 @@
 #include <Progress.h>
 
 #include <boost/lexical_cast.hpp>
+#include <iostream>
 #include <Sawyer/Synchronization.h>
+#include <string>
 
 // Pretends to do some real work consisting of multiple phases each having some number of steps.
 static void

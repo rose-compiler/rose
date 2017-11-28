@@ -106,6 +106,9 @@ namespace AutoParallelization
   //TODO: move to SageInterface when ready
   bool differentMemoryLocation(SgExpression* e1, SgExpression* e2);
 
+  //! Check if a loop has any unsupported language features so we can skip them for now
+  bool useUnsupportedLanguageFeatures(SgNode* loop, VariantT* blackConstruct);
+
 } //end namespace
 
 #endif //auto_par_support_INCLUDED

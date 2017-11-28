@@ -18,7 +18,7 @@ namespace ConcreteSemantics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Sawyer::Optional<BaseSemantics::SValuePtr>
-SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, const BaseSemantics::MergerPtr&, SMTSolver*) const {
+SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, const BaseSemantics::MergerPtr&, SmtSolver*) const {
     // There's no official way to represent BOTTOM
     throw BaseSemantics::NotImplemented("SValue merging for ConcreteSemantics is not supported", NULL);
 }
@@ -31,12 +31,12 @@ SValue::bits(const Sawyer::Container::BitVector &newBits) {
 }
 
 bool
-SValue::may_equal(const BaseSemantics::SValuePtr &other, SMTSolver*) const {
+SValue::may_equal(const BaseSemantics::SValuePtr &other, SmtSolver*) const {
     return 0 == bits_.compare(SValue::promote(other)->bits());
 }
 
 bool
-SValue::must_equal(const BaseSemantics::SValuePtr &other, SMTSolver*) const {
+SValue::must_equal(const BaseSemantics::SValuePtr &other, SmtSolver*) const {
     return 0 == bits_.compare(SValue::promote(other)->bits());
 }
 
@@ -80,7 +80,7 @@ MemoryState::allocatePage(rose_addr_t va) {
         map_ = MemoryMap::instance();
     rose_addr_t pageVa = alignDown(va, pageSize_);
     unsigned acc = MemoryMap::READABLE | MemoryMap::WRITABLE;
-    map_->insert(AddressInterval::baseSize(pageVa, pageSize_),
+    map_->insert(AddressInterval::hull(pageVa, pageVa+pageSize_-1),
                  MemoryMap::Segment(MemoryMap::AllocatingBuffer::instance(pageSize_),
                                     0, acc, "ConcreteSemantics demand allocated"));
 }

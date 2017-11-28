@@ -1,6 +1,11 @@
 #include "rosetollvm/Control.h"
-#include <rosetollvm/LLVMAstAttributes.h>
-#include <llvm/ADT/StringExtras.h>
+#include "rosetollvm/LLVMAstAttributes.h"
+
+#include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/Format.h"
+#include "llvm/Support/FormattedStream.h"
+#include "llvm/Support/raw_ostream.h"
 
 void __rose2llvm_fail (const char *__assertion, const char *__file, unsigned int __line) {
     std::cerr << "*** Bad assertion in file " << __file << " at line " << __line << ": " << __assertion << std::endl;
@@ -281,27 +286,137 @@ string Control::FloatToString(double x) {
 }
 
 /**
- * This code was copied from llvm-3.4 AsmWriter and altered slightly here...
+ * This code was copied from llvm-4.0.1 AsmWriter and altered slightly here...
  *
  * AsmWriter.cpp:
  *
  *     static void WriteConstantInternal(raw_ostream &Out, const Constant *CV,
  *                                       TypePrinting &TypePrinter,
  *                                       SlotTracker *Machine,
- *                                       const Module *Context) { ...
+ *                                       const Module *Context) { ... }
  */
 string Control::FloatToString(APFloat &f) {
-    stringstream out;
+    string output_string;
+    llvm::raw_string_ostream out(output_string);
 
-    if (&f.getSemantics() == &APFloat::IEEEsingle || &f.getSemantics() == &APFloat::IEEEdouble) {
+    if (&(f.getSemantics()) == &APFloat::IEEEsingle() ||
+        &(f.getSemantics()) == &APFloat::IEEEdouble()) {
         // We would like to output the FP constant value in exponential notation,
         // but we cannot do this if doing so will lose precision.  Check here to
         // make sure that we only output it in exponential format if we can parse
         // the value back and get the same value.
         //
         bool ignored;
-        bool isHalf = &f.getSemantics()==&APFloat::IEEEhalf;
-        bool isDouble = &f.getSemantics()==&APFloat::IEEEdouble;
+        bool isDouble = &(f.getSemantics()) == &APFloat::IEEEdouble();
+        bool isInf = f.isInfinity();
+        bool isNaN = f.isNaN();
+        if (!isInf && !isNaN) {
+            double Val = isDouble ? f.convertToDouble() :
+                                    f.convertToFloat();
+            //
+            // TODO: THIS NEEDS TO BE FIXED !!!
+            //
+            /*	    
+            SmallString<128> StrVal;
+            raw_svector_ostream(StrVal) << Val;
+
+            // Check to make sure that the stringized number is not some string like
+            // "Inf" or NaN, that atof will accept, but the lexer will not.  Check
+            // that the string matches the "[-+]?[0-9]" regex.
+            //
+            if ((StrVal[0] >= '0' && StrVal[0] <= '9') ||
+                ((StrVal[0] == '-' || StrVal[0] == '+') &&
+                 (StrVal[1] >= '0' && StrVal[1] <= '9'))) {
+                // Reparse stringized version!
+                if (APFloat(APFloat::IEEEdouble(), StrVal).convertToDouble() == Val) {
+                    return StrVal.str().str();
+                }
+            }
+            */
+
+            out << Val;
+            string result = out.str(); // call to str() is required in order to flush buffer ...
+
+            // Check to make sure that the stringized number is not some string like
+            // "Inf" or NaN, that atof will accept, but the lexer will not.  Check
+            // that the string matches the "[-+]?[0-9]" regex.
+            //
+            if (result.length() >= 2) {
+                if ((result[0] >= '0' && result[0] <= '9') ||
+                    ((result[0] == '-' || result[0] == '+') &&
+                     (result[1] >= '0' && result[1] <= '9'))) {
+                    // Reparse stringized version!
+                    if (APFloat(APFloat::IEEEdouble(), result/* StrVal*/).convertToDouble() == Val) {
+                        return result;
+                    }
+                }
+            }
+        }
+ 
+        output_string = ""; // Clear the string...
+	
+        // Otherwise we could not reparse it to exactly the same value, so we must
+        // output the string in hexadecimal format!  Note that loading and storing
+        // floating point types changes the bits of NaNs on some hosts, notably
+        // x86, so we must not use these types.
+        static_assert(sizeof(double) == sizeof(uint64_t),
+                      "assuming that double is 64 bits!");
+        APFloat apf = f;
+        // Floats are represented in ASCII IR as double, convert.
+        if (!isDouble)
+            apf.convert(APFloat::IEEEdouble(), APFloat::rmNearestTiesToEven,
+                              &ignored);
+        out << format_hex(apf.bitcastToAPInt().getZExtValue(), 0, /*Upper=*/true);
+        return out.str();
+    }
+
+    // Either half, or some form of long double.
+    // These appear as a magic letter identifying the type, then a
+    // fixed number of hex digits.
+    out << "0x";
+    APInt API = f.bitcastToAPInt();
+    if (&(f.getSemantics()) == &APFloat::x87DoubleExtended()) {
+        out << 'K';
+
+        out << format_hex_no_prefix(API.getHiBits(16).getZExtValue(), 4,
+                                    /*Upper=*/true);
+        out << format_hex_no_prefix(API.getLoBits(64).getZExtValue(), 16,
+                                    /*Upper=*/true);
+    }
+    else if (&(f.getSemantics()) == &APFloat::IEEEquad()) {
+        out << 'L';
+        out << format_hex_no_prefix(API.getLoBits(64).getZExtValue(), 16,
+                                    /*Upper=*/true);
+        out << format_hex_no_prefix(API.getHiBits(64).getZExtValue(), 16,
+                                    /*Upper=*/true);
+    }
+    else if (&(f.getSemantics()) == &APFloat::PPCDoubleDouble()) {
+        out << 'M';
+        out << format_hex_no_prefix(API.getLoBits(64).getZExtValue(), 16,
+                                    /*Upper=*/true);
+        out << format_hex_no_prefix(API.getHiBits(64).getZExtValue(), 16,
+                                    /*Upper=*/true);
+    }
+    else if (&(f.getSemantics()) == &APFloat::IEEEhalf()) {
+        out << 'H';
+        out << format_hex_no_prefix(API.getZExtValue(), 4,
+                                    /*Upper=*/true);
+    }
+    else
+        llvm_unreachable("Unsupported floating point type");
+
+    return out.str();
+    
+  /*
+    if (&f.getSemantics() == &APFloat::IEEEsingle() || &f.getSemantics() == &APFloat::IEEEdouble()) {
+        // We would like to output the FP constant value in exponential notation,
+        // but we cannot do this if doing so will lose precision.  Check here to
+        // make sure that we only output it in exponential format if we can parse
+        // the value back and get the same value.
+        //
+        bool ignored;
+        bool isHalf = &f.getSemantics()==&APFloat::IEEEhalf();
+        bool isDouble = &f.getSemantics()==&APFloat::IEEEdouble();
         bool isInf = f.isInfinity();
         bool isNaN = f.isNaN();
         if (!isHalf && !isInf && !isNaN) {
@@ -317,7 +432,7 @@ string Control::FloatToString(APFloat &f) {
                 ((StrVal[0] == '-' || StrVal[0] == '+') &&
                  (StrVal[1] >= '0' && StrVal[1] <= '9'))) {
                  // Reparse stringized version!
-                if (APFloat(APFloat::IEEEdouble, StrVal).convertToDouble() == Val) {
+                 if (APFloat(APFloat::IEEEdouble(), StrVal).convertToDouble() == Val) {
                     return StrVal.str().str();
                 }
             }
@@ -331,9 +446,10 @@ string Control::FloatToString(APFloat &f) {
         APFloat apf = f;
         // Halves and floats are represented in ASCII IR as double, convert.
         if (!isDouble) {
-            apf.convert(APFloat::IEEEdouble, APFloat::rmNearestTiesToEven, &ignored);
+            apf.convert(APFloat::IEEEdouble(), APFloat::rmNearestTiesToEven, &ignored);
         }
-        out << "0x" << utohex_buffer(uint64_t(apf.bitcastToAPInt().getZExtValue()), Buffer+40);
+//         out << "0x" << utohex_buffer(uint64_t(apf.bitcastToAPInt().getZExtValue()), Buffer+40);
+	out << format_hex(apf.bitcastToAPInt().getZExtValue(), 0, /*Upper=*/ /*true);
         return out.str();
     }
 
@@ -344,7 +460,7 @@ string Control::FloatToString(APFloat &f) {
     // Bit position, in the current word, of the next nibble to print.
     int shiftcount;
 
-    if (&f.getSemantics() == &APFloat::x87DoubleExtended) {
+    if (&f.getSemantics() == &APFloat::x87DoubleExtended()) {
         out << 'K';
         // api needed to prevent premature destruction
         APInt api = f.bitcastToAPInt();
@@ -367,13 +483,13 @@ string Control::FloatToString(APFloat &f) {
         }
 
         return out.str();
-    } else if (&f.getSemantics() == &APFloat::IEEEquad) {
+    } else if (&f.getSemantics() == &APFloat::IEEEquad()) {
         shiftcount = 60;
         out << 'L';
-    } else if (&f.getSemantics() == &APFloat::PPCDoubleDouble) {
+    } else if (&f.getSemantics() == &APFloat::PPCDoubleDouble()) {
         shiftcount = 60;
         out << 'M';
-    } else if (&f.getSemantics() == &APFloat::IEEEhalf) {
+    } else if (&f.getSemantics() == &APFloat::IEEEhalf()) {
         shiftcount = 12;
         out << 'H';
     } else
@@ -397,8 +513,8 @@ string Control::FloatToString(APFloat &f) {
                 shiftcount = width-j-4;
         }
     }
-
     return out.str();
+*/
 }
 
 bool Control::isIntegerType(SgType *t) {
@@ -502,43 +618,43 @@ std::string Control::primitiveSource(SgValueExp *n, SgType *t) {
     }
     else if (isSgFloatVal(n)) {
         if (isSgTypeFloat(t)) {
-            APFloat f(APFloat::IEEEsingle, isSgFloatVal(n) -> get_valueString());
+            APFloat f(APFloat::IEEEsingle(), isSgFloatVal(n) -> get_valueString());
             str = FloatToString(f);
         }
         else if (isSgTypeDouble(t)) {
-            APFloat f(APFloat::IEEEdouble, isSgFloatVal(n) -> get_valueString());
+            APFloat f(APFloat::IEEEdouble(), isSgFloatVal(n) -> get_valueString());
             str = FloatToString(f);
         }
         else {
-            APFloat f(APFloat::IEEEquad, isSgFloatVal(n) -> get_valueString());
+            APFloat f(APFloat::IEEEquad(), isSgFloatVal(n) -> get_valueString());
             str = FloatToString(f);
         }
     }
     else if (isSgDoubleVal(n)) {
         if (isSgTypeFloat(t)) {
-            APFloat f(APFloat::IEEEsingle, isSgDoubleVal(n) -> get_valueString());
+            APFloat f(APFloat::IEEEsingle(), isSgDoubleVal(n) -> get_valueString());
             str = FloatToString(f);
         }
         else if (isSgTypeDouble(t)) {
-            APFloat f(APFloat::IEEEdouble, isSgDoubleVal(n) -> get_valueString());
+            APFloat f(APFloat::IEEEdouble(), isSgDoubleVal(n) -> get_valueString());
             str = FloatToString(f);
         }
         else {
-            APFloat f(APFloat::IEEEquad, isSgDoubleVal(n) -> get_valueString());
+            APFloat f(APFloat::IEEEquad(), isSgDoubleVal(n) -> get_valueString());
             str = FloatToString(f);
         }
     }
     else if (isSgLongDoubleVal(n)) {
         if (isSgTypeFloat(t)) {
-            APFloat f(APFloat::IEEEsingle, isSgLongDoubleVal(n) -> get_valueString());
+            APFloat f(APFloat::IEEEsingle(), isSgLongDoubleVal(n) -> get_valueString());
             str = FloatToString(f);
         }
         else if (isSgTypeDouble(t)) {
-            APFloat f(APFloat::IEEEdouble, isSgLongDoubleVal(n) -> get_valueString());
+            APFloat f(APFloat::IEEEdouble(), isSgLongDoubleVal(n) -> get_valueString());
             str = FloatToString(f);
         }
         else {
-            APFloat f(APFloat::IEEEquad, isSgLongDoubleVal(n) -> get_valueString());
+            APFloat f(APFloat::IEEEquad(), isSgLongDoubleVal(n) -> get_valueString());
             str = FloatToString(f);
         }
     }

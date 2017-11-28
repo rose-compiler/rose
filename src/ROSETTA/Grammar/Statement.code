@@ -1427,6 +1427,13 @@ HEADER_CATCH_STATEMENT_SEQ_END
 
 HEADER_STATIC_ASSERTION_DECLARATION_START
 
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual bool cfgIsIndexInteresting(unsigned int) const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
+#endif
+
        // We need this to be defined to avoid calling the base class version (which is an error).
           SgName get_mangled_name() const $ROSE_OVERRIDE;
 
@@ -1437,6 +1444,17 @@ HEADER_STATIC_ASSERTION_DECLARATION_END
 
 HEADER_FUNCTION_PARAMETER_SCOPE_START
 HEADER_FUNCTION_PARAMETER_SCOPE_END
+
+
+HEADER_DECLARATION_SCOPE_START
+
+       // DQ (7/19/2017): Adding support for mangled name support for new scope.
+          virtual SgName get_mangled_name(void) const $ROSE_OVERRIDE;
+
+       // DQ (7/19/2017): Added to support general name qualification
+          virtual SgName get_qualified_name() const $ROSE_OVERRIDE;
+
+HEADER_DECLARATION_SCOPE_END
 
 
 HEADER_FUNCTION_DECLARATION_STATEMENT_START
@@ -8002,7 +8020,10 @@ resetTemplateNamesInScope ( SgScopeStatement* scope )
      printf ("In resetTemplateNamesInScope: traversing through parent scopes (scope = %p = %s) \n",scope,scope->class_name().c_str());
 #endif
 
-     while ( scope != NULL && isSgGlobal(scope) == NULL )
+  // DQ (7/24/2017): Allow both SgGlobal and SgDeclarationScope to be stoping criteria for this iteration.
+  // Unless this causes name collissions because we truncated the scope names.
+  // while ( scope != NULL && isSgGlobal(scope) == NULL )
+     while ( scope != NULL && isSgGlobal(scope) == NULL && isSgDeclarationScope(scope) == NULL )
         {
 #if 0
           printf ("In resetTemplateNamesInScope(%s) \n",scope->class_name().c_str());
@@ -8066,6 +8087,13 @@ resetTemplateNamesInScope ( SgScopeStatement* scope )
                     break;
                   }
 
+            // DQ (7/20/2017): I don't think we have anything to do here, since there can only be class declarations in this scope, where it exists.
+               case V_SgDeclarationScope:
+                  {
+                 // Nothing to do here!
+                    break;
+                  }
+
                default:
                   {
                     printf ("Error: default reached in evaluation of scope within resetTemplateNamesInScope scope = %s \n",scope->sage_class_name());
@@ -8078,6 +8106,13 @@ resetTemplateNamesInScope ( SgScopeStatement* scope )
        // scope = scope->get_scope();
           ROSE_ASSERT(scope != NULL);
           SgScopeStatement* next_scope = scope->get_scope();
+#if 0
+          printf ("In resetTemplateNamesInScope(): next_scope = %p \n",next_scope);
+          if (next_scope != NULL)
+             {
+               printf ("In resetTemplateNamesInScope(): next_scope = %p = %s \n",next_scope,next_scope->class_name().c_str());
+             }
+#endif
           ROSE_ASSERT(scope != next_scope);
           scope = next_scope;
         }
@@ -8150,7 +8185,7 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
      SgScopeStatement* parentScope = get_scope();
 
 #if 0
-     printf ("In resetTemplateNameSupport(): At %s parentScope = %s \n",sage_class_name(),parentScope->sage_class_name());
+     printf ("In resetTemplateNameSupport(): At %s parentScope = %s \n",class_name().c_str(),parentScope->class_name().c_str());
 #endif
 
   // DQ (2/10/2007): I hope we can assert this!
@@ -8169,9 +8204,17 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
        // recursive calls from the evaluation of the template arguments.
           nameResetFromMangledForm = true;
 
+#if 0
+          printf ("In resetTemplateNameSupport(): Calling resetTemplateNamesInScope(): parentScope = %p = %s \n",parentScope,parentScope->class_name().c_str());
+#endif
+
        // DQ (10/26/2015): Moved to after the conditional test to avoid resetting the template name again on this declaration.
        // This function loops over all parent scopes
           resetTemplateNamesInScope(parentScope);
+
+#if 0
+          printf ("DONE: In resetTemplateNameSupport(): Calling resetTemplateNamesInScope(): parentScope = %p = %s \n",parentScope,parentScope->class_name().c_str());
+#endif
 
        // returnName = get_templateName().str();
        // SgTemplateArgumentPtrListPtr templateArgListPtr = get_templateArguments();
@@ -8274,6 +8317,10 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
              }
 
           ROSE_ASSERT(templateArgListPtr != NULL);
+
+#if 0
+          printf ("In resetTemplateNameSupport(): Handle the template arguments (where available) \n");
+#endif
 
        // DQ (4/13/2005): Sometimes template parameters are present but were not specified in the source code and if so we 
        // should also not output "<>".  This is a stronger test than that implemented previously (fixes output of "std::endl<>" as well).
@@ -8789,6 +8836,10 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
        // SageInterface::outputLocalSymbolTables(parentScope);
 
 #if 0
+          printf ("In resetTemplateNameSupport(): Handle the symbol support \n");
+#endif
+
+#if 0
        // DQ (2/10/2007): Unload the associated symbol using the old name and reload it into the symbol table using the new name!
           printf ("\n\nCalling this->get_symbol_from_symbol_table() on %s parentScope = %p = %s name = %s count = %ld \n",
                this->class_name().c_str(),parentScope,parentScope->class_name().c_str(),name.str(),parentScope->count_symbol(name));
@@ -8897,6 +8948,10 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
        // in building template name and which are a source of errors in generated code.
           testForBadGenerateTemplateName(returnName);
         }
+
+#if 0
+     printf ("Leaving SgDeclarationStatement::resetTemplateNameSupport() \n");
+#endif
    }
 
 
@@ -10537,6 +10592,37 @@ SgFunctionParameterScope::post_construction_initialization()
    }
 
 SOURCE_FUNCTION_PARAMETER_SCOPE_END
+
+
+SOURCE_DECLARATION_SCOPE_START
+
+void
+SgDeclarationScope::post_construction_initialization()
+   {
+  // Nothing to do here, but we need this function to be defined.
+   }
+
+// DQ (7/20/2017): I think that the mangled name support requires the definition of this function.
+SgName
+SgDeclarationScope::get_mangled_name(void) const
+   {
+  // I think that for this scope we need not return anything.
+     return SgName ("__declaration_scope__");
+   }
+
+// DQ (7/19/2017): Added to support qualified name generation
+SgName
+SgDeclarationScope::get_qualified_name() const
+   {
+     std::string globalScopeDelimiter;
+
+  // globalScopeDelimiter = "/* declaration scope */";
+     globalScopeDelimiter = "";
+
+     return SgName (globalScopeDelimiter);
+   }
+
+SOURCE_DECLARATION_SCOPE_END
 
 
 SOURCE_FUNCTION_DECLARATION_STATEMENT_START

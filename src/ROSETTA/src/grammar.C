@@ -1177,6 +1177,9 @@ generate_override_keyword( AstNodeClass & node, GrammarString & data )
      printf ("In generate_override_keyword(): nodeName = %s variableNameString = %s \n",nodeName.c_str(),variableNameString.c_str());
 #endif
 
+  // Rasmussen (8/16/2017): Added UntypedSubmoduleDeclaration (a submodule extends an existing module)
+  // Rasmussen (10/01/2017): Added SgUntypedPackageDeclaration,SgUntypedStructureDeclaration,SgUntypedTaskDeclaration,SgUntypedUnitDeclaration
+
   // Except in the root class for the virtual access function.
      if ( (nodeName == "XXXPragma"                  && variableNameString == "startOfConstruct")  ||
           (nodeName == "XXXPragma"                  && variableNameString == "endOfConstruct")    ||
@@ -1195,6 +1198,11 @@ generate_override_keyword( AstNodeClass & node, GrammarString & data )
           (nodeName == "InitializedName"            && variableNameString == "scope") ||
           (nodeName == "UntypedFunctionDeclaration" && variableNameString == "scope") ||
           (nodeName == "UntypedModuleDeclaration"   && variableNameString == "scope") ||
+          (nodeName == "UntypedSubmoduleDeclaration"&& variableNameString == "scope") ||
+          (nodeName == "UntypedPackageDeclaration"  && variableNameString == "scope") ||
+          (nodeName == "UntypedStructureDeclaration"&& variableNameString == "scope") ||
+          (nodeName == "UntypedTaskDeclaration"     && variableNameString == "scope") ||
+          (nodeName == "UntypedUnitDeclaration"     && variableNameString == "scope") ||
           (nodeName == "UntypedBlockStatement"      && variableNameString == "scope") ||
           (nodeName == "UntypedFile"                && variableNameString == "scope") ||
           (nodeName == "TemplateParameter"          && variableNameString == "type")  ||
@@ -1234,6 +1242,11 @@ generate_override_keyword( AstNodeClass & node, GrammarString & data )
           (nodeName == "UntypedReferenceExpression" && variableNameString == "name")  ||
           (nodeName == "UntypedFunctionDeclaration" && variableNameString == "name")  ||
           (nodeName == "UntypedModuleDeclaration"   && variableNameString == "name")  ||
+          (nodeName == "UntypedSubmoduleDeclaration"&& variableNameString == "name")  ||
+          (nodeName == "UntypedPackageDeclaration"  && variableNameString == "name")  ||
+          (nodeName == "UntypedStructureDeclaration"&& variableNameString == "name")  ||
+          (nodeName == "UntypedTaskDeclaration"     && variableNameString == "name")  ||
+          (nodeName == "UntypedUnitDeclaration"     && variableNameString == "name")  ||
           (nodeName == "UntypedInitializedName"     && variableNameString == "name")  ||
           (nodeName == "UntypedName"                && variableNameString == "name")  ||
           (nodeName == "EnumDeclaration"            && variableNameString == "name")  ||
@@ -1288,6 +1301,9 @@ generate_override_keyword_for_set_functions( AstNodeClass & node, GrammarString 
      printf ("In generate_override_keyword(): nodeName = %s variableNameString = %s \n",nodeName.c_str(),variableNameString.c_str());
 #endif
 
+  // Rasmussen (8/16/2017): Added UntypedSubmoduleDeclaration (a submodule extends an existing module)
+  // Rasmussen (9/01/2017): Added SgUntypedPackageDeclaration,SgUntypedStructureDeclaration,SgUntypedTaskDeclaration,SgUntypedUnitDeclaration
+
   // Except in the root class for the virtual access function.
      if ( (nodeName == "Pragma"                     && variableNameString == "startOfConstruct")   ||
           (nodeName == "Pragma"                     && variableNameString == "endOfConstruct")     ||
@@ -1299,6 +1315,11 @@ generate_override_keyword_for_set_functions( AstNodeClass & node, GrammarString 
           (nodeName == "InitializedName"            && variableNameString == "scope") ||
           (nodeName == "UntypedFunctionDeclaration" && variableNameString == "scope") ||
           (nodeName == "UntypedModuleDeclaration"   && variableNameString == "scope") ||
+          (nodeName == "UntypedSubmoduleDeclaration"&& variableNameString == "scope") ||
+          (nodeName == "UntypedPackageDeclaration"  && variableNameString == "scope") ||
+          (nodeName == "UntypedStructureDeclaration"&& variableNameString == "scope") ||
+          (nodeName == "UntypedTaskDeclaration"     && variableNameString == "scope") ||
+          (nodeName == "UntypedUnitDeclaration"     && variableNameString == "scope") ||
           (nodeName == "UntypedBlockStatement"      && variableNameString == "scope") ||
           (nodeName == "UntypedFile"                && variableNameString == "scope") ||
           (nodeName == "TemplateParameter"          && variableNameString == "type")  ||
@@ -1340,6 +1361,11 @@ generate_override_keyword_for_set_functions( AstNodeClass & node, GrammarString 
           (nodeName == "UntypedReferenceExpression" && variableNameString == "name")  ||
           (nodeName == "UntypedFunctionDeclaration" && variableNameString == "name")  ||
           (nodeName == "UntypedModuleDeclaration"   && variableNameString == "name")  ||
+          (nodeName == "UntypedSubmoduleDeclaration"&& variableNameString == "name")  ||
+          (nodeName == "UntypedPackageDeclaration"  && variableNameString == "name")  ||
+          (nodeName == "UntypedStructureDeclaration"&& variableNameString == "name")  ||
+          (nodeName == "UntypedTaskDeclaration"     && variableNameString == "name")  ||
+          (nodeName == "UntypedUnitDeclaration"     && variableNameString == "name")  ||
           (nodeName == "UntypedInitializedName"     && variableNameString == "name")  ||
           (nodeName == "UntypedName"                && variableNameString == "name")  ||
           (nodeName == "EnumDeclaration"            && variableNameString == "name")  ||

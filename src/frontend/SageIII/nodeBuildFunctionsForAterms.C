@@ -2877,11 +2877,11 @@ SgUntypedNode* SgUntypedNode::build_node_from_nonlist_children ( Sg_File_Info* s
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgUntypedExpression* SgUntypedExpression::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgToken::ROSE_Fortran_Keywords statement_enum )
+SgUntypedExpression* SgUntypedExpression::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, int expression_enum )
    {
 #if 0
   // debugging information!
-     printf ("In SgUntypedExpression::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgToken::ROSE_Fortran_Keywords statement_enum): this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In SgUntypedExpression::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, int expression_enum): this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
      SgUntypedExpression* returnNode = NULL;
@@ -2895,11 +2895,11 @@ SgUntypedExpression* SgUntypedExpression::build_node_from_nonlist_children ( Sg_
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgUntypedUnaryOperator* SgUntypedUnaryOperator::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgToken::ROSE_Fortran_Keywords statement_enum, SgToken::ROSE_Fortran_Operators operator_enum, std::string operator_name, SgUntypedExpression* operand )
+SgUntypedUnaryOperator* SgUntypedUnaryOperator::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, int expression_enum, std::string operator_name, SgUntypedExpression* operand )
    {
 #if 0
   // debugging information!
-     printf ("In SgUntypedUnaryOperator::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgToken::ROSE_Fortran_Keywords statement_enum, SgToken::ROSE_Fortran_Operators operator_enum, std::string operator_name, SgUntypedExpression* operand): this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In SgUntypedUnaryOperator::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, int expression_enum, std::string operator_name, SgUntypedExpression* operand): this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
      SgUntypedUnaryOperator* returnNode = NULL;
@@ -2913,11 +2913,11 @@ SgUntypedUnaryOperator* SgUntypedUnaryOperator::build_node_from_nonlist_children
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgUntypedBinaryOperator* SgUntypedBinaryOperator::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgToken::ROSE_Fortran_Keywords statement_enum, SgToken::ROSE_Fortran_Operators operator_enum, std::string operator_name, SgUntypedExpression* lhs_operand, SgUntypedExpression* rhs_operand )
+SgUntypedBinaryOperator* SgUntypedBinaryOperator::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, int expression_enum, std::string operator_name, SgUntypedExpression* lhs_operand, SgUntypedExpression* rhs_operand )
    {
 #if 0
   // debugging information!
-     printf ("In SgUntypedBinaryOperator::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgToken::ROSE_Fortran_Keywords statement_enum, SgToken::ROSE_Fortran_Operators operator_enum, std::string operator_name, SgUntypedExpression* lhs_operand, SgUntypedExpression* rhs_operand): this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In SgUntypedBinaryOperator::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, int expression_enum, std::string operator_name, SgUntypedExpression* lhs_operand, SgUntypedExpression* rhs_operand): this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
      SgUntypedBinaryOperator* returnNode = NULL;
@@ -2931,11 +2931,11 @@ SgUntypedBinaryOperator* SgUntypedBinaryOperator::build_node_from_nonlist_childr
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgUntypedValueExpression* SgUntypedValueExpression::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgToken::ROSE_Fortran_Keywords statement_enum, std::string value_string, SgUntypedType* type )
+SgUntypedValueExpression* SgUntypedValueExpression::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, int expression_enum, std::string value_string, SgUntypedType* type )
    {
 #if 0
   // debugging information!
-     printf ("In SgUntypedValueExpression::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgToken::ROSE_Fortran_Keywords statement_enum, std::string value_string, SgUntypedType* type): this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In SgUntypedValueExpression::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, int expression_enum, std::string value_string, SgUntypedType* type): this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
      SgUntypedValueExpression* returnNode = NULL;
@@ -2949,11 +2949,11 @@ SgUntypedValueExpression* SgUntypedValueExpression::build_node_from_nonlist_chil
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgUntypedArrayReferenceExpression* SgUntypedArrayReferenceExpression::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgToken::ROSE_Fortran_Keywords statement_enum )
+SgUntypedArrayReferenceExpression* SgUntypedArrayReferenceExpression::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, int expression_enum )
    {
 #if 0
   // debugging information!
-     printf ("In SgUntypedArrayReferenceExpression::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgToken::ROSE_Fortran_Keywords statement_enum): this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In SgUntypedArrayReferenceExpression::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, int expression_enum): this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
      SgUntypedArrayReferenceExpression* returnNode = NULL;
@@ -2967,11 +2967,11 @@ SgUntypedArrayReferenceExpression* SgUntypedArrayReferenceExpression::build_node
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgUntypedOtherExpression* SgUntypedOtherExpression::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgToken::ROSE_Fortran_Keywords statement_enum )
+SgUntypedOtherExpression* SgUntypedOtherExpression::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, int expression_enum )
    {
 #if 0
   // debugging information!
-     printf ("In SgUntypedOtherExpression::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgToken::ROSE_Fortran_Keywords statement_enum): this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In SgUntypedOtherExpression::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, int expression_enum): this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
      SgUntypedOtherExpression* returnNode = NULL;
@@ -2985,11 +2985,11 @@ SgUntypedOtherExpression* SgUntypedOtherExpression::build_node_from_nonlist_chil
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgUntypedFunctionCallOrArrayReferenceExpression* SgUntypedFunctionCallOrArrayReferenceExpression::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgToken::ROSE_Fortran_Keywords statement_enum )
+SgUntypedFunctionCallOrArrayReferenceExpression* SgUntypedFunctionCallOrArrayReferenceExpression::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, int expression_enum )
    {
 #if 0
   // debugging information!
-     printf ("In SgUntypedFunctionCallOrArrayReferenceExpression::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgToken::ROSE_Fortran_Keywords statement_enum): this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In SgUntypedFunctionCallOrArrayReferenceExpression::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, int expression_enum): this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
      SgUntypedFunctionCallOrArrayReferenceExpression* returnNode = NULL;
@@ -3003,11 +3003,11 @@ SgUntypedFunctionCallOrArrayReferenceExpression* SgUntypedFunctionCallOrArrayRef
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgUntypedReferenceExpression* SgUntypedReferenceExpression::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgToken::ROSE_Fortran_Keywords statement_enum, std::string name )
+SgUntypedReferenceExpression* SgUntypedReferenceExpression::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, int expression_enum, std::string name )
    {
 #if 0
   // debugging information!
-     printf ("In SgUntypedReferenceExpression::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgToken::ROSE_Fortran_Keywords statement_enum, std::string name): this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In SgUntypedReferenceExpression::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, int expression_enum, std::string name): this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
      SgUntypedReferenceExpression* returnNode = NULL;
@@ -3057,11 +3057,11 @@ SgUntypedDeclarationStatement* SgUntypedDeclarationStatement::build_node_from_no
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgUntypedNameListDeclaration* SgUntypedNameListDeclaration::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct )
+SgUntypedNameListDeclaration* SgUntypedNameListDeclaration::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, int statement_enum )
    {
 #if 0
   // debugging information!
-     printf ("In SgUntypedNameListDeclaration::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In SgUntypedNameListDeclaration::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, int statement_enum): this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
      SgUntypedNameListDeclaration* returnNode = NULL;
@@ -3155,11 +3155,11 @@ SgUntypedSubroutineDeclaration* SgUntypedSubroutineDeclaration::build_node_from_
    }
 
 
-SgUntypedInterfaceDeclaration* SgUntypedInterfaceDeclaration::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, std::string name )
+SgUntypedInterfaceDeclaration* SgUntypedInterfaceDeclaration::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, std::string name, int statement_enum )
    {
 #if 0
   // debugging information!
-     printf ("In SgUntypedInterfaceDeclaration::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, std::string name): this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In SgUntypedInterfaceDeclaration::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, std::string name, int statement_enum): this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
      SgUntypedInterfaceDeclaration* returnNode = NULL;
@@ -3181,6 +3181,425 @@ SgUntypedModuleDeclaration* SgUntypedModuleDeclaration::build_node_from_nonlist_
 #endif
 
      SgUntypedModuleDeclaration* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+// Rasmussen (8/16/2017): Added UntypedSubmoduleDeclaration IR node (a submodule extends an existing module)
+SgUntypedSubmoduleDeclaration* SgUntypedSubmoduleDeclaration::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, std::string name, std::string submodule_ancestor, std::string submodule_parent )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedSubmoduleDeclaration::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, std::string name, std::string submodule_ancestor, std::string submodule_parent): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedSubmoduleDeclaration* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+// Rasmussen (10/04/2017): Added several functions below for new untyped nodes related to general language support.
+//
+SgUntypedExceptionHandlerDeclaration* SgUntypedExceptionHandlerDeclaration::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedExceptionHandlerDeclaration::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedExceptionHandlerDeclaration* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+SgUntypedDelayRelativeStatement* SgUntypedDelayRelativeStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedDelayRelativeStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedDelayRelativeStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+SgUntypedForStatement* SgUntypedForStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedForStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedForStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+SgUntypedGotoStatement* SgUntypedGotoStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedGotoStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedGotoStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+SgUntypedLoopStatement* SgUntypedLoopStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedLoopStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedLoopStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+SgUntypedAcceptStatement* SgUntypedAcceptStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedAcceptStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedAcceptStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+SgUntypedIfStatement* SgUntypedIfStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedIfStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedIfStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+SgDeclarationScope* SgDeclarationScope::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgDeclarationScope::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgDeclarationScope* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+SgUntypedRequeueStatement* SgUntypedRequeueStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedRequeueStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedRequeueStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+SgUntypedCaseStatement* SgUntypedCaseStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedCaseStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedCaseStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+SgUntypedExtendedReturnStatement* SgUntypedExtendedReturnStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedExtendedReturnStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedExtendedReturnStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+SgUntypedNullStatement* SgUntypedNullStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedNullStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedNullStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+SgUntypedReturnStatement* SgUntypedReturnStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedReturnStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedReturnStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+SgUntypedTaskDeclaration* SgUntypedTaskDeclaration::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct, std::string name)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedTaskDeclaration::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, std::string name): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedTaskDeclaration* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+SgUntypedUnitDeclaration* SgUntypedUnitDeclaration::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct, std::string name)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedUnitDeclaration::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, std::string name): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedUnitDeclaration* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+SgUntypedConditionalEntryCallStatement* SgUntypedConditionalEntryCallStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedConditionalEntryCallStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedConditionalEntryCallStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+SgUntypedAbortStatement* SgUntypedAbortStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedAbortStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedAbortStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+SgUntypedRaiseStatement* SgUntypedRaiseStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedRaiseStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedRaiseStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+SgUntypedDelayUntilStatement* SgUntypedDelayUntilStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedDelayUntilStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedDelayUntilStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+SgUntypedExceptionDeclaration* SgUntypedExceptionDeclaration::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedExceptionDeclaration::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedExceptionDeclaration* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+SgUntypedExitStatement* SgUntypedExitStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedExitStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedExitStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+SgUntypedAsynchronousSelectStatement* SgUntypedAsynchronousSelectStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedAsynchronousSelectStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedAsynchronousSelectStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+SgUntypedWhileStatement* SgUntypedWhileStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedWhileStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedWhileStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+SgUntypedTerminateAlternativeStatement* SgUntypedTerminateAlternativeStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedTerminateAlternativeStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedTerminateAlternativeStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+SgUntypedProcedureCallStatement* SgUntypedProcedureCallStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedProcedureCallStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedProcedureCallStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+SgUntypedSelectiveAcceptStatement* SgUntypedSelectiveAcceptStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedSelectiveAcceptStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedSelectiveAcceptStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+SgUntypedPackageDeclaration* SgUntypedPackageDeclaration::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct, std::string name)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedPackageDeclaration::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, std::string name): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedPackageDeclaration* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+SgUntypedStructureDeclaration* SgUntypedStructureDeclaration::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct, std::string name)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedStructureDeclaration::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, std::string name): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedStructureDeclaration* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+SgUntypedTimedEntryCallStatement* SgUntypedTimedEntryCallStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedTimedEntryCallStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedTimedEntryCallStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+SgUntypedEntryCallStatement* SgUntypedEntryCallStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedEntryCallStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedEntryCallStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
+SgUntypedCodeStatement* SgUntypedCodeStatement::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedCodeStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedCodeStatement* returnNode = NULL;
 
      return returnNode;
    }
@@ -3245,11 +3664,11 @@ SgUntypedBlockStatement* SgUntypedBlockStatement::build_node_from_nonlist_childr
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgUntypedNamedStatement* SgUntypedNamedStatement::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, std::string statement_name )
+SgUntypedNamedStatement* SgUntypedNamedStatement::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, int statement_enum, std::string statement_name )
    {
 #if 0
   // debugging information!
-     printf ("In SgUntypedNamedStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, std::string statement_name): this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In SgUntypedNamedStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, int statement_enum, std::string statement_name): this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
      SgUntypedNamedStatement* returnNode = NULL;
@@ -3258,11 +3677,11 @@ SgUntypedNamedStatement* SgUntypedNamedStatement::build_node_from_nonlist_childr
    }
 
 //TODO: Rasmussen - figure out how to get this file generated
-SgUntypedExpressionStatement* SgUntypedExpressionStatement::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, SgUntypedExpression* statement_expression )
+SgUntypedExpressionStatement* SgUntypedExpressionStatement::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, int statement_enum, SgUntypedExpression* statement_expression )
    {
 #if 0
   // debugging information!
-     printf ("In SgUntypedExpressionStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgUntypedExpression* statement_expression): this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In SgUntypedExpressionStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, int statement_enum, SgUntypedExpression* statement_expression): this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
      SgUntypedExpressionStatement* returnNode = NULL;
@@ -3276,11 +3695,11 @@ SgUntypedExpressionStatement* SgUntypedExpressionStatement::build_node_from_nonl
 /* #line 1 "/home/dquinlan/ROSE/git-dq-edg49-fortran-rc/src/ROSETTA/Grammar/grammarAtermConstructorDefinitionMacros.macro" */
 
 // Generated static function for building IR nodes for Aterm support (like a constructor).
-SgUntypedOtherStatement* SgUntypedOtherStatement::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct )
+SgUntypedOtherStatement* SgUntypedOtherStatement::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, int statement_enum )
    {
 #if 0
   // debugging information!
-     printf ("In SgUntypedOtherStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct): this = %p = %s \n",this,this->class_name().c_str());
+     printf ("In SgUntypedOtherStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, int statement_enum): this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
      SgUntypedOtherStatement* returnNode = NULL;

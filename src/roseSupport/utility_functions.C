@@ -36,6 +36,9 @@
 // Interestingly it must be at the top of the list of include files.
 #include "rose_config.h"
 
+// DQ (9/8/2017): Debugging ROSE_ASSERT. Call sighandler_t signal(int signum, sighandler_t handler);
+#include<signal.h>
+
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 using namespace Rose;
@@ -618,6 +621,23 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
 
      int finalCombinedExitStatus = 0;
 
+     if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL )
+        {
+          printf ("Inside of backend(SgProject*) \n");
+        }
+
+#ifdef ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
+  // DQ (9/8/2017): Debugging ROSE_ASSERT. Call sighandler_t signal(int signum, sighandler_t handler);
+  // signal(SIG_DFL,NULL);
+     signal(SIGABRT,SIG_DFL);
+#endif
+
+#if 0
+  // DQ (9/8/2017): Debugging ROSE_ASSERT.
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
      if (project->get_binary_only() == true)
         {
           ROSE_ASSERT(project != NULL);
@@ -628,9 +648,6 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
 
           project->skipfinalCompileStep(true);
         }
-
-     if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL )
-          printf ("Inside of backend(SgProject*) \n");
 
   // printf ("   project->get_useBackendOnly() = %s \n",project->get_useBackendOnly() ? "true" : "false");
      if (project->get_useBackendOnly() == false)
@@ -980,6 +997,25 @@ generateDOT ( const SgProject & project, std::string filenamePostfix )
                printf ("In generateDOT(): AST graph too large to generate. (numberOfASTnodes=%d) > (maxSize=%d) \n",numberOfASTnodes,maxSize);
         }
    }
+
+
+void
+generateDOT ( SgNode* node, std::string filename )
+   {
+  // DQ (9/22/2017): This function is being provided to support the generation of a dot file from any subtree.
+  // The more imediate use for this function is to support generation of dot files from trees built using the ROSE Untyped nodes.
+
+  // DQ (6/14/2007): Added support for timing of the generateDOT() function.
+     TimingPerformance timer ("ROSE generateDOT():");
+
+     AstDOTGeneration astdotgen;
+
+  // This used to be the default, but it would output too much data (from include files).
+  // std::string filenamePostfix = ".dot";
+     std::string filenamePostfix = "";
+     astdotgen.generate(node, filename, DOTGeneration<SgNode*>::TOPDOWNBOTTOMUP, filenamePostfix);
+   }
+
 
 void
 generateDOT_withIncludes ( const SgProject & project, std::string filenamePostfix )

@@ -15,7 +15,6 @@ FORTRAN_CODES = \
 test1_f.f \
 test2_f.f
 
-
 TESTCODES_Objects = ${LIST}
 
 $(TESTCODES_Objects): ../../testTranslator

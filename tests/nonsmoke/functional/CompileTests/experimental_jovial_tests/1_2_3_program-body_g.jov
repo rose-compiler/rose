@@ -1,0 +1,7 @@
+START
+PROGRAM testbody ;
+BEGIN
+  ivar = 13 ;
+  label1: label2: label3:
+END
+TERM
