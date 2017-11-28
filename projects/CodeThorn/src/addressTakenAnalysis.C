@@ -701,7 +701,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionCallEx
       while(!isSgFile((node = node->get_parent())));
       SgFile* enclosingFile = isSgFile(node);
       ROSE_ASSERT(enclosingFile);
-      if(enclosingFile->get_outputLanguage() == SgFile::e_C_output_language) {
+      if(enclosingFile->get_outputLanguage() == SgFile::e_C_language) {
         // This should be C code. TODO: This might be overwritten by -std=... ?
         // Because C has no references, they only possible address-taking is the function to pointer
         //  conversion. Make the parameter type a function pointer type if the argument type is a
