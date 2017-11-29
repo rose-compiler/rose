@@ -73,6 +73,8 @@ static omp_construct_enum omptype = e_unknown;
 //Liao
 static SgNode* gNode;
 
+static const char* orig_str; 
+
 // The current expression node being generated 
 static SgExpression* current_exp = NULL;
 bool b_within_variable_list  = false;  // a flag to indicate if the program is now processing a list of variables
@@ -88,6 +90,8 @@ static SgExpression* length_exp = NULL;
 static bool arraySection=true; 
 
 %}
+
+%locations
 
 /* The %union declaration specifies the entire collection of possible data types for semantic values. these names are used in the %token and %type declarations to pick one of the types for a terminal or nonterminal symbol
 corresponding C type is union name defaults to YYSTYPE.
@@ -1326,7 +1330,10 @@ dist_size_opt: /*empty*/ {current_exp = NULL;}
 
 %%
 int yyerror(const char *s) {
-    printf("%s!\n", s);
+    SgLocatedNode* lnode = isSgLocatedNode(gNode);
+    assert (lnode);
+    printf("Error when parsing pragma:\n\t %s \n\t associated with node at line %d\n", orig_str, lnode->get_file_info()->get_line()); 
+    printf(" %s!\n", s);
     assert(0);
     return 0; // we want to the program to stop on error
 }
@@ -1337,6 +1344,7 @@ OmpAttribute* getParsedDirective() {
 }
 
 void omp_parser_init(SgNode* aNode, const char* str) {
+    orig_str = str;  
     omp_lexer_init(str);
     gNode = aNode;
 }
