@@ -243,7 +243,8 @@ int main(int argc, char* argv[]) {
 
   if(args.getBool("normalize2")) {
     logger[TRACE] <<"STATUS: Normalization started."<<endl;
-    SPRAY::Normalization::normalizeAst(root);
+    SPRAY::Normalization normalizer;
+    normalizer.normalizeAst(root);
     logger[TRACE] <<"STATUS: Normalization finished."<<endl;
     root->unparse(0,0);
     exit(0);

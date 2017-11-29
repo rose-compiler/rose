@@ -156,7 +156,8 @@ Lattice* DFAnalysisBase::initializeGlobalVariables(SgProject* root) {
 void
 DFAnalysisBase::normalizeProgram(SgProject* root) {
   cout<<"STATUS: Normalizing program."<<endl;
-  SPRAY::Normalization::normalizeAst(root);
+  SPRAY::Normalization normalizer;
+  normalizer.normalizeAst(root);
 }
 
 

@@ -10,7 +10,7 @@ using namespace std;
 namespace SPRAY {
 
   int32_t Normalization::tmpVarNr=1;
-  Normalization::TransformationList Normalization::transformationList;
+  //Normalization::TransformationList Normalization::transformationList;
 
   void Normalization::normalizeAst(SgNode* root) {
     SingleStatementToBlockNormalizer singleStatementToBlockNormalizer;
@@ -93,15 +93,6 @@ namespace SPRAY {
         i.skipChildrenOnForward();
       }
     }
-#if 0
-    for(InsertList::iterator i=insertList.begin();i!=insertList.end();++i) {
-      SageInterface::insertStatementBefore((*i).first, (*i).second);
-    }
-    for(ReplaceList::iterator i=replaceList.begin();i!=replaceList.end();++i) {
-      cout<<"DEBUG: replacing "<<(*i).first->unparseToString()<<" with "<<(*i).second->unparseToString()<<endl;
-      SageInterface::replaceExpression((*i).first, (*i).second);
-    }
-#else
     for(TransformationList::iterator i=transformationList.begin();i!=transformationList.end();++i) {
       SgStatement* stmt=(*i).first;
       SgExpression* expr=(*i).second;
@@ -117,7 +108,6 @@ namespace SPRAY {
       cout<<"tmp"<<tmpVarNr<<": replaced @"<<(stmt)->unparseToString()<<" inserted: "<<tmpVarDeclaration->unparseToString()<<endl;
       tmpVarNr++;
     }
-#endif
   }
 } // end of namespace SPRAY
 
