@@ -18,7 +18,10 @@ LDADD    = $(ROSE_LIBS)
 # put macroCalls.c here since it requires -rose:wave, which causes seg fault on 64-bit machine
 TESTCODE_CURRENTLY_FAILING = \
 	ompfor7.c \
-	macroCalls.c
+	macroCalls.c \
+	data-member-access.cpp \
+	define-directive2.cpp \
+	define-directive.c
 
 C_TESTCODES_REQUIRED_TO_PASS = \
 	3loops.c \
@@ -153,7 +156,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	threadprivate.c \
 	threadProcessor.c \
 	upperCase.c \
-	variables.c 
+	variables.c
 
 
 # DQ (2/19/2017): This logic has not yet been updated to reflect the new logic for GNU, Clang, Intel compilers.
