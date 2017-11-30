@@ -4,13 +4,13 @@
 #include "Normalization.h"
 #include "RoseAst.h"
 #include "SgNodeHelper.h"
+#include "inliner.h"
 
 using namespace std;
 
 namespace SPRAY {
 
   int32_t Normalization::tmpVarNr=1;
-  //Normalization::TransformationList Normalization::transformationList;
 
   void Normalization::normalizeAst(SgNode* root) {
     SingleStatementToBlockNormalizer singleStatementToBlockNormalizer;
@@ -19,16 +19,7 @@ namespace SPRAY {
     //convertAllForsToWhiles(root);
     //changeBreakStatementsToGotos(root);
     normalizeExpressions(root);
-#if 0
-    ExtractFunctionArguments efa;
-    if(!efa.IsNormalized(root)) {
-      cout<<"STATUS: Normalizing function call arguments."<<endl;
-      efa.NormalizeTree(root,true);
-    }
-    FunctionCallNormalization fn;
-    cout<<"STATUS: Normalizing function calls in expressions."<<endl;
-    fn.visit(root);
-#endif
+    inlineFunctions(root);
   }
 
   void Normalization::convertAllForsToWhiles (SgNode* top) {
@@ -109,5 +100,45 @@ namespace SPRAY {
       tmpVarNr++;
     }
   }
+
+  bool Normalization::isAstContaining(SgNode *haystack, SgNode *needle) {
+    struct T1: AstSimpleProcessing {
+      SgNode *needle;
+      T1(SgNode *needle): needle(needle) {}
+      void visit(SgNode *node) {
+        if (node == needle)
+          throw this;
+      }
+    } t1(needle);
+    try {
+      t1.traverse(haystack, preorder);
+      return false;
+    } catch (const T1*) {
+      return true;
+    }
+  }
+  
+  size_t Normalization::inlineFunctions(SgNode* root) {
+    // Inline one call at a time until all have been inlined.  Loops on recursive code.
+    //SgProject* project=isSgProject(root);
+    //ROSE_ASSERT(project);
+    size_t nInlined = 0;
+    for (int count=0; count<10; ++count) {
+      bool changed = false;
+        BOOST_FOREACH (SgFunctionCallExp *call, SageInterface::querySubTree<SgFunctionCallExp>(root)) {
+          if (doInline(call)) {
+            ASSERT_always_forbid2(isAstContaining(root, call),
+                                  "Inliner says it inlined, but the call expression is still present in the AST.");
+            ++nInlined;
+            changed = true;
+            break;
+          }
+        }
+        if (!changed)
+          break;
+    }
+    return nInlined;
+  }
+
 } // end of namespace SPRAY
 
