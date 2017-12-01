@@ -21,7 +21,7 @@ class Normalization {
 	add a new label below the statement and change the breaks into
 	gotos to that new label.
   */
-  void changeBreakStatementsToGotos (SgStatement *loopOrSwitch);
+  void changeBreakStatementsToGotos (SgNode *ast);
   static int32_t tmpVarNr;
   typedef std::list<std::pair<SgStatement*,SgExpression*> > TransformationList;
   TransformationList transformationList;

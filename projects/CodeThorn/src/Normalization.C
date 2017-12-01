@@ -5,6 +5,7 @@
 #include "RoseAst.h"
 #include "SgNodeHelper.h"
 #include "inliner.h"
+#include "CFAnalysis.h"
 
 using namespace std;
 
@@ -16,8 +17,8 @@ namespace SPRAY {
     SingleStatementToBlockNormalizer singleStatementToBlockNormalizer;
     singleStatementToBlockNormalizer.Normalize(root);
 
-    //convertAllForsToWhiles(root);
-    //changeBreakStatementsToGotos(root);
+    convertAllForsToWhiles(root);
+    changeBreakStatementsToGotos(root);
     normalizeExpressions(root);
     inlineFunctions(root);
   }
@@ -26,8 +27,13 @@ namespace SPRAY {
     SageInterface::convertAllForsToWhiles (top);
   }
  
-  void Normalization::changeBreakStatementsToGotos (SgStatement *loopOrSwitch) {
-    SageInterface::changeBreakStatementsToGotos(loopOrSwitch);
+  void Normalization::changeBreakStatementsToGotos (SgNode* root) {
+    RoseAst ast(root);
+    for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+      if(isSgSwitchStatement(*i)||CFAnalysis::isLoopConstructRootNode(*i)) {
+         SageInterface::changeBreakStatementsToGotos(isSgStatement(*i));
+      }
+    }
   }
 
   void Normalization::generateTmpVarAssignment(SgExprStatement* stmt, SgExpression* expr) {
