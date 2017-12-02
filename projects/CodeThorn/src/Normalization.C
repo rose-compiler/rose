@@ -8,19 +8,44 @@
 #include "CFAnalysis.h"
 
 using namespace std;
+using namespace Rose;
 
 namespace SPRAY {
 
   int32_t Normalization::tmpVarNr=1;
+  int32_t Normalization::labelNr=1;
 
   void Normalization::normalizeAst(SgNode* root) {
-    SingleStatementToBlockNormalizer singleStatementToBlockNormalizer;
-    singleStatementToBlockNormalizer.Normalize(root);
-
+    normalizeBlocks(root);
     convertAllForsToWhiles(root);
     changeBreakStatementsToGotos(root);
+    createLoweringSequence(root);
+    applyLoweringSequence();
     normalizeExpressions(root);
     inlineFunctions(root);
+  }
+
+  void Normalization::createLoweringSequence(SgNode* node) {
+    RoseAst ast(node);
+    for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+      if(SgWhileStmt* stmt=isSgWhileStmt(*i)) {
+        loweringSequence.push_back(new WhileStmtLowering(stmt));
+      } else if(SgDoWhileStmt* stmt=isSgDoWhileStmt(*i)) {
+        loweringSequence.push_back(new DoWhileStmtLowering(stmt));
+      }
+    }
+  }
+
+  void Normalization::applyLoweringSequence() {
+    BOOST_FOREACH(Lowering* loweringOp,loweringSequence) {
+      loweringOp->analyse();
+      loweringOp->transform();
+    }
+  }
+
+  void Normalization::normalizeBlocks(SgNode* root) {
+    SingleStatementToBlockNormalizer singleStatementToBlockNormalizer;
+    singleStatementToBlockNormalizer.Normalize(root);
   }
 
   void Normalization::convertAllForsToWhiles (SgNode* top) {
@@ -62,7 +87,7 @@ namespace SPRAY {
       //normalizeExpression(stmt,isSgExpression(SgNodeHelper::getLhs(assignOp)));
       normalizeExpression(stmt,isSgExpression(SgNodeHelper::getRhs(compoundAssignOp)));
     } else if(SgNodeHelper::isPrefixIncDecOp(expr)||SgNodeHelper::isPostfixIncDecOp(expr)) {
-      /* TODO: ++,-- operators may need to moved in the generated assignment sequence
+      /* TODO: ++,-- operators may need to be moved in the generated assignment sequence
          and replaced with +=/-=.
       */
       normalizeExpression(stmt,isSgExpression(SgNodeHelper::getUnaryOpChild(expr)));
@@ -153,6 +178,65 @@ namespace SPRAY {
           break;
     }
     return nInlined;
+  }
+
+  // creates a goto at end of 'block', and inserts a label before statement 'target'.
+  void Normalization::createGotoStmtAtEndOfBlock(SgBasicBlock* block, SgStatement* target) {
+    SgLabelStatement* newLabel =
+      SageBuilder::buildLabelStatement("__loopLabel" +
+                                       StringUtility::numberToString(labelNr++),
+                                       SageBuilder::buildBasicBlock(),
+                                       isSgScopeStatement(target->get_parent()));
+    SageInterface::insertStatement(target, newLabel, true);
+    SgGotoStatement* newGoto = SageBuilder::buildGotoStatement(newLabel);
+    block->append_statement(newGoto);
+  }
+
+  Lowering::Lowering() {}
+  Lowering::~Lowering() {}
+
+  void Lowering::analyse() {
+  }
+  void WhileStmtLowering::analyse() {
+  }
+  WhileStmtLowering::WhileStmtLowering(SgWhileStmt* node) {
+    this->node=node;
+  }
+  void WhileStmtLowering::transform() {
+
+    cout<<"DEBUG: transforming WhileStmt."<<endl;
+    SgBasicBlock* block=isSgBasicBlock(SgNodeHelper::getLoopBody(node));
+    ROSE_ASSERT(block); // must hold because all branches are normalized to be blocks
+    Normalization::createGotoStmtAtEndOfBlock(block, node);
+
+    // replace WhileStmt with IfStmt
+    SgIfStmt* newIfStmt=SageBuilder::buildIfStmt(isSgExprStatement(SgNodeHelper::getCond(node)),
+                                                 block,
+                                                 0);
+    isSgStatement(node->get_parent())->replace_statement(node,newIfStmt);
+    newIfStmt->set_parent(node->get_parent());
+  }
+
+  WhileStmtLowering::~WhileStmtLowering() {
+  }
+
+  DoWhileStmtLowering::DoWhileStmtLowering(SgDoWhileStmt* node) {
+    this->node=node;
+  }
+  void DoWhileStmtLowering::transform() {
+    //cout<<"DEBUG: transforming DoWhileStmt."<<endl;
+  }
+
+  ForStmtLowering::ForStmtLowering(SgForStatement* node) {
+    this->node=node;
+  }
+  void ForStmtLowering::transform() {
+  }
+
+  SwitchStmtLowering::SwitchStmtLowering(SgSwitchStatement* node) {
+    this->node=node;
+  }
+  void SwitchStmtLowering::transform() {
   }
 
 } // end of namespace SPRAY
