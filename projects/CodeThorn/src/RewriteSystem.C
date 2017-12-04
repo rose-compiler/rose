@@ -3,6 +3,7 @@
 #include "Timer.h"
 #include "AstTerm.h"
 #include "RoseAst.h"
+#include "SgNodeHelper.h"
 #include <list>
 
 using namespace std;
@@ -23,24 +24,15 @@ bool RewriteSystem::getTrace() {
 }
 
 RewriteStatistics RewriteSystem::getRewriteStatistics() {
-  return dump1_stats;
+  return _rewriteStatistics;
 }
 
-RewriteStatistics::RewriteStatistics() {
-  init();
+RewriteStatistics RewriteSystem::getStatistics() {
+  return _rewriteStatistics;
 }
 
-void RewriteStatistics::init() {
-  numElimMinusOperator=0;
-  numElimAssignOperator=0;
-  numAddOpReordering=0;
-  numConstantFolding=0;
-  numVariableElim=0;
-  numArrayUpdates=0;
-  numConstExprElim=0;
-}
-void RewriteStatistics::reset() {
-  init();
+void RewriteSystem::resetStatistics() {
+  _rewriteStatistics.reset();
 }
 
 void RewriteSystem::initDiagnostics() {
@@ -50,39 +42,6 @@ void RewriteSystem::initDiagnostics() {
     logger = Sawyer::Message::Facility("CodeThorn::RewriteSystem", Rose::Diagnostics::destination);
     Rose::Diagnostics::mfacilities.insertAndAdjust(logger);
   }
-}
-
-RewriteStatistics RewriteSystem::getStatistics() {
-  return dump1_stats;
-}
-
-string RewriteStatistics::toString() {
-  stringstream ss;
-  ss<<"Array updates  : "<<numArrayUpdates<<endl;
-  ss<<"Elim minus op  : "<<numElimMinusOperator<<endl;
-  ss<<"Elim assign op : "<<numElimAssignOperator<<endl;
-  ss<<"Add op reorder : "<<numAddOpReordering<<endl;
-  ss<<"Const fold     : "<<numConstantFolding<<endl;
-  ss<<"Variable elim  : "<<numVariableElim<<endl;
-  ss<<"Const expr elim: "<<numConstExprElim<<endl;
-  return ss.str();
-}
-
-string RewriteStatistics::toCsvString() {
-  stringstream ss;
-  ss<<numArrayUpdates
-    <<","<<numElimMinusOperator
-    <<","<<numElimAssignOperator
-    <<","<<numAddOpReordering
-    <<","<<numConstantFolding
-    <<","<<numVariableElim
-    <<","<<numConstExprElim
-    ;
-  return ss.str();
-}
-
-void RewriteSystem::resetStatistics() {
-  dump1_stats.reset();
 }
 
 void RewriteSystem::rewriteCompoundAssignmentsInAst(SgNode* root, VariableIdMapping* variableIdMapping) {
@@ -121,7 +80,7 @@ void RewriteSystem::rewriteCompoundAssignmentsInAst(SgNode* root, VariableIdMapp
 SgNode* RewriteSystem::buildRewriteCompoundAssignment(SgNode* root, VariableIdMapping* variableIdMapping) {
   // Rewrite-rule 0: $Left OP= $Right => $Left = $Left OP $Right
   if(isSgCompoundAssignOp(root)) {
-    dump1_stats.numElimAssignOperator++;
+    _rewriteStatistics.numElimCompoundAssignOperator++;
     SgExpression* lhsCopy=SageInterface::copyExpression(isSgExpression(SgNodeHelper::getLhs(root)));
     SgExpression* lhsCopy2=SageInterface::copyExpression(isSgExpression(SgNodeHelper::getLhs(root)));
     SgExpression* rhsCopy=SageInterface::copyExpression(isSgExpression(SgNodeHelper::getRhs(root)));
@@ -166,14 +125,14 @@ SgNode* RewriteSystem::buildRewriteCompoundAssignment(SgNode* root, VariableIdMa
 }
 
 void RewriteSystem::rewriteCompoundAssignments(SgNode*& root, VariableIdMapping* variableIdMapping) {
-#if 0
-  SgNode* root2=*(&root);
-  root=buildRewriteCompoundAssignment(root2,variableIdMapping);
-  return;
+#if 1
+  SgNode* newRoot=buildRewriteCompoundAssignment(root,variableIdMapping);
+  if(newRoot)
+    root=newRoot;
 #else
   // Rewrite-rule 0: $Left OP= $Right => $Left = $Left OP $Right
   if(isSgCompoundAssignOp(root)) {
-    dump1_stats.numElimAssignOperator++;
+    _rewriteStatistics.numElimCompoundAssignOperator++;
     SgExpression* lhsCopy=SageInterface::copyExpression(isSgExpression(SgNodeHelper::getLhs(root)));
     SgExpression* lhsCopy2=SageInterface::copyExpression(isSgExpression(SgNodeHelper::getLhs(root)));
     SgExpression* rhsCopy=SageInterface::copyExpression(isSgExpression(SgNodeHelper::getRhs(root)));
@@ -275,7 +234,8 @@ void RewriteSystem::establishCommutativeOrder(SgNode*& root, VariableIdMapping* 
       SgExpression* lhs=op->get_lhs_operand();
       SgExpression* rhs=op->get_rhs_operand();
       if(requiresSwap(lhs,rhs,variableIdMapping)) {
-        //cout<<"DEBUG: swapping: "<<op->unparseToString()<<" ==> ";
+        _rewriteStatistics.numCommutativeSwap++;
+        //cout<<"DEBUG: commutative swap "<<_rewriteStatistics.numCommutativeSwap<<" "<<op->class_name()<<": @"<<op<<": "<<op->unparseToString()<<" ==> ";
         // swap lhs and rhs
         op->set_lhs_operand(rhs);
         op->set_rhs_operand(lhs);
@@ -377,7 +337,7 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
            }
            transformationApplied=true;
            someTransformationApplied=true;
-           dump1_stats.numElimMinusOperator++;
+           _rewriteStatistics.numElimMinusOperator++;
          }
        }
      } while(transformationApplied); // a loop will eliminate -(-(5)) to 5
@@ -397,6 +357,7 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
                cout<<"Rule algebraic: "<<originalExp->unparseToString()<<" => "<<newSubtractOp->unparseToString()<<endl;
              }
              SgNodeHelper::replaceExpression(originalExp,newSubtractOp,false);
+             _rewriteStatistics.numUnaryMinusToBinaryMinusConversion++;
              someTransformationApplied=true;
            }
          }
@@ -412,9 +373,10 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
              SgExpression* e2=isSgExpression((*mr)["$E2"]);
              SgExpression* newSubtractOp=SageBuilder::buildSubtractOp(e1,e2);
              if(getTrace()) {
-             cout<<"Rule algebraic: "<<originalExp->unparseToString()<<" => "<<newSubtractOp->unparseToString()<<endl;
+               cout<<"Rule algebraic: "<<originalExp->unparseToString()<<" => "<<newSubtractOp->unparseToString()<<endl;
              }
              SgNodeHelper::replaceExpression(originalExp,newSubtractOp,false);
+             _rewriteStatistics.numUnaryMinusToBinaryMinusConversion++;
              someTransformationApplied=true;
            }
          }       
@@ -431,8 +393,9 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
              SgExpression* newAddOp=SageBuilder::buildAddOp(e1,e2);
              SgExpression* newMinusOp=SageBuilder::buildMinusOp(newAddOp);
              if(getTrace()) {
-             cout<<"Rule algebraic: "<<originalExp->unparseToString()<<" => "<<newMinusOp->unparseToString()<<endl;
+               cout<<"Rule algebraic: "<<originalExp->unparseToString()<<" => "<<newMinusOp->unparseToString()<<endl;
              }
+             _rewriteStatistics.numBinaryAndUnaryMinusToBinarySubConversion++;
              SgNodeHelper::replaceExpression(originalExp,newMinusOp,false);
              someTransformationApplied=true;
            }
@@ -449,8 +412,9 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
              SgExpression* e2=isSgExpression((*mr)["$E2"]);
              SgExpression* newAddOp=SageBuilder::buildAddOp(e1,e2);
              if(getTrace()) {
-             cout<<"Rule algebraic: "<<originalExp->unparseToString()<<" => "<<newAddOp->unparseToString()<<endl;
+               cout<<"Rule algebraic: "<<originalExp->unparseToString()<<" => "<<newAddOp->unparseToString()<<endl;
              }
+             _rewriteStatistics.numBinaryAndUnaryMinusToBinaryAddConversion++;
              SgNodeHelper::replaceExpression(originalExp,newAddOp,false);
              someTransformationApplied=true;
            }
@@ -483,12 +447,15 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
              if(valueNode && isSgMultiplyOp(op)) {
                if(isValueOne(valueNode)) {
                  algebraicIdentityTransformation=true;
+                 _rewriteStatistics.numMultiplyMinusOneConversion++;
                } else {
                  //not normalize
                  //cout<<"WARNING: Found unsupported value-type in alebraic multiply-transformation rule :"<<cnt<<": "<<op->unparseToString()<<endl;
                }
              }
              if(valueNode && isSgAddOp(op)) {
+               // unreachable
+               ROSE_ASSERT(false);
                if(isValueZero(valueNode)) {
                  algebraicIdentityTransformation=true;
                } else {
@@ -548,6 +515,7 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
                SgNodeHelper::replaceExpression(op,newMinusOp,false);
                transformationApplied=true; 
                someTransformationApplied=true;
+               _rewriteStatistics.numZeroSubEConversion++;
                cnt++;
              }
            }
@@ -592,6 +560,7 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
              if(valueNode && isSgMultiplyOp(op)) {
                if(isValueOne(valueNode)) {
                  algebraicIdentityTransformation=true;
+                 _rewriteStatistics.numMultiplyOneElim++;
                } else {
                  //not normalize
                  //cout<<"WARNING: Found unsupported value-type in alebraic multiply-transformation rule :"<<cnt<<": "<<op->unparseToString()<<endl;
@@ -600,6 +569,7 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
              if(valueNode && isSgAddOp(op)) {
                if(isValueZero(valueNode)) {
                  algebraicIdentityTransformation=true;
+                 _rewriteStatistics.numAddZeroElim++;
                } else {
                  //not normalized
                  //cout<<"DEBUG: Found unsupported value-type in alebraic multiply-transformation rule :"<<cnt<<": "<<op->unparseToString()<<endl;
@@ -651,7 +621,7 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
                  someTransformationApplied=true;
                  if(getTrace())
                    cout<<((*i)["$BinaryOp1"])->unparseToString()<<endl;
-                 dump1_stats.numAddOpReordering++;
+                 _rewriteStatistics.numAddOpReordering++;
                }
              }
            }
@@ -699,7 +669,7 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
            }
            transformationApplied=true;
            someTransformationApplied=true;
-           dump1_stats.numConstantFolding++;
+           _rewriteStatistics.numConstantFolding++;
          }
        }
      } while(transformationApplied);

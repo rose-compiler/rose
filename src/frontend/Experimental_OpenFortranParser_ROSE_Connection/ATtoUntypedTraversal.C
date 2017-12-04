@@ -2521,13 +2521,13 @@ ATbool ATtoUntypedTraversal::traverse_SubmoduleStmt(ATerm term, SgUntypedNamedSt
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_SubmoduleStmt: %s\n", ATwriteToString(term));
 #endif
-  
+
    ATerm term1, term2, term3, term_eos;
    std::string label, name, eos;
 
    SgToken::ROSE_Fortran_Keywords keyword = SgToken::FORTRAN_SUBMODULE;
 
-   *submodule_stmt = NULL; 
+   *submodule_stmt = NULL;
    if (ATmatch(term, "SubmoduleStmt(<term>,<term>,<term>,<term>)", &term1,&term2,&term3,&term_eos)) {
       if (traverse_OptLabel(term1, label)) {
          // MATCHED OptLabel
@@ -2558,7 +2558,7 @@ ATbool ATtoUntypedTraversal::traverse_ParentIdentifier(ATerm term, std::string &
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_ParentIdentifier: %s\n", ATwriteToString(term));
 #endif
-  
+
    char * arg1, * arg2;
 
    if (ATmatch(term, "ParentIdentifier(<str>,no-name())", &arg1)) {
@@ -2617,22 +2617,14 @@ ATbool ATtoUntypedTraversal::traverse_BlockData(ATerm term, SgUntypedScope* scop
    printf("... traverse_BlockData: %s\n", ATwriteToString(term));
 #endif
 
-// TODO - implementation
-   std::cerr << "...TODO... implement BlockData" << std::endl;
-
    ATerm term1, term2, term3;
    std::string label, name;
 
-// TODO - change/fix types
-   SgUntypedModuleDeclaration*  block_data;
-   SgUntypedNamedStatement*     block_data_stmt;
-   SgUntypedNamedStatement* end_block_data_stmt;
-   SgUntypedModuleScope *       block_data_scope;
+   SgUntypedBlockDataDeclaration*  block_data;
+   SgUntypedNamedStatement*        block_data_stmt;
+   SgUntypedNamedStatement*    end_block_data_stmt;
 
-// scope lists
    SgUntypedDeclarationStatementList* decl_list;
-   SgUntypedStatementList*            stmt_list;
-   SgUntypedFunctionDeclarationList*  func_list;
 
    if (ATmatch(term, "BlockData(<term>,<term>,<term>)", &term1,&term2,&term3))
    {
@@ -2641,16 +2633,9 @@ ATbool ATtoUntypedTraversal::traverse_BlockData(ATerm term, SgUntypedScope* scop
       } else return ATfalse;
 
       decl_list = new SgUntypedDeclarationStatementList();
-      stmt_list = new SgUntypedStatementList();
-      func_list = new SgUntypedFunctionDeclarationList();
-
-   // Statement and function lists not used
-      setSourcePositionUnknown(stmt_list);
-      setSourcePositionUnknown(func_list);
 
       label = block_data_stmt->get_label_string();
       name  = block_data_stmt->get_statement_name();
-      block_data_scope = new SgUntypedModuleScope(label,decl_list,stmt_list,func_list);
 
       if (traverse_SpecificationPart(term2, decl_list)) {
          // MATCHED SpecificationPart
@@ -2661,10 +2646,9 @@ ATbool ATtoUntypedTraversal::traverse_BlockData(ATerm term, SgUntypedScope* scop
       } else return ATfalse;
    } else return ATfalse;
 
-   block_data = new SgUntypedModuleDeclaration(label,name,block_data_scope,end_block_data_stmt);
+   block_data = new SgUntypedBlockDataDeclaration(label,name,false,decl_list,end_block_data_stmt);
 
    setSourcePositionIncludingNode(block_data, term, end_block_data_stmt);
-   setSourcePositionIncludingNode(block_data->get_scope(), term2, end_block_data_stmt);
 
 // add block data to the outer scope
    scope->get_declaration_list()->get_decl_list().push_back(block_data);
@@ -2672,10 +2656,7 @@ ATbool ATtoUntypedTraversal::traverse_BlockData(ATerm term, SgUntypedScope* scop
 // no longer need block_data_stmt as this information is contained in the block data declaration
    delete block_data_stmt;
  
-// TODO - implementation
-   std::cerr << "...TODO... almost finished exiting traverse_BlockData" << std::endl;
-
-  return ATfalse;
+   return ATtrue;
 }
 
 //========================================================================================

@@ -208,6 +208,9 @@ Grammar::setUpNodes ()
   // Rasmussen (8/16/2017): Added new IR node to represent a Fortran submodule (a submodule extends an existing module)
      NEW_TERMINAL_MACRO (UntypedSubmoduleDeclaration,     "UntypedSubmoduleDeclaration",     "TEMP_UntypedSubmoduleDeclaration" );
 
+  // Rasmussen (8/17/2017): Added new IR node to represent a Fortran block-data program unit
+     NEW_TERMINAL_MACRO (UntypedBlockDataDeclaration,     "UntypedBlockDataDeclaration",     "TEMP_UntypedBlockDataDeclaration" );
+
   // DQ (9/29/2017): Added new IR node for untyped representation of package declarations (Ada).
      NEW_TERMINAL_MACRO (UntypedPackageDeclaration,          "UntypedPackageDeclaration",          "TEMP_UntypedPackageDeclaration" );
      NEW_TERMINAL_MACRO (UntypedTaskDeclaration,             "UntypedTaskDeclaration",             "TEMP_UntypedTaskDeclaration" );
@@ -220,12 +223,12 @@ Grammar::setUpNodes ()
   // NEW_NONTERMINAL_MACRO (UntypedDeclarationStatement, UntypedImplicitDeclaration | UntypedVariableDeclaration | 
   //     UntypedFunctionDeclaration | UntypedModuleDeclaration,
   //     "UntypedDeclarationStatement", "UntypedDeclarationStatementTag", false);
-  // Rasmussen (8/16/2017): Added UntypedSubmoduleDeclaration
+  // Rasmussen (8/16-17/2017): Added UntypedSubmoduleDeclaration, UntypedBlockDataDeclaration
      NEW_NONTERMINAL_MACRO (UntypedDeclarationStatement, UntypedNameListDeclaration | UntypedUseStatement |
          UntypedImplicitDeclaration  | UntypedVariableDeclaration  | UntypedFunctionDeclaration |
-         UntypedModuleDeclaration    | UntypedSubmoduleDeclaration | UntypedPackageDeclaration  | 
-         UntypedStructureDeclaration | UntypedExceptionDeclaration | UntypedExceptionHandlerDeclaration |
-         UntypedTaskDeclaration      | UntypedUnitDeclaration,
+         UntypedModuleDeclaration    | UntypedSubmoduleDeclaration | UntypedBlockDataDeclaration |
+         UntypedPackageDeclaration   | UntypedStructureDeclaration | UntypedExceptionHandlerDeclaration |
+         UntypedExceptionDeclaration | UntypedTaskDeclaration      | UntypedUnitDeclaration,
          "UntypedDeclarationStatement", "UntypedDeclarationStatementTag", true);
 
      NEW_TERMINAL_MACRO (UntypedAssignmentStatement,   "UntypedAssignmentStatement",   "TEMP_UntypedAssignmentStatement" );
@@ -819,6 +822,17 @@ Grammar::setUpNodes ()
      UntypedSubmoduleDeclaration.setDataPrototype       ( "SgUntypedNamedStatement*", "end_statement", "= NULL",
                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
+  // Rasmussen (8/17/2017): Added UntypedBlockDataDeclaration
+     UntypedBlockDataDeclaration.setFunctionPrototype   ( "HEADER_UNTYPED_BLOCK_DATA_DECLARATION", "../Grammar/LocatedNode.code");
+     UntypedBlockDataDeclaration.setDataPrototype       ( "std::string", "name", "= \"\"",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS,  NO_TRAVERSAL, NO_DELETE);
+     UntypedBlockDataDeclaration.setDataPrototype       ( "bool", "has_name", "= false",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS,  NO_TRAVERSAL, NO_DELETE);
+     UntypedBlockDataDeclaration.setDataPrototype       ( "SgUntypedDeclarationStatementList*", "declaration_list", "= NULL",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     UntypedBlockDataDeclaration.setDataPrototype       ( "SgUntypedNamedStatement*", "end_statement", "= NULL",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
   // DQ (10/2/2017): Adding general language neutral exception declaration support (e.g. for Ada).
      UntypedExceptionDeclaration.setFunctionPrototype      ( "HEADER_UNTYPED_EXCEPTION_DECLARATION", "../Grammar/LocatedNode.code");
      UntypedExceptionDeclaration.setDataPrototype          ( "SgUntypedStatement*", "statement", "= NULL",
@@ -1401,6 +1415,9 @@ Grammar::setUpNodes ()
 
   // Rasmussen (8/16/2017): Added new IR node to represent a Fortran submodule (a submodule extends an existing module)
      UntypedSubmoduleDeclaration.setFunctionSource     ( "SOURCE_UNTYPED_SUBMODULE_DECLARATION", "../Grammar/LocatedNode.code");
+
+  // Rasmussen (8/17/2017): Added new IR node to represent a Fortran block-data program unit
+     UntypedBlockDataDeclaration.setFunctionSource     ( "SOURCE_UNTYPED_BLOCK_DATA_DECLARATION", "../Grammar/LocatedNode.code");
 
      UntypedScope.setFunctionSource         ( "SOURCE_UNTYPED_SCOPE", "../Grammar/LocatedNode.code");
      UntypedFunctionScope.setFunctionSource ( "SOURCE_UNTYPED_FUNCTION_SCOPE", "../Grammar/LocatedNode.code");

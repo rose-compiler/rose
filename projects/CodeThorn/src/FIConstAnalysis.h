@@ -70,7 +70,7 @@ public:
   VariableId varId;
   AbstractValue varValue;
   string toString(VariableIdMapping& varIdMapping) {
-    string varNameString=varIdMapping.uniqueShortVariableName(varId);
+    string varNameString=varIdMapping.uniqueVariableName(varId);
     string varValueString=varValue.toString();
     return varNameString+"="+varValueString;
   }

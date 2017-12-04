@@ -115,6 +115,31 @@ SgUntypedType* buildType(SgUntypedType::type_enum type_enum)
           break;
         }
 
+      case SgFile::e_Cobol_language:
+        {
+          switch(type_enum)
+            {
+             case SgUntypedType::e_unknown:
+               {
+                 type = new SgUntypedType("UNKNOWN",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
+                                          is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum);
+                 break;
+               }
+             case SgUntypedType::e_void:
+               {
+                 type = new SgUntypedType("void",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
+                                          is_user_defined,char_length_expr,char_length,char_length_is_string,type_enum);
+                 break;
+               }
+             default:
+               {
+                 fprintf(stderr, "UntypedBuilder::buildType: unimplemented for Cobol type_enum %d \n", type_enum);
+                 ROSE_ASSERT(0);  // NOT IMPLEMENTED
+               }
+            }
+          break;
+        }
+
       default:
         {
           fprintf(stderr, "UntypedBuilder::buildType: unimplemented for language_enum %d \n", language_enum);

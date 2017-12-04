@@ -631,29 +631,35 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionCallEx
     std::cout << "Call kinds: Callee: " << calleeKind << ", Base expr: " << baseExprKind << ", Mem func: " << memberFunctionKind << std::endl;
   }
 
-  // In the Rose AST every call of a non-static member function should have an explicit object on which the member function is called and
-  //  there therefore should be a dot, arrow, dot-star or arrow-star operator for each non-static member function call.
+  // In the Rose AST every call of a non-static member function should
+  // have an explicit object on which the member function is called
+  // and there therefore should be a dot, arrow, dot-star or
+  // arrow-star operator for each non-static member function call.
   if(calleeKind == CK_MemberFunction && memberFunctionKind == MFK_NonStatic) {
     ROSE_ASSERT((baseExprKind & BEK_PointerOrObject) > 0);
     ROSE_ASSERT(isSgMemberFunctionType(calleeType));
   }
 
-  // If this is a call of a non-static member function, then add the object, on which the member function
-  //  is called, to the address taken set. This is necessary because inside a non-static member function
-  //  the address of the object is accessible via "this".
+  // If this is a call of a non-static member function, then add the
+  // object, on which the member function is called, to the address
+  // taken set. This is necessary because inside a non-static member
+  // function the address of the object is accessible via "this".
   if((calleeKind & CK_MemberFunctionLike) && (memberFunctionKind & MFK_NonStatic)) {
     if(debuglevel > 0) {
       std::cout << "Member function type: " << isSgExpression(firstChildOfCallExp)->get_type()->unparseToString() << std::endl;
     }
-    // Get the object/ expression on which the member-function is called:
-    //  Only consider dot (a.b) and dot-star (a.*b) expressions. We can ignore arrow (a->b)
-    //  and arrow-star (a->*b) because they expect a pointer on the left hand side and they
-    //  dereference this pointer to get the real object on which the member function is called.
-    //  Therefore only variables from which the address was already taken in an other way (e.g. via
-    //  address-of operator) are affected.
+    // Get the object/ expression on which the member-function is
+    // called: Only consider dot (a.b) and dot-star (a.*b)
+    // expressions. We can ignore arrow (a->b) and arrow-star (a->*b)
+    // because they expect a pointer on the left hand side and they
+    // dereference this pointer to get the real object on which the
+    // member function is called.  Therefore only variables from which
+    // the address was already taken in an other way (e.g. via
+    // address-of operator) are affected.
     if((baseExprKind & BEK_Object)) {
       SgExpression* memFuncCallBaseExpr = static_cast<const SgBinaryOp*>(firstChildOfCallExp)->get_lhs_operand();
-      // Add all variables that are used in the base expression to the address taken set:
+      // Add all variables that are used in the base expression to the
+      // address taken set:
       memFuncCallBaseExpr->accept(*this);
     }
     else if((baseExprKind & BEK_Pointer)) {
@@ -674,26 +680,14 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionCallEx
 
   // Vector of pointers to the parameter types that are declared for this function:
   SgTypePtrList parameterTypes;
-  // schroder3 (2016-06-28): TODO: SgFunctionCallExp::getAssociatedFunctionSymbol does not return correct symbol
-  //  in case of call of result of call ("get_func()()"). Therefore determineFunctionDefinition does not return
-  //  the correct definition. We will use the parameter types of the callee function type instead
-//  if(SgFunctionDefinition* functionDefinition = SgNodeHelper::determineFunctionDefinition(sgn)) {
-//    SgInitializedNamePtrList& parameterInitNames = SgNodeHelper::getFunctionDefinitionFormalParameterList(functionDefinition);
-//    for(SgInitializedNamePtrList::const_iterator paramInitNamesIter = parameterInitNames.begin();
-//        paramInitNamesIter != parameterInitNames.end();
-//      ++paramInitNamesIter
-//    ) {
-//      parameterTypes.push_back((*paramInitNamesIter)->get_type());
-//    }
-//  }
-//  else {
-//    std::cout << "INFO: no function definition found for call " << sgn->unparseToString()
-//            << ". Will use parameter types of callee type instead." << std::endl;
   parameterTypes = calleeType->get_arguments();
-  // schroder3 (2016-08-17): Check for an implicitly declared function (e.g. gettimeofday(...) can
-  //  be used without an include and without an explicit declaration). This is only allowed in C and
-  //  it is deprecated starting with C99 (as far as i know). The type of these functions is "int()"
-  //  (even if they have parameters) and there is therefore no information about the parameter types.
+
+  // schroder3 (2016-08-17): Check for an implicitly declared function
+  // (e.g. gettimeofday(...) can be used without an include and
+  // without an explicit declaration). This is only allowed in C and
+  // it is deprecated starting with C99 (as far as i know). The type
+  // of these functions is "int()" (even if they have parameters) and
+  // there is therefore no information about the parameter types.
   if(parameterTypes.size() == 0 && arguments.size() > 0) {
     if(isSgTypeInt(calleeType->get_return_type())) {
       // The type is int(): Make sure that this is compiled as C code:
@@ -701,11 +695,11 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionCallEx
       while(!isSgFile((node = node->get_parent())));
       SgFile* enclosingFile = isSgFile(node);
       ROSE_ASSERT(enclosingFile);
-      if(enclosingFile->get_outputLanguage() == SgFile::e_C_output_language) {
-        // This should be C code. TODO: This might be overwritten by -std=... ?
-        // Because C has no references, they only possible address-taking is the function to pointer
-        //  conversion. Make the parameter type a function pointer type if the argument type is a
-        //  function type:
+      if(enclosingFile->get_C_only()) {
+        // in case it is C code: because C has no references, they
+        // only possible address-taking is the function to pointer
+        // conversion. Make the parameter type a function pointer type
+        // if the argument type is a function type:
         for(SgExpressionPtrList::const_iterator i = arguments.begin(); i != arguments.end(); ++i) {
           SgType* parameterType = (*i)->get_type();
           if(isSgFunctionType(parameterType)) {
@@ -717,8 +711,6 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgFunctionCallEx
     }
 
   }
-//  }
-
   handleCall(parameterTypes, arguments);
 
   // we can look at its defintion and process the return expression ?
@@ -755,6 +747,7 @@ void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgExpression* sg
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::visit(SgLambdaExp* sgn)
 {
   if(debuglevel > 0) debugPrint(sgn);
+  throw SPRAY::Exception("Address-Taken Analysis: lambda expression not supported.");
   // TODO!
 }
 

@@ -138,7 +138,7 @@ void DataDependenceVisualizer::generateDotFunctionClusters(SgNode* root, CFAnaly
           for(LabelSet::iterator i=defLabSet.begin();i!=defLabSet.end();++i) {
             Label sourceNode=lab;
             Label targetNode=*i;
-            string edgeAnnotationString=_variableIdMapping->uniqueShortVariableName(useVar);
+            string edgeAnnotationString=_variableIdMapping->uniqueVariableName(useVar);
             stringstream ddedge;
             switch(_mode) {
             case DDVMODE_USEDEF: ddedge<<sourceNode<<" -> "<<targetNode; break;
@@ -208,7 +208,7 @@ void DataDependenceVisualizer::generateDot(SgNode* root, string fileName) {
         for(LabelSet::iterator i=defLabSet.begin();i!=defLabSet.end();++i) {
           Label sourceNode=lab;
           Label targetNode=*i;
-          string edgeAnnotationString=_variableIdMapping->uniqueShortVariableName(useVar);
+          string edgeAnnotationString=_variableIdMapping->uniqueVariableName(useVar);
           switch(_mode) {
           case DDVMODE_USEDEF:
             myfile<<sourceNode<<" -> "<<targetNode; break;
