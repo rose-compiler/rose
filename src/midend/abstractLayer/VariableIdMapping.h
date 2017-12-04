@@ -13,7 +13,6 @@
 
 #include "RoseAst.h"
 #include "SgNodeHelper.h"
-#include "TypeSizeMapping.h"
 
 namespace SPRAY {
 
@@ -50,6 +49,7 @@ class VariableIdMapping {
    */
   VariableId createUniqueTemporaryVariableId(std::string name);
   bool isTemporaryVariableId(VariableId varId);
+  bool isHeapMemoryRegionId(VariableId varId);
 
   // delete a unique variable symbol (should be used together with createUniqueVariableSymbol)
   void deleteUniqueTemporaryVariableId(VariableId uniqueVarSym);
@@ -87,8 +87,7 @@ class VariableIdMapping {
   // schroder3 (2016-07-05): Returns whether the given variable is valid in this mapping
   bool isVariableIdValid(VariableId varId);
   std::string variableName(VariableId varId);
-  std::string uniqueLongVariableName(VariableId varId);
-  std::string uniqueShortVariableName(VariableId varId);
+  std::string uniqueVariableName(VariableId varId);
 
   // set number of elements of the memory region determined by this variableid
   void setNumberOfElements(VariableId variableId, size_t size);
@@ -162,7 +161,7 @@ class VariableId {
   std::string toUniqueString(VariableIdMapping& vid) const;
 
   /* if VariableIdMapping is a valid pointer a variable name is returned
-     otherwise toString() is called and a generic name (V..) is returend.
+     otherwise toString() is called and a generic name (V..) is returned.
   */
   std::string toString(VariableIdMapping* vid) const;
   std::string toUniqueString(VariableIdMapping* vid) const;
