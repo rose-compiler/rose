@@ -123,6 +123,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	set_num_threads.c \
 	shared.c \
 	simd.c \
+	simd2.c \
 	single.c \
 	single2.c \
 	single_copyprivate.c \
@@ -158,6 +159,13 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	upperCase.c \
 	variables.c
 
+# removed experimental test cases	
+removed_Experimental_TEST = \
+	axpy_ompacc_mpi.c \
+	axpy_ompacc4.c \
+	axpy_ompacc_parseonly.c 
+
+
 
 # DQ (2/19/2017): This logic has not yet been updated to reflect the new logic for GNU, Clang, Intel compilers.
 # It might be that it need not be updated since it is sufficently portable as it is (if not then it will be updated).
@@ -186,9 +194,6 @@ C_OMP_ACC_TESTCODES_REQUIRED_TO_PASS = \
         axpy_ompacc.c \
         axpy_ompacc2.c \
 	axpy_ompacc3.c \
-	axpy_ompacc4.c \
-	axpy_ompacc_parseonly.c \
-	axpy_ompacc_mpi.c \
 	matrixmultiply-ompacc.c \
 	matrixmultiply-ompacc2.c \
 	jacobi-ompacc.c \

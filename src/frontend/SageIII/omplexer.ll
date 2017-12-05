@@ -85,13 +85,11 @@ num_threads     { /*Can be either a clause name or a variable name */
                 } 
 ordered         { return cond_return ( ORDERED  ); }
 schedule        { return cond_return ( SCHEDULE ); }
-
 static          { return ( STATIC ); }  /*keyword in C/C++ */
 dynamic         { return cond_return ( DYNAMIC ); } 
 guided          { return cond_return ( GUIDED ); }
 runtime         { return cond_return ( RUNTIME ); }
 auto            { return ( AUTO ); } /*keyword in C/C++ ?*/
-
 sections        { return cond_return  ( SECTIONS ); }
 section         { return cond_return ( SECTION ); }
 single          { return cond_return ( SINGLE ); }
@@ -113,23 +111,18 @@ shared          { return cond_return ( SHARED ); }
 none            { return cond_return ( NONE ); } 
 reduction       { return cond_return ( REDUCTION ); }
 copyin          { return cond_return ( COPYIN ); }
-
 inbranch        { return cond_return ( INBRANCH ); }
 notinbranch     { return cond_return ( NOTINBRANCH ); }
-
 proc_bind       { return cond_return ( PROC_BIND); }
 close           { return cond_return ( CLOSE ); }
 spread          { return cond_return ( SPREAD ); } /* master should already be recognized */
-
 depend          { return cond_return ( DEPEND ); } 
 in              { return cond_return ( IN ); } 
 out             { return cond_return ( OUT ); } 
 inout           { return cond_return ( INOUT ); } 
-
 read            { return cond_return ( READ ); }
 write           { return cond_return ( WRITE ); }
 capture         { return cond_return ( CAPTURE ); }
-
 target          {return cond_return ( TARGET ); }
 mpi             {return cond_return ( MPI ); } /*Experimental keywords to support scaling up to MPI processes */
 mpi:all         {return cond_return ( MPI_ALL ); }
@@ -153,7 +146,6 @@ linear          {return cond_return ( LINEAR ); }
 uniform         {return cond_return ( UNIFORM ); }
 final           {return cond_return ( FINAL ); }
 priority        {return cond_return ( PRIORITY); }
-
 dist_data       {return ( DIST_DATA); } /*Extensions for data distribution clause
 It is tricky to support mixed variable vs. keyword parsing for dist_data() since it is part of variable list parsing 
 We enforce that users won't use variable names colliding with the keywords (no cond_return() is used)
