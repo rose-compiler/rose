@@ -1095,6 +1095,24 @@ set<SgNode*> SgNodeHelper::LoopRelevantBreakStmtNodes(SgNode* node) {
   return breakNodes;
 }
 
+/*! 
+  * \author Markus Schordan
+  * \date 2017.
+ */
+set<SgNode*> SgNodeHelper::loopRelevantContinueStmtNodes(SgNode* node) {
+  set<SgNode*> continueNodes;
+  RoseAst ast(node);
+  RoseAst::iterator i=ast.begin();
+  ++i; // go to first child
+  while(i!=ast.end()) {
+    if(isSgContinueStmt(*i))
+      continueNodes.insert(*i);
+    if(isSgForStatement(*i)||isSgWhileStmt(*i)||isSgDoWhileStmt(*i)||isSgSwitchStatement(*i))
+      i.skipChildrenOnForward();
+    ++i;
+  }
+  return continueNodes;
+}
 
 /*! 
   * \author Markus Schordan
