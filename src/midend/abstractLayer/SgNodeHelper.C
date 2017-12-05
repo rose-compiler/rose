@@ -1080,7 +1080,7 @@ std::pair<SgVarRefExp*,SgFunctionCallExp*> SgNodeHelper::Pattern::matchExprStmtA
   * \author Markus Schordan
   * \date 2012.
  */
-set<SgNode*> SgNodeHelper::LoopRelevantBreakStmtNodes(SgNode* node) {
+set<SgNode*> SgNodeHelper::loopRelevantBreakStmtNodes(SgNode* node) {
   set<SgNode*> breakNodes;
   RoseAst ast(node);
   RoseAst::iterator i=ast.begin();
@@ -1099,14 +1099,14 @@ set<SgNode*> SgNodeHelper::LoopRelevantBreakStmtNodes(SgNode* node) {
   * \author Markus Schordan
   * \date 2017.
  */
-set<SgNode*> SgNodeHelper::loopRelevantContinueStmtNodes(SgNode* node) {
-  set<SgNode*> continueNodes;
+set<SgContinueStmt*> SgNodeHelper::loopRelevantContinueStmtNodes(SgNode* node) {
+  set<SgContinueStmt*> continueNodes;
   RoseAst ast(node);
   RoseAst::iterator i=ast.begin();
   ++i; // go to first child
   while(i!=ast.end()) {
-    if(isSgContinueStmt(*i))
-      continueNodes.insert(*i);
+    if(SgContinueStmt* cs=isSgContinueStmt(*i))
+      continueNodes.insert(cs);
     if(isSgForStatement(*i)||isSgWhileStmt(*i)||isSgDoWhileStmt(*i)||isSgSwitchStatement(*i))
       i.skipChildrenOnForward();
     ++i;
