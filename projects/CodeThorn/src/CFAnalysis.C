@@ -363,7 +363,7 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
   case V_SgWhileStmt: {
     SgNode* condNode=SgNodeHelper::getCond(node);
     finalSet.insert(labeler->getLabel(condNode));
-    set<SgNode*> breakNodes=SgNodeHelper::LoopRelevantBreakStmtNodes(node);
+    set<SgNode*> breakNodes=SgNodeHelper::loopRelevantBreakStmtNodes(node);
     LabelSet lset=labeler->getLabelSet(breakNodes);
     finalSet+=lset;
     //cout << finalSet.toString  () << endl;
@@ -396,7 +396,7 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
   }
   case V_SgSwitchStatement: {
     // 1) add all break statements, 2) add final label of last stmt (emulating a break)
-    set<SgNode*> breakNodes=SgNodeHelper::LoopRelevantBreakStmtNodes(node);
+    set<SgNode*> breakNodes=SgNodeHelper::loopRelevantBreakStmtNodes(node);
     LabelSet lset=labeler->getLabelSet(breakNodes);
     finalSet+=lset;
     //cout << finalSet.toString() << endl;

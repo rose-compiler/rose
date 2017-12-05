@@ -116,6 +116,10 @@ namespace SPRAY {
   }
   
   void Lowering::normalizeExpressions(SgNode* node) {
+    // TODO: if temporary variables are generated, the initialization-list
+    // must be put into a block, otherwise some generates gotos are
+    // not legal (crossing initialization).
+
     // find all SgExprStatement, SgReturnStmt
     RoseAst ast(node);
     for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
@@ -259,13 +263,33 @@ namespace SPRAY {
 
     // build if-stmt with condition of do-while-stmt and new goto
     SgIfStmt* newIfStmt=SageBuilder::buildIfStmt(conditionOfDoWhileStmt,
-                                                 newGoto, // TODO: should be its own block
+                                                 newGoto, // TODO: should be its own block?
                                                  0);
     newIfStmt->set_parent(blockOfDoWhileStmt);
 
     // replace do-while with new block (of do-while) and insert if-stmt with conditional goto.
     parentOfDoWhileStmt->replace_statement(node,blockOfDoWhileStmt);
     SageInterface::appendStatement(newIfStmt,blockOfDoWhileStmt);
+
+    // handle continue statements
+    std::set<SgContinueStmt*> continueStmts=SgNodeHelper::loopRelevantContinueStmtNodes(node);
+    
+    if(continueStmts.size()>0) {
+      // create label for gotos replacing continues
+      SgLabelStatement* newLabelForContinue =
+        SageBuilder::buildLabelStatement(Lowering::newLabelName(),
+                                         SageBuilder::buildBasicBlock(),
+                                         // MS: scope should be function scope?
+                                         scopeContainingDoWhileStmt);
+      SageInterface::insertStatementBefore(newIfStmt, newLabelForContinue);
+      BOOST_FOREACH(SgContinueStmt* continueStmt,continueStmts) {
+        cout<<"TODO:"<<continueStmt->unparseToString()<<endl;
+        SgGotoStatement* newGoto = SageBuilder::buildGotoStatement(newLabelForContinue);
+        // replace continue with newGoto
+        isSgStatement(continueStmt->get_parent())->replace_statement(continueStmt,newGoto);
+        newGoto->set_parent(continueStmt->get_parent());
+      }
+    }
   }
 
   ForStmtLoweringOp::ForStmtLoweringOp(SgForStatement* node) {
