@@ -169,8 +169,8 @@ SAWYER_EXPORT size_t fastRandomIndex(size_t n);
  *
  *  @code
  *  struct MyClass {
- *      static SAWYER_THREAD_LOCAL int foo;
- *      MultiInstanceTls<int> bar;
+ *      static SAWYER_THREAD_LOCAL int foo; // static thread-local using __thread, thread_local, etc.
+ *      MultiInstanceTls<int> bar; // per-instance thread local
  *  };
  *
  *  MyClass a, b;
@@ -186,45 +186,53 @@ SAWYER_EXPORT size_t fastRandomIndex(size_t n);
  *  b.bar are different storage locations, and are also thread-local. */
 template<typename T>
 class MultiInstanceTls {
-    // pointer to avoid lack of thread-local dynamic initialization prior to C++11, and to avoid lack of well defined order
-    // when initializing and destroying global variables in C++.
+    // The implementation needs to handle the case when this object is created on one thread and used in another thread. The
+    // constructor, running in thread A, creates a thread-local repo which doesn't exist in thread B using this object.
+    // 
+    // This is a pointer to avoid lack of thread-local dynamic initialization prior to C++11, and to avoid lack of well defined
+    // order when initializing and destroying global variables in C++.
     typedef Container::Map<uintptr_t, T> Repo;
     static SAWYER_THREAD_LOCAL Repo *repo_;
-
-    void initRepo() {
-        if (NULL == repo_)
-            repo_ = new Repo;
-    }
 
 public:
     /** Default-constructed value. */
     MultiInstanceTls() {
-        initRepo();
+        if (!repo_)
+            repo_ = new Repo;
         repo_->insert(reinterpret_cast<uintptr_t>(this), T());
     }
 
     /** Initialize value. */
     /*implicit*/ MultiInstanceTls(const T& value) {
-        initRepo();
+        if (!repo_)
+            repo_ = new Repo;
         repo_->insert(reinterpret_cast<uintptr_t>(this), value);
     }
 
     /** Assignment operator. */
     MultiInstanceTls& operator=(const T &value) {
-        initRepo();
+        if (!repo_)
+            repo_ = new Repo;
         repo_->insert(reinterpret_cast<uintptr_t>(this), value);
         return *this;
+    }
+
+    ~MultiInstanceTls() {
+        if (repo_)
+            repo_->erase(reinterpret_cast<uintptr_t>(this));
     }
 
     /** Get interior object.
      *
      * @{ */
     T& get() {
-        initRepo();
+        if (!repo_)
+            repo_ = new Repo;
         return repo_->insertMaybeDefault(reinterpret_cast<uintptr_t>(this));
     }
     const T& get() const {
-        initRepo();
+        if (!repo_)
+            repo_ = new Repo;
         return repo_->insertMaybeDefault(reinterpret_cast<uintptr_t>(this));
     }
     /** @} */
@@ -245,18 +253,12 @@ public:
         return &get();
     }
 
-    ~MultiInstanceTls() {
-        if (repo_)
-            repo_->erase(reinterpret_cast<uintptr_t>(this));
-    }
-
     /** Implicit conversion to enclosed type.
      *
      *  This is so that the data member can be used as if it were type @c T rather than a MultiInstanceTls object. */
-    operator T() {
-#ifdef USE_ROSE // FIXME[Robb Matzke 2017-11-22]: ROSE fails to compile here
-        initRepo();
-#endif
+    operator T() const {
+        if (!repo_)
+            repo_ = new Repo;
         return repo_->insertMaybeDefault(reinterpret_cast<uintptr_t>(this));
     }
 };
