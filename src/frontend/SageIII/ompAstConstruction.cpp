@@ -339,7 +339,7 @@ namespace OmpSupport
   
   // Sara Royuela ( Nov 2, 2012 ): Check for clause parameters that can be defined in macros
   // This adds support for the use of macro definitions in OpenMP clauses
-  // We need a traversal over SgExpression to support macros in any possition of an "assignment_expr"
+  // We need a traversal over SgExpression to support macros in any position of an "assignment_expr"
   // F.i.:   #define THREADS_1 16
   //         #define THREADS_2 8
   //         int main( int arg, char** argv ) {
@@ -368,10 +368,10 @@ namespace OmpSupport
                                                      bool& macro_replaced, omp_construct_enum clause_type )
   {
       SgExpression* newExp = old_exp;
-      // Parse the macro: we are only interested in macros with the form #define MACRO_NAME MACRO_VALUE
+      // Parse the macro: we are only interested in macros with the form #define MACRO_NAME MACRO_VALUE, the constant macro
       size_t parenthesis = define_macro.find("(");
       if(parenthesis == string::npos)
-      {   // Non function macro
+      {   // Non function macro, constant macro
           unsigned int macroNameInitPos = (unsigned int)(define_macro.find("define")) + 6;
           while(macroNameInitPos<define_macro.size() && define_macro[macroNameInitPos]==' ')
               macroNameInitPos++;
