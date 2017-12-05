@@ -9,7 +9,7 @@
 #include "AnalysisAbstractionLayer.h"
 #include "ExtractFunctionArguments.h"
 #include "FunctionNormalization.h"
-#include "Normalization.h"
+#include "Lowering.h"
 
 using namespace SPRAY;
 using namespace std;
@@ -156,8 +156,8 @@ Lattice* DFAnalysisBase::initializeGlobalVariables(SgProject* root) {
 void
 DFAnalysisBase::normalizeProgram(SgProject* root) {
   cout<<"STATUS: Normalizing program."<<endl;
-  SPRAY::Normalization normalizer;
-  normalizer.normalizeAst(root);
+  SPRAY::Lowering lowering;
+  lowering.lowerAst(root);
 }
 
 

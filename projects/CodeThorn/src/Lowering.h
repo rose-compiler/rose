@@ -11,50 +11,53 @@ class SgSwitchStatement;
 
 namespace SPRAY {
 
-  class Lowering {
+  class LoweringOp {
   public:
-    Lowering();
+    LoweringOp();
     virtual void analyse();
     virtual void transform()=0;
-    ~Lowering();
+    ~LoweringOp();
   };
-  class WhileStmtLowering : public Lowering {
+  class WhileStmtLoweringOp : public LoweringOp {
   public:
-    WhileStmtLowering(SgWhileStmt* node);
+    WhileStmtLoweringOp(SgWhileStmt* node);
     void analyse();
     void transform();
-    virtual ~WhileStmtLowering();
+    virtual ~WhileStmtLoweringOp();
   private:
     SgWhileStmt* node;
   };
 
-  class DoWhileStmtLowering : public Lowering {
+  class DoWhileStmtLoweringOp : public LoweringOp {
   public:
-    DoWhileStmtLowering(SgDoWhileStmt* node);
+    DoWhileStmtLoweringOp(SgDoWhileStmt* node);
     void transform();
   private:
     SgDoWhileStmt* node;
   };
-  class ForStmtLowering : public Lowering {
+  class ForStmtLoweringOp : public LoweringOp {
   public:
-    ForStmtLowering(SgForStatement* node);
+    ForStmtLoweringOp(SgForStatement* node);
     void transform();
   private:
     SgForStatement* node;
   };
-  class SwitchStmtLowering : public Lowering {
+  class SwitchStmtLoweringOp : public LoweringOp {
   public:
-    SwitchStmtLowering(SgSwitchStatement* node);
+    SwitchStmtLoweringOp(SgSwitchStatement* node);
     void transform();
   private:
     SgSwitchStatement* node;
   };
 
-  class Normalization {
+  class Lowering {
   public:
-    void normalizeAst(SgNode* root);
+    void lowerAst(SgNode* root);
     size_t inlineFunctions(SgNode* root);
     static void createGotoStmtAtEndOfBlock(SgBasicBlock* block, SgStatement* target);
+    static SgGotoStatement* createGotoStmtAndInsertLabel(SgBasicBlock* block, SgStatement* target);
+    static void setLabelPrefix(std::string prefix);
+    static std::string newLabelName();
   private:
     void createLoweringSequence(SgNode* root);
     void applyLoweringSequence();
@@ -76,10 +79,11 @@ namespace SPRAY {
     static int32_t tmpVarNr;
     // counter for generating new label names
     static int labelNr;
+    static std::string labelPrefix;
 
     typedef std::list<std::pair<SgStatement*,SgExpression*> > TransformationList;
     TransformationList transformationList;
-    std::list<Lowering*> loweringSequence;
+    std::list<LoweringOp*> loweringSequence;
   };
   
 } // end of namespace SPRAY

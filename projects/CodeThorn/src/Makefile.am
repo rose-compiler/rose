@@ -55,7 +55,7 @@ libspray_la_SOURCES=\
  LVTransferFunctions.h \
  LanguageRestrictor.h \
  Miscellaneous2.h \
- Normalization.h \
+ Lowering.h \
  NumberIntervalLattice.h \
  ParallelAutomataGenerator.h \
  PASolver1.h \
@@ -93,7 +93,7 @@ libspray_la_SOURCES=\
  LVLattice.C \
  LVTransferFunctions.C \
  Miscellaneous2.C \
- Normalization.C \
+ Lowering.C \
  NumberIntervalLattice.C \
  ParallelAutomataGenerator.C \
  PASolver1.C \

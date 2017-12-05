@@ -18,7 +18,7 @@
 #include "TrivialInlining.h"
 #include "Threadification.h"
 #include "RewriteSystem.h"
-#include "Normalization.h"
+#include "Lowering.h"
 
 #include <vector>
 #include <set>
@@ -242,10 +242,10 @@ int main(int argc, char* argv[]) {
   }
 
   if(args.getBool("normalize2")) {
-    logger[TRACE] <<"STATUS: Normalization started."<<endl;
-    SPRAY::Normalization normalizer;
-    normalizer.normalizeAst(root);
-    logger[TRACE] <<"STATUS: Normalization finished."<<endl;
+    logger[TRACE] <<"STATUS: Lowering started."<<endl;
+    SPRAY::Lowering lowering;
+    lowering.lowerAst(root);
+    logger[TRACE] <<"STATUS: Lowering finished."<<endl;
     root->unparse(0,0);
     exit(0);
   }
@@ -291,11 +291,11 @@ int main(int argc, char* argv[]) {
   }
 
   if(args.getBool("normalize")) {
-    logger[TRACE] <<"STATUS: Normalization started."<<endl;
+    logger[TRACE] <<"STATUS: Lowering started."<<endl;
     RewriteSystem rewriteSystem;
     rewriteSystem.resetStatistics();
     rewriteSystem.rewriteCompoundAssignmentsInAst(root,&variableIdMapping);
-    logger[TRACE] <<"STATUS: Normalization finished."<<endl;
+    logger[TRACE] <<"STATUS: Lowering finished."<<endl;
   }
 
   logger[TRACE] <<"STATUS: performing flow-insensitive const analysis."<<endl;
