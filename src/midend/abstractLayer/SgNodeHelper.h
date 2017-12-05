@@ -200,8 +200,8 @@ namespace SgNodeHelper {
      (=relevant) loop. This function can be used for:
      SgWhile,SgDoWhile,SgForStatement, SgSwitch.
   */
-  std::set<SgNode*> LoopRelevantBreakStmtNodes(SgNode* node);
-  std::set<SgNode*> loopRelevantContinueStmtNodes(SgNode* node);
+  std::set<SgNode*> loopRelevantBreakStmtNodes(SgNode* node);
+  std::set<SgContinueStmt*> loopRelevantContinueStmtNodes(SgNode* node);
 
   //! returns the first child of an arbitrary AST node (throws exception if numChildren==0)
   SgNode* getFirstChild(SgNode* node);
