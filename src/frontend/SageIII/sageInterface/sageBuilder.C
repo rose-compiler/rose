@@ -9077,6 +9077,18 @@ SageBuilder::buildGotoStatement_nfi(SgLabelStatement *  label)
   return result;
 }
 
+// DQ (11/22/2017): Added support for computed code goto as defined by GNU C/C++ extension.
+SgGotoStatement *
+SageBuilder::buildGotoStatement_nfi(SgExpression*  label_expression)
+   {
+     SgLabelStatement* label = NULL;
+     SgGotoStatement* result = new SgGotoStatement(label);
+     result->set_selector_expression(label_expression);
+     ROSE_ASSERT(result);
+     setOneSourcePositionNull(result);
+     return result;
+   }
+
 //! Build a return statement
 SgReturnStmt* SageBuilder::buildReturnStmt(SgExpression* expression /* = NULL */)
 {
