@@ -151,8 +151,6 @@ simdlen         {return cond_return ( SIMDLEN ); }
 aligned         {return cond_return ( ALIGNED ); }
 linear          {return cond_return ( LINEAR ); }
 uniform         {return cond_return ( UNIFORM ); }
-inbranch        {return cond_return ( INBRANCH ); }
-notinbranch     {return cond_return ( NOTINBRANCH ); }
 final           {return cond_return ( FINAL ); }
 priority        {return cond_return ( PRIORITY); }
 

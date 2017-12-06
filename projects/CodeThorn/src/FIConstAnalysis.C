@@ -681,7 +681,7 @@ void FIConstAnalysis::writeCvsConstResult(VariableIdMapping& variableIdMapping, 
   //VariableConstInfo vci(&variableIdMapping, &map);
   for(VarConstSetMap::iterator i=_varConstSetMap.begin();i!=_varConstSetMap.end();++i) {
     VariableId varId=(*i).first;
-    //string variableName=variableIdMapping.uniqueShortVariableName(varId);
+    //string variableName=variableIdMapping.uniqueVariableName(varId);
     string variableName=variableIdMapping.variableName(varId);
     myfile<<variableName;
     myfile<<",";

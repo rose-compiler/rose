@@ -10,6 +10,7 @@
 #include "ReadWriteData.h"
 #include "Visualizer.h"
 #include "LoopInfo.h"
+#include "CollectionOperators.h"
 
 // BOOST includes
 #include "boost/lexical_cast.hpp"
@@ -92,14 +93,15 @@ private:
 class Specialization {
  public:
   Specialization();
+
+  static void initDiagnostics();
+ 
   void transformArrayProgram(SgProject* root, Analyzer* analyzer);
   void extractArrayUpdateOperations(Analyzer* ana,
                                     ArrayUpdatesSequence& arrayUpdates,
                                     RewriteSystem& rewriteSystem,
                                     bool useConstExprSubstRule=true
                                     );
-  // computes number of race conditions in update sequence (0:OK, >0:race conditions exist).
-  int verifyUpdateSequenceRaceConditions(LoopInfoSet& loopInfoSet, ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping);
   void printUpdateInfos(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping);
   void writeArrayUpdatesToFile(ArrayUpdatesSequence& arrayUpdates, string filename, SAR_MODE sarMode, bool performSorting);
   void createSsaNumbering(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping);
@@ -107,12 +109,10 @@ class Specialization {
   int specializeFunction(SgProject* project, string funNameToFind, int param, int constInt, VariableIdMapping* variableIdMapping);
   int specializeFunction(SgProject* project, string funNameToFind, int param, int constInt, string varInitName, int initConst, VariableIdMapping* variableIdMapping);
   SgFunctionDefinition* getSpecializedFunctionRootNode() { return _specializedFunctionRootNode; }
-  static int numParLoops(LoopInfoSet& loopInfoSet, VariableIdMapping* variableIdMapping);
-  void setCheckAllLoops(bool val);
-  void setCheckAllDataRaces(bool val);
-  void setVisualizeReadWriteAccesses(bool val);
   void substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping, SAR_MODE sarMode, RewriteSystem& rewriteSystem);
+
  private:
+  static Sawyer::Message::Facility logger;
   string iterVarsToString(IterationVariables iterationVars, VariableIdMapping* variableIdMapping);
   int substituteConstArrayIndexExprsWithConst(VariableIdMapping* variableIdMapping, ExprAnalyzer* exprAnalyzer, const EState* estate, SgNode* root);
   VariableId determineVariableIdToSpecialize(SgFunctionDefinition* funDef, int param, VariableIdMapping* variableIdMapping);
@@ -133,14 +133,10 @@ class Specialization {
   //SgExpressionPtrList& getInitializerListOfArrayVariable(VariableId arrayVar, VariableIdMapping* variableIdMapping);
   string flattenArrayInitializer(SgVariableDeclaration* decl, VariableIdMapping* variableIdMapping);
   void transformArrayAccess(SgNode* node, VariableIdMapping* variableIdMapping);
-
-  SgFunctionDefinition* _specializedFunctionRootNode;
-
-  // for data race check of all loops independent on whether they are marked as parallel loops
-  bool _checkAllLoops;
-  bool _checkAllDataRaces;
-  bool _visualizeReadWriteAccesses;
-  long _maxNumberOfExtractedUpdates;
+  
+  SgFunctionDefinition* _specializedFunctionRootNode=0;
+  long _maxNumberOfExtractedUpdates=-1;
 };
+
 
 #endif

@@ -3200,6 +3200,20 @@ SgUntypedSubmoduleDeclaration* SgUntypedSubmoduleDeclaration::build_node_from_no
    }
 
 
+// Rasmussen (8/17/2017): Added new IR node to represent a Fortran block-data program unit
+SgUntypedBlockDataDeclaration* SgUntypedBlockDataDeclaration::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, std::string name )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedBlockDataDeclaration::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, std::string name): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedBlockDataDeclaration* returnNode = NULL;
+
+     return returnNode;
+   }
+
+
 // Rasmussen (10/04/2017): Added several functions below for new untyped nodes related to general language support.
 //
 SgUntypedExceptionHandlerDeclaration* SgUntypedExceptionHandlerDeclaration::build_node_from_nonlist_children(Sg_File_Info* startOfConstruct)

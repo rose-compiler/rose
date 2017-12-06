@@ -1062,6 +1062,10 @@ SgGotoStatement * buildGotoStatement_nfi(SgLabelStatement *  label);
 //! Build a goto statement from a label symbol, supporting both C/C++ and Fortran cases
 ROSE_DLL_API SgGotoStatement * buildGotoStatement(SgLabelSymbol*  symbol);
 
+// DQ (11/22/2017): Added support for computed code goto as defined by GNU C/C++ extension.
+//! Build a goto statement from a label expression, supporting only C/C++ and not Fortran cases
+SgGotoStatement * buildGotoStatement_nfi(SgExpression*  expr);
+
 //! Build a case option statement
 ROSE_DLL_API SgCaseOptionStmt * buildCaseOptionStmt( SgExpression * key = NULL,SgStatement *body = NULL);
 SgCaseOptionStmt * buildCaseOptionStmt_nfi( SgExpression * key,SgStatement *body);

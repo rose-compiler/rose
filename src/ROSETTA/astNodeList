@@ -787,6 +787,7 @@ SgUntypedModuleScope
 SgUntypedGlobalScope
 SgUntypedModuleDeclaration
 SgUntypedSubmoduleDeclaration
+SgUntypedBlockDataDeclaration
 SgUntypedStructureDeclaration
 SgUntypedPackageDeclaration
 SgUntypedExceptionDeclaration

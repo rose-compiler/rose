@@ -2562,6 +2562,14 @@ Grammar::setUpStatements ()
      GotoStatement.setDataPrototype     ( "SgLabelRefExp*", "label_expression", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (11/22/2017): Adding support for GNU extension computed goto for C (different enough from 
+  // Fortran to just extend the C IR node instead of reuse the Fortran computd goto IR node).
+  // Note that in Fortran this is the asigned goto, but in C GNU explicitly calls it the computed 
+  // goto (and it is different from Fortran's computed goto).  GNU claims that the name "assigned 
+  // goto" does not make sense for the C language.
+     GotoStatement.setDataPrototype     ( "SgExpression*", "selector_expression", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      AsmStmt.setFunctionPrototype  ( "HEADER_ASM_STATEMENT", "../Grammar/Statement.code" );
 
 #if 0
