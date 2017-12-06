@@ -18,7 +18,7 @@ namespace BinaryAnalysis {
 
 /** Interface to the Z3 SMT solver.
  *
- *  This interface has to modes: it can either talk to a "z3" executable using the SMT-LIB2 format, or it can connect directly
+ *  This interface has two modes: it can either talk to a "z3" executable using the SMT-LIB2 format, or it can connect directly
  *  to the z3 shared library. The former is easier to debug, but the latter is much faster since it avoids translating to an
  *  intermediate text representation both when sending data to the solver and when getting data from the solver.  The mode is
  *  selected at runtime with the @ref linkage property. */
