@@ -62,7 +62,7 @@ MOVE_MERGE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS = $(addprefix rose_v2_, ${MOV
 #MOVE_MERGE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS = $(addprefix rose_v2_, ${MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED})
 
 MOVE_MERGE_DECLS_NO_VAR_NORM_TESTCODES_FULLY_SUPPORTED_RESULTS = $(addprefix rose_v3_, ${MOVE_DECLS_TESTCODES_FULLY_SUPPORTED})
-iSSING_MOVE_DECLS_TESTCODES_RESULTS = \
+PASSING_MOVE_DECLS_TESTCODES_RESULTS = \
    $(MOVE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS)                                                                                                                                                                                             
 #   $(MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS)                                                                                                                                                                                        
 # DQ (12/23/2014): Added tests specific to use of move tool with token-based unparsing.                                                                                                                                                        
@@ -418,6 +418,7 @@ if USING_GNU_COMPILER
 if ROSE_USING_GCC_VERSION_LATER_4_8
 	@echo "moveDeclarationTool tests require configuration with either EDG version 4.9 and GNU version 4.8 or backend compiler or EDG 4.12 and 4.8 or any later GNU compiler."
 	@echo "moveDeclarationTool tests using EDG 4.12 and any supported backend compiler are allowed."
+	@$(MAKE) move_diff_check
 endif # ROSE_USING_GCC_VERSION_LATER_4_8
 else
 	@echo "ROSE_USE_EDG_VERSION_4_9 == false"
