@@ -193,20 +193,25 @@ namespace SPRAY {
   }
 
   // creates a goto at end of 'block', and inserts a label before statement 'target'.
-  SgGotoStatement* Lowering::createGotoStmtAndInsertLabel(SgBasicBlock* block, SgStatement* target) {
+  SgLabelStatement* Lowering::createLabel(SgStatement* target) {
     SgLabelStatement* newLabel =
       SageBuilder::buildLabelStatement(Lowering::newLabelName(),
                                        SageBuilder::buildBasicBlock(),
                                        // MS: scope should be function scope?
                                        isSgScopeStatement(target->get_parent()));
+    return newLabel;
+  }
+
+  // creates a goto at end of 'block', and inserts a label before statement 'target'.
+  SgGotoStatement* Lowering::createGotoStmtAndInsertLabel(SgLabelStatement* newLabel, SgStatement* target) {
     SageInterface::insertStatement(target, newLabel, true);
     SgGotoStatement* newGoto = SageBuilder::buildGotoStatement(newLabel);
     return newGoto;
   }
 
   // creates a goto at end of 'block', and inserts a label before statement 'target'.
-  void Lowering::createGotoStmtAtEndOfBlock(SgBasicBlock* block, SgStatement* target) {
-    SgGotoStatement* newGoto=createGotoStmtAndInsertLabel(block, target);
+  void Lowering::createGotoStmtAtEndOfBlock(SgLabelStatement* newLabel, SgBasicBlock* block, SgStatement* target) {
+    SgGotoStatement* newGoto=createGotoStmtAndInsertLabel(newLabel, target);
     block->append_statement(newGoto);
   }
 
@@ -224,7 +229,10 @@ namespace SPRAY {
     //cout<<"DEBUG: transforming WhileStmt."<<endl;
     SgBasicBlock* block=isSgBasicBlock(SgNodeHelper::getLoopBody(node));
     ROSE_ASSERT(block); // must hold because all branches are normalized to be blocks
-    Lowering::createGotoStmtAtEndOfBlock(block, node);
+    
+    SgLabelStatement* newLabel=Lowering::createLabel(node);
+    Lowering::createGotoStmtAtEndOfBlock(newLabel,block,node);
+
     // build IfStmt
     SgIfStmt* newIfStmt=SageBuilder::buildIfStmt(isSgExprStatement(SgNodeHelper::getCond(node)),
                                                  block,
@@ -232,6 +240,20 @@ namespace SPRAY {
     // replace while-stmt with if-stmt
     isSgStatement(node->get_parent())->replace_statement(node,newIfStmt);
     newIfStmt->set_parent(node->get_parent());
+
+    // handle continue statements
+    std::set<SgContinueStmt*> continueStmts=SgNodeHelper::loopRelevantContinueStmtNodes(node);
+
+    if(continueStmts.size()>0) {
+      // reuse same label (compact code) for gotos replacing continues
+      SgLabelStatement* labelForContinue = newLabel; 
+      BOOST_FOREACH(SgContinueStmt* continueStmt,continueStmts) {
+        SgGotoStatement* newGoto = SageBuilder::buildGotoStatement(labelForContinue);
+        // replace continue with newGoto
+        isSgStatement(continueStmt->get_parent())->replace_statement(continueStmt,newGoto);
+        newGoto->set_parent(continueStmt->get_parent());
+      }
+    }
   }
 
   WhileStmtLoweringOp::~WhileStmtLoweringOp() {
@@ -283,7 +305,6 @@ namespace SPRAY {
                                          scopeContainingDoWhileStmt);
       SageInterface::insertStatementBefore(newIfStmt, newLabelForContinue);
       BOOST_FOREACH(SgContinueStmt* continueStmt,continueStmts) {
-        cout<<"TODO:"<<continueStmt->unparseToString()<<endl;
         SgGotoStatement* newGoto = SageBuilder::buildGotoStatement(newLabelForContinue);
         // replace continue with newGoto
         isSgStatement(continueStmt->get_parent())->replace_statement(continueStmt,newGoto);

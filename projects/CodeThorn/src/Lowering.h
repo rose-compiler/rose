@@ -54,8 +54,9 @@ namespace SPRAY {
   public:
     void lowerAst(SgNode* root);
     size_t inlineFunctions(SgNode* root);
-    static void createGotoStmtAtEndOfBlock(SgBasicBlock* block, SgStatement* target);
-    static SgGotoStatement* createGotoStmtAndInsertLabel(SgBasicBlock* block, SgStatement* target);
+    static SgLabelStatement* createLabel(SgStatement* target);
+    static void createGotoStmtAtEndOfBlock(SgLabelStatement* newLabel, SgBasicBlock* block, SgStatement* target);
+    static SgGotoStatement* createGotoStmtAndInsertLabel(SgLabelStatement* newLabel, SgStatement* target);
     static void setLabelPrefix(std::string prefix);
     static std::string newLabelName();
   private:
