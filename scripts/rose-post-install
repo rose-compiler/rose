@@ -2,7 +2,7 @@
 $Interpreter ||= "/usr/bin/perl";
 #-------------------------------------------------------------------------------
 #
-#   Copyright 1985-99,2000-17 James Frederick Reus
+#   Copyright 1985-99,2000-18 James Frederick Reus
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -21,15 +21,15 @@ $Interpreter ||= "/usr/bin/perl";
 # MyUniqueFileId: 05bfd522-45a2-4dfa-ca27-420e6c630546
 
 $mkinstaller_ver_major = "1";
-$mkinstaller_ver_minor = "0";
-$mkinstaller_ver_build = "3";
+$mkinstaller_ver_minor = "1";
+$mkinstaller_ver_build = "2";
 $mkinstaller_ver_patch = "";
-$mkinstaller_ver_name  = "1.0.3";
-$mkinstaller_ver_time  = " 3Nov2017 18:27:59z";
-$mkinstaller_ver_id    = "@(#)mkinstaller 1.0.3 -  3Nov2017 18:27:59z";
+$mkinstaller_ver_name  = "1.1.2";
+$mkinstaller_ver_time  = " 1Dec2017 04:40:42z";
+$mkinstaller_ver_id    = "@(#)mkinstaller 1.1.2 -  1Dec2017 04:40:42z";
 
 @defaultCopyrightOwners
-  = ( "Copyright 1985-99,2000-17 James Frederick Reus\n"
+  = ( "Copyright 1985-99,2000-18 James Frederick Reus\n"
     );
 
 @defaultCopyrightStatement
@@ -66,6 +66,7 @@ if ( exists $ENV{"DEBUG_rose_post_install"}) {
    #----------------------------------------------------------------------------
 
    print "rose-post-install: initialization...\n" if $debugging;
+   my $backupPathname = "";
    my $dir_include    = "";
    my $dir_lib        = "";
    my $dir_prefix     = "";
@@ -395,11 +396,12 @@ if ( exists $ENV{"DEBUG_rose_post_install"}) {
 
    print "rose-post-install: locate \"rose-config.cfg\"...\n" if $debugging;
    {
-      my $lookFor = $here."/lib/rose-config.cfg";
+      my $lookFor = $dir_lib."/rose-config.cfg";
       print STDERR "rose-post-install: find \"rose-config.cfg\"\n" if (1 <= $verbosityLevel);
       if ( -f $lookFor) {
          $inputPathname  = $lookFor;
          $outputPathname = $lookFor.".new";
+         $backupPathname = $inputPathname.".bak";
          print "rose-post-install: ...found \"$inputPathname\"\n" if $debugging;
          print STDERR "rose-post-install: ...found \"$inputPathname\"\n" if (1 <= $verbosityLevel);
       }
@@ -537,16 +539,19 @@ if ( exists $ENV{"DEBUG_rose_post_install"}) {
    print "rose-post-install: rename files...\n" if $debugging;
    {
       if ( -f $inputPathname) {
+         print "rose-post-install: ...found \"$inputPathname\"\n" if $debugging;
          if ( -f $outputPathname) {
+            print "rose-post-install:      and \"$outputPathname\"\n" if $debugging;
             #---------------------------------------
             #
             #  First eliminate existing rose-config.cfg.bak
             #  file...
             #
             #---------------------------------------
-            my $backupPathname = $inputPathname.".bak";
+            print "rose-post-install: ...use \"$backupPathname\" for a backup\n" if $debugging;
             if ( -f $backupPathname) {
-               print "rose-post-install: ...eliminate existing \"$backupPathname\" file\n" if $debugging;
+               print STDERR "rose-post-install: delete existing \"$backupPathname\"\n" if (1 <= $verbosityLevel);
+               print "rose-post-install:    eliminate existing \"$backupPathname\" file\n" if $debugging;
                if ( ! unlink($backupPathname)) {
                   print STDERR "rose-post-install: error -- can't delete existing \"$backupPathname\"\n";
                   exit 1;
@@ -555,7 +560,8 @@ if ( exists $ENV{"DEBUG_rose_post_install"}) {
                   print STDERR "rose-post-install: error -- did't delete existing \"$backupPathname\"\n";
                   exit 1;
                }
-               print "rose-post-install:    done\n" if $debugging;
+               print "rose-post-install:    ...done\n" if $debugging;
+               print "rose-post-install: ...done\n" if (2 <= $verbosityLevel);
             }
             #---------------------------------------
             #
@@ -563,8 +569,10 @@ if ( exists $ENV{"DEBUG_rose_post_install"}) {
             #  as rose-config.cfg.bak (preserving it)...
             #
             #---------------------------------------
-            print "rose-post-install: ...rename given \"$inputPathname\" as \"$backupPathname\"\n" if $debugging;
+            print "rose-post-install: ...rename original \"$inputPathname\" as \"$backupPathname\"\n" if $debugging;
             {
+               print "rose-post-install: rename \"$inputPathname\"\n" if (1 <= $verbosityLevel);
+               print "rose-post-install:     as \"$backupPathname\"\n" if (1 <= $verbosityLevel);
                if ( ! rename($inputPathname,$backupPathname)) {
                   print STDERR "rose-post-install: error -- can't rename \"$inputPathname\" as \"$backupPathname\"\n";
                   exit 1;
@@ -579,6 +587,7 @@ if ( exists $ENV{"DEBUG_rose_post_install"}) {
                   print STDERR "rose-post-install: ...\"$backupPathname\" isn't there\n";
                   exit 1;
                }
+               print "rose-post-install: ...done\n" if (2 <= $verbosityLevel);
             }
             print "rose-post-install:    done\n" if $debugging;
             #---------------------------------------
@@ -589,6 +598,8 @@ if ( exists $ENV{"DEBUG_rose_post_install"}) {
             #---------------------------------------
             print "rose-post-install: ...rename new \"$outputPathname\" as \"$inputPathname\"\n" if $debugging;
             {
+               print "rose-post-install: rename \"$outputPathname\"\n" if (1 <= $verbosityLevel);
+               print "rose-post-install:     as \"$inputPathname\"\n" if (1 <= $verbosityLevel);
                if ( ! rename($outputPathname,$inputPathname)) {
                   print STDERR "rose-post-install: error -- can't rename \"$outputPathname\" as \"$inputPathname\"\n";
                   exit 1;
@@ -603,10 +614,23 @@ if ( exists $ENV{"DEBUG_rose_post_install"}) {
                   print STDERR "rose-post-install: ...\"$inputPathname\" isn't there\n";
                   exit 1;
                }
+               print "rose-post-install: ...done\n" if (2 <= $verbosityLevel);
             }
             print "rose-post-install:    done\n" if $debugging;
          }
       }
+   }
+   if ( -f $inputPathname) {
+      print STDERR "rose-post-install: found: \"$inputPathname\"\n" if (1 <= $verbosityLevel);
+   }
+   else {
+      print STDERR "rose-post-install: can't find \"$inputPathname\"\n";
+   }
+   if ( -f $backupPathname) {
+      print STDERR "rose-post-install:    and \"$backupPathname\"\n" if (1 <= $verbosityLevel);
+   }
+   else {
+      print STDERR "rose-post-install: can't find \"$backupPathname\"\n";
    }
    print "rose-post-install: ...done\n" if $debugging;
    exit 0;
@@ -913,36 +937,39 @@ sub getOSclass {
 #-------------------------------------------------------------------------------
 
 sub getWorkingDirectory {
-   my $sponsor  = shift;
+   my $callerIs = shift;
+   print STDERR "getWorkingDirectory[ starting...\n" if $debugging;
    my $exitCode;
    my $gives;
    my $tmpdir   = findTempDir("");
    my $osClass  = getOSclass();
    if ($osClass eq "UNIX-like") {
-      my $pathname = "$tmpdir/pwd-$$.tmp";;
-      $gives       = `pwd 2>$pathname`;
-      $exitCode    = $? + 0;
+      print STDERR "getWorkingDirectory: ...UNIX-like\n" if $debugging;
+      my $tmpFile = "$tmpdir/pwd-$$.tmp";;
+      print STDERR "getWorkingDirectory: ...run: [pwd 2>$tmpFile]\n" if $debugging;
+      $gives      = `pwd 2>$tmpFile`;
+      $exitCode   = $? + 0;
       chomp $gives;
-      unlink $pathname if -f $pathname;
+      unlink $tmpFile if -f $tmpFile;
    }
    elsif ($osClass eq "Windows-like") {
-      my $pathname = "$tmpdir\\pwd-$$.tmp";
-      $gives       = `cd 2>$pathname`;
-      $exitCode    = $? + 0;
+      print STDERR "getWorkingDirectory: ...Windows-like\n" if $debugging;
+      my $tmpFile = "$tmpdir\\pwd-$$.tmp";
+      $gives      = `cd 2>$tmpFile`;
+      print STDERR "getWorkingDirectory: ...run: [cd 2>$tmpFile]\n" if $debugging;
+      $exitCode   = $? + 0;
       chomp $gives;
-      unlink $pathname if -f $pathname;
+      unlink $tmpFile if -f $tmpFile;
    }
    else {
       $gives    = "";
       $exitCode = 1;
    }
    if ($exitCode != 0) {
-      if ($sponsor ne "") {
-         print STDERR "$sponsor: can't determine current working directory\n";
-         exit 1;
-      }
+      print STDERR "$callerIscan't determine current working directory\n";
       $gives = "";
    }
+   print STDERR "getWorkingDirectory] ...done(=\"".$gives."\")\n" if $debugging;
    return $gives;
 }
 

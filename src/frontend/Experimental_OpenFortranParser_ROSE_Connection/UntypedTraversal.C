@@ -67,6 +67,14 @@ UntypedTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute curre
          std::cout << "--- TODO: convert SgUntypedInterfaceDeclaration\n";
       }
 
+   else if (isSgUntypedBlockDataDeclaration (n) != NULL)
+      {
+         SgUntypedBlockDataDeclaration* ut_block_data = dynamic_cast<SgUntypedBlockDataDeclaration*>(n);
+         SgProcedureHeaderStatement* sg_function = pConverter->convertSgUntypedBlockDataDeclaration(ut_block_data, currentScope);
+
+         currentScope = sg_function->get_definition()->get_body();
+      }
+
    else if (isSgUntypedFunctionDeclaration (n) != NULL)
       {
          SgUntypedFunctionDeclaration* ut_function = dynamic_cast<SgUntypedFunctionDeclaration*>(n);

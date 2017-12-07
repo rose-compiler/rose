@@ -4032,13 +4032,37 @@ void Grammar::setUpBinaryInstructions() {
     IS_SERIALIZABLE(AsmStatement);
 
 #ifdef DOCUMENTATION
+    /** Base class for statement-like subclasses.
+     *
+     *  This is a base class for those binary analysis entities, such as instructions and basic blocks, that have a starting
+     *  address in the virtual address space. */
     class SgAsmStatement: public SgAsmNode {
     public:
 #endif
 
-#ifndef DOCUMENTATION
+#ifdef DOCUMENTATION
+        /** Property: Starting virtual address.
+         *
+         *  Virtual address of first byte of instruction, block, or whatever, depending on subclass.
+         *
+         *  @{ */
+        rose_addr_t get_address() const;
+        void set_address(rose_addr_t);
+        /** @} */
+#else
         AsmStatement.setDataPrototype("rose_addr_t", "address", "= 0",
                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: Commentary.
+         *
+         *  @{ */
+        const std::string& get_comment() const;
+        void set_comment(const std::string&);
+        /** @} */
+#else
         AsmStatement.setDataPrototype("std::string", "comment", "= \"\"",
                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif

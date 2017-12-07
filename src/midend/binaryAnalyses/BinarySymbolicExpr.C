@@ -652,9 +652,9 @@ Interior::print(std::ostream &o, Formatter &fmt) {
                     }
                     break;
 
-                case OP_BV_AND:
-                case OP_BV_OR:
-                case OP_BV_XOR:
+                case OP_AND:
+                case OP_OR:
+                case OP_XOR:
                 case OP_CONCAT:
                 case OP_UDIV:
                 case OP_UGE:
@@ -2145,7 +2145,6 @@ Interior::simplifyTop() {
                     newnode = inode->foldConstants(AddSimplifier());
                 break;
             case OP_AND:
-            case OP_BV_AND:
                 newnode = inode->associative()->commutative()->identity((uint64_t)-1);
                 if (newnode==node)
                     newnode = inode->foldConstants(AndSimplifier());
@@ -2157,7 +2156,7 @@ Interior::simplifyTop() {
                 if (newnode==node)
                     newnode = inode->rewrite(AsrSimplifier());
                 break;
-            case OP_BV_XOR:
+            case OP_XOR:
                 newnode = inode->associative()->commutative()->foldConstants(XorSimplifier());
                 if (newnode==node)
                     newnode = inode->rewrite(XorSimplifier());
@@ -2201,7 +2200,6 @@ Interior::simplifyTop() {
                 newnode = inode->rewrite(NoopSimplifier());
                 break;
             case OP_OR:
-            case OP_BV_OR:
                 newnode = inode->associative()->commutative()->identity(0);
                 if (newnode==node)
                     newnode = inode->foldConstants(OrSimplifier());
@@ -2719,17 +2717,17 @@ makeAsr(const Ptr &sa, const Ptr &a, const std::string &comment, unsigned flags)
 
 Ptr
 makeAnd(const Ptr &a, const Ptr &b, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_BV_AND, a, b, comment, flags);
+    return Interior::create(0, OP_AND, a, b, comment, flags);
 }
 
 Ptr
 makeOr(const Ptr &a, const Ptr &b, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_BV_OR, a, b, comment, flags);
+    return Interior::create(0, OP_OR, a, b, comment, flags);
 }
 
 Ptr
 makeXor(const Ptr &a, const Ptr &b, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_BV_XOR, a, b, comment, flags);
+    return Interior::create(0, OP_XOR, a, b, comment, flags);
 }
     
 Ptr
