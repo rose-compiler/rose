@@ -2038,15 +2038,25 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
              }
             else
              {
-            // DQ (4/28/2017): Where this is un-named type but we are wanting to output a name for a template argument, then we want to generated name,
+            // DQ (12/3/2017): This is a problem for Cxx11_tests/test2017_31,C, need to debug this case.
+#if 0
+               printf ("info.get_use_generated_name_for_template_arguments() = %s \n",info.get_use_generated_name_for_template_arguments() ? "true" : "false");
+#endif
+            // DQ (4/28/2017): Where this is un-named type but we are wanting to output a name for a template argument, then we want the generated name,
             // otherwise we want the class definition to be output directly.  So I think we need to trigger this use case via the SgUnparseInfo object.
                if (info.get_use_generated_name_for_template_arguments() == true)
                   {
+#if 0
+                    printf ("WARNING: info.get_use_generated_name_for_template_arguments() == true \n");
+#endif
                  // In this case we need to output the generated name.
 #if 0
                     printf ("In unparseClassType(): Detected case of output of un-named class for use in template argument \n");
 #endif
                     SgName nm = class_type->get_name();
+#if 0
+                    printf ("In unparseClassType(): Detected case of output of un-named class for use in template argument: nm = %s \n",nm.str());
+#endif
 #if 0
                     curprint(" /* in unparseClassType: output un-named type for template argument */ ");
 #endif
@@ -2060,17 +2070,34 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
                          decl,decl->get_name().str(),decl->get_definition());
                     printf ("In unparseClassType: Detected un-named class declaration: Calling  unset_SkipClassDefinition() \n");
 #endif
+
+                 // DQ (12/3/2017): This is a problem for Cxx11_tests/test2017_31.C (but with it uncommented, C_tests/test2015_67.c does pass).
 #if 1
                  // DQ (4/4/2015): Comment out this to support test2015_67.c.
-
-                    info.unset_SkipClassDefinition();
-
+                 // info.unset_SkipClassDefinition();
                  // DQ (1/9/2014): Mark Enum and Class declaration handling consistantly (enforced within the unparser now).
-                    info.unset_SkipEnumDefinition();
+                 // info.unset_SkipEnumDefinition();
+
+                 // DQ (12/6/2017): Check if this is a part of a lambda capture.
+                    SgClassDeclaration* parentClassDeclaration = isSgClassDeclaration(class_type->get_declaration());
+                    ROSE_ASSERT(parentClassDeclaration != NULL);
+                    SgLambdaExp* lambdaExpresssion = isSgLambdaExp(parentClassDeclaration->get_parent());
+                    if (lambdaExpresssion != NULL)
+                       {
+                      // In the case where this is a class representing the capture variables, we don't output the class.
+                       }
+                      else
+                       {
+                      // DQ (12/6/2017): test2005_114.C demonstrates where we need to output the class declaration even when the name is generated (the generated name will not be output).
+                         info.unset_SkipClassDefinition();
+                         info.unset_SkipEnumDefinition();
+                       }
 #else
-#error "DEAD CODE!"
+// #error "DEAD CODE!"
                  // DQ (4/4/2015): This addresses the handling of test2015_67.c.
+#if 0
                     printf ("In unparseClassType(): Skipping reset of info.unset_SkipClassDefinition() and info.unset_SkipEnumDefinition() \n");
+#endif
 #endif
 #if 0
                     printf ("In unparseClassType(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
@@ -2089,6 +2116,10 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
      printf ("In unparseClassType: decl->isForward()                   = %s \n",(decl->isForward()                   == true) ? "true" : "false");
      printf ("In unparseClassType: decl->get_isUnNamed()               = %s \n",(decl->get_isUnNamed()               == true) ? "true" : "false");
      printf ("In unparseClassType: decl->get_isAutonomousDeclaration() = %s \n",(decl->get_isAutonomousDeclaration() == true) ? "true" : "false");
+#endif
+#if 0
+     printf ("In unparseClassType(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
+     printf ("In unparseClassType(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition() == true) ? "true" : "false");
 #endif
 
   // DQ (7/28/2013): If this is an un-named class/struct/union then we have to put out the full definition each time (I think).
