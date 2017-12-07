@@ -145,7 +145,7 @@ SgAsmInstruction::hasEffect(const std::vector<SgAsmInstruction*> &insns, bool al
     if (relax_stack_semantics) {
         static bool emitted = false;
         if (!emitted && InstructionSemantics2::mlog[WARN]) {
-            InstructionSemantics2::mlog[WARN] <<"SgAsmX86Instruction::hasEffect: relax_stack_semantics not implemented\n";
+            InstructionSemantics2::mlog[WARN] <<"SgAsmInstruction::hasEffect: relax_stack_semantics not implemented\n";
             emitted = true;
         }
     }
@@ -163,7 +163,7 @@ SgAsmInstruction::findNoopSubsequences(const std::vector<SgAsmInstruction*>& ins
     if (relax_stack_semantics) {
         static bool emitted = false;
         if (!emitted && InstructionSemantics2::mlog[WARN]) {
-            InstructionSemantics2::mlog[WARN] <<"SgAsmX86Instruction::hasEffect: relax_stack_semantics not implemented\n";
+            InstructionSemantics2::mlog[WARN] <<"SgAsmInstruction::hasEffect: relax_stack_semantics not implemented\n";
             emitted = true;
         }
     }
