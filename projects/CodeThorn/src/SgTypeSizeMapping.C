@@ -2,19 +2,6 @@
 #include "SgTypeSizeMapping.h"
 
 namespace SPRAY {
-
-  TypeSizeMapping::TypeSizeMapping() {
-    // C++98 version
-    static const TypeSize mapping[]={1U,
-                                                          1,1,2,2,4,4,
-                                                          2,2,4,4,4,4,8,8,
-                                                          4,8,16,
-                                                          8
-    };
-    std::vector<TypeSize> mappingVec (mapping, mapping + sizeof(mapping) / sizeof(mapping[0]) );
-    setMapping(mappingVec);
-  }
-
   SPRAY::TypeSize SgTypeSizeMapping::determineTypeSize(SgType* sgType) {
     switch (sgType->variantT()) {
 
@@ -61,14 +48,38 @@ namespace SPRAY {
       return getTypeSize(BITYPE_DOUBLE);
     case V_SgTypeLongDouble:
       return getTypeSize(BITYPE_LONG_DOUBLE);
-
-      // TODO: SgArrayType,SgFunctionType,SgReferenceType,SgTypeComplex
-      // TODO: structs/class/union
+    case V_SgReferenceType:
+      return getTypeSize(BITYPE_REFERENCE);
+    case V_SgArrayType: {
+      SPRAY::TypeSize elementTypeSize=determineElementTypeSize(isSgArrayType(sgType));
+      // TODO determine size of the array and multiply it with element type size.
+      SPRAY::TypeSize numberOfElements=1;
+      return numberOfElements*elementTypeSize;
+    }
+    case V_SgClassType: {
+      typedef std::vector< std::pair< SgNode*, std::string > > DataMemberPointers;
+      SPRAY::TypeSize sum=0;
+      DataMemberPointers dataMemPtrs=isSgClassType(sgType)->returnDataMemberPointers();
+      // returnDataMemberPointers includes all declarations (methods need to be filtered)
+      for(DataMemberPointers::iterator i=dataMemPtrs.begin();i!=dataMemPtrs.end();++i) {
+        SgNode* node=(*i).first;
+        if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(node)) {
+          sum+=determineTypeSize(varDecl->get_type());
+        }
+      }
+      return sum;
+    }
+      //case V_SgFunctionType:
+      //case V_SgTypeComplex:
 
     default:
-      // return size 0 for all other cases
       return 0;
     }
+  }
+
+  SPRAY::TypeSize SgTypeSizeMapping::determineElementTypeSize(SgArrayType* sgType) {
+    SgType* elementType=isSgArrayType(sgType)->get_base_type();
+    return determineTypeSize(elementType);
   }
 
   SPRAY::TypeSize SgTypeSizeMapping::determineTypeSizePointedTo(SgPointerType* sgType) {

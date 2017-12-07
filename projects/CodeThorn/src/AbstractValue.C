@@ -59,27 +59,39 @@ SgTypeSizeMapping* AbstractValue::getTypeSizeMapping() {
   return  _typeSizeMapping;
 }
 
-void AbstractValue::calculateValueSize(SPRAY::BuiltInType btype) {
+AbstractValue::TypeSize AbstractValue::calculateTypeSize(SPRAY::BuiltInType btype) {
   ROSE_ASSERT(AbstractValue::_typeSizeMapping);
-  valueSize=AbstractValue::_typeSizeMapping->getTypeSize(btype);
+  return AbstractValue::_typeSizeMapping->getTypeSize(btype);
 }
 
 void AbstractValue::setValue(long long int val) {
-  ROSE_ASSERT(valueSize!=0);
+  ROSE_ASSERT(typeSize!=0);
   // TODO: truncate here if necessary
   intValue=val;
 }
 
+void AbstractValue::setValue(long double fval) {
+  ROSE_ASSERT(typeSize!=0);
+  // TODO: adapt here if necessary
+  floatValue=fval;
+}
+
 AbstractValue AbstractValue::createIntegerValue(SPRAY::BuiltInType btype, long long int ival) {
   AbstractValue aval;
-  aval.init(btype,ival);
+  aval.initInteger(btype,ival);
   return aval;
 }
 
-void AbstractValue::init(SPRAY::BuiltInType btype, long long int ival) {
+void AbstractValue::initInteger(SPRAY::BuiltInType btype, long long int ival) {
   valueType=AbstractValue::INTEGER;
-  calculateValueSize(btype);
+  setTypeSize(calculateTypeSize(btype));
   setValue(ival);
+}
+
+void AbstractValue::initFloat(SPRAY::BuiltInType btype, long double fval) {
+  valueType=AbstractValue::FLOAT;
+  setTypeSize(calculateTypeSize(btype));
+  setValue(fval);
 }
 
 // type conversion
@@ -88,35 +100,44 @@ AbstractValue::AbstractValue(Top e) {valueType=AbstractValue::TOP;intValue=0;}
 AbstractValue::AbstractValue(Bot e) {valueType=AbstractValue::BOT;intValue=0;}
 
 AbstractValue::AbstractValue(unsigned char x) {
-  init(BITYPE_UCHAR,x);
+  initInteger(BITYPE_UCHAR,x);
 }
 AbstractValue::AbstractValue(signed char x) {
-  init(BITYPE_SCHAR,x);
+  initInteger(BITYPE_SCHAR,x);
 }
 AbstractValue::AbstractValue(short x) {
-  init(BITYPE_SSHORT,x);
+  initInteger(BITYPE_SSHORT,x);
 }
 AbstractValue::AbstractValue(int x) {
-  init(BITYPE_SINT,x);
+  initInteger(BITYPE_SINT,x);
 }
 AbstractValue::AbstractValue(long int x) {
-  init(BITYPE_SLONG,x);
+  initInteger(BITYPE_SLONG,x);
 }
 AbstractValue::AbstractValue(long long int x) {
-  init(BITYPE_SLONG_LONG,x);
+  initInteger(BITYPE_SLONG_LONG,x);
 }
 
 AbstractValue::AbstractValue(unsigned short int x) {
-  init(BITYPE_USHORT,x);
+  initInteger(BITYPE_USHORT,x);
 }
 AbstractValue::AbstractValue(unsigned int x) {
-  init(BITYPE_UINT,x);
+  initInteger(BITYPE_UINT,x);
 }
 AbstractValue::AbstractValue(unsigned long int x) {
-  init(BITYPE_ULONG,x);
+  initInteger(BITYPE_ULONG,x);
 }
 AbstractValue::AbstractValue(unsigned long long int x) {
-  init(BITYPE_ULONG_LONG,x);
+  initInteger(BITYPE_ULONG_LONG,x);
+}
+AbstractValue::AbstractValue(float x) {
+  initFloat(BITYPE_FLOAT,x);
+}
+AbstractValue::AbstractValue(double x) {
+  initFloat(BITYPE_DOUBLE,x);
+}
+AbstractValue::AbstractValue(long double x) {
+  initFloat(BITYPE_LONG_DOUBLE,x);
 }
 
 AbstractValue 
@@ -510,12 +531,21 @@ string AbstractValue::toString(SPRAY::VariableIdMapping* vim) const {
     ss<<getIntValue();
     return ss.str();
   }
+  case FLOAT: {
+    return getFloatValueString();
+  }
   case PTR: {
-    stringstream ss;
-    ss<<"(";
-    ss<<variableId.toString(vim);
-    ss<<","<<getIntValue()<<")";
-    return ss.str();
+    if(vim->hasArrayType(variableId)||vim->hasClassType(variableId)||vim->hasReferenceType(variableId)||vim->isHeapMemoryRegionId(variableId)) {
+      stringstream ss;
+      ss<<"("
+        <<variableId.toString(vim)
+        <<","
+        <<getIntValue()
+        <<")";
+      return ss.str();
+    } else {
+      return variableId.toString(vim);
+    }
   }
   default:
     throw CodeThorn::Exception("Error: AbstractValue::toString operation failed. Unknown abstraction type.");
@@ -530,6 +560,9 @@ string AbstractValue::toString() const {
     stringstream ss;
     ss<<getIntValue();
     return ss.str();
+  }
+  case FLOAT: {
+    return getFloatValueString();
   }
   case PTR: {
     stringstream ss;
@@ -561,12 +594,17 @@ AbstractValue::ValueType AbstractValue::getValueType() const {
   return valueType;
 }
 
-uint8_t AbstractValue::getValueSize() const {
-  return valueSize;
+AbstractValue::TypeSize AbstractValue::getTypeSize() const {
+  return typeSize;
 }
 
-void AbstractValue::setValueSize(uint8_t valueSize) {
-  this->valueSize=valueSize;
+// deprecated
+AbstractValue::TypeSize AbstractValue::getValueSize() const {
+  return getTypeSize();
+}
+
+void AbstractValue::setTypeSize(AbstractValue::TypeSize typeSize) {
+  this->typeSize=typeSize;
 }
 
 int AbstractValue::getIndexIntValue() const { 
@@ -588,10 +626,21 @@ int AbstractValue::getIntValue() const {
     return intValue;
 }
 
- SPRAY::VariableId AbstractValue::getVariableId() const { 
-   if(valueType!=PTR) {
+std::string AbstractValue::getFloatValueString() const { 
+   if(valueType!=FLOAT) {
      cerr << "AbstractValue: valueType="<<valueTypeToString()<<endl;
-     throw CodeThorn::Exception("Error: AbstractValue::getVariableId operation failed.");
+     throw CodeThorn::Exception("Error: AbstractValue::getFloatValueString operation failed.");
+   } else {
+     stringstream ss;
+     ss<<floatValue;
+     return ss.str();
+   }
+}
+
+SPRAY::VariableId AbstractValue::getVariableId() const { 
+  if(valueType!=PTR && valueType!=REF) {
+    cerr << "AbstractValue: valueType="<<valueTypeToString()<<endl;
+    throw CodeThorn::Exception("Error: AbstractValue::getVariableId operation failed.");
   }
   else 
     return variableId;

@@ -32,10 +32,11 @@ public:
      *  ROSE uses bit constants "#b1" and "#b0" (in SMT-LIB syntax) to represent Boolean true and false, but most solvers
      *  distinguish between bit vector and Boolean types and don't allow them to be mixed (e.g., "(and #b1 true)" is an
      *  error). */
-    enum Type { BOOLEAN, BIT_VECTOR, MEM_STATE };
+    enum Type { NO_TYPE, BOOLEAN, BIT_VECTOR, MEM_STATE };
 
     /** Maps expression nodes to term names.  This map is populated for common subexpressions. */
-    typedef Sawyer::Container::Map<SymbolicExpr::Ptr, std::string> TermNames;
+    typedef std::pair<std::string, Type> StringTypePair;
+    typedef Sawyer::Container::Map<SymbolicExpr::Ptr, StringTypePair> TermNames;
 
     /** Maps one symbolic expression to another. */
     typedef Sawyer::Container::Map<SymbolicExpr::Ptr, SymbolicExpr::Ptr> ExprExprMap;
@@ -82,12 +83,18 @@ public:
         std::string content_;
         std::vector<Ptr> children_;
     public:
-        static Ptr instance();                          // interior node
-        static Ptr instance(const std::string &content); //  leaf node
+        static Ptr instance(const std::string &content); // leaf node
+        static Ptr instance(size_t);                    // integer leaf node
+        static Ptr instance(const Ptr &a = Ptr(), const Ptr &b = Ptr(), const Ptr &c = Ptr(), const Ptr &d = Ptr());
+
         const std::string name() const { return content_; }
         const std::vector<Ptr>& children() const { return children_; }
         std::vector<Ptr>& children() { return children_; }
+        void append(const std::vector<Ptr>&);
+        void print(std::ostream&) const;
     };
+
+    typedef std::pair<SExpr::Ptr, Type> SExprTypePair;
 
 private:
     std::string name_;
@@ -97,7 +104,7 @@ protected:
     LinkMode linkage_;
     std::string outputText_;                            /**< Additional output obtained by satisfiable(). */
     std::vector<SExpr::Ptr> parsedOutput_;              // the evidence output
-    TermNames termNames_;
+    TermNames termNames_;                               // maps ROSE exprs to SMT exprs and their basic type
 
 
     // Statistics
@@ -391,7 +398,7 @@ protected:
      *
      *  A null pointer is printed as "nil" and an empty list is printed as "()" in order to distinguish the two cases. There
      *  should be no null pointers though in well-formed S-Exprs. */
-    void printSExpression(std::ostream&, const SExpr::Ptr&);
+    static void printSExpression(std::ostream&, const SExpr::Ptr&);
 
     /** Generates an input file for for the solver. Usually the input file will be SMT-LIB format, but subclasses might
      *  override this to generate some other kind of input. Throws Excecption if the solver does not support an operation that
@@ -451,6 +458,8 @@ protected:
     virtual std::string get_command(const std::string &config_name) ROSE_DEPRECATED("use getCommand");
     virtual void parse_evidence() ROSE_DEPRECATED("use parseEvidence");
 };
+
+std::ostream& operator<<(std::ostream&, const SmtSolver::SExpr&);
 
 // FIXME[Robb Matzke 2017-10-17]: This typedef is deprecated. Use SmtSolver instead.
 typedef SmtSolver SMTSolver;

@@ -256,7 +256,7 @@ sub parse_namespace {
   if ('{' eq $ns_name) {
     push @name_stack, [undef, &$lexer('location')];
   } elsif ($ns_name =~ /^[a-z_A-Z]\w*$/ && '{' eq &$lexer()) {
-    if ($ns_name eq 'rose') {
+    if ($ns_name eq 'Rose') {
       push @name_stack, [undef, &$lexer('location')];
     } else {
       push @name_stack, [$ns_name, &$lexer('location')];

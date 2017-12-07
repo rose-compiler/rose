@@ -176,7 +176,7 @@ void SingleEvalResultConstInt::init(EState estate, ConstraintSet exprConstraints
 
 #define CASE_EXPR_ANALYZER_EVAL_UNARY_OP(ROSENODENAME,EVALFUNCTIONNAME) case V_ ## ROSENODENAME: resultList.splice(resultList.end(),EVALFUNCTIONNAME(is ## ROSENODENAME(node),operandResult,estate,useConstraints));break
 
-list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState estate, bool useConstraints) {
+list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,EState estate, bool useConstraints) {
   ROSE_ASSERT(estate.pstate()); // ensure state exists
   // initialize with default values from argument(s)
   SingleEvalResultConstInt res;
@@ -193,9 +193,9 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
 
   if(dynamic_cast<SgBinaryOp*>(node)) {
     SgNode* lhs=SgNodeHelper::getLhs(node);
-    list<SingleEvalResultConstInt> lhsResultList=evalConstInt(lhs,estate,useConstraints);
+    list<SingleEvalResultConstInt> lhsResultList=evaluateExpression(lhs,estate,useConstraints);
     SgNode* rhs=SgNodeHelper::getRhs(node);
-    list<SingleEvalResultConstInt> rhsResultList=evalConstInt(rhs,estate,useConstraints);
+    list<SingleEvalResultConstInt> rhsResultList=evaluateExpression(rhs,estate,useConstraints);
     list<SingleEvalResultConstInt> resultList;
     for(list<SingleEvalResultConstInt>::iterator liter=lhsResultList.begin();
         liter!=lhsResultList.end();
@@ -229,7 +229,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
 
         default:
           cerr << "Binary Op:"<<SgNodeHelper::nodeToString(node)<<"(nodetype:"<<node->class_name()<<")"<<endl;
-          throw CodeThorn::Exception("Error: evalConstInt::unkown binary operation.");
+          throw CodeThorn::Exception("Error: evaluateExpression::unkown binary operation.");
         }
       }
     }
@@ -238,7 +238,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
   
   if(dynamic_cast<SgUnaryOp*>(node)) {
     SgNode* child=SgNodeHelper::getFirstChild(node);
-    list<SingleEvalResultConstInt> operandResultList=evalConstInt(child,estate,useConstraints);
+    list<SingleEvalResultConstInt> operandResultList=evaluateExpression(child,estate,useConstraints);
     //assert(operandResultList.size()==1);
     list<SingleEvalResultConstInt> resultList;
     for(list<SingleEvalResultConstInt>::iterator oiter=operandResultList.begin();
@@ -251,9 +251,15 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
         CASE_EXPR_ANALYZER_EVAL_UNARY_OP(SgBitComplementOp,evalBitwiseComplementOp);
         CASE_EXPR_ANALYZER_EVAL_UNARY_OP(SgMinusOp,evalUnaryMinusOp);
         CASE_EXPR_ANALYZER_EVAL_UNARY_OP(SgPointerDerefExp,evalDereferenceOp);
+      case V_SgAddressOfOp: {
+        cerr << "Error: Operator addressOfOp not implemented for this domain."<<endl;
+        string exceptionInfo=string("Error: Operator addressOfOp not implemented for this domain.");
+        throw exceptionInfo; 
+        //CASE_EXPR_ANALYZER_EVAL_UNARY_OP(SgAddressOfOp,evalAddressOfOp); // TODO
+      }
       default:
         cerr << "@NODE:"<<node->sage_class_name()<<endl;
-        string exceptionInfo=string("Error: evalConstInt::unknown unary operation @")+string(node->sage_class_name());
+        string exceptionInfo=string("Error: evaluateExpression::unknown unary operation @")+string(node->sage_class_name());
         throw exceptionInfo; 
       } // end switch
     }
@@ -272,12 +278,14 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
   switch(node->variantT()) {
   case V_SgVarRefExp:
     return evalRValueVarExp(isSgVarRefExp(node),estate,useConstraints);
-  case V_SgFunctionCallExp:
+  case V_SgFunctionCallExp: {
+    //cout<<"DEBUG: SgFunctionCall detected in subexpression."<<endl;
     return evalFunctionCall(isSgFunctionCallExp(node),estate,useConstraints);
+  }
   default:
-    throw CodeThorn::Exception("Error: evalConstInt::unknown node in expression ("+string(node->sage_class_name())+")");
+    throw CodeThorn::Exception("Error: evaluateExpression::unknown node in expression ("+string(node->sage_class_name())+")");
   } // end of switch
-  throw CodeThorn::Exception("Error: evalConstInt failed.");
+  throw CodeThorn::Exception("Error: evaluateExpression failed.");
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -288,7 +296,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
 list<SingleEvalResultConstInt> ExprAnalyzer::evalConditionalExpr(SgConditionalExp* condExp, EState estate, bool useConstraints) {
   list<SingleEvalResultConstInt> resultList;
   SgExpression* cond=condExp->get_conditional_exp();
-  list<SingleEvalResultConstInt> condResultList=evalConstInt(cond,estate,useConstraints);
+  list<SingleEvalResultConstInt> condResultList=evaluateExpression(cond,estate,useConstraints);
   if(condResultList.size()==0) {
     cerr<<"Error: evaluating condition of conditional operator inside expressions gives no result."<<endl;
     exit(1);
@@ -309,19 +317,19 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConditionalExpr(SgConditionalEx
   SingleEvalResultConstInt singleResult=*condResultList.begin();
   if(singleResult.result.isTop()) {
     SgExpression* trueBranch=condExp->get_true_exp();
-    list<SingleEvalResultConstInt> trueBranchResultList=evalConstInt(trueBranch,estate,useConstraints);
+    list<SingleEvalResultConstInt> trueBranchResultList=evaluateExpression(trueBranch,estate,useConstraints);
     SgExpression* falseBranch=condExp->get_false_exp();
-    list<SingleEvalResultConstInt> falseBranchResultList=evalConstInt(falseBranch,estate,useConstraints);
+    list<SingleEvalResultConstInt> falseBranchResultList=evaluateExpression(falseBranch,estate,useConstraints);
     // append falseBranchResultList to trueBranchResultList (moves elements), O(1).
     trueBranchResultList.splice(trueBranchResultList.end(), falseBranchResultList); 
     return trueBranchResultList;
   } else if(singleResult.result.isTrue()) {
     SgExpression* trueBranch=condExp->get_true_exp();
-    list<SingleEvalResultConstInt> trueBranchResultList=evalConstInt(trueBranch,estate,useConstraints);
+    list<SingleEvalResultConstInt> trueBranchResultList=evaluateExpression(trueBranch,estate,useConstraints);
     return trueBranchResultList;
   } else if(singleResult.result.isFalse()) {
     SgExpression* falseBranch=condExp->get_false_exp();
-    list<SingleEvalResultConstInt> falseBranchResultList=evalConstInt(falseBranch,estate,useConstraints);
+    list<SingleEvalResultConstInt> falseBranchResultList=evaluateExpression(falseBranch,estate,useConstraints);
     return falseBranchResultList;
   } else {
     cerr<<"Error: evaluating conditional operator inside expressions - unknown behavior (condition may have evaluated to bot)."<<endl;
@@ -602,7 +610,7 @@ ExprAnalyzer::evalGreaterOrEqualOp(SgGreaterOrEqualOp* node,
   SingleEvalResultConstInt res;
   res.estate=estate;
   res.result=(lhsResult.result.operatorMoreOrEq(rhsResult.result));
-  if(boolOptions["relop-constraints"]) {
+  if(args.getBool("relop-constraints")) {
     if(res.result.isTop())
       throw CodeThorn::Exception("Error: Top found in relational operator (not supported yet).");
   }
@@ -620,7 +628,7 @@ ExprAnalyzer::evalGreaterThanOp(SgGreaterThanOp* node,
   SingleEvalResultConstInt res;
   res.estate=estate;
   res.result=(lhsResult.result.operatorMore(rhsResult.result));
-  if(boolOptions["relop-constraints"]) {
+  if(args.getBool("relop-constraints")) {
     if(res.result.isTop())
       throw CodeThorn::Exception("Error: Top found in relational operator (not supported yet).");
   }
@@ -638,7 +646,7 @@ ExprAnalyzer::evalLessOrEqualOp(SgLessOrEqualOp* node,
   SingleEvalResultConstInt res;
   res.estate=estate;
   res.result=(lhsResult.result.operatorLessOrEq(rhsResult.result));
-  if(boolOptions["relop-constraints"]) {
+  if(args.getBool("relop-constraints")) {
     if(res.result.isTop())
       throw CodeThorn::Exception("Error: Top found in relational operator (not supported yet).");
   }
@@ -656,7 +664,7 @@ ExprAnalyzer::evalLessThanOp(SgLessThanOp* node,
   SingleEvalResultConstInt res;
   res.estate=estate;
   res.result=(lhsResult.result.operatorLess(rhsResult.result));
-  if(boolOptions["relop-constraints"]) {
+  if(args.getBool("relop-constraints")) {
     if(res.result.isTop())
       throw CodeThorn::Exception("Error: Top found in relational operator (not supported yet).");
   }
@@ -703,7 +711,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
   SingleEvalResultConstInt res;
   res.estate=estate;
   SgNode* arrayExpr=SgNodeHelper::getLhs(node);
-  
+ 
   if(indexExprResult.value().isTop()||getSkipArrayAccesses()==true) {
     // set result to top when index is top [imprecision]
     // assume top for array elements if skipped
@@ -755,7 +763,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
         return listify(res);
       } else {
         // array variable NOT in state. Special space optimization case for constant array.
-        if(_variableIdMapping->hasArrayType(arrayVarId) && boolOptions["explicit-arrays"]==false) {
+        if(_variableIdMapping->hasArrayType(arrayVarId) && args.getBool("explicit-arrays")==false) {
           SgExpressionPtrList& initList=_variableIdMapping->getInitializerListOfArrayVariable(arrayVarId);
           int elemIndex=0;
           // TODO: slow linear lookup (TODO: pre-compute all values and provide access function)
@@ -855,13 +863,23 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalDereferenceOp(SgPointerDerefExp
   res.estate=estate;
   AbstractValue derefOperandValue=operandResult.result;
   //cout<<"DEBUG: derefOperandValue: "<<derefOperandValue.toRhsString(_variableIdMapping);
-  // (varid,idx) => varid'; return estate.pstate()[varid'] || pstate(AbstractValue)
-  //res.result=readFromMemoryLocation(estate.pstate(), derefOperandValue);
-  res.result=derefOperandValue;
+  res.result=estate.pstate()->readFromMemoryLocation(derefOperandValue);
   res.exprConstraints=operandResult.exprConstraints;
   return listify(res);
 }
 
+list<SingleEvalResultConstInt> ExprAnalyzer::evalAddressOfOp(SgAddressOfOp* node, 
+                                                             SingleEvalResultConstInt operandResult, 
+                                                             EState estate, bool useConstraints) {
+  SingleEvalResultConstInt res;
+  res.estate=estate;
+  AbstractValue addressOfOperandValue=operandResult.result;
+  //cout<<"DEBUG: derefOperandValue: "<<derefOperandValue.toRhsString(_variableIdMapping);
+  // AbstractValue of a VariableId is a pointer to this variable.
+  res.result=AbstractValue(addressOfOperandValue.getVariableId());
+  res.exprConstraints=operandResult.exprConstraints;
+  return listify(res);
+}
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarExp(SgVarRefExp* node, EState estate, bool useConstraints) {
   //cout<<"DEBUG: evalRValueVarExp: "<<node->unparseToString()<<endl;
@@ -886,14 +904,14 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarExp(SgVarRefExp* node,
     // special mode to represent information not stored in the state
     // i) unmodified arrays: data can be stored outside the state
     // ii) undefined variables mapped to 'top' (abstraction by removing variables from state)
-    if(_variableIdMapping->hasArrayType(varId) && boolOptions["explicit-arrays"]==false) {
+    if(_variableIdMapping->hasArrayType(varId) && args.getBool("explicit-arrays")==false) {
       // variable is used on the rhs and it has array type implies it avalates to a pointer to that array
       //res.result=AbstractValue(varId.getIdCode());
       res.result=AbstractValue::createAddressOfArray(varId);
       return listify(res);
     } else {
       res.result=CodeThorn::Top();
-      //cerr << "WARNING: variable not in PState (var="<<_variableIdMapping->uniqueLongVariableName(varId)<<"). Initialized with top."<<endl;
+      //cerr << "WARNING: variable not in PState (var="<<_variableIdMapping->uniqueVariableName(varId)<<"). Initialized with top."<<endl;
       return listify(res);
     }
   }
@@ -915,7 +933,6 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp*
     // return default value
     return listify(res);
   } else if(stdFunctionSemantics()) {
-    //cout<<"DEBUG: FOUND function call inside expression (external): "<<funCall->unparseToString()<<endl;
     string funName=SgNodeHelper::getFunctionName(funCall);
     if(funName=="malloc") {
       return evalFunctionCallMalloc(funCall,estate,useConstraints);
@@ -923,6 +940,10 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp*
       return evalFunctionCallMemCpy(funCall,estate,useConstraints);
     } else if(funName=="free") {
       return evalFunctionCallFree(funCall,estate,useConstraints);
+    } else if(funName=="fflush") {
+      // ignoring fflush
+      SingleEvalResultConstInt res;
+      return listify(res);
     } else {
       cout<<"WARNING: unknown std function ("<<funName<<") inside expression detected. Assuming it is side-effect free."<<endl;
       return listify(res);
@@ -943,7 +964,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMalloc(SgFunctionCa
   SgExpressionPtrList& argsList=SgNodeHelper::getFunctionCallActualParameterList(funCall);
   if(argsList.size()==1) {
     SgExpression* arg1=*argsList.begin();
-    list<SingleEvalResultConstInt> resList=evalConstInt(arg1,estate,useConstraints);
+    list<SingleEvalResultConstInt> resList=evaluateExpression(arg1,estate,useConstraints);
     if(resList.size()!=1) {
       cerr<<"Error: conditional control-flow in function argument expression not supported. Expression normalization required."<<endl;
       exit(1);
@@ -977,7 +998,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallFree(SgFunctionCall
   SgExpressionPtrList& argsList=SgNodeHelper::getFunctionCallActualParameterList(funCall);
   if(argsList.size()==1) {
     SgExpression* arg1=*argsList.begin();
-    list<SingleEvalResultConstInt> resList=evalConstInt(arg1,estate,useConstraints);
+    list<SingleEvalResultConstInt> resList=evaluateExpression(arg1,estate,useConstraints);
     if(resList.size()!=1) {
       cerr<<"Error: conditional control-flow in function argument expression not supported. Expression normalization required."<<endl;
       exit(1);
@@ -1017,7 +1038,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMemCpy(SgFunctionCa
     int i=0;
     for(SgExpressionPtrList::iterator argIter=argsList.begin();argIter!=argsList.end();++argIter) {
       SgExpression* arg=*argIter;
-      list<SingleEvalResultConstInt> resList=evalConstInt(arg,estate,useConstraints);
+      list<SingleEvalResultConstInt> resList=evaluateExpression(arg,estate,useConstraints);
       if(resList.size()!=1) {
         cerr<<"Error: conditional control-flow in function argument expression. Expression normalization required."<<endl;
         exit(1);

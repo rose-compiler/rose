@@ -1,5 +1,8 @@
 #include "sage3basic.h"
-#include "AnalyzerTools.h"
+#include "CounterexampleGenerator.h"
+#include "RersCounterexample.h"
+#include "SvcompWitness.h"
+#include "Analyzer.h"
 #include "Diagnostics.h"
 
 #include <unordered_map>
@@ -11,61 +14,24 @@ using namespace CodeThorn;
 using namespace std;
 using namespace Sawyer::Message;
 
-ExecutionTrace ExecutionTrace::onlyIOStates() const {
-  ExecutionTrace newTrace;
-  ExecutionTrace::const_iterator begin = this->begin();
-  ExecutionTrace::const_iterator end = this->end();
-  for (ExecutionTrace::const_iterator i = begin; i != end; i++ ) {
-    if ((*i)->io.isStdInIO() || (*i)->io.isStdOutIO()) {
-      newTrace.push_back(*i);
-    }
-  }
-  return newTrace;
-}
-
-string ExecutionTrace::toString() const {
-  string result = "[";
-  ExecutionTrace::const_iterator begin = this->begin();
-  ExecutionTrace::const_iterator end = this->end();
-  for (ExecutionTrace::const_iterator i = begin; i != end; i++ ) {
-    if (i != begin) {
-      result += ";";
-    }
-    if ((*i)->io.isStdInIO()) {
-      result += "i";
-    } else if ((*i)->io.isStdOutIO()) {
-      result += "o";
-    }
-    result += (*i)->toString();
-  }
-  result += "]";
-  return result;
-}
-
-string ExecutionTrace::toString(SPRAY::VariableIdMapping* variableIdMapping) const {
-  string result = "[";
-  ExecutionTrace::const_iterator begin = this->begin();
-  ExecutionTrace::const_iterator end = this->end();
-  for (ExecutionTrace::const_iterator i = begin; i != end; i++ ) {
-    if (i != begin) {
-      result += ";";
-    }
-    if ((*i)->io.isStdInIO()) {
-      result += "i";
-    } else if ((*i)->io.isStdOutIO()) {
-      result += "o";
-    }
-    result += (*i)->toString(variableIdMapping);
-  }
-  result += "]";
-  return result;
-}
-
-
-
-//=============================================================================
-
 Sawyer::Message::Facility CounterexampleGenerator::logger;
+
+/*! 
+ * \author Marc Jasper
+ * \date 2017.
+ */
+CounterexampleGenerator::CounterexampleGenerator(TransitionGraph* stg) : 
+  _stg(stg) {
+}
+
+/*! 
+ * \author Marc Jasper
+ * \date 2017.
+ */
+CounterexampleGenerator::CounterexampleGenerator(TraceType type, TransitionGraph* stg) : 
+  _type(type),
+  _stg(stg) {
+}
 
 void CounterexampleGenerator::initDiagnostics() {
   static bool initialized = false;
@@ -76,18 +42,36 @@ void CounterexampleGenerator::initDiagnostics() {
   }
 }
 
-list<ExecutionTrace> CounterexampleGenerator::createExecutionTraces(Analyzer* analyzer) {
-  TransitionGraph* graph = analyzer->getTransitionGraph();
+list<ExecutionTrace*> CounterexampleGenerator::createExecutionTraces() {
+  Analyzer* analyzer = _stg->getAnalyzer();
   list<FailedAssertion> assertions = analyzer->getFirstAssertionOccurences();
-  list<ExecutionTrace> traces;
+  list<ExecutionTrace*> traces;
   for (auto i : assertions) {
-    ExecutionTrace trace = this->traceBreadthFirst(graph,i.second, graph->getStartEState());
-    traces.push_back(trace);
+    traces.push_back(traceLeadingTo(i.second));
   }
   return traces;
 }
 
-ExecutionTrace CounterexampleGenerator::traceBreadthFirst(TransitionGraph* transitionGraph, const EState* source, const EState* target) {
+/*! 
+ * \author Marc Jasper
+ * \date 2017.
+ */
+ExecutionTrace* CounterexampleGenerator::traceLeadingTo(const EState* target) {
+  if (_type == TRACE_TYPE_RERS_CE) {
+    return reverseTraceBreadthFirst<RersCounterexample>(target, _stg->getStartEState());
+  } else if (_type == TRACE_TYPE_SVCOMP_WITNESS) {
+    return reverseTraceBreadthFirst<SvcompWitness>(target, _stg->getStartEState());
+  } else {
+    throw CodeThorn::Exception("Unsupported trace type when generating a trace leading to target EState.");
+  } 
+}
+
+/*! 
+ * \author Marc Jasper
+ * \date 2014.
+ */
+template <class T>
+T* CounterexampleGenerator::reverseTraceBreadthFirst(const EState* source, const EState* target) {
   // 1.) init: list wl , hashmap predecessor, hashset visited
   list<const EState*> worklist;
   worklist.push_back(source);
@@ -101,7 +85,7 @@ ExecutionTrace CounterexampleGenerator::traceBreadthFirst(TransitionGraph* trans
     worklist.pop_front();
     if (visited.find(vertex) == visited.end()) {  //avoid cycles
       visited.insert(vertex);
-      EStatePtrSet predsOfVertex = transitionGraph->pred(vertex);
+      EStatePtrSet predsOfVertex = _stg->pred(vertex);
       for(EStatePtrSet::iterator i=predsOfVertex.begin();i!=predsOfVertex.end();++i) {
         predecessor.insert(pair<const EState*, const EState*>((*i), vertex));
         if ((*i) == target) {
@@ -119,20 +103,20 @@ ExecutionTrace CounterexampleGenerator::traceBreadthFirst(TransitionGraph* trans
   }
 
   // 3.) reconstruct trace.
-  ExecutionTrace run;
-  run.push_back(target);
+  T* run = new T;
+  run->push_back(target);
   boost::unordered_map <const EState*, const EState*>::iterator nextPred = predecessor.find(target);
 
   while (nextPred != predecessor.end()) {
-    run.push_back(nextPred->second);
+    run->push_back(nextPred->second);
     nextPred = predecessor.find(nextPred->second);
   }
 
   return run;
 }
 
-
-ExecutionTrace CounterexampleGenerator::traceDijkstra(TransitionGraph* transitionGraph, const EState* source, const EState* target) {
+template<class T>
+T* CounterexampleGenerator::reverseTraceDijkstra(const EState* source, const EState* target) {
   typedef std::pair<size_t, const EState*> entry;
 
   // 1.) init: list wl , hashmap predecessor, hashset visited
@@ -149,7 +133,7 @@ ExecutionTrace CounterexampleGenerator::traceDijkstra(TransitionGraph* transitio
     heap.pop();
     if (visited.count(current) == 0) {
       visited.insert(current);
-      EStatePtrSet predsOfVertex = transitionGraph->pred(current);
+      EStatePtrSet predsOfVertex = _stg->pred(current);
       for (auto pred : predsOfVertex) {
         predecessor.insert(make_pair(pred, current));
         if (pred == target) {
@@ -167,12 +151,12 @@ ExecutionTrace CounterexampleGenerator::traceDijkstra(TransitionGraph* transitio
   }
 
   // 3.) reconstruct trace.
-  ExecutionTrace run;
-  run.push_back(target);
+  T* run = new T;
+  run->push_back(target);
   unordered_map <const EState*, const EState*>::iterator nextPred = predecessor.find(target);
 
   while (nextPred != predecessor.end()) {
-    run.push_back(nextPred->second);
+    run->push_back(nextPred->second);
     nextPred = predecessor.find(nextPred->second);
   }
 

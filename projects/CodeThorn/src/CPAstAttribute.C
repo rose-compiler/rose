@@ -31,7 +31,7 @@ string CPAstAttribute::toString(){
   VariableIdSet vset=_variableIdMapping->variableIdsOfAstSubTree(_node);
   for(VariableIdSet::iterator i=vset.begin();i!=vset.end();++i) {
     ss<<"("
-      <<_variableIdMapping->uniqueShortVariableName(*i)
+      <<_variableIdMapping->uniqueVariableName(*i)
       <<",";
     if(isConstantInteger(*i)) {
       ss<<getConstantInteger(*i);
