@@ -753,6 +753,91 @@ printf ("...TODO... convert untyped function: scope type ... %s\n", scope->class
 }
 
 
+SgProcedureHeaderStatement*
+UntypedConverter::convertSgUntypedBlockDataDeclaration (SgUntypedBlockDataDeclaration* ut_block_data, SgScopeStatement* scope)
+   {
+   // The block data statement is implemented to build a function (which initializes data)
+   // Note that it can be declared with the "EXTERNAL" statement and as such it works much
+   // the same as any other procedure.
+
+      SgName name = ut_block_data->get_name();
+      SgFunctionType* functionType = new SgFunctionType(SgTypeVoid::createType(), false);
+
+   // TODO - take better care of instance when there is no name
+   // TODO - which begs the question of what to do with duplicate symbols and looking them up
+   // TODO - implement symbol lookup
+      if (name.get_length() == 0) {
+         std::cout << "...TODO... WARNING: block data name is UNKNOWN" << std::endl;
+         name = "Block_Data_Name_UNKNOWN";
+      }
+
+   // Note that a ProcedureHeaderStatement is derived from a SgFunctionDeclaration (and is Fortran specific).
+   // The SgProcedureHeaderStatement can be used for a Fortran function, subroutine, or block data declaration.
+
+      SgProcedureHeaderStatement* blockDataDeclaration = new SgProcedureHeaderStatement(name, functionType, NULL);
+
+   // TODO - this should be only BlockDataStmt (or exclude decl_list)
+      setSourcePositionFrom(blockDataDeclaration,                      ut_block_data);
+      setSourcePositionFrom(blockDataDeclaration->get_parameterList(), ut_block_data);
+
+      blockDataDeclaration->set_subprogram_kind(SgProcedureHeaderStatement::e_block_data_subprogram_kind);
+
+//    bool hasDummyArgList = false;
+//    buildProcedureSupport(ut_block_data, blockDataDeclaration, hasDummyArgList);
+
+   // This will be the defining declaration
+      blockDataDeclaration->set_definingDeclaration(blockDataDeclaration);
+      blockDataDeclaration->set_firstNondefiningDeclaration(NULL);
+
+      SgScopeStatement* currentScopeOfFunctionDeclaration = scope;
+      ROSE_ASSERT(currentScopeOfFunctionDeclaration != NULL);
+
+      currentScopeOfFunctionDeclaration->append_statement(blockDataDeclaration);
+
+   // See if this was previously declared
+   // Assume NULL for now, does it even need a symbol?
+  //     SgFunctionSymbol* functionSymbol = SageInterface::lookupFunctionSymbolInParentScopes (procedureDeclaration->get_name(), scope);
+
+      SgFunctionSymbol* functionSymbol = new SgFunctionSymbol(blockDataDeclaration);
+      currentScopeOfFunctionDeclaration->insert_symbol(blockDataDeclaration->get_name(), functionSymbol);
+
+      SgBasicBlock*         blockDataBody       = new SgBasicBlock();
+      SgFunctionDefinition* blockDataDefinition = new SgFunctionDefinition(blockDataDeclaration, blockDataBody);
+
+      setSourcePositionFrom(blockDataDefinition, ut_block_data);
+      setSourcePositionFrom(blockDataBody,       ut_block_data->get_declaration_list());
+
+      ROSE_ASSERT(blockDataDeclaration->get_definition() != NULL);
+
+   // Specify case insensitivity for Fortran.
+      blockDataBody->setCaseInsensitive(true);
+      blockDataDefinition->setCaseInsensitive(true);
+      blockDataDeclaration->set_scope (currentScopeOfFunctionDeclaration);
+      blockDataDeclaration->set_parent(currentScopeOfFunctionDeclaration);
+
+   // Convert the labels for the program begin and end statements
+      UntypedConverter::convertLabel(ut_block_data,                      blockDataDeclaration, SgLabelSymbol::e_start_label_type, /*label_scope=*/ blockDataDefinition);
+      UntypedConverter::convertLabel(ut_block_data->get_end_statement(), blockDataDeclaration, SgLabelSymbol::e_end_label_type,   /*label_scope=*/ blockDataDefinition);
+
+   // Set the end statement name if it exists
+      if (ut_block_data->get_end_statement()->get_statement_name().empty() != true)
+         {
+            blockDataDeclaration->set_named_in_end_statement(true);
+         }
+
+   // TODO - implement conversion of decl_list
+
+      ROSE_ASSERT(functionType->get_arguments().empty() == true);
+
+      blockDataBody->set_parent(blockDataDefinition);
+      blockDataDefinition->set_parent(blockDataDeclaration);
+
+      ROSE_ASSERT(blockDataDeclaration->get_parameterList() != NULL);
+
+      return blockDataDeclaration;
+   }
+
+
 //TODO-WARNING: This needs help!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 //
 SgVariableDeclaration*
@@ -989,6 +1074,9 @@ UntypedConverter::convertSgUntypedAssignmentStatement (SgUntypedAssignmentStatem
          {
             SgExpression* assignmentExpr = new SgAssignOp(lhs, rhs, NULL);
             setSourcePositionIncluding(assignmentExpr, lhs, rhs);
+
+         // lhs expression now becomes an lvalue
+            lhs->set_lvalue(true);
 
             SgExprStatement* expressionStatement = new SgExprStatement(assignmentExpr);
             setSourcePositionFrom(expressionStatement, ut_stmt);

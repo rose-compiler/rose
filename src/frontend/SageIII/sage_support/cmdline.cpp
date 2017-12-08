@@ -7976,8 +7976,6 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
           case SgFile::e_Jovial_language:
              {
-               printf ("Error: SgFile::e_Jovial_language detected in SgFile::buildCompilerCommandLineOptions() \n");
-
             // Rasmussen (11/14/2017): Added check to ensure that JOVIAL is configured
 #ifdef ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION
                compilerNameString[0] = BACKEND_JOVIAL_COMPILER_NAME_WITH_PATH;

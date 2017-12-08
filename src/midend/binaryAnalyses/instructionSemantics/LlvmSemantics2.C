@@ -1115,13 +1115,7 @@ RiscOperators::emit_expression(std::ostream &o, const ExpressionPtr &orig_expr)
                 ASSERT_require(2==operands.size());
                 operator_result = emit_arithmetic_right_shift(o, operands[1], operands[0]);
                 break;
-            case SymbolicExpr::OP_BV_AND:
-                operator_result = emit_left_associative(o, "and", operands);
-                break;
-            case SymbolicExpr::OP_BV_OR:
-                operator_result = emit_left_associative(o, "or", operands);
-                break;
-            case SymbolicExpr::OP_BV_XOR:
+            case SymbolicExpr::OP_XOR:
                 operator_result = emit_left_associative(o, "xor", operands);
                 break;
             case SymbolicExpr::OP_CONCAT:

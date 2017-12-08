@@ -34,8 +34,6 @@ int main(int argc, char* argv[]) {
   bool option_interval_analysis=false;
   try {
     cout << "INIT: Parsing and creating AST."<<endl;
-    boolOptions.registerOption("semantic-fold",false); // temporary
-    boolOptions.registerOption("post-semantic-fold",false); // temporary
     SgProject* root = frontend(argc,argv);
 
     {

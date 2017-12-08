@@ -404,26 +404,12 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
   * \author Markus Schordan
   * \date 2012.
  */
-string VariableIdMapping::uniqueLongVariableName(VariableId varId) {
-  if(!isTemporaryVariableId(varId)) {
-    return variableName(varId);
-    //return SgNodeHelper::uniqueLongVariableName(getSymbol(varId));
-  } else {
-    return "$$$tmp"+variableName(varId);
-  }
-}
-
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
-string VariableIdMapping::uniqueShortVariableName(VariableId varId) {
+string VariableIdMapping::uniqueVariableName(VariableId varId) {
   if(!isTemporaryVariableId(varId)) {
     if(!varId.isValid())
       return "$invalidId";
     else
       return variableName(varId)+"_"+varId.toString().substr(1);
-    //return SgNodeHelper::uniqueLongVariableName(getSymbol(varId));
   } else {
     return string("tmp")+"_"+varId.toString().substr(1);
   }
@@ -516,6 +502,14 @@ VariableId VariableIdMapping::idForArrayRef(SgPntrArrRefExp* ref)
   return result;
 }
 
+
+/*! 
+  * \author Markus Schordan
+  * \date 2017.
+ */
+bool VariableIdMapping::isHeapMemoryRegionId(VariableId varId) {
+  return isTemporaryVariableId(varId);
+}
 
 /*! 
   * \author Markus Schordan
@@ -681,13 +675,13 @@ VariableId::toString() const {
 
 string
 VariableId::toUniqueString(VariableIdMapping& vim) const {
-  return vim.uniqueShortVariableName(*this);
+  return vim.uniqueVariableName(*this);
 }
 
 string
 VariableId::toUniqueString(VariableIdMapping* vim) const {
   if(vim)
-    return vim->uniqueShortVariableName(*this);
+    return vim->uniqueVariableName(*this);
   else
     return toString();
 }

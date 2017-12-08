@@ -9,7 +9,7 @@ int main() {
   int* p;
   int y=0;
   p=a;
-  x=p[3];
-  p[3]=x;
+  x=p[3]; // out of bounds access
+  p[3]=x; // out of bounds access
   return 0;
 }

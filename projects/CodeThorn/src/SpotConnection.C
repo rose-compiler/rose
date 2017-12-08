@@ -181,6 +181,10 @@ void SpotConnection::checkLtlProperties(TransitionGraph& stg,
     ROSE_ASSERT(ltlResults);
     std::list<int>* yetToEvaluate = ltlResults->getPropertyNumbers(PROPERTY_VALUE_UNKNOWN);
     for (std::list<int>::iterator i = yetToEvaluate->begin(); i != yetToEvaluate->end(); ++i) {
+      if (modeLTLDriven && args.getBool("reset-analyzer")) {
+	stg.getAnalyzer()->resetAnalysis();
+	cout << "STATUS: Analyzer reset successful, now checking LTL property " << *i << "." << endl;
+      }
       if (checkFormula(ct_tgba, ltlResults->getFormula(*i), ct_tgba->get_dict(), &pCounterExample)) {  //SPOT returns that the formula could be verified
         if (stg.isComplete()) {
           ltlResults->strictUpdatePropertyValue(*i, PROPERTY_VALUE_YES);
@@ -328,7 +332,7 @@ bool SpotConnection::checkFormula(spot::tgba* ct_tgba, std::string ltl_string, s
 	spot::print_tgba_run(runResult, &product, run);
 	//assign a string representation of the counterexample if the corresponding out parameter is set
 	std::string r = runResult.str();
-	r = filterCounterexample(r, boolOptions["counterexamples-with-output"]);
+	r = filterCounterexample(r, args.getBool("counterexamples-with-output"));
 	*ce_ptr = new string(r);//formatRun(r);	
 	delete run;
       } else {

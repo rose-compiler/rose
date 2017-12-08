@@ -36,6 +36,7 @@ namespace CodeThorn {
  */
 class AbstractValue {
  public:
+  typedef uint16_t TypeSize;
   friend bool strictWeakOrderingIsSmaller(const AbstractValue& c1, const AbstractValue& c2);
   friend bool strictWeakOrderingIsEqual(const AbstractValue& c1, const AbstractValue& c2);
   enum ValueType { BOT, INTEGER, FLOAT, PTR, REF, TOP};
@@ -56,10 +57,14 @@ class AbstractValue {
   AbstractValue(unsigned long int x);
   AbstractValue(long long int x);
   AbstractValue(unsigned long long int x);
+  AbstractValue(float x);
+  AbstractValue(double x);
+  AbstractValue(long double x);
   AbstractValue(SPRAY::VariableId varId); // allows implicit type conversion
-  void init(SPRAY::BuiltInType btype, long long int ival);
+  void initInteger(SPRAY::BuiltInType btype, long long int ival);
+  void initFloat(SPRAY::BuiltInType btype, long double fval);
   static AbstractValue createIntegerValue(SPRAY::BuiltInType btype, long long int ival);
-  void calculateValueSize(SPRAY::BuiltInType btype);
+  TypeSize calculateTypeSize(SPRAY::BuiltInType btype);
   bool isTop() const;
   bool isTrue() const;
   bool isFalse() const;
@@ -115,22 +120,28 @@ class AbstractValue {
 
   ValueType getValueType() const;
   int getIntValue() const;
+  std::string getFloatValueString() const;
   int getIndexIntValue() const;
   SPRAY::VariableId getVariableId() const;
   // sets value according to type size (truncates if necessary)
-  void setValue(long long int val);
+  void setValue(long long int ival);
+  void setValue(long double fval);
   long hash() const;
   std::string valueTypeToString() const;
 
-  uint8_t getValueSize() const;
-  void setValueSize(uint8_t valueSize);
+  // deprecated (use getTypeSize() instead)
+  TypeSize getValueSize() const; 
+  TypeSize getTypeSize() const;
+  void setTypeSize(TypeSize valueSize);
   static void setTypeSizeMapping(SPRAY::SgTypeSizeMapping* typeSizeMapping);
   static SPRAY::SgTypeSizeMapping* getTypeSizeMapping();
  private:
   ValueType valueType;
   SPRAY::VariableId variableId;
-  long long int intValue;
-  uint8_t valueSize=0; // size of value in bytes
+  // union required
+  long long int intValue=0;
+  double floatValue=0.0;
+  TypeSize typeSize=0; // size of value in bytes
   static SPRAY::SgTypeSizeMapping* _typeSizeMapping;
 };
 
