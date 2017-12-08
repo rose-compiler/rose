@@ -11,7 +11,6 @@ VALGRIND =
 # bin_PROGRAMS = traverse
 # traverse_SOURCES = traverse.cpp
 
-# ATERM_ROOT = /home/dquinlan/bin/aterm-2.5-install-64bit
 ATERM_ROOT = $(ATERM_INSTALL_PATH)
 ATERM_INCLUDE = -I$(ATERM_ROOT)/include
 AM_CPPFLAGS = -I$(top_srcdir)/src/3rdPartyLibraries/experimental-fortran-parser/rose_traverse $(ROSE_INCLUDES) $(ATERM_INCLUDE)
@@ -34,6 +33,10 @@ F90_TESTCODES = \
  R854.f90   \
  R856.f90   \
  test2014_02.f90
+
+F2015_TESTCODES_WORKING_ON = \
+ R507-F2015-N2007.f90 \
+ R511-F2015-N2007.f90
 
 F90_TESTCODES_WORKING_ON = \
  R404.f90   \
