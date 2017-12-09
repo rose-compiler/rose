@@ -507,6 +507,12 @@ if (enable-ada)
   set(ROSE_BUILD_ADA_LANGUAGE_SUPPORT 1)
 endif()
 
+option(enable-jovial "Enable Jovial language support in ROSE." OFF)
+if (enable-jovial)
+  # TODO:
+  set(ROSE_BUILD_JOVIAL_LANGUAGE_SUPPORT 1)
+endif()
+
 # Other configuration options
 
 option(disable-binary-analysis-tests
@@ -1023,6 +1029,7 @@ endif (HAVE_DLFCN_H)
      ${ROSE_TOP_SRC_DIR}/src/backend/unparser/PythonCodeGeneration 
      ${ROSE_TOP_SRC_DIR}/src/backend/unparser/X10CodeGeneration
      ${ROSE_TOP_SRC_DIR}/src/backend/unparser/AdaCodeGeneration
+     ${ROSE_TOP_SRC_DIR}/src/backend/unparser/JovialCodeGeneration
      ${ROSE_TOP_SRC_DIR}/src/backend/asmUnparser 
      ${ROSE_TOP_SRC_DIR}/src/util 
      ${ROSE_TOP_SRC_DIR}/src/util/support 

@@ -1049,11 +1049,11 @@ public:
     Stream *stream_;                                    // Points back to the Stream that owns this
     bool enabled_;                                      // Whether this stream is enabled.
     MesgProps dflt_props_;                              // Default properties for new messages.
-    Mesg message_;                                      // Current message, never in an @ref isComplete state.
+    MultiInstanceTls<Mesg> message_;                    // Current message, never in an @ref isComplete state.
     DestinationPtr destination_;                        // Where messages should be sent.
-    BakedDestinations baked_;                           // Destinations baked at the start of each message.
-    bool isBaked_;                                      // True if @c baked_ is initialized.
-    bool anyUnbuffered_;                                // True if any baked destinations are unbuffered.
+    MultiInstanceTls<BakedDestinations> baked_;         // Destinations baked at the start of each message.
+    MultiInstanceTls<bool> isBaked_;                    // True if @c baked_ is initialized.
+    MultiInstanceTls<bool> anyUnbuffered_;              // True if any baked destinations are unbuffered.
 
     StreamBuf(Stream *owner): stream_(owner), enabled_(true), isBaked_(false), anyUnbuffered_(false) {}
     virtual ~StreamBuf() { cancelMessage(); }
@@ -1073,21 +1073,21 @@ public:
 // not synchronized
 void
 StreamBuf::post() {
-    if (enabled_ && message_.hasText() && (message_.isComplete() || anyUnbuffered_)) {
+    if (enabled_ && message_->hasText() && (message_->isComplete() || anyUnbuffered_)) {
         assert(isBaked_);
-        message_.post(baked_);
+        message_->post(baked_);
     }
 }
 
 // not synchronized
 void
 StreamBuf::completeMessage() {
-    if (!message_.isEmpty()) {
-        message_.complete();
+    if (!message_->isEmpty()) {
+        message_->complete();
         post();
     }
     message_ = Mesg(dflt_props_);
-    baked_.clear();
+    baked_->clear();
     isBaked_ = false;
     anyUnbuffered_ = false;
 }
@@ -1095,12 +1095,12 @@ StreamBuf::completeMessage() {
 // not synchronized
 void
 StreamBuf::cancelMessage() {
-    if (!message_.isEmpty()) {
-        message_.cancel();
+    if (!message_->isEmpty()) {
+        message_->cancel();
         post();
     }
     message_ = Mesg(dflt_props_);
-    baked_.clear();
+    baked_->clear();
     isBaked_ = false;
     anyUnbuffered_ = false;
 }
@@ -1109,9 +1109,9 @@ StreamBuf::cancelMessage() {
 void
 StreamBuf::bake() {
     if (!isBaked_) {
-        destination_->bakeDestinations(message_.properties(), baked_/*out*/);
+        destination_->bakeDestinations(message_->properties(), *baked_/*out*/);
         anyUnbuffered_ = false;
-        for (BakedDestinations::const_iterator bi=baked_.begin(); bi!=baked_.end() && !anyUnbuffered_; ++bi)
+        for (BakedDestinations::const_iterator bi=baked_->begin(); bi!=baked_->end() && !anyUnbuffered_; ++bi)
             anyUnbuffered_ = !bi->second.isBuffered;
         isBaked_ = true;
     }
@@ -1131,7 +1131,7 @@ StreamBuf::xsputn(const char *s, std::streamsize n) {
         if (termination_symbol==s[i]) {
             completeMessage();
         } else if ('\r'!=s[i]) {
-            message_.insert(s[i]);
+            message_->insert(s[i]);
             for (std::streamsize i=0; i<n; ++i) {
                 if (isgraph(s[i])) {
                     bake();
@@ -1166,7 +1166,7 @@ Stream::Stream(const std::string facilityName, Importance imp, const Destination
     streambuf_->dflt_props_.facilityName = facilityName;
     streambuf_->dflt_props_.importance = imp;
     streambuf_->destination_ = destination;
-    streambuf_->message_.properties() = streambuf_->dflt_props_;
+    streambuf_->message_->properties() = streambuf_->dflt_props_;
 }
 
 SAWYER_EXPORT
@@ -1178,7 +1178,7 @@ Stream::Stream(const MesgProps &props, const DestinationPtr &destination)
     assert(destination!=NULL);
     streambuf_->dflt_props_ = props;
     streambuf_->destination_ = destination;
-    streambuf_->message_.properties() = streambuf_->dflt_props_;
+    streambuf_->message_->properties() = streambuf_->dflt_props_;
 }
 
 // thread-safe: locks other, but no need to lock this
@@ -1246,7 +1246,7 @@ Stream::initFromNS(const Stream &other) {
     streambuf_->destination_ = other.streambuf_->destination_;
 
     // Swap message-related stuff in order to move ownership of the message to this.
-    streambuf_->message_.properties() = streambuf_->dflt_props_;
+    streambuf_->message_->properties() = streambuf_->dflt_props_;
     std::swap(streambuf_->message_, other.streambuf_->message_);
     std::swap(streambuf_->baked_, other.streambuf_->baked_);
     std::swap(streambuf_->isBaked_, other.streambuf_->isBaked_);
@@ -1297,7 +1297,7 @@ Stream::enable(bool b) {
 SAWYER_EXPORT void
 Stream::completionString(const std::string &s, bool asDefault) {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-    streambuf_->message_.properties().completionStr = s;
+    streambuf_->message_->properties().completionStr = s;
     if (asDefault) {
         streambuf_->dflt_props_.completionStr = s;
     } else if (streambuf_->isBaked_) {
@@ -1309,7 +1309,7 @@ Stream::completionString(const std::string &s, bool asDefault) {
 SAWYER_EXPORT void
 Stream::interruptionString(const std::string &s, bool asDefault) {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-    streambuf_->message_.properties().interruptionStr = s;
+    streambuf_->message_->properties().interruptionStr = s;
     if (asDefault) {
         streambuf_->dflt_props_.interruptionStr = s;
     } else if (streambuf_->isBaked_) {
@@ -1321,7 +1321,7 @@ Stream::interruptionString(const std::string &s, bool asDefault) {
 SAWYER_EXPORT void
 Stream::cancelationString(const std::string &s, bool asDefault) {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-    streambuf_->message_.properties().cancelationStr = s;
+    streambuf_->message_->properties().cancelationStr = s;
     if (asDefault) {
         streambuf_->dflt_props_.cancelationStr = s;
     } else if (streambuf_->isBaked_) {
@@ -1333,7 +1333,7 @@ Stream::cancelationString(const std::string &s, bool asDefault) {
 SAWYER_EXPORT void
 Stream::facilityName(const std::string &s, bool asDefault) {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-    streambuf_->message_.properties().facilityName = s;
+    streambuf_->message_->properties().facilityName = s;
     if (asDefault) {
         streambuf_->dflt_props_.facilityName = s;
     } else if (streambuf_->isBaked_) {

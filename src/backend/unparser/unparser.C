@@ -739,8 +739,10 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
 
           case SgFile::e_Jovial_language:
              {
-               printf ("Error: SgFile::e_Jovial_language detected in unparser (unparser not implemented, unparsing ignored) \n");
-            // ROSE_ASSERT(false);
+            // Rasmussen (11/24/2017): Begin implementation of the Jovial unparser
+               Unparse_Jovial unparser(this, file->getFileName());
+               unparser.unparseJovialFile(file, info);
+
                break;
              }
 
@@ -2978,8 +2980,7 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
 
                case SgFile::e_Jovial_language:
                   {
-                    printf ("Error: SgFile::e_Jovial_language detected in unparser (unparser not implemented, unparsing ignored) \n");
-                 // ROSE_ASSERT(false);
+                    outputFilename = "rose_" + file->get_sourceFileNameWithoutPath();
                     break;
                   }
 

@@ -323,6 +323,7 @@ ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      -I$(top_srcdir)/src/backend/unparser/PythonCodeGeneration \
      -I$(top_srcdir)/src/backend/unparser/X10CodeGeneration \
      -I$(top_srcdir)/src/backend/unparser/AdaCodeGeneration \
+     -I$(top_srcdir)/src/backend/unparser/JovialCodeGeneration \
      -I$(top_srcdir)/src/backend/asmUnparser \
      -I$(top_srcdir)/src/util \
      -I$(top_srcdir)/src/util/support \
@@ -383,6 +384,7 @@ ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      -I$(top_srcdir)/src/backend/unparser/PythonCodeGeneration \
      -I$(top_srcdir)/src/backend/unparser/X10CodeGeneration \
      -I$(top_srcdir)/src/backend/unparser/AdaCodeGeneration \
+     -I$(top_srcdir)/src/backend/unparser/JovialCodeGeneration \
      -I$(top_srcdir)/src/backend/asmUnparser \
      -I$(top_srcdir)/src/util \
      -I$(top_srcdir)/src/util/support \
