@@ -18,7 +18,10 @@ LDADD    = $(ROSE_LIBS)
 # put macroCalls.c here since it requires -rose:wave, which causes seg fault on 64-bit machine
 TESTCODE_CURRENTLY_FAILING = \
 	ompfor7.c \
-	macroCalls.c
+	macroCalls.c \
+	data-member-access.cpp \
+	define-directive2.cpp \
+	define-directive.c
 
 C_TESTCODES_REQUIRED_TO_PASS = \
 	3loops.c \
@@ -120,6 +123,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	set_num_threads.c \
 	shared.c \
 	simd.c \
+	simd2.c \
 	single.c \
 	single2.c \
 	single_copyprivate.c \
@@ -153,7 +157,14 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	threadprivate.c \
 	threadProcessor.c \
 	upperCase.c \
-	variables.c 
+	variables.c
+
+# removed experimental test cases	
+removed_Experimental_TEST = \
+	axpy_ompacc_mpi.c \
+	axpy_ompacc4.c \
+	axpy_ompacc_parseonly.c 
+
 
 
 # DQ (2/19/2017): This logic has not yet been updated to reflect the new logic for GNU, Clang, Intel compilers.
@@ -183,9 +194,6 @@ C_OMP_ACC_TESTCODES_REQUIRED_TO_PASS = \
         axpy_ompacc.c \
         axpy_ompacc2.c \
 	axpy_ompacc3.c \
-	axpy_ompacc4.c \
-	axpy_ompacc_parseonly.c \
-	axpy_ompacc_mpi.c \
 	matrixmultiply-ompacc.c \
 	matrixmultiply-ompacc2.c \
 	jacobi-ompacc.c \

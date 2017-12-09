@@ -66,40 +66,89 @@ protected:
     virtual void outputComparisonFunctions(std::ostream&, const std::vector<SymbolicExpr::Ptr>&);
 
 protected:
+    // Return the most common type (arbitrarily if tied). Returns NO_TYPE when there are no inputs.
+    virtual Type mostType(const std::vector<SExprTypePair>&);
+
+    // Cast an SMT expression(s) to some other type.
+    virtual SExprTypePair outputCast(const SExprTypePair&, Type to);
+    virtual std::vector<SExprTypePair> outputCast(const std::vector<SExprTypePair>&, Type to);
 
     virtual std::string typeName(const SymbolicExpr::Ptr&);
+
+    // Convert a ROSE symbolic expression to an SMT solver expression. The return value is a pair consisting of an SExpr::Ptr
+    // (ROSE internal representation of an SMT solver expression) and a type indicating whether the SMT solver expression is a
+    // bit vector, a Boolean, or a memory state. Although ROSE uses a bit to represent Booleans, SMT solvers often distinguish
+    // betwen a single bit and a Boolean.
+    virtual SExprTypePair outputExpression(const SymbolicExpr::Ptr&);
+    virtual std::vector<SmtSolver::SExprTypePair> outputExpressions(const std::vector<SymbolicExpr::Ptr>&);
+
+    // Create an SMT expression from a ROSE symbolic leaf node (constant, variable, or memory state).
+    virtual SExprTypePair outputLeaf(const SymbolicExpr::LeafPtr&);
+
+    // Create an expression composed of only 2-argument calls to the specified function.  The arguments are all first converted
+    // to the most common argument type (which is usually a no-op since arguments are normally all the same type). If rettype
+    // is NO_TYPE then the returned type is assumed to be the same as the arguments, otherwise it is set as specified.
+    virtual SExprTypePair outputLeftAssoc(const std::string &func, const SymbolicExpr::InteriorPtr&, Type rettype = NO_TYPE);
+    virtual SExprTypePair outputLeftAssoc(const std::string &func, const std::vector<SExprTypePair>&, Type rettype = NO_TYPE);
+
+    // Create an expression that does a shift operation.
+    virtual SExprTypePair outputArithmeticShiftRight(const SymbolicExpr::InteriorPtr&);
+    virtual SExprTypePair outputLogicalShiftRight(const SymbolicExpr::InteriorPtr&);
+    virtual SExprTypePair outputShiftLeft(const SymbolicExpr::InteriorPtr&);
+
+    // Create a rotate expression. */
+    virtual SExprTypePair outputRotateLeft(const SymbolicExpr::InteriorPtr&);
+    virtual SExprTypePair outputRotateRight(const SymbolicExpr::InteriorPtr&);
+
+    // Create an expression that does either a bit-wise or boolean XOR. All arguments must be the same type, either bit vectors
+    // or Booleans, and the return value is the same as the argument type.
+    virtual SExprTypePair outputXor(const SymbolicExpr::InteriorPtr&);
+
+    // Create a binary expression. This is a special case of outputLeftAssoc.
+    virtual SExprTypePair outputBinary(const std::string &func, const SymbolicExpr::InteriorPtr&, Type rettype = NO_TYPE);
+
+    // Create a unary expression.  The return type is the same as the argument type.
+    virtual SExprTypePair outputUnary(const std::string &funcName, const SExprTypePair &arg);
+
+    // Create a bit extraction expression, i.e., a bit vector result which is a sub-array of the input bit vector.
+    virtual SExprTypePair outputExtract(const SymbolicExpr::InteriorPtr&);
+
+    // Create a widening expression that returns a bit vector type. */
+    virtual SExprTypePair outputSignExtend(const SymbolicExpr::InteriorPtr&);
+    virtual SExprTypePair outputUnsignedExtend(const SymbolicExpr::InteriorPtr&);
+
+    // Create an if-then-else expression. The arguments should be the same type (one is cast if not) and the return type is the
+    // same as the argument types.
+    virtual SExprTypePair outputIte(const SymbolicExpr::InteriorPtr&);
+
+    // Create a not-equal expression. The operands can be any type and are cast to a common type before comparing. The return
+    // type is Boolean.
+    virtual SExprTypePair outputNotEqual(const SymbolicExpr::InteriorPtr&);
+
+    // Create a comparison expression for bit vectors. Return type is Boolean. */
+    virtual SExprTypePair outputSignedCompare(const SymbolicExpr::InteriorPtr&);
+    virtual SExprTypePair outputUnsignedCompare(const SymbolicExpr::InteriorPtr&);
+    virtual SExprTypePair outputZerop(const SymbolicExpr::InteriorPtr&);
+
+    // Create multiplicative expression. */
+    virtual SExprTypePair outputMultiply(const SymbolicExpr::InteriorPtr&);
+    virtual SExprTypePair outputUnsignedDivide(const SymbolicExpr::InteriorPtr&);
+    virtual SExprTypePair outputUnsignedModulo(const SymbolicExpr::InteriorPtr&);
+
+    // Create a memory read expression. The return type is a bit vector. */
+    virtual SExprTypePair outputRead(const SymbolicExpr::InteriorPtr&);
+
+    // Create a memory write operation. The return value is a memory state. */
+    virtual SExprTypePair outputWrite(const SymbolicExpr::InteriorPtr&);
+
+    // Create a set expression that represents a set of bit vectors all the same size. */
+    virtual SExprTypePair outputSet(const SymbolicExpr::InteriorPtr&);
 
     // Functions that generate SMT-LIB output to a stream when given a Rose::BinaryAnalysis::SymbolicExpr
     virtual void outputVariableDeclarations(std::ostream&, const VariableSet&);
     virtual void outputComments(std::ostream&, const std::vector<SymbolicExpr::Ptr>&);
     virtual void outputCommonSubexpressions(std::ostream&, const std::vector<SymbolicExpr::Ptr>&);
     virtual void outputAssertion(std::ostream&, const SymbolicExpr::Ptr&);
-    virtual void outputExpression(std::ostream&, const SymbolicExpr::Ptr&, Type need);
-    virtual void outputLeaf(std::ostream&, const SymbolicExpr::LeafPtr&, Type need);
-    virtual void outputList(std::ostream&, const std::string &funcName, const SymbolicExpr::InteriorPtr&, Type need);
-    virtual void outputUnary(std::ostream&, const std::string &funcName, const SymbolicExpr::InteriorPtr&, Type need);
-    virtual void outputBinary(std::ostream&, const std::string &funcName, const SymbolicExpr::InteriorPtr&, Type need);
-    virtual void outputLeftAssoc(std::ostream&, const std::string &funcName, const SymbolicExpr::InteriorPtr&, Type need);
-    virtual void outputXor(std::ostream&, const SymbolicExpr::InteriorPtr&);
-    virtual void outputExtract(std::ostream&, const SymbolicExpr::InteriorPtr&);
-    virtual void outputIte(std::ostream&, const SymbolicExpr::InteriorPtr&, Type need);
-    virtual void outputNotEqual(std::ostream&, const SymbolicExpr::InteriorPtr&);
-    virtual void outputUnsignedExtend(std::ostream&, const SymbolicExpr::InteriorPtr&);
-    virtual void outputSignExtend(std::ostream&, const SymbolicExpr::InteriorPtr&);
-    virtual void outputSet(std::ostream&, const SymbolicExpr::InteriorPtr&);
-    virtual void outputLogicalShiftRight(std::ostream&, const SymbolicExpr::InteriorPtr&);
-    virtual void outputShiftLeft(std::ostream&, const SymbolicExpr::InteriorPtr&);
-    virtual void outputArithmeticShiftRight(std::ostream&, const SymbolicExpr::InteriorPtr&);
-    virtual void outputRotateLeft(std::ostream&, const SymbolicExpr::InteriorPtr&);
-    virtual void outputRotateRight(std::ostream&, const SymbolicExpr::InteriorPtr&);
-    virtual void outputZerop(std::ostream&, const SymbolicExpr::InteriorPtr&);
-    virtual void outputMultiply(std::ostream&, const SymbolicExpr::InteriorPtr&);
-    virtual void outputUnsignedDivide(std::ostream&, const SymbolicExpr::InteriorPtr&);
-    virtual void outputUnsignedModulo(std::ostream&, const SymbolicExpr::InteriorPtr&);
-    virtual void outputSignedCompare(std::ostream&, const SymbolicExpr::InteriorPtr&);
-    virtual void outputUnsignedCompare(std::ostream&, const SymbolicExpr::InteriorPtr&);
-    virtual void outputRead(std::ostream&, const SymbolicExpr::InteriorPtr&);
-    virtual void outputWrite(std::ostream&, const SymbolicExpr::InteriorPtr&);
 };
 
 } // namespace
