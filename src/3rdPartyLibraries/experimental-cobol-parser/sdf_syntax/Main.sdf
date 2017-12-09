@@ -34,7 +34,7 @@ context-free syntax
   "IDENTIFICATION" "DIVISION" "." "PROGRAM-ID" "." ProgramName
    -> CobolSourceProgram  {cons("CobolSourceProgram")}
 
-   ("IDENTIFICATION"|"ID") "DIVISION" "." "PROGRAM-ID" (""|".") ProgramName
+   ("IDENTIFICATION"|"ID") "DIVISION" "." "PROGRAM-ID" ("."|"") ProgramName
    OptProgramSpec   
    OptEndProgram  % TODO - not optional if there are nested source programs %
 -> CobolSourceProgram  {cons("CobolSourceProgram")}
@@ -47,7 +47,7 @@ context-free syntax
    ("IS"|"") "INITIAL"   ("PROGRAM"|"") ("."|"")
 -> OptProgramSpec                                                {cons("INITIAL")}
 
-   (""|".")
+   ("."|"")
 -> OptProgramSpec                                                {cons("no-program-spec")}
 
 %% OptEndProgram
@@ -57,5 +57,5 @@ context-free syntax
 -> OptEndProgram                                                 {cons("no-end-program")}
 
    Name
--> ProgramName
+-> ProgramName                                                   {cons("Name")}
 

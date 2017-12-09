@@ -5,7 +5,7 @@
 #include "sage3basic.h"
 
 //CodeThorn includes
-#include "Analyzer.h"
+#include "IOAnalyzer.h"
 #include "PropertyValueTable.h"
 #include "EState.h"
 #include "SpotConnection.h"
@@ -57,8 +57,8 @@ namespace CodeThorn {
   class CounterexampleAnalyzer {
   public:
     // initializing the CounterexampleAnalyzer, using "analyzer" to trace paths of the original program
-    CounterexampleAnalyzer(Analyzer* analyzer);
-    CounterexampleAnalyzer(Analyzer* analyzer, stringstream* csvOutput);
+    CounterexampleAnalyzer(IOAnalyzer* analyzer);
+    CounterexampleAnalyzer(IOAnalyzer* analyzer, stringstream* csvOutput);
     // Check whether or not the "counterexample" is spurious. 
     // If "returnSpuriousLabel" is set to true: In the case of a spurious counterexample, the result includes a label that should not 
     //                                        be reachable according to the original program but is reachable in the counterexample
@@ -122,7 +122,7 @@ namespace CodeThorn {
     std::string ioErrTraceToString(list<pair<int, IoType> > trace);
     void writeDotGraphToDisk(std::string filename, Visualizer& visualizer);
 
-    Analyzer* _analyzer;
+    IOAnalyzer* _analyzer;
     stringstream* _csvOutput;
     int _maxCounterexamples;
     InputsAtEState _erroneousBranches;

@@ -91,7 +91,7 @@ testNewExprRule() {
     std::cout <<"  e3 = " <<*e3 <<"\n";
     ASSERT_always_require(e3->flags() == 0);
 
-    SymbolicExpr::Ptr e4 = SymbolicExpr::Interior::create(32, SymbolicExpr::OP_BV_XOR, e1, e1);
+    SymbolicExpr::Ptr e4 = SymbolicExpr::Interior::create(32, SymbolicExpr::OP_XOR, e1, e1);
     std::cout <<"  e4 = " <<*e4 <<"\n";
     ASSERT_always_require(e4->flags() == 0);
 }

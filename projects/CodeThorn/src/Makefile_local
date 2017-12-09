@@ -52,7 +52,7 @@ $(TOOLNAME3): $(OBJECT_FILES) RERS_empty_specialization.o $(TOOLNAME3).o
 
 # Create a specialized hybrid analyzer for the given RERS problem. Uses several input parameters, is called by the "generate_rers_hybrid_analyzer" script
 $(TOOLNAME3)_$(PROBLEM): $(OBJECT_FILES_REMOTE) $(HYBRID_DIR)/$(PROBLEM)_copy_functions.o 
-	$(CXX) -DRERS_SPECIALIZATION $(CXXFLAGS)  $(CPPFLAGS) $(OBJECT_FILES_REMOTE) $(PROBLEM)_copy_functions.o $(ROSE_LIBS) $(BOOST_CPPFLAGS) -lspray -o$(HYBRID_DIR)/$(TOOLNAME3)_$(PROBLEM)
+	$(CXX) -DRERS_SPECIALIZATION $(CXXFLAGS)  $(CPPFLAGS) $(OBJECT_FILES_REMOTE) $(PROBLEM)_copy_functions.o $(ROSE_LIBS) $(Z3_LIBS) $(BOOST_CPPFLAGS) -lspray -o$(HYBRID_DIR)/$(TOOLNAME3)_$(PROBLEM)
 
 ###############################################################################################
 

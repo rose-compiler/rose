@@ -10308,7 +10308,7 @@ bool isStructuredBlock(SgStatement* s)
   ROSE_ASSERT (s != NULL);
 
   // contain break; 
-  std::set<SgNode*>  bset = SgNodeHelper::LoopRelevantBreakStmtNodes (s);
+  std::set<SgNode*>  bset = SgNodeHelper::loopRelevantBreakStmtNodes (s);
   if (bset.size()!=0 ) 
     rt = false;
   //TODO: contain goto statement, jumping to outside targets

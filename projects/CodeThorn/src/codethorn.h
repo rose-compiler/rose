@@ -14,7 +14,7 @@
 #include <sstream>
 
 #include "CFAnalysis.h"
-#include "Analyzer.h"
+#include "IOAnalyzer.h"
 #include "Visualizer.h"
 #include "LanguageRestrictor.h"
 #include "LanguageRestrictorCollection.h"
@@ -27,7 +27,7 @@ namespace CodeThorn {
     void initialize();
   };
 
-  void printAnalyzerStatistics(Analyzer& analyzer, double totalRunTime, 
+  void printAnalyzerStatistics(IOAnalyzer* analyzer, double totalRunTime, 
                                std::string title = "state transition system computed");
   // prints #transitions and details about states
   void printStgSize(TransitionGraph* model, std::string optionalComment="", std::stringstream* csvOutput=NULL);

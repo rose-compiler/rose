@@ -342,7 +342,7 @@ sorts
 
 %% 6.6 Image selectors
 
-  ImageSelector                       %% R624
+%%ImageSelector                       %% R624, replace by R624-F2015-N2007
   Cosubscript                         %% R625
 
   OptImageSelector
@@ -536,8 +536,6 @@ sorts
 
   OptStopCode
 
-  FailImageStmt                       %% R511-F2015-N2007
-
 %% 8.5 Image execution control
 
   SyncAllStmt                         %% R858
@@ -607,7 +605,7 @@ sorts
 %% 9.7 Waiting on pending data transfer
 
   WaitStmt                            %% R922
-  WaitSpec                            %% R923
+  WaitSpec                            %% R923, R604-F2015-N2007
 
 %% 9.8 File positioning statements
 
@@ -759,6 +757,39 @@ sorts
   ProcedureEntityName ResultName NoResultName
   SubroutineName NoSubroutineName OptSubroutineName
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% TS 18508 Additional Parallel Features in Fortran
+%% WG5/N2007 - 12th March 2014 9:46
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+  ChangeTeamConstruct                 %% R501-F2015-N2007
+  ChangeTeamStmt                      %% R502-F2015-N2007
+  CoarrayAssociation                  %% R503-F2015-N2007
+%%Coselector                          %% R504-F2015-N2007 (not used)
+  EndChangeTeamStmt                   %% R505-F2015-N2007
+  TeamVariable                        %% R506-F2015-N2007
+
+  ImageSelector                       %% R624, R624-F2015-N2007
+
+  FormTeamStmt                        %% R507-F2015-N2007
+  TeamId                              %% R508-F2015-N2007
+  FormTeamSpec                        %% R509-F2015-N2007
+  SyncTeamStmt                        %% R510-F2015-N2007
+  FailImageStmt                       %% R511-F2015-N2007
+
+  EventPostStmt                       %% R601-F2015-N2007
+  EventVariable                       %% R602-F2015-N2007
+  EventWaitStmt                       %% R603-F2015-N2007
+%%WaitSpec                            %% R604-F2015-N2007
+
+  ScalarIntExpr                       %% TODO - use this in 2008 grammar portion as well
+  ScalarVariable                      %% TODO - use this in 2008 grammar portion as well
+
+  OptWaitSpecList OptFormTeamSpecList OptParensSyncStatList OptCoarrayAssociationList
+  OptTeamId OptTeamVariable CoselectorName OptTeamConstructName OptTeamConstructNameCOLON
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 context-free syntax
 
@@ -1867,11 +1898,12 @@ context-free syntax
 %% 6.6 Image selectors
 %%
 
-%%R624
-  '[' {Cosubscript ','}+ ']'                             -> ImageSelector        {cons("ImageSelector")}
-  ImageSelector                                          -> OptImageSelector
-  ImageSelector '(' SubstringRange ')'                   -> OptImageSelector     {cons("substring-section-range")}
-  % empty %                                              -> OptImageSelector     {cons("no-image-selector")}
+%%R624 - Replaced by R624-F2015-N2007
+%%
+%%'[' {Cosubscript ','}+ ']'                             -> ImageSelector        {cons("ImageSelector")}
+%%ImageSelector                                          -> OptImageSelector
+%%ImageSelector '(' SubstringRange ')'                   -> OptImageSelector     {cons("substring-section-range")}
+%%% empty %                                              -> OptImageSelector     {cons("no-image-selector")}
 
 %%625
 %%      int-expr substituted for scalar-int-expr
@@ -2735,9 +2767,6 @@ context-free syntax
   StopCode                                              -> OptStopCode
   % empty %                                             -> OptStopCode          {cons("no-stop-code")}
 
-%%R511-F2015-N2007
-%%
-  OptLabel 'FAIL' 'IMAGE' OptStopCode               EOS -> FailImageStmt        {cons("FailImageStmt")}
 
 %% 8.5 Image execution control
 %%
@@ -3340,6 +3369,7 @@ context-free syntax
   AssociateConstruct                     -> ExecutableConstruct
   BlockConstruct                         -> ExecutableConstruct
   CaseConstruct                          -> ExecutableConstruct
+  ChangeTeamConstruct                    -> ExecutableConstruct  %% R501-F2015-N2007
   CriticalConstruct                      -> ExecutableConstruct
 %%DoConstruct          %% Ambiguous - placed related statements in action-stmt
   ForallConstruct                        -> ExecutableConstruct
@@ -3365,7 +3395,10 @@ context-free syntax
   EndSubroutineStmt                      -> ActionStmt  {reject}  %% creates ambiguity for "end" statement with no "SUBROUTINE"
   EndfileStmt                            -> ActionStmt
   ErrorStopStmt                          -> ActionStmt
-  FailImageStmt                          -> ActionStmt  %%R511-F2015-N2007
+  EventPostStmt                          -> ActionStmt  %% R601-F2015-N2007
+  EventWaitStmt                          -> ActionStmt  %% R603-F2015-N2007
+  FailImageStmt                          -> ActionStmt  %% R511-F2015-N2007
+  FormTeamStmt                           -> ActionStmt  %% R507-F2015-N2007
   ExitStmt                               -> ActionStmt
   FlushStmt                              -> ActionStmt
   ForallStmt                             -> ActionStmt
@@ -3385,6 +3418,7 @@ context-free syntax
   SyncAllStmt                            -> ActionStmt
   SyncImagesStmt                         -> ActionStmt
   SyncMemoryStmt                         -> ActionStmt
+  SyncTeamStmt                           -> ActionStmt  %% R510-F2015-N2007
   UnlockStmt                             -> ActionStmt
   WaitStmt                               -> ActionStmt
   WhereStmt                              -> ActionStmt
@@ -3858,3 +3892,162 @@ context-free syntax
 %% This rule is AMBIGUOUS with an array assignment, e.g., A(i) = 1
 %%
 %% OptLabel FunctionName '(' {DummyArgName ','}* ')' '=' Expr  EOS -> StmtFunctionStmt {cons("StmtFunctionStmt")}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% TS 18508 Additional Parallel Features in Fortran
+%% WG5/N2007 - 12th March 2014 9:46
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% 5. Teams of images
+%% ------------------
+
+%% 5.2 TEAM_TYPE
+%% -------------
+
+%% 5.3 CHANGE TEAM construct
+%% -------------------------
+
+%%R501-F2015-N2007
+%%
+  ChangeTeamStmt Block EndChangeTeamStmt                -> ChangeTeamConstruct  {cons("ChangeTeamConstruct")}
+
+%%R502-F2015-N2007
+%%
+  OptLabel OptTeamConstructNameCOLON
+  'CHANGE' 'TEAM'
+    '('
+        TeamVariable
+        OptCoarrayAssociationList
+	OptSyncStatList
+    ')'                                             EOS -> ChangeTeamStmt            {cons("ChangeTeamStmt")}
+
+  Ident ':'                                             -> OptTeamConstructNameCOLON {cons("Name")}
+  % empty %                                             -> OptTeamConstructNameCOLON {cons("no-name")}
+
+  ',' { CoarrayAssociation ','}+                        -> OptCoarrayAssociationList {cons("comma-list")}
+  % empty %                                             -> OptCoarrayAssociationList {cons("no-list")}
+
+%%R503-F2015-N2007
+%%
+  CodimensionDecl '=>' CoselectorName                   -> CoarrayAssociation   {cons("CoarrayAssociation")}
+
+  Ident                                                 -> CoselectorName
+
+%%R504-F2015-N2007
+%% Note: not used
+%%
+%%Coarray                                               -> Coselector
+
+%%R505-F2015-N2007
+%%
+  OptLabel 'END' 'TEAM'
+  OptParensSyncStatList OptTeamConstructName        EOS -> EndChangeTeamStmt     {cons("EndChangeTeamStmt")}
+
+  '(' { SyncStat ','}+ ')'                              -> OptParensSyncStatList {cons("paren-list")}
+  % empty %                                             -> OptParensSyncStatList {cons("no-list")}
+
+  Ident                                                 -> OptTeamConstructName  {cons("Name")}
+  % empty %                                             -> OptTeamConstructName  {cons("no-name")}
+
+%%R506-F2015-N2007
+%%
+  ScalarVariable                                        -> TeamVariable
+  Variable                                              -> ScalarVariable
+
+%% 5.4 Image selectors
+%% -------------------
+
+%%R624-F2015-N2007
+%%
+  '['
+      OptTeamVariable {Cosubscript ','}+
+      OptTeamId
+  ']'                                                   -> ImageSelector        {cons("ImageSelector")}
+
+  ImageSelector                                         -> OptImageSelector
+  ImageSelector '(' SubstringRange ')'                  -> OptImageSelector     {cons("substring-section-range")}
+  % empty %                                             -> OptImageSelector     {cons("no-image-selector")}
+
+  TeamVariable '::'                                     -> OptTeamVariable      {cons("TeamVariable")}
+  % empty %                                             -> OptTeamVariable      {cons("no-team-variable")}
+
+  'TEAM_ID' '=' ScalarIntExpr                           -> OptTeamId            {cons("TeamId")}
+  % empty %                                             -> OptTeamId            {cons("no-team-id")}
+
+  Expr                                                  -> ScalarIntExpr
+
+%% 5.5 FORM TEAM statement
+%% -----------------------
+
+%% R507-F2015-N2007
+%%
+  OptLabel 'FORM' 'TEAM'
+  '('
+      TeamId ',' TeamVariable OptFormTeamSpecList
+  ')'                                              EOS -> FormTeamStmt          {cons("FormTeamStmt")}
+
+  ',' { FormTeamSpec ','}+                             -> OptFormTeamSpecList   {cons("comma-list")}
+  % empty %                                            -> OptFormTeamSpecList   {cons("no-list")}
+
+%% R508-F2015-N2007
+%%
+  ScalarIntExpr                                        -> TeamId
+
+%% R509-F2015-N2007
+%%
+  'NEW_INDEX' '=' ScalarIntExpr                        -> FormTeamSpec          {cons("FormTeamSpec")}
+  SyncStat                                             -> FormTeamSpec
+
+%% 5.6 SYNC TEAM statement
+%% -----------------------
+
+%% R510-F2015-N2007
+%%
+  OptLabel 'SYNC' 'TEAM'
+  '('
+      TeamVariable OptSyncStatList
+  ')'                                              EOS -> SyncTeamStmt          {cons("SyncTeamStmt")}
+
+%% 5.7 FAIL IMAGE statement
+%% ------------------------
+
+%% R511-F2015-N2007
+%%
+  OptLabel 'FAIL' 'IMAGE' OptStopCode              EOS -> FailImageStmt         {cons("FailImageStmt")}
+
+
+%% 6 Events
+%% --------
+
+%% 6.1 EVENT_TYPE
+%% --------------
+
+%% 6.2 EVENT POST statement
+%% ------------------------
+
+%% R601-F2015-N2007
+%%
+  OptLabel 'EVENT' 'POST'
+  '('
+      EventVariable OptSyncStatList
+  ')'                                             EOS -> EventPostStmt          {cons("EventPostStmt")}
+
+%% R602-F2015-N2007
+%%
+  ScalarVariable                                      -> EventVariable
+
+%% R603-F2015-N2007
+%%
+  OptLabel 'EVENT' 'WAIT'
+  '('
+      EventVariable OptWaitSpecList
+  ')'                                             EOS -> EventWaitStmt          {cons("EventWaitStmt")}
+
+  ',' { WaitSpec ','}+                                -> OptWaitSpecList       {cons("comma-list")}
+  % empty %                                           -> OptWaitSpecList       {cons("no-list")}
+
+%% R604-F2015-N2007
+%%
+  'UNTIL_COUNT' '=' ScalarIntExpr                     -> WaitSpec              {cons("UNTIL_COUNT")}
+  SyncStat                                            -> WaitSpec

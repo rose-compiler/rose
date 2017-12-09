@@ -4,24 +4,7 @@
 #include "VariableIdMapping.h"
 #include "Labeler.h"
 #include "AstMatching.h"
-
-struct RewriteStatistics {
-  RewriteStatistics();
-  int numElimMinusOperator;
-  int numElimAssignOperator;
-  int numAddOpReordering;
-  int numConstantFolding;
-  int numVariableElim;
-  int numArrayUpdates; // number of array updates (i.e. assignments)
-  int numConstExprElim; // number of const-expr found and substituted by constant (new rule, includes variables)
-  // resets all statistics counters to 0.
-  void reset();
-  std::string toString();
-  // create a comma separated value string
-  std::string toCsvString();
-private:
-  void init();
-};
+#include "RewriteStatistics.h"
 
 class RewriteSystem {
  public:
@@ -33,7 +16,7 @@ class RewriteSystem {
   RewriteStatistics getStatistics();
   void resetStatistics();
   RewriteStatistics getRewriteStatistics();
-  RewriteStatistics* getRewriteStatisticsPtr() { return &dump1_stats; }
+  RewriteStatistics* getRewriteStatisticsPtr() { return &_rewriteStatistics; }
 
   void rewriteCompoundAssignmentsInAst(SgNode* root, SPRAY::VariableIdMapping* variableIdMapping);
   void rewriteCompoundAssignments(SgNode*& root, SPRAY::VariableIdMapping* variableIdMapping);
@@ -64,7 +47,7 @@ class RewriteSystem {
   bool _rewriteCondStmt;
   // sets valueString to empty string in SgFloatVal, SgDoubleVal, SgLongDoubleVal
   void normalizeFloatingPointNumbersForUnparsing(SgNode*& root);
-  RewriteStatistics dump1_stats;
+  RewriteStatistics _rewriteStatistics;
   bool ruleCommutativeSort=false;
 };
 
