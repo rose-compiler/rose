@@ -68,9 +68,33 @@ static int WSTOPSIG(int) { return 0; }                  // Windows dud
 
 #elif defined(__APPLE__) && defined(__MACH__)
 
-// I don't have a Mac OSX on which to test things, so whoever does, please replace this comment with whatever's necessary to
-// make the rest of the code compile.  See the windows stuff above for examples. [Robb P. Matzke 2015-02-20]
-#error "FIXME[Robb P. Matzke 2015-02-20]: Not supported on Mac OSX yet"
+# warning("FIXME[Robb P. Matzke  2015-02-20]: Not supported on Mac OSX yet")
+# warning("FIXME[Craig Rasmussen 2017-12-09]: Still not supported on Mac OSX but will now compile")
+
+# include <signal.h>
+
+enum __ptrace_request {                                 // Mac OSX dud
+    PTRACE_ATTACH,
+    PTRACE_CONT,
+    PTRACE_DETACH,
+    PTRACE_GETREGS,
+    PTRACE_GETFPREGS,
+    PTRACE_KILL,
+    PTRACE_SETREGS,
+    PTRACE_SINGLESTEP,
+    PTRACE_TRACEME,
+    PTRACE_PEEKUSER,
+    PTRACE_SYSCALL
+};
+
+struct user_regs_struct {                               // Mac OSX dud
+    long int eip;
+};
+
+static int ptrace(__ptrace_request, int, void*, void*) {// Mac OSX dud
+    errno = ENOSYS;
+    return -1;
+}
 
 #else
 
@@ -106,7 +130,7 @@ sendCommandInt(__ptrace_request request, int child, void *addr, int i) {
     return sendCommand(request, child, addr, ptr);
 }
 
-#if defined(BOOST_WINDOWS) || __WORDSIZE==32
+#if defined(BOOST_WINDOWS) || __WORDSIZE==32 || (defined(__APPLE__) && defined(__MACH__))
 static rose_addr_t
 getInstructionPointer(const user_regs_struct &regs) {
     return regs.eip;
