@@ -1035,18 +1035,37 @@ Partitioner::basicBlockIsFunctionReturn(const BasicBlock::Ptr &bb) const {
 
     // Use our own semantics if we have them.
     if (BaseSemantics::StatePtr state = bb->finalState()) {
-        // This is a function return if the instruction pointer has the same value as the memory for one past the end of the
-        // stack pointer.  The assumption is that a function return pops the return-to address off the top of the stack and
-        // unconditionally branches to it.  It may pop other things from the stack as well.  Assuming stacks grow down. This
-        // will not work for callee-cleans-up returns where the callee also pops off some arguments that were pushed before
-        // the call.
+        // This is a function return if the new instruction pointer (after processing this basic block semantically) has a
+        // value equal to a return address which is now past the top of the stack.
         ASSERT_not_null(bb->dispatcher());
         BaseSemantics::RiscOperatorsPtr ops = bb->dispatcher()->get_operators();
         const RegisterDescriptor REG_IP = instructionProvider_->instructionPointerRegister();
         const RegisterDescriptor REG_SP = instructionProvider_->stackPointerRegister();
         const RegisterDescriptor REG_SS = instructionProvider_->stackSegmentRegister();
-        BaseSemantics::SValuePtr retAddrPtr = ops->add(ops->readRegister(REG_SP),
-                                                       ops->negate(ops->number_(REG_IP.get_nbits(), REG_IP.get_nbits()/8)));
+
+        // Find the pointer to the return address. Since the return instruction (e.g., x86 RET) has been processed semantically
+        // already, the return address is beyond the end of the stack.  Here we handle architecture-specific instructions that
+        // might pop more than just the return address (e.g., x86 "RET 4").
+        BaseSemantics::SValuePtr stackOffset;           // added to stack ptr to get ptr to return address
+        if (SgAsmX86Instruction *x86insn = isSgAsmX86Instruction(lastInsn)) {
+            if ((x86insn->get_kind() == x86_ret || x86insn->get_kind() == x86_retf) &&
+                x86insn->get_operandList()->get_operands().size() == 1 &&
+                isSgAsmIntegerValueExpression(x86insn->get_operandList()->get_operands()[0])) {
+                uint64_t nbytes = isSgAsmIntegerValueExpression(x86insn->get_operandList()->get_operands()[0])
+                                  ->get_absoluteValue();
+                nbytes += REG_IP.get_nbits() / 8;       // size of return address
+                stackOffset = ops->negate(ops->number_(REG_IP.get_nbits(), nbytes));
+            }
+        }
+        if (!stackOffset) {
+            // If no special case above, assume return address is the word beyond the top-of-stack and that the stack grows
+            // downward.
+            stackOffset = ops->negate(ops->number_(REG_IP.get_nbits(), REG_IP.get_nbits()/8));
+        }
+        BaseSemantics::SValuePtr retAddrPtr = ops->add(ops->readRegister(REG_SP), stackOffset);
+
+        // Now that we have the ptr to the return address, read it from the stack and compare it with the new instruction
+        // pointer. If equal, then the basic block returns to the caller.
         BaseSemantics::SValuePtr retAddr = ops->undefined_(REG_IP.get_nbits());
         retAddr = ops->readMemory(REG_SS, retAddrPtr, retAddr, ops->boolean_(true));
         BaseSemantics::SValuePtr isEqual = ops->equalToZero(ops->add(retAddr, ops->negate(ops->readRegister(REG_IP))));
