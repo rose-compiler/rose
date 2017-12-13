@@ -2025,40 +2025,75 @@ Engine::BasicBlockFinalizer::operator()(bool chain, const Args &args) {
         ASSERT_not_null(bb);
         ASSERT_require(bb->nInstructions() > 0);
 
-        if (args.bblock->finalState() == NULL)
-            return true;
-        BaseSemantics::RiscOperatorsPtr ops = args.bblock->dispatcher()->get_operators();
-
-        // Should we add an indeterminate CFG edge from this basic block?  For instance, a "JMP [ADDR]" instruction should get
-        // an indeterminate edge if ADDR is a writable region of memory. There are two situations: ADDR is non-writable, in
-        // which case RiscOperators::readMemory would have returned a free variable to indicate an indeterminate value, or ADDR
-        // is writable but its MemoryMap::INITIALIZED bit is set to indicate it has a valid value already, in which case
-        // RiscOperators::readMemory would have returned the value stored there but also marked the value as being
-        // INDETERMINATE.  The SymbolicExpr::TreeNode::INDETERMINATE bit in the expression should have been carried along
-        // so that things like "MOV EAX, [ADDR]; JMP EAX" will behave the same as "JMP [ADDR]".
-        bool addIndeterminateEdge = false;
-        size_t addrWidth = 0;
-        BOOST_FOREACH (const BasicBlock::Successor &successor, args.partitioner.basicBlockSuccessors(args.bblock)) {
-            if (!successor.expr()->is_number()) {       // BB already has an indeterminate successor?
-                addIndeterminateEdge = false;
-                break;
-            } else if (!addIndeterminateEdge &&
-                       (successor.expr()->get_expression()->flags() & SymbolicExpr::Node::INDETERMINATE) != 0) {
-                addIndeterminateEdge = true;
-                addrWidth = successor.expr()->get_width();
-            }
-        }
-
-        // Add an edge
-        if (addIndeterminateEdge) {
-            ASSERT_require(addrWidth != 0);
-            BaseSemantics::SValuePtr addr = ops->undefined_(addrWidth);
-            args.bblock->insertSuccessor(addr);
-            SAWYER_MESG(mlog[DEBUG]) <<args.bblock->printableName()
-                                     <<": added indeterminate successor for initialized, non-constant memory read\n";
-        }
+        fixFunctionReturnEdge(args);
+        addPossibleIndeterminateEdge(args);
     }
     return chain;
+}
+
+// If the block is a function return (e.g., ends with an x86 RET instruction) to an indeterminate location, then that successor
+// type should be E_FUNCTION_RETURN instead of E_NORMAL.
+void
+Engine::BasicBlockFinalizer::fixFunctionReturnEdge(const Args &args) {
+    if (args.partitioner.basicBlockIsFunctionReturn(args.bblock)) {
+        bool hadCorrectEdge = false, edgeModified = false;
+        BasicBlock::Successors successors = args.partitioner.basicBlockSuccessors(args.bblock);
+        for (size_t i = 0; i < successors.size(); ++i) {
+            if (!successors[i].expr()->is_number() ||
+                (successors[i].expr()->get_expression()->flags() & SymbolicExpr::Node::INDETERMINATE) != 0) {
+                if (successors[i].type() == E_FUNCTION_RETURN) {
+                    hadCorrectEdge = true;
+                    break;
+                } else if (successors[i].type() == E_NORMAL && !edgeModified) {
+                    successors[i].type(E_FUNCTION_RETURN);
+                    edgeModified = true;
+                }
+            }
+        }
+        if (!hadCorrectEdge && edgeModified) {
+            args.bblock->clearSuccessors();
+            args.bblock->successors(successors);
+            SAWYER_MESG(mlog[DEBUG]) <<args.bblock->printableName() <<": fixed function return edge type\n";
+        }
+    }
+}
+
+// Should we add an indeterminate CFG edge from this basic block?  For instance, a "JMP [ADDR]" instruction should get an
+// indeterminate edge if ADDR is a writable region of memory. There are two situations: ADDR is non-writable, in which case
+// RiscOperators::readMemory would have returned a free variable to indicate an indeterminate value, or ADDR is writable but
+// its MemoryMap::INITIALIZED bit is set to indicate it has a valid value already, in which case RiscOperators::readMemory
+// would have returned the value stored there but also marked the value as being INDETERMINATE.  The
+// SymbolicExpr::TreeNode::INDETERMINATE bit in the expression should have been carried along so that things like "MOV EAX,
+// [ADDR]; JMP EAX" will behave the same as "JMP [ADDR]".
+void
+Engine::BasicBlockFinalizer::addPossibleIndeterminateEdge(const Args &args) {
+    if (args.bblock->finalState() == NULL)
+        return;
+    BaseSemantics::RiscOperatorsPtr ops = args.bblock->dispatcher()->get_operators();
+    ASSERT_not_null(ops);
+
+    bool addIndeterminateEdge = false;
+    size_t addrWidth = 0;
+    BOOST_FOREACH (const BasicBlock::Successor &successor, args.partitioner.basicBlockSuccessors(args.bblock)) {
+        if (!successor.expr()->is_number()) {       // BB already has an indeterminate successor?
+            addIndeterminateEdge = false;
+            break;
+        } else if (!addIndeterminateEdge &&
+                   (successor.expr()->get_expression()->flags() & SymbolicExpr::Node::INDETERMINATE) != 0) {
+            addIndeterminateEdge = true;
+            addrWidth = successor.expr()->get_width();
+        }
+    }
+
+    // Add an edge
+    if (addIndeterminateEdge) {
+        ASSERT_require(addrWidth != 0);
+        BaseSemantics::SValuePtr addr = ops->undefined_(addrWidth);
+        EdgeType type = args.partitioner.basicBlockIsFunctionReturn(args.bblock) ? E_FUNCTION_RETURN : E_NORMAL;
+        args.bblock->insertSuccessor(addr, type);
+        SAWYER_MESG(mlog[DEBUG]) <<args.bblock->printableName()
+                                 <<": added indeterminate successor for initialized, non-constant memory read\n";
+    }
 }
 
 // Add basic block to worklist(s)
