@@ -58,6 +58,7 @@ SUBDIRS = \
 	ManyCoreRuntime \
 	ManyCoreRuntime2 \
 	Fortran_to_C \
+	Jovial_to_C \
 	mint \
 	vectorization \
 	extractMPISkeleton \
