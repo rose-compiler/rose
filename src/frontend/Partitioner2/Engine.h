@@ -133,6 +133,7 @@ private:
         virtual bool operator()(bool chain, const Args &args) ROSE_OVERRIDE;
     private:
         void fixFunctionReturnEdge(const Args&);
+        void fixFunctionCallEdges(const Args&);
         void addPossibleIndeterminateEdge(const Args&);
     };
     

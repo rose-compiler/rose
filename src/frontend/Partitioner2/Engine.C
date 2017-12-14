@@ -2026,6 +2026,7 @@ Engine::BasicBlockFinalizer::operator()(bool chain, const Args &args) {
         ASSERT_require(bb->nInstructions() > 0);
 
         fixFunctionReturnEdge(args);
+        fixFunctionCallEdges(args);
         addPossibleIndeterminateEdge(args);
     }
     return chain;
@@ -2054,6 +2055,27 @@ Engine::BasicBlockFinalizer::fixFunctionReturnEdge(const Args &args) {
             args.bblock->clearSuccessors();
             args.bblock->successors(successors);
             SAWYER_MESG(mlog[DEBUG]) <<args.bblock->printableName() <<": fixed function return edge type\n";
+        }
+    }
+}
+
+// If the block is a function call (e.g., ends with an x86 CALL instruction) then change all E_NORMAL edges to E_FUNCTION_CALL
+// edges.
+void
+Engine::BasicBlockFinalizer::fixFunctionCallEdges(const Args &args) {
+    if (args.partitioner.basicBlockIsFunctionCall(args.bblock)) {
+        BasicBlock::Successors successors = args.partitioner.basicBlockSuccessors(args.bblock);
+        bool changed = false;
+        BOOST_FOREACH (BasicBlock::Successor &successor, successors) {
+            if (successor.type() == E_NORMAL) {
+                successor.type(E_FUNCTION_CALL);
+                changed = true;
+            }
+        }
+        if (changed) {
+            args.bblock->clearSuccessors();
+            args.bblock->successors(successors);
+            SAWYER_MESG(mlog[DEBUG]) <<args.bblock->printableName() <<": fixed function call edge(s) type\n";
         }
     }
 }
