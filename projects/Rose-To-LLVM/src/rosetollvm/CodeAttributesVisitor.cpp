@@ -191,6 +191,27 @@ void CodeAttributesVisitor::processVariableDeclaration(SgInitializedName *n) {
             if (! type -> attributeExists(Control::LLVM_ALIGN_TYPE)) {
                 attributes -> setLLVMTypeName(type);
             }
+//
+// TODO: Remove this !
+//
+/*	    
+if (isSgInitializedName(n)) {
+cout << "*** The node is an SgInitializedName for "
+     << isSgInitializedName(n) -> get_qualified_name()
+  << endl;
+}
+else {
+cout << "*** The node "
+     << n -> class_name() << " does not have an alignment set"
+  << endl;
+}
+if (! (IntAstAttribute *) type -> getAttribute(Control::LLVM_ALIGN_TYPE)) {
+cout << "*** The type "
+     << type -> class_name() << " does not have an alignment set!"
+  << endl;
+}
+cout.flush();
+*/
             ROSE2LLVM_ASSERT((IntAstAttribute *) type -> getAttribute(Control::LLVM_ALIGN_TYPE));
             alignment = ((IntAstAttribute *) type -> getAttribute(Control::LLVM_ALIGN_TYPE)) -> getValue();
         }

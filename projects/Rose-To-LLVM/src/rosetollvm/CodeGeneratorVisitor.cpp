@@ -20,7 +20,7 @@ public:
         other_expression = NULL;
     }
 
-    long int_value;
+    long long int_value;
     double double_value;
     SgStringVal *string_literal;
     SgFunctionRefExp *function_reference;
@@ -45,7 +45,7 @@ public:
         return hasDoubleValue_;
     }
 
-    void setIntValue(long value_) {
+    void setIntValue(long long value_) {
         int_value = value_;
         hasIntValue_ = true;
         hasDoubleValue_ = false;
@@ -107,6 +107,9 @@ public:
         else if (isSgLongIntVal(valExp)) {
             subtreeVal.setIntValue(isSgLongIntVal(valExp) -> get_value());
         }
+        else if (isSgLongLongIntVal(valExp)) {
+            subtreeVal.setIntValue(isSgLongLongIntVal(valExp) -> get_value());
+        }
         else if (isSgShortVal(valExp)) {
            subtreeVal.setIntValue(isSgShortVal(valExp) -> get_value());
         }
@@ -115,6 +118,9 @@ public:
         }
         else if (isSgUnsignedLongVal(valExp)) {
             subtreeVal.setIntValue(isSgUnsignedLongVal(valExp) -> get_value());
+        } 
+        else if (isSgUnsignedLongLongIntVal(valExp)) {
+            subtreeVal.setIntValue(isSgUnsignedLongLongIntVal(valExp) -> get_value());
         } 
         else if (isSgUnsignedShortVal(valExp)) {
             subtreeVal.setIntValue(isSgUnsignedShortVal(valExp) -> get_value());
