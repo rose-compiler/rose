@@ -210,8 +210,15 @@ test_diff.out : ../autoPar $(top_srcdir)/tests/nonsmoke/functional/CompileTests/
 # Two files are singled out since their output will be put in tutorial text
 doall_2.out: ../autoPar doall_2.c 
 	$(VALGRIND) ../autoPar $(ROSE_CFLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/doall_2.c > doall_2.out
+
+# special flags, no aliasing flag is used        
 inner_only.out: ../autoPar inner_only.c 
-	$(VALGRIND) ../autoPar $(ROSE_CFLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/inner_only.c > inner_only.out
+	$(VALGRIND) ../autoPar --edg:no_warnings -w -rose:verbose 0 $(TESTCODE_INCLUDES) -c $(srcdir)/inner_only.c > inner_only.out
+
+rose_inner_only.c.diff: inner_only.out
+	echo "Verifying autoPar translation by using diff ..."; \
+	if $(DIFF) $(@:.c.diff=.c) $(REFERENCE_PATH)/$(@:.c.diff=.c) > $@ ; then echo "Test Passed" ; else echo "Files differ; test failed"; cat $@; rm -rf $@; exit 1; fi
+            
 check-local:
 	@echo "Test for ROSE automatic parallelization."
 	@$(MAKE) $(C_TEST_Objects)
@@ -221,7 +228,7 @@ check-local:
 	@$(MAKE) rose_doall_vector2.C > doall_vector2.out
 	@$(MAKE) rose_Stress2.cc > Stress2.out
 	@$(MAKE) test_diff.out
-	@$(MAKE) inner_only.out
+	@$(MAKE) rose_inner_only.c.diff
 	@$(MAKE) doall_2.out
 	@$(MAKE) $(C_TEST_DIFF_FILES) $(CXX_TEST_DIFF_FILES)
 	@echo "***********************************************************************************************************"
@@ -233,7 +240,4 @@ EXTRA_DIST = $(ALL_TESTCODES) funcs.annot floatArray.annot Index.annot simpleA++
 
 clean-local:
 	rm -f *.o rose_*.[cC] *.dot *.out rose_*.cc *.patch *.diff
-
-
-
 

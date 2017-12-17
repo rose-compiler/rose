@@ -1044,12 +1044,16 @@ namespace AutoParallelization
           SgScopeStatement* varscope =NULL;
           SgNode* src_node = AstNodePtr2Sage(info.SrcRef());
           SgInitializedName* src_name=NULL;
+          // two variables will be set if source or snk nodes are variable references nodes
+          SgVarRefExp* src_var_ref = NULL; 
+          SgVarRefExp* snk_var_ref = NULL; 
           // x. Ignore dependence caused by locally declared variables: declared within the loop    
           if (src_node)
           {
             SgVarRefExp* var_ref = isSgVarRefExp(src_node);
             if (var_ref)
             {  
+	      src_var_ref = var_ref; 
               varscope= var_ref->get_symbol()->get_scope();
               src_name = var_ref->get_symbol()->get_declaration();
               if (SageInterface::isAncestor(currentscope,varscope))
@@ -1075,6 +1079,7 @@ namespace AutoParallelization
           if (snk_node)
           {
             SgVarRefExp* var_ref = isSgVarRefExp(snk_node);
+	    snk_var_ref = var_ref; 
             if (var_ref)
             {  
               varscope= var_ref->get_symbol()->get_scope();
@@ -1138,20 +1143,45 @@ namespace AutoParallelization
             isArray2= fa.IsArrayAccess(info.SnkRef());
           }
 
-          if (AutoParallelization::no_aliasing) 
+          //if (isArray1 && isArray2) // changed from both to either to be aggressive, 5/25/2010
+          if (isArray1 || isArray2)
           {
-            //if (isArray1 && isArray2) // changed from both to either to be aggressive, 5/25/2010
-            if (isArray1 || isArray2)
+            if ((info.GetDepType() & DEPTYPE_SCALAR)||(info.GetDepType() & DEPTYPE_BACKSCALAR))
             {
-              if ((info.GetDepType() & DEPTYPE_SCALAR)||(info.GetDepType() & DEPTYPE_BACKSCALAR))
+              if (src_var_ref || snk_var_ref) // at least one is a scalar: we have scalar vs. array
               {
-                if (enable_debug)
+                // we have to check the type of the scalar: 
+                //  integer type? skip
+                //  pointer type, skip if no-aliasing is specified
+                SgVarRefExp* one_var= src_var_ref?src_var_ref:snk_var_ref;
+
+                // non-pointer type or pointertype && no_aliasing, we skip it
+                if (!isPointerType(one_var->get_type()) ||AutoParallelization::no_aliasing )
                 {
-                  cout<<"Non-aliasing assumed, eliminating a dep relation due to scalar dep type for at least one array variable (pointers used as arrays)"<<endl; 
-                  info.Dump();
+                  if (enable_debug)
+                  {
+                    if (AutoParallelization::no_aliasing)
+                      cout<<"Non-aliasing assumed, eliminating a dep relation due to scalar dep type for at least one array variable (pointers used as arrays)"<<endl; 
+                    else
+                      cout<<"Found a non-pointer scalar, eliminating a dep relation due to the scalar dep type between a scalar and an array"<<endl; 
+                    info.Dump();
+                  }
+
+                  continue;
                 }
-                continue;
               }
+              else // both are arrays
+              {
+                if (AutoParallelization::no_aliasing) 
+                {
+                  if (enable_debug)
+                  {
+                    cout<<"Non-aliasing assumed, eliminating a dep relation due to scalar dep type for at least one array variable (pointers used as arrays)"<<endl; 
+                    info.Dump();
+                  }
+                  continue;
+                }
+              }  
             }
           }
 #endif
