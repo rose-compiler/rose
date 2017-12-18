@@ -358,6 +358,13 @@ print_testcodes:
 globalVariablesInLambdas_test: globalVariablesInLambdas
 	./globalVariablesInLambdas -std=c++11 --edg:no_warnings -c $(srcdir)/globalVariablesInLambdas_test_01.C
 
+# DQ (12/13/2017): Need to add support for multiple versions of Raja.
+# Use --with-research-raja=... and --with-ares-raja=... , and for other specific applications dependent on Raja.
+RajaInclude = /home/quinlan1/ROSE/RAJA/install/include
+
+rajaTest:../../testTranslator
+	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(RajaInclude) -I$(srcdir) -c $(srcdir)/test2017_33.C
+
 
 check-local:
 # DQ (2/19/2017): NEW VERSION OF LOGIC
