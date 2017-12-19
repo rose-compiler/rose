@@ -617,6 +617,9 @@ AC_LANG(C++)
 
 ROSE_SUPPORT_BOOST
 
+# Rasmussen (12/16/2017): Added test for Bison version (Mac OSX Bison version may be too old)
+ROSE_SUPPORT_BISON
+
 # DQ (11/5/2009): Added test for GraphViz's ``dot'' program
 ROSE_SUPPORT_GRAPHVIZ
 
