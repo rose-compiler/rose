@@ -17,6 +17,11 @@
 # include <unistd.h>                                    // for access()
 #endif
 
+#if defined(__APPLE__) && defined(__MACH__)
+#  define PTRACE_ATTACH PT_ATTACHEXC
+#  define PTRACE_DETACH PT_DETACH
+#endif
+
 // This is the other half of the BOOST_CLASS_EXPORT_KEY from the header file.
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::MemoryMap::AllocatingBuffer);
