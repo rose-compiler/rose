@@ -45,6 +45,7 @@ matrixmultiply.c \
 matrixmultiply2.c \
 matrixVectormultiply.c \
 minusMinus.c \
+uniformIndirectIndexedArrayRefs.c \
 outer_only.c \
 output_dep.c \
 output_dep2.c \

@@ -1309,13 +1309,16 @@ namespace AutoParallelization
 
   Cases of multiple dimensions, multiple levels of indirections are also handled.  
 
-  We uniform them into a single form (Form 2) to simplify later recognition of indirect indexed array refs
+  We uniform them into a single form (Form 1) to simplify later recognition of indirect indexed array refs
+
    For Form 2: if the rhs operand is a variable
       find the reaching definition of the index based on data flow analysis
         case 1: if it is the current loop's index variable, nothing to do further. stop
+                what if it is another loop's index variable??
         case 2: outside the current loop's scope: for example higher level loop's index. stop
         case 3: the definition is within the  current loop ?  
                  replace the rhs operand with its reaching definition's right hand value.
+                    if rhs is another array references??
                 one assignment to another array with the current  (?? higher level is considered at its own level) loop index
  
 Algorithm: Replace the index variable with its right hand value of its reaching definition,
@@ -1324,6 +1327,8 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
 */
  static void uniformIndirectIndexedArrayRefs (SgForStatement* for_loop)
  {
+   if (enable_debug)
+     cout<<"Entering uniformIndirectIndexedArrayRefs() ..."<<endl;
    ROSE_ASSERT (for_loop != NULL);
    ROSE_ASSERT (for_loop->get_loop_body() != NULL);
    SgInitializedName * loop_index_name = NULL;
@@ -1333,21 +1338,23 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
    // prepare def/use analysis, it should already exist as part of initialize_analysis()
    //SgProject * project = getProject();
    ROSE_ASSERT (defuse != NULL);  
+
+   // For each array reference:
    Rose_STL_Container <SgNode* > nodeList = NodeQuery::querySubTree(for_loop->get_loop_body(), V_SgPntrArrRefExp);
    for (Rose_STL_Container<SgNode *>::iterator i = nodeList.begin(); i != nodeList.end(); i++)
    {
-     SgPntrArrRefExp *aRef = isSgPntrArrRefExp((*i));
+     SgPntrArrRefExp *aRef = isSgPntrArrRefExp((*i)); 
      ROSE_ASSERT (aRef != NULL); 
      SgExpression* rhs = aRef-> get_rhs_operand_i();
      switch (rhs->variantT())
      {
-       case V_SgVarRefExp:
+       case V_SgVarRefExp: // the index of the array is a variable reference
          {
            // SgVarRefExp * varRef = isSgVarRefExp(rhs);
            // trace back to the 'root' value of rhs according to def/use analysis
            // Initialize the end value to the current rhs of the array reference expression
            SgExpression * the_end_value = rhs; 
-           while (isSgVarRefExp(the_end_value))
+           while (isSgVarRefExp(the_end_value)) // the applications we care only have one level of value transfer.
            {
              SgVarRefExp * varRef = isSgVarRefExp(the_end_value);
              SgInitializedName * initName = isSgInitializedName(varRef->get_symbol()->get_declaration());
@@ -1398,8 +1405,12 @@ Algorithm: Replace the index variable with its right hand value of its reaching 
                break;
              }
            } // end while() to trace down to root definition expression
-           //replace rhs with its root value if rhs != end_value
-           if (rhs != the_end_value)
+
+           //Replace rhs with its root value if rhs != end_value
+           // We should only do the replacement if the end value is array reference!
+           // Otherwise, an inner loop variable j's initialization value 0 will be used to replace j in the array reference!
+           // Liao, 12/20/2017
+           if (isSgPntrArrRefExp (the_end_value) && rhs != the_end_value)
            {
              SgExpression* new_rhs = SageInterface::deepCopy<SgExpression> (the_end_value);
              //TODO use replaceExpression() instead
