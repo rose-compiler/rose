@@ -60,14 +60,7 @@ smtSolverDocumentationString(const std::string &dfltValue) {
 
     std::string docstr = "Specifies which connection is used to interface to an SMT solver for analyses that don't "
                          "otherwise specify a solver. The choices are names of solver interfaces, \"none\" "
-                         "(or the empty string), \"best\", or \"list\". The default is \"" + dfltValue + "\"";
-    if ("best" == dfltValue) {
-        SmtSolver *solver = SmtSolver::bestAvailable();
-        docstr += ", which currently means \"" + solver->name() + "\".";
-        delete solver;
-    } else {
-        docstr += ".";
-    }
+                         "(or the empty string), \"best\", or \"list\".";
 
     SmtSolver::Availability solvers = SmtSolver::availability();
     std::vector<std::string> enabled, disabled;
@@ -92,9 +85,16 @@ smtSolverDocumentationString(const std::string &dfltValue) {
               "converts its internal representation to text, which ROSE then reads and parses. These \"-exe\" parsers "
               "are therefore quite slow, but work well for debugging. On the other hand, the \"-lib\" parsers use "
               "a solver library and can avoid two of the four translation steps, but don't produce much debugging "
-              "output.";
+              "output. To debug solvers, enable the " + SmtSolver::mlog.name() + " diagnostic facility (see @s{log}).";
 
-    docstr += " To debug solvers, enable the " + SmtSolver::mlog.name() + " diagnostic facility (see @s{log}).";
+    docstr += " The default is \"" + dfltValue + "\"";
+    if ("best" == dfltValue) {
+        SmtSolver *solver = SmtSolver::bestAvailable();
+        docstr += ", which currently means \"" + solver->name() + "\".";
+        delete solver;
+    } else {
+        docstr += ".";
+    }
 
     return docstr;
 }
