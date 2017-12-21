@@ -42,6 +42,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SmtSolver);
         // ctx_         -- not serialized
         // solver_      -- not serialized
         // ctxCses_     -- not serialized
@@ -158,5 +159,9 @@ protected:
 
 } // namespace
 } // namespace
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::Z3Solver);
+#endif
 
 #endif

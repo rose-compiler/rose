@@ -29,15 +29,16 @@ namespace BinaryAnalysis {
 namespace Partitioner2 {
 
 Partitioner::Partitioner()
-    : solver_(NULL), autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1),
-      semanticMemoryParadigm_(LIST_BASED_MEMORY), progress_(Progress::instance()), cfgProgressTotal_(0) {
+    : solver_(SmtSolver::instance(CommandlineProcessing::genericSwitchArgs.smtSolver)), autoAddCallReturnEdges_(false),
+      assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1), semanticMemoryParadigm_(LIST_BASED_MEMORY),
+      progress_(Progress::instance()), cfgProgressTotal_(0) {
     init(NULL, memoryMap_);
 }
 
 Partitioner::Partitioner(Disassembler *disassembler, const MemoryMap::Ptr &map)
-    : memoryMap_(map), solver_(NULL), autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true),
-      stackDeltaInterproceduralLimit_(1), semanticMemoryParadigm_(LIST_BASED_MEMORY),
-      progress_(Progress::instance()), cfgProgressTotal_(0) {
+    : memoryMap_(map), solver_(SmtSolver::instance(CommandlineProcessing::genericSwitchArgs.smtSolver)),
+      autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1),
+      semanticMemoryParadigm_(LIST_BASED_MEMORY), progress_(Progress::instance()), cfgProgressTotal_(0) {
     init(disassembler, map);
 }
 
