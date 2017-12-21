@@ -70,9 +70,13 @@ namespace CommandlineProcessing
           struct GenericSwitchArgs {
               unsigned int threads;                     /**< Number of threads analyses should use. Zero means use the number
                                                          *   of threads that the hardware provides. */
+              std::string smtSolver;                    /**< Name of SMT solver interface. "list" means show a list and exit.
+                                                         *   The empty string means no solver is used. Additional switches
+                                                         *   might be present to override this global solver for specific
+                                                         *   situations. */
 
               GenericSwitchArgs()
-                  : threads(0) {}
+                  : threads(0), smtSolver("none") {}
           };
 
           /** Global location for parsed generic command-line switches.
