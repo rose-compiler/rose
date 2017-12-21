@@ -220,6 +220,20 @@ join(const std::string &separator, const char *strings[], size_t nstrings) {
     return join_range(separator, strings, strings+nstrings);
 }
 
+std::string
+joinEnglish(const std::vector<std::string> &phrases, const std::string &separator, const std::string &finalIntro) {
+    if (phrases.empty())
+        return "";
+    if (phrases.size() == 1)
+        return phrases[0];
+    if (phrases.size() == 2)
+        return phrases[0] + " " + finalIntro + " " + phrases[1];
+
+    std::string s;
+    for (size_t i=0; i<phrases.size()-1; ++i)
+        s = phrases[i] + separator + " ";
+    return s + finalIntro + " " + phrases.back();
+}
 
 
 
