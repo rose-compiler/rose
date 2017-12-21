@@ -820,7 +820,7 @@ Base::emitBasicBlockSharing(std::ostream &out, const P2::BasicBlock::Ptr &bb, St
         if (current != functions.end())
             functions.erase(current);
         BOOST_FOREACH (P2::Function::Ptr function, functions)
-            out <<"\t;; block owned by " <<function->printableName() <<"\n";
+            out <<"\t;; block also owned by " <<function->printableName() <<"\n";
     }
 }
 
