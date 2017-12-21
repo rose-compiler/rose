@@ -372,7 +372,7 @@ public:
     /** Factory method to create a new transcoder for 32-bit X86 instructions. */
     static TranscoderPtr instanceX86() {
         const RegisterDictionary *regdict = RegisterDictionary::dictionary_pentium4();
-        SmtSolver *solver = NULL;
+        SmtSolver *solver = SmtSolver::instance(CommandlineProcessing::genericSwitchArgs.smtSolver);
         RiscOperatorsPtr ops = RiscOperators::instance(regdict, solver);
         BaseSemantics::DispatcherPtr dispatcher = DispatcherX86::instance(ops, 32);
         return instance(dispatcher);

@@ -436,9 +436,8 @@ FeasiblePath::buildVirtualCpu(const P2::Partitioner &partitioner) {
         }
     }
 
-    // Create the RiscOperators and Dispatcher. We could use an SMT solver here also, but it seems to slow things down more
-    // than speed them up.
-    SmtSolver *solver = NULL;
+    // Create the RiscOperators and Dispatcher.
+    SmtSolver *solver = SmtSolver::instance(CommandlineProcessing::genericSwitchArgs.smtSolver);
     RiscOperatorsPtr ops = RiscOperators::instance(&partitioner, registers_, settings_.searchMode, solver);
     ASSERT_not_null(partitioner.instructionProvider().dispatcher());
     BaseSemantics::DispatcherPtr cpu = partitioner.instructionProvider().dispatcher()->create(ops);

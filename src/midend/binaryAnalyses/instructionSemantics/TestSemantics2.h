@@ -123,7 +123,7 @@ public:
         const RegisterDescriptor *segreg_ = regdict->lookup("ss");
         require(segreg_!=NULL, "segreg lookup");
         const RegisterDescriptor segreg = *segreg_;
-        SmtSolver *solver = NULL;
+        SmtSolver *solver = SmtSolver::instance(CommandlineProcessing::genericSwitchArgs.smtSolver);
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // SValue

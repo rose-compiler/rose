@@ -598,8 +598,7 @@ buildVirtualCpu(const P2::Partitioner &partitioner) {
         }
     }
 
-    // We could use an SMT solver here also, but it seems to slow things down more than speed them up.
-    SmtSolver *solver = NULL;
+    SmtSolver *solver = SmtSolver::instance(CommandlineProcessing::genericSwitchArgs.smtSolver);
     RiscOperatorsPtr ops = RiscOperators::instance(&partitioner, myRegs, solver);
 
     return partitioner.instructionProvider().dispatcher()->create(ops);
