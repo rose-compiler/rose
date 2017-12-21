@@ -233,9 +233,10 @@ Engine::partitionerSwitches() {
               .intrinsicValue(true, settings_.partitioner.base.usingSemantics)
               .doc("The partitioner can either use quick and naive methods of determining instruction characteristics, or "
                    "it can use slower but more accurate methods, such as symbolic semantics.  This switch enables use of "
-                   "the slower symbolic semantics, or the feature can be disabled with @s{no-use-semantics}. The default is "
-                   "to " +
-                   std::string(settings_.partitioner.base.usingSemantics?"":"not ") + "use semantics."));
+                   "the slower symbolic semantics, or the feature can be disabled with @s{no-use-semantics}. Furthermore, "
+                   "instruction semantics will use an SMT solver if one is specified, which can make the analysis even "
+                   "slower. The default is to " + std::string(settings_.partitioner.base.usingSemantics?"":"not ") +
+                   "use semantics."));
     sg.insert(Switch("no-use-semantics")
               .key("use-semantics")
               .intrinsicValue(false, settings_.partitioner.base.usingSemantics)
